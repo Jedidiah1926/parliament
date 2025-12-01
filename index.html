@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>정치 시뮬레이션: 이념 커스텀 시스템</title>
+    <title>정치 시뮬레이션: 양원 분리/통합 관리</title>
     <style>
         :root {
             --bg-color: #1a1a1a;
@@ -161,19 +161,27 @@
         .ruling-selector input { margin: 0; cursor: pointer; }
         .ruling-selector.active { border-color: var(--gold-color); color: var(--gold-color); font-weight: bold; }
 
+        /* 교차 참여 체크박스 스타일 */
+        .cross-check {
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px dashed #555;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85em;
+            color: #aaa;
+        }
+        .cross-check input { width: auto; margin: 0; cursor: pointer; }
+        .cross-check label { display: inline; margin: 0; cursor: pointer; color: #aaa; font-weight: normal; }
+        .cross-check:hover label { color: #fff; }
+
         button.add-btn { background-color: var(--success-color); width: 100%; border:none; padding:10px; color:white; border-radius:4px; cursor:pointer; margin-top: 10px; }
         button.simulate-btn { background-color: var(--accent-color); width: 100%; padding: 12px; font-size: 1.1em; margin-top: 20px; border:none; color:white; border-radius:4px; cursor:pointer; font-weight:bold;}
 
-        /* 이념 리스트 스타일 */
         .ideology-list-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            background: #222;
-            padding: 8px;
-            border-bottom: 1px solid #444;
-            margin-bottom: 5px;
-            border-radius: 4px;
+            display: flex; align-items: center; gap: 10px; background: #222;
+            padding: 8px; border-bottom: 1px solid #444; margin-bottom: 5px; border-radius: 4px;
         }
         .order-controls { display: flex; flex-direction: column; gap: 2px; }
         .order-btn { font-size: 0.7em; padding: 0 4px; line-height: 1; cursor: pointer; background: #444; border:none; color:white; }
@@ -229,8 +237,7 @@
 
         <div id="contentIdeology" class="tab-content">
             <div style="color:#aaa; font-size:0.9em; margin-bottom:15px;">
-                * 위쪽이 <strong>의회 왼쪽(180°)</strong>, 아래쪽이 <strong>의회 오른쪽(0°)</strong>에 배치됩니다.<br>
-                * 순서를 변경하여 좌석 배치를 조정하세요.
+                * 위쪽(▲)이 의회의 <strong>왼쪽(좌파석)</strong>에 배치됩니다.
             </div>
             <div id="ideologyList"></div>
             <button class="add-btn" onclick="addIdeology()">+ 이념 추가</button>
@@ -238,17 +245,17 @@
 
         <div id="contentHouse" class="tab-content active">
             <div id="partyListHouse"></div>
-            <button class="add-btn" onclick="addParty()">+ 정당 추가</button>
+            <button class="add-btn" onclick="addParty()">+ 정당 추가 (양원 공통)</button>
         </div>
 
         <div id="contentSenate" class="tab-content">
             <div id="partyListSenate"></div>
-            <button class="add-btn" onclick="addParty()">+ 정당 추가</button>
+            <button class="add-btn" onclick="addParty()">+ 정당 추가 (양원 공통)</button>
         </div>
 
         <div id="contentCoalition" class="tab-content">
             <div style="color:#888; font-size:0.9em; margin-bottom:10px;">
-                * 연정 구성 및 집권 세력(Government)을 설정합니다.
+                * 연정 및 집권 세력 설정 (양원 공통 적용)
             </div>
             <div id="coalitionList"></div>
             <button class="add-btn" onclick="addCoalition()">+ 연정 추가</button>
@@ -271,7 +278,6 @@
     </div>
 
     <script>
-        // 초기 이념 데이터 (순서가 중요함)
         let ideologies = [
             { id: 101, name: "혁명적 사회주의" },
             { id: 102, name: "민주사회주의" },
@@ -282,18 +288,19 @@
             { id: 107, name: "기타/무소속" }
         ];
 
-        // 정당 데이터 (ideologyId로 연결)
+        // 데이터 구조에 참여 여부 플래그(inHouse, inSenate) 추가
         let parties = [
-            { id: 1, name: "노동자당", color: "#8B0000", seatsHouse: 10, seatsSenate: 2, ideologyId: 101, isRuling: false },
-            { id: 2, name: "사회당", color: "#E91E63", seatsHouse: 40, seatsSenate: 10, ideologyId: 102, isRuling: false },
-            { id: 3, name: "민주당", color: "#3498DB", seatsHouse: 120, seatsSenate: 45, ideologyId: 103, isRuling: false },
-            { id: 4, name: "국민당", color: "#E74C3C", seatsHouse: 110, seatsSenate: 40, ideologyId: 105, isRuling: false },
-            { id: 5, name: "자유당", color: "#F1C40F", seatsHouse: 20, seatsSenate: 3, ideologyId: 104, isRuling: false }
+            { id: 1, name: "노동자당", color: "#8B0000", seatsHouse: 10, seatsSenate: 2, ideologyId: 101, isRuling: false, inHouse: true, inSenate: true },
+            { id: 2, name: "사회당", color: "#E91E63", seatsHouse: 40, seatsSenate: 10, ideologyId: 102, isRuling: false, inHouse: true, inSenate: true },
+            { id: 3, name: "민주당", color: "#3498DB", seatsHouse: 120, seatsSenate: 45, ideologyId: 103, isRuling: false, inHouse: true, inSenate: true },
+            { id: 4, name: "국민당", color: "#E74C3C", seatsHouse: 110, seatsSenate: 40, ideologyId: 105, isRuling: false, inHouse: true, inSenate: true },
+            { id: 5, name: "지역당(하원전용)", color: "#F1C40F", seatsHouse: 20, seatsSenate: 0, ideologyId: 104, isRuling: false, inHouse: true, inSenate: false }, // 하원 전용 예시
+            { id: 6, name: "귀족원(상원전용)", color: "#8E44AD", seatsHouse: 0, seatsSenate: 15, ideologyId: 106, isRuling: false, inHouse: false, inSenate: true } // 상원 전용 예시
         ];
 
         let coalitions = [
             { id: 'c1', name: "민주 연정", color: "#3498DB", members: [2, 3], isRuling: true },
-            { id: 'c2', name: "보수 연합", color: "#E74C3C", members: [4, 5], isRuling: false }
+            { id: 'c2', name: "보수 연합", color: "#E74C3C", members: [4], isRuling: false }
         ];
 
         let currentTab = 'house';
@@ -346,11 +353,9 @@
 
         function isValidHex(hex) { return /^#[0-9A-F]{6}$/i.test(hex); }
 
-        // --- 1. 이념 관리 렌더링 ---
         function renderIdeologyList() {
             const container = document.getElementById('ideologyList');
             container.innerHTML = '';
-
             ideologies.forEach((ide, index) => {
                 const div = document.createElement('div');
                 div.className = 'ideology-list-item';
@@ -366,80 +371,74 @@
             });
         }
 
-        function addIdeology() {
-            ideologies.push({ id: Date.now(), name: "새 이념" });
-            refreshUI();
-        }
-
-        function removeIdeology(index) {
-            if(ideologies.length <= 1) { alert("최소 1개의 이념은 있어야 합니다."); return; }
-            const removedId = ideologies[index].id;
-            ideologies.splice(index, 1);
-            // 삭제된 이념을 쓰던 정당들은 첫번째 이념으로 강제 이동
-            parties.forEach(p => {
-                if(p.ideologyId === removedId) p.ideologyId = ideologies[0].id;
-            });
-            refreshUI(); simulate();
-        }
-
-        function updateIdeology(index, key, val) {
-            ideologies[index][key] = val;
-            refreshUI(); simulate();
-        }
-
-        function moveIdeology(index, direction) {
-            if (direction === -1 && index > 0) {
-                [ideologies[index], ideologies[index - 1]] = [ideologies[index - 1], ideologies[index]];
-            } else if (direction === 1 && index < ideologies.length - 1) {
-                [ideologies[index], ideologies[index + 1]] = [ideologies[index + 1], ideologies[index]];
-            }
-            refreshUI(); simulate();
-        }
-
-        // --- 2. 정당 관리 렌더링 (이념 드롭다운 포함) ---
         function renderPartyList(type) {
             const container = document.getElementById(type === 'house' ? 'partyListHouse' : 'partyListSenate');
             container.innerHTML = '';
 
-            // 이념 옵션 생성
-            let ideOptions = '';
-            ideologies.forEach(ide => {
-                ideOptions += `<option value="${ide.id}">${ide.name}</option>`;
-            });
+            // 필터링: 해당 의회에 '참여(in...)'하는 정당만 표시
+            const visibleParties = parties.map((p, idx) => ({ ...p, originalIdx: idx }))
+                                          .filter(p => type === 'house' ? p.inHouse : p.inSenate);
 
-            parties.forEach((p, idx) => {
+            visibleParties.forEach((p) => {
+                const idx = p.originalIdx;
                 const div = document.createElement('div');
                 div.className = `card-item ${p.isRuling ? 'is-ruling' : ''}`;
                 div.style.borderLeftColor = p.color;
 
                 const seatKey = type === 'house' ? 'seatsHouse' : 'seatsSenate';
                 const seatLabel = type === 'house' ? '하원 의석' : '상원 의석';
+                
+                // 교차 체크박스 로직
+                // 하원 탭이면 -> "상원에도 출마?" 체크박스 표시
+                // 상원 탭이면 -> "하원에도 출마?" 체크박스 표시
+                let crossCheckHtml = '';
+                if (type === 'house') {
+                    crossCheckHtml = `
+                        <div class="cross-check">
+                            <input type="checkbox" id="linkSen${idx}" ${p.inSenate ? 'checked' : ''} onchange="togglePartyParticipation(${idx}, 'inSenate', this.checked)">
+                            <label for="linkSen${idx}">상원(Senate)에도 참여</label>
+                        </div>
+                    `;
+                } else {
+                    crossCheckHtml = `
+                        <div class="cross-check">
+                            <input type="checkbox" id="linkHou${idx}" ${p.inHouse ? 'checked' : ''} onchange="togglePartyParticipation(${idx}, 'inHouse', this.checked)">
+                            <label for="linkHou${idx}">하원(House)에도 참여</label>
+                        </div>
+                    `;
+                }
 
                 div.innerHTML = `
                     <div class="card-header">
                         <input type="text" value="${p.name}" onchange="updateParty(${idx}, 'name', this.value)" style="flex:1;" placeholder="당명">
                         <input type="text" class="hex-input" value="${p.color}" onchange="updatePartyColor(this, ${idx})" style="width: 60px;">
                         <div class="color-preview" style="background-color: ${p.color};"></div>
-                        <button class="remove-btn" onclick="removeParty(${idx})">삭제</button>
+                        <button class="remove-btn" onclick="removeParty(${idx})" title="양원 모두에서 영구 삭제">삭제</button>
                     </div>
                     <div class="party-grid">
                         <div class="full-width">
-                            <label>이념 선택</label>
+                            <label>이념</label>
                             <select onchange="updateParty(${idx}, 'ideologyId', parseInt(this.value))">
                                 ${ideologies.map(ide => `<option value="${ide.id}" ${p.ideologyId === ide.id ? 'selected' : ''}>${ide.name}</option>`).join('')}
                             </select>
                         </div>
-                        <div>
-                            <label style="color:${type==='house'?'#4a90e2':'#e67e22'}">${seatLabel}</label>
-                            <input type="number" value="${p[seatKey]}" min="0" onchange="updateParty(${idx}, '${seatKey}', parseInt(this.value)||0)">
+                        <div class="full-width" style="display:flex; gap:10px;">
+                            <div style="flex:1;">
+                                <label style="color:${type==='house'?'#4a90e2':'#e67e22'}">${seatLabel}</label>
+                                <input type="number" value="${p[seatKey]}" min="0" onchange="updateParty(${idx}, '${seatKey}', parseInt(this.value)||0)">
+                            </div>
                         </div>
                     </div>
+                    ${crossCheckHtml}
                 `;
                 container.appendChild(div);
             });
+            
+            if (visibleParties.length === 0) {
+                container.innerHTML = '<div style="text-align:center; color:#666; padding:20px;">등록된 정당이 없습니다.</div>';
+            }
         }
 
-        // --- 3. 연정/집권 렌더링 ---
         function renderCoalitions() {
             const container = document.getElementById('coalitionList');
             container.innerHTML = '';
@@ -449,14 +448,21 @@
                 div.style.borderLeftColor = coal.color;
                 let memberChecks = '';
                 parties.forEach(p => {
+                    // 연정 탭에서는 모든 정당(inHouse, inSenate 무관) 표시하여 선택 가능하게 함
                     const isChecked = coal.members.includes(p.id);
-                    // 정당 이름 옆에 이념 명칭 표시
                     const ideName = ideologies.find(i => i.id === p.ideologyId)?.name || "미정";
-                    
+                    // 참여 정보 표시
+                    let badges = [];
+                    if(p.inHouse) badges.push("하");
+                    if(p.inSenate) badges.push("상");
+                    const badgeStr = badges.length ? `[${badges.join('+')}]` : `[미참여]`;
+
                     memberChecks += `
                         <div class="member-check">
                             <span class="party-badge" style="background:${p.color}"></span>
-                            <label for="c${cIdx}_p${p.id}">${p.name} <span style="color:#888; font-size:0.8em;">(${ideName})</span></label>
+                            <label for="c${cIdx}_p${p.id}">
+                                ${p.name} <span style="color:#aaa; font-size:0.8em;">${badgeStr}</span>
+                            </label>
                             <input type="checkbox" id="c${cIdx}_p${p.id}" 
                                 ${isChecked ? 'checked' : ''} 
                                 onchange="toggleCoalitionMember('${coal.id}', ${p.id}, this.checked)">
@@ -499,10 +505,25 @@
             container.appendChild(partyGovDiv);
         }
 
-        // --- Data Logic ---
+        // --- Logic Functions ---
+
+        function addIdeology() { ideologies.push({ id: Date.now(), name: "새 이념" }); refreshUI(); }
+        function removeIdeology(index) {
+            if(ideologies.length <= 1) { alert("최소 1개의 이념은 있어야 합니다."); return; }
+            const removedId = ideologies[index].id; ideologies.splice(index, 1);
+            parties.forEach(p => { if(p.ideologyId === removedId) p.ideologyId = ideologies[0].id; });
+            refreshUI(); simulate();
+        }
+        function updateIdeology(index, key, val) { ideologies[index][key] = val; refreshUI(); simulate(); }
+        function moveIdeology(index, direction) {
+            if (direction === -1 && index > 0) { [ideologies[index], ideologies[index - 1]] = [ideologies[index - 1], ideologies[index]]; } 
+            else if (direction === 1 && index < ideologies.length - 1) { [ideologies[index], ideologies[index + 1]] = [ideologies[index + 1], ideologies[index]]; }
+            refreshUI(); simulate();
+        }
+
         function addParty() {
-            // 기본 이념은 첫 번째 이념
-            parties.push({ id: Date.now(), name: "신당", color: "#999999", seatsHouse: 0, seatsSenate: 0, ideologyId: ideologies[0].id, isRuling: false });
+            // 기본적으로 양원 모두 참여(true)로 생성
+            parties.push({ id: Date.now(), name: "신당", color: "#999999", seatsHouse: 0, seatsSenate: 0, ideologyId: ideologies[0].id, isRuling: false, inHouse: true, inSenate: true });
             refreshUI();
         }
         function removeParty(idx) {
@@ -516,67 +537,61 @@
             if (key === 'name') refreshUI(); 
             simulate();
         }
+        // 핵심: 참여 여부 토글
+        function togglePartyParticipation(idx, field, isChecked) {
+            parties[idx][field] = isChecked;
+            // 만약 둘 다 false가 되면? -> 목록에서 아예 안보일 수 있음. 방지하려면 최소 하나는 true 강제할 수도 있지만,
+            // 사용자가 '잠시 숨김' 용도로 쓸 수도 있으니 허용하되 연정 탭에서는 보이게 둠.
+            refreshUI(); simulate();
+        }
+
         function updatePartyColor(el, idx) {
             let v = el.value.trim(); if(!v.startsWith('#')) v = '#'+v;
             if(isValidHex(v)) { parties[idx].color = v.toUpperCase(); refreshUI(); simulate(); }
         }
-        function addCoalition() {
-            coalitions.push({ id: 'c'+Date.now(), name: "새 연정", color: "#FFFFFF", members: [], isRuling: false });
-            refreshUI();
-        }
-        function removeCoalition(id) {
-            coalitions = coalitions.filter(c => c.id !== id);
-            refreshUI(); simulate();
-        }
-        function updateCoalition(id, key, val) {
-            const c = coalitions.find(c => c.id === id); if(c) { c[key] = val; simulate(); }
-        }
-        function updateCoalitionColor(el, id) {
-            let v = el.value.trim(); if(!v.startsWith('#')) v = '#'+v;
-            if(isValidHex(v)) { 
-                const c = coalitions.find(x => x.id === id); 
-                if(c) { c.color = v.toUpperCase(); el.parentElement.querySelector('.color-preview').style.backgroundColor = v; simulate(); }
-            }
-        }
+
+        function addCoalition() { coalitions.push({ id: 'c'+Date.now(), name: "새 연정", color: "#FFFFFF", members: [], isRuling: false }); refreshUI(); }
+        function removeCoalition(id) { coalitions = coalitions.filter(c => c.id !== id); refreshUI(); simulate(); }
+        function updateCoalition(id, key, val) { const c = coalitions.find(c => c.id === id); if(c) { c[key] = val; simulate(); } }
+        function updateCoalitionColor(el, id) { let v = el.value.trim(); if(!v.startsWith('#')) v = '#'+v; if(isValidHex(v)) { const c = coalitions.find(x => x.id === id); if(c) { c.color = v.toUpperCase(); el.parentElement.querySelector('.color-preview').style.backgroundColor = v; simulate(); } } }
         function toggleCoalitionMember(cId, pId, checked) {
-            if(checked) {
-                coalitions.forEach(c => c.members = c.members.filter(id => id !== pId));
-                const t = coalitions.find(c => c.id === cId); if(t) t.members.push(pId);
-            } else {
-                const t = coalitions.find(c => c.id === cId); if(t) t.members = t.members.filter(id => id !== pId);
-            }
+            if(checked) { coalitions.forEach(c => c.members = c.members.filter(id => id !== pId)); const t = coalitions.find(c => c.id === cId); if(t) t.members.push(pId); } 
+            else { const t = coalitions.find(c => c.id === cId); if(t) t.members = t.members.filter(id => id !== pId); }
             refreshUI(); simulate();
         }
         function setRuling(type, id) {
-            parties.forEach(p => p.isRuling = false);
-            coalitions.forEach(c => c.isRuling = false);
+            parties.forEach(p => p.isRuling = false); coalitions.forEach(c => c.isRuling = false);
             if(type === 'party') { const p = parties.find(x => x.id === id); if(p) p.isRuling = true; }
             else if(type === 'coalition') { const c = coalitions.find(x => x.id === id); if(c) c.isRuling = true; }
             refreshUI(); simulate();
         }
 
-        // --- Simulation ---
         function simulate() {
             const isBicameral = document.querySelector('input[name="systemType"]:checked').value === 'bicameral';
             const sTotal = parseInt(document.getElementById('senateTotal').value) || 100;
             const hTotal = parseInt(document.getElementById('houseTotal').value) || 300;
 
-            // 정렬 핵심: ideologies 배열 내의 인덱스 순서대로 정렬
+            // 정렬: 이념 순서
             parties.sort((a, b) => {
                 const idxA = ideologies.findIndex(i => i.id === a.ideologyId);
                 const idxB = ideologies.findIndex(i => i.id === b.ideologyId);
                 return idxA - idxB;
             });
 
-            const getMap = (targetTotal, chamberKey) => {
-                const definedTotal = parties.reduce((s, p) => s + p[chamberKey], 0);
+            // chamberKey: 'seatsHouse' or 'seatsSenate'
+            // checkKey: 'inHouse' or 'inSenate'
+            const getMap = (targetTotal, chamberKey, checkKey) => {
+                // 해당 의회에 참여하는 정당만 계산에 포함
+                const activeParties = parties.filter(p => p[checkKey]);
+                const definedTotal = activeParties.reduce((s, p) => s + p[chamberKey], 0);
+                
                 if(targetTotal === 0 || definedTotal === 0) return [];
                 
                 let map = [];
                 let acc = 0;
                 
-                parties.forEach((p, i) => {
-                    let count = (i === parties.length - 1) 
+                activeParties.forEach((p, i) => {
+                    let count = (i === activeParties.length - 1) 
                         ? targetTotal - acc 
                         : Math.round((p[chamberKey] / definedTotal) * targetTotal);
                     acc += count;
@@ -586,18 +601,13 @@
                     let stroke = null;
                     if(coal) stroke = coal.color;
                     else if(p.isRuling) stroke = "#f1c40f";
-
                     const ideName = ideologies.find(ide => ide.id === p.ideologyId)?.name || "";
 
                     for(let k=0; k<count; k++) {
                         map.push({
-                            color: p.color,
-                            partyName: p.name,
-                            ideology: ideName,
-                            coalitionName: coal ? coal.name : null,
-                            coalitionId: coal ? coal.id : null,
-                            strokeColor: stroke,
-                            isRuling: isGov
+                            color: p.color, partyName: p.name, ideology: ideName,
+                            coalitionName: coal ? coal.name : null, coalitionId: coal ? coal.id : null,
+                            strokeColor: stroke, isRuling: isGov
                         });
                     }
                 });
@@ -606,12 +616,12 @@
                 return map;
             };
 
-            const hMap = getMap(hTotal, 'seatsHouse');
+            const hMap = getMap(hTotal, 'seatsHouse', 'inHouse');
             drawChamber('houseCanvas', hMap, hTotal);
             updateStats('houseStats', hMap, hTotal);
 
             if (isBicameral) {
-                const sMap = getMap(sTotal, 'seatsSenate');
+                const sMap = getMap(sTotal, 'seatsSenate', 'inSenate');
                 drawChamber('senateCanvas', sMap, sTotal);
                 updateStats('senateStats', sMap, sTotal);
             }
@@ -626,7 +636,6 @@
             const CX = canvas.width / 2;
             const CY = canvas.height - 25;
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
             if(totalSeats <= 0) return;
 
             const minR = canvas.width * 0.18;
@@ -647,19 +656,13 @@
             let sum = distRows.reduce((a,b)=>a+b.actual, 0);
             distRows[distRows.length-1].actual += (totalSeats - sum);
 
-            const startAngle = Math.PI - 0.05;
-            const endAngle = 0.05;
-            const span = startAngle - endAngle;
+            const startAngle = Math.PI - 0.05; const endAngle = 0.05; const span = startAngle - endAngle;
 
             distRows.forEach(row => {
                 if(row.actual <= 0) return;
                 for(let i=0; i<row.actual; i++) {
                     let ang = (row.actual===1) ? Math.PI/2 : startAngle - (span * (i / (row.actual-1)));
-                    allPoints.push({
-                        x: CX + row.radius * Math.cos(ang),
-                        y: CY - row.radius * Math.sin(ang),
-                        angle: ang
-                    });
+                    allPoints.push({ x: CX + row.radius * Math.cos(ang), y: CY - row.radius * Math.sin(ang), angle: ang });
                 }
             });
 
@@ -667,17 +670,9 @@
             allPoints.forEach((pt, i) => {
                 if(i >= seatMap.length) return;
                 const d = seatMap[i];
-                ctx.beginPath();
-                ctx.arc(pt.x, pt.y, dotR, 0, Math.PI*2);
-                ctx.fillStyle = d.color;
-                ctx.fill();
-                if(d.strokeColor) {
-                    ctx.strokeStyle = d.strokeColor;
-                    ctx.lineWidth = Math.max(1.5, dotR * 0.4);
-                } else {
-                    ctx.strokeStyle = "rgba(0,0,0,0.3)";
-                    ctx.lineWidth = 1;
-                }
+                ctx.beginPath(); ctx.arc(pt.x, pt.y, dotR, 0, Math.PI*2); ctx.fillStyle = d.color; ctx.fill();
+                if(d.strokeColor) { ctx.strokeStyle = d.strokeColor; ctx.lineWidth = Math.max(1.5, dotR * 0.4); } 
+                else { ctx.strokeStyle = "rgba(0,0,0,0.3)"; ctx.lineWidth = 1; }
                 ctx.stroke();
             });
             ctx.fillStyle = "#fff"; ctx.textAlign = "center"; ctx.textBaseline = "bottom";
