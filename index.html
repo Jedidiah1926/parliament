@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>정치 시뮬레이션: 상/하원 개별 관리</title>
+    <title>정치 시뮬레이션: 이념 커스텀 시스템</title>
     <style>
         :root {
             --bg-color: #1a1a1a;
@@ -79,9 +79,10 @@
         }
         input.hex-input { font-family: monospace; text-transform: uppercase; }
 
-        /* --- 탭 스타일 --- */
+        /* 탭 스타일 */
         .tab-container {
             display: flex;
+            flex-wrap: wrap;
             gap: 5px;
             margin-bottom: 15px;
             border-bottom: 1px solid var(--border-color);
@@ -89,6 +90,7 @@
         }
         .tab-btn {
             flex: 1;
+            min-width: 80px;
             padding: 10px;
             background-color: var(--tab-inactive-bg);
             color: #aaa;
@@ -97,6 +99,7 @@
             border-radius: 4px 4px 0 0;
             font-weight: bold;
             transition: all 0.2s;
+            font-size: 0.9em;
         }
         .tab-btn.active {
             background-color: var(--tab-active-bg);
@@ -104,7 +107,6 @@
         }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
-
 
         /* 카드 스타일 */
         .card-item {
@@ -121,9 +123,15 @@
             border: 2px solid var(--gold-color);
             box-shadow: 0 0 10px rgba(241, 196, 15, 0.3);
         }
-        
         .card-header { display: flex; gap: 10px; align-items: center; margin-bottom: 8px; }
+        
         .color-preview { width: 25px; height: 25px; border-radius: 4px; border: 1px solid #555; flex-shrink: 0; cursor: pointer;}
+        
+        /* 버튼 스타일 */
+        .btn-icon { background: none; border: 1px solid #555; color: #aaa; cursor: pointer; padding: 2px 6px; border-radius: 3px; }
+        .btn-icon:hover { background: #555; color: #fff; }
+        .btn-icon.danger:hover { background: var(--danger-color); border-color: var(--danger-color); }
+        
         .remove-btn { 
             background-color: transparent; color: #aaa; border: 1px solid #555; 
             padding: 2px 8px; margin-left: auto; width: auto; font-size: 0.8em; 
@@ -155,6 +163,21 @@
 
         button.add-btn { background-color: var(--success-color); width: 100%; border:none; padding:10px; color:white; border-radius:4px; cursor:pointer; margin-top: 10px; }
         button.simulate-btn { background-color: var(--accent-color); width: 100%; padding: 12px; font-size: 1.1em; margin-top: 20px; border:none; color:white; border-radius:4px; cursor:pointer; font-weight:bold;}
+
+        /* 이념 리스트 스타일 */
+        .ideology-list-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: #222;
+            padding: 8px;
+            border-bottom: 1px solid #444;
+            margin-bottom: 5px;
+            border-radius: 4px;
+        }
+        .order-controls { display: flex; flex-direction: column; gap: 2px; }
+        .order-btn { font-size: 0.7em; padding: 0 4px; line-height: 1; cursor: pointer; background: #444; border:none; color:white; }
+        .order-btn:hover { background: #666; }
 
         canvas {
             background: radial-gradient(circle at bottom, #252525, #151515);
@@ -198,9 +221,19 @@
         </div>
 
         <div class="tab-container">
+            <button class="tab-btn" onclick="switchTab('ideology')" id="tabIdeology">이념 설정</button>
             <button class="tab-btn active" onclick="switchTab('house')" id="tabHouse">하원 관리</button>
             <button class="tab-btn" onclick="switchTab('senate')" id="tabSenate">상원 관리</button>
             <button class="tab-btn" onclick="switchTab('coalition')" id="tabCoalition">연정/집권</button>
+        </div>
+
+        <div id="contentIdeology" class="tab-content">
+            <div style="color:#aaa; font-size:0.9em; margin-bottom:15px;">
+                * 위쪽이 <strong>의회 왼쪽(180°)</strong>, 아래쪽이 <strong>의회 오른쪽(0°)</strong>에 배치됩니다.<br>
+                * 순서를 변경하여 좌석 배치를 조정하세요.
+            </div>
+            <div id="ideologyList"></div>
+            <button class="add-btn" onclick="addIdeology()">+ 이념 추가</button>
         </div>
 
         <div id="contentHouse" class="tab-content active">
@@ -238,26 +271,29 @@
     </div>
 
     <script>
-        const SPECTRUM_NAMES = {
-            "communist": "공산주의 (극좌)", "socialist": "사회주의 (좌파)", "socdem": "사민주의 (중도좌파)",
-            "liberal": "자유주의 (중도)", "conservative": "보수주의 (중도우파)", "reactionary": "반동주의 (우파)",
-            "nationalist": "민족주의 (극우)", "monarchist": "왕당파", "nonaligned": "비동맹/기타", "vacant": "공석"
-        };
-        const SPECTRUM_KEYS = Object.keys(SPECTRUM_NAMES);
-        const SPECTRUM_ORDER = SPECTRUM_KEYS.reduce((acc, key, idx) => { acc[key] = idx; return acc; }, {});
+        // 초기 이념 데이터 (순서가 중요함)
+        let ideologies = [
+            { id: 101, name: "혁명적 사회주의" },
+            { id: 102, name: "민주사회주의" },
+            { id: 103, name: "사회자유주의" },
+            { id: 104, name: "자유주의" },
+            { id: 105, name: "보수주의" },
+            { id: 106, name: "국가주의" },
+            { id: 107, name: "기타/무소속" }
+        ];
 
-        // 데이터 구조 변경: seats -> seatsHouse, seatsSenate
+        // 정당 데이터 (ideologyId로 연결)
         let parties = [
-            { id: 1, name: "공산당", color: "#8B0000", seatsHouse: 10, seatsSenate: 2, spectrum: "communist", isRuling: false },
-            { id: 2, name: "민주당", color: "#3498DB", seatsHouse: 140, seatsSenate: 45, spectrum: "liberal", isRuling: false },
-            { id: 3, name: "진보당", color: "#2ECC71", seatsHouse: 20, seatsSenate: 5, spectrum: "socdem", isRuling: false },
-            { id: 4, name: "공화당", color: "#E74C3C", seatsHouse: 120, seatsSenate: 48, spectrum: "conservative", isRuling: false },
-            { id: 5, name: "왕당파", color: "#8E44AD", seatsHouse: 10, seatsSenate: 0, spectrum: "monarchist", isRuling: false }
+            { id: 1, name: "노동자당", color: "#8B0000", seatsHouse: 10, seatsSenate: 2, ideologyId: 101, isRuling: false },
+            { id: 2, name: "사회당", color: "#E91E63", seatsHouse: 40, seatsSenate: 10, ideologyId: 102, isRuling: false },
+            { id: 3, name: "민주당", color: "#3498DB", seatsHouse: 120, seatsSenate: 45, ideologyId: 103, isRuling: false },
+            { id: 4, name: "국민당", color: "#E74C3C", seatsHouse: 110, seatsSenate: 40, ideologyId: 105, isRuling: false },
+            { id: 5, name: "자유당", color: "#F1C40F", seatsHouse: 20, seatsSenate: 3, ideologyId: 104, isRuling: false }
         ];
 
         let coalitions = [
-            { id: 'c1', name: "여당 연정", color: "#3498DB", members: [2, 3], isRuling: true },
-            { id: 'c2', name: "야당 연합", color: "#E74C3C", members: [4, 5], isRuling: false }
+            { id: 'c1', name: "민주 연정", color: "#3498DB", members: [2, 3], isRuling: true },
+            { id: 'c2', name: "보수 연합", color: "#E74C3C", members: [4, 5], isRuling: false }
         ];
 
         let currentTab = 'house';
@@ -270,44 +306,29 @@
 
         function switchTab(tabName) {
             currentTab = tabName;
-            
-            // 탭 버튼 스타일
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            if(tabName === 'house') document.getElementById('tabHouse').classList.add('active');
-            if(tabName === 'senate') document.getElementById('tabSenate').classList.add('active');
-            if(tabName === 'coalition') document.getElementById('tabCoalition').classList.add('active');
-
-            // 탭 컨텐츠 표시
+            document.getElementById('tab' + tabName.charAt(0).toUpperCase() + tabName.slice(1)).classList.add('active');
+            
             document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-            if(tabName === 'house') document.getElementById('contentHouse').classList.add('active');
-            if(tabName === 'senate') document.getElementById('contentSenate').classList.add('active');
-            if(tabName === 'coalition') document.getElementById('contentCoalition').classList.add('active');
-
+            document.getElementById('content' + tabName.charAt(0).toUpperCase() + tabName.slice(1)).classList.add('active');
+            
             refreshUI();
         }
 
         function toggleSystem() {
             const isBicameral = document.querySelector('input[name="systemType"]:checked').value === 'bicameral';
-            
-            // 상원 관련 UI 제어
             document.getElementById('senateConfig').style.display = isBicameral ? 'block' : 'none';
             document.getElementById('senateSection').style.display = isBicameral ? 'block' : 'none';
             document.getElementById('tabSenate').style.display = isBicameral ? 'block' : 'none';
-            
-            // 라벨 변경
             document.getElementById('houseNameLabel').textContent = isBicameral ? "하원 명칭" : "의회 명칭";
             document.getElementById('tabHouse').textContent = isBicameral ? "하원 관리" : "의석 관리";
-
-            // 만약 단원제로 바꿨는데 현재 탭이 상원이면 하원으로 이동
             if(!isBicameral && currentTab === 'senate') switchTab('house');
-
             updateNames();
         }
 
         function updateNames() {
             const sName = document.getElementById('senateNameInput').value;
             const hName = document.getElementById('houseNameInput').value;
-            
             document.getElementById('senateTitle').textContent = sName;
             document.getElementById('houseTitle').textContent = hName;
             document.getElementById('tabHouse').textContent = 
@@ -317,6 +338,7 @@
         }
 
         function refreshUI() {
+            renderIdeologyList();
             renderPartyList('house');
             renderPartyList('senate');
             renderCoalitions();
@@ -324,22 +346,72 @@
 
         function isValidHex(hex) { return /^#[0-9A-F]{6}$/i.test(hex); }
 
-        // 통합 정당 리스트 렌더링 (type: 'house' or 'senate')
+        // --- 1. 이념 관리 렌더링 ---
+        function renderIdeologyList() {
+            const container = document.getElementById('ideologyList');
+            container.innerHTML = '';
+
+            ideologies.forEach((ide, index) => {
+                const div = document.createElement('div');
+                div.className = 'ideology-list-item';
+                div.innerHTML = `
+                    <div class="order-controls">
+                        <button class="order-btn" onclick="moveIdeology(${index}, -1)" ${index === 0 ? 'disabled' : ''}>▲</button>
+                        <button class="order-btn" onclick="moveIdeology(${index}, 1)" ${index === ideologies.length - 1 ? 'disabled' : ''}>▼</button>
+                    </div>
+                    <input type="text" value="${ide.name}" onchange="updateIdeology(${index}, 'name', this.value)" style="flex:1;">
+                    <button class="btn-icon danger" onclick="removeIdeology(${index})">X</button>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function addIdeology() {
+            ideologies.push({ id: Date.now(), name: "새 이념" });
+            refreshUI();
+        }
+
+        function removeIdeology(index) {
+            if(ideologies.length <= 1) { alert("최소 1개의 이념은 있어야 합니다."); return; }
+            const removedId = ideologies[index].id;
+            ideologies.splice(index, 1);
+            // 삭제된 이념을 쓰던 정당들은 첫번째 이념으로 강제 이동
+            parties.forEach(p => {
+                if(p.ideologyId === removedId) p.ideologyId = ideologies[0].id;
+            });
+            refreshUI(); simulate();
+        }
+
+        function updateIdeology(index, key, val) {
+            ideologies[index][key] = val;
+            refreshUI(); simulate();
+        }
+
+        function moveIdeology(index, direction) {
+            if (direction === -1 && index > 0) {
+                [ideologies[index], ideologies[index - 1]] = [ideologies[index - 1], ideologies[index]];
+            } else if (direction === 1 && index < ideologies.length - 1) {
+                [ideologies[index], ideologies[index + 1]] = [ideologies[index + 1], ideologies[index]];
+            }
+            refreshUI(); simulate();
+        }
+
+        // --- 2. 정당 관리 렌더링 (이념 드롭다운 포함) ---
         function renderPartyList(type) {
             const container = document.getElementById(type === 'house' ? 'partyListHouse' : 'partyListSenate');
             container.innerHTML = '';
+
+            // 이념 옵션 생성
+            let ideOptions = '';
+            ideologies.forEach(ide => {
+                ideOptions += `<option value="${ide.id}">${ide.name}</option>`;
+            });
 
             parties.forEach((p, idx) => {
                 const div = document.createElement('div');
                 div.className = `card-item ${p.isRuling ? 'is-ruling' : ''}`;
                 div.style.borderLeftColor = p.color;
 
-                let opts = '';
-                for (const [k, l] of Object.entries(SPECTRUM_NAMES)) {
-                    opts += `<option value="${k}" ${p.spectrum === k ? 'selected' : ''}>${l}</option>`;
-                }
-
-                // 의석 입력 필드 결정
                 const seatKey = type === 'house' ? 'seatsHouse' : 'seatsSenate';
                 const seatLabel = type === 'house' ? '하원 의석' : '상원 의석';
 
@@ -351,17 +423,23 @@
                         <button class="remove-btn" onclick="removeParty(${idx})">삭제</button>
                     </div>
                     <div class="party-grid">
+                        <div class="full-width">
+                            <label>이념 선택</label>
+                            <select onchange="updateParty(${idx}, 'ideologyId', parseInt(this.value))">
+                                ${ideologies.map(ide => `<option value="${ide.id}" ${p.ideologyId === ide.id ? 'selected' : ''}>${ide.name}</option>`).join('')}
+                            </select>
+                        </div>
                         <div>
                             <label style="color:${type==='house'?'#4a90e2':'#e67e22'}">${seatLabel}</label>
                             <input type="number" value="${p[seatKey]}" min="0" onchange="updateParty(${idx}, '${seatKey}', parseInt(this.value)||0)">
                         </div>
-                        <div><label>성향</label><select onchange="updateParty(${idx}, 'spectrum', this.value)">${opts}</select></div>
                     </div>
                 `;
                 container.appendChild(div);
             });
         }
 
+        // --- 3. 연정/집권 렌더링 ---
         function renderCoalitions() {
             const container = document.getElementById('coalitionList');
             container.innerHTML = '';
@@ -372,10 +450,13 @@
                 let memberChecks = '';
                 parties.forEach(p => {
                     const isChecked = coal.members.includes(p.id);
+                    // 정당 이름 옆에 이념 명칭 표시
+                    const ideName = ideologies.find(i => i.id === p.ideologyId)?.name || "미정";
+                    
                     memberChecks += `
                         <div class="member-check">
                             <span class="party-badge" style="background:${p.color}"></span>
-                            <label for="c${cIdx}_p${p.id}">${p.name}</label>
+                            <label for="c${cIdx}_p${p.id}">${p.name} <span style="color:#888; font-size:0.8em;">(${ideName})</span></label>
                             <input type="checkbox" id="c${cIdx}_p${p.id}" 
                                 ${isChecked ? 'checked' : ''} 
                                 onchange="toggleCoalitionMember('${coal.id}', ${p.id}, this.checked)">
@@ -398,7 +479,6 @@
                 container.appendChild(div);
             });
             
-            // 연정 탭에 정당별 집권 설정 기능도 추가 (단독 집권)
             const partyGovDiv = document.createElement('div');
             partyGovDiv.style.marginTop = "20px";
             partyGovDiv.style.borderTop = "1px solid #444";
@@ -406,7 +486,6 @@
             partyGovDiv.innerHTML = "<h4>단독 집권 설정</h4>";
             
             parties.forEach(p => {
-                // 연정에 속하지 않은 당만 표시하거나 전체 표시 (여기선 전체 표시하되 연정 소속시 비활성화는 안함 - 유연성)
                 const pDiv = document.createElement('div');
                 pDiv.className = `ruling-selector ${p.isRuling ? 'active' : ''}`;
                 pDiv.style.marginBottom = "5px";
@@ -421,9 +500,9 @@
         }
 
         // --- Data Logic ---
-
         function addParty() {
-            parties.push({ id: Date.now(), name: "신당", color: "#999999", seatsHouse: 0, seatsSenate: 0, spectrum: "nonaligned", isRuling: false });
+            // 기본 이념은 첫 번째 이념
+            parties.push({ id: Date.now(), name: "신당", color: "#999999", seatsHouse: 0, seatsSenate: 0, ideologyId: ideologies[0].id, isRuling: false });
             refreshUI();
         }
         function removeParty(idx) {
@@ -434,14 +513,13 @@
         }
         function updateParty(idx, key, val) {
             parties[idx][key] = val;
-            if (key === 'name') refreshUI(); // 이름 바뀌면 양쪽 탭 다 갱신
-            simulate(); // 의석수 바뀌면 즉시 시뮬레이션
+            if (key === 'name') refreshUI(); 
+            simulate();
         }
         function updatePartyColor(el, idx) {
             let v = el.value.trim(); if(!v.startsWith('#')) v = '#'+v;
             if(isValidHex(v)) { parties[idx].color = v.toUpperCase(); refreshUI(); simulate(); }
         }
-
         function addCoalition() {
             coalitions.push({ id: 'c'+Date.now(), name: "새 연정", color: "#FFFFFF", members: [], isRuling: false });
             refreshUI();
@@ -478,16 +556,18 @@
         }
 
         // --- Simulation ---
-
         function simulate() {
             const isBicameral = document.querySelector('input[name="systemType"]:checked').value === 'bicameral';
-            // 총 의석수는 사용자 입력값을 따름
             const sTotal = parseInt(document.getElementById('senateTotal').value) || 100;
             const hTotal = parseInt(document.getElementById('houseTotal').value) || 300;
 
-            parties.sort((a, b) => SPECTRUM_ORDER[a.spectrum] - SPECTRUM_ORDER[b.spectrum]);
+            // 정렬 핵심: ideologies 배열 내의 인덱스 순서대로 정렬
+            parties.sort((a, b) => {
+                const idxA = ideologies.findIndex(i => i.id === a.ideologyId);
+                const idxB = ideologies.findIndex(i => i.id === b.ideologyId);
+                return idxA - idxB;
+            });
 
-            // chamberType: 'seatsHouse' or 'seatsSenate'
             const getMap = (targetTotal, chamberKey) => {
                 const definedTotal = parties.reduce((s, p) => s + p[chamberKey], 0);
                 if(targetTotal === 0 || definedTotal === 0) return [];
@@ -496,7 +576,6 @@
                 let acc = 0;
                 
                 parties.forEach((p, i) => {
-                    // 비율대로 배분 (입력된 의석수 합계 대비 비율 * 목표 총 의석수)
                     let count = (i === parties.length - 1) 
                         ? targetTotal - acc 
                         : Math.round((p[chamberKey] / definedTotal) * targetTotal);
@@ -508,10 +587,13 @@
                     if(coal) stroke = coal.color;
                     else if(p.isRuling) stroke = "#f1c40f";
 
+                    const ideName = ideologies.find(ide => ide.id === p.ideologyId)?.name || "";
+
                     for(let k=0; k<count; k++) {
                         map.push({
                             color: p.color,
                             partyName: p.name,
+                            ideology: ideName,
                             coalitionName: coal ? coal.name : null,
                             coalitionId: coal ? coal.id : null,
                             strokeColor: stroke,
@@ -629,7 +711,7 @@
                 else if(parties.find(p => p.name === s.partyName)?.isRuling) key = 'p_' + parties.find(p => p.name === s.partyName).id;
                 if(!stats[key]) key = 'none';
                 stats[key].count++;
-                if(!stats[key].parties[s.partyName]) stats[key].parties[s.partyName] = { n:0, col: s.color };
+                if(!stats[key].parties[s.partyName]) stats[key].parties[s.partyName] = { n:0, col: s.color, ide: s.ideology };
                 stats[key].parties[s.partyName].n++;
             });
 
@@ -656,7 +738,7 @@
                 }
                 let legendHtml = '';
                 for(const [pName, pData] of Object.entries(group.parties)) {
-                    legendHtml += `<div class="legend-pill"><span class="party-badge" style="background:${pData.col}; border: 1px solid ${group.type==='coalition' ? group.color : 'transparent'}"></span>${pName}: <strong>${pData.n}</strong></div>`;
+                    legendHtml += `<div class="legend-pill" title="${pData.ide}"><span class="party-badge" style="background:${pData.col}; border: 1px solid ${group.type==='coalition' ? group.color : 'transparent'}"></span>${pName} <span style="color:#888; margin-left:3px; font-size:0.9em;">(${pData.ide})</span>: <strong>${pData.n}</strong></div>`;
                 }
                 html += `<div class="stat-block ${group.isRuling ? 'gov-block' : ''}" style="border-left-color: ${group.isRuling ? 'var(--gold-color)' : group.color}"><div class="stat-title"><span><strong style="color:${group.isRuling ? 'var(--gold-color)' : group.color}">${group.name}</strong> <span style="color:#aaa; font-size:0.9em;">(${group.count}석 / ${percent}%)</span></span>${statusBadge}</div><div class="stat-legend">${legendHtml}</div></div>`;
             });
