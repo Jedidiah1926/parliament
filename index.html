@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>정치 시뮬레이션: 양원 분리/통합 관리 (공석 지원)</title>
+    <title>정치 시뮬레이션: 최종 완성 (테두리 두께 조정)</title>
     <style>
         :root {
             --bg-color: #1a1a1a;
@@ -16,6 +16,7 @@
             --danger-color: #e74c3c;
             --gold-color: #f1c40f;
             --warning-color: #f39c12;
+            --gray-btn-color: #7f8c8d;
             --tab-active-bg: #4a90e2;
             --tab-inactive-bg: #333;
         }
@@ -77,9 +78,29 @@
             border-radius: 4px;
             box-sizing: border-box;
         }
-        input.hex-input { font-family: monospace; text-transform: uppercase; }
+        
+        .color-input-group {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        input.hex-input { 
+            font-family: monospace; 
+            text-transform: uppercase; 
+            width: 70px !important;
+        }
+        input[type="color"] {
+            -webkit-appearance: none;
+            border: none;
+            width: 32px;
+            height: 32px;
+            padding: 0;
+            background: none;
+            cursor: pointer;
+        }
+        input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+        input[type="color"]::-webkit-color-swatch { border: 1px solid #555; border-radius: 4px; }
 
-        /* 탭 스타일 */
         .tab-container {
             display: flex;
             flex-wrap: wrap;
@@ -108,7 +129,6 @@
         .tab-content { display: none; }
         .tab-content.active { display: block; }
 
-        /* 카드 스타일 */
         .card-item {
             background: #363636;
             padding: 12px;
@@ -125,9 +145,6 @@
         }
         .card-header { display: flex; gap: 10px; align-items: center; margin-bottom: 8px; }
         
-        .color-preview { width: 25px; height: 25px; border-radius: 4px; border: 1px solid #555; flex-shrink: 0; cursor: pointer;}
-        
-        /* 버튼 스타일 */
         .btn-icon { background: none; border: 1px solid #555; color: #aaa; cursor: pointer; padding: 2px 6px; border-radius: 3px; }
         .btn-icon:hover { background: #555; color: #fff; }
         .btn-icon.danger:hover { background: var(--danger-color); border-color: var(--danger-color); }
@@ -161,7 +178,6 @@
         .ruling-selector input { margin: 0; cursor: pointer; }
         .ruling-selector.active { border-color: var(--gold-color); color: var(--gold-color); font-weight: bold; }
 
-        /* 교차 참여 체크박스 스타일 */
         .cross-check {
             margin-top: 8px;
             padding-top: 8px;
@@ -177,6 +193,9 @@
         .cross-check:hover label { color: #fff; }
 
         button.add-btn { background-color: var(--success-color); width: 100%; border:none; padding:10px; color:white; border-radius:4px; cursor:pointer; margin-top: 10px; }
+        button.add-btn-secondary { background-color: var(--gray-btn-color); width: 100%; border:none; padding:10px; color:white; border-radius:4px; cursor:pointer; margin-top: 5px; }
+        button.add-btn-secondary:hover { background-color: #95a5a6; }
+        
         button.simulate-btn { background-color: var(--accent-color); width: 100%; padding: 12px; font-size: 1.1em; margin-top: 20px; border:none; color:white; border-radius:4px; cursor:pointer; font-weight:bold;}
 
         .ideology-list-item {
@@ -195,7 +214,6 @@
 
         .stats-wrapper { margin-top: 15px; border-top: 1px solid #444; padding-top: 15px; }
         .stat-block { background: #222; padding: 12px; border-radius: 6px; border-left: 5px solid #555; margin-bottom: 10px; }
-        .stat-block.gov-block { border-left: 5px solid var(--gold-color); background: linear-gradient(90deg, #2a2a20 0%, #222 100%); }
         .stat-title { font-size: 1.1em; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;}
         .stat-legend { display: flex; flex-wrap: wrap; gap: 8px; }
         .legend-pill { background: #333; padding: 4px 10px; border-radius: 12px; font-size: 0.85em; display: flex; align-items: center; gap: 6px; }
@@ -212,6 +230,13 @@
                 <label style="font-weight:normal; color:#fff;"><input type="radio" name="systemType" value="unicameral" onchange="toggleSystem()"> 단원제</label>
             </div>
             
+            <div style="margin-bottom: 15px;">
+                <label style="font-weight:normal; color:#fff; display:flex; align-items:center; gap:5px; cursor:pointer;">
+                    <input type="checkbox" id="chkGovHighlight" onchange="simulate()"> 
+                    <span>집권 세력 금색 테두리 표시</span>
+                </label>
+            </div>
+
             <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom: 15px; border-bottom:1px solid #444; padding-bottom:15px;">
                 <div id="senateConfig">
                     <label>상원 명칭</label>
@@ -237,26 +262,27 @@
 
         <div id="contentIdeology" class="tab-content">
             <div style="color:#aaa; font-size:0.9em; margin-bottom:15px;">
-                * 위쪽(▲)이 의회의 <strong>왼쪽(좌파석)</strong>에 배치됩니다.
+                * 위쪽(▲)이 의회의 <strong>왼쪽(좌파석)</strong>에 배치됩니다.<br>
+                * 무소속 이념은 항상 리스트의 <strong>맨 마지막(오른쪽)</strong>에 배치됩니다.
             </div>
             <div id="ideologyList"></div>
             <button class="add-btn" onclick="addIdeology()">+ 이념 추가</button>
+            <button class="add-btn-secondary" onclick="addIndependentIdeology()">+ 무소속 이념 추가 (맨 오른쪽)</button>
         </div>
 
         <div id="contentHouse" class="tab-content active">
             <div id="partyListHouse"></div>
             <button class="add-btn" onclick="addParty()">+ 정당 추가 (양원 공통)</button>
+            <button class="add-btn-secondary" onclick="addIndependentParty()">+ 무소속 의원 추가</button>
         </div>
 
         <div id="contentSenate" class="tab-content">
             <div id="partyListSenate"></div>
             <button class="add-btn" onclick="addParty()">+ 정당 추가 (양원 공통)</button>
+            <button class="add-btn-secondary" onclick="addIndependentParty()">+ 무소속 의원 추가</button>
         </div>
 
         <div id="contentCoalition" class="tab-content">
-            <div style="color:#888; font-size:0.9em; margin-bottom:10px;">
-                * 연정 및 집권 세력 설정 (양원 공통 적용)
-            </div>
             <div id="coalitionList"></div>
             <button class="add-btn" onclick="addCoalition()">+ 연정 추가</button>
         </div>
@@ -278,6 +304,8 @@
     </div>
 
     <script>
+        const IND_IDEOLOGY_ID = 9999;
+
         let ideologies = [
             { id: 101, name: "혁명적 사회주의" },
             { id: 102, name: "민주사회주의" },
@@ -285,7 +313,7 @@
             { id: 104, name: "자유주의" },
             { id: 105, name: "보수주의" },
             { id: 106, name: "국가주의" },
-            { id: 107, name: "기타/무소속" }
+            { id: IND_IDEOLOGY_ID, name: "무소속" }
         ];
 
         let parties = [
@@ -314,10 +342,8 @@
             currentTab = tabName;
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             document.getElementById('tab' + tabName.charAt(0).toUpperCase() + tabName.slice(1)).classList.add('active');
-            
             document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
             document.getElementById('content' + tabName.charAt(0).toUpperCase() + tabName.slice(1)).classList.add('active');
-            
             refreshUI();
         }
 
@@ -406,8 +432,10 @@
                 div.innerHTML = `
                     <div class="card-header">
                         <input type="text" value="${p.name}" onchange="updateParty(${idx}, 'name', this.value)" style="flex:1;" placeholder="당명">
-                        <input type="text" class="hex-input" value="${p.color}" onchange="updatePartyColor(this, ${idx})" style="width: 60px;">
-                        <div class="color-preview" style="background-color: ${p.color};"></div>
+                        <div class="color-input-group">
+                            <input type="text" class="hex-input" value="${p.color}" onchange="updatePartyColorText(this, ${idx})" placeholder="#Hex">
+                            <input type="color" value="${p.color}" oninput="updatePartyColorPicker(this, ${idx})">
+                        </div>
                         <button class="remove-btn" onclick="removeParty(${idx})" title="양원 모두에서 영구 삭제">삭제</button>
                     </div>
                     <div class="party-grid">
@@ -464,8 +492,10 @@
                 div.innerHTML = `
                     <div class="card-header">
                         <input type="text" value="${coal.name}" onchange="updateCoalition('${coal.id}', 'name', this.value)" style="flex:1;" placeholder="연정 이름">
-                        <input type="text" class="hex-input" value="${coal.color}" onchange="updateCoalitionColor(this, '${coal.id}')" style="width: 60px;">
-                        <div class="color-preview" style="background-color: ${coal.color};"></div>
+                        <div class="color-input-group">
+                            <input type="text" class="hex-input" value="${coal.color}" onchange="updateCoalitionColorText(this, '${coal.id}')">
+                            <input type="color" value="${coal.color}" oninput="updateCoalitionColorPicker(this, '${coal.id}')">
+                        </div>
                         <button class="remove-btn" onclick="removeCoalition('${coal.id}')">삭제</button>
                     </div>
                     <label class="ruling-selector ${coal.isRuling ? 'active' : ''}" style="margin-bottom:10px;">
@@ -497,9 +527,19 @@
             container.appendChild(partyGovDiv);
         }
 
-        // --- Logic Functions ---
-
         function addIdeology() { ideologies.push({ id: Date.now(), name: "새 이념" }); refreshUI(); }
+        
+        function addIndependentIdeology() {
+            const existing = ideologies.find(i => i.id === IND_IDEOLOGY_ID);
+            if (existing) {
+                ideologies = ideologies.filter(i => i.id !== IND_IDEOLOGY_ID);
+                ideologies.push(existing);
+            } else {
+                ideologies.push({ id: IND_IDEOLOGY_ID, name: "무소속" });
+            }
+            refreshUI(); simulate();
+        }
+
         function removeIdeology(index) {
             if(ideologies.length <= 1) { alert("최소 1개의 이념은 있어야 합니다."); return; }
             const removedId = ideologies[index].id; ideologies.splice(index, 1);
@@ -517,6 +557,17 @@
             parties.push({ id: Date.now(), name: "신당", color: "#999999", seatsHouse: 0, seatsSenate: 0, ideologyId: ideologies[0].id, isRuling: false, inHouse: true, inSenate: true });
             refreshUI();
         }
+
+        function addIndependentParty() {
+            let indIdeology = ideologies.find(i => i.id === IND_IDEOLOGY_ID);
+            if (!indIdeology) {
+                addIndependentIdeology();
+                indIdeology = ideologies.find(i => i.id === IND_IDEOLOGY_ID);
+            }
+            parties.push({ id: Date.now(), name: "무소속", color: "#AAAAAA", seatsHouse: 1, seatsSenate: 0, ideologyId: IND_IDEOLOGY_ID, isRuling: false, inHouse: true, inSenate: true });
+            refreshUI(); simulate();
+        }
+
         function removeParty(idx) {
             const pId = parties[idx].id;
             parties.splice(idx, 1);
@@ -533,15 +584,44 @@
             refreshUI(); simulate();
         }
 
-        function updatePartyColor(el, idx) {
+        function updatePartyColorText(el, idx) {
             let v = el.value.trim(); if(!v.startsWith('#')) v = '#'+v;
-            if(isValidHex(v)) { parties[idx].color = v.toUpperCase(); refreshUI(); simulate(); }
+            if(isValidHex(v)) { 
+                parties[idx].color = v.toUpperCase(); 
+                el.parentElement.querySelector('input[type="color"]').value = v.substring(0,7); 
+                refreshUI(); simulate(); 
+            }
+        }
+        function updatePartyColorPicker(el, idx) {
+            parties[idx].color = el.value.toUpperCase();
+            el.parentElement.querySelector('.hex-input').value = el.value.toUpperCase(); 
+            simulate(); 
         }
 
         function addCoalition() { coalitions.push({ id: 'c'+Date.now(), name: "새 연정", color: "#FFFFFF", members: [], isRuling: false }); refreshUI(); }
         function removeCoalition(id) { coalitions = coalitions.filter(c => c.id !== id); refreshUI(); simulate(); }
         function updateCoalition(id, key, val) { const c = coalitions.find(c => c.id === id); if(c) { c[key] = val; simulate(); } }
-        function updateCoalitionColor(el, id) { let v = el.value.trim(); if(!v.startsWith('#')) v = '#'+v; if(isValidHex(v)) { const c = coalitions.find(x => x.id === id); if(c) { c.color = v.toUpperCase(); el.parentElement.querySelector('.color-preview').style.backgroundColor = v; simulate(); } } }
+        
+        function updateCoalitionColorText(el, id) {
+            let v = el.value.trim(); if(!v.startsWith('#')) v = '#'+v;
+            if(isValidHex(v)) { 
+                const c = coalitions.find(x => x.id === id); 
+                if(c) { 
+                    c.color = v.toUpperCase(); 
+                    el.parentElement.querySelector('input[type="color"]').value = v.substring(0,7);
+                    simulate(); 
+                } 
+            }
+        }
+        function updateCoalitionColorPicker(el, id) {
+            const c = coalitions.find(x => x.id === id); 
+            if(c) { 
+                c.color = el.value.toUpperCase(); 
+                el.parentElement.querySelector('.hex-input').value = el.value.toUpperCase();
+                simulate(); 
+            }
+        }
+
         function toggleCoalitionMember(cId, pId, checked) {
             if(checked) { coalitions.forEach(c => c.members = c.members.filter(id => id !== pId)); const t = coalitions.find(c => c.id === cId); if(t) t.members.push(pId); } 
             else { const t = coalitions.find(c => c.id === cId); if(t) t.members = t.members.filter(id => id !== pId); }
@@ -556,13 +636,16 @@
 
         function simulate() {
             const isBicameral = document.querySelector('input[name="systemType"]:checked').value === 'bicameral';
+            const highlightGov = document.getElementById('chkGovHighlight').checked;
+
             const sTotal = parseInt(document.getElementById('senateTotal').value) || 100;
             const hTotal = parseInt(document.getElementById('houseTotal').value) || 300;
 
-            // 정렬: 이념 순서
             parties.sort((a, b) => {
                 const idxA = ideologies.findIndex(i => i.id === a.ideologyId);
                 const idxB = ideologies.findIndex(i => i.id === b.ideologyId);
+                if (a.ideologyId === IND_IDEOLOGY_ID && b.ideologyId !== IND_IDEOLOGY_ID) return 1;
+                if (b.ideologyId === IND_IDEOLOGY_ID && a.ideologyId !== IND_IDEOLOGY_ID) return -1;
                 return idxA - idxB;
             });
 
@@ -570,19 +653,23 @@
                 const activeParties = parties.filter(p => p[checkKey]);
                 let map = [];
                 
-                // 1. 비율 계산 없이 정확한 수대로 배정
                 activeParties.forEach((p) => {
                     const count = p[chamberKey]; 
                     
                     const coal = coalitions.find(c => c.members.includes(p.id));
                     const isGov = (coal && coal.isRuling) || p.isRuling;
+                    
                     let stroke = null;
-                    if(coal) stroke = coal.color;
-                    else if(p.isRuling) stroke = "#f1c40f";
+                    if (highlightGov && isGov) {
+                        stroke = "#f1c40f";
+                    } else if (coal) {
+                        stroke = coal.color;
+                    }
+
                     const ideName = ideologies.find(ide => ide.id === p.ideologyId)?.name || "";
 
                     for(let k=0; k < count; k++) {
-                        if (map.length >= targetTotal) break; // 오버플로우 방지
+                        if (map.length >= targetTotal) break;
                         map.push({
                             color: p.color, 
                             partyName: p.name, 
@@ -595,7 +682,6 @@
                     }
                 });
 
-                // 2. 남은 의석은 공석(Vacant) 처리
                 while(map.length < targetTotal) {
                     map.push({ 
                         color: '#333',
@@ -666,7 +752,8 @@
                 if(i >= seatMap.length) return;
                 const d = seatMap[i];
                 ctx.beginPath(); ctx.arc(pt.x, pt.y, dotR, 0, Math.PI*2); ctx.fillStyle = d.color; ctx.fill();
-                if(d.strokeColor) { ctx.strokeStyle = d.strokeColor; ctx.lineWidth = Math.max(1.5, dotR * 0.4); } 
+                // 얇은 테두리 적용 (기존 0.4 -> 0.28, 최소 1.5 -> 1.0)
+                if(d.strokeColor) { ctx.strokeStyle = d.strokeColor; ctx.lineWidth = Math.max(1.0, dotR * 0.28); } 
                 else { ctx.strokeStyle = "rgba(0,0,0,0.3)"; ctx.lineWidth = 1; }
                 ctx.stroke();
             });
@@ -690,10 +777,14 @@
         function updateStats(elId, map, total) {
             const el = document.getElementById(elId);
             if(total === 0) { el.innerHTML = ""; return; }
+            
+            const highlightGov = document.getElementById('chkGovHighlight').checked;
+
             let stats = {};
             coalitions.forEach(c => { stats[c.id] = { type: 'coalition', id: c.id, name: c.name, color: c.color, count: 0, parties: {}, isRuling: c.isRuling }; });
             parties.forEach(p => { if(p.isRuling && !coalitions.some(c => c.members.includes(p.id))) { stats['p_'+p.id] = { type: 'party', id: p.id, name: p.name, color: p.color, count: 0, parties: {}, isRuling: true }; } });
-            stats['none'] = { type: 'none', id: 'none', name: '무소속/기타', color: '#777', count: 0, parties: {}, isRuling: false };
+            
+            stats['none'] = { type: 'none', id: 'none', name: '연정 미소속', color: '#777', count: 0, parties: {}, isRuling: false };
             stats['vacant'] = { type: 'vacant', id: 'vacant', name: '공석 (미배정)', color: '#444', count: 0, parties: {}, isRuling: false };
 
             map.forEach(s => {
@@ -722,25 +813,34 @@
                 const percent = ((group.count / total) * 100).toFixed(1);
                 const isMaj = group.count >= maj;
                 let statusBadge = '';
+                
+                const useGold = group.isRuling && highlightGov;
+                const isVacant = key === 'vacant';
+
                 if (group.isRuling) {
-                    const govTitle = `<span style="background:var(--gold-color); color:#000; font-size:0.7em; padding:2px 6px; border-radius:4px; margin-right:5px; font-weight:bold;">GOV</span>`;
+                    const badgeBg = useGold ? 'var(--gold-color)' : group.color;
+                    const badgeTxt = useGold ? '#000' : '#fff'; 
+                    
+                    const govTitle = `<span style="background:${badgeBg}; color:${badgeTxt}; font-size:0.7em; padding:2px 6px; border-radius:4px; margin-right:5px; font-weight:bold; text-shadow:${useGold ? 'none' : '0 0 2px rgba(0,0,0,0.5)'}">집권</span>`;
+
                     if (isMaj) statusBadge = `${govTitle} <span style="color:var(--success-color); font-size:0.8em; margin-left:10px;">✔ 과반 확보</span>`;
                     else statusBadge = `${govTitle} <span style="color:var(--danger-color); font-size:0.8em; margin-left:10px;">⚠ 과반 미달 (필요: ${maj})</span>`;
                 } else if (key !== 'vacant' && isMaj) {
                     statusBadge = `<span style="color:var(--warning-color); font-size:0.8em; margin-left:10px;">⚡ 과반 장악 (여소야대)</span>`;
                 }
+
                 let legendHtml = '';
                 for(const [pName, pData] of Object.entries(group.parties)) {
                     legendHtml += `<div class="legend-pill" title="${pData.ide}"><span class="party-badge" style="background:${pData.col}; border: 1px solid ${group.type==='coalition' ? group.color : 'transparent'}"></span>${pName} <span style="color:#888; margin-left:3px; font-size:0.9em;">(${pData.ide})</span>: <strong>${pData.n}</strong></div>`;
                 }
                 
-                const isVacant = key === 'vacant';
-                const borderColor = isVacant ? '#444' : (group.isRuling ? 'var(--gold-color)' : group.color);
-                const bgColor = isVacant ? '#1a1a1a' : (group.isRuling ? 'linear-gradient(90deg, #2a2a20 0%, #222 100%)' : '#222');
+                const borderColor = isVacant ? '#444' : (useGold ? 'var(--gold-color)' : group.color);
+                const bgColor = isVacant ? '#1a1a1a' : (useGold ? 'linear-gradient(90deg, #2a2a20 0%, #222 100%)' : '#222');
+                const titleColor = isVacant ? '#888' : borderColor;
 
                 html += `<div class="stat-block" style="border-left: 5px solid ${borderColor}; background: ${bgColor}">
                             <div class="stat-title">
-                                <span><strong style="color:${isVacant ? '#888' : borderColor}">${group.name}</strong> <span style="color:#aaa; font-size:0.9em;">(${group.count}석 / ${percent}%)</span></span>
+                                <span><strong style="color:${titleColor}">${group.name}</strong> <span style="color:#aaa; font-size:0.9em;">(${group.count}석 / ${percent}%)</span></span>
                                 ${statusBadge}
                             </div>
                             <div class="stat-legend">${legendHtml}</div>
