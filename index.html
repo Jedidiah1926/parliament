@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>정치 시뮬레이션: 유효 의석 기준 과반 계산</title>
+    <title>정치 시뮬레이션: 테마 변경 지원</title>
     <style>
         :root {
             --bg-color: #1a1a1a;
@@ -17,6 +17,7 @@
             --gold-color: #f1c40f;
             --warning-color: #f39c12;
             --gray-btn-color: #7f8c8d;
+            --theme-btn-color: #8e44ad; /* 테마 변경 버튼 색상 (보라색) */
             --tab-active-bg: #4a90e2;
             --tab-inactive-bg: #333;
         }
@@ -196,6 +197,23 @@
         button.add-btn-secondary { background-color: var(--gray-btn-color); width: 100%; border:none; padding:10px; color:white; border-radius:4px; cursor:pointer; margin-top: 5px; }
         button.add-btn-secondary:hover { background-color: #95a5a6; }
         
+        /* 테마 변경 버튼 스타일 */
+        a.theme-btn {
+            display: block;
+            width: 100%;
+            background-color: var(--theme-btn-color);
+            color: white;
+            text-align: center;
+            padding: 10px;
+            border-radius: 4px;
+            text-decoration: none;
+            font-weight: bold;
+            box-sizing: border-box;
+            margin-bottom: 20px;
+            transition: background 0.2s;
+        }
+        a.theme-btn:hover { background-color: #7d3c98; }
+
         button.simulate-btn { background-color: var(--accent-color); width: 100%; padding: 12px; font-size: 1.1em; margin-top: 20px; border:none; color:white; border-radius:4px; cursor:pointer; font-weight:bold;}
 
         .ideology-list-item {
@@ -224,6 +242,8 @@
     <div class="controls">
         <h2>설정 (Configuration)</h2>
         
+        <a href="tno.html" class="theme-btn">🎨 테마 변경 (TNO 스타일)</a>
+
         <div class="form-group">
             <div style="display:flex; gap:15px; margin-bottom: 15px;">
                 <label style="font-weight:normal; color:#fff;"><input type="radio" name="systemType" value="bicameral" checked onchange="toggleSystem()"> 양원제</label>
