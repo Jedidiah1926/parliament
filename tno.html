@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -30,6 +30,30 @@
             box-sizing: border-box;
             overflow: hidden;
             font-size: 18px;
+        }
+
+        /* Language Switch Button Style */
+        .lang-switch {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            z-index: 2000; /* 스캔라인 위에 표시 */
+            font-family: 'VT323', monospace;
+            color: var(--tno-neon);
+            text-decoration: none;
+            border: 1px solid var(--tno-neon);
+            padding: 5px 12px;
+            background: #000;
+            text-transform: uppercase;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: 0.2s;
+            box-shadow: 0 0 5px var(--tno-neon);
+        }
+        .lang-switch:hover {
+            background: var(--tno-neon);
+            color: #000;
+            box-shadow: 0 0 15px var(--tno-neon);
         }
 
         /* CRT Scanline Effect Overlay */
@@ -243,6 +267,8 @@
     </style>
 </head>
 <body>
+
+    <a href="tno_kor.html" class="lang-switch">>> SWITCH TO KOREAN</a>
 
     <div class="controls">
         <div class="tno-header-strip">
@@ -604,7 +630,7 @@
             // High DPI Scaling
             const dpr = window.devicePixelRatio || 1;
             
-            // **[FIXED]** Height Calculation increased from +50 to +120
+            // **[FIXED]** Height Calculation increased
             const heightBuffer = 120;
             
             cvs.width = width * dpr;
@@ -617,7 +643,7 @@
             
             const CX = width / 2;
             
-            // **[FIXED]** Center Y Adjusted to leave bottom margin
+            // **[FIXED]** Center Y Adjusted
             const CY = (width / 2 + heightBuffer) - 40; 
 
             ctx.clearRect(0,0,width, cvs.height/dpr);
