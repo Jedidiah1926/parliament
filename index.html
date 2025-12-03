@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>정치 시뮬레이션: 최종 완성 (테두리 두께 조정)</title>
+    <title>정치 시뮬레이션: 유효 의석 기준 과반 계산</title>
     <style>
         :root {
             --bg-color: #1a1a1a;
@@ -752,7 +752,8 @@
                 if(i >= seatMap.length) return;
                 const d = seatMap[i];
                 ctx.beginPath(); ctx.arc(pt.x, pt.y, dotR, 0, Math.PI*2); ctx.fillStyle = d.color; ctx.fill();
-                // 얇은 테두리 적용 (기존 0.4 -> 0.28, 최소 1.5 -> 1.0)
+                
+                // 테두리 두께 70% 수준으로 감소
                 if(d.strokeColor) { ctx.strokeStyle = d.strokeColor; ctx.lineWidth = Math.max(1.0, dotR * 0.28); } 
                 else { ctx.strokeStyle = "rgba(0,0,0,0.3)"; ctx.lineWidth = 1; }
                 ctx.stroke();
@@ -799,7 +800,11 @@
                 stats[key].parties[s.partyName].n++;
             });
 
-            const maj = Math.floor(total/2) + 1;
+            // 과반 계산 (공석 제외)
+            const vacantCount = stats['vacant'] ? stats['vacant'].count : 0;
+            const activeSeats = total - vacantCount;
+            const maj = Math.floor(activeSeats / 2) + 1;
+
             const sortedKeys = Object.keys(stats).sort((a,b) => {
                 if(a==='vacant') return 1; if(b==='vacant') return -1;
                 if(stats[a].isRuling) return -1; if(stats[b].isRuling) return 1;
@@ -823,10 +828,10 @@
                     
                     const govTitle = `<span style="background:${badgeBg}; color:${badgeTxt}; font-size:0.7em; padding:2px 6px; border-radius:4px; margin-right:5px; font-weight:bold; text-shadow:${useGold ? 'none' : '0 0 2px rgba(0,0,0,0.5)'}">집권</span>`;
 
-                    if (isMaj) statusBadge = `${govTitle} <span style="color:var(--success-color); font-size:0.8em; margin-left:10px;">✔ 과반 확보</span>`;
-                    else statusBadge = `${govTitle} <span style="color:var(--danger-color); font-size:0.8em; margin-left:10px;">⚠ 과반 미달 (필요: ${maj})</span>`;
+                    if (isMaj) statusBadge = `${govTitle} <span style="color:var(--success-color); font-size:0.8em; margin-left:10px;">✔ 과반 확보</span> <span style="color:#888; font-size:0.7em;">(필요: ${maj} / 유효: ${activeSeats})</span>`;
+                    else statusBadge = `${govTitle} <span style="color:var(--danger-color); font-size:0.8em; margin-left:10px;">⚠ 과반 미달</span> <span style="color:#888; font-size:0.7em;">(필요: ${maj} / 유효: ${activeSeats})</span>`;
                 } else if (key !== 'vacant' && isMaj) {
-                    statusBadge = `<span style="color:var(--warning-color); font-size:0.8em; margin-left:10px;">⚡ 과반 장악 (여소야대)</span>`;
+                    statusBadge = `<span style="color:var(--warning-color); font-size:0.8em; margin-left:10px;">⚡ 과반 장악 (여소야대)</span> <span style="color:#888; font-size:0.7em;">(필요: ${maj} / 유효: ${activeSeats})</span>`;
                 }
 
                 let legendHtml = '';
