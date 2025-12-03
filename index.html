@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>정치 시뮬레이션: 양원 분리/통합 관리</title>
+    <title>정치 시뮬레이션: 양원 분리/통합 관리 (공석 지원)</title>
     <style>
         :root {
             --bg-color: #1a1a1a;
@@ -288,14 +288,13 @@
             { id: 107, name: "기타/무소속" }
         ];
 
-        // 데이터 구조에 참여 여부 플래그(inHouse, inSenate) 추가
         let parties = [
             { id: 1, name: "노동자당", color: "#8B0000", seatsHouse: 10, seatsSenate: 2, ideologyId: 101, isRuling: false, inHouse: true, inSenate: true },
             { id: 2, name: "사회당", color: "#E91E63", seatsHouse: 40, seatsSenate: 10, ideologyId: 102, isRuling: false, inHouse: true, inSenate: true },
             { id: 3, name: "민주당", color: "#3498DB", seatsHouse: 120, seatsSenate: 45, ideologyId: 103, isRuling: false, inHouse: true, inSenate: true },
-            { id: 4, name: "국민당", color: "#E74C3C", seatsHouse: 110, seatsSenate: 40, ideologyId: 105, isRuling: false, inHouse: true, inSenate: true },
-            { id: 5, name: "지역당(하원전용)", color: "#F1C40F", seatsHouse: 20, seatsSenate: 0, ideologyId: 104, isRuling: false, inHouse: true, inSenate: false }, // 하원 전용 예시
-            { id: 6, name: "귀족원(상원전용)", color: "#8E44AD", seatsHouse: 0, seatsSenate: 15, ideologyId: 106, isRuling: false, inHouse: false, inSenate: true } // 상원 전용 예시
+            { id: 4, name: "국민당", color: "#E74C3C", seatsHouse: 80, seatsSenate: 30, ideologyId: 105, isRuling: false, inHouse: true, inSenate: true },
+            { id: 5, name: "지역당", color: "#F1C40F", seatsHouse: 20, seatsSenate: 0, ideologyId: 104, isRuling: false, inHouse: true, inSenate: false }, 
+            { id: 6, name: "귀족원", color: "#8E44AD", seatsHouse: 0, seatsSenate: 10, ideologyId: 106, isRuling: false, inHouse: false, inSenate: true } 
         ];
 
         let coalitions = [
@@ -375,9 +374,8 @@
             const container = document.getElementById(type === 'house' ? 'partyListHouse' : 'partyListSenate');
             container.innerHTML = '';
 
-            // 필터링: 해당 의회에 '참여(in...)'하는 정당만 표시
             const visibleParties = parties.map((p, idx) => ({ ...p, originalIdx: idx }))
-                                          .filter(p => type === 'house' ? p.inHouse : p.inSenate);
+                                            .filter(p => type === 'house' ? p.inHouse : p.inSenate);
 
             visibleParties.forEach((p) => {
                 const idx = p.originalIdx;
@@ -388,9 +386,6 @@
                 const seatKey = type === 'house' ? 'seatsHouse' : 'seatsSenate';
                 const seatLabel = type === 'house' ? '하원 의석' : '상원 의석';
                 
-                // 교차 체크박스 로직
-                // 하원 탭이면 -> "상원에도 출마?" 체크박스 표시
-                // 상원 탭이면 -> "하원에도 출마?" 체크박스 표시
                 let crossCheckHtml = '';
                 if (type === 'house') {
                     crossCheckHtml = `
@@ -448,10 +443,7 @@
                 div.style.borderLeftColor = coal.color;
                 let memberChecks = '';
                 parties.forEach(p => {
-                    // 연정 탭에서는 모든 정당(inHouse, inSenate 무관) 표시하여 선택 가능하게 함
                     const isChecked = coal.members.includes(p.id);
-                    const ideName = ideologies.find(i => i.id === p.ideologyId)?.name || "미정";
-                    // 참여 정보 표시
                     let badges = [];
                     if(p.inHouse) badges.push("하");
                     if(p.inSenate) badges.push("상");
@@ -522,7 +514,6 @@
         }
 
         function addParty() {
-            // 기본적으로 양원 모두 참여(true)로 생성
             parties.push({ id: Date.now(), name: "신당", color: "#999999", seatsHouse: 0, seatsSenate: 0, ideologyId: ideologies[0].id, isRuling: false, inHouse: true, inSenate: true });
             refreshUI();
         }
@@ -537,11 +528,8 @@
             if (key === 'name') refreshUI(); 
             simulate();
         }
-        // 핵심: 참여 여부 토글
         function togglePartyParticipation(idx, field, isChecked) {
             parties[idx][field] = isChecked;
-            // 만약 둘 다 false가 되면? -> 목록에서 아예 안보일 수 있음. 방지하려면 최소 하나는 true 강제할 수도 있지만,
-            // 사용자가 '잠시 숨김' 용도로 쓸 수도 있으니 허용하되 연정 탭에서는 보이게 둠.
             refreshUI(); simulate();
         }
 
@@ -578,24 +566,14 @@
                 return idxA - idxB;
             });
 
-            // chamberKey: 'seatsHouse' or 'seatsSenate'
-            // checkKey: 'inHouse' or 'inSenate'
             const getMap = (targetTotal, chamberKey, checkKey) => {
-                // 해당 의회에 참여하는 정당만 계산에 포함
                 const activeParties = parties.filter(p => p[checkKey]);
-                const definedTotal = activeParties.reduce((s, p) => s + p[chamberKey], 0);
-                
-                if(targetTotal === 0 || definedTotal === 0) return [];
-                
                 let map = [];
-                let acc = 0;
                 
-                activeParties.forEach((p, i) => {
-                    let count = (i === activeParties.length - 1) 
-                        ? targetTotal - acc 
-                        : Math.round((p[chamberKey] / definedTotal) * targetTotal);
-                    acc += count;
-
+                // 1. 비율 계산 없이 정확한 수대로 배정
+                activeParties.forEach((p) => {
+                    const count = p[chamberKey]; 
+                    
                     const coal = coalitions.find(c => c.members.includes(p.id));
                     const isGov = (coal && coal.isRuling) || p.isRuling;
                     let stroke = null;
@@ -603,16 +581,33 @@
                     else if(p.isRuling) stroke = "#f1c40f";
                     const ideName = ideologies.find(ide => ide.id === p.ideologyId)?.name || "";
 
-                    for(let k=0; k<count; k++) {
+                    for(let k=0; k < count; k++) {
+                        if (map.length >= targetTotal) break; // 오버플로우 방지
                         map.push({
-                            color: p.color, partyName: p.name, ideology: ideName,
-                            coalitionName: coal ? coal.name : null, coalitionId: coal ? coal.id : null,
-                            strokeColor: stroke, isRuling: isGov
+                            color: p.color, 
+                            partyName: p.name, 
+                            ideology: ideName,
+                            coalitionName: coal ? coal.name : null, 
+                            coalitionId: coal ? coal.id : null,
+                            strokeColor: stroke, 
+                            isRuling: isGov
                         });
                     }
                 });
-                while(map.length > targetTotal) map.pop();
-                while(map.length < targetTotal) map.push({ color: '#333', strokeColor:null });
+
+                // 2. 남은 의석은 공석(Vacant) 처리
+                while(map.length < targetTotal) {
+                    map.push({ 
+                        color: '#333',
+                        partyName: '공석',
+                        ideology: '-',
+                        coalitionName: null,
+                        coalitionId: 'vacant', 
+                        strokeColor: '#444',
+                        isRuling: false
+                    });
+                }
+                
                 return map;
             };
 
@@ -698,12 +693,15 @@
             let stats = {};
             coalitions.forEach(c => { stats[c.id] = { type: 'coalition', id: c.id, name: c.name, color: c.color, count: 0, parties: {}, isRuling: c.isRuling }; });
             parties.forEach(p => { if(p.isRuling && !coalitions.some(c => c.members.includes(p.id))) { stats['p_'+p.id] = { type: 'party', id: p.id, name: p.name, color: p.color, count: 0, parties: {}, isRuling: true }; } });
-            stats['none'] = { type: 'none', id: 'none', name: '무소속/기타', color: '#555', count: 0, parties: {}, isRuling: false };
+            stats['none'] = { type: 'none', id: 'none', name: '무소속/기타', color: '#777', count: 0, parties: {}, isRuling: false };
+            stats['vacant'] = { type: 'vacant', id: 'vacant', name: '공석 (미배정)', color: '#444', count: 0, parties: {}, isRuling: false };
 
             map.forEach(s => {
                 let key = 'none';
-                if(s.coalitionId) key = s.coalitionId;
+                if(s.coalitionId === 'vacant') key = 'vacant';
+                else if(s.coalitionId) key = s.coalitionId;
                 else if(parties.find(p => p.name === s.partyName)?.isRuling) key = 'p_' + parties.find(p => p.name === s.partyName).id;
+                
                 if(!stats[key]) key = 'none';
                 stats[key].count++;
                 if(!stats[key].parties[s.partyName]) stats[key].parties[s.partyName] = { n:0, col: s.color, ide: s.ideology };
@@ -712,8 +710,8 @@
 
             const maj = Math.floor(total/2) + 1;
             const sortedKeys = Object.keys(stats).sort((a,b) => {
+                if(a==='vacant') return 1; if(b==='vacant') return -1;
                 if(stats[a].isRuling) return -1; if(stats[b].isRuling) return 1;
-                if(a==='none') return 1; if(b==='none') return -1;
                 return stats[b].count - stats[a].count;
             });
 
@@ -728,14 +726,25 @@
                     const govTitle = `<span style="background:var(--gold-color); color:#000; font-size:0.7em; padding:2px 6px; border-radius:4px; margin-right:5px; font-weight:bold;">GOV</span>`;
                     if (isMaj) statusBadge = `${govTitle} <span style="color:var(--success-color); font-size:0.8em; margin-left:10px;">✔ 과반 확보</span>`;
                     else statusBadge = `${govTitle} <span style="color:var(--danger-color); font-size:0.8em; margin-left:10px;">⚠ 과반 미달 (필요: ${maj})</span>`;
-                } else {
-                    if (isMaj) statusBadge = `<span style="color:var(--warning-color); font-size:0.8em; margin-left:10px;">⚡ 과반 장악 (여소야대)</span>`;
+                } else if (key !== 'vacant' && isMaj) {
+                    statusBadge = `<span style="color:var(--warning-color); font-size:0.8em; margin-left:10px;">⚡ 과반 장악 (여소야대)</span>`;
                 }
                 let legendHtml = '';
                 for(const [pName, pData] of Object.entries(group.parties)) {
                     legendHtml += `<div class="legend-pill" title="${pData.ide}"><span class="party-badge" style="background:${pData.col}; border: 1px solid ${group.type==='coalition' ? group.color : 'transparent'}"></span>${pName} <span style="color:#888; margin-left:3px; font-size:0.9em;">(${pData.ide})</span>: <strong>${pData.n}</strong></div>`;
                 }
-                html += `<div class="stat-block ${group.isRuling ? 'gov-block' : ''}" style="border-left-color: ${group.isRuling ? 'var(--gold-color)' : group.color}"><div class="stat-title"><span><strong style="color:${group.isRuling ? 'var(--gold-color)' : group.color}">${group.name}</strong> <span style="color:#aaa; font-size:0.9em;">(${group.count}석 / ${percent}%)</span></span>${statusBadge}</div><div class="stat-legend">${legendHtml}</div></div>`;
+                
+                const isVacant = key === 'vacant';
+                const borderColor = isVacant ? '#444' : (group.isRuling ? 'var(--gold-color)' : group.color);
+                const bgColor = isVacant ? '#1a1a1a' : (group.isRuling ? 'linear-gradient(90deg, #2a2a20 0%, #222 100%)' : '#222');
+
+                html += `<div class="stat-block" style="border-left: 5px solid ${borderColor}; background: ${bgColor}">
+                            <div class="stat-title">
+                                <span><strong style="color:${isVacant ? '#888' : borderColor}">${group.name}</strong> <span style="color:#aaa; font-size:0.9em;">(${group.count}석 / ${percent}%)</span></span>
+                                ${statusBadge}
+                            </div>
+                            <div class="stat-legend">${legendHtml}</div>
+                        </div>`;
             });
             el.innerHTML = html;
         }
