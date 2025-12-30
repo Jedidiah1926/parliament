@@ -38,6 +38,30 @@
             line-height: 1.4;
         }
 
+        /* Language Switch Button Style */
+        .lang-switch {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            z-index: 2000; /* 스캔라인 위에 표시 */
+            font-family: 'NeoDunggeunmo', 'VT323', monospace;
+            color: var(--tno-neon);
+            text-decoration: none;
+            border: 1px solid var(--tno-neon);
+            padding: 5px 12px;
+            background: #000;
+            text-transform: uppercase;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: 0.2s;
+            box-shadow: 0 0 5px var(--tno-neon);
+        }
+        .lang-switch:hover {
+            background: var(--tno-neon);
+            color: #000;
+            box-shadow: 0 0 15px var(--tno-neon);
+        }
+
         /* CRT Scanline Effect Overlay */
         body::after {
             content: " ";
@@ -253,6 +277,8 @@
     </style>
 </head>
 <body>
+
+    <a href="tno_kor.html" class="lang-switch">>> 영어로 변경 </a>
 
     <div class="controls">
         <div class="tno-header-strip">
