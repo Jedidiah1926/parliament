@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DATANET: PARLIAMENT SIMULATION</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/neodgm/neodgm-webfont@latest/neodgm/style.css">
+
+    <style>
+        :root {
+            --tno-bg: #101218;
+            --tno-panel: #1a1d26;
+            --tno-neon: #00ffff;
+            --tno-neon-dim: rgba(0, 255, 255, 0.3);
+            --tno-text: #e0e0e0;
+            --tno-border: #4a5a6a;
+            --tno-alert: #ff0055;
+            --tno-gold: #ffd700;
+            --scanline-color: rgba(0, 0, 0, 0.5);
+        }
+
+        body {
+            /* 폰트 적용 순서: 네오둥근모(한글/영문 커버) -> VT323(영문 보조) -> monospace */
+            font-family: 'NeoDunggeunmo', 'VT323', monospace;
+            background-color: var(--tno-bg);
+            color: var(--tno-text);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            gap: 20px;
+            height: 100vh;
+            box-sizing: border-box;
+            overflow: hidden;
+            font-size: 16px; /* 네오둥근모 최적 사이즈 */
+            line-height: 1.4;
+        }
+
+        /* Language Switch Button Style */
+        .lang-switch {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            z-index: 2000; /* 스캔라인 위에 표시 */
+            font-family: 'NeoDunggeunmo', 'VT323', monospace;
+            color: var(--tno-neon);
+            text-decoration: none;
+            border: 1px solid var(--tno-neon);
+            padding: 5px 12px;
+            background: #000;
+            text-transform: uppercase;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: 0.2s;
+            box-shadow: 0 0 5px var(--tno-neon);
+        }
+        .lang-switch:hover {
+            background: var(--tno-neon);
+            color: #000;
+            box-shadow: 0 0 15px var(--tno-neon);
+        }
+
+        /* CRT Scanline Effect Overlay */
+        body::after {
+            content: " ";
+            display: block;
+            position: absolute;
+            top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            z-index: 999;
+            background-size: 100% 2px, 3px 100%;
+            pointer-events: none;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 10px; background: #000; }
+        ::-webkit-scrollbar-thumb { background: var(--tno-border); border: 1px solid var(--tno-neon); }
+        ::-webkit-scrollbar-thumb:hover { background: var(--tno-neon); }
+
+        /* --- Layout --- */
+        .controls {
+            flex: 0 0 400px;
+            background: var(--tno-panel);
+            border: 2px solid var(--tno-border);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.1);
+        }
+        
+        /* TNO Style Header Strip */
+        .tno-header-strip {
+            background: repeating-linear-gradient(45deg, #000, #000 10px, #222 10px, #222 20px);
+            color: var(--tno-neon);
+            padding: 12px 15px;
+            border-bottom: 2px solid var(--tno-neon);
+            text-align: center;
+            font-size: 1.2rem;
+            letter-spacing: 1px;
+            text-shadow: 0 0 5px var(--tno-neon);
+            text-transform: uppercase;
+        }
+
+        .controls-content {
+            padding: 15px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .display-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            overflow-y: auto;
+            padding-right: 5px;
+        }
+
+        .chamber-box {
+            background: var(--tno-panel);
+            border: 2px solid var(--tno-border);
+            padding: 15px;
+            position: relative;
+        }
+        
+        /* 코너 장식 */
+        .chamber-box::before {
+            content: ''; position: absolute; top: -2px; left: -2px; width: 20px; height: 20px;
+            border-top: 2px solid var(--tno-neon); border-left: 2px solid var(--tno-neon);
+        }
+        .chamber-box::after {
+            content: ''; position: absolute; bottom: -2px; right: -2px; width: 20px; height: 20px;
+            border-bottom: 2px solid var(--tno-neon); border-right: 2px solid var(--tno-neon);
+        }
+
+        h2, h3, h4 { margin: 0; text-transform: uppercase; font-weight: normal; }
+        h3 { 
+            border-bottom: 1px solid var(--tno-border); 
+            padding-bottom: 5px; margin-bottom: 10px; 
+            color: var(--tno-neon);
+            letter-spacing: 1px;
+            font-size: 1.2rem;
+        }
+
+        /* --- UI Elements --- */
+        label { color: #aaa; display: block; margin-bottom: 5px; font-size: 0.95rem; }
+        
+        /* 모든 입력 요소에 폰트 강제 적용 */
+        input, select, button, textarea {
+            font-family: 'NeoDunggeunmo', 'VT323', monospace;
+        }
+        
+        input[type="text"], input[type="number"], select {
+            background: #000;
+            border: 1px solid var(--tno-border);
+            color: var(--tno-neon);
+            font-size: 1rem;
+            padding: 6px 10px;
+            width: 100%;
+            box-sizing: border-box;
+            border-radius: 0;
+        }
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--tno-neon);
+            box-shadow: 0 0 5px var(--tno-neon-dim);
+        }
+
+        /* Checkbox */
+        input[type="checkbox"], input[type="radio"] {
+            accent-color: var(--tno-neon);
+            width: 16px; height: 16px; cursor: pointer;
+        }
+
+        /* Tabs */
+        .tab-container {
+            display: flex;
+            border-bottom: 2px solid var(--tno-border);
+            margin-bottom: 15px;
+        }
+        .tab-btn {
+            flex: 1;
+            background: transparent;
+            color: #666;
+            border: 1px solid transparent;
+            border-bottom: none;
+            padding: 8px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            transition: 0.2s;
+        }
+        .tab-btn:hover { color: var(--tno-neon); }
+        .tab-btn.active {
+            background: rgba(0, 255, 255, 0.05);
+            color: var(--tno-neon);
+            border-color: var(--tno-border);
+            border-bottom-color: var(--tno-panel);
+            text-shadow: 0 0 3px var(--tno-neon);
+        }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: flicker 0.2s; }
+        @keyframes flicker { 0% { opacity: 0.8; } 50% { opacity: 1; } 100% { opacity: 1; } }
+
+        /* Cards (Party/Coalition) */
+        .card-item {
+            background: #0d0f14;
+            border: 1px solid #333;
+            border-left-width: 5px;
+            padding: 10px;
+            margin-bottom: 10px;
+            position: relative;
+        }
+        .card-item.is-ruling {
+            border-color: var(--tno-gold);
+            box-shadow: inset 0 0 10px rgba(255, 215, 0, 0.2);
+        }
+        .card-header { display: flex; gap: 5px; align-items: center; margin-bottom: 5px; }
+
+        /* Buttons */
+        button { text-transform: uppercase; cursor: pointer; border-radius: 0; }
+        
+        .add-btn {
+            background: transparent; border: 1px dashed var(--tno-border); color: #888;
+            padding: 8px; width: 100%; margin-top: 10px; font-size: 1rem;
+        }
+        .add-btn:hover { border-color: var(--tno-neon); color: var(--tno-neon); background: rgba(0,255,255,0.1); }
+        
+        .remove-btn {
+            background: transparent; border: 1px solid #555; color: #555; font-size: 1rem; padding: 2px 8px;
+        }
+        .remove-btn:hover { border-color: var(--tno-alert); color: var(--tno-alert); background: rgba(255,0,85,0.1); }
+
+        .simulate-btn {
+            background: var(--tno-neon); color: #000; font-weight: bold;
+            border: none; width: 100%; padding: 15px; font-size: 1.4rem; letter-spacing: 2px;
+            margin-top: 20px;
+            box-shadow: 0 0 10px var(--tno-neon);
+        }
+        .simulate-btn:hover { background: #fff; box-shadow: 0 0 20px var(--tno-neon); }
+
+        .color-input-group { display: flex; gap: 2px; }
+        input.hex-input { width: 70px !important; text-align: center; }
+        input[type="color"] { border: 1px solid #555; width: 30px; height: 30px; padding: 0; background: none; }
+
+        /* Stats */
+        .stat-block {
+            background: #000; border: 1px solid #333; border-left-width: 5px;
+            padding: 10px; margin-bottom: 5px;
+            display: flex; flex-direction: column; gap: 5px;
+        }
+        .legend-pill {
+            background: #222; padding: 2px 6px; font-size: 0.9rem; border: 1px solid #444; display: inline-flex; align-items: center; gap: 5px; margin-right: 5px; margin-top: 3px;
+        }
+
+        /* Canvas */
+        canvas {
+            display: block;
+            background: radial-gradient(circle, #1a202c 0%, #000 90%);
+            border: 1px solid #333;
+            width: 100%; height: auto;
+            image-rendering: pixelated; /* 픽셀 느낌 */
+        }
+
+        /* Ruling Selector */
+        .ruling-selector {
+            border: 1px solid #333; padding: 5px; margin-bottom: 5px; cursor: pointer;
+            display: flex; align-items: center; gap: 10px; background: #050505;
+        }
+        .ruling-selector:hover { border-color: #666; }
+        .ruling-selector.active { border-color: var(--tno-gold); color: var(--tno-gold); background: rgba(255, 215, 0, 0.05); }
+
+        .coalition-members { background: #000; border: 1px solid #333; padding: 5px; margin-top: 5px; max-height: 100px; overflow-y: auto; }
+        
+        .order-btn { background: #222; color: #fff; border: 1px solid #444; font-size: 0.8rem; padding: 0 4px; }
+    </style>
+</head>
+<body>
+
+    <a href="tno.html" class="lang-switch">>> 영어로 변경 </a>
+
+    <div class="controls">
+        <div class="tno-header-strip">
+            Ministry of Interior
+        </div>
+        
+        <div class="controls-content">
+            <div style="display:flex; gap:15px; margin-bottom: 15px; border-bottom:1px solid #333; padding-bottom:10px;">
+                <label style="cursor:pointer; color:#fff;"><input type="radio" name="systemType" value="bicameral" checked onchange="toggleSystem()"> 양원제(BICAMERAL)</label>
+                <label style="cursor:pointer; color:#fff;"><input type="radio" name="systemType" value="unicameral" onchange="toggleSystem()"> 단원제(UNICAMERAL)</label>
+            </div>
+            
+            <label style="cursor:pointer; margin-bottom:15px;">
+                <input type="checkbox" id="chkGovHighlight" onchange="simulate()" checked> 
+                <span style="color:var(--tno-gold); text-shadow:0 0 5px var(--tno-gold);">집권 세력 강조 (HIGHLIGHT GOV)</span>
+            </label>
+
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom: 20px;">
+                <div id="senateConfig">
+                    <label style="color:var(--tno-neon)">상원 (UPPER)</label>
+                    <input type="text" id="senateNameInput" value="상원" oninput="updateNames()">
+                    <input type="number" id="senateTotal" value="100">
+                </div>
+                <div>
+                    <label id="houseNameLabel" style="color:#fff">하원 (LOWER)</label>
+                    <input type="text" id="houseNameInput" value="국회" oninput="updateNames()">
+                    <input type="number" id="houseTotal" value="300">
+                </div>
+            </div>
+
+            <div class="tab-container">
+                <button class="tab-btn" onclick="switchTab('ideology')" id="tabIdeology">이념</button>
+                <button class="tab-btn active" onclick="switchTab('house')" id="tabHouse">하원</button>
+                <button class="tab-btn" onclick="switchTab('senate')" id="tabSenate">상원</button>
+                <button class="tab-btn" onclick="switchTab('coalition')" id="tabCoalition">연정</button>
+            </div>
+
+            <div id="contentIdeology" class="tab-content">
+                <div id="ideologyList"></div>
+                <button class="add-btn" onclick="addIdeology()">[+] 이념 추가</button>
+                <button class="add-btn" style="border-style:solid; font-size:0.9rem;" onclick="addIndependentIdeology()">[+] 무소속 슬롯 추가</button>
+            </div>
+
+            <div id="contentHouse" class="tab-content active">
+                <div id="partyListHouse"></div>
+                <button class="add-btn" onclick="addParty()">[+] 정당 추가</button>
+                <button class="add-btn" style="border-style:solid; font-size:0.9rem;" onclick="addIndependentParty()">[+] 무소속 의원 추가</button>
+            </div>
+
+            <div id="contentSenate" class="tab-content">
+                <div id="partyListSenate"></div>
+                <button class="add-btn" onclick="addParty()">[+] 정당 추가</button>
+            </div>
+
+            <div id="contentCoalition" class="tab-content">
+                <div id="coalitionList"></div>
+                <button class="add-btn" onclick="addCoalition()">[+] 연정 구성</button>
+            </div>
+            
+        </div>
+        <div style="padding: 15px; border-top: 2px solid var(--tno-border); background: #000;">
+            <button class="simulate-btn" onclick="simulate()">>> PROTOCOL EXECUTE <<</button>
+        </div>
+    </div>
+
+    <div class="display-area">
+        <div class="chamber-box" id="senateSection">
+            <h3 id="senateTitle">SENATE</h3>
+            <canvas id="senateCanvas"></canvas>
+            <div id="senateStats" style="margin-top:10px;"></div>
+        </div>
+        <div class="chamber-box">
+            <h3 id="houseTitle">HOUSE</h3>
+            <canvas id="houseCanvas"></canvas>
+            <div id="houseStats" style="margin-top:10px;"></div>
+        </div>
+    </div>
+
+    <script>
+        /* * Logic Core - Identical logic, enhanced rendering 
+         */
+        const IND_IDEOLOGY_ID = 9999;
+
+        let ideologies = [
+            { id: 101, name: "혁명적 사회주의" },
+            { id: 102, name: "사회주의" },
+            { id: 103, name: "진보주의" },
+            { id: 104, name: "자유주의" },
+            { id: 105, name: "보수주의" },
+            { id: 106, name: "권위주의" },
+            { id: 107, name: "국가사회주의" },
+            { id: IND_IDEOLOGY_ID, name: "무소속" }
+        ];
+
+        let parties = [
+            { id: 1, name: "국가재건당", color: "#2E2E2E", seatsHouse: 140, seatsSenate: 60, ideologyId: 101, isRuling: true, inHouse: true, inSenate: true },
+            { id: 2, name: "개혁그룹", color: "#5D6D7E", seatsHouse: 50, seatsSenate: 20, ideologyId: 102, isRuling: false, inHouse: true, inSenate: true },
+            { id: 3, name: "민주당", color: "#3498DB", seatsHouse: 60, seatsSenate: 10, ideologyId: 105, isRuling: false, inHouse: true, inSenate: true },
+            { id: 4, name: "사회당", color: "#E74C3C", seatsHouse: 40, seatsSenate: 5, ideologyId: 106, isRuling: false, inHouse: true, inSenate: true },
+            { id: 5, name: "무소속", color: "#F1C40F", seatsHouse: 10, seatsSenate: 5, ideologyId: IND_IDEOLOGY_ID, isRuling: false, inHouse: true, inSenate: true }
+        ];
+
+        let coalitions = [
+            { id: 'c1', name: "국민전선", color: "#2E2E2E", members: [1], isRuling: true },
+        ];
+
+        let currentTab = 'house';
+
+        // --- Resize Handler for Canvas ---
+        window.addEventListener('resize', () => {
+            simulate();
+        });
+
+        window.onload = function() { 
+            toggleSystem(); 
+            refreshUI();
+            simulate(); 
+        };
+
+        function switchTab(tabName) {
+            currentTab = tabName;
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('tab' + tabName.charAt(0).toUpperCase() + tabName.slice(1)).classList.add('active');
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.getElementById('content' + tabName.charAt(0).toUpperCase() + tabName.slice(1)).classList.add('active');
+            refreshUI();
+        }
+
+        function toggleSystem() {
+            const isBicameral = document.querySelector('input[name="systemType"]:checked').value === 'bicameral';
+            document.getElementById('senateConfig').style.display = isBicameral ? 'block' : 'none';
+            document.getElementById('senateSection').style.display = isBicameral ? 'block' : 'none';
+            document.getElementById('tabSenate').style.display = isBicameral ? 'block' : 'none';
+            
+            // Text color update for TNO style
+            document.getElementById('houseNameLabel').style.color = isBicameral ? '#fff' : 'var(--tno-neon)';
+
+            if(!isBicameral && currentTab === 'senate') switchTab('house');
+            updateNames();
+        }
+
+        function updateNames() {
+            const sName = document.getElementById('senateNameInput').value;
+            const hName = document.getElementById('houseNameInput').value;
+            document.getElementById('senateTitle').innerText = "> " + sName;
+            document.getElementById('houseTitle').innerText = "> " + hName;
+            
+            const isBi = document.querySelector('input[name="systemType"]:checked').value === 'bicameral';
+            document.getElementById('tabHouse').innerText = isBi ? "하원" : "본회의";
+            document.getElementById('tabSenate').innerText = "상원";
+        }
+
+        function refreshUI() {
+            renderIdeologyList();
+            renderPartyList('house');
+            renderPartyList('senate');
+            renderCoalitions();
+        }
+
+        function isValidHex(hex) { return /^#[0-9A-F]{6}$/i.test(hex); }
+
+        function renderIdeologyList() {
+            const container = document.getElementById('ideologyList');
+            container.innerHTML = '';
+            ideologies.forEach((ide, index) => {
+                const div = document.createElement('div');
+                div.style.display='flex'; div.style.gap='5px'; div.style.marginBottom='5px';
+                div.innerHTML = `
+                    <div style="display:flex; flex-direction:column;">
+                        <button class="order-btn" onclick="moveIdeology(${index}, -1)">▲</button>
+                        <button class="order-btn" onclick="moveIdeology(${index}, 1)">▼</button>
+                    </div>
+                    <input type="text" value="${ide.name}" onchange="updateIdeology(${index}, 'name', this.value)">
+                    <button class="remove-btn" onclick="removeIdeology(${index})">X</button>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function renderPartyList(type) {
+            const container = document.getElementById(type === 'house' ? 'partyListHouse' : 'partyListSenate');
+            container.innerHTML = '';
+            const visibleParties = parties.map((p, idx) => ({ ...p, originalIdx: idx })).filter(p => type === 'house' ? p.inHouse : p.inSenate);
+
+            if (visibleParties.length === 0) container.innerHTML = '<div style="text-align:center; color:#555;">[데이터 없음]</div>';
+
+            visibleParties.forEach((p) => {
+                const idx = p.originalIdx;
+                const div = document.createElement('div');
+                div.className = `card-item ${p.isRuling ? 'is-ruling' : ''}`;
+                div.style.borderLeftColor = p.color;
+
+                const seatKey = type === 'house' ? 'seatsHouse' : 'seatsSenate';
+                
+                div.innerHTML = `
+                    <div class="card-header">
+                        <input type="text" value="${p.name}" onchange="updateParty(${idx}, 'name', this.value)" placeholder="이름">
+                        <div class="color-input-group">
+                            <input type="text" class="hex-input" value="${p.color}" onchange="updatePartyColorText(this, ${idx})">
+                            <input type="color" value="${p.color}" oninput="updatePartyColorPicker(this, ${idx})">
+                        </div>
+                        <button class="remove-btn" onclick="removeParty(${idx})">X</button>
+                    </div>
+                    <div style="display:grid; grid-template-columns:2fr 1fr; gap:5px;">
+                        <select onchange="updateParty(${idx}, 'ideologyId', parseInt(this.value))">
+                            ${ideologies.map(ide => `<option value="${ide.id}" ${p.ideologyId === ide.id ? 'selected' : ''}>${ide.name}</option>`).join('')}
+                        </select>
+                        <input type="number" value="${p[seatKey]}" min="0" onchange="updateParty(${idx}, '${seatKey}', parseInt(this.value)||0)">
+                    </div>
+                    <div style="margin-top:5px; font-size:0.9rem;">
+                        <input type="checkbox" id="lnk_${type}_${idx}" ${type==='house' ? (p.inSenate?'checked':'') : (p.inHouse?'checked':'')} 
+                            onchange="togglePartyParticipation(${idx}, '${type==='house'?'inSenate':'inHouse'}', this.checked)">
+                        <label for="lnk_${type}_${idx}" style="display:inline; cursor:pointer;">${type==='house'?'상원':'하원'} 연동 (LINK)</label>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function renderCoalitions() {
+            const container = document.getElementById('coalitionList');
+            container.innerHTML = '';
+            
+            // Coalitions
+            coalitions.forEach((coal, cIdx) => {
+                const div = document.createElement('div');
+                div.className = `card-item ${coal.isRuling ? 'is-ruling' : ''}`;
+                div.style.borderLeftColor = coal.color;
+                
+                let memberChecks = parties.map(p => `
+                    <div style="display:flex; align-items:center; border-bottom:1px solid #222;">
+                        <span style="width:10px; height:10px; background:${p.color}; display:inline-block; margin-right:5px;"></span>
+                        <label style="flex:1; margin:0; cursor:pointer;" for="c${cIdx}_p${p.id}">${p.name}</label>
+                        <input type="checkbox" id="c${cIdx}_p${p.id}" ${coal.members.includes(p.id)?'checked':''} onchange="toggleCoalitionMember('${coal.id}', ${p.id}, this.checked)">
+                    </div>
+                `).join('');
+
+                div.innerHTML = `
+                    <div class="card-header">
+                        <input type="text" value="${coal.name}" onchange="updateCoalition('${coal.id}', 'name', this.value)">
+                        <div class="color-input-group">
+                            <input type="text" class="hex-input" value="${coal.color}" onchange="updateCoalitionColorText(this, '${coal.id}')">
+                            <input type="color" value="${coal.color}" oninput="updateCoalitionColorPicker(this, '${coal.id}')">
+                        </div>
+                        <button class="remove-btn" onclick="removeCoalition('${coal.id}')">X</button>
+                    </div>
+                    <div class="ruling-selector ${coal.isRuling ? 'active' : ''}" onclick="setRuling('coalition', '${coal.id}')">
+                         [ ${coal.isRuling ? '현재 집권 중 (ACTIVE GOV)' : '집권 세력으로 설정'} ]
+                    </div>
+                    <div class="coalition-members">${memberChecks}</div>
+                `;
+                container.appendChild(div);
+            });
+
+            // Single Parties
+            const singleHeader = document.createElement('div');
+            singleHeader.style.marginTop = "20px"; singleHeader.style.borderTop="1px dashed #444"; singleHeader.innerText="단독 집권 (SINGLE PARTY RULE)"; singleHeader.style.color="#666";
+            container.appendChild(singleHeader);
+
+            parties.forEach(p => {
+                const div = document.createElement('div');
+                div.className = `ruling-selector ${p.isRuling ? 'active' : ''}`;
+                div.onclick = () => setRuling('party', p.id);
+                div.innerHTML = `<span style="background:${p.color}; width:8px; height:8px;"></span> ${p.name}`;
+                container.appendChild(div);
+            });
+        }
+
+        // Logic Helpers
+        function addIdeology() { ideologies.push({ id: Date.now(), name: "새 이념" }); refreshUI(); }
+        function addIndependentIdeology() { 
+             if(!ideologies.find(i=>i.id===IND_IDEOLOGY_ID)) ideologies.push({id:IND_IDEOLOGY_ID, name:"무소속"}); 
+             refreshUI(); simulate(); 
+        }
+        function removeIdeology(idx) { if(ideologies.length>1) { const id=ideologies[idx].id; ideologies.splice(idx,1); parties.forEach(p=>{if(p.ideologyId===id)p.ideologyId=ideologies[0].id;}); refreshUI(); simulate(); }}
+        function updateIdeology(i,k,v) { ideologies[i][k]=v; refreshUI(); simulate(); }
+        function moveIdeology(i,d) { if((d===-1&&i>0)||(d===1&&i<ideologies.length-1)){ [ideologies[i], ideologies[i+d]] = [ideologies[i+d], ideologies[i]]; refreshUI(); simulate(); }}
+        function addParty() { parties.push({id:Date.now(), name:"신당", color:"#555555", seatsHouse:0, seatsSenate:0, ideologyId:ideologies[ideologies.length - 1].id, isRuling:false, inHouse:true, inSenate:true}); refreshUI(); }
+        function addIndependentParty() { 
+            if(!ideologies.find(i=>i.id===IND_IDEOLOGY_ID)) addIndependentIdeology();
+            parties.push({id:Date.now(), name:"무소속", color:"#999999", seatsHouse:1, seatsSenate:0, ideologyId:IND_IDEOLOGY_ID, isRuling:false, inHouse:true, inSenate:true}); 
+            refreshUI(); simulate();
+        }
+        function removeParty(i) { const pid=parties[i].id; parties.splice(i,1); coalitions.forEach(c=>c.members=c.members.filter(x=>x!==pid)); refreshUI(); simulate(); }
+        function updateParty(i,k,v) { parties[i][k]=v; if(k==='name')refreshUI(); simulate(); }
+        function togglePartyParticipation(i,f,v) { parties[i][f]=v; refreshUI(); simulate(); }
+        function updatePartyColorText(e,i) { if(isValidHex(e.value)){ parties[i].color=e.value.toUpperCase(); e.nextElementSibling.value=parties[i].color; refreshUI(); simulate(); }}
+        function updatePartyColorPicker(e,i) { parties[i].color=e.value.toUpperCase(); e.previousElementSibling.value=parties[i].color; simulate(); }
+        
+        function addCoalition() { coalitions.push({id:'c'+Date.now(), name:"새 연정", color:"#ffffff", members:[], isRuling:false}); refreshUI(); }
+        function removeCoalition(id) { coalitions=coalitions.filter(c=>c.id!==id); refreshUI(); simulate(); }
+        function updateCoalition(id,k,v) { const c=coalitions.find(x=>x.id===id); if(c){c[k]=v; simulate();} }
+        function updateCoalitionColorText(e,id) { if(isValidHex(e.value)) { const c=coalitions.find(x=>x.id===id); if(c){ c.color=e.value.toUpperCase(); e.nextElementSibling.value=c.color; simulate(); }}}
+        function updateCoalitionColorPicker(e,id) { const c=coalitions.find(x=>x.id===id); if(c){ c.color=e.value.toUpperCase(); e.previousElementSibling.value=c.color; simulate(); }}
+        function toggleCoalitionMember(cid,pid,chk) { 
+            if(chk) { coalitions.forEach(c=>c.members=c.members.filter(x=>x!==pid)); coalitions.find(c=>c.id===cid).members.push(pid); }
+            else { const c=coalitions.find(x=>x.id===cid); c.members=c.members.filter(x=>x!==pid); }
+            refreshUI(); simulate();
+        }
+        function setRuling(t,id) {
+            parties.forEach(p=>p.isRuling=false); coalitions.forEach(c=>c.isRuling=false);
+            if(t==='party') parties.find(p=>p.id===id).isRuling=true;
+            else coalitions.find(c=>c.id===id).isRuling=true;
+            refreshUI(); simulate();
+        }
+
+        /* SIMULATION & RENDERING */
+        function simulate() {
+            const isBicameral = document.querySelector('input[name="systemType"]:checked').value === 'bicameral';
+            const highlightGov = document.getElementById('chkGovHighlight').checked;
+            const sTotal = parseInt(document.getElementById('senateTotal').value) || 100;
+            const hTotal = parseInt(document.getElementById('houseTotal').value) || 300;
+
+            // Sort Parties
+            parties.sort((a,b) => {
+                const ia = ideologies.findIndex(i=>i.id===a.ideologyId);
+                const ib = ideologies.findIndex(i=>i.id===b.ideologyId);
+                if(a.ideologyId===IND_IDEOLOGY_ID && b.ideologyId!==IND_IDEOLOGY_ID) return 1;
+                if(b.ideologyId===IND_IDEOLOGY_ID && a.ideologyId!==IND_IDEOLOGY_ID) return -1;
+                return ia - ib;
+            });
+
+            const getMap = (targetTotal, chamberKey, checkKey) => {
+                const active = parties.filter(p=>p[checkKey]);
+                let map = [];
+                active.forEach(p => {
+                    const cnt = p[chamberKey];
+                    const coal = coalitions.find(c=>c.members.includes(p.id));
+                    const isGov = (coal && coal.isRuling) || p.isRuling;
+
+                    for(let k=0; k<cnt; k++) {
+                        if(map.length >= targetTotal) break;
+                        map.push({
+                            partyColor: p.color, // ✅ 테두리(정당색) 전용
+                            partyName: p.name,
+                            ideology: ideologies.find(i=>i.id===p.ideologyId)?.name||"?",
+                            coalitionName: coal?.name,
+                            isRuling: isGov
+                        });
+                    }
+                });
+                while(map.length < targetTotal) map.push({ partyColor: '#333', partyName: 'Vacant', ideology: '-', isRuling: false });
+                return map;
+            };
+
+            const hMap = getMap(hTotal, 'seatsHouse', 'inHouse');
+            drawChamber('houseCanvas', hMap, hTotal);
+            updateStats('houseStats', hMap, hTotal);
+
+            if(isBicameral) {
+                const sMap = getMap(sTotal, 'seatsSenate', 'inSenate');
+                drawChamber('senateCanvas', sMap, sTotal);
+                updateStats('senateStats', sMap, sTotal);
+            }
+        }
+
+        function drawChamber(cvsId, map, total) {
+            const cvs = document.getElementById(cvsId);
+            const parent = cvs.parentElement;
+            const width = parent.clientWidth - 34; // padding accounted
+            
+            // High DPI Scaling
+            const dpr = window.devicePixelRatio || 1;
+            
+            // **Height Buffer fixed (Margin)**
+            const heightBuffer = 120;
+            
+            cvs.width = width * dpr;
+            cvs.height = (width / 2 + heightBuffer) * dpr;
+            cvs.style.width = width + "px";
+            cvs.style.height = (width / 2 + heightBuffer) + "px";
+            
+            const ctx = cvs.getContext('2d');
+            ctx.scale(dpr, dpr);
+            
+            const CX = width / 2;
+            const CY = (width / 2 + heightBuffer) - 40; 
+
+            ctx.clearRect(0,0,width, cvs.height/dpr);
+            if(total <= 0) return;
+
+            // Geometry Calculation
+            const minR = width * 0.15;
+            const maxR = (width / 2) - 10;
+            let best = null;
+            let low=2, high=20;
+            
+            const calc = (rows) => {
+                const dotR_est = (maxR - minR) / rows / 2.2;
+                let cap = 0;
+                let rRows = [];
+                for(let i=0; i<rows; i++) {
+                    const r = minR + i * (dotR_est * 2.2) + dotR_est;
+                    const c = Math.floor((Math.PI * r) / (dotR_est * 2.2));
+                    rRows.push({r, c});
+                    cap += c;
+                }
+                return { cap, rows, dotR: dotR_est, rRows };
+            }
+
+            for(let i=0; i<20; i++) {
+                let mid = Math.floor((low+high)/2);
+                let res = calc(mid);
+                if(res.cap >= total) { best = res; low = mid + 1; }
+                else { low = mid + 1; }
+            }
+            best = null;
+            for(let r=3; r<30; r++) {
+                let res = calc(r);
+                if(res.cap >= total) { best=res; break; }
+            }
+            if(!best) best = calc(30);
+
+            const { dotR, rRows } = best;
+            
+            // Generate Points
+            let pts = [];
+            let totalCap = rRows.reduce((a,b)=>a+b.c, 0);
+            let currentPoints = 0;
+            
+            rRows.forEach((row, rI) => {
+                let count = Math.round(total * (row.c / totalCap));
+                if(rI === rRows.length-1) count = total - currentPoints; 
+                currentPoints += count;
+                
+                if(count > 0) {
+                    for(let i=0; i<count; i++) {
+                        let angle = Math.PI - (Math.PI / (count > 1 ? count-1 : 1)) * i;
+                        if(count===1) angle = Math.PI/2;
+                        pts.push({ x: CX + row.r * Math.cos(angle), y: CY - row.r * Math.sin(angle) });
+                    }
+                }
+            });
+            
+            pts.forEach(p => {
+                p.angle = Math.atan2(CY - p.y, p.x - CX); 
+            });
+            pts.sort((a,b) => b.angle - a.angle); 
+
+            // ✅ NEW RENDERING RULES (only dot painting logic changed)
+            pts.forEach((pt, i) => {
+                if(i >= map.length) return;
+                const d = map[i];
+
+                const highlightGov = document.getElementById('chkGovHighlight').checked;
+
+                // Fill: ruling seats -> yellow (only when highlight ON), else vacant-like
+                let fill = '#222';
+                if(d.partyName === 'Vacant') fill = '#222';
+                else if(highlightGov && d.isRuling) fill = '#ffd700';
+
+                // Stroke: always party color thick, vacant thinner
+                let stroke = (d.partyName === 'Vacant') ? '#333' : (d.partyColor || '#555');
+                let lineW  = (d.partyName === 'Vacant') ? 1 : 3;
+
+                ctx.beginPath();
+                ctx.arc(pt.x, pt.y, dotR * 0.85, 0, Math.PI*2);
+
+                ctx.fillStyle = fill;
+                ctx.fill();
+
+                ctx.strokeStyle = stroke;
+                ctx.lineWidth = lineW;
+
+                // Optional glow on ruling (still only when highlight ON)
+                if(highlightGov && d.isRuling && d.partyName !== 'Vacant') {
+                    ctx.shadowColor = "rgba(255, 215, 0, 0.6)";
+                    ctx.shadowBlur = 8;
+                    ctx.stroke();
+                    ctx.shadowBlur = 0;
+                } else {
+                    ctx.stroke();
+                }
+            });
+
+            // Text - Use NeoDunggeunmo for numbers too
+            ctx.fillStyle = "#fff";
+            ctx.font = "30px 'NeoDunggeunmo'";
+            ctx.textAlign = "center";
+            ctx.fillText(total, CX, CY);
+            ctx.font = "16px 'NeoDunggeunmo'";
+            ctx.fillStyle = "var(--tno-neon)";
+            ctx.fillText("SEATS", CX, CY + 25);
+        }
+
+        function updateStats(id, map, total) {
+            const el = document.getElementById(id);
+            if(total===0){ el.innerHTML=""; return;}
+            
+            let stats = {};
+            const vac = map.filter(x=>x.partyName==='Vacant').length;
+            const valid = total - vac;
+            const maj = Math.floor(valid/2)+1;
+            
+            map.forEach(m => {
+                if(m.partyName==='Vacant') return;
+                let k = m.coalitionName ? 'c_'+m.coalitionName : 'p_'+m.partyName;
+                if(!stats[k]) stats[k] = { name: m.coalitionName || m.partyName, count:0, color: m.partyColor || '#555', isRuling: m.isRuling, parties:{} };
+                stats[k].count++;
+                if(!stats[k].parties[m.partyName]) stats[k].parties[m.partyName] = {n:0, c:m.partyColor, i:m.ideology};
+                stats[k].parties[m.partyName].n++;
+            });
+
+            const sorted = Object.values(stats).sort((a,b) => b.isRuling - a.isRuling || b.count - a.count);
+            
+            let html = "";
+            sorted.forEach(s => {
+                let status = "";
+                if(s.isRuling) {
+                     status = `<span style="color:var(--tno-gold); font-weight:bold;">[여당 GOV]</span>`;
+                     if(s.count >= maj) status += ` <span style="color:#0f0;">[과반 MAJ]</span>`;
+                     else status += ` <span style="color:#f00;">[소수 MIN]</span>`;
+                } else if(s.count >= maj) status = `<span style="color:#f00;">[여소야대]</span>`;
+
+                let subs = Object.entries(s.parties).map(([n, d]) => 
+                    `<span class="legend-pill"><span style="background:${d.c}; width:8px; height:8px; display:inline-block;"></span>${n}(${d.n})</span>`
+                ).join('');
+
+                html += `
+                    <div class="stat-block" style="border-left-color:${s.isRuling ? 'var(--tno-gold)' : s.color};">
+                        <div style="display:flex; justify-content:space-between; font-size:1.1rem;">
+                            <span>${s.name} : ${s.count} (${((s.count/total)*100).toFixed(1)}%)</span>
+                            <span>${status}</span>
+                        </div>
+                        <div style="margin-top:5px; opacity:0.8;">${subs}</div>
+                    </div>
+                `;
+            });
+            el.innerHTML = html;
+        }
+    </script>
+</body>
+</html>
