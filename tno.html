@@ -546,7 +546,7 @@
         function removeIdeology(idx) { if(ideologies.length>1) { const id=ideologies[idx].id; ideologies.splice(idx,1); parties.forEach(p=>{if(p.ideologyId===id)p.ideologyId=ideologies[0].id;}); refreshUI(); simulate(); }}
         function updateIdeology(i,k,v) { ideologies[i][k]=v; refreshUI(); simulate(); }
         function moveIdeology(i,d) { if((d===-1&&i>0)||(d===1&&i<ideologies.length-1)){ [ideologies[i], ideologies[i+d]] = [ideologies[i+d], ideologies[i]]; refreshUI(); simulate(); }}
-        function addParty() { parties.push({id:Date.now(), name:"New Party", color:"#555555", seatsHouse:0, seatsSenate:0, ideologyId:ideologies[0].id, isRuling:false, inHouse:true, inSenate:true}); refreshUI(); }
+        function addParty() { parties.push({id:Date.now(), name:"New Party", color:"#555555", seatsHouse:0, seatsSenate:0, ideologyId:ideologies[ideologies.length - 1].id, isRuling:false, inHouse:true, inSenate:true}); refreshUI(); }
         function addIndependentParty() { 
             if(!ideologies.find(i=>i.id===IND_IDEOLOGY_ID)) addIndependentIdeology();
             parties.push({id:Date.now(), name:"Independent", color:"#999999", seatsHouse:1, seatsSenate:0, ideologyId:IND_IDEOLOGY_ID, isRuling:false, inHouse:true, inSenate:true}); 
