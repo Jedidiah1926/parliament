@@ -340,6 +340,19 @@
             
         </div>
         <div style="padding: 15px; border-top: 2px solid var(--tno-border); background: #000;">
+            <div style="display:flex; gap:10px; margin-bottom:-10px;">
+                <button class="add-btn" id="btnSaveJson" style="border-style:solid; margin-top:0;">
+                     SAVE
+                </button>
+
+                <button class="add-btn" id="btnLoadJson" style="border-style:solid; margin-top:0;">
+                      LOAD
+                </button>
+
+                <!-- 숨김 파일 인풋 -->
+                <input id="fileLoadJson" type="file" accept="application/json" style="display:none;">
+            </div>
+
             <button class="simulate-btn" onclick="simulate()">>> PROTOCOL EXECUTE <<</button>
         </div>
     </div>
@@ -397,6 +410,124 @@
             refreshUI();
             simulate(); 
         };
+        
+        // ===== SAVE / LOAD (JSON) =====
+function getAppState() {
+    const systemType = document.querySelector('input[name="systemType"]:checked')?.value || 'bicameral';
+
+    return {
+        meta: {
+            app: "DATANET_PARLIAMENT_SIM",
+            version: 1,
+            savedAt: new Date().toISOString()
+        },
+        ui: {
+            currentTab
+        },
+        config: {
+            systemType,
+            highlightGov: document.getElementById('chkGovHighlight')?.checked ?? true,
+            senateName: document.getElementById('senateNameInput')?.value ?? "상원",
+            houseName: document.getElementById('houseNameInput')?.value ?? "국회",
+            senateTotal: parseInt(document.getElementById('senateTotal')?.value) || 100,
+            houseTotal: parseInt(document.getElementById('houseTotal')?.value) || 300
+        },
+        data: {
+            ideologies,
+            parties,
+            coalitions
+        }
+    };
+}
+
+function setAppState(state) {
+    // 최소 방어
+    if (!state || typeof state !== "object") throw new Error("Invalid state");
+    if (!state.data || !Array.isArray(state.data.parties) || !Array.isArray(state.data.ideologies) || !Array.isArray(state.data.coalitions)) {
+        throw new Error("Invalid state.data");
+    }
+
+    // 1) 데이터 복원
+    ideologies = state.data.ideologies;
+    parties = state.data.parties;
+    coalitions = state.data.coalitions;
+
+    // 2) UI/설정 복원 (입력값/체크박스/라디오)
+    const cfg = state.config || {};
+    const systemType = cfg.systemType || 'bicameral';
+
+    // 라디오 선택
+    const radio = document.querySelector(`input[name="systemType"][value="${systemType}"]`);
+    if (radio) radio.checked = true;
+
+    // 입력들
+    if (document.getElementById('senateNameInput')) document.getElementById('senateNameInput').value = cfg.senateName ?? "상원";
+    if (document.getElementById('houseNameInput')) document.getElementById('houseNameInput').value = cfg.houseName ?? "국회";
+    if (document.getElementById('senateTotal')) document.getElementById('senateTotal').value = cfg.senateTotal ?? 100;
+    if (document.getElementById('houseTotal')) document.getElementById('houseTotal').value = cfg.houseTotal ?? 300;
+
+    if (document.getElementById('chkGovHighlight')) document.getElementById('chkGovHighlight').checked = cfg.highlightGov ?? true;
+
+    // 3) 화면 구조 반영 (양원/단원 토글 + 이름 반영)
+    toggleSystem();   // 내부에서 updateNames()도 호출함
+    updateNames();
+
+    // 4) 탭 복원 (없거나 잘못되면 house로)
+    const tab = state.ui?.currentTab || 'house';
+    switchTab(['ideology', 'house', 'senate', 'coalition'].includes(tab) ? tab : 'house');
+
+    // 5) UI 렌더 + 시뮬
+    refreshUI();
+    simulate();
+}
+
+function downloadJSON(filename, obj) {
+    const blob = new Blob([JSON.stringify(obj, null, 2)], { type: "application/json" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(a.href);
+}
+
+function saveJSON() {
+    const state = getAppState();
+    const ts = new Date().toISOString().replace(/[:.]/g, "-");
+    downloadJSON(`parliament-save-${ts}.json`, state);
+}
+
+async function loadJSONFromFile(file) {
+    const text = await file.text();
+    const obj = JSON.parse(text);
+    setAppState(obj);
+}
+
+// 버튼 연결 (DOMContentLoaded 이후에도 안전하게)
+window.addEventListener("load", () => {
+    const btnSave = document.getElementById("btnSaveJson");
+    const btnLoad = document.getElementById("btnLoadJson");
+    const fileInput = document.getElementById("fileLoadJson");
+
+    if (btnSave) btnSave.addEventListener("click", saveJSON);
+
+    if (btnLoad && fileInput) {
+        btnLoad.addEventListener("click", () => fileInput.click());
+        fileInput.addEventListener("change", async () => {
+            const file = fileInput.files?.[0];
+            if (!file) return;
+            try {
+                await loadJSONFromFile(file);
+            } catch (e) {
+                alert("불러오기 실패: 저장 파일이 깨졌거나 형식이 다릅니다.");
+            } finally {
+                fileInput.value = ""; // 같은 파일 다시 선택 가능하게
+            }
+        });
+    }
+});
+
 
         function switchTab(tabName) {
             currentTab = tabName;
