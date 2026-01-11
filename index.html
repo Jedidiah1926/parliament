@@ -45,13 +45,15 @@
         }
 
         .terminal-container {
-            width: 600px;
-            background: var(--tno-panel);
-            border: 2px solid var(--tno-border);
-            padding: 0;
-            position: relative;
-            box-shadow: 0 0 30px rgba(0, 255, 255, 0.1);
-        }
+    width: 650px;          /* 기본 표시 폭 (600 → 650) */
+    max-width: 92vw;       /* 작은 화면에서 넘치지 않게 */
+    background: var(--tno-panel);
+    border: 2px solid var(--tno-border);
+    padding: 0;
+    position: relative;
+    box-shadow: 0 0 30px rgba(0, 255, 255, 0.1);
+}
+
 
         .header-strip {
             background: repeating-linear-gradient(45deg, #000, #000 10px, #111 10px, #111 20px);
@@ -142,6 +144,90 @@
         }
         .top-left { top: -2px; left: -2px; border-right: 0; border-bottom: 0; }
         .bottom-right { bottom: -2px; right: -2px; border-left: 0; border-top: 0; }
+        
+        .version-box {
+    border: 1px solid #222;
+    background: #07090d;
+    padding: 15px;
+    margin-top: 10px;
+    box-shadow: inset 0 0 12px rgba(0, 255, 255, 0.08);
+}
+
+.version-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    border-bottom: 1px dashed #2b3a44;
+    padding-bottom: 8px;
+    margin-bottom: 10px;
+}
+
+.version-tag {
+    color: var(--tno-neon);
+    text-shadow: 0 0 6px var(--tno-neon);
+    letter-spacing: 2px;
+    font-size: 1.0rem;
+}
+
+.build-tag {
+    color: #666;
+    font-size: 0.85rem;
+}
+
+.changelog {
+    font-size: 0.9rem;
+    color: #aaa;
+    line-height: 1.5;
+
+    /* ↓ 여기부터 스크롤 관련 */
+    max-height: 120px;          /* 원하는 높이로 조절 */
+    overflow-y: auto;
+    padding-right: 6px;
+}
+
+/* 스크롤바 TNO 스타일 */
+.changelog::-webkit-scrollbar {
+    width: 8px;
+    background: #000;
+}
+.changelog::-webkit-scrollbar-thumb {
+    background: var(--tno-border);
+    border: 1px solid var(--tno-neon);
+}
+.changelog::-webkit-scrollbar-thumb:hover {
+    background: var(--tno-neon);
+}
+
+.changelog-title {
+    color: #666;
+    margin-bottom: 6px;
+}
+
+.changelog ul {
+    margin: 0;
+    padding-left: 18px;
+}
+
+.changelog li {
+    margin: 4px 0;
+}
+
+.changelog .date {
+    color: #666;
+}
+
+.changelog .new {
+    color: var(--tno-neon);
+}
+
+.changelog .fix {
+    color: #ffd700;
+}
+
+.changelog .warn {
+    color: var(--tno-alert);
+}
+
 
     </style>
 </head>
@@ -170,13 +256,52 @@
                     프로토콜 실행 : 한국어
                 </a>
             </div>
+            
+            <div class="version-box">
+    <div class="version-head">
+        <div class="version-tag">VERSION: v1.0.1</div>
+        <div class="build-tag">BUILD: 2026-01-11</div>
+    </div>
+
+    <div class="changelog">
+        <div class="changelog-title">UPDATE LOG</div>
+        <ul>
+            <li>
+                <span class="ver">v1.0.1</span>
+                <span class="date">2026-01-11</span> —
+             <span class="fix">[FIX]</span> SAVE/LOAD ADDED
+            </li>
+            <li>
+                <span class="ver">v1.0.0</span>
+                <span class="date">2026-01-11</span> —
+                <span class="new">[RELEASE]</span> MAJOR RELEASE
+            </li>
+            <li>
+                <span class="ver">v0.1.1</span>
+                <span class="date">2025-12-30</span> —
+                <span class="warn">[BETA]</span> AUTHORIZED ACCESS ONLY — DO NOT DISTRIBUTE
+            </li>
+            <li>
+                <span class="ver">v0.1.0</span>
+                <span class="date">2025-12-03</span> —
+                <span class="warn">[BETA]</span> AUTHORIZED ACCESS ONLY — DO NOT DISTRIBUTE
+            </li>
+            <li>
+                <span class="ver">v0.0.0</span>
+                <span class="date">2025-12-02</span> —
+                <span class="warn">[BETA]</span> AUTHORIZED ACCESS ONLY — DO NOT DISTRIBUTE
+            </li>
+        </ul>
+
+    </div>
+</div>
+
 
             <div class="footer">
-                &copy; 1962-1972 REICHSDATENNETZ ADMINISTRATION
+                &copy; 2025-2026 Absatzmarke / Abwehr
             </div>
         </div>
     </div>
 
 </body>
 </html>
-
