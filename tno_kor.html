@@ -669,17 +669,53 @@
         }
 
         function renderPartyList(type) {
-            const container = document.getElementById(type === 'house' ? 'partyListHouse' : 'partyListSenate'); container.innerHTML = '';
-            const activeP = parties.map((p, idx) => ({ ...p, originalIdx: idx })).filter(p => type === 'house' ? p.inHouse : p.inSenate);
-            activeP.forEach((p) => {
-                const idx = p.originalIdx; const div = document.createElement('div'); div.className = `card-item ${p.isRuling ? 'is-ruling' : ''}`; div.style.borderLeftColor = p.color;
-                const seatK = type === 'house' ? 'seatsHouse' : 'seatsSenate';
-                div.innerHTML = `<div class="card-header"><input type="text" value="${p.name}" onchange="updateParty(${idx}, 'name', this.value)"><div class="color-input-group"><input type="text" class="hex-input" value="${p.color}" onchange="updatePartyColorText(this, ${idx})"><input type="color" value="${p.color}" oninput="updatePartyColorPicker(this, ${idx})"></div><button class="remove-btn" onclick="removeParty(${idx})">X</button></div>
-                    <div style="display:grid; grid-template-columns:2fr 1fr; gap:5px;"><select onchange="updateParty(${idx}, 'ideologyId', parseInt(this.value))">${ideologies.map(ide => `<option value="${ide.id}" ${p.ideologyId === ide.id ? 'selected' : ''}>${ide.name}</option>`).join('')}</select><input type="number" value="${p[seatK]}" onchange="updateParty(${idx}, '${seatK}', parseInt(this.value)||0)"></div>
-                    <div style="margin-top:5px; font-size:0.9rem;"><input type="checkbox" id="lnk_${type}_${idx}" ${type==='house' ? (p.inSenate?'checked':'') : (p.inHouse?'checked':'')} onchange="togglePartyParticipation(${idx}, '${type==='house'?'inSenate':'inHouse'}', this.checked)"><label for="lnk_${type}_${idx}" style="display:inline; cursor:pointer;">${type==='house'?'상원':'하원'} 연동</label></div>`;
-                container.appendChild(div);
-            });
-        }
+    const container = document.getElementById(type === 'house' ? 'partyListHouse' : 'partyListSenate');
+    container.innerHTML = '';
+    
+    // 1. 이념 순서 정렬을 위한 복사본 생성
+    let displayParties = [...parties];
+
+    displayParties.sort((a, b) => {
+        const ia = ideologies.findIndex(i => i.id === a.ideologyId);
+        const ib = ideologies.findIndex(i => i.id === b.ideologyId);
+        if (a.ideologyId === IND_IDEOLOGY_ID && b.ideologyId !== IND_IDEOLOGY_ID) return 1;
+        if (b.ideologyId === IND_IDEOLOGY_ID && a.ideologyId !== IND_IDEOLOGY_ID) return -1;
+        return ia - ib;
+    });
+
+    const visibleParties = displayParties.filter(p => type === 'house' ? p.inHouse : p.inSenate);
+
+    visibleParties.forEach((p) => {
+        const pid = p.id; // 고유 ID 사용 (인덱스 대신)
+        const div = document.createElement('div');
+        div.className = `card-item ${p.isRuling ? 'is-ruling' : ''}`;
+        div.style.borderLeftColor = p.color;
+        const seatKey = type === 'house' ? 'seatsHouse' : 'seatsSenate';
+        
+        div.innerHTML = `
+            <div class="card-header">
+                <input type="text" value="${p.name}" onchange="updatePartyById(${pid}, 'name', this.value)">
+                <div class="color-input-group">
+                    <input type="text" class="hex-input" value="${p.color}" onchange="updatePartyColorTextById(this, ${pid})">
+                    <input type="color" value="${p.color}" oninput="updatePartyColorPickerById(this, ${pid})">
+                </div>
+                <button class="remove-btn" onclick="removePartyById(${pid})">X</button>
+            </div>
+            <div style="display:grid; grid-template-columns:2fr 1fr; gap:5px;">
+                <select onchange="updatePartyById(${pid}, 'ideologyId', parseInt(this.value))">
+                    ${ideologies.map(ide => `<option value="${ide.id}" ${p.ideologyId === ide.id ? 'selected' : ''}>${ide.name}</option>`).join('')}
+                </select>
+                <input type="number" value="${p[seatKey]}" min="0" onchange="updatePartyById(${pid}, '${seatKey}', parseInt(this.value)||0)">
+            </div>
+            <div style="margin-top:5px; font-size:0.9rem;">
+                <input type="checkbox" id="lnk_${type}_${pid}" ${type==='house' ? (p.inSenate?'checked':'') : (p.inHouse?'checked':'')} 
+                    onchange="togglePartyParticipationById(${pid}, '${type==='house'?'inSenate':'inHouse'}', this.checked)">
+                <label for="lnk_${type}_${pid}" style="display:inline; cursor:pointer;">${type==='house'?'상원':'하원'} 연동</label>
+            </div>
+        `;
+        container.appendChild(div);
+    });
+}
 
         function renderCoalitions() {
             const container = document.getElementById('coalitionList');
@@ -735,12 +771,63 @@
         function moveIdeology(i,d) { if((d===-1&&i>0)||(d===1&&i<ideologies.length-1)){ [ideologies[i], ideologies[i+d]] = [ideologies[i+d], ideologies[i]]; refreshUI(); simulate(); } }
         function updateIdeology(i,k,v) { ideologies[i][k]=v; refreshUI(); simulate(); }
         function removeIdeology(idx) { ideologies.splice(idx,1); refreshUI(); simulate(); }
-        function addParty() { parties.push({id:Date.now(), name:"신당", color:"#555555", seatsHouse:0, seatsSenate:0, ideologyId:ideologies[0].id, isRuling:false, inHouse:true, inSenate:true}); refreshUI(); }
-        function removeParty(i) { parties.splice(i,1); refreshUI(); simulate(); }
-        function updateParty(i,k,v) { parties[i][k]=v; if(k==='name')refreshUI(); simulate(); }
-        function togglePartyParticipation(i,f,v) { parties[i][f]=v; refreshUI(); simulate(); }
-        function updatePartyColorText(e,i) { if(/^#[0-9A-F]{6}$/i.test(e.value)){ parties[i].color=e.value.toUpperCase(); e.nextElementSibling.value=parties[i].color; refreshUI(); simulate(); }}
-        function updatePartyColorPicker(e,i) { parties[i].color=e.value.toUpperCase(); e.previousElementSibling.value=parties[i].color; simulate(); }
+        function addParty() { 
+    // 무소속 이념 ID (이미 코드 상단에 IND_IDEOLOGY_ID = 9999로 정의되어 있음)
+    const targetIdeologyId = IND_IDEOLOGY_ID;
+
+    parties.push({
+        id: Date.now(), // 고유 ID (데이터 꼬임 방지용)
+        name: "신당", 
+        color: "#555555", 
+        seatsHouse: 0, 
+        seatsSenate: 0, 
+        ideologyId: targetIdeologyId, // 무조건 무소속으로 설정
+        isRuling: false, 
+        inHouse: true, 
+        inSenate: true
+    }); 
+    
+    refreshUI(); 
+    simulate(); 
+}
+        // 기존 removeParty 대체
+function removePartyById(id) {
+    parties = parties.filter(p => p.id !== id);
+    coalitions.forEach(c => c.members = c.members.filter(m => m !== id));
+    refreshUI();
+    simulate();
+}
+        // 기존 updateParty 대체
+function updatePartyById(id, k, v) {
+    const p = parties.find(x => x.id === id);
+    if(p) { p[k] = v; simulate(); }
+}
+        // 연동 토글 업데이트
+function togglePartyParticipationById(id, f, v) {
+    const p = parties.find(x => x.id === id);
+    if(p) { p[f] = v; refreshUI(); simulate(); }
+}
+        // 색상 텍스트 업데이트
+function updatePartyColorTextById(e, id) {
+    if(isValidHex(e.value)) {
+        const p = parties.find(x => x.id === id);
+        if(p) {
+            p.color = e.value.toUpperCase();
+            e.nextElementSibling.value = p.color;
+            refreshUI();
+            simulate();
+        }
+    }
+}
+        // 색상 피커 업데이트
+function updatePartyColorPickerById(e, id) {
+    const p = parties.find(x => x.id === id);
+    if(p) {
+        p.color = e.value.toUpperCase();
+        e.previousElementSibling.value = p.color;
+        simulate();
+    }
+}
         function addCoalition() { coalitions.push({id:'c'+Date.now(), name:"새 연정", color:"#ffffff", members:[], isRuling:false}); refreshUI(); }
         function removeCoalition(id) { coalitions=coalitions.filter(c=>c.id!==id); refreshUI(); simulate(); }
         function updateCoalition(id,k,v) { const c=coalitions.find(x=>x.id===id); if(c){c[k]=v; simulate();} }
@@ -853,9 +940,6 @@
                 });
             }
         });
-    </script>
-</body>
-</html>
     </script>
 </body>
 </html>
