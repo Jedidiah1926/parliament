@@ -690,12 +690,50 @@
         }
 
         function renderCoalitions() {
-            const container = document.getElementById('coalitionList'); container.innerHTML = '';
+            const container = document.getElementById('coalitionList');
+            container.innerHTML = '';
+            
+            // Coalitions
             coalitions.forEach((coal, cIdx) => {
-                const div = document.createElement('div'); div.className = `card-item ${coal.isRuling ? 'is-ruling' : ''}`; div.style.borderLeftColor = coal.color;
-                let members = parties.map(p => `<div style="display:flex; align-items:center; border-bottom:1px solid #222;"><span style="width:10px; height:10px; background:${p.color}; display:inline-block; margin-right:5px;"></span><label style="flex:1; margin:0; cursor:pointer;" for="c${cIdx}_p${p.id}">${p.name}</label><input type="checkbox" id="c${cIdx}_p${p.id}" ${coal.members.includes(p.id)?'checked':''} onchange="toggleCoalitionMember('${coal.id}', ${p.id}, this.checked)"></div>`).join('');
-                div.innerHTML = `<div class="card-header"><input type="text" value="${coal.name}" onchange="updateCoalition('${coal.id}', 'name', this.value)"><div class="color-input-group"><input type="text" class="hex-input" value="${coal.color}" onchange="updateCoalitionColorText(this, '${coal.id}')"><input type="color" value="${coal.color}" oninput="updateCoalitionColorPicker(this, '${coal.id}')"></div><button class="remove-btn" onclick="removeCoalition('${coal.id}')">X</button></div>
-                    <div class="ruling-selector ${coal.isRuling ? 'active' : ''}" onclick="setRuling('coalition', '${coal.id}')">[ ${coal.isRuling ? 'ACTIVE GOV' : 'SET AS GOV'} ]</div><div class="coalition-members">${members}</div>`;
+                const div = document.createElement('div');
+                div.className = `card-item ${coal.isRuling ? 'is-ruling' : ''}`;
+                div.style.borderLeftColor = coal.color;
+                
+                let memberChecks = parties.map(p => `
+                    <div style="display:flex; align-items:center; border-bottom:1px solid #222;">
+                        <span style="width:10px; height:10px; background:${p.color}; display:inline-block; margin-right:5px;"></span>
+                        <label style="flex:1; margin:0; cursor:pointer;" for="c${cIdx}_p${p.id}">${p.name}</label>
+                        <input type="checkbox" id="c${cIdx}_p${p.id}" ${coal.members.includes(p.id)?'checked':''} onchange="toggleCoalitionMember('${coal.id}', ${p.id}, this.checked)">
+                    </div>
+                `).join('');
+
+                div.innerHTML = `
+                    <div class="card-header">
+                        <input type="text" value="${coal.name}" onchange="updateCoalition('${coal.id}', 'name', this.value)">
+                        <div class="color-input-group">
+                            <input type="text" class="hex-input" value="${coal.color}" onchange="updateCoalitionColorText(this, '${coal.id}')">
+                            <input type="color" value="${coal.color}" oninput="updateCoalitionColorPicker(this, '${coal.id}')">
+                        </div>
+                        <button class="remove-btn" onclick="removeCoalition('${coal.id}')">X</button>
+                    </div>
+                    <div class="ruling-selector ${coal.isRuling ? 'active' : ''}" onclick="setRuling('coalition', '${coal.id}')">
+                         [ ${coal.isRuling ? 'ACTIVE RULING GOV' : 'SET AS GOVERNMENT'} ]
+                    </div>
+                    <div class="coalition-members">${memberChecks}</div>
+                `;
+                container.appendChild(div);
+            });
+
+            // Single Parties
+            const singleHeader = document.createElement('div');
+            singleHeader.style.marginTop = "20px"; singleHeader.style.borderTop="1px dashed #444"; singleHeader.innerText="SINGLE PARTY RULE"; singleHeader.style.color="#666";
+            container.appendChild(singleHeader);
+
+            parties.forEach(p => {
+                const div = document.createElement('div');
+                div.className = `ruling-selector ${p.isRuling ? 'active' : ''}`;
+                div.onclick = () => setRuling('party', p.id);
+                div.innerHTML = `<span style="background:${p.color}; width:8px; height:8px;"></span> ${p.name}`;
                 container.appendChild(div);
             });
         }
