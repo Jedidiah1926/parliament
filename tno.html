@@ -1,373 +1,752 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ko">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DATANET: PARLIAMENT SIMULATION</title>
+    
     <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/neodgm/neodgm-webfont@latest/neodgm/style.css">
+
     <style>
         :root {
-            --tno-bg: #101218; --tno-panel: #1a1d26; --tno-neon: #00ffff;
-            --tno-neon-dim: rgba(0,255,255,0.3); --tno-text: #e0e0e0;
-            --tno-border: #4a5a6a; --tno-alert: #ff0055; --tno-gold: #ffd700;
-            --vote-yea: #00ff88; --vote-nay: #ff2244; --vote-abs: #888888;
+            --tno-bg: #101218;
+            --tno-panel: #1a1d26;
+            --tno-neon: #00ffff;
+            --tno-neon-dim: rgba(0, 255, 255, 0.3);
+            --tno-text: #e0e0e0;
+            --tno-border: #4a5a6a;
+            --tno-alert: #ff0055;
+            --tno-gold: #ffd700;
+            --vote-yea: #00ff88;
+            --vote-nay: #ff2244;
+            --vote-abs: #888888;
         }
+
         body {
-            font-family: 'VT323', monospace;
-            background-color: var(--tno-bg); color: var(--tno-text);
-            margin: 0; padding: 20px; display: flex; gap: 20px;
-            height: 100vh; box-sizing: border-box; overflow: hidden;
-            font-size: 18px; line-height: 1.3;
+            font-family: 'NeoDunggeunmo', 'VT323', monospace;
+            background-color: var(--tno-bg);
+            color: var(--tno-text);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            gap: 20px;
+            height: 100vh;
+            box-sizing: border-box;
+            overflow: hidden;
+            font-size: 16px;
+            line-height: 1.4;
         }
+
         .lang-switch {
-            position: absolute; top: 15px; right: 20px; z-index: 2000;
-            font-family: 'VT323', monospace; color: var(--tno-neon);
-            text-decoration: none; border: 1px solid var(--tno-neon);
-            padding: 5px 12px; background: #000; text-transform: uppercase;
-            font-size: 1.2rem; cursor: pointer; transition: 0.2s;
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            z-index: 2000;
+            font-family: 'NeoDunggeunmo', 'VT323', monospace;
+            color: var(--tno-neon);
+            text-decoration: none;
+            border: 1px solid var(--tno-neon);
+            padding: 5px 12px;
+            background: #000;
+            text-transform: uppercase;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: 0.2s;
             box-shadow: 0 0 5px var(--tno-neon);
         }
-        .lang-switch:hover { background: var(--tno-neon); color: #000; }
+        .lang-switch:hover { background: var(--tno-neon); color: #000; box-shadow: 0 0 15px var(--tno-neon); }
+
         body::after {
-            content:" "; display:block; position:absolute; top:0; left:0; bottom:0; right:0;
-            background: linear-gradient(rgba(18,16,16,0) 50%,rgba(0,0,0,.25) 50%),
-                        linear-gradient(90deg,rgba(255,0,0,.06),rgba(0,255,0,.02),rgba(0,0,255,.06));
-            z-index:999; background-size:100% 2px,3px 100%; pointer-events:none;
+            content: " ";
+            display: block;
+            position: absolute;
+            top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            z-index: 999;
+            background-size: 100% 2px, 3px 100%;
+            pointer-events: none;
         }
-        ::-webkit-scrollbar{width:10px;background:#000}
-        ::-webkit-scrollbar-thumb{background:var(--tno-border);border:1px solid var(--tno-neon)}
-        ::-webkit-scrollbar-thumb:hover{background:var(--tno-neon)}
+
+        ::-webkit-scrollbar { width: 10px; background: #000; }
+        ::-webkit-scrollbar-thumb { background: var(--tno-border); border: 1px solid var(--tno-neon); }
+        ::-webkit-scrollbar-thumb:hover { background: var(--tno-neon); }
+
         .controls {
-            flex: 0 0 400px; background: var(--tno-panel);
-            border: 2px solid var(--tno-border); display: flex;
-            flex-direction: column; box-shadow: 0 0 15px rgba(0,255,255,.1);
+            flex: 0 0 400px;
+            background: var(--tno-panel);
+            border: 2px solid var(--tno-border);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.1);
         }
+        
         .tno-header-strip {
-            background: repeating-linear-gradient(45deg,#000,#000 10px,#222 10px,#222 20px);
-            color: var(--tno-neon); padding: 12px 15px; border-bottom: 2px solid var(--tno-neon);
-            text-align: center; font-size: 1.3rem; letter-spacing: 2px;
-            text-shadow: 0 0 5px var(--tno-neon); text-transform: uppercase;
+            background: repeating-linear-gradient(45deg, #000, #000 10px, #222 10px, #222 20px);
+            color: var(--tno-neon);
+            padding: 12px 15px;
+            border-bottom: 2px solid var(--tno-neon);
+            text-align: center;
+            font-size: 1.2rem;
+            letter-spacing: 1px;
+            text-shadow: 0 0 5px var(--tno-neon);
+            text-transform: uppercase;
         }
-        .controls-content { padding: 15px; overflow-y: auto; flex: 1; }
-        .display-area { flex: 1; display: flex; flex-direction: column; gap: 20px; overflow-y: auto; padding-right: 5px; }
+
+        .controls-content {
+            padding: 15px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .display-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            overflow-y: auto;
+            padding-right: 5px;
+        }
+
         .chamber-box {
-            background: var(--tno-panel); border: 2px solid var(--tno-border);
-            padding: 15px; position: relative;
+            background: var(--tno-panel);
+            border: 2px solid var(--tno-border);
+            padding: 15px;
+            position: relative;
         }
-        .chamber-box::before { content:''; position:absolute; top:-2px; left:-2px; width:20px; height:20px; border-top:2px solid var(--tno-neon); border-left:2px solid var(--tno-neon); }
-        .chamber-box::after  { content:''; position:absolute; bottom:-2px; right:-2px; width:20px; height:20px; border-bottom:2px solid var(--tno-neon); border-right:2px solid var(--tno-neon); }
-        h2,h3,h4 { margin:0; text-transform:uppercase; font-weight:normal; }
-        h3 { border-bottom:1px solid var(--tno-border); padding-bottom:5px; margin-bottom:10px; color:var(--tno-neon); letter-spacing:2px; font-size:1.4rem; }
-        label { color:#aaa; display:block; margin-bottom:5px; font-size:1rem; }
-        input,select,button,textarea { font-family:'VT323',monospace; }
-        input[type="text"],input[type="number"],select {
-            background:#000; border:1px solid var(--tno-border); color:var(--tno-neon);
-            font-size:1.1rem; padding:5px 10px; width:100%; box-sizing:border-box; border-radius:0;
+        .chamber-box::before {
+            content: ''; position: absolute; top: -2px; left: -2px; width: 20px; height: 20px;
+            border-top: 2px solid var(--tno-neon); border-left: 2px solid var(--tno-neon);
         }
-        input:focus,select:focus { outline:none; border-color:var(--tno-neon); box-shadow:0 0 5px var(--tno-neon-dim); }
-        input[type="checkbox"],input[type="radio"] { accent-color:var(--tno-neon); width:16px; height:16px; cursor:pointer; }
+        .chamber-box::after {
+            content: ''; position: absolute; bottom: -2px; right: -2px; width: 20px; height: 20px;
+            border-bottom: 2px solid var(--tno-neon); border-right: 2px solid var(--tno-neon);
+        }
 
-        /* ===== 2-LEVEL TABS ===== */
-        .main-tab-container { display:flex; border-bottom:2px solid var(--tno-neon); }
+        h2, h3, h4 { margin: 0; text-transform: uppercase; font-weight: normal; }
+        h3 { 
+            border-bottom: 1px solid var(--tno-border); 
+            padding-bottom: 5px; margin-bottom: 10px; 
+            color: var(--tno-neon);
+            letter-spacing: 1px;
+            font-size: 1.2rem;
+        }
+
+        label { color: #aaa; display: block; margin-bottom: 5px; font-size: 0.95rem; }
+        
+        input, select, button, textarea {
+            font-family: 'NeoDunggeunmo', 'VT323', monospace;
+        }
+        
+        input[type="text"], input[type="number"], select {
+            background: #000;
+            border: 1px solid var(--tno-border);
+            color: var(--tno-neon);
+            font-size: 1rem;
+            padding: 6px 10px;
+            width: 100%;
+            box-sizing: border-box;
+            border-radius: 0;
+        }
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--tno-neon);
+            box-shadow: 0 0 5px var(--tno-neon-dim);
+        }
+
+        input[type="checkbox"], input[type="radio"] {
+            accent-color: var(--tno-neon);
+            width: 16px; height: 16px; cursor: pointer;
+        }
+
+        /* ===== 2단 탭 ===== */
+        .main-tab-container {
+            display: flex;
+            border-bottom: 2px solid var(--tno-neon);
+            margin-bottom: 0;
+        }
         .main-tab-btn {
-            flex:1; background:transparent; color:#555; border:1px solid transparent;
-            border-bottom:none; padding:9px 6px; cursor:pointer; font-size:1rem;
-            font-family:'VT323',monospace; letter-spacing:1px; transition:0.2s; text-transform:uppercase;
+            flex: 1;
+            background: transparent;
+            color: #555;
+            border: 1px solid transparent;
+            border-bottom: none;
+            padding: 9px 6px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-family: 'NeoDunggeunmo', 'VT323', monospace;
+            letter-spacing: 1px;
+            transition: 0.2s;
+            text-transform: uppercase;
         }
-        .main-tab-btn:hover { color:var(--tno-neon); }
-        .main-tab-btn.active { background:rgba(0,255,255,.07); color:var(--tno-neon); border-color:var(--tno-neon); border-bottom-color:var(--tno-panel); text-shadow:0 0 6px var(--tno-neon); }
-        .main-tab-content { display:none; }
-        .main-tab-content.active { display:block; }
-        .sub-tab-container { display:flex; border-bottom:1px solid var(--tno-border); margin-bottom:12px; margin-top:10px; background:#0a0c10; }
-        .sub-tab-btn { flex:1; background:transparent; color:#555; border:none; border-bottom:2px solid transparent; padding:6px 4px; cursor:pointer; font-size:1rem; font-family:'VT323',monospace; transition:0.15s; }
-        .sub-tab-btn:hover { color:#aaa; }
-        .sub-tab-btn.active { color:var(--tno-neon); border-bottom-color:var(--tno-neon); }
-        .sub-tab-content { display:none; }
-        .sub-tab-content.active { display:block; animation:flicker .15s; }
-        @keyframes flicker { 0%{opacity:.8} 100%{opacity:1} }
+        .main-tab-btn:hover { color: var(--tno-neon); }
+        .main-tab-btn.active {
+            background: rgba(0,255,255,0.07);
+            color: var(--tno-neon);
+            border-color: var(--tno-neon);
+            border-bottom-color: var(--tno-panel);
+            text-shadow: 0 0 6px var(--tno-neon);
+        }
 
-        .card-item { background:#0d0f14; border:1px solid #333; border-left-width:5px; padding:10px; margin-bottom:10px; }
-        .card-item.is-ruling { border-color:var(--tno-gold); box-shadow:inset 0 0 10px rgba(255,215,0,.2); }
-        .card-header { display:flex; gap:5px; align-items:center; margin-bottom:5px; }
-        button { text-transform:uppercase; cursor:pointer; border-radius:0; }
-        .add-btn { background:transparent; border:1px dashed var(--tno-border); color:#888; padding:8px; width:100%; margin-top:10px; font-size:1rem; }
-        .add-btn:hover { border-color:var(--tno-neon); color:var(--tno-neon); background:rgba(0,255,255,.1); }
-        .remove-btn { background:transparent; border:1px solid #555; color:#555; font-size:1rem; padding:2px 8px; }
-        .remove-btn:hover { border-color:var(--tno-alert); color:var(--tno-alert); background:rgba(255,0,85,.1); }
-        .simulate-btn { background:var(--tno-neon); color:#000; font-weight:bold; border:none; width:100%; padding:15px; font-size:1.5rem; letter-spacing:3px; margin-top:20px; box-shadow:0 0 10px var(--tno-neon); }
-        .simulate-btn:hover { background:#fff; box-shadow:0 0 20px var(--tno-neon); }
-        .color-input-group { display:flex; gap:2px; }
-        input.hex-input { width:70px!important; text-align:center; }
-        input[type="color"] { border:1px solid #555; width:30px; height:30px; padding:0; background:none; }
-        .stat-block { background:#000; border:1px solid #333; border-left-width:5px; padding:10px; margin-bottom:5px; display:flex; flex-direction:column; gap:5px; }
-        .legend-pill { background:#222; padding:2px 6px; font-size:1rem; border:1px solid #444; display:inline-flex; align-items:center; gap:5px; margin-right:5px; margin-top:3px; }
-        canvas { display:block; background:radial-gradient(circle,#1a202c 0%,#000 90%); border:1px solid #333; width:100%; height:auto; cursor:pointer; }
-        .ruling-selector { border:1px solid #333; padding:5px; margin-bottom:5px; cursor:pointer; display:flex; align-items:center; gap:10px; background:#050505; }
-        .ruling-selector:hover { border-color:#666; }
-        .ruling-selector.active { border-color:var(--tno-gold); color:var(--tno-gold); background:rgba(255,215,0,.05); }
-        .coalition-members { background:#000; border:1px solid #333; padding:5px; margin-top:5px; max-height:100px; overflow-y:auto; }
-        .order-btn { background:#222; color:#fff; border:1px solid #444; font-size:0.9rem; padding:0 4px; }
+        .main-tab-content { display: none; }
+        .main-tab-content.active { display: block; }
+
+        .sub-tab-container {
+            display: flex;
+            border-bottom: 1px solid var(--tno-border);
+            margin-bottom: 12px;
+            margin-top: 10px;
+            background: #0a0c10;
+        }
+        .sub-tab-btn {
+            flex: 1;
+            background: transparent;
+            color: #555;
+            border: none;
+            border-bottom: 2px solid transparent;
+            padding: 6px 4px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-family: 'NeoDunggeunmo', 'VT323', monospace;
+            transition: 0.15s;
+        }
+        .sub-tab-btn:hover { color: #aaa; }
+        .sub-tab-btn.active {
+            color: var(--tno-neon);
+            border-bottom-color: var(--tno-neon);
+        }
+
+        .sub-tab-content { display: none; }
+        .sub-tab-content.active { display: block; animation: flicker 0.15s; }
+        @keyframes flicker { 0% { opacity: 0.8; } 100% { opacity: 1; } }
+
+        .card-item {
+            background: #0d0f14;
+            border: 1px solid #333;
+            border-left-width: 5px;
+            padding: 10px;
+            margin-bottom: 10px;
+            position: relative;
+        }
+        .card-item.is-ruling {
+            border-color: var(--tno-gold);
+            box-shadow: inset 0 0 10px rgba(255, 215, 0, 0.2);
+        }
+        .card-header { display: flex; gap: 5px; align-items: center; margin-bottom: 5px; }
+
+        button { text-transform: uppercase; cursor: pointer; border-radius: 0; }
+        
+        .add-btn {
+            background: transparent; border: 1px dashed var(--tno-border); color: #888;
+            padding: 8px; width: 100%; margin-top: 10px; font-size: 1rem;
+        }
+        .add-btn:hover { border-color: var(--tno-neon); color: var(--tno-neon); background: rgba(0,255,255,0.1); }
+        
+        .remove-btn {
+            background: transparent; border: 1px solid #555; color: #555; font-size: 1rem; padding: 2px 8px;
+        }
+        .remove-btn:hover { border-color: var(--tno-alert); color: var(--tno-alert); background: rgba(255,0,85,0.1); }
+
+        .simulate-btn {
+            background: var(--tno-neon); color: #000; font-weight: bold;
+            border: none; width: 100%; padding: 15px; font-size: 1.4rem; letter-spacing: 2px;
+            margin-top: 20px;
+            box-shadow: 0 0 10px var(--tno-neon);
+        }
+        .simulate-btn:hover { background: #fff; box-shadow: 0 0 20px var(--tno-neon); }
+
+        .color-input-group { display: flex; gap: 2px; }
+        input.hex-input { width: 70px !important; text-align: center; }
+        input[type="color"] { border: 1px solid #555; width: 30px; height: 30px; padding: 0; background: none; }
+
+        .stat-block {
+            background: #000; border: 1px solid #333; border-left-width: 5px;
+            padding: 10px; margin-bottom: 5px;
+            display: flex; flex-direction: column; gap: 5px;
+        }
+        .legend-pill {
+            background: #222; padding: 2px 6px; font-size: 0.9rem; border: 1px solid #444; display: inline-flex; align-items: center; gap: 5px; margin-right: 5px; margin-top: 3px;
+        }
+
+        canvas {
+            display: block;
+            background: radial-gradient(circle, #1a202c 0%, #000 90%);
+            border: 1px solid #333;
+            width: 100%; height: auto;
+            cursor: pointer;
+        }
+
+        .ruling-selector {
+            border: 1px solid #333; padding: 5px; margin-bottom: 5px; cursor: pointer;
+            display: flex; align-items: center; gap: 10px; background: #050505;
+        }
+        .ruling-selector:hover { border-color: #666; }
+        .ruling-selector.active { border-color: var(--tno-gold); color: var(--tno-gold); background: rgba(255, 215, 0, 0.05); }
+
+        .coalition-members { background: #000; border: 1px solid #333; padding: 5px; margin-top: 5px; max-height: 100px; overflow-y: auto; }
+        
+        .order-btn { background: #222; color: #fff; border: 1px solid #444; font-size: 0.8rem; padding: 0 4px; }
 
         /* ===== VOTE UI ===== */
-        .vote-panel { background:#000; border:2px solid #333; padding:12px; margin-bottom:12px; }
-        .vote-panel-title { color:var(--tno-neon); font-size:1.1rem; letter-spacing:1px; border-bottom:1px solid #333; padding-bottom:6px; margin-bottom:10px; }
-        .vote-bill-input { background:#000; border:1px solid var(--tno-border); color:var(--tno-gold); font-size:1rem; padding:6px 10px; width:100%; box-sizing:border-box; margin-bottom:8px; }
-        .vote-btn-row { display:flex; gap:6px; margin-top:6px; }
-        .vote-ctrl-btn { flex:1; padding:7px 4px; font-size:1rem; font-family:'VT323',monospace; border:1px solid; background:transparent; cursor:pointer; letter-spacing:1px; transition:0.15s; }
-        .vote-ctrl-btn.yea { border-color:var(--vote-yea); color:var(--vote-yea); }
-        .vote-ctrl-btn.nay { border-color:var(--vote-nay); color:var(--vote-nay); }
-        .vote-ctrl-btn.abs { border-color:var(--vote-abs); color:var(--vote-abs); }
-        .vote-ctrl-btn.clr { border-color:#555; color:#888; }
-        .vote-ctrl-btn:hover { opacity:.7; }
-        .vote-ctrl-btn.yea:hover { background:rgba(0,255,136,.15); }
-        .vote-ctrl-btn.nay:hover { background:rgba(255,34,68,.15); }
-        .vote-ctrl-btn.abs:hover { background:rgba(136,136,136,.15); }
-        .vote-ctrl-btn.clr:hover { background:rgba(100,100,100,.15); }
-        .vote-hint { font-size:0.9rem; color:#555; margin-top:6px; line-height:1.5; }
-        .vote-result-wrap { margin-top:10px; border:1px solid #222; padding:10px; background:#050505; }
-        .vote-result-title { font-size:1rem; color:#888; margin-bottom:6px; letter-spacing:1px; }
-        .vote-bar-outer { height:18px; background:#111; border:1px solid #333; display:flex; overflow:hidden; margin-bottom:6px; }
-        .vote-bar-yea { background:var(--vote-yea); transition:width .3s; }
-        .vote-bar-nay { background:var(--vote-nay); transition:width .3s; }
-        .vote-bar-abs { background:var(--vote-abs); transition:width .3s; }
-        .vote-bar-none { background:#222; transition:width .3s; }
-        .vote-counts { display:flex; gap:12px; font-size:1rem; }
-        .vc-yea{color:var(--vote-yea)} .vc-nay{color:var(--vote-nay)} .vc-abs{color:var(--vote-abs)} .vc-none{color:#444}
-        .vote-verdict { margin-top:8px; font-size:1.2rem; text-align:center; letter-spacing:2px; padding:4px; border:1px solid #333; }
-        .verdict-pass { color:var(--vote-yea); border-color:var(--vote-yea); text-shadow:0 0 8px var(--vote-yea); }
-        .verdict-fail { color:var(--vote-nay); border-color:var(--vote-nay); text-shadow:0 0 8px var(--vote-nay); }
-        .verdict-pending { color:#555; border-color:#333; }
+        .vote-panel {
+            background: #000;
+            border: 2px solid #333;
+            padding: 12px;
+            margin-bottom: 12px;
+        }
+        .vote-panel-title {
+            color: var(--tno-neon);
+            font-size: 1.1rem;
+            letter-spacing: 1px;
+            border-bottom: 1px solid #333;
+            padding-bottom: 6px;
+            margin-bottom: 10px;
+        }
+        .vote-bill-input {
+            background: #000;
+            border: 1px solid var(--tno-border);
+            color: var(--tno-gold);
+            font-size: 1rem;
+            padding: 6px 10px;
+            width: 100%;
+            box-sizing: border-box;
+            margin-bottom: 8px;
+        }
+        .vote-btn-row {
+            display: flex;
+            gap: 6px;
+            margin-top: 6px;
+        }
+        .vote-ctrl-btn {
+            flex: 1;
+            padding: 7px 4px;
+            font-size: 0.95rem;
+            font-family: 'NeoDunggeunmo', 'VT323', monospace;
+            border: 1px solid;
+            background: transparent;
+            cursor: pointer;
+            letter-spacing: 1px;
+            transition: 0.15s;
+        }
+        .vote-ctrl-btn.yea  { border-color: var(--vote-yea); color: var(--vote-yea); }
+        .vote-ctrl-btn.nay  { border-color: var(--vote-nay); color: var(--vote-nay); }
+        .vote-ctrl-btn.abs  { border-color: var(--vote-abs); color: var(--vote-abs); }
+        .vote-ctrl-btn.clr  { border-color: #555; color: #888; }
+        .vote-ctrl-btn:hover { opacity: 0.7; }
+        .vote-ctrl-btn.yea:hover  { background: rgba(0,255,136,0.15); }
+        .vote-ctrl-btn.nay:hover  { background: rgba(255,34,68,0.15); }
+        .vote-ctrl-btn.abs:hover  { background: rgba(136,136,136,0.15); }
+        .vote-ctrl-btn.clr:hover  { background: rgba(100,100,100,0.15); }
 
-        /* BULK VOTE */
-        .bulk-party-row { display:flex; align-items:center; gap:5px; padding:5px 4px; border-bottom:1px solid #1a1a1a; }
-        .bulk-party-row:last-child { border-bottom:none; }
-        .bulk-party-dot { width:10px; height:10px; flex-shrink:0; border-radius:50%; }
-        .bulk-party-name { flex:1; font-size:1rem; color:#ccc; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-        .bulk-vote-btn { padding:3px 7px; font-size:0.9rem; font-family:'VT323',monospace; border:1px solid; background:transparent; cursor:pointer; transition:0.12s; }
-        .bulk-vote-btn.yea{border-color:var(--vote-yea);color:var(--vote-yea)}
-        .bulk-vote-btn.nay{border-color:var(--vote-nay);color:var(--vote-nay)}
-        .bulk-vote-btn.abs{border-color:var(--vote-abs);color:var(--vote-abs)}
-        .bulk-vote-btn.clr{border-color:#444;color:#666}
-        .bulk-vote-btn.yea:hover{background:rgba(0,255,136,.18)}
-        .bulk-vote-btn.nay:hover{background:rgba(255,34,68,.18)}
-        .bulk-vote-btn.abs:hover{background:rgba(136,136,136,.18)}
-        .bulk-vote-btn.clr:hover{background:rgba(80,80,80,.18)}
-        .bulk-vote-btn.active-yea{background:rgba(0,255,136,.25);font-weight:bold}
-        .bulk-vote-btn.active-nay{background:rgba(255,34,68,.25);font-weight:bold}
-        .bulk-vote-btn.active-abs{background:rgba(136,136,136,.25);font-weight:bold}
+        .vote-hint {
+            font-size: 0.85rem;
+            color: #555;
+            margin-top: 6px;
+            line-height: 1.5;
+        }
 
-        /* BILL CARDS */
-        .bill-card { background:#080b10; border:1px solid #2a2a2a; border-left:4px solid #333; padding:10px 12px; margin-bottom:8px; transition:border-color .15s; }
-        .bill-card:hover { border-color:var(--tno-neon); }
-        .bill-card.selected { border-left-color:var(--tno-neon); background:rgba(0,255,255,.04); }
-        .bill-card-title { font-size:1.1rem; color:var(--tno-gold); margin-bottom:4px; display:flex; align-items:center; gap:8px; }
-        .bill-card-body { font-size:0.85rem; color:#666; line-height:1.5; white-space:pre-wrap; max-height:60px; overflow:hidden; }
-        .bill-card-footer { display:flex; gap:6px; margin-top:7px; align-items:center; flex-wrap:wrap; }
-        .bill-status-badge { font-size:0.85rem; padding:2px 8px; border:1px solid; letter-spacing:1px; }
-        .bill-status-badge.pending{border-color:#444;color:#666}
-        .bill-status-badge.house-pass{border-color:#3a7a3a;color:#4caf50;background:rgba(76,175,80,.08)}
-        .bill-status-badge.house-fail{border-color:#7a2a2a;color:#ef5350;background:rgba(239,83,80,.08)}
-        .bill-status-badge.senate-pass{border-color:#2a5a7a;color:#42a5f5;background:rgba(66,165,245,.08)}
-        .bill-status-badge.senate-fail{border-color:#5a2a7a;color:#ab47bc;background:rgba(171,71,188,.08)}
-        .bill-status-badge.passed{border-color:var(--vote-yea);color:var(--vote-yea);background:rgba(0,255,136,.08);text-shadow:0 0 5px var(--vote-yea)}
-        .bill-status-badge.failed{border-color:var(--vote-nay);color:var(--vote-nay);background:rgba(255,34,68,.08);text-shadow:0 0 5px var(--vote-nay)}
-        .bill-select-btn { margin-left:auto; font-size:0.9rem; padding:2px 8px; border:1px solid var(--tno-neon); color:var(--tno-neon); background:transparent; cursor:pointer; font-family:'VT323',monospace; }
-        .bill-select-btn:hover { background:rgba(0,255,255,.1); }
-        .bill-remove-btn { font-size:0.9rem; padding:2px 6px; border:1px solid #333; color:#555; background:transparent; cursor:pointer; font-family:'VT323',monospace; }
-        .bill-remove-btn:hover { border-color:var(--tno-alert); color:var(--tno-alert); }
+        /* Vote Result Bar */
+        .vote-result-wrap {
+            margin-top: 10px;
+            border: 1px solid #222;
+            padding: 10px;
+            background: #050505;
+        }
+        .vote-result-title {
+            font-size: 0.9rem;
+            color: #888;
+            margin-bottom: 6px;
+            letter-spacing: 1px;
+        }
+        .vote-bar-outer {
+            height: 18px;
+            background: #111;
+            border: 1px solid #333;
+            display: flex;
+            overflow: visible;
+            margin-bottom: 6px;
+            margin-top: 22px;
+            position: relative;
+        }
+        .vote-bar-yea { background: var(--vote-yea); transition: width 0.3s; }
+        .vote-bar-nay { background: var(--vote-nay); transition: width 0.3s; }
+        .vote-bar-abs { background: var(--vote-abs); transition: width 0.3s; }
+        .vote-bar-none { background: #222; transition: width 0.3s; }
+        .vote-counts {
+            display: flex;
+            gap: 12px;
+            font-size: 1rem;
+        }
+        .vc-yea { color: var(--vote-yea); }
+        .vc-nay { color: var(--vote-nay); }
+        .vc-abs { color: var(--vote-abs); }
+        .vc-none { color: #444; }
+        .vote-verdict {
+            margin-top: 8px;
+            font-size: 1.2rem;
+            text-align: center;
+            letter-spacing: 2px;
+            padding: 4px;
+            border: 1px solid #333;
+        }
+        .verdict-pass { color: var(--vote-yea); border-color: var(--vote-yea); text-shadow: 0 0 8px var(--vote-yea); }
+        .verdict-fail { color: var(--vote-nay); border-color: var(--vote-nay); text-shadow: 0 0 8px var(--vote-nay); }
+        .verdict-pending { color: #555; border-color: #333; }
 
-        .tooltip-box { position:fixed; background:#000; border:1px solid var(--tno-neon); color:var(--tno-neon); font-family:'VT323',monospace; font-size:1rem; padding:4px 10px; pointer-events:none; z-index:5000; display:none; white-space:nowrap; }
+        /* 내보내기 버튼 */
+        .vote-mode-active canvas {
+            box-shadow: 0 0 12px rgba(0, 255, 136, 0.3);
+        }
+
+        /* Bulk party row */
+        .bulk-party-row {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 5px 4px;
+            border-bottom: 1px solid #1a1a1a;
+        }
+        .bulk-party-row:last-child { border-bottom: none; }
+        .bulk-party-dot {
+            width: 10px; height: 10px; flex-shrink: 0; border-radius: 50%;
+        }
+        .bulk-party-name {
+            flex: 1; font-size: 0.9rem; color: #ccc;
+            overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+        }
+        .bulk-vote-btn {
+            padding: 3px 7px;
+            font-size: 0.8rem;
+            font-family: 'NeoDunggeunmo', 'VT323', monospace;
+            border: 1px solid;
+            background: transparent;
+            cursor: pointer;
+            transition: 0.12s;
+        }
+        .bulk-vote-btn.yea { border-color: var(--vote-yea); color: var(--vote-yea); }
+        .bulk-vote-btn.nay { border-color: var(--vote-nay); color: var(--vote-nay); }
+        .bulk-vote-btn.abs { border-color: var(--vote-abs); color: var(--vote-abs); }
+        .bulk-vote-btn.clr { border-color: #444; color: #666; }
+        .bulk-vote-btn.yea:hover { background: rgba(0,255,136,0.18); }
+        .bulk-vote-btn.nay:hover { background: rgba(255,34,68,0.18); }
+        .bulk-vote-btn.abs:hover { background: rgba(136,136,136,0.18); }
+        .bulk-vote-btn.clr:hover { background: rgba(80,80,80,0.18); }
+        .bulk-vote-btn.active-yea { background: rgba(0,255,136,0.25); font-weight: bold; }
+        .bulk-vote-btn.active-nay { background: rgba(255,34,68,0.25); font-weight: bold; }
+        .bulk-vote-btn.active-abs { background: rgba(136,136,136,0.25); font-weight: bold; }
+
+        /* ===== BILL CARD ===== */
+        .bill-card {
+            background: #080b10;
+            border: 1px solid #2a2a2a;
+            border-left: 4px solid #333;
+            padding: 10px 12px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: border-color 0.15s;
+            position: relative;
+        }
+        .bill-card:hover { border-color: var(--tno-neon); }
+        .bill-card.selected { border-left-color: var(--tno-neon); background: rgba(0,255,255,0.04); }
+        .bill-card-title {
+            font-size: 1rem;
+            color: var(--tno-gold);
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .bill-card-body {
+            font-size: 0.8rem;
+            color: #666;
+            line-height: 1.5;
+            white-space: pre-wrap;
+            max-height: 60px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .bill-card-footer {
+            display: flex;
+            gap: 6px;
+            margin-top: 7px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .bill-status-badge {
+            font-size: 0.8rem;
+            padding: 2px 8px;
+            border: 1px solid;
+            letter-spacing: 1px;
+        }
+        .bill-status-badge.pending { border-color: #444; color: #666; }
+        .bill-status-badge.house-pass { border-color: #3a7a3a; color: #4caf50; background: rgba(76,175,80,0.08); }
+        .bill-status-badge.house-fail { border-color: #7a2a2a; color: #ef5350; background: rgba(239,83,80,0.08); }
+        .bill-status-badge.senate-pass { border-color: #2a5a7a; color: #42a5f5; background: rgba(66,165,245,0.08); }
+        .bill-status-badge.senate-fail { border-color: #5a2a7a; color: #ab47bc; background: rgba(171,71,188,0.08); }
+        .bill-status-badge.passed { border-color: var(--vote-yea); color: var(--vote-yea); background: rgba(0,255,136,0.08); text-shadow: 0 0 5px var(--vote-yea); }
+        .bill-status-badge.failed { border-color: var(--vote-nay); color: var(--vote-nay); background: rgba(255,34,68,0.08); text-shadow: 0 0 5px var(--vote-nay); }
+        .bill-select-btn {
+            margin-left: auto;
+            font-size: 0.8rem;
+            padding: 2px 8px;
+            border: 1px solid var(--tno-neon);
+            color: var(--tno-neon);
+            background: transparent;
+            cursor: pointer;
+            font-family: 'NeoDunggeunmo','VT323',monospace;
+        }
+        .bill-select-btn:hover { background: rgba(0,255,255,0.1); }
+        .bill-remove-btn {
+            font-size: 0.8rem;
+            padding: 2px 6px;
+            border: 1px solid #333;
+            color: #555;
+            background: transparent;
+            cursor: pointer;
+            font-family: 'NeoDunggeunmo','VT323',monospace;
+        }
+        .bill-remove-btn:hover { border-color: var(--tno-alert); color: var(--tno-alert); }
+
+        .tooltip-box {
+            position: fixed;
+            background: #000;
+            border: 1px solid var(--tno-neon);
+            color: var(--tno-neon);
+            font-family: 'NeoDunggeunmo', 'VT323', monospace;
+            font-size: 0.9rem;
+            padding: 4px 10px;
+            pointer-events: none;
+            z-index: 5000;
+            display: none;
+            white-space: nowrap;
+        }
     </style>
 </head>
 <body>
 
-    <a href="tno_kor.html" class="lang-switch">>> SWITCH TO KOREAN</a>
+    <a href="tno.html" class="lang-switch">>> 베타 버전 체험하기</a>
+
+    <!-- Tooltip -->
     <div class="tooltip-box" id="tooltipBox"></div>
 
     <div class="controls">
         <div class="tno-header-strip">Ministry of Interior</div>
+        
         <div class="controls-content">
-            <div style="display:flex;gap:15px;margin-bottom:15px;border-bottom:1px solid #333;padding-bottom:10px;">
-                <label style="cursor:pointer;color:#fff;"><input type="radio" name="systemType" value="bicameral" checked onchange="toggleSystem()"> BICAMERAL</label>
-                <label style="cursor:pointer;color:#fff;"><input type="radio" name="systemType" value="unicameral" onchange="toggleSystem()"> UNICAMERAL</label>
+            <div style="display:flex; gap:15px; margin-bottom: 15px; border-bottom:1px solid #333; padding-bottom:10px;">
+                <label style="cursor:pointer; color:#fff;"><input type="radio" name="systemType" value="bicameral" checked onchange="toggleSystem()"> 양원제(BICAMERAL)</label>
+                <label style="cursor:pointer; color:#fff;"><input type="radio" name="systemType" value="unicameral" onchange="toggleSystem()"> 단원제(UNICAMERAL)</label>
             </div>
-            <label style="cursor:pointer;margin-bottom:15px;">
-                <input type="checkbox" id="chkGovHighlight" onchange="simulate()" checked>
-                <span style="color:var(--tno-gold);text-shadow:0 0 5px var(--tno-gold);">HIGHLIGHT GOVERNMENT</span>
+            
+            <label style="cursor:pointer; margin-bottom:8px;">
+                <input type="checkbox" id="chkGovHighlight" onchange="simulate()" checked> 
+                <span style="color:var(--tno-gold); text-shadow:0 0 5px var(--tno-gold);">집권 세력 강조 (HIGHLIGHT GOV)</span>
             </label>
 
-            <!-- MAIN TABS -->
+
+            <!-- ===== 상단 메인 탭 ===== -->
             <div class="main-tab-container">
-                <button class="main-tab-btn active" onclick="switchMainTab('setup')" id="mainTabSetup">⚙ PARLIAMENT</button>
-                <button class="main-tab-btn" onclick="switchMainTab('legislation')" id="mainTabLegislation">⚖ LEGISLATION</button>
+                <button class="main-tab-btn active" onclick="switchMainTab('setup')" id="mainTabSetup">⚙ 의회 설정</button>
+                <button class="main-tab-btn" onclick="switchMainTab('legislation')" id="mainTabLegislation">⚖ 입법 절차</button>
             </div>
 
-            <!-- PARLIAMENT SETUP GROUP -->
+            <!-- ===== 의회 설정 그룹 ===== -->
             <div id="mainContentSetup" class="main-tab-content active">
                 <div class="sub-tab-container">
-                    <button class="sub-tab-btn active" onclick="switchSubTab('setup','ideology')" id="subTabIdeology">IDEOLOGY</button>
-                    <button class="sub-tab-btn" onclick="switchSubTab('setup','house')" id="subTabHouse">HOUSE</button>
-                    <button class="sub-tab-btn" onclick="switchSubTab('setup','senate')" id="subTabSenate">SENATE</button>
-                    <button class="sub-tab-btn" onclick="switchSubTab('setup','coalition')" id="subTabCoalition">COALITION</button>
+                    <button class="sub-tab-btn active" onclick="switchSubTab('setup','ideology')" id="subTabIdeology">이념</button>
+                    <button class="sub-tab-btn" onclick="switchSubTab('setup','house')" id="subTabHouse">하원</button>
+                    <button class="sub-tab-btn" onclick="switchSubTab('setup','senate')" id="subTabSenate">상원</button>
+                    <button class="sub-tab-btn" onclick="switchSubTab('setup','coalition')" id="subTabCoalition">연정</button>
                 </div>
 
                 <div id="contentIdeology" class="sub-tab-content active">
                     <div id="ideologyList"></div>
-                    <button class="add-btn" onclick="addIdeology()">[+] ADD IDEOLOGY</button>
-                    <button class="add-btn" style="border-style:solid;font-size:0.9rem;" onclick="addIndependentIdeology()">[+] ADD INDEPENDENT SLOT</button>
+                    <button class="add-btn" onclick="addIdeology()">[+] 이념 추가</button>
+                    <button class="add-btn" style="border-style:solid; font-size:0.9rem;" onclick="addIndependentIdeology()">[+] 무소속 슬롯 추가</button>
                 </div>
 
                 <div id="contentHouse" class="sub-tab-content">
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;padding:10px;background:#0a0c10;border:1px solid #2a2a2a;">
+                    <!-- 하원 이름/의석 설정 -->
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:12px; padding:10px; background:#0a0c10; border:1px solid #2a2a2a;">
                         <div>
-                            <label id="houseNameLabel" style="color:var(--tno-neon);font-size:0.9rem;">CHAMBER NAME</label>
-                            <input type="text" id="houseNameInput" value="House" oninput="updateNames()">
+                            <label id="houseNameLabel" style="color:var(--tno-neon); font-size:0.85rem;">의회 명칭</label>
+                            <input type="text" id="houseNameInput" value="국회" oninput="updateNames()">
                         </div>
                         <div>
-                            <label style="color:var(--tno-neon);font-size:0.9rem;">TOTAL SEATS</label>
+                            <label style="color:var(--tno-neon); font-size:0.85rem;">총 의석 수</label>
                             <input type="number" id="houseTotal" value="300">
                         </div>
                     </div>
                     <div id="partyListHouse"></div>
-                    <button class="add-btn" onclick="addParty()">[+] ADD PARTY</button>
-                    <button class="add-btn" style="border-style:solid;font-size:0.9rem;" onclick="addIndependentParty()">[+] ADD INDEPENDENT MP</button>
+                    <button class="add-btn" onclick="addParty()">[+] 정당 추가</button>
+                    <button class="add-btn" style="border-style:solid; font-size:0.9rem;" onclick="addIndependentParty()">[+] 무소속 의원 추가</button>
                 </div>
 
-                <div id="contentSenate" class="sub-tab-content">
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;padding:10px;background:#0a0c10;border:1px solid #2a2a2a;">
+                <div id="contentSenate" class="sub-tab-content" id="senateConfig">
+                    <!-- 상원 이름/의석 설정 -->
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:12px; padding:10px; background:#0a0c10; border:1px solid #2a2a2a;">
                         <div>
-                            <label style="color:var(--tno-neon);font-size:0.9rem;">CHAMBER NAME</label>
-                            <input type="text" id="senateNameInput" value="Senate" oninput="updateNames()">
+                            <label style="color:var(--tno-neon); font-size:0.85rem;">의회 명칭</label>
+                            <input type="text" id="senateNameInput" value="상원" oninput="updateNames()">
                         </div>
                         <div>
-                            <label style="color:var(--tno-neon);font-size:0.9rem;">TOTAL SEATS</label>
+                            <label style="color:var(--tno-neon); font-size:0.85rem;">총 의석 수</label>
                             <input type="number" id="senateTotal" value="100">
                         </div>
                     </div>
                     <div id="partyListSenate"></div>
-                    <button class="add-btn" onclick="addParty()">[+] ADD PARTY</button>
+                    <button class="add-btn" onclick="addParty()">[+] 정당 추가</button>
                 </div>
 
                 <div id="contentCoalition" class="sub-tab-content">
                     <div id="coalitionList"></div>
-                    <button class="add-btn" onclick="addCoalition()">[+] FORM COALITION</button>
+                    <button class="add-btn" onclick="addCoalition()">[+] 연정 구성</button>
                 </div>
             </div>
 
-            <!-- LEGISLATION GROUP -->
+            <!-- ===== 입법 절차 그룹 ===== -->
             <div id="mainContentLegislation" class="main-tab-content">
                 <div class="sub-tab-container">
-                    <button class="sub-tab-btn active" onclick="switchSubTab('legislation','bill')" id="subTabBill">BILLS</button>
-                    <button class="sub-tab-btn" onclick="switchSubTab('legislation','vote')" id="subTabVote">VOTE</button>
-                    <button class="sub-tab-btn" onclick="switchSubTab('legislation','archive')" id="subTabArchive">RECORD</button>
+                    <button class="sub-tab-btn active" onclick="switchSubTab('legislation','bill')" id="subTabBill">법안 제출</button>
+                    <button class="sub-tab-btn" onclick="switchSubTab('legislation','vote')" id="subTabVote">표결</button>
+                    <button class="sub-tab-btn" onclick="switchSubTab('legislation','archive')" id="subTabArchive">기록</button>
                 </div>
 
-                <!-- BILLS SUB-TAB -->
-                <div id="contentBill" class="sub-tab-content active">
-                    <div class="vote-panel" style="margin-bottom:10px;">
-                        <div class="vote-panel-title">> DRAFT NEW BILL</div>
-                        <input type="text" class="vote-bill-input" id="newBillTitle" placeholder="Bill title..." style="margin-bottom:6px;">
-                        <textarea id="newBillContent" placeholder="Bill content..." style="background:#000;border:1px solid var(--tno-border);color:#ccc;font-family:'VT323',monospace;font-size:1rem;width:100%;box-sizing:border-box;padding:8px;resize:vertical;min-height:80px;outline:none;line-height:1.5;"></textarea>
-                        <button class="add-btn" style="border-style:solid;margin-top:8px;color:var(--tno-neon);border-color:var(--tno-neon);" onclick="addBill()">[+] SUBMIT BILL</button>
-                    </div>
-                    <div id="billList"></div>
-                </div>
-
-                <!-- ARCHIVE SUB-TAB -->
-                <div id="contentArchive" class="sub-tab-content">
-                    <div id="archiveList"></div>
-                </div>
-
-                <!-- VOTE SUB-TAB -->
-                <div id="contentVote" class="sub-tab-content">
-                    <div class="vote-panel" style="margin-bottom:10px;">
-                        <div class="vote-panel-title">> SELECT BILL FOR DEBATE</div>
-                        <div id="voteActiveBillDisplay" style="background:#050505;border:1px solid #333;padding:8px;margin-bottom:8px;min-height:36px;">
-                            <span style="color:#444;font-size:0.9rem;">Select a bill to debate...</span>
-                        </div>
-                        <select id="voteSelectBill" style="width:100%;background:#000;border:1px solid var(--tno-border);color:var(--tno-gold);font-family:'VT323',monospace;font-size:1rem;padding:6px;" onchange="selectBillForVote(this.value)">
-                            <option value="">-- SELECT BILL --</option>
+            <!-- 법안 제출 탭: 작성 + 대기 중 목록 -->
+            <div id="contentBill" class="sub-tab-content active">
+                <div class="vote-panel" style="margin-bottom:10px;">
+                    <div class="vote-panel-title">> 새 법안 작성 (NEW BILL)</div>
+                    <input type="text" class="vote-bill-input" id="newBillTitle" placeholder="법안 제목..." style="margin-bottom:6px;">
+                    <textarea id="newBillContent" placeholder="법안 내용을 입력하세요..." style="
+                        background:#000; border:1px solid var(--tno-border); color:#ccc;
+                        font-family:'NeoDunggeunmo','VT323',monospace; font-size:0.85rem;
+                        width:100%; box-sizing:border-box; padding:8px; resize:vertical;
+                        min-height:80px; outline:none; line-height:1.5;
+                    "></textarea>
+                    <div style="margin-top:8px;">
+                        <label style="color:#888; font-size:0.85rem; margin-bottom:4px;">가결 기준</label>
+                        <select id="newBillThreshold" style="width:100%; background:#000; border:1px solid var(--tno-border); color:var(--tno-gold); font-family:'NeoDunggeunmo','VT323',monospace; font-size:0.9rem; padding:4px 8px;" onchange="toggleCustomThreshold()">
+                            <option value="0.5">과반 (재적 과반수)</option>
+                            <option value="0.667">특별다수 (2/3 이상)</option>
+                            <option value="1.0">전원 일치</option>
+                            <option value="custom">지정...</option>
                         </select>
+                        <div id="customThresholdWrap" style="display:none; margin-top:6px; display:none; align-items:center; gap:6px;">
+                            <input type="number" id="customNumer" min="1" placeholder="분자" style="flex:1; text-align:center;">
+                            <span style="color:#666; font-size:1.2rem;">/</span>
+                            <input type="number" id="customDenom" min="1" placeholder="분모" style="flex:1; text-align:center;">
+                            <span id="customThresholdPreview" style="color:#ffd700; font-size:0.85rem; white-space:nowrap;"></span>
+                        </div>
                     </div>
+                    <button class="add-btn" style="border-style:solid; margin-top:8px; color:var(--tno-neon); border-color:var(--tno-neon);" onclick="addBill()">[+] 법안 등록</button>
+                </div>
+                <div id="billList"></div>
+            </div>
 
-                    <div class="vote-panel">
-                        <div class="vote-panel-title">> VOTE INPUT MODE</div>
-                        <div class="vote-btn-row">
-                            <button class="vote-ctrl-btn yea" onclick="setVoteMode('yea')">▲ YEA</button>
-                            <button class="vote-ctrl-btn nay" onclick="setVoteMode('nay')">▼ NAY</button>
-                            <button class="vote-ctrl-btn abs" onclick="setVoteMode('abs')">— ABSTAIN</button>
-                            <button class="vote-ctrl-btn clr" onclick="setVoteMode('none')">✕ CLEAR</button>
-                        </div>
-                        <div class="vote-hint">
-                            Select mode, then click a seat on the canvas. &nbsp;|&nbsp;
-                            Mode: <span id="currentModeLabel" style="color:#888;">NONE</span>
-                        </div>
-                        <div class="vote-btn-row" style="margin-top:8px;">
-                            <button class="vote-ctrl-btn clr" style="color:var(--tno-alert);border-color:var(--tno-alert);" onclick="clearAllVotes()">RESET ALL VOTES</button>
-                        </div>
-                    </div>
+            <!-- 기록 탭: 가결/부결 완료 -->
+            <div id="contentArchive" class="sub-tab-content">
+                <div id="archiveList"></div>
+            </div>
 
-                    <div class="vote-panel">
-                        <div class="vote-panel-title">> PARTY BULK VOTE</div>
-                        <div style="display:flex;gap:6px;margin-bottom:8px;">
-                            <label style="display:inline-flex;align-items:center;gap:4px;cursor:pointer;color:#aaa;font-size:0.9rem;">
-                                <input type="radio" name="bulkChamber" value="house" checked onchange="renderBulkPartyList()"> <span id="bulkHouseLabel">House</span>
-                            </label>
-                            <label style="display:inline-flex;align-items:center;gap:4px;cursor:pointer;color:#aaa;font-size:0.9rem;" id="bulkSenateRadioWrap">
-                                <input type="radio" name="bulkChamber" value="senate" onchange="renderBulkPartyList()"> <span id="bulkSenateLabel">Senate</span>
-                            </label>
-                            <label style="display:inline-flex;align-items:center;gap:4px;cursor:pointer;color:#aaa;font-size:0.9rem;">
-                                <input type="radio" name="bulkChamber" value="both" onchange="renderBulkPartyList()"> BOTH
-                            </label>
-                        </div>
-                        <div id="bulkPartyList"></div>
+            <!-- VOTE SUB-TAB -->
+            <div id="contentVote" class="sub-tab-content">
+                <!-- 법안 선택 -->
+                <div class="vote-panel" style="margin-bottom:10px;">
+                    <div class="vote-panel-title">> 심의 법안 선택 (SELECT BILL)</div>
+                    <div id="voteActiveBillDisplay" style="
+                        background:#050505; border:1px solid #333; padding:8px;
+                        margin-bottom:8px; min-height:36px;
+                    ">
+                        <span style="color:#444; font-size:0.9rem;">법안을 선택하세요...</span>
                     </div>
+                    <select id="voteSelectBill" style="width:100%; background:#000; border:1px solid var(--tno-border); color:var(--tno-gold); font-family:'NeoDunggeunmo','VT323',monospace; font-size:0.95rem; padding:6px;" onchange="selectBillForVote(this.value)">
+                        <option value="">-- 법안 선택 --</option>
+                    </select>
+                </div>
 
-                    <!-- HOUSE VOTE RESULT -->
-                    <div class="vote-result-wrap" id="houseVoteResult">
-                        <div class="vote-result-title" id="houseVoteResultTitle">[ HOUSE VOTE RESULT ]</div>
-                        <div class="vote-bar-outer">
-                            <div class="vote-bar-yea" id="hBarYea" style="width:0%"></div>
-                            <div class="vote-bar-nay" id="hBarNay" style="width:0%"></div>
-                            <div class="vote-bar-abs" id="hBarAbs" style="width:0%"></div>
-                            <div class="vote-bar-none" id="hBarNone" style="width:100%"></div>
-                        </div>
-                        <div class="vote-counts">
-                            <span class="vc-yea">YEA <b id="hCntYea">0</b></span>
-                            <span class="vc-nay">NAY <b id="hCntNay">0</b></span>
-                            <span class="vc-abs">ABS <b id="hCntAbs">0</b></span>
-                            <span class="vc-none">NOT VOTED <b id="hCntNone">0</b></span>
-                        </div>
-                        <div class="vote-verdict verdict-pending" id="hVerdict">-- AWAITING VOTE --</div>
-                        <button class="vote-ctrl-btn yea" id="hConfirmBtn" style="width:100%;margin-top:8px;padding:9px;" onclick="confirmChamberVote('house')">▶ CONFIRM HOUSE VOTE</button>
+                <!-- 투표 입력 모드 -->
+                <div class="vote-panel" id="voteModePanel">
+                    <div class="vote-panel-title">> 투표 입력 모드</div>
+                    <div class="vote-btn-row">
+                        <button class="vote-ctrl-btn yea" onclick="setVoteMode('yea')">▲ 찬성</button>
+                        <button class="vote-ctrl-btn nay" onclick="setVoteMode('nay')">▼ 반대</button>
+                        <button class="vote-ctrl-btn abs" onclick="setVoteMode('abs')">— 기권</button>
+                        <button class="vote-ctrl-btn clr" onclick="setVoteMode('none')">✕ 초기화</button>
                     </div>
+                    <div class="vote-hint">
+                        모드 선택 후 캔버스 의원 원 클릭 &nbsp;|&nbsp;
+                        현재: <span id="currentModeLabel" style="color:#888;">없음</span>
+                    </div>
+                    <div class="vote-btn-row" style="margin-top:8px;">
+                        <button class="vote-ctrl-btn clr" style="color:var(--tno-alert);border-color:var(--tno-alert);" onclick="clearAllVotes()">전체 초기화</button>
+                    </div>
+                </div>
 
-                    <!-- SENATE VOTE RESULT -->
-                    <div class="vote-result-wrap" id="senateVoteResult" style="margin-top:8px;">
-                        <div class="vote-result-title" id="senateVoteResultTitle">[ SENATE VOTE RESULT ]</div>
-                        <div class="vote-bar-outer">
-                            <div class="vote-bar-yea" id="sBarYea" style="width:0%"></div>
-                            <div class="vote-bar-nay" id="sBarNay" style="width:0%"></div>
-                            <div class="vote-bar-abs" id="sBarAbs" style="width:0%"></div>
-                            <div class="vote-bar-none" id="sBarNone" style="width:100%"></div>
-                        </div>
-                        <div class="vote-counts">
-                            <span class="vc-yea">YEA <b id="sCntYea">0</b></span>
-                            <span class="vc-nay">NAY <b id="sCntNay">0</b></span>
-                            <span class="vc-abs">ABS <b id="sCntAbs">0</b></span>
-                            <span class="vc-none">NOT VOTED <b id="sCntNone">0</b></span>
-                        </div>
-                        <div class="vote-verdict verdict-pending" id="sVerdict">-- AWAITING VOTE --</div>
-                        <button class="vote-ctrl-btn yea" id="sConfirmBtn" style="width:100%;margin-top:8px;padding:9px;" onclick="confirmChamberVote('senate')">▶ CONFIRM SENATE VOTE</button>
+                <!-- 정당 일괄 투표 -->
+                <div class="vote-panel" id="partyBulkPanel">
+                    <div class="vote-panel-title">> 정당 일괄 투표 (PARTY BULK)</div>
+                    <div style="display:flex; gap:6px; margin-bottom:8px;">
+                        <label style="display:inline-flex;align-items:center;gap:4px;cursor:pointer;color:#aaa;font-size:0.85rem;">
+                            <input type="radio" name="bulkChamber" value="house" checked onchange="renderBulkPartyList()"> <span id="bulkHouseLabel">하원</span>
+                        </label>
+                        <label style="display:inline-flex;align-items:center;gap:4px;cursor:pointer;color:#aaa;font-size:0.85rem;" id="bulkSenateRadioWrap">
+                            <input type="radio" name="bulkChamber" value="senate" onchange="renderBulkPartyList()"> <span id="bulkSenateLabel">상원</span>
+                        </label>
+                        <label style="display:inline-flex;align-items:center;gap:4px;cursor:pointer;color:#aaa;font-size:0.85rem;">
+                            <input type="radio" name="bulkChamber" value="both" onchange="renderBulkPartyList()"> 양원
+                        </label>
                     </div>
-                </div><!-- end contentVote -->
+                    <div id="bulkPartyList"></div>
+                </div>
+
+                <!-- 하원 표결 확정 -->
+                <div class="vote-result-wrap" id="houseVoteResult">
+                    <div class="vote-result-title" id="houseVoteResultTitle">[ 하원 표결 결과 ]</div>
+                    <div class="vote-bar-outer">
+                        <div class="vote-bar-yea" id="hBarYea" style="width:0%"></div>
+                        <div class="vote-bar-nay" id="hBarNay" style="width:0%"></div>
+                        <div class="vote-bar-abs" id="hBarAbs" style="width:0%"></div>
+                        <div class="vote-bar-none" id="hBarNone" style="width:100%"></div>
+                    </div>
+                    <div class="vote-counts">
+                        <span class="vc-yea">찬성 <b id="hCntYea">0</b></span>
+                        <span class="vc-nay">반대 <b id="hCntNay">0</b></span>
+                        <span class="vc-abs">기권 <b id="hCntAbs">0</b></span>
+                        <span class="vc-none">미투표 <b id="hCntNone">0</b></span>
+                    </div>
+                    <div style="font-size:0.85rem; color:#aaa; text-align:right; margin-bottom:2px; min-height:1.2em;" id="hVoteInfo"></div>
+                    <div class="vote-verdict verdict-pending" id="hVerdict">-- 표결 대기 중 --</div>
+                    <button class="vote-ctrl-btn yea" id="hConfirmBtn" style="width:100%;margin-top:8px;padding:9px;" onclick="confirmChamberVote('house')">▶ 하원 표결 확정</button>
+                </div>
+
+                <!-- 상원 표결 확정 -->
+                <div class="vote-result-wrap" id="senateVoteResult" style="margin-top:8px;">
+                    <div class="vote-result-title" id="senateVoteResultTitle">[ 상원 표결 결과 ]</div>
+                    <div class="vote-bar-outer">
+                        <div class="vote-bar-yea" id="sBarYea" style="width:0%"></div>
+                        <div class="vote-bar-nay" id="sBarNay" style="width:0%"></div>
+                        <div class="vote-bar-abs" id="sBarAbs" style="width:0%"></div>
+                        <div class="vote-bar-none" id="sBarNone" style="width:100%"></div>
+                    </div>
+                    <div class="vote-counts">
+                        <span class="vc-yea">찬성 <b id="sCntYea">0</b></span>
+                        <span class="vc-nay">반대 <b id="sCntNay">0</b></span>
+                        <span class="vc-abs">기권 <b id="sCntAbs">0</b></span>
+                        <span class="vc-none">미투표 <b id="sCntNone">0</b></span>
+                    </div>
+                    <div style="font-size:0.85rem; color:#aaa; text-align:right; margin-bottom:2px; min-height:1.2em;" id="sVoteInfo"></div>
+                    <div class="vote-verdict verdict-pending" id="sVerdict">-- 표결 대기 중 --</div>
+                    <button class="vote-ctrl-btn yea" id="sConfirmBtn" style="width:100%;margin-top:8px;padding:9px;" onclick="confirmChamberVote('senate')">▶ 상원 표결 확정</button>
+                </div>
+            </div><!-- end contentVote -->
             </div><!-- end mainContentLegislation -->
         </div><!-- end controls-content -->
 
-        <div style="padding:15px;border-top:2px solid var(--tno-border);background:#000;">
-            <div style="display:flex;gap:10px;margin-bottom:-10px;">
-                <button class="add-btn" id="btnSaveJson" style="border-style:solid;margin-top:0;">SAVE</button>
-                <button class="add-btn" id="btnLoadJson" style="border-style:solid;margin-top:0;">LOAD</button>
+        <div style="padding: 15px; border-top: 2px solid var(--tno-border); background: #000;">
+            <div style="display:flex; gap:10px; margin-bottom:-10px;">
+                <button class="add-btn" id="btnSaveJson" style="border-style:solid; margin-top:0;">SAVE</button>
+                <button class="add-btn" id="btnLoadJson" style="border-style:solid; margin-top:0;">LOAD</button>
                 <input id="fileLoadJson" type="file" accept="application/json" style="display:none;">
             </div>
             <button class="simulate-btn" onclick="simulate()">>> PROTOCOL EXECUTE <<</button>
@@ -391,46 +770,93 @@
         const IND_IDEOLOGY_ID = 9999;
 
         let ideologies = [
-            { id:101, name:"Revolutionary Socialism" }, { id:102, name:"Socialism" },
-            { id:103, name:"Progressivism" }, { id:104, name:"Liberalism" },
-            { id:105, name:"Conservatism" }, { id:106, name:"Authoritarianism" },
-            { id:107, name:"National Socialism" }, { id:IND_IDEOLOGY_ID, name:"Independent" }
+            { id: 101, name: "혁명적 사회주의" },
+            { id: 102, name: "사회주의" },
+            { id: 103, name: "진보주의" },
+            { id: 104, name: "자유주의" },
+            { id: 105, name: "보수주의" },
+            { id: 106, name: "권위주의" },
+            { id: 107, name: "국가사회주의" },
+            { id: IND_IDEOLOGY_ID, name: "무소속" }
         ];
+
         let parties = [
-            { id:1, name:"National Reconstruction Party", color:"#2E2E2E", seatsHouse:140, seatsSenate:60, ideologyId:101, isRuling:true,  inHouse:true, inSenate:true },
-            { id:2, name:"Reform Group",                  color:"#5D6D7E", seatsHouse:50,  seatsSenate:20, ideologyId:102, isRuling:false, inHouse:true, inSenate:true },
-            { id:3, name:"Democratic Party",              color:"#3498DB", seatsHouse:60,  seatsSenate:10, ideologyId:105, isRuling:false, inHouse:true, inSenate:true },
-            { id:4, name:"Socialist Party",               color:"#E74C3C", seatsHouse:40,  seatsSenate:5,  ideologyId:106, isRuling:false, inHouse:true, inSenate:true },
-            { id:5, name:"Independent",                   color:"#F1C40F", seatsHouse:10,  seatsSenate:5,  ideologyId:IND_IDEOLOGY_ID, isRuling:false, inHouse:true, inSenate:true }
+            { id: 1, name: "국가재건당", color: "#2E2E2E", seatsHouse: 140, seatsSenate: 60, ideologyId: 101, isRuling: true, inHouse: true, inSenate: true },
+            { id: 2, name: "개혁그룹", color: "#5D6D7E", seatsHouse: 50, seatsSenate: 20, ideologyId: 102, isRuling: false, inHouse: true, inSenate: true },
+            { id: 3, name: "민주당", color: "#3498DB", seatsHouse: 60, seatsSenate: 10, ideologyId: 105, isRuling: false, inHouse: true, inSenate: true },
+            { id: 4, name: "사회당", color: "#E74C3C", seatsHouse: 40, seatsSenate: 5, ideologyId: 106, isRuling: false, inHouse: true, inSenate: true },
+            { id: 5, name: "무소속", color: "#F1C40F", seatsHouse: 10, seatsSenate: 5, ideologyId: IND_IDEOLOGY_ID, isRuling: false, inHouse: true, inSenate: true }
         ];
+
         let coalitions = [
-            { id:'c1', name:"National Front", color:"#2E2E2E", members:[1], isRuling:true }
+            { id: 'c1', name: "국민전선", color: "#2E2E2E", members: [1], isRuling: true },
         ];
+
+        let currentTab = 'house';
 
         // ===== BILL STATE =====
+        // bill: { id, title, content, houseStatus: 'pending'|'pass'|'fail', senateStatus: 'pending'|'pass'|'fail',
+        //         houseVote: {yea,nay,abs}, senateVote: {yea,nay,abs} }
         let bills = [
-            { id:'b1', title:'National Reconstruction Act §1',
-              content:'All necessary measures for national reconstruction may be taken.\nThe executive may issue emergency decrees without parliamentary approval.',
-              houseStatus:'pending', senateStatus:'pending', houseVote:null, senateVote:null }
+            { id: 'b1', title: '국가재건특별법 제1조', threshold: 0.5,
+              content: '국가 재건을 위해 필요한 모든 조치를 취할 수 있다.\n집행부는 의회의 동의 없이 긴급 법령을 발동할 수 있다.',
+              houseStatus: 'pending', senateStatus: 'pending', houseVote: null, senateVote: null }
         ];
-        let activeBillId = null;
-        let voteState = { house:{}, senate:{} };
-        let currentVoteMode = 'none';
-        let dotCache = { house:[], senate:[] };
-        let manualSort = false;
-        let currentMainTab = 'setup';
-        let currentSubTab = { setup:'ideology', legislation:'bill' };
+        let activeBillId = null; // 현재 심의 중인 법안
 
-        // ===== INIT =====
-        window.addEventListener('resize', () => simulate());
-        window.onload = function() { toggleSystem(); refreshUI(); simulate(); renderBillList(); renderArchiveList(); syncBillSelect(); };
+        // ===== VOTE STATE =====
+        let voteState = { house: {}, senate: {} };
+        let currentVoteMode = 'none';
+        let dotCache = { house: [], senate: [] };
 
         // ===== BILL FUNCTIONS =====
+        function toggleCustomThreshold() {
+            const sel = document.getElementById('newBillThreshold');
+            const wrap = document.getElementById('customThresholdWrap');
+            const isCustom = sel.value === 'custom';
+            wrap.style.display = isCustom ? 'flex' : 'none';
+            if(isCustom) {
+                const numer = document.getElementById('customNumer');
+                const denom = document.getElementById('customDenom');
+                const updatePreview = () => {
+                    const n = parseInt(numer.value) || 0;
+                    const d = parseInt(denom.value) || 1;
+                    document.getElementById('customThresholdPreview').textContent =
+                        n && d ? `= ${(n/d*100).toFixed(1)}%` : '';
+                };
+                numer.oninput = updatePreview;
+                denom.oninput = updatePreview;
+            }
+        }
+
+        function getThresholdValue() {
+            const sel = document.getElementById('newBillThreshold');
+            if(sel.value !== 'custom') return parseFloat(sel.value) || 0.5;
+            const n = parseInt(document.getElementById('customNumer').value);
+            const d = parseInt(document.getElementById('customDenom').value);
+            if(!n || !d || d === 0) return 0.5;
+            return n / d;
+        }
+
+        function getThresholdLabel(threshold, numer, denom) {
+            if(threshold >= 1.0) return '전원 일치';
+            if(Math.abs(threshold - 0.5) < 0.01) return '과반';
+            if(Math.abs(threshold - 0.667) < 0.01) return '특별다수(2/3)';
+            if(numer && denom) return `${numer}/${denom}`;
+            return `${Math.round(threshold*100)}%`;
+        }
+
         function addBill() {
             const title = document.getElementById('newBillTitle').value.trim();
             const content = document.getElementById('newBillContent').value.trim();
-            if(!title) { alert('Please enter a bill title.'); return; }
-            bills.push({ id:'b'+Date.now(), title, content, houseStatus:'pending', senateStatus:'pending', houseVote:null, senateVote:null });
+            const threshold = getThresholdValue();
+            const sel = document.getElementById('newBillThreshold');
+            const isCustom = sel.value === 'custom';
+            const numer = isCustom ? parseInt(document.getElementById('customNumer').value) || null : null;
+            const denom = isCustom ? parseInt(document.getElementById('customDenom').value) || null : null;
+            if(!title) { alert('법안 제목을 입력하세요.'); return; }
+            bills.push({ id: 'b'+Date.now(), title, content, threshold, numer, denom,
+                houseStatus: 'pending', senateStatus: 'pending', houseVote: null, senateVote: null });
             document.getElementById('newBillTitle').value = '';
             document.getElementById('newBillContent').value = '';
             renderBillList(); syncBillSelect();
@@ -439,33 +865,42 @@
         function removeBill(id) {
             bills = bills.filter(b => b.id !== id);
             if(activeBillId === id) { activeBillId = null; voteState = {house:{}, senate:{}}; redrawAll(); updateVoteResults(); }
-            renderBillList(); renderArchiveList(); syncBillSelect();
+            renderBillList();
+            syncBillSelect();
         }
 
         function selectBillForVote(id) {
             activeBillId = id;
-            voteState = { house:{}, senate:{} };
-            renderBillList(); renderActiveBillDisplay(); redrawAll();
-            updateVoteResults(); updateConfirmButtons(); renderBulkPartyList();
+            voteState = { house: {}, senate: {} };
+            renderBillList();
+            renderActiveBillDisplay();
+            redrawAll();
+            updateVoteResults();
+            updateConfirmButtons();
+            renderBulkPartyList();
         }
 
         function renderActiveBillDisplay() {
             const el = document.getElementById('voteActiveBillDisplay');
             const sel = document.getElementById('voteSelectBill');
             if(!activeBillId || !bills.find(b=>b.id===activeBillId)) {
-                el.innerHTML = '<span style="color:#444;font-size:0.9rem;">Select a bill to debate...</span>';
-                sel.value = ''; return;
+                el.innerHTML = '<span style="color:#444; font-size:0.9rem;">법안을 선택하세요...</span>';
+                sel.value = '';
+                return;
             }
             const bill = bills.find(b=>b.id===activeBillId);
-            el.innerHTML = `<div style="color:var(--tno-gold);font-size:1.1rem;margin-bottom:3px;">${bill.title}</div>
-                ${bill.content ? `<div style="color:#666;font-size:0.85rem;white-space:pre-wrap;max-height:50px;overflow:hidden;">${bill.content}</div>` : ''}`;
+            el.innerHTML = `
+                <div style="color:var(--tno-gold); font-size:1rem; margin-bottom:3px;">${bill.title}</div>
+                ${bill.content ? `<div style="color:#666; font-size:0.8rem; white-space:pre-wrap; max-height:50px; overflow:hidden;">${bill.content}</div>` : ''}
+            `;
             sel.value = activeBillId;
         }
 
         function syncBillSelect() {
             const sel = document.getElementById('voteSelectBill');
             if(!sel) return;
-            sel.innerHTML = '<option value="">-- SELECT BILL --</option>';
+            const prev = sel.value;
+            sel.innerHTML = '<option value="">-- 법안 선택 --</option>';
             bills.filter(b => getBillOverallStatus(b) === 'pending').forEach(b => {
                 const opt = document.createElement('option');
                 opt.value = b.id;
@@ -478,55 +913,60 @@
 
         function getBillStatusSuffix(b) {
             const isBi = document.querySelector('input[name="systemType"]:checked').value === 'bicameral';
-            const hName = document.getElementById('houseNameInput')?.value || 'House';
-            const sName = document.getElementById('senateNameInput')?.value || 'Senate';
             const parts = [];
-            if(b.houseStatus !== 'pending') parts.push(b.houseStatus==='pass' ? hName+'✔' : hName+'✘');
-            if(isBi && b.senateStatus !== 'pending') parts.push(b.senateStatus==='pass' ? sName+'✔' : sName+'✘');
-            return parts.length ? ' ['+parts.join(' ')+']' : '';
+            if(b.houseStatus !== 'pending') parts.push(b.houseStatus === 'pass' ? '하원✔' : '하원✘');
+            if(isBi && b.senateStatus !== 'pending') parts.push(b.senateStatus === 'pass' ? '상원✔' : '상원✘');
+            return parts.length ? ' [' + parts.join(' ') + ']' : '';
         }
 
         function getBillOverallStatus(bill) {
             const isBi = document.querySelector('input[name="systemType"]:checked').value === 'bicameral';
             if(isBi) {
-                if(bill.houseStatus==='fail' || bill.senateStatus==='skip') return 'failed';
-                if(bill.houseStatus==='pass' && bill.senateStatus==='pass') return 'passed';
-                if(bill.senateStatus==='fail') return 'failed';
+                if(bill.houseStatus === 'fail' || bill.senateStatus === 'skip') return 'failed';
+                if(bill.houseStatus === 'pass' && bill.senateStatus === 'pass') return 'passed';
+                if(bill.senateStatus === 'fail') return 'failed';
             } else {
-                if(bill.houseStatus==='pass') return 'passed';
-                if(bill.houseStatus==='fail') return 'failed';
+                if(bill.houseStatus === 'pass') return 'passed';
+                if(bill.houseStatus === 'fail') return 'failed';
             }
             return 'pending';
         }
 
+        // 법안 카드 공통 배지 생성
         function buildBillBadges(bill) {
             const isBi = document.querySelector('input[name="systemType"]:checked').value === 'bicameral';
             const overall = getBillOverallStatus(bill);
-            const hName = document.getElementById('houseNameInput')?.value || 'House';
-            const sName = document.getElementById('senateNameInput')?.value || 'Senate';
-            const overallCfg = { passed:['passed','✔ PASSED'], failed:['failed','✘ FAILED'], pending:['pending','PENDING'] };
+            const overallCfg = {
+                passed: ['passed', '✔ 최종 가결'],
+                failed: ['failed', '✘ 최종 부결'],
+                pending: ['pending', '대기 중'],
+            };
             const [oc, ol] = overallCfg[overall];
             let badges = `<span class="bill-status-badge ${oc}">${ol}</span>`;
             if(bill.houseStatus !== 'pending') {
-                badges += `<span class="bill-status-badge ${bill.houseStatus==='pass'?'house-pass':'house-fail'}">${hName} ${bill.houseStatus==='pass'?'✔PASS':'✘FAIL'}</span>`;
-                if(bill.houseVote) badges += `<span style="color:#555;font-size:0.8rem;">(Y${bill.houseVote.yea}/N${bill.houseVote.nay}/A${bill.houseVote.abs})</span>`;
+                const hName = document.getElementById('houseNameInput')?.value || '하원';
+                badges += `<span class="bill-status-badge ${bill.houseStatus==='pass'?'house-pass':'house-fail'}">${hName} ${bill.houseStatus==='pass'?'✔가결':'✘부결'}</span>`;
+                if(bill.houseVote) badges += `<span style="color:#555; font-size:0.75rem;">(찬${bill.houseVote.yea}/반${bill.houseVote.nay}/기${bill.houseVote.abs})</span>`;
             }
             if(isBi && bill.senateStatus !== 'pending' && bill.senateStatus !== 'skip') {
-                badges += `<span class="bill-status-badge ${bill.senateStatus==='pass'?'senate-pass':'senate-fail'}">${sName} ${bill.senateStatus==='pass'?'✔PASS':'✘FAIL'}</span>`;
-                if(bill.senateVote) badges += `<span style="color:#555;font-size:0.8rem;">(Y${bill.senateVote.yea}/N${bill.senateVote.nay}/A${bill.senateVote.abs})</span>`;
+                const sName = document.getElementById('senateNameInput')?.value || '상원';
+                badges += `<span class="bill-status-badge ${bill.senateStatus==='pass'?'senate-pass':'senate-fail'}">${sName} ${bill.senateStatus==='pass'?'✔가결':'✘부결'}</span>`;
+                if(bill.senateVote) badges += `<span style="color:#555; font-size:0.75rem;">(찬${bill.senateVote.yea}/반${bill.senateVote.nay}/기${bill.senateVote.abs})</span>`;
             }
             if(isBi && bill.senateStatus === 'skip') {
-                badges += `<span class="bill-status-badge senate-fail">${sName} NOT TABLED</span>`;
+                const sName = document.getElementById('senateNameInput')?.value || '상원';
+                badges += `<span class="bill-status-badge senate-fail">${sName} 미상정</span>`;
             }
             return badges;
         }
 
+        // 법안 제출 탭 — 대기 중인 법안만
         function renderBillList() {
             const container = document.getElementById('billList');
             if(!container) return;
             const pending = bills.filter(b => getBillOverallStatus(b) === 'pending');
             if(pending.length === 0) {
-                container.innerHTML = '<div style="color:#333;text-align:center;padding:20px;border:1px dashed #222;">No pending bills</div>';
+                container.innerHTML = '<div style="color:#333; text-align:center; padding:20px; border:1px dashed #222;">대기 중인 법안이 없습니다</div>';
                 return;
             }
             container.innerHTML = '';
@@ -536,30 +976,33 @@
                 div.className = 'bill-card' + (isActive ? ' selected' : '');
                 div.innerHTML = `
                     <div class="bill-card-title">
-                        ${isActive ? '<span style="color:var(--tno-neon);font-size:0.85rem;">[IN DEBATE]</span>' : ''}
+                        ${isActive ? '<span style="color:var(--tno-neon); font-size:0.8rem;">[심의중]</span>' : ''}
                         ${bill.title}
                     </div>
                     ${bill.content ? `<div class="bill-card-body">${bill.content}</div>` : ''}
                     <div class="bill-card-footer">
                         ${buildBillBadges(bill)}
-                        <div style="margin-left:auto;display:flex;gap:5px;">
-                            ${!isActive ? `<button class="bill-select-btn" onclick="selectBillForVote('${bill.id}'); switchTab('vote');">DEBATE</button>` : ''}
-                            <button class="bill-remove-btn" onclick="removeBill('${bill.id}')">DEL</button>
+                        <div style="margin-left:auto; display:flex; gap:5px;">
+                            ${!isActive ? `<button class="bill-select-btn" onclick="selectBillForVote('${bill.id}'); switchTab('vote');">심의 선택</button>` : ''}
+                            <button class="bill-remove-btn" onclick="removeBill('${bill.id}')">삭제</button>
                         </div>
-                    </div>`;
+                    </div>
+                `;
                 container.appendChild(div);
             });
         }
 
+        // 기록 탭 — 가결/부결 완료 법안만
         function renderArchiveList() {
             const container = document.getElementById('archiveList');
             if(!container) return;
             const done = bills.filter(b => getBillOverallStatus(b) !== 'pending');
             if(done.length === 0) {
-                container.innerHTML = '<div style="color:#333;text-align:center;padding:20px;border:1px dashed #222;">No completed bills</div>';
+                container.innerHTML = '<div style="color:#333; text-align:center; padding:20px; border:1px dashed #222;">완료된 법안이 없습니다</div>';
                 return;
             }
             container.innerHTML = '';
+            // 최신순 정렬
             [...done].reverse().forEach(bill => {
                 const overall = getBillOverallStatus(bill);
                 const div = document.createElement('div');
@@ -571,107 +1014,149 @@
                     <div class="bill-card-footer">
                         ${buildBillBadges(bill)}
                         <div style="margin-left:auto;">
-                            <button class="bill-remove-btn" onclick="removeBill('${bill.id}')">DEL</button>
+                            <button class="bill-remove-btn" onclick="removeBill('${bill.id}')">삭제</button>
                         </div>
-                    </div>`;
+                    </div>
+                `;
                 container.appendChild(div);
             });
         }
 
         // ===== CONFIRM CHAMBER VOTE =====
         function confirmChamberVote(chamber) {
-            if(!activeBillId) { alert('Please select a bill first.'); return; }
+            if(!activeBillId) { alert('심의할 법안을 먼저 선택하세요.'); return; }
             const bill = bills.find(b=>b.id===activeBillId);
             if(!bill) return;
+
             const isBi = document.querySelector('input[name="systemType"]:checked').value === 'bicameral';
-            const hName = document.getElementById('houseNameInput')?.value || 'House';
+
+            // 상원은 하원 가결 후에만 가능
             if(chamber === 'senate') {
-                if(bill.houseStatus === 'pending') { alert(`Please confirm the ${hName} vote first.`); return; }
-                if(bill.houseStatus === 'fail') { alert(`Bills rejected by the ${hName} cannot be tabled in the Senate.`); return; }
+                if(bill.houseStatus === 'pending') { alert('하원 표결을 먼저 확정하세요.'); return; }
+                if(bill.houseStatus === 'fail') { alert('하원에서 부결된 법안은 상원에 상정되지 않습니다.'); return; }
             }
+
             const dots = dotCache[chamber];
             let yea=0, nay=0, abs=0;
             dots.forEach((d,i) => {
                 if(d.partyName==='Vacant') return;
                 const v = voteState[chamber][i]||'none';
-                if(v==='yea') yea++; else if(v==='nay') nay++; else if(v==='abs') abs++;
+                if(v==='yea') yea++;
+                else if(v==='nay') nay++;
+                else if(v==='abs') abs++;
             });
             const validSeats = dots.filter(d=>d.partyName!=='Vacant').length;
-            const maj = Math.floor(validSeats/2)+1;
-            const result = yea >= maj ? 'pass' : 'fail';
+            const threshold = bill.threshold || 0.5;
+            const required = threshold >= 1.0 ? validSeats : Math.floor(validSeats * threshold) + 1;
+            const result = yea >= required ? 'pass' : 'fail';
+
             if(chamber==='house') {
-                bill.houseStatus = result; bill.houseVote = {yea,nay,abs};
-                if(isBi && result==='fail') { bill.senateStatus='skip'; bill.senateVote=null; }
-            } else { bill.senateStatus=result; bill.senateVote={yea,nay,abs}; }
-            renderBillList(); renderArchiveList(); syncBillSelect();
-            updateVoteResults(); updateConfirmButtons();
-            voteState[chamber] = {}; redrawAll(); renderBulkPartyList();
+                bill.houseStatus = result;
+                bill.houseVote = {yea, nay, abs};
+                // 양원제에서 하원 부결 → 상원 자동 부결 처리
+                if(isBi && result === 'fail') {
+                    bill.senateStatus = 'skip';
+                    bill.senateVote = null;
+                }
+            } else {
+                bill.senateStatus = result;
+                bill.senateVote = {yea, nay, abs};
+            }
+
+            renderBillList();
+            renderArchiveList();
+            syncBillSelect();
+            updateVoteResults();
+            updateConfirmButtons();
+
+            voteState[chamber] = {};
+            redrawAll();
+            renderBulkPartyList();
         }
 
+        // 확정 버튼 잠금/해제 상태 갱신
         function updateConfirmButtons() {
             const isBi = document.querySelector('input[name="systemType"]:checked').value === 'bicameral';
             const bill = activeBillId ? bills.find(b=>b.id===activeBillId) : null;
-            const hName = document.getElementById('houseNameInput')?.value || 'House';
-            const sName = document.getElementById('senateNameInput')?.value || 'Senate';
+            const hName = document.getElementById('houseNameInput')?.value || '하원';
+            const sName = document.getElementById('senateNameInput')?.value || '상원';
+
             const hBtn = document.getElementById('hConfirmBtn');
             const sBtn = document.getElementById('sConfirmBtn');
             if(!hBtn || !sBtn) return;
+
             const hDone = bill && bill.houseStatus !== 'pending';
             hBtn.disabled = !!hDone;
             hBtn.style.opacity = hDone ? '0.35' : '1';
             hBtn.style.cursor = hDone ? 'not-allowed' : 'pointer';
             hBtn.textContent = hDone
-                ? (bill.houseStatus==='pass' ? `✔ ${hName} VOTE CONFIRMED (PASSED)` : `✘ ${hName} VOTE CONFIRMED (FAILED)`)
-                : `▶ CONFIRM ${hName} VOTE`;
+                ? (bill.houseStatus === 'pass' ? `✔ ${hName} 가결 확정됨` : `✘ ${hName} 부결 확정됨`)
+                : `▶ ${hName} 표결 확정`;
+
             if(isBi) {
                 const hPassed = bill && bill.houseStatus === 'pass';
                 const sDone   = bill && bill.senateStatus !== 'pending' && bill.senateStatus !== 'skip';
                 const sSkip   = bill && bill.senateStatus === 'skip';
+
                 sBtn.disabled = !hPassed || sDone || sSkip;
                 sBtn.style.opacity = (!hPassed || sDone || sSkip) ? '0.35' : '1';
                 sBtn.style.cursor = (!hPassed || sDone || sSkip) ? 'not-allowed' : 'pointer';
-                if(sSkip)         sBtn.textContent = `✘ ${hName} FAILED — ${sName} NOT TABLED`;
-                else if(sDone)    sBtn.textContent = bill.senateStatus==='pass' ? `✔ ${sName} VOTE CONFIRMED (PASSED)` : `✘ ${sName} VOTE CONFIRMED (FAILED)`;
-                else if(!hPassed) sBtn.textContent = `[##] UNLOCKS AFTER ${hName} PASSES`;
-                else              sBtn.textContent = `▶ CONFIRM ${sName} VOTE`;
+
+                if(sSkip)         sBtn.textContent = `✘ ${hName} 부결 — ${sName} 미상정`;
+                else if(sDone)    sBtn.textContent = bill.senateStatus === 'pass' ? `✔ ${sName} 가결 확정됨` : `✘ ${sName} 부결 확정됨`;
+                else if(!hPassed) sBtn.textContent = `[##] ${hName} 가결 후 열림`;
+                else              sBtn.textContent = `▶ ${sName} 표결 확정`;
             }
         }
 
         function setVoteMode(mode) {
             currentVoteMode = mode;
-            const labels = { yea:'▲ YEA (GREEN)', nay:'▼ NAY (RED)', abs:'— ABSTAIN (GREY)', none:'✕ CLEAR' };
-            const colors  = { yea:'#00ff88', nay:'#ff2244', abs:'#888888', none:'#888' };
+            const labels = { yea: '▲ 찬성 (초록)', nay: '▼ 반대 (빨강)', abs: '— 기권 (회색)', none: '✕ 초기화' };
+            const colors  = { yea: '#00ff88', nay: '#ff2244', abs: '#888888', none: '#888' };
             const el = document.getElementById('currentModeLabel');
-            el.textContent = labels[mode] || 'NONE';
+            el.textContent = labels[mode] || '없음';
             el.style.color = colors[mode] || '#888';
         }
 
         function clearAllVotes() {
-            voteState = { house:{}, senate:{} };
-            redrawAll(); updateVoteResults(); renderBulkPartyList();
+            voteState = { house: {}, senate: {} };
+            redrawAll();
+            updateVoteResults();
+            renderBulkPartyList();
         }
 
         // ===== BULK PARTY VOTE =====
-        function getBulkChamber() { return document.querySelector('input[name="bulkChamber"]:checked')?.value || 'house'; }
+        function getBulkChamber() {
+            return document.querySelector('input[name="bulkChamber"]:checked')?.value || 'house';
+        }
 
         function applyPartyVote(partyName, vote) {
             const chamber = getBulkChamber();
-            const chambers = chamber === 'both' ? ['house','senate'] : [chamber];
+            const chambers = chamber === 'both' ? ['house', 'senate'] : [chamber];
             chambers.forEach(ch => {
-                dotCache[ch].forEach((d,i) => {
+                dotCache[ch].forEach((d, i) => {
                     if(d.partyName === partyName && d.partyName !== 'Vacant') {
                         if(vote === 'none') delete voteState[ch][i];
                         else voteState[ch][i] = vote;
                     }
                 });
             });
-            redrawAll(); updateVoteResults(); renderBulkPartyList();
+            redrawAll();
+            updateVoteResults();
+            renderBulkPartyList();
         }
 
         function getPartyDominantVote(partyName) {
-            const ch = getBulkChamber() === 'both' ? 'house' : getBulkChamber();
-            const counts = { yea:0, nay:0, abs:0, none:0 };
-            dotCache[ch].forEach((d,i) => { if(d.partyName===partyName) counts[voteState[ch][i]||'none']++; });
+            // 현재 선택된 의원방에서 해당 당의 다수 투표 상태 반환
+            const chamber = getBulkChamber();
+            const ch = chamber === 'both' ? 'house' : chamber;
+            const counts = { yea: 0, nay: 0, abs: 0, none: 0 };
+            dotCache[ch].forEach((d, i) => {
+                if(d.partyName === partyName) {
+                    const v = voteState[ch][i] || 'none';
+                    counts[v]++;
+                }
+            });
             const max = Object.entries(counts).sort((a,b)=>b[1]-a[1])[0];
             return max[1] > 0 ? max[0] : 'none';
         }
@@ -680,16 +1165,28 @@
             const container = document.getElementById('bulkPartyList');
             if(!container) return;
             const isBi = document.querySelector('input[name="systemType"]:checked').value === 'bicameral';
+
+            // 상원 라디오 활성/비활성
             const senateWrap = document.getElementById('bulkSenateRadioWrap');
             if(senateWrap) senateWrap.style.opacity = isBi ? '1' : '0.3';
+
+            // 현재 의원실의 정당 목록 (중복 제거, Vacant 제외)
             const chamber = getBulkChamber();
             const refCh = chamber === 'both' ? 'house' : chamber;
-            const seen = new Set(), partyOrder = [];
-            dotCache[refCh].forEach(d => { if(d.partyName!=='Vacant' && !seen.has(d.partyName)) { seen.add(d.partyName); partyOrder.push(d); } });
+            const seen = new Set();
+            const partyOrder = [];
+            dotCache[refCh].forEach(d => {
+                if(d.partyName !== 'Vacant' && !seen.has(d.partyName)) {
+                    seen.add(d.partyName);
+                    partyOrder.push(d);
+                }
+            });
+
             if(partyOrder.length === 0) {
-                container.innerHTML = '<div style="color:#444;font-size:0.9rem;text-align:center;padding:8px;">Run simulation first</div>';
+                container.innerHTML = '<div style="color:#444; font-size:0.85rem; text-align:center; padding:8px;">시뮬레이션을 먼저 실행하세요</div>';
                 return;
             }
+
             container.innerHTML = '';
             partyOrder.forEach(d => {
                 const dominant = getPartyDominantVote(d.partyName);
@@ -698,134 +1195,274 @@
                 row.innerHTML = `
                     <div class="bulk-party-dot" style="background:${d.color};"></div>
                     <span class="bulk-party-name" title="${d.partyName}">${d.partyName}</span>
-                    <button class="bulk-vote-btn yea ${dominant==='yea'?'active-yea':''}" onclick="applyPartyVote('${d.partyName}','yea')">▲YEA</button>
-                    <button class="bulk-vote-btn nay ${dominant==='nay'?'active-nay':''}" onclick="applyPartyVote('${d.partyName}','nay')">▼NAY</button>
-                    <button class="bulk-vote-btn abs ${dominant==='abs'?'active-abs':''}" onclick="applyPartyVote('${d.partyName}','abs')">—ABS</button>
-                    <button class="bulk-vote-btn clr" onclick="applyPartyVote('${d.partyName}','none')">✕</button>`;
+                    <button class="bulk-vote-btn yea ${dominant==='yea'?'active-yea':''}" onclick="applyPartyVote('${d.partyName}','yea')">▲찬</button>
+                    <button class="bulk-vote-btn nay ${dominant==='nay'?'active-nay':''}" onclick="applyPartyVote('${d.partyName}','nay')">▼반</button>
+                    <button class="bulk-vote-btn abs ${dominant==='abs'?'active-abs':''}" onclick="applyPartyVote('${d.partyName}','abs')">—기</button>
+                    <button class="bulk-vote-btn clr" onclick="applyPartyVote('${d.partyName}','none')">✕</button>
+                `;
                 container.appendChild(row);
             });
         }
 
         function getVoteColor(v) {
-            if(v==='yea') return '#00ff88';
-            if(v==='nay') return '#ff2244';
-            if(v==='abs') return '#888888';
-            return null;
+            if(v === 'yea') return '#00ff88';
+            if(v === 'nay') return '#ff2244';
+            if(v === 'abs') return '#888888';
+            return null; // none
         }
 
-        // ===== CANVAS CLICK =====
+        // ===== CANVAS CLICK HANDLER =====
         function handleCanvasClick(e, chamber) {
-            const cvs = e.target, rect = cvs.getBoundingClientRect();
-            const dpr = window.devicePixelRatio||1;
-            const mx = (e.clientX-rect.left)*(cvs.width/dpr/rect.width);
-            const my = (e.clientY-rect.top)*(cvs.height/dpr/rect.height);
-            let hit=-1, minDist=Infinity;
-            dotCache[chamber].forEach((d,i) => { const dist=Math.hypot(mx-d.x,my-d.y); if(dist<=d.r*1.5&&dist<minDist){minDist=dist;hit=i;} });
-            if(hit===-1) return;
-            const prev = voteState[chamber][hit]||'none';
-            if(currentVoteMode==='none'||currentVoteMode===prev) delete voteState[chamber][hit];
-            else voteState[chamber][hit] = currentVoteMode;
-            redrawAll(); updateVoteResults();
+            const cvs = e.target;
+            const rect = cvs.getBoundingClientRect();
+            const dpr = window.devicePixelRatio || 1;
+            const scaleX = cvs.width / dpr / rect.width;
+            const scaleY = cvs.height / dpr / rect.height;
+            const mx = (e.clientX - rect.left) * scaleX;
+            const my = (e.clientY - rect.top) * scaleY;
+
+            const dots = dotCache[chamber];
+            let hit = -1;
+            let minDist = Infinity;
+            dots.forEach((d, i) => {
+                const dist = Math.hypot(mx - d.x, my - d.y);
+                if(dist <= d.r * 1.5 && dist < minDist) { minDist = dist; hit = i; }
+            });
+
+            if(hit === -1) return;
+
+            const prev = voteState[chamber][hit] || 'none';
+            if(currentVoteMode === 'none') {
+                // 초기화 모드: 해당 원만 리셋
+                delete voteState[chamber][hit];
+            } else if(currentVoteMode === prev) {
+                // 같은 모드 다시 클릭 → 초기화
+                delete voteState[chamber][hit];
+            } else {
+                voteState[chamber][hit] = currentVoteMode;
+            }
+
+            redrawAll();
+            updateVoteResults();
         }
 
         // ===== TOOLTIP =====
         function handleCanvasMouseMove(e, chamber) {
-            const cvs = e.target, rect = cvs.getBoundingClientRect();
-            const dpr = window.devicePixelRatio||1;
-            const mx = (e.clientX-rect.left)*(cvs.width/dpr/rect.width);
-            const my = (e.clientY-rect.top)*(cvs.height/dpr/rect.height);
+            const cvs = e.target;
+            const rect = cvs.getBoundingClientRect();
+            const dpr = window.devicePixelRatio || 1;
+            const scaleX = cvs.width / dpr / rect.width;
+            const scaleY = cvs.height / dpr / rect.height;
+            const mx = (e.clientX - rect.left) * scaleX;
+            const my = (e.clientY - rect.top) * scaleY;
+
+            const dots = dotCache[chamber];
             const tip = document.getElementById('tooltipBox');
-            let hit=-1;
-            dotCache[chamber].forEach((d,i) => { if(Math.hypot(mx-d.x,my-d.y)<=d.r*1.5) hit=i; });
+            let hit = -1;
+            dots.forEach((d, i) => {
+                if(Math.hypot(mx - d.x, my - d.y) <= d.r * 1.5) hit = i;
+            });
+
             if(hit !== -1) {
-                const d = dotCache[chamber][hit];
-                const voteLabels = { yea:'YEA', nay:'NAY', abs:'ABSTAIN', none:'NOT VOTED' };
-                const vs = voteState[chamber][hit]||'none';
-                tip.style.display='block';
-                tip.style.left=(e.clientX+14)+'px';
-                tip.style.top=(e.clientY-8)+'px';
+                const d = dots[hit];
+                const voteLabels = { yea:'찬성', nay:'반대', abs:'기권', none:'미투표' };
+                const vs = voteState[chamber][hit] || 'none';
+                tip.style.display = 'block';
+                tip.style.left = (e.clientX + 14) + 'px';
+                tip.style.top = (e.clientY - 8) + 'px';
                 tip.textContent = `${d.partyName} | ${d.ideology} | ${voteLabels[vs]}`;
-            } else { tip.style.display='none'; }
+            } else {
+                tip.style.display = 'none';
+            }
         }
 
-        function handleCanvasMouseLeave() { document.getElementById('tooltipBox').style.display='none'; }
+        function handleCanvasMouseLeave() {
+            document.getElementById('tooltipBox').style.display = 'none';
+        }
 
-        // ===== VOTE RESULTS =====
+        // ===== VOTE RESULT UPDATER =====
         function updateVoteResults() {
             const isBi = document.querySelector('input[name="systemType"]:checked').value === 'bicameral';
-            calcAndRenderResult('house', parseInt(document.getElementById('houseTotal').value)||300, 'h');
-            if(isBi) calcAndRenderResult('senate', parseInt(document.getElementById('senateTotal').value)||100, 's');
+            const hTotal = parseInt(document.getElementById('houseTotal').value) || 300;
+            const sTotal = parseInt(document.getElementById('senateTotal').value) || 100;
+
+            calcAndRenderResult('house', hTotal, 'h');
+            if(isBi) calcAndRenderResult('senate', sTotal, 's');
         }
 
         function calcAndRenderResult(chamber, total, prefix) {
-            let yea=0,nay=0,abs=0;
+            let yea=0, nay=0, abs=0;
             const dots = dotCache[chamber];
-            dots.forEach((d,i) => {
-                if(d.partyName==='Vacant') return;
-                const v = voteState[chamber][i]||'none';
-                if(v==='yea') yea++; else if(v==='nay') nay++; else if(v==='abs') abs++;
+            dots.forEach((d, i) => {
+                if(d.partyName === 'Vacant') return;
+                const v = voteState[chamber][i] || 'none';
+                if(v==='yea') yea++;
+                else if(v==='nay') nay++;
+                else if(v==='abs') abs++;
             });
             const validSeats = dots.filter(d=>d.partyName!=='Vacant').length;
-            const none = validSeats-yea-nay-abs, t=validSeats||1;
-            const maj = Math.floor(validSeats/2)+1;
-            document.getElementById(prefix+'CntYea').textContent=yea;
-            document.getElementById(prefix+'CntNay').textContent=nay;
-            document.getElementById(prefix+'CntAbs').textContent=abs;
-            document.getElementById(prefix+'CntNone').textContent=none;
-            document.getElementById(prefix+'BarYea').style.width=(yea/t*100).toFixed(1)+'%';
-            document.getElementById(prefix+'BarNay').style.width=(nay/t*100).toFixed(1)+'%';
-            document.getElementById(prefix+'BarAbs').style.width=(abs/t*100).toFixed(1)+'%';
-            document.getElementById(prefix+'BarNone').style.width=(none/t*100).toFixed(1)+'%';
+            const none = validSeats - yea - nay - abs;
+            const t = validSeats || 1;
+
+            // 현재 법안의 가결 기준 적용
+            const bill = activeBillId ? bills.find(b=>b.id===activeBillId) : null;
+            const threshold = bill?.threshold || 0.5;
+            const required = threshold >= 1.0 ? validSeats : Math.floor(validSeats * threshold) + 1;
+
+            document.getElementById(prefix+'CntYea').textContent = yea;
+            document.getElementById(prefix+'CntNay').textContent = nay;
+            document.getElementById(prefix+'CntAbs').textContent = abs;
+            document.getElementById(prefix+'CntNone').textContent = none;
+
+            document.getElementById(prefix+'BarYea').style.width = (yea/t*100).toFixed(1)+'%';
+            document.getElementById(prefix+'BarNay').style.width = (nay/t*100).toFixed(1)+'%';
+            document.getElementById(prefix+'BarAbs').style.width = (abs/t*100).toFixed(1)+'%';
+            document.getElementById(prefix+'BarNone').style.width = (none/t*100).toFixed(1)+'%';
+
+            // 기준선 표시 마커 (표결 바에만)
+            const barOuter = document.getElementById(prefix+'BarYea')?.parentElement;
+            if(barOuter) {
+                let marker = barOuter.querySelector('.threshold-marker');
+                if(!marker) {
+                    marker = document.createElement('div');
+                    marker.className = 'threshold-marker';
+                    barOuter.appendChild(marker);
+                }
+                let labelEl = barOuter.querySelector('.threshold-label');
+                if(!labelEl) {
+                    labelEl = document.createElement('div');
+                    labelEl.className = 'threshold-label';
+                    barOuter.appendChild(labelEl);
+                }
+                barOuter.style.position = 'relative';
+                const pct = Math.min(threshold * 100, 100).toFixed(1);
+                marker.style.cssText = `position:absolute; left:${pct}%; top:0; bottom:0; width:2px; background:var(--tno-gold); box-shadow:0 0 5px var(--tno-gold); z-index:2; pointer-events:none;`;
+                const thLabel = getThresholdLabel(threshold, bill?.numer, bill?.denom);
+                labelEl.style.cssText = `position:absolute; left:${pct}%; top:-18px; transform:translateX(-50%); font-size:0.75rem; color:var(--tno-gold); white-space:nowrap; pointer-events:none; font-family:'NeoDunggeunmo','VT323',monospace;`;
+                labelEl.textContent = `${thLabel} (${required}석)`;
+            }
+
+            const thresholdLabels = { 0.5:'과반', 0.667:'2/3', 0.75:'3/4', 1.0:'전원일치' };
+            const thLabel = getThresholdLabel(threshold, bill?.numer, bill?.denom);
+
+            // 부가 정보 (찬성수/기준, 기준명, 부족석)
+            const infoEl = document.getElementById(prefix+'VoteInfo');
+            if(infoEl) {
+                if(yea + nay + abs === 0) {
+                    infoEl.textContent = `기준: ${thLabel}, ${required}석 필요`;
+                } else if(yea >= required) {
+                    infoEl.textContent = `${yea} / ${required} (${thLabel})`;
+                } else {
+                    infoEl.textContent = `${yea} / ${required} (${thLabel}, ${required - yea}석 부족)`;
+                }
+            }
+
+            // 판정문 (원래 형식)
             const vEl = document.getElementById(prefix+'Verdict');
-            vEl.className='vote-verdict';
-            const billTitle = activeBillId ? (bills.find(b=>b.id===activeBillId)?.title||'Bill') : 'Bill';
-            if(yea+nay+abs===0) { vEl.textContent='-- AWAITING VOTE --'; vEl.classList.add('verdict-pending'); }
-            else if(yea>=maj)   { vEl.textContent=`✔ PASSED (${billTitle})`; vEl.classList.add('verdict-pass'); }
-            else                { vEl.textContent=`✘ FAILED (${billTitle})`; vEl.classList.add('verdict-fail'); }
+            vEl.className = 'vote-verdict';
+            const billTitle = activeBillId ? (bills.find(b=>b.id===activeBillId)?.title || '법안') : '법안';
+            if(yea + nay + abs === 0) {
+                vEl.textContent = '-- 표결 대기 중 --';
+                vEl.classList.add('verdict-pending');
+            } else if(yea >= required) {
+                vEl.textContent = `✔ 가결 (${billTitle})`;
+                vEl.classList.add('verdict-pass');
+            } else {
+                vEl.textContent = `✘ 부결 (${billTitle})`;
+                vEl.classList.add('verdict-fail');
+            }
         }
 
-        // ===== REDRAW =====
+        // ===== REDRAW (vote state aware) =====
         function redrawAll() {
             const isBi = document.querySelector('input[name="systemType"]:checked').value === 'bicameral';
-            if(isBi) redrawChamber('senateCanvas','senate');
-            redrawChamber('houseCanvas','house');
+            if(isBi) redrawChamber('senateCanvas', 'senate');
+            redrawChamber('houseCanvas', 'house');
         }
 
         function redrawChamber(cvsId, chamber) {
             const dots = dotCache[chamber];
-            if(!dots||dots.length===0) return;
+            if(!dots || dots.length === 0) return;
             const cvs = document.getElementById(cvsId);
-            const dpr = window.devicePixelRatio||1;
+            const dpr = window.devicePixelRatio || 1;
             const ctx = cvs.getContext('2d');
-            const W=cvs.width/dpr, H=cvs.height/dpr;
-            ctx.clearRect(0,0,W,H);
+            const W = cvs.width / dpr;
+            const H = cvs.height / dpr;
+            ctx.clearRect(0, 0, W, H);
+            ctx.fillStyle = 'transparent';
+
             const highlightGov = document.getElementById('chkGovHighlight').checked;
-            dots.forEach((d,i) => {
-                const vote=voteState[chamber][i]||'none', voteColor=getVoteColor(vote);
-                ctx.beginPath(); ctx.arc(d.x,d.y,d.r*0.85,0,Math.PI*2);
-                ctx.fillStyle=voteColor||d.color; ctx.fill();
-                if(d.isRuling&&highlightGov) { ctx.shadowColor="rgba(255,215,0,.8)"; ctx.shadowBlur=10; ctx.strokeStyle="#ffd700"; ctx.lineWidth=2; ctx.stroke(); ctx.shadowBlur=0; }
-                else if(d.strokeColor) { ctx.strokeStyle=d.strokeColor; ctx.lineWidth=1; ctx.stroke(); }
-                if(voteColor) { ctx.beginPath(); ctx.arc(d.x,d.y,d.r*0.85,0,Math.PI*2); ctx.strokeStyle=d.color; ctx.lineWidth=2.5; ctx.stroke(); }
+
+            dots.forEach((d, i) => {
+                const vote = voteState[chamber][i] || 'none';
+                const voteColor = getVoteColor(vote);
+
+                ctx.beginPath();
+                ctx.arc(d.x, d.y, d.r * 0.85, 0, Math.PI*2);
+
+                // Fill: vote color if voted, else party color
+                if(voteColor) {
+                    ctx.fillStyle = voteColor;
+                } else {
+                    ctx.fillStyle = d.color;
+                }
+                ctx.fill();
+
+                // Stroke: always party/coalition/gov color
+                if(d.isRuling && highlightGov) {
+                    ctx.shadowColor = "rgba(255, 215, 0, 0.8)";
+                    ctx.shadowBlur = 10;
+                    ctx.strokeStyle = "#ffd700";
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                    ctx.shadowBlur = 0;
+                } else if(d.strokeColor) {
+                    ctx.strokeStyle = d.strokeColor;
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+                }
+
+                // If voted, draw inner border using party color so border stays visible
+                if(voteColor) {
+                    ctx.beginPath();
+                    ctx.arc(d.x, d.y, d.r * 0.85, 0, Math.PI*2);
+                    ctx.strokeStyle = d.color;
+                    ctx.lineWidth = 2.5;
+                    ctx.stroke();
+                }
             });
-            const CX=dots[0]?.cx??W/2, CY=dots[0]?.cy??H-40;
-            ctx.fillStyle="#fff"; ctx.font="30px 'VT323'"; ctx.textAlign="center"; ctx.fillText(dots.length,CX,CY);
-            ctx.font="16px 'VT323'"; ctx.fillStyle="var(--tno-neon)"; ctx.fillText("SEATS",CX,CY+25);
+
+            // Center text
+            const total = dots.length;
+            const CX = dots[0]?.cx ?? W/2;
+            const CY = dots[0]?.cy ?? H - 40;
+            ctx.fillStyle = "#fff";
+            ctx.font = `30px 'NeoDunggeunmo'`;
+            ctx.textAlign = "center";
+            ctx.fillText(total, CX, CY);
+            ctx.font = `16px 'NeoDunggeunmo'`;
+            ctx.fillStyle = "var(--tno-neon)";
+            ctx.fillText("SEATS", CX, CY + 25);
         }
+
+        // ===== MAIN SIMULATE =====
+        window.addEventListener('resize', () => { simulate(); });
+
+        window.onload = function() { toggleSystem(); refreshUI(); simulate(); renderBillList(); renderArchiveList(); syncBillSelect(); };
 
         // ===== SAVE / LOAD =====
         function getAppState() {
-            const systemType = document.querySelector('input[name="systemType"]:checked')?.value||'bicameral';
+            const systemType = document.querySelector('input[name="systemType"]:checked')?.value || 'bicameral';
             return {
-                meta: { app:"DATANET_PARLIAMENT_SIM", version:2, savedAt:new Date().toISOString() },
+                meta: { app: "DATANET_PARLIAMENT_SIM", version: 2, savedAt: new Date().toISOString() },
                 ui: { currentMainTab, currentSubTab },
                 config: {
                     systemType,
-                    highlightGov: document.getElementById('chkGovHighlight')?.checked??true,
-                    senateName: document.getElementById('senateNameInput')?.value??"Senate",
-                    houseName:  document.getElementById('houseNameInput')?.value??"House",
-                    senateTotal: parseInt(document.getElementById('senateTotal')?.value)||100,
-                    houseTotal:  parseInt(document.getElementById('houseTotal')?.value)||300
+                    highlightGov: document.getElementById('chkGovHighlight')?.checked ?? true,
+                    senateName: document.getElementById('senateNameInput')?.value ?? "상원",
+                    houseName: document.getElementById('houseNameInput')?.value ?? "국회",
+                    senateTotal: parseInt(document.getElementById('senateTotal')?.value) || 100,
+                    houseTotal: parseInt(document.getElementById('houseTotal')?.value) || 300
                 },
                 parliament: { ideologies, parties, coalitions, manualSort },
                 legislation: { bills, activeBillId, voteState }
@@ -833,355 +1470,567 @@
         }
 
         function setAppState(state) {
-            if(!state||typeof state!=="object") throw new Error("Invalid state");
-            const parl = state.parliament||state.data;
-            if(!parl||!Array.isArray(parl.parties)||!Array.isArray(parl.ideologies)||!Array.isArray(parl.coalitions)) throw new Error("Invalid parliament data");
-            ideologies=parl.ideologies; parties=parl.parties; coalitions=parl.coalitions; manualSort=parl.manualSort??false;
-            const leg=state.legislation||{};
-            bills=Array.isArray(leg.bills)?leg.bills:(Array.isArray(state.data?.bills)?state.data.bills:[]);
-            activeBillId=leg.activeBillId??null;
-            voteState=leg.voteState??{house:{},senate:{}};
-            const cfg=state.config||{};
-            const radio=document.querySelector(`input[name="systemType"][value="${cfg.systemType||'bicameral'}"]`);
-            if(radio) radio.checked=true;
-            if(document.getElementById('senateNameInput')) document.getElementById('senateNameInput').value=cfg.senateName??"Senate";
-            if(document.getElementById('houseNameInput'))  document.getElementById('houseNameInput').value=cfg.houseName??"House";
-            if(document.getElementById('senateTotal'))     document.getElementById('senateTotal').value=cfg.senateTotal??100;
-            if(document.getElementById('houseTotal'))      document.getElementById('houseTotal').value=cfg.houseTotal??300;
-            if(document.getElementById('chkGovHighlight')) document.getElementById('chkGovHighlight').checked=cfg.highlightGov??true;
-            const uiMain=state.ui?.currentMainTab||'setup';
-            const uiSub=state.ui?.currentSubTab||{setup:'ideology',legislation:'bill'};
-            currentSubTab=uiSub;
-            toggleSystem(); updateNames(); refreshUI(); simulate();
-            renderBillList(); renderArchiveList(); syncBillSelect(); renderActiveBillDisplay(); updateConfirmButtons();
+            if(!state || typeof state !== "object") throw new Error("Invalid state");
+
+            // 의회 설정 복원 (v2: parliament, 하위호환: data)
+            const parl = state.parliament || state.data;
+            if(!parl || !Array.isArray(parl.parties) || !Array.isArray(parl.ideologies) || !Array.isArray(parl.coalitions))
+                throw new Error("Invalid parliament data");
+
+            ideologies  = parl.ideologies;
+            parties     = parl.parties;
+            coalitions  = parl.coalitions;
+            manualSort  = parl.manualSort ?? false;
+
+            // 입법 절차 복원
+            const leg = state.legislation || {};
+            bills        = Array.isArray(leg.bills) ? leg.bills : (Array.isArray(state.data?.bills) ? state.data.bills : []);
+            activeBillId = leg.activeBillId ?? null;
+            voteState    = leg.voteState   ?? { house: {}, senate: {} };
+
+            // 설정 복원
+            const cfg = state.config || {};
+            const systemType = cfg.systemType || 'bicameral';
+            const radio = document.querySelector(`input[name="systemType"][value="${systemType}"]`);
+            if(radio) radio.checked = true;
+            if(document.getElementById('senateNameInput')) document.getElementById('senateNameInput').value = cfg.senateName ?? "상원";
+            if(document.getElementById('houseNameInput'))  document.getElementById('houseNameInput').value  = cfg.houseName  ?? "국회";
+            if(document.getElementById('senateTotal'))     document.getElementById('senateTotal').value     = cfg.senateTotal ?? 100;
+            if(document.getElementById('houseTotal'))      document.getElementById('houseTotal').value      = cfg.houseTotal  ?? 300;
+            if(document.getElementById('chkGovHighlight')) document.getElementById('chkGovHighlight').checked = cfg.highlightGov ?? true;
+
+            // UI 탭 복원
+            const uiMain = state.ui?.currentMainTab || 'setup';
+            const uiSub  = state.ui?.currentSubTab  || { setup: 'ideology', legislation: 'bill' };
+            currentSubTab = uiSub;
+
+            toggleSystem();
+            updateNames();
+            refreshUI();
+            simulate();
+            renderBillList();
+            renderArchiveList();
+            syncBillSelect();
+            renderActiveBillDisplay();
+            updateConfirmButtons();
+
+            // 탭 복원은 마지막에 (simulate가 끝난 후)
             switchMainTab(uiMain);
-            switchSubTab(uiMain,uiSub[uiMain]||(uiMain==='setup'?'ideology':'bill'),false);
+            switchSubTab(uiMain, uiSub[uiMain] || (uiMain === 'setup' ? 'ideology' : 'bill'), false);
         }
 
         function downloadJSON(filename, obj) {
-            const blob=new Blob([JSON.stringify(obj,null,2)],{type:"application/json"});
-            const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=filename;
-            document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(a.href);
+            const blob = new Blob([JSON.stringify(obj, null, 2)], { type: "application/json" });
+            const a = document.createElement("a");
+            a.href = URL.createObjectURL(blob);
+            a.download = filename;
+            document.body.appendChild(a); a.click(); a.remove();
+            URL.revokeObjectURL(a.href);
+        }
+
+        function saveJSON() {
+            const state = getAppState();
+            const ts = new Date().toISOString().replace(/[:.]/g, "-");
+            downloadJSON(`parliament-save-${ts}.json`, state);
+        }
+
+        async function loadJSONFromFile(file) {
+            const text = await file.text();
+            const obj = JSON.parse(text);
+            setAppState(obj);
         }
 
         window.addEventListener("load", () => {
-            const btnSave=document.getElementById("btnSaveJson");
-            const btnLoad=document.getElementById("btnLoadJson");
-            const fileInput=document.getElementById("fileLoadJson");
-            if(btnSave) btnSave.addEventListener("click", () => { downloadJSON(`parliament-save-en-${new Date().toISOString().replace(/[:.]/g,"-")}.json`, getAppState()); });
-            if(btnLoad&&fileInput) {
+            const btnSave = document.getElementById("btnSaveJson");
+            const btnLoad = document.getElementById("btnLoadJson");
+            const fileInput = document.getElementById("fileLoadJson");
+            if(btnSave) btnSave.addEventListener("click", saveJSON);
+            if(btnLoad && fileInput) {
                 btnLoad.addEventListener("click", () => fileInput.click());
                 fileInput.addEventListener("change", async () => {
-                    const file=fileInput.files?.[0]; if(!file) return;
-                    try { setAppState(JSON.parse(await file.text())); }
-                    catch(e) { alert("LOAD FAILED: File corrupted or wrong format."); }
-                    finally { fileInput.value=""; }
+                    const file = fileInput.files?.[0];
+                    if(!file) return;
+                    try { await loadJSONFromFile(file); }
+                    catch(e) { alert("불러오기 실패: 저장 파일이 깨졌거나 형식이 다릅니다."); }
+                    finally { fileInput.value = ""; }
                 });
             }
-            document.getElementById('houseCanvas').addEventListener('click', e=>handleCanvasClick(e,'house'));
-            document.getElementById('senateCanvas').addEventListener('click', e=>handleCanvasClick(e,'senate'));
-            document.getElementById('houseCanvas').addEventListener('mousemove', e=>handleCanvasMouseMove(e,'house'));
-            document.getElementById('senateCanvas').addEventListener('mousemove', e=>handleCanvasMouseMove(e,'senate'));
+
+            // Canvas event binding
+            document.getElementById('houseCanvas').addEventListener('click', e => handleCanvasClick(e, 'house'));
+            document.getElementById('senateCanvas').addEventListener('click', e => handleCanvasClick(e, 'senate'));
+            document.getElementById('houseCanvas').addEventListener('mousemove', e => handleCanvasMouseMove(e, 'house'));
+            document.getElementById('senateCanvas').addEventListener('mousemove', e => handleCanvasMouseMove(e, 'senate'));
             document.getElementById('houseCanvas').addEventListener('mouseleave', handleCanvasMouseLeave);
             document.getElementById('senateCanvas').addEventListener('mouseleave', handleCanvasMouseLeave);
         });
 
-        // ===== 2-LEVEL TAB SWITCHING =====
+        // ===== 2단 탭 전환 =====
+        let currentMainTab = 'setup';
+        let currentSubTab = { setup: 'ideology', legislation: 'bill' };
+
         function switchMainTab(main) {
-            currentMainTab=main;
-            document.querySelectorAll('.main-tab-btn').forEach(b=>b.classList.remove('active'));
-            document.getElementById('mainTab'+main.charAt(0).toUpperCase()+main.slice(1)).classList.add('active');
-            document.querySelectorAll('.main-tab-content').forEach(c=>c.classList.remove('active'));
-            document.getElementById('mainContent'+main.charAt(0).toUpperCase()+main.slice(1)).classList.add('active');
-            switchSubTab(main,currentSubTab[main],false);
+            currentMainTab = main;
+            document.querySelectorAll('.main-tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('mainTab' + main.charAt(0).toUpperCase() + main.slice(1)).classList.add('active');
+            document.querySelectorAll('.main-tab-content').forEach(c => c.classList.remove('active'));
+            document.getElementById('mainContent' + main.charAt(0).toUpperCase() + main.slice(1)).classList.add('active');
+            // 해당 그룹의 현재 서브탭 활성화
+            switchSubTab(main, currentSubTab[main], false);
         }
 
-        function switchSubTab(main, sub, doMainSwitch=true) {
-            if(doMainSwitch&&currentMainTab!==main) switchMainTab(main);
-            currentSubTab[main]=sub;
-            const groupEl=document.getElementById('mainContent'+main.charAt(0).toUpperCase()+main.slice(1));
-            groupEl.querySelectorAll('.sub-tab-btn').forEach(b=>b.classList.remove('active'));
-            groupEl.querySelectorAll('.sub-tab-content').forEach(c=>c.classList.remove('active'));
-            const btn=document.getElementById('subTab'+sub.charAt(0).toUpperCase()+sub.slice(1));
-            const content=document.getElementById('content'+sub.charAt(0).toUpperCase()+sub.slice(1));
+        function switchSubTab(main, sub, doMainSwitch = true) {
+            if(doMainSwitch && currentMainTab !== main) switchMainTab(main);
+            currentSubTab[main] = sub;
+            // 해당 그룹 내 서브탭 버튼/콘텐츠만 처리
+            const groupEl = document.getElementById('mainContent' + main.charAt(0).toUpperCase() + main.slice(1));
+            groupEl.querySelectorAll('.sub-tab-btn').forEach(b => b.classList.remove('active'));
+            groupEl.querySelectorAll('.sub-tab-content').forEach(c => c.classList.remove('active'));
+            const btnId = 'subTab' + sub.charAt(0).toUpperCase() + sub.slice(1);
+            const contentId = 'content' + sub.charAt(0).toUpperCase() + sub.slice(1);
+            const btn = document.getElementById(btnId);
+            const content = document.getElementById(contentId);
             if(btn) btn.classList.add('active');
             if(content) content.classList.add('active');
+
             refreshUI();
-            if(sub==='vote') { renderBulkPartyList(); syncBillSelect(); renderActiveBillDisplay(); updateConfirmButtons(); }
-            if(sub==='bill') renderBillList();
-            if(sub==='archive') renderArchiveList();
+            if(sub === 'vote') { renderBulkPartyList(); syncBillSelect(); renderActiveBillDisplay(); updateConfirmButtons(); }
+            if(sub === 'bill') renderBillList();
+            if(sub === 'archive') renderArchiveList();
         }
 
+        // 구버전 switchTab 호환 (법안→투표 이동 등 내부 호출용)
         function switchTab(tabName) {
-            if(['ideology','house','senate','coalition'].includes(tabName)) switchSubTab('setup',tabName);
-            else if(['bill','vote','archive'].includes(tabName)) switchSubTab('legislation',tabName);
+            if(['ideology','house','senate','coalition'].includes(tabName)) {
+                switchSubTab('setup', tabName);
+            } else if(['bill','vote'].includes(tabName)) {
+                switchSubTab('legislation', tabName);
+            }
         }
 
         function toggleSystem() {
-            const isBi = document.querySelector('input[name="systemType"]:checked').value === 'bicameral';
-            document.getElementById('senateSection').style.display = isBi ? 'block' : 'none';
-            document.getElementById('subTabSenate').style.display  = isBi ? '' : 'none';
-            document.getElementById('senateVoteResult').style.display = isBi ? 'block' : 'none';
-            if(!isBi&&currentSubTab['setup']==='senate') switchSubTab('setup','ideology');
-            renderBillList(); renderArchiveList(); syncBillSelect(); updateNames();
+            const isBicameral = document.querySelector('input[name="systemType"]:checked').value === 'bicameral';
+            document.getElementById('senateSection').style.display = isBicameral ? 'block' : 'none';
+            document.getElementById('subTabSenate').style.display = isBicameral ? '' : 'none';
+            document.getElementById('senateVoteResult').style.display = isBicameral ? 'block' : 'none';
+            if(!isBicameral && currentSubTab['setup'] === 'senate') switchSubTab('setup', 'ideology');
+            renderBillList();
+            renderArchiveList();
+            syncBillSelect();
+            updateNames();
         }
 
         function updateNames() {
-            const sName=document.getElementById('senateNameInput').value;
-            const hName=document.getElementById('houseNameInput').value;
-            document.getElementById('senateTitle').innerText="> "+sName;
-            document.getElementById('houseTitle').innerText="> "+hName;
-            document.getElementById('houseVoteResultTitle').textContent=`[ ${hName} VOTE RESULT ]`;
-            document.getElementById('senateVoteResultTitle').textContent=`[ ${sName} VOTE RESULT ]`;
-            document.getElementById('subTabHouse').innerText=hName;
-            document.getElementById('subTabSenate').innerText=sName;
-            const bulkH=document.getElementById('bulkHouseLabel');
-            const bulkS=document.getElementById('bulkSenateLabel');
-            if(bulkH) bulkH.textContent=hName;
-            if(bulkS) bulkS.textContent=sName;
+            const sName = document.getElementById('senateNameInput').value;
+            const hName = document.getElementById('houseNameInput').value;
+            document.getElementById('senateTitle').innerText = "> " + sName;
+            document.getElementById('houseTitle').innerText = "> " + hName;
+            document.getElementById('houseVoteResultTitle').textContent = `[ ${hName} 표결 결과 ]`;
+            document.getElementById('senateVoteResultTitle').textContent = `[ ${sName} 표결 결과 ]`;
+            document.getElementById('subTabHouse').innerText = hName;
+            document.getElementById('subTabSenate').innerText = sName;
+            const bulkH = document.getElementById('bulkHouseLabel');
+            const bulkS = document.getElementById('bulkSenateLabel');
+            if(bulkH) bulkH.textContent = hName;
+            if(bulkS) bulkS.textContent = sName;
             updateConfirmButtons();
         }
 
-        function refreshUI() { renderIdeologyList(); renderPartyList('house'); renderPartyList('senate'); renderCoalitions(); }
+        function refreshUI() {
+            renderIdeologyList();
+            renderPartyList('house');
+            renderPartyList('senate');
+            renderCoalitions();
+        }
 
         function isValidHex(hex) { return /^#[0-9A-F]{6}$/i.test(hex); }
 
-        // ===== PARTY SORT =====
+        // ===== 정당 순서 =====
+        let manualSort = false; // false: 이념 자동정렬, true: 수동정렬
+
         function autoSortParties() {
-            manualSort=false;
+            manualSort = false;
             parties.sort((a,b) => {
-                const ia=ideologies.findIndex(i=>i.id===a.ideologyId);
-                const ib=ideologies.findIndex(i=>i.id===b.ideologyId);
-                if(a.ideologyId===IND_IDEOLOGY_ID&&b.ideologyId!==IND_IDEOLOGY_ID) return 1;
-                if(b.ideologyId===IND_IDEOLOGY_ID&&a.ideologyId!==IND_IDEOLOGY_ID) return -1;
-                return ia-ib;
+                const ia = ideologies.findIndex(i=>i.id===a.ideologyId);
+                const ib = ideologies.findIndex(i=>i.id===b.ideologyId);
+                if(a.ideologyId===IND_IDEOLOGY_ID && b.ideologyId!==IND_IDEOLOGY_ID) return 1;
+                if(b.ideologyId===IND_IDEOLOGY_ID && a.ideologyId!==IND_IDEOLOGY_ID) return -1;
+                return ia - ib;
             });
             refreshUI(); simulate();
         }
 
         function moveParty(idx, dir) {
-            manualSort=true;
-            const target=idx+dir;
-            if(target<0||target>=parties.length) return;
-            [parties[idx],parties[target]]=[parties[target],parties[idx]];
+            manualSort = true;
+            const target = idx + dir;
+            if(target < 0 || target >= parties.length) return;
+            [parties[idx], parties[target]] = [parties[target], parties[idx]];
             refreshUI(); simulate();
         }
 
         function renderIdeologyList() {
-            const container=document.getElementById('ideologyList');
-            container.innerHTML='';
-            ideologies.forEach((ide,index) => {
-                const div=document.createElement('div');
+            const container = document.getElementById('ideologyList');
+            container.innerHTML = '';
+            ideologies.forEach((ide, index) => {
+                const div = document.createElement('div');
                 div.style.display='flex'; div.style.gap='5px'; div.style.marginBottom='5px';
-                div.innerHTML=`<div style="display:flex;flex-direction:column;">
-                    <button class="order-btn" onclick="moveIdeology(${index},-1)">▲</button>
-                    <button class="order-btn" onclick="moveIdeology(${index},1)">▼</button></div>
-                    <input type="text" value="${ide.name}" onchange="updateIdeology(${index},'name',this.value)">
-                    <button class="remove-btn" onclick="removeIdeology(${index})">X</button>`;
+                div.innerHTML = `
+                    <div style="display:flex; flex-direction:column;">
+                        <button class="order-btn" onclick="moveIdeology(${index}, -1)">▲</button>
+                        <button class="order-btn" onclick="moveIdeology(${index}, 1)">▼</button>
+                    </div>
+                    <input type="text" value="${ide.name}" onchange="updateIdeology(${index}, 'name', this.value)">
+                    <button class="remove-btn" onclick="removeIdeology(${index})">X</button>
+                `;
                 container.appendChild(div);
             });
         }
 
         function renderPartyList(type) {
-            const container=document.getElementById(type==='house'?'partyListHouse':'partyListSenate');
-            container.innerHTML='';
-            const sortBar=document.createElement('div');
-            sortBar.style.cssText='display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;padding:5px 8px;background:#0a0c10;border:1px solid #222;font-size:0.85rem;';
-            sortBar.innerHTML=`<span style="color:${manualSort?'var(--tno-gold)':'#555'};">${manualSort?'⚠ MANUAL ORDER':'✦ AUTO-SORTED BY IDEOLOGY'}</span>
-                <button onclick="autoSortParties()" style="background:transparent;border:1px solid ${manualSort?'var(--tno-gold)':'#333'};color:${manualSort?'var(--tno-gold)':'#444'};font-family:'VT323',monospace;font-size:0.85rem;padding:2px 8px;cursor:pointer;">↺ AUTO-SORT</button>`;
+            const container = document.getElementById(type === 'house' ? 'partyListHouse' : 'partyListSenate');
+            container.innerHTML = '';
+
+            // 정렬 상태 표시 + 자동정렬 버튼
+            const sortBar = document.createElement('div');
+            sortBar.style.cssText = 'display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; padding:5px 8px; background:#0a0c10; border:1px solid #222; font-size:0.8rem;';
+            sortBar.innerHTML = `
+                <span style="color:${manualSort ? 'var(--tno-gold)' : '#555'};">
+                    ${manualSort ? '⚠ 수동 정렬 중' : '✦ 이념 순 자동정렬'}
+                </span>
+                <button onclick="autoSortParties()" style="
+                    background:transparent; border:1px solid ${manualSort ? 'var(--tno-gold)' : '#333'};
+                    color:${manualSort ? 'var(--tno-gold)' : '#444'}; font-family:'NeoDunggeunmo','VT323',monospace;
+                    font-size:0.75rem; padding:2px 8px; cursor:pointer;
+                " title="이념 순으로 자동정렬">↺ 자동정렬</button>
+            `;
             container.appendChild(sortBar);
-            const visibleParties=parties.map((p,idx)=>({...p,originalIdx:idx})).filter(p=>type==='house'?p.inHouse:p.inSenate);
-            if(visibleParties.length===0){ container.insertAdjacentHTML('beforeend','<div style="text-align:center;color:#555;">[NO DATA]</div>'); return; }
-            visibleParties.forEach((p,visIdx) => {
-                const idx=p.originalIdx;
-                const div=document.createElement('div');
-                div.className=`card-item ${p.isRuling?'is-ruling':''}`;
-                div.style.borderLeftColor=p.color;
-                const seatKey=type==='house'?'seatsHouse':'seatsSenate';
-                const isFirst=visIdx===0, isLast=visIdx===visibleParties.length-1;
-                div.innerHTML=`<div class="card-header">
-                    <div style="display:flex;flex-direction:column;flex-shrink:0;">
-                        <button class="order-btn" onclick="moveParty(${idx},-1)" ${isFirst?'disabled style="opacity:0.2"':''}>▲</button>
-                        <button class="order-btn" onclick="moveParty(${idx},1)" ${isLast?'disabled style="opacity:0.2"':''}>▼</button>
+
+            const visibleParties = parties.map((p, idx) => ({ ...p, originalIdx: idx })).filter(p => type === 'house' ? p.inHouse : p.inSenate);
+            if(visibleParties.length === 0) {
+                container.insertAdjacentHTML('beforeend', '<div style="text-align:center; color:#555;">[데이터 없음]</div>');
+                return;
+            }
+            visibleParties.forEach((p, visIdx) => {
+                const idx = p.originalIdx;
+                const div = document.createElement('div');
+                div.className = `card-item ${p.isRuling ? 'is-ruling' : ''}`;
+                div.style.borderLeftColor = p.color;
+                const seatKey = type === 'house' ? 'seatsHouse' : 'seatsSenate';
+                const isFirst = visIdx === 0;
+                const isLast = visIdx === visibleParties.length - 1;
+                div.innerHTML = `
+                    <div class="card-header">
+                        <div style="display:flex; flex-direction:column; flex-shrink:0;">
+                            <button class="order-btn" onclick="moveParty(${idx}, -1)" ${isFirst?'disabled style="opacity:0.2"':''}>▲</button>
+                            <button class="order-btn" onclick="moveParty(${idx}, 1)" ${isLast?'disabled style="opacity:0.2"':''}>▼</button>
+                        </div>
+                        <input type="text" value="${p.name}" onchange="updateParty(${idx}, 'name', this.value)" placeholder="이름">
+                        <div class="color-input-group">
+                            <input type="text" class="hex-input" value="${p.color}" onchange="updatePartyColorText(this, ${idx})">
+                            <input type="color" value="${p.color}" oninput="updatePartyColorPicker(this, ${idx})">
+                        </div>
+                        <button class="remove-btn" onclick="removeParty(${idx})">X</button>
                     </div>
-                    <input type="text" value="${p.name}" onchange="updateParty(${idx},'name',this.value)" placeholder="Party name">
-                    <div class="color-input-group">
-                        <input type="text" class="hex-input" value="${p.color}" onchange="updatePartyColorText(this,${idx})">
-                        <input type="color" value="${p.color}" oninput="updatePartyColorPicker(this,${idx})">
-                    </div>
-                    <button class="remove-btn" onclick="removeParty(${idx})">X</button></div>
-                    <div style="display:grid;grid-template-columns:2fr 1fr;gap:5px;">
-                        <select onchange="updateParty(${idx},'ideologyId',parseInt(this.value))">
-                            ${ideologies.map(ide=>`<option value="${ide.id}" ${p.ideologyId===ide.id?'selected':''}>${ide.name}</option>`).join('')}
+                    <div style="display:grid; grid-template-columns:2fr 1fr; gap:5px;">
+                        <select onchange="updateParty(${idx}, 'ideologyId', parseInt(this.value))">
+                            ${ideologies.map(ide => `<option value="${ide.id}" ${p.ideologyId === ide.id ? 'selected' : ''}>${ide.name}</option>`).join('')}
                         </select>
-                        <input type="number" value="${p[seatKey]}" min="0" onchange="updateParty(${idx},'${seatKey}',parseInt(this.value)||0)">
+                        <input type="number" value="${p[seatKey]}" min="0" onchange="updateParty(${idx}, '${seatKey}', parseInt(this.value)||0)">
                     </div>
-                    <div style="margin-top:5px;font-size:0.9rem;">
-                        <input type="checkbox" id="lnk_${type}_${idx}" ${type==='house'?(p.inSenate?'checked':''):(p.inHouse?'checked':'')}
-                            onchange="togglePartyParticipation(${idx},'${type==='house'?'inSenate':'inHouse'}',this.checked)">
-                        <label for="lnk_${type}_${idx}" style="display:inline;cursor:pointer;">SYNC ${type==='house'?'SENATE':'HOUSE'}</label>
-                    </div>`;
+                    <div style="margin-top:5px; font-size:0.9rem;">
+                        <input type="checkbox" id="lnk_${type}_${idx}" ${type==='house' ? (p.inSenate?'checked':'') : (p.inHouse?'checked':'')} 
+                            onchange="togglePartyParticipation(${idx}, '${type==='house'?'inSenate':'inHouse'}', this.checked)">
+                        <label for="lnk_${type}_${idx}" style="display:inline; cursor:pointer;">${type==='house'?'상원':'하원'} 연동 (LINK)</label>
+                    </div>
+                `;
                 container.appendChild(div);
             });
         }
 
         function renderCoalitions() {
-            const container=document.getElementById('coalitionList');
-            container.innerHTML='';
-            coalitions.forEach((coal,cIdx) => {
-                const div=document.createElement('div');
-                div.className=`card-item ${coal.isRuling?'is-ruling':''}`;
-                div.style.borderLeftColor=coal.color;
-                const memberChecks=parties.map(p=>`<div style="display:flex;align-items:center;border-bottom:1px solid #222;">
-                    <span style="width:10px;height:10px;background:${p.color};display:inline-block;margin-right:5px;"></span>
-                    <label style="flex:1;margin:0;cursor:pointer;" for="c${cIdx}_p${p.id}">${p.name}</label>
-                    <input type="checkbox" id="c${cIdx}_p${p.id}" ${coal.members.includes(p.id)?'checked':''} onchange="toggleCoalitionMember('${coal.id}',${p.id},this.checked)">
-                    </div>`).join('');
-                div.innerHTML=`<div class="card-header">
-                    <input type="text" value="${coal.name}" onchange="updateCoalition('${coal.id}','name',this.value)">
-                    <div class="color-input-group">
-                        <input type="text" class="hex-input" value="${coal.color}" onchange="updateCoalitionColorText(this,'${coal.id}')">
-                        <input type="color" value="${coal.color}" oninput="updateCoalitionColorPicker(this,'${coal.id}')">
+            const container = document.getElementById('coalitionList');
+            container.innerHTML = '';
+            coalitions.forEach((coal, cIdx) => {
+                const div = document.createElement('div');
+                div.className = `card-item ${coal.isRuling ? 'is-ruling' : ''}`;
+                div.style.borderLeftColor = coal.color;
+                let memberChecks = parties.map(p => `
+                    <div style="display:flex; align-items:center; border-bottom:1px solid #222;">
+                        <span style="width:10px; height:10px; background:${p.color}; display:inline-block; margin-right:5px;"></span>
+                        <label style="flex:1; margin:0; cursor:pointer;" for="c${cIdx}_p${p.id}">${p.name}</label>
+                        <input type="checkbox" id="c${cIdx}_p${p.id}" ${coal.members.includes(p.id)?'checked':''} onchange="toggleCoalitionMember('${coal.id}', ${p.id}, this.checked)">
                     </div>
-                    <button class="remove-btn" onclick="removeCoalition('${coal.id}')">X</button></div>
-                    <div class="ruling-selector ${coal.isRuling?'active':''}" onclick="setRuling('coalition','${coal.id}')">
-                        [ ${coal.isRuling?'ACTIVE GOVERNMENT':'SET AS GOVERNMENT'} ]
+                `).join('');
+                div.innerHTML = `
+                    <div class="card-header">
+                        <input type="text" value="${coal.name}" onchange="updateCoalition('${coal.id}', 'name', this.value)">
+                        <div class="color-input-group">
+                            <input type="text" class="hex-input" value="${coal.color}" onchange="updateCoalitionColorText(this, '${coal.id}')">
+                            <input type="color" value="${coal.color}" oninput="updateCoalitionColorPicker(this, '${coal.id}')">
+                        </div>
+                        <button class="remove-btn" onclick="removeCoalition('${coal.id}')">X</button>
                     </div>
-                    <div class="coalition-members">${memberChecks}</div>`;
+                    <div class="ruling-selector ${coal.isRuling ? 'active' : ''}" onclick="setRuling('coalition', '${coal.id}')">
+                         [ ${coal.isRuling ? '현재 집권 중 (ACTIVE GOV)' : '집권 세력으로 설정'} ]
+                    </div>
+                    <div class="coalition-members">${memberChecks}</div>
+                `;
                 container.appendChild(div);
             });
-            const hdr=document.createElement('div');
-            hdr.style.marginTop="20px"; hdr.style.borderTop="1px dashed #444"; hdr.innerText="SINGLE PARTY RULE"; hdr.style.color="#666";
-            container.appendChild(hdr);
+            const singleHeader = document.createElement('div');
+            singleHeader.style.marginTop = "20px"; singleHeader.style.borderTop="1px dashed #444"; singleHeader.innerText="단독 집권 (SINGLE PARTY RULE)"; singleHeader.style.color="#666";
+            container.appendChild(singleHeader);
             parties.forEach(p => {
-                const div=document.createElement('div');
-                div.className=`ruling-selector ${p.isRuling?'active':''}`;
-                div.onclick=()=>setRuling('party',p.id);
-                div.innerHTML=`<span style="background:${p.color};width:8px;height:8px;"></span> ${p.name}`;
+                const div = document.createElement('div');
+                div.className = `ruling-selector ${p.isRuling ? 'active' : ''}`;
+                div.onclick = () => setRuling('party', p.id);
+                div.innerHTML = `<span style="background:${p.color}; width:8px; height:8px;"></span> ${p.name}`;
                 container.appendChild(div);
             });
         }
 
-        function addIdeology() { ideologies.push({id:Date.now(),name:"New Ideology"}); refreshUI(); }
-        function addIndependentIdeology() { if(!ideologies.find(i=>i.id===IND_IDEOLOGY_ID)) ideologies.push({id:IND_IDEOLOGY_ID,name:"Independent"}); refreshUI(); simulate(); }
-        function removeIdeology(idx) { if(ideologies.length>1){const id=ideologies[idx].id;ideologies.splice(idx,1);parties.forEach(p=>{if(p.ideologyId===id)p.ideologyId=ideologies[0].id;});refreshUI();simulate();} }
+        function addIdeology() { ideologies.push({ id: Date.now(), name: "새 이념" }); refreshUI(); }
+        function addIndependentIdeology() {
+            if(!ideologies.find(i=>i.id===IND_IDEOLOGY_ID)) ideologies.push({id:IND_IDEOLOGY_ID, name:"무소속"});
+            refreshUI(); simulate();
+        }
+        function removeIdeology(idx) { if(ideologies.length>1) { const id=ideologies[idx].id; ideologies.splice(idx,1); parties.forEach(p=>{if(p.ideologyId===id)p.ideologyId=ideologies[0].id;}); refreshUI(); simulate(); }}
         function updateIdeology(i,k,v) { ideologies[i][k]=v; refreshUI(); simulate(); }
-        function moveIdeology(i,d) { if((d===-1&&i>0)||(d===1&&i<ideologies.length-1)){[ideologies[i],ideologies[i+d]]=[ideologies[i+d],ideologies[i]];refreshUI();simulate();} }
-        function addParty() { parties.push({id:Date.now(),name:"New Party",color:"#555555",seatsHouse:0,seatsSenate:0,ideologyId:ideologies[ideologies.length-1].id,isRuling:false,inHouse:true,inSenate:true}); refreshUI(); }
-        function addIndependentParty() { if(!ideologies.find(i=>i.id===IND_IDEOLOGY_ID)) addIndependentIdeology(); parties.push({id:Date.now(),name:"Independent",color:"#999999",seatsHouse:1,seatsSenate:0,ideologyId:IND_IDEOLOGY_ID,isRuling:false,inHouse:true,inSenate:true}); refreshUI(); simulate(); }
+        function moveIdeology(i,d) { if((d===-1&&i>0)||(d===1&&i<ideologies.length-1)){ [ideologies[i], ideologies[i+d]] = [ideologies[i+d], ideologies[i]]; refreshUI(); simulate(); }}
+        function addParty() { parties.push({id:Date.now(), name:"신당", color:"#555555", seatsHouse:0, seatsSenate:0, ideologyId:ideologies[ideologies.length - 1].id, isRuling:false, inHouse:true, inSenate:true}); refreshUI(); }
+        function addIndependentParty() {
+            if(!ideologies.find(i=>i.id===IND_IDEOLOGY_ID)) addIndependentIdeology();
+            parties.push({id:Date.now(), name:"무소속", color:"#999999", seatsHouse:1, seatsSenate:0, ideologyId:IND_IDEOLOGY_ID, isRuling:false, inHouse:true, inSenate:true});
+            refreshUI(); simulate();
+        }
         function removeParty(i) { const pid=parties[i].id; parties.splice(i,1); coalitions.forEach(c=>c.members=c.members.filter(x=>x!==pid)); refreshUI(); simulate(); }
         function updateParty(i,k,v) { parties[i][k]=v; if(k==='name')refreshUI(); simulate(); }
         function togglePartyParticipation(i,f,v) { parties[i][f]=v; refreshUI(); simulate(); }
-        function updatePartyColorText(e,i) { if(isValidHex(e.value)){parties[i].color=e.value.toUpperCase();e.nextElementSibling.value=parties[i].color;refreshUI();simulate();} }
-        function updatePartyColorPicker(e,i) { parties[i].color=e.value.toUpperCase();e.previousElementSibling.value=parties[i].color;simulate(); }
-        function addCoalition() { coalitions.push({id:'c'+Date.now(),name:"New Coalition",color:"#ffffff",members:[],isRuling:false}); refreshUI(); }
-        function removeCoalition(id) { coalitions=coalitions.filter(c=>c.id!==id); refreshUI(); simulate(); }
-        function updateCoalition(id,k,v) { const c=coalitions.find(x=>x.id===id); if(c){c[k]=v;simulate();} }
-        function updateCoalitionColorText(e,id) { if(isValidHex(e.value)){const c=coalitions.find(x=>x.id===id);if(c){c.color=e.value.toUpperCase();e.nextElementSibling.value=c.color;simulate();}} }
-        function updateCoalitionColorPicker(e,id) { const c=coalitions.find(x=>x.id===id);if(c){c.color=e.value.toUpperCase();e.previousElementSibling.value=c.color;simulate();} }
-        function toggleCoalitionMember(cid,pid,chk) { if(chk){coalitions.forEach(c=>c.members=c.members.filter(x=>x!==pid));coalitions.find(c=>c.id===cid).members.push(pid);}else{const c=coalitions.find(x=>x.id===cid);c.members=c.members.filter(x=>x!==pid);} refreshUI(); simulate(); }
-        function setRuling(t,id) { parties.forEach(p=>p.isRuling=false);coalitions.forEach(c=>c.isRuling=false);if(t==='party')parties.find(p=>p.id===id).isRuling=true;else coalitions.find(c=>c.id===id).isRuling=true;refreshUI();simulate(); }
+        function updatePartyColorText(e,i) { if(isValidHex(e.value)){ parties[i].color=e.value.toUpperCase(); e.nextElementSibling.value=parties[i].color; refreshUI(); simulate(); }}
+        function updatePartyColorPicker(e,i) { parties[i].color=e.value.toUpperCase(); e.previousElementSibling.value=parties[i].color; simulate(); }
 
-        // ===== SIMULATE & DRAW =====
+        function addCoalition() { coalitions.push({id:'c'+Date.now(), name:"새 연정", color:"#ffffff", members:[], isRuling:false}); refreshUI(); }
+        function removeCoalition(id) { coalitions=coalitions.filter(c=>c.id!==id); refreshUI(); simulate(); }
+        function updateCoalition(id,k,v) { const c=coalitions.find(x=>x.id===id); if(c){c[k]=v; simulate();} }
+        function updateCoalitionColorText(e,id) { if(isValidHex(e.value)) { const c=coalitions.find(x=>x.id===id); if(c){ c.color=e.value.toUpperCase(); e.nextElementSibling.value=c.color; simulate(); }}}
+        function updateCoalitionColorPicker(e,id) { const c=coalitions.find(x=>x.id===id); if(c){ c.color=e.value.toUpperCase(); e.previousElementSibling.value=c.color; simulate(); }}
+        function toggleCoalitionMember(cid,pid,chk) {
+            if(chk) { coalitions.forEach(c=>c.members=c.members.filter(x=>x!==pid)); coalitions.find(c=>c.id===cid).members.push(pid); }
+            else { const c=coalitions.find(x=>x.id===cid); c.members=c.members.filter(x=>x!==pid); }
+            refreshUI(); simulate();
+        }
+        function setRuling(t,id) {
+            parties.forEach(p=>p.isRuling=false); coalitions.forEach(c=>c.isRuling=false);
+            if(t==='party') parties.find(p=>p.id===id).isRuling=true;
+            else coalitions.find(c=>c.id===id).isRuling=true;
+            refreshUI(); simulate();
+        }
+
+        // ===== PNG 내보내기 =====
+        /* ===== SIMULATE & DRAW ===== */
         function simulate() {
-            const isBi = document.querySelector('input[name="systemType"]:checked').value === 'bicameral';
+            const isBicameral = document.querySelector('input[name="systemType"]:checked').value === 'bicameral';
             const highlightGov = document.getElementById('chkGovHighlight').checked;
-            const sTotal = parseInt(document.getElementById('senateTotal').value)||100;
-            const hTotal = parseInt(document.getElementById('houseTotal').value)||300;
+            const sTotal = parseInt(document.getElementById('senateTotal').value) || 100;
+            const hTotal = parseInt(document.getElementById('houseTotal').value) || 300;
 
             if(!manualSort) {
                 parties.sort((a,b) => {
-                    const ia=ideologies.findIndex(i=>i.id===a.ideologyId);
-                    const ib=ideologies.findIndex(i=>i.id===b.ideologyId);
-                    if(a.ideologyId===IND_IDEOLOGY_ID&&b.ideologyId!==IND_IDEOLOGY_ID) return 1;
-                    if(b.ideologyId===IND_IDEOLOGY_ID&&a.ideologyId!==IND_IDEOLOGY_ID) return -1;
-                    return ia-ib;
+                    const ia = ideologies.findIndex(i=>i.id===a.ideologyId);
+                    const ib = ideologies.findIndex(i=>i.id===b.ideologyId);
+                    if(a.ideologyId===IND_IDEOLOGY_ID && b.ideologyId!==IND_IDEOLOGY_ID) return 1;
+                    if(b.ideologyId===IND_IDEOLOGY_ID && a.ideologyId!==IND_IDEOLOGY_ID) return -1;
+                    return ia - ib;
                 });
             }
 
             const getMap = (targetTotal, chamberKey, checkKey) => {
-                let map=[];
-                parties.filter(p=>p[checkKey]).forEach(p => {
-                    const coal=coalitions.find(c=>c.members.includes(p.id));
-                    const isGov=(coal&&coal.isRuling)||p.isRuling;
-                    const stroke = highlightGov&&isGov ? "var(--tno-gold)" : (coal?coal.color:null);
-                    for(let k=0;k<p[chamberKey];k++) {
-                        if(map.length>=targetTotal) break;
-                        map.push({color:p.color,partyName:p.name,ideology:ideologies.find(i=>i.id===p.ideologyId)?.name||"?",coalitionName:coal?.name,strokeColor:stroke,isRuling:isGov});
+                const active = parties.filter(p=>p[checkKey]);
+                let map = [];
+                active.forEach(p => {
+                    const cnt = p[chamberKey];
+                    const coal = coalitions.find(c=>c.members.includes(p.id));
+                    const isGov = (coal && coal.isRuling) || p.isRuling;
+                    let stroke = null;
+                    if(highlightGov && isGov) stroke = "var(--tno-gold)";
+                    else if(coal) stroke = coal.color;
+                    for(let k=0; k<cnt; k++) {
+                        if(map.length >= targetTotal) break;
+                        map.push({ color: p.color, partyName: p.name, ideology: ideologies.find(i=>i.id===p.ideologyId)?.name||"?", coalitionName: coal?.name, strokeColor: stroke, isRuling: isGov });
                     }
                 });
-                while(map.length<targetTotal) map.push({color:'#222',partyName:'Vacant',ideology:'-',strokeColor:'#333',isRuling:false});
+                while(map.length < targetTotal) map.push({ color: '#222', partyName: 'Vacant', ideology: '-', strokeColor: '#333', isRuling: false });
                 return map;
             };
 
-            const hMap=getMap(hTotal,'seatsHouse','inHouse');
-            drawChamber('houseCanvas',hMap,hTotal,'house'); updateStats('houseStats',hMap,hTotal);
-            if(isBi) {
-                const sMap=getMap(sTotal,'seatsSenate','inSenate');
-                drawChamber('senateCanvas',sMap,sTotal,'senate'); updateStats('senateStats',sMap,sTotal);
+            const hMap = getMap(hTotal, 'seatsHouse', 'inHouse');
+            drawChamber('houseCanvas', hMap, hTotal, 'house');
+            updateStats('houseStats', hMap, hTotal);
+
+            if(isBicameral) {
+                const sMap = getMap(sTotal, 'seatsSenate', 'inSenate');
+                drawChamber('senateCanvas', sMap, sTotal, 'senate');
+                updateStats('senateStats', sMap, sTotal);
             }
-            updateVoteResults(); renderBulkPartyList(); syncBillSelect();
+
+            updateVoteResults();
+            renderBulkPartyList();
+            if(currentTab === 'bill') renderBillList();
         }
 
         function drawChamber(cvsId, map, total, chamber) {
-            const cvs=document.getElementById(cvsId), parent=cvs.parentElement;
-            const width=parent.clientWidth-34, dpr=window.devicePixelRatio||1, heightBuffer=120;
-            cvs.width=width*dpr; cvs.height=(width/2+heightBuffer)*dpr;
-            cvs.style.width=width+"px"; cvs.style.height=(width/2+heightBuffer)+"px";
-            const ctx=cvs.getContext('2d'); ctx.scale(dpr,dpr);
-            const CX=width/2, CY=(width/2+heightBuffer)-40;
-            ctx.clearRect(0,0,width,cvs.height/dpr); if(total<=0) return;
-            const minR=width*0.15, maxR=(width/2)-10;
-            const calc=(rows)=>{ const dR=(maxR-minR)/rows/2.2; let cap=0,rRows=[]; for(let i=0;i<rows;i++){const r=minR+i*(dR*2.2)+dR;const c=Math.floor((Math.PI*r)/(dR*2.2));rRows.push({r,c});cap+=c;} return{cap,rows,dotR:dR,rRows}; };
-            let best=null; for(let r=3;r<30;r++){let res=calc(r);if(res.cap>=total){best=res;break;}} if(!best) best=calc(30);
-            const {dotR,rRows}=best; let pts=[],totalCap=rRows.reduce((a,b)=>a+b.c,0),curP=0;
-            rRows.forEach((row,rI)=>{
-                let count=Math.round(total*(row.c/totalCap));
-                if(rI===rRows.length-1) count=total-curP; curP+=count;
-                for(let i=0;i<count;i++){let ang=Math.PI-(Math.PI/(count>1?count-1:1))*i;if(count===1)ang=Math.PI/2;pts.push({x:CX+row.r*Math.cos(ang),y:CY-row.r*Math.sin(ang)});}
+            const cvs = document.getElementById(cvsId);
+            const parent = cvs.parentElement;
+            const width = parent.clientWidth - 34;
+            const dpr = window.devicePixelRatio || 1;
+            const heightBuffer = 120;
+            cvs.width = width * dpr;
+            cvs.height = (width / 2 + heightBuffer) * dpr;
+            cvs.style.width = width + "px";
+            cvs.style.height = (width / 2 + heightBuffer) + "px";
+            const ctx = cvs.getContext('2d');
+            ctx.scale(dpr, dpr);
+
+            const CX = width / 2;
+            const CY = (width / 2 + heightBuffer) - 40;
+
+            ctx.clearRect(0, 0, width, cvs.height/dpr);
+            if(total <= 0) return;
+
+            // Geometry
+            const minR = width * 0.15;
+            const maxR = (width / 2) - 10;
+            let best = null;
+            const calc = (rows) => {
+                const dotR_est = (maxR - minR) / rows / 2.2;
+                let cap = 0, rRows = [];
+                for(let i=0; i<rows; i++) {
+                    const r = minR + i * (dotR_est * 2.2) + dotR_est;
+                    const c = Math.floor((Math.PI * r) / (dotR_est * 2.2));
+                    rRows.push({r, c}); cap += c;
+                }
+                return { cap, rows, dotR: dotR_est, rRows };
+            };
+            for(let r=3; r<30; r++) { let res=calc(r); if(res.cap>=total){best=res;break;} }
+            if(!best) best = calc(30);
+
+            const { dotR, rRows } = best;
+            let pts = [];
+            let totalCap = rRows.reduce((a,b)=>a+b.c, 0);
+            let currentPoints = 0;
+            rRows.forEach((row, rI) => {
+                let count = Math.round(total * (row.c / totalCap));
+                if(rI === rRows.length-1) count = total - currentPoints;
+                currentPoints += count;
+                if(count > 0) {
+                    for(let i=0; i<count; i++) {
+                        let angle = Math.PI - (Math.PI / (count > 1 ? count-1 : 1)) * i;
+                        if(count===1) angle = Math.PI/2;
+                        pts.push({ x: CX + row.r * Math.cos(angle), y: CY - row.r * Math.sin(angle) });
+                    }
+                }
             });
-            pts.forEach(p=>{p.angle=Math.atan2(CY-p.y,p.x-CX);}); pts.sort((a,b)=>b.angle-a.angle);
-            dotCache[chamber]=pts.map((pt,i)=>({x:pt.x,y:pt.y,r:dotR,cx:CX,cy:CY,color:map[i]?.color||'#222',strokeColor:map[i]?.strokeColor||null,isRuling:map[i]?.isRuling||false,partyName:map[i]?.partyName||'Vacant',ideology:map[i]?.ideology||'-'}));
-            const highlightGov=document.getElementById('chkGovHighlight').checked;
-            pts.forEach((pt,i)=>{
-                if(i>=map.length) return; const d=map[i];
-                const vote=voteState[chamber][i]||'none', voteColor=getVoteColor(vote);
-                ctx.beginPath(); ctx.arc(pt.x,pt.y,dotR*0.85,0,Math.PI*2);
-                ctx.fillStyle=voteColor||d.color; ctx.fill();
-                if(d.isRuling&&highlightGov){ctx.shadowColor="rgba(255,215,0,.8)";ctx.shadowBlur=10;ctx.strokeStyle="#ffd700";ctx.lineWidth=2;ctx.stroke();ctx.shadowBlur=0;}
-                else if(d.strokeColor){ctx.strokeStyle=d.strokeColor;ctx.lineWidth=1;ctx.stroke();}
-                if(voteColor){ctx.beginPath();ctx.arc(pt.x,pt.y,dotR*0.85,0,Math.PI*2);ctx.strokeStyle=d.color;ctx.lineWidth=2.5;ctx.stroke();}
+            pts.forEach(p => { p.angle = Math.atan2(CY - p.y, p.x - CX); });
+            pts.sort((a,b) => b.angle - a.angle);
+
+            // Save dot positions for click detection
+            dotCache[chamber] = pts.map((pt, i) => ({
+                x: pt.x, y: pt.y, r: dotR,
+                cx: CX, cy: CY,
+                color: map[i]?.color || '#222',
+                strokeColor: map[i]?.strokeColor || null,
+                isRuling: map[i]?.isRuling || false,
+                partyName: map[i]?.partyName || 'Vacant',
+                ideology: map[i]?.ideology || '-',
+            }));
+
+            const highlightGov = document.getElementById('chkGovHighlight').checked;
+
+            // Draw dots (with vote state)
+            pts.forEach((pt, i) => {
+                if(i >= map.length) return;
+                const d = map[i];
+                const vote = voteState[chamber][i] || 'none';
+                const voteColor = getVoteColor(vote);
+
+                ctx.beginPath();
+                ctx.arc(pt.x, pt.y, dotR * 0.85, 0, Math.PI*2);
+                ctx.fillStyle = voteColor || d.color;
+                ctx.fill();
+
+                // Stroke: party/coalition/gov
+                if(d.isRuling && highlightGov) {
+                    ctx.shadowColor = "rgba(255, 215, 0, 0.8)";
+                    ctx.shadowBlur = 10;
+                    ctx.strokeStyle = "#ffd700";
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                    ctx.shadowBlur = 0;
+                } else if(d.strokeColor) {
+                    ctx.strokeStyle = d.strokeColor;
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+                }
+
+                // If voted, overlay party color as border so color stays visible
+                if(voteColor) {
+                    ctx.beginPath();
+                    ctx.arc(pt.x, pt.y, dotR * 0.85, 0, Math.PI*2);
+                    ctx.strokeStyle = d.color;
+                    ctx.lineWidth = 2.5;
+                    ctx.stroke();
+                }
             });
-            ctx.fillStyle="#fff"; ctx.font="30px 'VT323'"; ctx.textAlign="center"; ctx.fillText(total,CX,CY);
-            ctx.font="16px 'VT323'"; ctx.fillStyle="var(--tno-neon)"; ctx.fillText("SEATS",CX,CY+25);
+
+            // Center label
+            ctx.fillStyle = "#fff";
+            ctx.font = "30px 'NeoDunggeunmo'";
+            ctx.textAlign = "center";
+            ctx.fillText(total, CX, CY);
+            ctx.font = "16px 'NeoDunggeunmo'";
+            ctx.fillStyle = "var(--tno-neon)";
+            ctx.fillText("SEATS", CX, CY + 25);
         }
 
         function updateStats(id, map, total) {
-            const el=document.getElementById(id); if(total===0){el.innerHTML="";return;}
-            let stats={};
-            const vac=map.filter(x=>x.partyName==='Vacant').length, valid=total-vac, maj=Math.floor(valid/2)+1;
-            map.forEach(m=>{
+            const el = document.getElementById(id);
+            if(total===0){ el.innerHTML=""; return; }
+            let stats = {};
+            const vac = map.filter(x=>x.partyName==='Vacant').length;
+            const valid = total - vac;
+            const maj = Math.floor(valid/2)+1;
+            map.forEach(m => {
                 if(m.partyName==='Vacant') return;
-                let k=m.coalitionName?'c_'+m.coalitionName:'p_'+m.partyName;
-                if(!stats[k]) stats[k]={name:m.coalitionName||m.partyName,count:0,color:m.strokeColor||m.color,isRuling:m.isRuling,parties:{}};
+                let k = m.coalitionName ? 'c_'+m.coalitionName : 'p_'+m.partyName;
+                if(!stats[k]) stats[k] = { name: m.coalitionName || m.partyName, count:0, color: m.strokeColor || m.color, isRuling: m.isRuling, parties:{} };
                 stats[k].count++;
-                if(!stats[k].parties[m.partyName]) stats[k].parties[m.partyName]={n:0,c:m.color,i:m.ideology};
+                if(!stats[k].parties[m.partyName]) stats[k].parties[m.partyName] = {n:0, c:m.color, i:m.ideology};
                 stats[k].parties[m.partyName].n++;
             });
-            let html="";
-            Object.values(stats).sort((a,b)=>b.isRuling-a.isRuling||b.count-a.count).forEach(s=>{
-                let status="";
-                if(s.isRuling){status=`<span style="color:var(--tno-gold);font-weight:bold;">[GOV]</span>`;if(s.count>=maj)status+=` <span style="color:#0f0;">[MAJ]</span>`;else status+=` <span style="color:#f00;">[MIN]</span>`;}
-                else if(s.count>=maj) status=`<span style="color:#f00;">[OPP MAJ]</span>`;
-                const subs=Object.entries(s.parties).map(([n,d])=>`<span class="legend-pill"><span style="background:${d.c};width:8px;height:8px;display:inline-block;"></span>${n}(${d.n})</span>`).join('');
-                html+=`<div class="stat-block" style="border-left-color:${s.isRuling?'var(--tno-gold)':s.color};">
-                    <div style="display:flex;justify-content:space-between;font-size:1.1rem;"><span>${s.name} : ${s.count} (${((s.count/total)*100).toFixed(1)}%)</span><span>${status}</span></div>
-                    <div style="margin-top:5px;opacity:0.8;">${subs}</div></div>`;
+            const sorted = Object.values(stats).sort((a,b) => b.isRuling - a.isRuling || b.count - a.count);
+            let html = "";
+            sorted.forEach(s => {
+                let status = "";
+                if(s.isRuling) {
+                    status = `<span style="color:var(--tno-gold); font-weight:bold;">[여당 GOV]</span>`;
+                    if(s.count >= maj) status += ` <span style="color:#0f0;">[과반 MAJ]</span>`;
+                    else status += ` <span style="color:#f00;">[소수 MIN]</span>`;
+                } else if(s.count >= maj) status = `<span style="color:#f00;">[여소야대]</span>`;
+                let subs = Object.entries(s.parties).map(([n, d]) =>
+                    `<span class="legend-pill"><span style="background:${d.c}; width:8px; height:8px; display:inline-block;"></span>${n}(${d.n})</span>`
+                ).join('');
+                html += `
+                    <div class="stat-block" style="border-left-color:${s.isRuling ? 'var(--tno-gold)' : s.color};">
+                        <div style="display:flex; justify-content:space-between; font-size:1.1rem;">
+                            <span>${s.name} : ${s.count} (${((s.count/total)*100).toFixed(1)}%)</span>
+                            <span>${status}</span>
+                        </div>
+                        <div style="margin-top:5px; opacity:0.8;">${subs}</div>
+                    </div>
+                `;
             });
-            el.innerHTML=html;
+            el.innerHTML = html;
         }
     </script>
-</body>
-</html>
 </body>
 </html>
