@@ -7,7 +7,7 @@
     
     <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/neodgm/neodgm-webfont@latest/neodgm/style.css">
-
+ 
     <style>
         :root {
             --tno-bg: #101218;
@@ -22,7 +22,7 @@
             --vote-nay: #ff2244;
             --vote-abs: #888888;
         }
-
+ 
         body {
             font-family: 'NeoDunggeunmo', 'VT323', monospace;
             background-color: var(--tno-bg);
@@ -37,7 +37,7 @@
             font-size: 16px;
             line-height: 1.4;
         }
-
+ 
         .lang-switch {
             position: absolute;
             top: 15px;
@@ -56,7 +56,7 @@
             box-shadow: 0 0 5px var(--tno-neon);
         }
         .lang-switch:hover { background: var(--tno-neon); color: #000; box-shadow: 0 0 15px var(--tno-neon); }
-
+ 
         body::after {
             content: " ";
             display: block;
@@ -67,11 +67,11 @@
             background-size: 100% 2px, 3px 100%;
             pointer-events: none;
         }
-
+ 
         ::-webkit-scrollbar { width: 10px; background: #000; }
         ::-webkit-scrollbar-thumb { background: var(--tno-border); border: 1px solid var(--tno-neon); }
         ::-webkit-scrollbar-thumb:hover { background: var(--tno-neon); }
-
+ 
         .controls {
             flex: 0 0 400px;
             background: var(--tno-panel);
@@ -93,13 +93,13 @@
             text-shadow: 0 0 5px var(--tno-neon);
             text-transform: uppercase;
         }
-
+ 
         .controls-content {
             padding: 15px;
             overflow-y: auto;
             flex: 1;
         }
-
+ 
         .display-area {
             flex: 1;
             display: flex;
@@ -108,7 +108,7 @@
             overflow-y: auto;
             padding-right: 5px;
         }
-
+ 
         .chamber-box {
             background: var(--tno-panel);
             border: 2px solid var(--tno-border);
@@ -123,7 +123,7 @@
             content: ''; position: absolute; bottom: -2px; right: -2px; width: 20px; height: 20px;
             border-bottom: 2px solid var(--tno-neon); border-right: 2px solid var(--tno-neon);
         }
-
+ 
         h2, h3, h4 { margin: 0; text-transform: uppercase; font-weight: normal; }
         h3 { 
             border-bottom: 1px solid var(--tno-border); 
@@ -132,7 +132,7 @@
             letter-spacing: 1px;
             font-size: 1.2rem;
         }
-
+ 
         label { color: #aaa; display: block; margin-bottom: 5px; font-size: 0.95rem; }
         
         input, select, button, textarea {
@@ -154,12 +154,12 @@
             border-color: var(--tno-neon);
             box-shadow: 0 0 5px var(--tno-neon-dim);
         }
-
+ 
         input[type="checkbox"], input[type="radio"] {
             accent-color: var(--tno-neon);
             width: 16px; height: 16px; cursor: pointer;
         }
-
+ 
         /* ===== 2단 탭 ===== */
         .main-tab-container {
             display: flex;
@@ -188,10 +188,10 @@
             border-bottom-color: var(--tno-panel);
             text-shadow: 0 0 6px var(--tno-neon);
         }
-
+ 
         .main-tab-content { display: none; }
         .main-tab-content.active { display: block; }
-
+ 
         .sub-tab-container {
             display: flex;
             border-bottom: 1px solid var(--tno-border);
@@ -216,11 +216,11 @@
             color: var(--tno-neon);
             border-bottom-color: var(--tno-neon);
         }
-
+ 
         .sub-tab-content { display: none; }
         .sub-tab-content.active { display: block; animation: flicker 0.15s; }
         @keyframes flicker { 0% { opacity: 0.8; } 100% { opacity: 1; } }
-
+ 
         .card-item {
             background: #0d0f14;
             border: 1px solid #333;
@@ -234,7 +234,7 @@
             box-shadow: inset 0 0 10px rgba(255, 215, 0, 0.2);
         }
         .card-header { display: flex; gap: 5px; align-items: center; margin-bottom: 5px; }
-
+ 
         button { text-transform: uppercase; cursor: pointer; border-radius: 0; }
         
         .add-btn {
@@ -247,7 +247,7 @@
             background: transparent; border: 1px solid #555; color: #555; font-size: 1rem; padding: 2px 8px;
         }
         .remove-btn:hover { border-color: var(--tno-alert); color: var(--tno-alert); background: rgba(255,0,85,0.1); }
-
+ 
         .simulate-btn {
             background: var(--tno-neon); color: #000; font-weight: bold;
             border: none; width: 100%; padding: 15px; font-size: 1.4rem; letter-spacing: 2px;
@@ -255,11 +255,11 @@
             box-shadow: 0 0 10px var(--tno-neon);
         }
         .simulate-btn:hover { background: #fff; box-shadow: 0 0 20px var(--tno-neon); }
-
+ 
         .color-input-group { display: flex; gap: 2px; }
         input.hex-input { width: 70px !important; text-align: center; }
         input[type="color"] { border: 1px solid #555; width: 30px; height: 30px; padding: 0; background: none; }
-
+ 
         .stat-block {
             background: #000; border: 1px solid #333; border-left-width: 5px;
             padding: 10px; margin-bottom: 5px;
@@ -268,7 +268,7 @@
         .legend-pill {
             background: #222; padding: 2px 6px; font-size: 0.9rem; border: 1px solid #444; display: inline-flex; align-items: center; gap: 5px; margin-right: 5px; margin-top: 3px;
         }
-
+ 
         canvas {
             display: block;
             background: radial-gradient(circle, #1a202c 0%, #000 90%);
@@ -276,18 +276,18 @@
             width: 100%; height: auto;
             cursor: pointer;
         }
-
+ 
         .ruling-selector {
             border: 1px solid #333; padding: 5px; margin-bottom: 5px; cursor: pointer;
             display: flex; align-items: center; gap: 10px; background: #050505;
         }
         .ruling-selector:hover { border-color: #666; }
         .ruling-selector.active { border-color: var(--tno-gold); color: var(--tno-gold); background: rgba(255, 215, 0, 0.05); }
-
+ 
         .coalition-members { background: #000; border: 1px solid #333; padding: 5px; margin-top: 5px; max-height: 100px; overflow-y: auto; }
         
         .order-btn { background: #222; color: #fff; border: 1px solid #444; font-size: 0.8rem; padding: 0 4px; }
-
+ 
         /* ===== VOTE UI ===== */
         .vote-panel {
             background: #000;
@@ -338,14 +338,14 @@
         .vote-ctrl-btn.nay:hover  { background: rgba(255,34,68,0.15); }
         .vote-ctrl-btn.abs:hover  { background: rgba(136,136,136,0.15); }
         .vote-ctrl-btn.clr:hover  { background: rgba(100,100,100,0.15); }
-
+ 
         .vote-hint {
             font-size: 0.85rem;
             color: #555;
             margin-top: 6px;
             line-height: 1.5;
         }
-
+ 
         /* Vote Result Bar */
         .vote-result-wrap {
             margin-top: 10px;
@@ -393,12 +393,12 @@
         .verdict-pass { color: var(--vote-yea); border-color: var(--vote-yea); text-shadow: 0 0 8px var(--vote-yea); }
         .verdict-fail { color: var(--vote-nay); border-color: var(--vote-nay); text-shadow: 0 0 8px var(--vote-nay); }
         .verdict-pending { color: #555; border-color: #333; }
-
+ 
         /* 내보내기 버튼 */
         .vote-mode-active canvas {
             box-shadow: 0 0 12px rgba(0, 255, 136, 0.3);
         }
-
+ 
         /* Bulk party row */
         .bulk-party-row {
             display: flex;
@@ -435,7 +435,7 @@
         .bulk-vote-btn.active-yea { background: rgba(0,255,136,0.25); font-weight: bold; }
         .bulk-vote-btn.active-nay { background: rgba(255,34,68,0.25); font-weight: bold; }
         .bulk-vote-btn.active-abs { background: rgba(136,136,136,0.25); font-weight: bold; }
-
+ 
         /* ===== BILL CARD ===== */
         .bill-card {
             background: #080b10;
@@ -507,7 +507,7 @@
             font-family: 'NeoDunggeunmo','VT323',monospace;
         }
         .bill-remove-btn:hover { border-color: var(--tno-alert); color: var(--tno-alert); }
-
+ 
         .tooltip-box {
             position: fixed;
             background: #000;
@@ -524,12 +524,12 @@
     </style>
 </head>
 <body>
-
+ 
     <a href="tno.html" class="lang-switch">>> 베타 버전 체험하기</a>
-
+ 
     <!-- Tooltip -->
     <div class="tooltip-box" id="tooltipBox"></div>
-
+ 
     <div class="controls">
         <div class="tno-header-strip">Ministry of Interior</div>
         
@@ -543,14 +543,14 @@
                 <input type="checkbox" id="chkGovHighlight" onchange="simulate()" checked> 
                 <span style="color:var(--tno-gold); text-shadow:0 0 5px var(--tno-gold);">집권 세력 강조 (HIGHLIGHT GOV)</span>
             </label>
-
-
+ 
+ 
             <!-- ===== 상단 메인 탭 ===== -->
             <div class="main-tab-container">
                 <button class="main-tab-btn active" onclick="switchMainTab('setup')" id="mainTabSetup">⚙ 의회 설정</button>
                 <button class="main-tab-btn" onclick="switchMainTab('legislation')" id="mainTabLegislation">⚖ 입법 절차</button>
             </div>
-
+ 
             <!-- ===== 의회 설정 그룹 ===== -->
             <div id="mainContentSetup" class="main-tab-content active">
                 <div class="sub-tab-container">
@@ -559,13 +559,13 @@
                     <button class="sub-tab-btn" onclick="switchSubTab('setup','senate')" id="subTabSenate">상원</button>
                     <button class="sub-tab-btn" onclick="switchSubTab('setup','coalition')" id="subTabCoalition">연정</button>
                 </div>
-
+ 
                 <div id="contentIdeology" class="sub-tab-content active">
                     <div id="ideologyList"></div>
                     <button class="add-btn" onclick="addIdeology()">[+] 이념 추가</button>
                     <button class="add-btn" style="border-style:solid; font-size:0.9rem;" onclick="addIndependentIdeology()">[+] 무소속 슬롯 추가</button>
                 </div>
-
+ 
                 <div id="contentHouse" class="sub-tab-content">
                     <!-- 하원 이름/의석 설정 -->
                     <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:12px; padding:10px; background:#0a0c10; border:1px solid #2a2a2a;">
@@ -582,7 +582,7 @@
                     <button class="add-btn" onclick="addParty()">[+] 정당 추가</button>
                     <button class="add-btn" style="border-style:solid; font-size:0.9rem;" onclick="addIndependentParty()">[+] 무소속 의원 추가</button>
                 </div>
-
+ 
                 <div id="contentSenate" class="sub-tab-content" id="senateConfig">
                     <!-- 상원 이름/의석 설정 -->
                     <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:12px; padding:10px; background:#0a0c10; border:1px solid #2a2a2a;">
@@ -598,13 +598,13 @@
                     <div id="partyListSenate"></div>
                     <button class="add-btn" onclick="addParty()">[+] 정당 추가</button>
                 </div>
-
+ 
                 <div id="contentCoalition" class="sub-tab-content">
                     <div id="coalitionList"></div>
                     <button class="add-btn" onclick="addCoalition()">[+] 연정 구성</button>
                 </div>
             </div>
-
+ 
             <!-- ===== 입법 절차 그룹 ===== -->
             <div id="mainContentLegislation" class="main-tab-content">
                 <div class="sub-tab-container">
@@ -612,7 +612,7 @@
                     <button class="sub-tab-btn" onclick="switchSubTab('legislation','vote')" id="subTabVote">표결</button>
                     <button class="sub-tab-btn" onclick="switchSubTab('legislation','archive')" id="subTabArchive">기록</button>
                 </div>
-
+ 
             <!-- 법안 제출 탭: 작성 + 대기 중 목록 -->
             <div id="contentBill" class="sub-tab-content active">
                 <div class="vote-panel" style="margin-bottom:10px;">
@@ -643,12 +643,12 @@
                 </div>
                 <div id="billList"></div>
             </div>
-
+ 
             <!-- 기록 탭: 가결/부결 완료 -->
             <div id="contentArchive" class="sub-tab-content">
                 <div id="archiveList"></div>
             </div>
-
+ 
             <!-- VOTE SUB-TAB -->
             <div id="contentVote" class="sub-tab-content">
                 <!-- 법안 선택 -->
@@ -664,7 +664,7 @@
                         <option value="">-- 법안 선택 --</option>
                     </select>
                 </div>
-
+ 
                 <!-- 투표 입력 모드 -->
                 <div class="vote-panel" id="voteModePanel">
                     <div class="vote-panel-title">> 투표 입력 모드</div>
@@ -682,7 +682,7 @@
                         <button class="vote-ctrl-btn clr" style="color:var(--tno-alert);border-color:var(--tno-alert);" onclick="clearAllVotes()">전체 초기화</button>
                     </div>
                 </div>
-
+ 
                 <!-- 정당 일괄 투표 -->
                 <div class="vote-panel" id="partyBulkPanel">
                     <div class="vote-panel-title">> 정당 일괄 투표 (PARTY BULK)</div>
@@ -699,7 +699,7 @@
                     </div>
                     <div id="bulkPartyList"></div>
                 </div>
-
+ 
                 <!-- 하원 표결 확정 -->
                 <div class="vote-result-wrap" id="houseVoteResult">
                     <div class="vote-result-title" id="houseVoteResultTitle">[ 하원 표결 결과 ]</div>
@@ -719,7 +719,7 @@
                     <div class="vote-verdict verdict-pending" id="hVerdict">-- 표결 대기 중 --</div>
                     <button class="vote-ctrl-btn yea" id="hConfirmBtn" style="width:100%;margin-top:8px;padding:9px;" onclick="confirmChamberVote('house')">▶ 하원 표결 확정</button>
                 </div>
-
+ 
                 <!-- 상원 표결 확정 -->
                 <div class="vote-result-wrap" id="senateVoteResult" style="margin-top:8px;">
                     <div class="vote-result-title" id="senateVoteResultTitle">[ 상원 표결 결과 ]</div>
@@ -742,7 +742,7 @@
             </div><!-- end contentVote -->
             </div><!-- end mainContentLegislation -->
         </div><!-- end controls-content -->
-
+ 
         <div style="padding: 15px; border-top: 2px solid var(--tno-border); background: #000;">
             <div style="display:flex; gap:10px; margin-bottom:-10px;">
                 <button class="add-btn" id="btnSaveJson" style="border-style:solid; margin-top:0;">SAVE</button>
@@ -752,7 +752,7 @@
             <button class="simulate-btn" onclick="simulate()">>> PROTOCOL EXECUTE <<</button>
         </div>
     </div>
-
+ 
     <div class="display-area">
         <div class="chamber-box" id="senateSection">
             <h3 id="senateTitle">SENATE</h3>
@@ -765,10 +765,10 @@
             <div id="houseStats" style="margin-top:10px;"></div>
         </div>
     </div>
-
+ 
     <script>
         const IND_IDEOLOGY_ID = 9999;
-
+ 
         let ideologies = [
             { id: 101, name: "혁명적 사회주의" },
             { id: 102, name: "사회주의" },
@@ -779,7 +779,7 @@
             { id: 107, name: "국가사회주의" },
             { id: IND_IDEOLOGY_ID, name: "무소속" }
         ];
-
+ 
         let parties = [
             { id: 1, name: "국가재건당", color: "#2E2E2E", seatsHouse: 140, seatsSenate: 60, ideologyId: 101, isRuling: true, inHouse: true, inSenate: true },
             { id: 2, name: "개혁그룹", color: "#5D6D7E", seatsHouse: 50, seatsSenate: 20, ideologyId: 102, isRuling: false, inHouse: true, inSenate: true },
@@ -787,13 +787,13 @@
             { id: 4, name: "사회당", color: "#E74C3C", seatsHouse: 40, seatsSenate: 5, ideologyId: 106, isRuling: false, inHouse: true, inSenate: true },
             { id: 5, name: "무소속", color: "#F1C40F", seatsHouse: 10, seatsSenate: 5, ideologyId: IND_IDEOLOGY_ID, isRuling: false, inHouse: true, inSenate: true }
         ];
-
+ 
         let coalitions = [
             { id: 'c1', name: "국민전선", color: "#2E2E2E", members: [1], isRuling: true },
         ];
-
+ 
         let currentTab = 'house';
-
+ 
         // ===== BILL STATE =====
         // bill: { id, title, content, houseStatus: 'pending'|'pass'|'fail', senateStatus: 'pending'|'pass'|'fail',
         //         houseVote: {yea,nay,abs}, senateVote: {yea,nay,abs} }
@@ -803,12 +803,12 @@
               houseStatus: 'pending', senateStatus: 'pending', houseVote: null, senateVote: null }
         ];
         let activeBillId = null; // 현재 심의 중인 법안
-
+ 
         // ===== VOTE STATE =====
         let voteState = { house: {}, senate: {} };
         let currentVoteMode = 'none';
         let dotCache = { house: [], senate: [] };
-
+ 
         // ===== BILL FUNCTIONS =====
         function toggleCustomThreshold() {
             const sel = document.getElementById('newBillThreshold');
@@ -828,7 +828,7 @@
                 denom.oninput = updatePreview;
             }
         }
-
+ 
         function getThresholdValue() {
             const sel = document.getElementById('newBillThreshold');
             if(sel.value !== 'custom') return parseFloat(sel.value) || 0.5;
@@ -837,7 +837,7 @@
             if(!n || !d || d === 0) return 0.5;
             return n / d;
         }
-
+ 
         function getThresholdLabel(threshold, numer, denom) {
             if(threshold >= 1.0) return '전원 일치';
             if(Math.abs(threshold - 0.5) < 0.01) return '과반';
@@ -845,7 +845,7 @@
             if(numer && denom) return `${numer}/${denom}`;
             return `${Math.round(threshold*100)}%`;
         }
-
+ 
         function addBill() {
             const title = document.getElementById('newBillTitle').value.trim();
             const content = document.getElementById('newBillContent').value.trim();
@@ -861,14 +861,14 @@
             document.getElementById('newBillContent').value = '';
             renderBillList(); syncBillSelect();
         }
-
+ 
         function removeBill(id) {
             bills = bills.filter(b => b.id !== id);
             if(activeBillId === id) { activeBillId = null; voteState = {house:{}, senate:{}}; redrawAll(); updateVoteResults(); }
             renderBillList();
             syncBillSelect();
         }
-
+ 
         function selectBillForVote(id) {
             activeBillId = id;
             voteState = { house: {}, senate: {} };
@@ -879,7 +879,7 @@
             updateConfirmButtons();
             renderBulkPartyList();
         }
-
+ 
         function renderActiveBillDisplay() {
             const el = document.getElementById('voteActiveBillDisplay');
             const sel = document.getElementById('voteSelectBill');
@@ -895,7 +895,7 @@
             `;
             sel.value = activeBillId;
         }
-
+ 
         function syncBillSelect() {
             const sel = document.getElementById('voteSelectBill');
             if(!sel) return;
@@ -910,7 +910,7 @@
             sel.value = activeBillId || '';
             renderActiveBillDisplay();
         }
-
+ 
         function getBillStatusSuffix(b) {
             const isBi = document.querySelector('input[name="systemType"]:checked').value === 'bicameral';
             const parts = [];
@@ -918,7 +918,7 @@
             if(isBi && b.senateStatus !== 'pending') parts.push(b.senateStatus === 'pass' ? '상원✔' : '상원✘');
             return parts.length ? ' [' + parts.join(' ') + ']' : '';
         }
-
+ 
         function getBillOverallStatus(bill) {
             const isBi = document.querySelector('input[name="systemType"]:checked').value === 'bicameral';
             if(isBi) {
@@ -931,7 +931,7 @@
             }
             return 'pending';
         }
-
+ 
         // 법안 카드 공통 배지 생성
         function buildBillBadges(bill) {
             const isBi = document.querySelector('input[name="systemType"]:checked').value === 'bicameral';
@@ -959,7 +959,7 @@
             }
             return badges;
         }
-
+ 
         // 법안 제출 탭 — 대기 중인 법안만
         function renderBillList() {
             const container = document.getElementById('billList');
@@ -991,7 +991,7 @@
                 container.appendChild(div);
             });
         }
-
+ 
         // 기록 탭 — 가결/부결 완료 법안만
         function renderArchiveList() {
             const container = document.getElementById('archiveList');
@@ -1021,21 +1021,21 @@
                 container.appendChild(div);
             });
         }
-
+ 
         // ===== CONFIRM CHAMBER VOTE =====
         function confirmChamberVote(chamber) {
             if(!activeBillId) { alert('심의할 법안을 먼저 선택하세요.'); return; }
             const bill = bills.find(b=>b.id===activeBillId);
             if(!bill) return;
-
+ 
             const isBi = document.querySelector('input[name="systemType"]:checked').value === 'bicameral';
-
+ 
             // 상원은 하원 가결 후에만 가능
             if(chamber === 'senate') {
                 if(bill.houseStatus === 'pending') { alert('하원 표결을 먼저 확정하세요.'); return; }
                 if(bill.houseStatus === 'fail') { alert('하원에서 부결된 법안은 상원에 상정되지 않습니다.'); return; }
             }
-
+ 
             const dots = dotCache[chamber];
             let yea=0, nay=0, abs=0;
             dots.forEach((d,i) => {
@@ -1049,7 +1049,7 @@
             const threshold = bill.threshold || 0.5;
             const required = threshold >= 1.0 ? validSeats : Math.floor(validSeats * threshold) + 1;
             const result = yea >= required ? 'pass' : 'fail';
-
+ 
             if(chamber==='house') {
                 bill.houseStatus = result;
                 bill.houseVote = {yea, nay, abs};
@@ -1062,29 +1062,29 @@
                 bill.senateStatus = result;
                 bill.senateVote = {yea, nay, abs};
             }
-
+ 
             renderBillList();
             renderArchiveList();
             syncBillSelect();
             updateVoteResults();
             updateConfirmButtons();
-
+ 
             voteState[chamber] = {};
             redrawAll();
             renderBulkPartyList();
         }
-
+ 
         // 확정 버튼 잠금/해제 상태 갱신
         function updateConfirmButtons() {
             const isBi = document.querySelector('input[name="systemType"]:checked').value === 'bicameral';
             const bill = activeBillId ? bills.find(b=>b.id===activeBillId) : null;
             const hName = document.getElementById('houseNameInput')?.value || '하원';
             const sName = document.getElementById('senateNameInput')?.value || '상원';
-
+ 
             const hBtn = document.getElementById('hConfirmBtn');
             const sBtn = document.getElementById('sConfirmBtn');
             if(!hBtn || !sBtn) return;
-
+ 
             const hDone = bill && bill.houseStatus !== 'pending';
             hBtn.disabled = !!hDone;
             hBtn.style.opacity = hDone ? '0.35' : '1';
@@ -1092,23 +1092,23 @@
             hBtn.textContent = hDone
                 ? (bill.houseStatus === 'pass' ? `✔ ${hName} 가결 확정됨` : `✘ ${hName} 부결 확정됨`)
                 : `▶ ${hName} 표결 확정`;
-
+ 
             if(isBi) {
                 const hPassed = bill && bill.houseStatus === 'pass';
                 const sDone   = bill && bill.senateStatus !== 'pending' && bill.senateStatus !== 'skip';
                 const sSkip   = bill && bill.senateStatus === 'skip';
-
+ 
                 sBtn.disabled = !hPassed || sDone || sSkip;
                 sBtn.style.opacity = (!hPassed || sDone || sSkip) ? '0.35' : '1';
                 sBtn.style.cursor = (!hPassed || sDone || sSkip) ? 'not-allowed' : 'pointer';
-
+ 
                 if(sSkip)         sBtn.textContent = `✘ ${hName} 부결 — ${sName} 미상정`;
                 else if(sDone)    sBtn.textContent = bill.senateStatus === 'pass' ? `✔ ${sName} 가결 확정됨` : `✘ ${sName} 부결 확정됨`;
                 else if(!hPassed) sBtn.textContent = `[##] ${hName} 가결 후 열림`;
                 else              sBtn.textContent = `▶ ${sName} 표결 확정`;
             }
         }
-
+ 
         function setVoteMode(mode) {
             currentVoteMode = mode;
             const labels = { yea: '▲ 찬성 (초록)', nay: '▼ 반대 (빨강)', abs: '— 기권 (회색)', none: '✕ 초기화' };
@@ -1117,19 +1117,19 @@
             el.textContent = labels[mode] || '없음';
             el.style.color = colors[mode] || '#888';
         }
-
+ 
         function clearAllVotes() {
             voteState = { house: {}, senate: {} };
             redrawAll();
             updateVoteResults();
             renderBulkPartyList();
         }
-
+ 
         // ===== BULK PARTY VOTE =====
         function getBulkChamber() {
             return document.querySelector('input[name="bulkChamber"]:checked')?.value || 'house';
         }
-
+ 
         function applyPartyVote(partyName, vote) {
             const chamber = getBulkChamber();
             const chambers = chamber === 'both' ? ['house', 'senate'] : [chamber];
@@ -1145,7 +1145,7 @@
             updateVoteResults();
             renderBulkPartyList();
         }
-
+ 
         function getPartyDominantVote(partyName) {
             // 현재 선택된 의원방에서 해당 당의 다수 투표 상태 반환
             const chamber = getBulkChamber();
@@ -1160,16 +1160,16 @@
             const max = Object.entries(counts).sort((a,b)=>b[1]-a[1])[0];
             return max[1] > 0 ? max[0] : 'none';
         }
-
+ 
         function renderBulkPartyList() {
             const container = document.getElementById('bulkPartyList');
             if(!container) return;
             const isBi = document.querySelector('input[name="systemType"]:checked').value === 'bicameral';
-
+ 
             // 상원 라디오 활성/비활성
             const senateWrap = document.getElementById('bulkSenateRadioWrap');
             if(senateWrap) senateWrap.style.opacity = isBi ? '1' : '0.3';
-
+ 
             // 현재 의원실의 정당 목록 (중복 제거, Vacant 제외)
             const chamber = getBulkChamber();
             const refCh = chamber === 'both' ? 'house' : chamber;
@@ -1181,12 +1181,12 @@
                     partyOrder.push(d);
                 }
             });
-
+ 
             if(partyOrder.length === 0) {
                 container.innerHTML = '<div style="color:#444; font-size:0.85rem; text-align:center; padding:8px;">시뮬레이션을 먼저 실행하세요</div>';
                 return;
             }
-
+ 
             container.innerHTML = '';
             partyOrder.forEach(d => {
                 const dominant = getPartyDominantVote(d.partyName);
@@ -1203,14 +1203,14 @@
                 container.appendChild(row);
             });
         }
-
+ 
         function getVoteColor(v) {
             if(v === 'yea') return '#00ff88';
             if(v === 'nay') return '#ff2244';
             if(v === 'abs') return '#888888';
             return null; // none
         }
-
+ 
         // ===== CANVAS CLICK HANDLER =====
         function handleCanvasClick(e, chamber) {
             const cvs = e.target;
@@ -1220,7 +1220,7 @@
             const scaleY = cvs.height / dpr / rect.height;
             const mx = (e.clientX - rect.left) * scaleX;
             const my = (e.clientY - rect.top) * scaleY;
-
+ 
             const dots = dotCache[chamber];
             let hit = -1;
             let minDist = Infinity;
@@ -1228,9 +1228,9 @@
                 const dist = Math.hypot(mx - d.x, my - d.y);
                 if(dist <= d.r * 1.5 && dist < minDist) { minDist = dist; hit = i; }
             });
-
+ 
             if(hit === -1) return;
-
+ 
             const prev = voteState[chamber][hit] || 'none';
             if(currentVoteMode === 'none') {
                 // 초기화 모드: 해당 원만 리셋
@@ -1241,11 +1241,11 @@
             } else {
                 voteState[chamber][hit] = currentVoteMode;
             }
-
+ 
             redrawAll();
             updateVoteResults();
         }
-
+ 
         // ===== TOOLTIP =====
         function handleCanvasMouseMove(e, chamber) {
             const cvs = e.target;
@@ -1255,14 +1255,14 @@
             const scaleY = cvs.height / dpr / rect.height;
             const mx = (e.clientX - rect.left) * scaleX;
             const my = (e.clientY - rect.top) * scaleY;
-
+ 
             const dots = dotCache[chamber];
             const tip = document.getElementById('tooltipBox');
             let hit = -1;
             dots.forEach((d, i) => {
                 if(Math.hypot(mx - d.x, my - d.y) <= d.r * 1.5) hit = i;
             });
-
+ 
             if(hit !== -1) {
                 const d = dots[hit];
                 const voteLabels = { yea:'찬성', nay:'반대', abs:'기권', none:'미투표' };
@@ -1275,21 +1275,21 @@
                 tip.style.display = 'none';
             }
         }
-
+ 
         function handleCanvasMouseLeave() {
             document.getElementById('tooltipBox').style.display = 'none';
         }
-
+ 
         // ===== VOTE RESULT UPDATER =====
         function updateVoteResults() {
             const isBi = document.querySelector('input[name="systemType"]:checked').value === 'bicameral';
             const hTotal = parseInt(document.getElementById('houseTotal').value) || 300;
             const sTotal = parseInt(document.getElementById('senateTotal').value) || 100;
-
+ 
             calcAndRenderResult('house', hTotal, 'h');
             if(isBi) calcAndRenderResult('senate', sTotal, 's');
         }
-
+ 
         function calcAndRenderResult(chamber, total, prefix) {
             let yea=0, nay=0, abs=0;
             const dots = dotCache[chamber];
@@ -1303,22 +1303,22 @@
             const validSeats = dots.filter(d=>d.partyName!=='Vacant').length;
             const none = validSeats - yea - nay - abs;
             const t = validSeats || 1;
-
+ 
             // 현재 법안의 가결 기준 적용
             const bill = activeBillId ? bills.find(b=>b.id===activeBillId) : null;
             const threshold = bill?.threshold || 0.5;
             const required = threshold >= 1.0 ? validSeats : Math.floor(validSeats * threshold) + 1;
-
+ 
             document.getElementById(prefix+'CntYea').textContent = yea;
             document.getElementById(prefix+'CntNay').textContent = nay;
             document.getElementById(prefix+'CntAbs').textContent = abs;
             document.getElementById(prefix+'CntNone').textContent = none;
-
+ 
             document.getElementById(prefix+'BarYea').style.width = (yea/t*100).toFixed(1)+'%';
             document.getElementById(prefix+'BarNay').style.width = (nay/t*100).toFixed(1)+'%';
             document.getElementById(prefix+'BarAbs').style.width = (abs/t*100).toFixed(1)+'%';
             document.getElementById(prefix+'BarNone').style.width = (none/t*100).toFixed(1)+'%';
-
+ 
             // 기준선 표시 마커 (표결 바에만)
             const barOuter = document.getElementById(prefix+'BarYea')?.parentElement;
             if(barOuter) {
@@ -1341,10 +1341,10 @@
                 labelEl.style.cssText = `position:absolute; left:${pct}%; top:-18px; transform:translateX(-50%); font-size:0.75rem; color:var(--tno-gold); white-space:nowrap; pointer-events:none; font-family:'NeoDunggeunmo','VT323',monospace;`;
                 labelEl.textContent = `${thLabel} (${required}석)`;
             }
-
+ 
             const thresholdLabels = { 0.5:'과반', 0.667:'2/3', 0.75:'3/4', 1.0:'전원일치' };
             const thLabel = getThresholdLabel(threshold, bill?.numer, bill?.denom);
-
+ 
             // 부가 정보 (찬성수/기준, 기준명, 부족석)
             const infoEl = document.getElementById(prefix+'VoteInfo');
             if(infoEl) {
@@ -1356,7 +1356,7 @@
                     infoEl.textContent = `${yea} / ${required} (${thLabel}, ${required - yea}석 부족)`;
                 }
             }
-
+ 
             // 판정문 (원래 형식)
             const vEl = document.getElementById(prefix+'Verdict');
             vEl.className = 'vote-verdict';
@@ -1372,14 +1372,14 @@
                 vEl.classList.add('verdict-fail');
             }
         }
-
+ 
         // ===== REDRAW (vote state aware) =====
         function redrawAll() {
             const isBi = document.querySelector('input[name="systemType"]:checked').value === 'bicameral';
             if(isBi) redrawChamber('senateCanvas', 'senate');
             redrawChamber('houseCanvas', 'house');
         }
-
+ 
         function redrawChamber(cvsId, chamber) {
             const dots = dotCache[chamber];
             if(!dots || dots.length === 0) return;
@@ -1390,16 +1390,16 @@
             const H = cvs.height / dpr;
             ctx.clearRect(0, 0, W, H);
             ctx.fillStyle = 'transparent';
-
+ 
             const highlightGov = document.getElementById('chkGovHighlight').checked;
-
+ 
             dots.forEach((d, i) => {
                 const vote = voteState[chamber][i] || 'none';
                 const voteColor = getVoteColor(vote);
-
+ 
                 ctx.beginPath();
                 ctx.arc(d.x, d.y, d.r * 0.85, 0, Math.PI*2);
-
+ 
                 // Fill: vote color if voted, else party color
                 if(voteColor) {
                     ctx.fillStyle = voteColor;
@@ -1407,7 +1407,7 @@
                     ctx.fillStyle = d.color;
                 }
                 ctx.fill();
-
+ 
                 // Stroke: always party/coalition/gov color
                 if(d.isRuling && highlightGov) {
                     ctx.shadowColor = "rgba(255, 215, 0, 0.8)";
@@ -1421,7 +1421,7 @@
                     ctx.lineWidth = 1;
                     ctx.stroke();
                 }
-
+ 
                 // If voted, draw inner border using party color so border stays visible
                 if(voteColor) {
                     ctx.beginPath();
@@ -1431,7 +1431,7 @@
                     ctx.stroke();
                 }
             });
-
+ 
             // Center text
             const total = dots.length;
             const CX = dots[0]?.cx ?? W/2;
@@ -1444,12 +1444,12 @@
             ctx.fillStyle = "var(--tno-neon)";
             ctx.fillText("SEATS", CX, CY + 25);
         }
-
+ 
         // ===== MAIN SIMULATE =====
         window.addEventListener('resize', () => { simulate(); });
-
+ 
         window.onload = function() { toggleSystem(); refreshUI(); simulate(); renderBillList(); renderArchiveList(); syncBillSelect(); };
-
+ 
         // ===== SAVE / LOAD =====
         function getAppState() {
             const systemType = document.querySelector('input[name="systemType"]:checked')?.value || 'bicameral';
@@ -1468,26 +1468,26 @@
                 legislation: { bills, activeBillId, voteState }
             };
         }
-
+ 
         function setAppState(state) {
             if(!state || typeof state !== "object") throw new Error("Invalid state");
-
+ 
             // 의회 설정 복원 (v2: parliament, 하위호환: data)
             const parl = state.parliament || state.data;
             if(!parl || !Array.isArray(parl.parties) || !Array.isArray(parl.ideologies) || !Array.isArray(parl.coalitions))
                 throw new Error("Invalid parliament data");
-
+ 
             ideologies  = parl.ideologies;
             parties     = parl.parties;
             coalitions  = parl.coalitions;
             manualSort  = parl.manualSort ?? false;
-
+ 
             // 입법 절차 복원
             const leg = state.legislation || {};
             bills        = Array.isArray(leg.bills) ? leg.bills : (Array.isArray(state.data?.bills) ? state.data.bills : []);
             activeBillId = leg.activeBillId ?? null;
             voteState    = leg.voteState   ?? { house: {}, senate: {} };
-
+ 
             // 설정 복원
             const cfg = state.config || {};
             const systemType = cfg.systemType || 'bicameral';
@@ -1498,12 +1498,12 @@
             if(document.getElementById('senateTotal'))     document.getElementById('senateTotal').value     = cfg.senateTotal ?? 100;
             if(document.getElementById('houseTotal'))      document.getElementById('houseTotal').value      = cfg.houseTotal  ?? 300;
             if(document.getElementById('chkGovHighlight')) document.getElementById('chkGovHighlight').checked = cfg.highlightGov ?? true;
-
+ 
             // UI 탭 복원
             const uiMain = state.ui?.currentMainTab || 'setup';
             const uiSub  = state.ui?.currentSubTab  || { setup: 'ideology', legislation: 'bill' };
             currentSubTab = uiSub;
-
+ 
             toggleSystem();
             updateNames();
             refreshUI();
@@ -1513,12 +1513,12 @@
             syncBillSelect();
             renderActiveBillDisplay();
             updateConfirmButtons();
-
+ 
             // 탭 복원은 마지막에 (simulate가 끝난 후)
             switchMainTab(uiMain);
             switchSubTab(uiMain, uiSub[uiMain] || (uiMain === 'setup' ? 'ideology' : 'bill'), false);
         }
-
+ 
         function downloadJSON(filename, obj) {
             const blob = new Blob([JSON.stringify(obj, null, 2)], { type: "application/json" });
             const a = document.createElement("a");
@@ -1527,19 +1527,19 @@
             document.body.appendChild(a); a.click(); a.remove();
             URL.revokeObjectURL(a.href);
         }
-
+ 
         function saveJSON() {
             const state = getAppState();
             const ts = new Date().toISOString().replace(/[:.]/g, "-");
             downloadJSON(`parliament-save-${ts}.json`, state);
         }
-
+ 
         async function loadJSONFromFile(file) {
             const text = await file.text();
             const obj = JSON.parse(text);
             setAppState(obj);
         }
-
+ 
         window.addEventListener("load", () => {
             const btnSave = document.getElementById("btnSaveJson");
             const btnLoad = document.getElementById("btnLoadJson");
@@ -1555,7 +1555,7 @@
                     finally { fileInput.value = ""; }
                 });
             }
-
+ 
             // Canvas event binding
             document.getElementById('houseCanvas').addEventListener('click', e => handleCanvasClick(e, 'house'));
             document.getElementById('senateCanvas').addEventListener('click', e => handleCanvasClick(e, 'senate'));
@@ -1564,11 +1564,11 @@
             document.getElementById('houseCanvas').addEventListener('mouseleave', handleCanvasMouseLeave);
             document.getElementById('senateCanvas').addEventListener('mouseleave', handleCanvasMouseLeave);
         });
-
+ 
         // ===== 2단 탭 전환 =====
         let currentMainTab = 'setup';
         let currentSubTab = { setup: 'ideology', legislation: 'bill' };
-
+ 
         function switchMainTab(main) {
             currentMainTab = main;
             document.querySelectorAll('.main-tab-btn').forEach(b => b.classList.remove('active'));
@@ -1578,7 +1578,7 @@
             // 해당 그룹의 현재 서브탭 활성화
             switchSubTab(main, currentSubTab[main], false);
         }
-
+ 
         function switchSubTab(main, sub, doMainSwitch = true) {
             if(doMainSwitch && currentMainTab !== main) switchMainTab(main);
             currentSubTab[main] = sub;
@@ -1592,13 +1592,13 @@
             const content = document.getElementById(contentId);
             if(btn) btn.classList.add('active');
             if(content) content.classList.add('active');
-
+ 
             refreshUI();
             if(sub === 'vote') { renderBulkPartyList(); syncBillSelect(); renderActiveBillDisplay(); updateConfirmButtons(); }
             if(sub === 'bill') renderBillList();
             if(sub === 'archive') renderArchiveList();
         }
-
+ 
         // 구버전 switchTab 호환 (법안→투표 이동 등 내부 호출용)
         function switchTab(tabName) {
             if(['ideology','house','senate','coalition'].includes(tabName)) {
@@ -1607,7 +1607,7 @@
                 switchSubTab('legislation', tabName);
             }
         }
-
+ 
         function toggleSystem() {
             const isBicameral = document.querySelector('input[name="systemType"]:checked').value === 'bicameral';
             document.getElementById('senateSection').style.display = isBicameral ? 'block' : 'none';
@@ -1619,7 +1619,7 @@
             syncBillSelect();
             updateNames();
         }
-
+ 
         function updateNames() {
             const sName = document.getElementById('senateNameInput').value;
             const hName = document.getElementById('houseNameInput').value;
@@ -1635,19 +1635,19 @@
             if(bulkS) bulkS.textContent = sName;
             updateConfirmButtons();
         }
-
+ 
         function refreshUI() {
             renderIdeologyList();
             renderPartyList('house');
             renderPartyList('senate');
             renderCoalitions();
         }
-
+ 
         function isValidHex(hex) { return /^#[0-9A-F]{6}$/i.test(hex); }
-
+ 
         // ===== 정당 순서 =====
         let manualSort = false; // false: 이념 자동정렬, true: 수동정렬
-
+ 
         function autoSortParties() {
             manualSort = false;
             parties.sort((a,b) => {
@@ -1659,7 +1659,7 @@
             });
             refreshUI(); simulate();
         }
-
+ 
         function moveParty(idx, dir) {
             manualSort = true;
             const target = idx + dir;
@@ -1667,7 +1667,7 @@
             [parties[idx], parties[target]] = [parties[target], parties[idx]];
             refreshUI(); simulate();
         }
-
+ 
         function renderIdeologyList() {
             const container = document.getElementById('ideologyList');
             container.innerHTML = '';
@@ -1685,11 +1685,11 @@
                 container.appendChild(div);
             });
         }
-
+ 
         function renderPartyList(type) {
             const container = document.getElementById(type === 'house' ? 'partyListHouse' : 'partyListSenate');
             container.innerHTML = '';
-
+ 
             // 정렬 상태 표시 + 자동정렬 버튼
             const sortBar = document.createElement('div');
             sortBar.style.cssText = 'display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; padding:5px 8px; background:#0a0c10; border:1px solid #222; font-size:0.8rem;';
@@ -1704,7 +1704,7 @@
                 " title="이념 순으로 자동정렬">↺ 자동정렬</button>
             `;
             container.appendChild(sortBar);
-
+ 
             const visibleParties = parties.map((p, idx) => ({ ...p, originalIdx: idx })).filter(p => type === 'house' ? p.inHouse : p.inSenate);
             if(visibleParties.length === 0) {
                 container.insertAdjacentHTML('beforeend', '<div style="text-align:center; color:#555;">[데이터 없음]</div>');
@@ -1746,7 +1746,7 @@
                 container.appendChild(div);
             });
         }
-
+ 
         function renderCoalitions() {
             const container = document.getElementById('coalitionList');
             container.innerHTML = '';
@@ -1788,7 +1788,7 @@
                 container.appendChild(div);
             });
         }
-
+ 
         function addIdeology() { ideologies.push({ id: Date.now(), name: "새 이념" }); refreshUI(); }
         function addIndependentIdeology() {
             if(!ideologies.find(i=>i.id===IND_IDEOLOGY_ID)) ideologies.push({id:IND_IDEOLOGY_ID, name:"무소속"});
@@ -1808,7 +1808,7 @@
         function togglePartyParticipation(i,f,v) { parties[i][f]=v; refreshUI(); simulate(); }
         function updatePartyColorText(e,i) { if(isValidHex(e.value)){ parties[i].color=e.value.toUpperCase(); e.nextElementSibling.value=parties[i].color; refreshUI(); simulate(); }}
         function updatePartyColorPicker(e,i) { parties[i].color=e.value.toUpperCase(); e.previousElementSibling.value=parties[i].color; simulate(); }
-
+ 
         function addCoalition() { coalitions.push({id:'c'+Date.now(), name:"새 연정", color:"#ffffff", members:[], isRuling:false}); refreshUI(); }
         function removeCoalition(id) { coalitions=coalitions.filter(c=>c.id!==id); refreshUI(); simulate(); }
         function updateCoalition(id,k,v) { const c=coalitions.find(x=>x.id===id); if(c){c[k]=v; simulate();} }
@@ -1825,7 +1825,7 @@
             else coalitions.find(c=>c.id===id).isRuling=true;
             refreshUI(); simulate();
         }
-
+ 
         // ===== PNG 내보내기 =====
         /* ===== SIMULATE & DRAW ===== */
         function simulate() {
@@ -1833,7 +1833,7 @@
             const highlightGov = document.getElementById('chkGovHighlight').checked;
             const sTotal = parseInt(document.getElementById('senateTotal').value) || 100;
             const hTotal = parseInt(document.getElementById('houseTotal').value) || 300;
-
+ 
             if(!manualSort) {
                 parties.sort((a,b) => {
                     const ia = ideologies.findIndex(i=>i.id===a.ideologyId);
@@ -1843,7 +1843,7 @@
                     return ia - ib;
                 });
             }
-
+ 
             const getMap = (targetTotal, chamberKey, checkKey) => {
                 const active = parties.filter(p=>p[checkKey]);
                 let map = [];
@@ -1862,22 +1862,22 @@
                 while(map.length < targetTotal) map.push({ color: '#222', partyName: 'Vacant', ideology: '-', strokeColor: '#333', isRuling: false });
                 return map;
             };
-
+ 
             const hMap = getMap(hTotal, 'seatsHouse', 'inHouse');
             drawChamber('houseCanvas', hMap, hTotal, 'house');
             updateStats('houseStats', hMap, hTotal);
-
+ 
             if(isBicameral) {
                 const sMap = getMap(sTotal, 'seatsSenate', 'inSenate');
                 drawChamber('senateCanvas', sMap, sTotal, 'senate');
                 updateStats('senateStats', sMap, sTotal);
             }
-
+ 
             updateVoteResults();
             renderBulkPartyList();
             if(currentTab === 'bill') renderBillList();
         }
-
+ 
         function drawChamber(cvsId, map, total, chamber) {
             const cvs = document.getElementById(cvsId);
             const parent = cvs.parentElement;
@@ -1890,13 +1890,13 @@
             cvs.style.height = (width / 2 + heightBuffer) + "px";
             const ctx = cvs.getContext('2d');
             ctx.scale(dpr, dpr);
-
+ 
             const CX = width / 2;
             const CY = (width / 2 + heightBuffer) - 40;
-
+ 
             ctx.clearRect(0, 0, width, cvs.height/dpr);
             if(total <= 0) return;
-
+ 
             // Geometry
             const minR = width * 0.15;
             const maxR = (width / 2) - 10;
@@ -1913,7 +1913,7 @@
             };
             for(let r=3; r<30; r++) { let res=calc(r); if(res.cap>=total){best=res;break;} }
             if(!best) best = calc(30);
-
+ 
             const { dotR, rRows } = best;
             let pts = [];
             let totalCap = rRows.reduce((a,b)=>a+b.c, 0);
@@ -1932,7 +1932,7 @@
             });
             pts.forEach(p => { p.angle = Math.atan2(CY - p.y, p.x - CX); });
             pts.sort((a,b) => b.angle - a.angle);
-
+ 
             // Save dot positions for click detection
             dotCache[chamber] = pts.map((pt, i) => ({
                 x: pt.x, y: pt.y, r: dotR,
@@ -1943,21 +1943,21 @@
                 partyName: map[i]?.partyName || 'Vacant',
                 ideology: map[i]?.ideology || '-',
             }));
-
+ 
             const highlightGov = document.getElementById('chkGovHighlight').checked;
-
+ 
             // Draw dots (with vote state)
             pts.forEach((pt, i) => {
                 if(i >= map.length) return;
                 const d = map[i];
                 const vote = voteState[chamber][i] || 'none';
                 const voteColor = getVoteColor(vote);
-
+ 
                 ctx.beginPath();
                 ctx.arc(pt.x, pt.y, dotR * 0.85, 0, Math.PI*2);
                 ctx.fillStyle = voteColor || d.color;
                 ctx.fill();
-
+ 
                 // Stroke: party/coalition/gov
                 if(d.isRuling && highlightGov) {
                     ctx.shadowColor = "rgba(255, 215, 0, 0.8)";
@@ -1971,7 +1971,7 @@
                     ctx.lineWidth = 1;
                     ctx.stroke();
                 }
-
+ 
                 // If voted, overlay party color as border so color stays visible
                 if(voteColor) {
                     ctx.beginPath();
@@ -1981,7 +1981,7 @@
                     ctx.stroke();
                 }
             });
-
+ 
             // Center label
             ctx.fillStyle = "#fff";
             ctx.font = "30px 'NeoDunggeunmo'";
@@ -1991,7 +1991,7 @@
             ctx.fillStyle = "var(--tno-neon)";
             ctx.fillText("SEATS", CX, CY + 25);
         }
-
+ 
         function updateStats(id, map, total) {
             const el = document.getElementById(id);
             if(total===0){ el.innerHTML=""; return; }
