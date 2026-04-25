@@ -364,8 +364,10 @@
             background: #111;
             border: 1px solid #333;
             display: flex;
-            overflow: hidden;
+            overflow: visible;
             margin-bottom: 6px;
+            margin-top: 22px;
+            position: relative;
         }
         .vote-bar-yea { background: var(--vote-yea); transition: width 0.3s; }
         .vote-bar-nay { background: var(--vote-nay); transition: width 0.3s; }
@@ -392,6 +394,7 @@
         .verdict-fail { color: var(--vote-nay); border-color: var(--vote-nay); text-shadow: 0 0 8px var(--vote-nay); }
         .verdict-pending { color: #555; border-color: #333; }
 
+        /* 내보내기 버튼 */
         .vote-mode-active canvas {
             box-shadow: 0 0 12px rgba(0, 255, 136, 0.3);
         }
@@ -522,7 +525,7 @@
 </head>
 <body>
 
-    <a href="beta_tno_kor.html" class="lang-switch">>> 베타 버전 체험하기</a>
+    <a href="tno.html" class="lang-switch">>> 베타 버전 체험하기</a>
 
     <!-- Tooltip -->
     <div class="tooltip-box" id="tooltipBox"></div>
@@ -536,10 +539,11 @@
                 <label style="cursor:pointer; color:#fff;"><input type="radio" name="systemType" value="unicameral" onchange="toggleSystem()"> 단원제(UNICAMERAL)</label>
             </div>
             
-            <label style="cursor:pointer; margin-bottom:15px;">
+            <label style="cursor:pointer; margin-bottom:8px;">
                 <input type="checkbox" id="chkGovHighlight" onchange="simulate()" checked> 
                 <span style="color:var(--tno-gold); text-shadow:0 0 5px var(--tno-gold);">집권 세력 강조 (HIGHLIGHT GOV)</span>
             </label>
+
 
             <!-- ===== 상단 메인 탭 ===== -->
             <div class="main-tab-container">
@@ -620,6 +624,21 @@
                         width:100%; box-sizing:border-box; padding:8px; resize:vertical;
                         min-height:80px; outline:none; line-height:1.5;
                     "></textarea>
+                    <div style="margin-top:8px;">
+                        <label style="color:#888; font-size:0.85rem; margin-bottom:4px;">가결 기준</label>
+                        <select id="newBillThreshold" style="width:100%; background:#000; border:1px solid var(--tno-border); color:var(--tno-gold); font-family:'NeoDunggeunmo','VT323',monospace; font-size:0.9rem; padding:4px 8px;" onchange="toggleCustomThreshold()">
+                            <option value="0.5">과반 (재적 과반수)</option>
+                            <option value="0.667">특별다수 (2/3 이상)</option>
+                            <option value="1.0">전원 일치</option>
+                            <option value="custom">지정...</option>
+                        </select>
+                        <div id="customThresholdWrap" style="display:none; margin-top:6px; display:none; align-items:center; gap:6px;">
+                            <input type="number" id="customNumer" min="1" placeholder="분자" style="flex:1; text-align:center;">
+                            <span style="color:#666; font-size:1.2rem;">/</span>
+                            <input type="number" id="customDenom" min="1" placeholder="분모" style="flex:1; text-align:center;">
+                            <span id="customThresholdPreview" style="color:#ffd700; font-size:0.85rem; white-space:nowrap;"></span>
+                        </div>
+                    </div>
                     <button class="add-btn" style="border-style:solid; margin-top:8px; color:var(--tno-neon); border-color:var(--tno-neon);" onclick="addBill()">[+] 법안 등록</button>
                 </div>
                 <div id="billList"></div>
@@ -696,6 +715,7 @@
                         <span class="vc-abs">기권 <b id="hCntAbs">0</b></span>
                         <span class="vc-none">미투표 <b id="hCntNone">0</b></span>
                     </div>
+                    <div style="font-size:0.85rem; color:#aaa; text-align:right; margin-bottom:2px; min-height:1.2em;" id="hVoteInfo"></div>
                     <div class="vote-verdict verdict-pending" id="hVerdict">-- 표결 대기 중 --</div>
                     <button class="vote-ctrl-btn yea" id="hConfirmBtn" style="width:100%;margin-top:8px;padding:9px;" onclick="confirmChamberVote('house')">▶ 하원 표결 확정</button>
                 </div>
@@ -715,6 +735,7 @@
                         <span class="vc-abs">기권 <b id="sCntAbs">0</b></span>
                         <span class="vc-none">미투표 <b id="sCntNone">0</b></span>
                     </div>
+                    <div style="font-size:0.85rem; color:#aaa; text-align:right; margin-bottom:2px; min-height:1.2em;" id="sVoteInfo"></div>
                     <div class="vote-verdict verdict-pending" id="sVerdict">-- 표결 대기 중 --</div>
                     <button class="vote-ctrl-btn yea" id="sConfirmBtn" style="width:100%;margin-top:8px;padding:9px;" onclick="confirmChamberVote('senate')">▶ 상원 표결 확정</button>
                 </div>
@@ -777,7 +798,8 @@
         // bill: { id, title, content, houseStatus: 'pending'|'pass'|'fail', senateStatus: 'pending'|'pass'|'fail',
         //         houseVote: {yea,nay,abs}, senateVote: {yea,nay,abs} }
         let bills = [
-            { id: 'b1', title: '국가재건특별법 제1조', content: '국가 재건을 위해 필요한 모든 조치를 취할 수 있다.\n집행부는 의회의 동의 없이 긴급 법령을 발동할 수 있다.',
+            { id: 'b1', title: '국가재건특별법 제1조', threshold: 0.5,
+              content: '국가 재건을 위해 필요한 모든 조치를 취할 수 있다.\n집행부는 의회의 동의 없이 긴급 법령을 발동할 수 있다.',
               houseStatus: 'pending', senateStatus: 'pending', houseVote: null, senateVote: null }
         ];
         let activeBillId = null; // 현재 심의 중인 법안
@@ -788,16 +810,56 @@
         let dotCache = { house: [], senate: [] };
 
         // ===== BILL FUNCTIONS =====
+        function toggleCustomThreshold() {
+            const sel = document.getElementById('newBillThreshold');
+            const wrap = document.getElementById('customThresholdWrap');
+            const isCustom = sel.value === 'custom';
+            wrap.style.display = isCustom ? 'flex' : 'none';
+            if(isCustom) {
+                const numer = document.getElementById('customNumer');
+                const denom = document.getElementById('customDenom');
+                const updatePreview = () => {
+                    const n = parseInt(numer.value) || 0;
+                    const d = parseInt(denom.value) || 1;
+                    document.getElementById('customThresholdPreview').textContent =
+                        n && d ? `= ${(n/d*100).toFixed(1)}%` : '';
+                };
+                numer.oninput = updatePreview;
+                denom.oninput = updatePreview;
+            }
+        }
+
+        function getThresholdValue() {
+            const sel = document.getElementById('newBillThreshold');
+            if(sel.value !== 'custom') return parseFloat(sel.value) || 0.5;
+            const n = parseInt(document.getElementById('customNumer').value);
+            const d = parseInt(document.getElementById('customDenom').value);
+            if(!n || !d || d === 0) return 0.5;
+            return n / d;
+        }
+
+        function getThresholdLabel(threshold, numer, denom) {
+            if(threshold >= 1.0) return '전원 일치';
+            if(Math.abs(threshold - 0.5) < 0.01) return '과반';
+            if(Math.abs(threshold - 0.667) < 0.01) return '특별다수(2/3)';
+            if(numer && denom) return `${numer}/${denom}`;
+            return `${Math.round(threshold*100)}%`;
+        }
+
         function addBill() {
             const title = document.getElementById('newBillTitle').value.trim();
             const content = document.getElementById('newBillContent').value.trim();
+            const threshold = getThresholdValue();
+            const sel = document.getElementById('newBillThreshold');
+            const isCustom = sel.value === 'custom';
+            const numer = isCustom ? parseInt(document.getElementById('customNumer').value) || null : null;
+            const denom = isCustom ? parseInt(document.getElementById('customDenom').value) || null : null;
             if(!title) { alert('법안 제목을 입력하세요.'); return; }
-            bills.push({ id: 'b'+Date.now(), title, content,
+            bills.push({ id: 'b'+Date.now(), title, content, threshold, numer, denom,
                 houseStatus: 'pending', senateStatus: 'pending', houseVote: null, senateVote: null });
             document.getElementById('newBillTitle').value = '';
             document.getElementById('newBillContent').value = '';
-            renderBillList();
-            syncBillSelect();
+            renderBillList(); syncBillSelect();
         }
 
         function removeBill(id) {
@@ -984,8 +1046,9 @@
                 else if(v==='abs') abs++;
             });
             const validSeats = dots.filter(d=>d.partyName!=='Vacant').length;
-            const maj = Math.floor(validSeats/2)+1;
-            const result = yea >= maj ? 'pass' : 'fail';
+            const threshold = bill.threshold || 0.5;
+            const required = threshold >= 1.0 ? validSeats : Math.floor(validSeats * threshold) + 1;
+            const result = yea >= required ? 'pass' : 'fail';
 
             if(chamber==='house') {
                 bill.houseStatus = result;
@@ -1240,7 +1303,11 @@
             const validSeats = dots.filter(d=>d.partyName!=='Vacant').length;
             const none = validSeats - yea - nay - abs;
             const t = validSeats || 1;
-            const maj = Math.floor(validSeats / 2) + 1;
+
+            // 현재 법안의 가결 기준 적용
+            const bill = activeBillId ? bills.find(b=>b.id===activeBillId) : null;
+            const threshold = bill?.threshold || 0.5;
+            const required = threshold >= 1.0 ? validSeats : Math.floor(validSeats * threshold) + 1;
 
             document.getElementById(prefix+'CntYea').textContent = yea;
             document.getElementById(prefix+'CntNay').textContent = nay;
@@ -1252,13 +1319,52 @@
             document.getElementById(prefix+'BarAbs').style.width = (abs/t*100).toFixed(1)+'%';
             document.getElementById(prefix+'BarNone').style.width = (none/t*100).toFixed(1)+'%';
 
+            // 기준선 표시 마커 (표결 바에만)
+            const barOuter = document.getElementById(prefix+'BarYea')?.parentElement;
+            if(barOuter) {
+                let marker = barOuter.querySelector('.threshold-marker');
+                if(!marker) {
+                    marker = document.createElement('div');
+                    marker.className = 'threshold-marker';
+                    barOuter.appendChild(marker);
+                }
+                let labelEl = barOuter.querySelector('.threshold-label');
+                if(!labelEl) {
+                    labelEl = document.createElement('div');
+                    labelEl.className = 'threshold-label';
+                    barOuter.appendChild(labelEl);
+                }
+                barOuter.style.position = 'relative';
+                const pct = Math.min(threshold * 100, 100).toFixed(1);
+                marker.style.cssText = `position:absolute; left:${pct}%; top:0; bottom:0; width:2px; background:var(--tno-gold); box-shadow:0 0 5px var(--tno-gold); z-index:2; pointer-events:none;`;
+                const thLabel = getThresholdLabel(threshold, bill?.numer, bill?.denom);
+                labelEl.style.cssText = `position:absolute; left:${pct}%; top:-18px; transform:translateX(-50%); font-size:0.75rem; color:var(--tno-gold); white-space:nowrap; pointer-events:none; font-family:'NeoDunggeunmo','VT323',monospace;`;
+                labelEl.textContent = `${thLabel} (${required}석)`;
+            }
+
+            const thresholdLabels = { 0.5:'과반', 0.667:'2/3', 0.75:'3/4', 1.0:'전원일치' };
+            const thLabel = getThresholdLabel(threshold, bill?.numer, bill?.denom);
+
+            // 부가 정보 (찬성수/기준, 기준명, 부족석)
+            const infoEl = document.getElementById(prefix+'VoteInfo');
+            if(infoEl) {
+                if(yea + nay + abs === 0) {
+                    infoEl.textContent = `기준: ${thLabel}, ${required}석 필요`;
+                } else if(yea >= required) {
+                    infoEl.textContent = `${yea} / ${required} (${thLabel})`;
+                } else {
+                    infoEl.textContent = `${yea} / ${required} (${thLabel}, ${required - yea}석 부족)`;
+                }
+            }
+
+            // 판정문 (원래 형식)
             const vEl = document.getElementById(prefix+'Verdict');
             vEl.className = 'vote-verdict';
             const billTitle = activeBillId ? (bills.find(b=>b.id===activeBillId)?.title || '법안') : '법안';
             if(yea + nay + abs === 0) {
                 vEl.textContent = '-- 표결 대기 중 --';
                 vEl.classList.add('verdict-pending');
-            } else if(yea >= maj) {
+            } else if(yea >= required) {
                 vEl.textContent = `✔ 가결 (${billTitle})`;
                 vEl.classList.add('verdict-pass');
             } else {
@@ -1720,6 +1826,7 @@
             refreshUI(); simulate();
         }
 
+        // ===== PNG 내보내기 =====
         /* ===== SIMULATE & DRAW ===== */
         function simulate() {
             const isBicameral = document.querySelector('input[name="systemType"]:checked').value === 'bicameral';
