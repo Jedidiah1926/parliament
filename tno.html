@@ -66,7 +66,7 @@
         }
         input:focus,select:focus { outline:none; border-color:var(--tno-neon); box-shadow:0 0 5px var(--tno-neon-dim); }
         input[type="checkbox"],input[type="radio"] { accent-color:var(--tno-neon); width:16px; height:16px; cursor:pointer; }
- 
+
         /* ===== 2-LEVEL TABS ===== */
         .main-tab-container { display:flex; border-bottom:2px solid var(--tno-neon); }
         .main-tab-btn {
@@ -85,7 +85,7 @@
         .sub-tab-content { display:none; }
         .sub-tab-content.active { display:block; animation:flicker .15s; }
         @keyframes flicker { 0%{opacity:.8} 100%{opacity:1} }
- 
+
         .card-item { background:#0d0f14; border:1px solid #333; border-left-width:5px; padding:10px; margin-bottom:10px; }
         .card-item.is-ruling { border-color:var(--tno-gold); box-shadow:inset 0 0 10px rgba(255,215,0,.2); }
         .card-header { display:flex; gap:5px; align-items:center; margin-bottom:5px; }
@@ -107,7 +107,7 @@
         .ruling-selector.active { border-color:var(--tno-gold); color:var(--tno-gold); background:rgba(255,215,0,.05); }
         .coalition-members { background:#000; border:1px solid #333; padding:5px; margin-top:5px; max-height:100px; overflow-y:auto; }
         .order-btn { background:#222; color:#fff; border:1px solid #444; font-size:0.9rem; padding:0 4px; }
- 
+
         /* ===== VOTE UI ===== */
         .vote-panel { background:#000; border:2px solid #333; padding:12px; margin-bottom:12px; }
         .vote-panel-title { color:var(--tno-neon); font-size:1.1rem; letter-spacing:1px; border-bottom:1px solid #333; padding-bottom:6px; margin-bottom:10px; }
@@ -137,7 +137,7 @@
         .verdict-pass { color:var(--vote-yea); border-color:var(--vote-yea); text-shadow:0 0 8px var(--vote-yea); }
         .verdict-fail { color:var(--vote-nay); border-color:var(--vote-nay); text-shadow:0 0 8px var(--vote-nay); }
         .verdict-pending { color:#555; border-color:#333; }
- 
+
         /* BULK VOTE */
         .bulk-party-row { display:flex; align-items:center; gap:5px; padding:5px 4px; border-bottom:1px solid #1a1a1a; }
         .bulk-party-row:last-child { border-bottom:none; }
@@ -155,7 +155,7 @@
         .bulk-vote-btn.active-yea{background:rgba(0,255,136,.25);font-weight:bold}
         .bulk-vote-btn.active-nay{background:rgba(255,34,68,.25);font-weight:bold}
         .bulk-vote-btn.active-abs{background:rgba(136,136,136,.25);font-weight:bold}
- 
+
         /* BILL CARDS */
         .bill-card { background:#080b10; border:1px solid #2a2a2a; border-left:4px solid #333; padding:10px 12px; margin-bottom:8px; transition:border-color .15s; }
         .bill-card:hover { border-color:var(--tno-neon); }
@@ -175,14 +175,28 @@
         .bill-select-btn:hover { background:rgba(0,255,255,.1); }
         .bill-remove-btn { font-size:0.9rem; padding:2px 6px; border:1px solid #333; color:#555; background:transparent; cursor:pointer; font-family:'VT323',monospace; }
         .bill-remove-btn:hover { border-color:var(--tno-alert); color:var(--tno-alert); }
- 
+
+        /* ===== TAG / SEARCH ===== */
+        .tag-badge {
+            display:inline-block; background:#0d1a1a; border:1px solid #2a4a4a;
+            color:var(--tno-neon); font-size:0.8rem; padding:1px 7px;
+            margin:2px 2px 2px 0; cursor:pointer;
+            font-family:'VT323',monospace; letter-spacing:0.5px; transition:0.15s;
+        }
+        .tag-badge:hover, .tag-badge.active { background:rgba(0,255,255,0.12); border-color:var(--tno-neon); }
+        .tag-badge.active { font-weight:bold; }
+        .bill-search-bar { display:flex; gap:5px; margin-bottom:8px; }
+        .bill-search-bar input { flex:1; background:#000; border:1px solid #333; color:#ccc; font-family:'VT323',monospace; font-size:1rem; padding:5px 8px; }
+        .bill-search-bar input:focus { outline:none; border-color:var(--tno-neon); }
+        .bill-tag-filter { display:flex; flex-wrap:wrap; gap:3px; margin-bottom:8px; min-height:0; }
+
     </style>
 </head>
 <body>
- 
+
     <a href="tno_kor.html" class="lang-switch">>> SWITCH TO KOREAN</a>
     <div class="tooltip-box" id="tooltipBox"></div>
- 
+
     <div class="controls">
         <div class="tno-header-strip">Ministry of Interior</div>
         <div class="controls-content">
@@ -194,13 +208,13 @@
                 <input type="checkbox" id="chkGovHighlight" onchange="simulate()" checked>
                 <span style="color:var(--tno-gold);text-shadow:0 0 5px var(--tno-gold);">HIGHLIGHT GOVERNMENT</span>
             </label>
- 
+
             <!-- MAIN TABS -->
             <div class="main-tab-container">
                 <button class="main-tab-btn active" onclick="switchMainTab('setup')" id="mainTabSetup">⚙ PARLIAMENT</button>
                 <button class="main-tab-btn" onclick="switchMainTab('legislation')" id="mainTabLegislation">⚖ LEGISLATION</button>
             </div>
- 
+
             <!-- PARLIAMENT SETUP GROUP -->
             <div id="mainContentSetup" class="main-tab-content active">
                 <div class="sub-tab-container">
@@ -209,13 +223,13 @@
                     <button class="sub-tab-btn" onclick="switchSubTab('setup','senate')" id="subTabSenate">SENATE</button>
                     <button class="sub-tab-btn" onclick="switchSubTab('setup','coalition')" id="subTabCoalition">COALITION</button>
                 </div>
- 
+
                 <div id="contentIdeology" class="sub-tab-content active">
                     <div id="ideologyList"></div>
                     <button class="add-btn" onclick="addIdeology()">[+] ADD IDEOLOGY</button>
                     <button class="add-btn" style="border-style:solid;font-size:0.9rem;" onclick="addIndependentIdeology()">[+] ADD INDEPENDENT SLOT</button>
                 </div>
- 
+
                 <div id="contentHouse" class="sub-tab-content">
                     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;padding:10px;background:#0a0c10;border:1px solid #2a2a2a;">
                         <div>
@@ -231,7 +245,7 @@
                     <button class="add-btn" onclick="addParty()">[+] ADD PARTY</button>
                     <button class="add-btn" style="border-style:solid;font-size:0.9rem;" onclick="addIndependentParty()">[+] ADD INDEPENDENT MP</button>
                 </div>
- 
+
                 <div id="contentSenate" class="sub-tab-content">
                     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;padding:10px;background:#0a0c10;border:1px solid #2a2a2a;">
                         <div>
@@ -246,13 +260,13 @@
                     <div id="partyListSenate"></div>
                     <button class="add-btn" onclick="addParty()">[+] ADD PARTY</button>
                 </div>
- 
+
                 <div id="contentCoalition" class="sub-tab-content">
                     <div id="coalitionList"></div>
                     <button class="add-btn" onclick="addCoalition()">[+] FORM COALITION</button>
                 </div>
             </div>
- 
+
             <!-- LEGISLATION GROUP -->
             <div id="mainContentLegislation" class="main-tab-content">
                 <div class="sub-tab-container">
@@ -260,13 +274,14 @@
                     <button class="sub-tab-btn" onclick="switchSubTab('legislation','vote')" id="subTabVote">VOTE</button>
                     <button class="sub-tab-btn" onclick="switchSubTab('legislation','archive')" id="subTabArchive">RECORD</button>
                 </div>
- 
+
                 <!-- BILLS SUB-TAB -->
                 <div id="contentBill" class="sub-tab-content active">
                     <div class="vote-panel" style="margin-bottom:10px;">
                         <div class="vote-panel-title">> DRAFT NEW BILL</div>
                         <input type="text" class="vote-bill-input" id="newBillTitle" placeholder="Bill title..." style="margin-bottom:6px;">
                         <textarea id="newBillContent" placeholder="Bill content..." style="background:#000;border:1px solid var(--tno-border);color:#ccc;font-family:'VT323',monospace;font-size:1rem;width:100%;box-sizing:border-box;padding:8px;resize:vertical;min-height:80px;outline:none;line-height:1.5;"></textarea>
+                        <input type="text" id="newBillTags" placeholder="Tags (comma-separated, e.g. economy, security)" style="background:#000;border:1px solid var(--tno-border);color:#aaa;font-family:'VT323',monospace;font-size:0.95rem;width:100%;box-sizing:border-box;padding:5px 8px;margin-top:6px;">
                         <div style="margin-top:8px;">
                             <label style="color:#888;font-size:0.9rem;margin-bottom:4px;">Passage Threshold</label>
                             <select id="newBillThreshold" style="width:100%;background:#000;border:1px solid var(--tno-border);color:var(--tno-gold);font-family:'VT323',monospace;font-size:1rem;padding:4px 8px;" onchange="toggleCustomThreshold()">
@@ -284,14 +299,26 @@
                         </div>
                         <button class="add-btn" style="border-style:solid;margin-top:8px;color:var(--tno-neon);border-color:var(--tno-neon);" onclick="addBill()">[+] SUBMIT BILL</button>
                     </div>
+
+                    <!-- Search + Tag Filter -->
+                    <div class="bill-search-bar">
+                        <input type="text" id="billSearchInput" placeholder="Search bills..." oninput="renderBillList(); renderArchiveList();">
+                        <button onclick="document.getElementById('billSearchInput').value=''; activeBillTagFilter=null; renderBillList(); renderArchiveList();" style="background:transparent;border:1px solid #333;color:#555;padding:4px 8px;font-family:'VT323',monospace;cursor:pointer;" title="Clear">✕</button>
+                    </div>
+                    <div class="bill-tag-filter" id="billTagFilter"></div>
                     <div id="billList"></div>
                 </div>
- 
+
                 <!-- ARCHIVE SUB-TAB -->
                 <div id="contentArchive" class="sub-tab-content">
+                    <div class="bill-search-bar" style="margin-bottom:8px;">
+                        <input type="text" id="archiveSearchInput" placeholder="Search records..." oninput="renderArchiveList();">
+                        <button onclick="document.getElementById('archiveSearchInput').value=''; activeArchiveTagFilter=null; renderArchiveList();" style="background:transparent;border:1px solid #333;color:#555;padding:4px 8px;font-family:'VT323',monospace;cursor:pointer;" title="Clear">✕</button>
+                    </div>
+                    <div class="bill-tag-filter" id="archiveTagFilter"></div>
                     <div id="archiveList"></div>
                 </div>
- 
+
                 <!-- VOTE SUB-TAB -->
                 <div id="contentVote" class="sub-tab-content">
                     <div class="vote-panel" style="margin-bottom:10px;">
@@ -303,7 +330,7 @@
                             <option value="">-- SELECT BILL --</option>
                         </select>
                     </div>
- 
+
                     <div class="vote-panel">
                         <div class="vote-panel-title">> VOTE INPUT MODE</div>
                         <div class="vote-btn-row">
@@ -320,7 +347,7 @@
                             <button class="vote-ctrl-btn clr" style="color:var(--tno-alert);border-color:var(--tno-alert);" onclick="clearAllVotes()">RESET ALL VOTES</button>
                         </div>
                     </div>
- 
+
                     <div class="vote-panel">
                         <div class="vote-panel-title">> PARTY BULK VOTE</div>
                         <div style="display:flex;gap:6px;margin-bottom:8px;">
@@ -336,7 +363,7 @@
                         </div>
                         <div id="bulkPartyList"></div>
                     </div>
- 
+
                     <!-- HOUSE VOTE RESULT -->
                     <div class="vote-result-wrap" id="houseVoteResult">
                         <div class="vote-result-title" id="houseVoteResultTitle">[ HOUSE VOTE RESULT ]</div>
@@ -356,7 +383,7 @@
                         <div class="vote-verdict verdict-pending" id="hVerdict">-- AWAITING VOTE --</div>
                         <button class="vote-ctrl-btn yea" id="hConfirmBtn" style="width:100%;margin-top:8px;padding:9px;" onclick="confirmChamberVote('house')">▶ CONFIRM HOUSE VOTE</button>
                     </div>
- 
+
                     <!-- SENATE VOTE RESULT -->
                     <div class="vote-result-wrap" id="senateVoteResult" style="margin-top:8px;">
                         <div class="vote-result-title" id="senateVoteResultTitle">[ SENATE VOTE RESULT ]</div>
@@ -379,7 +406,7 @@
                 </div><!-- end contentVote -->
             </div><!-- end mainContentLegislation -->
         </div><!-- end controls-content -->
- 
+
         <div style="padding:15px;border-top:2px solid var(--tno-border);background:#000;">
             <div style="display:flex;gap:10px;margin-bottom:-10px;">
                 <button class="add-btn" id="btnSaveJson" style="border-style:solid;margin-top:0;">SAVE</button>
@@ -389,7 +416,7 @@
             <button class="simulate-btn" onclick="simulate()">>> PROTOCOL EXECUTE <<</button>
         </div>
     </div>
- 
+
     <div class="display-area">
         <div class="chamber-box" id="senateSection">
             <h3 id="senateTitle">SENATE</h3>
@@ -402,10 +429,10 @@
             <div id="houseStats" style="margin-top:10px;"></div>
         </div>
     </div>
- 
+
     <script>
         const IND_IDEOLOGY_ID = 9999;
- 
+
         let ideologies = [
             { id:101, name:"Revolutionary Socialism" }, { id:102, name:"Socialism" },
             { id:103, name:"Progressivism" }, { id:104, name:"Liberalism" },
@@ -422,7 +449,7 @@
         let coalitions = [
             { id:'c1', name:"National Front", color:"#2E2E2E", members:[1], isRuling:true }
         ];
- 
+
         // ===== BILL STATE =====
         let bills = [
             { id:'b1', title:'National Reconstruction Act §1',
@@ -430,17 +457,19 @@
               houseStatus:'pending', senateStatus:'pending', houseVote:null, senateVote:null }
         ];
         let activeBillId = null;
+        let activeBillTagFilter = null;
+        let activeArchiveTagFilter = null;
         let voteState = { house:{}, senate:{} };
         let currentVoteMode = 'none';
         let dotCache = { house:[], senate:[] };
         let manualSort = false;
         let currentMainTab = 'setup';
         let currentSubTab = { setup:'ideology', legislation:'bill' };
- 
+
         // ===== INIT =====
         window.addEventListener('resize', () => simulate());
         window.onload = function() { toggleSystem(); refreshUI(); simulate(); renderBillList(); renderArchiveList(); syncBillSelect(); };
- 
+
         // ===== BILL FUNCTIONS =====
         function toggleCustomThreshold() {
             const sel = document.getElementById('newBillThreshold');
@@ -457,7 +486,7 @@
                 numer.oninput = update; denom.oninput = update;
             }
         }
- 
+
         function getThresholdValue() {
             const sel = document.getElementById('newBillThreshold');
             if(!sel || sel.value !== 'custom') return parseFloat(sel?.value) || 0.5;
@@ -465,7 +494,7 @@
             const d = parseInt(document.getElementById('customDenom').value);
             return (!n || !d) ? 0.5 : n / d;
         }
- 
+
         function addBill() {
             const title = document.getElementById('newBillTitle').value.trim();
             const content = document.getElementById('newBillContent').value.trim();
@@ -474,26 +503,65 @@
             const isCustom = sel?.value === 'custom';
             const numer = isCustom ? parseInt(document.getElementById('customNumer').value)||null : null;
             const denom = isCustom ? parseInt(document.getElementById('customDenom').value)||null : null;
+            const tagsRaw = document.getElementById('newBillTags')?.value || '';
+            const tags = tagsRaw.split(',').map(t => t.trim()).filter(t => t.length > 0);
             if(!title) { alert('Please enter a bill title.'); return; }
-            bills.push({ id:'b'+Date.now(), title, content, threshold, numer, denom, houseStatus:'pending', senateStatus:'pending', houseVote:null, senateVote:null });
+            bills.push({ id:'b'+Date.now(), title, content, threshold, numer, denom, tags, houseStatus:'pending', senateStatus:'pending', houseVote:null, senateVote:null });
             document.getElementById('newBillTitle').value = '';
             document.getElementById('newBillContent').value = '';
+            if(document.getElementById('newBillTags')) document.getElementById('newBillTags').value = '';
             renderBillList(); syncBillSelect();
         }
- 
+
+        // ===== TAG HELPERS =====
+        function getAllTags(billSet) {
+            const set = new Set();
+            billSet.forEach(b => (b.tags||[]).forEach(t => set.add(t)));
+            return [...set].sort();
+        }
+
+        function renderTagFilter(containerId, tags, activeTag, onToggle) {
+            const el = document.getElementById(containerId);
+            if(!el) return;
+            if(tags.length === 0) { el.innerHTML = ''; return; }
+            el.innerHTML = tags.map(t =>
+                `<span class="tag-badge ${activeTag===t?'active':''}" onclick="(${onToggle})('${t}')"># ${t}</span>`
+            ).join('');
+        }
+
+        function billMatchesFilter(bill, query, tagFilter) {
+            const q = query?.toLowerCase() || '';
+            if(tagFilter && !(bill.tags||[]).includes(tagFilter)) return false;
+            if(q) return bill.title.toLowerCase().includes(q) || (bill.content||'').toLowerCase().includes(q) || (bill.tags||[]).some(t => t.toLowerCase().includes(q));
+            return true;
+        }
+
+        function buildTagHtml(bill) {
+            if(!bill.tags || bill.tags.length === 0) return '';
+            return bill.tags.map(t => `<span class="tag-badge" style="cursor:default;"># ${t}</span>`).join('');
+        }
+
+        function getThresholdLabelEn(threshold, numer, denom) {
+            if(threshold >= 1.0) return 'Unanimous';
+            if(Math.abs(threshold - 0.5) < 0.01) return 'Majority';
+            if(Math.abs(threshold - 0.667) < 0.01) return 'Supermajority (2/3)';
+            if(numer && denom) return `${numer}/${denom}`;
+            return `${Math.round(threshold*100)}%`;
+        }
+
         function removeBill(id) {
             bills = bills.filter(b => b.id !== id);
             if(activeBillId === id) { activeBillId = null; voteState = {house:{}, senate:{}}; redrawAll(); updateVoteResults(); }
             renderBillList(); renderArchiveList(); syncBillSelect();
         }
- 
+
         function selectBillForVote(id) {
             activeBillId = id;
             voteState = { house:{}, senate:{} };
             renderBillList(); renderActiveBillDisplay(); redrawAll();
             updateVoteResults(); updateConfirmButtons(); renderBulkPartyList();
         }
- 
+
         function renderActiveBillDisplay() {
             const el = document.getElementById('voteActiveBillDisplay');
             const sel = document.getElementById('voteSelectBill');
@@ -506,7 +574,7 @@
                 ${bill.content ? `<div style="color:#666;font-size:0.85rem;white-space:pre-wrap;max-height:50px;overflow:hidden;">${bill.content}</div>` : ''}`;
             sel.value = activeBillId;
         }
- 
+
         function syncBillSelect() {
             const sel = document.getElementById('voteSelectBill');
             if(!sel) return;
@@ -520,7 +588,7 @@
             sel.value = activeBillId || '';
             renderActiveBillDisplay();
         }
- 
+
         function getBillStatusSuffix(b) {
             const isBi = document.querySelector('input[name="systemType"]:checked').value === 'bicameral';
             const hName = document.getElementById('houseNameInput')?.value || 'House';
@@ -530,7 +598,7 @@
             if(isBi && b.senateStatus !== 'pending') parts.push(b.senateStatus==='pass' ? sName+'✔' : sName+'✘');
             return parts.length ? ' ['+parts.join(' ')+']' : '';
         }
- 
+
         function getBillOverallStatus(bill) {
             const isBi = document.querySelector('input[name="systemType"]:checked').value === 'bicameral';
             if(isBi) {
@@ -543,7 +611,7 @@
             }
             return 'pending';
         }
- 
+
         function buildBillBadges(bill) {
             const isBi = document.querySelector('input[name="systemType"]:checked').value === 'bicameral';
             const overall = getBillOverallStatus(bill);
@@ -565,18 +633,33 @@
             }
             return badges;
         }
- 
+
         function renderBillList() {
             const container = document.getElementById('billList');
             if(!container) return;
+            const query = document.getElementById('billSearchInput')?.value || '';
             const pending = bills.filter(b => getBillOverallStatus(b) === 'pending');
+
+            const allTags = getAllTags(pending);
+            renderTagFilter('billTagFilter', allTags, activeBillTagFilter, (t) => {
+                activeBillTagFilter = activeBillTagFilter === t ? null : t;
+                renderBillList();
+            });
+
+            const filtered = pending.filter(b => billMatchesFilter(b, query, activeBillTagFilter));
+
             if(pending.length === 0) {
                 container.innerHTML = '<div style="color:#333;text-align:center;padding:20px;border:1px dashed #222;">No pending bills</div>';
                 return;
             }
+            if(filtered.length === 0) {
+                container.innerHTML = '<div style="color:#444;text-align:center;padding:16px;border:1px dashed #222;">No results found</div>';
+                return;
+            }
             container.innerHTML = '';
-            pending.forEach(bill => {
+            filtered.forEach(bill => {
                 const isActive = bill.id === activeBillId;
+                const thLabel = getThresholdLabelEn(bill.threshold || 0.5, bill.numer, bill.denom);
                 const div = document.createElement('div');
                 div.className = 'bill-card' + (isActive ? ' selected' : '');
                 div.innerHTML = `
@@ -585,8 +668,10 @@
                         ${bill.title}
                     </div>
                     ${bill.content ? `<div class="bill-card-body">${bill.content}</div>` : ''}
+                    <div style="margin-top:4px;">${buildTagHtml(bill)}</div>
                     <div class="bill-card-footer">
                         ${buildBillBadges(bill)}
+                        <span style="color:#555;font-size:0.78rem;margin-left:4px;">[${thLabel}]</span>
                         <div style="margin-left:auto;display:flex;gap:5px;">
                             ${!isActive ? `<button class="bill-select-btn" onclick="selectBillForVote('${bill.id}'); switchTab('vote');">DEBATE</button>` : ''}
                             <button class="bill-remove-btn" onclick="removeBill('${bill.id}')">DEL</button>
@@ -595,26 +680,43 @@
                 container.appendChild(div);
             });
         }
- 
+
         function renderArchiveList() {
             const container = document.getElementById('archiveList');
             if(!container) return;
-            const done = bills.filter(b => getBillOverallStatus(b) !== 'pending');
+            const query = document.getElementById('archiveSearchInput')?.value || '';
+            const done = [...bills.filter(b => getBillOverallStatus(b) !== 'pending')].reverse();
+
+            const allTags = getAllTags(done);
+            renderTagFilter('archiveTagFilter', allTags, activeArchiveTagFilter, (t) => {
+                activeArchiveTagFilter = activeArchiveTagFilter === t ? null : t;
+                renderArchiveList();
+            });
+
+            const filtered = done.filter(b => billMatchesFilter(b, query, activeArchiveTagFilter));
+
             if(done.length === 0) {
                 container.innerHTML = '<div style="color:#333;text-align:center;padding:20px;border:1px dashed #222;">No completed bills</div>';
                 return;
             }
+            if(filtered.length === 0) {
+                container.innerHTML = '<div style="color:#444;text-align:center;padding:16px;border:1px dashed #222;">No results found</div>';
+                return;
+            }
             container.innerHTML = '';
-            [...done].reverse().forEach(bill => {
+            filtered.forEach(bill => {
                 const overall = getBillOverallStatus(bill);
+                const thLabel = getThresholdLabelEn(bill.threshold || 0.5, bill.numer, bill.denom);
                 const div = document.createElement('div');
                 div.className = 'bill-card';
                 div.style.borderLeftColor = overall === 'passed' ? 'var(--vote-yea)' : 'var(--vote-nay)';
                 div.innerHTML = `
                     <div class="bill-card-title">${bill.title}</div>
                     ${bill.content ? `<div class="bill-card-body">${bill.content}</div>` : ''}
+                    <div style="margin-top:4px;">${buildTagHtml(bill)}</div>
                     <div class="bill-card-footer">
                         ${buildBillBadges(bill)}
+                        <span style="color:#555;font-size:0.78rem;margin-left:4px;">[${thLabel}]</span>
                         <div style="margin-left:auto;">
                             <button class="bill-remove-btn" onclick="removeBill('${bill.id}')">DEL</button>
                         </div>
@@ -622,7 +724,7 @@
                 container.appendChild(div);
             });
         }
- 
+
         // ===== CONFIRM CHAMBER VOTE =====
         function confirmChamberVote(chamber) {
             if(!activeBillId) { alert('Please select a bill first.'); return; }
@@ -653,7 +755,7 @@
             updateVoteResults(); updateConfirmButtons();
             voteState[chamber] = {}; redrawAll(); renderBulkPartyList();
         }
- 
+
         function updateConfirmButtons() {
             const isBi = document.querySelector('input[name="systemType"]:checked').value === 'bicameral';
             const bill = activeBillId ? bills.find(b=>b.id===activeBillId) : null;
@@ -682,7 +784,7 @@
                 else              sBtn.textContent = `▶ CONFIRM ${sName} VOTE`;
             }
         }
- 
+
         function setVoteMode(mode) {
             currentVoteMode = mode;
             const labels = { yea:'▲ YEA (GREEN)', nay:'▼ NAY (RED)', abs:'— ABSTAIN (GREY)', none:'✕ CLEAR' };
@@ -691,15 +793,15 @@
             el.textContent = labels[mode] || 'NONE';
             el.style.color = colors[mode] || '#888';
         }
- 
+
         function clearAllVotes() {
             voteState = { house:{}, senate:{} };
             redrawAll(); updateVoteResults(); renderBulkPartyList();
         }
- 
+
         // ===== BULK PARTY VOTE =====
         function getBulkChamber() { return document.querySelector('input[name="bulkChamber"]:checked')?.value || 'house'; }
- 
+
         function applyPartyVote(partyName, vote) {
             const chamber = getBulkChamber();
             const chambers = chamber === 'both' ? ['house','senate'] : [chamber];
@@ -713,7 +815,7 @@
             });
             redrawAll(); updateVoteResults(); renderBulkPartyList();
         }
- 
+
         function getPartyDominantVote(partyName) {
             const ch = getBulkChamber() === 'both' ? 'house' : getBulkChamber();
             const counts = { yea:0, nay:0, abs:0, none:0 };
@@ -721,7 +823,7 @@
             const max = Object.entries(counts).sort((a,b)=>b[1]-a[1])[0];
             return max[1] > 0 ? max[0] : 'none';
         }
- 
+
         function renderBulkPartyList() {
             const container = document.getElementById('bulkPartyList');
             if(!container) return;
@@ -751,14 +853,14 @@
                 container.appendChild(row);
             });
         }
- 
+
         function getVoteColor(v) {
             if(v==='yea') return '#00ff88';
             if(v==='nay') return '#ff2244';
             if(v==='abs') return '#888888';
             return null;
         }
- 
+
         // ===== CANVAS CLICK =====
         function handleCanvasClick(e, chamber) {
             const cvs = e.target, rect = cvs.getBoundingClientRect();
@@ -773,7 +875,7 @@
             else voteState[chamber][hit] = currentVoteMode;
             redrawAll(); updateVoteResults();
         }
- 
+
         // ===== TOOLTIP =====
         function handleCanvasMouseMove(e, chamber) {
             const cvs = e.target, rect = cvs.getBoundingClientRect();
@@ -793,16 +895,16 @@
                 tip.textContent = `${d.partyName} | ${d.ideology} | ${voteLabels[vs]}`;
             } else { tip.style.display='none'; }
         }
- 
+
         function handleCanvasMouseLeave() { document.getElementById('tooltipBox').style.display='none'; }
- 
+
         // ===== VOTE RESULTS =====
         function updateVoteResults() {
             const isBi = document.querySelector('input[name="systemType"]:checked').value === 'bicameral';
             calcAndRenderResult('house', parseInt(document.getElementById('houseTotal').value)||300, 'h');
             if(isBi) calcAndRenderResult('senate', parseInt(document.getElementById('senateTotal').value)||100, 's');
         }
- 
+
         function calcAndRenderResult(chamber, total, prefix) {
             let yea=0,nay=0,abs=0;
             const dots = dotCache[chamber];
@@ -816,7 +918,7 @@
             const bill = activeBillId ? bills.find(b=>b.id===activeBillId) : null;
             const threshold = bill?.threshold || 0.5;
             const required = threshold >= 1.0 ? validSeats : Math.floor(validSeats * threshold) + 1;
- 
+
             document.getElementById(prefix+'CntYea').textContent=yea;
             document.getElementById(prefix+'CntNay').textContent=nay;
             document.getElementById(prefix+'CntAbs').textContent=abs;
@@ -825,7 +927,7 @@
             document.getElementById(prefix+'BarNay').style.width=(nay/t*100).toFixed(1)+'%';
             document.getElementById(prefix+'BarAbs').style.width=(abs/t*100).toFixed(1)+'%';
             document.getElementById(prefix+'BarNone').style.width=(none/t*100).toFixed(1)+'%';
- 
+
             // Threshold marker on bar
             const barOuter = document.getElementById(prefix+'BarYea')?.parentElement;
             if(barOuter) {
@@ -840,7 +942,7 @@
                 labelEl.style.cssText=`position:absolute;left:${pct}%;top:-18px;transform:translateX(-50%);font-size:0.75rem;color:var(--tno-gold);white-space:nowrap;pointer-events:none;font-family:'VT323',monospace;`;
                 labelEl.textContent=`${thLabel} (${required})`;
             }
- 
+
             // Info line
             const infoEl = document.getElementById(prefix+'VoteInfo');
             const thLabel2 = threshold>=1.0?'Unanimous':Math.abs(threshold-0.5)<0.01?'Majority':Math.abs(threshold-0.667)<0.01?'2/3':(bill?.numer&&bill?.denom?`${bill.numer}/${bill.denom}`:`${Math.round(threshold*100)}%`);
@@ -849,7 +951,7 @@
                 else if(yea>=required) infoEl.textContent=`${yea} / ${required} (${thLabel2})`;
                 else                   infoEl.textContent=`${yea} / ${required} (${thLabel2}, ${required-yea} short)`;
             }
- 
+
             // Verdict
             const vEl = document.getElementById(prefix+'Verdict');
             vEl.className='vote-verdict';
@@ -858,14 +960,14 @@
             else if(yea>=required) { vEl.textContent=`✔ PASSED (${billTitle})`; vEl.classList.add('verdict-pass'); }
             else                   { vEl.textContent=`✘ FAILED (${billTitle})`; vEl.classList.add('verdict-fail'); }
         }
- 
+
         // ===== REDRAW =====
         function redrawAll() {
             const isBi = document.querySelector('input[name="systemType"]:checked').value === 'bicameral';
             if(isBi) redrawChamber('senateCanvas','senate');
             redrawChamber('houseCanvas','house');
         }
- 
+
         function redrawChamber(cvsId, chamber) {
             const dots = dotCache[chamber];
             if(!dots||dots.length===0) return;
@@ -887,12 +989,12 @@
             ctx.fillStyle="#fff"; ctx.font="30px 'VT323'"; ctx.textAlign="center"; ctx.fillText(dots.length,CX,CY);
             ctx.font="16px 'VT323'"; ctx.fillStyle="var(--tno-neon)"; ctx.fillText("SEATS",CX,CY+25);
         }
- 
+
         // ===== SAVE / LOAD =====
         function getAppState() {
             const systemType = document.querySelector('input[name="systemType"]:checked')?.value||'bicameral';
             return {
-                meta: { app:"DATANET_PARLIAMENT_SIM", version:2, savedAt:new Date().toISOString() },
+                meta: { app:"DATANET_PARLIAMENT_SIM", version:3, savedAt:new Date().toISOString() },
                 ui: { currentMainTab, currentSubTab },
                 config: {
                     systemType,
@@ -903,42 +1005,52 @@
                     houseTotal:  parseInt(document.getElementById('houseTotal')?.value)||300
                 },
                 parliament: { ideologies, parties, coalitions, manualSort },
-                legislation: { bills, activeBillId, voteState }
+                legislation: {
+                    bills,
+                    activeBillId,
+                    voteState,
+                    activeBillTagFilter,
+                    activeArchiveTagFilter
+                }
             };
         }
- 
+
         function setAppState(state) {
             if(!state||typeof state!=="object") throw new Error("Invalid state");
             const parl = state.parliament||state.data;
             if(!parl||!Array.isArray(parl.parties)||!Array.isArray(parl.ideologies)||!Array.isArray(parl.coalitions)) throw new Error("Invalid parliament data");
             ideologies=parl.ideologies; parties=parl.parties; coalitions=parl.coalitions; manualSort=parl.manualSort??false;
             const leg=state.legislation||{};
-            bills=Array.isArray(leg.bills)?leg.bills:(Array.isArray(state.data?.bills)?state.data.bills:[]);
+            bills=(Array.isArray(leg.bills)?leg.bills:(Array.isArray(state.data?.bills)?state.data.bills:[]))
+                .map(b=>({ tags:[], threshold:0.5, numer:null, denom:null, ...b }));
             activeBillId=leg.activeBillId??null;
             voteState=leg.voteState??{house:{},senate:{}};
+            activeBillTagFilter    = leg.activeBillTagFilter    ?? null;
+            activeArchiveTagFilter = leg.activeArchiveTagFilter ?? null;
             const cfg=state.config||{};
             const radio=document.querySelector(`input[name="systemType"][value="${cfg.systemType||'bicameral'}"]`);
             if(radio) radio.checked=true;
-            if(document.getElementById('senateNameInput')) document.getElementById('senateNameInput').value=cfg.senateName??"Senate";
-            if(document.getElementById('houseNameInput'))  document.getElementById('houseNameInput').value=cfg.houseName??"House";
-            if(document.getElementById('senateTotal'))     document.getElementById('senateTotal').value=cfg.senateTotal??100;
-            if(document.getElementById('houseTotal'))      document.getElementById('houseTotal').value=cfg.houseTotal??300;
-            if(document.getElementById('chkGovHighlight')) document.getElementById('chkGovHighlight').checked=cfg.highlightGov??true;
+            const $=id=>document.getElementById(id);
+            if($('senateNameInput')) $('senateNameInput').value=cfg.senateName??"Senate";
+            if($('houseNameInput'))  $('houseNameInput').value=cfg.houseName??"House";
+            if($('senateTotal'))     $('senateTotal').value=cfg.senateTotal??100;
+            if($('houseTotal'))      $('houseTotal').value=cfg.houseTotal??300;
+            if($('chkGovHighlight')) $('chkGovHighlight').checked=cfg.highlightGov??true;
             const uiMain=state.ui?.currentMainTab||'setup';
             const uiSub=state.ui?.currentSubTab||{setup:'ideology',legislation:'bill'};
             currentSubTab=uiSub;
             toggleSystem(); updateNames(); refreshUI(); simulate();
-            renderBillList(); renderArchiveList(); syncBillSelect(); renderActiveBillDisplay(); updateConfirmButtons();
+            renderBillList(); renderArchiveList(); syncBillSelect(); renderActiveBillDisplay(); updateConfirmButtons(); renderBulkPartyList();
             switchMainTab(uiMain);
             switchSubTab(uiMain,uiSub[uiMain]||(uiMain==='setup'?'ideology':'bill'),false);
         }
- 
+
         function downloadJSON(filename, obj) {
             const blob=new Blob([JSON.stringify(obj,null,2)],{type:"application/json"});
             const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=filename;
             document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(a.href);
         }
- 
+
         window.addEventListener("load", () => {
             const btnSave=document.getElementById("btnSaveJson");
             const btnLoad=document.getElementById("btnLoadJson");
@@ -960,7 +1072,7 @@
             document.getElementById('houseCanvas').addEventListener('mouseleave', handleCanvasMouseLeave);
             document.getElementById('senateCanvas').addEventListener('mouseleave', handleCanvasMouseLeave);
         });
- 
+
         // ===== 2-LEVEL TAB SWITCHING =====
         function switchMainTab(main) {
             currentMainTab=main;
@@ -970,7 +1082,7 @@
             document.getElementById('mainContent'+main.charAt(0).toUpperCase()+main.slice(1)).classList.add('active');
             switchSubTab(main,currentSubTab[main],false);
         }
- 
+
         function switchSubTab(main, sub, doMainSwitch=true) {
             if(doMainSwitch&&currentMainTab!==main) switchMainTab(main);
             currentSubTab[main]=sub;
@@ -986,12 +1098,12 @@
             if(sub==='bill') renderBillList();
             if(sub==='archive') renderArchiveList();
         }
- 
+
         function switchTab(tabName) {
             if(['ideology','house','senate','coalition'].includes(tabName)) switchSubTab('setup',tabName);
             else if(['bill','vote','archive'].includes(tabName)) switchSubTab('legislation',tabName);
         }
- 
+
         function toggleSystem() {
             const isBi = document.querySelector('input[name="systemType"]:checked').value === 'bicameral';
             document.getElementById('senateSection').style.display = isBi ? 'block' : 'none';
@@ -1000,7 +1112,7 @@
             if(!isBi&&currentSubTab['setup']==='senate') switchSubTab('setup','ideology');
             renderBillList(); renderArchiveList(); syncBillSelect(); updateNames();
         }
- 
+
         function updateNames() {
             const sName=document.getElementById('senateNameInput').value;
             const hName=document.getElementById('houseNameInput').value;
@@ -1016,11 +1128,11 @@
             if(bulkS) bulkS.textContent=sName;
             updateConfirmButtons();
         }
- 
+
         function refreshUI() { renderIdeologyList(); renderPartyList('house'); renderPartyList('senate'); renderCoalitions(); }
- 
+
         function isValidHex(hex) { return /^#[0-9A-F]{6}$/i.test(hex); }
- 
+
         // ===== PARTY SORT =====
         function autoSortParties() {
             manualSort=false;
@@ -1033,7 +1145,7 @@
             });
             refreshUI(); simulate();
         }
- 
+
         function moveParty(idx, dir) {
             manualSort=true;
             const target=idx+dir;
@@ -1041,7 +1153,7 @@
             [parties[idx],parties[target]]=[parties[target],parties[idx]];
             refreshUI(); simulate();
         }
- 
+
         function renderIdeologyList() {
             const container=document.getElementById('ideologyList');
             container.innerHTML='';
@@ -1056,7 +1168,7 @@
                 container.appendChild(div);
             });
         }
- 
+
         function renderPartyList(type) {
             const container=document.getElementById(type==='house'?'partyListHouse':'partyListSenate');
             container.innerHTML='';
@@ -1099,7 +1211,7 @@
                 container.appendChild(div);
             });
         }
- 
+
         function renderCoalitions() {
             const container=document.getElementById('coalitionList');
             container.innerHTML='';
@@ -1136,7 +1248,7 @@
                 container.appendChild(div);
             });
         }
- 
+
         function addIdeology() { ideologies.push({id:Date.now(),name:"New Ideology"}); refreshUI(); }
         function addIndependentIdeology() { if(!ideologies.find(i=>i.id===IND_IDEOLOGY_ID)) ideologies.push({id:IND_IDEOLOGY_ID,name:"Independent"}); refreshUI(); simulate(); }
         function removeIdeology(idx) { if(ideologies.length>1){const id=ideologies[idx].id;ideologies.splice(idx,1);parties.forEach(p=>{if(p.ideologyId===id)p.ideologyId=ideologies[0].id;});refreshUI();simulate();} }
@@ -1156,14 +1268,14 @@
         function updateCoalitionColorPicker(e,id) { const c=coalitions.find(x=>x.id===id);if(c){c.color=e.value.toUpperCase();e.previousElementSibling.value=c.color;simulate();} }
         function toggleCoalitionMember(cid,pid,chk) { if(chk){coalitions.forEach(c=>c.members=c.members.filter(x=>x!==pid));coalitions.find(c=>c.id===cid).members.push(pid);}else{const c=coalitions.find(x=>x.id===cid);c.members=c.members.filter(x=>x!==pid);} refreshUI(); simulate(); }
         function setRuling(t,id) { parties.forEach(p=>p.isRuling=false);coalitions.forEach(c=>c.isRuling=false);if(t==='party')parties.find(p=>p.id===id).isRuling=true;else coalitions.find(c=>c.id===id).isRuling=true;refreshUI();simulate(); }
- 
+
         // ===== SIMULATE & DRAW =====
         function simulate() {
             const isBi = document.querySelector('input[name="systemType"]:checked').value === 'bicameral';
             const highlightGov = document.getElementById('chkGovHighlight').checked;
             const sTotal = parseInt(document.getElementById('senateTotal').value)||100;
             const hTotal = parseInt(document.getElementById('houseTotal').value)||300;
- 
+
             if(!manualSort) {
                 parties.sort((a,b) => {
                     const ia=ideologies.findIndex(i=>i.id===a.ideologyId);
@@ -1173,7 +1285,7 @@
                     return ia-ib;
                 });
             }
- 
+
             const getMap = (targetTotal, chamberKey, checkKey) => {
                 let map=[];
                 parties.filter(p=>p[checkKey]).forEach(p => {
@@ -1188,7 +1300,7 @@
                 while(map.length<targetTotal) map.push({color:'#222',partyName:'Vacant',ideology:'-',strokeColor:'#333',isRuling:false});
                 return map;
             };
- 
+
             const hMap=getMap(hTotal,'seatsHouse','inHouse');
             drawChamber('houseCanvas',hMap,hTotal,'house'); updateStats('houseStats',hMap,hTotal);
             if(isBi) {
@@ -1197,7 +1309,7 @@
             }
             updateVoteResults(); renderBulkPartyList(); syncBillSelect();
         }
- 
+
         function drawChamber(cvsId, map, total, chamber) {
             const cvs=document.getElementById(cvsId), parent=cvs.parentElement;
             const width=parent.clientWidth-34, dpr=window.devicePixelRatio||1, heightBuffer=120;
@@ -1230,7 +1342,7 @@
             ctx.fillStyle="#fff"; ctx.font="30px 'VT323'"; ctx.textAlign="center"; ctx.fillText(total,CX,CY);
             ctx.font="16px 'VT323'"; ctx.fillStyle="var(--tno-neon)"; ctx.fillText("SEATS",CX,CY+25);
         }
- 
+
         function updateStats(id, map, total) {
             const el=document.getElementById(id); if(total===0){el.innerHTML="";return;}
             let stats={};
