@@ -508,7 +508,41 @@
         }
         .bill-remove-btn:hover { border-color: var(--tno-alert); color: var(--tno-alert); }
 
-        /* ===== 태그 / 검색 ===== */
+        /* display-area 탭 */
+        .display-tab-container {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 0;
+        }
+        .display-tab-btn {
+            background: var(--tno-panel);
+            border: 2px solid var(--tno-border);
+            border-bottom: none;
+            color: #555;
+            padding: 6px 14px;
+            cursor: pointer;
+            font-family: 'NeoDunggeunmo', 'VT323', monospace;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            transition: 0.15s;
+        }
+        .display-tab-btn:hover { color: #aaa; }
+        .display-tab-btn.active {
+            color: var(--tno-neon);
+            border-color: var(--tno-neon);
+            text-shadow: 0 0 5px var(--tno-neon);
+            background: rgba(0,255,255,0.05);
+        }
+        .display-panel {
+            display: none;
+            flex-direction: column;
+            flex: 1;
+            overflow-y: auto;
+            gap: 20px;
+            padding-right: 5px;
+            min-height: 0;
+        }
+        .display-panel.active { display: flex; }
         .tag-badge {
             display: inline-block;
             background: #0d1a1a;
@@ -579,6 +613,7 @@
             <div class="main-tab-container">
                 <button class="main-tab-btn active" onclick="switchMainTab('setup')" id="mainTabSetup">⚙ 의회 설정</button>
                 <button class="main-tab-btn" onclick="switchMainTab('legislation')" id="mainTabLegislation">⚖ 입법 절차</button>
+                <button class="main-tab-btn" onclick="switchMainTab('election')" id="mainTabElection">🗳 선거</button>
             </div>
 
             <!-- ===== 의회 설정 그룹 ===== -->
@@ -785,6 +820,16 @@
                 </div>
             </div><!-- end contentVote -->
             </div><!-- end mainContentLegislation -->
+            <!-- ===== 선거 그룹 ===== -->
+            <div id="mainContentElection" class="main-tab-content">
+                <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px;gap:16px;text-align:center;">
+                    <div style="font-size:3rem;letter-spacing:4px;color:#333;">[##]</div>
+                    <div style="color:var(--tno-neon);font-size:1.4rem;letter-spacing:3px;text-shadow:0 0 8px var(--tno-neon);">COMING SOON</div>
+                    <div style="color:#444;font-size:0.9rem;letter-spacing:1px;border:1px solid #222;padding:8px 16px;">선거 시뮬레이션 기능 준비 중</div>
+                </div>
+            </div><!-- end mainContentElection -->
+
+
         </div><!-- end controls-content -->
 
         <div style="padding: 15px; border-top: 2px solid var(--tno-border); background: #000;">
@@ -798,16 +843,18 @@
     </div>
 
     <div class="display-area">
-        <div class="chamber-box" id="senateSection">
-            <h3 id="senateTitle">SENATE</h3>
-            <canvas id="senateCanvas"></canvas>
-            <div id="senateStats" style="margin-top:10px;"></div>
+                    <div class="chamber-box" id="senateSection">
+                <h3 id="senateTitle">SENATE</h3>
+                <canvas id="senateCanvas"></canvas>
+                <div id="senateStats" style="margin-top:10px;"></div>
+            </div>
+            <div class="chamber-box">
+                <h3 id="houseTitle">HOUSE</h3>
+                <canvas id="houseCanvas"></canvas>
+                <div id="houseStats" style="margin-top:10px;"></div>
+            </div>
         </div>
-        <div class="chamber-box">
-            <h3 id="houseTitle">HOUSE</h3>
-            <canvas id="houseCanvas"></canvas>
-            <div id="houseStats" style="margin-top:10px;"></div>
-        </div>
+
     </div>
 
     <script>
@@ -1708,38 +1755,32 @@
             document.getElementById('mainTab' + main.charAt(0).toUpperCase() + main.slice(1)).classList.add('active');
             document.querySelectorAll('.main-tab-content').forEach(c => c.classList.remove('active'));
             document.getElementById('mainContent' + main.charAt(0).toUpperCase() + main.slice(1)).classList.add('active');
-            // 해당 그룹의 현재 서브탭 활성화
-            switchSubTab(main, currentSubTab[main], false);
+            switchSubTab(main, currentSubTab[main] || (main === 'setup' ? 'ideology' : 'bill'), false);
         }
 
         function switchSubTab(main, sub, doMainSwitch = true) {
             if(doMainSwitch && currentMainTab !== main) switchMainTab(main);
             currentSubTab[main] = sub;
-            // 해당 그룹 내 서브탭 버튼/콘텐츠만 처리
             const groupEl = document.getElementById('mainContent' + main.charAt(0).toUpperCase() + main.slice(1));
+            if(!groupEl) return;
             groupEl.querySelectorAll('.sub-tab-btn').forEach(b => b.classList.remove('active'));
             groupEl.querySelectorAll('.sub-tab-content').forEach(c => c.classList.remove('active'));
-            const btnId = 'subTab' + sub.charAt(0).toUpperCase() + sub.slice(1);
-            const contentId = 'content' + sub.charAt(0).toUpperCase() + sub.slice(1);
-            const btn = document.getElementById(btnId);
-            const content = document.getElementById(contentId);
+            const btn = document.getElementById('subTab' + sub.charAt(0).toUpperCase() + sub.slice(1));
+            const content = document.getElementById('content' + sub.charAt(0).toUpperCase() + sub.slice(1));
             if(btn) btn.classList.add('active');
             if(content) content.classList.add('active');
-
             refreshUI();
             if(sub === 'vote') { renderBulkPartyList(); syncBillSelect(); renderActiveBillDisplay(); updateConfirmButtons(); }
             if(sub === 'bill') renderBillList();
             if(sub === 'archive') renderArchiveList();
         }
 
-        // 구버전 switchTab 호환 (법안→투표 이동 등 내부 호출용)
+        // 구버전 switchTab 호환
         function switchTab(tabName) {
-            if(['ideology','house','senate','coalition'].includes(tabName)) {
-                switchSubTab('setup', tabName);
-            } else if(['bill','vote'].includes(tabName)) {
-                switchSubTab('legislation', tabName);
-            }
+            if(['ideology','house','senate','coalition'].includes(tabName)) switchSubTab('setup', tabName);
+            else if(['bill','vote','archive'].includes(tabName)) switchSubTab('legislation', tabName);
         }
+
 
         function toggleSystem() {
             const isBicameral = document.querySelector('input[name="systemType"]:checked').value === 'bicameral';
@@ -1747,10 +1788,7 @@
             document.getElementById('subTabSenate').style.display = isBicameral ? '' : 'none';
             document.getElementById('senateVoteResult').style.display = isBicameral ? 'block' : 'none';
             if(!isBicameral && currentSubTab['setup'] === 'senate') switchSubTab('setup', 'ideology');
-            renderBillList();
-            renderArchiveList();
-            syncBillSelect();
-            updateNames();
+            renderBillList(); renderArchiveList(); syncBillSelect(); updateNames();
         }
 
         function updateNames() {
@@ -1960,6 +1998,13 @@
         }
 
         // ===== PNG 내보내기 =====
+        // ===== 선거 기능 =====
+
+
+
+
+
+
         /* ===== SIMULATE & DRAW ===== */
         function simulate() {
             const isBicameral = document.querySelector('input[name="systemType"]:checked').value === 'bicameral';
@@ -2008,13 +2053,21 @@
 
             updateVoteResults();
             renderBulkPartyList();
-            if(currentTab === 'bill') renderBillList();
+            if(currentSubTab?.legislation === 'bill') renderBillList();
         }
 
         function drawChamber(cvsId, map, total, chamber) {
             const cvs = document.getElementById(cvsId);
+            if(!cvs) return;
             const parent = cvs.parentElement;
-            const width = parent.clientWidth - 34;
+            // clientWidth가 0이면 offsetWidth로 재시도 (flex 레이아웃 확정 전 대비)
+            let width = (parent.clientWidth || parent.offsetWidth) - 34;
+            if(width <= 10) {
+                // 상위 패널까지 올라가며 width 탐색
+                let el = parent;
+                while(el && width <= 10) { el = el.parentElement; width = (el?.clientWidth || 0) - 34; }
+            }
+            if(width <= 10) return;
             const dpr = window.devicePixelRatio || 1;
             const heightBuffer = 120;
             cvs.width = width * dpr;
