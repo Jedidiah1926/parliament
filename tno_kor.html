@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DATANET: PARLIAMENT SIMULATION</title>
+    <title>DATANET: PARLIAMENT SIMULATION [BETA]</title>
     
     <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/neodgm/neodgm-webfont@latest/neodgm/style.css">
@@ -104,10 +104,44 @@
             flex: 1;
             display: flex;
             flex-direction: column;
-            gap: 20px;
-            overflow-y: auto;
+            overflow: hidden;
             padding-right: 5px;
+            min-height: 0;
         }
+        .disp-tab-bar {
+            display: flex;
+            gap: 4px;
+            flex-shrink: 0;
+            margin-bottom: 0;
+        }
+        .disp-tab-btn {
+            background: var(--tno-panel);
+            border: 2px solid var(--tno-border);
+            border-bottom: none;
+            color: #555;
+            padding: 6px 14px;
+            cursor: pointer;
+            font-family: 'NeoDunggeunmo','VT323',monospace;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            transition: 0.15s;
+        }
+        .disp-tab-btn:hover { color: #aaa; }
+        .disp-tab-btn.active {
+            color: var(--tno-neon);
+            border-color: var(--tno-neon);
+            background: rgba(0,255,255,0.05);
+            text-shadow: 0 0 5px var(--tno-neon);
+        }
+        .disp-panel {
+            display: none;
+            flex: 1;
+            flex-direction: column;
+            overflow-y: auto;
+            min-height: 0;
+            padding-top: 2px;
+        }
+        .disp-panel.active { display: flex; }
 
         .chamber-box {
             background: var(--tno-panel);
@@ -588,8 +622,8 @@
     </style>
 </head>
 <body>
-    
-    <a href="tno.html" class="lang-switch">>> SWITCH TO ENGLISH</a>
+
+    <a href="tno_kor.html" class="lang-switch">>> 릴리스로 돌아가기</a>
 
     <!-- Tooltip -->
     <div class="tooltip-box" id="tooltipBox"></div>
@@ -820,12 +854,91 @@
                 </div>
             </div><!-- end contentVote -->
             </div><!-- end mainContentLegislation -->
+
             <!-- ===== 선거 그룹 ===== -->
             <div id="mainContentElection" class="main-tab-content">
-                <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px;gap:16px;text-align:center;">
-                    <div style="font-size:3rem;letter-spacing:4px;color:#333;">[##]</div>
-                    <div style="color:var(--tno-neon);font-size:1.4rem;letter-spacing:3px;text-shadow:0 0 8px var(--tno-neon);">COMING SOON</div>
-                    <div style="color:#444;font-size:0.9rem;letter-spacing:1px;border:1px solid #222;padding:8px 16px;">선거 시뮬레이션 기능 준비 중</div>
+                <!-- 하위 탭 -->
+                <div class="sub-tab-container" style="margin-top:10px;">
+                    <button class="sub-tab-btn active" id="elecSubTabVote" onclick="elecSwitchSub('vote')">선거</button>
+                    <button class="sub-tab-btn" id="elecSubTabRecord" onclick="elecSwitchSub('record')">기록</button>
+                </div>
+
+                <!-- 선거 서브탭 -->
+                <div id="elecSubVote" class="sub-tab-content active">
+                    <!-- 선거 제목 / 연도 -->
+                    <div style="display:grid;grid-template-columns:1fr 90px;gap:8px;margin-bottom:10px;">
+                        <div>
+                            <label style="color:#888;font-size:0.8rem;margin-bottom:3px;">선거 제목</label>
+                            <input type="text" id="elecTitle" placeholder="예: 제1회 총선거" style="width:100%;box-sizing:border-box;">
+                        </div>
+                        <div>
+                            <label style="color:#888;font-size:0.8rem;margin-bottom:3px;">연도</label>
+                            <input type="number" id="elecYear" placeholder="1952" style="width:100%;box-sizing:border-box;">
+                        </div>
+                    </div>
+
+                    <!-- 대상 의원실 -->
+                    <div style="display:flex;gap:12px;margin-bottom:10px;border-bottom:1px solid #222;padding-bottom:10px;">
+                        <label style="cursor:pointer;color:#aaa;display:inline-flex;align-items:center;gap:5px;">
+                            <input type="radio" name="elecTarget" value="house" checked> <span id="elecHouseLabel">하원</span>
+                        </label>
+                        <label style="cursor:pointer;color:#aaa;display:inline-flex;align-items:center;gap:5px;" id="elecSenateWrap">
+                            <input type="radio" name="elecTarget" value="senate"> <span id="elecSenateLabel">상원</span>
+                        </label>
+                    </div>
+
+                    <!-- 개표 속도 -->
+                    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;background:#000;border:1px solid #333;padding:8px 10px;">
+                        <label style="flex:0 0 70px;color:#aaa;font-size:0.85rem;margin:0;">개표 속도</label>
+                        <input type="range" id="elecSpeed" min="1" max="100" value="80"
+                            oninput="document.getElementById('elecSpeedVal').innerText=this.value"
+                            style="-webkit-appearance:none;width:100%;background:transparent;">
+                        <span id="elecSpeedVal" style="width:28px;color:var(--tno-neon);text-align:right;">80</span>
+                    </div>
+                    <style>
+                    #elecSpeed::-webkit-slider-runnable-track{height:4px;background:var(--tno-border);}
+                    #elecSpeed::-webkit-slider-thumb{height:16px;width:10px;background:var(--tno-neon);-webkit-appearance:none;margin-top:-6px;box-shadow:0 0 5px var(--tno-neon);}
+                    </style>
+
+                    <!-- 진행 바 -->
+                    <div style="height:14px;background:#111;border:1px solid var(--tno-border);margin-bottom:8px;overflow:hidden;">
+                        <div id="elecProgressBar" style="height:100%;background:var(--tno-neon);width:0%;box-shadow:0 0 6px var(--tno-neon);transition:width 0.06s;"></div>
+                    </div>
+
+                    <!-- 정당 목록 헤더 -->
+                    <div style="display:grid;grid-template-columns:1fr 75px 60px;gap:6px;padding:0 2px;margin-bottom:4px;color:#555;font-size:0.8rem;">
+                        <span>정당명</span><span style="text-align:center;">지지율(%)</span><span style="text-align:center;">오차(±%)</span>
+                    </div>
+                    <div id="elecInputList"></div>
+
+                    <!-- 개표 시작 버튼 -->
+                    <button id="elecRunBtn" onclick="elecRun()"
+                        style="background:var(--tno-neon);color:#000;font-weight:bold;border:none;width:100%;padding:14px;font-size:1.3rem;letter-spacing:2px;margin-top:10px;box-shadow:0 0 10px var(--tno-neon);cursor:pointer;font-family:inherit;">>> 개표 시작 <<</button>
+
+                    <!-- 개표 중 컨트롤 -->
+                    <div id="elecMidControls" style="display:none;margin-top:8px;">
+                        <div style="display:flex;gap:6px;">
+                            <button onclick="elecTogglePause()" id="elecPauseBtn"
+                                style="flex:1;background:transparent;border:1px solid var(--tno-gold);color:var(--tno-gold);padding:8px;font-family:inherit;font-size:0.9rem;cursor:pointer;">⏸ 일시정지</button>
+                            <button onclick="elecFinishNow()" id="elecFinishBtn"
+                                style="flex:1;background:transparent;border:1px solid #888;color:#aaa;padding:8px;font-family:inherit;font-size:0.9rem;cursor:pointer;">⏩ 즉시 완료</button>
+                        </div>
+                    </div>
+
+                    <!-- 개표 완료 후 버튼 -->
+                    <div id="elecPostBtns" style="display:none;margin-top:8px;">
+                        <div style="display:flex;gap:6px;">
+                            <button onclick="elecApplyToParliament()"
+                                style="flex:1;background:var(--tno-neon);color:#000;border:none;padding:9px;font-family:inherit;font-size:0.9rem;cursor:pointer;letter-spacing:1px;">✔ 의회에 반영</button>
+                            <button onclick="elecRerun()"
+                                style="flex:1;background:transparent;border:1px solid var(--tno-neon);color:var(--tno-neon);padding:9px;font-family:inherit;font-size:0.9rem;cursor:pointer;">↺ 재개표</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 기록 서브탭 -->
+                <div id="elecSubRecord" class="sub-tab-content">
+                    <div id="elecRecordList" style="margin-top:8px;"></div>
                 </div>
             </div><!-- end mainContentElection -->
 
@@ -843,11 +956,15 @@
     </div>
 
     <div class="display-area">
-                    <div class="chamber-box" id="senateSection">
-                <h3 id="senateTitle">SENATE</h3>
-                <canvas id="senateCanvas"></canvas>
-                <div id="senateStats" style="margin-top:10px;"></div>
-            </div>
+        <!-- 디스플레이 탭 -->
+        <div class="disp-tab-bar">
+            <button class="disp-tab-btn active" id="dispTabHouse" onclick="switchDispTab('house')">하원</button>
+            <button class="disp-tab-btn" id="dispTabSenate" onclick="switchDispTab('senate')">상원</button>
+            <button class="disp-tab-btn" id="dispTabElecResult" onclick="switchDispTab('elecResult')" style="display:none;">선거 결과</button>
+        </div>
+
+        <!-- 하원 패널 -->
+        <div class="disp-panel active" id="dispPanelHouse">
             <div class="chamber-box">
                 <h3 id="houseTitle">HOUSE</h3>
                 <canvas id="houseCanvas"></canvas>
@@ -855,6 +972,33 @@
             </div>
         </div>
 
+        <!-- 상원 패널 -->
+        <div class="disp-panel" id="dispPanelSenate" id="senateSection">
+            <div class="chamber-box" id="senateSection">
+                <h3 id="senateTitle">SENATE</h3>
+                <canvas id="senateCanvas"></canvas>
+                <div id="senateStats" style="margin-top:10px;"></div>
+            </div>
+        </div>
+
+        <!-- 선거 결과 패널 -->
+        <div class="disp-panel" id="dispPanelElecResult">
+            <div class="chamber-box">
+                <h3 id="elecResultTitle">> 선거 결과</h3>
+                <div style="height:14px;background:#111;border:1px solid var(--tno-border);margin-bottom:10px;overflow:hidden;">
+                    <div id="elecResultBar" style="height:100%;background:var(--tno-neon);width:0%;box-shadow:0 0 6px var(--tno-neon);transition:width 0.06s;"></div>
+                </div>
+                <canvas id="elecCanvas"></canvas>
+                <div id="elecResultStats" style="margin-top:10px;"></div>
+                <!-- 개표 완료 후 버튼 -->
+                <div id="elecPostBtns" style="display:none;margin-top:12px;display:none;">
+                    <div style="display:flex;gap:8px;">
+                        <button onclick="elecApplyToParliament()" style="flex:1;background:var(--tno-neon);color:#000;border:none;padding:10px;font-family:inherit;font-size:1rem;letter-spacing:1px;cursor:pointer;">✔ 의회에 반영</button>
+                        <button onclick="elecRerun()" style="flex:1;background:transparent;border:1px solid var(--tno-neon);color:var(--tno-neon);padding:10px;font-family:inherit;font-size:1rem;cursor:pointer;">↺ 재개표</button>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -902,7 +1046,7 @@
         // ===== VOTE STATE =====
         let voteState = { house: {}, senate: {} };
         let currentVoteMode = 'none';
-        let dotCache = { house: [], senate: [] };
+        let dotCache = { house: [], senate: [], _elec: [] };
 
         // ===== BILL FUNCTIONS =====
         function toggleCustomThreshold() {
@@ -974,6 +1118,7 @@
             renderActiveBillDisplay();
             redrawAll();
             updateVoteResults();
+            elecUpdateLabels();
             updateConfirmButtons();
             renderBulkPartyList();
         }
@@ -1615,7 +1760,7 @@
         // ===== MAIN SIMULATE =====
         window.addEventListener('resize', () => { simulate(); });
 
-        window.onload = function() { toggleSystem(); refreshUI(); simulate(); renderBillList(); renderArchiveList(); syncBillSelect(); };
+        window.onload = function() { toggleSystem(); refreshUI(); simulate(); renderBillList(); renderArchiveList(); syncBillSelect(); elecRenderList(); elecRenderRecords(); };
 
         // ===== SAVE / LOAD =====
         function getAppState() {
@@ -1755,6 +1900,7 @@
             document.getElementById('mainTab' + main.charAt(0).toUpperCase() + main.slice(1)).classList.add('active');
             document.querySelectorAll('.main-tab-content').forEach(c => c.classList.remove('active'));
             document.getElementById('mainContent' + main.charAt(0).toUpperCase() + main.slice(1)).classList.add('active');
+            if(main === 'election') { elecRenderList(); elecRenderRecords(); return; }
             switchSubTab(main, currentSubTab[main] || (main === 'setup' ? 'ideology' : 'bill'), false);
         }
 
@@ -1788,6 +1934,10 @@
             document.getElementById('subTabSenate').style.display = isBicameral ? '' : 'none';
             document.getElementById('senateVoteResult').style.display = isBicameral ? 'block' : 'none';
             if(!isBicameral && currentSubTab['setup'] === 'senate') switchSubTab('setup', 'ideology');
+            // 단원제: 상원 디스플레이 탭 숨김
+            const dispSenate = document.getElementById('dispTabSenate');
+            if(dispSenate) dispSenate.style.display = isBicameral ? '' : 'none';
+            if(!isBicameral && document.querySelector('.disp-panel.active')?.id === 'dispPanelSenate') switchDispTab('house');
             renderBillList(); renderArchiveList(); syncBillSelect(); updateNames();
         }
 
@@ -2005,6 +2155,567 @@
 
 
 
+
+
+        // ═══════════════════════════════════════
+        // 선거 시뮬레이션
+        // ═══════════════════════════════════════
+        const elecStore = {};          // { partyId: { prob, err } }
+        let elecRunning  = false;
+        let elecPaused   = false;
+        let elecSkipToEnd = false;
+        let elecRecords  = [];         // 선거 기록 배열
+        let elecLastResult = null;     // 마지막 개표 결과 (반영용)
+
+        // ── 탭 전환 ────────────────────────────
+        function switchDispTab(tab) {
+            document.querySelectorAll('.disp-tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.disp-panel').forEach(p => p.classList.remove('active'));
+            const btn   = document.getElementById('dispTab' + tab.charAt(0).toUpperCase() + tab.slice(1));
+            const panel = document.getElementById('dispPanel' + tab.charAt(0).toUpperCase() + tab.slice(1));
+            if(btn)   btn.classList.add('active');
+            if(panel) panel.classList.add('active');
+            requestAnimationFrame(() => {
+                if(tab === 'house')  simulate();
+                if(tab === 'senate') simulate();
+            });
+        }
+
+        function elecSwitchSub(sub) {
+            document.getElementById('elecSubTabVote').classList.toggle('active', sub==='vote');
+            document.getElementById('elecSubTabRecord').classList.toggle('active', sub==='record');
+            document.getElementById('elecSubVote').classList.toggle('active', sub==='vote');
+            document.getElementById('elecSubRecord').classList.toggle('active', sub==='record');
+        }
+
+        function buildParliamentMap(chamberType) {
+            const isSenate = chamberType === 'senate';
+            const total = parseInt(document.getElementById(isSenate?'senateTotal':'houseTotal').value)||0;
+            const highlightGov = document.getElementById('chkGovHighlight').checked;
+            let map = [];
+            parties.filter(p => isSenate ? p.inSenate : p.inHouse).forEach(p => {
+                const cnt = isSenate ? p.seatsSenate : p.seatsHouse;
+                const coal = coalitions.find(c=>c.members.includes(p.id));
+                const isGov = (coal&&coal.isRuling)||p.isRuling;
+                const stroke = highlightGov&&isGov ? 'var(--tno-gold)' : (coal?coal.color:null);
+                for(let k=0;k<cnt;k++){
+                    if(map.length>=total) break;
+                    map.push({color:p.color,partyName:p.name,ideology:ideologies.find(i=>i.id===p.ideologyId)?.name||'?',coalitionName:coal?.name,strokeColor:stroke,isRuling:isGov});
+                }
+            });
+            while(map.length<total) map.push({color:'#222',partyName:'Vacant',ideology:'-',strokeColor:'#333',isRuling:false});
+            return map;
+        }
+
+        // ── 이름 반영 ───────────────────────────
+        function elecUpdateLabels() {
+            const hName = document.getElementById('houseNameInput')?.value || '하원';
+            const sName = document.getElementById('senateNameInput')?.value || '상원';
+            const isBi  = document.querySelector('input[name="systemType"]:checked').value === 'bicameral';
+            const hBtn  = document.getElementById('dispTabHouse');
+            const sBtn  = document.getElementById('dispTabSenate');
+            const hl    = document.getElementById('elecHouseLabel');
+            const sl    = document.getElementById('elecSenateLabel');
+            const sw    = document.getElementById('elecSenateWrap');
+            if(hBtn) hBtn.textContent = hName;
+            if(sBtn) sBtn.textContent = sName;
+            if(hl)   hl.textContent   = hName;
+            if(sl)   sl.textContent   = sName;
+            if(sw)   sw.style.display = isBi ? '' : 'none';
+            if(!isBi) document.querySelector('input[name="elecTarget"][value="house"]').checked = true;
+        }
+
+        // ── 정당 목록 렌더 ─────────────────────
+        // 색상이 어두운지 판단 (HSP 밝기)
+        function elecIsColorDark(hex) {
+            const r = parseInt(hex.slice(1,3),16);
+            const g = parseInt(hex.slice(3,5),16);
+            const b = parseInt(hex.slice(5,7),16);
+            const hsp = Math.sqrt(0.299*r*r + 0.587*g*g + 0.114*b*b);
+            return hsp < 128;
+        }
+
+        // 통합 바 업데이트
+        function elecUpdateAllBars() {
+            const allEntries = [
+                ...parties.map(p => ({ id: p.id, prob: Math.max(0, elecStore[p.id]?.prob||0), color: p.color })),
+                { id: '__swing__', prob: Math.max(0, elecStore['__swing__']?.prob||0), color: null }
+            ];
+            const total = allEntries.reduce((s,e)=>s+e.prob,0) || 1;
+
+            // 각 세그먼트 위치/너비 계산
+            let cursor = 0;
+            const segs = allEntries.map(e => {
+                const pct = e.prob / total * 100;
+                const pos = cursor;
+                cursor += pct;
+                return { ...e, pct, pos };
+            });
+            const n = segs.length;
+
+            segs.forEach((seg, idx) => {
+                const errRaw = Math.max(0, elecStore[seg.id]?.err||0);
+                const errPct = errRaw / total * 100;
+
+                // 세그먼트 바
+                const el = document.querySelector(`.elec-seg[data-id="${seg.id}"]`);
+                if(el) { el.style.left = seg.pos + '%'; el.style.width = seg.pct + '%'; }
+
+                // 레이블 색상: 어두운 색이면 흰색, 밝으면 검정
+                const lbl = document.querySelector(`.elec-seg-lbl[data-id="${seg.id}"]`);
+                if(lbl) {
+                    const isDark = seg.color ? elecIsColorDark(seg.color) : true;
+                    lbl.style.color = isDark ? '#fff' : '#000';
+                    lbl.style.textShadow = isDark ? '0 0 3px rgba(0,0,0,0.8)' : 'none';
+                    if(seg.pct > 4) {
+                        lbl.style.left = seg.pos + '%';
+                        lbl.style.width = seg.pct + '%';
+                        lbl.textContent = seg.prob.toFixed(1) + '%';
+                        lbl.style.opacity = '1';
+                    } else {
+                        lbl.style.opacity = '0';
+                    }
+                }
+
+                // 오차범위: 절반씩 양옆, 한쪽 공간 부족하면 반대편으로 넘김
+                const half       = errPct / 2;
+                const leftSpace  = seg.pos;                    // 왼쪽 가용 공간
+                const rightSpace = 100 - (seg.pos + seg.pct);  // 오른쪽 가용 공간
+
+                let errLeft  = Math.min(half, leftSpace);
+                let errRight = Math.min(half, rightSpace);
+                // 부족분 반대편으로
+                errLeft  = Math.min(errLeft  + Math.max(0, half - errRight), leftSpace);
+                errRight = Math.min(errRight + Math.max(0, half - Math.min(half, leftSpace)), rightSpace);
+
+                const elL = document.querySelector(`.elec-seg-err-l[data-id="${seg.id}"]`);
+                const elR = document.querySelector(`.elec-seg-err-r[data-id="${seg.id}"]`);
+
+                if(elL) {
+                    const lo = seg.pos - errLeft;
+                    elL.style.left  = lo + '%';
+                    elL.style.width = errLeft + '%';
+                    elL.style.display = '';
+                }
+                if(elR) {
+                    elR.style.left  = (seg.pos + seg.pct) + '%';
+                    elR.style.width = errRight + '%';
+                    elR.style.display = '';
+                }
+            });
+        }
+
+        function elecRenderList() {
+            elecUpdateLabels();
+            const container = document.getElementById('elecInputList');
+            if(!container) return;
+
+            // 현재 DOM 값 저장
+            container.querySelectorAll('.elec-prob').forEach(el => {
+                const id = el.dataset.id;
+                if(!elecStore[id]) elecStore[id]={prob:0,err:0};
+                elecStore[id].prob = parseFloat(el.value)||0;
+            });
+            container.querySelectorAll('.elec-err').forEach(el => {
+                const id = el.dataset.id;
+                if(!elecStore[id]) elecStore[id]={prob:0,err:0};
+                elecStore[id].err = parseFloat(el.value)||0;
+            });
+            if(!elecStore['__swing__']) elecStore['__swing__']={prob:0,err:0};
+
+            container.innerHTML = '';
+
+            // ── 통합 바 ──────────────────────────
+            const barWrap = document.createElement('div');
+            barWrap.style.cssText = 'margin-bottom:14px;';
+
+            // 레이블 레이어 (바 위, z-index:3)
+            let lblHtml = '';
+            parties.forEach(p => {
+                lblHtml += `<div class="elec-seg-lbl" data-id="${p.id}"
+                    style="position:absolute;top:0;bottom:0;display:flex;align-items:center;justify-content:center;
+                    font-size:0.7rem;font-weight:bold;overflow:hidden;white-space:nowrap;pointer-events:none;opacity:0;z-index:3;"></div>`;
+            });
+            lblHtml += `<div class="elec-seg-lbl" data-id="__swing__"
+                style="position:absolute;top:0;bottom:0;display:flex;align-items:center;justify-content:center;
+                font-size:0.7rem;font-weight:bold;overflow:hidden;white-space:nowrap;pointer-events:none;opacity:0;z-index:3;"></div>`;
+
+            // 오차 레이어 + 세그먼트 레이어
+            let errHtml = '', segHtml = '';
+            parties.forEach(p => {
+                // 빗금 패턴: 더 선명하게 (불투명도 높임)
+                const hatch = `repeating-linear-gradient(45deg,${p.color}99,${p.color}99 2.5px,transparent 2.5px,transparent 5px)`;
+                errHtml += `
+                    <div class="elec-seg-err-l" data-id="${p.id}" style="position:absolute;top:0;bottom:0;background:${hatch};pointer-events:none;z-index:2;"></div>
+                    <div class="elec-seg-err-r" data-id="${p.id}" style="position:absolute;top:0;bottom:0;background:${hatch};pointer-events:none;z-index:2;"></div>`;
+                segHtml += `<div class="elec-seg" data-id="${p.id}" style="position:absolute;top:0;bottom:0;background:${p.color};border-right:1px solid #101218;box-sizing:border-box;z-index:1;"></div>`;
+            });
+            // 무당파 (오차는 왼쪽으로만 — err-r은 숨김)
+            const swHatch = `repeating-linear-gradient(45deg,#88888899,#88888899 2.5px,transparent 2.5px,transparent 5px)`;
+            errHtml += `
+                <div class="elec-seg-err-l" data-id="__swing__" style="position:absolute;top:0;bottom:0;background:${swHatch};pointer-events:none;z-index:2;"></div>
+                <div class="elec-seg-err-r" data-id="__swing__" style="position:absolute;top:0;bottom:0;background:${swHatch};pointer-events:none;z-index:2;"></div>`;
+            segHtml += `<div class="elec-seg" data-id="__swing__" style="position:absolute;top:0;bottom:0;background:repeating-linear-gradient(45deg,#333,#333 3px,#444 3px,#444 6px);border-right:1px solid #101218;z-index:1;"></div>`;
+
+            barWrap.innerHTML = `
+                <div style="font-size:0.75rem;color:#555;margin-bottom:4px;letter-spacing:1px;">▌ 지지율 분포</div>
+                <div style="position:relative;height:22px;background:#111;border:1px solid #333;overflow:visible;">
+                    ${errHtml}${segHtml}${lblHtml}
+                </div>
+                <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:5px;">
+                    ${parties.map(p=>`<span style="display:inline-flex;align-items:center;gap:3px;font-size:0.75rem;color:#aaa;">
+                        <span style="width:8px;height:8px;background:${p.color};display:inline-block;flex-shrink:0;"></span>${p.name}</span>`).join('')}
+                    <span style="display:inline-flex;align-items:center;gap:3px;font-size:0.75rem;color:#aaa;">
+                        <span style="width:8px;height:8px;background:repeating-linear-gradient(45deg,#333,#333 2px,#444 2px,#444 4px);display:inline-block;flex-shrink:0;"></span>무당파</span>
+                </div>`;
+            container.appendChild(barWrap);
+
+            // ── 정당 행 ──────────────────────────
+            parties.forEach(p => {
+                const st = elecStore[p.id]||{prob:0,err:0};
+                const row = document.createElement('div');
+                row.style.cssText = 'display:grid;grid-template-columns:1fr 75px 60px;gap:6px;margin-bottom:7px;align-items:center;';
+                row.innerHTML = `
+                    <div style="display:flex;align-items:center;gap:6px;">
+                        <span style="width:10px;height:10px;background:${p.color};border-radius:50%;flex-shrink:0;border:1px solid #444;"></span>
+                        <span style="font-size:0.85rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${p.name}">${p.name}</span>
+                    </div>
+                    <input type="number" class="elec-prob" data-id="${p.id}" value="${st.prob}"
+                        min="0" max="100" placeholder="0"
+                        style="background:#000;border:1px solid var(--tno-border);color:var(--tno-neon);font-family:inherit;font-size:0.9rem;padding:4px;text-align:center;width:100%;box-sizing:border-box;"
+                        oninput="if(!elecStore['${p.id}'])elecStore['${p.id}']={prob:0,err:0}; elecStore['${p.id}'].prob=parseFloat(this.value)||0; elecUpdateAllBars();">
+                    <input type="number" class="elec-err" data-id="${p.id}" value="${st.err}"
+                        min="0" max="50" placeholder="0"
+                        style="background:#000;border:1px solid #444;color:#888;font-family:inherit;font-size:0.9rem;padding:4px;text-align:center;width:100%;box-sizing:border-box;"
+                        oninput="if(!elecStore['${p.id}'])elecStore['${p.id}']={prob:0,err:0}; elecStore['${p.id}'].err=parseFloat(this.value)||0; elecUpdateAllBars();">
+                `;
+                container.appendChild(row);
+            });
+
+            // ── 무당파 행 ────────────────────────
+            const sw = elecStore['__swing__'];
+            const swRow = document.createElement('div');
+            swRow.style.cssText = 'display:grid;grid-template-columns:1fr 75px 60px;gap:6px;margin-bottom:7px;align-items:center;border-top:1px dashed #333;padding-top:8px;margin-top:4px;';
+            swRow.innerHTML = `
+                <div style="display:flex;align-items:center;gap:6px;">
+                    <span style="width:10px;height:10px;background:repeating-linear-gradient(45deg,#555,#555 2px,#333 2px,#333 4px);border-radius:50%;flex-shrink:0;border:1px solid #666;"></span>
+                    <span style="font-size:0.85rem;color:#aaa;">무당파</span>
+                </div>
+                <input type="number" class="elec-prob" data-id="__swing__" value="${sw.prob}"
+                    min="0" max="100" placeholder="0"
+                    style="background:#000;border:1px solid #555;color:#aaa;font-family:inherit;font-size:0.9rem;padding:4px;text-align:center;width:100%;box-sizing:border-box;"
+                    oninput="elecStore['__swing__'].prob=parseFloat(this.value)||0; elecUpdateAllBars();">
+                <input type="number" class="elec-err" data-id="__swing__" value="${sw.err}"
+                    min="0" max="50" placeholder="0"
+                    style="background:#000;border:1px solid #444;color:#555;font-family:inherit;font-size:0.9rem;padding:4px;text-align:center;width:100%;box-sizing:border-box;"
+                    oninput="elecStore['__swing__'].err=parseFloat(this.value)||0; elecUpdateAllBars();">
+            `;
+            container.appendChild(swRow);
+
+            elecUpdateAllBars();
+        }
+
+        // ── 개표 일시정지 / 재개 ───────────────
+        function elecTogglePause() {
+            elecPaused = !elecPaused;
+            const btn = document.getElementById('elecPauseBtn');
+            if(btn) btn.textContent = elecPaused ? '▶ 재개' : '⏸ 일시정지';
+        }
+
+        // ── 즉시 완료 ──────────────────────────
+        function elecFinishNow() {
+            elecSkipToEnd = true;
+            elecPaused = false;
+        }
+
+        // ── 의회 반영 ──────────────────────────
+        function elecApplyToParliament() {
+            if(!elecLastResult) return;
+            const { isSenate, seatMap } = elecLastResult;
+            parties.forEach(p => {
+                const s = seatMap.find(x=>x.id===p.id);
+                if(isSenate) p.seatsSenate = s?.n||0;
+                else         p.seatsHouse  = s?.n||0;
+            });
+            simulate(); refreshUI();
+            // 의회 탭으로 전환
+            switchDispTab(isSenate ? 'senate' : 'house');
+        }
+
+        // ── 재개표 ────────────────────────────
+        function elecRerun() {
+            if(!elecLastResult) return;
+            elecRun(true);
+        }
+
+        // ── 선거 기록 저장 ────────────────────
+        function elecSaveRecord(title, year, isSenate, seatMap, weightedResult) {
+            const hName = document.getElementById('houseNameInput')?.value||'하원';
+            const sName = document.getElementById('senateNameInput')?.value||'상원';
+            const record = {
+                id: 'er'+Date.now(),
+                title: title || '무제 선거',
+                year:  year  || '?',
+                chamber: isSenate ? sName : hName,
+                isSenate,
+                parties: parties.map(p => {
+                    const w = weightedResult.find(x=>x.id===p.id);
+                    const s = seatMap.find(x=>x.id===p.id);
+                    return { id:p.id, name:p.name, color:p.color, prob: w?.origProb||0, seats: s?.n||0 };
+                }),
+                totalSeats: seatMap.reduce((a,b)=>a+b.n,0)
+            };
+            elecRecords.unshift(record);
+            elecRenderRecords();
+        }
+
+        function elecRenderRecords() {
+            const container = document.getElementById('elecRecordList');
+            if(!container) return;
+            if(elecRecords.length === 0) {
+                container.innerHTML = '<div style="color:#333;text-align:center;padding:16px;border:1px dashed #222;font-size:0.85rem;">저장된 선거 기록이 없습니다</div>';
+                return;
+            }
+            container.innerHTML = '';
+            elecRecords.forEach(r => {
+                const div = document.createElement('div');
+                div.style.cssText = 'background:#080b10;border:1px solid #2a2a2a;border-left:4px solid var(--tno-neon);padding:10px;margin-bottom:8px;';
+                const partySummary = r.parties.filter(p=>p.seats>0)
+                    .sort((a,b)=>b.seats-a.seats)
+                    .map(p=>`<span style="display:inline-flex;align-items:center;gap:3px;margin-right:6px;font-size:0.8rem;color:#aaa;"><span style="width:8px;height:8px;background:${p.color};border-radius:50%;display:inline-block;"></span>${p.name} ${p.seats}석</span>`)
+                    .join('');
+                div.innerHTML = `
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+                        <span style="color:var(--tno-gold);font-size:1rem;">${r.title}</span>
+                        <span style="color:#555;font-size:0.85rem;">${r.year} · ${r.chamber}</span>
+                    </div>
+                    <div style="margin-bottom:8px;">${partySummary}</div>
+                    <div style="display:flex;gap:6px;">
+                        <button onclick="elecLoadRecord('${r.id}')" style="flex:1;background:transparent;border:1px solid var(--tno-neon);color:var(--tno-neon);padding:5px;font-family:inherit;font-size:0.85rem;cursor:pointer;">↻ 의회 반영</button>
+                        <button onclick="elecDeleteRecord('${r.id}')" style="background:transparent;border:1px solid #333;color:#555;padding:5px 10px;font-family:inherit;font-size:0.85rem;cursor:pointer;">삭제</button>
+                    </div>`;
+                container.appendChild(div);
+            });
+        }
+
+        function elecLoadRecord(id) {
+            const r = elecRecords.find(x=>x.id===id);
+            if(!r) return;
+            parties.forEach(p => {
+                const rp = r.parties.find(x=>x.id===p.id);
+                if(r.isSenate) p.seatsSenate = rp?.seats||0;
+                else           p.seatsHouse  = rp?.seats||0;
+            });
+            simulate(); refreshUI();
+            switchDispTab(r.isSenate ? 'senate' : 'house');
+        }
+
+        function elecDeleteRecord(id) {
+            elecRecords = elecRecords.filter(x=>x.id!==id);
+            elecRenderRecords();
+        }
+
+        // ── 메인 개표 함수 ────────────────────
+        async function elecRun(isRerun) {
+            if(elecRunning) return;
+
+            // DOM → store 동기화
+            document.querySelectorAll('.elec-prob').forEach(el => {
+                const id = el.dataset.id;
+                if(!elecStore[id]) elecStore[id]={prob:0,err:0};
+                elecStore[id].prob = parseFloat(el.value)||0;
+            });
+            document.querySelectorAll('.elec-err').forEach(el => {
+                const id = el.dataset.id;
+                if(!elecStore[id]) elecStore[id]={prob:0,err:0};
+                elecStore[id].err = parseFloat(el.value)||0;
+            });
+            if(!elecStore['__swing__']) elecStore['__swing__']={prob:0,err:0};
+
+            const isSenate = document.querySelector('input[name="elecTarget"]:checked')?.value === 'senate';
+            const hName = document.getElementById('houseNameInput')?.value||'하원';
+            const sName = document.getElementById('senateNameInput')?.value||'상원';
+            const chamberName = isSenate ? sName : hName;
+            const elecTitle = document.getElementById('elecTitle')?.value.trim() || '무제 선거';
+            const elecYear  = document.getElementById('elecYear')?.value.trim()  || '?';
+
+            // 지지율 합산 검사 (무당파 포함)
+            const partyProb = parties.reduce((s,p)=>s+(elecStore[p.id]?.prob||0),0);
+            if(partyProb<=0) { alert('지지율을 입력해 주세요.\n각 정당의 지지율(%) 칸에 숫자를 입력하세요.'); return; }
+            const totalSeats = parseInt(document.getElementById(isSenate?'senateTotal':'houseTotal').value)||0;
+            if(totalSeats<=0) { alert('의석 수가 0입니다. 의회 설정에서 의석 수를 확인하세요.'); return; }
+
+            elecRunning   = true;
+            elecPaused    = false;
+            elecSkipToEnd = false;
+
+            const runBtn   = document.getElementById('elecRunBtn');
+            const midCtrl  = document.getElementById('elecMidControls');
+            const postBtns = document.getElementById('elecPostBtns');
+            runBtn.style.background='#222'; runBtn.style.color='#888'; runBtn.textContent='>> 개표 중... <<';
+            if(midCtrl)  midCtrl.style.display='block';
+            if(postBtns) postBtns.style.display='none';
+
+            const speed = Math.round((101 - parseInt(document.getElementById('elecSpeed').value)) * 1.5);
+
+            // ── 오차 적용 후 각 당 지지율 계산 ──
+            const partyWeighted = parties.map(p => {
+                const st = elecStore[p.id]||{prob:0,err:0};
+                const w  = Math.max(0, st.prob + (Math.random()*2-1)*(st.err||0));
+                return { id:p.id, w, origProb: st.prob };
+            });
+
+            // ── 무당파 계산 ───────────────────────
+            const swingSt   = elecStore['__swing__']||{prob:0,err:0};
+            const swingRaw  = Math.max(0, swingSt.prob + (Math.random()*2-1)*(swingSt.err||0));
+
+            // ── 무당파 분배 알고리즘 ──────────────
+            // A/B 비율 랜덤 결정 (매 선거마다 다름)
+            const ratioA = Math.random(); // 0~1 사이 랜덤 (그룹A 비율)
+            const ratioB = 1 - ratioA;
+            const swingA = swingRaw * ratioA; // 완전 랜덤 그룹
+            const swingB = swingRaw * ratioB; // 지지율×친화도 그룹
+
+            // 그룹A: 각 당에 균등 랜덤 분배 (난수 비중)
+            const randWeights = parties.map(() => Math.random());
+            const randTotal   = randWeights.reduce((a,b)=>a+b,0);
+
+            // 그룹B: 각 당의 (지지율 × 친화도 계수) 비중으로 분배
+            // 친화도 계수: 0.5~1.5 사이 랜덤 (매 선거 당마다 다름)
+            const affinities = parties.map(() => 0.5 + Math.random());
+            const bWeights   = partyWeighted.map((p,i) => Math.max(0, p.w) * affinities[i]);
+            const bTotal     = bWeights.reduce((a,b)=>a+b,0);
+
+            // 각 당에 무당파 배분량 합산
+            const swingBonus = parties.map((p,i) => {
+                const fromA = randTotal  > 0 ? swingA * (randWeights[i] / randTotal) : 0;
+                const fromB = bTotal     > 0 ? swingB * (bWeights[i]    / bTotal)    : 0;
+                return fromA + fromB;
+            });
+
+            // ── 최종 가중치 (정당 지지율 + 무당파 배분) ──
+            const weighted = partyWeighted.map((p,i) => ({
+                id: p.id,
+                w:  p.w + swingBonus[i],
+                origProb: p.origProb,
+            }));
+            const wTotal = weighted.reduce((s,p)=>s+p.w,0);
+            if(wTotal<=0) {
+                elecRunning=false;
+                runBtn.style.background='var(--tno-neon)'; runBtn.style.color='#000'; runBtn.textContent='>> 개표 시작 <<';
+                return;
+            }
+
+            // ── 최대 잔여분 의석 배분 ──────────────
+            let seatMap = weighted.map(p=>({id:p.id, n:Math.floor((p.w/wTotal)*totalSeats), origProb:p.origProb}));
+            let alloc   = seatMap.reduce((s,p)=>s+p.n,0);
+            const rems  = weighted.map((p,i)=>({i,rem:(p.w/wTotal)*totalSeats-seatMap[i].n})).sort((a,b)=>b.rem-a.rem);
+            for(let ri=0; alloc<totalSeats; ri++,alloc++) seatMap[rems[ri%rems.length].i].n++;
+
+            // ── 결과 저장 (반영/재개표용) ───────
+            elecLastResult = { isSenate, seatMap: seatMap.map(x=>({...x})), weighted };
+
+            // ── 풀 생성 + 셔플 ─────────────────
+            parties.forEach(p=>{ if(isSenate) p.seatsSenate=0; else p.seatsHouse=0; });
+            let pool=[];
+            seatMap.forEach(s=>{ for(let i=0;i<s.n;i++) pool.push(s.id); });
+            for(let i=pool.length-1;i>0;i--){
+                const j=Math.floor(Math.random()*(i+1));
+                [pool[i],pool[j]]=[pool[j],pool[i]];
+            }
+
+            // ── 선거 결과 탭으로 전환 ──────────
+            document.getElementById('dispTabElecResult').style.display='';
+            document.getElementById('dispTabElecResult').textContent = `${chamberName} 선거 결과`;
+            switchDispTab('elecResult');
+            document.getElementById('elecResultTitle').innerText = `> ${elecTitle} (${elecYear}) — ${chamberName} 개표 중...`;
+            document.getElementById('elecResultBar').style.width='0%';
+            document.getElementById('elecProgressBar').style.width='0%';
+            // 패널이 실제로 렌더된 후 캔버스 크기를 강제 설정
+            await new Promise(r=>setTimeout(r,150));
+            // elecCanvas 크기를 display-area 기준으로 강제 설정
+            const elecCvs = document.getElementById('elecCanvas');
+            const dispArea = document.querySelector('.display-area');
+            const forcedWidth = (dispArea?.clientWidth || 600) - 34;
+            elecCvs.style.width = forcedWidth + 'px';
+
+            // ── 개표 애니메이션 ────────────────
+            const drawEvery = Math.max(1, Math.floor(totalSeats/100));
+
+            for(let i=0; i<pool.length; i++) {
+                // 즉시 완료 — 루프 진입 즉시 체크
+                if(elecSkipToEnd) {
+                    for(let j=i; j<pool.length; j++) {
+                        const pp=parties.find(x=>x.id===pool[j]);
+                        if(pp){ if(isSenate) pp.seatsSenate++; else pp.seatsHouse++; }
+                    }
+                    break;
+                }
+
+                // 일시정지 대기
+                while(elecPaused && !elecSkipToEnd) {
+                    await new Promise(r=>setTimeout(r,80));
+                }
+                if(elecSkipToEnd) {
+                    for(let j=i; j<pool.length; j++) {
+                        const pp=parties.find(x=>x.id===pool[j]);
+                        if(pp){ if(isSenate) pp.seatsSenate++; else pp.seatsHouse++; }
+                    }
+                    break;
+                }
+
+                const p = parties.find(x=>x.id===pool[i]);
+                if(p){ if(isSenate) p.seatsSenate++; else p.seatsHouse++; }
+
+                const pct = ((i+1)/totalSeats*100).toFixed(1)+'%';
+                document.getElementById('elecProgressBar').style.width=pct;
+                document.getElementById('elecResultBar').style.width=pct;
+
+                if(i%drawEvery===0 || i===pool.length-1) {
+                    const map = buildElecMap(isSenate, totalSeats);
+                    drawChamber('elecCanvas', map, totalSeats, '_elec');
+                    updateStats('elecResultStats', map, totalSeats);
+                }
+
+                if(speed>0) await new Promise(r=>setTimeout(r,speed));
+            }
+
+            // 최종 렌더
+            document.getElementById('elecProgressBar').style.width='100%';
+            document.getElementById('elecResultBar').style.width='100%';
+            const finalMap = buildElecMap(isSenate, totalSeats);
+            drawChamber('elecCanvas', finalMap, totalSeats, '_elec');
+            updateStats('elecResultStats', finalMap, totalSeats);
+
+            // ── 개표 완료 ──────────────────────
+            document.getElementById('elecResultTitle').innerText = `> ${elecTitle} (${elecYear}) — ${chamberName} 결과 확정`;
+            if(midCtrl)  midCtrl.style.display='none';
+            if(postBtns) postBtns.style.display='block';
+
+            // 기록 저장
+            elecSaveRecord(elecTitle, elecYear, isSenate, seatMap, weighted);
+
+            elecRunning=false;
+            runBtn.style.background='var(--tno-neon)'; runBtn.style.color='#000'; runBtn.textContent='>> 개표 시작 <<';
+        }
+
+        function buildElecMap(isSenate, totalSeats) {
+            const hG = document.getElementById('chkGovHighlight').checked;
+            let map=[];
+            parties.forEach(p=>{
+                const seats = isSenate ? p.seatsSenate : p.seatsHouse;
+                const coal  = coalitions.find(c=>c.members.includes(p.id));
+                const isG   = (coal&&coal.isRuling)||p.isRuling;
+                const stroke= hG&&isG?'var(--tno-gold)':(coal?coal.color:null);
+                for(let k=0;k<seats;k++){
+                    if(map.length>=totalSeats) break;
+                    map.push({color:p.color,partyName:p.name,ideology:ideologies.find(i=>i.id===p.ideologyId)?.name||'?',strokeColor:stroke,isRuling:isG});
+                }
+            });
+            while(map.length<totalSeats) map.push({color:'#222',partyName:'Vacant',ideology:'-',strokeColor:'#333',isRuling:false});
+            return map;
+        }
+
         /* ===== SIMULATE & DRAW ===== */
         function simulate() {
             const isBicameral = document.querySelector('input[name="systemType"]:checked').value === 'bicameral';
@@ -2060,14 +2771,11 @@
             const cvs = document.getElementById(cvsId);
             if(!cvs) return;
             const parent = cvs.parentElement;
-            // clientWidth가 0이면 offsetWidth로 재시도 (flex 레이아웃 확정 전 대비)
-            let width = (parent.clientWidth || parent.offsetWidth) - 34;
-            if(width <= 10) {
-                // 상위 패널까지 올라가며 width 탐색
-                let el = parent;
-                while(el && width <= 10) { el = el.parentElement; width = (el?.clientWidth || 0) - 34; }
-            }
-            if(width <= 10) return;
+            // clientWidth가 0이면 offsetWidth, 그래도 0이면 인라인 style.width 파싱
+            let width = parent.clientWidth || parent.offsetWidth;
+            if(!width && cvs.style.width) width = parseInt(cvs.style.width);
+            width = (width || 600) - 34;
+            if(width <= 50) return; // 너무 좁으면 스킵
             const dpr = window.devicePixelRatio || 1;
             const heightBuffer = 120;
             cvs.width = width * dpr;
@@ -2088,7 +2796,7 @@
             const maxR = (width / 2) - 10;
             let best = null;
             const calc = (rows) => {
-                const dotR_est = (maxR - minR) / rows / 2.2;
+                const dotR_est = Math.max(0.5, (maxR - minR) / rows / 2.2);
                 let cap = 0, rRows = [];
                 for(let i=0; i<rows; i++) {
                     const r = minR + i * (dotR_est * 2.2) + dotR_est;
@@ -2101,6 +2809,7 @@
             if(!best) best = calc(30);
 
             const { dotR, rRows } = best;
+            if(dotR <= 0) return; // 반지름이 0 이하면 그릴 수 없음
             let pts = [];
             let totalCap = rRows.reduce((a,b)=>a+b.c, 0);
             let currentPoints = 0;
@@ -2131,16 +2840,18 @@
             }));
 
             const highlightGov = document.getElementById('chkGovHighlight').checked;
+            const chamberVoteState = voteState[chamber] || {};
 
             // Draw dots (with vote state)
             pts.forEach((pt, i) => {
                 if(i >= map.length) return;
                 const d = map[i];
-                const vote = voteState[chamber][i] || 'none';
+                const vote = chamberVoteState[i] || 'none';
                 const voteColor = getVoteColor(vote);
+                const radius = Math.max(0.5, dotR * 0.85);
 
                 ctx.beginPath();
-                ctx.arc(pt.x, pt.y, dotR * 0.85, 0, Math.PI*2);
+                ctx.arc(pt.x, pt.y, radius, 0, Math.PI*2);
                 ctx.fillStyle = voteColor || d.color;
                 ctx.fill();
 
@@ -2161,7 +2872,7 @@
                 // If voted, overlay party color as border so color stays visible
                 if(voteColor) {
                     ctx.beginPath();
-                    ctx.arc(pt.x, pt.y, dotR * 0.85, 0, Math.PI*2);
+                    ctx.arc(pt.x, pt.y, radius, 0, Math.PI*2);
                     ctx.strokeStyle = d.color;
                     ctx.lineWidth = 2.5;
                     ctx.stroke();
