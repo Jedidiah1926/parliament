@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DOT 타임라인</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600&family=Noto+Sans+KR:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0b0c0f;
+    --surface: #13141a;
+    --surface2: #1a1b23;
+    --border: rgba(255,255,255,0.07);
+    --border-hover: rgba(255,255,255,0.15);
+    --text: #dcdad2;
+    --muted: #6b6960;
+    --dim: #3d3c38;
+
+    --col-p:   #7eb8d4;
+    --col-t:   #a07ed4;
+    --col-rel: #6ec89a;
+    --col-pre: #c8a96e;
+    
+    --col-cbt: #7e9ec8;
+    --col-fix: #e8874a;
+    --col-withdrawn: #c86e6e;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Noto Sans KR', sans-serif;
+    font-weight: 300;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 70% 50% at 15% 5%,  rgba(126,184,212,0.05) 0%, transparent 55%),
+      radial-gradient(ellipse 50% 70% at 85% 90%, rgba(160,126,212,0.05) 0%, transparent 55%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .page {
+    position: relative;
+    z-index: 1;
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 72px 40px 120px;
+  }
+
+  .header { margin-bottom: 56px; }
+
+  .header-eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    color: var(--col-p);
+    margin-bottom: 14px;
+    opacity: 0.8;
+  }
+
+  .header-title {
+    font-family: 'Noto Serif KR', serif;
+    font-size: clamp(28px, 4.5vw, 46px);
+    font-weight: 400;
+    line-height: 1.2;
+    color: var(--text);
+    margin-bottom: 10px;
+  }
+
+  .header-sub {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.7;
+  }
+
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 18px;
+    margin-bottom: 40px;
+    padding: 14px 18px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: var(--surface);
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 12px;
+    color: var(--muted);
+    cursor: pointer;
+    transition: color 0.15s;
+    user-select: none;
+  }
+
+  .legend-item:hover { color: var(--text); }
+  .legend-item.inactive { opacity: 0.35; }
+
+  .legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+  .filter-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 40px;
+  }
+
+  .filter-btn {
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 12px;
+    font-weight: 400;
+    letter-spacing: 0.04em;
+    padding: 5px 14px;
+    border-radius: 2px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.18s;
+  }
+
+  .filter-btn:hover { border-color: var(--border-hover); color: var(--text); }
+  .filter-btn.active { background: var(--col-p); border-color: var(--col-p); color: #0b0c0f; font-weight: 500; }
+
+  .stats-row {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 48px;
+    flex-wrap: wrap;
+  }
+
+  .stat {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 12px 18px;
+    min-width: 90px;
+  }
+
+  .stat-val {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 22px;
+    font-weight: 500;
+    color: var(--text);
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+
+  .stat-label { font-size: 10px; color: var(--muted); letter-spacing: 0.06em; }
+
+  .count-info {
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 24px;
+  }
+
+  .count-info strong { color: var(--text); font-weight: 500; }
+
+  /* Timeline */
+  .year-section { margin-bottom: 8px; }
+
+  .year-divider {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 28px;
+    padding-left: 56px;
+  }
+
+  .year-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--col-p);
+    opacity: 0.7;
+    letter-spacing: 0.08em;
+    white-space: nowrap;
+  }
+
+  .year-line { flex: 1; height: 1px; background: var(--border); }
+
+  .track {
+    position: relative;
+    padding-left: 56px;
+  }
+
+  .track::before {
+    content: '';
+    position: absolute;
+    left: 20px;
+    top: 0; bottom: 0;
+    width: 1px;
+    background: linear-gradient(to bottom, transparent, var(--dim) 6%, var(--dim) 94%, transparent);
+  }
+
+  .tl-item {
+    position: relative;
+    margin-bottom: 10px;
+    animation: fadeUp 0.4s ease both;
+  }
+
+  .tl-item.hidden { display: none; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .tl-dot {
+    position: absolute;
+    left: -40px;
+    top: 18px;
+    width: 9px; height: 9px;
+    border-radius: 50%;
+    border: 1.5px solid var(--muted);
+    background: var(--bg);
+    transition: transform 0.2s, box-shadow 0.2s;
+    z-index: 2;
+  }
+
+  .tl-item:hover .tl-dot { transform: scale(1.6); }
+
+  .dot-p   { border-color: var(--col-p);   }  .tl-item:hover .dot-p   { box-shadow: 0 0 10px var(--col-p);   }
+  .dot-t   { border-color: var(--col-t);   }  .tl-item:hover .dot-t   { box-shadow: 0 0 10px var(--col-t);   }
+  .dot-rel { border-color: var(--col-rel); }  .tl-item:hover .dot-rel { box-shadow: 0 0 10px var(--col-rel); }
+  .dot-pre { border-color: var(--col-pre); }  .tl-item:hover .dot-pre { box-shadow: 0 0 10px var(--col-pre); }
+  .dot-fix { border-color: var(--col-fix); }  .tl-item:hover .dot-fix { box-shadow: 0 0 10px var(--col-fix); }
+  .dot-withdrawn { border-color: var(--col-withdrawn); }  .tl-item:hover .dot-withdrawn { box-shadow: 0 0 10px var(--col-withdrawn); }
+  .dot-cbt { border-color: var(--col-cbt); }  .tl-item:hover .dot-cbt { box-shadow: 0 0 10px var(--col-cbt); }
+
+  .tl-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 2px solid transparent;
+    border-radius: 3px;
+    padding: 13px 16px;
+    transition: all 0.18s ease;
+  }
+
+  .tl-item:hover .tl-card {
+    border-color: var(--border-hover);
+    background: var(--surface2);
+    transform: translateX(3px);
+  }
+
+  .card-p   { --ac: var(--col-p);   }
+  .card-t   { --ac: var(--col-t);   }
+  .card-rel { --ac: var(--col-rel); }
+  .card-pre { --ac: var(--col-pre); }
+  .card-fix { --ac: var(--col-fix); }
+  .card-withdrawn { --ac: var(--col-withdrawn); }
+  .card-cbt { --ac: var(--col-cbt); }
+
+  .tl-item:hover .tl-card { border-left-color: var(--ac, var(--border-hover)); }
+
+  .tl-card.tba { opacity: 0.5; border-style: dashed; }
+
+  .tl-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 5px;
+    flex-wrap: wrap;
+  }
+
+  .tl-date {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.04em;
+  }
+
+  .tl-badge {
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    padding: 1px 7px;
+    border-radius: 1px;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+
+  .badge-p   { background: rgba(126,184,212,0.12); color: var(--col-p);   }
+  .badge-t   { background: rgba(160,126,212,0.12); color: var(--col-t);   }
+  .badge-rel { background: rgba(110,200,154,0.12); color: var(--col-rel); }
+  .badge-pre { background: rgba(200,169,110,0.12); color: var(--col-pre); }
+  .badge-fix { background: rgba(232,135,74,0.12); color: var(--col-fix); }
+  .badge-withdrawn { background: rgba(200,110,110,0.15); color: var(--col-withdrawn); }
+  .badge-cbt { background: rgba(126,158,200,0.12); color: var(--col-cbt); }
+
+  .tl-title { font-size: 14px; font-weight: 500; color: var(--text); line-height: 1.45; }
+  .tl-note  { font-size: 12px; color: var(--muted); margin-top: 3px; line-height: 1.6; }
+
+  .version-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--col-pre);
+    margin-right: 4px;
+  }
+
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--dim); border-radius: 2px; }
+
+  @media (max-width: 580px) {
+    .page { padding: 48px 16px 80px; }
+    .track { padding-left: 40px; }
+    .track::before { left: 20px; }
+    .tl-dot { left: -40px; }
+    .year-divider { padding-left: 40px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="header">
+    <p class="header-eyebrow">// CHANGELOG · PROJECT LOG</p>
+    <h1 class="header-title">DOT 타임라인</h1>
+    <p class="header-sub">DNO &amp; TTR의 주요 마일스톤 및 버전 히스토리</p>
+  </div>
+
+  <div class="legend">
+    <div class="legend-item" data-filter="DNO"><div class="legend-dot" style="background:var(--col-p)"></div>DATA NET ORDER</div>
+    <div class="legend-item" data-filter="TTR"><div class="legend-dot" style="background:var(--col-t)"></div>THE TOOL RISES</div>
+    <div class="legend-item" data-filter="릴리스"><div class="legend-dot" style="background:var(--col-rel)"></div>릴리스</div>
+    <div class="legend-item" data-filter="프리릴리스"><div class="legend-dot" style="background:var(--col-pre)"></div>프리릴리스</div>
+    <div class="legend-item" data-filter="핫픽스"><div class="legend-dot" style="background:var(--col-fix)"></div>핫픽스</div>
+    <div class="legend-item" data-filter="철회"><div class="legend-dot" style="background:var(--col-withdrawn)"></div>철회/삭제</div>
+    <div class="legend-item" data-filter="CBT"><div class="legend-dot" style="background:var(--col-cbt)"></div>CBT</div>
+  </div>
+
+  <div class="filter-bar">
+    <button class="filter-btn active" data-filter="all">전체</button>
+    <button class="filter-btn" data-filter="DNO">DATA NET ORDER</button>
+    <button class="filter-btn" data-filter="TTR">THE TOOL RISES</button>
+    <button class="filter-btn" data-filter="릴리스">릴리스</button>
+    <button class="filter-btn" data-filter="프리릴리스">프리릴리스</button>
+    <button class="filter-btn" data-filter="핫픽스">핫픽스</button>
+    <button class="filter-btn" data-filter="CBT">CBT</button>
+    <button class="filter-btn" data-filter="철회">철회/삭제</button>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat"><div class="stat-val">19</div><div class="stat-label">TOTAL EVENTS</div></div>
+    <div class="stat"><div class="stat-val">8</div><div class="stat-label">VERSIONS</div></div>
+    <div class="stat"><div class="stat-val">5</div><div class="stat-label">PRE-RELEASES</div></div>
+    <div class="stat"><div class="stat-val">150+</div><div class="stat-label">DAYS ACTIVE</div></div>
+  </div>
+
+  <div class="count-info">표시 중: <strong id="visible-count">19</strong>개 이벤트</div>
+
+  <div id="timeline">
+
+    <!-- 2025 -->
+    <div class="year-section">
+      <div class="year-divider"><span class="year-label">2025</span><div class="year-line"></div></div>
+      <div class="track">
+
+        <div class="tl-item" data-cats="DNO">
+          <div class="tl-dot dot-p"></div>
+          <div class="tl-card card-p">
+            <div class="tl-meta"><span class="tl-date">2025.12.02</span><span class="tl-badge badge-p">DNO</span></div>
+            <p class="tl-title">DATA NET ORDER 개설</p>
+          </div>
+        </div>
+
+        <div class="tl-item" data-cats="DNO">
+          <div class="tl-dot dot-p"></div>
+          <div class="tl-card card-p">
+            <div class="tl-meta"><span class="tl-date">2025.12.03</span><span class="tl-badge badge-p">DNO</span></div>
+            <p class="tl-title">DNO 프로토타입 완성</p>
+          </div>
+        </div>
+
+        <div class="tl-item" data-cats="CBT DNO">
+          <div class="tl-dot dot-cbt"></div>
+          <div class="tl-card card-cbt">
+            <div class="tl-meta"><span class="tl-date">2025.12.30</span><span class="tl-badge badge-cbt">CBT</span></div>
+            <p class="tl-title">CBT 개시</p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- 2026 -->
+    <div class="year-section">
+      <div class="year-divider"><span class="year-label">2026</span><div class="year-line"></div></div>
+      <div class="track">
+
+        <div class="tl-item" data-cats="CBT 릴리스 DNO">
+          <div class="tl-dot dot-rel"></div>
+          <div class="tl-card card-rel">
+            <div class="tl-meta"><span class="tl-date">2026.01.11</span><span class="tl-badge badge-cbt">CBT</span><span class="tl-badge badge-rel">릴리스</span></div>
+            <p class="tl-title">CBT 종료 및 공식 런칭</p>
+            <p class="tl-note"><span class="version-tag">v1.0.0</span>업데이트 · TNO 테마로 수정</p>
+          </div>
+        </div>
+
+        <div class="tl-item" data-cats="릴리스 DNO">
+          <div class="tl-dot dot-rel"></div>
+          <div class="tl-card card-rel">
+            <div class="tl-meta"><span class="tl-date">2026.01.11</span><span class="tl-badge badge-rel">릴리스</span></div>
+            <p class="tl-title"><span class="version-tag">v1.1.0</span>업데이트</p>
+            <p class="tl-note">save/load 기능 추가</p>
+          </div>
+        </div>
+
+        <div class="tl-item" data-cats="릴리스 DNO 철회">
+          <div class="tl-dot dot-withdrawn"></div>
+          <div class="tl-card card-withdrawn">
+            <div class="tl-meta"><span class="tl-date">2026.02.09</span><span class="tl-badge badge-rel">릴리스</span><span class="tl-badge badge-withdrawn">철회</span></div>
+            <p class="tl-title"><span class="version-tag">v1.2.0</span>업데이트 및 철회</p>
+            <p class="tl-note">선거 업데이트 — 철회됨</p>
+          </div>
+        </div>
+
+        <div class="tl-item" data-cats="프리릴리스 DNO">
+          <div class="tl-dot dot-pre"></div>
+          <div class="tl-card card-pre">
+            <div class="tl-meta"><span class="tl-date">2026.02.09</span><span class="tl-badge badge-pre">프리릴리스</span></div>
+            <p class="tl-title"><span class="version-tag">26w07a</span>프리릴리스 오픈</p>
+            <p class="tl-note">선거 업데이트</p>
+          </div>
+        </div>
+
+        <div class="tl-item" data-cats="프리릴리스 DNO 철회">
+          <div class="tl-dot dot-withdrawn"></div>
+          <div class="tl-card card-withdrawn">
+            <div class="tl-meta"><span class="tl-date">2026.02.09</span><span class="tl-badge badge-pre">프리릴리스</span><span class="tl-badge badge-withdrawn">삭제</span></div>
+            <p class="tl-title"><span class="version-tag">26w07b</span>프리릴리스 삭제</p>
+            <p class="tl-note">선거 업데이트</p>
+          </div>
+        </div>
+
+        <div class="tl-item" data-cats="프리릴리스 DNO">
+          <div class="tl-dot dot-pre"></div>
+          <div class="tl-card card-pre">
+            <div class="tl-meta"><span class="tl-date">2026.03.09</span><span class="tl-badge badge-pre">프리릴리스</span></div>
+            <p class="tl-title"><span class="version-tag">26w11a</span>프리릴리스 추가</p>
+            <p class="tl-note">선거 업데이트</p>
+          </div>
+        </div>
+
+        <div class="tl-item" data-cats="릴리스 DNO">
+          <div class="tl-dot dot-rel"></div>
+          <div class="tl-card card-rel">
+            <div class="tl-meta"><span class="tl-date">2026.03.10</span><span class="tl-badge badge-rel">릴리스</span></div>
+            <p class="tl-title"><span class="version-tag">v1.1.1</span>업데이트</p>
+            <p class="tl-note">프리릴리스 재오픈</p>
+          </div>
+        </div>
+
+        <div class="tl-item" data-cats="프리릴리스 DNO">
+          <div class="tl-dot dot-pre"></div>
+          <div class="tl-card card-pre">
+            <div class="tl-meta"><span class="tl-date">2026.03.10</span><span class="tl-badge badge-pre">프리릴리스</span></div>
+            <p class="tl-title"><span class="version-tag">26w11b</span>프리릴리스 버그 수정</p>
+          </div>
+        </div>
+
+        <div class="tl-item" data-cats="릴리스 DNO">
+          <div class="tl-dot dot-rel"></div>
+          <div class="tl-card card-rel">
+            <div class="tl-meta"><span class="tl-date">2026.04.25</span><span class="tl-badge badge-rel">릴리스</span></div>
+            <p class="tl-title"><span class="version-tag">v1.2.0</span>업데이트</p>
+            <p class="tl-note">법안 기능 추가</p>
+          </div>
+        </div>
+
+        <div class="tl-item" data-cats="릴리스 핫픽스 DNO">
+          <div class="tl-dot dot-fix"></div>
+          <div class="tl-card card-fix">
+            <div class="tl-meta"><span class="tl-date">2026.04.25</span><span class="tl-badge badge-rel">릴리스</span><span class="tl-badge badge-fix">핫픽스</span></div>
+            <p class="tl-title"><span class="version-tag">v1.2.1</span>업데이트</p>
+            <p class="tl-note">법안 관련 버그 수정</p>
+          </div>
+        </div>
+
+        <div class="tl-item" data-cats="프리릴리스 DNO 철회">
+          <div class="tl-dot dot-withdrawn"></div>
+          <div class="tl-card card-withdrawn">
+            <div class="tl-meta"><span class="tl-date">2026.04.28</span><span class="tl-badge badge-pre">프리릴리스</span><span class="tl-badge badge-withdrawn">종료</span></div>
+            <p class="tl-title"><span class="version-tag">26w17a</span>프리릴리스 채널 종료</p>
+            <p class="tl-note">정식 릴리스 전환을 위해 프리릴리스 채널을 닫음</p>
+          </div>
+        </div>
+
+        <div class="tl-item" data-cats="릴리스 DNO">
+          <div class="tl-dot dot-rel"></div>
+          <div class="tl-card card-rel">
+            <div class="tl-meta"><span class="tl-date">2026.04.29</span><span class="tl-badge badge-rel">릴리스</span></div>
+            <p class="tl-title"><span class="version-tag">v1.3.0</span>업데이트</p>
+            <p class="tl-note">선거 업데이트</p>
+          </div>
+        </div>
+
+        <div class="tl-item" data-cats="TTR">
+          <div class="tl-dot dot-t"></div>
+          <div class="tl-card card-t">
+            <div class="tl-meta"><span class="tl-date">2026.04.29</span><span class="tl-badge badge-t">TTR</span></div>
+            <p class="tl-title">THE TOOL RISES 개설</p>
+          </div>
+        </div>
+
+        <div class="tl-item" data-cats="DNO TTR">
+          <div class="tl-dot dot-t"></div>
+          <div class="tl-card card-t">
+            <div class="tl-meta"><span class="tl-date">2026.04.30</span><span class="tl-badge badge-p">DNO</span><span class="tl-badge badge-t">TTR</span></div>
+            <p class="tl-title">TTR 발표 및 DNO 개발 완료 선언</p>
+          </div>
+        </div>
+
+        <div class="tl-item" data-cats="릴리스 핫픽스 DNO">
+          <div class="tl-dot dot-fix"></div>
+          <div class="tl-card card-fix">
+            <div class="tl-meta"><span class="tl-date">2026.05.01</span><span class="tl-badge badge-rel">릴리스</span><span class="tl-badge badge-fix">핫픽스</span></div>
+            <p class="tl-title"><span class="version-tag">v1.3.1</span>업데이트 — DATA NET ORDER</p>
+            <p class="tl-note">버그 수정</p>
+          </div>
+        </div>
+
+        <div class="tl-item" data-cats="릴리스 DNO">
+          <div class="tl-dot dot-rel"></div>
+          <div class="tl-card card-rel tba">
+            <div class="tl-meta"><span class="tl-date">2026.05.XX</span><span class="tl-badge badge-rel">릴리스</span></div>
+            <p class="tl-title"><span class="version-tag">v1.3.2</span>업데이트 — DATA NET ORDER</p>
+            <p class="tl-note">TBA</p>
+          </div>
+        </div>
+
+        <div class="tl-item" data-cats="TTR">
+          <div class="tl-dot dot-t"></div>
+          <div class="tl-card card-t tba">
+            <div class="tl-meta"><span class="tl-date">2026.05.XX</span><span class="tl-badge badge-t">TTR</span></div>
+            <p class="tl-title">TTR 프로토타입 완성</p>
+            <p class="tl-note">TBA</p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  const items = document.querySelectorAll('.tl-item');
+  const filterBtns = document.querySelectorAll('.filter-btn');
+  const legendItems = document.querySelectorAll('.legend-item');
+  const visibleCountEl = document.getElementById('visible-count');
+  let activeFilters = new Set(['all']);
+
+  function applyFilter() {
+    let count = 0;
+    items.forEach((item, i) => {
+      const cats = (item.dataset.cats || '').split(' ').filter(Boolean);
+      const show = activeFilters.has('all') || [...activeFilters].some(f => cats.includes(f));
+      item.classList.toggle('hidden', !show);
+      if (show) {
+        count++;
+        item.style.animationDelay = (count * 0.04) + 's';
+        item.style.animation = 'none';
+        requestAnimationFrame(() => { item.style.animation = ''; });
+      }
+    });
+    visibleCountEl.textContent = count;
+    legendItems.forEach(li => {
+      li.classList.toggle('inactive', !activeFilters.has('all') && !activeFilters.has(li.dataset.filter));
+    });
+  }
+
+  filterBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const f = btn.dataset.filter;
+      if (f === 'all') {
+        activeFilters = new Set(['all']);
+      } else {
+        activeFilters.delete('all');
+        activeFilters.has(f) ? activeFilters.delete(f) : activeFilters.add(f);
+        if (activeFilters.size === 0) activeFilters.add('all');
+      }
+      filterBtns.forEach(b => b.classList.toggle('active', activeFilters.has(b.dataset.filter)));
+      applyFilter();
+    });
+  });
+
+  legendItems.forEach(li => {
+    li.addEventListener('click', () => {
+      const btn = [...filterBtns].find(b => b.dataset.filter === li.dataset.filter);
+      if (btn) btn.click();
+    });
+  });
+
+  items.forEach((item, i) => { item.style.animationDelay = (i * 0.04) + 's'; });
+</script>
+</body>
+</html>
