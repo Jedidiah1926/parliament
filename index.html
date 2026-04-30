@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DOT HUB</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Noto+Sans+KR:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #08090c;
+    --surface: #0f1015;
+    --border: rgba(255,255,255,0.06);
+    --border-hover: rgba(255,255,255,0.14);
+    --text: #e0ddd5;
+    --muted: #5a5955;
+    --dim: #2a2928;
+    --col-dno: #7eb8d4;
+    --col-ttr: #a07ed4;
+    --col-tl: #6ec89a;
+  }
+
+  html, body { height: 100%; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Noto Sans KR', sans-serif;
+    font-weight: 300;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow-x: hidden;
+  }
+
+  /* Ambient background */
+  .ambient {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    overflow: hidden;
+  }
+
+  .ambient-blob {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(120px);
+    opacity: 0.07;
+    animation: drift 20s ease-in-out infinite alternate;
+  }
+
+  .blob-dno {
+    width: 600px; height: 600px;
+    background: var(--col-dno);
+    top: -200px; left: -100px;
+    animation-duration: 22s;
+  }
+
+  .blob-ttr {
+    width: 500px; height: 500px;
+    background: var(--col-ttr);
+    bottom: -150px; right: -100px;
+    animation-duration: 18s;
+    animation-direction: alternate-reverse;
+  }
+
+  .blob-tl {
+    width: 300px; height: 300px;
+    background: var(--col-tl);
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    animation-duration: 26s;
+  }
+
+  @keyframes drift {
+    from { transform: translate(0, 0) scale(1); }
+    to   { transform: translate(40px, 30px) scale(1.08); }
+  }
+
+  /* Noise overlay */
+  .noise {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 1;
+    opacity: 0.025;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+    background-size: 200px;
+  }
+
+  /* Main layout */
+  .page {
+    position: relative;
+    z-index: 2;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 24px;
+    min-height: 100vh;
+  }
+
+  /* Logo / wordmark */
+  .wordmark {
+    text-align: center;
+    margin-bottom: 64px;
+    animation: fadeDown 0.8s ease both;
+  }
+
+  .wordmark-dot {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(72px, 14vw, 120px);
+    letter-spacing: 0.12em;
+    line-height: 1;
+    background: linear-gradient(135deg, #e0ddd5 0%, #888 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .wordmark-sub {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.3em;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-top: 6px;
+  }
+
+  /* Grid */
+  .hub-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto;
+    gap: 16px;
+    width: 100%;
+    max-width: 700px;
+    animation: fadeUp 0.8s 0.2s ease both;
+  }
+
+  /* Card */
+  .hub-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    padding: 32px 28px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    text-decoration: none;
+    color: inherit;
+    overflow: hidden;
+    transition: border-color 0.25s, transform 0.25s, background 0.25s;
+    cursor: pointer;
+  }
+
+  .hub-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .hub-card:hover:not(.disabled) {
+    border-color: var(--border-hover);
+    transform: translateY(-3px);
+  }
+
+  .hub-card:hover:not(.disabled)::before { opacity: 1; }
+
+  /* Card accent glow on hover */
+  .card-dno::before  { background: radial-gradient(ellipse at top left, rgba(126,184,212,0.06), transparent 60%); }
+  .card-ttr::before  { background: radial-gradient(ellipse at top left, rgba(160,126,212,0.06), transparent 60%); }
+  .card-tl::before   { background: radial-gradient(ellipse at top left, rgba(110,200,154,0.06), transparent 60%); }
+
+  .hub-card:hover:not(.disabled) .card-accent-line { opacity: 1; }
+
+  .card-accent-line {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .card-dno .card-accent-line { background: linear-gradient(to right, var(--col-dno), transparent); }
+  .card-ttr .card-accent-line { background: linear-gradient(to right, var(--col-ttr), transparent); }
+  .card-tl  .card-accent-line { background: linear-gradient(to right, var(--col-tl),  transparent); }
+
+  /* Disabled */
+  .hub-card.disabled {
+    opacity: 0.38;
+    cursor: not-allowed;
+  }
+
+  .disabled-tag {
+    position: absolute;
+    top: 14px; right: 14px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.15em;
+    padding: 3px 8px;
+    border: 1px solid var(--dim);
+    border-radius: 1px;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+
+  /* Card content */
+  .card-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    margin-bottom: 16px;
+    font-weight: 500;
+  }
+
+  .tag-dno { color: var(--col-dno); }
+  .tag-ttr { color: var(--col-ttr); }
+  .tag-tl  { color: var(--col-tl);  }
+  .tag-dis { color: var(--muted); }
+
+  .card-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(28px, 4vw, 38px);
+    letter-spacing: 0.06em;
+    line-height: 1;
+    margin-bottom: 10px;
+    color: var(--text);
+  }
+
+  .card-desc {
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.65;
+    flex: 1;
+  }
+
+  .card-arrow {
+    margin-top: 24px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: gap 0.2s;
+  }
+
+  .hub-card:hover:not(.disabled) .card-arrow { gap: 14px; }
+
+  .arrow-dno { color: var(--col-dno); }
+  .arrow-ttr { color: var(--col-ttr); }
+  .arrow-tl  { color: var(--col-tl);  }
+
+  /* Timeline card spans full width */
+  .card-tl { grid-column: 1 / -1; flex-direction: row; align-items: center; gap: 32px; }
+  .card-tl .card-body { flex: 1; }
+  .card-tl .card-arrow { margin-top: 0; }
+
+  .tl-stat-row {
+    display: flex;
+    gap: 24px;
+    margin-top: 14px;
+  }
+
+  .tl-stat { }
+  .tl-stat-val {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 20px;
+    font-weight: 500;
+    color: var(--text);
+    line-height: 1;
+  }
+  .tl-stat-label { font-size: 10px; color: var(--muted); letter-spacing: 0.06em; margin-top: 2px; }
+
+  /* Footer */
+  .footer {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+    padding: 24px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--dim);
+    letter-spacing: 0.1em;
+  }
+
+  @keyframes fadeDown {
+    from { opacity: 0; transform: translateY(-20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  @media (max-width: 560px) {
+    .hub-grid { grid-template-columns: 1fr; }
+    .card-tl { flex-direction: column; align-items: flex-start; gap: 16px; }
+    .card-tl .card-arrow { margin-top: 8px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="ambient">
+  <div class="ambient-blob blob-dno"></div>
+  <div class="ambient-blob blob-ttr"></div>
+  <div class="ambient-blob blob-tl"></div>
+</div>
+<div class="noise"></div>
+
+<div class="page">
+
+  <div class="wordmark">
+    <div class="wordmark-dot">DOT</div>
+
+  </div>
+
+  <div class="hub-grid">
+
+    <!-- DNO -->
+    <a class="hub-card card-dno" href="dno.main.html">
+      <div class="card-accent-line"></div>
+      <span class="card-tag tag-dno">// PROJECT · DNO</span>
+      <h2 class="card-title">DATA NET<br>ORDER</h2>
+
+      <div class="card-arrow arrow-dno">ENTER <span>→</span></div>
+    </a>
+
+    <!-- TTR (disabled) -->
+    <div class="hub-card card-ttr disabled">
+      <div class="card-accent-line"></div>
+      <span class="disabled-tag">미공개</span>
+      <span class="card-tag tag-dis">// PROJECT · TTR</span>
+      <h2 class="card-title">THE TOOL<br>RISES</h2>
+
+      <div class="card-arrow" style="color:var(--muted)">LOCKED <span>—</span></div>
+    </div>
+
+    <!-- Timeline (full width) -->
+    <a class="hub-card card-tl" href="timeline.html">
+      <div class="card-accent-line"></div>
+      <div class="card-body">
+        <span class="card-tag tag-tl">// CHANGELOG</span>
+        <h2 class="card-title">DOT 타임라인</h2>
+
+        <div class="tl-stat-row">
+          <div class="tl-stat"><div class="tl-stat-val">19</div><div class="tl-stat-label">EVENTS</div></div>
+          <div class="tl-stat"><div class="tl-stat-val">8</div><div class="tl-stat-label">VERSIONS</div></div>
+          <div class="tl-stat"><div class="tl-stat-val">5</div><div class="tl-stat-label">PRE-REL</div></div>
+        </div>
+      </div>
+      <div class="card-arrow arrow-tl">VIEW <span>→</span></div>
+    </a>
+
+  </div>
+</div>
+
+<div class="footer">DOT HUB &nbsp;·&nbsp; DNO &amp; TTR</div>
+
+</body>
+</html>
