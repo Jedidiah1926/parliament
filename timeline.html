@@ -245,6 +245,7 @@
     border-radius: 3px;
     padding: 13px 16px;
     transition: all 0.18s ease;
+    position: relative;
   }
 
   .tl-item:hover .tl-card {
@@ -307,6 +308,21 @@
     margin-right: 4px;
   }
 
+
+  .tl-card.has-link { cursor: pointer; }
+  .tl-card.has-link:hover .tl-link-icon { opacity: 1; }
+  .tl-link-icon {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    opacity: 0;
+    transition: opacity 0.2s;
+    pointer-events: none;
+  }
   ::-webkit-scrollbar { width: 4px; }
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: var(--dim); border-radius: 2px; }
@@ -382,7 +398,7 @@
           </div>
         </div>
 
-        <div class="tl-item" data-cats="CBT DNO">
+        <div class="tl-item" data-url="https://gall.dcinside.com/mgallery/board/view/?id=kaiserreich&no=137172&exception_mode=recommend&page=12" data-cats="CBT DNO">
           <div class="tl-dot dot-cbt"></div>
           <div class="tl-card card-cbt">
             <div class="tl-meta"><span class="tl-date">2025.12.30</span><span class="tl-badge badge-cbt">CBT</span></div>
@@ -398,7 +414,7 @@
       <div class="year-divider"><span class="year-label">2026</span><div class="year-line"></div></div>
       <div class="track">
 
-        <div class="tl-item" data-cats="CBT 릴리스 DNO">
+        <div class="tl-item" data-url="https://gall.dcinside.com/mgallery/board/view/?id=kaiserreich&no=137174&page=1" data-cats="CBT 릴리스 DNO">
           <div class="tl-dot dot-rel"></div>
           <div class="tl-card card-rel">
             <div class="tl-meta"><span class="tl-date">2026.01.11</span><span class="tl-badge badge-cbt">CBT</span><span class="tl-badge badge-rel">릴리스</span></div>
@@ -407,7 +423,7 @@
           </div>
         </div>
 
-        <div class="tl-item" data-cats="릴리스 DNO">
+        <div class="tl-item" data-url="https://gall.dcinside.com/mgallery/board/view/?id=kaiserreich&no=137218&page=2" data-cats="릴리스 DNO">
           <div class="tl-dot dot-rel"></div>
           <div class="tl-card card-rel">
             <div class="tl-meta"><span class="tl-date">2026.01.11</span><span class="tl-badge badge-rel">릴리스</span></div>
@@ -416,7 +432,7 @@
           </div>
         </div>
 
-        <div class="tl-item" data-cats="릴리스 DNO 철회">
+        <div class="tl-item" data-url="https://gall.dcinside.com/mgallery/board/view/?id=kaiserreich&no=139534&exception_mode=recommend&page=1" data-cats="릴리스 DNO 철회">
           <div class="tl-dot dot-withdrawn"></div>
           <div class="tl-card card-withdrawn">
             <div class="tl-meta"><span class="tl-date">2026.02.09</span><span class="tl-badge badge-rel">릴리스</span><span class="tl-badge badge-withdrawn">철회</span></div>
@@ -469,7 +485,7 @@
           </div>
         </div>
 
-        <div class="tl-item" data-cats="릴리스 DNO">
+        <div class="tl-item" data-url="https://gall.dcinside.com/mgallery/board/view/?id=kaiserreich&no=144659&page=1" data-cats="릴리스 DNO">
           <div class="tl-dot dot-rel"></div>
           <div class="tl-card card-rel">
             <div class="tl-meta"><span class="tl-date">2026.04.25</span><span class="tl-badge badge-rel">릴리스</span></div>
@@ -478,7 +494,7 @@
           </div>
         </div>
 
-        <div class="tl-item" data-cats="릴리스 핫픽스 DNO">
+        <div class="tl-item" data-url="https://gall.dcinside.com/mgallery/board/view/?id=kaiserreich&no=144731&page=1" data-cats="릴리스 핫픽스 DNO">
           <div class="tl-dot dot-fix"></div>
           <div class="tl-card card-fix">
             <div class="tl-meta"><span class="tl-date">2026.04.25</span><span class="tl-badge badge-rel">릴리스</span><span class="tl-badge badge-fix">핫픽스</span></div>
@@ -496,7 +512,7 @@
           </div>
         </div>
 
-        <div class="tl-item" data-cats="릴리스 DNO">
+        <div class="tl-item" data-url="https://gall.dcinside.com/mgallery/board/view?id=kaiserreich&no=144841" data-cats="릴리스 DNO">
           <div class="tl-dot dot-rel"></div>
           <div class="tl-card card-rel">
             <div class="tl-meta"><span class="tl-date">2026.04.29</span><span class="tl-badge badge-rel">릴리스</span></div>
@@ -513,7 +529,7 @@
           </div>
         </div>
 
-        <div class="tl-item" data-cats="DNO TTR">
+        <div class="tl-item" data-url="https://gall.dcinside.com/mgallery/board/view?id=kaiserreich&no=144903" data-cats="DNO TTR">
           <div class="tl-dot dot-t"></div>
           <div class="tl-card card-t">
             <div class="tl-meta"><span class="tl-date">2026.04.30</span><span class="tl-badge badge-p">DNO</span><span class="tl-badge badge-t">TTR</span></div>
@@ -524,9 +540,9 @@
         <div class="tl-item" data-cats="릴리스 핫픽스 DNO">
           <div class="tl-dot dot-fix"></div>
           <div class="tl-card card-fix">
-            <div class="tl-meta"><span class="tl-date">2026.04.30</span><span class="tl-badge badge-rel">릴리스</span><span class="tl-badge badge-fix">핫픽스</span></div>
+            <div class="tl-meta"><span class="tl-date">2026.05.01</span><span class="tl-badge badge-rel">릴리스</span><span class="tl-badge badge-fix">핫픽스</span></div>
             <p class="tl-title"><span class="version-tag">v1.3.1</span>업데이트 — DATA NET ORDER</p>
-            <p class="tl-note">버그 수정 및 정당 사진 추가</p>
+            <p class="tl-note">버그 수정</p>
           </div>
         </div>
 
@@ -603,6 +619,20 @@
   });
 
   items.forEach((item, i) => { item.style.animationDelay = (i * 0.04) + 's'; });
+
+  // Link handling
+  document.querySelectorAll('.tl-item[data-url]').forEach(item => {
+    const card = item.querySelector('.tl-card');
+    card.classList.add('has-link');
+    const icon = document.createElement('span');
+    icon.className = 'tl-link-icon';
+    icon.textContent = '↗ 공지글';
+    card.appendChild(icon);
+    card.addEventListener('click', () => {
+      window.open(item.dataset.url, '_blank');
+    });
+  });
+
 </script>
 </body>
 </html>
