@@ -683,52 +683,73 @@
 
             <!-- ===== 상단 메인 탭 ===== -->
             <div class="main-tab-container">
-                <button class="main-tab-btn active" onclick="switchMainTab('setup')" id="mainTabSetup">⚙ 의회 설정</button>
-                <button class="main-tab-btn" onclick="switchMainTab('legislation')" id="mainTabLegislation">⚖ 입법 절차</button>
+                <button class="main-tab-btn active" onclick="switchMainTab('party')" id="mainTabParty">🏛 정당</button>
+                <button class="main-tab-btn" onclick="switchMainTab('setup')" id="mainTabSetup">⚙ 의회</button>
+                <button class="main-tab-btn" onclick="switchMainTab('legislation')" id="mainTabLegislation">⚖ 입법</button>
                 <button class="main-tab-btn" onclick="switchMainTab('election')" id="mainTabElection">🗳 선거</button>
             </div>
 
             <!-- ===== 의회 설정 그룹 ===== -->
-            <div id="mainContentSetup" class="main-tab-content active">
+            <!-- ===== 정당 그룹 ===== -->
+            <div id="mainContentParty" class="main-tab-content active">
                 <div class="sub-tab-container">
-                    <button class="sub-tab-btn active" onclick="switchSubTab('setup','ideology')" id="subTabIdeology">이념</button>
-                    <button class="sub-tab-btn" onclick="switchSubTab('setup','house')" id="subTabHouse">하원</button>
+                    <button class="sub-tab-btn active" onclick="switchSubTab('party','ideology')" id="subTabPartyIdeology">이념</button>
+                    <button class="sub-tab-btn" onclick="switchSubTab('party','partyInfo')" id="subTabPartyInfo">정당</button>
+                    <button class="sub-tab-btn" onclick="switchSubTab('party','leader')" id="subTabLeader">당수</button>
+                </div>
+
+                <!-- 이념 탭 -->
+                <div id="contentIdeology" class="sub-tab-content active">
+                    <div id="ideologyList"></div>
+                    <button class="add-btn" onclick="addIdeology()">[+] 이념 추가</button>
+                    <button class="add-btn" style="border-style:solid;font-size:0.9rem;" onclick="addIndependentIdeology()">[+] 무소속 슬롯 추가</button>
+                </div>
+
+                <!-- 정당 탭 -->
+                <div id="contentPartyInfo" class="sub-tab-content">
+                    <div id="partyInfoList"></div>
+                    <button class="add-btn" onclick="addParty()">[+] 정당 추가</button>
+                    <button class="add-btn" style="border-style:solid;font-size:0.9rem;" onclick="addIndependentParty()">[+] 무소속 의원 추가</button>
+                </div>
+
+                <!-- 당수 탭 -->
+                <div id="contentLeader" class="sub-tab-content">
+                    <div id="leaderList"></div>
+                </div>
+            </div>
+
+            <!-- ===== 의회 그룹 ===== -->
+            <div id="mainContentSetup" class="main-tab-content">
+                <div class="sub-tab-container">
+                    <button class="sub-tab-btn active" onclick="switchSubTab('setup','house')" id="subTabHouse">하원</button>
                     <button class="sub-tab-btn" onclick="switchSubTab('setup','senate')" id="subTabSenate">상원</button>
                     <button class="sub-tab-btn" onclick="switchSubTab('setup','coalition')" id="subTabCoalition">연정</button>
                 </div>
 
-                <div id="contentIdeology" class="sub-tab-content active">
-                    <div id="ideologyList"></div>
-                    <button class="add-btn" onclick="addIdeology()">[+] 이념 추가</button>
-                    <button class="add-btn" style="border-style:solid; font-size:0.9rem;" onclick="addIndependentIdeology()">[+] 무소속 슬롯 추가</button>
-                </div>
-
-                <div id="contentHouse" class="sub-tab-content">
-                    <!-- 하원 이름/의석 설정 -->
-                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:12px; padding:10px; background:#0a0c10; border:1px solid #2a2a2a;">
+                <div id="contentHouse" class="sub-tab-content active">
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;padding:10px;background:#0a0c10;border:1px solid #2a2a2a;">
                         <div>
-                            <label id="houseNameLabel" style="color:var(--tno-neon); font-size:0.85rem;">의회 명칭</label>
+                            <label id="houseNameLabel" style="color:var(--tno-neon);font-size:0.85rem;">의회 명칭</label>
                             <input type="text" id="houseNameInput" value="국회" oninput="updateNames()">
                         </div>
                         <div>
-                            <label style="color:var(--tno-neon); font-size:0.85rem;">총 의석 수</label>
+                            <label style="color:var(--tno-neon);font-size:0.85rem;">총 의석 수</label>
                             <input type="number" id="houseTotal" value="300">
                         </div>
                     </div>
                     <div id="partyListHouse"></div>
                     <button class="add-btn" onclick="addParty()">[+] 정당 추가</button>
-                    <button class="add-btn" style="border-style:solid; font-size:0.9rem;" onclick="addIndependentParty()">[+] 무소속 의원 추가</button>
+                    <button class="add-btn" style="border-style:solid;font-size:0.9rem;" onclick="addIndependentParty()">[+] 무소속 의원 추가</button>
                 </div>
 
-                <div id="contentSenate" class="sub-tab-content" id="senateConfig">
-                    <!-- 상원 이름/의석 설정 -->
-                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:12px; padding:10px; background:#0a0c10; border:1px solid #2a2a2a;">
+                <div id="contentSenate" class="sub-tab-content">
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;padding:10px;background:#0a0c10;border:1px solid #2a2a2a;">
                         <div>
-                            <label style="color:var(--tno-neon); font-size:0.85rem;">의회 명칭</label>
+                            <label style="color:var(--tno-neon);font-size:0.85rem;">의회 명칭</label>
                             <input type="text" id="senateNameInput" value="상원" oninput="updateNames()">
                         </div>
                         <div>
-                            <label style="color:var(--tno-neon); font-size:0.85rem;">총 의석 수</label>
+                            <label style="color:var(--tno-neon);font-size:0.85rem;">총 의석 수</label>
                             <input type="number" id="senateTotal" value="100">
                         </div>
                     </div>
@@ -739,7 +760,7 @@
                 <div id="contentCoalition" class="sub-tab-content">
                     <div id="coalitionList"></div>
                     <button class="add-btn" onclick="addCoalition()">[+] 연정 구성</button>
-                <button class="add-btn" onclick="setNoRuling()" style="color:#555;border-color:#333;">[✕] 무집권 상태</button>
+                    <button class="add-btn" onclick="setNoRuling()" style="color:#555;border-color:#333;">[✕] 무집권 상태</button>
                 </div>
             </div>
 
@@ -1055,11 +1076,11 @@
         ];
 
         let parties = [
-            { id: 1, name: "국가재건당", color: "#2E2E2E", seatsHouse: 140, seatsSenate: 60, ideologyId: 101, isRuling: true, inHouse: true, inSenate: true , leaderName: "", leaderPhoto: "" },
-            { id: 2, name: "개혁그룹", color: "#5D6D7E", seatsHouse: 50, seatsSenate: 20, ideologyId: 102, isRuling: false, inHouse: true, inSenate: true , leaderName: "", leaderPhoto: "" },
-            { id: 3, name: "민주당", color: "#3498DB", seatsHouse: 60, seatsSenate: 10, ideologyId: 105, isRuling: false, inHouse: true, inSenate: true , leaderName: "", leaderPhoto: "" },
-            { id: 4, name: "사회당", color: "#E74C3C", seatsHouse: 40, seatsSenate: 5, ideologyId: 106, isRuling: false, inHouse: true, inSenate: true , leaderName: "", leaderPhoto: "" },
-            { id: 5, name: "무소속", color: "#F1C40F", seatsHouse: 10, seatsSenate: 5, ideologyId: IND_IDEOLOGY_ID, isRuling: false, inHouse: true, inSenate: true , leaderName: "", leaderPhoto: "" }
+            { id: 1, name: "국가재건당", color: "#2E2E2E", seatsHouse: 140, seatsSenate: 60, ideologyId: 101, isRuling: true,  inHouse: true, inSenate: true, leaderName: "", leaderPhoto: "", logoPhoto: "", showLogoInStats: false, description: "" },
+            { id: 2, name: "개혁그룹",   color: "#5D6D7E", seatsHouse: 50,  seatsSenate: 20, ideologyId: 102, isRuling: false, inHouse: true, inSenate: true, leaderName: "", leaderPhoto: "", logoPhoto: "", showLogoInStats: false, description: "" },
+            { id: 3, name: "민주당",     color: "#3498DB", seatsHouse: 60,  seatsSenate: 10, ideologyId: 105, isRuling: false, inHouse: true, inSenate: true, leaderName: "", leaderPhoto: "", logoPhoto: "", showLogoInStats: false, description: "" },
+            { id: 4, name: "사회당",     color: "#E74C3C", seatsHouse: 40,  seatsSenate: 5,  ideologyId: 106, isRuling: false, inHouse: true, inSenate: true, leaderName: "", leaderPhoto: "", logoPhoto: "", showLogoInStats: false, description: "" },
+            { id: 5, name: "무소속",     color: "#F1C40F", seatsHouse: 10,  seatsSenate: 5,  ideologyId: IND_IDEOLOGY_ID, isRuling: false, inHouse: true, inSenate: true, leaderName: "", leaderPhoto: "", logoPhoto: "", showLogoInStats: false, description: "" }
         ];
 
         let coalitions = [
@@ -1837,7 +1858,7 @@
             const includePhotos = document.getElementById('chkSavePhoto')?.checked ?? false;
             const state = getAppState();
             if(!includePhotos) {
-                state.parliament.parties    = state.parliament.parties.map(p => ({ ...p, leaderPhoto: '' }));
+                state.parliament.parties    = state.parliament.parties.map(p => ({ ...p, leaderPhoto: '', logoPhoto: '' }));
                 state.parliament.coalitions = state.parliament.coalitions.map(c => ({ ...c, leaderPhoto: '' }));
             }
             const ts = new Date().toISOString().replace(/[:.]/g, "-");
@@ -1853,8 +1874,7 @@
                 throw new Error("Invalid parliament data");
 
             ideologies = parl.ideologies;
-            parties    = parl.parties.map(p => ({ leaderName:'', leaderPhoto:'', ...p }));
-            coalitions = parl.coalitions.map(c => ({ leaderName:'', leaderPhoto:'', leadPartyId:null, ...c }));
+                parties    = parl.parties.map(p => ({ leaderName:'', leaderPhoto:'', logoPhoto:'', showLogoInStats:false, description:'', ...p }));            coalitions = parl.coalitions.map(c => ({ leaderName:'', leaderPhoto:'', leadPartyId:null, ...c }));
             manualSort = parl.manualSort ?? false;
 
             // ── 입법 절차 복원 ──
@@ -1907,11 +1927,14 @@
             elecRenderRecords();
 
             // ── 탭 복원 (마지막) ──
-            const uiMain = state.ui?.currentMainTab || 'setup';
-            const uiSub  = state.ui?.currentSubTab  || { setup:'ideology', legislation:'bill' };
-            currentSubTab = uiSub;
+            const uiMain = state.ui?.currentMainTab || 'party';
+            const uiSub  = state.ui?.currentSubTab  || { party:'ideology', setup:'house', legislation:'bill' };
+            currentSubTab = { party:'ideology', setup:'house', legislation:'bill', ...uiSub };
             switchMainTab(uiMain);
-            switchSubTab(uiMain, uiSub[uiMain] || (uiMain === 'setup' ? 'ideology' : 'bill'), false);
+            if(uiMain !== 'election') {
+                const fallback = uiMain==='party' ? 'ideology' : uiMain==='setup' ? 'house' : 'bill';
+                switchSubTab(uiMain, currentSubTab[uiMain] || fallback, false);
+            }
         }
 
         function downloadJSON(filename, obj) {
@@ -1955,8 +1978,8 @@
         });
 
         // ===== 2단 탭 전환 =====
-        let currentMainTab = 'setup';
-        let currentSubTab = { setup: 'ideology', legislation: 'bill' };
+        let currentMainTab = 'party';
+        let currentSubTab = { party: 'ideology', setup: 'house', legislation: 'bill' };
 
         function switchMainTab(main) {
             currentMainTab = main;
@@ -1965,7 +1988,11 @@
             document.querySelectorAll('.main-tab-content').forEach(c => c.classList.remove('active'));
             document.getElementById('mainContent' + main.charAt(0).toUpperCase() + main.slice(1)).classList.add('active');
             if(main === 'election') { elecRenderList(); elecRenderRecords(); return; }
-            switchSubTab(main, currentSubTab[main] || (main === 'setup' ? 'ideology' : 'bill'), false);
+            if(main === 'party') {
+                switchSubTab('party', currentSubTab['party'] || 'ideology', false);
+                return;
+            }
+            switchSubTab(main, currentSubTab[main] || (main === 'setup' ? 'house' : 'bill'), false);
         }
 
         function switchSubTab(main, sub, doMainSwitch = true) {
@@ -1983,6 +2010,9 @@
             if(sub === 'vote') { renderBulkPartyList(); syncBillSelect(); renderActiveBillDisplay(); updateConfirmButtons(); }
             if(sub === 'bill') renderBillList();
             if(sub === 'archive') renderArchiveList();
+            if(sub === 'partyInfo') renderPartyInfoList();
+            if(sub === 'leader') renderLeaderList();
+            if(sub === 'ideology') renderIdeologyList();
         }
 
         // 구버전 switchTab 호환
@@ -2039,6 +2069,8 @@
             renderPartyList('house');
             renderPartyList('senate');
             renderCoalitions();
+            renderPartyInfoList();
+            renderLeaderList();
         }
 
         function isValidHex(hex) { return /^#[0-9A-F]{6}$/i.test(hex); }
@@ -2090,74 +2122,47 @@
 
             const hName = document.getElementById('houseNameInput')?.value || '하원';
             const sName = document.getElementById('senateNameInput')?.value || '상원';
+            const thisChamberName = type === 'house' ? hName : sName;
 
-            const sortBar = document.createElement('div');
-            sortBar.style.cssText = 'display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;padding:5px 8px;background:#0a0c10;border:1px solid #222;font-size:0.8rem;';
-            sortBar.innerHTML = `
-                <span style="color:${manualSort?'var(--tno-gold)':'#555'};">${manualSort?'⚠ 수동 정렬 중':'✦ 이념 순 자동정렬'}</span>
-                <button onclick="autoSortParties()" style="background:transparent;border:1px solid ${manualSort?'var(--tno-gold)':'#333'};color:${manualSort?'var(--tno-gold)':'#444'};font-family:'NeoDunggeunmo','VT323',monospace;font-size:0.75rem;padding:2px 8px;cursor:pointer;">↺ 자동정렬</button>
-            `;
-            container.appendChild(sortBar);
+            const visibleParties = parties.map((p,idx)=>({...p,originalIdx:idx}))
+                .filter(p => type==='house' ? p.inHouse : p.inSenate);
 
-            const visibleParties = parties.map((p,idx)=>({...p,originalIdx:idx})).filter(p=>type==='house'?p.inHouse:p.inSenate);
-            if(visibleParties.length===0){
-                container.insertAdjacentHTML('beforeend','<div style="text-align:center;color:#555;">[데이터 없음]</div>');
+            if(visibleParties.length === 0) {
+                container.innerHTML = '<div style="text-align:center;color:#555;padding:20px;">[배정된 정당 없음]</div>';
                 return;
             }
-            visibleParties.forEach((p, visIdx) => {
+            visibleParties.forEach(p => {
                 const idx = p.originalIdx;
-                const seatKey = type==='house'?'seatsHouse':'seatsSenate';
-                const linkKey = type==='house'?'inSenate':'inHouse';
-                const thisChamberName = type==='house' ? hName : sName;
-                const linkLabel = type==='house' ? sName : hName;
-                const isFirst = visIdx===0, isLast = visIdx===visibleParties.length-1;
-                const photo = p.leaderPhoto||'';
+                const seatKey = type === 'house' ? 'seatsHouse' : 'seatsSenate';
+                const photo = p.logoPhoto || '';
+                const ideologyName = ideologies.find(i => i.id === p.ideologyId)?.name || '';
                 const div = document.createElement('div');
                 div.className = `card-item ${p.isRuling?'is-ruling':''}`;
                 div.style.borderLeftColor = p.color;
                 div.innerHTML = `
-                    <div style="display:grid;grid-template-columns:auto auto 1fr;gap:0 6px;align-items:center;">
-                        <!-- 열1: 순서버튼 -->
-                        <div style="display:flex;flex-direction:column;gap:2px;align-self:start;padding-top:2px;">
-                            <button class="order-btn" onclick="moveParty(${idx},-1)" ${isFirst?'disabled style="opacity:0.2"':''}>▲</button>
-                            <button class="order-btn" onclick="moveParty(${idx},1)"  ${isLast ?'disabled style="opacity:0.2"':''}>▼</button>
+                    <div style="display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center;">
+                        <!-- 당 로고 (정사각형, 업로드 가능) -->
+                        <div class="leader-photo-box" title="당 로고 업로드" style="width:45px;height:45px;flex-shrink:0;">
+                            ${photo
+                                ? `<img src="${photo}" alt="로고" style="width:100%;height:100%;object-fit:cover;display:block;">`
+                                : `<div style="width:100%;height:100%;background:${p.color}22;display:flex;align-items:center;justify-content:center;font-size:1.2rem;color:${p.color}88;">⚑</div>`
+                            }
+                            <input type="file" accept="image/*" onchange="uploadLogoPhoto(this,${p.id})">
                         </div>
-                        <!-- 열2: 사진 -->
-                        <div class="leader-photo-box" title="클릭하여 사진 업로드" style="width:40px;height:52px;align-self:start;">
-                            ${photo?`<img src="${photo}" alt="당수">`:'<div class="photo-ph" style="font-size:1.1rem;">👤</div>'}
-                            <input type="file" accept="image/*" onchange="uploadLeaderPhoto(this,'party',${p.id})">
+                        <!-- 이름 + 이념 (읽기 전용) -->
+                        <div style="min-width:0;">
+                            <div style="display:flex;align-items:center;gap:6px;">
+                                <span style="width:9px;height:9px;background:${p.color};border-radius:50%;flex-shrink:0;"></span>
+                                <span style="font-size:1rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${p.name}</span>
+                            </div>
+                            ${ideologyName?`<div style="color:#666;font-size:0.8rem;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${ideologyName}</div>`:''}
                         </div>
-                        <!-- 열3: 정보 -->
-                        <div style="display:flex;flex-direction:column;gap:5px;min-width:0;">
-                            <!-- 행1: 정당명 색상 X -->
-                            <div style="display:flex;gap:4px;align-items:center;">
-                                <input type="text" value="${p.name}" onchange="updateParty(${idx},'name',this.value)" placeholder="이름" style="flex:1;min-width:0;">
-                                <div class="color-input-group" style="flex-shrink:0;">
-                                    <input type="text" class="hex-input" value="${p.color}" onchange="updatePartyColorText(this,${idx})">
-                                    <input type="color" value="${p.color}" oninput="updatePartyColorPicker(this,${idx})">
-                                </div>
-                                <button class="remove-btn" onclick="removeParty(${idx})" style="flex-shrink:0;">X</button>
-                            </div>
-                            <!-- 행2: 당수이름 + 의석 -->
-                            <div style="display:flex;gap:4px;align-items:center;">
-                                <input type="text" value="${p.leaderName||''}" placeholder="당수명"
-                                    style="flex:1;background:#000;border:1px solid #2a2a2a;color:#bbb;font-family:inherit;font-size:0.85rem;padding:3px 6px;min-width:0;"
-                                    onchange="updateLeaderField('party',${p.id},'leaderName',this.value)">
-                                <input type="number" value="${p[seatKey]}" min="0"
-                                    onchange="updateParty(${idx},'${seatKey}',parseInt(this.value)||0)"
-                                    style="width:60px;flex-shrink:0;" title="${thisChamberName} 의석">
-                            </div>
-                            <!-- 행3: 이념 + 연동 -->
-                            <div style="display:flex;gap:6px;align-items:center;">
-                                <select onchange="updateParty(${idx},'ideologyId',parseInt(this.value))" style="flex:1;min-width:0;">
-                                    ${ideologies.map(ide=>`<option value="${ide.id}" ${p.ideologyId===ide.id?'selected':''}>${ide.name}</option>`).join('')}
-                                </select>
-                                <label style="display:flex;align-items:center;gap:4px;cursor:pointer;color:#888;font-size:0.85rem;white-space:nowrap;flex-shrink:0;">
-                                    <input type="checkbox" ${type==='house'?(p.inSenate?'checked':''):(p.inHouse?'checked':'')}
-                                        onchange="togglePartyParticipation(${idx},'${linkKey}',this.checked)">
-                                    ${linkLabel} 연동
-                                </label>
-                            </div>
+                        <!-- 의석 수 입력 -->
+                        <div style="display:flex;align-items:center;gap:5px;flex-shrink:0;">
+                            <label style="color:#555;font-size:0.8rem;white-space:nowrap;">${thisChamberName} 의석</label>
+                            <input type="number" value="${p[seatKey]}" min="0"
+                                onchange="updateParty(${idx},'${seatKey}',parseInt(this.value)||0)"
+                                style="width:65px;">
                         </div>
                     </div>`;
                 container.appendChild(div);
@@ -2244,6 +2249,16 @@
         }
 
         // 사진 업로드
+        function uploadLogoPhoto(input, pid) {
+            const file = input.files?.[0]; if(!file) return;
+            const reader = new FileReader();
+            reader.onload = e => {
+                const p = parties.find(x=>x.id===pid);
+                if(p){ p.logoPhoto = e.target.result; refreshUI(); simulate(); }
+            };
+            reader.readAsDataURL(file);
+        }
+
         function uploadLeaderPhoto(input, type, entityId) {
             const file = input.files?.[0]; if(!file) return;
             const reader = new FileReader();
@@ -2278,10 +2293,10 @@
         function removeIdeology(idx) { if(ideologies.length>1) { const id=ideologies[idx].id; ideologies.splice(idx,1); parties.forEach(p=>{if(p.ideologyId===id)p.ideologyId=ideologies[0].id;}); refreshUI(); simulate(); }}
         function updateIdeology(i,k,v) { ideologies[i][k]=v; refreshUI(); simulate(); }
         function moveIdeology(i,d) { if((d===-1&&i>0)||(d===1&&i<ideologies.length-1)){ [ideologies[i], ideologies[i+d]] = [ideologies[i+d], ideologies[i]]; refreshUI(); simulate(); }}
-        function addParty() { parties.push({id:Date.now(), name:"신당", color:"#555555", seatsHouse:0, seatsSenate:0, ideologyId:ideologies[ideologies.length - 1].id, isRuling:false, inHouse:true, inSenate:true, leaderName: "", leaderPhoto: "" }); refreshUI(); }
+        function addParty() { parties.push({id:Date.now(), name:"신당", color:"#555555", seatsHouse:0, seatsSenate:0, ideologyId:ideologies[ideologies.length - 1].id, isRuling:false, inHouse:true, inSenate:true, leaderName: "", leaderPhoto: "", logoPhoto: "", showLogoInStats: false }); refreshUI(); }
         function addIndependentParty() {
             if(!ideologies.find(i=>i.id===IND_IDEOLOGY_ID)) addIndependentIdeology();
-            parties.push({id:Date.now(), name:"무소속", color:"#999999", seatsHouse:1, seatsSenate:0, ideologyId:IND_IDEOLOGY_ID, isRuling:false, inHouse:true, inSenate:true, leaderName: "", leaderPhoto: "" });
+            parties.push({id:Date.now(), name:"무소속", color:"#999999", seatsHouse:1, seatsSenate:0, ideologyId:IND_IDEOLOGY_ID, isRuling:false, inHouse:true, inSenate:true, leaderName: "", leaderPhoto: "", logoPhoto: "", showLogoInStats: false });
             refreshUI(); simulate();
         }
         function removeParty(i) { const pid=parties[i].id; parties.splice(i,1); coalitions.forEach(c=>c.members=c.members.filter(x=>x!==pid)); refreshUI(); simulate(); }
@@ -2313,7 +2328,126 @@
             refreshUI(); simulate();
         }
 
-        // ===== PNG 내보내기 =====
+        // ===== 정당 탭: 정당 정보 =====
+        function renderPartyInfoList() {
+            const container = document.getElementById('partyInfoList');
+            if(!container) return;
+            container.innerHTML = '';
+
+            const hName = document.getElementById('houseNameInput')?.value || '하원';
+            const sName = document.getElementById('senateNameInput')?.value || '상원';
+            const isBi  = document.querySelector('input[name="systemType"]:checked')?.value === 'bicameral';
+
+            // 정렬 바
+            const sortBar = document.createElement('div');
+            sortBar.style.cssText = 'display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;padding:5px 8px;background:#0a0c10;border:1px solid #222;font-size:0.8rem;';
+            sortBar.innerHTML = `
+                <span style="color:${manualSort?'var(--tno-gold)':'#555'};">${manualSort?'⚠ 수동 정렬 중':'✦ 이념 순 자동정렬'}</span>
+                <button onclick="autoSortParties()" style="background:transparent;border:1px solid ${manualSort?'var(--tno-gold)':'#333'};color:${manualSort?'var(--tno-gold)':'#444'};font-family:'NeoDunggeunmo','VT323',monospace;font-size:0.75rem;padding:2px 8px;cursor:pointer;">↺ 자동정렬</button>
+            `;
+            container.appendChild(sortBar);
+
+            parties.forEach((p, idx) => {
+                const div = document.createElement('div');
+                div.className = `card-item ${p.isRuling?'is-ruling':''}`;
+                div.style.borderLeftColor = p.color;
+                div.innerHTML = `
+                    <!-- 행1: 색상 + 이름 + X -->
+                    <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px;">
+                        <div style="display:flex;flex-direction:column;gap:2px;flex-shrink:0;">
+                            <button class="order-btn" onclick="moveParty(${idx},-1)" ${idx===0?'disabled style="opacity:0.2"':''}>▲</button>
+                            <button class="order-btn" onclick="moveParty(${idx},1)"  ${idx===parties.length-1?'disabled style="opacity:0.2"':''}>▼</button>
+                        </div>
+                        <div class="color-input-group" style="flex-shrink:0;">
+                            <input type="text" class="hex-input" value="${p.color}" onchange="updatePartyColorText(this,${idx})">
+                            <input type="color" value="${p.color}" oninput="updatePartyColorPicker(this,${idx})">
+                        </div>
+                        <input type="text" value="${p.name}" onchange="updateParty(${idx},'name',this.value)"
+                            placeholder="정당명" style="flex:1;font-size:1rem;">
+                        <button class="remove-btn" onclick="removeParty(${idx})">X</button>
+                    </div>
+                    <!-- 행2: 이념 + 연동 체크박스 -->
+                    <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;">
+                        <select onchange="updateParty(${idx},'ideologyId',parseInt(this.value))" style="flex:1;">
+                            ${ideologies.map(ide=>`<option value="${ide.id}" ${p.ideologyId===ide.id?'selected':''}>${ide.name}</option>`).join('')}
+                        </select>
+                        <label style="display:flex;align-items:center;gap:4px;cursor:pointer;color:#aaa;font-size:0.85rem;white-space:nowrap;flex-shrink:0;">
+                            <input type="checkbox" ${p.inHouse?'checked':''} onchange="togglePartyParticipation(${idx},'inHouse',this.checked)">
+                            ${hName}
+                        </label>
+                        ${isBi?`<label style="display:flex;align-items:center;gap:4px;cursor:pointer;color:#aaa;font-size:0.85rem;white-space:nowrap;flex-shrink:0;">
+                            <input type="checkbox" ${p.inSenate?'checked':''} onchange="togglePartyParticipation(${idx},'inSenate',this.checked)">
+                            ${sName}
+                        </label>`:''}
+                    </div>
+                    <!-- 행3: 통계 표시 사진 선택 -->
+                    <div style="display:flex;align-items:center;gap:12px;margin-top:4px;padding:5px 8px;background:#0a0c10;border:1px solid #222;">
+                        <span style="color:#555;font-size:0.8rem;white-space:nowrap;">통계 표시</span>
+                        <label style="display:flex;align-items:center;gap:4px;cursor:pointer;color:#aaa;font-size:0.85rem;">
+                            <input type="radio" name="statsPhoto_${p.id}" value="leader"
+                                ${!p.showLogoInStats?'checked':''}
+                                onchange="updateParty(${idx},'showLogoInStats',false);simulate();">
+                            당수 사진
+                        </label>
+                        <label style="display:flex;align-items:center;gap:4px;cursor:pointer;color:#aaa;font-size:0.85rem;">
+                            <input type="radio" name="statsPhoto_${p.id}" value="logo"
+                                ${p.showLogoInStats?'checked':''}
+                                onchange="updateParty(${idx},'showLogoInStats',true);simulate();">
+                            당 로고
+                        </label>
+                    </div>
+                    <!-- 행4: 당 설명 -->
+                    <textarea placeholder="당에 대한 설명을 입력하세요..."
+                        style="width:100%;box-sizing:border-box;background:#000;border:1px solid #2a2a2a;color:#bbb;font-family:'NeoDunggeunmo','VT323',monospace;font-size:0.85rem;padding:6px;resize:vertical;min-height:60px;outline:none;line-height:1.5;"
+                        onchange="updateParty(${idx},'description',this.value)">${p.description||''}</textarea>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        // ===== 정당 탭: 당수 =====
+        function renderLeaderList() {
+            const container = document.getElementById('leaderList');
+            if(!container) return;
+            container.innerHTML = '';
+            parties.forEach((p, idx) => {
+                const photo = p.leaderPhoto || '';
+                const div = document.createElement('div');
+                div.className = `card-item ${p.isRuling?'is-ruling':''}`;
+                div.style.borderLeftColor = p.color;
+                div.innerHTML = `
+                    <div style="display:flex;gap:10px;align-items:flex-start;">
+                        <!-- 사진 -->
+                        <div style="display:flex;flex-direction:column;align-items:center;gap:4px;flex-shrink:0;">
+                            <div class="leader-photo-box" title="클릭하여 사진 업로드" style="width:52px;height:65px;">
+                                ${photo?`<img src="${photo}" alt="당수">`:'<div class="photo-ph">👤</div>'}
+                                <input type="file" accept="image/*" onchange="uploadLeaderPhoto(this,'party',${p.id})">
+                            </div>
+                            <span style="font-size:0.75rem;color:#444;">사진 업로드</span>
+                        </div>
+                        <!-- 정보 -->
+                        <div style="flex:1;display:flex;flex-direction:column;gap:6px;min-width:0;">
+                            <!-- 정당명 (읽기 전용 표시) -->
+                            <div style="display:flex;align-items:center;gap:6px;">
+                                <span style="width:10px;height:10px;background:${p.color};border-radius:50%;flex-shrink:0;"></span>
+                                <span style="color:var(--tno-neon);font-size:0.95rem;">${p.name}</span>
+                            </div>
+                            <!-- 당수 이름 -->
+                            <input type="text" value="${p.leaderName||''}" placeholder="당수 이름"
+                                style="background:#000;border:1px solid #2a2a2a;color:#e0e0e0;font-family:inherit;font-size:0.95rem;padding:5px 8px;width:100%;box-sizing:border-box;"
+                                onchange="updateLeaderField('party',${p.id},'leaderName',this.value)">
+                            ${photo?`<button onclick="removeLeaderPhoto(${p.id})" style="background:transparent;border:1px solid #333;color:#555;font-family:inherit;font-size:0.8rem;padding:3px 8px;cursor:pointer;text-align:left;">✕ 사진 제거</button>`:''}
+                        </div>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function removeLeaderPhoto(pid) {
+            const p = parties.find(x=>x.id===pid);
+            if(p){ p.leaderPhoto=''; refreshUI(); simulate(); }
+        }
         // ===== 선거 기능 =====
 
 
@@ -3093,7 +3227,7 @@
                 ).join('');
 
                 // 사진/이름 결정
-                let photo = '', leaderName = '';
+                let photo = '', leaderName = '', isLogo = false;
                 if(s.coalitionName) {
                     const coal = coalitions.find(x=>x.name===s.coalitionName);
                     if(coal) {
@@ -3104,14 +3238,15 @@
                 } else {
                     const pName = Object.keys(s.parties)[0];
                     const party = parties.find(p=>p.name===pName);
-                    photo      = party?.leaderPhoto || '';
-                    leaderName = party?.leaderName  || '';
+                    isLogo     = party?.showLogoInStats ?? false;
+                    photo      = party ? (isLogo ? (party.logoPhoto||party.leaderPhoto||'') : (party.leaderPhoto||party.logoPhoto||'')) : '';
+                    leaderName = party?.leaderName || '';
                 }
 
                 html += `<div class="stat-block" style="border-left-color:${s.isRuling?'var(--tno-gold)':s.color};">
                     <div style="display:flex;gap:8px;align-items:flex-start;">
-                        <!-- 사진: 고정 높이, 가로는 3:4 비율 자동 -->
-                        <div style="height:58px;aspect-ratio:3/4;flex-shrink:0;background:#0a0c10;border:1px solid #222;overflow:hidden;">
+                        <!-- 사진: 당수=3:4비율, 로고=1:1 -->
+                        <div style="height:58px;${isLogo?'width:58px;':'aspect-ratio:3/4;'}flex-shrink:0;background:#0a0c10;border:1px solid #222;overflow:hidden;">
                             ${photo?`<img src="${photo}" alt="" style="width:100%;height:100%;object-fit:cover;display:block;">`:''}
                         </div>
                         <!-- 오른쪽 3행 -->
