@@ -1979,7 +1979,7 @@
                 state.parliament.coalitions = state.parliament.coalitions.map(c => ({ ...c, leaderPhoto: '' }));
             }
             const ts = new Date().toISOString().replace(/[:.]/g, "-");
-            downloadJSON(`parliament-save-v5-${ts}.json`, state);
+            downloadJSON(`parliament-save-v6-${ts}.json`, state);
         }
 
         function setAppState(state) {
