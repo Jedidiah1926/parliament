@@ -657,6 +657,8 @@
 </head>
 <body>
 
+    <a href="tno_kor.html" class="lang-switch">>> 릴리스로 돌아가기</a>
+
     <!-- Tooltip -->
     <div class="tooltip-box" id="tooltipBox"></div>
 
@@ -924,7 +926,18 @@
 
                 <!-- 지역구 서브탭 - 설정만 (맵은 우측) -->
                 <div id="elecSubDistrict" class="sub-tab-content">
-                    <div style="margin:8px 0 6px;font-size:0.8rem;color:#555;">편집 모드</div>
+                    <!-- 지역구 종류 선택 -->
+                    <div style="display:flex;gap:6px;margin:8px 0 10px;">
+                        <button id="districtChamberHouseBtn" onclick="districtSetChamber('house')"
+                            style="flex:1;padding:6px;font-family:inherit;font-size:0.85rem;background:#0a1a2a;color:var(--tno-neon);border:2px solid var(--tno-neon);cursor:pointer;letter-spacing:1px;" id="districtChamberHouseBtn">
+                            <span id="districtChamberHouseLabel">하원</span> 지역구
+                        </button>
+                        <button id="districtChamberSenateBtn" onclick="districtSetChamber('senate')"
+                            style="flex:1;padding:6px;font-family:inherit;font-size:0.85rem;background:transparent;color:#664400;border:2px solid #664400;cursor:pointer;letter-spacing:1px;">
+                            <span id="districtChamberSenateLabel">상원</span> 지역구
+                        </button>
+                    </div>
+                    <div style="margin:0 0 6px;font-size:0.8rem;color:#555;">편집 모드</div>
                     <div style="display:flex;gap:6px;margin-bottom:10px;">
                         <button id="districtModeAdd" onclick="districtSetMode('add')"
                             style="flex:1;padding:8px;font-family:inherit;font-size:0.9rem;background:#0a2a1a;color:#00cc66;border:2px solid #00cc66;cursor:pointer;letter-spacing:1px;box-shadow:0 0 8px #00cc6688;">추가</button>
@@ -974,6 +987,9 @@
                         </label>
                         <label style="cursor:pointer;color:#aaa;display:inline-flex;align-items:center;gap:5px;" id="elecSenateWrap">
                             <input type="radio" name="elecTarget" value="senate" onchange="elecUpdateDistrictInfo()"> <span id="elecSenateLabel">상원</span>
+                        </label>
+                        <label style="cursor:pointer;color:#aaa;display:inline-flex;align-items:center;gap:5px;" id="elecBothWrap">
+                            <input type="radio" name="elecTarget" value="both" onchange="elecUpdateDistrictInfo()"> <span id="elecBothLabel">양원</span>
                         </label>
                     </div>
                     <!-- 선거 방식 -->
@@ -1997,7 +2013,12 @@
             if(ge('elecTitle')) ge('elecTitle').value = elec.elecTitle || '';
             if(ge('elecYear'))  ge('elecYear').value  = elec.elecYear  || '';
             // 지역구
-            if(elec.district?.grid) districtGrid = elec.district.grid;
+            if(elec.district?.grid) {
+                const g = elec.district.grid;
+                // 구버전(flat object) 호환
+                if(g.house !== undefined) districtGrid = g;
+                else districtGrid = { house: g, senate: {} };
+            }
             if(elec.district?.view) Object.assign(districtView, elec.district.view);
             // 성향
             if(elec.tendency?.data) tendencyData = elec.tendency.data;
@@ -2586,10 +2607,29 @@
         // ─────────────────────────────────────────
         // 지역구 맵
         // ─────────────────────────────────────────
-        let districtGrid = {};
+        let districtGrid = { house: {}, senate: {} };
         let districtView = { zoom: 1, panX: 0, panY: 0 };
         let districtMode = 'add'; // 'add' | 'remove'
+        let districtChamber = 'house'; // 'house' | 'senate'
         const HEX_SIZE = 18;
+
+        function districtSetChamber(ch) {
+            districtChamber = ch;
+            const hBtn = document.getElementById('districtChamberHouseBtn');
+            const sBtn = document.getElementById('districtChamberSenateBtn');
+            const neon = getComputedStyle(document.documentElement).getPropertyValue('--tno-neon').trim()||'#00ffff';
+            if(hBtn) {
+                hBtn.style.background   = ch==='house' ? '#0a1a2a' : 'transparent';
+                hBtn.style.color        = ch==='house' ? neon : '#335533';
+                hBtn.style.borderColor  = ch==='house' ? neon : '#335533';
+            }
+            if(sBtn) {
+                sBtn.style.background   = ch==='senate' ? '#1a1200' : 'transparent';
+                sBtn.style.color        = ch==='senate' ? 'var(--tno-gold)' : '#664400';
+                sBtn.style.borderColor  = ch==='senate' ? 'var(--tno-gold)' : '#664400';
+            }
+            districtDrawCanvas();
+        }
 
         function districtSetMode(mode) {
             districtMode = mode;
@@ -2613,22 +2653,24 @@
 
         function districtHexCorners(cx, cy, size) {
             return Array.from({length:6}, (_,i) => {
-                const a = Math.PI/180 * (60*i - 30);
+                const a = Math.PI/180 * (60*i);   // flat-top: 0°부터 시작
                 return [cx + size * Math.cos(a), cy + size * Math.sin(a)];
             });
         }
 
         function districtAxialToPixel(q, r, size, panX, panY) {
-            const x = size * (Math.sqrt(3)*q + Math.sqrt(3)/2*r) + panX;
-            const y = size * (3/2 * r) + panY;
+            // flat-top axial → pixel
+            const x = size * (3/2 * q) + panX;
+            const y = size * (Math.sqrt(3)/2 * q + Math.sqrt(3) * r) + panY;
             return [x, y];
         }
 
         function districtPixelToAxial(px, py, size, panX, panY) {
+            // flat-top pixel → axial
             const x = (px - panX) / size;
             const y = (py - panY) / size;
-            const q = (Math.sqrt(3)/3*x - 1/3*y);
-            const r = (2/3 * y);
+            const q = (2/3 * x);
+            const r = (-1/3 * x + Math.sqrt(3)/3 * y);
             return districtHexRound(q, r);
         }
 
@@ -2676,29 +2718,44 @@
                     if(cx < -size*2 || cx > cvs.width+size*2 || cy < -size*2 || cy > cvs.height+size*2) continue;
 
                     const key = `${q},${r}`;
-                    const active = !!districtGrid[key];
+                    const activeHouse   = !!districtGrid.house[key];
+                    const activeSenate  = !!districtGrid.senate[key];
+                    const active = activeHouse || activeSenate;
                     const corners = districtHexCorners(cx, cy, size * 0.95);
 
                     ctx.beginPath();
                     ctx.moveTo(...corners[0]);
                     corners.slice(1).forEach(c => ctx.lineTo(...c));
                     ctx.closePath();
-                    ctx.fillStyle = active ? '#1a2a2a' : '#0a0c10';
+                    ctx.fillStyle = activeHouse ? '#0a2020' : activeSenate ? '#1a1500' : '#0a0c10';
                     ctx.fill();
-                    if(active) {
+
+                    if(activeHouse) {
                         ctx.strokeStyle = neonColor;
-                        ctx.lineWidth = 1.5;
+                        ctx.lineWidth = 2;
+                        ctx.shadowColor = neonColor;
+                        ctx.shadowBlur = 6;
+                        ctx.stroke();
+                        ctx.shadowBlur = 0;
+                    } else if(activeSenate) {
+                        ctx.strokeStyle = '#ffd700';
+                        ctx.lineWidth = 2;
+                        ctx.shadowColor = '#ffd700';
+                        ctx.shadowBlur = 6;
+                        ctx.stroke();
+                        ctx.shadowBlur = 0;
                     } else {
                         ctx.strokeStyle = '#1a1d22';
                         ctx.lineWidth = 0.8;
+                        ctx.stroke();
                     }
-                    ctx.stroke();
                 }
             }
 
-            const cnt = Object.keys(districtGrid).length;
+            const cntH = Object.keys(districtGrid.house).length;
+            const cntS = Object.keys(districtGrid.senate).length;
             const el = document.getElementById('districtCount');
-            if(el) el.textContent = `활성 칸: ${cnt}`;
+            if(el) el.textContent = `하원 ${cntH}칸 · 상원 ${cntS}칸`;
         }
 
         function districtZoom(factor) {
@@ -2721,7 +2778,7 @@
         }
 
         function districtClearAll() {
-            districtGrid = {};
+            districtGrid[districtChamber] = {};
             districtDrawCanvas();
         }
 
@@ -2755,8 +2812,13 @@
                         const size = HEX_SIZE * districtView.zoom;
                         const [q, r] = districtPixelToAxial(e.offsetX, e.offsetY, size, districtView.panX, districtView.panY);
                         const key = `${q},${r}`;
-                        if(districtMode === 'add') districtGrid[key] = true;
-                        else delete districtGrid[key];
+                        const other = districtChamber === 'house' ? 'senate' : 'house';
+                        if(districtMode === 'add') {
+                            // 반대 의원실에 이미 있으면 추가 불가
+                            if(!districtGrid[other][key]) districtGrid[districtChamber][key] = true;
+                        } else {
+                            delete districtGrid[districtChamber][key];
+                        }
                         districtDrawCanvas();
                     }
                 });
@@ -2771,8 +2833,12 @@
                         const size = HEX_SIZE * districtView.zoom;
                         const [q, r] = districtPixelToAxial(e.offsetX, e.offsetY, size, districtView.panX, districtView.panY);
                         const key = `${q},${r}`;
-                        if(districtMode === 'add') districtGrid[key] = true;
-                        else delete districtGrid[key];
+                        const other = districtChamber === 'house' ? 'senate' : 'house';
+                        if(districtMode === 'add') {
+                            if(!districtGrid[other][key]) districtGrid[districtChamber][key] = true;
+                        } else {
+                            delete districtGrid[districtChamber][key];
+                        }
                         districtDrawCanvas();
                     }
                 });
@@ -2809,7 +2875,7 @@
         }
 
         function tendencyGetBounds() {
-            const keys = Object.keys(districtGrid);
+            const keys = [...new Set([...Object.keys(districtGrid.house), ...Object.keys(districtGrid.senate)])];
             if(keys.length === 0) return null;
             let minQ=Infinity, maxQ=-Infinity, minR=Infinity, maxR=-Infinity;
             keys.forEach(k => {
@@ -2818,6 +2884,10 @@
                 if(r<minR) minR=r; if(r>maxR) maxR=r;
             });
             return { minQ, maxQ, minR, maxR };
+        }
+
+        function tendencyAllKeys() {
+            return [...new Set([...Object.keys(districtGrid.house), ...Object.keys(districtGrid.senate)])];
         }
 
         function tendencyDrawMap(cvs, partyId) {
@@ -2840,10 +2910,12 @@
             ctx.clearRect(0,0,cvs.width,cvs.height);
             const neon = getComputedStyle(document.documentElement).getPropertyValue('--tno-neon').trim()||'#00ffff';
 
-            Object.keys(districtGrid).forEach(key => {
+            tendencyAllKeys().forEach(key => {
                 const [q,r] = key.split(',').map(Number);
                 const [cx,cy] = districtAxialToPixel(q, r, size, offX, offY);
                 const corners = districtHexCorners(cx, cy, size*0.93);
+                const isHouse  = !!districtGrid.house[key];
+                const isSenate = !!districtGrid.senate[key];
 
                 ctx.beginPath();
                 ctx.moveTo(...corners[0]);
@@ -2851,7 +2923,6 @@
                 ctx.closePath();
 
                 if(isAll) {
-                    // 종합: 최고 지지율 당 색으로
                     let bestParty = null, bestVal = -1;
                     parties.forEach(p => {
                         const val = tendencyData[p.id]?.[key] || 0;
@@ -2893,6 +2964,32 @@
                     } else {
                         ctx.fillStyle = '#111'; ctx.fill();
                         ctx.strokeStyle = '#1a1d22'; ctx.lineWidth=0.8; ctx.stroke();
+                    }
+                }
+                // 지역구 구분 테두리 오버레이
+                if(isHouse || isSenate) {
+                    const innerCorners = districtHexCorners(cx, cy, size*0.82);
+                    ctx.beginPath();
+                    ctx.moveTo(...innerCorners[0]);
+                    innerCorners.slice(1).forEach(c=>ctx.lineTo(...c));
+                    ctx.closePath();
+                    if(isHouse && isSenate) {
+                        ctx.strokeStyle = neon;
+                        ctx.lineWidth = 1.5;
+                        ctx.stroke();
+                        ctx.strokeStyle = 'rgba(255,200,0,0.8)';
+                        ctx.lineWidth = 1;
+                        ctx.setLineDash([3,3]);
+                        ctx.stroke();
+                        ctx.setLineDash([]);
+                    } else if(isHouse) {
+                        ctx.strokeStyle = neon;
+                        ctx.lineWidth = 1.5;
+                        ctx.stroke();
+                    } else {
+                        ctx.strokeStyle = 'rgba(255,200,0,0.9)';
+                        ctx.lineWidth = 1.5;
+                        ctx.stroke();
                     }
                 }
             });
@@ -3065,12 +3162,20 @@
             const sBtn  = document.getElementById('dispTabSenate');
             const hl    = document.getElementById('elecHouseLabel');
             const sl    = document.getElementById('elecSenateLabel');
+            const bl    = document.getElementById('elecBothLabel');
             const sw    = document.getElementById('elecSenateWrap');
+            const bw    = document.getElementById('elecBothWrap');
             if(hBtn) hBtn.textContent = hName;
             if(sBtn) sBtn.textContent = sName;
             if(hl)   hl.textContent   = hName;
             if(sl)   sl.textContent   = sName;
+            if(bl)   bl.textContent   = `${hName}+${sName}`;
+            const dcH = document.getElementById('districtChamberHouseLabel');
+            const dcS = document.getElementById('districtChamberSenateLabel');
+            if(dcH) dcH.textContent = hName;
+            if(dcS) dcS.textContent = sName;
             if(sw)   sw.style.display = isBi ? '' : 'none';
+            if(bw)   bw.style.display = isBi ? '' : 'none';
             if(!isBi) document.querySelector('input[name="elecTarget"][value="house"]').checked = true;
         }
 
@@ -3420,9 +3525,13 @@
         }
 
         function elecUpdateDistrictInfo() {
-            const isSenate = document.querySelector('input[name="elecTarget"]:checked')?.value === 'senate';
-            const totalSeats = parseInt(document.getElementById(isSenate?'senateTotal':'houseTotal').value) || 0;
-            const distSeats  = Object.keys(districtGrid).length;
+            const targetVal = document.querySelector('input[name="elecTarget"]:checked')?.value || 'house';
+            const isBoth = targetVal === 'both';
+            const isSenate = targetVal === 'senate';
+            const hTotal = parseInt(document.getElementById('houseTotal')?.value) || 0;
+            const sTotal = parseInt(document.getElementById('senateTotal')?.value) || 0;
+            const totalSeats = isBoth ? hTotal + sTotal : (isSenate ? sTotal : hTotal);
+            const distSeats  = Math.min(Object.keys(isSenate ? districtGrid.senate : districtGrid.house).length, totalSeats);
             const propSeats  = Math.max(0, totalSeats - distSeats);
             const dEl = document.getElementById('elecDistrictCount');
             const pEl = document.getElementById('elecPropCount');
@@ -3433,11 +3542,11 @@
         // ─────────────────────────────────────────
         // 지역구 선거 시뮬레이션
         // ─────────────────────────────────────────
-        function elecSimulateDistricts() {
+        function elecSimulateDistricts(isSenate) {
             // 각 지역구마다 1위 결정 (성향 + 노이즈)
             // 반환: [{ key, partyId }] — 셔플 가능한 형태
             const results = [];
-            const districtKeys = Object.keys(districtGrid);
+            const districtKeys = Object.keys(isSenate ? districtGrid.senate : districtGrid.house);
             districtKeys.forEach(key => {
                 let bestParty = null, bestScore = -1;
                 parties.forEach(p => {
@@ -3477,7 +3586,7 @@
             const offY = h/2 - size*(1.5*((minR+maxR)/2));
 
             // 모든 지역구를 배경으로 그리기
-            Object.keys(districtGrid).forEach(key => {
+            tendencyAllKeys().forEach(key => {
                 const [q, r] = key.split(',').map(Number);
                 const [cx, cy] = districtAxialToPixel(q, r, size, offX, offY);
                 const corners = districtHexCorners(cx, cy, size*0.93);
@@ -3528,19 +3637,37 @@
             });
             if(!elecStore['__swing__']) elecStore['__swing__']={prob:0,err:0};
 
-            const isSenate = document.querySelector('input[name="elecTarget"]:checked')?.value === 'senate';
+            const targetVal = document.querySelector('input[name="elecTarget"]:checked')?.value || 'house';
+            const isBoth   = targetVal === 'both';
+            const isSenate = targetVal === 'senate';
             const hName = document.getElementById('houseNameInput')?.value||'하원';
             const sName = document.getElementById('senateNameInput')?.value||'상원';
-            const chamberName = isSenate ? sName : hName;
+            const chamberName = isBoth ? `${hName}+${sName}` : (isSenate ? sName : hName);
             const elecTitle = document.getElementById('elecTitle')?.value.trim() || '무제 선거';
             const elecYear  = document.getElementById('elecYear')?.value.trim()  || '?';
             const elecMode  = document.querySelector('input[name="elecMode"]:checked')?.value || 'proportional';
+
+            // 양원 선거: 재귀적으로 하원→상원 순서로 실행
+            if(isBoth) {
+                // 하원 먼저
+                document.querySelector('input[name="elecTarget"][value="house"]').checked = true;
+                await elecRun(false);
+                if(!elecRunning) {
+                    // 하원 완료 후 상원
+                    await new Promise(r=>setTimeout(r,600));
+                    document.querySelector('input[name="elecTarget"][value="senate"]').checked = true;
+                    await elecRun(false);
+                    // 완료 후 both 복원
+                    document.querySelector('input[name="elecTarget"][value="both"]').checked = true;
+                }
+                return;
+            }
 
             const totalSeats = parseInt(document.getElementById(isSenate?'senateTotal':'houseTotal').value)||0;
             if(totalSeats<=0) { alert('의석 수가 0입니다. 의회 설정에서 의석 수를 확인하세요.'); return; }
 
             // 모드별 의석 분리
-            const districtSeats = elecMode === 'district' ? Math.min(Object.keys(districtGrid).length, totalSeats) : 0;
+            const districtSeats = elecMode === 'district' ? Math.min(Object.keys(isSenate ? districtGrid.senate : districtGrid.house).length, totalSeats) : 0;
             const propSeats     = totalSeats - districtSeats;
 
             // 비례 의석이 있으면 지지율 검사
@@ -3630,7 +3757,7 @@
             // ── 지역구 선거 결과 미리 계산 ──────────
             let districtResults = [];
             if(districtSeats > 0) {
-                districtResults = elecSimulateDistricts();
+                districtResults = elecSimulateDistricts(isSenate);
                 // 지역구 결과를 seatMap에 합산
                 districtResults.forEach(({partyId}) => {
                     const sm = seatMap.find(x=>x.id===partyId);
