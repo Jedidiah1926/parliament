@@ -1124,6 +1124,7 @@
                     <div style="display:flex;gap:4px;">
                         <button onclick="districtZoom(1.2)"      style="background:#111;border:1px solid #333;color:#aaa;padding:3px 10px;cursor:pointer;font-family:inherit;">+</button>
                         <button onclick="districtZoom(1/1.2)"    style="background:#111;border:1px solid #333;color:#aaa;padding:3px 10px;cursor:pointer;font-family:inherit;">−</button>
+                        <button onclick="districtFitView()"      style="background:#111;border:1px solid #333;color:#aaa;padding:3px 10px;cursor:pointer;font-family:inherit;">⊡</button>
                         <button onclick="districtResetView()"    style="background:#111;border:1px solid #333;color:#555;padding:3px 10px;cursor:pointer;font-family:inherit;">↺</button>
                         <button onclick="districtClearAll()"     style="background:transparent;border:1px solid #333;color:#555;padding:3px 10px;cursor:pointer;font-family:inherit;font-size:0.8rem;">전체 초기화</button>
                     </div>
@@ -2758,10 +2759,51 @@
             if(el) el.textContent = `하원 ${cntH}칸 · 상원 ${cntS}칸`;
         }
 
+        function districtFitView() {
+            const cvs = document.getElementById('districtCanvas');
+            if(!cvs) return;
+            const allKeys = [...new Set([...Object.keys(districtGrid.house), ...Object.keys(districtGrid.senate)])];
+            if(allKeys.length === 0) return; // 활성 칸 없으면 그대로
+
+            const w = cvs.offsetWidth  || 500;
+            const h = cvs.offsetHeight || 400;
+
+            // 활성 칸의 axial bounding box
+            let minQ=Infinity, maxQ=-Infinity, minR=Infinity, maxR=-Infinity;
+            allKeys.forEach(k => {
+                const [q,r] = k.split(',').map(Number);
+                if(q<minQ) minQ=q; if(q>maxQ) maxQ=q;
+                if(r<minR) minR=r; if(r>maxR) maxR=r;
+            });
+
+            // padding: 활성 칸 주변 2칸 여백
+            const PAD = 2;
+            minQ -= PAD; maxQ += PAD;
+            minR -= PAD; maxR += PAD;
+
+            // 이 범위가 캔버스에 딱 맞는 size 계산 (flat-top)
+            const spanX = (maxQ - minQ + 1) * 1.5 + 0.5;
+            const spanY = (maxR - minR + 1) * Math.sqrt(3) + Math.sqrt(3)/2;
+            const sizeByW = w / spanX;
+            const sizeByH = h / spanY;
+            const newSize = Math.min(sizeByW, sizeByH, HEX_SIZE * 3); // 너무 크지 않게 캡
+
+            // 중심 axial 좌표 → 화면 중앙에 맞추기
+            const cq = (minQ + maxQ) / 2;
+            const cr = (minR + maxR) / 2;
+            const [px, py] = [
+                newSize * (3/2 * cq),
+                newSize * (Math.sqrt(3)/2 * cq + Math.sqrt(3) * cr)
+            ];
+            districtView.zoom = newSize / HEX_SIZE;
+            districtView.panX = w/2 - px;
+            districtView.panY = h/2 - py;
+            districtDrawCanvas();
+        }
+
         function districtZoom(factor) {
             const cvs = document.getElementById('districtCanvas');
             if(!cvs) return;
-            const cx = cvs.width/2, cy = cvs.height/2;
             districtView.panX = cx + (districtView.panX - cx) * factor;
             districtView.panY = cy + (districtView.panY - cy) * factor;
             districtView.zoom = Math.max(0.3, Math.min(5, districtView.zoom * factor));
@@ -2793,6 +2835,11 @@
             if(districtView.panX === 0) {
                 districtView.panX = w / 2;
                 districtView.panY = h / 2;
+                // 활성 칸 있으면 자동으로 맞추기
+                const allKeys = [...Object.keys(districtGrid.house), ...Object.keys(districtGrid.senate)];
+                if(allKeys.length > 0) {
+                    setTimeout(() => districtFitView(), 0);
+                }
             }
 
             // 이벤트는 한 번만 바인딩
@@ -2898,13 +2945,21 @@
             if(!bounds) { cvs.width=w; cvs.height=60; const c=cvs.getContext('2d'); c.fillStyle='#333'; c.font='12px monospace'; c.fillText('지역구를 먼저 설정하세요',8,35); return; }
 
             const { minQ, maxQ, minR, maxR } = bounds;
-            const spanQ = maxQ - minQ + 1, spanR = maxR - minR + 1;
-            const size = Math.min(w / (spanQ * Math.sqrt(3) + 1), w*0.8 / (spanR * 1.5 + 1), 20);
-            const h = Math.ceil(size * (spanR * 1.5 + 1) + size*2);
-            cvs.width = w; cvs.height = Math.max(h, 60);
+            // flat-top: x방향은 q, y방향은 r
+            const spanQ = maxQ - minQ + 1;
+            const spanR = maxR - minR + 1;
+            // flat-top 픽셀 범위 계산
+            const sizeByW = w / (spanQ * 1.5 + 0.5);
+            const sizeByH = (w * 1.2) / (spanR * Math.sqrt(3) + Math.sqrt(3)/2 + 1);
+            const size = Math.min(sizeByW, sizeByH, 20);
+            const totalH = Math.ceil(size * (spanR * Math.sqrt(3) + Math.sqrt(3)) + size * 2);
+            cvs.width = w; cvs.height = Math.max(totalH, 60);
 
-            const offX = w/2 - size * (Math.sqrt(3) * ((minQ+maxQ)/2) + Math.sqrt(3)/2 * ((minR+maxR)/2));
-            const offY = size*1.5 - size * (1.5 * minR);
+            // 중심 칸을 캔버스 중앙에 맞추기
+            const cq = (minQ + maxQ) / 2;
+            const cr = (minR + maxR) / 2;
+            const offX = cvs.width/2  - size * (3/2 * cq);
+            const offY = cvs.height/2 - size * (Math.sqrt(3)/2 * cq + Math.sqrt(3) * cr);
 
             const ctx = cvs.getContext('2d');
             ctx.clearRect(0,0,cvs.width,cvs.height);
@@ -3050,7 +3105,7 @@
                         const off = getTendOffset(cvs); if(!off) return;
                         const [q,r]=districtPixelToAxial(e.offsetX, e.offsetY, off.size, off.x, off.y);
                         const key=`${q},${r}`;
-                        if(districtGrid[key]) {
+                        if(districtGrid.house[key] || districtGrid.senate[key]) {
                             if(tendencyStrength===0) delete tendencyData[p.id][key];
                             else tendencyData[p.id][key]=tendencyStrength;
                             tendencyDrawMap(cvs, p.id);
@@ -3069,7 +3124,7 @@
                         const off = getTendOffset(cvs); if(!off) return;
                         const [q,r]=districtPixelToAxial(e.offsetX, e.offsetY, off.size, off.x, off.y);
                         const key=`${q},${r}`;
-                        if(districtGrid[key]) {
+                        if(districtGrid.house[key] || districtGrid.senate[key]) {
                             if(tendencyStrength===0) delete tendencyData[p.id][key];
                             else tendencyData[p.id][key]=tendencyStrength;
                             tendencyDrawMap(cvs, p.id);
