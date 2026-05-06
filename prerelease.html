@@ -947,8 +947,7 @@
                     <div style="padding:6px 8px;background:#0a0c10;border:1px solid #222;font-size:0.78rem;color:#444;margin-bottom:10px;">
                         클릭/드래그로 칸 편집 &nbsp;|&nbsp; 휠: 확대/축소 &nbsp;|&nbsp; 휠클릭+드래그: 이동
                     </div>
-                    <div style="display:flex;justify-content:space-between;align-items:center;">
-                        <span id="districtCount" style="color:#555;font-size:0.85rem;">활성 칸: 0</span>
+                    <div style="display:flex;justify-content:flex-end;align-items:center;">
                         <button onclick="districtClearAll()" style="background:transparent;border:1px solid #333;color:#555;padding:3px 10px;cursor:pointer;font-family:inherit;font-size:0.8rem;">전체 초기화</button>
                     </div>
                 </div>
@@ -1003,8 +1002,9 @@
                                 <input type="radio" name="elecMode" value="district" onchange="elecToggleMode()"> 지역구+비례
                             </label>
                         </div>
-                        <div id="elecModeInfo" style="display:none;margin-top:6px;padding:6px 8px;background:#0a0c10;border:1px solid #2a2a2a;font-size:0.78rem;color:#666;line-height:1.4;">
-                            <span id="elecDistrictCount">지역구 0석</span> + <span id="elecPropCount">비례 0석</span>
+                        <div id="elecModeInfo" style="display:none;margin-top:6px;padding:6px 8px;background:#0a0c10;border:1px solid #2a2a2a;font-size:0.78rem;color:#666;line-height:1.6;">
+                            <div id="elecModeInfoHouse"></div>
+                            <div id="elecModeInfoSenate" style="display:none;"></div>
                             <div style="font-size:0.72rem;color:#444;margin-top:3px;">지역구는 성향 탭의 지지도로 결정, 비례는 아래 지지율로 결정</div>
                         </div>
                     </div>
@@ -1130,9 +1130,8 @@
                     </div>
                 </div>
                 <canvas id="districtCanvas" style="width:100%;flex:1;background:#0a0c10;border:1px solid #222;cursor:crosshair;display:block;touch-action:none;min-height:200px;"></canvas>
-                <div style="margin-top:6px;font-size:0.8rem;color:#444;flex-shrink:0;">
-                    <span id="districtCount">활성 칸: 0</span>
-                    &nbsp;|&nbsp; 클릭/드래그: 활성화 &nbsp;|&nbsp; 휠: 확대/축소 &nbsp;|&nbsp; 휠클릭+드래그: 이동
+                <div style="margin-top:4px;font-size:0.8rem;color:#555;flex-shrink:0;">
+                    <span id="districtCount">하원 0칸 · 상원 0칸</span>
                 </div>
             </div>
         </div>
@@ -3054,6 +3053,8 @@
             const container = document.getElementById('tendencyMaps');
             if(!container) return;
             container.innerHTML = '';
+            // 오프셋 캐시 초기화 (맵 크기가 바뀔 수 있으니)
+            parties.forEach(p => { p._tendOffset = { x: null, y: null }; });
 
             // 종합 지도
             const allWrap = document.createElement('div');
@@ -3085,14 +3086,17 @@
 
                 function getTendOffset(c) {
                     if(p._tendOffset.x === null) {
-                        const w2 = c.clientWidth||260;
+                        const w2 = c.clientWidth || c.offsetWidth || 260;
                         const bounds = tendencyGetBounds();
                         if(!bounds) return;
                         const {minQ,maxQ,minR,maxR} = bounds;
-                        const spanQ=maxQ-minQ+1, spanR=maxR-minR+1;
-                        const sz=Math.min(w2/(spanQ*Math.sqrt(3)+1), w2*0.8/(spanR*1.5+1), 20);
-                        p._tendOffset.x = w2/2 - sz*(Math.sqrt(3)*((minQ+maxQ)/2)+Math.sqrt(3)/2*((minR+maxR)/2));
-                        p._tendOffset.y = sz*1.5 - sz*(1.5*minR);
+                        const spanQ = maxQ-minQ+1, spanR = maxR-minR+1;
+                        const sizeByW = w2 / (spanQ * 1.5 + 0.5);
+                        const sizeByH = (w2 * 1.2) / (spanR * Math.sqrt(3) + Math.sqrt(3)/2 + 1);
+                        const sz = Math.min(sizeByW, sizeByH, 20);
+                        const cq = (minQ+maxQ)/2, cr = (minR+maxR)/2;
+                        p._tendOffset.x    = w2/2 - sz*(3/2*cq);
+                        p._tendOffset.y    = (c.offsetHeight||w2*0.6)/2 - sz*(Math.sqrt(3)/2*cq + Math.sqrt(3)*cr);
                         p._tendOffset.size = sz;
                     }
                     return p._tendOffset;
@@ -3581,17 +3585,44 @@
 
         function elecUpdateDistrictInfo() {
             const targetVal = document.querySelector('input[name="elecTarget"]:checked')?.value || 'house';
-            const isBoth = targetVal === 'both';
+            const isBoth   = targetVal === 'both';
             const isSenate = targetVal === 'senate';
+            const hName = document.getElementById('houseNameInput')?.value || '하원';
+            const sName = document.getElementById('senateNameInput')?.value || '상원';
             const hTotal = parseInt(document.getElementById('houseTotal')?.value) || 0;
             const sTotal = parseInt(document.getElementById('senateTotal')?.value) || 0;
-            const totalSeats = isBoth ? hTotal + sTotal : (isSenate ? sTotal : hTotal);
-            const distSeats  = Math.min(Object.keys(isSenate ? districtGrid.senate : districtGrid.house).length, totalSeats);
-            const propSeats  = Math.max(0, totalSeats - distSeats);
-            const dEl = document.getElementById('elecDistrictCount');
-            const pEl = document.getElementById('elecPropCount');
-            if(dEl) dEl.textContent = `지역구 ${distSeats}석`;
-            if(pEl) pEl.textContent = `비례 ${propSeats}석`;
+
+            const hDist = Object.keys(districtGrid.house).length;
+            const sDist = Object.keys(districtGrid.senate).length;
+
+            const hDistSeats = Math.min(hDist, hTotal);
+            const hPropSeats = Math.max(0, hTotal - hDistSeats);
+            const sDistSeats = Math.min(sDist, sTotal);
+            const sPropSeats = Math.max(0, sTotal - sDistSeats);
+
+            const houseEl  = document.getElementById('elecModeInfoHouse');
+            const senateEl = document.getElementById('elecModeInfoSenate');
+
+            if(houseEl) {
+                if(!isSenate) {
+                    houseEl.innerHTML = `<span style="color:var(--tno-neon)">${hName}</span> 지역구 <b>${hDistSeats}</b>석 + 비례 <b>${hPropSeats}</b>석`;
+                    houseEl.style.display = '';
+                } else {
+                    houseEl.style.display = 'none';
+                }
+            }
+            if(senateEl) {
+                if(isBoth) {
+                    senateEl.innerHTML = `<span style="color:#ffd700">${sName}</span> 지역구 <b>${sDistSeats}</b>석 + 비례 <b>${sPropSeats}</b>석`;
+                    senateEl.style.display = '';
+                } else if(isSenate) {
+                    senateEl.innerHTML = `<span style="color:#ffd700">${sName}</span> 지역구 <b>${sDistSeats}</b>석 + 비례 <b>${sPropSeats}</b>석`;
+                    senateEl.style.display = '';
+                    houseEl && (houseEl.style.display = 'none');
+                } else {
+                    senateEl.style.display = 'none';
+                }
+            }
         }
 
         // ─────────────────────────────────────────
