@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Development Roadmap</title>
+  <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/neodgm/neodgm-webfont@latest/neodgm/style.css">
+  <style>
+    :root {
+      --tno-bg: #101218;
+      --tno-panel: #1a1d26;
+      --tno-neon: #00ffff;
+      --tno-neon-dim: rgba(0, 255, 255, .3);
+      --tno-text: #e0e0e0;
+      --tno-border: #4a5a6a;
+      --tno-gold: #ffd700;
+      --edge-pad: clamp(14px, 1.8vw, 26px);
+    }
+
+    * { box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; margin: 0; padding: 0; }
+    body {
+      background: var(--tno-bg);
+      color: var(--tno-text);
+      font-family: 'NeoDunggeunmo', 'VT323', monospace;
+      font-size: 16px;
+      line-height: 1.4;
+      padding: 20px;
+      display: flex;
+      align-items: stretch;
+    }
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 999;
+      background:
+        linear-gradient(rgba(18,16,16,0) 50%, rgba(0,0,0,.25) 50%),
+        linear-gradient(90deg, rgba(255,0,0,.06), rgba(0,255,0,.02), rgba(0,0,255,.06));
+      background-size: 100% 2px, 3px 100%;
+    }
+
+    /* 프레임은 부모 높이를 100% 채우고, 남는 세로 공간은 카드 행이 모두 사용합니다. */
+    .rd-frame {
+      display: flex !important;
+      flex-direction: column;
+      width: min(1320px, 100%);
+      height: 100%;
+      min-height: 0;
+      max-height: none;
+      margin: 0 auto;
+      padding: 0;
+      flex: 1 1 auto !important;
+      align-self: stretch !important;
+      background-color: var(--tno-panel);
+      background-image:
+        linear-gradient(rgba(0, 255, 255, .045) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 255, 255, .045) 1px, transparent 1px);
+      background-size: 32px 32px;
+      border: 2px solid var(--tno-border);
+      box-shadow: 0 0 15px rgba(0,255,255,.1);
+      position: relative;
+    }
+    .rd-frame::before, .rd-frame::after {
+      content: '';
+      position: absolute;
+      width: 22px;
+      height: 22px;
+      pointer-events: none;
+      z-index: 4;
+    }
+    .rd-frame::before {
+      top: -2px; left: -2px;
+      border-top: 2px solid var(--tno-neon);
+      border-left: 2px solid var(--tno-neon);
+    }
+    .rd-frame::after {
+      right: -2px; bottom: -2px;
+      border-right: 2px solid var(--tno-neon);
+      border-bottom: 2px solid var(--tno-neon);
+    }
+
+    .rd-header {
+      padding: 12px 15px;
+      border-bottom: 2px solid var(--tno-neon);
+      background: repeating-linear-gradient(45deg, #000, #000 10px, #222 10px, #222 20px);
+      color: var(--tno-neon);
+      font-family: 'NeoDunggeunmo', 'VT323', monospace;
+      font-size: 1.2rem;
+      letter-spacing: 1px;
+      line-height: 1.2;
+      text-align: left;
+      text-transform: uppercase;
+      text-shadow: 0 0 5px var(--tno-neon);
+    }
+
+    .rd-content {
+      display: flex;
+      flex: 1 1 auto;
+      min-height: 0;
+      flex-direction: column;
+      padding: clamp(16px, 2vw, 24px) var(--edge-pad) var(--edge-pad);
+    }
+    .rd-version {
+      margin: 0 0 clamp(18px, 2vw, 26px);
+      padding: 0 0 12px;
+      border-bottom: 1px solid var(--tno-border);
+      color: var(--tno-gold);
+      font-family: 'NeoDunggeunmo', 'VT323', monospace;
+      font-size: clamp(2rem, 4.1vw, 3.6rem);
+      font-weight: normal;
+      line-height: 1;
+      letter-spacing: 3px;
+      text-align: left;
+      text-shadow: 0 0 10px rgba(255,215,0,.55);
+    }
+
+    .rd-track {
+      position: relative;
+      display: grid;
+      flex: 1 1 auto;
+      min-height: 0;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      grid-auto-rows: minmax(0, 1fr);
+      align-items: stretch;
+      gap: clamp(10px, 1.25vw, 18px);
+      padding-top: 22px;
+    }
+    .rd-track::before {
+      content: '';
+      position: absolute;
+      z-index: 0;
+      top: 43px;
+      left: calc(-1 * var(--edge-pad));
+      right: calc(-1 * var(--edge-pad));
+      height: 2px;
+      background: var(--tno-border);
+      box-shadow: 0 0 6px var(--tno-neon-dim);
+    }
+
+    .rd-card {
+      position: relative;
+      z-index: 1;
+      min-width: 0;
+      height: 100%;
+      min-height: 0;
+      padding: 31px 14px 16px;
+      background: #0d0f14;
+      border: 1px solid #333;
+      border-top: 2px solid var(--tno-border);
+      transition: border-color .15s ease, box-shadow .15s ease, background .15s ease;
+    }
+    .rd-card::before {
+      content: '';
+      position: absolute;
+      top: -10px;
+      left: 50%;
+      width: 16px;
+      height: 16px;
+      transform: translateX(-50%);
+      background: var(--tno-panel);
+      border: 2px solid var(--tno-neon);
+      box-shadow: 0 0 8px var(--tno-neon-dim);
+    }
+    .rd-card:hover {
+      background: #0d151a;
+      border-color: var(--tno-neon);
+      box-shadow: inset 0 0 12px rgba(0,255,255,.08), 0 0 10px rgba(0,255,255,.1);
+    }
+    .rd-card:hover::before {
+      background: var(--tno-neon);
+      box-shadow: 0 0 13px var(--tno-neon);
+    }
+    .rd-title {
+      margin: 0 0 10px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #333;
+      color: var(--tno-neon);
+      font-family: 'NeoDunggeunmo', 'VT323', monospace;
+      font-size: 1.08rem;
+      font-weight: normal;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      text-shadow: 0 0 5px var(--tno-neon);
+    }
+    .rd-desc {
+      margin: 0;
+      color: #b8c5c9;
+      font-family: 'NeoDunggeunmo', 'VT323', monospace;
+      font-size: .95rem;
+      line-height: 1.65;
+      word-break: keep-all;
+    }
+
+    @media (max-width: 880px) {
+      body { padding: 12px; }
+      body { padding: 12px; }
+      .rd-frame { width: 100%; }
+      .rd-content { padding: 16px 12px 14px; }
+      .rd-track {
+        grid-template-columns: repeat(5, minmax(160px, 1fr));
+        overflow-x: auto;
+        padding-bottom: 2px;
+      }
+      .rd-track::before { left: -12px; right: -12px; }
+    }
+    @media (max-height: 560px) {
+      body { padding: 10px; }
+      .rd-header { padding: 8px 12px; }
+      .rd-content { padding: 12px; }
+      .rd-version { margin-bottom: 14px; padding-bottom: 8px; }
+      .rd-track { padding-top: 18px; }
+      .rd-track::before { top: 39px; left: -12px; right: -12px; }
+      .rd-card { height: 100%; min-height: 0; padding-top: 25px; }
+      .rd-title { margin-bottom: 7px; padding-bottom: 6px; }
+      .rd-desc { font-size: .88rem; line-height: 1.45; }
+    }
+  </style>
+</head>
+<body>
+  <div class="rd-frame" aria-label="Development Roadmap">
+    <div class="rd-header">DEVELOPMENT ROADMAP</div>
+    <div class="rd-content">
+      <h1 class="rd-version">1.4 : The Great Reform</h1>
+      <div class="rd-track">
+        <article class="rd-card"><h2 class="rd-title">1.4.0</h2><p class="rd-desc">- 선거 시스템 개편 (지역구/지지율 시스템 추가)
+        <br>- 정당 시스템 개편 I (당 내 파벌 추가)
+        <br>- 사진 비율 조정
+        <br>- 버그 수정</p></article>
+        <article class="rd-card"><h2 class="rd-title">1.4.1</h2><p class="rd-desc">- 연정 시스템 개편 (신임과 보완 추가)
+        <br>- 정당 시스템 개편 II (정당 해산/금지 표기 추가)
+        </p></article>
+        <article class="rd-card"><h2 class="rd-title">1.4.2</h2><p class="rd-desc">- 의회 시스템 개편 (삼원제 추가)</p></article>
+        <article class="rd-card"><h2 class="rd-title">1.4.3</h2><p class="rd-desc">미정</p></article>
+        <article class="rd-card"><h2 class="rd-title">1.5.0</h2><p class="rd-desc">공개 예정</p></article>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
