@@ -4931,7 +4931,7 @@
                 html += `<div class="stat-block" style="border-left-color:${s.partyColor||s.color};">
                     <div class="dyn-row" style="display:flex;gap:8px;align-items:stretch;">
                         <!-- 사진: JS에서 오른쪽 텍스트 실측 높이에 맞춰 px로 직접 지정 -->
-                        <div class="dyn-photo" data-ratio="${isLogo?'1':'0.75'}" style="flex-shrink:0;background:#0a0c10;border:1px solid #222;overflow:hidden;">
+                        <div class="leader-photo-box dyn-photo" data-ratio="${isLogo?'1':'0.75'}" style="flex-shrink:0;background:#0a0c10;border:1px solid #222;overflow:hidden;">
                             ${photo?`<img src="${photo}" alt="" style="width:100%;height:100%;object-fit:cover;display:block;">`:''}
                         </div>
                         <!-- 오른쪽 3행 -->
