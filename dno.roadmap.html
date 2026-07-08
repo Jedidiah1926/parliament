@@ -6,6 +6,7 @@
   <title>Development Roadmap</title>
   <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/neodgm/neodgm-webfont@latest/neodgm/style.css">
+
   <style>
     :root {
       --tno-bg: #101218;
@@ -15,11 +16,14 @@
       --tno-text: #e0e0e0;
       --tno-border: #4a5a6a;
       --tno-gold: #ffd700;
+      --vote-yea: #00ff88;
+      --rd-gap: clamp(10px, 1.25vw, 18px);
       --edge-pad: clamp(14px, 1.8vw, 26px);
     }
 
     * { box-sizing: border-box; }
     html, body { width: 100%; height: 100%; margin: 0; padding: 0; }
+
     body {
       background: var(--tno-bg);
       color: var(--tno-text);
@@ -29,7 +33,9 @@
       padding: 20px;
       display: flex;
       align-items: stretch;
+      overflow: hidden;
     }
+
     body::after {
       content: '';
       position: fixed;
@@ -42,18 +48,35 @@
       background-size: 100% 2px, 3px 100%;
     }
 
-    /* 프레임은 부모 높이를 100% 채우고, 남는 세로 공간은 카드 행이 모두 사용합니다. */
+    ::-webkit-scrollbar {
+      width: 10px;
+      height: 12px;
+      background: #000;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #18242c;
+      border: 1px solid var(--tno-neon);
+      box-shadow: inset 0 0 5px rgba(0,255,255,.22), 0 0 5px rgba(0,255,255,.18);
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--tno-neon);
+      box-shadow: 0 0 12px var(--tno-neon);
+    }
+    ::-webkit-scrollbar-track {
+      background: #000;
+      border-top: 1px solid #1f343c;
+    }
+    ::-webkit-scrollbar-corner { background: #000; }
+
     .rd-frame {
-      display: flex !important;
+      display: flex;
       flex-direction: column;
       width: min(1320px, 100%);
       height: 100%;
       min-height: 0;
-      max-height: none;
       margin: 0 auto;
-      padding: 0;
-      flex: 1 1 auto !important;
-      align-self: stretch !important;
+      flex: 1 1 auto;
+      align-self: stretch;
       background-color: var(--tno-panel);
       background-image:
         linear-gradient(rgba(0, 255, 255, .045) 1px, transparent 1px),
@@ -62,8 +85,11 @@
       border: 2px solid var(--tno-border);
       box-shadow: 0 0 15px rgba(0,255,255,.1);
       position: relative;
+      overflow: hidden;
     }
-    .rd-frame::before, .rd-frame::after {
+
+    .rd-frame::before,
+    .rd-frame::after {
       content: '';
       position: absolute;
       width: 22px;
@@ -71,29 +97,90 @@
       pointer-events: none;
       z-index: 4;
     }
+
     .rd-frame::before {
-      top: -2px; left: -2px;
+      top: -2px;
+      left: -2px;
       border-top: 2px solid var(--tno-neon);
       border-left: 2px solid var(--tno-neon);
     }
+
     .rd-frame::after {
-      right: -2px; bottom: -2px;
+      right: -2px;
+      bottom: -2px;
       border-right: 2px solid var(--tno-neon);
       border-bottom: 2px solid var(--tno-neon);
     }
 
     .rd-header {
-      padding: 12px 15px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-height: 48px;
+      padding: 10px 15px;
       border-bottom: 2px solid var(--tno-neon);
       background: repeating-linear-gradient(45deg, #000, #000 10px, #222 10px, #222 20px);
       color: var(--tno-neon);
       font-family: 'NeoDunggeunmo', 'VT323', monospace;
-      font-size: 1.2rem;
-      letter-spacing: 1px;
       line-height: 1.2;
       text-align: left;
       text-transform: uppercase;
       text-shadow: 0 0 5px var(--tno-neon);
+      flex: 0 0 auto;
+      overflow-x: auto;
+      overflow-y: hidden;
+      scrollbar-width: thin;
+      scrollbar-color: var(--tno-neon) #000;
+    }
+
+    .rd-header-title {
+      flex: 0 0 auto;
+      font-size: 1.2rem;
+      letter-spacing: 1px;
+      white-space: nowrap;
+    }
+
+    .rd-header-divider {
+      flex: 0 0 auto;
+      width: 1px;
+      height: 24px;
+      background: var(--tno-neon);
+      box-shadow: 0 0 8px var(--tno-neon);
+      opacity: .9;
+    }
+
+    .rd-version-nav {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex: 0 0 auto;
+    }
+
+    .rd-version-btn {
+      font-family: 'NeoDunggeunmo', 'VT323', monospace;
+      background: #000;
+      border: 1px solid var(--tno-border);
+      color: #777;
+      padding: 5px 12px;
+      font-size: 1rem;
+      line-height: 1;
+      cursor: pointer;
+      transition: .15s;
+      text-transform: uppercase;
+    }
+
+    .rd-version-btn:hover {
+      color: var(--tno-neon);
+      border-color: var(--tno-neon);
+      box-shadow: 0 0 8px var(--tno-neon-dim);
+    }
+
+    .rd-version-btn.active {
+      color: #000;
+      background: var(--tno-neon);
+      border-color: var(--tno-neon);
+      box-shadow: 0 0 10px var(--tno-neon);
+      text-shadow: none;
     }
 
     .rd-content {
@@ -102,7 +189,9 @@
       min-height: 0;
       flex-direction: column;
       padding: clamp(16px, 2vw, 24px) var(--edge-pad) var(--edge-pad);
+      overflow: hidden;
     }
+
     .rd-version {
       margin: 0 0 clamp(18px, 2vw, 26px);
       padding: 0 0 12px;
@@ -115,43 +204,57 @@
       letter-spacing: 3px;
       text-align: left;
       text-shadow: 0 0 10px rgba(255,215,0,.55);
+      flex: 0 0 auto;
     }
 
-    .rd-track {
-      position: relative;
-      display: grid;
+    .rd-track-viewport {
       flex: 1 1 auto;
       min-height: 0;
-      grid-template-columns: repeat(5, minmax(0, 1fr));
-      grid-auto-rows: minmax(0, 1fr);
-      align-items: stretch;
-      gap: clamp(10px, 1.25vw, 18px);
+      width: 100%;
+      overflow-x: auto;
+      overflow-y: hidden;
+      scrollbar-color: var(--tno-neon) #000;
+      scrollbar-width: thin;
       padding-top: 22px;
+      padding-bottom: 14px;
+      position: relative;
     }
-    .rd-track::before {
-      content: '';
+
+    .rd-track-inner {
+      position: relative;
+      display: flex;
+      align-items: stretch;
+      height: 100%;
+      min-height: 0;
+      gap: var(--rd-gap);
+    }
+
+    .rd-track-line {
       position: absolute;
       z-index: 0;
-      top: 43px;
-      left: calc(-1 * var(--edge-pad));
-      right: calc(-1 * var(--edge-pad));
+      top: 21px;
+      left: 0;
       height: 2px;
       background: var(--tno-border);
       box-shadow: 0 0 6px var(--tno-neon-dim);
+      pointer-events: none;
     }
 
     .rd-card {
       position: relative;
       z-index: 1;
+      flex: 0 0 auto;
       min-width: 0;
       height: 100%;
       min-height: 0;
       padding: 31px 14px 16px;
       background: #0d0f14;
       border: 1px solid #333;
-      border-top: 2px solid var(--tno-border);
+      border-top: 2px solid var(--card-color, var(--tno-border));
       transition: border-color .15s ease, box-shadow .15s ease, background .15s ease;
+      overflow: visible;
     }
+
     .rd-card::before {
       content: '';
       position: absolute;
@@ -161,30 +264,51 @@
       height: 16px;
       transform: translateX(-50%);
       background: var(--tno-panel);
-      border: 2px solid var(--tno-neon);
-      box-shadow: 0 0 8px var(--tno-neon-dim);
+      border: 2px solid var(--card-color, var(--tno-neon));
+      box-shadow: 0 0 8px color-mix(in srgb, var(--card-color, var(--tno-neon)) 45%, transparent);
     }
+
+    .rd-card.done {
+      --card-color: var(--vote-yea);
+      --card-bg-hover: #0d1a14;
+    }
+
+    .rd-card.current {
+      --card-color: var(--tno-gold);
+      --card-bg-hover: #1a160d;
+    }
+
+    .rd-card.future {
+      --card-color: var(--tno-neon);
+      --card-bg-hover: #0d151a;
+    }
+
     .rd-card:hover {
-      background: #0d151a;
-      border-color: var(--tno-neon);
-      box-shadow: inset 0 0 12px rgba(0,255,255,.08), 0 0 10px rgba(0,255,255,.1);
+      background: var(--card-bg-hover, #0d151a);
+      border-color: var(--card-color, var(--tno-neon));
+      box-shadow:
+        inset 0 0 12px color-mix(in srgb, var(--card-color, var(--tno-neon)) 18%, transparent),
+        0 0 10px color-mix(in srgb, var(--card-color, var(--tno-neon)) 24%, transparent);
     }
+
     .rd-card:hover::before {
-      background: var(--tno-neon);
-      box-shadow: 0 0 13px var(--tno-neon);
+      background: var(--card-color, var(--tno-neon));
+      box-shadow: 0 0 13px var(--card-color, var(--tno-neon));
     }
+
     .rd-title {
       margin: 0 0 10px;
       padding-bottom: 8px;
       border-bottom: 1px solid #333;
-      color: var(--tno-neon);
+      color: var(--card-color, var(--tno-neon));
       font-family: 'NeoDunggeunmo', 'VT323', monospace;
       font-size: 1.08rem;
       font-weight: normal;
       letter-spacing: 1px;
       text-transform: uppercase;
-      text-shadow: 0 0 5px var(--tno-neon);
+      text-shadow: 0 0 5px color-mix(in srgb, var(--card-color, var(--tno-neon)) 75%, transparent);
     }
+
     .rd-desc {
       margin: 0;
       color: #b8c5c9;
@@ -196,82 +320,297 @@
 
     @media (max-width: 880px) {
       body { padding: 12px; }
-      body { padding: 12px; }
       .rd-frame { width: 100%; }
       .rd-content { padding: 16px 12px 14px; }
-      .rd-track {
-        grid-template-columns: repeat(5, minmax(160px, 1fr));
-        overflow-x: auto;
-        padding-bottom: 2px;
-      }
-      .rd-track::before { left: -12px; right: -12px; }
+      .rd-track-viewport { padding-bottom: 14px; }
+      .rd-header { gap: 9px; }
+      .rd-version-btn { padding: 5px 9px; }
     }
+
     @media (max-height: 560px) {
       body { padding: 10px; }
-      .rd-header { padding: 8px 12px; }
+      .rd-header { padding: 8px 12px; min-height: 42px; }
+      .rd-header-divider { height: 20px; }
       .rd-content { padding: 12px; }
       .rd-version { margin-bottom: 14px; padding-bottom: 8px; }
-      .rd-track { padding-top: 18px; }
-      .rd-track::before { top: 39px; left: -12px; right: -12px; }
+      .rd-track-viewport { padding-top: 18px; padding-bottom: 12px; }
+      .rd-track-line { top: 17px; }
       .rd-card { height: 100%; min-height: 0; padding-top: 25px; }
       .rd-title { margin-bottom: 7px; padding-bottom: 6px; }
       .rd-desc { font-size: .88rem; line-height: 1.45; }
     }
-    .lang-switch {
-            position: absolute;
-            top: 15px;
-            right: 20px;
-            z-index: 2000;
-            font-family: 'NeoDunggeunmo', 'VT323', monospace;
-            color: var(--tno-neon);
-            text-decoration: none;
-            border: 1px solid var(--tno-neon);
-            padding: 5px 12px;
-            background: #000;
-            text-transform: uppercase;
-            font-size: 1.2rem;
-            cursor: pointer;
-            transition: 0.2s;
-            box-shadow: 0 0 5px var(--tno-neon);
-        }
-    .lang-switch:hover { background: var(--tno-neon); color: #000; box-shadow: 0 0 15px var(--tno-neon); }
   </style>
 </head>
+
 <body>
   <div class="rd-frame" aria-label="Development Roadmap">
-    <div class="rd-header">DEVELOPMENT ROADMAP</div>
+    <div class="rd-header">
+      <div class="rd-header-title">DEVELOPMENT ROADMAP</div>
+      <div class="rd-header-divider"></div>
+      <nav class="rd-version-nav" aria-label="Roadmap Version Selector">
+        <button class="rd-version-btn" data-version="1.0" type="button">1.0</button>
+        <button class="rd-version-btn" data-version="1.1" type="button">1.1</button>
+        <button class="rd-version-btn" data-version="1.2" type="button">1.2</button>
+        <button class="rd-version-btn" data-version="1.3" type="button">1.3</button>
+        <button class="rd-version-btn active" data-version="1.4" type="button">1.4</button>
+      </nav>
+    </div>
+
     <div class="rd-content">
-      <h1 class="rd-version">1.4 : The Great Reform</h1>
-      <div class="rd-track">
-        <article class="rd-card"><h2 class="rd-title">1.4.0 - 선거 개편 ✓</h2><p class="rd-desc">2026.07.06
-          <br>- 선거 시스템 개편 (지역구/지지율 시스템 추가)
-          <br>- 파벌 시스템 추가 (당 내 파벌 추가)
-          <br>- 사진 비율 조정
-          <br>- 버그 수정
-        </p></article>
-        <article class="rd-card"><h2 class="rd-title">1.4.1 - 연정 개편 ✓</h2><p class="rd-desc">2026.07.08
-          <br>- 연정 시스템 개편 (신임과 보완 추가)
-          <br>- 저장 시스템 버전 업데이트 (v8)
-          <br>- 버그 수정
-        </p></article>
-        <article class="rd-card"><h2 class="rd-title">1.4.2 - 의회 개편 ✓</h2><p class="rd-desc">2026.07.08
-          <br>- 의회 시스템 개편 I (삼원제 추가)
-          <br>- 저장 시스템 버전 업데이트 (v9)
-          <br>- 버그 수정
-        </p></article>
-        <article class="rd-card"><h2 class="rd-title">1.4.3 - 정당 개편 I</h2><p class="rd-desc">2026.07.09
-          <br>- 정당 시스템 개편 I (무소속 로직 개편)
-          <br>- 의회 시스템 개편 II (의석 번호 추가)
-          <br>- 저장 시스템 버전 업데이트 (v10)
-          <br>- 버그 수정
-        </p></article>
-        <article class="rd-card"><h2 class="rd-title">1.4.4 - 정당 개편 II</h2><p class="rd-desc">2026.07.10
-          <br>- 정당 시스템 개편 II (정당 해산/금지 표기 추가)
-          <br>- 버그 수정
-        </p></article>
-        <!-- <a href="https://gall.dcinside.com/mgallery/board/view?id=kaiserreich&no=149405" class="lang-switch">>> 1.4.2 업데이트 내역</a> -->
+      <h1 class="rd-version" id="roadmapVersionTitle">1.4 : The Great Reform</h1>
+
+      <div class="rd-track-viewport" id="roadmapViewport">
+        <div class="rd-track-inner" id="roadmapTrack">
+          <div class="rd-track-line" id="roadmapLine"></div>
+        </div>
       </div>
     </div>
   </div>
+
+  <script>
+    const roadmapData = {
+      '1.0': {
+        title: '1.0',
+        cards: [
+          {
+            status: 'done',
+            title: '1.0.0',
+            desc: `2026.01.11
+              <br>- 프로젝트 공개`
+          }
+        ]
+      },
+
+      '1.1': {
+        title: '1.1',
+        cards: [
+          {
+            status: 'done',
+            title: '1.1.0',
+            desc: `2026.01.11
+              <br>- 저장/불러오기 시스템 추가
+              <br>- 저장 시스템 버전 업데이트 (v1)`
+          },
+          {
+            status: 'done',
+            title: '1.1.1',
+            desc: `2026.03.10
+              <br>- 버그 수정`
+          }
+        ]
+      },
+
+      '1.2': {
+        title: '1.2',
+        cards: [
+          {
+            status: 'done',
+            title: '1.2.0',
+            desc: `2026.04.25
+              <br>- 입법/표결 시스템 추가
+              <br>- UI 개편 (정당 순서 자동/수동 설정)
+              <br>- 버그 수정`
+          },
+          {
+            status: 'done',
+            title: '1.2.1',
+            desc: `2026.07.09
+              <br>- 입법/표결 시스템 보완 (기준선, 비율 설정, 태그 추가)
+              <br>- 저장 시스템 버전 업데이트 (v2)
+              <br>- 버그 수정`
+          }
+        ]
+      },
+
+      '1.3': {
+        title: '1.3',
+        cards: [
+          {
+            status: 'done',
+            title: '1.3.0',
+            desc: `2026.04.29
+              <br>- 선거 시스템 추가
+              <br>- 저장 시스템 버전 업데이트 (v4)
+              <br>- 버그 수정`
+          },
+          {
+            status: 'done',
+            title: '1.3.1',
+            desc: `2026.04.30
+              <br>- UI 개편
+              <br>- 당수 사진 및 이름 추가
+              <br>- 저장 시스템 버전 업데이트 (v5)
+              <br>- 버그 수정`
+          },
+          {
+            status: 'done',
+            title: '1.3.2',
+            desc: `2026.05.01
+              <br>- 버그 수정`
+          },
+          {
+            status: 'done',
+            title: '1.3.3',
+            desc: `2026.05.03
+              <br>- 정당 탭 신설 및 기능 재편
+              <br>- 정당 로고 추가
+              <br>- 저장 시스템 버전 업데이트 (v6)
+              <br>- 버그 수정`
+          },
+          {
+            status: 'done',
+            title: '1.3.4',
+            desc: `2026.05.06
+              <br>- 선거 시스템 수정 (지역구 시스템 beta 추가)
+              <br>- 저장 시스템 버전 업데이트 (v7)
+              <br>- 버그 수정`
+          }
+        ]
+      },
+
+      '1.4': {
+        title: '1.4 : The Great Reform',
+        cards: [
+          {
+            status: 'done',
+            title: '1.4.0 - 선거 개편',
+            desc: `2026.07.06
+              <br>- 선거 시스템 개편 (지역구/지지율 시스템 추가)
+              <br>- 파벌 시스템 추가 (당 내 파벌 추가)
+              <br>- 사진 비율 조정
+              <br>- 버그 수정`
+          },
+          {
+            status: 'done',
+            title: '1.4.1 - 연정 개편',
+            desc: `2026.07.08
+              <br>- 연정 시스템 개편 (신임과 보완 추가)
+              <br>- 저장 시스템 버전 업데이트 (v8)
+              <br>- 버그 수정`
+          },
+          {
+            status: 'current',
+            title: '1.4.2 - 의회 개편',
+            desc: `2026.07.08
+              <br>- 의회 시스템 개편 I (삼원제 추가)
+              <br>- 저장 시스템 버전 업데이트 (v9)
+              <br>- 버그 수정`
+          },
+          {
+            status: 'future',
+            title: '1.4.3 - 정당 개편 I',
+            desc: `2026.07.09
+              <br>- 정당 시스템 개편 I (무소속 로직 개편)
+              <br>- 의회 시스템 개편 II (의석 번호 추가)
+              <br>- 저장 시스템 버전 업데이트 (v10)
+              <br>- 로드맵 개편 및 메인 화면 개편
+              <br>- 버그 수정`
+          },
+          {
+            status: 'future',
+            title: '1.4.4 - 정당 개편 II',
+            desc: `2026.07.10
+              <br>- 정당 시스템 개편 II (정당 해산/금지 표기 추가)
+              <br>- 버그 수정`
+          },
+          {
+            status: 'future',
+            title: '1.4.5',
+            desc: `내용을 입력하세요.`
+          }
+        ]
+      }
+    };
+
+    function escapeHTML(value) {
+      return String(value)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
+    }
+
+
+    function renderRoadmap(versionKey) {
+      const data = roadmapData[versionKey];
+      const titleEl = document.getElementById('roadmapVersionTitle');
+      const track = document.getElementById('roadmapTrack');
+      const line = document.getElementById('roadmapLine');
+
+      if (!data || !titleEl || !track || !line) return;
+
+      titleEl.textContent = data.title;
+
+      track.querySelectorAll('.rd-card').forEach(card => card.remove());
+
+      data.cards.forEach(item => {
+        const article = document.createElement('article');
+        article.className = `rd-card ${item.status || 'future'}`;
+
+        article.innerHTML = `
+          <h2 class="rd-title">${escapeHTML(item.title)}</h2>
+          <p class="rd-desc">${item.desc}</p>
+        `;
+
+        track.appendChild(article);
+      });
+
+      document.querySelectorAll('.rd-version-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.version === versionKey);
+      });
+
+      requestAnimationFrame(syncRoadmapSize);
+    }
+
+    function syncRoadmapSize() {
+      const viewport = document.getElementById('roadmapViewport');
+      const track = document.getElementById('roadmapTrack');
+      const line = document.getElementById('roadmapLine');
+      const cards = Array.from(track.querySelectorAll('.rd-card'));
+
+      if (!viewport || !track || !line || cards.length === 0) return;
+
+      const gapText = getComputedStyle(track).gap || '14px';
+      const gap = parseFloat(gapText) || 14;
+
+      const viewportWidth = viewport.clientWidth;
+      const visibleCards = 5;
+
+      const minCardWidth = viewportWidth <= 880
+        ? Math.min(260, Math.max(160, viewportWidth * 0.72))
+        : 220;
+
+      const naturalCardWidth = (viewportWidth - gap * (visibleCards - 1)) / visibleCards;
+      const cardWidth = Math.max(minCardWidth, naturalCardWidth);
+
+      const totalWidth = cards.length * cardWidth + Math.max(0, cards.length - 1) * gap;
+      const trackWidth = Math.max(viewportWidth, totalWidth);
+
+      track.style.width = trackWidth + 'px';
+
+      cards.forEach(card => {
+        card.style.flexBasis = cardWidth + 'px';
+      });
+
+      line.style.left = '0px';
+      line.style.width = trackWidth + 'px';
+    }
+
+    document.querySelectorAll('.rd-version-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        renderRoadmap(btn.dataset.version);
+      });
+    });
+
+    window.addEventListener('load', () => renderRoadmap('1.4'));
+    window.addEventListener('resize', syncRoadmapSize);
+
+    if ('ResizeObserver' in window) {
+      const observer = new ResizeObserver(syncRoadmapSize);
+      observer.observe(document.getElementById('roadmapViewport'));
+      observer.observe(document.getElementById('roadmapTrack'));
+    }
+  </script>
 </body>
 </html>
