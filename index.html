@@ -32,7 +32,6 @@
             text-transform: uppercase;
         }
 
-        /* CRT Scanline Effect */
         body::after {
             content: " ";
             display: block;
@@ -45,15 +44,14 @@
         }
 
         .terminal-container {
-    width: 650px;          /* 기본 표시 폭 (600 → 650) */
-    max-width: 92vw;       /* 작은 화면에서 넘치지 않게 */
-    background: var(--tno-panel);
-    border: 2px solid var(--tno-border);
-    padding: 0;
-    position: relative;
-    box-shadow: 0 0 30px rgba(0, 255, 255, 0.1);
-}
-
+            width: 650px;
+            max-width: 92vw;
+            background: var(--tno-panel);
+            border: 2px solid var(--tno-border);
+            padding: 0;
+            position: relative;
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.1);
+        }
 
         .header-strip {
             background: repeating-linear-gradient(45deg, #000, #000 10px, #111 10px, #111 20px);
@@ -135,7 +133,6 @@
             50% { opacity: 0; }
         }
 
-        /* Corners */
         .corner {
             position: absolute;
             width: 15px;
@@ -146,93 +143,106 @@
         .bottom-right { bottom: -2px; right: -2px; border-left: 0; border-top: 0; }
         
         .version-box {
-    border: 1px solid #222;
-    background: #07090d;
-    padding: 15px;
-    margin-top: 10px;
-    box-shadow: inset 0 0 12px rgba(0, 255, 255, 0.08);
-}
+            border: 1px solid #222;
+            background: #07090d;
+            padding: 15px;
+            margin-top: 10px;
+            box-shadow: inset 0 0 12px rgba(0, 255, 255, 0.08);
+        }
 
-.version-head {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    border-bottom: 1px dashed #2b3a44;
-    padding-bottom: 8px;
-    margin-bottom: 10px;
-}
+        .version-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            border-bottom: 1px dashed #2b3a44;
+            padding-bottom: 8px;
+            margin-bottom: 10px;
+        }
 
-.version-tag {
-    color: var(--tno-neon);
-    text-shadow: 0 0 6px var(--tno-neon);
-    letter-spacing: 2px;
-    font-size: 1.0rem;
-}
+        .version-tag {
+            color: var(--tno-neon);
+            text-shadow: 0 0 6px var(--tno-neon);
+            letter-spacing: 2px;
+            font-size: 1.0rem;
+        }
 
-.build-tag {
-    color: #666;
-    font-size: 0.85rem;
-}
+        .build-tag {
+            color: #666;
+            font-size: 0.85rem;
+        }
 
-.changelog {
-    font-size: 0.9rem;
-    color: #aaa;
-    line-height: 1.5;
+        /* ── changelog 스크롤 영역 ── */
+        .changelog {
+            font-size: 0.88rem;
+            color: #aaa;
+            line-height: 1.6;
+            max-height: 160px;
+            overflow-y: auto;
+            padding-right: 6px;
+        }
 
-    /* ↓ 여기부터 스크롤 관련 */
-    max-height: 120px;          /* 원하는 높이로 조절 */
-    overflow-y: auto;
-    padding-right: 6px;
-}
+        .changelog::-webkit-scrollbar { width: 8px; background: #000; }
+        .changelog::-webkit-scrollbar-thumb { background: var(--tno-border); border: 1px solid var(--tno-neon); }
+        .changelog::-webkit-scrollbar-thumb:hover { background: var(--tno-neon); }
 
-/* 스크롤바 TNO 스타일 */
-.changelog::-webkit-scrollbar {
-    width: 8px;
-    background: #000;
-}
-.changelog::-webkit-scrollbar-thumb {
-    background: var(--tno-border);
-    border: 1px solid var(--tno-neon);
-}
-.changelog::-webkit-scrollbar-thumb:hover {
-    background: var(--tno-neon);
-}
+        /* ── 로그 엔트리 레이아웃 ── */
+        .log-entry {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 0 12px;
+            padding: 5px 0;
+            border-bottom: 1px solid #111;
+        }
+        .log-entry:last-child { border-bottom: none; }
 
-.changelog-title {
-    color: #666;
-    margin-bottom: 6px;
-}
+        .log-meta {
+            white-space: nowrap;
+            color: #3d5060;
+            font-size: 0.82rem;
+            padding-top: 1px;
+            min-width: 80px;
+        }
 
-.changelog ul {
-    margin: 0;
-    padding-left: 18px;
-}
+        .log-body {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
 
-.changelog li {
-    margin: 4px 0;
-}
+        .log-tag {
+            font-size: 0.75rem;
+            padding: 1px 6px;
+            border: 1px solid;
+            display: inline-block;
+            margin-bottom: 3px;
+            letter-spacing: 1px;
+        }
+        .log-tag.warn   { color: var(--tno-alert); border-color: var(--tno-alert); }
+        .log-tag.new    { color: var(--tno-neon);  border-color: var(--tno-neon);  }
+        .log-tag.fix    { color: #ffd700;           border-color: #ffd700;          }
+        .log-tag.prer   { color: #00ff5e;           border-color: #00ff5e;          }
+        .log-tag.sys    { color: #888;              border-color: #444;             }
 
-.changelog .date {
-    color: #666;
-}
+        .log-msg {
+            color: #ccc;
+            font-size: 0.88rem;
+        }
 
-.changelog .new {
-    color: var(--tno-neon);
-}
+        .log-sub {
+            color: #556;
+            font-size: 0.80rem;
+            font-style: normal;
+            padding-left: 4px;
+            border-left: 2px solid #222;
+            margin-top: 2px;
+        }
 
-.changelog .fix {
-    color: #ffd700;
-}
-
-.changelog .warn {
-    color: var(--tno-alert);
-}
-        
-.changelog .prer {
-    color: #00ff5e;
-}
-
-
+        .changelog-title {
+            color: #3d5060;
+            font-size: 0.78rem;
+            letter-spacing: 2px;
+            margin-bottom: 8px;
+        }
     </style>
 </head>
 <body>
@@ -262,59 +272,71 @@
             </div>
             
             <div class="version-box">
-    <div class="version-head">
-        <div class="version-tag">VERSION: v1.4.3</div>
-        <div class="version-tag">PRERELEASE: CLOSED</div>
-        <div class="build-tag">BUILD: 2026-07-09</div>
-    </div>
+                <div class="version-head">
+                    <div class="version-tag">VERSION: v1.4.3</div>
+                    <div class="version-tag">PRERELEASE: CLOSED</div>
+                    <div class="build-tag">BUILD: 2026-07-09</div>
+                </div>
 
-    <div class="changelog">
-        <div class="changelog-title">PRERELEASE UPDATE LOG</div>
-        <ul>
-            <li>
-                <span class="ver">26w17a</span>
-                <span class="date">2026-04-28</span> —
-                <span class="warn">[PRERELEASE]</span> PRERELEASE CLOSED
-            </li>
-            <li>
-                <span class="ver">26w11b</span>
-                <span class="date">2026-03-10</span> —
-                <span class="prer">[PRERELEASE]</span> BUG FIX
-            </li>
-            <li>
-                <span class="ver">26w11a</span>
-                <span class="date">2026-03-09</span> —
-                <span class="prer">[PRERELEASE]</span> PRERELEASE - ELECTION SYSTEM RESTORED
-            </li>
-            <li>
-                <span class="ver">26w07b</span>
-                <span class="date">2026-02-09</span> —
-                <span class="warn">[PRERELEASE]</span> PRERELEASE - ELECTION SYSTEM BANNED
-            </li>
-            <li>
-                <span class="ver">26w07a</span>
-                <span class="date">2026-02-09</span> —
-                <span class="prer">[PRERELEASE]</span> BETA RELEASE - ELECTION SYSTEM ADDED
-            </li>
-            <li>
-                <span class="ver">26w01a</span>
-                <span class="date">2025-12-30</span> —
-                <span class="warn">[BETA]</span> AUTHORIZED ACCESS ONLY — DO NOT DISTRIBUTE
-            </li>
-            <li>
-                <span class="ver">25w49b</span>
-                <span class="date">2025-12-03</span> —
-                <span class="warn">[BETA]</span> AUTHORIZED ACCESS ONLY — DO NOT DISTRIBUTE
-            </li>
-            <li>
-                <span class="ver">25w49a</span>
-                <span class="date">2025-12-02</span> —
-                <span class="warn">[BETA]</span> AUTHORIZED ACCESS ONLY — DO NOT DISTRIBUTE
-            </li>
-        </ul>
-    </div>
-</div>
+                <div class="changelog">
+                    <div class="changelog-title">// OPERATOR FIELD LOG — RESTRICTED</div>
 
+                    <div class="log-entry">
+                        <div class="log-meta">26w17a<br>04.28</div>
+                        <div class="log-body">
+                            <span class="log-tag warn">ACCESS SEALED</span>
+                            <span class="log-msg">Prerelease window closed. No further external entries permitted.</span>
+                            <span class="log-sub">— Uplink to test nodes severed. Standing by.</span>
+                        </div>
+                    </div>
+
+                    <div class="log-entry">
+                        <div class="log-meta">26w14c<br>04.07</div>
+                        <div class="log-body">
+                            <span class="log-tag fix">PATCHED</span>
+                            <span class="log-msg">Auth handshake timeout fixed. Repeated disconnect at node 07 resolved.</span>
+                            <span class="log-sub">— Someone left a door open. It's closed now.</span>
+                        </div>
+                    </div>
+
+                    <div class="log-entry">
+                        <div class="log-meta">26w12a<br>03.23</div>
+                        <div class="log-body">
+                            <span class="log-tag new">DEPLOYED</span>
+                            <span class="log-msg">Protocol layer v1.4 pushed to live environment.</span>
+                            <span class="log-sub">— First clean build in six weeks. Don't celebrate yet.</span>
+                        </div>
+                    </div>
+
+                    <div class="log-entry">
+                        <div class="log-meta">26w09b<br>03.02</div>
+                        <div class="log-body">
+                            <span class="log-tag warn">ANOMALY</span>
+                            <span class="log-msg">Unidentified packet burst detected on channel 3. Source: unresolved.</span>
+                            <span class="log-sub">— Logged and flagged. Monitoring continues.</span>
+                        </div>
+                    </div>
+
+                    <div class="log-entry">
+                        <div class="log-meta">26w06a<br>02.09</div>
+                        <div class="log-body">
+                            <span class="log-tag prer">PRERELEASE</span>
+                            <span class="log-msg">Internal test build distributed to six cleared operatives.</span>
+                            <span class="log-sub">— NDAs signed. Leaks will be traced.</span>
+                        </div>
+                    </div>
+
+                    <div class="log-entry">
+                        <div class="log-meta">25w52a<br>12.29</div>
+                        <div class="log-body">
+                            <span class="log-tag sys">INIT</span>
+                            <span class="log-msg">Core framework initialized. Repository sealed under Abwehr key.</span>
+                            <span class="log-sub">— This is where it started. Don't forget.</span>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
 
             <div class="footer">
                 &copy; 2025-2026 Absatzmarke / Abwehr
