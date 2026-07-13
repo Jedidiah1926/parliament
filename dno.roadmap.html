@@ -354,6 +354,7 @@
         <button class="rd-version-btn" data-version="1.2" type="button">1.2</button>
         <button class="rd-version-btn" data-version="1.3" type="button">1.3</button>
         <button class="rd-version-btn active" data-version="1.4" type="button">1.4</button>
+        <button class="rd-version-btn" data-version="1.5" type="button">1.5</button>
       </nav>
     </div>
 
@@ -551,7 +552,7 @@
           },
           {
             status: 'done',
-            title: '1.4.2 - 의회 리워크',
+            title: '1.4.2 - 의회 리워크 Pt.I',
             desc: `2026.07.08
               <br>- 의회 시스템 리워크 I (삼원제 추가)
               <br>- 저장 시스템 버전 업데이트 (v9)
@@ -559,7 +560,7 @@
           },
           {
             status: 'done',
-            title: '1.4.3 - 정당 리워크',
+            title: '1.4.3 - 정당 리워크 Pt.I',
             desc: `2026.07.09
               <br>- 정당 시스템 리워크 I (무소속 로직 리워크)
               <br>- 의회 시스템 리워크 II (의석 번호 추가)
@@ -568,7 +569,7 @@
               <br>- 버그 수정`
           },
           {
-            status: 'current',
+            status: 'done',
             title: '1.4.4 - 지역구 리워크',
             desc: `2026.07.10
               <br>- 지역구 시스템 리워크 (지역구 이름 설정 추가)
@@ -579,30 +580,57 @@
               <br>- 버그 수정`
           },
           {
+            status: 'current',
+            title: '1.4.5 - 핫픽스',
+            desc: `2026.07.13
+              <br>- 정당이 안 생성되는 버그 수정`
+          },
+          {
             status: 'future',
-            title: '1.4.5 - 기록 리워크',
-            desc: `2026.07.11
+            title: '1.4.6 - 기록 리워크',
+            desc: `2026.07.14
               <br>- 입법/선거 기록 리워크 (세부 기록 추가)
-              <br>- 정당 시스템 리워크 II (정당 해산/금지 표기 추가)
               <br>- 저장 시스템 버전 업데이트 (v12)
               <br>- 버그 수정`
           },
           {
             status: 'future',
-            title: '1.4.6 - 모바일 출시',
-            desc: `2026.07.12
-              <br>- 모바일 내에서도 구동 가능하도록 수정
+            title: '1.4.7 - 정당 리워크 Pt.II',
+            desc: `2026.07.XX
+              <br>- 정당 시스템 리워크 II (정당 해산/금지 표기 추가)
+              <br>- 저장 시스템 버전 업데이트 (v13)
               <br>- 버그 수정`
           },
           {
             status: 'future',
-            title: '1.4.7',
+            title: '1.4.8 - 의회 리워크 Pt.II',
             desc: `2026.07.XX
-              <br>- 아이디어좀
+              <br>- 의회 시스템 리워크 III (원외정당 시스템 추가)
+              <br>- 저장 시스템 버전 업데이트 (v14)
+              <br>- 버그 수정`
+          },
+          {
+            status: 'future',
+            title: '1.4.9 - 저장 리워크',
+            desc: `2026.07.XX
+              <br>- 저장/불러오기 시스템 리워크 (버전명 체계 변경 및 안정화)
               <br>- 버그 수정`
           }
         ]
       }
+
+      '1.5': {
+        title: '1.5: Mobiles',
+        cards: [
+          {
+            status: 'future',
+            title: '1.5.0 - 모바일 출시',
+            desc: `2026 하반기 출시
+              <br>- 모바일 내에서도 구동 가능하도록 수정
+              <br>- 버그 수정`
+          }
+        ]
+      },
     };
 
     function escapeHTML(value) {
