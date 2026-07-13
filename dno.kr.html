@@ -813,6 +813,7 @@
                 <div class="sub-tab-container">
                     <button class="sub-tab-btn active" onclick="switchSubTab('setup','settings')" id="subTabSettings">설정</button>
                     <button class="sub-tab-btn" onclick="switchSubTab('setup','coalition')" id="subTabCoalition">연정</button>
+                    <button class="sub-tab-btn" onclick="switchSubTab('setup','members')" id="subTabMembers">의원</button>
                     <button class="sub-tab-btn" onclick="switchSubTab('setup','indMember')" id="subTabIndMember">무소속</button>
                 </div>
 
@@ -875,6 +876,16 @@
                     <div id="coalitionList"></div>
                     <button class="add-btn" onclick="addCoalition()">[+] 연정 구성</button>
                     <button class="add-btn" onclick="setNoRuling()" style="color:#555;border-color:#333;">[✕] 무집권 상태</button>
+                </div>
+
+                <!-- 의원 탭 (지역구 당선 의원 개별 정보, 내부 탭: 하원/상원/삼원) -->
+                <div id="contentMembers" class="sub-tab-content">
+                    <div class="sub-tab-container-3" id="membersInnerTabs">
+                        <button class="sub-tab-btn-3 active" onclick="switchMembersInnerTab('house')" id="innerTabMembersHouse">하원</button>
+                        <button class="sub-tab-btn-3" onclick="switchMembersInnerTab('senate')" id="innerTabMembersSenate">상원</button>
+                        <button class="sub-tab-btn-3" onclick="switchMembersInnerTab('third')" id="innerTabMembersThird">삼원</button>
+                    </div>
+                    <div id="membersList"></div>
                 </div>
 
                 <!-- 무소속 탭 (연정 참여/각외협력 설정, 내부 탭: 하원/상원/삼원) -->
@@ -1211,12 +1222,18 @@
                         <div style="color:#666;font-size:0.8rem;margin-bottom:4px;">선거 방식</div>
                         <div style="display:flex;gap:6px;">
                             <label style="flex:1;cursor:pointer;padding:6px 8px;background:#0a0c10;border:1px solid #2a2a2a;display:flex;align-items:center;gap:6px;font-size:0.85rem;color:#aaa;">
-                                <input type="radio" name="elecMode" value="proportional" checked onchange="elecToggleMode()"> 비례대표
+                                <input type="checkbox" id="elecModeProportional" checked onchange="onElecModeChange()"> 비례
                             </label>
                             <label style="flex:1;cursor:pointer;padding:6px 8px;background:#0a0c10;border:1px solid #2a2a2a;display:flex;align-items:center;gap:6px;font-size:0.85rem;color:#aaa;">
-                                <input type="radio" name="elecMode" value="district" onchange="elecToggleMode()"> 지역구+비례
+                                <input type="checkbox" id="elecModeDistrict" onchange="onElecModeChange()"> 지역구
+                            </label>
+                            <label style="flex:1;cursor:pointer;padding:6px 8px;background:#0a1a1a;border:1px solid #1a3a3a;display:flex;align-items:center;gap:6px;font-size:0.85rem;color:var(--tno-neon);">
+                                <input type="checkbox" id="elecModeAll" onchange="onElecModeAllChange(this.checked)"> 전체
                             </label>
                         </div>
+                        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:6px 8px;background:#0a0c10;border:1px solid #663333;margin-top:6px;font-size:0.85rem;color:#cc8888;" title="궐석 처리된 지역구만 대상으로 다시 개표">
+                            <input type="checkbox" id="elecModeByElection" onchange="elecUpdateDistrictInfo()"> 보궐 (궐석 지역구만 재선거)
+                        </label>
                         <div id="elecModeInfo" style="display:none;margin-top:6px;padding:6px 8px;background:#0a0c10;border:1px solid #2a2a2a;font-size:0.78rem;color:#666;line-height:1.6;">
                             <div id="elecModeInfoHouse"></div>
                             <div id="elecModeInfoSenate" style="display:none;"></div>
@@ -2575,7 +2592,7 @@
         function getAppState() {
             const systemType = document.querySelector('input[name="systemType"]:checked')?.value || 'bicameral';
             return {
-                meta: { app: "DATANET_PARLIAMENT_SIM", version: 11, savedAt: new Date().toISOString() },
+                meta: { app: "DATANET_PARLIAMENT_SIM", version: 12, savedAt: new Date().toISOString() },
                 ui: { currentMainTab, currentSubTab },
                 config: {
                     systemType,
@@ -2605,7 +2622,8 @@
                         grid: JSON.parse(JSON.stringify(districtGrid)),
                         view: { ...districtView },
                         names: JSON.parse(JSON.stringify(districtNames)),
-                        order: JSON.parse(JSON.stringify(districtOrder))
+                        order: JSON.parse(JSON.stringify(districtOrder)),
+                        members: JSON.parse(JSON.stringify(districtMembers))
                     },
                     tendency: {
                         data:     JSON.parse(JSON.stringify(tendencyData)),
@@ -2624,7 +2642,7 @@
                 state.parliament.independents  = state.parliament.independents.map(x => ({ ...x, photo: '' }));
             }
             const ts = new Date().toISOString().replace(/[:.]/g, "-");
-            downloadJSON(`parliament-save-v11-${ts}.json`, state);
+            downloadJSON(`parliament-save-v12-${ts}.json`, state);
         }
 
         function setAppState(state) {
@@ -2660,7 +2678,7 @@
             const ge = id => document.getElementById(id);
             if(ge('elecTitle')) ge('elecTitle').value = elec.elecTitle || '';
             if(ge('elecYear'))  ge('elecYear').value  = elec.elecYear  || '';
-            // 지역구 (v6 이하: house/senate만, v9: third 포함, v11: 이름/순서 포함)
+            // 지역구 (v6 이하: house/senate만, v9: third 포함, v11: 이름/순서 포함, v12: 당선 의원 정보 포함)
             if(elec.district?.grid) {
                 const g = elec.district.grid;
                 if(g.house !== undefined) districtGrid = { house:g.house||{}, senate:g.senate||{}, third:g.third||{} };
@@ -2669,6 +2687,7 @@
             if(elec.district?.view) Object.assign(districtView, elec.district.view);
             districtNames = elec.district?.names ? { house:{}, senate:{}, third:{}, ...elec.district.names } : { house:{}, senate:{}, third:{} };
             districtOrder = elec.district?.order ? { house:[], senate:[], third:[], ...elec.district.order } : { house:[], senate:[], third:[] };
+            districtMembers = elec.district?.members ? { house:{}, senate:{}, third:{}, ...elec.district.members } : { house:{}, senate:{}, third:{} };
             ['house','senate','third'].forEach(ch => districtOrderSync(ch)); // 구버전 파일은 순서 배열이 없으므로 좌표 등장순으로 자동 생성
             selectedDistrictKey = null;
             // 성향
@@ -2812,6 +2831,7 @@
             if(sub === 'settings') { switchSetupInnerTab('house'); }
             if(sub === 'coalition') { renderCoalitions(); }
             if(sub === 'indMember') { indMemberInnerTab = 'house'; switchIndMemberInnerTab('house'); }
+            if(sub === 'members') { membersInnerTab = 'house'; switchMembersInnerTab('house'); }
         }
 
         // 정당 탭 내부의 정당/당수 중첩 탭 전환
@@ -2955,6 +2975,7 @@
             renderLeaderList();
             renderCoalitionLeaderList();
             renderIndependentList();
+            renderMembersList();
         }
 
         function isValidHex(hex) { return /^#[0-9A-F]{6}$/i.test(hex); }
@@ -3571,7 +3592,10 @@
             else if(chamber === 'senate') flags.inSenate = true;
             else if(chamber === 'third') flags.inThird = true;
             else flags.inHouse = true; // 정당 탭 등 컨텍스트 없을 때 기본값
-            parties.push({id:Date.now(), name:"신당", color:"#555555", seatsHouse:0, seatsSenate:0, seatsThird:0, ideologyId:ideologies[ideologies.length - 1].id, isRuling:false, ...flags, leaderName: "", leaderPhoto: "", logoPhoto: "", showLogoInStats: false, factions: [] }); refreshUI(); }
+            // 새 정당의 기본 이념: 무소속 이념은 제외하고 마지막 일반 이념을 사용 (무소속은 목록 맨 뒤에 자동 추가되므로)
+            const nonIndIdeologies = ideologies.filter(i => i.id !== IND_IDEOLOGY_ID);
+            const defaultIdeologyId = nonIndIdeologies.length > 0 ? nonIndIdeologies[nonIndIdeologies.length - 1].id : ideologies[0]?.id;
+            parties.push({id:Date.now(), name:"신당", color:"#555555", seatsHouse:0, seatsSenate:0, seatsThird:0, ideologyId:defaultIdeologyId, isRuling:false, ...flags, leaderName: "", leaderPhoto: "", logoPhoto: "", showLogoInStats: false, factions: [] }); refreshUI(); }
         function addIndependentParty() {
             if(!ideologies.find(i=>i.id===IND_IDEOLOGY_ID)) addIndependentIdeology();
             parties.push({id:Date.now(), name:"무소속", color:"#999999", seatsHouse:1, seatsSenate:0, seatsThird:0, ideologyId:IND_IDEOLOGY_ID, isRuling:false, inHouse:true, inSenate:true, inThird:false, leaderName: "", leaderPhoto: "", logoPhoto: "", showLogoInStats: false, factions: [] });
@@ -4198,7 +4222,118 @@
             }
             refreshUI(); simulate();
         }
-        // ===== 선거 기능 =====
+
+        // ===== 의회 > 의원 탭: 지역구 당선 의원 개별 관리 =====
+        let membersInnerTab = 'house';
+        function switchMembersInnerTab(ch) {
+            membersInnerTab = ch;
+            ['house','senate','third'].forEach(c => {
+                document.getElementById('innerTabMembers'+c.charAt(0).toUpperCase()+c.slice(1))?.classList.toggle('active', c===ch);
+            });
+            renderMembersList();
+        }
+
+        // 특정 의원실의 지역구 당선자 목록을 (오프셋 반영) 전역 의석 번호와 함께 반환
+        function getDistrictMemberEntries(ch) {
+            const keys = districtSortedKeys(ch).filter(k => districtMembers[ch][k]);
+            return keys.map(key => ({ key, member: districtMembers[ch][key], name: districtNames[ch][key] || key }));
+        }
+
+        function renderMembersList() {
+            const container = document.getElementById('membersList');
+            if(!container) return;
+            container.innerHTML = '';
+
+            const chambers = chamberList();
+            ['house','senate','third'].forEach(c => {
+                const btn = document.getElementById('innerTabMembers'+c.charAt(0).toUpperCase()+c.slice(1));
+                if(btn) btn.style.display = chambers.includes(c) ? '' : 'none';
+            });
+            if(!chambers.includes(membersInnerTab)) membersInnerTab = chambers[0] || 'house';
+            ['house','senate','third'].forEach(c => {
+                document.getElementById('innerTabMembers'+c.charAt(0).toUpperCase()+c.slice(1))?.classList.toggle('active', c===membersInnerTab);
+            });
+
+            const ch = membersInnerTab;
+            const entries = getDistrictMemberEntries(ch);
+
+            if(entries.length === 0) {
+                container.innerHTML = '<div style="text-align:center;color:#555;padding:20px;">[지역구 당선 의원이 없습니다 — 지역구+비례 방식으로 선거를 진행하고 의회에 반영하면 여기 표시됩니다]</div>';
+                return;
+            }
+
+            entries.forEach(({key, member, name}) => {
+                const party = parties.find(p=>p.id===member.partyId);
+                const div = document.createElement('div');
+                div.className = 'card-item';
+                div.style.cssText = `border-left-color:${member.vacant?'#663333':(party?.color||'#666')};margin-bottom:8px;padding:10px;${member.vacant?'opacity:0.6;':''}`;
+                div.innerHTML = `
+                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+                        <span style="width:9px;height:9px;background:${party?.color||'#666'};border-radius:50%;flex-shrink:0;"></span>
+                        <span style="color:#ccc;font-size:0.9rem;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${key}">${name}</span>
+                        ${member.vacant?'<span style="color:#cc3333;font-size:0.75rem;">[궐석]</span>':''}
+                    </div>
+                    <input type="text" value="${member.name||''}" placeholder="의원 이름" ${member.vacant?'disabled':''}
+                        style="width:100%;box-sizing:border-box;background:#000;border:1px solid #2a2a2a;color:#e0e0e0;font-family:inherit;font-size:0.9rem;padding:5px 8px;margin-bottom:6px;"
+                        onchange="updateDistrictMember('${ch}','${key}','name',this.value)">
+                    <select ${member.vacant?'disabled':''} onchange="updateDistrictMemberParty('${ch}','${key}',parseInt(this.value))"
+                        style="width:100%;background:#000;border:1px solid #333;color:var(--tno-gold);font-family:inherit;font-size:0.85rem;padding:4px;margin-bottom:6px;">
+                        ${parties.filter(p=>p[inKeyFor(ch)]).map(p=>`<option value="${p.id}" ${member.partyId===p.id?'selected':''}>${p.name}</option>`).join('')}
+                    </select>
+                    ${(party?.factions||[]).length>0?`
+                    <select ${member.vacant?'disabled':''} onchange="updateDistrictMember('${ch}','${key}','factionId',this.value||null)"
+                        style="width:100%;background:#000;border:1px solid #333;color:#aaa;font-family:inherit;font-size:0.85rem;padding:4px;margin-bottom:6px;">
+                        <option value="">파벌 미지정</option>
+                        ${party.factions.map(f=>`<option value="${f.id}" ${member.factionId===f.id?'selected':''}>${f.name}</option>`).join('')}
+                    </select>`:''}
+                    <div style="display:flex;gap:6px;">
+                        ${member.vacant
+                            ? `<button onclick="fillVacantSeat('${ch}','${key}')" style="flex:1;background:transparent;border:1px solid #00cc66;color:#00cc66;font-family:inherit;font-size:0.8rem;padding:5px;cursor:pointer;">보궐선거로 채우기</button>`
+                            : `<button onclick="vacateSeat('${ch}','${key}')" style="flex:1;background:transparent;border:1px solid #663333;color:#cc6666;font-family:inherit;font-size:0.8rem;padding:5px;cursor:pointer;">궐석 처리 (사퇴/사망)</button>`
+                        }
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function updateDistrictMember(ch, key, field, value) {
+            const m = districtMembers[ch][key];
+            if(!m) return;
+            m[field] = value;
+            if(field !== 'name') simulate();
+            if(field === 'name') renderMembersList();
+        }
+
+        // 지역구 의원 정당 변경 (당적 변경/이적) — 기존 정당 의석 -1, 새 정당 의석 +1
+        function updateDistrictMemberParty(ch, key, newPartyId) {
+            const m = districtMembers[ch][key];
+            if(!m || m.partyId === newPartyId) return;
+            const seatKey = seatKeyFor(ch);
+            const oldParty = parties.find(p=>p.id===m.partyId);
+            const newParty = parties.find(p=>p.id===newPartyId);
+            if(oldParty) oldParty[seatKey] = Math.max(0, (oldParty[seatKey]||0) - 1);
+            if(newParty) newParty[seatKey] = (newParty[seatKey]||0) + 1;
+            m.partyId = newPartyId;
+            m.factionId = null; // 이적 시 파벌 소속은 초기화
+            refreshUI(); simulate();
+        }
+
+        // 궐석 처리: 의원이 사퇴/사망 등으로 빠짐 — 소속 정당 의석에서 -1 (보궐선거 전까지 공석)
+        function vacateSeat(ch, key) {
+            const m = districtMembers[ch][key];
+            if(!m || m.vacant) return;
+            if(!confirm('이 지역구를 궐석 처리하시겠습니까?\n(보궐선거로 다시 채울 때까지 소속 정당 의석에서 1석 감소합니다)')) return;
+            const seatKey = seatKeyFor(ch);
+            const party = parties.find(p=>p.id===m.partyId);
+            if(party) party[seatKey] = Math.max(0, (party[seatKey]||0) - 1);
+            m.vacant = true;
+            refreshUI(); simulate();
+        }
+
+        function fillVacantSeat(ch, key) {
+            alert(`선거 탭 > 지역구 체크박스에서 "보궐"을 선택하고 개표하면\n이 지역구(${districtNames[ch][key]||key})가 자동으로 대상에 포함됩니다.`);
+        }
 
 
 
@@ -4254,6 +4389,7 @@
         // ─────────────────────────────────────────
         let districtGrid = { house: {}, senate: {}, third: {} };
         let districtNames = { house: {}, senate: {}, third: {} }; // { "q,r": "이름" }
+        let districtMembers = { house: {}, senate: {}, third: {} }; // { "q,r": {name, partyId, factionId, vacant} } — 지역구 당선 의원 개별 정보
         let districtOrder = { house: [], senate: [], third: [] }; // 목록 표시 순서 (드래그로 변경 가능)
         let selectedDistrictKey = null; // '이름' 모드에서 클릭 선택된 칸
 
@@ -4704,10 +4840,17 @@
                     const tip = document.getElementById('tooltipBox');
                     if(tip && districtGrid[districtChamber][hkey]) {
                         const nm = districtNames[districtChamber][hkey];
+                        const mem = districtMembers[districtChamber][hkey];
+                        let text = nm ? nm : `(${hkey})`;
+                        if(mem) {
+                            const memParty = parties.find(p=>p.id===mem.partyId);
+                            if(mem.vacant) text += ` — 궐석`;
+                            else text += ` — ${mem.name||'(이름 미지정)'} (${memParty?.name||'?'})`;
+                        }
                         tip.style.display = 'block';
                         tip.style.left = (e.clientX + 14) + 'px';
                         tip.style.top = (e.clientY - 8) + 'px';
-                        tip.textContent = nm ? nm : `(${hkey})`;
+                        tip.textContent = text;
                     } else if(tip) {
                         tip.style.display = 'none';
                     }
@@ -4970,10 +5113,18 @@
                         const hkey = `${hq},${hr}`;
                         const nm = districtNameFor(hkey);
                         if(nm !== null) {
+                            let text = nm || `(${hkey})`;
+                            const hCh = ['house','senate','third'].find(c => districtGrid[c][hkey]);
+                            const mem = hCh ? districtMembers[hCh][hkey] : null;
+                            if(mem) {
+                                const memParty = parties.find(p=>p.id===mem.partyId);
+                                if(mem.vacant) text += ` — 궐석`;
+                                else text += ` — ${mem.name||'(이름 미지정)'} (${memParty?.name||'?'})`;
+                            }
                             tip.style.display = 'block';
                             tip.style.left = (e.clientX + 14) + 'px';
                             tip.style.top = (e.clientY - 8) + 'px';
-                            tip.textContent = nm || `(${hkey})`;
+                            tip.textContent = text;
                         } else {
                             tip.style.display = 'none';
                         }
@@ -5377,10 +5528,28 @@
         }
 
         // ── 의회 반영 ──────────────────────────
+        // 보궐선거: 궐석 지역구만 대상으로 즉시 재선거 (애니메이션 없이 즉시 반영)
+        async function elecRunByElection(chamber, vacantKeys, chamberName) {
+            const allResults = elecSimulateDistricts(chamber); // 현재 활성 지역구 전체에 대한 결과
+            const relevantResults = allResults.filter(r => vacantKeys.includes(r.key));
+            const seatKey = seatKeyFor(chamber);
+            const summary = [];
+            relevantResults.forEach(({key, partyId}) => {
+                const party = parties.find(p=>p.id===partyId);
+                if(party) party[seatKey] = (party[seatKey]||0) + 1;
+                districtMembers[chamber][key] = { name:'', partyId, factionId:null, vacant:false };
+                summary.push(`${districtNames[chamber][key]||key} : ${party?.name||'?'}`);
+            });
+            refreshUI(); simulate();
+            switchDispTab(chamber);
+            alert(`보궐선거 결과 (${chamberName})\n\n${summary.join('\n')}\n\n의회>의원 탭에서 당선자 이름을 입력해 주세요.`);
+        }
+
         function elecApplyToParliament() {
             if(!elecLastResult) return;
-            const { chamber, seatMap } = elecLastResult;
-            const seatKey = seatKeyFor(chamber || (elecLastResult.isSenate?'senate':'house'));
+            const { chamber, seatMap, districtResults } = elecLastResult;
+            const ch = chamber || (elecLastResult.isSenate?'senate':'house');
+            const seatKey = seatKeyFor(ch);
             let hadFactions = false;
             parties.forEach(p => {
                 const s = seatMap.find(x=>x.id===p.id);
@@ -5391,8 +5560,14 @@
                     p.factions.forEach(f => { f[seatKey] = 0; });
                 }
             });
+            // 지역구 당선자 개별 정보 생성 (이름은 비워둠 — 의회>의원 탭에서 입력)
+            if(Array.isArray(districtResults) && districtResults.length > 0) {
+                districtResults.forEach(({key, partyId}) => {
+                    districtMembers[ch][key] = { name: '', partyId, factionId: null, vacant: false };
+                });
+            }
             simulate(); refreshUI();
-            switchDispTab(chamber || (elecLastResult.isSenate?'senate':'house'));
+            switchDispTab(ch);
             if(hadFactions) {
                 alert('선거 결과가 반영되었습니다.\n\n파벌이 있는 정당의 파벌별 의석은 선거 전 분포가 무효화되어 0으로 초기화되었습니다.\n정당 탭에서 파벌 의석을 다시 배분해 주세요.');
             }
@@ -5522,10 +5697,32 @@
         // ─────────────────────────────────────────
         // 선거 방식 전환
         // ─────────────────────────────────────────
+        // 선거 방식: 비례/지역구 체크박스 조합 -> 'proportional'|'district'(지역구만)|'mixed'(둘다)
+        function getElecMode() {
+            const prop = document.getElementById('elecModeProportional')?.checked ?? true;
+            const dist = document.getElementById('elecModeDistrict')?.checked ?? false;
+            if(prop && dist) return 'mixed';
+            if(dist) return 'district';
+            return 'proportional';
+        }
+        function onElecModeChange() {
+            const prop = document.getElementById('elecModeProportional');
+            const dist = document.getElementById('elecModeDistrict');
+            const allBox = document.getElementById('elecModeAll');
+            if(allBox) allBox.checked = !!(prop?.checked && dist?.checked);
+            elecToggleMode();
+        }
+        function onElecModeAllChange(checked) {
+            const prop = document.getElementById('elecModeProportional');
+            const dist = document.getElementById('elecModeDistrict');
+            if(prop) prop.checked = checked;
+            if(dist) dist.checked = checked;
+            elecToggleMode();
+        }
         function elecToggleMode() {
-            const mode = document.querySelector('input[name="elecMode"]:checked')?.value || 'proportional';
+            const mode = getElecMode();
             const info = document.getElementById('elecModeInfo');
-            if(mode === 'district') {
+            if(mode === 'district' || mode === 'mixed') {
                 info.style.display = '';
                 elecUpdateDistrictInfo();
             } else {
@@ -5756,7 +5953,8 @@
             const tName = document.getElementById('thirdNameInput')?.value||'삼원';
             const elecTitle = document.getElementById('elecTitle')?.value.trim() || '무제 선거';
             const elecYear  = document.getElementById('elecYear')?.value.trim()  || '?';
-            const elecMode  = document.querySelector('input[name="elecMode"]:checked')?.value || 'proportional';
+            const elecMode  = getElecMode(); // 'proportional' | 'district'(지역구만) | 'mixed'(지역구+비례)
+            const isByElection = document.getElementById('elecModeByElection')?.checked ?? false;
 
             // 여러 의원실 선택 시: 순차적으로 하원→상원→삼원 순서로 실행
             if(targets.length > 1) {
@@ -5784,9 +5982,31 @@
             const totalSeats = parseInt(document.getElementById(chamber==='senate'?'senateTotal':chamber==='third'?'thirdTotal':'houseTotal').value)||0;
             if(totalSeats<=0) { alert('의석 수가 0입니다. 의회 설정에서 의석 수를 확인하세요.'); return; }
 
+            // 보궐선거: 궐석 처리된 지역구만 대상으로 재선거
+            if(isByElection) {
+                const vacantKeys = Object.keys(districtMembers[chamber]).filter(k => districtMembers[chamber][k]?.vacant);
+                if(vacantKeys.length === 0) {
+                    alert('궐석 처리된 지역구가 없습니다.\n의회 > 의원 탭에서 궐석 처리를 먼저 진행하세요.');
+                    return;
+                }
+                await elecRunByElection(chamber, vacantKeys, chamberName);
+                return;
+            }
+
             // 모드별 의석 분리
-            const districtSeats = elecMode === 'district' ? Math.min(Object.keys(districtGrid[chamber]||{}).length, totalSeats) : 0;
-            const propSeats     = totalSeats - districtSeats;
+            const activeDistrictCount = Object.keys(districtGrid[chamber]||{}).length;
+            let districtSeats, propSeats;
+            if(elecMode === 'district') {
+                // 지역구만: 비례 없이 지역구 수만큼만 채움 (전체 의석과 다를 수 있음)
+                districtSeats = Math.min(activeDistrictCount, totalSeats);
+                propSeats = 0;
+            } else if(elecMode === 'mixed') {
+                districtSeats = Math.min(activeDistrictCount, totalSeats);
+                propSeats = totalSeats - districtSeats;
+            } else {
+                districtSeats = 0;
+                propSeats = totalSeats;
+            }
 
             // 비례 의석이 있으면 지지율 검사
             const partyProb = parties.reduce((s,p)=>s+(elecStore[p.id]?.prob||0),0);
@@ -5795,8 +6015,8 @@
                 return;
             }
             // 지역구 모드인데 활성 지역구가 없으면 안내
-            if(elecMode === 'district' && districtSeats === 0) {
-                alert('지역구 탭에서 활성화된 지역구가 없습니다.\n지역구를 먼저 추가하거나 비례대표 모드를 선택하세요.');
+            if((elecMode === 'district' || elecMode === 'mixed') && districtSeats === 0) {
+                alert('지역구 탭에서 활성화된 지역구가 없습니다.\n지역구를 먼저 추가하거나 비례 모드를 선택하세요.');
                 return;
             }
 
@@ -6141,25 +6361,31 @@
                             const indEntry = indList[k];
                             // 무소속 개별 의원: 소속 연정에 따라 테두리만 반영 (채우기 색은 회색 그대로 유지)
                             let indStroke = stroke, indDashed = strokeDashed, indIsGov = isGov, indCoalName = effectiveCoal?.name;
+                            let indExtSupport = isExtSupport?(rulingCoal.externalSupportLabel||'각외협력'):false;
                             if(isIndParty && indEntry) {
                                 const indKey = 'ind__' + indEntry.id;
                                 const indCoal = coalitions.find(c => c.members.includes(indKey));
-                                const indExtCoal = !indCoal ? coalitions.find(c => c.externalSupporters?.includes(indKey)) : null;
+                                const indExtCoal = !indCoal && rulingCoal ? (rulingCoal.externalSupporters?.includes(indKey) ? rulingCoal : null) : null;
                                 if(indCoal) {
                                     indIsGov = !!indCoal.isRuling;
                                     indStroke = highlightGov && indIsGov ? 'var(--tno-gold)' : indCoal.color;
                                     indDashed = false;
                                     indCoalName = indCoal.name;
-                                } else if(indExtCoal && indExtCoal.isRuling) {
+                                    indExtSupport = false;
+                                } else if(indExtCoal) {
                                     indIsGov = false;
                                     indStroke = highlightGov ? '#ffd700' : indExtCoal.color;
                                     indDashed = true;
                                     indCoalName = null;
+                                    indExtSupport = indExtCoal.externalSupportLabel || '각외협력';
+                                } else {
+                                    // 이 의원은 개별적으로 연정/각외협력 어디에도 속하지 않음 — 정당 전체 각외협력 여부와 무관하게 일반 무소속으로 표시
+                                    indExtSupport = false;
                                 }
                             }
                             map.push({color:p.color, partyName:p.name, factionName:null,
                                 ideology:ideologies.find(i=>i.id===p.ideologyId)?.name||'?',
-                                coalitionName:indCoalName, strokeColor:indStroke, strokeDashed:indDashed, isRuling:indIsGov, externalSupport:isExtSupport?(rulingCoal.externalSupportLabel||'각외협력'):false,
+                                coalitionName:indCoalName, strokeColor:indStroke, strokeDashed:indDashed, isRuling:indIsGov, externalSupport:indExtSupport,
                                 independentName: indEntry?.name || null, independentSeatIndex: indEntry?.seatIndex || null});
                         }
                     }
@@ -6336,6 +6562,7 @@
             map.forEach(m => {
                 if(m.partyName==='Vacant') return;
                 let k = m.coalitionName ? 'c_'+m.coalitionName :
+                        m.externalSupport ? 'e_'+m.partyName :
                         (m.factionName && !m.isRuling) ? 'f_'+m.partyName+'__'+m.factionName :
                                           'p_'+m.partyName;
                 const displayName = m.coalitionName ? m.coalitionName :
