@@ -3,229 +3,595 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DATANET: PARLIAMENT SIMULATION</title>
+    <title>DATANET: PARLIAMENT SIMULATION [BETA]</title>
+    
     <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/neodgm/neodgm-webfont@latest/neodgm/style.css">
+
     <link rel="stylesheet" href="dno.en.css">
 </head>
 <body>
 
-    <a href="tno_kor.html" class="lang-switch">>> SWITCH TO KOREAN</a>
+
+
+    <!-- Tooltip -->
     <div class="tooltip-box" id="tooltipBox"></div>
 
     <div class="controls">
         <div class="tno-header-strip">Ministry of Interior</div>
+        
         <div class="controls-content">
-            <div style="display:flex;gap:15px;margin-bottom:15px;border-bottom:1px solid #333;padding-bottom:10px;">
-                <label style="cursor:pointer;color:#fff;"><input type="radio" name="systemType" value="bicameral" checked onchange="toggleSystem()"> BICAMERAL</label>
-                <label style="cursor:pointer;color:#fff;"><input type="radio" name="systemType" value="unicameral" onchange="toggleSystem()"> UNICAMERAL</label>
+            <div style="display:flex; gap:15px; margin-bottom: 15px; border-bottom:1px solid #333; padding-bottom:10px;">
+                <label style="cursor:pointer; color:#fff;"><input type="radio" name="systemType" value="unicameral" onchange="toggleSystem()"> Unicameral</label>
+                <label style="cursor:pointer; color:#fff;"><input type="radio" name="systemType" value="bicameral" checked onchange="toggleSystem()"> Bicameral</label>
+                <label style="cursor:pointer; color:#fff;"><input type="radio" name="systemType" value="tricameral" onchange="toggleSystem()"> Tricameral</label>
             </div>
-            <label style="cursor:pointer;margin-bottom:8px;">
-                <input type="checkbox" id="chkGovHighlight" onchange="simulate()" checked>
-                <span style="color:var(--tno-gold);text-shadow:0 0 5px var(--tno-gold);">HIGHLIGHT GOVERNMENT</span>
+            
+            <label style="cursor:pointer; margin-bottom:4px;">
+                <input type="checkbox" id="chkGovHighlight" onchange="simulate()" checked> 
+                <span style="color:var(--tno-gold); text-shadow:0 0 5px var(--tno-gold);">Highlight Ruling Power (HIGHLIGHT GOV)</span>
+            </label>
+            <label style="cursor:pointer; margin-bottom:12px;">
+                <input type="checkbox" id="chkSavePhoto"> 
+                <span style="color:#666;">Include photo when saving</span>
             </label>
 
-            <!-- MAIN TABS -->
+
+            <!-- ===== Top main tabs ===== -->
             <div class="main-tab-container">
-                <button class="main-tab-btn active" onclick="switchMainTab('setup')" id="mainTabSetup">⚙ PARLIAMENT</button>
-                <button class="main-tab-btn" onclick="switchMainTab('legislation')" id="mainTabLegislation">⚖ LEGISLATION</button>
+                <button class="main-tab-btn active" onclick="switchMainTab('party')" id="mainTabParty">🏛 Party</button>
+                <button class="main-tab-btn" onclick="switchMainTab('setup')" id="mainTabSetup">⚙ Parliament</button>
+                <button class="main-tab-btn" onclick="switchMainTab('legislation')" id="mainTabLegislation">⚖ Legislation</button>
+                <button class="main-tab-btn" onclick="switchMainTab('election')" id="mainTabElection">🗳 Election</button>
             </div>
 
-            <!-- PARLIAMENT SETUP GROUP -->
-            <div id="mainContentSetup" class="main-tab-content active">
+            <!-- ===== Parliament settings group ===== -->
+            <!-- ===== Party group ===== -->
+            <div id="mainContentParty" class="main-tab-content active">
                 <div class="sub-tab-container">
-                    <button class="sub-tab-btn active" onclick="switchSubTab('setup','ideology')" id="subTabIdeology">IDEOLOGY</button>
-                    <button class="sub-tab-btn" onclick="switchSubTab('setup','house')" id="subTabHouse">HOUSE</button>
-                    <button class="sub-tab-btn" onclick="switchSubTab('setup','senate')" id="subTabSenate">SENATE</button>
-                    <button class="sub-tab-btn" onclick="switchSubTab('setup','coalition')" id="subTabCoalition">COALITION</button>
+                    <button class="sub-tab-btn active" onclick="switchSubTab('party','ideology')" id="subTabPartyIdeology">Ideology</button>
+                    <button class="sub-tab-btn" onclick="switchSubTab('party','partyInfo')" id="subTabPartyInfo">Party</button>
+                    <button class="sub-tab-btn" onclick="switchSubTab('party','coalitionLeader')" id="subTabCoalitionLeader">Coalition</button>
+                    <button class="sub-tab-btn" onclick="switchSubTab('party','independent')" id="subTabIndependent">Independent</button>
                 </div>
 
+                <!-- Ideology tab -->
                 <div id="contentIdeology" class="sub-tab-content active">
                     <div id="ideologyList"></div>
-                    <button class="add-btn" onclick="addIdeology()">[+] ADD IDEOLOGY</button>
-                    <button class="add-btn" style="border-style:solid;font-size:0.9rem;" onclick="addIndependentIdeology()">[+] ADD INDEPENDENT SLOT</button>
+                    <button class="add-btn" onclick="addIdeology()">[+] Add Ideology</button>
                 </div>
 
-                <div id="contentHouse" class="sub-tab-content">
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;padding:10px;background:#0a0c10;border:1px solid #2a2a2a;">
-                        <div>
-                            <label id="houseNameLabel" style="color:var(--tno-neon);font-size:0.9rem;">CHAMBER NAME</label>
-                            <input type="text" id="houseNameInput" value="House" oninput="updateNames()">
-                        </div>
-                        <div>
-                            <label style="color:var(--tno-neon);font-size:0.9rem;">TOTAL SEATS</label>
-                            <input type="number" id="houseTotal" value="300">
-                        </div>
+                <!-- Party tab (inner tabs: Party / Leader) -->
+                <div id="contentPartyInfo" class="sub-tab-content">
+                    <div class="sub-tab-container-3">
+                        <button class="sub-tab-btn-3 active" onclick="switchPartyInnerTab('info')" id="innerTabPartyInfo">Party</button>
+                        <button class="sub-tab-btn-3" onclick="switchPartyInnerTab('leader')" id="innerTabPartyLeader">Leader</button>
                     </div>
-                    <div id="partyListHouse"></div>
-                    <button class="add-btn" onclick="addParty()">[+] ADD PARTY</button>
-                    <button class="add-btn" style="border-style:solid;font-size:0.9rem;" onclick="addIndependentParty()">[+] ADD INDEPENDENT MP</button>
-                </div>
-
-                <div id="contentSenate" class="sub-tab-content">
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;padding:10px;background:#0a0c10;border:1px solid #2a2a2a;">
-                        <div>
-                            <label style="color:var(--tno-neon);font-size:0.9rem;">CHAMBER NAME</label>
-                            <input type="text" id="senateNameInput" value="Senate" oninput="updateNames()">
-                        </div>
-                        <div>
-                            <label style="color:var(--tno-neon);font-size:0.9rem;">TOTAL SEATS</label>
-                            <input type="number" id="senateTotal" value="100">
-                        </div>
+                    <div id="innerContentPartyInfo" class="sub-tab-content active">
+                        <div id="partyInfoList"></div>
+                        <button class="add-btn" onclick="addParty('house')">[+] Add Party</button>
                     </div>
-                    <div id="partyListSenate"></div>
-                    <button class="add-btn" onclick="addParty()">[+] ADD PARTY</button>
+                    <div id="innerContentPartyLeader" class="sub-tab-content">
+                        <div id="leaderList"></div>
+                    </div>
                 </div>
 
-                <div id="contentCoalition" class="sub-tab-content">
-                    <div id="coalitionList"></div>
-                    <button class="add-btn" onclick="addCoalition()">[+] FORM COALITION</button>
+                <!-- Coalition (photo) tab -->
+                <div id="contentCoalitionLeader" class="sub-tab-content">
+                    <div id="coalitionLeaderList"></div>
+                </div>
+
+                <!-- Independent tab (inner tabs: House/Senate/Third) -->
+                <div id="contentIndependent" class="sub-tab-content">
+                    <div class="sub-tab-container-3" id="independentInnerTabs">
+                        <button class="sub-tab-btn-3 active" onclick="switchIndependentInnerTab('house')" id="innerTabIndHouse">House</button>
+                        <button class="sub-tab-btn-3" onclick="switchIndependentInnerTab('senate')" id="innerTabIndSenate">Senate</button>
+                        <button class="sub-tab-btn-3" onclick="switchIndependentInnerTab('third')" id="innerTabIndThird">Third</button>
+                    </div>
+                    <div id="independentList"></div>
                 </div>
             </div>
 
-            <!-- LEGISLATION GROUP -->
-            <div id="mainContentLegislation" class="main-tab-content">
+            <!-- ===== Parliament group ===== -->
+            <div id="mainContentSetup" class="main-tab-content">
                 <div class="sub-tab-container">
-                    <button class="sub-tab-btn active" onclick="switchSubTab('legislation','bill')" id="subTabBill">BILLS</button>
-                    <button class="sub-tab-btn" onclick="switchSubTab('legislation','vote')" id="subTabVote">VOTE</button>
-                    <button class="sub-tab-btn" onclick="switchSubTab('legislation','archive')" id="subTabArchive">RECORD</button>
+                    <button class="sub-tab-btn active" onclick="switchSubTab('setup','settings')" id="subTabSettings">Settings</button>
+                    <button class="sub-tab-btn" onclick="switchSubTab('setup','coalition')" id="subTabCoalition">Coalition</button>
+                    <button class="sub-tab-btn" onclick="switchSubTab('setup','members')" id="subTabMembers">Members</button>
+                    <button class="sub-tab-btn" onclick="switchSubTab('setup','indMember')" id="subTabIndMember">Independent</button>
                 </div>
 
-                <!-- BILLS SUB-TAB -->
-                <div id="contentBill" class="sub-tab-content active">
-                    <div class="vote-panel" style="margin-bottom:10px;">
-                        <div class="vote-panel-title">> DRAFT NEW BILL</div>
-                        <input type="text" class="vote-bill-input" id="newBillTitle" placeholder="Bill title..." style="margin-bottom:6px;">
-                        <textarea id="newBillContent" placeholder="Bill content..." style="background:#000;border:1px solid var(--tno-border);color:#ccc;font-family:'VT323',monospace;font-size:1rem;width:100%;box-sizing:border-box;padding:8px;resize:vertical;min-height:80px;outline:none;line-height:1.5;"></textarea>
-                        <input type="text" id="newBillTags" placeholder="Tags (comma-separated, e.g. economy, security)" style="background:#000;border:1px solid var(--tno-border);color:#aaa;font-family:'VT323',monospace;font-size:0.95rem;width:100%;box-sizing:border-box;padding:5px 8px;margin-top:6px;">
+                <!-- Settings tab (inner tabs: House/Senate/Third) -->
+                <div id="contentSettings" class="sub-tab-content active">
+                    <div class="sub-tab-container-3">
+                        <button class="sub-tab-btn-3 active" onclick="switchSetupInnerTab('house')" id="innerTabSetupHouse">House</button>
+                        <button class="sub-tab-btn-3" onclick="switchSetupInnerTab('senate')" id="innerTabSetupSenate">Senate</button>
+                        <button class="sub-tab-btn-3" onclick="switchSetupInnerTab('third')" id="innerTabSetupThird" style="display:none;">Third</button>
+                    </div>
+
+                    <div id="contentHouse" class="sub-tab-content active">
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;padding:10px;background:#0a0c10;border:1px solid #2a2a2a;">
+                            <div>
+                                <label id="houseNameLabel" style="color:var(--tno-neon);font-size:0.85rem;">Parliament Name</label>
+                                <input type="text" id="houseNameInput" value="National Assembly" oninput="updateNames()">
+                            </div>
+                            <div>
+                                <label style="color:var(--tno-neon);font-size:0.85rem;">Total Seats</label>
+                                <input type="number" id="houseTotal" value="300" oninput="elecUpdateDistrictInfo()">
+                            </div>
+                        </div>
+                        <div id="partyListHouse"></div>
+                        <button class="add-btn" onclick="addParty('house')">[+] Add Party</button>
+                    </div>
+
+                    <div id="contentSenate" class="sub-tab-content">
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;padding:10px;background:#0a0c10;border:1px solid #2a2a2a;">
+                            <div>
+                                <label style="color:var(--tno-neon);font-size:0.85rem;">Parliament Name</label>
+                                <input type="text" id="senateNameInput" value="Senate" oninput="updateNames()">
+                            </div>
+                            <div>
+                                <label style="color:var(--tno-neon);font-size:0.85rem;">Total Seats</label>
+                                <input type="number" id="senateTotal" value="100" oninput="elecUpdateDistrictInfo()">
+                            </div>
+                        </div>
+                        <div id="partyListSenate"></div>
+                        <button class="add-btn" onclick="addParty('senate')">[+] Add Party</button>
+                    </div>
+
+                    <div id="contentThird" class="sub-tab-content">
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;padding:10px;background:#0a0c10;border:1px solid #2a2a2a;">
+                            <div>
+                                <label style="color:var(--tno-neon);font-size:0.85rem;">Parliament Name</label>
+                                <input type="text" id="thirdNameInput" value="Third" oninput="updateNames()">
+                            </div>
+                            <div>
+                                <label style="color:var(--tno-neon);font-size:0.85rem;">Total Seats</label>
+                                <input type="number" id="thirdTotal" value="100" oninput="elecUpdateDistrictInfo()">
+                            </div>
+                        </div>
+                        <div id="partyListThird"></div>
+                        <button class="add-btn" onclick="addParty('third')">[+] Add Party</button>
+                    </div>
+                </div>
+
+                <!-- Coalition tab -->
+                <div id="contentCoalition" class="sub-tab-content">
+                    <div id="coalitionList"></div>
+                    <button class="add-btn" onclick="addCoalition()">[+] Form Coalition</button>
+                    <button class="add-btn" onclick="setNoRuling()" style="color:#555;border-color:#333;">[✕] No Ruling Party</button>
+                </div>
+
+                <!-- Members tab (individual info for district-elected members, inner tabs: House/Senate/Third) -->
+                <div id="contentMembers" class="sub-tab-content">
+                    <div class="sub-tab-container-3" id="membersInnerTabs">
+                        <button class="sub-tab-btn-3 active" onclick="switchMembersInnerTab('house')" id="innerTabMembersHouse">House</button>
+                        <button class="sub-tab-btn-3" onclick="switchMembersInnerTab('senate')" id="innerTabMembersSenate">Senate</button>
+                        <button class="sub-tab-btn-3" onclick="switchMembersInnerTab('third')" id="innerTabMembersThird">Third</button>
+                    </div>
+                    <div id="membersList"></div>
+                </div>
+
+                <!-- Independent tab (coalition participation / external support settings, inner tabs: House/Senate/Third) -->
+                <div id="contentIndMember" class="sub-tab-content">
+                    <div class="sub-tab-container-3" id="indMemberInnerTabs">
+                        <button class="sub-tab-btn-3 active" onclick="switchIndMemberInnerTab('house')" id="innerTabIndMemHouse">House</button>
+                        <button class="sub-tab-btn-3" onclick="switchIndMemberInnerTab('senate')" id="innerTabIndMemSenate">Senate</button>
+                        <button class="sub-tab-btn-3" onclick="switchIndMemberInnerTab('third')" id="innerTabIndMemThird">Third</button>
+                    </div>
+                    <div id="indMemberList"></div>
+                </div>
+            </div>
+
+            <!-- ===== Legislative process group ===== -->
+            <div id="mainContentLegislation" class="main-tab-content">
+                <div class="sub-tab-container">
+                    <button class="sub-tab-btn active" onclick="switchSubTab('legislation','bill')" id="subTabBill">Submit</button>
+                    <button class="sub-tab-btn" onclick="switchSubTab('legislation','table')" id="subTabTable">Floor</button>
+                    <button class="sub-tab-btn" onclick="switchSubTab('legislation','vote')" id="subTabVote">Vote</button>
+                    <button class="sub-tab-btn" onclick="switchSubTab('legislation','archive')" id="subTabArchive">Archive</button>
+                </div>
+
+            <!-- Submit tab: bill drafting form only -->
+            <div id="contentBill" class="sub-tab-content active">
+                <div class="vote-panel" style="margin-bottom:10px;">
+                    <div class="vote-panel-title">> Draft New Bill (NEW BILL)</div>
+                    <input type="text" class="vote-bill-input" id="newBillTitle" placeholder="Bill title..." style="margin-bottom:6px;">
+                    <textarea id="newBillContent" placeholder="Enter the bill content..." style="
+                        background:#000; border:1px solid var(--tno-border); color:#ccc;
+                        font-family:'NeoDunggeunmo','VT323',monospace; font-size:0.85rem;
+                        width:100%; box-sizing:border-box; padding:8px; resize:vertical;
+                        min-height:80px; outline:none; line-height:1.5;
+                    "></textarea>
+                    <input type="text" id="newBillTags" placeholder="Tags (comma-separated, e.g. Economy, Security)" style="background:#000; border:1px solid var(--tno-border); color:#aaa; font-family:'NeoDunggeunmo','VT323',monospace; font-size:0.85rem; width:100%; box-sizing:border-box; padding:5px 8px; margin-top:6px;">
+                    <div style="margin-top:8px;">
+                        <label style="color:#888; font-size:0.85rem; margin-bottom:4px;">Passage Threshold</label>
+                        <select id="newBillThreshold" style="width:100%; background:#000; border:1px solid var(--tno-border); color:var(--tno-gold); font-family:'NeoDunggeunmo','VT323',monospace; font-size:0.9rem; padding:4px 8px;" onchange="toggleCustomThreshold()">
+                            <option value="0.5">Majority (over half of members)</option>
+                            <option value="0.667">Supermajority (2/3 or more)</option>
+                            <option value="1.0">Unanimous</option>
+                            <option value="custom">Custom...</option>
+                        </select>
+                        <div id="customThresholdWrap" style="display:none; margin-top:6px; display:none; align-items:center; gap:6px;">
+                            <input type="number" id="customNumer" min="1" placeholder="Numerator" style="flex:1; text-align:center;">
+                            <span style="color:#666; font-size:1.2rem;">/</span>
+                            <input type="number" id="customDenom" min="1" placeholder="Denominator" style="flex:1; text-align:center;">
+                            <span id="customThresholdPreview" style="color:#ffd700; font-size:0.85rem; white-space:nowrap;"></span>
+                        </div>
+                    </div>
+                    <button class="add-btn" style="border-style:solid; margin-top:8px; color:var(--tno-neon); border-color:var(--tno-neon);" onclick="addBill()">[+] Register Bill</button>
+                </div>
+
+                <!-- Edit Existing Bill -->
+                <div class="vote-panel">
+                    <div class="vote-panel-title">> Edit Existing Bill (EDIT BILL)</div>
+                    <select id="editBillSelect" style="width:100%; background:#000; border:1px solid var(--tno-border); color:var(--tno-gold); font-family:'NeoDunggeunmo','VT323',monospace; font-size:0.95rem; padding:6px;margin-bottom:10px;" onchange="selectBillForEdit(this.value)">
+                        <option value="">-- Select bill to edit --</option>
+                    </select>
+                    <div id="editBillForm" style="display:none;">
+                        <input type="text" class="vote-bill-input" id="editBillTitle" placeholder="Bill title..." style="margin-bottom:6px;">
+                        <textarea id="editBillContent" placeholder="Enter the bill content..." style="
+                            background:#000; border:1px solid var(--tno-border); color:#ccc;
+                            font-family:'NeoDunggeunmo','VT323',monospace; font-size:0.85rem;
+                            width:100%; box-sizing:border-box; padding:8px; resize:vertical;
+                            min-height:80px; outline:none; line-height:1.5;
+                        "></textarea>
+                        <input type="text" id="editBillTags" placeholder="Tags (comma-separated, e.g. Economy, Security)" style="background:#000; border:1px solid var(--tno-border); color:#aaa; font-family:'NeoDunggeunmo','VT323',monospace; font-size:0.85rem; width:100%; box-sizing:border-box; padding:5px 8px; margin-top:6px;">
                         <div style="margin-top:8px;">
-                            <label style="color:#888;font-size:0.9rem;margin-bottom:4px;">Passage Threshold</label>
-                            <select id="newBillThreshold" style="width:100%;background:#000;border:1px solid var(--tno-border);color:var(--tno-gold);font-family:'VT323',monospace;font-size:1rem;padding:4px 8px;" onchange="toggleCustomThreshold()">
-                                <option value="0.5">Simple Majority (1/2+1)</option>
-                                <option value="0.667">Supermajority (2/3)</option>
+                            <label style="color:#888; font-size:0.85rem; margin-bottom:4px;">Passage Threshold</label>
+                            <select id="editBillThreshold" style="width:100%; background:#000; border:1px solid var(--tno-border); color:var(--tno-gold); font-family:'NeoDunggeunmo','VT323',monospace; font-size:0.9rem; padding:4px 8px;" onchange="toggleEditCustomThreshold()">
+                                <option value="0.5">Majority (over half of members)</option>
+                                <option value="0.667">Supermajority (2/3 or more)</option>
                                 <option value="1.0">Unanimous</option>
                                 <option value="custom">Custom...</option>
                             </select>
-                            <div id="customThresholdWrap" style="display:none;margin-top:6px;align-items:center;gap:6px;">
-                                <input type="number" id="customNumer" min="1" placeholder="Num." style="flex:1;text-align:center;">
-                                <span style="color:#666;font-size:1.2rem;">/</span>
-                                <input type="number" id="customDenom" min="1" placeholder="Den." style="flex:1;text-align:center;">
-                                <span id="customThresholdPreview" style="color:#ffd700;font-size:0.9rem;white-space:nowrap;"></span>
+                            <div id="editCustomThresholdWrap" style="display:none; margin-top:6px; align-items:center; gap:6px;">
+                                <input type="number" id="editCustomNumer" min="1" placeholder="Numerator" style="flex:1; text-align:center;">
+                                <span style="color:#666; font-size:1.2rem;">/</span>
+                                <input type="number" id="editCustomDenom" min="1" placeholder="Denominator" style="flex:1; text-align:center;">
+                                <span id="editCustomThresholdPreview" style="color:#ffd700; font-size:0.85rem; white-space:nowrap;"></span>
                             </div>
                         </div>
-                        <button class="add-btn" style="border-style:solid;margin-top:8px;color:var(--tno-neon);border-color:var(--tno-neon);" onclick="addBill()">[+] SUBMIT BILL</button>
+                        <button class="add-btn" style="border-style:solid; margin-top:8px; color:var(--tno-gold); border-color:var(--tno-gold);" onclick="saveEditBill()">[✔] Save Changes</button>
                     </div>
+                </div>
+            </div>
 
-                    <!-- Search + Tag Filter -->
-                    <div class="bill-search-bar">
-                        <input type="text" id="billSearchInput" placeholder="Search bills..." oninput="renderBillList(); renderArchiveList();">
-                        <button onclick="document.getElementById('billSearchInput').value=''; activeBillTagFilter=null; renderBillList(); renderArchiveList();" style="background:transparent;border:1px solid #333;color:#555;padding:4px 8px;font-family:'VT323',monospace;cursor:pointer;" title="Clear">✕</button>
+            <!-- Floor tab: bill search + pending list -->
+            <div id="contentTable" class="sub-tab-content">
+                <!-- Search + tag filter -->
+                <div class="bill-search-bar">
+                    <input type="text" id="billSearchInput" placeholder="Search bills..." oninput="renderBillList(); renderArchiveList();">
+                    <button onclick="document.getElementById('billSearchInput').value=''; activeBillTagFilter=null; renderBillList(); renderArchiveList();" style="background:transparent;border:1px solid #333;color:#555;padding:4px 8px;font-family:'NeoDunggeunmo','VT323',monospace;cursor:pointer;" title="Reset">✕</button>
+                </div>
+                <div class="bill-tag-filter" id="billTagFilter"></div>
+
+                <div id="billList"></div>
+            </div>
+
+            <!-- Archive tab: passed/failed bills -->
+            <div id="contentArchive" class="sub-tab-content">
+                <div class="bill-search-bar" style="margin-bottom:8px;">
+                    <input type="text" id="archiveSearchInput" placeholder="Search archive..." oninput="renderArchiveList();">
+                    <button onclick="document.getElementById('archiveSearchInput').value=''; renderArchiveList();" style="background:transparent;border:1px solid #333;color:#555;padding:4px 8px;font-family:'NeoDunggeunmo','VT323',monospace;cursor:pointer;" title="Reset">✕</button>
+                </div>
+                <div class="bill-tag-filter" id="archiveTagFilter"></div>
+                <div id="archiveList"></div>
+            </div>
+
+            <!-- VOTE SUB-TAB -->
+            <div id="contentVote" class="sub-tab-content">
+                <!-- Select Bill -->
+                <div class="vote-panel" style="margin-bottom:10px;">
+                    <div class="vote-panel-title">> Select Bill Under Review (SELECT BILL)</div>
+                    <div id="voteActiveBillDisplay" style="
+                        background:#050505; border:1px solid #333; padding:8px;
+                        margin-bottom:8px; min-height:36px;
+                    ">
+                        <span style="color:#444; font-size:0.9rem;">Select a bill...</span>
                     </div>
-                    <div class="bill-tag-filter" id="billTagFilter"></div>
-                    <div id="billList"></div>
+                    <select id="voteSelectBill" style="width:100%; background:#000; border:1px solid var(--tno-border); color:var(--tno-gold); font-family:'NeoDunggeunmo','VT323',monospace; font-size:0.95rem; padding:6px;" onchange="selectBillForVote(this.value)">
+                        <option value="">-- Select Bill --</option>
+                    </select>
+                    <div style="margin-top:8px;">
+                        <label style="color:#888; font-size:0.85rem; margin-bottom:4px;">Vote Date</label>
+                        <input type="text" id="voteDateInput" placeholder="e.g. March 5, 1952" style="width:100%; box-sizing:border-box;" onchange="updateVoteDate(this.value)">
+                    </div>
                 </div>
 
-                <!-- ARCHIVE SUB-TAB -->
-                <div id="contentArchive" class="sub-tab-content">
-                    <div class="bill-search-bar" style="margin-bottom:8px;">
-                        <input type="text" id="archiveSearchInput" placeholder="Search records..." oninput="renderArchiveList();">
-                        <button onclick="document.getElementById('archiveSearchInput').value=''; activeArchiveTagFilter=null; renderArchiveList();" style="background:transparent;border:1px solid #333;color:#555;padding:4px 8px;font-family:'VT323',monospace;cursor:pointer;" title="Clear">✕</button>
+                <!-- Vote Input Mode -->
+                <div class="vote-panel" id="voteModePanel">
+                    <div class="vote-panel-title">> Vote Input Mode</div>
+                    <div class="vote-btn-row">
+                        <button class="vote-ctrl-btn yea" onclick="setVoteMode('yea')">▲ Yea</button>
+                        <button class="vote-ctrl-btn nay" onclick="setVoteMode('nay')">▼ Nay</button>
+                        <button class="vote-ctrl-btn abs" onclick="setVoteMode('abs')">— Abstain</button>
+                        <button class="vote-ctrl-btn clr" onclick="setVoteMode('none')">✕ Clear</button>
                     </div>
-                    <div class="bill-tag-filter" id="archiveTagFilter"></div>
-                    <div id="archiveList"></div>
+                    <div class="vote-hint">
+                        Select a mode, then click a member's dot on the canvas &nbsp;|&nbsp;
+                        Current: <span id="currentModeLabel" style="color:#888;">None</span>
+                    </div>
+                    <div class="vote-btn-row" style="margin-top:8px;">
+                        <button class="vote-ctrl-btn clr" style="color:var(--tno-alert);border-color:var(--tno-alert);" onclick="clearAllVotes()">Clear All</button>
+                    </div>
                 </div>
 
-                <!-- VOTE SUB-TAB -->
-                <div id="contentVote" class="sub-tab-content">
-                    <div class="vote-panel" style="margin-bottom:10px;">
-                        <div class="vote-panel-title">> SELECT BILL FOR DEBATE</div>
-                        <div id="voteActiveBillDisplay" style="background:#050505;border:1px solid #333;padding:8px;margin-bottom:8px;min-height:36px;">
-                            <span style="color:#444;font-size:0.9rem;">Select a bill to debate...</span>
-                        </div>
-                        <select id="voteSelectBill" style="width:100%;background:#000;border:1px solid var(--tno-border);color:var(--tno-gold);font-family:'VT323',monospace;font-size:1rem;padding:6px;" onchange="selectBillForVote(this.value)">
-                            <option value="">-- SELECT BILL --</option>
-                        </select>
+                <!-- Party Bulk Vote -->
+                <div class="vote-panel" id="partyBulkPanel">
+                    <div class="vote-panel-title">> Party Bulk Vote (PARTY BULK)</div>
+                    <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:8px;" id="bulkChamberSelectGroup">
+                        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;color:#aaa;font-size:0.85rem;padding:4px 6px;background:#0a0c10;border:1px solid #222;" id="bulkHouseWrap">
+                            <input type="checkbox" name="bulkChamber" value="house" checked onchange="onBulkChamberChange()"> <span id="bulkHouseLabel">House</span>
+                        </label>
+                        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;color:#aaa;font-size:0.85rem;padding:4px 6px;background:#0a0c10;border:1px solid #222;" id="bulkSenateRadioWrap">
+                            <input type="checkbox" name="bulkChamber" value="senate" onchange="onBulkChamberChange()"> <span id="bulkSenateLabel">Senate</span>
+                        </label>
+                        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;color:#aaa;font-size:0.85rem;padding:4px 6px;background:#0a0c10;border:1px solid #222;display:none;" id="bulkThirdRadioWrap">
+                            <input type="checkbox" name="bulkChamber" value="third" onchange="onBulkChamberChange()"> <span id="bulkThirdLabel">Third</span>
+                        </label>
+                        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;color:var(--tno-neon);font-size:0.85rem;padding:4px 6px;background:#0a1a1a;border:1px solid #1a3a3a;" id="bulkAllWrap">
+                            <input type="checkbox" id="bulkChamberAll" onchange="onBulkChamberAllChange(this.checked)"> All
+                        </label>
                     </div>
+                    <div id="bulkPartyList"></div>
+                </div>
 
-                    <div class="vote-panel">
-                        <div class="vote-panel-title">> VOTE INPUT MODE</div>
-                        <div class="vote-btn-row">
-                            <button class="vote-ctrl-btn yea" onclick="setVoteMode('yea')">▲ YEA</button>
-                            <button class="vote-ctrl-btn nay" onclick="setVoteMode('nay')">▼ NAY</button>
-                            <button class="vote-ctrl-btn abs" onclick="setVoteMode('abs')">— ABSTAIN</button>
-                            <button class="vote-ctrl-btn clr" onclick="setVoteMode('none')">✕ CLEAR</button>
-                        </div>
-                        <div class="vote-hint">
-                            Select mode, then click a seat on the canvas. &nbsp;|&nbsp;
-                            Mode: <span id="currentModeLabel" style="color:#888;">NONE</span>
-                        </div>
-                        <div class="vote-btn-row" style="margin-top:8px;">
-                            <button class="vote-ctrl-btn clr" style="color:var(--tno-alert);border-color:var(--tno-alert);" onclick="clearAllVotes()">RESET ALL VOTES</button>
-                        </div>
+                <!-- Confirm House Vote -->
+                <div class="vote-result-wrap" id="houseVoteResult">
+                    <div class="vote-result-title" id="houseVoteResultTitle">[ House Vote Result ]</div>
+                    <div class="vote-bar-outer">
+                        <div class="vote-bar-yea" id="hBarYea" style="width:0%"></div>
+                        <div class="vote-bar-nay" id="hBarNay" style="width:0%"></div>
+                        <div class="vote-bar-abs" id="hBarAbs" style="width:0%"></div>
+                        <div class="vote-bar-none" id="hBarNone" style="width:100%"></div>
                     </div>
+                    <div class="vote-counts">
+                        <span class="vc-yea">Yea <b id="hCntYea">0</b></span>
+                        <span class="vc-nay">Nay <b id="hCntNay">0</b></span>
+                        <span class="vc-abs">Abstain <b id="hCntAbs">0</b></span>
+                        <span class="vc-none">No Vote <b id="hCntNone">0</b></span>
+                    </div>
+                    <div style="font-size:0.85rem; color:#aaa; text-align:right; margin-bottom:2px; min-height:1.2em;" id="hVoteInfo"></div>
+                    <div class="vote-verdict verdict-pending" id="hVerdict">-- Awaiting Vote --</div>
+                    <button class="vote-ctrl-btn yea" id="hConfirmBtn" style="width:100%;margin-top:8px;padding:9px;" onclick="confirmChamberVote('house')">▶ Confirm House Vote</button>
+                </div>
 
-                    <div class="vote-panel">
-                        <div class="vote-panel-title">> PARTY BULK VOTE</div>
-                        <div style="display:flex;gap:6px;margin-bottom:8px;">
-                            <label style="display:inline-flex;align-items:center;gap:4px;cursor:pointer;color:#aaa;font-size:0.9rem;">
-                                <input type="radio" name="bulkChamber" value="house" checked onchange="renderBulkPartyList()"> <span id="bulkHouseLabel">House</span>
-                            </label>
-                            <label style="display:inline-flex;align-items:center;gap:4px;cursor:pointer;color:#aaa;font-size:0.9rem;" id="bulkSenateRadioWrap">
-                                <input type="radio" name="bulkChamber" value="senate" onchange="renderBulkPartyList()"> <span id="bulkSenateLabel">Senate</span>
-                            </label>
-                            <label style="display:inline-flex;align-items:center;gap:4px;cursor:pointer;color:#aaa;font-size:0.9rem;">
-                                <input type="radio" name="bulkChamber" value="both" onchange="renderBulkPartyList()"> BOTH
-                            </label>
-                        </div>
-                        <div id="bulkPartyList"></div>
+                <!-- Confirm Senate Vote -->
+                <div class="vote-result-wrap" id="senateVoteResult" style="margin-top:8px;">
+                    <div class="vote-result-title" id="senateVoteResultTitle">[ Senate Vote Result ]</div>
+                    <div class="vote-bar-outer">
+                        <div class="vote-bar-yea" id="sBarYea" style="width:0%"></div>
+                        <div class="vote-bar-nay" id="sBarNay" style="width:0%"></div>
+                        <div class="vote-bar-abs" id="sBarAbs" style="width:0%"></div>
+                        <div class="vote-bar-none" id="sBarNone" style="width:100%"></div>
                     </div>
+                    <div class="vote-counts">
+                        <span class="vc-yea">Yea <b id="sCntYea">0</b></span>
+                        <span class="vc-nay">Nay <b id="sCntNay">0</b></span>
+                        <span class="vc-abs">Abstain <b id="sCntAbs">0</b></span>
+                        <span class="vc-none">No Vote <b id="sCntNone">0</b></span>
+                    </div>
+                    <div style="font-size:0.85rem; color:#aaa; text-align:right; margin-bottom:2px; min-height:1.2em;" id="sVoteInfo"></div>
+                    <div class="vote-verdict verdict-pending" id="sVerdict">-- Awaiting Vote --</div>
+                    <button class="vote-ctrl-btn yea" id="sConfirmBtn" style="width:100%;margin-top:8px;padding:9px;" onclick="confirmChamberVote('senate')">▶ Confirm Senate Vote</button>
+                </div>
 
-                    <!-- HOUSE VOTE RESULT -->
-                    <div class="vote-result-wrap" id="houseVoteResult">
-                        <div class="vote-result-title" id="houseVoteResultTitle">[ HOUSE VOTE RESULT ]</div>
-                        <div class="vote-bar-outer">
-                            <div class="vote-bar-yea" id="hBarYea" style="width:0%"></div>
-                            <div class="vote-bar-nay" id="hBarNay" style="width:0%"></div>
-                            <div class="vote-bar-abs" id="hBarAbs" style="width:0%"></div>
-                            <div class="vote-bar-none" id="hBarNone" style="width:100%"></div>
-                        </div>
-                        <div class="vote-counts">
-                            <span class="vc-yea">YEA <b id="hCntYea">0</b></span>
-                            <span class="vc-nay">NAY <b id="hCntNay">0</b></span>
-                            <span class="vc-abs">ABS <b id="hCntAbs">0</b></span>
-                            <span class="vc-none">NOT VOTED <b id="hCntNone">0</b></span>
-                        </div>
-                        <div style="font-size:0.85rem; color:#aaa; text-align:right; margin-bottom:2px; min-height:1.2em;" id="hVoteInfo"></div>
-                        <div class="vote-verdict verdict-pending" id="hVerdict">-- AWAITING VOTE --</div>
-                        <button class="vote-ctrl-btn yea" id="hConfirmBtn" style="width:100%;margin-top:8px;padding:9px;" onclick="confirmChamberVote('house')">▶ CONFIRM HOUSE VOTE</button>
+                <!-- Confirm Third Vote -->
+                <div class="vote-result-wrap" id="thirdVoteResult" style="margin-top:8px;display:none;">
+                    <div class="vote-result-title" id="thirdVoteResultTitle">[ Third Vote Result ]</div>
+                    <div class="vote-bar-outer">
+                        <div class="vote-bar-yea" id="tBarYea" style="width:0%"></div>
+                        <div class="vote-bar-nay" id="tBarNay" style="width:0%"></div>
+                        <div class="vote-bar-abs" id="tBarAbs" style="width:0%"></div>
+                        <div class="vote-bar-none" id="tBarNone" style="width:100%"></div>
                     </div>
-
-                    <!-- SENATE VOTE RESULT -->
-                    <div class="vote-result-wrap" id="senateVoteResult" style="margin-top:8px;">
-                        <div class="vote-result-title" id="senateVoteResultTitle">[ SENATE VOTE RESULT ]</div>
-                        <div class="vote-bar-outer">
-                            <div class="vote-bar-yea" id="sBarYea" style="width:0%"></div>
-                            <div class="vote-bar-nay" id="sBarNay" style="width:0%"></div>
-                            <div class="vote-bar-abs" id="sBarAbs" style="width:0%"></div>
-                            <div class="vote-bar-none" id="sBarNone" style="width:100%"></div>
-                        </div>
-                        <div class="vote-counts">
-                            <span class="vc-yea">YEA <b id="sCntYea">0</b></span>
-                            <span class="vc-nay">NAY <b id="sCntNay">0</b></span>
-                            <span class="vc-abs">ABS <b id="sCntAbs">0</b></span>
-                            <span class="vc-none">NOT VOTED <b id="sCntNone">0</b></span>
-                        </div>
-                        <div style="font-size:0.85rem; color:#aaa; text-align:right; margin-bottom:2px; min-height:1.2em;" id="sVoteInfo"></div>
-                        <div class="vote-verdict verdict-pending" id="sVerdict">-- AWAITING VOTE --</div>
-                        <button class="vote-ctrl-btn yea" id="sConfirmBtn" style="width:100%;margin-top:8px;padding:9px;" onclick="confirmChamberVote('senate')">▶ CONFIRM SENATE VOTE</button>
+                    <div class="vote-counts">
+                        <span class="vc-yea">Yea <b id="tCntYea">0</b></span>
+                        <span class="vc-nay">Nay <b id="tCntNay">0</b></span>
+                        <span class="vc-abs">Abstain <b id="tCntAbs">0</b></span>
+                        <span class="vc-none">No Vote <b id="tCntNone">0</b></span>
                     </div>
-                </div><!-- end contentVote -->
+                    <div style="font-size:0.85rem; color:#aaa; text-align:right; margin-bottom:2px; min-height:1.2em;" id="tVoteInfo"></div>
+                    <div class="vote-verdict verdict-pending" id="tVerdict">-- Awaiting Vote --</div>
+                    <button class="vote-ctrl-btn yea" id="tConfirmBtn" style="width:100%;margin-top:8px;padding:9px;" onclick="confirmChamberVote('third')">▶ Confirm Third Vote</button>
+                </div>
+            </div><!-- end contentVote -->
             </div><!-- end mainContentLegislation -->
+
+            <!-- ===== Election group ===== -->
+            <div id="mainContentElection" class="main-tab-content">
+                <div class="sub-tab-container" style="margin-top:10px;">
+                    <button class="sub-tab-btn" id="elecSubTabDistrict" onclick="elecSwitchSub('district')">District</button>
+                    <button class="sub-tab-btn" id="elecSubTabTendency" onclick="elecSwitchSub('tendency')">Tendency</button>
+                    <button class="sub-tab-btn active" id="elecSubTabVote" onclick="elecSwitchSub('vote')">Election</button>
+                    <button class="sub-tab-btn" id="elecSubTabRecord" onclick="elecSwitchSub('record')">Record</button>
+                </div>
+
+                <!-- District sub-tab - settings only (map on the right) -->
+                <div id="elecSubDistrict" class="sub-tab-content">
+                    <!-- Select district type -->
+                    <div style="display:flex;gap:6px;margin:8px 0 10px;">
+                        <button id="districtChamberHouseBtn" onclick="districtSetChamber('house')"
+                            style="flex:1;padding:6px;font-family:inherit;font-size:0.85rem;background:#0a1a2a;color:var(--tno-neon);border:2px solid var(--tno-neon);cursor:pointer;letter-spacing:1px;" id="districtChamberHouseBtn">
+                            <span id="districtChamberHouseLabel">House</span> Districts
+                        </button>
+                        <button id="districtChamberSenateBtn" onclick="districtSetChamber('senate')"
+                            style="flex:1;padding:6px;font-family:inherit;font-size:0.85rem;background:transparent;color:#664400;border:2px solid #664400;cursor:pointer;letter-spacing:1px;">
+                            <span id="districtChamberSenateLabel">Senate</span> Districts
+                        </button>
+                        <button id="districtChamberThirdBtn" onclick="districtSetChamber('third')" style="display:none;flex:1;padding:6px;font-family:inherit;font-size:0.85rem;background:transparent;color:#6a0080;border:2px solid #6a0080;cursor:pointer;letter-spacing:1px;">
+                            <span id="districtChamberThirdLabel">Third</span> Districts
+                        </button>
+                    </div>
+                    <div style="margin:0 0 6px;font-size:0.8rem;color:#555;">Edit Mode</div>
+                    <div style="display:flex;gap:6px;margin-bottom:10px;">
+                        <button id="districtModeAdd" onclick="districtSetMode('add')"
+                            style="flex:1;padding:8px;font-family:inherit;font-size:0.9rem;background:#0a2a1a;color:#00cc66;border:2px solid #00cc66;cursor:pointer;letter-spacing:1px;box-shadow:0 0 8px #00cc6688;">Add</button>
+                        <button id="districtModeRemove" onclick="districtSetMode('remove')"
+                            style="flex:1;padding:8px;font-family:inherit;font-size:0.9rem;background:transparent;color:#663333;border:2px solid #663333;cursor:pointer;letter-spacing:1px;">Remove</button>
+                        <button id="districtModeName" onclick="districtSetMode('name')"
+                            style="flex:1;padding:8px;font-family:inherit;font-size:0.9rem;background:transparent;color:#666633;border:2px solid #666633;cursor:pointer;letter-spacing:1px;">Name</button>
+                        <button id="districtModeNone" onclick="districtSetMode('none')"
+                            style="flex:0 0 44px;padding:8px;font-family:inherit;font-size:0.9rem;background:transparent;color:#555;border:2px solid #444;cursor:pointer;" title="Deselect (pan/zoom only)">✕</button>
+                    </div>
+                    <!-- Name mode side panel -->
+                    <div id="districtNamePanel" style="display:none;padding:8px;background:#0a0c10;border:1px solid #665500;margin-bottom:10px;">
+                        <div style="color:#888;font-size:0.78rem;margin-bottom:5px;">Selected district <span id="districtNamePanelCoord" style="color:#666;"></span></div>
+                        <input type="text" id="districtNameInput" placeholder="District name (e.g. Downtown)"
+                            style="width:100%;box-sizing:border-box;background:#000;border:1px solid #665500;color:var(--tno-gold);font-family:inherit;font-size:0.9rem;padding:6px;"
+                            oninput="districtSetName(this.value)">
+                    </div>
+                    <div style="padding:6px 8px;background:#0a0c10;border:1px solid #222;font-size:0.78rem;color:#444;margin-bottom:10px;">
+                        Click/drag to edit cells (name mode: click only) &nbsp;|&nbsp; Wheel: zoom &nbsp;|&nbsp; Wheel-click+drag: pan
+                    </div>
+                    <div style="display:flex;justify-content:flex-end;align-items:center;margin-bottom:14px;">
+                        <button onclick="districtClearAll()" style="background:transparent;border:1px solid #333;color:#555;padding:3px 10px;cursor:pointer;font-family:inherit;font-size:0.8rem;">Clear All</button>
+                    </div>
+
+                    <!-- District List Panel (bulk name management) -->
+                    <div style="color:#666;font-size:0.8rem;margin-bottom:6px;letter-spacing:1px;border-top:1px solid #222;padding-top:10px;">▌ District List</div>
+                    <div class="sub-tab-container-3" id="districtListInnerTabs">
+                        <button class="sub-tab-btn-3 active" onclick="switchDistrictListInnerTab('house')" id="innerTabDistListHouse">House</button>
+                        <button class="sub-tab-btn-3" onclick="switchDistrictListInnerTab('senate')" id="innerTabDistListSenate">Senate</button>
+                        <button class="sub-tab-btn-3" onclick="switchDistrictListInnerTab('third')" id="innerTabDistListThird" style="display:none;">Third</button>
+                    </div>
+                    <div id="districtListPanel"></div>
+                </div>
+
+                <!-- Tendency sub-tab - strength setting only (map on the right) -->
+                <div id="elecSubTendency" class="sub-tab-content">
+                    <!-- Select strength -->
+                    <div style="display:flex;align-items:center;gap:4px;margin:8px 0;flex-wrap:wrap;">
+                        <span style="color:#666;font-size:0.8rem;margin-right:2px;">Strength</span>
+                        <button id="tendStrBtn0"   onclick="tendencySetStrength(0)"   style="flex:1;padding:4px;font-size:0.85rem;font-family:inherit;background:#111;color:#888;border:1px solid #333;cursor:pointer;">0%</button>
+                        <button id="tendStrBtn25"  onclick="tendencySetStrength(25)"  style="flex:1;padding:4px;font-size:0.85rem;font-family:inherit;background:#111;color:#888;border:1px solid #333;cursor:pointer;">25%</button>
+                        <button id="tendStrBtn50"  onclick="tendencySetStrength(50)"  style="flex:1;padding:4px;font-size:0.85rem;font-family:inherit;background:var(--tno-neon);color:#000;border:1px solid var(--tno-neon);cursor:pointer;">50%</button>
+                        <button id="tendStrBtn75"  onclick="tendencySetStrength(75)"  style="flex:1;padding:4px;font-size:0.85rem;font-family:inherit;background:#111;color:#888;border:1px solid #333;cursor:pointer;">75%</button>
+                        <button id="tendStrBtn100" onclick="tendencySetStrength(100)" style="flex:1;padding:4px;font-size:0.85rem;font-family:inherit;background:#111;color:#888;border:1px solid #333;cursor:pointer;">100%</button>
+                    </div>
+                    <div style="font-size:0.75rem;color:#444;margin-bottom:6px;padding:4px 8px;background:#0a0c10;border:1px solid #222;">
+                        View and edit the tendency map in the right panel
+                    </div>
+                </div>
+
+                <!-- Election sub-tab -->
+                <div id="elecSubVote" class="sub-tab-content active">
+                    <div style="display:grid;grid-template-columns:1fr 90px;gap:8px;margin-bottom:10px;">
+                        <div>
+                            <label style="color:#888;font-size:0.8rem;margin-bottom:3px;">Election Title</label>
+                            <input type="text" id="elecTitle" placeholder="e.g. 1st General Election" style="width:100%;box-sizing:border-box;">
+                        </div>
+                        <div>
+                            <label style="color:#888;font-size:0.8rem;margin-bottom:3px;">Year</label>
+                            <input type="number" id="elecYear" placeholder="1952" style="width:100%;box-sizing:border-box;">
+                        </div>
+                    </div>
+                    <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:10px;border-bottom:1px solid #222;padding-bottom:10px;" id="elecChamberSelectGroup">
+                        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;color:#aaa;font-size:0.9rem;padding:4px 6px;background:#0a0c10;border:1px solid #222;" id="elecHouseWrap">
+                            <input type="checkbox" name="elecTarget" value="house" checked onchange="onElecTargetChange()"> <span id="elecHouseLabel">House</span>
+                        </label>
+                        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;color:#aaa;font-size:0.9rem;padding:4px 6px;background:#0a0c10;border:1px solid #222;" id="elecSenateWrap">
+                            <input type="checkbox" name="elecTarget" value="senate" onchange="onElecTargetChange()"> <span id="elecSenateLabel">Senate</span>
+                        </label>
+                        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;color:#aaa;font-size:0.9rem;padding:4px 6px;background:#0a0c10;border:1px solid #222;display:none;" id="elecThirdWrap">
+                            <input type="checkbox" name="elecTarget" value="third" onchange="onElecTargetChange()"> <span id="elecThirdLabel">Third</span>
+                        </label>
+                        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;color:var(--tno-neon);font-size:0.9rem;padding:4px 6px;background:#0a1a1a;border:1px solid #1a3a3a;" id="elecBothWrap">
+                            <input type="checkbox" id="elecTargetAll" onchange="onElecTargetAllChange(this.checked)"> <span id="elecBothLabel">All</span>
+                        </label>
+                    </div>
+                    <!-- Election method -->
+                    <div style="margin-bottom:10px;">
+                        <div style="color:#666;font-size:0.8rem;margin-bottom:4px;">Election Method</div>
+                        <div style="display:flex;gap:6px;">
+                            <label style="flex:1;cursor:pointer;padding:6px 8px;background:#0a0c10;border:1px solid #2a2a2a;display:flex;align-items:center;gap:6px;font-size:0.85rem;color:#aaa;">
+                                <input type="checkbox" id="elecModeProportional" checked onchange="onElecModeChange()"> Proportional
+                            </label>
+                            <label style="flex:1;cursor:pointer;padding:6px 8px;background:#0a0c10;border:1px solid #2a2a2a;display:flex;align-items:center;gap:6px;font-size:0.85rem;color:#aaa;">
+                                <input type="checkbox" id="elecModeDistrict" onchange="onElecModeChange()"> District
+                            </label>
+                            <label style="flex:1;cursor:pointer;padding:6px 8px;background:#0a1a1a;border:1px solid #1a3a3a;display:flex;align-items:center;gap:6px;font-size:0.85rem;color:var(--tno-neon);">
+                                <input type="checkbox" id="elecModeAll" onchange="onElecModeAllChange(this.checked)"> All
+                            </label>
+                        </div>
+                        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:6px 8px;background:#0a0c10;border:1px solid #663333;margin-top:6px;font-size:0.85rem;color:#cc8888;" title="Recount only vacant districts">
+                            <input type="checkbox" id="elecModeByElection" onchange="elecUpdateDistrictInfo()"> By-election (re-run only vacant districts)
+                        </label>
+                        <div id="elecModeInfo" style="display:none;margin-top:6px;padding:6px 8px;background:#0a0c10;border:1px solid #2a2a2a;font-size:0.78rem;color:#666;line-height:1.6;">
+                            <div id="elecModeInfoHouse"></div>
+                            <div id="elecModeInfoSenate" style="display:none;"></div>
+                            <div id="elecModeInfoThird" style="display:none;"></div>
+                            <div style="font-size:0.72rem;color:#444;margin-top:3px;">Districts are decided by support in the Tendency tab; Proportional is decided by the support rate below</div>
+                        </div>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;background:#000;border:1px solid #333;padding:8px 10px;">
+                        <label style="flex:0 0 70px;color:#aaa;font-size:0.85rem;margin:0;">Count Speed</label>
+                        <input type="range" id="elecSpeed" min="1" max="100" value="80"
+                            oninput="document.getElementById('elecSpeedVal').innerText=this.value"
+                            style="-webkit-appearance:none;width:100%;background:transparent;">
+                        <span id="elecSpeedVal" style="width:28px;color:var(--tno-neon);text-align:right;">80</span>
+                    </div>
+                    <div style="height:14px;background:#111;border:1px solid var(--tno-border);margin-bottom:8px;overflow:hidden;">
+                        <div id="elecProgressBar" style="height:100%;background:var(--tno-neon);width:0%;box-shadow:0 0 6px var(--tno-neon);transition:width 0.06s;"></div>
+                    </div>
+                    <!-- Proportional panel -->
+                    <div id="elecProportionalPanel">
+                        <div id="elecInputList"></div>
+                    </div>
+                    <!-- District panel -->
+                    <div id="elecDistrictPanel" style="display:none;">
+                        <div style="background:#0a0c10;border:1px solid #2a2a2a;padding:10px;margin-bottom:8px;">
+                            <div style="color:#888;font-size:0.8rem;margin-bottom:8px;">District Settings</div>
+                            <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;">
+                                <label style="color:#666;font-size:0.8rem;white-space:nowrap;flex-shrink:0;">District Seats</label>
+                                <span id="elecDistrictSeats" style="color:var(--tno-neon);font-size:0.9rem;">0 seats (active district count)</span>
+                            </div>
+                            <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;">
+                                <label style="color:#666;font-size:0.8rem;white-space:nowrap;flex-shrink:0;">Noise (±%)</label>
+                                <input type="number" id="elecDistrictNoise" value="15" min="0" max="50"
+                                    style="width:70px;background:#000;border:1px solid #333;color:var(--tno-neon);font-family:inherit;font-size:0.9rem;padding:4px;text-align:center;">
+                                <span style="color:#444;font-size:0.78rem;">Random variation added to each district's result</span>
+                            </div>
+                        </div>
+                        <div style="background:#0a0c10;border:1px solid #2a2a2a;padding:8px;margin-bottom:8px;font-size:0.78rem;color:#555;line-height:1.5;">
+                            Winners in each district are decided based on the support set in the Tendency tab.<br>
+                            Districts without tendency data are assigned at random.
+                        </div>
+                    </div>
+                    <button id="elecRunBtn" onclick="elecRun()"
+                        style="background:var(--tno-neon);color:#000;font-weight:bold;border:none;width:100%;padding:14px;font-size:1.3rem;letter-spacing:2px;margin-top:10px;box-shadow:0 0 10px var(--tno-neon);cursor:pointer;font-family:inherit;">>> START COUNT <<</button>
+                    <div id="elecMidControls" style="display:none;margin-top:8px;">
+                        <div style="display:flex;gap:6px;">
+                            <button onclick="elecTogglePause()" id="elecPauseBtn"
+                                style="flex:1;background:transparent;border:1px solid var(--tno-gold);color:var(--tno-gold);padding:8px;font-family:inherit;font-size:0.9rem;cursor:pointer;">⏸ Pause</button>
+                            <button onclick="elecFinishNow()" id="elecFinishBtn"
+                                style="flex:1;background:transparent;border:1px solid #888;color:#aaa;padding:8px;font-family:inherit;font-size:0.9rem;cursor:pointer;">⏩ Finish Now</button>
+                        </div>
+                    </div>
+                    <div id="elecPostBtns" style="display:none;margin-top:8px;">
+                        <div style="display:flex;gap:6px;">
+                            <button onclick="elecApplyToParliament()"
+                                style="flex:1;background:var(--tno-neon);color:#000;border:none;padding:9px;font-family:inherit;font-size:0.9rem;cursor:pointer;letter-spacing:1px;">✔ Apply to Parliament</button>
+                            <button onclick="elecRerun()"
+                                style="flex:1;background:transparent;border:1px solid var(--tno-neon);color:var(--tno-neon);padding:9px;font-family:inherit;font-size:0.9rem;cursor:pointer;">↺ Recount</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Record sub-tab -->
+                <div id="elecSubRecord" class="sub-tab-content">
+                    <div id="elecRecordList" style="margin-top:8px;"></div>
+                </div>
+            </div><!-- end mainContentElection -->
+
+
         </div><!-- end controls-content -->
 
-        <div style="padding:15px;border-top:2px solid var(--tno-border);background:#000;">
-            <div style="display:flex;gap:10px;margin-bottom:-10px;">
-                <button class="add-btn" id="btnSaveJson" style="border-style:solid;margin-top:0;">SAVE</button>
-                <button class="add-btn" id="btnLoadJson" style="border-style:solid;margin-top:0;">LOAD</button>
+        <div style="padding: 15px; border-top: 2px solid var(--tno-border); background: #000;">
+            <div style="display:flex; gap:10px; margin-bottom:-10px;">
+                <button class="add-btn" id="btnSaveJson" style="border-style:solid; margin-top:0;">SAVE</button>
+                <button class="add-btn" id="btnLoadJson" style="border-style:solid; margin-top:0;">LOAD</button>
                 <input id="fileLoadJson" type="file" accept="application/json" style="display:none;">
             </div>
             <button class="simulate-btn" onclick="simulate()">>> PROTOCOL EXECUTE <<</button>
@@ -233,15 +599,175 @@
     </div>
 
     <div class="display-area">
-        <div class="chamber-box" id="senateSection">
-            <h3 id="senateTitle">SENATE</h3>
-            <canvas id="senateCanvas"></canvas>
-            <div id="senateStats" style="margin-top:10px;"></div>
+        <!-- Display Tabs -->
+        <div class="disp-tab-bar">
+            <button class="disp-tab-btn active" id="dispTabHouse"     data-tab="house"  onclick="switchDispTab('house')">House</button>
+            <button class="disp-tab-btn"         id="dispTabSenate"   data-tab="senate" onclick="switchDispTab('senate')">Senate</button>
+            <button class="disp-tab-btn"         id="dispTabThird"    data-tab="third" onclick="switchDispTab('third')" style="display:none;">Third</button>
+            <button class="disp-tab-btn"         id="dispTabDistrict" data-tab="district" onclick="switchDispTab('district')" style="display:none;"><span class="disp-tab-label">District</span><span class="disp-tab-close" onclick="event.stopPropagation();closeDispTab('district')">×</span></button>
+            <button class="disp-tab-btn"         id="dispTabTendency" data-tab="tendency" onclick="switchDispTab('tendency')" style="display:none;"><span class="disp-tab-label">Tendency</span><span class="disp-tab-close" onclick="event.stopPropagation();closeDispTab('tendency')">×</span></button>
+            <button class="disp-tab-btn"         id="dispTabElecResultHouse" data-tab="elecResultHouse" onclick="switchDispTab('elecResultHouse')" style="display:none;"><span class="disp-tab-label">House Election Results</span><span class="disp-tab-close" onclick="event.stopPropagation();closeDispTab('elecResultHouse')">×</span></button>
+            <button class="disp-tab-btn"         id="dispTabElecResultSenate" data-tab="elecResultSenate" onclick="switchDispTab('elecResultSenate')" style="display:none;"><span class="disp-tab-label">Senate Election Results</span><span class="disp-tab-close" onclick="event.stopPropagation();closeDispTab('elecResultSenate')">×</span></button>
+            <button class="disp-tab-btn"         id="dispTabElecResultThird" data-tab="elecResultThird" onclick="switchDispTab('elecResultThird')" style="display:none;"><span class="disp-tab-label">Third Election Results</span><span class="disp-tab-close" onclick="event.stopPropagation();closeDispTab('elecResultThird')">×</span></button>
         </div>
-        <div class="chamber-box">
-            <h3 id="houseTitle">HOUSE</h3>
-            <canvas id="houseCanvas"></canvas>
-            <div id="houseStats" style="margin-top:10px;"></div>
+
+        <!-- House Panel -->
+        <div class="disp-panel active" id="dispPanelHouse">
+            <div class="chamber-box">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+                    <h3 id="houseTitle" style="margin:0;">HOUSE</h3>
+                    <div style="display:flex;gap:4px;">
+                        <button onclick="chamberSetView('house','arc')" id="houseViewArcBtn"
+                            style="background:var(--tno-neon);color:#000;border:1px solid var(--tno-neon);padding:3px 9px;font-family:inherit;font-size:0.78rem;cursor:pointer;">Arc</button>
+                        <button onclick="chamberSetView('house','district')" id="houseViewDistrictBtn"
+                            style="background:transparent;color:#555;border:1px solid #333;padding:3px 9px;font-family:inherit;font-size:0.78rem;cursor:pointer;">District</button>
+                    </div>
+                </div>
+                <div id="houseViewArcWrap"><canvas id="houseCanvas" style="width:100%;display:block;"></canvas></div>
+                <div id="houseViewDistrictWrap" style="display:none;">
+                    <canvas id="houseDistrictCanvas" style="width:100%;height:340px;background:#0a0c10;border:1px solid #222;display:block;"></canvas>
+                </div>
+                <div id="houseStats" style="margin-top:10px;"></div>
+            </div>
+        </div>
+
+        <!-- Senate Panel -->
+        <div class="disp-panel" id="dispPanelSenate">
+            <div class="chamber-box" id="senateSection">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+                    <h3 id="senateTitle" style="margin:0;">SENATE</h3>
+                    <div style="display:flex;gap:4px;">
+                        <button onclick="chamberSetView('senate','arc')" id="senateViewArcBtn"
+                            style="background:var(--tno-neon);color:#000;border:1px solid var(--tno-neon);padding:3px 9px;font-family:inherit;font-size:0.78rem;cursor:pointer;">Arc</button>
+                        <button onclick="chamberSetView('senate','district')" id="senateViewDistrictBtn"
+                            style="background:transparent;color:#555;border:1px solid #333;padding:3px 9px;font-family:inherit;font-size:0.78rem;cursor:pointer;">District</button>
+                    </div>
+                </div>
+                <div id="senateViewArcWrap"><canvas id="senateCanvas" style="width:100%;display:block;"></canvas></div>
+                <div id="senateViewDistrictWrap" style="display:none;">
+                    <canvas id="senateDistrictCanvas" style="width:100%;height:340px;background:#0a0c10;border:1px solid #222;display:block;"></canvas>
+                </div>
+                <div id="senateStats" style="margin-top:10px;"></div>
+            </div>
+        </div>
+
+        <!-- Third Panel -->
+        <div class="disp-panel" id="dispPanelThird">
+            <div class="chamber-box" id="thirdSection">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+                    <h3 id="thirdTitle" style="margin:0;">THIRD</h3>
+                    <div style="display:flex;gap:4px;">
+                        <button onclick="chamberSetView('third','arc')" id="thirdViewArcBtn"
+                            style="background:var(--tno-neon);color:#000;border:1px solid var(--tno-neon);padding:3px 9px;font-family:inherit;font-size:0.78rem;cursor:pointer;">Arc</button>
+                        <button onclick="chamberSetView('third','district')" id="thirdViewDistrictBtn"
+                            style="background:transparent;color:#555;border:1px solid #333;padding:3px 9px;font-family:inherit;font-size:0.78rem;cursor:pointer;">District</button>
+                    </div>
+                </div>
+                <div id="thirdViewArcWrap"><canvas id="thirdCanvas" style="width:100%;display:block;"></canvas></div>
+                <div id="thirdViewDistrictWrap" style="display:none;">
+                    <canvas id="thirdDistrictCanvas" style="width:100%;height:340px;background:#0a0c10;border:1px solid #222;display:block;"></canvas>
+                </div>
+                <div id="thirdStats" style="margin-top:10px;"></div>
+            </div>
+        </div>
+
+        <!-- District Map Panel -->
+        <div class="disp-panel" id="dispPanelDistrict">
+            <div class="chamber-box" style="display:flex;flex-direction:column;height:100%;box-sizing:border-box;">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-shrink:0;">
+                    <h3 style="margin:0;border:none;padding:0;">> District Map</h3>
+                    <div style="display:flex;gap:4px;">
+                        <button onclick="districtZoom(1.2)"      style="background:#111;border:1px solid #333;color:#aaa;padding:3px 10px;cursor:pointer;font-family:inherit;">+</button>
+                        <button onclick="districtZoom(1/1.2)"    style="background:#111;border:1px solid #333;color:#aaa;padding:3px 10px;cursor:pointer;font-family:inherit;">−</button>
+                        <button onclick="districtFitView()"      style="background:#111;border:1px solid #333;color:#aaa;padding:3px 10px;cursor:pointer;font-family:inherit;">⊡</button>
+                        <button onclick="districtResetView()"    style="background:#111;border:1px solid #333;color:#555;padding:3px 10px;cursor:pointer;font-family:inherit;">↺</button>
+                        <button onclick="districtClearAll()"     style="background:transparent;border:1px solid #333;color:#555;padding:3px 10px;cursor:pointer;font-family:inherit;font-size:0.8rem;">Clear All</button>
+                    </div>
+                </div>
+                <canvas id="districtCanvas" style="width:100%;flex:1;background:#0a0c10;border:1px solid #222;cursor:crosshair;display:block;touch-action:none;min-height:200px;"></canvas>
+                <div style="margin-top:4px;font-size:0.8rem;color:#555;flex-shrink:0;">
+                    <span id="districtCount">House 0 cells · Senate 0 cells</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tendency Map Panel -->
+        <div class="disp-panel" id="dispPanelTendency">
+            <div class="chamber-box">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+                    <h3 style="margin:0;border:none;padding:0;">> Tendency Map</h3>
+                </div>
+                <div id="tendencyMaps"></div>
+            </div>
+        </div>
+
+        <!-- House Election Result Panel -->
+        <div class="disp-panel" id="dispPanelElecResultHouse">
+            <div class="chamber-box">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+                    <h3 id="elecResultTitleHouse" style="margin:0;border:none;padding:0;">> Election Results</h3>
+                    <div style="display:flex;gap:4px;">
+                        <button onclick="elecSetView('arc','house')" id="elecViewArcBtnHouse"
+                            style="background:var(--tno-neon);color:#000;border:1px solid var(--tno-neon);padding:4px 10px;font-family:inherit;font-size:0.8rem;cursor:pointer;">Arc</button>
+                        <button onclick="elecSetView('district','house')" id="elecViewDistrictBtnHouse"
+                            style="background:transparent;color:#555;border:1px solid #333;padding:4px 10px;font-family:inherit;font-size:0.8rem;cursor:pointer;">District</button>
+                    </div>
+                </div>
+                <div style="height:14px;background:#111;border:1px solid var(--tno-border);margin-bottom:10px;overflow:hidden;">
+                    <div id="elecResultBarHouse" style="height:100%;background:var(--tno-neon);width:0%;box-shadow:0 0 6px var(--tno-neon);transition:width 0.06s;"></div>
+                </div>
+                <div id="elecViewArcHouse"><canvas id="elecCanvasHouse" style="width:100%;display:block;"></canvas></div>
+                <div id="elecViewDistrictHouse" style="display:none;">
+                    <canvas id="elecDistrictResultCanvasHouse" style="width:100%;height:420px;background:#0a0c10;border:1px solid #222;display:block;"></canvas>
+                </div>
+                <div id="elecResultStatsHouse" style="margin-top:10px;"></div>
+            </div>
+        </div>
+
+        <!-- Senate Election Result Panel -->
+        <div class="disp-panel" id="dispPanelElecResultSenate">
+            <div class="chamber-box">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+                    <h3 id="elecResultTitleSenate" style="margin:0;border:none;padding:0;">> Election Results</h3>
+                    <div style="display:flex;gap:4px;">
+                        <button onclick="elecSetView('arc','senate')" id="elecViewArcBtnSenate"
+                            style="background:var(--tno-neon);color:#000;border:1px solid var(--tno-neon);padding:4px 10px;font-family:inherit;font-size:0.8rem;cursor:pointer;">Arc</button>
+                        <button onclick="elecSetView('district','senate')" id="elecViewDistrictBtnSenate"
+                            style="background:transparent;color:#555;border:1px solid #333;padding:4px 10px;font-family:inherit;font-size:0.8rem;cursor:pointer;">District</button>
+                    </div>
+                </div>
+                <div style="height:14px;background:#111;border:1px solid var(--tno-border);margin-bottom:10px;overflow:hidden;">
+                    <div id="elecResultBarSenate" style="height:100%;background:var(--tno-neon);width:0%;box-shadow:0 0 6px var(--tno-neon);transition:width 0.06s;"></div>
+                </div>
+                <div id="elecViewArcSenate"><canvas id="elecCanvasSenate" style="width:100%;display:block;"></canvas></div>
+                <div id="elecViewDistrictSenate" style="display:none;">
+                    <canvas id="elecDistrictResultCanvasSenate" style="width:100%;height:420px;background:#0a0c10;border:1px solid #222;display:block;"></canvas>
+                </div>
+                <div id="elecResultStatsSenate" style="margin-top:10px;"></div>
+            </div>
+        </div>
+
+        <!-- Third Election Result Panel -->
+        <div class="disp-panel" id="dispPanelElecResultThird">
+            <div class="chamber-box">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+                    <h3 id="elecResultTitleThird" style="margin:0;border:none;padding:0;">> Election Results</h3>
+                    <div style="display:flex;gap:4px;">
+                        <button onclick="elecSetView('arc','third')" id="elecViewArcBtnThird"
+                            style="background:var(--tno-neon);color:#000;border:1px solid var(--tno-neon);padding:4px 10px;font-family:inherit;font-size:0.8rem;cursor:pointer;">Arc</button>
+                        <button onclick="elecSetView('district','third')" id="elecViewDistrictBtnThird"
+                            style="background:transparent;color:#555;border:1px solid #333;padding:4px 10px;font-family:inherit;font-size:0.8rem;cursor:pointer;">District</button>
+                    </div>
+                </div>
+                <div style="height:14px;background:#111;border:1px solid var(--tno-border);margin-bottom:10px;overflow:hidden;">
+                    <div id="elecResultBarThird" style="height:100%;background:var(--tno-neon);width:0%;box-shadow:0 0 6px var(--tno-neon);transition:width 0.06s;"></div>
+                </div>
+                <div id="elecViewArcThird"><canvas id="elecCanvasThird" style="width:100%;display:block;"></canvas></div>
+                <div id="elecViewDistrictThird" style="display:none;">
+                    <canvas id="elecDistrictResultCanvasThird" style="width:100%;height:420px;background:#0a0c10;border:1px solid #222;display:block;"></canvas>
+                </div>
+                <div id="elecResultStatsThird" style="margin-top:10px;"></div>
+            </div>
         </div>
     </div>
 
