@@ -17,7 +17,9 @@
     <script src="maintenance.js"></script>
     <script>
         const REDIRECT_URL = "dno.main.html";
-        function parseMaintTime(v) { return v ? new Date(v) : null; }
+        // maintenance.js 의 시각은 항상 KST(UTC+9) 기준이므로, 보는 사람의 시간대와
+        // 무관하게 항상 같은 순간을 가리키도록 +09:00 오프셋을 붙여 해석한다.
+        function parseMaintTime(v) { return v ? new Date(v + '+09:00') : null; }
         const MAINT_START = parseMaintTime(MAINTENANCE_WINDOW.start);
         const MAINT_END   = parseMaintTime(MAINTENANCE_WINDOW.end);
         function isMaintenanceNow() {
@@ -73,11 +75,17 @@
     <script>
         function fmtMaintTime(d) {
             if (!d) return '미정';
-            const p = n => String(n).padStart(2, '0');
-            return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
+            // 보는 사람의 시간대와 무관하게 항상 KST 벽시계 시각으로 표시한다.
+            const parts = new Intl.DateTimeFormat('ko-KR', {
+                timeZone: 'Asia/Seoul',
+                year: 'numeric', month: '2-digit', day: '2-digit',
+                hour: '2-digit', minute: '2-digit', hour12: false
+            }).formatToParts(d);
+            const get = t => parts.find(p => p.type === t).value;
+            return `${get('year')}-${get('month')}-${get('day')} ${get('hour')}:${get('minute')}`;
         }
         document.getElementById('maintenancePeriod').textContent =
-            `점검 기간: ${fmtMaintTime(MAINT_START)} ~ ${fmtMaintTime(MAINT_END)}`;
+            `점검 기간: ${fmtMaintTime(MAINT_START)} ~ ${fmtMaintTime(MAINT_END)} (KST)`;
 
         if (!MAINTENANCE_MODE) {
             document.getElementById('maintenanceView').style.display = 'none';
