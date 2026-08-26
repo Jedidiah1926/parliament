@@ -553,6 +553,12 @@
                     </div>
                     <!-- 비례 패널 -->
                     <div id="elecProportionalPanel">
+                        <div class="sub-tab-container-3" id="elecProbChamberTabs" style="margin-bottom:8px;">
+                            <button class="sub-tab-btn-3 active" onclick="switchElecProbChamber('house')" id="innerTabElecProbHouse">하원</button>
+                            <button class="sub-tab-btn-3" onclick="switchElecProbChamber('senate')" id="innerTabElecProbSenate">상원</button>
+                            <button class="sub-tab-btn-3" onclick="switchElecProbChamber('third')" id="innerTabElecProbThird" style="display:none;">삼원</button>
+                        </div>
+                        <div style="font-size:0.72rem;color:#555;margin:-4px 0 8px;">의원실마다 정당 구성이 다를 수 있어 지지율을 독립적으로 설정합니다.</div>
                         <div id="elecInputList"></div>
                     </div>
                     <!-- 지역구 패널 -->

@@ -1237,7 +1237,7 @@
         function getAppState() {
             const systemType = document.querySelector('input[name="systemType"]:checked')?.value || 'bicameral';
             return {
-                meta: { app: "DATANET_PARLIAMENT_SIM", version: 12, savedAt: new Date().toISOString() },
+                meta: { app: "DATANET_PARLIAMENT_SIM", version: 13, savedAt: new Date().toISOString() },
                 ui: { currentMainTab, currentSubTab },
                 config: {
                     systemType,
@@ -1287,7 +1287,7 @@
                 state.parliament.independents  = state.parliament.independents.map(x => ({ ...x, photo: '' }));
             }
             const ts = new Date().toISOString().replace(/[:.]/g, "-");
-            downloadJSON(`parliament-save-v12-${ts}.json`, state);
+            downloadJSON(`parliament-save-v13-${ts}.json`, state);
         }
 
         function setAppState(state) {
@@ -1317,8 +1317,18 @@
 
             // ── Restore election data ──
             const elec = state.election || {};
-            Object.keys(elecStore).forEach(k => delete elecStore[k]);
-            if(elec.elecStore && typeof elec.elecStore === 'object') Object.assign(elecStore, elec.elecStore);
+            // Restore support-rate store (v13: split per chamber { house:{}, senate:{}, third:{} } /
+            // v12 and earlier: a single flat list → applied to every chamber the same way)
+            ['house','senate','third'].forEach(c => { elecStore[c] = {}; });
+            if(elec.elecStore && typeof elec.elecStore === 'object') {
+                const loaded = elec.elecStore;
+                const isPerChamber = ['house','senate','third'].some(c => loaded[c] && typeof loaded[c] === 'object');
+                if(isPerChamber) {
+                    ['house','senate','third'].forEach(c => { elecStore[c] = loaded[c] ? JSON.parse(JSON.stringify(loaded[c])) : {}; });
+                } else {
+                    ['house','senate','third'].forEach(c => { elecStore[c] = JSON.parse(JSON.stringify(loaded)); });
+                }
+            }
             elecRecords    = Array.isArray(elec.elecRecords) ? elec.elecRecords : [];
             elecLastResult = elec.elecLastResult ?? null;
             const ge = id => document.getElementById(id);
@@ -2991,7 +3001,8 @@
         // ═══════════════════════════════════════
         // Election simulation
         // ═══════════════════════════════════════
-        const elecStore = {};          // { partyId: { prob, err } }
+        const elecStore = { house:{}, senate:{}, third:{} };   // { chamber: { partyId: { prob, err } } } — independent per-chamber support rates (party lineups can differ)
+        let elecProbChamber = 'house';  // chamber currently being edited in the support-rate tab
         let elecRunning  = false;
         let elecPaused   = false;
         let elecSkipToEnd = false;
@@ -3943,9 +3954,11 @@
 
         // Update combined bar
         function elecUpdateAllBars() {
+            const store = elecStore[elecProbChamber] || {};
+            const inKey = inKeyFor(elecProbChamber);
             const allEntries = [
-                ...parties.map(p => ({ id: p.id, prob: Math.max(0, elecStore[p.id]?.prob||0), color: p.color })),
-                { id: '__swing__', prob: Math.max(0, elecStore['__swing__']?.prob||0), color: null }
+                ...parties.filter(p => p[inKey]).map(p => ({ id: p.id, prob: Math.max(0, store[p.id]?.prob||0), color: p.color })),
+                { id: '__swing__', prob: Math.max(0, store['__swing__']?.prob||0), color: null }
             ];
             const total = allEntries.reduce((s,e)=>s+e.prob,0) || 1;
 
@@ -3960,7 +3973,7 @@
             const n = segs.length;
 
             segs.forEach((seg, idx) => {
-                const errRaw = Math.max(0, elecStore[seg.id]?.err||0);
+                const errRaw = Math.max(0, store[seg.id]?.err||0);
                 const errPct = errRaw / total * 100;
 
                 // Segment bar
@@ -4011,25 +4024,59 @@
             });
         }
 
+        // Flush the currently displayed support-rate inputs into the store for whichever chamber is showing.
+        // Call this "just before" switching chambers — if called after elecProbChamber changes, the old tab's
+        // values would be written into the new chamber's store instead.
+        function elecSyncCurrentProbDom() {
+            const container = document.getElementById('elecInputList');
+            if(!container) return;
+            const store = elecStore[elecProbChamber] || (elecStore[elecProbChamber] = {});
+            container.querySelectorAll('.elec-prob').forEach(el => {
+                const id = el.dataset.id;
+                if(!store[id]) store[id]={prob:0,err:0};
+                store[id].prob = parseFloat(el.value)||0;
+            });
+            container.querySelectorAll('.elec-err').forEach(el => {
+                const id = el.dataset.id;
+                if(!store[id]) store[id]={prob:0,err:0};
+                store[id].err = parseFloat(el.value)||0;
+            });
+        }
+
+        // Switch the support-rate input tab (House/Senate/Third) — chambers can have different party lineups,
+        // so each keeps its own independent support rates.
+        function switchElecProbChamber(ch) {
+            elecSyncCurrentProbDom(); // flush whatever was being typed on the old tab into its own store first
+            elecProbChamber = ch;
+            elecRenderList();
+        }
+
         function elecRenderList() {
             elecUpdateLabels();
             elecToggleMode();
             elecUpdateDistrictInfo();
+
+            // Sync tab visibility/active state (hide tabs for chambers that don't exist)
+            const chambers = chamberList();
+            ['house','senate','third'].forEach(c => {
+                const btn = document.getElementById('innerTabElecProb'+c.charAt(0).toUpperCase()+c.slice(1));
+                if(btn) btn.style.display = chambers.includes(c) ? '' : 'none';
+            });
+            if(!chambers.includes(elecProbChamber)) elecProbChamber = chambers[0] || 'house';
+            ['house','senate','third'].forEach(c => {
+                document.getElementById('innerTabElecProb'+c.charAt(0).toUpperCase()+c.slice(1))?.classList.toggle('active', c===elecProbChamber);
+            });
+
             const container = document.getElementById('elecInputList');
             if(!container) return;
+            const store = elecStore[elecProbChamber] || (elecStore[elecProbChamber] = {});
+            const inKey = inKeyFor(elecProbChamber);
 
-            // Store current DOM values
-            container.querySelectorAll('.elec-prob').forEach(el => {
-                const id = el.dataset.id;
-                if(!elecStore[id]) elecStore[id]={prob:0,err:0};
-                elecStore[id].prob = parseFloat(el.value)||0;
-            });
-            container.querySelectorAll('.elec-err').forEach(el => {
-                const id = el.dataset.id;
-                if(!elecStore[id]) elecStore[id]={prob:0,err:0};
-                elecStore[id].err = parseFloat(el.value)||0;
-            });
-            if(!elecStore['__swing__']) elecStore['__swing__']={prob:0,err:0};
+            // (DOM → store syncing happens live via oninput on every keystroke, and switchElecProbChamber()
+            //  already flushes the old tab's values "before" switching — the DOM here, right after a switch,
+            //  still holds the previous tab's markup until we rebuild it below, so reading it now would
+            //  wrongly overwrite the new chamber's store with the old chamber's values.)
+            if(!store['__swing__']) store['__swing__']={prob:0,err:0};
 
             container.innerHTML = '';
 
@@ -4084,11 +4131,12 @@
             headerRow.innerHTML = `<span>Party</span><span style="text-align:center;">Support (%)</span><span style="text-align:center;">Error (±%)</span>`;
             container.appendChild(headerRow);
 
-            // ── Party rows (independents excluded) ──────────────
-            const regularParties = parties.filter(p => p.ideologyId !== IND_IDEOLOGY_ID);
-            const indPartyForElec = parties.find(p => p.ideologyId === IND_IDEOLOGY_ID);
+            // ── Party rows (independents excluded, only parties participating in the current chamber tab) ──
+            const regularParties = parties.filter(p => p.ideologyId !== IND_IDEOLOGY_ID && p[inKey]);
+            const indPartyForElec = parties.find(p => p.ideologyId === IND_IDEOLOGY_ID && p[inKey]);
+            const ch = elecProbChamber;
             regularParties.forEach(p => {
-                const st = elecStore[p.id]||{prob:0,err:0};
+                const st = store[p.id]||{prob:0,err:0};
                 const row = document.createElement('div');
                 row.style.cssText = 'display:grid;grid-template-columns:1fr 75px 60px;gap:6px;margin-bottom:7px;align-items:center;';
                 row.innerHTML = `
@@ -4099,11 +4147,11 @@
                     <input type="number" class="elec-prob" data-id="${p.id}" value="${st.prob}"
                         min="0" max="100" placeholder="0"
                         style="background:#000;border:1px solid var(--tno-border);color:var(--tno-neon);font-family:inherit;font-size:0.9rem;padding:4px;text-align:center;width:100%;box-sizing:border-box;"
-                        oninput="if(!elecStore['${p.id}'])elecStore['${p.id}']={prob:0,err:0}; elecStore['${p.id}'].prob=parseFloat(this.value)||0; elecUpdateAllBars();">
+                        oninput="if(!elecStore['${ch}']['${p.id}'])elecStore['${ch}']['${p.id}']={prob:0,err:0}; elecStore['${ch}']['${p.id}'].prob=parseFloat(this.value)||0; elecUpdateAllBars();">
                     <input type="number" class="elec-err" data-id="${p.id}" value="${st.err}"
                         min="0" max="50" placeholder="0"
                         style="background:#000;border:1px solid #444;color:#888;font-family:inherit;font-size:0.9rem;padding:4px;text-align:center;width:100%;box-sizing:border-box;"
-                        oninput="if(!elecStore['${p.id}'])elecStore['${p.id}']={prob:0,err:0}; elecStore['${p.id}'].err=parseFloat(this.value)||0; elecUpdateAllBars();">
+                        oninput="if(!elecStore['${ch}']['${p.id}'])elecStore['${ch}']['${p.id}']={prob:0,err:0}; elecStore['${ch}']['${p.id}'].err=parseFloat(this.value)||0; elecUpdateAllBars();">
                 `;
                 container.appendChild(row);
             });
@@ -4111,7 +4159,7 @@
             // ── Divider (above independents) + independent row (fixed gray color) ──
             if(indPartyForElec) {
                 const p = indPartyForElec;
-                const st = elecStore[p.id]||{prob:0,err:0};
+                const st = store[p.id]||{prob:0,err:0};
                 const row = document.createElement('div');
                 row.style.cssText = 'display:grid;grid-template-columns:1fr 75px 60px;gap:6px;margin-bottom:7px;align-items:center;border-top:1px dashed #333;padding-top:8px;margin-top:4px;';
                 row.innerHTML = `
@@ -4122,17 +4170,17 @@
                     <input type="number" class="elec-prob" data-id="${p.id}" value="${st.prob}"
                         min="0" max="100" placeholder="0"
                         style="background:#000;border:1px solid var(--tno-border);color:var(--tno-neon);font-family:inherit;font-size:0.9rem;padding:4px;text-align:center;width:100%;box-sizing:border-box;"
-                        oninput="if(!elecStore['${p.id}'])elecStore['${p.id}']={prob:0,err:0}; elecStore['${p.id}'].prob=parseFloat(this.value)||0; elecUpdateAllBars();">
+                        oninput="if(!elecStore['${ch}']['${p.id}'])elecStore['${ch}']['${p.id}']={prob:0,err:0}; elecStore['${ch}']['${p.id}'].prob=parseFloat(this.value)||0; elecUpdateAllBars();">
                     <input type="number" class="elec-err" data-id="${p.id}" value="${st.err}"
                         min="0" max="50" placeholder="0"
                         style="background:#000;border:1px solid #444;color:#888;font-family:inherit;font-size:0.9rem;padding:4px;text-align:center;width:100%;box-sizing:border-box;"
-                        oninput="if(!elecStore['${p.id}'])elecStore['${p.id}']={prob:0,err:0}; elecStore['${p.id}'].err=parseFloat(this.value)||0; elecUpdateAllBars();">
+                        oninput="if(!elecStore['${ch}']['${p.id}'])elecStore['${ch}']['${p.id}']={prob:0,err:0}; elecStore['${ch}']['${p.id}'].err=parseFloat(this.value)||0; elecUpdateAllBars();">
                 `;
                 container.appendChild(row);
             }
 
             // ── Undecided row (right below independents, no divider) ──
-            const sw = elecStore['__swing__'];
+            const sw = store['__swing__'];
             const swRow = document.createElement('div');
             swRow.style.cssText = 'display:grid;grid-template-columns:1fr 75px 60px;gap:6px;margin-bottom:7px;align-items:center;';
             swRow.innerHTML = `
@@ -4143,11 +4191,11 @@
                 <input type="number" class="elec-prob" data-id="__swing__" value="${sw.prob}"
                     min="0" max="100" placeholder="0"
                     style="background:#000;border:1px solid #555;color:#aaa;font-family:inherit;font-size:0.9rem;padding:4px;text-align:center;width:100%;box-sizing:border-box;"
-                    oninput="elecStore['__swing__'].prob=parseFloat(this.value)||0; elecUpdateAllBars();">
+                    oninput="elecStore['${ch}']['__swing__'].prob=parseFloat(this.value)||0; elecUpdateAllBars();">
                 <input type="number" class="elec-err" data-id="__swing__" value="${sw.err}"
                     min="0" max="50" placeholder="0"
                     style="background:#000;border:1px solid #444;color:#555;font-family:inherit;font-size:0.9rem;padding:4px;text-align:center;width:100%;box-sizing:border-box;"
-                    oninput="elecStore['__swing__'].err=parseFloat(this.value)||0; elecUpdateAllBars();">
+                    oninput="elecStore['${ch}']['__swing__'].err=parseFloat(this.value)||0; elecUpdateAllBars();">
             `;
             container.appendChild(swRow);
 
@@ -4588,18 +4636,9 @@
         async function elecRun(isRerun) {
             if(elecRunning) return;
 
-            // Sync DOM → store
-            document.querySelectorAll('.elec-prob').forEach(el => {
-                const id = el.dataset.id;
-                if(!elecStore[id]) elecStore[id]={prob:0,err:0};
-                elecStore[id].prob = parseFloat(el.value)||0;
-            });
-            document.querySelectorAll('.elec-err').forEach(el => {
-                const id = el.dataset.id;
-                if(!elecStore[id]) elecStore[id]={prob:0,err:0};
-                elecStore[id].err = parseFloat(el.value)||0;
-            });
-            if(!elecStore['__swing__']) elecStore['__swing__']={prob:0,err:0};
+            // Support rates are already synced live into elecStore[that chamber] by each input's oninput,
+            // so we don't re-read the DOM here (during a multi-chamber sequential run, a different chamber's
+            // tab may be the one currently shown on screen).
 
             const targets = getElecTargets();
             const hName = document.getElementById('houseNameInput')?.value||'House';
@@ -4663,7 +4702,8 @@
             }
 
             // If there are proportional seats, check the support rates
-            const partyProb = parties.reduce((s,p)=>s+(elecStore[p.id]?.prob||0),0);
+            const chamberStore = elecStore[chamber] || {};
+            const partyProb = parties.reduce((s,p)=>s+(chamberStore[p.id]?.prob||0),0);
             if(propSeats > 0 && partyProb<=0) {
                 alert('Please enter support rates.\nEnter a number in each party\'s support rate (%) field.');
                 return;
@@ -4689,13 +4729,13 @@
 
             // ── Compute each party's support after applying error ──
             const partyWeighted = parties.map(p => {
-                const st = elecStore[p.id]||{prob:0,err:0};
+                const st = chamberStore[p.id]||{prob:0,err:0};
                 const w  = Math.max(0, st.prob + (Math.random()*2-1)*(st.err||0));
                 return { id:p.id, w, origProb: st.prob };
             });
 
             // ── Compute undecided voters ───────────────────────
-            const swingSt   = elecStore['__swing__']||{prob:0,err:0};
+            const swingSt   = chamberStore['__swing__']||{prob:0,err:0};
             const swingRaw  = Math.max(0, swingSt.prob + (Math.random()*2-1)*(swingSt.err||0));
 
             // ── Undecided-voter distribution algorithm ──────────────

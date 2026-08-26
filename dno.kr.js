@@ -1310,7 +1310,7 @@
         function getAppState() {
             const systemType = document.querySelector('input[name="systemType"]:checked')?.value || 'bicameral';
             return {
-                meta: { app: "DATANET_PARLIAMENT_SIM", version: 12, savedAt: new Date().toISOString() },
+                meta: { app: "DATANET_PARLIAMENT_SIM", version: 13, savedAt: new Date().toISOString() },
                 ui: { currentMainTab, currentSubTab },
                 config: {
                     systemType,
@@ -1360,7 +1360,7 @@
                 state.parliament.independents  = state.parliament.independents.map(x => ({ ...x, photo: '' }));
             }
             const ts = new Date().toISOString().replace(/[:.]/g, "-");
-            downloadJSON(`parliament-save-v12-${ts}.json`, state);
+            downloadJSON(`parliament-save-v13-${ts}.json`, state);
         }
 
         function setAppState(state) {
@@ -1390,8 +1390,17 @@
 
             // ── 선거 데이터 복원 ──
             const elec = state.election || {};
-            Object.keys(elecStore).forEach(k => delete elecStore[k]);
-            if(elec.elecStore && typeof elec.elecStore === 'object') Object.assign(elecStore, elec.elecStore);
+            // 지지율 저장소 복원 (v13: 의원실별 분리 { house:{}, senate:{}, third:{} } / v12 이하: 단일 목록 → 모든 의원실에 동일 적용)
+            ['house','senate','third'].forEach(c => { elecStore[c] = {}; });
+            if(elec.elecStore && typeof elec.elecStore === 'object') {
+                const loaded = elec.elecStore;
+                const isPerChamber = ['house','senate','third'].some(c => loaded[c] && typeof loaded[c] === 'object');
+                if(isPerChamber) {
+                    ['house','senate','third'].forEach(c => { elecStore[c] = loaded[c] ? JSON.parse(JSON.stringify(loaded[c])) : {}; });
+                } else {
+                    ['house','senate','third'].forEach(c => { elecStore[c] = JSON.parse(JSON.stringify(loaded)); });
+                }
+            }
             elecRecords    = Array.isArray(elec.elecRecords) ? elec.elecRecords : [];
             elecLastResult = elec.elecLastResult ?? null;
             const ge = id => document.getElementById(id);
@@ -3090,7 +3099,8 @@
         // ═══════════════════════════════════════
         // 선거 시뮬레이션
         // ═══════════════════════════════════════
-        const elecStore = {};          // { partyId: { prob, err } }
+        const elecStore = { house:{}, senate:{}, third:{} };   // { chamber: { partyId: { prob, err } } } — 의원실별 독립 지지율 (정당 구성이 다를 수 있으므로)
+        let elecProbChamber = 'house';  // 지지율 입력 탭에서 현재 편집 중인 의원실
         let elecRunning  = false;
         let elecPaused   = false;
         let elecSkipToEnd = false;
@@ -4042,9 +4052,11 @@
 
         // 통합 바 업데이트
         function elecUpdateAllBars() {
+            const store = elecStore[elecProbChamber] || {};
+            const inKey = inKeyFor(elecProbChamber);
             const allEntries = [
-                ...parties.map(p => ({ id: p.id, prob: Math.max(0, elecStore[p.id]?.prob||0), color: p.color })),
-                { id: '__swing__', prob: Math.max(0, elecStore['__swing__']?.prob||0), color: null }
+                ...parties.filter(p => p[inKey]).map(p => ({ id: p.id, prob: Math.max(0, store[p.id]?.prob||0), color: p.color })),
+                { id: '__swing__', prob: Math.max(0, store['__swing__']?.prob||0), color: null }
             ];
             const total = allEntries.reduce((s,e)=>s+e.prob,0) || 1;
 
@@ -4059,7 +4071,7 @@
             const n = segs.length;
 
             segs.forEach((seg, idx) => {
-                const errRaw = Math.max(0, elecStore[seg.id]?.err||0);
+                const errRaw = Math.max(0, store[seg.id]?.err||0);
                 const errPct = errRaw / total * 100;
 
                 // 세그먼트 바
@@ -4110,25 +4122,56 @@
             });
         }
 
+        // 현재 화면에 표시된 지지율 입력 DOM 값을 지금의 elecProbChamber 저장소로 흘려보냄
+        // (탭을 바꾸기 "직전"에 호출해야 함 — elecProbChamber가 바뀐 뒤 호출하면 이전 탭 값이 새 탭 저장소를 덮어씀)
+        function elecSyncCurrentProbDom() {
+            const container = document.getElementById('elecInputList');
+            if(!container) return;
+            const store = elecStore[elecProbChamber] || (elecStore[elecProbChamber] = {});
+            container.querySelectorAll('.elec-prob').forEach(el => {
+                const id = el.dataset.id;
+                if(!store[id]) store[id]={prob:0,err:0};
+                store[id].prob = parseFloat(el.value)||0;
+            });
+            container.querySelectorAll('.elec-err').forEach(el => {
+                const id = el.dataset.id;
+                if(!store[id]) store[id]={prob:0,err:0};
+                store[id].err = parseFloat(el.value)||0;
+            });
+        }
+
+        // 지지율 입력 탭(하원/상원/삼원) 전환 — 의원실마다 정당 구성이 다를 수 있어 지지율을 독립적으로 관리
+        function switchElecProbChamber(ch) {
+            elecSyncCurrentProbDom(); // 이전 탭에서 입력 중이던 값을 먼저 그 탭의 저장소에 반영
+            elecProbChamber = ch;
+            elecRenderList();
+        }
+
         function elecRenderList() {
             elecUpdateLabels();
             elecToggleMode();
             elecUpdateDistrictInfo();
+
+            // 탭 가시성/활성 상태 동기화 (존재하지 않는 의원실 탭은 숨김)
+            const chambers = chamberList();
+            ['house','senate','third'].forEach(c => {
+                const btn = document.getElementById('innerTabElecProb'+c.charAt(0).toUpperCase()+c.slice(1));
+                if(btn) btn.style.display = chambers.includes(c) ? '' : 'none';
+            });
+            if(!chambers.includes(elecProbChamber)) elecProbChamber = chambers[0] || 'house';
+            ['house','senate','third'].forEach(c => {
+                document.getElementById('innerTabElecProb'+c.charAt(0).toUpperCase()+c.slice(1))?.classList.toggle('active', c===elecProbChamber);
+            });
+
             const container = document.getElementById('elecInputList');
             if(!container) return;
+            const store = elecStore[elecProbChamber] || (elecStore[elecProbChamber] = {});
+            const inKey = inKeyFor(elecProbChamber);
 
-            // 현재 DOM 값 저장
-            container.querySelectorAll('.elec-prob').forEach(el => {
-                const id = el.dataset.id;
-                if(!elecStore[id]) elecStore[id]={prob:0,err:0};
-                elecStore[id].prob = parseFloat(el.value)||0;
-            });
-            container.querySelectorAll('.elec-err').forEach(el => {
-                const id = el.dataset.id;
-                if(!elecStore[id]) elecStore[id]={prob:0,err:0};
-                elecStore[id].err = parseFloat(el.value)||0;
-            });
-            if(!elecStore['__swing__']) elecStore['__swing__']={prob:0,err:0};
+            // (DOM → store 동기화는 oninput으로 매 입력마다 즉시 반영되고, 탭 전환 시에는
+            //  elecSyncCurrentProbDom()이 전환 "직전"에 처리하므로 여기서는 다시 읽지 않는다 —
+            //  전환 직후 이 시점의 DOM은 아직 재빌드 전, 이전 탭의 값을 그대로 담고 있어 여기서 읽으면 잘못 덮어써진다.)
+            if(!store['__swing__']) store['__swing__']={prob:0,err:0};
 
             container.innerHTML = '';
 
@@ -4183,11 +4226,12 @@
             headerRow.innerHTML = `<span>정당명</span><span style="text-align:center;">지지율(%)</span><span style="text-align:center;">오차(±%)</span>`;
             container.appendChild(headerRow);
 
-            // ── 정당 행 (무소속 제외) ──────────────
-            const regularParties = parties.filter(p => p.ideologyId !== IND_IDEOLOGY_ID);
-            const indPartyForElec = parties.find(p => p.ideologyId === IND_IDEOLOGY_ID);
+            // ── 정당 행 (무소속 제외, 현재 탭 의원실에 참여하는 정당만) ──────────────
+            const regularParties = parties.filter(p => p.ideologyId !== IND_IDEOLOGY_ID && p[inKey]);
+            const indPartyForElec = parties.find(p => p.ideologyId === IND_IDEOLOGY_ID && p[inKey]);
+            const ch = elecProbChamber;
             regularParties.forEach(p => {
-                const st = elecStore[p.id]||{prob:0,err:0};
+                const st = store[p.id]||{prob:0,err:0};
                 const row = document.createElement('div');
                 row.style.cssText = 'display:grid;grid-template-columns:1fr 75px 60px;gap:6px;margin-bottom:7px;align-items:center;';
                 row.innerHTML = `
@@ -4198,11 +4242,11 @@
                     <input type="number" class="elec-prob" data-id="${p.id}" value="${st.prob}"
                         min="0" max="100" placeholder="0"
                         style="background:#000;border:1px solid var(--tno-border);color:var(--tno-neon);font-family:inherit;font-size:0.9rem;padding:4px;text-align:center;width:100%;box-sizing:border-box;"
-                        oninput="if(!elecStore['${p.id}'])elecStore['${p.id}']={prob:0,err:0}; elecStore['${p.id}'].prob=parseFloat(this.value)||0; elecUpdateAllBars();">
+                        oninput="if(!elecStore['${ch}']['${p.id}'])elecStore['${ch}']['${p.id}']={prob:0,err:0}; elecStore['${ch}']['${p.id}'].prob=parseFloat(this.value)||0; elecUpdateAllBars();">
                     <input type="number" class="elec-err" data-id="${p.id}" value="${st.err}"
                         min="0" max="50" placeholder="0"
                         style="background:#000;border:1px solid #444;color:#888;font-family:inherit;font-size:0.9rem;padding:4px;text-align:center;width:100%;box-sizing:border-box;"
-                        oninput="if(!elecStore['${p.id}'])elecStore['${p.id}']={prob:0,err:0}; elecStore['${p.id}'].err=parseFloat(this.value)||0; elecUpdateAllBars();">
+                        oninput="if(!elecStore['${ch}']['${p.id}'])elecStore['${ch}']['${p.id}']={prob:0,err:0}; elecStore['${ch}']['${p.id}'].err=parseFloat(this.value)||0; elecUpdateAllBars();">
                 `;
                 container.appendChild(row);
             });
@@ -4210,7 +4254,7 @@
             // ── 구분선 (무소속 위) + 무소속 행 (색상 고정 회색) ──
             if(indPartyForElec) {
                 const p = indPartyForElec;
-                const st = elecStore[p.id]||{prob:0,err:0};
+                const st = store[p.id]||{prob:0,err:0};
                 const row = document.createElement('div');
                 row.style.cssText = 'display:grid;grid-template-columns:1fr 75px 60px;gap:6px;margin-bottom:7px;align-items:center;border-top:1px dashed #333;padding-top:8px;margin-top:4px;';
                 row.innerHTML = `
@@ -4221,17 +4265,17 @@
                     <input type="number" class="elec-prob" data-id="${p.id}" value="${st.prob}"
                         min="0" max="100" placeholder="0"
                         style="background:#000;border:1px solid var(--tno-border);color:var(--tno-neon);font-family:inherit;font-size:0.9rem;padding:4px;text-align:center;width:100%;box-sizing:border-box;"
-                        oninput="if(!elecStore['${p.id}'])elecStore['${p.id}']={prob:0,err:0}; elecStore['${p.id}'].prob=parseFloat(this.value)||0; elecUpdateAllBars();">
+                        oninput="if(!elecStore['${ch}']['${p.id}'])elecStore['${ch}']['${p.id}']={prob:0,err:0}; elecStore['${ch}']['${p.id}'].prob=parseFloat(this.value)||0; elecUpdateAllBars();">
                     <input type="number" class="elec-err" data-id="${p.id}" value="${st.err}"
                         min="0" max="50" placeholder="0"
                         style="background:#000;border:1px solid #444;color:#888;font-family:inherit;font-size:0.9rem;padding:4px;text-align:center;width:100%;box-sizing:border-box;"
-                        oninput="if(!elecStore['${p.id}'])elecStore['${p.id}']={prob:0,err:0}; elecStore['${p.id}'].err=parseFloat(this.value)||0; elecUpdateAllBars();">
+                        oninput="if(!elecStore['${ch}']['${p.id}'])elecStore['${ch}']['${p.id}']={prob:0,err:0}; elecStore['${ch}']['${p.id}'].err=parseFloat(this.value)||0; elecUpdateAllBars();">
                 `;
                 container.appendChild(row);
             }
 
             // ── 무당파 행 (구분선 없이 무소속 바로 아래) ──
-            const sw = elecStore['__swing__'];
+            const sw = store['__swing__'];
             const swRow = document.createElement('div');
             swRow.style.cssText = 'display:grid;grid-template-columns:1fr 75px 60px;gap:6px;margin-bottom:7px;align-items:center;';
             swRow.innerHTML = `
@@ -4242,11 +4286,11 @@
                 <input type="number" class="elec-prob" data-id="__swing__" value="${sw.prob}"
                     min="0" max="100" placeholder="0"
                     style="background:#000;border:1px solid #555;color:#aaa;font-family:inherit;font-size:0.9rem;padding:4px;text-align:center;width:100%;box-sizing:border-box;"
-                    oninput="elecStore['__swing__'].prob=parseFloat(this.value)||0; elecUpdateAllBars();">
+                    oninput="elecStore['${ch}']['__swing__'].prob=parseFloat(this.value)||0; elecUpdateAllBars();">
                 <input type="number" class="elec-err" data-id="__swing__" value="${sw.err}"
                     min="0" max="50" placeholder="0"
                     style="background:#000;border:1px solid #444;color:#555;font-family:inherit;font-size:0.9rem;padding:4px;text-align:center;width:100%;box-sizing:border-box;"
-                    oninput="elecStore['__swing__'].err=parseFloat(this.value)||0; elecUpdateAllBars();">
+                    oninput="elecStore['${ch}']['__swing__'].err=parseFloat(this.value)||0; elecUpdateAllBars();">
             `;
             container.appendChild(swRow);
 
@@ -4687,18 +4731,8 @@
         async function elecRun(isRerun) {
             if(elecRunning) return;
 
-            // DOM → store 동기화
-            document.querySelectorAll('.elec-prob').forEach(el => {
-                const id = el.dataset.id;
-                if(!elecStore[id]) elecStore[id]={prob:0,err:0};
-                elecStore[id].prob = parseFloat(el.value)||0;
-            });
-            document.querySelectorAll('.elec-err').forEach(el => {
-                const id = el.dataset.id;
-                if(!elecStore[id]) elecStore[id]={prob:0,err:0};
-                elecStore[id].err = parseFloat(el.value)||0;
-            });
-            if(!elecStore['__swing__']) elecStore['__swing__']={prob:0,err:0};
+            // 지지율은 입력칸 oninput에서 elecStore[해당 의원실]에 실시간으로 이미 반영되어 있으므로
+            // (다중 의원실 순차 개표 시 화면에는 다른 의원실 탭이 떠 있을 수 있어) 여기서 DOM을 다시 읽지 않는다.
 
             const targets = getElecTargets();
             const hName = document.getElementById('houseNameInput')?.value||'하원';
@@ -4762,7 +4796,8 @@
             }
 
             // 비례 의석이 있으면 지지율 검사
-            const partyProb = parties.reduce((s,p)=>s+(elecStore[p.id]?.prob||0),0);
+            const chamberStore = elecStore[chamber] || {};
+            const partyProb = parties.reduce((s,p)=>s+(chamberStore[p.id]?.prob||0),0);
             if(propSeats > 0 && partyProb<=0) {
                 alert('지지율을 입력해 주세요.\n각 정당의 지지율(%) 칸에 숫자를 입력하세요.');
                 return;
@@ -4788,13 +4823,13 @@
 
             // ── 오차 적용 후 각 당 지지율 계산 ──
             const partyWeighted = parties.map(p => {
-                const st = elecStore[p.id]||{prob:0,err:0};
+                const st = chamberStore[p.id]||{prob:0,err:0};
                 const w  = Math.max(0, st.prob + (Math.random()*2-1)*(st.err||0));
                 return { id:p.id, w, origProb: st.prob };
             });
 
             // ── 무당파 계산 ───────────────────────
-            const swingSt   = elecStore['__swing__']||{prob:0,err:0};
+            const swingSt   = chamberStore['__swing__']||{prob:0,err:0};
             const swingRaw  = Math.max(0, swingSt.prob + (Math.random()*2-1)*(swingSt.err||0));
 
             // ── 무당파 분배 알고리즘 ──────────────

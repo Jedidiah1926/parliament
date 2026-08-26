@@ -541,6 +541,12 @@
                     </div>
                     <!-- Proportional panel -->
                     <div id="elecProportionalPanel">
+                        <div class="sub-tab-container-3" id="elecProbChamberTabs" style="margin-bottom:8px;">
+                            <button class="sub-tab-btn-3 active" onclick="switchElecProbChamber('house')" id="innerTabElecProbHouse">House</button>
+                            <button class="sub-tab-btn-3" onclick="switchElecProbChamber('senate')" id="innerTabElecProbSenate">Senate</button>
+                            <button class="sub-tab-btn-3" onclick="switchElecProbChamber('third')" id="innerTabElecProbThird" style="display:none;">Third</button>
+                        </div>
+                        <div style="font-size:0.72rem;color:#555;margin:-4px 0 8px;">Each chamber can have a different party lineup, so support rates are set independently per chamber.</div>
                         <div id="elecInputList"></div>
                     </div>
                     <!-- District panel -->
