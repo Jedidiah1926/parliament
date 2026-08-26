@@ -1619,6 +1619,13 @@
             if(dcH) dcH.textContent = hName;
             if(dcS) dcS.textContent = sName;
             if(dcT) dcT.textContent = tName;
+            const probH = document.getElementById('innerTabElecProbHouse');
+            const probS = document.getElementById('innerTabElecProbSenate');
+            const probT = document.getElementById('innerTabElecProbThird');
+            if(probH) probH.textContent = hName;
+            if(probS) probS.textContent = sName;
+            if(probT) probT.textContent = tName;
+            elecRenderProbBars(); // Immediately refresh the read-only support-rate bar titles on the Election tab too
             // Also refresh the seat label inside the card (excluded from renderCoalitions to prevent an infinite loop)
             renderIdeologyList();
             renderPartyList('house');
@@ -3859,6 +3866,12 @@
             if(sl)   sl.textContent   = sName;
             if(tl)   tl.textContent   = tName;
             if(bl)   bl.textContent   = 'All';
+            const probH = document.getElementById('innerTabElecProbHouse');
+            const probS = document.getElementById('innerTabElecProbSenate');
+            const probT = document.getElementById('innerTabElecProbThird');
+            if(probH) probH.textContent = hName;
+            if(probS) probS.textContent = sName;
+            if(probT) probT.textContent = tName;
             const dcH = document.getElementById('districtChamberHouseLabel');
             const dcS = document.getElementById('districtChamberSenateLabel');
             const dcT = document.getElementById('districtChamberThirdLabel');
@@ -4027,7 +4040,11 @@
         function elecRenderProbBars() {
             const container = document.getElementById('elecProbBars');
             if(!container) return;
-            const chamberNames = { house:'House', senate:'Senate', third:'Third' };
+            const chamberNames = {
+                house:  document.getElementById('houseNameInput')?.value  || 'House',
+                senate: document.getElementById('senateNameInput')?.value || 'Senate',
+                third:  document.getElementById('thirdNameInput')?.value  || 'Third'
+            };
             container.innerHTML = chamberList()
                 .map(c => buildProbBarHtml(c, { title: `${chamberNames[c]} Support Distribution` }))
                 .join('');

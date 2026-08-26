@@ -1692,6 +1692,13 @@
             if(dcH) dcH.textContent = hName;
             if(dcS) dcS.textContent = sName;
             if(dcT) dcT.textContent = tName;
+            const probH = document.getElementById('innerTabElecProbHouse');
+            const probS = document.getElementById('innerTabElecProbSenate');
+            const probT = document.getElementById('innerTabElecProbThird');
+            if(probH) probH.textContent = hName;
+            if(probS) probS.textContent = sName;
+            if(probT) probT.textContent = tName;
+            elecRenderProbBars(); // 선거 탭의 읽기전용 지지율 바 제목도 즉시 갱신
             // 카드 안 의석 레이블도 갱신 (renderCoalitions 제외로 무한루프 방지)
             renderIdeologyList();
             renderPartyList('house');
@@ -3957,6 +3964,12 @@
             if(sl)   sl.textContent   = sName;
             if(tl)   tl.textContent   = tName;
             if(bl)   bl.textContent   = '전체';
+            const probH = document.getElementById('innerTabElecProbHouse');
+            const probS = document.getElementById('innerTabElecProbSenate');
+            const probT = document.getElementById('innerTabElecProbThird');
+            if(probH) probH.textContent = hName;
+            if(probS) probS.textContent = sName;
+            if(probT) probT.textContent = tName;
             const dcH = document.getElementById('districtChamberHouseLabel');
             const dcS = document.getElementById('districtChamberSenateLabel');
             const dcT = document.getElementById('districtChamberThirdLabel');
@@ -4124,7 +4137,11 @@
         function elecRenderProbBars() {
             const container = document.getElementById('elecProbBars');
             if(!container) return;
-            const chamberNames = { house:'하원', senate:'상원', third:'삼원' };
+            const chamberNames = {
+                house:  document.getElementById('houseNameInput')?.value  || '하원',
+                senate: document.getElementById('senateNameInput')?.value || '상원',
+                third:  document.getElementById('thirdNameInput')?.value  || '삼원'
+            };
             container.innerHTML = chamberList()
                 .map(c => buildProbBarHtml(c, { title: `${chamberNames[c]} 지지율 분포` }))
                 .join('');
