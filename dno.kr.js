@@ -2006,8 +2006,11 @@
                 const div = document.createElement('div');
                 div.className = `card-item drag-card-coalition ${coal.isRuling?'is-ruling':''}`;
                 div.style.borderLeftColor = coal.color;
-                const memberParties = parties.filter(p=>coal.members.includes(p.id));
-                let memberChecks = parties.map(p=>{
+                // "무소속" 정당은 여러 무소속 의원을 뭉뚱그린 가상 정당이라 연정 체크박스 목록에서는 제외 —
+                // 개별 무소속 의원 배정은 아래 memberIndRows/extIndRows(무소속 탭 관리)로만 표시한다.
+                const nonIndParties = parties.filter(p => p.ideologyId !== IND_IDEOLOGY_ID);
+                const memberParties = nonIndParties.filter(p=>coal.members.includes(p.id));
+                let memberChecks = nonIndParties.map(p=>{
                     const hasFactions = (p.factions||[]).length > 0;
                     const partyCheck = `
                     <div style="display:flex;align-items:center;border-bottom:1px solid #222;padding:3px 0;">
@@ -2027,7 +2030,7 @@
                     return partyCheck + factionChecks;
                 }).join('');
                 if(!coal.externalSupporters) coal.externalSupporters = [];
-                const extChecks = parties
+                const extChecks = nonIndParties
                     .filter(p => !coal.members.includes(p.id))
                     .map(p => `
                     <div style="display:flex;align-items:center;border-bottom:1px solid #222;padding:3px 0;">
