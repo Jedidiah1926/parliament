@@ -1071,7 +1071,9 @@
                     : `좌석 정보 ${seatLabel}`;
             }
 
-            const rows = [`정당: ${nameLabel}`, `이념: ${d.ideology}`];
+            const rows = [];
+            if(d.partyName !== '무소속') rows.push(`정당: ${nameLabel}`);
+            rows.push(`이념: ${d.ideology}`);
             if(d.coalitionName) rows.push(`연정: ${d.coalitionName}`);
             if(d.isRuling) rows.push(`★ 집권 세력`);
             if(d.partyName !== 'Vacant') rows.push(`투표 상태: ${voteLabels[vs]}`);
