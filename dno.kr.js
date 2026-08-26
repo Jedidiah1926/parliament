@@ -1089,6 +1089,8 @@
             if(d.factionName) rows.push(`파벌: ${d.factionName}`);
             rows.push(`이념: ${d.ideology}`);
             if(d.coalitionName) rows.push(`연정: ${d.coalitionName}`);
+            if(d.partyStatus === 'dissolved') rows.push(`상태: <span class="party-status-badge status-dissolved">해산</span>`);
+            if(d.partyStatus === 'banned') rows.push(`상태: <span class="party-status-badge status-banned">활동 금지</span>`);
             body.innerHTML = rows.map(r => `<div>${r}</div>`).join('');
 
             seatInfoCardTarget = { chamber, hit };
@@ -1860,6 +1862,7 @@
                             <div style="display:flex;align-items:center;gap:6px;">
                                 <span style="width:9px;height:9px;background:${p.color};border-radius:50%;flex-shrink:0;"></span>
                                 <span style="font-size:1rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${p.name}</span>
+                                ${partyStatusBadge(p)}
                             </div>
                             ${ideologyName?`<div style="color:#666;font-size:0.8rem;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${ideologyName}</div>`:''}
                         </div>
@@ -2356,7 +2359,14 @@
             refreshUI(); simulate();
         }
         function removeParty(i) { const pid=parties[i].id; parties.splice(i,1); coalitions.forEach(c=>c.members=c.members.filter(x=>x!==pid)); refreshUI(); simulate(); }
-        function updateParty(i,k,v) { parties[i][k]=v; if(k==='name')refreshUI(); simulate(); }
+        function updateParty(i,k,v) { parties[i][k]=v; if(k==='name'||k==='status')refreshUI(); simulate(); }
+
+        // 정당 해산/활동금지 표기 뱃지 — 활동중인 정당은 표기하지 않음
+        function partyStatusBadge(p) {
+            if(p.status === 'dissolved') return `<span class="party-status-badge status-dissolved">해산</span>`;
+            if(p.status === 'banned') return `<span class="party-status-badge status-banned">활동 금지</span>`;
+            return '';
+        }
         function togglePartyParticipation(i,f,v) { parties[i][f]=v; refreshUI(); simulate(); }
         function updatePartyColorText(e,i) { if(isValidHex(e.value)){ parties[i].color=e.value.toUpperCase(); e.nextElementSibling.value=parties[i].color; refreshUI(); simulate(); }}
         function updatePartyColorPicker(e,i) { parties[i].color=e.value.toUpperCase(); e.previousElementSibling.value=parties[i].color; simulate(); }
@@ -2566,13 +2576,22 @@
                         <button class="remove-btn" onclick="removeParty(${idx})">X</button>
                     </div>
                     <!-- 행2: 당명 (항상 보임) -->
-                    <div style="margin-bottom:6px;">
-                        <input type="text" value="${p.name}" onchange="updateParty(${idx},'name',this.value)" placeholder="정당명" style="width:100%;font-size:1rem;box-sizing:border-box;">
+                    <div style="margin-bottom:6px;display:flex;align-items:center;gap:6px;">
+                        <input type="text" value="${p.name}" onchange="updateParty(${idx},'name',this.value)" placeholder="정당명" style="flex:1;min-width:0;font-size:1rem;box-sizing:border-box;">
+                        ${partyStatusBadge(p)}
                     </div>
                     <!-- 행3: 이념 (항상 보임) -->
                     <div style="margin-bottom:6px;">
                         <select onchange="updateParty(${idx},'ideologyId',parseInt(this.value))" style="width:100%;">
                             ${ideologies.map(ide=>`<option value="${ide.id}" ${p.ideologyId===ide.id?'selected':''}>${ide.name}</option>`).join('')}
+                        </select>
+                    </div>
+                    <!-- 행3.5: 정당 상태 (항상 보임) -->
+                    <div style="margin-bottom:6px;">
+                        <select onchange="updateParty(${idx},'status',this.value)" style="width:100%;">
+                            <option value="active" ${(!p.status||p.status==='active')?'selected':''}>활동중</option>
+                            <option value="dissolved" ${p.status==='dissolved'?'selected':''}>해산</option>
+                            <option value="banned" ${p.status==='banned'?'selected':''}>활동 금지</option>
                         </select>
                     </div>
                     <!-- 이 아래부터 접기 대상 -->
@@ -3911,7 +3930,7 @@
                         const fStroke = highlightGov&&fIsGov ? 'var(--tno-gold)' : (fEffCoal?fEffCoal.color:null);
                         for(let k=0; k<(f[seatKey]||0); k++){
                             if(map.length>=total) break;
-                            map.push({color:fc, partyName:p.name, factionName:f.name,
+                            map.push({color:fc, partyName:p.name, factionName:f.name, partyStatus:p.status||'active',
                                 ideology:ideologies.find(i=>i.id===f.ideologyId)?.name||ideologies.find(i=>i.id===p.ideologyId)?.name||'?',
                                 coalitionName:fEffCoal?.name, strokeColor:fStroke, isRuling:fIsGov, externalSupport:isExtSupport?(rulingCoal.externalSupportLabel||'각외협력'):false});
                         }
@@ -3920,14 +3939,14 @@
                     // 파벌 합계 < 당 의석이면 나머지는 당 색으로
                     for(let k=placed; k<cnt; k++){
                         if(map.length>=total) break;
-                        map.push({color:p.color, partyName:p.name, factionName:null,
+                        map.push({color:p.color, partyName:p.name, factionName:null, partyStatus:p.status||'active',
                             ideology:ideologies.find(i=>i.id===p.ideologyId)?.name||'?',
                             coalitionName:effectiveCoal?.name, strokeColor:stroke, strokeDashed, isRuling:isGov, externalSupport:isExtSupport?(rulingCoal.externalSupportLabel||'각외협력'):false});
                     }
                 } else {
                     for(let k=0;k<cnt;k++){
                         if(map.length>=total) break;
-                        map.push({color:p.color, partyName:p.name, factionName:null,
+                        map.push({color:p.color, partyName:p.name, factionName:null, partyStatus:p.status||'active',
                             ideology:ideologies.find(i=>i.id===p.ideologyId)?.name||'?',
                             coalitionName:effectiveCoal?.name, strokeColor:stroke, strokeDashed, isRuling:isGov, externalSupport:isExtSupport?(rulingCoal.externalSupportLabel||'각외협력'):false});
                     }
@@ -5147,7 +5166,7 @@
                             const fStroke = highlightGov&&fIsGov ? 'var(--tno-gold)' : (fEffCoal?fEffCoal.color:null);
                             for(let k=0; k<(f[seatKey]||0); k++){
                                 if(map.length>=targetTotal) break;
-                                map.push({color:fc, partyName:p.name, factionName:f.name,
+                                map.push({color:fc, partyName:p.name, factionName:f.name, partyStatus:p.status||'active',
                                     ideology:ideologies.find(i=>i.id===f.ideologyId)?.name||ideologies.find(i=>i.id===p.ideologyId)?.name||'?',
                                     coalitionName:fEffCoal?.name, strokeColor:fStroke, isRuling:fIsGov, externalSupport:isExtSupport?(rulingCoal.externalSupportLabel||'각외협력'):false});
                             }
@@ -5155,7 +5174,7 @@
                         });
                         for(let k=placed; k<cnt; k++){
                             if(map.length>=targetTotal) break;
-                            map.push({color:p.color, partyName:p.name, factionName:null,
+                            map.push({color:p.color, partyName:p.name, factionName:null, partyStatus:p.status||'active',
                                 ideology:ideologies.find(i=>i.id===p.ideologyId)?.name||'?',
                                 coalitionName:effectiveCoal?.name, strokeColor:stroke, strokeDashed, isRuling:isGov, externalSupport:isExtSupport?(rulingCoal.externalSupportLabel||'각외협력'):false});
                         }
@@ -5190,7 +5209,7 @@
                                     indExtSupport = false;
                                 }
                             }
-                            map.push({color:p.color, partyName:p.name, factionName:null,
+                            map.push({color:p.color, partyName:p.name, factionName:null, partyStatus:p.status||'active',
                                 ideology:ideologies.find(i=>i.id===p.ideologyId)?.name||'?',
                                 coalitionName:indCoalName, strokeColor:indStroke, strokeDashed:indDashed, isRuling:indIsGov, externalSupport:indExtSupport,
                                 independentName: indEntry?.name || null, independentSeatIndex: indEntry?.seatIndex || null});
@@ -5294,6 +5313,7 @@
                 isRuling: map[i]?.isRuling || false,
                 externalSupport: map[i]?.externalSupport || false,
                 partyName: map[i]?.partyName || 'Vacant',
+                partyStatus: map[i]?.partyStatus || 'active',
                 ideology: map[i]?.ideology || '-',
                 coalitionName: map[i]?.coalitionName || null,
                 factionName: map[i]?.factionName || null,

@@ -1790,6 +1790,7 @@
                             <div style="display:flex;align-items:center;gap:6px;">
                                 <span style="width:9px;height:9px;background:${p.color};border-radius:50%;flex-shrink:0;"></span>
                                 <span style="font-size:1rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${p.name}</span>
+                                ${partyStatusBadge(p)}
                             </div>
                             ${ideologyName?`<div style="color:#666;font-size:0.8rem;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${ideologyName}</div>`:''}
                         </div>
@@ -2261,7 +2262,14 @@
             refreshUI(); simulate();
         }
         function removeParty(i) { const pid=parties[i].id; parties.splice(i,1); coalitions.forEach(c=>c.members=c.members.filter(x=>x!==pid)); refreshUI(); simulate(); }
-        function updateParty(i,k,v) { parties[i][k]=v; if(k==='name')refreshUI(); simulate(); }
+        function updateParty(i,k,v) { parties[i][k]=v; if(k==='name'||k==='status')refreshUI(); simulate(); }
+
+        // Party dissolved/banned badge — shown only when the party isn't active
+        function partyStatusBadge(p) {
+            if(p.status === 'dissolved') return `<span class="party-status-badge status-dissolved">Dissolved</span>`;
+            if(p.status === 'banned') return `<span class="party-status-badge status-banned">Banned</span>`;
+            return '';
+        }
         function togglePartyParticipation(i,f,v) { parties[i][f]=v; refreshUI(); simulate(); }
         function updatePartyColorText(e,i) { if(isValidHex(e.value)){ parties[i].color=e.value.toUpperCase(); e.nextElementSibling.value=parties[i].color; refreshUI(); simulate(); }}
         function updatePartyColorPicker(e,i) { parties[i].color=e.value.toUpperCase(); e.previousElementSibling.value=parties[i].color; simulate(); }
@@ -2471,13 +2479,22 @@
                         <button class="remove-btn" onclick="removeParty(${idx})">X</button>
                     </div>
                     <!-- Row 2: party name (always visible) -->
-                    <div style="margin-bottom:6px;">
-                        <input type="text" value="${p.name}" onchange="updateParty(${idx},'name',this.value)" placeholder="Party name" style="width:100%;font-size:1rem;box-sizing:border-box;">
+                    <div style="margin-bottom:6px;display:flex;align-items:center;gap:6px;">
+                        <input type="text" value="${p.name}" onchange="updateParty(${idx},'name',this.value)" placeholder="Party name" style="flex:1;min-width:0;font-size:1rem;box-sizing:border-box;">
+                        ${partyStatusBadge(p)}
                     </div>
                     <!-- Row 3: ideology (always visible) -->
                     <div style="margin-bottom:6px;">
                         <select onchange="updateParty(${idx},'ideologyId',parseInt(this.value))" style="width:100%;">
                             ${ideologies.map(ide=>`<option value="${ide.id}" ${p.ideologyId===ide.id?'selected':''}>${ide.name}</option>`).join('')}
+                        </select>
+                    </div>
+                    <!-- Row 3.5: party status (always visible) -->
+                    <div style="margin-bottom:6px;">
+                        <select onchange="updateParty(${idx},'status',this.value)" style="width:100%;">
+                            <option value="active" ${(!p.status||p.status==='active')?'selected':''}>Active</option>
+                            <option value="dissolved" ${p.status==='dissolved'?'selected':''}>Dissolved</option>
+                            <option value="banned" ${p.status==='banned'?'selected':''}>Banned</option>
                         </select>
                     </div>
                     <!-- Everything below is collapsible -->
@@ -3816,7 +3833,7 @@
                         const fStroke = highlightGov&&fIsGov ? 'var(--tno-gold)' : (fEffCoal?fEffCoal.color:null);
                         for(let k=0; k<(f[seatKey]||0); k++){
                             if(map.length>=total) break;
-                            map.push({color:fc, partyName:p.name, factionName:f.name,
+                            map.push({color:fc, partyName:p.name, factionName:f.name, partyStatus:p.status||'active',
                                 ideology:ideologies.find(i=>i.id===f.ideologyId)?.name||ideologies.find(i=>i.id===p.ideologyId)?.name||'?',
                                 coalitionName:fEffCoal?.name, strokeColor:fStroke, isRuling:fIsGov, externalSupport:isExtSupport?(rulingCoal.externalSupportLabel||'External Support'):false});
                         }
@@ -3825,14 +3842,14 @@
                     // If faction total < party seats, the remainder uses the party color
                     for(let k=placed; k<cnt; k++){
                         if(map.length>=total) break;
-                        map.push({color:p.color, partyName:p.name, factionName:null,
+                        map.push({color:p.color, partyName:p.name, factionName:null, partyStatus:p.status||'active',
                             ideology:ideologies.find(i=>i.id===p.ideologyId)?.name||'?',
                             coalitionName:effectiveCoal?.name, strokeColor:stroke, strokeDashed, isRuling:isGov, externalSupport:isExtSupport?(rulingCoal.externalSupportLabel||'External Support'):false});
                     }
                 } else {
                     for(let k=0;k<cnt;k++){
                         if(map.length>=total) break;
-                        map.push({color:p.color, partyName:p.name, factionName:null,
+                        map.push({color:p.color, partyName:p.name, factionName:null, partyStatus:p.status||'active',
                             ideology:ideologies.find(i=>i.id===p.ideologyId)?.name||'?',
                             coalitionName:effectiveCoal?.name, strokeColor:stroke, strokeDashed, isRuling:isGov, externalSupport:isExtSupport?(rulingCoal.externalSupportLabel||'External Support'):false});
                     }
@@ -5058,7 +5075,7 @@
                             const fStroke = highlightGov&&fIsGov ? 'var(--tno-gold)' : (fEffCoal?fEffCoal.color:null);
                             for(let k=0; k<(f[seatKey]||0); k++){
                                 if(map.length>=targetTotal) break;
-                                map.push({color:fc, partyName:p.name, factionName:f.name,
+                                map.push({color:fc, partyName:p.name, factionName:f.name, partyStatus:p.status||'active',
                                     ideology:ideologies.find(i=>i.id===f.ideologyId)?.name||ideologies.find(i=>i.id===p.ideologyId)?.name||'?',
                                     coalitionName:fEffCoal?.name, strokeColor:fStroke, isRuling:fIsGov, externalSupport:isExtSupport?(rulingCoal.externalSupportLabel||'External Support'):false});
                             }
@@ -5066,7 +5083,7 @@
                         });
                         for(let k=placed; k<cnt; k++){
                             if(map.length>=targetTotal) break;
-                            map.push({color:p.color, partyName:p.name, factionName:null,
+                            map.push({color:p.color, partyName:p.name, factionName:null, partyStatus:p.status||'active',
                                 ideology:ideologies.find(i=>i.id===p.ideologyId)?.name||'?',
                                 coalitionName:effectiveCoal?.name, strokeColor:stroke, strokeDashed, isRuling:isGov, externalSupport:isExtSupport?(rulingCoal.externalSupportLabel||'External Support'):false});
                         }
@@ -5101,7 +5118,7 @@
                                     indExtSupport = false;
                                 }
                             }
-                            map.push({color:p.color, partyName:p.name, factionName:null,
+                            map.push({color:p.color, partyName:p.name, factionName:null, partyStatus:p.status||'active',
                                 ideology:ideologies.find(i=>i.id===p.ideologyId)?.name||'?',
                                 coalitionName:indCoalName, strokeColor:indStroke, strokeDashed:indDashed, isRuling:indIsGov, externalSupport:indExtSupport,
                                 independentName: indEntry?.name || null, independentSeatIndex: indEntry?.seatIndex || null});

@@ -606,6 +606,15 @@
         .bill-status-badge.third-fail { border-color: #7a2a2a; color: #ef5350; background: rgba(239,83,80,0.08); }
         .bill-status-badge.passed { border-color: var(--vote-yea); color: var(--vote-yea); background: rgba(0,255,136,0.08); text-shadow: 0 0 5px var(--vote-yea); }
         .bill-status-badge.failed { border-color: var(--vote-nay); color: var(--vote-nay); background: rgba(255,34,68,0.08); text-shadow: 0 0 5px var(--vote-nay); }
+        .party-status-badge {
+            font-size: 0.72rem;
+            padding: 1px 7px;
+            border: 1px solid;
+            letter-spacing: 1px;
+            flex-shrink: 0;
+        }
+        .party-status-badge.status-dissolved { border-color: #555; color: #999; background: rgba(153,153,153,0.08); }
+        .party-status-badge.status-banned { border-color: var(--tno-alert); color: var(--tno-alert); background: rgba(255,0,85,0.08); text-shadow: 0 0 4px var(--tno-alert); }
         .bill-select-btn {
             margin-left: auto;
             font-size: 0.8rem;
