@@ -393,6 +393,7 @@
                     <button class="sub-tab-btn" id="elecSubTabDistrict" onclick="elecSwitchSub('district')">District</button>
                     <button class="sub-tab-btn" id="elecSubTabTendency" onclick="elecSwitchSub('tendency')">Tendency</button>
                     <button class="sub-tab-btn active" id="elecSubTabVote" onclick="elecSwitchSub('vote')">Election</button>
+                    <button class="sub-tab-btn" id="elecSubTabProb" onclick="elecSwitchSub('prob')">Support</button>
                 </div>
 
                 <!-- District sub-tab - settings only (map on the right) -->
@@ -522,16 +523,8 @@
                     <div style="height:14px;background:#111;border:1px solid var(--tno-border);margin-bottom:8px;overflow:hidden;">
                         <div id="elecProgressBar" style="height:100%;background:var(--tno-neon);width:0%;box-shadow:0 0 6px var(--tno-neon);transition:width 0.06s;"></div>
                     </div>
-                    <!-- Proportional panel -->
-                    <div id="elecProportionalPanel">
-                        <div class="sub-tab-container-3" id="elecProbChamberTabs" style="margin-bottom:8px;">
-                            <button class="sub-tab-btn-3 active" onclick="switchElecProbChamber('house')" id="innerTabElecProbHouse">House</button>
-                            <button class="sub-tab-btn-3" onclick="switchElecProbChamber('senate')" id="innerTabElecProbSenate">Senate</button>
-                            <button class="sub-tab-btn-3" onclick="switchElecProbChamber('third')" id="innerTabElecProbThird" style="display:none;">Third</button>
-                        </div>
-                        <div style="font-size:0.72rem;color:#555;margin:-4px 0 8px;">Each chamber can have a different party lineup, so support rates are set independently per chamber.</div>
-                        <div id="elecInputList"></div>
-                    </div>
+                    <!-- Support-rate bars (read-only — actual settings live in the Support tab) -->
+                    <div id="elecProbBars" style="margin-bottom:10px;"></div>
                     <!-- District panel -->
                     <div id="elecDistrictPanel" style="display:none;">
                         <div style="background:#0a0c10;border:1px solid #2a2a2a;padding:10px;margin-bottom:8px;">
@@ -570,6 +563,20 @@
                                 style="flex:1;background:transparent;border:1px solid var(--tno-neon);color:var(--tno-neon);padding:9px;font-family:inherit;font-size:0.9rem;cursor:pointer;">↺ Recount</button>
                         </div>
                     </div>
+                </div>
+
+                <!-- Support-rate sub-tab -->
+                <div id="elecSubProb" class="sub-tab-content">
+                    <div class="sub-tab-container-3" id="elecProbChamberTabs" style="margin-bottom:8px;">
+                        <button class="sub-tab-btn-3 active" onclick="switchElecProbChamber('house')" id="innerTabElecProbHouse">House</button>
+                        <button class="sub-tab-btn-3" onclick="switchElecProbChamber('senate')" id="innerTabElecProbSenate">Senate</button>
+                        <button class="sub-tab-btn-3" onclick="switchElecProbChamber('third')" id="innerTabElecProbThird" style="display:none;">Third</button>
+                    </div>
+                    <label style="display:flex;align-items:center;gap:6px;cursor:pointer;color:var(--tno-neon);font-size:0.9rem;padding:5px 8px;background:#0a1a1a;border:1px solid #1a3a3a;margin-bottom:8px;">
+                        <input type="checkbox" id="elecProbSyncAll" onchange="onElecProbSyncAllChange(this.checked)"> Apply to all
+                    </label>
+                    <div style="font-size:0.72rem;color:#555;margin:-4px 0 8px;">Each chamber can have a different party lineup, so support rates are set independently per chamber.</div>
+                    <div id="elecInputList"></div>
                 </div>
 
             </div><!-- end mainContentElection -->

@@ -405,6 +405,7 @@
                     <button class="sub-tab-btn" id="elecSubTabDistrict" onclick="elecSwitchSub('district')">지역구</button>
                     <button class="sub-tab-btn" id="elecSubTabTendency" onclick="elecSwitchSub('tendency')">성향</button>
                     <button class="sub-tab-btn active" id="elecSubTabVote" onclick="elecSwitchSub('vote')">선거</button>
+                    <button class="sub-tab-btn" id="elecSubTabProb" onclick="elecSwitchSub('prob')">지지율</button>
                 </div>
 
                 <!-- 지역구 서브탭 - 설정만 (맵은 우측) -->
@@ -534,16 +535,8 @@
                     <div style="height:14px;background:#111;border:1px solid var(--tno-border);margin-bottom:8px;overflow:hidden;">
                         <div id="elecProgressBar" style="height:100%;background:var(--tno-neon);width:0%;box-shadow:0 0 6px var(--tno-neon);transition:width 0.06s;"></div>
                     </div>
-                    <!-- 비례 패널 -->
-                    <div id="elecProportionalPanel">
-                        <div class="sub-tab-container-3" id="elecProbChamberTabs" style="margin-bottom:8px;">
-                            <button class="sub-tab-btn-3 active" onclick="switchElecProbChamber('house')" id="innerTabElecProbHouse">하원</button>
-                            <button class="sub-tab-btn-3" onclick="switchElecProbChamber('senate')" id="innerTabElecProbSenate">상원</button>
-                            <button class="sub-tab-btn-3" onclick="switchElecProbChamber('third')" id="innerTabElecProbThird" style="display:none;">삼원</button>
-                        </div>
-                        <div style="font-size:0.72rem;color:#555;margin:-4px 0 8px;">의원실마다 정당 구성이 다를 수 있어 지지율을 독립적으로 설정합니다.</div>
-                        <div id="elecInputList"></div>
-                    </div>
+                    <!-- 지지율 바 (읽기 전용 — 실제 설정은 지지율 탭에서) -->
+                    <div id="elecProbBars" style="margin-bottom:10px;"></div>
                     <!-- 지역구 패널 -->
                     <div id="elecDistrictPanel" style="display:none;">
                         <div style="background:#0a0c10;border:1px solid #2a2a2a;padding:10px;margin-bottom:8px;">
@@ -582,6 +575,20 @@
                                 style="flex:1;background:transparent;border:1px solid var(--tno-neon);color:var(--tno-neon);padding:9px;font-family:inherit;font-size:0.9rem;cursor:pointer;">↺ 재개표</button>
                         </div>
                     </div>
+                </div>
+
+                <!-- 지지율 서브탭 -->
+                <div id="elecSubProb" class="sub-tab-content">
+                    <div class="sub-tab-container-3" id="elecProbChamberTabs" style="margin-bottom:8px;">
+                        <button class="sub-tab-btn-3 active" onclick="switchElecProbChamber('house')" id="innerTabElecProbHouse">하원</button>
+                        <button class="sub-tab-btn-3" onclick="switchElecProbChamber('senate')" id="innerTabElecProbSenate">상원</button>
+                        <button class="sub-tab-btn-3" onclick="switchElecProbChamber('third')" id="innerTabElecProbThird" style="display:none;">삼원</button>
+                    </div>
+                    <label style="display:flex;align-items:center;gap:6px;cursor:pointer;color:var(--tno-neon);font-size:0.9rem;padding:5px 8px;background:#0a1a1a;border:1px solid #1a3a3a;margin-bottom:8px;">
+                        <input type="checkbox" id="elecProbSyncAll" onchange="onElecProbSyncAllChange(this.checked)"> 전체에 반영
+                    </label>
+                    <div style="font-size:0.72rem;color:#555;margin:-4px 0 8px;">의원실마다 정당 구성이 다를 수 있어 지지율을 독립적으로 설정합니다.</div>
+                    <div id="elecInputList"></div>
                 </div>
 
             </div><!-- end mainContentElection -->

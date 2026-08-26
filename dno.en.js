@@ -1619,6 +1619,13 @@
             if(dcH) dcH.textContent = hName;
             if(dcS) dcS.textContent = sName;
             if(dcT) dcT.textContent = tName;
+            const probH = document.getElementById('innerTabElecProbHouse');
+            const probS = document.getElementById('innerTabElecProbSenate');
+            const probT = document.getElementById('innerTabElecProbThird');
+            if(probH) probH.textContent = hName;
+            if(probS) probS.textContent = sName;
+            if(probT) probT.textContent = tName;
+            elecRenderProbBars(); // Immediately refresh the read-only support-rate bar titles on the Election tab too
             // Also refresh the seat label inside the card (excluded from renderCoalitions to prevent an infinite loop)
             renderIdeologyList();
             renderPartyList('house');
@@ -1783,6 +1790,7 @@
                             <div style="display:flex;align-items:center;gap:6px;">
                                 <span style="width:9px;height:9px;background:${p.color};border-radius:50%;flex-shrink:0;"></span>
                                 <span style="font-size:1rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${p.name}</span>
+                                ${partyStatusBadge(p)}
                             </div>
                             ${ideologyName?`<div style="color:#666;font-size:0.8rem;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${ideologyName}</div>`:''}
                         </div>
@@ -2254,7 +2262,14 @@
             refreshUI(); simulate();
         }
         function removeParty(i) { const pid=parties[i].id; parties.splice(i,1); coalitions.forEach(c=>c.members=c.members.filter(x=>x!==pid)); refreshUI(); simulate(); }
-        function updateParty(i,k,v) { parties[i][k]=v; if(k==='name')refreshUI(); simulate(); }
+        function updateParty(i,k,v) { parties[i][k]=v; if(k==='name'||k==='status')refreshUI(); simulate(); }
+
+        // Party dissolved/banned badge — shown only when the party isn't active
+        function partyStatusBadge(p) {
+            if(p.status === 'dissolved') return `<span class="party-status-badge status-dissolved">Dissolved</span>`;
+            if(p.status === 'banned') return `<span class="party-status-badge status-banned">Banned</span>`;
+            return '';
+        }
         function togglePartyParticipation(i,f,v) { parties[i][f]=v; refreshUI(); simulate(); }
         function updatePartyColorText(e,i) { if(isValidHex(e.value)){ parties[i].color=e.value.toUpperCase(); e.nextElementSibling.value=parties[i].color; refreshUI(); simulate(); }}
         function updatePartyColorPicker(e,i) { parties[i].color=e.value.toUpperCase(); e.previousElementSibling.value=parties[i].color; simulate(); }
@@ -2464,13 +2479,22 @@
                         <button class="remove-btn" onclick="removeParty(${idx})">X</button>
                     </div>
                     <!-- Row 2: party name (always visible) -->
-                    <div style="margin-bottom:6px;">
-                        <input type="text" value="${p.name}" onchange="updateParty(${idx},'name',this.value)" placeholder="Party name" style="width:100%;font-size:1rem;box-sizing:border-box;">
+                    <div style="margin-bottom:6px;display:flex;align-items:center;gap:6px;">
+                        <input type="text" value="${p.name}" onchange="updateParty(${idx},'name',this.value)" placeholder="Party name" style="flex:1;min-width:0;font-size:1rem;box-sizing:border-box;">
+                        ${partyStatusBadge(p)}
                     </div>
                     <!-- Row 3: ideology (always visible) -->
                     <div style="margin-bottom:6px;">
                         <select onchange="updateParty(${idx},'ideologyId',parseInt(this.value))" style="width:100%;">
                             ${ideologies.map(ide=>`<option value="${ide.id}" ${p.ideologyId===ide.id?'selected':''}>${ide.name}</option>`).join('')}
+                        </select>
+                    </div>
+                    <!-- Row 3.5: party status (always visible) -->
+                    <div style="margin-bottom:6px;">
+                        <select onchange="updateParty(${idx},'status',this.value)" style="width:100%;">
+                            <option value="active" ${(!p.status||p.status==='active')?'selected':''}>Active</option>
+                            <option value="dissolved" ${p.status==='dissolved'?'selected':''}>Dissolved</option>
+                            <option value="banned" ${p.status==='banned'?'selected':''}>Banned</option>
                         </select>
                     </div>
                     <!-- Everything below is collapsible -->
@@ -3760,7 +3784,7 @@
         // Election sub-tab switching
         // ─────────────────────────────────────────
         function elecSwitchSub(sub) {
-            ['district','tendency','vote'].forEach(s => {
+            ['district','tendency','vote','prob'].forEach(s => {
                 document.getElementById(`elecSubTab${s.charAt(0).toUpperCase()+s.slice(1)}`)?.classList.toggle('active', s===sub);
                 document.getElementById(`elecSub${s.charAt(0).toUpperCase()+s.slice(1)}`)?.classList.toggle('active', s===sub);
             });
@@ -3809,7 +3833,7 @@
                         const fStroke = highlightGov&&fIsGov ? 'var(--tno-gold)' : (fEffCoal?fEffCoal.color:null);
                         for(let k=0; k<(f[seatKey]||0); k++){
                             if(map.length>=total) break;
-                            map.push({color:fc, partyName:p.name, factionName:f.name,
+                            map.push({color:fc, partyName:p.name, factionName:f.name, partyStatus:p.status||'active',
                                 ideology:ideologies.find(i=>i.id===f.ideologyId)?.name||ideologies.find(i=>i.id===p.ideologyId)?.name||'?',
                                 coalitionName:fEffCoal?.name, strokeColor:fStroke, isRuling:fIsGov, externalSupport:isExtSupport?(rulingCoal.externalSupportLabel||'External Support'):false});
                         }
@@ -3818,14 +3842,14 @@
                     // If faction total < party seats, the remainder uses the party color
                     for(let k=placed; k<cnt; k++){
                         if(map.length>=total) break;
-                        map.push({color:p.color, partyName:p.name, factionName:null,
+                        map.push({color:p.color, partyName:p.name, factionName:null, partyStatus:p.status||'active',
                             ideology:ideologies.find(i=>i.id===p.ideologyId)?.name||'?',
                             coalitionName:effectiveCoal?.name, strokeColor:stroke, strokeDashed, isRuling:isGov, externalSupport:isExtSupport?(rulingCoal.externalSupportLabel||'External Support'):false});
                     }
                 } else {
                     for(let k=0;k<cnt;k++){
                         if(map.length>=total) break;
-                        map.push({color:p.color, partyName:p.name, factionName:null,
+                        map.push({color:p.color, partyName:p.name, factionName:null, partyStatus:p.status||'active',
                             ideology:ideologies.find(i=>i.id===p.ideologyId)?.name||'?',
                             coalitionName:effectiveCoal?.name, strokeColor:stroke, strokeDashed, isRuling:isGov, externalSupport:isExtSupport?(rulingCoal.externalSupportLabel||'External Support'):false});
                     }
@@ -3859,6 +3883,12 @@
             if(sl)   sl.textContent   = sName;
             if(tl)   tl.textContent   = tName;
             if(bl)   bl.textContent   = 'All';
+            const probH = document.getElementById('innerTabElecProbHouse');
+            const probS = document.getElementById('innerTabElecProbSenate');
+            const probT = document.getElementById('innerTabElecProbThird');
+            if(probH) probH.textContent = hName;
+            if(probS) probS.textContent = sName;
+            if(probT) probT.textContent = tName;
             const dcH = document.getElementById('districtChamberHouseLabel');
             const dcS = document.getElementById('districtChamberSenateLabel');
             const dcT = document.getElementById('districtChamberThirdLabel');
@@ -3892,10 +3922,18 @@
             return hsp < 128;
         }
 
-        // Update combined bar
+        // Update combined bar — refreshes every bar instance for every existing chamber
+        // (a setter bar on the Support tab and a read-only bar on the Election tab can both be in the DOM at once)
         function elecUpdateAllBars() {
-            const store = elecStore[elecProbChamber] || {};
-            const inKey = inKeyFor(elecProbChamber);
+            chamberList().forEach(c => updateProbBar(c));
+        }
+
+        // Refresh one chamber's support-rate bar segments/error range/labels.
+        // Multiple bar instances for the same chamber can exist at once (setter + read-only),
+        // so this scopes queries to each [data-chamber] container instead of the whole document.
+        function updateProbBar(chamber) {
+            const store = elecStore[chamber] || {};
+            const inKey = inKeyFor(chamber);
             const allEntries = [
                 ...parties.filter(p => p[inKey]).map(p => ({ id: p.id, prob: Math.max(0, store[p.id]?.prob||0), color: p.color })),
                 { id: '__swing__', prob: Math.max(0, store['__swing__']?.prob||0), color: null }
@@ -3910,58 +3948,163 @@
                 cursor += pct;
                 return { ...e, pct, pos };
             });
-            const n = segs.length;
 
-            segs.forEach((seg, idx) => {
-                const errRaw = Math.max(0, store[seg.id]?.err||0);
-                const errPct = errRaw / total * 100;
+            document.querySelectorAll(`.elec-prob-bar[data-chamber="${chamber}"]`).forEach(barEl => {
+                segs.forEach(seg => {
+                    const errRaw = Math.max(0, store[seg.id]?.err||0);
+                    const errPct = errRaw / total * 100;
 
-                // Segment bar
-                const el = document.querySelector(`.elec-seg[data-id="${seg.id}"]`);
-                if(el) { el.style.left = seg.pos + '%'; el.style.width = seg.pct + '%'; }
+                    // Segment bar
+                    const el = barEl.querySelector(`.elec-seg[data-id="${seg.id}"]`);
+                    if(el) { el.style.left = seg.pos + '%'; el.style.width = seg.pct + '%'; }
 
-                // Label color: white on dark colors, black on light colors
-                const lbl = document.querySelector(`.elec-seg-lbl[data-id="${seg.id}"]`);
-                if(lbl) {
-                    const isDark = seg.color ? elecIsColorDark(seg.color) : true;
-                    lbl.style.color = isDark ? '#fff' : '#000';
-                    lbl.style.textShadow = isDark ? '0 0 3px rgba(0,0,0,0.8)' : 'none';
-                    if(seg.pct > 4) {
-                        lbl.style.left = seg.pos + '%';
-                        lbl.style.width = seg.pct + '%';
-                        lbl.textContent = seg.prob.toFixed(1) + '%';
-                        lbl.style.opacity = '1';
-                    } else {
-                        lbl.style.opacity = '0';
+                    // Label color: white on dark colors, black on light colors
+                    const lbl = barEl.querySelector(`.elec-seg-lbl[data-id="${seg.id}"]`);
+                    if(lbl) {
+                        const isDark = seg.color ? elecIsColorDark(seg.color) : true;
+                        lbl.style.color = isDark ? '#fff' : '#000';
+                        lbl.style.textShadow = isDark ? '0 0 3px rgba(0,0,0,0.8)' : 'none';
+                        if(seg.pct > 4) {
+                            lbl.style.left = seg.pos + '%';
+                            lbl.style.width = seg.pct + '%';
+                            lbl.textContent = seg.prob.toFixed(1) + '%';
+                            lbl.style.opacity = '1';
+                        } else {
+                            lbl.style.opacity = '0';
+                        }
                     }
-                }
 
-                // Margin of error: split evenly to both sides; if one side lacks room, overflow to the other
-                const half       = errPct / 2;
-                const leftSpace  = seg.pos;                    // Space available on the left
-                const rightSpace = 100 - (seg.pos + seg.pct);  // Space available on the right
+                    // Margin of error: split evenly to both sides; if one side lacks room, overflow to the other
+                    const half       = errPct / 2;
+                    const leftSpace  = seg.pos;                    // Space available on the left
+                    const rightSpace = 100 - (seg.pos + seg.pct);  // Space available on the right
 
-                let errLeft  = Math.min(half, leftSpace);
-                let errRight = Math.min(half, rightSpace);
-                // Push the shortfall to the other side
-                errLeft  = Math.min(errLeft  + Math.max(0, half - errRight), leftSpace);
-                errRight = Math.min(errRight + Math.max(0, half - Math.min(half, leftSpace)), rightSpace);
+                    let errLeft  = Math.min(half, leftSpace);
+                    let errRight = Math.min(half, rightSpace);
+                    // Push the shortfall to the other side
+                    errLeft  = Math.min(errLeft  + Math.max(0, half - errRight), leftSpace);
+                    errRight = Math.min(errRight + Math.max(0, half - Math.min(half, leftSpace)), rightSpace);
 
-                const elL = document.querySelector(`.elec-seg-err-l[data-id="${seg.id}"]`);
-                const elR = document.querySelector(`.elec-seg-err-r[data-id="${seg.id}"]`);
+                    const elL = barEl.querySelector(`.elec-seg-err-l[data-id="${seg.id}"]`);
+                    const elR = barEl.querySelector(`.elec-seg-err-r[data-id="${seg.id}"]`);
 
-                if(elL) {
-                    const lo = seg.pos - errLeft;
-                    elL.style.left  = lo + '%';
-                    elL.style.width = errLeft + '%';
-                    elL.style.display = '';
-                }
-                if(elR) {
-                    elR.style.left  = (seg.pos + seg.pct) + '%';
-                    elR.style.width = errRight + '%';
-                    elR.style.display = '';
-                }
+                    if(elL) {
+                        const lo = seg.pos - errLeft;
+                        elL.style.left  = lo + '%';
+                        elL.style.width = errLeft + '%';
+                        elL.style.display = '';
+                    }
+                    if(elR) {
+                        elR.style.left  = (seg.pos + seg.pct) + '%';
+                        elR.style.width = errRight + '%';
+                        elR.style.display = '';
+                    }
+                });
             });
+        }
+
+        // One chamber's "support distribution" bar HTML — shared by the setter bar on the Support tab
+        // and the read-only bar on the Election tab.
+        function buildProbBarHtml(chamber, opts = {}) {
+            const inKey = inKeyFor(chamber);
+            const chamberParties = parties.filter(p => p[inKey]);
+
+            let lblHtml = '';
+            chamberParties.forEach(p => {
+                lblHtml += `<div class="elec-seg-lbl" data-id="${p.id}"
+                    style="position:absolute;top:0;bottom:0;display:flex;align-items:center;justify-content:center;
+                    font-size:0.7rem;font-weight:bold;overflow:hidden;white-space:nowrap;pointer-events:none;opacity:0;z-index:3;"></div>`;
+            });
+            lblHtml += `<div class="elec-seg-lbl" data-id="__swing__"
+                style="position:absolute;top:0;bottom:0;display:flex;align-items:center;justify-content:center;
+                font-size:0.7rem;font-weight:bold;overflow:hidden;white-space:nowrap;pointer-events:none;opacity:0;z-index:3;"></div>`;
+
+            let errHtml = '', segHtml = '';
+            chamberParties.forEach(p => {
+                const hatch = `repeating-linear-gradient(45deg,${p.color}99,${p.color}99 2.5px,transparent 2.5px,transparent 5px)`;
+                errHtml += `
+                    <div class="elec-seg-err-l" data-id="${p.id}" style="position:absolute;top:0;bottom:0;background:${hatch};pointer-events:none;z-index:2;"></div>
+                    <div class="elec-seg-err-r" data-id="${p.id}" style="position:absolute;top:0;bottom:0;background:${hatch};pointer-events:none;z-index:2;"></div>`;
+                segHtml += `<div class="elec-seg" data-id="${p.id}" style="position:absolute;top:0;bottom:0;background:${p.color};border-right:1px solid #101218;box-sizing:border-box;z-index:1;"></div>`;
+            });
+            // Undecided (error shown on the left only — err-r is hidden)
+            const swHatch = `repeating-linear-gradient(45deg,#88888899,#88888899 2.5px,transparent 2.5px,transparent 5px)`;
+            errHtml += `
+                <div class="elec-seg-err-l" data-id="__swing__" style="position:absolute;top:0;bottom:0;background:${swHatch};pointer-events:none;z-index:2;"></div>
+                <div class="elec-seg-err-r" data-id="__swing__" style="position:absolute;top:0;bottom:0;background:${swHatch};pointer-events:none;z-index:2;"></div>`;
+            segHtml += `<div class="elec-seg" data-id="__swing__" style="position:absolute;top:0;bottom:0;background:repeating-linear-gradient(45deg,#333,#333 3px,#444 3px,#444 6px);border-right:1px solid #101218;z-index:1;"></div>`;
+
+            const legend = chamberParties.map(p=>`<span style="display:inline-flex;align-items:center;gap:3px;font-size:0.75rem;color:#aaa;">
+                        <span style="width:8px;height:8px;background:${p.color};display:inline-block;flex-shrink:0;"></span>${p.name}</span>`).join('')
+                + `<span style="display:inline-flex;align-items:center;gap:3px;font-size:0.75rem;color:#aaa;">
+                        <span style="width:8px;height:8px;background:repeating-linear-gradient(45deg,#333,#333 2px,#444 2px,#444 4px);display:inline-block;flex-shrink:0;"></span>Undecided</span>`;
+
+            const titleHtml = opts.title ? `<div style="font-size:0.75rem;color:#555;margin-bottom:4px;letter-spacing:1px;">▌ ${opts.title}</div>` : '';
+
+            return `
+                <div class="elec-prob-bar" data-chamber="${chamber}" style="${opts.wrapStyle || 'margin-bottom:14px;'}">
+                    ${titleHtml}
+                    <div style="position:relative;height:22px;background:#111;border:1px solid #333;overflow:visible;">
+                        ${errHtml}${segHtml}${lblHtml}
+                    </div>
+                    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:5px;">
+                        ${legend}
+                    </div>
+                </div>`;
+        }
+
+        // Read-only support-rate bars shown on the Election tab — existing chambers only, House → Senate → Third
+        function elecRenderProbBars() {
+            const container = document.getElementById('elecProbBars');
+            if(!container) return;
+            const chamberNames = {
+                house:  document.getElementById('houseNameInput')?.value  || 'House',
+                senate: document.getElementById('senateNameInput')?.value || 'Senate',
+                third:  document.getElementById('thirdNameInput')?.value  || 'Third'
+            };
+            container.innerHTML = chamberList()
+                .map(c => buildProbBarHtml(c, { title: `${chamberNames[c]} Support Distribution` }))
+                .join('');
+        }
+
+        // "Apply to all" (Support tab) — while on, editing a value in one chamber also writes it into
+        // every other chamber that party belongs to.
+        let elecProbSyncAll = false;
+
+        function elecPropagateProb(fromChamber, partyId, entry) {
+            const party = partyId === '__swing__' ? null : parties.find(p=>String(p.id)===String(partyId));
+            chamberList().forEach(c => {
+                if(c === fromChamber) return;
+                if(party && !party[inKeyFor(c)]) return; // skip chambers this party isn't part of
+                if(!elecStore[c]) elecStore[c] = {};
+                elecStore[c][partyId] = { prob: entry.prob, err: entry.err };
+            });
+        }
+
+        function elecSetProb(chamber, partyId, val) {
+            const store = elecStore[chamber] || (elecStore[chamber] = {});
+            if(!store[partyId]) store[partyId] = { prob:0, err:0 };
+            store[partyId].prob = val;
+            if(elecProbSyncAll) elecPropagateProb(chamber, partyId, store[partyId]);
+            elecUpdateAllBars();
+        }
+
+        function elecSetErr(chamber, partyId, val) {
+            const store = elecStore[chamber] || (elecStore[chamber] = {});
+            if(!store[partyId]) store[partyId] = { prob:0, err:0 };
+            store[partyId].err = val;
+            if(elecProbSyncAll) elecPropagateProb(chamber, partyId, store[partyId]);
+            elecUpdateAllBars();
+        }
+
+        // "Apply to all" checkbox — checking it immediately syncs the current tab's values to every other chamber
+        function onElecProbSyncAllChange(checked) {
+            elecProbSyncAll = checked;
+            if(checked) {
+                const store = elecStore[elecProbChamber] || {};
+                Object.keys(store).forEach(partyId => elecPropagateProb(elecProbChamber, partyId, store[partyId]));
+                elecUpdateAllBars();
+            }
         }
 
         // Flush the currently displayed support-rate inputs into the store for whichever chamber is showing.
@@ -4020,50 +4163,9 @@
 
             container.innerHTML = '';
 
-            // ── Combined bar ──────────────────────
-            const barWrap = document.createElement('div');
-            barWrap.style.cssText = 'margin-bottom:14px;';
-
-            // Label layer (above the bar, z-index:3)
-            let lblHtml = '';
-            parties.forEach(p => {
-                lblHtml += `<div class="elec-seg-lbl" data-id="${p.id}"
-                    style="position:absolute;top:0;bottom:0;display:flex;align-items:center;justify-content:center;
-                    font-size:0.7rem;font-weight:bold;overflow:hidden;white-space:nowrap;pointer-events:none;opacity:0;z-index:3;"></div>`;
-            });
-            lblHtml += `<div class="elec-seg-lbl" data-id="__swing__"
-                style="position:absolute;top:0;bottom:0;display:flex;align-items:center;justify-content:center;
-                font-size:0.7rem;font-weight:bold;overflow:hidden;white-space:nowrap;pointer-events:none;opacity:0;z-index:3;"></div>`;
-
-            // Error layer + segment layer
-            let errHtml = '', segHtml = '';
-            parties.forEach(p => {
-                // Hatch pattern: sharper (higher opacity)
-                const hatch = `repeating-linear-gradient(45deg,${p.color}99,${p.color}99 2.5px,transparent 2.5px,transparent 5px)`;
-                errHtml += `
-                    <div class="elec-seg-err-l" data-id="${p.id}" style="position:absolute;top:0;bottom:0;background:${hatch};pointer-events:none;z-index:2;"></div>
-                    <div class="elec-seg-err-r" data-id="${p.id}" style="position:absolute;top:0;bottom:0;background:${hatch};pointer-events:none;z-index:2;"></div>`;
-                segHtml += `<div class="elec-seg" data-id="${p.id}" style="position:absolute;top:0;bottom:0;background:${p.color};border-right:1px solid #101218;box-sizing:border-box;z-index:1;"></div>`;
-            });
-            // Undecided (error bar shows on the left only — err-r is hidden)
-            const swHatch = `repeating-linear-gradient(45deg,#88888899,#88888899 2.5px,transparent 2.5px,transparent 5px)`;
-            errHtml += `
-                <div class="elec-seg-err-l" data-id="__swing__" style="position:absolute;top:0;bottom:0;background:${swHatch};pointer-events:none;z-index:2;"></div>
-                <div class="elec-seg-err-r" data-id="__swing__" style="position:absolute;top:0;bottom:0;background:${swHatch};pointer-events:none;z-index:2;"></div>`;
-            segHtml += `<div class="elec-seg" data-id="__swing__" style="position:absolute;top:0;bottom:0;background:repeating-linear-gradient(45deg,#333,#333 3px,#444 3px,#444 6px);border-right:1px solid #101218;z-index:1;"></div>`;
-
-            barWrap.innerHTML = `
-                <div style="font-size:0.75rem;color:#555;margin-bottom:4px;letter-spacing:1px;">▌ Support Distribution</div>
-                <div style="position:relative;height:22px;background:#111;border:1px solid #333;overflow:visible;">
-                    ${errHtml}${segHtml}${lblHtml}
-                </div>
-                <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:5px;">
-                    ${parties.map(p=>`<span style="display:inline-flex;align-items:center;gap:3px;font-size:0.75rem;color:#aaa;">
-                        <span style="width:8px;height:8px;background:${p.color};display:inline-block;flex-shrink:0;"></span>${p.name}</span>`).join('')}
-                    <span style="display:inline-flex;align-items:center;gap:3px;font-size:0.75rem;color:#aaa;">
-                        <span style="width:8px;height:8px;background:repeating-linear-gradient(45deg,#333,#333 2px,#444 2px,#444 4px);display:inline-block;flex-shrink:0;"></span>Undecided</span>
-                </div>`;
-            container.appendChild(barWrap);
+            // ── Combined bar (shared renderer for the setter tab + the Election tab's read-only bars) ──
+            container.insertAdjacentHTML('beforeend', buildProbBarHtml(elecProbChamber, { title: 'Support Distribution' }));
+            elecRenderProbBars(); // keep the Election tab's read-only bar stack current too
 
             // ── Header (party name/support/error) — right below the support distribution bar, right above the input rows ──
             const headerRow = document.createElement('div');
@@ -4087,11 +4189,11 @@
                     <input type="number" class="elec-prob" data-id="${p.id}" value="${st.prob}"
                         min="0" max="100" placeholder="0"
                         style="background:#000;border:1px solid var(--tno-border);color:var(--tno-neon);font-family:inherit;font-size:0.9rem;padding:4px;text-align:center;width:100%;box-sizing:border-box;"
-                        oninput="if(!elecStore['${ch}']['${p.id}'])elecStore['${ch}']['${p.id}']={prob:0,err:0}; elecStore['${ch}']['${p.id}'].prob=parseFloat(this.value)||0; elecUpdateAllBars();">
+                        oninput="elecSetProb('${ch}','${p.id}', parseFloat(this.value)||0)">
                     <input type="number" class="elec-err" data-id="${p.id}" value="${st.err}"
                         min="0" max="50" placeholder="0"
                         style="background:#000;border:1px solid #444;color:#888;font-family:inherit;font-size:0.9rem;padding:4px;text-align:center;width:100%;box-sizing:border-box;"
-                        oninput="if(!elecStore['${ch}']['${p.id}'])elecStore['${ch}']['${p.id}']={prob:0,err:0}; elecStore['${ch}']['${p.id}'].err=parseFloat(this.value)||0; elecUpdateAllBars();">
+                        oninput="elecSetErr('${ch}','${p.id}', parseFloat(this.value)||0)">
                 `;
                 container.appendChild(row);
             });
@@ -4110,11 +4212,11 @@
                     <input type="number" class="elec-prob" data-id="${p.id}" value="${st.prob}"
                         min="0" max="100" placeholder="0"
                         style="background:#000;border:1px solid var(--tno-border);color:var(--tno-neon);font-family:inherit;font-size:0.9rem;padding:4px;text-align:center;width:100%;box-sizing:border-box;"
-                        oninput="if(!elecStore['${ch}']['${p.id}'])elecStore['${ch}']['${p.id}']={prob:0,err:0}; elecStore['${ch}']['${p.id}'].prob=parseFloat(this.value)||0; elecUpdateAllBars();">
+                        oninput="elecSetProb('${ch}','${p.id}', parseFloat(this.value)||0)">
                     <input type="number" class="elec-err" data-id="${p.id}" value="${st.err}"
                         min="0" max="50" placeholder="0"
                         style="background:#000;border:1px solid #444;color:#888;font-family:inherit;font-size:0.9rem;padding:4px;text-align:center;width:100%;box-sizing:border-box;"
-                        oninput="if(!elecStore['${ch}']['${p.id}'])elecStore['${ch}']['${p.id}']={prob:0,err:0}; elecStore['${ch}']['${p.id}'].err=parseFloat(this.value)||0; elecUpdateAllBars();">
+                        oninput="elecSetErr('${ch}','${p.id}', parseFloat(this.value)||0)">
                 `;
                 container.appendChild(row);
             }
@@ -4131,11 +4233,11 @@
                 <input type="number" class="elec-prob" data-id="__swing__" value="${sw.prob}"
                     min="0" max="100" placeholder="0"
                     style="background:#000;border:1px solid #555;color:#aaa;font-family:inherit;font-size:0.9rem;padding:4px;text-align:center;width:100%;box-sizing:border-box;"
-                    oninput="elecStore['${ch}']['__swing__'].prob=parseFloat(this.value)||0; elecUpdateAllBars();">
+                    oninput="elecSetProb('${ch}','__swing__', parseFloat(this.value)||0)">
                 <input type="number" class="elec-err" data-id="__swing__" value="${sw.err}"
                     min="0" max="50" placeholder="0"
                     style="background:#000;border:1px solid #444;color:#555;font-family:inherit;font-size:0.9rem;padding:4px;text-align:center;width:100%;box-sizing:border-box;"
-                    oninput="elecStore['${ch}']['__swing__'].err=parseFloat(this.value)||0; elecUpdateAllBars();">
+                    oninput="elecSetErr('${ch}','__swing__', parseFloat(this.value)||0)">
             `;
             container.appendChild(swRow);
 
@@ -4163,7 +4265,7 @@
             const seatKey = seatKeyFor(chamber);
             const summary = [];
             relevantResults.forEach(({key, partyId}) => {
-                const party = parties.find(p=>p.id===partyId);
+                const party = parties.find(p=>String(p.id)===String(partyId));
                 if(party) party[seatKey] = (party[seatKey]||0) + 1;
                 districtMembers[chamber][key] = { name:'', partyId, factionId:null, vacant:false };
                 summary.push(`${districtNames[chamber][key]||key} : ${party?.name||'?'}`);
@@ -4250,7 +4352,6 @@
                     .sort((a,b)=>b.seats-a.seats)
                     .map(p=>`<span style="display:inline-flex;align-items:center;gap:3px;margin-right:6px;font-size:0.8rem;color:#aaa;"><span style="width:8px;height:8px;background:${p.color};border-radius:50%;display:inline-block;"></span>${p.name} ${p.seats} seats</span>`)
                     .join('');
-                const savedAtLabel = r.savedAt ? new Date(r.savedAt).toLocaleString('en-US') : '—';
                 const detailRows = r.parties.filter(p=>p.seats>0 || p.prob>0)
                     .sort((a,b)=>b.seats-a.seats)
                     .map(p=>`<div class="bill-history-entry">${p.name} — ${p.seats} seats · vote share ${(p.prob*100).toFixed(1)}%</div>`)
@@ -4262,7 +4363,7 @@
                     </div>
                     <div style="margin-bottom:4px;">${partySummary}</div>
                     <div style="margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;">
-                        <span class="elec-record-toggle" onclick="toggleElecRecordDetail('${r.id}')">▾ Details (${r.totalSeats} seats total · saved: ${savedAtLabel})</span>
+                        <span class="elec-record-toggle" onclick="toggleElecRecordDetail('${r.id}')">▾ Details (${r.totalSeats} seats total)</span>
                     </div>
                     <div class="elec-record-detail" id="elecRecordDetail-${r.id}">${detailRows}</div>
                     <div style="display:flex;gap:6px;">
@@ -4974,7 +5075,7 @@
                             const fStroke = highlightGov&&fIsGov ? 'var(--tno-gold)' : (fEffCoal?fEffCoal.color:null);
                             for(let k=0; k<(f[seatKey]||0); k++){
                                 if(map.length>=targetTotal) break;
-                                map.push({color:fc, partyName:p.name, factionName:f.name,
+                                map.push({color:fc, partyName:p.name, factionName:f.name, partyStatus:p.status||'active',
                                     ideology:ideologies.find(i=>i.id===f.ideologyId)?.name||ideologies.find(i=>i.id===p.ideologyId)?.name||'?',
                                     coalitionName:fEffCoal?.name, strokeColor:fStroke, isRuling:fIsGov, externalSupport:isExtSupport?(rulingCoal.externalSupportLabel||'External Support'):false});
                             }
@@ -4982,7 +5083,7 @@
                         });
                         for(let k=placed; k<cnt; k++){
                             if(map.length>=targetTotal) break;
-                            map.push({color:p.color, partyName:p.name, factionName:null,
+                            map.push({color:p.color, partyName:p.name, factionName:null, partyStatus:p.status||'active',
                                 ideology:ideologies.find(i=>i.id===p.ideologyId)?.name||'?',
                                 coalitionName:effectiveCoal?.name, strokeColor:stroke, strokeDashed, isRuling:isGov, externalSupport:isExtSupport?(rulingCoal.externalSupportLabel||'External Support'):false});
                         }
@@ -5017,7 +5118,7 @@
                                     indExtSupport = false;
                                 }
                             }
-                            map.push({color:p.color, partyName:p.name, factionName:null,
+                            map.push({color:p.color, partyName:p.name, factionName:null, partyStatus:p.status||'active',
                                 ideology:ideologies.find(i=>i.id===p.ideologyId)?.name||'?',
                                 coalitionName:indCoalName, strokeColor:indStroke, strokeDashed:indDashed, isRuling:indIsGov, externalSupport:indExtSupport,
                                 independentName: indEntry?.name || null, independentSeatIndex: indEntry?.seatIndex || null});

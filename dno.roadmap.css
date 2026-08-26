@@ -243,6 +243,8 @@
       border-top: 2px solid var(--card-color, var(--tno-border));
       transition: border-color .15s ease, box-shadow .15s ease, background .15s ease;
       overflow: visible;
+      display: flex;
+      flex-direction: column;
     }
 
     .rd-card::before {
@@ -287,6 +289,7 @@
     }
 
     .rd-title {
+      flex: 0 0 auto;
       margin: 0 0 10px;
       padding-bottom: 8px;
       border-bottom: 1px solid #333;
@@ -300,12 +303,34 @@
     }
 
     .rd-desc {
+      flex: 1 1 auto;
+      min-height: 0;
       margin: 0;
+      padding-right: 8px;
       color: #b8c5c9;
       font-family: 'NeoDunggeunmo', 'VT323', monospace;
       font-size: .95rem;
       line-height: 1.65;
       word-break: keep-all;
+      overflow-y: auto;
+      overflow-x: hidden;
+      scrollbar-width: thin;
+      scrollbar-color: var(--card-color, var(--tno-neon)) rgba(0, 0, 0, .4);
+    }
+
+    /* 카드 상태(--card-color)에 맞춰 스크롤바 색이 함께 바뀐다 */
+    .rd-desc::-webkit-scrollbar {
+      width: 6px;
+    }
+    .rd-desc::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, .4);
+    }
+    .rd-desc::-webkit-scrollbar-thumb {
+      background: var(--card-color, var(--tno-neon));
+      box-shadow: 0 0 4px color-mix(in srgb, var(--card-color, var(--tno-neon)) 60%, transparent);
+    }
+    .rd-desc::-webkit-scrollbar-thumb:hover {
+      box-shadow: 0 0 8px var(--card-color, var(--tno-neon));
     }
 
     @media (max-width: 880px) {

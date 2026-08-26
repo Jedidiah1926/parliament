@@ -1071,8 +1071,6 @@
 
             const d = dotCache[chamber][hit];
             if(!d) return;
-            const voteLabels = { yea:'찬성', nay:'반대', abs:'기권', none:'미투표' };
-            const vs = voteState[chamber]?.[hit] || 'none';
             const nameLabel = d.independentName ? d.independentName : d.partyName;
             const seatLabel = d.independentSeatIndex
                 ? `#${computeIndependentOffset(chamber) + d.independentSeatIndex}`
@@ -1091,7 +1089,8 @@
             if(d.factionName) rows.push(`파벌: ${d.factionName}`);
             rows.push(`이념: ${d.ideology}`);
             if(d.coalitionName) rows.push(`연정: ${d.coalitionName}`);
-            if(d.partyName !== 'Vacant') rows.push(`투표 상태: ${voteLabels[vs]}`);
+            if(d.partyStatus === 'dissolved') rows.push(`상태: <span class="party-status-badge status-dissolved">해산</span>`);
+            if(d.partyStatus === 'banned') rows.push(`상태: <span class="party-status-badge status-banned">활동 금지</span>`);
             body.innerHTML = rows.map(r => `<div>${r}</div>`).join('');
 
             seatInfoCardTarget = { chamber, hit };
@@ -1692,6 +1691,13 @@
             if(dcH) dcH.textContent = hName;
             if(dcS) dcS.textContent = sName;
             if(dcT) dcT.textContent = tName;
+            const probH = document.getElementById('innerTabElecProbHouse');
+            const probS = document.getElementById('innerTabElecProbSenate');
+            const probT = document.getElementById('innerTabElecProbThird');
+            if(probH) probH.textContent = hName;
+            if(probS) probS.textContent = sName;
+            if(probT) probT.textContent = tName;
+            elecRenderProbBars(); // 선거 탭의 읽기전용 지지율 바 제목도 즉시 갱신
             // 카드 안 의석 레이블도 갱신 (renderCoalitions 제외로 무한루프 방지)
             renderIdeologyList();
             renderPartyList('house');
@@ -1856,6 +1862,7 @@
                             <div style="display:flex;align-items:center;gap:6px;">
                                 <span style="width:9px;height:9px;background:${p.color};border-radius:50%;flex-shrink:0;"></span>
                                 <span style="font-size:1rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${p.name}</span>
+                                ${partyStatusBadge(p)}
                             </div>
                             ${ideologyName?`<div style="color:#666;font-size:0.8rem;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${ideologyName}</div>`:''}
                         </div>
@@ -2352,7 +2359,14 @@
             refreshUI(); simulate();
         }
         function removeParty(i) { const pid=parties[i].id; parties.splice(i,1); coalitions.forEach(c=>c.members=c.members.filter(x=>x!==pid)); refreshUI(); simulate(); }
-        function updateParty(i,k,v) { parties[i][k]=v; if(k==='name')refreshUI(); simulate(); }
+        function updateParty(i,k,v) { parties[i][k]=v; if(k==='name'||k==='status')refreshUI(); simulate(); }
+
+        // 정당 해산/활동금지 표기 뱃지 — 활동중인 정당은 표기하지 않음
+        function partyStatusBadge(p) {
+            if(p.status === 'dissolved') return `<span class="party-status-badge status-dissolved">해산</span>`;
+            if(p.status === 'banned') return `<span class="party-status-badge status-banned">활동 금지</span>`;
+            return '';
+        }
         function togglePartyParticipation(i,f,v) { parties[i][f]=v; refreshUI(); simulate(); }
         function updatePartyColorText(e,i) { if(isValidHex(e.value)){ parties[i].color=e.value.toUpperCase(); e.nextElementSibling.value=parties[i].color; refreshUI(); simulate(); }}
         function updatePartyColorPicker(e,i) { parties[i].color=e.value.toUpperCase(); e.previousElementSibling.value=parties[i].color; simulate(); }
@@ -2562,13 +2576,22 @@
                         <button class="remove-btn" onclick="removeParty(${idx})">X</button>
                     </div>
                     <!-- 행2: 당명 (항상 보임) -->
-                    <div style="margin-bottom:6px;">
-                        <input type="text" value="${p.name}" onchange="updateParty(${idx},'name',this.value)" placeholder="정당명" style="width:100%;font-size:1rem;box-sizing:border-box;">
+                    <div style="margin-bottom:6px;display:flex;align-items:center;gap:6px;">
+                        <input type="text" value="${p.name}" onchange="updateParty(${idx},'name',this.value)" placeholder="정당명" style="flex:1;min-width:0;font-size:1rem;box-sizing:border-box;">
+                        ${partyStatusBadge(p)}
                     </div>
                     <!-- 행3: 이념 (항상 보임) -->
                     <div style="margin-bottom:6px;">
                         <select onchange="updateParty(${idx},'ideologyId',parseInt(this.value))" style="width:100%;">
                             ${ideologies.map(ide=>`<option value="${ide.id}" ${p.ideologyId===ide.id?'selected':''}>${ide.name}</option>`).join('')}
+                        </select>
+                    </div>
+                    <!-- 행3.5: 정당 상태 (항상 보임) -->
+                    <div style="margin-bottom:6px;">
+                        <select onchange="updateParty(${idx},'status',this.value)" style="width:100%;">
+                            <option value="active" ${(!p.status||p.status==='active')?'selected':''}>활동중</option>
+                            <option value="dissolved" ${p.status==='dissolved'?'selected':''}>해산</option>
+                            <option value="banned" ${p.status==='banned'?'selected':''}>활동 금지</option>
                         </select>
                     </div>
                     <!-- 이 아래부터 접기 대상 -->
@@ -3858,7 +3881,7 @@
         // 선거 하위탭 전환
         // ─────────────────────────────────────────
         function elecSwitchSub(sub) {
-            ['district','tendency','vote'].forEach(s => {
+            ['district','tendency','vote','prob'].forEach(s => {
                 document.getElementById(`elecSubTab${s.charAt(0).toUpperCase()+s.slice(1)}`)?.classList.toggle('active', s===sub);
                 document.getElementById(`elecSub${s.charAt(0).toUpperCase()+s.slice(1)}`)?.classList.toggle('active', s===sub);
             });
@@ -3907,7 +3930,7 @@
                         const fStroke = highlightGov&&fIsGov ? 'var(--tno-gold)' : (fEffCoal?fEffCoal.color:null);
                         for(let k=0; k<(f[seatKey]||0); k++){
                             if(map.length>=total) break;
-                            map.push({color:fc, partyName:p.name, factionName:f.name,
+                            map.push({color:fc, partyName:p.name, factionName:f.name, partyStatus:p.status||'active',
                                 ideology:ideologies.find(i=>i.id===f.ideologyId)?.name||ideologies.find(i=>i.id===p.ideologyId)?.name||'?',
                                 coalitionName:fEffCoal?.name, strokeColor:fStroke, isRuling:fIsGov, externalSupport:isExtSupport?(rulingCoal.externalSupportLabel||'각외협력'):false});
                         }
@@ -3916,14 +3939,14 @@
                     // 파벌 합계 < 당 의석이면 나머지는 당 색으로
                     for(let k=placed; k<cnt; k++){
                         if(map.length>=total) break;
-                        map.push({color:p.color, partyName:p.name, factionName:null,
+                        map.push({color:p.color, partyName:p.name, factionName:null, partyStatus:p.status||'active',
                             ideology:ideologies.find(i=>i.id===p.ideologyId)?.name||'?',
                             coalitionName:effectiveCoal?.name, strokeColor:stroke, strokeDashed, isRuling:isGov, externalSupport:isExtSupport?(rulingCoal.externalSupportLabel||'각외협력'):false});
                     }
                 } else {
                     for(let k=0;k<cnt;k++){
                         if(map.length>=total) break;
-                        map.push({color:p.color, partyName:p.name, factionName:null,
+                        map.push({color:p.color, partyName:p.name, factionName:null, partyStatus:p.status||'active',
                             ideology:ideologies.find(i=>i.id===p.ideologyId)?.name||'?',
                             coalitionName:effectiveCoal?.name, strokeColor:stroke, strokeDashed, isRuling:isGov, externalSupport:isExtSupport?(rulingCoal.externalSupportLabel||'각외협력'):false});
                     }
@@ -3957,6 +3980,12 @@
             if(sl)   sl.textContent   = sName;
             if(tl)   tl.textContent   = tName;
             if(bl)   bl.textContent   = '전체';
+            const probH = document.getElementById('innerTabElecProbHouse');
+            const probS = document.getElementById('innerTabElecProbSenate');
+            const probT = document.getElementById('innerTabElecProbThird');
+            if(probH) probH.textContent = hName;
+            if(probS) probS.textContent = sName;
+            if(probT) probT.textContent = tName;
             const dcH = document.getElementById('districtChamberHouseLabel');
             const dcS = document.getElementById('districtChamberSenateLabel');
             const dcT = document.getElementById('districtChamberThirdLabel');
@@ -3990,10 +4019,18 @@
             return hsp < 128;
         }
 
-        // 통합 바 업데이트
+        // 통합 바 업데이트 — 존재하는 모든 원의 바 인스턴스를 전부 갱신한다
+        // (지지율 탭의 설정용 바 + 선거 탭의 읽기전용 바가 동시에 DOM에 있을 수 있음)
         function elecUpdateAllBars() {
-            const store = elecStore[elecProbChamber] || {};
-            const inKey = inKeyFor(elecProbChamber);
+            chamberList().forEach(c => updateProbBar(c));
+        }
+
+        // 특정 원(chamber)의 지지율 바 세그먼트/오차/레이블을 갱신한다.
+        // 같은 chamber를 가리키는 바 인스턴스가 여러 개 동시에 존재할 수 있어(설정용+읽기전용),
+        // document 전역이 아니라 [data-chamber] 컨테이너 단위로 찾아 전부 갱신한다.
+        function updateProbBar(chamber) {
+            const store = elecStore[chamber] || {};
+            const inKey = inKeyFor(chamber);
             const allEntries = [
                 ...parties.filter(p => p[inKey]).map(p => ({ id: p.id, prob: Math.max(0, store[p.id]?.prob||0), color: p.color })),
                 { id: '__swing__', prob: Math.max(0, store['__swing__']?.prob||0), color: null }
@@ -4008,58 +4045,161 @@
                 cursor += pct;
                 return { ...e, pct, pos };
             });
-            const n = segs.length;
 
-            segs.forEach((seg, idx) => {
-                const errRaw = Math.max(0, store[seg.id]?.err||0);
-                const errPct = errRaw / total * 100;
+            document.querySelectorAll(`.elec-prob-bar[data-chamber="${chamber}"]`).forEach(barEl => {
+                segs.forEach(seg => {
+                    const errRaw = Math.max(0, store[seg.id]?.err||0);
+                    const errPct = errRaw / total * 100;
 
-                // 세그먼트 바
-                const el = document.querySelector(`.elec-seg[data-id="${seg.id}"]`);
-                if(el) { el.style.left = seg.pos + '%'; el.style.width = seg.pct + '%'; }
+                    // 세그먼트 바
+                    const el = barEl.querySelector(`.elec-seg[data-id="${seg.id}"]`);
+                    if(el) { el.style.left = seg.pos + '%'; el.style.width = seg.pct + '%'; }
 
-                // 레이블 색상: 어두운 색이면 흰색, 밝으면 검정
-                const lbl = document.querySelector(`.elec-seg-lbl[data-id="${seg.id}"]`);
-                if(lbl) {
-                    const isDark = seg.color ? elecIsColorDark(seg.color) : true;
-                    lbl.style.color = isDark ? '#fff' : '#000';
-                    lbl.style.textShadow = isDark ? '0 0 3px rgba(0,0,0,0.8)' : 'none';
-                    if(seg.pct > 4) {
-                        lbl.style.left = seg.pos + '%';
-                        lbl.style.width = seg.pct + '%';
-                        lbl.textContent = seg.prob.toFixed(1) + '%';
-                        lbl.style.opacity = '1';
-                    } else {
-                        lbl.style.opacity = '0';
+                    // 레이블 색상: 어두운 색이면 흰색, 밝으면 검정
+                    const lbl = barEl.querySelector(`.elec-seg-lbl[data-id="${seg.id}"]`);
+                    if(lbl) {
+                        const isDark = seg.color ? elecIsColorDark(seg.color) : true;
+                        lbl.style.color = isDark ? '#fff' : '#000';
+                        lbl.style.textShadow = isDark ? '0 0 3px rgba(0,0,0,0.8)' : 'none';
+                        if(seg.pct > 4) {
+                            lbl.style.left = seg.pos + '%';
+                            lbl.style.width = seg.pct + '%';
+                            lbl.textContent = seg.prob.toFixed(1) + '%';
+                            lbl.style.opacity = '1';
+                        } else {
+                            lbl.style.opacity = '0';
+                        }
                     }
-                }
 
-                // 오차범위: 절반씩 양옆, 한쪽 공간 부족하면 반대편으로 넘김
-                const half       = errPct / 2;
-                const leftSpace  = seg.pos;                    // 왼쪽 가용 공간
-                const rightSpace = 100 - (seg.pos + seg.pct);  // 오른쪽 가용 공간
+                    // 오차범위: 절반씩 양옆, 한쪽 공간 부족하면 반대편으로 넘김
+                    const half       = errPct / 2;
+                    const leftSpace  = seg.pos;                    // 왼쪽 가용 공간
+                    const rightSpace = 100 - (seg.pos + seg.pct);  // 오른쪽 가용 공간
 
-                let errLeft  = Math.min(half, leftSpace);
-                let errRight = Math.min(half, rightSpace);
-                // 부족분 반대편으로
-                errLeft  = Math.min(errLeft  + Math.max(0, half - errRight), leftSpace);
-                errRight = Math.min(errRight + Math.max(0, half - Math.min(half, leftSpace)), rightSpace);
+                    let errLeft  = Math.min(half, leftSpace);
+                    let errRight = Math.min(half, rightSpace);
+                    // 부족분 반대편으로
+                    errLeft  = Math.min(errLeft  + Math.max(0, half - errRight), leftSpace);
+                    errRight = Math.min(errRight + Math.max(0, half - Math.min(half, leftSpace)), rightSpace);
 
-                const elL = document.querySelector(`.elec-seg-err-l[data-id="${seg.id}"]`);
-                const elR = document.querySelector(`.elec-seg-err-r[data-id="${seg.id}"]`);
+                    const elL = barEl.querySelector(`.elec-seg-err-l[data-id="${seg.id}"]`);
+                    const elR = barEl.querySelector(`.elec-seg-err-r[data-id="${seg.id}"]`);
 
-                if(elL) {
-                    const lo = seg.pos - errLeft;
-                    elL.style.left  = lo + '%';
-                    elL.style.width = errLeft + '%';
-                    elL.style.display = '';
-                }
-                if(elR) {
-                    elR.style.left  = (seg.pos + seg.pct) + '%';
-                    elR.style.width = errRight + '%';
-                    elR.style.display = '';
-                }
+                    if(elL) {
+                        const lo = seg.pos - errLeft;
+                        elL.style.left  = lo + '%';
+                        elL.style.width = errLeft + '%';
+                        elL.style.display = '';
+                    }
+                    if(elR) {
+                        elR.style.left  = (seg.pos + seg.pct) + '%';
+                        elR.style.width = errRight + '%';
+                        elR.style.display = '';
+                    }
+                });
             });
+        }
+
+        // 특정 원의 "지지율 분포" 바 HTML — 지지율 탭의 설정용 바와 선거 탭의 읽기전용 바가 함께 사용
+        function buildProbBarHtml(chamber, opts = {}) {
+            const inKey = inKeyFor(chamber);
+            const chamberParties = parties.filter(p => p[inKey]);
+
+            let lblHtml = '';
+            chamberParties.forEach(p => {
+                lblHtml += `<div class="elec-seg-lbl" data-id="${p.id}"
+                    style="position:absolute;top:0;bottom:0;display:flex;align-items:center;justify-content:center;
+                    font-size:0.7rem;font-weight:bold;overflow:hidden;white-space:nowrap;pointer-events:none;opacity:0;z-index:3;"></div>`;
+            });
+            lblHtml += `<div class="elec-seg-lbl" data-id="__swing__"
+                style="position:absolute;top:0;bottom:0;display:flex;align-items:center;justify-content:center;
+                font-size:0.7rem;font-weight:bold;overflow:hidden;white-space:nowrap;pointer-events:none;opacity:0;z-index:3;"></div>`;
+
+            let errHtml = '', segHtml = '';
+            chamberParties.forEach(p => {
+                const hatch = `repeating-linear-gradient(45deg,${p.color}99,${p.color}99 2.5px,transparent 2.5px,transparent 5px)`;
+                errHtml += `
+                    <div class="elec-seg-err-l" data-id="${p.id}" style="position:absolute;top:0;bottom:0;background:${hatch};pointer-events:none;z-index:2;"></div>
+                    <div class="elec-seg-err-r" data-id="${p.id}" style="position:absolute;top:0;bottom:0;background:${hatch};pointer-events:none;z-index:2;"></div>`;
+                segHtml += `<div class="elec-seg" data-id="${p.id}" style="position:absolute;top:0;bottom:0;background:${p.color};border-right:1px solid #101218;box-sizing:border-box;z-index:1;"></div>`;
+            });
+            // 무당파 (오차는 왼쪽으로만 — err-r은 숨김)
+            const swHatch = `repeating-linear-gradient(45deg,#88888899,#88888899 2.5px,transparent 2.5px,transparent 5px)`;
+            errHtml += `
+                <div class="elec-seg-err-l" data-id="__swing__" style="position:absolute;top:0;bottom:0;background:${swHatch};pointer-events:none;z-index:2;"></div>
+                <div class="elec-seg-err-r" data-id="__swing__" style="position:absolute;top:0;bottom:0;background:${swHatch};pointer-events:none;z-index:2;"></div>`;
+            segHtml += `<div class="elec-seg" data-id="__swing__" style="position:absolute;top:0;bottom:0;background:repeating-linear-gradient(45deg,#333,#333 3px,#444 3px,#444 6px);border-right:1px solid #101218;z-index:1;"></div>`;
+
+            const legend = chamberParties.map(p=>`<span style="display:inline-flex;align-items:center;gap:3px;font-size:0.75rem;color:#aaa;">
+                        <span style="width:8px;height:8px;background:${p.color};display:inline-block;flex-shrink:0;"></span>${p.name}</span>`).join('')
+                + `<span style="display:inline-flex;align-items:center;gap:3px;font-size:0.75rem;color:#aaa;">
+                        <span style="width:8px;height:8px;background:repeating-linear-gradient(45deg,#333,#333 2px,#444 2px,#444 4px);display:inline-block;flex-shrink:0;"></span>무당파</span>`;
+
+            const titleHtml = opts.title ? `<div style="font-size:0.75rem;color:#555;margin-bottom:4px;letter-spacing:1px;">▌ ${opts.title}</div>` : '';
+
+            return `
+                <div class="elec-prob-bar" data-chamber="${chamber}" style="${opts.wrapStyle || 'margin-bottom:14px;'}">
+                    ${titleHtml}
+                    <div style="position:relative;height:22px;background:#111;border:1px solid #333;overflow:visible;">
+                        ${errHtml}${segHtml}${lblHtml}
+                    </div>
+                    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:5px;">
+                        ${legend}
+                    </div>
+                </div>`;
+        }
+
+        // 선거 > 선거 탭에 표시되는 읽기전용 지지율 바 묶음 — 존재하는 원만, 하원→상원→삼원 순으로 표시
+        function elecRenderProbBars() {
+            const container = document.getElementById('elecProbBars');
+            if(!container) return;
+            const chamberNames = {
+                house:  document.getElementById('houseNameInput')?.value  || '하원',
+                senate: document.getElementById('senateNameInput')?.value || '상원',
+                third:  document.getElementById('thirdNameInput')?.value  || '삼원'
+            };
+            container.innerHTML = chamberList()
+                .map(c => buildProbBarHtml(c, { title: `${chamberNames[c]} 지지율 분포` }))
+                .join('');
+        }
+
+        // "전체에 반영" (지지율 탭) — 켜져 있으면 한 원에서 값을 바꿀 때 그 정당이 속한 다른 원에도 그대로 반영
+        let elecProbSyncAll = false;
+
+        function elecPropagateProb(fromChamber, partyId, entry) {
+            const party = partyId === '__swing__' ? null : parties.find(p=>String(p.id)===String(partyId));
+            chamberList().forEach(c => {
+                if(c === fromChamber) return;
+                if(party && !party[inKeyFor(c)]) return; // 그 원에 없는 정당이면 건너뜀
+                if(!elecStore[c]) elecStore[c] = {};
+                elecStore[c][partyId] = { prob: entry.prob, err: entry.err };
+            });
+        }
+
+        function elecSetProb(chamber, partyId, val) {
+            const store = elecStore[chamber] || (elecStore[chamber] = {});
+            if(!store[partyId]) store[partyId] = { prob:0, err:0 };
+            store[partyId].prob = val;
+            if(elecProbSyncAll) elecPropagateProb(chamber, partyId, store[partyId]);
+            elecUpdateAllBars();
+        }
+
+        function elecSetErr(chamber, partyId, val) {
+            const store = elecStore[chamber] || (elecStore[chamber] = {});
+            if(!store[partyId]) store[partyId] = { prob:0, err:0 };
+            store[partyId].err = val;
+            if(elecProbSyncAll) elecPropagateProb(chamber, partyId, store[partyId]);
+            elecUpdateAllBars();
+        }
+
+        // "전체에 반영" 체크박스 — 켜는 순간 현재 탭(원)의 값을 다른 모든 원에 즉시 동기화
+        function onElecProbSyncAllChange(checked) {
+            elecProbSyncAll = checked;
+            if(checked) {
+                const store = elecStore[elecProbChamber] || {};
+                Object.keys(store).forEach(partyId => elecPropagateProb(elecProbChamber, partyId, store[partyId]));
+                elecUpdateAllBars();
+            }
         }
 
         // 현재 화면에 표시된 지지율 입력 DOM 값을 지금의 elecProbChamber 저장소로 흘려보냄
@@ -4115,50 +4255,9 @@
 
             container.innerHTML = '';
 
-            // ── 통합 바 ──────────────────────────
-            const barWrap = document.createElement('div');
-            barWrap.style.cssText = 'margin-bottom:14px;';
-
-            // 레이블 레이어 (바 위, z-index:3)
-            let lblHtml = '';
-            parties.forEach(p => {
-                lblHtml += `<div class="elec-seg-lbl" data-id="${p.id}"
-                    style="position:absolute;top:0;bottom:0;display:flex;align-items:center;justify-content:center;
-                    font-size:0.7rem;font-weight:bold;overflow:hidden;white-space:nowrap;pointer-events:none;opacity:0;z-index:3;"></div>`;
-            });
-            lblHtml += `<div class="elec-seg-lbl" data-id="__swing__"
-                style="position:absolute;top:0;bottom:0;display:flex;align-items:center;justify-content:center;
-                font-size:0.7rem;font-weight:bold;overflow:hidden;white-space:nowrap;pointer-events:none;opacity:0;z-index:3;"></div>`;
-
-            // 오차 레이어 + 세그먼트 레이어
-            let errHtml = '', segHtml = '';
-            parties.forEach(p => {
-                // 빗금 패턴: 더 선명하게 (불투명도 높임)
-                const hatch = `repeating-linear-gradient(45deg,${p.color}99,${p.color}99 2.5px,transparent 2.5px,transparent 5px)`;
-                errHtml += `
-                    <div class="elec-seg-err-l" data-id="${p.id}" style="position:absolute;top:0;bottom:0;background:${hatch};pointer-events:none;z-index:2;"></div>
-                    <div class="elec-seg-err-r" data-id="${p.id}" style="position:absolute;top:0;bottom:0;background:${hatch};pointer-events:none;z-index:2;"></div>`;
-                segHtml += `<div class="elec-seg" data-id="${p.id}" style="position:absolute;top:0;bottom:0;background:${p.color};border-right:1px solid #101218;box-sizing:border-box;z-index:1;"></div>`;
-            });
-            // 무당파 (오차는 왼쪽으로만 — err-r은 숨김)
-            const swHatch = `repeating-linear-gradient(45deg,#88888899,#88888899 2.5px,transparent 2.5px,transparent 5px)`;
-            errHtml += `
-                <div class="elec-seg-err-l" data-id="__swing__" style="position:absolute;top:0;bottom:0;background:${swHatch};pointer-events:none;z-index:2;"></div>
-                <div class="elec-seg-err-r" data-id="__swing__" style="position:absolute;top:0;bottom:0;background:${swHatch};pointer-events:none;z-index:2;"></div>`;
-            segHtml += `<div class="elec-seg" data-id="__swing__" style="position:absolute;top:0;bottom:0;background:repeating-linear-gradient(45deg,#333,#333 3px,#444 3px,#444 6px);border-right:1px solid #101218;z-index:1;"></div>`;
-
-            barWrap.innerHTML = `
-                <div style="font-size:0.75rem;color:#555;margin-bottom:4px;letter-spacing:1px;">▌ 지지율 분포</div>
-                <div style="position:relative;height:22px;background:#111;border:1px solid #333;overflow:visible;">
-                    ${errHtml}${segHtml}${lblHtml}
-                </div>
-                <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:5px;">
-                    ${parties.map(p=>`<span style="display:inline-flex;align-items:center;gap:3px;font-size:0.75rem;color:#aaa;">
-                        <span style="width:8px;height:8px;background:${p.color};display:inline-block;flex-shrink:0;"></span>${p.name}</span>`).join('')}
-                    <span style="display:inline-flex;align-items:center;gap:3px;font-size:0.75rem;color:#aaa;">
-                        <span style="width:8px;height:8px;background:repeating-linear-gradient(45deg,#333,#333 2px,#444 2px,#444 4px);display:inline-block;flex-shrink:0;"></span>무당파</span>
-                </div>`;
-            container.appendChild(barWrap);
+            // ── 통합 바 (설정 탭용 + 선거 탭 읽기전용 바 공통 렌더러) ──
+            container.insertAdjacentHTML('beforeend', buildProbBarHtml(elecProbChamber, { title: '지지율 분포' }));
+            elecRenderProbBars(); // 선거 탭의 읽기전용 바 묶음도 함께 최신화
 
             // ── 헤더 (정당명/지지율/오차) — 지지율 분포 바로 아래, 입력 행 바로 위 ──
             const headerRow = document.createElement('div');
@@ -4182,11 +4281,11 @@
                     <input type="number" class="elec-prob" data-id="${p.id}" value="${st.prob}"
                         min="0" max="100" placeholder="0"
                         style="background:#000;border:1px solid var(--tno-border);color:var(--tno-neon);font-family:inherit;font-size:0.9rem;padding:4px;text-align:center;width:100%;box-sizing:border-box;"
-                        oninput="if(!elecStore['${ch}']['${p.id}'])elecStore['${ch}']['${p.id}']={prob:0,err:0}; elecStore['${ch}']['${p.id}'].prob=parseFloat(this.value)||0; elecUpdateAllBars();">
+                        oninput="elecSetProb('${ch}','${p.id}', parseFloat(this.value)||0)">
                     <input type="number" class="elec-err" data-id="${p.id}" value="${st.err}"
                         min="0" max="50" placeholder="0"
                         style="background:#000;border:1px solid #444;color:#888;font-family:inherit;font-size:0.9rem;padding:4px;text-align:center;width:100%;box-sizing:border-box;"
-                        oninput="if(!elecStore['${ch}']['${p.id}'])elecStore['${ch}']['${p.id}']={prob:0,err:0}; elecStore['${ch}']['${p.id}'].err=parseFloat(this.value)||0; elecUpdateAllBars();">
+                        oninput="elecSetErr('${ch}','${p.id}', parseFloat(this.value)||0)">
                 `;
                 container.appendChild(row);
             });
@@ -4205,11 +4304,11 @@
                     <input type="number" class="elec-prob" data-id="${p.id}" value="${st.prob}"
                         min="0" max="100" placeholder="0"
                         style="background:#000;border:1px solid var(--tno-border);color:var(--tno-neon);font-family:inherit;font-size:0.9rem;padding:4px;text-align:center;width:100%;box-sizing:border-box;"
-                        oninput="if(!elecStore['${ch}']['${p.id}'])elecStore['${ch}']['${p.id}']={prob:0,err:0}; elecStore['${ch}']['${p.id}'].prob=parseFloat(this.value)||0; elecUpdateAllBars();">
+                        oninput="elecSetProb('${ch}','${p.id}', parseFloat(this.value)||0)">
                     <input type="number" class="elec-err" data-id="${p.id}" value="${st.err}"
                         min="0" max="50" placeholder="0"
                         style="background:#000;border:1px solid #444;color:#888;font-family:inherit;font-size:0.9rem;padding:4px;text-align:center;width:100%;box-sizing:border-box;"
-                        oninput="if(!elecStore['${ch}']['${p.id}'])elecStore['${ch}']['${p.id}']={prob:0,err:0}; elecStore['${ch}']['${p.id}'].err=parseFloat(this.value)||0; elecUpdateAllBars();">
+                        oninput="elecSetErr('${ch}','${p.id}', parseFloat(this.value)||0)">
                 `;
                 container.appendChild(row);
             }
@@ -4226,11 +4325,11 @@
                 <input type="number" class="elec-prob" data-id="__swing__" value="${sw.prob}"
                     min="0" max="100" placeholder="0"
                     style="background:#000;border:1px solid #555;color:#aaa;font-family:inherit;font-size:0.9rem;padding:4px;text-align:center;width:100%;box-sizing:border-box;"
-                    oninput="elecStore['${ch}']['__swing__'].prob=parseFloat(this.value)||0; elecUpdateAllBars();">
+                    oninput="elecSetProb('${ch}','__swing__', parseFloat(this.value)||0)">
                 <input type="number" class="elec-err" data-id="__swing__" value="${sw.err}"
                     min="0" max="50" placeholder="0"
                     style="background:#000;border:1px solid #444;color:#555;font-family:inherit;font-size:0.9rem;padding:4px;text-align:center;width:100%;box-sizing:border-box;"
-                    oninput="elecStore['${ch}']['__swing__'].err=parseFloat(this.value)||0; elecUpdateAllBars();">
+                    oninput="elecSetErr('${ch}','__swing__', parseFloat(this.value)||0)">
             `;
             container.appendChild(swRow);
 
@@ -4258,7 +4357,7 @@
             const seatKey = seatKeyFor(chamber);
             const summary = [];
             relevantResults.forEach(({key, partyId}) => {
-                const party = parties.find(p=>p.id===partyId);
+                const party = parties.find(p=>String(p.id)===String(partyId));
                 if(party) party[seatKey] = (party[seatKey]||0) + 1;
                 districtMembers[chamber][key] = { name:'', partyId, factionId:null, vacant:false };
                 summary.push(`${districtNames[chamber][key]||key} : ${party?.name||'?'}`);
@@ -4345,7 +4444,6 @@
                     .sort((a,b)=>b.seats-a.seats)
                     .map(p=>`<span style="display:inline-flex;align-items:center;gap:3px;margin-right:6px;font-size:0.8rem;color:#aaa;"><span style="width:8px;height:8px;background:${p.color};border-radius:50%;display:inline-block;"></span>${p.name} ${p.seats}석</span>`)
                     .join('');
-                const savedAtLabel = r.savedAt ? new Date(r.savedAt).toLocaleString('ko-KR') : '—';
                 const detailRows = r.parties.filter(p=>p.seats>0 || p.prob>0)
                     .sort((a,b)=>b.seats-a.seats)
                     .map(p=>`<div class="bill-history-entry">${p.name} — 의석 ${p.seats}석 · 득표율 ${(p.prob*100).toFixed(1)}%</div>`)
@@ -4357,7 +4455,7 @@
                     </div>
                     <div style="margin-bottom:4px;">${partySummary}</div>
                     <div style="margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;">
-                        <span class="elec-record-toggle" onclick="toggleElecRecordDetail('${r.id}')">▾ 세부 기록 (총 ${r.totalSeats}석 · 저장: ${savedAtLabel})</span>
+                        <span class="elec-record-toggle" onclick="toggleElecRecordDetail('${r.id}')">▾ 세부 기록 (총 ${r.totalSeats}석)</span>
                     </div>
                     <div class="elec-record-detail" id="elecRecordDetail-${r.id}">${detailRows}</div>
                     <div style="display:flex;gap:6px;">
@@ -5068,7 +5166,7 @@
                             const fStroke = highlightGov&&fIsGov ? 'var(--tno-gold)' : (fEffCoal?fEffCoal.color:null);
                             for(let k=0; k<(f[seatKey]||0); k++){
                                 if(map.length>=targetTotal) break;
-                                map.push({color:fc, partyName:p.name, factionName:f.name,
+                                map.push({color:fc, partyName:p.name, factionName:f.name, partyStatus:p.status||'active',
                                     ideology:ideologies.find(i=>i.id===f.ideologyId)?.name||ideologies.find(i=>i.id===p.ideologyId)?.name||'?',
                                     coalitionName:fEffCoal?.name, strokeColor:fStroke, isRuling:fIsGov, externalSupport:isExtSupport?(rulingCoal.externalSupportLabel||'각외협력'):false});
                             }
@@ -5076,7 +5174,7 @@
                         });
                         for(let k=placed; k<cnt; k++){
                             if(map.length>=targetTotal) break;
-                            map.push({color:p.color, partyName:p.name, factionName:null,
+                            map.push({color:p.color, partyName:p.name, factionName:null, partyStatus:p.status||'active',
                                 ideology:ideologies.find(i=>i.id===p.ideologyId)?.name||'?',
                                 coalitionName:effectiveCoal?.name, strokeColor:stroke, strokeDashed, isRuling:isGov, externalSupport:isExtSupport?(rulingCoal.externalSupportLabel||'각외협력'):false});
                         }
@@ -5111,7 +5209,7 @@
                                     indExtSupport = false;
                                 }
                             }
-                            map.push({color:p.color, partyName:p.name, factionName:null,
+                            map.push({color:p.color, partyName:p.name, factionName:null, partyStatus:p.status||'active',
                                 ideology:ideologies.find(i=>i.id===p.ideologyId)?.name||'?',
                                 coalitionName:indCoalName, strokeColor:indStroke, strokeDashed:indDashed, isRuling:indIsGov, externalSupport:indExtSupport,
                                 independentName: indEntry?.name || null, independentSeatIndex: indEntry?.seatIndex || null});
@@ -5215,6 +5313,7 @@
                 isRuling: map[i]?.isRuling || false,
                 externalSupport: map[i]?.externalSupport || false,
                 partyName: map[i]?.partyName || 'Vacant',
+                partyStatus: map[i]?.partyStatus || 'active',
                 ideology: map[i]?.ideology || '-',
                 coalitionName: map[i]?.coalitionName || null,
                 factionName: map[i]?.factionName || null,
