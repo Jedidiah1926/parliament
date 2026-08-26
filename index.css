@@ -1,11 +1,12 @@
         :root {
-            --tno-bg: #05070a;
-            --tno-panel: #101218;
+            --tno-bg: #101218;
+            --tno-panel: #1a1d26;
             --tno-neon: #00ffff;
-            --tno-neon-dim: rgba(0, 255, 255, 0.2);
+            --tno-neon-dim: rgba(0, 255, 255, 0.3);
             --tno-text: #e0e0e0;
             --tno-border: #4a5a6a;
             --tno-alert: #ff0055;
+            --tno-gold: #ffd700;
         }
 
         body {
@@ -68,44 +69,6 @@
             padding-left: 10px;
         }
 
-        .menu-options {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-
-        .menu-btn {
-            display: block;
-            text-decoration: none;
-            color: var(--tno-text);
-            border: 1px solid var(--tno-border);
-            padding: 15px 20px;
-            font-size: 1.2rem;
-            transition: 0.3s;
-            position: relative;
-            background: rgba(255, 255, 255, 0.02);
-            overflow: hidden;
-        }
-
-        .menu-btn::before {
-            content: ">>";
-            margin-right: 15px;
-            color: var(--tno-border);
-        }
-
-        .menu-btn:hover {
-            border-color: var(--tno-neon);
-            color: var(--tno-neon);
-            background: rgba(0, 255, 255, 0.05);
-            box-shadow: inset 0 0 15px var(--tno-neon-dim);
-            transform: translateX(10px);
-        }
-
-        .menu-btn:hover::before {
-            color: var(--tno-neon);
-            text-shadow: 0 0 5px var(--tno-neon);
-        }
-
         .footer {
             margin-top: 20px;
             font-size: 0.8rem;
@@ -130,106 +93,53 @@
         }
         .top-left { top: -2px; left: -2px; border-right: 0; border-bottom: 0; }
         .bottom-right { bottom: -2px; right: -2px; border-left: 0; border-top: 0; }
-        
-        .version-box {
+
+        /* ── 점검중 안내 ── */
+        .maintenance-box {
             border: 1px solid #222;
             background: #07090d;
-            padding: 15px;
+            padding: 20px;
             margin-top: 10px;
+            text-align: center;
             box-shadow: inset 0 0 12px rgba(0, 255, 255, 0.08);
         }
 
-        .version-head {
-            display: flex;
-            justify-content: space-between;
-            align-items: baseline;
-            border-bottom: 1px dashed #2b3a44;
-            padding-bottom: 8px;
-            margin-bottom: 10px;
+        .maintenance-icon {
+            font-size: 2.2rem;
+            color: var(--tno-gold);
+            text-shadow: 0 0 10px var(--tno-gold);
+            animation: blink 1.4s infinite;
         }
 
-        .version-tag {
+        .maintenance-title {
             color: var(--tno-neon);
             text-shadow: 0 0 6px var(--tno-neon);
             letter-spacing: 2px;
-            font-size: 1.0rem;
+            font-size: 1.2rem;
+            margin: 12px 0 14px;
         }
 
-        .build-tag {
-            color: #666;
-            font-size: 0.85rem;
+        .maintenance-msg {
+            color: #ccc;
+            font-size: 0.95rem;
+            line-height: 1.8;
         }
 
-        /* ── changelog 스크롤 영역 ── */
-        .changelog {
+        .maintenance-period {
+            margin-top: 16px;
+            padding: 8px 12px;
+            border: 1px dashed var(--tno-border);
+            color: var(--tno-neon);
+            text-shadow: 0 0 4px var(--tno-neon);
             font-size: 0.88rem;
-            color: #aaa;
-            line-height: 1.6;
-            max-height: 160px;
-            overflow-y: auto;
-            padding-right: 6px;
-        }
-
-        .changelog::-webkit-scrollbar { width: 8px; background: #000; }
-        .changelog::-webkit-scrollbar-thumb { background: var(--tno-border); border: 1px solid var(--tno-neon); }
-        .changelog::-webkit-scrollbar-thumb:hover { background: var(--tno-neon); }
-
-        /* ── 로그 엔트리 레이아웃 ── */
-        .log-entry {
-            display: grid;
-            grid-template-columns: auto 1fr;
-            gap: 0 12px;
-            padding: 5px 0;
-            border-bottom: 1px solid #111;
-        }
-        .log-entry:last-child { border-bottom: none; }
-
-        .log-meta {
-            white-space: nowrap;
-            color: #3d5060;
-            font-size: 0.82rem;
-            padding-top: 1px;
-            min-width: 80px;
-        }
-
-        .log-body {
-            display: flex;
-            flex-direction: column;
-            gap: 2px;
-        }
-
-        .log-tag {
-            font-size: 0.75rem;
-            padding: 1px 6px;
-            border: 1px solid;
-            display: inline-block;
-            margin-bottom: 3px;
             letter-spacing: 1px;
         }
-        .log-tag.warn   { color: var(--tno-alert); border-color: var(--tno-alert); }
-        .log-tag.new    { color: var(--tno-neon);  border-color: var(--tno-neon);  }
-        .log-tag.fix    { color: #ffd700;           border-color: #ffd700;          }
-        .log-tag.prer   { color: #00ff5e;           border-color: #00ff5e;          }
-        .log-tag.sys    { color: #888;              border-color: #444;             }
 
-        .log-msg {
-            color: #ccc;
-            font-size: 0.88rem;
+        .maintenance-eta {
+            margin-top: 14px;
+            padding-top: 10px;
+            border-top: 1px dashed #2b3a44;
+            color: #666;
+            font-size: 0.82rem;
         }
 
-        .log-sub {
-            color: #556;
-            font-size: 0.80rem;
-            font-style: normal;
-            padding-left: 4px;
-            border-left: 2px solid #222;
-            margin-top: 2px;
-        }
-
-        .changelog-title {
-            color: #3d5060;
-            font-size: 0.78rem;
-            letter-spacing: 2px;
-            margin-bottom: 8px;
-        }
-    
