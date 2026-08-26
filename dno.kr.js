@@ -1073,6 +1073,7 @@
 
             const rows = [];
             if(d.partyName !== '무소속') rows.push(`정당: ${nameLabel}`);
+            if(d.factionName) rows.push(`파벌: ${d.factionName}`);
             rows.push(`이념: ${d.ideology}`);
             if(d.coalitionName) rows.push(`연정: ${d.coalitionName}`);
             if(d.isRuling) rows.push(`★ 집권 세력`);
@@ -5202,6 +5203,7 @@
                 partyName: map[i]?.partyName || 'Vacant',
                 ideology: map[i]?.ideology || '-',
                 coalitionName: map[i]?.coalitionName || null,
+                factionName: map[i]?.factionName || null,
                 independentName: map[i]?.independentName || null,
                 independentSeatIndex: map[i]?.independentSeatIndex || null,
             }));
