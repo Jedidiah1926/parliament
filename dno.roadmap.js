@@ -1,6 +1,6 @@
     const roadmapData = {
       '0.0': {
-        title: '0.0 : Prerelease',
+        title: '0.0 : Beta',
         cards: [
           {
             status: 'done',
@@ -22,42 +22,58 @@
               <br>- TNO 테마 추가
               <br>- 일반 테마 삭제
               <br>- 베타 삭제`
-          },
+          }
+        ]
+      },
+      '0.1': {
+        title: '0.1 : Prerelease',
+        cards: [
           {
             status: 'done',
-            title: '0.0.3 - 선거 개발',
+            title: '0.1.0 - 선거 개발',
             desc: `2026.02.09
               <br>- 선거 시스템 개발 시도 I
               <br>- 프리릴리스 시작`
           },
           {
             status: 'done',
-            title: '0.0.4 - 선거 삭제',
+            title: '0.1.1 - 선거 삭제',
             desc: `2026.02.09
               <br>- 선거 시스템 개발 실패`
           },
           {
             status: 'done',
-            title: '0.0.5 - 선거 추가',
+            title: '0.1.2 - 선거 추가',
             desc: `2026.03.09
               <br>- 선거 시스템 개발 시도 II`
           },
           {
             status: 'done',
-            title: '0.0.6 - 버그 수정',
+            title: '0.1.3 - 버그 수정',
             desc: `2026.03.10
               <br>- 버그 수정`
           },
           {
             status: 'done',
-            title: '0.0.7 - 프리릴리스 삭제',
+            title: '0.1.4 - 프리릴리스 삭제',
             desc: `2026.04.28
               <br>- 선거 시스템 개발 완료
               <br>- 프리릴리스 중단`
           }
         ]
       },
-      
+      '0.2': {
+        title: '0.2 : Multi-lingual',
+        cards: [
+          {
+            status: 'done',
+            title: '0.2.0 - 다중언어 프로젝트 시작',
+            desc: `2026.08.27
+              <br>- 영어 추가
+              <br>- 프로젝트 시작`
+          }
+        ]
+      },
       '1.0': {
         title: '1.0',
         cards: [
@@ -228,9 +244,9 @@
               <br>- 버그 수정`
           },
           {
-            status: 'done',
+            status: 'current',
             title: '1.4.7 - 정당 리워크 Part.II',
-            desc: `2026.08.26
+            desc: `2026.08.27
               <br>- 정당 시스템 리워크 II (정당 해산/금지 표기 추가)
               <br>- 저장 시스템 버전 업데이트 (v13)
               <br>- 시작 화면 리워크 (index.html을 점검 안내/자동 리디렉션 페이지로 전환, 기존 메인 화면은 dno.main.html로 이전)
@@ -243,7 +259,7 @@
               <br>- 버그 수정`
           },
           {
-            status: 'current',
+            status: 'future',
             title: '1.4.8 - 의회 리워크 Part.II',
             desc: `2026 하반기 출시
               <br>- 의회 시스템 리워크 III (원외정당 시스템 추가, 날짜/회기 설정)
@@ -263,7 +279,7 @@
       },
 
       '1.5': {
-        title: '1.5: Mobiles',
+        title: '1.5: TBA',
         cards: [
           {
             status: 'future',
