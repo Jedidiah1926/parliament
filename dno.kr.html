@@ -52,6 +52,7 @@
                 <button class="main-tab-btn" onclick="switchMainTab('setup')" id="mainTabSetup">⚙ 의회</button>
                 <button class="main-tab-btn" onclick="switchMainTab('legislation')" id="mainTabLegislation">⚖ 입법</button>
                 <button class="main-tab-btn" onclick="switchMainTab('election')" id="mainTabElection">🗳 선거</button>
+                <button class="main-tab-btn" onclick="switchMainTab('record')" id="mainTabRecord">🗂 기록</button>
             </div>
 
             <!-- ===== 의회 설정 그룹 ===== -->
@@ -198,7 +199,6 @@
                     <button class="sub-tab-btn active" onclick="switchSubTab('legislation','bill')" id="subTabBill">제출</button>
                     <button class="sub-tab-btn" onclick="switchSubTab('legislation','table')" id="subTabTable">상정</button>
                     <button class="sub-tab-btn" onclick="switchSubTab('legislation','vote')" id="subTabVote">표결</button>
-                    <button class="sub-tab-btn" onclick="switchSubTab('legislation','archive')" id="subTabArchive">기록</button>
                 </div>
 
             <!-- 제출 탭: 법안 작성 폼만 -->
@@ -280,16 +280,6 @@
                 <div class="bill-tag-filter" id="billTagFilter"></div>
 
                 <div id="billList"></div>
-            </div>
-
-            <!-- 기록 탭: 가결/부결 완료 -->
-            <div id="contentArchive" class="sub-tab-content">
-                <div class="bill-search-bar" style="margin-bottom:8px;">
-                    <input type="text" id="archiveSearchInput" placeholder="기록 검색..." oninput="renderArchiveList();">
-                    <button onclick="document.getElementById('archiveSearchInput').value=''; renderArchiveList();" style="background:transparent;border:1px solid #333;color:#555;padding:4px 8px;font-family:'NeoDunggeunmo','VT323',monospace;cursor:pointer;" title="초기화">✕</button>
-                </div>
-                <div class="bill-tag-filter" id="archiveTagFilter"></div>
-                <div id="archiveList"></div>
             </div>
 
             <!-- VOTE SUB-TAB -->
@@ -421,7 +411,6 @@
                     <button class="sub-tab-btn" id="elecSubTabDistrict" onclick="elecSwitchSub('district')">지역구</button>
                     <button class="sub-tab-btn" id="elecSubTabTendency" onclick="elecSwitchSub('tendency')">성향</button>
                     <button class="sub-tab-btn active" id="elecSubTabVote" onclick="elecSwitchSub('vote')">선거</button>
-                    <button class="sub-tab-btn" id="elecSubTabRecord" onclick="elecSwitchSub('record')">기록</button>
                 </div>
 
                 <!-- 지역구 서브탭 - 설정만 (맵은 우측) -->
@@ -601,11 +590,30 @@
                     </div>
                 </div>
 
-                <!-- 기록 서브탭 -->
-                <div id="elecSubRecord" class="sub-tab-content">
+            </div><!-- end mainContentElection -->
+
+            <!-- ===== 기록 그룹 ===== -->
+            <div id="mainContentRecord" class="main-tab-content">
+                <div class="sub-tab-container">
+                    <button class="sub-tab-btn active" onclick="switchSubTab('record','archive')" id="subTabArchive">입법</button>
+                    <button class="sub-tab-btn" onclick="switchSubTab('record','elecRecord')" id="subTabElecRecord">선거</button>
+                </div>
+
+                <!-- 입법 기록 -->
+                <div id="contentArchive" class="sub-tab-content active">
+                    <div class="bill-search-bar" style="margin-bottom:8px;">
+                        <input type="text" id="archiveSearchInput" placeholder="기록 검색..." oninput="renderArchiveList();">
+                        <button onclick="document.getElementById('archiveSearchInput').value=''; renderArchiveList();" style="background:transparent;border:1px solid #333;color:#555;padding:4px 8px;font-family:'NeoDunggeunmo','VT323',monospace;cursor:pointer;" title="초기화">✕</button>
+                    </div>
+                    <div class="bill-tag-filter" id="archiveTagFilter"></div>
+                    <div id="archiveList"></div>
+                </div>
+
+                <!-- 선거 기록 -->
+                <div id="contentElecRecord" class="sub-tab-content">
                     <div id="elecRecordList" style="margin-top:8px;"></div>
                 </div>
-            </div><!-- end mainContentElection -->
+            </div><!-- end mainContentRecord -->
 
 
         </div><!-- end controls-content -->

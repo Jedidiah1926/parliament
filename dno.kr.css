@@ -203,17 +203,21 @@
         }
         .main-tab-btn {
             flex: 1;
+            min-width: 0;
             background: transparent;
             color: #555;
             border: 1px solid transparent;
             border-bottom: none;
-            padding: 9px 6px;
+            padding: 9px 2px;
             cursor: pointer;
-            font-size: 1rem;
+            font-size: 0.9rem;
             font-family: 'NeoDunggeunmo', 'VT323', monospace;
-            letter-spacing: 1px;
+            letter-spacing: 0.5px;
             transition: 0.2s;
             text-transform: uppercase;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
         .main-tab-btn:hover { color: var(--tno-neon); }
         .main-tab-btn.active {

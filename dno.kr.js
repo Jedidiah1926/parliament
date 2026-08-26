@@ -1451,14 +1451,17 @@
 
             // ── 탭 복원 (마지막) ──
             const uiMain = state.ui?.currentMainTab || 'party';
-            const uiSub  = state.ui?.currentSubTab  || { party:'ideology', setup:'settings', legislation:'bill' };
-            currentSubTab = { party:'ideology', setup:'settings', legislation:'bill', ...uiSub };
+            const uiSub  = state.ui?.currentSubTab  || { party:'ideology', setup:'settings', legislation:'bill', record:'archive' };
+            currentSubTab = { party:'ideology', setup:'settings', legislation:'bill', record:'archive', ...uiSub };
             // 구버전 파일 호환: setup 하위탭이 house/senate/third/leader였다면 새 구조로 매핑
             if(['house','senate','third'].includes(currentSubTab.setup)) currentSubTab.setup = 'settings';
             if(currentSubTab.party === 'leader') currentSubTab.party = 'partyInfo';
+            // 구버전 파일 호환: 기록 탭이 입법/선거 그룹에서 독립되기 전 위치를 가리키던 경우 재매핑
+            if(currentSubTab.legislation === 'archive') currentSubTab.legislation = 'bill';
+            if(currentSubTab.election === 'record') currentSubTab.election = 'vote';
             switchMainTab(uiMain);
             if(uiMain !== 'election') {
-                const fallback = uiMain==='party' ? 'ideology' : uiMain==='setup' ? 'settings' : 'bill';
+                const fallback = uiMain==='party' ? 'ideology' : uiMain==='setup' ? 'settings' : uiMain==='record' ? 'archive' : 'bill';
                 switchSubTab(uiMain, currentSubTab[uiMain] || fallback, false);
             }
         }
@@ -1508,7 +1511,7 @@
 
         // ===== 2단 탭 전환 =====
         let currentMainTab = 'party';
-        let currentSubTab = { party: 'ideology', setup: 'settings', legislation: 'bill' };
+        let currentSubTab = { party: 'ideology', setup: 'settings', legislation: 'bill', record: 'archive' };
 
         // 표결 탭을 벗어날 때, 선택된 법안이 완전히 결론(가결/부결) 났으면 선택 초기화
         function checkResetVoteSelectionOnLeave() {
@@ -1533,6 +1536,10 @@
                 switchSubTab('party', currentSubTab['party'] || 'ideology', false);
                 return;
             }
+            if(main === 'record') {
+                switchSubTab('record', currentSubTab['record'] || 'archive', false);
+                return;
+            }
             switchSubTab(main, currentSubTab[main] || (main === 'setup' ? 'settings' : 'bill'), false);
         }
 
@@ -1553,6 +1560,7 @@
             if(sub === 'bill') renderBillList();
             if(sub === 'table') renderBillList();
             if(sub === 'archive') renderArchiveList();
+            if(sub === 'elecRecord') elecRenderRecords();
             if(sub === 'partyInfo') { switchPartyInnerTab('info'); }
             if(sub === 'ideology') renderIdeologyList();
             if(sub === 'coalitionLeader') renderCoalitionLeaderList();
@@ -3918,7 +3926,7 @@
         // 선거 하위탭 전환
         // ─────────────────────────────────────────
         function elecSwitchSub(sub) {
-            ['district','tendency','vote','record'].forEach(s => {
+            ['district','tendency','vote'].forEach(s => {
                 document.getElementById(`elecSubTab${s.charAt(0).toUpperCase()+s.slice(1)}`)?.classList.toggle('active', s===sub);
                 document.getElementById(`elecSub${s.charAt(0).toUpperCase()+s.slice(1)}`)?.classList.toggle('active', s===sub);
             });

@@ -1379,14 +1379,17 @@
 
             // ── Restore tabs (last) ──
             const uiMain = state.ui?.currentMainTab || 'party';
-            const uiSub  = state.ui?.currentSubTab  || { party:'ideology', setup:'settings', legislation:'bill' };
-            currentSubTab = { party:'ideology', setup:'settings', legislation:'bill', ...uiSub };
+            const uiSub  = state.ui?.currentSubTab  || { party:'ideology', setup:'settings', legislation:'bill', record:'archive' };
+            currentSubTab = { party:'ideology', setup:'settings', legislation:'bill', record:'archive', ...uiSub };
             // Backward compat with older save files: map the old setup sub-tab (house/senate/third/leader) to the new structure
             if(['house','senate','third'].includes(currentSubTab.setup)) currentSubTab.setup = 'settings';
             if(currentSubTab.party === 'leader') currentSubTab.party = 'partyInfo';
+            // Backward compat: the Record tab used to live inside Legislation/Election before being split out
+            if(currentSubTab.legislation === 'archive') currentSubTab.legislation = 'bill';
+            if(currentSubTab.election === 'record') currentSubTab.election = 'vote';
             switchMainTab(uiMain);
             if(uiMain !== 'election') {
-                const fallback = uiMain==='party' ? 'ideology' : uiMain==='setup' ? 'settings' : 'bill';
+                const fallback = uiMain==='party' ? 'ideology' : uiMain==='setup' ? 'settings' : uiMain==='record' ? 'archive' : 'bill';
                 switchSubTab(uiMain, currentSubTab[uiMain] || fallback, false);
             }
         }
@@ -1436,7 +1439,7 @@
 
         // ===== 2nd-level tab switching =====
         let currentMainTab = 'party';
-        let currentSubTab = { party: 'ideology', setup: 'settings', legislation: 'bill' };
+        let currentSubTab = { party: 'ideology', setup: 'settings', legislation: 'bill', record: 'archive' };
 
         // When leaving the Vote tab, reset the selection if the selected bill has fully concluded (passed/failed)
         function checkResetVoteSelectionOnLeave() {
@@ -1460,6 +1463,10 @@
                 switchSubTab('party', currentSubTab['party'] || 'ideology', false);
                 return;
             }
+            if(main === 'record') {
+                switchSubTab('record', currentSubTab['record'] || 'archive', false);
+                return;
+            }
             switchSubTab(main, currentSubTab[main] || (main === 'setup' ? 'settings' : 'bill'), false);
         }
 
@@ -1480,6 +1487,7 @@
             if(sub === 'bill') renderBillList();
             if(sub === 'table') renderBillList();
             if(sub === 'archive') renderArchiveList();
+            if(sub === 'elecRecord') elecRenderRecords();
             if(sub === 'partyInfo') { switchPartyInnerTab('info'); }
             if(sub === 'ideology') renderIdeologyList();
             if(sub === 'coalitionLeader') renderCoalitionLeaderList();
@@ -3820,7 +3828,7 @@
         // Election sub-tab switching
         // ─────────────────────────────────────────
         function elecSwitchSub(sub) {
-            ['district','tendency','vote','record'].forEach(s => {
+            ['district','tendency','vote'].forEach(s => {
                 document.getElementById(`elecSubTab${s.charAt(0).toUpperCase()+s.slice(1)}`)?.classList.toggle('active', s===sub);
                 document.getElementById(`elecSub${s.charAt(0).toUpperCase()+s.slice(1)}`)?.classList.toggle('active', s===sub);
             });
