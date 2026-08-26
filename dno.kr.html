@@ -15,10 +15,10 @@
 
 
     <!-- Tooltip -->
-    <div class="tooltip-box" id="tooltipBox"></div>
+    <div class="tooltip-box" id="tooltipBox" style="display:none;"></div>
 
-    <!-- 좌석 클릭 시 뜨는 정보 카드 -->
-    <div class="seat-info-card" id="seatInfoCard">
+    <!-- 좌석 클릭 시 뜨는 정보 카드 (display:none 인라인 기본값 — 외부 CSS 로드 실패/캐시 문제와 무관하게 항상 숨김 상태로 시작) -->
+    <div class="seat-info-card" id="seatInfoCard" style="display:none;">
         <div class="seat-info-card-header">
             <span id="seatInfoCardTitle">좌석 정보</span>
             <button onclick="closeSeatInfoCard()" title="닫기">✕</button>
