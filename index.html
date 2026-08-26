@@ -11,12 +11,20 @@
     <link rel="stylesheet" href="index.css">
 
     <!-- ── 점검 스위치 ──────────────────────────────────
-         MAINTENANCE_MODE = true  → 아래 점검중 페이지를 표시
-         MAINTENANCE_MODE = false → REDIRECT_URL 로 즉시 이동
+         maintenance.js 의 시작/종료 시각을 기준으로 자동 판정합니다.
+         그 사이 시간이면 점검중 페이지, 아니면 REDIRECT_URL 로 즉시 이동.
     ─────────────────────────────────────────────────── -->
+    <script src="maintenance.js"></script>
     <script>
-        const MAINTENANCE_MODE = true;
         const REDIRECT_URL = "dno.main.html";
+        function parseMaintTime(v) { return v ? new Date(v) : null; }
+        const MAINT_START = parseMaintTime(MAINTENANCE_WINDOW.start);
+        const MAINT_END   = parseMaintTime(MAINTENANCE_WINDOW.end);
+        function isMaintenanceNow() {
+            const now = new Date();
+            return (!MAINT_START || now >= MAINT_START) && (!MAINT_END || now < MAINT_END);
+        }
+        const MAINTENANCE_MODE = isMaintenanceNow();
         if (!MAINTENANCE_MODE) {
             document.write('<meta http-equiv="refresh" content="0; url=' + REDIRECT_URL + '">');
         }
@@ -47,6 +55,7 @@
                     보다 안정적인 서비스 제공을 위해 노력하고 있습니다.<br>
                     이용에 불편을 드려 죄송합니다.
                 </div>
+                <div class="maintenance-period" id="maintenancePeriod"></div>
                 <div class="maintenance-eta">— 점검이 완료되는 대로 서비스가 재개됩니다.</div>
             </div>
 
@@ -62,11 +71,24 @@
     </p>
 
     <script>
+        function fmtMaintTime(d) {
+            if (!d) return '미정';
+            const p = n => String(n).padStart(2, '0');
+            return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
+        }
+        document.getElementById('maintenancePeriod').textContent =
+            `점검 기간: ${fmtMaintTime(MAINT_START)} ~ ${fmtMaintTime(MAINT_END)}`;
+
         if (!MAINTENANCE_MODE) {
             document.getElementById('maintenanceView').style.display = 'none';
             document.getElementById('redirectView').style.display = 'block';
             document.getElementById('redirectLink').href = REDIRECT_URL;
             window.location.replace(REDIRECT_URL);
+        } else if (MAINT_END) {
+            // 종료 시각이 지나면 새로고침 없이도 자동으로 이동
+            setInterval(() => {
+                if (!isMaintenanceNow()) window.location.replace(REDIRECT_URL);
+            }, 15000);
         }
     </script>
 

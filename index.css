@@ -125,6 +125,16 @@
             line-height: 1.8;
         }
 
+        .maintenance-period {
+            margin-top: 16px;
+            padding: 8px 12px;
+            border: 1px dashed var(--tno-border);
+            color: var(--tno-neon);
+            text-shadow: 0 0 4px var(--tno-neon);
+            font-size: 0.88rem;
+            letter-spacing: 1px;
+        }
+
         .maintenance-eta {
             margin-top: 14px;
             padding-top: 10px;
