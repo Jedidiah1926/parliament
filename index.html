@@ -4,15 +4,27 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DATANET ORDER — SYSTEM MAINTENANCE</title>
-    
+
     <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/neodgm/neodgm-webfont@latest/neodgm/style.css">
 
     <link rel="stylesheet" href="index.css">
+
+    <!-- ── 점검 스위치 ──────────────────────────────────
+         MAINTENANCE_MODE = true  → 아래 점검중 페이지를 표시
+         MAINTENANCE_MODE = false → REDIRECT_URL 로 즉시 이동
+    ─────────────────────────────────────────────────── -->
+    <script>
+        const MAINTENANCE_MODE = true;
+        const REDIRECT_URL = "dno.main.html";
+        if (!MAINTENANCE_MODE) {
+            document.write('<meta http-equiv="refresh" content="0; url=' + REDIRECT_URL + '">');
+        }
+    </script>
 </head>
 <body>
 
-    <div class="terminal-container">
+    <div class="terminal-container" id="maintenanceView">
         <div class="corner top-left"></div>
         <div class="corner bottom-right"></div>
 
@@ -43,6 +55,20 @@
             </div>
         </div>
     </div>
+
+    <p id="redirectView" style="display:none; font-family:'NeoDunggeunmo','VT323',monospace; color:#e0e0e0; text-align:center;">
+        페이지를 이동 중입니다. 잠시만 기다려주세요.
+        <a id="redirectLink" href="#" style="color:#00ffff;">직접 이동하기</a>
+    </p>
+
+    <script>
+        if (!MAINTENANCE_MODE) {
+            document.getElementById('maintenanceView').style.display = 'none';
+            document.getElementById('redirectView').style.display = 'block';
+            document.getElementById('redirectLink').href = REDIRECT_URL;
+            window.location.replace(REDIRECT_URL);
+        }
+    </script>
 
 </body>
 </html>
