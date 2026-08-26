@@ -17,6 +17,15 @@
     <!-- Tooltip -->
     <div class="tooltip-box" id="tooltipBox"></div>
 
+    <!-- 좌석 클릭 시 뜨는 정보 카드 -->
+    <div class="seat-info-card" id="seatInfoCard">
+        <div class="seat-info-card-header">
+            <span id="seatInfoCardTitle">좌석 정보</span>
+            <button onclick="closeSeatInfoCard()" title="닫기">✕</button>
+        </div>
+        <div class="seat-info-card-body" id="seatInfoCardBody"></div>
+    </div>
+
     <div class="controls">
         <div class="tno-header-strip">Ministry of Interior</div>
         
@@ -194,6 +203,10 @@
 
             <!-- 제출 탭: 법안 작성 폼만 -->
             <div id="contentBill" class="sub-tab-content active">
+                <div id="amendmentBanner" class="amendment-banner">
+                    <span id="amendmentBannerText"></span>
+                    <button onclick="cancelAmendment()" title="취소">✕</button>
+                </div>
                 <div class="vote-panel" style="margin-bottom:10px;">
                     <div class="vote-panel-title">> 새 법안 작성 (NEW BILL)</div>
                     <input type="text" class="vote-bill-input" id="newBillTitle" placeholder="법안 제목..." style="margin-bottom:6px;">
@@ -308,8 +321,11 @@
                         <button class="vote-ctrl-btn abs" onclick="setVoteMode('abs')">— 기권</button>
                         <button class="vote-ctrl-btn clr" onclick="setVoteMode('none')">✕ 제거</button>
                     </div>
+                    <div class="vote-btn-row" style="margin-top:6px;">
+                        <button class="vote-ctrl-btn info" onclick="setVoteMode('info')">🔍 정보 보기</button>
+                    </div>
                     <div class="vote-hint">
-                        모드 선택 후 캔버스 의원 원 클릭 &nbsp;|&nbsp;
+                        모드 선택 후 캔버스 의원 원 클릭 (정보 보기 모드는 투표를 바꾸지 않음) &nbsp;|&nbsp;
                         현재: <span id="currentModeLabel" style="color:#888;">없음</span>
                     </div>
                     <div class="vote-btn-row" style="margin-top:8px;">

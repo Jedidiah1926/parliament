@@ -82,13 +82,16 @@
 
         // ===== BILL STATE =====
         // bill: { id, title, content, houseStatus: 'pending'|'pass'|'fail', senateStatus: 'pending'|'pass'|'fail',
-        //         houseVote: {yea,nay,abs}, senateVote: {yea,nay,abs} }
+        //         houseVote: {yea,nay,abs}, senateVote: {yea,nay,abs},
+        //         version, parentBillId, isAmendment, voteHistory: [{chamber,result,date,yea,nay,abs,total,required,at}] }
         let bills = [
             { id: 'b1', title: 'National Reconstruction Special Act, Article 1', threshold: 0.5, tags: ['Reconstruction', 'Emergency'],
               content: 'All measures necessary for national reconstruction may be taken.\nThe executive may issue emergency decrees without the consent of Parliament.',
-              houseStatus: 'pending', senateStatus: 'pending', thirdStatus: 'pending', houseVote: null, senateVote: null, thirdVote: null }
+              houseStatus: 'pending', senateStatus: 'pending', thirdStatus: 'pending', houseVote: null, senateVote: null, thirdVote: null,
+              version: 1, parentBillId: null, isAmendment: false, voteHistory: [] }
         ];
         let activeBillId = null;
+        let amendmentSourceId = null;
 
         // ===== Tag filter state =====
         let activeBillTagFilter = null;
@@ -147,12 +150,50 @@
             const tagsRaw = document.getElementById('newBillTags')?.value || '';
             const tags = tagsRaw.split(',').map(t => t.trim()).filter(t => t.length > 0);
             if(!title) { alert('Please enter a bill title.'); return; }
+            const amendedBill = amendmentSourceId ? bills.find(b => b.id === amendmentSourceId) : null;
+            const version = amendedBill ? (amendedBill.version || 1) + 1 : 1;
             bills.push({ id: 'b'+Date.now(), title, content, threshold, numer, denom, tags,
-                houseStatus: 'pending', senateStatus: 'pending', thirdStatus: 'pending', houseVote: null, senateVote: null, thirdVote: null });
+                houseStatus: 'pending', senateStatus: 'pending', thirdStatus: 'pending', houseVote: null, senateVote: null, thirdVote: null,
+                version, parentBillId: amendedBill ? amendedBill.id : null, isAmendment: !!amendedBill, voteHistory: [] });
             document.getElementById('newBillTitle').value = '';
             document.getElementById('newBillContent').value = '';
             document.getElementById('newBillTags').value = '';
+            amendmentSourceId = null;
+            renderAmendmentBanner();
             renderBillList(); syncBillSelect();
+        }
+
+        // ── Propose an amendment ──────────────────
+        function startAmendment(id) {
+            const orig = bills.find(b => b.id === id);
+            if(!orig) return;
+            if(getBillOverallStatus(orig) !== 'passed') { alert('Only passed bills can have an amendment proposed.'); return; }
+            amendmentSourceId = id;
+            switchMainTab('legislation');
+            switchSubTab('legislation', 'bill');
+            document.getElementById('newBillTitle').value = orig.title + ' (Amendment)';
+            document.getElementById('newBillContent').value = orig.content || '';
+            document.getElementById('newBillTags').value = (orig.tags || []).join(', ');
+            renderAmendmentBanner();
+        }
+
+        function cancelAmendment() {
+            amendmentSourceId = null;
+            renderAmendmentBanner();
+        }
+
+        function renderAmendmentBanner() {
+            const banner = document.getElementById('amendmentBanner');
+            const text = document.getElementById('amendmentBannerText');
+            if(!banner || !text) return;
+            const orig = amendmentSourceId ? bills.find(b => b.id === amendmentSourceId) : null;
+            if(!orig) { banner.classList.remove('show'); return; }
+            text.innerHTML = `📝 Amending:<br>${orig.title} (v${orig.version || 1})`;
+            banner.classList.add('show');
+        }
+
+        function getAmendmentsOf(id) {
+            return bills.filter(b => b.parentBillId === id);
         }
 
         function removeBill(id) {
@@ -363,7 +404,64 @@
                 const tName = document.getElementById('thirdNameInput')?.value || 'Third';
                 badges += `<span class="bill-status-badge third-fail">${tName} Not Tabled</span>`;
             }
+            if((bill.version || 1) > 1) badges += `<span class="bill-version-badge">v${bill.version}</span>`;
+            if(bill.isAmendment) {
+                const orig = bills.find(b => b.id === bill.parentBillId);
+                badges += `<span class="bill-version-badge" title="Original bill being amended">↩ Amends: ${orig ? orig.title : '(deleted bill)'}</span>`;
+            }
             return badges;
+        }
+
+        // Bill detailed vote timeline + amendment list HTML — rendered as the same bar graph as the live vote-result panel
+        function buildBillHistoryHtml(bill) {
+            const chamberLabel = ch => ch === 'senate' ? (document.getElementById('senateNameInput')?.value || 'Senate')
+                : ch === 'third' ? (document.getElementById('thirdNameInput')?.value || 'Third')
+                : (document.getElementById('houseNameInput')?.value || 'House');
+            const history = bill.voteHistory || [];
+            const historyRows = history.length === 0
+                ? '<div style="color:#444;">No vote history</div>'
+                : history.map(h => {
+                    if(h.result === 'skip') return `<div class="vote-verdict verdict-pending" style="margin:6px 0;">⊘ ${chamberLabel(h.chamber)} Not Tabled</div>`;
+                    const total = h.total || 1;
+                    const none = Math.max(0, total - h.yea - h.nay - h.abs);
+                    const threshold = h.threshold ?? 0.5;
+                    const threshPct = Math.min(threshold * 100, 100).toFixed(1);
+                    const threshLabel = getThresholdLabel(threshold, h.numer, h.denom);
+                    const dateStr = h.date ? ` · ${h.date}` : '';
+                    return `
+                        <div class="vote-result-wrap" style="margin-top:8px; padding:8px;">
+                            <div class="vote-result-title">[ ${chamberLabel(h.chamber)} Vote Result ]${dateStr}</div>
+                            <div class="vote-bar-outer">
+                                <div class="vote-bar-yea" style="width:${(h.yea/total*100).toFixed(1)}%"></div>
+                                <div class="vote-bar-nay" style="width:${(h.nay/total*100).toFixed(1)}%"></div>
+                                <div class="vote-bar-abs" style="width:${(h.abs/total*100).toFixed(1)}%"></div>
+                                <div class="vote-bar-none" style="width:${(none/total*100).toFixed(1)}%"></div>
+                                <div style="position:absolute; left:${threshPct}%; top:0; bottom:0; width:2px; background:var(--tno-gold); box-shadow:0 0 5px var(--tno-gold); z-index:2;"></div>
+                                <div style="position:absolute; left:${threshPct}%; top:-18px; transform:translateX(-50%); font-size:0.72rem; color:var(--tno-gold); white-space:nowrap; font-family:'NeoDunggeunmo','VT323',monospace;">${threshLabel} (${h.required} seats)</div>
+                            </div>
+                            <div class="vote-counts">
+                                <span class="vc-yea">Yea <b>${h.yea}</b></span>
+                                <span class="vc-nay">Nay <b>${h.nay}</b></span>
+                                <span class="vc-abs">Abs <b>${h.abs}</b></span>
+                                <span class="vc-none">No Vote <b>${none}</b></span>
+                            </div>
+                            <div class="vote-verdict ${h.result==='pass'?'verdict-pass':'verdict-fail'}">${h.result==='pass'?'✔ Passed':'✘ Failed'}</div>
+                        </div>`;
+                }).join('');
+
+            const amendments = getAmendmentsOf(bill.id);
+            const amendmentRows = amendments.length === 0 ? '' : `
+                <div style="margin-top:6px; padding-top:6px; border-top:1px dotted #1a1a1a;">
+                    <div style="color:#666; margin-bottom:2px;">Amendments (${amendments.length})</div>
+                    ${amendments.map(a => `<div class="bill-history-entry">v${a.version} — ${a.title} [${buildBillBadges(a).replace(/<[^>]+>/g,' ').trim() || 'Pending'}]</div>`).join('')}
+                </div>`;
+
+            return `<div class="bill-history" id="billHistory-${bill.id}">${historyRows}${amendmentRows}</div>`;
+        }
+
+        function toggleBillHistory(id) {
+            const el = document.getElementById('billHistory-' + id);
+            if(el) el.classList.toggle('open');
         }
 
         // ===== Tag helpers =====
@@ -439,11 +537,13 @@
                     <div class="bill-card-footer">
                         ${buildBillBadges(bill)}
                         <span style="color:#555; font-size:0.75rem; margin-left:4px;">[${thLabel}]</span>
+                        ${(bill.voteHistory||[]).length > 0 ? `<span class="bill-history-toggle" onclick="event.stopPropagation(); toggleBillHistory('${bill.id}')">▾ Details</span>` : ''}
                         <div style="margin-left:auto; display:flex; gap:5px;">
                             ${!isActive ? `<button class="bill-select-btn" onclick="selectBillForVote('${bill.id}'); switchTab('vote');">Select for Review</button>` : ''}
                             <button class="bill-remove-btn" onclick="removeBill('${bill.id}')">Delete</button>
                         </div>
                     </div>
+                    ${(bill.voteHistory||[]).length > 0 ? buildBillHistoryHtml(bill) : ''}
                 `;
                 container.appendChild(div);
             });
@@ -488,10 +588,13 @@
                     <div class="bill-card-footer">
                         ${buildBillBadges(bill)}
                         <span style="color:#555; font-size:0.75rem; margin-left:4px;">[${thLabel}]</span>
-                        <div style="margin-left:auto;">
+                        <span class="bill-history-toggle" onclick="event.stopPropagation(); toggleBillHistory('${bill.id}')">▾ Details</span>
+                        <div style="display:flex; gap:5px;">
+                            ${overall === 'passed' ? `<button class="bill-amend-btn" onclick="startAmendment('${bill.id}')">📝 Propose Amendment</button>` : ''}
                             <button class="bill-remove-btn" onclick="removeBill('${bill.id}')">Delete</button>
                         </div>
                     </div>
+                    ${buildBillHistoryHtml(bill)}
                 `;
                 container.appendChild(div);
             });
@@ -534,21 +637,29 @@
             const required = threshold >= 1.0 ? validSeats : Math.floor(validSeats * threshold) + 1;
             const result = yea >= required ? 'pass' : 'fail';
 
+            if(!bill.voteHistory) bill.voteHistory = [];
+            const nowISO = new Date().toISOString();
+            const logVote = (ch, res) => bill.voteHistory.push({ chamber: ch, result: res, date: bill.voteDate || '', yea, nay, abs, total: validSeats, required, threshold, numer: bill.numer, denom: bill.denom, at: nowISO });
+            const logSkip = (ch) => bill.voteHistory.push({ chamber: ch, result: 'skip', date: '', at: nowISO });
+
             if(chamber==='house') {
                 bill.houseStatus = result;
                 bill.houseVote = {yea, nay, abs, total: validSeats, required};
+                logVote('house', result);
                 // House failure → automatically fails subsequent stages (Senate/Third)
                 if(result === 'fail') {
-                    if(isBi) { bill.senateStatus = 'skip'; bill.senateVote = null; }
-                    if(isTri) { bill.thirdStatus = 'skip'; bill.thirdVote = null; }
+                    if(isBi) { bill.senateStatus = 'skip'; bill.senateVote = null; logSkip('senate'); }
+                    if(isTri) { bill.thirdStatus = 'skip'; bill.thirdVote = null; logSkip('third'); }
                 }
             } else if(chamber==='senate') {
                 bill.senateStatus = result;
                 bill.senateVote = {yea, nay, abs, total: validSeats, required};
-                if(result === 'fail' && isTri) { bill.thirdStatus = 'skip'; bill.thirdVote = null; }
+                logVote('senate', result);
+                if(result === 'fail' && isTri) { bill.thirdStatus = 'skip'; bill.thirdVote = null; logSkip('third'); }
             } else {
                 bill.thirdStatus = result;
                 bill.thirdVote = {yea, nay, abs, total: validSeats, required};
+                logVote('third', result);
             }
 
             renderBillList();
@@ -868,6 +979,23 @@
         }
 
         // ===== TOOLTIP =====
+        // Measure actual rendered size and clamp so it never gets clipped at the screen edge (e.g. the rightmost seat)
+        function positionTooltip(tip, text, clientX, clientY) {
+            tip.textContent = text;
+            tip.style.display = 'block';
+            const margin = 8;
+            const w = tip.offsetWidth;
+            const h = tip.offsetHeight;
+            let left = clientX + 14;
+            let top = clientY - 8;
+            if(left + w > window.innerWidth - margin) left = clientX - w - 14;
+            if(left < margin) left = margin;
+            if(top + h > window.innerHeight - margin) top = window.innerHeight - h - margin;
+            if(top < margin) top = margin;
+            tip.style.left = left + 'px';
+            tip.style.top = top + 'px';
+        }
+
         function handleCanvasMouseMove(e, chamber) {
             const cvs = e.target;
             const rect = cvs.getBoundingClientRect();
@@ -888,14 +1016,11 @@
                 const d = dots[hit];
                 const voteLabels = { yea:'Yea', nay:'Nay', abs:'Abstain', none:'No Vote' };
                 const vs = voteState[chamber][hit] || 'none';
-                tip.style.display = 'block';
-                tip.style.left = (e.clientX + 14) + 'px';
-                tip.style.top = (e.clientY - 8) + 'px';
                 const nameLabel = d.independentName ? d.independentName : d.partyName;
                 const seatLabel = d.independentSeatIndex
                     ? `#${computeIndependentOffset(chamber) + d.independentSeatIndex}`
                     : `#${hit+1}`;
-                tip.textContent = `${seatLabel} | ${nameLabel} | ${d.ideology} | ${voteLabels[vs]}`;
+                positionTooltip(tip, `${seatLabel} | ${nameLabel} | ${d.ideology} | ${voteLabels[vs]}`, e.clientX, e.clientY);
             } else {
                 tip.style.display = 'none';
             }
@@ -1168,7 +1293,8 @@
             // ── Restore legislative process ──
             const leg = state.legislation || {};
             bills = (Array.isArray(leg.bills) ? leg.bills : (Array.isArray(state.data?.bills) ? state.data.bills : []))
-                .map(b => ({ tags:[], threshold:0.5, numer:null, denom:null, thirdStatus:'pending', thirdVote:null, voteDate:'', ...b }));
+                // v12: adds version/parentBillId/isAmendment/voteHistory (amendments, versioning, detailed vote log)
+                .map(b => ({ tags:[], threshold:0.5, numer:null, denom:null, thirdStatus:'pending', thirdVote:null, voteDate:'', version:1, parentBillId:null, isAmendment:false, voteHistory:[], ...b }));
             activeBillId           = leg.activeBillId           ?? null;
             voteState              = leg.voteState              ?? { house:{}, senate:{}, third:{} };
             if(!voteState.third) voteState.third = {};
@@ -3353,10 +3479,7 @@
                             if(mem.vacant) text += ` — Vacant`;
                             else text += ` — ${mem.name||'(unnamed)'} (${memParty?.name||'?'})`;
                         }
-                        tip.style.display = 'block';
-                        tip.style.left = (e.clientX + 14) + 'px';
-                        tip.style.top = (e.clientY - 8) + 'px';
-                        tip.textContent = text;
+                        positionTooltip(tip, text, e.clientX, e.clientY);
                     } else if(tip) {
                         tip.style.display = 'none';
                     }
@@ -3627,10 +3750,7 @@
                                 if(mem.vacant) text += ` — Vacant`;
                                 else text += ` — ${mem.name||'(unnamed)'} (${memParty?.name||'?'})`;
                             }
-                            tip.style.display = 'block';
-                            tip.style.left = (e.clientX + 14) + 'px';
-                            tip.style.top = (e.clientY - 8) + 'px';
-                            tip.textContent = text;
+                            positionTooltip(tip, text, e.clientX, e.clientY);
                         } else {
                             tip.style.display = 'none';
                         }
@@ -4091,6 +4211,8 @@
             const sName = document.getElementById('senateNameInput')?.value||'Senate';
             const tName = document.getElementById('thirdNameInput')?.value||'Third';
             const chamberDisplayName = chamber==='senate'?sName:chamber==='third'?tName:hName;
+            // Each party's share of the actual weight total used in the count = the real result, not a pre-election estimate
+            const wTotal = (weightedResult||[]).reduce((s,x)=>s+(x.w||0),0);
             const record = {
                 id: 'er'+Date.now(),
                 title: title || 'Untitled Election',
@@ -4098,10 +4220,11 @@
                 chamber: chamberDisplayName,
                 chamberType: chamber,
                 isSenate: chamber==='senate',
+                savedAt: new Date().toISOString(),
                 parties: parties.map(p => {
                     const w = weightedResult.find(x=>x.id===p.id);
                     const s = seatMap.find(x=>x.id===p.id);
-                    return { id:p.id, name:p.name, color:p.color, prob: w?.origProb||0, seats: s?.n||0 };
+                    return { id:p.id, name:p.name, color:p.color, prob: (w && wTotal>0) ? w.w/wTotal : 0, seats: s?.n||0 };
                 }),
                 totalSeats: seatMap.reduce((a,b)=>a+b.n,0),
                 districtResults: (districtResults || []).map(d => ({ ...d, districtName: districtNames[chamber][d.key] || '' }))
@@ -4125,12 +4248,21 @@
                     .sort((a,b)=>b.seats-a.seats)
                     .map(p=>`<span style="display:inline-flex;align-items:center;gap:3px;margin-right:6px;font-size:0.8rem;color:#aaa;"><span style="width:8px;height:8px;background:${p.color};border-radius:50%;display:inline-block;"></span>${p.name} ${p.seats} seats</span>`)
                     .join('');
+                const savedAtLabel = r.savedAt ? new Date(r.savedAt).toLocaleString('en-US') : '—';
+                const detailRows = r.parties.filter(p=>p.seats>0 || p.prob>0)
+                    .sort((a,b)=>b.seats-a.seats)
+                    .map(p=>`<div class="bill-history-entry">${p.name} — ${p.seats} seats · vote share ${(p.prob*100).toFixed(1)}%</div>`)
+                    .join('') || '<div style="color:#444;">No per-party detail available</div>';
                 div.innerHTML = `
                     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
                         <span style="color:var(--tno-gold);font-size:1rem;">${r.title}</span>
                         <span style="color:#555;font-size:0.85rem;">${r.year} · ${r.chamber}</span>
                     </div>
-                    <div style="margin-bottom:8px;">${partySummary}</div>
+                    <div style="margin-bottom:4px;">${partySummary}</div>
+                    <div style="margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;">
+                        <span class="elec-record-toggle" onclick="toggleElecRecordDetail('${r.id}')">▾ Details (${r.totalSeats} seats total · saved: ${savedAtLabel})</span>
+                    </div>
+                    <div class="elec-record-detail" id="elecRecordDetail-${r.id}">${detailRows}</div>
                     <div style="display:flex;gap:6px;">
                         <button onclick="elecLoadRecord('${r.id}')" style="flex:1;background:transparent;border:1px solid var(--tno-neon);color:var(--tno-neon);padding:5px;font-family:inherit;font-size:0.85rem;cursor:pointer;">↻ Apply to Parliament</button>
                         <button onclick="elecViewRecord('${r.id}')" style="flex:1;background:transparent;border:1px solid #888;color:#aaa;padding:5px;font-family:inherit;font-size:0.85rem;cursor:pointer;">👁 View</button>
@@ -4197,6 +4329,11 @@
         function elecDeleteRecord(id) {
             elecRecords = elecRecords.filter(x=>x.id!==id);
             elecRenderRecords();
+        }
+
+        function toggleElecRecordDetail(id) {
+            const el = document.getElementById('elecRecordDetail-' + id);
+            if(el) el.classList.toggle('open');
         }
 
         // ── Main vote-counting function ────────────────
@@ -4328,10 +4465,7 @@
                 const hkey = `${hq},${hr}`;
                 const found = ctxData.nameMap[hkey];
                 if(found !== undefined) {
-                    tip.style.display = 'block';
-                    tip.style.left = (e.clientX + 14) + 'px';
-                    tip.style.top = (e.clientY - 8) + 'px';
-                    tip.textContent = found || `(${hkey})`;
+                    positionTooltip(tip, found || `(${hkey})`, e.clientX, e.clientY);
                 } else {
                     tip.style.display = 'none';
                 }

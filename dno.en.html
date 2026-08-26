@@ -194,6 +194,10 @@
 
             <!-- Submit tab: bill drafting form only -->
             <div id="contentBill" class="sub-tab-content active">
+                <div id="amendmentBanner" class="amendment-banner">
+                    <span id="amendmentBannerText"></span>
+                    <button onclick="cancelAmendment()" title="Cancel">✕</button>
+                </div>
                 <div class="vote-panel" style="margin-bottom:10px;">
                     <div class="vote-panel-title">> Draft New Bill (NEW BILL)</div>
                     <input type="text" class="vote-bill-input" id="newBillTitle" placeholder="Bill title..." style="margin-bottom:6px;">
