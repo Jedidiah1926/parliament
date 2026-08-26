@@ -1071,8 +1071,6 @@
 
             const d = dotCache[chamber][hit];
             if(!d) return;
-            const voteLabels = { yea:'찬성', nay:'반대', abs:'기권', none:'미투표' };
-            const vs = voteState[chamber]?.[hit] || 'none';
             const nameLabel = d.independentName ? d.independentName : d.partyName;
             const seatLabel = d.independentSeatIndex
                 ? `#${computeIndependentOffset(chamber) + d.independentSeatIndex}`
@@ -1091,7 +1089,6 @@
             if(d.factionName) rows.push(`파벌: ${d.factionName}`);
             rows.push(`이념: ${d.ideology}`);
             if(d.coalitionName) rows.push(`연정: ${d.coalitionName}`);
-            if(d.partyName !== 'Vacant') rows.push(`투표 상태: ${voteLabels[vs]}`);
             body.innerHTML = rows.map(r => `<div>${r}</div>`).join('');
 
             seatInfoCardTarget = { chamber, hit };
@@ -4428,7 +4425,6 @@
                     .sort((a,b)=>b.seats-a.seats)
                     .map(p=>`<span style="display:inline-flex;align-items:center;gap:3px;margin-right:6px;font-size:0.8rem;color:#aaa;"><span style="width:8px;height:8px;background:${p.color};border-radius:50%;display:inline-block;"></span>${p.name} ${p.seats}석</span>`)
                     .join('');
-                const savedAtLabel = r.savedAt ? new Date(r.savedAt).toLocaleString('ko-KR') : '—';
                 const detailRows = r.parties.filter(p=>p.seats>0 || p.prob>0)
                     .sort((a,b)=>b.seats-a.seats)
                     .map(p=>`<div class="bill-history-entry">${p.name} — 의석 ${p.seats}석 · 득표율 ${(p.prob*100).toFixed(1)}%</div>`)
@@ -4440,7 +4436,7 @@
                     </div>
                     <div style="margin-bottom:4px;">${partySummary}</div>
                     <div style="margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;">
-                        <span class="elec-record-toggle" onclick="toggleElecRecordDetail('${r.id}')">▾ 세부 기록 (총 ${r.totalSeats}석 · 저장: ${savedAtLabel})</span>
+                        <span class="elec-record-toggle" onclick="toggleElecRecordDetail('${r.id}')">▾ 세부 기록 (총 ${r.totalSeats}석)</span>
                     </div>
                     <div class="elec-record-detail" id="elecRecordDetail-${r.id}">${detailRows}</div>
                     <div style="display:flex;gap:6px;">

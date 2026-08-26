@@ -4335,7 +4335,6 @@
                     .sort((a,b)=>b.seats-a.seats)
                     .map(p=>`<span style="display:inline-flex;align-items:center;gap:3px;margin-right:6px;font-size:0.8rem;color:#aaa;"><span style="width:8px;height:8px;background:${p.color};border-radius:50%;display:inline-block;"></span>${p.name} ${p.seats} seats</span>`)
                     .join('');
-                const savedAtLabel = r.savedAt ? new Date(r.savedAt).toLocaleString('en-US') : '—';
                 const detailRows = r.parties.filter(p=>p.seats>0 || p.prob>0)
                     .sort((a,b)=>b.seats-a.seats)
                     .map(p=>`<div class="bill-history-entry">${p.name} — ${p.seats} seats · vote share ${(p.prob*100).toFixed(1)}%</div>`)
@@ -4347,7 +4346,7 @@
                     </div>
                     <div style="margin-bottom:4px;">${partySummary}</div>
                     <div style="margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;">
-                        <span class="elec-record-toggle" onclick="toggleElecRecordDetail('${r.id}')">▾ Details (${r.totalSeats} seats total · saved: ${savedAtLabel})</span>
+                        <span class="elec-record-toggle" onclick="toggleElecRecordDetail('${r.id}')">▾ Details (${r.totalSeats} seats total)</span>
                     </div>
                     <div class="elec-record-detail" id="elecRecordDetail-${r.id}">${detailRows}</div>
                     <div style="display:flex;gap:6px;">
