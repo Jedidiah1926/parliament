@@ -101,6 +101,7 @@
         let voteState = { house: {}, senate: {}, third: {} };
         let currentVoteMode = 'none';
         let dotCache = { house: [], senate: [], third: [], _elec: [] };
+        let hoveredSeat = { house: -1, senate: -1, third: -1 };
 
         // ===== BILL FUNCTIONS =====
         function toggleCustomThreshold() {
@@ -1010,7 +1011,7 @@
         }
 
         // 본원(하원/상원/삼원) 좌석 캔버스는 더 이상 호버 툴팁을 띄우지 않는다 —
-        // 클릭 시 좌석 정보 카드(showSeatInfoCard)로 대체되었으므로, 호버는 클릭 가능 커서 힌트만 준다.
+        // 클릭 시 좌석 정보 카드(showSeatInfoCard)로 대체되었으므로, 호버는 커서 힌트 + 흰색 고리(토성 고리처럼 좌석과 떨어진)로 표시한다.
         function handleCanvasMouseMove(e, chamber) {
             const cvs = e.target;
             const rect = cvs.getBoundingClientRect();
@@ -1026,10 +1027,19 @@
                 if(Math.hypot(mx - d.x, my - d.y) <= d.r * 1.5) hit = i;
             });
             cvs.style.cursor = hit !== -1 ? 'pointer' : 'default';
+
+            if(hoveredSeat[chamber] !== hit) {
+                hoveredSeat[chamber] = hit;
+                redrawChamber(cvs.id, chamber);
+            }
         }
 
-        function handleCanvasMouseLeave(e) {
+        function handleCanvasMouseLeave(e, chamber) {
             if(e?.target) e.target.style.cursor = 'default';
+            if(hoveredSeat[chamber] !== -1) {
+                hoveredSeat[chamber] = -1;
+                redrawChamber(e.target.id, chamber);
+            }
         }
 
         // 좌석 클릭 시 뜨는 정보 카드 (호버 대신 클릭으로 열고 닫음)
@@ -1240,6 +1250,18 @@
                     ctx.lineWidth = 2.5;
                     ctx.stroke();
                 }
+
+                // 호버 중인 좌석: 토성 고리처럼 좌석과 떨어진 흰색 고리
+                if(hoveredSeat[chamber] === i) {
+                    ctx.beginPath();
+                    ctx.arc(d.x, d.y, d.r * 1.35, 0, Math.PI*2);
+                    ctx.strokeStyle = '#fff';
+                    ctx.lineWidth = 1.5;
+                    ctx.shadowColor = 'rgba(255,255,255,0.6)';
+                    ctx.shadowBlur = 6;
+                    ctx.stroke();
+                    ctx.shadowBlur = 0;
+                }
             });
 
             // Center text
@@ -1446,9 +1468,9 @@
             document.getElementById('houseCanvas').addEventListener('mousemove', e => handleCanvasMouseMove(e, 'house'));
             document.getElementById('senateCanvas').addEventListener('mousemove', e => handleCanvasMouseMove(e, 'senate'));
             document.getElementById('thirdCanvas').addEventListener('mousemove', e => handleCanvasMouseMove(e, 'third'));
-            document.getElementById('houseCanvas').addEventListener('mouseleave', handleCanvasMouseLeave);
-            document.getElementById('senateCanvas').addEventListener('mouseleave', handleCanvasMouseLeave);
-            document.getElementById('thirdCanvas').addEventListener('mouseleave', handleCanvasMouseLeave);
+            document.getElementById('houseCanvas').addEventListener('mouseleave', e => handleCanvasMouseLeave(e, 'house'));
+            document.getElementById('senateCanvas').addEventListener('mouseleave', e => handleCanvasMouseLeave(e, 'senate'));
+            document.getElementById('thirdCanvas').addEventListener('mouseleave', e => handleCanvasMouseLeave(e, 'third'));
         });
 
         // ===== 2단 탭 전환 =====
@@ -5214,6 +5236,18 @@
                     ctx.strokeStyle = d.color;
                     ctx.lineWidth = 2.5;
                     ctx.stroke();
+                }
+
+                // 호버 중인 좌석: 토성 고리처럼 좌석과 떨어진 흰색 고리
+                if(hoveredSeat[chamber] === i) {
+                    ctx.beginPath();
+                    ctx.arc(pt.x, pt.y, dotR * 1.35, 0, Math.PI*2);
+                    ctx.strokeStyle = '#fff';
+                    ctx.lineWidth = 1.5;
+                    ctx.shadowColor = 'rgba(255,255,255,0.6)';
+                    ctx.shadowBlur = 6;
+                    ctx.stroke();
+                    ctx.shadowBlur = 0;
                 }
             });
 
