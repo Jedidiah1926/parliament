@@ -75,7 +75,7 @@
         ];
 
         let coalitions = [
-            { id: 'c1', name: "National Front", color: "#2E2E2E", members: [1], isRuling: true , leaderName: "", leaderPhoto: "", leadPartyId: null, externalSupporters: [], externalSupportLabel: "External Support", syncWithLeadParty: false },
+            { id: 'c1', name: "National Front", color: "#2E2E2E", members: [1], isRuling: true , leadPartyId: null, externalSupporters: [], externalSupportLabel: "External Support" },
         ];
 
         let currentTab = 'house';
@@ -379,37 +379,51 @@
                 pending: ['pending', 'Pending'],
             };
             const [oc, ol] = overallCfg[overall];
-            let badges = `<span class="bill-status-badge ${oc}">${ol}</span>`;
-            if(bill.voteDate) badges += `<span style="color:#666;font-size:0.75rem;">📅 ${bill.voteDate}</span>`;
+
+            // Each line (overall status / per-chamber status) is stacked as its own row so wrapping is always clean
+            const rows = [];
+
+            let overallRow = `<span class="bill-status-badge ${oc}">${ol}</span>`;
+            if(bill.voteDate) overallRow += `<span style="color:#666;font-size:0.75rem;">📅 ${bill.voteDate}</span>`;
+            rows.push(overallRow);
+
             if(bill.houseStatus !== 'pending') {
                 const hName = document.getElementById('houseNameInput')?.value || 'House';
-                badges += `<span class="bill-status-badge ${bill.houseStatus==='pass'?'house-pass':'house-fail'}">${hName} ${bill.houseStatus==='pass'?'✔Passed':'✘Failed'}</span>`;
-                if(bill.houseVote) badges += `<span style="color:#555; font-size:0.75rem;">(Yea ${bill.houseVote.yea}/Nay ${bill.houseVote.nay}/Abs ${bill.houseVote.abs})</span>`;
+                let row = `<span class="bill-status-badge ${bill.houseStatus==='pass'?'house-pass':'house-fail'}">${hName} ${bill.houseStatus==='pass'?'✔Passed':'✘Failed'}</span>`;
+                if(bill.houseVote) row += `<span style="color:#555; font-size:0.75rem;">(Yea ${bill.houseVote.yea}/Nay ${bill.houseVote.nay}/Abs ${bill.houseVote.abs})</span>`;
+                rows.push(row);
             }
             if(isBi && bill.senateStatus !== 'pending' && bill.senateStatus !== 'skip') {
                 const sName = document.getElementById('senateNameInput')?.value || 'Senate';
-                badges += `<span class="bill-status-badge ${bill.senateStatus==='pass'?'senate-pass':'senate-fail'}">${sName} ${bill.senateStatus==='pass'?'✔Passed':'✘Failed'}</span>`;
-                if(bill.senateVote) badges += `<span style="color:#555; font-size:0.75rem;">(Yea ${bill.senateVote.yea}/Nay ${bill.senateVote.nay}/Abs ${bill.senateVote.abs})</span>`;
+                let row = `<span class="bill-status-badge ${bill.senateStatus==='pass'?'senate-pass':'senate-fail'}">${sName} ${bill.senateStatus==='pass'?'✔Passed':'✘Failed'}</span>`;
+                if(bill.senateVote) row += `<span style="color:#555; font-size:0.75rem;">(Yea ${bill.senateVote.yea}/Nay ${bill.senateVote.nay}/Abs ${bill.senateVote.abs})</span>`;
+                rows.push(row);
             }
             if(isBi && bill.senateStatus === 'skip') {
                 const sName = document.getElementById('senateNameInput')?.value || 'Senate';
-                badges += `<span class="bill-status-badge senate-fail">${sName} Not Tabled</span>`;
+                rows.push(`<span class="bill-status-badge senate-fail">${sName} Not Tabled</span>`);
             }
             if(isTri && bill.thirdStatus !== 'pending' && bill.thirdStatus !== 'skip') {
                 const tName = document.getElementById('thirdNameInput')?.value || 'Third';
-                badges += `<span class="bill-status-badge ${bill.thirdStatus==='pass'?'third-pass':'third-fail'}">${tName} ${bill.thirdStatus==='pass'?'✔Passed':'✘Failed'}</span>`;
-                if(bill.thirdVote) badges += `<span style="color:#555; font-size:0.75rem;">(Yea ${bill.thirdVote.yea}/Nay ${bill.thirdVote.nay}/Abs ${bill.thirdVote.abs})</span>`;
+                let row = `<span class="bill-status-badge ${bill.thirdStatus==='pass'?'third-pass':'third-fail'}">${tName} ${bill.thirdStatus==='pass'?'✔Passed':'✘Failed'}</span>`;
+                if(bill.thirdVote) row += `<span style="color:#555; font-size:0.75rem;">(Yea ${bill.thirdVote.yea}/Nay ${bill.thirdVote.nay}/Abs ${bill.thirdVote.abs})</span>`;
+                rows.push(row);
             }
             if(isTri && bill.thirdStatus === 'skip') {
                 const tName = document.getElementById('thirdNameInput')?.value || 'Third';
-                badges += `<span class="bill-status-badge third-fail">${tName} Not Tabled</span>`;
+                rows.push(`<span class="bill-status-badge third-fail">${tName} Not Tabled</span>`);
             }
-            if((bill.version || 1) > 1) badges += `<span class="bill-version-badge">v${bill.version}</span>`;
-            if(bill.isAmendment) {
-                const orig = bills.find(b => b.id === bill.parentBillId);
-                badges += `<span class="bill-version-badge" title="Original bill being amended">↩ Amends: ${orig ? orig.title : '(deleted bill)'}</span>`;
+            if((bill.version || 1) > 1 || bill.isAmendment) {
+                let row = '';
+                if((bill.version || 1) > 1) row += `<span class="bill-version-badge">v${bill.version}</span>`;
+                if(bill.isAmendment) {
+                    const orig = bills.find(b => b.id === bill.parentBillId);
+                    row += `<span class="bill-version-badge" title="Original bill being amended">↩ Amends: ${orig ? orig.title : '(deleted bill)'}</span>`;
+                }
+                rows.push(row);
             }
-            return badges;
+
+            return rows.map(r => `<div style="display:flex; align-items:center; gap:6px; width:100%;">${r}</div>`).join('');
         }
 
         // Bill detailed vote timeline + amendment list HTML — rendered as the same bar graph as the live vote-result panel
@@ -1223,7 +1237,7 @@
         function getAppState() {
             const systemType = document.querySelector('input[name="systemType"]:checked')?.value || 'bicameral';
             return {
-                meta: { app: "DATANET_PARLIAMENT_SIM", version: 12, savedAt: new Date().toISOString() },
+                meta: { app: "DATANET_PARLIAMENT_SIM", version: 13, savedAt: new Date().toISOString() },
                 ui: { currentMainTab, currentSubTab },
                 config: {
                     systemType,
@@ -1273,7 +1287,7 @@
                 state.parliament.independents  = state.parliament.independents.map(x => ({ ...x, photo: '' }));
             }
             const ts = new Date().toISOString().replace(/[:.]/g, "-");
-            downloadJSON(`parliament-save-v12-${ts}.json`, state);
+            downloadJSON(`parliament-save-v13-${ts}.json`, state);
         }
 
         function setAppState(state) {
@@ -1286,7 +1300,7 @@
 
             ideologies = parl.ideologies;
             parties    = parl.parties.map(p => ({ leaderName:'', leaderPhoto:'', logoPhoto:'', showLogoInStats:false, description:'', factions:[], seatsThird:0, inThird:false, abbr:'', ...p, factions:(p.factions||[]).map(f=>({leaderName:'',leaderPhoto:'',logoPhoto:'',usePartyColor:false,seatsThird:0,...f})) }));
-            coalitions = parl.coalitions.map(c => ({ leaderName:'', leaderPhoto:'', leadPartyId:null, externalSupporters:[], externalSupportLabel:'External Support', syncWithLeadParty:false, ...c }));
+            coalitions = parl.coalitions.map(c => ({ leadPartyId:null, externalSupporters:[], externalSupportLabel:'External Support', ...c }));
             manualSort = parl.manualSort ?? false;
             independents = Array.isArray(parl.independents) ? parl.independents : [];
 
@@ -1303,8 +1317,18 @@
 
             // ── Restore election data ──
             const elec = state.election || {};
-            Object.keys(elecStore).forEach(k => delete elecStore[k]);
-            if(elec.elecStore && typeof elec.elecStore === 'object') Object.assign(elecStore, elec.elecStore);
+            // Restore support-rate store (v13: split per chamber { house:{}, senate:{}, third:{} } /
+            // v12 and earlier: a single flat list → applied to every chamber the same way)
+            ['house','senate','third'].forEach(c => { elecStore[c] = {}; });
+            if(elec.elecStore && typeof elec.elecStore === 'object') {
+                const loaded = elec.elecStore;
+                const isPerChamber = ['house','senate','third'].some(c => loaded[c] && typeof loaded[c] === 'object');
+                if(isPerChamber) {
+                    ['house','senate','third'].forEach(c => { elecStore[c] = loaded[c] ? JSON.parse(JSON.stringify(loaded[c])) : {}; });
+                } else {
+                    ['house','senate','third'].forEach(c => { elecStore[c] = JSON.parse(JSON.stringify(loaded)); });
+                }
+            }
             elecRecords    = Array.isArray(elec.elecRecords) ? elec.elecRecords : [];
             elecLastResult = elec.elecLastResult ?? null;
             const ge = id => document.getElementById(id);
@@ -1355,14 +1379,18 @@
 
             // ── Restore tabs (last) ──
             const uiMain = state.ui?.currentMainTab || 'party';
-            const uiSub  = state.ui?.currentSubTab  || { party:'ideology', setup:'settings', legislation:'bill' };
-            currentSubTab = { party:'ideology', setup:'settings', legislation:'bill', ...uiSub };
+            const uiSub  = state.ui?.currentSubTab  || { party:'ideology', setup:'settings', legislation:'bill', record:'archive' };
+            currentSubTab = { party:'ideology', setup:'settings', legislation:'bill', record:'archive', ...uiSub };
             // Backward compat with older save files: map the old setup sub-tab (house/senate/third/leader) to the new structure
             if(['house','senate','third'].includes(currentSubTab.setup)) currentSubTab.setup = 'settings';
             if(currentSubTab.party === 'leader') currentSubTab.party = 'partyInfo';
+            if(currentSubTab.party === 'coalitionLeader') currentSubTab.party = 'partyInfo';
+            // Backward compat: the Record tab used to live inside Legislation/Election before being split out
+            if(currentSubTab.legislation === 'archive') currentSubTab.legislation = 'bill';
+            if(currentSubTab.election === 'record') currentSubTab.election = 'vote';
             switchMainTab(uiMain);
             if(uiMain !== 'election') {
-                const fallback = uiMain==='party' ? 'ideology' : uiMain==='setup' ? 'settings' : 'bill';
+                const fallback = uiMain==='party' ? 'ideology' : uiMain==='setup' ? 'settings' : uiMain==='record' ? 'archive' : 'bill';
                 switchSubTab(uiMain, currentSubTab[uiMain] || fallback, false);
             }
         }
@@ -1412,7 +1440,7 @@
 
         // ===== 2nd-level tab switching =====
         let currentMainTab = 'party';
-        let currentSubTab = { party: 'ideology', setup: 'settings', legislation: 'bill' };
+        let currentSubTab = { party: 'ideology', setup: 'settings', legislation: 'bill', record: 'archive' };
 
         // When leaving the Vote tab, reset the selection if the selected bill has fully concluded (passed/failed)
         function checkResetVoteSelectionOnLeave() {
@@ -1436,6 +1464,10 @@
                 switchSubTab('party', currentSubTab['party'] || 'ideology', false);
                 return;
             }
+            if(main === 'record') {
+                switchSubTab('record', currentSubTab['record'] || 'archive', false);
+                return;
+            }
             switchSubTab(main, currentSubTab[main] || (main === 'setup' ? 'settings' : 'bill'), false);
         }
 
@@ -1456,9 +1488,9 @@
             if(sub === 'bill') renderBillList();
             if(sub === 'table') renderBillList();
             if(sub === 'archive') renderArchiveList();
+            if(sub === 'elecRecord') elecRenderRecords();
             if(sub === 'partyInfo') { switchPartyInnerTab('info'); }
             if(sub === 'ideology') renderIdeologyList();
-            if(sub === 'coalitionLeader') renderCoalitionLeaderList();
             if(sub === 'independent') { independentInnerTab = 'house'; renderIndependentList(); }
             if(sub === 'settings') { switchSetupInnerTab('house'); }
             if(sub === 'coalition') { renderCoalitions(); }
@@ -1605,7 +1637,6 @@
             renderCoalitions();
             renderPartyInfoList();
             renderLeaderList();
-            renderCoalitionLeaderList();
             renderIndependentList();
             renderMembersList();
         }
@@ -2184,30 +2215,19 @@
             });
         }
 
-        function uploadLeaderPhoto(input, type, entityId) {
+        function uploadLeaderPhoto(input, pid) {
             const file = input.files?.[0]; if(!file) return;
             const reader = new FileReader();
             reader.onload = e => {
-                const b64 = e.target.result;
-                if(type==='party') {
-                    const p = parties.find(x=>x.id===entityId);
-                    if(p){ p.leaderPhoto=b64; refreshUI(); simulate(); }
-                } else {
-                    const coal = coalitions.find(x=>x.id===entityId);
-                    if(coal){ coal.leaderPhoto=b64; renderCoalitions(); simulate(); }
-                }
+                const p = parties.find(x=>x.id===pid);
+                if(p){ p.leaderPhoto=e.target.result; refreshUI(); simulate(); }
             };
             reader.readAsDataURL(file);
         }
 
-        function updateLeaderField(type, entityId, field, val) {
-            if(type==='party') {
-                const p = parties.find(x=>x.id===entityId);
-                if(p){ p[field]=val; simulate(); }
-            } else {
-                const c = coalitions.find(x=>x.id===entityId);
-                if(c){ c[field]=val; simulate(); }
-            }
+        function updateLeaderField(pid, field, val) {
+            const p = parties.find(x=>x.id===pid);
+            if(p){ p[field]=val; simulate(); }
         }
 
         function addIdeology() { ideologies.push({ id: Date.now(), name: "New Ideology" }); refreshUI(); }
@@ -2239,7 +2259,7 @@
         function updatePartyColorText(e,i) { if(isValidHex(e.value)){ parties[i].color=e.value.toUpperCase(); e.nextElementSibling.value=parties[i].color; refreshUI(); simulate(); }}
         function updatePartyColorPicker(e,i) { parties[i].color=e.value.toUpperCase(); e.previousElementSibling.value=parties[i].color; simulate(); }
 
-        function addCoalition() { coalitions.push({id:'c'+Date.now(), name:"New Coalition", color:"#ffffff", members:[], isRuling:false, leaderName: "", leaderPhoto: "", leadPartyId: null, externalSupporters: [], externalSupportLabel: "External Support", syncWithLeadParty: false }); refreshUI(); }
+        function addCoalition() { coalitions.push({id:'c'+Date.now(), name:"New Coalition", color:"#ffffff", members:[], isRuling:false, leadPartyId: null, externalSupporters: [], externalSupportLabel: "External Support" }); refreshUI(); }
         function removeCoalition(id) { coalitions=coalitions.filter(c=>c.id!==id); refreshUI(); simulate(); }
         function updateCoalition(id,k,v) { const c=coalitions.find(x=>x.id===id); if(c){c[k]=v; simulate();} }
         function updateCoalitionColorText(e,id) { if(isValidHex(e.value)) { const c=coalitions.find(x=>x.id===id); if(c){ c.color=e.value.toUpperCase(); e.nextElementSibling.value=c.color; simulate(); }}}
@@ -2573,7 +2593,7 @@
                         <div style="display:flex;flex-direction:column;align-items:center;gap:4px;flex-shrink:0;">
                             <div class="leader-photo-box dyn-photo" data-ratio="0.8" title="Click to upload photo" style="width:52px;height:65px;">
                                 ${photo?`<img src="${photo}" alt="leader">`:'<div class="photo-ph">👤</div>'}
-                                <input type="file" accept="image/*" onchange="uploadLeaderPhoto(this,'party',${p.id})">
+                                <input type="file" accept="image/*" onchange="uploadLeaderPhoto(this,${p.id})">
                             </div>
                             <span style="font-size:0.75rem;color:#444;flex-shrink:0;">Upload Photo</span>
                         </div>
@@ -2584,7 +2604,7 @@
                             </div>
                             <input type="text" value="${p.leaderName||''}" placeholder="Leader name"
                                 style="background:#000;border:1px solid #2a2a2a;color:#e0e0e0;font-family:inherit;font-size:0.95rem;padding:5px 8px;width:100%;box-sizing:border-box;"
-                                onchange="updateLeaderField('party',${p.id},'leaderName',this.value)">
+                                onchange="updateLeaderField(${p.id},'leaderName',this.value)">
                             ${photo?`<button onclick="removeLeaderPhoto(${p.id})" style="background:transparent;border:1px solid #333;color:#555;font-family:inherit;font-size:0.8rem;padding:3px 8px;cursor:pointer;text-align:left;">✕ Remove Photo</button>`:''}
                         </div>
                     </div>
@@ -2598,62 +2618,6 @@
         function removeLeaderPhoto(pid) {
             const p = parties.find(x=>x.id===pid);
             if(p){ p.leaderPhoto=''; refreshUI(); simulate(); }
-        }
-
-        // ===== Party tab: coalition (photo settings) =====
-        function renderCoalitionLeaderList() {
-            const container = document.getElementById('coalitionLeaderList');
-            if(!container) return;
-            container.innerHTML = '';
-
-            if(coalitions.length === 0) {
-                container.innerHTML = '<div style="text-align:center;color:#555;padding:20px;">[No coalition formed — form a coalition in the Parliament tab first]</div>';
-                return;
-            }
-
-            coalitions.forEach(coal => {
-                const leadP = coal.leadPartyId ? parties.find(p=>p.id===coal.leadPartyId) : null;
-                const synced = coal.syncWithLeadParty && leadP;
-                const photo = synced ? (leadP.leaderPhoto||'') : (coal.leaderPhoto||'');
-                const leaderNameVal = synced ? (leadP.leaderName||'') : (coal.leaderName||'');
-                const div = document.createElement('div');
-                div.className = `card-item drag-card-coalitionleader ${coal.isRuling?'is-ruling':''}`;
-                div.style.borderLeftColor = coal.color;
-                div.innerHTML = `
-                    <div class="dyn-row" style="display:flex;gap:10px;align-items:stretch;">
-                        <span class="drag-handle" style="align-self:center;">⋮⋮</span>
-                        <!-- Leader photo -->
-                        <div class="leader-photo-box dyn-photo" data-ratio="0.8" title="${synced?'Syncing with lead party (uncheck the box below to detach)':'Upload leader photo'}" style="width:52px;height:65px;flex-shrink:0;${synced?'opacity:0.6;cursor:default;':''}">
-                            ${photo?`<img src="${photo}" alt="leader">`:'<div class="photo-ph">👤</div>'}
-                            ${synced?'':`<input type="file" accept="image/*" onchange="uploadLeaderPhoto(this,'coalition','${coal.id}')">`}
-                        </div>
-                        <div class="dyn-ref" style="flex:1;display:flex;flex-direction:column;gap:6px;min-width:0;">
-                            <div style="display:flex;align-items:center;gap:6px;">
-                                <span style="width:10px;height:10px;background:${coal.color};border-radius:50%;flex-shrink:0;"></span>
-                                <span style="color:var(--tno-neon);font-size:0.95rem;">${coal.name}</span>
-                            </div>
-                            <input type="text" value="${leaderNameVal}" placeholder="Leader name" ${synced?'disabled':''}
-                                style="background:#000;border:1px solid #2a2a2a;color:${synced?'#666':'#e0e0e0'};font-family:inherit;font-size:0.95rem;padding:5px 8px;width:100%;box-sizing:border-box;"
-                                onchange="updateLeaderField('coalition','${coal.id}','leaderName',this.value)">
-                            ${synced?`<div style="color:#665500;font-size:0.78rem;">↳ Syncing with lead party (${leadP.name})</div>`
-                                : (photo?`<button onclick="removeCoalitionLeaderPhoto('${coal.id}')" style="background:transparent;border:1px solid #333;color:#555;font-family:inherit;font-size:0.8rem;padding:3px 8px;cursor:pointer;text-align:left;">✕ Remove Photo</button>`:'')}
-                            <label style="display:flex;align-items:center;gap:6px;cursor:${coal.leadPartyId?'pointer':'not-allowed'};color:#777;font-size:0.78rem;margin-top:2px;">
-                                <input type="checkbox" ${coal.syncWithLeadParty?'checked':''} ${coal.leadPartyId?'':'disabled'}
-                                    onchange="updateCoalition('${coal.id}','syncWithLeadParty',this.checked); refreshUI(); simulate();">
-                                Same as lead party ${coal.leadPartyId?'':'<br>(designate a lead party in the Parliament tab first)'}
-                            </label>
-                        </div>
-                    </div>
-                `;
-                container.appendChild(div);
-                startDragReorder(div.querySelector('.drag-handle'), 'coalitionLeaderList', '.drag-card-coalitionleader', coalitions, renderCoalitionLeaderList);
-            });
-            fitDynPhotos(container);
-        }
-
-        function removeCoalitionLeaderPhoto(cid) {
-            const c = coalitions.find(x=>x.id===cid);
-            if(c){ c.leaderPhoto=''; refreshUI(); simulate(); }
         }
 
         // ===== Party tab: independents (individual member info) =====
@@ -2977,7 +2941,8 @@
         // ═══════════════════════════════════════
         // Election simulation
         // ═══════════════════════════════════════
-        const elecStore = {};          // { partyId: { prob, err } }
+        const elecStore = { house:{}, senate:{}, third:{} };   // { chamber: { partyId: { prob, err } } } — independent per-chamber support rates (party lineups can differ)
+        let elecProbChamber = 'house';  // chamber currently being edited in the support-rate tab
         let elecRunning  = false;
         let elecPaused   = false;
         let elecSkipToEnd = false;
@@ -3795,7 +3760,7 @@
         // Election sub-tab switching
         // ─────────────────────────────────────────
         function elecSwitchSub(sub) {
-            ['district','tendency','vote','record'].forEach(s => {
+            ['district','tendency','vote'].forEach(s => {
                 document.getElementById(`elecSubTab${s.charAt(0).toUpperCase()+s.slice(1)}`)?.classList.toggle('active', s===sub);
                 document.getElementById(`elecSub${s.charAt(0).toUpperCase()+s.slice(1)}`)?.classList.toggle('active', s===sub);
             });
@@ -3929,9 +3894,11 @@
 
         // Update combined bar
         function elecUpdateAllBars() {
+            const store = elecStore[elecProbChamber] || {};
+            const inKey = inKeyFor(elecProbChamber);
             const allEntries = [
-                ...parties.map(p => ({ id: p.id, prob: Math.max(0, elecStore[p.id]?.prob||0), color: p.color })),
-                { id: '__swing__', prob: Math.max(0, elecStore['__swing__']?.prob||0), color: null }
+                ...parties.filter(p => p[inKey]).map(p => ({ id: p.id, prob: Math.max(0, store[p.id]?.prob||0), color: p.color })),
+                { id: '__swing__', prob: Math.max(0, store['__swing__']?.prob||0), color: null }
             ];
             const total = allEntries.reduce((s,e)=>s+e.prob,0) || 1;
 
@@ -3946,7 +3913,7 @@
             const n = segs.length;
 
             segs.forEach((seg, idx) => {
-                const errRaw = Math.max(0, elecStore[seg.id]?.err||0);
+                const errRaw = Math.max(0, store[seg.id]?.err||0);
                 const errPct = errRaw / total * 100;
 
                 // Segment bar
@@ -3997,25 +3964,59 @@
             });
         }
 
+        // Flush the currently displayed support-rate inputs into the store for whichever chamber is showing.
+        // Call this "just before" switching chambers — if called after elecProbChamber changes, the old tab's
+        // values would be written into the new chamber's store instead.
+        function elecSyncCurrentProbDom() {
+            const container = document.getElementById('elecInputList');
+            if(!container) return;
+            const store = elecStore[elecProbChamber] || (elecStore[elecProbChamber] = {});
+            container.querySelectorAll('.elec-prob').forEach(el => {
+                const id = el.dataset.id;
+                if(!store[id]) store[id]={prob:0,err:0};
+                store[id].prob = parseFloat(el.value)||0;
+            });
+            container.querySelectorAll('.elec-err').forEach(el => {
+                const id = el.dataset.id;
+                if(!store[id]) store[id]={prob:0,err:0};
+                store[id].err = parseFloat(el.value)||0;
+            });
+        }
+
+        // Switch the support-rate input tab (House/Senate/Third) — chambers can have different party lineups,
+        // so each keeps its own independent support rates.
+        function switchElecProbChamber(ch) {
+            elecSyncCurrentProbDom(); // flush whatever was being typed on the old tab into its own store first
+            elecProbChamber = ch;
+            elecRenderList();
+        }
+
         function elecRenderList() {
             elecUpdateLabels();
             elecToggleMode();
             elecUpdateDistrictInfo();
+
+            // Sync tab visibility/active state (hide tabs for chambers that don't exist)
+            const chambers = chamberList();
+            ['house','senate','third'].forEach(c => {
+                const btn = document.getElementById('innerTabElecProb'+c.charAt(0).toUpperCase()+c.slice(1));
+                if(btn) btn.style.display = chambers.includes(c) ? '' : 'none';
+            });
+            if(!chambers.includes(elecProbChamber)) elecProbChamber = chambers[0] || 'house';
+            ['house','senate','third'].forEach(c => {
+                document.getElementById('innerTabElecProb'+c.charAt(0).toUpperCase()+c.slice(1))?.classList.toggle('active', c===elecProbChamber);
+            });
+
             const container = document.getElementById('elecInputList');
             if(!container) return;
+            const store = elecStore[elecProbChamber] || (elecStore[elecProbChamber] = {});
+            const inKey = inKeyFor(elecProbChamber);
 
-            // Store current DOM values
-            container.querySelectorAll('.elec-prob').forEach(el => {
-                const id = el.dataset.id;
-                if(!elecStore[id]) elecStore[id]={prob:0,err:0};
-                elecStore[id].prob = parseFloat(el.value)||0;
-            });
-            container.querySelectorAll('.elec-err').forEach(el => {
-                const id = el.dataset.id;
-                if(!elecStore[id]) elecStore[id]={prob:0,err:0};
-                elecStore[id].err = parseFloat(el.value)||0;
-            });
-            if(!elecStore['__swing__']) elecStore['__swing__']={prob:0,err:0};
+            // (DOM → store syncing happens live via oninput on every keystroke, and switchElecProbChamber()
+            //  already flushes the old tab's values "before" switching — the DOM here, right after a switch,
+            //  still holds the previous tab's markup until we rebuild it below, so reading it now would
+            //  wrongly overwrite the new chamber's store with the old chamber's values.)
+            if(!store['__swing__']) store['__swing__']={prob:0,err:0};
 
             container.innerHTML = '';
 
@@ -4070,11 +4071,12 @@
             headerRow.innerHTML = `<span>Party</span><span style="text-align:center;">Support (%)</span><span style="text-align:center;">Error (±%)</span>`;
             container.appendChild(headerRow);
 
-            // ── Party rows (independents excluded) ──────────────
-            const regularParties = parties.filter(p => p.ideologyId !== IND_IDEOLOGY_ID);
-            const indPartyForElec = parties.find(p => p.ideologyId === IND_IDEOLOGY_ID);
+            // ── Party rows (independents excluded, only parties participating in the current chamber tab) ──
+            const regularParties = parties.filter(p => p.ideologyId !== IND_IDEOLOGY_ID && p[inKey]);
+            const indPartyForElec = parties.find(p => p.ideologyId === IND_IDEOLOGY_ID && p[inKey]);
+            const ch = elecProbChamber;
             regularParties.forEach(p => {
-                const st = elecStore[p.id]||{prob:0,err:0};
+                const st = store[p.id]||{prob:0,err:0};
                 const row = document.createElement('div');
                 row.style.cssText = 'display:grid;grid-template-columns:1fr 75px 60px;gap:6px;margin-bottom:7px;align-items:center;';
                 row.innerHTML = `
@@ -4085,11 +4087,11 @@
                     <input type="number" class="elec-prob" data-id="${p.id}" value="${st.prob}"
                         min="0" max="100" placeholder="0"
                         style="background:#000;border:1px solid var(--tno-border);color:var(--tno-neon);font-family:inherit;font-size:0.9rem;padding:4px;text-align:center;width:100%;box-sizing:border-box;"
-                        oninput="if(!elecStore['${p.id}'])elecStore['${p.id}']={prob:0,err:0}; elecStore['${p.id}'].prob=parseFloat(this.value)||0; elecUpdateAllBars();">
+                        oninput="if(!elecStore['${ch}']['${p.id}'])elecStore['${ch}']['${p.id}']={prob:0,err:0}; elecStore['${ch}']['${p.id}'].prob=parseFloat(this.value)||0; elecUpdateAllBars();">
                     <input type="number" class="elec-err" data-id="${p.id}" value="${st.err}"
                         min="0" max="50" placeholder="0"
                         style="background:#000;border:1px solid #444;color:#888;font-family:inherit;font-size:0.9rem;padding:4px;text-align:center;width:100%;box-sizing:border-box;"
-                        oninput="if(!elecStore['${p.id}'])elecStore['${p.id}']={prob:0,err:0}; elecStore['${p.id}'].err=parseFloat(this.value)||0; elecUpdateAllBars();">
+                        oninput="if(!elecStore['${ch}']['${p.id}'])elecStore['${ch}']['${p.id}']={prob:0,err:0}; elecStore['${ch}']['${p.id}'].err=parseFloat(this.value)||0; elecUpdateAllBars();">
                 `;
                 container.appendChild(row);
             });
@@ -4097,7 +4099,7 @@
             // ── Divider (above independents) + independent row (fixed gray color) ──
             if(indPartyForElec) {
                 const p = indPartyForElec;
-                const st = elecStore[p.id]||{prob:0,err:0};
+                const st = store[p.id]||{prob:0,err:0};
                 const row = document.createElement('div');
                 row.style.cssText = 'display:grid;grid-template-columns:1fr 75px 60px;gap:6px;margin-bottom:7px;align-items:center;border-top:1px dashed #333;padding-top:8px;margin-top:4px;';
                 row.innerHTML = `
@@ -4108,17 +4110,17 @@
                     <input type="number" class="elec-prob" data-id="${p.id}" value="${st.prob}"
                         min="0" max="100" placeholder="0"
                         style="background:#000;border:1px solid var(--tno-border);color:var(--tno-neon);font-family:inherit;font-size:0.9rem;padding:4px;text-align:center;width:100%;box-sizing:border-box;"
-                        oninput="if(!elecStore['${p.id}'])elecStore['${p.id}']={prob:0,err:0}; elecStore['${p.id}'].prob=parseFloat(this.value)||0; elecUpdateAllBars();">
+                        oninput="if(!elecStore['${ch}']['${p.id}'])elecStore['${ch}']['${p.id}']={prob:0,err:0}; elecStore['${ch}']['${p.id}'].prob=parseFloat(this.value)||0; elecUpdateAllBars();">
                     <input type="number" class="elec-err" data-id="${p.id}" value="${st.err}"
                         min="0" max="50" placeholder="0"
                         style="background:#000;border:1px solid #444;color:#888;font-family:inherit;font-size:0.9rem;padding:4px;text-align:center;width:100%;box-sizing:border-box;"
-                        oninput="if(!elecStore['${p.id}'])elecStore['${p.id}']={prob:0,err:0}; elecStore['${p.id}'].err=parseFloat(this.value)||0; elecUpdateAllBars();">
+                        oninput="if(!elecStore['${ch}']['${p.id}'])elecStore['${ch}']['${p.id}']={prob:0,err:0}; elecStore['${ch}']['${p.id}'].err=parseFloat(this.value)||0; elecUpdateAllBars();">
                 `;
                 container.appendChild(row);
             }
 
             // ── Undecided row (right below independents, no divider) ──
-            const sw = elecStore['__swing__'];
+            const sw = store['__swing__'];
             const swRow = document.createElement('div');
             swRow.style.cssText = 'display:grid;grid-template-columns:1fr 75px 60px;gap:6px;margin-bottom:7px;align-items:center;';
             swRow.innerHTML = `
@@ -4129,11 +4131,11 @@
                 <input type="number" class="elec-prob" data-id="__swing__" value="${sw.prob}"
                     min="0" max="100" placeholder="0"
                     style="background:#000;border:1px solid #555;color:#aaa;font-family:inherit;font-size:0.9rem;padding:4px;text-align:center;width:100%;box-sizing:border-box;"
-                    oninput="elecStore['__swing__'].prob=parseFloat(this.value)||0; elecUpdateAllBars();">
+                    oninput="elecStore['${ch}']['__swing__'].prob=parseFloat(this.value)||0; elecUpdateAllBars();">
                 <input type="number" class="elec-err" data-id="__swing__" value="${sw.err}"
                     min="0" max="50" placeholder="0"
                     style="background:#000;border:1px solid #444;color:#555;font-family:inherit;font-size:0.9rem;padding:4px;text-align:center;width:100%;box-sizing:border-box;"
-                    oninput="elecStore['__swing__'].err=parseFloat(this.value)||0; elecUpdateAllBars();">
+                    oninput="elecStore['${ch}']['__swing__'].err=parseFloat(this.value)||0; elecUpdateAllBars();">
             `;
             container.appendChild(swRow);
 
@@ -4574,18 +4576,9 @@
         async function elecRun(isRerun) {
             if(elecRunning) return;
 
-            // Sync DOM → store
-            document.querySelectorAll('.elec-prob').forEach(el => {
-                const id = el.dataset.id;
-                if(!elecStore[id]) elecStore[id]={prob:0,err:0};
-                elecStore[id].prob = parseFloat(el.value)||0;
-            });
-            document.querySelectorAll('.elec-err').forEach(el => {
-                const id = el.dataset.id;
-                if(!elecStore[id]) elecStore[id]={prob:0,err:0};
-                elecStore[id].err = parseFloat(el.value)||0;
-            });
-            if(!elecStore['__swing__']) elecStore['__swing__']={prob:0,err:0};
+            // Support rates are already synced live into elecStore[that chamber] by each input's oninput,
+            // so we don't re-read the DOM here (during a multi-chamber sequential run, a different chamber's
+            // tab may be the one currently shown on screen).
 
             const targets = getElecTargets();
             const hName = document.getElementById('houseNameInput')?.value||'House';
@@ -4649,7 +4642,8 @@
             }
 
             // If there are proportional seats, check the support rates
-            const partyProb = parties.reduce((s,p)=>s+(elecStore[p.id]?.prob||0),0);
+            const chamberStore = elecStore[chamber] || {};
+            const partyProb = parties.reduce((s,p)=>s+(chamberStore[p.id]?.prob||0),0);
             if(propSeats > 0 && partyProb<=0) {
                 alert('Please enter support rates.\nEnter a number in each party\'s support rate (%) field.');
                 return;
@@ -4675,13 +4669,13 @@
 
             // ── Compute each party's support after applying error ──
             const partyWeighted = parties.map(p => {
-                const st = elecStore[p.id]||{prob:0,err:0};
+                const st = chamberStore[p.id]||{prob:0,err:0};
                 const w  = Math.max(0, st.prob + (Math.random()*2-1)*(st.err||0));
                 return { id:p.id, w, origProb: st.prob };
             });
 
             // ── Compute undecided voters ───────────────────────
-            const swingSt   = elecStore['__swing__']||{prob:0,err:0};
+            const swingSt   = chamberStore['__swing__']||{prob:0,err:0};
             const swingRaw  = Math.max(0, swingSt.prob + (Math.random()*2-1)*(swingSt.err||0));
 
             // ── Undecided-voter distribution algorithm ──────────────
@@ -5289,14 +5283,10 @@
                 if(s.coalitionName) {
                     const coal = coalObj;
                     if(coal) {
+                        // A coalition's leader always follows its lead party's leader
                         const leadP = coal.leadPartyId ? parties.find(p=>p.id===coal.leadPartyId) : null;
-                        if(coal.syncWithLeadParty && leadP) {
-                            photo      = leadP.leaderPhoto || '';
-                            leaderName = leadP.leaderName  || '';
-                        } else {
-                            photo      = coal.leaderPhoto || '';
-                            leaderName = coal.leaderName  || '';
-                        }
+                        photo      = leadP?.leaderPhoto || '';
+                        leaderName = leadP?.leaderName  || '';
                     }
                 } else {
                     const pName = Object.keys(s.parties)[0];

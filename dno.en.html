@@ -43,6 +43,7 @@
                 <button class="main-tab-btn" onclick="switchMainTab('setup')" id="mainTabSetup">⚙ Parliament</button>
                 <button class="main-tab-btn" onclick="switchMainTab('legislation')" id="mainTabLegislation">⚖ Legislation</button>
                 <button class="main-tab-btn" onclick="switchMainTab('election')" id="mainTabElection">🗳 Election</button>
+                <button class="main-tab-btn" onclick="switchMainTab('record')" id="mainTabRecord">🗂 Record</button>
             </div>
 
             <!-- ===== Parliament settings group ===== -->
@@ -51,7 +52,6 @@
                 <div class="sub-tab-container">
                     <button class="sub-tab-btn active" onclick="switchSubTab('party','ideology')" id="subTabIdeology">Ideology</button>
                     <button class="sub-tab-btn" onclick="switchSubTab('party','partyInfo')" id="subTabPartyInfo">Party</button>
-                    <button class="sub-tab-btn" onclick="switchSubTab('party','coalitionLeader')" id="subTabCoalitionLeader">Coalition</button>
                     <button class="sub-tab-btn" onclick="switchSubTab('party','independent')" id="subTabIndependent">Independent</button>
                 </div>
 
@@ -74,11 +74,6 @@
                     <div id="innerContentPartyLeader" class="sub-tab-content">
                         <div id="leaderList"></div>
                     </div>
-                </div>
-
-                <!-- Coalition (photo) tab -->
-                <div id="contentCoalitionLeader" class="sub-tab-content">
-                    <div id="coalitionLeaderList"></div>
                 </div>
 
                 <!-- Independent tab (inner tabs: House/Senate/Third) -->
@@ -189,7 +184,6 @@
                     <button class="sub-tab-btn active" onclick="switchSubTab('legislation','bill')" id="subTabBill">Submit</button>
                     <button class="sub-tab-btn" onclick="switchSubTab('legislation','table')" id="subTabTable">Floor</button>
                     <button class="sub-tab-btn" onclick="switchSubTab('legislation','vote')" id="subTabVote">Vote</button>
-                    <button class="sub-tab-btn" onclick="switchSubTab('legislation','archive')" id="subTabArchive">Archive</button>
                 </div>
 
             <!-- Submit tab: bill drafting form only -->
@@ -271,16 +265,6 @@
                 <div class="bill-tag-filter" id="billTagFilter"></div>
 
                 <div id="billList"></div>
-            </div>
-
-            <!-- Archive tab: passed/failed bills -->
-            <div id="contentArchive" class="sub-tab-content">
-                <div class="bill-search-bar" style="margin-bottom:8px;">
-                    <input type="text" id="archiveSearchInput" placeholder="Search archive..." oninput="renderArchiveList();">
-                    <button onclick="document.getElementById('archiveSearchInput').value=''; renderArchiveList();" style="background:transparent;border:1px solid #333;color:#555;padding:4px 8px;font-family:'NeoDunggeunmo','VT323',monospace;cursor:pointer;" title="Reset">✕</button>
-                </div>
-                <div class="bill-tag-filter" id="archiveTagFilter"></div>
-                <div id="archiveList"></div>
             </div>
 
             <!-- VOTE SUB-TAB -->
@@ -409,7 +393,6 @@
                     <button class="sub-tab-btn" id="elecSubTabDistrict" onclick="elecSwitchSub('district')">District</button>
                     <button class="sub-tab-btn" id="elecSubTabTendency" onclick="elecSwitchSub('tendency')">Tendency</button>
                     <button class="sub-tab-btn active" id="elecSubTabVote" onclick="elecSwitchSub('vote')">Election</button>
-                    <button class="sub-tab-btn" id="elecSubTabRecord" onclick="elecSwitchSub('record')">Record</button>
                 </div>
 
                 <!-- District sub-tab - settings only (map on the right) -->
@@ -541,6 +524,12 @@
                     </div>
                     <!-- Proportional panel -->
                     <div id="elecProportionalPanel">
+                        <div class="sub-tab-container-3" id="elecProbChamberTabs" style="margin-bottom:8px;">
+                            <button class="sub-tab-btn-3 active" onclick="switchElecProbChamber('house')" id="innerTabElecProbHouse">House</button>
+                            <button class="sub-tab-btn-3" onclick="switchElecProbChamber('senate')" id="innerTabElecProbSenate">Senate</button>
+                            <button class="sub-tab-btn-3" onclick="switchElecProbChamber('third')" id="innerTabElecProbThird" style="display:none;">Third</button>
+                        </div>
+                        <div style="font-size:0.72rem;color:#555;margin:-4px 0 8px;">Each chamber can have a different party lineup, so support rates are set independently per chamber.</div>
                         <div id="elecInputList"></div>
                     </div>
                     <!-- District panel -->
@@ -583,11 +572,30 @@
                     </div>
                 </div>
 
-                <!-- Record sub-tab -->
-                <div id="elecSubRecord" class="sub-tab-content">
+            </div><!-- end mainContentElection -->
+
+            <!-- ===== Record group ===== -->
+            <div id="mainContentRecord" class="main-tab-content">
+                <div class="sub-tab-container">
+                    <button class="sub-tab-btn active" onclick="switchSubTab('record','archive')" id="subTabArchive">Legislation</button>
+                    <button class="sub-tab-btn" onclick="switchSubTab('record','elecRecord')" id="subTabElecRecord">Election</button>
+                </div>
+
+                <!-- Legislative archive -->
+                <div id="contentArchive" class="sub-tab-content active">
+                    <div class="bill-search-bar" style="margin-bottom:8px;">
+                        <input type="text" id="archiveSearchInput" placeholder="Search archive..." oninput="renderArchiveList();">
+                        <button onclick="document.getElementById('archiveSearchInput').value=''; renderArchiveList();" style="background:transparent;border:1px solid #333;color:#555;padding:4px 8px;font-family:'NeoDunggeunmo','VT323',monospace;cursor:pointer;" title="Reset">✕</button>
+                    </div>
+                    <div class="bill-tag-filter" id="archiveTagFilter"></div>
+                    <div id="archiveList"></div>
+                </div>
+
+                <!-- Election record -->
+                <div id="contentElecRecord" class="sub-tab-content">
                     <div id="elecRecordList" style="margin-top:8px;"></div>
                 </div>
-            </div><!-- end mainContentElection -->
+            </div><!-- end mainContentRecord -->
 
 
         </div><!-- end controls-content -->

@@ -75,7 +75,7 @@
         ];
 
         let coalitions = [
-            { id: 'c1', name: "국민전선", color: "#2E2E2E", members: [1], isRuling: true , leaderName: "", leaderPhoto: "", leadPartyId: null, externalSupporters: [], externalSupportLabel: "각외협력", syncWithLeadParty: false },
+            { id: 'c1', name: "국민전선", color: "#2E2E2E", members: [1], isRuling: true , leadPartyId: null, externalSupporters: [], externalSupportLabel: "각외협력" },
         ];
 
         let currentTab = 'house';
@@ -380,37 +380,51 @@
                 pending: ['pending', '대기 중'],
             };
             const [oc, ol] = overallCfg[overall];
-            let badges = `<span class="bill-status-badge ${oc}">${ol}</span>`;
-            if(bill.voteDate) badges += `<span style="color:#666;font-size:0.75rem;">📅 ${bill.voteDate}</span>`;
+
+            // 각 줄(전체 상태 / 의원실별 상태)을 별도 행으로 쌓아 줄바꿈이 항상 깔끔하게 되도록 구성
+            const rows = [];
+
+            let overallRow = `<span class="bill-status-badge ${oc}">${ol}</span>`;
+            if(bill.voteDate) overallRow += `<span style="color:#666;font-size:0.75rem;">📅 ${bill.voteDate}</span>`;
+            rows.push(overallRow);
+
             if(bill.houseStatus !== 'pending') {
                 const hName = document.getElementById('houseNameInput')?.value || '하원';
-                badges += `<span class="bill-status-badge ${bill.houseStatus==='pass'?'house-pass':'house-fail'}">${hName} ${bill.houseStatus==='pass'?'✔가결':'✘부결'}</span>`;
-                if(bill.houseVote) badges += `<span style="color:#555; font-size:0.75rem;">(찬${bill.houseVote.yea}/반${bill.houseVote.nay}/기${bill.houseVote.abs})</span>`;
+                let row = `<span class="bill-status-badge ${bill.houseStatus==='pass'?'house-pass':'house-fail'}">${hName} ${bill.houseStatus==='pass'?'✔가결':'✘부결'}</span>`;
+                if(bill.houseVote) row += `<span style="color:#555; font-size:0.75rem;">(찬${bill.houseVote.yea}/반${bill.houseVote.nay}/기${bill.houseVote.abs})</span>`;
+                rows.push(row);
             }
             if(isBi && bill.senateStatus !== 'pending' && bill.senateStatus !== 'skip') {
                 const sName = document.getElementById('senateNameInput')?.value || '상원';
-                badges += `<span class="bill-status-badge ${bill.senateStatus==='pass'?'senate-pass':'senate-fail'}">${sName} ${bill.senateStatus==='pass'?'✔가결':'✘부결'}</span>`;
-                if(bill.senateVote) badges += `<span style="color:#555; font-size:0.75rem;">(찬${bill.senateVote.yea}/반${bill.senateVote.nay}/기${bill.senateVote.abs})</span>`;
+                let row = `<span class="bill-status-badge ${bill.senateStatus==='pass'?'senate-pass':'senate-fail'}">${sName} ${bill.senateStatus==='pass'?'✔가결':'✘부결'}</span>`;
+                if(bill.senateVote) row += `<span style="color:#555; font-size:0.75rem;">(찬${bill.senateVote.yea}/반${bill.senateVote.nay}/기${bill.senateVote.abs})</span>`;
+                rows.push(row);
             }
             if(isBi && bill.senateStatus === 'skip') {
                 const sName = document.getElementById('senateNameInput')?.value || '상원';
-                badges += `<span class="bill-status-badge senate-fail">${sName} 미상정</span>`;
+                rows.push(`<span class="bill-status-badge senate-fail">${sName} 미상정</span>`);
             }
             if(isTri && bill.thirdStatus !== 'pending' && bill.thirdStatus !== 'skip') {
                 const tName = document.getElementById('thirdNameInput')?.value || '삼원';
-                badges += `<span class="bill-status-badge ${bill.thirdStatus==='pass'?'third-pass':'third-fail'}">${tName} ${bill.thirdStatus==='pass'?'✔가결':'✘부결'}</span>`;
-                if(bill.thirdVote) badges += `<span style="color:#555; font-size:0.75rem;">(찬${bill.thirdVote.yea}/반${bill.thirdVote.nay}/기${bill.thirdVote.abs})</span>`;
+                let row = `<span class="bill-status-badge ${bill.thirdStatus==='pass'?'third-pass':'third-fail'}">${tName} ${bill.thirdStatus==='pass'?'✔가결':'✘부결'}</span>`;
+                if(bill.thirdVote) row += `<span style="color:#555; font-size:0.75rem;">(찬${bill.thirdVote.yea}/반${bill.thirdVote.nay}/기${bill.thirdVote.abs})</span>`;
+                rows.push(row);
             }
             if(isTri && bill.thirdStatus === 'skip') {
                 const tName = document.getElementById('thirdNameInput')?.value || '삼원';
-                badges += `<span class="bill-status-badge third-fail">${tName} 미상정</span>`;
+                rows.push(`<span class="bill-status-badge third-fail">${tName} 미상정</span>`);
             }
-            if((bill.version || 1) > 1) badges += `<span class="bill-version-badge">제${bill.version}판</span>`;
-            if(bill.isAmendment) {
-                const orig = bills.find(b => b.id === bill.parentBillId);
-                badges += `<span class="bill-version-badge" title="개정 대상 법안">↩ 개정: ${orig ? orig.title : '(삭제된 법안)'}</span>`;
+            if((bill.version || 1) > 1 || bill.isAmendment) {
+                let row = '';
+                if((bill.version || 1) > 1) row += `<span class="bill-version-badge">제${bill.version}판</span>`;
+                if(bill.isAmendment) {
+                    const orig = bills.find(b => b.id === bill.parentBillId);
+                    row += `<span class="bill-version-badge" title="개정 대상 법안">↩ 개정: ${orig ? orig.title : '(삭제된 법안)'}</span>`;
+                }
+                rows.push(row);
             }
-            return badges;
+
+            return rows.map(r => `<div style="display:flex; align-items:center; gap:6px; width:100%;">${r}</div>`).join('');
         }
 
         // 법안 세부 표결 기록(타임라인) + 개정안 목록 HTML — 실제 표결 결과 패널과 동일한 막대그래프로 표시
@@ -1296,7 +1310,7 @@
         function getAppState() {
             const systemType = document.querySelector('input[name="systemType"]:checked')?.value || 'bicameral';
             return {
-                meta: { app: "DATANET_PARLIAMENT_SIM", version: 12, savedAt: new Date().toISOString() },
+                meta: { app: "DATANET_PARLIAMENT_SIM", version: 13, savedAt: new Date().toISOString() },
                 ui: { currentMainTab, currentSubTab },
                 config: {
                     systemType,
@@ -1346,7 +1360,7 @@
                 state.parliament.independents  = state.parliament.independents.map(x => ({ ...x, photo: '' }));
             }
             const ts = new Date().toISOString().replace(/[:.]/g, "-");
-            downloadJSON(`parliament-save-v12-${ts}.json`, state);
+            downloadJSON(`parliament-save-v13-${ts}.json`, state);
         }
 
         function setAppState(state) {
@@ -1359,7 +1373,7 @@
 
             ideologies = parl.ideologies;
             parties    = parl.parties.map(p => ({ leaderName:'', leaderPhoto:'', logoPhoto:'', showLogoInStats:false, description:'', factions:[], seatsThird:0, inThird:false, abbr:'', ...p, factions:(p.factions||[]).map(f=>({leaderName:'',leaderPhoto:'',logoPhoto:'',usePartyColor:false,seatsThird:0,...f})) }));
-            coalitions = parl.coalitions.map(c => ({ leaderName:'', leaderPhoto:'', leadPartyId:null, externalSupporters:[], externalSupportLabel:'각외협력', syncWithLeadParty:false, ...c }));
+            coalitions = parl.coalitions.map(c => ({ leadPartyId:null, externalSupporters:[], externalSupportLabel:'각외협력', ...c }));
             manualSort = parl.manualSort ?? false;
             independents = Array.isArray(parl.independents) ? parl.independents : [];
 
@@ -1376,8 +1390,17 @@
 
             // ── 선거 데이터 복원 ──
             const elec = state.election || {};
-            Object.keys(elecStore).forEach(k => delete elecStore[k]);
-            if(elec.elecStore && typeof elec.elecStore === 'object') Object.assign(elecStore, elec.elecStore);
+            // 지지율 저장소 복원 (v13: 의원실별 분리 { house:{}, senate:{}, third:{} } / v12 이하: 단일 목록 → 모든 의원실에 동일 적용)
+            ['house','senate','third'].forEach(c => { elecStore[c] = {}; });
+            if(elec.elecStore && typeof elec.elecStore === 'object') {
+                const loaded = elec.elecStore;
+                const isPerChamber = ['house','senate','third'].some(c => loaded[c] && typeof loaded[c] === 'object');
+                if(isPerChamber) {
+                    ['house','senate','third'].forEach(c => { elecStore[c] = loaded[c] ? JSON.parse(JSON.stringify(loaded[c])) : {}; });
+                } else {
+                    ['house','senate','third'].forEach(c => { elecStore[c] = JSON.parse(JSON.stringify(loaded)); });
+                }
+            }
             elecRecords    = Array.isArray(elec.elecRecords) ? elec.elecRecords : [];
             elecLastResult = elec.elecLastResult ?? null;
             const ge = id => document.getElementById(id);
@@ -1428,14 +1451,18 @@
 
             // ── 탭 복원 (마지막) ──
             const uiMain = state.ui?.currentMainTab || 'party';
-            const uiSub  = state.ui?.currentSubTab  || { party:'ideology', setup:'settings', legislation:'bill' };
-            currentSubTab = { party:'ideology', setup:'settings', legislation:'bill', ...uiSub };
+            const uiSub  = state.ui?.currentSubTab  || { party:'ideology', setup:'settings', legislation:'bill', record:'archive' };
+            currentSubTab = { party:'ideology', setup:'settings', legislation:'bill', record:'archive', ...uiSub };
             // 구버전 파일 호환: setup 하위탭이 house/senate/third/leader였다면 새 구조로 매핑
             if(['house','senate','third'].includes(currentSubTab.setup)) currentSubTab.setup = 'settings';
             if(currentSubTab.party === 'leader') currentSubTab.party = 'partyInfo';
+            if(currentSubTab.party === 'coalitionLeader') currentSubTab.party = 'partyInfo';
+            // 구버전 파일 호환: 기록 탭이 입법/선거 그룹에서 독립되기 전 위치를 가리키던 경우 재매핑
+            if(currentSubTab.legislation === 'archive') currentSubTab.legislation = 'bill';
+            if(currentSubTab.election === 'record') currentSubTab.election = 'vote';
             switchMainTab(uiMain);
             if(uiMain !== 'election') {
-                const fallback = uiMain==='party' ? 'ideology' : uiMain==='setup' ? 'settings' : 'bill';
+                const fallback = uiMain==='party' ? 'ideology' : uiMain==='setup' ? 'settings' : uiMain==='record' ? 'archive' : 'bill';
                 switchSubTab(uiMain, currentSubTab[uiMain] || fallback, false);
             }
         }
@@ -1485,7 +1512,7 @@
 
         // ===== 2단 탭 전환 =====
         let currentMainTab = 'party';
-        let currentSubTab = { party: 'ideology', setup: 'settings', legislation: 'bill' };
+        let currentSubTab = { party: 'ideology', setup: 'settings', legislation: 'bill', record: 'archive' };
 
         // 표결 탭을 벗어날 때, 선택된 법안이 완전히 결론(가결/부결) 났으면 선택 초기화
         function checkResetVoteSelectionOnLeave() {
@@ -1510,6 +1537,10 @@
                 switchSubTab('party', currentSubTab['party'] || 'ideology', false);
                 return;
             }
+            if(main === 'record') {
+                switchSubTab('record', currentSubTab['record'] || 'archive', false);
+                return;
+            }
             switchSubTab(main, currentSubTab[main] || (main === 'setup' ? 'settings' : 'bill'), false);
         }
 
@@ -1530,9 +1561,9 @@
             if(sub === 'bill') renderBillList();
             if(sub === 'table') renderBillList();
             if(sub === 'archive') renderArchiveList();
+            if(sub === 'elecRecord') elecRenderRecords();
             if(sub === 'partyInfo') { switchPartyInnerTab('info'); }
             if(sub === 'ideology') renderIdeologyList();
-            if(sub === 'coalitionLeader') renderCoalitionLeaderList();
             if(sub === 'independent') { independentInnerTab = 'house'; renderIndependentList(); }
             if(sub === 'settings') { switchSetupInnerTab('house'); }
             if(sub === 'coalition') { renderCoalitions(); }
@@ -1679,7 +1710,6 @@
             renderCoalitions();
             renderPartyInfoList();
             renderLeaderList();
-            renderCoalitionLeaderList();
             renderIndependentList();
             renderMembersList();
         }
@@ -2283,30 +2313,19 @@
             });
         }
 
-        function uploadLeaderPhoto(input, type, entityId) {
+        function uploadLeaderPhoto(input, pid) {
             const file = input.files?.[0]; if(!file) return;
             const reader = new FileReader();
             reader.onload = e => {
-                const b64 = e.target.result;
-                if(type==='party') {
-                    const p = parties.find(x=>x.id===entityId);
-                    if(p){ p.leaderPhoto=b64; refreshUI(); simulate(); }
-                } else {
-                    const coal = coalitions.find(x=>x.id===entityId);
-                    if(coal){ coal.leaderPhoto=b64; renderCoalitions(); simulate(); }
-                }
+                const p = parties.find(x=>x.id===pid);
+                if(p){ p.leaderPhoto=e.target.result; refreshUI(); simulate(); }
             };
             reader.readAsDataURL(file);
         }
 
-        function updateLeaderField(type, entityId, field, val) {
-            if(type==='party') {
-                const p = parties.find(x=>x.id===entityId);
-                if(p){ p[field]=val; simulate(); }
-            } else {
-                const c = coalitions.find(x=>x.id===entityId);
-                if(c){ c[field]=val; simulate(); }
-            }
+        function updateLeaderField(pid, field, val) {
+            const p = parties.find(x=>x.id===pid);
+            if(p){ p[field]=val; simulate(); }
         }
 
         function addIdeology() { ideologies.push({ id: Date.now(), name: "새 이념" }); refreshUI(); }
@@ -2338,7 +2357,7 @@
         function updatePartyColorText(e,i) { if(isValidHex(e.value)){ parties[i].color=e.value.toUpperCase(); e.nextElementSibling.value=parties[i].color; refreshUI(); simulate(); }}
         function updatePartyColorPicker(e,i) { parties[i].color=e.value.toUpperCase(); e.previousElementSibling.value=parties[i].color; simulate(); }
 
-        function addCoalition() { coalitions.push({id:'c'+Date.now(), name:"새 연정", color:"#ffffff", members:[], isRuling:false, leaderName: "", leaderPhoto: "", leadPartyId: null, externalSupporters: [], externalSupportLabel: "각외협력", syncWithLeadParty: false }); refreshUI(); }
+        function addCoalition() { coalitions.push({id:'c'+Date.now(), name:"새 연정", color:"#ffffff", members:[], isRuling:false, leadPartyId: null, externalSupporters: [], externalSupportLabel: "각외협력" }); refreshUI(); }
         function removeCoalition(id) { coalitions=coalitions.filter(c=>c.id!==id); refreshUI(); simulate(); }
         function updateCoalition(id,k,v) { const c=coalitions.find(x=>x.id===id); if(c){c[k]=v; simulate();} }
         function updateCoalitionColorText(e,id) { if(isValidHex(e.value)) { const c=coalitions.find(x=>x.id===id); if(c){ c.color=e.value.toUpperCase(); e.nextElementSibling.value=c.color; simulate(); }}}
@@ -2672,7 +2691,7 @@
                         <div style="display:flex;flex-direction:column;align-items:center;gap:4px;flex-shrink:0;">
                             <div class="leader-photo-box dyn-photo" data-ratio="0.8" title="클릭하여 사진 업로드" style="width:52px;height:65px;">
                                 ${photo?`<img src="${photo}" alt="당수">`:'<div class="photo-ph">👤</div>'}
-                                <input type="file" accept="image/*" onchange="uploadLeaderPhoto(this,'party',${p.id})">
+                                <input type="file" accept="image/*" onchange="uploadLeaderPhoto(this,${p.id})">
                             </div>
                             <span style="font-size:0.75rem;color:#444;flex-shrink:0;">사진 업로드</span>
                         </div>
@@ -2683,7 +2702,7 @@
                             </div>
                             <input type="text" value="${p.leaderName||''}" placeholder="당수 이름"
                                 style="background:#000;border:1px solid #2a2a2a;color:#e0e0e0;font-family:inherit;font-size:0.95rem;padding:5px 8px;width:100%;box-sizing:border-box;"
-                                onchange="updateLeaderField('party',${p.id},'leaderName',this.value)">
+                                onchange="updateLeaderField(${p.id},'leaderName',this.value)">
                             ${photo?`<button onclick="removeLeaderPhoto(${p.id})" style="background:transparent;border:1px solid #333;color:#555;font-family:inherit;font-size:0.8rem;padding:3px 8px;cursor:pointer;text-align:left;">✕ 사진 제거</button>`:''}
                         </div>
                     </div>
@@ -2697,62 +2716,6 @@
         function removeLeaderPhoto(pid) {
             const p = parties.find(x=>x.id===pid);
             if(p){ p.leaderPhoto=''; refreshUI(); simulate(); }
-        }
-
-        // ===== 정당 탭: 연정 (사진 설정) =====
-        function renderCoalitionLeaderList() {
-            const container = document.getElementById('coalitionLeaderList');
-            if(!container) return;
-            container.innerHTML = '';
-
-            if(coalitions.length === 0) {
-                container.innerHTML = '<div style="text-align:center;color:#555;padding:20px;">[구성된 연정 없음 — 의회 탭에서 먼저 연정을 만드세요]</div>';
-                return;
-            }
-
-            coalitions.forEach(coal => {
-                const leadP = coal.leadPartyId ? parties.find(p=>p.id===coal.leadPartyId) : null;
-                const synced = coal.syncWithLeadParty && leadP;
-                const photo = synced ? (leadP.leaderPhoto||'') : (coal.leaderPhoto||'');
-                const leaderNameVal = synced ? (leadP.leaderName||'') : (coal.leaderName||'');
-                const div = document.createElement('div');
-                div.className = `card-item drag-card-coalitionleader ${coal.isRuling?'is-ruling':''}`;
-                div.style.borderLeftColor = coal.color;
-                div.innerHTML = `
-                    <div class="dyn-row" style="display:flex;gap:10px;align-items:stretch;">
-                        <span class="drag-handle" style="align-self:center;">⋮⋮</span>
-                        <!-- 당수 사진 -->
-                        <div class="leader-photo-box dyn-photo" data-ratio="0.8" title="${synced?'대표당과 동기화 중 (해제하려면 아래 체크박스 해제)':'당수 사진 업로드'}" style="width:52px;height:65px;flex-shrink:0;${synced?'opacity:0.6;cursor:default;':''}">
-                            ${photo?`<img src="${photo}" alt="당수">`:'<div class="photo-ph">👤</div>'}
-                            ${synced?'':`<input type="file" accept="image/*" onchange="uploadLeaderPhoto(this,'coalition','${coal.id}')">`}
-                        </div>
-                        <div class="dyn-ref" style="flex:1;display:flex;flex-direction:column;gap:6px;min-width:0;">
-                            <div style="display:flex;align-items:center;gap:6px;">
-                                <span style="width:10px;height:10px;background:${coal.color};border-radius:50%;flex-shrink:0;"></span>
-                                <span style="color:var(--tno-neon);font-size:0.95rem;">${coal.name}</span>
-                            </div>
-                            <input type="text" value="${leaderNameVal}" placeholder="당수 이름" ${synced?'disabled':''}
-                                style="background:#000;border:1px solid #2a2a2a;color:${synced?'#666':'#e0e0e0'};font-family:inherit;font-size:0.95rem;padding:5px 8px;width:100%;box-sizing:border-box;"
-                                onchange="updateLeaderField('coalition','${coal.id}','leaderName',this.value)">
-                            ${synced?`<div style="color:#665500;font-size:0.78rem;">↳ 대표당(${leadP.name})과 동기화 중</div>`
-                                : (photo?`<button onclick="removeCoalitionLeaderPhoto('${coal.id}')" style="background:transparent;border:1px solid #333;color:#555;font-family:inherit;font-size:0.8rem;padding:3px 8px;cursor:pointer;text-align:left;">✕ 사진 제거</button>`:'')}
-                            <label style="display:flex;align-items:center;gap:6px;cursor:${coal.leadPartyId?'pointer':'not-allowed'};color:#777;font-size:0.78rem;margin-top:2px;">
-                                <input type="checkbox" ${coal.syncWithLeadParty?'checked':''} ${coal.leadPartyId?'':'disabled'}
-                                    onchange="updateCoalition('${coal.id}','syncWithLeadParty',this.checked); refreshUI(); simulate();">
-                                대표당과 동일 ${coal.leadPartyId?'':'<br>(먼저 의회 탭에서 대표당 지정 필요)'}
-                            </label>
-                        </div>
-                    </div>
-                `;
-                container.appendChild(div);
-                startDragReorder(div.querySelector('.drag-handle'), 'coalitionLeaderList', '.drag-card-coalitionleader', coalitions, renderCoalitionLeaderList);
-            });
-            fitDynPhotos(container);
-        }
-
-        function removeCoalitionLeaderPhoto(cid) {
-            const c = coalitions.find(x=>x.id===cid);
-            if(c){ c.leaderPhoto=''; refreshUI(); simulate(); }
         }
 
         // ===== 정당 탭: 무소속 (의원 개별 정보) =====
@@ -3076,7 +3039,8 @@
         // ═══════════════════════════════════════
         // 선거 시뮬레이션
         // ═══════════════════════════════════════
-        const elecStore = {};          // { partyId: { prob, err } }
+        const elecStore = { house:{}, senate:{}, third:{} };   // { chamber: { partyId: { prob, err } } } — 의원실별 독립 지지율 (정당 구성이 다를 수 있으므로)
+        let elecProbChamber = 'house';  // 지지율 입력 탭에서 현재 편집 중인 의원실
         let elecRunning  = false;
         let elecPaused   = false;
         let elecSkipToEnd = false;
@@ -3894,7 +3858,7 @@
         // 선거 하위탭 전환
         // ─────────────────────────────────────────
         function elecSwitchSub(sub) {
-            ['district','tendency','vote','record'].forEach(s => {
+            ['district','tendency','vote'].forEach(s => {
                 document.getElementById(`elecSubTab${s.charAt(0).toUpperCase()+s.slice(1)}`)?.classList.toggle('active', s===sub);
                 document.getElementById(`elecSub${s.charAt(0).toUpperCase()+s.slice(1)}`)?.classList.toggle('active', s===sub);
             });
@@ -4028,9 +3992,11 @@
 
         // 통합 바 업데이트
         function elecUpdateAllBars() {
+            const store = elecStore[elecProbChamber] || {};
+            const inKey = inKeyFor(elecProbChamber);
             const allEntries = [
-                ...parties.map(p => ({ id: p.id, prob: Math.max(0, elecStore[p.id]?.prob||0), color: p.color })),
-                { id: '__swing__', prob: Math.max(0, elecStore['__swing__']?.prob||0), color: null }
+                ...parties.filter(p => p[inKey]).map(p => ({ id: p.id, prob: Math.max(0, store[p.id]?.prob||0), color: p.color })),
+                { id: '__swing__', prob: Math.max(0, store['__swing__']?.prob||0), color: null }
             ];
             const total = allEntries.reduce((s,e)=>s+e.prob,0) || 1;
 
@@ -4045,7 +4011,7 @@
             const n = segs.length;
 
             segs.forEach((seg, idx) => {
-                const errRaw = Math.max(0, elecStore[seg.id]?.err||0);
+                const errRaw = Math.max(0, store[seg.id]?.err||0);
                 const errPct = errRaw / total * 100;
 
                 // 세그먼트 바
@@ -4096,25 +4062,56 @@
             });
         }
 
+        // 현재 화면에 표시된 지지율 입력 DOM 값을 지금의 elecProbChamber 저장소로 흘려보냄
+        // (탭을 바꾸기 "직전"에 호출해야 함 — elecProbChamber가 바뀐 뒤 호출하면 이전 탭 값이 새 탭 저장소를 덮어씀)
+        function elecSyncCurrentProbDom() {
+            const container = document.getElementById('elecInputList');
+            if(!container) return;
+            const store = elecStore[elecProbChamber] || (elecStore[elecProbChamber] = {});
+            container.querySelectorAll('.elec-prob').forEach(el => {
+                const id = el.dataset.id;
+                if(!store[id]) store[id]={prob:0,err:0};
+                store[id].prob = parseFloat(el.value)||0;
+            });
+            container.querySelectorAll('.elec-err').forEach(el => {
+                const id = el.dataset.id;
+                if(!store[id]) store[id]={prob:0,err:0};
+                store[id].err = parseFloat(el.value)||0;
+            });
+        }
+
+        // 지지율 입력 탭(하원/상원/삼원) 전환 — 의원실마다 정당 구성이 다를 수 있어 지지율을 독립적으로 관리
+        function switchElecProbChamber(ch) {
+            elecSyncCurrentProbDom(); // 이전 탭에서 입력 중이던 값을 먼저 그 탭의 저장소에 반영
+            elecProbChamber = ch;
+            elecRenderList();
+        }
+
         function elecRenderList() {
             elecUpdateLabels();
             elecToggleMode();
             elecUpdateDistrictInfo();
+
+            // 탭 가시성/활성 상태 동기화 (존재하지 않는 의원실 탭은 숨김)
+            const chambers = chamberList();
+            ['house','senate','third'].forEach(c => {
+                const btn = document.getElementById('innerTabElecProb'+c.charAt(0).toUpperCase()+c.slice(1));
+                if(btn) btn.style.display = chambers.includes(c) ? '' : 'none';
+            });
+            if(!chambers.includes(elecProbChamber)) elecProbChamber = chambers[0] || 'house';
+            ['house','senate','third'].forEach(c => {
+                document.getElementById('innerTabElecProb'+c.charAt(0).toUpperCase()+c.slice(1))?.classList.toggle('active', c===elecProbChamber);
+            });
+
             const container = document.getElementById('elecInputList');
             if(!container) return;
+            const store = elecStore[elecProbChamber] || (elecStore[elecProbChamber] = {});
+            const inKey = inKeyFor(elecProbChamber);
 
-            // 현재 DOM 값 저장
-            container.querySelectorAll('.elec-prob').forEach(el => {
-                const id = el.dataset.id;
-                if(!elecStore[id]) elecStore[id]={prob:0,err:0};
-                elecStore[id].prob = parseFloat(el.value)||0;
-            });
-            container.querySelectorAll('.elec-err').forEach(el => {
-                const id = el.dataset.id;
-                if(!elecStore[id]) elecStore[id]={prob:0,err:0};
-                elecStore[id].err = parseFloat(el.value)||0;
-            });
-            if(!elecStore['__swing__']) elecStore['__swing__']={prob:0,err:0};
+            // (DOM → store 동기화는 oninput으로 매 입력마다 즉시 반영되고, 탭 전환 시에는
+            //  elecSyncCurrentProbDom()이 전환 "직전"에 처리하므로 여기서는 다시 읽지 않는다 —
+            //  전환 직후 이 시점의 DOM은 아직 재빌드 전, 이전 탭의 값을 그대로 담고 있어 여기서 읽으면 잘못 덮어써진다.)
+            if(!store['__swing__']) store['__swing__']={prob:0,err:0};
 
             container.innerHTML = '';
 
@@ -4169,11 +4166,12 @@
             headerRow.innerHTML = `<span>정당명</span><span style="text-align:center;">지지율(%)</span><span style="text-align:center;">오차(±%)</span>`;
             container.appendChild(headerRow);
 
-            // ── 정당 행 (무소속 제외) ──────────────
-            const regularParties = parties.filter(p => p.ideologyId !== IND_IDEOLOGY_ID);
-            const indPartyForElec = parties.find(p => p.ideologyId === IND_IDEOLOGY_ID);
+            // ── 정당 행 (무소속 제외, 현재 탭 의원실에 참여하는 정당만) ──────────────
+            const regularParties = parties.filter(p => p.ideologyId !== IND_IDEOLOGY_ID && p[inKey]);
+            const indPartyForElec = parties.find(p => p.ideologyId === IND_IDEOLOGY_ID && p[inKey]);
+            const ch = elecProbChamber;
             regularParties.forEach(p => {
-                const st = elecStore[p.id]||{prob:0,err:0};
+                const st = store[p.id]||{prob:0,err:0};
                 const row = document.createElement('div');
                 row.style.cssText = 'display:grid;grid-template-columns:1fr 75px 60px;gap:6px;margin-bottom:7px;align-items:center;';
                 row.innerHTML = `
@@ -4184,11 +4182,11 @@
                     <input type="number" class="elec-prob" data-id="${p.id}" value="${st.prob}"
                         min="0" max="100" placeholder="0"
                         style="background:#000;border:1px solid var(--tno-border);color:var(--tno-neon);font-family:inherit;font-size:0.9rem;padding:4px;text-align:center;width:100%;box-sizing:border-box;"
-                        oninput="if(!elecStore['${p.id}'])elecStore['${p.id}']={prob:0,err:0}; elecStore['${p.id}'].prob=parseFloat(this.value)||0; elecUpdateAllBars();">
+                        oninput="if(!elecStore['${ch}']['${p.id}'])elecStore['${ch}']['${p.id}']={prob:0,err:0}; elecStore['${ch}']['${p.id}'].prob=parseFloat(this.value)||0; elecUpdateAllBars();">
                     <input type="number" class="elec-err" data-id="${p.id}" value="${st.err}"
                         min="0" max="50" placeholder="0"
                         style="background:#000;border:1px solid #444;color:#888;font-family:inherit;font-size:0.9rem;padding:4px;text-align:center;width:100%;box-sizing:border-box;"
-                        oninput="if(!elecStore['${p.id}'])elecStore['${p.id}']={prob:0,err:0}; elecStore['${p.id}'].err=parseFloat(this.value)||0; elecUpdateAllBars();">
+                        oninput="if(!elecStore['${ch}']['${p.id}'])elecStore['${ch}']['${p.id}']={prob:0,err:0}; elecStore['${ch}']['${p.id}'].err=parseFloat(this.value)||0; elecUpdateAllBars();">
                 `;
                 container.appendChild(row);
             });
@@ -4196,7 +4194,7 @@
             // ── 구분선 (무소속 위) + 무소속 행 (색상 고정 회색) ──
             if(indPartyForElec) {
                 const p = indPartyForElec;
-                const st = elecStore[p.id]||{prob:0,err:0};
+                const st = store[p.id]||{prob:0,err:0};
                 const row = document.createElement('div');
                 row.style.cssText = 'display:grid;grid-template-columns:1fr 75px 60px;gap:6px;margin-bottom:7px;align-items:center;border-top:1px dashed #333;padding-top:8px;margin-top:4px;';
                 row.innerHTML = `
@@ -4207,17 +4205,17 @@
                     <input type="number" class="elec-prob" data-id="${p.id}" value="${st.prob}"
                         min="0" max="100" placeholder="0"
                         style="background:#000;border:1px solid var(--tno-border);color:var(--tno-neon);font-family:inherit;font-size:0.9rem;padding:4px;text-align:center;width:100%;box-sizing:border-box;"
-                        oninput="if(!elecStore['${p.id}'])elecStore['${p.id}']={prob:0,err:0}; elecStore['${p.id}'].prob=parseFloat(this.value)||0; elecUpdateAllBars();">
+                        oninput="if(!elecStore['${ch}']['${p.id}'])elecStore['${ch}']['${p.id}']={prob:0,err:0}; elecStore['${ch}']['${p.id}'].prob=parseFloat(this.value)||0; elecUpdateAllBars();">
                     <input type="number" class="elec-err" data-id="${p.id}" value="${st.err}"
                         min="0" max="50" placeholder="0"
                         style="background:#000;border:1px solid #444;color:#888;font-family:inherit;font-size:0.9rem;padding:4px;text-align:center;width:100%;box-sizing:border-box;"
-                        oninput="if(!elecStore['${p.id}'])elecStore['${p.id}']={prob:0,err:0}; elecStore['${p.id}'].err=parseFloat(this.value)||0; elecUpdateAllBars();">
+                        oninput="if(!elecStore['${ch}']['${p.id}'])elecStore['${ch}']['${p.id}']={prob:0,err:0}; elecStore['${ch}']['${p.id}'].err=parseFloat(this.value)||0; elecUpdateAllBars();">
                 `;
                 container.appendChild(row);
             }
 
             // ── 무당파 행 (구분선 없이 무소속 바로 아래) ──
-            const sw = elecStore['__swing__'];
+            const sw = store['__swing__'];
             const swRow = document.createElement('div');
             swRow.style.cssText = 'display:grid;grid-template-columns:1fr 75px 60px;gap:6px;margin-bottom:7px;align-items:center;';
             swRow.innerHTML = `
@@ -4228,11 +4226,11 @@
                 <input type="number" class="elec-prob" data-id="__swing__" value="${sw.prob}"
                     min="0" max="100" placeholder="0"
                     style="background:#000;border:1px solid #555;color:#aaa;font-family:inherit;font-size:0.9rem;padding:4px;text-align:center;width:100%;box-sizing:border-box;"
-                    oninput="elecStore['__swing__'].prob=parseFloat(this.value)||0; elecUpdateAllBars();">
+                    oninput="elecStore['${ch}']['__swing__'].prob=parseFloat(this.value)||0; elecUpdateAllBars();">
                 <input type="number" class="elec-err" data-id="__swing__" value="${sw.err}"
                     min="0" max="50" placeholder="0"
                     style="background:#000;border:1px solid #444;color:#555;font-family:inherit;font-size:0.9rem;padding:4px;text-align:center;width:100%;box-sizing:border-box;"
-                    oninput="elecStore['__swing__'].err=parseFloat(this.value)||0; elecUpdateAllBars();">
+                    oninput="elecStore['${ch}']['__swing__'].err=parseFloat(this.value)||0; elecUpdateAllBars();">
             `;
             container.appendChild(swRow);
 
@@ -4673,18 +4671,8 @@
         async function elecRun(isRerun) {
             if(elecRunning) return;
 
-            // DOM → store 동기화
-            document.querySelectorAll('.elec-prob').forEach(el => {
-                const id = el.dataset.id;
-                if(!elecStore[id]) elecStore[id]={prob:0,err:0};
-                elecStore[id].prob = parseFloat(el.value)||0;
-            });
-            document.querySelectorAll('.elec-err').forEach(el => {
-                const id = el.dataset.id;
-                if(!elecStore[id]) elecStore[id]={prob:0,err:0};
-                elecStore[id].err = parseFloat(el.value)||0;
-            });
-            if(!elecStore['__swing__']) elecStore['__swing__']={prob:0,err:0};
+            // 지지율은 입력칸 oninput에서 elecStore[해당 의원실]에 실시간으로 이미 반영되어 있으므로
+            // (다중 의원실 순차 개표 시 화면에는 다른 의원실 탭이 떠 있을 수 있어) 여기서 DOM을 다시 읽지 않는다.
 
             const targets = getElecTargets();
             const hName = document.getElementById('houseNameInput')?.value||'하원';
@@ -4748,7 +4736,8 @@
             }
 
             // 비례 의석이 있으면 지지율 검사
-            const partyProb = parties.reduce((s,p)=>s+(elecStore[p.id]?.prob||0),0);
+            const chamberStore = elecStore[chamber] || {};
+            const partyProb = parties.reduce((s,p)=>s+(chamberStore[p.id]?.prob||0),0);
             if(propSeats > 0 && partyProb<=0) {
                 alert('지지율을 입력해 주세요.\n각 정당의 지지율(%) 칸에 숫자를 입력하세요.');
                 return;
@@ -4774,13 +4763,13 @@
 
             // ── 오차 적용 후 각 당 지지율 계산 ──
             const partyWeighted = parties.map(p => {
-                const st = elecStore[p.id]||{prob:0,err:0};
+                const st = chamberStore[p.id]||{prob:0,err:0};
                 const w  = Math.max(0, st.prob + (Math.random()*2-1)*(st.err||0));
                 return { id:p.id, w, origProb: st.prob };
             });
 
             // ── 무당파 계산 ───────────────────────
-            const swingSt   = elecStore['__swing__']||{prob:0,err:0};
+            const swingSt   = chamberStore['__swing__']||{prob:0,err:0};
             const swingRaw  = Math.max(0, swingSt.prob + (Math.random()*2-1)*(swingSt.err||0));
 
             // ── 무당파 분배 알고리즘 ──────────────
@@ -5402,14 +5391,10 @@
                 if(s.coalitionName) {
                     const coal = coalObj;
                     if(coal) {
+                        // 연정의 당수는 항상 대표당의 당수를 그대로 따른다
                         const leadP = coal.leadPartyId ? parties.find(p=>p.id===coal.leadPartyId) : null;
-                        if(coal.syncWithLeadParty && leadP) {
-                            photo      = leadP.leaderPhoto || '';
-                            leaderName = leadP.leaderName  || '';
-                        } else {
-                            photo      = coal.leaderPhoto || '';
-                            leaderName = coal.leaderName  || '';
-                        }
+                        photo      = leadP?.leaderPhoto || '';
+                        leaderName = leadP?.leaderName  || '';
                     }
                 } else {
                     const pName = Object.keys(s.parties)[0];
