@@ -82,13 +82,16 @@
 
         // ===== BILL STATE =====
         // bill: { id, title, content, houseStatus: 'pending'|'pass'|'fail', senateStatus: 'pending'|'pass'|'fail',
-        //         houseVote: {yea,nay,abs}, senateVote: {yea,nay,abs} }
+        //         houseVote: {yea,nay,abs}, senateVote: {yea,nay,abs},
+        //         version, parentBillId, isAmendment, voteHistory: [{chamber,result,date,yea,nay,abs,total,required,at}] }
         let bills = [
             { id: 'b1', title: '국가재건특별법 제1조', threshold: 0.5, tags: ['재건', '긴급'],
               content: '국가 재건을 위해 필요한 모든 조치를 취할 수 있다.\n집행부는 의회의 동의 없이 긴급 법령을 발동할 수 있다.',
-              houseStatus: 'pending', senateStatus: 'pending', thirdStatus: 'pending', houseVote: null, senateVote: null, thirdVote: null }
+              houseStatus: 'pending', senateStatus: 'pending', thirdStatus: 'pending', houseVote: null, senateVote: null, thirdVote: null,
+              version: 1, parentBillId: null, isAmendment: false, voteHistory: [] }
         ];
         let activeBillId = null;
+        let amendmentSourceId = null;
 
         // ===== 태그 필터 상태 =====
         let activeBillTagFilter = null;
@@ -147,12 +150,50 @@
             const tagsRaw = document.getElementById('newBillTags')?.value || '';
             const tags = tagsRaw.split(',').map(t => t.trim()).filter(t => t.length > 0);
             if(!title) { alert('법안 제목을 입력하세요.'); return; }
+            const amendedBill = amendmentSourceId ? bills.find(b => b.id === amendmentSourceId) : null;
+            const version = amendedBill ? (amendedBill.version || 1) + 1 : 1;
             bills.push({ id: 'b'+Date.now(), title, content, threshold, numer, denom, tags,
-                houseStatus: 'pending', senateStatus: 'pending', thirdStatus: 'pending', houseVote: null, senateVote: null, thirdVote: null });
+                houseStatus: 'pending', senateStatus: 'pending', thirdStatus: 'pending', houseVote: null, senateVote: null, thirdVote: null,
+                version, parentBillId: amendedBill ? amendedBill.id : null, isAmendment: !!amendedBill, voteHistory: [] });
             document.getElementById('newBillTitle').value = '';
             document.getElementById('newBillContent').value = '';
             document.getElementById('newBillTags').value = '';
+            amendmentSourceId = null;
+            renderAmendmentBanner();
             renderBillList(); syncBillSelect();
+        }
+
+        // ── 개정안 발의 ──────────────────────────
+        function startAmendment(id) {
+            const orig = bills.find(b => b.id === id);
+            if(!orig) return;
+            if(getBillOverallStatus(orig) !== 'passed') { alert('가결된 법안만 개정안을 발의할 수 있습니다.'); return; }
+            amendmentSourceId = id;
+            switchMainTab('legislation');
+            switchSubTab('legislation', 'bill');
+            document.getElementById('newBillTitle').value = orig.title + ' 개정안';
+            document.getElementById('newBillContent').value = orig.content || '';
+            document.getElementById('newBillTags').value = (orig.tags || []).join(', ');
+            renderAmendmentBanner();
+        }
+
+        function cancelAmendment() {
+            amendmentSourceId = null;
+            renderAmendmentBanner();
+        }
+
+        function renderAmendmentBanner() {
+            const banner = document.getElementById('amendmentBanner');
+            const text = document.getElementById('amendmentBannerText');
+            if(!banner || !text) return;
+            const orig = amendmentSourceId ? bills.find(b => b.id === amendmentSourceId) : null;
+            if(!orig) { banner.classList.remove('show'); return; }
+            text.textContent = `📝 개정 대상: ${orig.title} (제${orig.version || 1}판)`;
+            banner.classList.add('show');
+        }
+
+        function getAmendmentsOf(id) {
+            return bills.filter(b => b.parentBillId === id);
         }
 
         function removeBill(id) {
@@ -363,7 +404,42 @@
                 const tName = document.getElementById('thirdNameInput')?.value || '삼원';
                 badges += `<span class="bill-status-badge third-fail">${tName} 미상정</span>`;
             }
+            if((bill.version || 1) > 1) badges += `<span class="bill-version-badge">제${bill.version}판</span>`;
+            if(bill.isAmendment) {
+                const orig = bills.find(b => b.id === bill.parentBillId);
+                badges += `<span class="bill-version-badge" title="개정 대상 법안">↩ 개정: ${orig ? orig.title : '(삭제된 법안)'}</span>`;
+            }
             return badges;
+        }
+
+        // 법안 세부 표결 기록(타임라인) + 개정안 목록 HTML
+        function buildBillHistoryHtml(bill) {
+            const chamberLabel = ch => ch === 'senate' ? (document.getElementById('senateNameInput')?.value || '상원')
+                : ch === 'third' ? (document.getElementById('thirdNameInput')?.value || '삼원')
+                : (document.getElementById('houseNameInput')?.value || '하원');
+            const history = bill.voteHistory || [];
+            const historyRows = history.length === 0
+                ? '<div style="color:#444;">표결 기록 없음</div>'
+                : history.map(h => {
+                    if(h.result === 'skip') return `<div class="bill-history-entry">⊘ ${chamberLabel(h.chamber)} — 미상정</div>`;
+                    const label = h.result === 'pass' ? '✔ 가결' : '✘ 부결';
+                    const dateStr = h.date ? ` · ${h.date}` : '';
+                    return `<div class="bill-history-entry">${h.result==='pass'?'✔':'✘'} ${chamberLabel(h.chamber)} — ${label} (찬${h.yea}/반${h.nay}/기${h.abs}, 필요표 ${h.required}/${h.total})${dateStr}</div>`;
+                }).join('');
+
+            const amendments = getAmendmentsOf(bill.id);
+            const amendmentRows = amendments.length === 0 ? '' : `
+                <div style="margin-top:6px; padding-top:6px; border-top:1px dotted #1a1a1a;">
+                    <div style="color:#666; margin-bottom:2px;">개정안 (${amendments.length}건)</div>
+                    ${amendments.map(a => `<div class="bill-history-entry">제${a.version}판 — ${a.title} [${buildBillBadges(a).replace(/<[^>]+>/g,' ').trim() || '대기 중'}]</div>`).join('')}
+                </div>`;
+
+            return `<div class="bill-history" id="billHistory-${bill.id}">${historyRows}${amendmentRows}</div>`;
+        }
+
+        function toggleBillHistory(id) {
+            const el = document.getElementById('billHistory-' + id);
+            if(el) el.classList.toggle('open');
         }
 
         // ===== 태그 헬퍼 =====
@@ -439,11 +515,13 @@
                     <div class="bill-card-footer">
                         ${buildBillBadges(bill)}
                         <span style="color:#555; font-size:0.75rem; margin-left:4px;">[${thLabel}]</span>
+                        ${(bill.voteHistory||[]).length > 0 ? `<span class="bill-history-toggle" onclick="event.stopPropagation(); toggleBillHistory('${bill.id}')">▾ 세부 기록</span>` : ''}
                         <div style="margin-left:auto; display:flex; gap:5px;">
                             ${!isActive ? `<button class="bill-select-btn" onclick="selectBillForVote('${bill.id}'); switchTab('vote');">심의 선택</button>` : ''}
                             <button class="bill-remove-btn" onclick="removeBill('${bill.id}')">삭제</button>
                         </div>
                     </div>
+                    ${(bill.voteHistory||[]).length > 0 ? buildBillHistoryHtml(bill) : ''}
                 `;
                 container.appendChild(div);
             });
@@ -488,10 +566,13 @@
                     <div class="bill-card-footer">
                         ${buildBillBadges(bill)}
                         <span style="color:#555; font-size:0.75rem; margin-left:4px;">[${thLabel}]</span>
-                        <div style="margin-left:auto;">
+                        <span class="bill-history-toggle" onclick="event.stopPropagation(); toggleBillHistory('${bill.id}')">▾ 세부 기록</span>
+                        <div style="display:flex; gap:5px;">
+                            ${overall === 'passed' ? `<button class="bill-amend-btn" onclick="startAmendment('${bill.id}')">📝 개정안 발의</button>` : ''}
                             <button class="bill-remove-btn" onclick="removeBill('${bill.id}')">삭제</button>
                         </div>
                     </div>
+                    ${buildBillHistoryHtml(bill)}
                 `;
                 container.appendChild(div);
             });
@@ -534,21 +615,29 @@
             const required = threshold >= 1.0 ? validSeats : Math.floor(validSeats * threshold) + 1;
             const result = yea >= required ? 'pass' : 'fail';
 
+            if(!bill.voteHistory) bill.voteHistory = [];
+            const nowISO = new Date().toISOString();
+            const logVote = (ch, res) => bill.voteHistory.push({ chamber: ch, result: res, date: bill.voteDate || '', yea, nay, abs, total: validSeats, required, at: nowISO });
+            const logSkip = (ch) => bill.voteHistory.push({ chamber: ch, result: 'skip', date: '', at: nowISO });
+
             if(chamber==='house') {
                 bill.houseStatus = result;
                 bill.houseVote = {yea, nay, abs, total: validSeats, required};
+                logVote('house', result);
                 // 하원 부결 → 이후 단계(상원/삼원) 자동 부결 처리
                 if(result === 'fail') {
-                    if(isBi) { bill.senateStatus = 'skip'; bill.senateVote = null; }
-                    if(isTri) { bill.thirdStatus = 'skip'; bill.thirdVote = null; }
+                    if(isBi) { bill.senateStatus = 'skip'; bill.senateVote = null; logSkip('senate'); }
+                    if(isTri) { bill.thirdStatus = 'skip'; bill.thirdVote = null; logSkip('third'); }
                 }
             } else if(chamber==='senate') {
                 bill.senateStatus = result;
                 bill.senateVote = {yea, nay, abs, total: validSeats, required};
-                if(result === 'fail' && isTri) { bill.thirdStatus = 'skip'; bill.thirdVote = null; }
+                logVote('senate', result);
+                if(result === 'fail' && isTri) { bill.thirdStatus = 'skip'; bill.thirdVote = null; logSkip('third'); }
             } else {
                 bill.thirdStatus = result;
                 bill.thirdVote = {yea, nay, abs, total: validSeats, required};
+                logVote('third', result);
             }
 
             renderBillList();
@@ -868,6 +957,23 @@
         }
 
         // ===== TOOLTIP =====
+        // 화면 오른쪽/아래 끝에서도 잘리지 않도록 실제 렌더 크기를 측정해 위치를 보정
+        function positionTooltip(tip, text, clientX, clientY) {
+            tip.textContent = text;
+            tip.style.display = 'block';
+            const margin = 8;
+            const w = tip.offsetWidth;
+            const h = tip.offsetHeight;
+            let left = clientX + 14;
+            let top = clientY - 8;
+            if(left + w > window.innerWidth - margin) left = clientX - w - 14;
+            if(left < margin) left = margin;
+            if(top + h > window.innerHeight - margin) top = window.innerHeight - h - margin;
+            if(top < margin) top = margin;
+            tip.style.left = left + 'px';
+            tip.style.top = top + 'px';
+        }
+
         function handleCanvasMouseMove(e, chamber) {
             const cvs = e.target;
             const rect = cvs.getBoundingClientRect();
@@ -888,14 +994,11 @@
                 const d = dots[hit];
                 const voteLabels = { yea:'찬성', nay:'반대', abs:'기권', none:'미투표' };
                 const vs = voteState[chamber][hit] || 'none';
-                tip.style.display = 'block';
-                tip.style.left = (e.clientX + 14) + 'px';
-                tip.style.top = (e.clientY - 8) + 'px';
                 const nameLabel = d.independentName ? d.independentName : d.partyName;
                 const seatLabel = d.independentSeatIndex
                     ? `#${computeIndependentOffset(chamber) + d.independentSeatIndex}`
                     : `#${hit+1}`;
-                tip.textContent = `${seatLabel} | ${nameLabel} | ${d.ideology} | ${voteLabels[vs]}`;
+                positionTooltip(tip, `${seatLabel} | ${nameLabel} | ${d.ideology} | ${voteLabels[vs]}`, e.clientX, e.clientY);
             } else {
                 tip.style.display = 'none';
             }
@@ -1168,7 +1271,8 @@
             // ── 입법 절차 복원 ──
             const leg = state.legislation || {};
             bills = (Array.isArray(leg.bills) ? leg.bills : (Array.isArray(state.data?.bills) ? state.data.bills : []))
-                .map(b => ({ tags:[], threshold:0.5, numer:null, denom:null, thirdStatus:'pending', thirdVote:null, voteDate:'', ...b }));
+                // v12: version/parentBillId/isAmendment/voteHistory (개정안·버전·세부 표결 기록) 추가
+                .map(b => ({ tags:[], threshold:0.5, numer:null, denom:null, thirdStatus:'pending', thirdVote:null, voteDate:'', version:1, parentBillId:null, isAmendment:false, voteHistory:[], ...b }));
             activeBillId           = leg.activeBillId           ?? null;
             voteState              = leg.voteState              ?? { house:{}, senate:{}, third:{} };
             if(!voteState.third) voteState.third = {};
@@ -3353,10 +3457,7 @@
                             if(mem.vacant) text += ` — 궐석`;
                             else text += ` — ${mem.name||'(이름 미지정)'} (${memParty?.name||'?'})`;
                         }
-                        tip.style.display = 'block';
-                        tip.style.left = (e.clientX + 14) + 'px';
-                        tip.style.top = (e.clientY - 8) + 'px';
-                        tip.textContent = text;
+                        positionTooltip(tip, text, e.clientX, e.clientY);
                     } else if(tip) {
                         tip.style.display = 'none';
                     }
@@ -3627,10 +3728,7 @@
                                 if(mem.vacant) text += ` — 궐석`;
                                 else text += ` — ${mem.name||'(이름 미지정)'} (${memParty?.name||'?'})`;
                             }
-                            tip.style.display = 'block';
-                            tip.style.left = (e.clientX + 14) + 'px';
-                            tip.style.top = (e.clientY - 8) + 'px';
-                            tip.textContent = text;
+                            positionTooltip(tip, text, e.clientX, e.clientY);
                         } else {
                             tip.style.display = 'none';
                         }
@@ -4098,6 +4196,7 @@
                 chamber: chamberDisplayName,
                 chamberType: chamber,
                 isSenate: chamber==='senate',
+                savedAt: new Date().toISOString(),
                 parties: parties.map(p => {
                     const w = weightedResult.find(x=>x.id===p.id);
                     const s = seatMap.find(x=>x.id===p.id);
@@ -4125,12 +4224,21 @@
                     .sort((a,b)=>b.seats-a.seats)
                     .map(p=>`<span style="display:inline-flex;align-items:center;gap:3px;margin-right:6px;font-size:0.8rem;color:#aaa;"><span style="width:8px;height:8px;background:${p.color};border-radius:50%;display:inline-block;"></span>${p.name} ${p.seats}석</span>`)
                     .join('');
+                const savedAtLabel = r.savedAt ? new Date(r.savedAt).toLocaleString('ko-KR') : '—';
+                const detailRows = r.parties.filter(p=>p.seats>0 || p.prob>0)
+                    .sort((a,b)=>b.seats-a.seats)
+                    .map(p=>`<div class="bill-history-entry">${p.name} — 의석 ${p.seats}석 · 득표율(추정) ${(p.prob*100).toFixed(1)}%</div>`)
+                    .join('') || '<div style="color:#444;">정당별 세부 데이터 없음</div>';
                 div.innerHTML = `
                     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
                         <span style="color:var(--tno-gold);font-size:1rem;">${r.title}</span>
                         <span style="color:#555;font-size:0.85rem;">${r.year} · ${r.chamber}</span>
                     </div>
-                    <div style="margin-bottom:8px;">${partySummary}</div>
+                    <div style="margin-bottom:4px;">${partySummary}</div>
+                    <div style="margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;">
+                        <span class="elec-record-toggle" onclick="toggleElecRecordDetail('${r.id}')">▾ 세부 기록 (총 ${r.totalSeats}석 · 저장: ${savedAtLabel})</span>
+                    </div>
+                    <div class="elec-record-detail" id="elecRecordDetail-${r.id}">${detailRows}</div>
                     <div style="display:flex;gap:6px;">
                         <button onclick="elecLoadRecord('${r.id}')" style="flex:1;background:transparent;border:1px solid var(--tno-neon);color:var(--tno-neon);padding:5px;font-family:inherit;font-size:0.85rem;cursor:pointer;">↻ 의회 반영</button>
                         <button onclick="elecViewRecord('${r.id}')" style="flex:1;background:transparent;border:1px solid #888;color:#aaa;padding:5px;font-family:inherit;font-size:0.85rem;cursor:pointer;">👁 보기</button>
@@ -4197,6 +4305,11 @@
         function elecDeleteRecord(id) {
             elecRecords = elecRecords.filter(x=>x.id!==id);
             elecRenderRecords();
+        }
+
+        function toggleElecRecordDetail(id) {
+            const el = document.getElementById('elecRecordDetail-' + id);
+            if(el) el.classList.toggle('open');
         }
 
         // ── 메인 개표 함수 ────────────────────
@@ -4328,10 +4441,7 @@
                 const hkey = `${hq},${hr}`;
                 const found = ctxData.nameMap[hkey];
                 if(found !== undefined) {
-                    tip.style.display = 'block';
-                    tip.style.left = (e.clientX + 14) + 'px';
-                    tip.style.top = (e.clientY - 8) + 'px';
-                    tip.textContent = found || `(${hkey})`;
+                    positionTooltip(tip, found || `(${hkey})`, e.clientX, e.clientY);
                 } else {
                     tip.style.display = 'none';
                 }
