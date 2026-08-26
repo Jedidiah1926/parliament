@@ -730,8 +730,9 @@
 
         function setVoteMode(mode) {
             currentVoteMode = mode;
-            const labels = { yea: '▲ 찬성 (초록)', nay: '▼ 반대 (빨강)', abs: '— 기권 (회색)', none: '✕ 제거' };
-            const colors  = { yea: '#00ff88', nay: '#ff2244', abs: '#888888', none: '#888' };
+            closeSeatInfoCard();
+            const labels = { yea: '▲ 찬성 (초록)', nay: '▼ 반대 (빨강)', abs: '— 기권 (회색)', none: '✕ 제거', info: '🔍 정보 보기' };
+            const colors  = { yea: '#00ff88', nay: '#ff2244', abs: '#888888', none: '#888', info: 'var(--tno-neon)' };
             const el = document.getElementById('currentModeLabel');
             el.textContent = labels[mode] || '없음';
             el.style.color = colors[mode] || '#888';
@@ -944,6 +945,8 @@
         }
 
         // ===== CANVAS CLICK HANDLER =====
+        // 표결 탭에서는 currentVoteMode로 "표결 입력" vs "정보 보기"를 선택하고,
+        // 그 외 탭에서는 항상 좌석 정보 카드를 띄운다 (투표 상태를 건드리지 않음).
         function handleCanvasClick(e, chamber) {
             const cvs = e.target;
             const rect = cvs.getBoundingClientRect();
@@ -963,6 +966,12 @@
 
             if(hit === -1) return;
 
+            const onVoteTab = currentMainTab === 'legislation' && currentSubTab.legislation === 'vote';
+            if(!onVoteTab || currentVoteMode === 'info') {
+                showSeatInfoCard(chamber, hit, e.clientX, e.clientY);
+                return;
+            }
+
             const prev = voteState[chamber][hit] || 'none';
             if(currentVoteMode === 'none') {
                 // 초기화 모드: 해당 원만 리셋
@@ -978,24 +987,30 @@
             updateVoteResults();
         }
 
-        // ===== TOOLTIP =====
+        // ===== TOOLTIP / 좌석 정보 카드 =====
         // 화면 오른쪽/아래 끝에서도 잘리지 않도록 실제 렌더 크기를 측정해 위치를 보정
-        function positionTooltip(tip, text, clientX, clientY) {
-            tip.textContent = text;
-            tip.style.display = 'block';
+        function positionFloatingBox(el, clientX, clientY) {
             const margin = 8;
-            const w = tip.offsetWidth;
-            const h = tip.offsetHeight;
+            const w = el.offsetWidth;
+            const h = el.offsetHeight;
             let left = clientX + 14;
             let top = clientY - 8;
             if(left + w > window.innerWidth - margin) left = clientX - w - 14;
             if(left < margin) left = margin;
             if(top + h > window.innerHeight - margin) top = window.innerHeight - h - margin;
             if(top < margin) top = margin;
-            tip.style.left = left + 'px';
-            tip.style.top = top + 'px';
+            el.style.left = left + 'px';
+            el.style.top = top + 'px';
         }
 
+        function positionTooltip(tip, text, clientX, clientY) {
+            tip.textContent = text;
+            tip.style.display = 'block';
+            positionFloatingBox(tip, clientX, clientY);
+        }
+
+        // 본원(하원/상원/삼원) 좌석 캔버스는 더 이상 호버 툴팁을 띄우지 않는다 —
+        // 클릭 시 좌석 정보 카드(showSeatInfoCard)로 대체되었으므로, 호버는 클릭 가능 커서 힌트만 준다.
         function handleCanvasMouseMove(e, chamber) {
             const cvs = e.target;
             const rect = cvs.getBoundingClientRect();
@@ -1006,28 +1021,54 @@
             const my = (e.clientY - rect.top) * scaleY;
 
             const dots = dotCache[chamber];
-            const tip = document.getElementById('tooltipBox');
             let hit = -1;
             dots.forEach((d, i) => {
                 if(Math.hypot(mx - d.x, my - d.y) <= d.r * 1.5) hit = i;
             });
-
-            if(hit !== -1) {
-                const d = dots[hit];
-                const voteLabels = { yea:'찬성', nay:'반대', abs:'기권', none:'미투표' };
-                const vs = voteState[chamber][hit] || 'none';
-                const nameLabel = d.independentName ? d.independentName : d.partyName;
-                const seatLabel = d.independentSeatIndex
-                    ? `#${computeIndependentOffset(chamber) + d.independentSeatIndex}`
-                    : `#${hit+1}`;
-                positionTooltip(tip, `${seatLabel} | ${nameLabel} | ${d.ideology} | ${voteLabels[vs]}`, e.clientX, e.clientY);
-            } else {
-                tip.style.display = 'none';
-            }
+            cvs.style.cursor = hit !== -1 ? 'pointer' : 'default';
         }
 
-        function handleCanvasMouseLeave() {
-            document.getElementById('tooltipBox').style.display = 'none';
+        function handleCanvasMouseLeave(e) {
+            if(e?.target) e.target.style.cursor = 'default';
+        }
+
+        // 좌석 클릭 시 뜨는 정보 카드 (호버 대신 클릭으로 열고 닫음)
+        let seatInfoCardTarget = null;
+        function showSeatInfoCard(chamber, hit, clientX, clientY) {
+            const card = document.getElementById('seatInfoCard');
+            const body = document.getElementById('seatInfoCardBody');
+            if(!card || !body) return;
+
+            // 같은 좌석을 다시 클릭하면 닫기
+            if(seatInfoCardTarget && seatInfoCardTarget.chamber === chamber && seatInfoCardTarget.hit === hit && card.style.display === 'block') {
+                closeSeatInfoCard();
+                return;
+            }
+
+            const d = dotCache[chamber][hit];
+            if(!d) return;
+            const voteLabels = { yea:'찬성', nay:'반대', abs:'기권', none:'미투표' };
+            const vs = voteState[chamber]?.[hit] || 'none';
+            const nameLabel = d.independentName ? d.independentName : d.partyName;
+            const seatLabel = d.independentSeatIndex
+                ? `#${computeIndependentOffset(chamber) + d.independentSeatIndex}`
+                : `#${hit+1}`;
+
+            const rows = [`좌석 ${seatLabel}`, `정당: ${nameLabel}`, `이념: ${d.ideology}`];
+            if(d.coalitionName) rows.push(`연정: ${d.coalitionName}`);
+            if(d.isRuling) rows.push(`★ 집권 세력`);
+            if(d.partyName !== 'Vacant') rows.push(`투표 상태: ${voteLabels[vs]}`);
+            body.innerHTML = rows.map(r => `<div>${r}</div>`).join('');
+
+            seatInfoCardTarget = { chamber, hit };
+            card.style.display = 'block';
+            positionFloatingBox(card, clientX, clientY);
+        }
+
+        function closeSeatInfoCard() {
+            seatInfoCardTarget = null;
+            const card = document.getElementById('seatInfoCard');
+            if(card) card.style.display = 'none';
         }
 
         // ===== VOTE RESULT UPDATER =====
@@ -1426,6 +1467,7 @@
 
         function switchMainTab(main) {
             checkResetVoteSelectionOnLeave();
+            closeSeatInfoCard();
             currentMainTab = main;
             document.querySelectorAll('.main-tab-btn').forEach(b => b.classList.remove('active'));
             document.getElementById('mainTab' + main.charAt(0).toUpperCase() + main.slice(1)).classList.add('active');
@@ -5128,6 +5170,7 @@
                 externalSupport: map[i]?.externalSupport || false,
                 partyName: map[i]?.partyName || 'Vacant',
                 ideology: map[i]?.ideology || '-',
+                coalitionName: map[i]?.coalitionName || null,
                 independentName: map[i]?.independentName || null,
                 independentSeatIndex: map[i]?.independentSeatIndex || null,
             }));

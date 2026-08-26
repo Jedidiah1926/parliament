@@ -448,11 +448,13 @@
         .vote-ctrl-btn.nay  { border-color: var(--vote-nay); color: var(--vote-nay); }
         .vote-ctrl-btn.abs  { border-color: var(--vote-abs); color: var(--vote-abs); }
         .vote-ctrl-btn.clr  { border-color: #555; color: #888; }
+        .vote-ctrl-btn.info { border-color: var(--tno-neon); color: var(--tno-neon); }
         .vote-ctrl-btn:hover { opacity: 0.7; }
         .vote-ctrl-btn.yea:hover  { background: rgba(0,255,136,0.15); }
         .vote-ctrl-btn.nay:hover  { background: rgba(255,34,68,0.15); }
         .vote-ctrl-btn.abs:hover  { background: rgba(136,136,136,0.15); }
         .vote-ctrl-btn.clr:hover  { background: rgba(100,100,100,0.15); }
+        .vote-ctrl-btn.info:hover { background: rgba(0,255,255,0.15); }
 
         .vote-hint {
             font-size: 0.85rem;
@@ -793,6 +795,44 @@
             display: none;
             white-space: nowrap;
         }
+
+        .seat-info-card {
+            position: fixed;
+            display: none;
+            background: #000;
+            border: 1px solid var(--tno-neon);
+            color: #ccc;
+            font-family: 'NeoDunggeunmo', 'VT323', monospace;
+            font-size: 0.85rem;
+            padding: 8px 10px;
+            min-width: 160px;
+            max-width: 260px;
+            z-index: 5001;
+            box-shadow: 0 0 10px rgba(0,255,255,0.15);
+        }
+        .seat-info-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+            padding-bottom: 4px;
+            border-bottom: 1px solid #222;
+            color: var(--tno-neon);
+            font-size: 0.8rem;
+            letter-spacing: 1px;
+        }
+        .seat-info-card-header button {
+            background: transparent;
+            border: none;
+            color: #888;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.9rem;
+            line-height: 1;
+            padding: 0 2px;
+        }
+        .seat-info-card-header button:hover { color: var(--tno-alert); }
+        .seat-info-card-body div { padding: 2px 0; }
     
 
                     #elecSpeed::-webkit-slider-runnable-track{height:4px;background:var(--tno-border);}
