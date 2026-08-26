@@ -1254,7 +1254,7 @@
                 // 호버 중인 좌석: 토성 고리처럼 좌석과 떨어진 흰색 고리
                 if(hoveredSeat[chamber] === i) {
                     ctx.beginPath();
-                    ctx.arc(d.x, d.y, d.r * 0.975, 0, Math.PI*2);
+                    ctx.arc(d.x, d.y, d.r * 0.9125, 0, Math.PI*2);
                     ctx.strokeStyle = '#fff';
                     ctx.lineWidth = 1.5;
                     ctx.shadowColor = 'rgba(255,255,255,0.6)';
@@ -5241,7 +5241,7 @@
                 // 호버 중인 좌석: 토성 고리처럼 좌석과 떨어진 흰색 고리
                 if(hoveredSeat[chamber] === i) {
                     ctx.beginPath();
-                    ctx.arc(pt.x, pt.y, dotR * 0.975, 0, Math.PI*2);
+                    ctx.arc(pt.x, pt.y, dotR * 0.9125, 0, Math.PI*2);
                     ctx.strokeStyle = '#fff';
                     ctx.lineWidth = 1.5;
                     ctx.shadowColor = 'rgba(255,255,255,0.6)';
