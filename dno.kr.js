@@ -1066,9 +1066,10 @@
 
             const titleEl = document.getElementById('seatInfoCardTitle');
             if(titleEl) {
-                titleEl.textContent = d.partyName === '무소속'
+                const baseTitle = d.partyName === '무소속'
                     ? `${d.independentName || '무소속'} ${seatLabel}`
                     : `좌석 정보 ${seatLabel}`;
+                titleEl.textContent = d.isRuling ? `★ ${baseTitle}` : baseTitle;
             }
 
             const rows = [];
@@ -1076,7 +1077,6 @@
             if(d.factionName) rows.push(`파벌: ${d.factionName}`);
             rows.push(`이념: ${d.ideology}`);
             if(d.coalitionName) rows.push(`연정: ${d.coalitionName}`);
-            if(d.isRuling) rows.push(`★ 집권 세력`);
             if(d.partyName !== 'Vacant') rows.push(`투표 상태: ${voteLabels[vs]}`);
             body.innerHTML = rows.map(r => `<div>${r}</div>`).join('');
 
