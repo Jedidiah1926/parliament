@@ -75,7 +75,7 @@
         ];
 
         let coalitions = [
-            { id: 'c1', name: "국민전선", color: "#2E2E2E", members: [1], isRuling: true , leaderName: "", leaderPhoto: "", leadPartyId: null, externalSupporters: [], externalSupportLabel: "각외협력", syncWithLeadParty: false },
+            { id: 'c1', name: "국민전선", color: "#2E2E2E", members: [1], isRuling: true , leadPartyId: null, externalSupporters: [], externalSupportLabel: "각외협력" },
         ];
 
         let currentTab = 'house';
@@ -1373,7 +1373,7 @@
 
             ideologies = parl.ideologies;
             parties    = parl.parties.map(p => ({ leaderName:'', leaderPhoto:'', logoPhoto:'', showLogoInStats:false, description:'', factions:[], seatsThird:0, inThird:false, abbr:'', ...p, factions:(p.factions||[]).map(f=>({leaderName:'',leaderPhoto:'',logoPhoto:'',usePartyColor:false,seatsThird:0,...f})) }));
-            coalitions = parl.coalitions.map(c => ({ leaderName:'', leaderPhoto:'', leadPartyId:null, externalSupporters:[], externalSupportLabel:'각외협력', syncWithLeadParty:false, ...c }));
+            coalitions = parl.coalitions.map(c => ({ leadPartyId:null, externalSupporters:[], externalSupportLabel:'각외협력', ...c }));
             manualSort = parl.manualSort ?? false;
             independents = Array.isArray(parl.independents) ? parl.independents : [];
 
@@ -1456,6 +1456,7 @@
             // 구버전 파일 호환: setup 하위탭이 house/senate/third/leader였다면 새 구조로 매핑
             if(['house','senate','third'].includes(currentSubTab.setup)) currentSubTab.setup = 'settings';
             if(currentSubTab.party === 'leader') currentSubTab.party = 'partyInfo';
+            if(currentSubTab.party === 'coalitionLeader') currentSubTab.party = 'partyInfo';
             // 구버전 파일 호환: 기록 탭이 입법/선거 그룹에서 독립되기 전 위치를 가리키던 경우 재매핑
             if(currentSubTab.legislation === 'archive') currentSubTab.legislation = 'bill';
             if(currentSubTab.election === 'record') currentSubTab.election = 'vote';
@@ -1563,7 +1564,6 @@
             if(sub === 'elecRecord') elecRenderRecords();
             if(sub === 'partyInfo') { switchPartyInnerTab('info'); }
             if(sub === 'ideology') renderIdeologyList();
-            if(sub === 'coalitionLeader') renderCoalitionLeaderList();
             if(sub === 'independent') { independentInnerTab = 'house'; renderIndependentList(); }
             if(sub === 'settings') { switchSetupInnerTab('house'); }
             if(sub === 'coalition') { renderCoalitions(); }
@@ -1710,7 +1710,6 @@
             renderCoalitions();
             renderPartyInfoList();
             renderLeaderList();
-            renderCoalitionLeaderList();
             renderIndependentList();
             renderMembersList();
         }
@@ -2314,30 +2313,19 @@
             });
         }
 
-        function uploadLeaderPhoto(input, type, entityId) {
+        function uploadLeaderPhoto(input, pid) {
             const file = input.files?.[0]; if(!file) return;
             const reader = new FileReader();
             reader.onload = e => {
-                const b64 = e.target.result;
-                if(type==='party') {
-                    const p = parties.find(x=>x.id===entityId);
-                    if(p){ p.leaderPhoto=b64; refreshUI(); simulate(); }
-                } else {
-                    const coal = coalitions.find(x=>x.id===entityId);
-                    if(coal){ coal.leaderPhoto=b64; renderCoalitions(); simulate(); }
-                }
+                const p = parties.find(x=>x.id===pid);
+                if(p){ p.leaderPhoto=e.target.result; refreshUI(); simulate(); }
             };
             reader.readAsDataURL(file);
         }
 
-        function updateLeaderField(type, entityId, field, val) {
-            if(type==='party') {
-                const p = parties.find(x=>x.id===entityId);
-                if(p){ p[field]=val; simulate(); }
-            } else {
-                const c = coalitions.find(x=>x.id===entityId);
-                if(c){ c[field]=val; simulate(); }
-            }
+        function updateLeaderField(pid, field, val) {
+            const p = parties.find(x=>x.id===pid);
+            if(p){ p[field]=val; simulate(); }
         }
 
         function addIdeology() { ideologies.push({ id: Date.now(), name: "새 이념" }); refreshUI(); }
@@ -2369,7 +2357,7 @@
         function updatePartyColorText(e,i) { if(isValidHex(e.value)){ parties[i].color=e.value.toUpperCase(); e.nextElementSibling.value=parties[i].color; refreshUI(); simulate(); }}
         function updatePartyColorPicker(e,i) { parties[i].color=e.value.toUpperCase(); e.previousElementSibling.value=parties[i].color; simulate(); }
 
-        function addCoalition() { coalitions.push({id:'c'+Date.now(), name:"새 연정", color:"#ffffff", members:[], isRuling:false, leaderName: "", leaderPhoto: "", leadPartyId: null, externalSupporters: [], externalSupportLabel: "각외협력", syncWithLeadParty: false }); refreshUI(); }
+        function addCoalition() { coalitions.push({id:'c'+Date.now(), name:"새 연정", color:"#ffffff", members:[], isRuling:false, leadPartyId: null, externalSupporters: [], externalSupportLabel: "각외협력" }); refreshUI(); }
         function removeCoalition(id) { coalitions=coalitions.filter(c=>c.id!==id); refreshUI(); simulate(); }
         function updateCoalition(id,k,v) { const c=coalitions.find(x=>x.id===id); if(c){c[k]=v; simulate();} }
         function updateCoalitionColorText(e,id) { if(isValidHex(e.value)) { const c=coalitions.find(x=>x.id===id); if(c){ c.color=e.value.toUpperCase(); e.nextElementSibling.value=c.color; simulate(); }}}
@@ -2703,7 +2691,7 @@
                         <div style="display:flex;flex-direction:column;align-items:center;gap:4px;flex-shrink:0;">
                             <div class="leader-photo-box dyn-photo" data-ratio="0.8" title="클릭하여 사진 업로드" style="width:52px;height:65px;">
                                 ${photo?`<img src="${photo}" alt="당수">`:'<div class="photo-ph">👤</div>'}
-                                <input type="file" accept="image/*" onchange="uploadLeaderPhoto(this,'party',${p.id})">
+                                <input type="file" accept="image/*" onchange="uploadLeaderPhoto(this,${p.id})">
                             </div>
                             <span style="font-size:0.75rem;color:#444;flex-shrink:0;">사진 업로드</span>
                         </div>
@@ -2714,7 +2702,7 @@
                             </div>
                             <input type="text" value="${p.leaderName||''}" placeholder="당수 이름"
                                 style="background:#000;border:1px solid #2a2a2a;color:#e0e0e0;font-family:inherit;font-size:0.95rem;padding:5px 8px;width:100%;box-sizing:border-box;"
-                                onchange="updateLeaderField('party',${p.id},'leaderName',this.value)">
+                                onchange="updateLeaderField(${p.id},'leaderName',this.value)">
                             ${photo?`<button onclick="removeLeaderPhoto(${p.id})" style="background:transparent;border:1px solid #333;color:#555;font-family:inherit;font-size:0.8rem;padding:3px 8px;cursor:pointer;text-align:left;">✕ 사진 제거</button>`:''}
                         </div>
                     </div>
@@ -2728,62 +2716,6 @@
         function removeLeaderPhoto(pid) {
             const p = parties.find(x=>x.id===pid);
             if(p){ p.leaderPhoto=''; refreshUI(); simulate(); }
-        }
-
-        // ===== 정당 탭: 연정 (사진 설정) =====
-        function renderCoalitionLeaderList() {
-            const container = document.getElementById('coalitionLeaderList');
-            if(!container) return;
-            container.innerHTML = '';
-
-            if(coalitions.length === 0) {
-                container.innerHTML = '<div style="text-align:center;color:#555;padding:20px;">[구성된 연정 없음 — 의회 탭에서 먼저 연정을 만드세요]</div>';
-                return;
-            }
-
-            coalitions.forEach(coal => {
-                const leadP = coal.leadPartyId ? parties.find(p=>p.id===coal.leadPartyId) : null;
-                const synced = coal.syncWithLeadParty && leadP;
-                const photo = synced ? (leadP.leaderPhoto||'') : (coal.leaderPhoto||'');
-                const leaderNameVal = synced ? (leadP.leaderName||'') : (coal.leaderName||'');
-                const div = document.createElement('div');
-                div.className = `card-item drag-card-coalitionleader ${coal.isRuling?'is-ruling':''}`;
-                div.style.borderLeftColor = coal.color;
-                div.innerHTML = `
-                    <div class="dyn-row" style="display:flex;gap:10px;align-items:stretch;">
-                        <span class="drag-handle" style="align-self:center;">⋮⋮</span>
-                        <!-- 당수 사진 -->
-                        <div class="leader-photo-box dyn-photo" data-ratio="0.8" title="${synced?'대표당과 동기화 중 (해제하려면 아래 체크박스 해제)':'당수 사진 업로드'}" style="width:52px;height:65px;flex-shrink:0;${synced?'opacity:0.6;cursor:default;':''}">
-                            ${photo?`<img src="${photo}" alt="당수">`:'<div class="photo-ph">👤</div>'}
-                            ${synced?'':`<input type="file" accept="image/*" onchange="uploadLeaderPhoto(this,'coalition','${coal.id}')">`}
-                        </div>
-                        <div class="dyn-ref" style="flex:1;display:flex;flex-direction:column;gap:6px;min-width:0;">
-                            <div style="display:flex;align-items:center;gap:6px;">
-                                <span style="width:10px;height:10px;background:${coal.color};border-radius:50%;flex-shrink:0;"></span>
-                                <span style="color:var(--tno-neon);font-size:0.95rem;">${coal.name}</span>
-                            </div>
-                            <input type="text" value="${leaderNameVal}" placeholder="당수 이름" ${synced?'disabled':''}
-                                style="background:#000;border:1px solid #2a2a2a;color:${synced?'#666':'#e0e0e0'};font-family:inherit;font-size:0.95rem;padding:5px 8px;width:100%;box-sizing:border-box;"
-                                onchange="updateLeaderField('coalition','${coal.id}','leaderName',this.value)">
-                            ${synced?`<div style="color:#665500;font-size:0.78rem;">↳ 대표당(${leadP.name})과 동기화 중</div>`
-                                : (photo?`<button onclick="removeCoalitionLeaderPhoto('${coal.id}')" style="background:transparent;border:1px solid #333;color:#555;font-family:inherit;font-size:0.8rem;padding:3px 8px;cursor:pointer;text-align:left;">✕ 사진 제거</button>`:'')}
-                            <label style="display:flex;align-items:center;gap:6px;cursor:${coal.leadPartyId?'pointer':'not-allowed'};color:#777;font-size:0.78rem;margin-top:2px;">
-                                <input type="checkbox" ${coal.syncWithLeadParty?'checked':''} ${coal.leadPartyId?'':'disabled'}
-                                    onchange="updateCoalition('${coal.id}','syncWithLeadParty',this.checked); refreshUI(); simulate();">
-                                대표당과 동일 ${coal.leadPartyId?'':'<br>(먼저 의회 탭에서 대표당 지정 필요)'}
-                            </label>
-                        </div>
-                    </div>
-                `;
-                container.appendChild(div);
-                startDragReorder(div.querySelector('.drag-handle'), 'coalitionLeaderList', '.drag-card-coalitionleader', coalitions, renderCoalitionLeaderList);
-            });
-            fitDynPhotos(container);
-        }
-
-        function removeCoalitionLeaderPhoto(cid) {
-            const c = coalitions.find(x=>x.id===cid);
-            if(c){ c.leaderPhoto=''; refreshUI(); simulate(); }
         }
 
         // ===== 정당 탭: 무소속 (의원 개별 정보) =====
@@ -5459,14 +5391,10 @@
                 if(s.coalitionName) {
                     const coal = coalObj;
                     if(coal) {
+                        // 연정의 당수는 항상 대표당의 당수를 그대로 따른다
                         const leadP = coal.leadPartyId ? parties.find(p=>p.id===coal.leadPartyId) : null;
-                        if(coal.syncWithLeadParty && leadP) {
-                            photo      = leadP.leaderPhoto || '';
-                            leaderName = leadP.leaderName  || '';
-                        } else {
-                            photo      = coal.leaderPhoto || '';
-                            leaderName = coal.leaderName  || '';
-                        }
+                        photo      = leadP?.leaderPhoto || '';
+                        leaderName = leadP?.leaderName  || '';
                     }
                 } else {
                     const pName = Object.keys(s.parties)[0];

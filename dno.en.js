@@ -75,7 +75,7 @@
         ];
 
         let coalitions = [
-            { id: 'c1', name: "National Front", color: "#2E2E2E", members: [1], isRuling: true , leaderName: "", leaderPhoto: "", leadPartyId: null, externalSupporters: [], externalSupportLabel: "External Support", syncWithLeadParty: false },
+            { id: 'c1', name: "National Front", color: "#2E2E2E", members: [1], isRuling: true , leadPartyId: null, externalSupporters: [], externalSupportLabel: "External Support" },
         ];
 
         let currentTab = 'house';
@@ -1300,7 +1300,7 @@
 
             ideologies = parl.ideologies;
             parties    = parl.parties.map(p => ({ leaderName:'', leaderPhoto:'', logoPhoto:'', showLogoInStats:false, description:'', factions:[], seatsThird:0, inThird:false, abbr:'', ...p, factions:(p.factions||[]).map(f=>({leaderName:'',leaderPhoto:'',logoPhoto:'',usePartyColor:false,seatsThird:0,...f})) }));
-            coalitions = parl.coalitions.map(c => ({ leaderName:'', leaderPhoto:'', leadPartyId:null, externalSupporters:[], externalSupportLabel:'External Support', syncWithLeadParty:false, ...c }));
+            coalitions = parl.coalitions.map(c => ({ leadPartyId:null, externalSupporters:[], externalSupportLabel:'External Support', ...c }));
             manualSort = parl.manualSort ?? false;
             independents = Array.isArray(parl.independents) ? parl.independents : [];
 
@@ -1384,6 +1384,7 @@
             // Backward compat with older save files: map the old setup sub-tab (house/senate/third/leader) to the new structure
             if(['house','senate','third'].includes(currentSubTab.setup)) currentSubTab.setup = 'settings';
             if(currentSubTab.party === 'leader') currentSubTab.party = 'partyInfo';
+            if(currentSubTab.party === 'coalitionLeader') currentSubTab.party = 'partyInfo';
             // Backward compat: the Record tab used to live inside Legislation/Election before being split out
             if(currentSubTab.legislation === 'archive') currentSubTab.legislation = 'bill';
             if(currentSubTab.election === 'record') currentSubTab.election = 'vote';
@@ -1490,7 +1491,6 @@
             if(sub === 'elecRecord') elecRenderRecords();
             if(sub === 'partyInfo') { switchPartyInnerTab('info'); }
             if(sub === 'ideology') renderIdeologyList();
-            if(sub === 'coalitionLeader') renderCoalitionLeaderList();
             if(sub === 'independent') { independentInnerTab = 'house'; renderIndependentList(); }
             if(sub === 'settings') { switchSetupInnerTab('house'); }
             if(sub === 'coalition') { renderCoalitions(); }
@@ -1637,7 +1637,6 @@
             renderCoalitions();
             renderPartyInfoList();
             renderLeaderList();
-            renderCoalitionLeaderList();
             renderIndependentList();
             renderMembersList();
         }
@@ -2216,30 +2215,19 @@
             });
         }
 
-        function uploadLeaderPhoto(input, type, entityId) {
+        function uploadLeaderPhoto(input, pid) {
             const file = input.files?.[0]; if(!file) return;
             const reader = new FileReader();
             reader.onload = e => {
-                const b64 = e.target.result;
-                if(type==='party') {
-                    const p = parties.find(x=>x.id===entityId);
-                    if(p){ p.leaderPhoto=b64; refreshUI(); simulate(); }
-                } else {
-                    const coal = coalitions.find(x=>x.id===entityId);
-                    if(coal){ coal.leaderPhoto=b64; renderCoalitions(); simulate(); }
-                }
+                const p = parties.find(x=>x.id===pid);
+                if(p){ p.leaderPhoto=e.target.result; refreshUI(); simulate(); }
             };
             reader.readAsDataURL(file);
         }
 
-        function updateLeaderField(type, entityId, field, val) {
-            if(type==='party') {
-                const p = parties.find(x=>x.id===entityId);
-                if(p){ p[field]=val; simulate(); }
-            } else {
-                const c = coalitions.find(x=>x.id===entityId);
-                if(c){ c[field]=val; simulate(); }
-            }
+        function updateLeaderField(pid, field, val) {
+            const p = parties.find(x=>x.id===pid);
+            if(p){ p[field]=val; simulate(); }
         }
 
         function addIdeology() { ideologies.push({ id: Date.now(), name: "New Ideology" }); refreshUI(); }
@@ -2271,7 +2259,7 @@
         function updatePartyColorText(e,i) { if(isValidHex(e.value)){ parties[i].color=e.value.toUpperCase(); e.nextElementSibling.value=parties[i].color; refreshUI(); simulate(); }}
         function updatePartyColorPicker(e,i) { parties[i].color=e.value.toUpperCase(); e.previousElementSibling.value=parties[i].color; simulate(); }
 
-        function addCoalition() { coalitions.push({id:'c'+Date.now(), name:"New Coalition", color:"#ffffff", members:[], isRuling:false, leaderName: "", leaderPhoto: "", leadPartyId: null, externalSupporters: [], externalSupportLabel: "External Support", syncWithLeadParty: false }); refreshUI(); }
+        function addCoalition() { coalitions.push({id:'c'+Date.now(), name:"New Coalition", color:"#ffffff", members:[], isRuling:false, leadPartyId: null, externalSupporters: [], externalSupportLabel: "External Support" }); refreshUI(); }
         function removeCoalition(id) { coalitions=coalitions.filter(c=>c.id!==id); refreshUI(); simulate(); }
         function updateCoalition(id,k,v) { const c=coalitions.find(x=>x.id===id); if(c){c[k]=v; simulate();} }
         function updateCoalitionColorText(e,id) { if(isValidHex(e.value)) { const c=coalitions.find(x=>x.id===id); if(c){ c.color=e.value.toUpperCase(); e.nextElementSibling.value=c.color; simulate(); }}}
@@ -2605,7 +2593,7 @@
                         <div style="display:flex;flex-direction:column;align-items:center;gap:4px;flex-shrink:0;">
                             <div class="leader-photo-box dyn-photo" data-ratio="0.8" title="Click to upload photo" style="width:52px;height:65px;">
                                 ${photo?`<img src="${photo}" alt="leader">`:'<div class="photo-ph">👤</div>'}
-                                <input type="file" accept="image/*" onchange="uploadLeaderPhoto(this,'party',${p.id})">
+                                <input type="file" accept="image/*" onchange="uploadLeaderPhoto(this,${p.id})">
                             </div>
                             <span style="font-size:0.75rem;color:#444;flex-shrink:0;">Upload Photo</span>
                         </div>
@@ -2616,7 +2604,7 @@
                             </div>
                             <input type="text" value="${p.leaderName||''}" placeholder="Leader name"
                                 style="background:#000;border:1px solid #2a2a2a;color:#e0e0e0;font-family:inherit;font-size:0.95rem;padding:5px 8px;width:100%;box-sizing:border-box;"
-                                onchange="updateLeaderField('party',${p.id},'leaderName',this.value)">
+                                onchange="updateLeaderField(${p.id},'leaderName',this.value)">
                             ${photo?`<button onclick="removeLeaderPhoto(${p.id})" style="background:transparent;border:1px solid #333;color:#555;font-family:inherit;font-size:0.8rem;padding:3px 8px;cursor:pointer;text-align:left;">✕ Remove Photo</button>`:''}
                         </div>
                     </div>
@@ -2630,62 +2618,6 @@
         function removeLeaderPhoto(pid) {
             const p = parties.find(x=>x.id===pid);
             if(p){ p.leaderPhoto=''; refreshUI(); simulate(); }
-        }
-
-        // ===== Party tab: coalition (photo settings) =====
-        function renderCoalitionLeaderList() {
-            const container = document.getElementById('coalitionLeaderList');
-            if(!container) return;
-            container.innerHTML = '';
-
-            if(coalitions.length === 0) {
-                container.innerHTML = '<div style="text-align:center;color:#555;padding:20px;">[No coalition formed — form a coalition in the Parliament tab first]</div>';
-                return;
-            }
-
-            coalitions.forEach(coal => {
-                const leadP = coal.leadPartyId ? parties.find(p=>p.id===coal.leadPartyId) : null;
-                const synced = coal.syncWithLeadParty && leadP;
-                const photo = synced ? (leadP.leaderPhoto||'') : (coal.leaderPhoto||'');
-                const leaderNameVal = synced ? (leadP.leaderName||'') : (coal.leaderName||'');
-                const div = document.createElement('div');
-                div.className = `card-item drag-card-coalitionleader ${coal.isRuling?'is-ruling':''}`;
-                div.style.borderLeftColor = coal.color;
-                div.innerHTML = `
-                    <div class="dyn-row" style="display:flex;gap:10px;align-items:stretch;">
-                        <span class="drag-handle" style="align-self:center;">⋮⋮</span>
-                        <!-- Leader photo -->
-                        <div class="leader-photo-box dyn-photo" data-ratio="0.8" title="${synced?'Syncing with lead party (uncheck the box below to detach)':'Upload leader photo'}" style="width:52px;height:65px;flex-shrink:0;${synced?'opacity:0.6;cursor:default;':''}">
-                            ${photo?`<img src="${photo}" alt="leader">`:'<div class="photo-ph">👤</div>'}
-                            ${synced?'':`<input type="file" accept="image/*" onchange="uploadLeaderPhoto(this,'coalition','${coal.id}')">`}
-                        </div>
-                        <div class="dyn-ref" style="flex:1;display:flex;flex-direction:column;gap:6px;min-width:0;">
-                            <div style="display:flex;align-items:center;gap:6px;">
-                                <span style="width:10px;height:10px;background:${coal.color};border-radius:50%;flex-shrink:0;"></span>
-                                <span style="color:var(--tno-neon);font-size:0.95rem;">${coal.name}</span>
-                            </div>
-                            <input type="text" value="${leaderNameVal}" placeholder="Leader name" ${synced?'disabled':''}
-                                style="background:#000;border:1px solid #2a2a2a;color:${synced?'#666':'#e0e0e0'};font-family:inherit;font-size:0.95rem;padding:5px 8px;width:100%;box-sizing:border-box;"
-                                onchange="updateLeaderField('coalition','${coal.id}','leaderName',this.value)">
-                            ${synced?`<div style="color:#665500;font-size:0.78rem;">↳ Syncing with lead party (${leadP.name})</div>`
-                                : (photo?`<button onclick="removeCoalitionLeaderPhoto('${coal.id}')" style="background:transparent;border:1px solid #333;color:#555;font-family:inherit;font-size:0.8rem;padding:3px 8px;cursor:pointer;text-align:left;">✕ Remove Photo</button>`:'')}
-                            <label style="display:flex;align-items:center;gap:6px;cursor:${coal.leadPartyId?'pointer':'not-allowed'};color:#777;font-size:0.78rem;margin-top:2px;">
-                                <input type="checkbox" ${coal.syncWithLeadParty?'checked':''} ${coal.leadPartyId?'':'disabled'}
-                                    onchange="updateCoalition('${coal.id}','syncWithLeadParty',this.checked); refreshUI(); simulate();">
-                                Same as lead party ${coal.leadPartyId?'':'<br>(designate a lead party in the Parliament tab first)'}
-                            </label>
-                        </div>
-                    </div>
-                `;
-                container.appendChild(div);
-                startDragReorder(div.querySelector('.drag-handle'), 'coalitionLeaderList', '.drag-card-coalitionleader', coalitions, renderCoalitionLeaderList);
-            });
-            fitDynPhotos(container);
-        }
-
-        function removeCoalitionLeaderPhoto(cid) {
-            const c = coalitions.find(x=>x.id===cid);
-            if(c){ c.leaderPhoto=''; refreshUI(); simulate(); }
         }
 
         // ===== Party tab: independents (individual member info) =====
@@ -5351,14 +5283,10 @@
                 if(s.coalitionName) {
                     const coal = coalObj;
                     if(coal) {
+                        // A coalition's leader always follows its lead party's leader
                         const leadP = coal.leadPartyId ? parties.find(p=>p.id===coal.leadPartyId) : null;
-                        if(coal.syncWithLeadParty && leadP) {
-                            photo      = leadP.leaderPhoto || '';
-                            leaderName = leadP.leaderName  || '';
-                        } else {
-                            photo      = coal.leaderPhoto || '';
-                            leaderName = coal.leaderName  || '';
-                        }
+                        photo      = leadP?.leaderPhoto || '';
+                        leaderName = leadP?.leaderName  || '';
                     }
                 } else {
                     const pName = Object.keys(s.parties)[0];
