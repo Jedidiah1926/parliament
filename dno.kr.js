@@ -380,37 +380,51 @@
                 pending: ['pending', '대기 중'],
             };
             const [oc, ol] = overallCfg[overall];
-            let badges = `<span class="bill-status-badge ${oc}">${ol}</span>`;
-            if(bill.voteDate) badges += `<span style="color:#666;font-size:0.75rem;">📅 ${bill.voteDate}</span>`;
+
+            // 각 줄(전체 상태 / 의원실별 상태)을 별도 행으로 쌓아 줄바꿈이 항상 깔끔하게 되도록 구성
+            const rows = [];
+
+            let overallRow = `<span class="bill-status-badge ${oc}">${ol}</span>`;
+            if(bill.voteDate) overallRow += `<span style="color:#666;font-size:0.75rem;">📅 ${bill.voteDate}</span>`;
+            rows.push(overallRow);
+
             if(bill.houseStatus !== 'pending') {
                 const hName = document.getElementById('houseNameInput')?.value || '하원';
-                badges += `<span class="bill-status-badge ${bill.houseStatus==='pass'?'house-pass':'house-fail'}">${hName} ${bill.houseStatus==='pass'?'✔가결':'✘부결'}</span>`;
-                if(bill.houseVote) badges += `<span style="color:#555; font-size:0.75rem;">(찬${bill.houseVote.yea}/반${bill.houseVote.nay}/기${bill.houseVote.abs})</span>`;
+                let row = `<span class="bill-status-badge ${bill.houseStatus==='pass'?'house-pass':'house-fail'}">${hName} ${bill.houseStatus==='pass'?'✔가결':'✘부결'}</span>`;
+                if(bill.houseVote) row += `<span style="color:#555; font-size:0.75rem;">(찬${bill.houseVote.yea}/반${bill.houseVote.nay}/기${bill.houseVote.abs})</span>`;
+                rows.push(row);
             }
             if(isBi && bill.senateStatus !== 'pending' && bill.senateStatus !== 'skip') {
                 const sName = document.getElementById('senateNameInput')?.value || '상원';
-                badges += `<span class="bill-status-badge ${bill.senateStatus==='pass'?'senate-pass':'senate-fail'}">${sName} ${bill.senateStatus==='pass'?'✔가결':'✘부결'}</span>`;
-                if(bill.senateVote) badges += `<span style="color:#555; font-size:0.75rem;">(찬${bill.senateVote.yea}/반${bill.senateVote.nay}/기${bill.senateVote.abs})</span>`;
+                let row = `<span class="bill-status-badge ${bill.senateStatus==='pass'?'senate-pass':'senate-fail'}">${sName} ${bill.senateStatus==='pass'?'✔가결':'✘부결'}</span>`;
+                if(bill.senateVote) row += `<span style="color:#555; font-size:0.75rem;">(찬${bill.senateVote.yea}/반${bill.senateVote.nay}/기${bill.senateVote.abs})</span>`;
+                rows.push(row);
             }
             if(isBi && bill.senateStatus === 'skip') {
                 const sName = document.getElementById('senateNameInput')?.value || '상원';
-                badges += `<span class="bill-status-badge senate-fail">${sName} 미상정</span>`;
+                rows.push(`<span class="bill-status-badge senate-fail">${sName} 미상정</span>`);
             }
             if(isTri && bill.thirdStatus !== 'pending' && bill.thirdStatus !== 'skip') {
                 const tName = document.getElementById('thirdNameInput')?.value || '삼원';
-                badges += `<span class="bill-status-badge ${bill.thirdStatus==='pass'?'third-pass':'third-fail'}">${tName} ${bill.thirdStatus==='pass'?'✔가결':'✘부결'}</span>`;
-                if(bill.thirdVote) badges += `<span style="color:#555; font-size:0.75rem;">(찬${bill.thirdVote.yea}/반${bill.thirdVote.nay}/기${bill.thirdVote.abs})</span>`;
+                let row = `<span class="bill-status-badge ${bill.thirdStatus==='pass'?'third-pass':'third-fail'}">${tName} ${bill.thirdStatus==='pass'?'✔가결':'✘부결'}</span>`;
+                if(bill.thirdVote) row += `<span style="color:#555; font-size:0.75rem;">(찬${bill.thirdVote.yea}/반${bill.thirdVote.nay}/기${bill.thirdVote.abs})</span>`;
+                rows.push(row);
             }
             if(isTri && bill.thirdStatus === 'skip') {
                 const tName = document.getElementById('thirdNameInput')?.value || '삼원';
-                badges += `<span class="bill-status-badge third-fail">${tName} 미상정</span>`;
+                rows.push(`<span class="bill-status-badge third-fail">${tName} 미상정</span>`);
             }
-            if((bill.version || 1) > 1) badges += `<span class="bill-version-badge">제${bill.version}판</span>`;
-            if(bill.isAmendment) {
-                const orig = bills.find(b => b.id === bill.parentBillId);
-                badges += `<span class="bill-version-badge" title="개정 대상 법안">↩ 개정: ${orig ? orig.title : '(삭제된 법안)'}</span>`;
+            if((bill.version || 1) > 1 || bill.isAmendment) {
+                let row = '';
+                if((bill.version || 1) > 1) row += `<span class="bill-version-badge">제${bill.version}판</span>`;
+                if(bill.isAmendment) {
+                    const orig = bills.find(b => b.id === bill.parentBillId);
+                    row += `<span class="bill-version-badge" title="개정 대상 법안">↩ 개정: ${orig ? orig.title : '(삭제된 법안)'}</span>`;
+                }
+                rows.push(row);
             }
-            return badges;
+
+            return rows.map(r => `<div style="display:flex; align-items:center; gap:6px; width:100%;">${r}</div>`).join('');
         }
 
         // 법안 세부 표결 기록(타임라인) + 개정안 목록 HTML — 실제 표결 결과 패널과 동일한 막대그래프로 표시

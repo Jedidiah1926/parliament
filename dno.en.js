@@ -379,37 +379,51 @@
                 pending: ['pending', 'Pending'],
             };
             const [oc, ol] = overallCfg[overall];
-            let badges = `<span class="bill-status-badge ${oc}">${ol}</span>`;
-            if(bill.voteDate) badges += `<span style="color:#666;font-size:0.75rem;">📅 ${bill.voteDate}</span>`;
+
+            // Each line (overall status / per-chamber status) is stacked as its own row so wrapping is always clean
+            const rows = [];
+
+            let overallRow = `<span class="bill-status-badge ${oc}">${ol}</span>`;
+            if(bill.voteDate) overallRow += `<span style="color:#666;font-size:0.75rem;">📅 ${bill.voteDate}</span>`;
+            rows.push(overallRow);
+
             if(bill.houseStatus !== 'pending') {
                 const hName = document.getElementById('houseNameInput')?.value || 'House';
-                badges += `<span class="bill-status-badge ${bill.houseStatus==='pass'?'house-pass':'house-fail'}">${hName} ${bill.houseStatus==='pass'?'✔Passed':'✘Failed'}</span>`;
-                if(bill.houseVote) badges += `<span style="color:#555; font-size:0.75rem;">(Yea ${bill.houseVote.yea}/Nay ${bill.houseVote.nay}/Abs ${bill.houseVote.abs})</span>`;
+                let row = `<span class="bill-status-badge ${bill.houseStatus==='pass'?'house-pass':'house-fail'}">${hName} ${bill.houseStatus==='pass'?'✔Passed':'✘Failed'}</span>`;
+                if(bill.houseVote) row += `<span style="color:#555; font-size:0.75rem;">(Yea ${bill.houseVote.yea}/Nay ${bill.houseVote.nay}/Abs ${bill.houseVote.abs})</span>`;
+                rows.push(row);
             }
             if(isBi && bill.senateStatus !== 'pending' && bill.senateStatus !== 'skip') {
                 const sName = document.getElementById('senateNameInput')?.value || 'Senate';
-                badges += `<span class="bill-status-badge ${bill.senateStatus==='pass'?'senate-pass':'senate-fail'}">${sName} ${bill.senateStatus==='pass'?'✔Passed':'✘Failed'}</span>`;
-                if(bill.senateVote) badges += `<span style="color:#555; font-size:0.75rem;">(Yea ${bill.senateVote.yea}/Nay ${bill.senateVote.nay}/Abs ${bill.senateVote.abs})</span>`;
+                let row = `<span class="bill-status-badge ${bill.senateStatus==='pass'?'senate-pass':'senate-fail'}">${sName} ${bill.senateStatus==='pass'?'✔Passed':'✘Failed'}</span>`;
+                if(bill.senateVote) row += `<span style="color:#555; font-size:0.75rem;">(Yea ${bill.senateVote.yea}/Nay ${bill.senateVote.nay}/Abs ${bill.senateVote.abs})</span>`;
+                rows.push(row);
             }
             if(isBi && bill.senateStatus === 'skip') {
                 const sName = document.getElementById('senateNameInput')?.value || 'Senate';
-                badges += `<span class="bill-status-badge senate-fail">${sName} Not Tabled</span>`;
+                rows.push(`<span class="bill-status-badge senate-fail">${sName} Not Tabled</span>`);
             }
             if(isTri && bill.thirdStatus !== 'pending' && bill.thirdStatus !== 'skip') {
                 const tName = document.getElementById('thirdNameInput')?.value || 'Third';
-                badges += `<span class="bill-status-badge ${bill.thirdStatus==='pass'?'third-pass':'third-fail'}">${tName} ${bill.thirdStatus==='pass'?'✔Passed':'✘Failed'}</span>`;
-                if(bill.thirdVote) badges += `<span style="color:#555; font-size:0.75rem;">(Yea ${bill.thirdVote.yea}/Nay ${bill.thirdVote.nay}/Abs ${bill.thirdVote.abs})</span>`;
+                let row = `<span class="bill-status-badge ${bill.thirdStatus==='pass'?'third-pass':'third-fail'}">${tName} ${bill.thirdStatus==='pass'?'✔Passed':'✘Failed'}</span>`;
+                if(bill.thirdVote) row += `<span style="color:#555; font-size:0.75rem;">(Yea ${bill.thirdVote.yea}/Nay ${bill.thirdVote.nay}/Abs ${bill.thirdVote.abs})</span>`;
+                rows.push(row);
             }
             if(isTri && bill.thirdStatus === 'skip') {
                 const tName = document.getElementById('thirdNameInput')?.value || 'Third';
-                badges += `<span class="bill-status-badge third-fail">${tName} Not Tabled</span>`;
+                rows.push(`<span class="bill-status-badge third-fail">${tName} Not Tabled</span>`);
             }
-            if((bill.version || 1) > 1) badges += `<span class="bill-version-badge">v${bill.version}</span>`;
-            if(bill.isAmendment) {
-                const orig = bills.find(b => b.id === bill.parentBillId);
-                badges += `<span class="bill-version-badge" title="Original bill being amended">↩ Amends: ${orig ? orig.title : '(deleted bill)'}</span>`;
+            if((bill.version || 1) > 1 || bill.isAmendment) {
+                let row = '';
+                if((bill.version || 1) > 1) row += `<span class="bill-version-badge">v${bill.version}</span>`;
+                if(bill.isAmendment) {
+                    const orig = bills.find(b => b.id === bill.parentBillId);
+                    row += `<span class="bill-version-badge" title="Original bill being amended">↩ Amends: ${orig ? orig.title : '(deleted bill)'}</span>`;
+                }
+                rows.push(row);
             }
-            return badges;
+
+            return rows.map(r => `<div style="display:flex; align-items:center; gap:6px; width:100%;">${r}</div>`).join('');
         }
 
         // Bill detailed vote timeline + amendment list HTML — rendered as the same bar graph as the live vote-result panel
