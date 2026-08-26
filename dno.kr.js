@@ -188,7 +188,7 @@
             if(!banner || !text) return;
             const orig = amendmentSourceId ? bills.find(b => b.id === amendmentSourceId) : null;
             if(!orig) { banner.classList.remove('show'); return; }
-            text.textContent = `📝 개정 대상: ${orig.title} (제${orig.version || 1}판)`;
+            text.innerHTML = `📝 개정 대상:<br>${orig.title} (제${orig.version || 1}판)`;
             banner.classList.add('show');
         }
 
@@ -412,7 +412,7 @@
             return badges;
         }
 
-        // 법안 세부 표결 기록(타임라인) + 개정안 목록 HTML
+        // 법안 세부 표결 기록(타임라인) + 개정안 목록 HTML — 실제 표결 결과 패널과 동일한 막대그래프로 표시
         function buildBillHistoryHtml(bill) {
             const chamberLabel = ch => ch === 'senate' ? (document.getElementById('senateNameInput')?.value || '상원')
                 : ch === 'third' ? (document.getElementById('thirdNameInput')?.value || '삼원')
@@ -421,10 +421,32 @@
             const historyRows = history.length === 0
                 ? '<div style="color:#444;">표결 기록 없음</div>'
                 : history.map(h => {
-                    if(h.result === 'skip') return `<div class="bill-history-entry">⊘ ${chamberLabel(h.chamber)} — 미상정</div>`;
-                    const label = h.result === 'pass' ? '✔ 가결' : '✘ 부결';
+                    if(h.result === 'skip') return `<div class="vote-verdict verdict-pending" style="margin:6px 0;">⊘ ${chamberLabel(h.chamber)} 미상정</div>`;
+                    const total = h.total || 1;
+                    const none = Math.max(0, total - h.yea - h.nay - h.abs);
+                    const threshold = h.threshold ?? 0.5;
+                    const threshPct = Math.min(threshold * 100, 100).toFixed(1);
+                    const threshLabel = getThresholdLabel(threshold, h.numer, h.denom);
                     const dateStr = h.date ? ` · ${h.date}` : '';
-                    return `<div class="bill-history-entry">${h.result==='pass'?'✔':'✘'} ${chamberLabel(h.chamber)} — ${label} (찬${h.yea}/반${h.nay}/기${h.abs}, 필요표 ${h.required}/${h.total})${dateStr}</div>`;
+                    return `
+                        <div class="vote-result-wrap" style="margin-top:8px; padding:8px;">
+                            <div class="vote-result-title">[ ${chamberLabel(h.chamber)} 표결 결과 ]${dateStr}</div>
+                            <div class="vote-bar-outer">
+                                <div class="vote-bar-yea" style="width:${(h.yea/total*100).toFixed(1)}%"></div>
+                                <div class="vote-bar-nay" style="width:${(h.nay/total*100).toFixed(1)}%"></div>
+                                <div class="vote-bar-abs" style="width:${(h.abs/total*100).toFixed(1)}%"></div>
+                                <div class="vote-bar-none" style="width:${(none/total*100).toFixed(1)}%"></div>
+                                <div style="position:absolute; left:${threshPct}%; top:0; bottom:0; width:2px; background:var(--tno-gold); box-shadow:0 0 5px var(--tno-gold); z-index:2;"></div>
+                                <div style="position:absolute; left:${threshPct}%; top:-18px; transform:translateX(-50%); font-size:0.72rem; color:var(--tno-gold); white-space:nowrap; font-family:'NeoDunggeunmo','VT323',monospace;">${threshLabel} (${h.required}석)</div>
+                            </div>
+                            <div class="vote-counts">
+                                <span class="vc-yea">찬성 <b>${h.yea}</b></span>
+                                <span class="vc-nay">반대 <b>${h.nay}</b></span>
+                                <span class="vc-abs">기권 <b>${h.abs}</b></span>
+                                <span class="vc-none">미투표 <b>${none}</b></span>
+                            </div>
+                            <div class="vote-verdict ${h.result==='pass'?'verdict-pass':'verdict-fail'}">${h.result==='pass'?'✔ 가결':'✘ 부결'}</div>
+                        </div>`;
                 }).join('');
 
             const amendments = getAmendmentsOf(bill.id);
@@ -617,7 +639,7 @@
 
             if(!bill.voteHistory) bill.voteHistory = [];
             const nowISO = new Date().toISOString();
-            const logVote = (ch, res) => bill.voteHistory.push({ chamber: ch, result: res, date: bill.voteDate || '', yea, nay, abs, total: validSeats, required, at: nowISO });
+            const logVote = (ch, res) => bill.voteHistory.push({ chamber: ch, result: res, date: bill.voteDate || '', yea, nay, abs, total: validSeats, required, threshold, numer: bill.numer, denom: bill.denom, at: nowISO });
             const logSkip = (ch) => bill.voteHistory.push({ chamber: ch, result: 'skip', date: '', at: nowISO });
 
             if(chamber==='house') {
@@ -4189,6 +4211,8 @@
             const sName = document.getElementById('senateNameInput')?.value||'상원';
             const tName = document.getElementById('thirdNameInput')?.value||'삼원';
             const chamberDisplayName = chamber==='senate'?sName:chamber==='third'?tName:hName;
+            // 실제 개표에 쓰인 가중치 총합 대비 각 정당의 비중 = 그 선거의 실제 득표율(추정치가 아닌 결과 그 자체)
+            const wTotal = (weightedResult||[]).reduce((s,x)=>s+(x.w||0),0);
             const record = {
                 id: 'er'+Date.now(),
                 title: title || '무제 선거',
@@ -4200,7 +4224,7 @@
                 parties: parties.map(p => {
                     const w = weightedResult.find(x=>x.id===p.id);
                     const s = seatMap.find(x=>x.id===p.id);
-                    return { id:p.id, name:p.name, color:p.color, prob: w?.origProb||0, seats: s?.n||0 };
+                    return { id:p.id, name:p.name, color:p.color, prob: (w && wTotal>0) ? w.w/wTotal : 0, seats: s?.n||0 };
                 }),
                 totalSeats: seatMap.reduce((a,b)=>a+b.n,0),
                 districtResults: (districtResults || []).map(d => ({ ...d, districtName: districtNames[chamber][d.key] || '' }))
@@ -4227,7 +4251,7 @@
                 const savedAtLabel = r.savedAt ? new Date(r.savedAt).toLocaleString('ko-KR') : '—';
                 const detailRows = r.parties.filter(p=>p.seats>0 || p.prob>0)
                     .sort((a,b)=>b.seats-a.seats)
-                    .map(p=>`<div class="bill-history-entry">${p.name} — 의석 ${p.seats}석 · 득표율(추정) ${(p.prob*100).toFixed(1)}%</div>`)
+                    .map(p=>`<div class="bill-history-entry">${p.name} — 의석 ${p.seats}석 · 득표율 ${(p.prob*100).toFixed(1)}%</div>`)
                     .join('') || '<div style="color:#444;">정당별 세부 데이터 없음</div>';
                 div.innerHTML = `
                     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
