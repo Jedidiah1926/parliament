@@ -2035,6 +2035,28 @@
                         <label style="flex:1;margin:0;cursor:pointer;font-size:0.9rem;color:#aaa;" for="c${cIdx}_ext${p.id}">${p.name}</label>
                         <input type="checkbox" id="c${cIdx}_ext${p.id}" ${coal.externalSupporters.includes(p.id)?'checked':''} onchange="toggleCoalitionExternalSupport('${coal.id}',${p.id},this.checked)">
                     </div>`).join('');
+
+                // 무소속 탭에서 개별 배정된 의원(indKey) — 정당 체크박스로는 안 잡히므로 이름/좌석번호로 별도 표시
+                const indLabelFor = (indKey) => {
+                    const ind = independents.find(x => 'ind__'+x.id === indKey);
+                    if(!ind) return indKey;
+                    return ind.name ? ind.name : `#${computeIndependentOffset(ind.chamber) + ind.seatIndex}`;
+                };
+                const memberIndKeys = coal.members.filter(m => typeof m === 'string' && m.startsWith('ind__'));
+                const extIndKeys = coal.externalSupporters.filter(m => typeof m === 'string' && m.startsWith('ind__'));
+                const memberIndRows = memberIndKeys.map(k => `
+                    <div style="display:flex;align-items:center;border-bottom:1px solid #222;padding:3px 0;">
+                        <span style="width:9px;height:9px;background:#999;border-radius:50%;display:inline-block;margin-right:6px;flex-shrink:0;"></span>
+                        <label style="flex:1;margin:0;font-size:0.9rem;color:#ccc;">${indLabelFor(k)}</label>
+                        <span style="color:#555;font-size:0.75rem;" title="무소속 탭에서 관리">무소속</span>
+                    </div>`).join('');
+                const extIndRows = extIndKeys.map(k => `
+                    <div style="display:flex;align-items:center;border-bottom:1px solid #222;padding:3px 0;">
+                        <span style="width:9px;height:9px;background:#999;border-radius:50%;display:inline-block;margin-right:6px;flex-shrink:0;"></span>
+                        <label style="flex:1;margin:0;font-size:0.9rem;color:#aaa;">${indLabelFor(k)}</label>
+                        <span style="color:#555;font-size:0.75rem;" title="무소속 탭에서 관리">무소속</span>
+                    </div>`).join('');
+                const memberCount = memberParties.length + memberIndKeys.length;
                 const membersCollapsed = coal._membersCollapsed ?? false;
                 const extCollapsed = coal._extCollapsed ?? true; // 각외협력은 기본 접힘
                 div.innerHTML = `
@@ -2062,12 +2084,12 @@
                             ${coal.isRuling?'★ 집권':'집권 설정'}
                         </div>
                     </div>
-                    <!-- 멤버 정당 (접기 가능) -->
+                    <!-- 멤버 (접기 가능) -->
                     <div onclick="toggleCoalitionSection('${coal.id}','members')" style="display:flex;align-items:center;gap:6px;margin-top:10px;cursor:pointer;user-select:none;">
                         <span style="color:#888;font-size:0.8rem;">${membersCollapsed?'▶':'▼'}</span>
-                        <span style="color:#555;font-size:0.78rem;letter-spacing:1px;">▌ 멤버 정당 (${memberParties.length})</span>
+                        <span style="color:#555;font-size:0.78rem;letter-spacing:1px;">▌ 멤버 (${memberCount})</span>
                     </div>
-                    <div class="coalition-members" style="display:${membersCollapsed?'none':'block'};">${memberChecks}</div>
+                    <div class="coalition-members" style="display:${membersCollapsed?'none':'block'};">${memberChecks}${memberIndRows}</div>
                     <!-- 각외협력 (접기 가능) -->
                     <div onclick="toggleCoalitionSection('${coal.id}','ext')" style="display:flex;align-items:center;gap:6px;margin-top:10px;cursor:pointer;user-select:none;">
                         <span style="color:#888;font-size:0.8rem;">${extCollapsed?'▶':'▼'}</span>
@@ -2081,7 +2103,7 @@
                                 title="명칭 커스터마이징 (예: 신임과 보완, 보완과 신임 등)"
                                 onchange="updateCoalition('${coal.id}','externalSupportLabel',this.value.trim()||'각외협력')">
                         </div>
-                        <div class="coalition-members" style="border-color:#443300;margin-top:6px;">${extChecks || '<div style="color:#333;font-size:0.8rem;padding:4px 0;">비멤버 정당 없음</div>'}</div>
+                        <div class="coalition-members" style="border-color:#443300;margin-top:6px;">${extChecks}${extIndRows}${(!extChecks && !extIndRows) ? '<div style="color:#333;font-size:0.8rem;padding:4px 0;">비멤버 정당 없음</div>' : ''}</div>
                     </div>`;
                 container.appendChild(div);
                 startDragReorder(div.querySelector('.drag-handle'), 'coalitionList', '.drag-card-coalition', coalitions, renderCoalitions);
