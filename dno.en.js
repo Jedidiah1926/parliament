@@ -2304,8 +2304,8 @@
             return '';
         }
 
-        // Party status transition — dissolving saves the name and locks it to "*Dissolved*", and clears all its seats.
-        // Leaving dissolved (to active/banned) restores the saved name.
+        // Party status transition — dissolving saves the name/abbr and locks them to "*Dissolved*", and clears all its seats.
+        // Leaving dissolved (to active/banned) restores the saved name/abbr.
         function updatePartyStatus(i, newStatus) {
             const p = parties[i];
             if(!p) return;
@@ -2314,11 +2314,15 @@
 
             if(oldStatus === 'dissolved') {
                 p.name = p._nameBeforeDissolution ?? p.name;
+                p.abbr = p._abbrBeforeDissolution ?? p.abbr;
                 delete p._nameBeforeDissolution;
+                delete p._abbrBeforeDissolution;
             }
             if(newStatus === 'dissolved') {
                 p._nameBeforeDissolution = p.name;
+                p._abbrBeforeDissolution = p.abbr;
                 p.name = '*Dissolved*';
+                p.abbr = '*Dissolved*';
                 p.seatsHouse = 0; p.seatsSenate = 0; p.seatsThird = 0;
                 (p.factions||[]).forEach(f => { f.seatsHouse = 0; f.seatsSenate = 0; f.seatsThird = 0; });
             }
@@ -2531,7 +2535,7 @@
                         </div>
                         <input type="text" value="${p.abbr||''}" onchange="updateParty(${idx},'abbr',this.value)" placeholder="Abbr." title="Party abbreviation (e.g. SPD)"
                             ${p.status==='dissolved'?'disabled':''}
-                            style="flex:1;min-width:0;font-size:0.85rem;text-align:center;color:var(--tno-gold);${p.status==='dissolved'?'opacity:0.5;cursor:not-allowed;':''}">
+                            style="flex:1;min-width:0;font-size:0.85rem;text-align:center;color:${p.status==='dissolved'?'var(--tno-alert)':'#aaa'};${p.status==='dissolved'?'opacity:0.5;cursor:not-allowed;':''}">
                         <button class="remove-btn" onclick="removeParty(${idx})">X</button>
                     </div>
                     <!-- Row 2: party name (always visible) -->

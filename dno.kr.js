@@ -2401,8 +2401,8 @@
             return '';
         }
 
-        // 정당 상태 전환 — 해산되면 이름을 저장해두고 "*해산됨*"으로 고정, 의석을 모두 비움.
-        // 해산에서 벗어나면(활동중/활동금지) 저장해둔 원래 이름을 복원.
+        // 정당 상태 전환 — 해산되면 이름·약칭을 저장해두고 "*해산됨*"으로 고정, 의석을 모두 비움.
+        // 해산에서 벗어나면(활동중/활동금지) 저장해둔 원래 이름·약칭을 복원.
         function updatePartyStatus(i, newStatus) {
             const p = parties[i];
             if(!p) return;
@@ -2411,11 +2411,15 @@
 
             if(oldStatus === 'dissolved') {
                 p.name = p._nameBeforeDissolution ?? p.name;
+                p.abbr = p._abbrBeforeDissolution ?? p.abbr;
                 delete p._nameBeforeDissolution;
+                delete p._abbrBeforeDissolution;
             }
             if(newStatus === 'dissolved') {
                 p._nameBeforeDissolution = p.name;
+                p._abbrBeforeDissolution = p.abbr;
                 p.name = '*해산됨*';
+                p.abbr = '*해산됨*';
                 p.seatsHouse = 0; p.seatsSenate = 0; p.seatsThird = 0;
                 (p.factions||[]).forEach(f => { f.seatsHouse = 0; f.seatsSenate = 0; f.seatsThird = 0; });
             }
@@ -2628,7 +2632,7 @@
                         </div>
                         <input type="text" value="${p.abbr||''}" onchange="updateParty(${idx},'abbr',this.value)" placeholder="약칭" title="정당 약자 표기 (예: SPD)"
                             ${p.status==='dissolved'?'disabled':''}
-                            style="flex:1;min-width:0;font-size:0.85rem;text-align:center;color:var(--tno-gold);${p.status==='dissolved'?'opacity:0.5;cursor:not-allowed;':''}">
+                            style="flex:1;min-width:0;font-size:0.85rem;text-align:center;color:${p.status==='dissolved'?'var(--tno-alert)':'#aaa'};${p.status==='dissolved'?'opacity:0.5;cursor:not-allowed;':''}">
                         <button class="remove-btn" onclick="removeParty(${idx})">X</button>
                     </div>
                     <!-- 행2: 당명 (항상 보임) -->
