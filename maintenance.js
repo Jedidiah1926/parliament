@@ -7,6 +7,6 @@
 // end를 null로 비워두면 start 이후 종료 시각 없이 점검 상태가 계속됩니다.
 // start를 null로 비워두면 이미 점검이 시작된 것으로 취급합니다.
 const MAINTENANCE_WINDOW = {
-    start: "2026-08-27T21:00:00",
+    start: "2026-08-27T22:00:00",
     end:   "2026-08-28T00:30:00"
 };
