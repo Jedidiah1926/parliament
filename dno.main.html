@@ -9,12 +9,18 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/neodgm/neodgm-webfont@latest/neodgm/style.css">
 
     <link rel="stylesheet" href="dno.main.css">
+
+    <script src="maintenance.js"></script>
 </head>
 <body>
 
     <div class="terminal-container">
         <div class="corner top-left"></div>
         <div class="corner bottom-right"></div>
+
+        <div class="maint-notice-bar" id="maintNoticeBar" style="display:none;">
+            ⚠ <span id="maintNoticeText"></span>
+        </div>
 
         <div class="header-strip">
             DATANET MAIN TERMINAL
@@ -108,6 +114,39 @@
             </div>
         </div>
     </div>
+
+    <script>
+        // maintenance.js의 시각은 항상 KST(UTC+9) 기준이므로 보는 사람의 시간대와 무관하게 +09:00으로 해석
+        function parseMaintTime(v) { return v ? new Date(v + '+09:00') : null; }
+        function fmtMaintTime(d) {
+            const parts = new Intl.DateTimeFormat('ko-KR', {
+                timeZone: 'Asia/Seoul',
+                year: 'numeric', month: '2-digit', day: '2-digit',
+                hour: '2-digit', minute: '2-digit', hour12: false
+            }).formatToParts(d);
+            const get = t => parts.find(p => p.type === t).value;
+            return `${get('year')}-${get('month')}-${get('day')} ${get('hour')}:${get('minute')}`;
+        }
+
+        // 아직 시작되지 않은(=예정된) 점검이 있으면 상단에 안내 바를 띄운다
+        function checkUpcomingMaintenance() {
+            const bar = document.getElementById('maintNoticeBar');
+            if(!bar || typeof MAINTENANCE_WINDOW === 'undefined') return;
+            const start = parseMaintTime(MAINTENANCE_WINDOW.start);
+            const end = parseMaintTime(MAINTENANCE_WINDOW.end);
+            if(start && new Date() < start) {
+                const text = end
+                    ? `예정된 점검: ${fmtMaintTime(start)} ~ ${fmtMaintTime(end)} (KST)`
+                    : `예정된 점검: ${fmtMaintTime(start)} (KST)부터`;
+                document.getElementById('maintNoticeText').textContent = text;
+                bar.style.display = 'block';
+            } else {
+                bar.style.display = 'none';
+            }
+        }
+        checkUpcomingMaintenance();
+        setInterval(checkUpcomingMaintenance, 15000);
+    </script>
 
 </body>
 </html>
