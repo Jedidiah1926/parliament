@@ -1250,7 +1250,14 @@
                 ctx.fill();
 
                 // Stroke: always party/coalition/gov color
-                if(d.isRuling && highlightGov) {
+                if(d.partyStatus === 'banned') {
+                    ctx.shadowColor = "rgba(255, 0, 85, 0.8)";
+                    ctx.shadowBlur = 10;
+                    ctx.strokeStyle = "#ff0055";
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                    ctx.shadowBlur = 0;
+                } else if(d.isRuling && highlightGov) {
                     ctx.shadowColor = "rgba(255, 215, 0, 0.8)";
                     ctx.shadowBlur = 10;
                     ctx.strokeStyle = "#ffd700";
@@ -1698,6 +1705,30 @@
             if(probS) probS.textContent = sName;
             if(probT) probT.textContent = tName;
             elecRenderProbBars(); // 선거 탭의 읽기전용 지지율 바 제목도 즉시 갱신
+            const indH = document.getElementById('innerTabIndHouse');
+            const indS = document.getElementById('innerTabIndSenate');
+            const indT = document.getElementById('innerTabIndThird');
+            if(indH) indH.textContent = hName;
+            if(indS) indS.textContent = sName;
+            if(indT) indT.textContent = tName;
+            const membersH = document.getElementById('innerTabMembersHouse');
+            const membersS = document.getElementById('innerTabMembersSenate');
+            const membersT = document.getElementById('innerTabMembersThird');
+            if(membersH) membersH.textContent = hName;
+            if(membersS) membersS.textContent = sName;
+            if(membersT) membersT.textContent = tName;
+            const indMemH = document.getElementById('innerTabIndMemHouse');
+            const indMemS = document.getElementById('innerTabIndMemSenate');
+            const indMemT = document.getElementById('innerTabIndMemThird');
+            if(indMemH) indMemH.textContent = hName;
+            if(indMemS) indMemS.textContent = sName;
+            if(indMemT) indMemT.textContent = tName;
+            const distListH = document.getElementById('innerTabDistListHouse');
+            const distListS = document.getElementById('innerTabDistListSenate');
+            const distListT = document.getElementById('innerTabDistListThird');
+            if(distListH) distListH.textContent = hName;
+            if(distListS) distListS.textContent = sName;
+            if(distListT) distListT.textContent = tName;
             // 카드 안 의석 레이블도 갱신 (renderCoalitions 제외로 무한루프 방지)
             renderIdeologyList();
             renderPartyList('house');
@@ -1871,7 +1902,8 @@
                             <label style="color:#555;font-size:0.8rem;white-space:nowrap;">${thisChamberName} 의석</label>
                             <input type="number" value="${p[seatKey]}" min="0"
                                 onchange="updateParty(${idx},'${seatKey}',parseInt(this.value)||0)"
-                                style="width:65px;">
+                                ${p.status==='dissolved'?'disabled':''}
+                                style="width:65px;${p.status==='dissolved'?'opacity:0.5;cursor:not-allowed;':''}">
                         </div>
                     </div>
                     ${(p.factions||[]).length>0?`
@@ -1881,8 +1913,9 @@
                             return `<div style="display:flex;align-items:center;gap:6px;padding:3px 0;border-bottom:1px solid #111;">
                                 <span style="width:6px;height:6px;background:${f.usePartyColor?p.color:f.color};border-radius:50%;flex-shrink:0;"></span>
                                 <span style="flex:1;font-size:0.8rem;color:#888;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${f.name}</span>
-                                <input type="number" value="${f[fSeatKey]||0}" min="0" style="width:55px;font-size:0.8rem;"
-                                    onchange="updateFactionById(${p.id},'${f.id}','${fSeatKey}',parseInt(this.value)||0)">
+                                <input type="number" value="${f[fSeatKey]||0}" min="0" style="width:55px;font-size:0.8rem;${p.status==='dissolved'?'opacity:0.5;cursor:not-allowed;':''}"
+                                    onchange="updateFactionById(${p.id},'${f.id}','${fSeatKey}',parseInt(this.value)||0)"
+                                    ${p.status==='dissolved'?'disabled':''}>
                             </div>`;
                         }).join('')}
                         ${(()=>{
@@ -2359,13 +2392,35 @@
             refreshUI(); simulate();
         }
         function removeParty(i) { const pid=parties[i].id; parties.splice(i,1); coalitions.forEach(c=>c.members=c.members.filter(x=>x!==pid)); refreshUI(); simulate(); }
-        function updateParty(i,k,v) { parties[i][k]=v; if(k==='name'||k==='status')refreshUI(); simulate(); }
+        function updateParty(i,k,v) { parties[i][k]=v; if(k==='name')refreshUI(); simulate(); }
 
         // 정당 해산/활동금지 표기 뱃지 — 활동중인 정당은 표기하지 않음
         function partyStatusBadge(p) {
             if(p.status === 'dissolved') return `<span class="party-status-badge status-dissolved">해산</span>`;
             if(p.status === 'banned') return `<span class="party-status-badge status-banned">활동 금지</span>`;
             return '';
+        }
+
+        // 정당 상태 전환 — 해산되면 이름을 저장해두고 "*해산됨*"으로 고정, 의석을 모두 비움.
+        // 해산에서 벗어나면(활동중/활동금지) 저장해둔 원래 이름을 복원.
+        function updatePartyStatus(i, newStatus) {
+            const p = parties[i];
+            if(!p) return;
+            const oldStatus = p.status || 'active';
+            if(oldStatus === newStatus) return;
+
+            if(oldStatus === 'dissolved') {
+                p.name = p._nameBeforeDissolution ?? p.name;
+                delete p._nameBeforeDissolution;
+            }
+            if(newStatus === 'dissolved') {
+                p._nameBeforeDissolution = p.name;
+                p.name = '*해산됨*';
+                p.seatsHouse = 0; p.seatsSenate = 0; p.seatsThird = 0;
+                (p.factions||[]).forEach(f => { f.seatsHouse = 0; f.seatsSenate = 0; f.seatsThird = 0; });
+            }
+            p.status = newStatus;
+            refreshUI(); simulate();
         }
         function togglePartyParticipation(i,f,v) { parties[i][f]=v; refreshUI(); simulate(); }
         function updatePartyColorText(e,i) { if(isValidHex(e.value)){ parties[i].color=e.value.toUpperCase(); e.nextElementSibling.value=parties[i].color; refreshUI(); simulate(); }}
@@ -2572,12 +2627,15 @@
                             <input type="color" value="${p.color}" oninput="updatePartyColorPicker(this,${idx})">
                         </div>
                         <input type="text" value="${p.abbr||''}" onchange="updateParty(${idx},'abbr',this.value)" placeholder="약칭" title="정당 약자 표기 (예: SPD)"
-                            style="flex:1;min-width:0;font-size:0.85rem;text-align:center;color:var(--tno-gold);">
+                            ${p.status==='dissolved'?'disabled':''}
+                            style="flex:1;min-width:0;font-size:0.85rem;text-align:center;color:var(--tno-gold);${p.status==='dissolved'?'opacity:0.5;cursor:not-allowed;':''}">
                         <button class="remove-btn" onclick="removeParty(${idx})">X</button>
                     </div>
                     <!-- 행2: 당명 (항상 보임) -->
                     <div style="margin-bottom:6px;display:flex;align-items:center;gap:6px;">
-                        <input type="text" value="${p.name}" onchange="updateParty(${idx},'name',this.value)" placeholder="정당명" style="flex:1;min-width:0;font-size:1rem;box-sizing:border-box;">
+                        <input type="text" value="${p.name}" onchange="updateParty(${idx},'name',this.value)" placeholder="정당명"
+                            ${p.status==='dissolved'?'disabled':''}
+                            style="flex:1;min-width:0;font-size:1rem;box-sizing:border-box;${p.status==='dissolved'?'opacity:0.5;cursor:not-allowed;':''}">
                         ${partyStatusBadge(p)}
                     </div>
                     <!-- 행3: 이념 (항상 보임) -->
@@ -2588,10 +2646,10 @@
                     </div>
                     <!-- 행3.5: 정당 상태 (항상 보임) -->
                     <div style="margin-bottom:6px;">
-                        <select onchange="updateParty(${idx},'status',this.value)" style="width:100%;">
+                        <select onchange="updatePartyStatus(${idx},this.value)" style="width:100%;">
                             <option value="active" ${(!p.status||p.status==='active')?'selected':''}>활동중</option>
-                            <option value="dissolved" ${p.status==='dissolved'?'selected':''}>해산</option>
                             <option value="banned" ${p.status==='banned'?'selected':''}>활동 금지</option>
+                            <option value="dissolved" ${p.status==='dissolved'?'selected':''}>해산</option>
                         </select>
                     </div>
                     <!-- 이 아래부터 접기 대상 -->
@@ -5338,7 +5396,14 @@
                 ctx.fill();
 
                 // Stroke: party/coalition/gov
-                if(d.isRuling && highlightGov) {
+                if(d.partyStatus === 'banned') {
+                    ctx.shadowColor = "rgba(255, 0, 85, 0.8)";
+                    ctx.shadowBlur = 10;
+                    ctx.strokeStyle = "#ff0055";
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                    ctx.shadowBlur = 0;
+                } else if(d.isRuling && highlightGov) {
                     ctx.shadowColor = "rgba(255, 215, 0, 0.8)";
                     ctx.shadowBlur = 10;
                     ctx.strokeStyle = "#ffd700";

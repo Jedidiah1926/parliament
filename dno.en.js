@@ -1190,7 +1190,14 @@
                 ctx.fill();
 
                 // Stroke: always party/coalition/gov color
-                if(d.isRuling && highlightGov) {
+                if(d.partyStatus === 'banned') {
+                    ctx.shadowColor = "rgba(255, 0, 85, 0.8)";
+                    ctx.shadowBlur = 10;
+                    ctx.strokeStyle = "#ff0055";
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                    ctx.shadowBlur = 0;
+                } else if(d.isRuling && highlightGov) {
                     ctx.shadowColor = "rgba(255, 215, 0, 0.8)";
                     ctx.shadowBlur = 10;
                     ctx.strokeStyle = "#ffd700";
@@ -1626,6 +1633,30 @@
             if(probS) probS.textContent = sName;
             if(probT) probT.textContent = tName;
             elecRenderProbBars(); // Immediately refresh the read-only support-rate bar titles on the Election tab too
+            const indH = document.getElementById('innerTabIndHouse');
+            const indS = document.getElementById('innerTabIndSenate');
+            const indT = document.getElementById('innerTabIndThird');
+            if(indH) indH.textContent = hName;
+            if(indS) indS.textContent = sName;
+            if(indT) indT.textContent = tName;
+            const membersH = document.getElementById('innerTabMembersHouse');
+            const membersS = document.getElementById('innerTabMembersSenate');
+            const membersT = document.getElementById('innerTabMembersThird');
+            if(membersH) membersH.textContent = hName;
+            if(membersS) membersS.textContent = sName;
+            if(membersT) membersT.textContent = tName;
+            const indMemH = document.getElementById('innerTabIndMemHouse');
+            const indMemS = document.getElementById('innerTabIndMemSenate');
+            const indMemT = document.getElementById('innerTabIndMemThird');
+            if(indMemH) indMemH.textContent = hName;
+            if(indMemS) indMemS.textContent = sName;
+            if(indMemT) indMemT.textContent = tName;
+            const distListH = document.getElementById('innerTabDistListHouse');
+            const distListS = document.getElementById('innerTabDistListSenate');
+            const distListT = document.getElementById('innerTabDistListThird');
+            if(distListH) distListH.textContent = hName;
+            if(distListS) distListS.textContent = sName;
+            if(distListT) distListT.textContent = tName;
             // Also refresh the seat label inside the card (excluded from renderCoalitions to prevent an infinite loop)
             renderIdeologyList();
             renderPartyList('house');
@@ -1799,7 +1830,8 @@
                             <label style="color:#555;font-size:0.8rem;white-space:nowrap;">${thisChamberName} Seats</label>
                             <input type="number" value="${p[seatKey]}" min="0"
                                 onchange="updateParty(${idx},'${seatKey}',parseInt(this.value)||0)"
-                                style="width:65px;">
+                                ${p.status==='dissolved'?'disabled':''}
+                                style="width:65px;${p.status==='dissolved'?'opacity:0.5;cursor:not-allowed;':''}">
                         </div>
                     </div>
                     ${(p.factions||[]).length>0?`
@@ -1809,8 +1841,9 @@
                             return `<div style="display:flex;align-items:center;gap:6px;padding:3px 0;border-bottom:1px solid #111;">
                                 <span style="width:6px;height:6px;background:${f.usePartyColor?p.color:f.color};border-radius:50%;flex-shrink:0;"></span>
                                 <span style="flex:1;font-size:0.8rem;color:#888;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${f.name}</span>
-                                <input type="number" value="${f[fSeatKey]||0}" min="0" style="width:55px;font-size:0.8rem;"
-                                    onchange="updateFactionById(${p.id},'${f.id}','${fSeatKey}',parseInt(this.value)||0)">
+                                <input type="number" value="${f[fSeatKey]||0}" min="0" style="width:55px;font-size:0.8rem;${p.status==='dissolved'?'opacity:0.5;cursor:not-allowed;':''}"
+                                    onchange="updateFactionById(${p.id},'${f.id}','${fSeatKey}',parseInt(this.value)||0)"
+                                    ${p.status==='dissolved'?'disabled':''}>
                             </div>`;
                         }).join('')}
                         ${(()=>{
@@ -2262,13 +2295,35 @@
             refreshUI(); simulate();
         }
         function removeParty(i) { const pid=parties[i].id; parties.splice(i,1); coalitions.forEach(c=>c.members=c.members.filter(x=>x!==pid)); refreshUI(); simulate(); }
-        function updateParty(i,k,v) { parties[i][k]=v; if(k==='name'||k==='status')refreshUI(); simulate(); }
+        function updateParty(i,k,v) { parties[i][k]=v; if(k==='name')refreshUI(); simulate(); }
 
         // Party dissolved/banned badge — shown only when the party isn't active
         function partyStatusBadge(p) {
             if(p.status === 'dissolved') return `<span class="party-status-badge status-dissolved">Dissolved</span>`;
             if(p.status === 'banned') return `<span class="party-status-badge status-banned">Banned</span>`;
             return '';
+        }
+
+        // Party status transition — dissolving saves the name and locks it to "*Dissolved*", and clears all its seats.
+        // Leaving dissolved (to active/banned) restores the saved name.
+        function updatePartyStatus(i, newStatus) {
+            const p = parties[i];
+            if(!p) return;
+            const oldStatus = p.status || 'active';
+            if(oldStatus === newStatus) return;
+
+            if(oldStatus === 'dissolved') {
+                p.name = p._nameBeforeDissolution ?? p.name;
+                delete p._nameBeforeDissolution;
+            }
+            if(newStatus === 'dissolved') {
+                p._nameBeforeDissolution = p.name;
+                p.name = '*Dissolved*';
+                p.seatsHouse = 0; p.seatsSenate = 0; p.seatsThird = 0;
+                (p.factions||[]).forEach(f => { f.seatsHouse = 0; f.seatsSenate = 0; f.seatsThird = 0; });
+            }
+            p.status = newStatus;
+            refreshUI(); simulate();
         }
         function togglePartyParticipation(i,f,v) { parties[i][f]=v; refreshUI(); simulate(); }
         function updatePartyColorText(e,i) { if(isValidHex(e.value)){ parties[i].color=e.value.toUpperCase(); e.nextElementSibling.value=parties[i].color; refreshUI(); simulate(); }}
@@ -2475,12 +2530,15 @@
                             <input type="color" value="${p.color}" oninput="updatePartyColorPicker(this,${idx})">
                         </div>
                         <input type="text" value="${p.abbr||''}" onchange="updateParty(${idx},'abbr',this.value)" placeholder="Abbr." title="Party abbreviation (e.g. SPD)"
-                            style="flex:1;min-width:0;font-size:0.85rem;text-align:center;color:var(--tno-gold);">
+                            ${p.status==='dissolved'?'disabled':''}
+                            style="flex:1;min-width:0;font-size:0.85rem;text-align:center;color:var(--tno-gold);${p.status==='dissolved'?'opacity:0.5;cursor:not-allowed;':''}">
                         <button class="remove-btn" onclick="removeParty(${idx})">X</button>
                     </div>
                     <!-- Row 2: party name (always visible) -->
                     <div style="margin-bottom:6px;display:flex;align-items:center;gap:6px;">
-                        <input type="text" value="${p.name}" onchange="updateParty(${idx},'name',this.value)" placeholder="Party name" style="flex:1;min-width:0;font-size:1rem;box-sizing:border-box;">
+                        <input type="text" value="${p.name}" onchange="updateParty(${idx},'name',this.value)" placeholder="Party name"
+                            ${p.status==='dissolved'?'disabled':''}
+                            style="flex:1;min-width:0;font-size:1rem;box-sizing:border-box;${p.status==='dissolved'?'opacity:0.5;cursor:not-allowed;':''}">
                         ${partyStatusBadge(p)}
                     </div>
                     <!-- Row 3: ideology (always visible) -->
@@ -2491,10 +2549,10 @@
                     </div>
                     <!-- Row 3.5: party status (always visible) -->
                     <div style="margin-bottom:6px;">
-                        <select onchange="updateParty(${idx},'status',this.value)" style="width:100%;">
+                        <select onchange="updatePartyStatus(${idx},this.value)" style="width:100%;">
                             <option value="active" ${(!p.status||p.status==='active')?'selected':''}>Active</option>
-                            <option value="dissolved" ${p.status==='dissolved'?'selected':''}>Dissolved</option>
                             <option value="banned" ${p.status==='banned'?'selected':''}>Banned</option>
+                            <option value="dissolved" ${p.status==='dissolved'?'selected':''}>Dissolved</option>
                         </select>
                     </div>
                     <!-- Everything below is collapsible -->
@@ -5222,6 +5280,7 @@
                 isRuling: map[i]?.isRuling || false,
                 externalSupport: map[i]?.externalSupport || false,
                 partyName: map[i]?.partyName || 'Vacant',
+                partyStatus: map[i]?.partyStatus || 'active',
                 ideology: map[i]?.ideology || '-',
                 independentName: map[i]?.independentName || null,
                 independentSeatIndex: map[i]?.independentSeatIndex || null,
@@ -5244,7 +5303,14 @@
                 ctx.fill();
 
                 // Stroke: party/coalition/gov
-                if(d.isRuling && highlightGov) {
+                if(d.partyStatus === 'banned') {
+                    ctx.shadowColor = "rgba(255, 0, 85, 0.8)";
+                    ctx.shadowBlur = 10;
+                    ctx.strokeStyle = "#ff0055";
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                    ctx.shadowBlur = 0;
+                } else if(d.isRuling && highlightGov) {
                     ctx.shadowColor = "rgba(255, 215, 0, 0.8)";
                     ctx.shadowBlur = 10;
                     ctx.strokeStyle = "#ffd700";
