@@ -6,6 +6,7 @@
             --tno-text: #e0e0e0;
             --tno-border: #4a5a6a;
             --tno-alert: #ff0055;
+            --tno-gold: #ffd700;
         }
 
         body {
@@ -40,6 +41,18 @@
             padding: 0;
             position: relative;
             box-shadow: 0 0 30px rgba(0, 255, 255, 0.1);
+        }
+
+        /* ── 예정된 점검 안내 바 ── */
+        .maint-notice-bar {
+            background: repeating-linear-gradient(45deg, #1a1400, #1a1400 10px, #241d00 10px, #241d00 20px);
+            color: var(--tno-gold);
+            text-align: center;
+            padding: 8px 16px;
+            font-size: 0.85rem;
+            letter-spacing: 1px;
+            border-bottom: 2px solid var(--tno-gold);
+            text-shadow: 0 0 6px var(--tno-gold);
         }
 
         .header-strip {
