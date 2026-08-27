@@ -1461,7 +1461,6 @@
             currentSubTab = { party:'ideology', setup:'settings', legislation:'bill', record:'archive', ...uiSub };
             // 구버전 파일 호환: setup 하위탭이 house/senate/third/leader였다면 새 구조로 매핑
             if(['house','senate','third'].includes(currentSubTab.setup)) currentSubTab.setup = 'settings';
-            if(currentSubTab.party === 'leader') currentSubTab.party = 'partyInfo';
             if(currentSubTab.party === 'coalitionLeader') currentSubTab.party = 'partyInfo';
             // 구버전 파일 호환: 기록 탭이 입법/선거 그룹에서 독립되기 전 위치를 가리키던 경우 재매핑
             if(currentSubTab.legislation === 'archive') currentSubTab.legislation = 'bill';
@@ -1568,23 +1567,14 @@
             if(sub === 'table') renderBillList();
             if(sub === 'archive') renderArchiveList();
             if(sub === 'elecRecord') elecRenderRecords();
-            if(sub === 'partyInfo') { switchPartyInnerTab('info'); }
+            if(sub === 'partyInfo') { renderPartyInfoList(); }
+            if(sub === 'leader') { renderLeaderList(); }
             if(sub === 'ideology') renderIdeologyList();
             if(sub === 'independent') { independentInnerTab = 'house'; renderIndependentList(); }
             if(sub === 'settings') { switchSetupInnerTab('house'); }
             if(sub === 'coalition') { renderCoalitions(); }
             if(sub === 'indMember') { indMemberInnerTab = 'house'; switchIndMemberInnerTab('house'); }
             if(sub === 'members') { membersInnerTab = 'house'; switchMembersInnerTab('house'); }
-        }
-
-        // 정당 탭 내부의 정당/당수 중첩 탭 전환
-        function switchPartyInnerTab(inner) {
-            document.getElementById('innerTabPartyInfo').classList.toggle('active', inner==='info');
-            document.getElementById('innerTabPartyLeader').classList.toggle('active', inner==='leader');
-            document.getElementById('innerContentPartyInfo').classList.toggle('active', inner==='info');
-            document.getElementById('innerContentPartyLeader').classList.toggle('active', inner==='leader');
-            if(inner==='info') renderPartyInfoList();
-            else renderLeaderList();
         }
 
         // 구버전 switchTab 호환

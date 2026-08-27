@@ -60,7 +60,8 @@
             <div id="mainContentParty" class="main-tab-content active">
                 <div class="sub-tab-container">
                     <button class="sub-tab-btn active" onclick="switchSubTab('party','ideology')" id="subTabIdeology">이념</button>
-                    <button class="sub-tab-btn" onclick="switchSubTab('party','partyInfo')" id="subTabPartyInfo">정당</button>
+                    <button class="sub-tab-btn" onclick="switchSubTab('party','partyInfo')" id="subTabPartyInfo">정보</button>
+                    <button class="sub-tab-btn" onclick="switchSubTab('party','leader')" id="subTabLeader">당수</button>
                     <button class="sub-tab-btn" onclick="switchSubTab('party','independent')" id="subTabIndependent">무소속</button>
                 </div>
 
@@ -70,19 +71,15 @@
                     <button class="add-btn" onclick="addIdeology()">[+] 이념 추가</button>
                 </div>
 
-                <!-- 정당 탭 (내부 탭: 정당 / 당수) -->
+                <!-- 정보 탭 (구 "정당" 내부 탭에서 승격) -->
                 <div id="contentPartyInfo" class="sub-tab-content">
-                    <div class="sub-tab-container-3">
-                        <button class="sub-tab-btn-3 active" onclick="switchPartyInnerTab('info')" id="innerTabPartyInfo">정당</button>
-                        <button class="sub-tab-btn-3" onclick="switchPartyInnerTab('leader')" id="innerTabPartyLeader">당수</button>
-                    </div>
-                    <div id="innerContentPartyInfo" class="sub-tab-content active">
-                        <div id="partyInfoList"></div>
-                        <button class="add-btn" onclick="addParty('house')">[+] 정당 추가</button>
-                    </div>
-                    <div id="innerContentPartyLeader" class="sub-tab-content">
-                        <div id="leaderList"></div>
-                    </div>
+                    <div id="partyInfoList"></div>
+                    <button class="add-btn" onclick="addParty('house')">[+] 정당 추가</button>
+                </div>
+
+                <!-- 당수 탭 (구 내부 탭에서 승격) -->
+                <div id="contentLeader" class="sub-tab-content">
+                    <div id="leaderList"></div>
                 </div>
 
                 <!-- 무소속 탭 (내부 탭: 하원/상원/삼원) -->
