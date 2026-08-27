@@ -1705,6 +1705,30 @@
             if(probS) probS.textContent = sName;
             if(probT) probT.textContent = tName;
             elecRenderProbBars(); // 선거 탭의 읽기전용 지지율 바 제목도 즉시 갱신
+            const indH = document.getElementById('innerTabIndHouse');
+            const indS = document.getElementById('innerTabIndSenate');
+            const indT = document.getElementById('innerTabIndThird');
+            if(indH) indH.textContent = hName;
+            if(indS) indS.textContent = sName;
+            if(indT) indT.textContent = tName;
+            const membersH = document.getElementById('innerTabMembersHouse');
+            const membersS = document.getElementById('innerTabMembersSenate');
+            const membersT = document.getElementById('innerTabMembersThird');
+            if(membersH) membersH.textContent = hName;
+            if(membersS) membersS.textContent = sName;
+            if(membersT) membersT.textContent = tName;
+            const indMemH = document.getElementById('innerTabIndMemHouse');
+            const indMemS = document.getElementById('innerTabIndMemSenate');
+            const indMemT = document.getElementById('innerTabIndMemThird');
+            if(indMemH) indMemH.textContent = hName;
+            if(indMemS) indMemS.textContent = sName;
+            if(indMemT) indMemT.textContent = tName;
+            const distListH = document.getElementById('innerTabDistListHouse');
+            const distListS = document.getElementById('innerTabDistListSenate');
+            const distListT = document.getElementById('innerTabDistListThird');
+            if(distListH) distListH.textContent = hName;
+            if(distListS) distListS.textContent = sName;
+            if(distListT) distListT.textContent = tName;
             // 카드 안 의석 레이블도 갱신 (renderCoalitions 제외로 무한루프 방지)
             renderIdeologyList();
             renderPartyList('house');
