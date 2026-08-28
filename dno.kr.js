@@ -2066,8 +2066,8 @@
                             ${ideologyName?`<div style="color:#666;font-size:0.8rem;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${ideologyName}</div>`:''}
                         </div>
                         <!-- 의석 수 입력 -->
-                        <div style="display:flex;align-items:center;gap:5px;flex-shrink:0;">
-                            <label style="color:#555;font-size:0.8rem;white-space:nowrap;">${thisChamberName} 의석</label>
+                        <div style="display:flex;flex-direction:column;align-items:center;gap:4px;flex-shrink:0;margin-top:4px;">
+                            <label style="color:#555;font-size:0.75rem;white-space:nowrap;">${thisChamberName} 의석</label>
                             <input type="number" value="${p[seatKey]}" min="0"
                                 onchange="updateParty(${idx},'${seatKey}',parseInt(this.value)||0)"
                                 ${p.status==='dissolved'?'disabled':''}
