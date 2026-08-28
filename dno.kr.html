@@ -30,10 +30,6 @@
         <div class="tno-header-strip">Ministry of Interior</div>
 
         <div class="nation-id-bar" id="nationIdBar">
-            <span class="nation-flag-disp" id="nationFlagDispWrap">
-                <img id="nationFlagDispImg" alt="국기" style="display:none;">
-                <span id="nationFlagDispPh">🏳️</span>
-            </span>
             <span class="nation-name-disp" id="nationNameDisp">국가명 미설정</span>
         </div>
 
@@ -50,13 +46,13 @@
 
             <!-- ===== 상단 메인 탭 ===== -->
             <div class="main-tab-container">
-                <button class="main-tab-btn active" onclick="switchMainTab('setup')" id="mainTabSetup">⚙ 의회</button>
-                <button class="main-tab-btn" onclick="switchMainTab('nation')" id="mainTabNation">🏛 국가</button>
+                <button class="main-tab-btn" onclick="switchMainTab('setup')" id="mainTabSetup">⚙ 의회</button>
+                <button class="main-tab-btn active" onclick="switchMainTab('nation')" id="mainTabNation">🏛 국가</button>
                 <button class="main-tab-btn" onclick="switchMainTab('election')" id="mainTabElection">🗳 여론</button>
             </div>
 
             <!-- ===== 의회 그룹 (정당 그룹이 여기로 통합됨) ===== -->
-            <div id="mainContentSetup" class="main-tab-content active">
+            <div id="mainContentSetup" class="main-tab-content">
                 <div class="sub-tab-container">
                     <button class="sub-tab-btn active" onclick="switchSubTab('setup','party')" id="subTabParty">정당</button>
                     <button class="sub-tab-btn" onclick="switchSubTab('setup','settings')" id="subTabSettings">구성</button>
@@ -171,16 +167,16 @@
             </div>
 
             <!-- ===== 국가 그룹 (입법+기록 통합) ===== -->
-            <div id="mainContentNation" class="main-tab-content">
+            <div id="mainContentNation" class="main-tab-content active">
                 <div class="sub-tab-container">
-                    <button class="sub-tab-btn" onclick="switchSubTab('nation','config')" id="subTabConfig">설정</button>
-                    <button class="sub-tab-btn active" onclick="switchSubTab('nation','legislation')" id="subTabLegislation">입법</button>
+                    <button class="sub-tab-btn active" onclick="switchSubTab('nation','config')" id="subTabConfig">설정</button>
+                    <button class="sub-tab-btn" onclick="switchSubTab('nation','legislation')" id="subTabLegislation">입법</button>
                     <button class="sub-tab-btn" onclick="switchSubTab('nation','election')" id="subTabElection">선거</button>
                     <button class="sub-tab-btn" onclick="switchSubTab('nation','record')" id="subTabRecord">기록</button>
                 </div>
 
                 <!-- 설정 탭: 국가 식별 정보 + 전역 표시 옵션 -->
-                <div id="contentConfig" class="sub-tab-content">
+                <div id="contentConfig" class="sub-tab-content active">
                     <label style="cursor:pointer; margin-bottom:16px; display:block;">
                         <input type="checkbox" id="chkGovHighlight" onchange="simulate()" checked>
                         <span style="color:var(--tno-gold); text-shadow:0 0 5px var(--tno-gold);">집권 세력 강조 (HIGHLIGHT GOV)</span>
@@ -256,7 +252,7 @@
                 </div>
 
                 <!-- 입법 탭 (내부 탭: 제출/상정/표결) -->
-                <div id="contentLegislation" class="sub-tab-content active">
+                <div id="contentLegislation" class="sub-tab-content">
                     <div class="sub-tab-container-3">
                         <button class="sub-tab-btn-3 active" onclick="switchLegislationInnerTab('bill')" id="innerTabLegBill">제출</button>
                         <button class="sub-tab-btn-3" onclick="switchLegislationInnerTab('table')" id="innerTabLegTable">상정</button>
