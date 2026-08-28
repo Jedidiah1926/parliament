@@ -1448,11 +1448,16 @@
         window.addEventListener('beforeunload', () => { if(autosaveEnabled && !suppressAutosaveOnUnload) autosaveNow(); });
 
         window.onload = function() {
-            loadAutosavePreference();
-            const restored = autosaveEnabled && loadFromAutosave();
+            let restored = false;
+            try {
+                loadAutosavePreference();
+                restored = autosaveEnabled && loadFromAutosave();
+            } catch(e) { /* 자동저장 초기화 실패 — 기본 상태로 계속 진행 */ }
             if(!restored) { toggleSystem(); refreshUI(); simulate(); renderBillList(); renderArchiveList(); syncBillSelect(); elecRenderList(); elecRenderRecords(); updateNationIdBar(); updateDispInfoBar(); }
-            if(autosaveEnabled) { autosaveNow(); startAutosaveTimer(); }
-            renderSaveTabUI();
+            try {
+                if(autosaveEnabled) { autosaveNow(); startAutosaveTimer(); }
+                renderSaveTabUI();
+            } catch(e) { /* 자동저장 UI 갱신 실패는 앱 동작에 영향 없음 */ }
         };
 
         // ===== SAVE / LOAD (v5) =====
@@ -1662,28 +1667,58 @@
         }
 
         // ===== 자동저장 (localStorage) =====
+        // Safari의 file:// 접근 차단, 프라이빗 모드, 저장소 차단 설정 등에서는
+        // localStorage 자체에 접근하는 것만으로도 예외가 발생할 수 있으므로
+        // 모든 접근을 반드시 try/catch로 감싼다 — 그렇지 않으면 window.onload 안에서
+        // 예외가 나는 순간 이후의 전체 초기화 코드가 실행되지 않아 앱 자체가 먹통이 된다.
         const AUTOSAVE_KEY = 'dnoParliamentAutosave';
         const AUTOSAVE_ENABLED_KEY = 'dnoParliamentAutosaveEnabled';
         let autosaveEnabled = true;
         let autosaveTimer = null;
+        let localStorageAvailable = true;
+
+        function checkLocalStorageAvailable() {
+            try {
+                const testKey = '__dno_ls_test__';
+                localStorage.setItem(testKey, '1');
+                localStorage.removeItem(testKey);
+                return true;
+            } catch(e) { return false; }
+        }
+
+        function safeLsGet(key) {
+            try { return localStorage.getItem(key); } catch(e) { return null; }
+        }
+        function safeLsSet(key, value) {
+            try { localStorage.setItem(key, value); return true; } catch(e) { return false; }
+        }
+        function safeLsRemove(key) {
+            try { localStorage.removeItem(key); } catch(e) { /* 무시 */ }
+        }
 
         function loadAutosavePreference() {
-            const stored = localStorage.getItem(AUTOSAVE_ENABLED_KEY);
+            localStorageAvailable = checkLocalStorageAvailable();
+            if(!localStorageAvailable) { autosaveEnabled = false; return; }
+            const stored = safeLsGet(AUTOSAVE_ENABLED_KEY);
             autosaveEnabled = stored === null ? true : stored === 'true';
         }
 
         function setAutosaveEnabled(enabled) {
+            if(!localStorageAvailable) {
+                alert('이 브라우저/환경에서는 자동저장(localStorage)을 사용할 수 없습니다.\n(예: 파일을 직접 열었거나, 브라우저의 저장소 차단 설정)');
+                renderSaveTabUI();
+                return;
+            }
             autosaveEnabled = enabled;
-            localStorage.setItem(AUTOSAVE_ENABLED_KEY, String(enabled));
+            safeLsSet(AUTOSAVE_ENABLED_KEY, String(enabled));
             if(enabled) { autosaveNow(); startAutosaveTimer(); }
             else stopAutosaveTimer();
             renderSaveTabUI();
         }
 
         function autosaveNow() {
-            if(!autosaveEnabled) return;
-            try { localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(getAppState())); }
-            catch(e) { /* localStorage 용량 초과 등 — 조용히 무시 */ }
+            if(!autosaveEnabled || !localStorageAvailable) return;
+            safeLsSet(AUTOSAVE_KEY, JSON.stringify(getAppState()));
             renderSaveTabUI();
         }
 
@@ -1696,7 +1731,8 @@
         }
 
         function loadFromAutosave() {
-            const raw = localStorage.getItem(AUTOSAVE_KEY);
+            if(!localStorageAvailable) return false;
+            const raw = safeLsGet(AUTOSAVE_KEY);
             if(!raw) return false;
             try { setAppState(JSON.parse(raw)); return true; }
             catch(e) { return false; }
@@ -1705,17 +1741,22 @@
         function resetAutosaveData() {
             if(!confirm('저장된 데이터를 모두 삭제하고 처음 상태로 되돌리시겠습니까?\n(파일로 저장한 .json 파일에는 영향이 없습니다)')) return;
             suppressAutosaveOnUnload = true;
-            localStorage.removeItem(AUTOSAVE_KEY);
+            safeLsRemove(AUTOSAVE_KEY);
             location.reload();
         }
 
         function renderSaveTabUI() {
             const toggle = document.getElementById('autosaveToggle');
-            if(toggle) toggle.checked = autosaveEnabled;
             const info = document.getElementById('autosaveStatusText');
+            if(!localStorageAvailable) {
+                if(toggle) { toggle.checked = false; toggle.disabled = true; }
+                if(info) info.textContent = '이 환경에서는 자동저장을 사용할 수 없음';
+                return;
+            }
+            if(toggle) { toggle.checked = autosaveEnabled; toggle.disabled = false; }
             if(!info) return;
             if(!autosaveEnabled) { info.textContent = '꺼짐'; return; }
-            const raw = localStorage.getItem(AUTOSAVE_KEY);
+            const raw = safeLsGet(AUTOSAVE_KEY);
             if(!raw) { info.textContent = '자동저장된 데이터 없음'; return; }
             let savedAt = null;
             try { savedAt = JSON.parse(raw).meta?.savedAt; } catch(e) {}
