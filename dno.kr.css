@@ -216,6 +216,13 @@
             transition: 0.15s;
         }
         .system-radio-btn:hover { border-color: #3a4a54; color: #aaa; }
+        .system-radio-btn input[type="radio"] {
+            position: absolute;
+            width: 0;
+            height: 0;
+            opacity: 0;
+            margin: 0;
+        }
         .system-radio-btn:has(input:checked) {
             border-color: var(--tno-neon);
             color: var(--tno-neon);
