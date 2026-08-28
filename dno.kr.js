@@ -3613,6 +3613,31 @@
         // ─────────────────────────────────────────
         let tendencyData   = {};   // { partyId: { "q,r": 0|25|50|75|100 } }
         let tendencyStrength = 50;
+        let tendencyView = 'all'; // 'all'=종합만, 'party'=각 당별 지도
+
+        function tendencySetView(view) {
+            tendencyView = view;
+            const allBtn = document.getElementById('tendViewAllBtn');
+            const partyBtn = document.getElementById('tendViewPartyBtn');
+            if(allBtn) {
+                allBtn.style.background  = view==='all' ? 'var(--tno-neon)' : '#111';
+                allBtn.style.color       = view==='all' ? '#000' : '#888';
+                allBtn.style.borderColor = view==='all' ? 'var(--tno-neon)' : '#333';
+            }
+            if(partyBtn) {
+                partyBtn.style.background  = view==='party' ? 'var(--tno-neon)' : '#111';
+                partyBtn.style.color       = view==='party' ? '#000' : '#888';
+                partyBtn.style.borderColor = view==='party' ? 'var(--tno-neon)' : '#333';
+            }
+            const allWrap = document.getElementById('tendencyAllWrap');
+            const partyWrap = document.getElementById('tendencyPartyWrap');
+            if(allWrap && partyWrap) {
+                allWrap.style.display = view==='all' ? '' : 'none';
+                partyWrap.style.display = view==='party' ? '' : 'none';
+            } else {
+                tendencyRenderMaps();
+            }
+        }
 
         function tendencySetStrength(v) {
             tendencyStrength = v;
@@ -3765,14 +3790,20 @@
 
             // 종합 지도
             const allWrap = document.createElement('div');
-            allWrap.style.cssText = 'margin-bottom:12px;';
+            allWrap.id = 'tendencyAllWrap';
+            allWrap.style.cssText = `margin-bottom:12px; display:${tendencyView==='all' ? '' : 'none'};`;
             allWrap.innerHTML = `<div style="color:#888;font-size:0.8rem;margin-bottom:4px;letter-spacing:1px;">▌ 종합</div>`;
             const allCvs = document.createElement('canvas');
             allCvs.style.cssText = 'width:100%;display:block;background:#0a0c10;border:1px solid #222;cursor:default;';
             allWrap.appendChild(allCvs);
             container.appendChild(allWrap);
 
-            // 당별 지도
+            // 당별 지도 (그룹으로 묶어서 종합/각 당 전환 시 한번에 표시/숨김)
+            const partyGroup = document.createElement('div');
+            partyGroup.id = 'tendencyPartyWrap';
+            partyGroup.style.cssText = `display:${tendencyView==='party' ? '' : 'none'};`;
+            container.appendChild(partyGroup);
+
             parties.forEach(p => {
                 if(!tendencyData[p.id]) tendencyData[p.id] = {};
                 const wrap = document.createElement('div');
@@ -3869,7 +3900,7 @@
                 cvs.addEventListener('mouseleave', ()=>{painting=false; middleDrag=false; document.getElementById('tooltipBox').style.display='none';});
 
                 wrap.appendChild(cvs);
-                container.appendChild(wrap);
+                partyGroup.appendChild(wrap);
 
                 requestAnimationFrame(() => {
                     tendencyDrawMap(cvs, p.id);
