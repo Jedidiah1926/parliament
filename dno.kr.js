@@ -1444,14 +1444,22 @@
 
         // ===== MAIN SIMULATE =====
         window.addEventListener('resize', () => { simulate(); });
+        let suppressAutosaveOnUnload = false;
+        window.addEventListener('beforeunload', () => { if(autosaveEnabled && !suppressAutosaveOnUnload) autosaveNow(); });
 
-        window.onload = function() { toggleSystem(); refreshUI(); simulate(); renderBillList(); renderArchiveList(); syncBillSelect(); elecRenderList(); elecRenderRecords(); updateNationIdBar(); updateDispInfoBar(); };
+        window.onload = function() {
+            loadAutosavePreference();
+            const restored = autosaveEnabled && loadFromAutosave();
+            if(!restored) { toggleSystem(); refreshUI(); simulate(); renderBillList(); renderArchiveList(); syncBillSelect(); elecRenderList(); elecRenderRecords(); updateNationIdBar(); updateDispInfoBar(); }
+            if(autosaveEnabled) { autosaveNow(); startAutosaveTimer(); }
+            renderSaveTabUI();
+        };
 
         // ===== SAVE / LOAD (v5) =====
         function getAppState() {
             const systemType = document.querySelector('input[name="systemType"]:checked')?.value || 'bicameral';
             return {
-                meta: { app: "DATANET_PARLIAMENT_SIM", version: 13, savedAt: new Date().toISOString() },
+                meta: { app: "DATANET_PARLIAMENT_SIM", version: "1.0", savedAt: new Date().toISOString() },
                 ui: { currentMainTab, currentSubTab },
                 config: {
                     systemType,
@@ -1505,10 +1513,17 @@
             };
         }
 
+        // KST(UTC+9) 기준 압축 타임스탬프 — YYYYMMDDHHmmssSSS (구분자 없이, 파일명용)
+        function formatKstTimestampCompact(date = new Date()) {
+            const kst = new Date(date.getTime() + 9 * 60 * 60 * 1000);
+            const pad = (n, len = 2) => String(n).padStart(len, '0');
+            return `${kst.getUTCFullYear()}${pad(kst.getUTCMonth() + 1)}${pad(kst.getUTCDate())}` +
+                   `${pad(kst.getUTCHours())}${pad(kst.getUTCMinutes())}${pad(kst.getUTCSeconds())}${pad(kst.getUTCMilliseconds(), 3)}`;
+        }
+
         function saveJSON() {
             const state = getAppState();
-            const ts = new Date().toISOString().replace(/[:.]/g, "-");
-            downloadJSON(`parliament-save-v13-${ts}.json`, state);
+            downloadJSON(`dno-save-v1.0-${formatKstTimestampCompact()}.json`, state);
         }
 
         function setAppState(state) {
@@ -1646,19 +1661,146 @@
             setAppState(obj);
         }
 
+        // ===== 자동저장 (localStorage) =====
+        const AUTOSAVE_KEY = 'dnoParliamentAutosave';
+        const AUTOSAVE_ENABLED_KEY = 'dnoParliamentAutosaveEnabled';
+        let autosaveEnabled = true;
+        let autosaveTimer = null;
+
+        function loadAutosavePreference() {
+            const stored = localStorage.getItem(AUTOSAVE_ENABLED_KEY);
+            autosaveEnabled = stored === null ? true : stored === 'true';
+        }
+
+        function setAutosaveEnabled(enabled) {
+            autosaveEnabled = enabled;
+            localStorage.setItem(AUTOSAVE_ENABLED_KEY, String(enabled));
+            if(enabled) { autosaveNow(); startAutosaveTimer(); }
+            else stopAutosaveTimer();
+            renderSaveTabUI();
+        }
+
+        function autosaveNow() {
+            if(!autosaveEnabled) return;
+            try { localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(getAppState())); }
+            catch(e) { /* localStorage 용량 초과 등 — 조용히 무시 */ }
+            renderSaveTabUI();
+        }
+
+        function startAutosaveTimer() {
+            stopAutosaveTimer();
+            autosaveTimer = setInterval(autosaveNow, 15000);
+        }
+        function stopAutosaveTimer() {
+            if(autosaveTimer) { clearInterval(autosaveTimer); autosaveTimer = null; }
+        }
+
+        function loadFromAutosave() {
+            const raw = localStorage.getItem(AUTOSAVE_KEY);
+            if(!raw) return false;
+            try { setAppState(JSON.parse(raw)); return true; }
+            catch(e) { return false; }
+        }
+
+        function resetAutosaveData() {
+            if(!confirm('저장된 데이터를 모두 삭제하고 처음 상태로 되돌리시겠습니까?\n(파일로 저장한 .json 파일에는 영향이 없습니다)')) return;
+            suppressAutosaveOnUnload = true;
+            localStorage.removeItem(AUTOSAVE_KEY);
+            location.reload();
+        }
+
+        function renderSaveTabUI() {
+            const toggle = document.getElementById('autosaveToggle');
+            if(toggle) toggle.checked = autosaveEnabled;
+            const info = document.getElementById('autosaveStatusText');
+            if(!info) return;
+            if(!autosaveEnabled) { info.textContent = '꺼짐'; return; }
+            const raw = localStorage.getItem(AUTOSAVE_KEY);
+            if(!raw) { info.textContent = '자동저장된 데이터 없음'; return; }
+            let savedAt = null;
+            try { savedAt = JSON.parse(raw).meta?.savedAt; } catch(e) {}
+            info.textContent = savedAt ? `마지막 저장: ${new Date(savedAt).toLocaleString('ko-KR')}` : '자동저장됨';
+        }
+
+        // ===== 실행 취소 / 다시 실행 (Ctrl+Z / Ctrl+Shift+Z) =====
+        // 개별 변경마다 undo 지점을 만들지 않고, 전체 상태 스냅샷 방식으로 구현.
+        // mousedown/focusin 시점(실제 값이 바뀌기 전)에 "이전 상태"를 잡아두고,
+        // 짧은 시간 안에 이어지는 조작(연속 타이핑 등)은 하나의 undo 단위로 묶는다.
+        const UNDO_HISTORY_LIMIT = 50;
+        const UNDO_BATCH_DEBOUNCE_MS = 600;
+        let undoStack = [];
+        let redoStack = [];
+        let pendingUndoSnapshot = null;
+        let undoBatchTimer = null;
+        let isApplyingHistory = false;
+
+        function captureUndoSnapshot() {
+            if(isApplyingHistory) return;
+            if(pendingUndoSnapshot === null) pendingUndoSnapshot = JSON.stringify(getAppState());
+            clearTimeout(undoBatchTimer);
+            undoBatchTimer = setTimeout(commitUndoBatch, UNDO_BATCH_DEBOUNCE_MS);
+        }
+
+        function commitUndoBatch() {
+            clearTimeout(undoBatchTimer);
+            undoBatchTimer = null;
+            if(pendingUndoSnapshot === null) return;
+            const current = JSON.stringify(getAppState());
+            if(current !== pendingUndoSnapshot) {
+                undoStack.push(pendingUndoSnapshot);
+                if(undoStack.length > UNDO_HISTORY_LIMIT) undoStack.shift();
+                redoStack = [];
+            }
+            pendingUndoSnapshot = null;
+        }
+
+        function applyHistorySnapshot(json) {
+            isApplyingHistory = true;
+            try { setAppState(JSON.parse(json)); }
+            catch(e) { /* 손상된 스냅샷 — 조용히 무시 */ }
+            finally { isApplyingHistory = false; }
+        }
+
+        function performUndo() {
+            commitUndoBatch();
+            if(undoStack.length === 0) return;
+            const prev = undoStack.pop();
+            redoStack.push(JSON.stringify(getAppState()));
+            if(redoStack.length > UNDO_HISTORY_LIMIT) redoStack.shift();
+            applyHistorySnapshot(prev);
+        }
+
+        function performRedo() {
+            commitUndoBatch();
+            if(redoStack.length === 0) return;
+            const next = redoStack.pop();
+            undoStack.push(JSON.stringify(getAppState()));
+            if(undoStack.length > UNDO_HISTORY_LIMIT) undoStack.shift();
+            applyHistorySnapshot(next);
+        }
+
+        function initUndoRedoTracking() {
+            document.addEventListener('mousedown', captureUndoSnapshot, true);
+            document.addEventListener('focusin', captureUndoSnapshot, true);
+            document.addEventListener('focusout', commitUndoBatch, true);
+            window.addEventListener('keydown', (e) => {
+                const key = e.key.toLowerCase();
+                if(!(e.ctrlKey || e.metaKey) || key !== 'z') return;
+                e.preventDefault();
+                if(e.shiftKey) performRedo(); else performUndo();
+            });
+        }
+
         window.addEventListener("load", () => {
-            const btnSave = document.getElementById("btnSaveJson");
-            const btnLoad = document.getElementById("btnLoadJson");
-            const fileInput = document.getElementById("fileLoadJson");
-            if(btnSave) btnSave.addEventListener("click", saveJSON);
-            if(btnLoad && fileInput) {
-                btnLoad.addEventListener("click", () => fileInput.click());
-                fileInput.addEventListener("change", async () => {
-                    const file = fileInput.files?.[0];
+            initUndoRedoTracking();
+            const fileInputTab = document.getElementById("fileLoadJsonTab");
+            if(fileInputTab) {
+                fileInputTab.addEventListener("change", async () => {
+                    const file = fileInputTab.files?.[0];
                     if(!file) return;
                     try { await loadJSONFromFile(file); }
                     catch(e) { alert("불러오기 실패: 저장 파일이 깨졌거나 형식이 다릅니다."); }
-                    finally { fileInput.value = ""; }
+                    finally { fileInputTab.value = ""; }
                 });
             }
 
