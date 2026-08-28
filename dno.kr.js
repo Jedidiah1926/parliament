@@ -3617,11 +3617,7 @@
         function tendencySetStrength(v) {
             tendencyStrength = v;
             [0,25,50,75,100].forEach(s => {
-                const btn = document.getElementById(`tendStrBtn${s}`);
-                if(!btn) return;
-                btn.style.background = s===v ? 'var(--tno-neon)' : '#111';
-                btn.style.color      = s===v ? '#000' : '#888';
-                btn.style.borderColor= s===v ? 'var(--tno-neon)' : '#333';
+                document.getElementById(`tendStrBtn${s}`)?.classList.toggle('active', s===v);
             });
         }
 
