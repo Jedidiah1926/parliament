@@ -14,7 +14,7 @@ DATANET Parliament Simulation은 설치나 빌드 없이 **브라우저에서 �
 - 지역구·비례대표를 혼합할 수 있는 선거 시뮬레이션과 기록 보관
 - 전체 상태를 `.json`으로 저장/불러오기
 
-한국어 버전과 영어 버전이 나란히 제공되며, 두 버전은 완전히 동일한 저장 파일 형식을 사용합니다.
+한국어 화면(`dno.kr.html`)을 기준으로 개발되며, 설정에서 영어를 선택하면 `lang.js`가 화면에 표시되는 텍스트를 실시간으로 영어로 치환해 보여줍니다 — 별도의 영어 전용 HTML/JS 사본을 유지하지 않습니다.
 
 ---
 
@@ -23,12 +23,13 @@ DATANET Parliament Simulation은 설치나 빌드 없이 **브라우저에서 �
 | 파일 | 설명 |
 |------|------|
 | `index.html` | 시작 메뉴 (버전 정보, 로드맵 링크, 시뮬레이터 실행) |
-| `dno.kr.html` | 시뮬레이터 한국어 버전 |
-| `dno.en.html` | 시뮬레이터 영어 버전 |
+| `dno.kr.html` | 시뮬레이터 본체 |
+| `dno.settings.html` | 설정 화면 (언어 선택) |
 | `dno.roadmap.html` | 개발 로드맵 및 업데이트 내역 |
 | `dno.pre.html` | 과거 프리릴리스 빌드 (개발 중단, 참고용) |
+| `lang.js` | 언어 설정 저장 및 한국어→영어 실시간 치환 엔진 (`dno.kr.html`/`dno.roadmap.html`에서 사용) |
 
-`index.html` 또는 `dno.kr.html`/`dno.en.html`을 브라우저에서 직접 열면 됩니다. Chrome, Firefox, Edge 최신 버전에서 동작하며, 최초 실행 시 픽셀 폰트를 외부 CDN(Google Fonts / jsDelivr)에서 불러오므로 인터넷 연결이 필요합니다.
+`index.html` 또는 `dno.kr.html`을 브라우저에서 직접 열면 됩니다. Chrome, Firefox, Edge 최신 버전에서 동작하며, 최초 실행 시 픽셀 폰트를 외부 CDN(Google Fonts / jsDelivr)에서 불러오므로 인터넷 연결이 필요합니다.
 
 ---
 
