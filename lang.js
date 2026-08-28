@@ -454,32 +454,17 @@
         for (const child of Array.from(node.childNodes)) translateNodeDeep(child);
     }
 
-    // ===== 이후 동적으로 추가/변경되는 DOM(정당 카드, 알림, 캔버스 라벨 등)도 계속 감시 =====
-    function initObserver() {
-        const mo = new MutationObserver(mutations => {
-            for (const m of mutations) {
-                if (m.type === 'childList') {
-                    m.addedNodes.forEach(translateNodeDeep);
-                } else if (m.type === 'characterData') {
-                    translateNodeDeep(m.target);
-                } else if (m.type === 'attributes') {
-                    translateAttrs(m.target);
-                }
-            }
-        });
-        mo.observe(document.documentElement, {
-            childList: true, subtree: true, characterData: true,
-            attributes: true, attributeFilter: ['placeholder', 'title', 'alt']
-        });
-    }
-
+    // 초기 화면 로드 시점에 한 번만 번역한다 (언어 설정은 localStorage에 있으므로,
+    // 이후 새로 생성되는 동적 콘텐츠는 다음 새로고침 때 다시 이 시점에 맞춰 번역됨).
+    // dno.kr.js/dno.roadmap.js의 자체 초기 렌더링(window.onload)이 끝난 뒤에 실행되도록
+    // DOMContentLoaded가 아닌 load 이벤트에서 실행 — 두 스크립트 모두 lang.js보다 먼저
+    // <script> 태그로 로드되므로 그쪽 onload 핸들러가 먼저 등록되어 항상 먼저 실행된다.
     function boot() {
         translateNodeDeep(document.documentElement);
-        initObserver();
     }
 
-    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
-    else boot();
+    if (document.readyState === 'complete') boot();
+    else window.addEventListener('load', boot);
 
     // alert()/confirm()도 번역 사전을 거치도록 감싼다 (동적으로 생성되는 메시지 문자열용)
     const _alert = window.alert, _confirm = window.confirm;
