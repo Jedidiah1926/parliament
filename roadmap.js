@@ -293,20 +293,26 @@
       },
 
       '1.5': {
-        title: '1.5: The Programs',
+        title: '1.5: We shall fight on the MAPS',
         cards: [
           {
             status: 'future',
-            title: '1.5.0 - 모바일 출시',
+            title: '1.5.0 - 모바일 환경 구현',
             desc: `2026.09.XX
               <br>- 모바일 환경에서도 구동 가능하도록 비율 또는 UI 수정
               <br>- 버그 수정`
           },
           {
             status: 'future',
-            title: '1.5.1 - 그래서 이제 뭐함?',
+            title: '1.5.1 - 지도 시스템',
             desc: `2026.09.XX
-              <br>- 아이디어 고갈`
+              <br>- 1차 개발`
+          },
+          {
+            status: 'future',
+            title: '1.5.2 - 지도 개발',
+            desc: `2026.09.XX
+              <br>- 2차 개발`
           },
           {
             status: 'future',
