@@ -1,5 +1,44 @@
         const IND_IDEOLOGY_ID = 9999;
 
+        // ── 국가명·국기 (v1.4.8) ──────────────
+        let nationFlag = ''; // dataURL
+
+        function updateNationIdBar() {
+            const name = document.getElementById('nationNameInput')?.value?.trim() || '';
+            const nameEl = document.getElementById('nationNameDisp');
+            if(nameEl) nameEl.textContent = name || '국가명 미설정';
+            const img = document.getElementById('nationFlagDispImg');
+            const ph  = document.getElementById('nationFlagDispPh');
+            if(img && ph) {
+                if(nationFlag) { img.src = nationFlag; img.style.display = ''; ph.style.display = 'none'; }
+                else { img.style.display = 'none'; ph.style.display = ''; }
+            }
+        }
+
+        function renderNationConfig() {
+            const img = document.getElementById('nationFlagImg');
+            const ph  = document.getElementById('nationFlagPh');
+            if(img && ph) {
+                if(nationFlag) { img.src = nationFlag; img.style.display = ''; ph.style.display = 'none'; }
+                else { img.style.display = 'none'; ph.style.display = ''; }
+            }
+            const removeBtn = document.getElementById('nationFlagRemoveBtn');
+            if(removeBtn) removeBtn.style.display = nationFlag ? '' : 'none';
+            updateNationIdBar();
+        }
+
+        function uploadNationFlag(input) {
+            const file = input.files?.[0]; if(!file) return;
+            const reader = new FileReader();
+            reader.onload = e => { nationFlag = e.target.result; renderNationConfig(); };
+            reader.readAsDataURL(file);
+        }
+
+        function removeNationFlag() {
+            nationFlag = '';
+            renderNationConfig();
+        }
+
         // ── 무소속 개별 의원 데이터 ──────────────
         let independents = []; // { id, chamber, seatIndex, name, photo, ideologyId }
 
@@ -1310,7 +1349,7 @@
         // ===== MAIN SIMULATE =====
         window.addEventListener('resize', () => { simulate(); });
 
-        window.onload = function() { toggleSystem(); refreshUI(); simulate(); renderBillList(); renderArchiveList(); syncBillSelect(); elecRenderList(); elecRenderRecords(); };
+        window.onload = function() { toggleSystem(); refreshUI(); simulate(); renderBillList(); renderArchiveList(); syncBillSelect(); elecRenderList(); elecRenderRecords(); updateNationIdBar(); };
 
         // ===== SAVE / LOAD (v5) =====
         function getAppState() {
@@ -1321,6 +1360,8 @@
                 config: {
                     systemType,
                     highlightGov:  document.getElementById('chkGovHighlight')?.checked ?? true,
+                    nationName:    document.getElementById('nationNameInput')?.value   ?? "",
+                    nationFlag,
                     senateName:    document.getElementById('senateNameInput')?.value   ?? "상원",
                     houseName:     document.getElementById('houseNameInput')?.value    ?? "국회",
                     thirdName:     document.getElementById('thirdNameInput')?.value    ?? "삼원",
@@ -1364,6 +1405,7 @@
                 state.parliament.parties       = state.parliament.parties.map(p => ({ ...p, leaderPhoto: '', logoPhoto: '' }));
                 state.parliament.coalitions    = state.parliament.coalitions.map(c => ({ ...c, leaderPhoto: '' }));
                 state.parliament.independents  = state.parliament.independents.map(x => ({ ...x, photo: '' }));
+                state.config.nationFlag        = '';
             }
             const ts = new Date().toISOString().replace(/[:.]/g, "-");
             downloadJSON(`parliament-save-v13-${ts}.json`, state);
@@ -1440,6 +1482,9 @@
             if(gd('houseTotal'))      gd('houseTotal').value      = cfg.houseTotal  ?? 300;
             if(gd('thirdTotal'))      gd('thirdTotal').value      = cfg.thirdTotal  ?? 100;
             if(gd('chkGovHighlight')) gd('chkGovHighlight').checked = cfg.highlightGov ?? true;
+            if(gd('nationNameInput')) gd('nationNameInput').value = cfg.nationName ?? "";
+            nationFlag = cfg.nationFlag ?? "";
+            renderNationConfig();
 
             // ── 전체 렌더 ──
             toggleSystem();
@@ -1556,6 +1601,7 @@
             if(btn) btn.classList.add('active');
             if(content) content.classList.add('active');
             refreshUI();
+            if(sub === 'config') { renderNationConfig(); }
             if(sub === 'legislation') { switchLegislationInnerTab('bill'); }
             if(sub === 'election') { elecRenderList(); }
             if(sub === 'record') { switchRecordInnerTab('archive'); }
