@@ -1459,7 +1459,7 @@
         function getAppState() {
             const systemType = document.querySelector('input[name="systemType"]:checked')?.value || 'bicameral';
             return {
-                meta: { app: "DATANET_PARLIAMENT_SIM", version: 13, savedAt: new Date().toISOString() },
+                meta: { app: "DATANET_PARLIAMENT_SIM", version: "1.0", savedAt: new Date().toISOString() },
                 ui: { currentMainTab, currentSubTab },
                 config: {
                     systemType,
@@ -1513,10 +1513,17 @@
             };
         }
 
+        // KST(UTC+9) 기준 압축 타임스탬프 — YYYYMMDDHHmmssSSS (구분자 없이, 파일명용)
+        function formatKstTimestampCompact(date = new Date()) {
+            const kst = new Date(date.getTime() + 9 * 60 * 60 * 1000);
+            const pad = (n, len = 2) => String(n).padStart(len, '0');
+            return `${kst.getUTCFullYear()}${pad(kst.getUTCMonth() + 1)}${pad(kst.getUTCDate())}` +
+                   `${pad(kst.getUTCHours())}${pad(kst.getUTCMinutes())}${pad(kst.getUTCSeconds())}${pad(kst.getUTCMilliseconds(), 3)}`;
+        }
+
         function saveJSON() {
             const state = getAppState();
-            const ts = new Date().toISOString().replace(/[:.]/g, "-");
-            downloadJSON(`parliament-save-v13-${ts}.json`, state);
+            downloadJSON(`dno-save-v1.0-${formatKstTimestampCompact()}.json`, state);
         }
 
         function setAppState(state) {
