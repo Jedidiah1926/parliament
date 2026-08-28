@@ -196,26 +196,27 @@
         }
 
         /* ===== 2단 탭 =====
-           위계가 내려갈수록 "각진 탭 → 완전히 둥근 칩"으로 자연스럽게 이어지도록:
-           상위 = 굵은 베이스라인 위에 얹힌 각진 탭 (모서리 위쪽만 살짝)
-           중위 = 상위보다 얇은 베이스라인 + 더 둥근 모서리 (상위↔하위 절충)
+           상위 = 박스가 아닌 터미널 프롬프트 스타일 (랜딩페이지 메뉴버튼의 ">>" 모티프 재사용)
+                  — 중위/하위와 아예 다른 문법이라 겹쳐 보이지 않음
+           중위 = 각진 박스, 얇은 베이스라인 (하위의 완전히 둥근 칩으로 가는 절충 단계)
            하위(.sub-tab-btn-3) = 베이스라인 없이 완전히 둥근 칩 (변경 없음) */
         .main-tab-container {
             display: flex;
-            gap: 4px;
-            border-bottom: 4px solid var(--tno-neon);
+            gap: 2px;
+            border-bottom: 1px solid #222;
+            margin-bottom: 14px;
+            padding-bottom: 11px;
         }
         .main-tab-btn {
+            position: relative;
             flex: 1;
             min-width: 0;
-            background: #0a0c10;
+            background: transparent;
             color: #555;
-            border: 2px solid #2a2a2a;
-            border-bottom: none;
-            border-radius: 6px 6px 0 0;
-            padding: 13px 4px 11px;
+            border: none;
+            padding: 4px 22px;
             cursor: pointer;
-            font-size: 1.1rem;
+            font-size: 1.05rem;
             font-weight: bold;
             font-family: 'NeoDunggeunmo', 'VT323', monospace;
             letter-spacing: 2px;
@@ -225,14 +226,21 @@
             overflow: hidden;
             text-overflow: ellipsis;
         }
-        .main-tab-btn:hover { color: var(--tno-neon); border-color: #3a4a54; }
+        .main-tab-btn:hover { color: var(--tno-neon); }
         .main-tab-btn.active {
-            background: linear-gradient(180deg, rgba(0,255,255,0.22), rgba(0,255,255,0.05));
             color: var(--tno-neon);
-            border-color: var(--tno-neon);
-            box-shadow: 0 -5px 18px var(--tno-neon-dim), inset 0 1px 0 rgba(255,255,255,0.08);
             text-shadow: 0 0 8px var(--tno-neon);
         }
+        .main-tab-btn.active::before,
+        .main-tab-btn.active::after {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--tno-neon);
+            text-shadow: 0 0 6px var(--tno-neon);
+        }
+        .main-tab-btn.active::before { content: '>>'; left: 4px; }
+        .main-tab-btn.active::after  { content: '<<'; right: 4px; }
 
         .main-tab-content { display: none; }
         .main-tab-content.active { display: block; }
