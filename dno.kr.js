@@ -3763,10 +3763,9 @@
             box.innerHTML = '';
             const opts = [{ key:'all', label:'전체' }, { key:'overall', label:'종합' }, ...parties.map(p => ({ key: p.id, label: p.name }))];
             opts.forEach(o => {
-                const active = tendencyView === o.key;
                 const btn = document.createElement('button');
                 btn.textContent = o.label;
-                btn.style.cssText = `padding:6px;font-size:0.85rem;font-family:inherit;cursor:pointer;background:${active?'var(--tno-neon)':'#111'};color:${active?'#000':'#888'};border:1px solid ${active?'var(--tno-neon)':'#333'};`;
+                btn.className = 'sub-tab-btn-3' + (tendencyView === o.key ? ' active' : '');
                 btn.onclick = () => { tendencyView = o.key; tendencyRenderMaps(); };
                 box.appendChild(btn);
             });
