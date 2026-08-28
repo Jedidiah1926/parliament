@@ -1375,6 +1375,8 @@
                     highlightGov:  document.getElementById('chkGovHighlight')?.checked ?? true,
                     nationName:    document.getElementById('nationNameInput')?.value   ?? "",
                     nationFlag,
+                    nationDate:    document.getElementById('nationDateInput')?.value    ?? "",
+                    nationSession: document.getElementById('nationSessionInput')?.value ?? "",
                     senateName:    document.getElementById('senateNameInput')?.value   ?? "상원",
                     houseName:     document.getElementById('houseNameInput')?.value    ?? "국회",
                     thirdName:     document.getElementById('thirdNameInput')?.value    ?? "삼원",
@@ -1489,6 +1491,8 @@
             if(gd('thirdTotal'))      gd('thirdTotal').value      = cfg.thirdTotal  ?? 100;
             if(gd('chkGovHighlight')) gd('chkGovHighlight').checked = cfg.highlightGov ?? true;
             if(gd('nationNameInput')) gd('nationNameInput').value = cfg.nationName ?? "";
+            if(gd('nationDateInput')) gd('nationDateInput').value = cfg.nationDate ?? "";
+            if(gd('nationSessionInput')) gd('nationSessionInput').value = cfg.nationSession ?? "";
             nationFlag = cfg.nationFlag ?? "";
             renderNationConfig();
 
