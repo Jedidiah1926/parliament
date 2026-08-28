@@ -2563,19 +2563,22 @@
         function updateParty(i,k,v) { parties[i][k]=v; if(k==='name')refreshUI(); simulate(); }
 
         // ===== 원외정당 (의석 없는 정당) =====
-        // 별도 데이터가 아니라 정당>정보에 있는 일반 정당 중 (참여 중인 의원실 기준) 의석 합계가 0인 정당.
-        // 예전에는 이런 정당이 어느 의원실 지도에도 안 잡혀서 우측 정보 패널에서 그냥 사라졌는데,
+        // 정당>정보에서 특정 의원실에 배정(inHouse/inSenate/inThird)되어 있으면서
+        // 그 의원실 의석 수만 0인 정당 — 의원실별 통계 패널에 개별적으로 표시된다.
+        // 예전에는 이런 정당이 해당 의원실 지도에 안 잡혀서 우측 정보 패널에서 그냥 사라졌는데,
         // 이제 그 자리에 "원외정당" 접기/펼치기 섹션으로 모아서 보여준다.
         function toggleExtraPartiesCollapse() { extraPartiesCollapsed = !extraPartiesCollapsed; simulate(); }
         function partyTotalSeats(p) {
             return (p.inHouse?p.seatsHouse||0:0) + (p.inSenate?p.seatsSenate||0:0) + (p.inThird?p.seatsThird||0:0);
         }
-        function extraParliamentaryPartyList() {
-            return parties.filter(p => p.ideologyId !== IND_IDEOLOGY_ID && partyTotalSeats(p) === 0);
+        function extraParliamentaryPartyList(chamber) {
+            const inKey = inKeyFor(chamber);
+            const seatKey = seatKeyFor(chamber);
+            return parties.filter(p => p.ideologyId !== IND_IDEOLOGY_ID && p[inKey] && (p[seatKey]||0) === 0);
         }
 
-        function renderExtraPartiesSection() {
-            const list = extraParliamentaryPartyList();
+        function renderExtraPartiesSection(chamber) {
+            const list = extraParliamentaryPartyList(chamber);
             let h = `<div onclick="toggleExtraPartiesCollapse()" style="display:flex;align-items:center;gap:8px;margin:10px 0 6px;cursor:pointer;user-select:none;">
                 <div style="flex:1;height:1px;background:#333;"></div>
                 <span style="color:#666;font-size:0.78rem;letter-spacing:2px;white-space:nowrap;">${extraPartiesCollapsed?'▶':'▼'} 원외정당 (${list.length})</span>
@@ -5844,7 +5847,7 @@
                 html += renderSectionHeader('야당');
                 oppArr.forEach(s => html += renderCard(s));
             }
-            html += renderExtraPartiesSection();
+            html += renderExtraPartiesSection(inferChamberFromStatsId(id));
             el.innerHTML = html;
             fitDynPhotos(el);
         }
