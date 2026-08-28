@@ -981,7 +981,7 @@
 
             if(hit === -1) return;
 
-            const onVoteTab = currentMainTab === 'legislation' && currentSubTab.legislation === 'vote';
+            const onVoteTab = currentMainTab === 'nation' && currentSubTab.nation === 'legislation' && legislationInnerTab === 'vote';
             if(!onVoteTab || currentVoteMode === 'info') {
                 showSeatInfoCard(chamber, hit, e.clientX, e.clientY);
                 return;
@@ -1457,19 +1457,20 @@
 
             // ── 탭 복원 (마지막) ──
             let uiMain = state.ui?.currentMainTab || 'setup';
-            const uiSub  = state.ui?.currentSubTab  || { setup:'party', legislation:'bill', record:'archive' };
-            currentSubTab = { setup:'party', legislation:'bill', record:'archive', ...uiSub };
+            const uiSub  = state.ui?.currentSubTab  || { setup:'party', nation:'legislation' };
+            currentSubTab = { setup:'party', nation:'legislation', ...uiSub };
             // 구버전 파일 호환: 정당 메인탭이 의회로 통합되기 전 위치를 가리키던 경우 재매핑
             // (당시 party>ideology/partyInfo/leader/coalitionLeader/independent 중 무엇이었든, 지금은 모두 setup>party로 합쳐짐)
             if(uiMain === 'party') { uiMain = 'setup'; currentSubTab.setup = 'party'; }
             // 구버전 파일 호환: setup 하위탭이 house/senate/third/leader였다면 새 구조로 매핑
             if(['house','senate','third'].includes(currentSubTab.setup)) currentSubTab.setup = 'settings';
-            // 구버전 파일 호환: 기록 탭이 입법/선거 그룹에서 독립되기 전 위치를 가리키던 경우 재매핑
-            if(currentSubTab.legislation === 'archive') currentSubTab.legislation = 'bill';
+            // 구버전 파일 호환: 입법/기록 메인탭이 국가로 통합되기 전 위치를 가리키던 경우 재매핑
+            // (옛 메인탭 키 legislation/record가 그대로 새 nation 서브탭 키로 재사용됨)
+            if(uiMain === 'legislation' || uiMain === 'record') { currentSubTab.nation = uiMain; uiMain = 'nation'; }
             if(currentSubTab.election === 'record') currentSubTab.election = 'vote';
             switchMainTab(uiMain);
             if(uiMain !== 'election') {
-                const fallback = uiMain==='setup' ? 'party' : uiMain==='record' ? 'archive' : 'bill';
+                const fallback = uiMain==='setup' ? 'party' : 'legislation';
                 switchSubTab(uiMain, currentSubTab[uiMain] || fallback, false);
             }
         }
@@ -1519,11 +1520,11 @@
 
         // ===== 2단 탭 전환 =====
         let currentMainTab = 'setup';
-        let currentSubTab = { setup: 'party', legislation: 'bill', record: 'archive' };
+        let currentSubTab = { setup: 'party', nation: 'legislation' };
 
         // 표결 탭을 벗어날 때, 선택된 법안이 완전히 결론(가결/부결) 났으면 선택 초기화
         function checkResetVoteSelectionOnLeave() {
-            if(currentMainTab === 'legislation' && currentSubTab['legislation'] === 'vote' && activeBillId) {
+            if(currentMainTab === 'nation' && currentSubTab['nation'] === 'legislation' && legislationInnerTab === 'vote' && activeBillId) {
                 const bill = bills.find(b=>b.id===activeBillId);
                 if(bill && getBillOverallStatus(bill) !== 'pending') {
                     activeBillId = null;
@@ -1540,15 +1541,10 @@
             document.querySelectorAll('.main-tab-content').forEach(c => c.classList.remove('active'));
             document.getElementById('mainContent' + main.charAt(0).toUpperCase() + main.slice(1)).classList.add('active');
             if(main === 'election') { elecRenderList(); elecRenderRecords(); return; }
-            if(main === 'record') {
-                switchSubTab('record', currentSubTab['record'] || 'archive', false);
-                return;
-            }
-            switchSubTab(main, currentSubTab[main] || (main === 'setup' ? 'party' : 'bill'), false);
+            switchSubTab(main, currentSubTab[main] || (main === 'setup' ? 'party' : 'legislation'), false);
         }
 
         function switchSubTab(main, sub, doMainSwitch = true) {
-            if(main === 'legislation' && sub !== 'vote') checkResetVoteSelectionOnLeave();
             if(doMainSwitch && currentMainTab !== main) switchMainTab(main);
             currentSubTab[main] = sub;
             const groupEl = document.getElementById('mainContent' + main.charAt(0).toUpperCase() + main.slice(1));
@@ -1560,11 +1556,8 @@
             if(btn) btn.classList.add('active');
             if(content) content.classList.add('active');
             refreshUI();
-            if(sub === 'vote') { renderBulkPartyList(); syncBillSelect(); renderActiveBillDisplay(); updateConfirmButtons(); }
-            if(sub === 'bill') renderBillList();
-            if(sub === 'table') renderBillList();
-            if(sub === 'archive') renderArchiveList();
-            if(sub === 'elecRecord') elecRenderRecords();
+            if(sub === 'legislation') { switchLegislationInnerTab('bill'); }
+            if(sub === 'record') { switchRecordInnerTab('archive'); }
             if(sub === 'party') { switchPartyGroupInnerTab('ideology'); }
             if(sub === 'settings') { switchSetupInnerTab('house'); }
             if(sub === 'coalition') { renderCoalitions(); }
@@ -1572,10 +1565,37 @@
             if(sub === 'members') { membersInnerTab = 'house'; switchMembersInnerTab('house'); }
         }
 
+        // 국가 > 입법 내부 탭 (제출/상정/표결) — 구 입법 메인탭이 국가로 통합됨
+        let legislationInnerTab = 'bill';
+        function switchLegislationInnerTab(inner) {
+            if(inner !== 'vote') checkResetVoteSelectionOnLeave();
+            legislationInnerTab = inner;
+            ['bill','table','vote'].forEach(k => {
+                document.getElementById('innerTabLeg'+k.charAt(0).toUpperCase()+k.slice(1))?.classList.toggle('active', k===inner);
+                document.getElementById('content'+k.charAt(0).toUpperCase()+k.slice(1))?.classList.toggle('active', k===inner);
+            });
+            if(inner === 'vote') { renderBulkPartyList(); syncBillSelect(); renderActiveBillDisplay(); updateConfirmButtons(); }
+            if(inner === 'bill') renderBillList();
+            if(inner === 'table') renderBillList();
+        }
+
+        // 국가 > 기록 내부 탭 (입법/선거) — 구 기록 메인탭이 국가로 통합됨
+        let recordInnerTab = 'archive';
+        function switchRecordInnerTab(inner) {
+            recordInnerTab = inner;
+            ['archive','elecRecord'].forEach(k => {
+                document.getElementById('innerTabRec'+k.charAt(0).toUpperCase()+k.slice(1))?.classList.toggle('active', k===inner);
+                document.getElementById('content'+k.charAt(0).toUpperCase()+k.slice(1))?.classList.toggle('active', k===inner);
+            });
+            if(inner === 'archive') renderArchiveList();
+            if(inner === 'elecRecord') elecRenderRecords();
+        }
+
         // 구버전 switchTab 호환
         function switchTab(tabName) {
             if(['ideology','house','senate','coalition'].includes(tabName)) switchSubTab('setup', tabName==='house'||tabName==='senate'?'settings':tabName);
-            else if(['bill','vote','archive'].includes(tabName)) switchSubTab('legislation', tabName);
+            else if(['bill','table','vote'].includes(tabName)) { switchSubTab('nation','legislation'); switchLegislationInnerTab(tabName); }
+            else if(tabName === 'archive') { switchSubTab('nation','record'); switchRecordInnerTab('archive'); }
         }
 
         // 의회 > 설정 내부 탭 (하원/상원/삼원)

@@ -49,9 +49,8 @@
             <!-- ===== 상단 메인 탭 ===== -->
             <div class="main-tab-container">
                 <button class="main-tab-btn active" onclick="switchMainTab('setup')" id="mainTabSetup">⚙ 의회</button>
-                <button class="main-tab-btn" onclick="switchMainTab('legislation')" id="mainTabLegislation">⚖ 입법</button>
-                <button class="main-tab-btn" onclick="switchMainTab('election')" id="mainTabElection">🗳 선거</button>
-                <button class="main-tab-btn" onclick="switchMainTab('record')" id="mainTabRecord">🗂 기록</button>
+                <button class="main-tab-btn" onclick="switchMainTab('nation')" id="mainTabNation">🏛 국가</button>
+                <button class="main-tab-btn" onclick="switchMainTab('election')" id="mainTabElection">🗳 여론</button>
             </div>
 
             <!-- ===== 의회 그룹 (정당 그룹이 여기로 통합됨) ===== -->
@@ -59,9 +58,9 @@
                 <div class="sub-tab-container">
                     <button class="sub-tab-btn active" onclick="switchSubTab('setup','party')" id="subTabParty">정당</button>
                     <button class="sub-tab-btn" onclick="switchSubTab('setup','settings')" id="subTabSettings">설정</button>
-                    <button class="sub-tab-btn" onclick="switchSubTab('setup','coalition')" id="subTabCoalition">연정</button>
                     <button class="sub-tab-btn" onclick="switchSubTab('setup','members')" id="subTabMembers">의원</button>
                     <button class="sub-tab-btn" onclick="switchSubTab('setup','indMember')" id="subTabIndMember">무소속</button>
+                    <button class="sub-tab-btn" onclick="switchSubTab('setup','coalition')" id="subTabCoalition">연정</button>
                 </div>
 
                 <!-- 정당 탭 (내부 탭: 이념/정보/당수) -->
@@ -169,13 +168,20 @@
                 </div>
             </div>
 
-            <!-- ===== 입법 절차 그룹 ===== -->
-            <div id="mainContentLegislation" class="main-tab-content">
+            <!-- ===== 국가 그룹 (입법+기록 통합) ===== -->
+            <div id="mainContentNation" class="main-tab-content">
                 <div class="sub-tab-container">
-                    <button class="sub-tab-btn active" onclick="switchSubTab('legislation','bill')" id="subTabBill">제출</button>
-                    <button class="sub-tab-btn" onclick="switchSubTab('legislation','table')" id="subTabTable">상정</button>
-                    <button class="sub-tab-btn" onclick="switchSubTab('legislation','vote')" id="subTabVote">표결</button>
+                    <button class="sub-tab-btn active" onclick="switchSubTab('nation','legislation')" id="subTabLegislation">입법</button>
+                    <button class="sub-tab-btn" onclick="switchSubTab('nation','record')" id="subTabRecord">기록</button>
                 </div>
+
+                <!-- 입법 탭 (내부 탭: 제출/상정/표결) -->
+                <div id="contentLegislation" class="sub-tab-content active">
+                    <div class="sub-tab-container-3">
+                        <button class="sub-tab-btn-3 active" onclick="switchLegislationInnerTab('bill')" id="innerTabLegBill">제출</button>
+                        <button class="sub-tab-btn-3" onclick="switchLegislationInnerTab('table')" id="innerTabLegTable">상정</button>
+                        <button class="sub-tab-btn-3" onclick="switchLegislationInnerTab('vote')" id="innerTabLegVote">표결</button>
+                    </div>
 
             <!-- 제출 탭: 법안 작성 폼만 -->
             <div id="contentBill" class="sub-tab-content active">
@@ -379,7 +385,31 @@
                     <button class="vote-ctrl-btn yea" id="tConfirmBtn" style="width:100%;margin-top:8px;padding:9px;" onclick="confirmChamberVote('third')">▶ 삼원 표결 확정</button>
                 </div>
             </div><!-- end contentVote -->
-            </div><!-- end mainContentLegislation -->
+                </div><!-- end contentLegislation -->
+
+                <!-- 기록 탭 (내부 탭: 입법/선거) -->
+                <div id="contentRecord" class="sub-tab-content">
+                    <div class="sub-tab-container-3">
+                        <button class="sub-tab-btn-3 active" onclick="switchRecordInnerTab('archive')" id="innerTabRecArchive">입법</button>
+                        <button class="sub-tab-btn-3" onclick="switchRecordInnerTab('elecRecord')" id="innerTabRecElecRecord">선거</button>
+                    </div>
+
+                    <!-- 입법 기록 -->
+                    <div id="contentArchive" class="sub-tab-content active">
+                        <div class="bill-search-bar" style="margin-bottom:8px;">
+                            <input type="text" id="archiveSearchInput" placeholder="기록 검색..." oninput="renderArchiveList();">
+                            <button onclick="document.getElementById('archiveSearchInput').value=''; renderArchiveList();" style="background:transparent;border:1px solid #333;color:#555;padding:4px 8px;font-family:'NeoDunggeunmo','VT323',monospace;cursor:pointer;" title="초기화">✕</button>
+                        </div>
+                        <div class="bill-tag-filter" id="archiveTagFilter"></div>
+                        <div id="archiveList"></div>
+                    </div>
+
+                    <!-- 선거 기록 -->
+                    <div id="contentElecRecord" class="sub-tab-content">
+                        <div id="elecRecordList" style="margin-top:8px;"></div>
+                    </div>
+                </div><!-- end contentRecord -->
+            </div><!-- end mainContentNation -->
 
             <!-- ===== 선거 그룹 ===== -->
             <div id="mainContentElection" class="main-tab-content">
@@ -574,29 +604,6 @@
                 </div>
 
             </div><!-- end mainContentElection -->
-
-            <!-- ===== 기록 그룹 ===== -->
-            <div id="mainContentRecord" class="main-tab-content">
-                <div class="sub-tab-container">
-                    <button class="sub-tab-btn active" onclick="switchSubTab('record','archive')" id="subTabArchive">입법</button>
-                    <button class="sub-tab-btn" onclick="switchSubTab('record','elecRecord')" id="subTabElecRecord">선거</button>
-                </div>
-
-                <!-- 입법 기록 -->
-                <div id="contentArchive" class="sub-tab-content active">
-                    <div class="bill-search-bar" style="margin-bottom:8px;">
-                        <input type="text" id="archiveSearchInput" placeholder="기록 검색..." oninput="renderArchiveList();">
-                        <button onclick="document.getElementById('archiveSearchInput').value=''; renderArchiveList();" style="background:transparent;border:1px solid #333;color:#555;padding:4px 8px;font-family:'NeoDunggeunmo','VT323',monospace;cursor:pointer;" title="초기화">✕</button>
-                    </div>
-                    <div class="bill-tag-filter" id="archiveTagFilter"></div>
-                    <div id="archiveList"></div>
-                </div>
-
-                <!-- 선거 기록 -->
-                <div id="contentElecRecord" class="sub-tab-content">
-                    <div id="elecRecordList" style="margin-top:8px;"></div>
-                </div>
-            </div><!-- end mainContentRecord -->
 
 
         </div><!-- end controls-content -->
