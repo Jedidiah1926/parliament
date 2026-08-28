@@ -210,6 +210,7 @@
             background: transparent;
             color: #555;
             border: none;
+            outline: none;
             padding: 13px 4px 11px;
             cursor: pointer;
             font-size: 1.1rem;
