@@ -1444,7 +1444,8 @@
 
         // ===== MAIN SIMULATE =====
         window.addEventListener('resize', () => { simulate(); });
-        window.addEventListener('beforeunload', () => { if(autosaveEnabled) autosaveNow(); });
+        let suppressAutosaveOnUnload = false;
+        window.addEventListener('beforeunload', () => { if(autosaveEnabled && !suppressAutosaveOnUnload) autosaveNow(); });
 
         window.onload = function() {
             loadAutosavePreference();
@@ -1695,9 +1696,10 @@
         }
 
         function resetAutosaveData() {
-            if(!confirm('자동저장된 데이터를 완전히 삭제하시겠습니까?\n(파일로 저장한 .json 파일에는 영향이 없습니다)')) return;
+            if(!confirm('저장된 데이터를 모두 삭제하고 처음 상태로 되돌리시겠습니까?\n(파일로 저장한 .json 파일에는 영향이 없습니다)')) return;
+            suppressAutosaveOnUnload = true;
             localStorage.removeItem(AUTOSAVE_KEY);
-            renderSaveTabUI();
+            location.reload();
         }
 
         function renderSaveTabUI() {
