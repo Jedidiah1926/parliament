@@ -3613,31 +3613,6 @@
         // ─────────────────────────────────────────
         let tendencyData   = {};   // { partyId: { "q,r": 0|25|50|75|100 } }
         let tendencyStrength = 50;
-        let tendencyView = 'all'; // 'all'=종합만, 'party'=각 당별 지도
-
-        function tendencySetView(view) {
-            tendencyView = view;
-            const allBtn = document.getElementById('tendViewAllBtn');
-            const partyBtn = document.getElementById('tendViewPartyBtn');
-            if(allBtn) {
-                allBtn.style.background  = view==='all' ? 'var(--tno-neon)' : '#111';
-                allBtn.style.color       = view==='all' ? '#000' : '#888';
-                allBtn.style.borderColor = view==='all' ? 'var(--tno-neon)' : '#333';
-            }
-            if(partyBtn) {
-                partyBtn.style.background  = view==='party' ? 'var(--tno-neon)' : '#111';
-                partyBtn.style.color       = view==='party' ? '#000' : '#888';
-                partyBtn.style.borderColor = view==='party' ? 'var(--tno-neon)' : '#333';
-            }
-            const allWrap = document.getElementById('tendencyAllWrap');
-            const partyWrap = document.getElementById('tendencyPartyWrap');
-            if(allWrap && partyWrap) {
-                allWrap.style.display = view==='all' ? '' : 'none';
-                partyWrap.style.display = view==='party' ? '' : 'none';
-            } else {
-                tendencyRenderMaps();
-            }
-        }
 
         function tendencySetStrength(v) {
             tendencyStrength = v;
@@ -3788,20 +3763,18 @@
             // 오프셋 캐시 초기화 (맵 크기가 바뀔 수 있으니)
             parties.forEach(p => { p._tendOffset = { x: null, y: null }; });
 
-            // 종합 지도
+            // 종합 지도 (전체 너비)
             const allWrap = document.createElement('div');
-            allWrap.id = 'tendencyAllWrap';
-            allWrap.style.cssText = `margin-bottom:12px; display:${tendencyView==='all' ? '' : 'none'};`;
+            allWrap.style.cssText = 'margin-bottom:12px;';
             allWrap.innerHTML = `<div style="color:#888;font-size:0.8rem;margin-bottom:4px;letter-spacing:1px;">▌ 종합</div>`;
             const allCvs = document.createElement('canvas');
             allCvs.style.cssText = 'width:100%;display:block;background:#0a0c10;border:1px solid #222;cursor:default;';
             allWrap.appendChild(allCvs);
             container.appendChild(allWrap);
 
-            // 당별 지도 (그룹으로 묶어서 종합/각 당 전환 시 한번에 표시/숨김)
+            // 당별 지도 (2열 그리드)
             const partyGroup = document.createElement('div');
-            partyGroup.id = 'tendencyPartyWrap';
-            partyGroup.style.cssText = `display:${tendencyView==='party' ? '' : 'none'};`;
+            partyGroup.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:8px;';
             container.appendChild(partyGroup);
 
             parties.forEach(p => {
