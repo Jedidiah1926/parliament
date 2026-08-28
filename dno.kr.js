@@ -7,21 +7,14 @@
             const name = document.getElementById('nationNameInput')?.value?.trim() || '';
             const nameEl = document.getElementById('nationNameDisp');
             if(nameEl) nameEl.textContent = name || '국가명 미설정';
-            const wrap = document.getElementById('nationFlagDispWrap');
-            const img = document.getElementById('nationFlagDispImg');
-            const ph  = document.getElementById('nationFlagDispPh');
             const banner = document.getElementById('nationFlagBanner');
             const bannerImg = document.getElementById('nationFlagBannerImg');
             if(nationFlag) {
-                // 국기가 있으면 작은 헤더 아이콘 대신 좌측 탭 폭에 맞춘 큰 배너로 표시
-                if(wrap) wrap.style.display = 'none';
+                // 국기가 있으면 좌측 탭 폭에 맞춘 큰 배너로 표시
                 if(bannerImg) bannerImg.src = nationFlag;
                 if(banner) banner.style.display = '';
-            } else {
-                if(wrap) wrap.style.display = '';
-                if(img) img.style.display = 'none';
-                if(ph) ph.style.display = '';
-                if(banner) banner.style.display = 'none';
+            } else if(banner) {
+                banner.style.display = 'none';
             }
         }
 
@@ -1679,8 +1672,8 @@
         });
 
         // ===== 2단 탭 전환 =====
-        let currentMainTab = 'setup';
-        let currentSubTab = { setup: 'party', nation: 'legislation' };
+        let currentMainTab = 'nation';
+        let currentSubTab = { setup: 'party', nation: 'config' };
 
         // 표결 탭을 벗어날 때, 선택된 법안이 완전히 결론(가결/부결) 났으면 선택 초기화
         function checkResetVoteSelectionOnLeave() {
