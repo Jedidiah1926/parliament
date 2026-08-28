@@ -16,7 +16,7 @@
     ─────────────────────────────────────────────────── -->
     <script src="maintenance.js"></script>
     <script>
-        const REDIRECT_URL = "dno.main.html";
+        const REDIRECT_URL = "main.html";
         // maintenance.js 의 시각은 항상 KST(UTC+9) 기준이므로, 보는 사람의 시간대와
         // 무관하게 항상 같은 순간을 가리키도록 +09:00 오프셋을 붙여 해석한다.
         function parseMaintTime(v) { return v ? new Date(v + '+09:00') : null; }

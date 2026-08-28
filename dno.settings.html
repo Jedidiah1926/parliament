@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DATANET ORDER — SETTINGS</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/neodgm/neodgm-webfont@latest/neodgm/style.css">
+
+    <link rel="stylesheet" href="main.css">
+
+    <script src="lang.js"></script>
+</head>
+<body>
+
+    <div class="terminal-container">
+        <div class="corner top-left"></div>
+        <div class="corner bottom-right"></div>
+
+        <div class="header-strip">
+            SETTINGS
+        </div>
+
+        <div class="content">
+            <div class="status-line">
+                SYSTEM: ONLINE<br>
+                LANGUAGE MODULE
+            </div>
+
+            <div>
+                <div class="settings-label">LANGUAGE / 언어</div>
+                <div class="lang-select-group">
+                    <button class="lang-select-btn" id="langBtnKr" onclick="selectLang('kr')">한국어</button>
+                    <button class="lang-select-btn" id="langBtnEn" onclick="selectLang('en')">English</button>
+                    <button class="lang-select-btn" id="langBtnLocked" disabled title="Coming soon">🔒︎</button>
+                </div>
+            </div>
+
+            <a href="main.html" class="menu-btn" style="text-align:center;">&lt;&lt; BACK</a>
+
+            <div class="footer">
+                &copy; 2025-2026 Absatzmarke / Abwehr
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function selectLang(lang) {
+            setLang(lang);
+            renderLangButtons();
+        }
+        function renderLangButtons() {
+            const cur = getLang();
+            document.getElementById('langBtnKr').classList.toggle('active', cur === 'kr');
+            document.getElementById('langBtnEn').classList.toggle('active', cur === 'en');
+        }
+        renderLangButtons();
+    </script>
+
+</body>
+</html>
