@@ -1714,20 +1714,6 @@
         }
 
         window.addEventListener("load", () => {
-            const btnSave = document.getElementById("btnSaveJson");
-            const btnLoad = document.getElementById("btnLoadJson");
-            const fileInput = document.getElementById("fileLoadJson");
-            if(btnSave) btnSave.addEventListener("click", saveJSON);
-            if(btnLoad && fileInput) {
-                btnLoad.addEventListener("click", () => fileInput.click());
-                fileInput.addEventListener("change", async () => {
-                    const file = fileInput.files?.[0];
-                    if(!file) return;
-                    try { await loadJSONFromFile(file); }
-                    catch(e) { alert("불러오기 실패: 저장 파일이 깨졌거나 형식이 다릅니다."); }
-                    finally { fileInput.value = ""; }
-                });
-            }
             const fileInputTab = document.getElementById("fileLoadJsonTab");
             if(fileInputTab) {
                 fileInputTab.addEventListener("change", async () => {
