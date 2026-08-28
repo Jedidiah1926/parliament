@@ -196,7 +196,7 @@
         }
 
         /* ===== 2단 탭 =====
-           상위 = 박스가 아닌 터미널 프롬프트 스타일 (랜딩페이지 메뉴버튼의 ">>" 모티프 재사용)
+           상위 = 박스 없는 플랫 텍스트 탭, 활성 표시는 색+글로우+짧은 밑줄만
                   — 중위/하위와 아예 다른 문법이라 겹쳐 보이지 않음
            중위 = 각진 박스, 얇은 베이스라인 (하위의 완전히 둥근 칩으로 가는 절충 단계)
            하위(.sub-tab-btn-3) = 베이스라인 없이 완전히 둥근 칩 (변경 없음) */
@@ -214,7 +214,7 @@
             background: transparent;
             color: #555;
             border: none;
-            padding: 4px 22px;
+            padding: 4px 6px 8px;
             cursor: pointer;
             font-size: 1.05rem;
             font-weight: bold;
@@ -231,16 +231,17 @@
             color: var(--tno-neon);
             text-shadow: 0 0 8px var(--tno-neon);
         }
-        .main-tab-btn.active::before,
         .main-tab-btn.active::after {
+            content: '';
             position: absolute;
-            top: 50%;
-            transform: translateY(-50%);
-            color: var(--tno-neon);
-            text-shadow: 0 0 6px var(--tno-neon);
+            left: 50%;
+            bottom: 0;
+            transform: translateX(-50%);
+            width: 22px;
+            height: 2px;
+            background: var(--tno-neon);
+            box-shadow: 0 0 6px var(--tno-neon);
         }
-        .main-tab-btn.active::before { content: '>>'; left: 4px; }
-        .main-tab-btn.active::after  { content: '<<'; right: 4px; }
 
         .main-tab-content { display: none; }
         .main-tab-content.active { display: block; }
