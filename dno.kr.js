@@ -116,10 +116,11 @@
         function formatNationSession() {
             if(nationSessionMode === 'individual') {
                 const term = document.getElementById('nationSessionTerm')?.value;
+                const orgName = document.getElementById('nationSessionOrgName')?.value?.trim() || '국회';
                 const num  = document.getElementById('nationSessionNumber')?.value;
                 if(!term && !num) return '';
                 const typeLabel = nationSessionType === 'extraordinary' ? '임시회' : '정기회';
-                return `제${term||'?'}대 국회 제${num||'?'}회 ${typeLabel}`;
+                return `제${term||'?'}대 ${orgName} 제${num||'?'}회 ${typeLabel}`;
             }
             return document.getElementById('nationSessionInput')?.value?.trim() || '';
         }
@@ -1465,6 +1466,7 @@
                     nationSessionMode: nationSessionMode,
                     nationSession: document.getElementById('nationSessionInput')?.value ?? "",
                     nationSessionTerm:   document.getElementById('nationSessionTerm')?.value   ?? "",
+                    nationSessionOrgName: document.getElementById('nationSessionOrgName')?.value ?? "",
                     nationSessionNumber: document.getElementById('nationSessionNumber')?.value ?? "",
                     nationSessionType: nationSessionType,
                     senateName:    document.getElementById('senateNameInput')?.value   ?? "상원",
@@ -1587,6 +1589,7 @@
             if(gd('nationDateDay'))   gd('nationDateDay').value   = cfg.nationDateDay ?? "";
             if(gd('nationSessionInput')) gd('nationSessionInput').value = cfg.nationSession ?? "";
             if(gd('nationSessionTerm'))   gd('nationSessionTerm').value   = cfg.nationSessionTerm ?? "";
+            if(gd('nationSessionOrgName')) gd('nationSessionOrgName').value = cfg.nationSessionOrgName ?? "";
             if(gd('nationSessionNumber')) gd('nationSessionNumber').value = cfg.nationSessionNumber ?? "";
             nationFlag = cfg.nationFlag ?? "";
             setNationDateMode(cfg.nationDateMode ?? "simple");
