@@ -117,6 +117,10 @@
             { id: 'c1', name: "국민전선", color: "#2E2E2E", members: [1], isRuling: true , leadPartyId: null, externalSupporters: [], externalSupportLabel: "각외협력" },
         ];
 
+        // 원외정당: 의회에 진출하지 못한 정당 — 의석/의원실 정보 없이 신원(이름/색/이념/설명)만 관리
+        let extraParliamentaryParties = [];
+        let extraPartiesCollapsed = true;
+
         let currentTab = 'house';
 
         // ===== BILL STATE =====
@@ -1369,7 +1373,7 @@
                     houseTotal:    parseInt(document.getElementById('houseTotal')?.value)   || 300,
                     thirdTotal:    parseInt(document.getElementById('thirdTotal')?.value)   || 100
                 },
-                parliament: { ideologies, parties, coalitions, manualSort, independents },
+                parliament: { ideologies, parties, coalitions, manualSort, independents, extraParliamentaryParties },
                 legislation: {
                     bills,
                     activeBillId,
@@ -1417,6 +1421,7 @@
             coalitions = parl.coalitions.map(c => ({ leadPartyId:null, externalSupporters:[], externalSupportLabel:'각외협력', ...c }));
             manualSort = parl.manualSort ?? false;
             independents = Array.isArray(parl.independents) ? parl.independents : [];
+            extraParliamentaryParties = Array.isArray(parl.extraParliamentaryParties) ? parl.extraParliamentaryParties : [];
 
             // ── 입법 절차 복원 ──
             const leg = state.legislation || {};
@@ -2446,6 +2451,19 @@
         function removeParty(i) { const pid=parties[i].id; parties.splice(i,1); coalitions.forEach(c=>c.members=c.members.filter(x=>x!==pid)); refreshUI(); simulate(); }
         function updateParty(i,k,v) { parties[i][k]=v; if(k==='name')refreshUI(); simulate(); }
 
+        // ===== 원외정당 (의석 없는 정당) =====
+        function toggleExtraPartiesCollapse() { extraPartiesCollapsed = !extraPartiesCollapsed; renderPartyInfoList(); }
+        function addExtraParty() {
+            const defaultIdeologyId = ideologies.find(i=>i.id!==IND_IDEOLOGY_ID)?.id ?? ideologies[0]?.id;
+            extraParliamentaryParties.push({ id: Date.now(), name: "신당", abbr: "", color: "#555555", ideologyId: defaultIdeologyId, description: "" });
+            extraPartiesCollapsed = false;
+            renderPartyInfoList();
+        }
+        function removeExtraParty(i) { extraParliamentaryParties.splice(i,1); renderPartyInfoList(); }
+        function updateExtraParty(i,k,v) { if(extraParliamentaryParties[i]) extraParliamentaryParties[i][k]=v; if(k==='name') renderPartyInfoList(); }
+        function updateExtraPartyColorText(e,i) { if(isValidHex(e.value)){ extraParliamentaryParties[i].color=e.value.toUpperCase(); e.nextElementSibling.value=extraParliamentaryParties[i].color; renderPartyInfoList(); }}
+        function updateExtraPartyColorPicker(e,i) { extraParliamentaryParties[i].color=e.value.toUpperCase(); e.previousElementSibling.value=extraParliamentaryParties[i].color; }
+
         // 정당 해산/활동금지 표기 뱃지 — 활동중인 정당은 표기하지 않음
         function partyStatusBadge(p) {
             if(p.status === 'dissolved') return `<span class="party-status-badge status-dissolved">해산</span>`;
@@ -2747,6 +2765,53 @@
             });
             // 전체 체크박스 초기 동기화
             parties.forEach((p, idx) => syncPartyChamberAll(idx));
+
+            // ── 원외정당 (접기/펼치기, 의석 없이 카드만) ──
+            const exHeader = document.createElement('div');
+            exHeader.onclick = toggleExtraPartiesCollapse;
+            exHeader.style.cssText = `display:flex;align-items:center;gap:6px;cursor:pointer;padding:6px 8px;background:#0a0c10;border:1px solid #222;margin-top:14px;margin-bottom:${extraPartiesCollapsed?'0':'8px'};user-select:none;`;
+            exHeader.innerHTML = `
+                <span style="color:#888;font-size:0.85rem;">${extraPartiesCollapsed?'▶':'▼'}</span>
+                <span style="color:#888;font-size:0.85rem;letter-spacing:1px;">원외정당 (${extraParliamentaryParties.length})</span>
+            `;
+            container.appendChild(exHeader);
+
+            if(!extraPartiesCollapsed) {
+                extraParliamentaryParties.forEach((ep, exIdx) => {
+                    const div = document.createElement('div');
+                    div.className = 'card-item';
+                    div.style.borderLeftColor = ep.color;
+                    div.innerHTML = `
+                        <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px;">
+                            <div class="color-input-group" style="flex-shrink:0;">
+                                <input type="text" class="hex-input" value="${ep.color}" onchange="updateExtraPartyColorText(this,${exIdx})">
+                                <input type="color" value="${ep.color}" oninput="updateExtraPartyColorPicker(this,${exIdx})">
+                            </div>
+                            <input type="text" value="${ep.abbr||''}" onchange="updateExtraParty(${exIdx},'abbr',this.value)" placeholder="약칭" title="정당 약자 표기 (예: SPD)"
+                                style="flex:1;min-width:0;font-size:0.85rem;text-align:center;color:#aaa;">
+                            <button class="remove-btn" onclick="removeExtraParty(${exIdx})">X</button>
+                        </div>
+                        <div style="margin-bottom:6px;">
+                            <input type="text" value="${ep.name}" onchange="updateExtraParty(${exIdx},'name',this.value)" placeholder="정당명"
+                                style="width:100%;font-size:1rem;box-sizing:border-box;">
+                        </div>
+                        <div style="margin-bottom:6px;">
+                            <select onchange="updateExtraParty(${exIdx},'ideologyId',parseInt(this.value))" style="width:100%;">
+                                ${ideologies.map(ide=>`<option value="${ide.id}" ${ep.ideologyId===ide.id?'selected':''}>${ide.name}</option>`).join('')}
+                            </select>
+                        </div>
+                        <textarea placeholder="당에 대한 설명을 입력하세요..."
+                            style="width:100%;box-sizing:border-box;background:#000;border:1px solid #2a2a2a;color:#bbb;font-family:'NeoDunggeunmo','VT323',monospace;font-size:0.85rem;padding:6px;resize:vertical;min-height:50px;outline:none;line-height:1.5;"
+                            onchange="updateExtraParty(${exIdx},'description',this.value)">${ep.description||''}</textarea>
+                    `;
+                    container.appendChild(div);
+                });
+                const addExBtn = document.createElement('button');
+                addExBtn.className = 'add-btn';
+                addExBtn.textContent = '[+] 원외정당 추가';
+                addExBtn.onclick = addExtraParty;
+                container.appendChild(addExBtn);
+            }
         }
 
         // 정당별 소속 의원실 "전체" 체크박스 동기화
