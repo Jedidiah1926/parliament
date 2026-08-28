@@ -195,24 +195,64 @@
             width: 16px; height: 16px; cursor: pointer;
         }
 
-        /* ===== 2단 탭 ===== */
+        /* 단원제/양원제/삼원제 선택 — 박스형 세그먼트 버튼 */
+        .system-radio-group {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 15px;
+        }
+        .system-radio-btn {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 8px 6px;
+            background: #0a0c10;
+            border: 1px solid #2a2a2a;
+            border-radius: 4px;
+            color: #888;
+            cursor: pointer;
+            transition: 0.15s;
+        }
+        .system-radio-btn:hover { border-color: #3a4a54; color: #aaa; }
+        .system-radio-btn input[type="radio"] {
+            position: absolute;
+            width: 0;
+            height: 0;
+            opacity: 0;
+            margin: 0;
+        }
+        .system-radio-btn:has(input:checked) {
+            border-color: var(--tno-neon);
+            color: var(--tno-neon);
+            background: rgba(0,255,255,0.07);
+            box-shadow: 0 0 6px var(--tno-neon-dim);
+            text-shadow: 0 0 4px var(--tno-neon);
+        }
+
+        /* ===== 2단 탭 =====
+           상위 = 박스 없이 텍스트만, 굵은 베이스라인 위에 얹혀서 활성 시 글자만 빛남
+           중위 = 각진 박스지만 위쪽 모서리만 살짝 둥글게, 얇은 베이스라인 (하위의 완전히 둥근 칩으로 가는 절충 단계)
+           하위(.sub-tab-btn-3) = 베이스라인 없이 완전히 둥근 칩 (변경 없음) */
         .main-tab-container {
             display: flex;
-            border-bottom: 2px solid var(--tno-neon);
-            margin-bottom: 0;
+            gap: 4px;
+            border-bottom: 4px solid var(--tno-neon);
         }
         .main-tab-btn {
             flex: 1;
             min-width: 0;
             background: transparent;
             color: #555;
-            border: 1px solid transparent;
-            border-bottom: none;
-            padding: 9px 2px;
+            border: none;
+            outline: none;
+            padding: 13px 4px 11px;
             cursor: pointer;
-            font-size: 0.9rem;
+            font-size: 1.1rem;
+            font-weight: bold;
             font-family: 'NeoDunggeunmo', 'VT323', monospace;
-            letter-spacing: 0.5px;
+            letter-spacing: 2px;
             transition: 0.2s;
             text-transform: uppercase;
             white-space: nowrap;
@@ -221,11 +261,8 @@
         }
         .main-tab-btn:hover { color: var(--tno-neon); }
         .main-tab-btn.active {
-            background: rgba(0,255,255,0.07);
             color: var(--tno-neon);
-            border-color: var(--tno-neon);
-            border-bottom-color: var(--tno-panel);
-            text-shadow: 0 0 6px var(--tno-neon);
+            text-shadow: 0 0 10px var(--tno-neon), 0 0 20px var(--tno-neon-dim);
         }
 
         .main-tab-content { display: none; }
@@ -233,34 +270,38 @@
 
         .sub-tab-container {
             display: flex;
-            border-bottom: 1px solid var(--tno-border);
+            gap: 4px;
             margin-bottom: 12px;
             margin-top: 10px;
-            background: #0a0c10;
+            border-bottom: 1px solid var(--tno-border);
         }
         .sub-tab-btn {
             flex: 1;
-            background: transparent;
+            background: #0a0c10;
             color: #555;
-            border: none;
-            border-bottom: 2px solid transparent;
-            padding: 6px 4px;
+            border: 1px solid #222;
+            border-bottom: none;
+            border-radius: 4px 4px 0 0;
+            padding: 7px 4px;
             cursor: pointer;
-            font-size: 0.95rem;
+            font-size: 0.92rem;
             font-family: 'NeoDunggeunmo', 'VT323', monospace;
+            letter-spacing: 0.5px;
             transition: 0.15s;
         }
-        .sub-tab-btn:hover { color: #aaa; }
+        .sub-tab-btn:hover { color: #aaa; border-color: #3a4a54; }
         .sub-tab-btn.active {
             color: var(--tno-neon);
-            border-bottom-color: var(--tno-neon);
+            border-color: var(--tno-neon);
+            background: rgba(0,255,255,0.07);
+            box-shadow: 0 -2px 8px var(--tno-neon-dim);
         }
 
         .sub-tab-content { display: none; }
         .sub-tab-content.active { display: block; animation: flicker 0.15s; }
         @keyframes flicker { 0% { opacity: 0.8; } 100% { opacity: 1; } }
 
-        /* 3차 탭 (2차 탭 안쪽 nested 탭) — 시각적으로 구분되는 pill 스타일 */
+        /* 3차 탭 (2차 탭 안쪽 nested 탭) — 같은 pill 계열에서 가장 작은 단계, 골드로 위계 구분 */
         .sub-tab-container-3 {
             display: flex;
             gap: 4px;
