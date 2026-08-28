@@ -204,13 +204,46 @@
                     </div>
 
                     <div style="margin-top:16px;">
-                        <label style="color:#888;font-size:0.8rem;margin-bottom:4px;display:block;">현재 날짜</label>
-                        <input type="text" id="nationDateInput" placeholder="예: 1952년 3월 15일" style="width:100%;box-sizing:border-box;">
+                        <label style="color:#888;font-size:0.8rem;margin-bottom:6px;display:block;">현재 날짜</label>
+                        <div class="system-radio-group" style="margin-bottom:8px;">
+                            <button type="button" class="system-radio-btn active" id="nationDateModeSimpleBtn" onclick="setNationDateMode('simple')">단순형</button>
+                            <button type="button" class="system-radio-btn" id="nationDateModeProgBtn" onclick="setNationDateMode('progressive')">수동 진행형</button>
+                        </div>
+                        <div id="nationDateSimpleWrap">
+                            <input type="text" id="nationDateInput" placeholder="예: 1952년 3월 15일" oninput="updateDispInfoBar()" style="width:100%;box-sizing:border-box;">
+                        </div>
+                        <div id="nationDateProgWrap" style="display:none;">
+                            <div style="display:flex;gap:6px;margin-bottom:8px;">
+                                <input type="number" id="nationDateYear" placeholder="연" oninput="updateDispInfoBar()" style="flex:1.4;text-align:center;">
+                                <input type="number" id="nationDateMonth" placeholder="월" min="1" max="12" oninput="updateDispInfoBar()" style="flex:1;text-align:center;">
+                                <input type="number" id="nationDateDay" placeholder="일" min="1" max="31" oninput="updateDispInfoBar()" style="flex:1;text-align:center;">
+                            </div>
+                            <button class="add-btn" onclick="advanceNationDate()" style="width:100%;">▶ +1일 진행</button>
+                        </div>
                     </div>
 
                     <div style="margin-top:16px;">
-                        <label style="color:#888;font-size:0.8rem;margin-bottom:4px;display:block;">회기</label>
-                        <input type="text" id="nationSessionInput" placeholder="예: 제21대 국회 제1회 임시회" style="width:100%;box-sizing:border-box;">
+                        <label style="color:#888;font-size:0.8rem;margin-bottom:6px;display:block;">회기</label>
+                        <div class="system-radio-group" style="margin-bottom:8px;">
+                            <button type="button" class="system-radio-btn active" id="nationSessionModeSimpleBtn" onclick="setNationSessionMode('simple')">단순형</button>
+                            <button type="button" class="system-radio-btn" id="nationSessionModeIndivBtn" onclick="setNationSessionMode('individual')">개별형</button>
+                        </div>
+                        <div id="nationSessionSimpleWrap">
+                            <input type="text" id="nationSessionInput" placeholder="예: 제21대 국회 제1회 임시회" oninput="updateDispInfoBar()" style="width:100%;box-sizing:border-box;">
+                        </div>
+                        <div id="nationSessionIndivWrap" style="display:none;">
+                            <div style="display:flex;gap:6px;margin-bottom:8px;">
+                                <div style="flex:1;">
+                                    <label style="color:#555;font-size:0.72rem;margin-bottom:2px;">대수</label>
+                                    <input type="number" id="nationSessionTerm" placeholder="21" oninput="updateDispInfoBar()" style="width:100%;text-align:center;box-sizing:border-box;">
+                                </div>
+                                <div style="flex:1;">
+                                    <label style="color:#555;font-size:0.72rem;margin-bottom:2px;">회기 번호</label>
+                                    <input type="number" id="nationSessionNumber" placeholder="1" oninput="updateDispInfoBar()" style="width:100%;text-align:center;box-sizing:border-box;">
+                                </div>
+                            </div>
+                            <button class="add-btn" onclick="advanceNationSession()" style="width:100%;">▶ 다음 회기</button>
+                        </div>
                     </div>
                 </div>
 
@@ -668,6 +701,10 @@
             <button class="disp-tab-btn"         id="dispTabElecResultHouse" data-tab="elecResultHouse" onclick="switchDispTab('elecResultHouse')" style="display:none;"><span class="disp-tab-label">하원 선거결과</span><span class="disp-tab-close" onclick="event.stopPropagation();closeDispTab('elecResultHouse')">×</span></button>
             <button class="disp-tab-btn"         id="dispTabElecResultSenate" data-tab="elecResultSenate" onclick="switchDispTab('elecResultSenate')" style="display:none;"><span class="disp-tab-label">상원 선거결과</span><span class="disp-tab-close" onclick="event.stopPropagation();closeDispTab('elecResultSenate')">×</span></button>
             <button class="disp-tab-btn"         id="dispTabElecResultThird" data-tab="elecResultThird" onclick="switchDispTab('elecResultThird')" style="display:none;"><span class="disp-tab-label">삼원 선거결과</span><span class="disp-tab-close" onclick="event.stopPropagation();closeDispTab('elecResultThird')">×</span></button>
+            <div class="disp-info-bar" id="dispInfoBar">
+                <span id="dispInfoDate">날짜 미설정</span>
+                <span id="dispInfoSession">회기 미설정</span>
+            </div>
         </div>
 
         <!-- 하원 패널 -->
