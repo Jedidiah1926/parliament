@@ -57,7 +57,7 @@
             <div id="mainContentSetup" class="main-tab-content active">
                 <div class="sub-tab-container">
                     <button class="sub-tab-btn active" onclick="switchSubTab('setup','party')" id="subTabParty">정당</button>
-                    <button class="sub-tab-btn" onclick="switchSubTab('setup','settings')" id="subTabSettings">설정</button>
+                    <button class="sub-tab-btn" onclick="switchSubTab('setup','settings')" id="subTabSettings">구성</button>
                     <button class="sub-tab-btn" onclick="switchSubTab('setup','members')" id="subTabMembers">의원</button>
                     <button class="sub-tab-btn" onclick="switchSubTab('setup','indMember')" id="subTabIndMember">무소속</button>
                     <button class="sub-tab-btn" onclick="switchSubTab('setup','coalition')" id="subTabCoalition">연정</button>
@@ -171,8 +171,18 @@
             <!-- ===== 국가 그룹 (입법+기록 통합) ===== -->
             <div id="mainContentNation" class="main-tab-content">
                 <div class="sub-tab-container">
+                    <button class="sub-tab-btn" onclick="switchSubTab('nation','config')" id="subTabConfig">설정</button>
                     <button class="sub-tab-btn active" onclick="switchSubTab('nation','legislation')" id="subTabLegislation">입법</button>
+                    <button class="sub-tab-btn" onclick="switchSubTab('nation','election')" id="subTabElection">선거</button>
                     <button class="sub-tab-btn" onclick="switchSubTab('nation','record')" id="subTabRecord">기록</button>
+                </div>
+
+                <!-- 설정 탭 (v1.4.8 예정 기능 자리 — 준비중) -->
+                <div id="contentConfig" class="sub-tab-content">
+                    <div style="padding:50px 20px;text-align:center;color:#555;border:1px dashed #333;background:#0a0c10;">
+                        <div style="font-size:1.1rem;color:#666;letter-spacing:2px;margin-bottom:10px;">⚙ COMING SOON</div>
+                        <div style="font-size:0.85rem;color:#444;">v1.4.8에서 추가될 기능을 위한 자리입니다.</div>
+                    </div>
                 </div>
 
                 <!-- 입법 탭 (내부 탭: 제출/상정/표결) -->
@@ -387,108 +397,8 @@
             </div><!-- end contentVote -->
                 </div><!-- end contentLegislation -->
 
-                <!-- 기록 탭 (내부 탭: 입법/선거) -->
-                <div id="contentRecord" class="sub-tab-content">
-                    <div class="sub-tab-container-3">
-                        <button class="sub-tab-btn-3 active" onclick="switchRecordInnerTab('archive')" id="innerTabRecArchive">입법</button>
-                        <button class="sub-tab-btn-3" onclick="switchRecordInnerTab('elecRecord')" id="innerTabRecElecRecord">선거</button>
-                    </div>
-
-                    <!-- 입법 기록 -->
-                    <div id="contentArchive" class="sub-tab-content active">
-                        <div class="bill-search-bar" style="margin-bottom:8px;">
-                            <input type="text" id="archiveSearchInput" placeholder="기록 검색..." oninput="renderArchiveList();">
-                            <button onclick="document.getElementById('archiveSearchInput').value=''; renderArchiveList();" style="background:transparent;border:1px solid #333;color:#555;padding:4px 8px;font-family:'NeoDunggeunmo','VT323',monospace;cursor:pointer;" title="초기화">✕</button>
-                        </div>
-                        <div class="bill-tag-filter" id="archiveTagFilter"></div>
-                        <div id="archiveList"></div>
-                    </div>
-
-                    <!-- 선거 기록 -->
-                    <div id="contentElecRecord" class="sub-tab-content">
-                        <div id="elecRecordList" style="margin-top:8px;"></div>
-                    </div>
-                </div><!-- end contentRecord -->
-            </div><!-- end mainContentNation -->
-
-            <!-- ===== 선거 그룹 ===== -->
-            <div id="mainContentElection" class="main-tab-content">
-                <div class="sub-tab-container" style="margin-top:10px;">
-                    <button class="sub-tab-btn" id="elecSubTabDistrict" onclick="elecSwitchSub('district')">지역구</button>
-                    <button class="sub-tab-btn" id="elecSubTabTendency" onclick="elecSwitchSub('tendency')">성향</button>
-                    <button class="sub-tab-btn" id="elecSubTabProb" onclick="elecSwitchSub('prob')">지지율</button>
-                    <button class="sub-tab-btn active" id="elecSubTabVote" onclick="elecSwitchSub('vote')">선거</button>
-                </div>
-
-                <!-- 지역구 서브탭 - 설정만 (맵은 우측) -->
-                <div id="elecSubDistrict" class="sub-tab-content">
-                    <!-- 지역구 종류 선택 -->
-                    <div style="display:flex;gap:6px;margin:8px 0 10px;">
-                        <button id="districtChamberHouseBtn" onclick="districtSetChamber('house')"
-                            style="flex:1;padding:6px;font-family:inherit;font-size:0.85rem;background:#0a1a2a;color:var(--tno-neon);border:2px solid var(--tno-neon);cursor:pointer;letter-spacing:1px;" id="districtChamberHouseBtn">
-                            <span id="districtChamberHouseLabel">하원</span> 지역구
-                        </button>
-                        <button id="districtChamberSenateBtn" onclick="districtSetChamber('senate')"
-                            style="flex:1;padding:6px;font-family:inherit;font-size:0.85rem;background:transparent;color:#664400;border:2px solid #664400;cursor:pointer;letter-spacing:1px;">
-                            <span id="districtChamberSenateLabel">상원</span> 지역구
-                        </button>
-                        <button id="districtChamberThirdBtn" onclick="districtSetChamber('third')" style="display:none;flex:1;padding:6px;font-family:inherit;font-size:0.85rem;background:transparent;color:#6a0080;border:2px solid #6a0080;cursor:pointer;letter-spacing:1px;">
-                            <span id="districtChamberThirdLabel">삼원</span> 지역구
-                        </button>
-                    </div>
-                    <div style="margin:0 0 6px;font-size:0.8rem;color:#555;">편집 모드</div>
-                    <div style="display:flex;gap:6px;margin-bottom:10px;">
-                        <button id="districtModeAdd" onclick="districtSetMode('add')"
-                            style="flex:1;padding:8px;font-family:inherit;font-size:0.9rem;background:#0a2a1a;color:#00cc66;border:2px solid #00cc66;cursor:pointer;letter-spacing:1px;box-shadow:0 0 8px #00cc6688;">추가</button>
-                        <button id="districtModeRemove" onclick="districtSetMode('remove')"
-                            style="flex:1;padding:8px;font-family:inherit;font-size:0.9rem;background:transparent;color:#663333;border:2px solid #663333;cursor:pointer;letter-spacing:1px;">제거</button>
-                        <button id="districtModeName" onclick="districtSetMode('name')"
-                            style="flex:1;padding:8px;font-family:inherit;font-size:0.9rem;background:transparent;color:#666633;border:2px solid #666633;cursor:pointer;letter-spacing:1px;">이름</button>
-                        <button id="districtModeNone" onclick="districtSetMode('none')"
-                            style="flex:0 0 44px;padding:8px;font-family:inherit;font-size:0.9rem;background:transparent;color:#555;border:2px solid #444;cursor:pointer;" title="선택 해제 (이동/확대만)">✕</button>
-                    </div>
-                    <!-- 이름 모드 사이드패널 -->
-                    <div id="districtNamePanel" style="display:none;padding:8px;background:#0a0c10;border:1px solid #665500;margin-bottom:10px;">
-                        <div style="color:#888;font-size:0.78rem;margin-bottom:5px;">선택한 지역구 <span id="districtNamePanelCoord" style="color:#666;"></span></div>
-                        <input type="text" id="districtNameInput" placeholder="지역구 이름 (예: 종로구)"
-                            style="width:100%;box-sizing:border-box;background:#000;border:1px solid #665500;color:var(--tno-gold);font-family:inherit;font-size:0.9rem;padding:6px;"
-                            oninput="districtSetName(this.value)">
-                    </div>
-                    <div style="padding:6px 8px;background:#0a0c10;border:1px solid #222;font-size:0.78rem;color:#444;margin-bottom:10px;">
-                        클릭/드래그로 칸 편집 (이름 모드는 클릭만) &nbsp;|&nbsp; 휠: 확대/축소 &nbsp;|&nbsp; 휠클릭+드래그: 이동
-                    </div>
-                    <div style="display:flex;justify-content:flex-end;align-items:center;margin-bottom:14px;">
-                        <button onclick="districtClearAll()" style="background:transparent;border:1px solid #333;color:#555;padding:3px 10px;cursor:pointer;font-family:inherit;font-size:0.8rem;">전체 초기화</button>
-                    </div>
-
-                    <!-- 지역구 목록 패널 (이름 일괄 관리) -->
-                    <div style="color:#666;font-size:0.8rem;margin-bottom:6px;letter-spacing:1px;border-top:1px solid #222;padding-top:10px;">▌ 지역구 목록</div>
-                    <div class="sub-tab-container-3" id="districtListInnerTabs">
-                        <button class="sub-tab-btn-3 active" onclick="switchDistrictListInnerTab('house')" id="innerTabDistListHouse">하원</button>
-                        <button class="sub-tab-btn-3" onclick="switchDistrictListInnerTab('senate')" id="innerTabDistListSenate">상원</button>
-                        <button class="sub-tab-btn-3" onclick="switchDistrictListInnerTab('third')" id="innerTabDistListThird" style="display:none;">삼원</button>
-                    </div>
-                    <div id="districtListPanel"></div>
-                </div>
-
-                <!-- 성향 서브탭 - 강도 설정만 (맵은 우측) -->
-                <div id="elecSubTendency" class="sub-tab-content">
-                    <!-- 강도 선택 -->
-                    <div style="display:flex;align-items:center;gap:4px;margin:8px 0;flex-wrap:wrap;">
-                        <span style="color:#666;font-size:0.8rem;margin-right:2px;">강도</span>
-                        <button id="tendStrBtn0"   onclick="tendencySetStrength(0)"   style="flex:1;padding:4px;font-size:0.85rem;font-family:inherit;background:#111;color:#888;border:1px solid #333;cursor:pointer;">0%</button>
-                        <button id="tendStrBtn25"  onclick="tendencySetStrength(25)"  style="flex:1;padding:4px;font-size:0.85rem;font-family:inherit;background:#111;color:#888;border:1px solid #333;cursor:pointer;">25%</button>
-                        <button id="tendStrBtn50"  onclick="tendencySetStrength(50)"  style="flex:1;padding:4px;font-size:0.85rem;font-family:inherit;background:var(--tno-neon);color:#000;border:1px solid var(--tno-neon);cursor:pointer;">50%</button>
-                        <button id="tendStrBtn75"  onclick="tendencySetStrength(75)"  style="flex:1;padding:4px;font-size:0.85rem;font-family:inherit;background:#111;color:#888;border:1px solid #333;cursor:pointer;">75%</button>
-                        <button id="tendStrBtn100" onclick="tendencySetStrength(100)" style="flex:1;padding:4px;font-size:0.85rem;font-family:inherit;background:#111;color:#888;border:1px solid #333;cursor:pointer;">100%</button>
-                    </div>
-                    <div style="font-size:0.75rem;color:#444;margin-bottom:6px;padding:4px 8px;background:#0a0c10;border:1px solid #222;">
-                        성향 맵은 우측 패널에서 확인 및 편집하세요
-                    </div>
-                </div>
-
-                <!-- 선거 서브탭 -->
-                <div id="elecSubVote" class="sub-tab-content active">
+                <!-- 선거 탭 (구 여론>선거, 국가로 이동) -->
+                <div id="contentElection" class="sub-tab-content">
                     <div style="display:grid;grid-template-columns:1fr 90px;gap:8px;margin-bottom:10px;">
                         <div>
                             <label style="color:#888;font-size:0.8rem;margin-bottom:3px;">선거 제목</label>
@@ -586,6 +496,105 @@
                             <button onclick="elecRerun()"
                                 style="flex:1;background:transparent;border:1px solid var(--tno-neon);color:var(--tno-neon);padding:9px;font-family:inherit;font-size:0.9rem;cursor:pointer;">↺ 재개표</button>
                         </div>
+                    </div>
+                </div><!-- end contentElection -->
+
+                <!-- 기록 탭 (내부 탭: 입법/선거) -->
+                <div id="contentRecord" class="sub-tab-content">
+                    <div class="sub-tab-container-3">
+                        <button class="sub-tab-btn-3 active" onclick="switchRecordInnerTab('archive')" id="innerTabRecArchive">입법</button>
+                        <button class="sub-tab-btn-3" onclick="switchRecordInnerTab('elecRecord')" id="innerTabRecElecRecord">선거</button>
+                    </div>
+
+                    <!-- 입법 기록 -->
+                    <div id="contentArchive" class="sub-tab-content active">
+                        <div class="bill-search-bar" style="margin-bottom:8px;">
+                            <input type="text" id="archiveSearchInput" placeholder="기록 검색..." oninput="renderArchiveList();">
+                            <button onclick="document.getElementById('archiveSearchInput').value=''; renderArchiveList();" style="background:transparent;border:1px solid #333;color:#555;padding:4px 8px;font-family:'NeoDunggeunmo','VT323',monospace;cursor:pointer;" title="초기화">✕</button>
+                        </div>
+                        <div class="bill-tag-filter" id="archiveTagFilter"></div>
+                        <div id="archiveList"></div>
+                    </div>
+
+                    <!-- 선거 기록 -->
+                    <div id="contentElecRecord" class="sub-tab-content">
+                        <div id="elecRecordList" style="margin-top:8px;"></div>
+                    </div>
+                </div><!-- end contentRecord -->
+            </div><!-- end mainContentNation -->
+
+            <!-- ===== 선거 그룹 ===== -->
+            <div id="mainContentElection" class="main-tab-content">
+                <div class="sub-tab-container" style="margin-top:10px;">
+                    <button class="sub-tab-btn active" id="elecSubTabDistrict" onclick="elecSwitchSub('district')">지역구</button>
+                    <button class="sub-tab-btn" id="elecSubTabTendency" onclick="elecSwitchSub('tendency')">성향</button>
+                    <button class="sub-tab-btn" id="elecSubTabProb" onclick="elecSwitchSub('prob')">지지율</button>
+                </div>
+
+                <!-- 지역구 서브탭 - 설정만 (맵은 우측) -->
+                <div id="elecSubDistrict" class="sub-tab-content active">
+                    <!-- 지역구 종류 선택 -->
+                    <div style="display:flex;gap:6px;margin:8px 0 10px;">
+                        <button id="districtChamberHouseBtn" onclick="districtSetChamber('house')"
+                            style="flex:1;padding:6px;font-family:inherit;font-size:0.85rem;background:#0a1a2a;color:var(--tno-neon);border:2px solid var(--tno-neon);cursor:pointer;letter-spacing:1px;" id="districtChamberHouseBtn">
+                            <span id="districtChamberHouseLabel">하원</span> 지역구
+                        </button>
+                        <button id="districtChamberSenateBtn" onclick="districtSetChamber('senate')"
+                            style="flex:1;padding:6px;font-family:inherit;font-size:0.85rem;background:transparent;color:#664400;border:2px solid #664400;cursor:pointer;letter-spacing:1px;">
+                            <span id="districtChamberSenateLabel">상원</span> 지역구
+                        </button>
+                        <button id="districtChamberThirdBtn" onclick="districtSetChamber('third')" style="display:none;flex:1;padding:6px;font-family:inherit;font-size:0.85rem;background:transparent;color:#6a0080;border:2px solid #6a0080;cursor:pointer;letter-spacing:1px;">
+                            <span id="districtChamberThirdLabel">삼원</span> 지역구
+                        </button>
+                    </div>
+                    <div style="margin:0 0 6px;font-size:0.8rem;color:#555;">편집 모드</div>
+                    <div style="display:flex;gap:6px;margin-bottom:10px;">
+                        <button id="districtModeAdd" onclick="districtSetMode('add')"
+                            style="flex:1;padding:8px;font-family:inherit;font-size:0.9rem;background:#0a2a1a;color:#00cc66;border:2px solid #00cc66;cursor:pointer;letter-spacing:1px;box-shadow:0 0 8px #00cc6688;">추가</button>
+                        <button id="districtModeRemove" onclick="districtSetMode('remove')"
+                            style="flex:1;padding:8px;font-family:inherit;font-size:0.9rem;background:transparent;color:#663333;border:2px solid #663333;cursor:pointer;letter-spacing:1px;">제거</button>
+                        <button id="districtModeName" onclick="districtSetMode('name')"
+                            style="flex:1;padding:8px;font-family:inherit;font-size:0.9rem;background:transparent;color:#666633;border:2px solid #666633;cursor:pointer;letter-spacing:1px;">이름</button>
+                        <button id="districtModeNone" onclick="districtSetMode('none')"
+                            style="flex:0 0 44px;padding:8px;font-family:inherit;font-size:0.9rem;background:transparent;color:#555;border:2px solid #444;cursor:pointer;" title="선택 해제 (이동/확대만)">✕</button>
+                    </div>
+                    <!-- 이름 모드 사이드패널 -->
+                    <div id="districtNamePanel" style="display:none;padding:8px;background:#0a0c10;border:1px solid #665500;margin-bottom:10px;">
+                        <div style="color:#888;font-size:0.78rem;margin-bottom:5px;">선택한 지역구 <span id="districtNamePanelCoord" style="color:#666;"></span></div>
+                        <input type="text" id="districtNameInput" placeholder="지역구 이름 (예: 종로구)"
+                            style="width:100%;box-sizing:border-box;background:#000;border:1px solid #665500;color:var(--tno-gold);font-family:inherit;font-size:0.9rem;padding:6px;"
+                            oninput="districtSetName(this.value)">
+                    </div>
+                    <div style="padding:6px 8px;background:#0a0c10;border:1px solid #222;font-size:0.78rem;color:#444;margin-bottom:10px;">
+                        클릭/드래그로 칸 편집 (이름 모드는 클릭만) &nbsp;|&nbsp; 휠: 확대/축소 &nbsp;|&nbsp; 휠클릭+드래그: 이동
+                    </div>
+                    <div style="display:flex;justify-content:flex-end;align-items:center;margin-bottom:14px;">
+                        <button onclick="districtClearAll()" style="background:transparent;border:1px solid #333;color:#555;padding:3px 10px;cursor:pointer;font-family:inherit;font-size:0.8rem;">전체 초기화</button>
+                    </div>
+
+                    <!-- 지역구 목록 패널 (이름 일괄 관리) -->
+                    <div style="color:#666;font-size:0.8rem;margin-bottom:6px;letter-spacing:1px;border-top:1px solid #222;padding-top:10px;">▌ 지역구 목록</div>
+                    <div class="sub-tab-container-3" id="districtListInnerTabs">
+                        <button class="sub-tab-btn-3 active" onclick="switchDistrictListInnerTab('house')" id="innerTabDistListHouse">하원</button>
+                        <button class="sub-tab-btn-3" onclick="switchDistrictListInnerTab('senate')" id="innerTabDistListSenate">상원</button>
+                        <button class="sub-tab-btn-3" onclick="switchDistrictListInnerTab('third')" id="innerTabDistListThird" style="display:none;">삼원</button>
+                    </div>
+                    <div id="districtListPanel"></div>
+                </div>
+
+                <!-- 성향 서브탭 - 강도 설정만 (맵은 우측) -->
+                <div id="elecSubTendency" class="sub-tab-content">
+                    <!-- 강도 선택 -->
+                    <div style="display:flex;align-items:center;gap:4px;margin:8px 0;flex-wrap:wrap;">
+                        <span style="color:#666;font-size:0.8rem;margin-right:2px;">강도</span>
+                        <button id="tendStrBtn0"   onclick="tendencySetStrength(0)"   style="flex:1;padding:4px;font-size:0.85rem;font-family:inherit;background:#111;color:#888;border:1px solid #333;cursor:pointer;">0%</button>
+                        <button id="tendStrBtn25"  onclick="tendencySetStrength(25)"  style="flex:1;padding:4px;font-size:0.85rem;font-family:inherit;background:#111;color:#888;border:1px solid #333;cursor:pointer;">25%</button>
+                        <button id="tendStrBtn50"  onclick="tendencySetStrength(50)"  style="flex:1;padding:4px;font-size:0.85rem;font-family:inherit;background:var(--tno-neon);color:#000;border:1px solid var(--tno-neon);cursor:pointer;">50%</button>
+                        <button id="tendStrBtn75"  onclick="tendencySetStrength(75)"  style="flex:1;padding:4px;font-size:0.85rem;font-family:inherit;background:#111;color:#888;border:1px solid #333;cursor:pointer;">75%</button>
+                        <button id="tendStrBtn100" onclick="tendencySetStrength(100)" style="flex:1;padding:4px;font-size:0.85rem;font-family:inherit;background:#111;color:#888;border:1px solid #333;cursor:pointer;">100%</button>
+                    </div>
+                    <div style="font-size:0.75rem;color:#444;margin-bottom:6px;padding:4px 8px;background:#0a0c10;border:1px solid #222;">
+                        성향 맵은 우측 패널에서 확인 및 편집하세요
                     </div>
                 </div>
 

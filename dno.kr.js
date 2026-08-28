@@ -1557,6 +1557,7 @@
             if(content) content.classList.add('active');
             refreshUI();
             if(sub === 'legislation') { switchLegislationInnerTab('bill'); }
+            if(sub === 'election') { elecRenderList(); }
             if(sub === 'record') { switchRecordInnerTab('archive'); }
             if(sub === 'party') { switchPartyGroupInnerTab('ideology'); }
             if(sub === 'settings') { switchSetupInnerTab('house'); }
@@ -3903,7 +3904,7 @@
         // 선거 하위탭 전환
         // ─────────────────────────────────────────
         function elecSwitchSub(sub) {
-            ['district','tendency','prob','vote'].forEach(s => {
+            ['district','tendency','prob'].forEach(s => {
                 document.getElementById(`elecSubTab${s.charAt(0).toUpperCase()+s.slice(1)}`)?.classList.toggle('active', s===sub);
                 document.getElementById(`elecSub${s.charAt(0).toUpperCase()+s.slice(1)}`)?.classList.toggle('active', s===sub);
             });
