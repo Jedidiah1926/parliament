@@ -686,11 +686,27 @@
 
             </div><!-- end mainContentElection -->
 
-            <!-- ===== 저장 그룹 (v1.4.9 예정) ===== -->
+            <!-- ===== 저장 그룹 ===== -->
             <div id="mainContentSave" class="main-tab-content">
-                <div style="padding:50px 20px;text-align:center;color:#555;border:1px dashed #333;background:#0a0c10;">
-                    <div style="font-size:1.1rem;color:#666;letter-spacing:2px;margin-bottom:10px;">💾︎ COMING SOON</div>
-                    <div style="font-size:0.85rem;color:#444;">1.4.9에서 추가 예정입니다.</div>
+                <div style="padding:16px;">
+                    <label style="display:flex;align-items:center;justify-content:space-between;gap:10px;cursor:pointer;padding:12px 14px;background:#0a0c10;border:1px solid #2a2a2a;margin-bottom:14px;">
+                        <span>
+                            <span style="color:var(--tno-neon);font-size:0.95rem;display:block;">자동저장</span>
+                            <span style="color:#666;font-size:0.75rem;" id="autosaveStatusText">-</span>
+                        </span>
+                        <input type="checkbox" id="autosaveToggle" onchange="setAutosaveEnabled(this.checked)">
+                    </label>
+
+                    <button class="add-btn" onclick="resetAutosaveData()" style="width:100%;margin-top:0;border-color:#663333;color:#ff6666;">✕ 저장 데이터 초기화</button>
+
+                    <div style="height:1px;background:#222;margin:18px 0;"></div>
+
+                    <label style="color:#888;font-size:0.8rem;margin-bottom:6px;display:block;">파일로 저장 / 불러오기</label>
+                    <div style="display:flex;gap:8px;">
+                        <button class="add-btn" onclick="saveJSON()" style="flex:1;margin-top:0;">파일로 저장</button>
+                        <button class="add-btn" onclick="document.getElementById('fileLoadJsonTab').click()" style="flex:1;margin-top:0;">불러오기</button>
+                    </div>
+                    <input id="fileLoadJsonTab" type="file" accept="application/json" style="display:none;">
                 </div>
             </div>
 

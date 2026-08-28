@@ -1444,8 +1444,15 @@
 
         // ===== MAIN SIMULATE =====
         window.addEventListener('resize', () => { simulate(); });
+        window.addEventListener('beforeunload', () => { if(autosaveEnabled) autosaveNow(); });
 
-        window.onload = function() { toggleSystem(); refreshUI(); simulate(); renderBillList(); renderArchiveList(); syncBillSelect(); elecRenderList(); elecRenderRecords(); updateNationIdBar(); updateDispInfoBar(); };
+        window.onload = function() {
+            loadAutosavePreference();
+            const restored = autosaveEnabled && loadFromAutosave();
+            if(!restored) { toggleSystem(); refreshUI(); simulate(); renderBillList(); renderArchiveList(); syncBillSelect(); elecRenderList(); elecRenderRecords(); updateNationIdBar(); updateDispInfoBar(); }
+            if(autosaveEnabled) { autosaveNow(); startAutosaveTimer(); }
+            renderSaveTabUI();
+        };
 
         // ===== SAVE / LOAD (v5) =====
         function getAppState() {
@@ -1646,6 +1653,66 @@
             setAppState(obj);
         }
 
+        // ===== 자동저장 (localStorage) =====
+        const AUTOSAVE_KEY = 'dnoParliamentAutosave';
+        const AUTOSAVE_ENABLED_KEY = 'dnoParliamentAutosaveEnabled';
+        let autosaveEnabled = true;
+        let autosaveTimer = null;
+
+        function loadAutosavePreference() {
+            const stored = localStorage.getItem(AUTOSAVE_ENABLED_KEY);
+            autosaveEnabled = stored === null ? true : stored === 'true';
+        }
+
+        function setAutosaveEnabled(enabled) {
+            autosaveEnabled = enabled;
+            localStorage.setItem(AUTOSAVE_ENABLED_KEY, String(enabled));
+            if(enabled) { autosaveNow(); startAutosaveTimer(); }
+            else stopAutosaveTimer();
+            renderSaveTabUI();
+        }
+
+        function autosaveNow() {
+            if(!autosaveEnabled) return;
+            try { localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(getAppState())); }
+            catch(e) { /* localStorage 용량 초과 등 — 조용히 무시 */ }
+            renderSaveTabUI();
+        }
+
+        function startAutosaveTimer() {
+            stopAutosaveTimer();
+            autosaveTimer = setInterval(autosaveNow, 15000);
+        }
+        function stopAutosaveTimer() {
+            if(autosaveTimer) { clearInterval(autosaveTimer); autosaveTimer = null; }
+        }
+
+        function loadFromAutosave() {
+            const raw = localStorage.getItem(AUTOSAVE_KEY);
+            if(!raw) return false;
+            try { setAppState(JSON.parse(raw)); return true; }
+            catch(e) { return false; }
+        }
+
+        function resetAutosaveData() {
+            if(!confirm('자동저장된 데이터를 완전히 삭제하시겠습니까?\n(파일로 저장한 .json 파일에는 영향이 없습니다)')) return;
+            localStorage.removeItem(AUTOSAVE_KEY);
+            renderSaveTabUI();
+        }
+
+        function renderSaveTabUI() {
+            const toggle = document.getElementById('autosaveToggle');
+            if(toggle) toggle.checked = autosaveEnabled;
+            const info = document.getElementById('autosaveStatusText');
+            if(!info) return;
+            if(!autosaveEnabled) { info.textContent = '꺼짐'; return; }
+            const raw = localStorage.getItem(AUTOSAVE_KEY);
+            if(!raw) { info.textContent = '자동저장된 데이터 없음'; return; }
+            let savedAt = null;
+            try { savedAt = JSON.parse(raw).meta?.savedAt; } catch(e) {}
+            info.textContent = savedAt ? `마지막 저장: ${new Date(savedAt).toLocaleString('ko-KR')}` : '자동저장됨';
+        }
+
         window.addEventListener("load", () => {
             const btnSave = document.getElementById("btnSaveJson");
             const btnLoad = document.getElementById("btnLoadJson");
@@ -1659,6 +1726,16 @@
                     try { await loadJSONFromFile(file); }
                     catch(e) { alert("불러오기 실패: 저장 파일이 깨졌거나 형식이 다릅니다."); }
                     finally { fileInput.value = ""; }
+                });
+            }
+            const fileInputTab = document.getElementById("fileLoadJsonTab");
+            if(fileInputTab) {
+                fileInputTab.addEventListener("change", async () => {
+                    const file = fileInputTab.files?.[0];
+                    if(!file) return;
+                    try { await loadJSONFromFile(file); }
+                    catch(e) { alert("불러오기 실패: 저장 파일이 깨졌거나 형식이 다릅니다."); }
+                    finally { fileInputTab.value = ""; }
                 });
             }
 
