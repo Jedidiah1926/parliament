@@ -1399,14 +1399,7 @@
         }
 
         function saveJSON() {
-            const includePhotos = document.getElementById('chkSavePhoto')?.checked ?? false;
             const state = getAppState();
-            if(!includePhotos) {
-                state.parliament.parties       = state.parliament.parties.map(p => ({ ...p, leaderPhoto: '', logoPhoto: '' }));
-                state.parliament.coalitions    = state.parliament.coalitions.map(c => ({ ...c, leaderPhoto: '' }));
-                state.parliament.independents  = state.parliament.independents.map(x => ({ ...x, photo: '' }));
-                state.config.nationFlag        = '';
-            }
             const ts = new Date().toISOString().replace(/[:.]/g, "-");
             downloadJSON(`parliament-save-v13-${ts}.json`, state);
         }
