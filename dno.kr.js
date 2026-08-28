@@ -1694,6 +1694,7 @@
             document.querySelectorAll('.main-tab-content').forEach(c => c.classList.remove('active'));
             document.getElementById('mainContent' + main.charAt(0).toUpperCase() + main.slice(1)).classList.add('active');
             if(main === 'election') { elecRenderList(); elecRenderRecords(); return; }
+            if(main === 'save') { return; } // v1.4.9 예정 — 서브탭 없는 플레이스홀더
             switchSubTab(main, currentSubTab[main] || (main === 'setup' ? 'party' : 'legislation'), false);
         }
 
