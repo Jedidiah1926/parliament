@@ -195,6 +195,35 @@
             width: 16px; height: 16px; cursor: pointer;
         }
 
+        /* 단원제/양원제/삼원제 선택 — 박스형 세그먼트 버튼 */
+        .system-radio-group {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 15px;
+        }
+        .system-radio-btn {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 8px 6px;
+            background: #0a0c10;
+            border: 1px solid #2a2a2a;
+            border-radius: 4px;
+            color: #888;
+            cursor: pointer;
+            transition: 0.15s;
+        }
+        .system-radio-btn:hover { border-color: #3a4a54; color: #aaa; }
+        .system-radio-btn:has(input:checked) {
+            border-color: var(--tno-neon);
+            color: var(--tno-neon);
+            background: rgba(0,255,255,0.07);
+            box-shadow: 0 0 6px var(--tno-neon-dim);
+            text-shadow: 0 0 4px var(--tno-neon);
+        }
+
         /* ===== 2단 탭 =====
            상위 = 박스 없이 텍스트만, 굵은 베이스라인 위에 얹혀서 활성 시 글자만 빛남
            중위 = 각진 박스지만 위쪽 모서리만 살짝 둥글게, 얇은 베이스라인 (하위의 완전히 둥근 칩으로 가는 절충 단계)
