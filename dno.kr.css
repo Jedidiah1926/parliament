@@ -195,11 +195,15 @@
             width: 16px; height: 16px; cursor: pointer;
         }
 
-        /* ===== 2단 탭 (상위/중위/하위 모두 같은 pill-box 계열로 통일, 크기·색으로 위계 표현) ===== */
+        /* ===== 2단 탭 =====
+           위계가 내려갈수록 "각진 탭 → 완전히 둥근 칩"으로 자연스럽게 이어지도록:
+           상위 = 굵은 베이스라인 위에 얹힌 각진 탭 (모서리 위쪽만 살짝)
+           중위 = 상위보다 얇은 베이스라인 + 더 둥근 모서리 (상위↔하위 절충)
+           하위(.sub-tab-btn-3) = 베이스라인 없이 완전히 둥근 칩 (변경 없음) */
         .main-tab-container {
             display: flex;
-            gap: 6px;
-            margin-bottom: 14px;
+            gap: 3px;
+            border-bottom: 3px solid var(--tno-neon);
         }
         .main-tab-btn {
             flex: 1;
@@ -207,8 +211,9 @@
             background: #0a0c10;
             color: #555;
             border: 1px solid #2a2a2a;
-            border-radius: 4px;
-            padding: 10px 4px;
+            border-bottom: none;
+            border-radius: 5px 5px 0 0;
+            padding: 10px 4px 9px;
             cursor: pointer;
             font-size: 1rem;
             font-family: 'NeoDunggeunmo', 'VT323', monospace;
@@ -221,10 +226,10 @@
         }
         .main-tab-btn:hover { color: var(--tno-neon); border-color: #3a4a54; }
         .main-tab-btn.active {
-            background: rgba(0,255,255,0.1);
+            background: linear-gradient(180deg, rgba(0,255,255,0.16), rgba(0,255,255,0.04));
             color: var(--tno-neon);
             border-color: var(--tno-neon);
-            box-shadow: 0 0 10px var(--tno-neon-dim);
+            box-shadow: 0 -3px 12px var(--tno-neon-dim);
             text-shadow: 0 0 6px var(--tno-neon);
         }
 
@@ -233,17 +238,18 @@
 
         .sub-tab-container {
             display: flex;
-            gap: 5px;
+            gap: 4px;
             margin-bottom: 12px;
             margin-top: 10px;
-            background: transparent;
+            border-bottom: 1px solid var(--tno-border);
         }
         .sub-tab-btn {
             flex: 1;
             background: #0a0c10;
             color: #555;
             border: 1px solid #222;
-            border-radius: 3px;
+            border-bottom: none;
+            border-radius: 4px 4px 0 0;
             padding: 7px 4px;
             cursor: pointer;
             font-size: 0.92rem;
@@ -255,8 +261,8 @@
         .sub-tab-btn.active {
             color: var(--tno-neon);
             border-color: var(--tno-neon);
-            background: rgba(0,255,255,0.06);
-            box-shadow: 0 0 6px var(--tno-neon-dim);
+            background: rgba(0,255,255,0.07);
+            box-shadow: 0 -2px 8px var(--tno-neon-dim);
         }
 
         .sub-tab-content { display: none; }
