@@ -1715,7 +1715,77 @@
             info.textContent = savedAt ? `마지막 저장: ${new Date(savedAt).toLocaleString('ko-KR')}` : '자동저장됨';
         }
 
+        // ===== 실행 취소 / 다시 실행 (Ctrl+Z / Ctrl+Shift+Z) =====
+        // 개별 변경마다 undo 지점을 만들지 않고, 전체 상태 스냅샷 방식으로 구현.
+        // mousedown/focusin 시점(실제 값이 바뀌기 전)에 "이전 상태"를 잡아두고,
+        // 짧은 시간 안에 이어지는 조작(연속 타이핑 등)은 하나의 undo 단위로 묶는다.
+        const UNDO_HISTORY_LIMIT = 50;
+        const UNDO_BATCH_DEBOUNCE_MS = 600;
+        let undoStack = [];
+        let redoStack = [];
+        let pendingUndoSnapshot = null;
+        let undoBatchTimer = null;
+        let isApplyingHistory = false;
+
+        function captureUndoSnapshot() {
+            if(isApplyingHistory) return;
+            if(pendingUndoSnapshot === null) pendingUndoSnapshot = JSON.stringify(getAppState());
+            clearTimeout(undoBatchTimer);
+            undoBatchTimer = setTimeout(commitUndoBatch, UNDO_BATCH_DEBOUNCE_MS);
+        }
+
+        function commitUndoBatch() {
+            clearTimeout(undoBatchTimer);
+            undoBatchTimer = null;
+            if(pendingUndoSnapshot === null) return;
+            const current = JSON.stringify(getAppState());
+            if(current !== pendingUndoSnapshot) {
+                undoStack.push(pendingUndoSnapshot);
+                if(undoStack.length > UNDO_HISTORY_LIMIT) undoStack.shift();
+                redoStack = [];
+            }
+            pendingUndoSnapshot = null;
+        }
+
+        function applyHistorySnapshot(json) {
+            isApplyingHistory = true;
+            try { setAppState(JSON.parse(json)); }
+            catch(e) { /* 손상된 스냅샷 — 조용히 무시 */ }
+            finally { isApplyingHistory = false; }
+        }
+
+        function performUndo() {
+            commitUndoBatch();
+            if(undoStack.length === 0) return;
+            const prev = undoStack.pop();
+            redoStack.push(JSON.stringify(getAppState()));
+            if(redoStack.length > UNDO_HISTORY_LIMIT) redoStack.shift();
+            applyHistorySnapshot(prev);
+        }
+
+        function performRedo() {
+            commitUndoBatch();
+            if(redoStack.length === 0) return;
+            const next = redoStack.pop();
+            undoStack.push(JSON.stringify(getAppState()));
+            if(undoStack.length > UNDO_HISTORY_LIMIT) undoStack.shift();
+            applyHistorySnapshot(next);
+        }
+
+        function initUndoRedoTracking() {
+            document.addEventListener('mousedown', captureUndoSnapshot, true);
+            document.addEventListener('focusin', captureUndoSnapshot, true);
+            document.addEventListener('focusout', commitUndoBatch, true);
+            window.addEventListener('keydown', (e) => {
+                const key = e.key.toLowerCase();
+                if(!(e.ctrlKey || e.metaKey) || key !== 'z') return;
+                e.preventDefault();
+                if(e.shiftKey) performRedo(); else performUndo();
+            });
+        }
+
         window.addEventListener("load", () => {
+            initUndoRedoTracking();
             const fileInputTab = document.getElementById("fileLoadJsonTab");
             if(fileInputTab) {
                 fileInputTab.addEventListener("change", async () => {
