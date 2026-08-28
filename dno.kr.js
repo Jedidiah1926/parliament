@@ -1,5 +1,54 @@
         const IND_IDEOLOGY_ID = 9999;
 
+        // ── 국가명·국기 (v1.4.8) ──────────────
+        let nationFlag = ''; // dataURL
+
+        function updateNationIdBar() {
+            const name = document.getElementById('nationNameInput')?.value?.trim() || '';
+            const nameEl = document.getElementById('nationNameDisp');
+            if(nameEl) nameEl.textContent = name || '국가명 미설정';
+            const wrap = document.getElementById('nationFlagDispWrap');
+            const img = document.getElementById('nationFlagDispImg');
+            const ph  = document.getElementById('nationFlagDispPh');
+            const banner = document.getElementById('nationFlagBanner');
+            const bannerImg = document.getElementById('nationFlagBannerImg');
+            if(nationFlag) {
+                // 국기가 있으면 작은 헤더 아이콘 대신 좌측 탭 폭에 맞춘 큰 배너로 표시
+                if(wrap) wrap.style.display = 'none';
+                if(bannerImg) bannerImg.src = nationFlag;
+                if(banner) banner.style.display = '';
+            } else {
+                if(wrap) wrap.style.display = '';
+                if(img) img.style.display = 'none';
+                if(ph) ph.style.display = '';
+                if(banner) banner.style.display = 'none';
+            }
+        }
+
+        function renderNationConfig() {
+            const img = document.getElementById('nationFlagImg');
+            const ph  = document.getElementById('nationFlagPh');
+            if(img && ph) {
+                if(nationFlag) { img.src = nationFlag; img.style.display = ''; ph.style.display = 'none'; }
+                else { img.style.display = 'none'; ph.style.display = ''; }
+            }
+            const removeBtn = document.getElementById('nationFlagRemoveBtn');
+            if(removeBtn) removeBtn.style.display = nationFlag ? '' : 'none';
+            updateNationIdBar();
+        }
+
+        function uploadNationFlag(input) {
+            const file = input.files?.[0]; if(!file) return;
+            const reader = new FileReader();
+            reader.onload = e => { nationFlag = e.target.result; renderNationConfig(); };
+            reader.readAsDataURL(file);
+        }
+
+        function removeNationFlag() {
+            nationFlag = '';
+            renderNationConfig();
+        }
+
         // ── 무소속 개별 의원 데이터 ──────────────
         let independents = []; // { id, chamber, seatIndex, name, photo, ideologyId }
 
@@ -77,6 +126,9 @@
         let coalitions = [
             { id: 'c1', name: "국민전선", color: "#2E2E2E", members: [1], isRuling: true , leadPartyId: null, externalSupporters: [], externalSupportLabel: "각외협력" },
         ];
+
+        // 원외정당 접기/펼치기 상태 (실제 정당 목록은 parties에서 의석 0인 것을 그때그때 걸러냄)
+        let extraPartiesCollapsed = true;
 
         let currentTab = 'house';
 
@@ -1310,7 +1362,7 @@
         // ===== MAIN SIMULATE =====
         window.addEventListener('resize', () => { simulate(); });
 
-        window.onload = function() { toggleSystem(); refreshUI(); simulate(); renderBillList(); renderArchiveList(); syncBillSelect(); elecRenderList(); elecRenderRecords(); };
+        window.onload = function() { toggleSystem(); refreshUI(); simulate(); renderBillList(); renderArchiveList(); syncBillSelect(); elecRenderList(); elecRenderRecords(); updateNationIdBar(); };
 
         // ===== SAVE / LOAD (v5) =====
         function getAppState() {
@@ -1321,6 +1373,10 @@
                 config: {
                     systemType,
                     highlightGov:  document.getElementById('chkGovHighlight')?.checked ?? true,
+                    nationName:    document.getElementById('nationNameInput')?.value   ?? "",
+                    nationFlag,
+                    nationDate:    document.getElementById('nationDateInput')?.value    ?? "",
+                    nationSession: document.getElementById('nationSessionInput')?.value ?? "",
                     senateName:    document.getElementById('senateNameInput')?.value   ?? "상원",
                     houseName:     document.getElementById('houseNameInput')?.value    ?? "국회",
                     thirdName:     document.getElementById('thirdNameInput')?.value    ?? "삼원",
@@ -1358,13 +1414,7 @@
         }
 
         function saveJSON() {
-            const includePhotos = document.getElementById('chkSavePhoto')?.checked ?? false;
             const state = getAppState();
-            if(!includePhotos) {
-                state.parliament.parties       = state.parliament.parties.map(p => ({ ...p, leaderPhoto: '', logoPhoto: '' }));
-                state.parliament.coalitions    = state.parliament.coalitions.map(c => ({ ...c, leaderPhoto: '' }));
-                state.parliament.independents  = state.parliament.independents.map(x => ({ ...x, photo: '' }));
-            }
             const ts = new Date().toISOString().replace(/[:.]/g, "-");
             downloadJSON(`parliament-save-v13-${ts}.json`, state);
         }
@@ -1440,6 +1490,11 @@
             if(gd('houseTotal'))      gd('houseTotal').value      = cfg.houseTotal  ?? 300;
             if(gd('thirdTotal'))      gd('thirdTotal').value      = cfg.thirdTotal  ?? 100;
             if(gd('chkGovHighlight')) gd('chkGovHighlight').checked = cfg.highlightGov ?? true;
+            if(gd('nationNameInput')) gd('nationNameInput').value = cfg.nationName ?? "";
+            if(gd('nationDateInput')) gd('nationDateInput').value = cfg.nationDate ?? "";
+            if(gd('nationSessionInput')) gd('nationSessionInput').value = cfg.nationSession ?? "";
+            nationFlag = cfg.nationFlag ?? "";
+            renderNationConfig();
 
             // ── 전체 렌더 ──
             toggleSystem();
@@ -1556,6 +1611,7 @@
             if(btn) btn.classList.add('active');
             if(content) content.classList.add('active');
             refreshUI();
+            if(sub === 'config') { renderNationConfig(); }
             if(sub === 'legislation') { switchLegislationInnerTab('bill'); }
             if(sub === 'election') { elecRenderList(); }
             if(sub === 'record') { switchRecordInnerTab('archive'); }
@@ -2406,6 +2462,49 @@
         }
         function removeParty(i) { const pid=parties[i].id; parties.splice(i,1); coalitions.forEach(c=>c.members=c.members.filter(x=>x!==pid)); refreshUI(); simulate(); }
         function updateParty(i,k,v) { parties[i][k]=v; if(k==='name')refreshUI(); simulate(); }
+
+        // ===== 원외정당 (의석 없는 정당) =====
+        // 별도 데이터가 아니라 정당>정보에 있는 일반 정당 중 (참여 중인 의원실 기준) 의석 합계가 0인 정당.
+        // 예전에는 이런 정당이 어느 의원실 지도에도 안 잡혀서 우측 정보 패널에서 그냥 사라졌는데,
+        // 이제 그 자리에 "원외정당" 접기/펼치기 섹션으로 모아서 보여준다.
+        function toggleExtraPartiesCollapse() { extraPartiesCollapsed = !extraPartiesCollapsed; simulate(); }
+        function partyTotalSeats(p) {
+            return (p.inHouse?p.seatsHouse||0:0) + (p.inSenate?p.seatsSenate||0:0) + (p.inThird?p.seatsThird||0:0);
+        }
+        function extraParliamentaryPartyList() {
+            return parties.filter(p => p.ideologyId !== IND_IDEOLOGY_ID && partyTotalSeats(p) === 0);
+        }
+
+        function renderExtraPartiesSection() {
+            const list = extraParliamentaryPartyList();
+            let h = `<div onclick="toggleExtraPartiesCollapse()" style="display:flex;align-items:center;gap:8px;margin:10px 0 6px;cursor:pointer;user-select:none;">
+                <div style="flex:1;height:1px;background:#333;"></div>
+                <span style="color:#666;font-size:0.78rem;letter-spacing:2px;white-space:nowrap;">${extraPartiesCollapsed?'▶':'▼'} 원외정당 (${list.length})</span>
+                <div style="flex:1;height:1px;background:#333;"></div>
+            </div>`;
+            if(extraPartiesCollapsed || list.length === 0) return h;
+            list.forEach(p => {
+                const isLogo = p.showLogoInStats ?? false;
+                const photo  = isLogo ? (p.logoPhoto||p.leaderPhoto||'') : (p.leaderPhoto||p.logoPhoto||'');
+                const ideoName = ideologies.find(i=>i.id===p.ideologyId)?.name || '';
+                h += `<div class="stat-block" style="border-left-color:${p.color};">
+                    <div class="dyn-row" style="display:flex;gap:8px;align-items:stretch;">
+                        <div class="leader-photo-box dyn-photo" data-ratio="${isLogo?'1':'0.75'}" style="flex-shrink:0;background:#0a0c10;border:1px solid #222;overflow:hidden;">
+                            ${photo?`<img src="${photo}" alt="" style="width:100%;height:100%;object-fit:cover;display:block;">`:''}
+                        </div>
+                        <div class="dyn-ref" style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px;">
+                            <div style="display:flex;justify-content:space-between;align-items:baseline;gap:6px;flex-wrap:wrap;">
+                                <span style="font-size:1.1rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;">${p.name}${p.abbr?` (${p.abbr})`:''}</span>
+                                <span style="flex-shrink:0;font-size:0.9rem;">${partyStatusBadge(p)}</span>
+                            </div>
+                            <div style="color:#888;font-size:0.82rem;">${ideoName}</div>
+                            <div style="color:#888;font-size:0.82rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${p.leaderName||'　'}</div>
+                        </div>
+                    </div>
+                </div>`;
+            });
+            return h;
+        }
 
         // 정당 해산/활동금지 표기 뱃지 — 활동중인 정당은 표기하지 않음
         function partyStatusBadge(p) {
@@ -5646,6 +5745,7 @@
                 html += renderSectionHeader('야당');
                 oppArr.forEach(s => html += renderCard(s));
             }
+            html += renderExtraPartiesSection();
             el.innerHTML = html;
             fitDynPhotos(el);
         }

@@ -28,22 +28,24 @@
 
     <div class="controls">
         <div class="tno-header-strip">Ministry of Interior</div>
-        
+
+        <div class="nation-id-bar" id="nationIdBar">
+            <span class="nation-flag-disp" id="nationFlagDispWrap">
+                <img id="nationFlagDispImg" alt="국기" style="display:none;">
+                <span id="nationFlagDispPh">🏳️</span>
+            </span>
+            <span class="nation-name-disp" id="nationNameDisp">국가명 미설정</span>
+        </div>
+
         <div class="controls-content">
+            <div class="nation-flag-banner" id="nationFlagBanner" style="display:none;">
+                <img id="nationFlagBannerImg" alt="국기">
+            </div>
             <div class="system-radio-group">
                 <label class="system-radio-btn"><input type="radio" name="systemType" value="unicameral" onchange="toggleSystem()"> 단원제</label>
                 <label class="system-radio-btn"><input type="radio" name="systemType" value="bicameral" checked onchange="toggleSystem()"> 양원제</label>
                 <label class="system-radio-btn"><input type="radio" name="systemType" value="tricameral" onchange="toggleSystem()"> 삼원제</label>
             </div>
-            
-            <label style="cursor:pointer; margin-bottom:4px;">
-                <input type="checkbox" id="chkGovHighlight" onchange="simulate()" checked> 
-                <span style="color:var(--tno-gold); text-shadow:0 0 5px var(--tno-gold);">집권 세력 강조 (HIGHLIGHT GOV)</span>
-            </label>
-            <label style="cursor:pointer; margin-bottom:12px;">
-                <input type="checkbox" id="chkSavePhoto"> 
-                <span style="color:#666;">저장 시 사진 포함</span>
-            </label>
 
 
             <!-- ===== 상단 메인 탭 ===== -->
@@ -177,11 +179,38 @@
                     <button class="sub-tab-btn" onclick="switchSubTab('nation','record')" id="subTabRecord">기록</button>
                 </div>
 
-                <!-- 설정 탭 (v1.4.8 예정 기능 자리 — 준비중) -->
+                <!-- 설정 탭: 국가 식별 정보 + 전역 표시 옵션 -->
                 <div id="contentConfig" class="sub-tab-content">
-                    <div style="padding:50px 20px;text-align:center;color:#555;border:1px dashed #333;background:#0a0c10;">
-                        <div style="font-size:1.1rem;color:#666;letter-spacing:2px;margin-bottom:10px;">⚙ COMING SOON</div>
-                        <div style="font-size:0.85rem;color:#444;">v1.4.8에서 추가될 기능을 위한 자리입니다.</div>
+                    <label style="cursor:pointer; margin-bottom:16px; display:block;">
+                        <input type="checkbox" id="chkGovHighlight" onchange="simulate()" checked>
+                        <span style="color:var(--tno-gold); text-shadow:0 0 5px var(--tno-gold);">집권 세력 강조 (HIGHLIGHT GOV)</span>
+                    </label>
+
+                    <div style="margin-bottom:16px;">
+                        <label style="color:#888;font-size:0.8rem;margin-bottom:4px;display:block;">국가명</label>
+                        <input type="text" id="nationNameInput" placeholder="예: 대한합중국" oninput="updateNationIdBar()" style="width:100%;box-sizing:border-box;">
+                    </div>
+
+                    <div>
+                        <label style="color:#888;font-size:0.8rem;margin-bottom:6px;display:block;">국기</label>
+                        <div style="display:flex;align-items:center;gap:12px;">
+                            <div class="leader-photo-box" id="nationFlagBox" title="클릭하여 국기 업로드" style="width:72px;height:48px;">
+                                <img id="nationFlagImg" alt="국기" style="display:none;">
+                                <span class="photo-ph" id="nationFlagPh" style="font-size:1.4rem;">🏳️</span>
+                                <input type="file" accept="image/*" onchange="uploadNationFlag(this)">
+                            </div>
+                            <button onclick="removeNationFlag()" id="nationFlagRemoveBtn" style="display:none;background:transparent;border:1px solid #333;color:#555;font-family:inherit;font-size:0.8rem;padding:4px 10px;cursor:pointer;">✕ 국기 제거</button>
+                        </div>
+                    </div>
+
+                    <div style="margin-top:16px;">
+                        <label style="color:#888;font-size:0.8rem;margin-bottom:4px;display:block;">현재 날짜</label>
+                        <input type="text" id="nationDateInput" placeholder="예: 1952년 3월 15일" style="width:100%;box-sizing:border-box;">
+                    </div>
+
+                    <div style="margin-top:16px;">
+                        <label style="color:#888;font-size:0.8rem;margin-bottom:4px;display:block;">회기</label>
+                        <input type="text" id="nationSessionInput" placeholder="예: 제21대 국회 제1회 임시회" style="width:100%;box-sizing:border-box;">
                     </div>
                 </div>
 

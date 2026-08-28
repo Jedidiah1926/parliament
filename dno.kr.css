@@ -83,10 +83,55 @@
             text-transform: uppercase;
         }
 
+        /* 국가명·국기 표시 바 (v1.4.8) */
+        .nation-id-bar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 15px;
+            background: #06070a;
+            border-bottom: 1px solid #222;
+        }
+        .nation-flag-disp {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 26px;
+            height: 18px;
+            flex-shrink: 0;
+            background: #0a0c10;
+            border: 1px solid #2a2a2a;
+            overflow: hidden;
+        }
+        .nation-flag-disp img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .nation-flag-disp span { font-size: 0.9rem; line-height: 1; }
+        .nation-name-disp {
+            color: #888;
+            font-size: 0.85rem;
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
         .controls-content {
             padding: 15px;
             overflow-y: auto;
             flex: 1;
+        }
+
+        /* 국기 지정 시 단원제/양원제/삼원제 버튼 위에 표시되는 큰 배너 — 좌측 탭 폭에 맞춰 고정 */
+        .nation-flag-banner {
+            width: 100%;
+            margin-bottom: 12px;
+            border: 1px solid #2a2a2a;
+            overflow: hidden;
+            line-height: 0;
+        }
+        .nation-flag-banner img {
+            width: 100%;
+            height: auto;
+            display: block;
         }
 
         .display-area {
