@@ -196,39 +196,41 @@
         }
 
         /* ===== 2단 탭 =====
-           상위 = 기존 디자인 그대로 유지
-           중위 = 각진 박스, 얇은 베이스라인 (하위의 완전히 둥근 칩으로 가는 절충 단계)
+           상위 = 각진(radius 0) 박스, 굵은 베이스라인 — 완전히 각져서 중위와 구분됨
+           중위 = 각진 박스지만 위쪽 모서리만 살짝 둥글게, 얇은 베이스라인 (하위의 완전히 둥근 칩으로 가는 절충 단계)
            하위(.sub-tab-btn-3) = 베이스라인 없이 완전히 둥근 칩 (변경 없음) */
         .main-tab-container {
             display: flex;
-            border-bottom: 2px solid var(--tno-neon);
-            margin-bottom: 0;
+            gap: 4px;
+            border-bottom: 4px solid var(--tno-neon);
         }
         .main-tab-btn {
             flex: 1;
             min-width: 0;
-            background: transparent;
+            background: #0a0c10;
             color: #555;
-            border: 1px solid transparent;
+            border: 2px solid #2a2a2a;
             border-bottom: none;
-            padding: 9px 2px;
+            border-radius: 0;
+            padding: 13px 4px 11px;
             cursor: pointer;
-            font-size: 0.9rem;
+            font-size: 1.1rem;
+            font-weight: bold;
             font-family: 'NeoDunggeunmo', 'VT323', monospace;
-            letter-spacing: 0.5px;
+            letter-spacing: 2px;
             transition: 0.2s;
             text-transform: uppercase;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
         }
-        .main-tab-btn:hover { color: var(--tno-neon); }
+        .main-tab-btn:hover { color: var(--tno-neon); border-color: #3a4a54; }
         .main-tab-btn.active {
-            background: rgba(0,255,255,0.07);
+            background: linear-gradient(180deg, rgba(0,255,255,0.22), rgba(0,255,255,0.05));
             color: var(--tno-neon);
             border-color: var(--tno-neon);
-            border-bottom-color: var(--tno-panel);
-            text-shadow: 0 0 6px var(--tno-neon);
+            box-shadow: 0 -5px 18px var(--tno-neon-dim), inset 0 1px 0 rgba(255,255,255,0.08);
+            text-shadow: 0 0 8px var(--tno-neon);
         }
 
         .main-tab-content { display: none; }
