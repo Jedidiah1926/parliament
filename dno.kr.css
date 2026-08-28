@@ -144,9 +144,22 @@
         }
         .disp-tab-bar {
             display: flex;
+            align-items: center;
             gap: 4px;
             flex-shrink: 0;
             margin-bottom: 0;
+        }
+        /* 국가 날짜/회기 표시 — 디스플레이 탭 바 우측 끝에 고정 */
+        .disp-info-bar {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 0 10px;
+            color: #666;
+            font-size: 0.82rem;
+            letter-spacing: 0.5px;
+            white-space: nowrap;
         }
         .disp-tab-btn {
             background: var(--tno-panel);
@@ -269,6 +282,14 @@
             margin: 0;
         }
         .system-radio-btn:has(input:checked) {
+            border-color: var(--tno-neon);
+            color: var(--tno-neon);
+            background: rgba(0,255,255,0.07);
+            box-shadow: 0 0 6px var(--tno-neon-dim);
+            text-shadow: 0 0 4px var(--tno-neon);
+        }
+        /* 라디오가 아닌 일반 버튼 토글(날짜/회기 모드 전환)에서 쓰는 활성 상태 — 위와 동일한 룩 */
+        .system-radio-btn.active {
             border-color: var(--tno-neon);
             color: var(--tno-neon);
             background: rgba(0,255,255,0.07);

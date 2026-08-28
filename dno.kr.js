@@ -35,6 +35,7 @@
             const removeBtn = document.getElementById('nationFlagRemoveBtn');
             if(removeBtn) removeBtn.style.display = nationFlag ? '' : 'none';
             updateNationIdBar();
+            updateDispInfoBar();
         }
 
         function uploadNationFlag(input) {
@@ -47,6 +48,84 @@
         function removeNationFlag() {
             nationFlag = '';
             renderNationConfig();
+        }
+
+        // ── 날짜/회기 (v1.4.8) ──────────────
+        let nationDateMode = 'simple';       // 'simple' | 'progressive'
+        let nationSessionMode = 'simple';    // 'simple' | 'individual'
+
+        function setNationDateMode(mode) {
+            nationDateMode = mode;
+            document.getElementById('nationDateModeSimpleBtn')?.classList.toggle('active', mode==='simple');
+            document.getElementById('nationDateModeProgBtn')?.classList.toggle('active', mode==='progressive');
+            const simpleWrap = document.getElementById('nationDateSimpleWrap');
+            const progWrap   = document.getElementById('nationDateProgWrap');
+            if(simpleWrap) simpleWrap.style.display = mode==='simple' ? '' : 'none';
+            if(progWrap)   progWrap.style.display   = mode==='progressive' ? '' : 'none';
+            updateDispInfoBar();
+        }
+
+        function setNationSessionMode(mode) {
+            nationSessionMode = mode;
+            document.getElementById('nationSessionModeSimpleBtn')?.classList.toggle('active', mode==='simple');
+            document.getElementById('nationSessionModeIndivBtn')?.classList.toggle('active', mode==='individual');
+            const simpleWrap = document.getElementById('nationSessionSimpleWrap');
+            const indivWrap  = document.getElementById('nationSessionIndivWrap');
+            if(simpleWrap) simpleWrap.style.display = mode==='simple' ? '' : 'none';
+            if(indivWrap)  indivWrap.style.display  = mode==='individual' ? '' : 'none';
+            updateDispInfoBar();
+        }
+
+        // 수동 진행형 날짜: +1일 진행 (달력 계산은 실제 Date 객체로 처리해 월말/윤년 등을 정확히 넘김)
+        function advanceNationDate() {
+            const yEl = document.getElementById('nationDateYear');
+            const mEl = document.getElementById('nationDateMonth');
+            const dEl = document.getElementById('nationDateDay');
+            const y = parseInt(yEl.value) || 1;
+            const m = parseInt(mEl.value) || 1;
+            const d = parseInt(dEl.value) || 1;
+            const dt = new Date(y, m-1, d);
+            dt.setDate(dt.getDate() + 1);
+            yEl.value = dt.getFullYear();
+            mEl.value = dt.getMonth() + 1;
+            dEl.value = dt.getDate();
+            updateDispInfoBar();
+        }
+
+        // 개별형 회기: 다음 회기 (회기 번호만 +1, 대수는 총선 등 큰 이벤트 때 수동으로 바꾸는 값이라 유지)
+        function advanceNationSession() {
+            const numEl = document.getElementById('nationSessionNumber');
+            const num = parseInt(numEl.value) || 0;
+            numEl.value = num + 1;
+            updateDispInfoBar();
+        }
+
+        function formatNationDate() {
+            if(nationDateMode === 'progressive') {
+                const y = document.getElementById('nationDateYear')?.value;
+                const m = document.getElementById('nationDateMonth')?.value;
+                const d = document.getElementById('nationDateDay')?.value;
+                if(!y && !m && !d) return '';
+                return `${y||'?'}년 ${m||'?'}월 ${d||'?'}일`;
+            }
+            return document.getElementById('nationDateInput')?.value?.trim() || '';
+        }
+
+        function formatNationSession() {
+            if(nationSessionMode === 'individual') {
+                const term = document.getElementById('nationSessionTerm')?.value;
+                const num  = document.getElementById('nationSessionNumber')?.value;
+                if(!term && !num) return '';
+                return `제${term||'?'}대 국회 제${num||'?'}회`;
+            }
+            return document.getElementById('nationSessionInput')?.value?.trim() || '';
+        }
+
+        function updateDispInfoBar() {
+            const dateEl = document.getElementById('dispInfoDate');
+            const sessEl = document.getElementById('dispInfoSession');
+            if(dateEl) dateEl.textContent = formatNationDate() || '날짜 미설정';
+            if(sessEl) sessEl.textContent = formatNationSession() || '회기 미설정';
         }
 
         // ── 무소속 개별 의원 데이터 ──────────────
@@ -1362,7 +1441,7 @@
         // ===== MAIN SIMULATE =====
         window.addEventListener('resize', () => { simulate(); });
 
-        window.onload = function() { toggleSystem(); refreshUI(); simulate(); renderBillList(); renderArchiveList(); syncBillSelect(); elecRenderList(); elecRenderRecords(); updateNationIdBar(); };
+        window.onload = function() { toggleSystem(); refreshUI(); simulate(); renderBillList(); renderArchiveList(); syncBillSelect(); elecRenderList(); elecRenderRecords(); updateNationIdBar(); updateDispInfoBar(); };
 
         // ===== SAVE / LOAD (v5) =====
         function getAppState() {
@@ -1375,8 +1454,15 @@
                     highlightGov:  document.getElementById('chkGovHighlight')?.checked ?? true,
                     nationName:    document.getElementById('nationNameInput')?.value   ?? "",
                     nationFlag,
+                    nationDateMode: nationDateMode,
                     nationDate:    document.getElementById('nationDateInput')?.value    ?? "",
+                    nationDateYear:  document.getElementById('nationDateYear')?.value   ?? "",
+                    nationDateMonth: document.getElementById('nationDateMonth')?.value  ?? "",
+                    nationDateDay:   document.getElementById('nationDateDay')?.value    ?? "",
+                    nationSessionMode: nationSessionMode,
                     nationSession: document.getElementById('nationSessionInput')?.value ?? "",
+                    nationSessionTerm:   document.getElementById('nationSessionTerm')?.value   ?? "",
+                    nationSessionNumber: document.getElementById('nationSessionNumber')?.value ?? "",
                     senateName:    document.getElementById('senateNameInput')?.value   ?? "상원",
                     houseName:     document.getElementById('houseNameInput')?.value    ?? "국회",
                     thirdName:     document.getElementById('thirdNameInput')?.value    ?? "삼원",
@@ -1492,8 +1578,15 @@
             if(gd('chkGovHighlight')) gd('chkGovHighlight').checked = cfg.highlightGov ?? true;
             if(gd('nationNameInput')) gd('nationNameInput').value = cfg.nationName ?? "";
             if(gd('nationDateInput')) gd('nationDateInput').value = cfg.nationDate ?? "";
+            if(gd('nationDateYear'))  gd('nationDateYear').value  = cfg.nationDateYear ?? "";
+            if(gd('nationDateMonth')) gd('nationDateMonth').value = cfg.nationDateMonth ?? "";
+            if(gd('nationDateDay'))   gd('nationDateDay').value   = cfg.nationDateDay ?? "";
             if(gd('nationSessionInput')) gd('nationSessionInput').value = cfg.nationSession ?? "";
+            if(gd('nationSessionTerm'))   gd('nationSessionTerm').value   = cfg.nationSessionTerm ?? "";
+            if(gd('nationSessionNumber')) gd('nationSessionNumber').value = cfg.nationSessionNumber ?? "";
             nationFlag = cfg.nationFlag ?? "";
+            setNationDateMode(cfg.nationDateMode ?? "simple");
+            setNationSessionMode(cfg.nationSessionMode ?? "simple");
             renderNationConfig();
 
             // ── 전체 렌더 ──
