@@ -214,11 +214,15 @@
                         </div>
                         <div id="nationDateProgWrap" style="display:none;">
                             <div style="display:flex;gap:6px;margin-bottom:8px;">
-                                <input type="number" id="nationDateYear" placeholder="연" oninput="updateDispInfoBar()" style="flex:1.4;text-align:center;">
-                                <input type="number" id="nationDateMonth" placeholder="월" min="1" max="12" oninput="updateDispInfoBar()" style="flex:1;text-align:center;">
-                                <input type="number" id="nationDateDay" placeholder="일" min="1" max="31" oninput="updateDispInfoBar()" style="flex:1;text-align:center;">
+                                <input type="number" id="nationDateYear" placeholder="연" oninput="updateDispInfoBar()" style="flex:1;min-width:0;text-align:center;">
+                                <input type="number" id="nationDateMonth" placeholder="월" min="1" max="12" oninput="updateDispInfoBar()" style="flex:1;min-width:0;text-align:center;">
+                                <input type="number" id="nationDateDay" placeholder="일" min="1" max="31" oninput="updateDispInfoBar()" style="flex:1;min-width:0;text-align:center;">
                             </div>
-                            <button class="add-btn" onclick="advanceNationDate()" style="width:100%;">▶ +1일 진행</button>
+                            <div style="display:flex;gap:6px;">
+                                <button class="add-btn" onclick="advanceNationDate(1,'day')" style="flex:1;min-width:0;margin-top:0;">+1일</button>
+                                <button class="add-btn" onclick="advanceNationDate(7,'day')" style="flex:1;min-width:0;margin-top:0;">+7일</button>
+                                <button class="add-btn" onclick="advanceNationDate(1,'month')" style="flex:1;min-width:0;margin-top:0;">+1개월</button>
+                            </div>
                         </div>
                     </div>
 
@@ -242,7 +246,11 @@
                                     <input type="number" id="nationSessionNumber" placeholder="1" oninput="updateDispInfoBar()" style="width:100%;text-align:center;box-sizing:border-box;">
                                 </div>
                             </div>
-                            <button class="add-btn" onclick="advanceNationSession()" style="width:100%;">▶ 다음 회기</button>
+                            <div class="system-radio-group" style="margin-bottom:8px;">
+                                <button type="button" class="system-radio-btn active" id="nationSessionTypeRegularBtn" onclick="setNationSessionType('regular')">정기회</button>
+                                <button type="button" class="system-radio-btn" id="nationSessionTypeExtraBtn" onclick="setNationSessionType('extraordinary')">임시회</button>
+                            </div>
+                            <button class="add-btn" onclick="advanceNationSession()" style="width:100%;margin-top:0;">▶ 다음 회기</button>
                         </div>
                     </div>
                 </div>
