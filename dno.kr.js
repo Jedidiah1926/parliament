@@ -1456,19 +1456,20 @@
             elecRenderRecords();
 
             // ── 탭 복원 (마지막) ──
-            const uiMain = state.ui?.currentMainTab || 'party';
-            const uiSub  = state.ui?.currentSubTab  || { party:'ideology', setup:'settings', legislation:'bill', record:'archive' };
-            currentSubTab = { party:'ideology', setup:'settings', legislation:'bill', record:'archive', ...uiSub };
+            let uiMain = state.ui?.currentMainTab || 'setup';
+            const uiSub  = state.ui?.currentSubTab  || { setup:'party', legislation:'bill', record:'archive' };
+            currentSubTab = { setup:'party', legislation:'bill', record:'archive', ...uiSub };
+            // 구버전 파일 호환: 정당 메인탭이 의회로 통합되기 전 위치를 가리키던 경우 재매핑
+            // (당시 party>ideology/partyInfo/leader/coalitionLeader/independent 중 무엇이었든, 지금은 모두 setup>party로 합쳐짐)
+            if(uiMain === 'party') { uiMain = 'setup'; currentSubTab.setup = 'party'; }
             // 구버전 파일 호환: setup 하위탭이 house/senate/third/leader였다면 새 구조로 매핑
             if(['house','senate','third'].includes(currentSubTab.setup)) currentSubTab.setup = 'settings';
-            if(currentSubTab.party === 'coalitionLeader') currentSubTab.party = 'partyInfo';
-            if(currentSubTab.party === 'independent') currentSubTab.party = 'partyInfo'; // 정당>무소속 탭 폐지(의회>무소속으로 통합)
             // 구버전 파일 호환: 기록 탭이 입법/선거 그룹에서 독립되기 전 위치를 가리키던 경우 재매핑
             if(currentSubTab.legislation === 'archive') currentSubTab.legislation = 'bill';
             if(currentSubTab.election === 'record') currentSubTab.election = 'vote';
             switchMainTab(uiMain);
             if(uiMain !== 'election') {
-                const fallback = uiMain==='party' ? 'ideology' : uiMain==='setup' ? 'settings' : uiMain==='record' ? 'archive' : 'bill';
+                const fallback = uiMain==='setup' ? 'party' : uiMain==='record' ? 'archive' : 'bill';
                 switchSubTab(uiMain, currentSubTab[uiMain] || fallback, false);
             }
         }
@@ -1517,8 +1518,8 @@
         });
 
         // ===== 2단 탭 전환 =====
-        let currentMainTab = 'party';
-        let currentSubTab = { party: 'ideology', setup: 'settings', legislation: 'bill', record: 'archive' };
+        let currentMainTab = 'setup';
+        let currentSubTab = { setup: 'party', legislation: 'bill', record: 'archive' };
 
         // 표결 탭을 벗어날 때, 선택된 법안이 완전히 결론(가결/부결) 났으면 선택 초기화
         function checkResetVoteSelectionOnLeave() {
@@ -1539,15 +1540,11 @@
             document.querySelectorAll('.main-tab-content').forEach(c => c.classList.remove('active'));
             document.getElementById('mainContent' + main.charAt(0).toUpperCase() + main.slice(1)).classList.add('active');
             if(main === 'election') { elecRenderList(); elecRenderRecords(); return; }
-            if(main === 'party') {
-                switchSubTab('party', currentSubTab['party'] || 'ideology', false);
-                return;
-            }
             if(main === 'record') {
                 switchSubTab('record', currentSubTab['record'] || 'archive', false);
                 return;
             }
-            switchSubTab(main, currentSubTab[main] || (main === 'setup' ? 'settings' : 'bill'), false);
+            switchSubTab(main, currentSubTab[main] || (main === 'setup' ? 'party' : 'bill'), false);
         }
 
         function switchSubTab(main, sub, doMainSwitch = true) {
@@ -1568,9 +1565,7 @@
             if(sub === 'table') renderBillList();
             if(sub === 'archive') renderArchiveList();
             if(sub === 'elecRecord') elecRenderRecords();
-            if(sub === 'partyInfo') { renderPartyInfoList(); }
-            if(sub === 'leader') { renderLeaderList(); }
-            if(sub === 'ideology') renderIdeologyList();
+            if(sub === 'party') { switchPartyGroupInnerTab('ideology'); }
             if(sub === 'settings') { switchSetupInnerTab('house'); }
             if(sub === 'coalition') { renderCoalitions(); }
             if(sub === 'indMember') { indMemberInnerTab = 'house'; switchIndMemberInnerTab('house'); }
@@ -1591,6 +1586,19 @@
                 document.getElementById('innerTabSetup'+c.charAt(0).toUpperCase()+c.slice(1))?.classList.toggle('active', c===ch);
                 document.getElementById('content'+c.charAt(0).toUpperCase()+c.slice(1))?.classList.toggle('active', c===ch);
             });
+        }
+
+        // 의회 > 정당 내부 탭 (이념/정보/당수) — 구 정당 메인탭이 의회로 통합됨
+        let partyGroupInnerTab = 'ideology';
+        function switchPartyGroupInnerTab(inner) {
+            partyGroupInnerTab = inner;
+            ['ideology','info','leader'].forEach(k => {
+                document.getElementById('innerTabParty'+k.charAt(0).toUpperCase()+k.slice(1))?.classList.toggle('active', k===inner);
+                document.getElementById('innerContentParty'+k.charAt(0).toUpperCase()+k.slice(1))?.classList.toggle('active', k===inner);
+            });
+            if(inner==='ideology') renderIdeologyList();
+            else if(inner==='info') renderPartyInfoList();
+            else renderLeaderList();
         }
 
 

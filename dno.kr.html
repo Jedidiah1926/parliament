@@ -48,52 +48,47 @@
 
             <!-- ===== 상단 메인 탭 ===== -->
             <div class="main-tab-container">
-                <button class="main-tab-btn active" onclick="switchMainTab('party')" id="mainTabParty">🏛 정당</button>
-                <button class="main-tab-btn" onclick="switchMainTab('setup')" id="mainTabSetup">⚙ 의회</button>
+                <button class="main-tab-btn active" onclick="switchMainTab('setup')" id="mainTabSetup">⚙ 의회</button>
                 <button class="main-tab-btn" onclick="switchMainTab('legislation')" id="mainTabLegislation">⚖ 입법</button>
                 <button class="main-tab-btn" onclick="switchMainTab('election')" id="mainTabElection">🗳 선거</button>
                 <button class="main-tab-btn" onclick="switchMainTab('record')" id="mainTabRecord">🗂 기록</button>
             </div>
 
-            <!-- ===== 의회 설정 그룹 ===== -->
-            <!-- ===== 정당 그룹 ===== -->
-            <div id="mainContentParty" class="main-tab-content active">
+            <!-- ===== 의회 그룹 (정당 그룹이 여기로 통합됨) ===== -->
+            <div id="mainContentSetup" class="main-tab-content active">
                 <div class="sub-tab-container">
-                    <button class="sub-tab-btn active" onclick="switchSubTab('party','ideology')" id="subTabIdeology">이념</button>
-                    <button class="sub-tab-btn" onclick="switchSubTab('party','partyInfo')" id="subTabPartyInfo">정보</button>
-                    <button class="sub-tab-btn" onclick="switchSubTab('party','leader')" id="subTabLeader">당수</button>
-                </div>
-
-                <!-- 이념 탭 -->
-                <div id="contentIdeology" class="sub-tab-content active">
-                    <div id="ideologyList"></div>
-                    <button class="add-btn" onclick="addIdeology()">[+] 이념 추가</button>
-                </div>
-
-                <!-- 정보 탭 (구 "정당" 내부 탭에서 승격) -->
-                <div id="contentPartyInfo" class="sub-tab-content">
-                    <div id="partyInfoList"></div>
-                    <button class="add-btn" onclick="addParty('house')">[+] 정당 추가</button>
-                </div>
-
-                <!-- 당수 탭 (구 내부 탭에서 승격) -->
-                <div id="contentLeader" class="sub-tab-content">
-                    <div id="leaderList"></div>
-                </div>
-
-            </div>
-
-            <!-- ===== 의회 그룹 ===== -->
-            <div id="mainContentSetup" class="main-tab-content">
-                <div class="sub-tab-container">
-                    <button class="sub-tab-btn active" onclick="switchSubTab('setup','settings')" id="subTabSettings">설정</button>
+                    <button class="sub-tab-btn active" onclick="switchSubTab('setup','party')" id="subTabParty">정당</button>
+                    <button class="sub-tab-btn" onclick="switchSubTab('setup','settings')" id="subTabSettings">설정</button>
                     <button class="sub-tab-btn" onclick="switchSubTab('setup','coalition')" id="subTabCoalition">연정</button>
                     <button class="sub-tab-btn" onclick="switchSubTab('setup','members')" id="subTabMembers">의원</button>
                     <button class="sub-tab-btn" onclick="switchSubTab('setup','indMember')" id="subTabIndMember">무소속</button>
                 </div>
 
+                <!-- 정당 탭 (내부 탭: 이념/정보/당수) -->
+                <div id="contentParty" class="sub-tab-content active">
+                    <div class="sub-tab-container-3">
+                        <button class="sub-tab-btn-3 active" onclick="switchPartyGroupInnerTab('ideology')" id="innerTabPartyIdeology">이념</button>
+                        <button class="sub-tab-btn-3" onclick="switchPartyGroupInnerTab('info')" id="innerTabPartyInfo">정보</button>
+                        <button class="sub-tab-btn-3" onclick="switchPartyGroupInnerTab('leader')" id="innerTabPartyLeader">당수</button>
+                    </div>
+
+                    <div id="innerContentPartyIdeology" class="sub-tab-content active">
+                        <div id="ideologyList"></div>
+                        <button class="add-btn" onclick="addIdeology()">[+] 이념 추가</button>
+                    </div>
+
+                    <div id="innerContentPartyInfo" class="sub-tab-content">
+                        <div id="partyInfoList"></div>
+                        <button class="add-btn" onclick="addParty('house')">[+] 정당 추가</button>
+                    </div>
+
+                    <div id="innerContentPartyLeader" class="sub-tab-content">
+                        <div id="leaderList"></div>
+                    </div>
+                </div>
+
                 <!-- 설정 탭 (내부 탭: 하원/상원/삼원) -->
-                <div id="contentSettings" class="sub-tab-content active">
+                <div id="contentSettings" class="sub-tab-content">
                     <div class="sub-tab-container-3">
                         <button class="sub-tab-btn-3 active" onclick="switchSetupInnerTab('house')" id="innerTabSetupHouse">하원</button>
                         <button class="sub-tab-btn-3" onclick="switchSetupInnerTab('senate')" id="innerTabSetupSenate">상원</button>
