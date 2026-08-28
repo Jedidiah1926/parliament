@@ -62,7 +62,6 @@
                     <button class="sub-tab-btn active" onclick="switchSubTab('party','ideology')" id="subTabIdeology">이념</button>
                     <button class="sub-tab-btn" onclick="switchSubTab('party','partyInfo')" id="subTabPartyInfo">정보</button>
                     <button class="sub-tab-btn" onclick="switchSubTab('party','leader')" id="subTabLeader">당수</button>
-                    <button class="sub-tab-btn" onclick="switchSubTab('party','independent')" id="subTabIndependent">무소속</button>
                 </div>
 
                 <!-- 이념 탭 -->
@@ -82,15 +81,6 @@
                     <div id="leaderList"></div>
                 </div>
 
-                <!-- 무소속 탭 (내부 탭: 하원/상원/삼원) -->
-                <div id="contentIndependent" class="sub-tab-content">
-                    <div class="sub-tab-container-3" id="independentInnerTabs">
-                        <button class="sub-tab-btn-3 active" onclick="switchIndependentInnerTab('house')" id="innerTabIndHouse">하원</button>
-                        <button class="sub-tab-btn-3" onclick="switchIndependentInnerTab('senate')" id="innerTabIndSenate">상원</button>
-                        <button class="sub-tab-btn-3" onclick="switchIndependentInnerTab('third')" id="innerTabIndThird">삼원</button>
-                    </div>
-                    <div id="independentList"></div>
-                </div>
             </div>
 
             <!-- ===== 의회 그룹 ===== -->

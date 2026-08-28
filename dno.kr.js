@@ -1462,6 +1462,7 @@
             // 구버전 파일 호환: setup 하위탭이 house/senate/third/leader였다면 새 구조로 매핑
             if(['house','senate','third'].includes(currentSubTab.setup)) currentSubTab.setup = 'settings';
             if(currentSubTab.party === 'coalitionLeader') currentSubTab.party = 'partyInfo';
+            if(currentSubTab.party === 'independent') currentSubTab.party = 'partyInfo'; // 정당>무소속 탭 폐지(의회>무소속으로 통합)
             // 구버전 파일 호환: 기록 탭이 입법/선거 그룹에서 독립되기 전 위치를 가리키던 경우 재매핑
             if(currentSubTab.legislation === 'archive') currentSubTab.legislation = 'bill';
             if(currentSubTab.election === 'record') currentSubTab.election = 'vote';
@@ -1570,7 +1571,6 @@
             if(sub === 'partyInfo') { renderPartyInfoList(); }
             if(sub === 'leader') { renderLeaderList(); }
             if(sub === 'ideology') renderIdeologyList();
-            if(sub === 'independent') { independentInnerTab = 'house'; renderIndependentList(); }
             if(sub === 'settings') { switchSetupInnerTab('house'); }
             if(sub === 'coalition') { renderCoalitions(); }
             if(sub === 'indMember') { indMemberInnerTab = 'house'; switchIndMemberInnerTab('house'); }
@@ -1695,12 +1695,6 @@
             if(probS) probS.textContent = sName;
             if(probT) probT.textContent = tName;
             elecRenderProbBars(); // 선거 탭의 읽기전용 지지율 바 제목도 즉시 갱신
-            const indH = document.getElementById('innerTabIndHouse');
-            const indS = document.getElementById('innerTabIndSenate');
-            const indT = document.getElementById('innerTabIndThird');
-            if(indH) indH.textContent = hName;
-            if(indS) indS.textContent = sName;
-            if(indT) indT.textContent = tName;
             const membersH = document.getElementById('innerTabMembersHouse');
             const membersS = document.getElementById('innerTabMembersSenate');
             const membersT = document.getElementById('innerTabMembersThird');
@@ -1737,7 +1731,7 @@
             renderCoalitions();
             renderPartyInfoList();
             renderLeaderList();
-            renderIndependentList();
+            renderIndMemberList();
             renderMembersList();
         }
 
@@ -2807,17 +2801,42 @@
             return offset;
         }
 
-        let independentInnerTab = 'house';
-        function switchIndependentInnerTab(ch) {
-            independentInnerTab = ch;
-            ['house','senate','third'].forEach(c => {
-                document.getElementById('innerTabInd'+c.charAt(0).toUpperCase()+c.slice(1))?.classList.toggle('active', c===ch);
-            });
-            renderIndependentList();
+        function updateIndependent(id, key, val) {
+            const ind = independents.find(x=>x.id===id);
+            if(!ind) return;
+            ind[key] = val;
+            if(key === 'name') renderIndMemberList();
+            simulate();
         }
 
-        function renderIndependentList() {
-            const container = document.getElementById('independentList');
+        function uploadIndependentPhoto(input, id) {
+            const file = input.files?.[0]; if(!file) return;
+            const reader = new FileReader();
+            reader.onload = e => {
+                const ind = independents.find(x=>x.id===id);
+                if(ind){ ind.photo = e.target.result; renderIndMemberList(); }
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function removeIndependentPhoto(id) {
+            const ind = independents.find(x=>x.id===id);
+            if(ind){ ind.photo=''; renderIndMemberList(); }
+        }
+
+        // ===== 의회 > 무소속 탭: 개별 무소속 의원 관리(이름·사진·이념) + 연정 참여/각외협력 설정 =====
+        // (구 정당>무소속 탭과 통합됨)
+        let indMemberInnerTab = 'house';
+        function switchIndMemberInnerTab(ch) {
+            indMemberInnerTab = ch;
+            ['house','senate','third'].forEach(c => {
+                document.getElementById('innerTabIndMem'+c.charAt(0).toUpperCase()+c.slice(1))?.classList.toggle('active', c===ch);
+            });
+            renderIndMemberList();
+        }
+
+        function renderIndMemberList() {
+            const container = document.getElementById('indMemberList');
             if(!container) return;
             container.innerHTML = '';
 
@@ -2827,18 +2846,17 @@
                 return;
             }
 
-            // 존재하지 않는 의원실 탭은 숨기고, 현재 탭이 유효하지 않으면 첫 유효 탭으로 전환
             const chambers = chamberList();
             ['house','senate','third'].forEach(c => {
-                const btn = document.getElementById('innerTabInd'+c.charAt(0).toUpperCase()+c.slice(1));
+                const btn = document.getElementById('innerTabIndMem'+c.charAt(0).toUpperCase()+c.slice(1));
                 if(btn) btn.style.display = chambers.includes(c) ? '' : 'none';
             });
-            if(!chambers.includes(independentInnerTab)) independentInnerTab = chambers[0] || 'house';
+            if(!chambers.includes(indMemberInnerTab)) indMemberInnerTab = chambers[0] || 'house';
             ['house','senate','third'].forEach(c => {
-                document.getElementById('innerTabInd'+c.charAt(0).toUpperCase()+c.slice(1))?.classList.toggle('active', c===independentInnerTab);
+                document.getElementById('innerTabIndMem'+c.charAt(0).toUpperCase()+c.slice(1))?.classList.toggle('active', c===indMemberInnerTab);
             });
 
-            const ch = independentInnerTab;
+            const ch = indMemberInnerTab;
             const list = independents.filter(x=>x.chamber===ch).sort((a,b)=>a.seatIndex-b.seatIndex);
             const offset = computeIndependentOffset(ch);
 
@@ -2848,9 +2866,26 @@
             }
 
             list.forEach(ind => {
-                const globalSeatNum = offset + ind.seatIndex; // 내부적으론 1..N, 표기는 실제 전체 의석 순번
+                const indKey = 'ind__' + ind.id;
+                // 현재 소속 상태 파악
+                let currentValue = '';
+                for(const coal of coalitions) {
+                    if(coal.members.includes(indKey)) { currentValue = 'm_'+coal.id; break; }
+                    if(coal.externalSupporters?.includes(indKey)) { currentValue = 'e_'+coal.id; break; }
+                }
+                const globalSeatNum = offset + ind.seatIndex;
+                const coalitionField = coalitions.length === 0
+                    ? `<div style="color:#444;font-size:0.78rem;padding:5px 0;">연정 없음 — 연정 탭에서 먼저 연정을 만드세요</div>`
+                    : `<select onchange="updateIndCoalitionMembership('${ind.id}',this.value)"
+                        style="width:100%;background:#000;border:1px solid #333;color:var(--tno-gold);font-family:inherit;font-size:0.85rem;padding:5px;">
+                        <option value="" ${currentValue===''?'selected':''}>-- 소속 없음 --</option>
+                        ${coalitions.map(coal => `
+                            <option value="m_${coal.id}" ${currentValue==='m_'+coal.id?'selected':''}>${coal.name} — 정식 참여</option>
+                            <option value="e_${coal.id}" ${currentValue==='e_'+coal.id?'selected':''}>${coal.name} — ${coal.externalSupportLabel||'각외협력'}</option>
+                        `).join('')}
+                    </select>`;
                 const div = document.createElement('div');
-                div.className = 'card-item dyn-row drag-card-indlist';
+                div.className = 'card-item dyn-row drag-card-indmember';
                 div.dataset.indId = ind.id;
                 div.style.cssText = 'display:flex;gap:10px;align-items:stretch;border-left-color:#999;margin-bottom:8px;';
                 div.innerHTML = `
@@ -2872,106 +2907,13 @@
                             ${ideologies.filter(i=>i.id!==IND_IDEOLOGY_ID).map(i=>`<option value="${i.id}" ${ind.ideologyId===i.id?'selected':''}>${i.name}</option>`).join('')}
                         </select>
                         ${ind.photo?`<button onclick="removeIndependentPhoto('${ind.id}')" style="background:transparent;border:1px solid #333;color:#555;font-family:inherit;font-size:0.75rem;padding:2px 8px;cursor:pointer;text-align:left;">✕ 사진 제거</button>`:''}
+                        ${coalitionField}
                     </div>
-                `;
-                container.appendChild(div);
-                startIndependentDragReorder(div.querySelector('.drag-handle'), 'independentList', '.drag-card-indlist', ch, renderIndependentList);
-            });
-            fitDynPhotos(container);
-        }
-
-        function updateIndependent(id, key, val) {
-            const ind = independents.find(x=>x.id===id);
-            if(!ind) return;
-            ind[key] = val;
-            if(key === 'name') renderIndependentList();
-            simulate();
-        }
-
-        function uploadIndependentPhoto(input, id) {
-            const file = input.files?.[0]; if(!file) return;
-            const reader = new FileReader();
-            reader.onload = e => {
-                const ind = independents.find(x=>x.id===id);
-                if(ind){ ind.photo = e.target.result; renderIndependentList(); }
-            };
-            reader.readAsDataURL(file);
-        }
-
-        function removeIndependentPhoto(id) {
-            const ind = independents.find(x=>x.id===id);
-            if(ind){ ind.photo=''; renderIndependentList(); }
-        }
-
-        // ===== 의회 > 무소속 탭: 개별 의원의 연정 참여 / 각외협력 설정 =====
-        let indMemberInnerTab = 'house';
-        function switchIndMemberInnerTab(ch) {
-            indMemberInnerTab = ch;
-            ['house','senate','third'].forEach(c => {
-                document.getElementById('innerTabIndMem'+c.charAt(0).toUpperCase()+c.slice(1))?.classList.toggle('active', c===ch);
-            });
-            renderIndMemberList();
-        }
-
-        function renderIndMemberList() {
-            const container = document.getElementById('indMemberList');
-            if(!container) return;
-            container.innerHTML = '';
-
-            const chambers = chamberList();
-            ['house','senate','third'].forEach(c => {
-                const btn = document.getElementById('innerTabIndMem'+c.charAt(0).toUpperCase()+c.slice(1));
-                if(btn) btn.style.display = chambers.includes(c) ? '' : 'none';
-            });
-            if(!chambers.includes(indMemberInnerTab)) indMemberInnerTab = chambers[0] || 'house';
-            ['house','senate','third'].forEach(c => {
-                document.getElementById('innerTabIndMem'+c.charAt(0).toUpperCase()+c.slice(1))?.classList.toggle('active', c===indMemberInnerTab);
-            });
-
-            const ch = indMemberInnerTab;
-            const list = independents.filter(x=>x.chamber===ch).sort((a,b)=>a.seatIndex-b.seatIndex);
-            const offset = computeIndependentOffset(ch);
-
-            if(coalitions.length === 0) {
-                container.innerHTML = '<div style="text-align:center;color:#555;padding:20px;">[구성된 연정이 없습니다 — 연정 탭에서 먼저 연정을 만드세요]</div>';
-                return;
-            }
-            if(list.length === 0) {
-                container.innerHTML = '<div style="text-align:center;color:#555;padding:20px;">[이 의원실에는 무소속 의석이 없습니다]</div>';
-                return;
-            }
-
-            list.forEach(ind => {
-                const indKey = 'ind__' + ind.id;
-                // 현재 소속 상태 파악
-                let currentValue = '';
-                for(const coal of coalitions) {
-                    if(coal.members.includes(indKey)) { currentValue = 'm_'+coal.id; break; }
-                    if(coal.externalSupporters?.includes(indKey)) { currentValue = 'e_'+coal.id; break; }
-                }
-                const globalSeatNum = offset + ind.seatIndex;
-                const div = document.createElement('div');
-                div.className = 'card-item drag-card-indmember';
-                div.dataset.indId = ind.id;
-                div.style.cssText = 'border-left-color:#999;margin-bottom:8px;padding:10px;';
-                div.innerHTML = `
-                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
-                        <span class="drag-handle">⋮⋮</span>
-                        <span style="color:#999;font-size:0.85rem;flex-shrink:0;">#${globalSeatNum}</span>
-                        <span style="color:#ccc;font-size:0.95rem;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${ind.name||'(이름 미지정)'}</span>
-                    </div>
-                    <select onchange="updateIndCoalitionMembership('${ind.id}',this.value)"
-                        style="width:100%;background:#000;border:1px solid #333;color:var(--tno-gold);font-family:inherit;font-size:0.85rem;padding:5px;">
-                        <option value="" ${currentValue===''?'selected':''}>-- 소속 없음 --</option>
-                        ${coalitions.map(coal => `
-                            <option value="m_${coal.id}" ${currentValue==='m_'+coal.id?'selected':''}>${coal.name} — 정식 참여</option>
-                            <option value="e_${coal.id}" ${currentValue==='e_'+coal.id?'selected':''}>${coal.name} — ${coal.externalSupportLabel||'각외협력'}</option>
-                        `).join('')}
-                    </select>
                 `;
                 container.appendChild(div);
                 startIndependentDragReorder(div.querySelector('.drag-handle'), 'indMemberList', '.drag-card-indmember', ch, renderIndMemberList);
             });
+            fitDynPhotos(container);
         }
 
         function updateIndCoalitionMembership(indId, value) {
