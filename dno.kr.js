@@ -3756,14 +3756,159 @@
             });
         }
 
+        let tendencyView = 'all'; // 'all'=전체, 'overall'=종합만, 그 외에는 정당 id (해당 정당만)
+
+        function tendencyRenderViewButtons() {
+            const box = document.getElementById('tendencyViewButtons');
+            if(!box) return;
+            if(tendencyView !== 'all' && tendencyView !== 'overall' && !parties.some(p => p.id === tendencyView)) {
+                tendencyView = 'all'; // 선택돼 있던 정당이 삭제된 경우 대비
+            }
+            box.innerHTML = '';
+            const opts = [{ key:'all', label:'전체' }, { key:'overall', label:'종합' }, ...parties.map(p => ({ key: p.id, label: p.name }))];
+            opts.forEach(o => {
+                const active = tendencyView === o.key;
+                const btn = document.createElement('button');
+                btn.textContent = o.label;
+                btn.style.cssText = `padding:6px;font-size:0.85rem;font-family:inherit;cursor:pointer;background:${active?'var(--tno-neon)':'#111'};color:${active?'#000':'#888'};border:1px solid ${active?'var(--tno-neon)':'#333'};`;
+                btn.onclick = () => { tendencyView = o.key; tendencyRenderMaps(); };
+                box.appendChild(btn);
+            });
+        }
+
+        // 정당 하나의 성향 맵(캔버스+편집 이벤트)을 만들어 반환.
+        // allCvs가 있으면 이 맵을 칠할 때 종합 맵도 같이 갱신한다 (전체 뷰에서만 필요).
+        function tendencyBuildPartyWrap(p, allCvs) {
+            if(!tendencyData[p.id]) tendencyData[p.id] = {};
+            const wrap = document.createElement('div');
+            wrap.style.cssText = 'margin-bottom:12px;';
+            wrap.innerHTML = `
+                <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+                    <span style="width:10px;height:10px;background:${p.color};border-radius:50%;flex-shrink:0;"></span>
+                    <span style="color:#aaa;font-size:0.8rem;">${p.name}</span>
+                </div>`;
+            const cvs = document.createElement('canvas');
+            cvs.style.cssText = 'width:100%;display:block;background:#0a0c10;border:1px solid #222;cursor:crosshair;';
+            cvs.dataset.partyId = p.id;
+
+            // 이벤트: 클릭/드래그로 칠하기, 휠클릭드래그로 이동
+            let painting = false, middleDrag = false, mx=0, my=0;
+            // 각 지도 자체 오프셋 저장
+            if(!p._tendOffset) p._tendOffset = { x: null, y: null };
+
+            function getTendOffset(c) {
+                if(p._tendOffset.x === null) {
+                    const w2 = c.clientWidth || c.offsetWidth || 260;
+                    const bounds = tendencyGetBounds();
+                    if(!bounds) return;
+                    const {minQ,maxQ,minR,maxR} = bounds;
+                    const spanQ = maxQ-minQ+1, spanR = maxR-minR+1;
+                    const sizeByW = w2 / (spanQ * 1.5 + 0.5);
+                    const sizeByH = (w2 * 1.2) / (spanR * Math.sqrt(3) + Math.sqrt(3)/2 + 1);
+                    const sz = Math.min(sizeByW, sizeByH, 20);
+                    const cq = (minQ+maxQ)/2, cr = (minR+maxR)/2;
+                    p._tendOffset.x    = w2/2 - sz*(3/2*cq);
+                    p._tendOffset.y    = (c.offsetHeight||w2*0.6)/2 - sz*(Math.sqrt(3)/2*cq + Math.sqrt(3)*cr);
+                    p._tendOffset.size = sz;
+                }
+                return p._tendOffset;
+            }
+
+            cvs.addEventListener('mousedown', e => {
+                if(e.button===1){ middleDrag=true; mx=e.offsetX; my=e.offsetY; e.preventDefault(); return; }
+                if(e.button===0) {
+                    painting=true;
+                    const off = getTendOffset(cvs); if(!off) return;
+                    const [q,r]=districtPixelToAxial(e.offsetX, e.offsetY, off.size, off.x, off.y);
+                    const key=`${q},${r}`;
+                    if(districtGrid.house[key] || districtGrid.senate[key] || districtGrid.third[key]) {
+                        if(tendencyStrength===0) delete tendencyData[p.id][key];
+                        else tendencyData[p.id][key]=tendencyStrength;
+                        tendencyDrawMap(cvs, p.id);
+                        if(allCvs) tendencyDrawMap(allCvs, '__all__');
+                    }
+                }
+            });
+            cvs.addEventListener('mousemove', e => {
+                if(middleDrag) {
+                    const off = getTendOffset(cvs); if(!off) return;
+                    off.x += e.offsetX-mx; off.y += e.offsetY-my;
+                    mx=e.offsetX; my=e.offsetY;
+                    tendencyDrawMap(cvs, p.id); return;
+                }
+                if(painting) {
+                    const off = getTendOffset(cvs); if(!off) return;
+                    const [q,r]=districtPixelToAxial(e.offsetX, e.offsetY, off.size, off.x, off.y);
+                    const key=`${q},${r}`;
+                    if(districtGrid.house[key] || districtGrid.senate[key] || districtGrid.third[key]) {
+                        if(tendencyStrength===0) delete tendencyData[p.id][key];
+                        else tendencyData[p.id][key]=tendencyStrength;
+                        tendencyDrawMap(cvs, p.id);
+                        if(allCvs) tendencyDrawMap(allCvs, '__all__');
+                    }
+                    return;
+                }
+                // 호버 툴팁
+                const off = getTendOffset(cvs);
+                const tip = document.getElementById('tooltipBox');
+                if(off && tip) {
+                    const [hq,hr] = districtPixelToAxial(e.offsetX, e.offsetY, off.size, off.x, off.y);
+                    const hkey = `${hq},${hr}`;
+                    const nm = districtNameFor(hkey);
+                    if(nm !== null) {
+                        let text = nm || `(${hkey})`;
+                        const hCh = ['house','senate','third'].find(c => districtGrid[c][hkey]);
+                        const mem = hCh ? districtMembers[hCh][hkey] : null;
+                        if(mem) {
+                            const memParty = parties.find(p=>p.id===mem.partyId);
+                            if(mem.vacant) text += ` — 궐석`;
+                            else text += ` — ${mem.name||'(이름 미지정)'} (${memParty?.name||'?'})`;
+                        }
+                        positionTooltip(tip, text, e.clientX, e.clientY);
+                    } else {
+                        tip.style.display = 'none';
+                    }
+                }
+            });
+            cvs.addEventListener('mouseup', ()=>{painting=false; middleDrag=false;});
+            cvs.addEventListener('mouseleave', ()=>{painting=false; middleDrag=false; document.getElementById('tooltipBox').style.display='none';});
+
+            wrap.appendChild(cvs);
+            requestAnimationFrame(() => { tendencyDrawMap(cvs, p.id); });
+            return wrap;
+        }
+
         function tendencyRenderMaps() {
+            tendencyRenderViewButtons();
             const container = document.getElementById('tendencyMaps');
             if(!container) return;
             container.innerHTML = '';
             // 오프셋 캐시 초기화 (맵 크기가 바뀔 수 있으니)
             parties.forEach(p => { p._tendOffset = { x: null, y: null }; });
 
-            // 종합 지도 (전체 너비)
+            if(tendencyView === 'overall') {
+                // 종합 지도만
+                const allWrap = document.createElement('div');
+                allWrap.innerHTML = `<div style="color:#888;font-size:0.8rem;margin-bottom:4px;letter-spacing:1px;">▌ 종합</div>`;
+                const allCvs = document.createElement('canvas');
+                allCvs.style.cssText = 'width:100%;display:block;background:#0a0c10;border:1px solid #222;cursor:default;';
+                allWrap.appendChild(allCvs);
+                container.appendChild(allWrap);
+                requestAnimationFrame(() => { tendencyDrawMap(allCvs, '__all__'); });
+                return;
+            }
+
+            if(tendencyView !== 'all') {
+                // 특정 정당 지도만
+                const p = parties.find(x => x.id === tendencyView);
+                if(p) {
+                    container.appendChild(tendencyBuildPartyWrap(p, null));
+                    return;
+                }
+                tendencyView = 'all'; // 대상 정당이 없으면 전체로 폴백
+            }
+
+            // 전체 뷰: 종합(전체 너비) + 당별 지도(2열 그리드)
             const allWrap = document.createElement('div');
             allWrap.style.cssText = 'margin-bottom:12px;';
             allWrap.innerHTML = `<div style="color:#888;font-size:0.8rem;margin-bottom:4px;letter-spacing:1px;">▌ 종합</div>`;
@@ -3772,112 +3917,12 @@
             allWrap.appendChild(allCvs);
             container.appendChild(allWrap);
 
-            // 당별 지도 (2열 그리드)
             const partyGroup = document.createElement('div');
             partyGroup.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:8px;';
             container.appendChild(partyGroup);
 
             parties.forEach(p => {
-                if(!tendencyData[p.id]) tendencyData[p.id] = {};
-                const wrap = document.createElement('div');
-                wrap.style.cssText = 'margin-bottom:12px;';
-                wrap.innerHTML = `
-                    <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
-                        <span style="width:10px;height:10px;background:${p.color};border-radius:50%;flex-shrink:0;"></span>
-                        <span style="color:#aaa;font-size:0.8rem;">${p.name}</span>
-                    </div>`;
-                const cvs = document.createElement('canvas');
-                cvs.style.cssText = 'width:100%;display:block;background:#0a0c10;border:1px solid #222;cursor:crosshair;';
-                cvs.dataset.partyId = p.id;
-
-                // 이벤트: 클릭/드래그로 칠하기, 휠클릭드래그로 이동
-                let painting = false, middleDrag = false, mx=0, my=0;
-                // 각 지도 자체 오프셋 저장
-                if(!p._tendOffset) p._tendOffset = { x: null, y: null };
-
-                function getTendOffset(c) {
-                    if(p._tendOffset.x === null) {
-                        const w2 = c.clientWidth || c.offsetWidth || 260;
-                        const bounds = tendencyGetBounds();
-                        if(!bounds) return;
-                        const {minQ,maxQ,minR,maxR} = bounds;
-                        const spanQ = maxQ-minQ+1, spanR = maxR-minR+1;
-                        const sizeByW = w2 / (spanQ * 1.5 + 0.5);
-                        const sizeByH = (w2 * 1.2) / (spanR * Math.sqrt(3) + Math.sqrt(3)/2 + 1);
-                        const sz = Math.min(sizeByW, sizeByH, 20);
-                        const cq = (minQ+maxQ)/2, cr = (minR+maxR)/2;
-                        p._tendOffset.x    = w2/2 - sz*(3/2*cq);
-                        p._tendOffset.y    = (c.offsetHeight||w2*0.6)/2 - sz*(Math.sqrt(3)/2*cq + Math.sqrt(3)*cr);
-                        p._tendOffset.size = sz;
-                    }
-                    return p._tendOffset;
-                }
-
-                cvs.addEventListener('mousedown', e => {
-                    if(e.button===1){ middleDrag=true; mx=e.offsetX; my=e.offsetY; e.preventDefault(); return; }
-                    if(e.button===0) {
-                        painting=true;
-                        const off = getTendOffset(cvs); if(!off) return;
-                        const [q,r]=districtPixelToAxial(e.offsetX, e.offsetY, off.size, off.x, off.y);
-                        const key=`${q},${r}`;
-                        if(districtGrid.house[key] || districtGrid.senate[key] || districtGrid.third[key]) {
-                            if(tendencyStrength===0) delete tendencyData[p.id][key];
-                            else tendencyData[p.id][key]=tendencyStrength;
-                            tendencyDrawMap(cvs, p.id);
-                            tendencyDrawMap(allCvs, '__all__');
-                        }
-                    }
-                });
-                cvs.addEventListener('mousemove', e => {
-                    if(middleDrag) {
-                        const off = getTendOffset(cvs); if(!off) return;
-                        off.x += e.offsetX-mx; off.y += e.offsetY-my;
-                        mx=e.offsetX; my=e.offsetY;
-                        tendencyDrawMap(cvs, p.id); return;
-                    }
-                    if(painting) {
-                        const off = getTendOffset(cvs); if(!off) return;
-                        const [q,r]=districtPixelToAxial(e.offsetX, e.offsetY, off.size, off.x, off.y);
-                        const key=`${q},${r}`;
-                        if(districtGrid.house[key] || districtGrid.senate[key] || districtGrid.third[key]) {
-                            if(tendencyStrength===0) delete tendencyData[p.id][key];
-                            else tendencyData[p.id][key]=tendencyStrength;
-                            tendencyDrawMap(cvs, p.id);
-                            tendencyDrawMap(allCvs, '__all__');
-                        }
-                        return;
-                    }
-                    // 호버 툴팁
-                    const off = getTendOffset(cvs);
-                    const tip = document.getElementById('tooltipBox');
-                    if(off && tip) {
-                        const [hq,hr] = districtPixelToAxial(e.offsetX, e.offsetY, off.size, off.x, off.y);
-                        const hkey = `${hq},${hr}`;
-                        const nm = districtNameFor(hkey);
-                        if(nm !== null) {
-                            let text = nm || `(${hkey})`;
-                            const hCh = ['house','senate','third'].find(c => districtGrid[c][hkey]);
-                            const mem = hCh ? districtMembers[hCh][hkey] : null;
-                            if(mem) {
-                                const memParty = parties.find(p=>p.id===mem.partyId);
-                                if(mem.vacant) text += ` — 궐석`;
-                                else text += ` — ${mem.name||'(이름 미지정)'} (${memParty?.name||'?'})`;
-                            }
-                            positionTooltip(tip, text, e.clientX, e.clientY);
-                        } else {
-                            tip.style.display = 'none';
-                        }
-                    }
-                });
-                cvs.addEventListener('mouseup', ()=>{painting=false; middleDrag=false;});
-                cvs.addEventListener('mouseleave', ()=>{painting=false; middleDrag=false; document.getElementById('tooltipBox').style.display='none';});
-
-                wrap.appendChild(cvs);
-                partyGroup.appendChild(wrap);
-
-                requestAnimationFrame(() => {
-                    tendencyDrawMap(cvs, p.id);
-                });
+                partyGroup.appendChild(tendencyBuildPartyWrap(p, allCvs));
             });
 
             requestAnimationFrame(() => { tendencyDrawMap(allCvs, '__all__'); });
