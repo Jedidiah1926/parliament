@@ -120,6 +120,20 @@
             flex: 1;
         }
 
+        /* 국기 지정 시 단원제/양원제/삼원제 버튼 위에 표시되는 큰 배너 — 좌측 탭 폭에 맞춰 고정 */
+        .nation-flag-banner {
+            width: 100%;
+            margin-bottom: 12px;
+            border: 1px solid #2a2a2a;
+            overflow: hidden;
+            line-height: 0;
+        }
+        .nation-flag-banner img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
         .display-area {
             flex: 1;
             display: flex;
