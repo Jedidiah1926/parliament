@@ -1453,7 +1453,7 @@
                 loadAutosavePreference();
                 restored = autosaveEnabled && loadFromAutosave();
             } catch(e) { /* 자동저장 초기화 실패 — 기본 상태로 계속 진행 */ }
-            if(!restored) { toggleSystem(); refreshUI(); simulate(); renderBillList(); renderArchiveList(); syncBillSelect(); elecRenderList(); elecRenderRecords(); updateNationIdBar(); updateDispInfoBar(); }
+            if(!restored) { toggleSystem(); simulate(); refreshUI(); renderBillList(); renderArchiveList(); syncBillSelect(); elecRenderList(); elecRenderRecords(); updateNationIdBar(); updateDispInfoBar(); }
             try {
                 if(autosaveEnabled) { autosaveNow(); startAutosaveTimer(); }
                 renderSaveTabUI();
@@ -2167,7 +2167,7 @@
                 if(b.ideologyId===IND_IDEOLOGY_ID && a.ideologyId!==IND_IDEOLOGY_ID) return -1;
                 return ia - ib;
             });
-            refreshUI(); simulate();
+            simulate(); refreshUI();
         }
 
         function moveParty(idx, dir) {
@@ -2175,7 +2175,7 @@
             const target = idx + dir;
             if(target < 0 || target >= parties.length) return;
             [parties[idx], parties[target]] = [parties[target], parties[idx]];
-            refreshUI(); simulate();
+            simulate(); refreshUI();
         }
 
         function togglePartyCollapse(pid) {
@@ -2486,6 +2486,25 @@
                 const memberCount = memberParties.length + memberIndKeys.length;
                 const membersCollapsed = coal._membersCollapsed ?? false;
                 const extCollapsed = coal._extCollapsed ?? true; // 각외협력은 기본 접힘
+                // 각외협력(신임과 보완)은 정부 지지를 의미하므로 집권 연정에만 실제 효과가 있다.
+                // 비집권 연정에서 체크해도 아무 데도 반영되지 않아 혼란을 주므로, 아예 노출하지 않는다.
+                const extSectionHtml = coal.isRuling ? `
+                    <!-- 각외협력 (접기 가능) -->
+                    <div onclick="toggleCoalitionSection('${coal.id}','ext')" style="display:flex;align-items:center;gap:6px;margin-top:10px;cursor:pointer;user-select:none;">
+                        <span style="color:#888;font-size:0.8rem;">${extCollapsed?'▶':'▼'}</span>
+                        <span style="color:#555;font-size:0.78rem;letter-spacing:1px;" title="연정에 정식 참여하지 않지만 신임투표·예산안 등에서 정부를 지지하는 정당">▌ ${coal.externalSupportLabel ?? '각외협력'} (${coal.externalSupporters.length})</span>
+                    </div>
+                    <div style="display:${extCollapsed?'none':'block'};">
+                        <div style="display:flex;align-items:center;gap:6px;margin-top:6px;" onclick="event.stopPropagation()">
+                            <span style="color:#555;font-size:0.78rem;letter-spacing:1px;white-space:nowrap;">▌ 명칭</span>
+                            <input type="text" value="${coal.externalSupportLabel ?? '각외협력'}" placeholder="각외협력"
+                                style="flex:1;background:#000;border:1px solid #443300;color:#cc9900;font-family:inherit;font-size:0.78rem;padding:2px 6px;"
+                                title="명칭 커스터마이징 (예: 신임과 보완, 보완과 신임 등)"
+                                onchange="updateCoalition('${coal.id}','externalSupportLabel',this.value.trim()||'각외협력')">
+                        </div>
+                        <div class="coalition-members" style="border-color:#443300;margin-top:6px;">${extChecks}${extIndRows}${(!extChecks && !extIndRows) ? '<div style="color:#333;font-size:0.8rem;padding:4px 0;">비멤버 정당 없음</div>' : ''}</div>
+                    </div>` : `
+                    <div style="margin-top:10px;color:#444;font-size:0.75rem;letter-spacing:0.5px;" title="신임투표·예산안 등에서 정부를 지지하는 각외협력은 집권 연정에만 설정할 수 있습니다.">▌ 각외협력은 집권 연정에서만 설정 가능</div>`;
                 div.innerHTML = `
                     <div style="display:flex;gap:8px;align-items:center;">
                         <!-- 햄버거 드래그 핸들 -->
@@ -2517,21 +2536,7 @@
                         <span style="color:#555;font-size:0.78rem;letter-spacing:1px;">▌ 멤버 (${memberCount})</span>
                     </div>
                     <div class="coalition-members" style="display:${membersCollapsed?'none':'block'};">${memberChecks}${memberIndRows}</div>
-                    <!-- 각외협력 (접기 가능) -->
-                    <div onclick="toggleCoalitionSection('${coal.id}','ext')" style="display:flex;align-items:center;gap:6px;margin-top:10px;cursor:pointer;user-select:none;">
-                        <span style="color:#888;font-size:0.8rem;">${extCollapsed?'▶':'▼'}</span>
-                        <span style="color:#555;font-size:0.78rem;letter-spacing:1px;" title="연정에 정식 참여하지 않지만 신임투표·예산안 등에서 정부를 지지하는 정당">▌ ${coal.externalSupportLabel ?? '각외협력'} (${coal.externalSupporters.length})</span>
-                    </div>
-                    <div style="display:${extCollapsed?'none':'block'};">
-                        <div style="display:flex;align-items:center;gap:6px;margin-top:6px;" onclick="event.stopPropagation()">
-                            <span style="color:#555;font-size:0.78rem;letter-spacing:1px;white-space:nowrap;">▌ 명칭</span>
-                            <input type="text" value="${coal.externalSupportLabel ?? '각외협력'}" placeholder="각외협력"
-                                style="flex:1;background:#000;border:1px solid #443300;color:#cc9900;font-family:inherit;font-size:0.78rem;padding:2px 6px;"
-                                title="명칭 커스터마이징 (예: 신임과 보완, 보완과 신임 등)"
-                                onchange="updateCoalition('${coal.id}','externalSupportLabel',this.value.trim()||'각외협력')">
-                        </div>
-                        <div class="coalition-members" style="border-color:#443300;margin-top:6px;">${extChecks}${extIndRows}${(!extChecks && !extIndRows) ? '<div style="color:#333;font-size:0.8rem;padding:4px 0;">비멤버 정당 없음</div>' : ''}</div>
-                    </div>`;
+                    ${extSectionHtml}`;
                 container.appendChild(div);
                 startDragReorder(div.querySelector('.drag-handle'), 'coalitionList', '.drag-card-coalition', coalitions, renderCoalitions);
             });
@@ -2555,7 +2560,7 @@
             const reader = new FileReader();
             reader.onload = e => {
                 const p = parties.find(x=>x.id===pid);
-                if(p){ p.logoPhoto = e.target.result; refreshUI(); simulate(); }
+                if(p){ p.logoPhoto = e.target.result; simulate(); refreshUI(); }
             };
             reader.readAsDataURL(file);
         }
@@ -2712,7 +2717,7 @@
             const reader = new FileReader();
             reader.onload = e => {
                 const p = parties.find(x=>x.id===pid);
-                if(p){ p.leaderPhoto=e.target.result; refreshUI(); simulate(); }
+                if(p){ p.leaderPhoto=e.target.result; simulate(); refreshUI(); }
             };
             reader.readAsDataURL(file);
         }
@@ -2725,11 +2730,11 @@
         function addIdeology() { ideologies.push({ id: Date.now(), name: "새 이념" }); refreshUI(); }
         function addIndependentIdeology() {
             if(!ideologies.find(i=>i.id===IND_IDEOLOGY_ID)) ideologies.push({id:IND_IDEOLOGY_ID, name:"무소속"});
-            refreshUI(); simulate();
+            simulate(); refreshUI();
         }
-        function removeIdeology(idx) { if(ideologies.length>1) { const id=ideologies[idx].id; ideologies.splice(idx,1); parties.forEach(p=>{if(p.ideologyId===id)p.ideologyId=ideologies[0].id;}); refreshUI(); simulate(); }}
-        function updateIdeology(i,k,v) { ideologies[i][k]=v; refreshUI(); simulate(); }
-        function moveIdeology(i,d) { if((d===-1&&i>0)||(d===1&&i<ideologies.length-1)){ [ideologies[i], ideologies[i+d]] = [ideologies[i+d], ideologies[i]]; refreshUI(); simulate(); }}
+        function removeIdeology(idx) { if(ideologies.length>1) { const id=ideologies[idx].id; ideologies.splice(idx,1); parties.forEach(p=>{if(p.ideologyId===id)p.ideologyId=ideologies[0].id;}); simulate(); refreshUI(); }}
+        function updateIdeology(i,k,v) { ideologies[i][k]=v; simulate(); refreshUI(); }
+        function moveIdeology(i,d) { if((d===-1&&i>0)||(d===1&&i<ideologies.length-1)){ [ideologies[i], ideologies[i+d]] = [ideologies[i+d], ideologies[i]]; simulate(); refreshUI(); }}
         function addParty(chamber) {
             const flags = { inHouse:false, inSenate:false, inThird:false };
             if(chamber === 'house') flags.inHouse = true;
@@ -2743,10 +2748,13 @@
         function addIndependentParty() {
             if(!ideologies.find(i=>i.id===IND_IDEOLOGY_ID)) addIndependentIdeology();
             parties.push({id:Date.now(), name:"무소속", color:"#999999", seatsHouse:1, seatsSenate:0, seatsThird:0, ideologyId:IND_IDEOLOGY_ID, isRuling:false, inHouse:true, inSenate:true, inThird:false, leaderName: "", leaderPhoto: "", logoPhoto: "", showLogoInStats: false, factions: [] });
-            refreshUI(); simulate();
+            simulate(); refreshUI();
         }
-        function removeParty(i) { const pid=parties[i].id; parties.splice(i,1); coalitions.forEach(c=>c.members=c.members.filter(x=>x!==pid)); refreshUI(); simulate(); }
-        function updateParty(i,k,v) { parties[i][k]=v; if(k==='name')refreshUI(); simulate(); }
+        function removeParty(i) { const pid=parties[i].id; parties.splice(i,1); coalitions.forEach(c=>c.members=c.members.filter(x=>x!==pid)); simulate(); refreshUI(); }
+        // simulate()가 (manualSort가 꺼져 있으면) parties 배열을 이념 순으로 재정렬하므로,
+        // 반드시 정렬이 끝난 뒤에 refreshUI()를 호출해야 카드에 새겨진 인덱스(idx)가
+        // 최신 배열 순서와 어긋나지 않는다. 순서가 바뀌면 그 다음 입력이 엉뚱한 정당에 적용된다.
+        function updateParty(i,k,v) { parties[i][k]=v; simulate(); refreshUI(); }
 
         // ===== 원외정당 (의석 없는 정당) =====
         // 정당>정보에서 특정 의원실에 배정(inHouse/inSenate/inThird)되어 있으면서
@@ -2824,21 +2832,21 @@
                 (p.factions||[]).forEach(f => { f.seatsHouse = 0; f.seatsSenate = 0; f.seatsThird = 0; });
             }
             p.status = newStatus;
-            refreshUI(); simulate();
+            simulate(); refreshUI();
         }
-        function togglePartyParticipation(i,f,v) { parties[i][f]=v; refreshUI(); simulate(); }
-        function updatePartyColorText(e,i) { if(isValidHex(e.value)){ parties[i].color=e.value.toUpperCase(); e.nextElementSibling.value=parties[i].color; refreshUI(); simulate(); }}
+        function togglePartyParticipation(i,f,v) { parties[i][f]=v; simulate(); refreshUI(); }
+        function updatePartyColorText(e,i) { if(isValidHex(e.value)){ parties[i].color=e.value.toUpperCase(); e.nextElementSibling.value=parties[i].color; simulate(); refreshUI(); }}
         function updatePartyColorPicker(e,i) { parties[i].color=e.value.toUpperCase(); e.previousElementSibling.value=parties[i].color; simulate(); }
 
         function addCoalition() { coalitions.push({id:'c'+Date.now(), name:"새 연정", color:"#ffffff", members:[], isRuling:false, leadPartyId: null, externalSupporters: [], externalSupportLabel: "각외협력" }); refreshUI(); }
-        function removeCoalition(id) { coalitions=coalitions.filter(c=>c.id!==id); refreshUI(); simulate(); }
+        function removeCoalition(id) { coalitions=coalitions.filter(c=>c.id!==id); simulate(); refreshUI(); }
         function updateCoalition(id,k,v) { const c=coalitions.find(x=>x.id===id); if(c){c[k]=v; simulate();} }
         function updateCoalitionColorText(e,id) { if(isValidHex(e.value)) { const c=coalitions.find(x=>x.id===id); if(c){ c.color=e.value.toUpperCase(); e.nextElementSibling.value=c.color; simulate(); }}}
         function updateCoalitionColorPicker(e,id) { const c=coalitions.find(x=>x.id===id); if(c){ c.color=e.value.toUpperCase(); e.previousElementSibling.value=c.color; simulate(); }}
         function toggleCoalitionMember(cid,pid,chk) {
             if(chk) { coalitions.forEach(c=>c.members=c.members.filter(x=>x!==pid)); coalitions.find(c=>c.id===cid).members.push(pid); }
             else { const c=coalitions.find(x=>x.id===cid); c.members=c.members.filter(x=>x!==pid); }
-            refreshUI(); simulate();
+            simulate(); refreshUI();
         }
         // 각외협력(신임과 보완) — 연정에 정식 참여하지 않으면서 신임/예산 등에서만 정부를 지지하는 정당
         function toggleCoalitionExternalSupport(cid,pid,chk) {
@@ -2846,19 +2854,19 @@
             if(!c.externalSupporters) c.externalSupporters = [];
             if(chk) { if(!c.externalSupporters.includes(pid)) c.externalSupporters.push(pid); }
             else c.externalSupporters = c.externalSupporters.filter(x=>x!==pid);
-            refreshUI(); simulate();
+            simulate(); refreshUI();
         }
         function setRuling(t,id) {
             parties.forEach(p=>p.isRuling=false); coalitions.forEach(c=>c.isRuling=false);
             if(t==='party') parties.find(p=>p.id===id).isRuling=true;
             else coalitions.find(c=>c.id===id).isRuling=true;
-            refreshUI(); simulate();
+            simulate(); refreshUI();
         }
 
         function setNoRuling() {
             parties.forEach(p=>p.isRuling=false);
             coalitions.forEach(c=>c.isRuling=false);
-            refreshUI(); simulate();
+            simulate(); refreshUI();
         }
 
         // ===== 파벌 함수 =====
@@ -2913,7 +2921,7 @@
                 ideologyId:f.ideologyId||p.ideologyId, isRuling:false, inHouse:p.inHouse, inSenate:p.inSenate,
                 leaderName:f.leaderName||'', leaderPhoto:f.leaderPhoto||'', logoPhoto:f.logoPhoto||'',
                 showLogoInStats:false, description:'', factions:[] });
-            refreshUI(); simulate();
+            simulate(); refreshUI();
         }
         function moveFaction(partyId, factionId, dir) {
             const p = parties.find(x=>x.id===partyId); if(!p?.factions) return;
@@ -3114,7 +3122,7 @@
                 const key = inKeyFor(c);
                 p[key] = checked;
             });
-            refreshUI(); simulate();
+            simulate(); refreshUI();
         }
 
         // ===== 정당 탭: 당수 =====
@@ -3200,7 +3208,7 @@
 
         function removeLeaderPhoto(pid) {
             const p = parties.find(x=>x.id===pid);
-            if(p){ p.leaderPhoto=''; refreshUI(); simulate(); }
+            if(p){ p.leaderPhoto=''; simulate(); refreshUI(); }
         }
 
         // ===== 정당 탭: 무소속 (의원 개별 정보) =====
@@ -3347,7 +3355,7 @@
                     else { if(!coal.externalSupporters) coal.externalSupporters = []; coal.externalSupporters.push(indKey); }
                 }
             }
-            refreshUI(); simulate();
+            simulate(); refreshUI();
         }
 
         // ===== 의회 > 의원 탭: 지역구 당선 의원 개별 관리 =====
@@ -3443,7 +3451,7 @@
             if(newParty) newParty[seatKey] = (newParty[seatKey]||0) + 1;
             m.partyId = newPartyId;
             m.factionId = null; // 이적 시 파벌 소속은 초기화
-            refreshUI(); simulate();
+            simulate(); refreshUI();
         }
 
         // 궐석 처리: 의원이 사퇴/사망 등으로 빠짐 — 소속 정당 의석에서 -1 (보궐선거 전까지 공석)
@@ -3455,7 +3463,7 @@
             const party = parties.find(p=>p.id===m.partyId);
             if(party) party[seatKey] = Math.max(0, (party[seatKey]||0) - 1);
             m.vacant = true;
-            refreshUI(); simulate();
+            simulate(); refreshUI();
         }
 
         function fillVacantSeat(ch, key) {
@@ -4816,7 +4824,7 @@
                 districtMembers[chamber][key] = { name:'', partyId, factionId:null, vacant:false };
                 summary.push(`${districtNames[chamber][key]||key} : ${party?.name||'?'}`);
             });
-            refreshUI(); simulate();
+            simulate(); refreshUI();
             switchDispTab(chamber);
             alert(`보궐선거 결과 (${chamberName})\n\n${summary.join('\n')}\n\n의회>의원 탭에서 당선자 이름을 입력해 주세요.`);
         }
