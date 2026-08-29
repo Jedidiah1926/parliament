@@ -255,6 +255,7 @@
         ['초기화', 'Reset'],
 
         // ── 로드맵 버전 타이틀 ──
+        ['1.5.0 - 지역구/비례 시스템 개편', '1.5.0 - District/Proportional System Overhaul'],
         ['1.4.9 - 저장 리워크', '1.4.9 - Save Rework'],
         ['1.4.8 - 의회 리워크 Part.II', '1.4.8 - Parliament Rework Part II'],
         ['1.4.7 - 정당 리워크 Part.II', '1.4.7 - Party Rework Part II'],

@@ -1577,7 +1577,7 @@
         function getAppState() {
             const systemType = document.querySelector('input[name="systemType"]:checked')?.value || 'bicameral';
             return {
-                meta: { app: "DATANET_PARLIAMENT_SIM", version: "1.0", savedAt: new Date().toISOString() },
+                meta: { app: "DATANET_PARLIAMENT_SIM", version: "1.1", savedAt: new Date().toISOString() },
                 ui: { currentMainTab, currentSubTab },
                 config: {
                     systemType,
@@ -1641,7 +1641,7 @@
 
         function saveJSON() {
             const state = getAppState();
-            downloadJSON(`dno-save-v1.0-${formatKstTimestampCompact()}.json`, state);
+            downloadJSON(`dno-save-v1.1-${formatKstTimestampCompact()}.json`, state);
         }
 
         function setAppState(state) {
@@ -1995,7 +1995,7 @@
             document.querySelectorAll('.main-tab-content').forEach(c => c.classList.remove('active'));
             document.getElementById('mainContent' + main.charAt(0).toUpperCase() + main.slice(1)).classList.add('active');
             if(main === 'election') { elecRenderList(); elecRenderRecords(); return; }
-            if(main === 'save') { return; } // v1.4.9 예정 — 서브탭 없는 플레이스홀더
+            if(main === 'save') { return; } // 저장 탭은 서브탭 없는 단일 화면
             switchSubTab(main, currentSubTab[main] || (main === 'setup' ? 'party' : 'legislation'), false);
         }
 
