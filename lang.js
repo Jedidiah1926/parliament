@@ -384,7 +384,7 @@
         ['입법', 'Legislation'], ['전체', 'All'], ['없음', 'None'], ['연정', 'Coalition'],
         ['하원', 'House'], ['상원', 'Senate'], ['삼원', 'Third'], ['정당', 'Party'], ['의원', 'Members'],
         ['이념', 'Ideology'], ['당수', 'Leader'], ['기권', 'Abstain'], ['찬성', 'Yea'], ['반대', 'Nay'],
-        ['의석', 'Seats'], ['지역구', 'District'], ['선거', 'Election'], ['무소속', 'Independent'],
+        ['의석', 'Seats'], ['지역구', 'District'], ['선거', 'Election'], ['무소속', 'Independent'], ['비례', 'Proportional'], ['필터', 'Filter'],
         ['개표', 'Counting'], ['국회', 'National Assembly'], ['회기', 'Session'], ['국가명', 'Nation Name'],
         ['현재:', 'Current:'], ['✕ 제거', '✕ Remove'], ['▶ 재개', '▶ Resume'],
         ['사진 업로드', 'Upload Photo'], ['가결 후 열림', 'Opens After Passage'],
