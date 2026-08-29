@@ -2647,7 +2647,7 @@
                 if(p && highlightGov) {
                     const coal = coalitions.find(c=>c.members.includes(p.id));
                     const isGov = p.isRuling || (coal && coal.isRuling);
-                    const isExtSupport = !isGov && !coal && rulingCoal && rulingCoal.externalSupporters?.includes(p.id);
+                    const isExtSupport = !isGov && rulingCoal && rulingCoal.externalSupporters?.includes(p.id);
                     if(isGov) {
                         ctx.save();
                         ctx.shadowColor = 'rgba(255,215,0,0.8)';
@@ -4372,8 +4372,9 @@
                 const isPartyRuling = p.isRuling;
                 const isCoalRuling  = !isPartyRuling && (coal && coal.isRuling);
                 const isGov = isPartyRuling || isCoalRuling;
-                const effectiveCoal = (isPartyRuling && !(coal && coal.isRuling)) ? null : coal;
-                const isExtSupport = !isGov && !coal && rulingCoal && rulingCoal.externalSupporters?.includes(p.id);
+                const isExtSupport = !isGov && rulingCoal && rulingCoal.externalSupporters?.includes(p.id);
+                // 각외협력 정당은 (다른 연정 소속이더라도) 그 연정 카드가 아니라 각외협력 항목으로 별도 집계
+                const effectiveCoal = (isExtSupport || (isPartyRuling && !(coal && coal.isRuling))) ? null : coal;
                 let stroke = highlightGov&&isGov ? 'var(--tno-gold)' : (effectiveCoal?effectiveCoal.color:null);
                 let strokeDashed = false;
                 if(isExtSupport && rulingCoal) { stroke = highlightGov ? '#ffd700' : rulingCoal.color; strokeDashed = true; }
@@ -5206,7 +5207,7 @@
                 if(highlightGov) {
                     const coal = coalitions.find(c=>c.members.includes(p.id));
                     const isGov = p.isRuling || (coal && coal.isRuling);
-                    const isExtSupport = !isGov && !coal && rulingCoal && rulingCoal.externalSupporters?.includes(p.id);
+                    const isExtSupport = !isGov && rulingCoal && rulingCoal.externalSupporters?.includes(p.id);
                     if(isGov) {
                         ctx.save();
                         ctx.shadowColor = 'rgba(255,215,0,0.8)';
@@ -5534,8 +5535,9 @@
                 const isPartyRuling = p.isRuling;
                 const isCoalRuling  = !isPartyRuling && (coal && coal.isRuling);
                 const isGov = isPartyRuling || isCoalRuling;
-                const effectiveCoal = (isPartyRuling && !(coal && coal.isRuling)) ? null : coal;
-                const isExtSupport = !isGov && !coal && rulingCoal && rulingCoal.externalSupporters?.includes(p.id);
+                const isExtSupport = !isGov && rulingCoal && rulingCoal.externalSupporters?.includes(p.id);
+                // 각외협력 정당은 (다른 연정 소속이더라도) 그 연정 카드가 아니라 각외협력 항목으로 별도 집계
+                const effectiveCoal = (isExtSupport || (isPartyRuling && !(coal && coal.isRuling))) ? null : coal;
                 let stroke = hG&&isGov ? 'var(--tno-gold)' : (effectiveCoal?effectiveCoal.color:null);
                 let strokeDashed = false;
                 if(isExtSupport && rulingCoal) { stroke = hG ? '#ffd700' : rulingCoal.color; strokeDashed = true; }
@@ -5606,8 +5608,9 @@
                     const isPartyRuling = p.isRuling;
                     const isCoalRuling  = !isPartyRuling && (coal && coal.isRuling);
                     const isGov = isPartyRuling || isCoalRuling;
-                    const effectiveCoal = (isPartyRuling && !(coal && coal.isRuling)) ? null : coal;
-                    const isExtSupport = !isGov && !coal && rulingCoal && rulingCoal.externalSupporters?.includes(p.id);
+                    const isExtSupport = !isGov && rulingCoal && rulingCoal.externalSupporters?.includes(p.id);
+                    // 각외협력 정당은 (다른 연정 소속이더라도) 그 연정 카드가 아니라 각외협력 항목으로 별도 집계
+                    const effectiveCoal = (isExtSupport || (isPartyRuling && !(coal && coal.isRuling))) ? null : coal;
                     let stroke = null;
                     let strokeDashed = false;
                     if(highlightGov && isGov) stroke = "var(--tno-gold)";
