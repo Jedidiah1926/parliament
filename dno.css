@@ -657,6 +657,21 @@
         .bulk-vote-btn.active-yea { background: rgba(0,255,136,0.25); font-weight: bold; }
         .bulk-vote-btn.active-nay { background: rgba(255,34,68,0.25); font-weight: bold; }
         .bulk-vote-btn.active-abs { background: rgba(136,136,136,0.25); font-weight: bold; }
+        /* 찬/반/기 버튼 3개를 합친 만큼의 너비를 차지하는 활동 금지 박스 */
+        .bulk-vote-banned {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: calc(3 * (1.6em + 14px) + 2 * 5px);
+            padding: 3px 7px;
+            font-size: 0.8rem;
+            font-family: 'NeoDunggeunmo', 'VT323', monospace;
+            border: 1px solid var(--tno-alert);
+            color: var(--tno-alert);
+            background: rgba(255,0,85,0.08);
+            text-shadow: 0 0 4px var(--tno-alert);
+            box-sizing: border-box;
+        }
 
         /* ===== BILL CARD ===== */
         .bill-card {

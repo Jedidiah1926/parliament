@@ -776,13 +776,14 @@
             const dots = dotCache[chamber];
             let yea=0, nay=0, abs=0;
             dots.forEach((d,i) => {
-                if(d.partyName==='Vacant') return;
+                if(d.partyName==='Vacant' || d.partyStatus==='banned') return;
                 const v = voteState[chamber][i]||'none';
                 if(v==='yea') yea++;
                 else if(v==='nay') nay++;
                 else if(v==='abs') abs++;
             });
-            const validSeats = dots.filter(d=>d.partyName!=='Vacant').length;
+            // 활동 금지된 정당은 표결에 참여할 수 없으므로 유효 의석(과반 기준)에서 제외
+            const validSeats = dots.filter(d=>d.partyName!=='Vacant' && d.partyStatus!=='banned').length;
             const threshold = bill.threshold || 0.5;
             const required = threshold >= 1.0 ? validSeats : Math.floor(validSeats * threshold) + 1;
             const result = yea >= required ? 'pass' : 'fail';
@@ -925,6 +926,8 @@
         }
 
         function applyPartyVote(partyName, vote) {
+            // 활동 금지된 정당은 표결에 참여할 수 없음
+            if(vote !== 'none' && parties.find(p=>p.name===partyName)?.status==='banned') return;
             const chambers = getBulkChambers();
             chambers.forEach(ch => {
                 dotCache[ch].forEach((d, i) => {
@@ -998,6 +1001,12 @@
                 const party = parties.find(p => p.name === d.partyName);
                 const hasFactions = party?.factions?.length > 0;
                 const dominant = getPartyDominantVote(d.partyName);
+                const isBanned = party?.status === 'banned';
+                const voteButtonsHtml = isBanned
+                    ? `<div class="bulk-vote-banned" title="활동 금지된 정당은 표결에 참여할 수 없습니다">활동 금지</div>`
+                    : `<button class="bulk-vote-btn yea ${dominant==='yea'?'active-yea':''}" onclick="applyPartyVote('${d.partyName}','yea')">▲찬</button>
+                    <button class="bulk-vote-btn nay ${dominant==='nay'?'active-nay':''}" onclick="applyPartyVote('${d.partyName}','nay')">▼반</button>
+                    <button class="bulk-vote-btn abs ${dominant==='abs'?'active-abs':''}" onclick="applyPartyVote('${d.partyName}','abs')">—기</button>`;
 
                 // 당 행
                 const row = document.createElement('div');
@@ -1006,9 +1015,7 @@
                 row.innerHTML = `
                     <div class="bulk-party-dot" style="background:${d.color};"></div>
                     <span class="bulk-party-name" title="${d.partyName}">${d.partyName}</span>
-                    <button class="bulk-vote-btn yea ${dominant==='yea'?'active-yea':''}" onclick="applyPartyVote('${d.partyName}','yea')">▲찬</button>
-                    <button class="bulk-vote-btn nay ${dominant==='nay'?'active-nay':''}" onclick="applyPartyVote('${d.partyName}','nay')">▼반</button>
-                    <button class="bulk-vote-btn abs ${dominant==='abs'?'active-abs':''}" onclick="applyPartyVote('${d.partyName}','abs')">—기</button>
+                    ${voteButtonsHtml}
                     <button class="bulk-vote-btn clr" onclick="applyPartyVote('${d.partyName}','none')">✕</button>
                 `;
                 container.appendChild(row);
@@ -1017,15 +1024,18 @@
                 if(hasFactions) {
                     party.factions.forEach(f => {
                         const fDominant = getFactionDominantVote(d.partyName, f, refCh);
+                        const fVoteButtonsHtml = isBanned
+                            ? `<div class="bulk-vote-banned" title="활동 금지된 정당은 표결에 참여할 수 없습니다">활동 금지</div>`
+                            : `<button class="bulk-vote-btn yea ${fDominant==='yea'?'active-yea':''}" onclick="applyFactionVote('${d.partyName}','${f.id}','yea')">▲찬</button>
+                            <button class="bulk-vote-btn nay ${fDominant==='nay'?'active-nay':''}" onclick="applyFactionVote('${d.partyName}','${f.id}','nay')">▼반</button>
+                            <button class="bulk-vote-btn abs ${fDominant==='abs'?'active-abs':''}" onclick="applyFactionVote('${d.partyName}','${f.id}','abs')">—기</button>`;
                         const fRow = document.createElement('div');
                         fRow.className = 'bulk-party-row';
                         fRow.style.cssText = 'padding-left:18px;background:#080a0e;border-top:none;';
                         fRow.innerHTML = `
                             <div class="bulk-party-dot" style="background:${f.color};width:7px;height:7px;"></div>
                             <span class="bulk-party-name" style="color:#888;font-size:0.82rem;" title="${f.name}">${f.name}</span>
-                            <button class="bulk-vote-btn yea ${fDominant==='yea'?'active-yea':''}" onclick="applyFactionVote('${d.partyName}','${f.id}','yea')">▲찬</button>
-                            <button class="bulk-vote-btn nay ${fDominant==='nay'?'active-nay':''}" onclick="applyFactionVote('${d.partyName}','${f.id}','nay')">▼반</button>
-                            <button class="bulk-vote-btn abs ${fDominant==='abs'?'active-abs':''}" onclick="applyFactionVote('${d.partyName}','${f.id}','abs')">—기</button>
+                            ${fVoteButtonsHtml}
                             <button class="bulk-vote-btn clr" onclick="applyFactionVote('${d.partyName}','${f.id}','none')">✕</button>
                         `;
                         container.appendChild(fRow);
@@ -1055,6 +1065,8 @@
         }
 
         function applyFactionVote(partyName, factionId, vote) {
+            // 활동 금지된 정당은 표결에 참여할 수 없음
+            if(vote !== 'none' && parties.find(p=>p.name===partyName)?.status==='banned') return;
             const key = `__faction__${partyName}__${factionId}`;
             const chs = getBulkChambers();
             chs.forEach(ch => {
@@ -1118,6 +1130,12 @@
 
             const onVoteTab = currentMainTab === 'nation' && currentSubTab.nation === 'legislation' && legislationInnerTab === 'vote';
             if(!onVoteTab || currentVoteMode === 'info') {
+                showSeatInfoCard(chamber, hit, e.clientX, e.clientY);
+                return;
+            }
+
+            // 활동 금지된 정당의 좌석은 표결에 참여할 수 없으므로 클릭으로 표를 넣을 수 없음
+            if(dots[hit].partyStatus === 'banned') {
                 showSeatInfoCard(chamber, hit, e.clientX, e.clientY);
                 return;
             }
@@ -1268,13 +1286,14 @@
                 yea=0; nay=0; abs=0;
                 const dots = dotCache[chamber];
                 dots.forEach((d, i) => {
-                    if(d.partyName === 'Vacant') return;
+                    if(d.partyName === 'Vacant' || d.partyStatus==='banned') return;
                     const v = voteState[chamber][i] || 'none';
                     if(v==='yea') yea++;
                     else if(v==='nay') nay++;
                     else if(v==='abs') abs++;
                 });
-                validSeats = dots.filter(d=>d.partyName!=='Vacant').length;
+                // 활동 금지된 정당은 표결에 참여할 수 없으므로 유효 의석(과반 기준)에서 제외
+                validSeats = dots.filter(d=>d.partyName!=='Vacant' && d.partyStatus!=='banned').length;
             }
             const none = validSeats - yea - nay - abs;
             const t = validSeats || 1;
@@ -5795,7 +5814,8 @@
             pts.forEach((pt, i) => {
                 if(i >= map.length) return;
                 const d = map[i];
-                const vote = chamberVoteState[i] || 'none';
+                // 활동 금지된 정당은 표결에 참여할 수 없으므로 표결 색을 반영하지 않음
+                const vote = d.partyStatus === 'banned' ? 'none' : (chamberVoteState[i] || 'none');
                 const voteColor = getVoteColor(vote);
                 const radius = Math.max(0.5, dotR * 0.85);
 
@@ -5872,7 +5892,9 @@
             if(total===0){ el.innerHTML=""; return; }
             let stats = {};
             const vac = map.filter(x=>x.partyName==='Vacant').length;
-            const valid = total - vac;
+            // 활동 금지된 정당은 표결에 참여할 수 없으므로 과반 기준 유효 의석에서 제외
+            const bannedCount = map.filter(x=>x.partyStatus==='banned').length;
+            const valid = total - vac - bannedCount;
             const maj = Math.floor(valid/2)+1;
             map.forEach(m => {
                 if(m.partyName==='Vacant') return;
