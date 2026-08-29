@@ -1511,8 +1511,6 @@
             const mode = chamberCenterMode[chamber] || 'seats';
             document.getElementById('chamberCenterModeSeatsBtn' + suf)?.classList.toggle('active', mode === 'seats');
             document.getElementById('chamberCenterModeLogoBtn' + suf)?.classList.toggle('active', mode === 'logo');
-            const logoWrap = document.getElementById('chamberCenterLogoWrap' + suf);
-            if(logoWrap) logoWrap.style.display = mode === 'logo' ? 'flex' : 'none';
         }
 
         function uploadChamberLogo(input, chamber) {
@@ -1537,7 +1535,10 @@
             const box = document.getElementById('chamberLogoPreview' + suf);
             const removeBtn = document.getElementById('chamberLogoRemoveBtn' + suf);
             const src = chamberLogos[chamber];
-            if(box) box.innerHTML = src ? `<img src="${src}" alt="">` : '<div class="photo-ph">⚑</div>';
+            // 파일 input을 함께 다시 그려야 함 — 이미지/플레이스홀더만 교체하면 업로드용 input이 사라져
+            // 이후 클릭해도 파일 선택창이 뜨지 않게 되는 문제가 있었음
+            if(box) box.innerHTML = (src ? `<img src="${src}" alt="">` : '<div class="photo-ph">⚑</div>') +
+                `<input type="file" accept="image/*" onchange="uploadChamberLogo(this,'${chamber}')">`;
             if(removeBtn) removeBtn.style.display = src ? '' : 'none';
         }
 

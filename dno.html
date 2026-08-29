@@ -280,12 +280,15 @@
                             <button type="button" class="system-radio-btn active" id="chamberCenterModeSeatsBtnHouse" onclick="setChamberCenterMode('house','seats')">의석 수</button>
                             <button type="button" class="system-radio-btn" id="chamberCenterModeLogoBtnHouse" onclick="setChamberCenterMode('house','logo')">로고</button>
                         </div>
-                        <div id="chamberCenterLogoWrapHouse" style="display:none;align-items:center;gap:10px;">
-                            <div class="leader-photo-box" id="chamberLogoPreviewHouse" style="width:52px;height:52px;" title="반원 중앙에 표시할 로고">
+                        <div id="chamberCenterLogoWrapHouse" style="display:flex;align-items:center;gap:10px;">
+                            <div class="leader-photo-box" id="chamberLogoPreviewHouse" style="width:52px;height:52px;flex-shrink:0;" title="클릭하여 로고 업로드">
                                 <div class="photo-ph">⚑</div>
                                 <input type="file" accept="image/*" onchange="uploadChamberLogo(this,'house')">
                             </div>
-                            <button id="chamberLogoRemoveBtnHouse" onclick="removeChamberLogo('house')" style="display:none;background:transparent;border:1px solid #333;color:#555;font-family:inherit;font-size:0.75rem;padding:4px 10px;cursor:pointer;">✕ 로고 제거</button>
+                            <div style="min-width:0;">
+                                <div style="color:#666;font-size:0.72rem;">클릭해서 로고를 올리고, [로고]를 선택하면 반원 중앙에 표시됩니다</div>
+                                <button id="chamberLogoRemoveBtnHouse" onclick="removeChamberLogo('house')" style="display:none;background:transparent;border:1px solid #333;color:#555;font-family:inherit;font-size:0.75rem;padding:4px 10px;cursor:pointer;margin-top:4px;">✕ 로고 제거</button>
+                            </div>
                         </div>
                     </div>
 
@@ -295,7 +298,7 @@
                             <button type="button" class="system-radio-btn active" id="chamberCenterModeSeatsBtnSenate" onclick="setChamberCenterMode('senate','seats')">의석 수</button>
                             <button type="button" class="system-radio-btn" id="chamberCenterModeLogoBtnSenate" onclick="setChamberCenterMode('senate','logo')">로고</button>
                         </div>
-                        <div id="chamberCenterLogoWrapSenate" style="display:none;align-items:center;gap:10px;">
+                        <div id="chamberCenterLogoWrapSenate" style="display:flex;align-items:center;gap:10px;">
                             <div class="leader-photo-box" id="chamberLogoPreviewSenate" style="width:52px;height:52px;" title="반원 중앙에 표시할 로고">
                                 <div class="photo-ph">⚑</div>
                                 <input type="file" accept="image/*" onchange="uploadChamberLogo(this,'senate')">
@@ -310,7 +313,7 @@
                             <button type="button" class="system-radio-btn active" id="chamberCenterModeSeatsBtnThird" onclick="setChamberCenterMode('third','seats')">의석 수</button>
                             <button type="button" class="system-radio-btn" id="chamberCenterModeLogoBtnThird" onclick="setChamberCenterMode('third','logo')">로고</button>
                         </div>
-                        <div id="chamberCenterLogoWrapThird" style="display:none;align-items:center;gap:10px;">
+                        <div id="chamberCenterLogoWrapThird" style="display:flex;align-items:center;gap:10px;">
                             <div class="leader-photo-box" id="chamberLogoPreviewThird" style="width:52px;height:52px;" title="반원 중앙에 표시할 로고">
                                 <div class="photo-ph">⚑</div>
                                 <input type="file" accept="image/*" onchange="uploadChamberLogo(this,'third')">
