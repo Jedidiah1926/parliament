@@ -1460,8 +1460,9 @@
             }
         }
 
-        // ===== 의원실 중앙 로고 (의석 수 대신 표시) =====
-        let chamberLogos = { house: '', senate: '', third: '' }; // 비어있으면 기존처럼 의석 수 텍스트 표시
+        // ===== 의원실 중앙 표시 (의석 수 / 로고) — 국가>설정에서 의원실별로 선택 =====
+        let chamberLogos = { house: '', senate: '', third: '' };
+        let chamberCenterMode = { house: 'seats', senate: 'seats', third: 'seats' }; // 'seats' | 'logo'
         const chamberLogoImgCache = { house: null, senate: null, third: null }; // { src, img } — 매 프레임 새로 디코딩하지 않도록 캐시
 
         // 이미지가 준비되어 있으면 반환, 아직 로딩 중이면 null (로딩 완료 시 onReady로 재요청)
@@ -1477,9 +1478,10 @@
             return null;
         }
 
-        // 의석 수 텍스트 또는 (설정되어 있으면) 의원실 로고를 반원 중앙에 그림
+        // 국가>설정에서 고른 모드(의석 수/로고)에 따라 반원 중앙에 표시할 내용을 그림
         function drawChamberCenter(ctx, CX, CY, total, chamber, cvsId) {
-            const img = getChamberLogoImage(chamber, () => redrawChamber(cvsId, chamber));
+            const useLogo = chamberCenterMode[chamber] === 'logo' && chamberLogos[chamber];
+            const img = useLogo ? getChamberLogoImage(chamber, () => redrawChamber(cvsId, chamber)) : null;
             if(img) {
                 const size = 56;
                 ctx.save();
@@ -1497,6 +1499,22 @@
             ctx.font = "16px 'NeoDunggeunmo'";
             ctx.fillStyle = "var(--tno-neon)";
             ctx.fillText("SEATS", CX, CY + 25);
+        }
+
+        function setChamberCenterMode(chamber, mode) {
+            chamberCenterMode[chamber] = mode;
+            updateChamberCenterModeUI(chamber);
+            simulate();
+        }
+        function updateChamberCenterModeUI(chamber) {
+            const suf = chamber.charAt(0).toUpperCase() + chamber.slice(1);
+            const mode = chamberCenterMode[chamber] || 'seats';
+            document.getElementById('chamberCenterModeSeatsBtn' + suf)?.classList.toggle('active', mode === 'seats');
+            document.getElementById('chamberCenterModeLogoBtn' + suf)?.classList.toggle('active', mode === 'logo');
+            const seatsWrap = document.getElementById('chamberCenterSeatsWrap' + suf);
+            const logoWrap = document.getElementById('chamberCenterLogoWrap' + suf);
+            if(seatsWrap) seatsWrap.style.display = mode === 'seats' ? '' : 'none';
+            if(logoWrap) logoWrap.style.display = mode === 'logo' ? 'flex' : 'none';
         }
 
         function uploadChamberLogo(input, chamber) {
@@ -1660,7 +1678,8 @@
                     senateTotal:   parseInt(document.getElementById('senateTotal')?.value)  || 100,
                     houseTotal:    parseInt(document.getElementById('houseTotal')?.value)   || 300,
                     thirdTotal:    parseInt(document.getElementById('thirdTotal')?.value)   || 100,
-                    chamberLogos:  { ...chamberLogos }
+                    chamberLogos:  { ...chamberLogos },
+                    chamberCenterMode: { ...chamberCenterMode }
                 },
                 parliament: { ideologies, parties, coalitions, manualSort, independents, listMembers: JSON.parse(JSON.stringify(listMembers)) },
                 legislation: {
@@ -1777,8 +1796,9 @@
             if(gd('houseTotal'))      gd('houseTotal').value      = cfg.houseTotal  ?? 300;
             if(gd('thirdTotal'))      gd('thirdTotal').value      = cfg.thirdTotal  ?? 100;
             chamberLogos = { house:'', senate:'', third:'', ...(cfg.chamberLogos||{}) };
+            chamberCenterMode = { house:'seats', senate:'seats', third:'seats', ...(cfg.chamberCenterMode||{}) };
             chamberLogoImgCache.house = chamberLogoImgCache.senate = chamberLogoImgCache.third = null;
-            ['house','senate','third'].forEach(updateChamberLogoUI);
+            ['house','senate','third'].forEach(ch => { updateChamberLogoUI(ch); updateChamberCenterModeUI(ch); });
             if(gd('chkGovHighlight')) gd('chkGovHighlight').checked = cfg.highlightGov ?? true;
             if(gd('nationNameInput')) gd('nationNameInput').value = cfg.nationName ?? "";
             if(gd('nationDateInput')) gd('nationDateInput').value = cfg.nationDate ?? "";
@@ -2157,11 +2177,16 @@
             // 설정 탭 내부(하원/상원/삼원)에서 더 이상 존재하지 않는 의원실을 보고 있었다면 하원으로 전환
             if(!hasSenate && setupInnerTab === 'senate') switchSetupInnerTab('house');
             if(!hasThird && setupInnerTab === 'third') switchSetupInnerTab('house');
-            // 무소속 참여 탭의 내부 탭도 동기화
-            const indMemSenateBtn = document.getElementById('innerTabIndMemSenate');
-            if(indMemSenateBtn) indMemSenateBtn.style.display = hasSenate ? '' : 'none';
-            const indMemThirdBtn = document.getElementById('innerTabIndMemThird');
-            if(indMemThirdBtn) indMemThirdBtn.style.display = hasThird ? '' : 'none';
+            // 비례 탭의 내부 탭도 동기화
+            const listSenateBtn = document.getElementById('innerTabListSenate');
+            if(listSenateBtn) listSenateBtn.style.display = hasSenate ? '' : 'none';
+            const listThirdBtn = document.getElementById('innerTabListThird');
+            if(listThirdBtn) listThirdBtn.style.display = hasThird ? '' : 'none';
+            // 국가>설정의 의원실별 반원 중앙 표시(의석 수/로고) 설정 블록도 동기화
+            const centerSenateWrap = document.getElementById('chamberCenterSenateWrap');
+            if(centerSenateWrap) centerSenateWrap.style.display = hasSenate ? '' : 'none';
+            const centerThirdWrap = document.getElementById('chamberCenterThirdWrap');
+            if(centerThirdWrap) centerThirdWrap.style.display = hasThird ? '' : 'none';
             // 디스플레이 탭 숨김
             const dispSenate = document.getElementById('dispTabSenate');
             if(dispSenate) dispSenate.style.display = hasSenate ? '' : 'none';
@@ -2249,12 +2274,18 @@
             if(membersH) membersH.textContent = hName;
             if(membersS) membersS.textContent = sName;
             if(membersT) membersT.textContent = tName;
-            const indMemH = document.getElementById('innerTabIndMemHouse');
-            const indMemS = document.getElementById('innerTabIndMemSenate');
-            const indMemT = document.getElementById('innerTabIndMemThird');
-            if(indMemH) indMemH.textContent = hName;
-            if(indMemS) indMemS.textContent = sName;
-            if(indMemT) indMemT.textContent = tName;
+            const listH = document.getElementById('innerTabListHouse');
+            const listS = document.getElementById('innerTabListSenate');
+            const listT = document.getElementById('innerTabListThird');
+            if(listH) listH.textContent = hName;
+            if(listS) listS.textContent = sName;
+            if(listT) listT.textContent = tName;
+            const centerLabelH = document.getElementById('chamberCenterLabelHouse');
+            const centerLabelS = document.getElementById('chamberCenterLabelSenate');
+            const centerLabelT = document.getElementById('chamberCenterLabelThird');
+            if(centerLabelH) centerLabelH.textContent = `${hName} 반원 중앙 표시`;
+            if(centerLabelS) centerLabelS.textContent = `${sName} 반원 중앙 표시`;
+            if(centerLabelT) centerLabelT.textContent = `${tName} 반원 중앙 표시`;
             const distListH = document.getElementById('innerTabDistListHouse');
             const distListS = document.getElementById('innerTabDistListSenate');
             const distListT = document.getElementById('innerTabDistListThird');
