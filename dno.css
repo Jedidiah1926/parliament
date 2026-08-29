@@ -1021,14 +1021,14 @@
         /* 모바일에서만 날짜/회기 표시를 탭 버튼 줄 아래 별도 줄로 내리고 구분선을 그림 (데스크톱은 탭 바 우측 끝에 그대로 고정) */
         html[data-ui-mode="mobile"] .disp-tab-bar {
             flex-wrap: wrap;
-            row-gap: 4px;
+            row-gap: 0;
         }
         html[data-ui-mode="mobile"] .disp-info-bar {
             flex-basis: 100%;
             margin-left: 0;
             justify-content: flex-end;
             padding: 6px 10px 0;
-            margin-top: 4px;
+            margin-top: 0;
             border-top: 2px solid var(--tno-border);
         }
         html[data-ui-mode="mobile"] .main-tab-btn,
