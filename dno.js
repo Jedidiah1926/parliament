@@ -1479,11 +1479,12 @@
         }
 
         // 국가>설정에서 고른 모드(의석 수/로고)에 따라 반원 중앙에 표시할 내용을 그림
-        function drawChamberCenter(ctx, CX, CY, total, chamber, cvsId) {
+        // width: 반원 캔버스 전체 너비 — 중앙 빈 공간 크기에 비례해서 로고 크기를 정하기 위해 사용
+        function drawChamberCenter(ctx, CX, CY, total, chamber, cvsId, width) {
             const useLogo = chamberCenterMode[chamber] === 'logo' && chamberLogos[chamber];
             const img = useLogo ? getChamberLogoImage(chamber, () => redrawChamber(cvsId, chamber)) : null;
             if(img) {
-                const size = 56;
+                const size = Math.max(56, Math.min((width || 0) * 0.22, 260));
                 ctx.save();
                 ctx.beginPath();
                 ctx.arc(CX, CY - 8, size / 2, 0, Math.PI * 2);
@@ -1628,7 +1629,7 @@
             const total = dots.length;
             const CX = dots[0]?.cx ?? W/2;
             const CY = dots[0]?.cy ?? H - 40;
-            drawChamberCenter(ctx, CX, CY, total, chamber, cvsId);
+            drawChamberCenter(ctx, CX, CY, total, chamber, cvsId, W);
         }
 
         // ===== MAIN SIMULATE =====
@@ -6343,7 +6344,7 @@
             });
 
             // Center label
-            drawChamberCenter(ctx, CX, CY, total, chamber, cvsId);
+            drawChamberCenter(ctx, CX, CY, total, chamber, cvsId, width);
         }
 
         // 통계 컨테이너 id로부터 의원실 추정 (houseStats/senateStats/thirdStats/elecResultStatsHouse 등)
