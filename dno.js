@@ -255,7 +255,7 @@
                     if(arr.length < listCount) {
                         arr = [...arr];
                         for(let i=arr.length; i<listCount; i++) {
-                            arr.push({ id:'lm_'+ch+'_'+p.id+'_'+Date.now()+'_'+i, name:'', factionId:null, vacant:false });
+                            arr.push({ id:'lm_'+ch+'_'+p.id+'_'+Date.now()+'_'+i, name:'', factionId:null, vacant:false, photo:'' });
                         }
                     } else if(arr.length > listCount) {
                         arr = arr.slice(0, listCount);
@@ -3615,32 +3615,40 @@
                     const topLabelHtml = `<div style="color:#888;font-size:0.78rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${key}">${name}${member.vacant?' <span style="color:#cc3333;">[궐석]</span>':''}</div>`;
                     div.innerHTML = buildIndependentCardBody(ind, { seatNo, topLabelHtml, disabled: member.vacant, extraHtml: vacantHtml });
                 } else {
-                    div.style.cssText = `border-left-color:${member.vacant?'#663333':(party?.color||'#666')};margin-bottom:8px;padding:10px;${member.vacant?'opacity:0.6;':''}`;
+                    div.className = 'card-item dyn-row';
+                    div.style.cssText = `display:flex;gap:10px;align-items:stretch;border-left-color:${member.vacant?'#663333':(party?.color||'#666')};margin-bottom:8px;${member.vacant?'opacity:0.6;':''}`;
                     div.innerHTML = `
-                        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
-                            <span style="color:#555;font-size:0.75rem;flex-shrink:0;" title="좌석 번호">#${seatNo}</span>
-                            <span style="width:9px;height:9px;background:${party?.color||'#666'};border-radius:50%;flex-shrink:0;"></span>
-                            <span style="color:#ccc;font-size:0.9rem;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${key}">${name}</span>
-                            ${member.vacant?'<span style="color:#cc3333;font-size:0.75rem;">[궐석]</span>':''}
+                        <div class="leader-photo-box dyn-photo" data-ratio="0.8" style="width:52px;height:65px;flex-shrink:0;${member.vacant?'opacity:0.5;':''}">
+                            ${member.photo?`<img src="${member.photo}" alt="">`:'<div class="photo-ph">👤</div>'}
+                            <input type="file" accept="image/*" ${member.vacant?'disabled':''} onchange="uploadDistrictMemberPhoto(this,'${ch}','${key}')">
                         </div>
-                        <input type="text" value="${member.name||''}" placeholder="의원 이름" ${member.vacant?'disabled':''}
-                            style="width:100%;box-sizing:border-box;background:#000;border:1px solid #2a2a2a;color:#e0e0e0;font-family:inherit;font-size:0.9rem;padding:5px 8px;margin-bottom:6px;"
-                            onchange="updateDistrictMember('${ch}','${key}','name',this.value)">
-                        <select ${member.vacant?'disabled':''} onchange="updateDistrictMemberParty('${ch}','${key}',parseInt(this.value))"
-                            style="width:100%;background:#000;border:1px solid #333;color:var(--tno-gold);font-family:inherit;font-size:0.85rem;padding:4px;margin-bottom:6px;">
-                            ${parties.filter(p=>p[inKeyFor(ch)]).map(p=>`<option value="${p.id}" ${member.partyId===p.id?'selected':''}>${p.name}</option>`).join('')}
-                        </select>
-                        ${(party?.factions||[]).length>0?`
-                        <select ${member.vacant?'disabled':''} onchange="updateDistrictMember('${ch}','${key}','factionId',this.value||null)"
-                            style="width:100%;background:#000;border:1px solid #333;color:#aaa;font-family:inherit;font-size:0.85rem;padding:4px;margin-bottom:6px;">
-                            <option value="">파벌 미지정</option>
-                            ${party.factions.map(f=>`<option value="${f.id}" ${member.factionId===f.id?'selected':''}>${f.name}</option>`).join('')}
-                        </select>`:''}
-                        <div style="display:flex;gap:6px;">
-                            ${member.vacant
-                                ? `<button onclick="fillVacantSeat('${ch}','${key}')" style="flex:1;background:transparent;border:1px solid #00cc66;color:#00cc66;font-family:inherit;font-size:0.8rem;padding:5px;cursor:pointer;">보궐선거로 채우기</button>`
-                                : `<button onclick="vacateSeat('${ch}','${key}')" style="flex:1;background:transparent;border:1px solid #663333;color:#cc6666;font-family:inherit;font-size:0.8rem;padding:5px;cursor:pointer;">궐석 처리 (사퇴/사망)</button>`
-                            }
+                        <div class="dyn-ref" style="flex:1;display:flex;flex-direction:column;gap:6px;min-width:0;">
+                            <div style="display:flex;align-items:center;gap:8px;">
+                                <span style="color:#555;font-size:0.75rem;flex-shrink:0;" title="좌석 번호">#${seatNo}</span>
+                                <span style="width:9px;height:9px;background:${party?.color||'#666'};border-radius:50%;flex-shrink:0;"></span>
+                                <span style="color:#ccc;font-size:0.9rem;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${key}">${name}</span>
+                                ${member.vacant?'<span style="color:#cc3333;font-size:0.75rem;">[궐석]</span>':''}
+                            </div>
+                            <input type="text" value="${member.name||''}" placeholder="의원 이름" ${member.vacant?'disabled':''}
+                                style="width:100%;box-sizing:border-box;background:#000;border:1px solid #2a2a2a;color:#e0e0e0;font-family:inherit;font-size:0.9rem;padding:5px 8px;"
+                                onchange="updateDistrictMember('${ch}','${key}','name',this.value)">
+                            <select ${member.vacant?'disabled':''} onchange="updateDistrictMemberParty('${ch}','${key}',parseInt(this.value))"
+                                style="width:100%;background:#000;border:1px solid #333;color:var(--tno-gold);font-family:inherit;font-size:0.85rem;padding:4px;">
+                                ${parties.filter(p=>p[inKeyFor(ch)]).map(p=>`<option value="${p.id}" ${member.partyId===p.id?'selected':''}>${p.name}</option>`).join('')}
+                            </select>
+                            ${(party?.factions||[]).length>0?`
+                            <select ${member.vacant?'disabled':''} onchange="updateDistrictMember('${ch}','${key}','factionId',this.value||null)"
+                                style="width:100%;background:#000;border:1px solid #333;color:#aaa;font-family:inherit;font-size:0.85rem;padding:4px;">
+                                <option value="">파벌 미지정</option>
+                                ${party.factions.map(f=>`<option value="${f.id}" ${member.factionId===f.id?'selected':''}>${f.name}</option>`).join('')}
+                            </select>`:''}
+                            ${(member.photo && !member.vacant)?`<button onclick="removeDistrictMemberPhoto('${ch}','${key}')" style="background:transparent;border:1px solid #333;color:#555;font-family:inherit;font-size:0.75rem;padding:2px 8px;cursor:pointer;text-align:left;">✕ 사진 제거</button>`:''}
+                            <div style="display:flex;gap:6px;">
+                                ${member.vacant
+                                    ? `<button onclick="fillVacantSeat('${ch}','${key}')" style="flex:1;background:transparent;border:1px solid #00cc66;color:#00cc66;font-family:inherit;font-size:0.8rem;padding:5px;cursor:pointer;">보궐선거로 채우기</button>`
+                                    : `<button onclick="vacateSeat('${ch}','${key}')" style="flex:1;background:transparent;border:1px solid #663333;color:#cc6666;font-family:inherit;font-size:0.8rem;padding:5px;cursor:pointer;">궐석 처리 (사퇴/사망)</button>`
+                                }
+                            </div>
                         </div>
                     `;
                 }
@@ -3669,6 +3677,20 @@
             m.partyId = newPartyId;
             m.factionId = null; // 이적 시 파벌 소속은 초기화
             simulate(); refreshUI();
+        }
+
+        function uploadDistrictMemberPhoto(input, ch, key) {
+            const file = input.files?.[0]; if(!file) return;
+            const reader = new FileReader();
+            reader.onload = e => {
+                const m = districtMembers[ch]?.[key];
+                if(m) { m.photo = e.target.result; renderMembersList(); }
+            };
+            reader.readAsDataURL(file);
+        }
+        function removeDistrictMemberPhoto(ch, key) {
+            const m = districtMembers[ch]?.[key];
+            if(m) { m.photo = ''; renderMembersList(); }
         }
 
         // 궐석 처리: 의원이 사퇴/사망 등으로 빠짐 — 소속 정당 의석에서 -1 (보궐선거 전까지 공석)
@@ -3714,6 +3736,7 @@
             const idx = arr?.findIndex(x=>String(x.id)===String(memberId));
             if(idx === undefined || idx === -1) return;
             const movedName = arr[idx].name;
+            const movedPhoto = arr[idx].photo;
             const oldParty = parties.find(p=>String(p.id)===String(oldPartyId));
             const newParty = parties.find(p=>String(p.id)===String(newPartyId));
             if(!newParty || String(newParty.id)===String(oldPartyId)) return;
@@ -3723,17 +3746,33 @@
             newParty[seatKey] = (newParty[seatKey]||0) + 1;
             simulate();
             refreshUI();
-            if(movedName) {
+            if(movedName || movedPhoto) {
                 if(newParty.ideologyId === IND_IDEOLOGY_ID) {
-                    const freeInd = independents.find(x=>x.chamber===ch && !x.districtKey && !x.name);
-                    if(freeInd) freeInd.name = movedName;
+                    const freeInd = independents.find(x=>x.chamber===ch && !x.districtKey && !x.name && !x.photo);
+                    if(freeInd) { if(movedName) freeInd.name = movedName; if(movedPhoto) freeInd.photo = movedPhoto; }
                 } else {
                     const newArr = listMembers[ch]?.[newParty.id] || [];
-                    const target = [...newArr].reverse().find(x => !x.name);
-                    if(target) target.name = movedName;
+                    const target = [...newArr].reverse().find(x => !x.name && !x.photo);
+                    if(target) { if(movedName) target.name = movedName; if(movedPhoto) target.photo = movedPhoto; }
                 }
                 renderListMemberList();
             }
+        }
+
+        function uploadListMemberPhoto(input, ch, partyId, memberId) {
+            const file = input.files?.[0]; if(!file) return;
+            const reader = new FileReader();
+            reader.onload = e => {
+                const arr = listMembers[ch]?.[partyId];
+                const m = arr?.find(x=>String(x.id)===String(memberId));
+                if(m) { m.photo = e.target.result; renderListMemberList(); }
+            };
+            reader.readAsDataURL(file);
+        }
+        function removeListMemberPhoto(ch, partyId, memberId) {
+            const arr = listMembers[ch]?.[partyId];
+            const m = arr?.find(x=>String(x.id)===String(memberId));
+            if(m) { m.photo = ''; renderListMemberList(); }
         }
 
         function renderListMemberList() {
@@ -3797,27 +3836,34 @@
                     startIndependentDragReorder(div.querySelector('.drag-handle'), 'listMemberList', '.drag-card-indmember', ch, renderListMemberList);
                 } else {
                     const m = e.member;
-                    div.className = 'card-item';
-                    div.style.cssText = `border-left-color:${party?.color||'#666'};margin-bottom:8px;padding:10px;`;
+                    div.className = 'card-item dyn-row';
+                    div.style.cssText = `display:flex;gap:10px;align-items:stretch;border-left-color:${party?.color||'#666'};margin-bottom:8px;`;
                     div.innerHTML = `
-                        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
-                            <span style="color:#555;font-size:0.75rem;flex-shrink:0;" title="좌석 번호">#${e.seatNo}</span>
-                            <span style="width:9px;height:9px;background:${party?.color||'#666'};border-radius:50%;flex-shrink:0;"></span>
-                            <span style="color:#888;font-size:0.8rem;">비례</span>
+                        <div class="leader-photo-box dyn-photo" data-ratio="0.8" style="width:52px;height:65px;flex-shrink:0;">
+                            ${m.photo?`<img src="${m.photo}" alt="">`:'<div class="photo-ph">👤</div>'}
+                            <input type="file" accept="image/*" onchange="uploadListMemberPhoto(this,'${ch}','${e.partyId}','${m.id}')">
                         </div>
-                        <input type="text" value="${m.name||''}" placeholder="의원 이름"
-                            style="width:100%;box-sizing:border-box;background:#000;border:1px solid #2a2a2a;color:#e0e0e0;font-family:inherit;font-size:0.9rem;padding:5px 8px;margin-bottom:6px;"
-                            onchange="updateListMember('${ch}','${e.partyId}','${m.id}','name',this.value)">
-                        <select onchange="updateListMemberParty('${ch}','${e.partyId}','${m.id}',parseInt(this.value))"
-                            style="width:100%;background:#000;border:1px solid #333;color:var(--tno-gold);font-family:inherit;font-size:0.85rem;padding:4px;margin-bottom:6px;">
-                            ${parties.filter(p=>p[inKeyFor(ch)]).map(p=>`<option value="${p.id}" ${String(e.partyId)===String(p.id)?'selected':''}>${p.name}</option>`).join('')}
-                        </select>
-                        ${(party?.factions||[]).length>0?`
-                        <select onchange="updateListMember('${ch}','${e.partyId}','${m.id}','factionId',this.value||null)"
-                            style="width:100%;background:#000;border:1px solid #333;color:#aaa;font-family:inherit;font-size:0.85rem;padding:4px;">
-                            <option value="">파벌 미지정</option>
-                            ${party.factions.map(f=>`<option value="${f.id}" ${m.factionId===f.id?'selected':''}>${f.name}</option>`).join('')}
-                        </select>`:''}
+                        <div class="dyn-ref" style="flex:1;display:flex;flex-direction:column;gap:6px;min-width:0;">
+                            <div style="display:flex;align-items:center;gap:8px;">
+                                <span style="color:#555;font-size:0.75rem;flex-shrink:0;" title="좌석 번호">#${e.seatNo}</span>
+                                <span style="width:9px;height:9px;background:${party?.color||'#666'};border-radius:50%;flex-shrink:0;"></span>
+                                <span style="color:#888;font-size:0.8rem;">비례</span>
+                            </div>
+                            <input type="text" value="${m.name||''}" placeholder="의원 이름"
+                                style="width:100%;box-sizing:border-box;background:#000;border:1px solid #2a2a2a;color:#e0e0e0;font-family:inherit;font-size:0.9rem;padding:5px 8px;"
+                                onchange="updateListMember('${ch}','${e.partyId}','${m.id}','name',this.value)">
+                            <select onchange="updateListMemberParty('${ch}','${e.partyId}','${m.id}',parseInt(this.value))"
+                                style="width:100%;background:#000;border:1px solid #333;color:var(--tno-gold);font-family:inherit;font-size:0.85rem;padding:4px;">
+                                ${parties.filter(p=>p[inKeyFor(ch)]).map(p=>`<option value="${p.id}" ${String(e.partyId)===String(p.id)?'selected':''}>${p.name}</option>`).join('')}
+                            </select>
+                            ${(party?.factions||[]).length>0?`
+                            <select onchange="updateListMember('${ch}','${e.partyId}','${m.id}','factionId',this.value||null)"
+                                style="width:100%;background:#000;border:1px solid #333;color:#aaa;font-family:inherit;font-size:0.85rem;padding:4px;">
+                                <option value="">파벌 미지정</option>
+                                ${party.factions.map(f=>`<option value="${f.id}" ${m.factionId===f.id?'selected':''}>${f.name}</option>`).join('')}
+                            </select>`:''}
+                            ${m.photo?`<button onclick="removeListMemberPhoto('${ch}','${e.partyId}','${m.id}')" style="background:transparent;border:1px solid #333;color:#555;font-family:inherit;font-size:0.75rem;padding:2px 8px;cursor:pointer;text-align:left;">✕ 사진 제거</button>`:''}
+                        </div>
                     `;
                     container.appendChild(div);
                 }
