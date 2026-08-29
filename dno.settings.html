@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="main.css">
 
     <script src="lang.js"></script>
+    <script src="uimode.js"></script>
 </head>
 <body>
 
@@ -37,6 +38,14 @@
                 </div>
             </div>
 
+            <div>
+                <div class="settings-label">UI MODE / 화면 모드</div>
+                <div class="lang-select-group">
+                    <button class="lang-select-btn" id="uiModeBtnDesktop" onclick="selectUiMode('desktop')">데스크톱<br>(가로형)</button>
+                    <button class="lang-select-btn" id="uiModeBtnMobile" onclick="selectUiMode('mobile')">모바일<br>(세로형)</button>
+                </div>
+            </div>
+
             <a href="main.html" class="menu-btn" style="text-align:center;">&lt;&lt; BACK</a>
 
             <div class="footer">
@@ -56,6 +65,17 @@
             document.getElementById('langBtnEn').classList.toggle('active', cur === 'en');
         }
         renderLangButtons();
+
+        function selectUiMode(mode) {
+            setUiMode(mode);
+            renderUiModeButtons();
+        }
+        function renderUiModeButtons() {
+            const cur = getUiMode();
+            document.getElementById('uiModeBtnDesktop').classList.toggle('active', cur === 'desktop');
+            document.getElementById('uiModeBtnMobile').classList.toggle('active', cur === 'mobile');
+        }
+        renderUiModeButtons();
     </script>
 
 </body>
