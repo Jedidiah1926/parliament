@@ -1460,6 +1460,71 @@
             }
         }
 
+        // ===== 의원실 중앙 로고 (의석 수 대신 표시) =====
+        let chamberLogos = { house: '', senate: '', third: '' }; // 비어있으면 기존처럼 의석 수 텍스트 표시
+        const chamberLogoImgCache = { house: null, senate: null, third: null }; // { src, img } — 매 프레임 새로 디코딩하지 않도록 캐시
+
+        // 이미지가 준비되어 있으면 반환, 아직 로딩 중이면 null (로딩 완료 시 onReady로 재요청)
+        function getChamberLogoImage(chamber, onReady) {
+            const src = chamberLogos[chamber];
+            if(!src) return null;
+            const cache = chamberLogoImgCache[chamber];
+            if(cache && cache.src === src) return (cache.img.complete && cache.img.naturalWidth > 0) ? cache.img : null;
+            const img = new Image();
+            img.onload = () => { onReady && onReady(); };
+            img.src = src;
+            chamberLogoImgCache[chamber] = { src, img };
+            return null;
+        }
+
+        // 의석 수 텍스트 또는 (설정되어 있으면) 의원실 로고를 반원 중앙에 그림
+        function drawChamberCenter(ctx, CX, CY, total, chamber, cvsId) {
+            const img = getChamberLogoImage(chamber, () => redrawChamber(cvsId, chamber));
+            if(img) {
+                const size = 56;
+                ctx.save();
+                ctx.beginPath();
+                ctx.arc(CX, CY - 8, size / 2, 0, Math.PI * 2);
+                ctx.clip();
+                ctx.drawImage(img, CX - size / 2, CY - 8 - size / 2, size, size);
+                ctx.restore();
+                return;
+            }
+            ctx.fillStyle = "#fff";
+            ctx.font = "30px 'NeoDunggeunmo'";
+            ctx.textAlign = "center";
+            ctx.fillText(total, CX, CY);
+            ctx.font = "16px 'NeoDunggeunmo'";
+            ctx.fillStyle = "var(--tno-neon)";
+            ctx.fillText("SEATS", CX, CY + 25);
+        }
+
+        function uploadChamberLogo(input, chamber) {
+            const file = input.files?.[0]; if(!file) return;
+            const reader = new FileReader();
+            reader.onload = e => {
+                chamberLogos[chamber] = e.target.result;
+                chamberLogoImgCache[chamber] = null;
+                updateChamberLogoUI(chamber);
+                simulate();
+            };
+            reader.readAsDataURL(file);
+        }
+        function removeChamberLogo(chamber) {
+            chamberLogos[chamber] = '';
+            chamberLogoImgCache[chamber] = null;
+            updateChamberLogoUI(chamber);
+            simulate();
+        }
+        function updateChamberLogoUI(chamber) {
+            const suf = chamber.charAt(0).toUpperCase() + chamber.slice(1);
+            const box = document.getElementById('chamberLogoPreview' + suf);
+            const removeBtn = document.getElementById('chamberLogoRemoveBtn' + suf);
+            const src = chamberLogos[chamber];
+            if(box) box.innerHTML = src ? `<img src="${src}" alt="">` : '<div class="photo-ph">⚑</div>';
+            if(removeBtn) removeBtn.style.display = src ? '' : 'none';
+        }
+
         // ===== REDRAW (vote state aware) =====
         function redrawAll() {
             const isBi = hasSenateChamber();
@@ -1546,13 +1611,7 @@
             const total = dots.length;
             const CX = dots[0]?.cx ?? W/2;
             const CY = dots[0]?.cy ?? H - 40;
-            ctx.fillStyle = "#fff";
-            ctx.font = `30px 'NeoDunggeunmo'`;
-            ctx.textAlign = "center";
-            ctx.fillText(total, CX, CY);
-            ctx.font = `16px 'NeoDunggeunmo'`;
-            ctx.fillStyle = "var(--tno-neon)";
-            ctx.fillText("SEATS", CX, CY + 25);
+            drawChamberCenter(ctx, CX, CY, total, chamber, cvsId);
         }
 
         // ===== MAIN SIMULATE =====
@@ -1600,7 +1659,8 @@
                     thirdName:     document.getElementById('thirdNameInput')?.value    ?? "삼원",
                     senateTotal:   parseInt(document.getElementById('senateTotal')?.value)  || 100,
                     houseTotal:    parseInt(document.getElementById('houseTotal')?.value)   || 300,
-                    thirdTotal:    parseInt(document.getElementById('thirdTotal')?.value)   || 100
+                    thirdTotal:    parseInt(document.getElementById('thirdTotal')?.value)   || 100,
+                    chamberLogos:  { ...chamberLogos }
                 },
                 parliament: { ideologies, parties, coalitions, manualSort, independents, listMembers: JSON.parse(JSON.stringify(listMembers)) },
                 legislation: {
@@ -1716,6 +1776,9 @@
             if(gd('senateTotal'))     gd('senateTotal').value     = cfg.senateTotal ?? 100;
             if(gd('houseTotal'))      gd('houseTotal').value      = cfg.houseTotal  ?? 300;
             if(gd('thirdTotal'))      gd('thirdTotal').value      = cfg.thirdTotal  ?? 100;
+            chamberLogos = { house:'', senate:'', third:'', ...(cfg.chamberLogos||{}) };
+            chamberLogoImgCache.house = chamberLogoImgCache.senate = chamberLogoImgCache.third = null;
+            ['house','senate','third'].forEach(updateChamberLogoUI);
             if(gd('chkGovHighlight')) gd('chkGovHighlight').checked = cfg.highlightGov ?? true;
             if(gd('nationNameInput')) gd('nationNameInput').value = cfg.nationName ?? "";
             if(gd('nationDateInput')) gd('nationDateInput').value = cfg.nationDate ?? "";
@@ -6250,13 +6313,7 @@
             });
 
             // Center label
-            ctx.fillStyle = "#fff";
-            ctx.font = "30px 'NeoDunggeunmo'";
-            ctx.textAlign = "center";
-            ctx.fillText(total, CX, CY);
-            ctx.font = "16px 'NeoDunggeunmo'";
-            ctx.fillStyle = "var(--tno-neon)";
-            ctx.fillText("SEATS", CX, CY + 25);
+            drawChamberCenter(ctx, CX, CY, total, chamber, cvsId);
         }
 
         // 통계 컨테이너 id로부터 의원실 추정 (houseStats/senateStats/thirdStats/elecResultStatsHouse 등)

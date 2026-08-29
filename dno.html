@@ -110,6 +110,17 @@
                                 <input type="number" id="houseTotal" value="300" oninput="elecUpdateDistrictInfo()">
                             </div>
                         </div>
+                        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;padding:10px;background:#0a0c10;border:1px solid #2a2a2a;">
+                            <div class="leader-photo-box" id="chamberLogoPreviewHouse" style="width:52px;height:52px;" title="반원 중앙에 표시할 로고 (선택)">
+                                <div class="photo-ph">⚑</div>
+                                <input type="file" accept="image/*" onchange="uploadChamberLogo(this,'house')">
+                            </div>
+                            <div style="flex:1;min-width:0;">
+                                <div style="color:var(--tno-neon);font-size:0.85rem;margin-bottom:2px;">중앙 로고 (선택)</div>
+                                <div style="color:#666;font-size:0.75rem;">설정하면 반원 중앙에 의석 수 대신 표시됩니다</div>
+                                <button id="chamberLogoRemoveBtnHouse" onclick="removeChamberLogo('house')" style="display:none;background:transparent;border:1px solid #333;color:#555;font-family:inherit;font-size:0.75rem;padding:2px 8px;cursor:pointer;margin-top:4px;">✕ 로고 제거</button>
+                            </div>
+                        </div>
                         <div id="partyListHouse"></div>
                         <button class="add-btn" onclick="addParty('house')">[+] 정당 추가</button>
                     </div>
@@ -125,6 +136,17 @@
                                 <input type="number" id="senateTotal" value="100" oninput="elecUpdateDistrictInfo()">
                             </div>
                         </div>
+                        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;padding:10px;background:#0a0c10;border:1px solid #2a2a2a;">
+                            <div class="leader-photo-box" id="chamberLogoPreviewSenate" style="width:52px;height:52px;" title="반원 중앙에 표시할 로고 (선택)">
+                                <div class="photo-ph">⚑</div>
+                                <input type="file" accept="image/*" onchange="uploadChamberLogo(this,'senate')">
+                            </div>
+                            <div style="flex:1;min-width:0;">
+                                <div style="color:var(--tno-neon);font-size:0.85rem;margin-bottom:2px;">중앙 로고 (선택)</div>
+                                <div style="color:#666;font-size:0.75rem;">설정하면 반원 중앙에 의석 수 대신 표시됩니다</div>
+                                <button id="chamberLogoRemoveBtnSenate" onclick="removeChamberLogo('senate')" style="display:none;background:transparent;border:1px solid #333;color:#555;font-family:inherit;font-size:0.75rem;padding:2px 8px;cursor:pointer;margin-top:4px;">✕ 로고 제거</button>
+                            </div>
+                        </div>
                         <div id="partyListSenate"></div>
                         <button class="add-btn" onclick="addParty('senate')">[+] 정당 추가</button>
                     </div>
@@ -138,6 +160,17 @@
                             <div>
                                 <label style="color:var(--tno-neon);font-size:0.85rem;">총 의석 수</label>
                                 <input type="number" id="thirdTotal" value="100" oninput="elecUpdateDistrictInfo()">
+                            </div>
+                        </div>
+                        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;padding:10px;background:#0a0c10;border:1px solid #2a2a2a;">
+                            <div class="leader-photo-box" id="chamberLogoPreviewThird" style="width:52px;height:52px;" title="반원 중앙에 표시할 로고 (선택)">
+                                <div class="photo-ph">⚑</div>
+                                <input type="file" accept="image/*" onchange="uploadChamberLogo(this,'third')">
+                            </div>
+                            <div style="flex:1;min-width:0;">
+                                <div style="color:var(--tno-neon);font-size:0.85rem;margin-bottom:2px;">중앙 로고 (선택)</div>
+                                <div style="color:#666;font-size:0.75rem;">설정하면 반원 중앙에 의석 수 대신 표시됩니다</div>
+                                <button id="chamberLogoRemoveBtnThird" onclick="removeChamberLogo('third')" style="display:none;background:transparent;border:1px solid #333;color:#555;font-family:inherit;font-size:0.75rem;padding:2px 8px;cursor:pointer;margin-top:4px;">✕ 로고 제거</button>
                             </div>
                         </div>
                         <div id="partyListThird"></div>
