@@ -136,6 +136,7 @@
             gap: 4px;
             flex-shrink: 0;
             margin-bottom: 0;
+            border-bottom: 2px solid var(--tno-border);
         }
         /* 국가 날짜/회기 표시 — 디스플레이 탭 바 우측 끝에 고정 */
         .disp-info-bar {
@@ -167,6 +168,8 @@
             border-color: var(--tno-neon);
             background: rgba(0,255,255,0.05);
             text-shadow: 0 0 5px var(--tno-neon);
+            /* 탭 바 아래쪽 구분선을 활성 탭 위치에서만 가려서, 아래 패널과 이어져 보이게 함 */
+            margin-bottom: -2px;
         }
         .disp-tab-close {
             display: inline-block;
@@ -989,4 +992,40 @@
         html[data-ui-mode="mobile"] .sub-tab-btn-3 {
             font-size: 0.85rem;
         }
+
+        /* 모바일 전용 좌/우 패널 전환 버튼 — 데스크톱에서는 항상 숨김 */
+        .mobile-panel-switch { display: none; }
+        html[data-ui-mode="mobile"] .mobile-panel-switch {
+            display: flex;
+            gap: 6px;
+            position: sticky;
+            top: 0;
+            z-index: 20;
+            background: #000;
+            padding: 8px 10px;
+            margin: -10px -10px 10px;
+            border-bottom: 2px solid var(--tno-border);
+        }
+        .mobile-panel-btn {
+            flex: 1;
+            background: transparent;
+            border: 1px solid var(--tno-border);
+            color: #888;
+            font-family: inherit;
+            font-size: 0.85rem;
+            padding: 8px 4px;
+            cursor: pointer;
+            transition: 0.15s;
+        }
+        .mobile-panel-btn:hover { border-color: #3a4a54; color: #aaa; }
+        .mobile-panel-btn.active {
+            border-color: var(--tno-neon);
+            color: var(--tno-neon);
+            background: rgba(0,255,255,0.07);
+            box-shadow: 0 0 6px var(--tno-neon-dim);
+            text-shadow: 0 0 4px var(--tno-neon);
+        }
+        /* 선택된 패널만 보이도록 — 한쪽을 완전히 display:none 처리해 스크롤 길이도 줄인다 */
+        html[data-ui-mode="mobile"][data-mobile-panel="controls"] .display-area { display: none; }
+        html[data-ui-mode="mobile"][data-mobile-panel="display"] .controls { display: none; }
                     

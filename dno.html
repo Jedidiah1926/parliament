@@ -14,7 +14,11 @@
 </head>
 <body>
 
-
+    <!-- 모바일 UI 모드 전용 — 좌측(컨트롤)/우측(디스플레이) 패널 전환 버튼. 데스크톱 모드에서는 CSS로 숨김 -->
+    <div class="mobile-panel-switch" id="mobilePanelSwitch">
+        <button class="mobile-panel-btn active" id="mobilePanelBtnControls" onclick="setMobilePanel('controls')">◀ 컨트롤</button>
+        <button class="mobile-panel-btn" id="mobilePanelBtnDisplay" onclick="setMobilePanel('display')">의석 현황 ▶</button>
+    </div>
 
     <!-- Tooltip -->
     <div class="tooltip-box" id="tooltipBox" style="display:none;"></div>

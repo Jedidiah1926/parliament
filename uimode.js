@@ -24,4 +24,18 @@
     window.setUiMode = setUiMode;
 
     document.documentElement.setAttribute('data-ui-mode', getUiMode());
+
+    // ===== 모바일 모드 전용 — 좌측(컨트롤)/우측(디스플레이) 패널 전환 =====
+    // 세션 동안만 유지되는 UI 상태이며(새로고침 시 컨트롤 패널로 초기화), 페이지 로드 시점에
+    // 유효한 값이 있어야 CSS 규칙이 즉시 적용되므로 기본값을 미리 지정해 둔다.
+    function setMobilePanel(panel) {
+        if (panel !== 'controls' && panel !== 'display') return;
+        document.documentElement.setAttribute('data-mobile-panel', panel);
+        const btnControls = document.getElementById('mobilePanelBtnControls');
+        const btnDisplay = document.getElementById('mobilePanelBtnDisplay');
+        if (btnControls) btnControls.classList.toggle('active', panel === 'controls');
+        if (btnDisplay) btnDisplay.classList.toggle('active', panel === 'display');
+    }
+    window.setMobilePanel = setMobilePanel;
+    document.documentElement.setAttribute('data-mobile-panel', 'controls');
 })();
