@@ -2640,7 +2640,8 @@
             const spanQ=(maxQ-minQ+1)+2, spanR=(maxR-minR+1)+2;
             const sizeByW = w/(spanQ*1.5+0.5);
             const sizeByH = h/(spanR*Math.sqrt(3)+Math.sqrt(3)/2+1);
-            const size = Math.min(sizeByW, sizeByH, 30);
+            // 지역구 맵 편집 화면(HEX_SIZE*3 캡)과 동일한 크기 상한을 사용해 미리보기가 지나치게 작아지지 않게 함
+            const size = Math.min(sizeByW, sizeByH, HEX_SIZE * 3);
             const cq=(minQ+maxQ)/2, cr=(minR+maxR)/2;
             const offX = w/2 - size*(3/2*cq);
             const offY = h/2 - size*(Math.sqrt(3)/2*cq + Math.sqrt(3)*cr);
@@ -3389,10 +3390,26 @@
             renderMembersList();
         }
 
-        // 특정 의원실의 지역구 당선자 목록을 (오프셋 반영) 전역 의석 번호와 함께 반환
+        // 특정 의원실의 지역구 당선자 목록을 좌석 번호(표시 순서 기준 1부터)와 함께 반환
         function getDistrictMemberEntries(ch) {
             const keys = districtSortedKeys(ch).filter(k => districtMembers[ch][k]);
-            return keys.map(key => ({ key, member: districtMembers[ch][key], name: districtNames[ch][key] || key }));
+            return keys.map((key, i) => ({ key, member: districtMembers[ch][key], name: districtNames[ch][key] || key, seatNo: i+1 }));
+        }
+
+        // 의원 검색/필터 상태
+        let membersSearchQuery = '';
+        let membersFilterPartyId = '';
+        let membersFilterIdeologyId = '';
+        function onMembersSearchInput(v) { membersSearchQuery = v; renderMembersList(); }
+        function onMembersFilterChange() {
+            membersFilterPartyId = document.getElementById('membersFilterParty')?.value || '';
+            membersFilterIdeologyId = document.getElementById('membersFilterIdeology')?.value || '';
+            renderMembersList();
+        }
+        // 의원 카드의 유효 이념(파벌 지정 시 파벌 이념 우선) id 반환
+        function memberEffectiveIdeologyId(member, party) {
+            const faction = party?.factions?.find(f=>f.id===member.factionId);
+            return faction?.ideologyId ?? party?.ideologyId ?? null;
         }
 
         function renderMembersList() {
@@ -3413,18 +3430,56 @@
             const ch = membersInnerTab;
             const entries = getDistrictMemberEntries(ch);
 
+            // 정당/이념 필터 드롭다운 옵션 갱신 (현재 의원실에 참여 중인 정당 기준)
+            const chamberParties = parties.filter(p=>p[inKeyFor(ch)]);
+            const partySelect = document.getElementById('membersFilterParty');
+            if(partySelect) {
+                partySelect.innerHTML = `<option value="">정당 전체</option>` +
+                    chamberParties.map(p=>`<option value="${p.id}" ${String(membersFilterPartyId)===String(p.id)?'selected':''}>${p.name}</option>`).join('');
+            }
+            const usedIdeologyIds = [...new Set(chamberParties.flatMap(p => [p.ideologyId, ...(p.factions||[]).map(f=>f.ideologyId)]).filter(Boolean))];
+            const ideologySelect = document.getElementById('membersFilterIdeology');
+            if(ideologySelect) {
+                ideologySelect.innerHTML = `<option value="">이념 전체</option>` +
+                    ideologies.filter(i=>usedIdeologyIds.includes(i.id)).map(i=>`<option value="${i.id}" ${String(membersFilterIdeologyId)===String(i.id)?'selected':''}>${i.name}</option>`).join('');
+            }
+
             if(entries.length === 0) {
                 container.innerHTML = '<div style="text-align:center;color:#555;padding:20px;">[지역구 당선 의원이 없습니다 — 지역구+비례 방식으로 선거를 진행하고 의회에 반영하면 여기 표시됩니다]</div>';
                 return;
             }
 
-            entries.forEach(({key, member, name}) => {
+            // 검색: 접두어 없이 쓰면 이름(의원 이름/지역구 이름), '#'을 붙이면 좌석 번호로 검색
+            const query = (membersSearchQuery||'').trim();
+            let filtered = entries;
+            if(query.startsWith('#')) {
+                const numQ = query.slice(1).trim();
+                if(numQ) filtered = filtered.filter(e => String(e.seatNo).includes(numQ));
+            } else if(query) {
+                const q = query.toLowerCase();
+                filtered = filtered.filter(e => (e.name||'').toLowerCase().includes(q) || (e.member.name||'').toLowerCase().includes(q));
+            }
+            if(membersFilterPartyId) filtered = filtered.filter(e => String(e.member.partyId) === String(membersFilterPartyId));
+            if(membersFilterIdeologyId) {
+                filtered = filtered.filter(e => {
+                    const party = parties.find(p=>p.id===e.member.partyId);
+                    return String(memberEffectiveIdeologyId(e.member, party)) === String(membersFilterIdeologyId);
+                });
+            }
+
+            if(filtered.length === 0) {
+                container.innerHTML = '<div style="text-align:center;color:#555;padding:20px;">[검색/필터 조건에 맞는 의원이 없습니다]</div>';
+                return;
+            }
+
+            filtered.forEach(({key, member, name, seatNo}) => {
                 const party = parties.find(p=>p.id===member.partyId);
                 const div = document.createElement('div');
                 div.className = 'card-item';
                 div.style.cssText = `border-left-color:${member.vacant?'#663333':(party?.color||'#666')};margin-bottom:8px;padding:10px;${member.vacant?'opacity:0.6;':''}`;
                 div.innerHTML = `
                     <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+                        <span style="color:#555;font-size:0.75rem;flex-shrink:0;" title="좌석 번호">#${seatNo}</span>
                         <span style="width:9px;height:9px;background:${party?.color||'#666'};border-radius:50%;flex-shrink:0;"></span>
                         <span style="color:#ccc;font-size:0.9rem;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${key}">${name}</span>
                         ${member.vacant?'<span style="color:#cc3333;font-size:0.75rem;">[궐석]</span>':''}

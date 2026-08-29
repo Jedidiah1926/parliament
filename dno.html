@@ -159,6 +159,18 @@
                         <button class="sub-tab-btn-3" onclick="switchMembersInnerTab('senate')" id="innerTabMembersSenate">상원</button>
                         <button class="sub-tab-btn-3" onclick="switchMembersInnerTab('third')" id="innerTabMembersThird">삼원</button>
                     </div>
+                    <div style="display:flex;flex-wrap:wrap;gap:6px;margin:8px 0;">
+                        <input type="text" id="membersSearchInput" placeholder="검색 (이름 / #좌석번호)" oninput="onMembersSearchInput(this.value)"
+                            style="flex:1;min-width:120px;background:#000;border:1px solid #2a2a2a;color:#e0e0e0;font-family:inherit;font-size:0.85rem;padding:5px 8px;">
+                        <select id="membersFilterParty" onchange="onMembersFilterChange()"
+                            style="background:#000;border:1px solid #333;color:var(--tno-gold);font-family:inherit;font-size:0.82rem;padding:4px;">
+                            <option value="">정당 전체</option>
+                        </select>
+                        <select id="membersFilterIdeology" onchange="onMembersFilterChange()"
+                            style="background:#000;border:1px solid #333;color:#aaa;font-family:inherit;font-size:0.82rem;padding:4px;">
+                            <option value="">이념 전체</option>
+                        </select>
+                    </div>
                     <div id="membersList"></div>
                 </div>
 
