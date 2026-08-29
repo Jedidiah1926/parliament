@@ -1484,7 +1484,7 @@
             const useLogo = chamberCenterMode[chamber] === 'logo' && chamberLogos[chamber];
             const img = useLogo ? getChamberLogoImage(chamber, () => redrawChamber(cvsId, chamber)) : null;
             if(img) {
-                const size = Math.max(56, Math.min((width || 0) * 0.22, 260));
+                const size = Math.max(34, Math.min((width || 0) * 0.132, 156));
                 ctx.save();
                 ctx.beginPath();
                 ctx.arc(CX, CY - 8, size / 2, 0, Math.PI * 2);
