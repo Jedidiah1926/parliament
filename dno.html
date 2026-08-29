@@ -100,27 +100,45 @@
                     </div>
 
                     <div id="contentHouse" class="sub-tab-content active">
-                        <div style="margin-bottom:12px;padding:10px;background:#0a0c10;border:1px solid #2a2a2a;">
-                            <label id="houseNameLabel" style="color:var(--tno-neon);font-size:0.85rem;">의회 명칭</label>
-                            <input type="text" id="houseNameInput" value="국회" oninput="updateNames()" style="width:100%;box-sizing:border-box;">
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;padding:10px;background:#0a0c10;border:1px solid #2a2a2a;">
+                            <div>
+                                <label id="houseNameLabel" style="color:var(--tno-neon);font-size:0.85rem;">의회 명칭</label>
+                                <input type="text" id="houseNameInput" value="국회" oninput="updateNames()">
+                            </div>
+                            <div>
+                                <label style="color:var(--tno-neon);font-size:0.85rem;">총 의석 수</label>
+                                <input type="number" id="houseTotal" value="300" oninput="elecUpdateDistrictInfo()">
+                            </div>
                         </div>
                         <div id="partyListHouse"></div>
                         <button class="add-btn" onclick="addParty('house')">[+] 정당 추가</button>
                     </div>
 
                     <div id="contentSenate" class="sub-tab-content">
-                        <div style="margin-bottom:12px;padding:10px;background:#0a0c10;border:1px solid #2a2a2a;">
-                            <label style="color:var(--tno-neon);font-size:0.85rem;">의회 명칭</label>
-                            <input type="text" id="senateNameInput" value="상원" oninput="updateNames()" style="width:100%;box-sizing:border-box;">
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;padding:10px;background:#0a0c10;border:1px solid #2a2a2a;">
+                            <div>
+                                <label style="color:var(--tno-neon);font-size:0.85rem;">의회 명칭</label>
+                                <input type="text" id="senateNameInput" value="상원" oninput="updateNames()">
+                            </div>
+                            <div>
+                                <label style="color:var(--tno-neon);font-size:0.85rem;">총 의석 수</label>
+                                <input type="number" id="senateTotal" value="100" oninput="elecUpdateDistrictInfo()">
+                            </div>
                         </div>
                         <div id="partyListSenate"></div>
                         <button class="add-btn" onclick="addParty('senate')">[+] 정당 추가</button>
                     </div>
 
                     <div id="contentThird" class="sub-tab-content">
-                        <div style="margin-bottom:12px;padding:10px;background:#0a0c10;border:1px solid #2a2a2a;">
-                            <label style="color:var(--tno-neon);font-size:0.85rem;">의회 명칭</label>
-                            <input type="text" id="thirdNameInput" value="삼원" oninput="updateNames()" style="width:100%;box-sizing:border-box;">
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;padding:10px;background:#0a0c10;border:1px solid #2a2a2a;">
+                            <div>
+                                <label style="color:var(--tno-neon);font-size:0.85rem;">의회 명칭</label>
+                                <input type="text" id="thirdNameInput" value="삼원" oninput="updateNames()">
+                            </div>
+                            <div>
+                                <label style="color:var(--tno-neon);font-size:0.85rem;">총 의석 수</label>
+                                <input type="number" id="thirdTotal" value="100" oninput="elecUpdateDistrictInfo()">
+                            </div>
                         </div>
                         <div id="partyListThird"></div>
                         <button class="add-btn" onclick="addParty('third')">[+] 정당 추가</button>
@@ -262,9 +280,6 @@
                             <button type="button" class="system-radio-btn active" id="chamberCenterModeSeatsBtnHouse" onclick="setChamberCenterMode('house','seats')">의석 수</button>
                             <button type="button" class="system-radio-btn" id="chamberCenterModeLogoBtnHouse" onclick="setChamberCenterMode('house','logo')">로고</button>
                         </div>
-                        <div id="chamberCenterSeatsWrapHouse">
-                            <input type="number" id="houseTotal" value="300" oninput="elecUpdateDistrictInfo()" style="width:100%;box-sizing:border-box;">
-                        </div>
                         <div id="chamberCenterLogoWrapHouse" style="display:none;align-items:center;gap:10px;">
                             <div class="leader-photo-box" id="chamberLogoPreviewHouse" style="width:52px;height:52px;" title="반원 중앙에 표시할 로고">
                                 <div class="photo-ph">⚑</div>
@@ -280,9 +295,6 @@
                             <button type="button" class="system-radio-btn active" id="chamberCenterModeSeatsBtnSenate" onclick="setChamberCenterMode('senate','seats')">의석 수</button>
                             <button type="button" class="system-radio-btn" id="chamberCenterModeLogoBtnSenate" onclick="setChamberCenterMode('senate','logo')">로고</button>
                         </div>
-                        <div id="chamberCenterSeatsWrapSenate">
-                            <input type="number" id="senateTotal" value="100" oninput="elecUpdateDistrictInfo()" style="width:100%;box-sizing:border-box;">
-                        </div>
                         <div id="chamberCenterLogoWrapSenate" style="display:none;align-items:center;gap:10px;">
                             <div class="leader-photo-box" id="chamberLogoPreviewSenate" style="width:52px;height:52px;" title="반원 중앙에 표시할 로고">
                                 <div class="photo-ph">⚑</div>
@@ -297,9 +309,6 @@
                         <div class="system-radio-group" style="margin-bottom:8px;">
                             <button type="button" class="system-radio-btn active" id="chamberCenterModeSeatsBtnThird" onclick="setChamberCenterMode('third','seats')">의석 수</button>
                             <button type="button" class="system-radio-btn" id="chamberCenterModeLogoBtnThird" onclick="setChamberCenterMode('third','logo')">로고</button>
-                        </div>
-                        <div id="chamberCenterSeatsWrapThird">
-                            <input type="number" id="thirdTotal" value="100" oninput="elecUpdateDistrictInfo()" style="width:100%;box-sizing:border-box;">
                         </div>
                         <div id="chamberCenterLogoWrapThird" style="display:none;align-items:center;gap:10px;">
                             <div class="leader-photo-box" id="chamberLogoPreviewThird" style="width:52px;height:52px;" title="반원 중앙에 표시할 로고">
