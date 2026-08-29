@@ -1,6 +1,6 @@
 // ===== DATANET PARLIAMENT SIMULATION — 언어 전환 모듈 =====
 // dno.html / roadmap.js를 건드리지 않고, 렌더링된 DOM 텍스트를 사전 기반으로
-// 실시간 치환하는 방식으로 영어 표시를 지원한다. 언어 설정은 dno.settings.html에서
+// 실시간 치환하는 방식으로 영어 표시를 지원한다. 언어 설정은 settings.html에서
 // 바꾸며, localStorage에 저장된 설정을 각 페이지가 로드 시점에 읽어 적용한다.
 (function () {
     'use strict';
