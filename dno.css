@@ -133,22 +133,17 @@
         .disp-tab-bar {
             display: flex;
             align-items: center;
-            flex-wrap: wrap;
             gap: 4px;
             flex-shrink: 0;
             margin-bottom: 0;
         }
-        /* 국가 날짜/회기 표시 — 탭 버튼 줄 아래에 별도 줄로, 탭과 구분선으로 나눔 */
+        /* 국가 날짜/회기 표시 — 데스크톱에서는 탭 바 우측 끝에 고정 (모바일 전용 줄바꿈은 아래 mobile 규칙 참고) */
         .disp-info-bar {
-            flex-basis: 100%;
-            margin-left: 0;
+            margin-left: auto;
             display: flex;
             align-items: center;
-            justify-content: flex-end;
             gap: 12px;
-            padding: 6px 10px 0;
-            margin-top: 4px;
-            border-top: 2px solid var(--tno-border);
+            padding: 0 10px;
             color: #666;
             font-size: 0.82rem;
             letter-spacing: 0.5px;
@@ -1022,6 +1017,19 @@
         html[data-ui-mode="mobile"] .disp-panel {
             flex: 0 0 auto;
             overflow-y: visible;
+        }
+        /* 모바일에서만 날짜/회기 표시를 탭 버튼 줄 아래 별도 줄로 내리고 구분선을 그림 (데스크톱은 탭 바 우측 끝에 그대로 고정) */
+        html[data-ui-mode="mobile"] .disp-tab-bar {
+            flex-wrap: wrap;
+            row-gap: 4px;
+        }
+        html[data-ui-mode="mobile"] .disp-info-bar {
+            flex-basis: 100%;
+            margin-left: 0;
+            justify-content: flex-end;
+            padding: 6px 10px 0;
+            margin-top: 4px;
+            border-top: 2px solid var(--tno-border);
         }
         html[data-ui-mode="mobile"] .main-tab-btn,
         html[data-ui-mode="mobile"] .sub-tab-btn,
