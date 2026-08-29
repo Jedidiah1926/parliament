@@ -1511,9 +1511,7 @@
             const mode = chamberCenterMode[chamber] || 'seats';
             document.getElementById('chamberCenterModeSeatsBtn' + suf)?.classList.toggle('active', mode === 'seats');
             document.getElementById('chamberCenterModeLogoBtn' + suf)?.classList.toggle('active', mode === 'logo');
-            const seatsWrap = document.getElementById('chamberCenterSeatsWrap' + suf);
             const logoWrap = document.getElementById('chamberCenterLogoWrap' + suf);
-            if(seatsWrap) seatsWrap.style.display = mode === 'seats' ? '' : 'none';
             if(logoWrap) logoWrap.style.display = mode === 'logo' ? 'flex' : 'none';
         }
 
