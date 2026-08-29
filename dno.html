@@ -64,7 +64,7 @@
                     <button class="sub-tab-btn active" onclick="switchSubTab('setup','party')" id="subTabParty">정당</button>
                     <button class="sub-tab-btn" onclick="switchSubTab('setup','settings')" id="subTabSettings">구성</button>
                     <button class="sub-tab-btn" onclick="switchSubTab('setup','members')" id="subTabMembers">의원</button>
-                    <button class="sub-tab-btn" onclick="switchSubTab('setup','indMember')" id="subTabIndMember">무소속</button>
+                    <button class="sub-tab-btn" onclick="switchSubTab('setup','list')" id="subTabList">비례</button>
                     <button class="sub-tab-btn" onclick="switchSubTab('setup','coalition')" id="subTabCoalition">연정</button>
                 </div>
 
@@ -159,17 +159,29 @@
                         <button class="sub-tab-btn-3" onclick="switchMembersInnerTab('senate')" id="innerTabMembersSenate">상원</button>
                         <button class="sub-tab-btn-3" onclick="switchMembersInnerTab('third')" id="innerTabMembersThird">삼원</button>
                     </div>
+                    <div style="display:flex;gap:6px;margin:8px 0;position:relative;">
+                        <input type="text" id="membersSearchInput" placeholder="검색 (이름 / #좌석번호)" oninput="onMemberSearchInput('members',this.value)"
+                            style="flex:1;min-width:0;background:#000;border:1px solid #2a2a2a;color:#e0e0e0;font-family:inherit;font-size:0.85rem;padding:5px 8px;">
+                        <button onclick="toggleMemberFilterPopup('members')" id="membersFilterBtn" class="member-filter-btn">필터</button>
+                        <div id="membersFilterPopup" class="member-filter-popup" style="display:none;"></div>
+                    </div>
                     <div id="membersList"></div>
                 </div>
 
-                <!-- 무소속 탭 (연정 참여/각외협력 설정, 내부 탭: 하원/상원/삼원) -->
-                <div id="contentIndMember" class="sub-tab-content">
-                    <div class="sub-tab-container-3" id="indMemberInnerTabs">
-                        <button class="sub-tab-btn-3 active" onclick="switchIndMemberInnerTab('house')" id="innerTabIndMemHouse">하원</button>
-                        <button class="sub-tab-btn-3" onclick="switchIndMemberInnerTab('senate')" id="innerTabIndMemSenate">상원</button>
-                        <button class="sub-tab-btn-3" onclick="switchIndMemberInnerTab('third')" id="innerTabIndMemThird">삼원</button>
+                <!-- 비례 탭 (정당별 비례 의석 개별 관리, 내부 탭: 하원/상원/삼원) -->
+                <div id="contentList" class="sub-tab-content">
+                    <div class="sub-tab-container-3" id="listInnerTabs">
+                        <button class="sub-tab-btn-3 active" onclick="switchListMemberInnerTab('house')" id="innerTabListHouse">하원</button>
+                        <button class="sub-tab-btn-3" onclick="switchListMemberInnerTab('senate')" id="innerTabListSenate">상원</button>
+                        <button class="sub-tab-btn-3" onclick="switchListMemberInnerTab('third')" id="innerTabListThird">삼원</button>
                     </div>
-                    <div id="indMemberList"></div>
+                    <div style="display:flex;gap:6px;margin:8px 0;position:relative;">
+                        <input type="text" id="listSearchInput" placeholder="검색 (이름 / #좌석번호)" oninput="onMemberSearchInput('list',this.value)"
+                            style="flex:1;min-width:0;background:#000;border:1px solid #2a2a2a;color:#e0e0e0;font-family:inherit;font-size:0.85rem;padding:5px 8px;">
+                        <button onclick="toggleMemberFilterPopup('list')" id="listFilterBtn" class="member-filter-btn">필터</button>
+                        <div id="listFilterPopup" class="member-filter-popup" style="display:none;"></div>
+                    </div>
+                    <div id="listMemberList"></div>
                 </div>
             </div>
 

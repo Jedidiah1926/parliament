@@ -133,18 +133,22 @@
         .disp-tab-bar {
             display: flex;
             align-items: center;
+            flex-wrap: wrap;
             gap: 4px;
             flex-shrink: 0;
             margin-bottom: 0;
-            border-bottom: 2px solid var(--tno-border);
         }
-        /* 국가 날짜/회기 표시 — 디스플레이 탭 바 우측 끝에 고정 */
+        /* 국가 날짜/회기 표시 — 탭 버튼 줄 아래에 별도 줄로, 탭과 구분선으로 나눔 */
         .disp-info-bar {
-            margin-left: auto;
+            flex-basis: 100%;
+            margin-left: 0;
             display: flex;
             align-items: center;
+            justify-content: flex-end;
             gap: 12px;
-            padding: 0 10px;
+            padding: 6px 10px 0;
+            margin-top: 4px;
+            border-top: 2px solid var(--tno-border);
             color: #666;
             font-size: 0.82rem;
             letter-spacing: 0.5px;
@@ -168,8 +172,6 @@
             border-color: var(--tno-neon);
             background: rgba(0,255,255,0.05);
             text-shadow: 0 0 5px var(--tno-neon);
-            /* 탭 바 아래쪽 구분선을 활성 탭 위치에서만 가려서, 아래 패널과 이어져 보이게 함 */
-            margin-bottom: -2px;
         }
         .disp-tab-close {
             display: inline-block;
@@ -396,6 +398,33 @@
             margin-bottom: 10px;
             position: relative;
         }
+
+        /* 의회>의원 / 의회>비례 검색+필터 버튼 및 팝업 (당/무소속·이념 체크박스) */
+        .member-filter-btn {
+            background: #000;
+            border: 1px solid #333;
+            color: #aaa;
+            font-family: inherit;
+            font-size: 0.82rem;
+            padding: 5px 10px;
+            cursor: pointer;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+        .member-filter-btn:hover { border-color: #555; color: #ccc; }
+        .member-filter-popup {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            margin-top: 4px;
+            min-width: 200px;
+            max-width: 260px;
+            background: #0a0c10;
+            border: 1px solid #333;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.6);
+            padding: 10px;
+            z-index: 30;
+        }
         .card-item.is-ruling {
             border-color: var(--tno-gold);
             box-shadow: inset 0 0 10px rgba(255, 215, 0, 0.2);
@@ -492,6 +521,7 @@
             cursor: grab; color: #444; font-size: 1.1rem; padding: 0 3px;
             user-select: none; flex-shrink: 0; line-height: 1; letter-spacing: -2px;
             display: flex; align-items: center;
+            touch-action: none; /* 터치로 눌러 드래그할 때 페이지 스크롤 대신 항목이 움직이도록 */
         }
         .drag-handle:hover { color: #888; }
         .drag-handle:active { cursor: grabbing; }
@@ -654,6 +684,21 @@
         .bulk-vote-btn.active-yea { background: rgba(0,255,136,0.25); font-weight: bold; }
         .bulk-vote-btn.active-nay { background: rgba(255,34,68,0.25); font-weight: bold; }
         .bulk-vote-btn.active-abs { background: rgba(136,136,136,0.25); font-weight: bold; }
+        /* 찬/반/기 버튼 3개를 합친 만큼의 너비를 차지하는 활동 금지 박스 */
+        .bulk-vote-banned {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: calc(3 * (1.6em + 14px) + 2 * 5px);
+            padding: 3px 7px;
+            font-size: 0.8rem;
+            font-family: 'NeoDunggeunmo', 'VT323', monospace;
+            border: 1px solid var(--tno-alert);
+            color: var(--tno-alert);
+            background: rgba(255,0,85,0.08);
+            text-shadow: 0 0 4px var(--tno-alert);
+            box-sizing: border-box;
+        }
 
         /* ===== BILL CARD ===== */
         .bill-card {
@@ -977,15 +1022,6 @@
         html[data-ui-mode="mobile"] .disp-panel {
             flex: 0 0 auto;
             overflow-y: visible;
-        }
-        html[data-ui-mode="mobile"] .disp-tab-bar {
-            flex-wrap: wrap;
-            row-gap: 4px;
-        }
-        html[data-ui-mode="mobile"] .disp-info-bar {
-            margin-left: 0;
-            flex-basis: 100%;
-            justify-content: flex-end;
         }
         html[data-ui-mode="mobile"] .main-tab-btn,
         html[data-ui-mode="mobile"] .sub-tab-btn,

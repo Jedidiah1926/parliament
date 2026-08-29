@@ -25,7 +25,7 @@ DATANET Parliament Simulation은 설치나 빌드 없이 **브라우저에서 �
 | `index.html` | 점검 시간대 자동 판정 후 `main.html`로 리디렉션 |
 | `main.html` | 시작 메뉴 (버전 정보, 로드맵 링크, 시뮬레이터 실행) |
 | `dno.html` | 시뮬레이터 본체 |
-| `dno.settings.html` | 설정 화면 (언어 선택) |
+| `settings.html` | 설정 화면 (언어 선택) |
 | `roadmap.html` | 개발 로드맵 및 업데이트 내역 |
 | `teaser.html` | 티저 페이지 (구 `dno.pre.html`) |
 | `lang.js` | 언어 설정 저장 및 한국어→영어 실시간 치환 엔진 (`dno.html`/`roadmap.html`에서 사용) |

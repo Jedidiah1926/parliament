@@ -1,6 +1,6 @@
 // ===== DATANET PARLIAMENT SIMULATION — 언어 전환 모듈 =====
 // dno.html / roadmap.js를 건드리지 않고, 렌더링된 DOM 텍스트를 사전 기반으로
-// 실시간 치환하는 방식으로 영어 표시를 지원한다. 언어 설정은 dno.settings.html에서
+// 실시간 치환하는 방식으로 영어 표시를 지원한다. 언어 설정은 settings.html에서
 // 바꾸며, localStorage에 저장된 설정을 각 페이지가 로드 시점에 읽어 적용한다.
 (function () {
     'use strict';
@@ -255,6 +255,7 @@
         ['초기화', 'Reset'],
 
         // ── 로드맵 버전 타이틀 ──
+        ['1.5.0 - 지역구/비례 시스템 개편', '1.5.0 - District/Proportional System Overhaul'],
         ['1.4.9 - 저장 리워크', '1.4.9 - Save Rework'],
         ['1.4.8 - 의회 리워크 Part.II', '1.4.8 - Parliament Rework Part II'],
         ['1.4.7 - 정당 리워크 Part.II', '1.4.7 - Party Rework Part II'],
@@ -384,7 +385,7 @@
         ['입법', 'Legislation'], ['전체', 'All'], ['없음', 'None'], ['연정', 'Coalition'],
         ['하원', 'House'], ['상원', 'Senate'], ['삼원', 'Third'], ['정당', 'Party'], ['의원', 'Members'],
         ['이념', 'Ideology'], ['당수', 'Leader'], ['기권', 'Abstain'], ['찬성', 'Yea'], ['반대', 'Nay'],
-        ['의석', 'Seats'], ['지역구', 'District'], ['선거', 'Election'], ['무소속', 'Independent'],
+        ['의석', 'Seats'], ['지역구', 'District'], ['선거', 'Election'], ['무소속', 'Independent'], ['비례', 'Proportional'], ['필터', 'Filter'],
         ['개표', 'Counting'], ['국회', 'National Assembly'], ['회기', 'Session'], ['국가명', 'Nation Name'],
         ['현재:', 'Current:'], ['✕ 제거', '✕ Remove'], ['▶ 재개', '▶ Resume'],
         ['사진 업로드', 'Upload Photo'], ['가결 후 열림', 'Opens After Passage'],
