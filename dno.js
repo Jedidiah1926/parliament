@@ -2111,7 +2111,7 @@
         // handleEl: 드래그 시작점(⋮⋮ 아이콘), containerId: 카드들이 들어있는 컨테이너 id,
         // cardSelector: 카드 클래스 선택자, arr: 재정렬할 배열, renderFn: 재정렬 후 다시 그릴 함수
         function startDragReorder(handleEl, containerId, cardSelector, arr, renderFn) {
-            handleEl.addEventListener('mousedown', e => {
+            handleEl.addEventListener('pointerdown', e => {
                 e.preventDefault();
                 const card = handleEl.closest(cardSelector);
                 if(!card) return;
@@ -2143,14 +2143,14 @@
                     }
                 }
                 function onUp() {
-                    document.removeEventListener('mousemove', onMove);
-                    document.removeEventListener('mouseup', onUp);
+                    document.removeEventListener('pointermove', onMove);
+                    document.removeEventListener('pointerup', onUp);
                     document.querySelectorAll('.drag-lifted').forEach(el => el.classList.remove('drag-lifted'));
                     renderFn();
                     if(typeof simulate === 'function') simulate();
                 }
-                document.addEventListener('mousemove', onMove);
-                document.addEventListener('mouseup', onUp);
+                document.addEventListener('pointermove', onMove);
+                document.addEventListener('pointerup', onUp);
             });
         }
 
@@ -2232,32 +2232,34 @@
                 div.dataset.pid = p.id;
                 div.style.borderLeftColor = p.color;
                 div.innerHTML = `
-                    <div style="display:grid;grid-template-columns:auto auto 1fr auto;gap:8px;align-items:center;">
-                        <span class="drag-handle">⋮⋮</span>
-                        <!-- 당 로고 (정사각형, 업로드 가능) -->
-                        <div class="leader-photo-box" title="당 로고 업로드" style="width:45px;height:45px;flex-shrink:0;">
+                    <div style="display:grid;grid-template-columns:auto auto 1fr;grid-template-rows:auto auto;column-gap:8px;row-gap:3px;align-items:center;">
+                        <span class="drag-handle" style="grid-row:1/3;">⋮⋮</span>
+                        <!-- 당 로고 (정사각형, 업로드 가능, 2행에 걸쳐 표시) -->
+                        <div class="leader-photo-box" title="당 로고 업로드" style="grid-row:1/3;width:45px;height:45px;flex-shrink:0;">
                             ${photo
                                 ? `<img src="${photo}" alt="로고" style="width:100%;height:100%;object-fit:cover;display:block;">`
                                 : `<div style="width:100%;height:100%;background:${p.color}22;display:flex;align-items:center;justify-content:center;font-size:1.2rem;color:${p.color}88;">⚑</div>`
                             }
                             <input type="file" accept="image/*" onchange="uploadLogoPhoto(this,${p.id})">
                         </div>
-                        <!-- 이름 + 이념 (읽기 전용) -->
-                        <div style="min-width:0;">
-                            <div style="display:flex;align-items:center;gap:6px;">
+                        <!-- 1행: 정당명 + 상태 뱃지 -->
+                        <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;min-width:0;">
+                            <span style="display:flex;align-items:center;gap:6px;min-width:0;">
                                 <span style="width:9px;height:9px;background:${p.color};border-radius:50%;flex-shrink:0;"></span>
                                 <span style="font-size:1rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${p.name}</span>
-                                ${partyStatusBadge(p)}
-                            </div>
-                            ${ideologyName?`<div style="color:#666;font-size:0.8rem;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${ideologyName}</div>`:''}
+                            </span>
+                            ${partyStatusBadge(p)}
                         </div>
-                        <!-- 의석 수 입력 -->
-                        <div style="display:flex;flex-direction:column;align-items:center;gap:4px;flex-shrink:0;margin-top:4px;">
-                            <label style="color:#555;font-size:0.75rem;white-space:nowrap;">${thisChamberName} 의석</label>
-                            <input type="number" value="${p[seatKey]}" min="0"
-                                onchange="updateParty(${idx},'${seatKey}',parseInt(this.value)||0)"
-                                ${p.status==='dissolved'?'disabled':''}
-                                style="width:65px;${p.status==='dissolved'?'opacity:0.5;cursor:not-allowed;':''}">
+                        <!-- 2행: 이념 + 의석 수 입력 -->
+                        <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;min-width:0;">
+                            <span style="color:#666;font-size:0.8rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;">${ideologyName}</span>
+                            <div style="display:flex;align-items:center;gap:5px;flex-shrink:0;">
+                                <label style="color:#555;font-size:0.75rem;white-space:nowrap;">${thisChamberName} 의석</label>
+                                <input type="number" value="${p[seatKey]}" min="0"
+                                    onchange="updateParty(${idx},'${seatKey}',parseInt(this.value)||0)"
+                                    ${p.status==='dissolved'?'disabled':''}
+                                    style="width:65px;${p.status==='dissolved'?'opacity:0.5;cursor:not-allowed;':''}">
+                            </div>
                         </div>
                     </div>
                     ${(p.factions||[]).length>0?`
@@ -2309,7 +2311,7 @@
         // 무소속 의원 순서 변경: 배열 위치가 아니라 seatIndex를 재할당 (getMap이 seatIndex 기준 정렬로 좌석 배정하므로)
         function startIndependentDragReorder(handleEl, containerId, cardSelector, chamber, renderFn) {
             if(!handleEl) return;
-            handleEl.addEventListener('mousedown', e => {
+            handleEl.addEventListener('pointerdown', e => {
                 e.preventDefault();
                 const container = document.getElementById(containerId);
                 if(!container) return;
@@ -2349,21 +2351,21 @@
                     }
                 }
                 function onUp() {
-                    document.removeEventListener('mousemove', onMove);
-                    document.removeEventListener('mouseup', onUp);
+                    document.removeEventListener('pointermove', onMove);
+                    document.removeEventListener('pointerup', onUp);
                     document.querySelectorAll('.drag-lifted').forEach(el => el.classList.remove('drag-lifted'));
                     applyOrder();
                     renderFn();
                     simulate();
                 }
-                document.addEventListener('mousemove', onMove);
-                document.addEventListener('mouseup', onUp);
+                document.addEventListener('pointermove', onMove);
+                document.addEventListener('pointerup', onUp);
             });
         }
 
         function startPartyListDragReorder(handleEl, containerId, cardSelector, type) {
             if(!handleEl) return;
-            handleEl.addEventListener('mousedown', e => {
+            handleEl.addEventListener('pointerdown', e => {
                 e.preventDefault();
                 const container = document.getElementById(containerId);
                 if(!container) return;
@@ -2397,14 +2399,14 @@
                     }
                 }
                 function onUp() {
-                    document.removeEventListener('mousemove', onMove);
-                    document.removeEventListener('mouseup', onUp);
+                    document.removeEventListener('pointermove', onMove);
+                    document.removeEventListener('pointerup', onUp);
                     document.querySelectorAll('.drag-lifted').forEach(el => el.classList.remove('drag-lifted'));
                     renderPartyList(type);
                     simulate();
                 }
-                document.addEventListener('mousemove', onMove);
-                document.addEventListener('mouseup', onUp);
+                document.addEventListener('pointermove', onMove);
+                document.addEventListener('pointerup', onUp);
             });
         }
 
