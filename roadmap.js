@@ -414,7 +414,17 @@
       });
     });
 
-    window.addEventListener('load', () => renderRoadmap('1.4'));
+    // 새 버전 섹션이 추가될 때마다 이 값을 손으로 고쳐야 했던 문제 방지 —
+    // 가장 마지막에 등장하는 "현재 진행 중"(status:'current') 카드가 속한 섹션을 자동으로 기본 화면으로 선택
+    function getDefaultVersionKey() {
+      const keys = Object.keys(roadmapData);
+      for (let i = keys.length - 1; i >= 0; i--) {
+        if (roadmapData[keys[i]].cards.some(card => card.status === 'current')) return keys[i];
+      }
+      return keys[keys.length - 1];
+    }
+
+    window.addEventListener('load', () => renderRoadmap(getDefaultVersionKey()));
     window.addEventListener('resize', syncRoadmapSize);
 
     if ('ResizeObserver' in window) {
