@@ -1695,6 +1695,7 @@
                     elecStore:      JSON.parse(JSON.stringify(elecStore)),
                     elecRecords:    JSON.parse(JSON.stringify(elecRecords)),
                     elecLastResult: elecLastResult ? JSON.parse(JSON.stringify(elecLastResult)) : null,
+                    elecLastResults: JSON.parse(JSON.stringify(elecLastResults)),
                     elecTitle:      document.getElementById('elecTitle')?.value  || '',
                     elecYear:       document.getElementById('elecYear')?.value   || '',
                     district: {
@@ -1767,6 +1768,7 @@
             }
             elecRecords    = Array.isArray(elec.elecRecords) ? elec.elecRecords : [];
             elecLastResult = elec.elecLastResult ?? null;
+            elecLastResults = (elec.elecLastResults && typeof elec.elecLastResults === 'object') ? elec.elecLastResults : {};
             const ge = id => document.getElementById(id);
             if(ge('elecTitle')) ge('elecTitle').value = elec.elecTitle || '';
             if(ge('elecYear'))  ge('elecYear').value  = elec.elecYear  || '';
@@ -3983,7 +3985,8 @@
         let elecPaused   = false;
         let elecSkipToEnd = false;
         let elecRecords  = [];         // 선거 기록 배열
-        let elecLastResult = null;     // 마지막 개표 결과 (반영용)
+        let elecLastResult = null;     // 마지막 개표 결과 (의원실별 순차 개표 시에는 마지막 의원실 결과만 참조용으로 담김)
+        let elecLastResults = {};      // 반영 대기 중인 개표 결과 (의원실별) — 여러 의원실을 한 번에 개표해도 모두 반영되도록 의원실 키로 누적
 
         // ── 탭 전환 ────────────────────────────
         function switchDispTab(tab) {
@@ -5328,28 +5331,39 @@
         }
 
         function elecApplyToParliament() {
-            if(!elecLastResult) return;
-            const { chamber, seatMap, districtResults } = elecLastResult;
-            const ch = chamber || (elecLastResult.isSenate?'senate':'house');
-            const seatKey = seatKeyFor(ch);
+            // 여러 의원실을 한 번에 개표했을 경우 대기 중인 모든 의원실 결과를 순서대로 반영
+            // (마지막 의원실 결과만 elecLastResult에 남아 있어, 예전에는 그 의원실만 반영되고
+            // 나머지 의원실은 지역구 당선자 정보가 비어 있는 채로 남는 문제가 있었음)
+            const pending = Object.keys(elecLastResults);
+            if(pending.length === 0) { if(elecLastResult) pending.push(elecLastResult.chamber || (elecLastResult.isSenate?'senate':'house')); else return; }
+
             let hadFactions = false;
-            parties.forEach(p => {
-                const s = seatMap.find(x=>x.id===p.id);
-                p[seatKey] = s?.n||0;
-                // 파벌 의석은 선거 이전 분포이므로 무효화 (재분배 필요)
-                if((p.factions||[]).length > 0) {
-                    hadFactions = true;
-                    p.factions.forEach(f => { f[seatKey] = 0; });
-                }
-            });
-            // 지역구 당선자 개별 정보 생성 (이름은 비워둠 — 의회>의원 탭에서 입력)
-            if(Array.isArray(districtResults) && districtResults.length > 0) {
-                districtResults.forEach(({key, partyId}) => {
-                    districtMembers[ch][key] = { name: '', partyId, factionId: null, vacant: false };
+            let lastCh = null;
+            pending.forEach(ch => {
+                const result = elecLastResults[ch] || elecLastResult;
+                if(!result) return;
+                const { seatMap, districtResults } = result;
+                const seatKey = seatKeyFor(ch);
+                parties.forEach(p => {
+                    const s = seatMap.find(x=>x.id===p.id);
+                    p[seatKey] = s?.n||0;
+                    // 파벌 의석은 선거 이전 분포이므로 무효화 (재분배 필요)
+                    if((p.factions||[]).length > 0) {
+                        hadFactions = true;
+                        p.factions.forEach(f => { f[seatKey] = 0; });
+                    }
                 });
-            }
+                // 지역구 당선자 개별 정보 생성 (이름은 비워둠 — 의회>의원 탭에서 입력)
+                if(Array.isArray(districtResults) && districtResults.length > 0) {
+                    districtResults.forEach(({key, partyId}) => {
+                        districtMembers[ch][key] = { name: '', partyId, factionId: null, vacant: false };
+                    });
+                }
+                lastCh = ch;
+            });
+            elecLastResults = {};
             simulate(); refreshUI();
-            switchDispTab(ch);
+            if(lastCh) switchDispTab(lastCh);
             if(hadFactions) {
                 alert('선거 결과가 반영되었습니다.\n\n파벌이 있는 정당의 파벌별 의석은 선거 전 분포가 무효화되어 0으로 초기화되었습니다.\n정당 탭에서 파벌 의석을 다시 배분해 주세요.');
             }
@@ -5898,6 +5912,7 @@
 
             // ── 결과 저장 (반영/재개표용) ───────
             elecLastResult = { chamber, isSenate: chamber==='senate', seatMap: seatMap.map(x=>({...x})), weighted, districtResults: [...districtResults], mode: elecMode };
+            elecLastResults[chamber] = elecLastResult;
 
             // ── 비례 풀 생성 + 셔플 ─────────────────
             parties.forEach(p=>{ p[seatKey]=0; });
