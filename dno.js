@@ -1485,11 +1485,13 @@
             const img = useLogo ? getChamberLogoImage(chamber, () => redrawChamber(cvsId, chamber)) : null;
             if(img) {
                 const size = Math.max(34, Math.min((width || 0) * 0.132, 156));
+                // 로고 하단이 기존 "SEATS" 글씨 하단부(CY+27 부근)를 넘지 않도록, 그 지점에 맞춰 위로 배치
+                const centerY = (CY + 27) - size / 2;
                 ctx.save();
                 ctx.beginPath();
-                ctx.arc(CX, CY - 8, size / 2, 0, Math.PI * 2);
+                ctx.arc(CX, centerY, size / 2, 0, Math.PI * 2);
                 ctx.clip();
-                ctx.drawImage(img, CX - size / 2, CY - 8 - size / 2, size, size);
+                ctx.drawImage(img, CX - size / 2, centerY - size / 2, size, size);
                 ctx.restore();
                 return;
             }
