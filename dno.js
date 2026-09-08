@@ -4106,6 +4106,9 @@
                 el.setAttribute('fill', (opts.getFill ? opts.getFill(s.key) : null) || 'transparent');
                 el.setAttribute('stroke', map.strokeColor || '#00ffff');
                 el.setAttribute('stroke-width', opts.strokeWidth || '1.5');
+                // 지도 좌표 규모(viewBox)가 저장된 값과 다르거나 매우 클 수 있어, 테두리가 화면 픽셀
+                // 기준 두께를 유지하도록 함 (확대해도 실선이 얇아지거나 안 보이지 않게)
+                el.setAttribute('vector-effect', 'non-scaling-stroke');
                 el.style.transition = 'fill 200ms, filter 120ms';
                 if(opts.clickable) {
                     el.style.cursor = 'pointer';
@@ -4121,6 +4124,28 @@
                 svg.appendChild(el);
             });
             wrapEl.appendChild(svg);
+
+            // 저장된 viewBox가 실제 도형 좌표와 맞지 않으면(오래된 캐시로 내보낸 파일 등) 도형이 화면
+            // 밖이나 점 하나 크기로 그려져 안 보일 수 있으므로, 실제 렌더링된 도형들의 경계 상자로 보정
+            try {
+                let bbox = null;
+                svg.querySelectorAll('path,circle,rect,polygon,polyline,ellipse').forEach(el => {
+                    const b = el.getBBox();
+                    if(!b || (b.width === 0 && b.height === 0)) return;
+                    if(!bbox) bbox = { x: b.x, y: b.y, x2: b.x+b.width, y2: b.y+b.height };
+                    else {
+                        bbox.x  = Math.min(bbox.x,  b.x);
+                        bbox.y  = Math.min(bbox.y,  b.y);
+                        bbox.x2 = Math.max(bbox.x2, b.x+b.width);
+                        bbox.y2 = Math.max(bbox.y2, b.y+b.height);
+                    }
+                });
+                if(bbox) {
+                    const w = bbox.x2 - bbox.x, h = bbox.y2 - bbox.y;
+                    const pad = Math.max(w, h, 1) * 0.04;
+                    svg.setAttribute('viewBox', `${bbox.x-pad} ${bbox.y-pad} ${w+pad*2} ${h+pad*2}`);
+                }
+            } catch(e) { /* getBBox 미지원 환경 등에서는 저장된 viewBox 그대로 사용 */ }
         }
 
         // 지역구 맵 패널을 지역구 시스템 전체 방식(육각형/SVG)에 맞춰 다시 그림 — 지역구 편집 관련 갱신은 모두 이 함수를 거친다
@@ -4202,18 +4227,27 @@
             const vbMatch = text.match(/\/\/\s*VIEWBOX:\s*(.+)/);
             const viewBox = vbMatch ? vbMatch[1].trim() : '0 0 100 100';
             const shapes = [];
+            const usedKeys = new Set();
             const compRe = /export const (\w+)\s*=\s*\([^)]*\)\s*=>\s*\(\s*<(\w+)\s*([^>]*?)\/?>\s*\)/g;
             let m;
             while((m = compRe.exec(text))) {
                 const [, name, tag, attrStr] = m;
                 const attrs = {};
+                let dataKey = null;
                 const attrRe = /([a-zA-Z0-9_-]+)="([^"]*)"/g;
                 let am;
                 while((am = attrRe.exec(attrStr))) {
                     const [, k, v] = am;
-                    if(['d','points','cx','cy','r','x','y','width','height','rx','ry','transform'].includes(k)) attrs[k] = v;
+                    const decoded = v.replace(/&quot;/g, '"');
+                    if(k === 'data-key') dataKey = decoded;
+                    else if(['d','points','cx','cy','r','x','y','width','height','rx','ry','transform'].includes(k)) attrs[k] = decoded;
                 }
-                shapes.push({ key: name, tag, attrs });
+                // data-key(원본 지역구 이름, 한글 등 포함)가 있으면 우선 사용 — 컴포넌트 이름(name)은
+                // 한글이면 겹치기 쉬운 JS 식별자라 표시용으로 부적합함. 그래도 서로 겹치면 번호를 붙여 구분
+                let key = dataKey || name;
+                while(usedKeys.has(key)) key = `${key}_${shapes.length+1}`;
+                usedKeys.add(key);
+                shapes.push({ key, tag, attrs });
             }
             return { viewBox, shapes };
         }
