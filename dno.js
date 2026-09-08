@@ -4224,10 +4224,14 @@
         // "구 지역구"/"뉴 지역구" 탭의 표시를 지역구 시스템 전체 방식(육각형/SVG)에 맞춰 동기화
         function districtUpdateModeUI() {
             const isSvg = districtMapMode === 'svg';
-            const notice = document.getElementById('districtSvgModeNotice');
-            const hexUI  = document.getElementById('districtHexEditUI');
-            if(notice) notice.style.display = isSvg ? '' : 'none';
-            if(hexUI)  hexUI.style.display  = isSvg ? 'none' : '';
+            const hexUI = document.getElementById('districtHexEditUI');
+            const svgUI = document.getElementById('districtSvgEditUI');
+            if(hexUI) hexUI.style.display = isSvg ? 'none' : '';
+            if(svgUI) svgUI.style.display = isSvg ? '' : 'none';
+
+            // 국가>설정의 지역구 시스템 토글 버튼 상태 동기화
+            document.getElementById('districtSystemModeHexBtn')?.classList.toggle('active', !isSvg);
+            document.getElementById('districtSystemModeSvgBtn')?.classList.toggle('active', isSvg);
 
             const info = document.getElementById('districtSvgInfo');
             const fileName = document.getElementById('districtSvgFileName');
@@ -4343,6 +4347,27 @@
             districtSeatCounts = {};
             districtSvgTendency = {};
             ['house','senate','third'].forEach(ch => { districtGrid[ch] = {}; districtNames[ch] = {}; districtMembers[ch] = {}; districtOrderSync(ch); });
+            selectedDistrictKey = null;
+            document.getElementById('districtNamePanel').style.display = 'none';
+            districtUpdateModeUI();
+            districtRenderMap();
+            renderDistrictListPanel();
+            elecUpdateDistrictInfo();
+        }
+
+        // 국가>설정의 지역구 시스템 토글에서 호출 — 육각형 데이터는 지도로 바꿔도 그대로 보존되고
+        // (SVG 지도를 업로드하는 순간 대체됨), 지도 데이터가 있는 상태에서 육각형으로 되돌릴 때만
+        // 기존 되돌리기와 동일하게 확인 후 초기화한다
+        function setDistrictMapMode(mode) {
+            if(mode !== 'hex' && mode !== 'svg') return;
+            if(mode === districtMapMode) return;
+            if(mode === 'hex') {
+                const hasSvgData = !!districtSvgMap || Object.keys(districtSeatCounts).length > 0;
+                if(hasSvgData) { districtSvgRevertToHex(); return; }
+                districtMapMode = 'hex';
+            } else {
+                districtMapMode = 'svg';
+            }
             selectedDistrictKey = null;
             document.getElementById('districtNamePanel').style.display = 'none';
             districtUpdateModeUI();
@@ -5261,11 +5286,11 @@
         // 선거 하위탭 전환
         // ─────────────────────────────────────────
         function elecSwitchSub(sub) {
-            ['district','districtNew','tendency','prob'].forEach(s => {
+            ['district','tendency','prob'].forEach(s => {
                 document.getElementById(`elecSubTab${s.charAt(0).toUpperCase()+s.slice(1)}`)?.classList.toggle('active', s===sub);
                 document.getElementById(`elecSub${s.charAt(0).toUpperCase()+s.slice(1)}`)?.classList.toggle('active', s===sub);
             });
-            if(sub === 'district' || sub === 'districtNew') {
+            if(sub === 'district') {
                 document.getElementById('dispTabDistrict').style.display = '';
                 switchDispTab('district');
                 districtUpdateModeUI();
