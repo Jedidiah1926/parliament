@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>SVG Splitter — Path → React Components</title>
+<title>맵 메이커</title>
 <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/neodgm/neodgm-webfont@latest/neodgm/style.css">
 <style>
@@ -51,8 +51,27 @@
     color: var(--tno-text); border-radius:4px; font-family: inherit;
   }
   input[type="text"]:focus { outline:none; border-color: var(--tno-neon); box-shadow: 0 0 6px var(--tno-neon-dim); }
-  input[type="file"] { color: var(--tno-text); font-family: inherit; }
-  input[type="checkbox"] { accent-color: var(--tno-neon); }
+
+  /* 파일 업로드 칸: 브라우저 기본 버튼 대신 테마에 맞춘 커스텀 버튼 + 파일명 표시 */
+  input[type="file"] { position:absolute; width:1px; height:1px; opacity:0; overflow:hidden; }
+  .file-label {
+    display:inline-flex; align-items:center; gap:6px; cursor:pointer;
+  }
+  #fileNameDisplay { color:#8a94a3; font-size:13px; }
+
+  /* 체크박스: 테마에 맞춘 커스텀 스타일 */
+  input[type="checkbox"] {
+    appearance:none; -webkit-appearance:none; width:16px; height:16px; flex-shrink:0;
+    background:#000; border:1px solid var(--tno-border); border-radius:3px;
+    cursor:pointer; position:relative; margin:0;
+  }
+  input[type="checkbox"]:hover { border-color: var(--tno-neon); }
+  input[type="checkbox"]:checked { background: var(--tno-neon); border-color: var(--tno-neon); box-shadow: 0 0 6px var(--tno-neon-dim); }
+  input[type="checkbox"]:checked::after {
+    content:''; position:absolute; left:4px; top:1px; width:4px; height:8px;
+    border:solid #000; border-width:0 2px 2px 0; transform: rotate(45deg);
+  }
+
   .small { font-size:13px; color:#8a94a3; }
   footer { grid-column:1 / -1; margin-top:12px; color:#8a94a3; font-size:13px; }
   .btn {
@@ -64,22 +83,25 @@
     background: transparent; color: var(--tno-neon); border:1px solid var(--tno-neon);
   }
   .btn.secondary:hover { background: var(--tno-neon-dim); box-shadow: 0 0 10px var(--tno-neon-dim); }
+  .btn.icon { padding:6px 9px; font-size:15px; line-height:1; }
   #count { color: var(--tno-gold); }
 </style>
 </head>
 <body>
   <div class="wrap">
     <header>
-      <h1>SVG Splitter — Path → React Components</h1>
+      <h1>맵 메이커</h1>
       <div class="small">SVG 올려서 각 `&lt;path&gt;`들을 컴포넌트로 추출해요 · 클라이언트 전용</div>
     </header>
 
     <div class="panel">
-      <div style="display:flex; gap:8px; align-items:center;">
+      <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
         <input id="fileInput" type="file" accept=".svg,image/svg+xml" />
-        <button id="btnParse" class="btn secondary">파싱</button>
-        <button id="btnExportAll" class="btn">React 컴포넌트로 내보내기</button>
-        <button id="btnExportSelected" class="btn secondary">선택된 것만 내보내기</button>
+        <label for="fileInput" class="btn secondary file-label">📁 SVG 선택</label>
+        <span id="fileNameDisplay">파일 없음</span>
+        <button id="btnParse" class="btn secondary icon" title="파싱">▶</button>
+        <button id="btnExportAll" class="btn">내보내기</button>
+        <button id="btnExportSelected" class="btn secondary">선택 내보내기</button>
       </div>
 
       <div class="controls" style="margin-top:10px;">
@@ -112,7 +134,7 @@
       </div>
 
       <div style="margin-top:10px;" class="small">
-        사용법: SVG 업로드 → 파싱 → 리스트에서 이름 편집/선택 → "React 컴포넌트로 내보내기".
+        사용법: SVG 업로드 → ▶ 파싱 → 리스트에서 이름 편집/선택 → "내보내기".
       </div>
     </aside>
 
@@ -138,6 +160,11 @@ const btnSelectAll = document.getElementById('btnSelectAll');
 const btnDeselectAll = document.getElementById('btnDeselectAll');
 const btnDownloadSVG = document.getElementById('btnDownloadSVG');
 const btnClear = document.getElementById('btnClear');
+const fileNameDisplay = document.getElementById('fileNameDisplay');
+
+fileInput.addEventListener('change', () => {
+  fileNameDisplay.textContent = fileInput.files?.[0]?.name || '파일 없음';
+});
 
 function readFileAsText(file) {
   return new Promise((res, rej) => {
@@ -221,8 +248,9 @@ function renderList() {
     div.appendChild(chk);
     // zoom / highlight button
     const btn = document.createElement('button');
-    btn.textContent = '하이라이트';
-    btn.className = 'btn secondary';
+    btn.textContent = '⌖';
+    btn.title = '하이라이트';
+    btn.className = 'btn secondary icon';
     btn.onclick = () => {
       // scroll into view / flash
       s.el.style.transition = 'filter 200ms, transform 200ms';
@@ -232,8 +260,9 @@ function renderList() {
     div.appendChild(btn);
     // export single button
     const btn2 = document.createElement('button');
-    btn2.textContent = '내보내기';
-    btn2.className = 'btn';
+    btn2.textContent = '⇩';
+    btn2.title = '내보내기';
+    btn2.className = 'btn icon';
     btn2.onclick = () => downloadComponents([s], true);
     div.appendChild(btn2);
     elementsList.appendChild(div);
@@ -365,6 +394,7 @@ btnDownloadSVG.addEventListener('click', ()=> {
 });
 btnClear.addEventListener('click', ()=> {
   fileInput.value = '';
+  fileNameDisplay.textContent = '파일 없음';
   svgContainer.innerHTML = '업로드한 SVG가 여기 표시됩니다';
   elementsList.innerHTML = '';
   shapes = [];
