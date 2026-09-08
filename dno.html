@@ -760,6 +760,12 @@
 
                 <!-- 성향 서브탭 - 강도 설정만 (맵은 우측) -->
                 <div id="elecSubTendency" class="sub-tab-content">
+                    <!-- 지도(뉴 지역구) 방식일 때만 표시 — 원별로 성향 데이터가 다르므로 편집할 원을 먼저 선택 -->
+                    <div class="sub-tab-container-3" id="tendencySvgChamberTabs" style="display:none;">
+                        <button class="sub-tab-btn-3 active" id="tendencySvgChamberHouseBtn" onclick="tendencySetSvgChamber('house')">하원</button>
+                        <button class="sub-tab-btn-3" id="tendencySvgChamberSenateBtn" onclick="tendencySetSvgChamber('senate')">상원</button>
+                        <button class="sub-tab-btn-3" id="tendencySvgChamberThirdBtn" onclick="tendencySetSvgChamber('third')" style="display:none;">삼원</button>
+                    </div>
                     <!-- 강도 선택 -->
                     <div style="display:flex;align-items:center;gap:4px;margin:8px 0;flex-wrap:wrap;">
                         <span style="color:#666;font-size:0.8rem;margin-right:2px;">강도</span>

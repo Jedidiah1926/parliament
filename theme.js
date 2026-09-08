@@ -48,4 +48,14 @@
     window.isValidHexColor = isValidHex;
 
     applyThemeColor(getThemeColor());
+
+    // 다른 탭에서 설정을 바꾼 경우(storage 이벤트)와, 뒤로가기로 bfcache에서 페이지가 복원된
+    // 경우(pageshow, persisted) 모두 현재 페이지가 스크립트를 다시 실행하지 않으므로 색이 갱신되지
+    // 않는다 — 두 경우 모두 감지해서 최신 색을 다시 적용한다.
+    window.addEventListener('storage', function (e) {
+        if (e.key === THEME_KEY || e.key === null) applyThemeColor(getThemeColor());
+    });
+    window.addEventListener('pageshow', function (e) {
+        if (e.persisted) applyThemeColor(getThemeColor());
+    });
 })();
