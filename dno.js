@@ -4083,6 +4083,7 @@
         let districtSeatCounts = {};
         // districtSvgTendency[key] = { house:{partyId:pct}, senate:{...}, third:{...} } — 지역구·원별 정당 지지도(%)
         let districtSvgTendency = {};
+        let districtSvgTendencyTab = null; // 선택한 지역구 편집 패널의 성향 하위 탭 (원 키) — null이면 첫 번째 배정 원으로 자동 선택
 
         // SVG 지도를 지정된 컨테이너에 그리고, 도형별 채우기 색/클릭/툴팁을 옵션으로 받는다
         // (지역구 편집 패널·의회 화면 지역구 보기·선거 결과 지역구 보기가 모두 이 함수를 공유)
@@ -4180,6 +4181,7 @@
                     getFill: key => key === selectedDistrictKey ? 'rgba(255,215,0,0.25)' : 'transparent',
                     title: key => districtNames.house[key] || key,
                     onClickKey: key => {
+                        if(selectedDistrictKey !== key) districtSvgTendencyTab = null; // 새 지역구 선택 시 성향 탭 기본값으로
                         selectedDistrictKey = key;
                         districtRenderNamePanel();
                         districtRenderMap();
@@ -4222,19 +4224,28 @@
         // "구 지역구"/"뉴 지역구" 탭의 표시를 지역구 시스템 전체 방식(육각형/SVG)에 맞춰 동기화
         function districtUpdateModeUI() {
             const isSvg = districtMapMode === 'svg';
-            const notice = document.getElementById('districtSvgModeNotice');
-            const hexUI  = document.getElementById('districtHexEditUI');
-            if(notice) notice.style.display = isSvg ? '' : 'none';
-            if(hexUI)  hexUI.style.display  = isSvg ? 'none' : '';
+            const hexUI = document.getElementById('districtHexEditUI');
+            const svgUI = document.getElementById('districtSvgEditUI');
+            if(hexUI) hexUI.style.display = isSvg ? 'none' : '';
+            if(svgUI) svgUI.style.display = isSvg ? '' : 'none';
+
+            // 국가>설정의 지역구 시스템 토글 버튼 상태 동기화
+            document.getElementById('districtSystemModeHexBtn')?.classList.toggle('active', !isSvg);
+            document.getElementById('districtSystemModeSvgBtn')?.classList.toggle('active', isSvg);
 
             const info = document.getElementById('districtSvgInfo');
             const fileName = document.getElementById('districtSvgFileName');
             const shapeCount = document.getElementById('districtSvgShapeCount');
             const strokeInput = document.getElementById('districtSvgStrokeColorInput');
+            const strokeHexInput = document.getElementById('districtSvgStrokeColorHexInput');
             if(info) info.style.display = districtSvgMap ? '' : 'none';
             if(fileName) fileName.textContent = districtSvgMap ? '업로드됨' : '파일 없음';
             if(shapeCount) shapeCount.textContent = districtSvgMap ? String(districtSvgMap.shapes.length) : '0';
-            if(strokeInput && districtSvgMap) strokeInput.value = districtSvgMap.strokeColor || '#00ffff';
+            if(districtSvgMap) {
+                const color = districtSvgMap.strokeColor || '#00ffff';
+                if(strokeInput) strokeInput.value = color;
+                if(strokeHexInput) strokeHexInput.value = color.toUpperCase();
+            }
         }
 
         // 맵 메이커(map.html)가 내보낸 .jsx 텍스트에서 도형 정보와 viewBox를 추출
@@ -4310,7 +4321,23 @@
         function districtSvgSetStrokeColor(color) {
             if(!districtSvgMap) return;
             districtSvgMap.strokeColor = color;
+            districtUpdateModeUI();
             districtRenderMap();
+        }
+
+        function districtSvgSetStrokeColorHex(hex) {
+            const v = hex.trim().startsWith('#') ? hex.trim() : '#' + hex.trim();
+            if(typeof isValidHexColor === 'function' ? !isValidHexColor(v) : !/^#[0-9a-fA-F]{6}$/.test(v)) {
+                districtUpdateModeUI(); // 잘못된 값이면 원래 값으로 되돌림
+                return;
+            }
+            districtSvgSetStrokeColor(v);
+        }
+
+        // 지역구 테두리 색을 현재 사이트 테마 색(설정에서 고른 색)과 동일하게 맞춤
+        function districtSvgSyncStrokeColorWithTheme() {
+            if(typeof getThemeColor !== 'function') return;
+            districtSvgSetStrokeColor(getThemeColor());
         }
 
         function districtSvgRevertToHex() {
@@ -4320,6 +4347,27 @@
             districtSeatCounts = {};
             districtSvgTendency = {};
             ['house','senate','third'].forEach(ch => { districtGrid[ch] = {}; districtNames[ch] = {}; districtMembers[ch] = {}; districtOrderSync(ch); });
+            selectedDistrictKey = null;
+            document.getElementById('districtNamePanel').style.display = 'none';
+            districtUpdateModeUI();
+            districtRenderMap();
+            renderDistrictListPanel();
+            elecUpdateDistrictInfo();
+        }
+
+        // 국가>설정의 지역구 시스템 토글에서 호출 — 육각형 데이터는 지도로 바꿔도 그대로 보존되고
+        // (SVG 지도를 업로드하는 순간 대체됨), 지도 데이터가 있는 상태에서 육각형으로 되돌릴 때만
+        // 기존 되돌리기와 동일하게 확인 후 초기화한다
+        function setDistrictMapMode(mode) {
+            if(mode !== 'hex' && mode !== 'svg') return;
+            if(mode === districtMapMode) return;
+            if(mode === 'hex') {
+                const hasSvgData = !!districtSvgMap || Object.keys(districtSeatCounts).length > 0;
+                if(hasSvgData) { districtSvgRevertToHex(); return; }
+                districtMapMode = 'hex';
+            } else {
+                districtMapMode = 'svg';
+            }
             selectedDistrictKey = null;
             document.getElementById('districtNamePanel').style.display = 'none';
             districtUpdateModeUI();
@@ -4346,6 +4394,11 @@
             districtSvgTendency[key] = districtSvgTendency[key] || { house:{}, senate:{}, third:{} };
             districtSvgTendency[key][chamber] = districtSvgTendency[key][chamber] || {};
             districtSvgTendency[key][chamber][partyId] = v;
+        }
+
+        function districtSetSvgTendencyTab(ch) {
+            districtSvgTendencyTab = ch;
+            districtRenderNamePanel();
         }
 
         // 지도에 잘못 섞여 들어온 도형(예: 배경/틀 사각형)을 통째로 제거 — 지도 자체에서 삭제되며 복구 불가
@@ -4444,6 +4497,7 @@
             };
             const seats = districtSeatCounts[key] || { house:0, senate:0, third:0 };
             const activeChambers = chambers.filter(ch => (seats[ch]||0) > 0);
+            if(!activeChambers.includes(districtSvgTendencyTab)) districtSvgTendencyTab = activeChambers[0] || null;
 
             panel.innerHTML = `
                 <div style="color:#888;font-size:0.78rem;margin-bottom:5px;">선택한 지역구 <span style="color:#666;">(${key})</span></div>
@@ -4461,20 +4515,26 @@
                         </div>
                     `).join('')}
                 </div>
-                <div style="max-height:280px;overflow:auto;border-top:1px solid #222;padding-top:8px;">
-                    ${activeChambers.length === 0 ? '<div style="color:#444;font-size:0.78rem;text-align:center;padding:10px;">이 지역구에 배정된 의석이 없습니다 — 위에서 의석 수를 먼저 입력하세요</div>' : ''}
-                    ${activeChambers.map(ch => `
-                        <div style="color:#666;font-size:0.75rem;margin:6px 0 4px;letter-spacing:1px;">▌ 성향 (${chLabel[ch]})</div>
-                        ${parties.map(p => `
-                            <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
-                                <span style="width:8px;height:8px;background:${p.color};flex-shrink:0;"></span>
-                                <span style="flex:1;min-width:0;font-size:0.82rem;color:#ccc;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${p.name}</span>
-                                <input type="number" min="0" max="100" value="${districtSvgTendency[key]?.[ch]?.[p.id]||0}"
-                                    style="width:56px;flex-shrink:0;background:#000;border:1px solid #333;color:var(--tno-text);font-family:inherit;font-size:0.82rem;padding:3px;text-align:center;"
-                                    onchange="districtSvgSetTendency('${key}','${ch}','${p.id}',this.value)">%
-                            </div>
-                        `).join('')}
-                    `).join('')}
+                <div>
+                    ${activeChambers.length === 0 ? '<div style="color:#444;font-size:0.78rem;text-align:center;padding:10px;border-top:1px solid #222;">이 지역구에 배정된 의석이 없습니다 — 위에서 의석 수를 먼저 입력하세요</div>' : `
+                        <div style="color:#666;font-size:0.75rem;margin:6px 0 4px;letter-spacing:1px;">▌ 성향</div>
+                        <div class="sub-tab-container-3" style="margin-bottom:8px;">
+                            ${activeChambers.map(ch => `
+                                <button class="sub-tab-btn-3${ch===districtSvgTendencyTab?' active':''}" onclick="districtSetSvgTendencyTab('${ch}')">${chLabel[ch]}</button>
+                            `).join('')}
+                        </div>
+                        <div style="max-height:280px;overflow:auto;">
+                            ${parties.map(p => `
+                                <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+                                    <span style="width:8px;height:8px;background:${p.color};flex-shrink:0;"></span>
+                                    <span style="flex:1;min-width:0;font-size:0.82rem;color:#ccc;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${p.name}</span>
+                                    <input type="number" min="0" max="100" value="${districtSvgTendency[key]?.[districtSvgTendencyTab]?.[p.id]||0}"
+                                        style="width:56px;flex-shrink:0;background:#000;border:1px solid #333;color:var(--tno-text);font-family:inherit;font-size:0.82rem;padding:3px;text-align:center;"
+                                        onchange="districtSvgSetTendency('${key}','${districtSvgTendencyTab}','${p.id}',this.value)">%
+                                </div>
+                            `).join('')}
+                        </div>
+                    `}
                 </div>
                 <div style="border-top:1px solid #222;margin-top:10px;padding-top:8px;text-align:right;">
                     <button onclick="districtSvgRemoveShape('${key}')" style="background:transparent;border:1px solid #663333;color:#cc6666;padding:4px 10px;font-family:inherit;font-size:0.75rem;cursor:pointer;">이 도형 지도에서 삭제 (배경/틀 등 잘못 포함된 도형용)</button>
@@ -5226,11 +5286,11 @@
         // 선거 하위탭 전환
         // ─────────────────────────────────────────
         function elecSwitchSub(sub) {
-            ['district','districtNew','tendency','prob'].forEach(s => {
+            ['district','tendency','prob'].forEach(s => {
                 document.getElementById(`elecSubTab${s.charAt(0).toUpperCase()+s.slice(1)}`)?.classList.toggle('active', s===sub);
                 document.getElementById(`elecSub${s.charAt(0).toUpperCase()+s.slice(1)}`)?.classList.toggle('active', s===sub);
             });
-            if(sub === 'district' || sub === 'districtNew') {
+            if(sub === 'district') {
                 document.getElementById('dispTabDistrict').style.display = '';
                 switchDispTab('district');
                 districtUpdateModeUI();
