@@ -4202,18 +4202,27 @@
             const vbMatch = text.match(/\/\/\s*VIEWBOX:\s*(.+)/);
             const viewBox = vbMatch ? vbMatch[1].trim() : '0 0 100 100';
             const shapes = [];
+            const usedKeys = new Set();
             const compRe = /export const (\w+)\s*=\s*\([^)]*\)\s*=>\s*\(\s*<(\w+)\s*([^>]*?)\/?>\s*\)/g;
             let m;
             while((m = compRe.exec(text))) {
                 const [, name, tag, attrStr] = m;
                 const attrs = {};
+                let dataKey = null;
                 const attrRe = /([a-zA-Z0-9_-]+)="([^"]*)"/g;
                 let am;
                 while((am = attrRe.exec(attrStr))) {
                     const [, k, v] = am;
-                    if(['d','points','cx','cy','r','x','y','width','height','rx','ry','transform'].includes(k)) attrs[k] = v;
+                    const decoded = v.replace(/&quot;/g, '"');
+                    if(k === 'data-key') dataKey = decoded;
+                    else if(['d','points','cx','cy','r','x','y','width','height','rx','ry','transform'].includes(k)) attrs[k] = decoded;
                 }
-                shapes.push({ key: name, tag, attrs });
+                // data-key(원본 지역구 이름, 한글 등 포함)가 있으면 우선 사용 — 컴포넌트 이름(name)은
+                // 한글이면 겹치기 쉬운 JS 식별자라 표시용으로 부적합함. 그래도 서로 겹치면 번호를 붙여 구분
+                let key = dataKey || name;
+                while(usedKeys.has(key)) key = `${key}_${shapes.length+1}`;
+                usedKeys.add(key);
+                shapes.push({ key, tag, attrs });
             }
             return { viewBox, shapes };
         }
