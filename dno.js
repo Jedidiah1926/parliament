@@ -1703,7 +1703,9 @@
                         view: { ...districtView },
                         names: JSON.parse(JSON.stringify(districtNames)),
                         order: JSON.parse(JSON.stringify(districtOrder)),
-                        members: JSON.parse(JSON.stringify(districtMembers))
+                        members: JSON.parse(JSON.stringify(districtMembers)),
+                        mapType: { ...districtMapType },
+                        svgMap: JSON.parse(JSON.stringify(districtSvgMap))
                     },
                     tendency: {
                         data:     JSON.parse(JSON.stringify(tendencyData)),
@@ -1782,8 +1784,11 @@
             districtNames = elec.district?.names ? { house:{}, senate:{}, third:{}, ...elec.district.names } : { house:{}, senate:{}, third:{} };
             districtOrder = elec.district?.order ? { house:[], senate:[], third:[], ...elec.district.order } : { house:[], senate:[], third:[] };
             districtMembers = elec.district?.members ? { house:{}, senate:{}, third:{}, ...elec.district.members } : { house:{}, senate:{}, third:{} };
+            districtMapType = { house:'hex', senate:'hex', third:'hex', ...(elec.district?.mapType||{}) };
+            districtSvgMap = { house:null, senate:null, third:null, ...(elec.district?.svgMap||{}) };
             ['house','senate','third'].forEach(ch => districtOrderSync(ch)); // 구버전 파일은 순서 배열이 없으므로 좌표 등장순으로 자동 생성
             selectedDistrictKey = null;
+            districtUpdateModeUI();
             // 성향
             if(elec.tendency?.data) tendencyData = elec.tendency.data;
             if(typeof elec.tendency?.strength === 'number') { tendencyStrength = elec.tendency.strength; tendencySetStrength(tendencyStrength); }
@@ -2203,17 +2208,25 @@
             if(senDistBtn) senDistBtn.style.display = hasSenate ? '' : 'none';
             const thirdDistBtn = document.getElementById('districtChamberThirdBtn');
             if(thirdDistBtn) thirdDistBtn.style.display = hasThird ? '' : 'none';
+            const senDistBtnNew = document.getElementById('districtChamberSenateBtnNew');
+            if(senDistBtnNew) senDistBtnNew.style.display = hasSenate ? '' : 'none';
+            const thirdDistBtnNew = document.getElementById('districtChamberThirdBtnNew');
+            if(thirdDistBtnNew) thirdDistBtnNew.style.display = hasThird ? '' : 'none';
             if(!hasSenate && districtChamber === 'senate') districtSetChamber('house');
             if(!hasThird && districtChamber === 'third') districtSetChamber('house');
             // 존재하지 않는 의원실의 지역구 데이터 자체를 삭제
             if(!hasSenate && districtGrid.senate && Object.keys(districtGrid.senate).length > 0) {
                 districtGrid.senate = {};
-                districtDrawCanvas();
+                districtMapType.senate = 'hex';
+                districtSvgMap.senate = null;
+                districtRenderMap();
                 elecUpdateDistrictInfo();
             }
             if(!hasThird && districtGrid.third && Object.keys(districtGrid.third).length > 0) {
                 districtGrid.third = {};
-                districtDrawCanvas();
+                districtMapType.third = 'hex';
+                districtSvgMap.third = null;
+                districtRenderMap();
                 elecUpdateDistrictInfo();
             }
             renderBillList(); renderArchiveList(); syncBillSelect(); updateNames();
@@ -2805,7 +2818,24 @@
 
         function drawChamberDistrict(chamber) {
             const cvs = document.getElementById(chamber+'DistrictCanvas');
+            const svgWrap = document.getElementById(chamber+'DistrictSvgWrap');
             if(!cvs) return;
+            if(districtMapType[chamber] === 'svg') {
+                cvs.style.display = 'none';
+                if(svgWrap) {
+                    svgWrap.style.display = '';
+                    const lastRecord = [...elecRecords].reverse().find(r => r.chamberType===chamber && r.districtResults?.length>0);
+                    const resultMap = {};
+                    if(lastRecord) lastRecord.districtResults.forEach(d => { resultMap[d.key] = d.partyId; });
+                    renderDistrictSvgInto(svgWrap, chamber, {
+                        getFill: key => { const p = parties.find(x=>x.id===resultMap[key]); return p ? p.color : 'transparent'; },
+                        title: key => districtNames[chamber][key] || key
+                    });
+                }
+                return;
+            }
+            if(svgWrap) svgWrap.style.display = 'none';
+            cvs.style.display = '';
             const w = cvs.offsetWidth;
             const h = cvs.offsetHeight;
             if(!w || !h) {
@@ -4045,6 +4075,79 @@
         let districtChamber = 'house'; // 'house' | 'senate' | 'third'
         const HEX_SIZE = 18;
 
+        // ── 뉴 지역구 (SVG 기반 지도) ──────────────
+        let districtMapType = { house:'hex', senate:'hex', third:'hex' }; // 'hex'(육각형, 구 지역구) | 'svg'(뉴 지역구)
+        // districtSvgMap[ch] = { viewBox, strokeColor, shapes:[{key, tag, attrs:{...}}] } | null
+        let districtSvgMap  = { house:null, senate:null, third:null };
+
+        // SVG 지도를 지정된 컨테이너에 그리고, 도형별 채우기 색/클릭/툴팁을 옵션으로 받는다
+        // (지역구 편집 패널·의회 화면 지역구 보기·선거 결과 지역구 보기가 모두 이 함수를 공유)
+        function renderDistrictSvgInto(wrapEl, chamber, opts = {}) {
+            if(!wrapEl) return;
+            const map = districtSvgMap[chamber];
+            wrapEl.innerHTML = '';
+            if(!map || !Array.isArray(map.shapes) || map.shapes.length === 0) {
+                wrapEl.innerHTML = '<div style="text-align:center;color:#444;font-size:0.85rem;padding:30px 10px;">SVG 지도가 없습니다 — 뉴 지역구 탭에서 업로드하세요</div>';
+                return;
+            }
+            const svgNS = 'http://www.w3.org/2000/svg';
+            const svg = document.createElementNS(svgNS, 'svg');
+            svg.setAttribute('viewBox', map.viewBox || '0 0 100 100');
+            svg.style.width = '100%';
+            svg.style.height = '100%';
+            svg.style.display = 'block';
+            map.shapes.forEach(s => {
+                const el = document.createElementNS(svgNS, s.tag);
+                Object.entries(s.attrs||{}).forEach(([k,v]) => el.setAttribute(k, v));
+                el.setAttribute('fill', (opts.getFill ? opts.getFill(s.key) : null) || 'transparent');
+                el.setAttribute('stroke', map.strokeColor || '#00ffff');
+                el.setAttribute('stroke-width', opts.strokeWidth || '1.5');
+                el.style.transition = 'fill 200ms, filter 120ms';
+                if(opts.clickable) {
+                    el.style.cursor = 'pointer';
+                    el.addEventListener('click', () => opts.onClickKey?.(s.key));
+                    el.addEventListener('mouseenter', () => { el.style.filter = 'brightness(1.5)'; });
+                    el.addEventListener('mouseleave', () => { el.style.filter = ''; });
+                }
+                if(opts.title) {
+                    const titleEl = document.createElementNS(svgNS, 'title');
+                    titleEl.textContent = opts.title(s.key) || s.key;
+                    el.appendChild(titleEl);
+                }
+                svg.appendChild(el);
+            });
+            wrapEl.appendChild(svg);
+        }
+
+        // 지역구 맵 패널을 현재 의원실의 지도 방식(육각형/SVG)에 맞춰 다시 그림 — 지역구 편집 관련 갱신은 모두 이 함수를 거친다
+        function districtRenderMap() {
+            const cvs = document.getElementById('districtCanvas');
+            const svgWrap = document.getElementById('districtSvgWrap');
+            if(!cvs || !svgWrap) return;
+            const isSvg = districtMapType[districtChamber] === 'svg';
+            cvs.style.display = isSvg ? 'none' : '';
+            svgWrap.style.display = isSvg ? '' : 'none';
+            const zoomControls = document.getElementById('districtZoomControls');
+            if(zoomControls) zoomControls.style.display = isSvg ? 'none' : '';
+            if(isSvg) {
+                // SVG 지역구는 도형이 파일에서 이미 정해져 있으므로 추가/제거 모드가 없고, 클릭하면 항상 이름 패널이 열림
+                renderDistrictSvgInto(svgWrap, districtChamber, {
+                    clickable: true,
+                    getFill: key => key === selectedDistrictKey ? 'rgba(255,215,0,0.25)' : 'transparent',
+                    title: key => districtNames[districtChamber][key] || key,
+                    onClickKey: key => {
+                        selectedDistrictKey = key;
+                        districtRenderNamePanel();
+                        districtRenderMap();
+                    }
+                });
+                const cntEl = document.getElementById('districtCount');
+                if(cntEl) cntEl.textContent = `${Object.keys(districtGrid[districtChamber]||{}).length}개 지역구 (SVG)`;
+            } else {
+                districtDrawCanvas();
+            }
+        }
+
         function districtSetChamber(ch) {
             districtChamber = ch;
             const hBtn = document.getElementById('districtChamberHouseBtn');
@@ -4066,10 +4169,112 @@
                 tBtn.style.color        = ch==='third' ? '#cc33ff' : '#6a0080';
                 tBtn.style.borderColor  = ch==='third' ? '#cc33ff' : '#6a0080';
             }
+            ['House','Senate','Third'].forEach(suf => {
+                document.getElementById('districtChamber'+suf+'BtnNew')?.classList.toggle('active', ch === suf.toLowerCase());
+            });
             selectedDistrictKey = null;
             const namePanel = document.getElementById('districtNamePanel');
             if(namePanel) namePanel.style.display = 'none';
-            districtDrawCanvas();
+            districtUpdateModeUI();
+            districtRenderMap();
+        }
+
+        // "구 지역구"/"뉴 지역구" 탭의 표시를 현재 의원실의 지도 방식(육각형/SVG)에 맞춰 동기화
+        function districtUpdateModeUI() {
+            const isSvg = districtMapType[districtChamber] === 'svg';
+            const notice = document.getElementById('districtSvgModeNotice');
+            const hexUI  = document.getElementById('districtHexEditUI');
+            if(notice) notice.style.display = isSvg ? '' : 'none';
+            if(hexUI)  hexUI.style.display  = isSvg ? 'none' : '';
+
+            const map = districtSvgMap[districtChamber];
+            const info = document.getElementById('districtSvgInfo');
+            const fileName = document.getElementById('districtSvgFileName');
+            const shapeCount = document.getElementById('districtSvgShapeCount');
+            const strokeInput = document.getElementById('districtSvgStrokeColorInput');
+            if(info) info.style.display = map ? '' : 'none';
+            if(fileName) fileName.textContent = map ? '업로드됨' : '파일 없음';
+            if(shapeCount) shapeCount.textContent = map ? String(map.shapes.length) : '0';
+            if(strokeInput && map) strokeInput.value = map.strokeColor || '#00ffff';
+        }
+
+        function districtSvgUpload(input) {
+            const file = input.files?.[0]; if(!file) return;
+            const ch = districtChamber;
+            const hasExisting = Object.keys(districtGrid[ch]||{}).length > 0 || districtMapType[ch] === 'svg';
+            if(hasExisting && !confirm(`"${ch}" 의원실의 기존 지역구 데이터가 모두 새 SVG 지도로 대체됩니다.\n(이름·당선자 정보 포함) 계속하시겠습니까?`)) {
+                input.value = '';
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = e => {
+                const text = e.target.result;
+                let doc;
+                try { doc = new DOMParser().parseFromString(text, 'image/svg+xml'); } catch(err) { alert('SVG 파일을 읽을 수 없습니다.'); return; }
+                const svg = doc.querySelector('svg');
+                if(!svg || doc.querySelector('parsererror')) { alert('유효한 SVG 파일이 아닙니다.'); return; }
+                const nodeList = svg.querySelectorAll('path,polygon,polyline,rect,circle,ellipse');
+                if(nodeList.length === 0) { alert('SVG 안에서 지역구로 쓸 도형(path/polygon 등)을 찾을 수 없습니다.'); return; }
+
+                const usedKeys = new Set();
+                const shapes = Array.from(nodeList).map((el, idx) => {
+                    const tag = el.tagName.toLowerCase();
+                    const rawId = el.id || '';
+                    let key = rawId ? rawId.replace(/[^\w\-]/g, '_') : `shape_${idx+1}`;
+                    while(usedKeys.has(key)) key = `${key}_${idx+1}`;
+                    usedKeys.add(key);
+                    const attrs = {};
+                    ['d','points','cx','cy','r','x','y','width','height','rx','ry'].forEach(a => { if(el.hasAttribute(a)) attrs[a] = el.getAttribute(a); });
+                    return { key, tag, attrs };
+                });
+                const vb = svg.getAttribute('viewBox');
+                const viewBox = vb || `0 0 ${svg.getAttribute('width')||100} ${svg.getAttribute('height')||100}`;
+                const strokeColor = districtSvgMap[ch]?.strokeColor || '#00ffff';
+
+                districtSvgMap[ch] = { viewBox, strokeColor, shapes };
+                districtMapType[ch] = 'svg';
+                districtGrid[ch] = {};
+                districtNames[ch] = {};
+                shapes.forEach(s => {
+                    districtGrid[ch][s.key] = true;
+                    if(!/^shape_\d+$/.test(s.key)) districtNames[ch][s.key] = s.key; // 도형 id가 있으면 기본 이름으로 사용
+                });
+                districtMembers[ch] = {};
+                districtOrderSync(ch);
+                selectedDistrictKey = null;
+                document.getElementById('districtNamePanel').style.display = 'none';
+
+                districtUpdateModeUI();
+                districtRenderMap();
+                renderDistrictListPanel();
+                elecUpdateDistrictInfo();
+                input.value = '';
+            };
+            reader.readAsText(file);
+        }
+
+        function districtSvgSetStrokeColor(color) {
+            const map = districtSvgMap[districtChamber];
+            if(!map) return;
+            map.strokeColor = color;
+            districtRenderMap();
+        }
+
+        function districtSvgRevertToHex() {
+            const ch = districtChamber;
+            if(!confirm(`"${ch}" 의원실을 구 지역구(육각형) 방식으로 되돌립니다.\nSVG 지도로 만든 지역구/당선자 데이터가 모두 삭제됩니다. 계속하시겠습니까?`)) return;
+            districtMapType[ch] = 'hex';
+            districtSvgMap[ch] = null;
+            districtGrid[ch] = {};
+            districtNames[ch] = {};
+            districtMembers[ch] = {};
+            districtOrderSync(ch);
+            selectedDistrictKey = null;
+            document.getElementById('districtNamePanel').style.display = 'none';
+            districtUpdateModeUI();
+            districtRenderMap();
+            renderDistrictListPanel();
+            elecUpdateDistrictInfo();
         }
 
         function districtSetMode(mode) {
@@ -4107,7 +4312,7 @@
             }
             const cvs = document.getElementById('districtCanvas');
             if(cvs) cvs.style.cursor = mode==='none' ? 'grab' : (mode==='remove' ? 'cell' : mode==='name' ? 'pointer' : 'crosshair');
-            districtDrawCanvas();
+            districtRenderMap();
         }
 
         function districtRenderNamePanel() {
@@ -4181,7 +4386,7 @@
             if(name.trim()) districtNames[ch][key] = name.trim();
             else delete districtNames[ch][key];
             if(ch === districtChamber && key === selectedDistrictKey) districtRenderNamePanel();
-            districtDrawCanvas();
+            districtRenderMap();
         }
 
         // 좌표가 어느 의원실 소속인지 찾아 이름(또는 빈 문자열) 반환, 활성 지역구가 아니면 null
@@ -4316,6 +4521,7 @@
         }
 
         function districtFitView() {
+            if(districtMapType[districtChamber] === 'svg') return; // SVG는 뷰포트에 맞춰 자동으로 표시됨
             const cvs = document.getElementById('districtCanvas');
             if(!cvs) return;
             const allKeys = [...new Set([...Object.keys(districtGrid.house), ...Object.keys(districtGrid.senate)])];
@@ -4358,8 +4564,10 @@
         }
 
         function districtZoom(factor) {
+            if(districtMapType[districtChamber] === 'svg') return;
             const cvs = document.getElementById('districtCanvas');
             if(!cvs) return;
+            const cx = districtView.panX, cy = districtView.panY;
             districtView.panX = cx + (districtView.panX - cx) * factor;
             districtView.panY = cy + (districtView.panY - cy) * factor;
             districtView.zoom = Math.max(0.3, Math.min(5, districtView.zoom * factor));
@@ -4367,6 +4575,7 @@
         }
 
         function districtResetView() {
+            if(districtMapType[districtChamber] === 'svg') return;
             const cvs = document.getElementById('districtCanvas');
             if(!cvs) return;
             const w = cvs.offsetWidth || 500;
@@ -4376,19 +4585,33 @@
         }
 
         function districtClearAll() {
+            if(districtMapType[districtChamber] === 'svg') {
+                // SVG 지도의 도형 자체는 업로드된 파일에서 오므로 유지하고, 이름만 초기화
+                if(Object.keys(districtNames[districtChamber]||{}).length === 0) return;
+                if(!confirm('이 지역구의 모든 이름을 초기화하시겠습니까? (지도 도형 자체는 유지됩니다)')) return;
+                districtNames[districtChamber] = {};
+                selectedDistrictKey = null;
+                const namePanel = document.getElementById('districtNamePanel');
+                if(namePanel) namePanel.style.display = 'none';
+                districtRenderMap();
+                renderDistrictListPanel();
+                return;
+            }
             districtGrid[districtChamber] = {};
             districtNames[districtChamber] = {};
             districtOrder[districtChamber] = [];
             selectedDistrictKey = null;
             const namePanel = document.getElementById('districtNamePanel');
             if(namePanel) namePanel.style.display = 'none';
-            districtDrawCanvas();
+            districtRenderMap();
             renderDistrictListPanel();
         }
 
         function districtInitCanvas() {
             const cvs = document.getElementById('districtCanvas');
             if(!cvs) return;
+
+            if(districtMapType[districtChamber] === 'svg') { districtRenderMap(); return; }
 
             // 실제 너비 확보 (탭이 숨겨졌다 열려도 올바르게)
             let w = cvs.offsetWidth  || cvs.parentElement?.offsetWidth  || 500;
@@ -4517,7 +4740,7 @@
         }
 
         function tendencyGetBounds() {
-            const keys = [...new Set([...Object.keys(districtGrid.house), ...Object.keys(districtGrid.senate), ...Object.keys(districtGrid.third)])];
+            const keys = tendencyAllKeys();
             if(keys.length === 0) return null;
             let minQ=Infinity, maxQ=-Infinity, minR=Infinity, maxR=-Infinity;
             keys.forEach(k => {
@@ -4529,7 +4752,9 @@
         }
 
         function tendencyAllKeys() {
-            return [...new Set([...Object.keys(districtGrid.house), ...Object.keys(districtGrid.senate), ...Object.keys(districtGrid.third)])];
+            // SVG 지도(뉴 지역구)의 키는 육각형 좌표("q,r")가 아니므로, 성향/육각형 렌더링에 섞이지 않도록 hex 모드 의원실만 포함
+            const hexChambers = ['house','senate','third'].filter(c => districtMapType[c] !== 'svg');
+            return [...new Set(hexChambers.flatMap(c => Object.keys(districtGrid[c])))];
         }
 
         function tendencyDrawMap(cvs, partyId) {
@@ -4843,13 +5068,14 @@
         // 선거 하위탭 전환
         // ─────────────────────────────────────────
         function elecSwitchSub(sub) {
-            ['district','tendency','prob'].forEach(s => {
+            ['district','districtNew','tendency','prob'].forEach(s => {
                 document.getElementById(`elecSubTab${s.charAt(0).toUpperCase()+s.slice(1)}`)?.classList.toggle('active', s===sub);
                 document.getElementById(`elecSub${s.charAt(0).toUpperCase()+s.slice(1)}`)?.classList.toggle('active', s===sub);
             });
-            if(sub === 'district') {
+            if(sub === 'district' || sub === 'districtNew') {
                 document.getElementById('dispTabDistrict').style.display = '';
                 switchDispTab('district');
+                districtUpdateModeUI();
                 setTimeout(() => { districtInitCanvas(); }, 80);
                 renderDistrictListPanel();
             }
@@ -5646,7 +5872,23 @@
             // 우측 elecDistrictResultCanvas에 지역구 색 칠하기
             const suf = chamber.charAt(0).toUpperCase() + chamber.slice(1);
             const cvs = document.getElementById('elecDistrictResultCanvas'+suf);
+            const svgWrap = document.getElementById('elecDistrictResultSvg'+suf);
             if(!cvs) return;
+            if(districtMapType[chamber] === 'svg') {
+                cvs.style.display = 'none';
+                if(svgWrap) {
+                    svgWrap.style.display = '';
+                    const resultMap = {};
+                    districtResults.slice(0, progress).forEach(({key, partyId}) => { resultMap[key] = partyId; });
+                    renderDistrictSvgInto(svgWrap, chamber, {
+                        getFill: key => { const p = parties.find(x=>x.id===resultMap[key]); return p ? p.color : 'transparent'; },
+                        title: key => districtNames[chamber][key] || key
+                    });
+                }
+                return;
+            }
+            if(svgWrap) svgWrap.style.display = 'none';
+            cvs.style.display = '';
             elecDistrictBindHover(chamber);
             const w = cvs.offsetWidth;
             const h = cvs.offsetHeight;
