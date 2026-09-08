@@ -4,6 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>MINISTRY OF TRANSPORT</title>
+<script src="theme.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/neodgm/neodgm-webfont@latest/neodgm/style.css">
 <style>
@@ -90,14 +91,7 @@
   <div class="wrap">
     <header>
       <h1>MINISTRY OF TRANSPORT</h1>
-      <div style="display:flex; align-items:center; gap:14px;">
-        <div class="small">SVG 올려서 각 `&lt;path&gt;`들을 컴포넌트로 추출해요 · 클라이언트 전용</div>
-        <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
-          <span class="small">테마 색</span>
-          <input type="color" id="themeColorInput" value="#00ffff" title="테마 색"
-            style="width:30px; height:26px; padding:0; border:1px solid var(--tno-border); background:none; cursor:pointer;">
-        </label>
-      </div>
+      <div class="small">SVG 올려서 각 `&lt;path&gt;`들을 컴포넌트로 추출해요 · 클라이언트 전용</div>
     </header>
 
     <div class="panel">
@@ -150,29 +144,6 @@
   </div>
 
 <script>
-/* 테마 색 — 선택한 색을 --tno-neon(및 옅은 버전)에 적용, localStorage에 저장해 다음 방문에도 유지 */
-(function() {
-  const THEME_KEY = 'mapMakerThemeColor';
-  const input = document.getElementById('themeColorInput');
-  function hexToRgb(hex) {
-    const m = hex.replace('#','').match(/.{1,2}/g);
-    return m ? m.map(h => parseInt(h,16)).join(',') : '0,255,255';
-  }
-  function applyThemeColor(hex) {
-    const root = document.documentElement.style;
-    root.setProperty('--tno-neon', hex);
-    root.setProperty('--tno-neon-dim', `rgba(${hexToRgb(hex)}, .3)`);
-  }
-  let saved = '#00ffff';
-  try { saved = localStorage.getItem(THEME_KEY) || saved; } catch(e) {}
-  if (input) input.value = saved;
-  applyThemeColor(saved);
-  input?.addEventListener('input', (e) => {
-    applyThemeColor(e.target.value);
-    try { localStorage.setItem(THEME_KEY, e.target.value); } catch(e) {}
-  });
-})();
-
 /* SVG Splitter — client-side */
 let lastSVGText = "";
 let svgDoc = null;
