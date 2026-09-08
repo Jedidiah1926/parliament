@@ -1,0 +1,408 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>맵 메이커</title>
+<link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/neodgm/neodgm-webfont@latest/neodgm/style.css">
+<style>
+  :root {
+    --tno-bg: #101218;
+    --tno-panel: #1a1d26;
+    --tno-neon: #00ffff;
+    --tno-neon-dim: rgba(0, 255, 255, .3);
+    --tno-text: #e0e0e0;
+    --tno-border: #4a5a6a;
+    --tno-gold: #ffd700;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: 'NeoDunggeunmo', 'VT323', monospace;
+    margin: 16px;
+    background: var(--tno-bg);
+    color: var(--tno-text);
+  }
+  ::-webkit-scrollbar { width: 10px; height: 12px; background: #000; }
+  ::-webkit-scrollbar-thumb { background: var(--tno-border); border: 1px solid var(--tno-neon); box-shadow: inset 0 0 5px rgba(0,255,255,.22), 0 0 5px rgba(0,255,255,.18); }
+  ::-webkit-scrollbar-thumb:hover { background: var(--tno-neon); box-shadow: 0 0 12px var(--tno-neon); }
+  ::-webkit-scrollbar-track { background: #000; border-top: 1px solid #1f343c; }
+  ::-webkit-scrollbar-corner { background: #000; }
+
+  .wrap { max-width:1100px; margin:0 auto; display:grid; grid-template-columns: 1fr 360px; gap:16px; align-items:start; }
+  header { grid-column: 1 / -1; display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:8px; }
+  h1 { font-size:20px; margin:0; color: var(--tno-neon); text-shadow: 0 0 6px var(--tno-neon-dim); letter-spacing: 1px; }
+  .panel {
+    background: var(--tno-panel);
+    border: 2px solid var(--tno-border);
+    padding:12px;
+    border-radius:6px;
+    box-shadow: 0 0 15px rgba(0,255,255,.08);
+  }
+  #preview { border-radius:6px; overflow:hidden; background:#0a0c11; border: 1px solid var(--tno-border); height:620px; display:flex; align-items:center; justify-content:center; }
+  #svgContainer svg { width:100%; height:auto; display:block; }
+  .controls { display:flex; gap:8px; flex-wrap:wrap; margin-top:8px; align-items:center; }
+  .controls label { color: var(--tno-text); font-size: 14px; }
+  .list { max-height:560px; overflow:auto; margin-top:8px; }
+  .item { display:flex; gap:6px; flex-wrap:wrap; row-gap:6px; align-items:center; padding:6px; border-bottom:1px solid var(--tno-border); }
+  .item button { margin-left:auto; }
+  input[type="text"] {
+    width:100px; padding:5px 8px; background:#000; border:1px solid var(--tno-border);
+    color: var(--tno-text); border-radius:4px; font-family: inherit;
+  }
+  input[type="text"]:focus { outline:none; border-color: var(--tno-neon); box-shadow: 0 0 6px var(--tno-neon-dim); }
+
+  /* 파일 업로드 칸: 브라우저 기본 버튼 대신 테마에 맞춘 커스텀 버튼 + 파일명 표시 */
+  input[type="file"] { position:absolute; width:1px; height:1px; opacity:0; overflow:hidden; }
+  .file-label {
+    display:inline-flex; align-items:center; gap:6px; cursor:pointer;
+  }
+  #fileNameDisplay { color:#8a94a3; font-size:13px; }
+
+  /* 체크박스: 테마에 맞춘 커스텀 스타일 */
+  input[type="checkbox"] {
+    appearance:none; -webkit-appearance:none; width:16px; height:16px; flex-shrink:0;
+    background:#000; border:1px solid var(--tno-border); border-radius:3px;
+    cursor:pointer; position:relative; margin:0;
+  }
+  input[type="checkbox"]:hover { border-color: var(--tno-neon); }
+  input[type="checkbox"]:checked { background: var(--tno-neon); border-color: var(--tno-neon); box-shadow: 0 0 6px var(--tno-neon-dim); }
+  input[type="checkbox"]:checked::after {
+    content:''; position:absolute; left:4px; top:1px; width:4px; height:8px;
+    border:solid #000; border-width:0 2px 2px 0; transform: rotate(45deg);
+  }
+
+  .small { font-size:13px; color:#8a94a3; }
+  footer { grid-column:1 / -1; margin-top:12px; color:#8a94a3; font-size:13px; }
+  .btn {
+    background: var(--tno-neon); color:#000; padding:8px 10px; border-radius:6px;
+    border:none; cursor:pointer; font-family: inherit; font-weight: bold; white-space: nowrap;
+  }
+  .btn:hover { background:#fff; box-shadow: 0 0 15px var(--tno-neon); }
+  .btn.secondary {
+    background: transparent; color: var(--tno-neon); border:1px solid var(--tno-neon);
+  }
+  .btn.secondary:hover { background: var(--tno-neon-dim); box-shadow: 0 0 10px var(--tno-neon-dim); }
+  .btn.icon { padding:6px 9px; font-size:15px; line-height:1; }
+  #count { color: var(--tno-gold); }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>맵 메이커</h1>
+      <div class="small">SVG 올려서 각 `&lt;path&gt;`들을 컴포넌트로 추출해요 · 클라이언트 전용</div>
+    </header>
+
+    <div class="panel">
+      <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+        <input id="fileInput" type="file" accept=".svg,image/svg+xml" />
+        <label for="fileInput" class="btn secondary file-label">⬆ SVG 선택</label>
+        <span id="fileNameDisplay">파일 없음</span>
+        <button id="btnParse" class="btn secondary icon" title="파싱">▶</button>
+        <button id="btnExportAll" class="btn">내보내기</button>
+        <button id="btnExportSelected" class="btn secondary">선택 내보내기</button>
+      </div>
+
+      <div class="controls" style="margin-top:10px;">
+        <label><input id="toggleIds" type="checkbox" checked /> id/label 우선 사용</label>
+        <label><input id="wrapSvg" type="checkbox" checked /> export 시 <code>&lt;svg viewBox&gt;</code> 래퍼 포함</label>
+        <button id="btnClear" class="btn secondary">초기화</button>
+      </div>
+
+      <div id="preview" style="margin-top:12px;">
+        <div id="svgContainer" style="width:100%; padding:8px; box-sizing:border-box; text-align:center; color:#8a94a3;">
+          업로드한 SVG가 여기 표시됩니다
+        </div>
+      </div>
+    </div>
+
+    <aside class="panel">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div style="font-weight:700; color: var(--tno-neon);">요소 목록</div>
+        <div class="small">찾은 shape 수: <span id="count">0</span></div>
+      </div>
+
+      <div class="list" id="elementsList" style="margin-top:8px;">
+        <!-- items -->
+      </div>
+
+      <div style="display:flex; gap:8px; margin-top:8px;">
+        <button id="btnSelectAll" class="btn secondary">모두 선택</button>
+        <button id="btnDeselectAll" class="btn secondary">선택 해제</button>
+        <button id="btnDownloadSVG" class="btn">수정된 SVG 다운로드</button>
+      </div>
+
+      <div style="margin-top:10px;" class="small">
+        사용법: SVG 업로드 → ▶ 파싱 → 리스트에서 이름 편집/선택 → "내보내기".
+      </div>
+    </aside>
+
+    <footer>
+      이 페이지는 로컬에서 실행됩니다. 복잡한 변환(좌표 스케일링·투영·정밀 트레이싱)이 필요하면 서버/수동 보정 옵션을 추가해 드립니다.
+    </footer>
+  </div>
+
+<script>
+/* SVG Splitter — client-side */
+let lastSVGText = "";
+let svgDoc = null;
+let shapes = []; // {el, tag, id, defaultId, selected}
+
+const fileInput = document.getElementById('fileInput');
+const btnParse = document.getElementById('btnParse');
+const svgContainer = document.getElementById('svgContainer');
+const elementsList = document.getElementById('elementsList');
+const countEl = document.getElementById('count');
+const btnExportAll = document.getElementById('btnExportAll');
+const btnExportSelected = document.getElementById('btnExportSelected');
+const btnSelectAll = document.getElementById('btnSelectAll');
+const btnDeselectAll = document.getElementById('btnDeselectAll');
+const btnDownloadSVG = document.getElementById('btnDownloadSVG');
+const btnClear = document.getElementById('btnClear');
+const fileNameDisplay = document.getElementById('fileNameDisplay');
+
+fileInput.addEventListener('change', () => {
+  fileNameDisplay.textContent = fileInput.files?.[0]?.name || '파일 없음';
+});
+
+function readFileAsText(file) {
+  return new Promise((res, rej) => {
+    const fr = new FileReader();
+    fr.onload = () => res(fr.result);
+    fr.onerror = rej;
+    fr.readAsText(file, 'utf-8');
+  });
+}
+
+function sanitizeId(s, fallback) {
+  if(!s) return fallback;
+  return s.replace(/[^\w\-]/g, '_');
+}
+
+async function parseUploaded() {
+  elementsList.innerHTML = '';
+  shapes = [];
+  if (!fileInput.files || fileInput.files.length === 0) return alert('SVG 파일을 선택하세요.');
+  const text = await readFileAsText(fileInput.files[0]);
+  lastSVGText = text;
+  // parse to DOM
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(text, 'image/svg+xml');
+  svgDoc = doc;
+  const svg = doc.querySelector('svg');
+  if (!svg) return alert('유효한 SVG가 아닙니다.');
+  // render inline copy (clone) to container
+  svgContainer.innerHTML = '';
+  const clone = svg.cloneNode(true);
+  // make sure it scales to container
+  clone.style.width = '100%';
+  clone.style.height = 'auto';
+  svgContainer.appendChild(clone);
+
+  // gather shapes
+  const nodeList = clone.querySelectorAll('path,polygon,polyline,rect,circle,ellipse');
+  nodeList.forEach((el, idx) => {
+    const tag = el.tagName.toLowerCase();
+    const origId = el.id || el.getAttribute('inkscape:label') || el.getAttribute('data-name') || '';
+    const defaultId = origId || `${tag}_${idx+1}`;
+    const safe = sanitizeId(defaultId, `${tag}_${idx+1}`);
+    shapes.push({ el, tag, id: safe, defaultId: safe, selected: false, origId });
+  });
+
+  renderList();
+  attachHoverHandlers();
+}
+
+function renderList() {
+  elementsList.innerHTML = '';
+  shapes.forEach((s, i) => {
+    const div = document.createElement('div');
+    div.className = 'item';
+    // color swatch (computed)
+    const sw = document.createElement('div');
+    sw.style.width = '12px'; sw.style.height='12px'; sw.style.borderRadius='3px';
+    const fill = s.el.getAttribute('fill') || window.getComputedStyle(s.el).fill || '#ccc';
+    sw.style.background = fill;
+    div.appendChild(sw);
+    // name input
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.value = s.id;
+    input.title = s.origId || '';
+    input.oninput = (e) => { s.id = sanitizeId(e.target.value || s.defaultId, s.defaultId); };
+    div.appendChild(input);
+    // tag
+    const tagSpan = document.createElement('div');
+    tagSpan.textContent = s.tag;
+    tagSpan.style.opacity = 0.6; tagSpan.style.marginLeft='6px';
+    div.appendChild(tagSpan);
+    // select checkbox
+    const chk = document.createElement('input');
+    chk.type = 'checkbox';
+    chk.style.marginLeft = '8px';
+    chk.onchange = (ev) => {
+      s.selected = ev.target.checked;
+      s.el.style.opacity = s.selected ? 0.7 : 1;
+    };
+    div.appendChild(chk);
+    // zoom / highlight button
+    const btn = document.createElement('button');
+    btn.textContent = '⌖';
+    btn.title = '하이라이트';
+    btn.className = 'btn secondary icon';
+    btn.onclick = () => {
+      // scroll into view / flash
+      s.el.style.transition = 'filter 200ms, transform 200ms';
+      s.el.style.filter = 'drop-shadow(0 6px 16px rgba(0,0,0,0.2))';
+      setTimeout(()=> s.el.style.filter='', 600);
+    };
+    div.appendChild(btn);
+    // export single button
+    const btn2 = document.createElement('button');
+    btn2.textContent = '⇩';
+    btn2.title = '내보내기';
+    btn2.className = 'btn icon';
+    btn2.onclick = () => downloadComponents([s], true);
+    div.appendChild(btn2);
+    elementsList.appendChild(div);
+  });
+  countEl.textContent = shapes.length;
+}
+
+function attachHoverHandlers() {
+  shapes.forEach(s => {
+    s.el.style.transition = 'opacity 120ms ease, transform 120ms ease';
+    s.el.onmouseenter = () => { s.el.style.opacity = 0.85; s.el.style.transform = 'translateY(-2px)'; };
+    s.el.onmouseleave = () => { if (!s.selected) s.el.style.opacity = 1; s.el.style.transform=''; };
+    s.el.onclick = () => {
+      // toggle select
+      s.selected = !s.selected;
+      // sync checkbox in list
+      const idx = shapes.indexOf(s);
+      const listItem = elementsList.children[idx];
+      if (listItem) {
+        const cb = listItem.querySelector('input[type="checkbox"]');
+        if(cb) cb.checked = s.selected;
+      }
+      s.el.style.opacity = s.selected ? 0.7 : 1;
+    };
+  });
+}
+
+/* Export logic: create a .jsx text with React components */
+function toJSXName(name) {
+  // CamelCase
+  return name.replace(/^[^A-Za-z]+/, '').split(/[_\- ]+/).map((p,i)=> i? (p.charAt(0).toUpperCase()+p.slice(1)) : (p.charAt(0).toUpperCase()+p.slice(1))).join('') || 'Path';
+}
+function escapeAttr(s) {
+  // escape backticks and closing braces used in template; we'll wrap strings in double quotes
+  if (!s) return '';
+  return s.replace(/"/g, '&quot;').replace(/`/g,'\\`');
+}
+
+function download(filename, text) {
+  const a = document.createElement('a');
+  const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+  setTimeout(()=> URL.revokeObjectURL(a.href), 5000);
+}
+
+function generateComponentText(items, includeSvgWrapper = true) {
+  const viewBox = (svgDoc && svgDoc.querySelector('svg')) ? svgDoc.querySelector('svg').getAttribute('viewBox') || '' : '';
+  let out = `import React from 'react';\n\n// Auto-generated by SVG Splitter\n\n`;
+  items.forEach(it => {
+    const name = toJSXName(it.id);
+    const tag = it.tag;
+    let attrText = '';
+    // pick attributes to include
+    const attrs = it.el.attributes;
+    const keep = [];
+    for (let j=0;j<attrs.length;j++) {
+      const a = attrs[j];
+      const aname = a.name;
+      if (aname === 'd' || aname === 'points' || aname === 'cx' || aname === 'cy' || aname === 'r' ||
+          aname==='x' || aname==='y' || aname==='width' || aname==='height' || aname==='rx' || aname==='ry' || aname==='fill' || aname==='stroke' || aname==='transform') {
+        keep.push([aname, a.value]);
+      }
+    }
+    // build attribute string, but use placeholders for fill/stroke so props override
+    keep.forEach(([k,v])=>{
+      if (k==='fill') return;
+      if (k==='stroke') return;
+      if (k==='d' || k==='points') {
+        attrText += ` ${k}="${escapeAttr(v)}"`;
+      } else {
+        attrText += ` ${k}="${v}"`;
+      }
+    });
+    // component template
+    out += `export const ${name} = ({ fill = 'currentColor', stroke = 'none', onClick, className, style }) => (\n  <${tag} ${attrText} fill={fill} stroke={stroke} onClick={onClick} className={"{className}"} style={"{style}"} />\n);\n\n`;
+  });
+  // default export map
+  out += `const COMPONENTS = {\n`;
+  items.forEach(it => {
+    out += `  '${toJSXName(it.id)}': ${toJSXName(it.id)},\n`;
+  });
+  out += `};\n\nexport default COMPONENTS;\n`;
+  // note: above we inserted placeholders for className/style strings because building correct JSX with string templates in-browser is messy;
+  // We'll post-process replace the placeholder "{className}" -> {className} and "{style}" -> {style}
+  out = out.replace(/className="\{className\}"/g, 'className={className}');
+  out = out.replace(/style="\{style\}"/g, 'style={style}');
+  return out;
+}
+
+function getSelectedShapes() {
+  return shapes.filter(s => s.selected);
+}
+
+function downloadComponents(list, singleFile = true) {
+  if (!list || list.length === 0) {
+    alert('선택된 요소가 없습니다.');
+    return;
+  }
+  const jsx = generateComponentText(list, document.getElementById('wrapSvg').checked);
+  const filename = 'svg_components.jsx';
+  download(filename, jsx);
+}
+
+btnParse.addEventListener('click', parseUploaded);
+btnExportAll.addEventListener('click', ()=> downloadComponents(shapes, true));
+btnExportSelected.addEventListener('click', ()=> downloadComponents(getSelectedShapes(), true));
+btnSelectAll.addEventListener('click', ()=> {
+  shapes.forEach((s,i)=> {
+    s.selected = true;
+    const cb = elementsList.children[i].querySelector('input[type="checkbox"]');
+    if(cb) cb.checked = true;
+    s.el.style.opacity = 0.7;
+  });
+});
+btnDeselectAll.addEventListener('click', ()=> {
+  shapes.forEach((s,i)=> {
+    s.selected = false;
+    const cb = elementsList.children[i].querySelector('input[type="checkbox"]');
+    if(cb) cb.checked = false;
+    s.el.style.opacity = 1;
+  });
+});
+btnDownloadSVG.addEventListener('click', ()=> {
+  // download original SVG text (possibly post-edit if you want to support edits)
+  if (!lastSVGText) return alert('먼저 SVG를 파싱하세요.');
+  download('edited.svg', lastSVGText);
+});
+btnClear.addEventListener('click', ()=> {
+  fileInput.value = '';
+  fileNameDisplay.textContent = '파일 없음';
+  svgContainer.innerHTML = '업로드한 SVG가 여기 표시됩니다';
+  elementsList.innerHTML = '';
+  shapes = [];
+  svgDoc = null;
+  lastSVGText = '';
+  countEl.textContent = '0';
+});
+
+</script>
+</body>
+</html>
