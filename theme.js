@@ -36,8 +36,16 @@
         applyThemeColor(hex);
     }
 
+    function resetThemeColor() {
+        try { localStorage.removeItem(THEME_KEY); } catch (e) {}
+        applyThemeColor(DEFAULT_COLOR);
+    }
+
     window.getThemeColor = getThemeColor;
     window.setThemeColor = setThemeColor;
+    window.resetThemeColor = resetThemeColor;
+    window.getDefaultThemeColor = function () { return DEFAULT_COLOR; };
+    window.isValidHexColor = isValidHex;
 
     applyThemeColor(getThemeColor());
 })();

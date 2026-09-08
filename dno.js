@@ -4231,10 +4231,15 @@
             const fileName = document.getElementById('districtSvgFileName');
             const shapeCount = document.getElementById('districtSvgShapeCount');
             const strokeInput = document.getElementById('districtSvgStrokeColorInput');
+            const strokeHexInput = document.getElementById('districtSvgStrokeColorHexInput');
             if(info) info.style.display = districtSvgMap ? '' : 'none';
             if(fileName) fileName.textContent = districtSvgMap ? '업로드됨' : '파일 없음';
             if(shapeCount) shapeCount.textContent = districtSvgMap ? String(districtSvgMap.shapes.length) : '0';
-            if(strokeInput && districtSvgMap) strokeInput.value = districtSvgMap.strokeColor || '#00ffff';
+            if(districtSvgMap) {
+                const color = districtSvgMap.strokeColor || '#00ffff';
+                if(strokeInput) strokeInput.value = color;
+                if(strokeHexInput) strokeHexInput.value = color.toUpperCase();
+            }
         }
 
         // 맵 메이커(map.html)가 내보낸 .jsx 텍스트에서 도형 정보와 viewBox를 추출
@@ -4310,7 +4315,23 @@
         function districtSvgSetStrokeColor(color) {
             if(!districtSvgMap) return;
             districtSvgMap.strokeColor = color;
+            districtUpdateModeUI();
             districtRenderMap();
+        }
+
+        function districtSvgSetStrokeColorHex(hex) {
+            const v = hex.trim().startsWith('#') ? hex.trim() : '#' + hex.trim();
+            if(typeof isValidHexColor === 'function' ? !isValidHexColor(v) : !/^#[0-9a-fA-F]{6}$/.test(v)) {
+                districtUpdateModeUI(); // 잘못된 값이면 원래 값으로 되돌림
+                return;
+            }
+            districtSvgSetStrokeColor(v);
+        }
+
+        // 지역구 테두리 색을 현재 사이트 테마 색(설정에서 고른 색)과 동일하게 맞춤
+        function districtSvgSyncStrokeColorWithTheme() {
+            if(typeof getThemeColor !== 'function') return;
+            districtSvgSetStrokeColor(getThemeColor());
         }
 
         function districtSvgRevertToHex() {
