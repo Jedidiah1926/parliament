@@ -2,7 +2,7 @@
             --tno-bg: #101218;
             --tno-panel: #1a1d26;
             --tno-neon: #00ffff;
-            --tno-neon-dim: rgba(0, 255, 255, 0.3);
+            --tno-neon-dim: color-mix(in srgb, var(--tno-neon) 30%, transparent);
             --tno-text: #e0e0e0;
             --tno-border: #4a5a6a;
             --tno-alert: #ff0055;
@@ -68,7 +68,7 @@
             display: flex;
             flex-direction: column;
             position: relative;
-            box-shadow: 0 0 15px rgba(0, 255, 255, 0.1);
+            box-shadow: 0 0 15px color-mix(in srgb, var(--tno-neon) 10%, transparent);
         }
         
         .tno-header-strip {
@@ -165,7 +165,7 @@
         .disp-tab-btn.active {
             color: var(--tno-neon);
             border-color: var(--tno-neon);
-            background: rgba(0,255,255,0.05);
+            background: color-mix(in srgb, var(--tno-neon) 5%, transparent);
             text-shadow: 0 0 5px var(--tno-neon);
         }
         .disp-tab-close {
@@ -272,7 +272,7 @@
         .system-radio-btn:has(input:checked) {
             border-color: var(--tno-neon);
             color: var(--tno-neon);
-            background: rgba(0,255,255,0.07);
+            background: color-mix(in srgb, var(--tno-neon) 7%, transparent);
             box-shadow: 0 0 6px var(--tno-neon-dim);
             text-shadow: 0 0 4px var(--tno-neon);
         }
@@ -280,7 +280,7 @@
         .system-radio-btn.active {
             border-color: var(--tno-neon);
             color: var(--tno-neon);
-            background: rgba(0,255,255,0.07);
+            background: color-mix(in srgb, var(--tno-neon) 7%, transparent);
             box-shadow: 0 0 6px var(--tno-neon-dim);
             text-shadow: 0 0 4px var(--tno-neon);
         }
@@ -347,7 +347,7 @@
         .sub-tab-btn.active {
             color: var(--tno-neon);
             border-color: var(--tno-neon);
-            background: rgba(0,255,255,0.07);
+            background: color-mix(in srgb, var(--tno-neon) 7%, transparent);
             box-shadow: 0 -2px 8px var(--tno-neon-dim);
         }
 
@@ -466,7 +466,7 @@
             background: transparent; border: 1px dashed var(--tno-border); color: #888;
             padding: 8px; width: 100%; margin-top: 10px; font-size: 1rem;
         }
-        .add-btn:hover { border-color: var(--tno-neon); color: var(--tno-neon); background: rgba(0,255,255,0.1); }
+        .add-btn:hover { border-color: var(--tno-neon); color: var(--tno-neon); background: color-mix(in srgb, var(--tno-neon) 10%, transparent); }
         
         .remove-btn {
             background: transparent; border: 1px solid #555; color: #555; font-size: 1rem; padding: 2px 8px;
@@ -581,7 +581,7 @@
         .vote-ctrl-btn.nay:hover  { background: rgba(255,34,68,0.15); }
         .vote-ctrl-btn.abs:hover  { background: rgba(136,136,136,0.15); }
         .vote-ctrl-btn.clr:hover  { background: rgba(100,100,100,0.15); }
-        .vote-ctrl-btn.info:hover { background: rgba(0,255,255,0.15); }
+        .vote-ctrl-btn.info:hover { background: color-mix(in srgb, var(--tno-neon) 15%, transparent); }
 
         .vote-hint {
             font-size: 0.85rem;
@@ -707,7 +707,7 @@
             position: relative;
         }
         .bill-card:hover { border-color: var(--tno-neon); }
-        .bill-card.selected { border-left-color: var(--tno-neon); background: rgba(0,255,255,0.04); }
+        .bill-card.selected { border-left-color: var(--tno-neon); background: color-mix(in srgb, var(--tno-neon) 4%, transparent); }
         .bill-card-title {
             font-size: 1rem;
             color: var(--tno-gold);
@@ -766,7 +766,7 @@
             cursor: pointer;
             font-family: 'NeoDunggeunmo','VT323',monospace;
         }
-        .bill-select-btn:hover { background: rgba(0,255,255,0.1); }
+        .bill-select-btn:hover { background: color-mix(in srgb, var(--tno-neon) 10%, transparent); }
         .bill-remove-btn {
             font-size: 0.8rem;
             padding: 2px 6px;
@@ -881,7 +881,7 @@
             color: var(--tno-neon);
             border-color: var(--tno-neon);
             text-shadow: 0 0 5px var(--tno-neon);
-            background: rgba(0,255,255,0.05);
+            background: color-mix(in srgb, var(--tno-neon) 5%, transparent);
         }
         .display-panel {
             display: none;
@@ -907,7 +907,7 @@
             transition: 0.15s;
         }
         .tag-badge:hover, .tag-badge.active {
-            background: rgba(0,255,255,0.12);
+            background: color-mix(in srgb, var(--tno-neon) 12%, transparent);
             border-color: var(--tno-neon);
         }
         .tag-badge.active { font-weight: bold; }
@@ -959,7 +959,7 @@
             min-width: 160px;
             max-width: 260px;
             z-index: 5001;
-            box-shadow: 0 0 10px rgba(0,255,255,0.15);
+            box-shadow: 0 0 10px color-mix(in srgb, var(--tno-neon) 15%, transparent);
         }
         .seat-info-card-header {
             display: flex;
@@ -1065,7 +1065,7 @@
         .mobile-panel-btn.active {
             border-color: var(--tno-neon);
             color: var(--tno-neon);
-            background: rgba(0,255,255,0.07);
+            background: color-mix(in srgb, var(--tno-neon) 7%, transparent);
             box-shadow: 0 0 6px var(--tno-neon-dim);
             text-shadow: 0 0 4px var(--tno-neon);
         }

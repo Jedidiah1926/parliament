@@ -2,7 +2,7 @@
             --tno-bg: #05070a;
             --tno-panel: #101218;
             --tno-neon: #00ffff;
-            --tno-neon-dim: rgba(0, 255, 255, 0.2);
+            --tno-neon-dim: color-mix(in srgb, var(--tno-neon) 20%, transparent);
             --tno-text: #e0e0e0;
             --tno-border: #4a5a6a;
             --tno-alert: #ff0055;
@@ -40,7 +40,7 @@
             border: 2px solid var(--tno-border);
             padding: 0;
             position: relative;
-            box-shadow: 0 0 30px rgba(0, 255, 255, 0.1);
+            box-shadow: 0 0 30px color-mix(in srgb, var(--tno-neon) 10%, transparent);
         }
 
         /* ── 예정된 점검 안내 바: 화면 전체를 가로지르는 노란색 접근금지 띠 스타일, 기존 화면 위에 떠 있음 ── */
@@ -118,7 +118,7 @@
         .menu-btn:hover {
             border-color: var(--tno-neon);
             color: var(--tno-neon);
-            background: rgba(0, 255, 255, 0.05);
+            background: color-mix(in srgb, var(--tno-neon) 5%, transparent);
             box-shadow: inset 0 0 15px var(--tno-neon-dim);
             transform: translateX(10px);
         }
@@ -158,7 +158,7 @@
             background: #07090d;
             padding: 15px;
             margin-top: 10px;
-            box-shadow: inset 0 0 12px rgba(0, 255, 255, 0.08);
+            box-shadow: inset 0 0 12px color-mix(in srgb, var(--tno-neon) 8%, transparent);
         }
 
         .version-head {
@@ -282,12 +282,12 @@
         .lang-select-btn:hover:not(:disabled) {
             border-color: var(--tno-neon);
             color: var(--tno-neon);
-            background: rgba(0, 255, 255, 0.05);
+            background: color-mix(in srgb, var(--tno-neon) 5%, transparent);
         }
         .lang-select-btn.active {
             border-color: var(--tno-neon);
             color: var(--tno-neon);
-            background: rgba(0, 255, 255, 0.07);
+            background: color-mix(in srgb, var(--tno-neon) 7%, transparent);
             box-shadow: 0 0 8px var(--tno-neon-dim);
             text-shadow: 0 0 5px var(--tno-neon);
         }

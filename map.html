@@ -12,7 +12,7 @@
     --tno-bg: #101218;
     --tno-panel: #1a1d26;
     --tno-neon: #00ffff;
-    --tno-neon-dim: rgba(0, 255, 255, .3);
+    --tno-neon-dim: color-mix(in srgb, var(--tno-neon) 30%, transparent);
     --tno-text: #e0e0e0;
     --tno-border: #4a5a6a;
     --tno-gold: #ffd700;
@@ -25,7 +25,7 @@
     color: var(--tno-text);
   }
   ::-webkit-scrollbar { width: 10px; height: 12px; background: #000; }
-  ::-webkit-scrollbar-thumb { background: var(--tno-border); border: 1px solid var(--tno-neon); box-shadow: inset 0 0 5px rgba(0,255,255,.22), 0 0 5px rgba(0,255,255,.18); }
+  ::-webkit-scrollbar-thumb { background: var(--tno-border); border: 1px solid var(--tno-neon); box-shadow: inset 0 0 5px color-mix(in srgb, var(--tno-neon) 22%, transparent), 0 0 5px color-mix(in srgb, var(--tno-neon) 18%, transparent); }
   ::-webkit-scrollbar-thumb:hover { background: var(--tno-neon); box-shadow: 0 0 12px var(--tno-neon); }
   ::-webkit-scrollbar-track { background: #000; border-top: 1px solid #1f343c; }
   ::-webkit-scrollbar-corner { background: #000; }
@@ -37,7 +37,7 @@
     background: var(--tno-panel);
     border: 2px solid var(--tno-border);
     padding:12px;
-    box-shadow: 0 0 15px rgba(0,255,255,.08);
+    box-shadow: 0 0 15px color-mix(in srgb, var(--tno-neon) 8%, transparent);
   }
   #preview { overflow:hidden; background:#0a0c11; border: 1px solid var(--tno-border); height:620px; display:flex; align-items:center; justify-content:center; }
   #svgContainer svg { width:100%; height:auto; display:block; }
