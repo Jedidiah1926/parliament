@@ -4203,7 +4203,6 @@
                                 rect.setAttribute('y', badgeY - badgeSize/2);
                                 rect.setAttribute('width', badgeSize);
                                 rect.setAttribute('height', badgeSize);
-                                rect.setAttribute('rx', badgeSize*0.15);
                                 rect.setAttribute('fill', entry.party.color);
                                 rect.setAttribute('stroke', '#000');
                                 rect.setAttribute('stroke-width', badgeSize*0.06);
@@ -4216,6 +4215,7 @@
                                 numEl.setAttribute('dominant-baseline', 'central');
                                 numEl.setAttribute('font-size', badgeSize*0.62);
                                 numEl.setAttribute('font-weight', 'bold');
+                                numEl.setAttribute('font-family', "'NeoDunggeunmo','VT323',monospace");
                                 numEl.setAttribute('fill', '#fff');
                                 numEl.setAttribute('pointer-events', 'none');
                                 numEl.textContent = entry.n;
@@ -5068,7 +5068,7 @@
             colors.forEach((c, i) => { octx.fillStyle = c; octx.fillRect(i*stripeW, 0, stripeW, size); });
             const pattern = ctx.createPattern(off, 'repeat');
             if(pattern && pattern.setTransform) {
-                try { pattern.setTransform(new DOMMatrix().rotate(45)); } catch(e) {}
+                try { pattern.setTransform(new DOMMatrix().rotate(-45)); } catch(e) {}
             }
             return pattern;
         }
@@ -5394,7 +5394,7 @@
                 const stripeW = 6;
                 const size = stripeW * colors.length;
                 const rects = colors.map((c,i) => `<rect x="${i*stripeW}" y="0" width="${stripeW}" height="${size}" fill="${c}"/>`).join('');
-                patternDefs.set(id, `<pattern id="${id}" width="${size}" height="${size}" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">${rects}</pattern>`);
+                patternDefs.set(id, `<pattern id="${id}" width="${size}" height="${size}" patternUnits="userSpaceOnUse" patternTransform="rotate(-45)">${rects}</pattern>`);
             }
             return `url(#${id})`;
         }
