@@ -4126,12 +4126,27 @@
             wrapEl.appendChild(svg);
 
             // 저장된 viewBox가 실제 도형 좌표와 맞지 않으면(오래된 캐시로 내보낸 파일 등) 도형이 화면
-            // 밖이나 점 하나 크기로 그려져 안 보일 수 있으므로, 실제 렌더링된 도형들의 경계 상자로 보정
+            // 밖이나 점 하나 크기로 그려져 안 보일 수 있으므로, 실제 렌더링된 도형들의 경계 상자로 보정.
+            // 배경/틀로 쓰인 거대한 사각형 하나가 섞여 있으면 그 도형이 경계 상자를 지배해 정작 실제
+            // 지역구들은 한쪽 구석에 작게 몰리므로, 중간값보다 훨씬 큰 이상치 도형은 제외하고 계산
             try {
-                let bbox = null;
+                const boxes = [];
                 svg.querySelectorAll('path,circle,rect,polygon,polyline,ellipse').forEach(el => {
                     const b = el.getBBox();
                     if(!b || (b.width === 0 && b.height === 0)) return;
+                    boxes.push(b);
+                });
+                let useBoxes = boxes;
+                if(boxes.length >= 4) {
+                    const areas = boxes.map(b => b.width * b.height).sort((a,b) => a-b);
+                    const median = areas[Math.floor(areas.length/2)];
+                    if(median > 0) {
+                        const filtered = boxes.filter(b => (b.width*b.height) <= median * 20);
+                        if(filtered.length > 0) useBoxes = filtered;
+                    }
+                }
+                let bbox = null;
+                useBoxes.forEach(b => {
                     if(!bbox) bbox = { x: b.x, y: b.y, x2: b.x+b.width, y2: b.y+b.height };
                     else {
                         bbox.x  = Math.min(bbox.x,  b.x);
@@ -4333,6 +4348,27 @@
             districtSvgTendency[key][chamber][partyId] = v;
         }
 
+        // 지도에 잘못 섞여 들어온 도형(예: 배경/틀 사각형)을 통째로 제거 — 지도 자체에서 삭제되며 복구 불가
+        function districtSvgRemoveShape(key) {
+            if(!districtSvgMap) return;
+            if(!confirm(`"${key}" 도형을 지도에서 완전히 삭제합니다.\n(배경/틀처럼 잘못 포함된 도형을 뺄 때 사용) 계속하시겠습니까?`)) return;
+            districtSvgMap.shapes = districtSvgMap.shapes.filter(s => s.key !== key);
+            delete districtSeatCounts[key];
+            delete districtSvgTendency[key];
+            ['house','senate','third'].forEach(ch => {
+                delete districtGrid[ch][key];
+                delete districtNames[ch][key];
+                delete districtMembers[ch][key];
+                districtOrderSync(ch);
+            });
+            if(selectedDistrictKey === key) selectedDistrictKey = null;
+            document.getElementById('districtNamePanel').style.display = 'none';
+            districtUpdateModeUI();
+            districtRenderMap();
+            renderDistrictListPanel();
+            elecUpdateDistrictInfo();
+        }
+
         // SVG 지역구의 이름은 세 원이 공유하므로 house/senate/third 이름 저장소에 동시 반영
         function districtSvgSetName(name) {
             if(!selectedDistrictKey) return;
@@ -4439,6 +4475,9 @@
                             </div>
                         `).join('')}
                     `).join('')}
+                </div>
+                <div style="border-top:1px solid #222;margin-top:10px;padding-top:8px;text-align:right;">
+                    <button onclick="districtSvgRemoveShape('${key}')" style="background:transparent;border:1px solid #663333;color:#cc6666;padding:4px 10px;font-family:inherit;font-size:0.75rem;cursor:pointer;">이 도형 지도에서 삭제 (배경/틀 등 잘못 포함된 도형용)</button>
                 </div>
             `;
         }
