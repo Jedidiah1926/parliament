@@ -670,13 +670,8 @@
                     <button class="sub-tab-btn" id="elecSubTabProb" onclick="elecSwitchSub('prob')">지지율</button>
                 </div>
 
-                <!-- 이름 모드 사이드패널 (구/뉴 지역구 공용 — 선택된 지역구가 있을 때만 표시) -->
-                <div id="districtNamePanel" style="display:none;padding:8px;background:#0a0c10;border:1px solid #665500;margin:8px 0;">
-                    <div style="color:#888;font-size:0.78rem;margin-bottom:5px;">선택한 지역구 <span id="districtNamePanelCoord" style="color:#666;"></span></div>
-                    <input type="text" id="districtNameInput" placeholder="지역구 이름 (예: 종로구)"
-                        style="width:100%;box-sizing:border-box;background:#000;border:1px solid #665500;color:var(--tno-gold);font-family:inherit;font-size:0.9rem;padding:6px;"
-                        oninput="districtSetName(this.value)">
-                </div>
+                <!-- 지역구 편집 사이드패널 (구/뉴 지역구 공용 — 선택된 지역구가 있을 때만 표시, 내용은 JS가 채움) -->
+                <div id="districtNamePanel" style="display:none;padding:8px;background:#0a0c10;border:1px solid #665500;margin:8px 0;"></div>
 
                 <!-- 지역구 서브탭 - 설정만 (맵은 우측) -->
                 <div id="elecSubDistrict" class="sub-tab-content active">
@@ -695,9 +690,9 @@
                         </button>
                     </div>
 
-                    <!-- 이 의원실이 뉴 지역구(SVG) 방식일 때 육각형 편집 UI 대신 표시 -->
+                    <!-- 지역구 시스템이 뉴 지역구(SVG) 방식일 때 육각형 편집 UI 대신 표시 -->
                     <div id="districtSvgModeNotice" style="display:none;padding:10px;background:#1a1200;border:1px solid #665500;color:var(--tno-gold);font-size:0.82rem;margin-bottom:10px;">
-                        이 의원실은 현재 "뉴 지역구"(SVG 지도) 방식입니다.<br>
+                        현재 지역구 시스템이 "뉴 지역구"(SVG 지도) 방식입니다.<br>
                         육각형 편집은 비활성화됩니다 — 지도 관리는 <b>뉴 지역구</b> 탭에서 하세요.
                     </div>
 
@@ -731,22 +726,17 @@
                     <div id="districtListPanel"></div>
                 </div>
 
-                <!-- 뉴 지역구 서브탭 (SVG 지도) -->
+                <!-- 뉴 지역구 서브탭 (SVG 지도, 하원/상원/삼원 공유) -->
                 <div id="elecSubDistrictNew" class="sub-tab-content">
-                    <div style="display:flex;gap:6px;margin:8px 0 10px;">
-                        <button id="districtChamberHouseBtnNew" onclick="districtSetChamber('house')" class="sub-tab-btn-3 active" style="flex:1;">하원</button>
-                        <button id="districtChamberSenateBtnNew" onclick="districtSetChamber('senate')" class="sub-tab-btn-3" style="flex:1;">상원</button>
-                        <button id="districtChamberThirdBtnNew" onclick="districtSetChamber('third')" class="sub-tab-btn-3" style="display:none;flex:1;">삼원</button>
-                    </div>
-
                     <div style="padding:8px;background:#0a0c10;border:1px solid #222;font-size:0.78rem;color:#666;margin-bottom:10px;line-height:1.5;">
-                        <a href="map.html" target="_blank" style="color:var(--tno-neon);">맵 메이커</a>에서 만든(또는 도형별로 id가 있는) SVG 파일을 업로드하면, 육각형 대신 실제 지도 모양으로 지역구를 만들 수 있습니다.<br>
-                        업로드하면 <b style="color:#cc8888;">선택한 의원실의 기존 지역구 데이터가 새 지도로 대체</b>됩니다.
+                        <a href="map.html" target="_blank" style="color:var(--tno-neon);">맵 메이커</a>에서 내보낸 .jsx 파일을 업로드하면, 육각형 대신 실제 지도 모양으로 지역구를 만들 수 있습니다.<br>
+                        하나의 지도를 하원·상원·삼원이 함께 쓰며, 지역구를 클릭하면 원별 의석 수와 정당별 성향(%)을 지정할 수 있습니다.<br>
+                        업로드하면 <b style="color:#cc8888;">기존 지역구 데이터가 새 지도로 대체</b>됩니다.
                     </div>
 
                     <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
-                        <input type="file" id="districtSvgFileInput" accept=".svg,image/svg+xml" style="position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;" onchange="districtSvgUpload(this)">
-                        <label for="districtSvgFileInput" class="add-btn" style="margin:0;display:inline-block;cursor:pointer;">⬆ SVG 지도 업로드</label>
+                        <input type="file" id="districtSvgFileInput" accept=".jsx,.js,text/javascript" style="position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;" onchange="districtSvgUpload(this)">
+                        <label for="districtSvgFileInput" class="add-btn" style="margin:0;display:inline-block;cursor:pointer;">⬆ 지역구 지도 업로드 (.jsx)</label>
                         <span id="districtSvgFileName" style="color:#555;font-size:0.8rem;">파일 없음</span>
                     </div>
 
@@ -756,7 +746,7 @@
                             <input type="color" id="districtSvgStrokeColorInput" value="#00ffff" oninput="districtSvgSetStrokeColor(this.value)" style="width:36px;height:28px;padding:0;border:1px solid #333;background:none;cursor:pointer;">
                             <span style="color:#444;font-size:0.75rem;">채우기는 항상 투명입니다</span>
                         </div>
-                        <div style="font-size:0.8rem;color:#555;margin-bottom:10px;">지도 안 도형 수: <span id="districtSvgShapeCount" style="color:var(--tno-neon);">0</span>개 &nbsp;|&nbsp; 이름 모드로 도형을 클릭하면 이름을 붙일 수 있습니다 (아래 "구 지역구" 탭의 이름 패널 재사용)</div>
+                        <div style="font-size:0.8rem;color:#555;margin-bottom:10px;">지도 안 지역구 수: <span id="districtSvgShapeCount" style="color:var(--tno-neon);">0</span>개 &nbsp;|&nbsp; 지역구를 클릭하면 의석 수·성향을 편집할 수 있습니다</div>
                         <div style="display:flex;justify-content:flex-end;">
                             <button onclick="districtSvgRevertToHex()" style="background:transparent;border:1px solid #663333;color:#cc6666;padding:4px 10px;font-family:inherit;font-size:0.8rem;cursor:pointer;">구 지역구(육각형) 방식으로 되돌리기</button>
                         </div>
