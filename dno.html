@@ -685,8 +685,8 @@
 
                 <!-- 지역구 서브탭 - 설정만 (맵은 우측) -->
                 <div id="elecSubDistrict" class="sub-tab-content active">
-                    <!-- 지역구 종류 선택 -->
-                    <div style="display:flex;gap:6px;margin:8px 0 10px;">
+                    <!-- 지역구 종류 선택 — 지도(SVG) 방식은 세 원이 지도 하나를 공유하므로 이 선택이 필요 없어 숨김 -->
+                    <div id="districtChamberSelectRow" style="display:flex;gap:6px;margin:8px 0 10px;">
                         <button id="districtChamberHouseBtn" onclick="districtSetChamber('house')"
                             style="flex:1;padding:6px;font-family:inherit;font-size:0.85rem;background:#0a1a2a;color:var(--tno-neon);border:2px solid var(--tno-neon);cursor:pointer;letter-spacing:1px;" id="districtChamberHouseBtn">
                             <span id="districtChamberHouseLabel">하원</span> 지역구
@@ -766,14 +766,22 @@
                         <button class="sub-tab-btn-3" id="tendencySvgChamberSenateBtn" onclick="tendencySetSvgChamber('senate')">상원</button>
                         <button class="sub-tab-btn-3" id="tendencySvgChamberThirdBtn" onclick="tendencySetSvgChamber('third')" style="display:none;">삼원</button>
                     </div>
-                    <!-- 강도 선택 -->
-                    <div style="display:flex;align-items:center;gap:4px;margin:8px 0;flex-wrap:wrap;">
+                    <!-- 강도 선택 — 육각형(구 지역구): 빠르게 여러 칸을 칠하므로 5단계 버튼 -->
+                    <div id="tendencyStrengthButtons" style="display:flex;align-items:center;gap:4px;margin:8px 0;flex-wrap:wrap;">
                         <span style="color:#666;font-size:0.8rem;margin-right:2px;">강도</span>
                         <button id="tendStrBtn0"   class="sub-tab-btn-3"           onclick="tendencySetStrength(0)">0%</button>
                         <button id="tendStrBtn25"  class="sub-tab-btn-3"           onclick="tendencySetStrength(25)">25%</button>
                         <button id="tendStrBtn50"  class="sub-tab-btn-3 active"    onclick="tendencySetStrength(50)">50%</button>
                         <button id="tendStrBtn75"  class="sub-tab-btn-3"           onclick="tendencySetStrength(75)">75%</button>
                         <button id="tendStrBtn100" class="sub-tab-btn-3"           onclick="tendencySetStrength(100)">100%</button>
+                    </div>
+                    <!-- % 입력 — 지도(SVG): 지역구 하나하나를 정밀하게 지정하므로 자유 입력 -->
+                    <div id="tendencyStrengthPctRow" style="display:none;align-items:center;gap:6px;margin:8px 0;">
+                        <span style="color:#666;font-size:0.8rem;">클릭 시 적용할 성향(%)</span>
+                        <input type="number" id="tendencyStrengthPctInput" min="0" max="100" value="50"
+                            oninput="tendencySetStrength(Math.max(0,Math.min(100,parseInt(this.value)||0)))"
+                            style="width:70px;background:#000;border:1px solid #333;color:var(--tno-neon);font-family:inherit;font-size:0.9rem;padding:5px;text-align:center;">
+                        <span style="color:#444;font-size:0.78rem;">%</span>
                     </div>
                     <div style="font-size:0.75rem;color:#444;margin-bottom:6px;padding:4px 8px;background:#0a0c10;border:1px solid #222;">
                         성향 맵은 우측 패널에서 확인 및 편집하세요
