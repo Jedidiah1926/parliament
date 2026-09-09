@@ -501,6 +501,10 @@
             width: 100%; height: auto;
             cursor: pointer;
         }
+        /* 의회 표시기(하원/상원/삼원)의 반원 배경을 옆의 지역구 지도와 같은 단색 배경으로 통일 */
+        #houseCanvas, #senateCanvas, #thirdCanvas {
+            background: #0a0c10;
+        }
 
         .ruling-selector {
             border: 1px solid #333; padding: 5px; margin-bottom: 5px; cursor: pointer;
