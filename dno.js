@@ -6747,9 +6747,13 @@
                 origProb: p.origProb,
             }));
             const wTotal = weighted.reduce((s,p)=>s+p.w,0);
-            if(wTotal<=0) {
+            // wTotal(지지율+무당파 가중치)은 비례 의석 배분에만 쓰이므로, 비례 의석이 0석인
+            // 지역구 전용 개표에서는 지지율을 하나도 입력하지 않았어도 막을 이유가 없음
+            // (이 조건 없이 막으면 지역구만 개표할 때 안내 문구 하나 없이 조용히 실패한 것처럼 보임)
+            if(propSeats > 0 && wTotal<=0) {
                 elecRunning=false;
                 runBtn.style.background='var(--tno-neon)'; runBtn.style.color='#000'; runBtn.textContent='>> 개표 시작 <<';
+                alert('지지율을 입력해 주세요.\n각 정당의 지지율(%) 칸에 숫자를 입력하세요.');
                 return;
             }
 
