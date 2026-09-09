@@ -4107,6 +4107,16 @@
         let districtSvgTendency = {};
         // districtAbbr[key] = "약칭" — 설정하면 지도에서 그 지역구 도형 가운데에 표시됨
         let districtAbbr = {};
+        // 지도 위 약칭/의석 배지 크기 배율(1=100%) — 슬라이더로 조정, 지역구 자체 크기와 무관하게 지도 전체에 균일 적용
+        let districtLabelScale = 1;
+        function setDistrictLabelScale(v) {
+            districtLabelScale = Math.max(0.5, Math.min(2, (parseInt(v)||100) / 100));
+            const val = document.getElementById('districtLabelScaleVal');
+            if(val) val.textContent = `${Math.round(districtLabelScale*100)}%`;
+            // 현재 화면에 지도가 떠 있을 수 있는 곳들을 다시 그림 (해당 없으면 각 함수 내부에서 조용히 무시됨)
+            districtRenderMap();
+            tendencyRenderMaps();
+        }
 
         // SVG 지도를 지정된 컨테이너에 그리고, 도형별 채우기 색/클릭/툴팁을 옵션으로 받는다
         // (지역구 편집 패널·의회 화면 지역구 보기·선거 결과 지역구 보기가 모두 이 함수를 공유)
@@ -4166,6 +4176,18 @@
             // 약칭 표시 + (선거 결과 지도라면) 정당별 획득 의석 수 배지 — 도형이 실제로 배치된 뒤에만
             // getBBox로 중심을 구할 수 있으므로 여기서 처리. 배지가 있으면 약칭은 위로, 배지는 아래로 배치
             if(!opts.hideAbbr || opts.seatBadges) {
+                // 각 지역구 도형마다 크기가 달라 글씨·배지 크기가 제각각이 되지 않도록,
+                // 전체 도형 크기의 중앙값을 기준 크기로 삼아 지도 전체에 일괄 적용함
+                // (슬라이더로 사용자가 배율을 조정할 수 있음: districtLabelScale)
+                let refSize = 10;
+                try {
+                    const sizes = shapeEls
+                        .map(({ el }) => { try { const bb = el.getBBox(); return Math.min(bb.width, bb.height); } catch(e) { return 0; } })
+                        .filter(v => v > 0)
+                        .sort((a,b) => a-b);
+                    if(sizes.length > 0) refSize = sizes[Math.floor(sizes.length/2)];
+                } catch(e) {}
+                refSize *= (typeof districtLabelScale === 'number' ? districtLabelScale : 1);
                 shapeEls.forEach(({ s, el }) => {
                     const abbr = opts.hideAbbr ? null : districtAbbr[s.key];
                     const badges = opts.seatBadges ? opts.seatBadges(s.key) : null;
@@ -4178,10 +4200,10 @@
                         let abbrY = cy, badgeY = cy;
                         if(abbr && badges && badges.length) { abbrY = cy - b.height*0.16; badgeY = cy + b.height*0.16; }
                         if(abbr) {
-                            // 글자 수만큼 가로로 넓게 차지하므로, 세로 기준(도형 높이)뿐 아니라
-                            // 가로 기준(도형 너비 ÷ 글자 수)도 함께 고려해 도형 밖으로 넘치지 않게 함
-                            // (예: 대각선 삼각형처럼 bbox는 크지만 실제 안쪽 여유는 좁은 도형 대비)
-                            const fontSize = Math.max(Math.min(b.height * 0.32, (b.width / Math.max(abbr.length, 1)) * 0.62), 0.1);
+                            // 지도 전체 기준 크기(refSize)를 우선 사용하되, 글자 수만큼 가로로 넓게
+                            // 차지하는 경우나(가로 기준: 도형 너비 ÷ 글자 수) 도형 자체가 유난히 작은
+                            // 경우(세로 기준: 도형 높이)엔 그 도형 밖으로 넘치지 않도록 상한을 둠
+                            const fontSize = Math.max(Math.min(refSize * 0.32, b.height * 0.45, (b.width / Math.max(abbr.length, 1)) * 0.62), 0.1) * 0.9;
                             const textEl = document.createElementNS(svgNS, 'text');
                             textEl.setAttribute('x', cx);
                             textEl.setAttribute('y', abbrY);
@@ -4190,7 +4212,7 @@
                             textEl.setAttribute('font-size', fontSize);
                             textEl.setAttribute('fill', '#fff');
                             textEl.setAttribute('paint-order', 'stroke');
-                            textEl.setAttribute('stroke', '#000');
+                            textEl.setAttribute('stroke', map.abbrStrokeColor || map.strokeColor || '#00ffff');
                             textEl.setAttribute('stroke-width', fontSize * 0.12);
                             textEl.setAttribute('pointer-events', 'none');
                             textEl.textContent = abbr;
@@ -4198,7 +4220,7 @@
                         }
                         if(badges && badges.length) {
                             const shown = badges.slice(0, 5);
-                            const badgeSize = Math.max(Math.min(b.width, b.height) * 0.2, 0.1);
+                            const badgeSize = Math.max(Math.min(refSize * 0.2, Math.min(b.width, b.height) * 0.45), 0.1);
                             const gap = badgeSize * 0.25;
                             const totalW = shown.length * badgeSize + (shown.length-1) * gap;
                             let bx = cx - totalW/2;
@@ -4349,6 +4371,8 @@
             const shapeCount = document.getElementById('districtSvgShapeCount');
             const strokeInput = document.getElementById('districtSvgStrokeColorInput');
             const strokeHexInput = document.getElementById('districtSvgStrokeColorHexInput');
+            const abbrStrokeInput = document.getElementById('districtSvgAbbrStrokeColorInput');
+            const abbrStrokeHexInput = document.getElementById('districtSvgAbbrStrokeColorHexInput');
             if(info) info.style.display = districtSvgMap ? '' : 'none';
             if(fileName) fileName.textContent = districtSvgMap ? '업로드됨' : '파일 없음';
             if(shapeCount) shapeCount.textContent = districtSvgMap ? String(districtSvgMap.shapes.length) : '0';
@@ -4356,6 +4380,9 @@
                 const color = districtSvgMap.strokeColor || '#00ffff';
                 if(strokeInput) strokeInput.value = color;
                 if(strokeHexInput) strokeHexInput.value = color.toUpperCase();
+                const abbrColor = districtSvgMap.abbrStrokeColor || color;
+                if(abbrStrokeInput) abbrStrokeInput.value = abbrColor;
+                if(abbrStrokeHexInput) abbrStrokeHexInput.value = abbrColor.toUpperCase();
             }
         }
 
@@ -4403,7 +4430,8 @@
                 if(shapes.length === 0) { alert('맵 메이커에서 내보낸 .jsx 파일에서 지역구로 쓸 도형을 찾을 수 없습니다.'); return; }
 
                 const strokeColor = districtSvgMap?.strokeColor || '#00ffff';
-                districtSvgMap = { viewBox, strokeColor, shapes };
+                const abbrStrokeColor = districtSvgMap?.abbrStrokeColor || null;
+                districtSvgMap = { viewBox, strokeColor, abbrStrokeColor, shapes };
                 districtMapMode = 'svg';
                 districtSeatCounts = {};
                 districtSvgTendency = {};
@@ -4450,6 +4478,28 @@
         function districtSvgSyncStrokeColorWithTheme() {
             if(typeof getThemeColor !== 'function') return;
             districtSvgSetStrokeColor(getThemeColor());
+        }
+
+        function districtSvgSetAbbrStrokeColor(color) {
+            if(!districtSvgMap) return;
+            districtSvgMap.abbrStrokeColor = color;
+            districtUpdateModeUI();
+            districtRenderMap();
+        }
+
+        function districtSvgSetAbbrStrokeColorHex(hex) {
+            const v = hex.trim().startsWith('#') ? hex.trim() : '#' + hex.trim();
+            if(typeof isValidHexColor === 'function' ? !isValidHexColor(v) : !/^#[0-9a-fA-F]{6}$/.test(v)) {
+                districtUpdateModeUI(); // 잘못된 값이면 원래 값으로 되돌림
+                return;
+            }
+            districtSvgSetAbbrStrokeColor(v);
+        }
+
+        // 글씨 테두리 색을 현재 사이트 테마 색(설정에서 고른 색)과 동일하게 맞춤
+        function districtSvgSyncAbbrStrokeColorWithTheme() {
+            if(typeof getThemeColor !== 'function') return;
+            districtSvgSetAbbrStrokeColor(getThemeColor());
         }
 
         function districtSvgRevertToHex() {
@@ -5087,6 +5137,12 @@
             tendencyRenderMaps();
         }
 
+        // 성향 탭에서 지도를 직접 클릭하는 것 외에, 이름으로 골라 선택 지역구를 바꿀 때 사용
+        function tendencySvgSelectDistrict(key) {
+            tendencySvgSelectedKey = key || null;
+            tendencyRenderMaps();
+        }
+
         function tendencySetStrength(v) {
             tendencyStrength = v;
             [0,25,50,75,100].forEach(s => {
@@ -5455,8 +5511,15 @@
 
             if(!panel) return;
             const key = tendencySvgSelectedKey;
+            // 지도에서 직접 클릭하는 것 외에, 이름으로 바로 찾아 바꿀 수 있는 선택 목록 — 항상 표시
+            const pickerHtml = `
+                <select onchange="tendencySvgSelectDistrict(this.value)" style="width:100%;box-sizing:border-box;background:#000;border:1px solid #333;color:var(--tno-neon);font-family:inherit;font-size:0.85rem;padding:6px;margin-bottom:8px;">
+                    <option value="">— 지역구 선택 —</option>
+                    ${districtSvgMap.shapes.map(s => `<option value="${s.key}"${s.key===key?' selected':''}>${districtNames.house[s.key]||s.key}</option>`).join('')}
+                </select>
+            `;
             if(!key || !districtSvgMap.shapes.some(s => s.key === key)) {
-                panel.innerHTML = '<div style="color:#444;font-size:0.78rem;text-align:center;padding:14px;border:1px solid #222;background:#0a0c10;margin-top:8px;">위 지도에서 지역구를 클릭해 선택하세요</div>';
+                panel.innerHTML = pickerHtml + '<div style="color:#444;font-size:0.78rem;text-align:center;padding:14px;border:1px solid #222;background:#0a0c10;">위 지도를 클릭하거나, 위 목록에서 지역구를 선택하세요</div>';
                 return;
             }
             const nm = districtNames.house[key] || key;
@@ -5466,8 +5529,8 @@
                 senate: document.getElementById('senateNameInput')?.value || '상원',
                 third:  document.getElementById('thirdNameInput')?.value  || '삼원',
             };
-            panel.innerHTML = `
-                <div style="color:#888;font-size:0.78rem;margin:8px 0 6px;">선택한 지역구 <span style="color:var(--tno-neon);">${nm}</span></div>
+            panel.innerHTML = pickerHtml + `
+                <div style="color:#888;font-size:0.78rem;margin-bottom:6px;">선택한 지역구 <span style="color:var(--tno-neon);">${nm}</span></div>
                 ${seats <= 0 ? `<div style="color:#664444;font-size:0.75rem;margin-bottom:6px;">지역구 탭에서 ${chLabel[tendencySvgChamber]}의 의석 수가 0으로 지정되어 있습니다</div>` : ''}
                 <div style="display:grid;grid-template-columns:1fr 75px;gap:6px;padding:0 2px;margin-bottom:4px;color:#555;font-size:0.8rem;">
                     <span>정당명</span><span style="text-align:center;">지지율(%)</span>
