@@ -622,6 +622,15 @@
                                     style="width:70px;background:#000;border:1px solid #333;color:var(--tno-neon);font-family:inherit;font-size:0.9rem;padding:4px;text-align:center;">
                                 <span style="color:#444;font-size:0.78rem;">각 지역구 결과에 추가되는 랜덤 변동</span>
                             </div>
+                            <!-- 지도(SVG) 지역구 전용 — 자동으로 순서대로 개표할지, 지도에서 직접 지역구를 클릭해 하나씩 열어볼지 -->
+                            <div id="elecCountModeRow" style="display:none;gap:8px;align-items:center;">
+                                <label style="color:#666;font-size:0.8rem;white-space:nowrap;flex-shrink:0;">개표 방식</label>
+                                <div class="system-radio-group" style="flex:1;">
+                                    <button type="button" class="system-radio-btn active" id="elecCountModeAutoBtn" onclick="setElecCountMode('auto')">자동</button>
+                                    <button type="button" class="system-radio-btn" id="elecCountModeManualBtn" onclick="setElecCountMode('manual')">선택</button>
+                                </div>
+                            </div>
+                            <div id="elecCountModeHint" style="display:none;font-size:0.72rem;color:#444;margin-top:4px;">지도에서 지역구를 하나씩 클릭해 직접 개표합니다</div>
                         </div>
                         <div style="background:#0a0c10;border:1px solid #2a2a2a;padding:8px;margin-bottom:8px;font-size:0.78rem;color:#555;line-height:1.5;">
                             성향 탭에서 설정한 지지도를 기반으로 각 지역구의 당선자를 결정합니다.<br>

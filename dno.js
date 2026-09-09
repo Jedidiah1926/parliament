@@ -6290,7 +6290,21 @@
             elecUpdateDistrictInfo();
         }
 
+        // 지역구 개표 방식 — 'auto': 기존처럼 순서를 섞어 자동으로 하나씩 애니메이션, 'manual': 지도(SVG)에서 사용자가 직접 지역구를 클릭해 개표
+        let elecCountMode = 'auto';
+        function setElecCountMode(mode) {
+            if(mode !== 'auto' && mode !== 'manual') return;
+            elecCountMode = mode;
+            document.getElementById('elecCountModeAutoBtn')?.classList.toggle('active', mode === 'auto');
+            document.getElementById('elecCountModeManualBtn')?.classList.toggle('active', mode === 'manual');
+            const hint = document.getElementById('elecCountModeHint');
+            if(hint) hint.style.display = mode === 'manual' ? '' : 'none';
+        }
+
         function elecUpdateDistrictInfo() {
+            const countRow = document.getElementById('elecCountModeRow');
+            if(countRow) countRow.style.display = districtMapMode === 'svg' ? 'flex' : 'none';
+            if(districtMapMode !== 'svg' && elecCountMode === 'manual') setElecCountMode('auto');
             const targets = getElecTargets();
             const hName = document.getElementById('houseNameInput')?.value || '하원';
             const sName = document.getElementById('senateNameInput')?.value || '상원';
@@ -6423,6 +6437,35 @@
                 getBadges: key => badgeMap[key] || null,
                 defs: Array.from(patternDefs.values()).join('')
             };
+        }
+
+        // "선택 개표" 지도 렌더링 — 아직 공개 안 된 지역구는 클릭을 기다리는 중립색으로, 공개된 지역구만
+        // elecSvgBuildResultFill과 동일한 색/빗금/배지로 표시. 미공개 지역구를 클릭하면 onReveal(key) 호출
+        function elecDrawDistrictResultManualSvg(chamber, districtResults, revealedKeys, onReveal) {
+            const suf = chamber.charAt(0).toUpperCase() + chamber.slice(1);
+            const cvs = document.getElementById('elecDistrictResultCanvas'+suf);
+            const svgWrap = document.getElementById('elecDistrictResultSvg'+suf);
+            if(cvs) cvs.style.display = 'none';
+            if(!svgWrap) return;
+            svgWrap.style.display = '';
+            const allKeys = new Set(districtResults.map(d => d.key));
+            const revealedResults = districtResults.filter(d => revealedKeys.has(d.key));
+            const result = elecSvgBuildResultFill(elecBuildDistrictSeatBreakdown(revealedResults), chamber);
+            renderDistrictSvgInto(svgWrap, {
+                clickable: true,
+                getFill: key => {
+                    if(revealedKeys.has(key)) return result.getFill(key);
+                    return allKeys.has(key) ? 'rgba(255,255,255,0.1)' : 'transparent';
+                },
+                title: key => {
+                    if(revealedKeys.has(key)) return result.getTitle(key);
+                    const nm = districtNames[chamber]?.[key] || key;
+                    return allKeys.has(key) ? `${nm} — 클릭해서 개표` : nm;
+                },
+                seatBadges: key => revealedKeys.has(key) ? result.getBadges(key) : null,
+                defs: result.defs,
+                onClickKey: key => { if(allKeys.has(key) && !revealedKeys.has(key)) onReveal(key); }
+            });
         }
 
         // 지역구 시스템 방식에 관계없이 "그 의원실이 지역구에서 채울 수 있는 총 의석 수"를 반환
@@ -6773,7 +6816,43 @@
             await new Promise(r=>setTimeout(r,150));
 
             // ── 1단계: 지역구 개표 애니메이션 ─────
-            if(districtSeats > 0) {
+            if(districtSeats > 0 && districtMapMode === 'svg' && elecCountMode === 'manual') {
+                // 선택 개표: 자동으로 순서를 섞어 넘기지 않고, 사용자가 결과 지도에서 지역구를 하나씩 클릭해 개표
+                const pauseBtn = document.getElementById('elecPauseBtn');
+                if(pauseBtn) pauseBtn.style.display = 'none'; // 자동 진행이 없으므로 일시정지는 의미가 없음
+                const allDistrictKeys = [...new Set(districtResults.map(d => d.key))];
+                const revealedKeys = new Set();
+                let revealedSeats = 0;
+                const revealOne = key => {
+                    if(revealedKeys.has(key)) return;
+                    revealedKeys.add(key);
+                    districtResults.filter(d => d.key === key).forEach(({ partyId }) => {
+                        const p = parties.find(x => x.id === partyId);
+                        if(p) { p[seatKey]++; revealedSeats++; }
+                    });
+                    elecDrawDistrictResultManualSvg(chamber, districtResults, revealedKeys, revealOne);
+                    const distName = districtNames[chamber][key];
+                    document.getElementById('elecResultTitle'+suf).innerText = `> ${elecTitle} (${elecYear}) — ${chamberName} 개표 중... (${distName || key})`;
+                    const pct = (revealedSeats/totalSeats*100).toFixed(1)+'%';
+                    document.getElementById('elecProgressBar').style.width = pct;
+                    document.getElementById('elecResultBar'+suf).style.width = pct;
+                    const map = buildElecMap(chamber, totalSeats);
+                    updateStats('elecResultStats'+suf, map, totalSeats);
+                };
+                document.getElementById('elecResultTitle'+suf).innerText = `> ${elecTitle} (${elecYear}) — ${chamberName}: 지도에서 지역구를 클릭해 개표하세요`;
+                elecDrawDistrictResultManualSvg(chamber, districtResults, revealedKeys, revealOne);
+                while(revealedKeys.size < allDistrictKeys.length && !elecSkipToEnd) {
+                    await new Promise(r=>setTimeout(r,100));
+                }
+                if(elecSkipToEnd) allDistrictKeys.forEach(k => revealOne(k)); // 즉시 완료 시 남은 지역구 일괄 개표
+                if(pauseBtn) pauseBtn.style.display = ''; // 비례 단계는 다시 자동 애니메이션이므로 복원
+                if(propSeats > 0 && !elecSkipToEnd) {
+                    await new Promise(r=>setTimeout(r,300));
+                    elecSetView('arc', chamber);
+                    await new Promise(r=>setTimeout(r,200));
+                }
+                elecDrawDistrictResult(districtResults, districtResults.length, chamber);
+            } else if(districtSeats > 0) {
                 const districtSpeed = Math.max(speed, 20);
                 for(let i = 0; i < districtResults.length; i++) {
                     if(elecSkipToEnd) break;
