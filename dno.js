@@ -4147,10 +4147,16 @@
                     el.addEventListener('mouseenter', () => { el.style.filter = 'brightness(1.5)'; });
                     el.addEventListener('mouseleave', () => { el.style.filter = ''; });
                 }
+                // 브라우저 기본 <title> 툴팁 대신, 앱 전체에서 쓰는 네온 스타일 툴팁 박스(#tooltipBox)를 사용
                 if(opts.title) {
-                    const titleEl = document.createElementNS(svgNS, 'title');
-                    titleEl.textContent = opts.title(s.key) || s.key;
-                    el.appendChild(titleEl);
+                    el.addEventListener('mousemove', e => {
+                        const tip = document.getElementById('tooltipBox');
+                        if(tip) positionTooltip(tip, opts.title(s.key) || s.key, e.clientX, e.clientY);
+                    });
+                    el.addEventListener('mouseleave', () => {
+                        const tip = document.getElementById('tooltipBox');
+                        if(tip) tip.style.display = 'none';
+                    });
                 }
                 svg.appendChild(el);
                 shapeEls.push({ s, el });
@@ -4235,6 +4241,7 @@
                 const boxes = [];
                 svg.querySelectorAll('path,circle,rect,polygon,polyline,ellipse').forEach(el => {
                     if(el.hasAttribute('data-decor')) return; // 약칭/의석 배지 장식용 rect는 실제 도형이 아니므로 제외
+                    if(el.closest('pattern')) return; // 경합 빗금 <pattern> 안의 rect도 실제 도형이 아니며, 좌표가 0~1 사이라 경계상자를 심하게 왜곡시킴
                     const b = el.getBBox();
                     if(!b || (b.width === 0 && b.height === 0)) return;
                     boxes.push(b);
@@ -5073,6 +5080,7 @@
             return pattern;
         }
         let tendencySvgChamber = 'house'; // 지도(SVG) 지역구의 성향을 편집 중인 원 — 원별로 성향 데이터가 다르므로 필요
+        let tendencySvgSelectedKey = null; // 성향 탭에서 클릭으로 선택한 지역구 — 정당별 %를 목록으로 편집할 대상
 
         function tendencySetSvgChamber(ch) {
             tendencySvgChamber = ch;
@@ -5084,8 +5092,6 @@
             [0,25,50,75,100].forEach(s => {
                 document.getElementById(`tendStrBtn${s}`)?.classList.toggle('active', s===v);
             });
-            const pctInput = document.getElementById('tendencyStrengthPctInput');
-            if(pctInput && document.activeElement !== pctInput) pctInput.value = v;
         }
 
         function tendencyGetBounds() {
@@ -5342,13 +5348,17 @@
             return wrap;
         }
 
-        // 지도(뉴 지역구) 방식일 때 성향 탭에서 쓸 원(하원/상원/삼원) 탭 버튼을 갱신
+        // 지도(뉴 지역구) 방식일 때 성향 탭에서 쓸 원(하원/상원/삼원) 탭 버튼 + 육각형 전용 UI 표시 여부를 갱신
         function tendencyUpdateSvgChamberTabs() {
             const isSvg = districtMapMode === 'svg';
             const strBtns = document.getElementById('tendencyStrengthButtons');
-            const pctRow = document.getElementById('tendencyStrengthPctRow');
+            const hexHint = document.getElementById('tendencyHexHint');
+            const viewBtns = document.getElementById('tendencyViewButtons');
+            const svgPanel = document.getElementById('tendencySvgDistrictPanel');
             if(strBtns) strBtns.style.display = isSvg ? 'none' : '';
-            if(pctRow) pctRow.style.display = isSvg ? 'flex' : 'none';
+            if(hexHint) hexHint.style.display = isSvg ? 'none' : '';
+            if(viewBtns) viewBtns.style.display = isSvg ? 'none' : '';
+            if(svgPanel) svgPanel.style.display = isSvg ? '' : 'none';
             const box = document.getElementById('tendencySvgChamberTabs');
             if(!box) return;
             box.style.display = isSvg ? '' : 'none';
@@ -5363,25 +5373,6 @@
             });
         }
 
-        // 지도(SVG) 지역구의 성향 값을 색으로 계산 — partyIdOrAll이 '__all__'이면 최다 지지 정당 기준 종합 색
-        function tendencySvgFillFor(partyIdOrAll, key) {
-            const seats = districtSeatCounts[key]?.[tendencySvgChamber] || 0;
-            if(seats <= 0) return '#141414';
-            if(partyIdOrAll === '__all__') {
-                let bestParty = null, bestVal = -1;
-                parties.forEach(p => {
-                    const val = districtSvgTendency[key]?.[tendencySvgChamber]?.[p.id] || 0;
-                    if(val > bestVal) { bestVal = val; bestParty = p; }
-                });
-                if(bestParty && bestVal > 0) return tendencyColorForPct(bestParty.color, bestVal);
-                return 'rgba(255,255,255,0.05)';
-            }
-            const val = districtSvgTendency[key]?.[tendencySvgChamber]?.[partyIdOrAll] || 0;
-            const p = parties.find(x => x.id === partyIdOrAll);
-            if(p && val > 0) return tendencyColorForPct(p.color, val);
-            return 'rgba(255,255,255,0.05)';
-        }
-
         // 여러 정당이 최고 %로 동률(경합)일 때 겹쳐 표시할 빗금 패턴의 고유 id
         function tendencySvgTiePatternId(colors) {
             return 'tendTie_' + colors.map(c => c.replace('#','')).join('_');
@@ -5391,10 +5382,14 @@
         function tendencyRegisterTiePattern(patternDefs, colors) {
             const id = tendencySvgTiePatternId(colors);
             if(!patternDefs.has(id)) {
-                const stripeW = 6;
-                const size = stripeW * colors.length;
-                const rects = colors.map((c,i) => `<rect x="${i*stripeW}" y="0" width="${stripeW}" height="${size}" fill="${c}"/>`).join('');
-                patternDefs.set(id, `<pattern id="${id}" width="${size}" height="${size}" patternUnits="userSpaceOnUse" patternTransform="rotate(-45)">${rects}</pattern>`);
+                // patternUnits를 도형 자신의 경계상자 기준(objectBoundingBox)으로 잡아, 지도의 좌표 규모가
+                // 크든 작든(예: viewBox "0 0 2000 1600") 줄무늬가 항상 도형 크기에 비례해 또렷하게 보이도록 함
+                // (고정 픽셀 크기로 하면 좌표 규모가 큰 지도에서 줄무늬가 너무 가늘어져 회색으로 뭉개져 보임)
+                const n = colors.length;
+                const tile = 0.3; // 도형 경계상자 대비 패턴 한 칸의 비율 — 작을수록 줄무늬가 촘촘해짐
+                const bandW = tile / n;
+                const rects = colors.map((c,i) => `<rect x="${i*bandW}" y="0" width="${bandW}" height="${tile}" fill="${c}"/>`).join('');
+                patternDefs.set(id, `<pattern id="${id}" width="${tile}" height="${tile}" patternUnits="objectBoundingBox" patternContentUnits="objectBoundingBox" patternTransform="rotate(-45)">${rects}</pattern>`);
             }
             return `url(#${id})`;
         }
@@ -5416,11 +5411,18 @@
                     if(val > bestVal) { bestVal = val; tied = [p]; }
                     else if(val === bestVal && val > 0) tied.push(p);
                 });
-                if(tied.length === 0 || bestVal <= 0) { fillMap[key] = 'rgba(255,255,255,0.05)'; titleMap[key] = nm; return; }
-                if(tied.length === 1) { fillMap[key] = tendencyColorForPct(tied[0].color, bestVal); titleMap[key] = `${nm}: ${tied[0].name} ${bestVal}%`; return; }
+                // 툴팁에는 값이 매겨진 모든 정당의 %를 높은 순으로 나열 (경합이면 몇 당이 동률인지도 표시)
+                const breakdown = parties
+                    .map(p => ({ p, val: districtSvgTendency[key]?.[tendencySvgChamber]?.[p.id] || 0 }))
+                    .filter(e => e.val > 0)
+                    .sort((a,b) => b.val - a.val)
+                    .map(e => `${e.p.name} ${e.val}%`)
+                    .join(' · ');
+                if(tied.length === 0 || bestVal <= 0) { fillMap[key] = 'rgba(255,255,255,0.05)'; titleMap[key] = `${nm}: 성향 미지정`; return; }
+                if(tied.length === 1) { fillMap[key] = tendencyColorForPct(tied[0].color, bestVal); titleMap[key] = `${nm}: ${breakdown}`; return; }
                 const colors = tied.map(p => tendencyColorForPct(p.color, bestVal));
                 fillMap[key] = tendencyRegisterTiePattern(patternDefs, colors);
-                titleMap[key] = `${nm}: 경합 (${tied.map(p=>p.name).join(', ')} ${bestVal}%)`;
+                titleMap[key] = `${nm} (경합): ${breakdown}`;
             });
             return {
                 getFill: key => fillMap[key] || 'rgba(255,255,255,0.05)',
@@ -5429,88 +5431,65 @@
             };
         }
 
-        function tendencySvgTitleFor(partyIdOrAll, key) {
-            const nm = districtNames.house[key] || key;
-            const seats = districtSeatCounts[key]?.[tendencySvgChamber] || 0;
-            if(seats <= 0) return `${nm} (이 원에 의석 없음)`;
-            if(partyIdOrAll === '__all__') return nm;
-            const val = districtSvgTendency[key]?.[tendencySvgChamber]?.[partyIdOrAll] || 0;
-            return `${nm}: ${val}%`;
-        }
-
-        // 정당 하나의 지도(SVG) 성향 편집 패널(제목 + 클릭 가능한 지도)을 만들어 반환
-        function tendencySvgBuildPartyWrap(p) {
-            const wrap = document.createElement('div');
-            wrap.style.cssText = 'margin-bottom:12px;';
-            wrap.innerHTML = `
-                <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
-                    <span style="width:10px;height:10px;background:${p.color};border-radius:50%;flex-shrink:0;"></span>
-                    <span style="color:#aaa;font-size:0.8rem;">${p.name}</span>
-                </div>`;
-            const mapDiv = document.createElement('div');
-            mapDiv.style.cssText = 'width:100%;min-height:180px;background:#0a0c10;border:1px solid #222;';
-            wrap.appendChild(mapDiv);
-            renderDistrictSvgInto(mapDiv, {
-                clickable: true,
-                getFill: key => tendencySvgFillFor(p.id, key),
-                title: key => tendencySvgTitleFor(p.id, key),
-                onClickKey: key => {
-                    if((districtSeatCounts[key]?.[tendencySvgChamber]||0) <= 0) return;
-                    districtSvgSetTendency(key, tendencySvgChamber, p.id, tendencyStrength);
-                    tendencyRenderMaps();
-                }
-            });
-            return wrap;
-        }
-
-        // 지역구 시스템이 지도(SVG)일 때의 성향 탭 렌더링 — 하원/상원/삼원 탭으로 나눠 원별로 편집
+        // 지역구 시스템이 지도(SVG)일 때의 성향 탭 렌더링 — 우측엔 종합 지도 하나만 두고(클릭해서 지역구 선택),
+        // 좌측 패널에 선택된 지역구의 정당별 성향(%)을 목록(정당명 + 입력칸)으로 편집 — 지지율 탭과 같은 방식
         function tendencySvgRenderMaps() {
             const container = document.getElementById('tendencyMaps');
+            const panel = document.getElementById('tendencySvgDistrictPanel');
             if(!container) return;
             container.innerHTML = '';
             if(!districtSvgMap) {
                 container.innerHTML = '<div style="text-align:center;color:#444;font-size:0.85rem;padding:30px 10px;">지역구 탭에서 지도를 먼저 업로드하세요</div>';
+                if(panel) panel.innerHTML = '';
                 return;
             }
 
-            if(tendencyView === 'overall') {
-                const allWrap = document.createElement('div');
-                allWrap.innerHTML = `<div style="color:#888;font-size:0.8rem;margin-bottom:4px;letter-spacing:1px;">▌ 종합</div>`;
-                const mapDiv = document.createElement('div');
-                mapDiv.style.cssText = 'width:100%;min-height:220px;background:#0a0c10;border:1px solid #222;';
-                allWrap.appendChild(mapDiv);
-                container.appendChild(allWrap);
-                const overall = tendencySvgBuildOverallFill();
-                renderDistrictSvgInto(mapDiv, { getFill: overall.getFill, title: overall.getTitle, defs: overall.defs });
-                return;
-            }
-
-            if(tendencyView !== 'all') {
-                const p = parties.find(x => x.id === tendencyView);
-                if(p) { container.appendChild(tendencySvgBuildPartyWrap(p)); return; }
-                tendencyView = 'all';
-            }
-
-            const allWrap = document.createElement('div');
-            allWrap.style.cssText = 'margin-bottom:12px;';
-            allWrap.innerHTML = `<div style="color:#888;font-size:0.8rem;margin-bottom:4px;letter-spacing:1px;">▌ 종합</div>`;
-            const allMapDiv = document.createElement('div');
-            allMapDiv.style.cssText = 'width:100%;min-height:200px;background:#0a0c10;border:1px solid #222;';
-            allWrap.appendChild(allMapDiv);
-            container.appendChild(allWrap);
             const overall = tendencySvgBuildOverallFill();
-            renderDistrictSvgInto(allMapDiv, { getFill: overall.getFill, title: overall.getTitle, defs: overall.defs });
+            renderDistrictSvgInto(container, {
+                clickable: true,
+                getFill: overall.getFill,
+                title: overall.getTitle,
+                defs: overall.defs,
+                onClickKey: key => { tendencySvgSelectedKey = key; tendencyRenderMaps(); }
+            });
 
-            const partyGroup = document.createElement('div');
-            partyGroup.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:8px;';
-            container.appendChild(partyGroup);
-            parties.forEach(p => { partyGroup.appendChild(tendencySvgBuildPartyWrap(p)); });
+            if(!panel) return;
+            const key = tendencySvgSelectedKey;
+            if(!key || !districtSvgMap.shapes.some(s => s.key === key)) {
+                panel.innerHTML = '<div style="color:#444;font-size:0.78rem;text-align:center;padding:14px;border:1px solid #222;background:#0a0c10;margin-top:8px;">위 지도에서 지역구를 클릭해 선택하세요</div>';
+                return;
+            }
+            const nm = districtNames.house[key] || key;
+            const seats = districtSeatCounts[key]?.[tendencySvgChamber] || 0;
+            const chLabel = {
+                house:  document.getElementById('houseNameInput')?.value  || '하원',
+                senate: document.getElementById('senateNameInput')?.value || '상원',
+                third:  document.getElementById('thirdNameInput')?.value  || '삼원',
+            };
+            panel.innerHTML = `
+                <div style="color:#888;font-size:0.78rem;margin:8px 0 6px;">선택한 지역구 <span style="color:var(--tno-neon);">${nm}</span></div>
+                ${seats <= 0 ? `<div style="color:#664444;font-size:0.75rem;margin-bottom:6px;">지역구 탭에서 ${chLabel[tendencySvgChamber]}의 의석 수가 0으로 지정되어 있습니다</div>` : ''}
+                <div style="display:grid;grid-template-columns:1fr 75px;gap:6px;padding:0 2px;margin-bottom:4px;color:#555;font-size:0.8rem;">
+                    <span>정당명</span><span style="text-align:center;">지지율(%)</span>
+                </div>
+                ${parties.map(p => `
+                    <div style="display:grid;grid-template-columns:1fr 75px;gap:6px;margin-bottom:7px;align-items:center;">
+                        <div style="display:flex;align-items:center;gap:6px;min-width:0;">
+                            <span style="width:10px;height:10px;background:${p.color};border-radius:50%;flex-shrink:0;"></span>
+                            <span style="font-size:0.85rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${p.name}">${p.name}</span>
+                        </div>
+                        <input type="number" min="0" max="100" value="${districtSvgTendency[key]?.[tendencySvgChamber]?.[p.id]||0}"
+                            style="width:100%;box-sizing:border-box;background:#000;border:1px solid #333;color:var(--tno-neon);font-family:inherit;font-size:0.9rem;padding:6px 4px;text-align:center;"
+                            onchange="districtSvgSetTendency('${key}','${tendencySvgChamber}','${p.id}',this.value); tendencyRenderMaps();">
+                    </div>
+                `).join('')}
+            `;
         }
 
         function tendencyRenderMaps() {
-            tendencyRenderViewButtons();
             tendencyUpdateSvgChamberTabs();
             if(districtMapMode === 'svg') { tendencySvgRenderMaps(); return; }
+            tendencyRenderViewButtons();
             const container = document.getElementById('tendencyMaps');
             if(!container) return;
             container.innerHTML = '';
@@ -6311,7 +6290,21 @@
             elecUpdateDistrictInfo();
         }
 
+        // 지역구 개표 방식 — 'auto': 기존처럼 순서를 섞어 자동으로 하나씩 애니메이션, 'manual': 지도(SVG)에서 사용자가 직접 지역구를 클릭해 개표
+        let elecCountMode = 'auto';
+        function setElecCountMode(mode) {
+            if(mode !== 'auto' && mode !== 'manual') return;
+            elecCountMode = mode;
+            document.getElementById('elecCountModeAutoBtn')?.classList.toggle('active', mode === 'auto');
+            document.getElementById('elecCountModeManualBtn')?.classList.toggle('active', mode === 'manual');
+            const hint = document.getElementById('elecCountModeHint');
+            if(hint) hint.style.display = mode === 'manual' ? '' : 'none';
+        }
+
         function elecUpdateDistrictInfo() {
+            const countRow = document.getElementById('elecCountModeRow');
+            if(countRow) countRow.style.display = districtMapMode === 'svg' ? 'flex' : 'none';
+            if(districtMapMode !== 'svg' && elecCountMode === 'manual') setElecCountMode('auto');
             const targets = getElecTargets();
             const hName = document.getElementById('houseNameInput')?.value || '하원';
             const sName = document.getElementById('senateNameInput')?.value || '상원';
@@ -6427,14 +6420,15 @@
                 if(withParty.length === 0) { fillMap[key] = 'transparent'; titleMap[key] = nm; return; }
                 const maxN = Math.max(...withParty.map(e => e.n));
                 const top = withParty.filter(e => e.n === maxN);
+                const breakdownText = withParty.slice().sort((a,b) => b.n - a.n).map(e => `${e.party.name} ${e.n}석`).join(' · ');
                 if(top.length === 1) {
                     const pct = (maxN/total) * 100;
                     fillMap[key] = tendencyColorForPct(top[0].party.color, pct);
-                    titleMap[key] = `${nm}: ${top[0].party.name} ${maxN}/${total}석`;
+                    titleMap[key] = `${nm}: ${breakdownText}`;
                 } else {
                     const colors = top.map(e => tendencyColorForPct(e.party.color, 50));
                     fillMap[key] = tendencyRegisterTiePattern(patternDefs, colors);
-                    titleMap[key] = `${nm}: 경합 (${top.map(e=>e.party.name).join(', ')} 각 ${maxN}석)`;
+                    titleMap[key] = `${nm} (경합): ${breakdownText}`;
                 }
             });
             return {
@@ -6443,6 +6437,35 @@
                 getBadges: key => badgeMap[key] || null,
                 defs: Array.from(patternDefs.values()).join('')
             };
+        }
+
+        // "선택 개표" 지도 렌더링 — 아직 공개 안 된 지역구는 클릭을 기다리는 중립색으로, 공개된 지역구만
+        // elecSvgBuildResultFill과 동일한 색/빗금/배지로 표시. 미공개 지역구를 클릭하면 onReveal(key) 호출
+        function elecDrawDistrictResultManualSvg(chamber, districtResults, revealedKeys, onReveal) {
+            const suf = chamber.charAt(0).toUpperCase() + chamber.slice(1);
+            const cvs = document.getElementById('elecDistrictResultCanvas'+suf);
+            const svgWrap = document.getElementById('elecDistrictResultSvg'+suf);
+            if(cvs) cvs.style.display = 'none';
+            if(!svgWrap) return;
+            svgWrap.style.display = '';
+            const allKeys = new Set(districtResults.map(d => d.key));
+            const revealedResults = districtResults.filter(d => revealedKeys.has(d.key));
+            const result = elecSvgBuildResultFill(elecBuildDistrictSeatBreakdown(revealedResults), chamber);
+            renderDistrictSvgInto(svgWrap, {
+                clickable: true,
+                getFill: key => {
+                    if(revealedKeys.has(key)) return result.getFill(key);
+                    return allKeys.has(key) ? 'rgba(255,255,255,0.1)' : 'transparent';
+                },
+                title: key => {
+                    if(revealedKeys.has(key)) return result.getTitle(key);
+                    const nm = districtNames[chamber]?.[key] || key;
+                    return allKeys.has(key) ? `${nm} — 클릭해서 개표` : nm;
+                },
+                seatBadges: key => revealedKeys.has(key) ? result.getBadges(key) : null,
+                defs: result.defs,
+                onClickKey: key => { if(allKeys.has(key) && !revealedKeys.has(key)) onReveal(key); }
+            });
         }
 
         // 지역구 시스템 방식에 관계없이 "그 의원실이 지역구에서 채울 수 있는 총 의석 수"를 반환
@@ -6793,7 +6816,43 @@
             await new Promise(r=>setTimeout(r,150));
 
             // ── 1단계: 지역구 개표 애니메이션 ─────
-            if(districtSeats > 0) {
+            if(districtSeats > 0 && districtMapMode === 'svg' && elecCountMode === 'manual') {
+                // 선택 개표: 자동으로 순서를 섞어 넘기지 않고, 사용자가 결과 지도에서 지역구를 하나씩 클릭해 개표
+                const pauseBtn = document.getElementById('elecPauseBtn');
+                if(pauseBtn) pauseBtn.style.display = 'none'; // 자동 진행이 없으므로 일시정지는 의미가 없음
+                const allDistrictKeys = [...new Set(districtResults.map(d => d.key))];
+                const revealedKeys = new Set();
+                let revealedSeats = 0;
+                const revealOne = key => {
+                    if(revealedKeys.has(key)) return;
+                    revealedKeys.add(key);
+                    districtResults.filter(d => d.key === key).forEach(({ partyId }) => {
+                        const p = parties.find(x => x.id === partyId);
+                        if(p) { p[seatKey]++; revealedSeats++; }
+                    });
+                    elecDrawDistrictResultManualSvg(chamber, districtResults, revealedKeys, revealOne);
+                    const distName = districtNames[chamber][key];
+                    document.getElementById('elecResultTitle'+suf).innerText = `> ${elecTitle} (${elecYear}) — ${chamberName} 개표 중... (${distName || key})`;
+                    const pct = (revealedSeats/totalSeats*100).toFixed(1)+'%';
+                    document.getElementById('elecProgressBar').style.width = pct;
+                    document.getElementById('elecResultBar'+suf).style.width = pct;
+                    const map = buildElecMap(chamber, totalSeats);
+                    updateStats('elecResultStats'+suf, map, totalSeats);
+                };
+                document.getElementById('elecResultTitle'+suf).innerText = `> ${elecTitle} (${elecYear}) — ${chamberName}: 지도에서 지역구를 클릭해 개표하세요`;
+                elecDrawDistrictResultManualSvg(chamber, districtResults, revealedKeys, revealOne);
+                while(revealedKeys.size < allDistrictKeys.length && !elecSkipToEnd) {
+                    await new Promise(r=>setTimeout(r,100));
+                }
+                if(elecSkipToEnd) allDistrictKeys.forEach(k => revealOne(k)); // 즉시 완료 시 남은 지역구 일괄 개표
+                if(pauseBtn) pauseBtn.style.display = ''; // 비례 단계는 다시 자동 애니메이션이므로 복원
+                if(propSeats > 0 && !elecSkipToEnd) {
+                    await new Promise(r=>setTimeout(r,300));
+                    elecSetView('arc', chamber);
+                    await new Promise(r=>setTimeout(r,200));
+                }
+                elecDrawDistrictResult(districtResults, districtResults.length, chamber);
+            } else if(districtSeats > 0) {
                 const districtSpeed = Math.max(speed, 20);
                 for(let i = 0; i < districtResults.length; i++) {
                     if(elecSkipToEnd) break;
