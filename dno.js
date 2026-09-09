@@ -6609,7 +6609,9 @@
                     fillMap[key] = tendencyColorForPct(top[0].party.color, pct);
                     titleMap[key] = `${nm}: ${breakdownText}`;
                 } else {
-                    const colors = top.map(e => tendencyColorForPct(e.party.color, 50));
+                    // 50%로 섞으면 정당 원색이 옅을 때 검은 배경과 대비가 거의 없어 안 보이는 것처럼
+                    // 보일 수 있어(예: #3498DB, #E74C3C), 경합 빗금은 확실히 알아볼 수 있도록 진하게 표시
+                    const colors = top.map(e => tendencyColorForPct(e.party.color, 85));
                     fillMap[key] = tendencyRegisterTiePattern(patternDefs, colors);
                     titleMap[key] = `${nm} (경합): ${breakdownText}`;
                 }
