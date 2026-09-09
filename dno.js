@@ -6696,9 +6696,30 @@
                 cvs.style.display = 'none';
                 if(svgWrap) {
                     svgWrap.style.display = '';
-                    const breakdown = elecBuildDistrictSeatBreakdown(districtResults.slice(0, progress));
+                    const revealed = districtResults.slice(0, progress);
+                    const breakdown = elecBuildDistrictSeatBreakdown(revealed);
                     const result = elecSvgBuildResultFill(breakdown, chamber);
-                    renderDistrictSvgInto(svgWrap, { getFill: result.getFill, title: result.getTitle, seatBadges: result.getBadges, defs: result.defs });
+                    // 자동 개표는 지역구 순서가 아니라 의석 단위로 뒤섞여 진행되므로, 의석이 여럿인
+                    // 지역구는 그 의석들이 개표 순서상 아직 하나도 나오지 않은 동안 결과가 없는 것처럼
+                    // (의석 없음과 똑같이 안 보이게) 보일 수 있다. 아직 개표되지 않았을 뿐인 지역구는
+                    // "선택 개표"의 대기 표시와 같은 중립색으로 구분해 보여준다
+                    const isComplete = progress >= districtResults.length;
+                    const countedSoFar = {};
+                    if(!isComplete) revealed.forEach(r => { countedSoFar[r.key] = true; });
+                    renderDistrictSvgInto(svgWrap, {
+                        getFill: key => {
+                            if(!isComplete && (districtSeatCounts[key]?.[chamber] || 0) > 0 && !countedSoFar[key]) return 'rgba(255,255,255,0.1)';
+                            return result.getFill(key);
+                        },
+                        title: key => {
+                            if(!isComplete && (districtSeatCounts[key]?.[chamber] || 0) > 0 && !countedSoFar[key]) {
+                                return `${districtNames[chamber]?.[key] || key} — 개표 대기 중`;
+                            }
+                            return result.getTitle(key);
+                        },
+                        seatBadges: result.getBadges,
+                        defs: result.defs
+                    });
                 }
                 return;
             }
