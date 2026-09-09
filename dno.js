@@ -5487,8 +5487,28 @@
             };
         }
 
-        // 지역구 시스템이 지도(SVG)일 때의 성향 탭 렌더링 — 우측엔 종합 지도 하나만 두고(클릭해서 지역구 선택),
-        // 좌측 패널에 선택된 지역구의 정당별 성향(%)을 목록(정당명 + 입력칸)으로 편집 — 지지율 탭과 같은 방식
+        // 특정 정당 하나의 성향(%) 값만으로 도형별 채우기를 계산 — 종합 지도 밑에 정당별로 나열되는 보조 지도용
+        function tendencySvgBuildPartyFill(p) {
+            const fillMap = {};
+            const titleMap = {};
+            (districtSvgMap?.shapes || []).forEach(s => {
+                const key = s.key;
+                const nm = districtNames.house[key] || key;
+                const seats = districtSeatCounts[key]?.[tendencySvgChamber] || 0;
+                if(seats <= 0) { fillMap[key] = '#141414'; titleMap[key] = `${nm} (이 원에 의석 없음)`; return; }
+                const val = districtSvgTendency[key]?.[tendencySvgChamber]?.[p.id] || 0;
+                fillMap[key] = val > 0 ? tendencyColorForPct(p.color, val) : 'rgba(255,255,255,0.05)';
+                titleMap[key] = `${nm}: ${p.name} ${val}%`;
+            });
+            return {
+                getFill: key => fillMap[key] || 'rgba(255,255,255,0.05)',
+                getTitle: key => titleMap[key] || (districtNames.house[key] || key),
+            };
+        }
+
+        // 지역구 시스템이 지도(SVG)일 때의 성향 탭 렌더링 — 우측엔 (구 지역구 방식의 "전체" 보기와 같은 구성으로)
+        // 맨 위에 종합 지도, 그 아래 정당별 지도를 나열하고(모두 클릭해서 지역구 선택 가능),
+        // 좌측 패널에 선택된 지역구의 의석 수 + 정당별 성향(%)을 목록(정당명 + 입력칸)으로 편집 — 지지율 탭과 같은 방식
         function tendencySvgRenderMaps() {
             const container = document.getElementById('tendencyMaps');
             const panel = document.getElementById('tendencySvgDistrictPanel');
@@ -5500,13 +5520,44 @@
                 return;
             }
 
+            const onSelect = key => { tendencySvgSelectedKey = key; tendencyRenderMaps(); };
+
             const overall = tendencySvgBuildOverallFill();
-            renderDistrictSvgInto(container, {
+            const overallWrap = document.createElement('div');
+            overallWrap.style.cssText = 'margin-bottom:12px;';
+            overallWrap.innerHTML = `<div style="color:#888;font-size:0.8rem;margin-bottom:4px;letter-spacing:1px;">▌ 종합</div>`;
+            const overallMapDiv = document.createElement('div');
+            overallWrap.appendChild(overallMapDiv);
+            container.appendChild(overallWrap);
+            renderDistrictSvgInto(overallMapDiv, {
                 clickable: true,
                 getFill: overall.getFill,
                 title: overall.getTitle,
                 defs: overall.defs,
-                onClickKey: key => { tendencySvgSelectedKey = key; tendencyRenderMaps(); }
+                onClickKey: onSelect
+            });
+
+            const partyGroup = document.createElement('div');
+            partyGroup.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:8px;';
+            container.appendChild(partyGroup);
+            parties.forEach(p => {
+                const pf = tendencySvgBuildPartyFill(p);
+                const pWrap = document.createElement('div');
+                pWrap.style.cssText = 'margin-bottom:12px;';
+                pWrap.innerHTML = `<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+                    <span style="width:10px;height:10px;background:${p.color};border-radius:50%;flex-shrink:0;"></span>
+                    <span style="color:#aaa;font-size:0.8rem;">${p.name}</span>
+                </div>`;
+                const pMapDiv = document.createElement('div');
+                pWrap.appendChild(pMapDiv);
+                partyGroup.appendChild(pWrap);
+                renderDistrictSvgInto(pMapDiv, {
+                    clickable: true,
+                    hideAbbr: true,
+                    getFill: pf.getFill,
+                    title: pf.getTitle,
+                    onClickKey: onSelect
+                });
             });
 
             if(!panel) return;
@@ -5531,7 +5582,13 @@
             };
             panel.innerHTML = pickerHtml + `
                 <div style="color:#888;font-size:0.78rem;margin-bottom:6px;">선택한 지역구 <span style="color:var(--tno-neon);">${nm}</span></div>
-                ${seats <= 0 ? `<div style="color:#664444;font-size:0.75rem;margin-bottom:6px;">지역구 탭에서 ${chLabel[tendencySvgChamber]}의 의석 수가 0으로 지정되어 있습니다</div>` : ''}
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;padding:8px;background:#0a0c10;border:1px solid #222;">
+                    <span style="color:#888;font-size:0.8rem;white-space:nowrap;">${chLabel[tendencySvgChamber]} 의석 수</span>
+                    <input type="number" min="0" value="${seats}"
+                        style="width:70px;box-sizing:border-box;background:#000;border:1px solid #333;color:var(--tno-neon);font-family:inherit;font-size:0.9rem;padding:5px;text-align:center;"
+                        onchange="districtSvgSetSeats('${key}','${tendencySvgChamber}',this.value); tendencyRenderMaps();">
+                </div>
+                ${seats <= 0 ? `<div style="color:#664444;font-size:0.75rem;margin-bottom:6px;">이 지역구는 ${chLabel[tendencySvgChamber]}에 배정된 의석이 없습니다 — 위에서 의석 수를 먼저 입력하세요</div>` : ''}
                 <div style="display:grid;grid-template-columns:1fr 75px;gap:6px;padding:0 2px;margin-bottom:4px;color:#555;font-size:0.8rem;">
                     <span>정당명</span><span style="text-align:center;">지지율(%)</span>
                 </div>
