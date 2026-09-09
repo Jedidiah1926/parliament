@@ -775,18 +775,13 @@
                         <button id="tendStrBtn75"  class="sub-tab-btn-3"           onclick="tendencySetStrength(75)">75%</button>
                         <button id="tendStrBtn100" class="sub-tab-btn-3"           onclick="tendencySetStrength(100)">100%</button>
                     </div>
-                    <!-- % 입력 — 지도(SVG): 지역구 하나하나를 정밀하게 지정하므로 자유 입력 -->
-                    <div id="tendencyStrengthPctRow" style="display:none;align-items:center;gap:6px;margin:8px 0;">
-                        <span style="color:#666;font-size:0.8rem;">클릭 시 적용할 성향(%)</span>
-                        <input type="number" id="tendencyStrengthPctInput" min="0" max="100" value="50"
-                            oninput="tendencySetStrength(Math.max(0,Math.min(100,parseInt(this.value)||0)))"
-                            style="width:70px;background:#000;border:1px solid #333;color:var(--tno-neon);font-family:inherit;font-size:0.9rem;padding:5px;text-align:center;">
-                        <span style="color:#444;font-size:0.78rem;">%</span>
-                    </div>
-                    <div style="font-size:0.75rem;color:#444;margin-bottom:6px;padding:4px 8px;background:#0a0c10;border:1px solid #222;">
+                    <div id="tendencyHexHint" style="font-size:0.75rem;color:#444;margin-bottom:6px;padding:4px 8px;background:#0a0c10;border:1px solid #222;">
                         성향 맵은 우측 패널에서 확인 및 편집하세요
                     </div>
                     <div id="tendencyViewButtons" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;"></div>
+
+                    <!-- 지도(SVG) 방식: 우측 지도에서 지역구를 클릭해 선택하면, 그 지역구의 정당별 성향(%)을 목록으로 편집 -->
+                    <div id="tendencySvgDistrictPanel" style="display:none;"></div>
                 </div>
 
                 <!-- 지지율 서브탭 -->
