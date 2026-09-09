@@ -793,6 +793,9 @@
                         <button class="sub-tab-btn-3" id="tendencySvgChamberSenateBtn" onclick="tendencySetSvgChamber('senate')">상원</button>
                         <button class="sub-tab-btn-3" id="tendencySvgChamberThirdBtn" onclick="tendencySetSvgChamber('third')" style="display:none;">삼원</button>
                     </div>
+                    <label id="tendencySvgSyncAllRow" style="display:none;align-items:center;gap:6px;cursor:pointer;color:var(--tno-neon);font-size:0.9rem;padding:5px 8px;background:#0a1a1a;border:1px solid #1a3a3a;margin-bottom:8px;">
+                        <input type="checkbox" id="tendencySvgSyncAll" onchange="onTendencySvgSyncAllChange(this.checked)"> 전체에 반영
+                    </label>
                     <!-- 강도 선택 — 육각형(구 지역구): 빠르게 여러 칸을 칠하므로 5단계 버튼 -->
                     <div id="tendencyStrengthButtons" style="display:flex;align-items:center;gap:4px;margin:8px 0;flex-wrap:wrap;">
                         <span style="color:#666;font-size:0.8rem;margin-right:2px;">강도</span>
