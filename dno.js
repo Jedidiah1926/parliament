@@ -6588,6 +6588,11 @@
             (districtSvgMap?.shapes || []).forEach(s => {
                 const key = s.key;
                 const nm = districtNames[chamber]?.[key] || districtNames.house[key] || key;
+                const seats = districtSeatCounts[key]?.[chamber] || 0;
+                // 이 원에 의석이 배정되지 않은 지역구는 개표 결과가 없는 게 정상이므로, 완전히 투명하게(안 보이게)
+                // 두지 않고 성향 지도와 같은 어두운 회색 + 안내 문구로 명확히 표시한다 (원마다 지역구 의석이
+                // 다를 수 있어 하원/상원 중 한쪽에서만 이렇게 보이는 것은 버그가 아니라 의도된 동작)
+                if(seats <= 0) { fillMap[key] = '#141414'; titleMap[key] = `${nm} (이 원에 의석 없음)`; return; }
                 const dist = breakdown[key];
                 if(!dist) { fillMap[key] = 'transparent'; titleMap[key] = nm; return; }
                 const entries = Object.keys(dist).map(pid => ({ pid, n: dist[pid] }));
@@ -6633,12 +6638,14 @@
                 clickable: true,
                 getFill: key => {
                     if(revealedKeys.has(key)) return result.getFill(key);
-                    return allKeys.has(key) ? 'rgba(255,255,255,0.1)' : 'transparent';
+                    if(allKeys.has(key)) return 'rgba(255,255,255,0.1)';
+                    return (districtSeatCounts[key]?.[chamber] || 0) <= 0 ? '#141414' : 'transparent';
                 },
                 title: key => {
                     if(revealedKeys.has(key)) return result.getTitle(key);
                     const nm = districtNames[chamber]?.[key] || key;
-                    return allKeys.has(key) ? `${nm} — 클릭해서 개표` : nm;
+                    if(allKeys.has(key)) return `${nm} — 클릭해서 개표`;
+                    return (districtSeatCounts[key]?.[chamber] || 0) <= 0 ? `${nm} (이 원에 의석 없음)` : nm;
                 },
                 seatBadges: key => revealedKeys.has(key) ? result.getBadges(key) : null,
                 defs: result.defs,
