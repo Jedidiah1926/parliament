@@ -4141,6 +4141,7 @@
                 Array.from(defsWrap.childNodes).forEach(n => svg.appendChild(n));
             }
             const shapeEls = [];
+            let selectedOverlayEl = null;
             map.shapes.forEach(s => {
                 const el = document.createElementNS(svgNS, s.tag);
                 Object.entries(s.attrs||{}).forEach(([k,v]) => el.setAttribute(k, v));
@@ -4170,7 +4171,22 @@
                 }
                 svg.appendChild(el);
                 shapeEls.push({ s, el });
+                // 선택된 지역구는 (지역구 탭과 동일하게) 노란색 반투명 박스를 겹쳐 표시 — 지역구/성향 탭이
+                // selectedDistrictKey를 공유하므로 어느 쪽에서 선택해도 다른 탭에도 그대로 반영됨.
+                // 다른 도형들에 가려지지 않도록 맨 위에 그려야 해서, 지금 만들지만 나중에 append한다
+                if(opts.selectedKey && s.key === opts.selectedKey) {
+                    const overlay = document.createElementNS(svgNS, s.tag);
+                    Object.entries(s.attrs||{}).forEach(([k,v]) => overlay.setAttribute(k, v));
+                    overlay.setAttribute('fill', 'rgba(255,215,0,0.3)');
+                    overlay.setAttribute('stroke', 'rgba(255,215,0,0.9)');
+                    overlay.setAttribute('stroke-width', (opts.strokeWidth || '1.5') * 1.6 || '2.4');
+                    overlay.setAttribute('vector-effect', 'non-scaling-stroke');
+                    overlay.setAttribute('pointer-events', 'none');
+                    overlay.setAttribute('data-decor', '1');
+                    selectedOverlayEl = overlay;
+                }
             });
+            if(selectedOverlayEl) svg.appendChild(selectedOverlayEl);
             wrapEl.appendChild(svg);
 
             // 약칭 표시 + (선거 결과 지도라면) 정당별 획득 의석 수 배지 — 도형이 실제로 배치된 뒤에만
@@ -5130,7 +5146,6 @@
             return pattern;
         }
         let tendencySvgChamber = 'house'; // 지도(SVG) 지역구의 성향을 편집 중인 원 — 원별로 성향 데이터가 다르므로 필요
-        let tendencySvgSelectedKey = null; // 성향 탭에서 클릭으로 선택한 지역구 — 정당별 %를 목록으로 편집할 대상
 
         function tendencySetSvgChamber(ch) {
             tendencySvgChamber = ch;
@@ -5138,8 +5153,10 @@
         }
 
         // 성향 탭에서 지도를 직접 클릭하는 것 외에, 이름으로 골라 선택 지역구를 바꿀 때 사용
+        // 선택 상태(selectedDistrictKey)는 지역구 탭과 공유되므로, 여기서 선택해도 지역구 탭의
+        // 노란색 선택 표시·편집 패널에 그대로 반영되고 그 반대도 마찬가지다
         function tendencySvgSelectDistrict(key) {
-            tendencySvgSelectedKey = key || null;
+            selectedDistrictKey = key || null;
             tendencyRenderMaps();
         }
 
@@ -5520,7 +5537,7 @@
                 return;
             }
 
-            const onSelect = key => { tendencySvgSelectedKey = key; tendencyRenderMaps(); };
+            const onSelect = key => { selectedDistrictKey = key; tendencyRenderMaps(); };
 
             const overall = tendencySvgBuildOverallFill();
             const overallWrap = document.createElement('div');
@@ -5534,6 +5551,7 @@
                 getFill: overall.getFill,
                 title: overall.getTitle,
                 defs: overall.defs,
+                selectedKey: selectedDistrictKey,
                 onClickKey: onSelect
             });
 
@@ -5556,12 +5574,13 @@
                     hideAbbr: true,
                     getFill: pf.getFill,
                     title: pf.getTitle,
+                    selectedKey: selectedDistrictKey,
                     onClickKey: onSelect
                 });
             });
 
             if(!panel) return;
-            const key = tendencySvgSelectedKey;
+            const key = selectedDistrictKey;
             // 지도에서 직접 클릭하는 것 외에, 이름으로 바로 찾아 바꿀 수 있는 선택 목록 — 항상 표시
             const pickerHtml = `
                 <select onchange="tendencySvgSelectDistrict(this.value)" style="width:100%;box-sizing:border-box;background:#000;border:1px solid #333;color:var(--tno-neon);font-family:inherit;font-size:0.85rem;padding:6px;margin-bottom:8px;">
@@ -5582,13 +5601,7 @@
             };
             panel.innerHTML = pickerHtml + `
                 <div style="color:#888;font-size:0.78rem;margin-bottom:6px;">선택한 지역구 <span style="color:var(--tno-neon);">${nm}</span></div>
-                <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;padding:8px;background:#0a0c10;border:1px solid #222;">
-                    <span style="color:#888;font-size:0.8rem;white-space:nowrap;">${chLabel[tendencySvgChamber]} 의석 수</span>
-                    <input type="number" min="0" value="${seats}"
-                        style="width:70px;box-sizing:border-box;background:#000;border:1px solid #333;color:var(--tno-neon);font-family:inherit;font-size:0.9rem;padding:5px;text-align:center;"
-                        onchange="districtSvgSetSeats('${key}','${tendencySvgChamber}',this.value); tendencyRenderMaps();">
-                </div>
-                ${seats <= 0 ? `<div style="color:#664444;font-size:0.75rem;margin-bottom:6px;">이 지역구는 ${chLabel[tendencySvgChamber]}에 배정된 의석이 없습니다 — 위에서 의석 수를 먼저 입력하세요</div>` : ''}
+                ${seats <= 0 ? `<div style="color:#664444;font-size:0.75rem;margin-bottom:6px;">지역구 탭에서 ${chLabel[tendencySvgChamber]}의 의석 수가 0으로 지정되어 있습니다</div>` : ''}
                 <div style="display:grid;grid-template-columns:1fr 75px;gap:6px;padding:0 2px;margin-bottom:4px;color:#555;font-size:0.8rem;">
                     <span>정당명</span><span style="text-align:center;">지지율(%)</span>
                 </div>
@@ -5693,6 +5706,9 @@
                 districtUpdateModeUI();
                 setTimeout(() => { districtInitCanvas(); }, 80);
                 renderDistrictListPanel();
+                // 성향 탭에서 선택해 둔 지역구(selectedDistrictKey는 두 탭이 공유)가 있으면
+                // 여기서도 그 편집 패널을 그대로 이어서 보여준다
+                districtRenderNamePanel();
             }
             if(sub === 'tendency') {
                 document.getElementById('dispTabTendency').style.display = '';
