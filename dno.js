@@ -4568,11 +4568,36 @@
             elecUpdateDistrictInfo();
         }
 
+        // "전체에 반영" (성향 탭, 지지율 탭과 같은 방식) — 켜져 있으면 한 원에서 지역구 성향(%)을 바꿀 때
+        // 같은 지역구의 다른 원에도 그대로 반영 (원마다 지역구 성향을 독립적으로 관리하기 때문에 필요)
+        let tendencySvgSyncAll = false;
+
+        function tendencySvgPropagateValue(key, fromChamber, partyId, value) {
+            chamberList().forEach(c => {
+                if(c === fromChamber) return;
+                districtSvgTendency[key] = districtSvgTendency[key] || { house:{}, senate:{}, third:{} };
+                districtSvgTendency[key][c] = districtSvgTendency[key][c] || {};
+                districtSvgTendency[key][c][partyId] = value;
+            });
+        }
+
         function districtSvgSetTendency(key, chamber, partyId, value) {
             const v = Math.max(0, Math.min(100, parseFloat(value)||0));
             districtSvgTendency[key] = districtSvgTendency[key] || { house:{}, senate:{}, third:{} };
             districtSvgTendency[key][chamber] = districtSvgTendency[key][chamber] || {};
             districtSvgTendency[key][chamber][partyId] = v;
+            if(tendencySvgSyncAll) tendencySvgPropagateValue(key, chamber, partyId, v);
+        }
+
+        // "전체에 반영" 체크박스 — 켜는 순간 현재 선택된 지역구의 현재 원 값을 다른 모든 원에 즉시 동기화
+        function onTendencySvgSyncAllChange(checked) {
+            tendencySvgSyncAll = checked;
+            if(checked && selectedDistrictKey) {
+                const key = selectedDistrictKey;
+                const store = districtSvgTendency[key]?.[tendencySvgChamber] || {};
+                Object.keys(store).forEach(partyId => tendencySvgPropagateValue(key, tendencySvgChamber, partyId, store[partyId]));
+                tendencyRenderMaps();
+            }
         }
 
         // 지도에 잘못 섞여 들어온 도형(예: 배경/틀 사각형)을 통째로 제거 — 지도 자체에서 삭제되며 복구 불가
@@ -4705,10 +4730,19 @@
                     ? '<div style="color:#444;font-size:0.78rem;text-align:center;padding:10px;border-top:1px solid #222;">이 지역구에 배정된 의석이 없습니다 — 위에서 의석 수를 먼저 입력하세요</div>'
                     : '<div style="color:#555;font-size:0.75rem;padding:8px;background:#0a0c10;border:1px solid #222;">정당별 성향(%)은 위쪽 <b style="color:var(--tno-neon);">성향</b> 탭에서 이 지도를 클릭해 편집하세요</div>'
                 }
-                <div style="border-top:1px solid #222;margin-top:10px;padding-top:8px;text-align:right;">
+                <div style="border-top:1px solid #222;margin-top:10px;padding-top:8px;display:flex;justify-content:space-between;gap:8px;">
+                    <button onclick="clearSelectedDistrict()" style="background:transparent;border:1px solid #333;color:#888;padding:4px 10px;font-family:inherit;font-size:0.75rem;cursor:pointer;">선택 해제</button>
                     <button onclick="districtSvgRemoveShape('${key}')" style="background:transparent;border:1px solid #663333;color:#cc6666;padding:4px 10px;font-family:inherit;font-size:0.75rem;cursor:pointer;">이 도형 지도에서 삭제 (배경/틀 등 잘못 포함된 도형용)</button>
                 </div>
             `;
+        }
+
+        // 지역구/성향 탭이 공유하는 선택 상태(selectedDistrictKey)를 해제 — 양쪽 탭에 모두 반영
+        function clearSelectedDistrict() {
+            selectedDistrictKey = null;
+            districtRenderNamePanel();
+            districtRenderMap();
+            if(districtMapMode === 'svg') tendencyRenderMaps();
         }
 
         function districtSetName(name) {
@@ -5428,10 +5462,12 @@
             const hexHint = document.getElementById('tendencyHexHint');
             const viewBtns = document.getElementById('tendencyViewButtons');
             const svgPanel = document.getElementById('tendencySvgDistrictPanel');
+            const syncAllRow = document.getElementById('tendencySvgSyncAllRow');
             if(strBtns) strBtns.style.display = isSvg ? 'none' : '';
             if(hexHint) hexHint.style.display = isSvg ? 'none' : '';
             if(viewBtns) viewBtns.style.display = isSvg ? 'none' : '';
             if(svgPanel) svgPanel.style.display = isSvg ? '' : 'none';
+            if(syncAllRow) syncAllRow.style.display = isSvg ? 'flex' : 'none';
             const box = document.getElementById('tendencySvgChamberTabs');
             if(!box) return;
             box.style.display = isSvg ? '' : 'none';
@@ -5600,7 +5636,10 @@
                 third:  document.getElementById('thirdNameInput')?.value  || '삼원',
             };
             panel.innerHTML = pickerHtml + `
-                <div style="color:#888;font-size:0.78rem;margin-bottom:6px;">선택한 지역구 <span style="color:var(--tno-neon);">${nm}</span></div>
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px;">
+                    <span style="color:#888;font-size:0.78rem;">선택한 지역구 <span style="color:var(--tno-neon);">${nm}</span></span>
+                    <button onclick="clearSelectedDistrict()" style="background:transparent;border:1px solid #333;color:#888;padding:3px 8px;font-family:inherit;font-size:0.72rem;cursor:pointer;flex-shrink:0;">선택 해제</button>
+                </div>
                 ${seats <= 0 ? `<div style="color:#664444;font-size:0.75rem;margin-bottom:6px;">지역구 탭에서 ${chLabel[tendencySvgChamber]}의 의석 수가 0으로 지정되어 있습니다</div>` : ''}
                 <div style="display:grid;grid-template-columns:1fr 75px;gap:6px;padding:0 2px;margin-bottom:4px;color:#555;font-size:0.8rem;">
                     <span>정당명</span><span style="text-align:center;">지지율(%)</span>
@@ -5700,6 +5739,9 @@
                 document.getElementById(`elecSubTab${s.charAt(0).toUpperCase()+s.slice(1)}`)?.classList.toggle('active', s===sub);
                 document.getElementById(`elecSub${s.charAt(0).toUpperCase()+s.slice(1)}`)?.classList.toggle('active', s===sub);
             });
+            // districtNamePanel(선택한 지역구 편집 패널)은 sub-tab-content 밖에 있어 자동으로 숨겨지지
+            // 않으므로, 지역구 탭이 아닐 때는 항상 직접 숨긴다 (성향/지지율 탭에 겹쳐 보이던 버그 수정)
+            if(sub !== 'district') document.getElementById('districtNamePanel').style.display = 'none';
             if(sub === 'district') {
                 document.getElementById('dispTabDistrict').style.display = '';
                 switchDispTab('district');
