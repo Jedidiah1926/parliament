@@ -2,7 +2,7 @@
       --tno-bg: #101218;
       --tno-panel: #1a1d26;
       --tno-neon: #00ffff;
-      --tno-neon-dim: rgba(0, 255, 255, .3);
+      --tno-neon-dim: color-mix(in srgb, var(--tno-neon) 30%, transparent);
       --tno-text: #e0e0e0;
       --tno-border: #4a5a6a;
       --tno-gold: #ffd700;
@@ -46,7 +46,7 @@
     ::-webkit-scrollbar-thumb {
       background: #18242c;
       border: 1px solid var(--tno-neon);
-      box-shadow: inset 0 0 5px rgba(0,255,255,.22), 0 0 5px rgba(0,255,255,.18);
+      box-shadow: inset 0 0 5px color-mix(in srgb, var(--tno-neon) 22%, transparent), 0 0 5px color-mix(in srgb, var(--tno-neon) 18%, transparent);
     }
     ::-webkit-scrollbar-thumb:hover {
       background: var(--tno-neon);
@@ -69,11 +69,11 @@
       align-self: stretch;
       background-color: var(--tno-panel);
       background-image:
-        linear-gradient(rgba(0, 255, 255, .045) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(0, 255, 255, .045) 1px, transparent 1px);
+        linear-gradient(color-mix(in srgb, var(--tno-neon) 4.5%, transparent) 1px, transparent 1px),
+        linear-gradient(90deg, color-mix(in srgb, var(--tno-neon) 4.5%, transparent) 1px, transparent 1px);
       background-size: 32px 32px;
       border: 2px solid var(--tno-border);
-      box-shadow: 0 0 15px rgba(0,255,255,.1);
+      box-shadow: 0 0 15px color-mix(in srgb, var(--tno-neon) 10%, transparent);
       position: relative;
       overflow: hidden;
     }
