@@ -1857,6 +1857,8 @@
             // (옛 메인탭 키 legislation/record가 그대로 새 nation 서브탭 키로 재사용됨)
             if(uiMain === 'legislation' || uiMain === 'record') { currentSubTab.nation = uiMain; uiMain = 'nation'; }
             if(currentSubTab.election === 'record') currentSubTab.election = 'vote';
+            // 구버전 파일 호환: 저장 메인탭이 국가>설정 하단으로 통합되기 전 위치를 가리키던 경우 재매핑
+            if(uiMain === 'save') uiMain = 'nation';
             switchMainTab(uiMain);
             if(uiMain !== 'election') {
                 const fallback = uiMain==='setup' ? 'party' : 'legislation';
@@ -2093,7 +2095,7 @@
             document.querySelectorAll('.main-tab-content').forEach(c => c.classList.remove('active'));
             document.getElementById('mainContent' + main.charAt(0).toUpperCase() + main.slice(1)).classList.add('active');
             if(main === 'election') { elecRenderList(); elecRenderRecords(); return; }
-            if(main === 'save') { return; } // 저장 탭은 서브탭 없는 단일 화면
+            if(main === 'cabinet') { return; } // 내각 탭은 서브탭 없는 단일 화면 (Coming Soon)
             switchSubTab(main, currentSubTab[main] || (main === 'setup' ? 'party' : 'legislation'), false);
         }
 
