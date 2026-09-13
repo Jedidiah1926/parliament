@@ -56,7 +56,7 @@
                 <button class="main-tab-btn" onclick="switchMainTab('setup')" id="mainTabSetup">⚙ 의회</button>
                 <button class="main-tab-btn active" onclick="switchMainTab('nation')" id="mainTabNation">🏛 국가</button>
                 <button class="main-tab-btn" onclick="switchMainTab('election')" id="mainTabElection">🗳 여론</button>
-                <button class="main-tab-btn" onclick="switchMainTab('save')" id="mainTabSave">💾︎ 저장</button>
+                <button class="main-tab-btn" onclick="switchMainTab('cabinet')" id="mainTabCabinet">👔 내각</button>
             </div>
 
             <!-- ===== 의회 그룹 (정당 그룹이 여기로 통합됨) ===== -->
@@ -342,6 +342,26 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- 저장 (구 최상단 '저장' 탭이 여기로 통합됨) -->
+                    <div style="color:#666;font-size:0.8rem;margin:18px 0 6px;letter-spacing:1px;border-top:1px solid #222;padding-top:14px;">▌ 저장</div>
+                    <label style="display:flex;align-items:center;justify-content:space-between;gap:10px;cursor:pointer;padding:12px 14px;background:#0a0c10;border:1px solid #2a2a2a;margin-bottom:14px;">
+                        <span>
+                            <span style="color:var(--tno-neon);font-size:0.95rem;display:block;">자동저장</span>
+                            <span style="color:#666;font-size:0.75rem;" id="autosaveStatusText">-</span>
+                        </span>
+                        <input type="checkbox" id="autosaveToggle" onchange="setAutosaveEnabled(this.checked)">
+                    </label>
+
+                    <button class="add-btn" onclick="resetAutosaveData()" style="width:100%;margin-top:0;border-color:#663333;color:#ff6666;">✕ 저장 데이터 초기화</button>
+
+                    <div style="height:1px;background:#222;margin:18px 0;"></div>
+
+                    <div style="display:flex;gap:8px;">
+                        <button class="add-btn" onclick="saveJSON()" style="flex:1;margin-top:0;">파일로 저장</button>
+                        <button class="add-btn" onclick="document.getElementById('fileLoadJsonTab').click()" style="flex:1;margin-top:0;">불러오기</button>
+                    </div>
+                    <input id="fileLoadJsonTab" type="file" accept="application/json" style="display:none;">
                 </div>
 
                 <!-- 입법 탭 (내부 탭: 제출/상정/표결) -->
@@ -831,25 +851,10 @@
             </div><!-- end mainContentElection -->
 
             <!-- ===== 저장 그룹 ===== -->
-            <div id="mainContentSave" class="main-tab-content">
-                <div style="padding:16px;">
-                    <label style="display:flex;align-items:center;justify-content:space-between;gap:10px;cursor:pointer;padding:12px 14px;background:#0a0c10;border:1px solid #2a2a2a;margin-bottom:14px;">
-                        <span>
-                            <span style="color:var(--tno-neon);font-size:0.95rem;display:block;">자동저장</span>
-                            <span style="color:#666;font-size:0.75rem;" id="autosaveStatusText">-</span>
-                        </span>
-                        <input type="checkbox" id="autosaveToggle" onchange="setAutosaveEnabled(this.checked)">
-                    </label>
-
-                    <button class="add-btn" onclick="resetAutosaveData()" style="width:100%;margin-top:0;border-color:#663333;color:#ff6666;">✕ 저장 데이터 초기화</button>
-
-                    <div style="height:1px;background:#222;margin:18px 0;"></div>
-
-                    <div style="display:flex;gap:8px;">
-                        <button class="add-btn" onclick="saveJSON()" style="flex:1;margin-top:0;">파일로 저장</button>
-                        <button class="add-btn" onclick="document.getElementById('fileLoadJsonTab').click()" style="flex:1;margin-top:0;">불러오기</button>
-                    </div>
-                    <input id="fileLoadJsonTab" type="file" accept="application/json" style="display:none;">
+            <div id="mainContentCabinet" class="main-tab-content">
+                <div style="padding:60px 16px;text-align:center;color:#555;">
+                    <div style="font-size:1.4rem;color:var(--tno-neon);letter-spacing:2px;margin-bottom:10px;">COMING SOON</div>
+                    <div style="font-size:0.85rem;">내각 기능은 아직 준비 중입니다.</div>
                 </div>
             </div>
 
