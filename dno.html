@@ -34,9 +34,18 @@
         <div style="background:#0a0c10;border:1px solid var(--tno-neon);box-shadow:0 0 16px color-mix(in srgb, var(--tno-neon) 30%, transparent);padding:20px;width:300px;max-width:90vw;font-family:'NeoDunggeunmo','VT323',monospace;">
             <div style="color:var(--tno-neon);font-size:1rem;margin-bottom:16px;letter-spacing:1px;">▌ 내보내기</div>
 
-            <label style="display:flex;align-items:center;gap:8px;margin-bottom:16px;cursor:pointer;color:#ccc;font-size:0.85rem;">
-                <input type="checkbox" id="exportIncludeStats"> 아래 의석 수 등 통계 포함
+            <label style="display:flex;align-items:center;gap:8px;margin-bottom:10px;cursor:pointer;color:#ccc;font-size:0.85rem;">
+                <input type="checkbox" id="exportIncludeStats" onchange="onExportIncludeStatsChange()"> 아래 의석 수 등 통계 포함
             </label>
+
+            <div id="exportStatsSubOptions" style="display:none;margin:0 0 16px 22px;">
+                <label style="display:flex;align-items:center;gap:8px;margin-bottom:8px;cursor:pointer;color:#999;font-size:0.8rem;">
+                    <input type="checkbox" id="exportExpandIndependents"> 무소속 펼치기
+                </label>
+                <label style="display:flex;align-items:center;gap:8px;cursor:pointer;color:#999;font-size:0.8rem;">
+                    <input type="checkbox" id="exportIncludeExtraParties"> 원외정당 포함하기
+                </label>
+            </div>
 
             <div style="color:#888;font-size:0.8rem;margin-bottom:6px;">형식</div>
             <div style="display:flex;gap:6px;margin-bottom:20px;">
