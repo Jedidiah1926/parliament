@@ -318,7 +318,7 @@
           },
           {
             status: 'current',
-            title: '1.5.1 - 지도',
+            title: '1.5.M - Maps',
             desc: `2026.09.09
               <br>- 맵 메이커(구 맵 메이커, MINISTRY OF TRANSPORT)에서 만든 실제 지도 모양의 지역구를 .jsx로 내보내고, 지역구 탭에서 업로드해 하원·상원·삼원이 하나의 지도를 공유하는 "지도" 지역구 시스템 추가
               <br>- 지역구별로 원별 의석 수를 따로 지정할 수 있고, 도형을 클릭하면 이름·약칭·의석 수를 편집 가능 (약칭을 지정하면 지도 위 도형 가운데에 표시)
@@ -333,13 +333,31 @@
           },
           {
             status: 'future',
-            title: '1.5.2 - 지도 개발',
+            title: '1.5.A - Assets',
+            desc: `2026.09.14
+              <br>- 내보내기 형식 추가`
+          },
+          {
+            status: 'future',
+            title: '1.5.P - Powers',
+            desc: `2026.09.XX
+              <br>- 행정부 추가`
+          },
+          {
+            status: 'future',
+            title: '1.5.S - Scandals',
+            desc: `2026.09.XX
+              <br>- 부정선거 추가`
+          },
+          {
+            status: 'future',
+            title: '1.5.1 - Assets',
             desc: `2026.09.XX
               <br>- 2차 개발`
           },
           {
             status: 'future',
-            title: '1.5.X - 프로그램 출시',
+            title: '1.5.9 - 프로그램 출시',
             desc: `2026.11.XX
               <br>- Windows 환경에서 Microsoft Store를 통해 사용할 수 있도록 최적화
               <br>- Android 환경에서 Google Play Store를 통해 사용할 수 있도록 최적화`
