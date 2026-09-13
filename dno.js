@@ -1271,6 +1271,214 @@
             positionFloatingBox(tip, clientX, clientY);
         }
 
+        // 캔버스/SVG 우클릭 → 내보내기 메뉴 → 내보내기 옵션 창 (앱 전체 canvas·svg 요소 공용, 사이트 전역에서 한 번만 등록)
+        let canvasExportTarget = null;
+        document.addEventListener('contextmenu', e => {
+            const el = e.target.closest?.('canvas, svg');
+            if(!el) return;
+            e.preventDefault();
+            canvasExportTarget = el;
+            const menu = document.getElementById('canvasExportMenu');
+            if(!menu) return;
+            menu.style.display = 'block';
+            positionFloatingBox(menu, e.clientX, e.clientY);
+        });
+        document.addEventListener('click', () => {
+            const menu = document.getElementById('canvasExportMenu');
+            if(menu) menu.style.display = 'none';
+        });
+
+        let exportDialogTarget = null;
+        let exportFormat = 'png';
+
+        function setExportFormat(fmt) {
+            exportFormat = fmt;
+            document.querySelectorAll('#exportDialogOverlay .sub-tab-btn-3').forEach(b => b.classList.toggle('active', b.dataset.format === fmt));
+        }
+
+        function openExportDialog() {
+            document.getElementById('canvasExportMenu').style.display = 'none';
+            if(!canvasExportTarget) return;
+            exportDialogTarget = canvasExportTarget;
+            document.getElementById('exportIncludeStats').checked = false;
+            setExportFormat('png');
+            document.getElementById('exportDialogOverlay').style.display = 'flex';
+        }
+
+        function closeExportDialog() {
+            document.getElementById('exportDialogOverlay').style.display = 'none';
+        }
+
+        // id 규칙이 두 가지라 정규식도 둘 다 잡아야 함: 반원(houseStats)은 Stats로 끝나지만,
+        // 선거 결과(elecResultStatsHouse)는 원 이름이 뒤에 더 붙어 Stats가 중간에 옴
+        function findStatsElementIn(box) {
+            return Array.from(box.querySelectorAll('[id]')).find(n => /Stats(House|Senate|Third)?$/.test(n.id)) || null;
+        }
+
+        // 대상 요소(캔버스/svg)를 담고 있는 .chamber-box 안에서, 그 아래 표시되는 의석 통계 블록(있다면)을 찾음
+        function findExportStatsBlock(el) {
+            const box = el.closest('.chamber-box');
+            if(!box) return null;
+            const stats = findStatsElementIn(box);
+            return (stats && stats.children.length > 0) ? box : null;
+        }
+
+        function downloadDataUrl(dataUrl, filename) {
+            const a = document.createElement('a');
+            a.href = dataUrl;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+        }
+
+        function downloadBlob(blob, filename) {
+            const url = URL.createObjectURL(blob);
+            downloadDataUrl(url, filename);
+            setTimeout(() => URL.revokeObjectURL(url), 2000);
+        }
+
+        // svg 요소를 그 자체(비트맵 아님, <foreignObject> 없는 순수 벡터 마크업)만으로 캔버스에 래스터화
+        // — foreignObject로 임의 HTML을 담으면 Chromium이 교차출처 리소스 여부와 무관하게 캔버스를
+        // "오염(tainted)"시켜 toDataURL을 막아버리므로, 통계 영역은 별도로 캔버스/SVG 기본 도형으로 직접 그린다
+        function rasterizeSvgElement(svgEl, mime) {
+            return new Promise((resolve, reject) => {
+                const rect = svgEl.getBoundingClientRect();
+                const clone = svgEl.cloneNode(true);
+                clone.setAttribute('width', rect.width);
+                clone.setAttribute('height', rect.height);
+                const blob = new Blob([new XMLSerializer().serializeToString(clone)], { type: 'image/svg+xml;charset=utf-8' });
+                const url = URL.createObjectURL(blob);
+                const img = new Image();
+                img.onload = () => {
+                    const scale = window.devicePixelRatio || 1;
+                    const cvs = document.createElement('canvas');
+                    cvs.width = Math.max(1, Math.round(rect.width * scale));
+                    cvs.height = Math.max(1, Math.round(rect.height * scale));
+                    const ctx = cvs.getContext('2d');
+                    ctx.fillStyle = '#0a0c10';
+                    ctx.fillRect(0, 0, cvs.width, cvs.height);
+                    ctx.drawImage(img, 0, 0, cvs.width, cvs.height);
+                    URL.revokeObjectURL(url);
+                    try { resolve(cvs); } catch(e) { reject(e); }
+                };
+                img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('SVG 렌더링 실패')); };
+                img.src = url;
+            });
+        }
+
+        // 통계 블록(.stat-block들) 각각에서 좌측 띠 색과 텍스트만 뽑아냄 — 원본 서식(뱃지·연정 pill 등)을
+        // 그대로 복제하지 않고 캔버스/SVG 기본 도형으로 다시 그리기 위한 단순화된 표현
+        function extractStatsRows(statsEl) {
+            return Array.from(statsEl.children)
+                .map(block => ({
+                    color: getComputedStyle(block).borderLeftColor || '#888',
+                    text: block.textContent.replace(/\s+/g, ' ').trim(),
+                }))
+                .filter(r => r.text);
+        }
+
+        // 시각화(canvas 또는 svg)를 캔버스에 그린 뒤, includeStats면 그 아래에 통계 행을 이어서 그려
+        // 최종 캔버스를 반환. 통계는 <foreignObject> 없이 canvas 2D 도형(rect+text)으로 직접 그림
+        async function renderExportCanvas(target, box) {
+            const baseCanvas = target.tagName === 'CANVAS' ? target : await rasterizeSvgElement(target, 'image/png');
+            if(!box) return baseCanvas;
+            const statsEl = findStatsElementIn(box);
+            const rows = statsEl ? extractStatsRows(statsEl) : [];
+            if(rows.length === 0) return baseCanvas;
+
+            const scale = (baseCanvas.width / (target.clientWidth || target.getBoundingClientRect().width || baseCanvas.width)) || 1;
+            const rowH = Math.round(34 * scale), pad = Math.round(10 * scale), fontSize = Math.round(13 * scale);
+            const statsH = pad + rows.length * rowH + pad;
+
+            const out = document.createElement('canvas');
+            out.width = baseCanvas.width;
+            out.height = baseCanvas.height + statsH;
+            const ctx = out.getContext('2d');
+            ctx.fillStyle = '#0a0c10';
+            ctx.fillRect(0, 0, out.width, out.height);
+            ctx.drawImage(baseCanvas, 0, 0);
+
+            ctx.font = `${fontSize}px monospace`;
+            ctx.textBaseline = 'middle';
+            rows.forEach((row, i) => {
+                const y = baseCanvas.height + pad + i * rowH;
+                ctx.fillStyle = '#000';
+                ctx.fillRect(pad, y, out.width - pad * 2, rowH - Math.round(4 * scale));
+                ctx.fillStyle = row.color;
+                ctx.fillRect(pad, y, Math.round(4 * scale), rowH - Math.round(4 * scale));
+                ctx.fillStyle = '#ccc';
+                ctx.fillText(row.text, pad + Math.round(12 * scale), y + (rowH - Math.round(4 * scale)) / 2, out.width - pad * 3);
+            });
+            return out;
+        }
+
+        // 시각화(svg 요소)와, includeStats면 그 아래 통계 행을 <rect>/<text> 기본 도형으로 담은 SVG 문자열을 만듦
+        function buildExportSvgMarkup(target, box) {
+            const rect = target.getBoundingClientRect();
+            const vizMarkup = target.tagName === 'CANVAS'
+                ? `<image href="${target.toDataURL('image/png')}" width="${rect.width}" height="${rect.height}"/>`
+                : (() => { const c = target.cloneNode(true); c.setAttribute('width', rect.width); c.setAttribute('height', rect.height); return c.outerHTML; })();
+
+            let statsMarkup = '', statsH = 0;
+            if(box) {
+                const statsEl = findStatsElementIn(box);
+                const rows = statsEl ? extractStatsRows(statsEl) : [];
+                const rowH = 34, pad = 10;
+                statsH = rows.length ? pad + rows.length * rowH + pad : 0;
+                statsMarkup = rows.map((row, i) => {
+                    const y = rect.height + pad + i * rowH;
+                    const text = row.text.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+                    return `<rect x="${pad}" y="${y}" width="${rect.width - pad * 2}" height="${rowH - 4}" fill="#000"/>`
+                         + `<rect x="${pad}" y="${y}" width="4" height="${rowH - 4}" fill="${row.color}"/>`
+                         + `<text x="${pad + 12}" y="${y + (rowH - 4) / 2}" dominant-baseline="middle" fill="#ccc" font-size="13" font-family="monospace">${text}</text>`;
+                }).join('');
+            }
+            const totalH = rect.height + statsH;
+            return `<svg xmlns="http://www.w3.org/2000/svg" width="${rect.width}" height="${totalH}" viewBox="0 0 ${rect.width} ${totalH}">`
+                + `<rect x="0" y="0" width="${rect.width}" height="${totalH}" fill="#0a0c10"/>${vizMarkup}${statsMarkup}</svg>`;
+        }
+
+        async function performExport() {
+            const target = exportDialogTarget;
+            const includeStats = document.getElementById('exportIncludeStats').checked;
+            const format = exportFormat;
+            closeExportDialog();
+            if(!target) return;
+            try {
+                await exportVisualElement(target, includeStats, format);
+            } catch(e) {
+                alert('내보내기 중 오류가 발생했습니다: ' + e.message);
+            }
+        }
+
+        async function exportVisualElement(target, includeStats, format) {
+            const box = includeStats ? findExportStatsBlock(target) : null;
+            // 지도용 <svg>는 자체 id가 없고 감싸는 div만 id를 가지므로(예: districtSvgWrap) 그쪽으로 대체
+            const nameSource = target.id || target.closest('[id]')?.id || 'export';
+            const filenameBase = `${nameSource}_${formatKstTimestampCompact()}`;
+
+            // 통계 미포함 + 캔버스 + png/jpg → 캔버스를 바로 변환(가장 흔한 경우, 손실·비용 없음)
+            if(!box && target.tagName === 'CANVAS' && format !== 'svg') {
+                const mime = format === 'jpg' ? 'image/jpeg' : 'image/png';
+                downloadDataUrl(target.toDataURL(mime, 0.95), `${filenameBase}.${format}`);
+                return;
+            }
+            // 통계 미포함 + svg + svg 형식 → 마크업 그대로 직렬화(가장 흔한 경우, 벡터 그대로 보존)
+            if(!box && target.tagName !== 'CANVAS' && format === 'svg') {
+                downloadBlob(new Blob([new XMLSerializer().serializeToString(target)], { type: 'image/svg+xml' }), `${filenameBase}.svg`);
+                return;
+            }
+
+            if(format === 'svg') {
+                downloadBlob(new Blob([buildExportSvgMarkup(target, box)], { type: 'image/svg+xml' }), `${filenameBase}.svg`);
+                return;
+            }
+            const mime = format === 'jpg' ? 'image/jpeg' : 'image/png';
+            const cvs = await renderExportCanvas(target, box);
+            downloadDataUrl(cvs.toDataURL(mime, 0.95), `${filenameBase}.${format}`);
+        }
+
         // 본원(하원/상원/삼원) 좌석 캔버스는 더 이상 호버 툴팁을 띄우지 않는다 —
         // 클릭 시 좌석 정보 카드(showSeatInfoCard)로 대체되었으므로, 호버는 커서 힌트 + 흰색 고리(토성 고리처럼 좌석과 떨어진)로 표시한다.
         function handleCanvasMouseMove(e, chamber) {

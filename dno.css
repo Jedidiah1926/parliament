@@ -951,6 +951,26 @@
             white-space: nowrap;
         }
 
+        .canvas-export-menu {
+            position: fixed;
+            background: #0a0c10;
+            border: 1px solid var(--tno-neon);
+            box-shadow: 0 0 10px color-mix(in srgb, var(--tno-neon) 40%, transparent);
+            z-index: 5001;
+            display: none;
+            white-space: nowrap;
+            font-family: 'NeoDunggeunmo', 'VT323', monospace;
+        }
+        .canvas-export-menu-item {
+            color: var(--tno-neon);
+            font-size: 0.85rem;
+            padding: 8px 14px;
+            cursor: pointer;
+        }
+        .canvas-export-menu-item:hover {
+            background: color-mix(in srgb, var(--tno-neon) 15%, transparent);
+        }
+
         .seat-info-card {
             position: fixed;
             display: none;
