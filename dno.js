@@ -1271,6 +1271,35 @@
             positionFloatingBox(tip, clientX, clientY);
         }
 
+        // 캔버스 우클릭 → PNG 내보내기 메뉴 (앱 전체 canvas 요소 공용, 사이트 전역에서 한 번만 등록)
+        let canvasExportTarget = null;
+        document.addEventListener('contextmenu', e => {
+            const canvas = e.target.closest?.('canvas');
+            if(!canvas) return;
+            e.preventDefault();
+            canvasExportTarget = canvas;
+            const menu = document.getElementById('canvasExportMenu');
+            if(!menu) return;
+            menu.style.display = 'block';
+            positionFloatingBox(menu, e.clientX, e.clientY);
+        });
+        document.addEventListener('click', () => {
+            const menu = document.getElementById('canvasExportMenu');
+            if(menu) menu.style.display = 'none';
+        });
+
+        function exportCanvasAsPng() {
+            const canvas = canvasExportTarget;
+            document.getElementById('canvasExportMenu').style.display = 'none';
+            if(!canvas) return;
+            const link = document.createElement('a');
+            link.download = `${canvas.id || 'canvas'}_${formatKstTimestampCompact()}.png`;
+            link.href = canvas.toDataURL('image/png');
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+        }
+
         // 본원(하원/상원/삼원) 좌석 캔버스는 더 이상 호버 툴팁을 띄우지 않는다 —
         // 클릭 시 좌석 정보 카드(showSeatInfoCard)로 대체되었으므로, 호버는 커서 힌트 + 흰색 고리(토성 고리처럼 좌석과 떨어진)로 표시한다.
         function handleCanvasMouseMove(e, chamber) {
