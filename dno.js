@@ -1296,11 +1296,19 @@
             document.querySelectorAll('#exportDialogOverlay .sub-tab-btn-3').forEach(b => b.classList.toggle('active', b.dataset.format === fmt));
         }
 
+        function onExportIncludeStatsChange() {
+            const show = document.getElementById('exportIncludeStats').checked;
+            document.getElementById('exportStatsSubOptions').style.display = show ? 'block' : 'none';
+        }
+
         function openExportDialog() {
             document.getElementById('canvasExportMenu').style.display = 'none';
             if(!canvasExportTarget) return;
             exportDialogTarget = canvasExportTarget;
             document.getElementById('exportIncludeStats').checked = false;
+            document.getElementById('exportExpandIndependents').checked = false;
+            document.getElementById('exportIncludeExtraParties').checked = false;
+            onExportIncludeStatsChange();
             setExportFormat('png');
             document.getElementById('exportDialogOverlay').style.display = 'flex';
         }
@@ -1369,9 +1377,11 @@
 
         // 통계 블록(.stat-block들) 각각에서 좌측 띠 색·이름줄(이름:의석수(%))·상태 태그(색 포함)·
         // 정당별 legend-pill(점 색+텍스트)을 구조째로 뽑아냄 — 실제 카드 디자인에 최대한 가깝게
-        // 캔버스/SVG 기본 도형으로 다시 그리기 위함(사진 박스·복잡한 파벌 서식 등은 생략)
-        function extractStatsRows(statsEl) {
-            return Array.from(statsEl.querySelectorAll('.stat-block')).map(block => {
+        // 캔버스/SVG 기본 도형으로 다시 그리기 위함(사진 박스·복잡한 파벌 서식 등은 생략).
+        // expandIndependents: 무소속 카드의 숨겨진 개별 의원 패널(indPanel_*)도 함께 뽑아 sub-line으로 붙임.
+        // includeExtraParties: 화면에서 접혀 있어(원외정당 접기) DOM에 아예 없는 원외정당도 데이터에서 직접 행을 만들어 덧붙임.
+        function extractStatsRows(statsEl, chamber, statsOptions = {}) {
+            const rows = Array.from(statsEl.querySelectorAll('.stat-block')).map(block => {
                 const barColor = getComputedStyle(block).borderLeftColor || '#888';
                 const ref = block.querySelector('.dyn-ref');
                 const headerRow = ref?.children?.[0];
@@ -1385,8 +1395,41 @@
                     dotColor: getComputedStyle(p.querySelector('span')).backgroundColor || '#888',
                     text: p.textContent.trim(),
                 }));
-                return { barColor, nameText, statusTags, pills };
+                let independentMembers = [];
+                if(statsOptions.expandIndependents) {
+                    const panel = block.querySelector('[id^="indPanel_"]:not([id$="_arrow"])');
+                    if(panel) {
+                        independentMembers = Array.from(panel.children).map(row => {
+                            const kids = Array.from(row.children);
+                            if(kids.length >= 4) {
+                                return `${kids[1].textContent.trim()} ${kids[2].textContent.trim()} (${kids[3].textContent.trim()})`;
+                            }
+                            return row.textContent.replace(/\s+/g, ' ').trim();
+                        }).filter(Boolean);
+                    }
+                }
+                return { barColor, nameText, statusTags, pills, independentMembers };
             }).filter(r => r.nameText);
+
+            if(statsOptions.includeExtraParties && chamber) rows.push(...extractExtraPartyRows(chamber));
+            return rows;
+        }
+
+        // 원외정당(의석 0)은 화면에서 접혀 있으면 DOM에 카드 자체가 없으므로, 데이터에서 직접
+        // 같은 모양의 행을 만들어 통계 내보내기에 추가한다 (실제 화면 접기 상태는 건드리지 않음)
+        function extractExtraPartyRows(chamber) {
+            return extraParliamentaryPartyList(chamber).map(p => {
+                const ideoName = ideologies.find(i => i.id === p.ideologyId)?.name || '';
+                const statusTags = p.status === 'dissolved' ? [{ text: '해산', color: '#999' }]
+                                  : p.status === 'banned' ? [{ text: '활동 금지', color: '#ff0055' }] : [];
+                return {
+                    barColor: p.color,
+                    nameText: `${p.name}${p.abbr ? ` (${p.abbr})` : ''}`,
+                    statusTags,
+                    pills: ideoName ? [{ dotColor: p.color, text: ideoName }] : [],
+                    independentMembers: [],
+                };
+            });
         }
 
         // 캔버스에 텍스트를 그리기 전, 사이트 웹폰트(NeoDunggeunmo)가 실제로 로드되길 기다림 —
@@ -1407,11 +1450,12 @@
         // 시각화(canvas 또는 svg)를 캔버스에 그린 뒤, includeStats면 그 아래에 통계 행을 이어서 그려
         // 최종 캔버스를 반환. 통계는 <foreignObject> 없이 canvas 2D 도형(rect+text)으로 직접 그림
         // (foreignObject로 그리면 Chromium이 래스터화 시 캔버스를 오염시켜 toDataURL이 막힘)
-        async function renderExportCanvas(target, box) {
+        async function renderExportCanvas(target, box, statsOptions = {}) {
             const baseCanvas = target.tagName === 'CANVAS' ? target : await rasterizeSvgElement(target, 'image/png');
             if(!box) return baseCanvas;
             const statsEl = findStatsElementIn(box);
-            const rows = statsEl ? extractStatsRows(statsEl) : [];
+            const chamber = statsEl ? inferChamberFromStatsId(statsEl.id) : null;
+            const rows = statsEl ? extractStatsRows(statsEl, chamber, statsOptions) : [];
             if(rows.length === 0) return baseCanvas;
 
             await ensureExportFontsLoaded();
@@ -1420,8 +1464,10 @@
             const scale = (baseCanvas.width / (target.clientWidth || target.getBoundingClientRect().width || baseCanvas.width)) || 1;
             const pad = Math.round(10 * scale), barW = Math.round(4 * scale);
             const nameSize = Math.round(15 * scale), tagSize = Math.round(11 * scale), pillSize = Math.round(11 * scale);
-            const rowH = Math.round(56 * scale);
-            const statsH = pad + rows.length * rowH + pad;
+            const indLineSize = Math.round(11 * scale), indLineH = Math.round(15 * scale);
+            const baseRowH = Math.round(56 * scale);
+            const rowHeights = rows.map(row => baseRowH + row.independentMembers.length * indLineH);
+            const statsH = pad + rowHeights.reduce((a, b) => a + b, 0) + pad;
 
             const out = document.createElement('canvas');
             out.width = baseCanvas.width;
@@ -1432,8 +1478,10 @@
             ctx.drawImage(baseCanvas, 0, 0);
             ctx.textBaseline = 'middle';
 
+            let cursorY = baseCanvas.height + pad;
             rows.forEach((row, i) => {
-                const y = baseCanvas.height + pad + i * rowH;
+                const y = cursorY;
+                const rowH = rowHeights[i];
                 const innerH = rowH - Math.round(4 * scale);
                 ctx.fillStyle = '#000';
                 ctx.fillRect(pad, y, out.width - pad * 2, innerH);
@@ -1476,6 +1524,18 @@
                         px += ctx.measureText(pill.text).width + Math.round(10 * scale);
                     }
                 }
+
+                // 무소속 개별 의원 목록 (펼치기 체크 시) — 카드 하단에 작은 글씨로 한 줄씩 추가
+                if(row.independentMembers.length) {
+                    ctx.font = `${indLineSize}px ${font}`;
+                    ctx.fillStyle = '#888';
+                    row.independentMembers.forEach((line, li) => {
+                        const ly = y + Math.round(52 * scale) + li * indLineH + indLineH / 2;
+                        ctx.fillText('· ' + line, textX, ly, out.width - pad * 2 - (textX - pad));
+                    });
+                }
+
+                cursorY += rowH;
             });
             return out;
         }
@@ -1499,7 +1559,7 @@
         // 통계 포함 SVG 내보내기 — 실제 화면과 동일하게 보이도록 .chamber-box 전체를 <foreignObject>로
         // 그대로 담는다. SVG 형식은 래스터화(canvas 변환)하지 않고 파일로만 저장하므로, PNG/JPG와 달리
         // Chromium의 foreignObject 캔버스 오염 제약에 걸리지 않아 실제 카드 디자인·폰트를 온전히 담을 수 있다
-        function buildStatsForeignObjectSvg(box) {
+        function buildStatsForeignObjectSvg(box, statsOptions = {}) {
             const rect = box.getBoundingClientRect();
             const clone = box.cloneNode(true);
             const origCanvases = Array.from(box.querySelectorAll('canvas'));
@@ -1511,6 +1571,32 @@
                 img.style.cssText = `display:block;width:${w}px;height:${h}px;`;
                 cloneCanvases[i]?.replaceWith(img);
             });
+
+            // 무소속 펼치기: 화면에는 이미 렌더링돼 있지만 display:none으로 숨겨진 개별 의원
+            // 패널을 복제본에서만 강제로 펼침(실제 화면 상태는 건드리지 않음)
+            if(statsOptions.expandIndependents) {
+                clone.querySelectorAll('[id^="indPanel_"]:not([id$="_arrow"])').forEach(panel => {
+                    panel.style.display = '';
+                    const arrow = clone.querySelector(`#${CSS.escape(panel.id)}_arrow`);
+                    if(arrow) arrow.textContent = '▼';
+                });
+            }
+            // 원외정당 포함하기: 접혀 있으면 카드 자체가 DOM에 없으므로, 전역 접기 상태를
+            // 순간적으로(동기적으로) 펼침 상태로 바꿔 마크업만 새로 뽑아낸 뒤 즉시 원복한다
+            // — 화면 리렌더링을 거치지 않으므로 실제 화면에는 아무 영향이 없다
+            if(statsOptions.includeExtraParties) {
+                const statsElOrig = findStatsElementIn(box);
+                const chamber = statsElOrig ? inferChamberFromStatsId(statsElOrig.id) : 'house';
+                const header = clone.querySelector('[onclick="toggleExtraPartiesCollapse()"]');
+                if(header) {
+                    const prevCollapsed = extraPartiesCollapsed;
+                    extraPartiesCollapsed = false;
+                    const expandedHtml = renderExtraPartiesSection(chamber);
+                    extraPartiesCollapsed = prevCollapsed;
+                    header.outerHTML = expandedHtml;
+                }
+            }
+
             const css = getExportInlineCss();
             const html = new XMLSerializer().serializeToString(clone);
             // <style>은 foreignObject 안(xhtml 문서)이 아니라 <svg> 바로 아래(형제)에 둬야 한다.
@@ -1524,8 +1610,8 @@
         }
 
         // 시각화(svg 요소)만 담은 SVG 문자열을 만듦 — 통계 미포함 canvas→svg 변환용(간단히 이미지로 임베드)
-        function buildExportSvgMarkup(target, box) {
-            if(box) return buildStatsForeignObjectSvg(box);
+        function buildExportSvgMarkup(target, box, statsOptions = {}) {
+            if(box) return buildStatsForeignObjectSvg(box, statsOptions);
             const rect = target.getBoundingClientRect();
             const vizMarkup = target.tagName === 'CANVAS'
                 ? `<image href="${target.toDataURL('image/png')}" width="${rect.width}" height="${rect.height}"/>`
@@ -1537,17 +1623,21 @@
         async function performExport() {
             const target = exportDialogTarget;
             const includeStats = document.getElementById('exportIncludeStats').checked;
+            const statsOptions = {
+                expandIndependents: document.getElementById('exportExpandIndependents').checked,
+                includeExtraParties: document.getElementById('exportIncludeExtraParties').checked,
+            };
             const format = exportFormat;
             closeExportDialog();
             if(!target) return;
             try {
-                await exportVisualElement(target, includeStats, format);
+                await exportVisualElement(target, includeStats, format, statsOptions);
             } catch(e) {
                 alert('내보내기 중 오류가 발생했습니다: ' + e.message);
             }
         }
 
-        async function exportVisualElement(target, includeStats, format) {
+        async function exportVisualElement(target, includeStats, format, statsOptions = {}) {
             const box = includeStats ? findExportStatsBlock(target) : null;
             // 지도용 <svg>는 자체 id가 없고 감싸는 div만 id를 가지므로(예: districtSvgWrap) 그쪽으로 대체
             const nameSource = target.id || target.closest('[id]')?.id || 'export';
@@ -1575,11 +1665,11 @@
             }
 
             if(format === 'svg') {
-                downloadBlob(new Blob([buildExportSvgMarkup(target, box)], { type: 'image/svg+xml' }), `${filenameBase}.svg`);
+                downloadBlob(new Blob([buildExportSvgMarkup(target, box, statsOptions)], { type: 'image/svg+xml' }), `${filenameBase}.svg`);
                 return;
             }
             const mime = format === 'jpg' ? 'image/jpeg' : 'image/png';
-            const cvs = await renderExportCanvas(target, box);
+            const cvs = await renderExportCanvas(target, box, statsOptions);
             downloadDataUrl(cvs.toDataURL(mime, 0.95), `${filenameBase}.${format}`);
         }
 
