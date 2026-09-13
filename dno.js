@@ -1367,19 +1367,46 @@
             });
         }
 
-        // 통계 블록(.stat-block들) 각각에서 좌측 띠 색과 텍스트만 뽑아냄 — 원본 서식(뱃지·연정 pill 등)을
-        // 그대로 복제하지 않고 캔버스/SVG 기본 도형으로 다시 그리기 위한 단순화된 표현
+        // 통계 블록(.stat-block들) 각각에서 좌측 띠 색·이름줄(이름:의석수(%))·상태 태그(색 포함)·
+        // 정당별 legend-pill(점 색+텍스트)을 구조째로 뽑아냄 — 실제 카드 디자인에 최대한 가깝게
+        // 캔버스/SVG 기본 도형으로 다시 그리기 위함(사진 박스·복잡한 파벌 서식 등은 생략)
         function extractStatsRows(statsEl) {
-            return Array.from(statsEl.children)
-                .map(block => ({
-                    color: getComputedStyle(block).borderLeftColor || '#888',
-                    text: block.textContent.replace(/\s+/g, ' ').trim(),
-                }))
-                .filter(r => r.text);
+            return Array.from(statsEl.querySelectorAll('.stat-block')).map(block => {
+                const barColor = getComputedStyle(block).borderLeftColor || '#888';
+                const ref = block.querySelector('.dyn-ref');
+                const headerRow = ref?.children?.[0];
+                const nameSpan = headerRow?.children?.[0];
+                const statusSpan = headerRow?.children?.[1];
+                const nameText = (nameSpan ? nameSpan.textContent : block.textContent).replace(/\s+/g, ' ').trim();
+                const statusTags = statusSpan
+                    ? Array.from(statusSpan.children).map(s => ({ text: s.textContent.trim(), color: getComputedStyle(s).color })).filter(t => t.text)
+                    : [];
+                const pills = Array.from(block.querySelectorAll('.legend-pill')).map(p => ({
+                    dotColor: getComputedStyle(p.querySelector('span')).backgroundColor || '#888',
+                    text: p.textContent.trim(),
+                }));
+                return { barColor, nameText, statusTags, pills };
+            }).filter(r => r.nameText);
+        }
+
+        // 캔버스에 텍스트를 그리기 전, 사이트 웹폰트(NeoDunggeunmo)가 실제로 로드되길 기다림 —
+        // 링크된 폰트라도 canvas 2D는 자동으로 기다려주지 않아 그냥 그리면 기본 폰트로 그려짐.
+        // 네트워크 문제 등으로 로드가 안 되는 경우를 대비해 시간 제한을 둠(넘으면 기본 폰트로 진행)
+        async function ensureExportFontsLoaded() {
+            try {
+                await Promise.race([
+                    Promise.all([
+                        document.fonts.load("15px 'NeoDunggeunmo'"),
+                        document.fonts.load("bold 11px 'NeoDunggeunmo'"),
+                    ]),
+                    new Promise((_, reject) => setTimeout(() => reject(new Error('font-timeout')), 3000)),
+                ]);
+            } catch(e) { /* 실패해도 기본 폰트로 계속 진행 */ }
         }
 
         // 시각화(canvas 또는 svg)를 캔버스에 그린 뒤, includeStats면 그 아래에 통계 행을 이어서 그려
         // 최종 캔버스를 반환. 통계는 <foreignObject> 없이 canvas 2D 도형(rect+text)으로 직접 그림
+        // (foreignObject로 그리면 Chromium이 래스터화 시 캔버스를 오염시켜 toDataURL이 막힘)
         async function renderExportCanvas(target, box) {
             const baseCanvas = target.tagName === 'CANVAS' ? target : await rasterizeSvgElement(target, 'image/png');
             if(!box) return baseCanvas;
@@ -1387,8 +1414,13 @@
             const rows = statsEl ? extractStatsRows(statsEl) : [];
             if(rows.length === 0) return baseCanvas;
 
+            await ensureExportFontsLoaded();
+            const font = "'NeoDunggeunmo','VT323',monospace";
+
             const scale = (baseCanvas.width / (target.clientWidth || target.getBoundingClientRect().width || baseCanvas.width)) || 1;
-            const rowH = Math.round(34 * scale), pad = Math.round(10 * scale), fontSize = Math.round(13 * scale);
+            const pad = Math.round(10 * scale), barW = Math.round(4 * scale);
+            const nameSize = Math.round(15 * scale), tagSize = Math.round(11 * scale), pillSize = Math.round(11 * scale);
+            const rowH = Math.round(56 * scale);
             const statsH = pad + rows.length * rowH + pad;
 
             const out = document.createElement('canvas');
@@ -1398,45 +1430,108 @@
             ctx.fillStyle = '#0a0c10';
             ctx.fillRect(0, 0, out.width, out.height);
             ctx.drawImage(baseCanvas, 0, 0);
-
-            ctx.font = `${fontSize}px monospace`;
             ctx.textBaseline = 'middle';
+
             rows.forEach((row, i) => {
                 const y = baseCanvas.height + pad + i * rowH;
+                const innerH = rowH - Math.round(4 * scale);
                 ctx.fillStyle = '#000';
-                ctx.fillRect(pad, y, out.width - pad * 2, rowH - Math.round(4 * scale));
-                ctx.fillStyle = row.color;
-                ctx.fillRect(pad, y, Math.round(4 * scale), rowH - Math.round(4 * scale));
-                ctx.fillStyle = '#ccc';
-                ctx.fillText(row.text, pad + Math.round(12 * scale), y + (rowH - Math.round(4 * scale)) / 2, out.width - pad * 3);
+                ctx.fillRect(pad, y, out.width - pad * 2, innerH);
+                ctx.fillStyle = row.barColor;
+                ctx.fillRect(pad, y, barW, innerH);
+
+                const textX = pad + barW + Math.round(10 * scale);
+                const nameY = y + Math.round(18 * scale);
+
+                // 우측 정렬 상태 태그 먼저 배치(자리를 먼저 차지해야 이름 줄 최대폭을 계산할 수 있음)
+                ctx.font = `bold ${tagSize}px ${font}`;
+                let tagX = out.width - pad - Math.round(8 * scale);
+                for(let t = row.statusTags.length - 1; t >= 0; t--) {
+                    const tag = row.statusTags[t];
+                    const w = ctx.measureText(tag.text).width;
+                    tagX -= w;
+                    ctx.fillStyle = tag.color || '#fff';
+                    ctx.fillText(tag.text, tagX, nameY);
+                    tagX -= Math.round(8 * scale);
+                }
+
+                ctx.font = `${nameSize}px ${font}`;
+                ctx.fillStyle = '#eee';
+                ctx.fillText(row.nameText, textX, nameY, Math.max(10, tagX - textX - Math.round(6 * scale)));
+
+                if(row.pills.length) {
+                    let px = textX;
+                    const py = y + Math.round(40 * scale);
+                    const dotR = Math.round(3 * scale);
+                    ctx.font = `${pillSize}px ${font}`;
+                    for(const pill of row.pills) {
+                        if(px > out.width - pad * 2) break;
+                        ctx.fillStyle = pill.dotColor;
+                        ctx.beginPath();
+                        ctx.arc(px + dotR, py, dotR, 0, Math.PI * 2);
+                        ctx.fill();
+                        px += dotR * 2 + Math.round(4 * scale);
+                        ctx.fillStyle = '#aaa';
+                        ctx.fillText(pill.text, px, py);
+                        px += ctx.measureText(pill.text).width + Math.round(10 * scale);
+                    }
+                }
             });
             return out;
         }
 
-        // 시각화(svg 요소)와, includeStats면 그 아래 통계 행을 <rect>/<text> 기본 도형으로 담은 SVG 문자열을 만듦
+        // 같은 출처(dno.css)의 스타일 규칙 텍스트를 모아 반환 — 외부(구글 폰트 등) 스타일시트는
+        // CORS 때문에 JS로 규칙을 읽을 수 없으므로 제외하고, 대신 @import로 원본 주소를 그대로 참조.
+        // (이 함수는 SVG 형식 내보내기에만 쓰여 래스터화하지 않으므로, 캔버스 오염 문제와 무관함)
+        let cachedInlineCss = null;
+        function getExportInlineCss() {
+            if(cachedInlineCss !== null) return cachedInlineCss;
+            let css = "@import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');\n"
+                    + "@import url('https://cdn.jsdelivr.net/gh/neodgm/neodgm-webfont@latest/neodgm/style.css');\n";
+            for(const sheet of document.styleSheets) {
+                try { for(const rule of sheet.cssRules) css += rule.cssText + '\n'; }
+                catch(e) { /* 외부(cross-origin) 스타일시트 — 건너뜀 */ }
+            }
+            cachedInlineCss = css;
+            return css;
+        }
+
+        // 통계 포함 SVG 내보내기 — 실제 화면과 동일하게 보이도록 .chamber-box 전체를 <foreignObject>로
+        // 그대로 담는다. SVG 형식은 래스터화(canvas 변환)하지 않고 파일로만 저장하므로, PNG/JPG와 달리
+        // Chromium의 foreignObject 캔버스 오염 제약에 걸리지 않아 실제 카드 디자인·폰트를 온전히 담을 수 있다
+        function buildStatsForeignObjectSvg(box) {
+            const rect = box.getBoundingClientRect();
+            const clone = box.cloneNode(true);
+            const origCanvases = Array.from(box.querySelectorAll('canvas'));
+            const cloneCanvases = Array.from(clone.querySelectorAll('canvas'));
+            origCanvases.forEach((orig, i) => {
+                const img = document.createElement('img');
+                img.src = orig.toDataURL('image/png');
+                const w = orig.clientWidth || orig.width, h = orig.clientHeight || orig.height;
+                img.style.cssText = `display:block;width:${w}px;height:${h}px;`;
+                cloneCanvases[i]?.replaceWith(img);
+            });
+            const css = getExportInlineCss();
+            const html = new XMLSerializer().serializeToString(clone);
+            // <style>은 foreignObject 안(xhtml 문서)이 아니라 <svg> 바로 아래(형제)에 둬야 한다.
+            // xhtml div 안에 넣으면 file://로 직접 열었을 때 <style> 내용이 그대로 텍스트로 노출되는데,
+            // SVG 루트 레벨에 두면 동일한 CDATA로도 foreignObject 내부 요소까지 스타일이 정상 적용된다
+            // (직접 만든 격리 테스트로 확인됨). CSS 본문은 XML 특수문자(&) 문제를 피하려 CDATA로 감싼다.
+            return `<svg xmlns="http://www.w3.org/2000/svg" width="${rect.width}" height="${rect.height}" viewBox="0 0 ${rect.width} ${rect.height}">`
+                + `<style><![CDATA[${css}]]></style>`
+                + `<foreignObject width="100%" height="100%"><div xmlns="http://www.w3.org/1999/xhtml" style="width:${rect.width}px;background:#0a0c10;font-family:'NeoDunggeunmo','VT323',monospace;">`
+                + `${html}</div></foreignObject></svg>`;
+        }
+
+        // 시각화(svg 요소)만 담은 SVG 문자열을 만듦 — 통계 미포함 canvas→svg 변환용(간단히 이미지로 임베드)
         function buildExportSvgMarkup(target, box) {
+            if(box) return buildStatsForeignObjectSvg(box);
             const rect = target.getBoundingClientRect();
             const vizMarkup = target.tagName === 'CANVAS'
                 ? `<image href="${target.toDataURL('image/png')}" width="${rect.width}" height="${rect.height}"/>`
                 : (() => { const c = target.cloneNode(true); c.setAttribute('width', rect.width); c.setAttribute('height', rect.height); return c.outerHTML; })();
-
-            let statsMarkup = '', statsH = 0;
-            if(box) {
-                const statsEl = findStatsElementIn(box);
-                const rows = statsEl ? extractStatsRows(statsEl) : [];
-                const rowH = 34, pad = 10;
-                statsH = rows.length ? pad + rows.length * rowH + pad : 0;
-                statsMarkup = rows.map((row, i) => {
-                    const y = rect.height + pad + i * rowH;
-                    const text = row.text.replace(/&/g, '&amp;').replace(/</g, '&lt;');
-                    return `<rect x="${pad}" y="${y}" width="${rect.width - pad * 2}" height="${rowH - 4}" fill="#000"/>`
-                         + `<rect x="${pad}" y="${y}" width="4" height="${rowH - 4}" fill="${row.color}"/>`
-                         + `<text x="${pad + 12}" y="${y + (rowH - 4) / 2}" dominant-baseline="middle" fill="#ccc" font-size="13" font-family="monospace">${text}</text>`;
-                }).join('');
-            }
-            const totalH = rect.height + statsH;
-            return `<svg xmlns="http://www.w3.org/2000/svg" width="${rect.width}" height="${totalH}" viewBox="0 0 ${rect.width} ${totalH}">`
-                + `<rect x="0" y="0" width="${rect.width}" height="${totalH}" fill="#0a0c10"/>${vizMarkup}${statsMarkup}</svg>`;
+            return `<svg xmlns="http://www.w3.org/2000/svg" width="${rect.width}" height="${rect.height}" viewBox="0 0 ${rect.width} ${rect.height}">`
+                + `<rect x="0" y="0" width="${rect.width}" height="${rect.height}" fill="#0a0c10"/>${vizMarkup}</svg>`;
         }
 
         async function performExport() {
@@ -1458,10 +1553,19 @@
             const nameSource = target.id || target.closest('[id]')?.id || 'export';
             const filenameBase = `${nameSource}_${formatKstTimestampCompact()}`;
 
-            // 통계 미포함 + 캔버스 + png/jpg → 캔버스를 바로 변환(가장 흔한 경우, 손실·비용 없음)
+            // 통계 미포함 + 캔버스 + png/jpg → 캔버스를 배경색 위에 합성해서 변환
+            // (반원 등은 ctx.clearRect로 그려 실제 픽셀은 투명이라, 그대로 내보내면 PNG는 배경이
+            // 비어 보이고 JPG는 알파를 지원하지 않아 검게 나옴 — 통계 포함 경로와 배경을 통일)
             if(!box && target.tagName === 'CANVAS' && format !== 'svg') {
                 const mime = format === 'jpg' ? 'image/jpeg' : 'image/png';
-                downloadDataUrl(target.toDataURL(mime, 0.95), `${filenameBase}.${format}`);
+                const opaque = document.createElement('canvas');
+                opaque.width = target.width;
+                opaque.height = target.height;
+                const octx = opaque.getContext('2d');
+                octx.fillStyle = '#0a0c10';
+                octx.fillRect(0, 0, opaque.width, opaque.height);
+                octx.drawImage(target, 0, 0);
+                downloadDataUrl(opaque.toDataURL(mime, 0.95), `${filenameBase}.${format}`);
                 return;
             }
             // 통계 미포함 + svg + svg 형식 → 마크업 그대로 직렬화(가장 흔한 경우, 벡터 그대로 보존)
