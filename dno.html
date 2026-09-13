@@ -24,9 +24,32 @@
     <!-- Tooltip -->
     <div class="tooltip-box" id="tooltipBox" style="display:none;"></div>
 
-    <!-- 캔버스 우클릭 시 뜨는 PNG 내보내기 메뉴 (모든 canvas 요소 공용) -->
+    <!-- 캔버스/SVG 우클릭 시 뜨는 내보내기 메뉴 (모든 canvas·svg 요소 공용) -->
     <div id="canvasExportMenu" class="canvas-export-menu" style="display:none;" onclick="event.stopPropagation();">
-        <div class="canvas-export-menu-item" onclick="exportCanvasAsPng()">⬇ PNG로 내보내기</div>
+        <div class="canvas-export-menu-item" onclick="openExportDialog()">⬇ 내보내기...</div>
+    </div>
+
+    <!-- 내보내기 옵션 창 -->
+    <div id="exportDialogOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:6000;align-items:center;justify-content:center;" onclick="if(event.target===this) closeExportDialog();">
+        <div style="background:#0a0c10;border:1px solid var(--tno-neon);box-shadow:0 0 16px color-mix(in srgb, var(--tno-neon) 30%, transparent);padding:20px;width:300px;max-width:90vw;font-family:'NeoDunggeunmo','VT323',monospace;">
+            <div style="color:var(--tno-neon);font-size:1rem;margin-bottom:16px;letter-spacing:1px;">▌ 내보내기</div>
+
+            <label style="display:flex;align-items:center;gap:8px;margin-bottom:16px;cursor:pointer;color:#ccc;font-size:0.85rem;">
+                <input type="checkbox" id="exportIncludeStats"> 아래 의석 수 등 통계 포함
+            </label>
+
+            <div style="color:#888;font-size:0.8rem;margin-bottom:6px;">형식</div>
+            <div style="display:flex;gap:6px;margin-bottom:20px;">
+                <button class="sub-tab-btn-3 active" data-format="png" onclick="setExportFormat('png')">PNG</button>
+                <button class="sub-tab-btn-3" data-format="jpg" onclick="setExportFormat('jpg')">JPG</button>
+                <button class="sub-tab-btn-3" data-format="svg" onclick="setExportFormat('svg')">SVG</button>
+            </div>
+
+            <div style="display:flex;gap:8px;">
+                <button class="add-btn" style="flex:1;margin-top:0;" onclick="performExport()">내보내기</button>
+                <button class="add-btn" style="flex:1;margin-top:0;background:transparent;color:#888;border-color:#333;" onclick="closeExportDialog()">취소</button>
+            </div>
+        </div>
     </div>
 
     <!-- 좌석 클릭 시 뜨는 정보 카드 (display:none 인라인 기본값 — 외부 CSS 로드 실패/캐시 문제와 무관하게 항상 숨김 상태로 시작) -->
