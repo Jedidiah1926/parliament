@@ -48,7 +48,7 @@
         let nationSessionMode = 'simple';    // 'simple' | 'individual'
         let nationSessionType = 'regular';   // 'regular'(정기회) | 'extraordinary'(임시회) — 개별형에서만 사용
 
-        // ── 내각 > 설정: 정부 형태 (v1.5.A) ──────────────
+        // ── 내각 > 설정: 정부 형태 (v1.5.P) ──────────────
         let govType = 'parliamentary'; // 'presidential'(대통령제) | 'semi'(이원집정부제) | 'parliamentary'(의원내각제)
         let president = { name: '', photo: '' }; // 대통령(+대선 == 행정부 선거)
         let pm = { name: '', photo: '' };         // 총리(선출 과정과 불신임 등은 추후 구현)
