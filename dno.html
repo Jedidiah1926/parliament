@@ -100,11 +100,6 @@
             <div class="nation-flag-banner" id="nationFlagBanner" style="display:none;">
                 <img id="nationFlagBannerImg" alt="국기">
             </div>
-            <div class="system-radio-group">
-                <label class="system-radio-btn"><input type="radio" name="systemType" value="unicameral" onchange="toggleSystem()"> 단원제</label>
-                <label class="system-radio-btn"><input type="radio" name="systemType" value="bicameral" checked onchange="toggleSystem()"> 양원제</label>
-                <label class="system-radio-btn"><input type="radio" name="systemType" value="tricameral" onchange="toggleSystem()"> 삼원제</label>
-            </div>
 
 
             <!-- ===== 상단 메인 탭 ===== -->
@@ -253,6 +248,15 @@
 
                 <!-- 설정 탭: 국가 식별 정보 + 전역 표시 옵션 -->
                 <div id="contentConfig" class="sub-tab-content active">
+                    <div style="margin-bottom:16px;">
+                        <label style="color:#888;font-size:0.8rem;margin-bottom:6px;display:block;">원 구성</label>
+                        <div class="system-radio-group">
+                            <label class="system-radio-btn"><input type="radio" name="systemType" value="unicameral" onchange="toggleSystem()"> 단원제</label>
+                            <label class="system-radio-btn"><input type="radio" name="systemType" value="bicameral" checked onchange="toggleSystem()"> 양원제</label>
+                            <label class="system-radio-btn"><input type="radio" name="systemType" value="tricameral" onchange="toggleSystem()"> 삼원제</label>
+                        </div>
+                    </div>
+
                     <label style="cursor:pointer; margin-bottom:16px; display:block;">
                         <input type="checkbox" id="chkGovHighlight" onchange="simulate()" checked>
                         <span style="color:var(--tno-gold); text-shadow:0 0 5px var(--tno-gold);">집권 세력 강조 (HIGHLIGHT GOV)</span>
@@ -869,7 +873,7 @@
                         <button class="sub-tab-btn-3" id="tendencySvgChamberSenateBtn" onclick="tendencySetSvgChamber('senate')">상원</button>
                         <button class="sub-tab-btn-3" id="tendencySvgChamberThirdBtn" onclick="tendencySetSvgChamber('third')" style="display:none;">삼원</button>
                     </div>
-                    <label id="tendencySvgSyncAllRow" style="display:none;align-items:center;gap:6px;cursor:pointer;color:var(--tno-neon);font-size:0.9rem;padding:5px 8px;background:#0a1a1a;border:1px solid #1a3a3a;margin-bottom:8px;">
+                    <label id="tendencySvgSyncAllRow" style="display:none;align-items:center;gap:6px;cursor:pointer;color:var(--tno-neon);font-size:0.9rem;padding:5px 8px;background:color-mix(in srgb, var(--tno-neon) 10%, transparent);border:1px solid var(--tno-neon-dim);margin-bottom:8px;">
                         <input type="checkbox" id="tendencySvgSyncAll" onchange="onTendencySvgSyncAllChange(this.checked)"> 전체에 반영
                     </label>
                     <!-- 강도 선택 — 육각형(구 지역구): 빠르게 여러 칸을 칠하므로 5단계 버튼 -->
@@ -897,7 +901,7 @@
                         <button class="sub-tab-btn-3" onclick="switchElecProbChamber('senate')" id="innerTabElecProbSenate">상원</button>
                         <button class="sub-tab-btn-3" onclick="switchElecProbChamber('third')" id="innerTabElecProbThird" style="display:none;">삼원</button>
                     </div>
-                    <label style="display:flex;align-items:center;gap:6px;cursor:pointer;color:var(--tno-neon);font-size:0.9rem;padding:5px 8px;background:#0a1a1a;border:1px solid #1a3a3a;margin-bottom:8px;">
+                    <label style="display:flex;align-items:center;gap:6px;cursor:pointer;color:var(--tno-neon);font-size:0.9rem;padding:5px 8px;background:color-mix(in srgb, var(--tno-neon) 10%, transparent);border:1px solid var(--tno-neon-dim);margin-bottom:8px;">
                         <input type="checkbox" id="elecProbSyncAll" onchange="onElecProbSyncAllChange(this.checked)"> 전체에 반영
                     </label>
                     <div style="font-size:0.72rem;color:#555;margin:-4px 0 8px;">의원실마다 정당 구성이 다를 수 있어 지지율을 독립적으로 설정합니다.</div>
@@ -906,11 +910,26 @@
 
             </div><!-- end mainContentElection -->
 
-            <!-- ===== 저장 그룹 ===== -->
+            <!-- ===== 내각 그룹 ===== -->
             <div id="mainContentCabinet" class="main-tab-content">
-                <div style="padding:60px 16px;text-align:center;color:#555;">
-                    <div style="font-size:1.4rem;color:var(--tno-neon);letter-spacing:2px;margin-bottom:10px;">COMING SOON</div>
-                    <div style="font-size:0.85rem;">내각 기능은 아직 준비 중입니다.</div>
+                <div class="sub-tab-container">
+                    <button class="sub-tab-btn active" onclick="switchSubTab('cabinet','system')" id="subTabSystem">설정</button>
+                </div>
+
+                <div id="contentSystem" class="sub-tab-content active">
+                    <div style="margin-top:16px;">
+                        <label style="color:#888;font-size:0.8rem;margin-bottom:6px;display:block;">정부 형태</label>
+                        <div class="system-radio-group">
+                            <button type="button" class="system-radio-btn" id="govTypePresidentialBtn" onclick="setGovType('presidential')">대통령제</button>
+                            <button type="button" class="system-radio-btn" id="govTypeSemiBtn" onclick="setGovType('semi')">이원집정부제</button>
+                            <button type="button" class="system-radio-btn active" id="govTypeParliamentaryBtn" onclick="setGovType('parliamentary')">의원내각제</button>
+                        </div>
+                    </div>
+
+                    <div style="padding:60px 16px 20px;text-align:center;color:#555;">
+                        <div style="font-size:1.2rem;color:var(--tno-neon);letter-spacing:2px;margin-bottom:10px;">COMING SOON</div>
+                        <div style="font-size:0.85rem;">그 외 내각 기능은 아직 준비 중입니다.</div>
+                    </div>
                 </div>
             </div>
 
@@ -1013,6 +1032,9 @@
                             <button onclick="districtFitView()"      style="background:#111;border:1px solid #333;color:#aaa;padding:3px 10px;cursor:pointer;font-family:inherit;">⊡</button>
                             <button onclick="districtResetView()"    style="background:#111;border:1px solid #333;color:#555;padding:3px 10px;cursor:pointer;font-family:inherit;">↺</button>
                         </span>
+                        <span id="districtSvgViewControls" style="display:none;gap:4px;">
+                            <button onclick="districtSvgResetView()" style="background:#111;border:1px solid #333;color:#555;padding:3px 10px;cursor:pointer;font-family:inherit;font-size:0.8rem;">↺ 위치 초기화</button>
+                        </span>
                         <button onclick="districtClearAll()"     style="background:transparent;border:1px solid #333;color:#555;padding:3px 10px;cursor:pointer;font-family:inherit;font-size:0.8rem;">전체 초기화</button>
                     </div>
                 </div>
@@ -1020,6 +1042,7 @@
                 <div id="districtSvgWrap" style="width:100%;flex:1;background:#0a0c10;border:1px solid #222;min-height:200px;overflow:hidden;"></div>
                 <div style="margin-top:4px;font-size:0.8rem;color:#555;flex-shrink:0;">
                     <span id="districtCount">하원 0칸 · 상원 0칸</span>
+                    <span id="districtSvgViewHint" style="display:none;color:#444;"> · Shift+스크롤: 확대/축소 · 휠클릭 드래그: 이동</span>
                 </div>
             </div>
         </div>
