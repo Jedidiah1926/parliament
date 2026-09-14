@@ -50,9 +50,26 @@
 
         // ── 내각 > 설정: 정부 형태 (v1.5.P) ──────────────
         let govType = 'parliamentary'; // 'presidential'(대통령제) | 'semi'(이원집정부제) | 'parliamentary'(의원내각제)
-        let president = { name: '', photo: '' }; // 대통령(+대선 == 행정부 선거)
-        let pm = { name: '', photo: '' };         // 총리(선출 과정과 불신임 등은 추후 구현)
-        let cabinetMembers = []; // 국무위원/내각 구성원 { id, name, position, photo }
+        let president = { name: '', photo: '', partyId: null }; // 대통령(+대선 == 행정부 선거)
+        let pm = { name: '', photo: '', partyId: null };         // 총리/국무총리(선출 과정과 불신임 등은 추후 구현)
+        let cabinetMembers = []; // 국무위원/내각 구성원 { id, name, position, photo, partyId }
+
+        // 대통령제에서는 관례상 총리를 "국무총리"라 부르므로, 정부 형태에 따라 탭/라벨 표기를 바꾼다
+        function pmRoleLabel() { return govType === 'presidential' ? '국무총리' : '총리'; }
+
+        // 대통령/총리/국무위원의 당적 선택 <select> 옵션 — 무소속 가상 정당은 목록에서 제외하고
+        // 빈 값("")을 기본 "무소속"으로 취급한다 (의석에 영향 없는 표시 전용 소속이므로)
+        function partySelectOptionsHtml(selectedId) {
+            const real = parties.filter(p => p.ideologyId !== IND_IDEOLOGY_ID);
+            return `<option value="">무소속</option>` + real.map(p =>
+                `<option value="${p.id}" ${String(p.id) === String(selectedId) ? 'selected' : ''}>${p.name}</option>`
+            ).join('');
+        }
+        function partyDotColor(partyId) {
+            if(partyId === null || partyId === undefined || partyId === '') return '#666';
+            const p = parties.find(x => x.id === partyId);
+            return p ? p.color : '#666';
+        }
 
         // 거부권(veto) 주체 — 정부 형태에 따라 기본값을 다르게 두되, 내각>설정에서 직접 재지정 가능
         // 'none' | 'president' | 'pm'
@@ -64,6 +81,44 @@
             document.getElementById('govTypePresidentialBtn')?.classList.toggle('active', type==='presidential');
             document.getElementById('govTypeSemiBtn')?.classList.toggle('active', type==='semi');
             document.getElementById('govTypeParliamentaryBtn')?.classList.toggle('active', type==='parliamentary');
+            updatePmRoleLabels();
+            applyGovTypeHolderRestrictions();
+        }
+
+        // 정부 형태에 따라 거부권/비상 권한 주체로 고를 수 있는 대상을 제한한다 —
+        // 대통령제: 없음/대통령만, 의원내각제: 없음/총리만, 이원집정부제: 셋 다 가능
+        function applyGovTypeHolderRestrictions() {
+            const showPresident = govType !== 'parliamentary';
+            const showPm = govType !== 'presidential';
+
+            const vpBtn = document.getElementById('vetoHolderPresidentBtn');
+            const vmBtn = document.getElementById('vetoHolderPmBtn');
+            if(vpBtn) vpBtn.style.display = showPresident ? '' : 'none';
+            if(vmBtn) vmBtn.style.display = showPm ? '' : 'none';
+            if(!showPresident && vetoHolder === 'president') setVetoHolder('none');
+            if(!showPm && vetoHolder === 'pm') setVetoHolder('none');
+
+            Object.keys(EMERGENCY_POWERS).forEach(key => {
+                const suf = key.charAt(0).toUpperCase() + key.slice(1);
+                const presBtn = document.getElementById('emergencyHolderPresident'+suf);
+                const pmBtn = document.getElementById('emergencyHolderPm'+suf);
+                if(presBtn) presBtn.style.display = showPresident ? '' : 'none';
+                if(pmBtn) pmBtn.style.display = showPm ? '' : 'none';
+                if(!showPresident && emergencyPowers[key].holder === 'president') { emergencyPowers[key].active = false; setEmergencyHolder(key, 'none'); }
+                if(!showPm && emergencyPowers[key].holder === 'pm') { emergencyPowers[key].active = false; setEmergencyHolder(key, 'none'); }
+            });
+        }
+
+        function updatePmRoleLabels() {
+            const label = pmRoleLabel();
+            const tabBtn = document.getElementById('subTabPm');
+            if(tabBtn) tabBtn.textContent = label;
+            const sectionLabel = document.getElementById('pmSectionLabel');
+            if(sectionLabel) sectionLabel.textContent = `${label} (선출 과정과 불신임 등)`;
+            const nameInput = document.getElementById('pmNameInput');
+            if(nameInput) nameInput.placeholder = `${label} 이름`;
+            const img = document.getElementById('pmPhotoImg');
+            if(img) img.alt = label;
         }
 
         function renderPresidentSection() {
@@ -77,10 +132,15 @@
                 else { img.style.display = 'none'; ph.style.display = ''; }
             }
             if(removeBtn) removeBtn.style.display = president.photo ? '' : 'none';
+            const partySelect = document.getElementById('presidentPartySelect');
+            if(partySelect) partySelect.innerHTML = partySelectOptionsHtml(president.partyId);
+            const dot = document.getElementById('presidentPartyDot');
+            if(dot) dot.style.background = partyDotColor(president.partyId);
         }
 
         function updatePresidentField(key, val) {
             president[key] = val;
+            if(key === 'partyId') renderPresidentSection();
         }
 
         function uploadPresidentPhoto(input) {
@@ -97,6 +157,7 @@
 
         // ── 내각 > 총리 (president와 동일한 구조) ──────────────
         function renderPmSection() {
+            updatePmRoleLabels();
             const nameInput = document.getElementById('pmNameInput');
             if(nameInput && nameInput.value !== pm.name) nameInput.value = pm.name;
             const img = document.getElementById('pmPhotoImg');
@@ -107,10 +168,15 @@
                 else { img.style.display = 'none'; ph.style.display = ''; }
             }
             if(removeBtn) removeBtn.style.display = pm.photo ? '' : 'none';
+            const partySelect = document.getElementById('pmPartySelect');
+            if(partySelect) partySelect.innerHTML = partySelectOptionsHtml(pm.partyId);
+            const dot = document.getElementById('pmPartyDot');
+            if(dot) dot.style.background = partyDotColor(pm.partyId);
         }
 
         function updatePmField(key, val) {
             pm[key] = val;
+            if(key === 'partyId') renderPmSection();
         }
 
         function uploadPmPhoto(input) {
@@ -143,6 +209,13 @@
                             <input type="text" value="${m.position||''}" placeholder="직책 (예: 외교부 장관)"
                                 style="background:#000;border:1px solid #2a2a2a;color:#aaa;font-family:inherit;font-size:0.85rem;padding:5px 8px;width:100%;box-sizing:border-box;"
                                 onchange="updateCabinetMember('${m.id}','position',this.value)">
+                            <div style="display:flex;align-items:center;gap:6px;">
+                                <span style="width:9px;height:9px;border-radius:50%;flex-shrink:0;background:${partyDotColor(m.partyId)};"></span>
+                                <select onchange="updateCabinetMember('${m.id}','partyId',this.value?parseInt(this.value):null)"
+                                    style="flex:1;min-width:0;background:#000;border:1px solid #333;color:var(--tno-gold);font-family:inherit;font-size:0.85rem;padding:4px;">
+                                    ${partySelectOptionsHtml(m.partyId)}
+                                </select>
+                            </div>
                             <div style="display:flex;justify-content:space-between;align-items:center;">
                                 ${m.photo?`<button onclick="removeCabinetMemberPhoto('${m.id}')" style="background:transparent;border:1px solid #333;color:#555;font-family:inherit;font-size:0.75rem;padding:2px 8px;cursor:pointer;">✕ 사진 제거</button>`:'<span></span>'}
                                 <button onclick="removeCabinetMember('${m.id}')" style="background:transparent;border:1px solid #333;color:#a55;font-family:inherit;font-size:0.75rem;padding:2px 8px;cursor:pointer;">삭제</button>
@@ -155,7 +228,7 @@
         }
 
         function addCabinetMember() {
-            cabinetMembers.push({ id: 'cm_'+Date.now()+'_'+Math.floor(Math.random()*1000), name: '', position: '', photo: '' });
+            cabinetMembers.push({ id: 'cm_'+Date.now()+'_'+Math.floor(Math.random()*1000), name: '', position: '', photo: '', partyId: null });
             renderCabinetMembersList();
         }
 
@@ -166,7 +239,9 @@
 
         function updateCabinetMember(id, key, val) {
             const m = cabinetMembers.find(x => x.id === id);
-            if(m) m[key] = val;
+            if(!m) return;
+            m[key] = val;
+            if(key === 'partyId') renderCabinetMembersList();
         }
 
         function uploadCabinetMemberPhoto(input, id) {
@@ -225,20 +300,22 @@
             renderEmergencyPowers();
         }
 
+        // 각 비상 권한의 선포/해제 버튼은 설정에서 지정한 권한 주체(대통령/총리)의 탭에 표시된다 —
+        // 대통령에게 준 권한은 대통령 탭에, 총리에게 준 권한은 총리 탭에 나타나며, 주체가 없으면 어디에도 표시되지 않는다.
         function renderEmergencyPowers() {
-            Object.keys(EMERGENCY_POWERS).forEach(key => {
-                const cfg = EMERGENCY_POWERS[key];
-                const st = emergencyPowers[key];
-                const badge = document.getElementById('emergencyBadge'+key.charAt(0).toUpperCase()+key.slice(1));
-                if(badge) {
-                    badge.style.display = st.active ? 'inline-block' : 'none';
-                    badge.style.borderColor = cfg.color;
-                    badge.style.color = cfg.color;
-                    badge.style.textShadow = `0 0 4px ${cfg.color}`;
-                    badge.textContent = `! ${cfg.label} !`;
-                }
-                const btn = document.getElementById('emergencyToggleBtn'+key.charAt(0).toUpperCase()+key.slice(1));
-                if(btn) btn.textContent = st.active ? `${cfg.label} 해제` : `${cfg.label} 선포`;
+            ['president', 'pm'].forEach(office => {
+                const container = document.getElementById(office === 'president' ? 'presidentEmergencyPowers' : 'pmEmergencyPowers');
+                if(!container) return;
+                const keys = Object.keys(EMERGENCY_POWERS).filter(k => emergencyPowers[k].holder === office);
+                if(keys.length === 0) { container.innerHTML = ''; return; }
+                container.innerHTML = `<div style="color:#666;font-size:0.8rem;margin:16px 0 8px;letter-spacing:1px;border-top:1px solid #222;padding-top:10px;">▌ 비상 권한</div>` +
+                    keys.map(key => {
+                        const cfg = EMERGENCY_POWERS[key];
+                        const st = emergencyPowers[key];
+                        const bg = st.active ? `color-mix(in srgb, ${cfg.color} 15%, transparent)` : 'transparent';
+                        const shadow = st.active ? `0 0 10px ${cfg.color}` : 'none';
+                        return `<button class="add-btn" style="margin-top:8px;border-style:solid;border-color:${cfg.color};color:${cfg.color};text-shadow:0 0 4px ${cfg.color};background:${bg};box-shadow:${shadow};" onclick="toggleEmergencyActive('${key}')">! ${cfg.label} ${st.active ? '해제' : '선포'} !</button>`;
+                    }).join('');
             });
         }
 
@@ -2683,9 +2760,9 @@
             setNationDateMode(cfg.nationDateMode ?? "simple");
             setNationSessionMode(cfg.nationSessionMode ?? "simple");
             setNationSessionType(cfg.nationSessionType ?? "regular");
-            president = { name: '', photo: '', ...(cfg.president || {}) };
-            pm = { name: '', photo: '', ...(cfg.pm || {}) };
-            cabinetMembers = Array.isArray(cfg.cabinetMembers) ? cfg.cabinetMembers : [];
+            president = { name: '', photo: '', partyId: null, ...(cfg.president || {}) };
+            pm = { name: '', photo: '', partyId: null, ...(cfg.pm || {}) };
+            cabinetMembers = Array.isArray(cfg.cabinetMembers) ? cfg.cabinetMembers.map(m => ({ partyId: null, ...m })) : [];
             Object.keys(EMERGENCY_POWERS).forEach(k => {
                 emergencyPowers[k] = { holder: 'none', active: false, ...(cfg.emergencyPowers?.[k] || {}) };
             });
@@ -2989,8 +3066,8 @@
                 setGovType(govType); setVetoHolder(vetoHolder);
                 Object.keys(EMERGENCY_POWERS).forEach(k => setEmergencyHolder(k, emergencyPowers[k].holder));
             }
-            if(sub === 'president') { renderPresidentSection(); }
-            if(sub === 'pm') { renderPmSection(); }
+            if(sub === 'president') { renderPresidentSection(); renderEmergencyPowers(); }
+            if(sub === 'pm') { renderPmSection(); renderEmergencyPowers(); }
             if(sub === 'cabinetmembers') { renderCabinetMembersList(); }
             if(sub === 'coalition') { renderCoalitions(); }
             if(sub === 'list') { listMemberInnerTab = 'house'; switchListMemberInnerTab('house'); }

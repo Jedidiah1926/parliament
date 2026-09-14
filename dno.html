@@ -961,43 +961,31 @@
                         <div style="color:#555;font-size:0.72rem;margin-top:4px;">거부권이 있으면, 표결 통과된 법안을 국가 &gt; 입법 탭에서 거부할 수 있습니다</div>
                     </div>
 
-                    <!-- 국가 비상사태 / 의회 해산 / 계엄령 — 권한 주체 + 선포 -->
+                    <!-- 국가 비상사태 / 의회 해산 / 계엄령 — 권한 주체 지정 (실제 선포 버튼은 권한 주체로 지정된 대통령/총리 탭에 표시됨) -->
                     <div style="margin-top:20px;">
                         <label style="color:#888;font-size:0.8rem;margin-bottom:6px;display:block;">국가 비상사태 권한 주체</label>
-                        <div class="system-radio-group" style="margin-bottom:6px;">
+                        <div class="system-radio-group">
                             <button type="button" class="system-radio-btn active" id="emergencyHolderNoneStateOfEmergency" onclick="setEmergencyHolder('stateOfEmergency','none')">없음</button>
                             <button type="button" class="system-radio-btn" id="emergencyHolderPresidentStateOfEmergency" onclick="setEmergencyHolder('stateOfEmergency','president')">대통령</button>
                             <button type="button" class="system-radio-btn" id="emergencyHolderPmStateOfEmergency" onclick="setEmergencyHolder('stateOfEmergency','pm')">총리</button>
-                        </div>
-                        <div style="display:flex;align-items:center;gap:10px;">
-                            <button class="add-btn" style="margin-top:0;" id="emergencyToggleBtnStateOfEmergency" onclick="toggleEmergencyActive('stateOfEmergency')">국가 비상사태 선포</button>
-                            <span class="party-status-badge" id="emergencyBadgeStateOfEmergency" style="display:none;"></span>
                         </div>
                     </div>
 
                     <div style="margin-top:20px;">
                         <label style="color:#888;font-size:0.8rem;margin-bottom:6px;display:block;">의회 해산 권한 주체</label>
-                        <div class="system-radio-group" style="margin-bottom:6px;">
+                        <div class="system-radio-group">
                             <button type="button" class="system-radio-btn active" id="emergencyHolderNoneDissolution" onclick="setEmergencyHolder('dissolution','none')">없음</button>
                             <button type="button" class="system-radio-btn" id="emergencyHolderPresidentDissolution" onclick="setEmergencyHolder('dissolution','president')">대통령</button>
                             <button type="button" class="system-radio-btn" id="emergencyHolderPmDissolution" onclick="setEmergencyHolder('dissolution','pm')">총리</button>
-                        </div>
-                        <div style="display:flex;align-items:center;gap:10px;">
-                            <button class="add-btn" style="margin-top:0;" id="emergencyToggleBtnDissolution" onclick="toggleEmergencyActive('dissolution')">의회 해산 선포</button>
-                            <span class="party-status-badge" id="emergencyBadgeDissolution" style="display:none;"></span>
                         </div>
                     </div>
 
                     <div style="margin-top:20px;">
                         <label style="color:#888;font-size:0.8rem;margin-bottom:6px;display:block;">계엄령 권한 주체</label>
-                        <div class="system-radio-group" style="margin-bottom:6px;">
+                        <div class="system-radio-group">
                             <button type="button" class="system-radio-btn active" id="emergencyHolderNoneMartialLaw" onclick="setEmergencyHolder('martialLaw','none')">없음</button>
                             <button type="button" class="system-radio-btn" id="emergencyHolderPresidentMartialLaw" onclick="setEmergencyHolder('martialLaw','president')">대통령</button>
                             <button type="button" class="system-radio-btn" id="emergencyHolderPmMartialLaw" onclick="setEmergencyHolder('martialLaw','pm')">총리</button>
-                        </div>
-                        <div style="display:flex;align-items:center;gap:10px;">
-                            <button class="add-btn" style="margin-top:0;" id="emergencyToggleBtnMartialLaw" onclick="toggleEmergencyActive('martialLaw')">계엄령 선포</button>
-                            <span class="party-status-badge" id="emergencyBadgeMartialLaw" style="display:none;"></span>
                         </div>
                     </div>
                 </div>
@@ -1019,16 +1007,22 @@
                                 <input type="text" id="presidentNameInput" placeholder="대통령 이름"
                                     style="background:#000;border:1px solid #2a2a2a;color:#e0e0e0;font-family:inherit;font-size:0.95rem;padding:5px 8px;width:100%;box-sizing:border-box;"
                                     oninput="updatePresidentField('name',this.value)">
+                                <div style="display:flex;align-items:center;gap:6px;">
+                                    <span id="presidentPartyDot" style="width:9px;height:9px;border-radius:50%;flex-shrink:0;background:#666;"></span>
+                                    <select id="presidentPartySelect" onchange="updatePresidentField('partyId',this.value?parseInt(this.value):null)"
+                                        style="flex:1;min-width:0;background:#000;border:1px solid #333;color:var(--tno-gold);font-family:inherit;font-size:0.85rem;padding:4px;"></select>
+                                </div>
                                 <button id="presidentPhotoRemoveBtn" onclick="removePresidentPhoto()" style="display:none;background:transparent;border:1px solid #333;color:#555;font-family:inherit;font-size:0.8rem;padding:3px 8px;cursor:pointer;text-align:left;">✕ 사진 제거</button>
                             </div>
                         </div>
                     </div>
+                    <div id="presidentEmergencyPowers"></div>
                 </div>
 
-                <!-- 총리: 선출 과정과 불신임 등은 추후 구현 -->
+                <!-- 총리/국무총리: 선출 과정과 불신임 등은 추후 구현 -->
                 <div id="contentPm" class="sub-tab-content">
                     <div style="margin-top:16px;">
-                        <label style="color:#888;font-size:0.8rem;margin-bottom:6px;display:block;">총리 (선출 과정과 불신임 등)</label>
+                        <label id="pmSectionLabel" style="color:#888;font-size:0.8rem;margin-bottom:6px;display:block;">총리 (선출 과정과 불신임 등)</label>
                         <div style="display:flex;gap:10px;align-items:stretch;">
                             <div style="display:flex;flex-direction:column;align-items:center;gap:4px;flex-shrink:0;">
                                 <div class="leader-photo-box" data-ratio="0.8" title="클릭하여 사진 업로드" id="pmPhotoBox" style="width:52px;height:65px;">
@@ -1042,10 +1036,16 @@
                                 <input type="text" id="pmNameInput" placeholder="총리 이름"
                                     style="background:#000;border:1px solid #2a2a2a;color:#e0e0e0;font-family:inherit;font-size:0.95rem;padding:5px 8px;width:100%;box-sizing:border-box;"
                                     oninput="updatePmField('name',this.value)">
+                                <div style="display:flex;align-items:center;gap:6px;">
+                                    <span id="pmPartyDot" style="width:9px;height:9px;border-radius:50%;flex-shrink:0;background:#666;"></span>
+                                    <select id="pmPartySelect" onchange="updatePmField('partyId',this.value?parseInt(this.value):null)"
+                                        style="flex:1;min-width:0;background:#000;border:1px solid #333;color:var(--tno-gold);font-family:inherit;font-size:0.85rem;padding:4px;"></select>
+                                </div>
                                 <button id="pmPhotoRemoveBtn" onclick="removePmPhoto()" style="display:none;background:transparent;border:1px solid #333;color:#555;font-family:inherit;font-size:0.8rem;padding:3px 8px;cursor:pointer;text-align:left;">✕ 사진 제거</button>
                             </div>
                         </div>
                     </div>
+                    <div id="pmEmergencyPowers"></div>
                 </div>
 
                 <!-- 내각: 행정부 수반 산하 국무위원/내각 구성원 -->
