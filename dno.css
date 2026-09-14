@@ -236,7 +236,32 @@
             box-shadow: 0 0 5px var(--tno-neon-dim);
         }
 
-        input[type="checkbox"], input[type="radio"] {
+        /* 박스형 체크박스 — 브라우저 기본 모양 대신 각진 네온 테두리 + 체크 표시로 통일 */
+        input[type="checkbox"] {
+            appearance: none;
+            -webkit-appearance: none;
+            width: 16px; height: 16px;
+            border-radius: 0;
+            background: #0a0c10;
+            border: 1px solid #444;
+            cursor: pointer;
+            position: relative;
+            flex-shrink: 0;
+            vertical-align: middle;
+            transition: border-color 0.15s, background 0.15s;
+        }
+        input[type="checkbox"]:hover { border-color: var(--tno-neon); }
+        input[type="checkbox"]:checked { background: var(--tno-neon); border-color: var(--tno-neon); }
+        input[type="checkbox"]:checked::after {
+            content: "";
+            position: absolute;
+            left: 4px; top: 1px;
+            width: 4px; height: 8px;
+            border: solid #000;
+            border-width: 0 2px 2px 0;
+            transform: rotate(45deg);
+        }
+        input[type="radio"] {
             accent-color: var(--tno-neon);
             width: 16px; height: 16px; cursor: pointer;
         }

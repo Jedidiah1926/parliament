@@ -1305,6 +1305,10 @@
             document.getElementById('canvasExportMenu').style.display = 'none';
             if(!canvasExportTarget) return;
             exportDialogTarget = canvasExportTarget;
+            document.getElementById('exportIncludeFlag').checked = false;
+            document.getElementById('exportIncludeName').checked = false;
+            document.getElementById('exportIncludeDate').checked = false;
+            document.getElementById('exportIncludeSession').checked = false;
             document.getElementById('exportIncludeStats').checked = false;
             document.getElementById('exportExpandIndependents').checked = false;
             document.getElementById('exportIncludeExtraParties').checked = false;
@@ -1329,6 +1333,112 @@
             if(!box) return null;
             const stats = findStatsElementIn(box);
             return (stats && stats.children.length > 0) ? box : null;
+        }
+
+        // 최상단 정보(국기/국가 이름/날짜/회기) 체크박스 상태 + 실제 국가 데이터를 조합해,
+        // 그릴 내용이 실제로 하나라도 있을 때만 헤더 정보 객체를 반환(전부 비어있으면 null → 헤더 자체를 생략)
+        function buildExportHeaderInfo(headerOptions = {}) {
+            const flag = headerOptions.includeFlag && nationFlag ? nationFlag : null;
+            const name = headerOptions.includeName ? (document.getElementById('nationNameInput')?.value?.trim() || '') : '';
+            const date = headerOptions.includeDate ? formatNationDate() : '';
+            const session = headerOptions.includeSession ? formatNationSession() : '';
+            if(!flag && !name && !date && !session) return null;
+            return { flag, name, date, session };
+        }
+
+        const EXPORT_HEADER_H = 60; // 헤더 높이(css px 기준, 캔버스에서는 배율(scale)을 곱해 사용)
+
+        function escapeXml(str) {
+            return String(str).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&apos;' }[c]));
+        }
+
+        function loadImageAsync(src) {
+            return new Promise(resolve => {
+                const img = new Image();
+                img.onload = () => resolve(img);
+                img.onerror = () => resolve(null); // 실패해도 헤더 자체는 계속 그림(국기만 생략)
+                img.src = src;
+            });
+        }
+
+        // 캔버스에 헤더 행(국기+국가 이름 좌측, 날짜/회기 우측)을 직접 그림
+        async function drawExportHeader(ctx, info, width, headerH, scale, font) {
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'middle';
+            ctx.fillStyle = '#0a0c10';
+            ctx.fillRect(0, 0, width, headerH);
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = Math.max(1, Math.round(scale));
+            ctx.beginPath();
+            ctx.moveTo(0, headerH - 0.5);
+            ctx.lineTo(width, headerH - 0.5);
+            ctx.stroke();
+
+            const pad = Math.round(14 * scale);
+            const midY = headerH / 2;
+            let x = pad;
+
+            if(info.flag) {
+                const img = await loadImageAsync(info.flag);
+                if(img && img.width && img.height) {
+                    const fh = Math.round(30 * scale);
+                    const fw = Math.round(fh * (img.width / img.height));
+                    ctx.drawImage(img, x, midY - fh / 2, fw, fh);
+                    x += fw + Math.round(10 * scale);
+                }
+            }
+            if(info.name) {
+                ctx.font = `bold ${Math.round(18 * scale)}px ${font}`;
+                ctx.fillStyle = '#eee';
+                ctx.fillText(info.name, x, midY);
+            }
+
+            if(info.date || info.session) {
+                ctx.textAlign = 'right';
+                const rightX = width - pad;
+                if(info.date && info.session) {
+                    ctx.font = `${Math.round(13 * scale)}px ${font}`;
+                    ctx.fillStyle = '#ccc';
+                    ctx.fillText(info.date, rightX, midY - Math.round(8 * scale));
+                    ctx.font = `${Math.round(12 * scale)}px ${font}`;
+                    ctx.fillStyle = '#888';
+                    ctx.fillText(info.session, rightX, midY + Math.round(8 * scale));
+                } else {
+                    ctx.font = `${Math.round(13 * scale)}px ${font}`;
+                    ctx.fillStyle = '#ccc';
+                    ctx.fillText(info.date || info.session, rightX, midY);
+                }
+                ctx.textAlign = 'left';
+            }
+        }
+
+        // SVG 헤더는 <foreignObject> 없는 순수 SVG 도형(<image>/<text>)으로 직접 그림 —
+        // 통계 영역의 <style> 배치 문제와 무관하게 항상 안전하게 렌더링됨
+        function buildExportHeaderSvgMarkup(info, width, headerH) {
+            if(!info) return '';
+            const font = "NeoDunggeunmo, VT323, monospace";
+            const pad = 14, midY = headerH / 2;
+            let x = pad;
+            let markup = `<rect x="0" y="0" width="${width}" height="${headerH}" fill="#0a0c10"/>`
+                       + `<line x1="0" y1="${headerH}" x2="${width}" y2="${headerH}" stroke="#333" stroke-width="1"/>`;
+            if(info.flag) {
+                const fh = 30, fw = 45;
+                markup += `<image href="${info.flag}" x="${x}" y="${midY - fh / 2}" width="${fw}" height="${fh}" preserveAspectRatio="xMidYMid slice"/>`;
+                x += fw + 10;
+            }
+            if(info.name) {
+                markup += `<text x="${x}" y="${midY}" fill="#eee" font-family="${font}" font-weight="bold" font-size="18" dominant-baseline="middle">${escapeXml(info.name)}</text>`;
+            }
+            if(info.date || info.session) {
+                const rightX = width - pad;
+                if(info.date && info.session) {
+                    markup += `<text x="${rightX}" y="${midY - 8}" fill="#ccc" font-family="${font}" font-size="13" text-anchor="end" dominant-baseline="middle">${escapeXml(info.date)}</text>`;
+                    markup += `<text x="${rightX}" y="${midY + 8}" fill="#888" font-family="${font}" font-size="12" text-anchor="end" dominant-baseline="middle">${escapeXml(info.session)}</text>`;
+                } else {
+                    markup += `<text x="${rightX}" y="${midY}" fill="#ccc" font-family="${font}" font-size="13" text-anchor="end" dominant-baseline="middle">${escapeXml(info.date || info.session)}</text>`;
+                }
+            }
+            return markup;
         }
 
         function downloadDataUrl(dataUrl, filename) {
@@ -1450,13 +1560,13 @@
         // 시각화(canvas 또는 svg)를 캔버스에 그린 뒤, includeStats면 그 아래에 통계 행을 이어서 그려
         // 최종 캔버스를 반환. 통계는 <foreignObject> 없이 canvas 2D 도형(rect+text)으로 직접 그림
         // (foreignObject로 그리면 Chromium이 래스터화 시 캔버스를 오염시켜 toDataURL이 막힘)
-        async function renderExportCanvas(target, box, statsOptions = {}) {
+        async function renderExportCanvas(target, box, statsOptions = {}, headerOptions = {}) {
             const baseCanvas = target.tagName === 'CANVAS' ? target : await rasterizeSvgElement(target, 'image/png');
-            if(!box) return baseCanvas;
-            const statsEl = findStatsElementIn(box);
+            const statsEl = box ? findStatsElementIn(box) : null;
             const chamber = statsEl ? inferChamberFromStatsId(statsEl.id) : null;
             const rows = statsEl ? extractStatsRows(statsEl, chamber, statsOptions) : [];
-            if(rows.length === 0) return baseCanvas;
+            const headerInfo = buildExportHeaderInfo(headerOptions);
+            if(rows.length === 0 && !headerInfo) return baseCanvas;
 
             await ensureExportFontsLoaded();
             const font = "'NeoDunggeunmo','VT323',monospace";
@@ -1467,18 +1577,20 @@
             const indLineSize = Math.round(11 * scale), indLineH = Math.round(15 * scale);
             const baseRowH = Math.round(56 * scale);
             const rowHeights = rows.map(row => baseRowH + row.independentMembers.length * indLineH);
-            const statsH = pad + rowHeights.reduce((a, b) => a + b, 0) + pad;
+            const statsH = rows.length ? pad + rowHeights.reduce((a, b) => a + b, 0) + pad : 0;
+            const headerH = headerInfo ? Math.round(EXPORT_HEADER_H * scale) : 0;
 
             const out = document.createElement('canvas');
             out.width = baseCanvas.width;
-            out.height = baseCanvas.height + statsH;
+            out.height = headerH + baseCanvas.height + statsH;
             const ctx = out.getContext('2d');
             ctx.fillStyle = '#0a0c10';
             ctx.fillRect(0, 0, out.width, out.height);
-            ctx.drawImage(baseCanvas, 0, 0);
+            if(headerInfo) await drawExportHeader(ctx, headerInfo, out.width, headerH, scale, font);
+            ctx.drawImage(baseCanvas, 0, headerH);
             ctx.textBaseline = 'middle';
 
-            let cursorY = baseCanvas.height + pad;
+            let cursorY = headerH + baseCanvas.height + pad;
             rows.forEach((row, i) => {
                 const y = cursorY;
                 const rowH = rowHeights[i];
@@ -1559,7 +1671,7 @@
         // 통계 포함 SVG 내보내기 — 실제 화면과 동일하게 보이도록 .chamber-box 전체를 <foreignObject>로
         // 그대로 담는다. SVG 형식은 래스터화(canvas 변환)하지 않고 파일로만 저장하므로, PNG/JPG와 달리
         // Chromium의 foreignObject 캔버스 오염 제약에 걸리지 않아 실제 카드 디자인·폰트를 온전히 담을 수 있다
-        function buildStatsForeignObjectSvg(box, statsOptions = {}) {
+        function buildStatsForeignObjectSvg(box, statsOptions = {}, headerInfo = null) {
             const rect = box.getBoundingClientRect();
             const clone = box.cloneNode(true);
             const origCanvases = Array.from(box.querySelectorAll('canvas'));
@@ -1599,25 +1711,33 @@
 
             const css = getExportInlineCss();
             const html = new XMLSerializer().serializeToString(clone);
+            const headerH = headerInfo ? EXPORT_HEADER_H : 0;
+            const totalH = rect.height + headerH;
             // <style>은 foreignObject 안(xhtml 문서)이 아니라 <svg> 바로 아래(형제)에 둬야 한다.
             // xhtml div 안에 넣으면 file://로 직접 열었을 때 <style> 내용이 그대로 텍스트로 노출되는데,
             // SVG 루트 레벨에 두면 동일한 CDATA로도 foreignObject 내부 요소까지 스타일이 정상 적용된다
             // (직접 만든 격리 테스트로 확인됨). CSS 본문은 XML 특수문자(&) 문제를 피하려 CDATA로 감싼다.
-            return `<svg xmlns="http://www.w3.org/2000/svg" width="${rect.width}" height="${rect.height}" viewBox="0 0 ${rect.width} ${rect.height}">`
+            return `<svg xmlns="http://www.w3.org/2000/svg" width="${rect.width}" height="${totalH}" viewBox="0 0 ${rect.width} ${totalH}">`
                 + `<style><![CDATA[${css}]]></style>`
-                + `<foreignObject width="100%" height="100%"><div xmlns="http://www.w3.org/1999/xhtml" style="width:${rect.width}px;background:#0a0c10;font-family:'NeoDunggeunmo','VT323',monospace;">`
+                + buildExportHeaderSvgMarkup(headerInfo, rect.width, headerH)
+                + `<foreignObject y="${headerH}" width="100%" height="${rect.height}"><div xmlns="http://www.w3.org/1999/xhtml" style="width:${rect.width}px;background:#0a0c10;font-family:'NeoDunggeunmo','VT323',monospace;">`
                 + `${html}</div></foreignObject></svg>`;
         }
 
         // 시각화(svg 요소)만 담은 SVG 문자열을 만듦 — 통계 미포함 canvas→svg 변환용(간단히 이미지로 임베드)
-        function buildExportSvgMarkup(target, box, statsOptions = {}) {
-            if(box) return buildStatsForeignObjectSvg(box, statsOptions);
+        function buildExportSvgMarkup(target, box, statsOptions = {}, headerOptions = {}) {
+            const headerInfo = buildExportHeaderInfo(headerOptions);
+            if(box) return buildStatsForeignObjectSvg(box, statsOptions, headerInfo);
             const rect = target.getBoundingClientRect();
             const vizMarkup = target.tagName === 'CANVAS'
                 ? `<image href="${target.toDataURL('image/png')}" width="${rect.width}" height="${rect.height}"/>`
                 : (() => { const c = target.cloneNode(true); c.setAttribute('width', rect.width); c.setAttribute('height', rect.height); return c.outerHTML; })();
-            return `<svg xmlns="http://www.w3.org/2000/svg" width="${rect.width}" height="${rect.height}" viewBox="0 0 ${rect.width} ${rect.height}">`
-                + `<rect x="0" y="0" width="${rect.width}" height="${rect.height}" fill="#0a0c10"/>${vizMarkup}</svg>`;
+            const headerH = headerInfo ? EXPORT_HEADER_H : 0;
+            const totalH = rect.height + headerH;
+            return `<svg xmlns="http://www.w3.org/2000/svg" width="${rect.width}" height="${totalH}" viewBox="0 0 ${rect.width} ${totalH}">`
+                + `<rect x="0" y="0" width="${rect.width}" height="${totalH}" fill="#0a0c10"/>`
+                + buildExportHeaderSvgMarkup(headerInfo, rect.width, headerH)
+                + `<g transform="translate(0, ${headerH})">${vizMarkup}</g></svg>`;
         }
 
         async function performExport() {
@@ -1627,26 +1747,33 @@
                 expandIndependents: document.getElementById('exportExpandIndependents').checked,
                 includeExtraParties: document.getElementById('exportIncludeExtraParties').checked,
             };
+            const headerOptions = {
+                includeFlag: document.getElementById('exportIncludeFlag').checked,
+                includeName: document.getElementById('exportIncludeName').checked,
+                includeDate: document.getElementById('exportIncludeDate').checked,
+                includeSession: document.getElementById('exportIncludeSession').checked,
+            };
             const format = exportFormat;
             closeExportDialog();
             if(!target) return;
             try {
-                await exportVisualElement(target, includeStats, format, statsOptions);
+                await exportVisualElement(target, includeStats, format, statsOptions, headerOptions);
             } catch(e) {
                 alert('내보내기 중 오류가 발생했습니다: ' + e.message);
             }
         }
 
-        async function exportVisualElement(target, includeStats, format, statsOptions = {}) {
+        async function exportVisualElement(target, includeStats, format, statsOptions = {}, headerOptions = {}) {
             const box = includeStats ? findExportStatsBlock(target) : null;
+            const headerInfo = buildExportHeaderInfo(headerOptions);
             // 지도용 <svg>는 자체 id가 없고 감싸는 div만 id를 가지므로(예: districtSvgWrap) 그쪽으로 대체
             const nameSource = target.id || target.closest('[id]')?.id || 'export';
             const filenameBase = `${nameSource}_${formatKstTimestampCompact()}`;
 
-            // 통계 미포함 + 캔버스 + png/jpg → 캔버스를 배경색 위에 합성해서 변환
+            // 통계·헤더 모두 미포함 + 캔버스 + png/jpg → 캔버스를 배경색 위에 합성해서 변환
             // (반원 등은 ctx.clearRect로 그려 실제 픽셀은 투명이라, 그대로 내보내면 PNG는 배경이
             // 비어 보이고 JPG는 알파를 지원하지 않아 검게 나옴 — 통계 포함 경로와 배경을 통일)
-            if(!box && target.tagName === 'CANVAS' && format !== 'svg') {
+            if(!box && !headerInfo && target.tagName === 'CANVAS' && format !== 'svg') {
                 const mime = format === 'jpg' ? 'image/jpeg' : 'image/png';
                 const opaque = document.createElement('canvas');
                 opaque.width = target.width;
@@ -1658,18 +1785,18 @@
                 downloadDataUrl(opaque.toDataURL(mime, 0.95), `${filenameBase}.${format}`);
                 return;
             }
-            // 통계 미포함 + svg + svg 형식 → 마크업 그대로 직렬화(가장 흔한 경우, 벡터 그대로 보존)
-            if(!box && target.tagName !== 'CANVAS' && format === 'svg') {
+            // 통계·헤더 모두 미포함 + svg + svg 형식 → 마크업 그대로 직렬화(가장 흔한 경우, 벡터 그대로 보존)
+            if(!box && !headerInfo && target.tagName !== 'CANVAS' && format === 'svg') {
                 downloadBlob(new Blob([new XMLSerializer().serializeToString(target)], { type: 'image/svg+xml' }), `${filenameBase}.svg`);
                 return;
             }
 
             if(format === 'svg') {
-                downloadBlob(new Blob([buildExportSvgMarkup(target, box, statsOptions)], { type: 'image/svg+xml' }), `${filenameBase}.svg`);
+                downloadBlob(new Blob([buildExportSvgMarkup(target, box, statsOptions, headerOptions)], { type: 'image/svg+xml' }), `${filenameBase}.svg`);
                 return;
             }
             const mime = format === 'jpg' ? 'image/jpeg' : 'image/png';
-            const cvs = await renderExportCanvas(target, box, statsOptions);
+            const cvs = await renderExportCanvas(target, box, statsOptions, headerOptions);
             downloadDataUrl(cvs.toDataURL(mime, 0.95), `${filenameBase}.${format}`);
         }
 
@@ -1738,6 +1865,7 @@
             if(d.factionName) rows.push(`파벌: ${d.factionName}`);
             rows.push(`이념: ${d.ideology}`);
             if(d.coalitionName) rows.push(`연정: ${d.coalitionName}`);
+            else if(d.externalSupport) rows.push(`연정: <span style="color:var(--tno-gold);font-weight:bold;border-bottom:2px dashed var(--tno-gold);" title="연정에 정식 참여하지 않지만 신임투표·예산안 등에서 정부를 지지">${d.externalSupport} (C&S)</span>`);
             if(d.partyStatus === 'dissolved') rows.push(`상태: <span class="party-status-badge status-dissolved">해산</span>`);
             if(d.partyStatus === 'banned') rows.push(`상태: <span class="party-status-badge status-banned">활동 금지</span>`);
             body.innerHTML = rows.map(r => `<div>${r}</div>`).join('');
