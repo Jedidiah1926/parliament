@@ -48,6 +48,16 @@
         let nationSessionMode = 'simple';    // 'simple' | 'individual'
         let nationSessionType = 'regular';   // 'regular'(정기회) | 'extraordinary'(임시회) — 개별형에서만 사용
 
+        // ── 내각 > 설정: 정부 형태 (v1.5.A) ──────────────
+        let govType = 'parliamentary'; // 'presidential'(대통령제) | 'semi'(이원집정부제) | 'parliamentary'(의원내각제)
+        function setGovType(type) {
+            if(!['presidential','semi','parliamentary'].includes(type)) return;
+            govType = type;
+            document.getElementById('govTypePresidentialBtn')?.classList.toggle('active', type==='presidential');
+            document.getElementById('govTypeSemiBtn')?.classList.toggle('active', type==='semi');
+            document.getElementById('govTypeParliamentaryBtn')?.classList.toggle('active', type==='parliamentary');
+        }
+
         function setNationSessionType(type) {
             nationSessionType = type;
             document.getElementById('nationSessionTypeRegularBtn')?.classList.toggle('active', type==='regular');
@@ -2245,6 +2255,7 @@
                     nationSessionOrgName: document.getElementById('nationSessionOrgName')?.value ?? "",
                     nationSessionNumber: document.getElementById('nationSessionNumber')?.value ?? "",
                     nationSessionType: nationSessionType,
+                    govType: govType,
                     senateName:    document.getElementById('senateNameInput')?.value   ?? "상원",
                     houseName:     document.getElementById('houseNameInput')?.value    ?? "국회",
                     thirdName:     document.getElementById('thirdNameInput')?.value    ?? "삼원",
@@ -2399,6 +2410,7 @@
             setNationDateMode(cfg.nationDateMode ?? "simple");
             setNationSessionMode(cfg.nationSessionMode ?? "simple");
             setNationSessionType(cfg.nationSessionType ?? "regular");
+            setGovType(cfg.govType ?? "parliamentary");
             renderNationConfig();
 
             // ── 전체 렌더 ──
@@ -2666,8 +2678,7 @@
             document.querySelectorAll('.main-tab-content').forEach(c => c.classList.remove('active'));
             document.getElementById('mainContent' + main.charAt(0).toUpperCase() + main.slice(1)).classList.add('active');
             if(main === 'election') { elecRenderList(); elecRenderRecords(); return; }
-            if(main === 'cabinet') { return; } // 내각 탭은 서브탭 없는 단일 화면 (Coming Soon)
-            switchSubTab(main, currentSubTab[main] || (main === 'setup' ? 'party' : 'legislation'), false);
+            switchSubTab(main, currentSubTab[main] || (main === 'setup' ? 'party' : main === 'cabinet' ? 'system' : 'legislation'), false);
         }
 
         function switchSubTab(main, sub, doMainSwitch = true) {
@@ -2688,6 +2699,7 @@
             if(sub === 'record') { switchRecordInnerTab('archive'); }
             if(sub === 'party') { switchPartyGroupInnerTab('ideology'); }
             if(sub === 'settings') { switchSetupInnerTab('house'); }
+            if(sub === 'system') { setGovType(govType); }
             if(sub === 'coalition') { renderCoalitions(); }
             if(sub === 'list') { listMemberInnerTab = 'house'; switchListMemberInnerTab('house'); }
             if(sub === 'members') { membersInnerTab = 'house'; switchMembersInnerTab('house'); }

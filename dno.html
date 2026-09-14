@@ -906,11 +906,26 @@
 
             </div><!-- end mainContentElection -->
 
-            <!-- ===== 저장 그룹 ===== -->
+            <!-- ===== 내각 그룹 ===== -->
             <div id="mainContentCabinet" class="main-tab-content">
-                <div style="padding:60px 16px;text-align:center;color:#555;">
-                    <div style="font-size:1.4rem;color:var(--tno-neon);letter-spacing:2px;margin-bottom:10px;">COMING SOON</div>
-                    <div style="font-size:0.85rem;">내각 기능은 아직 준비 중입니다.</div>
+                <div class="sub-tab-container">
+                    <button class="sub-tab-btn active" onclick="switchSubTab('cabinet','system')" id="subTabSystem">설정</button>
+                </div>
+
+                <div id="contentSystem" class="sub-tab-content active">
+                    <div style="margin-top:16px;">
+                        <label style="color:#888;font-size:0.8rem;margin-bottom:6px;display:block;">정부 형태</label>
+                        <div class="system-radio-group">
+                            <button type="button" class="system-radio-btn" id="govTypePresidentialBtn" onclick="setGovType('presidential')">대통령제</button>
+                            <button type="button" class="system-radio-btn" id="govTypeSemiBtn" onclick="setGovType('semi')">이원집정부제</button>
+                            <button type="button" class="system-radio-btn active" id="govTypeParliamentaryBtn" onclick="setGovType('parliamentary')">의원내각제</button>
+                        </div>
+                    </div>
+
+                    <div style="padding:60px 16px 20px;text-align:center;color:#555;">
+                        <div style="font-size:1.2rem;color:var(--tno-neon);letter-spacing:2px;margin-bottom:10px;">COMING SOON</div>
+                        <div style="font-size:0.85rem;">그 외 내각 기능은 아직 준비 중입니다.</div>
+                    </div>
                 </div>
             </div>
 
