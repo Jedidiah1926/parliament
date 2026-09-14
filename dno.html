@@ -1032,6 +1032,9 @@
                             <button onclick="districtFitView()"      style="background:#111;border:1px solid #333;color:#aaa;padding:3px 10px;cursor:pointer;font-family:inherit;">⊡</button>
                             <button onclick="districtResetView()"    style="background:#111;border:1px solid #333;color:#555;padding:3px 10px;cursor:pointer;font-family:inherit;">↺</button>
                         </span>
+                        <span id="districtSvgViewControls" style="display:none;gap:4px;">
+                            <button onclick="districtSvgResetView()" style="background:#111;border:1px solid #333;color:#555;padding:3px 10px;cursor:pointer;font-family:inherit;font-size:0.8rem;">↺ 위치 초기화</button>
+                        </span>
                         <button onclick="districtClearAll()"     style="background:transparent;border:1px solid #333;color:#555;padding:3px 10px;cursor:pointer;font-family:inherit;font-size:0.8rem;">전체 초기화</button>
                     </div>
                 </div>
@@ -1039,6 +1042,7 @@
                 <div id="districtSvgWrap" style="width:100%;flex:1;background:#0a0c10;border:1px solid #222;min-height:200px;overflow:hidden;"></div>
                 <div style="margin-top:4px;font-size:0.8rem;color:#555;flex-shrink:0;">
                     <span id="districtCount">하원 0칸 · 상원 0칸</span>
+                    <span id="districtSvgViewHint" style="display:none;color:#444;"> · Shift+스크롤: 확대/축소 · 휠클릭 드래그: 이동</span>
                 </div>
             </div>
         </div>

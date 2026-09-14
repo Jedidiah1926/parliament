@@ -4895,12 +4895,104 @@
                         bbox.y2 = Math.max(bbox.y2, b.y+b.height);
                     }
                 });
+                let naturalViewBox = null;
                 if(bbox) {
                     const w = bbox.x2 - bbox.x, h = bbox.y2 - bbox.y;
                     const pad = Math.max(w, h, 1) * 0.04;
-                    svg.setAttribute('viewBox', `${bbox.x-pad} ${bbox.y-pad} ${w+pad*2} ${h+pad*2}`);
+                    naturalViewBox = { x: bbox.x-pad, y: bbox.y-pad, w: w+pad*2, h: h+pad*2 };
+                    svg.setAttribute('viewBox', `${naturalViewBox.x} ${naturalViewBox.y} ${naturalViewBox.w} ${naturalViewBox.h}`);
+                }
+                // 팬/줌 적용(지역구 편집 지도 전용) — 그리드(육각형) 방식처럼 확대·이동 가능하게, 위에서 구한
+                // 자연 크기(naturalViewBox, 실제 도형 전체가 꼭 맞게 보이는 기본 위치)를 기준으로 계산
+                if(opts.panZoom && naturalViewBox) {
+                    const pz = opts.panZoom;
+                    pz.baseViewBox = naturalViewBox;
+                    const zoom = pz.zoom || 1;
+                    const w = naturalViewBox.w / zoom, h = naturalViewBox.h / zoom;
+                    const cx = pz.cx ?? (naturalViewBox.x + naturalViewBox.w/2);
+                    const cy = pz.cy ?? (naturalViewBox.y + naturalViewBox.h/2);
+                    svg.setAttribute('viewBox', `${cx - w/2} ${cy - h/2} ${w} ${h}`);
                 }
             } catch(e) { /* getBBox 미지원 환경 등에서는 저장된 viewBox 그대로 사용 */ }
+        }
+
+        // 지역구 지도(SVG) 편집 화면 전용 팬/줌 상태 — 그리드(육각형)의 이동/확대와 같은 개념을
+        // 실제 지도(SVG) 도형에도 적용. cx/cy는 뷰박스 좌표계 기준 현재 보기의 중심점(null=기본 위치=전체 보기)
+        let districtSvgView = { zoom: 1, cx: null, cy: null, baseViewBox: null };
+
+        function districtSvgResetView() {
+            districtSvgView.zoom = 1;
+            districtSvgView.cx = null;
+            districtSvgView.cy = null;
+            districtRenderMap();
+        }
+
+        // fracX/fracY(0~1): 지도 영역 안에서 마우스 커서 위치 비율 — 그 지점을 고정한 채 확대/축소
+        function districtSvgZoom(factor, fracX = 0.5, fracY = 0.5) {
+            const base = districtSvgView.baseViewBox;
+            if(!base) return;
+            const curZoom = districtSvgView.zoom || 1;
+            const curW = base.w / curZoom, curH = base.h / curZoom;
+            const curCx = districtSvgView.cx ?? (base.x + base.w/2);
+            const curCy = districtSvgView.cy ?? (base.y + base.h/2);
+            const vx = (curCx - curW/2) + fracX * curW;
+            const vy = (curCy - curH/2) + fracY * curH;
+            const newZoom = Math.max(1, Math.min(10, curZoom * factor));
+            const newW = base.w / newZoom, newH = base.h / newZoom;
+            districtSvgView.zoom = newZoom;
+            districtSvgView.cx = Math.max(base.x, Math.min(base.x + base.w, vx - (fracX - 0.5) * newW));
+            districtSvgView.cy = Math.max(base.y, Math.min(base.y + base.h, vy - (fracY - 0.5) * newH));
+            districtRenderMap();
+        }
+
+        function districtSvgPanByPixels(wrapEl, dxPx, dyPx) {
+            const base = districtSvgView.baseViewBox;
+            if(!base) return;
+            const rect = wrapEl.getBoundingClientRect();
+            if(rect.width <= 0 || rect.height <= 0) return;
+            const zoom = districtSvgView.zoom || 1;
+            const curW = base.w / zoom, curH = base.h / zoom;
+            const unitPerPxX = curW / rect.width, unitPerPxY = curH / rect.height;
+            const curCx = districtSvgView.cx ?? (base.x + base.w/2);
+            const curCy = districtSvgView.cy ?? (base.y + base.h/2);
+            districtSvgView.cx = Math.max(base.x, Math.min(base.x + base.w, curCx - dxPx * unitPerPxX));
+            districtSvgView.cy = Math.max(base.y, Math.min(base.y + base.h, curCy - dyPx * unitPerPxY));
+            districtRenderMap();
+        }
+
+        // 휠클릭(가운데 버튼) 드래그로 이동, Shift+스크롤로 확대/축소 — 좌클릭은 지역구 선택에 그대로 사용
+        function districtInitSvgPanZoom(wrapEl) {
+            if(wrapEl._svgViewInited) return;
+            wrapEl._svgViewInited = true;
+            let isPanning = false, lastX = 0, lastY = 0;
+
+            wrapEl.addEventListener('mousedown', e => {
+                if(e.button !== 1) return;
+                isPanning = true;
+                lastX = e.clientX; lastY = e.clientY;
+                wrapEl.style.cursor = 'grabbing';
+                e.preventDefault();
+            });
+            window.addEventListener('mousemove', e => {
+                if(!isPanning) return;
+                const dx = e.clientX - lastX, dy = e.clientY - lastY;
+                lastX = e.clientX; lastY = e.clientY;
+                districtSvgPanByPixels(wrapEl, dx, dy);
+            });
+            window.addEventListener('mouseup', () => {
+                if(!isPanning) return;
+                isPanning = false;
+                wrapEl.style.cursor = '';
+            });
+            wrapEl.addEventListener('wheel', e => {
+                if(!e.shiftKey) return; // shift 없는 일반 스크롤은 페이지 스크롤 그대로 유지
+                e.preventDefault();
+                const rect = wrapEl.getBoundingClientRect();
+                const fracX = (e.clientX - rect.left) / rect.width;
+                const fracY = (e.clientY - rect.top) / rect.height;
+                const factor = e.deltaY < 0 ? 1.15 : 1/1.15;
+                districtSvgZoom(factor, fracX, fracY);
+            }, { passive: false });
         }
 
         // 지역구 맵 패널을 지역구 시스템 전체 방식(육각형/SVG)에 맞춰 다시 그림 — 지역구 편집 관련 갱신은 모두 이 함수를 거친다
@@ -4913,7 +5005,12 @@
             svgWrap.style.display = isSvg ? '' : 'none';
             const zoomControls = document.getElementById('districtZoomControls');
             if(zoomControls) zoomControls.style.display = isSvg ? 'none' : '';
+            const svgViewControls = document.getElementById('districtSvgViewControls');
+            if(svgViewControls) svgViewControls.style.display = isSvg ? 'inline-flex' : 'none';
+            const svgViewHint = document.getElementById('districtSvgViewHint');
+            if(svgViewHint) svgViewHint.style.display = isSvg ? '' : 'none';
             if(isSvg) {
+                districtInitSvgPanZoom(svgWrap);
                 // SVG 지역구는 도형이 파일에서 이미 정해져 있으므로 추가/제거 모드가 없고, 클릭하면 항상 편집 패널이 열림
                 renderDistrictSvgInto(svgWrap, {
                     clickable: true,
@@ -4923,7 +5020,8 @@
                         selectedDistrictKey = key;
                         districtRenderNamePanel();
                         districtRenderMap();
-                    }
+                    },
+                    panZoom: districtSvgView
                 });
                 const cntEl = document.getElementById('districtCount');
                 if(cntEl) cntEl.textContent = `${districtSvgMap?.shapes?.length||0}개 지역구 (SVG)`;
