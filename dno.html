@@ -56,6 +56,9 @@
 
             <div id="exportStatsSubOptions" style="display:none;margin:0 0 16px 22px;">
                 <label style="display:flex;align-items:center;gap:8px;margin-bottom:8px;cursor:pointer;color:#999;font-size:0.8rem;">
+                    <input type="checkbox" id="exportIncludePhotos" checked> 당수/로고 사진 포함
+                </label>
+                <label style="display:flex;align-items:center;gap:8px;margin-bottom:8px;cursor:pointer;color:#999;font-size:0.8rem;">
                     <input type="checkbox" id="exportExpandIndependents"> 무소속 펼치기
                 </label>
                 <label style="display:flex;align-items:center;gap:8px;cursor:pointer;color:#999;font-size:0.8rem;">
@@ -378,10 +381,10 @@
 
                     <!-- 지역구 시스템 (육각형 / 지도) -->
                     <div style="margin-top:16px;">
-                        <label style="color:#888;font-size:0.8rem;margin-bottom:6px;display:block;">지역구 시스템 (기본: 육각형)</label>
+                        <label style="color:#888;font-size:0.8rem;margin-bottom:6px;display:block;">지역구 시스템 (기본: 지도)</label>
                         <div class="system-radio-group">
-                            <button type="button" class="system-radio-btn active" id="districtSystemModeHexBtn" onclick="setDistrictMapMode('hex')">육각형</button>
-                            <button type="button" class="system-radio-btn" id="districtSystemModeSvgBtn" onclick="setDistrictMapMode('svg')">지도</button>
+                            <button type="button" class="system-radio-btn active" id="districtSystemModeSvgBtn" onclick="setDistrictMapMode('svg')">지도</button>
+                            <button type="button" class="system-radio-btn" id="districtSystemModeHexBtn" onclick="setDistrictMapMode('hex')">그리드</button>
                         </div>
                         <div style="color:#555;font-size:0.72rem;margin-top:4px;">지도 모드로 바꾸면 선거 &gt; 지역구 탭에서 SVG 지도를 업로드할 수 있습니다</div>
                         <!-- 지도 위 약칭/의석 배지 크기 — 지역구 자체 크기와 무관하게 지도 전체에서 하나의 기준으로 통일되지만, 취향에 따라 일괄 조정 가능 -->
@@ -778,7 +781,7 @@
                 <!-- 지역구 서브탭 - 설정만 (맵은 우측) -->
                 <div id="elecSubDistrict" class="sub-tab-content active">
                     <!-- 지역구 종류 선택 — 지도(SVG) 방식은 세 원이 지도 하나를 공유하므로 이 선택이 필요 없어 숨김 -->
-                    <div id="districtChamberSelectRow" style="display:flex;gap:6px;margin:8px 0 10px;">
+                    <div id="districtChamberSelectRow" style="display:none;gap:6px;margin:8px 0 10px;">
                         <button id="districtChamberHouseBtn" onclick="districtSetChamber('house')"
                             style="flex:1;padding:6px;font-family:inherit;font-size:0.85rem;background:#0a1a2a;color:var(--tno-neon);border:2px solid var(--tno-neon);cursor:pointer;letter-spacing:1px;" id="districtChamberHouseBtn">
                             <span id="districtChamberHouseLabel">하원</span> 지역구
@@ -793,7 +796,7 @@
                     </div>
 
                     <!-- 육각형(구 지역구) 편집 UI — 지역구 시스템이 육각형일 때만 표시 -->
-                    <div id="districtHexEditUI">
+                    <div id="districtHexEditUI" style="display:none;">
                         <div style="margin:0 0 6px;font-size:0.8rem;color:#555;">편집 모드</div>
                         <div style="display:flex;gap:6px;margin-bottom:10px;">
                             <button id="districtModeAdd" onclick="districtSetMode('add')"
@@ -814,9 +817,9 @@
                     </div>
 
                     <!-- 지도(뉴 지역구) 편집 UI — 지역구 시스템이 지도일 때만 표시 -->
-                    <div id="districtSvgEditUI" style="display:none;">
+                    <div id="districtSvgEditUI">
                         <div style="padding:8px;background:#0a0c10;border:1px solid #222;font-size:0.78rem;color:#666;margin-bottom:10px;line-height:1.5;">
-                            <a href="map.html" target="_blank" style="color:var(--tno-neon);">맵 메이커</a>에서 내보낸 .jsx 파일을 업로드하면, 육각형 대신 실제 지도 모양으로 지역구를 만들 수 있습니다.<br>
+                            <a href="map.html" target="_blank" style="color:var(--tno-neon);">맵 메이커</a>에서 내보낸 .jsx 파일을 업로드하면, 그리드 대신 실제 지도 모양으로 지역구를 만들 수 있습니다.<br>
                             하나의 지도를 하원·상원·삼원이 함께 쓰며, 지역구를 클릭하면 원별 의석 수와 정당별 성향(%)을 지정할 수 있습니다.<br>
                             업로드하면 <b style="color:#cc8888;">기존 지역구 데이터가 새 지도로 대체</b>됩니다.
                         </div>
@@ -1004,7 +1007,7 @@
                 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-shrink:0;">
                     <h3 style="margin:0;border:none;padding:0;">> 지역구 맵</h3>
                     <div style="display:flex;gap:4px;">
-                        <span id="districtZoomControls" style="display:flex;gap:4px;">
+                        <span id="districtZoomControls" style="display:none;gap:4px;">
                             <button onclick="districtZoom(1.2)"      style="background:#111;border:1px solid #333;color:#aaa;padding:3px 10px;cursor:pointer;font-family:inherit;">+</button>
                             <button onclick="districtZoom(1/1.2)"    style="background:#111;border:1px solid #333;color:#aaa;padding:3px 10px;cursor:pointer;font-family:inherit;">−</button>
                             <button onclick="districtFitView()"      style="background:#111;border:1px solid #333;color:#aaa;padding:3px 10px;cursor:pointer;font-family:inherit;">⊡</button>
@@ -1013,8 +1016,8 @@
                         <button onclick="districtClearAll()"     style="background:transparent;border:1px solid #333;color:#555;padding:3px 10px;cursor:pointer;font-family:inherit;font-size:0.8rem;">전체 초기화</button>
                     </div>
                 </div>
-                <canvas id="districtCanvas" style="width:100%;flex:1;background:#0a0c10;border:1px solid #222;cursor:crosshair;display:block;touch-action:none;min-height:200px;"></canvas>
-                <div id="districtSvgWrap" style="display:none;width:100%;flex:1;background:#0a0c10;border:1px solid #222;min-height:200px;overflow:hidden;"></div>
+                <canvas id="districtCanvas" style="width:100%;flex:1;background:#0a0c10;border:1px solid #222;cursor:crosshair;display:none;touch-action:none;min-height:200px;"></canvas>
+                <div id="districtSvgWrap" style="width:100%;flex:1;background:#0a0c10;border:1px solid #222;min-height:200px;overflow:hidden;"></div>
                 <div style="margin-top:4px;font-size:0.8rem;color:#555;flex-shrink:0;">
                     <span id="districtCount">하원 0칸 · 상원 0칸</span>
                 </div>

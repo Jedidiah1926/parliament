@@ -1310,6 +1310,7 @@
             document.getElementById('exportIncludeDate').checked = false;
             document.getElementById('exportIncludeSession').checked = false;
             document.getElementById('exportIncludeStats').checked = false;
+            document.getElementById('exportIncludePhotos').checked = true;
             document.getElementById('exportExpandIndependents').checked = false;
             document.getElementById('exportIncludeExtraParties').checked = false;
             onExportIncludeStatsChange();
@@ -1359,6 +1360,15 @@
                 img.onerror = () => resolve(null); // 실패해도 헤더 자체는 계속 그림(국기만 생략)
                 img.src = src;
             });
+        }
+
+        // 실제 화면의 object-fit:cover와 동일하게, 원본 비율을 유지한 채 대상 박스를 꽉 채우도록(넘치는 부분은 크롭) 그림
+        function drawImageCover(ctx, img, x, y, w, h) {
+            const srcRatio = img.width / img.height, dstRatio = w / h;
+            let sx = 0, sy = 0, sw = img.width, sh = img.height;
+            if(srcRatio > dstRatio) { sw = img.height * dstRatio; sx = (img.width - sw) / 2; }
+            else { sh = img.width / dstRatio; sy = (img.height - sh) / 2; }
+            ctx.drawImage(img, sx, sy, sw, sh, x, y, w, h);
         }
 
         // 캔버스에 헤더 행(국기+국가 이름 좌측, 날짜/회기 우측)을 직접 그림
@@ -1518,26 +1528,30 @@
                         }).filter(Boolean);
                     }
                 }
-                return { barColor, nameText, statusTags, pills, independentMembers };
+                const photoSrc = statsOptions.includePhotos ? (block.querySelector('.leader-photo-box img')?.src || null) : null;
+                return { barColor, nameText, statusTags, pills, independentMembers, photoSrc };
             }).filter(r => r.nameText);
 
-            if(statsOptions.includeExtraParties && chamber) rows.push(...extractExtraPartyRows(chamber));
+            if(statsOptions.includeExtraParties && chamber) rows.push(...extractExtraPartyRows(chamber, statsOptions));
             return rows;
         }
 
         // 원외정당(의석 0)은 화면에서 접혀 있으면 DOM에 카드 자체가 없으므로, 데이터에서 직접
         // 같은 모양의 행을 만들어 통계 내보내기에 추가한다 (실제 화면 접기 상태는 건드리지 않음)
-        function extractExtraPartyRows(chamber) {
+        function extractExtraPartyRows(chamber, statsOptions = {}) {
             return extraParliamentaryPartyList(chamber).map(p => {
                 const ideoName = ideologies.find(i => i.id === p.ideologyId)?.name || '';
                 const statusTags = p.status === 'dissolved' ? [{ text: '해산', color: '#999' }]
                                   : p.status === 'banned' ? [{ text: '활동 금지', color: '#ff0055' }] : [];
+                const isLogo = p.showLogoInStats ?? false;
+                const photoSrc = statsOptions.includePhotos ? ((isLogo ? (p.logoPhoto||p.leaderPhoto) : (p.leaderPhoto||p.logoPhoto)) || null) : null;
                 return {
                     barColor: p.color,
                     nameText: `${p.name}${p.abbr ? ` (${p.abbr})` : ''}`,
                     statusTags,
                     pills: ideoName ? [{ dotColor: p.color, text: ideoName }] : [],
                     independentMembers: [],
+                    photoSrc,
                 };
             });
         }
@@ -1569,12 +1583,14 @@
             if(rows.length === 0 && !headerInfo) return baseCanvas;
 
             await ensureExportFontsLoaded();
+            await Promise.all(rows.map(async row => { if(row.photoSrc) row.photoImg = await loadImageAsync(row.photoSrc); }));
             const font = "'NeoDunggeunmo','VT323',monospace";
 
             const scale = (baseCanvas.width / (target.clientWidth || target.getBoundingClientRect().width || baseCanvas.width)) || 1;
             const pad = Math.round(10 * scale), barW = Math.round(4 * scale);
             const nameSize = Math.round(15 * scale), tagSize = Math.round(11 * scale), pillSize = Math.round(11 * scale);
             const indLineSize = Math.round(11 * scale), indLineH = Math.round(15 * scale);
+            const photoW = Math.round(40 * scale), photoH = Math.round(44 * scale), photoGap = Math.round(8 * scale);
             const baseRowH = Math.round(56 * scale);
             const rowHeights = rows.map(row => baseRowH + row.independentMembers.length * indLineH);
             const statsH = rows.length ? pad + rowHeights.reduce((a, b) => a + b, 0) + pad : 0;
@@ -1600,7 +1616,17 @@
                 ctx.fillStyle = row.barColor;
                 ctx.fillRect(pad, y, barW, innerH);
 
-                const textX = pad + barW + Math.round(10 * scale);
+                const photoX = pad + barW + Math.round(6 * scale);
+                if(row.photoImg) {
+                    const photoY = y + Math.round(4 * scale);
+                    ctx.fillStyle = '#0a0c10';
+                    ctx.fillRect(photoX, photoY, photoW, photoH);
+                    drawImageCover(ctx, row.photoImg, photoX, photoY, photoW, photoH);
+                    ctx.strokeStyle = '#222';
+                    ctx.lineWidth = Math.max(1, Math.round(scale));
+                    ctx.strokeRect(photoX + 0.5, photoY + 0.5, photoW - 1, photoH - 1);
+                }
+                const textX = photoX + (row.photoImg ? photoW + photoGap : Math.round(4 * scale));
                 const nameY = y + Math.round(18 * scale);
 
                 // 우측 정렬 상태 태그 먼저 배치(자리를 먼저 차지해야 이름 줄 최대폭을 계산할 수 있음)
@@ -1708,6 +1734,10 @@
                     header.outerHTML = expandedHtml;
                 }
             }
+            // 당수/로고 사진 포함 체크가 꺼져 있으면 사진만 비우고(박스 자체는 남겨 레이아웃 유지) 내보냄
+            if(!statsOptions.includePhotos) {
+                clone.querySelectorAll('.leader-photo-box img').forEach(img => img.remove());
+            }
 
             const css = getExportInlineCss();
             const html = new XMLSerializer().serializeToString(clone);
@@ -1744,6 +1774,7 @@
             const target = exportDialogTarget;
             const includeStats = document.getElementById('exportIncludeStats').checked;
             const statsOptions = {
+                includePhotos: document.getElementById('exportIncludePhotos').checked,
                 expandIndependents: document.getElementById('exportExpandIndependents').checked,
                 includeExtraParties: document.getElementById('exportIncludeExtraParties').checked,
             };
@@ -4048,7 +4079,7 @@
             const ind = independents.find(x=>x.id===id);
             if(!ind) return;
             ind[key] = val;
-            if(key === 'name') rerenderIndependentOwner(ind);
+            if(key === 'name' || key === 'status') rerenderIndependentOwner(ind);
             simulate();
         }
 
@@ -4186,6 +4217,7 @@
                         <option value="e_${coal.id}" ${currentValue==='e_'+coal.id?'selected':''}>${coal.name} — ${coal.externalSupportLabel||'각외협력'}</option>
                     `).join('')}
                 </select>`;
+            const statusBadge = ind.status === 'banned' ? `<span class="party-status-badge status-banned">활동 금지</span>` : '';
             return `
                 <div class="leader-photo-box dyn-photo" data-ratio="0.8" style="width:52px;height:65px;flex-shrink:0;${opts.disabled?'opacity:0.5;':''}">
                     ${ind.photo?`<img src="${ind.photo}" alt="">`:'<div class="photo-ph">👤</div>'}
@@ -4198,11 +4230,17 @@
                         <input type="text" value="${ind.name||''}" placeholder="의원 이름" ${dis}
                             style="flex:1;background:#000;border:1px solid #2a2a2a;color:#e0e0e0;font-family:inherit;font-size:0.95rem;padding:5px 8px;min-width:0;"
                             onchange="updateIndependent('${ind.id}','name',this.value)">
+                        ${statusBadge}
                     </div>
                     <select ${dis} onchange="updateIndependent('${ind.id}','ideologyId',this.value?parseInt(this.value):null)"
                         style="width:100%;background:#000;border:1px solid #2a2a2a;color:#aaa;font-family:inherit;font-size:0.85rem;padding:4px;">
                         <option value="">이념 미지정</option>
                         ${ideologies.filter(i=>i.id!==IND_IDEOLOGY_ID).map(i=>`<option value="${i.id}" ${ind.ideologyId===i.id?'selected':''}>${i.name}</option>`).join('')}
+                    </select>
+                    <select ${dis} onchange="updateIndependent('${ind.id}','status',this.value)"
+                        style="width:100%;background:#000;border:1px solid #2a2a2a;color:#aaa;font-family:inherit;font-size:0.85rem;padding:4px;">
+                        <option value="active" ${(!ind.status||ind.status==='active')?'selected':''}>활동중</option>
+                        <option value="banned" ${ind.status==='banned'?'selected':''}>활동 금지</option>
                     </select>
                     ${(ind.photo && !opts.disabled)?`<button onclick="removeIndependentPhoto('${ind.id}')" style="background:transparent;border:1px solid #333;color:#555;font-family:inherit;font-size:0.75rem;padding:2px 8px;cursor:pointer;text-align:left;">✕ 사진 제거</button>`:''}
                     ${coalitionField}
@@ -4640,7 +4678,7 @@
         const HEX_SIZE = 18;
 
         // ── 뉴 지역구 (SVG 기반 지도, 하원/상원/삼원이 하나의 지도를 공유) ──────────────
-        let districtMapMode = 'hex'; // 'hex'(육각형, 구 지역구) | 'svg'(뉴 지역구) — 지역구 시스템 전체의 방식
+        let districtMapMode = 'svg'; // 'hex'(그리드, 구 지역구) | 'svg'(뉴 지역구, 기본값) — 지역구 시스템 전체의 방식
         // districtSvgMap = { viewBox, strokeColor, shapes:[{key, tag, attrs:{...}}] } | null — 세 원 공용
         let districtSvgMap = null;
         // districtSeatCounts[key] = { house, senate, third } — 그 지역구가 각 원에 배정하는 의석 수 (0이면 그 원엔 참여 안 함)
@@ -5061,7 +5099,7 @@
         }
 
         function districtSvgRevertToHex() {
-            if(!confirm('구 지역구(육각형) 방식으로 되돌립니다.\nSVG 지도로 만든 지역구/의석/성향/당선자 데이터가 모두 삭제됩니다. 계속하시겠습니까?')) return;
+            if(!confirm('구 지역구(그리드) 방식으로 되돌립니다.\nSVG 지도로 만든 지역구/의석/성향/당선자 데이터가 모두 삭제됩니다. 계속하시겠습니까?')) return;
             districtMapMode = 'hex';
             districtSvgMap = null;
             districtSeatCounts = {};
@@ -7848,7 +7886,7 @@
                                     indExtSupport = false;
                                 }
                             }
-                            map.push({color:p.color, partyName:p.name, factionName:null, partyStatus:p.status||'active',
+                            map.push({color:p.color, partyName:p.name, factionName:null, partyStatus:indEntry?.status || p.status || 'active',
                                 ideology:ideologies.find(i=>i.id===p.ideologyId)?.name||'?',
                                 coalitionName:indCoalName, strokeColor:indStroke, strokeDashed:indDashed, isRuling:indIsGov, externalSupport:indExtSupport,
                                 independentName: indEntry?.name || null, independentSeatIndex: indEntry?.seatIndex || null});
@@ -8166,6 +8204,7 @@
                                 <span style="width:24px;color:#666;flex-shrink:0;">#${ind.seatIndex}</span>
                                 <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${ind.name||'(이름 미지정)'}</span>
                                 <span style="color:#666;font-size:0.75rem;flex-shrink:0;">${indIdeo||'무소속'}${districtLabel?` (${districtLabel})`:''}</span>
+                                ${ind.status==='banned' ? `<span class="party-status-badge status-banned" style="flex-shrink:0;">활동 금지</span>` : ''}
                             </div>`;
                         }).join('')}
                     </div>`;
