@@ -2,7 +2,7 @@
             --tno-bg: #101218;
             --tno-panel: #1a1d26;
             --tno-neon: #00ffff;
-            --tno-neon-dim: rgba(0, 255, 255, 0.3);
+            --tno-neon-dim: color-mix(in srgb, var(--tno-neon) 30%, transparent);
             --tno-text: #e0e0e0;
             --tno-border: #4a5a6a;
             --tno-alert: #ff0055;
@@ -40,7 +40,7 @@
             border: 2px solid var(--tno-border);
             padding: 0;
             position: relative;
-            box-shadow: 0 0 30px rgba(0, 255, 255, 0.1);
+            box-shadow: 0 0 30px color-mix(in srgb, var(--tno-neon) 10%, transparent);
         }
 
         .header-strip {
@@ -101,7 +101,7 @@
             padding: 20px;
             margin-top: 10px;
             text-align: center;
-            box-shadow: inset 0 0 12px rgba(0, 255, 255, 0.08);
+            box-shadow: inset 0 0 12px color-mix(in srgb, var(--tno-neon) 8%, transparent);
         }
 
         .maintenance-icon {
