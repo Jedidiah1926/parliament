@@ -3675,7 +3675,7 @@
                 (p.factions||[]).forEach(f => { f.seatsHouse = 0; f.seatsSenate = 0; f.seatsThird = 0; });
             }
             p.status = newStatus;
-            simulate(); refreshUI();
+            simulate(); refreshUI(); elecUpdateAllBars();
         }
         function togglePartyParticipation(i,f,v) { parties[i][f]=v; simulate(); refreshUI(); }
         function updatePartyColorText(e,i) { if(isValidHex(e.value)){ parties[i].color=e.value.toUpperCase(); e.nextElementSibling.value=parties[i].color; simulate(); refreshUI(); }}
@@ -6478,8 +6478,9 @@
         function updateProbBar(chamber) {
             const store = elecStore[chamber] || {};
             const inKey = inKeyFor(chamber);
+            // 활동 금지된 정당은 저장된 수치와 무관하게 실제 반영(막대·계산)에서는 0으로 취급
             const allEntries = [
-                ...parties.filter(p => p[inKey]).map(p => ({ id: p.id, prob: Math.max(0, store[p.id]?.prob||0), color: p.color })),
+                ...parties.filter(p => p[inKey]).map(p => ({ id: p.id, prob: p.status==='banned' ? 0 : Math.max(0, store[p.id]?.prob||0), color: p.color })),
                 { id: '__swing__', prob: Math.max(0, store['__swing__']?.prob||0), color: null }
             ];
             const total = allEntries.reduce((s,e)=>s+e.prob,0) || 1;
@@ -6718,20 +6719,23 @@
             const ch = elecProbChamber;
             regularParties.forEach(p => {
                 const st = store[p.id]||{prob:0,err:0};
+                const banned = p.status === 'banned';
+                const dim = banned ? 'opacity:0.45;' : '';
                 const row = document.createElement('div');
-                row.style.cssText = 'display:grid;grid-template-columns:1fr 75px 60px;gap:6px;margin-bottom:7px;align-items:center;';
+                row.style.cssText = `display:grid;grid-template-columns:1fr 75px 60px;gap:6px;margin-bottom:7px;align-items:center;`;
                 row.innerHTML = `
-                    <div style="display:flex;align-items:center;gap:6px;">
-                        <span style="width:10px;height:10px;background:${p.color};border-radius:50%;flex-shrink:0;border:1px solid #444;"></span>
-                        <span style="font-size:0.85rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${p.name}">${p.name}</span>
+                    <div style="display:flex;align-items:center;gap:6px;min-width:0;">
+                        <span style="width:10px;height:10px;background:${p.color};border-radius:50%;flex-shrink:0;border:1px solid #444;${dim}"></span>
+                        <span style="font-size:0.85rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;${dim}" title="${p.name}">${p.name}</span>
+                        ${banned ? `<span class="party-status-badge status-banned" style="flex-shrink:0;">활동 금지</span>` : ''}
                     </div>
                     <input type="number" class="elec-prob" data-id="${p.id}" value="${st.prob}"
-                        min="0" max="100" placeholder="0"
-                        style="background:#000;border:1px solid var(--tno-border);color:var(--tno-neon);font-family:inherit;font-size:0.9rem;padding:4px;text-align:center;width:100%;box-sizing:border-box;"
+                        min="0" max="100" placeholder="0" ${banned?'disabled title="활동 금지된 정당은 지지율이 반영되지 않습니다"':''}
+                        style="background:#000;border:1px solid var(--tno-border);color:var(--tno-neon);font-family:inherit;font-size:0.9rem;padding:4px;text-align:center;width:100%;box-sizing:border-box;${dim}"
                         oninput="elecSetProb('${ch}','${p.id}', parseFloat(this.value)||0)">
                     <input type="number" class="elec-err" data-id="${p.id}" value="${st.err}"
-                        min="0" max="50" placeholder="0"
-                        style="background:#000;border:1px solid #444;color:#888;font-family:inherit;font-size:0.9rem;padding:4px;text-align:center;width:100%;box-sizing:border-box;"
+                        min="0" max="50" placeholder="0" ${banned?'disabled':''}
+                        style="background:#000;border:1px solid #444;color:#888;font-family:inherit;font-size:0.9rem;padding:4px;text-align:center;width:100%;box-sizing:border-box;${dim}"
                         oninput="elecSetErr('${ch}','${p.id}', parseFloat(this.value)||0)">
                 `;
                 container.appendChild(row);
@@ -7467,9 +7471,9 @@
                 propSeats = totalSeats;
             }
 
-            // 비례 의석이 있으면 지지율 검사
+            // 비례 의석이 있으면 지지율 검사 (활동 금지된 정당은 저장된 수치가 있어도 반영 대상에서 제외)
             const chamberStore = elecStore[chamber] || {};
-            const partyProb = parties.reduce((s,p)=>s+(chamberStore[p.id]?.prob||0),0);
+            const partyProb = parties.reduce((s,p)=>s+(p.status==='banned'?0:(chamberStore[p.id]?.prob||0)),0);
             if(propSeats > 0 && partyProb<=0) {
                 alert('지지율을 입력해 주세요.\n각 정당의 지지율(%) 칸에 숫자를 입력하세요.');
                 return;
@@ -7493,10 +7497,10 @@
 
             const speed = Math.round((101 - parseInt(document.getElementById('elecSpeed').value)) * 1.5);
 
-            // ── 오차 적용 후 각 당 지지율 계산 ──
+            // ── 오차 적용 후 각 당 지지율 계산 (활동 금지된 정당은 저장된 지지율과 무관하게 가중치 0) ──
             const partyWeighted = parties.map(p => {
                 const st = chamberStore[p.id]||{prob:0,err:0};
-                const w  = Math.max(0, st.prob + (Math.random()*2-1)*(st.err||0));
+                const w  = p.status==='banned' ? 0 : Math.max(0, st.prob + (Math.random()*2-1)*(st.err||0));
                 return { id:p.id, w, origProb: st.prob };
             });
 
@@ -7511,8 +7515,8 @@
             const swingA = swingRaw * ratioA; // 완전 랜덤 그룹
             const swingB = swingRaw * ratioB; // 지지율×친화도 그룹
 
-            // 그룹A: 각 당에 균등 랜덤 분배 (난수 비중)
-            const randWeights = parties.map(() => Math.random());
+            // 그룹A: 각 당에 균등 랜덤 분배 (난수 비중) — 활동 금지된 정당은 무당파 배분도 받지 않음
+            const randWeights = parties.map(p => p.status==='banned' ? 0 : Math.random());
             const randTotal   = randWeights.reduce((a,b)=>a+b,0);
 
             // 그룹B: 각 당의 (지지율 × 친화도 계수) 비중으로 분배
