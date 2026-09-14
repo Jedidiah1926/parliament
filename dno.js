@@ -2014,15 +2014,25 @@
             const useLogo = chamberCenterMode[chamber] === 'logo' && chamberLogos[chamber];
             const img = useLogo ? getChamberLogoImage(chamber, () => redrawChamber(cvsId, chamber)) : null;
             if(img) {
-                const size = Math.max(34, Math.min((width || 0) * 0.132, 156));
+                const boxSize = Math.max(34, Math.min((width || 0) * 0.132, 156));
                 // 로고 하단이 기존 "SEATS" 글씨 하단부(CY+27 부근)를 넘지 않도록, 그 지점에 맞춰 위로 배치
-                const centerY = (CY + 27) - size / 2;
-                ctx.save();
-                ctx.beginPath();
-                ctx.arc(CX, centerY, size / 2, 0, Math.PI * 2);
-                ctx.clip();
-                ctx.drawImage(img, CX - size / 2, centerY - size / 2, size, size);
-                ctx.restore();
+                const centerY = (CY + 27) - boxSize / 2;
+                const ratio = (img.naturalWidth && img.naturalHeight) ? img.naturalWidth / img.naturalHeight : 1;
+                if(Math.abs(ratio - 1) < 0.05) {
+                    // 정사각형(=대개 원형 로고)에 가까우면 기존과 동일하게 원형 클립 + 꽉 채우기
+                    // (정사각형을 정사각형 박스에 그리는 것이므로 늘어남 없이 예전과 같은 결과)
+                    ctx.save();
+                    ctx.beginPath();
+                    ctx.arc(CX, centerY, boxSize / 2, 0, Math.PI * 2);
+                    ctx.clip();
+                    ctx.drawImage(img, CX - boxSize / 2, centerY - boxSize / 2, boxSize, boxSize);
+                    ctx.restore();
+                } else {
+                    // 직사각형 로고: 원형으로 강제 크롭·왜곡하지 않고, 원본 비율 그대로 boxSize 안에 맞춰(contain) 그림
+                    const drawW = ratio >= 1 ? boxSize : boxSize * ratio;
+                    const drawH = ratio >= 1 ? boxSize / ratio : boxSize;
+                    ctx.drawImage(img, CX - drawW / 2, centerY - drawH / 2, drawW, drawH);
+                }
                 return;
             }
             ctx.fillStyle = "#fff";

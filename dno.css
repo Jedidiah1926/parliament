@@ -141,13 +141,20 @@
         .disp-info-bar {
             margin-left: auto;
             display: flex;
-            align-items: center;
-            gap: 12px;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 2px;
             padding: 0 10px;
-            color: #666;
-            font-size: 0.82rem;
             letter-spacing: 0.5px;
             white-space: nowrap;
+        }
+        .disp-info-bar #dispInfoDate {
+            color: #ccc;
+            font-size: 0.85rem;
+        }
+        .disp-info-bar #dispInfoSession {
+            color: #888;
+            font-size: 0.78rem;
         }
         .disp-tab-btn {
             background: var(--tno-panel);
@@ -1075,7 +1082,7 @@
         html[data-ui-mode="mobile"] .disp-info-bar {
             flex-basis: 100%;
             margin-left: 0;
-            justify-content: flex-end;
+            align-items: flex-end;
             padding: 6px 10px 0;
             margin-top: 0;
             border-top: 2px solid var(--tno-border);
