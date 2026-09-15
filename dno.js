@@ -11418,6 +11418,9 @@
                     photo      = (party && !hidePhotoBox) ? (isLogo ? (party.logoPhoto||party.leaderPhoto||'') : (party.leaderPhoto||party.logoPhoto||'')) : '';
                     leaderName = party?.leaderName || '';
                     isIndependentCard = party?.ideologyId === IND_IDEOLOGY_ID;
+                    // 무소속은 개별 의원만 있고 당대표 개념이 없으므로, 당수 탭에 값이 들어있어도
+                    // (대선/총리 후보 지정 등 다른 용도로 쓰일 수 있음) 이 통계 카드에는 항상 숨김
+                    if(isIndependentCard) { hidePhotoBox = true; photo = ''; leaderName = ''; }
                 }
 
                 // 무소속 카드: 접고 펼 수 있는 개별 의원 리스트
@@ -11428,7 +11431,7 @@
                     const listItems = independents.filter(x=>x.chamber===chamber).sort((a,b)=>a.seatIndex-b.seatIndex);
                     const panelId = `indPanel_${id}_${chamber}`;
                     independentToggleHtml = `<span onclick="event.stopPropagation();toggleIndependentPanel('${panelId}')" style="cursor:pointer;color:#888;font-size:0.85rem;user-select:none;flex-shrink:0;" id="${panelId}_arrow">▶</span>`;
-                    independentListHtml = `<div id="${panelId}" style="display:none;margin-top:6px;border-top:1px dashed #333;padding-top:6px;max-height:260px;overflow-y:auto;">
+                    independentListHtml = `<div id="${panelId}" style="display:none;margin-top:6px;border-top:1px dashed #333;padding-top:6px;">
                         ${listItems.length===0 ? '<div style="color:#444;font-size:0.78rem;">개별 정보 없음</div>' : listItems.map(ind => {
                             const indIdeo = ind.ideologyId ? ideologies.find(i=>i.id===ind.ideologyId)?.name : null;
                             const districtLabel = ind.districtKey ? (districtNames[chamber]?.[ind.districtKey] || ind.districtKey) : null;
