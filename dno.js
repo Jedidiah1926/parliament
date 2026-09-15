@@ -2881,7 +2881,13 @@
         // 캔버스/SVG 우클릭 → 내보내기 메뉴 → 내보내기 옵션 창 (앱 전체 canvas·svg 요소 공용, 사이트 전역에서 한 번만 등록)
         let canvasExportTarget = null;
         document.addEventListener('contextmenu', e => {
-            const el = e.target.closest?.('canvas, svg');
+            // 계엄령으로 의회가 정지되면 .chamber-box 위에 클릭을 가로채는 shade가 덮이므로,
+            // 우클릭 대상이 shade여도 그 안의 실제 캔버스/svg를 찾아 내보내기 대상으로 삼는다
+            let el = e.target.closest?.('canvas, svg');
+            if(!el) {
+                const shade = e.target.closest?.('.martial-law-shade');
+                el = shade?.closest('.chamber-box')?.querySelector('canvas, svg') || null;
+            }
             if(!el) return;
             e.preventDefault();
             canvasExportTarget = el;
