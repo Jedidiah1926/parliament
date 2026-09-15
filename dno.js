@@ -5556,6 +5556,14 @@
             refreshUI();
         }
 
+        // 이 의원의 이름·사진이 현재 당수 정보와 일치하는지 — 일치하면 "당수로 지정" 버튼을 숨겨서
+        // 이미 당수인 사람에게 다시 버튼을 보여주지 않는다 (이름 없는 빈 카드끼리의 우연한 일치는 제외)
+        function isPartyLeaderMatch(partyId, name, photo) {
+            const p = parties.find(x => x.id === partyId);
+            if(!p || !name) return false;
+            return (p.leaderName || '') === name && (p.leaderPhoto || '') === (photo || '');
+        }
+
         // 의원 카드의 "당수로 지정" 버튼 — 그 의원의 이름·사진을 당수로 1회 복사
         function designatePartyLeader(partyId, name, photo) {
             const p = parties.find(x => x.id === partyId);
@@ -6407,7 +6415,7 @@
                         <option value="banned" ${ind.status==='banned'?'selected':''}>활동 금지</option>
                     </select>
                     ${(ind.photo && !opts.disabled)?`<button onclick="removeIndependentPhoto('${ind.id}')" style="background:transparent;border:1px solid #333;color:#555;font-family:inherit;font-size:0.75rem;padding:2px 8px;cursor:pointer;text-align:left;">✕ 사진 제거</button>`:''}
-                    ${!opts.disabled?`<button onclick="designatePartyLeaderFromIndependent('${ind.id}')" style="background:transparent;border:1px solid #443300;color:#c9a227;font-family:inherit;font-size:0.75rem;padding:2px 8px;cursor:pointer;text-align:left;">👑 당수로 지정</button>`:''}
+                    ${(!opts.disabled && !isPartyLeaderMatch(getIndependentParty()?.id, ind.name, ind.photo))?`<button onclick="designatePartyLeaderFromIndependent('${ind.id}')" style="background:transparent;border:1px solid #443300;color:#c9a227;font-family:inherit;font-size:0.75rem;padding:2px 8px;cursor:pointer;text-align:left;">👑 당수로 지정</button>`:''}
                     ${coalitionField}
                     ${opts.extraHtml || ''}
                 </div>
@@ -6538,7 +6546,7 @@
                                 ${party.factions.map(f=>`<option value="${f.id}" ${member.factionId===f.id?'selected':''}>${f.name}</option>`).join('')}
                             </select>`:''}
                             ${(member.photo && !member.vacant)?`<button onclick="removeDistrictMemberPhoto('${ch}','${key}')" style="background:transparent;border:1px solid #333;color:#555;font-family:inherit;font-size:0.75rem;padding:2px 8px;cursor:pointer;text-align:left;">✕ 사진 제거</button>`:''}
-                            ${!member.vacant?`<button onclick="designatePartyLeaderFromDistrictSeat('${ch}','${key}')" style="background:transparent;border:1px solid #443300;color:#c9a227;font-family:inherit;font-size:0.75rem;padding:2px 8px;cursor:pointer;text-align:left;">👑 당수로 지정</button>`:''}
+                            ${(!member.vacant && !isPartyLeaderMatch(member.partyId, member.name, member.photo))?`<button onclick="designatePartyLeaderFromDistrictSeat('${ch}','${key}')" style="background:transparent;border:1px solid #443300;color:#c9a227;font-family:inherit;font-size:0.75rem;padding:2px 8px;cursor:pointer;text-align:left;">👑 당수로 지정</button>`:''}
                             <div style="display:flex;gap:6px;">
                                 ${member.vacant
                                     ? `<button onclick="fillVacantSeat('${ch}','${key}')" style="flex:1;background:transparent;border:1px solid #00cc66;color:#00cc66;font-family:inherit;font-size:0.8rem;padding:5px;cursor:pointer;">보궐선거로 채우기</button>`
@@ -6759,7 +6767,7 @@
                                 ${party.factions.map(f=>`<option value="${f.id}" ${m.factionId===f.id?'selected':''}>${f.name}</option>`).join('')}
                             </select>`:''}
                             ${m.photo?`<button onclick="removeListMemberPhoto('${ch}','${e.partyId}','${m.id}')" style="background:transparent;border:1px solid #333;color:#555;font-family:inherit;font-size:0.75rem;padding:2px 8px;cursor:pointer;text-align:left;">✕ 사진 제거</button>`:''}
-                            <button onclick="designatePartyLeaderFromListSeat('${ch}','${e.partyId}','${m.id}')" style="background:transparent;border:1px solid #443300;color:#c9a227;font-family:inherit;font-size:0.75rem;padding:2px 8px;cursor:pointer;text-align:left;">👑 당수로 지정</button>
+                            ${!isPartyLeaderMatch(e.partyId, m.name, m.photo)?`<button onclick="designatePartyLeaderFromListSeat('${ch}','${e.partyId}','${m.id}')" style="background:transparent;border:1px solid #443300;color:#c9a227;font-family:inherit;font-size:0.75rem;padding:2px 8px;cursor:pointer;text-align:left;">👑 당수로 지정</button>`:''}
                         </div>
                     `;
                     container.appendChild(div);
