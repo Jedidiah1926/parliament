@@ -3798,11 +3798,41 @@
             `;
             }).join('');
             fitDynPhotos(container);
+            renderAllChamberLeaderDisplays();
+        }
+
+        // 하원/상원/삼원 표시 패널(제목바 아래, 반원 캔버스 위)에 의장/부의장을 사진+이름으로 표시
+        // — 의장·부의장 둘 다 비어 있으면(아직 지정 안 함) 자리 자체를 만들지 않고 숨김
+        function renderChamberLeaderDisplay(ch) {
+            const container = document.getElementById(ch + 'LeadersDisplay');
+            if(!container) return;
+            const speaker = chamberLeaders[ch]?.speaker || { name: '', photo: '' };
+            const deputies = chamberLeaders[ch]?.deputies || [];
+            if(!speaker.name && !speaker.photo && deputies.length === 0) { container.innerHTML = ''; return; }
+            const chip = (label, name, photo, small) => `
+                <div style="display:flex;align-items:center;gap:6px;">
+                    <div class="leader-photo-box" style="width:${small?26:32}px;height:${small?33:40}px;flex-shrink:0;pointer-events:none;">
+                        ${photo ? `<img src="${photo}" alt="">` : `<div class="photo-ph" style="font-size:${small?0.7:0.8}rem;">👤</div>`}
+                    </div>
+                    <div style="display:flex;flex-direction:column;line-height:1.25;min-width:0;">
+                        <span style="color:#555;font-size:0.62rem;">${label}</span>
+                        <span style="color:#ccc;font-size:0.8rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:90px;">${name || '미지정'}</span>
+                    </div>
+                </div>`;
+            container.innerHTML = `<div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:8px;">
+                ${chip('의장', speaker.name, speaker.photo, false)}
+                ${deputies.map((d, i) => chip(deputies.length > 1 ? `부의장${i+1}` : '부의장', d.name, d.photo, true)).join('')}
+            </div>`;
+        }
+
+        function renderAllChamberLeaderDisplays() {
+            ['house', 'senate', 'third'].forEach(renderChamberLeaderDisplay);
         }
 
         function updateChamberLeader(ch, key, val) {
             if(!chamberLeaders[ch]) return;
             chamberLeaders[ch].speaker[key] = val;
+            renderChamberLeaderDisplay(ch);
         }
 
         function uploadChamberLeaderPhoto(input, ch) {
@@ -3827,6 +3857,7 @@
         function updateChamberDeputy(ch, id, key, val) {
             const d = chamberLeaders[ch]?.deputies.find(x => x.id === id);
             if(d) d[key] = val;
+            renderChamberLeaderDisplay(ch);
         }
 
         function uploadChamberDeputyPhoto(input, ch, id) {
@@ -4333,6 +4364,7 @@
             renderBulkPartyList();
             elecRenderList();
             elecRenderRecords();
+            renderAllChamberLeaderDisplays();
 
             // ── 탭 복원 (마지막) ──
             let uiMain = state.ui?.currentMainTab || 'setup';
