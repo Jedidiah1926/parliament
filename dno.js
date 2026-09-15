@@ -5841,6 +5841,12 @@
             `;
         }
 
+        // 부정선거 탭은 기능은 이미 구현되어 있으나, 다음 버전 정식 공개 전까지는 버튼을 눌러도
+        // 접근 권한 부족 안내만 뜨고 실제 탭으로 전환되지 않도록 잠가둔다.
+        function openFraudTabGated() {
+            showCustomAlert('⚠ 접근 권한이 부족합니다.');
+        }
+
         // 국가 > 부정선거 탭 — 정당별 카드로 부정선거 시도를 한눈에 모아 설정 (정당 정보 탭에는 노출하지 않음)
         function renderFraudTab() {
             const container = document.getElementById('fraudPartyList');
