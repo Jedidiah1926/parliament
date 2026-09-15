@@ -52,6 +52,7 @@
         let govType = 'parliamentary'; // 'presidential'(대통령제) | 'semi'(이원집정부제) | 'parliamentary'(의원내각제) | 'collective'(집단지도체제)
         let president = { name: '', photo: '', partyId: null, linkedSeat: null }; // 대통령(+대선 == 행정부 선거)
         let pm = { name: '', photo: '', partyId: null, linkedSeat: null };         // 총리/국무총리
+        let deputyPm = { name: '', photo: '', partyId: null, linkedSeat: null };   // 부총리
         let cabinetMembers = []; // 국무위원/내각 구성원(집단지도체제에서는 "장관") { id, name, position, photo, partyId, linkedSeat }
         let collectiveChair = { name: '', photo: '', partyId: null, linkedSeat: null }; // 집단지도체제: 의장
 
@@ -78,6 +79,18 @@
             if(partyId === null || partyId === undefined || partyId === '') return '#666';
             const p = parties.find(x => x.id === partyId);
             return p ? p.color : '#666';
+        }
+
+        // 당적 select 박스 자체를 선택된 정당 색으로 은은하게 빛나게(네온) 표시 — 무소속/미지정이면 회색으로 되돌림
+        function partySelectGlowCss(partyId) {
+            const color = partyDotColor(partyId);
+            return `border-color:${color};box-shadow:0 0 6px ${color};`;
+        }
+        function applyPartySelectGlow(selectEl, partyId) {
+            if(!selectEl) return;
+            const color = partyDotColor(partyId);
+            selectEl.style.borderColor = color;
+            selectEl.style.boxShadow = `0 0 6px ${color}`;
         }
 
         // ── 대통령/총리/국무위원을 실제 의원(지역구·비례·무소속)과 연결 — 이름·사진·당적 자동 반영 ──────────────
@@ -166,6 +179,7 @@
             applyGovTypeHolderRestrictions();
             applyGovTypeTabVisibility();
             renderPmSection();
+            renderDeputyPmSection();
             renderChairSection();
             renderCabinetMembersList();
             renderCabinetDisplay();
@@ -255,7 +269,7 @@
             const photoInput = document.querySelector('#presidentPhotoBox input[type=file]');
             if(photoInput) photoInput.disabled = !!resolved;
             const partySelect = document.getElementById('presidentPartySelect');
-            if(partySelect) { partySelect.innerHTML = partySelectOptionsHtml(effPartyId); partySelect.disabled = !!resolved; }
+            if(partySelect) { partySelect.innerHTML = partySelectOptionsHtml(effPartyId); partySelect.disabled = !!resolved; applyPartySelectGlow(partySelect, effPartyId); }
             const dot = document.getElementById('presidentPartyDot');
             if(dot) dot.style.background = partyDotColor(effPartyId);
             const picker = document.getElementById('presidentMemberPicker');
@@ -321,7 +335,7 @@
             const photoInput = document.querySelector('#chairPhotoBox input[type=file]');
             if(photoInput) photoInput.disabled = !!resolved;
             const partySelect = document.getElementById('chairPartySelect');
-            if(partySelect) { partySelect.innerHTML = partySelectOptionsHtml(effPartyId); partySelect.disabled = !!resolved; }
+            if(partySelect) { partySelect.innerHTML = partySelectOptionsHtml(effPartyId); partySelect.disabled = !!resolved; applyPartySelectGlow(partySelect, effPartyId); }
             const dot = document.getElementById('chairPartyDot');
             if(dot) dot.style.background = partyDotColor(effPartyId);
             const picker = document.getElementById('chairMemberPicker');
@@ -421,7 +435,7 @@
             const photoInput = document.querySelector('#pmPhotoBox input[type=file]');
             if(photoInput) photoInput.disabled = !!resolved;
             const partySelect = document.getElementById('pmPartySelect');
-            if(partySelect) { partySelect.innerHTML = partySelectOptionsHtml(effPartyId); partySelect.disabled = !!resolved; }
+            if(partySelect) { partySelect.innerHTML = partySelectOptionsHtml(effPartyId); partySelect.disabled = !!resolved; applyPartySelectGlow(partySelect, effPartyId); }
             const dot = document.getElementById('pmPartyDot');
             if(dot) dot.style.background = partyDotColor(effPartyId);
             const picker = document.getElementById('pmMemberPicker');
@@ -490,6 +504,72 @@
             renderCabinetDisplay();
         }
 
+        // ── 부총리 (president와 동일한 구조 — 별도 선출 과정 없이 단순 카드) ──────────────
+        function renderDeputyPmSection() {
+            if(deputyPm.linkedSeat && !resolveLinkedSeat(deputyPm.linkedSeat)) deputyPm.linkedSeat = null;
+            const resolved = deputyPm.linkedSeat ? resolveLinkedSeat(deputyPm.linkedSeat) : null;
+            const effName = resolved ? resolved.name : deputyPm.name;
+            const effPhoto = resolved ? resolved.photo : deputyPm.photo;
+            const effPartyId = resolved ? resolved.partyId : deputyPm.partyId;
+
+            const nameInput = document.getElementById('deputyPmNameInput');
+            if(nameInput) {
+                nameInput.disabled = !!resolved;
+                if(nameInput.value !== (effName||'')) nameInput.value = effName || '';
+            }
+            const img = document.getElementById('deputyPmPhotoImg');
+            const ph  = document.getElementById('deputyPmPhotoPh');
+            const removeBtn = document.getElementById('deputyPmPhotoRemoveBtn');
+            if(img && ph) {
+                if(effPhoto) { img.src = effPhoto; img.style.display = ''; ph.style.display = 'none'; }
+                else { img.style.display = 'none'; ph.style.display = ''; }
+            }
+            if(removeBtn) removeBtn.style.display = (!resolved && deputyPm.photo) ? '' : 'none';
+            const photoInput = document.querySelector('#deputyPmPhotoBox input[type=file]');
+            if(photoInput) photoInput.disabled = !!resolved;
+            const partySelect = document.getElementById('deputyPmPartySelect');
+            if(partySelect) { partySelect.innerHTML = partySelectOptionsHtml(effPartyId); partySelect.disabled = !!resolved; applyPartySelectGlow(partySelect, effPartyId); }
+            const dot = document.getElementById('deputyPmPartyDot');
+            if(dot) dot.style.background = partyDotColor(effPartyId);
+            const picker = document.getElementById('deputyPmMemberPicker');
+            if(picker) { picker.innerHTML = memberPickerOptionsHtml(); picker.value = ''; picker.style.display = resolved ? 'none' : ''; }
+            const badge = document.getElementById('deputyPmLinkedBadge');
+            if(badge) badge.style.display = resolved ? 'flex' : 'none';
+        }
+
+        function updateDeputyPmField(key, val) {
+            deputyPm[key] = val;
+            if(key === 'partyId') renderDeputyPmSection();
+            renderCabinetDisplay();
+        }
+
+        function linkDeputyPmToMember(val) {
+            const parsed = parseMemberPickerValue(val);
+            if(!parsed) return;
+            deputyPm.linkedSeat = parsed;
+            renderDeputyPmSection();
+            renderCabinetDisplay();
+        }
+
+        function unlinkDeputyPm() {
+            deputyPm.linkedSeat = null;
+            renderDeputyPmSection();
+            renderCabinetDisplay();
+        }
+
+        function uploadDeputyPmPhoto(input) {
+            const file = input.files?.[0]; if(!file) return;
+            const reader = new FileReader();
+            reader.onload = e => { deputyPm.photo = e.target.result; renderDeputyPmSection(); renderCabinetDisplay(); };
+            reader.readAsDataURL(file);
+        }
+
+        function removeDeputyPmPhoto() {
+            deputyPm.photo = '';
+            renderDeputyPmSection();
+            renderCabinetDisplay();
+        }
+
         // ── 대통령 임명제: 총리 후보 지명 → 의회 심의 상정 ──────────────
         function renderPmNomineeSection() {
             if(pmNomineeBillId) {
@@ -527,7 +607,7 @@
             const photoInput = document.querySelector('#pmNomineePhotoBox input[type=file]');
             if(photoInput) photoInput.disabled = !!resolved;
             const partySelect = document.getElementById('pmNomineePartySelect');
-            if(partySelect) { partySelect.innerHTML = partySelectOptionsHtml(effPartyId); partySelect.disabled = !!resolved; }
+            if(partySelect) { partySelect.innerHTML = partySelectOptionsHtml(effPartyId); partySelect.disabled = !!resolved; applyPartySelectGlow(partySelect, effPartyId); }
             const dot = document.getElementById('pmNomineePartyDot');
             if(dot) dot.style.background = partyDotColor(effPartyId);
             const picker = document.getElementById('pmNomineeMemberPicker');
@@ -640,7 +720,7 @@
                             <div style="display:flex;align-items:center;gap:6px;">
                                 <span style="width:9px;height:9px;border-radius:50%;flex-shrink:0;background:${partyDotColor(effPartyId)};"></span>
                                 <select ${resolved?'disabled':''} onchange="updateCabinetMember('${m.id}','partyId',this.value?parseInt(this.value):null)"
-                                    style="flex:1;min-width:0;background:#000;border:1px solid #333;color:var(--tno-gold);font-family:inherit;font-size:0.85rem;padding:4px;">
+                                    style="flex:1;min-width:0;background:#000;border:1px solid #333;color:var(--tno-gold);font-family:inherit;font-size:0.85rem;padding:4px;${partySelectGlowCss(effPartyId)}">
                                     ${partySelectOptionsHtml(effPartyId)}
                                 </select>
                             </div>
@@ -776,22 +856,29 @@
 
         // ── 우측 디스플레이 패널의 "내각" 탭 (하원/상원/삼원처럼 항상 표시) — 대통령·총리·국무위원 읽기 전용 그리드 ──────────────
         // 내각 디스플레이(HTML)와 내보내기(canvas)가 공유하는 카드 데이터 목록
-        function getCabinetDisplayCards() {
-            const cards = [];
+        // 행 단위로 묶어서 반환 — 집단지도체제가 아니면 1행 대통령 / 2행 총리·부총리 / 3행 장관(국무위원),
+        // 집단지도체제면 1행 의장 / 2행 장관(국무위원)
+        function getCabinetDisplayRows() {
+            const rows = [];
             if(govType === 'collective') {
                 const chairResolved = collectiveChair.linkedSeat ? resolveLinkedSeat(collectiveChair.linkedSeat) : null;
-                cards.push({ label: '의장', photo: chairResolved ? chairResolved.photo : collectiveChair.photo, name: chairResolved ? chairResolved.name : collectiveChair.name, partyId: chairResolved ? chairResolved.partyId : collectiveChair.partyId });
+                rows.push([{ label: '의장', photo: chairResolved ? chairResolved.photo : collectiveChair.photo, name: chairResolved ? chairResolved.name : collectiveChair.name, partyId: chairResolved ? chairResolved.partyId : collectiveChair.partyId }]);
             } else {
                 const presResolved = president.linkedSeat ? resolveLinkedSeat(president.linkedSeat) : null;
+                rows.push([{ label: '대통령', photo: presResolved ? presResolved.photo : president.photo, name: presResolved ? presResolved.name : president.name, partyId: presResolved ? presResolved.partyId : president.partyId }]);
+
                 const pmResolved = pmAutoSource();
-                cards.push({ label: '대통령', photo: presResolved ? presResolved.photo : president.photo, name: presResolved ? presResolved.name : president.name, partyId: presResolved ? presResolved.partyId : president.partyId });
-                cards.push({ label: pmRoleLabel(), photo: pmResolved ? pmResolved.photo : pm.photo, name: pmResolved ? pmResolved.name : pm.name, partyId: pmResolved ? pmResolved.partyId : pm.partyId });
+                const deputyResolved = deputyPm.linkedSeat ? resolveLinkedSeat(deputyPm.linkedSeat) : null;
+                rows.push([
+                    { label: pmRoleLabel(), photo: pmResolved ? pmResolved.photo : pm.photo, name: pmResolved ? pmResolved.name : pm.name, partyId: pmResolved ? pmResolved.partyId : pm.partyId },
+                    { label: '부총리', photo: deputyResolved ? deputyResolved.photo : deputyPm.photo, name: deputyResolved ? deputyResolved.name : deputyPm.name, partyId: deputyResolved ? deputyResolved.partyId : deputyPm.partyId },
+                ]);
             }
-            cabinetMembers.forEach((m, i) => {
+            rows.push(cabinetMembers.map((m, i) => {
                 const resolved = m.linkedSeat ? resolveLinkedSeat(m.linkedSeat) : null;
-                cards.push({ label: m.position || `${cabinetMemberRoleLabel()}${i+1}`, photo: resolved ? resolved.photo : m.photo, name: resolved ? resolved.name : m.name, partyId: resolved ? resolved.partyId : m.partyId });
-            });
-            return cards;
+                return { label: m.position || `${cabinetMemberRoleLabel()}${i+1}`, photo: resolved ? resolved.photo : m.photo, name: resolved ? resolved.name : m.name, partyId: resolved ? resolved.partyId : m.partyId };
+            }));
+            return rows.filter(row => row.length > 0);
         }
 
         function renderCabinetDisplay() {
@@ -812,7 +899,8 @@
                     </div>
                 `;
             };
-            container.innerHTML = getCabinetDisplayCards().map(cardHtml).join('');
+            const rowHtml = row => `<div style="display:flex;flex-wrap:wrap;gap:22px;">${row.map(cardHtml).join('')}</div>`;
+            container.innerHTML = getCabinetDisplayRows().map(rowHtml).join('<div style="height:20px;"></div>');
             // <svg>는 div처럼 내용에 맞춰 자동으로 높이가 늘어나지 않으므로, 우클릭 내보내기가
             // 실제 화면과 동일한 벡터를 담도록 렌더 후 실측한 높이를 svg에 직접 반영한다
             requestAnimationFrame(() => {
@@ -825,21 +913,27 @@
         async function renderCabinetExportCanvas() {
             await ensureExportFontsLoaded();
             const font = "'NeoDunggeunmo','VT323',monospace";
-            const cards = getCabinetDisplayCards();
-            const photos = await Promise.all(cards.map(c => c.photo ? loadImageAsync(c.photo) : Promise.resolve(null)));
+            const displayRows = getCabinetDisplayRows();
+            const allCards = displayRows.flat();
+            const photoMap = new Map();
+            await Promise.all(allCards.map(async c => { if(c.photo) photoMap.set(c, await loadImageAsync(c.photo)); }));
 
             const scale = window.devicePixelRatio || 1;
-            const pad = Math.round(16*scale), cardW = Math.round(110*scale), cardGap = Math.round(22*scale);
+            const pad = Math.round(16*scale), cardW = Math.round(110*scale), cardGap = Math.round(22*scale), rowGap = Math.round(20*scale);
             const photoW = Math.round(70*scale), photoH = Math.round(88*scale);
             const labelH = Math.round(20*scale), gapSm = Math.round(6*scale), nameH = Math.round(18*scale), badgeH = Math.round(18*scale);
             const cardH = labelH + gapSm + photoH + gapSm + nameH + gapSm + badgeH;
 
             const containerEl = document.getElementById('cabinetDisplayGrid');
-            const containerWidth = (containerEl?.clientWidth || 0) * scale || (cardW + cardGap) * cards.length;
+            const maxRowLen = Math.max(1, ...displayRows.map(r => r.length));
+            const containerWidth = (containerEl?.clientWidth || 0) * scale || (cardW + cardGap) * maxRowLen;
             const perRow = Math.max(1, Math.floor((containerWidth + cardGap) / (cardW + cardGap)));
-            const rows = Math.ceil(cards.length / perRow);
+
+            // 화면과 동일하게, 각 행(대통령/총리·부총리/장관)이 컨테이너 폭에 맞춰 줄바꿈되는 줄 수를 미리 계산
+            const lineCounts = displayRows.map(row => Math.max(1, Math.ceil(row.length / perRow)));
+            const totalLines = lineCounts.reduce((a,b) => a+b, 0);
             const totalW = perRow*cardW + (perRow-1)*cardGap;
-            const totalH = rows*cardH + Math.max(0, rows-1)*cardGap;
+            const totalH = totalLines*cardH + Math.max(0, totalLines-1)*cardGap + Math.max(0, displayRows.length-1)*rowGap;
 
             const cvs = document.createElement('canvas');
             cvs.width = totalW + pad*2;
@@ -850,48 +944,53 @@
             ctx.textBaseline = 'middle';
             ctx.textAlign = 'center';
 
-            cards.forEach((c, i) => {
-                const col = i % perRow, row = Math.floor(i / perRow);
-                const x = pad + col * (cardW + cardGap);
-                let cy = pad + row * (cardH + cardGap);
-                const cx = x + cardW/2;
+            let cursorY = pad;
+            displayRows.forEach((row, rIdx) => {
+                row.forEach((c, i) => {
+                    const col = i % perRow, lineIdx = Math.floor(i / perRow);
+                    const x = pad + col * (cardW + cardGap);
+                    let cy = cursorY + lineIdx * (cardH + cardGap);
+                    const cx = x + cardW/2;
 
-                ctx.font = `bold ${Math.round(labelH*0.75)}px ${font}`;
-                ctx.fillStyle = '#e0e0e0';
-                ctx.fillText(c.label, cx, cy + labelH/2, cardW);
-                cy += labelH + gapSm;
+                    ctx.font = `bold ${Math.round(labelH*0.75)}px ${font}`;
+                    ctx.fillStyle = '#e0e0e0';
+                    ctx.fillText(c.label, cx, cy + labelH/2, cardW);
+                    cy += labelH + gapSm;
 
-                const photoX = x + (cardW - photoW)/2;
-                ctx.fillStyle = '#0a0c10';
-                ctx.fillRect(photoX, cy, photoW, photoH);
-                if(photos[i]) drawImageCover(ctx, photos[i], photoX, cy, photoW, photoH);
-                else {
-                    ctx.fillStyle = '#2a3a3a';
-                    ctx.font = `${Math.round(photoH*0.4)}px ${font}`;
-                    ctx.fillText('👤', cx, cy + photoH/2, photoW);
-                }
-                ctx.strokeStyle = '#2a2a2a';
-                ctx.lineWidth = Math.max(1, Math.round(scale));
-                ctx.strokeRect(photoX + 0.5, cy + 0.5, photoW - 1, photoH - 1);
-                cy += photoH + gapSm;
+                    const photoX = x + (cardW - photoW)/2;
+                    ctx.fillStyle = '#0a0c10';
+                    ctx.fillRect(photoX, cy, photoW, photoH);
+                    const img = photoMap.get(c);
+                    if(img) drawImageCover(ctx, img, photoX, cy, photoW, photoH);
+                    else {
+                        ctx.fillStyle = '#2a3a3a';
+                        ctx.font = `${Math.round(photoH*0.4)}px ${font}`;
+                        ctx.fillText('👤', cx, cy + photoH/2, photoW);
+                    }
+                    ctx.strokeStyle = '#2a2a2a';
+                    ctx.lineWidth = Math.max(1, Math.round(scale));
+                    ctx.strokeRect(photoX + 0.5, cy + 0.5, photoW - 1, photoH - 1);
+                    cy += photoH + gapSm;
 
-                ctx.font = `${Math.round(nameH*0.8)}px ${font}`;
-                ctx.fillStyle = '#ccc';
-                ctx.fillText(c.name || '이름 미지정', cx, cy + nameH/2, cardW);
-                cy += nameH + gapSm;
+                    ctx.font = `${Math.round(nameH*0.8)}px ${font}`;
+                    ctx.fillStyle = '#ccc';
+                    ctx.fillText(c.name || '이름 미지정', cx, cy + nameH/2, cardW);
+                    cy += nameH + gapSm;
 
-                const party = parties.find(p => p.id === c.partyId);
-                const partyName = party ? party.name : '무소속';
-                const partyColor = party ? party.color : '#666';
-                ctx.font = `${Math.round(badgeH*0.6)}px ${font}`;
-                const textW = ctx.measureText(partyName).width;
-                const badgeW = Math.min(cardW, textW + Math.round(16*scale));
-                const badgeX = x + (cardW - badgeW)/2;
-                ctx.strokeStyle = partyColor;
-                ctx.lineWidth = Math.max(1, Math.round(scale));
-                ctx.strokeRect(badgeX + 0.5, cy + 0.5, badgeW - 1, badgeH - 1);
-                ctx.fillStyle = partyColor;
-                ctx.fillText(partyName, cx, cy + badgeH/2, badgeW - Math.round(8*scale));
+                    const party = parties.find(p => p.id === c.partyId);
+                    const partyName = party ? party.name : '무소속';
+                    const partyColor = party ? party.color : '#666';
+                    ctx.font = `${Math.round(badgeH*0.6)}px ${font}`;
+                    const textW = ctx.measureText(partyName).width;
+                    const badgeW = Math.min(cardW, textW + Math.round(16*scale));
+                    const badgeX = x + (cardW - badgeW)/2;
+                    ctx.strokeStyle = partyColor;
+                    ctx.lineWidth = Math.max(1, Math.round(scale));
+                    ctx.strokeRect(badgeX + 0.5, cy + 0.5, badgeW - 1, badgeH - 1);
+                    ctx.fillStyle = partyColor;
+                    ctx.fillText(partyName, cx, cy + badgeH/2, badgeW - Math.round(8*scale));
+                });
+                cursorY += lineCounts[rIdx] * (cardH + cardGap) - cardGap + rowGap;
             });
             ctx.textAlign = 'left';
             return cvs;
@@ -930,14 +1029,110 @@
             renderEmergencyPowers();
         }
 
+        // ── 브라우저 기본 alert/confirm 대신 앱 자체 UI로 표시 (권한 선포 등 확인/안내용) ──────────────
+        function showCustomAlert(message) {
+            const overlay = document.getElementById('customAlertOverlay');
+            if(!overlay) { alert(message); return; }
+            document.getElementById('customAlertMessage').textContent = message;
+            overlay.style.display = 'flex';
+            document.getElementById('customAlertOkBtn').onclick = () => { overlay.style.display = 'none'; };
+        }
+        function showCustomConfirm(message, onConfirm) {
+            const overlay = document.getElementById('customConfirmOverlay');
+            if(!overlay) { if(confirm(message)) onConfirm(); return; }
+            document.getElementById('customConfirmMessage').textContent = message;
+            overlay.style.display = 'flex';
+            const okBtn = document.getElementById('customConfirmOkBtn');
+            const cancelBtn = document.getElementById('customConfirmCancelBtn');
+            const cleanup = () => { overlay.style.display = 'none'; okBtn.onclick = null; cancelBtn.onclick = null; };
+            okBtn.onclick = () => { cleanup(); onConfirm(); };
+            cancelBtn.onclick = cleanup;
+        }
+
+        // 의회 해산 선포 시 현재 존재하는 모든 원(하원/상원/삼원)의 의석을 전부 비운다 —
+        // 지역구는 궐석 처리(기록 보존), 비례 명단은 초기화, 정당별 의석 수는 0으로
+        function clearAllSeatsForDissolution() {
+            chamberList().forEach(ch => {
+                const seatKey = seatKeyFor(ch);
+                Object.keys(districtMembers[ch] || {}).forEach(key => {
+                    const m = districtMembers[ch][key];
+                    if(m) m.vacant = true;
+                });
+                listMembers[ch] = {};
+                independents = independents.filter(x => !(x.chamber === ch && !x.districtKey));
+                parties.forEach(p => { p[seatKey] = 0; });
+            });
+            simulate();
+            refreshUI();
+        }
+
         function toggleEmergencyActive(key) {
             if(!EMERGENCY_POWERS[key]) return;
-            if(emergencyPowers[key].holder === 'none') { alert('먼저 권한 주체를 지정하세요.'); return; }
-            if(!emergencyPowers[key].active) {
-                if(!confirm(`${EMERGENCY_POWERS[key].label}을(를) 선포합니다. 계속하시겠습니까?`)) return;
+            if(emergencyPowers[key].holder === 'none') { showCustomAlert('먼저 권한 주체를 지정하세요.'); return; }
+            // 의회 해산은 한 번 선포되면 임의로 해제할 수 없고, 총선을 새로 반영해야만 풀린다
+            if(key === 'dissolution' && emergencyPowers[key].active) {
+                showCustomAlert('의회 해산은 스스로 해제할 수 없습니다.\n국가 > 선거 > 총선에서 새 선거를 반영해야 해제됩니다.');
+                return;
             }
-            emergencyPowers[key].active = !emergencyPowers[key].active;
+            if(!emergencyPowers[key].active) {
+                showCustomConfirm(`${EMERGENCY_POWERS[key].label}을(를) 선포합니다. 계속하시겠습니까?`, () => {
+                    emergencyPowers[key].active = true;
+                    if(key === 'dissolution') clearAllSeatsForDissolution();
+                    renderEmergencyPowers();
+                    applyMartialLawEffects();
+                });
+                return;
+            }
+            emergencyPowers[key].active = false;
             renderEmergencyPowers();
+            applyMartialLawEffects();
+        }
+
+        // 계엄령 선포 중에는 하원/상원/삼원 화면을 어둡게 가리고 "의회 활동 정지" 배너를 표시,
+        // 표결(좌석 클릭/일괄 투표)도 막는다 — 해제되면 원상 복구
+        function applyMartialLawEffects() {
+            const active = emergencyPowers.martialLaw.active;
+            ['House','Senate','Third'].forEach(suf => {
+                const panel = document.getElementById('dispPanel'+suf);
+                if(!panel) return;
+                let shade = panel.querySelector('.martial-law-shade');
+                if(active) {
+                    if(!shade) {
+                        shade = document.createElement('div');
+                        shade.className = 'martial-law-shade';
+                        shade.style.cssText = 'position:absolute;inset:0;background:rgba(20,0,0,0.72);z-index:50;display:flex;align-items:center;justify-content:center;pointer-events:auto;';
+                        shade.innerHTML = `<div style="color:var(--tno-alert);text-shadow:0 0 8px var(--tno-alert);font-size:1.1rem;letter-spacing:2px;border:1px solid var(--tno-alert);padding:10px 18px;background:rgba(0,0,0,0.6);">! 계엄령 선포 중 — 의회 활동 정지 !</div>`;
+                        const box = panel.querySelector('.chamber-box');
+                        if(box) { box.style.position = 'relative'; box.appendChild(shade); }
+                    }
+                } else if(shade) {
+                    shade.remove();
+                }
+            });
+            const councilPanel = document.getElementById('cabinetCouncilPanel');
+            if(councilPanel) councilPanel.style.display = active ? '' : 'none';
+        }
+
+        // 계엄령 중 대체 입법 경로 — 선택된 법안을 의회 표결 없이 국무회의 의결로 즉시 통과시킴
+        function passViaCabinetCouncil() {
+            if(!emergencyPowers.martialLaw.active) { showCustomAlert('계엄령이 선포된 상태에서만 사용할 수 있습니다.'); return; }
+            if(!activeBillId) { showCustomAlert('심의할 법안을 먼저 선택하세요.'); return; }
+            const bill = bills.find(b => b.id === activeBillId);
+            if(!bill) return;
+            showCustomConfirm(`『${bill.title}』을(를) 국무회의 의결로 통과시킵니다. 계속하시겠습니까?`, () => {
+                bill.houseStatus = 'pass';
+                if(hasSenateChamber()) bill.senateStatus = 'pass';
+                if(hasThirdChamber()) bill.thirdStatus = 'pass';
+                if(!bill.voteHistory) bill.voteHistory = [];
+                bill.voteHistory.push({ chamber: 'cabinetCouncil', result: 'pass', date: bill.voteDate || '', at: new Date().toISOString() });
+                renderBillList(); renderArchiveList(); syncBillSelect();
+                showCustomAlert(`『${bill.title}』이(가) 국무회의 의결로 통과되었습니다.`);
+            });
+        }
+
+        function isParliamentSuspended() {
+            if(emergencyPowers.martialLaw.active) { showCustomAlert('계엄령 선포 중에는 의회 표결을 진행할 수 없습니다.\n법안은 국무회의를 통해 통과시킬 수 있습니다.'); return true; }
+            return false;
         }
 
         // 각 비상 권한의 선포/해제 버튼은 설정에서 지정한 권한 주체(대통령/총리)의 탭에 표시된다 —
@@ -955,7 +1150,9 @@
                         const st = emergencyPowers[key];
                         const bg = st.active ? `color-mix(in srgb, ${cfg.color} 15%, transparent)` : 'transparent';
                         const shadow = st.active ? `0 0 10px ${cfg.color}` : 'none';
-                        return `<button class="add-btn" style="margin-top:8px;border-style:solid;border-color:${cfg.color};color:${cfg.color};text-shadow:0 0 4px ${cfg.color};background:${bg};box-shadow:${shadow};" onclick="toggleEmergencyActive('${key}')">! ${cfg.label} ${st.active ? '해제' : '선포'} !</button>`;
+                        const locked = key === 'dissolution' && st.active;
+                        const label = locked ? `! ${cfg.label} 선포됨 (총선으로만 해제) !` : `! ${cfg.label} ${st.active ? '해제' : '선포'} !`;
+                        return `<button class="add-btn" style="margin-top:8px;border-style:solid;border-color:${cfg.color};color:${cfg.color};text-shadow:0 0 4px ${cfg.color};background:${bg};box-shadow:${shadow};${locked?'cursor:default;opacity:0.85;':''}" onclick="toggleEmergencyActive('${key}')">${label}</button>`;
                     }).join('');
             });
         }
@@ -1963,6 +2160,7 @@
         }
 
         function applyPartyVote(partyName, vote) {
+            if(vote !== 'none' && isParliamentSuspended()) return;
             // 활동 금지된 정당은 표결에 참여할 수 없음
             if(vote !== 'none' && parties.find(p=>p.name===partyName)?.status==='banned') return;
             const chambers = getBulkChambers();
@@ -2102,6 +2300,7 @@
         }
 
         function applyFactionVote(partyName, factionId, vote) {
+            if(vote !== 'none' && isParliamentSuspended()) return;
             // 활동 금지된 정당은 표결에 참여할 수 없음
             if(vote !== 'none' && parties.find(p=>p.name===partyName)?.status==='banned') return;
             const key = `__faction__${partyName}__${factionId}`;
@@ -2176,6 +2375,8 @@
                 showSeatInfoCard(chamber, hit, e.clientX, e.clientY);
                 return;
             }
+
+            if(currentVoteMode !== 'none' && isParliamentSuspended()) return;
 
             const prev = voteState[chamber][hit] || 'none';
             if(currentVoteMode === 'none') {
@@ -3257,6 +3458,7 @@
                     govType: govType,
                     president: president,
                     pm: pm,
+                    deputyPm: deputyPm,
                     collectiveChair: collectiveChair,
                     cabinetMembers: JSON.parse(JSON.stringify(cabinetMembers)),
                     pmDirectElectionEnabled: pmDirectElectionEnabled,
@@ -3342,7 +3544,7 @@
                 throw new Error("Invalid parliament data");
 
             ideologies = parl.ideologies;
-            parties    = parl.parties.map(p => ({ leaderName:'', leaderPhoto:'', logoPhoto:'', showLogoInStats:false, description:'', factions:[], seatsThird:0, inThird:false, abbr:'', ...p, factions:(p.factions||[]).map(f=>({leaderName:'',leaderPhoto:'',logoPhoto:'',usePartyColor:false,seatsThird:0,...f})) }));
+            parties    = parl.parties.map(p => ({ leaderName:'', leaderPhoto:'', leaderLinkedSeat:null, logoPhoto:'', showLogoInStats:false, description:'', factions:[], seatsThird:0, inThird:false, abbr:'', ...p, factions:(p.factions||[]).map(f=>({leaderName:'',leaderPhoto:'',logoPhoto:'',usePartyColor:false,seatsThird:0,...f})) }));
             coalitions = parl.coalitions.map(c => ({ leadPartyId:null, externalSupporters:[], externalSupportLabel:'각외협력', ...c }));
             manualSort = parl.manualSort ?? false;
             // 구버전 저장 파일 호환: districtKey 필드가 없으면 비례(미연결) 무소속으로 취급
@@ -3444,6 +3646,7 @@
             setNationSessionType(cfg.nationSessionType ?? "regular");
             president = { name: '', photo: '', partyId: null, linkedSeat: null, ...(cfg.president || {}) };
             pm = { name: '', photo: '', partyId: null, linkedSeat: null, ...(cfg.pm || {}) };
+            deputyPm = { name: '', photo: '', partyId: null, linkedSeat: null, ...(cfg.deputyPm || {}) };
             collectiveChair = { name: '', photo: '', partyId: null, linkedSeat: null, ...(cfg.collectiveChair || {}) };
             cabinetMembers = Array.isArray(cfg.cabinetMembers) ? cfg.cabinetMembers.map(m => ({ partyId: null, linkedSeat: null, ...m })) : [];
             pmDirectElectionEnabled = !!cfg.pmDirectElectionEnabled;
@@ -3472,6 +3675,7 @@
             simulate();
             renderBillList();
             renderArchiveList();
+            applyMartialLawEffects();
             syncBillSelect();
             renderActiveBillDisplay();
             updateConfirmButtons();
@@ -3756,7 +3960,7 @@
                 Object.keys(EMERGENCY_POWERS).forEach(k => setEmergencyHolder(k, emergencyPowers[k].holder));
             }
             if(sub === 'president') { renderPresidentSection(); renderEmergencyPowers(); }
-            if(sub === 'pm') { renderPmSection(); renderEmergencyPowers(); }
+            if(sub === 'pm') { renderPmSection(); renderDeputyPmSection(); renderEmergencyPowers(); }
             if(sub === 'cabinetmembers') { renderCabinetMembersList(); renderChairSection(); renderEmergencyPowers(); }
             if(sub === 'coalition') { renderCoalitions(); }
             if(sub === 'list') { listMemberInnerTab = 'house'; switchListMemberInnerTab('house'); }
@@ -3891,6 +4095,7 @@
             elecUpdateLabels();
             elecUpdateDistrictInfo();
             renderChamberLeaders();
+            applyMartialLawEffects();
         }
 
         function updateNames() {
@@ -4654,6 +4859,92 @@
             if(p){ p[field]=val; simulate(); }
         }
 
+        // ── 당대표 자동 배정: 지정된 의석이 없으면 그 정당의 1번 의원을 당대표로 자동 배정 ──────────────
+        // party.leaderLinkedSeat로 특정 의석을 지정하면 그 의석 우선, 없으면 정당 소속 1번 의원(지역구→비례 순)
+        function partyFirstMemberInfo(party) {
+            if(!party) return null;
+            for(const ch of chamberList()) {
+                for(const key of districtSortedKeys(ch)) {
+                    const m = districtMembers[ch]?.[key];
+                    if(!m || m.vacant || m.partyId !== party.id) continue;
+                    const resolved = resolveLinkedSeat({ type:'district', chamber:ch, key });
+                    if(resolved) return resolved;
+                }
+                for(const m of (listMembers[ch]?.[party.id] || [])) {
+                    if(m.vacant) continue;
+                    const resolved = resolveLinkedSeat({ type:'list', chamber:ch, partyId:party.id, memberId:m.id });
+                    if(resolved) return resolved;
+                }
+                if(party.ideologyId === IND_IDEOLOGY_ID) {
+                    const inds = independents.filter(x => x.chamber===ch && !x.districtKey).sort((a,b)=>a.seatIndex-b.seatIndex);
+                    for(const ind of inds) {
+                        const resolved = resolveLinkedSeat({ type:'independent', memberId: ind.id });
+                        if(resolved) return resolved;
+                    }
+                }
+            }
+            return null;
+        }
+
+        function partyLeaderAutoInfo(party) {
+            if(!party) return null;
+            if(party.leaderLinkedSeat) {
+                const resolved = resolveLinkedSeat(party.leaderLinkedSeat);
+                if(resolved) return resolved;
+                party.leaderLinkedSeat = null; // 연결 끊어짐 — 자동 해제 후 1번 의원으로 대체
+            }
+            return partyFirstMemberInfo(party);
+        }
+
+        function syncPartyLeaderFromSeat(party) {
+            const auto = partyLeaderAutoInfo(party);
+            if(auto) { party.leaderName = auto.name; party.leaderPhoto = auto.photo; }
+        }
+
+        // 당대표 지정 의석 선택 드롭다운 — 해당 정당 소속 의원만 나열
+        function partyMemberPickerOptionsHtml(partyId) {
+            const party = parties.find(p => p.id === partyId);
+            const opts = ['<option value="">-- 특정 의석으로 지정 --</option>'];
+            chamberList().forEach(ch => {
+                const chLabel = chamberDisplayName(ch);
+                districtSortedKeys(ch).forEach((key, i) => {
+                    const m = districtMembers[ch]?.[key];
+                    if(!m || m.vacant || m.partyId !== partyId) return;
+                    const isInd = party?.ideologyId === IND_IDEOLOGY_ID;
+                    const ind = isInd ? independents.find(x => x.chamber === ch && x.districtKey === key) : null;
+                    const nm = isInd ? (ind?.name || '무소속') : (m.name || '(이름 없음)');
+                    opts.push(`<option value="district:${ch}:${key}">[${chLabel}] #${i+1} ${nm}</option>`);
+                });
+                (listMembers[ch]?.[partyId]||[]).forEach(m => {
+                    if(m.vacant) return;
+                    opts.push(`<option value="list:${ch}:${partyId}:${m.id}">[${chLabel} 비례] ${m.name||'(이름 없음)'}</option>`);
+                });
+                if(party?.ideologyId === IND_IDEOLOGY_ID) {
+                    independents.filter(x => x.chamber === ch && !x.districtKey).forEach(ind => {
+                        const label = ind.name || `#${computeIndependentOffset(ch) + ind.seatIndex}`;
+                        opts.push(`<option value="independent:${ind.id}">[${chLabel} 비례·무소속] ${label}</option>`);
+                    });
+                }
+            });
+            return opts.join('');
+        }
+
+        function linkPartyLeaderToSeat(pid, val) {
+            const parsed = parseMemberPickerValue(val);
+            if(!parsed) return;
+            const p = parties.find(x => x.id === pid);
+            if(!p) return;
+            p.leaderLinkedSeat = parsed;
+            simulate(); refreshUI();
+        }
+
+        function unlinkPartyLeader(pid) {
+            const p = parties.find(x => x.id === pid);
+            if(!p) return;
+            p.leaderLinkedSeat = null;
+            simulate(); refreshUI();
+        }
+
         function addIdeology() { ideologies.push({ id: Date.now(), name: "새 이념" }); refreshUI(); }
         function addIndependentIdeology() {
             if(!ideologies.find(i=>i.id===IND_IDEOLOGY_ID)) ideologies.push({id:IND_IDEOLOGY_ID, name:"무소속"});
@@ -4671,10 +4962,10 @@
             // 새 정당의 기본 이념: 무소속 이념은 제외하고 마지막 일반 이념을 사용 (무소속은 목록 맨 뒤에 자동 추가되므로)
             const nonIndIdeologies = ideologies.filter(i => i.id !== IND_IDEOLOGY_ID);
             const defaultIdeologyId = nonIndIdeologies.length > 0 ? nonIndIdeologies[nonIndIdeologies.length - 1].id : ideologies[0]?.id;
-            parties.push({id:Date.now(), name:"신당", color:"#555555", seatsHouse:0, seatsSenate:0, seatsThird:0, ideologyId:defaultIdeologyId, isRuling:false, ...flags, leaderName: "", leaderPhoto: "", logoPhoto: "", showLogoInStats: false, factions: [] }); refreshUI(); }
+            parties.push({id:Date.now(), name:"신당", color:"#555555", seatsHouse:0, seatsSenate:0, seatsThird:0, ideologyId:defaultIdeologyId, isRuling:false, ...flags, leaderName: "", leaderPhoto: "", leaderLinkedSeat: null, logoPhoto: "", showLogoInStats: false, factions: [] }); refreshUI(); }
         function addIndependentParty() {
             if(!ideologies.find(i=>i.id===IND_IDEOLOGY_ID)) addIndependentIdeology();
-            parties.push({id:Date.now(), name:"무소속", color:"#999999", seatsHouse:1, seatsSenate:0, seatsThird:0, ideologyId:IND_IDEOLOGY_ID, isRuling:false, inHouse:true, inSenate:true, inThird:false, leaderName: "", leaderPhoto: "", logoPhoto: "", showLogoInStats: false, factions: [] });
+            parties.push({id:Date.now(), name:"무소속", color:"#999999", seatsHouse:1, seatsSenate:0, seatsThird:0, ideologyId:IND_IDEOLOGY_ID, isRuling:false, inHouse:true, inSenate:true, inThird:false, leaderName: "", leaderPhoto: "", leaderLinkedSeat: null, logoPhoto: "", showLogoInStats: false, factions: [] });
             simulate(); refreshUI();
         }
         function removeParty(i) { const pid=parties[i].id; parties.splice(i,1); coalitions.forEach(c=>c.members=c.members.filter(x=>x!==pid)); simulate(); refreshUI(); }
@@ -5061,7 +5352,9 @@
                 const div = document.createElement('div');
                 div.className = `card-item ${p.isRuling?'is-ruling':''}`;
                 div.style.borderLeftColor = p.color;
-                const photo = p.leaderPhoto||'';
+                const auto = partyLeaderAutoInfo(p);
+                const name = auto ? auto.name : p.leaderName;
+                const photo = auto ? auto.photo : (p.leaderPhoto||'');
                 const hasFactions = (p.factions||[]).length > 0;
 
                 // 파벌 섹션 HTML
@@ -5111,7 +5404,7 @@
                         <div style="display:flex;flex-direction:column;align-items:center;gap:4px;flex-shrink:0;">
                             <div class="leader-photo-box dyn-photo" data-ratio="0.8" title="클릭하여 사진 업로드" style="width:52px;height:65px;">
                                 ${photo?`<img src="${photo}" alt="당수">`:'<div class="photo-ph">👤</div>'}
-                                <input type="file" accept="image/*" onchange="uploadLeaderPhoto(this,${p.id})">
+                                <input type="file" accept="image/*" ${auto?'disabled':''} onchange="uploadLeaderPhoto(this,${p.id})">
                             </div>
                             <span style="font-size:0.75rem;color:#444;flex-shrink:0;">사진 업로드</span>
                         </div>
@@ -5120,10 +5413,20 @@
                                 <span style="width:10px;height:10px;background:${p.color};border-radius:50%;flex-shrink:0;"></span>
                                 <span style="color:var(--tno-neon);font-size:0.95rem;">${p.name}</span>
                             </div>
-                            <input type="text" value="${p.leaderName||''}" placeholder="당수 이름"
+                            <input type="text" value="${name||''}" placeholder="당수 이름" ${auto?'disabled':''}
                                 style="background:#000;border:1px solid #2a2a2a;color:#e0e0e0;font-family:inherit;font-size:0.95rem;padding:5px 8px;width:100%;box-sizing:border-box;"
                                 onchange="updateLeaderField(${p.id},'leaderName',this.value)">
-                            ${photo?`<button onclick="removeLeaderPhoto(${p.id})" style="background:transparent;border:1px solid #333;color:#555;font-family:inherit;font-size:0.8rem;padding:3px 8px;cursor:pointer;text-align:left;">✕ 사진 제거</button>`:''}
+                            <select onchange="linkPartyLeaderToSeat(${p.id},this.value)"
+                                style="width:100%;box-sizing:border-box;background:#000;border:1px solid #333;color:#888;font-family:inherit;font-size:0.75rem;padding:4px;">
+                                ${partyMemberPickerOptionsHtml(p.id)}
+                            </select>
+                            ${p.leaderLinkedSeat ? `
+                            <div style="display:flex;align-items:center;gap:6px;color:#6cf;font-size:0.72rem;">
+                                🔗 지정된 의석과 연결됨 — 이름·사진 자동 반영
+                                <button onclick="unlinkPartyLeader(${p.id})" style="background:transparent;border:1px solid #333;color:#888;font-family:inherit;font-size:0.7rem;padding:2px 6px;cursor:pointer;">연결 해제</button>
+                            </div>` : (auto ? `
+                            <div style="color:#6a6;font-size:0.72rem;">◆ 자동 배정: 소속 1번 의원 — 이름·사진 자동 반영</div>` : '')}
+                            ${(!auto && photo)?`<button onclick="removeLeaderPhoto(${p.id})" style="background:transparent;border:1px solid #333;color:#555;font-family:inherit;font-size:0.8rem;padding:3px 8px;cursor:pointer;text-align:left;">✕ 사진 제거</button>`:''}
                         </div>
                     </div>
                     ${factionHtml}
@@ -8373,10 +8676,16 @@
                 lastCh = ch;
             });
             elecLastResults = {};
+            // 총선 반영으로 의회가 새로 구성되므로, 선포돼 있던 의회 해산은 여기서만 해제된다
+            const wasDissolved = emergencyPowers.dissolution.active;
+            if(wasDissolved) { emergencyPowers.dissolution.active = false; renderEmergencyPowers(); }
             simulate(); refreshUI();
             if(lastCh) switchDispTab(lastCh);
             if(hadFactions) {
                 alert('선거 결과가 반영되었습니다.\n\n파벌이 있는 정당의 파벌별 의석은 선거 전 분포가 무효화되어 0으로 초기화되었습니다.\n정당 탭에서 파벌 의석을 다시 배분해 주세요.');
+            }
+            if(wasDissolved) {
+                showCustomAlert('새 총선이 반영되어 의회 해산 상태가 해제되었습니다.');
             }
         }
 
@@ -9321,6 +9630,7 @@
 
         /* ===== SIMULATE & DRAW ===== */
         function simulate() {
+            parties.forEach(syncPartyLeaderFromSeat);
             const isBicameral = hasSenateChamber();
             const highlightGov = document.getElementById('chkGovHighlight').checked;
             const sTotal = parseInt(document.getElementById('senateTotal').value) || 100;
@@ -9647,6 +9957,9 @@
             const govArr = allStats.filter(s=>s.isRuling);
             const extArr = allStats.filter(s=>!s.isRuling && s.externalSupport).sort((a,b)=>b.count-a.count);
             const oppArr = allStats.filter(s=>!s.isRuling && !s.externalSupport).sort((a,b)=>b.count-a.count);
+            // 여당(+각외협력) 실질 의석 — 이미 과반을 확보했다면 어떤 야당도 "여소야대"로 표시하지 않는다
+            // (valid/maj 계산이 활동금지·궐석 등으로 왜곡돼도 여당·야당이 동시에 "과반"으로 표시되는 모순을 방지)
+            const govEffectiveTotal = govArr.reduce((sum,s)=>sum+s.count, 0) + extSupportTotal;
 
             function renderCard(s) {
                 let statusHtml = '';
@@ -9662,7 +9975,7 @@
                     }
                 } else if(s.externalSupport) {
                     statusHtml = `<span style="color:var(--tno-gold);font-weight:bold;border-bottom:2px dashed var(--tno-gold);" title="연정에 정식 참여하지 않지만 신임투표·예산안 등에서 정부를 지지">[${s.externalSupport} C&S]</span>`;
-                } else if(s.count>=maj && govArr.length > 0) {
+                } else if(s.count>=maj && govArr.length > 0 && govEffectiveTotal < maj) {
                     statusHtml = `<span style="color:#f00;font-weight:bold;">[여소야대]</span>`;
                 }
 
