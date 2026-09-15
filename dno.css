@@ -259,6 +259,9 @@
         }
         input[type="checkbox"]:hover { border-color: var(--tno-neon); }
         input[type="checkbox"]:checked { background: var(--tno-neon); border-color: var(--tno-neon); }
+        /* 계엄령 "의회 정지" 체크박스 — 테마색 대신 계엄령 버튼과 같은 경고색으로 표시 */
+        input[type="checkbox"].chk-alert:hover { border-color: var(--tno-alert); }
+        input[type="checkbox"].chk-alert:checked { background: var(--tno-alert); border-color: var(--tno-alert); }
         input[type="checkbox"]:checked::after {
             content: "";
             position: absolute;

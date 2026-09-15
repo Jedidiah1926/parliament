@@ -1509,7 +1509,7 @@
                         if(key === 'martialLaw') {
                             return btn + `
                             <label style="display:flex;align-items:flex-start;gap:6px;margin-top:6px;cursor:${st.active?'default':'pointer'};color:#888;font-size:0.76rem;line-height:1.4;">
-                                <input type="checkbox" ${st.suspendParliament?'checked':''} ${st.active?'disabled':''} onchange="setMartialLawSuspendParliament(this.checked)" style="margin-top:2px;flex-shrink:0;">
+                                <input type="checkbox" class="chk-alert" ${st.suspendParliament?'checked':''} ${st.active?'disabled':''} onchange="setMartialLawSuspendParliament(this.checked)" style="margin-top:2px;flex-shrink:0;">
                                 <span>의회 정지 — 체크 후 선포하면 의회가 정지(화면 어둡게, 표결 불가)됩니다. 체크하지 않으면 의회는 정상 작동하고, 계엄 해제 결의안이 자동으로 상정됩니다.</span>
                             </label>`;
                         }
@@ -2946,6 +2946,58 @@
             return (stats && stats.children.length > 0) ? box : null;
         }
 
+        // 계엄령으로 하원/상원/삼원 화면이 가려진 상태에서 우클릭 내보내기를 해도, 화면에 보이는
+        // "! 계엄령 선포 중 !" 경고 문구가 그대로 이미지에 담기도록 캔버스/SVG 양쪽에 오버레이를 합성한다.
+        // (통계 포함 SVG 내보내기는 .chamber-box 전체를 그대로 복제하므로 이미 자동으로 포함됨 — 그 외 경로에만 필요)
+        const MARTIAL_LAW_SHADE_TEXT = '! 계엄령 선포 중 — 의회 활동 정지 !';
+        function isMartialLawShadedTarget(target) {
+            const box = target.closest?.('.chamber-box');
+            return !!box?.querySelector('.martial-law-shade');
+        }
+        function measureTextWidth(text, font) {
+            const c = measureTextWidth._c || (measureTextWidth._c = document.createElement('canvas'));
+            const ctx = c.getContext('2d');
+            ctx.font = font;
+            return ctx.measureText(text).width;
+        }
+        function drawMartialLawShadeOnCanvas(ctx, x, y, w, h, scale = 1) {
+            const alertColor = getComputedStyle(document.documentElement).getPropertyValue('--tno-alert').trim() || '#ff0055';
+            const fontSize = Math.round(18 * scale);
+            const font = `${fontSize}px 'NeoDunggeunmo','VT323',monospace`;
+            const textW = measureTextWidth(MARTIAL_LAW_SHADE_TEXT, font);
+            const padX = 18 * scale, padY = 10 * scale;
+            const boxW = textW + padX * 2, boxH = fontSize + padY * 2;
+            const cx = x + w / 2, cy = y + h / 2;
+            ctx.save();
+            ctx.fillStyle = 'rgba(20,0,0,0.72)';
+            ctx.fillRect(x, y, w, h);
+            ctx.fillStyle = 'rgba(0,0,0,0.6)';
+            ctx.fillRect(cx - boxW / 2, cy - boxH / 2, boxW, boxH);
+            ctx.strokeStyle = alertColor;
+            ctx.lineWidth = Math.max(1, scale);
+            ctx.strokeRect(cx - boxW / 2 + 0.5, cy - boxH / 2 + 0.5, boxW - 1, boxH - 1);
+            ctx.font = font;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.shadowColor = alertColor;
+            ctx.shadowBlur = 8 * scale;
+            ctx.fillStyle = alertColor;
+            ctx.fillText(MARTIAL_LAW_SHADE_TEXT, cx, cy + 1);
+            ctx.restore();
+        }
+        function martialLawShadeSvgMarkup(w, h) {
+            const alertColor = getComputedStyle(document.documentElement).getPropertyValue('--tno-alert').trim() || '#ff0055';
+            const font = `18px 'NeoDunggeunmo','VT323',monospace`;
+            const textW = measureTextWidth(MARTIAL_LAW_SHADE_TEXT, font);
+            const boxW = textW + 36, boxH = 38;
+            const cx = w / 2, cy = h / 2;
+            return `<g>`
+                + `<rect x="0" y="0" width="${w}" height="${h}" fill="rgba(20,0,0,0.72)"/>`
+                + `<rect x="${cx - boxW / 2}" y="${cy - boxH / 2}" width="${boxW}" height="${boxH}" fill="rgba(0,0,0,0.6)" stroke="${alertColor}"/>`
+                + `<text x="${cx}" y="${cy}" fill="${alertColor}" font-family="'NeoDunggeunmo','VT323',monospace" font-size="18" text-anchor="middle" dominant-baseline="middle">${escapeXml(MARTIAL_LAW_SHADE_TEXT)}</text>`
+                + `</g>`;
+        }
+
         // 최상단 정보(국기/국가 이름/날짜/회기) 체크박스 상태 + 실제 국가 데이터를 조합해,
         // 그릴 내용이 실제로 하나라도 있을 때만 헤더 정보 객체를 반환(전부 비어있으면 null → 헤더 자체를 생략)
         function buildExportHeaderInfo(headerOptions = {}) {
@@ -3214,6 +3266,7 @@
             ctx.fillRect(0, 0, out.width, out.height);
             if(headerInfo) await drawExportHeader(ctx, headerInfo, out.width, headerH, scale, font);
             ctx.drawImage(baseCanvas, 0, headerH);
+            if(isMartialLawShadedTarget(target)) drawMartialLawShadeOnCanvas(ctx, 0, headerH, baseCanvas.width, baseCanvas.height, scale);
             ctx.textBaseline = 'middle';
 
             let cursorY = headerH + baseCanvas.height + pad;
@@ -3369,9 +3422,10 @@
             const headerInfo = buildExportHeaderInfo(headerOptions);
             if(box) return buildStatsForeignObjectSvg(box, statsOptions, headerInfo);
             const rect = target.getBoundingClientRect();
-            const vizMarkup = target.tagName === 'CANVAS'
+            const vizMarkup = (target.tagName === 'CANVAS'
                 ? `<image href="${target.toDataURL('image/png')}" width="${rect.width}" height="${rect.height}"/>`
-                : (() => { const c = target.cloneNode(true); c.setAttribute('width', rect.width); c.setAttribute('height', rect.height); return c.outerHTML; })();
+                : (() => { const c = target.cloneNode(true); c.setAttribute('width', rect.width); c.setAttribute('height', rect.height); return c.outerHTML; })())
+                + (isMartialLawShadedTarget(target) ? martialLawShadeSvgMarkup(rect.width, rect.height) : '');
             const headerH = headerInfo ? EXPORT_HEADER_H : 0;
             const totalH = rect.height + headerH;
             return `<svg xmlns="http://www.w3.org/2000/svg" width="${rect.width}" height="${totalH}" viewBox="0 0 ${rect.width} ${totalH}">`
@@ -3435,6 +3489,10 @@
                 octx.fillStyle = '#0a0c10';
                 octx.fillRect(0, 0, opaque.width, opaque.height);
                 octx.drawImage(target, 0, 0);
+                if(isMartialLawShadedTarget(target)) {
+                    const scale = opaque.width / (target.clientWidth || target.getBoundingClientRect().width || opaque.width) || 1;
+                    drawMartialLawShadeOnCanvas(octx, 0, 0, opaque.width, opaque.height, scale);
+                }
                 downloadDataUrl(opaque.toDataURL(mime, 0.95), `${filenameBase}.${format}`);
                 return;
             }
