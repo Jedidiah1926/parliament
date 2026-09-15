@@ -7047,7 +7047,10 @@
             map.shapes.forEach(s => {
                 const el = document.createElementNS(svgNS, s.tag);
                 Object.entries(s.attrs||{}).forEach(([k,v]) => el.setAttribute(k, v));
-                el.setAttribute('fill', (opts.getFill ? opts.getFill(s.key) : null) || 'transparent');
+                const fillColor = (opts.getFill ? opts.getFill(s.key) : null) || 'transparent';
+                // innerGlow: 도형 전체를 단색으로 칠하는 대신, 어두운 바탕 위에 경계 안쪽에서
+                // 옅어지는 네온 광원만 보이도록 함 (권역 지도 등에서 사용)
+                el.setAttribute('fill', opts.innerGlow && fillColor !== 'transparent' ? `color-mix(in srgb, ${fillColor} 22%, #06070a)` : fillColor);
                 el.setAttribute('stroke', map.strokeColor || '#00ffff');
                 el.setAttribute('stroke-width', opts.strokeWidth || '1.5');
                 // 지도 좌표 규모(viewBox)가 저장된 값과 다르거나 매우 클 수 있어, 테두리가 화면 픽셀
@@ -7073,6 +7076,31 @@
                 }
                 svg.appendChild(el);
                 shapeEls.push({ s, el });
+                // innerGlow: 도형과 동일한 모양을 클립으로 삼아, 그 안에서만 보이는 흐린 네온 테두리를
+                // 겹쳐 그림 — 경계 쪽은 밝고 중앙으로 갈수록 옅어지는 광원 느낌을 줌
+                if(opts.innerGlow && fillColor !== 'transparent') {
+                    const clipId = 'clip_' + Math.random().toString(36).slice(2, 10);
+                    const clipPath = document.createElementNS(svgNS, 'clipPath');
+                    clipPath.setAttribute('id', clipId);
+                    const clipShape = document.createElementNS(svgNS, s.tag);
+                    Object.entries(s.attrs||{}).forEach(([k,v]) => clipShape.setAttribute(k, v));
+                    clipPath.appendChild(clipShape);
+                    svg.appendChild(clipPath);
+                    const glowG = document.createElementNS(svgNS, 'g');
+                    glowG.setAttribute('clip-path', `url(#${clipId})`);
+                    glowG.setAttribute('pointer-events', 'none');
+                    glowG.setAttribute('data-decor', '1');
+                    const glowShape = document.createElementNS(svgNS, s.tag);
+                    Object.entries(s.attrs||{}).forEach(([k,v]) => glowShape.setAttribute(k, v));
+                    glowShape.setAttribute('fill', 'none');
+                    glowShape.setAttribute('stroke', fillColor);
+                    glowShape.setAttribute('stroke-width', opts.innerGlowWidth || 8);
+                    glowShape.setAttribute('vector-effect', 'non-scaling-stroke');
+                    glowShape.setAttribute('opacity', '0.8');
+                    glowShape.style.filter = 'blur(3px)';
+                    glowG.appendChild(glowShape);
+                    svg.appendChild(glowG);
+                }
                 // 선택된 지역구는 (지역구 탭과 동일하게) 노란색 반투명 박스를 겹쳐 표시 — 지역구/성향 탭이
                 // selectedDistrictKey를 공유하므로 어느 쪽에서 선택해도 다른 탭에도 그대로 반영됨.
                 // 다른 도형들에 가려지지 않도록 맨 위에 그려야 해서, 지금 만들지만 나중에 append한다
@@ -9833,11 +9861,12 @@
                 wrap.innerHTML = '';
                 renderDistrictSvgInto(wrap, {
                     clickable: true,
+                    innerGlow: true,
                     getFill: key => {
-                        if(!districtGrid[ch][key]) return 'rgba(255,255,255,0.03)';
+                        if(!districtGrid[ch][key]) return 'transparent';
                         const regionId = districtRegionMap[ch]?.[key];
                         const region = (regions[ch]||[]).find(r => r.id === regionId);
-                        return region ? region.color : 'rgba(255,255,255,0.08)';
+                        return region ? region.color : 'rgba(255,255,255,0.25)';
                     },
                     title: key => {
                         const nm = districtNames.house[key] || key;
