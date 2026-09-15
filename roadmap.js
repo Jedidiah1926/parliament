@@ -390,14 +390,32 @@
             status: 'future',
             title: '1.5.5 - ?',
             desc: `2026.09.XX
-              <br>- 2차 개발`
+              <br>- ???`
+          },
+          {
+            status: 'future',
+            title: '1.5.6 - ?',
+            desc: `2026.09.XX
+              <br>- ???`
+          },
+          {
+            status: 'future',
+            title: '1.5.7 - ?',
+            desc: `2026.10.XX
+              <br>- ???`
+          },
+          {
+            status: 'future',
+            title: '1.5.8 - ?',
+            desc: `2026.10.XX
+              <br>- ???`
           },
           {
             status: 'future',
             title: '1.5.9 - 프로그램 출시',
             desc: `2026.11.XX
-              <br>- Windows 환경에서 Microsoft Store를 통해 사용할 수 있도록 최적화
-              <br>- Android 환경에서 Google Play Store를 통해 사용할 수 있도록 최적화`
+              <br>- Steam 서비스 준비
+              <br>- Steam 개발자 계정을 위한 펀딩 시작`
           }
         ]
       }
