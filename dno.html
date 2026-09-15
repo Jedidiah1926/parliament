@@ -574,11 +574,11 @@
                     </div>
                 </div>
 
-                <!-- 계엄령 중 대체 입법 경로 — 의회 표결 대신 국무회의 의결로 즉시 통과 -->
+                <!-- 계엄령 중 대체 입법 경로 — 의회 표결 대신 국무회의 표결로 통과 여부 결정 -->
                 <div class="vote-panel" id="cabinetCouncilPanel" style="display:none;border-color:var(--tno-alert);">
                     <div class="vote-panel-title" style="color:var(--tno-alert);">! 계엄령 중 — 국무회의로 법안 통과</div>
-                    <div style="color:#888;font-size:0.78rem;margin-bottom:8px;">의회 표결이 정지된 동안, 선택된 법안을 국무회의 의결로 즉시 통과시킬 수 있습니다.</div>
-                    <button class="vote-ctrl-btn yea" style="width:100%;" onclick="passViaCabinetCouncil()">▶ 국무회의로 통과</button>
+                    <div style="color:#888;font-size:0.78rem;margin-bottom:8px;">의회 표결이 정지된 동안, 내각 디스플레이(우측 "내각" 탭)에서 국무위원별로 찬성·반대·기권을 표시한 뒤 아래 버튼으로 의결을 확정하세요.</div>
+                    <button class="vote-ctrl-btn yea" style="width:100%;" onclick="resolveCabinetCouncilVote()">▶ 국무회의로 의결</button>
                 </div>
 
                 <!-- 투표 입력 모드 -->
@@ -1444,6 +1444,12 @@
             <div class="chamber-box">
                 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
                     <h3 style="margin:0;">내각</h3>
+                </div>
+                <div id="cabinetCouncilControls" style="display:none;align-items:center;gap:8px;margin-bottom:10px;padding:8px;background:#0a0c10;border:1px solid var(--tno-alert);flex-wrap:wrap;">
+                    <span style="color:var(--tno-alert);font-size:0.8rem;white-space:nowrap;">! 국무회의 표결 중</span>
+                    <button onclick="setAllCabinetCouncilVote('yea')" style="background:transparent;border:1px solid #00ff88;color:#00ff88;padding:4px 10px;font-family:inherit;font-size:0.78rem;cursor:pointer;">전원 찬성</button>
+                    <button onclick="setAllCabinetCouncilVote('nay')" style="background:transparent;border:1px solid #ff2244;color:#ff2244;padding:4px 10px;font-family:inherit;font-size:0.78rem;cursor:pointer;">전원 반대</button>
+                    <button onclick="clearCabinetCouncilVote()" style="background:transparent;border:1px solid #666;color:#aaa;padding:4px 10px;font-family:inherit;font-size:0.78rem;cursor:pointer;">초기화</button>
                 </div>
                 <svg id="cabinetDisplaySvg" data-export-kind="cabinet" xmlns="http://www.w3.org/2000/svg" width="100%" style="display:block;">
                     <foreignObject x="0" y="0" width="100%" height="100%">

@@ -478,7 +478,7 @@
                 const canNoConfidence = govType === 'parliamentary' || govType === 'semi';
                 noConfidenceSection.style.display = canNoConfidence ? '' : 'none';
                 const label = document.getElementById('noConfidenceBtnLabel');
-                if(label) label.textContent = `${pmRoleLabel()} 불신임안`;
+                if(label) label.textContent = `내각 불신임안`;
             }
         }
 
@@ -682,23 +682,29 @@
         // ── 내각 불신임 (의원내각제/이원집정부제 전용) ──────────────
         function submitNoConfidenceBill() {
             const bill = {
-                id: 'b'+Date.now(), title: `${pmRoleLabel()} 불신임안`, content: '', threshold: 0.5, numer: null, denom: null, tags: ['불신임안'],
+                id: 'b'+Date.now(), title: `내각 불신임안`, content: '', threshold: 0.5, numer: null, denom: null, tags: ['불신임안'],
                 houseStatus: 'pending', senateStatus: 'pending', thirdStatus: 'pending', houseVote: null, senateVote: null, thirdVote: null,
                 version: 1, parentBillId: null, isAmendment: false, voteHistory: [],
                 isNoConfidence: true, noConfidenceApplied: false,
             };
             bills.push(bill);
             renderBillList(); syncBillSelect();
-            alert(`${pmRoleLabel()} 불신임안이 국가 > 입법 탭에 상정되었습니다.`);
+            alert(`내각 불신임안이 국가 > 입법 탭에 상정되었습니다.`);
         }
 
+        // 내각 불신임안이 가결되면 총리·부총리·국무위원 전원의 재직자 정보를 초기화 —
+        // 자리(직책/국무위원 슬롯) 자체는 남고, 의원 연결·이름·사진·당적만 비워짐
         function checkNoConfidenceBills() {
             bills.forEach(b => {
                 if(!b.isNoConfidence || b.noConfidenceApplied) return;
                 if(getBillOverallStatus(b) !== 'passed') return;
                 b.noConfidenceApplied = true;
                 pm = { name: '', photo: '', partyId: null, linkedSeat: null };
+                deputyPm = { name: '', photo: '', partyId: null, linkedSeat: null };
+                cabinetMembers.forEach(m => { m.name = ''; m.photo = ''; m.partyId = null; m.linkedSeat = null; });
                 renderPmSection();
+                renderDeputyPmSection();
+                renderCabinetMembersList();
                 renderCabinetDisplay();
             });
         }
@@ -873,40 +879,73 @@
             const rows = [];
             if(govType === 'collective') {
                 const chairResolved = collectiveChair.linkedSeat ? resolveLinkedSeat(collectiveChair.linkedSeat) : null;
-                rows.push([{ label: effRoleLabel('chair'), photo: chairResolved ? chairResolved.photo : collectiveChair.photo, name: chairResolved ? chairResolved.name : collectiveChair.name, partyId: chairResolved ? chairResolved.partyId : collectiveChair.partyId }]);
+                rows.push([{ voteKey: 'chair', label: effRoleLabel('chair'), photo: chairResolved ? chairResolved.photo : collectiveChair.photo, name: chairResolved ? chairResolved.name : collectiveChair.name, partyId: chairResolved ? chairResolved.partyId : collectiveChair.partyId }]);
             } else {
                 const presResolved = president.linkedSeat ? resolveLinkedSeat(president.linkedSeat) : null;
-                rows.push([{ label: effRoleLabel('president'), photo: presResolved ? presResolved.photo : president.photo, name: presResolved ? presResolved.name : president.name, partyId: presResolved ? presResolved.partyId : president.partyId }]);
+                rows.push([{ voteKey: 'president', label: effRoleLabel('president'), photo: presResolved ? presResolved.photo : president.photo, name: presResolved ? presResolved.name : president.name, partyId: presResolved ? presResolved.partyId : president.partyId }]);
 
                 const pmResolved = pmAutoSource();
                 const deputyResolved = deputyPm.linkedSeat ? resolveLinkedSeat(deputyPm.linkedSeat) : null;
                 rows.push([
-                    { label: effRoleLabel('pm'), photo: pmResolved ? pmResolved.photo : pm.photo, name: pmResolved ? pmResolved.name : pm.name, partyId: pmResolved ? pmResolved.partyId : pm.partyId },
-                    { label: effRoleLabel('deputyPm'), photo: deputyResolved ? deputyResolved.photo : deputyPm.photo, name: deputyResolved ? deputyResolved.name : deputyPm.name, partyId: deputyResolved ? deputyResolved.partyId : deputyPm.partyId },
+                    { voteKey: 'pm', label: effRoleLabel('pm'), photo: pmResolved ? pmResolved.photo : pm.photo, name: pmResolved ? pmResolved.name : pm.name, partyId: pmResolved ? pmResolved.partyId : pm.partyId },
+                    { voteKey: 'deputyPm', label: effRoleLabel('deputyPm'), photo: deputyResolved ? deputyResolved.photo : deputyPm.photo, name: deputyResolved ? deputyResolved.name : deputyPm.name, partyId: deputyResolved ? deputyResolved.partyId : deputyPm.partyId },
                 ]);
             }
             rows.push(cabinetMembers.map((m, i) => {
                 const resolved = m.linkedSeat ? resolveLinkedSeat(m.linkedSeat) : null;
-                return { label: m.position || `${effRoleLabel('cabinetMember')}${i+1}`, photo: resolved ? resolved.photo : m.photo, name: resolved ? resolved.name : m.name, partyId: resolved ? resolved.partyId : m.partyId };
+                return { voteKey: 'cm_'+m.id, label: m.position || `${effRoleLabel('cabinetMember')}${i+1}`, photo: resolved ? resolved.photo : m.photo, name: resolved ? resolved.name : m.name, partyId: resolved ? resolved.partyId : m.partyId };
             }));
             return rows.filter(row => row.length > 0);
+        }
+
+        // 계엄령으로 의회가 정지되어, 내각 디스플레이에서 국무회의 표결(찬성/반대/기권)을 받는 상태인지
+        function isCouncilVotingMode() {
+            return emergencyPowers.martialLaw.active && emergencyPowers.martialLaw.suspendParliament;
+        }
+
+        function setCabinetCouncilVote(voteKey, vote) {
+            if(cabinetCouncilVote[voteKey] === vote) delete cabinetCouncilVote[voteKey]; // 같은 표를 다시 누르면 취소
+            else cabinetCouncilVote[voteKey] = vote;
+            renderCabinetDisplay();
+        }
+        function setAllCabinetCouncilVote(vote) {
+            getCabinetDisplayRows().flat().forEach(c => { cabinetCouncilVote[c.voteKey] = vote; });
+            renderCabinetDisplay();
+        }
+        function clearCabinetCouncilVote() {
+            cabinetCouncilVote = {};
+            renderCabinetDisplay();
         }
 
         function renderCabinetDisplay() {
             const container = document.getElementById('cabinetDisplayGrid');
             if(!container) return;
-            const cardHtml = ({ label, photo, name, partyId }) => {
+            const councilMode = isCouncilVotingMode();
+            const controls = document.getElementById('cabinetCouncilControls');
+            if(controls) controls.style.display = councilMode ? 'flex' : 'none';
+            const cardHtml = ({ voteKey, label, photo, name, partyId }) => {
                 const party = parties.find(p => p.id === partyId);
                 const partyName = party ? party.name : '무소속';
                 const partyColor = party ? party.color : '#666';
+                const vote = cabinetCouncilVote[voteKey];
+                const voteColor = getVoteColor(vote);
+                const photoBoxVoteStyle = voteColor ? `box-shadow:0 0 10px ${voteColor}, 0 0 18px ${voteColor};border:2px solid ${voteColor};` : '';
+                const voteBtn = (v, txt, c) => `<button onclick="setCabinetCouncilVote('${voteKey}','${v}')" style="flex:1;background:${vote===v?c:'transparent'};color:${vote===v?'#000':c};border:1px solid ${c};font-size:0.65rem;padding:2px 0;cursor:pointer;font-family:inherit;">${txt}</button>`;
+                const voteButtonsHtml = councilMode ? `
+                    <div style="display:flex;gap:2px;margin-top:4px;justify-content:center;">
+                        ${voteBtn('yea','찬성','#00ff88')}
+                        ${voteBtn('nay','반대','#ff2244')}
+                        ${voteBtn('abs','기권','#888888')}
+                    </div>` : '';
                 return `
                     <div style="text-align:center;width:92px;">
                         <div style="color:#e0e0e0;font-size:0.85rem;margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${label}">${label}</div>
-                        <div class="leader-photo-box" style="width:70px;height:88px;margin:0 auto;pointer-events:none;">
+                        <div class="leader-photo-box" style="width:70px;height:88px;margin:0 auto;pointer-events:none;${photoBoxVoteStyle}">
                             ${photo ? `<img src="${photo}" alt="">` : '<div class="photo-ph">👤</div>'}
                         </div>
                         <div style="color:#ccc;font-size:0.82rem;margin-top:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${name||''}">${name || '이름 미지정'}</div>
                         <div style="display:inline-block;margin-top:4px;padding:1px 8px;border:1px solid ${partyColor};color:${partyColor};font-size:0.7rem;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;box-sizing:border-box;">${partyName}</div>
+                        ${voteButtonsHtml}
                     </div>
                 `;
             };
@@ -1033,6 +1072,10 @@
             martialLaw:       { holder: 'none', active: false, suspendParliament: false },
         };
 
+        // 계엄령으로 의회가 정지됐을 때, 국무회의(대통령/총리·국무총리/부총리/의장/장관·국무위원)가
+        // 대신 표결하는 기능 — { voteKey: 'yea'|'nay'|'abs' }, voteKey는 getCabinetDisplayRows()의 voteKey와 대응
+        let cabinetCouncilVote = {};
+
         function setEmergencyHolder(key, holder) {
             if(!EMERGENCY_POWERS[key] || !['none','president','pm','cabinet'].includes(holder)) return;
             emergencyPowers[key].holder = holder;
@@ -1158,23 +1201,38 @@
             });
             const councilPanel = document.getElementById('cabinetCouncilPanel');
             if(councilPanel) councilPanel.style.display = suspended ? '' : 'none';
+            renderCabinetDisplay();
         }
 
-        // 계엄령 중 대체 입법 경로 — 선택된 법안을 의회 표결 없이 국무회의 의결로 즉시 통과시킴
+        // 계엄령 중 대체 입법 경로 — 내각 디스플레이(우측 "내각" 탭)에서 국무위원별로 매긴
+        // 찬성/반대/기권 표를 집계해, 일반 의회 표결과 같은 방식(정족수 기준 과반 등)으로 통과 여부를 확정
         // (의회가 정지된 경우에만 필요 — 정지되지 않았다면 의회에서 정상적으로 표결하면 됨)
-        function passViaCabinetCouncil() {
+        function resolveCabinetCouncilVote() {
             if(!(emergencyPowers.martialLaw.active && emergencyPowers.martialLaw.suspendParliament)) { showCustomAlert('의회가 정지된 계엄령 상태에서만 사용할 수 있습니다.'); return; }
             if(!activeBillId) { showCustomAlert('심의할 법안을 먼저 선택하세요.'); return; }
             const bill = bills.find(b => b.id === activeBillId);
             if(!bill) return;
-            showCustomConfirm(`『${bill.title}』을(를) 국무회의 의결로 통과시킵니다. 계속하시겠습니까?`, () => {
-                bill.houseStatus = 'pass';
-                if(hasSenateChamber()) bill.senateStatus = 'pass';
-                if(hasThirdChamber()) bill.thirdStatus = 'pass';
+            const participants = getCabinetDisplayRows().flat();
+            const totalParticipants = participants.length;
+            if(totalParticipants === 0) { showCustomAlert('국무회의에 참여할 인원이 없습니다.'); return; }
+            let yea = 0, nay = 0, abs = 0;
+            participants.forEach(({voteKey}) => {
+                const v = cabinetCouncilVote[voteKey];
+                if(v === 'yea') yea++; else if(v === 'nay') nay++; else if(v === 'abs') abs++;
+            });
+            if(yea + nay + abs === 0) { showCustomAlert('표결한 국무위원이 없습니다.\n내각 디스플레이에서 각 인물의 찬성·반대·기권을 먼저 표시하세요.'); return; }
+            const threshold = bill.threshold ?? 0.5;
+            const required = threshold >= 1.0 ? totalParticipants : Math.floor(totalParticipants * threshold) + 1;
+            const result = yea >= required ? 'pass' : 'fail';
+            showCustomConfirm(`국무회의 표결 결과 — 찬성 ${yea} · 반대 ${nay} · 기권 ${abs} (총 ${totalParticipants}인)\n\n『${bill.title}』이(가) ${result==='pass'?'가결':'부결'}됩니다. 확정하시겠습니까?`, () => {
+                bill.houseStatus = result;
+                if(hasSenateChamber()) bill.senateStatus = result;
+                if(hasThirdChamber()) bill.thirdStatus = result;
                 if(!bill.voteHistory) bill.voteHistory = [];
-                bill.voteHistory.push({ chamber: 'cabinetCouncil', result: 'pass', date: bill.voteDate || '', at: new Date().toISOString() });
-                renderBillList(); renderArchiveList(); syncBillSelect();
-                showCustomAlert(`『${bill.title}』이(가) 국무회의 의결로 통과되었습니다.`);
+                bill.voteHistory.push({ chamber: 'cabinetCouncil', result, yea, nay, abs, total: totalParticipants, required, threshold, date: bill.voteDate || '', at: new Date().toISOString() });
+                cabinetCouncilVote = {};
+                renderBillList(); renderArchiveList(); syncBillSelect(); renderCabinetDisplay();
+                showCustomAlert(`『${bill.title}』이(가) 국무회의 의결로 ${result==='pass'?'가결':'부결'}되었습니다.`);
             });
         }
 
@@ -1601,6 +1659,7 @@
         function selectBillForVote(id) {
             activeBillId = id;
             voteState = { house: {}, senate: {}, third: {} };
+            cabinetCouncilVote = {};
             renderBillList();
             renderActiveBillDisplay();
             redrawAll();
@@ -1608,6 +1667,7 @@
             elecUpdateLabels();
             updateConfirmButtons();
             renderBulkPartyList();
+            renderCabinetDisplay();
             const dateInput = document.getElementById('voteDateInput');
             if(dateInput) {
                 const bill = bills.find(b=>b.id===id);
@@ -3523,6 +3583,7 @@
                     pmNomineeBillId: pmNomineeBillId,
                     vetoHolder: vetoHolder,
                     emergencyPowers: JSON.parse(JSON.stringify(emergencyPowers)),
+                    cabinetCouncilVote: JSON.parse(JSON.stringify(cabinetCouncilVote)),
                     chamberLeaders: JSON.parse(JSON.stringify(chamberLeaders)),
                     senateName:    document.getElementById('senateNameInput')?.value   ?? "상원",
                     houseName:     document.getElementById('houseNameInput')?.value    ?? "국회",
@@ -3732,6 +3793,7 @@
             Object.keys(EMERGENCY_POWERS).forEach(k => {
                 emergencyPowers[k] = { holder: 'none', active: false, ...(k==='martialLaw'?{suspendParliament:false}:{}), ...(cfg.emergencyPowers?.[k] || {}) };
             });
+            cabinetCouncilVote = { ...(cfg.cabinetCouncilVote || {}) };
             ['house','senate','third'].forEach(ch => {
                 chamberLeaders[ch] = {
                     speaker: { name: '', photo: '', ...(cfg.chamberLeaders?.[ch]?.speaker || {}) },
