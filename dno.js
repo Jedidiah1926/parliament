@@ -1648,7 +1648,7 @@
                 p = { id: 'ind_auto_'+Date.now(), name: "무소속", color: "#999999",
                     seatsHouse: 10, seatsSenate: 5, seatsThird: 0, ideologyId: IND_IDEOLOGY_ID,
                     isRuling: false, inHouse: true, inSenate: true, inThird: true,
-                    leaderName: "", leaderPhoto: "", logoPhoto: "", showLogoInStats: false,
+                    leaderName: "", leaderPhoto: "", logoPhoto: "", showLogoInStats: false, hideStatsPhoto: false,
                     description: "", factions: [], abbr: "" };
                 parties.push(p);
             }
@@ -1796,10 +1796,10 @@
         ];
 
         let parties = [
-            { id: 1, name: "국가재건당", color: "#2E2E2E", seatsHouse: 140, seatsSenate: 60, seatsThird: 0, ideologyId: 101, isRuling: true,  inHouse: true, inSenate: true, inThird: false, leaderName: "", leaderPhoto: "", logoPhoto: "", showLogoInStats: false, description: "", factions: [] },
-            { id: 2, name: "개혁그룹",   color: "#5D6D7E", seatsHouse: 50,  seatsSenate: 20, seatsThird: 0, ideologyId: 102, isRuling: false, inHouse: true, inSenate: true, inThird: false, leaderName: "", leaderPhoto: "", logoPhoto: "", showLogoInStats: false, description: "", factions: [] },
-            { id: 3, name: "민주당",     color: "#3498DB", seatsHouse: 60,  seatsSenate: 10, seatsThird: 0, ideologyId: 105, isRuling: false, inHouse: true, inSenate: true, inThird: false, leaderName: "", leaderPhoto: "", logoPhoto: "", showLogoInStats: false, description: "", factions: [] },
-            { id: 4, name: "사회당",     color: "#E74C3C", seatsHouse: 40,  seatsSenate: 5, seatsThird: 0,  ideologyId: 106, isRuling: false, inHouse: true, inSenate: true, inThird: false, leaderName: "", leaderPhoto: "", logoPhoto: "", showLogoInStats: false, description: "", factions: [] }
+            { id: 1, name: "국가재건당", color: "#2E2E2E", seatsHouse: 140, seatsSenate: 60, seatsThird: 0, ideologyId: 101, isRuling: true,  inHouse: true, inSenate: true, inThird: false, leaderName: "", leaderPhoto: "", logoPhoto: "", showLogoInStats: false, hideStatsPhoto: false, description: "", factions: [] },
+            { id: 2, name: "개혁그룹",   color: "#5D6D7E", seatsHouse: 50,  seatsSenate: 20, seatsThird: 0, ideologyId: 102, isRuling: false, inHouse: true, inSenate: true, inThird: false, leaderName: "", leaderPhoto: "", logoPhoto: "", showLogoInStats: false, hideStatsPhoto: false, description: "", factions: [] },
+            { id: 3, name: "민주당",     color: "#3498DB", seatsHouse: 60,  seatsSenate: 10, seatsThird: 0, ideologyId: 105, isRuling: false, inHouse: true, inSenate: true, inThird: false, leaderName: "", leaderPhoto: "", logoPhoto: "", showLogoInStats: false, hideStatsPhoto: false, description: "", factions: [] },
+            { id: 4, name: "사회당",     color: "#E74C3C", seatsHouse: 40,  seatsSenate: 5, seatsThird: 0,  ideologyId: 106, isRuling: false, inHouse: true, inSenate: true, inThird: false, leaderName: "", leaderPhoto: "", logoPhoto: "", showLogoInStats: false, hideStatsPhoto: false, description: "", factions: [] }
         ];
 
         let coalitions = [
@@ -3244,7 +3244,7 @@
                 const statusTags = p.status === 'dissolved' ? [{ text: '해산', color: '#999' }]
                                   : p.status === 'banned' ? [{ text: '활동 금지', color: '#ff0055' }] : [];
                 const isLogo = p.showLogoInStats ?? false;
-                const photoSrc = statsOptions.includePhotos ? ((isLogo ? (p.logoPhoto||p.leaderPhoto) : (p.leaderPhoto||p.logoPhoto)) || null) : null;
+                const photoSrc = (statsOptions.includePhotos && !p.hideStatsPhoto) ? ((isLogo ? (p.logoPhoto||p.leaderPhoto) : (p.leaderPhoto||p.logoPhoto)) || null) : null;
                 return {
                     barColor: p.color,
                     nameText: `${p.name}${p.abbr ? ` (${p.abbr})` : ''}`,
@@ -4191,7 +4191,7 @@
                 throw new Error("Invalid parliament data");
 
             ideologies = parl.ideologies;
-            parties    = parl.parties.map(p => ({ leaderName:'', leaderPhoto:'', logoPhoto:'', showLogoInStats:false, description:'', factions:[], seatsThird:0, inThird:false, abbr:'', fraudAttempt:null, ...p, factions:(p.factions||[]).map(f=>({leaderName:'',leaderPhoto:'',logoPhoto:'',usePartyColor:false,seatsThird:0,...f})) }));
+            parties    = parl.parties.map(p => ({ leaderName:'', leaderPhoto:'', logoPhoto:'', showLogoInStats:false, hideStatsPhoto:false, description:'', factions:[], seatsThird:0, inThird:false, abbr:'', fraudAttempt:null, ...p, factions:(p.factions||[]).map(f=>({leaderName:'',leaderPhoto:'',logoPhoto:'',usePartyColor:false,seatsThird:0,...f})) }));
             coalitions = parl.coalitions.map(c => ({ leadPartyId:null, externalSupporters:[], externalSupportLabel:'각외협력', ...c }));
             manualSort = parl.manualSort ?? false;
             // 구버전 저장 파일 호환: districtKey 필드가 없으면 비례(미연결) 무소속으로 취급
@@ -5684,10 +5684,10 @@
             // 새 정당의 기본 이념: 무소속 이념은 제외하고 마지막 일반 이념을 사용 (무소속은 목록 맨 뒤에 자동 추가되므로)
             const nonIndIdeologies = ideologies.filter(i => i.id !== IND_IDEOLOGY_ID);
             const defaultIdeologyId = nonIndIdeologies.length > 0 ? nonIndIdeologies[nonIndIdeologies.length - 1].id : ideologies[0]?.id;
-            parties.push({id:Date.now(), name:"신당", color:"#555555", seatsHouse:0, seatsSenate:0, seatsThird:0, ideologyId:defaultIdeologyId, isRuling:false, ...flags, leaderName: "", leaderPhoto: "", logoPhoto: "", showLogoInStats: false, factions: [] }); refreshUI(); }
+            parties.push({id:Date.now(), name:"신당", color:"#555555", seatsHouse:0, seatsSenate:0, seatsThird:0, ideologyId:defaultIdeologyId, isRuling:false, ...flags, leaderName: "", leaderPhoto: "", logoPhoto: "", showLogoInStats: false, hideStatsPhoto: false, factions: [] }); refreshUI(); }
         function addIndependentParty() {
             if(!ideologies.find(i=>i.id===IND_IDEOLOGY_ID)) addIndependentIdeology();
-            parties.push({id:Date.now(), name:"무소속", color:"#999999", seatsHouse:1, seatsSenate:0, seatsThird:0, ideologyId:IND_IDEOLOGY_ID, isRuling:false, inHouse:true, inSenate:true, inThird:false, leaderName: "", leaderPhoto: "", logoPhoto: "", showLogoInStats: false, factions: [] });
+            parties.push({id:Date.now(), name:"무소속", color:"#999999", seatsHouse:1, seatsSenate:0, seatsThird:0, ideologyId:IND_IDEOLOGY_ID, isRuling:false, inHouse:true, inSenate:true, inThird:false, leaderName: "", leaderPhoto: "", logoPhoto: "", showLogoInStats: false, hideStatsPhoto: false, factions: [] });
             simulate(); refreshUI();
         }
         function removeParty(i) { const pid=parties[i].id; parties.splice(i,1); coalitions.forEach(c=>c.members=c.members.filter(x=>x!==pid)); simulate(); refreshUI(); }
@@ -5695,6 +5695,17 @@
         // 반드시 정렬이 끝난 뒤에 refreshUI()를 호출해야 카드에 새겨진 인덱스(idx)가
         // 최신 배열 순서와 어긋나지 않는다. 순서가 바뀌면 그 다음 입력이 엉뚱한 정당에 적용된다.
         function updateParty(i,k,v) { parties[i][k]=v; simulate(); refreshUI(); }
+
+        // 정당 카드 "통계 표시" — 당수 사진/당 로고/표시 안 함(X) 중 하나를 고름. X를 고르면 그 정당의
+        // leaderPhoto/logoPhoto 자체는 그대로 두고, 하원/상원/삼원 통계 카드에만 사진을 비워 보여준다.
+        function setPartyStatsPhotoMode(idx, mode) {
+            const p = parties[idx];
+            if(!p) return;
+            p.hideStatsPhoto = (mode === 'none');
+            if(mode !== 'none') p.showLogoInStats = (mode === 'logo');
+            simulate();
+            refreshUI();
+        }
 
         // ===== 원외정당 (의석 없는 정당) =====
         // 정당>정보에서 특정 의원실에 배정(inHouse/inSenate/inThird)되어 있으면서
@@ -5721,7 +5732,7 @@
             if(extraPartiesCollapsed || list.length === 0) return h;
             list.forEach(p => {
                 const isLogo = p.showLogoInStats ?? false;
-                const photo  = isLogo ? (p.logoPhoto||p.leaderPhoto||'') : (p.leaderPhoto||p.logoPhoto||'');
+                const photo  = p.hideStatsPhoto ? '' : (isLogo ? (p.logoPhoto||p.leaderPhoto||'') : (p.leaderPhoto||p.logoPhoto||''));
                 const ideoName = ideologies.find(i=>i.id===p.ideologyId)?.name || '';
                 h += `<div class="stat-block" style="border-left-color:${p.color};">
                     <div class="dyn-row" style="display:flex;gap:8px;align-items:stretch;">
@@ -5860,7 +5871,7 @@
             parties.push({ id:Date.now(), name:f.name, color:f.color, seatsHouse:f.seatsHouse, seatsSenate:f.seatsSenate,
                 ideologyId:f.ideologyId||p.ideologyId, isRuling:false, inHouse:p.inHouse, inSenate:p.inSenate,
                 leaderName:f.leaderName||'', leaderPhoto:f.leaderPhoto||'', logoPhoto:f.logoPhoto||'',
-                showLogoInStats:false, description:'', factions:[] });
+                showLogoInStats:false, hideStatsPhoto:false, description:'', factions:[] });
             simulate(); refreshUI();
         }
         function moveFaction(partyId, factionId, dir) {
@@ -6152,16 +6163,16 @@
                             <input type="checkbox" id="partyChamberAll_${idx}" onchange="setAllPartyChambers(${idx},this.checked)"> 전체
                         </label>
                     </div>`:''}
-                    <div style="display:flex;align-items:center;gap:12px;margin-bottom:6px;padding:5px 8px;background:#0a0c10;border:1px solid #222;">
+                    <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;padding:5px 8px;background:#0a0c10;border:1px solid #222;">
                         <span style="color:#555;font-size:0.8rem;white-space:nowrap;">통계 표시</span>
-                        <label style="display:flex;align-items:center;gap:4px;cursor:pointer;color:#aaa;font-size:0.85rem;">
-                            <input type="radio" name="statsPhoto_${p.id}" value="leader" ${!p.showLogoInStats?'checked':''}
-                                onchange="updateParty(${idx},'showLogoInStats',false);simulate();"> 당수 사진
-                        </label>
-                        <label style="display:flex;align-items:center;gap:4px;cursor:pointer;color:#aaa;font-size:0.85rem;">
-                            <input type="radio" name="statsPhoto_${p.id}" value="logo" ${p.showLogoInStats?'checked':''}
-                                onchange="updateParty(${idx},'showLogoInStats',true);simulate();"> 당 로고
-                        </label>
+                        <div class="system-radio-group" style="margin-bottom:0;flex:1;">
+                            <button type="button" class="system-radio-btn ${(!p.hideStatsPhoto && !p.showLogoInStats)?'active':''}"
+                                onclick="setPartyStatsPhotoMode(${idx},'leader')" style="padding:4px 6px;font-size:0.8rem;">당수 사진</button>
+                            <button type="button" class="system-radio-btn ${(!p.hideStatsPhoto && p.showLogoInStats)?'active':''}"
+                                onclick="setPartyStatsPhotoMode(${idx},'logo')" style="padding:4px 6px;font-size:0.8rem;">당 로고</button>
+                            <button type="button" class="system-radio-btn ${p.hideStatsPhoto?'active':''}"
+                                onclick="setPartyStatsPhotoMode(${idx},'none')" style="padding:4px 6px;font-size:0.8rem;flex:0.5;">X</button>
+                        </div>
                     </div>
                     <textarea placeholder="당에 대한 설명을 입력하세요..."
                         style="width:100%;box-sizing:border-box;background:#000;border:1px solid #2a2a2a;color:#bbb;font-family:'NeoDunggeunmo','VT323',monospace;font-size:0.85rem;padding:6px;resize:vertical;min-height:60px;outline:none;line-height:1.5;"
@@ -11391,7 +11402,7 @@
                     const pName = Object.keys(s.parties)[0];
                     const party = parties.find(p=>p.name===pName);
                     isLogo     = party?.showLogoInStats ?? false;
-                    photo      = party ? (isLogo ? (party.logoPhoto||party.leaderPhoto||'') : (party.leaderPhoto||party.logoPhoto||'')) : '';
+                    photo      = (party && !party.hideStatsPhoto) ? (isLogo ? (party.logoPhoto||party.leaderPhoto||'') : (party.leaderPhoto||party.logoPhoto||'')) : '';
                     leaderName = party?.leaderName || '';
                     isIndependentCard = party?.ideologyId === IND_IDEOLOGY_ID;
                 }
