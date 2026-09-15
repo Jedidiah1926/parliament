@@ -2173,8 +2173,10 @@
             const allChambersPassed = bill.houseStatus === 'pass' && (!isBi || bill.senateStatus === 'pass') && (!isTri || bill.thirdStatus === 'pass');
             if(allChambersPassed) {
                 // 거부권 주체가 지정돼 있으면(내각>설정), 의회 표결 통과만으로 바로 최종 가결되지 않고
-                // 서명/거부 결정을 거쳐야 함
-                if(vetoHolder !== 'none') {
+                // 서명/거부 결정을 거쳐야 함 — 단, 내각 불신임안은 그 대상이 총리 본인이므로 거부권자가
+                // 총리라면 자기 자신의 불신임안을 서명/거부할 수 없어야 하고, 대신 무조건 서명(즉시 가결)됨
+                const skipVeto = bill.isNoConfidence && vetoHolder === 'pm';
+                if(vetoHolder !== 'none' && !skipVeto) {
                     if(bill.vetoStatus === 'vetoed') return 'vetoed';
                     if(bill.vetoStatus !== 'signed') return 'awaiting_veto';
                 }
