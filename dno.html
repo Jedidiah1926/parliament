@@ -263,6 +263,8 @@
                     <button class="sub-tab-btn" onclick="switchSubTab('nation','legislation')" id="subTabLegislation">입법</button>
                     <button class="sub-tab-btn" onclick="switchSubTab('nation','election')" id="subTabElection">선거</button>
                     <button class="sub-tab-btn" onclick="switchSubTab('nation','record')" id="subTabRecord">기록</button>
+                    <!-- onclick="switchSubTab('nation','fraud')" — 1.5.S 업데이트시 반영 -->
+                    <button class="sub-tab-btn sub-tab-btn-danger" onclick="openFraudTabGated()" id="subTabFraud">⚠</button>
                 </div>
 
                 <!-- 설정 탭: 국가 식별 정보 + 전역 표시 옵션 -->
@@ -961,6 +963,12 @@
                         <div id="elecRecordList" style="margin-top:8px;"></div>
                     </div>
                 </div><!-- end contentRecord -->
+
+                <!-- 부정선거 탭: 정당별로 부정선거 시도를 설정 (정당 탭에는 노출하지 않음) -->
+                <div id="contentFraud" class="sub-tab-content">
+                    <div style="color:#664444;font-size:0.78rem;margin-bottom:10px;line-height:1.5;">정당별로 다음 총선 개표 1회에 한해 부정선거를 시도할 수 있습니다. 발각되면 활동 금지 처분을 받습니다.</div>
+                    <div id="fraudPartyList"></div>
+                </div><!-- end contentFraud -->
             </div><!-- end mainContentNation -->
 
             <!-- ===== 선거 그룹 ===== -->
