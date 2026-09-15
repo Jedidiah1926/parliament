@@ -948,7 +948,7 @@
                             ${photo ? `<img src="${photo}" alt="">` : '<div class="photo-ph">👤</div>'}
                         </div>
                         <div style="color:#ccc;font-size:0.82rem;margin-top:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${name||''}">${councilVacant ? '공석' : (name || '이름 미지정')}</div>
-                        <div style="display:inline-block;margin-top:4px;padding:1px 8px;border:1px solid ${partyColor};color:${partyColor};font-size:0.7rem;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;box-sizing:border-box;">${partyName}</div>
+                        <div style="display:inline-block;margin-top:4px;padding:1px 8px;border:1px solid ${partyColor};color:${partyColor};font-size:0.7rem;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;box-sizing:border-box;${councilVacant?'':`box-shadow:0 0 6px ${partyColor};text-shadow:0 0 4px ${partyColor};`}">${partyName}</div>
                         ${voteButtonsHtml}
                     </div>
                 `;
