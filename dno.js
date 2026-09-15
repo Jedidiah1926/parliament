@@ -4063,7 +4063,7 @@
                 throw new Error("Invalid parliament data");
 
             ideologies = parl.ideologies;
-            parties    = parl.parties.map(p => ({ leaderName:'', leaderPhoto:'', leaderLinkedSeat:null, logoPhoto:'', showLogoInStats:false, description:'', factions:[], seatsThird:0, inThird:false, abbr:'', fraudAttempt:null, ...p, factions:(p.factions||[]).map(f=>({leaderName:'',leaderPhoto:'',logoPhoto:'',usePartyColor:false,seatsThird:0,...f})) }));
+            parties    = parl.parties.map(p => ({ leaderName:'', leaderPhoto:'', logoPhoto:'', showLogoInStats:false, description:'', factions:[], seatsThird:0, inThird:false, abbr:'', fraudAttempt:null, ...p, factions:(p.factions||[]).map(f=>({leaderName:'',leaderPhoto:'',logoPhoto:'',usePartyColor:false,seatsThird:0,...f})) }));
             coalitions = parl.coalitions.map(c => ({ leadPartyId:null, externalSupporters:[], externalSupportLabel:'각외협력', ...c }));
             manualSort = parl.manualSort ?? false;
             // 구버전 저장 파일 호환: districtKey 필드가 없으면 비례(미연결) 무소속으로 취급
@@ -5425,52 +5425,39 @@
             if(p){ p[field]=val; simulate(); }
         }
 
-        // ── 당대표 자동 배정: 지정된 의석이 없으면 그 정당의 1번 의원을 당대표로 자동 배정 ──────────────
-        // party.leaderLinkedSeat로 특정 의석을 지정하면 그 의석 우선, 없으면 정당 소속 1번 의원(지역구→비례 순)
-        function partyFirstMemberInfo(party) {
-            if(!party) return null;
-            for(const ch of chamberList()) {
-                for(const key of districtSortedKeys(ch)) {
-                    const m = districtMembers[ch]?.[key];
-                    if(!m || m.vacant || m.partyId !== party.id) continue;
-                    const resolved = resolveLinkedSeat({ type:'district', chamber:ch, key });
-                    if(resolved) return resolved;
+        // ── 당수 ↔ 의석 정보 복사: 당수 탭에서 편집한 이름·사진을 고른 의석에 붙여넣거나,
+        // 반대로 의원 카드에서 "당수로 지정"을 눌러 그 의원 정보를 당수로 끌어올림. 양쪽 다 1회성 복사이며
+        // 이후에는 서로 독립적으로 값이 유지됨 (자동 동기화하지 않음) ──────────────
+        function writeLinkedSeatInfo(link, name, photo) {
+            if(!link) return;
+            if(link.type === 'district') {
+                const m = districtMembers[link.chamber]?.[link.key];
+                if(!m) return;
+                const party = parties.find(p => p.id === m.partyId);
+                if(party?.ideologyId === IND_IDEOLOGY_ID) {
+                    const ind = independents.find(x => x.chamber === link.chamber && x.districtKey === link.key);
+                    if(ind) { ind.name = name; ind.photo = photo; }
+                } else {
+                    m.name = name; m.photo = photo;
                 }
-                for(const m of (listMembers[ch]?.[party.id] || [])) {
-                    if(m.vacant) continue;
-                    const resolved = resolveLinkedSeat({ type:'list', chamber:ch, partyId:party.id, memberId:m.id });
-                    if(resolved) return resolved;
-                }
-                if(party.ideologyId === IND_IDEOLOGY_ID) {
-                    const inds = independents.filter(x => x.chamber===ch && !x.districtKey).sort((a,b)=>a.seatIndex-b.seatIndex);
-                    for(const ind of inds) {
-                        const resolved = resolveLinkedSeat({ type:'independent', memberId: ind.id });
-                        if(resolved) return resolved;
-                    }
-                }
+                renderMembersList();
+            } else if(link.type === 'list') {
+                const m = listMembers[link.chamber]?.[link.partyId]?.find(x => x.id === link.memberId);
+                if(!m) return;
+                m.name = name; m.photo = photo;
+                renderListMemberList();
+            } else if(link.type === 'independent') {
+                const ind = independents.find(x => x.id === link.memberId);
+                if(!ind) return;
+                ind.name = name; ind.photo = photo;
+                rerenderIndependentOwner(ind);
             }
-            return null;
         }
 
-        function partyLeaderAutoInfo(party) {
-            if(!party) return null;
-            if(party.leaderLinkedSeat) {
-                const resolved = resolveLinkedSeat(party.leaderLinkedSeat);
-                if(resolved) return resolved;
-                party.leaderLinkedSeat = null; // 연결 끊어짐 — 자동 해제 후 1번 의원으로 대체
-            }
-            return partyFirstMemberInfo(party);
-        }
-
-        function syncPartyLeaderFromSeat(party) {
-            const auto = partyLeaderAutoInfo(party);
-            if(auto) { party.leaderName = auto.name; party.leaderPhoto = auto.photo; }
-        }
-
-        // 당대표 지정 의석 선택 드롭다운 — 해당 정당 소속 의원만 나열
+        // 당수 탭에서 고른 의석 선택 드롭다운 — 해당 정당 소속 의원만 나열
         function partyMemberPickerOptionsHtml(partyId) {
             const party = parties.find(p => p.id === partyId);
-            const opts = ['<option value="">-- 특정 의석으로 지정 --</option>'];
+            const opts = ['<option value="">-- 의석 선택 (붙여넣기 대상) --</option>'];
             chamberList().forEach(ch => {
                 const chLabel = chamberDisplayName(ch);
                 districtSortedKeys(ch).forEach((key, i) => {
@@ -5495,20 +5482,51 @@
             return opts.join('');
         }
 
-        function linkPartyLeaderToSeat(pid, val) {
-            const parsed = parseMemberPickerValue(val);
-            if(!parsed) return;
+        // 당수 탭에서 편집 중인 이름·사진을 고른 의석에 1회 붙여넣기
+        function pasteLeaderToSeat(pid, val) {
+            const link = parseMemberPickerValue(val);
+            if(!link) return;
             const p = parties.find(x => x.id === pid);
             if(!p) return;
-            p.leaderLinkedSeat = parsed;
-            simulate(); refreshUI();
+            writeLinkedSeatInfo(link, p.leaderName || '', p.leaderPhoto || '');
+            refreshUI();
         }
 
-        function unlinkPartyLeader(pid) {
-            const p = parties.find(x => x.id === pid);
+        // 의원 카드의 "당수로 지정" 버튼 — 그 의원의 이름·사진을 당수로 1회 복사
+        function designatePartyLeader(partyId, name, photo) {
+            const p = parties.find(x => x.id === partyId);
             if(!p) return;
-            p.leaderLinkedSeat = null;
-            simulate(); refreshUI();
+            p.leaderName = name || '';
+            p.leaderPhoto = photo || '';
+            renderLeaderList();
+            refreshUI();
+        }
+
+        function designatePartyLeaderFromDistrictSeat(ch, key) {
+            const m = districtMembers[ch]?.[key];
+            if(!m) return;
+            const party = parties.find(p => p.id === m.partyId);
+            if(!party) return;
+            let name = m.name || '', photo = m.photo || '';
+            if(party.ideologyId === IND_IDEOLOGY_ID) {
+                const ind = independents.find(x => x.chamber === ch && x.districtKey === key);
+                name = ind?.name || ''; photo = ind?.photo || '';
+            }
+            designatePartyLeader(party.id, name, photo);
+        }
+
+        function designatePartyLeaderFromListSeat(ch, partyId, memberId) {
+            const m = listMembers[ch]?.[partyId]?.find(x => String(x.id) === String(memberId));
+            if(!m) return;
+            designatePartyLeader(parseInt(partyId), m.name || '', m.photo || '');
+        }
+
+        function designatePartyLeaderFromIndependent(indId) {
+            const ind = independents.find(x => String(x.id) === String(indId));
+            if(!ind) return;
+            const party = getIndependentParty();
+            if(!party) return;
+            designatePartyLeader(party.id, ind.name || '', ind.photo || '');
         }
 
         function addIdeology() { ideologies.push({ id: Date.now(), name: "새 이념" }); refreshUI(); }
@@ -5528,10 +5546,10 @@
             // 새 정당의 기본 이념: 무소속 이념은 제외하고 마지막 일반 이념을 사용 (무소속은 목록 맨 뒤에 자동 추가되므로)
             const nonIndIdeologies = ideologies.filter(i => i.id !== IND_IDEOLOGY_ID);
             const defaultIdeologyId = nonIndIdeologies.length > 0 ? nonIndIdeologies[nonIndIdeologies.length - 1].id : ideologies[0]?.id;
-            parties.push({id:Date.now(), name:"신당", color:"#555555", seatsHouse:0, seatsSenate:0, seatsThird:0, ideologyId:defaultIdeologyId, isRuling:false, ...flags, leaderName: "", leaderPhoto: "", leaderLinkedSeat: null, logoPhoto: "", showLogoInStats: false, factions: [] }); refreshUI(); }
+            parties.push({id:Date.now(), name:"신당", color:"#555555", seatsHouse:0, seatsSenate:0, seatsThird:0, ideologyId:defaultIdeologyId, isRuling:false, ...flags, leaderName: "", leaderPhoto: "", logoPhoto: "", showLogoInStats: false, factions: [] }); refreshUI(); }
         function addIndependentParty() {
             if(!ideologies.find(i=>i.id===IND_IDEOLOGY_ID)) addIndependentIdeology();
-            parties.push({id:Date.now(), name:"무소속", color:"#999999", seatsHouse:1, seatsSenate:0, seatsThird:0, ideologyId:IND_IDEOLOGY_ID, isRuling:false, inHouse:true, inSenate:true, inThird:false, leaderName: "", leaderPhoto: "", leaderLinkedSeat: null, logoPhoto: "", showLogoInStats: false, factions: [] });
+            parties.push({id:Date.now(), name:"무소속", color:"#999999", seatsHouse:1, seatsSenate:0, seatsThird:0, ideologyId:IND_IDEOLOGY_ID, isRuling:false, inHouse:true, inSenate:true, inThird:false, leaderName: "", leaderPhoto: "", logoPhoto: "", showLogoInStats: false, factions: [] });
             simulate(); refreshUI();
         }
         function removeParty(i) { const pid=parties[i].id; parties.splice(i,1); coalitions.forEach(c=>c.members=c.members.filter(x=>x!==pid)); simulate(); refreshUI(); }
@@ -6049,9 +6067,8 @@
                 const div = document.createElement('div');
                 div.className = `card-item ${p.isRuling?'is-ruling':''}`;
                 div.style.borderLeftColor = p.color;
-                const auto = partyLeaderAutoInfo(p);
-                const name = auto ? auto.name : p.leaderName;
-                const photo = auto ? auto.photo : (p.leaderPhoto||'');
+                const name = p.leaderName;
+                const photo = p.leaderPhoto||'';
                 const hasFactions = (p.factions||[]).length > 0;
 
                 // 파벌 섹션 HTML
@@ -6101,7 +6118,7 @@
                         <div style="display:flex;flex-direction:column;align-items:center;gap:4px;flex-shrink:0;">
                             <div class="leader-photo-box dyn-photo" data-ratio="0.8" title="클릭하여 사진 업로드" style="width:52px;height:65px;">
                                 ${photo?`<img src="${photo}" alt="당수">`:'<div class="photo-ph">👤</div>'}
-                                <input type="file" accept="image/*" ${auto?'disabled':''} onchange="uploadLeaderPhoto(this,${p.id})">
+                                <input type="file" accept="image/*" onchange="uploadLeaderPhoto(this,${p.id})">
                             </div>
                             <span style="font-size:0.75rem;color:#444;flex-shrink:0;">사진 업로드</span>
                         </div>
@@ -6110,20 +6127,19 @@
                                 <span style="width:10px;height:10px;background:${p.color};border-radius:50%;flex-shrink:0;"></span>
                                 <span style="color:var(--tno-neon);font-size:0.95rem;">${p.name}</span>
                             </div>
-                            <input type="text" value="${name||''}" placeholder="당수 이름" ${auto?'disabled':''}
+                            <input type="text" value="${name||''}" placeholder="당수 이름"
                                 style="background:#000;border:1px solid #2a2a2a;color:#e0e0e0;font-family:inherit;font-size:0.95rem;padding:5px 8px;width:100%;box-sizing:border-box;"
                                 onchange="updateLeaderField(${p.id},'leaderName',this.value)">
-                            <select onchange="linkPartyLeaderToSeat(${p.id},this.value)"
-                                style="width:100%;box-sizing:border-box;background:#000;border:1px solid #333;color:#888;font-family:inherit;font-size:0.75rem;padding:4px;">
-                                ${partyMemberPickerOptionsHtml(p.id)}
-                            </select>
-                            ${p.leaderLinkedSeat ? `
-                            <div style="display:flex;align-items:center;gap:6px;color:#6cf;font-size:0.72rem;">
-                                🔗 지정된 의석과 연결됨 — 이름·사진 자동 반영
-                                <button onclick="unlinkPartyLeader(${p.id})" style="background:transparent;border:1px solid #333;color:#888;font-family:inherit;font-size:0.7rem;padding:2px 6px;cursor:pointer;">연결 해제</button>
-                            </div>` : (auto ? `
-                            <div style="color:#6a6;font-size:0.72rem;">◆ 자동 배정: 소속 1번 의원 — 이름·사진 자동 반영</div>` : '')}
-                            ${(!auto && photo)?`<button onclick="removeLeaderPhoto(${p.id})" style="background:transparent;border:1px solid #333;color:#555;font-family:inherit;font-size:0.8rem;padding:3px 8px;cursor:pointer;text-align:left;">✕ 사진 제거</button>`:''}
+                            ${photo?`<button onclick="removeLeaderPhoto(${p.id})" style="background:transparent;border:1px solid #333;color:#555;font-family:inherit;font-size:0.8rem;padding:3px 8px;cursor:pointer;text-align:left;">✕ 사진 제거</button>`:''}
+                            <div style="display:flex;gap:6px;">
+                                <select id="leaderSeatSelect_${p.id}"
+                                    style="flex:1;min-width:0;box-sizing:border-box;background:#000;border:1px solid #333;color:#888;font-family:inherit;font-size:0.75rem;padding:4px;">
+                                    ${partyMemberPickerOptionsHtml(p.id)}
+                                </select>
+                                <button onclick="pasteLeaderToSeat(${p.id},document.getElementById('leaderSeatSelect_${p.id}').value)"
+                                    style="flex-shrink:0;background:transparent;border:1px solid #333;color:#6cf;font-family:inherit;font-size:0.72rem;padding:4px 8px;cursor:pointer;">붙여넣기</button>
+                            </div>
+                            <div style="color:#555;font-size:0.68rem;">◆ 위에서 의석을 고르고 "붙여넣기"를 누르면 현재 당수 이름·사진이 그 의석에 복사됩니다</div>
                         </div>
                     </div>
                     ${factionHtml}
@@ -6327,6 +6343,7 @@
                         <option value="banned" ${ind.status==='banned'?'selected':''}>활동 금지</option>
                     </select>
                     ${(ind.photo && !opts.disabled)?`<button onclick="removeIndependentPhoto('${ind.id}')" style="background:transparent;border:1px solid #333;color:#555;font-family:inherit;font-size:0.75rem;padding:2px 8px;cursor:pointer;text-align:left;">✕ 사진 제거</button>`:''}
+                    ${!opts.disabled?`<button onclick="designatePartyLeaderFromIndependent('${ind.id}')" style="background:transparent;border:1px solid #443300;color:#c9a227;font-family:inherit;font-size:0.75rem;padding:2px 8px;cursor:pointer;text-align:left;">👑 당수로 지정</button>`:''}
                     ${coalitionField}
                     ${opts.extraHtml || ''}
                 </div>
@@ -6457,6 +6474,7 @@
                                 ${party.factions.map(f=>`<option value="${f.id}" ${member.factionId===f.id?'selected':''}>${f.name}</option>`).join('')}
                             </select>`:''}
                             ${(member.photo && !member.vacant)?`<button onclick="removeDistrictMemberPhoto('${ch}','${key}')" style="background:transparent;border:1px solid #333;color:#555;font-family:inherit;font-size:0.75rem;padding:2px 8px;cursor:pointer;text-align:left;">✕ 사진 제거</button>`:''}
+                            ${!member.vacant?`<button onclick="designatePartyLeaderFromDistrictSeat('${ch}','${key}')" style="background:transparent;border:1px solid #443300;color:#c9a227;font-family:inherit;font-size:0.75rem;padding:2px 8px;cursor:pointer;text-align:left;">👑 당수로 지정</button>`:''}
                             <div style="display:flex;gap:6px;">
                                 ${member.vacant
                                     ? `<button onclick="fillVacantSeat('${ch}','${key}')" style="flex:1;background:transparent;border:1px solid #00cc66;color:#00cc66;font-family:inherit;font-size:0.8rem;padding:5px;cursor:pointer;">보궐선거로 채우기</button>`
@@ -6677,6 +6695,7 @@
                                 ${party.factions.map(f=>`<option value="${f.id}" ${m.factionId===f.id?'selected':''}>${f.name}</option>`).join('')}
                             </select>`:''}
                             ${m.photo?`<button onclick="removeListMemberPhoto('${ch}','${e.partyId}','${m.id}')" style="background:transparent;border:1px solid #333;color:#555;font-family:inherit;font-size:0.75rem;padding:2px 8px;cursor:pointer;text-align:left;">✕ 사진 제거</button>`:''}
+                            <button onclick="designatePartyLeaderFromListSeat('${ch}','${e.partyId}','${m.id}')" style="background:transparent;border:1px solid #443300;color:#c9a227;font-family:inherit;font-size:0.75rem;padding:2px 8px;cursor:pointer;text-align:left;">👑 당수로 지정</button>
                         </div>
                     `;
                     container.appendChild(div);
@@ -10841,7 +10860,6 @@
 
         /* ===== SIMULATE & DRAW ===== */
         function simulate() {
-            parties.forEach(syncPartyLeaderFromSeat);
             const isBicameral = hasSenateChamber();
             const highlightGov = document.getElementById('chkGovHighlight').checked;
             const sTotal = parseInt(document.getElementById('senateTotal').value) || 100;
