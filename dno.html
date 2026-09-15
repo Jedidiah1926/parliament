@@ -471,6 +471,7 @@
                         <button class="sub-tab-btn-3 active" onclick="switchLegislationInnerTab('bill')" id="innerTabLegBill">제출</button>
                         <button class="sub-tab-btn-3" onclick="switchLegislationInnerTab('table')" id="innerTabLegTable">상정</button>
                         <button class="sub-tab-btn-3" onclick="switchLegislationInnerTab('vote')" id="innerTabLegVote">표결</button>
+                        <button class="sub-tab-btn-3" onclick="switchLegislationInnerTab('council')" id="innerTabLegCouncil">국무회의</button>
                     </div>
 
             <!-- 제출 탭: 법안 작성 폼만 -->
@@ -574,13 +575,6 @@
                     </div>
                 </div>
 
-                <!-- 계엄령 중 대체 입법 경로 — 의회 표결 대신 국무회의 표결로 통과 여부 결정 -->
-                <div class="vote-panel" id="cabinetCouncilPanel" style="display:none;border-color:var(--tno-alert);">
-                    <div class="vote-panel-title" style="color:var(--tno-alert);">! 계엄령 중 — 국무회의로 법안 통과</div>
-                    <div style="color:#888;font-size:0.78rem;margin-bottom:8px;">의회 표결이 정지된 동안, 내각 디스플레이(우측 "내각" 탭)에서 국무위원별로 찬성·반대·기권을 표시한 뒤 아래 버튼으로 의결을 확정하세요.</div>
-                    <button class="vote-ctrl-btn yea" style="width:100%;" onclick="resolveCabinetCouncilVote()">▶ 국무회의로 의결</button>
-                </div>
-
                 <!-- 투표 입력 모드 -->
                 <div class="vote-panel" id="voteModePanel">
                     <div class="vote-panel-title">> 투표 입력 모드</div>
@@ -682,6 +676,70 @@
                     <button class="vote-ctrl-btn yea" id="tConfirmBtn" style="width:100%;margin-top:8px;padding:9px;" onclick="confirmChamberVote('third')">▶ 삼원 표결 확정</button>
                 </div>
             </div><!-- end contentVote -->
+
+            <!-- 국무회의 탭: 계엄령으로 의회가 정지된 동안 국무회의가 대신 의결하는 특별 입법 경로 (단원제 스타일) -->
+            <div id="contentCouncil" class="sub-tab-content">
+                <!-- 법안 선택 -->
+                <div class="vote-panel" style="margin-bottom:10px;">
+                    <div class="vote-panel-title">> 심의 법안 선택 (COUNCIL BILL)</div>
+                    <div id="councilActiveBillDisplay" style="
+                        background:#050505; border:1px solid #333; padding:8px;
+                        margin-bottom:8px; min-height:36px;
+                    ">
+                        <span style="color:#444; font-size:0.9rem;">법안을 선택하세요...</span>
+                    </div>
+                    <select id="councilSelectBill" style="width:100%; background:#000; border:1px solid var(--tno-border); color:var(--tno-gold); font-family:'NeoDunggeunmo','VT323',monospace; font-size:0.95rem; padding:6px;" onchange="selectBillForCouncilVote(this.value)">
+                        <option value="">-- 법안 선택 --</option>
+                    </select>
+                    <div style="margin-top:8px;">
+                        <label style="color:#888; font-size:0.85rem; margin-bottom:4px;">의결일</label>
+                        <input type="text" id="councilVoteDateInput" placeholder="예: 1952년 3월 5일" style="width:100%; box-sizing:border-box;" onchange="updateCouncilVoteDate(this.value)">
+                    </div>
+                </div>
+
+                <!-- 국무회의 의결 정족수 설정 -->
+                <div class="vote-panel" style="margin-bottom:10px;">
+                    <div class="vote-panel-title">> 국무회의 의결 정족수</div>
+                    <select id="councilThresholdSelect" style="width:100%; background:#000; border:1px solid var(--tno-border); color:var(--tno-gold); font-family:'NeoDunggeunmo','VT323',monospace; font-size:0.9rem; padding:4px 8px;" onchange="toggleCouncilCustomThreshold()">
+                        <option value="0.5">과반 (재적 과반수)</option>
+                        <option value="0.667">특별다수 (2/3 이상)</option>
+                        <option value="1.0">전원 일치</option>
+                        <option value="custom">지정...</option>
+                    </select>
+                    <div id="councilCustomThresholdWrap" style="display:none; margin-top:6px; align-items:center; gap:6px;">
+                        <input type="number" id="councilCustomNumer" min="1" placeholder="분자" style="flex:1; text-align:center;">
+                        <span style="color:#666; font-size:1.2rem;">/</span>
+                        <input type="number" id="councilCustomDenom" min="1" placeholder="분모" style="flex:1; text-align:center;">
+                        <span id="councilCustomThresholdPreview" style="color:#ffd700; font-size:0.85rem; white-space:nowrap;"></span>
+                    </div>
+                </div>
+
+                <!-- 계엄령 중 대체 입법 경로 — 의회 표결 대신 국무회의 표결로 통과 여부 결정 -->
+                <div class="vote-panel" id="cabinetCouncilPanel" style="display:none;border-color:var(--tno-alert);">
+                    <div class="vote-panel-title" style="color:var(--tno-alert);">! 계엄령 중 — 국무회의로 법안 통과</div>
+                    <div style="color:#888;font-size:0.78rem;">의회 표결이 정지된 동안, 내각 디스플레이(우측 "내각" 탭)에서 국무위원별로 찬성·반대·기권을 표시하세요. 아래에 실시간 집계가 표시됩니다.</div>
+                </div>
+
+                <!-- 국무회의 표결 확정 (단원제 — 원 구분 없이 하나의 결과만 표시) -->
+                <div class="vote-result-wrap" id="councilVoteResult" style="display:none;">
+                    <div class="vote-result-title" id="councilVoteResultTitle">[ 국무회의 표결 결과 ]</div>
+                    <div class="vote-bar-outer">
+                        <div class="vote-bar-yea" id="counBarYea" style="width:0%"></div>
+                        <div class="vote-bar-nay" id="counBarNay" style="width:0%"></div>
+                        <div class="vote-bar-abs" id="counBarAbs" style="width:0%"></div>
+                        <div class="vote-bar-none" id="counBarNone" style="width:100%"></div>
+                    </div>
+                    <div class="vote-counts">
+                        <span class="vc-yea">찬성 <b id="counCntYea">0</b></span>
+                        <span class="vc-nay">반대 <b id="counCntNay">0</b></span>
+                        <span class="vc-abs">기권 <b id="counCntAbs">0</b></span>
+                        <span class="vc-none">미투표 <b id="counCntNone">0</b></span>
+                    </div>
+                    <div style="font-size:0.85rem; color:#aaa; text-align:right; margin-bottom:2px; min-height:1.2em;" id="counVoteInfo"></div>
+                    <div class="vote-verdict verdict-pending" id="counVerdict">-- 표결 대기 중 --</div>
+                    <button class="vote-ctrl-btn yea" id="counConfirmBtn" style="width:100%;margin-top:8px;padding:9px;" onclick="resolveCabinetCouncilVote()">▶ 국무회의로 의결</button>
+                </div>
+            </div><!-- end contentCouncil -->
                 </div><!-- end contentLegislation -->
 
                 <!-- 선거 탭 (구 여론>선거, 국가로 이동) -->

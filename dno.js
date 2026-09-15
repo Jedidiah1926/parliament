@@ -1009,8 +1009,8 @@
         // 그 법안이 가결/부결로 확정되거나 다른 법안으로 바뀌면 다시 사라짐
         function hasActivePendingCouncilBill() {
             if(!isCouncilVotingMode()) return false;
-            if(!activeBillId) return false;
-            const bill = bills.find(b => b.id === activeBillId);
+            if(!activeCouncilBillId) return false;
+            const bill = bills.find(b => b.id === activeCouncilBillId);
             if(!bill) return false;
             return getBillOverallStatus(bill) === 'pending';
         }
@@ -1037,6 +1037,9 @@
             if(controls) controls.style.display = councilMode ? 'flex' : 'none';
             const councilPanel = document.getElementById('cabinetCouncilPanel');
             if(councilPanel) councilPanel.style.display = councilMode ? '' : 'none';
+            const councilResult = document.getElementById('councilVoteResult');
+            if(councilResult) councilResult.style.display = councilMode ? '' : 'none';
+            if(councilMode) renderCouncilVoteResult();
             const cardHtml = ({ voteKey, label, photo, name, partyId, vacant }) => {
                 const councilVacant = councilMode && vacant;
                 const party = parties.find(p => p.id === partyId);
@@ -1191,6 +1194,10 @@
         // 계엄령으로 의회가 정지됐을 때, 국무회의(대통령/총리·국무총리/부총리/의장/장관·국무위원)가
         // 대신 표결하는 기능 — { voteKey: 'yea'|'nay'|'abs' }, voteKey는 getCabinetDisplayRows()의 voteKey와 대응
         let cabinetCouncilVote = {};
+        // 국무회의 탭에서 심의 중인 법안 (표결 탭의 activeBillId와는 별개 — 국회/국무회의 각각 독립적으로 법안을 심의)
+        let activeCouncilBillId = null;
+        // 국무회의 의결 정족수 — 개별 법안의 가결 기준(threshold)과 별도로, 국무회의 표결 전체에 적용되는 전역 기준
+        let councilVoteThreshold = 0.5, councilVoteNumer = null, councilVoteDenom = null;
 
         function setEmergencyHolder(key, holder) {
             if(!EMERGENCY_POWERS[key] || !['none','president','pm','cabinet'].includes(holder)) return;
@@ -1315,16 +1322,135 @@
                     shade.remove();
                 }
             });
+            // 입법 > 표결 탭 전체도 하원/상원/삼원과 동일하게 shade — 계엄령 중에는 국무회의 탭을 이용해야 함
+            const voteTab = document.getElementById('contentVote');
+            if(voteTab) {
+                let vShade = voteTab.querySelector('.martial-law-shade');
+                if(suspended) {
+                    if(!vShade) {
+                        vShade = document.createElement('div');
+                        vShade.className = 'martial-law-shade';
+                        vShade.style.cssText = 'position:absolute;inset:0;background:rgba(20,0,0,0.72);z-index:50;display:flex;align-items:center;justify-content:center;pointer-events:auto;';
+                        vShade.innerHTML = `<div style="color:var(--tno-alert);text-shadow:0 0 8px var(--tno-alert);font-size:1.1rem;letter-spacing:2px;border:1px solid var(--tno-alert);padding:10px 18px;background:rgba(0,0,0,0.6);text-align:center;">! 계엄령 선포 중 — 의회 표결 정지 !<br><span style="font-size:0.8rem;letter-spacing:0;">법안은 [국무회의] 탭에서 처리하세요.</span></div>`;
+                        voteTab.style.position = 'relative';
+                        voteTab.appendChild(vShade);
+                    }
+                } else if(vShade) {
+                    vShade.remove();
+                }
+            }
             renderCabinetDisplay(); // cabinetCouncilPanel 표시 여부도 여기서 함께 갱신됨 (hasActivePendingCouncilBill 기준)
         }
 
+        // 국무회의 의결 정족수 설정 UI (국무회의 탭) — 개별 법안의 가결 기준과 별개로, 국무회의 표결 전체에 적용
+        function toggleCouncilCustomThreshold() {
+            const sel = document.getElementById('councilThresholdSelect');
+            const wrap = document.getElementById('councilCustomThresholdWrap');
+            if(!sel || !wrap) return;
+            const isCustom = sel.value === 'custom';
+            wrap.style.display = isCustom ? 'flex' : 'none';
+            if(isCustom) {
+                const numer = document.getElementById('councilCustomNumer');
+                const denom = document.getElementById('councilCustomDenom');
+                const updatePreview = () => {
+                    const n = parseInt(numer.value) || 0;
+                    const d = parseInt(denom.value) || 1;
+                    document.getElementById('councilCustomThresholdPreview').textContent =
+                        n && d ? `= ${(n/d*100).toFixed(1)}%` : '';
+                    setCouncilThreshold();
+                };
+                numer.oninput = updatePreview;
+                denom.oninput = updatePreview;
+            }
+            setCouncilThreshold();
+        }
+
+        function setCouncilThreshold() {
+            const sel = document.getElementById('councilThresholdSelect');
+            if(!sel) return;
+            if(sel.value !== 'custom') {
+                councilVoteThreshold = parseFloat(sel.value) || 0.5;
+                councilVoteNumer = null; councilVoteDenom = null;
+            } else {
+                const n = parseInt(document.getElementById('councilCustomNumer')?.value);
+                const d = parseInt(document.getElementById('councilCustomDenom')?.value);
+                if(n && d) { councilVoteThreshold = n/d; councilVoteNumer = n; councilVoteDenom = d; }
+            }
+            renderCouncilVoteResult();
+        }
+
+        // 국무회의 탭 UI를 저장된 상태(councilVoteThreshold 등)와 동기화
+        function renderCouncilThresholdUI() {
+            const sel = document.getElementById('councilThresholdSelect');
+            if(!sel) return;
+            sel.value = (councilVoteNumer && councilVoteDenom) ? 'custom' : String(councilVoteThreshold);
+            toggleCouncilCustomThreshold();
+            if(councilVoteNumer && councilVoteDenom) {
+                document.getElementById('councilCustomNumer').value = councilVoteNumer;
+                document.getElementById('councilCustomDenom').value = councilVoteDenom;
+                const preview = document.getElementById('councilCustomThresholdPreview');
+                if(preview) preview.textContent = `= ${(councilVoteNumer/councilVoteDenom*100).toFixed(1)}%`;
+            }
+        }
+
+        // 국무회의 탭의 단원제 스타일 표결 결과 바 — 내각 디스플레이에서 매긴 찬성/반대/기권을 실시간 집계
+        function renderCouncilVoteResult() {
+            const wrap = document.getElementById('councilVoteResult');
+            if(!wrap || wrap.style.display === 'none') return;
+            const participants = getCabinetDisplayRows().flat().filter(c => !c.vacant);
+            const total = participants.length || 1;
+            let yea = 0, nay = 0, abs = 0;
+            participants.forEach(({voteKey}) => {
+                const v = cabinetCouncilVote[voteKey];
+                if(v === 'yea') yea++; else if(v === 'nay') nay++; else if(v === 'abs') abs++;
+            });
+            const none = Math.max(0, total - yea - nay - abs);
+            const required = councilVoteThreshold >= 1.0 ? total : Math.floor(total * councilVoteThreshold) + 1;
+            const thLabel = getThresholdLabel(councilVoteThreshold, councilVoteNumer, councilVoteDenom);
+
+            document.getElementById('counCntYea').textContent = yea;
+            document.getElementById('counCntNay').textContent = nay;
+            document.getElementById('counCntAbs').textContent = abs;
+            document.getElementById('counCntNone').textContent = none;
+            document.getElementById('counBarYea').style.width = (yea/total*100).toFixed(1)+'%';
+            document.getElementById('counBarNay').style.width = (nay/total*100).toFixed(1)+'%';
+            document.getElementById('counBarAbs').style.width = (abs/total*100).toFixed(1)+'%';
+            document.getElementById('counBarNone').style.width = (none/total*100).toFixed(1)+'%';
+
+            const barOuter = document.getElementById('counBarYea')?.parentElement;
+            if(barOuter) {
+                let marker = barOuter.querySelector('.threshold-marker');
+                if(!marker) { marker = document.createElement('div'); marker.className = 'threshold-marker'; barOuter.appendChild(marker); }
+                let labelEl = barOuter.querySelector('.threshold-label');
+                if(!labelEl) { labelEl = document.createElement('div'); labelEl.className = 'threshold-label'; barOuter.appendChild(labelEl); }
+                barOuter.style.position = 'relative';
+                const pct = Math.min(councilVoteThreshold * 100, 100).toFixed(1);
+                marker.style.cssText = `position:absolute; left:${pct}%; top:0; bottom:0; width:2px; background:var(--tno-gold); box-shadow:0 0 5px var(--tno-gold); z-index:2; pointer-events:none;`;
+                labelEl.style.cssText = `position:absolute; left:${pct}%; top:-18px; transform:translateX(-50%); font-size:0.75rem; color:var(--tno-gold); white-space:nowrap; pointer-events:none; font-family:'NeoDunggeunmo','VT323',monospace;`;
+                labelEl.textContent = `${thLabel} (${required}인)`;
+            }
+
+            const infoEl = document.getElementById('counVoteInfo');
+            if(infoEl) {
+                if(yea + nay + abs === 0) infoEl.textContent = `기준: ${thLabel}, ${required}인 필요`;
+                else if(yea >= required) infoEl.textContent = `${yea} / ${required} (${thLabel})`;
+                else infoEl.textContent = `${yea} / ${required} (${thLabel}, ${required - yea}인 부족)`;
+            }
+            const verdict = document.getElementById('counVerdict');
+            if(verdict) {
+                if(yea + nay + abs === 0) { verdict.className = 'vote-verdict verdict-pending'; verdict.textContent = '-- 표결 대기 중 --'; }
+                else if(yea >= required) { verdict.className = 'vote-verdict verdict-pass'; verdict.textContent = '✔ 가결 예상'; }
+                else { verdict.className = 'vote-verdict verdict-fail'; verdict.textContent = '✘ 부결 예상'; }
+            }
+        }
+
         // 계엄령 중 대체 입법 경로 — 내각 디스플레이(우측 "내각" 탭)에서 국무위원별로 매긴
-        // 찬성/반대/기권 표를 집계해, 일반 의회 표결과 같은 방식(정족수 기준 과반 등)으로 통과 여부를 확정
+        // 찬성/반대/기권 표를 집계해, 국무회의 의결 정족수 기준으로 통과 여부를 확정
         // (의회가 정지된 경우에만 필요 — 정지되지 않았다면 의회에서 정상적으로 표결하면 됨)
         function resolveCabinetCouncilVote() {
             if(!(emergencyPowers.martialLaw.active && emergencyPowers.martialLaw.suspendParliament)) { showCustomAlert('의회가 정지된 계엄령 상태에서만 사용할 수 있습니다.'); return; }
-            if(!activeBillId) { showCustomAlert('심의할 법안을 먼저 선택하세요.'); return; }
-            const bill = bills.find(b => b.id === activeBillId);
+            if(!activeCouncilBillId) { showCustomAlert('심의할 법안을 먼저 선택하세요.'); return; }
+            const bill = bills.find(b => b.id === activeCouncilBillId);
             if(!bill) return;
             // 공석(재직자 없음)인 자리는 표결 정족수에서 제외 — 의회 표결에서 궐석/활동금지 정당을 제외하는 것과 동일한 방식
             const participants = getCabinetDisplayRows().flat().filter(c => !c.vacant);
@@ -1336,7 +1462,7 @@
                 if(v === 'yea') yea++; else if(v === 'nay') nay++; else if(v === 'abs') abs++;
             });
             if(yea + nay + abs === 0) { showCustomAlert('표결한 국무위원이 없습니다.\n내각 디스플레이에서 각 인물의 찬성·반대·기권을 먼저 표시하세요.'); return; }
-            const threshold = bill.threshold ?? 0.5;
+            const threshold = councilVoteThreshold ?? 0.5;
             const required = threshold >= 1.0 ? totalParticipants : Math.floor(totalParticipants * threshold) + 1;
             const result = yea >= required ? 'pass' : 'fail';
             showCustomConfirm(`국무회의 표결 결과 — 찬성 ${yea} · 반대 ${nay} · 기권 ${abs} (총 ${totalParticipants}인)\n\n『${bill.title}』이(가) ${result==='pass'?'가결':'부결'}됩니다. 확정하시겠습니까?`, () => {
@@ -1344,9 +1470,9 @@
                 if(hasSenateChamber()) bill.senateStatus = result;
                 if(hasThirdChamber()) bill.thirdStatus = result;
                 if(!bill.voteHistory) bill.voteHistory = [];
-                bill.voteHistory.push({ chamber: 'cabinetCouncil', result, yea, nay, abs, total: totalParticipants, required, threshold, date: bill.voteDate || '', at: new Date().toISOString() });
+                bill.voteHistory.push({ chamber: 'cabinetCouncil', result, yea, nay, abs, total: totalParticipants, required, threshold, numer: councilVoteNumer, denom: councilVoteDenom, date: bill.voteDate || '', at: new Date().toISOString() });
                 cabinetCouncilVote = {};
-                renderBillList(); renderArchiveList(); syncBillSelect(); renderCabinetDisplay();
+                renderBillList(); renderArchiveList(); syncBillSelect(); syncCouncilBillSelect(); renderCabinetDisplay();
                 showCustomAlert(`『${bill.title}』이(가) 국무회의 의결로 ${result==='pass'?'가결':'부결'}되었습니다.`);
             });
         }
@@ -1722,7 +1848,8 @@
             const version = amendedBill ? (amendedBill.version || 1) + 1 : 1;
             bills.push({ id: 'b'+Date.now(), title, content, threshold, numer, denom, tags,
                 houseStatus: 'pending', senateStatus: 'pending', thirdStatus: 'pending', houseVote: null, senateVote: null, thirdVote: null,
-                version, parentBillId: amendedBill ? amendedBill.id : null, isAmendment: !!amendedBill, voteHistory: [] });
+                version, parentBillId: amendedBill ? amendedBill.id : null, isAmendment: !!amendedBill, voteHistory: [],
+                tabledTo: isCouncilVotingMode() ? 'council' : 'parliament' });
             document.getElementById('newBillTitle').value = '';
             document.getElementById('newBillContent').value = '';
             document.getElementById('newBillTags').value = '';
@@ -1767,14 +1894,33 @@
         function removeBill(id) {
             bills = bills.filter(b => b.id !== id);
             if(activeBillId === id) { activeBillId = null; voteState = {house:{}, senate:{}, third:{}}; redrawAll(); updateVoteResults(); }
+            if(activeCouncilBillId === id) { activeCouncilBillId = null; cabinetCouncilVote = {}; renderCabinetDisplay(); }
             renderBillList();
             syncBillSelect();
+        }
+
+        // 법안의 상정 대상 (국회 / 국무회의) — 지정되지 않은 법안(구버전 세이브 포함)은 국회로 취급
+        function billTabledTo(bill) {
+            return bill.tabledTo || 'parliament';
+        }
+
+        // 입법 > 상정 탭에서 법안을 국회 또는 국무회의로 상정 — 계엄령으로 의회가 정지된 동안은 국무회의만 선택 가능
+        function setBillTabledTo(id, dest) {
+            if(!['parliament','council'].includes(dest)) return;
+            const bill = bills.find(b => b.id === id);
+            if(!bill) return;
+            if(dest === 'parliament' && isCouncilVotingMode()) { showCustomAlert('계엄령으로 의회가 정지된 상태에서는 국회로 상정할 수 없습니다.'); return; }
+            bill.tabledTo = dest;
+            if(activeBillId === id && dest !== 'parliament') { activeBillId = null; voteState = {house:{}, senate:{}, third:{}}; redrawAll(); updateVoteResults(); }
+            if(activeCouncilBillId === id && dest !== 'council') { activeCouncilBillId = null; cabinetCouncilVote = {}; }
+            renderBillList();
+            syncBillSelect();
+            renderCabinetDisplay();
         }
 
         function selectBillForVote(id) {
             activeBillId = id;
             voteState = { house: {}, senate: {}, third: {} };
-            cabinetCouncilVote = {};
             renderBillList();
             renderActiveBillDisplay();
             redrawAll();
@@ -1782,7 +1928,6 @@
             elecUpdateLabels();
             updateConfirmButtons();
             renderBulkPartyList();
-            renderCabinetDisplay();
             const dateInput = document.getElementById('voteDateInput');
             if(dateInput) {
                 const bill = bills.find(b=>b.id===id);
@@ -1812,11 +1957,48 @@
             sel.value = activeBillId;
         }
 
+        // 국무회의 탭 — 국무회의로 상정된 법안 심의 선택 (표결 탭의 selectBillForVote와 대응, cabinetCouncilVote 초기화)
+        function selectBillForCouncilVote(id) {
+            activeCouncilBillId = id;
+            cabinetCouncilVote = {};
+            renderBillList();
+            renderCouncilActiveBillDisplay();
+            renderCabinetDisplay();
+            const dateInput = document.getElementById('councilVoteDateInput');
+            if(dateInput) {
+                const bill = bills.find(b=>b.id===id);
+                dateInput.value = bill?.voteDate || '';
+            }
+        }
+
+        function updateCouncilVoteDate(val) {
+            if(!activeCouncilBillId) return;
+            const bill = bills.find(b=>b.id===activeCouncilBillId);
+            if(bill) { bill.voteDate = val.trim(); renderBillList(); renderArchiveList(); }
+        }
+
+        function renderCouncilActiveBillDisplay() {
+            const el = document.getElementById('councilActiveBillDisplay');
+            const sel = document.getElementById('councilSelectBill');
+            if(!el || !sel) return;
+            if(!activeCouncilBillId || !bills.find(b=>b.id===activeCouncilBillId)) {
+                el.innerHTML = '<span style="color:#444; font-size:0.9rem;">법안을 선택하세요...</span>';
+                sel.value = '';
+                return;
+            }
+            const bill = bills.find(b=>b.id===activeCouncilBillId);
+            el.innerHTML = `
+                <div style="color:var(--tno-gold); font-size:1rem; margin-bottom:3px;">${bill.title}</div>
+                ${bill.content ? `<div style="color:#666; font-size:0.8rem; white-space:pre-wrap; max-height:50px; overflow:hidden;">${bill.content}</div>` : ''}
+            `;
+            sel.value = activeCouncilBillId;
+        }
+
         function syncBillSelect() {
             const sel = document.getElementById('voteSelectBill');
             if(sel) {
                 sel.innerHTML = '<option value="">-- 법안 선택 --</option>';
-                bills.filter(b => getBillOverallStatus(b) === 'pending').forEach(b => {
+                bills.filter(b => getBillOverallStatus(b) === 'pending' && billTabledTo(b) === 'parliament').forEach(b => {
                     const opt = document.createElement('option');
                     opt.value = b.id;
                     opt.textContent = b.title + getBillStatusSuffix(b);
@@ -1825,7 +2007,7 @@
                 sel.value = activeBillId || '';
                 renderActiveBillDisplay();
             }
-            // 제출 탭의 "기존 법안 수정" 드롭다운도 함께 동기화 (대기 중인 법안만 수정 가능)
+            // 제출 탭의 "기존 법안 수정" 드롭다운도 함께 동기화 (대기 중인 법안만 수정 가능, 상정 대상 무관)
             const editSel = document.getElementById('editBillSelect');
             if(editSel) {
                 const prevEdit = editSel.value;
@@ -1838,6 +2020,22 @@
                 });
                 if(bills.find(b=>b.id===prevEdit)) editSel.value = prevEdit;
             }
+            syncCouncilBillSelect();
+        }
+
+        // 국무회의 탭 — 국무회의로 상정된 대기 중인 법안만 드롭다운에 표시
+        function syncCouncilBillSelect() {
+            const sel = document.getElementById('councilSelectBill');
+            if(!sel) return;
+            sel.innerHTML = '<option value="">-- 법안 선택 --</option>';
+            bills.filter(b => getBillOverallStatus(b) === 'pending' && billTabledTo(b) === 'council').forEach(b => {
+                const opt = document.createElement('option');
+                opt.value = b.id;
+                opt.textContent = b.title + getBillStatusSuffix(b);
+                sel.appendChild(opt);
+            });
+            sel.value = activeCouncilBillId || '';
+            renderCouncilActiveBillDisplay();
         }
 
         // ── 기존 법안 수정 (제출 탭) ──────────────
@@ -1987,31 +2185,39 @@
             if(bill.voteDate) overallRow += `<span style="color:#666;font-size:0.75rem;">📅 ${bill.voteDate}</span>`;
             rows.push(overallRow);
 
-            if(bill.houseStatus !== 'pending') {
-                const hName = document.getElementById('houseNameInput')?.value || '하원';
-                let row = `<span class="bill-status-badge ${bill.houseStatus==='pass'?'house-pass':'house-fail'}">${hName} ${bill.houseStatus==='pass'?'✔가결':'✘부결'}</span>`;
-                if(bill.houseVote) row += `<span style="color:#555; font-size:0.75rem;">(찬${bill.houseVote.yea}/반${bill.houseVote.nay}/기${bill.houseVote.abs})</span>`;
+            if(billTabledTo(bill) === 'council' && bill.houseStatus !== 'pending') {
+                // 국무회의로 상정된 법안은 국회/상원 대신 [국무회의 ✔가결/✘부결]로 표시
+                const councilVote = [...(bill.voteHistory||[])].reverse().find(h => h.chamber === 'cabinetCouncil');
+                let row = `<span class="bill-status-badge ${bill.houseStatus==='pass'?'house-pass':'house-fail'}">국무회의 ${bill.houseStatus==='pass'?'✔가결':'✘부결'}</span>`;
+                if(councilVote) row += `<span style="color:#555; font-size:0.75rem;">(찬${councilVote.yea}/반${councilVote.nay}/기${councilVote.abs})</span>`;
                 rows.push(row);
-            }
-            if(isBi && bill.senateStatus !== 'pending' && bill.senateStatus !== 'skip') {
-                const sName = document.getElementById('senateNameInput')?.value || '상원';
-                let row = `<span class="bill-status-badge ${bill.senateStatus==='pass'?'senate-pass':'senate-fail'}">${sName} ${bill.senateStatus==='pass'?'✔가결':'✘부결'}</span>`;
-                if(bill.senateVote) row += `<span style="color:#555; font-size:0.75rem;">(찬${bill.senateVote.yea}/반${bill.senateVote.nay}/기${bill.senateVote.abs})</span>`;
-                rows.push(row);
-            }
-            if(isBi && bill.senateStatus === 'skip') {
-                const sName = document.getElementById('senateNameInput')?.value || '상원';
-                rows.push(`<span class="bill-status-badge senate-fail">${sName} 미상정</span>`);
-            }
-            if(isTri && bill.thirdStatus !== 'pending' && bill.thirdStatus !== 'skip') {
-                const tName = document.getElementById('thirdNameInput')?.value || '삼원';
-                let row = `<span class="bill-status-badge ${bill.thirdStatus==='pass'?'third-pass':'third-fail'}">${tName} ${bill.thirdStatus==='pass'?'✔가결':'✘부결'}</span>`;
-                if(bill.thirdVote) row += `<span style="color:#555; font-size:0.75rem;">(찬${bill.thirdVote.yea}/반${bill.thirdVote.nay}/기${bill.thirdVote.abs})</span>`;
-                rows.push(row);
-            }
-            if(isTri && bill.thirdStatus === 'skip') {
-                const tName = document.getElementById('thirdNameInput')?.value || '삼원';
-                rows.push(`<span class="bill-status-badge third-fail">${tName} 미상정</span>`);
+            } else {
+                if(bill.houseStatus !== 'pending') {
+                    const hName = document.getElementById('houseNameInput')?.value || '하원';
+                    let row = `<span class="bill-status-badge ${bill.houseStatus==='pass'?'house-pass':'house-fail'}">${hName} ${bill.houseStatus==='pass'?'✔가결':'✘부결'}</span>`;
+                    if(bill.houseVote) row += `<span style="color:#555; font-size:0.75rem;">(찬${bill.houseVote.yea}/반${bill.houseVote.nay}/기${bill.houseVote.abs})</span>`;
+                    rows.push(row);
+                }
+                if(isBi && bill.senateStatus !== 'pending' && bill.senateStatus !== 'skip') {
+                    const sName = document.getElementById('senateNameInput')?.value || '상원';
+                    let row = `<span class="bill-status-badge ${bill.senateStatus==='pass'?'senate-pass':'senate-fail'}">${sName} ${bill.senateStatus==='pass'?'✔가결':'✘부결'}</span>`;
+                    if(bill.senateVote) row += `<span style="color:#555; font-size:0.75rem;">(찬${bill.senateVote.yea}/반${bill.senateVote.nay}/기${bill.senateVote.abs})</span>`;
+                    rows.push(row);
+                }
+                if(isBi && bill.senateStatus === 'skip') {
+                    const sName = document.getElementById('senateNameInput')?.value || '상원';
+                    rows.push(`<span class="bill-status-badge senate-fail">${sName} 미상정</span>`);
+                }
+                if(isTri && bill.thirdStatus !== 'pending' && bill.thirdStatus !== 'skip') {
+                    const tName = document.getElementById('thirdNameInput')?.value || '삼원';
+                    let row = `<span class="bill-status-badge ${bill.thirdStatus==='pass'?'third-pass':'third-fail'}">${tName} ${bill.thirdStatus==='pass'?'✔가결':'✘부결'}</span>`;
+                    if(bill.thirdVote) row += `<span style="color:#555; font-size:0.75rem;">(찬${bill.thirdVote.yea}/반${bill.thirdVote.nay}/기${bill.thirdVote.abs})</span>`;
+                    rows.push(row);
+                }
+                if(isTri && bill.thirdStatus === 'skip') {
+                    const tName = document.getElementById('thirdNameInput')?.value || '삼원';
+                    rows.push(`<span class="bill-status-badge third-fail">${tName} 미상정</span>`);
+                }
             }
             if((bill.version || 1) > 1 || bill.isAmendment) {
                 let row = '';
@@ -2028,7 +2234,8 @@
 
         // 법안 세부 표결 기록(타임라인) + 개정안 목록 HTML — 실제 표결 결과 패널과 동일한 막대그래프로 표시
         function buildBillHistoryHtml(bill) {
-            const chamberLabel = ch => ch === 'senate' ? (document.getElementById('senateNameInput')?.value || '상원')
+            const chamberLabel = ch => ch === 'cabinetCouncil' ? '국무회의'
+                : ch === 'senate' ? (document.getElementById('senateNameInput')?.value || '상원')
                 : ch === 'third' ? (document.getElementById('thirdNameInput')?.value || '삼원')
                 : (document.getElementById('houseNameInput')?.value || '하원');
             const history = bill.voteHistory || [];
@@ -2137,8 +2344,17 @@
 
             container.innerHTML = '';
             filtered.forEach(bill => {
-                const isActive = bill.id === activeBillId;
+                const dest = billTabledTo(bill);
+                const isActive = dest === 'council' ? bill.id === activeCouncilBillId : bill.id === activeBillId;
                 const thLabel = getThresholdLabel(bill.threshold || 0.5, bill.numer, bill.denom);
+                const suspended = isCouncilVotingMode();
+                const routeBtn = (d, txt) => {
+                    const disabled = d === 'parliament' && suspended;
+                    return `<button class="bill-select-btn" style="${dest===d?'color:var(--tno-gold);border-color:var(--tno-gold);':''}${disabled?'opacity:0.4;cursor:not-allowed;':''}" ${disabled?'disabled title="계엄령으로 의회가 정지된 상태에서는 선택할 수 없습니다"':''} onclick="setBillTabledTo('${bill.id}','${d}')">${txt}</button>`;
+                };
+                const selectAction = dest === 'council'
+                    ? `selectBillForCouncilVote('${bill.id}'); switchSubTab('nation','legislation'); switchLegislationInnerTab('council');`
+                    : `selectBillForVote('${bill.id}'); switchTab('vote');`;
                 const div = document.createElement('div');
                 div.className = 'bill-card' + (isActive ? ' selected' : '');
                 div.innerHTML = `
@@ -2148,12 +2364,17 @@
                     </div>
                     ${bill.content ? `<div class="bill-card-body">${bill.content}</div>` : ''}
                     <div style="margin-top:4px;">${buildTagHtml(bill)}</div>
+                    <div style="margin-top:4px; display:flex; align-items:center; gap:6px;">
+                        <span style="color:#666; font-size:0.75rem;">상정:</span>
+                        ${routeBtn('parliament', '국회')}
+                        ${routeBtn('council', '국무회의')}
+                    </div>
                     <div class="bill-card-footer">
                         ${buildBillBadges(bill)}
                         <span style="color:#555; font-size:0.75rem; margin-left:4px;">[${thLabel}]</span>
                         ${(bill.voteHistory||[]).length > 0 ? `<span class="bill-history-toggle" onclick="event.stopPropagation(); toggleBillHistory('${bill.id}')">▾ 세부 기록</span>` : ''}
                         <div style="margin-left:auto; display:flex; gap:5px;">
-                            ${!isActive ? `<button class="bill-select-btn" onclick="selectBillForVote('${bill.id}'); switchTab('vote');">심의 선택</button>` : ''}
+                            ${!isActive ? `<button class="bill-select-btn" onclick="${selectAction}">심의 선택</button>` : ''}
                             <button class="bill-remove-btn" onclick="removeBill('${bill.id}')">삭제</button>
                         </div>
                     </div>
@@ -3713,6 +3934,10 @@
                 legislation: {
                     bills,
                     activeBillId,
+                    activeCouncilBillId,
+                    councilVoteThreshold,
+                    councilVoteNumer,
+                    councilVoteDenom,
                     voteState,
                     activeBillTagFilter,
                     activeArchiveTagFilter
@@ -3796,8 +4021,13 @@
             bills = (Array.isArray(leg.bills) ? leg.bills : (Array.isArray(state.data?.bills) ? state.data.bills : []))
                 // v12: version/parentBillId/isAmendment/voteHistory (개정안·버전·세부 표결 기록) 추가
                 // v14: vetoStatus (거부권 서명/거부 여부) 추가
-                .map(b => ({ tags:[], threshold:0.5, numer:null, denom:null, thirdStatus:'pending', thirdVote:null, voteDate:'', version:1, parentBillId:null, isAmendment:false, voteHistory:[], vetoStatus:'pending', ...b }));
+                // v15: tabledTo (국회/국무회의 상정 대상) 추가 — 구버전 파일은 전부 국회로 취급
+                .map(b => ({ tags:[], threshold:0.5, numer:null, denom:null, thirdStatus:'pending', thirdVote:null, voteDate:'', version:1, parentBillId:null, isAmendment:false, voteHistory:[], vetoStatus:'pending', tabledTo:'parliament', ...b }));
             activeBillId           = leg.activeBillId           ?? null;
+            activeCouncilBillId    = leg.activeCouncilBillId    ?? null;
+            councilVoteThreshold   = leg.councilVoteThreshold   ?? 0.5;
+            councilVoteNumer       = leg.councilVoteNumer       ?? null;
+            councilVoteDenom       = leg.councilVoteDenom       ?? null;
             voteState              = leg.voteState              ?? { house:{}, senate:{}, third:{} };
             if(!voteState.third) voteState.third = {};
             activeBillTagFilter    = leg.activeBillTagFilter    ?? null;
@@ -3939,6 +4169,8 @@
             applyMartialLawEffects();
             syncBillSelect();
             renderActiveBillDisplay();
+            renderCouncilActiveBillDisplay();
+            renderCouncilThresholdUI();
             updateConfirmButtons();
             renderBulkPartyList();
             elecRenderList();
@@ -4186,6 +4418,16 @@
             }
         }
 
+        // 국무회의 탭을 벗어날 때, 심의 중이던 법안이 이미 결론(가결/부결) 났으면 선택 초기화 (표결 탭과 동일한 패턴)
+        function checkResetCouncilSelectionOnLeave() {
+            if(currentMainTab === 'nation' && currentSubTab['nation'] === 'legislation' && legislationInnerTab === 'council' && activeCouncilBillId) {
+                const bill = bills.find(b=>b.id===activeCouncilBillId);
+                if(bill && getBillOverallStatus(bill) !== 'pending') {
+                    activeCouncilBillId = null;
+                }
+            }
+        }
+
         function switchMainTab(main) {
             checkResetVoteSelectionOnLeave();
             closeSeatInfoCard();
@@ -4245,14 +4487,16 @@
         let legislationInnerTab = 'bill';
         function switchLegislationInnerTab(inner) {
             if(inner !== 'vote') checkResetVoteSelectionOnLeave();
+            if(inner !== 'council') checkResetCouncilSelectionOnLeave();
             legislationInnerTab = inner;
-            ['bill','table','vote'].forEach(k => {
+            ['bill','table','vote','council'].forEach(k => {
                 document.getElementById('innerTabLeg'+k.charAt(0).toUpperCase()+k.slice(1))?.classList.toggle('active', k===inner);
                 document.getElementById('content'+k.charAt(0).toUpperCase()+k.slice(1))?.classList.toggle('active', k===inner);
             });
             if(inner === 'vote') { renderBulkPartyList(); syncBillSelect(); renderActiveBillDisplay(); updateConfirmButtons(); }
             if(inner === 'bill') renderBillList();
             if(inner === 'table') renderBillList();
+            if(inner === 'council') { syncCouncilBillSelect(); renderCouncilActiveBillDisplay(); renderCouncilThresholdUI(); renderCabinetDisplay(); }
         }
 
         // 국가 > 기록 내부 탭 (입법/선거) — 구 기록 메인탭이 국가로 통합됨
