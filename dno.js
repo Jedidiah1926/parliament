@@ -748,7 +748,7 @@
         function submitPmNominationBill() {
             const resolved = pmNominee.linkedSeat ? resolveLinkedSeat(pmNominee.linkedSeat) : null;
             const nomineeName = resolved ? resolved.name : pmNominee.name;
-            if(!nomineeName) { alert('먼저 총리 후보(이름 또는 의원 연결)를 지정하세요.'); return; }
+            if(!nomineeName) { showCustomAlert('먼저 총리 후보(이름 또는 의원 연결)를 지정하세요.'); return; }
             const bill = {
                 id: 'b'+Date.now(), title: `${pmRoleLabel()} 임명동의안 (${nomineeName})`, content: '', threshold: 0.5, numer: null, denom: null, tags: ['임명동의안'],
                 houseStatus: 'pending', senateStatus: 'pending', thirdStatus: 'pending', houseVote: null, senateVote: null, thirdVote: null,
@@ -760,7 +760,7 @@
             pmNomineeBillId = bill.id;
             renderPmNomineeSection();
             renderBillList(); syncBillSelect();
-            alert(`${nomineeName}에 대한 ${pmRoleLabel()} 임명동의안이 국가 > 입법 탭에 상정되었습니다.`);
+            showCustomAlert(`${nomineeName}에 대한 ${pmRoleLabel()} 임명동의안이 국가 > 입법 탭에 상정되었습니다.`);
         }
 
         // 임명동의안이 가결되면 지명자를 실제 총리로 확정 반영
@@ -791,7 +791,7 @@
             };
             bills.push(bill);
             renderBillList(); syncBillSelect();
-            alert(`내각 불신임안이 국가 > 입법 탭에 상정되었습니다.`);
+            showCustomAlert(`내각 불신임안이 국가 > 입법 탭에 상정되었습니다.`);
         }
 
         // 내각 불신임안이 가결되면 총리·부총리·국무위원 전원의 재직자 정보를 초기화 —
@@ -1224,16 +1224,16 @@
             overlay.style.display = 'flex';
             document.getElementById('customAlertOkBtn').onclick = () => { overlay.style.display = 'none'; };
         }
-        function showCustomConfirm(message, onConfirm) {
+        function showCustomConfirm(message, onConfirm, onCancel) {
             const overlay = document.getElementById('customConfirmOverlay');
-            if(!overlay) { if(confirm(message)) onConfirm(); return; }
+            if(!overlay) { if(confirm(message)) onConfirm(); else onCancel?.(); return; }
             document.getElementById('customConfirmMessage').textContent = message;
             overlay.style.display = 'flex';
             const okBtn = document.getElementById('customConfirmOkBtn');
             const cancelBtn = document.getElementById('customConfirmCancelBtn');
             const cleanup = () => { overlay.style.display = 'none'; okBtn.onclick = null; cancelBtn.onclick = null; };
             okBtn.onclick = () => { cleanup(); onConfirm(); };
-            cancelBtn.onclick = cleanup;
+            cancelBtn.onclick = () => { cleanup(); onCancel?.(); };
         }
 
         // 의회 해산 선포 시 현재 존재하는 모든 원(하원/상원/삼원)의 의석을 전부 비운다 —
@@ -1849,7 +1849,7 @@
             const denom = isCustom ? parseInt(document.getElementById('customDenom').value) || null : null;
             const tagsRaw = document.getElementById('newBillTags')?.value || '';
             const tags = tagsRaw.split(',').map(t => t.trim()).filter(t => t.length > 0);
-            if(!title) { alert('법안 제목을 입력하세요.'); return; }
+            if(!title) { showCustomAlert('법안 제목을 입력하세요.'); return; }
             const amendedBill = amendmentSourceId ? bills.find(b => b.id === amendmentSourceId) : null;
             const version = amendedBill ? (amendedBill.version || 1) + 1 : 1;
             bills.push({ id: 'b'+Date.now(), title, content, threshold, numer, denom, tags,
@@ -1868,7 +1868,7 @@
         function startAmendment(id) {
             const orig = bills.find(b => b.id === id);
             if(!orig) return;
-            if(getBillOverallStatus(orig) !== 'passed') { alert('가결된 법안만 개정안을 발의할 수 있습니다.'); return; }
+            if(getBillOverallStatus(orig) !== 'passed') { showCustomAlert('가결된 법안만 개정안을 발의할 수 있습니다.'); return; }
             amendmentSourceId = id;
             switchMainTab('legislation');
             switchSubTab('legislation', 'bill');
@@ -2092,7 +2092,7 @@
             const bill = bills.find(b=>b.id===editingBillId);
             if(!bill) return;
             const title = document.getElementById('editBillTitle').value.trim();
-            if(!title) { alert('법안 제목을 입력하세요.'); return; }
+            if(!title) { showCustomAlert('법안 제목을 입력하세요.'); return; }
             bill.title = title;
             bill.content = document.getElementById('editBillContent').value.trim();
             const tagsRaw = document.getElementById('editBillTags')?.value || '';
@@ -2114,7 +2114,7 @@
             if(editSel) editSel.value = '';
             const editForm = document.getElementById('editBillForm');
             if(editForm) editForm.style.display = 'none';
-            alert('법안이 수정되었습니다.');
+            showCustomAlert('법안이 수정되었습니다.');
         }
 
         function getBillStatusSuffix(b) {
@@ -2165,9 +2165,10 @@
         function vetoBill(id) {
             const bill = bills.find(b => b.id === id);
             if(!bill) return;
-            if(!confirm(`${vetoHolderLabel()}의 거부권을 행사해 이 법안을 최종 부결시킵니다. 계속하시겠습니까?`)) return;
-            bill.vetoStatus = 'vetoed';
-            renderArchiveList();
+            showCustomConfirm(`${vetoHolderLabel()}의 거부권을 행사해 이 법안을 최종 부결시킵니다. 계속하시겠습니까?`, () => {
+                bill.vetoStatus = 'vetoed';
+                renderArchiveList();
+            });
         }
 
         // 법안 카드 공통 배지 생성
@@ -2449,7 +2450,7 @@
 
         // ===== CONFIRM CHAMBER VOTE =====
         function confirmChamberVote(chamber) {
-            if(!activeBillId) { alert('심의할 법안을 먼저 선택하세요.'); return; }
+            if(!activeBillId) { showCustomAlert('심의할 법안을 먼저 선택하세요.'); return; }
             const bill = bills.find(b=>b.id===activeBillId);
             if(!bill) return;
 
@@ -2460,14 +2461,14 @@
 
             // 상원은 하원 가결 후에만, 삼원은 상원(또는 하원) 가결 후에만 가능
             if(chamber === 'senate') {
-                if(bill.houseStatus === 'pending') { alert(`${hName} 표결을 먼저 확정하세요.`); return; }
-                if(bill.houseStatus === 'fail') { alert(`${hName}에서 부결된 법안은 ${document.getElementById('senateNameInput')?.value||'상원'}에 상정되지 않습니다.`); return; }
+                if(bill.houseStatus === 'pending') { showCustomAlert(`${hName} 표결을 먼저 확정하세요.`); return; }
+                if(bill.houseStatus === 'fail') { showCustomAlert(`${hName}에서 부결된 법안은 ${document.getElementById('senateNameInput')?.value||'상원'}에 상정되지 않습니다.`); return; }
             }
             if(chamber === 'third') {
                 const prevStatus = isBi ? bill.senateStatus : bill.houseStatus;
                 const prevName = isBi ? sName : hName;
-                if(prevStatus === 'pending') { alert(`${prevName} 표결을 먼저 확정하세요.`); return; }
-                if(prevStatus === 'fail') { alert(`${prevName}에서 부결된 법안은 삼원에 상정되지 않습니다.`); return; }
+                if(prevStatus === 'pending') { showCustomAlert(`${prevName} 표결을 먼저 확정하세요.`); return; }
+                if(prevStatus === 'fail') { showCustomAlert(`${prevName}에서 부결된 법안은 삼원에 상정되지 않습니다.`); return; }
             }
 
             const dots = dotCache[chamber];
@@ -3460,7 +3461,7 @@
             try {
                 await exportVisualElement(target, includeStats, format, statsOptions, headerOptions);
             } catch(e) {
-                alert('내보내기 중 오류가 발생했습니다: ' + e.message);
+                showCustomAlert('내보내기 중 오류가 발생했습니다: ' + e.message);
             }
         }
 
@@ -4376,7 +4377,7 @@
 
         function setAutosaveEnabled(enabled) {
             if(!localStorageAvailable) {
-                alert('이 브라우저/환경에서는 자동저장(localStorage)을 사용할 수 없습니다.\n(예: 파일을 직접 열었거나, 브라우저의 저장소 차단 설정)');
+                showCustomAlert('이 브라우저/환경에서는 자동저장(localStorage)을 사용할 수 없습니다.\n(예: 파일을 직접 열었거나, 브라우저의 저장소 차단 설정)');
                 renderSaveTabUI();
                 return;
             }
@@ -4410,10 +4411,11 @@
         }
 
         function resetAutosaveData() {
-            if(!confirm('저장된 데이터를 모두 삭제하고 처음 상태로 되돌리시겠습니까?\n(파일로 저장한 .json 파일에는 영향이 없습니다)')) return;
-            suppressAutosaveOnUnload = true;
-            safeLsRemove(AUTOSAVE_KEY);
-            location.reload();
+            showCustomConfirm('저장된 데이터를 모두 삭제하고 처음 상태로 되돌리시겠습니까?\n(파일로 저장한 .json 파일에는 영향이 없습니다)', () => {
+                suppressAutosaveOnUnload = true;
+                safeLsRemove(AUTOSAVE_KEY);
+                location.reload();
+            });
         }
 
         function renderSaveTabUI() {
@@ -4511,7 +4513,7 @@
                     const file = fileInputTab.files?.[0];
                     if(!file) return;
                     try { await loadJSONFromFile(file); }
-                    catch(e) { alert("불러오기 실패: 저장 파일이 깨졌거나 형식이 다릅니다."); }
+                    catch(e) { showCustomAlert("불러오기 실패: 저장 파일이 깨졌거나 형식이 다릅니다."); }
                     finally { fileInputTab.value = ""; }
                 });
             }
@@ -5779,15 +5781,16 @@
         function splitFaction(partyId, factionId) {
             const p = parties.find(x=>x.id===partyId); if(!p?.factions) return;
             const f = p.factions.find(x=>x.id===factionId); if(!f) return;
-            if(!confirm(`"${f.name}" 파벌을 신당으로 분리하시겠습니까?\n\n신당: ${f.name}\n의석: 하원 ${f.seatsHouse}석, 상원 ${f.seatsSenate}석`)) return;
-            p.seatsHouse  = Math.max(0, p.seatsHouse  - f.seatsHouse);
-            p.seatsSenate = Math.max(0, p.seatsSenate - f.seatsSenate);
-            p.factions = p.factions.filter(x=>x.id!==factionId);
-            parties.push({ id:Date.now(), name:f.name, color:f.color, seatsHouse:f.seatsHouse, seatsSenate:f.seatsSenate,
-                ideologyId:f.ideologyId||p.ideologyId, isRuling:false, inHouse:p.inHouse, inSenate:p.inSenate,
-                leaderName:f.leaderName||'', leaderPhoto:f.leaderPhoto||'', logoPhoto:f.logoPhoto||'',
-                showLogoInStats:false, description:'', factions:[] });
-            simulate(); refreshUI();
+            showCustomConfirm(`"${f.name}" 파벌을 신당으로 분리하시겠습니까?\n\n신당: ${f.name}\n의석: 하원 ${f.seatsHouse}석, 상원 ${f.seatsSenate}석`, () => {
+                p.seatsHouse  = Math.max(0, p.seatsHouse  - f.seatsHouse);
+                p.seatsSenate = Math.max(0, p.seatsSenate - f.seatsSenate);
+                p.factions = p.factions.filter(x=>x.id!==factionId);
+                parties.push({ id:Date.now(), name:f.name, color:f.color, seatsHouse:f.seatsHouse, seatsSenate:f.seatsSenate,
+                    ideologyId:f.ideologyId||p.ideologyId, isRuling:false, inHouse:p.inHouse, inSenate:p.inSenate,
+                    leaderName:f.leaderName||'', leaderPhoto:f.leaderPhoto||'', logoPhoto:f.logoPhoto||'',
+                    showLogoInStats:false, description:'', factions:[] });
+                simulate(); refreshUI();
+            });
         }
         function moveFaction(partyId, factionId, dir) {
             const p = parties.find(x=>x.id===partyId); if(!p?.factions) return;
@@ -6593,16 +6596,17 @@
         function vacateSeat(ch, key) {
             const m = districtMembers[ch][key];
             if(!m || m.vacant) return;
-            if(!confirm('이 지역구를 궐석 처리하시겠습니까?\n(보궐선거로 다시 채울 때까지 소속 정당 의석에서 1석 감소합니다)')) return;
-            const seatKey = seatKeyFor(ch);
-            const party = parties.find(p=>p.id===m.partyId);
-            if(party) party[seatKey] = Math.max(0, (party[seatKey]||0) - 1);
-            m.vacant = true;
-            simulate(); refreshUI();
+            showCustomConfirm('이 지역구를 궐석 처리하시겠습니까?\n(보궐선거로 다시 채울 때까지 소속 정당 의석에서 1석 감소합니다)', () => {
+                const seatKey = seatKeyFor(ch);
+                const party = parties.find(p=>p.id===m.partyId);
+                if(party) party[seatKey] = Math.max(0, (party[seatKey]||0) - 1);
+                m.vacant = true;
+                simulate(); refreshUI();
+            });
         }
 
         function fillVacantSeat(ch, key) {
-            alert(`선거 탭 > 지역구 체크박스에서 "보궐"을 선택하고 개표하면\n이 지역구(${districtNames[ch][key]||key})가 자동으로 대상에 포함됩니다.`);
+            showCustomAlert(`선거 탭 > 지역구 체크박스에서 "보궐"을 선택하고 개표하면\n이 지역구(${districtNames[ch][key]||key})가 자동으로 대상에 포함됩니다.`);
         }
 
         // ===== 의회 > 비례 탭: 정당별 비례(지역구 외) 의석 개별 관리 (구 무소속 탭) =====
@@ -7023,7 +7027,7 @@
         function runPresidentialElection() {
             const candidates = presElectionCandidates();
             if(candidates.length === 0) {
-                alert('기준 원에 참여 중인 정당이 없습니다. 정당 탭 또는 선거 > 설정 탭에서 기준 원을 확인하세요.');
+                showCustomAlert('기준 원에 참여 중인 정당이 없습니다. 정당 탭 또는 선거 > 설정 탭에서 기준 원을 확인하세요.');
                 return;
             }
             const { round1, round2, winnerPartyId } = computeElectionRounds(presElectionMode, presElectionChamberBasis, candidates);
@@ -7038,7 +7042,7 @@
         function runPmElection() {
             const candidates = presElectionCandidates();
             if(candidates.length === 0) {
-                alert('기준 원에 참여 중인 정당이 없습니다. 정당 탭 또는 선거 > 설정 탭에서 기준 원을 확인하세요.');
+                showCustomAlert('기준 원에 참여 중인 정당이 없습니다. 정당 탭 또는 선거 > 설정 탭에서 기준 원을 확인하세요.');
                 return;
             }
             const { round1, round2, winnerPartyId } = computeElectionRounds(presElectionMode, presElectionChamberBasis, candidates);
@@ -7106,7 +7110,7 @@
                 winnerPartyId: r.winnerPartyId, winnerName: president.name,
                 date: new Date().toISOString(),
             });
-            alert(`${president.name || party.name}이(가) 대통령으로 취임했습니다.`);
+            showCustomAlert(`${president.name || party.name}이(가) 대통령으로 취임했습니다.`);
         }
 
         function applyPmElectionWinner() {
@@ -7127,7 +7131,7 @@
                 winnerPartyId: r.winnerPartyId, winnerName: pm.name,
                 date: new Date().toISOString(),
             });
-            alert(`${pm.name || party.name}이(가) ${pmRoleLabel()}으로 취임했습니다.`);
+            showCustomAlert(`${pm.name || party.name}이(가) ${pmRoleLabel()}으로 취임했습니다.`);
         }
 
         // ── 탭 전환 ────────────────────────────
@@ -7671,15 +7675,21 @@
         function districtSvgUpload(input) {
             const file = input.files?.[0]; if(!file) return;
             const hasExisting = districtMapMode === 'svg' || ['house','senate','third'].some(c => Object.keys(districtGrid[c]||{}).length > 0);
-            if(hasExisting && !confirm('기존 지역구 데이터가 모두 새 지도로 대체됩니다.\n(이름·의석 수·성향·당선자 정보 포함) 계속하시겠습니까?')) {
-                input.value = '';
+            if(hasExisting) {
+                showCustomConfirm('기존 지역구 데이터가 모두 새 지도로 대체됩니다.\n(이름·의석 수·성향·당선자 정보 포함) 계속하시겠습니까?',
+                    () => districtSvgUploadProceed(input, file),
+                    () => { input.value = ''; });
                 return;
             }
+            districtSvgUploadProceed(input, file);
+        }
+
+        function districtSvgUploadProceed(input, file) {
             const reader = new FileReader();
             reader.onload = e => {
                 const text = e.target.result;
                 const { viewBox, shapes } = parseDistrictJsx(text);
-                if(shapes.length === 0) { alert('맵 메이커에서 내보낸 .jsx 파일에서 지역구로 쓸 도형을 찾을 수 없습니다.'); return; }
+                if(shapes.length === 0) { showCustomAlert('맵 메이커에서 내보낸 .jsx 파일에서 지역구로 쓸 도형을 찾을 수 없습니다.'); return; }
 
                 const strokeColor = districtSvgMap?.strokeColor || '#00ffff';
                 const abbrStrokeColor = districtSvgMap?.abbrStrokeColor || null;
@@ -7755,19 +7765,20 @@
         }
 
         function districtSvgRevertToHex() {
-            if(!confirm('구 지역구(그리드) 방식으로 되돌립니다.\nSVG 지도로 만든 지역구/의석/성향/당선자 데이터가 모두 삭제됩니다. 계속하시겠습니까?')) return;
-            districtMapMode = 'hex';
-            districtSvgMap = null;
-            districtSeatCounts = {};
-            districtSvgTendency = {};
-            districtAbbr = {};
-            ['house','senate','third'].forEach(ch => { districtGrid[ch] = {}; districtNames[ch] = {}; districtMembers[ch] = {}; districtOrderSync(ch); });
-            selectedDistrictKey = null;
-            document.getElementById('districtNamePanel').style.display = 'none';
-            districtUpdateModeUI();
-            districtRenderMap();
-            renderDistrictListPanel();
-            elecUpdateDistrictInfo();
+            showCustomConfirm('구 지역구(그리드) 방식으로 되돌립니다.\nSVG 지도로 만든 지역구/의석/성향/당선자 데이터가 모두 삭제됩니다. 계속하시겠습니까?', () => {
+                districtMapMode = 'hex';
+                districtSvgMap = null;
+                districtSeatCounts = {};
+                districtSvgTendency = {};
+                districtAbbr = {};
+                ['house','senate','third'].forEach(ch => { districtGrid[ch] = {}; districtNames[ch] = {}; districtMembers[ch] = {}; districtOrderSync(ch); });
+                selectedDistrictKey = null;
+                document.getElementById('districtNamePanel').style.display = 'none';
+                districtUpdateModeUI();
+                districtRenderMap();
+                renderDistrictListPanel();
+                elecUpdateDistrictInfo();
+            });
         }
 
         // 국가>설정의 지역구 시스템 토글에서 호출 — 육각형 데이터는 지도로 바꿔도 그대로 보존되고
@@ -7839,23 +7850,24 @@
         // 지도에 잘못 섞여 들어온 도형(예: 배경/틀 사각형)을 통째로 제거 — 지도 자체에서 삭제되며 복구 불가
         function districtSvgRemoveShape(key) {
             if(!districtSvgMap) return;
-            if(!confirm(`"${key}" 도형을 지도에서 완전히 삭제합니다.\n(배경/틀처럼 잘못 포함된 도형을 뺄 때 사용) 계속하시겠습니까?`)) return;
-            districtSvgMap.shapes = districtSvgMap.shapes.filter(s => s.key !== key);
-            delete districtSeatCounts[key];
-            delete districtSvgTendency[key];
-            delete districtAbbr[key];
-            ['house','senate','third'].forEach(ch => {
-                delete districtGrid[ch][key];
-                delete districtNames[ch][key];
-                delete districtMembers[ch][key];
-                districtOrderSync(ch);
+            showCustomConfirm(`"${key}" 도형을 지도에서 완전히 삭제합니다.\n(배경/틀처럼 잘못 포함된 도형을 뺄 때 사용) 계속하시겠습니까?`, () => {
+                districtSvgMap.shapes = districtSvgMap.shapes.filter(s => s.key !== key);
+                delete districtSeatCounts[key];
+                delete districtSvgTendency[key];
+                delete districtAbbr[key];
+                ['house','senate','third'].forEach(ch => {
+                    delete districtGrid[ch][key];
+                    delete districtNames[ch][key];
+                    delete districtMembers[ch][key];
+                    districtOrderSync(ch);
+                });
+                if(selectedDistrictKey === key) selectedDistrictKey = null;
+                document.getElementById('districtNamePanel').style.display = 'none';
+                districtUpdateModeUI();
+                districtRenderMap();
+                renderDistrictListPanel();
+                elecUpdateDistrictInfo();
             });
-            if(selectedDistrictKey === key) selectedDistrictKey = null;
-            document.getElementById('districtNamePanel').style.display = 'none';
-            districtUpdateModeUI();
-            districtRenderMap();
-            renderDistrictListPanel();
-            elecUpdateDistrictInfo();
         }
 
         // SVG 지역구의 이름은 세 원이 공유하므로 house/senate/third 이름 저장소에 동시 반영
@@ -8245,13 +8257,14 @@
                 // SVG 지도의 도형 자체는 업로드된 파일에서 오므로 유지하고, 이름만 초기화 (세 원 공유이므로 전부 초기화)
                 const hasAnyName = ['house','senate','third'].some(ch => Object.keys(districtNames[ch]||{}).length > 0);
                 if(!hasAnyName) return;
-                if(!confirm('모든 지역구의 이름을 초기화하시겠습니까? (지도 도형·의석 수·성향은 유지됩니다)')) return;
-                ['house','senate','third'].forEach(ch => { districtNames[ch] = {}; });
-                selectedDistrictKey = null;
-                const namePanel = document.getElementById('districtNamePanel');
-                if(namePanel) namePanel.style.display = 'none';
-                districtRenderMap();
-                renderDistrictListPanel();
+                showCustomConfirm('모든 지역구의 이름을 초기화하시겠습니까? (지도 도형·의석 수·성향은 유지됩니다)', () => {
+                    ['house','senate','third'].forEach(ch => { districtNames[ch] = {}; });
+                    selectedDistrictKey = null;
+                    const namePanel = document.getElementById('districtNamePanel');
+                    if(namePanel) namePanel.style.display = 'none';
+                    districtRenderMap();
+                    renderDistrictListPanel();
+                });
                 return;
             }
             districtGrid[districtChamber] = {};
@@ -9511,7 +9524,7 @@
             });
             simulate(); refreshUI();
             switchDispTab(chamber);
-            alert(`보궐선거 결과 (${chamberName})\n\n${summary.join('\n')}\n\n의회>의원 탭에서 당선자 이름을 입력해 주세요.`);
+            showCustomAlert(`보궐선거 결과 (${chamberName})\n\n${summary.join('\n')}\n\n의회>의원 탭에서 당선자 이름을 입력해 주세요.`);
         }
 
         function elecApplyToParliament() {
@@ -9552,7 +9565,7 @@
             simulate(); refreshUI();
             if(lastCh) switchDispTab(lastCh);
             if(hadFactions) {
-                alert('선거 결과가 반영되었습니다.\n\n파벌이 있는 정당의 파벌별 의석은 선거 전 분포가 무효화되어 0으로 초기화되었습니다.\n정당 탭에서 파벌 의석을 다시 배분해 주세요.');
+                showCustomAlert('선거 결과가 반영되었습니다.\n\n파벌이 있는 정당의 파벌별 의석은 선거 전 분포가 무효화되어 0으로 초기화되었습니다.\n정당 탭에서 파벌 의석을 다시 배분해 주세요.');
             }
             if(wasDissolved) {
                 showCustomAlert('새 총선이 반영되어 의회 해산 상태가 해제되었습니다.');
@@ -10549,13 +10562,13 @@
             const chamber = targets[0]; // 'house' | 'senate' | 'third'
             const chamberName = chamber==='senate'?sName:chamber==='third'?tName:hName;
             const totalSeats = parseInt(document.getElementById(chamber==='senate'?'senateTotal':chamber==='third'?'thirdTotal':'houseTotal').value)||0;
-            if(totalSeats<=0) { alert('의석 수가 0입니다. 의회 설정에서 의석 수를 확인하세요.'); return; }
+            if(totalSeats<=0) { showCustomAlert('의석 수가 0입니다. 의회 설정에서 의석 수를 확인하세요.'); return; }
 
             // 보궐선거: 궐석 처리된 지역구만 대상으로 재선거
             if(isByElection) {
                 const vacantKeys = Object.keys(districtMembers[chamber]).filter(k => districtMembers[chamber][k]?.vacant);
                 if(vacantKeys.length === 0) {
-                    alert('궐석 처리된 지역구가 없습니다.\n의회 > 의원 탭에서 궐석 처리를 먼저 진행하세요.');
+                    showCustomAlert('궐석 처리된 지역구가 없습니다.\n의회 > 의원 탭에서 궐석 처리를 먼저 진행하세요.');
                     return;
                 }
                 await elecRunByElection(chamber, vacantKeys, chamberName);
@@ -10583,16 +10596,16 @@
             const chamberStore = elecStore[chamber] || {};
             const partyProb = parties.reduce((s,p)=>s+(p.status==='banned'?0:(chamberStore[p.id]?.prob||0)),0);
             if(propSeats > 0 && !isRegionalList && partyProb<=0) {
-                alert('지지율을 입력해 주세요.\n각 정당의 지지율(%) 칸에 숫자를 입력하세요.');
+                showCustomAlert('지지율을 입력해 주세요.\n각 정당의 지지율(%) 칸에 숫자를 입력하세요.');
                 return;
             }
             if(propSeats > 0 && isRegionalList && !regionScopeHasVoteData(chamber)) {
-                alert('권역별 득표율이 없습니다.\n여론 > 권역 탭에서 권역을 만들고 지역구를 배정하거나(자동 집계), 득표율을 직접 입력하세요.');
+                showCustomAlert('권역별 득표율이 없습니다.\n여론 > 권역 탭에서 권역을 만들고 지역구를 배정하거나(자동 집계), 득표율을 직접 입력하세요.');
                 return;
             }
             // 지역구 모드인데 활성 지역구가 없으면 안내
             if((elecMode === 'district' || elecMode === 'mixed') && districtSeats === 0) {
-                alert('지역구 탭에서 활성화된 지역구가 없습니다.\n지역구를 먼저 추가하거나 비례 모드를 선택하세요.');
+                showCustomAlert('지역구 탭에서 활성화된 지역구가 없습니다.\n지역구를 먼저 추가하거나 비례 모드를 선택하세요.');
                 return;
             }
 
@@ -10629,7 +10642,7 @@
                 }
                 p.fraudAttempt = null;
             });
-            if(fraudNotices.length > 0) { alert(fraudNotices.join('\n')); renderPartyInfoList(); }
+            if(fraudNotices.length > 0) { showCustomAlert(fraudNotices.join('\n')); renderPartyInfoList(); }
 
             // ── 오차 적용 후 각 당 지지율 계산 (활동 금지된 정당은 저장된 지지율과 무관하게 가중치 0) ──
             const partyWeighted = parties.map(p => {
@@ -10679,7 +10692,7 @@
             if(propSeats > 0 && !isRegionalList && wTotal<=0) {
                 elecRunning=false;
                 runBtn.style.background='var(--tno-neon)'; runBtn.style.color='#000'; runBtn.textContent='>> 개표 시작 <<';
-                alert('지지율을 입력해 주세요.\n각 정당의 지지율(%) 칸에 숫자를 입력하세요.');
+                showCustomAlert('지지율을 입력해 주세요.\n각 정당의 지지율(%) 칸에 숫자를 입력하세요.');
                 return;
             }
 
