@@ -350,7 +350,7 @@
           },
           {
             status: 'current',
-            title: '1.5.P - Powers I',
+            title: '1.5.P - Powers',
             desc: `2026.09.15
               <br>- 지역구 지도(SVG)에도 육각형 지도와 동일하게 이동/확대 기능 추가 — 휠클릭 드래그로 이동, Shift+스크롤로 확대/축소, 위치 초기화 버튼
               <br>- 상단 고정바에 있던 단원제/양원제/삼원제 선택 버튼을 국가 > 설정으로 이동
@@ -382,15 +382,15 @@
           },
           {
             status: 'future',
-            title: '1.5.4 - Powers II',
-            desc: `2026.09.15
-              <br>- 2차 개발`
+            title: '1.5.S - Scandals',
+            desc: `2026.09.16
+              <br>- 부정선거 추가`
           },
           {
             status: 'future',
-            title: '1.5.S - Scandals',
+            title: '1.5.5 - ?',
             desc: `2026.09.XX
-              <br>- 부정선거 추가`
+              <br>- 2차 개발`
           },
           {
             status: 'future',
