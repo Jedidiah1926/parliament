@@ -81,18 +81,6 @@
             return p ? p.color : '#666';
         }
 
-        // 당적 select 박스 자체를 선택된 정당 색으로 은은하게 빛나게(네온) 표시 — 무소속/미지정이면 회색으로 되돌림
-        function partySelectGlowCss(partyId) {
-            const color = partyDotColor(partyId);
-            return `border-color:${color};box-shadow:0 0 6px ${color};`;
-        }
-        function applyPartySelectGlow(selectEl, partyId) {
-            if(!selectEl) return;
-            const color = partyDotColor(partyId);
-            selectEl.style.borderColor = color;
-            selectEl.style.boxShadow = `0 0 6px ${color}`;
-        }
-
         // ── 대통령/총리/국무위원을 실제 의원(지역구·비례·무소속)과 연결 — 이름·사진·당적 자동 반영 ──────────────
         function chamberDisplayName(ch) {
             return document.getElementById(ch+'NameInput')?.value || ({house:'하원',senate:'상원',third:'삼원'}[ch] || ch);
@@ -269,7 +257,7 @@
             const photoInput = document.querySelector('#presidentPhotoBox input[type=file]');
             if(photoInput) photoInput.disabled = !!resolved;
             const partySelect = document.getElementById('presidentPartySelect');
-            if(partySelect) { partySelect.innerHTML = partySelectOptionsHtml(effPartyId); partySelect.disabled = !!resolved; applyPartySelectGlow(partySelect, effPartyId); }
+            if(partySelect) { partySelect.innerHTML = partySelectOptionsHtml(effPartyId); partySelect.disabled = !!resolved; }
             const dot = document.getElementById('presidentPartyDot');
             if(dot) dot.style.background = partyDotColor(effPartyId);
             const picker = document.getElementById('presidentMemberPicker');
@@ -335,7 +323,7 @@
             const photoInput = document.querySelector('#chairPhotoBox input[type=file]');
             if(photoInput) photoInput.disabled = !!resolved;
             const partySelect = document.getElementById('chairPartySelect');
-            if(partySelect) { partySelect.innerHTML = partySelectOptionsHtml(effPartyId); partySelect.disabled = !!resolved; applyPartySelectGlow(partySelect, effPartyId); }
+            if(partySelect) { partySelect.innerHTML = partySelectOptionsHtml(effPartyId); partySelect.disabled = !!resolved; }
             const dot = document.getElementById('chairPartyDot');
             if(dot) dot.style.background = partyDotColor(effPartyId);
             const picker = document.getElementById('chairMemberPicker');
@@ -435,7 +423,7 @@
             const photoInput = document.querySelector('#pmPhotoBox input[type=file]');
             if(photoInput) photoInput.disabled = !!resolved;
             const partySelect = document.getElementById('pmPartySelect');
-            if(partySelect) { partySelect.innerHTML = partySelectOptionsHtml(effPartyId); partySelect.disabled = !!resolved; applyPartySelectGlow(partySelect, effPartyId); }
+            if(partySelect) { partySelect.innerHTML = partySelectOptionsHtml(effPartyId); partySelect.disabled = !!resolved; }
             const dot = document.getElementById('pmPartyDot');
             if(dot) dot.style.background = partyDotColor(effPartyId);
             const picker = document.getElementById('pmMemberPicker');
@@ -528,7 +516,7 @@
             const photoInput = document.querySelector('#deputyPmPhotoBox input[type=file]');
             if(photoInput) photoInput.disabled = !!resolved;
             const partySelect = document.getElementById('deputyPmPartySelect');
-            if(partySelect) { partySelect.innerHTML = partySelectOptionsHtml(effPartyId); partySelect.disabled = !!resolved; applyPartySelectGlow(partySelect, effPartyId); }
+            if(partySelect) { partySelect.innerHTML = partySelectOptionsHtml(effPartyId); partySelect.disabled = !!resolved; }
             const dot = document.getElementById('deputyPmPartyDot');
             if(dot) dot.style.background = partyDotColor(effPartyId);
             const picker = document.getElementById('deputyPmMemberPicker');
@@ -607,7 +595,7 @@
             const photoInput = document.querySelector('#pmNomineePhotoBox input[type=file]');
             if(photoInput) photoInput.disabled = !!resolved;
             const partySelect = document.getElementById('pmNomineePartySelect');
-            if(partySelect) { partySelect.innerHTML = partySelectOptionsHtml(effPartyId); partySelect.disabled = !!resolved; applyPartySelectGlow(partySelect, effPartyId); }
+            if(partySelect) { partySelect.innerHTML = partySelectOptionsHtml(effPartyId); partySelect.disabled = !!resolved; }
             const dot = document.getElementById('pmNomineePartyDot');
             if(dot) dot.style.background = partyDotColor(effPartyId);
             const picker = document.getElementById('pmNomineeMemberPicker');
@@ -720,7 +708,7 @@
                             <div style="display:flex;align-items:center;gap:6px;">
                                 <span style="width:9px;height:9px;border-radius:50%;flex-shrink:0;background:${partyDotColor(effPartyId)};"></span>
                                 <select ${resolved?'disabled':''} onchange="updateCabinetMember('${m.id}','partyId',this.value?parseInt(this.value):null)"
-                                    style="flex:1;min-width:0;background:#000;border:1px solid #333;color:var(--tno-gold);font-family:inherit;font-size:0.85rem;padding:4px;${partySelectGlowCss(effPartyId)}">
+                                    style="flex:1;min-width:0;background:#000;border:1px solid #333;color:var(--tno-gold);font-family:inherit;font-size:0.85rem;padding:4px;">
                                     ${partySelectOptionsHtml(effPartyId)}
                                 </select>
                             </div>
@@ -939,7 +927,7 @@
             cvs.width = totalW + pad*2;
             cvs.height = totalH + pad*2;
             const ctx = cvs.getContext('2d');
-            ctx.fillStyle = '#0a0c10';
+            ctx.fillStyle = '#000';
             ctx.fillRect(0, 0, cvs.width, cvs.height);
             ctx.textBaseline = 'middle';
             ctx.textAlign = 'center';
@@ -958,7 +946,7 @@
                     cy += labelH + gapSm;
 
                     const photoX = x + (cardW - photoW)/2;
-                    ctx.fillStyle = '#0a0c10';
+                    ctx.fillStyle = '#000';
                     ctx.fillRect(photoX, cy, photoW, photoH);
                     const img = photoMap.get(c);
                     if(img) drawImageCover(ctx, img, photoX, cy, photoW, photoH);
@@ -988,7 +976,11 @@
                     ctx.lineWidth = Math.max(1, Math.round(scale));
                     ctx.strokeRect(badgeX + 0.5, cy + 0.5, badgeW - 1, badgeH - 1);
                     ctx.fillStyle = partyColor;
+                    ctx.shadowColor = partyColor;
+                    ctx.shadowBlur = Math.round(8*scale);
                     ctx.fillText(partyName, cx, cy + badgeH/2, badgeW - Math.round(8*scale));
+                    ctx.shadowBlur = 0;
+                    ctx.shadowColor = 'transparent';
                 });
                 cursorY += lineCounts[rIdx] * (cardH + cardGap) - cardGap + rowGap;
             });
