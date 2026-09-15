@@ -3674,7 +3674,7 @@
                 throw new Error("Invalid parliament data");
 
             ideologies = parl.ideologies;
-            parties    = parl.parties.map(p => ({ leaderName:'', leaderPhoto:'', leaderLinkedSeat:null, logoPhoto:'', showLogoInStats:false, description:'', factions:[], seatsThird:0, inThird:false, abbr:'', ...p, factions:(p.factions||[]).map(f=>({leaderName:'',leaderPhoto:'',logoPhoto:'',usePartyColor:false,seatsThird:0,...f})) }));
+            parties    = parl.parties.map(p => ({ leaderName:'', leaderPhoto:'', leaderLinkedSeat:null, logoPhoto:'', showLogoInStats:false, description:'', factions:[], seatsThird:0, inThird:false, abbr:'', fraudAttempt:null, ...p, factions:(p.factions||[]).map(f=>({leaderName:'',leaderPhoto:'',logoPhoto:'',usePartyColor:false,seatsThird:0,...f})) }));
             coalitions = parl.coalitions.map(c => ({ leadPartyId:null, externalSupporters:[], externalSupportLabel:'각외협력', ...c }));
             manualSort = parl.manualSort ?? false;
             // 구버전 저장 파일 호환: districtKey 필드가 없으면 비례(미연결) 무소속으로 취급
@@ -5368,6 +5368,75 @@
         }
 
         // ===== 정당 탭: 정당 정보 =====
+        // ── 부정선거 시도 (정당별) — 다음 총선 개표 1회에만 적용되는 일회성 설정 ──────────────
+        // p.fraudAttempt = { chamber, boostPct, catchChance, riggedDistricts: string[] } | null
+        function toggleFraudAttempt(pid, checked) {
+            const p = parties.find(x => x.id === pid);
+            if(!p) return;
+            p.fraudAttempt = checked ? { chamber: chamberList()[0], boostPct: 10, catchChance: 30, riggedDistricts: [] } : null;
+            renderPartyInfoList();
+        }
+        function updateFraudAttempt(pid, field, val) {
+            const p = parties.find(x => x.id === pid);
+            if(!p || !p.fraudAttempt) return;
+            p.fraudAttempt[field] = val;
+            if(field === 'chamber') p.fraudAttempt.riggedDistricts = []; // 원이 바뀌면 그 원에 없는 지역구 키가 남지 않도록 초기화
+            renderPartyInfoList();
+        }
+        function updateFraudRiggedDistricts(pid, selectEl) {
+            const p = parties.find(x => x.id === pid);
+            if(!p || !p.fraudAttempt) return;
+            p.fraudAttempt.riggedDistricts = Array.from(selectEl.selectedOptions).map(o => o.value);
+        }
+        function fraudDistrictOptionsHtml(chamber, selected) {
+            const sel = new Set(selected || []);
+            if(districtMapMode === 'svg') {
+                if(!districtSvgMap) return '';
+                return districtSvgMap.shapes.filter(s => districtGrid[chamber]?.[s.key]).map(s =>
+                    `<option value="${s.key}" ${sel.has(s.key)?'selected':''}>${districtNames.house[s.key]||s.key}</option>`
+                ).join('');
+            }
+            return districtSortedKeys(chamber).map(key =>
+                `<option value="${key}" ${sel.has(key)?'selected':''}>${districtNames[chamber][key]||key}</option>`
+            ).join('');
+        }
+        function renderFraudAttemptSection(p) {
+            const fa = p.fraudAttempt;
+            return `
+                <div style="margin-bottom:6px;padding:8px;background:#0a0c10;border:1px solid #663333;">
+                    <label style="display:flex;align-items:center;gap:6px;cursor:pointer;color:var(--tno-alert);font-size:0.85rem;${fa?'margin-bottom:8px;':''}">
+                        <input type="checkbox" ${fa?'checked':''} onchange="toggleFraudAttempt(${p.id},this.checked)"> ⚠ 부정선거 시도 (다음 총선 개표 1회에 적용)
+                    </label>
+                    ${!fa ? '' : `
+                    <div style="display:flex;flex-direction:column;gap:6px;">
+                        <div style="display:flex;align-items:center;gap:6px;">
+                            <span style="color:#888;font-size:0.78rem;width:100px;flex-shrink:0;">대상 의원실</span>
+                            <select onchange="updateFraudAttempt(${p.id},'chamber',this.value)" style="flex:1;min-width:0;">
+                                ${chamberList().map(ch => `<option value="${ch}" ${fa.chamber===ch?'selected':''}>${chamberDisplayName(ch)}</option>`).join('')}
+                            </select>
+                        </div>
+                        <div style="display:flex;align-items:center;gap:6px;">
+                            <span style="color:#888;font-size:0.78rem;width:100px;flex-shrink:0;">득표율 부풀리기</span>
+                            <input type="number" min="0" max="100" value="${fa.boostPct}" style="flex:1;min-width:0;" onchange="updateFraudAttempt(${p.id},'boostPct',parseFloat(this.value)||0)">
+                            <span style="color:#666;font-size:0.78rem;flex-shrink:0;">%p</span>
+                        </div>
+                        <div style="display:flex;align-items:center;gap:6px;">
+                            <span style="color:#888;font-size:0.78rem;width:100px;flex-shrink:0;">발각 확률</span>
+                            <input type="number" min="0" max="100" value="${fa.catchChance}" style="flex:1;min-width:0;" onchange="updateFraudAttempt(${p.id},'catchChance',parseFloat(this.value)||0)">
+                            <span style="color:#666;font-size:0.78rem;flex-shrink:0;">%</span>
+                        </div>
+                        <div>
+                            <span style="color:#888;font-size:0.78rem;">지역구 개표 조작 (선택한 지역구는 실제 결과와 무관하게 이 정당이 승리)</span>
+                            <select multiple onchange="updateFraudRiggedDistricts(${p.id},this)" style="width:100%;box-sizing:border-box;height:84px;margin-top:4px;">
+                                ${fraudDistrictOptionsHtml(fa.chamber, fa.riggedDistricts)}
+                            </select>
+                        </div>
+                        <div style="color:#664444;font-size:0.72rem;line-height:1.5;">발각되면 이번 선거에는 부정 효과가 반영되지 않고 활동 금지 처분을 받습니다. 발각되지 않으면 효과가 그대로 반영됩니다. 결과와 무관하게 시도는 개표 1회로 소진됩니다.</div>
+                    </div>`}
+                </div>
+            `;
+        }
+
         function renderPartyInfoList() {
             const container = document.getElementById('partyInfoList');
             if(!container) return;
@@ -5454,6 +5523,7 @@
                                 onchange="updateParty(${idx},'showLogoInStats',true);simulate();"> 당 로고
                         </label>
                     </div>
+                    ${renderFraudAttemptSection(p)}
                     <textarea placeholder="당에 대한 설명을 입력하세요..."
                         style="width:100%;box-sizing:border-box;background:#000;border:1px solid #2a2a2a;color:#bbb;font-family:'NeoDunggeunmo','VT323',monospace;font-size:0.85rem;padding:6px;resize:vertical;min-height:60px;outline:none;line-height:1.5;"
                         onchange="updateParty(${idx},'description',this.value)">${p.description||''}</textarea>
@@ -9941,9 +10011,31 @@
 
             const speed = Math.round((101 - parseInt(document.getElementById('elecSpeed').value)) * 1.5);
 
+            // ── 부정선거 시도 판정 — 이 원(chamber)을 대상으로 시도한 정당마다 발각 확률을 굴려,
+            // 발각되면 부정 효과 없이 활동 금지 처분, 발각되지 않으면 득표율 부풀리기/지역구 조작이 그대로 반영됨.
+            // 결과와 무관하게 시도는 이 개표 1회로 소진(초기화)됨.
+            const effChamberStore = JSON.parse(JSON.stringify(chamberStore));
+            const fraudRiggedByKey = {}; // { districtKey: partyId } — 발각되지 않은 시도만 반영
+            const fraudNotices = [];
+            parties.forEach(p => {
+                const fa = p.fraudAttempt;
+                if(!fa || fa.chamber !== chamber) return;
+                const caught = Math.random()*100 < (fa.catchChance ?? 0);
+                if(caught) {
+                    p.status = 'banned';
+                    fraudNotices.push(`⚠ ${p.name}의 부정선거 시도가 발각되어, 이번 선거 결과에 반영되지 않고 활동이 금지됩니다.`);
+                } else {
+                    if(!effChamberStore[p.id]) effChamberStore[p.id] = { prob: 0, err: 0 };
+                    effChamberStore[p.id].prob = (effChamberStore[p.id].prob || 0) + (fa.boostPct || 0);
+                    (fa.riggedDistricts || []).forEach(key => { fraudRiggedByKey[key] = p.id; });
+                }
+                p.fraudAttempt = null;
+            });
+            if(fraudNotices.length > 0) { alert(fraudNotices.join('\n')); renderPartyInfoList(); }
+
             // ── 오차 적용 후 각 당 지지율 계산 (활동 금지된 정당은 저장된 지지율과 무관하게 가중치 0) ──
             const partyWeighted = parties.map(p => {
-                const st = chamberStore[p.id]||{prob:0,err:0};
+                const st = effChamberStore[p.id]||{prob:0,err:0};
                 const w  = p.status==='banned' ? 0 : Math.max(0, st.prob + (Math.random()*2-1)*(st.err||0));
                 return { id:p.id, w, origProb: st.prob };
             });
@@ -9996,6 +10088,10 @@
             // ── 지역구 선거 결과 먼저 계산 (연동형/권역형 비례 배분에 지역구 당선 결과가 필요) ──
             let districtResults = [];
             if(districtSeats > 0) districtResults = elecSimulateDistricts(chamber);
+            // 발각되지 않은 부정선거 시도의 지역구 개표 조작 반영 — 실제 결과와 무관하게 지정된 정당으로 덮어씀
+            if(Object.keys(fraudRiggedByKey).length > 0) {
+                districtResults.forEach(d => { if(fraudRiggedByKey[d.key]) d.partyId = fraudRiggedByKey[d.key]; });
+            }
 
             // ── 비례 의석 배분 (전국형/권역형 × 병립~연동 절충, 원별 설정) ────
             const listSeatMap = allocateListSeats(chamber, weighted, districtResults, propSeats, totalSeats);
