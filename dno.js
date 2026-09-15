@@ -2829,6 +2829,12 @@
                     elecLastResults: JSON.parse(JSON.stringify(elecLastResults)),
                     elecTitle:      document.getElementById('elecTitle')?.value  || '',
                     elecYear:       document.getElementById('elecYear')?.value   || '',
+                    presElectionMode: presElectionMode,
+                    presElectionChamberBasis: presElectionChamberBasis,
+                    presElectionRecords: JSON.parse(JSON.stringify(presElectionRecords)),
+                    presElectionLastResult: presElectionLastResult ? JSON.parse(JSON.stringify(presElectionLastResult)) : null,
+                    presElecTitle:  document.getElementById('presElecTitle')?.value || '',
+                    presElecYear:   document.getElementById('presElecYear')?.value  || '',
                     district: {
                         grid: JSON.parse(JSON.stringify(districtGrid)),
                         view: { ...districtView },
@@ -2909,6 +2915,12 @@
             const ge = id => document.getElementById(id);
             if(ge('elecTitle')) ge('elecTitle').value = elec.elecTitle || '';
             if(ge('elecYear'))  ge('elecYear').value  = elec.elecYear  || '';
+            presElectionMode = ['plurality','runoff','electoral'].includes(elec.presElectionMode) ? elec.presElectionMode : 'plurality';
+            presElectionChamberBasis = elec.presElectionChamberBasis || 'house';
+            presElectionRecords = Array.isArray(elec.presElectionRecords) ? elec.presElectionRecords : [];
+            presElectionLastResult = elec.presElectionLastResult ?? null;
+            if(ge('presElecTitle')) ge('presElecTitle').value = elec.presElecTitle || '';
+            if(ge('presElecYear'))  ge('presElecYear').value  = elec.presElecYear  || '';
             // 지역구 (v6 이하: house/senate만, v9: third 포함, v11: 이름/순서 포함, v12: 당선 의원 정보 포함)
             if(elec.district?.grid) {
                 const g = elec.district.grid;
@@ -2975,6 +2987,9 @@
             setGovType(cfg.govType ?? "parliamentary");
             setVetoHolder(cfg.vetoHolder ?? "none");
             renderNationConfig();
+            setPresElectionMode(presElectionMode);
+            setPresElectionChamberBasis(presElectionChamberBasis);
+            renderPresElecResultPanel();
 
             // ── 전체 렌더 ──
             toggleSystem();
@@ -3258,7 +3273,7 @@
             refreshUI();
             if(sub === 'config') { switchConfigInnerTab(configInnerTab); }
             if(sub === 'legislation') { switchLegislationInnerTab('bill'); }
-            if(sub === 'election') { elecRenderList(); }
+            if(sub === 'election') { switchElectionInnerTab(electionInnerTab); }
             if(sub === 'record') { switchRecordInnerTab('archive'); }
             if(sub === 'party') { switchPartyGroupInnerTab('ideology'); }
             if(sub === 'settings') { switchSetupInnerTab('house'); }
@@ -5214,6 +5229,192 @@
         let elecRecords  = [];         // 선거 기록 배열
         let elecLastResult = null;     // 마지막 개표 결과 (의원실별 순차 개표 시에는 마지막 의원실 결과만 참조용으로 담김)
         let elecLastResults = {};      // 반영 대기 중인 개표 결과 (의원실별) — 여러 의원실을 한 번에 개표해도 모두 반영되도록 의원실 키로 누적
+
+        // ═══════════════════════════════════════
+        // 국가 > 선거 > 대선 (대통령 선거)
+        // ═══════════════════════════════════════
+        let electionInnerTab = 'general'; // 'presidential' | 'general' | 'settings'
+        let presElectionMode = 'plurality'; // 'plurality'(단순 다수 대표제) | 'runoff'(결선투표제) | 'electoral'(선거인단제)
+        let presElectionChamberBasis = 'house'; // 지지율(선거인단제는 지역구) 데이터를 가져올 원
+        let presElectionLastResult = null; // 마지막 개표 결과
+        let presElectionRecords = []; // 대선 기록
+
+        function switchElectionInnerTab(inner) {
+            electionInnerTab = inner;
+            ['presidential','general','settings'].forEach(k => {
+                document.getElementById('innerTabElec'+k.charAt(0).toUpperCase()+k.slice(1))?.classList.toggle('active', k===inner);
+                document.getElementById('innerContentElec'+k.charAt(0).toUpperCase()+k.slice(1))?.classList.toggle('active', k===inner);
+            });
+            elecRenderList();
+            if(inner === 'presidential') { updatePresElecSummary(); renderPresElecResultPanel(); }
+            if(inner === 'settings') applyPresElectionChamberRestrictions();
+        }
+
+        function setPresElectionMode(mode) {
+            if(!['plurality','runoff','electoral'].includes(mode)) return;
+            presElectionMode = mode;
+            document.getElementById('presElecModePluralityBtn')?.classList.toggle('active', mode==='plurality');
+            document.getElementById('presElecModeRunoffBtn')?.classList.toggle('active', mode==='runoff');
+            document.getElementById('presElecModeElectoralBtn')?.classList.toggle('active', mode==='electoral');
+            const hint = document.getElementById('presElecModeHint');
+            if(hint) hint.textContent = mode==='plurality' ? '1위 후보가 과반이 아니어도 최다 득표로 당선됩니다'
+                : mode==='runoff' ? '1위가 과반을 넘지 못하면 상위 2명이 2차 투표로 다시 겨룹니다'
+                : '기준 원의 지역구 결과를 선거인단(지역구별 승자)으로 집계해 당선자를 정합니다';
+            updatePresElecSummary();
+        }
+
+        function applyPresElectionChamberRestrictions() {
+            const chambers = chamberList();
+            ['house','senate','third'].forEach(c => {
+                const btn = document.getElementById('presElecChamber'+c.charAt(0).toUpperCase()+c.slice(1)+'Btn');
+                if(btn) btn.style.display = chambers.includes(c) ? '' : 'none';
+            });
+            if(!chambers.includes(presElectionChamberBasis)) setPresElectionChamberBasis(chambers[0] || 'house');
+        }
+
+        function setPresElectionChamberBasis(ch) {
+            if(!['house','senate','third'].includes(ch)) return;
+            presElectionChamberBasis = ch;
+            ['house','senate','third'].forEach(c => {
+                document.getElementById('presElecChamber'+c.charAt(0).toUpperCase()+c.slice(1)+'Btn')?.classList.toggle('active', c===ch);
+            });
+            updatePresElecSummary();
+        }
+
+        function updatePresElecSummary() {
+            const modeLabel = { plurality:'단순 다수 대표제', runoff:'결선투표제', electoral:'선거인단제' }[presElectionMode];
+            const modeEl = document.getElementById('presElecModeSummary');
+            if(modeEl) modeEl.textContent = modeLabel;
+            const chEl = document.getElementById('presElecChamberSummary');
+            if(chEl) chEl.textContent = chamberDisplayName(presElectionChamberBasis);
+        }
+
+        // 대선 후보 명단 — 기준 원에 참여 중이고 활동 금지되지 않은, 무소속이 아닌 정당의 당수를 후보로 삼는다
+        function presElectionCandidates() {
+            const ch = presElectionChamberBasis;
+            return parties.filter(p => p[inKeyFor(ch)] && p.status !== 'banned' && p.ideologyId !== IND_IDEOLOGY_ID);
+        }
+
+        // 단순 다수/결선투표: 기준 원의 지지율(elecStore) + 노이즈로 득표율 산출
+        function presElectionPopularVote(candidates) {
+            const store = elecStore[presElectionChamberBasis] || {};
+            const weighted = candidates.map(p => {
+                const st = store[p.id] || { prob:0, err:0 };
+                const w = Math.max(0, st.prob + (Math.random()*2-1)*(st.err||0));
+                return { partyId: p.id, w };
+            });
+            const total = weighted.reduce((s,c) => s+c.w, 0);
+            if(total <= 0) {
+                const even = 100 / (weighted.length || 1);
+                return weighted.map(c => ({ partyId: c.partyId, pct: even }));
+            }
+            return weighted.map(c => ({ partyId: c.partyId, pct: (c.w/total)*100 }));
+        }
+
+        // 선거인단제: 기준 원의 지역구 결과(elecSimulateDistricts)를 선거인단으로 집계
+        function presElectionElectoralVote(candidates) {
+            const candidateIds = new Set(candidates.map(p=>p.id));
+            const results = elecSimulateDistricts(presElectionChamberBasis); // [{key, partyId}]
+            const electorCounts = {};
+            let totalElectors = 0;
+            results.forEach(r => {
+                if(!candidateIds.has(r.partyId)) return; // 후보 자격 없는 정당(무소속/활동금지)이 가져간 지역구는 집계 제외
+                electorCounts[r.partyId] = (electorCounts[r.partyId]||0) + 1;
+                totalElectors++;
+            });
+            return candidates.map(p => ({ partyId: p.id, electors: electorCounts[p.id]||0, pct: totalElectors>0 ? (electorCounts[p.id]||0)/totalElectors*100 : 0 }));
+        }
+
+        function runPresidentialElection() {
+            const candidates = presElectionCandidates();
+            if(candidates.length === 0) {
+                alert('기준 원에 참여 중인 정당이 없습니다. 정당 탭 또는 선거 > 설정 탭에서 기준 원을 확인하세요.');
+                return;
+            }
+            let round1, round2 = null, winnerPartyId;
+            if(presElectionMode === 'electoral') {
+                round1 = presElectionElectoralVote(candidates);
+                round1.sort((a,b) => b.electors - a.electors);
+                winnerPartyId = round1[0]?.partyId ?? null;
+            } else {
+                round1 = presElectionPopularVote(candidates);
+                round1.sort((a,b) => b.pct - a.pct);
+                winnerPartyId = round1[0]?.partyId ?? null;
+                if(presElectionMode === 'runoff' && round1[0] && round1[0].pct < 50 && round1.length > 1) {
+                    const top2Ids = [round1[0].partyId, round1[1].partyId];
+                    const top2Candidates = candidates.filter(p => top2Ids.includes(p.id));
+                    // 2차 투표: 1차 득표를 기준 삼아 노이즈를 더해 재정규화 (단순화된 결선 모델)
+                    const weighted = top2Candidates.map(p => {
+                        const base = round1.find(r => r.partyId === p.id)?.pct || 0;
+                        return { partyId: p.id, w: Math.max(0, base + (Math.random()*20-10)) };
+                    });
+                    const total = weighted.reduce((s,c)=>s+c.w,0) || 1;
+                    round2 = weighted.map(c => ({ partyId: c.partyId, pct: (c.w/total)*100 })).sort((a,b)=>b.pct-a.pct);
+                    winnerPartyId = round2[0]?.partyId ?? winnerPartyId;
+                }
+            }
+            presElectionLastResult = {
+                mode: presElectionMode,
+                chamber: presElectionChamberBasis,
+                round1, round2, winnerPartyId,
+                title: document.getElementById('presElecTitle')?.value || '',
+                year: document.getElementById('presElecYear')?.value || '',
+            };
+            renderPresElecResultPanel();
+        }
+
+        function renderPresElecResultPanel() {
+            const panel = document.getElementById('presElecResultPanel');
+            if(!panel) return;
+            const r = presElectionLastResult;
+            if(!r) { panel.style.display = 'none'; return; }
+            panel.style.display = '';
+            const isElectoral = r.mode === 'electoral';
+            const rowHtml = (c, isWinner) => {
+                const party = parties.find(p => p.id === c.partyId);
+                const valLabel = isElectoral ? `선거인단 ${c.electors}명 (${c.pct.toFixed(1)}%)` : `${c.pct.toFixed(1)}%`;
+                return `
+                    <div style="display:flex;align-items:center;gap:8px;padding:6px 8px;background:${isWinner?'color-mix(in srgb, var(--tno-neon) 10%, transparent)':'#0a0c10'};border:1px solid ${isWinner?'var(--tno-neon)':'#222'};margin-bottom:4px;">
+                        <span style="width:9px;height:9px;border-radius:50%;flex-shrink:0;background:${party?.color||'#666'};"></span>
+                        <span style="flex:1;color:${isWinner?'var(--tno-neon)':'#ccc'};font-size:0.88rem;">${party?.leaderName || party?.name || '(후보 없음)'} <span style="color:#666;font-size:0.78rem;">(${party?.name||''})</span></span>
+                        <span style="color:${isWinner?'var(--tno-neon)':'#888'};font-size:0.85rem;">${valLabel}</span>
+                        ${isWinner?'<span style="color:var(--tno-neon);font-size:0.8rem;">★ 당선</span>':''}
+                    </div>
+                `;
+            };
+            let html = `<div style="color:#666;font-size:0.78rem;margin-bottom:6px;">${r.round2 ? '1차 투표' : '개표 결과'}</div>`;
+            html += r.round1.map(c => rowHtml(c, !r.round2 && c.partyId === r.winnerPartyId)).join('');
+            if(r.round2) {
+                html += `<div style="color:#666;font-size:0.78rem;margin:10px 0 6px;">결선투표 (2차)</div>`;
+                html += r.round2.map(c => rowHtml(c, c.partyId === r.winnerPartyId)).join('');
+            }
+            const winnerParty = parties.find(p => p.id === r.winnerPartyId);
+            html += `
+                <button onclick="applyPresidentialWinner()" style="width:100%;margin-top:10px;background:var(--tno-neon);color:#000;border:none;padding:10px;font-family:inherit;font-size:0.95rem;cursor:pointer;letter-spacing:1px;">✔ ${winnerParty?.leaderName || winnerParty?.name || '당선자'}를 대통령으로 반영</button>
+                <button onclick="runPresidentialElection()" style="width:100%;margin-top:6px;background:transparent;border:1px solid var(--tno-neon);color:var(--tno-neon);padding:9px;font-family:inherit;font-size:0.9rem;cursor:pointer;">↺ 재개표</button>
+            `;
+            panel.innerHTML = html;
+        }
+
+        function applyPresidentialWinner() {
+            const r = presElectionLastResult;
+            if(!r || !r.winnerPartyId) return;
+            const party = parties.find(p => p.id === r.winnerPartyId);
+            if(!party) return;
+            president.linkedSeat = null;
+            president.partyId = party.id;
+            president.name = party.leaderName || '';
+            president.photo = party.leaderPhoto || '';
+            renderPresidentSection();
+            renderCabinetDisplay();
+            presElectionRecords.push({
+                id: 'pe_'+Date.now(),
+                title: r.title, year: r.year, mode: r.mode, chamber: r.chamber,
+                winnerPartyId: r.winnerPartyId, winnerName: president.name,
+                date: new Date().toISOString(),
+            });
+            alert(`${president.name || party.name}이(가) 대통령으로 취임했습니다.`);
+        }
 
         // ── 탭 전환 ────────────────────────────
         function switchDispTab(tab) {
