@@ -3649,10 +3649,11 @@
         const chamberLogoImgCache = { house: null, senate: null, third: null }; // { src, img } — 매 프레임 새로 디코딩하지 않도록 캐시
 
         // ── 국가 > 설정 > 의회: 각 원의 의장/부의장 ──────────────
+        // deputies: 부의장 — 여러 명 추가/삭제 가능 (기본 0명), 부총리(deputyPms)와 동일한 패턴
         let chamberLeaders = {
-            house:  { speaker: { name: '', photo: '' }, deputy: { name: '', photo: '' } },
-            senate: { speaker: { name: '', photo: '' }, deputy: { name: '', photo: '' } },
-            third:  { speaker: { name: '', photo: '' }, deputy: { name: '', photo: '' } },
+            house:  { speaker: { name: '', photo: '' }, deputies: [] },
+            senate: { speaker: { name: '', photo: '' }, deputies: [] },
+            third:  { speaker: { name: '', photo: '' }, deputies: [] },
         };
 
         function renderChamberLeaders() {
@@ -3664,38 +3665,80 @@
                 senate: document.getElementById('senateNameInput')?.value || '상원',
                 third:  document.getElementById('thirdNameInput')?.value  || '삼원',
             };
-            const roleLabel = { speaker: '의장', deputy: '부의장' };
-            container.innerHTML = chambers.map(ch => `
+            container.innerHTML = chambers.map(ch => {
+                const deputies = chamberLeaders[ch].deputies || [];
+                return `
                 <div style="margin-bottom:16px;">
                     <div style="color:#666;font-size:0.8rem;margin-bottom:8px;letter-spacing:1px;">▌ ${chamberLabel[ch]}</div>
-                    ${['speaker','deputy'].map(role => `
+                    <div class="dyn-row" style="display:flex;gap:10px;align-items:stretch;margin-bottom:8px;">
+                        <div class="leader-photo-box dyn-photo" data-ratio="0.8" style="width:44px;height:55px;flex-shrink:0;" title="클릭하여 사진 업로드">
+                            ${chamberLeaders[ch].speaker.photo ? `<img src="${chamberLeaders[ch].speaker.photo}" alt="">` : '<div class="photo-ph" style="font-size:1.3rem;">👤</div>'}
+                            <input type="file" accept="image/*" onchange="uploadChamberLeaderPhoto(this,'${ch}')">
+                        </div>
+                        <div class="dyn-ref" style="flex:1;display:flex;flex-direction:column;gap:4px;min-width:0;">
+                            <span style="color:#888;font-size:0.78rem;">의장</span>
+                            <input type="text" value="${chamberLeaders[ch].speaker.name||''}" placeholder="의장 이름"
+                                style="background:#000;border:1px solid #2a2a2a;color:#e0e0e0;font-family:inherit;font-size:0.9rem;padding:4px 8px;width:100%;box-sizing:border-box;"
+                                onchange="updateChamberLeader('${ch}','name',this.value)">
+                        </div>
+                    </div>
+                    ${deputies.map((d, i) => `
                         <div class="dyn-row" style="display:flex;gap:10px;align-items:stretch;margin-bottom:8px;">
                             <div class="leader-photo-box dyn-photo" data-ratio="0.8" style="width:44px;height:55px;flex-shrink:0;" title="클릭하여 사진 업로드">
-                                ${chamberLeaders[ch][role].photo ? `<img src="${chamberLeaders[ch][role].photo}" alt="">` : '<div class="photo-ph" style="font-size:1.3rem;">👤</div>'}
-                                <input type="file" accept="image/*" onchange="uploadChamberLeaderPhoto(this,'${ch}','${role}')">
+                                ${d.photo ? `<img src="${d.photo}" alt="">` : '<div class="photo-ph" style="font-size:1.3rem;">👤</div>'}
+                                <input type="file" accept="image/*" onchange="uploadChamberDeputyPhoto(this,'${ch}','${d.id}')">
                             </div>
                             <div class="dyn-ref" style="flex:1;display:flex;flex-direction:column;gap:4px;min-width:0;">
-                                <span style="color:#888;font-size:0.78rem;">${roleLabel[role]}</span>
-                                <input type="text" value="${chamberLeaders[ch][role].name||''}" placeholder="${roleLabel[role]} 이름"
+                                <span style="color:#888;font-size:0.78rem;">${deputies.length > 1 ? '부의장'+(i+1) : '부의장'}</span>
+                                <input type="text" value="${d.name||''}" placeholder="부의장 이름"
                                     style="background:#000;border:1px solid #2a2a2a;color:#e0e0e0;font-family:inherit;font-size:0.9rem;padding:4px 8px;width:100%;box-sizing:border-box;"
-                                    onchange="updateChamberLeader('${ch}','${role}','name',this.value)">
+                                    onchange="updateChamberDeputy('${ch}','${d.id}','name',this.value)">
                             </div>
+                            <button onclick="removeChamberDeputy('${ch}','${d.id}')" style="align-self:center;background:transparent;border:1px solid #333;color:#a55;font-family:inherit;font-size:0.75rem;padding:4px 8px;cursor:pointer;flex-shrink:0;">삭제</button>
                         </div>
                     `).join('')}
+                    <button class="add-btn" style="margin-top:0;" onclick="addChamberDeputy('${ch}')">[+] 부의장 추가</button>
                 </div>
-            `).join('');
+            `;
+            }).join('');
             fitDynPhotos(container);
         }
 
-        function updateChamberLeader(ch, role, key, val) {
+        function updateChamberLeader(ch, key, val) {
             if(!chamberLeaders[ch]) return;
-            chamberLeaders[ch][role][key] = val;
+            chamberLeaders[ch].speaker[key] = val;
         }
 
-        function uploadChamberLeaderPhoto(input, ch, role) {
+        function uploadChamberLeaderPhoto(input, ch) {
             const file = input.files?.[0]; if(!file) return;
             const reader = new FileReader();
-            reader.onload = e => { chamberLeaders[ch][role].photo = e.target.result; renderChamberLeaders(); };
+            reader.onload = e => { chamberLeaders[ch].speaker.photo = e.target.result; renderChamberLeaders(); };
+            reader.readAsDataURL(file);
+        }
+
+        function addChamberDeputy(ch) {
+            if(!chamberLeaders[ch]) return;
+            chamberLeaders[ch].deputies.push({ id: 'cd_'+Date.now()+'_'+Math.floor(Math.random()*1000), name: '', photo: '' });
+            renderChamberLeaders();
+        }
+
+        function removeChamberDeputy(ch, id) {
+            if(!chamberLeaders[ch]) return;
+            chamberLeaders[ch].deputies = chamberLeaders[ch].deputies.filter(d => d.id !== id);
+            renderChamberLeaders();
+        }
+
+        function updateChamberDeputy(ch, id, key, val) {
+            const d = chamberLeaders[ch]?.deputies.find(x => x.id === id);
+            if(d) d[key] = val;
+        }
+
+        function uploadChamberDeputyPhoto(input, ch, id) {
+            const file = input.files?.[0]; if(!file) return;
+            const d = chamberLeaders[ch]?.deputies.find(x => x.id === id);
+            if(!d) return;
+            const reader = new FileReader();
+            reader.onload = e => { d.photo = e.target.result; renderChamberLeaders(); };
             reader.readAsDataURL(file);
         }
 
@@ -4158,9 +4201,15 @@
             });
             cabinetCouncilVote = { ...(cfg.cabinetCouncilVote || {}) };
             ['house','senate','third'].forEach(ch => {
+                const savedCh = cfg.chamberLeaders?.[ch];
+                // 구버전 세이브 호환: 부의장이 단일 객체(deputy)였던 것을 배열(deputies)로 이전
+                let deputies;
+                if(Array.isArray(savedCh?.deputies)) deputies = savedCh.deputies.map(d => ({ id: d.id || ('cd_'+Date.now()+'_'+Math.floor(Math.random()*1000)), name: '', photo: '', ...d }));
+                else if(savedCh?.deputy && (savedCh.deputy.name || savedCh.deputy.photo)) deputies = [{ id: 'cd_'+Date.now()+'_'+Math.floor(Math.random()*1000), name: savedCh.deputy.name || '', photo: savedCh.deputy.photo || '' }];
+                else deputies = [];
                 chamberLeaders[ch] = {
-                    speaker: { name: '', photo: '', ...(cfg.chamberLeaders?.[ch]?.speaker || {}) },
-                    deputy:  { name: '', photo: '', ...(cfg.chamberLeaders?.[ch]?.deputy  || {}) },
+                    speaker: { name: '', photo: '', ...(savedCh?.speaker || {}) },
+                    deputies,
                 };
             });
             setGovType(cfg.govType ?? "parliamentary");
