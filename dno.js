@@ -67,6 +67,28 @@
         // 대통령제에서는 관례상 총리를 "국무총리"라 부르므로, 정부 형태에 따라 탭/라벨 표기를 바꾼다
         function pmRoleLabel() { return govType === 'presidential' ? '국무총리' : '총리'; }
 
+        // 내각 디스플레이의 직책 이름(대통령/총리·국무총리/부총리/의장/장관·국무위원)을 사용자가 직접 바꿀 수 있게 함 —
+        // 비워두면(기본값) 정부 형태에 따른 자동 라벨(pmRoleLabel/cabinetMemberRoleLabel)을 그대로 사용
+        let cabinetRoleLabels = { president: '', pm: '', deputyPm: '', chair: '', cabinetMember: '' };
+        function cabinetRoleLabelDefault(key) {
+            return { president: '대통령', pm: pmRoleLabel(), deputyPm: '부총리', chair: '의장', cabinetMember: cabinetMemberRoleLabel() }[key];
+        }
+        function effRoleLabel(key) {
+            return cabinetRoleLabels[key] || cabinetRoleLabelDefault(key);
+        }
+        function updateCabinetRoleLabel(key, val) {
+            cabinetRoleLabels[key] = val;
+            renderCabinetDisplay();
+        }
+        function renderCabinetRoleLabelInputs() {
+            ['president','pm','deputyPm','chair','cabinetMember'].forEach(key => {
+                const input = document.getElementById('roleLabel'+key.charAt(0).toUpperCase()+key.slice(1)+'Input');
+                if(!input) return;
+                input.placeholder = cabinetRoleLabelDefault(key);
+                if(document.activeElement !== input) input.value = cabinetRoleLabels[key] || '';
+            });
+        }
+
         // 대통령/총리/국무위원의 당적 선택 <select> 옵션 — 무소속 가상 정당은 목록에서 제외하고
         // 빈 값("")을 기본 "무소속"으로 취급한다 (의석에 영향 없는 표시 전용 소속이므로)
         function partySelectOptionsHtml(selectedId) {
@@ -171,6 +193,7 @@
             renderChairSection();
             renderCabinetMembersList();
             renderCabinetDisplay();
+            renderCabinetRoleLabelInputs();
         }
 
         // 집단지도체제에서는 대통령/총리 탭이 사라지고 모두 내각 탭(의장+장관)으로 이관된다
@@ -850,21 +873,21 @@
             const rows = [];
             if(govType === 'collective') {
                 const chairResolved = collectiveChair.linkedSeat ? resolveLinkedSeat(collectiveChair.linkedSeat) : null;
-                rows.push([{ label: '의장', photo: chairResolved ? chairResolved.photo : collectiveChair.photo, name: chairResolved ? chairResolved.name : collectiveChair.name, partyId: chairResolved ? chairResolved.partyId : collectiveChair.partyId }]);
+                rows.push([{ label: effRoleLabel('chair'), photo: chairResolved ? chairResolved.photo : collectiveChair.photo, name: chairResolved ? chairResolved.name : collectiveChair.name, partyId: chairResolved ? chairResolved.partyId : collectiveChair.partyId }]);
             } else {
                 const presResolved = president.linkedSeat ? resolveLinkedSeat(president.linkedSeat) : null;
-                rows.push([{ label: '대통령', photo: presResolved ? presResolved.photo : president.photo, name: presResolved ? presResolved.name : president.name, partyId: presResolved ? presResolved.partyId : president.partyId }]);
+                rows.push([{ label: effRoleLabel('president'), photo: presResolved ? presResolved.photo : president.photo, name: presResolved ? presResolved.name : president.name, partyId: presResolved ? presResolved.partyId : president.partyId }]);
 
                 const pmResolved = pmAutoSource();
                 const deputyResolved = deputyPm.linkedSeat ? resolveLinkedSeat(deputyPm.linkedSeat) : null;
                 rows.push([
-                    { label: pmRoleLabel(), photo: pmResolved ? pmResolved.photo : pm.photo, name: pmResolved ? pmResolved.name : pm.name, partyId: pmResolved ? pmResolved.partyId : pm.partyId },
-                    { label: '부총리', photo: deputyResolved ? deputyResolved.photo : deputyPm.photo, name: deputyResolved ? deputyResolved.name : deputyPm.name, partyId: deputyResolved ? deputyResolved.partyId : deputyPm.partyId },
+                    { label: effRoleLabel('pm'), photo: pmResolved ? pmResolved.photo : pm.photo, name: pmResolved ? pmResolved.name : pm.name, partyId: pmResolved ? pmResolved.partyId : pm.partyId },
+                    { label: effRoleLabel('deputyPm'), photo: deputyResolved ? deputyResolved.photo : deputyPm.photo, name: deputyResolved ? deputyResolved.name : deputyPm.name, partyId: deputyResolved ? deputyResolved.partyId : deputyPm.partyId },
                 ]);
             }
             rows.push(cabinetMembers.map((m, i) => {
                 const resolved = m.linkedSeat ? resolveLinkedSeat(m.linkedSeat) : null;
-                return { label: m.position || `${cabinetMemberRoleLabel()}${i+1}`, photo: resolved ? resolved.photo : m.photo, name: resolved ? resolved.name : m.name, partyId: resolved ? resolved.partyId : m.partyId };
+                return { label: m.position || `${effRoleLabel('cabinetMember')}${i+1}`, photo: resolved ? resolved.photo : m.photo, name: resolved ? resolved.name : m.name, partyId: resolved ? resolved.partyId : m.partyId };
             }));
             return rows.filter(row => row.length > 0);
         }
@@ -878,7 +901,7 @@
                 const partyColor = party ? party.color : '#666';
                 return `
                     <div style="text-align:center;width:92px;">
-                        <div style="color:#e0e0e0;font-size:0.85rem;font-weight:bold;margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${label}">${label}</div>
+                        <div style="color:#e0e0e0;font-size:0.85rem;margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${label}">${label}</div>
                         <div class="leader-photo-box" style="width:70px;height:88px;margin:0 auto;pointer-events:none;">
                             ${photo ? `<img src="${photo}" alt="">` : '<div class="photo-ph">👤</div>'}
                         </div>
@@ -940,7 +963,7 @@
                     let cy = cursorY + lineIdx * (cardH + cardGap);
                     const cx = x + cardW/2;
 
-                    ctx.font = `bold ${Math.round(labelH*0.75)}px ${font}`;
+                    ctx.font = `${Math.round(labelH*0.75)}px ${font}`;
                     ctx.fillStyle = '#e0e0e0';
                     ctx.fillText(c.label, cx, cy + labelH/2, cardW);
                     cy += labelH + gapSm;
@@ -3418,7 +3441,7 @@
                 loadAutosavePreference();
                 restored = autosaveEnabled && loadFromAutosave();
             } catch(e) { /* 자동저장 초기화 실패 — 기본 상태로 계속 진행 */ }
-            if(!restored) { toggleSystem(); simulate(); refreshUI(); renderBillList(); renderArchiveList(); syncBillSelect(); elecRenderList(); elecRenderRecords(); updateNationIdBar(); updateDispInfoBar(); }
+            if(!restored) { toggleSystem(); simulate(); refreshUI(); renderBillList(); renderArchiveList(); syncBillSelect(); elecRenderList(); elecRenderRecords(); updateNationIdBar(); updateDispInfoBar(); renderCabinetRoleLabelInputs(); }
             try {
                 if(autosaveEnabled) { autosaveNow(); startAutosaveTimer(); }
                 renderSaveTabUI();
@@ -3453,6 +3476,7 @@
                     deputyPm: deputyPm,
                     collectiveChair: collectiveChair,
                     cabinetMembers: JSON.parse(JSON.stringify(cabinetMembers)),
+                    cabinetRoleLabels: { ...cabinetRoleLabels },
                     pmDirectElectionEnabled: pmDirectElectionEnabled,
                     pmNominee: pmNominee,
                     pmNomineeBillId: pmNomineeBillId,
@@ -3660,6 +3684,7 @@
             deputyPm = { name: '', photo: '', partyId: null, linkedSeat: null, ...(cfg.deputyPm || {}) };
             collectiveChair = { name: '', photo: '', partyId: null, linkedSeat: null, ...(cfg.collectiveChair || {}) };
             cabinetMembers = Array.isArray(cfg.cabinetMembers) ? cfg.cabinetMembers.map(m => ({ partyId: null, linkedSeat: null, ...m })) : [];
+            cabinetRoleLabels = { president: '', pm: '', deputyPm: '', chair: '', cabinetMember: '', ...(cfg.cabinetRoleLabels || {}) };
             pmDirectElectionEnabled = !!cfg.pmDirectElectionEnabled;
             pmNominee = { name: '', photo: '', partyId: null, linkedSeat: null, ...(cfg.pmNominee || {}) };
             pmNomineeBillId = cfg.pmNomineeBillId ?? null;

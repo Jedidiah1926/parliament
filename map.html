@@ -24,6 +24,17 @@
     background: var(--tno-bg);
     color: var(--tno-text);
   }
+  /* CRT 스캔라인 + 색수차 느낌 오버레이 — 다른 페이지(dno.html 등)와 동일한 효과 */
+  body::after {
+    content: " ";
+    display: block;
+    position: fixed;
+    top: 0; left: 0; bottom: 0; right: 0;
+    background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+    z-index: 999;
+    background-size: 100% 2px, 3px 100%;
+    pointer-events: none;
+  }
   ::-webkit-scrollbar { width: 10px; height: 12px; background: #000; }
   ::-webkit-scrollbar-thumb { background: var(--tno-border); border: 1px solid var(--tno-neon); box-shadow: inset 0 0 5px color-mix(in srgb, var(--tno-neon) 22%, transparent), 0 0 5px color-mix(in srgb, var(--tno-neon) 18%, transparent); }
   ::-webkit-scrollbar-thumb:hover { background: var(--tno-neon); box-shadow: 0 0 12px var(--tno-neon); }

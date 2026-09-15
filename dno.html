@@ -1088,6 +1088,37 @@
                     </div>
 
                     <div style="margin-top:16px;">
+                        <label style="color:#888;font-size:0.8rem;margin-bottom:6px;display:block;">직책 이름 (내각 디스플레이에 표시될 이름을 직접 바꿀 수 있습니다 — 비워두면 기본값 사용)</label>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                            <div>
+                                <span style="color:#555;font-size:0.72rem;display:block;margin-bottom:2px;">대통령</span>
+                                <input type="text" id="roleLabelPresidentInput" placeholder="대통령" oninput="updateCabinetRoleLabel('president',this.value)"
+                                    style="width:100%;box-sizing:border-box;background:#000;border:1px solid #2a2a2a;color:#e0e0e0;font-family:inherit;font-size:0.85rem;padding:5px 8px;">
+                            </div>
+                            <div>
+                                <span style="color:#555;font-size:0.72rem;display:block;margin-bottom:2px;">총리 / 국무총리</span>
+                                <input type="text" id="roleLabelPmInput" placeholder="총리" oninput="updateCabinetRoleLabel('pm',this.value)"
+                                    style="width:100%;box-sizing:border-box;background:#000;border:1px solid #2a2a2a;color:#e0e0e0;font-family:inherit;font-size:0.85rem;padding:5px 8px;">
+                            </div>
+                            <div>
+                                <span style="color:#555;font-size:0.72rem;display:block;margin-bottom:2px;">부총리</span>
+                                <input type="text" id="roleLabelDeputyPmInput" placeholder="부총리" oninput="updateCabinetRoleLabel('deputyPm',this.value)"
+                                    style="width:100%;box-sizing:border-box;background:#000;border:1px solid #2a2a2a;color:#e0e0e0;font-family:inherit;font-size:0.85rem;padding:5px 8px;">
+                            </div>
+                            <div>
+                                <span style="color:#555;font-size:0.72rem;display:block;margin-bottom:2px;">의장 (집단지도체제)</span>
+                                <input type="text" id="roleLabelChairInput" placeholder="의장" oninput="updateCabinetRoleLabel('chair',this.value)"
+                                    style="width:100%;box-sizing:border-box;background:#000;border:1px solid #2a2a2a;color:#e0e0e0;font-family:inherit;font-size:0.85rem;padding:5px 8px;">
+                            </div>
+                            <div>
+                                <span style="color:#555;font-size:0.72rem;display:block;margin-bottom:2px;">장관 / 국무위원</span>
+                                <input type="text" id="roleLabelCabinetMemberInput" placeholder="국무위원" oninput="updateCabinetRoleLabel('cabinetMember',this.value)"
+                                    style="width:100%;box-sizing:border-box;background:#000;border:1px solid #2a2a2a;color:#e0e0e0;font-family:inherit;font-size:0.85rem;padding:5px 8px;">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="margin-top:16px;">
                         <label style="color:#888;font-size:0.8rem;margin-bottom:6px;display:block;">법안 거부권(veto) 주체</label>
                         <div class="system-radio-group">
                             <button type="button" class="system-radio-btn active" id="vetoHolderNoneBtn" onclick="setVetoHolder('none')">없음</button>
