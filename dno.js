@@ -137,30 +137,36 @@
         }
 
         // 대통령/총리/국무위원 카드에 넣을 "의원에서 불러오기" 드롭다운의 옵션 목록 —
-        // 원별 지역구 당선자 → 비례 의원 → 비례·무소속 순으로 나열
-        function memberPickerOptionsHtml() {
+        // 원별 지역구 당선자 → 비례 의원 → 비례·무소속 순으로 나열.
+        // filterPartyId를 지정하면 그 정당(무소속 항목이면 무소속 의원) 소속 의원만 보여준다 —
+        // 대선/총리선거 후보 설정처럼 특정 정당의 후보 슬롯에 다른 정당 의원이 섞여 나오면 안 되는 곳에서 사용.
+        function memberPickerOptionsHtml(filterPartyId) {
+            const filterIsInd = filterPartyId !== undefined && parties.find(p => p.id === filterPartyId)?.ideologyId === IND_IDEOLOGY_ID;
             const opts = ['<option value="">-- 의원에서 불러오기 --</option>'];
             chamberList().forEach(ch => {
                 const chLabel = chamberDisplayName(ch);
                 districtSortedKeys(ch).forEach((key, i) => {
                     const m = districtMembers[ch][key];
                     if(!m || m.vacant) return;
+                    if(filterPartyId !== undefined && m.partyId !== filterPartyId) return;
                     const party = parties.find(p => p.id === m.partyId);
                     const isInd = party?.ideologyId === IND_IDEOLOGY_ID;
                     const ind = isInd ? independents.find(x => x.chamber === ch && x.districtKey === key) : null;
                     const nm = isInd ? (ind?.name || '무소속') : (m.name || '(이름 없음)');
                     opts.push(`<option value="district:${ch}:${key}">[${chLabel}] #${i+1} ${nm} (${party?.name||''})</option>`);
                 });
-                parties.filter(p => p.ideologyId !== IND_IDEOLOGY_ID).forEach(p => {
+                parties.filter(p => p.ideologyId !== IND_IDEOLOGY_ID && (filterPartyId === undefined || p.id === filterPartyId)).forEach(p => {
                     (listMembers[ch]?.[p.id]||[]).forEach(m => {
                         if(m.vacant) return;
                         opts.push(`<option value="list:${ch}:${p.id}:${m.id}">[${chLabel} 비례] ${m.name||'(이름 없음)'} (${p.name})</option>`);
                     });
                 });
-                independents.filter(x => x.chamber === ch && !x.districtKey).forEach(ind => {
-                    const label = ind.name || `#${computeIndependentOffset(ch) + ind.seatIndex}`;
-                    opts.push(`<option value="independent:${ind.id}">[${chLabel} 비례·무소속] ${label}</option>`);
-                });
+                if(filterPartyId === undefined || filterIsInd) {
+                    independents.filter(x => x.chamber === ch && !x.districtKey).forEach(ind => {
+                        const label = ind.name || `#${computeIndependentOffset(ch) + ind.seatIndex}`;
+                        opts.push(`<option value="independent:${ind.id}">[${chLabel} 비례·무소속] ${label}</option>`);
+                    });
+                }
             });
             return opts.join('');
         }
@@ -6653,7 +6659,7 @@
                                 onchange="updateElectionCandidateOverride('${p.id}','name',this.value)">
                             <select onchange="linkElectionCandidateToMember('${p.id}',this.value)"
                                 style="width:100%;box-sizing:border-box;background:#000;border:1px solid #333;color:#888;font-family:inherit;font-size:0.75rem;padding:3px;">
-                                ${memberPickerOptionsHtml()}
+                                ${memberPickerOptionsHtml(p.id)}
                             </select>
                             <div style="display:flex;gap:6px;">
                                 ${resolved?`<button onclick="unlinkElectionCandidate('${p.id}')" style="background:transparent;border:1px solid #333;color:#888;font-family:inherit;font-size:0.7rem;padding:2px 6px;cursor:pointer;">연결 해제</button>`:''}
