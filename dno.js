@@ -52,6 +52,7 @@
         let govType = 'parliamentary'; // 'presidential'(대통령제) | 'semi'(이원집정부제) | 'parliamentary'(의원내각제) | 'collective'(집단지도체제)
         let president = { name: '', photo: '', partyId: null, linkedSeat: null }; // 대통령(+대선 == 행정부 선거)
         let pm = { name: '', photo: '', partyId: null, linkedSeat: null };         // 총리/국무총리
+        let deputyPm = { name: '', photo: '', partyId: null, linkedSeat: null };   // 부총리
         let cabinetMembers = []; // 국무위원/내각 구성원(집단지도체제에서는 "장관") { id, name, position, photo, partyId, linkedSeat }
         let collectiveChair = { name: '', photo: '', partyId: null, linkedSeat: null }; // 집단지도체제: 의장
 
@@ -78,6 +79,18 @@
             if(partyId === null || partyId === undefined || partyId === '') return '#666';
             const p = parties.find(x => x.id === partyId);
             return p ? p.color : '#666';
+        }
+
+        // 당적 select 박스 자체를 선택된 정당 색으로 은은하게 빛나게(네온) 표시 — 무소속/미지정이면 회색으로 되돌림
+        function partySelectGlowCss(partyId) {
+            const color = partyDotColor(partyId);
+            return `border-color:${color};box-shadow:0 0 6px ${color};`;
+        }
+        function applyPartySelectGlow(selectEl, partyId) {
+            if(!selectEl) return;
+            const color = partyDotColor(partyId);
+            selectEl.style.borderColor = color;
+            selectEl.style.boxShadow = `0 0 6px ${color}`;
         }
 
         // ── 대통령/총리/국무위원을 실제 의원(지역구·비례·무소속)과 연결 — 이름·사진·당적 자동 반영 ──────────────
@@ -166,6 +179,7 @@
             applyGovTypeHolderRestrictions();
             applyGovTypeTabVisibility();
             renderPmSection();
+            renderDeputyPmSection();
             renderChairSection();
             renderCabinetMembersList();
             renderCabinetDisplay();
@@ -255,7 +269,7 @@
             const photoInput = document.querySelector('#presidentPhotoBox input[type=file]');
             if(photoInput) photoInput.disabled = !!resolved;
             const partySelect = document.getElementById('presidentPartySelect');
-            if(partySelect) { partySelect.innerHTML = partySelectOptionsHtml(effPartyId); partySelect.disabled = !!resolved; }
+            if(partySelect) { partySelect.innerHTML = partySelectOptionsHtml(effPartyId); partySelect.disabled = !!resolved; applyPartySelectGlow(partySelect, effPartyId); }
             const dot = document.getElementById('presidentPartyDot');
             if(dot) dot.style.background = partyDotColor(effPartyId);
             const picker = document.getElementById('presidentMemberPicker');
@@ -321,7 +335,7 @@
             const photoInput = document.querySelector('#chairPhotoBox input[type=file]');
             if(photoInput) photoInput.disabled = !!resolved;
             const partySelect = document.getElementById('chairPartySelect');
-            if(partySelect) { partySelect.innerHTML = partySelectOptionsHtml(effPartyId); partySelect.disabled = !!resolved; }
+            if(partySelect) { partySelect.innerHTML = partySelectOptionsHtml(effPartyId); partySelect.disabled = !!resolved; applyPartySelectGlow(partySelect, effPartyId); }
             const dot = document.getElementById('chairPartyDot');
             if(dot) dot.style.background = partyDotColor(effPartyId);
             const picker = document.getElementById('chairMemberPicker');
@@ -421,7 +435,7 @@
             const photoInput = document.querySelector('#pmPhotoBox input[type=file]');
             if(photoInput) photoInput.disabled = !!resolved;
             const partySelect = document.getElementById('pmPartySelect');
-            if(partySelect) { partySelect.innerHTML = partySelectOptionsHtml(effPartyId); partySelect.disabled = !!resolved; }
+            if(partySelect) { partySelect.innerHTML = partySelectOptionsHtml(effPartyId); partySelect.disabled = !!resolved; applyPartySelectGlow(partySelect, effPartyId); }
             const dot = document.getElementById('pmPartyDot');
             if(dot) dot.style.background = partyDotColor(effPartyId);
             const picker = document.getElementById('pmMemberPicker');
@@ -490,6 +504,72 @@
             renderCabinetDisplay();
         }
 
+        // ── 부총리 (president와 동일한 구조 — 별도 선출 과정 없이 단순 카드) ──────────────
+        function renderDeputyPmSection() {
+            if(deputyPm.linkedSeat && !resolveLinkedSeat(deputyPm.linkedSeat)) deputyPm.linkedSeat = null;
+            const resolved = deputyPm.linkedSeat ? resolveLinkedSeat(deputyPm.linkedSeat) : null;
+            const effName = resolved ? resolved.name : deputyPm.name;
+            const effPhoto = resolved ? resolved.photo : deputyPm.photo;
+            const effPartyId = resolved ? resolved.partyId : deputyPm.partyId;
+
+            const nameInput = document.getElementById('deputyPmNameInput');
+            if(nameInput) {
+                nameInput.disabled = !!resolved;
+                if(nameInput.value !== (effName||'')) nameInput.value = effName || '';
+            }
+            const img = document.getElementById('deputyPmPhotoImg');
+            const ph  = document.getElementById('deputyPmPhotoPh');
+            const removeBtn = document.getElementById('deputyPmPhotoRemoveBtn');
+            if(img && ph) {
+                if(effPhoto) { img.src = effPhoto; img.style.display = ''; ph.style.display = 'none'; }
+                else { img.style.display = 'none'; ph.style.display = ''; }
+            }
+            if(removeBtn) removeBtn.style.display = (!resolved && deputyPm.photo) ? '' : 'none';
+            const photoInput = document.querySelector('#deputyPmPhotoBox input[type=file]');
+            if(photoInput) photoInput.disabled = !!resolved;
+            const partySelect = document.getElementById('deputyPmPartySelect');
+            if(partySelect) { partySelect.innerHTML = partySelectOptionsHtml(effPartyId); partySelect.disabled = !!resolved; applyPartySelectGlow(partySelect, effPartyId); }
+            const dot = document.getElementById('deputyPmPartyDot');
+            if(dot) dot.style.background = partyDotColor(effPartyId);
+            const picker = document.getElementById('deputyPmMemberPicker');
+            if(picker) { picker.innerHTML = memberPickerOptionsHtml(); picker.value = ''; picker.style.display = resolved ? 'none' : ''; }
+            const badge = document.getElementById('deputyPmLinkedBadge');
+            if(badge) badge.style.display = resolved ? 'flex' : 'none';
+        }
+
+        function updateDeputyPmField(key, val) {
+            deputyPm[key] = val;
+            if(key === 'partyId') renderDeputyPmSection();
+            renderCabinetDisplay();
+        }
+
+        function linkDeputyPmToMember(val) {
+            const parsed = parseMemberPickerValue(val);
+            if(!parsed) return;
+            deputyPm.linkedSeat = parsed;
+            renderDeputyPmSection();
+            renderCabinetDisplay();
+        }
+
+        function unlinkDeputyPm() {
+            deputyPm.linkedSeat = null;
+            renderDeputyPmSection();
+            renderCabinetDisplay();
+        }
+
+        function uploadDeputyPmPhoto(input) {
+            const file = input.files?.[0]; if(!file) return;
+            const reader = new FileReader();
+            reader.onload = e => { deputyPm.photo = e.target.result; renderDeputyPmSection(); renderCabinetDisplay(); };
+            reader.readAsDataURL(file);
+        }
+
+        function removeDeputyPmPhoto() {
+            deputyPm.photo = '';
+            renderDeputyPmSection();
+            renderCabinetDisplay();
+        }
+
         // ── 대통령 임명제: 총리 후보 지명 → 의회 심의 상정 ──────────────
         function renderPmNomineeSection() {
             if(pmNomineeBillId) {
@@ -527,7 +607,7 @@
             const photoInput = document.querySelector('#pmNomineePhotoBox input[type=file]');
             if(photoInput) photoInput.disabled = !!resolved;
             const partySelect = document.getElementById('pmNomineePartySelect');
-            if(partySelect) { partySelect.innerHTML = partySelectOptionsHtml(effPartyId); partySelect.disabled = !!resolved; }
+            if(partySelect) { partySelect.innerHTML = partySelectOptionsHtml(effPartyId); partySelect.disabled = !!resolved; applyPartySelectGlow(partySelect, effPartyId); }
             const dot = document.getElementById('pmNomineePartyDot');
             if(dot) dot.style.background = partyDotColor(effPartyId);
             const picker = document.getElementById('pmNomineeMemberPicker');
@@ -640,7 +720,7 @@
                             <div style="display:flex;align-items:center;gap:6px;">
                                 <span style="width:9px;height:9px;border-radius:50%;flex-shrink:0;background:${partyDotColor(effPartyId)};"></span>
                                 <select ${resolved?'disabled':''} onchange="updateCabinetMember('${m.id}','partyId',this.value?parseInt(this.value):null)"
-                                    style="flex:1;min-width:0;background:#000;border:1px solid #333;color:var(--tno-gold);font-family:inherit;font-size:0.85rem;padding:4px;">
+                                    style="flex:1;min-width:0;background:#000;border:1px solid #333;color:var(--tno-gold);font-family:inherit;font-size:0.85rem;padding:4px;${partySelectGlowCss(effPartyId)}">
                                     ${partySelectOptionsHtml(effPartyId)}
                                 </select>
                             </div>
@@ -776,22 +856,29 @@
 
         // ── 우측 디스플레이 패널의 "내각" 탭 (하원/상원/삼원처럼 항상 표시) — 대통령·총리·국무위원 읽기 전용 그리드 ──────────────
         // 내각 디스플레이(HTML)와 내보내기(canvas)가 공유하는 카드 데이터 목록
-        function getCabinetDisplayCards() {
-            const cards = [];
+        // 행 단위로 묶어서 반환 — 집단지도체제가 아니면 1행 대통령 / 2행 총리·부총리 / 3행 장관(국무위원),
+        // 집단지도체제면 1행 의장 / 2행 장관(국무위원)
+        function getCabinetDisplayRows() {
+            const rows = [];
             if(govType === 'collective') {
                 const chairResolved = collectiveChair.linkedSeat ? resolveLinkedSeat(collectiveChair.linkedSeat) : null;
-                cards.push({ label: '의장', photo: chairResolved ? chairResolved.photo : collectiveChair.photo, name: chairResolved ? chairResolved.name : collectiveChair.name, partyId: chairResolved ? chairResolved.partyId : collectiveChair.partyId });
+                rows.push([{ label: '의장', photo: chairResolved ? chairResolved.photo : collectiveChair.photo, name: chairResolved ? chairResolved.name : collectiveChair.name, partyId: chairResolved ? chairResolved.partyId : collectiveChair.partyId }]);
             } else {
                 const presResolved = president.linkedSeat ? resolveLinkedSeat(president.linkedSeat) : null;
+                rows.push([{ label: '대통령', photo: presResolved ? presResolved.photo : president.photo, name: presResolved ? presResolved.name : president.name, partyId: presResolved ? presResolved.partyId : president.partyId }]);
+
                 const pmResolved = pmAutoSource();
-                cards.push({ label: '대통령', photo: presResolved ? presResolved.photo : president.photo, name: presResolved ? presResolved.name : president.name, partyId: presResolved ? presResolved.partyId : president.partyId });
-                cards.push({ label: pmRoleLabel(), photo: pmResolved ? pmResolved.photo : pm.photo, name: pmResolved ? pmResolved.name : pm.name, partyId: pmResolved ? pmResolved.partyId : pm.partyId });
+                const deputyResolved = deputyPm.linkedSeat ? resolveLinkedSeat(deputyPm.linkedSeat) : null;
+                rows.push([
+                    { label: pmRoleLabel(), photo: pmResolved ? pmResolved.photo : pm.photo, name: pmResolved ? pmResolved.name : pm.name, partyId: pmResolved ? pmResolved.partyId : pm.partyId },
+                    { label: '부총리', photo: deputyResolved ? deputyResolved.photo : deputyPm.photo, name: deputyResolved ? deputyResolved.name : deputyPm.name, partyId: deputyResolved ? deputyResolved.partyId : deputyPm.partyId },
+                ]);
             }
-            cabinetMembers.forEach((m, i) => {
+            rows.push(cabinetMembers.map((m, i) => {
                 const resolved = m.linkedSeat ? resolveLinkedSeat(m.linkedSeat) : null;
-                cards.push({ label: m.position || `${cabinetMemberRoleLabel()}${i+1}`, photo: resolved ? resolved.photo : m.photo, name: resolved ? resolved.name : m.name, partyId: resolved ? resolved.partyId : m.partyId });
-            });
-            return cards;
+                return { label: m.position || `${cabinetMemberRoleLabel()}${i+1}`, photo: resolved ? resolved.photo : m.photo, name: resolved ? resolved.name : m.name, partyId: resolved ? resolved.partyId : m.partyId };
+            }));
+            return rows.filter(row => row.length > 0);
         }
 
         function renderCabinetDisplay() {
@@ -812,7 +899,8 @@
                     </div>
                 `;
             };
-            container.innerHTML = getCabinetDisplayCards().map(cardHtml).join('');
+            const rowHtml = row => `<div style="display:flex;flex-wrap:wrap;gap:22px;">${row.map(cardHtml).join('')}</div>`;
+            container.innerHTML = getCabinetDisplayRows().map(rowHtml).join('<div style="height:20px;"></div>');
             // <svg>는 div처럼 내용에 맞춰 자동으로 높이가 늘어나지 않으므로, 우클릭 내보내기가
             // 실제 화면과 동일한 벡터를 담도록 렌더 후 실측한 높이를 svg에 직접 반영한다
             requestAnimationFrame(() => {
@@ -825,21 +913,27 @@
         async function renderCabinetExportCanvas() {
             await ensureExportFontsLoaded();
             const font = "'NeoDunggeunmo','VT323',monospace";
-            const cards = getCabinetDisplayCards();
-            const photos = await Promise.all(cards.map(c => c.photo ? loadImageAsync(c.photo) : Promise.resolve(null)));
+            const displayRows = getCabinetDisplayRows();
+            const allCards = displayRows.flat();
+            const photoMap = new Map();
+            await Promise.all(allCards.map(async c => { if(c.photo) photoMap.set(c, await loadImageAsync(c.photo)); }));
 
             const scale = window.devicePixelRatio || 1;
-            const pad = Math.round(16*scale), cardW = Math.round(110*scale), cardGap = Math.round(22*scale);
+            const pad = Math.round(16*scale), cardW = Math.round(110*scale), cardGap = Math.round(22*scale), rowGap = Math.round(20*scale);
             const photoW = Math.round(70*scale), photoH = Math.round(88*scale);
             const labelH = Math.round(20*scale), gapSm = Math.round(6*scale), nameH = Math.round(18*scale), badgeH = Math.round(18*scale);
             const cardH = labelH + gapSm + photoH + gapSm + nameH + gapSm + badgeH;
 
             const containerEl = document.getElementById('cabinetDisplayGrid');
-            const containerWidth = (containerEl?.clientWidth || 0) * scale || (cardW + cardGap) * cards.length;
+            const maxRowLen = Math.max(1, ...displayRows.map(r => r.length));
+            const containerWidth = (containerEl?.clientWidth || 0) * scale || (cardW + cardGap) * maxRowLen;
             const perRow = Math.max(1, Math.floor((containerWidth + cardGap) / (cardW + cardGap)));
-            const rows = Math.ceil(cards.length / perRow);
+
+            // 화면과 동일하게, 각 행(대통령/총리·부총리/장관)이 컨테이너 폭에 맞춰 줄바꿈되는 줄 수를 미리 계산
+            const lineCounts = displayRows.map(row => Math.max(1, Math.ceil(row.length / perRow)));
+            const totalLines = lineCounts.reduce((a,b) => a+b, 0);
             const totalW = perRow*cardW + (perRow-1)*cardGap;
-            const totalH = rows*cardH + Math.max(0, rows-1)*cardGap;
+            const totalH = totalLines*cardH + Math.max(0, totalLines-1)*cardGap + Math.max(0, displayRows.length-1)*rowGap;
 
             const cvs = document.createElement('canvas');
             cvs.width = totalW + pad*2;
@@ -850,48 +944,53 @@
             ctx.textBaseline = 'middle';
             ctx.textAlign = 'center';
 
-            cards.forEach((c, i) => {
-                const col = i % perRow, row = Math.floor(i / perRow);
-                const x = pad + col * (cardW + cardGap);
-                let cy = pad + row * (cardH + cardGap);
-                const cx = x + cardW/2;
+            let cursorY = pad;
+            displayRows.forEach((row, rIdx) => {
+                row.forEach((c, i) => {
+                    const col = i % perRow, lineIdx = Math.floor(i / perRow);
+                    const x = pad + col * (cardW + cardGap);
+                    let cy = cursorY + lineIdx * (cardH + cardGap);
+                    const cx = x + cardW/2;
 
-                ctx.font = `bold ${Math.round(labelH*0.75)}px ${font}`;
-                ctx.fillStyle = '#e0e0e0';
-                ctx.fillText(c.label, cx, cy + labelH/2, cardW);
-                cy += labelH + gapSm;
+                    ctx.font = `bold ${Math.round(labelH*0.75)}px ${font}`;
+                    ctx.fillStyle = '#e0e0e0';
+                    ctx.fillText(c.label, cx, cy + labelH/2, cardW);
+                    cy += labelH + gapSm;
 
-                const photoX = x + (cardW - photoW)/2;
-                ctx.fillStyle = '#0a0c10';
-                ctx.fillRect(photoX, cy, photoW, photoH);
-                if(photos[i]) drawImageCover(ctx, photos[i], photoX, cy, photoW, photoH);
-                else {
-                    ctx.fillStyle = '#2a3a3a';
-                    ctx.font = `${Math.round(photoH*0.4)}px ${font}`;
-                    ctx.fillText('👤', cx, cy + photoH/2, photoW);
-                }
-                ctx.strokeStyle = '#2a2a2a';
-                ctx.lineWidth = Math.max(1, Math.round(scale));
-                ctx.strokeRect(photoX + 0.5, cy + 0.5, photoW - 1, photoH - 1);
-                cy += photoH + gapSm;
+                    const photoX = x + (cardW - photoW)/2;
+                    ctx.fillStyle = '#0a0c10';
+                    ctx.fillRect(photoX, cy, photoW, photoH);
+                    const img = photoMap.get(c);
+                    if(img) drawImageCover(ctx, img, photoX, cy, photoW, photoH);
+                    else {
+                        ctx.fillStyle = '#2a3a3a';
+                        ctx.font = `${Math.round(photoH*0.4)}px ${font}`;
+                        ctx.fillText('👤', cx, cy + photoH/2, photoW);
+                    }
+                    ctx.strokeStyle = '#2a2a2a';
+                    ctx.lineWidth = Math.max(1, Math.round(scale));
+                    ctx.strokeRect(photoX + 0.5, cy + 0.5, photoW - 1, photoH - 1);
+                    cy += photoH + gapSm;
 
-                ctx.font = `${Math.round(nameH*0.8)}px ${font}`;
-                ctx.fillStyle = '#ccc';
-                ctx.fillText(c.name || '이름 미지정', cx, cy + nameH/2, cardW);
-                cy += nameH + gapSm;
+                    ctx.font = `${Math.round(nameH*0.8)}px ${font}`;
+                    ctx.fillStyle = '#ccc';
+                    ctx.fillText(c.name || '이름 미지정', cx, cy + nameH/2, cardW);
+                    cy += nameH + gapSm;
 
-                const party = parties.find(p => p.id === c.partyId);
-                const partyName = party ? party.name : '무소속';
-                const partyColor = party ? party.color : '#666';
-                ctx.font = `${Math.round(badgeH*0.6)}px ${font}`;
-                const textW = ctx.measureText(partyName).width;
-                const badgeW = Math.min(cardW, textW + Math.round(16*scale));
-                const badgeX = x + (cardW - badgeW)/2;
-                ctx.strokeStyle = partyColor;
-                ctx.lineWidth = Math.max(1, Math.round(scale));
-                ctx.strokeRect(badgeX + 0.5, cy + 0.5, badgeW - 1, badgeH - 1);
-                ctx.fillStyle = partyColor;
-                ctx.fillText(partyName, cx, cy + badgeH/2, badgeW - Math.round(8*scale));
+                    const party = parties.find(p => p.id === c.partyId);
+                    const partyName = party ? party.name : '무소속';
+                    const partyColor = party ? party.color : '#666';
+                    ctx.font = `${Math.round(badgeH*0.6)}px ${font}`;
+                    const textW = ctx.measureText(partyName).width;
+                    const badgeW = Math.min(cardW, textW + Math.round(16*scale));
+                    const badgeX = x + (cardW - badgeW)/2;
+                    ctx.strokeStyle = partyColor;
+                    ctx.lineWidth = Math.max(1, Math.round(scale));
+                    ctx.strokeRect(badgeX + 0.5, cy + 0.5, badgeW - 1, badgeH - 1);
+                    ctx.fillStyle = partyColor;
+                    ctx.fillText(partyName, cx, cy + badgeH/2, badgeW - Math.round(8*scale));
+                });
+                cursorY += lineCounts[rIdx] * (cardH + cardGap) - cardGap + rowGap;
             });
             ctx.textAlign = 'left';
             return cvs;
@@ -3257,6 +3356,7 @@
                     govType: govType,
                     president: president,
                     pm: pm,
+                    deputyPm: deputyPm,
                     collectiveChair: collectiveChair,
                     cabinetMembers: JSON.parse(JSON.stringify(cabinetMembers)),
                     pmDirectElectionEnabled: pmDirectElectionEnabled,
@@ -3444,6 +3544,7 @@
             setNationSessionType(cfg.nationSessionType ?? "regular");
             president = { name: '', photo: '', partyId: null, linkedSeat: null, ...(cfg.president || {}) };
             pm = { name: '', photo: '', partyId: null, linkedSeat: null, ...(cfg.pm || {}) };
+            deputyPm = { name: '', photo: '', partyId: null, linkedSeat: null, ...(cfg.deputyPm || {}) };
             collectiveChair = { name: '', photo: '', partyId: null, linkedSeat: null, ...(cfg.collectiveChair || {}) };
             cabinetMembers = Array.isArray(cfg.cabinetMembers) ? cfg.cabinetMembers.map(m => ({ partyId: null, linkedSeat: null, ...m })) : [];
             pmDirectElectionEnabled = !!cfg.pmDirectElectionEnabled;
@@ -3756,7 +3857,7 @@
                 Object.keys(EMERGENCY_POWERS).forEach(k => setEmergencyHolder(k, emergencyPowers[k].holder));
             }
             if(sub === 'president') { renderPresidentSection(); renderEmergencyPowers(); }
-            if(sub === 'pm') { renderPmSection(); renderEmergencyPowers(); }
+            if(sub === 'pm') { renderPmSection(); renderDeputyPmSection(); renderEmergencyPowers(); }
             if(sub === 'cabinetmembers') { renderCabinetMembersList(); renderChairSection(); renderEmergencyPowers(); }
             if(sub === 'coalition') { renderCoalitions(); }
             if(sub === 'list') { listMemberInnerTab = 'house'; switchListMemberInnerTab('house'); }

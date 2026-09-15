@@ -1157,6 +1157,38 @@
                         </div>
                     </div>
 
+                    <!-- 부총리 -->
+                    <div style="margin-top:16px;padding-top:14px;border-top:1px solid #222;">
+                        <label style="color:#888;font-size:0.8rem;margin-bottom:6px;display:block;">부총리</label>
+                        <div style="display:flex;gap:10px;align-items:stretch;">
+                            <div style="display:flex;flex-direction:column;align-items:center;gap:4px;flex-shrink:0;">
+                                <div class="leader-photo-box" data-ratio="0.8" title="클릭하여 사진 업로드" id="deputyPmPhotoBox" style="width:52px;height:65px;">
+                                    <div class="photo-ph" id="deputyPmPhotoPh">👤</div>
+                                    <img id="deputyPmPhotoImg" alt="부총리" style="display:none;">
+                                    <input type="file" accept="image/*" onchange="uploadDeputyPmPhoto(this)">
+                                </div>
+                                <span style="font-size:0.75rem;color:#444;flex-shrink:0;">사진 업로드</span>
+                            </div>
+                            <div style="flex:1;display:flex;flex-direction:column;gap:6px;min-width:0;">
+                                <input type="text" id="deputyPmNameInput" placeholder="부총리 이름"
+                                    style="background:#000;border:1px solid #2a2a2a;color:#e0e0e0;font-family:inherit;font-size:0.95rem;padding:5px 8px;width:100%;box-sizing:border-box;"
+                                    oninput="updateDeputyPmField('name',this.value)">
+                                <div style="display:flex;align-items:center;gap:6px;">
+                                    <span id="deputyPmPartyDot" style="width:9px;height:9px;border-radius:50%;flex-shrink:0;background:#666;"></span>
+                                    <select id="deputyPmPartySelect" onchange="updateDeputyPmField('partyId',this.value?parseInt(this.value):null)"
+                                        style="flex:1;min-width:0;background:#000;border:1px solid #333;color:var(--tno-gold);font-family:inherit;font-size:0.85rem;padding:4px;"></select>
+                                </div>
+                                <select id="deputyPmMemberPicker" onchange="linkDeputyPmToMember(this.value)"
+                                    style="width:100%;box-sizing:border-box;background:#000;border:1px solid #333;color:#888;font-family:inherit;font-size:0.78rem;padding:4px;"></select>
+                                <div id="deputyPmLinkedBadge" style="display:none;align-items:center;gap:6px;color:#6cf;font-size:0.75rem;">
+                                    🔗 의원과 연결됨 — 이름·사진·당적 자동 반영
+                                    <button onclick="unlinkDeputyPm()" style="background:transparent;border:1px solid #333;color:#888;font-family:inherit;font-size:0.72rem;padding:2px 6px;cursor:pointer;">연결 해제</button>
+                                </div>
+                                <button id="deputyPmPhotoRemoveBtn" onclick="removeDeputyPmPhoto()" style="display:none;background:transparent;border:1px solid #333;color:#555;font-family:inherit;font-size:0.8rem;padding:3px 8px;cursor:pointer;text-align:left;">✕ 사진 제거</button>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- 대통령 임명제: 후보 지명 → 의회 심의 상정 -->
                     <div id="pmNomineeSection" style="display:none;margin-top:16px;padding-top:14px;border-top:1px solid #222;">
                         <label style="color:#888;font-size:0.8rem;margin-bottom:6px;display:block;">총리 후보 지명 (대통령 임명제)</label>
@@ -1332,11 +1364,11 @@
         <div class="disp-panel" id="dispPanelCabinet">
             <div class="chamber-box">
                 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-                    <h3 style="margin:0;">CABINET</h3>
+                    <h3 style="margin:0;">내각</h3>
                 </div>
                 <svg id="cabinetDisplaySvg" data-export-kind="cabinet" xmlns="http://www.w3.org/2000/svg" width="100%" style="display:block;">
                     <foreignObject x="0" y="0" width="100%" height="100%">
-                        <div xmlns="http://www.w3.org/1999/xhtml" id="cabinetDisplayGrid" style="display:flex;flex-wrap:wrap;gap:22px;"></div>
+                        <div xmlns="http://www.w3.org/1999/xhtml" id="cabinetDisplayGrid"></div>
                     </foreignObject>
                 </svg>
             </div>
