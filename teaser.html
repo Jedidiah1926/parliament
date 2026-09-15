@@ -4,7 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DATANET: PARLIAMENT SIMULATION [BETA]</title>
-    
+
+    <script src="uimode.js"></script>
+    <script src="theme.js"></script>
+
     <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/neodgm/neodgm-webfont@latest/neodgm/style.css">
 
@@ -12,146 +15,471 @@
 </head>
 <body>
 
-
+    <!-- 모바일 UI 모드 전용 — 좌측(컨트롤)/우측(디스플레이) 패널 전환 버튼. 데스크톱 모드에서는 CSS로 숨김 -->
+    <div class="mobile-panel-switch" id="mobilePanelSwitch">
+        <button class="mobile-panel-btn active" id="mobilePanelBtnControls" onclick="setMobilePanel('controls')">◀ 컨트롤</button>
+        <button class="mobile-panel-btn" id="mobilePanelBtnDisplay" onclick="setMobilePanel('display')">의석 현황 ▶</button>
+    </div>
 
     <!-- Tooltip -->
-    <div class="tooltip-box" id="tooltipBox"></div>
+    <div class="tooltip-box" id="tooltipBox" style="display:none;"></div>
+
+    <!-- 캔버스/SVG 우클릭 시 뜨는 내보내기 메뉴 (모든 canvas·svg 요소 공용) -->
+    <div id="canvasExportMenu" class="canvas-export-menu" style="display:none;" onclick="event.stopPropagation();">
+        <div class="canvas-export-menu-item" onclick="openExportDialog()">⬇ 내보내기...</div>
+    </div>
+
+    <!-- 내보내기 옵션 창 -->
+    <!-- 권한(거부권/비상사태 등) 관련 확인/안내를 브라우저 기본 alert/confirm 대신 앱 자체 UI로 표시 -->
+    <div id="customConfirmOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:7000;align-items:center;justify-content:center;">
+        <div style="background:#0a0c10;border:1px solid var(--tno-neon);box-shadow:0 0 16px color-mix(in srgb, var(--tno-neon) 30%, transparent);padding:20px;width:320px;max-width:90vw;font-family:'NeoDunggeunmo','VT323',monospace;">
+            <div id="customConfirmMessage" style="color:#ddd;font-size:0.95rem;margin-bottom:20px;line-height:1.6;white-space:pre-line;"></div>
+            <div style="display:flex;gap:8px;">
+                <button id="customConfirmOkBtn" class="add-btn" style="flex:1;margin-top:0;">확인</button>
+                <button id="customConfirmCancelBtn" class="add-btn" style="flex:1;margin-top:0;background:transparent;color:#888;border-color:#333;">취소</button>
+            </div>
+        </div>
+    </div>
+    <div id="customAlertOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:7000;align-items:center;justify-content:center;">
+        <div style="background:#0a0c10;border:1px solid var(--tno-gold);box-shadow:0 0 16px color-mix(in srgb, var(--tno-gold) 30%, transparent);padding:20px;width:320px;max-width:90vw;font-family:'NeoDunggeunmo','VT323',monospace;">
+            <div id="customAlertMessage" style="color:#ddd;font-size:0.95rem;margin-bottom:20px;line-height:1.6;white-space:pre-line;"></div>
+            <button id="customAlertOkBtn" class="add-btn" style="width:100%;margin-top:0;">확인</button>
+        </div>
+    </div>
+
+    <div id="exportDialogOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:6000;align-items:center;justify-content:center;" onclick="if(event.target===this) closeExportDialog();">
+        <div style="background:#0a0c10;border:1px solid var(--tno-neon);box-shadow:0 0 16px color-mix(in srgb, var(--tno-neon) 30%, transparent);padding:20px;width:300px;max-width:90vw;font-family:'NeoDunggeunmo','VT323',monospace;">
+            <div style="color:var(--tno-neon);font-size:1rem;margin-bottom:16px;letter-spacing:1px;">▌ 내보내기</div>
+
+            <div id="exportHeaderStatsSection">
+                <div style="color:#888;font-size:0.8rem;margin-bottom:6px;">최상단에 포함</div>
+                <div style="display:flex;flex-wrap:wrap;gap:6px 14px;margin-bottom:16px;">
+                    <label style="display:flex;align-items:center;gap:6px;cursor:pointer;color:#ccc;font-size:0.8rem;">
+                        <input type="checkbox" id="exportIncludeFlag"> 국기
+                    </label>
+                    <label style="display:flex;align-items:center;gap:6px;cursor:pointer;color:#ccc;font-size:0.8rem;">
+                        <input type="checkbox" id="exportIncludeName"> 국가 이름
+                    </label>
+                    <label style="display:flex;align-items:center;gap:6px;cursor:pointer;color:#ccc;font-size:0.8rem;">
+                        <input type="checkbox" id="exportIncludeDate"> 날짜
+                    </label>
+                    <label style="display:flex;align-items:center;gap:6px;cursor:pointer;color:#ccc;font-size:0.8rem;">
+                        <input type="checkbox" id="exportIncludeSession"> 회기
+                    </label>
+                </div>
+
+                <label style="display:flex;align-items:center;gap:8px;margin-bottom:10px;cursor:pointer;color:#ccc;font-size:0.85rem;">
+                    <input type="checkbox" id="exportIncludeStats" onchange="onExportIncludeStatsChange()"> 아래 의석 수 등 통계 포함
+                </label>
+
+                <div id="exportStatsSubOptions" style="display:none;margin:0 0 16px 22px;">
+                    <label style="display:flex;align-items:center;gap:8px;margin-bottom:8px;cursor:pointer;color:#999;font-size:0.8rem;">
+                        <input type="checkbox" id="exportIncludePhotos" checked> 당수/로고 사진 포함
+                    </label>
+                    <label style="display:flex;align-items:center;gap:8px;margin-bottom:8px;cursor:pointer;color:#999;font-size:0.8rem;">
+                        <input type="checkbox" id="exportExpandIndependents"> 무소속 펼치기
+                    </label>
+                    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;color:#999;font-size:0.8rem;">
+                        <input type="checkbox" id="exportIncludeExtraParties"> 원외정당 포함하기
+                    </label>
+                </div>
+            </div>
+
+            <div style="color:#888;font-size:0.8rem;margin-bottom:6px;">형식</div>
+            <div style="display:flex;gap:6px;margin-bottom:20px;">
+                <button class="sub-tab-btn-3 active" data-format="png" onclick="setExportFormat('png')">PNG</button>
+                <button class="sub-tab-btn-3" data-format="jpg" onclick="setExportFormat('jpg')">JPG</button>
+                <button class="sub-tab-btn-3" data-format="svg" onclick="setExportFormat('svg')">SVG</button>
+            </div>
+
+            <div style="display:flex;gap:8px;">
+                <button class="add-btn" style="flex:1;margin-top:0;" onclick="performExport()">내보내기</button>
+                <button class="add-btn" style="flex:1;margin-top:0;background:transparent;color:#888;border-color:#333;" onclick="closeExportDialog()">취소</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 좌석 클릭 시 뜨는 정보 카드 (display:none 인라인 기본값 — 외부 CSS 로드 실패/캐시 문제와 무관하게 항상 숨김 상태로 시작) -->
+    <div class="seat-info-card" id="seatInfoCard" style="display:none;">
+        <div class="seat-info-card-header">
+            <span id="seatInfoCardTitle">좌석 정보</span>
+            <button onclick="closeSeatInfoCard()" title="닫기">✕</button>
+        </div>
+        <div class="seat-info-card-body" id="seatInfoCardBody"></div>
+    </div>
 
     <div class="controls">
         <div class="tno-header-strip">Ministry of Interior</div>
-        
+
+        <div class="nation-id-bar" id="nationIdBar">
+            <span class="nation-name-disp" id="nationNameDisp">국가명 미설정</span>
+        </div>
+
         <div class="controls-content">
-            <div style="display:flex; gap:15px; margin-bottom: 15px; border-bottom:1px solid #333; padding-bottom:10px;">
-                <label style="cursor:pointer; color:#fff;"><input type="radio" name="systemType" value="unicameral" onchange="toggleSystem()"> 단원제</label>
-                <label style="cursor:pointer; color:#fff;"><input type="radio" name="systemType" value="bicameral" checked onchange="toggleSystem()"> 양원제</label>
-                <label style="cursor:pointer; color:#fff;"><input type="radio" name="systemType" value="tricameral" onchange="toggleSystem()"> 삼원제</label>
+            <div class="nation-flag-banner" id="nationFlagBanner" style="display:none;">
+                <img id="nationFlagBannerImg" alt="국기">
             </div>
-            
-            <label style="cursor:pointer; margin-bottom:4px;">
-                <input type="checkbox" id="chkGovHighlight" onchange="simulate()" checked> 
-                <span style="color:var(--tno-gold); text-shadow:0 0 5px var(--tno-gold);">집권 세력 강조 (HIGHLIGHT GOV)</span>
-            </label>
-            <label style="cursor:pointer; margin-bottom:12px;">
-                <input type="checkbox" id="chkSavePhoto"> 
-                <span style="color:#666;">저장 시 사진 포함</span>
-            </label>
 
 
             <!-- ===== 상단 메인 탭 ===== -->
             <div class="main-tab-container">
-                <button class="main-tab-btn active" onclick="switchMainTab('party')" id="mainTabParty">🏛 정당</button>
                 <button class="main-tab-btn" onclick="switchMainTab('setup')" id="mainTabSetup">⚙ 의회</button>
-                <button class="main-tab-btn" onclick="switchMainTab('legislation')" id="mainTabLegislation">⚖ 입법</button>
-                <button class="main-tab-btn" onclick="switchMainTab('election')" id="mainTabElection">🗳 선거</button>
+                <button class="main-tab-btn active" onclick="switchMainTab('nation')" id="mainTabNation">🏛 국가</button>
+                <button class="main-tab-btn" onclick="switchMainTab('election')" id="mainTabElection">🗳 여론</button>
+                <button class="main-tab-btn" onclick="switchMainTab('cabinet')" id="mainTabCabinet">💼︎ 내각</button>
             </div>
 
-            <!-- ===== 의회 설정 그룹 ===== -->
-            <!-- ===== 정당 그룹 ===== -->
-            <div id="mainContentParty" class="main-tab-content active">
-                <div class="sub-tab-container">
-                    <button class="sub-tab-btn active" onclick="switchSubTab('party','ideology')" id="subTabPartyIdeology">이념</button>
-                    <button class="sub-tab-btn" onclick="switchSubTab('party','partyInfo')" id="subTabPartyInfo">정당</button>
-                    <button class="sub-tab-btn" onclick="switchSubTab('party','leader')" id="subTabLeader">당수</button>
-                    <button class="sub-tab-btn" onclick="switchSubTab('party','coalitionLeader')" id="subTabCoalitionLeader">연정</button>
-                </div>
-
-                <!-- 이념 탭 -->
-                <div id="contentIdeology" class="sub-tab-content active">
-                    <div id="ideologyList"></div>
-                    <button class="add-btn" onclick="addIdeology()">[+] 이념 추가</button>
-                    <button class="add-btn" style="border-style:solid;font-size:0.9rem;" onclick="addIndependentIdeology()">[+] 무소속 슬롯 추가</button>
-                </div>
-
-                <!-- 정당 탭 -->
-                <div id="contentPartyInfo" class="sub-tab-content">
-                    <div id="partyInfoList"></div>
-                    <button class="add-btn" onclick="addParty('house')">[+] 정당 추가</button>
-                    <button class="add-btn" style="border-style:solid;font-size:0.9rem;" onclick="addIndependentParty()">[+] 무소속 의원 추가</button>
-                </div>
-
-                <!-- 당수 탭 -->
-                <div id="contentLeader" class="sub-tab-content">
-                    <div id="leaderList"></div>
-                </div>
-
-                <!-- 연정(사진) 탭 -->
-                <div id="contentCoalitionLeader" class="sub-tab-content">
-                    <div id="coalitionLeaderList"></div>
-                </div>
-            </div>
-
-            <!-- ===== 의회 그룹 ===== -->
+            <!-- ===== 의회 그룹 (정당 그룹이 여기로 통합됨) ===== -->
             <div id="mainContentSetup" class="main-tab-content">
                 <div class="sub-tab-container">
-                    <button class="sub-tab-btn active" onclick="switchSubTab('setup','house')" id="subTabHouse">하원</button>
-                    <button class="sub-tab-btn" onclick="switchSubTab('setup','senate')" id="subTabSenate">상원</button>
-                    <button class="sub-tab-btn" onclick="switchSubTab('setup','third')" id="subTabThird" style="display:none;">삼원</button>
+                    <button class="sub-tab-btn active" onclick="switchSubTab('setup','party')" id="subTabParty">정당</button>
+                    <button class="sub-tab-btn" onclick="switchSubTab('setup','settings')" id="subTabSettings">구성</button>
+                    <button class="sub-tab-btn" onclick="switchSubTab('setup','members')" id="subTabMembers">의원</button>
+                    <button class="sub-tab-btn" onclick="switchSubTab('setup','list')" id="subTabList">비례</button>
                     <button class="sub-tab-btn" onclick="switchSubTab('setup','coalition')" id="subTabCoalition">연정</button>
                 </div>
 
-                <div id="contentHouse" class="sub-tab-content active">
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;padding:10px;background:#0a0c10;border:1px solid #2a2a2a;">
-                        <div>
-                            <label id="houseNameLabel" style="color:var(--tno-neon);font-size:0.85rem;">의회 명칭</label>
-                            <input type="text" id="houseNameInput" value="국회" oninput="updateNames()">
-                        </div>
-                        <div>
-                            <label style="color:var(--tno-neon);font-size:0.85rem;">총 의석 수</label>
-                            <input type="number" id="houseTotal" value="300" oninput="elecUpdateDistrictInfo()">
-                        </div>
+                <!-- 정당 탭 (내부 탭: 이념/정보/당수) -->
+                <div id="contentParty" class="sub-tab-content active">
+                    <div class="sub-tab-container-3">
+                        <button class="sub-tab-btn-3 active" onclick="switchPartyGroupInnerTab('ideology')" id="innerTabPartyIdeology">이념</button>
+                        <button class="sub-tab-btn-3" onclick="switchPartyGroupInnerTab('info')" id="innerTabPartyInfo">정보</button>
+                        <button class="sub-tab-btn-3" onclick="switchPartyGroupInnerTab('leader')" id="innerTabPartyLeader">당수</button>
                     </div>
-                    <div id="partyListHouse"></div>
-                    <button class="add-btn" onclick="addParty('house')">[+] 정당 추가</button>
-                    <button class="add-btn" style="border-style:solid;font-size:0.9rem;" onclick="addIndependentParty()">[+] 무소속 의원 추가</button>
+
+                    <div id="innerContentPartyIdeology" class="sub-tab-content active">
+                        <div id="ideologyList"></div>
+                        <button class="add-btn" onclick="addIdeology()">[+] 이념 추가</button>
+                    </div>
+
+                    <div id="innerContentPartyInfo" class="sub-tab-content">
+                        <div id="partyInfoList"></div>
+                        <button class="add-btn" onclick="addParty('house')">[+] 정당 추가</button>
+                    </div>
+
+                    <div id="innerContentPartyLeader" class="sub-tab-content">
+                        <div id="leaderList"></div>
+                    </div>
                 </div>
 
-                <div id="contentSenate" class="sub-tab-content">
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;padding:10px;background:#0a0c10;border:1px solid #2a2a2a;">
-                        <div>
-                            <label style="color:var(--tno-neon);font-size:0.85rem;">의회 명칭</label>
-                            <input type="text" id="senateNameInput" value="상원" oninput="updateNames()">
-                        </div>
-                        <div>
-                            <label style="color:var(--tno-neon);font-size:0.85rem;">총 의석 수</label>
-                            <input type="number" id="senateTotal" value="100" oninput="elecUpdateDistrictInfo()">
-                        </div>
+                <!-- 설정 탭 (내부 탭: 하원/상원/삼원) -->
+                <div id="contentSettings" class="sub-tab-content">
+                    <div class="sub-tab-container-3">
+                        <button class="sub-tab-btn-3 active" onclick="switchSetupInnerTab('house')" id="innerTabSetupHouse">하원</button>
+                        <button class="sub-tab-btn-3" onclick="switchSetupInnerTab('senate')" id="innerTabSetupSenate">상원</button>
+                        <button class="sub-tab-btn-3" onclick="switchSetupInnerTab('third')" id="innerTabSetupThird" style="display:none;">삼원</button>
                     </div>
-                    <div id="partyListSenate"></div>
-                    <button class="add-btn" onclick="addParty('senate')">[+] 정당 추가</button>
+
+                    <div id="contentHouse" class="sub-tab-content active">
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;padding:10px;background:#0a0c10;border:1px solid #2a2a2a;">
+                            <div>
+                                <label id="houseNameLabel" style="color:var(--tno-neon);font-size:0.85rem;">의회 명칭</label>
+                                <input type="text" id="houseNameInput" value="국회" oninput="updateNames()">
+                            </div>
+                            <div>
+                                <label style="color:var(--tno-neon);font-size:0.85rem;">총 의석 수</label>
+                                <input type="number" id="houseTotal" value="300" oninput="elecUpdateDistrictInfo()">
+                            </div>
+                        </div>
+                        <div id="partyListHouse"></div>
+                        <button class="add-btn" onclick="addParty('house')">[+] 정당 추가</button>
+                    </div>
+
+                    <div id="contentSenate" class="sub-tab-content">
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;padding:10px;background:#0a0c10;border:1px solid #2a2a2a;">
+                            <div>
+                                <label style="color:var(--tno-neon);font-size:0.85rem;">의회 명칭</label>
+                                <input type="text" id="senateNameInput" value="상원" oninput="updateNames()">
+                            </div>
+                            <div>
+                                <label style="color:var(--tno-neon);font-size:0.85rem;">총 의석 수</label>
+                                <input type="number" id="senateTotal" value="100" oninput="elecUpdateDistrictInfo()">
+                            </div>
+                        </div>
+                        <div id="partyListSenate"></div>
+                        <button class="add-btn" onclick="addParty('senate')">[+] 정당 추가</button>
+                    </div>
+
+                    <div id="contentThird" class="sub-tab-content">
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;padding:10px;background:#0a0c10;border:1px solid #2a2a2a;">
+                            <div>
+                                <label style="color:var(--tno-neon);font-size:0.85rem;">의회 명칭</label>
+                                <input type="text" id="thirdNameInput" value="삼원" oninput="updateNames()">
+                            </div>
+                            <div>
+                                <label style="color:var(--tno-neon);font-size:0.85rem;">총 의석 수</label>
+                                <input type="number" id="thirdTotal" value="100" oninput="elecUpdateDistrictInfo()">
+                            </div>
+                        </div>
+                        <div id="partyListThird"></div>
+                        <button class="add-btn" onclick="addParty('third')">[+] 정당 추가</button>
+                    </div>
                 </div>
 
-                <div id="contentThird" class="sub-tab-content">
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;padding:10px;background:#0a0c10;border:1px solid #2a2a2a;">
-                        <div>
-                            <label style="color:var(--tno-neon);font-size:0.85rem;">의회 명칭</label>
-                            <input type="text" id="thirdNameInput" value="삼원" oninput="updateNames()">
-                        </div>
-                        <div>
-                            <label style="color:var(--tno-neon);font-size:0.85rem;">총 의석 수</label>
-                            <input type="number" id="thirdTotal" value="100" oninput="elecUpdateDistrictInfo()">
-                        </div>
-                    </div>
-                    <div id="partyListThird"></div>
-                    <button class="add-btn" onclick="addParty('third')">[+] 정당 추가</button>
-                </div>
-
+                <!-- 연정 탭 -->
                 <div id="contentCoalition" class="sub-tab-content">
                     <div id="coalitionList"></div>
                     <button class="add-btn" onclick="addCoalition()">[+] 연정 구성</button>
                     <button class="add-btn" onclick="setNoRuling()" style="color:#555;border-color:#333;">[✕] 무집권 상태</button>
                 </div>
-            </div>
 
-            <!-- ===== 입법 절차 그룹 ===== -->
-            <div id="mainContentLegislation" class="main-tab-content">
-                <div class="sub-tab-container">
-                    <button class="sub-tab-btn active" onclick="switchSubTab('legislation','bill')" id="subTabBill">법안 제출</button>
-                    <button class="sub-tab-btn" onclick="switchSubTab('legislation','vote')" id="subTabVote">표결</button>
-                    <button class="sub-tab-btn" onclick="switchSubTab('legislation','archive')" id="subTabArchive">기록</button>
+                <!-- 의원 탭 (지역구 당선 의원 개별 정보, 내부 탭: 하원/상원/삼원) -->
+                <div id="contentMembers" class="sub-tab-content">
+                    <div class="sub-tab-container-3" id="membersInnerTabs">
+                        <button class="sub-tab-btn-3 active" onclick="switchMembersInnerTab('house')" id="innerTabMembersHouse">하원</button>
+                        <button class="sub-tab-btn-3" onclick="switchMembersInnerTab('senate')" id="innerTabMembersSenate">상원</button>
+                        <button class="sub-tab-btn-3" onclick="switchMembersInnerTab('third')" id="innerTabMembersThird">삼원</button>
+                    </div>
+                    <div style="display:flex;gap:6px;margin:8px 0;position:relative;">
+                        <input type="text" id="membersSearchInput" placeholder="검색 (이름 / #좌석번호)" oninput="onMemberSearchInput('members',this.value)"
+                            style="flex:1;min-width:0;background:#000;border:1px solid #2a2a2a;color:#e0e0e0;font-family:inherit;font-size:0.85rem;padding:5px 8px;">
+                        <button onclick="toggleMemberFilterPopup('members')" id="membersFilterBtn" class="member-filter-btn">필터</button>
+                        <div id="membersFilterPopup" class="member-filter-popup" style="display:none;"></div>
+                    </div>
+                    <div id="membersList"></div>
                 </div>
 
-            <!-- 법안 제출 탭: 작성 + 대기 중 목록 -->
+                <!-- 비례 탭 (정당별 비례 의석 개별 관리, 내부 탭: 하원/상원/삼원) -->
+                <div id="contentList" class="sub-tab-content">
+                    <div class="sub-tab-container-3" id="listInnerTabs">
+                        <button class="sub-tab-btn-3 active" onclick="switchListMemberInnerTab('house')" id="innerTabListHouse">하원</button>
+                        <button class="sub-tab-btn-3" onclick="switchListMemberInnerTab('senate')" id="innerTabListSenate">상원</button>
+                        <button class="sub-tab-btn-3" onclick="switchListMemberInnerTab('third')" id="innerTabListThird">삼원</button>
+                    </div>
+                    <div style="display:flex;gap:6px;margin:8px 0;position:relative;">
+                        <input type="text" id="listSearchInput" placeholder="검색 (이름 / #좌석번호)" oninput="onMemberSearchInput('list',this.value)"
+                            style="flex:1;min-width:0;background:#000;border:1px solid #2a2a2a;color:#e0e0e0;font-family:inherit;font-size:0.85rem;padding:5px 8px;">
+                        <button onclick="toggleMemberFilterPopup('list')" id="listFilterBtn" class="member-filter-btn">필터</button>
+                        <div id="listFilterPopup" class="member-filter-popup" style="display:none;"></div>
+                    </div>
+                    <div id="listMemberList"></div>
+                </div>
+            </div>
+
+            <!-- ===== 국가 그룹 (입법+기록 통합) ===== -->
+            <div id="mainContentNation" class="main-tab-content active">
+                <div class="sub-tab-container">
+                    <button class="sub-tab-btn active" onclick="switchSubTab('nation','config')" id="subTabConfig">설정</button>
+                    <button class="sub-tab-btn" onclick="switchSubTab('nation','legislation')" id="subTabLegislation">입법</button>
+                    <button class="sub-tab-btn" onclick="switchSubTab('nation','election')" id="subTabElection">선거</button>
+                    <button class="sub-tab-btn" onclick="switchSubTab('nation','record')" id="subTabRecord">기록</button>
+                </div>
+
+                <!-- 설정 탭: 국가 식별 정보 + 전역 표시 옵션 -->
+                <div id="contentConfig" class="sub-tab-content active">
+                    <div class="sub-tab-container-3">
+                        <button class="sub-tab-btn-3 active" onclick="switchConfigInnerTab('assembly')" id="innerTabConfigAssembly">의회</button>
+                        <button class="sub-tab-btn-3" onclick="switchConfigInnerTab('symbol')" id="innerTabConfigSymbol">상징</button>
+                        <button class="sub-tab-btn-3" onclick="switchConfigInnerTab('date')" id="innerTabConfigDate">날짜</button>
+                        <button class="sub-tab-btn-3" onclick="switchConfigInnerTab('save')" id="innerTabConfigSave">저장</button>
+                    </div>
+
+                    <!-- 의회: 원 구성 + 의장/부의장 + 지역구 시스템 -->
+                    <div id="innerContentConfigAssembly" class="sub-tab-content active">
+                        <label style="cursor:pointer; margin-bottom:16px; display:block;">
+                            <input type="checkbox" id="chkGovHighlight" onchange="simulate()" checked>
+                            <span style="color:var(--tno-gold); text-shadow:0 0 5px var(--tno-gold);">집권 세력 강조 (HIGHLIGHT GOV)</span>
+                        </label>
+
+                        <div style="margin-bottom:16px;">
+                            <label style="color:#888;font-size:0.8rem;margin-bottom:6px;display:block;">원 구성</label>
+                            <div class="system-radio-group">
+                                <label class="system-radio-btn"><input type="radio" name="systemType" value="unicameral" onchange="toggleSystem()"> 단원제</label>
+                                <label class="system-radio-btn"><input type="radio" name="systemType" value="bicameral" checked onchange="toggleSystem()"> 양원제</label>
+                                <label class="system-radio-btn"><input type="radio" name="systemType" value="tricameral" onchange="toggleSystem()"> 삼원제</label>
+                            </div>
+                        </div>
+
+                        <div style="margin-bottom:16px;">
+                            <label style="color:#888;font-size:0.8rem;margin-bottom:6px;display:block;">의장단</label>
+                            <div id="chamberLeadersList"></div>
+                        </div>
+
+                        <!-- 지역구 시스템 (육각형 / 지도) -->
+                        <div style="margin-top:16px;">
+                            <label style="color:#888;font-size:0.8rem;margin-bottom:6px;display:block;">지역구 시스템 (기본: 지도)</label>
+                            <div class="system-radio-group">
+                                <button type="button" class="system-radio-btn active" id="districtSystemModeSvgBtn" onclick="setDistrictMapMode('svg')">지도</button>
+                                <button type="button" class="system-radio-btn" id="districtSystemModeHexBtn" onclick="setDistrictMapMode('hex')">그리드</button>
+                            </div>
+                            <div style="color:#555;font-size:0.72rem;margin-top:4px;">지도 모드로 바꾸면 선거 &gt; 지역구 탭에서 SVG 지도를 업로드할 수 있습니다</div>
+                            <!-- 지도 위 약칭/의석 배지 크기 — 지역구 자체 크기와 무관하게 지도 전체에서 하나의 기준으로 통일되지만, 취향에 따라 일괄 조정 가능 -->
+                            <div style="margin-top:10px;">
+                                <label style="color:#888;font-size:0.8rem;margin-bottom:4px;display:block;">지도 글씨·배지 크기</label>
+                                <div style="display:flex;align-items:center;gap:8px;">
+                                    <input type="range" id="districtLabelScaleSlider" min="50" max="200" value="100"
+                                        oninput="setDistrictLabelScale(this.value)"
+                                        style="-webkit-appearance:none;flex:1;background:transparent;">
+                                    <span id="districtLabelScaleVal" style="color:var(--tno-neon);width:44px;text-align:right;font-size:0.85rem;">100%</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 상징: 국가명/국기 + 반원 표기(의석 수/로고) -->
+                    <div id="innerContentConfigSymbol" class="sub-tab-content">
+                        <div style="margin-bottom:16px;">
+                            <label style="color:#888;font-size:0.8rem;margin-bottom:4px;display:block;">국가명</label>
+                            <input type="text" id="nationNameInput" placeholder="예: 대게르만국" oninput="updateNationIdBar()" style="width:100%;box-sizing:border-box;">
+                        </div>
+
+                        <div>
+                            <label style="color:#888;font-size:0.8rem;margin-bottom:6px;display:block;">국기</label>
+                            <div style="display:flex;align-items:center;gap:12px;">
+                                <div class="leader-photo-box" id="nationFlagBox" title="클릭하여 국기 업로드" style="width:72px;height:48px;">
+                                    <img id="nationFlagImg" alt="국기" style="display:none;">
+                                    <span class="photo-ph" id="nationFlagPh" style="font-size:1.4rem;">🏳️</span>
+                                    <input type="file" accept="image/*" onchange="uploadNationFlag(this)">
+                                </div>
+                                <button onclick="removeNationFlag()" id="nationFlagRemoveBtn" style="display:none;background:transparent;border:1px solid #333;color:#555;font-family:inherit;font-size:0.8rem;padding:4px 10px;cursor:pointer;">✕ 국기 제거</button>
+                            </div>
+                        </div>
+
+                        <!-- 의원실별 반원 중앙 표시 (의석 수 / 로고) -->
+                        <div style="margin-top:16px;">
+                            <label id="chamberCenterLabelHouse" style="color:#888;font-size:0.8rem;margin-bottom:6px;display:block;">하원 반원 중앙 표시</label>
+                            <div class="system-radio-group" style="margin-bottom:8px;">
+                                <button type="button" class="system-radio-btn active" id="chamberCenterModeSeatsBtnHouse" onclick="setChamberCenterMode('house','seats')">의석 수</button>
+                                <button type="button" class="system-radio-btn" id="chamberCenterModeLogoBtnHouse" onclick="setChamberCenterMode('house','logo')">로고</button>
+                            </div>
+                            <div id="chamberCenterLogoWrapHouse" style="display:flex;align-items:center;gap:10px;">
+                                <div class="leader-photo-box" id="chamberLogoPreviewHouse" style="width:52px;height:52px;flex-shrink:0;" title="클릭하여 로고 업로드">
+                                    <div class="photo-ph">⚑</div>
+                                    <input type="file" accept="image/*" onchange="uploadChamberLogo(this,'house')">
+                                </div>
+                                <div style="min-width:0;">
+                                    <div style="color:#666;font-size:0.72rem;">클릭해서 로고를 올리고, [로고]를 선택하면 반원 중앙에 표시됩니다</div>
+                                    <button id="chamberLogoRemoveBtnHouse" onclick="removeChamberLogo('house')" style="display:none;background:transparent;border:1px solid #333;color:#555;font-family:inherit;font-size:0.75rem;padding:4px 10px;cursor:pointer;margin-top:4px;">✕ 로고 제거</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="chamberCenterSenateWrap" style="margin-top:16px;">
+                            <label style="color:#888;font-size:0.8rem;margin-bottom:6px;display:block;" id="chamberCenterLabelSenate">상원 반원 중앙 표시</label>
+                            <div class="system-radio-group" style="margin-bottom:8px;">
+                                <button type="button" class="system-radio-btn active" id="chamberCenterModeSeatsBtnSenate" onclick="setChamberCenterMode('senate','seats')">의석 수</button>
+                                <button type="button" class="system-radio-btn" id="chamberCenterModeLogoBtnSenate" onclick="setChamberCenterMode('senate','logo')">로고</button>
+                            </div>
+                            <div id="chamberCenterLogoWrapSenate" style="display:flex;align-items:center;gap:10px;">
+                                <div class="leader-photo-box" id="chamberLogoPreviewSenate" style="width:52px;height:52px;" title="반원 중앙에 표시할 로고">
+                                    <div class="photo-ph">⚑</div>
+                                    <input type="file" accept="image/*" onchange="uploadChamberLogo(this,'senate')">
+                                </div>
+                                <button id="chamberLogoRemoveBtnSenate" onclick="removeChamberLogo('senate')" style="display:none;background:transparent;border:1px solid #333;color:#555;font-family:inherit;font-size:0.75rem;padding:4px 10px;cursor:pointer;">✕ 로고 제거</button>
+                            </div>
+                        </div>
+
+                        <div id="chamberCenterThirdWrap" style="margin-top:16px;display:none;">
+                            <label style="color:#888;font-size:0.8rem;margin-bottom:6px;display:block;" id="chamberCenterLabelThird">삼원 반원 중앙 표시</label>
+                            <div class="system-radio-group" style="margin-bottom:8px;">
+                                <button type="button" class="system-radio-btn active" id="chamberCenterModeSeatsBtnThird" onclick="setChamberCenterMode('third','seats')">의석 수</button>
+                                <button type="button" class="system-radio-btn" id="chamberCenterModeLogoBtnThird" onclick="setChamberCenterMode('third','logo')">로고</button>
+                            </div>
+                            <div id="chamberCenterLogoWrapThird" style="display:flex;align-items:center;gap:10px;">
+                                <div class="leader-photo-box" id="chamberLogoPreviewThird" style="width:52px;height:52px;" title="반원 중앙에 표시할 로고">
+                                    <div class="photo-ph">⚑</div>
+                                    <input type="file" accept="image/*" onchange="uploadChamberLogo(this,'third')">
+                                </div>
+                                <button id="chamberLogoRemoveBtnThird" onclick="removeChamberLogo('third')" style="display:none;background:transparent;border:1px solid #333;color:#555;font-family:inherit;font-size:0.75rem;padding:4px 10px;cursor:pointer;">✕ 로고 제거</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 날짜: 현재 날짜 + 회기 -->
+                    <div id="innerContentConfigDate" class="sub-tab-content">
+                        <div>
+                            <label style="color:#888;font-size:0.8rem;margin-bottom:6px;display:block;">현재 날짜</label>
+                            <div class="system-radio-group" style="margin-bottom:8px;">
+                                <button type="button" class="system-radio-btn active" id="nationDateModeSimpleBtn" onclick="setNationDateMode('simple')">단순형</button>
+                                <button type="button" class="system-radio-btn" id="nationDateModeProgBtn" onclick="setNationDateMode('progressive')">수동 진행형</button>
+                            </div>
+                            <div id="nationDateSimpleWrap">
+                                <input type="text" id="nationDateInput" placeholder="예: 1952년 3월 15일" oninput="updateDispInfoBar()" style="width:100%;box-sizing:border-box;">
+                            </div>
+                            <div id="nationDateProgWrap" style="display:none;">
+                                <div style="display:flex;gap:6px;margin-bottom:8px;">
+                                    <input type="number" id="nationDateYear" placeholder="연" oninput="updateDispInfoBar()" style="flex:1;min-width:0;text-align:center;">
+                                    <input type="number" id="nationDateMonth" placeholder="월" min="1" max="12" oninput="updateDispInfoBar()" style="flex:1;min-width:0;text-align:center;">
+                                    <input type="number" id="nationDateDay" placeholder="일" min="1" max="31" oninput="updateDispInfoBar()" style="flex:1;min-width:0;text-align:center;">
+                                </div>
+                                <div style="display:flex;gap:6px;">
+                                    <button class="add-btn" onclick="advanceNationDate(1,'day')" style="flex:1;min-width:0;margin-top:0;">+1일</button>
+                                    <button class="add-btn" onclick="advanceNationDate(7,'day')" style="flex:1;min-width:0;margin-top:0;">+7일</button>
+                                    <button class="add-btn" onclick="advanceNationDate(1,'month')" style="flex:1;min-width:0;margin-top:0;">+1개월</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="margin-top:16px;">
+                            <label style="color:#888;font-size:0.8rem;margin-bottom:6px;display:block;">회기</label>
+                            <div class="system-radio-group" style="margin-bottom:8px;">
+                                <button type="button" class="system-radio-btn active" id="nationSessionModeSimpleBtn" onclick="setNationSessionMode('simple')">단순형</button>
+                                <button type="button" class="system-radio-btn" id="nationSessionModeIndivBtn" onclick="setNationSessionMode('individual')">개별형</button>
+                            </div>
+                            <div id="nationSessionSimpleWrap">
+                                <input type="text" id="nationSessionInput" placeholder="예: 제21대 국회 제1회 임시회" oninput="updateDispInfoBar()" style="width:100%;box-sizing:border-box;">
+                            </div>
+                            <div id="nationSessionIndivWrap" style="display:none;">
+                                <div style="display:flex;gap:6px;margin-bottom:8px;">
+                                    <div style="flex:1;">
+                                        <label style="color:#555;font-size:0.72rem;margin-bottom:2px;">대수</label>
+                                        <input type="number" id="nationSessionTerm" placeholder="21" oninput="updateDispInfoBar()" style="width:100%;text-align:center;box-sizing:border-box;">
+                                    </div>
+                                    <div style="flex:1;">
+                                        <label style="color:#555;font-size:0.72rem;margin-bottom:2px;">이름</label>
+                                        <input type="text" id="nationSessionOrgName" placeholder="국회" oninput="updateDispInfoBar()" style="width:100%;text-align:center;box-sizing:border-box;">
+                                    </div>
+                                    <div style="flex:1;">
+                                        <label style="color:#555;font-size:0.72rem;margin-bottom:2px;">회기</label>
+                                        <input type="number" id="nationSessionNumber" placeholder="1" oninput="updateDispInfoBar()" style="width:100%;text-align:center;box-sizing:border-box;">
+                                    </div>
+                                </div>
+                                <div class="system-radio-group" style="margin-bottom:8px;">
+                                    <button type="button" class="system-radio-btn active" id="nationSessionTypeRegularBtn" onclick="setNationSessionType('regular')">정기회</button>
+                                    <button type="button" class="system-radio-btn" id="nationSessionTypeExtraBtn" onclick="setNationSessionType('extraordinary')">임시회</button>
+                                </div>
+                                <button class="add-btn" onclick="advanceNationSession()" style="width:100%;margin-top:0;">▶ 다음 회기</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 저장 (구 최상단 '저장' 탭이 여기로 통합됨) -->
+                    <div id="innerContentConfigSave" class="sub-tab-content">
+                        <label style="display:flex;align-items:center;justify-content:space-between;gap:10px;cursor:pointer;padding:12px 14px;background:#0a0c10;border:1px solid #2a2a2a;margin-bottom:14px;">
+                            <span>
+                                <span style="color:var(--tno-neon);font-size:0.95rem;display:block;">자동저장</span>
+                                <span style="color:#666;font-size:0.75rem;" id="autosaveStatusText">-</span>
+                            </span>
+                            <input type="checkbox" id="autosaveToggle" onchange="setAutosaveEnabled(this.checked)">
+                        </label>
+
+                        <button class="add-btn" onclick="resetAutosaveData()" style="width:100%;margin-top:0;border-color:#663333;color:#ff6666;">✕ 저장 데이터 초기화</button>
+
+                        <div style="height:1px;background:#222;margin:18px 0;"></div>
+
+                        <div style="display:flex;gap:8px;">
+                            <button class="add-btn" onclick="saveJSON()" style="flex:1;margin-top:0;">파일로 저장</button>
+                            <button class="add-btn" onclick="document.getElementById('fileLoadJsonTab').click()" style="flex:1;margin-top:0;">불러오기</button>
+                        </div>
+                        <input id="fileLoadJsonTab" type="file" accept="application/json" style="display:none;">
+                    </div>
+                </div>
+
+                <!-- 입법 탭 (내부 탭: 제출/상정/표결) -->
+                <div id="contentLegislation" class="sub-tab-content">
+                    <div class="sub-tab-container-3">
+                        <button class="sub-tab-btn-3 active" onclick="switchLegislationInnerTab('bill')" id="innerTabLegBill">제출</button>
+                        <button class="sub-tab-btn-3" onclick="switchLegislationInnerTab('table')" id="innerTabLegTable">상정</button>
+                        <button class="sub-tab-btn-3" onclick="switchLegislationInnerTab('vote')" id="innerTabLegVote">표결</button>
+                        <button class="sub-tab-btn-3" onclick="switchLegislationInnerTab('council')" id="innerTabLegCouncil">국무회의</button>
+                    </div>
+
+            <!-- 제출 탭: 법안 작성 폼만 -->
             <div id="contentBill" class="sub-tab-content active">
+                <div id="amendmentBanner" class="amendment-banner">
+                    <span id="amendmentBannerText"></span>
+                    <button onclick="cancelAmendment()" title="취소">✕</button>
+                </div>
                 <div class="vote-panel" style="margin-bottom:10px;">
                     <div class="vote-panel-title">> 새 법안 작성 (NEW BILL)</div>
                     <input type="text" class="vote-bill-input" id="newBillTitle" placeholder="법안 제목..." style="margin-bottom:6px;">
@@ -180,6 +508,43 @@
                     <button class="add-btn" style="border-style:solid; margin-top:8px; color:var(--tno-neon); border-color:var(--tno-neon);" onclick="addBill()">[+] 법안 등록</button>
                 </div>
 
+                <!-- 기존 법안 수정 -->
+                <div class="vote-panel">
+                    <div class="vote-panel-title">> 기존 법안 수정 (EDIT BILL)</div>
+                    <select id="editBillSelect" style="width:100%; background:#000; border:1px solid var(--tno-border); color:var(--tno-gold); font-family:'NeoDunggeunmo','VT323',monospace; font-size:0.95rem; padding:6px;margin-bottom:10px;" onchange="selectBillForEdit(this.value)">
+                        <option value="">-- 수정할 법안 선택 --</option>
+                    </select>
+                    <div id="editBillForm" style="display:none;">
+                        <input type="text" class="vote-bill-input" id="editBillTitle" placeholder="법안 제목..." style="margin-bottom:6px;">
+                        <textarea id="editBillContent" placeholder="법안 내용을 입력하세요..." style="
+                            background:#000; border:1px solid var(--tno-border); color:#ccc;
+                            font-family:'NeoDunggeunmo','VT323',monospace; font-size:0.85rem;
+                            width:100%; box-sizing:border-box; padding:8px; resize:vertical;
+                            min-height:80px; outline:none; line-height:1.5;
+                        "></textarea>
+                        <input type="text" id="editBillTags" placeholder="태그 (쉼표로 구분, 예: 경제, 안보)" style="background:#000; border:1px solid var(--tno-border); color:#aaa; font-family:'NeoDunggeunmo','VT323',monospace; font-size:0.85rem; width:100%; box-sizing:border-box; padding:5px 8px; margin-top:6px;">
+                        <div style="margin-top:8px;">
+                            <label style="color:#888; font-size:0.85rem; margin-bottom:4px;">가결 기준</label>
+                            <select id="editBillThreshold" style="width:100%; background:#000; border:1px solid var(--tno-border); color:var(--tno-gold); font-family:'NeoDunggeunmo','VT323',monospace; font-size:0.9rem; padding:4px 8px;" onchange="toggleEditCustomThreshold()">
+                                <option value="0.5">과반 (재적 과반수)</option>
+                                <option value="0.667">특별다수 (2/3 이상)</option>
+                                <option value="1.0">전원 일치</option>
+                                <option value="custom">지정...</option>
+                            </select>
+                            <div id="editCustomThresholdWrap" style="display:none; margin-top:6px; align-items:center; gap:6px;">
+                                <input type="number" id="editCustomNumer" min="1" placeholder="분자" style="flex:1; text-align:center;">
+                                <span style="color:#666; font-size:1.2rem;">/</span>
+                                <input type="number" id="editCustomDenom" min="1" placeholder="분모" style="flex:1; text-align:center;">
+                                <span id="editCustomThresholdPreview" style="color:#ffd700; font-size:0.85rem; white-space:nowrap;"></span>
+                            </div>
+                        </div>
+                        <button class="add-btn" style="border-style:solid; margin-top:8px; color:var(--tno-gold); border-color:var(--tno-gold);" onclick="saveEditBill()">[✔] 수정 저장</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 상정 탭: 법안 검색 + 대기 중 목록 -->
+            <div id="contentTable" class="sub-tab-content">
                 <!-- 검색 + 태그 필터 -->
                 <div class="bill-search-bar">
                     <input type="text" id="billSearchInput" placeholder="법안 검색..." oninput="renderBillList(); renderArchiveList();">
@@ -188,16 +553,6 @@
                 <div class="bill-tag-filter" id="billTagFilter"></div>
 
                 <div id="billList"></div>
-            </div>
-
-            <!-- 기록 탭: 가결/부결 완료 -->
-            <div id="contentArchive" class="sub-tab-content">
-                <div class="bill-search-bar" style="margin-bottom:8px;">
-                    <input type="text" id="archiveSearchInput" placeholder="기록 검색..." oninput="renderArchiveList();">
-                    <button onclick="document.getElementById('archiveSearchInput').value=''; renderArchiveList();" style="background:transparent;border:1px solid #333;color:#555;padding:4px 8px;font-family:'NeoDunggeunmo','VT323',monospace;cursor:pointer;" title="초기화">✕</button>
-                </div>
-                <div class="bill-tag-filter" id="archiveTagFilter"></div>
-                <div id="archiveList"></div>
             </div>
 
             <!-- VOTE SUB-TAB -->
@@ -214,6 +569,10 @@
                     <select id="voteSelectBill" style="width:100%; background:#000; border:1px solid var(--tno-border); color:var(--tno-gold); font-family:'NeoDunggeunmo','VT323',monospace; font-size:0.95rem; padding:6px;" onchange="selectBillForVote(this.value)">
                         <option value="">-- 법안 선택 --</option>
                     </select>
+                    <div style="margin-top:8px;">
+                        <label style="color:#888; font-size:0.85rem; margin-bottom:4px;">표결일</label>
+                        <input type="text" id="voteDateInput" placeholder="예: 1952년 3월 5일" style="width:100%; box-sizing:border-box;" onchange="updateVoteDate(this.value)">
+                    </div>
                 </div>
 
                 <!-- 투표 입력 모드 -->
@@ -225,8 +584,11 @@
                         <button class="vote-ctrl-btn abs" onclick="setVoteMode('abs')">— 기권</button>
                         <button class="vote-ctrl-btn clr" onclick="setVoteMode('none')">✕ 제거</button>
                     </div>
+                    <div class="vote-btn-row" style="margin-top:6px;">
+                        <button class="vote-ctrl-btn info" onclick="setVoteMode('info')">🔍 정보 보기</button>
+                    </div>
                     <div class="vote-hint">
-                        모드 선택 후 캔버스 의원 원 클릭 &nbsp;|&nbsp;
+                        모드 선택 후 캔버스 의원 원 클릭 (정보 보기 모드는 투표를 바꾸지 않음) &nbsp;|&nbsp;
                         현재: <span id="currentModeLabel" style="color:#888;">없음</span>
                     </div>
                     <div class="vote-btn-row" style="margin-top:8px;">
@@ -237,17 +599,17 @@
                 <!-- 정당 일괄 투표 -->
                 <div class="vote-panel" id="partyBulkPanel">
                     <div class="vote-panel-title">> 정당 일괄 투표 (PARTY BULK)</div>
-                    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(70px,1fr));gap:6px;margin-bottom:8px;">
-                        <label style="display:flex;align-items:center;gap:5px;cursor:pointer;color:#aaa;font-size:0.85rem;padding:4px 6px;background:#0a0c10;border:1px solid #222;">
+                    <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:8px;" id="bulkChamberSelectGroup">
+                        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;color:#aaa;font-size:0.85rem;padding:4px 6px;background:#0a0c10;border:1px solid #222;" id="bulkHouseWrap">
                             <input type="checkbox" name="bulkChamber" value="house" checked onchange="onBulkChamberChange()"> <span id="bulkHouseLabel">하원</span>
                         </label>
-                        <label style="display:flex;align-items:center;gap:5px;cursor:pointer;color:#aaa;font-size:0.85rem;padding:4px 6px;background:#0a0c10;border:1px solid #222;" id="bulkSenateRadioWrap">
+                        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;color:#aaa;font-size:0.85rem;padding:4px 6px;background:#0a0c10;border:1px solid #222;" id="bulkSenateRadioWrap">
                             <input type="checkbox" name="bulkChamber" value="senate" onchange="onBulkChamberChange()"> <span id="bulkSenateLabel">상원</span>
                         </label>
-                        <label style="display:flex;align-items:center;gap:5px;cursor:pointer;color:#aaa;font-size:0.85rem;padding:4px 6px;background:#0a0c10;border:1px solid #222;display:none;" id="bulkThirdRadioWrap">
+                        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;color:#aaa;font-size:0.85rem;padding:4px 6px;background:#0a0c10;border:1px solid #222;display:none;" id="bulkThirdRadioWrap">
                             <input type="checkbox" name="bulkChamber" value="third" onchange="onBulkChamberChange()"> <span id="bulkThirdLabel">삼원</span>
                         </label>
-                        <label style="display:flex;align-items:center;gap:5px;cursor:pointer;color:var(--tno-neon);font-size:0.85rem;padding:4px 6px;background:#0a1a1a;border:1px solid #1a3a3a;">
+                        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;color:var(--tno-neon);font-size:0.85rem;padding:4px 6px;background:color-mix(in srgb, var(--tno-neon) 10%, transparent);border:1px solid var(--tno-neon-dim);" id="bulkAllWrap">
                             <input type="checkbox" id="bulkChamberAll" onchange="onBulkChamberAllChange(this.checked)"> 전체
                         </label>
                     </div>
@@ -314,68 +676,111 @@
                     <button class="vote-ctrl-btn yea" id="tConfirmBtn" style="width:100%;margin-top:8px;padding:9px;" onclick="confirmChamberVote('third')">▶ 삼원 표결 확정</button>
                 </div>
             </div><!-- end contentVote -->
-            </div><!-- end mainContentLegislation -->
 
-            <!-- ===== 선거 그룹 ===== -->
-            <div id="mainContentElection" class="main-tab-content">
-                <div class="sub-tab-container" style="margin-top:10px;">
-                    <button class="sub-tab-btn" id="elecSubTabDistrict" onclick="elecSwitchSub('district')">지역구</button>
-                    <button class="sub-tab-btn" id="elecSubTabTendency" onclick="elecSwitchSub('tendency')">성향</button>
-                    <button class="sub-tab-btn active" id="elecSubTabVote" onclick="elecSwitchSub('vote')">선거</button>
-                    <button class="sub-tab-btn" id="elecSubTabRecord" onclick="elecSwitchSub('record')">기록</button>
-                </div>
-
-                <!-- 지역구 서브탭 - 설정만 (맵은 우측) -->
-                <div id="elecSubDistrict" class="sub-tab-content">
-                    <!-- 지역구 종류 선택 -->
-                    <div style="display:flex;gap:6px;margin:8px 0 10px;">
-                        <button id="districtChamberHouseBtn" onclick="districtSetChamber('house')"
-                            style="flex:1;padding:6px;font-family:inherit;font-size:0.85rem;background:#0a1a2a;color:var(--tno-neon);border:2px solid var(--tno-neon);cursor:pointer;letter-spacing:1px;" id="districtChamberHouseBtn">
-                            <span id="districtChamberHouseLabel">하원</span> 지역구
-                        </button>
-                        <button id="districtChamberSenateBtn" onclick="districtSetChamber('senate')"
-                            style="flex:1;padding:6px;font-family:inherit;font-size:0.85rem;background:transparent;color:#664400;border:2px solid #664400;cursor:pointer;letter-spacing:1px;">
-                            <span id="districtChamberSenateLabel">상원</span> 지역구
-                        </button>
-                        <button id="districtChamberThirdBtn" onclick="districtSetChamber('third')" style="display:none;flex:1;padding:6px;font-family:inherit;font-size:0.85rem;background:transparent;color:#6a0080;border:2px solid #6a0080;cursor:pointer;letter-spacing:1px;">
-                            <span id="districtChamberThirdLabel">삼원</span> 지역구
-                        </button>
+            <!-- 국무회의 탭: 계엄령으로 의회가 정지된 동안 국무회의가 대신 의결하는 특별 입법 경로 (단원제 스타일) -->
+            <div id="contentCouncil" class="sub-tab-content">
+                <!-- 법안 선택 -->
+                <div class="vote-panel" style="margin-bottom:10px;">
+                    <div class="vote-panel-title">> 심의 법안 선택 (COUNCIL BILL)</div>
+                    <div id="councilActiveBillDisplay" style="
+                        background:#050505; border:1px solid #333; padding:8px;
+                        margin-bottom:8px; min-height:36px;
+                    ">
+                        <span style="color:#444; font-size:0.9rem;">법안을 선택하세요...</span>
                     </div>
-                    <div style="margin:0 0 6px;font-size:0.8rem;color:#555;">편집 모드</div>
-                    <div style="display:flex;gap:6px;margin-bottom:10px;">
-                        <button id="districtModeAdd" onclick="districtSetMode('add')"
-                            style="flex:1;padding:8px;font-family:inherit;font-size:0.9rem;background:#0a2a1a;color:#00cc66;border:2px solid #00cc66;cursor:pointer;letter-spacing:1px;box-shadow:0 0 8px #00cc6688;">추가</button>
-                        <button id="districtModeRemove" onclick="districtSetMode('remove')"
-                            style="flex:1;padding:8px;font-family:inherit;font-size:0.9rem;background:transparent;color:#663333;border:2px solid #663333;cursor:pointer;letter-spacing:1px;">제거</button>
-                        <button id="districtModeNone" onclick="districtSetMode('none')"
-                            style="flex:0 0 44px;padding:8px;font-family:inherit;font-size:0.9rem;background:transparent;color:#555;border:2px solid #444;cursor:pointer;" title="선택 해제 (이동/확대만)">✕</button>
-                    </div>
-                    <div style="padding:6px 8px;background:#0a0c10;border:1px solid #222;font-size:0.78rem;color:#444;margin-bottom:10px;">
-                        클릭/드래그로 칸 편집 &nbsp;|&nbsp; 휠: 확대/축소 &nbsp;|&nbsp; 휠클릭+드래그: 이동
-                    </div>
-                    <div style="display:flex;justify-content:flex-end;align-items:center;">
-                        <button onclick="districtClearAll()" style="background:transparent;border:1px solid #333;color:#555;padding:3px 10px;cursor:pointer;font-family:inherit;font-size:0.8rem;">전체 초기화</button>
+                    <select id="councilSelectBill" style="width:100%; background:#000; border:1px solid var(--tno-border); color:var(--tno-gold); font-family:'NeoDunggeunmo','VT323',monospace; font-size:0.95rem; padding:6px;" onchange="selectBillForCouncilVote(this.value)">
+                        <option value="">-- 법안 선택 --</option>
+                    </select>
+                    <div style="margin-top:8px;">
+                        <label style="color:#888; font-size:0.85rem; margin-bottom:4px;">의결일</label>
+                        <input type="text" id="councilVoteDateInput" placeholder="예: 1952년 3월 5일" style="width:100%; box-sizing:border-box;" onchange="updateCouncilVoteDate(this.value)">
                     </div>
                 </div>
 
-                <!-- 성향 서브탭 - 강도 설정만 (맵은 우측) -->
-                <div id="elecSubTendency" class="sub-tab-content">
-                    <!-- 강도 선택 -->
-                    <div style="display:flex;align-items:center;gap:4px;margin:8px 0;flex-wrap:wrap;">
-                        <span style="color:#666;font-size:0.8rem;margin-right:2px;">강도</span>
-                        <button id="tendStrBtn0"   onclick="tendencySetStrength(0)"   style="flex:1;padding:4px;font-size:0.85rem;font-family:inherit;background:#111;color:#888;border:1px solid #333;cursor:pointer;">0%</button>
-                        <button id="tendStrBtn25"  onclick="tendencySetStrength(25)"  style="flex:1;padding:4px;font-size:0.85rem;font-family:inherit;background:#111;color:#888;border:1px solid #333;cursor:pointer;">25%</button>
-                        <button id="tendStrBtn50"  onclick="tendencySetStrength(50)"  style="flex:1;padding:4px;font-size:0.85rem;font-family:inherit;background:var(--tno-neon);color:#000;border:1px solid var(--tno-neon);cursor:pointer;">50%</button>
-                        <button id="tendStrBtn75"  onclick="tendencySetStrength(75)"  style="flex:1;padding:4px;font-size:0.85rem;font-family:inherit;background:#111;color:#888;border:1px solid #333;cursor:pointer;">75%</button>
-                        <button id="tendStrBtn100" onclick="tendencySetStrength(100)" style="flex:1;padding:4px;font-size:0.85rem;font-family:inherit;background:#111;color:#888;border:1px solid #333;cursor:pointer;">100%</button>
-                    </div>
-                    <div style="font-size:0.75rem;color:#444;margin-bottom:6px;padding:4px 8px;background:#0a0c10;border:1px solid #222;">
-                        성향 맵은 우측 패널에서 확인 및 편집하세요
+                <!-- 국무회의 의결 정족수 설정 -->
+                <div class="vote-panel" style="margin-bottom:10px;">
+                    <div class="vote-panel-title">> 국무회의 의결 정족수</div>
+                    <select id="councilThresholdSelect" style="width:100%; background:#000; border:1px solid var(--tno-border); color:var(--tno-gold); font-family:'NeoDunggeunmo','VT323',monospace; font-size:0.9rem; padding:4px 8px;" onchange="toggleCouncilCustomThreshold()">
+                        <option value="0.5">과반 (재적 과반수)</option>
+                        <option value="0.667">특별다수 (2/3 이상)</option>
+                        <option value="1.0">전원 일치</option>
+                        <option value="custom">지정...</option>
+                    </select>
+                    <div id="councilCustomThresholdWrap" style="display:none; margin-top:6px; align-items:center; gap:6px;">
+                        <input type="number" id="councilCustomNumer" min="1" placeholder="분자" style="flex:1; text-align:center;">
+                        <span style="color:#666; font-size:1.2rem;">/</span>
+                        <input type="number" id="councilCustomDenom" min="1" placeholder="분모" style="flex:1; text-align:center;">
+                        <span id="councilCustomThresholdPreview" style="color:#ffd700; font-size:0.85rem; white-space:nowrap;"></span>
                     </div>
                 </div>
 
-                <!-- 선거 서브탭 -->
-                <div id="elecSubVote" class="sub-tab-content active">
+                <!-- 계엄령 중 대체 입법 경로 — 의회 표결 대신 국무회의 표결로 통과 여부 결정 -->
+                <div class="vote-panel" id="cabinetCouncilPanel" style="display:none;border-color:var(--tno-alert);">
+                    <div class="vote-panel-title" style="color:var(--tno-alert);">! 계엄령 중 — 국무회의로 법안 통과</div>
+                    <div style="color:#888;font-size:0.78rem;">의회 표결이 정지된 동안, 내각 디스플레이(우측 "내각" 탭)에서 국무위원별로 찬성·반대·기권을 표시하세요. 아래에 실시간 집계가 표시됩니다.</div>
+                </div>
+
+                <!-- 국무회의 표결 확정 (단원제 — 원 구분 없이 하나의 결과만 표시) -->
+                <div class="vote-result-wrap" id="councilVoteResult" style="display:none;">
+                    <div class="vote-result-title" id="councilVoteResultTitle">[ 국무회의 표결 결과 ]</div>
+                    <div class="vote-bar-outer">
+                        <div class="vote-bar-yea" id="counBarYea" style="width:0%"></div>
+                        <div class="vote-bar-nay" id="counBarNay" style="width:0%"></div>
+                        <div class="vote-bar-abs" id="counBarAbs" style="width:0%"></div>
+                        <div class="vote-bar-none" id="counBarNone" style="width:100%"></div>
+                    </div>
+                    <div class="vote-counts">
+                        <span class="vc-yea">찬성 <b id="counCntYea">0</b></span>
+                        <span class="vc-nay">반대 <b id="counCntNay">0</b></span>
+                        <span class="vc-abs">기권 <b id="counCntAbs">0</b></span>
+                        <span class="vc-none">미투표 <b id="counCntNone">0</b></span>
+                    </div>
+                    <div style="font-size:0.85rem; color:#aaa; text-align:right; margin-bottom:2px; min-height:1.2em;" id="counVoteInfo"></div>
+                    <div class="vote-verdict verdict-pending" id="counVerdict">-- 표결 대기 중 --</div>
+                    <button class="vote-ctrl-btn yea" id="counConfirmBtn" style="width:100%;margin-top:8px;padding:9px;" onclick="resolveCabinetCouncilVote()">▶ 국무회의로 의결</button>
+                </div>
+            </div><!-- end contentCouncil -->
+                </div><!-- end contentLegislation -->
+
+                <!-- 선거 탭 (구 여론>선거, 국가로 이동) -->
+                <div id="contentElection" class="sub-tab-content">
+                    <div class="sub-tab-container-3">
+                        <button class="sub-tab-btn-3" onclick="switchElectionInnerTab('presidential')" id="innerTabElecPresidential">대선</button>
+                        <button class="sub-tab-btn-3 active" onclick="switchElectionInnerTab('general')" id="innerTabElecGeneral">총선</button>
+                        <button class="sub-tab-btn-3" onclick="switchElectionInnerTab('settings')" id="innerTabElecSettings">설정</button>
+                    </div>
+
+                    <!-- 대선 -->
+                    <div id="innerContentElecPresidential" class="sub-tab-content">
+                        <div style="display:grid;grid-template-columns:1fr 90px;gap:8px;margin-bottom:10px;">
+                            <div>
+                                <label style="color:#888;font-size:0.8rem;margin-bottom:3px;">선거 제목</label>
+                                <input type="text" id="presElecTitle" placeholder="예: 제1회 대통령 선거" style="width:100%;box-sizing:border-box;">
+                            </div>
+                            <div>
+                                <label style="color:#888;font-size:0.8rem;margin-bottom:3px;">연도</label>
+                                <input type="number" id="presElecYear" placeholder="1952" style="width:100%;box-sizing:border-box;">
+                            </div>
+                        </div>
+                        <div style="background:#0a0c10;border:1px solid #2a2a2a;padding:8px 10px;margin-bottom:10px;font-size:0.78rem;color:#888;line-height:1.7;">
+                            선거 방식: <span id="presElecModeSummary" style="color:var(--tno-gold);">단순 다수 대표제</span>
+                            &nbsp;|&nbsp; 기준 원: <span id="presElecChamberSummary" style="color:var(--tno-gold);">하원</span>
+                            <span style="color:#444;">(설정 탭에서 변경)</span>
+                        </div>
+                        <button id="presElecRunBtn" onclick="runPresidentialElection()"
+                            style="background:var(--tno-neon);color:#000;font-weight:bold;border:none;width:100%;padding:14px;font-size:1.3rem;letter-spacing:2px;box-shadow:0 0 10px var(--tno-neon);cursor:pointer;font-family:inherit;">>> 개표 시작 <<</button>
+                        <div id="presElecResultPanel" style="display:none;margin-top:10px;"></div>
+                    </div>
+
+                    <!-- 총선 -->
+                    <div id="innerContentElecGeneral" class="sub-tab-content active">
+                    <!-- 총리직선제가 켜져 있을 때만 표시 — 이번 총선 탭에서 의원 선거를 할지 총리 선거를 할지 선택 -->
+                    <div class="system-radio-group" id="elecKindToggleGroup" style="display:none;">
+                        <button type="button" class="system-radio-btn active" id="elecKindMemberBtn" onclick="setElectionKind('member')">의원 선거</button>
+                        <button type="button" class="system-radio-btn" id="elecKindPmBtn" onclick="setElectionKind('pm')">총리 선거</button>
+                    </div>
+
+                    <div id="electionKindMemberWrap">
                     <div style="display:grid;grid-template-columns:1fr 90px;gap:8px;margin-bottom:10px;">
                         <div>
                             <label style="color:#888;font-size:0.8rem;margin-bottom:3px;">선거 제목</label>
@@ -386,17 +791,17 @@
                             <input type="number" id="elecYear" placeholder="1952" style="width:100%;box-sizing:border-box;">
                         </div>
                     </div>
-                    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(70px,1fr));gap:6px;margin-bottom:10px;border-bottom:1px solid #222;padding-bottom:10px;">
-                        <label style="display:flex;align-items:center;gap:5px;cursor:pointer;color:#aaa;font-size:0.9rem;padding:4px 6px;background:#0a0c10;border:1px solid #222;">
+                    <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:10px;border-bottom:1px solid #222;padding-bottom:10px;" id="elecChamberSelectGroup">
+                        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;color:#aaa;font-size:0.9rem;padding:4px 6px;background:#0a0c10;border:1px solid #222;" id="elecHouseWrap">
                             <input type="checkbox" name="elecTarget" value="house" checked onchange="onElecTargetChange()"> <span id="elecHouseLabel">하원</span>
                         </label>
-                        <label style="display:flex;align-items:center;gap:5px;cursor:pointer;color:#aaa;font-size:0.9rem;padding:4px 6px;background:#0a0c10;border:1px solid #222;" id="elecSenateWrap">
+                        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;color:#aaa;font-size:0.9rem;padding:4px 6px;background:#0a0c10;border:1px solid #222;" id="elecSenateWrap">
                             <input type="checkbox" name="elecTarget" value="senate" onchange="onElecTargetChange()"> <span id="elecSenateLabel">상원</span>
                         </label>
-                        <label style="display:flex;align-items:center;gap:5px;cursor:pointer;color:#aaa;font-size:0.9rem;padding:4px 6px;background:#0a0c10;border:1px solid #222;display:none;" id="elecThirdWrap">
+                        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;color:#aaa;font-size:0.9rem;padding:4px 6px;background:#0a0c10;border:1px solid #222;display:none;" id="elecThirdWrap">
                             <input type="checkbox" name="elecTarget" value="third" onchange="onElecTargetChange()"> <span id="elecThirdLabel">삼원</span>
                         </label>
-                        <label style="display:flex;align-items:center;gap:5px;cursor:pointer;color:var(--tno-neon);font-size:0.9rem;padding:4px 6px;background:#0a1a1a;border:1px solid #1a3a3a;" id="elecBothWrap">
+                        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;color:var(--tno-neon);font-size:0.9rem;padding:4px 6px;background:color-mix(in srgb, var(--tno-neon) 10%, transparent);border:1px solid var(--tno-neon-dim);" id="elecBothWrap">
                             <input type="checkbox" id="elecTargetAll" onchange="onElecTargetAllChange(this.checked)"> <span id="elecBothLabel">전체</span>
                         </label>
                     </div>
@@ -405,17 +810,32 @@
                         <div style="color:#666;font-size:0.8rem;margin-bottom:4px;">선거 방식</div>
                         <div style="display:flex;gap:6px;">
                             <label style="flex:1;cursor:pointer;padding:6px 8px;background:#0a0c10;border:1px solid #2a2a2a;display:flex;align-items:center;gap:6px;font-size:0.85rem;color:#aaa;">
-                                <input type="radio" name="elecMode" value="proportional" checked onchange="elecToggleMode()"> 비례대표
+                                <input type="checkbox" id="elecModeProportional" checked onchange="onElecModeChange()"> 비례
                             </label>
                             <label style="flex:1;cursor:pointer;padding:6px 8px;background:#0a0c10;border:1px solid #2a2a2a;display:flex;align-items:center;gap:6px;font-size:0.85rem;color:#aaa;">
-                                <input type="radio" name="elecMode" value="district" onchange="elecToggleMode()"> 지역구+비례
+                                <input type="checkbox" id="elecModeDistrict" onchange="onElecModeChange()"> 지역구
+                            </label>
+                            <label style="flex:1;cursor:pointer;padding:6px 8px;background:color-mix(in srgb, var(--tno-neon) 10%, transparent);border:1px solid var(--tno-neon-dim);display:flex;align-items:center;gap:6px;font-size:0.85rem;color:var(--tno-neon);">
+                                <input type="checkbox" id="elecModeAll" onchange="onElecModeAllChange(this.checked)"> 전체
                             </label>
                         </div>
+                        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:6px 8px;background:#0a0c10;border:1px solid #663333;margin-top:6px;font-size:0.85rem;color:#cc8888;" title="궐석 처리된 지역구만 대상으로 다시 개표">
+                            <input type="checkbox" id="elecModeByElection" onchange="elecUpdateDistrictInfo()"> 보궐 (궐석 지역구만 재선거)
+                        </label>
                         <div id="elecModeInfo" style="display:none;margin-top:6px;padding:6px 8px;background:#0a0c10;border:1px solid #2a2a2a;font-size:0.78rem;color:#666;line-height:1.6;">
                             <div id="elecModeInfoHouse"></div>
                             <div id="elecModeInfoSenate" style="display:none;"></div>
                             <div id="elecModeInfoThird" style="display:none;"></div>
                             <div style="font-size:0.72rem;color:#444;margin-top:3px;">지역구는 성향 탭의 지지도로 결정, 비례는 아래 지지율로 결정</div>
+                            <!-- 지도(SVG) 지역구 전용 — 자동으로 순서대로 개표할지, 지도에서 직접 지역구를 클릭해 하나씩 열어볼지 -->
+                            <div id="elecCountModeRow" style="display:none;gap:8px;align-items:center;margin-top:8px;">
+                                <label style="color:#666;font-size:0.8rem;white-space:nowrap;flex-shrink:0;">개표 방식</label>
+                                <div class="system-radio-group" style="flex:1;">
+                                    <button type="button" class="system-radio-btn active" id="elecCountModeAutoBtn" onclick="setElecCountMode('auto')">자동</button>
+                                    <button type="button" class="system-radio-btn" id="elecCountModeManualBtn" onclick="setElecCountMode('manual')">선택</button>
+                                </div>
+                            </div>
+                            <div id="elecCountModeHint" style="display:none;font-size:0.72rem;color:#444;margin-top:4px;">지도에서 지역구를 하나씩 클릭해 직접 개표합니다</div>
                         </div>
                     </div>
                     <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;background:#000;border:1px solid #333;padding:8px 10px;">
@@ -428,10 +848,8 @@
                     <div style="height:14px;background:#111;border:1px solid var(--tno-border);margin-bottom:8px;overflow:hidden;">
                         <div id="elecProgressBar" style="height:100%;background:var(--tno-neon);width:0%;box-shadow:0 0 6px var(--tno-neon);transition:width 0.06s;"></div>
                     </div>
-                    <!-- 비례 패널 -->
-                    <div id="elecProportionalPanel">
-                        <div id="elecInputList"></div>
-                    </div>
+                    <!-- 지지율 바 (읽기 전용 — 실제 설정은 지지율 탭에서) -->
+                    <div id="elecProbBars" style="margin-bottom:10px;"></div>
                     <!-- 지역구 패널 -->
                     <div id="elecDistrictPanel" style="display:none;">
                         <div style="background:#0a0c10;border:1px solid #2a2a2a;padding:10px;margin-bottom:8px;">
@@ -470,23 +888,504 @@
                                 style="flex:1;background:transparent;border:1px solid var(--tno-neon);color:var(--tno-neon);padding:9px;font-family:inherit;font-size:0.9rem;cursor:pointer;">↺ 재개표</button>
                         </div>
                     </div>
+                    </div><!-- end electionKindMemberWrap -->
+
+                    <!-- 총리 선거 (총리직선제 활성화 시) -->
+                    <div id="electionKindPmWrap" style="display:none;">
+                        <div style="display:grid;grid-template-columns:1fr 90px;gap:8px;margin-bottom:10px;">
+                            <div>
+                                <label style="color:#888;font-size:0.8rem;margin-bottom:3px;">선거 제목</label>
+                                <input type="text" id="pmElecTitle" placeholder="예: 제1회 총리 선거" style="width:100%;box-sizing:border-box;">
+                            </div>
+                            <div>
+                                <label style="color:#888;font-size:0.8rem;margin-bottom:3px;">연도</label>
+                                <input type="number" id="pmElecYear" placeholder="1952" style="width:100%;box-sizing:border-box;">
+                            </div>
+                        </div>
+                        <div style="background:#0a0c10;border:1px solid #2a2a2a;padding:8px 10px;margin-bottom:10px;font-size:0.78rem;color:#888;line-height:1.7;">
+                            선거 방식: <span id="pmElecModeSummary" style="color:var(--tno-gold);">단순 다수 대표제</span>
+                            &nbsp;|&nbsp; 기준 원: <span id="pmElecChamberSummary" style="color:var(--tno-gold);">하원</span>
+                            <span style="color:#444;">(선거 &gt; 설정 탭에서 변경 — 대선과 방식을 공유합니다)</span>
+                        </div>
+                        <button id="pmElecRunBtn" onclick="runPmElection()"
+                            style="background:var(--tno-neon);color:#000;font-weight:bold;border:none;width:100%;padding:14px;font-size:1.3rem;letter-spacing:2px;box-shadow:0 0 10px var(--tno-neon);cursor:pointer;font-family:inherit;">>> 개표 시작 <<</button>
+                        <div id="pmElecResultPanel" style="display:none;margin-top:10px;"></div>
+                    </div>
+                    </div><!-- end innerContentElecGeneral -->
+
+                    <!-- 설정 -->
+                    <div id="innerContentElecSettings" class="sub-tab-content">
+                        <div style="margin-top:6px;">
+                            <label style="color:#888;font-size:0.8rem;margin-bottom:6px;display:block;">대선 방식</label>
+                            <div class="system-radio-group">
+                                <button type="button" class="system-radio-btn active" id="presElecModePluralityBtn" onclick="setPresElectionMode('plurality')">단순 다수 대표제</button>
+                                <button type="button" class="system-radio-btn" id="presElecModeRunoffBtn" onclick="setPresElectionMode('runoff')">결선투표제</button>
+                                <button type="button" class="system-radio-btn" id="presElecModeElectoralBtn" onclick="setPresElectionMode('electoral')">선거인단제</button>
+                            </div>
+                            <div style="color:#555;font-size:0.72rem;margin-top:4px;" id="presElecModeHint">1위 후보가 과반이 아니어도 최다 득표로 당선됩니다</div>
+                        </div>
+                        <div style="margin-top:16px;">
+                            <label style="color:#888;font-size:0.8rem;margin-bottom:6px;display:block;">기준 원 <span style="color:#555;font-weight:normal;">— 지지율(선거인단제는 지역구 결과)을 가져올 원</span></label>
+                            <div class="system-radio-group" id="presElecChamberGroup">
+                                <button type="button" class="system-radio-btn active" id="presElecChamberHouseBtn" onclick="setPresElectionChamberBasis('house')">하원</button>
+                                <button type="button" class="system-radio-btn" id="presElecChamberSenateBtn" onclick="setPresElectionChamberBasis('senate')" style="display:none;">상원</button>
+                                <button type="button" class="system-radio-btn" id="presElecChamberThirdBtn" onclick="setPresElectionChamberBasis('third')" style="display:none;">삼원</button>
+                            </div>
+                        </div>
+                        <div style="margin-top:20px;padding-top:14px;border-top:1px solid #222;">
+                            <label style="color:#888;font-size:0.8rem;margin-bottom:6px;display:block;">후보 설정 <span style="color:#555;font-weight:normal;">— 기본값은 당수, 의원 연결 또는 직접 입력으로 다른 인물을 세울 수 있습니다 (대선/총리 선거 공용)</span></label>
+                            <div id="electionCandidatesConfig"></div>
+                        </div>
+                    </div>
+                </div><!-- end contentElection -->
+
+                <!-- 기록 탭 (내부 탭: 입법/선거) -->
+                <div id="contentRecord" class="sub-tab-content">
+                    <div class="sub-tab-container-3">
+                        <button class="sub-tab-btn-3 active" onclick="switchRecordInnerTab('archive')" id="innerTabRecArchive">입법</button>
+                        <button class="sub-tab-btn-3" onclick="switchRecordInnerTab('elecRecord')" id="innerTabRecElecRecord">선거</button>
+                    </div>
+
+                    <!-- 입법 기록 -->
+                    <div id="contentArchive" class="sub-tab-content active">
+                        <div class="bill-search-bar" style="margin-bottom:8px;">
+                            <input type="text" id="archiveSearchInput" placeholder="기록 검색..." oninput="renderArchiveList();">
+                            <button onclick="document.getElementById('archiveSearchInput').value=''; renderArchiveList();" style="background:transparent;border:1px solid #333;color:#555;padding:4px 8px;font-family:'NeoDunggeunmo','VT323',monospace;cursor:pointer;" title="초기화">✕</button>
+                        </div>
+                        <div class="bill-tag-filter" id="archiveTagFilter"></div>
+                        <div id="archiveList"></div>
+                    </div>
+
+                    <!-- 선거 기록 -->
+                    <div id="contentElecRecord" class="sub-tab-content">
+                        <div id="elecRecordList" style="margin-top:8px;"></div>
+                    </div>
+                </div><!-- end contentRecord -->
+            </div><!-- end mainContentNation -->
+
+            <!-- ===== 선거 그룹 ===== -->
+            <div id="mainContentElection" class="main-tab-content">
+                <div class="sub-tab-container" style="margin-top:10px;">
+                    <button class="sub-tab-btn active" id="elecSubTabDistrict" onclick="elecSwitchSub('district')">지역구</button>
+                    <button class="sub-tab-btn" id="elecSubTabTendency" onclick="elecSwitchSub('tendency')">성향</button>
+                    <button class="sub-tab-btn" id="elecSubTabRegion" onclick="elecSwitchSub('region')">권역</button>
+                    <button class="sub-tab-btn" id="elecSubTabProb" onclick="elecSwitchSub('prob')">지지율</button>
                 </div>
 
-                <!-- 기록 서브탭 -->
-                <div id="elecSubRecord" class="sub-tab-content">
-                    <div id="elecRecordList" style="margin-top:8px;"></div>
+                <!-- 지역구 편집 사이드패널 (구/뉴 지역구 공용 — 선택된 지역구가 있을 때만 표시, 내용은 JS가 채움) -->
+                <div id="districtNamePanel" style="display:none;padding:8px;background:#0a0c10;border:1px solid #665500;margin:8px 0;"></div>
+
+                <!-- 지역구 서브탭 - 설정만 (맵은 우측) -->
+                <div id="elecSubDistrict" class="sub-tab-content active">
+                    <!-- 지역구 종류 선택 — 지도(SVG) 방식은 세 원이 지도 하나를 공유하므로 이 선택이 필요 없어 숨김 -->
+                    <div id="districtChamberSelectRow" style="display:none;gap:6px;margin:8px 0 10px;">
+                        <button id="districtChamberHouseBtn" onclick="districtSetChamber('house')"
+                            style="flex:1;padding:6px;font-family:inherit;font-size:0.85rem;background:#0a1a2a;color:var(--tno-neon);border:2px solid var(--tno-neon);cursor:pointer;letter-spacing:1px;" id="districtChamberHouseBtn">
+                            <span id="districtChamberHouseLabel">하원</span> 지역구
+                        </button>
+                        <button id="districtChamberSenateBtn" onclick="districtSetChamber('senate')"
+                            style="flex:1;padding:6px;font-family:inherit;font-size:0.85rem;background:transparent;color:#664400;border:2px solid #664400;cursor:pointer;letter-spacing:1px;">
+                            <span id="districtChamberSenateLabel">상원</span> 지역구
+                        </button>
+                        <button id="districtChamberThirdBtn" onclick="districtSetChamber('third')" style="display:none;flex:1;padding:6px;font-family:inherit;font-size:0.85rem;background:transparent;color:#6a0080;border:2px solid #6a0080;cursor:pointer;letter-spacing:1px;">
+                            <span id="districtChamberThirdLabel">삼원</span> 지역구
+                        </button>
+                    </div>
+
+                    <!-- 육각형(구 지역구) 편집 UI — 지역구 시스템이 육각형일 때만 표시 -->
+                    <div id="districtHexEditUI" style="display:none;">
+                        <div style="margin:0 0 6px;font-size:0.8rem;color:#555;">편집 모드</div>
+                        <div style="display:flex;gap:6px;margin-bottom:10px;">
+                            <button id="districtModeAdd" onclick="districtSetMode('add')"
+                                style="flex:1;padding:8px;font-family:inherit;font-size:0.9rem;background:#0a2a1a;color:#00cc66;border:2px solid #00cc66;cursor:pointer;letter-spacing:1px;box-shadow:0 0 8px #00cc6688;">추가</button>
+                            <button id="districtModeRemove" onclick="districtSetMode('remove')"
+                                style="flex:1;padding:8px;font-family:inherit;font-size:0.9rem;background:transparent;color:#663333;border:2px solid #663333;cursor:pointer;letter-spacing:1px;">제거</button>
+                            <button id="districtModeName" onclick="districtSetMode('name')"
+                                style="flex:1;padding:8px;font-family:inherit;font-size:0.9rem;background:transparent;color:#666633;border:2px solid #666633;cursor:pointer;letter-spacing:1px;">이름</button>
+                            <button id="districtModeNone" onclick="districtSetMode('none')"
+                                style="flex:0 0 44px;padding:8px;font-family:inherit;font-size:0.9rem;background:transparent;color:#555;border:2px solid #444;cursor:pointer;" title="선택 해제 (이동/확대만)">✕</button>
+                        </div>
+                        <div style="padding:6px 8px;background:#0a0c10;border:1px solid #222;font-size:0.78rem;color:#444;margin-bottom:10px;">
+                            클릭/드래그로 칸 편집 (이름 모드는 클릭만) &nbsp;|&nbsp; 휠: 확대/축소 &nbsp;|&nbsp; 휠클릭+드래그: 이동
+                        </div>
+                        <div style="display:flex;justify-content:flex-end;align-items:center;margin-bottom:14px;">
+                            <button onclick="districtClearAll()" style="background:transparent;border:1px solid #333;color:#555;padding:3px 10px;cursor:pointer;font-family:inherit;font-size:0.8rem;">전체 초기화</button>
+                        </div>
+                    </div>
+
+                    <!-- 지도(뉴 지역구) 편집 UI — 지역구 시스템이 지도일 때만 표시 -->
+                    <div id="districtSvgEditUI">
+                        <div style="padding:8px;background:#0a0c10;border:1px solid #222;font-size:0.78rem;color:#666;margin-bottom:10px;line-height:1.5;">
+                            <a href="map.html" target="_blank" style="color:var(--tno-neon);">맵 메이커</a>에서 내보낸 .jsx 파일을 업로드하면, 그리드 대신 실제 지도 모양으로 지역구를 만들 수 있습니다.<br>
+                            하나의 지도를 하원·상원·삼원이 함께 쓰며, 지역구를 클릭하면 원별 의석 수와 정당별 성향(%)을 지정할 수 있습니다.<br>
+                            업로드하면 <b style="color:#cc8888;">기존 지역구 데이터가 새 지도로 대체</b>됩니다.
+                        </div>
+
+                        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
+                            <input type="file" id="districtSvgFileInput" accept=".jsx,.js,text/javascript" style="position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;" onchange="districtSvgUpload(this)">
+                            <label for="districtSvgFileInput" class="add-btn" style="margin:0;display:inline-block;cursor:pointer;">⬆ 지역구 지도 업로드 (.jsx)</label>
+                            <span id="districtSvgFileName" style="color:#555;font-size:0.8rem;">파일 없음</span>
+                        </div>
+
+                        <div id="districtSvgInfo" style="display:none;">
+                            <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;padding:8px;background:#0a0c10;border:1px solid #222;flex-wrap:wrap;">
+                                <span style="color:#888;font-size:0.85rem;">테두리 색</span>
+                                <input type="color" id="districtSvgStrokeColorInput" value="#00ffff" oninput="districtSvgSetStrokeColor(this.value)" style="width:36px;height:28px;padding:0;border:1px solid #333;background:none;cursor:pointer;">
+                                <input type="text" id="districtSvgStrokeColorHexInput" maxlength="7" placeholder="#00ffff" onchange="districtSvgSetStrokeColorHex(this.value)"
+                                    style="width:78px;background:#000;border:1px solid #333;color:var(--tno-neon);font-family:inherit;font-size:0.8rem;padding:5px;text-align:center;text-transform:uppercase;">
+                                <button onclick="districtSvgSyncStrokeColorWithTheme()" style="background:transparent;border:1px solid #333;color:#888;padding:5px 8px;font-family:inherit;font-size:0.75rem;cursor:pointer;">테마 색과 동기화</button>
+                                <span style="color:#444;font-size:0.75rem;">채우기는 항상 투명입니다</span>
+                            </div>
+                            <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;padding:8px;background:#0a0c10;border:1px solid #222;flex-wrap:wrap;">
+                                <span style="color:#888;font-size:0.85rem;">글씨 테두리 색</span>
+                                <input type="color" id="districtSvgAbbrStrokeColorInput" value="#00ffff" oninput="districtSvgSetAbbrStrokeColor(this.value)" style="width:36px;height:28px;padding:0;border:1px solid #333;background:none;cursor:pointer;">
+                                <input type="text" id="districtSvgAbbrStrokeColorHexInput" maxlength="7" placeholder="#00ffff" onchange="districtSvgSetAbbrStrokeColorHex(this.value)"
+                                    style="width:78px;background:#000;border:1px solid #333;color:var(--tno-neon);font-family:inherit;font-size:0.8rem;padding:5px;text-align:center;text-transform:uppercase;">
+                                <button onclick="districtSvgSyncAbbrStrokeColorWithTheme()" style="background:transparent;border:1px solid #333;color:#888;padding:5px 8px;font-family:inherit;font-size:0.75rem;cursor:pointer;">테마 색과 동기화</button>
+                                <span style="color:#444;font-size:0.75rem;">지역구 약칭 글씨의 테두리 색입니다</span>
+                            </div>
+                            <div style="font-size:0.8rem;color:#555;margin-bottom:10px;">지도 안 지역구 수: <span id="districtSvgShapeCount" style="color:var(--tno-neon);">0</span>개 &nbsp;|&nbsp; 지역구를 클릭하면 의석 수·성향을 편집할 수 있습니다</div>
+                        </div>
+                    </div>
+
+                    <!-- 지역구 목록 패널 (이름 일괄 관리, 공용) -->
+                    <div style="color:#666;font-size:0.8rem;margin-bottom:6px;letter-spacing:1px;border-top:1px solid #222;padding-top:10px;">▌ 지역구 목록</div>
+                    <div class="sub-tab-container-3" id="districtListInnerTabs">
+                        <button class="sub-tab-btn-3 active" onclick="switchDistrictListInnerTab('house')" id="innerTabDistListHouse">하원</button>
+                        <button class="sub-tab-btn-3" onclick="switchDistrictListInnerTab('senate')" id="innerTabDistListSenate">상원</button>
+                        <button class="sub-tab-btn-3" onclick="switchDistrictListInnerTab('third')" id="innerTabDistListThird" style="display:none;">삼원</button>
+                    </div>
+                    <div id="districtListPanel"></div>
                 </div>
+
+                <!-- 성향 서브탭 - 강도 설정만 (맵은 우측) -->
+                <div id="elecSubTendency" class="sub-tab-content">
+                    <!-- 지도(뉴 지역구) 방식일 때만 표시 — 원별로 성향 데이터가 다르므로 편집할 원을 먼저 선택 -->
+                    <div class="sub-tab-container-3" id="tendencySvgChamberTabs" style="display:none;">
+                        <button class="sub-tab-btn-3 active" id="tendencySvgChamberHouseBtn" onclick="tendencySetSvgChamber('house')">하원</button>
+                        <button class="sub-tab-btn-3" id="tendencySvgChamberSenateBtn" onclick="tendencySetSvgChamber('senate')">상원</button>
+                        <button class="sub-tab-btn-3" id="tendencySvgChamberThirdBtn" onclick="tendencySetSvgChamber('third')" style="display:none;">삼원</button>
+                    </div>
+                    <label id="tendencySvgSyncAllRow" style="display:none;align-items:center;gap:6px;cursor:pointer;color:var(--tno-neon);font-size:0.9rem;padding:5px 8px;background:color-mix(in srgb, var(--tno-neon) 10%, transparent);border:1px solid var(--tno-neon-dim);margin-bottom:8px;">
+                        <input type="checkbox" id="tendencySvgSyncAll" onchange="onTendencySvgSyncAllChange(this.checked)"> 전체에 반영
+                    </label>
+                    <!-- 강도 선택 — 육각형(구 지역구): 빠르게 여러 칸을 칠하므로 5단계 버튼 -->
+                    <div id="tendencyStrengthButtons" style="display:flex;align-items:center;gap:4px;margin:8px 0;flex-wrap:wrap;">
+                        <span style="color:#666;font-size:0.8rem;margin-right:2px;">강도</span>
+                        <button id="tendStrBtn0"   class="sub-tab-btn-3"           onclick="tendencySetStrength(0)">0%</button>
+                        <button id="tendStrBtn25"  class="sub-tab-btn-3"           onclick="tendencySetStrength(25)">25%</button>
+                        <button id="tendStrBtn50"  class="sub-tab-btn-3 active"    onclick="tendencySetStrength(50)">50%</button>
+                        <button id="tendStrBtn75"  class="sub-tab-btn-3"           onclick="tendencySetStrength(75)">75%</button>
+                        <button id="tendStrBtn100" class="sub-tab-btn-3"           onclick="tendencySetStrength(100)">100%</button>
+                    </div>
+                    <div id="tendencyHexHint" style="font-size:0.75rem;color:#444;margin-bottom:6px;padding:4px 8px;background:#0a0c10;border:1px solid #222;">
+                        성향 맵은 우측 패널에서 확인 및 편집하세요
+                    </div>
+                    <div id="tendencyViewButtons" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;"></div>
+
+                    <!-- 지도(SVG) 방식: 우측 지도에서 지역구를 클릭해 선택하면, 그 지역구의 정당별 성향(%)을 목록으로 편집 -->
+                    <div id="tendencySvgDistrictPanel" style="display:none;"></div>
+                </div>
+
+                <!-- 권역 서브탭 -->
+                <div id="elecSubRegion" class="sub-tab-content">
+                    <div class="sub-tab-container-3" id="regionChamberTabs">
+                        <button class="sub-tab-btn-3 active" onclick="regionSetChamber('house')" id="innerTabRegionHouse">하원</button>
+                        <button class="sub-tab-btn-3" onclick="regionSetChamber('senate')" id="innerTabRegionSenate">상원</button>
+                        <button class="sub-tab-btn-3" onclick="regionSetChamber('third')" id="innerTabRegionThird" style="display:none;">삼원</button>
+                    </div>
+                    <div style="font-size:0.72rem;color:#555;margin:8px 0;">권역형 비례대표에서 지역구를 묶는 단위입니다. 원별로 독립적으로 설정합니다. (전국형을 쓸 경우 설정하지 않아도 됩니다)</div>
+                    <div style="color:#666;font-size:0.8rem;margin-bottom:6px;letter-spacing:1px;">▌ 권역 목록 (칠하기 대상을 선택하세요)</div>
+                    <div id="regionList"></div>
+                    <button class="add-btn" onclick="regionAddRegion()">[+] 권역 추가</button>
+
+                    <div style="color:#666;font-size:0.8rem;margin:14px 0 6px;letter-spacing:1px;border-top:1px solid #222;padding-top:10px;">▌ 권역별 득표율</div>
+                    <div style="display:flex;gap:6px;margin-bottom:8px;">
+                        <button class="sub-tab-btn-3 active" id="regionVoteModeAutoBtn" onclick="regionSetVoteMode('auto')">자동 집계</button>
+                        <button class="sub-tab-btn-3" id="regionVoteModeManualBtn" onclick="regionSetVoteMode('manual')">수동 입력</button>
+                    </div>
+                    <div style="font-size:0.72rem;color:#555;margin-bottom:8px;">자동 집계: 권역에 속한 지역구들의 성향(%)을 평균해 득표율로 사용합니다. 수동 입력: 권역마다 직접 지지율을 입력합니다.</div>
+                    <div id="regionVoteManualPanel"></div>
+                </div>
+
+                <!-- 지지율 서브탭 -->
+                <div id="elecSubProb" class="sub-tab-content">
+                    <div class="sub-tab-container-3" id="elecProbChamberTabs" style="margin-bottom:8px;">
+                        <button class="sub-tab-btn-3 active" onclick="switchElecProbChamber('house')" id="innerTabElecProbHouse">하원</button>
+                        <button class="sub-tab-btn-3" onclick="switchElecProbChamber('senate')" id="innerTabElecProbSenate">상원</button>
+                        <button class="sub-tab-btn-3" onclick="switchElecProbChamber('third')" id="innerTabElecProbThird" style="display:none;">삼원</button>
+                    </div>
+                    <label style="display:flex;align-items:center;gap:6px;cursor:pointer;color:var(--tno-neon);font-size:0.9rem;padding:5px 8px;background:color-mix(in srgb, var(--tno-neon) 10%, transparent);border:1px solid var(--tno-neon-dim);margin-bottom:8px;">
+                        <input type="checkbox" id="elecProbSyncAll" onchange="onElecProbSyncAllChange(this.checked)"> 전체에 반영
+                    </label>
+                    <div style="font-size:0.72rem;color:#555;margin:-4px 0 8px;">의원실마다 정당 구성이 다를 수 있어 지지율을 독립적으로 설정합니다.</div>
+                    <div id="elecSystemSettings"></div>
+                    <div id="elecInputList"></div>
+                </div>
+
             </div><!-- end mainContentElection -->
 
+            <!-- ===== 내각 그룹 ===== -->
+            <div id="mainContentCabinet" class="main-tab-content">
+                <div class="sub-tab-container">
+                    <button class="sub-tab-btn active" onclick="switchSubTab('cabinet','system')" id="subTabSystem">설정</button>
+                    <button class="sub-tab-btn" onclick="switchSubTab('cabinet','president')" id="subTabPresident">대통령</button>
+                    <button class="sub-tab-btn" onclick="switchSubTab('cabinet','pm')" id="subTabPm">총리</button>
+                    <button class="sub-tab-btn" onclick="switchSubTab('cabinet','cabinetmembers')" id="subTabCabinetmembers">내각</button>
+                </div>
+
+                <div id="contentSystem" class="sub-tab-content active">
+                    <div style="margin-top:16px;">
+                        <label style="color:#888;font-size:0.8rem;margin-bottom:6px;display:block;">정부 형태</label>
+                        <div class="system-radio-group">
+                            <button type="button" class="system-radio-btn" id="govTypePresidentialBtn" onclick="setGovType('presidential')">대통령제</button>
+                            <button type="button" class="system-radio-btn" id="govTypeSemiBtn" onclick="setGovType('semi')">이원집정부제</button>
+                            <button type="button" class="system-radio-btn active" id="govTypeParliamentaryBtn" onclick="setGovType('parliamentary')">의원내각제</button>
+                            <button type="button" class="system-radio-btn" id="govTypeCollectiveBtn" onclick="setGovType('collective')">집단지도체제</button>
+                        </div>
+                    </div>
+
+                    <div style="margin-top:16px;">
+                        <label style="color:#888;font-size:0.8rem;margin-bottom:6px;display:block;">직책 이름 (내각 디스플레이에 표시될 이름을 직접 바꿀 수 있습니다 — 비워두면 기본값 사용)</label>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                            <div>
+                                <span style="color:#555;font-size:0.72rem;display:block;margin-bottom:2px;">대통령</span>
+                                <input type="text" id="roleLabelPresidentInput" placeholder="대통령" oninput="updateCabinetRoleLabel('president',this.value)"
+                                    style="width:100%;box-sizing:border-box;background:#000;border:1px solid #2a2a2a;color:#e0e0e0;font-family:inherit;font-size:0.85rem;padding:5px 8px;">
+                            </div>
+                            <div>
+                                <span style="color:#555;font-size:0.72rem;display:block;margin-bottom:2px;">총리 / 국무총리</span>
+                                <input type="text" id="roleLabelPmInput" placeholder="총리" oninput="updateCabinetRoleLabel('pm',this.value)"
+                                    style="width:100%;box-sizing:border-box;background:#000;border:1px solid #2a2a2a;color:#e0e0e0;font-family:inherit;font-size:0.85rem;padding:5px 8px;">
+                            </div>
+                            <div>
+                                <span style="color:#555;font-size:0.72rem;display:block;margin-bottom:2px;">부총리</span>
+                                <input type="text" id="roleLabelDeputyPmInput" placeholder="부총리" oninput="updateCabinetRoleLabel('deputyPm',this.value)"
+                                    style="width:100%;box-sizing:border-box;background:#000;border:1px solid #2a2a2a;color:#e0e0e0;font-family:inherit;font-size:0.85rem;padding:5px 8px;">
+                            </div>
+                            <div>
+                                <span style="color:#555;font-size:0.72rem;display:block;margin-bottom:2px;">의장 (집단지도체제)</span>
+                                <input type="text" id="roleLabelChairInput" placeholder="의장" oninput="updateCabinetRoleLabel('chair',this.value)"
+                                    style="width:100%;box-sizing:border-box;background:#000;border:1px solid #2a2a2a;color:#e0e0e0;font-family:inherit;font-size:0.85rem;padding:5px 8px;">
+                            </div>
+                            <div>
+                                <span style="color:#555;font-size:0.72rem;display:block;margin-bottom:2px;">장관 / 국무위원</span>
+                                <input type="text" id="roleLabelCabinetMemberInput" placeholder="국무위원" oninput="updateCabinetRoleLabel('cabinetMember',this.value)"
+                                    style="width:100%;box-sizing:border-box;background:#000;border:1px solid #2a2a2a;color:#e0e0e0;font-family:inherit;font-size:0.85rem;padding:5px 8px;">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="margin-top:16px;">
+                        <label style="color:#888;font-size:0.8rem;margin-bottom:6px;display:block;">법안 거부권(veto) 주체</label>
+                        <div class="system-radio-group">
+                            <button type="button" class="system-radio-btn active" id="vetoHolderNoneBtn" onclick="setVetoHolder('none')">없음</button>
+                            <button type="button" class="system-radio-btn" id="vetoHolderPresidentBtn" onclick="setVetoHolder('president')">대통령</button>
+                            <button type="button" class="system-radio-btn" id="vetoHolderPmBtn" onclick="setVetoHolder('pm')">총리</button>
+                            <button type="button" class="system-radio-btn" id="vetoHolderCabinetBtn" onclick="setVetoHolder('cabinet')" style="display:none;">내각</button>
+                        </div>
+                        <div style="color:#555;font-size:0.72rem;margin-top:4px;">거부권이 있으면, 표결 통과된 법안을 국가 &gt; 입법 탭에서 거부할 수 있습니다</div>
+                    </div>
+
+                    <!-- 국가 비상사태 / 의회 해산 / 계엄령 — 권한 주체 지정 (실제 선포 버튼은 권한 주체로 지정된 대통령/총리 탭에 표시됨) -->
+                    <div style="margin-top:20px;">
+                        <label style="color:#888;font-size:0.8rem;margin-bottom:6px;display:block;">국가 비상사태 권한 주체</label>
+                        <div class="system-radio-group">
+                            <button type="button" class="system-radio-btn active" id="emergencyHolderNoneStateOfEmergency" onclick="setEmergencyHolder('stateOfEmergency','none')">없음</button>
+                            <button type="button" class="system-radio-btn" id="emergencyHolderPresidentStateOfEmergency" onclick="setEmergencyHolder('stateOfEmergency','president')">대통령</button>
+                            <button type="button" class="system-radio-btn" id="emergencyHolderPmStateOfEmergency" onclick="setEmergencyHolder('stateOfEmergency','pm')">총리</button>
+                            <button type="button" class="system-radio-btn" id="emergencyHolderCabinetStateOfEmergency" onclick="setEmergencyHolder('stateOfEmergency','cabinet')" style="display:none;">내각</button>
+                        </div>
+                    </div>
+
+                    <div style="margin-top:20px;">
+                        <label style="color:#888;font-size:0.8rem;margin-bottom:6px;display:block;">의회 해산 권한 주체</label>
+                        <div class="system-radio-group">
+                            <button type="button" class="system-radio-btn active" id="emergencyHolderNoneDissolution" onclick="setEmergencyHolder('dissolution','none')">없음</button>
+                            <button type="button" class="system-radio-btn" id="emergencyHolderPresidentDissolution" onclick="setEmergencyHolder('dissolution','president')">대통령</button>
+                            <button type="button" class="system-radio-btn" id="emergencyHolderPmDissolution" onclick="setEmergencyHolder('dissolution','pm')">총리</button>
+                            <button type="button" class="system-radio-btn" id="emergencyHolderCabinetDissolution" onclick="setEmergencyHolder('dissolution','cabinet')" style="display:none;">내각</button>
+                        </div>
+                    </div>
+
+                    <div style="margin-top:20px;">
+                        <label style="color:#888;font-size:0.8rem;margin-bottom:6px;display:block;">계엄령 권한 주체</label>
+                        <div class="system-radio-group">
+                            <button type="button" class="system-radio-btn active" id="emergencyHolderNoneMartialLaw" onclick="setEmergencyHolder('martialLaw','none')">없음</button>
+                            <button type="button" class="system-radio-btn" id="emergencyHolderPresidentMartialLaw" onclick="setEmergencyHolder('martialLaw','president')">대통령</button>
+                            <button type="button" class="system-radio-btn" id="emergencyHolderPmMartialLaw" onclick="setEmergencyHolder('martialLaw','pm')">총리</button>
+                            <button type="button" class="system-radio-btn" id="emergencyHolderCabinetMartialLaw" onclick="setEmergencyHolder('martialLaw','cabinet')" style="display:none;">내각</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 대통령: +대선 == 행정부 선거 (선거 기능은 추후 구현) -->
+                <div id="contentPresident" class="sub-tab-content">
+                    <div style="margin-top:16px;">
+                        <label style="color:#888;font-size:0.8rem;margin-bottom:6px;display:block;">대통령</label>
+                        <div style="display:flex;gap:10px;align-items:stretch;">
+                            <div style="display:flex;flex-direction:column;align-items:center;gap:4px;flex-shrink:0;">
+                                <div class="leader-photo-box" data-ratio="0.8" title="클릭하여 사진 업로드" id="presidentPhotoBox" style="width:52px;height:65px;">
+                                    <div class="photo-ph" id="presidentPhotoPh">👤</div>
+                                    <img id="presidentPhotoImg" alt="대통령" style="display:none;">
+                                    <input type="file" accept="image/*" onchange="uploadPresidentPhoto(this)">
+                                </div>
+                                <span style="font-size:0.75rem;color:#444;flex-shrink:0;">사진 업로드</span>
+                            </div>
+                            <div style="flex:1;display:flex;flex-direction:column;gap:6px;min-width:0;">
+                                <input type="text" id="presidentNameInput" placeholder="대통령 이름"
+                                    style="background:#000;border:1px solid #2a2a2a;color:#e0e0e0;font-family:inherit;font-size:0.95rem;padding:5px 8px;width:100%;box-sizing:border-box;"
+                                    oninput="updatePresidentField('name',this.value)">
+                                <div style="display:flex;align-items:center;gap:6px;">
+                                    <span id="presidentPartyDot" style="width:9px;height:9px;border-radius:50%;flex-shrink:0;background:#666;"></span>
+                                    <select id="presidentPartySelect" onchange="updatePresidentField('partyId',this.value?parseInt(this.value):null)"
+                                        style="flex:1;min-width:0;background:#000;border:1px solid #333;color:var(--tno-gold);font-family:inherit;font-size:0.85rem;padding:4px;"></select>
+                                </div>
+                                <select id="presidentMemberPicker" onchange="linkPresidentToMember(this.value)"
+                                    style="width:100%;box-sizing:border-box;background:#000;border:1px solid #333;color:#888;font-family:inherit;font-size:0.78rem;padding:4px;"></select>
+                                <div id="presidentLinkedBadge" style="display:none;align-items:center;gap:6px;color:#6cf;font-size:0.75rem;">
+                                    🔗 의원과 연결됨 — 이름·사진·당적 자동 반영
+                                    <button onclick="unlinkPresident()" style="background:transparent;border:1px solid #333;color:#888;font-family:inherit;font-size:0.72rem;padding:2px 6px;cursor:pointer;">연결 해제</button>
+                                </div>
+                                <button id="presidentPhotoRemoveBtn" onclick="removePresidentPhoto()" style="display:none;background:transparent;border:1px solid #333;color:#555;font-family:inherit;font-size:0.8rem;padding:3px 8px;cursor:pointer;text-align:left;">✕ 사진 제거</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="presidentEmergencyPowers"></div>
+                </div>
+
+                <!-- 총리/국무총리 -->
+                <div id="contentPm" class="sub-tab-content">
+                    <label style="cursor:pointer;display:flex;align-items:center;gap:6px;margin-bottom:10px;color:#aaa;font-size:0.85rem;">
+                        <input type="checkbox" id="pmDirectElectionCheckbox" onchange="setPmDirectElectionEnabled(this.checked)">
+                        총리직선제
+                    </label>
+                    <div id="pmSelectionMethodHint" style="color:#555;font-size:0.72rem;margin-bottom:10px;"></div>
+
+                    <div style="margin-top:16px;">
+                        <label id="pmSectionLabel" style="color:#888;font-size:0.8rem;margin-bottom:6px;display:block;">총리</label>
+                        <div style="display:flex;gap:10px;align-items:stretch;">
+                            <div style="display:flex;flex-direction:column;align-items:center;gap:4px;flex-shrink:0;">
+                                <div class="leader-photo-box" data-ratio="0.8" title="클릭하여 사진 업로드" id="pmPhotoBox" style="width:52px;height:65px;">
+                                    <div class="photo-ph" id="pmPhotoPh">👤</div>
+                                    <img id="pmPhotoImg" alt="총리" style="display:none;">
+                                    <input type="file" accept="image/*" onchange="uploadPmPhoto(this)">
+                                </div>
+                                <span style="font-size:0.75rem;color:#444;flex-shrink:0;">사진 업로드</span>
+                            </div>
+                            <div style="flex:1;display:flex;flex-direction:column;gap:6px;min-width:0;">
+                                <input type="text" id="pmNameInput" placeholder="총리 이름"
+                                    style="background:#000;border:1px solid #2a2a2a;color:#e0e0e0;font-family:inherit;font-size:0.95rem;padding:5px 8px;width:100%;box-sizing:border-box;"
+                                    oninput="updatePmField('name',this.value)">
+                                <div style="display:flex;align-items:center;gap:6px;">
+                                    <span id="pmPartyDot" style="width:9px;height:9px;border-radius:50%;flex-shrink:0;background:#666;"></span>
+                                    <select id="pmPartySelect" onchange="updatePmField('partyId',this.value?parseInt(this.value):null)"
+                                        style="flex:1;min-width:0;background:#000;border:1px solid #333;color:var(--tno-gold);font-family:inherit;font-size:0.85rem;padding:4px;"></select>
+                                </div>
+                                <select id="pmMemberPicker" onchange="linkPmToMember(this.value)"
+                                    style="width:100%;box-sizing:border-box;background:#000;border:1px solid #333;color:#888;font-family:inherit;font-size:0.78rem;padding:4px;"></select>
+                                <div id="pmLinkedBadge" style="display:none;align-items:center;gap:6px;color:#6cf;font-size:0.75rem;">
+                                    <span id="pmLinkedBadgeText">🔗 의원과 연결됨 — 이름·사진·당적 자동 반영</span>
+                                    <button id="pmUnlinkBtn" onclick="unlinkPm()" style="background:transparent;border:1px solid #333;color:#888;font-family:inherit;font-size:0.72rem;padding:2px 6px;cursor:pointer;">연결 해제</button>
+                                </div>
+                                <button id="pmPhotoRemoveBtn" onclick="removePmPhoto()" style="display:none;background:transparent;border:1px solid #333;color:#555;font-family:inherit;font-size:0.8rem;padding:3px 8px;cursor:pointer;text-align:left;">✕ 사진 제거</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 부총리 (여러 명 추가 가능, 기본 0명) -->
+                    <div style="margin-top:16px;padding-top:14px;border-top:1px solid #222;">
+                        <label style="color:#888;font-size:0.8rem;margin-bottom:6px;display:block;">부총리</label>
+                        <button class="add-btn" onclick="addDeputyPm()">[+] 부총리 추가</button>
+                        <div id="deputyPmsList" style="margin-top:10px;"></div>
+                    </div>
+
+                    <!-- 대통령 임명제: 후보 지명 → 의회 심의 상정 -->
+                    <div id="pmNomineeSection" style="display:none;margin-top:16px;padding-top:14px;border-top:1px solid #222;">
+                        <label style="color:#888;font-size:0.8rem;margin-bottom:6px;display:block;">총리 후보 지명 (대통령 임명제)</label>
+                        <div id="pmNomineePendingHint" style="display:none;color:var(--tno-gold);font-size:0.78rem;margin-bottom:8px;padding:6px 8px;background:#0a0c10;border:1px solid #665500;"></div>
+                        <div style="display:flex;gap:10px;align-items:stretch;">
+                            <div style="display:flex;flex-direction:column;align-items:center;gap:4px;flex-shrink:0;">
+                                <div class="leader-photo-box" data-ratio="0.8" title="클릭하여 사진 업로드" id="pmNomineePhotoBox" style="width:52px;height:65px;">
+                                    <div class="photo-ph" id="pmNomineePhotoPh">👤</div>
+                                    <img id="pmNomineePhotoImg" alt="총리 후보" style="display:none;">
+                                    <input type="file" accept="image/*" onchange="uploadPmNomineePhoto(this)">
+                                </div>
+                                <span style="font-size:0.75rem;color:#444;flex-shrink:0;">사진 업로드</span>
+                            </div>
+                            <div style="flex:1;display:flex;flex-direction:column;gap:6px;min-width:0;">
+                                <input type="text" id="pmNomineeNameInput" placeholder="후보 이름"
+                                    style="background:#000;border:1px solid #2a2a2a;color:#e0e0e0;font-family:inherit;font-size:0.95rem;padding:5px 8px;width:100%;box-sizing:border-box;"
+                                    oninput="updatePmNomineeField('name',this.value)">
+                                <div style="display:flex;align-items:center;gap:6px;">
+                                    <span id="pmNomineePartyDot" style="width:9px;height:9px;border-radius:50%;flex-shrink:0;background:#666;"></span>
+                                    <select id="pmNomineePartySelect" onchange="updatePmNomineeField('partyId',this.value?parseInt(this.value):null)"
+                                        style="flex:1;min-width:0;background:#000;border:1px solid #333;color:var(--tno-gold);font-family:inherit;font-size:0.85rem;padding:4px;"></select>
+                                </div>
+                                <select id="pmNomineeMemberPicker" onchange="linkPmNomineeToMember(this.value)"
+                                    style="width:100%;box-sizing:border-box;background:#000;border:1px solid #333;color:#888;font-family:inherit;font-size:0.78rem;padding:4px;"></select>
+                                <div id="pmNomineeLinkedBadge" style="display:none;align-items:center;gap:6px;color:#6cf;font-size:0.75rem;">
+                                    🔗 의원과 연결됨 — 이름·사진·당적 자동 반영
+                                    <button onclick="unlinkPmNominee()" style="background:transparent;border:1px solid #333;color:#888;font-family:inherit;font-size:0.72rem;padding:2px 6px;cursor:pointer;">연결 해제</button>
+                                </div>
+                                <button onclick="submitPmNominationBill()" style="background:var(--tno-neon);color:#000;border:none;padding:8px;font-family:inherit;font-size:0.85rem;cursor:pointer;letter-spacing:1px;">지명 → 의회 심의 상정</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 내각 불신임 (의원내각제/이원집정부제 전용) -->
+                    <div id="noConfidenceSection" style="display:none;margin-top:16px;padding-top:14px;border-top:1px solid #222;">
+                        <label style="color:#888;font-size:0.8rem;margin-bottom:6px;display:block;">내각 불신임</label>
+                        <button onclick="submitNoConfidenceBill()" style="width:100%;background:transparent;border:1px solid var(--tno-alert);color:var(--tno-alert);padding:9px;font-family:inherit;font-size:0.9rem;cursor:pointer;">! <span id="noConfidenceBtnLabel">총리 불신임안</span> 발의 !</button>
+                        <div style="color:#555;font-size:0.72rem;margin-top:4px;">가결되면 국가 &gt; 입법 탭에서 확인할 수 있으며, 통과 시 현재 총리가 해임됩니다</div>
+                    </div>
+
+                    <div id="pmEmergencyPowers"></div>
+                </div>
+
+                <!-- 내각: 행정부 수반 산하 국무위원/내각 구성원 (집단지도체제일 경우 의장 + 장관도 여기서 관리) -->
+                <div id="contentCabinetmembers" class="sub-tab-content">
+                    <!-- 집단지도체제 전용: 의장 -->
+                    <div id="chairSection" style="display:none;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid #222;">
+                        <label style="color:#888;font-size:0.8rem;margin-bottom:6px;display:block;">의장</label>
+                        <div style="display:flex;gap:10px;align-items:stretch;">
+                            <div style="display:flex;flex-direction:column;align-items:center;gap:4px;flex-shrink:0;">
+                                <div class="leader-photo-box" data-ratio="0.8" title="클릭하여 사진 업로드" id="chairPhotoBox" style="width:52px;height:65px;">
+                                    <div class="photo-ph" id="chairPhotoPh">👤</div>
+                                    <img id="chairPhotoImg" alt="의장" style="display:none;">
+                                    <input type="file" accept="image/*" onchange="uploadChairPhoto(this)">
+                                </div>
+                                <span style="font-size:0.75rem;color:#444;flex-shrink:0;">사진 업로드</span>
+                            </div>
+                            <div style="flex:1;display:flex;flex-direction:column;gap:6px;min-width:0;">
+                                <input type="text" id="chairNameInput" placeholder="의장 이름"
+                                    style="background:#000;border:1px solid #2a2a2a;color:#e0e0e0;font-family:inherit;font-size:0.95rem;padding:5px 8px;width:100%;box-sizing:border-box;"
+                                    oninput="updateChairField('name',this.value)">
+                                <div style="display:flex;align-items:center;gap:6px;">
+                                    <span id="chairPartyDot" style="width:9px;height:9px;border-radius:50%;flex-shrink:0;background:#666;"></span>
+                                    <select id="chairPartySelect" onchange="updateChairField('partyId',this.value?parseInt(this.value):null)"
+                                        style="flex:1;min-width:0;background:#000;border:1px solid #333;color:var(--tno-gold);font-family:inherit;font-size:0.85rem;padding:4px;"></select>
+                                </div>
+                                <select id="chairMemberPicker" onchange="linkChairToMember(this.value)"
+                                    style="width:100%;box-sizing:border-box;background:#000;border:1px solid #333;color:#888;font-family:inherit;font-size:0.78rem;padding:4px;"></select>
+                                <div id="chairLinkedBadge" style="display:none;align-items:center;gap:6px;color:#6cf;font-size:0.75rem;">
+                                    🔗 의원과 연결됨 — 이름·사진·당적 자동 반영
+                                    <button onclick="unlinkChair()" style="background:transparent;border:1px solid #333;color:#888;font-family:inherit;font-size:0.72rem;padding:2px 6px;cursor:pointer;">연결 해제</button>
+                                </div>
+                                <button id="chairPhotoRemoveBtn" onclick="removeChairPhoto()" style="display:none;background:transparent;border:1px solid #333;color:#555;font-family:inherit;font-size:0.8rem;padding:3px 8px;cursor:pointer;text-align:left;">✕ 사진 제거</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="cabinetEmergencyPowers"></div>
+
+                    <button class="add-btn" id="addCabinetMemberBtn" onclick="addCabinetMember()">[+] 국무위원 추가</button>
+                    <div id="cabinetMembersList" style="margin-top:10px;"></div>
+                </div>
+            </div>
 
         </div><!-- end controls-content -->
 
         <div style="padding: 15px; border-top: 2px solid var(--tno-border); background: #000;">
-            <div style="display:flex; gap:10px; margin-bottom:-10px;">
-                <button class="add-btn" id="btnSaveJson" style="border-style:solid; margin-top:0;">SAVE</button>
-                <button class="add-btn" id="btnLoadJson" style="border-style:solid; margin-top:0;">LOAD</button>
-                <input id="fileLoadJson" type="file" accept="application/json" style="display:none;">
-            </div>
             <button class="simulate-btn" onclick="simulate()">>> PROTOCOL EXECUTE <<</button>
         </div>
     </div>
@@ -497,11 +1396,17 @@
             <button class="disp-tab-btn active" id="dispTabHouse"     data-tab="house"  onclick="switchDispTab('house')">하원</button>
             <button class="disp-tab-btn"         id="dispTabSenate"   data-tab="senate" onclick="switchDispTab('senate')">상원</button>
             <button class="disp-tab-btn"         id="dispTabThird"    data-tab="third" onclick="switchDispTab('third')" style="display:none;">삼원</button>
+            <button class="disp-tab-btn"         id="dispTabCabinet"  data-tab="cabinet" onclick="switchDispTab('cabinet')">내각</button>
             <button class="disp-tab-btn"         id="dispTabDistrict" data-tab="district" onclick="switchDispTab('district')" style="display:none;"><span class="disp-tab-label">지역구</span><span class="disp-tab-close" onclick="event.stopPropagation();closeDispTab('district')">×</span></button>
             <button class="disp-tab-btn"         id="dispTabTendency" data-tab="tendency" onclick="switchDispTab('tendency')" style="display:none;"><span class="disp-tab-label">성향</span><span class="disp-tab-close" onclick="event.stopPropagation();closeDispTab('tendency')">×</span></button>
+            <button class="disp-tab-btn"         id="dispTabRegion" data-tab="region" onclick="switchDispTab('region')" style="display:none;"><span class="disp-tab-label">권역</span><span class="disp-tab-close" onclick="event.stopPropagation();closeDispTab('region')">×</span></button>
             <button class="disp-tab-btn"         id="dispTabElecResultHouse" data-tab="elecResultHouse" onclick="switchDispTab('elecResultHouse')" style="display:none;"><span class="disp-tab-label">하원 선거결과</span><span class="disp-tab-close" onclick="event.stopPropagation();closeDispTab('elecResultHouse')">×</span></button>
             <button class="disp-tab-btn"         id="dispTabElecResultSenate" data-tab="elecResultSenate" onclick="switchDispTab('elecResultSenate')" style="display:none;"><span class="disp-tab-label">상원 선거결과</span><span class="disp-tab-close" onclick="event.stopPropagation();closeDispTab('elecResultSenate')">×</span></button>
             <button class="disp-tab-btn"         id="dispTabElecResultThird" data-tab="elecResultThird" onclick="switchDispTab('elecResultThird')" style="display:none;"><span class="disp-tab-label">삼원 선거결과</span><span class="disp-tab-close" onclick="event.stopPropagation();closeDispTab('elecResultThird')">×</span></button>
+            <div class="disp-info-bar" id="dispInfoBar">
+                <span id="dispInfoDate">날짜 미설정</span>
+                <span id="dispInfoSession">회기 미설정</span>
+            </div>
         </div>
 
         <!-- 하원 패널 -->
@@ -518,7 +1423,8 @@
                 </div>
                 <div id="houseViewArcWrap"><canvas id="houseCanvas" style="width:100%;display:block;"></canvas></div>
                 <div id="houseViewDistrictWrap" style="display:none;">
-                    <canvas id="houseDistrictCanvas" style="width:100%;height:340px;background:#0a0c10;border:1px solid #222;display:block;"></canvas>
+                    <canvas id="houseDistrictCanvas" style="width:100%;height:500px;background:#0a0c10;border:1px solid #222;display:block;"></canvas>
+                    <div id="houseDistrictSvgWrap" style="display:none;width:100%;height:500px;background:#0a0c10;border:1px solid #222;overflow:hidden;"></div>
                 </div>
                 <div id="houseStats" style="margin-top:10px;"></div>
             </div>
@@ -538,7 +1444,8 @@
                 </div>
                 <div id="senateViewArcWrap"><canvas id="senateCanvas" style="width:100%;display:block;"></canvas></div>
                 <div id="senateViewDistrictWrap" style="display:none;">
-                    <canvas id="senateDistrictCanvas" style="width:100%;height:340px;background:#0a0c10;border:1px solid #222;display:block;"></canvas>
+                    <canvas id="senateDistrictCanvas" style="width:100%;height:500px;background:#0a0c10;border:1px solid #222;display:block;"></canvas>
+                    <div id="senateDistrictSvgWrap" style="display:none;width:100%;height:500px;background:#0a0c10;border:1px solid #222;overflow:hidden;"></div>
                 </div>
                 <div id="senateStats" style="margin-top:10px;"></div>
             </div>
@@ -558,9 +1465,30 @@
                 </div>
                 <div id="thirdViewArcWrap"><canvas id="thirdCanvas" style="width:100%;display:block;"></canvas></div>
                 <div id="thirdViewDistrictWrap" style="display:none;">
-                    <canvas id="thirdDistrictCanvas" style="width:100%;height:340px;background:#0a0c10;border:1px solid #222;display:block;"></canvas>
+                    <canvas id="thirdDistrictCanvas" style="width:100%;height:500px;background:#0a0c10;border:1px solid #222;display:block;"></canvas>
+                    <div id="thirdDistrictSvgWrap" style="display:none;width:100%;height:500px;background:#0a0c10;border:1px solid #222;overflow:hidden;"></div>
                 </div>
                 <div id="thirdStats" style="margin-top:10px;"></div>
+            </div>
+        </div>
+
+        <!-- 내각 패널 (항상 표시) -->
+        <div class="disp-panel" id="dispPanelCabinet">
+            <div class="chamber-box">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+                    <h3 style="margin:0;border:none;padding:0;">> 내각</h3>
+                </div>
+                <div id="cabinetCouncilControls" style="display:none;align-items:center;gap:8px;margin-bottom:10px;padding:8px;background:#0a0c10;border:1px solid var(--tno-alert);flex-wrap:wrap;">
+                    <span style="color:var(--tno-alert);font-size:0.8rem;white-space:nowrap;">! 국무회의 표결 중</span>
+                    <button onclick="setAllCabinetCouncilVote('yea')" style="background:transparent;border:1px solid #00ff88;color:#00ff88;padding:4px 10px;font-family:inherit;font-size:0.78rem;cursor:pointer;">전원 찬성</button>
+                    <button onclick="setAllCabinetCouncilVote('nay')" style="background:transparent;border:1px solid #ff2244;color:#ff2244;padding:4px 10px;font-family:inherit;font-size:0.78rem;cursor:pointer;">전원 반대</button>
+                    <button onclick="clearCabinetCouncilVote()" style="background:transparent;border:1px solid #666;color:#aaa;padding:4px 10px;font-family:inherit;font-size:0.78rem;cursor:pointer;">초기화</button>
+                </div>
+                <svg id="cabinetDisplaySvg" data-export-kind="cabinet" xmlns="http://www.w3.org/2000/svg" width="100%" style="display:block;">
+                    <foreignObject x="0" y="0" width="100%" height="100%">
+                        <div xmlns="http://www.w3.org/1999/xhtml" id="cabinetDisplayGrid"></div>
+                    </foreignObject>
+                </svg>
             </div>
         </div>
 
@@ -570,16 +1498,23 @@
                 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-shrink:0;">
                     <h3 style="margin:0;border:none;padding:0;">> 지역구 맵</h3>
                     <div style="display:flex;gap:4px;">
-                        <button onclick="districtZoom(1.2)"      style="background:#111;border:1px solid #333;color:#aaa;padding:3px 10px;cursor:pointer;font-family:inherit;">+</button>
-                        <button onclick="districtZoom(1/1.2)"    style="background:#111;border:1px solid #333;color:#aaa;padding:3px 10px;cursor:pointer;font-family:inherit;">−</button>
-                        <button onclick="districtFitView()"      style="background:#111;border:1px solid #333;color:#aaa;padding:3px 10px;cursor:pointer;font-family:inherit;">⊡</button>
-                        <button onclick="districtResetView()"    style="background:#111;border:1px solid #333;color:#555;padding:3px 10px;cursor:pointer;font-family:inherit;">↺</button>
+                        <span id="districtZoomControls" style="display:none;gap:4px;">
+                            <button onclick="districtZoom(1.2)"      style="background:#111;border:1px solid #333;color:#aaa;padding:3px 10px;cursor:pointer;font-family:inherit;">+</button>
+                            <button onclick="districtZoom(1/1.2)"    style="background:#111;border:1px solid #333;color:#aaa;padding:3px 10px;cursor:pointer;font-family:inherit;">−</button>
+                            <button onclick="districtFitView()"      style="background:#111;border:1px solid #333;color:#aaa;padding:3px 10px;cursor:pointer;font-family:inherit;">⊡</button>
+                            <button onclick="districtResetView()"    style="background:#111;border:1px solid #333;color:#555;padding:3px 10px;cursor:pointer;font-family:inherit;">↺</button>
+                        </span>
+                        <span id="districtSvgViewControls" style="display:none;gap:4px;">
+                            <button onclick="districtSvgResetView()" style="background:#111;border:1px solid #333;color:#555;padding:3px 10px;cursor:pointer;font-family:inherit;font-size:0.8rem;">↺ 위치 초기화</button>
+                        </span>
                         <button onclick="districtClearAll()"     style="background:transparent;border:1px solid #333;color:#555;padding:3px 10px;cursor:pointer;font-family:inherit;font-size:0.8rem;">전체 초기화</button>
                     </div>
                 </div>
-                <canvas id="districtCanvas" style="width:100%;flex:1;background:#0a0c10;border:1px solid #222;cursor:crosshair;display:block;touch-action:none;min-height:200px;"></canvas>
+                <canvas id="districtCanvas" style="width:100%;flex:1;background:#0a0c10;border:1px solid #222;cursor:crosshair;display:none;touch-action:none;min-height:200px;"></canvas>
+                <div id="districtSvgWrap" style="width:100%;flex:1;background:#0a0c10;border:1px solid #222;min-height:200px;overflow:hidden;"></div>
                 <div style="margin-top:4px;font-size:0.8rem;color:#555;flex-shrink:0;">
                     <span id="districtCount">하원 0칸 · 상원 0칸</span>
+                    <span id="districtSvgViewHint" style="display:none;color:#444;"> · Shift+스크롤: 확대/축소 · 휠클릭 드래그: 이동</span>
                 </div>
             </div>
         </div>
@@ -591,6 +1526,17 @@
                     <h3 style="margin:0;border:none;padding:0;">> 성향 맵</h3>
                 </div>
                 <div id="tendencyMaps"></div>
+            </div>
+        </div>
+
+        <!-- 권역 배정 맵 패널 -->
+        <div class="disp-panel" id="dispPanelRegion">
+            <div class="chamber-box">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+                    <h3 style="margin:0;border:none;padding:0;">> 권역 배정 맵</h3>
+                </div>
+                <div style="font-size:0.78rem;color:#666;margin-bottom:8px;">아래에서 "칠하기" 권역을 고른 뒤, 지도(또는 그리드)의 지역구를 클릭해 그 권역에 배정/해제하세요.</div>
+                <div id="regionMapWrap"></div>
             </div>
         </div>
 
@@ -612,6 +1558,7 @@
                 <div id="elecViewArcHouse"><canvas id="elecCanvasHouse" style="width:100%;display:block;"></canvas></div>
                 <div id="elecViewDistrictHouse" style="display:none;">
                     <canvas id="elecDistrictResultCanvasHouse" style="width:100%;height:420px;background:#0a0c10;border:1px solid #222;display:block;"></canvas>
+                    <div id="elecDistrictResultSvgHouse" style="display:none;width:100%;height:420px;background:#0a0c10;border:1px solid #222;overflow:hidden;"></div>
                 </div>
                 <div id="elecResultStatsHouse" style="margin-top:10px;"></div>
             </div>
@@ -635,6 +1582,7 @@
                 <div id="elecViewArcSenate"><canvas id="elecCanvasSenate" style="width:100%;display:block;"></canvas></div>
                 <div id="elecViewDistrictSenate" style="display:none;">
                     <canvas id="elecDistrictResultCanvasSenate" style="width:100%;height:420px;background:#0a0c10;border:1px solid #222;display:block;"></canvas>
+                    <div id="elecDistrictResultSvgSenate" style="display:none;width:100%;height:420px;background:#0a0c10;border:1px solid #222;overflow:hidden;"></div>
                 </div>
                 <div id="elecResultStatsSenate" style="margin-top:10px;"></div>
             </div>
@@ -658,6 +1606,7 @@
                 <div id="elecViewArcThird"><canvas id="elecCanvasThird" style="width:100%;display:block;"></canvas></div>
                 <div id="elecViewDistrictThird" style="display:none;">
                     <canvas id="elecDistrictResultCanvasThird" style="width:100%;height:420px;background:#0a0c10;border:1px solid #222;display:block;"></canvas>
+                    <div id="elecDistrictResultSvgThird" style="display:none;width:100%;height:420px;background:#0a0c10;border:1px solid #222;overflow:hidden;"></div>
                 </div>
                 <div id="elecResultStatsThird" style="margin-top:10px;"></div>
             </div>
@@ -667,5 +1616,6 @@
     <a href="tno_kor.html" class="lang-switch">>> 1.5.A 업데이트 내역</a>
 
     <script src="teaser.js"></script>
+    <script src="lang.js"></script>
 </body>
 </html>

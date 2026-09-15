@@ -2,7 +2,7 @@
             --tno-bg: #101218;
             --tno-panel: #1a1d26;
             --tno-neon: #00ffff;
-            --tno-neon-dim: rgba(0, 255, 255, 0.3);
+            --tno-neon-dim: color-mix(in srgb, var(--tno-neon) 30%, transparent);
             --tno-text: #e0e0e0;
             --tno-border: #4a5a6a;
             --tno-alert: #ff0055;
@@ -68,7 +68,7 @@
             display: flex;
             flex-direction: column;
             position: relative;
-            box-shadow: 0 0 15px rgba(0, 255, 255, 0.1);
+            box-shadow: 0 0 15px color-mix(in srgb, var(--tno-neon) 10%, transparent);
         }
         
         .tno-header-strip {
@@ -83,10 +83,43 @@
             text-transform: uppercase;
         }
 
+        /* 국가명·국기 표시 바 (v1.4.8) */
+        .nation-id-bar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 15px;
+            background: #06070a;
+            border-bottom: 1px solid #222;
+        }
+        .nation-name-disp {
+            color: #888;
+            font-size: 1.2rem;
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
         .controls-content {
             padding: 15px;
             overflow-y: auto;
             flex: 1;
+        }
+
+        /* 국기 지정 시 단원제/양원제/삼원제 버튼 위에 표시되는 큰 배너 — 좌측 탭 폭에 맞춰 고정 */
+        .nation-flag-banner {
+            width: 100%;
+            box-sizing: border-box;
+            margin-bottom: 12px;
+            border: 1px solid #2a2a2a;
+            overflow: hidden;
+            line-height: 0;
+        }
+        .nation-flag-banner img {
+            width: 100%;
+            height: auto;
+            display: block;
         }
 
         .display-area {
@@ -99,9 +132,29 @@
         }
         .disp-tab-bar {
             display: flex;
+            align-items: center;
             gap: 4px;
             flex-shrink: 0;
             margin-bottom: 0;
+        }
+        /* 국가 날짜/회기 표시 — 데스크톱에서는 탭 바 우측 끝에 고정 (모바일 전용 줄바꿈은 아래 mobile 규칙 참고) */
+        .disp-info-bar {
+            margin-left: auto;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 2px;
+            padding: 0 10px;
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+        }
+        .disp-info-bar #dispInfoDate {
+            color: #ccc;
+            font-size: 0.85rem;
+        }
+        .disp-info-bar #dispInfoSession {
+            color: #888;
+            font-size: 0.78rem;
         }
         .disp-tab-btn {
             background: var(--tno-panel);
@@ -119,7 +172,7 @@
         .disp-tab-btn.active {
             color: var(--tno-neon);
             border-color: var(--tno-neon);
-            background: rgba(0,255,255,0.05);
+            background: color-mix(in srgb, var(--tno-neon) 5%, transparent);
             text-shadow: 0 0 5px var(--tno-neon);
         }
         .disp-tab-close {
@@ -190,38 +243,112 @@
             box-shadow: 0 0 5px var(--tno-neon-dim);
         }
 
-        input[type="checkbox"], input[type="radio"] {
+        /* 박스형 체크박스 — 브라우저 기본 모양 대신 각진 네온 테두리 + 체크 표시로 통일 */
+        input[type="checkbox"] {
+            appearance: none;
+            -webkit-appearance: none;
+            width: 16px; height: 16px;
+            border-radius: 0;
+            background: #0a0c10;
+            border: 1px solid #444;
+            cursor: pointer;
+            position: relative;
+            flex-shrink: 0;
+            vertical-align: middle;
+            transition: border-color 0.15s, background 0.15s;
+        }
+        input[type="checkbox"]:hover { border-color: var(--tno-neon); }
+        input[type="checkbox"]:checked { background: var(--tno-neon); border-color: var(--tno-neon); }
+        input[type="checkbox"]:checked::after {
+            content: "";
+            position: absolute;
+            left: 4px; top: 1px;
+            width: 4px; height: 8px;
+            border: solid #000;
+            border-width: 0 2px 2px 0;
+            transform: rotate(45deg);
+        }
+        input[type="radio"] {
             accent-color: var(--tno-neon);
             width: 16px; height: 16px; cursor: pointer;
         }
 
-        /* ===== 2단 탭 ===== */
+        /* 단원제/양원제/삼원제 선택 — 박스형 세그먼트 버튼 */
+        .system-radio-group {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 15px;
+        }
+        .system-radio-btn {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 8px 6px;
+            background: #0a0c10;
+            border: 1px solid #2a2a2a;
+            border-radius: 4px;
+            color: #888;
+            cursor: pointer;
+            transition: 0.15s;
+        }
+        .system-radio-btn:hover { border-color: #3a4a54; color: #aaa; }
+        .system-radio-btn input[type="radio"] {
+            position: absolute;
+            width: 0;
+            height: 0;
+            opacity: 0;
+            margin: 0;
+        }
+        .system-radio-btn:has(input:checked) {
+            border-color: var(--tno-neon);
+            color: var(--tno-neon);
+            background: color-mix(in srgb, var(--tno-neon) 7%, transparent);
+            box-shadow: 0 0 6px var(--tno-neon-dim);
+            text-shadow: 0 0 4px var(--tno-neon);
+        }
+        /* 라디오가 아닌 일반 버튼 토글(날짜/회기 모드 전환)에서 쓰는 활성 상태 — 위와 동일한 룩 */
+        .system-radio-btn.active {
+            border-color: var(--tno-neon);
+            color: var(--tno-neon);
+            background: color-mix(in srgb, var(--tno-neon) 7%, transparent);
+            box-shadow: 0 0 6px var(--tno-neon-dim);
+            text-shadow: 0 0 4px var(--tno-neon);
+        }
+
+        /* ===== 2단 탭 =====
+           상위 = 박스 없이 텍스트만, 굵은 베이스라인 위에 얹혀서 활성 시 글자만 빛남
+           중위 = 각진 박스지만 위쪽 모서리만 살짝 둥글게, 얇은 베이스라인 (하위의 완전히 둥근 칩으로 가는 절충 단계)
+           하위(.sub-tab-btn-3) = 베이스라인 없이 완전히 둥근 칩 (변경 없음) */
         .main-tab-container {
             display: flex;
-            border-bottom: 2px solid var(--tno-neon);
-            margin-bottom: 0;
+            gap: 4px;
+            border-bottom: 4px solid var(--tno-neon);
         }
         .main-tab-btn {
             flex: 1;
+            min-width: 0;
             background: transparent;
             color: #555;
-            border: 1px solid transparent;
-            border-bottom: none;
-            padding: 9px 6px;
+            border: none;
+            outline: none;
+            padding: 13px 4px 11px;
             cursor: pointer;
-            font-size: 1rem;
+            font-size: 1.1rem;
+            font-weight: bold;
             font-family: 'NeoDunggeunmo', 'VT323', monospace;
-            letter-spacing: 1px;
+            letter-spacing: 2px;
             transition: 0.2s;
             text-transform: uppercase;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
         .main-tab-btn:hover { color: var(--tno-neon); }
         .main-tab-btn.active {
-            background: rgba(0,255,255,0.07);
             color: var(--tno-neon);
-            border-color: var(--tno-neon);
-            border-bottom-color: var(--tno-panel);
-            text-shadow: 0 0 6px var(--tno-neon);
+            text-shadow: 0 0 10px var(--tno-neon), 0 0 20px var(--tno-neon-dim);
         }
 
         .main-tab-content { display: none; }
@@ -229,32 +356,66 @@
 
         .sub-tab-container {
             display: flex;
-            border-bottom: 1px solid var(--tno-border);
+            gap: 4px;
             margin-bottom: 12px;
             margin-top: 10px;
-            background: #0a0c10;
+            border-bottom: 1px solid var(--tno-border);
         }
         .sub-tab-btn {
             flex: 1;
-            background: transparent;
+            background: #0a0c10;
             color: #555;
-            border: none;
-            border-bottom: 2px solid transparent;
-            padding: 6px 4px;
+            border: 1px solid #222;
+            border-bottom: none;
+            border-radius: 4px 4px 0 0;
+            padding: 7px 4px;
             cursor: pointer;
-            font-size: 0.95rem;
+            font-size: 0.92rem;
             font-family: 'NeoDunggeunmo', 'VT323', monospace;
+            letter-spacing: 0.5px;
             transition: 0.15s;
         }
-        .sub-tab-btn:hover { color: #aaa; }
+        .sub-tab-btn:hover { color: #aaa; border-color: #3a4a54; }
         .sub-tab-btn.active {
             color: var(--tno-neon);
-            border-bottom-color: var(--tno-neon);
+            border-color: var(--tno-neon);
+            background: color-mix(in srgb, var(--tno-neon) 7%, transparent);
+            box-shadow: 0 -2px 8px var(--tno-neon-dim);
         }
 
         .sub-tab-content { display: none; }
         .sub-tab-content.active { display: block; animation: flicker 0.15s; }
         @keyframes flicker { 0% { opacity: 0.8; } 100% { opacity: 1; } }
+
+        /* 3차 탭 (2차 탭 안쪽 nested 탭) — 같은 pill 계열에서 가장 작은 단계, 골드로 위계 구분 */
+        .sub-tab-container-3 {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 10px;
+            margin-top: 4px;
+            background: transparent;
+            border-bottom: none;
+        }
+        .sub-tab-btn-3 {
+            flex: 1;
+            background: #0a0c10;
+            color: #666;
+            border: 1px solid #2a2a2a;
+            border-radius: 3px;
+            padding: 5px 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-family: 'NeoDunggeunmo', 'VT323', monospace;
+            letter-spacing: 1px;
+            transition: 0.15s;
+        }
+        .sub-tab-btn-3:hover { color: #aaa; border-color: #444; }
+        .sub-tab-btn-3.active {
+            color: var(--tno-gold);
+            border-color: var(--tno-gold);
+            background: rgba(255,215,0,0.08);
+            text-shadow: 0 0 4px var(--tno-gold);
+        }
 
         .card-item {
             background: #0d0f14;
@@ -263,6 +424,33 @@
             padding: 10px;
             margin-bottom: 10px;
             position: relative;
+        }
+
+        /* 의회>의원 / 의회>비례 검색+필터 버튼 및 팝업 (당/무소속·이념 체크박스) */
+        .member-filter-btn {
+            background: #000;
+            border: 1px solid #333;
+            color: #aaa;
+            font-family: inherit;
+            font-size: 0.82rem;
+            padding: 5px 10px;
+            cursor: pointer;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+        .member-filter-btn:hover { border-color: #555; color: #ccc; }
+        .member-filter-popup {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            margin-top: 4px;
+            min-width: 200px;
+            max-width: 260px;
+            background: #0a0c10;
+            border: 1px solid #333;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.6);
+            padding: 10px;
+            z-index: 30;
         }
         .card-item.is-ruling {
             border-color: var(--tno-gold);
@@ -310,7 +498,7 @@
             background: transparent; border: 1px dashed var(--tno-border); color: #888;
             padding: 8px; width: 100%; margin-top: 10px; font-size: 1rem;
         }
-        .add-btn:hover { border-color: var(--tno-neon); color: var(--tno-neon); background: rgba(0,255,255,0.1); }
+        .add-btn:hover { border-color: var(--tno-neon); color: var(--tno-neon); background: color-mix(in srgb, var(--tno-neon) 10%, transparent); }
         
         .remove-btn {
             background: transparent; border: 1px solid #555; color: #555; font-size: 1rem; padding: 2px 8px;
@@ -326,7 +514,7 @@
         .simulate-btn:hover { background: #fff; box-shadow: 0 0 20px var(--tno-neon); }
 
         .color-input-group { display: flex; gap: 2px; }
-        input.hex-input { width: 70px !important; text-align: center; }
+        input.hex-input { width: 105px !important; text-align: center; }
         input[type="color"] { border: 1px solid #555; width: 30px; height: 30px; padding: 0; background: none; }
 
         .stat-block {
@@ -345,6 +533,10 @@
             width: 100%; height: auto;
             cursor: pointer;
         }
+        /* 의회 표시기(하원/상원/삼원)의 반원 배경을 옆의 지역구 지도와 같은 단색 배경으로 통일 */
+        #houseCanvas, #senateCanvas, #thirdCanvas {
+            background: #0a0c10;
+        }
 
         .ruling-selector {
             border: 1px solid #333; padding: 5px; margin-bottom: 5px; cursor: pointer;
@@ -356,6 +548,23 @@
         .coalition-members { background: #000; border: 1px solid #333; padding: 5px; margin-top: 5px; max-height: 100px; overflow-y: auto; }
         
         .order-btn { background: #222; color: #fff; border: 1px solid #444; font-size: 0.8rem; padding: 0 4px; }
+        .drag-handle {
+            cursor: grab; color: #444; font-size: 1.1rem; padding: 0 3px;
+            user-select: none; flex-shrink: 0; line-height: 1; letter-spacing: -2px;
+            display: flex; align-items: center;
+            touch-action: none; /* 터치로 눌러 드래그할 때 페이지 스크롤 대신 항목이 움직이도록 */
+        }
+        .drag-handle:hover { color: #888; }
+        .drag-handle:active { cursor: grabbing; }
+        .drag-lifted {
+            opacity: 0.9;
+            transform: scale(1.02);
+            box-shadow: 0 10px 24px rgba(0,0,0,0.6), 0 0 0 1px var(--tno-neon);
+            position: relative;
+            z-index: 50;
+            transition: box-shadow 0.12s, transform 0.12s;
+        }
+        .drag-target { transition: transform 0.12s; }
 
         /* ===== VOTE UI ===== */
         .vote-panel {
@@ -402,11 +611,13 @@
         .vote-ctrl-btn.nay  { border-color: var(--vote-nay); color: var(--vote-nay); }
         .vote-ctrl-btn.abs  { border-color: var(--vote-abs); color: var(--vote-abs); }
         .vote-ctrl-btn.clr  { border-color: #555; color: #888; }
+        .vote-ctrl-btn.info { border-color: var(--tno-neon); color: var(--tno-neon); }
         .vote-ctrl-btn:hover { opacity: 0.7; }
         .vote-ctrl-btn.yea:hover  { background: rgba(0,255,136,0.15); }
         .vote-ctrl-btn.nay:hover  { background: rgba(255,34,68,0.15); }
         .vote-ctrl-btn.abs:hover  { background: rgba(136,136,136,0.15); }
         .vote-ctrl-btn.clr:hover  { background: rgba(100,100,100,0.15); }
+        .vote-ctrl-btn.info:hover { background: color-mix(in srgb, var(--tno-neon) 15%, transparent); }
 
         .vote-hint {
             font-size: 0.85rem;
@@ -504,6 +715,21 @@
         .bulk-vote-btn.active-yea { background: rgba(0,255,136,0.25); font-weight: bold; }
         .bulk-vote-btn.active-nay { background: rgba(255,34,68,0.25); font-weight: bold; }
         .bulk-vote-btn.active-abs { background: rgba(136,136,136,0.25); font-weight: bold; }
+        /* 찬/반/기 버튼 3개를 합친 만큼의 너비를 차지하는 활동 금지 박스 */
+        .bulk-vote-banned {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: calc(3 * (1.6em + 14px) + 2 * 5px);
+            padding: 3px 7px;
+            font-size: 0.8rem;
+            font-family: 'NeoDunggeunmo', 'VT323', monospace;
+            border: 1px solid var(--tno-alert);
+            color: var(--tno-alert);
+            background: rgba(255,0,85,0.08);
+            text-shadow: 0 0 4px var(--tno-alert);
+            box-sizing: border-box;
+        }
 
         /* ===== BILL CARD ===== */
         .bill-card {
@@ -517,7 +743,7 @@
             position: relative;
         }
         .bill-card:hover { border-color: var(--tno-neon); }
-        .bill-card.selected { border-left-color: var(--tno-neon); background: rgba(0,255,255,0.04); }
+        .bill-card.selected { border-left-color: var(--tno-neon); background: color-mix(in srgb, var(--tno-neon) 4%, transparent); }
         .bill-card-title {
             font-size: 1rem;
             color: var(--tno-gold);
@@ -557,6 +783,15 @@
         .bill-status-badge.third-fail { border-color: #7a2a2a; color: #ef5350; background: rgba(239,83,80,0.08); }
         .bill-status-badge.passed { border-color: var(--vote-yea); color: var(--vote-yea); background: rgba(0,255,136,0.08); text-shadow: 0 0 5px var(--vote-yea); }
         .bill-status-badge.failed { border-color: var(--vote-nay); color: var(--vote-nay); background: rgba(255,34,68,0.08); text-shadow: 0 0 5px var(--vote-nay); }
+        .party-status-badge {
+            font-size: 0.72rem;
+            padding: 1px 7px;
+            border: 1px solid;
+            letter-spacing: 1px;
+            flex-shrink: 0;
+        }
+        .party-status-badge.status-dissolved { border-color: #555; color: #999; background: rgba(153,153,153,0.08); }
+        .party-status-badge.status-banned { border-color: var(--tno-alert); color: var(--tno-alert); background: rgba(255,0,85,0.08); text-shadow: 0 0 4px var(--tno-alert); }
         .bill-select-btn {
             margin-left: auto;
             font-size: 0.8rem;
@@ -567,7 +802,7 @@
             cursor: pointer;
             font-family: 'NeoDunggeunmo','VT323',monospace;
         }
-        .bill-select-btn:hover { background: rgba(0,255,255,0.1); }
+        .bill-select-btn:hover { background: color-mix(in srgb, var(--tno-neon) 10%, transparent); }
         .bill-remove-btn {
             font-size: 0.8rem;
             padding: 2px 6px;
@@ -578,6 +813,86 @@
             font-family: 'NeoDunggeunmo','VT323',monospace;
         }
         .bill-remove-btn:hover { border-color: var(--tno-alert); color: var(--tno-alert); }
+
+        /* ===== 개정안 / 버전 / 세부 기록 ===== */
+        .bill-version-badge {
+            font-size: 0.75rem;
+            padding: 1px 7px;
+            border: 1px solid #6a5a2a;
+            color: var(--tno-gold);
+            background: rgba(255,215,0,0.06);
+            letter-spacing: 0.5px;
+        }
+        .bill-amend-btn {
+            font-size: 0.8rem;
+            padding: 2px 8px;
+            border: 1px solid var(--tno-gold);
+            color: var(--tno-gold);
+            background: transparent;
+            cursor: pointer;
+            font-family: 'NeoDunggeunmo','VT323',monospace;
+        }
+        .bill-amend-btn:hover { background: rgba(255,215,0,0.1); }
+        .bill-history-toggle {
+            font-size: 0.75rem;
+            color: #666;
+            cursor: pointer;
+            text-decoration: underline dotted;
+            margin-left: auto;
+        }
+        .bill-history-toggle:hover { color: var(--tno-neon); }
+        .bill-history {
+            display: none;
+            width: 100%;
+            margin-top: 8px;
+            padding: 8px 10px;
+            background: #05070a;
+            border: 1px dashed #2a2a2a;
+            font-size: 0.78rem;
+            color: #888;
+            box-sizing: border-box;
+        }
+        .bill-history.open { display: block; }
+        .bill-history-entry { padding: 3px 0; border-bottom: 1px dotted #1a1a1a; }
+        .bill-history-entry:last-child { border-bottom: none; }
+        .amendment-banner {
+            display: none;
+            background: rgba(255,215,0,0.06);
+            border: 1px solid var(--tno-gold);
+            color: var(--tno-gold);
+            padding: 8px 12px;
+            margin-bottom: 10px;
+            font-size: 0.85rem;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+        }
+        .amendment-banner.show { display: flex; }
+        .amendment-banner button {
+            background: transparent;
+            border: 1px solid var(--tno-gold);
+            color: var(--tno-gold);
+            padding: 2px 8px;
+            cursor: pointer;
+            font-family: 'NeoDunggeunmo','VT323',monospace;
+            font-size: 0.8rem;
+        }
+        .elec-record-toggle {
+            font-size: 0.75rem;
+            color: #666;
+            cursor: pointer;
+            text-decoration: underline dotted;
+        }
+        .elec-record-toggle:hover { color: var(--tno-neon); }
+        .elec-record-detail {
+            display: none;
+            margin-top: 8px;
+            padding: 6px 8px;
+            background: #05070a;
+            border: 1px dashed #2a2a2a;
+            font-size: 0.78rem;
+        }
+        .elec-record-detail.open { display: block; }
 
         /* display-area 탭 */
         .display-tab-container {
@@ -602,7 +917,7 @@
             color: var(--tno-neon);
             border-color: var(--tno-neon);
             text-shadow: 0 0 5px var(--tno-neon);
-            background: rgba(0,255,255,0.05);
+            background: color-mix(in srgb, var(--tno-neon) 5%, transparent);
         }
         .display-panel {
             display: none;
@@ -628,7 +943,7 @@
             transition: 0.15s;
         }
         .tag-badge:hover, .tag-badge.active {
-            background: rgba(0,255,255,0.12);
+            background: color-mix(in srgb, var(--tno-neon) 12%, transparent);
             border-color: var(--tno-neon);
         }
         .tag-badge.active { font-weight: bold; }
@@ -667,8 +982,150 @@
             display: none;
             white-space: nowrap;
         }
+
+        .canvas-export-menu {
+            position: fixed;
+            background: #0a0c10;
+            border: 1px solid var(--tno-neon);
+            box-shadow: 0 0 10px color-mix(in srgb, var(--tno-neon) 40%, transparent);
+            z-index: 5001;
+            display: none;
+            white-space: nowrap;
+            font-family: 'NeoDunggeunmo', 'VT323', monospace;
+        }
+        .canvas-export-menu-item {
+            color: var(--tno-neon);
+            font-size: 0.85rem;
+            padding: 8px 14px;
+            cursor: pointer;
+        }
+        .canvas-export-menu-item:hover {
+            background: color-mix(in srgb, var(--tno-neon) 15%, transparent);
+        }
+
+        .seat-info-card {
+            position: fixed;
+            display: none;
+            background: #000;
+            border: 1px solid var(--tno-neon);
+            color: #ccc;
+            font-family: 'NeoDunggeunmo', 'VT323', monospace;
+            font-size: 0.85rem;
+            padding: 8px 10px;
+            min-width: 160px;
+            max-width: 260px;
+            z-index: 5001;
+            box-shadow: 0 0 10px color-mix(in srgb, var(--tno-neon) 15%, transparent);
+        }
+        .seat-info-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+            padding-bottom: 4px;
+            border-bottom: 1px solid #222;
+            color: var(--tno-neon);
+            font-size: 0.8rem;
+            letter-spacing: 1px;
+        }
+        .seat-info-card-header button {
+            background: transparent;
+            border: none;
+            color: #888;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.9rem;
+            line-height: 1;
+            padding: 0 2px;
+        }
+        .seat-info-card-header button:hover { color: var(--tno-alert); }
+        .seat-info-card-body div { padding: 2px 0; }
     
 
                     #elecSpeed::-webkit-slider-runnable-track{height:4px;background:var(--tno-border);}
                     #elecSpeed::-webkit-slider-thumb{height:16px;width:10px;background:var(--tno-neon);-webkit-appearance:none;margin-top:-6px;box-shadow:0 0 5px var(--tno-neon);}
+
+        /* ===== 모바일(세로형) UI 모드 =====
+           설정 > UI 모드에서 선택하면 <html>에 data-ui-mode="mobile"이 붙는다 (uimode.js).
+           좌우 2단 레이아웃을 위→아래로 쌓는 것 외에는 기존 스타일을 그대로 재사용한다. */
+        html[data-ui-mode="mobile"] body {
+            flex-direction: column;
+            height: auto;
+            min-height: 100vh;
+            overflow: visible;
+            padding: 10px;
+            gap: 10px;
+        }
+        html[data-ui-mode="mobile"] .controls {
+            flex: 0 0 auto;
+            width: 100%;
+        }
+        html[data-ui-mode="mobile"] .controls-content {
+            flex: 0 0 auto;
+            overflow-y: visible;
+        }
+        html[data-ui-mode="mobile"] .display-area {
+            flex: 0 0 auto;
+            width: 100%;
+            overflow: visible;
+            padding-right: 0;
+        }
+        html[data-ui-mode="mobile"] .disp-panel {
+            flex: 0 0 auto;
+            overflow-y: visible;
+        }
+        /* 모바일에서만 날짜/회기 표시를 탭 버튼 줄 아래 별도 줄로 내리고 구분선을 그림 (데스크톱은 탭 바 우측 끝에 그대로 고정) */
+        html[data-ui-mode="mobile"] .disp-tab-bar {
+            flex-wrap: wrap;
+            row-gap: 0;
+        }
+        html[data-ui-mode="mobile"] .disp-info-bar {
+            flex-basis: 100%;
+            margin-left: 0;
+            align-items: flex-end;
+            padding: 6px 10px 0;
+            margin-top: 0;
+            border-top: 2px solid var(--tno-border);
+        }
+        html[data-ui-mode="mobile"] .main-tab-btn,
+        html[data-ui-mode="mobile"] .sub-tab-btn,
+        html[data-ui-mode="mobile"] .sub-tab-btn-3 {
+            font-size: 0.85rem;
+        }
+
+        /* 모바일 전용 좌/우 패널 전환 버튼 — 데스크톱에서는 항상 숨김 */
+        .mobile-panel-switch { display: none; }
+        html[data-ui-mode="mobile"] .mobile-panel-switch {
+            display: flex;
+            gap: 6px;
+            position: sticky;
+            top: 0;
+            z-index: 20;
+            background: #000;
+            padding: 8px 10px;
+            margin: -10px -10px 10px;
+            border-bottom: 2px solid var(--tno-border);
+        }
+        .mobile-panel-btn {
+            flex: 1;
+            background: transparent;
+            border: 1px solid var(--tno-border);
+            color: #888;
+            font-family: inherit;
+            font-size: 0.85rem;
+            padding: 8px 4px;
+            cursor: pointer;
+            transition: 0.15s;
+        }
+        .mobile-panel-btn:hover { border-color: #3a4a54; color: #aaa; }
+        .mobile-panel-btn.active {
+            border-color: var(--tno-neon);
+            color: var(--tno-neon);
+            background: color-mix(in srgb, var(--tno-neon) 7%, transparent);
+            box-shadow: 0 0 6px var(--tno-neon-dim);
+            text-shadow: 0 0 4px var(--tno-neon);
+        }
+        /* 선택된 패널만 보이도록 — 한쪽을 완전히 display:none 처리해 스크롤 길이도 줄인다 */
+        html[data-ui-mode="mobile"][data-mobile-panel="controls"] .display-area { display: none; }
+        html[data-ui-mode="mobile"][data-mobile-panel="display"] .controls { display: none; }
                     
