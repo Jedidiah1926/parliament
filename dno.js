@@ -444,6 +444,7 @@
             if(nameInput) {
                 nameInput.disabled = !!resolved;
                 if(nameInput.value !== (effName||'')) nameInput.value = effName || '';
+                nameInput.placeholder = (pmMajorityLocked && !effName) ? `${pmRoleLabel()} 이름 (공석)` : `${pmRoleLabel()} 이름`;
             }
             const img = document.getElementById('pmPhotoImg');
             const ph  = document.getElementById('pmPhotoPh');
@@ -492,7 +493,12 @@
                 const lockedNote = document.getElementById('pmMajorityLockedNote');
                 if(lockBtn) lockBtn.style.display = pmMajorityLocked ? 'none' : '';
                 if(unlockBtn) unlockBtn.style.display = pmMajorityLocked ? '' : 'none';
-                if(lockedNote) lockedNote.style.display = pmMajorityLocked ? '' : 'none';
+                if(lockedNote) {
+                    lockedNote.style.display = pmMajorityLocked ? '' : 'none';
+                    lockedNote.textContent = pm.name
+                        ? '🔒 총리가 고정되어 있습니다 — 다수당이 바뀌어도 총리는 유지되며, 내각 불신임이 가결되면 공석이 됩니다.'
+                        : '🔒 내각 불신임으로 총리가 공석입니다 — 직접 지정하거나, 아래 "고정 해제"로 현재 다수당 대표를 새 총리로 반영하세요.';
+                }
             }
 
             const noConfidenceSection = document.getElementById('noConfidenceSection');
@@ -833,7 +839,10 @@
                 if(getBillOverallStatus(b) !== 'passed') return;
                 b.noConfidenceApplied = true;
                 pm = { name: '', photo: '', partyId: null, linkedSeat: null };
-                pmMajorityLocked = false; // 불신임 가결 시 고정 해제 — 다수당 방식이면 새 총리가 바로 자동 반영됨
+                // 불신임 가결 직후엔 공석으로 유지 — 다수당 대표가 곧바로 다시 총리가 되는 게 아니라,
+                // "고정" 상태를 유지한 채 이름을 비워 공석으로 표시하고, 새 총리는 "고정 해제"로
+                // 다수당 대표를 다시 반영하거나 직접 지정하는 등 명시적인 절차를 거치도록 함
+                pmMajorityLocked = true;
                 deputyPms.forEach(d => { d.name = ''; d.photo = ''; d.partyId = null; d.linkedSeat = null; });
                 cabinetMembers.forEach(m => { m.name = ''; m.photo = ''; m.partyId = null; m.linkedSeat = null; });
                 renderPmSection();
