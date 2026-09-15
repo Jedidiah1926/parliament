@@ -99,7 +99,7 @@
             if(link.type === 'list') {
                 const m = listMembers[link.chamber]?.[link.partyId]?.find(x => x.id === link.memberId);
                 if(!m || m.vacant) return null;
-                return { name: m.name || '', photo: '', partyId: link.partyId }; // 비례 의원은 사진 데이터가 없음
+                return { name: m.name || '', photo: m.photo || '', partyId: link.partyId };
             }
             return null;
         }
@@ -4683,14 +4683,14 @@
             const reader = new FileReader();
             reader.onload = e => {
                 const ind = independents.find(x=>x.id===id);
-                if(ind){ ind.photo = e.target.result; rerenderIndependentOwner(ind); }
+                if(ind){ ind.photo = e.target.result; rerenderIndependentOwner(ind); renderCabinetDisplay(); }
             };
             reader.readAsDataURL(file);
         }
 
         function removeIndependentPhoto(id) {
             const ind = independents.find(x=>x.id===id);
-            if(ind){ ind.photo=''; rerenderIndependentOwner(ind); }
+            if(ind){ ind.photo=''; rerenderIndependentOwner(ind); renderCabinetDisplay(); }
         }
 
         // ===== 의원/비례 탭 공용: 검색창 + 필터(팝업) UI, 무소속 카드 =====
@@ -4987,7 +4987,7 @@
             if(!m) return;
             m[field] = value;
             if(field !== 'name') simulate();
-            if(field === 'name') renderMembersList();
+            if(field === 'name') { renderMembersList(); renderCabinetDisplay(); }
         }
 
         // 지역구 의원 정당 변경 (당적 변경/이적) — 기존 정당 의석 -1, 새 정당 의석 +1
@@ -5009,13 +5009,13 @@
             const reader = new FileReader();
             reader.onload = e => {
                 const m = districtMembers[ch]?.[key];
-                if(m) { m.photo = e.target.result; renderMembersList(); }
+                if(m) { m.photo = e.target.result; renderMembersList(); renderCabinetDisplay(); }
             };
             reader.readAsDataURL(file);
         }
         function removeDistrictMemberPhoto(ch, key) {
             const m = districtMembers[ch]?.[key];
-            if(m) { m.photo = ''; renderMembersList(); }
+            if(m) { m.photo = ''; renderMembersList(); renderCabinetDisplay(); }
         }
 
         // 궐석 처리: 의원이 사퇴/사망 등으로 빠짐 — 소속 정당 의석에서 -1 (보궐선거 전까지 공석)
@@ -5051,7 +5051,7 @@
             const m = arr?.find(x=>String(x.id)===String(memberId));
             if(!m) return;
             m[field] = value;
-            if(field === 'name') renderListMemberList();
+            if(field === 'name') { renderListMemberList(); renderCabinetDisplay(); }
             else simulate();
         }
 
@@ -5090,14 +5090,14 @@
             reader.onload = e => {
                 const arr = listMembers[ch]?.[partyId];
                 const m = arr?.find(x=>String(x.id)===String(memberId));
-                if(m) { m.photo = e.target.result; renderListMemberList(); }
+                if(m) { m.photo = e.target.result; renderListMemberList(); renderCabinetDisplay(); }
             };
             reader.readAsDataURL(file);
         }
         function removeListMemberPhoto(ch, partyId, memberId) {
             const arr = listMembers[ch]?.[partyId];
             const m = arr?.find(x=>String(x.id)===String(memberId));
-            if(m) { m.photo = ''; renderListMemberList(); }
+            if(m) { m.photo = ''; renderListMemberList(); renderCabinetDisplay(); }
         }
 
         function renderListMemberList() {
