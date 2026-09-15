@@ -382,6 +382,16 @@
             background: color-mix(in srgb, var(--tno-neon) 7%, transparent);
             box-shadow: 0 -2px 8px var(--tno-neon-dim);
         }
+        /* 부정선거 탭 버튼 — 선택 여부와 무관하게 항상 경고색(빨강)으로 표시 */
+        .sub-tab-btn-danger { color: var(--tno-alert); border-color: #663333; }
+        .sub-tab-btn-danger:hover { color: var(--tno-alert); border-color: var(--tno-alert); }
+        .sub-tab-btn-danger.active {
+            color: var(--tno-alert);
+            border-color: var(--tno-alert);
+            background: color-mix(in srgb, var(--tno-alert) 10%, transparent);
+            box-shadow: 0 -2px 8px color-mix(in srgb, var(--tno-alert) 40%, transparent);
+            text-shadow: 0 0 4px var(--tno-alert);
+        }
 
         .sub-tab-content { display: none; }
         .sub-tab-content.active { display: block; animation: flicker 0.15s; }

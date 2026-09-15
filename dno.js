@@ -4461,6 +4461,7 @@
             if(sub === 'legislation') { switchLegislationInnerTab('bill'); }
             if(sub === 'election') { switchElectionInnerTab(electionInnerTab); }
             if(sub === 'record') { switchRecordInnerTab('archive'); }
+            if(sub === 'fraud') { renderFraudTab(); }
             if(sub === 'party') { switchPartyGroupInnerTab('ideology'); }
             if(sub === 'settings') { switchSetupInnerTab('house'); }
             if(sub === 'system') {
@@ -5733,26 +5734,58 @@
             </div>`;
         }
 
-        // ===== 정당 탭: 정당 정보 =====
+        // ===== 국가 > 부정선거 탭 =====
         // ── 부정선거 시도 (정당별) — 다음 총선 개표 1회에만 적용되는 일회성 설정 ──────────────
-        // p.fraudAttempt = { chamber, boostPct, catchChance, riggedDistricts: string[] } | null
+        // p.fraudAttempt = { chamber, boostPct, catchChance, manualCatch, riggedDistricts: string[] } | null
+        // 발각 확률은 기본적으로 득표율 부풀리기 폭 + 조작한 지역구 수에 비례해 자동 계산되지만,
+        // "수동" 체크 시 직접 지정한 값을 그대로 사용한다.
+        function computeAutoFraudCatchChance(fa) {
+            const boostComponent = (fa.boostPct || 0) * 1.5;
+            const districtComponent = (fa.riggedDistricts || []).length * 6;
+            return Math.min(100, Math.round(boostComponent + districtComponent));
+        }
         function toggleFraudAttempt(pid, checked) {
             const p = parties.find(x => x.id === pid);
             if(!p) return;
-            p.fraudAttempt = checked ? { chamber: chamberList()[0], boostPct: 10, catchChance: 30, riggedDistricts: [] } : null;
-            renderPartyInfoList();
+            if(checked) {
+                const fa = { chamber: chamberList()[0], boostPct: 10, manualCatch: false, riggedDistricts: [] };
+                fa.catchChance = computeAutoFraudCatchChance(fa);
+                p.fraudAttempt = fa;
+            } else {
+                p.fraudAttempt = null;
+            }
+            renderFraudTab();
         }
         function updateFraudAttempt(pid, field, val) {
             const p = parties.find(x => x.id === pid);
             if(!p || !p.fraudAttempt) return;
             p.fraudAttempt[field] = val;
             if(field === 'chamber') p.fraudAttempt.riggedDistricts = []; // 원이 바뀌면 그 원에 없는 지역구 키가 남지 않도록 초기화
-            renderPartyInfoList();
+            if((field === 'chamber' || field === 'boostPct') && !p.fraudAttempt.manualCatch) {
+                p.fraudAttempt.catchChance = computeAutoFraudCatchChance(p.fraudAttempt);
+            }
+            renderFraudTab();
+        }
+        function toggleFraudManualCatch(pid, checked) {
+            const p = parties.find(x => x.id === pid);
+            if(!p || !p.fraudAttempt) return;
+            p.fraudAttempt.manualCatch = checked;
+            if(!checked) p.fraudAttempt.catchChance = computeAutoFraudCatchChance(p.fraudAttempt);
+            renderFraudTab();
         }
         function updateFraudRiggedDistricts(pid, selectEl) {
             const p = parties.find(x => x.id === pid);
             if(!p || !p.fraudAttempt) return;
             p.fraudAttempt.riggedDistricts = Array.from(selectEl.selectedOptions).map(o => o.value);
+            // 선택 도중 목록 전체를 다시 그리면 <select multiple>의 선택 상태가 끊기므로,
+            // 자동 발각 확률만 계산해 표시 요소를 직접 갱신한다 (전체 재렌더 없음)
+            if(!p.fraudAttempt.manualCatch) {
+                p.fraudAttempt.catchChance = computeAutoFraudCatchChance(p.fraudAttempt);
+                const input = document.getElementById('fraudCatchInput_'+pid);
+                if(input) input.value = p.fraudAttempt.catchChance;
+                const note = document.getElementById('fraudCatchNote_'+pid);
+                if(note) note.textContent = `자동 계산: 부풀리기·지역구 조작 규모에 비례 (현재 ${p.fraudAttempt.catchChance}%)`;
+            }
         }
         function fraudDistrictOptionsHtml(chamber, selected) {
             const sel = new Set(selected || []);
@@ -5788,9 +5821,14 @@
                         </div>
                         <div style="display:flex;align-items:center;gap:6px;">
                             <span style="color:#888;font-size:0.78rem;width:100px;flex-shrink:0;">발각 확률</span>
-                            <input type="number" min="0" max="100" value="${fa.catchChance}" style="flex:1;min-width:0;" onchange="updateFraudAttempt(${p.id},'catchChance',parseFloat(this.value)||0)">
+                            <input type="number" id="fraudCatchInput_${p.id}" min="0" max="100" value="${fa.catchChance}" ${fa.manualCatch?'':'disabled'}
+                                style="flex:1;min-width:0;${fa.manualCatch?'':'opacity:0.5;'}" onchange="updateFraudAttempt(${p.id},'catchChance',parseFloat(this.value)||0)">
                             <span style="color:#666;font-size:0.78rem;flex-shrink:0;">%</span>
+                            <label style="display:flex;align-items:center;gap:3px;color:#888;font-size:0.7rem;flex-shrink:0;cursor:pointer;white-space:nowrap;">
+                                <input type="checkbox" ${fa.manualCatch?'checked':''} onchange="toggleFraudManualCatch(${p.id},this.checked)"> 수동
+                            </label>
                         </div>
+                        ${!fa.manualCatch ? `<div id="fraudCatchNote_${p.id}" style="color:#555;font-size:0.7rem;margin-left:106px;">자동 계산: 부풀리기·지역구 조작 규모에 비례 (현재 ${fa.catchChance}%)</div>` : ''}
                         <div>
                             <span style="color:#888;font-size:0.78rem;">지역구 개표 조작 (선택한 지역구는 실제 결과와 무관하게 이 정당이 승리)</span>
                             <select multiple onchange="updateFraudRiggedDistricts(${p.id},this)" style="width:100%;box-sizing:border-box;height:84px;margin-top:4px;">
@@ -5801,6 +5839,24 @@
                     </div>`}
                 </div>
             `;
+        }
+
+        // 국가 > 부정선거 탭 — 정당별 카드로 부정선거 시도를 한눈에 모아 설정 (정당 정보 탭에는 노출하지 않음)
+        function renderFraudTab() {
+            const container = document.getElementById('fraudPartyList');
+            if(!container) return;
+            const list = parties.filter(p => p.ideologyId !== IND_IDEOLOGY_ID);
+            if(list.length === 0) { container.innerHTML = '<div style="color:#555;font-size:0.78rem;">정당이 없습니다.</div>'; return; }
+            container.innerHTML = list.map(p => `
+                <div style="border-left:3px solid ${p.color};padding:8px;margin-bottom:10px;background:#0a0c10;">
+                    <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
+                        <span style="width:9px;height:9px;background:${p.color};border-radius:50%;flex-shrink:0;"></span>
+                        <span style="color:#ccc;font-size:0.9rem;">${p.name}</span>
+                        ${p.status==='banned' ? '<span class="party-status-badge status-banned">활동 금지</span>' : ''}
+                    </div>
+                    ${renderFraudAttemptSection(p)}
+                </div>
+            `).join('');
         }
 
         function renderPartyInfoList() {
@@ -5889,7 +5945,6 @@
                                 onchange="updateParty(${idx},'showLogoInStats',true);simulate();"> 당 로고
                         </label>
                     </div>
-                    ${renderFraudAttemptSection(p)}
                     <textarea placeholder="당에 대한 설명을 입력하세요..."
                         style="width:100%;box-sizing:border-box;background:#000;border:1px solid #2a2a2a;color:#bbb;font-family:'NeoDunggeunmo','VT323',monospace;font-size:0.85rem;padding:6px;resize:vertical;min-height:60px;outline:none;line-height:1.5;"
                         onchange="updateParty(${idx},'description',this.value)">${p.description||''}</textarea>
