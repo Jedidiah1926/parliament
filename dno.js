@@ -58,6 +58,10 @@
 
         // ── 총리 선출 과정 ──────────────
         let pmDirectElectionEnabled = false; // 총리직선제 체크박스 — 켜면 국가>선거>총선에서 "총리 선거" 실행 가능
+        // 다수당 방식(pmSelectionMethod()==='majority')일 때, 기본은 매번 현재 다수당 대표를 실시간으로
+        // 따라가지만(소수정부 불신임안이 의미 있으려면 의석 변동만으로 총리가 바뀌면 안 되므로), "고정"하면
+        // 그 시점의 총리 정보를 그대로 유지하고 의석 변동에 더 이상 반응하지 않음 — 내각 불신임이 가결되면 자동 해제됨
+        let pmMajorityLocked = false;
         let pmNominee = { name: '', photo: '', partyId: null, linkedSeat: null }; // 대통령 임명제: 심의 상정 전 후보
         let pmNomineeBillId = null; // 현재 의회 심의 중인 임명동의안 bill id (있으면 심의 진행 중)
 
@@ -417,7 +421,7 @@
                 if(r) return { ...r, badgeText: '🔗 의원과 연결됨 — 이름·사진·당적 자동 반영' };
                 pm.linkedSeat = null;
             }
-            if(pmSelectionMethod() === 'majority') {
+            if(pmSelectionMethod() === 'majority' && !pmMajorityLocked) {
                 const ch = presElectionChamberBasis;
                 const seatKey = seatKeyFor(ch);
                 const eligible = parties.filter(p => p[inKeyFor(ch)] && p.status !== 'banned' && p.ideologyId !== IND_IDEOLOGY_ID);
@@ -479,6 +483,18 @@
             if(nomineeSection) nomineeSection.style.display = method === 'appoint' ? '' : 'none';
             if(method === 'appoint') renderPmNomineeSection();
 
+            // 다수당 방식 전용 — 의석 변동만으로 총리가 바뀌지 않도록 고정/고정 해제 (의원 연결 중이면 이미 그 의원으로 고정된 것이므로 숨김)
+            const majorityLockSection = document.getElementById('pmMajorityLockSection');
+            if(majorityLockSection) {
+                majorityLockSection.style.display = (method === 'majority' && !pm.linkedSeat) ? '' : 'none';
+                const lockBtn = document.getElementById('pmMajorityLockBtn');
+                const unlockBtn = document.getElementById('pmMajorityUnlockBtn');
+                const lockedNote = document.getElementById('pmMajorityLockedNote');
+                if(lockBtn) lockBtn.style.display = pmMajorityLocked ? 'none' : '';
+                if(unlockBtn) unlockBtn.style.display = pmMajorityLocked ? '' : 'none';
+                if(lockedNote) lockedNote.style.display = pmMajorityLocked ? '' : 'none';
+            }
+
             const noConfidenceSection = document.getElementById('noConfidenceSection');
             if(noConfidenceSection) {
                 const canNoConfidence = govType === 'parliamentary' || govType === 'semi';
@@ -491,6 +507,21 @@
         function updatePmField(key, val) {
             pm[key] = val;
             if(key === 'partyId') renderPmSection();
+            renderCabinetDisplay();
+        }
+
+        // 다수당 방식 총리 고정 — 현재 자동 반영된(다수당 대표) 정보를 그대로 pm에 못박아, 이후 의석
+        // 변동으로 다수당이 바뀌어도 총리가 따라 바뀌지 않게 함. 해제하면 다시 실시간 다수당 추적으로 복귀.
+        function lockPmMajority() {
+            const resolved = pmAutoSource();
+            if(resolved) { pm.name = resolved.name; pm.photo = resolved.photo; pm.partyId = resolved.partyId; }
+            pmMajorityLocked = true;
+            renderPmSection();
+            renderCabinetDisplay();
+        }
+        function unlockPmMajority() {
+            pmMajorityLocked = false;
+            renderPmSection();
             renderCabinetDisplay();
         }
 
@@ -802,6 +833,7 @@
                 if(getBillOverallStatus(b) !== 'passed') return;
                 b.noConfidenceApplied = true;
                 pm = { name: '', photo: '', partyId: null, linkedSeat: null };
+                pmMajorityLocked = false; // 불신임 가결 시 고정 해제 — 다수당 방식이면 새 총리가 바로 자동 반영됨
                 deputyPms.forEach(d => { d.name = ''; d.photo = ''; d.partyId = null; d.linkedSeat = null; });
                 cabinetMembers.forEach(m => { m.name = ''; m.photo = ''; m.partyId = null; m.linkedSeat = null; });
                 renderPmSection();
@@ -4033,6 +4065,7 @@
                     cabinetMembers: JSON.parse(JSON.stringify(cabinetMembers)),
                     cabinetRoleLabels: { ...cabinetRoleLabels },
                     pmDirectElectionEnabled: pmDirectElectionEnabled,
+                    pmMajorityLocked: pmMajorityLocked,
                     pmNominee: pmNominee,
                     pmNomineeBillId: pmNomineeBillId,
                     vetoHolder: vetoHolder,
@@ -4258,6 +4291,7 @@
             cabinetMembers = Array.isArray(cfg.cabinetMembers) ? cfg.cabinetMembers.map(m => ({ partyId: null, linkedSeat: null, ...m })) : [];
             cabinetRoleLabels = { president: '', pm: '', deputyPm: '', chair: '', cabinetMember: '', ...(cfg.cabinetRoleLabels || {}) };
             pmDirectElectionEnabled = !!cfg.pmDirectElectionEnabled;
+            pmMajorityLocked = !!cfg.pmMajorityLocked;
             pmNominee = { name: '', photo: '', partyId: null, linkedSeat: null, ...(cfg.pmNominee || {}) };
             pmNomineeBillId = cfg.pmNomineeBillId ?? null;
             Object.keys(EMERGENCY_POWERS).forEach(k => {
