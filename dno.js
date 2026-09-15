@@ -895,6 +895,8 @@
                 const resolved = m.linkedSeat ? resolveLinkedSeat(m.linkedSeat) : null;
                 return { voteKey: 'cm_'+m.id, label: m.position || `${effRoleLabel('cabinetMember')}${i+1}`, photo: resolved ? resolved.photo : m.photo, name: resolved ? resolved.name : m.name, partyId: resolved ? resolved.partyId : m.partyId };
             }));
+            // 이름이 없는 자리는 공석으로 취급 — 불신임 가결 등으로 재직자 정보가 비워진 경우 포함
+            rows.forEach(row => row.forEach(c => { c.vacant = !c.name; }));
             return rows.filter(row => row.length > 0);
         }
 
@@ -909,7 +911,7 @@
             renderCabinetDisplay();
         }
         function setAllCabinetCouncilVote(vote) {
-            getCabinetDisplayRows().flat().forEach(c => { cabinetCouncilVote[c.voteKey] = vote; });
+            getCabinetDisplayRows().flat().forEach(c => { if(!c.vacant) cabinetCouncilVote[c.voteKey] = vote; });
             renderCabinetDisplay();
         }
         function clearCabinetCouncilVote() {
@@ -923,27 +925,29 @@
             const councilMode = isCouncilVotingMode();
             const controls = document.getElementById('cabinetCouncilControls');
             if(controls) controls.style.display = councilMode ? 'flex' : 'none';
-            const cardHtml = ({ voteKey, label, photo, name, partyId }) => {
+            const cardHtml = ({ voteKey, label, photo, name, partyId, vacant }) => {
+                const councilVacant = councilMode && vacant;
                 const party = parties.find(p => p.id === partyId);
-                const partyName = party ? party.name : '무소속';
-                const partyColor = party ? party.color : '#666';
-                const vote = cabinetCouncilVote[voteKey];
+                const partyName = councilVacant ? '공석' : (party ? party.name : '무소속');
+                const partyColor = councilVacant ? '#555' : (party ? party.color : '#666');
+                const vote = councilVacant ? null : cabinetCouncilVote[voteKey];
                 const voteColor = getVoteColor(vote);
-                const photoBoxVoteStyle = voteColor ? `box-shadow:0 0 10px ${voteColor}, 0 0 18px ${voteColor};border:2px solid ${voteColor};` : '';
+                const photoBoxVoteStyle = voteColor ? `box-shadow:0 0 10px ${voteColor}, 0 0 18px ${voteColor};border:2px solid ${voteColor};` : (councilVacant ? 'opacity:0.4;' : '');
                 const voteBtn = (v, txt, c) => `<button onclick="setCabinetCouncilVote('${voteKey}','${v}')" style="flex:1;background:${vote===v?c:'transparent'};color:${vote===v?'#000':c};border:1px solid ${c};font-size:0.65rem;padding:2px 0;cursor:pointer;font-family:inherit;">${txt}</button>`;
-                const voteButtonsHtml = councilMode ? `
-                    <div style="display:flex;gap:2px;margin-top:4px;justify-content:center;">
+                const voteButtonsHtml = !councilMode ? '' : councilVacant
+                    ? `<div style="margin-top:4px;color:#555;font-size:0.68rem;">공석 — 표결 제외</div>`
+                    : `<div style="display:flex;gap:2px;margin-top:4px;justify-content:center;">
                         ${voteBtn('yea','찬성','#00ff88')}
                         ${voteBtn('nay','반대','#ff2244')}
                         ${voteBtn('abs','기권','#888888')}
-                    </div>` : '';
+                    </div>`;
                 return `
                     <div style="text-align:center;width:92px;">
                         <div style="color:#e0e0e0;font-size:0.85rem;margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${label}">${label}</div>
                         <div class="leader-photo-box" style="width:70px;height:88px;margin:0 auto;pointer-events:none;${photoBoxVoteStyle}">
                             ${photo ? `<img src="${photo}" alt="">` : '<div class="photo-ph">👤</div>'}
                         </div>
-                        <div style="color:#ccc;font-size:0.82rem;margin-top:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${name||''}">${name || '이름 미지정'}</div>
+                        <div style="color:#ccc;font-size:0.82rem;margin-top:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${name||''}">${councilVacant ? '공석' : (name || '이름 미지정')}</div>
                         <div style="display:inline-block;margin-top:4px;padding:1px 8px;border:1px solid ${partyColor};color:${partyColor};font-size:0.7rem;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;box-sizing:border-box;">${partyName}</div>
                         ${voteButtonsHtml}
                     </div>
@@ -1212,9 +1216,10 @@
             if(!activeBillId) { showCustomAlert('심의할 법안을 먼저 선택하세요.'); return; }
             const bill = bills.find(b => b.id === activeBillId);
             if(!bill) return;
-            const participants = getCabinetDisplayRows().flat();
+            // 공석(재직자 없음)인 자리는 표결 정족수에서 제외 — 의회 표결에서 궐석/활동금지 정당을 제외하는 것과 동일한 방식
+            const participants = getCabinetDisplayRows().flat().filter(c => !c.vacant);
             const totalParticipants = participants.length;
-            if(totalParticipants === 0) { showCustomAlert('국무회의에 참여할 인원이 없습니다.'); return; }
+            if(totalParticipants === 0) { showCustomAlert('국무회의에 참여할 인원이 없습니다 (모든 자리가 공석입니다).'); return; }
             let yea = 0, nay = 0, abs = 0;
             participants.forEach(({voteKey}) => {
                 const v = cabinetCouncilVote[voteKey];
