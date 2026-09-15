@@ -6670,10 +6670,11 @@
             if(pmChEl) pmChEl.textContent = chLabel;
         }
 
-        // 대선/총리선거 후보 명단 — 기준 원에 참여 중이고 활동 금지되지 않은, 무소속이 아닌 정당들
+        // 대선/총리선거 후보 명단 — 기준 원에 참여 중이고 활동 금지되지 않은 정당들 (무소속도 정당 탭에서
+        // "무소속" 항목을 추가해두었다면 다른 정당과 동일하게 후보로 출마 가능)
         function presElectionCandidates() {
             const ch = presElectionChamberBasis;
-            return parties.filter(p => p[inKeyFor(ch)] && p.status !== 'banned' && p.ideologyId !== IND_IDEOLOGY_ID);
+            return parties.filter(p => p[inKeyFor(ch)] && p.status !== 'banned');
         }
 
         // 각 정당의 실제 후보 — 기본은 당수, 후보 설정에서 의원 연결/직접 입력으로 재지정 가능
@@ -6702,6 +6703,8 @@
                 const usingDefault = !resolved && !ov.name && !ov.photo;
                 const effPhoto = resolved ? resolved.photo : (ov.photo || (usingDefault ? p.leaderPhoto : '') || '');
                 const inputVal = resolved ? resolved.name : (ov.name || '');
+                const isInd = p.ideologyId === IND_IDEOLOGY_ID;
+                const leaderLabel = isInd ? '대표' : '당수';
                 return `
                     <div style="display:flex;gap:10px;align-items:stretch;border-left:3px solid ${p.color};padding:8px;margin-bottom:8px;background:#0a0c10;">
                         <div class="leader-photo-box dyn-photo" data-ratio="0.8" style="width:44px;height:55px;flex-shrink:0;">
@@ -6710,7 +6713,7 @@
                         </div>
                         <div style="flex:1;display:flex;flex-direction:column;gap:4px;min-width:0;">
                             <div style="color:#aaa;font-size:0.82rem;">${p.name}</div>
-                            <input type="text" value="${inputVal}" placeholder="${p.leaderName ? p.leaderName+' (당수)' : '후보 이름 (비우면 당수)'}" ${resolved?'disabled':''}
+                            <input type="text" value="${inputVal}" placeholder="${p.leaderName ? p.leaderName+' ('+leaderLabel+')' : '후보 이름 (비우면 '+leaderLabel+')'}" ${resolved?'disabled':''}
                                 style="width:100%;box-sizing:border-box;background:#000;border:1px solid #2a2a2a;color:#e0e0e0;font-family:inherit;font-size:0.85rem;padding:4px 6px;"
                                 onchange="updateElectionCandidateOverride('${p.id}','name',this.value)">
                             <select onchange="linkElectionCandidateToMember('${p.id}',this.value)"
@@ -6719,7 +6722,7 @@
                             </select>
                             <div style="display:flex;gap:6px;">
                                 ${resolved?`<button onclick="unlinkElectionCandidate('${p.id}')" style="background:transparent;border:1px solid #333;color:#888;font-family:inherit;font-size:0.7rem;padding:2px 6px;cursor:pointer;">연결 해제</button>`:''}
-                                ${(!usingDefault)?`<button onclick="resetElectionCandidateToLeader('${p.id}')" style="background:transparent;border:1px solid #333;color:#666;font-family:inherit;font-size:0.7rem;padding:2px 6px;cursor:pointer;">당수로 재설정</button>`:''}
+                                ${(!usingDefault)?`<button onclick="resetElectionCandidateToLeader('${p.id}')" style="background:transparent;border:1px solid #333;color:#666;font-family:inherit;font-size:0.7rem;padding:2px 6px;cursor:pointer;">${leaderLabel}로 재설정</button>`:''}
                             </div>
                         </div>
                     </div>
