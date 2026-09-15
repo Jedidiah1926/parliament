@@ -900,9 +900,20 @@
             return rows.filter(row => row.length > 0);
         }
 
-        // 계엄령으로 의회가 정지되어, 내각 디스플레이에서 국무회의 표결(찬성/반대/기권)을 받는 상태인지
+        // 계엄령으로 의회가 정지되어, 내각 디스플레이에서 국무회의 표결(찬성/반대/기권)을 받을 수 있는 상태인지
         function isCouncilVotingMode() {
             return emergencyPowers.martialLaw.active && emergencyPowers.martialLaw.suspendParliament;
+        }
+
+        // 국무회의 표결 UI(전원찬성/전원반대/초기화, 인물별 찬성·반대·기권 버튼, "국무회의로 의결" 패널)는
+        // 계엄령으로 의회가 정지된 것만으로는 부족하고, 실제로 아직 결론나지 않은 법안이 선택되어 있어야 표시됨 —
+        // 그 법안이 가결/부결로 확정되거나 다른 법안으로 바뀌면 다시 사라짐
+        function hasActivePendingCouncilBill() {
+            if(!isCouncilVotingMode()) return false;
+            if(!activeBillId) return false;
+            const bill = bills.find(b => b.id === activeBillId);
+            if(!bill) return false;
+            return getBillOverallStatus(bill) === 'pending';
         }
 
         function setCabinetCouncilVote(voteKey, vote) {
@@ -922,9 +933,11 @@
         function renderCabinetDisplay() {
             const container = document.getElementById('cabinetDisplayGrid');
             if(!container) return;
-            const councilMode = isCouncilVotingMode();
+            const councilMode = hasActivePendingCouncilBill();
             const controls = document.getElementById('cabinetCouncilControls');
             if(controls) controls.style.display = councilMode ? 'flex' : 'none';
+            const councilPanel = document.getElementById('cabinetCouncilPanel');
+            if(councilPanel) councilPanel.style.display = councilMode ? '' : 'none';
             const cardHtml = ({ voteKey, label, photo, name, partyId, vacant }) => {
                 const councilVacant = councilMode && vacant;
                 const party = parties.find(p => p.id === partyId);
@@ -1203,9 +1216,7 @@
                     shade.remove();
                 }
             });
-            const councilPanel = document.getElementById('cabinetCouncilPanel');
-            if(councilPanel) councilPanel.style.display = suspended ? '' : 'none';
-            renderCabinetDisplay();
+            renderCabinetDisplay(); // cabinetCouncilPanel 표시 여부도 여기서 함께 갱신됨 (hasActivePendingCouncilBill 기준)
         }
 
         // 계엄령 중 대체 입법 경로 — 내각 디스플레이(우측 "내각" 탭)에서 국무위원별로 매긴
