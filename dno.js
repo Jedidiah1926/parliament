@@ -5747,9 +5747,9 @@
                 const ideoName = ideologies.find(i=>i.id===p.ideologyId)?.name || '';
                 h += `<div class="stat-block" style="border-left-color:${p.color};">
                     <div class="dyn-row" style="display:flex;gap:8px;align-items:stretch;">
-                        <div class="leader-photo-box dyn-photo" data-ratio="${isLogo?'1':'0.75'}" style="flex-shrink:0;background:#0a0c10;border:1px solid #222;overflow:hidden;">
+                        ${p.hideStatsPhoto ? '' : `<div class="leader-photo-box dyn-photo" data-ratio="${isLogo?'1':'0.75'}" style="flex-shrink:0;background:#0a0c10;border:1px solid #222;overflow:hidden;">
                             ${photo?`<img src="${photo}" alt="" style="width:100%;height:100%;object-fit:cover;display:block;">`:''}
-                        </div>
+                        </div>`}
                         <div class="dyn-ref" style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px;">
                             <div style="display:flex;justify-content:space-between;align-items:baseline;gap:6px;flex-wrap:wrap;">
                                 <span style="font-size:1.1rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;">${p.name}${p.abbr?` (${p.abbr})`:''}</span>
@@ -11399,21 +11399,23 @@
                 }
 
                 // 사진/이름 결정
-                let photo = '', leaderName = '', isLogo = false;
+                let photo = '', leaderName = '', isLogo = false, hidePhotoBox = false;
                 let isIndependentCard = false;
                 if(s.coalitionName) {
                     const coal = coalObj;
                     if(coal) {
                         // 연정의 당수는 항상 대표당의 당수를 그대로 따른다
                         const leadP = coal.leadPartyId ? parties.find(p=>p.id===coal.leadPartyId) : null;
-                        photo      = leadP?.leaderPhoto || '';
+                        hidePhotoBox = !!leadP?.hideStatsPhoto;
+                        photo      = hidePhotoBox ? '' : (leadP?.leaderPhoto || '');
                         leaderName = leadP?.leaderName  || '';
                     }
                 } else {
                     const pName = Object.keys(s.parties)[0];
                     const party = parties.find(p=>p.name===pName);
                     isLogo     = party?.showLogoInStats ?? false;
-                    photo      = (party && !party.hideStatsPhoto) ? (isLogo ? (party.logoPhoto||party.leaderPhoto||'') : (party.leaderPhoto||party.logoPhoto||'')) : '';
+                    hidePhotoBox = !!party?.hideStatsPhoto;
+                    photo      = (party && !hidePhotoBox) ? (isLogo ? (party.logoPhoto||party.leaderPhoto||'') : (party.leaderPhoto||party.logoPhoto||'')) : '';
                     leaderName = party?.leaderName || '';
                     isIndependentCard = party?.ideologyId === IND_IDEOLOGY_ID;
                 }
@@ -11445,10 +11447,10 @@
 
                 return `<div class="stat-block" style="border-left-color:${(s.coalitionName && s.isRuling) ? 'var(--tno-gold)' : (s.partyColor||s.color)};">
                     <div class="dyn-row" style="display:flex;gap:8px;align-items:stretch;">
-                        <!-- 사진: JS에서 오른쪽 텍스트 실측 높이에 맞춰 px로 직접 지정 -->
-                        <div class="leader-photo-box dyn-photo" data-ratio="${isLogo?'1':'0.75'}" style="flex-shrink:0;background:#0a0c10;border:1px solid #222;overflow:hidden;">
+                        <!-- 사진: JS에서 오른쪽 텍스트 실측 높이에 맞춰 px로 직접 지정. "X"로 표시 안 함을 고르면 칸 자체를 없앰 -->
+                        ${hidePhotoBox ? '' : `<div class="leader-photo-box dyn-photo" data-ratio="${isLogo?'1':'0.75'}" style="flex-shrink:0;background:#0a0c10;border:1px solid #222;overflow:hidden;">
                             ${photo?`<img src="${photo}" alt="" style="width:100%;height:100%;object-fit:cover;display:block;">`:''}
-                        </div>
+                        </div>`}
                         <!-- 오른쪽 3행 -->
                         <div class="dyn-ref" style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px;">
                             <!-- 행1: 연정/정당명 : 의석 (%) + 상태 -->
