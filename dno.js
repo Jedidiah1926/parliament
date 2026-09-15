@@ -3509,6 +3509,13 @@
                     tendency: {
                         data:     JSON.parse(JSON.stringify(tendencyData)),
                         strength: tendencyStrength
+                    },
+                    regionSystem: {
+                        electionSystem: JSON.parse(JSON.stringify(electionSystem)),
+                        regions: JSON.parse(JSON.stringify(regions)),
+                        districtRegionMap: JSON.parse(JSON.stringify(districtRegionMap)),
+                        regionVoteMode: JSON.parse(JSON.stringify(regionVoteMode)),
+                        regionVoteStore: JSON.parse(JSON.stringify(regionVoteStore))
                     }
                 }
             };
@@ -3606,6 +3613,18 @@
             // 성향
             if(elec.tendency?.data) tendencyData = elec.tendency.data;
             if(typeof elec.tendency?.strength === 'number') { tendencyStrength = elec.tendency.strength; tendencySetStrength(tendencyStrength); }
+            // 권역형 비례대표 시스템
+            const rs = elec.regionSystem || {};
+            electionSystem = {
+                house:  { listScope: 'national', compensationPct: 100, ...(rs.electionSystem?.house  || {}) },
+                senate: { listScope: 'national', compensationPct: 100, ...(rs.electionSystem?.senate || {}) },
+                third:  { listScope: 'national', compensationPct: 100, ...(rs.electionSystem?.third  || {}) },
+            };
+            regions = { house: [], senate: [], third: [], ...(rs.regions || {}) };
+            districtRegionMap = { house: {}, senate: {}, third: {}, ...(rs.districtRegionMap || {}) };
+            regionVoteMode = { house: 'auto', senate: 'auto', third: 'auto', ...(rs.regionVoteMode || {}) };
+            regionVoteStore = { house: {}, senate: {}, third: {}, ...(rs.regionVoteStore || {}) };
+            regionActiveId = null;
 
             // ── UI 설정 복원 ──
             const cfg = state.config || {};
@@ -6381,6 +6400,25 @@
         let districtOrder = { house: [], senate: [], third: [] }; // 목록 표시 순서 (드래그로 변경 가능)
         let selectedDistrictKey = null; // '이름' 모드에서 클릭 선택된 칸
 
+        // ── 권역형(regional list) 비례대표 — 지역구를 권역으로 묶고, 권역별로 비례 의석을 배분 ──────────────
+        let regions = { house: [], senate: [], third: [] }; // [{id, name, color}]
+        let districtRegionMap = { house: {}, senate: {}, third: {} }; // { "q,r"|svgKey: regionId }
+        let regionVoteMode = { house: 'auto', senate: 'auto', third: 'auto' }; // 'auto'(지역구 성향 자동 집계) | 'manual'(직접 입력)
+        let regionVoteStore = { house: {}, senate: {}, third: {} }; // { regionId: { partyId: {prob} } }
+        let regionActiveId = null; // 지도/그리드에서 클릭해 배정할 때 "칠하기" 대상으로 선택된 권역
+        let regionPaintChamber = 'house'; // 권역 탭에서 편집 중인 원
+
+        // ── 비례대표 배분 방식 (원별로 독립) — 병립형(0%)~완전연동형(100%)을 compensationPct로 절충, 전국형/권역형 선택 ──
+        let electionSystem = {
+            house:  { listScope: 'national', compensationPct: 100 },
+            senate: { listScope: 'national', compensationPct: 100 },
+            third:  { listScope: 'national', compensationPct: 100 },
+        };
+        function getElectionSystem(chamber) {
+            if(!electionSystem[chamber]) electionSystem[chamber] = { listScope: 'national', compensationPct: 100 };
+            return electionSystem[chamber];
+        }
+
         function districtOrderSync(ch) {
             // districtGrid 변경사항을 districtOrder에 반영 (없는 항목 추가, 사라진 항목 제거)
             const keys = Object.keys(districtGrid[ch]);
@@ -8133,7 +8171,7 @@
         // 선거 하위탭 전환
         // ─────────────────────────────────────────
         function elecSwitchSub(sub) {
-            ['district','tendency','prob'].forEach(s => {
+            ['district','tendency','region','prob'].forEach(s => {
                 document.getElementById(`elecSubTab${s.charAt(0).toUpperCase()+s.slice(1)}`)?.classList.toggle('active', s===sub);
                 document.getElementById(`elecSub${s.charAt(0).toUpperCase()+s.slice(1)}`)?.classList.toggle('active', s===sub);
             });
@@ -8155,10 +8193,15 @@
                 switchDispTab('tendency');
                 setTimeout(() => { tendencyRenderMaps(); }, 80);
             }
+            if(sub === 'region') {
+                document.getElementById('dispTabRegion').style.display = '';
+                switchDispTab('region');
+                setTimeout(() => { renderRegionTab(); }, 80);
+            }
             if(sub === 'prob') {
                 // 지지율 탭은 지역구/성향 지도와 무관하므로, 그 지도들이 우측 패널에 남아 보이던 상태였다면 다른 탭으로 전환
                 const activeDispTab = document.querySelector('.disp-tab-btn.active')?.dataset.tab;
-                if(activeDispTab === 'district' || activeDispTab === 'tendency') switchDispTab('house');
+                if(activeDispTab === 'district' || activeDispTab === 'tendency' || activeDispTab === 'region') switchDispTab('house');
             }
         }
 
@@ -8493,6 +8536,39 @@
             elecRenderList();
         }
 
+        // 원별 비례대표 방식(전국형/권역형, 병립~연동 절충 비율) 설정 UI
+        function setElectionSystemField(chamber, field, val) {
+            getElectionSystem(chamber)[field] = val;
+            elecRenderList();
+        }
+        function renderElecSystemSettings() {
+            const container = document.getElementById('elecSystemSettings');
+            if(!container) return;
+            const ch = elecProbChamber;
+            const sys = getElectionSystem(ch);
+            const chName = document.getElementById(ch==='senate'?'senateNameInput':ch==='third'?'thirdNameInput':'houseNameInput')?.value
+                || ({house:'하원',senate:'상원',third:'삼원'}[ch]);
+            const pctLabel = sys.compensationPct <= 0 ? '병립형' : sys.compensationPct >= 100 ? '완전연동형' : `준연동형 ${sys.compensationPct}%`;
+            container.innerHTML = `
+                <div style="margin-bottom:10px;padding:8px;background:#0a0c10;border:1px solid #2a2a2a;">
+                    <div style="color:#666;font-size:0.8rem;margin-bottom:6px;">비례대표 방식 (${chName}) — <span style="color:var(--tno-neon);">${pctLabel}</span></div>
+                    <div style="display:flex;gap:6px;margin-bottom:8px;">
+                        <button class="sub-tab-btn-3 ${sys.listScope==='national'?'active':''}" onclick="setElectionSystemField('${ch}','listScope','national')" style="flex:1;">전국형</button>
+                        <button class="sub-tab-btn-3 ${sys.listScope==='regional'?'active':''}" onclick="setElectionSystemField('${ch}','listScope','regional')" style="flex:1;">권역형</button>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                        <span style="color:#888;font-size:0.85rem;">연동 비율(%)</span>
+                        <input type="number" min="0" max="100" value="${sys.compensationPct}"
+                            style="width:70px;background:#000;border:1px solid #333;color:var(--tno-neon);font-family:inherit;font-size:0.9rem;padding:4px;text-align:center;"
+                            onchange="setElectionSystemField('${ch}','compensationPct', Math.max(0,Math.min(100,parseFloat(this.value)||0)))">
+                        <button style="background:transparent;border:1px solid #333;color:#888;padding:4px 8px;font-family:inherit;font-size:0.75rem;cursor:pointer;" onclick="setElectionSystemField('${ch}','compensationPct',0)">병립형(0%)</button>
+                        <button style="background:transparent;border:1px solid #333;color:#888;padding:4px 8px;font-family:inherit;font-size:0.75rem;cursor:pointer;" onclick="setElectionSystemField('${ch}','compensationPct',100)">완전연동형(100%)</button>
+                    </div>
+                    <div style="font-size:0.72rem;color:#555;margin-top:6px;">0% = 병립형(지역구·비례 독립 배분) · 100% = 완전연동형(전체 의석을 득표율에 맞춤) · 그 사이는 준연동형처럼 절충${sys.listScope==='regional' ? ' · 권역형은 <b style="color:var(--tno-neon);">여론 &gt; 권역</b> 탭에서 권역을 먼저 설정하세요' : ''}</div>
+                </div>
+            `;
+        }
+
         function elecRenderList() {
             elecUpdateLabels();
             elecToggleMode();
@@ -8508,6 +8584,8 @@
             ['house','senate','third'].forEach(c => {
                 document.getElementById('innerTabElecProb'+c.charAt(0).toUpperCase()+c.slice(1))?.classList.toggle('active', c===elecProbChamber);
             });
+
+            renderElecSystemSettings();
 
             const container = document.getElementById('elecInputList');
             if(!container) return;
@@ -8915,6 +8993,409 @@
         }
 
         // ─────────────────────────────────────────
+        // 비례대표 의석 배분 — 병립형(0%)~완전연동형(100%) 절충 × 전국형/권역형
+        // ─────────────────────────────────────────
+        // weights의 가중치 비례로 total석을 정수 배분(최대 잔여분 방식) — 합이 정확히 total이 되도록 보정
+        function largestRemainderAlloc(weights, total) {
+            const result = {};
+            weights.forEach(w => { result[w.id] = 0; });
+            const wTotal = weights.reduce((s,x)=>s+x.w,0);
+            if(total <= 0 || wTotal <= 0) return result;
+            const entries = weights.map(x => {
+                const exact = (x.w/wTotal)*total;
+                return { id:x.id, floor: Math.floor(exact), rem: exact - Math.floor(exact) };
+            });
+            entries.forEach(e => { result[e.id] = e.floor; });
+            let alloc = entries.reduce((s,e)=>s+e.floor,0);
+            const sorted = [...entries].sort((a,b)=>b.rem-a.rem);
+            for(let i=0; alloc<total; i++, alloc++) result[sorted[i%sorted.length].id]++;
+            return result;
+        }
+
+        // 병립형(propSeatsPool을 득표율대로만 배분)과 완전연동형(전체 의석 목표치에서 지역구 당선분을 뺀 만큼 배분)을
+        // compensationPct(0~100)로 절충해, propSeatsPool 정수 의석으로 정확히 맞춰 반환 — { partyId: n }
+        function computeListSeats(weights, districtWins, propSeatsPool, totalPoolForTarget, compensationPct) {
+            const result = {};
+            weights.forEach(w => { result[w.id] = 0; });
+            if(propSeatsPool <= 0) return result;
+            const parallelMap = largestRemainderAlloc(weights, propSeatsPool);
+            const targetMap = largestRemainderAlloc(weights, totalPoolForTarget);
+            const pct = Math.max(0, Math.min(100, compensationPct ?? 100)) / 100;
+            const blended = weights.map(({id}) => {
+                const compensatory = Math.max(0, (targetMap[id]||0) - (districtWins[id]||0));
+                const exact = (parallelMap[id]||0) + (compensatory - (parallelMap[id]||0)) * pct;
+                return { id, floor: Math.max(0, Math.floor(exact)), rem: exact - Math.floor(exact) };
+            });
+            blended.forEach(b => { result[b.id] = b.floor; });
+            const sum = blended.reduce((s,b)=>s+b.floor,0);
+            const diff = propSeatsPool - sum;
+            if(diff > 0) {
+                const order = [...blended].sort((a,b)=>b.rem-a.rem);
+                for(let i=0; i<diff; i++) result[order[i%order.length].id]++;
+            } else if(diff < 0) {
+                const order = [...blended].sort((a,b)=>a.rem-b.rem);
+                let need = -diff, idx = 0, guard = 0;
+                while(need > 0 && guard < order.length*4 && order.length > 0) {
+                    const id = order[idx % order.length].id;
+                    if(result[id] > 0) { result[id]--; need--; }
+                    idx++; guard++;
+                }
+            }
+            return result;
+        }
+
+        // 해당 원의 특정 권역에 배정된 (실제로 존재하는) 지역구 키 목록
+        function regionDistrictKeysOf(chamber, regionId) {
+            const map = districtRegionMap[chamber] || {};
+            return Object.keys(districtGrid[chamber]||{}).filter(k => districtGrid[chamber][k] && map[k] === regionId);
+        }
+
+        // 어느 권역에도 배정되지 않은 활성 지역구 키 목록
+        function regionUnassignedDistrictKeys(chamber) {
+            const map = districtRegionMap[chamber] || {};
+            const validIds = new Set((regions[chamber]||[]).map(r=>r.id));
+            return Object.keys(districtGrid[chamber]||{}).filter(k => districtGrid[chamber][k] && (!map[k] || !validIds.has(map[k])));
+        }
+
+        // 권역 자동 집계 득표(가중치) — 권역에 속한 지역구들의 성향(%) 평균
+        function regionAutoVoteWeights(chamber, districtKeys) {
+            if(districtKeys.length === 0) return parties.map(p => ({ id:p.id, w:0 }));
+            return parties.map(p => {
+                if(p.status === 'banned') return { id:p.id, w:0 };
+                let sum = 0;
+                districtKeys.forEach(k => {
+                    sum += districtMapMode === 'svg' ? (districtSvgTendency[k]?.[chamber]?.[p.id]||0) : (tendencyData[p.id]?.[k]||0);
+                });
+                return { id:p.id, w: sum / districtKeys.length };
+            });
+        }
+        function regionManualVoteWeights(chamber, regionId) {
+            const store = (regionVoteStore[chamber]||{})[regionId] || {};
+            return parties.map(p => ({ id:p.id, w: p.status==='banned' ? 0 : Math.max(0, store[p.id]?.prob||0) }));
+        }
+        function getRegionVoteWeights(chamber, regionId, districtKeys) {
+            return (regionVoteMode[chamber]==='manual') ? regionManualVoteWeights(chamber, regionId) : regionAutoVoteWeights(chamber, districtKeys);
+        }
+
+        // 정당별 "비례 의석" 배분 — 전국형(national)/권역형(regional) × 병립~연동 절충을 모두 처리
+        function allocateListSeats(chamber, weighted, districtResults, propSeats, totalSeats) {
+            const sys = getElectionSystem(chamber);
+            const districtWins = {};
+            districtResults.forEach(({partyId}) => { districtWins[partyId] = (districtWins[partyId]||0) + 1; });
+
+            if(sys.listScope !== 'regional') {
+                return computeListSeats(weighted, districtWins, propSeats, totalSeats, sys.compensationPct);
+            }
+
+            const groups = (regions[chamber]||[]).map(r => ({ id:r.id, keys: regionDistrictKeysOf(chamber, r.id) }));
+            const unassignedKeys = regionUnassignedDistrictKeys(chamber);
+            if(unassignedKeys.length > 0) groups.push({ id:'__unassigned__', keys: unassignedKeys });
+            if(groups.length === 0) return computeListSeats(weighted, districtWins, propSeats, totalSeats, sys.compensationPct);
+
+            // 권역별 비례 의석 수(propSeats)는 그 권역의 지역구 수 비중으로 배분 — 지역구가 없는 신설 권역은 0석
+            const groupWeights = groups.map(g => ({ id:g.id, w: g.keys.length }));
+            const groupSeatMap = largestRemainderAlloc(groupWeights, propSeats);
+
+            const result = {};
+            weighted.forEach(w => { result[w.id] = 0; });
+            groups.forEach(g => {
+                const gPropSeats = groupSeatMap[g.id] || 0;
+                const gDistrictWins = {};
+                districtResults.filter(d => g.keys.includes(d.key)).forEach(({partyId}) => { gDistrictWins[partyId] = (gDistrictWins[partyId]||0)+1; });
+                const gWeights = g.id === '__unassigned__' ? regionAutoVoteWeights(chamber, g.keys) : getRegionVoteWeights(chamber, g.id, g.keys);
+                const gList = computeListSeats(gWeights, gDistrictWins, gPropSeats, g.keys.length + gPropSeats, sys.compensationPct);
+                Object.keys(gList).forEach(id => { result[id] = (result[id]||0) + gList[id]; });
+            });
+            return result;
+        }
+
+        // 권역형일 때, 국가 단위 지지율(elecStore) 대신 권역별 득표 데이터가 하나라도 있는지 검사 —
+        // 전국형과 달리 개표 진행 가능 여부를 이 데이터로 판단해야 함
+        function regionScopeHasVoteData(chamber) {
+            const groups = (regions[chamber]||[]).map(r => ({ id:r.id, keys: regionDistrictKeysOf(chamber, r.id) }));
+            const unassignedKeys = regionUnassignedDistrictKeys(chamber);
+            if(unassignedKeys.length > 0) groups.push({ id:'__unassigned__', keys: unassignedKeys });
+            if(groups.length === 0) return false;
+            return groups.some(g => {
+                const w = g.id === '__unassigned__' ? regionAutoVoteWeights(chamber, g.keys) : getRegionVoteWeights(chamber, g.id, g.keys);
+                return w.reduce((s,x)=>s+x.w,0) > 0;
+            });
+        }
+
+        // ─────────────────────────────────────────
+        // 권역(region) 배정 UI — 여론 > 권역 탭: 지역구를 클릭해 권역으로 묶고, 권역별 득표율(자동/수동)을 관리
+        // ─────────────────────────────────────────
+        function regionSetChamber(ch) {
+            regionPaintChamber = ch;
+            renderRegionTab();
+        }
+
+        function regionAddRegion() {
+            const ch = regionPaintChamber;
+            if(!regions[ch]) regions[ch] = [];
+            const palette = ['#00ffff','#ff00ff','#ffcc00','#66ff66','#ff6666','#6699ff','#ff9933','#cc66ff'];
+            const color = palette[regions[ch].length % palette.length];
+            const r = { id: 'rg_'+Date.now()+'_'+Math.floor(Math.random()*1000), name: `권역${regions[ch].length+1}`, color };
+            regions[ch].push(r);
+            regionActiveId = r.id;
+            renderRegionTab();
+        }
+
+        function regionRemoveRegion(ch, id) {
+            regions[ch] = (regions[ch]||[]).filter(r => r.id !== id);
+            Object.keys(districtRegionMap[ch]||{}).forEach(k => { if(districtRegionMap[ch][k] === id) delete districtRegionMap[ch][k]; });
+            if(regionVoteStore[ch]) delete regionVoteStore[ch][id];
+            if(regionActiveId === id) regionActiveId = (regions[ch][0]||{}).id || null;
+            renderRegionTab();
+        }
+
+        function regionUpdateField(ch, id, field, val) {
+            const r = (regions[ch]||[]).find(x => x.id === id);
+            if(r) r[field] = val;
+            renderRegionTab();
+        }
+
+        function regionSetActiveId(id) {
+            regionActiveId = id;
+            renderRegionTab();
+        }
+
+        function regionSetVoteMode(mode) {
+            regionVoteMode[regionPaintChamber] = mode;
+            renderRegionTab();
+        }
+
+        // 지도/그리드에서 지역구를 클릭했을 때: 이미 선택된(칠하기) 권역에 속해 있으면 해제, 아니면 배정
+        function regionAssignDistrict(chamber, key) {
+            if(!regionActiveId) return;
+            if(!districtRegionMap[chamber]) districtRegionMap[chamber] = {};
+            if(districtRegionMap[chamber][key] === regionActiveId) delete districtRegionMap[chamber][key];
+            else districtRegionMap[chamber][key] = regionActiveId;
+        }
+
+        function renderRegionTab() {
+            const chambers = chamberList();
+            ['house','senate','third'].forEach(c => {
+                const btn = document.getElementById('innerTabRegion'+c.charAt(0).toUpperCase()+c.slice(1));
+                if(btn) btn.style.display = chambers.includes(c) ? '' : 'none';
+            });
+            if(!chambers.includes(regionPaintChamber)) regionPaintChamber = chambers[0] || 'house';
+            ['house','senate','third'].forEach(c => {
+                document.getElementById('innerTabRegion'+c.charAt(0).toUpperCase()+c.slice(1))?.classList.toggle('active', c===regionPaintChamber);
+            });
+            const ch = regionPaintChamber;
+            if(!regions[ch]) regions[ch] = [];
+            if(regionActiveId && !regions[ch].some(r => r.id === regionActiveId)) regionActiveId = null;
+            if(!regionActiveId && regions[ch].length > 0) regionActiveId = regions[ch][0].id;
+
+            document.getElementById('regionVoteModeAutoBtn')?.classList.toggle('active', regionVoteMode[ch] !== 'manual');
+            document.getElementById('regionVoteModeManualBtn')?.classList.toggle('active', regionVoteMode[ch] === 'manual');
+
+            renderRegionList();
+            renderRegionManualVotePanel();
+            renderRegionMap();
+        }
+
+        function renderRegionList() {
+            const ch = regionPaintChamber;
+            const container = document.getElementById('regionList');
+            if(!container) return;
+            const list = regions[ch] || [];
+            if(list.length === 0) {
+                container.innerHTML = '<div style="color:#444;font-size:0.8rem;padding:10px;text-align:center;border:1px solid #222;background:#0a0c10;">아직 권역이 없습니다. 아래 [+] 버튼으로 추가하세요.</div>';
+                return;
+            }
+            container.innerHTML = list.map(r => {
+                const count = Object.values(districtRegionMap[ch]||{}).filter(v => v === r.id).length;
+                const active = r.id === regionActiveId;
+                return `
+                <div class="card-item" style="border-left-color:${r.color};${active?'box-shadow:0 0 8px '+r.color+';':''}display:flex;align-items:center;gap:8px;margin-bottom:6px;padding:6px 8px;cursor:pointer;" onclick="regionSetActiveId('${r.id}')">
+                    <input type="color" value="${r.color}" onclick="event.stopPropagation()" onchange="regionUpdateField('${ch}','${r.id}','color',this.value)" style="width:28px;height:28px;padding:0;border:1px solid #333;background:none;cursor:pointer;flex-shrink:0;">
+                    <input type="text" value="${r.name}" onclick="event.stopPropagation()" onchange="regionUpdateField('${ch}','${r.id}','name',this.value)"
+                        style="flex:1;min-width:0;background:#000;border:1px solid #2a2a2a;color:#e0e0e0;font-family:inherit;font-size:0.9rem;padding:5px 8px;box-sizing:border-box;">
+                    <span style="color:#666;font-size:0.75rem;flex-shrink:0;">${count}개 지역구</span>
+                    <button onclick="event.stopPropagation();regionRemoveRegion('${ch}','${r.id}')" style="background:transparent;border:1px solid #333;color:#a55;font-family:inherit;font-size:0.75rem;padding:3px 8px;cursor:pointer;flex-shrink:0;">삭제</button>
+                </div>`;
+            }).join('');
+        }
+
+        function renderRegionManualVotePanel() {
+            const ch = regionPaintChamber;
+            const panel = document.getElementById('regionVoteManualPanel');
+            if(!panel) return;
+            if(regionVoteMode[ch] !== 'manual') { panel.innerHTML = ''; return; }
+            const list = regions[ch] || [];
+            if(list.length === 0) { panel.innerHTML = '<div style="color:#444;font-size:0.78rem;">권역을 먼저 추가하세요.</div>'; return; }
+            if(!regionVoteStore[ch]) regionVoteStore[ch] = {};
+            const inKey = inKeyFor(ch);
+            const votingParties = parties.filter(p => p.ideologyId !== IND_IDEOLOGY_ID && p[inKey]);
+            panel.innerHTML = list.map(r => {
+                if(!regionVoteStore[ch][r.id]) regionVoteStore[ch][r.id] = {};
+                const store = regionVoteStore[ch][r.id];
+                return `
+                <div style="margin-bottom:10px;padding:8px;background:#0a0c10;border:1px solid #222;">
+                    <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
+                        <span style="width:9px;height:9px;background:${r.color};border-radius:50%;flex-shrink:0;"></span>
+                        <span style="color:#aaa;font-size:0.85rem;">${r.name}</span>
+                    </div>
+                    ${votingParties.map(p => `
+                        <div style="display:grid;grid-template-columns:1fr 75px;gap:6px;margin-bottom:5px;align-items:center;">
+                            <div style="display:flex;align-items:center;gap:6px;min-width:0;">
+                                <span style="width:8px;height:8px;background:${p.color};border-radius:50%;flex-shrink:0;"></span>
+                                <span style="font-size:0.82rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${p.name}">${p.name}</span>
+                            </div>
+                            <input type="number" min="0" max="100" value="${store[p.id]?.prob||0}"
+                                style="width:100%;box-sizing:border-box;background:#000;border:1px solid var(--tno-border);color:var(--tno-neon);font-family:inherit;font-size:0.85rem;padding:4px;text-align:center;"
+                                onchange="regionSetManualVote('${ch}','${r.id}','${p.id}', parseFloat(this.value)||0)">
+                        </div>
+                    `).join('')}
+                </div>`;
+            }).join('');
+        }
+
+        function regionSetManualVote(ch, regionId, partyId, val) {
+            if(!regionVoteStore[ch]) regionVoteStore[ch] = {};
+            if(!regionVoteStore[ch][regionId]) regionVoteStore[ch][regionId] = {};
+            regionVoteStore[ch][regionId][partyId] = { prob: val };
+        }
+
+        // 지도(맵) 렌더링 — 지역구 시스템에 따라 SVG 지도 또는 육각형 그리드로 분기
+        function renderRegionMap() {
+            const wrap = document.getElementById('regionMapWrap');
+            if(!wrap) return;
+            const ch = regionPaintChamber;
+            if(districtMapMode === 'svg') {
+                if(!districtSvgMap) { wrap.innerHTML = '<div style="text-align:center;color:#444;font-size:0.85rem;padding:30px 10px;">지역구 탭에서 지도를 먼저 업로드하세요</div>'; return; }
+                wrap.innerHTML = '';
+                renderDistrictSvgInto(wrap, {
+                    clickable: true,
+                    getFill: key => {
+                        if(!districtGrid[ch][key]) return 'rgba(255,255,255,0.03)';
+                        const regionId = districtRegionMap[ch]?.[key];
+                        const region = (regions[ch]||[]).find(r => r.id === regionId);
+                        return region ? region.color : 'rgba(255,255,255,0.08)';
+                    },
+                    title: key => {
+                        const nm = districtNames.house[key] || key;
+                        if(!districtGrid[ch][key]) return `${nm} (이 원에 없는 지역구)`;
+                        const regionId = districtRegionMap[ch]?.[key];
+                        const region = (regions[ch]||[]).find(r => r.id === regionId);
+                        return `${nm}${region ? ' — '+region.name : ' — 미배정'}`;
+                    },
+                    onClickKey: key => {
+                        if(!districtGrid[ch][key]) return;
+                        regionAssignDistrict(ch, key);
+                        renderRegionTab();
+                    }
+                });
+                return;
+            }
+            // 육각형 그리드 모드
+            wrap.innerHTML = '<canvas id="regionHexCanvas" style="width:100%;display:block;background:#0a0c10;border:1px solid #222;cursor:crosshair;"></canvas>';
+            const cvs = document.getElementById('regionHexCanvas');
+            regionDrawHexMap(cvs, ch);
+            regionBindHexMapEvents(cvs, ch);
+        }
+
+        function regionChamberKeys(chamber) {
+            return Object.keys(districtGrid[chamber] || {});
+        }
+        function regionGetBounds(chamber) {
+            const keys = regionChamberKeys(chamber);
+            if(keys.length === 0) return null;
+            let minQ=Infinity, maxQ=-Infinity, minR=Infinity, maxR=-Infinity;
+            keys.forEach(k => {
+                const [q,r] = k.split(',').map(Number);
+                if(q<minQ) minQ=q; if(q>maxQ) maxQ=q;
+                if(r<minR) minR=r; if(r>maxR) maxR=r;
+            });
+            return { minQ, maxQ, minR, maxR };
+        }
+
+        function regionDrawHexMap(cvs, chamber) {
+            const keys = regionChamberKeys(chamber);
+            const w = cvs.clientWidth || 260;
+            const bounds = regionGetBounds(chamber);
+            if(!bounds) { cvs.width=w; cvs.height=60; const c=cvs.getContext('2d'); c.fillStyle='#333'; c.font='12px monospace'; c.fillText('지역구를 먼저 설정하세요',8,35); return; }
+            const { minQ, maxQ, minR, maxR } = bounds;
+            const spanQ = maxQ - minQ + 1, spanR = maxR - minR + 1;
+            const sizeByW = w / (spanQ * 1.5 + 0.5);
+            const sizeByH = (w * 1.2) / (spanR * Math.sqrt(3) + Math.sqrt(3)/2 + 1);
+            const size = Math.min(sizeByW, sizeByH, 20);
+            const totalH = Math.ceil(size * (spanR * Math.sqrt(3) + Math.sqrt(3)) + size * 2);
+            cvs.width = w; cvs.height = Math.max(totalH, 60);
+            const cq = (minQ + maxQ) / 2, cr = (minR + maxR) / 2;
+            const offX = cvs.width/2  - size * (3/2 * cq);
+            const offY = cvs.height/2 - size * (Math.sqrt(3)/2 * cq + Math.sqrt(3) * cr);
+            cvs._regionOffset = { x: offX, y: offY, size };
+
+            const ctx = cvs.getContext('2d');
+            ctx.clearRect(0,0,cvs.width,cvs.height);
+            keys.forEach(key => {
+                const [q,r] = key.split(',').map(Number);
+                const [cx,cy] = districtAxialToPixel(q, r, size, offX, offY);
+                const corners = districtHexCorners(cx, cy, size*0.93);
+                ctx.beginPath();
+                ctx.moveTo(...corners[0]);
+                corners.slice(1).forEach(c=>ctx.lineTo(...c));
+                ctx.closePath();
+                const regionId = districtRegionMap[chamber]?.[key];
+                const region = (regions[chamber]||[]).find(r => r.id === regionId);
+                if(region) {
+                    ctx.fillStyle = region.color;
+                    ctx.fill();
+                    const isActive = region.id === regionActiveId;
+                    ctx.strokeStyle = isActive ? '#fff' : region.color;
+                    ctx.lineWidth = isActive ? 2 : 1;
+                    ctx.stroke();
+                } else {
+                    ctx.fillStyle = '#111'; ctx.fill();
+                    ctx.strokeStyle = '#333'; ctx.lineWidth = 0.8; ctx.stroke();
+                }
+            });
+        }
+
+        function regionBindHexMapEvents(cvs, chamber) {
+            if(!cvs || cvs._regionBound) return;
+            cvs._regionBound = true;
+            let painting = false, middleDrag = false, mx=0, my=0, paintMode = 'assign';
+            cvs.addEventListener('mousedown', e => {
+                if(e.button===1) { middleDrag=true; mx=e.offsetX; my=e.offsetY; e.preventDefault(); return; }
+                if(e.button===0 && regionActiveId) {
+                    const off = cvs._regionOffset; if(!off) return;
+                    const [q,r] = districtPixelToAxial(e.offsetX, e.offsetY, off.size, off.x, off.y);
+                    const key = `${q},${r}`;
+                    if(!districtGrid[chamber][key]) return;
+                    painting = true;
+                    paintMode = (districtRegionMap[chamber]?.[key] === regionActiveId) ? 'erase' : 'assign';
+                    if(paintMode === 'erase') delete districtRegionMap[chamber][key];
+                    else { if(!districtRegionMap[chamber]) districtRegionMap[chamber]={}; districtRegionMap[chamber][key] = regionActiveId; }
+                    regionDrawHexMap(cvs, chamber);
+                }
+            });
+            cvs.addEventListener('mousemove', e => {
+                if(middleDrag) {
+                    const off = cvs._regionOffset; if(!off) return;
+                    off.x += e.offsetX-mx; off.y += e.offsetY-my;
+                    mx = e.offsetX; my = e.offsetY;
+                    regionDrawHexMap(cvs, chamber);
+                    return;
+                }
+                if(painting && regionActiveId) {
+                    const off = cvs._regionOffset; if(!off) return;
+                    const [q,r] = districtPixelToAxial(e.offsetX, e.offsetY, off.size, off.x, off.y);
+                    const key = `${q},${r}`;
+                    if(!districtGrid[chamber][key]) return;
+                    if(paintMode === 'erase') { if(districtRegionMap[chamber]?.[key]===regionActiveId) delete districtRegionMap[chamber][key]; }
+                    else { if(!districtRegionMap[chamber]) districtRegionMap[chamber]={}; districtRegionMap[chamber][key] = regionActiveId; }
+                    regionDrawHexMap(cvs, chamber);
+                }
+            });
+            cvs.addEventListener('mouseup', () => { if(painting) { painting=false; renderRegionList(); } middleDrag=false; });
+            cvs.addEventListener('mouseleave', () => { if(painting) { painting=false; renderRegionList(); } middleDrag=false; });
+        }
+
+        // ─────────────────────────────────────────
         // 지역구 선거 시뮬레이션
         // ─────────────────────────────────────────
         function elecSimulateDistricts(chamber) {
@@ -9296,10 +9777,16 @@
             }
 
             // 비례 의석이 있으면 지지율 검사 (활동 금지된 정당은 저장된 수치가 있어도 반영 대상에서 제외)
+            // 권역형은 국가 단위 지지율(elecStore)이 아니라 권역별 득표 데이터로 배분하므로 별도로 검사
+            const isRegionalList = getElectionSystem(chamber).listScope === 'regional';
             const chamberStore = elecStore[chamber] || {};
             const partyProb = parties.reduce((s,p)=>s+(p.status==='banned'?0:(chamberStore[p.id]?.prob||0)),0);
-            if(propSeats > 0 && partyProb<=0) {
+            if(propSeats > 0 && !isRegionalList && partyProb<=0) {
                 alert('지지율을 입력해 주세요.\n각 정당의 지지율(%) 칸에 숫자를 입력하세요.');
+                return;
+            }
+            if(propSeats > 0 && isRegionalList && !regionScopeHasVoteData(chamber)) {
+                alert('권역별 득표율이 없습니다.\n여론 > 권역 탭에서 권역을 만들고 지역구를 배정하거나(자동 집계), 득표율을 직접 입력하세요.');
                 return;
             }
             // 지역구 모드인데 활성 지역구가 없으면 안내
@@ -9366,38 +9853,31 @@
             // wTotal(지지율+무당파 가중치)은 비례 의석 배분에만 쓰이므로, 비례 의석이 0석인
             // 지역구 전용 개표에서는 지지율을 하나도 입력하지 않았어도 막을 이유가 없음
             // (이 조건 없이 막으면 지역구만 개표할 때 안내 문구 하나 없이 조용히 실패한 것처럼 보임)
-            if(propSeats > 0 && wTotal<=0) {
+            if(propSeats > 0 && !isRegionalList && wTotal<=0) {
                 elecRunning=false;
                 runBtn.style.background='var(--tno-neon)'; runBtn.style.color='#000'; runBtn.textContent='>> 개표 시작 <<';
                 alert('지지율을 입력해 주세요.\n각 정당의 지지율(%) 칸에 숫자를 입력하세요.');
                 return;
             }
 
-            // ── 최대 잔여분 의석 배분 (비례 의석만) ────
-            let seatMap;
-            if(propSeats > 0) {
-                seatMap = weighted.map(p=>({id:p.id, n:Math.floor((p.w/wTotal)*propSeats), origProb:p.origProb}));
-                let alloc = seatMap.reduce((s,p)=>s+p.n,0);
-                const rems  = weighted.map((p,i)=>({i,rem:(p.w/wTotal)*propSeats-seatMap[i].n})).sort((a,b)=>b.rem-a.rem);
-                for(let ri=0; alloc<propSeats; ri++,alloc++) seatMap[rems[ri%rems.length].i].n++;
-            } else {
-                seatMap = weighted.map(p=>({id:p.id, n:0, origProb:p.origProb}));
-            }
-
-            // ── 지역구 선거 결과 미리 계산 ──────────
+            // ── 지역구 선거 결과 먼저 계산 (연동형/권역형 비례 배분에 지역구 당선 결과가 필요) ──
             let districtResults = [];
-            if(districtSeats > 0) {
-                districtResults = elecSimulateDistricts(chamber);
-                // 지역구 결과를 seatMap에 합산
-                districtResults.forEach(({partyId}) => {
-                    const sm = seatMap.find(x=>x.id===partyId);
-                    if(sm) sm.n++;
-                });
-                // 셔플 (개표 순서)
-                for(let i=districtResults.length-1; i>0; i--) {
-                    const j = Math.floor(Math.random()*(i+1));
-                    [districtResults[i], districtResults[j]] = [districtResults[j], districtResults[i]];
-                }
+            if(districtSeats > 0) districtResults = elecSimulateDistricts(chamber);
+
+            // ── 비례 의석 배분 (전국형/권역형 × 병립~연동 절충, 원별 설정) ────
+            const listSeatMap = allocateListSeats(chamber, weighted, districtResults, propSeats, totalSeats);
+            const districtWinCounts = {};
+            districtResults.forEach(({partyId}) => { districtWinCounts[partyId] = (districtWinCounts[partyId]||0) + 1; });
+            const seatMap = weighted.map(p => ({
+                id: p.id,
+                n: (districtWinCounts[p.id]||0) + (listSeatMap[p.id]||0),
+                origProb: p.origProb,
+            }));
+
+            // 지역구 개표 순서 셔플 (연출용)
+            for(let i=districtResults.length-1; i>0; i--) {
+                const j = Math.floor(Math.random()*(i+1));
+                [districtResults[i], districtResults[j]] = [districtResults[j], districtResults[i]];
             }
 
             const seatKey = seatKeyFor(chamber);
@@ -9409,12 +9889,7 @@
             // ── 비례 풀 생성 + 셔플 ─────────────────
             parties.forEach(p=>{ p[seatKey]=0; });
             let pool=[];
-            // 비례 의석만 풀에 (지역구는 districtResults로 별도 처리)
-            const propSeatMap = weighted.map(p => ({
-                id: p.id,
-                n: seatMap.find(s=>s.id===p.id).n - districtResults.filter(d=>d.partyId===p.id).length
-            }));
-            propSeatMap.forEach(s=>{ for(let i=0;i<s.n;i++) pool.push(s.id); });
+            weighted.forEach(p => { const n = listSeatMap[p.id]||0; for(let i=0;i<n;i++) pool.push(p.id); });
             for(let i=pool.length-1;i>0;i--){
                 const j=Math.floor(Math.random()*(i+1));
                 [pool[i],pool[j]]=[pool[j],pool[i]];

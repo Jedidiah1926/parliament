@@ -910,6 +910,7 @@
                 <div class="sub-tab-container" style="margin-top:10px;">
                     <button class="sub-tab-btn active" id="elecSubTabDistrict" onclick="elecSwitchSub('district')">지역구</button>
                     <button class="sub-tab-btn" id="elecSubTabTendency" onclick="elecSwitchSub('tendency')">성향</button>
+                    <button class="sub-tab-btn" id="elecSubTabRegion" onclick="elecSwitchSub('region')">권역</button>
                     <button class="sub-tab-btn" id="elecSubTabProb" onclick="elecSwitchSub('prob')">지지율</button>
                 </div>
 
@@ -1028,6 +1029,27 @@
                     <div id="tendencySvgDistrictPanel" style="display:none;"></div>
                 </div>
 
+                <!-- 권역 서브탭 -->
+                <div id="elecSubRegion" class="sub-tab-content">
+                    <div class="sub-tab-container-3" id="regionChamberTabs">
+                        <button class="sub-tab-btn-3 active" onclick="regionSetChamber('house')" id="innerTabRegionHouse">하원</button>
+                        <button class="sub-tab-btn-3" onclick="regionSetChamber('senate')" id="innerTabRegionSenate">상원</button>
+                        <button class="sub-tab-btn-3" onclick="regionSetChamber('third')" id="innerTabRegionThird" style="display:none;">삼원</button>
+                    </div>
+                    <div style="font-size:0.72rem;color:#555;margin:8px 0;">권역형 비례대표에서 지역구를 묶는 단위입니다. 원별로 독립적으로 설정합니다. (전국형을 쓸 경우 설정하지 않아도 됩니다)</div>
+                    <div style="color:#666;font-size:0.8rem;margin-bottom:6px;letter-spacing:1px;">▌ 권역 목록 (칠하기 대상을 선택하세요)</div>
+                    <div id="regionList"></div>
+                    <button class="add-btn" onclick="regionAddRegion()">[+] 권역 추가</button>
+
+                    <div style="color:#666;font-size:0.8rem;margin:14px 0 6px;letter-spacing:1px;border-top:1px solid #222;padding-top:10px;">▌ 권역별 득표율</div>
+                    <div style="display:flex;gap:6px;margin-bottom:8px;">
+                        <button class="sub-tab-btn-3 active" id="regionVoteModeAutoBtn" onclick="regionSetVoteMode('auto')">자동 집계</button>
+                        <button class="sub-tab-btn-3" id="regionVoteModeManualBtn" onclick="regionSetVoteMode('manual')">수동 입력</button>
+                    </div>
+                    <div style="font-size:0.72rem;color:#555;margin-bottom:8px;">자동 집계: 권역에 속한 지역구들의 성향(%)을 평균해 득표율로 사용합니다. 수동 입력: 권역마다 직접 지지율을 입력합니다.</div>
+                    <div id="regionVoteManualPanel"></div>
+                </div>
+
                 <!-- 지지율 서브탭 -->
                 <div id="elecSubProb" class="sub-tab-content">
                     <div class="sub-tab-container-3" id="elecProbChamberTabs" style="margin-bottom:8px;">
@@ -1039,6 +1061,7 @@
                         <input type="checkbox" id="elecProbSyncAll" onchange="onElecProbSyncAllChange(this.checked)"> 전체에 반영
                     </label>
                     <div style="font-size:0.72rem;color:#555;margin:-4px 0 8px;">의원실마다 정당 구성이 다를 수 있어 지지율을 독립적으로 설정합니다.</div>
+                    <div id="elecSystemSettings"></div>
                     <div id="elecInputList"></div>
                 </div>
 
@@ -1312,6 +1335,7 @@
             <button class="disp-tab-btn"         id="dispTabCabinet"  data-tab="cabinet" onclick="switchDispTab('cabinet')">내각</button>
             <button class="disp-tab-btn"         id="dispTabDistrict" data-tab="district" onclick="switchDispTab('district')" style="display:none;"><span class="disp-tab-label">지역구</span><span class="disp-tab-close" onclick="event.stopPropagation();closeDispTab('district')">×</span></button>
             <button class="disp-tab-btn"         id="dispTabTendency" data-tab="tendency" onclick="switchDispTab('tendency')" style="display:none;"><span class="disp-tab-label">성향</span><span class="disp-tab-close" onclick="event.stopPropagation();closeDispTab('tendency')">×</span></button>
+            <button class="disp-tab-btn"         id="dispTabRegion" data-tab="region" onclick="switchDispTab('region')" style="display:none;"><span class="disp-tab-label">권역</span><span class="disp-tab-close" onclick="event.stopPropagation();closeDispTab('region')">×</span></button>
             <button class="disp-tab-btn"         id="dispTabElecResultHouse" data-tab="elecResultHouse" onclick="switchDispTab('elecResultHouse')" style="display:none;"><span class="disp-tab-label">하원 선거결과</span><span class="disp-tab-close" onclick="event.stopPropagation();closeDispTab('elecResultHouse')">×</span></button>
             <button class="disp-tab-btn"         id="dispTabElecResultSenate" data-tab="elecResultSenate" onclick="switchDispTab('elecResultSenate')" style="display:none;"><span class="disp-tab-label">상원 선거결과</span><span class="disp-tab-close" onclick="event.stopPropagation();closeDispTab('elecResultSenate')">×</span></button>
             <button class="disp-tab-btn"         id="dispTabElecResultThird" data-tab="elecResultThird" onclick="switchDispTab('elecResultThird')" style="display:none;"><span class="disp-tab-label">삼원 선거결과</span><span class="disp-tab-close" onclick="event.stopPropagation();closeDispTab('elecResultThird')">×</span></button>
@@ -1432,6 +1456,17 @@
                     <h3 style="margin:0;border:none;padding:0;">> 성향 맵</h3>
                 </div>
                 <div id="tendencyMaps"></div>
+            </div>
+        </div>
+
+        <!-- 권역 배정 맵 패널 -->
+        <div class="disp-panel" id="dispPanelRegion">
+            <div class="chamber-box">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+                    <h3 style="margin:0;border:none;padding:0;">> 권역 배정 맵</h3>
+                </div>
+                <div style="font-size:0.78rem;color:#666;margin-bottom:8px;">아래에서 "칠하기" 권역을 고른 뒤, 지도(또는 그리드)의 지역구를 클릭해 그 권역에 배정/해제하세요.</div>
+                <div id="regionMapWrap"></div>
             </div>
         </div>
 
