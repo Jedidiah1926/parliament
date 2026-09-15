@@ -1029,14 +1029,110 @@
             renderEmergencyPowers();
         }
 
+        // ── 브라우저 기본 alert/confirm 대신 앱 자체 UI로 표시 (권한 선포 등 확인/안내용) ──────────────
+        function showCustomAlert(message) {
+            const overlay = document.getElementById('customAlertOverlay');
+            if(!overlay) { alert(message); return; }
+            document.getElementById('customAlertMessage').textContent = message;
+            overlay.style.display = 'flex';
+            document.getElementById('customAlertOkBtn').onclick = () => { overlay.style.display = 'none'; };
+        }
+        function showCustomConfirm(message, onConfirm) {
+            const overlay = document.getElementById('customConfirmOverlay');
+            if(!overlay) { if(confirm(message)) onConfirm(); return; }
+            document.getElementById('customConfirmMessage').textContent = message;
+            overlay.style.display = 'flex';
+            const okBtn = document.getElementById('customConfirmOkBtn');
+            const cancelBtn = document.getElementById('customConfirmCancelBtn');
+            const cleanup = () => { overlay.style.display = 'none'; okBtn.onclick = null; cancelBtn.onclick = null; };
+            okBtn.onclick = () => { cleanup(); onConfirm(); };
+            cancelBtn.onclick = cleanup;
+        }
+
+        // 의회 해산 선포 시 현재 존재하는 모든 원(하원/상원/삼원)의 의석을 전부 비운다 —
+        // 지역구는 궐석 처리(기록 보존), 비례 명단은 초기화, 정당별 의석 수는 0으로
+        function clearAllSeatsForDissolution() {
+            chamberList().forEach(ch => {
+                const seatKey = seatKeyFor(ch);
+                Object.keys(districtMembers[ch] || {}).forEach(key => {
+                    const m = districtMembers[ch][key];
+                    if(m) m.vacant = true;
+                });
+                listMembers[ch] = {};
+                independents = independents.filter(x => !(x.chamber === ch && !x.districtKey));
+                parties.forEach(p => { p[seatKey] = 0; });
+            });
+            simulate();
+            refreshUI();
+        }
+
         function toggleEmergencyActive(key) {
             if(!EMERGENCY_POWERS[key]) return;
-            if(emergencyPowers[key].holder === 'none') { alert('먼저 권한 주체를 지정하세요.'); return; }
-            if(!emergencyPowers[key].active) {
-                if(!confirm(`${EMERGENCY_POWERS[key].label}을(를) 선포합니다. 계속하시겠습니까?`)) return;
+            if(emergencyPowers[key].holder === 'none') { showCustomAlert('먼저 권한 주체를 지정하세요.'); return; }
+            // 의회 해산은 한 번 선포되면 임의로 해제할 수 없고, 총선을 새로 반영해야만 풀린다
+            if(key === 'dissolution' && emergencyPowers[key].active) {
+                showCustomAlert('의회 해산은 스스로 해제할 수 없습니다.\n국가 > 선거 > 총선에서 새 선거를 반영해야 해제됩니다.');
+                return;
             }
-            emergencyPowers[key].active = !emergencyPowers[key].active;
+            if(!emergencyPowers[key].active) {
+                showCustomConfirm(`${EMERGENCY_POWERS[key].label}을(를) 선포합니다. 계속하시겠습니까?`, () => {
+                    emergencyPowers[key].active = true;
+                    if(key === 'dissolution') clearAllSeatsForDissolution();
+                    renderEmergencyPowers();
+                    applyMartialLawEffects();
+                });
+                return;
+            }
+            emergencyPowers[key].active = false;
             renderEmergencyPowers();
+            applyMartialLawEffects();
+        }
+
+        // 계엄령 선포 중에는 하원/상원/삼원 화면을 어둡게 가리고 "의회 활동 정지" 배너를 표시,
+        // 표결(좌석 클릭/일괄 투표)도 막는다 — 해제되면 원상 복구
+        function applyMartialLawEffects() {
+            const active = emergencyPowers.martialLaw.active;
+            ['House','Senate','Third'].forEach(suf => {
+                const panel = document.getElementById('dispPanel'+suf);
+                if(!panel) return;
+                let shade = panel.querySelector('.martial-law-shade');
+                if(active) {
+                    if(!shade) {
+                        shade = document.createElement('div');
+                        shade.className = 'martial-law-shade';
+                        shade.style.cssText = 'position:absolute;inset:0;background:rgba(20,0,0,0.72);z-index:50;display:flex;align-items:center;justify-content:center;pointer-events:auto;';
+                        shade.innerHTML = `<div style="color:var(--tno-alert);text-shadow:0 0 8px var(--tno-alert);font-size:1.1rem;letter-spacing:2px;border:1px solid var(--tno-alert);padding:10px 18px;background:rgba(0,0,0,0.6);">! 계엄령 선포 중 — 의회 활동 정지 !</div>`;
+                        const box = panel.querySelector('.chamber-box');
+                        if(box) { box.style.position = 'relative'; box.appendChild(shade); }
+                    }
+                } else if(shade) {
+                    shade.remove();
+                }
+            });
+            const councilPanel = document.getElementById('cabinetCouncilPanel');
+            if(councilPanel) councilPanel.style.display = active ? '' : 'none';
+        }
+
+        // 계엄령 중 대체 입법 경로 — 선택된 법안을 의회 표결 없이 국무회의 의결로 즉시 통과시킴
+        function passViaCabinetCouncil() {
+            if(!emergencyPowers.martialLaw.active) { showCustomAlert('계엄령이 선포된 상태에서만 사용할 수 있습니다.'); return; }
+            if(!activeBillId) { showCustomAlert('심의할 법안을 먼저 선택하세요.'); return; }
+            const bill = bills.find(b => b.id === activeBillId);
+            if(!bill) return;
+            showCustomConfirm(`『${bill.title}』을(를) 국무회의 의결로 통과시킵니다. 계속하시겠습니까?`, () => {
+                bill.houseStatus = 'pass';
+                if(hasSenateChamber()) bill.senateStatus = 'pass';
+                if(hasThirdChamber()) bill.thirdStatus = 'pass';
+                if(!bill.voteHistory) bill.voteHistory = [];
+                bill.voteHistory.push({ chamber: 'cabinetCouncil', result: 'pass', date: bill.voteDate || '', at: new Date().toISOString() });
+                renderBillList(); renderArchiveList(); syncBillSelect();
+                showCustomAlert(`『${bill.title}』이(가) 국무회의 의결로 통과되었습니다.`);
+            });
+        }
+
+        function isParliamentSuspended() {
+            if(emergencyPowers.martialLaw.active) { showCustomAlert('계엄령 선포 중에는 의회 표결을 진행할 수 없습니다.\n법안은 국무회의를 통해 통과시킬 수 있습니다.'); return true; }
+            return false;
         }
 
         // 각 비상 권한의 선포/해제 버튼은 설정에서 지정한 권한 주체(대통령/총리)의 탭에 표시된다 —
@@ -1054,7 +1150,9 @@
                         const st = emergencyPowers[key];
                         const bg = st.active ? `color-mix(in srgb, ${cfg.color} 15%, transparent)` : 'transparent';
                         const shadow = st.active ? `0 0 10px ${cfg.color}` : 'none';
-                        return `<button class="add-btn" style="margin-top:8px;border-style:solid;border-color:${cfg.color};color:${cfg.color};text-shadow:0 0 4px ${cfg.color};background:${bg};box-shadow:${shadow};" onclick="toggleEmergencyActive('${key}')">! ${cfg.label} ${st.active ? '해제' : '선포'} !</button>`;
+                        const locked = key === 'dissolution' && st.active;
+                        const label = locked ? `! ${cfg.label} 선포됨 (총선으로만 해제) !` : `! ${cfg.label} ${st.active ? '해제' : '선포'} !`;
+                        return `<button class="add-btn" style="margin-top:8px;border-style:solid;border-color:${cfg.color};color:${cfg.color};text-shadow:0 0 4px ${cfg.color};background:${bg};box-shadow:${shadow};${locked?'cursor:default;opacity:0.85;':''}" onclick="toggleEmergencyActive('${key}')">${label}</button>`;
                     }).join('');
             });
         }
@@ -2062,6 +2160,7 @@
         }
 
         function applyPartyVote(partyName, vote) {
+            if(vote !== 'none' && isParliamentSuspended()) return;
             // 활동 금지된 정당은 표결에 참여할 수 없음
             if(vote !== 'none' && parties.find(p=>p.name===partyName)?.status==='banned') return;
             const chambers = getBulkChambers();
@@ -2201,6 +2300,7 @@
         }
 
         function applyFactionVote(partyName, factionId, vote) {
+            if(vote !== 'none' && isParliamentSuspended()) return;
             // 활동 금지된 정당은 표결에 참여할 수 없음
             if(vote !== 'none' && parties.find(p=>p.name===partyName)?.status==='banned') return;
             const key = `__faction__${partyName}__${factionId}`;
@@ -2275,6 +2375,8 @@
                 showSeatInfoCard(chamber, hit, e.clientX, e.clientY);
                 return;
             }
+
+            if(currentVoteMode !== 'none' && isParliamentSuspended()) return;
 
             const prev = voteState[chamber][hit] || 'none';
             if(currentVoteMode === 'none') {
@@ -3573,6 +3675,7 @@
             simulate();
             renderBillList();
             renderArchiveList();
+            applyMartialLawEffects();
             syncBillSelect();
             renderActiveBillDisplay();
             updateConfirmButtons();
@@ -3992,6 +4095,7 @@
             elecUpdateLabels();
             elecUpdateDistrictInfo();
             renderChamberLeaders();
+            applyMartialLawEffects();
         }
 
         function updateNames() {
@@ -8474,10 +8578,16 @@
                 lastCh = ch;
             });
             elecLastResults = {};
+            // 총선 반영으로 의회가 새로 구성되므로, 선포돼 있던 의회 해산은 여기서만 해제된다
+            const wasDissolved = emergencyPowers.dissolution.active;
+            if(wasDissolved) { emergencyPowers.dissolution.active = false; renderEmergencyPowers(); }
             simulate(); refreshUI();
             if(lastCh) switchDispTab(lastCh);
             if(hadFactions) {
                 alert('선거 결과가 반영되었습니다.\n\n파벌이 있는 정당의 파벌별 의석은 선거 전 분포가 무효화되어 0으로 초기화되었습니다.\n정당 탭에서 파벌 의석을 다시 배분해 주세요.');
+            }
+            if(wasDissolved) {
+                showCustomAlert('새 총선이 반영되어 의회 해산 상태가 해제되었습니다.');
             }
         }
 
@@ -9748,6 +9858,9 @@
             const govArr = allStats.filter(s=>s.isRuling);
             const extArr = allStats.filter(s=>!s.isRuling && s.externalSupport).sort((a,b)=>b.count-a.count);
             const oppArr = allStats.filter(s=>!s.isRuling && !s.externalSupport).sort((a,b)=>b.count-a.count);
+            // 여당(+각외협력) 실질 의석 — 이미 과반을 확보했다면 어떤 야당도 "여소야대"로 표시하지 않는다
+            // (valid/maj 계산이 활동금지·궐석 등으로 왜곡돼도 여당·야당이 동시에 "과반"으로 표시되는 모순을 방지)
+            const govEffectiveTotal = govArr.reduce((sum,s)=>sum+s.count, 0) + extSupportTotal;
 
             function renderCard(s) {
                 let statusHtml = '';
@@ -9763,7 +9876,7 @@
                     }
                 } else if(s.externalSupport) {
                     statusHtml = `<span style="color:var(--tno-gold);font-weight:bold;border-bottom:2px dashed var(--tno-gold);" title="연정에 정식 참여하지 않지만 신임투표·예산안 등에서 정부를 지지">[${s.externalSupport} C&S]</span>`;
-                } else if(s.count>=maj && govArr.length > 0) {
+                } else if(s.count>=maj && govArr.length > 0 && govEffectiveTotal < maj) {
                     statusHtml = `<span style="color:#f00;font-weight:bold;">[여소야대]</span>`;
                 }
 
