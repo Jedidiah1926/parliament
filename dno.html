@@ -1012,6 +1012,12 @@
                                     <select id="presidentPartySelect" onchange="updatePresidentField('partyId',this.value?parseInt(this.value):null)"
                                         style="flex:1;min-width:0;background:#000;border:1px solid #333;color:var(--tno-gold);font-family:inherit;font-size:0.85rem;padding:4px;"></select>
                                 </div>
+                                <select id="presidentMemberPicker" onchange="linkPresidentToMember(this.value)"
+                                    style="width:100%;box-sizing:border-box;background:#000;border:1px solid #333;color:#888;font-family:inherit;font-size:0.78rem;padding:4px;"></select>
+                                <div id="presidentLinkedBadge" style="display:none;align-items:center;gap:6px;color:#6cf;font-size:0.75rem;">
+                                    🔗 의원과 연결됨 — 이름·사진·당적 자동 반영
+                                    <button onclick="unlinkPresident()" style="background:transparent;border:1px solid #333;color:#888;font-family:inherit;font-size:0.72rem;padding:2px 6px;cursor:pointer;">연결 해제</button>
+                                </div>
                                 <button id="presidentPhotoRemoveBtn" onclick="removePresidentPhoto()" style="display:none;background:transparent;border:1px solid #333;color:#555;font-family:inherit;font-size:0.8rem;padding:3px 8px;cursor:pointer;text-align:left;">✕ 사진 제거</button>
                             </div>
                         </div>
@@ -1041,6 +1047,12 @@
                                     <select id="pmPartySelect" onchange="updatePmField('partyId',this.value?parseInt(this.value):null)"
                                         style="flex:1;min-width:0;background:#000;border:1px solid #333;color:var(--tno-gold);font-family:inherit;font-size:0.85rem;padding:4px;"></select>
                                 </div>
+                                <select id="pmMemberPicker" onchange="linkPmToMember(this.value)"
+                                    style="width:100%;box-sizing:border-box;background:#000;border:1px solid #333;color:#888;font-family:inherit;font-size:0.78rem;padding:4px;"></select>
+                                <div id="pmLinkedBadge" style="display:none;align-items:center;gap:6px;color:#6cf;font-size:0.75rem;">
+                                    🔗 의원과 연결됨 — 이름·사진·당적 자동 반영
+                                    <button onclick="unlinkPm()" style="background:transparent;border:1px solid #333;color:#888;font-family:inherit;font-size:0.72rem;padding:2px 6px;cursor:pointer;">연결 해제</button>
+                                </div>
                                 <button id="pmPhotoRemoveBtn" onclick="removePmPhoto()" style="display:none;background:transparent;border:1px solid #333;color:#555;font-family:inherit;font-size:0.8rem;padding:3px 8px;cursor:pointer;text-align:left;">✕ 사진 제거</button>
                             </div>
                         </div>
@@ -1068,6 +1080,7 @@
             <button class="disp-tab-btn active" id="dispTabHouse"     data-tab="house"  onclick="switchDispTab('house')">하원</button>
             <button class="disp-tab-btn"         id="dispTabSenate"   data-tab="senate" onclick="switchDispTab('senate')">상원</button>
             <button class="disp-tab-btn"         id="dispTabThird"    data-tab="third" onclick="switchDispTab('third')" style="display:none;">삼원</button>
+            <button class="disp-tab-btn"         id="dispTabCabinet"  data-tab="cabinet" onclick="switchDispTab('cabinet')">내각</button>
             <button class="disp-tab-btn"         id="dispTabDistrict" data-tab="district" onclick="switchDispTab('district')" style="display:none;"><span class="disp-tab-label">지역구</span><span class="disp-tab-close" onclick="event.stopPropagation();closeDispTab('district')">×</span></button>
             <button class="disp-tab-btn"         id="dispTabTendency" data-tab="tendency" onclick="switchDispTab('tendency')" style="display:none;"><span class="disp-tab-label">성향</span><span class="disp-tab-close" onclick="event.stopPropagation();closeDispTab('tendency')">×</span></button>
             <button class="disp-tab-btn"         id="dispTabElecResultHouse" data-tab="elecResultHouse" onclick="switchDispTab('elecResultHouse')" style="display:none;"><span class="disp-tab-label">하원 선거결과</span><span class="disp-tab-close" onclick="event.stopPropagation();closeDispTab('elecResultHouse')">×</span></button>
@@ -1139,6 +1152,16 @@
                     <div id="thirdDistrictSvgWrap" style="display:none;width:100%;height:500px;background:#0a0c10;border:1px solid #222;overflow:hidden;"></div>
                 </div>
                 <div id="thirdStats" style="margin-top:10px;"></div>
+            </div>
+        </div>
+
+        <!-- 내각 패널 (항상 표시) -->
+        <div class="disp-panel" id="dispPanelCabinet">
+            <div class="chamber-box">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+                    <h3 style="margin:0;">CABINET</h3>
+                </div>
+                <div id="cabinetDisplayGrid" style="display:flex;flex-wrap:wrap;gap:22px;"></div>
             </div>
         </div>
 
