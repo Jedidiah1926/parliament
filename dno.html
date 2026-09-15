@@ -763,8 +763,8 @@
                             </div>
                         </div>
                         <div style="background:#0a0c10;border:1px solid #2a2a2a;padding:8px 10px;margin-bottom:10px;font-size:0.78rem;color:#888;line-height:1.7;">
-                            선거 방식: <span id="presElecModeSummary" style="color:var(--tno-gold);">단순 다수 대표제</span>
-                            &nbsp;|&nbsp; 기준 원: <span id="presElecChamberSummary" style="color:var(--tno-gold);">하원</span>
+                            선거 방식: <span id="presElecModeSummary" style="color:var(--tno-gold);">단순 다수 대표제</span><br>
+                            기준 원: <span id="presElecChamberSummary" style="color:var(--tno-gold);">하원</span>
                             <span style="color:#444;">(설정 탭에서 변경)</span>
                         </div>
                         <button id="presElecRunBtn" onclick="runPresidentialElection()"
@@ -903,8 +903,8 @@
                             </div>
                         </div>
                         <div style="background:#0a0c10;border:1px solid #2a2a2a;padding:8px 10px;margin-bottom:10px;font-size:0.78rem;color:#888;line-height:1.7;">
-                            선거 방식: <span id="pmElecModeSummary" style="color:var(--tno-gold);">단순 다수 대표제</span>
-                            &nbsp;|&nbsp; 기준 원: <span id="pmElecChamberSummary" style="color:var(--tno-gold);">하원</span>
+                            선거 방식: <span id="pmElecModeSummary" style="color:var(--tno-gold);">단순 다수 대표제</span><br>
+                            기준 원: <span id="pmElecChamberSummary" style="color:var(--tno-gold);">하원</span>
                             <span style="color:#444;">(선거 &gt; 설정 탭에서 변경 — 대선과 방식을 공유합니다)</span>
                         </div>
                         <button id="pmElecRunBtn" onclick="runPmElection()"
@@ -918,7 +918,7 @@
                         <div style="margin-top:6px;">
                             <label style="color:#888;font-size:0.8rem;margin-bottom:6px;display:block;">대선 방식</label>
                             <div class="system-radio-group">
-                                <button type="button" class="system-radio-btn active" id="presElecModePluralityBtn" onclick="setPresElectionMode('plurality')">단순 다수 대표제</button>
+                                <button type="button" class="system-radio-btn active" id="presElecModePluralityBtn" onclick="setPresElectionMode('plurality')">단순 다수<br>대표제</button>
                                 <button type="button" class="system-radio-btn" id="presElecModeRunoffBtn" onclick="setPresElectionMode('runoff')">결선투표제</button>
                                 <button type="button" class="system-radio-btn" id="presElecModeElectoralBtn" onclick="setPresElectionMode('electoral')">선거인단제</button>
                             </div>
@@ -1139,9 +1139,9 @@
                         <label style="color:#888;font-size:0.8rem;margin-bottom:6px;display:block;">정부 형태</label>
                         <div class="system-radio-group">
                             <button type="button" class="system-radio-btn" id="govTypePresidentialBtn" onclick="setGovType('presidential')">대통령제</button>
-                            <button type="button" class="system-radio-btn" id="govTypeSemiBtn" onclick="setGovType('semi')">이원집정부제</button>
+                            <button type="button" class="system-radio-btn" id="govTypeSemiBtn" onclick="setGovType('semi')">이원<br>집정부제</button>
                             <button type="button" class="system-radio-btn active" id="govTypeParliamentaryBtn" onclick="setGovType('parliamentary')">의원내각제</button>
-                            <button type="button" class="system-radio-btn" id="govTypeCollectiveBtn" onclick="setGovType('collective')">집단지도체제</button>
+                            <button type="button" class="system-radio-btn" id="govTypeCollectiveBtn" onclick="setGovType('collective')">집단<br>지도체제</button>
                         </div>
                     </div>
 

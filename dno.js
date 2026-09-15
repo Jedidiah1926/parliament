@@ -2348,9 +2348,14 @@
                 const isActive = dest === 'council' ? bill.id === activeCouncilBillId : bill.id === activeBillId;
                 const thLabel = getThresholdLabel(bill.threshold || 0.5, bill.numer, bill.denom);
                 const suspended = isCouncilVotingMode();
-                const routeBtn = (d, txt) => {
+                // 선택된 상정 대상은 색이 채워진 강조 스타일로, 선택되지 않은 쪽은 흐린 회색으로 — 한눈에 구분되도록
+                const routeBtn = (d, txt, color) => {
                     const disabled = d === 'parliament' && suspended;
-                    return `<button class="bill-select-btn" style="${dest===d?'color:var(--tno-gold);border-color:var(--tno-gold);':''}${disabled?'opacity:0.4;cursor:not-allowed;':''}" ${disabled?'disabled title="계엄령으로 의회가 정지된 상태에서는 선택할 수 없습니다"':''} onclick="setBillTabledTo('${bill.id}','${d}')">${txt}</button>`;
+                    const selected = dest === d;
+                    const style = selected
+                        ? `border-color:${color};color:${color};background:color-mix(in srgb, ${color} 15%, transparent);box-shadow:0 0 6px color-mix(in srgb, ${color} 50%, transparent);text-shadow:0 0 4px ${color};font-weight:bold;`
+                        : `border-color:#333;color:#555;background:transparent;`;
+                    return `<button class="bill-select-btn" style="${style}${disabled?'opacity:0.4;cursor:not-allowed;':''}" ${disabled?'disabled title="계엄령으로 의회가 정지된 상태에서는 선택할 수 없습니다"':''} onclick="setBillTabledTo('${bill.id}','${d}')">${selected?'✔ ':''}${txt}</button>`;
                 };
                 const selectAction = dest === 'council'
                     ? `selectBillForCouncilVote('${bill.id}'); switchSubTab('nation','legislation'); switchLegislationInnerTab('council');`
@@ -2366,8 +2371,8 @@
                     <div style="margin-top:4px;">${buildTagHtml(bill)}</div>
                     <div style="margin-top:4px; display:flex; align-items:center; gap:6px;">
                         <span style="color:#666; font-size:0.75rem;">상정:</span>
-                        ${routeBtn('parliament', '국회')}
-                        ${routeBtn('council', '국무회의')}
+                        ${routeBtn('parliament', '국회', 'var(--tno-gold)')}
+                        ${routeBtn('council', '국무회의', 'var(--tno-alert)')}
                     </div>
                     <div class="bill-card-footer">
                         ${buildBillBadges(bill)}
@@ -7027,7 +7032,7 @@
             const map = districtSvgMap;
             wrapEl.innerHTML = '';
             if(!map || !Array.isArray(map.shapes) || map.shapes.length === 0) {
-                wrapEl.innerHTML = '<div style="text-align:center;color:#444;font-size:0.85rem;padding:30px 10px;">SVG 지도가 없습니다 — 뉴 지역구 탭에서 업로드하세요</div>';
+                wrapEl.innerHTML = '<div style="text-align:center;color:#444;font-size:0.85rem;padding:30px 10px;">SVG 지도가 없습니다 — 지역구 탭에서 업로드하세요</div>';
                 return;
             }
             const svgNS = 'http://www.w3.org/2000/svg';
