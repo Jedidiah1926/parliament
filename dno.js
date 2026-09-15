@@ -1030,7 +1030,7 @@
         let emergencyPowers = {
             stateOfEmergency: { holder: 'none', active: false },
             dissolution:      { holder: 'none', active: false },
-            martialLaw:       { holder: 'none', active: false },
+            martialLaw:       { holder: 'none', active: false, suspendParliament: false },
         };
 
         function setEmergencyHolder(key, holder) {
@@ -1093,6 +1093,7 @@
                 showCustomConfirm(`${EMERGENCY_POWERS[key].label}을(를) 선포합니다. 계속하시겠습니까?`, () => {
                     emergencyPowers[key].active = true;
                     if(key === 'dissolution') clearAllSeatsForDissolution();
+                    if(key === 'martialLaw' && !emergencyPowers.martialLaw.suspendParliament) submitMartialLawLiftBill();
                     renderEmergencyPowers();
                     applyMartialLawEffects();
                 });
@@ -1103,15 +1104,46 @@
             applyMartialLawEffects();
         }
 
+        // 계엄령 선포 시 "의회 정지" 여부 — 체크 후 선포하면 의회가 shade 처리되고 표결이 정지되며,
+        // 체크하지 않으면 의회는 정상 기능하되 계엄 해제 결의안이 자동으로 상정됨
+        function setMartialLawSuspendParliament(checked) {
+            emergencyPowers.martialLaw.suspendParliament = checked;
+        }
+
+        // 계엄령을 의회 정지 없이 선포했을 때 자동으로 상정되는 계엄 해제 결의안 — 가결되면 계엄령이 해제됨
+        function submitMartialLawLiftBill() {
+            const bill = {
+                id: 'b'+Date.now(), title: '계엄 해제 결의안', content: '', threshold: 0.5, numer: null, denom: null, tags: ['계엄해제'],
+                houseStatus: 'pending', senateStatus: 'pending', thirdStatus: 'pending', houseVote: null, senateVote: null, thirdVote: null,
+                version: 1, parentBillId: null, isAmendment: false, voteHistory: [],
+                isMartialLawLift: true, martialLawLiftApplied: false,
+            };
+            bills.push(bill);
+            renderBillList(); syncBillSelect();
+            showCustomAlert('계엄 해제 결의안이 국가 > 입법 탭에 자동으로 상정되었습니다.\n의회가 가결하면 계엄령이 해제됩니다.');
+        }
+
+        // 계엄 해제 결의안이 가결되면 계엄령을 자동으로 해제
+        function checkMartialLawLiftBills() {
+            bills.forEach(b => {
+                if(!b.isMartialLawLift || b.martialLawLiftApplied) return;
+                if(getBillOverallStatus(b) !== 'passed') return;
+                b.martialLawLiftApplied = true;
+                emergencyPowers.martialLaw.active = false;
+                renderEmergencyPowers();
+                applyMartialLawEffects();
+            });
+        }
+
         // 계엄령 선포 중에는 하원/상원/삼원 화면을 어둡게 가리고 "의회 활동 정지" 배너를 표시,
         // 표결(좌석 클릭/일괄 투표)도 막는다 — 해제되면 원상 복구
         function applyMartialLawEffects() {
-            const active = emergencyPowers.martialLaw.active;
+            const suspended = emergencyPowers.martialLaw.active && emergencyPowers.martialLaw.suspendParliament;
             ['House','Senate','Third'].forEach(suf => {
                 const panel = document.getElementById('dispPanel'+suf);
                 if(!panel) return;
                 let shade = panel.querySelector('.martial-law-shade');
-                if(active) {
+                if(suspended) {
                     if(!shade) {
                         shade = document.createElement('div');
                         shade.className = 'martial-law-shade';
@@ -1125,12 +1157,13 @@
                 }
             });
             const councilPanel = document.getElementById('cabinetCouncilPanel');
-            if(councilPanel) councilPanel.style.display = active ? '' : 'none';
+            if(councilPanel) councilPanel.style.display = suspended ? '' : 'none';
         }
 
         // 계엄령 중 대체 입법 경로 — 선택된 법안을 의회 표결 없이 국무회의 의결로 즉시 통과시킴
+        // (의회가 정지된 경우에만 필요 — 정지되지 않았다면 의회에서 정상적으로 표결하면 됨)
         function passViaCabinetCouncil() {
-            if(!emergencyPowers.martialLaw.active) { showCustomAlert('계엄령이 선포된 상태에서만 사용할 수 있습니다.'); return; }
+            if(!(emergencyPowers.martialLaw.active && emergencyPowers.martialLaw.suspendParliament)) { showCustomAlert('의회가 정지된 계엄령 상태에서만 사용할 수 있습니다.'); return; }
             if(!activeBillId) { showCustomAlert('심의할 법안을 먼저 선택하세요.'); return; }
             const bill = bills.find(b => b.id === activeBillId);
             if(!bill) return;
@@ -1146,7 +1179,7 @@
         }
 
         function isParliamentSuspended() {
-            if(emergencyPowers.martialLaw.active) { showCustomAlert('계엄령 선포 중에는 의회 표결을 진행할 수 없습니다.\n법안은 국무회의를 통해 통과시킬 수 있습니다.'); return true; }
+            if(emergencyPowers.martialLaw.active && emergencyPowers.martialLaw.suspendParliament) { showCustomAlert('계엄령으로 의회가 정지된 상태에서는 표결을 진행할 수 없습니다.\n법안은 국무회의를 통해 통과시킬 수 있습니다.'); return true; }
             return false;
         }
 
@@ -1167,7 +1200,15 @@
                         const shadow = st.active ? `0 0 10px ${cfg.color}` : 'none';
                         const locked = key === 'dissolution' && st.active;
                         const label = locked ? `! ${cfg.label} 선포됨 (총선으로만 해제) !` : `! ${cfg.label} ${st.active ? '해제' : '선포'} !`;
-                        return `<button class="add-btn" style="margin-top:8px;border-style:solid;border-color:${cfg.color};color:${cfg.color};text-shadow:0 0 4px ${cfg.color};background:${bg};box-shadow:${shadow};${locked?'cursor:default;opacity:0.85;':''}" onclick="toggleEmergencyActive('${key}')">${label}</button>`;
+                        const btn = `<button class="add-btn" style="margin-top:8px;border-style:solid;border-color:${cfg.color};color:${cfg.color};text-shadow:0 0 4px ${cfg.color};background:${bg};box-shadow:${shadow};${locked?'cursor:default;opacity:0.85;':''}" onclick="toggleEmergencyActive('${key}')">${label}</button>`;
+                        if(key === 'martialLaw') {
+                            return btn + `
+                            <label style="display:flex;align-items:flex-start;gap:6px;margin-top:6px;cursor:${st.active?'default':'pointer'};color:#888;font-size:0.76rem;line-height:1.4;">
+                                <input type="checkbox" ${st.suspendParliament?'checked':''} ${st.active?'disabled':''} onchange="setMartialLawSuspendParliament(this.checked)" style="margin-top:2px;flex-shrink:0;">
+                                <span>의회 정지 — 체크 후 선포하면 의회가 정지(화면 어둡게, 표결 불가)됩니다. 체크하지 않으면 의회는 정상 작동하고, 계엄 해제 결의안이 자동으로 상정됩니다.</span>
+                            </label>`;
+                        }
+                        return btn;
                     }).join('');
             });
         }
@@ -3689,7 +3730,7 @@
             pmNominee = { name: '', photo: '', partyId: null, linkedSeat: null, ...(cfg.pmNominee || {}) };
             pmNomineeBillId = cfg.pmNomineeBillId ?? null;
             Object.keys(EMERGENCY_POWERS).forEach(k => {
-                emergencyPowers[k] = { holder: 'none', active: false, ...(cfg.emergencyPowers?.[k] || {}) };
+                emergencyPowers[k] = { holder: 'none', active: false, ...(k==='martialLaw'?{suspendParliament:false}:{}), ...(cfg.emergencyPowers?.[k] || {}) };
             });
             ['house','senate','third'].forEach(ch => {
                 chamberLeaders[ch] = {
@@ -10248,6 +10289,7 @@
             if(currentSubTab?.legislation === 'bill') renderBillList();
             checkPmConfirmationBills();
             checkNoConfidenceBills();
+            checkMartialLawLiftBills();
             renderCabinetDisplay();
         }
 
