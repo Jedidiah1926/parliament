@@ -34,36 +34,38 @@
         <div style="background:#0a0c10;border:1px solid var(--tno-neon);box-shadow:0 0 16px color-mix(in srgb, var(--tno-neon) 30%, transparent);padding:20px;width:300px;max-width:90vw;font-family:'NeoDunggeunmo','VT323',monospace;">
             <div style="color:var(--tno-neon);font-size:1rem;margin-bottom:16px;letter-spacing:1px;">▌ 내보내기</div>
 
-            <div style="color:#888;font-size:0.8rem;margin-bottom:6px;">최상단에 포함</div>
-            <div style="display:flex;flex-wrap:wrap;gap:6px 14px;margin-bottom:16px;">
-                <label style="display:flex;align-items:center;gap:6px;cursor:pointer;color:#ccc;font-size:0.8rem;">
-                    <input type="checkbox" id="exportIncludeFlag"> 국기
-                </label>
-                <label style="display:flex;align-items:center;gap:6px;cursor:pointer;color:#ccc;font-size:0.8rem;">
-                    <input type="checkbox" id="exportIncludeName"> 국가 이름
-                </label>
-                <label style="display:flex;align-items:center;gap:6px;cursor:pointer;color:#ccc;font-size:0.8rem;">
-                    <input type="checkbox" id="exportIncludeDate"> 날짜
-                </label>
-                <label style="display:flex;align-items:center;gap:6px;cursor:pointer;color:#ccc;font-size:0.8rem;">
-                    <input type="checkbox" id="exportIncludeSession"> 회기
-                </label>
-            </div>
+            <div id="exportHeaderStatsSection">
+                <div style="color:#888;font-size:0.8rem;margin-bottom:6px;">최상단에 포함</div>
+                <div style="display:flex;flex-wrap:wrap;gap:6px 14px;margin-bottom:16px;">
+                    <label style="display:flex;align-items:center;gap:6px;cursor:pointer;color:#ccc;font-size:0.8rem;">
+                        <input type="checkbox" id="exportIncludeFlag"> 국기
+                    </label>
+                    <label style="display:flex;align-items:center;gap:6px;cursor:pointer;color:#ccc;font-size:0.8rem;">
+                        <input type="checkbox" id="exportIncludeName"> 국가 이름
+                    </label>
+                    <label style="display:flex;align-items:center;gap:6px;cursor:pointer;color:#ccc;font-size:0.8rem;">
+                        <input type="checkbox" id="exportIncludeDate"> 날짜
+                    </label>
+                    <label style="display:flex;align-items:center;gap:6px;cursor:pointer;color:#ccc;font-size:0.8rem;">
+                        <input type="checkbox" id="exportIncludeSession"> 회기
+                    </label>
+                </div>
 
-            <label style="display:flex;align-items:center;gap:8px;margin-bottom:10px;cursor:pointer;color:#ccc;font-size:0.85rem;">
-                <input type="checkbox" id="exportIncludeStats" onchange="onExportIncludeStatsChange()"> 아래 의석 수 등 통계 포함
-            </label>
+                <label style="display:flex;align-items:center;gap:8px;margin-bottom:10px;cursor:pointer;color:#ccc;font-size:0.85rem;">
+                    <input type="checkbox" id="exportIncludeStats" onchange="onExportIncludeStatsChange()"> 아래 의석 수 등 통계 포함
+                </label>
 
-            <div id="exportStatsSubOptions" style="display:none;margin:0 0 16px 22px;">
-                <label style="display:flex;align-items:center;gap:8px;margin-bottom:8px;cursor:pointer;color:#999;font-size:0.8rem;">
-                    <input type="checkbox" id="exportIncludePhotos" checked> 당수/로고 사진 포함
-                </label>
-                <label style="display:flex;align-items:center;gap:8px;margin-bottom:8px;cursor:pointer;color:#999;font-size:0.8rem;">
-                    <input type="checkbox" id="exportExpandIndependents"> 무소속 펼치기
-                </label>
-                <label style="display:flex;align-items:center;gap:8px;cursor:pointer;color:#999;font-size:0.8rem;">
-                    <input type="checkbox" id="exportIncludeExtraParties"> 원외정당 포함하기
-                </label>
+                <div id="exportStatsSubOptions" style="display:none;margin:0 0 16px 22px;">
+                    <label style="display:flex;align-items:center;gap:8px;margin-bottom:8px;cursor:pointer;color:#999;font-size:0.8rem;">
+                        <input type="checkbox" id="exportIncludePhotos" checked> 당수/로고 사진 포함
+                    </label>
+                    <label style="display:flex;align-items:center;gap:8px;margin-bottom:8px;cursor:pointer;color:#999;font-size:0.8rem;">
+                        <input type="checkbox" id="exportExpandIndependents"> 무소속 펼치기
+                    </label>
+                    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;color:#999;font-size:0.8rem;">
+                        <input type="checkbox" id="exportIncludeExtraParties"> 원외정당 포함하기
+                    </label>
+                </div>
             </div>
 
             <div style="color:#888;font-size:0.8rem;margin-bottom:6px;">형식</div>
@@ -690,6 +692,13 @@
 
                     <!-- 총선 -->
                     <div id="innerContentElecGeneral" class="sub-tab-content active">
+                    <!-- 총리직선제가 켜져 있을 때만 표시 — 이번 총선 탭에서 의원 선거를 할지 총리 선거를 할지 선택 -->
+                    <div class="system-radio-group" id="elecKindToggleGroup" style="display:none;">
+                        <button type="button" class="system-radio-btn active" id="elecKindMemberBtn" onclick="setElectionKind('member')">의원 선거</button>
+                        <button type="button" class="system-radio-btn" id="elecKindPmBtn" onclick="setElectionKind('pm')">총리 선거</button>
+                    </div>
+
+                    <div id="electionKindMemberWrap">
                     <div style="display:grid;grid-template-columns:1fr 90px;gap:8px;margin-bottom:10px;">
                         <div>
                             <label style="color:#888;font-size:0.8rem;margin-bottom:3px;">선거 제목</label>
@@ -797,6 +806,29 @@
                                 style="flex:1;background:transparent;border:1px solid var(--tno-neon);color:var(--tno-neon);padding:9px;font-family:inherit;font-size:0.9rem;cursor:pointer;">↺ 재개표</button>
                         </div>
                     </div>
+                    </div><!-- end electionKindMemberWrap -->
+
+                    <!-- 총리 선거 (총리직선제 활성화 시) -->
+                    <div id="electionKindPmWrap" style="display:none;">
+                        <div style="display:grid;grid-template-columns:1fr 90px;gap:8px;margin-bottom:10px;">
+                            <div>
+                                <label style="color:#888;font-size:0.8rem;margin-bottom:3px;">선거 제목</label>
+                                <input type="text" id="pmElecTitle" placeholder="예: 제1회 총리 선거" style="width:100%;box-sizing:border-box;">
+                            </div>
+                            <div>
+                                <label style="color:#888;font-size:0.8rem;margin-bottom:3px;">연도</label>
+                                <input type="number" id="pmElecYear" placeholder="1952" style="width:100%;box-sizing:border-box;">
+                            </div>
+                        </div>
+                        <div style="background:#0a0c10;border:1px solid #2a2a2a;padding:8px 10px;margin-bottom:10px;font-size:0.78rem;color:#888;line-height:1.7;">
+                            선거 방식: <span id="pmElecModeSummary" style="color:var(--tno-gold);">단순 다수 대표제</span>
+                            &nbsp;|&nbsp; 기준 원: <span id="pmElecChamberSummary" style="color:var(--tno-gold);">하원</span>
+                            <span style="color:#444;">(선거 &gt; 설정 탭에서 변경 — 대선과 방식을 공유합니다)</span>
+                        </div>
+                        <button id="pmElecRunBtn" onclick="runPmElection()"
+                            style="background:var(--tno-neon);color:#000;font-weight:bold;border:none;width:100%;padding:14px;font-size:1.3rem;letter-spacing:2px;box-shadow:0 0 10px var(--tno-neon);cursor:pointer;font-family:inherit;">>> 개표 시작 <<</button>
+                        <div id="pmElecResultPanel" style="display:none;margin-top:10px;"></div>
+                    </div>
                     </div><!-- end innerContentElecGeneral -->
 
                     <!-- 설정 -->
@@ -817,6 +849,10 @@
                                 <button type="button" class="system-radio-btn" id="presElecChamberSenateBtn" onclick="setPresElectionChamberBasis('senate')" style="display:none;">상원</button>
                                 <button type="button" class="system-radio-btn" id="presElecChamberThirdBtn" onclick="setPresElectionChamberBasis('third')" style="display:none;">삼원</button>
                             </div>
+                        </div>
+                        <div style="margin-top:20px;padding-top:14px;border-top:1px solid #222;">
+                            <label style="color:#888;font-size:0.8rem;margin-bottom:6px;display:block;">후보 설정 <span style="color:#555;font-weight:normal;">— 기본값은 당수, 의원 연결 또는 직접 입력으로 다른 인물을 세울 수 있습니다 (대선/총리 선거 공용)</span></label>
+                            <div id="electionCandidatesConfig"></div>
                         </div>
                     </div>
                 </div><!-- end contentElection -->
@@ -1000,6 +1036,7 @@
                             <button type="button" class="system-radio-btn" id="govTypePresidentialBtn" onclick="setGovType('presidential')">대통령제</button>
                             <button type="button" class="system-radio-btn" id="govTypeSemiBtn" onclick="setGovType('semi')">이원집정부제</button>
                             <button type="button" class="system-radio-btn active" id="govTypeParliamentaryBtn" onclick="setGovType('parliamentary')">의원내각제</button>
+                            <button type="button" class="system-radio-btn" id="govTypeCollectiveBtn" onclick="setGovType('collective')">집단지도체제</button>
                         </div>
                     </div>
 
@@ -1009,6 +1046,7 @@
                             <button type="button" class="system-radio-btn active" id="vetoHolderNoneBtn" onclick="setVetoHolder('none')">없음</button>
                             <button type="button" class="system-radio-btn" id="vetoHolderPresidentBtn" onclick="setVetoHolder('president')">대통령</button>
                             <button type="button" class="system-radio-btn" id="vetoHolderPmBtn" onclick="setVetoHolder('pm')">총리</button>
+                            <button type="button" class="system-radio-btn" id="vetoHolderCabinetBtn" onclick="setVetoHolder('cabinet')" style="display:none;">내각</button>
                         </div>
                         <div style="color:#555;font-size:0.72rem;margin-top:4px;">거부권이 있으면, 표결 통과된 법안을 국가 &gt; 입법 탭에서 거부할 수 있습니다</div>
                     </div>
@@ -1020,6 +1058,7 @@
                             <button type="button" class="system-radio-btn active" id="emergencyHolderNoneStateOfEmergency" onclick="setEmergencyHolder('stateOfEmergency','none')">없음</button>
                             <button type="button" class="system-radio-btn" id="emergencyHolderPresidentStateOfEmergency" onclick="setEmergencyHolder('stateOfEmergency','president')">대통령</button>
                             <button type="button" class="system-radio-btn" id="emergencyHolderPmStateOfEmergency" onclick="setEmergencyHolder('stateOfEmergency','pm')">총리</button>
+                            <button type="button" class="system-radio-btn" id="emergencyHolderCabinetStateOfEmergency" onclick="setEmergencyHolder('stateOfEmergency','cabinet')" style="display:none;">내각</button>
                         </div>
                     </div>
 
@@ -1029,6 +1068,7 @@
                             <button type="button" class="system-radio-btn active" id="emergencyHolderNoneDissolution" onclick="setEmergencyHolder('dissolution','none')">없음</button>
                             <button type="button" class="system-radio-btn" id="emergencyHolderPresidentDissolution" onclick="setEmergencyHolder('dissolution','president')">대통령</button>
                             <button type="button" class="system-radio-btn" id="emergencyHolderPmDissolution" onclick="setEmergencyHolder('dissolution','pm')">총리</button>
+                            <button type="button" class="system-radio-btn" id="emergencyHolderCabinetDissolution" onclick="setEmergencyHolder('dissolution','cabinet')" style="display:none;">내각</button>
                         </div>
                     </div>
 
@@ -1038,6 +1078,7 @@
                             <button type="button" class="system-radio-btn active" id="emergencyHolderNoneMartialLaw" onclick="setEmergencyHolder('martialLaw','none')">없음</button>
                             <button type="button" class="system-radio-btn" id="emergencyHolderPresidentMartialLaw" onclick="setEmergencyHolder('martialLaw','president')">대통령</button>
                             <button type="button" class="system-radio-btn" id="emergencyHolderPmMartialLaw" onclick="setEmergencyHolder('martialLaw','pm')">총리</button>
+                            <button type="button" class="system-radio-btn" id="emergencyHolderCabinetMartialLaw" onclick="setEmergencyHolder('martialLaw','cabinet')" style="display:none;">내각</button>
                         </div>
                     </div>
                 </div>
@@ -1077,10 +1118,16 @@
                     <div id="presidentEmergencyPowers"></div>
                 </div>
 
-                <!-- 총리/국무총리: 선출 과정과 불신임 등은 추후 구현 -->
+                <!-- 총리/국무총리 -->
                 <div id="contentPm" class="sub-tab-content">
+                    <label style="cursor:pointer;display:flex;align-items:center;gap:6px;margin-bottom:10px;color:#aaa;font-size:0.85rem;">
+                        <input type="checkbox" id="pmDirectElectionCheckbox" onchange="setPmDirectElectionEnabled(this.checked)">
+                        총리직선제 <span style="color:#555;font-size:0.75rem;">(체크 시 국가 &gt; 선거 &gt; 총선에서 "총리 선거"를 실행할 수 있습니다)</span>
+                    </label>
+                    <div id="pmSelectionMethodHint" style="color:#555;font-size:0.72rem;margin-bottom:10px;"></div>
+
                     <div style="margin-top:16px;">
-                        <label id="pmSectionLabel" style="color:#888;font-size:0.8rem;margin-bottom:6px;display:block;">총리 (선출 과정과 불신임 등)</label>
+                        <label id="pmSectionLabel" style="color:#888;font-size:0.8rem;margin-bottom:6px;display:block;">총리</label>
                         <div style="display:flex;gap:10px;align-items:stretch;">
                             <div style="display:flex;flex-direction:column;align-items:center;gap:4px;flex-shrink:0;">
                                 <div class="leader-photo-box" data-ratio="0.8" title="클릭하여 사진 업로드" id="pmPhotoBox" style="width:52px;height:65px;">
@@ -1102,19 +1149,93 @@
                                 <select id="pmMemberPicker" onchange="linkPmToMember(this.value)"
                                     style="width:100%;box-sizing:border-box;background:#000;border:1px solid #333;color:#888;font-family:inherit;font-size:0.78rem;padding:4px;"></select>
                                 <div id="pmLinkedBadge" style="display:none;align-items:center;gap:6px;color:#6cf;font-size:0.75rem;">
-                                    🔗 의원과 연결됨 — 이름·사진·당적 자동 반영
-                                    <button onclick="unlinkPm()" style="background:transparent;border:1px solid #333;color:#888;font-family:inherit;font-size:0.72rem;padding:2px 6px;cursor:pointer;">연결 해제</button>
+                                    <span id="pmLinkedBadgeText">🔗 의원과 연결됨 — 이름·사진·당적 자동 반영</span>
+                                    <button id="pmUnlinkBtn" onclick="unlinkPm()" style="background:transparent;border:1px solid #333;color:#888;font-family:inherit;font-size:0.72rem;padding:2px 6px;cursor:pointer;">연결 해제</button>
                                 </div>
                                 <button id="pmPhotoRemoveBtn" onclick="removePmPhoto()" style="display:none;background:transparent;border:1px solid #333;color:#555;font-family:inherit;font-size:0.8rem;padding:3px 8px;cursor:pointer;text-align:left;">✕ 사진 제거</button>
                             </div>
                         </div>
                     </div>
+
+                    <!-- 대통령 임명제: 후보 지명 → 의회 심의 상정 -->
+                    <div id="pmNomineeSection" style="display:none;margin-top:16px;padding-top:14px;border-top:1px solid #222;">
+                        <label style="color:#888;font-size:0.8rem;margin-bottom:6px;display:block;">총리 후보 지명 (대통령 임명제)</label>
+                        <div id="pmNomineePendingHint" style="display:none;color:var(--tno-gold);font-size:0.78rem;margin-bottom:8px;padding:6px 8px;background:#0a0c10;border:1px solid #665500;"></div>
+                        <div style="display:flex;gap:10px;align-items:stretch;">
+                            <div style="display:flex;flex-direction:column;align-items:center;gap:4px;flex-shrink:0;">
+                                <div class="leader-photo-box" data-ratio="0.8" title="클릭하여 사진 업로드" id="pmNomineePhotoBox" style="width:52px;height:65px;">
+                                    <div class="photo-ph" id="pmNomineePhotoPh">👤</div>
+                                    <img id="pmNomineePhotoImg" alt="총리 후보" style="display:none;">
+                                    <input type="file" accept="image/*" onchange="uploadPmNomineePhoto(this)">
+                                </div>
+                                <span style="font-size:0.75rem;color:#444;flex-shrink:0;">사진 업로드</span>
+                            </div>
+                            <div style="flex:1;display:flex;flex-direction:column;gap:6px;min-width:0;">
+                                <input type="text" id="pmNomineeNameInput" placeholder="후보 이름"
+                                    style="background:#000;border:1px solid #2a2a2a;color:#e0e0e0;font-family:inherit;font-size:0.95rem;padding:5px 8px;width:100%;box-sizing:border-box;"
+                                    oninput="updatePmNomineeField('name',this.value)">
+                                <div style="display:flex;align-items:center;gap:6px;">
+                                    <span id="pmNomineePartyDot" style="width:9px;height:9px;border-radius:50%;flex-shrink:0;background:#666;"></span>
+                                    <select id="pmNomineePartySelect" onchange="updatePmNomineeField('partyId',this.value?parseInt(this.value):null)"
+                                        style="flex:1;min-width:0;background:#000;border:1px solid #333;color:var(--tno-gold);font-family:inherit;font-size:0.85rem;padding:4px;"></select>
+                                </div>
+                                <select id="pmNomineeMemberPicker" onchange="linkPmNomineeToMember(this.value)"
+                                    style="width:100%;box-sizing:border-box;background:#000;border:1px solid #333;color:#888;font-family:inherit;font-size:0.78rem;padding:4px;"></select>
+                                <div id="pmNomineeLinkedBadge" style="display:none;align-items:center;gap:6px;color:#6cf;font-size:0.75rem;">
+                                    🔗 의원과 연결됨 — 이름·사진·당적 자동 반영
+                                    <button onclick="unlinkPmNominee()" style="background:transparent;border:1px solid #333;color:#888;font-family:inherit;font-size:0.72rem;padding:2px 6px;cursor:pointer;">연결 해제</button>
+                                </div>
+                                <button onclick="submitPmNominationBill()" style="background:var(--tno-neon);color:#000;border:none;padding:8px;font-family:inherit;font-size:0.85rem;cursor:pointer;letter-spacing:1px;">지명 → 의회 심의 상정</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 내각 불신임 (의원내각제/이원집정부제 전용) -->
+                    <div id="noConfidenceSection" style="display:none;margin-top:16px;padding-top:14px;border-top:1px solid #222;">
+                        <label style="color:#888;font-size:0.8rem;margin-bottom:6px;display:block;">내각 불신임</label>
+                        <button onclick="submitNoConfidenceBill()" style="width:100%;background:transparent;border:1px solid var(--tno-alert);color:var(--tno-alert);padding:9px;font-family:inherit;font-size:0.9rem;cursor:pointer;">! <span id="noConfidenceBtnLabel">총리 불신임안</span> 발의 !</button>
+                        <div style="color:#555;font-size:0.72rem;margin-top:4px;">가결되면 국가 &gt; 입법 탭에서 확인할 수 있으며, 통과 시 현재 총리가 해임됩니다</div>
+                    </div>
+
                     <div id="pmEmergencyPowers"></div>
                 </div>
 
-                <!-- 내각: 행정부 수반 산하 국무위원/내각 구성원 -->
+                <!-- 내각: 행정부 수반 산하 국무위원/내각 구성원 (집단지도체제일 경우 의장 + 장관도 여기서 관리) -->
                 <div id="contentCabinetmembers" class="sub-tab-content">
-                    <button class="add-btn" onclick="addCabinetMember()">[+] 국무위원 추가</button>
+                    <!-- 집단지도체제 전용: 의장 -->
+                    <div id="chairSection" style="display:none;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid #222;">
+                        <label style="color:#888;font-size:0.8rem;margin-bottom:6px;display:block;">의장</label>
+                        <div style="display:flex;gap:10px;align-items:stretch;">
+                            <div style="display:flex;flex-direction:column;align-items:center;gap:4px;flex-shrink:0;">
+                                <div class="leader-photo-box" data-ratio="0.8" title="클릭하여 사진 업로드" id="chairPhotoBox" style="width:52px;height:65px;">
+                                    <div class="photo-ph" id="chairPhotoPh">👤</div>
+                                    <img id="chairPhotoImg" alt="의장" style="display:none;">
+                                    <input type="file" accept="image/*" onchange="uploadChairPhoto(this)">
+                                </div>
+                                <span style="font-size:0.75rem;color:#444;flex-shrink:0;">사진 업로드</span>
+                            </div>
+                            <div style="flex:1;display:flex;flex-direction:column;gap:6px;min-width:0;">
+                                <input type="text" id="chairNameInput" placeholder="의장 이름"
+                                    style="background:#000;border:1px solid #2a2a2a;color:#e0e0e0;font-family:inherit;font-size:0.95rem;padding:5px 8px;width:100%;box-sizing:border-box;"
+                                    oninput="updateChairField('name',this.value)">
+                                <div style="display:flex;align-items:center;gap:6px;">
+                                    <span id="chairPartyDot" style="width:9px;height:9px;border-radius:50%;flex-shrink:0;background:#666;"></span>
+                                    <select id="chairPartySelect" onchange="updateChairField('partyId',this.value?parseInt(this.value):null)"
+                                        style="flex:1;min-width:0;background:#000;border:1px solid #333;color:var(--tno-gold);font-family:inherit;font-size:0.85rem;padding:4px;"></select>
+                                </div>
+                                <select id="chairMemberPicker" onchange="linkChairToMember(this.value)"
+                                    style="width:100%;box-sizing:border-box;background:#000;border:1px solid #333;color:#888;font-family:inherit;font-size:0.78rem;padding:4px;"></select>
+                                <div id="chairLinkedBadge" style="display:none;align-items:center;gap:6px;color:#6cf;font-size:0.75rem;">
+                                    🔗 의원과 연결됨 — 이름·사진·당적 자동 반영
+                                    <button onclick="unlinkChair()" style="background:transparent;border:1px solid #333;color:#888;font-family:inherit;font-size:0.72rem;padding:2px 6px;cursor:pointer;">연결 해제</button>
+                                </div>
+                                <button id="chairPhotoRemoveBtn" onclick="removeChairPhoto()" style="display:none;background:transparent;border:1px solid #333;color:#555;font-family:inherit;font-size:0.8rem;padding:3px 8px;cursor:pointer;text-align:left;">✕ 사진 제거</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="cabinetEmergencyPowers"></div>
+
+                    <button class="add-btn" id="addCabinetMemberBtn" onclick="addCabinetMember()">[+] 국무위원 추가</button>
                     <div id="cabinetMembersList" style="margin-top:10px;"></div>
                 </div>
             </div>
@@ -1213,7 +1334,11 @@
                 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
                     <h3 style="margin:0;">CABINET</h3>
                 </div>
-                <div id="cabinetDisplayGrid" style="display:flex;flex-wrap:wrap;gap:22px;"></div>
+                <svg id="cabinetDisplaySvg" data-export-kind="cabinet" xmlns="http://www.w3.org/2000/svg" width="100%" style="display:block;">
+                    <foreignObject x="0" y="0" width="100%" height="100%">
+                        <div xmlns="http://www.w3.org/1999/xhtml" id="cabinetDisplayGrid" style="display:flex;flex-wrap:wrap;gap:22px;"></div>
+                    </foreignObject>
+                </svg>
             </div>
         </div>
 
