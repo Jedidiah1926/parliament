@@ -259,6 +259,9 @@
         }
         input[type="checkbox"]:hover { border-color: var(--tno-neon); }
         input[type="checkbox"]:checked { background: var(--tno-neon); border-color: var(--tno-neon); }
+        /* 계엄령 "의회 정지" 체크박스 — 테마색 대신 계엄령 버튼과 같은 경고색으로 표시 */
+        input[type="checkbox"].chk-alert:hover { border-color: var(--tno-alert); }
+        input[type="checkbox"].chk-alert:checked { background: var(--tno-alert); border-color: var(--tno-alert); }
         input[type="checkbox"]:checked::after {
             content: "";
             position: absolute;
@@ -381,6 +384,16 @@
             border-color: var(--tno-neon);
             background: color-mix(in srgb, var(--tno-neon) 7%, transparent);
             box-shadow: 0 -2px 8px var(--tno-neon-dim);
+        }
+        /* 부정선거 탭 버튼 — 선택 여부와 무관하게 항상 경고색(빨강)으로 표시 */
+        .sub-tab-btn-danger { color: var(--tno-alert); border-color: #663333; }
+        .sub-tab-btn-danger:hover { color: var(--tno-alert); border-color: var(--tno-alert); }
+        .sub-tab-btn-danger.active {
+            color: var(--tno-alert);
+            border-color: var(--tno-alert);
+            background: color-mix(in srgb, var(--tno-alert) 10%, transparent);
+            box-shadow: 0 -2px 8px color-mix(in srgb, var(--tno-alert) 40%, transparent);
+            text-shadow: 0 0 4px var(--tno-alert);
         }
 
         .sub-tab-content { display: none; }

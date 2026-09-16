@@ -263,6 +263,8 @@
                     <button class="sub-tab-btn" onclick="switchSubTab('nation','legislation')" id="subTabLegislation">입법</button>
                     <button class="sub-tab-btn" onclick="switchSubTab('nation','election')" id="subTabElection">선거</button>
                     <button class="sub-tab-btn" onclick="switchSubTab('nation','record')" id="subTabRecord">기록</button>
+                    <!-- onclick="switchSubTab('nation','fraud')" — 1.5.S 업데이트시 반영 -->
+                    <button class="sub-tab-btn sub-tab-btn-danger" onclick="openFraudTabGated()" id="subTabFraud">⚠</button>
                 </div>
 
                 <!-- 설정 탭: 국가 식별 정보 + 전역 표시 옵션 -->
@@ -763,8 +765,8 @@
                             </div>
                         </div>
                         <div style="background:#0a0c10;border:1px solid #2a2a2a;padding:8px 10px;margin-bottom:10px;font-size:0.78rem;color:#888;line-height:1.7;">
-                            선거 방식: <span id="presElecModeSummary" style="color:var(--tno-gold);">단순 다수 대표제</span>
-                            &nbsp;|&nbsp; 기준 원: <span id="presElecChamberSummary" style="color:var(--tno-gold);">하원</span>
+                            선거 방식: <span id="presElecModeSummary" style="color:var(--tno-gold);">단순 다수 대표제</span><br>
+                            기준 원: <span id="presElecChamberSummary" style="color:var(--tno-gold);">하원</span>
                             <span style="color:#444;">(설정 탭에서 변경)</span>
                         </div>
                         <button id="presElecRunBtn" onclick="runPresidentialElection()"
@@ -903,8 +905,8 @@
                             </div>
                         </div>
                         <div style="background:#0a0c10;border:1px solid #2a2a2a;padding:8px 10px;margin-bottom:10px;font-size:0.78rem;color:#888;line-height:1.7;">
-                            선거 방식: <span id="pmElecModeSummary" style="color:var(--tno-gold);">단순 다수 대표제</span>
-                            &nbsp;|&nbsp; 기준 원: <span id="pmElecChamberSummary" style="color:var(--tno-gold);">하원</span>
+                            선거 방식: <span id="pmElecModeSummary" style="color:var(--tno-gold);">단순 다수 대표제</span><br>
+                            기준 원: <span id="pmElecChamberSummary" style="color:var(--tno-gold);">하원</span>
                             <span style="color:#444;">(선거 &gt; 설정 탭에서 변경 — 대선과 방식을 공유합니다)</span>
                         </div>
                         <button id="pmElecRunBtn" onclick="runPmElection()"
@@ -916,9 +918,9 @@
                     <!-- 설정 -->
                     <div id="innerContentElecSettings" class="sub-tab-content">
                         <div style="margin-top:6px;">
-                            <label style="color:#888;font-size:0.8rem;margin-bottom:6px;display:block;">대선 방식</label>
+                            <label style="color:#888;font-size:0.8rem;margin-bottom:6px;display:block;">대선·총리 선거 방식 <span style="color:#555;font-weight:normal;">— 총리직선제일 때 총리 선거에도 그대로 적용됩니다</span></label>
                             <div class="system-radio-group">
-                                <button type="button" class="system-radio-btn active" id="presElecModePluralityBtn" onclick="setPresElectionMode('plurality')">단순 다수 대표제</button>
+                                <button type="button" class="system-radio-btn active" id="presElecModePluralityBtn" onclick="setPresElectionMode('plurality')">단순 다수<br>대표제</button>
                                 <button type="button" class="system-radio-btn" id="presElecModeRunoffBtn" onclick="setPresElectionMode('runoff')">결선투표제</button>
                                 <button type="button" class="system-radio-btn" id="presElecModeElectoralBtn" onclick="setPresElectionMode('electoral')">선거인단제</button>
                             </div>
@@ -961,6 +963,12 @@
                         <div id="elecRecordList" style="margin-top:8px;"></div>
                     </div>
                 </div><!-- end contentRecord -->
+
+                <!-- 부정선거 탭: 정당별로 부정선거 시도를 설정 (정당 탭에는 노출하지 않음) -->
+                <div id="contentFraud" class="sub-tab-content">
+                    <div style="color:#664444;font-size:0.78rem;margin-bottom:10px;line-height:1.5;">정당별로 다음 총선 개표 1회에 한해 부정선거를 시도할 수 있습니다. 발각되면 활동 금지 처분을 받습니다.</div>
+                    <div id="fraudPartyList"></div>
+                </div><!-- end contentFraud -->
             </div><!-- end mainContentNation -->
 
             <!-- ===== 선거 그룹 ===== -->
@@ -1139,9 +1147,9 @@
                         <label style="color:#888;font-size:0.8rem;margin-bottom:6px;display:block;">정부 형태</label>
                         <div class="system-radio-group">
                             <button type="button" class="system-radio-btn" id="govTypePresidentialBtn" onclick="setGovType('presidential')">대통령제</button>
-                            <button type="button" class="system-radio-btn" id="govTypeSemiBtn" onclick="setGovType('semi')">이원집정부제</button>
+                            <button type="button" class="system-radio-btn" id="govTypeSemiBtn" onclick="setGovType('semi')">이원<br>집정부제</button>
                             <button type="button" class="system-radio-btn active" id="govTypeParliamentaryBtn" onclick="setGovType('parliamentary')">의원내각제</button>
-                            <button type="button" class="system-radio-btn" id="govTypeCollectiveBtn" onclick="setGovType('collective')">집단지도체제</button>
+                            <button type="button" class="system-radio-btn" id="govTypeCollectiveBtn" onclick="setGovType('collective')">집단<br>지도체제</button>
                         </div>
                     </div>
 
@@ -1293,6 +1301,13 @@
                         </div>
                     </div>
 
+                    <!-- 다수당 방식 전용: 의석 변동만으로 총리가 바뀌지 않도록 고정/고정 해제 (내각 불신임 가결 시 자동 해제) -->
+                    <div id="pmMajorityLockSection" style="display:none;margin-top:12px;">
+                        <button id="pmMajorityLockBtn" onclick="lockPmMajority()" style="width:100%;background:transparent;border:1px solid var(--tno-gold);color:var(--tno-gold);padding:7px;font-family:inherit;font-size:0.82rem;cursor:pointer;">🔒 현재 총리로 고정 (의석 변동에 영향받지 않음)</button>
+                        <button id="pmMajorityUnlockBtn" onclick="unlockPmMajority()" style="display:none;width:100%;background:transparent;border:1px solid #888;color:#888;padding:7px;font-family:inherit;font-size:0.82rem;cursor:pointer;">🔓 고정 해제 (다시 다수당 대표를 실시간 반영)</button>
+                        <div id="pmMajorityLockedNote" style="display:none;color:var(--tno-gold);font-size:0.72rem;margin-top:4px;">🔒 총리가 고정되어 있습니다 — 다수당이 바뀌어도 총리는 유지되며, 내각 불신임이 가결되면 공석이 됩니다.</div>
+                    </div>
+
                     <!-- 부총리 (여러 명 추가 가능, 기본 0명) -->
                     <div style="margin-top:16px;padding-top:14px;border-top:1px solid #222;">
                         <label style="color:#888;font-size:0.8rem;margin-bottom:6px;display:block;">부총리</label>
@@ -1421,6 +1436,7 @@
                             style="background:transparent;color:#555;border:1px solid #333;padding:3px 9px;font-family:inherit;font-size:0.78rem;cursor:pointer;">지역구</button>
                     </div>
                 </div>
+                <div id="houseLeadersDisplay"></div>
                 <div id="houseViewArcWrap"><canvas id="houseCanvas" style="width:100%;display:block;"></canvas></div>
                 <div id="houseViewDistrictWrap" style="display:none;">
                     <canvas id="houseDistrictCanvas" style="width:100%;height:500px;background:#0a0c10;border:1px solid #222;display:block;"></canvas>
@@ -1442,6 +1458,7 @@
                             style="background:transparent;color:#555;border:1px solid #333;padding:3px 9px;font-family:inherit;font-size:0.78rem;cursor:pointer;">지역구</button>
                     </div>
                 </div>
+                <div id="senateLeadersDisplay"></div>
                 <div id="senateViewArcWrap"><canvas id="senateCanvas" style="width:100%;display:block;"></canvas></div>
                 <div id="senateViewDistrictWrap" style="display:none;">
                     <canvas id="senateDistrictCanvas" style="width:100%;height:500px;background:#0a0c10;border:1px solid #222;display:block;"></canvas>
@@ -1463,6 +1480,7 @@
                             style="background:transparent;color:#555;border:1px solid #333;padding:3px 9px;font-family:inherit;font-size:0.78rem;cursor:pointer;">지역구</button>
                     </div>
                 </div>
+                <div id="thirdLeadersDisplay"></div>
                 <div id="thirdViewArcWrap"><canvas id="thirdCanvas" style="width:100%;display:block;"></canvas></div>
                 <div id="thirdViewDistrictWrap" style="display:none;">
                     <canvas id="thirdDistrictCanvas" style="width:100%;height:500px;background:#0a0c10;border:1px solid #222;display:block;"></canvas>
