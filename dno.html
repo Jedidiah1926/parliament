@@ -1207,12 +1207,21 @@
                     </div>
 
                     <div style="margin-top:20px;">
-                        <label style="color:#888;font-size:0.8rem;margin-bottom:6px;display:block;">의회 해산 권한 주체</label>
-                        <div class="system-radio-group">
-                            <button type="button" class="system-radio-btn active" id="emergencyHolderNoneDissolution" onclick="setEmergencyHolder('dissolution','none')">없음</button>
-                            <button type="button" class="system-radio-btn" id="emergencyHolderPresidentDissolution" onclick="setEmergencyHolder('dissolution','president')">대통령</button>
-                            <button type="button" class="system-radio-btn" id="emergencyHolderPmDissolution" onclick="setEmergencyHolder('dissolution','pm')">총리</button>
-                            <button type="button" class="system-radio-btn" id="emergencyHolderCabinetDissolution" onclick="setEmergencyHolder('dissolution','cabinet')" style="display:none;">내각</button>
+                        <div id="dissolutionHolderGroup">
+                            <label style="color:#888;font-size:0.8rem;margin-bottom:6px;display:block;">의회 해산 권한 주체</label>
+                            <div class="system-radio-group">
+                                <button type="button" class="system-radio-btn active" id="emergencyHolderNoneDissolution" onclick="setEmergencyHolder('dissolution','none')">없음</button>
+                                <button type="button" class="system-radio-btn" id="emergencyHolderPresidentDissolution" onclick="setEmergencyHolder('dissolution','president')">대통령</button>
+                                <button type="button" class="system-radio-btn" id="emergencyHolderPmDissolution" onclick="setEmergencyHolder('dissolution','pm')">총리</button>
+                                <button type="button" class="system-radio-btn" id="emergencyHolderCabinetDissolution" onclick="setEmergencyHolder('dissolution','cabinet')" style="display:none;">내각</button>
+                            </div>
+                        </div>
+                        <!-- 이원집정부제 + 양원제 전용: 해산권을 상원(대통령)/하원(총리)으로 분할 -->
+                        <div id="splitDissolutionWrap" style="display:none;margin-top:10px;">
+                            <label style="cursor:pointer;display:flex;align-items:center;gap:6px;color:#aaa;font-size:0.85rem;">
+                                <input type="checkbox" id="splitDissolutionCheckbox" onchange="setSplitDissolutionHolders(this.checked)">
+                                해산권 분할 — 상원 해산: 대통령 / 하원 해산: 총리
+                            </label>
                         </div>
                     </div>
 

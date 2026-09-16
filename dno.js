@@ -55,6 +55,9 @@
         let deputyPms = []; // 부총리 — 여러 명 추가 가능(기본 0명) { id, name, position, photo, partyId, linkedSeat }
         let cabinetMembers = []; // 국무위원/내각 구성원(집단지도체제에서는 "장관") { id, name, position, photo, partyId, linkedSeat }
         let collectiveChair = { name: '', photo: '', partyId: null, linkedSeat: null }; // 집단지도체제: 의장
+        // 이원집정부제 + 양원제 전용: 의회 해산권을 원별로 나눠 대통령=상원 해산, 총리=하원 해산으로 지정 가능
+        // (기본은 꺼짐 — 켜면 기존 단일 "의회 해산" 권한 주체 설정 대신 이 두 개별 권한을 사용)
+        let splitDissolutionHolders = false;
 
         // ── 총리 선출 과정 ──────────────
         let pmDirectElectionEnabled = false; // 총리직선제 체크박스 — 켜면 국가>선거>총선에서 "총리 선거" 실행 가능
@@ -198,6 +201,7 @@
             updatePmRoleLabels();
             applyGovTypeHolderRestrictions();
             applyGovTypeTabVisibility();
+            updateSplitDissolutionUI();
             renderPmSection();
             renderDeputyPmsList();
             renderChairSection();
@@ -1231,11 +1235,17 @@
             stateOfEmergency: { label: '국가 비상사태', color: 'var(--tno-gold)' },
             dissolution:      { label: '의회 해산',     color: '#ff8800' },
             martialLaw:       { label: '계엄령',        color: 'var(--tno-alert)' },
+            // splitDissolutionHolders가 켜졌을 때만 쓰이는 대체 권한 — 주체가 대통령/총리로 고정되어
+            // 선택 버튼이 따로 없고, setSplitDissolutionHolders()가 holder를 직접 지정한다
+            dissolutionSenate: { label: '상원 해산', color: '#ff8800' },
+            dissolutionHouse:  { label: '하원 해산', color: '#ff8800' },
         };
         let emergencyPowers = {
             stateOfEmergency: { holder: 'none', active: false },
             dissolution:      { holder: 'none', active: false },
             martialLaw:       { holder: 'none', active: false, suspendParliament: false },
+            dissolutionSenate: { holder: 'none', active: false },
+            dissolutionHouse:  { holder: 'none', active: false },
         };
 
         // 계엄령으로 의회가 정지됐을 때, 국무회의(대통령/총리·국무총리/부총리/의장/장관·국무위원)가
@@ -1277,35 +1287,41 @@
             cancelBtn.onclick = cleanup;
         }
 
-        // 의회 해산 선포 시 현재 존재하는 모든 원(하원/상원/삼원)의 의석을 전부 비운다 —
-        // 지역구는 궐석 처리(기록 보존), 비례 명단은 초기화, 정당별 의석 수는 0으로
-        function clearAllSeatsForDissolution() {
-            chamberList().forEach(ch => {
-                const seatKey = seatKeyFor(ch);
-                Object.keys(districtMembers[ch] || {}).forEach(key => {
-                    const m = districtMembers[ch][key];
-                    if(m) m.vacant = true;
-                });
-                listMembers[ch] = {};
-                independents = independents.filter(x => !(x.chamber === ch && !x.districtKey));
-                parties.forEach(p => { p[seatKey] = 0; });
+        // 지정된 한 원의 의석을 비운다 — 지역구는 궐석 처리(기록 보존), 비례 명단은 초기화, 정당별 의석 수는 0으로
+        function clearChamberSeatsForDissolution(chamber) {
+            const seatKey = seatKeyFor(chamber);
+            Object.keys(districtMembers[chamber] || {}).forEach(key => {
+                const m = districtMembers[chamber][key];
+                if(m) m.vacant = true;
             });
+            listMembers[chamber] = {};
+            independents = independents.filter(x => !(x.chamber === chamber && !x.districtKey));
+            parties.forEach(p => { p[seatKey] = 0; });
+        }
+
+        // 의회 해산 선포 시 현재 존재하는 모든 원(하원/상원/삼원)의 의석을 전부 비운다
+        function clearAllSeatsForDissolution() {
+            chamberList().forEach(clearChamberSeatsForDissolution);
             simulate();
             refreshUI();
         }
 
+        const DISSOLUTION_KEYS = ['dissolution', 'dissolutionSenate', 'dissolutionHouse'];
+
         function toggleEmergencyActive(key) {
             if(!EMERGENCY_POWERS[key]) return;
             if(emergencyPowers[key].holder === 'none') { showCustomAlert('먼저 권한 주체를 지정하세요.'); return; }
-            // 의회 해산은 한 번 선포되면 임의로 해제할 수 없고, 총선을 새로 반영해야만 풀린다
-            if(key === 'dissolution' && emergencyPowers[key].active) {
-                showCustomAlert('의회 해산은 스스로 해제할 수 없습니다.\n국가 > 선거 > 총선에서 새 선거를 반영해야 해제됩니다.');
+            // 의회 해산(원별 분할 포함)은 한 번 선포되면 임의로 해제할 수 없고, 총선을 새로 반영해야만 풀린다
+            if(DISSOLUTION_KEYS.includes(key) && emergencyPowers[key].active) {
+                showCustomAlert(`${EMERGENCY_POWERS[key].label}은 스스로 해제할 수 없습니다.\n국가 > 선거 > 총선에서 새 선거를 반영해야 해제됩니다.`);
                 return;
             }
             if(!emergencyPowers[key].active) {
                 showCustomConfirm(`${EMERGENCY_POWERS[key].label}을(를) 선포합니다. 계속하시겠습니까?`, () => {
                     emergencyPowers[key].active = true;
                     if(key === 'dissolution') clearAllSeatsForDissolution();
+                    if(key === 'dissolutionSenate') { clearChamberSeatsForDissolution('senate'); simulate(); refreshUI(); }
+                    if(key === 'dissolutionHouse') { clearChamberSeatsForDissolution('house'); simulate(); refreshUI(); }
                     if(key === 'martialLaw' && !emergencyPowers.martialLaw.suspendParliament) submitMartialLawLiftBill();
                     renderEmergencyPowers();
                     applyMartialLawEffects();
@@ -1315,6 +1331,40 @@
             emergencyPowers[key].active = false;
             renderEmergencyPowers();
             applyMartialLawEffects();
+        }
+
+        // 이원집정부제 + 양원제 전용: 의회 해산권을 상원(대통령)/하원(총리)으로 분할할지 여부
+        function setSplitDissolutionHolders(checked) {
+            splitDissolutionHolders = !!checked;
+            if(splitDissolutionHolders) {
+                if(emergencyPowers.dissolution.active) { showCustomAlert('의회 전체가 이미 해산된 상태에서는 해산권을 분할할 수 없습니다.\n총선을 반영해 해제한 뒤 다시 시도하세요.'); splitDissolutionHolders = false; updateSplitDissolutionUI(); return; }
+                emergencyPowers.dissolution.holder = 'none';
+                setEmergencyHolder('dissolutionSenate', 'president');
+                setEmergencyHolder('dissolutionHouse', 'pm');
+            } else {
+                if(emergencyPowers.dissolutionSenate.active || emergencyPowers.dissolutionHouse.active) { showCustomAlert('상원 또는 하원이 이미 해산된 상태에서는 해산권 분할을 끌 수 없습니다.\n총선을 반영해 해제한 뒤 다시 시도하세요.'); splitDissolutionHolders = true; updateSplitDissolutionUI(); return; }
+                setEmergencyHolder('dissolutionSenate', 'none');
+                setEmergencyHolder('dissolutionHouse', 'none');
+            }
+            updateSplitDissolutionUI();
+        }
+
+        // 해산권 분할 체크박스는 이원집정부제 + 양원제일 때만 노출 — 조건이 깨지면(정부 형태/원 구성 변경) 자동으로 꺼짐
+        function updateSplitDissolutionUI() {
+            const eligible = govType === 'semi' && getSystemType() === 'bicameral';
+            if(!eligible && splitDissolutionHolders) {
+                emergencyPowers.dissolutionSenate.holder = 'none';
+                emergencyPowers.dissolutionSenate.active = false;
+                emergencyPowers.dissolutionHouse.holder = 'none';
+                emergencyPowers.dissolutionHouse.active = false;
+                splitDissolutionHolders = false;
+            }
+            const wrap = document.getElementById('splitDissolutionWrap');
+            if(wrap) wrap.style.display = eligible ? '' : 'none';
+            const checkbox = document.getElementById('splitDissolutionCheckbox');
+            if(checkbox) checkbox.checked = splitDissolutionHolders;
+            const singleGroup = document.getElementById('dissolutionHolderGroup');
+            if(singleGroup) singleGroup.style.display = splitDissolutionHolders ? 'none' : '';
         }
 
         // 계엄령 선포 시 "의회 정지" 여부 — 체크 후 선포하면 의회가 shade 처리되고 표결이 정지되며,
@@ -1544,7 +1594,7 @@
                         const st = emergencyPowers[key];
                         const bg = st.active ? `color-mix(in srgb, ${cfg.color} 15%, transparent)` : 'transparent';
                         const shadow = st.active ? `0 0 10px ${cfg.color}` : 'none';
-                        const locked = key === 'dissolution' && st.active;
+                        const locked = DISSOLUTION_KEYS.includes(key) && st.active;
                         const label = locked ? `! ${cfg.label} 선포됨 (총선으로만 해제) !` : `! ${cfg.label} ${st.active ? '해제' : '선포'} !`;
                         const btn = `<button class="add-btn" style="margin-top:8px;border-style:solid;border-color:${cfg.color};color:${cfg.color};text-shadow:0 0 4px ${cfg.color};background:${bg};box-shadow:${shadow};${locked?'cursor:default;opacity:0.85;':''}" onclick="toggleEmergencyActive('${key}')">${label}</button>`;
                         if(key === 'martialLaw') {
@@ -4108,6 +4158,7 @@
                     cabinetRoleLabels: { ...cabinetRoleLabels },
                     pmDirectElectionEnabled: pmDirectElectionEnabled,
                     pmMajorityLocked: pmMajorityLocked,
+                    splitDissolutionHolders: splitDissolutionHolders,
                     pmNominee: pmNominee,
                     pmNomineeBillId: pmNomineeBillId,
                     vetoHolder: vetoHolder,
@@ -4334,6 +4385,7 @@
             cabinetRoleLabels = { president: '', pm: '', deputyPm: '', chair: '', cabinetMember: '', ...(cfg.cabinetRoleLabels || {}) };
             pmDirectElectionEnabled = !!cfg.pmDirectElectionEnabled;
             pmMajorityLocked = !!cfg.pmMajorityLocked;
+            splitDissolutionHolders = !!cfg.splitDissolutionHolders;
             pmNominee = { name: '', photo: '', partyId: null, linkedSeat: null, ...(cfg.pmNominee || {}) };
             pmNomineeBillId = cfg.pmNomineeBillId ?? null;
             Object.keys(EMERGENCY_POWERS).forEach(k => {
@@ -4803,6 +4855,7 @@
             elecUpdateDistrictInfo();
             renderChamberLeaders();
             applyMartialLawEffects();
+            updateSplitDissolutionUI();
         }
 
         function updateNames() {
@@ -9642,9 +9695,15 @@
                 lastCh = ch;
             });
             elecLastResults = {};
-            // 총선 반영으로 의회가 새로 구성되므로, 선포돼 있던 의회 해산은 여기서만 해제된다
+            // 총선 반영으로 의회가 새로 구성되므로, 선포돼 있던 의회 해산은 여기서만 해제된다.
+            // 해산권이 원별로 분할돼 있으면, 이번에 반영된 원(pending)의 해산만 해제된다
             const wasDissolved = emergencyPowers.dissolution.active;
-            if(wasDissolved) { emergencyPowers.dissolution.active = false; renderEmergencyPowers(); }
+            if(wasDissolved) emergencyPowers.dissolution.active = false;
+            const releasedSenate = emergencyPowers.dissolutionSenate.active && pending.includes('senate');
+            if(releasedSenate) emergencyPowers.dissolutionSenate.active = false;
+            const releasedHouse = emergencyPowers.dissolutionHouse.active && pending.includes('house');
+            if(releasedHouse) emergencyPowers.dissolutionHouse.active = false;
+            if(wasDissolved || releasedSenate || releasedHouse) renderEmergencyPowers();
             simulate(); refreshUI();
             if(lastCh) switchDispTab(lastCh);
             if(hadFactions) {
@@ -9652,6 +9711,12 @@
             }
             if(wasDissolved) {
                 showCustomAlert('새 총선이 반영되어 의회 해산 상태가 해제되었습니다.');
+            } else if(releasedSenate && releasedHouse) {
+                showCustomAlert('새 총선이 반영되어 상원·하원 해산 상태가 모두 해제되었습니다.');
+            } else if(releasedSenate) {
+                showCustomAlert('새 총선이 반영되어 상원 해산 상태가 해제되었습니다.');
+            } else if(releasedHouse) {
+                showCustomAlert('새 총선이 반영되어 하원 해산 상태가 해제되었습니다.');
             }
         }
 
