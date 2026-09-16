@@ -6074,9 +6074,10 @@
             `;
         }
 
-        // 부정선거 탭은 기능은 이미 구현되어 있으나, 다음 버전 정식 공개 전까지는 버튼을 눌러도
-        // 접근 권한 부족 안내만 뜨고 실제 탭으로 전환되지 않도록 잠가둔다.
-        // 1.5.S 업데이트시 삭제 (dno.html의 subTabFraud 버튼 onclick을 switchSubTab('nation','fraud')로 되돌릴 것)
+        // dno.html에서는 부정선거 탭 버튼이 이 함수를 통해 잠겨 있지만(1.5.S 전까지 접근 권한 부족 안내만
+        // 표시), teaser.html은 부정선거 기능을 미리 공개하기로 하여 버튼 onclick을 switchSubTab('nation','fraud')로
+        // 되돌려 두었으므로 이 함수는 teaser에서 더 이상 쓰이지 않는다. dno.js와 파일을 동일하게 유지하기 위해
+        // 삭제하지 않고 남겨둠 — dno가 1.5.S에 도달해 이 함수 자체가 지워지면 teaser도 함께 지워질 것
         function openFraudTabGated() {
             showCustomAlert('⚠ 접근 권한이 부족합니다.');
         }
