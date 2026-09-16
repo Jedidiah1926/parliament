@@ -58,6 +58,10 @@
 
         // ── 총리 선출 과정 ──────────────
         let pmDirectElectionEnabled = false; // 총리직선제 체크박스 — 켜면 국가>선거>총선에서 "총리 선거" 실행 가능
+        // 다수당 방식(pmSelectionMethod()==='majority')일 때, 기본은 매번 현재 다수당 대표를 실시간으로
+        // 따라가지만(소수정부 불신임안이 의미 있으려면 의석 변동만으로 총리가 바뀌면 안 되므로), "고정"하면
+        // 그 시점의 총리 정보를 그대로 유지하고 의석 변동에 더 이상 반응하지 않음 — 내각 불신임이 가결되면 자동 해제됨
+        let pmMajorityLocked = false;
         let pmNominee = { name: '', photo: '', partyId: null, linkedSeat: null }; // 대통령 임명제: 심의 상정 전 후보
         let pmNomineeBillId = null; // 현재 의회 심의 중인 임명동의안 bill id (있으면 심의 진행 중)
 
@@ -137,30 +141,36 @@
         }
 
         // 대통령/총리/국무위원 카드에 넣을 "의원에서 불러오기" 드롭다운의 옵션 목록 —
-        // 원별 지역구 당선자 → 비례 의원 → 비례·무소속 순으로 나열
-        function memberPickerOptionsHtml() {
+        // 원별 지역구 당선자 → 비례 의원 → 비례·무소속 순으로 나열.
+        // filterPartyId를 지정하면 그 정당(무소속 항목이면 무소속 의원) 소속 의원만 보여준다 —
+        // 대선/총리선거 후보 설정처럼 특정 정당의 후보 슬롯에 다른 정당 의원이 섞여 나오면 안 되는 곳에서 사용.
+        function memberPickerOptionsHtml(filterPartyId) {
+            const filterIsInd = filterPartyId !== undefined && parties.find(p => p.id === filterPartyId)?.ideologyId === IND_IDEOLOGY_ID;
             const opts = ['<option value="">-- 의원에서 불러오기 --</option>'];
             chamberList().forEach(ch => {
                 const chLabel = chamberDisplayName(ch);
                 districtSortedKeys(ch).forEach((key, i) => {
                     const m = districtMembers[ch][key];
                     if(!m || m.vacant) return;
+                    if(filterPartyId !== undefined && m.partyId !== filterPartyId) return;
                     const party = parties.find(p => p.id === m.partyId);
                     const isInd = party?.ideologyId === IND_IDEOLOGY_ID;
                     const ind = isInd ? independents.find(x => x.chamber === ch && x.districtKey === key) : null;
                     const nm = isInd ? (ind?.name || '무소속') : (m.name || '(이름 없음)');
                     opts.push(`<option value="district:${ch}:${key}">[${chLabel}] #${i+1} ${nm} (${party?.name||''})</option>`);
                 });
-                parties.filter(p => p.ideologyId !== IND_IDEOLOGY_ID).forEach(p => {
+                parties.filter(p => p.ideologyId !== IND_IDEOLOGY_ID && (filterPartyId === undefined || p.id === filterPartyId)).forEach(p => {
                     (listMembers[ch]?.[p.id]||[]).forEach(m => {
                         if(m.vacant) return;
                         opts.push(`<option value="list:${ch}:${p.id}:${m.id}">[${chLabel} 비례] ${m.name||'(이름 없음)'} (${p.name})</option>`);
                     });
                 });
-                independents.filter(x => x.chamber === ch && !x.districtKey).forEach(ind => {
-                    const label = ind.name || `#${computeIndependentOffset(ch) + ind.seatIndex}`;
-                    opts.push(`<option value="independent:${ind.id}">[${chLabel} 비례·무소속] ${label}</option>`);
-                });
+                if(filterPartyId === undefined || filterIsInd) {
+                    independents.filter(x => x.chamber === ch && !x.districtKey).forEach(ind => {
+                        const label = ind.name || `#${computeIndependentOffset(ch) + ind.seatIndex}`;
+                        opts.push(`<option value="independent:${ind.id}">[${chLabel} 비례·무소속] ${label}</option>`);
+                    });
+                }
             });
             return opts.join('');
         }
@@ -411,7 +421,7 @@
                 if(r) return { ...r, badgeText: '🔗 의원과 연결됨 — 이름·사진·당적 자동 반영' };
                 pm.linkedSeat = null;
             }
-            if(pmSelectionMethod() === 'majority') {
+            if(pmSelectionMethod() === 'majority' && !pmMajorityLocked) {
                 const ch = presElectionChamberBasis;
                 const seatKey = seatKeyFor(ch);
                 const eligible = parties.filter(p => p[inKeyFor(ch)] && p.status !== 'banned' && p.ideologyId !== IND_IDEOLOGY_ID);
@@ -434,6 +444,7 @@
             if(nameInput) {
                 nameInput.disabled = !!resolved;
                 if(nameInput.value !== (effName||'')) nameInput.value = effName || '';
+                nameInput.placeholder = (pmMajorityLocked && !effName) ? `${pmRoleLabel()} 이름 (공석)` : `${pmRoleLabel()} 이름`;
             }
             const img = document.getElementById('pmPhotoImg');
             const ph  = document.getElementById('pmPhotoPh');
@@ -473,6 +484,23 @@
             if(nomineeSection) nomineeSection.style.display = method === 'appoint' ? '' : 'none';
             if(method === 'appoint') renderPmNomineeSection();
 
+            // 다수당 방식 전용 — 의석 변동만으로 총리가 바뀌지 않도록 고정/고정 해제 (의원 연결 중이면 이미 그 의원으로 고정된 것이므로 숨김)
+            const majorityLockSection = document.getElementById('pmMajorityLockSection');
+            if(majorityLockSection) {
+                majorityLockSection.style.display = (method === 'majority' && !pm.linkedSeat) ? '' : 'none';
+                const lockBtn = document.getElementById('pmMajorityLockBtn');
+                const unlockBtn = document.getElementById('pmMajorityUnlockBtn');
+                const lockedNote = document.getElementById('pmMajorityLockedNote');
+                if(lockBtn) lockBtn.style.display = pmMajorityLocked ? 'none' : '';
+                if(unlockBtn) unlockBtn.style.display = pmMajorityLocked ? '' : 'none';
+                if(lockedNote) {
+                    lockedNote.style.display = pmMajorityLocked ? '' : 'none';
+                    lockedNote.textContent = pm.name
+                        ? '🔒 총리가 고정되어 있습니다 — 다수당이 바뀌어도 총리는 유지되며, 내각 불신임이 가결되면 공석이 됩니다.'
+                        : '🔒 내각 불신임으로 총리가 공석입니다 — 직접 지정하거나, 아래 "고정 해제"로 현재 다수당 대표를 새 총리로 반영하세요.';
+                }
+            }
+
             const noConfidenceSection = document.getElementById('noConfidenceSection');
             if(noConfidenceSection) {
                 const canNoConfidence = govType === 'parliamentary' || govType === 'semi';
@@ -485,6 +513,21 @@
         function updatePmField(key, val) {
             pm[key] = val;
             if(key === 'partyId') renderPmSection();
+            renderCabinetDisplay();
+        }
+
+        // 다수당 방식 총리 고정 — 현재 자동 반영된(다수당 대표) 정보를 그대로 pm에 못박아, 이후 의석
+        // 변동으로 다수당이 바뀌어도 총리가 따라 바뀌지 않게 함. 해제하면 다시 실시간 다수당 추적으로 복귀.
+        function lockPmMajority() {
+            const resolved = pmAutoSource();
+            if(resolved) { pm.name = resolved.name; pm.photo = resolved.photo; pm.partyId = resolved.partyId; }
+            pmMajorityLocked = true;
+            renderPmSection();
+            renderCabinetDisplay();
+        }
+        function unlockPmMajority() {
+            pmMajorityLocked = false;
+            renderPmSection();
             renderCabinetDisplay();
         }
 
@@ -796,6 +839,10 @@
                 if(getBillOverallStatus(b) !== 'passed') return;
                 b.noConfidenceApplied = true;
                 pm = { name: '', photo: '', partyId: null, linkedSeat: null };
+                // 불신임 가결 직후엔 공석으로 유지 — 다수당 대표가 곧바로 다시 총리가 되는 게 아니라,
+                // "고정" 상태를 유지한 채 이름을 비워 공석으로 표시하고, 새 총리는 "고정 해제"로
+                // 다수당 대표를 다시 반영하거나 직접 지정하는 등 명시적인 절차를 거치도록 함
+                pmMajorityLocked = true;
                 deputyPms.forEach(d => { d.name = ''; d.photo = ''; d.partyId = null; d.linkedSeat = null; });
                 cabinetMembers.forEach(m => { m.name = ''; m.photo = ''; m.partyId = null; m.linkedSeat = null; });
                 renderPmSection();
@@ -1503,7 +1550,7 @@
                         if(key === 'martialLaw') {
                             return btn + `
                             <label style="display:flex;align-items:flex-start;gap:6px;margin-top:6px;cursor:${st.active?'default':'pointer'};color:#888;font-size:0.76rem;line-height:1.4;">
-                                <input type="checkbox" ${st.suspendParliament?'checked':''} ${st.active?'disabled':''} onchange="setMartialLawSuspendParliament(this.checked)" style="margin-top:2px;flex-shrink:0;">
+                                <input type="checkbox" class="chk-alert" ${st.suspendParliament?'checked':''} ${st.active?'disabled':''} onchange="setMartialLawSuspendParliament(this.checked)" style="margin-top:2px;flex-shrink:0;">
                                 <span>의회 정지 — 체크 후 선포하면 의회가 정지(화면 어둡게, 표결 불가)됩니다. 체크하지 않으면 의회는 정상 작동하고, 계엄 해제 결의안이 자동으로 상정됩니다.</span>
                             </label>`;
                         }
@@ -1610,7 +1657,7 @@
                 p = { id: 'ind_auto_'+Date.now(), name: "무소속", color: "#999999",
                     seatsHouse: 10, seatsSenate: 5, seatsThird: 0, ideologyId: IND_IDEOLOGY_ID,
                     isRuling: false, inHouse: true, inSenate: true, inThird: true,
-                    leaderName: "", leaderPhoto: "", logoPhoto: "", showLogoInStats: false,
+                    leaderName: "", leaderPhoto: "", logoPhoto: "", showLogoInStats: false, hideStatsPhoto: false,
                     description: "", factions: [], abbr: "" };
                 parties.push(p);
             }
@@ -1758,10 +1805,10 @@
         ];
 
         let parties = [
-            { id: 1, name: "국가재건당", color: "#2E2E2E", seatsHouse: 140, seatsSenate: 60, seatsThird: 0, ideologyId: 101, isRuling: true,  inHouse: true, inSenate: true, inThird: false, leaderName: "", leaderPhoto: "", logoPhoto: "", showLogoInStats: false, description: "", factions: [] },
-            { id: 2, name: "개혁그룹",   color: "#5D6D7E", seatsHouse: 50,  seatsSenate: 20, seatsThird: 0, ideologyId: 102, isRuling: false, inHouse: true, inSenate: true, inThird: false, leaderName: "", leaderPhoto: "", logoPhoto: "", showLogoInStats: false, description: "", factions: [] },
-            { id: 3, name: "민주당",     color: "#3498DB", seatsHouse: 60,  seatsSenate: 10, seatsThird: 0, ideologyId: 105, isRuling: false, inHouse: true, inSenate: true, inThird: false, leaderName: "", leaderPhoto: "", logoPhoto: "", showLogoInStats: false, description: "", factions: [] },
-            { id: 4, name: "사회당",     color: "#E74C3C", seatsHouse: 40,  seatsSenate: 5, seatsThird: 0,  ideologyId: 106, isRuling: false, inHouse: true, inSenate: true, inThird: false, leaderName: "", leaderPhoto: "", logoPhoto: "", showLogoInStats: false, description: "", factions: [] }
+            { id: 1, name: "국가재건당", color: "#2E2E2E", seatsHouse: 140, seatsSenate: 60, seatsThird: 0, ideologyId: 101, isRuling: true,  inHouse: true, inSenate: true, inThird: false, leaderName: "", leaderPhoto: "", logoPhoto: "", showLogoInStats: false, hideStatsPhoto: false, description: "", factions: [] },
+            { id: 2, name: "개혁그룹",   color: "#5D6D7E", seatsHouse: 50,  seatsSenate: 20, seatsThird: 0, ideologyId: 102, isRuling: false, inHouse: true, inSenate: true, inThird: false, leaderName: "", leaderPhoto: "", logoPhoto: "", showLogoInStats: false, hideStatsPhoto: false, description: "", factions: [] },
+            { id: 3, name: "민주당",     color: "#3498DB", seatsHouse: 60,  seatsSenate: 10, seatsThird: 0, ideologyId: 105, isRuling: false, inHouse: true, inSenate: true, inThird: false, leaderName: "", leaderPhoto: "", logoPhoto: "", showLogoInStats: false, hideStatsPhoto: false, description: "", factions: [] },
+            { id: 4, name: "사회당",     color: "#E74C3C", seatsHouse: 40,  seatsSenate: 5, seatsThird: 0,  ideologyId: 106, isRuling: false, inHouse: true, inSenate: true, inThird: false, leaderName: "", leaderPhoto: "", logoPhoto: "", showLogoInStats: false, hideStatsPhoto: false, description: "", factions: [] }
         ];
 
         let coalitions = [
@@ -2135,8 +2182,10 @@
             const allChambersPassed = bill.houseStatus === 'pass' && (!isBi || bill.senateStatus === 'pass') && (!isTri || bill.thirdStatus === 'pass');
             if(allChambersPassed) {
                 // 거부권 주체가 지정돼 있으면(내각>설정), 의회 표결 통과만으로 바로 최종 가결되지 않고
-                // 서명/거부 결정을 거쳐야 함
-                if(vetoHolder !== 'none') {
+                // 서명/거부 결정을 거쳐야 함 — 단, 내각 불신임안은 그 대상이 총리 본인이므로 거부권자가
+                // 총리라면 자기 자신의 불신임안을 서명/거부할 수 없어야 하고, 대신 무조건 서명(즉시 가결)됨
+                const skipVeto = bill.isNoConfidence && vetoHolder === 'pm';
+                if(vetoHolder !== 'none' && !skipVeto) {
                     if(bill.vetoStatus === 'vetoed') return 'vetoed';
                     if(bill.vetoStatus !== 'signed') return 'awaiting_veto';
                 }
@@ -2348,9 +2397,14 @@
                 const isActive = dest === 'council' ? bill.id === activeCouncilBillId : bill.id === activeBillId;
                 const thLabel = getThresholdLabel(bill.threshold || 0.5, bill.numer, bill.denom);
                 const suspended = isCouncilVotingMode();
-                const routeBtn = (d, txt) => {
+                // 선택된 상정 대상은 색이 채워진 강조 스타일로, 선택되지 않은 쪽은 흐린 회색으로 — 한눈에 구분되도록
+                const routeBtn = (d, txt, color) => {
                     const disabled = d === 'parliament' && suspended;
-                    return `<button class="bill-select-btn" style="${dest===d?'color:var(--tno-gold);border-color:var(--tno-gold);':''}${disabled?'opacity:0.4;cursor:not-allowed;':''}" ${disabled?'disabled title="계엄령으로 의회가 정지된 상태에서는 선택할 수 없습니다"':''} onclick="setBillTabledTo('${bill.id}','${d}')">${txt}</button>`;
+                    const selected = dest === d;
+                    const style = selected
+                        ? `border-color:${color};color:${color};background:color-mix(in srgb, ${color} 15%, transparent);box-shadow:0 0 6px color-mix(in srgb, ${color} 50%, transparent);text-shadow:0 0 4px ${color};font-weight:bold;`
+                        : `border-color:#333;color:#555;background:transparent;`;
+                    return `<button class="bill-select-btn" style="${style}${disabled?'opacity:0.4;cursor:not-allowed;':''}" ${disabled?'disabled title="계엄령으로 의회가 정지된 상태에서는 선택할 수 없습니다"':''} onclick="setBillTabledTo('${bill.id}','${d}')">${selected?'✔ ':''}${txt}</button>`;
                 };
                 const selectAction = dest === 'council'
                     ? `selectBillForCouncilVote('${bill.id}'); switchSubTab('nation','legislation'); switchLegislationInnerTab('council');`
@@ -2366,8 +2420,8 @@
                     <div style="margin-top:4px;">${buildTagHtml(bill)}</div>
                     <div style="margin-top:4px; display:flex; align-items:center; gap:6px;">
                         <span style="color:#666; font-size:0.75rem;">상정:</span>
-                        ${routeBtn('parliament', '국회')}
-                        ${routeBtn('council', '국무회의')}
+                        ${routeBtn('parliament', '국회', 'var(--tno-gold)')}
+                        ${routeBtn('council', '국무회의', 'var(--tno-alert)')}
                     </div>
                     <div class="bill-card-footer">
                         ${buildBillBadges(bill)}
@@ -2870,7 +2924,13 @@
         // 캔버스/SVG 우클릭 → 내보내기 메뉴 → 내보내기 옵션 창 (앱 전체 canvas·svg 요소 공용, 사이트 전역에서 한 번만 등록)
         let canvasExportTarget = null;
         document.addEventListener('contextmenu', e => {
-            const el = e.target.closest?.('canvas, svg');
+            // 계엄령으로 의회가 정지되면 .chamber-box 위에 클릭을 가로채는 shade가 덮이므로,
+            // 우클릭 대상이 shade여도 그 안의 실제 캔버스/svg를 찾아 내보내기 대상으로 삼는다
+            let el = e.target.closest?.('canvas, svg');
+            if(!el) {
+                const shade = e.target.closest?.('.martial-law-shade');
+                el = shade?.closest('.chamber-box')?.querySelector('canvas, svg') || null;
+            }
             if(!el) return;
             e.preventDefault();
             canvasExportTarget = el;
@@ -2933,6 +2993,58 @@
             if(!box) return null;
             const stats = findStatsElementIn(box);
             return (stats && stats.children.length > 0) ? box : null;
+        }
+
+        // 계엄령으로 하원/상원/삼원 화면이 가려진 상태에서 우클릭 내보내기를 해도, 화면에 보이는
+        // "! 계엄령 선포 중 !" 경고 문구가 그대로 이미지에 담기도록 캔버스/SVG 양쪽에 오버레이를 합성한다.
+        // (통계 포함 SVG 내보내기는 .chamber-box 전체를 그대로 복제하므로 이미 자동으로 포함됨 — 그 외 경로에만 필요)
+        const MARTIAL_LAW_SHADE_TEXT = '! 계엄령 선포 중 — 의회 활동 정지 !';
+        function isMartialLawShadedTarget(target) {
+            const box = target.closest?.('.chamber-box');
+            return !!box?.querySelector('.martial-law-shade');
+        }
+        function measureTextWidth(text, font) {
+            const c = measureTextWidth._c || (measureTextWidth._c = document.createElement('canvas'));
+            const ctx = c.getContext('2d');
+            ctx.font = font;
+            return ctx.measureText(text).width;
+        }
+        function drawMartialLawShadeOnCanvas(ctx, x, y, w, h, scale = 1) {
+            const alertColor = getComputedStyle(document.documentElement).getPropertyValue('--tno-alert').trim() || '#ff0055';
+            const fontSize = Math.round(18 * scale);
+            const font = `${fontSize}px 'NeoDunggeunmo','VT323',monospace`;
+            const textW = measureTextWidth(MARTIAL_LAW_SHADE_TEXT, font);
+            const padX = 18 * scale, padY = 10 * scale;
+            const boxW = textW + padX * 2, boxH = fontSize + padY * 2;
+            const cx = x + w / 2, cy = y + h / 2;
+            ctx.save();
+            ctx.fillStyle = 'rgba(20,0,0,0.72)';
+            ctx.fillRect(x, y, w, h);
+            ctx.fillStyle = 'rgba(0,0,0,0.6)';
+            ctx.fillRect(cx - boxW / 2, cy - boxH / 2, boxW, boxH);
+            ctx.strokeStyle = alertColor;
+            ctx.lineWidth = Math.max(1, scale);
+            ctx.strokeRect(cx - boxW / 2 + 0.5, cy - boxH / 2 + 0.5, boxW - 1, boxH - 1);
+            ctx.font = font;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.shadowColor = alertColor;
+            ctx.shadowBlur = 8 * scale;
+            ctx.fillStyle = alertColor;
+            ctx.fillText(MARTIAL_LAW_SHADE_TEXT, cx, cy + 1);
+            ctx.restore();
+        }
+        function martialLawShadeSvgMarkup(w, h) {
+            const alertColor = getComputedStyle(document.documentElement).getPropertyValue('--tno-alert').trim() || '#ff0055';
+            const font = `18px 'NeoDunggeunmo','VT323',monospace`;
+            const textW = measureTextWidth(MARTIAL_LAW_SHADE_TEXT, font);
+            const boxW = textW + 36, boxH = 38;
+            const cx = w / 2, cy = h / 2;
+            return `<g>`
+                + `<rect x="0" y="0" width="${w}" height="${h}" fill="rgba(20,0,0,0.72)"/>`
+                + `<rect x="${cx - boxW / 2}" y="${cy - boxH / 2}" width="${boxW}" height="${boxH}" fill="rgba(0,0,0,0.6)" stroke="${alertColor}"/>`
+                + `<text x="${cx}" y="${cy}" fill="${alertColor}" font-family="'NeoDunggeunmo','VT323',monospace" font-size="18" text-anchor="middle" dominant-baseline="middle">${escapeXml(MARTIAL_LAW_SHADE_TEXT)}</text>`
+                + `</g>`;
         }
 
         // 최상단 정보(국기/국가 이름/날짜/회기) 체크박스 상태 + 실제 국가 데이터를 조합해,
@@ -3143,7 +3255,7 @@
                 const statusTags = p.status === 'dissolved' ? [{ text: '해산', color: '#999' }]
                                   : p.status === 'banned' ? [{ text: '활동 금지', color: '#ff0055' }] : [];
                 const isLogo = p.showLogoInStats ?? false;
-                const photoSrc = statsOptions.includePhotos ? ((isLogo ? (p.logoPhoto||p.leaderPhoto) : (p.leaderPhoto||p.logoPhoto)) || null) : null;
+                const photoSrc = (statsOptions.includePhotos && !p.hideStatsPhoto) ? ((isLogo ? (p.logoPhoto||p.leaderPhoto) : (p.leaderPhoto||p.logoPhoto)) || null) : null;
                 return {
                     barColor: p.color,
                     nameText: `${p.name}${p.abbr ? ` (${p.abbr})` : ''}`,
@@ -3203,6 +3315,7 @@
             ctx.fillRect(0, 0, out.width, out.height);
             if(headerInfo) await drawExportHeader(ctx, headerInfo, out.width, headerH, scale, font);
             ctx.drawImage(baseCanvas, 0, headerH);
+            if(isMartialLawShadedTarget(target)) drawMartialLawShadeOnCanvas(ctx, 0, headerH, baseCanvas.width, baseCanvas.height, scale);
             ctx.textBaseline = 'middle';
 
             let cursorY = headerH + baseCanvas.height + pad;
@@ -3358,9 +3471,10 @@
             const headerInfo = buildExportHeaderInfo(headerOptions);
             if(box) return buildStatsForeignObjectSvg(box, statsOptions, headerInfo);
             const rect = target.getBoundingClientRect();
-            const vizMarkup = target.tagName === 'CANVAS'
+            const vizMarkup = (target.tagName === 'CANVAS'
                 ? `<image href="${target.toDataURL('image/png')}" width="${rect.width}" height="${rect.height}"/>`
-                : (() => { const c = target.cloneNode(true); c.setAttribute('width', rect.width); c.setAttribute('height', rect.height); return c.outerHTML; })();
+                : (() => { const c = target.cloneNode(true); c.setAttribute('width', rect.width); c.setAttribute('height', rect.height); return c.outerHTML; })())
+                + (isMartialLawShadedTarget(target) ? martialLawShadeSvgMarkup(rect.width, rect.height) : '');
             const headerH = headerInfo ? EXPORT_HEADER_H : 0;
             const totalH = rect.height + headerH;
             return `<svg xmlns="http://www.w3.org/2000/svg" width="${rect.width}" height="${totalH}" viewBox="0 0 ${rect.width} ${totalH}">`
@@ -3424,6 +3538,10 @@
                 octx.fillStyle = '#0a0c10';
                 octx.fillRect(0, 0, opaque.width, opaque.height);
                 octx.drawImage(target, 0, 0);
+                if(isMartialLawShadedTarget(target)) {
+                    const scale = opaque.width / (target.clientWidth || target.getBoundingClientRect().width || opaque.width) || 1;
+                    drawMartialLawShadeOnCanvas(octx, 0, 0, opaque.width, opaque.height, scale);
+                }
                 downloadDataUrl(opaque.toDataURL(mime, 0.95), `${filenameBase}.${format}`);
                 return;
             }
@@ -3638,10 +3756,11 @@
         const chamberLogoImgCache = { house: null, senate: null, third: null }; // { src, img } — 매 프레임 새로 디코딩하지 않도록 캐시
 
         // ── 국가 > 설정 > 의회: 각 원의 의장/부의장 ──────────────
+        // deputies: 부의장 — 여러 명 추가/삭제 가능 (기본 0명), 부총리(deputyPms)와 동일한 패턴
         let chamberLeaders = {
-            house:  { speaker: { name: '', photo: '' }, deputy: { name: '', photo: '' } },
-            senate: { speaker: { name: '', photo: '' }, deputy: { name: '', photo: '' } },
-            third:  { speaker: { name: '', photo: '' }, deputy: { name: '', photo: '' } },
+            house:  { speaker: { name: '', photo: '' }, deputies: [] },
+            senate: { speaker: { name: '', photo: '' }, deputies: [] },
+            third:  { speaker: { name: '', photo: '' }, deputies: [] },
         };
 
         function renderChamberLeaders() {
@@ -3653,38 +3772,111 @@
                 senate: document.getElementById('senateNameInput')?.value || '상원',
                 third:  document.getElementById('thirdNameInput')?.value  || '삼원',
             };
-            const roleLabel = { speaker: '의장', deputy: '부의장' };
-            container.innerHTML = chambers.map(ch => `
+            container.innerHTML = chambers.map(ch => {
+                const deputies = chamberLeaders[ch].deputies || [];
+                return `
                 <div style="margin-bottom:16px;">
                     <div style="color:#666;font-size:0.8rem;margin-bottom:8px;letter-spacing:1px;">▌ ${chamberLabel[ch]}</div>
-                    ${['speaker','deputy'].map(role => `
+                    <div class="dyn-row" style="display:flex;gap:10px;align-items:stretch;margin-bottom:8px;">
+                        <div class="leader-photo-box dyn-photo" data-ratio="0.8" style="width:44px;height:55px;flex-shrink:0;" title="클릭하여 사진 업로드">
+                            ${chamberLeaders[ch].speaker.photo ? `<img src="${chamberLeaders[ch].speaker.photo}" alt="">` : '<div class="photo-ph" style="font-size:1.3rem;">👤</div>'}
+                            <input type="file" accept="image/*" onchange="uploadChamberLeaderPhoto(this,'${ch}')">
+                        </div>
+                        <div class="dyn-ref" style="flex:1;display:flex;flex-direction:column;gap:4px;min-width:0;">
+                            <span style="color:#888;font-size:0.78rem;">의장</span>
+                            <input type="text" value="${chamberLeaders[ch].speaker.name||''}" placeholder="의장 이름"
+                                style="background:#000;border:1px solid #2a2a2a;color:#e0e0e0;font-family:inherit;font-size:0.9rem;padding:4px 8px;width:100%;box-sizing:border-box;"
+                                onchange="updateChamberLeader('${ch}','name',this.value)">
+                        </div>
+                    </div>
+                    ${deputies.map((d, i) => `
                         <div class="dyn-row" style="display:flex;gap:10px;align-items:stretch;margin-bottom:8px;">
                             <div class="leader-photo-box dyn-photo" data-ratio="0.8" style="width:44px;height:55px;flex-shrink:0;" title="클릭하여 사진 업로드">
-                                ${chamberLeaders[ch][role].photo ? `<img src="${chamberLeaders[ch][role].photo}" alt="">` : '<div class="photo-ph" style="font-size:1.3rem;">👤</div>'}
-                                <input type="file" accept="image/*" onchange="uploadChamberLeaderPhoto(this,'${ch}','${role}')">
+                                ${d.photo ? `<img src="${d.photo}" alt="">` : '<div class="photo-ph" style="font-size:1.3rem;">👤</div>'}
+                                <input type="file" accept="image/*" onchange="uploadChamberDeputyPhoto(this,'${ch}','${d.id}')">
                             </div>
                             <div class="dyn-ref" style="flex:1;display:flex;flex-direction:column;gap:4px;min-width:0;">
-                                <span style="color:#888;font-size:0.78rem;">${roleLabel[role]}</span>
-                                <input type="text" value="${chamberLeaders[ch][role].name||''}" placeholder="${roleLabel[role]} 이름"
+                                <span style="color:#888;font-size:0.78rem;">${deputies.length > 1 ? '부의장'+(i+1) : '부의장'}</span>
+                                <input type="text" value="${d.name||''}" placeholder="부의장 이름"
                                     style="background:#000;border:1px solid #2a2a2a;color:#e0e0e0;font-family:inherit;font-size:0.9rem;padding:4px 8px;width:100%;box-sizing:border-box;"
-                                    onchange="updateChamberLeader('${ch}','${role}','name',this.value)">
+                                    onchange="updateChamberDeputy('${ch}','${d.id}','name',this.value)">
                             </div>
+                            <button onclick="removeChamberDeputy('${ch}','${d.id}')" style="align-self:center;background:transparent;border:1px solid #333;color:#a55;font-family:inherit;font-size:0.75rem;padding:4px 8px;cursor:pointer;flex-shrink:0;">삭제</button>
                         </div>
                     `).join('')}
+                    <button class="add-btn" style="margin-top:0;" onclick="addChamberDeputy('${ch}')">[+] 부의장 추가</button>
                 </div>
-            `).join('');
+            `;
+            }).join('');
             fitDynPhotos(container);
+            renderAllChamberLeaderDisplays();
         }
 
-        function updateChamberLeader(ch, role, key, val) {
+        // 하원/상원/삼원 표시 패널(제목바 아래, 반원 캔버스 위)에 의장/부의장을 사진+이름으로 표시
+        // — 의장·부의장 둘 다 비어 있으면(아직 지정 안 함) 자리 자체를 만들지 않고 숨김
+        function renderChamberLeaderDisplay(ch) {
+            const container = document.getElementById(ch + 'LeadersDisplay');
+            if(!container) return;
+            const speaker = chamberLeaders[ch]?.speaker || { name: '', photo: '' };
+            const deputies = chamberLeaders[ch]?.deputies || [];
+            if(!speaker.name && !speaker.photo && deputies.length === 0) { container.innerHTML = ''; return; }
+            const chip = (label, name, photo, small) => `
+                <div style="display:flex;align-items:center;gap:6px;">
+                    <div class="leader-photo-box" style="width:${small?26:32}px;height:${small?33:40}px;flex-shrink:0;pointer-events:none;">
+                        ${photo ? `<img src="${photo}" alt="">` : `<div class="photo-ph" style="font-size:${small?0.7:0.8}rem;">👤</div>`}
+                    </div>
+                    <div style="display:flex;flex-direction:column;line-height:1.25;min-width:0;">
+                        <span style="color:#555;font-size:0.62rem;">${label}</span>
+                        <span style="color:#ccc;font-size:0.8rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:90px;">${name || '미지정'}</span>
+                    </div>
+                </div>`;
+            container.innerHTML = `<div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:8px;">
+                ${chip('의장', speaker.name, speaker.photo, false)}
+                ${deputies.map((d, i) => chip(deputies.length > 1 ? `부의장${i+1}` : '부의장', d.name, d.photo, true)).join('')}
+            </div>`;
+        }
+
+        function renderAllChamberLeaderDisplays() {
+            ['house', 'senate', 'third'].forEach(renderChamberLeaderDisplay);
+        }
+
+        function updateChamberLeader(ch, key, val) {
             if(!chamberLeaders[ch]) return;
-            chamberLeaders[ch][role][key] = val;
+            chamberLeaders[ch].speaker[key] = val;
+            renderChamberLeaderDisplay(ch);
         }
 
-        function uploadChamberLeaderPhoto(input, ch, role) {
+        function uploadChamberLeaderPhoto(input, ch) {
             const file = input.files?.[0]; if(!file) return;
             const reader = new FileReader();
-            reader.onload = e => { chamberLeaders[ch][role].photo = e.target.result; renderChamberLeaders(); };
+            reader.onload = e => { chamberLeaders[ch].speaker.photo = e.target.result; renderChamberLeaders(); };
+            reader.readAsDataURL(file);
+        }
+
+        function addChamberDeputy(ch) {
+            if(!chamberLeaders[ch]) return;
+            chamberLeaders[ch].deputies.push({ id: 'cd_'+Date.now()+'_'+Math.floor(Math.random()*1000), name: '', photo: '' });
+            renderChamberLeaders();
+        }
+
+        function removeChamberDeputy(ch, id) {
+            if(!chamberLeaders[ch]) return;
+            chamberLeaders[ch].deputies = chamberLeaders[ch].deputies.filter(d => d.id !== id);
+            renderChamberLeaders();
+        }
+
+        function updateChamberDeputy(ch, id, key, val) {
+            const d = chamberLeaders[ch]?.deputies.find(x => x.id === id);
+            if(d) d[key] = val;
+            renderChamberLeaderDisplay(ch);
+        }
+
+        function uploadChamberDeputyPhoto(input, ch, id) {
+            const file = input.files?.[0]; if(!file) return;
+            const d = chamberLeaders[ch]?.deputies.find(x => x.id === id);
+            if(!d) return;
+            const reader = new FileReader();
+            reader.onload = e => { d.photo = e.target.result; renderChamberLeaders(); };
             reader.readAsDataURL(file);
         }
 
@@ -3915,6 +4107,7 @@
                     cabinetMembers: JSON.parse(JSON.stringify(cabinetMembers)),
                     cabinetRoleLabels: { ...cabinetRoleLabels },
                     pmDirectElectionEnabled: pmDirectElectionEnabled,
+                    pmMajorityLocked: pmMajorityLocked,
                     pmNominee: pmNominee,
                     pmNomineeBillId: pmNomineeBillId,
                     vetoHolder: vetoHolder,
@@ -4009,7 +4202,7 @@
                 throw new Error("Invalid parliament data");
 
             ideologies = parl.ideologies;
-            parties    = parl.parties.map(p => ({ leaderName:'', leaderPhoto:'', leaderLinkedSeat:null, logoPhoto:'', showLogoInStats:false, description:'', factions:[], seatsThird:0, inThird:false, abbr:'', fraudAttempt:null, ...p, factions:(p.factions||[]).map(f=>({leaderName:'',leaderPhoto:'',logoPhoto:'',usePartyColor:false,seatsThird:0,...f})) }));
+            parties    = parl.parties.map(p => ({ leaderName:'', leaderPhoto:'', logoPhoto:'', showLogoInStats:false, hideStatsPhoto:false, description:'', factions:[], seatsThird:0, inThird:false, abbr:'', fraudAttempt:null, ...p, factions:(p.factions||[]).map(f=>({leaderName:'',leaderPhoto:'',logoPhoto:'',usePartyColor:false,seatsThird:0,...f})) }));
             coalitions = parl.coalitions.map(c => ({ leadPartyId:null, externalSupporters:[], externalSupportLabel:'각외협력', ...c }));
             manualSort = parl.manualSort ?? false;
             // 구버전 저장 파일 호환: districtKey 필드가 없으면 비례(미연결) 무소속으로 취급
@@ -4140,6 +4333,7 @@
             cabinetMembers = Array.isArray(cfg.cabinetMembers) ? cfg.cabinetMembers.map(m => ({ partyId: null, linkedSeat: null, ...m })) : [];
             cabinetRoleLabels = { president: '', pm: '', deputyPm: '', chair: '', cabinetMember: '', ...(cfg.cabinetRoleLabels || {}) };
             pmDirectElectionEnabled = !!cfg.pmDirectElectionEnabled;
+            pmMajorityLocked = !!cfg.pmMajorityLocked;
             pmNominee = { name: '', photo: '', partyId: null, linkedSeat: null, ...(cfg.pmNominee || {}) };
             pmNomineeBillId = cfg.pmNomineeBillId ?? null;
             Object.keys(EMERGENCY_POWERS).forEach(k => {
@@ -4147,9 +4341,15 @@
             });
             cabinetCouncilVote = { ...(cfg.cabinetCouncilVote || {}) };
             ['house','senate','third'].forEach(ch => {
+                const savedCh = cfg.chamberLeaders?.[ch];
+                // 구버전 세이브 호환: 부의장이 단일 객체(deputy)였던 것을 배열(deputies)로 이전
+                let deputies;
+                if(Array.isArray(savedCh?.deputies)) deputies = savedCh.deputies.map(d => ({ id: d.id || ('cd_'+Date.now()+'_'+Math.floor(Math.random()*1000)), name: '', photo: '', ...d }));
+                else if(savedCh?.deputy && (savedCh.deputy.name || savedCh.deputy.photo)) deputies = [{ id: 'cd_'+Date.now()+'_'+Math.floor(Math.random()*1000), name: savedCh.deputy.name || '', photo: savedCh.deputy.photo || '' }];
+                else deputies = [];
                 chamberLeaders[ch] = {
-                    speaker: { name: '', photo: '', ...(cfg.chamberLeaders?.[ch]?.speaker || {}) },
-                    deputy:  { name: '', photo: '', ...(cfg.chamberLeaders?.[ch]?.deputy  || {}) },
+                    speaker: { name: '', photo: '', ...(savedCh?.speaker || {}) },
+                    deputies,
                 };
             });
             setGovType(cfg.govType ?? "parliamentary");
@@ -4175,6 +4375,7 @@
             renderBulkPartyList();
             elecRenderList();
             elecRenderRecords();
+            renderAllChamberLeaderDisplays();
 
             // ── 탭 복원 (마지막) ──
             let uiMain = state.ui?.currentMainTab || 'setup';
@@ -4456,6 +4657,7 @@
             if(sub === 'legislation') { switchLegislationInnerTab('bill'); }
             if(sub === 'election') { switchElectionInnerTab(electionInnerTab); }
             if(sub === 'record') { switchRecordInnerTab('archive'); }
+            if(sub === 'fraud') { renderFraudTab(); }
             if(sub === 'party') { switchPartyGroupInnerTab('ideology'); }
             if(sub === 'settings') { switchSetupInnerTab('house'); }
             if(sub === 'system') {
@@ -5364,52 +5566,39 @@
             if(p){ p[field]=val; simulate(); }
         }
 
-        // ── 당대표 자동 배정: 지정된 의석이 없으면 그 정당의 1번 의원을 당대표로 자동 배정 ──────────────
-        // party.leaderLinkedSeat로 특정 의석을 지정하면 그 의석 우선, 없으면 정당 소속 1번 의원(지역구→비례 순)
-        function partyFirstMemberInfo(party) {
-            if(!party) return null;
-            for(const ch of chamberList()) {
-                for(const key of districtSortedKeys(ch)) {
-                    const m = districtMembers[ch]?.[key];
-                    if(!m || m.vacant || m.partyId !== party.id) continue;
-                    const resolved = resolveLinkedSeat({ type:'district', chamber:ch, key });
-                    if(resolved) return resolved;
+        // ── 당수 ↔ 의석 정보 복사: 당수 탭에서 편집한 이름·사진을 고른 의석에 붙여넣거나,
+        // 반대로 의원 카드에서 "당수로 지정"을 눌러 그 의원 정보를 당수로 끌어올림. 양쪽 다 1회성 복사이며
+        // 이후에는 서로 독립적으로 값이 유지됨 (자동 동기화하지 않음) ──────────────
+        function writeLinkedSeatInfo(link, name, photo) {
+            if(!link) return;
+            if(link.type === 'district') {
+                const m = districtMembers[link.chamber]?.[link.key];
+                if(!m) return;
+                const party = parties.find(p => p.id === m.partyId);
+                if(party?.ideologyId === IND_IDEOLOGY_ID) {
+                    const ind = independents.find(x => x.chamber === link.chamber && x.districtKey === link.key);
+                    if(ind) { ind.name = name; ind.photo = photo; }
+                } else {
+                    m.name = name; m.photo = photo;
                 }
-                for(const m of (listMembers[ch]?.[party.id] || [])) {
-                    if(m.vacant) continue;
-                    const resolved = resolveLinkedSeat({ type:'list', chamber:ch, partyId:party.id, memberId:m.id });
-                    if(resolved) return resolved;
-                }
-                if(party.ideologyId === IND_IDEOLOGY_ID) {
-                    const inds = independents.filter(x => x.chamber===ch && !x.districtKey).sort((a,b)=>a.seatIndex-b.seatIndex);
-                    for(const ind of inds) {
-                        const resolved = resolveLinkedSeat({ type:'independent', memberId: ind.id });
-                        if(resolved) return resolved;
-                    }
-                }
+                renderMembersList();
+            } else if(link.type === 'list') {
+                const m = listMembers[link.chamber]?.[link.partyId]?.find(x => x.id === link.memberId);
+                if(!m) return;
+                m.name = name; m.photo = photo;
+                renderListMemberList();
+            } else if(link.type === 'independent') {
+                const ind = independents.find(x => x.id === link.memberId);
+                if(!ind) return;
+                ind.name = name; ind.photo = photo;
+                rerenderIndependentOwner(ind);
             }
-            return null;
         }
 
-        function partyLeaderAutoInfo(party) {
-            if(!party) return null;
-            if(party.leaderLinkedSeat) {
-                const resolved = resolveLinkedSeat(party.leaderLinkedSeat);
-                if(resolved) return resolved;
-                party.leaderLinkedSeat = null; // 연결 끊어짐 — 자동 해제 후 1번 의원으로 대체
-            }
-            return partyFirstMemberInfo(party);
-        }
-
-        function syncPartyLeaderFromSeat(party) {
-            const auto = partyLeaderAutoInfo(party);
-            if(auto) { party.leaderName = auto.name; party.leaderPhoto = auto.photo; }
-        }
-
-        // 당대표 지정 의석 선택 드롭다운 — 해당 정당 소속 의원만 나열
+        // 당수 탭에서 고른 의석 선택 드롭다운 — 해당 정당 소속 의원만 나열
         function partyMemberPickerOptionsHtml(partyId) {
             const party = parties.find(p => p.id === partyId);
-            const opts = ['<option value="">-- 특정 의석으로 지정 --</option>'];
+            const opts = ['<option value="">-- 의석 선택 (붙여넣기 대상) --</option>'];
             chamberList().forEach(ch => {
                 const chLabel = chamberDisplayName(ch);
                 districtSortedKeys(ch).forEach((key, i) => {
@@ -5434,20 +5623,59 @@
             return opts.join('');
         }
 
-        function linkPartyLeaderToSeat(pid, val) {
-            const parsed = parseMemberPickerValue(val);
-            if(!parsed) return;
+        // 당수 탭에서 편집 중인 이름·사진을 고른 의석에 1회 붙여넣기
+        function pasteLeaderToSeat(pid, val) {
+            const link = parseMemberPickerValue(val);
+            if(!link) return;
             const p = parties.find(x => x.id === pid);
             if(!p) return;
-            p.leaderLinkedSeat = parsed;
-            simulate(); refreshUI();
+            writeLinkedSeatInfo(link, p.leaderName || '', p.leaderPhoto || '');
+            refreshUI();
         }
 
-        function unlinkPartyLeader(pid) {
-            const p = parties.find(x => x.id === pid);
+        // 이 의원의 이름·사진이 현재 당수 정보와 일치하는지 — 일치하면 "당수로 지정" 버튼을 숨겨서
+        // 이미 당수인 사람에게 다시 버튼을 보여주지 않는다 (이름 없는 빈 카드끼리의 우연한 일치는 제외)
+        function isPartyLeaderMatch(partyId, name, photo) {
+            const p = parties.find(x => x.id === partyId);
+            if(!p || !name) return false;
+            return (p.leaderName || '') === name && (p.leaderPhoto || '') === (photo || '');
+        }
+
+        // 의원 카드의 "당수로 지정" 버튼 — 그 의원의 이름·사진을 당수로 1회 복사
+        function designatePartyLeader(partyId, name, photo) {
+            const p = parties.find(x => x.id === partyId);
             if(!p) return;
-            p.leaderLinkedSeat = null;
-            simulate(); refreshUI();
+            p.leaderName = name || '';
+            p.leaderPhoto = photo || '';
+            renderLeaderList();
+            refreshUI();
+        }
+
+        function designatePartyLeaderFromDistrictSeat(ch, key) {
+            const m = districtMembers[ch]?.[key];
+            if(!m) return;
+            const party = parties.find(p => p.id === m.partyId);
+            if(!party) return;
+            let name = m.name || '', photo = m.photo || '';
+            if(party.ideologyId === IND_IDEOLOGY_ID) {
+                const ind = independents.find(x => x.chamber === ch && x.districtKey === key);
+                name = ind?.name || ''; photo = ind?.photo || '';
+            }
+            designatePartyLeader(party.id, name, photo);
+        }
+
+        function designatePartyLeaderFromListSeat(ch, partyId, memberId) {
+            const m = listMembers[ch]?.[partyId]?.find(x => String(x.id) === String(memberId));
+            if(!m) return;
+            designatePartyLeader(parseInt(partyId), m.name || '', m.photo || '');
+        }
+
+        function designatePartyLeaderFromIndependent(indId) {
+            const ind = independents.find(x => String(x.id) === String(indId));
+            if(!ind) return;
+            const party = getIndependentParty();
+            if(!party) return;
+            designatePartyLeader(party.id, ind.name || '', ind.photo || '');
         }
 
         function addIdeology() { ideologies.push({ id: Date.now(), name: "새 이념" }); refreshUI(); }
@@ -5467,10 +5695,10 @@
             // 새 정당의 기본 이념: 무소속 이념은 제외하고 마지막 일반 이념을 사용 (무소속은 목록 맨 뒤에 자동 추가되므로)
             const nonIndIdeologies = ideologies.filter(i => i.id !== IND_IDEOLOGY_ID);
             const defaultIdeologyId = nonIndIdeologies.length > 0 ? nonIndIdeologies[nonIndIdeologies.length - 1].id : ideologies[0]?.id;
-            parties.push({id:Date.now(), name:"신당", color:"#555555", seatsHouse:0, seatsSenate:0, seatsThird:0, ideologyId:defaultIdeologyId, isRuling:false, ...flags, leaderName: "", leaderPhoto: "", leaderLinkedSeat: null, logoPhoto: "", showLogoInStats: false, factions: [] }); refreshUI(); }
+            parties.push({id:Date.now(), name:"신당", color:"#555555", seatsHouse:0, seatsSenate:0, seatsThird:0, ideologyId:defaultIdeologyId, isRuling:false, ...flags, leaderName: "", leaderPhoto: "", logoPhoto: "", showLogoInStats: false, hideStatsPhoto: false, factions: [] }); refreshUI(); }
         function addIndependentParty() {
             if(!ideologies.find(i=>i.id===IND_IDEOLOGY_ID)) addIndependentIdeology();
-            parties.push({id:Date.now(), name:"무소속", color:"#999999", seatsHouse:1, seatsSenate:0, seatsThird:0, ideologyId:IND_IDEOLOGY_ID, isRuling:false, inHouse:true, inSenate:true, inThird:false, leaderName: "", leaderPhoto: "", leaderLinkedSeat: null, logoPhoto: "", showLogoInStats: false, factions: [] });
+            parties.push({id:Date.now(), name:"무소속", color:"#999999", seatsHouse:1, seatsSenate:0, seatsThird:0, ideologyId:IND_IDEOLOGY_ID, isRuling:false, inHouse:true, inSenate:true, inThird:false, leaderName: "", leaderPhoto: "", logoPhoto: "", showLogoInStats: false, hideStatsPhoto: false, factions: [] });
             simulate(); refreshUI();
         }
         function removeParty(i) { const pid=parties[i].id; parties.splice(i,1); coalitions.forEach(c=>c.members=c.members.filter(x=>x!==pid)); simulate(); refreshUI(); }
@@ -5478,6 +5706,17 @@
         // 반드시 정렬이 끝난 뒤에 refreshUI()를 호출해야 카드에 새겨진 인덱스(idx)가
         // 최신 배열 순서와 어긋나지 않는다. 순서가 바뀌면 그 다음 입력이 엉뚱한 정당에 적용된다.
         function updateParty(i,k,v) { parties[i][k]=v; simulate(); refreshUI(); }
+
+        // 정당 카드 "통계 표시" — 당수 사진/당 로고/표시 안 함(X) 중 하나를 고름. X를 고르면 그 정당의
+        // leaderPhoto/logoPhoto 자체는 그대로 두고, 하원/상원/삼원 통계 카드에만 사진을 비워 보여준다.
+        function setPartyStatsPhotoMode(idx, mode) {
+            const p = parties[idx];
+            if(!p) return;
+            p.hideStatsPhoto = (mode === 'none');
+            if(mode !== 'none') p.showLogoInStats = (mode === 'logo');
+            simulate();
+            refreshUI();
+        }
 
         // ===== 원외정당 (의석 없는 정당) =====
         // 정당>정보에서 특정 의원실에 배정(inHouse/inSenate/inThird)되어 있으면서
@@ -5504,13 +5743,13 @@
             if(extraPartiesCollapsed || list.length === 0) return h;
             list.forEach(p => {
                 const isLogo = p.showLogoInStats ?? false;
-                const photo  = isLogo ? (p.logoPhoto||p.leaderPhoto||'') : (p.leaderPhoto||p.logoPhoto||'');
+                const photo  = p.hideStatsPhoto ? '' : (isLogo ? (p.logoPhoto||p.leaderPhoto||'') : (p.leaderPhoto||p.logoPhoto||''));
                 const ideoName = ideologies.find(i=>i.id===p.ideologyId)?.name || '';
                 h += `<div class="stat-block" style="border-left-color:${p.color};">
                     <div class="dyn-row" style="display:flex;gap:8px;align-items:stretch;">
-                        <div class="leader-photo-box dyn-photo" data-ratio="${isLogo?'1':'0.75'}" style="flex-shrink:0;background:#0a0c10;border:1px solid #222;overflow:hidden;">
+                        ${p.hideStatsPhoto ? '' : `<div class="leader-photo-box dyn-photo" data-ratio="${isLogo?'1':'0.75'}" style="flex-shrink:0;background:#0a0c10;border:1px solid #222;overflow:hidden;">
                             ${photo?`<img src="${photo}" alt="" style="width:100%;height:100%;object-fit:cover;display:block;">`:''}
-                        </div>
+                        </div>`}
                         <div class="dyn-ref" style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px;">
                             <div style="display:flex;justify-content:space-between;align-items:baseline;gap:6px;flex-wrap:wrap;">
                                 <span style="font-size:1.1rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;">${p.name}${p.abbr?` (${p.abbr})`:''}</span>
@@ -5643,7 +5882,7 @@
             parties.push({ id:Date.now(), name:f.name, color:f.color, seatsHouse:f.seatsHouse, seatsSenate:f.seatsSenate,
                 ideologyId:f.ideologyId||p.ideologyId, isRuling:false, inHouse:p.inHouse, inSenate:p.inSenate,
                 leaderName:f.leaderName||'', leaderPhoto:f.leaderPhoto||'', logoPhoto:f.logoPhoto||'',
-                showLogoInStats:false, description:'', factions:[] });
+                showLogoInStats:false, hideStatsPhoto:false, description:'', factions:[] });
             simulate(); refreshUI();
         }
         function moveFaction(partyId, factionId, dir) {
@@ -5728,26 +5967,58 @@
             </div>`;
         }
 
-        // ===== 정당 탭: 정당 정보 =====
+        // ===== 국가 > 부정선거 탭 =====
         // ── 부정선거 시도 (정당별) — 다음 총선 개표 1회에만 적용되는 일회성 설정 ──────────────
-        // p.fraudAttempt = { chamber, boostPct, catchChance, riggedDistricts: string[] } | null
+        // p.fraudAttempt = { chamber, boostPct, catchChance, manualCatch, riggedDistricts: string[] } | null
+        // 발각 확률은 기본적으로 득표율 부풀리기 폭 + 조작한 지역구 수에 비례해 자동 계산되지만,
+        // "수동" 체크 시 직접 지정한 값을 그대로 사용한다.
+        function computeAutoFraudCatchChance(fa) {
+            const boostComponent = (fa.boostPct || 0) * 1.5;
+            const districtComponent = (fa.riggedDistricts || []).length * 6;
+            return Math.min(100, Math.round(boostComponent + districtComponent));
+        }
         function toggleFraudAttempt(pid, checked) {
             const p = parties.find(x => x.id === pid);
             if(!p) return;
-            p.fraudAttempt = checked ? { chamber: chamberList()[0], boostPct: 10, catchChance: 30, riggedDistricts: [] } : null;
-            renderPartyInfoList();
+            if(checked) {
+                const fa = { chamber: chamberList()[0], boostPct: 10, manualCatch: false, riggedDistricts: [] };
+                fa.catchChance = computeAutoFraudCatchChance(fa);
+                p.fraudAttempt = fa;
+            } else {
+                p.fraudAttempt = null;
+            }
+            renderFraudTab();
         }
         function updateFraudAttempt(pid, field, val) {
             const p = parties.find(x => x.id === pid);
             if(!p || !p.fraudAttempt) return;
             p.fraudAttempt[field] = val;
             if(field === 'chamber') p.fraudAttempt.riggedDistricts = []; // 원이 바뀌면 그 원에 없는 지역구 키가 남지 않도록 초기화
-            renderPartyInfoList();
+            if((field === 'chamber' || field === 'boostPct') && !p.fraudAttempt.manualCatch) {
+                p.fraudAttempt.catchChance = computeAutoFraudCatchChance(p.fraudAttempt);
+            }
+            renderFraudTab();
+        }
+        function toggleFraudManualCatch(pid, checked) {
+            const p = parties.find(x => x.id === pid);
+            if(!p || !p.fraudAttempt) return;
+            p.fraudAttempt.manualCatch = checked;
+            if(!checked) p.fraudAttempt.catchChance = computeAutoFraudCatchChance(p.fraudAttempt);
+            renderFraudTab();
         }
         function updateFraudRiggedDistricts(pid, selectEl) {
             const p = parties.find(x => x.id === pid);
             if(!p || !p.fraudAttempt) return;
             p.fraudAttempt.riggedDistricts = Array.from(selectEl.selectedOptions).map(o => o.value);
+            // 선택 도중 목록 전체를 다시 그리면 <select multiple>의 선택 상태가 끊기므로,
+            // 자동 발각 확률만 계산해 표시 요소를 직접 갱신한다 (전체 재렌더 없음)
+            if(!p.fraudAttempt.manualCatch) {
+                p.fraudAttempt.catchChance = computeAutoFraudCatchChance(p.fraudAttempt);
+                const input = document.getElementById('fraudCatchInput_'+pid);
+                if(input) input.value = p.fraudAttempt.catchChance;
+                const note = document.getElementById('fraudCatchNote_'+pid);
+                if(note) note.textContent = `자동 계산: 부풀리기·지역구 조작 규모에 비례 (현재 ${p.fraudAttempt.catchChance}%)`;
+            }
         }
         function fraudDistrictOptionsHtml(chamber, selected) {
             const sel = new Set(selected || []);
@@ -5783,9 +6054,14 @@
                         </div>
                         <div style="display:flex;align-items:center;gap:6px;">
                             <span style="color:#888;font-size:0.78rem;width:100px;flex-shrink:0;">발각 확률</span>
-                            <input type="number" min="0" max="100" value="${fa.catchChance}" style="flex:1;min-width:0;" onchange="updateFraudAttempt(${p.id},'catchChance',parseFloat(this.value)||0)">
+                            <input type="number" id="fraudCatchInput_${p.id}" min="0" max="100" value="${fa.catchChance}" ${fa.manualCatch?'':'disabled'}
+                                style="flex:1;min-width:0;${fa.manualCatch?'':'opacity:0.5;'}" onchange="updateFraudAttempt(${p.id},'catchChance',parseFloat(this.value)||0)">
                             <span style="color:#666;font-size:0.78rem;flex-shrink:0;">%</span>
+                            <label style="display:flex;align-items:center;gap:3px;color:#888;font-size:0.7rem;flex-shrink:0;cursor:pointer;white-space:nowrap;">
+                                <input type="checkbox" ${fa.manualCatch?'checked':''} onchange="toggleFraudManualCatch(${p.id},this.checked)"> 수동
+                            </label>
                         </div>
+                        ${!fa.manualCatch ? `<div id="fraudCatchNote_${p.id}" style="color:#555;font-size:0.7rem;margin-left:106px;">자동 계산: 부풀리기·지역구 조작 규모에 비례 (현재 ${fa.catchChance}%)</div>` : ''}
                         <div>
                             <span style="color:#888;font-size:0.78rem;">지역구 개표 조작 (선택한 지역구는 실제 결과와 무관하게 이 정당이 승리)</span>
                             <select multiple onchange="updateFraudRiggedDistricts(${p.id},this)" style="width:100%;box-sizing:border-box;height:84px;margin-top:4px;">
@@ -5796,6 +6072,32 @@
                     </div>`}
                 </div>
             `;
+        }
+
+        // dno.html에서는 부정선거 탭 버튼이 이 함수를 통해 잠겨 있지만(1.5.S 전까지 접근 권한 부족 안내만
+        // 표시), teaser.html은 부정선거 기능을 미리 공개하기로 하여 버튼 onclick을 switchSubTab('nation','fraud')로
+        // 되돌려 두었으므로 이 함수는 teaser에서 더 이상 쓰이지 않는다. dno.js와 파일을 동일하게 유지하기 위해
+        // 삭제하지 않고 남겨둠 — dno가 1.5.S에 도달해 이 함수 자체가 지워지면 teaser도 함께 지워질 것
+        function openFraudTabGated() {
+            showCustomAlert('⚠ 접근 권한이 부족합니다.');
+        }
+
+        // 국가 > 부정선거 탭 — 정당별 카드로 부정선거 시도를 한눈에 모아 설정 (정당 정보 탭에는 노출하지 않음)
+        function renderFraudTab() {
+            const container = document.getElementById('fraudPartyList');
+            if(!container) return;
+            const list = parties.filter(p => p.ideologyId !== IND_IDEOLOGY_ID);
+            if(list.length === 0) { container.innerHTML = '<div style="color:#555;font-size:0.78rem;">정당이 없습니다.</div>'; return; }
+            container.innerHTML = list.map(p => `
+                <div style="border-left:3px solid ${p.color};padding:8px;margin-bottom:10px;background:#0a0c10;">
+                    <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
+                        <span style="width:9px;height:9px;background:${p.color};border-radius:50%;flex-shrink:0;"></span>
+                        <span style="color:#ccc;font-size:0.9rem;">${p.name}</span>
+                        ${p.status==='banned' ? '<span class="party-status-badge status-banned">활동 금지</span>' : ''}
+                    </div>
+                    ${renderFraudAttemptSection(p)}
+                </div>
+            `).join('');
         }
 
         function renderPartyInfoList() {
@@ -5873,18 +6175,17 @@
                             <input type="checkbox" id="partyChamberAll_${idx}" onchange="setAllPartyChambers(${idx},this.checked)"> 전체
                         </label>
                     </div>`:''}
-                    <div style="display:flex;align-items:center;gap:12px;margin-bottom:6px;padding:5px 8px;background:#0a0c10;border:1px solid #222;">
+                    <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;padding:5px 8px;background:#0a0c10;border:1px solid #222;">
                         <span style="color:#555;font-size:0.8rem;white-space:nowrap;">통계 표시</span>
-                        <label style="display:flex;align-items:center;gap:4px;cursor:pointer;color:#aaa;font-size:0.85rem;">
-                            <input type="radio" name="statsPhoto_${p.id}" value="leader" ${!p.showLogoInStats?'checked':''}
-                                onchange="updateParty(${idx},'showLogoInStats',false);simulate();"> 당수 사진
-                        </label>
-                        <label style="display:flex;align-items:center;gap:4px;cursor:pointer;color:#aaa;font-size:0.85rem;">
-                            <input type="radio" name="statsPhoto_${p.id}" value="logo" ${p.showLogoInStats?'checked':''}
-                                onchange="updateParty(${idx},'showLogoInStats',true);simulate();"> 당 로고
-                        </label>
+                        <div class="system-radio-group" style="margin-bottom:0;flex:1;">
+                            <button type="button" class="system-radio-btn ${(!p.hideStatsPhoto && !p.showLogoInStats)?'active':''}"
+                                onclick="setPartyStatsPhotoMode(${idx},'leader')" style="padding:4px 6px;font-size:0.8rem;">당수 사진</button>
+                            <button type="button" class="system-radio-btn ${(!p.hideStatsPhoto && p.showLogoInStats)?'active':''}"
+                                onclick="setPartyStatsPhotoMode(${idx},'logo')" style="padding:4px 6px;font-size:0.8rem;">당 로고</button>
+                            <button type="button" class="system-radio-btn ${p.hideStatsPhoto?'active':''}"
+                                onclick="setPartyStatsPhotoMode(${idx},'none')" style="padding:4px 6px;font-size:0.8rem;flex:0.5;">X</button>
+                        </div>
                     </div>
-                    ${renderFraudAttemptSection(p)}
                     <textarea placeholder="당에 대한 설명을 입력하세요..."
                         style="width:100%;box-sizing:border-box;background:#000;border:1px solid #2a2a2a;color:#bbb;font-family:'NeoDunggeunmo','VT323',monospace;font-size:0.85rem;padding:6px;resize:vertical;min-height:60px;outline:none;line-height:1.5;"
                         onchange="updateParty(${idx},'description',this.value)">${p.description||''}</textarea>
@@ -5927,9 +6228,8 @@
                 const div = document.createElement('div');
                 div.className = `card-item ${p.isRuling?'is-ruling':''}`;
                 div.style.borderLeftColor = p.color;
-                const auto = partyLeaderAutoInfo(p);
-                const name = auto ? auto.name : p.leaderName;
-                const photo = auto ? auto.photo : (p.leaderPhoto||'');
+                const name = p.leaderName;
+                const photo = p.leaderPhoto||'';
                 const hasFactions = (p.factions||[]).length > 0;
 
                 // 파벌 섹션 HTML
@@ -5979,7 +6279,7 @@
                         <div style="display:flex;flex-direction:column;align-items:center;gap:4px;flex-shrink:0;">
                             <div class="leader-photo-box dyn-photo" data-ratio="0.8" title="클릭하여 사진 업로드" style="width:52px;height:65px;">
                                 ${photo?`<img src="${photo}" alt="당수">`:'<div class="photo-ph">👤</div>'}
-                                <input type="file" accept="image/*" ${auto?'disabled':''} onchange="uploadLeaderPhoto(this,${p.id})">
+                                <input type="file" accept="image/*" onchange="uploadLeaderPhoto(this,${p.id})">
                             </div>
                             <span style="font-size:0.75rem;color:#444;flex-shrink:0;">사진 업로드</span>
                         </div>
@@ -5988,20 +6288,19 @@
                                 <span style="width:10px;height:10px;background:${p.color};border-radius:50%;flex-shrink:0;"></span>
                                 <span style="color:var(--tno-neon);font-size:0.95rem;">${p.name}</span>
                             </div>
-                            <input type="text" value="${name||''}" placeholder="당수 이름" ${auto?'disabled':''}
+                            <input type="text" value="${name||''}" placeholder="당수 이름"
                                 style="background:#000;border:1px solid #2a2a2a;color:#e0e0e0;font-family:inherit;font-size:0.95rem;padding:5px 8px;width:100%;box-sizing:border-box;"
                                 onchange="updateLeaderField(${p.id},'leaderName',this.value)">
-                            <select onchange="linkPartyLeaderToSeat(${p.id},this.value)"
-                                style="width:100%;box-sizing:border-box;background:#000;border:1px solid #333;color:#888;font-family:inherit;font-size:0.75rem;padding:4px;">
-                                ${partyMemberPickerOptionsHtml(p.id)}
-                            </select>
-                            ${p.leaderLinkedSeat ? `
-                            <div style="display:flex;align-items:center;gap:6px;color:#6cf;font-size:0.72rem;">
-                                🔗 지정된 의석과 연결됨 — 이름·사진 자동 반영
-                                <button onclick="unlinkPartyLeader(${p.id})" style="background:transparent;border:1px solid #333;color:#888;font-family:inherit;font-size:0.7rem;padding:2px 6px;cursor:pointer;">연결 해제</button>
-                            </div>` : (auto ? `
-                            <div style="color:#6a6;font-size:0.72rem;">◆ 자동 배정: 소속 1번 의원 — 이름·사진 자동 반영</div>` : '')}
-                            ${(!auto && photo)?`<button onclick="removeLeaderPhoto(${p.id})" style="background:transparent;border:1px solid #333;color:#555;font-family:inherit;font-size:0.8rem;padding:3px 8px;cursor:pointer;text-align:left;">✕ 사진 제거</button>`:''}
+                            ${photo?`<button onclick="removeLeaderPhoto(${p.id})" style="background:transparent;border:1px solid #333;color:#555;font-family:inherit;font-size:0.8rem;padding:3px 8px;cursor:pointer;text-align:left;">✕ 사진 제거</button>`:''}
+                            <div style="display:flex;gap:6px;">
+                                <select id="leaderSeatSelect_${p.id}"
+                                    style="flex:1;min-width:0;box-sizing:border-box;background:#000;border:1px solid #333;color:#888;font-family:inherit;font-size:0.75rem;padding:4px;">
+                                    ${partyMemberPickerOptionsHtml(p.id)}
+                                </select>
+                                <button onclick="pasteLeaderToSeat(${p.id},document.getElementById('leaderSeatSelect_${p.id}').value)"
+                                    style="flex-shrink:0;background:transparent;border:1px solid #333;color:#6cf;font-family:inherit;font-size:0.72rem;padding:4px 8px;cursor:pointer;">붙여넣기</button>
+                            </div>
+                            <div style="color:#555;font-size:0.68rem;">◆ 위에서 의석을 고르고 "붙여넣기"를 누르면 현재 당수 이름·사진이 그 의석에 복사됩니다</div>
                         </div>
                     </div>
                     ${factionHtml}
@@ -6205,6 +6504,7 @@
                         <option value="banned" ${ind.status==='banned'?'selected':''}>활동 금지</option>
                     </select>
                     ${(ind.photo && !opts.disabled)?`<button onclick="removeIndependentPhoto('${ind.id}')" style="background:transparent;border:1px solid #333;color:#555;font-family:inherit;font-size:0.75rem;padding:2px 8px;cursor:pointer;text-align:left;">✕ 사진 제거</button>`:''}
+                    ${(!opts.disabled && !isPartyLeaderMatch(getIndependentParty()?.id, ind.name, ind.photo))?`<button onclick="designatePartyLeaderFromIndependent('${ind.id}')" style="background:transparent;border:1px solid #443300;color:#c9a227;font-family:inherit;font-size:0.75rem;padding:2px 8px;cursor:pointer;text-align:left;">👑 당수로 지정</button>`:''}
                     ${coalitionField}
                     ${opts.extraHtml || ''}
                 </div>
@@ -6335,6 +6635,7 @@
                                 ${party.factions.map(f=>`<option value="${f.id}" ${member.factionId===f.id?'selected':''}>${f.name}</option>`).join('')}
                             </select>`:''}
                             ${(member.photo && !member.vacant)?`<button onclick="removeDistrictMemberPhoto('${ch}','${key}')" style="background:transparent;border:1px solid #333;color:#555;font-family:inherit;font-size:0.75rem;padding:2px 8px;cursor:pointer;text-align:left;">✕ 사진 제거</button>`:''}
+                            ${(!member.vacant && !isPartyLeaderMatch(member.partyId, member.name, member.photo))?`<button onclick="designatePartyLeaderFromDistrictSeat('${ch}','${key}')" style="background:transparent;border:1px solid #443300;color:#c9a227;font-family:inherit;font-size:0.75rem;padding:2px 8px;cursor:pointer;text-align:left;">👑 당수로 지정</button>`:''}
                             <div style="display:flex;gap:6px;">
                                 ${member.vacant
                                     ? `<button onclick="fillVacantSeat('${ch}','${key}')" style="flex:1;background:transparent;border:1px solid #00cc66;color:#00cc66;font-family:inherit;font-size:0.8rem;padding:5px;cursor:pointer;">보궐선거로 채우기</button>`
@@ -6555,6 +6856,7 @@
                                 ${party.factions.map(f=>`<option value="${f.id}" ${m.factionId===f.id?'selected':''}>${f.name}</option>`).join('')}
                             </select>`:''}
                             ${m.photo?`<button onclick="removeListMemberPhoto('${ch}','${e.partyId}','${m.id}')" style="background:transparent;border:1px solid #333;color:#555;font-family:inherit;font-size:0.75rem;padding:2px 8px;cursor:pointer;text-align:left;">✕ 사진 제거</button>`:''}
+                            ${!isPartyLeaderMatch(e.partyId, m.name, m.photo)?`<button onclick="designatePartyLeaderFromListSeat('${ch}','${e.partyId}','${m.id}')" style="background:transparent;border:1px solid #443300;color:#c9a227;font-family:inherit;font-size:0.75rem;padding:2px 8px;cursor:pointer;text-align:left;">👑 당수로 지정</button>`:''}
                         </div>
                     `;
                     container.appendChild(div);
@@ -6670,10 +6972,11 @@
             if(pmChEl) pmChEl.textContent = chLabel;
         }
 
-        // 대선/총리선거 후보 명단 — 기준 원에 참여 중이고 활동 금지되지 않은, 무소속이 아닌 정당들
+        // 대선/총리선거 후보 명단 — 기준 원에 참여 중이고 활동 금지되지 않은 정당들 (무소속도 정당 탭에서
+        // "무소속" 항목을 추가해두었다면 다른 정당과 동일하게 후보로 출마 가능)
         function presElectionCandidates() {
             const ch = presElectionChamberBasis;
-            return parties.filter(p => p[inKeyFor(ch)] && p.status !== 'banned' && p.ideologyId !== IND_IDEOLOGY_ID);
+            return parties.filter(p => p[inKeyFor(ch)] && p.status !== 'banned');
         }
 
         // 각 정당의 실제 후보 — 기본은 당수, 후보 설정에서 의원 연결/직접 입력으로 재지정 가능
@@ -6702,6 +7005,8 @@
                 const usingDefault = !resolved && !ov.name && !ov.photo;
                 const effPhoto = resolved ? resolved.photo : (ov.photo || (usingDefault ? p.leaderPhoto : '') || '');
                 const inputVal = resolved ? resolved.name : (ov.name || '');
+                const isInd = p.ideologyId === IND_IDEOLOGY_ID;
+                const leaderLabel = isInd ? '대표' : '당수';
                 return `
                     <div style="display:flex;gap:10px;align-items:stretch;border-left:3px solid ${p.color};padding:8px;margin-bottom:8px;background:#0a0c10;">
                         <div class="leader-photo-box dyn-photo" data-ratio="0.8" style="width:44px;height:55px;flex-shrink:0;">
@@ -6710,16 +7015,16 @@
                         </div>
                         <div style="flex:1;display:flex;flex-direction:column;gap:4px;min-width:0;">
                             <div style="color:#aaa;font-size:0.82rem;">${p.name}</div>
-                            <input type="text" value="${inputVal}" placeholder="${p.leaderName ? p.leaderName+' (당수)' : '후보 이름 (비우면 당수)'}" ${resolved?'disabled':''}
+                            <input type="text" value="${inputVal}" placeholder="${p.leaderName ? p.leaderName+' ('+leaderLabel+')' : '후보 이름 (비우면 '+leaderLabel+')'}" ${resolved?'disabled':''}
                                 style="width:100%;box-sizing:border-box;background:#000;border:1px solid #2a2a2a;color:#e0e0e0;font-family:inherit;font-size:0.85rem;padding:4px 6px;"
                                 onchange="updateElectionCandidateOverride('${p.id}','name',this.value)">
                             <select onchange="linkElectionCandidateToMember('${p.id}',this.value)"
                                 style="width:100%;box-sizing:border-box;background:#000;border:1px solid #333;color:#888;font-family:inherit;font-size:0.75rem;padding:3px;">
-                                ${memberPickerOptionsHtml()}
+                                ${memberPickerOptionsHtml(p.id)}
                             </select>
                             <div style="display:flex;gap:6px;">
                                 ${resolved?`<button onclick="unlinkElectionCandidate('${p.id}')" style="background:transparent;border:1px solid #333;color:#888;font-family:inherit;font-size:0.7rem;padding:2px 6px;cursor:pointer;">연결 해제</button>`:''}
-                                ${(!usingDefault)?`<button onclick="resetElectionCandidateToLeader('${p.id}')" style="background:transparent;border:1px solid #333;color:#666;font-family:inherit;font-size:0.7rem;padding:2px 6px;cursor:pointer;">당수로 재설정</button>`:''}
+                                ${(!usingDefault)?`<button onclick="resetElectionCandidateToLeader('${p.id}')" style="background:transparent;border:1px solid #333;color:#666;font-family:inherit;font-size:0.7rem;padding:2px 6px;cursor:pointer;">${leaderLabel}로 재설정</button>`:''}
                             </div>
                         </div>
                     </div>
@@ -7027,7 +7332,7 @@
             const map = districtSvgMap;
             wrapEl.innerHTML = '';
             if(!map || !Array.isArray(map.shapes) || map.shapes.length === 0) {
-                wrapEl.innerHTML = '<div style="text-align:center;color:#444;font-size:0.85rem;padding:30px 10px;">SVG 지도가 없습니다 — 뉴 지역구 탭에서 업로드하세요</div>';
+                wrapEl.innerHTML = '<div style="text-align:center;color:#444;font-size:0.85rem;padding:30px 10px;">SVG 지도가 없습니다 — 지역구 탭에서 업로드하세요</div>';
                 return;
             }
             const svgNS = 'http://www.w3.org/2000/svg';
@@ -7047,7 +7352,10 @@
             map.shapes.forEach(s => {
                 const el = document.createElementNS(svgNS, s.tag);
                 Object.entries(s.attrs||{}).forEach(([k,v]) => el.setAttribute(k, v));
-                el.setAttribute('fill', (opts.getFill ? opts.getFill(s.key) : null) || 'transparent');
+                const fillColor = (opts.getFill ? opts.getFill(s.key) : null) || 'transparent';
+                // innerGlow: 도형 전체를 단색으로 칠하는 대신, 어두운 바탕 위에 경계 안쪽에서
+                // 옅어지는 네온 광원만 보이도록 함 (권역 지도 등에서 사용)
+                el.setAttribute('fill', opts.innerGlow && fillColor !== 'transparent' ? `color-mix(in srgb, ${fillColor} 22%, #06070a)` : fillColor);
                 el.setAttribute('stroke', map.strokeColor || '#00ffff');
                 el.setAttribute('stroke-width', opts.strokeWidth || '1.5');
                 // 지도 좌표 규모(viewBox)가 저장된 값과 다르거나 매우 클 수 있어, 테두리가 화면 픽셀
@@ -7073,6 +7381,31 @@
                 }
                 svg.appendChild(el);
                 shapeEls.push({ s, el });
+                // innerGlow: 도형과 동일한 모양을 클립으로 삼아, 그 안에서만 보이는 흐린 네온 테두리를
+                // 겹쳐 그림 — 경계 쪽은 밝고 중앙으로 갈수록 옅어지는 광원 느낌을 줌
+                if(opts.innerGlow && fillColor !== 'transparent') {
+                    const clipId = 'clip_' + Math.random().toString(36).slice(2, 10);
+                    const clipPath = document.createElementNS(svgNS, 'clipPath');
+                    clipPath.setAttribute('id', clipId);
+                    const clipShape = document.createElementNS(svgNS, s.tag);
+                    Object.entries(s.attrs||{}).forEach(([k,v]) => clipShape.setAttribute(k, v));
+                    clipPath.appendChild(clipShape);
+                    svg.appendChild(clipPath);
+                    const glowG = document.createElementNS(svgNS, 'g');
+                    glowG.setAttribute('clip-path', `url(#${clipId})`);
+                    glowG.setAttribute('pointer-events', 'none');
+                    glowG.setAttribute('data-decor', '1');
+                    const glowShape = document.createElementNS(svgNS, s.tag);
+                    Object.entries(s.attrs||{}).forEach(([k,v]) => glowShape.setAttribute(k, v));
+                    glowShape.setAttribute('fill', 'none');
+                    glowShape.setAttribute('stroke', fillColor);
+                    glowShape.setAttribute('stroke-width', opts.innerGlowWidth || 8);
+                    glowShape.setAttribute('vector-effect', 'non-scaling-stroke');
+                    glowShape.setAttribute('opacity', '0.8');
+                    glowShape.style.filter = 'blur(3px)';
+                    glowG.appendChild(glowShape);
+                    svg.appendChild(glowG);
+                }
                 // 선택된 지역구는 (지역구 탭과 동일하게) 노란색 반투명 박스를 겹쳐 표시 — 지역구/성향 탭이
                 // selectedDistrictKey를 공유하므로 어느 쪽에서 선택해도 다른 탭에도 그대로 반영됨.
                 // 다른 도형들에 가려지지 않도록 맨 위에 그려야 해서, 지금 만들지만 나중에 append한다
@@ -9833,11 +10166,12 @@
                 wrap.innerHTML = '';
                 renderDistrictSvgInto(wrap, {
                     clickable: true,
+                    innerGlow: true,
                     getFill: key => {
-                        if(!districtGrid[ch][key]) return 'rgba(255,255,255,0.03)';
+                        if(!districtGrid[ch][key]) return 'transparent';
                         const regionId = districtRegionMap[ch]?.[key];
                         const region = (regions[ch]||[]).find(r => r.id === regionId);
-                        return region ? region.color : 'rgba(255,255,255,0.08)';
+                        return region ? region.color : 'rgba(255,255,255,0.25)';
                     },
                     title: key => {
                         const nm = districtNames.house[key] || key;
@@ -10687,7 +11021,6 @@
 
         /* ===== SIMULATE & DRAW ===== */
         function simulate() {
-            parties.forEach(syncPartyLeaderFromSeat);
             const isBicameral = hasSenateChamber();
             const highlightGov = document.getElementById('chkGovHighlight').checked;
             const sTotal = parseInt(document.getElementById('senateTotal').value) || 100;
@@ -11067,23 +11400,28 @@
                 }
 
                 // 사진/이름 결정
-                let photo = '', leaderName = '', isLogo = false;
+                let photo = '', leaderName = '', isLogo = false, hidePhotoBox = false;
                 let isIndependentCard = false;
                 if(s.coalitionName) {
                     const coal = coalObj;
                     if(coal) {
                         // 연정의 당수는 항상 대표당의 당수를 그대로 따른다
                         const leadP = coal.leadPartyId ? parties.find(p=>p.id===coal.leadPartyId) : null;
-                        photo      = leadP?.leaderPhoto || '';
+                        hidePhotoBox = !!leadP?.hideStatsPhoto;
+                        photo      = hidePhotoBox ? '' : (leadP?.leaderPhoto || '');
                         leaderName = leadP?.leaderName  || '';
                     }
                 } else {
                     const pName = Object.keys(s.parties)[0];
                     const party = parties.find(p=>p.name===pName);
                     isLogo     = party?.showLogoInStats ?? false;
-                    photo      = party ? (isLogo ? (party.logoPhoto||party.leaderPhoto||'') : (party.leaderPhoto||party.logoPhoto||'')) : '';
+                    hidePhotoBox = !!party?.hideStatsPhoto;
+                    photo      = (party && !hidePhotoBox) ? (isLogo ? (party.logoPhoto||party.leaderPhoto||'') : (party.leaderPhoto||party.logoPhoto||'')) : '';
                     leaderName = party?.leaderName || '';
                     isIndependentCard = party?.ideologyId === IND_IDEOLOGY_ID;
+                    // 무소속은 개별 의원만 있고 당대표 개념이 없으므로, 당수 탭에 값이 들어있어도
+                    // (대선/총리 후보 지정 등 다른 용도로 쓰일 수 있음) 이 통계 카드에는 항상 숨김
+                    if(isIndependentCard) { hidePhotoBox = true; photo = ''; leaderName = ''; }
                 }
 
                 // 무소속 카드: 접고 펼 수 있는 개별 의원 리스트
@@ -11094,7 +11432,7 @@
                     const listItems = independents.filter(x=>x.chamber===chamber).sort((a,b)=>a.seatIndex-b.seatIndex);
                     const panelId = `indPanel_${id}_${chamber}`;
                     independentToggleHtml = `<span onclick="event.stopPropagation();toggleIndependentPanel('${panelId}')" style="cursor:pointer;color:#888;font-size:0.85rem;user-select:none;flex-shrink:0;" id="${panelId}_arrow">▶</span>`;
-                    independentListHtml = `<div id="${panelId}" style="display:none;margin-top:6px;border-top:1px dashed #333;padding-top:6px;max-height:260px;overflow-y:auto;">
+                    independentListHtml = `<div id="${panelId}" style="display:none;margin-top:6px;border-top:1px dashed #333;padding-top:6px;">
                         ${listItems.length===0 ? '<div style="color:#444;font-size:0.78rem;">개별 정보 없음</div>' : listItems.map(ind => {
                             const indIdeo = ind.ideologyId ? ideologies.find(i=>i.id===ind.ideologyId)?.name : null;
                             const districtLabel = ind.districtKey ? (districtNames[chamber]?.[ind.districtKey] || ind.districtKey) : null;
@@ -11113,10 +11451,10 @@
 
                 return `<div class="stat-block" style="border-left-color:${(s.coalitionName && s.isRuling) ? 'var(--tno-gold)' : (s.partyColor||s.color)};">
                     <div class="dyn-row" style="display:flex;gap:8px;align-items:stretch;">
-                        <!-- 사진: JS에서 오른쪽 텍스트 실측 높이에 맞춰 px로 직접 지정 -->
-                        <div class="leader-photo-box dyn-photo" data-ratio="${isLogo?'1':'0.75'}" style="flex-shrink:0;background:#0a0c10;border:1px solid #222;overflow:hidden;">
+                        <!-- 사진: JS에서 오른쪽 텍스트 실측 높이에 맞춰 px로 직접 지정. "X"로 표시 안 함을 고르면 칸 자체를 없앰 -->
+                        ${hidePhotoBox ? '' : `<div class="leader-photo-box dyn-photo" data-ratio="${isLogo?'1':'0.75'}" style="flex-shrink:0;background:#0a0c10;border:1px solid #222;overflow:hidden;">
                             ${photo?`<img src="${photo}" alt="" style="width:100%;height:100%;object-fit:cover;display:block;">`:''}
-                        </div>
+                        </div>`}
                         <!-- 오른쪽 3행 -->
                         <div class="dyn-ref" style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px;">
                             <!-- 행1: 연정/정당명 : 의석 (%) + 상태 -->
