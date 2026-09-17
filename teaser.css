@@ -150,11 +150,11 @@
         }
         .disp-info-bar #dispInfoDate {
             color: #ccc;
-            font-size: 0.85rem;
+            font-size: 0.95rem;
         }
         .disp-info-bar #dispInfoSession {
             color: #888;
-            font-size: 0.78rem;
+            font-size: 0.88rem;
         }
         .disp-tab-btn {
             background: var(--tno-panel);
