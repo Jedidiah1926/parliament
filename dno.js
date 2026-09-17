@@ -71,17 +71,26 @@
         // 대통령제에서는 관례상 총리를 "국무총리"라 부르므로, 정부 형태에 따라 탭/라벨 표기를 바꾼다
         function pmRoleLabel() { return govType === 'presidential' ? '국무총리' : '총리'; }
 
+        // 입헌군주제에서는 "대통령" 자리가 상징적 국가원수인 "국왕"으로 바뀐다 (실권은 총리에게 있음)
+        function presidentRoleLabel() { return govType === 'monarchy' ? '국왕' : '대통령'; }
+
         // 내각 디스플레이의 직책 이름(대통령/총리·국무총리/부총리/의장/장관·국무위원)을 사용자가 직접 바꿀 수 있게 함 —
         // 비워두면(기본값) 정부 형태에 따른 자동 라벨(pmRoleLabel/cabinetMemberRoleLabel)을 그대로 사용
         let cabinetRoleLabels = { president: '', pm: '', deputyPm: '', chair: '', cabinetMember: '' };
         function cabinetRoleLabelDefault(key) {
-            return { president: '대통령', pm: pmRoleLabel(), deputyPm: '부총리', chair: '의장', cabinetMember: cabinetMemberRoleLabel() }[key];
+            return { president: presidentRoleLabel(), pm: pmRoleLabel(), deputyPm: '부총리', chair: '의장', cabinetMember: cabinetMemberRoleLabel() }[key];
         }
         function effRoleLabel(key) {
             return cabinetRoleLabels[key] || cabinetRoleLabelDefault(key);
         }
         function updateCabinetRoleLabel(key, val) {
             cabinetRoleLabels[key] = val;
+            updatePmRoleLabels();
+            updatePresidentRoleLabels();
+            updateHolderButtonLabels();
+            applyGovTypeTabVisibility();
+            renderPmSection();
+            renderPresidentSection();
             renderCabinetDisplay();
         }
         function renderCabinetRoleLabelInputs() {
@@ -189,13 +198,16 @@
         let vetoHolder = 'none';
 
         function setGovType(type) {
-            if(!['presidential','semi','parliamentary','collective'].includes(type)) return;
+            if(!['presidential','semi','parliamentary','monarchy','collective'].includes(type)) return;
             govType = type;
             document.getElementById('govTypePresidentialBtn')?.classList.toggle('active', type==='presidential');
             document.getElementById('govTypeSemiBtn')?.classList.toggle('active', type==='semi');
             document.getElementById('govTypeParliamentaryBtn')?.classList.toggle('active', type==='parliamentary');
+            document.getElementById('govTypeMonarchyBtn')?.classList.toggle('active', type==='monarchy');
             document.getElementById('govTypeCollectiveBtn')?.classList.toggle('active', type==='collective');
             updatePmRoleLabels();
+            updatePresidentRoleLabels();
+            updateHolderButtonLabels();
             applyGovTypeHolderRestrictions();
             applyGovTypeTabVisibility();
             renderPmSection();
@@ -220,14 +232,15 @@
                 switchSubTab('cabinet', 'cabinetmembers');
             }
             const addBtn = document.getElementById('addCabinetMemberBtn');
-            if(addBtn) addBtn.textContent = `[+] ${cabinetMemberRoleLabel()} 추가`;
+            if(addBtn) addBtn.textContent = `[+] ${effRoleLabel('cabinetMember')} 추가`;
         }
 
         // 정부 형태에 따라 거부권/비상 권한 주체로 고를 수 있는 대상을 제한한다 —
         // 대통령제: 없음/대통령만, 의원내각제: 없음/총리만, 이원집정부제: 셋 다 가능, 집단지도체제: 없음/내각만
         function applyGovTypeHolderRestrictions() {
             const isCollective = govType === 'collective';
-            const showPresident = !isCollective && govType !== 'parliamentary';
+            // 입헌군주제의 국왕은 의원내각제의 대통령과 마찬가지로 실권(거부권·비상 권한)이 없음
+            const showPresident = !isCollective && govType !== 'parliamentary' && govType !== 'monarchy';
             const showPm = !isCollective && govType !== 'presidential';
             const showCabinet = isCollective;
 
@@ -256,7 +269,7 @@
         }
 
         function updatePmRoleLabels() {
-            const label = pmRoleLabel();
+            const label = effRoleLabel('pm');
             const tabBtn = document.getElementById('subTabPm');
             if(tabBtn) tabBtn.textContent = label;
             const sectionLabel = document.getElementById('pmSectionLabel');
@@ -265,6 +278,34 @@
             if(nameInput) nameInput.placeholder = `${label} 이름`;
             const img = document.getElementById('pmPhotoImg');
             if(img) img.alt = label;
+        }
+
+        function updatePresidentRoleLabels() {
+            const label = effRoleLabel('president');
+            const tabBtn = document.getElementById('subTabPresident');
+            if(tabBtn) tabBtn.textContent = label;
+            const sectionLabel = document.getElementById('presidentSectionLabel');
+            if(sectionLabel) sectionLabel.textContent = label;
+            const nameInput = document.getElementById('presidentNameInput');
+            if(nameInput) nameInput.placeholder = `${label} 이름`;
+            const img = document.getElementById('presidentPhotoImg');
+            if(img) img.alt = label;
+        }
+
+        // 거부권/비상 권한 주체 선택 버튼(대통령/총리)과 해산권 분할 문구는 정적 HTML 텍스트라
+        // 정부 형태·직책 이름 커스텀에 맞춰 실시간으로 갱신해줘야 함
+        function updateHolderButtonLabels() {
+            const presLabel = effRoleLabel('president');
+            const pmLabel = effRoleLabel('pm');
+            const vp = document.getElementById('vetoHolderPresidentBtn'); if(vp) vp.textContent = presLabel;
+            const vm = document.getElementById('vetoHolderPmBtn'); if(vm) vm.textContent = pmLabel;
+            Object.keys(EMERGENCY_POWERS).forEach(key => {
+                const suf = key.charAt(0).toUpperCase() + key.slice(1);
+                const p = document.getElementById('emergencyHolderPresident'+suf); if(p) p.textContent = presLabel;
+                const m = document.getElementById('emergencyHolderPm'+suf); if(m) m.textContent = pmLabel;
+            });
+            const sp = document.getElementById('splitDissolutionPresLabel'); if(sp) sp.textContent = presLabel;
+            const sm = document.getElementById('splitDissolutionPmLabel'); if(sm) sm.textContent = pmLabel;
         }
 
         function renderPresidentSection() {
@@ -444,7 +485,7 @@
             if(nameInput) {
                 nameInput.disabled = !!resolved;
                 if(nameInput.value !== (effName||'')) nameInput.value = effName || '';
-                nameInput.placeholder = (pmMajorityLocked && !effName) ? `${pmRoleLabel()} 이름 (공석)` : `${pmRoleLabel()} 이름`;
+                nameInput.placeholder = (pmMajorityLocked && !effName) ? `${effRoleLabel('pm')} 이름 (공석)` : `${effRoleLabel('pm')} 이름`;
             }
             const img = document.getElementById('pmPhotoImg');
             const ph  = document.getElementById('pmPhotoPh');
@@ -476,8 +517,8 @@
 
             const method = pmSelectionMethod();
             const hint = document.getElementById('pmSelectionMethodHint');
-            if(hint) hint.textContent = method === 'appoint' ? `현재 선출 방식: 대통령 임명제 — 대통령이 후보를 지명하면 의회 심의를 거쳐 ${pmRoleLabel()}으로 확정됩니다`
-                : method === 'majority' ? `현재 선출 방식: 다수당 방식 — 기준 원(${chamberDisplayName(presElectionChamberBasis)})의 다수당 대표가 자동으로 ${pmRoleLabel()}이 됩니다`
+            if(hint) hint.textContent = method === 'appoint' ? `현재 선출 방식: ${effRoleLabel('president')} 임명제 — ${effRoleLabel('president')}이 후보를 지명하면 의회 심의를 거쳐 ${effRoleLabel('pm')}으로 확정됩니다`
+                : method === 'majority' ? `현재 선출 방식: 다수당 방식 — 기준 원(${chamberDisplayName(presElectionChamberBasis)})의 다수당 대표가 자동으로 ${effRoleLabel('pm')}이 됩니다`
                 : `현재 선출 방식: 총리직선제 — 국가 > 선거 > 총선 탭에서 "총리 선거"로 개표하세요`;
 
             const nomineeSection = document.getElementById('pmNomineeSection');
@@ -787,7 +828,7 @@
             const nomineeName = resolved ? resolved.name : pmNominee.name;
             if(!nomineeName) { alert('먼저 총리 후보(이름 또는 의원 연결)를 지정하세요.'); return; }
             const bill = {
-                id: 'b'+Date.now(), title: `${pmRoleLabel()} 임명동의안 (${nomineeName})`, content: '', threshold: 0.5, numer: null, denom: null, tags: ['임명동의안'],
+                id: 'b'+Date.now(), title: `${effRoleLabel('pm')} 임명동의안 (${nomineeName})`, content: '', threshold: 0.5, numer: null, denom: null, tags: ['임명동의안'],
                 houseStatus: 'pending', senateStatus: 'pending', thirdStatus: 'pending', houseVote: null, senateVote: null, thirdVote: null,
                 version: 1, parentBillId: null, isAmendment: false, voteHistory: [],
                 isPmConfirmation: true, pmApplied: false,
@@ -797,7 +838,7 @@
             pmNomineeBillId = bill.id;
             renderPmNomineeSection();
             renderBillList(); syncBillSelect();
-            alert(`${nomineeName}에 대한 ${pmRoleLabel()} 임명동의안이 국가 > 입법 탭에 상정되었습니다.`);
+            alert(`${nomineeName}에 대한 ${effRoleLabel('pm')} 임명동의안이 국가 > 입법 탭에 상정되었습니다.`);
         }
 
         // 임명동의안이 가결되면 지명자를 실제 총리로 확정 반영
@@ -2195,7 +2236,7 @@
         }
 
         function vetoHolderLabel() {
-            return vetoHolder === 'president' ? '대통령' : vetoHolder === 'pm' ? pmRoleLabel() : vetoHolder === 'cabinet' ? '내각' : '';
+            return vetoHolder === 'president' ? effRoleLabel('president') : vetoHolder === 'pm' ? effRoleLabel('pm') : vetoHolder === 'cabinet' ? '내각' : '';
         }
 
         function signBill(id) {
@@ -7181,8 +7222,8 @@
             panel.innerHTML = html;
         }
 
-        function renderPresElecResultPanel() { renderElectionResultPanel(presElectionLastResult, 'presElecResultPanel', 'applyPresidentialWinner', '대통령', 'runPresidentialElection'); }
-        function renderPmElecResultPanel() { renderElectionResultPanel(pmElectionLastResult, 'pmElecResultPanel', 'applyPmElectionWinner', pmRoleLabel(), 'runPmElection'); }
+        function renderPresElecResultPanel() { renderElectionResultPanel(presElectionLastResult, 'presElecResultPanel', 'applyPresidentialWinner', effRoleLabel('president'), 'runPresidentialElection'); }
+        function renderPmElecResultPanel() { renderElectionResultPanel(pmElectionLastResult, 'pmElecResultPanel', 'applyPmElectionWinner', effRoleLabel('pm'), 'runPmElection'); }
 
         function applyPresidentialWinner() {
             const r = presElectionLastResult;
@@ -7202,7 +7243,7 @@
                 winnerPartyId: r.winnerPartyId, winnerName: president.name,
                 date: new Date().toISOString(),
             });
-            alert(`${president.name || party.name}이(가) 대통령으로 취임했습니다.`);
+            alert(`${president.name || party.name}이(가) ${effRoleLabel('president')}으로 취임했습니다.`);
         }
 
         function applyPmElectionWinner() {
@@ -7223,7 +7264,7 @@
                 winnerPartyId: r.winnerPartyId, winnerName: pm.name,
                 date: new Date().toISOString(),
             });
-            alert(`${pm.name || party.name}이(가) ${pmRoleLabel()}으로 취임했습니다.`);
+            alert(`${pm.name || party.name}이(가) ${effRoleLabel('pm')}으로 취임했습니다.`);
         }
 
         // ── 탭 전환 ────────────────────────────
