@@ -1149,6 +1149,7 @@
                             <button type="button" class="system-radio-btn" id="govTypePresidentialBtn" onclick="setGovType('presidential')">대통령제</button>
                             <button type="button" class="system-radio-btn" id="govTypeSemiBtn" onclick="setGovType('semi')">이원<br>집정부제</button>
                             <button type="button" class="system-radio-btn active" id="govTypeParliamentaryBtn" onclick="setGovType('parliamentary')">의원내각제</button>
+                            <button type="button" class="system-radio-btn" id="govTypeMonarchyBtn" onclick="setGovType('monarchy')">입헌<br>군주제</button>
                             <button type="button" class="system-radio-btn" id="govTypeCollectiveBtn" onclick="setGovType('collective')">집단<br>지도체제</button>
                         </div>
                     </div>
@@ -1239,7 +1240,7 @@
                 <!-- 대통령: +대선 == 행정부 선거 (선거 기능은 추후 구현) -->
                 <div id="contentPresident" class="sub-tab-content">
                     <div style="margin-top:16px;">
-                        <label style="color:#888;font-size:0.8rem;margin-bottom:6px;display:block;">대통령</label>
+                        <label id="presidentSectionLabel" style="color:#888;font-size:0.8rem;margin-bottom:6px;display:block;">대통령</label>
                         <div style="display:flex;gap:10px;align-items:stretch;">
                             <div style="display:flex;flex-direction:column;align-items:center;gap:4px;flex-shrink:0;">
                                 <div class="leader-photo-box" data-ratio="0.8" title="클릭하여 사진 업로드" id="presidentPhotoBox" style="width:52px;height:65px;">
