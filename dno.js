@@ -1248,6 +1248,14 @@
             dissolutionHouse:  { holder: 'none', active: false },
         };
 
+        // 상원/하원 분할 해산권은 원 이름이 설정에 따라 바뀌므로, EMERGENCY_POWERS의 고정 label 대신
+        // 항상 현재 이름(chamberDisplayName)으로 다시 계산해서 반환한다
+        function emergencyPowerLabel(key) {
+            if(key === 'dissolutionSenate') return `${chamberDisplayName('senate')} 해산`;
+            if(key === 'dissolutionHouse')  return `${chamberDisplayName('house')} 해산`;
+            return EMERGENCY_POWERS[key]?.label || '';
+        }
+
         // 계엄령으로 의회가 정지됐을 때, 국무회의(대통령/총리·국무총리/부총리/의장/장관·국무위원)가
         // 대신 표결하는 기능 — { voteKey: 'yea'|'nay'|'abs' }, voteKey는 getCabinetDisplayRows()의 voteKey와 대응
         let cabinetCouncilVote = {};
@@ -1313,11 +1321,11 @@
             if(emergencyPowers[key].holder === 'none') { showCustomAlert('먼저 권한 주체를 지정하세요.'); return; }
             // 의회 해산(원별 분할 포함)은 한 번 선포되면 임의로 해제할 수 없고, 총선을 새로 반영해야만 풀린다
             if(DISSOLUTION_KEYS.includes(key) && emergencyPowers[key].active) {
-                showCustomAlert(`${EMERGENCY_POWERS[key].label}은 스스로 해제할 수 없습니다.\n국가 > 선거 > 총선에서 새 선거를 반영해야 해제됩니다.`);
+                showCustomAlert(`${emergencyPowerLabel(key)}은 스스로 해제할 수 없습니다.\n국가 > 선거 > 총선에서 새 선거를 반영해야 해제됩니다.`);
                 return;
             }
             if(!emergencyPowers[key].active) {
-                showCustomConfirm(`${EMERGENCY_POWERS[key].label}을(를) 선포합니다. 계속하시겠습니까?`, () => {
+                showCustomConfirm(`${emergencyPowerLabel(key)}을(를) 선포합니다. 계속하시겠습니까?`, () => {
                     emergencyPowers[key].active = true;
                     if(key === 'dissolution') clearAllSeatsForDissolution();
                     if(key === 'dissolutionSenate') { clearChamberSeatsForDissolution('senate'); simulate(); refreshUI(); }
@@ -1595,7 +1603,8 @@
                         const bg = st.active ? `color-mix(in srgb, ${cfg.color} 15%, transparent)` : 'transparent';
                         const shadow = st.active ? `0 0 10px ${cfg.color}` : 'none';
                         const locked = DISSOLUTION_KEYS.includes(key) && st.active;
-                        const label = locked ? `! ${cfg.label} 선포됨 (총선으로만 해제) !` : `! ${cfg.label} ${st.active ? '해제' : '선포'} !`;
+                        const lbl = emergencyPowerLabel(key);
+                        const label = locked ? `! ${lbl} 선포됨 (총선으로만 해제) !` : `! ${lbl} ${st.active ? '해제' : '선포'} !`;
                         const btn = `<button class="add-btn" style="margin-top:8px;border-style:solid;border-color:${cfg.color};color:${cfg.color};text-shadow:0 0 4px ${cfg.color};background:${bg};box-shadow:${shadow};${locked?'cursor:default;opacity:0.85;':''}" onclick="toggleEmergencyActive('${key}')">${label}</button>`;
                         if(key === 'martialLaw') {
                             return btn + `
@@ -4940,6 +4949,32 @@
             renderPartyList('third');
             renderPartyInfoList();
             updateConfirmButtons();
+            // 해산권 분할 체크박스 문구 및 비상 권한 선포 버튼("◯◯ 해산" 등)에 쓰인 원 이름도 함께 갱신
+            const splitSenateLabel = document.getElementById('splitDissolutionSenateLabel');
+            const splitHouseLabel = document.getElementById('splitDissolutionHouseLabel');
+            if(splitSenateLabel) splitSenateLabel.textContent = sName;
+            if(splitHouseLabel) splitHouseLabel.textContent = hName;
+            renderEmergencyPowers();
+            // 그동안 원 이름이 바뀌어도 갱신되지 않던 고정 버튼들 — 대선/총리선거 "기준 원" 선택,
+            // 성향(SVG) 탭·여론>권역 탭의 원 선택 버튼 (전체 재렌더 대신 텍스트만 가볍게 갱신)
+            const presElecH = document.getElementById('presElecChamberHouseBtn');
+            const presElecS = document.getElementById('presElecChamberSenateBtn');
+            const presElecT = document.getElementById('presElecChamberThirdBtn');
+            if(presElecH) presElecH.textContent = hName;
+            if(presElecS) presElecS.textContent = sName;
+            if(presElecT) presElecT.textContent = tName;
+            const tendSvgH = document.getElementById('tendencySvgChamberHouseBtn');
+            const tendSvgS = document.getElementById('tendencySvgChamberSenateBtn');
+            const tendSvgT = document.getElementById('tendencySvgChamberThirdBtn');
+            if(tendSvgH) tendSvgH.textContent = hName;
+            if(tendSvgS) tendSvgS.textContent = sName;
+            if(tendSvgT) tendSvgT.textContent = tName;
+            const regionH = document.getElementById('innerTabRegionHouse');
+            const regionS = document.getElementById('innerTabRegionSenate');
+            const regionT = document.getElementById('innerTabRegionThird');
+            if(regionH) regionH.textContent = hName;
+            if(regionS) regionS.textContent = sName;
+            if(regionT) regionT.textContent = tName;
         }
 
         function refreshUI() {
@@ -6994,7 +7029,7 @@
             const chambers = chamberList();
             ['house','senate','third'].forEach(c => {
                 const btn = document.getElementById('presElecChamber'+c.charAt(0).toUpperCase()+c.slice(1)+'Btn');
-                if(btn) btn.style.display = chambers.includes(c) ? '' : 'none';
+                if(btn) { btn.style.display = chambers.includes(c) ? '' : 'none'; btn.textContent = chamberDisplayName(c); }
             });
             if(!chambers.includes(presElectionChamberBasis)) setPresElectionChamberBasis(chambers[0] || 'house');
             renderElectionCandidatesConfig();
@@ -8864,6 +8899,7 @@
                 if(!btn) return;
                 btn.style.display = chambers.includes(c) ? '' : 'none';
                 btn.classList.toggle('active', c === tendencySvgChamber);
+                btn.textContent = chamberDisplayName(c);
             });
         }
 
@@ -10138,7 +10174,7 @@
             const chambers = chamberList();
             ['house','senate','third'].forEach(c => {
                 const btn = document.getElementById('innerTabRegion'+c.charAt(0).toUpperCase()+c.slice(1));
-                if(btn) btn.style.display = chambers.includes(c) ? '' : 'none';
+                if(btn) { btn.style.display = chambers.includes(c) ? '' : 'none'; btn.textContent = chamberDisplayName(c); }
             });
             if(!chambers.includes(regionPaintChamber)) regionPaintChamber = chambers[0] || 'house';
             ['house','senate','third'].forEach(c => {
