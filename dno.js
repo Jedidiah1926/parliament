@@ -6115,8 +6115,13 @@
                 <button onclick="autoSortParties()" style="background:transparent;border:1px solid ${manualSort?'var(--tno-gold)':'#333'};color:${manualSort?'var(--tno-gold)':'#444'};font-family:'NeoDunggeunmo','VT323',monospace;font-size:0.75rem;padding:2px 8px;cursor:pointer;">↺ 자동정렬</button>
             `;
             container.appendChild(sortBar);
+            // 무소속 이념 슬롯은 원래 시스템이 자동 관리하는 가상 정당(getIndependentParty()) 하나만 있어야 하는데,
+            // 예전엔 이 목록의 이념 선택 드롭다운에 "무소속"이 실수로 노출되어 일반 정당에 잘못 지정될 수 있었음 —
+            // 그렇게 잘못 지정된 정당은 무소속으로 취급돼 이 목록에서 통째로 숨겨져 삭제할 방법이 없었으므로,
+            // 진짜 시스템 관리 무소속 정당(첫 번째로 찾은 것) 하나만 숨기고 나머지는 정상 노출해 삭제/재지정이 가능하게 함
+            const canonicalIndParty = parties.find(x => x.ideologyId === IND_IDEOLOGY_ID);
             parties.forEach((p, idx) => {
-                if(p.ideologyId === IND_IDEOLOGY_ID) return; // 무소속은 정당>무소속 탭에서 별도 관리
+                if(p === canonicalIndParty) return; // 무소속은 정당>무소속 탭에서 별도 관리
                 const div = document.createElement('div');
                 div.className = `card-item drag-card-party ${p.isRuling?'is-ruling':''}`;
                 div.style.borderLeftColor = p.color;
@@ -6146,7 +6151,7 @@
                     <!-- 행3: 이념 (항상 보임) -->
                     <div style="margin-bottom:6px;">
                         <select onchange="updateParty(${idx},'ideologyId',parseInt(this.value))" style="width:100%;">
-                            ${ideologies.map(ide=>`<option value="${ide.id}" ${p.ideologyId===ide.id?'selected':''}>${ide.name}</option>`).join('')}
+                            ${ideologies.filter(ide=>ide.id!==IND_IDEOLOGY_ID).map(ide=>`<option value="${ide.id}" ${p.ideologyId===ide.id?'selected':''}>${ide.name}</option>`).join('')}
                         </select>
                     </div>
                     <!-- 행3.5: 정당 상태 (항상 보임) -->
