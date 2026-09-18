@@ -262,6 +262,12 @@
         /* 계엄령 "의회 정지" 체크박스 — 테마색 대신 계엄령 버튼과 같은 경고색으로 표시 */
         input[type="checkbox"].chk-alert:hover { border-color: var(--tno-alert); }
         input[type="checkbox"].chk-alert:checked { background: var(--tno-alert); border-color: var(--tno-alert); }
+        /* 부정선거 카드의 입력/선택 요소 — 테마색 대신 부정선거 경고색(빨강)으로 표시 */
+        input.input-alert, select.input-alert { color: var(--tno-alert); }
+        input.input-alert:focus, select.input-alert:focus {
+            border-color: var(--tno-alert);
+            box-shadow: 0 0 5px color-mix(in srgb, var(--tno-alert) 40%, transparent);
+        }
         input[type="checkbox"]:checked::after {
             content: "";
             position: absolute;
