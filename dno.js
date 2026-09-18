@@ -6166,7 +6166,7 @@
             return `
                 <div style="margin-bottom:6px;padding:8px;background:#0a0c10;border:1px solid #663333;">
                     <label style="display:flex;align-items:center;gap:6px;cursor:pointer;color:var(--tno-alert);font-size:0.85rem;${fa?'margin-bottom:8px;':''}">
-                        <input type="checkbox" ${fa?'checked':''} onchange="toggleFraudAttempt(${p.id},this.checked)"> ⚠ 부정선거 시도 (다음 총선 개표 1회에 적용)
+                        <input type="checkbox" ${fa?'checked':''} onchange="toggleFraudAttempt(${p.id},this.checked)"> ⚠ 부정선거 시도<br>(다음 총선 개표 1회에 적용)
                     </label>
                     ${!fa ? '' : `
                     <div style="display:flex;flex-direction:column;gap:6px;">
