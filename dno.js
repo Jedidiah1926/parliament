@@ -3202,14 +3202,14 @@
             if(info.flag) {
                 const img = await loadImageAsync(info.flag);
                 if(img && img.width && img.height) {
-                    const fh = Math.round(30 * scale);
+                    const fh = Math.round(36 * scale);
                     const fw = Math.round(fh * (img.width / img.height));
                     ctx.drawImage(img, x, midY - fh / 2, fw, fh);
                     x += fw + Math.round(10 * scale);
                 }
             }
             if(info.name) {
-                ctx.font = `bold ${Math.round(18 * scale)}px ${font}`;
+                ctx.font = `bold ${Math.round(22 * scale)}px ${font}`;
                 ctx.fillStyle = '#eee';
                 ctx.fillText(info.name, x, midY);
             }
@@ -3218,14 +3218,14 @@
                 ctx.textAlign = 'right';
                 const rightX = width - pad;
                 if(info.date && info.session) {
-                    ctx.font = `${Math.round(13 * scale)}px ${font}`;
+                    ctx.font = `${Math.round(16 * scale)}px ${font}`;
                     ctx.fillStyle = '#ccc';
-                    ctx.fillText(info.date, rightX, midY - Math.round(8 * scale));
-                    ctx.font = `${Math.round(12 * scale)}px ${font}`;
+                    ctx.fillText(info.date, rightX, midY - Math.round(9 * scale));
+                    ctx.font = `${Math.round(14 * scale)}px ${font}`;
                     ctx.fillStyle = '#888';
-                    ctx.fillText(info.session, rightX, midY + Math.round(8 * scale));
+                    ctx.fillText(info.session, rightX, midY + Math.round(9 * scale));
                 } else {
-                    ctx.font = `${Math.round(13 * scale)}px ${font}`;
+                    ctx.font = `${Math.round(16 * scale)}px ${font}`;
                     ctx.fillStyle = '#ccc';
                     ctx.fillText(info.date || info.session, rightX, midY);
                 }
@@ -3243,20 +3243,20 @@
             let markup = `<rect x="0" y="0" width="${width}" height="${headerH}" fill="#0a0c10"/>`
                        + `<line x1="0" y1="${headerH}" x2="${width}" y2="${headerH}" stroke="#333" stroke-width="1"/>`;
             if(info.flag) {
-                const fh = 30, fw = 45;
+                const fh = 36, fw = 54;
                 markup += `<image href="${info.flag}" x="${x}" y="${midY - fh / 2}" width="${fw}" height="${fh}" preserveAspectRatio="xMidYMid slice"/>`;
                 x += fw + 10;
             }
             if(info.name) {
-                markup += `<text x="${x}" y="${midY}" fill="#eee" font-family="${font}" font-weight="bold" font-size="18" dominant-baseline="middle">${escapeXml(info.name)}</text>`;
+                markup += `<text x="${x}" y="${midY}" fill="#eee" font-family="${font}" font-weight="bold" font-size="22" dominant-baseline="middle">${escapeXml(info.name)}</text>`;
             }
             if(info.date || info.session) {
                 const rightX = width - pad;
                 if(info.date && info.session) {
-                    markup += `<text x="${rightX}" y="${midY - 8}" fill="#ccc" font-family="${font}" font-size="13" text-anchor="end" dominant-baseline="middle">${escapeXml(info.date)}</text>`;
-                    markup += `<text x="${rightX}" y="${midY + 8}" fill="#888" font-family="${font}" font-size="12" text-anchor="end" dominant-baseline="middle">${escapeXml(info.session)}</text>`;
+                    markup += `<text x="${rightX}" y="${midY - 9}" fill="#ccc" font-family="${font}" font-size="16" text-anchor="end" dominant-baseline="middle">${escapeXml(info.date)}</text>`;
+                    markup += `<text x="${rightX}" y="${midY + 9}" fill="#888" font-family="${font}" font-size="14" text-anchor="end" dominant-baseline="middle">${escapeXml(info.session)}</text>`;
                 } else {
-                    markup += `<text x="${rightX}" y="${midY}" fill="#ccc" font-family="${font}" font-size="13" text-anchor="end" dominant-baseline="middle">${escapeXml(info.date || info.session)}</text>`;
+                    markup += `<text x="${rightX}" y="${midY}" fill="#ccc" font-family="${font}" font-size="16" text-anchor="end" dominant-baseline="middle">${escapeXml(info.date || info.session)}</text>`;
                 }
             }
             return markup;
