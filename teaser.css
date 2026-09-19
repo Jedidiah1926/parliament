@@ -50,6 +50,27 @@
         }
         html[data-ui-mode="mobile"] .panel-resizer { display: none; }
 
+        /* 키보드 단축키(Ctrl+S 등) 피드백용 — 확인 클릭이 필요 없는 가벼운 자동 소멸 알림 */
+        .kbd-toast {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #000;
+            border: 1px solid var(--tno-neon);
+            color: var(--tno-neon);
+            padding: 8px 18px;
+            font-family: 'NeoDunggeunmo', 'VT323', monospace;
+            font-size: 0.9rem;
+            letter-spacing: 1px;
+            z-index: 9000;
+            box-shadow: 0 0 10px var(--tno-neon-dim);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s;
+        }
+        .kbd-toast.show { opacity: 1; }
+
         .lang-switch {
             position: absolute;
             top: 15px;
