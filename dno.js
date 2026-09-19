@@ -10991,7 +10991,10 @@
             const seatKey = seatKeyFor(chamber);
 
             // ── 결과 저장 (반영/재개표용) ───────
-            elecLastResult = { chamber, isSenate: chamber==='senate', seatMap: seatMap.map(x=>({...x})), weighted, districtResults: [...districtResults], mode: elecMode };
+            // prevSeatMap: 개표로 이 원의 실제 의석(party[seatKey])이 리셋되기 직전의 스냅샷 —
+            // 선거 결과 화면에서 "직전 대비 의석 변동"을 계산하는 기준이 된다
+            const prevSeatMap = parties.map(p => ({ id: p.id, n: p[seatKey]||0 }));
+            elecLastResult = { chamber, isSenate: chamber==='senate', seatMap: seatMap.map(x=>({...x})), weighted, districtResults: [...districtResults], mode: elecMode, prevSeatMap };
             elecLastResults[chamber] = elecLastResult;
 
             // ── 비례 풀 생성 + 셔플 ─────────────────
@@ -11536,6 +11539,25 @@
             // (valid/maj 계산이 활동금지·궐석 등으로 왜곡돼도 여당·야당이 동시에 "과반"으로 표시되는 모순을 방지)
             const govEffectiveTotal = govArr.reduce((sum,s)=>sum+s.count, 0) + extSupportTotal;
 
+            // 선거 결과 화면(elecResultStats*)에서만 의석 변동(▲▼)을 표시 — 이번 개표로 새로 계산된
+            // 의석과, 개표 시작 전 해당 원의 실제 의석(elecLastResults[chamber].prevSeatMap)을 비교.
+            // 평소 원 현황 탭(houseStats 등)에는 비교 기준(직전 선거)이 없으므로 표시하지 않는다
+            const elecChamberForChange = id.startsWith('elecResultStats') ? inferChamberFromStatsId(id) : null;
+            const prevSeatMap = elecChamberForChange ? elecLastResults[elecChamberForChange]?.prevSeatMap : null;
+            function seatChangeHtml(s) {
+                if(!prevSeatMap) return '';
+                const prevCount = Object.keys(s.parties).reduce((sum, pname) => {
+                    const p = parties.find(x => x.name === pname);
+                    const prev = p ? prevSeatMap.find(x => x.id === p.id) : null;
+                    return sum + (prev ? prev.n : 0);
+                }, 0);
+                const diff = s.count - prevCount;
+                if(diff === 0) return ` <span style="color:#666;font-size:0.85rem;">(0)</span>`;
+                const color = diff > 0 ? 'var(--vote-yea)' : 'var(--vote-nay)';
+                const sign = diff > 0 ? '▲' : '▼';
+                return ` <span style="color:${color};font-size:0.85rem;font-weight:bold;">(${sign}${Math.abs(diff)})</span>`;
+            }
+
             function renderCard(s) {
                 let statusHtml = '';
                 let extNoteHtml = '';
@@ -11643,7 +11665,7 @@
                         <div class="dyn-ref" style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px;">
                             <!-- 행1: 연정/정당명 : 의석 (%) + 상태 -->
                             <div style="display:flex;justify-content:space-between;align-items:baseline;gap:6px;flex-wrap:wrap;">
-                                <span style="font-size:1.1rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;display:flex;align-items:center;gap:6px;">${independentToggleHtml}${s.name} : ${s.count} <span style="color:#888;font-size:0.85rem;">(${((s.count/total)*100).toFixed(1)}%)</span></span>
+                                <span style="font-size:1.1rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;display:flex;align-items:center;gap:6px;">${independentToggleHtml}${s.name} : ${s.count} <span style="color:#888;font-size:0.85rem;">(${((s.count/total)*100).toFixed(1)}%)</span>${seatChangeHtml(s)}</span>
                                 <span style="flex-shrink:0;font-size:0.9rem;">${statusHtml}</span>
                             </div>
                             ${extNoteHtml}
