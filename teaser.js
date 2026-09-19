@@ -4494,6 +4494,7 @@
         }
 
         function renderSaveTabUI() {
+            renderSaveSlotList();
             const toggle = document.getElementById('autosaveToggle');
             const info = document.getElementById('autosaveStatusText');
             if(!localStorageAvailable) {
@@ -4509,6 +4510,75 @@
             let savedAt = null;
             try { savedAt = JSON.parse(raw).meta?.savedAt; } catch(e) {}
             info.textContent = savedAt ? `마지막 저장: ${new Date(savedAt).toLocaleString('ko-KR')}` : '자동저장됨';
+        }
+
+        // ===== 이름 붙여 저장 (여러 슬롯, localStorage) =====
+        // 자동저장은 슬롯 1개뿐이라 "민주화 이전", "2차 총선 직후"처럼 여러 시점을
+        // 따로 보관하고 언제든 전환하고 싶을 때 쓰라고 만든 이름 붙는 저장 슬롯 — 파일로 저장(.json)과
+        // 달리 다운로드 없이 브라우저(localStorage)에만 보관되므로 다른 브라우저/기기에서는 보이지 않는다.
+        const SAVE_SLOTS_KEY = 'dnoParliamentSaveSlots';
+        const MAX_SAVE_SLOTS = 20;
+
+        function loadSaveSlots() {
+            if(!localStorageAvailable) return [];
+            try { return JSON.parse(safeLsGet(SAVE_SLOTS_KEY) || '[]'); } catch(e) { return []; }
+        }
+        function persistSaveSlots(slots) { return safeLsSet(SAVE_SLOTS_KEY, JSON.stringify(slots)); }
+
+        function saveNamedSlot() {
+            if(!localStorageAvailable) { alert('이 브라우저/환경에서는 저장 슬롯(localStorage)을 사용할 수 없습니다.'); return; }
+            const input = document.getElementById('saveSlotNameInput');
+            const name = (input?.value || '').trim();
+            if(!name) { alert('저장할 이름을 입력하세요.'); return; }
+            const slots = loadSaveSlots();
+            const doSave = () => {
+                const state = getAppState();
+                const existing = slots.find(s => s.name === name);
+                if(existing) { existing.state = state; existing.savedAt = new Date().toISOString(); }
+                else slots.push({ id: 'slot'+Date.now(), name, savedAt: new Date().toISOString(), state });
+                if(persistSaveSlots(slots)) { input.value = ''; renderSaveSlotList(); }
+                else alert('저장에 실패했습니다. (브라우저 저장 공간이 부족할 수 있습니다)');
+            };
+            const existing = slots.find(s => s.name === name);
+            if(existing) showCustomConfirm(`"${name}" 슬롯이 이미 있습니다. 덮어쓸까요?`, doSave);
+            else if(slots.length >= MAX_SAVE_SLOTS) alert(`저장 슬롯은 최대 ${MAX_SAVE_SLOTS}개까지 만들 수 있습니다. 기존 슬롯을 삭제한 뒤 다시 시도하세요.`);
+            else doSave();
+        }
+
+        function loadNamedSlot(id) {
+            const slot = loadSaveSlots().find(s => s.id === id); if(!slot) return;
+            showCustomConfirm(`"${slot.name}" 슬롯을 불러올까요?\n현재 화면의 저장하지 않은 변경사항은 사라집니다.`, () => {
+                setAppState(slot.state);
+                simulate(); refreshUI();
+                showCustomAlert(`"${slot.name}" 슬롯을 불러왔습니다.`);
+            });
+        }
+
+        function deleteNamedSlot(id) {
+            const slots = loadSaveSlots();
+            const slot = slots.find(s => s.id === id); if(!slot) return;
+            showCustomConfirm(`"${slot.name}" 슬롯을 삭제할까요?`, () => {
+                persistSaveSlots(slots.filter(s => s.id !== id));
+                renderSaveSlotList();
+            });
+        }
+
+        function renderSaveSlotList() {
+            const container = document.getElementById('saveSlotList');
+            if(!container) return;
+            if(!localStorageAvailable) { container.innerHTML = ''; return; }
+            const slots = loadSaveSlots().slice().sort((a,b) => new Date(b.savedAt) - new Date(a.savedAt));
+            if(slots.length === 0) { container.innerHTML = '<div style="color:#444;font-size:0.78rem;padding:6px 0;">저장된 슬롯이 없습니다</div>'; return; }
+            container.innerHTML = slots.map(s => `
+                <div style="display:flex;align-items:center;gap:8px;padding:6px 8px;background:#0a0c10;border:1px solid #222;margin-bottom:4px;">
+                    <div style="flex:1;min-width:0;overflow:hidden;">
+                        <div style="color:#ccc;font-size:0.85rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${s.name}</div>
+                        <div style="color:#555;font-size:0.7rem;">${new Date(s.savedAt).toLocaleString('ko-KR')}</div>
+                    </div>
+                    <button class="add-btn" style="width:auto;margin-top:0;padding:4px 10px;font-size:0.8rem;" onclick="loadNamedSlot('${s.id}')">불러오기</button>
+                    <button class="remove-btn" onclick="deleteNamedSlot('${s.id}')">X</button>
+                </div>
+            `).join('');
         }
 
         // ===== 실행 취소 / 다시 실행 (Ctrl+Z / Ctrl+Shift+Z) =====

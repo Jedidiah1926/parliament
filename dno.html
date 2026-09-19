@@ -458,6 +458,15 @@
 
                         <div style="height:1px;background:#222;margin:18px 0;"></div>
 
+                        <span style="color:var(--tno-neon);font-size:0.95rem;display:block;margin-bottom:6px;">이름 붙여 저장 (브라우저에 보관)</span>
+                        <div style="display:flex;gap:6px;margin-bottom:10px;">
+                            <input type="text" id="saveSlotNameInput" placeholder="예: 2차 총선 직후" style="flex:1;" onkeydown="if(event.key==='Enter'){event.preventDefault();saveNamedSlot();}">
+                            <button class="add-btn" onclick="saveNamedSlot()" style="width:auto;margin-top:0;padding:8px 14px;white-space:nowrap;">저장</button>
+                        </div>
+                        <div id="saveSlotList"></div>
+
+                        <div style="height:1px;background:#222;margin:18px 0;"></div>
+
                         <div style="display:flex;gap:8px;">
                             <button class="add-btn" onclick="saveJSON()" style="flex:1;margin-top:0;">파일로 저장</button>
                             <button class="add-btn" onclick="document.getElementById('fileLoadJsonTab').click()" style="flex:1;margin-top:0;">불러오기</button>
