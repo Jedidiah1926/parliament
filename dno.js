@@ -1936,6 +1936,7 @@
         // ===== 태그 필터 상태 =====
         let activeBillTagFilter = null;
         let activeArchiveTagFilter = null;
+        let activeArchiveStatusFilter = null; // null(전체) | 'passed' | 'rejected'(부결+거부권 행사) | 'awaiting_veto'
 
         // ===== VOTE STATE =====
         let voteState = { house: {}, senate: {}, third: {} };
@@ -2461,6 +2462,31 @@
             return true;
         }
 
+        // 기록 탭 전용 — 결과별 필터('rejected'는 부결/거부권 행사를 하나로 묶음)
+        function billMatchesStatusFilter(bill, statusFilter) {
+            if(!statusFilter) return true;
+            const overall = getBillOverallStatus(bill);
+            if(statusFilter === 'rejected') return overall === 'failed' || overall === 'vetoed';
+            return overall === statusFilter;
+        }
+        function toggleArchiveStatusFilter(key) {
+            activeArchiveStatusFilter = activeArchiveStatusFilter === key ? null : key;
+            renderArchiveList();
+        }
+        function renderArchiveStatusFilter(done) {
+            const el = document.getElementById('archiveStatusFilter');
+            if(!el) return;
+            const options = [
+                { key: 'passed', label: '✔ 가결' },
+                { key: 'rejected', label: '✘ 부결/거부' },
+                { key: 'awaiting_veto', label: '⏳ 서명 대기' },
+            ].filter(o => done.some(b => billMatchesStatusFilter(b, o.key)));
+            if(options.length === 0) { el.innerHTML = ''; return; }
+            el.innerHTML = options.map(o =>
+                `<span class="tag-badge ${activeArchiveStatusFilter===o.key?'active':''}" onclick="toggleArchiveStatusFilter('${o.key}')">${o.label}</span>`
+            ).join('');
+        }
+
         function buildTagHtml(bill) {
             if(!bill.tags || bill.tags.length === 0) return '';
             return bill.tags.map(t => `<span class="tag-badge" style="cursor:default;"># ${t}</span>`).join('');
@@ -2545,14 +2571,15 @@
             const query = document.getElementById('archiveSearchInput')?.value || '';
             const done = [...bills.filter(b => getBillOverallStatus(b) !== 'pending')].reverse();
 
-            // 태그 필터 바 렌더
+            // 결과별 필터 + 태그 필터 바 렌더
+            renderArchiveStatusFilter(done);
             const allTags = getAllTags(done);
             renderTagFilter('archiveTagFilter', allTags, activeArchiveTagFilter, (t) => {
                 activeArchiveTagFilter = activeArchiveTagFilter === t ? null : t;
                 renderArchiveList();
             });
 
-            const filtered = done.filter(b => billMatchesFilter(b, query, activeArchiveTagFilter));
+            const filtered = done.filter(b => billMatchesStatusFilter(b, activeArchiveStatusFilter) && billMatchesFilter(b, query, activeArchiveTagFilter));
 
             if(done.length === 0) {
                 container.innerHTML = '<div style="color:#333; text-align:center; padding:20px; border:1px dashed #222;">완료된 법안이 없습니다</div>';
@@ -4234,7 +4261,8 @@
                     councilVoteDenom,
                     voteState,
                     activeBillTagFilter,
-                    activeArchiveTagFilter
+                    activeArchiveTagFilter,
+                    activeArchiveStatusFilter
                 },
                 election: {
                     elecStore:      JSON.parse(JSON.stringify(elecStore)),
@@ -4326,6 +4354,7 @@
             if(!voteState.third) voteState.third = {};
             activeBillTagFilter    = leg.activeBillTagFilter    ?? null;
             activeArchiveTagFilter = leg.activeArchiveTagFilter ?? null;
+            activeArchiveStatusFilter = leg.activeArchiveStatusFilter ?? null;
 
             // ── 선거 데이터 복원 ──
             const elec = state.election || {};
