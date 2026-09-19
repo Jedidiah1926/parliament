@@ -4682,8 +4682,53 @@
             });
         }
 
+        // ── 조작 탭(.controls)/시각 탭(.display-area) 사이 경계를 드래그해 폭 조절 ──────────────
+        const PANEL_RESIZER_WIDTH_KEY = 'dnoControlsPanelWidth';
+        function safeGetLocal(k) { try { return localStorage.getItem(k); } catch(e) { return null; } }
+        function safeSetLocal(k, v) { try { localStorage.setItem(k, v); return true; } catch(e) { return false; } }
+
+        function applyControlsPanelWidth(px) {
+            const controls = document.querySelector('.controls');
+            if(controls) controls.style.flexBasis = px + 'px';
+        }
+
+        function initPanelResizer() {
+            const resizer = document.getElementById('panelResizer');
+            const controls = document.querySelector('.controls');
+            if(!resizer || !controls) return;
+
+            const MIN_WIDTH = 280, MIN_DISPLAY_WIDTH = 300;
+            const saved = parseInt(safeGetLocal(PANEL_RESIZER_WIDTH_KEY), 10);
+            if(saved) applyControlsPanelWidth(Math.max(MIN_WIDTH, saved));
+
+            let dragging = false;
+            resizer.addEventListener('pointerdown', e => {
+                dragging = true;
+                resizer.classList.add('dragging');
+                resizer.setPointerCapture(e.pointerId);
+                e.preventDefault();
+            });
+            resizer.addEventListener('pointermove', e => {
+                if(!dragging) return;
+                const bodyRect = document.body.getBoundingClientRect();
+                const maxWidth = window.innerWidth - MIN_DISPLAY_WIDTH - Math.round(resizer.getBoundingClientRect().width);
+                const width = Math.max(MIN_WIDTH, Math.min(maxWidth, e.clientX - bodyRect.left));
+                applyControlsPanelWidth(width);
+            });
+            function endDrag(e) {
+                if(!dragging) return;
+                dragging = false;
+                resizer.classList.remove('dragging');
+                if(resizer.hasPointerCapture?.(e.pointerId)) resizer.releasePointerCapture(e.pointerId);
+                safeSetLocal(PANEL_RESIZER_WIDTH_KEY, Math.round(controls.getBoundingClientRect().width));
+            }
+            resizer.addEventListener('pointerup', endDrag);
+            resizer.addEventListener('pointercancel', endDrag);
+        }
+
         window.addEventListener("load", () => {
             initUndoRedoTracking();
+            initPanelResizer();
             const fileInputTab = document.getElementById("fileLoadJsonTab");
             if(fileInputTab) {
                 fileInputTab.addEventListener("change", async () => {

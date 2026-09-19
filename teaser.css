@@ -19,13 +19,36 @@
             margin: 0;
             padding: 20px;
             display: flex;
-            gap: 20px;
+            gap: 0;
             height: 100vh;
             box-sizing: border-box;
             overflow: hidden;
             font-size: 16px;
             line-height: 1.4;
         }
+
+        /* 조작 탭(.controls)과 시각 탭(.display-area) 사이의 드래그 폭 조절 핸들 —
+           기존 20px 여백을 대체하며, 그 자리에 얇은 세로선을 그려 드래그 가능함을 표시한다 */
+        .panel-resizer {
+            flex: 0 0 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: col-resize;
+            touch-action: none;
+        }
+        .panel-resizer::after {
+            content: '';
+            width: 2px;
+            height: 100%;
+            background: var(--tno-border);
+            transition: background 0.15s, box-shadow 0.15s;
+        }
+        .panel-resizer:hover::after, .panel-resizer.dragging::after {
+            background: var(--tno-neon);
+            box-shadow: 0 0 6px var(--tno-neon);
+        }
+        html[data-ui-mode="mobile"] .panel-resizer { display: none; }
 
         .lang-switch {
             position: absolute;
@@ -63,6 +86,8 @@
 
         .controls {
             flex: 0 0 400px;
+            box-sizing: border-box;
+            min-width: 0;
             background: var(--tno-panel);
             border: 2px solid var(--tno-border);
             display: flex;
