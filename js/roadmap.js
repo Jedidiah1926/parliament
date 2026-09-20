@@ -442,6 +442,39 @@
               <br>- Steam 개발자 계정을 위한 펀딩 시작`
           }
         ]
+      },
+      '1.6': {
+        title: '1.6',
+        cards: [
+          {
+            status: 'future',
+            title: '1.6.0 - ?',
+            desc: `2026.XX.XX
+              <br>- ?`
+          }
+        ]
+      },
+      '1.7': {
+        title: '1.7',
+        cards: [
+          {
+            status: 'future',
+            title: '1.7.0 - ?',
+            desc: `2026.XX.XX
+              <br>- ?`
+          }
+        ]
+      },
+      '2.0': {
+        title: '2.0',
+        cards: [
+          {
+            status: 'future',
+            title: '2.0.0 - ?',
+            desc: `202X.XX.XX
+              <br>- ?`
+          }
+        ]
       }
     };
 
