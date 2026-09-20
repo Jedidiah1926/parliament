@@ -3136,7 +3136,7 @@
                 }
             }
             if(info.name) {
-                ctx.font = `bold ${Math.round(22 * scale)}px ${font}`;
+                ctx.font = `${Math.round(22 * scale)}px ${font}`;
                 ctx.fillStyle = '#eee';
                 ctx.fillText(info.name, x, midY);
             }
@@ -3175,7 +3175,7 @@
                 x += fw + 10;
             }
             if(info.name) {
-                markup += `<text x="${x}" y="${midY}" fill="#eee" font-family="${font}" font-weight="bold" font-size="22" dominant-baseline="middle">${escapeXml(info.name)}</text>`;
+                markup += `<text x="${x}" y="${midY}" fill="#eee" font-family="${font}" font-size="22" dominant-baseline="middle">${escapeXml(info.name)}</text>`;
             }
             if(info.date || info.session) {
                 const rightX = width - pad;
