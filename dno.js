@@ -1149,7 +1149,7 @@
                         ${voteBtn('abs','기권','#888888')}
                     </div>`;
                 return `
-                    <div style="text-align:center;width:92px;">
+                    <div style="text-align:center;width:130px;">
                         <div style="color:#e0e0e0;font-size:0.85rem;margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${label}">${label}</div>
                         <div class="leader-photo-box" style="width:70px;height:88px;margin:0 auto;pointer-events:none;${photoBoxVoteStyle}">
                             ${photo ? `<img src="${photo}" alt="">` : '<div class="photo-ph">👤</div>'}
@@ -1180,7 +1180,7 @@
             await Promise.all(allCards.map(async c => { if(c.photo) photoMap.set(c, await loadImageAsync(c.photo)); }));
 
             const scale = window.devicePixelRatio || 1;
-            const pad = Math.round(16*scale), cardW = Math.round(110*scale), cardGap = Math.round(22*scale), rowGap = Math.round(20*scale);
+            const pad = Math.round(16*scale), cardW = Math.round(130*scale), cardGap = Math.round(22*scale), rowGap = Math.round(20*scale);
             const photoW = Math.round(70*scale), photoH = Math.round(88*scale);
             const labelH = Math.round(20*scale), gapSm = Math.round(6*scale), nameH = Math.round(18*scale), badgeH = Math.round(18*scale);
             const cardH = labelH + gapSm + photoH + gapSm + nameH + gapSm + badgeH;
@@ -3927,7 +3927,7 @@
                     </div>
                     <div style="display:flex;flex-direction:column;line-height:1.25;min-width:0;">
                         <span style="color:#555;font-size:0.62rem;">${label}</span>
-                        <span style="color:#ccc;font-size:0.8rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:90px;">${name || '미지정'}</span>
+                        <span style="color:#ccc;font-size:0.8rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:140px;">${name || '미지정'}</span>
                     </div>
                 </div>`;
             container.innerHTML = `<div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:8px;">
