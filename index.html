@@ -5,18 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DATANET ORDER — SYSTEM MAINTENANCE</title>
 
-    <script src="theme.js"></script>
+    <script src="js/theme.js"></script>
 
     <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/neodgm/neodgm-webfont@latest/neodgm/style.css">
 
-    <link rel="stylesheet" href="index.css">
+    <link rel="stylesheet" href="css/index.css">
 
     <!-- ── 점검 스위치 ──────────────────────────────────
          maintenance.js 의 시작/종료 시각을 기준으로 자동 판정합니다.
          그 사이 시간이면 점검중 페이지, 아니면 REDIRECT_URL 로 즉시 이동.
     ─────────────────────────────────────────────────── -->
-    <script src="maintenance.js"></script>
+    <script src="js/maintenance.js"></script>
     <script>
         const REDIRECT_URL = "main.html";
         // maintenance.js 의 시각은 항상 KST(UTC+9) 기준이므로, 보는 사람의 시간대와
