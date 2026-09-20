@@ -5,16 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DATANET: PARLIAMENT SIMULATION [BETA]</title>
 
-    <script src="uimode.js"></script>
-    <script src="theme.js"></script>
+    <script src="js/uimode.js"></script>
+    <script src="js/theme.js"></script>
 
     <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/neodgm/neodgm-webfont@latest/neodgm/style.css">
 
-    <link rel="stylesheet" href="teaser.css">
+    <link rel="stylesheet" href="css/teaser.css">
 </head>
 <body>
-
     <!-- 모바일 UI 모드 전용 — 좌측(컨트롤)/우측(디스플레이) 패널 전환 버튼. 데스크톱 모드에서는 CSS로 숨김 -->
     <div class="mobile-panel-switch" id="mobilePanelSwitch">
         <button class="mobile-panel-btn active" id="mobilePanelBtnControls" onclick="setMobilePanel('controls')">◀ 컨트롤</button>
@@ -263,6 +262,7 @@
                     <button class="sub-tab-btn" onclick="switchSubTab('nation','legislation')" id="subTabLegislation">입법</button>
                     <button class="sub-tab-btn" onclick="switchSubTab('nation','election')" id="subTabElection">선거</button>
                     <button class="sub-tab-btn" onclick="switchSubTab('nation','record')" id="subTabRecord">기록</button>
+                    <button class="sub-tab-btn sub-tab-btn-danger" onclick="switchSubTab('nation','fraud')" id="subTabFraud">⚠</button>
                 </div>
 
                 <!-- 설정 탭: 국가 식별 정보 + 전역 표시 옵션 -->
@@ -445,15 +445,37 @@
 
                     <!-- 저장 (구 최상단 '저장' 탭이 여기로 통합됨) -->
                     <div id="innerContentConfigSave" class="sub-tab-content">
-                        <label style="display:flex;align-items:center;justify-content:space-between;gap:10px;cursor:pointer;padding:12px 14px;background:#0a0c10;border:1px solid #2a2a2a;margin-bottom:14px;">
-                            <span>
-                                <span style="color:var(--tno-neon);font-size:0.95rem;display:block;">자동저장</span>
-                                <span style="color:#666;font-size:0.75rem;" id="autosaveStatusText">-</span>
-                            </span>
-                            <input type="checkbox" id="autosaveToggle" onchange="setAutosaveEnabled(this.checked)">
-                        </label>
+                        <div style="padding:12px 14px;background:#0a0c10;border:1px solid #2a2a2a;margin-bottom:14px;">
+                            <label style="display:flex;align-items:center;justify-content:space-between;gap:10px;cursor:pointer;">
+                                <span>
+                                    <span style="color:var(--tno-neon);font-size:0.95rem;display:block;">자동저장</span>
+                                    <span style="color:#666;font-size:0.75rem;" id="autosaveStatusText">-</span>
+                                </span>
+                                <input type="checkbox" id="autosaveToggle" onchange="setAutosaveEnabled(this.checked)">
+                            </label>
+                            <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:10px;padding-top:10px;border-top:1px solid #1a1a1a;">
+                                <span style="color:#888;font-size:0.82rem;">저장 주기</span>
+                                <select id="autosaveIntervalSelect" onchange="setAutosaveInterval(this.value)" style="width:auto;">
+                                    <option value="15">15초</option>
+                                    <option value="30">30초</option>
+                                    <option value="60">1분</option>
+                                    <option value="180">3분</option>
+                                    <option value="300">5분</option>
+                                    <option value="600">10분</option>
+                                </select>
+                            </div>
+                        </div>
 
                         <button class="add-btn" onclick="resetAutosaveData()" style="width:100%;margin-top:0;border-color:#663333;color:#ff6666;">✕ 저장 데이터 초기화</button>
+
+                        <div style="height:1px;background:#222;margin:18px 0;"></div>
+
+                        <span style="color:var(--tno-neon);font-size:0.95rem;display:block;margin-bottom:6px;">이름 붙여 저장 (브라우저에 보관)</span>
+                        <div style="display:flex;gap:6px;margin-bottom:10px;">
+                            <input type="text" id="saveSlotNameInput" placeholder="예: 2차 총선 직후" style="flex:1;" onkeydown="if(event.key==='Enter'){event.preventDefault();saveNamedSlot();}">
+                            <button class="add-btn" onclick="saveNamedSlot()" style="width:auto;margin-top:0;padding:8px 14px;white-space:nowrap;">저장</button>
+                        </div>
+                        <div id="saveSlotList"></div>
 
                         <div style="height:1px;background:#222;margin:18px 0;"></div>
 
@@ -763,8 +785,8 @@
                             </div>
                         </div>
                         <div style="background:#0a0c10;border:1px solid #2a2a2a;padding:8px 10px;margin-bottom:10px;font-size:0.78rem;color:#888;line-height:1.7;">
-                            선거 방식: <span id="presElecModeSummary" style="color:var(--tno-gold);">단순 다수 대표제</span>
-                            &nbsp;|&nbsp; 기준 원: <span id="presElecChamberSummary" style="color:var(--tno-gold);">하원</span>
+                            선거 방식: <span id="presElecModeSummary" style="color:var(--tno-gold);">단순 다수 대표제</span><br>
+                            기준 원: <span id="presElecChamberSummary" style="color:var(--tno-gold);">하원</span>
                             <span style="color:#444;">(설정 탭에서 변경)</span>
                         </div>
                         <button id="presElecRunBtn" onclick="runPresidentialElection()"
@@ -903,8 +925,8 @@
                             </div>
                         </div>
                         <div style="background:#0a0c10;border:1px solid #2a2a2a;padding:8px 10px;margin-bottom:10px;font-size:0.78rem;color:#888;line-height:1.7;">
-                            선거 방식: <span id="pmElecModeSummary" style="color:var(--tno-gold);">단순 다수 대표제</span>
-                            &nbsp;|&nbsp; 기준 원: <span id="pmElecChamberSummary" style="color:var(--tno-gold);">하원</span>
+                            선거 방식: <span id="pmElecModeSummary" style="color:var(--tno-gold);">단순 다수 대표제</span><br>
+                            기준 원: <span id="pmElecChamberSummary" style="color:var(--tno-gold);">하원</span>
                             <span style="color:#444;">(선거 &gt; 설정 탭에서 변경 — 대선과 방식을 공유합니다)</span>
                         </div>
                         <button id="pmElecRunBtn" onclick="runPmElection()"
@@ -916,9 +938,9 @@
                     <!-- 설정 -->
                     <div id="innerContentElecSettings" class="sub-tab-content">
                         <div style="margin-top:6px;">
-                            <label style="color:#888;font-size:0.8rem;margin-bottom:6px;display:block;">대선 방식</label>
+                            <label style="color:#888;font-size:0.8rem;margin-bottom:6px;display:block;">대선·총리 선거 방식 <span style="color:#555;font-weight:normal;">— 총리직선제일 때 총리 선거에도 그대로 적용됩니다</span></label>
                             <div class="system-radio-group">
-                                <button type="button" class="system-radio-btn active" id="presElecModePluralityBtn" onclick="setPresElectionMode('plurality')">단순 다수 대표제</button>
+                                <button type="button" class="system-radio-btn active" id="presElecModePluralityBtn" onclick="setPresElectionMode('plurality')">단순 다수<br>대표제</button>
                                 <button type="button" class="system-radio-btn" id="presElecModeRunoffBtn" onclick="setPresElectionMode('runoff')">결선투표제</button>
                                 <button type="button" class="system-radio-btn" id="presElecModeElectoralBtn" onclick="setPresElectionMode('electoral')">선거인단제</button>
                             </div>
@@ -952,6 +974,7 @@
                             <input type="text" id="archiveSearchInput" placeholder="기록 검색..." oninput="renderArchiveList();">
                             <button onclick="document.getElementById('archiveSearchInput').value=''; renderArchiveList();" style="background:transparent;border:1px solid #333;color:#555;padding:4px 8px;font-family:'NeoDunggeunmo','VT323',monospace;cursor:pointer;" title="초기화">✕</button>
                         </div>
+                        <div class="bill-tag-filter" id="archiveStatusFilter"></div>
                         <div class="bill-tag-filter" id="archiveTagFilter"></div>
                         <div id="archiveList"></div>
                     </div>
@@ -961,6 +984,12 @@
                         <div id="elecRecordList" style="margin-top:8px;"></div>
                     </div>
                 </div><!-- end contentRecord -->
+
+                <!-- 부정선거 탭: 정당별로 부정선거 시도를 설정 (정당 탭에는 노출하지 않음) -->
+                <div id="contentFraud" class="sub-tab-content">
+                    <div style="color:#664444;font-size:0.78rem;margin-bottom:10px;line-height:1.5;">정당별로 다음 총선 개표 1회에 한해 부정선거를 시도할 수 있습니다. 발각되면 활동 금지 처분을 받습니다.</div>
+                    <div id="fraudPartyList"></div>
+                </div><!-- end contentFraud -->
             </div><!-- end mainContentNation -->
 
             <!-- ===== 선거 그룹 ===== -->
@@ -1139,9 +1168,9 @@
                         <label style="color:#888;font-size:0.8rem;margin-bottom:6px;display:block;">정부 형태</label>
                         <div class="system-radio-group">
                             <button type="button" class="system-radio-btn" id="govTypePresidentialBtn" onclick="setGovType('presidential')">대통령제</button>
-                            <button type="button" class="system-radio-btn" id="govTypeSemiBtn" onclick="setGovType('semi')">이원집정부제</button>
+                            <button type="button" class="system-radio-btn" id="govTypeSemiBtn" onclick="setGovType('semi')">이원<br>집정부제</button>
                             <button type="button" class="system-radio-btn active" id="govTypeParliamentaryBtn" onclick="setGovType('parliamentary')">의원내각제</button>
-                            <button type="button" class="system-radio-btn" id="govTypeCollectiveBtn" onclick="setGovType('collective')">집단지도체제</button>
+                            <button type="button" class="system-radio-btn" id="govTypeCollectiveBtn" onclick="setGovType('collective')">집단<br>지도체제</button>
                         </div>
                     </div>
 
@@ -1293,6 +1322,13 @@
                         </div>
                     </div>
 
+                    <!-- 다수당 방식 전용: 의석 변동만으로 총리가 바뀌지 않도록 고정/고정 해제 (내각 불신임 가결 시 자동 해제) -->
+                    <div id="pmMajorityLockSection" style="display:none;margin-top:12px;">
+                        <button id="pmMajorityLockBtn" onclick="lockPmMajority()" style="width:100%;background:transparent;border:1px solid var(--tno-gold);color:var(--tno-gold);padding:7px;font-family:inherit;font-size:0.82rem;cursor:pointer;">🔒 현재 총리로 고정 (의석 변동에 영향받지 않음)</button>
+                        <button id="pmMajorityUnlockBtn" onclick="unlockPmMajority()" style="display:none;width:100%;background:transparent;border:1px solid #888;color:#888;padding:7px;font-family:inherit;font-size:0.82rem;cursor:pointer;">🔓 고정 해제 (다시 다수당 대표를 실시간 반영)</button>
+                        <div id="pmMajorityLockedNote" style="display:none;color:var(--tno-gold);font-size:0.72rem;margin-top:4px;">🔒 총리가 고정되어 있습니다 — 다수당이 바뀌어도 총리는 유지되며, 내각 불신임이 가결되면 공석이 됩니다.</div>
+                    </div>
+
                     <!-- 부총리 (여러 명 추가 가능, 기본 0명) -->
                     <div style="margin-top:16px;padding-top:14px;border-top:1px solid #222;">
                         <label style="color:#888;font-size:0.8rem;margin-bottom:6px;display:block;">부총리</label>
@@ -1390,6 +1426,8 @@
         </div>
     </div>
 
+    <div class="panel-resizer" id="panelResizer" title="드래그하여 폭 조절 (더블클릭: 기본값으로 초기화)"></div>
+
     <div class="display-area">
         <!-- 디스플레이 탭 -->
         <div class="disp-tab-bar">
@@ -1421,6 +1459,7 @@
                             style="background:transparent;color:#555;border:1px solid #333;padding:3px 9px;font-family:inherit;font-size:0.78rem;cursor:pointer;">지역구</button>
                     </div>
                 </div>
+                <div id="houseLeadersDisplay"></div>
                 <div id="houseViewArcWrap"><canvas id="houseCanvas" style="width:100%;display:block;"></canvas></div>
                 <div id="houseViewDistrictWrap" style="display:none;">
                     <canvas id="houseDistrictCanvas" style="width:100%;height:500px;background:#0a0c10;border:1px solid #222;display:block;"></canvas>
@@ -1442,6 +1481,7 @@
                             style="background:transparent;color:#555;border:1px solid #333;padding:3px 9px;font-family:inherit;font-size:0.78rem;cursor:pointer;">지역구</button>
                     </div>
                 </div>
+                <div id="senateLeadersDisplay"></div>
                 <div id="senateViewArcWrap"><canvas id="senateCanvas" style="width:100%;display:block;"></canvas></div>
                 <div id="senateViewDistrictWrap" style="display:none;">
                     <canvas id="senateDistrictCanvas" style="width:100%;height:500px;background:#0a0c10;border:1px solid #222;display:block;"></canvas>
@@ -1463,6 +1503,7 @@
                             style="background:transparent;color:#555;border:1px solid #333;padding:3px 9px;font-family:inherit;font-size:0.78rem;cursor:pointer;">지역구</button>
                     </div>
                 </div>
+                <div id="thirdLeadersDisplay"></div>
                 <div id="thirdViewArcWrap"><canvas id="thirdCanvas" style="width:100%;display:block;"></canvas></div>
                 <div id="thirdViewDistrictWrap" style="display:none;">
                     <canvas id="thirdDistrictCanvas" style="width:100%;height:500px;background:#0a0c10;border:1px solid #222;display:block;"></canvas>
@@ -1613,9 +1654,9 @@
         </div>
     </div>
 
-    <a href="dno.html" class="lang-switch">>> 1.5.P 업데이트 내역</a>
+    <a href="dno.html" class="lang-switch">>> 1.5.S 업데이트 내역</a>
 
-    <script src="teaser.js"></script>
-    <script src="lang.js"></script>
+    <script src="js/teaser.js"></script>
+    <script src="js/lang.js"></script>
 </body>
 </html>

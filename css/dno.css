@@ -19,13 +19,57 @@
             margin: 0;
             padding: 20px;
             display: flex;
-            gap: 20px;
+            gap: 0;
             height: 100vh;
             box-sizing: border-box;
             overflow: hidden;
             font-size: 16px;
             line-height: 1.4;
         }
+
+        /* 조작 탭(.controls)과 시각 탭(.display-area) 사이의 드래그 폭 조절 핸들 —
+           기존 20px 여백을 대체하며, 그 자리에 얇은 세로선을 그려 드래그 가능함을 표시한다 */
+        .panel-resizer {
+            flex: 0 0 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: col-resize;
+            touch-action: none;
+        }
+        .panel-resizer::after {
+            content: '';
+            width: 2px;
+            height: 100%;
+            background: var(--tno-border);
+            transition: background 0.15s, box-shadow 0.15s;
+        }
+        .panel-resizer:hover::after, .panel-resizer.dragging::after {
+            background: var(--tno-neon);
+            box-shadow: 0 0 6px var(--tno-neon);
+        }
+        html[data-ui-mode="mobile"] .panel-resizer { display: none; }
+
+        /* 키보드 단축키(Ctrl+S 등) 피드백용 — 확인 클릭이 필요 없는 가벼운 자동 소멸 알림 */
+        .kbd-toast {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #000;
+            border: 1px solid var(--tno-neon);
+            color: var(--tno-neon);
+            padding: 8px 18px;
+            font-family: 'NeoDunggeunmo', 'VT323', monospace;
+            font-size: 0.9rem;
+            letter-spacing: 1px;
+            z-index: 9000;
+            box-shadow: 0 0 10px var(--tno-neon-dim);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s;
+        }
+        .kbd-toast.show { opacity: 1; }
 
         .lang-switch {
             position: absolute;
@@ -63,6 +107,8 @@
 
         .controls {
             flex: 0 0 400px;
+            box-sizing: border-box;
+            min-width: 0;
             background: var(--tno-panel);
             border: 2px solid var(--tno-border);
             display: flex;
@@ -150,11 +196,11 @@
         }
         .disp-info-bar #dispInfoDate {
             color: #ccc;
-            font-size: 0.85rem;
+            font-size: 0.95rem;
         }
         .disp-info-bar #dispInfoSession {
             color: #888;
-            font-size: 0.78rem;
+            font-size: 0.88rem;
         }
         .disp-tab-btn {
             background: var(--tno-panel);
@@ -259,6 +305,15 @@
         }
         input[type="checkbox"]:hover { border-color: var(--tno-neon); }
         input[type="checkbox"]:checked { background: var(--tno-neon); border-color: var(--tno-neon); }
+        /* 계엄령 "의회 정지" 체크박스 — 테마색 대신 계엄령 버튼과 같은 경고색으로 표시 */
+        input[type="checkbox"].chk-alert:hover { border-color: var(--tno-alert); }
+        input[type="checkbox"].chk-alert:checked { background: var(--tno-alert); border-color: var(--tno-alert); }
+        /* 부정선거 카드의 입력/선택 요소 — 테마색 대신 부정선거 경고색(빨강)으로 표시 */
+        input.input-alert, select.input-alert { color: var(--tno-alert); }
+        input.input-alert:focus, select.input-alert:focus {
+            border-color: var(--tno-alert);
+            box-shadow: 0 0 5px color-mix(in srgb, var(--tno-alert) 40%, transparent);
+        }
         input[type="checkbox"]:checked::after {
             content: "";
             position: absolute;
@@ -382,6 +437,16 @@
             background: color-mix(in srgb, var(--tno-neon) 7%, transparent);
             box-shadow: 0 -2px 8px var(--tno-neon-dim);
         }
+        /* 부정선거 탭 버튼 — 선택 여부와 무관하게 항상 경고색(빨강)으로 표시 */
+        .sub-tab-btn-danger { color: var(--tno-alert); border-color: #663333; }
+        .sub-tab-btn-danger:hover { color: var(--tno-alert); border-color: var(--tno-alert); }
+        .sub-tab-btn-danger.active {
+            color: var(--tno-alert);
+            border-color: var(--tno-alert);
+            background: color-mix(in srgb, var(--tno-alert) 10%, transparent);
+            box-shadow: 0 -2px 8px color-mix(in srgb, var(--tno-alert) 40%, transparent);
+            text-shadow: 0 0 4px var(--tno-alert);
+        }
 
         .sub-tab-content { display: none; }
         .sub-tab-content.active { display: block; animation: flicker 0.15s; }
@@ -504,6 +569,11 @@
             background: transparent; border: 1px solid #555; color: #555; font-size: 1rem; padding: 2px 8px;
         }
         .remove-btn:hover { border-color: var(--tno-alert); color: var(--tno-alert); background: rgba(255,0,85,0.1); }
+
+        .dup-btn {
+            background: transparent; border: 1px solid #555; color: #555; font-size: 1rem; padding: 2px 8px;
+        }
+        .dup-btn:hover { border-color: var(--tno-neon); color: var(--tno-neon); background: color-mix(in srgb, var(--tno-neon) 10%, transparent); }
 
         .simulate-btn {
             background: var(--tno-neon); color: #000; font-weight: bold;

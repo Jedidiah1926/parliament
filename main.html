@@ -5,14 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DATANET ORDER</title>
     
-    <script src="theme.js"></script>
+    <script src="js/theme.js"></script>
 
     <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/neodgm/neodgm-webfont@latest/neodgm/style.css">
 
-    <link rel="stylesheet" href="main.css">
+    <link rel="stylesheet" href="css/main.css">
 
-    <script src="maintenance.js"></script>
+    <script src="js/maintenance.js"></script>
 </head>
 <body>
 
@@ -36,7 +36,7 @@
             </div>
 
             <div class="menu-options">
-                <a href="dno.html" class="menu-btn">
+                <a href="#" class="menu-btn" onclick="openSaveSelectModal(); return false;">
                     프로토콜 실행
                 </a>
                 <a href="roadmap.html" class="menu-btn">
@@ -49,12 +49,12 @@
             
             <div class="version-box">
                 <div class="version-head">
-                    <div class="version-tag">VERSION: v1.5.P</div>
+                    <div class="version-tag">VERSION: v1.5.S</div>
                     <div class="version-tag">We shall fight on the MAPS</div>
-                    <div class="build-tag">BUILD: 2026-09-15</div>
+                    <div class="build-tag">BUILD: 2026-09-18</div>
                 </div>
 
-                <div class="changelog">
+                <!-- <div class="changelog">
                     <div class="changelog-title">// OPERATOR FIELD LOG — RESTRICTED</div>
 
                     <div class="log-entry">
@@ -111,11 +111,32 @@
                         </div>
                     </div>
 
-                </div>
+                </div> -->
             </div>
 
             <div class="footer">
-                &copy; 2025-2026 Absatzmarke / Abwehr
+                &copy; 2025-2026 Abwehr / Pilcrow1926
+            </div>
+        </div>
+    </div>
+
+    <div class="save-select-overlay" id="saveSelectOverlay" style="display:none;">
+        <div class="save-select-modal">
+            <div class="corner top-left"></div>
+            <div class="corner bottom-right"></div>
+            <div class="save-select-head">
+                <span>SAVE SELECT</span>
+                <button class="save-select-close" onclick="closeSaveSelectModal()">X</button>
+            </div>
+            <div class="save-select-body">
+                <div class="settings-label">새 세이브 만들기</div>
+                <div class="save-select-new-row">
+                    <input type="text" id="newSaveNameInput" placeholder="예: 2차 총선 직후" maxlength="40" onkeydown="if(event.key==='Enter'){event.preventDefault();startNewSave();}">
+                    <button class="menu-btn save-select-start-btn" onclick="startNewSave()">생성 후 시작</button>
+                </div>
+
+                <div class="settings-label" style="margin-top:22px;">이어하기</div>
+                <div class="save-select-list" id="saveSelectList"></div>
             </div>
         </div>
     </div>
@@ -151,6 +172,78 @@
         }
         checkUpcomingMaintenance();
         setInterval(checkUpcomingMaintenance, 15000);
+
+        // ===== 세이브 선택 (온보딩) 모달 =====
+        // main.html은 dno.js를 로드하지 않으므로, dno.js가 쓰는 것과 같은 localStorage 키를
+        // 그대로 읽어서 세이브 목록을 보여준다. 실제 상태(state) 파싱/적용은 하지 않고
+        // 목록 표시와 부팅 시 넘길 sessionStorage 플래그 설정만 담당 — 무거운 state 객체를
+        // 여기서 손댈 필요가 없다.
+        const SAVE_SLOTS_KEY = 'dnoParliamentSaveSlots';
+        const AUTOSAVE_SLOT_NAME = '자동저장';
+
+        function loadSaveSlotsForMenu() {
+            try { return JSON.parse(localStorage.getItem(SAVE_SLOTS_KEY) || '[]'); }
+            catch(e) { return []; }
+        }
+
+        function renderSaveSelectList() {
+            const container = document.getElementById('saveSelectList');
+            const all = loadSaveSlotsForMenu();
+            const auto = all.find(s => s.isAutosave);
+            const named = all.filter(s => !s.isAutosave).sort((a,b) => new Date(b.savedAt||0) - new Date(a.savedAt||0));
+            const ordered = auto ? [auto, ...named] : named;
+            if(ordered.length === 0) {
+                container.innerHTML = '<div style="color:#444;font-size:0.85rem;padding:8px 0;">저장된 세이브가 없습니다. 새 세이브를 만들어 시작하세요.</div>';
+                return;
+            }
+            container.innerHTML = ordered.map(s => `
+                <button class="save-select-item${s.isAutosave ? ' save-select-item-auto' : ''}" onclick="continueSave('${s.id}')">
+                    <span class="save-select-item-name">${s.isAutosave ? '🔄 ' : ''}${escapeSaveName(s.name)}</span>
+                    <span class="save-select-item-time">${s.savedAt ? new Date(s.savedAt).toLocaleString('ko-KR') : '-'}</span>
+                </button>
+            `).join('');
+        }
+
+        function escapeSaveName(name) {
+            const div = document.createElement('div');
+            div.textContent = name;
+            return div.innerHTML;
+        }
+
+        function openSaveSelectModal() {
+            document.getElementById('newSaveNameInput').value = '';
+            renderSaveSelectList();
+            document.getElementById('saveSelectOverlay').style.display = 'flex';
+        }
+
+        function closeSaveSelectModal() {
+            document.getElementById('saveSelectOverlay').style.display = 'none';
+        }
+
+        function startNewSave() {
+            const input = document.getElementById('newSaveNameInput');
+            const name = input.value.trim();
+            if(!name) { alert('세이브 이름을 입력하세요.'); return; }
+            if(name === AUTOSAVE_SLOT_NAME) { alert(`"${AUTOSAVE_SLOT_NAME}"은(는) 예약된 이름입니다. 다른 이름을 입력하세요.`); return; }
+            if(loadSaveSlotsForMenu().some(s => !s.isAutosave && s.name === name)) {
+                alert(`"${name}" 세이브가 이미 있습니다. 다른 이름을 입력하세요.`);
+                return;
+            }
+            try { sessionStorage.setItem('dnoBootNewSaveName', name); } catch(e) {}
+            location.href = 'dno.html';
+        }
+
+        function continueSave(id) {
+            try { sessionStorage.setItem('dnoBootLoadSlotId', id); } catch(e) {}
+            location.href = 'dno.html';
+        }
+
+        document.getElementById('saveSelectOverlay').addEventListener('click', (e) => {
+            if(e.target.id === 'saveSelectOverlay') closeSaveSelectModal();
+        });
+        window.addEventListener('keydown', (e) => {
+            if(e.key === 'Escape' && document.getElementById('saveSelectOverlay').style.display !== 'none') closeSaveSelectModal();
+        });
     </script>
 
 </body>
