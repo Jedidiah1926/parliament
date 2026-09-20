@@ -6472,34 +6472,34 @@
             return `
                 <div style="margin-bottom:6px;padding:8px;background:#0a0c10;border:1px solid #663333;">
                     <label style="display:flex;align-items:center;gap:6px;cursor:pointer;color:var(--tno-alert);font-size:0.85rem;${fa?'margin-bottom:8px;':''}">
-                        <input type="checkbox" ${fa?'checked':''} onchange="toggleFraudAttempt(${p.id},this.checked)"> ⚠ 부정선거 시도<br>(다음 총선 개표 1회에 적용)
+                        <input type="checkbox" class="chk-alert" ${fa?'checked':''} onchange="toggleFraudAttempt(${p.id},this.checked)"> ⚠ 부정선거 시도<br>(다음 총선 개표 1회에 적용)
                     </label>
                     ${!fa ? '' : `
                     <div style="display:flex;flex-direction:column;gap:6px;">
                         <div style="display:flex;align-items:center;gap:6px;">
                             <span style="color:#888;font-size:0.78rem;width:100px;flex-shrink:0;">대상 의원실</span>
-                            <select onchange="updateFraudAttempt(${p.id},'chamber',this.value)" style="flex:1;min-width:0;">
+                            <select class="input-alert" onchange="updateFraudAttempt(${p.id},'chamber',this.value)" style="flex:1;min-width:0;">
                                 ${chamberList().map(ch => `<option value="${ch}" ${fa.chamber===ch?'selected':''}>${chamberDisplayName(ch)}</option>`).join('')}
                             </select>
                         </div>
                         <div style="display:flex;align-items:center;gap:6px;">
                             <span style="color:#888;font-size:0.78rem;width:100px;flex-shrink:0;">득표율 부풀리기</span>
-                            <input type="number" min="0" max="100" value="${fa.boostPct}" style="flex:1;min-width:0;" onchange="updateFraudAttempt(${p.id},'boostPct',parseFloat(this.value)||0)">
+                            <input type="number" class="input-alert" min="0" max="100" value="${fa.boostPct}" style="flex:1;min-width:0;" onchange="updateFraudAttempt(${p.id},'boostPct',parseFloat(this.value)||0)">
                             <span style="color:#666;font-size:0.78rem;flex-shrink:0;">%p</span>
                         </div>
                         <div style="display:flex;align-items:center;gap:6px;">
                             <span style="color:#888;font-size:0.78rem;width:100px;flex-shrink:0;">발각 확률</span>
-                            <input type="number" id="fraudCatchInput_${p.id}" min="0" max="100" value="${fa.catchChance}" ${fa.manualCatch?'':'disabled'}
+                            <input type="number" class="input-alert" id="fraudCatchInput_${p.id}" min="0" max="100" value="${fa.catchChance}" ${fa.manualCatch?'':'disabled'}
                                 style="flex:1;min-width:0;${fa.manualCatch?'':'opacity:0.5;'}" onchange="updateFraudAttempt(${p.id},'catchChance',parseFloat(this.value)||0)">
                             <span style="color:#666;font-size:0.78rem;flex-shrink:0;">%</span>
                             <label style="display:flex;align-items:center;gap:3px;color:#888;font-size:0.7rem;flex-shrink:0;cursor:pointer;white-space:nowrap;">
-                                <input type="checkbox" ${fa.manualCatch?'checked':''} onchange="toggleFraudManualCatch(${p.id},this.checked)"> 수동
+                                <input type="checkbox" class="chk-alert" ${fa.manualCatch?'checked':''} onchange="toggleFraudManualCatch(${p.id},this.checked)"> 수동
                             </label>
                         </div>
                         ${!fa.manualCatch ? `<div id="fraudCatchNote_${p.id}" style="color:#555;font-size:0.7rem;margin-left:106px;">자동 계산: 부풀리기·지역구 조작 규모에 비례 (현재 ${fa.catchChance}%)</div>` : ''}
                         <div>
                             <span style="color:#888;font-size:0.78rem;">지역구 개표 조작 (선택한 지역구는 실제 결과와 무관하게 이 정당이 승리)</span>
-                            <select multiple onchange="updateFraudRiggedDistricts(${p.id},this)" style="width:100%;box-sizing:border-box;height:84px;margin-top:4px;">
+                            <select multiple class="input-alert" onchange="updateFraudRiggedDistricts(${p.id},this)" style="width:100%;box-sizing:border-box;height:84px;margin-top:4px;">
                                 ${fraudDistrictOptionsHtml(fa.chamber, fa.riggedDistricts)}
                             </select>
                         </div>
