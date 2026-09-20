@@ -4638,12 +4638,23 @@
 
         // ── 조작 탭(.controls)/시각 탭(.display-area) 사이 경계를 드래그해 폭 조절 ──────────────
         const PANEL_RESIZER_WIDTH_KEY = 'dnoControlsPanelWidth';
+        const PANEL_RESIZER_DEFAULT_WIDTH = 400; // .controls의 CSS 기본값(flex: 0 0 400px)과 일치시켜야 "초기화"가 실제 기본 폭으로 돌아감
         function safeGetLocal(k) { try { return localStorage.getItem(k); } catch(e) { return null; } }
         function safeSetLocal(k, v) { try { localStorage.setItem(k, v); return true; } catch(e) { return false; } }
 
         function applyControlsPanelWidth(px) {
             const controls = document.querySelector('.controls');
             if(controls) controls.style.flexBasis = px + 'px';
+        }
+
+        // 패널 폭이 바뀌면 반원 좌석 캔버스는 부모 컨테이너 폭에 맞춰 다시 그려줘야
+        // 기존 해상도가 늘어난/줄어든 박스에 그대로 늘려져 찌그러지지 않음 — 드래그 중 매 프레임 다시
+        // 그리면 버벅이므로 requestAnimationFrame으로 한 프레임당 한 번만 실행되게 묶는다
+        let panelResizeRedrawScheduled = false;
+        function schedulePanelResizeRedraw() {
+            if(panelResizeRedrawScheduled) return;
+            panelResizeRedrawScheduled = true;
+            requestAnimationFrame(() => { panelResizeRedrawScheduled = false; simulate(); });
         }
 
         function initPanelResizer() {
@@ -4668,6 +4679,7 @@
                 const maxWidth = window.innerWidth - MIN_DISPLAY_WIDTH - Math.round(resizer.getBoundingClientRect().width);
                 const width = Math.max(MIN_WIDTH, Math.min(maxWidth, e.clientX - bodyRect.left));
                 applyControlsPanelWidth(width);
+                schedulePanelResizeRedraw();
             });
             function endDrag(e) {
                 if(!dragging) return;
@@ -4675,7 +4687,14 @@
                 resizer.classList.remove('dragging');
                 if(resizer.hasPointerCapture?.(e.pointerId)) resizer.releasePointerCapture(e.pointerId);
                 safeSetLocal(PANEL_RESIZER_WIDTH_KEY, Math.round(controls.getBoundingClientRect().width));
+                schedulePanelResizeRedraw();
             }
+            // 더블클릭하면 드래그로 바꾼 폭을 기본값으로 초기화
+            resizer.addEventListener('dblclick', () => {
+                applyControlsPanelWidth(PANEL_RESIZER_DEFAULT_WIDTH);
+                safeSetLocal(PANEL_RESIZER_WIDTH_KEY, PANEL_RESIZER_DEFAULT_WIDTH);
+                schedulePanelResizeRedraw();
+            });
             resizer.addEventListener('pointerup', endDrag);
             resizer.addEventListener('pointercancel', endDrag);
         }
