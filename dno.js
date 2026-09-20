@@ -4193,12 +4193,29 @@
 
         window.onload = function() {
             let restored = false;
+            let bootNewSaveName = null;
             try {
                 loadAutosavePreference();
-                restored = autosaveEnabled && loadFromAutosave();
+                let bootSlotId = null;
+                try {
+                    bootSlotId = sessionStorage.getItem('dnoBootLoadSlotId');
+                    sessionStorage.removeItem('dnoBootLoadSlotId');
+                    bootNewSaveName = sessionStorage.getItem('dnoBootNewSaveName');
+                    sessionStorage.removeItem('dnoBootNewSaveName');
+                } catch(e) { /* sessionStorage 접근 불가 — 일반 부팅으로 진행 */ }
+                if(bootNewSaveName) {
+                    restored = false;
+                } else if(bootSlotId) {
+                    const slot = loadSaveSlots().find(s => s.id === bootSlotId);
+                    if(slot) { setAppState(slot.state); restored = true; }
+                    else restored = autosaveEnabled && loadFromAutosave();
+                } else {
+                    restored = autosaveEnabled && loadFromAutosave();
+                }
             } catch(e) { /* 자동저장 초기화 실패 — 기본 상태로 계속 진행 */ }
             if(!restored) { toggleSystem(); simulate(); refreshUI(); renderBillList(); renderArchiveList(); syncBillSelect(); elecRenderList(); elecRenderRecords(); updateNationIdBar(); updateDispInfoBar(); renderCabinetRoleLabelInputs(); }
             try {
+                if(bootNewSaveName) createNamedSlotFromCurrentState(bootNewSaveName);
                 if(autosaveEnabled) { autosaveNow(); startAutosaveTimer(); }
                 renderSaveTabUI();
             } catch(e) { /* 자동저장 UI 갱신 실패는 앱 동작에 영향 없음 */ }
