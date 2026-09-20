@@ -179,9 +179,28 @@
         // 목록 표시와 부팅 시 넘길 sessionStorage 플래그 설정만 담당 — 무거운 state 객체를
         // 여기서 손댈 필요가 없다.
         const SAVE_SLOTS_KEY = 'dnoParliamentSaveSlots';
+        const LEGACY_AUTOSAVE_KEY = 'dnoParliamentAutosave'; // 세이브 슬롯 통합 이전, 단일 키에 저장하던 구버전 자동저장
+        const AUTOSAVE_SLOT_ID = 'autosave';
         const AUTOSAVE_SLOT_NAME = '자동저장';
 
+        // 구버전 자동저장 데이터가 남아있는데 아직 새 슬롯 배열로 옮겨지지 않았다면
+        // (dno.html을 아직 한 번도 다시 열지 않은 사용자) 여기서도 옮겨서 목록에 바로 보이게 함.
+        function migrateLegacyAutosaveForMenu() {
+            const legacyRaw = localStorage.getItem(LEGACY_AUTOSAVE_KEY);
+            if(!legacyRaw) return;
+            let slots;
+            try { slots = JSON.parse(localStorage.getItem(SAVE_SLOTS_KEY) || '[]'); } catch(e) { slots = []; }
+            if(slots.some(s => s.isAutosave)) { localStorage.removeItem(LEGACY_AUTOSAVE_KEY); return; }
+            let legacyState;
+            try { legacyState = JSON.parse(legacyRaw); } catch(e) { localStorage.removeItem(LEGACY_AUTOSAVE_KEY); return; }
+            slots.unshift({ id: AUTOSAVE_SLOT_ID, name: AUTOSAVE_SLOT_NAME, isAutosave: true,
+                savedAt: legacyState?.meta?.savedAt || new Date().toISOString(), state: legacyState });
+            localStorage.setItem(SAVE_SLOTS_KEY, JSON.stringify(slots));
+            localStorage.removeItem(LEGACY_AUTOSAVE_KEY);
+        }
+
         function loadSaveSlotsForMenu() {
+            migrateLegacyAutosaveForMenu();
             try { return JSON.parse(localStorage.getItem(SAVE_SLOTS_KEY) || '[]'); }
             catch(e) { return []; }
         }
