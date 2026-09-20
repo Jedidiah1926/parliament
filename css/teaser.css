@@ -50,6 +50,27 @@
         }
         html[data-ui-mode="mobile"] .panel-resizer { display: none; }
 
+        /* 키보드 단축키(Ctrl+S 등) 피드백용 — 확인 클릭이 필요 없는 가벼운 자동 소멸 알림 */
+        .kbd-toast {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #000;
+            border: 1px solid var(--tno-neon);
+            color: var(--tno-neon);
+            padding: 8px 18px;
+            font-family: 'NeoDunggeunmo', 'VT323', monospace;
+            font-size: 0.9rem;
+            letter-spacing: 1px;
+            z-index: 9000;
+            box-shadow: 0 0 10px var(--tno-neon-dim);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s;
+        }
+        .kbd-toast.show { opacity: 1; }
+
         .lang-switch {
             position: absolute;
             top: 15px;
@@ -287,6 +308,12 @@
         /* 계엄령 "의회 정지" 체크박스 — 테마색 대신 계엄령 버튼과 같은 경고색으로 표시 */
         input[type="checkbox"].chk-alert:hover { border-color: var(--tno-alert); }
         input[type="checkbox"].chk-alert:checked { background: var(--tno-alert); border-color: var(--tno-alert); }
+        /* 부정선거 카드의 입력/선택 요소 — 테마색 대신 부정선거 경고색(빨강)으로 표시 */
+        input.input-alert, select.input-alert { color: var(--tno-alert); }
+        input.input-alert:focus, select.input-alert:focus {
+            border-color: var(--tno-alert);
+            box-shadow: 0 0 5px color-mix(in srgb, var(--tno-alert) 40%, transparent);
+        }
         input[type="checkbox"]:checked::after {
             content: "";
             position: absolute;
@@ -542,6 +569,11 @@
             background: transparent; border: 1px solid #555; color: #555; font-size: 1rem; padding: 2px 8px;
         }
         .remove-btn:hover { border-color: var(--tno-alert); color: var(--tno-alert); background: rgba(255,0,85,0.1); }
+
+        .dup-btn {
+            background: transparent; border: 1px solid #555; color: #555; font-size: 1rem; padding: 2px 8px;
+        }
+        .dup-btn:hover { border-color: var(--tno-neon); color: var(--tno-neon); background: color-mix(in srgb, var(--tno-neon) 10%, transparent); }
 
         .simulate-btn {
             background: var(--tno-neon); color: #000; font-weight: bold;

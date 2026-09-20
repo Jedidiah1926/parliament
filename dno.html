@@ -446,15 +446,37 @@
 
                     <!-- 저장 (구 최상단 '저장' 탭이 여기로 통합됨) -->
                     <div id="innerContentConfigSave" class="sub-tab-content">
-                        <label style="display:flex;align-items:center;justify-content:space-between;gap:10px;cursor:pointer;padding:12px 14px;background:#0a0c10;border:1px solid #2a2a2a;margin-bottom:14px;">
-                            <span>
-                                <span style="color:var(--tno-neon);font-size:0.95rem;display:block;">자동저장</span>
-                                <span style="color:#666;font-size:0.75rem;" id="autosaveStatusText">-</span>
-                            </span>
-                            <input type="checkbox" id="autosaveToggle" onchange="setAutosaveEnabled(this.checked)">
-                        </label>
+                        <div style="padding:12px 14px;background:#0a0c10;border:1px solid #2a2a2a;margin-bottom:14px;">
+                            <label style="display:flex;align-items:center;justify-content:space-between;gap:10px;cursor:pointer;">
+                                <span>
+                                    <span style="color:var(--tno-neon);font-size:0.95rem;display:block;">자동저장</span>
+                                    <span style="color:#666;font-size:0.75rem;" id="autosaveStatusText">-</span>
+                                </span>
+                                <input type="checkbox" id="autosaveToggle" onchange="setAutosaveEnabled(this.checked)">
+                            </label>
+                            <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:10px;padding-top:10px;border-top:1px solid #1a1a1a;">
+                                <span style="color:#888;font-size:0.82rem;">저장 주기</span>
+                                <select id="autosaveIntervalSelect" onchange="setAutosaveInterval(this.value)" style="width:auto;">
+                                    <option value="15">15초</option>
+                                    <option value="30">30초</option>
+                                    <option value="60">1분</option>
+                                    <option value="180">3분</option>
+                                    <option value="300">5분</option>
+                                    <option value="600">10분</option>
+                                </select>
+                            </div>
+                        </div>
 
                         <button class="add-btn" onclick="resetAutosaveData()" style="width:100%;margin-top:0;border-color:#663333;color:#ff6666;">✕ 저장 데이터 초기화</button>
+
+                        <div style="height:1px;background:#222;margin:18px 0;"></div>
+
+                        <span style="color:var(--tno-neon);font-size:0.95rem;display:block;margin-bottom:6px;">이름 붙여 저장 (브라우저에 보관)</span>
+                        <div style="display:flex;gap:6px;margin-bottom:10px;">
+                            <input type="text" id="saveSlotNameInput" placeholder="예: 2차 총선 직후" style="flex:1;" onkeydown="if(event.key==='Enter'){event.preventDefault();saveNamedSlot();}">
+                            <button class="add-btn" onclick="saveNamedSlot()" style="width:auto;margin-top:0;padding:8px 14px;white-space:nowrap;">저장</button>
+                        </div>
+                        <div id="saveSlotList"></div>
 
                         <div style="height:1px;background:#222;margin:18px 0;"></div>
 
@@ -953,6 +975,7 @@
                             <input type="text" id="archiveSearchInput" placeholder="기록 검색..." oninput="renderArchiveList();">
                             <button onclick="document.getElementById('archiveSearchInput').value=''; renderArchiveList();" style="background:transparent;border:1px solid #333;color:#555;padding:4px 8px;font-family:'NeoDunggeunmo','VT323',monospace;cursor:pointer;" title="초기화">✕</button>
                         </div>
+                        <div class="bill-tag-filter" id="archiveStatusFilter"></div>
                         <div class="bill-tag-filter" id="archiveTagFilter"></div>
                         <div id="archiveList"></div>
                     </div>
@@ -1414,7 +1437,7 @@
         </div>
     </div>
 
-    <div class="panel-resizer" id="panelResizer" title="드래그하여 폭 조절"></div>
+    <div class="panel-resizer" id="panelResizer" title="드래그하여 폭 조절 (더블클릭: 기본값으로 초기화)"></div>
 
     <div class="display-area">
         <!-- 디스플레이 탭 -->

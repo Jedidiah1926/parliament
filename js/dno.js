@@ -830,7 +830,7 @@
         function submitPmNominationBill() {
             const resolved = pmNominee.linkedSeat ? resolveLinkedSeat(pmNominee.linkedSeat) : null;
             const nomineeName = resolved ? resolved.name : pmNominee.name;
-            if(!nomineeName) { alert('먼저 총리 후보(이름 또는 의원 연결)를 지정하세요.'); return; }
+            if(!nomineeName) { showCustomAlert('먼저 총리 후보(이름 또는 의원 연결)를 지정하세요.'); return; }
             const bill = {
                 id: 'b'+Date.now(), title: `${effRoleLabel('pm')} 임명동의안 (${nomineeName})`, content: '', threshold: 0.5, numer: null, denom: null, tags: ['임명동의안'],
                 houseStatus: 'pending', senateStatus: 'pending', thirdStatus: 'pending', houseVote: null, senateVote: null, thirdVote: null,
@@ -842,7 +842,7 @@
             pmNomineeBillId = bill.id;
             renderPmNomineeSection();
             renderBillList(); syncBillSelect();
-            alert(`${nomineeName}에 대한 ${effRoleLabel('pm')} 임명동의안이 국가 > 입법 탭에 상정되었습니다.`);
+            showCustomAlert(`${nomineeName}에 대한 ${effRoleLabel('pm')} 임명동의안이 국가 > 입법 탭에 상정되었습니다.`);
         }
 
         // 임명동의안이 가결되면 지명자를 실제 총리로 확정 반영
@@ -873,7 +873,7 @@
             };
             bills.push(bill);
             renderBillList(); syncBillSelect();
-            alert(`내각 불신임안이 국가 > 입법 탭에 상정되었습니다.`);
+            showCustomAlert(`내각 불신임안이 국가 > 입법 탭에 상정되었습니다.`);
         }
 
         // 내각 불신임안이 가결되면 총리·부총리·국무위원 전원의 재직자 정보를 초기화 —
@@ -1149,7 +1149,7 @@
                         ${voteBtn('abs','기권','#888888')}
                     </div>`;
                 return `
-                    <div style="text-align:center;width:92px;">
+                    <div style="text-align:center;width:130px;">
                         <div style="color:#e0e0e0;font-size:0.85rem;margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${label}">${label}</div>
                         <div class="leader-photo-box" style="width:70px;height:88px;margin:0 auto;pointer-events:none;${photoBoxVoteStyle}">
                             ${photo ? `<img src="${photo}" alt="">` : '<div class="photo-ph">👤</div>'}
@@ -1180,7 +1180,7 @@
             await Promise.all(allCards.map(async c => { if(c.photo) photoMap.set(c, await loadImageAsync(c.photo)); }));
 
             const scale = window.devicePixelRatio || 1;
-            const pad = Math.round(16*scale), cardW = Math.round(110*scale), cardGap = Math.round(22*scale), rowGap = Math.round(20*scale);
+            const pad = Math.round(16*scale), cardW = Math.round(130*scale), cardGap = Math.round(22*scale), rowGap = Math.round(20*scale);
             const photoW = Math.round(70*scale), photoH = Math.round(88*scale);
             const labelH = Math.round(20*scale), gapSm = Math.round(6*scale), nameH = Math.round(18*scale), badgeH = Math.round(18*scale);
             const cardH = labelH + gapSm + photoH + gapSm + nameH + gapSm + badgeH;
@@ -1324,16 +1324,16 @@
             overlay.style.display = 'flex';
             document.getElementById('customAlertOkBtn').onclick = () => { overlay.style.display = 'none'; };
         }
-        function showCustomConfirm(message, onConfirm) {
+        function showCustomConfirm(message, onConfirm, onCancel) {
             const overlay = document.getElementById('customConfirmOverlay');
-            if(!overlay) { if(confirm(message)) onConfirm(); return; }
+            if(!overlay) { if(confirm(message)) onConfirm(); else onCancel?.(); return; }
             document.getElementById('customConfirmMessage').textContent = message;
             overlay.style.display = 'flex';
             const okBtn = document.getElementById('customConfirmOkBtn');
             const cancelBtn = document.getElementById('customConfirmCancelBtn');
             const cleanup = () => { overlay.style.display = 'none'; okBtn.onclick = null; cancelBtn.onclick = null; };
             okBtn.onclick = () => { cleanup(); onConfirm(); };
-            cancelBtn.onclick = cleanup;
+            cancelBtn.onclick = () => { cleanup(); onCancel?.(); };
         }
 
         // 지정된 한 원의 의석을 비운다 — 지역구는 궐석 처리(기록 보존), 비례 명단은 초기화, 정당별 의석 수는 0으로
@@ -1936,6 +1936,7 @@
         // ===== 태그 필터 상태 =====
         let activeBillTagFilter = null;
         let activeArchiveTagFilter = null;
+        let activeArchiveStatusFilter = null; // null(전체) | 'passed' | 'rejected'(부결+거부권 행사) | 'awaiting_veto'
 
         // ===== VOTE STATE =====
         let voteState = { house: {}, senate: {}, third: {} };
@@ -1990,7 +1991,7 @@
             const denom = isCustom ? parseInt(document.getElementById('customDenom').value) || null : null;
             const tagsRaw = document.getElementById('newBillTags')?.value || '';
             const tags = tagsRaw.split(',').map(t => t.trim()).filter(t => t.length > 0);
-            if(!title) { alert('법안 제목을 입력하세요.'); return; }
+            if(!title) { showCustomAlert('법안 제목을 입력하세요.'); return; }
             const amendedBill = amendmentSourceId ? bills.find(b => b.id === amendmentSourceId) : null;
             const version = amendedBill ? (amendedBill.version || 1) + 1 : 1;
             bills.push({ id: 'b'+Date.now(), title, content, threshold, numer, denom, tags,
@@ -2009,7 +2010,7 @@
         function startAmendment(id) {
             const orig = bills.find(b => b.id === id);
             if(!orig) return;
-            if(getBillOverallStatus(orig) !== 'passed') { alert('가결된 법안만 개정안을 발의할 수 있습니다.'); return; }
+            if(getBillOverallStatus(orig) !== 'passed') { showCustomAlert('가결된 법안만 개정안을 발의할 수 있습니다.'); return; }
             amendmentSourceId = id;
             switchMainTab('legislation');
             switchSubTab('legislation', 'bill');
@@ -2233,7 +2234,7 @@
             const bill = bills.find(b=>b.id===editingBillId);
             if(!bill) return;
             const title = document.getElementById('editBillTitle').value.trim();
-            if(!title) { alert('법안 제목을 입력하세요.'); return; }
+            if(!title) { showCustomAlert('법안 제목을 입력하세요.'); return; }
             bill.title = title;
             bill.content = document.getElementById('editBillContent').value.trim();
             const tagsRaw = document.getElementById('editBillTags')?.value || '';
@@ -2255,7 +2256,7 @@
             if(editSel) editSel.value = '';
             const editForm = document.getElementById('editBillForm');
             if(editForm) editForm.style.display = 'none';
-            alert('법안이 수정되었습니다.');
+            showCustomAlert('법안이 수정되었습니다.');
         }
 
         function getBillStatusSuffix(b) {
@@ -2308,9 +2309,10 @@
         function vetoBill(id) {
             const bill = bills.find(b => b.id === id);
             if(!bill) return;
-            if(!confirm(`${vetoHolderLabel()}의 거부권을 행사해 이 법안을 최종 부결시킵니다. 계속하시겠습니까?`)) return;
-            bill.vetoStatus = 'vetoed';
-            renderArchiveList();
+            showCustomConfirm(`${vetoHolderLabel()}의 거부권을 행사해 이 법안을 최종 부결시킵니다. 계속하시겠습니까?`, () => {
+                bill.vetoStatus = 'vetoed';
+                renderArchiveList();
+            });
         }
 
         // 법안 카드 공통 배지 생성
@@ -2461,6 +2463,31 @@
             return true;
         }
 
+        // 기록 탭 전용 — 결과별 필터('rejected'는 부결/거부권 행사를 하나로 묶음)
+        function billMatchesStatusFilter(bill, statusFilter) {
+            if(!statusFilter) return true;
+            const overall = getBillOverallStatus(bill);
+            if(statusFilter === 'rejected') return overall === 'failed' || overall === 'vetoed';
+            return overall === statusFilter;
+        }
+        function toggleArchiveStatusFilter(key) {
+            activeArchiveStatusFilter = activeArchiveStatusFilter === key ? null : key;
+            renderArchiveList();
+        }
+        function renderArchiveStatusFilter(done) {
+            const el = document.getElementById('archiveStatusFilter');
+            if(!el) return;
+            const options = [
+                { key: 'passed', label: '✔ 가결' },
+                { key: 'rejected', label: '✘ 부결/거부' },
+                { key: 'awaiting_veto', label: '⏳ 서명 대기' },
+            ].filter(o => done.some(b => billMatchesStatusFilter(b, o.key)));
+            if(options.length === 0) { el.innerHTML = ''; return; }
+            el.innerHTML = options.map(o =>
+                `<span class="tag-badge ${activeArchiveStatusFilter===o.key?'active':''}" onclick="toggleArchiveStatusFilter('${o.key}')">${o.label}</span>`
+            ).join('');
+        }
+
         function buildTagHtml(bill) {
             if(!bill.tags || bill.tags.length === 0) return '';
             return bill.tags.map(t => `<span class="tag-badge" style="cursor:default;"># ${t}</span>`).join('');
@@ -2545,14 +2572,15 @@
             const query = document.getElementById('archiveSearchInput')?.value || '';
             const done = [...bills.filter(b => getBillOverallStatus(b) !== 'pending')].reverse();
 
-            // 태그 필터 바 렌더
+            // 결과별 필터 + 태그 필터 바 렌더
+            renderArchiveStatusFilter(done);
             const allTags = getAllTags(done);
             renderTagFilter('archiveTagFilter', allTags, activeArchiveTagFilter, (t) => {
                 activeArchiveTagFilter = activeArchiveTagFilter === t ? null : t;
                 renderArchiveList();
             });
 
-            const filtered = done.filter(b => billMatchesFilter(b, query, activeArchiveTagFilter));
+            const filtered = done.filter(b => billMatchesStatusFilter(b, activeArchiveStatusFilter) && billMatchesFilter(b, query, activeArchiveTagFilter));
 
             if(done.length === 0) {
                 container.innerHTML = '<div style="color:#333; text-align:center; padding:20px; border:1px dashed #222;">완료된 법안이 없습니다</div>';
@@ -2592,7 +2620,7 @@
 
         // ===== CONFIRM CHAMBER VOTE =====
         function confirmChamberVote(chamber) {
-            if(!activeBillId) { alert('심의할 법안을 먼저 선택하세요.'); return; }
+            if(!activeBillId) { showCustomAlert('심의할 법안을 먼저 선택하세요.'); return; }
             const bill = bills.find(b=>b.id===activeBillId);
             if(!bill) return;
 
@@ -2603,14 +2631,14 @@
 
             // 상원은 하원 가결 후에만, 삼원은 상원(또는 하원) 가결 후에만 가능
             if(chamber === 'senate') {
-                if(bill.houseStatus === 'pending') { alert(`${hName} 표결을 먼저 확정하세요.`); return; }
-                if(bill.houseStatus === 'fail') { alert(`${hName}에서 부결된 법안은 ${document.getElementById('senateNameInput')?.value||'상원'}에 상정되지 않습니다.`); return; }
+                if(bill.houseStatus === 'pending') { showCustomAlert(`${hName} 표결을 먼저 확정하세요.`); return; }
+                if(bill.houseStatus === 'fail') { showCustomAlert(`${hName}에서 부결된 법안은 ${document.getElementById('senateNameInput')?.value||'상원'}에 상정되지 않습니다.`); return; }
             }
             if(chamber === 'third') {
                 const prevStatus = isBi ? bill.senateStatus : bill.houseStatus;
                 const prevName = isBi ? sName : hName;
-                if(prevStatus === 'pending') { alert(`${prevName} 표결을 먼저 확정하세요.`); return; }
-                if(prevStatus === 'fail') { alert(`${prevName}에서 부결된 법안은 삼원에 상정되지 않습니다.`); return; }
+                if(prevStatus === 'pending') { showCustomAlert(`${prevName} 표결을 먼저 확정하세요.`); return; }
+                if(prevStatus === 'fail') { showCustomAlert(`${prevName}에서 부결된 법안은 삼원에 상정되지 않습니다.`); return; }
             }
 
             const dots = dotCache[chamber];
@@ -3209,7 +3237,7 @@
                 }
             }
             if(info.name) {
-                ctx.font = `bold ${Math.round(22 * scale)}px ${font}`;
+                ctx.font = `${Math.round(22 * scale)}px ${font}`;
                 ctx.fillStyle = '#eee';
                 ctx.fillText(info.name, x, midY);
             }
@@ -3248,7 +3276,7 @@
                 x += fw + 10;
             }
             if(info.name) {
-                markup += `<text x="${x}" y="${midY}" fill="#eee" font-family="${font}" font-weight="bold" font-size="22" dominant-baseline="middle">${escapeXml(info.name)}</text>`;
+                markup += `<text x="${x}" y="${midY}" fill="#eee" font-family="${font}" font-size="22" dominant-baseline="middle">${escapeXml(info.name)}</text>`;
             }
             if(info.date || info.session) {
                 const rightX = width - pad;
@@ -3603,7 +3631,7 @@
             try {
                 await exportVisualElement(target, includeStats, format, statsOptions, headerOptions);
             } catch(e) {
-                alert('내보내기 중 오류가 발생했습니다: ' + e.message);
+                showCustomAlert('내보내기 중 오류가 발생했습니다: ' + e.message);
             }
         }
 
@@ -3927,7 +3955,7 @@
                     </div>
                     <div style="display:flex;flex-direction:column;line-height:1.25;min-width:0;">
                         <span style="color:#555;font-size:0.62rem;">${label}</span>
-                        <span style="color:#ccc;font-size:0.8rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:90px;">${name || '미지정'}</span>
+                        <span style="color:#ccc;font-size:0.8rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:140px;">${name || '미지정'}</span>
                     </div>
                 </div>`;
             container.innerHTML = `<div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:8px;">
@@ -4166,12 +4194,29 @@
 
         window.onload = function() {
             let restored = false;
+            let bootNewSaveName = null;
             try {
                 loadAutosavePreference();
-                restored = autosaveEnabled && loadFromAutosave();
+                let bootSlotId = null;
+                try {
+                    bootSlotId = sessionStorage.getItem('dnoBootLoadSlotId');
+                    sessionStorage.removeItem('dnoBootLoadSlotId');
+                    bootNewSaveName = sessionStorage.getItem('dnoBootNewSaveName');
+                    sessionStorage.removeItem('dnoBootNewSaveName');
+                } catch(e) { /* sessionStorage 접근 불가 — 일반 부팅으로 진행 */ }
+                if(bootNewSaveName) {
+                    restored = false;
+                } else if(bootSlotId) {
+                    const slot = loadSaveSlots().find(s => s.id === bootSlotId);
+                    if(slot) { setAppState(slot.state); restored = true; }
+                    else restored = autosaveEnabled && loadFromAutosave();
+                } else {
+                    restored = autosaveEnabled && loadFromAutosave();
+                }
             } catch(e) { /* 자동저장 초기화 실패 — 기본 상태로 계속 진행 */ }
             if(!restored) { toggleSystem(); simulate(); refreshUI(); renderBillList(); renderArchiveList(); syncBillSelect(); elecRenderList(); elecRenderRecords(); updateNationIdBar(); updateDispInfoBar(); renderCabinetRoleLabelInputs(); }
             try {
+                if(bootNewSaveName) createNamedSlotFromCurrentState(bootNewSaveName);
                 if(autosaveEnabled) { autosaveNow(); startAutosaveTimer(); }
                 renderSaveTabUI();
             } catch(e) { /* 자동저장 UI 갱신 실패는 앱 동작에 영향 없음 */ }
@@ -4234,7 +4279,8 @@
                     councilVoteDenom,
                     voteState,
                     activeBillTagFilter,
-                    activeArchiveTagFilter
+                    activeArchiveTagFilter,
+                    activeArchiveStatusFilter
                 },
                 election: {
                     elecStore:      JSON.parse(JSON.stringify(elecStore)),
@@ -4326,6 +4372,7 @@
             if(!voteState.third) voteState.third = {};
             activeBillTagFilter    = leg.activeBillTagFilter    ?? null;
             activeArchiveTagFilter = leg.activeArchiveTagFilter ?? null;
+            activeArchiveStatusFilter = leg.activeArchiveStatusFilter ?? null;
 
             // ── 선거 데이터 복원 ──
             const elec = state.election || {};
@@ -4516,14 +4563,24 @@
             setAppState(obj);
         }
 
-        // ===== 자동저장 (localStorage) =====
+        // ===== 저장 슬롯 (localStorage) =====
+        // "자동저장"도 별도 메커니즘이 아니라, 이름 있는 슬롯들과 같은 배열 안에 들어있는 한 항목일 뿐이다
+        // (isAutosave:true, 이름은 "자동저장"으로 고정) — 자동저장 타이머만 이 항목을 계속 덮어쓰고,
+        // 나머지 이름 붙은 슬롯들은 사용자가 명시적으로 저장/불러오기 할 때만 손댄다.
         // Safari의 file:// 접근 차단, 프라이빗 모드, 저장소 차단 설정 등에서는
         // localStorage 자체에 접근하는 것만으로도 예외가 발생할 수 있으므로
         // 모든 접근을 반드시 try/catch로 감싼다 — 그렇지 않으면 window.onload 안에서
         // 예외가 나는 순간 이후의 전체 초기화 코드가 실행되지 않아 앱 자체가 먹통이 된다.
-        const AUTOSAVE_KEY = 'dnoParliamentAutosave';
+        const SAVE_SLOTS_KEY = 'dnoParliamentSaveSlots';
         const AUTOSAVE_ENABLED_KEY = 'dnoParliamentAutosaveEnabled';
+        const AUTOSAVE_INTERVAL_KEY = 'dnoParliamentAutosaveIntervalSec';
+        const AUTOSAVE_INTERVAL_OPTIONS = [15, 30, 60, 180, 300, 600]; // 초 단위 — 15초/30초/1분/3분/5분/10분
+        const AUTOSAVE_INTERVAL_DEFAULT = 15;
+        const AUTOSAVE_SLOT_ID = 'autosave';
+        const AUTOSAVE_SLOT_NAME = '자동저장';
+        const MAX_SAVE_SLOTS = 20; // 자동저장 제외, 사용자가 이름 붙인 슬롯 기준
         let autosaveEnabled = true;
+        let autosaveIntervalSec = AUTOSAVE_INTERVAL_DEFAULT;
         let autosaveTimer = null;
         let localStorageAvailable = true;
 
@@ -4546,16 +4603,33 @@
             try { localStorage.removeItem(key); } catch(e) { /* 무시 */ }
         }
 
+        function loadSaveSlots() {
+            if(!localStorageAvailable) return [];
+            try { return JSON.parse(safeLsGet(SAVE_SLOTS_KEY) || '[]'); } catch(e) { return []; }
+        }
+        function persistSaveSlots(slots) { return safeLsSet(SAVE_SLOTS_KEY, JSON.stringify(slots)); }
+        function getAutosaveSlot(slots) { return slots.find(s => s.isAutosave); }
+
         function loadAutosavePreference() {
             localStorageAvailable = checkLocalStorageAvailable();
             if(!localStorageAvailable) { autosaveEnabled = false; return; }
             const stored = safeLsGet(AUTOSAVE_ENABLED_KEY);
             autosaveEnabled = stored === null ? true : stored === 'true';
+            const storedInterval = parseInt(safeLsGet(AUTOSAVE_INTERVAL_KEY), 10);
+            autosaveIntervalSec = AUTOSAVE_INTERVAL_OPTIONS.includes(storedInterval) ? storedInterval : AUTOSAVE_INTERVAL_DEFAULT;
+        }
+
+        function setAutosaveInterval(sec) {
+            sec = parseInt(sec, 10);
+            if(!AUTOSAVE_INTERVAL_OPTIONS.includes(sec)) return;
+            autosaveIntervalSec = sec;
+            safeLsSet(AUTOSAVE_INTERVAL_KEY, String(sec));
+            if(autosaveEnabled) startAutosaveTimer();
         }
 
         function setAutosaveEnabled(enabled) {
             if(!localStorageAvailable) {
-                alert('이 브라우저/환경에서는 자동저장(localStorage)을 사용할 수 없습니다.\n(예: 파일을 직접 열었거나, 브라우저의 저장소 차단 설정)');
+                showCustomAlert('이 브라우저/환경에서는 자동저장(localStorage)을 사용할 수 없습니다.\n(예: 파일을 직접 열었거나, 브라우저의 저장소 차단 설정)');
                 renderSaveTabUI();
                 return;
             }
@@ -4568,13 +4642,19 @@
 
         function autosaveNow() {
             if(!autosaveEnabled || !localStorageAvailable) return;
-            safeLsSet(AUTOSAVE_KEY, JSON.stringify(getAppState()));
+            const slots = loadSaveSlots();
+            const savedAt = new Date().toISOString();
+            const state = getAppState();
+            const auto = getAutosaveSlot(slots);
+            if(auto) { auto.state = state; auto.savedAt = savedAt; }
+            else slots.unshift({ id: AUTOSAVE_SLOT_ID, name: AUTOSAVE_SLOT_NAME, isAutosave: true, savedAt, state });
+            persistSaveSlots(slots);
             renderSaveTabUI();
         }
 
         function startAutosaveTimer() {
             stopAutosaveTimer();
-            autosaveTimer = setInterval(autosaveNow, 15000);
+            autosaveTimer = setInterval(autosaveNow, autosaveIntervalSec * 1000);
         }
         function stopAutosaveTimer() {
             if(autosaveTimer) { clearInterval(autosaveTimer); autosaveTimer = null; }
@@ -4582,35 +4662,115 @@
 
         function loadFromAutosave() {
             if(!localStorageAvailable) return false;
-            const raw = safeLsGet(AUTOSAVE_KEY);
-            if(!raw) return false;
-            try { setAppState(JSON.parse(raw)); return true; }
+            const auto = getAutosaveSlot(loadSaveSlots());
+            if(!auto) return false;
+            try { setAppState(auto.state); return true; }
             catch(e) { return false; }
         }
 
         function resetAutosaveData() {
-            if(!confirm('저장된 데이터를 모두 삭제하고 처음 상태로 되돌리시겠습니까?\n(파일로 저장한 .json 파일에는 영향이 없습니다)')) return;
-            suppressAutosaveOnUnload = true;
-            safeLsRemove(AUTOSAVE_KEY);
-            location.reload();
+            showCustomConfirm('자동저장 데이터를 삭제하고 처음 상태로 되돌리시겠습니까?\n(이름 붙여 저장한 슬롯에는 영향이 없습니다)', () => {
+                suppressAutosaveOnUnload = true;
+                persistSaveSlots(loadSaveSlots().filter(s => !s.isAutosave));
+                location.reload();
+            });
         }
 
         function renderSaveTabUI() {
+            renderSaveSlotList();
             const toggle = document.getElementById('autosaveToggle');
             const info = document.getElementById('autosaveStatusText');
+            const intervalSelect = document.getElementById('autosaveIntervalSelect');
+            if(intervalSelect) intervalSelect.value = String(autosaveIntervalSec);
             if(!localStorageAvailable) {
                 if(toggle) { toggle.checked = false; toggle.disabled = true; }
+                if(intervalSelect) intervalSelect.disabled = true;
                 if(info) info.textContent = '이 환경에서는 자동저장을 사용할 수 없음';
                 return;
             }
             if(toggle) { toggle.checked = autosaveEnabled; toggle.disabled = false; }
+            if(intervalSelect) intervalSelect.disabled = false;
             if(!info) return;
             if(!autosaveEnabled) { info.textContent = '꺼짐'; return; }
-            const raw = safeLsGet(AUTOSAVE_KEY);
-            if(!raw) { info.textContent = '자동저장된 데이터 없음'; return; }
-            let savedAt = null;
-            try { savedAt = JSON.parse(raw).meta?.savedAt; } catch(e) {}
-            info.textContent = savedAt ? `마지막 저장: ${new Date(savedAt).toLocaleString('ko-KR')}` : '자동저장됨';
+            const auto = getAutosaveSlot(loadSaveSlots());
+            info.textContent = auto?.savedAt ? `마지막 저장: ${new Date(auto.savedAt).toLocaleString('ko-KR')}` : '자동저장된 데이터 없음';
+        }
+
+        // ===== 이름 붙여 저장 =====
+        // "민주화 이전", "2차 총선 직후"처럼 여러 시점을 따로 보관하고 언제든 전환하고 싶을 때 쓰는
+        // 이름 붙는 저장 슬롯 — 파일로 저장(.json)과 달리 다운로드 없이 브라우저(localStorage)에만
+        // 보관되므로 다른 브라우저/기기에서는 보이지 않는다. 자동저장과 달리 사용자가 명시적으로
+        // 저장 버튼을 눌러야만 갱신되며, "자동저장"이라는 이름은 예약되어 있어 쓸 수 없다.
+        function saveNamedSlot() {
+            if(!localStorageAvailable) { alert('이 브라우저/환경에서는 저장 슬롯(localStorage)을 사용할 수 없습니다.'); return; }
+            const input = document.getElementById('saveSlotNameInput');
+            const name = (input?.value || '').trim();
+            if(!name) { alert('저장할 이름을 입력하세요.'); return; }
+            if(name === AUTOSAVE_SLOT_NAME) { alert(`"${AUTOSAVE_SLOT_NAME}"은(는) 예약된 이름입니다. 다른 이름을 입력하세요.`); return; }
+            const slots = loadSaveSlots();
+            const namedSlots = slots.filter(s => !s.isAutosave);
+            const doSave = () => {
+                const state = getAppState();
+                const existing = slots.find(s => !s.isAutosave && s.name === name);
+                if(existing) { existing.state = state; existing.savedAt = new Date().toISOString(); }
+                else slots.push({ id: 'slot'+Date.now(), name, isAutosave: false, savedAt: new Date().toISOString(), state });
+                if(persistSaveSlots(slots)) { input.value = ''; renderSaveSlotList(); }
+                else alert('저장에 실패했습니다. (브라우저 저장 공간이 부족할 수 있습니다)');
+            };
+            const existing = namedSlots.find(s => s.name === name);
+            if(existing) showCustomConfirm(`"${name}" 슬롯이 이미 있습니다. 덮어쓸까요?`, doSave);
+            else if(namedSlots.length >= MAX_SAVE_SLOTS) alert(`저장 슬롯은 최대 ${MAX_SAVE_SLOTS}개까지 만들 수 있습니다. 기존 슬롯을 삭제한 뒤 다시 시도하세요.`);
+            else doSave();
+        }
+
+        // 새 세이브 생성 흐름(main.html)에서 넘어온 이름으로, 방금 초기화된 현재 상태를 그대로 첫 저장으로 등록
+        function createNamedSlotFromCurrentState(name) {
+            if(!localStorageAvailable || !name) return;
+            const slots = loadSaveSlots();
+            if(slots.some(s => !s.isAutosave && s.name === name)) return; // 이미 있으면 조용히 건너뜀
+            slots.push({ id: 'slot'+Date.now(), name, isAutosave: false, savedAt: new Date().toISOString(), state: getAppState() });
+            persistSaveSlots(slots);
+            renderSaveSlotList();
+        }
+
+        // 자동저장/이름 붙은 슬롯 공용 — 인게임에서도 이 목록의 "불러오기"로 바로 다른 세이브로 전환 가능
+        function loadNamedSlot(id) {
+            const slot = loadSaveSlots().find(s => s.id === id); if(!slot) return;
+            showCustomConfirm(`"${slot.name}" 슬롯을 불러올까요?\n현재 화면의 저장하지 않은 변경사항은 사라집니다.`, () => {
+                setAppState(slot.state);
+                simulate(); refreshUI();
+                showCustomAlert(`"${slot.name}" 슬롯을 불러왔습니다.`);
+            });
+        }
+
+        function deleteNamedSlot(id) {
+            const slots = loadSaveSlots();
+            const slot = slots.find(s => s.id === id); if(!slot || slot.isAutosave) return;
+            showCustomConfirm(`"${slot.name}" 슬롯을 삭제할까요?`, () => {
+                persistSaveSlots(slots.filter(s => s.id !== id));
+                renderSaveSlotList();
+            });
+        }
+
+        function renderSaveSlotList() {
+            const container = document.getElementById('saveSlotList');
+            if(!container) return;
+            if(!localStorageAvailable) { container.innerHTML = ''; return; }
+            const all = loadSaveSlots();
+            const auto = getAutosaveSlot(all);
+            const named = all.filter(s => !s.isAutosave).sort((a,b) => new Date(b.savedAt||0) - new Date(a.savedAt||0));
+            const ordered = auto ? [auto, ...named] : named;
+            if(ordered.length === 0) { container.innerHTML = '<div style="color:#444;font-size:0.78rem;padding:6px 0;">저장된 슬롯이 없습니다</div>'; return; }
+            container.innerHTML = ordered.map(s => `
+                <div style="display:flex;align-items:center;gap:8px;padding:6px 8px;background:#0a0c10;border:1px solid ${s.isAutosave?'#2a4444':'#222'};margin-bottom:4px;">
+                    <div style="flex:1;min-width:0;overflow:hidden;">
+                        <div style="color:${s.isAutosave?'var(--tno-neon)':'#ccc'};font-size:0.85rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${s.isAutosave?'🔄 ':''}${s.name}</div>
+                        <div style="color:#555;font-size:0.7rem;">${s.savedAt ? new Date(s.savedAt).toLocaleString('ko-KR') : '-'}</div>
+                    </div>
+                    <button class="add-btn" style="width:auto;margin-top:0;padding:4px 10px;font-size:0.8rem;" onclick="loadNamedSlot('${s.id}')">불러오기</button>
+                    ${s.isAutosave ? '' : `<button class="remove-btn" onclick="deleteNamedSlot('${s.id}')">X</button>`}
+                </div>
+            `).join('');
         }
 
         // ===== 실행 취소 / 다시 실행 (Ctrl+Z / Ctrl+Shift+Z) =====
@@ -4682,14 +4842,81 @@
             });
         }
 
+        // ===== 키보드 단축키 (Ctrl+S 저장 / Enter 실행 / Esc 닫기) =====
+        // 화면 하단에 잠깐 떴다 사라지는 토스트 — showCustomAlert처럼 확인 클릭을 요구하면
+        // Ctrl+S 같은 빈번한 단축키에는 너무 무거우므로 가볍게 자동 소멸되는 알림을 별도로 둔다
+        let kbdToastTimer = null;
+        function showKbdToast(message) {
+            let el = document.getElementById('kbdToast');
+            if(!el) {
+                el = document.createElement('div');
+                el.id = 'kbdToast';
+                el.className = 'kbd-toast';
+                document.body.appendChild(el);
+            }
+            el.textContent = message;
+            el.classList.add('show');
+            clearTimeout(kbdToastTimer);
+            kbdToastTimer = setTimeout(() => el.classList.remove('show'), 1500);
+        }
+
+        // Esc로 닫을 대상 중 실제로 열려 있는 것 하나만(우선순위대로) 닫는다
+        function handleGlobalEscape() {
+            const isVisible = el => el && getComputedStyle(el).display !== 'none';
+            const confirmOverlay = document.getElementById('customConfirmOverlay');
+            if(isVisible(confirmOverlay)) { document.getElementById('customConfirmCancelBtn')?.click(); return; }
+            const alertOverlay = document.getElementById('customAlertOverlay');
+            if(isVisible(alertOverlay)) { document.getElementById('customAlertOkBtn')?.click(); return; }
+            const exportOverlay = document.getElementById('exportDialogOverlay');
+            if(isVisible(exportOverlay)) { closeExportDialog(); return; }
+            const seatCard = document.getElementById('seatInfoCard');
+            if(isVisible(seatCard)) { closeSeatInfoCard(); return; }
+        }
+
+        function initKeyboardShortcuts() {
+            window.addEventListener('keydown', (e) => {
+                const key = e.key.toLowerCase();
+                const tag = document.activeElement?.tagName;
+                const isFormField = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT';
+
+                if((e.ctrlKey || e.metaKey) && key === 's') {
+                    e.preventDefault();
+                    autosaveNow();
+                    showKbdToast('✔ 저장됨');
+                    return;
+                }
+                if(key === 'escape') {
+                    handleGlobalEscape();
+                    return;
+                }
+                // 입력창/선택 상자에 포커스가 있을 때는 Enter의 기본 동작(줄바꿈 등)을 건드리지 않음
+                if(key === 'enter' && !isFormField && !e.ctrlKey && !e.metaKey && !e.altKey) {
+                    e.preventDefault();
+                    simulate();
+                    showKbdToast('>> PROTOCOL EXECUTE <<');
+                }
+            });
+        }
+
         // ── 조작 탭(.controls)/시각 탭(.display-area) 사이 경계를 드래그해 폭 조절 ──────────────
         const PANEL_RESIZER_WIDTH_KEY = 'dnoControlsPanelWidth';
+        const PANEL_RESIZER_DEFAULT_WIDTH = 400; // .controls의 CSS 기본값(flex: 0 0 400px)과 일치시켜야 "초기화"가 실제 기본 폭으로 돌아감
         function safeGetLocal(k) { try { return localStorage.getItem(k); } catch(e) { return null; } }
         function safeSetLocal(k, v) { try { localStorage.setItem(k, v); return true; } catch(e) { return false; } }
 
         function applyControlsPanelWidth(px) {
             const controls = document.querySelector('.controls');
             if(controls) controls.style.flexBasis = px + 'px';
+        }
+
+        // 패널 폭이 바뀌면 반원 좌석 캔버스는 부모 컨테이너 폭에 맞춰 다시 그려줘야
+        // 기존 해상도가 늘어난/줄어든 박스에 그대로 늘려져 찌그러지지 않음 — 드래그 중 매 프레임 다시
+        // 그리면 버벅이므로 requestAnimationFrame으로 한 프레임당 한 번만 실행되게 묶는다
+        let panelResizeRedrawScheduled = false;
+        function schedulePanelResizeRedraw() {
+            if(panelResizeRedrawScheduled) return;
+            panelResizeRedrawScheduled = true;
+            requestAnimationFrame(() => { panelResizeRedrawScheduled = false; simulate(); });
         }
 
         function initPanelResizer() {
@@ -4714,6 +4941,7 @@
                 const maxWidth = window.innerWidth - MIN_DISPLAY_WIDTH - Math.round(resizer.getBoundingClientRect().width);
                 const width = Math.max(MIN_WIDTH, Math.min(maxWidth, e.clientX - bodyRect.left));
                 applyControlsPanelWidth(width);
+                schedulePanelResizeRedraw();
             });
             function endDrag(e) {
                 if(!dragging) return;
@@ -4721,7 +4949,14 @@
                 resizer.classList.remove('dragging');
                 if(resizer.hasPointerCapture?.(e.pointerId)) resizer.releasePointerCapture(e.pointerId);
                 safeSetLocal(PANEL_RESIZER_WIDTH_KEY, Math.round(controls.getBoundingClientRect().width));
+                schedulePanelResizeRedraw();
             }
+            // 더블클릭하면 드래그로 바꾼 폭을 기본값으로 초기화
+            resizer.addEventListener('dblclick', () => {
+                applyControlsPanelWidth(PANEL_RESIZER_DEFAULT_WIDTH);
+                safeSetLocal(PANEL_RESIZER_WIDTH_KEY, PANEL_RESIZER_DEFAULT_WIDTH);
+                schedulePanelResizeRedraw();
+            });
             resizer.addEventListener('pointerup', endDrag);
             resizer.addEventListener('pointercancel', endDrag);
         }
@@ -4729,13 +4964,14 @@
         window.addEventListener("load", () => {
             initUndoRedoTracking();
             initPanelResizer();
+            initKeyboardShortcuts();
             const fileInputTab = document.getElementById("fileLoadJsonTab");
             if(fileInputTab) {
                 fileInputTab.addEventListener("change", async () => {
                     const file = fileInputTab.files?.[0];
                     if(!file) return;
                     try { await loadJSONFromFile(file); }
-                    catch(e) { alert("불러오기 실패: 저장 파일이 깨졌거나 형식이 다릅니다."); }
+                    catch(e) { showCustomAlert("불러오기 실패: 저장 파일이 깨졌거나 형식이 다릅니다."); }
                     finally { fileInputTab.value = ""; }
                 });
             }
@@ -5876,6 +6112,21 @@
             simulate(); refreshUI();
         }
         function removeParty(i) { const pid=parties[i].id; parties.splice(i,1); coalitions.forEach(c=>c.members=c.members.filter(x=>x!==pid)); simulate(); refreshUI(); }
+        // 정당 복제 — 색상/로고/당수/파벌 구성 등 "정체성"은 그대로 복사하고, 의석 수·집권 여부·연정
+        // 소속처럼 그 정당 고유의 정치적 상태는 복제하지 않고 초기화(0/없음)해 사용자가 새로 지정하게 한다
+        function duplicateParty(i) {
+            const src = parties[i]; if(!src) return;
+            const clone = JSON.parse(JSON.stringify(src));
+            clone.id = Date.now();
+            clone.name = src.name + ' (사본)';
+            clone.seatsHouse = 0; clone.seatsSenate = 0; clone.seatsThird = 0;
+            clone.isRuling = false;
+            if(Array.isArray(clone.factions)) {
+                clone.factions.forEach((f, fi) => { f.id = 'f'+Date.now()+'_'+fi; f.seatsHouse = 0; f.seatsSenate = 0; f.seatsThird = 0; });
+            }
+            parties.splice(i+1, 0, clone);
+            simulate(); refreshUI();
+        }
         // simulate()가 (manualSort가 꺼져 있으면) parties 배열을 이념 순으로 재정렬하므로,
         // 반드시 정렬이 끝난 뒤에 refreshUI()를 호출해야 카드에 새겨진 인덱스(idx)가
         // 최신 배열 순서와 어긋나지 않는다. 순서가 바뀌면 그 다음 입력이 엉뚱한 정당에 적용된다.
@@ -6017,6 +6268,17 @@
             p.factions = p.factions.filter(f=>f.id!==factionId);
             refreshUI();
         }
+        // 파벌 복제 — 의석 수는 0으로 초기화(합계가 정당 총 의석을 넘지 않도록)하고 나머지는 그대로 복사
+        function duplicateFaction(partyId, factionId) {
+            const p = parties.find(x=>x.id===partyId); if(!p?.factions) return;
+            const idx = p.factions.findIndex(f=>f.id===factionId); if(idx===-1) return;
+            const clone = JSON.parse(JSON.stringify(p.factions[idx]));
+            clone.id = 'f'+Date.now();
+            clone.name = clone.name + ' (사본)';
+            clone.seatsHouse = 0; clone.seatsSenate = 0; clone.seatsThird = 0;
+            p.factions.splice(idx+1, 0, clone);
+            simulate(); refreshUI();
+        }
         function updateFactionById(partyId, factionId, key, val) {
             const p = parties.find(x=>x.id===partyId); if(!p?.factions) return;
             const f = p.factions.find(x=>x.id===factionId); if(!f) return;
@@ -6049,15 +6311,16 @@
         function splitFaction(partyId, factionId) {
             const p = parties.find(x=>x.id===partyId); if(!p?.factions) return;
             const f = p.factions.find(x=>x.id===factionId); if(!f) return;
-            if(!confirm(`"${f.name}" 파벌을 신당으로 분리하시겠습니까?\n\n신당: ${f.name}\n의석: 하원 ${f.seatsHouse}석, 상원 ${f.seatsSenate}석`)) return;
-            p.seatsHouse  = Math.max(0, p.seatsHouse  - f.seatsHouse);
-            p.seatsSenate = Math.max(0, p.seatsSenate - f.seatsSenate);
-            p.factions = p.factions.filter(x=>x.id!==factionId);
-            parties.push({ id:Date.now(), name:f.name, color:f.color, seatsHouse:f.seatsHouse, seatsSenate:f.seatsSenate,
-                ideologyId:f.ideologyId||p.ideologyId, isRuling:false, inHouse:p.inHouse, inSenate:p.inSenate,
-                leaderName:f.leaderName||'', leaderPhoto:f.leaderPhoto||'', logoPhoto:f.logoPhoto||'',
-                showLogoInStats:false, hideStatsPhoto:false, description:'', factions:[] });
-            simulate(); refreshUI();
+            showCustomConfirm(`"${f.name}" 파벌을 신당으로 분리하시겠습니까?\n\n신당: ${f.name}\n의석: 하원 ${f.seatsHouse}석, 상원 ${f.seatsSenate}석`, () => {
+                p.seatsHouse  = Math.max(0, p.seatsHouse  - f.seatsHouse);
+                p.seatsSenate = Math.max(0, p.seatsSenate - f.seatsSenate);
+                p.factions = p.factions.filter(x=>x.id!==factionId);
+                parties.push({ id:Date.now(), name:f.name, color:f.color, seatsHouse:f.seatsHouse, seatsSenate:f.seatsSenate,
+                    ideologyId:f.ideologyId||p.ideologyId, isRuling:false, inHouse:p.inHouse, inSenate:p.inSenate,
+                    leaderName:f.leaderName||'', leaderPhoto:f.leaderPhoto||'', logoPhoto:f.logoPhoto||'',
+                    showLogoInStats:false, hideStatsPhoto:false, description:'', factions:[] });
+                simulate(); refreshUI();
+            });
         }
         function moveFaction(partyId, factionId, dir) {
             const p = parties.find(x=>x.id===partyId); if(!p?.factions) return;
@@ -6113,6 +6376,7 @@
                         }
                         <input type="text" value="${f.name}" placeholder="파벌명" style="flex:1;font-size:0.9rem;"
                             onchange="updateFaction(${p.id},'${f.id}','name',this.value)">
+                        <button class="dup-btn" style="font-size:0.8rem;padding:2px 6px;" title="파벌 복제" onclick="duplicateFaction(${p.id},'${f.id}')">⧉</button>
                         <button class="remove-btn" style="font-size:0.8rem;padding:2px 6px;" onclick="removeFaction(${p.id},'${f.id}')">X</button>
                     </div>
                     <!-- 행2: 이념만 (의석은 의회 탭에서) -->
@@ -6211,34 +6475,34 @@
             return `
                 <div style="margin-bottom:6px;padding:8px;background:#0a0c10;border:1px solid #663333;">
                     <label style="display:flex;align-items:center;gap:6px;cursor:pointer;color:var(--tno-alert);font-size:0.85rem;${fa?'margin-bottom:8px;':''}">
-                        <input type="checkbox" ${fa?'checked':''} onchange="toggleFraudAttempt(${p.id},this.checked)"> ⚠ 부정선거 시도<br>(다음 총선 개표 1회에 적용)
+                        <input type="checkbox" class="chk-alert" ${fa?'checked':''} onchange="toggleFraudAttempt(${p.id},this.checked)"> ⚠ 부정선거 시도<br>(다음 총선 개표 1회에 적용)
                     </label>
                     ${!fa ? '' : `
                     <div style="display:flex;flex-direction:column;gap:6px;">
                         <div style="display:flex;align-items:center;gap:6px;">
                             <span style="color:#888;font-size:0.78rem;width:100px;flex-shrink:0;">대상 의원실</span>
-                            <select onchange="updateFraudAttempt(${p.id},'chamber',this.value)" style="flex:1;min-width:0;">
+                            <select class="input-alert" onchange="updateFraudAttempt(${p.id},'chamber',this.value)" style="flex:1;min-width:0;">
                                 ${chamberList().map(ch => `<option value="${ch}" ${fa.chamber===ch?'selected':''}>${chamberDisplayName(ch)}</option>`).join('')}
                             </select>
                         </div>
                         <div style="display:flex;align-items:center;gap:6px;">
                             <span style="color:#888;font-size:0.78rem;width:100px;flex-shrink:0;">득표율 부풀리기</span>
-                            <input type="number" min="0" max="100" value="${fa.boostPct}" style="flex:1;min-width:0;" onchange="updateFraudAttempt(${p.id},'boostPct',parseFloat(this.value)||0)">
+                            <input type="number" class="input-alert" min="0" max="100" value="${fa.boostPct}" style="flex:1;min-width:0;" onchange="updateFraudAttempt(${p.id},'boostPct',parseFloat(this.value)||0)">
                             <span style="color:#666;font-size:0.78rem;flex-shrink:0;">%p</span>
                         </div>
                         <div style="display:flex;align-items:center;gap:6px;">
                             <span style="color:#888;font-size:0.78rem;width:100px;flex-shrink:0;">발각 확률</span>
-                            <input type="number" id="fraudCatchInput_${p.id}" min="0" max="100" value="${fa.catchChance}" ${fa.manualCatch?'':'disabled'}
+                            <input type="number" class="input-alert" id="fraudCatchInput_${p.id}" min="0" max="100" value="${fa.catchChance}" ${fa.manualCatch?'':'disabled'}
                                 style="flex:1;min-width:0;${fa.manualCatch?'':'opacity:0.5;'}" onchange="updateFraudAttempt(${p.id},'catchChance',parseFloat(this.value)||0)">
                             <span style="color:#666;font-size:0.78rem;flex-shrink:0;">%</span>
                             <label style="display:flex;align-items:center;gap:3px;color:#888;font-size:0.7rem;flex-shrink:0;cursor:pointer;white-space:nowrap;">
-                                <input type="checkbox" ${fa.manualCatch?'checked':''} onchange="toggleFraudManualCatch(${p.id},this.checked)"> 수동
+                                <input type="checkbox" class="chk-alert" ${fa.manualCatch?'checked':''} onchange="toggleFraudManualCatch(${p.id},this.checked)"> 수동
                             </label>
                         </div>
                         ${!fa.manualCatch ? `<div id="fraudCatchNote_${p.id}" style="color:#555;font-size:0.7rem;margin-left:106px;">자동 계산: 부풀리기·지역구 조작 규모에 비례 (현재 ${fa.catchChance}%)</div>` : ''}
                         <div>
                             <span style="color:#888;font-size:0.78rem;">지역구 개표 조작 (선택한 지역구는 실제 결과와 무관하게 이 정당이 승리)</span>
-                            <select multiple onchange="updateFraudRiggedDistricts(${p.id},this)" style="width:100%;box-sizing:border-box;height:84px;margin-top:4px;">
+                            <select multiple class="input-alert" onchange="updateFraudRiggedDistricts(${p.id},this)" style="width:100%;box-sizing:border-box;height:84px;margin-top:4px;">
                                 ${fraudDistrictOptionsHtml(fa.chamber, fa.riggedDistricts)}
                             </select>
                         </div>
@@ -6306,6 +6570,7 @@
                         <input type="text" value="${p.abbr||''}" onchange="updateParty(${idx},'abbr',this.value)" placeholder="약칭" title="정당 약자 표기 (예: SPD)"
                             ${p.status==='dissolved'?'disabled':''}
                             style="flex:1;min-width:0;font-size:0.85rem;text-align:center;color:${p.status==='dissolved'?'var(--tno-alert)':'#aaa'};${p.status==='dissolved'?'opacity:0.5;cursor:not-allowed;':''}">
+                        <button class="dup-btn" title="정당 복제" onclick="duplicateParty(${idx})">⧉</button>
                         <button class="remove-btn" onclick="removeParty(${idx})">X</button>
                     </div>
                     <!-- 행2: 당명 (항상 보임) -->
@@ -6861,16 +7126,17 @@
         function vacateSeat(ch, key) {
             const m = districtMembers[ch][key];
             if(!m || m.vacant) return;
-            if(!confirm('이 지역구를 궐석 처리하시겠습니까?\n(보궐선거로 다시 채울 때까지 소속 정당 의석에서 1석 감소합니다)')) return;
-            const seatKey = seatKeyFor(ch);
-            const party = parties.find(p=>p.id===m.partyId);
-            if(party) party[seatKey] = Math.max(0, (party[seatKey]||0) - 1);
-            m.vacant = true;
-            simulate(); refreshUI();
+            showCustomConfirm('이 지역구를 궐석 처리하시겠습니까?\n(보궐선거로 다시 채울 때까지 소속 정당 의석에서 1석 감소합니다)', () => {
+                const seatKey = seatKeyFor(ch);
+                const party = parties.find(p=>p.id===m.partyId);
+                if(party) party[seatKey] = Math.max(0, (party[seatKey]||0) - 1);
+                m.vacant = true;
+                simulate(); refreshUI();
+            });
         }
 
         function fillVacantSeat(ch, key) {
-            alert(`선거 탭 > 지역구 체크박스에서 "보궐"을 선택하고 개표하면\n이 지역구(${districtNames[ch][key]||key})가 자동으로 대상에 포함됩니다.`);
+            showCustomAlert(`선거 탭 > 지역구 체크박스에서 "보궐"을 선택하고 개표하면\n이 지역구(${districtNames[ch][key]||key})가 자동으로 대상에 포함됩니다.`);
         }
 
         // ===== 의회 > 비례 탭: 정당별 비례(지역구 외) 의석 개별 관리 (구 무소속 탭) =====
@@ -7291,7 +7557,7 @@
         function runPresidentialElection() {
             const candidates = presElectionCandidates();
             if(candidates.length === 0) {
-                alert('기준 원에 참여 중인 정당이 없습니다. 정당 탭 또는 선거 > 설정 탭에서 기준 원을 확인하세요.');
+                showCustomAlert('기준 원에 참여 중인 정당이 없습니다. 정당 탭 또는 선거 > 설정 탭에서 기준 원을 확인하세요.');
                 return;
             }
             const { round1, round2, winnerPartyId } = computeElectionRounds(presElectionMode, presElectionChamberBasis, candidates);
@@ -7306,7 +7572,7 @@
         function runPmElection() {
             const candidates = presElectionCandidates();
             if(candidates.length === 0) {
-                alert('기준 원에 참여 중인 정당이 없습니다. 정당 탭 또는 선거 > 설정 탭에서 기준 원을 확인하세요.');
+                showCustomAlert('기준 원에 참여 중인 정당이 없습니다. 정당 탭 또는 선거 > 설정 탭에서 기준 원을 확인하세요.');
                 return;
             }
             const { round1, round2, winnerPartyId } = computeElectionRounds(presElectionMode, presElectionChamberBasis, candidates);
@@ -7374,7 +7640,7 @@
                 winnerPartyId: r.winnerPartyId, winnerName: president.name,
                 date: new Date().toISOString(),
             });
-            alert(`${president.name || party.name}이(가) ${effRoleLabel('president')}으로 취임했습니다.`);
+            showCustomAlert(`${president.name || party.name}이(가) ${effRoleLabel('president')}으로 취임했습니다.`);
         }
 
         function applyPmElectionWinner() {
@@ -7395,7 +7661,7 @@
                 winnerPartyId: r.winnerPartyId, winnerName: pm.name,
                 date: new Date().toISOString(),
             });
-            alert(`${pm.name || party.name}이(가) ${effRoleLabel('pm')}으로 취임했습니다.`);
+            showCustomAlert(`${pm.name || party.name}이(가) ${effRoleLabel('pm')}으로 취임했습니다.`);
         }
 
         // ── 탭 전환 ────────────────────────────
@@ -7939,15 +8205,21 @@
         function districtSvgUpload(input) {
             const file = input.files?.[0]; if(!file) return;
             const hasExisting = districtMapMode === 'svg' || ['house','senate','third'].some(c => Object.keys(districtGrid[c]||{}).length > 0);
-            if(hasExisting && !confirm('기존 지역구 데이터가 모두 새 지도로 대체됩니다.\n(이름·의석 수·성향·당선자 정보 포함) 계속하시겠습니까?')) {
-                input.value = '';
+            if(hasExisting) {
+                showCustomConfirm('기존 지역구 데이터가 모두 새 지도로 대체됩니다.\n(이름·의석 수·성향·당선자 정보 포함) 계속하시겠습니까?',
+                    () => districtSvgUploadProceed(input, file),
+                    () => { input.value = ''; });
                 return;
             }
+            districtSvgUploadProceed(input, file);
+        }
+
+        function districtSvgUploadProceed(input, file) {
             const reader = new FileReader();
             reader.onload = e => {
                 const text = e.target.result;
                 const { viewBox, shapes } = parseDistrictJsx(text);
-                if(shapes.length === 0) { alert('맵 메이커에서 내보낸 .jsx 파일에서 지역구로 쓸 도형을 찾을 수 없습니다.'); return; }
+                if(shapes.length === 0) { showCustomAlert('맵 메이커에서 내보낸 .jsx 파일에서 지역구로 쓸 도형을 찾을 수 없습니다.'); return; }
 
                 const strokeColor = districtSvgMap?.strokeColor || '#00ffff';
                 const abbrStrokeColor = districtSvgMap?.abbrStrokeColor || null;
@@ -8023,19 +8295,20 @@
         }
 
         function districtSvgRevertToHex() {
-            if(!confirm('구 지역구(그리드) 방식으로 되돌립니다.\nSVG 지도로 만든 지역구/의석/성향/당선자 데이터가 모두 삭제됩니다. 계속하시겠습니까?')) return;
-            districtMapMode = 'hex';
-            districtSvgMap = null;
-            districtSeatCounts = {};
-            districtSvgTendency = {};
-            districtAbbr = {};
-            ['house','senate','third'].forEach(ch => { districtGrid[ch] = {}; districtNames[ch] = {}; districtMembers[ch] = {}; districtOrderSync(ch); });
-            selectedDistrictKey = null;
-            document.getElementById('districtNamePanel').style.display = 'none';
-            districtUpdateModeUI();
-            districtRenderMap();
-            renderDistrictListPanel();
-            elecUpdateDistrictInfo();
+            showCustomConfirm('구 지역구(그리드) 방식으로 되돌립니다.\nSVG 지도로 만든 지역구/의석/성향/당선자 데이터가 모두 삭제됩니다. 계속하시겠습니까?', () => {
+                districtMapMode = 'hex';
+                districtSvgMap = null;
+                districtSeatCounts = {};
+                districtSvgTendency = {};
+                districtAbbr = {};
+                ['house','senate','third'].forEach(ch => { districtGrid[ch] = {}; districtNames[ch] = {}; districtMembers[ch] = {}; districtOrderSync(ch); });
+                selectedDistrictKey = null;
+                document.getElementById('districtNamePanel').style.display = 'none';
+                districtUpdateModeUI();
+                districtRenderMap();
+                renderDistrictListPanel();
+                elecUpdateDistrictInfo();
+            });
         }
 
         // 국가>설정의 지역구 시스템 토글에서 호출 — 육각형 데이터는 지도로 바꿔도 그대로 보존되고
@@ -8107,23 +8380,24 @@
         // 지도에 잘못 섞여 들어온 도형(예: 배경/틀 사각형)을 통째로 제거 — 지도 자체에서 삭제되며 복구 불가
         function districtSvgRemoveShape(key) {
             if(!districtSvgMap) return;
-            if(!confirm(`"${key}" 도형을 지도에서 완전히 삭제합니다.\n(배경/틀처럼 잘못 포함된 도형을 뺄 때 사용) 계속하시겠습니까?`)) return;
-            districtSvgMap.shapes = districtSvgMap.shapes.filter(s => s.key !== key);
-            delete districtSeatCounts[key];
-            delete districtSvgTendency[key];
-            delete districtAbbr[key];
-            ['house','senate','third'].forEach(ch => {
-                delete districtGrid[ch][key];
-                delete districtNames[ch][key];
-                delete districtMembers[ch][key];
-                districtOrderSync(ch);
+            showCustomConfirm(`"${key}" 도형을 지도에서 완전히 삭제합니다.\n(배경/틀처럼 잘못 포함된 도형을 뺄 때 사용) 계속하시겠습니까?`, () => {
+                districtSvgMap.shapes = districtSvgMap.shapes.filter(s => s.key !== key);
+                delete districtSeatCounts[key];
+                delete districtSvgTendency[key];
+                delete districtAbbr[key];
+                ['house','senate','third'].forEach(ch => {
+                    delete districtGrid[ch][key];
+                    delete districtNames[ch][key];
+                    delete districtMembers[ch][key];
+                    districtOrderSync(ch);
+                });
+                if(selectedDistrictKey === key) selectedDistrictKey = null;
+                document.getElementById('districtNamePanel').style.display = 'none';
+                districtUpdateModeUI();
+                districtRenderMap();
+                renderDistrictListPanel();
+                elecUpdateDistrictInfo();
             });
-            if(selectedDistrictKey === key) selectedDistrictKey = null;
-            document.getElementById('districtNamePanel').style.display = 'none';
-            districtUpdateModeUI();
-            districtRenderMap();
-            renderDistrictListPanel();
-            elecUpdateDistrictInfo();
         }
 
         // SVG 지역구의 이름은 세 원이 공유하므로 house/senate/third 이름 저장소에 동시 반영
@@ -8513,13 +8787,14 @@
                 // SVG 지도의 도형 자체는 업로드된 파일에서 오므로 유지하고, 이름만 초기화 (세 원 공유이므로 전부 초기화)
                 const hasAnyName = ['house','senate','third'].some(ch => Object.keys(districtNames[ch]||{}).length > 0);
                 if(!hasAnyName) return;
-                if(!confirm('모든 지역구의 이름을 초기화하시겠습니까? (지도 도형·의석 수·성향은 유지됩니다)')) return;
-                ['house','senate','third'].forEach(ch => { districtNames[ch] = {}; });
-                selectedDistrictKey = null;
-                const namePanel = document.getElementById('districtNamePanel');
-                if(namePanel) namePanel.style.display = 'none';
-                districtRenderMap();
-                renderDistrictListPanel();
+                showCustomConfirm('모든 지역구의 이름을 초기화하시겠습니까? (지도 도형·의석 수·성향은 유지됩니다)', () => {
+                    ['house','senate','third'].forEach(ch => { districtNames[ch] = {}; });
+                    selectedDistrictKey = null;
+                    const namePanel = document.getElementById('districtNamePanel');
+                    if(namePanel) namePanel.style.display = 'none';
+                    districtRenderMap();
+                    renderDistrictListPanel();
+                });
                 return;
             }
             districtGrid[districtChamber] = {};
@@ -9780,7 +10055,7 @@
             });
             simulate(); refreshUI();
             switchDispTab(chamber);
-            alert(`보궐선거 결과 (${chamberName})\n\n${summary.join('\n')}\n\n의회>의원 탭에서 당선자 이름을 입력해 주세요.`);
+            showCustomAlert(`보궐선거 결과 (${chamberName})\n\n${summary.join('\n')}\n\n의회>의원 탭에서 당선자 이름을 입력해 주세요.`);
         }
 
         function elecApplyToParliament() {
@@ -9827,7 +10102,7 @@
             simulate(); refreshUI();
             if(lastCh) switchDispTab(lastCh);
             if(hadFactions) {
-                alert('선거 결과가 반영되었습니다.\n\n파벌이 있는 정당의 파벌별 의석은 선거 전 분포가 무효화되어 0으로 초기화되었습니다.\n정당 탭에서 파벌 의석을 다시 배분해 주세요.');
+                showCustomAlert('선거 결과가 반영되었습니다.\n\n파벌이 있는 정당의 파벌별 의석은 선거 전 분포가 무효화되어 0으로 초기화되었습니다.\n정당 탭에서 파벌 의석을 다시 배분해 주세요.');
             }
             if(wasDissolved) {
                 showCustomAlert('새 총선이 반영되어 의회 해산 상태가 해제되었습니다.');
@@ -10830,13 +11105,13 @@
             const chamber = targets[0]; // 'house' | 'senate' | 'third'
             const chamberName = chamber==='senate'?sName:chamber==='third'?tName:hName;
             const totalSeats = parseInt(document.getElementById(chamber==='senate'?'senateTotal':chamber==='third'?'thirdTotal':'houseTotal').value)||0;
-            if(totalSeats<=0) { alert('의석 수가 0입니다. 의회 설정에서 의석 수를 확인하세요.'); return; }
+            if(totalSeats<=0) { showCustomAlert('의석 수가 0입니다. 의회 설정에서 의석 수를 확인하세요.'); return; }
 
             // 보궐선거: 궐석 처리된 지역구만 대상으로 재선거
             if(isByElection) {
                 const vacantKeys = Object.keys(districtMembers[chamber]).filter(k => districtMembers[chamber][k]?.vacant);
                 if(vacantKeys.length === 0) {
-                    alert('궐석 처리된 지역구가 없습니다.\n의회 > 의원 탭에서 궐석 처리를 먼저 진행하세요.');
+                    showCustomAlert('궐석 처리된 지역구가 없습니다.\n의회 > 의원 탭에서 궐석 처리를 먼저 진행하세요.');
                     return;
                 }
                 await elecRunByElection(chamber, vacantKeys, chamberName);
@@ -10864,16 +11139,16 @@
             const chamberStore = elecStore[chamber] || {};
             const partyProb = parties.reduce((s,p)=>s+(p.status==='banned'?0:(chamberStore[p.id]?.prob||0)),0);
             if(propSeats > 0 && !isRegionalList && partyProb<=0) {
-                alert('지지율을 입력해 주세요.\n각 정당의 지지율(%) 칸에 숫자를 입력하세요.');
+                showCustomAlert('지지율을 입력해 주세요.\n각 정당의 지지율(%) 칸에 숫자를 입력하세요.');
                 return;
             }
             if(propSeats > 0 && isRegionalList && !regionScopeHasVoteData(chamber)) {
-                alert('권역별 득표율이 없습니다.\n여론 > 권역 탭에서 권역을 만들고 지역구를 배정하거나(자동 집계), 득표율을 직접 입력하세요.');
+                showCustomAlert('권역별 득표율이 없습니다.\n여론 > 권역 탭에서 권역을 만들고 지역구를 배정하거나(자동 집계), 득표율을 직접 입력하세요.');
                 return;
             }
             // 지역구 모드인데 활성 지역구가 없으면 안내
             if((elecMode === 'district' || elecMode === 'mixed') && districtSeats === 0) {
-                alert('지역구 탭에서 활성화된 지역구가 없습니다.\n지역구를 먼저 추가하거나 비례 모드를 선택하세요.');
+                showCustomAlert('지역구 탭에서 활성화된 지역구가 없습니다.\n지역구를 먼저 추가하거나 비례 모드를 선택하세요.');
                 return;
             }
 
@@ -10910,7 +11185,7 @@
                 }
                 p.fraudAttempt = null;
             });
-            if(fraudNotices.length > 0) { alert(fraudNotices.join('\n')); renderPartyInfoList(); }
+            if(fraudNotices.length > 0) { showCustomAlert(fraudNotices.join('\n')); renderPartyInfoList(); }
 
             // ── 오차 적용 후 각 당 지지율 계산 (활동 금지된 정당은 저장된 지지율과 무관하게 가중치 0) ──
             const partyWeighted = parties.map(p => {
@@ -10960,7 +11235,7 @@
             if(propSeats > 0 && !isRegionalList && wTotal<=0) {
                 elecRunning=false;
                 runBtn.style.background='var(--tno-neon)'; runBtn.style.color='#000'; runBtn.textContent='>> 개표 시작 <<';
-                alert('지지율을 입력해 주세요.\n각 정당의 지지율(%) 칸에 숫자를 입력하세요.');
+                showCustomAlert('지지율을 입력해 주세요.\n각 정당의 지지율(%) 칸에 숫자를 입력하세요.');
                 return;
             }
 

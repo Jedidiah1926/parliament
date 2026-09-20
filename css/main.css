@@ -296,3 +296,136 @@
             cursor: not-allowed;
             opacity: 0.6;
         }
+
+        /* ── 세이브 선택 온보딩 모달 ── */
+        .save-select-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.82);
+            z-index: 1100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .save-select-modal {
+            width: 480px;
+            max-width: 100%;
+            max-height: 82vh;
+            background: var(--tno-panel);
+            border: 2px solid var(--tno-border);
+            box-shadow: 0 0 40px color-mix(in srgb, var(--tno-neon) 15%, transparent);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .save-select-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: repeating-linear-gradient(45deg, #000, #000 10px, #111 10px, #111 20px);
+            color: var(--tno-neon);
+            padding: 14px 18px;
+            border-bottom: 2px solid var(--tno-neon);
+            font-size: 1.1rem;
+            letter-spacing: 2px;
+            text-shadow: 0 0 8px var(--tno-neon);
+        }
+
+        .save-select-close {
+            background: none;
+            border: 1px solid var(--tno-border);
+            color: var(--tno-text);
+            font-family: inherit;
+            font-size: 0.9rem;
+            padding: 3px 10px;
+            cursor: pointer;
+        }
+        .save-select-close:hover {
+            border-color: var(--tno-alert);
+            color: var(--tno-alert);
+        }
+
+        .save-select-body {
+            padding: 22px;
+            overflow-y: auto;
+        }
+
+        .save-select-new-row {
+            display: flex;
+            gap: 8px;
+        }
+
+        .save-select-new-row input {
+            flex: 1;
+            background: #07090d;
+            border: 1px solid var(--tno-border);
+            color: var(--tno-text);
+            font-family: inherit;
+            font-size: 0.95rem;
+            text-transform: uppercase;
+            padding: 10px 12px;
+        }
+        .save-select-new-row input:focus {
+            outline: none;
+            border-color: var(--tno-neon);
+        }
+
+        .save-select-start-btn {
+            padding: 10px 16px;
+            font-size: 0.95rem;
+            white-space: nowrap;
+            cursor: pointer;
+        }
+        .save-select-start-btn::before { content: none; }
+
+        .save-select-list {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            max-height: 260px;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+        .save-select-list::-webkit-scrollbar { width: 8px; background: #000; }
+        .save-select-list::-webkit-scrollbar-thumb { background: var(--tno-border); border: 1px solid var(--tno-neon); }
+
+        .save-select-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--tno-border);
+            color: var(--tno-text);
+            font-family: inherit;
+            text-transform: uppercase;
+            padding: 12px 14px;
+            cursor: pointer;
+            text-align: left;
+            transition: 0.15s;
+        }
+        .save-select-item:hover {
+            border-color: var(--tno-neon);
+            color: var(--tno-neon);
+            background: color-mix(in srgb, var(--tno-neon) 5%, transparent);
+        }
+        .save-select-item-auto {
+            border-color: #2a4444;
+        }
+
+        .save-select-item-name {
+            font-size: 1rem;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .save-select-item-time {
+            font-size: 0.75rem;
+            color: #666;
+            white-space: nowrap;
+        }
