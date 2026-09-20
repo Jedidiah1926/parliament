@@ -94,7 +94,7 @@
       },
 
       '1.1': {
-        title: '1.1',
+        title: '1.1 : Saves',
         cards: [
           {
             status: 'done',
@@ -113,7 +113,7 @@
       },
 
       '1.2': {
-        title: '1.2',
+        title: '1.2 : Laws',
         cards: [
           {
             status: 'done',
@@ -136,7 +136,7 @@
       },
 
       '1.3': {
-        title: '1.3',
+        title: '1.3 : Elections',
         cards: [
           {
             status: 'done',
@@ -349,7 +349,7 @@
               <br>- 상위 탭의 "저장"을 없애고 국가 > 설정 최하단으로 이동, 그 자리에 "내각" 탭 신설 (Coming Soon)`
           },
           {
-            status: 'current',
+            status: 'done',
             title: '1.5.P - Powers',
             desc: `2026.09.15
               <br>- 지역구 지도(SVG)에도 육각형 지도와 동일하게 이동/확대 기능 추가 — 휠클릭 드래그로 이동, Shift+스크롤로 확대/축소, 위치 초기화 버튼
@@ -388,7 +388,7 @@
               <br>- 저장 파일 버전 v1.2로 업데이트`
           },
           {
-            status: 'future',
+            status: 'done',
             title: '1.5.S - Scandals',
             desc: `2026.09.16
               <br>- 부정선거 추가
@@ -397,7 +397,7 @@
               <br>- 사진 포함 내보내기 최상단 헤더의 국기·국가 이름·날짜·회기 글씨 크기 확대`
           },
           {
-            status: 'future',
+            status: 'current',
             title: '1.5.5 - Saves',
             desc: `2026.09.20
               <br>- 정당/파벌 옆에 복제(사본) 버튼 추가
