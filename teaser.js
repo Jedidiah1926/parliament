@@ -4580,6 +4580,62 @@
             });
         }
 
+        // ===== 키보드 단축키 (Ctrl+S 저장 / Enter 실행 / Esc 닫기) =====
+        // 화면 하단에 잠깐 떴다 사라지는 토스트 — showCustomAlert처럼 확인 클릭을 요구하면
+        // Ctrl+S 같은 빈번한 단축키에는 너무 무거우므로 가볍게 자동 소멸되는 알림을 별도로 둔다
+        let kbdToastTimer = null;
+        function showKbdToast(message) {
+            let el = document.getElementById('kbdToast');
+            if(!el) {
+                el = document.createElement('div');
+                el.id = 'kbdToast';
+                el.className = 'kbd-toast';
+                document.body.appendChild(el);
+            }
+            el.textContent = message;
+            el.classList.add('show');
+            clearTimeout(kbdToastTimer);
+            kbdToastTimer = setTimeout(() => el.classList.remove('show'), 1500);
+        }
+
+        // Esc로 닫을 대상 중 실제로 열려 있는 것 하나만(우선순위대로) 닫는다
+        function handleGlobalEscape() {
+            const isVisible = el => el && getComputedStyle(el).display !== 'none';
+            const confirmOverlay = document.getElementById('customConfirmOverlay');
+            if(isVisible(confirmOverlay)) { document.getElementById('customConfirmCancelBtn')?.click(); return; }
+            const alertOverlay = document.getElementById('customAlertOverlay');
+            if(isVisible(alertOverlay)) { document.getElementById('customAlertOkBtn')?.click(); return; }
+            const exportOverlay = document.getElementById('exportDialogOverlay');
+            if(isVisible(exportOverlay)) { closeExportDialog(); return; }
+            const seatCard = document.getElementById('seatInfoCard');
+            if(isVisible(seatCard)) { closeSeatInfoCard(); return; }
+        }
+
+        function initKeyboardShortcuts() {
+            window.addEventListener('keydown', (e) => {
+                const key = e.key.toLowerCase();
+                const tag = document.activeElement?.tagName;
+                const isFormField = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT';
+
+                if((e.ctrlKey || e.metaKey) && key === 's') {
+                    e.preventDefault();
+                    autosaveNow();
+                    showKbdToast('✔ 저장됨');
+                    return;
+                }
+                if(key === 'escape') {
+                    handleGlobalEscape();
+                    return;
+                }
+                // 입력창/선택 상자에 포커스가 있을 때는 Enter의 기본 동작(줄바꿈 등)을 건드리지 않음
+                if(key === 'enter' && !isFormField && !e.ctrlKey && !e.metaKey && !e.altKey) {
+                    e.preventDefault();
+                    simulate();
+                    showKbdToast('>> PROTOCOL EXECUTE <<');
+                }
+            });
+        }
+
         // ── 조작 탭(.controls)/시각 탭(.display-area) 사이 경계를 드래그해 폭 조절 ──────────────
         const PANEL_RESIZER_WIDTH_KEY = 'dnoControlsPanelWidth';
         function safeGetLocal(k) { try { return localStorage.getItem(k); } catch(e) { return null; } }
@@ -4627,6 +4683,7 @@
         window.addEventListener("load", () => {
             initUndoRedoTracking();
             initPanelResizer();
+            initKeyboardShortcuts();
             const fileInputTab = document.getElementById("fileLoadJsonTab");
             if(fileInputTab) {
                 fileInputTab.addEventListener("change", async () => {
