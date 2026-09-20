@@ -4572,6 +4572,7 @@
         // 모든 접근을 반드시 try/catch로 감싼다 — 그렇지 않으면 window.onload 안에서
         // 예외가 나는 순간 이후의 전체 초기화 코드가 실행되지 않아 앱 자체가 먹통이 된다.
         const SAVE_SLOTS_KEY = 'dnoParliamentSaveSlots';
+        const LEGACY_AUTOSAVE_KEY = 'dnoParliamentAutosave'; // 세이브 슬롯 통합 이전, 단일 키에 저장하던 구버전 자동저장
         const AUTOSAVE_ENABLED_KEY = 'dnoParliamentAutosaveEnabled';
         const AUTOSAVE_INTERVAL_KEY = 'dnoParliamentAutosaveIntervalSec';
         const AUTOSAVE_INTERVAL_OPTIONS = [15, 30, 60, 180, 300, 600]; // 초 단위 — 15초/30초/1분/3분/5분/10분
@@ -4610,9 +4611,25 @@
         function persistSaveSlots(slots) { return safeLsSet(SAVE_SLOTS_KEY, JSON.stringify(slots)); }
         function getAutosaveSlot(slots) { return slots.find(s => s.isAutosave); }
 
+        // 구버전(단일 AUTOSAVE_KEY) 자동저장 데이터를 새 통합 슬롯 배열로 옮김 —
+        // 그렇지 않으면 이전 버전을 쓰던 사용자가 업데이트 후 "저장이 사라졌다"고 느끼게 됨.
+        function migrateLegacyAutosave() {
+            const legacyRaw = safeLsGet(LEGACY_AUTOSAVE_KEY);
+            if(!legacyRaw) return;
+            const slots = loadSaveSlots();
+            if(getAutosaveSlot(slots)) { safeLsRemove(LEGACY_AUTOSAVE_KEY); return; }
+            let legacyState;
+            try { legacyState = JSON.parse(legacyRaw); } catch(e) { safeLsRemove(LEGACY_AUTOSAVE_KEY); return; }
+            slots.unshift({ id: AUTOSAVE_SLOT_ID, name: AUTOSAVE_SLOT_NAME, isAutosave: true,
+                savedAt: legacyState?.meta?.savedAt || new Date().toISOString(), state: legacyState });
+            persistSaveSlots(slots);
+            safeLsRemove(LEGACY_AUTOSAVE_KEY);
+        }
+
         function loadAutosavePreference() {
             localStorageAvailable = checkLocalStorageAvailable();
             if(!localStorageAvailable) { autosaveEnabled = false; return; }
+            migrateLegacyAutosave();
             const stored = safeLsGet(AUTOSAVE_ENABLED_KEY);
             autosaveEnabled = stored === null ? true : stored === 'true';
             const storedInterval = parseInt(safeLsGet(AUTOSAVE_INTERVAL_KEY), 10);
