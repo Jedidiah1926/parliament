@@ -4414,13 +4414,19 @@
             setAppState(obj);
         }
 
-        // ===== 자동저장 (localStorage) =====
+        // ===== 저장 슬롯 (localStorage) =====
+        // "자동저장"도 별도 메커니즘이 아니라, 이름 있는 슬롯들과 같은 배열 안에 들어있는
+        // 한 항목일 뿐이다 (isAutosave:true, 이름은 "자동저장"으로 고정) — 자동저장 타이머만
+        // 이 항목을 계속 덮어쓰고, 나머지 이름 붙은 슬롯들은 사용자가 명시적으로 저장/불러오기 할 때만 손댄다.
         // Safari의 file:// 접근 차단, 프라이빗 모드, 저장소 차단 설정 등에서는
         // localStorage 자체에 접근하는 것만으로도 예외가 발생할 수 있으므로
         // 모든 접근을 반드시 try/catch로 감싼다 — 그렇지 않으면 window.onload 안에서
         // 예외가 나는 순간 이후의 전체 초기화 코드가 실행되지 않아 앱 자체가 먹통이 된다.
-        const AUTOSAVE_KEY = 'dnoParliamentAutosave';
+        const SAVE_SLOTS_KEY = 'dnoParliamentSaveSlots';
         const AUTOSAVE_ENABLED_KEY = 'dnoParliamentAutosaveEnabled';
+        const AUTOSAVE_SLOT_ID = 'autosave';
+        const AUTOSAVE_SLOT_NAME = '자동저장';
+        const MAX_SAVE_SLOTS = 20;
         let autosaveEnabled = true;
         let autosaveTimer = null;
         let localStorageAvailable = true;
@@ -4444,6 +4450,13 @@
             try { localStorage.removeItem(key); } catch(e) { /* 무시 */ }
         }
 
+        function loadSaveSlots() {
+            if(!localStorageAvailable) return [];
+            try { return JSON.parse(safeLsGet(SAVE_SLOTS_KEY) || '[]'); } catch(e) { return []; }
+        }
+        function persistSaveSlots(slots) { return safeLsSet(SAVE_SLOTS_KEY, JSON.stringify(slots)); }
+        function getAutosaveSlot(slots) { return slots.find(s => s.isAutosave); }
+
         function loadAutosavePreference() {
             localStorageAvailable = checkLocalStorageAvailable();
             if(!localStorageAvailable) { autosaveEnabled = false; return; }
@@ -4466,7 +4479,13 @@
 
         function autosaveNow() {
             if(!autosaveEnabled || !localStorageAvailable) return;
-            safeLsSet(AUTOSAVE_KEY, JSON.stringify(getAppState()));
+            const slots = loadSaveSlots();
+            const savedAt = new Date().toISOString();
+            const state = getAppState();
+            const auto = getAutosaveSlot(slots);
+            if(auto) { auto.state = state; auto.savedAt = savedAt; }
+            else slots.unshift({ id: AUTOSAVE_SLOT_ID, name: AUTOSAVE_SLOT_NAME, isAutosave: true, savedAt, state });
+            persistSaveSlots(slots);
             renderSaveTabUI();
         }
 
@@ -4480,16 +4499,16 @@
 
         function loadFromAutosave() {
             if(!localStorageAvailable) return false;
-            const raw = safeLsGet(AUTOSAVE_KEY);
-            if(!raw) return false;
-            try { setAppState(JSON.parse(raw)); return true; }
+            const auto = getAutosaveSlot(loadSaveSlots());
+            if(!auto) return false;
+            try { setAppState(auto.state); return true; }
             catch(e) { return false; }
         }
 
         function resetAutosaveData() {
-            if(!confirm('저장된 데이터를 모두 삭제하고 처음 상태로 되돌리시겠습니까?\n(파일로 저장한 .json 파일에는 영향이 없습니다)')) return;
+            if(!confirm('자동저장 데이터를 삭제하고 처음 상태로 되돌리시겠습니까?\n(이름 붙여 저장한 슬롯에는 영향이 없습니다)')) return;
             suppressAutosaveOnUnload = true;
-            safeLsRemove(AUTOSAVE_KEY);
+            persistSaveSlots(loadSaveSlots().filter(s => !s.isAutosave));
             location.reload();
         }
 
@@ -4505,44 +4524,39 @@
             if(toggle) { toggle.checked = autosaveEnabled; toggle.disabled = false; }
             if(!info) return;
             if(!autosaveEnabled) { info.textContent = '꺼짐'; return; }
-            const raw = safeLsGet(AUTOSAVE_KEY);
-            if(!raw) { info.textContent = '자동저장된 데이터 없음'; return; }
-            let savedAt = null;
-            try { savedAt = JSON.parse(raw).meta?.savedAt; } catch(e) {}
-            info.textContent = savedAt ? `마지막 저장: ${new Date(savedAt).toLocaleString('ko-KR')}` : '자동저장됨';
+            const auto = getAutosaveSlot(loadSaveSlots());
+            info.textContent = auto?.savedAt ? `마지막 저장: ${new Date(auto.savedAt).toLocaleString('ko-KR')}` : '자동저장된 데이터 없음';
         }
-
-        // ===== 이름 붙여 저장 (여러 슬롯, localStorage) =====
-        // 자동저장은 슬롯 1개뿐이라 "민주화 이전", "2차 총선 직후"처럼 여러 시점을
-        // 따로 보관하고 언제든 전환하고 싶을 때 쓰라고 만든 이름 붙는 저장 슬롯 — 파일로 저장(.json)과
-        // 달리 다운로드 없이 브라우저(localStorage)에만 보관되므로 다른 브라우저/기기에서는 보이지 않는다.
-        const SAVE_SLOTS_KEY = 'dnoParliamentSaveSlots';
-        const MAX_SAVE_SLOTS = 20;
-
-        function loadSaveSlots() {
-            if(!localStorageAvailable) return [];
-            try { return JSON.parse(safeLsGet(SAVE_SLOTS_KEY) || '[]'); } catch(e) { return []; }
-        }
-        function persistSaveSlots(slots) { return safeLsSet(SAVE_SLOTS_KEY, JSON.stringify(slots)); }
 
         function saveNamedSlot() {
             if(!localStorageAvailable) { alert('이 브라우저/환경에서는 저장 슬롯(localStorage)을 사용할 수 없습니다.'); return; }
             const input = document.getElementById('saveSlotNameInput');
             const name = (input?.value || '').trim();
             if(!name) { alert('저장할 이름을 입력하세요.'); return; }
+            if(name === AUTOSAVE_SLOT_NAME) { alert(`"${AUTOSAVE_SLOT_NAME}"은(는) 예약된 이름입니다. 다른 이름을 입력하세요.`); return; }
             const slots = loadSaveSlots();
+            const namedSlots = slots.filter(s => !s.isAutosave);
             const doSave = () => {
                 const state = getAppState();
-                const existing = slots.find(s => s.name === name);
+                const existing = slots.find(s => !s.isAutosave && s.name === name);
                 if(existing) { existing.state = state; existing.savedAt = new Date().toISOString(); }
-                else slots.push({ id: 'slot'+Date.now(), name, savedAt: new Date().toISOString(), state });
+                else slots.push({ id: 'slot'+Date.now(), name, isAutosave: false, savedAt: new Date().toISOString(), state });
                 if(persistSaveSlots(slots)) { input.value = ''; renderSaveSlotList(); }
                 else alert('저장에 실패했습니다. (브라우저 저장 공간이 부족할 수 있습니다)');
             };
-            const existing = slots.find(s => s.name === name);
+            const existing = namedSlots.find(s => s.name === name);
             if(existing) showCustomConfirm(`"${name}" 슬롯이 이미 있습니다. 덮어쓸까요?`, doSave);
-            else if(slots.length >= MAX_SAVE_SLOTS) alert(`저장 슬롯은 최대 ${MAX_SAVE_SLOTS}개까지 만들 수 있습니다. 기존 슬롯을 삭제한 뒤 다시 시도하세요.`);
+            else if(namedSlots.length >= MAX_SAVE_SLOTS) alert(`저장 슬롯은 최대 ${MAX_SAVE_SLOTS}개까지 만들 수 있습니다. 기존 슬롯을 삭제한 뒤 다시 시도하세요.`);
             else doSave();
+        }
+
+        function createNamedSlotFromCurrentState(name) {
+            if(!localStorageAvailable || !name) return;
+            const slots = loadSaveSlots();
+            if(slots.some(s => !s.isAutosave && s.name === name)) return;
+            slots.push({ id: 'slot'+Date.now(), name, isAutosave: false, savedAt: new Date().toISOString(), state: getAppState() });
+            persistSaveSlots(slots);
+            renderSaveSlotList();
         }
 
         function loadNamedSlot(id) {
@@ -4556,7 +4570,7 @@
 
         function deleteNamedSlot(id) {
             const slots = loadSaveSlots();
-            const slot = slots.find(s => s.id === id); if(!slot) return;
+            const slot = slots.find(s => s.id === id); if(!slot || slot.isAutosave) return;
             showCustomConfirm(`"${slot.name}" 슬롯을 삭제할까요?`, () => {
                 persistSaveSlots(slots.filter(s => s.id !== id));
                 renderSaveSlotList();
@@ -4567,16 +4581,19 @@
             const container = document.getElementById('saveSlotList');
             if(!container) return;
             if(!localStorageAvailable) { container.innerHTML = ''; return; }
-            const slots = loadSaveSlots().slice().sort((a,b) => new Date(b.savedAt) - new Date(a.savedAt));
-            if(slots.length === 0) { container.innerHTML = '<div style="color:#444;font-size:0.78rem;padding:6px 0;">저장된 슬롯이 없습니다</div>'; return; }
-            container.innerHTML = slots.map(s => `
-                <div style="display:flex;align-items:center;gap:8px;padding:6px 8px;background:#0a0c10;border:1px solid #222;margin-bottom:4px;">
+            const all = loadSaveSlots();
+            const auto = getAutosaveSlot(all);
+            const named = all.filter(s => !s.isAutosave).sort((a,b) => new Date(b.savedAt||0) - new Date(a.savedAt||0));
+            const ordered = auto ? [auto, ...named] : named;
+            if(ordered.length === 0) { container.innerHTML = '<div style="color:#444;font-size:0.78rem;padding:6px 0;">저장된 슬롯이 없습니다</div>'; return; }
+            container.innerHTML = ordered.map(s => `
+                <div style="display:flex;align-items:center;gap:8px;padding:6px 8px;background:#0a0c10;border:1px solid ${s.isAutosave?'#2a4444':'#222'};margin-bottom:4px;">
                     <div style="flex:1;min-width:0;overflow:hidden;">
-                        <div style="color:#ccc;font-size:0.85rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${s.name}</div>
-                        <div style="color:#555;font-size:0.7rem;">${new Date(s.savedAt).toLocaleString('ko-KR')}</div>
+                        <div style="color:${s.isAutosave?'var(--tno-neon)':'#ccc'};font-size:0.85rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${s.isAutosave?'🔄 ':''}${s.name}</div>
+                        <div style="color:#555;font-size:0.7rem;">${s.savedAt ? new Date(s.savedAt).toLocaleString('ko-KR') : '-'}</div>
                     </div>
                     <button class="add-btn" style="width:auto;margin-top:0;padding:4px 10px;font-size:0.8rem;" onclick="loadNamedSlot('${s.id}')">불러오기</button>
-                    <button class="remove-btn" onclick="deleteNamedSlot('${s.id}')">X</button>
+                    ${s.isAutosave ? '' : `<button class="remove-btn" onclick="deleteNamedSlot('${s.id}')">X</button>`}
                 </div>
             `).join('');
         }
