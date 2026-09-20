@@ -4572,10 +4572,14 @@
         // 예외가 나는 순간 이후의 전체 초기화 코드가 실행되지 않아 앱 자체가 먹통이 된다.
         const SAVE_SLOTS_KEY = 'dnoParliamentSaveSlots';
         const AUTOSAVE_ENABLED_KEY = 'dnoParliamentAutosaveEnabled';
+        const AUTOSAVE_INTERVAL_KEY = 'dnoParliamentAutosaveIntervalSec';
+        const AUTOSAVE_INTERVAL_OPTIONS = [15, 30, 60, 180, 300, 600]; // 초 단위 — 15초/30초/1분/3분/5분/10분
+        const AUTOSAVE_INTERVAL_DEFAULT = 15;
         const AUTOSAVE_SLOT_ID = 'autosave';
         const AUTOSAVE_SLOT_NAME = '자동저장';
         const MAX_SAVE_SLOTS = 20; // 자동저장 제외, 사용자가 이름 붙인 슬롯 기준
         let autosaveEnabled = true;
+        let autosaveIntervalSec = AUTOSAVE_INTERVAL_DEFAULT;
         let autosaveTimer = null;
         let localStorageAvailable = true;
 
@@ -4610,6 +4614,16 @@
             if(!localStorageAvailable) { autosaveEnabled = false; return; }
             const stored = safeLsGet(AUTOSAVE_ENABLED_KEY);
             autosaveEnabled = stored === null ? true : stored === 'true';
+            const storedInterval = parseInt(safeLsGet(AUTOSAVE_INTERVAL_KEY), 10);
+            autosaveIntervalSec = AUTOSAVE_INTERVAL_OPTIONS.includes(storedInterval) ? storedInterval : AUTOSAVE_INTERVAL_DEFAULT;
+        }
+
+        function setAutosaveInterval(sec) {
+            sec = parseInt(sec, 10);
+            if(!AUTOSAVE_INTERVAL_OPTIONS.includes(sec)) return;
+            autosaveIntervalSec = sec;
+            safeLsSet(AUTOSAVE_INTERVAL_KEY, String(sec));
+            if(autosaveEnabled) startAutosaveTimer();
         }
 
         function setAutosaveEnabled(enabled) {
@@ -4639,7 +4653,7 @@
 
         function startAutosaveTimer() {
             stopAutosaveTimer();
-            autosaveTimer = setInterval(autosaveNow, 15000);
+            autosaveTimer = setInterval(autosaveNow, autosaveIntervalSec * 1000);
         }
         function stopAutosaveTimer() {
             if(autosaveTimer) { clearInterval(autosaveTimer); autosaveTimer = null; }
@@ -4664,12 +4678,16 @@
             renderSaveSlotList();
             const toggle = document.getElementById('autosaveToggle');
             const info = document.getElementById('autosaveStatusText');
+            const intervalSelect = document.getElementById('autosaveIntervalSelect');
+            if(intervalSelect) intervalSelect.value = String(autosaveIntervalSec);
             if(!localStorageAvailable) {
                 if(toggle) { toggle.checked = false; toggle.disabled = true; }
+                if(intervalSelect) intervalSelect.disabled = true;
                 if(info) info.textContent = '이 환경에서는 자동저장을 사용할 수 없음';
                 return;
             }
             if(toggle) { toggle.checked = autosaveEnabled; toggle.disabled = false; }
+            if(intervalSelect) intervalSelect.disabled = false;
             if(!info) return;
             if(!autosaveEnabled) { info.textContent = '꺼짐'; return; }
             const auto = getAutosaveSlot(loadSaveSlots());
