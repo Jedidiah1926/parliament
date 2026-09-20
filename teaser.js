@@ -5747,6 +5747,21 @@
             simulate(); refreshUI();
         }
         function removeParty(i) { const pid=parties[i].id; parties.splice(i,1); coalitions.forEach(c=>c.members=c.members.filter(x=>x!==pid)); simulate(); refreshUI(); }
+        // 정당 복제 — 색상/로고/당수/파벌 구성 등 "정체성"은 그대로 복사하고, 의석 수·집권 여부·연정
+        // 소속처럼 그 정당 고유의 정치적 상태는 복제하지 않고 초기화(0/없음)해 사용자가 새로 지정하게 한다
+        function duplicateParty(i) {
+            const src = parties[i]; if(!src) return;
+            const clone = JSON.parse(JSON.stringify(src));
+            clone.id = Date.now();
+            clone.name = src.name + ' (사본)';
+            clone.seatsHouse = 0; clone.seatsSenate = 0; clone.seatsThird = 0;
+            clone.isRuling = false;
+            if(Array.isArray(clone.factions)) {
+                clone.factions.forEach((f, fi) => { f.id = 'f'+Date.now()+'_'+fi; f.seatsHouse = 0; f.seatsSenate = 0; f.seatsThird = 0; });
+            }
+            parties.splice(i+1, 0, clone);
+            simulate(); refreshUI();
+        }
         // simulate()가 (manualSort가 꺼져 있으면) parties 배열을 이념 순으로 재정렬하므로,
         // 반드시 정렬이 끝난 뒤에 refreshUI()를 호출해야 카드에 새겨진 인덱스(idx)가
         // 최신 배열 순서와 어긋나지 않는다. 순서가 바뀌면 그 다음 입력이 엉뚱한 정당에 적용된다.
@@ -5888,6 +5903,17 @@
             p.factions = p.factions.filter(f=>f.id!==factionId);
             refreshUI();
         }
+        // 파벌 복제 — 의석 수는 0으로 초기화(합계가 정당 총 의석을 넘지 않도록)하고 나머지는 그대로 복사
+        function duplicateFaction(partyId, factionId) {
+            const p = parties.find(x=>x.id===partyId); if(!p?.factions) return;
+            const idx = p.factions.findIndex(f=>f.id===factionId); if(idx===-1) return;
+            const clone = JSON.parse(JSON.stringify(p.factions[idx]));
+            clone.id = 'f'+Date.now();
+            clone.name = clone.name + ' (사본)';
+            clone.seatsHouse = 0; clone.seatsSenate = 0; clone.seatsThird = 0;
+            p.factions.splice(idx+1, 0, clone);
+            simulate(); refreshUI();
+        }
         function updateFactionById(partyId, factionId, key, val) {
             const p = parties.find(x=>x.id===partyId); if(!p?.factions) return;
             const f = p.factions.find(x=>x.id===factionId); if(!f) return;
@@ -5984,6 +6010,7 @@
                         }
                         <input type="text" value="${f.name}" placeholder="파벌명" style="flex:1;font-size:0.9rem;"
                             onchange="updateFaction(${p.id},'${f.id}','name',this.value)">
+                        <button class="dup-btn" style="font-size:0.8rem;padding:2px 6px;" title="파벌 복제" onclick="duplicateFaction(${p.id},'${f.id}')">⧉</button>
                         <button class="remove-btn" style="font-size:0.8rem;padding:2px 6px;" onclick="removeFaction(${p.id},'${f.id}')">X</button>
                     </div>
                     <!-- 행2: 이념만 (의석은 의회 탭에서) -->
@@ -6172,6 +6199,7 @@
                         <input type="text" value="${p.abbr||''}" onchange="updateParty(${idx},'abbr',this.value)" placeholder="약칭" title="정당 약자 표기 (예: SPD)"
                             ${p.status==='dissolved'?'disabled':''}
                             style="flex:1;min-width:0;font-size:0.85rem;text-align:center;color:${p.status==='dissolved'?'var(--tno-alert)':'#aaa'};${p.status==='dissolved'?'opacity:0.5;cursor:not-allowed;':''}">
+                        <button class="dup-btn" title="정당 복제" onclick="duplicateParty(${idx})">⧉</button>
                         <button class="remove-btn" onclick="removeParty(${idx})">X</button>
                     </div>
                     <!-- 행2: 당명 (항상 보임) -->

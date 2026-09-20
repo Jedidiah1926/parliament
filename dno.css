@@ -543,6 +543,11 @@
         }
         .remove-btn:hover { border-color: var(--tno-alert); color: var(--tno-alert); background: rgba(255,0,85,0.1); }
 
+        .dup-btn {
+            background: transparent; border: 1px solid #555; color: #555; font-size: 1rem; padding: 2px 8px;
+        }
+        .dup-btn:hover { border-color: var(--tno-neon); color: var(--tno-neon); background: color-mix(in srgb, var(--tno-neon) 10%, transparent); }
+
         .simulate-btn {
             background: var(--tno-neon); color: #000; font-weight: bold;
             border: none; width: 100%; padding: 15px; font-size: 1.4rem; letter-spacing: 2px;
