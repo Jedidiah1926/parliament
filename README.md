@@ -34,6 +34,22 @@ DATANET Parliament Simulation은 설치나 빌드 없이 **브라우저에서 �
 
 ---
 
+## 데스크톱 앱 (Windows .exe) 빌드
+
+Electron으로 감싸 설치형 Windows 앱(.exe)으로도 빌드할 수 있습니다. 게임 내부 로직·화면은 웹 버전과 완전히 동일하며, `electron/main.js`가 `main.html`을 창으로 띄우는 껍데기만 추가된 구조입니다.
+
+```bash
+npm install          # Electron / electron-builder 설치 (최초 1회)
+npm start             # 개발 중 바로 실행해보기
+npm run build:win     # Windows 설치형 exe 빌드 → dist/DATANET Parliament Simulation-Setup-<버전>.exe
+```
+
+- Windows에서 빌드하는 게 가장 확실하지만, `electron-builder`는 Wine이 설치된 macOS/Linux에서도 Windows 타깃 빌드를 지원합니다.
+- 빌드 설정은 `package.json`의 `build` 항목(electron-builder)에서 관리하며, 앱 이름·버전·설치 마법사 옵션(바탕화면/시작메뉴 바로가기 등)을 그곳에서 조정합니다.
+- 데스크톱 앱은 로컬 파일(`localStorage`)에 세이브를 저장하므로 브라우저 버전과 데이터가 공유되지 않습니다.
+
+---
+
 ## 화면 구성
 
 화면은 좌측 **컨트롤 패널**과 우측 **의석 시각화 패널**로 나뉩니다.
@@ -126,6 +142,8 @@ DATANET Parliament Simulation은 설치나 빌드 없이 **브라우저에서 �
 ---
 
 ## 저장 / 불러오기
+
+화면 맨 위에는 항상 **세이브 탭 바**가 떠 있어, 브라우저 탭처럼 클릭 한 번으로 세이브 사이를 오갈 수 있습니다. 각 탭은 그 세이브 전용 자동저장을 따로 가지고 있어 다른 탭으로 넘어가도 진행 상황이 섞이지 않으며, `+`를 누르면 지금 상태를 그대로 새 탭(세이브)으로 만들 수 있습니다.
 
 **SAVE** 버튼을 누르면 현재 상태 전체를 `.json` 파일로 저장합니다.
 

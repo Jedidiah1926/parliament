@@ -1,0 +1,47 @@
+{
+  "name": "datanet-parliament-simulation",
+  "version": "1.5.5",
+  "description": "DATANET: PARLIAMENT SIMULATION — desktop build",
+  "private": true,
+  "main": "electron/main.js",
+  "scripts": {
+    "start": "electron .",
+    "smoketest": "electron electron/smoketest.js",
+    "build:win": "electron-builder --win",
+    "build:win:portable": "electron-builder --win portable"
+  },
+  "devDependencies": {
+    "electron": "^32.0.0",
+    "electron-builder": "^25.0.0"
+  },
+  "build": {
+    "appId": "com.abwehr.datanet-parliament",
+    "productName": "DATANET Parliament Simulation",
+    "asar": true,
+    "files": [
+      "electron/**/*",
+      "*.html",
+      "js/**/*",
+      "css/**/*",
+      "!electron/smoketest.js",
+      "!README.md",
+      "!package.json",
+      "!package-lock.json"
+    ],
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": [
+        { "target": "nsis", "arch": ["x64"] }
+      ],
+      "artifactName": "${productName}-Setup-${version}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    }
+  }
+}

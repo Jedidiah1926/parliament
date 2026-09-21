@@ -4731,6 +4731,7 @@
 
         function renderSaveTabUI() {
             renderSaveSlotList();
+            renderSaveTabBar();
             const toggle = document.getElementById('autosaveToggle');
             const info = document.getElementById('autosaveStatusText');
             const intervalSelect = document.getElementById('autosaveIntervalSelect');
@@ -4769,8 +4770,11 @@
                 const existing = slots.find(s => !s.isAutosave && s.name === name);
                 let savedId;
                 if(existing) { existing.state = state; existing.savedAt = new Date().toISOString(); savedId = existing.id; }
-                else { savedId = 'slot'+Date.now(); slots.push({ id: savedId, name, isAutosave: false, savedAt: new Date().toISOString(), state }); }
-                if(persistSaveSlots(slots)) { setActiveSlotId(savedId); input.value = ''; renderSaveSlotList(); }
+                else { savedId = 'slot'+Date.now(); slots.push({ id: savedId, name, isAutosave: false, createdAt: new Date().toISOString(), savedAt: new Date().toISOString(), state }); }
+                if(persistSaveSlots(slots)) {
+                    if(autosaveEnabled && activeSlotId && activeSlotId !== savedId) autosaveNow(); // 원래 있던 탭의 진행 상황을 그 탭 전용 자동저장에 남겨둠
+                    setActiveSlotId(savedId); input.value = ''; renderSaveTabUI();
+                }
                 else alert('저장에 실패했습니다. (브라우저 저장 공간이 부족할 수 있습니다)');
             };
             const existing = namedSlots.find(s => s.name === name);
@@ -4785,10 +4789,10 @@
             const slots = loadSaveSlots();
             if(slots.some(s => !s.isAutosave && s.name === name)) return; // 이미 있으면 조용히 건너뜀
             const id = 'slot'+Date.now();
-            slots.push({ id, name, isAutosave: false, savedAt: new Date().toISOString(), state: getAppState() });
+            slots.push({ id, name, isAutosave: false, createdAt: new Date().toISOString(), savedAt: new Date().toISOString(), state: getAppState() });
             persistSaveSlots(slots);
             setActiveSlotId(id);
-            renderSaveSlotList();
+            renderSaveTabUI();
         }
 
         // 자동저장/이름 붙은 슬롯 공용 — 인게임에서도 이 목록의 "불러오기"로 바로 다른 세이브로 전환 가능.
@@ -4796,9 +4800,11 @@
         function loadNamedSlot(id) {
             const slot = loadSaveSlots().find(s => s.id === id); if(!slot) return;
             showCustomConfirm(`"${slot.name}" 슬롯을 불러올까요?\n현재 화면의 저장하지 않은 변경사항은 사라집니다.`, () => {
+                if(autosaveEnabled) autosaveNow(); // 지금 탭의 진행 상황을 먼저 그 탭 전용 자동저장에 남겨둠
                 setAppState(slot.state);
                 setActiveSlotId(slot.isAutosave ? (slot.parentId || null) : slot.id);
                 simulate(); refreshUI();
+                renderSaveTabUI();
                 showCustomAlert(`"${slot.name}" 슬롯을 불러왔습니다.`);
             });
         }
@@ -4810,7 +4816,7 @@
             showCustomConfirm(`"${slot.name}" 슬롯을 삭제할까요?\n(연결된 "${slot.name} 자동저장"도 함께 삭제됩니다)`, () => {
                 persistSaveSlots(slots.filter(s => s.id !== id && s.parentId !== id));
                 if(activeSlotId === id) setActiveSlotId(null);
-                renderSaveSlotList();
+                renderSaveTabUI();
             });
         }
 
@@ -4839,6 +4845,106 @@
                     ${s.isAutosave ? '' : `<button class="remove-btn" onclick="deleteNamedSlot('${s.id}')">X</button>`}
                 </div>
             `).join('');
+        }
+
+        // ===== 최상단 세이브 탭 바 (데스크톱 앱: 크롬 탭처럼 클릭으로 즉시 전환) =====
+        // 이름 붙은 세이브마다 탭 하나씩, 맨 앞엔 항상 "기존 저장"(특정 세이브에 속하지 않은
+        // 기본 세션) 탭이 고정. 탭을 클릭하면 지금 탭의 상태를 그 탭 전용 자동저장에 즉시
+        // 남겨두고(autosaveNow), 목적지 탭의 최신 상태(전용 자동저장이 있으면 그것, 없으면
+        // 수동 저장 지점)를 그대로 불러온다 — 확인창 없이 즉시 전환되는 게 핵심.
+        function renderSaveTabBar() {
+            const bar = document.getElementById('saveTabBar');
+            if(!bar) return;
+            const all = loadSaveSlots();
+            const named = all.filter(s => !s.isAutosave).sort((a,b) => new Date(a.createdAt||a.savedAt||0) - new Date(b.createdAt||b.savedAt||0));
+            const isDefaultActive = !activeSlotId;
+            const tabsHtml = [
+                `<div class="save-tab${isDefaultActive?' active':''}" onclick="switchToSaveTab('${AUTOSAVE_SLOT_ID}')" title="${AUTOSAVE_SLOT_NAME}">
+                    <span class="save-tab-name">${AUTOSAVE_SLOT_NAME}</span>
+                </div>`,
+                ...named.map(n => `
+                    <div class="save-tab${activeSlotId===n.id?' active':''}" onclick="switchToSaveTab('${n.id}')" title="${n.name}">
+                        <span class="save-tab-name">${n.name}</span>
+                        <span class="save-tab-close" onclick="event.stopPropagation();deleteSaveTab('${n.id}')">×</span>
+                    </div>
+                `)
+            ].join('');
+            bar.innerHTML = `
+                <div class="save-tab-list">${tabsHtml}</div>
+                <div class="save-tab-new" id="saveTabNewBtn" onclick="showSaveTabNewInput()" title="새 세이브">+</div>
+                <div class="save-tab-new-input-wrap" id="saveTabNewInputWrap" style="display:none;">
+                    <input type="text" id="saveTabNewInput" maxlength="40" placeholder="새 세이브 이름"
+                        onkeydown="if(event.key==='Enter'){confirmSaveTabNew();}else if(event.key==='Escape'){hideSaveTabNewInput();}">
+                    <button onclick="confirmSaveTabNew()">✓</button>
+                    <button onclick="hideSaveTabNewInput()">✕</button>
+                </div>
+            `;
+        }
+
+        function showSaveTabNewInput() {
+            document.getElementById('saveTabNewBtn').style.display = 'none';
+            const wrap = document.getElementById('saveTabNewInputWrap');
+            wrap.style.display = 'flex';
+            const input = document.getElementById('saveTabNewInput');
+            input.value = '';
+            input.focus();
+        }
+
+        function hideSaveTabNewInput() {
+            const btn = document.getElementById('saveTabNewBtn');
+            const wrap = document.getElementById('saveTabNewInputWrap');
+            if(btn) btn.style.display = '';
+            if(wrap) wrap.style.display = 'none';
+        }
+
+        // "+" 탭에서 새 이름을 입력해 확인 — saveNamedSlot()과 동일한 검증(예약어/중복/최대 개수)을
+        // 거친 뒤, 현재 화면 상태를 그대로 첫 저장으로 등록하고 그 탭으로 전환한다.
+        function confirmSaveTabNew() {
+            const input = document.getElementById('saveTabNewInput');
+            const name = (input?.value || '').trim();
+            if(!name) return;
+            if(name === AUTOSAVE_SLOT_NAME) { showCustomAlert(`"${AUTOSAVE_SLOT_NAME}"은(는) 예약된 이름입니다. 다른 이름을 입력하세요.`); return; }
+            const namedSlotsCheck = loadSaveSlots().filter(s => !s.isAutosave);
+            if(namedSlotsCheck.some(s => s.name === name)) { showCustomAlert(`"${name}" 세이브가 이미 있습니다. 다른 이름을 입력하세요.`); return; }
+            if(namedSlotsCheck.length >= MAX_SAVE_SLOTS) { showCustomAlert(`저장 슬롯은 최대 ${MAX_SAVE_SLOTS}개까지 만들 수 있습니다. 기존 슬롯을 삭제한 뒤 다시 시도하세요.`); return; }
+            if(autosaveEnabled) autosaveNow(); // 지금 탭(있다면)의 진행 상황을 먼저 그 탭 전용 자동저장에 남겨둠
+            const slots = loadSaveSlots();
+            const id = 'slot'+Date.now();
+            const now = new Date().toISOString();
+            slots.push({ id, name, isAutosave: false, createdAt: now, savedAt: now, state: getAppState() });
+            persistSaveSlots(slots);
+            setActiveSlotId(id);
+            hideSaveTabNewInput();
+            renderSaveTabUI();
+        }
+
+        function deleteSaveTab(id) {
+            deleteNamedSlot(id);
+        }
+
+        // 탭 클릭 시 즉시 전환 — 나가는 탭의 상태는 자동저장으로 남기고, 확인창 없이 대상 탭으로 교체
+        function switchToSaveTab(id) {
+            const toDefault = (id === AUTOSAVE_SLOT_ID);
+            const alreadyThere = toDefault ? !activeSlotId : (activeSlotId === id);
+            if(alreadyThere) return;
+            if(autosaveEnabled) autosaveNow();
+
+            const slots = loadSaveSlots();
+            let target = null;
+            if(toDefault) {
+                target = getAutosaveSlot(slots);
+            } else {
+                const parent = slots.find(s => s.id === id && !s.isAutosave);
+                if(!parent) return;
+                target = getNamedAutosaveSlot(slots, id) || parent;
+            }
+            if(target) {
+                try { setAppState(target.state); }
+                catch(e) { showCustomAlert('세이브를 불러오지 못했습니다.'); return; }
+            }
+            setActiveSlotId(toDefault ? null : id);
+            simulate(); refreshUI();
+            renderSaveTabUI();
         }
 
         // ===== 실행 취소 / 다시 실행 (Ctrl+Z / Ctrl+Shift+Z) =====
