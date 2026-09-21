@@ -419,6 +419,17 @@
             border-color: #2a4444;
         }
 
+        .save-select-import-btn {
+            width: 100%;
+            margin-top: 10px;
+            justify-content: center;
+            border-style: dashed;
+            color: #888;
+        }
+        .save-select-import-btn:hover {
+            color: var(--tno-neon);
+        }
+
         .save-select-item-name {
             font-size: 1rem;
             overflow: hidden;

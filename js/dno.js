@@ -4198,17 +4198,23 @@
             try {
                 loadAutosavePreference();
                 let bootSlotId = null;
+                let bootImportedJSON = null;
                 try {
+                    bootImportedJSON = sessionStorage.getItem('dnoBootImportedStateJSON');
+                    sessionStorage.removeItem('dnoBootImportedStateJSON');
                     bootSlotId = sessionStorage.getItem('dnoBootLoadSlotId');
                     sessionStorage.removeItem('dnoBootLoadSlotId');
                     bootNewSaveName = sessionStorage.getItem('dnoBootNewSaveName');
                     sessionStorage.removeItem('dnoBootNewSaveName');
                 } catch(e) { /* sessionStorage 접근 불가 — 일반 부팅으로 진행 */ }
-                if(bootNewSaveName) {
+                if(bootImportedJSON) {
+                    try { setAppState(JSON.parse(bootImportedJSON)); setActiveSlotId(null); restored = true; }
+                    catch(e) { restored = false; }
+                } else if(bootNewSaveName) {
                     restored = false;
                 } else if(bootSlotId) {
                     const slot = loadSaveSlots().find(s => s.id === bootSlotId);
-                    if(slot) { setAppState(slot.state); restored = true; }
+                    if(slot) { setAppState(slot.state); setActiveSlotId(slot.isAutosave ? (slot.parentId || null) : slot.id); restored = true; }
                     else restored = autosaveEnabled && loadFromAutosave();
                 } else {
                     restored = autosaveEnabled && loadFromAutosave();
@@ -4564,26 +4570,30 @@
         }
 
         // ===== 저장 슬롯 (localStorage) =====
-        // "자동저장"도 별도 메커니즘이 아니라, 이름 있는 슬롯들과 같은 배열 안에 들어있는 한 항목일 뿐이다
-        // (isAutosave:true, 이름은 "자동저장"으로 고정) — 자동저장 타이머만 이 항목을 계속 덮어쓰고,
-        // 나머지 이름 붙은 슬롯들은 사용자가 명시적으로 저장/불러오기 할 때만 손댄다.
+        // 이름 붙인 세이브마다 자기 전용 자동저장 슬롯("{이름} 자동저장")을 따로 가진다 —
+        // 그 세이브를 불러오거나 만든 이후로는 자동저장이 그 전용 슬롯에만 계속 덮어써지고,
+        // 세이브 자체(수동 저장 지점)와 다른 세이브들에는 영향이 없다. 아직 어떤 이름 붙은
+        // 세이브도 활성화하지 않은 기본 상태에서는 "기존 저장"이라는 전역 자동저장 슬롯
+        // 하나에 계속 덮어쓴다 (예전 버전에서 "자동저장"이라 부르던 바로 그 슬롯).
         // Safari의 file:// 접근 차단, 프라이빗 모드, 저장소 차단 설정 등에서는
         // localStorage 자체에 접근하는 것만으로도 예외가 발생할 수 있으므로
         // 모든 접근을 반드시 try/catch로 감싼다 — 그렇지 않으면 window.onload 안에서
         // 예외가 나는 순간 이후의 전체 초기화 코드가 실행되지 않아 앱 자체가 먹통이 된다.
         const SAVE_SLOTS_KEY = 'dnoParliamentSaveSlots';
         const LEGACY_AUTOSAVE_KEY = 'dnoParliamentAutosave'; // 세이브 슬롯 통합 이전, 단일 키에 저장하던 구버전 자동저장
+        const ACTIVE_SLOT_KEY = 'dnoParliamentActiveSlotId'; // 현재 이어서 플레이 중인 이름 붙은 세이브의 id (없으면 기본 자동저장 사용)
         const AUTOSAVE_ENABLED_KEY = 'dnoParliamentAutosaveEnabled';
         const AUTOSAVE_INTERVAL_KEY = 'dnoParliamentAutosaveIntervalSec';
         const AUTOSAVE_INTERVAL_OPTIONS = [15, 30, 60, 180, 300, 600]; // 초 단위 — 15초/30초/1분/3분/5분/10분
         const AUTOSAVE_INTERVAL_DEFAULT = 15;
         const AUTOSAVE_SLOT_ID = 'autosave';
-        const AUTOSAVE_SLOT_NAME = '자동저장';
-        const MAX_SAVE_SLOTS = 20; // 자동저장 제외, 사용자가 이름 붙인 슬롯 기준
+        const AUTOSAVE_SLOT_NAME = '기존 저장';
+        const MAX_SAVE_SLOTS = 20; // 전용 자동저장 슬롯 제외, 사용자가 이름 붙인 슬롯 기준
         let autosaveEnabled = true;
         let autosaveIntervalSec = AUTOSAVE_INTERVAL_DEFAULT;
         let autosaveTimer = null;
         let localStorageAvailable = true;
+        let activeSlotId = null;
 
         function checkLocalStorageAvailable() {
             try {
@@ -4609,7 +4619,17 @@
             try { return JSON.parse(safeLsGet(SAVE_SLOTS_KEY) || '[]'); } catch(e) { return []; }
         }
         function persistSaveSlots(slots) { return safeLsSet(SAVE_SLOTS_KEY, JSON.stringify(slots)); }
-        function getAutosaveSlot(slots) { return slots.find(s => s.isAutosave); }
+        // 기본(전역) 자동저장 — 특정 세이브에 연결되지 않은 "기존 저장" 슬롯
+        function getAutosaveSlot(slots) { return slots.find(s => s.isAutosave && !s.parentId); }
+        // parentId로 연결된, 특정 이름 붙은 세이브 전용 자동저장 슬롯
+        function getNamedAutosaveSlot(slots, parentId) { return slots.find(s => s.isAutosave && s.parentId === parentId); }
+
+        function loadActiveSlotId() { activeSlotId = safeLsGet(ACTIVE_SLOT_KEY) || null; }
+        function setActiveSlotId(id) {
+            activeSlotId = id || null;
+            if(activeSlotId) safeLsSet(ACTIVE_SLOT_KEY, activeSlotId);
+            else safeLsRemove(ACTIVE_SLOT_KEY);
+        }
 
         // 구버전(단일 AUTOSAVE_KEY) 자동저장 데이터를 새 통합 슬롯 배열로 옮김 —
         // 그렇지 않으면 이전 버전을 쓰던 사용자가 업데이트 후 "저장이 사라졌다"고 느끼게 됨.
@@ -4630,6 +4650,7 @@
             localStorageAvailable = checkLocalStorageAvailable();
             if(!localStorageAvailable) { autosaveEnabled = false; return; }
             migrateLegacyAutosave();
+            loadActiveSlotId();
             const stored = safeLsGet(AUTOSAVE_ENABLED_KEY);
             autosaveEnabled = stored === null ? true : stored === 'true';
             const storedInterval = parseInt(safeLsGet(AUTOSAVE_INTERVAL_KEY), 10);
@@ -4657,14 +4678,25 @@
             renderSaveTabUI();
         }
 
+        // 활성 세이브(activeSlotId)가 있으면 그 세이브 전용 자동저장 슬롯에,
+        // 없으면 기본 "기존 저장" 슬롯에 계속 덮어쓴다.
         function autosaveNow() {
             if(!autosaveEnabled || !localStorageAvailable) return;
             const slots = loadSaveSlots();
             const savedAt = new Date().toISOString();
             const state = getAppState();
-            const auto = getAutosaveSlot(slots);
-            if(auto) { auto.state = state; auto.savedAt = savedAt; }
-            else slots.unshift({ id: AUTOSAVE_SLOT_ID, name: AUTOSAVE_SLOT_NAME, isAutosave: true, savedAt, state });
+            if(activeSlotId) {
+                const parent = slots.find(s => s.id === activeSlotId && !s.isAutosave);
+                if(!parent) { setActiveSlotId(null); autosaveNow(); return; } // 부모 세이브가 삭제됨 — 기본 자동저장으로 폴백
+                const companion = getNamedAutosaveSlot(slots, activeSlotId);
+                const companionName = `${parent.name} 자동저장`;
+                if(companion) { companion.state = state; companion.savedAt = savedAt; companion.name = companionName; }
+                else slots.push({ id: 'autoOf_'+activeSlotId, name: companionName, isAutosave: true, parentId: activeSlotId, savedAt, state });
+            } else {
+                const auto = getAutosaveSlot(slots);
+                if(auto) { auto.state = state; auto.savedAt = savedAt; }
+                else slots.unshift({ id: AUTOSAVE_SLOT_ID, name: AUTOSAVE_SLOT_NAME, isAutosave: true, savedAt, state });
+            }
             persistSaveSlots(slots);
             renderSaveTabUI();
         }
@@ -4677,18 +4709,22 @@
             if(autosaveTimer) { clearInterval(autosaveTimer); autosaveTimer = null; }
         }
 
+        // 활성 세이브가 있으면 그 세이브의 전용 자동저장을, 없으면 기본 "기존 저장"을 복원
         function loadFromAutosave() {
             if(!localStorageAvailable) return false;
-            const auto = getAutosaveSlot(loadSaveSlots());
+            const slots = loadSaveSlots();
+            const auto = activeSlotId ? getNamedAutosaveSlot(slots, activeSlotId) : getAutosaveSlot(slots);
             if(!auto) return false;
             try { setAppState(auto.state); return true; }
             catch(e) { return false; }
         }
 
         function resetAutosaveData() {
-            showCustomConfirm('자동저장 데이터를 삭제하고 처음 상태로 되돌리시겠습니까?\n(이름 붙여 저장한 슬롯에는 영향이 없습니다)', () => {
+            showCustomConfirm('현재 자동저장 데이터를 삭제하고 처음 상태로 되돌리시겠습니까?\n(이름 붙여 저장한 슬롯과 다른 세이브의 자동저장에는 영향이 없습니다)', () => {
                 suppressAutosaveOnUnload = true;
-                persistSaveSlots(loadSaveSlots().filter(s => !s.isAutosave));
+                const slots = loadSaveSlots();
+                const targetId = activeSlotId ? getNamedAutosaveSlot(slots, activeSlotId)?.id : AUTOSAVE_SLOT_ID;
+                persistSaveSlots(slots.filter(s => s.id !== targetId));
                 location.reload();
             });
         }
@@ -4709,15 +4745,17 @@
             if(intervalSelect) intervalSelect.disabled = false;
             if(!info) return;
             if(!autosaveEnabled) { info.textContent = '꺼짐'; return; }
-            const auto = getAutosaveSlot(loadSaveSlots());
-            info.textContent = auto?.savedAt ? `마지막 저장: ${new Date(auto.savedAt).toLocaleString('ko-KR')}` : '자동저장된 데이터 없음';
+            const slots = loadSaveSlots();
+            const auto = activeSlotId ? getNamedAutosaveSlot(slots, activeSlotId) : getAutosaveSlot(slots);
+            info.textContent = auto?.savedAt ? `마지막 저장(${auto.name}): ${new Date(auto.savedAt).toLocaleString('ko-KR')}` : '자동저장된 데이터 없음';
         }
 
         // ===== 이름 붙여 저장 =====
         // "민주화 이전", "2차 총선 직후"처럼 여러 시점을 따로 보관하고 언제든 전환하고 싶을 때 쓰는
         // 이름 붙는 저장 슬롯 — 파일로 저장(.json)과 달리 다운로드 없이 브라우저(localStorage)에만
-        // 보관되므로 다른 브라우저/기기에서는 보이지 않는다. 자동저장과 달리 사용자가 명시적으로
-        // 저장 버튼을 눌러야만 갱신되며, "자동저장"이라는 이름은 예약되어 있어 쓸 수 없다.
+        // 보관되므로 다른 브라우저/기기에서는 보이지 않는다. 저장하는 순간 그 세이브가 "활성" 상태가
+        // 되어 이후 자동저장은 이 슬롯이 아니라 "{이름} 자동저장"이라는 전용 슬롯에 계속 덮어써진다.
+        // "기존 저장"이라는 이름은 예약되어 있어 쓸 수 없다.
         function saveNamedSlot() {
             if(!localStorageAvailable) { alert('이 브라우저/환경에서는 저장 슬롯(localStorage)을 사용할 수 없습니다.'); return; }
             const input = document.getElementById('saveSlotNameInput');
@@ -4729,9 +4767,10 @@
             const doSave = () => {
                 const state = getAppState();
                 const existing = slots.find(s => !s.isAutosave && s.name === name);
-                if(existing) { existing.state = state; existing.savedAt = new Date().toISOString(); }
-                else slots.push({ id: 'slot'+Date.now(), name, isAutosave: false, savedAt: new Date().toISOString(), state });
-                if(persistSaveSlots(slots)) { input.value = ''; renderSaveSlotList(); }
+                let savedId;
+                if(existing) { existing.state = state; existing.savedAt = new Date().toISOString(); savedId = existing.id; }
+                else { savedId = 'slot'+Date.now(); slots.push({ id: savedId, name, isAutosave: false, savedAt: new Date().toISOString(), state }); }
+                if(persistSaveSlots(slots)) { setActiveSlotId(savedId); input.value = ''; renderSaveSlotList(); }
                 else alert('저장에 실패했습니다. (브라우저 저장 공간이 부족할 수 있습니다)');
             };
             const existing = namedSlots.find(s => s.name === name);
@@ -4745,26 +4784,32 @@
             if(!localStorageAvailable || !name) return;
             const slots = loadSaveSlots();
             if(slots.some(s => !s.isAutosave && s.name === name)) return; // 이미 있으면 조용히 건너뜀
-            slots.push({ id: 'slot'+Date.now(), name, isAutosave: false, savedAt: new Date().toISOString(), state: getAppState() });
+            const id = 'slot'+Date.now();
+            slots.push({ id, name, isAutosave: false, savedAt: new Date().toISOString(), state: getAppState() });
             persistSaveSlots(slots);
+            setActiveSlotId(id);
             renderSaveSlotList();
         }
 
-        // 자동저장/이름 붙은 슬롯 공용 — 인게임에서도 이 목록의 "불러오기"로 바로 다른 세이브로 전환 가능
+        // 자동저장/이름 붙은 슬롯 공용 — 인게임에서도 이 목록의 "불러오기"로 바로 다른 세이브로 전환 가능.
+        // 어떤 슬롯을 불러오든 그 세이브(전용 자동저장을 불러온 경우 그 부모 세이브)가 활성 상태가 됨.
         function loadNamedSlot(id) {
             const slot = loadSaveSlots().find(s => s.id === id); if(!slot) return;
             showCustomConfirm(`"${slot.name}" 슬롯을 불러올까요?\n현재 화면의 저장하지 않은 변경사항은 사라집니다.`, () => {
                 setAppState(slot.state);
+                setActiveSlotId(slot.isAutosave ? (slot.parentId || null) : slot.id);
                 simulate(); refreshUI();
                 showCustomAlert(`"${slot.name}" 슬롯을 불러왔습니다.`);
             });
         }
 
+        // 이름 붙은 세이브를 지우면 그 세이브 전용 자동저장("OO 자동저장")도 함께 정리됨
         function deleteNamedSlot(id) {
             const slots = loadSaveSlots();
             const slot = slots.find(s => s.id === id); if(!slot || slot.isAutosave) return;
-            showCustomConfirm(`"${slot.name}" 슬롯을 삭제할까요?`, () => {
-                persistSaveSlots(slots.filter(s => s.id !== id));
+            showCustomConfirm(`"${slot.name}" 슬롯을 삭제할까요?\n(연결된 "${slot.name} 자동저장"도 함께 삭제됩니다)`, () => {
+                persistSaveSlots(slots.filter(s => s.id !== id && s.parentId !== id));
+                if(activeSlotId === id) setActiveSlotId(null);
                 renderSaveSlotList();
             });
         }
@@ -4774,12 +4819,18 @@
             if(!container) return;
             if(!localStorageAvailable) { container.innerHTML = ''; return; }
             const all = loadSaveSlots();
-            const auto = getAutosaveSlot(all);
+            const defaultAuto = getAutosaveSlot(all);
             const named = all.filter(s => !s.isAutosave).sort((a,b) => new Date(b.savedAt||0) - new Date(a.savedAt||0));
-            const ordered = auto ? [auto, ...named] : named;
+            const ordered = [];
+            if(defaultAuto) ordered.push(defaultAuto);
+            named.forEach(n => {
+                ordered.push(n);
+                const companion = getNamedAutosaveSlot(all, n.id);
+                if(companion) ordered.push(companion);
+            });
             if(ordered.length === 0) { container.innerHTML = '<div style="color:#444;font-size:0.78rem;padding:6px 0;">저장된 슬롯이 없습니다</div>'; return; }
             container.innerHTML = ordered.map(s => `
-                <div style="display:flex;align-items:center;gap:8px;padding:6px 8px;background:#0a0c10;border:1px solid ${s.isAutosave?'#2a4444':'#222'};margin-bottom:4px;">
+                <div style="display:flex;align-items:center;gap:8px;padding:6px 8px;background:#0a0c10;border:1px solid ${s.isAutosave?'#2a4444':'#222'};margin-bottom:4px;${s.parentId?'margin-left:14px;':''}">
                     <div style="flex:1;min-width:0;overflow:hidden;">
                         <div style="color:${s.isAutosave?'var(--tno-neon)':'#ccc'};font-size:0.85rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${s.isAutosave?'🔄 ':''}${s.name}</div>
                         <div style="color:#555;font-size:0.7rem;">${s.savedAt ? new Date(s.savedAt).toLocaleString('ko-KR') : '-'}</div>
