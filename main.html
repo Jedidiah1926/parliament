@@ -137,6 +137,10 @@
 
                 <div class="settings-label" style="margin-top:22px;">이어하기</div>
                 <div class="save-select-list" id="saveSelectList"></div>
+                <input type="file" id="saveFileInput" accept=".json,application/json" style="position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;" onchange="importSaveFile(this)">
+                <button class="save-select-item save-select-import-btn" onclick="document.getElementById('saveFileInput').click()">
+                    <span class="save-select-item-name">📁 저장 파일(.json) 불러오기</span>
+                </button>
             </div>
         </div>
     </div>
@@ -181,7 +185,7 @@
         const SAVE_SLOTS_KEY = 'dnoParliamentSaveSlots';
         const LEGACY_AUTOSAVE_KEY = 'dnoParliamentAutosave'; // 세이브 슬롯 통합 이전, 단일 키에 저장하던 구버전 자동저장
         const AUTOSAVE_SLOT_ID = 'autosave';
-        const AUTOSAVE_SLOT_NAME = '자동저장';
+        const AUTOSAVE_SLOT_NAME = '기존 저장';
 
         // 구버전 자동저장 데이터가 남아있는데 아직 새 슬롯 배열로 옮겨지지 않았다면
         // (dno.html을 아직 한 번도 다시 열지 않은 사용자) 여기서도 옮겨서 목록에 바로 보이게 함.
@@ -190,7 +194,7 @@
             if(!legacyRaw) return;
             let slots;
             try { slots = JSON.parse(localStorage.getItem(SAVE_SLOTS_KEY) || '[]'); } catch(e) { slots = []; }
-            if(slots.some(s => s.isAutosave)) { localStorage.removeItem(LEGACY_AUTOSAVE_KEY); return; }
+            if(slots.some(s => s.isAutosave && !s.parentId)) { localStorage.removeItem(LEGACY_AUTOSAVE_KEY); return; }
             let legacyState;
             try { legacyState = JSON.parse(legacyRaw); } catch(e) { localStorage.removeItem(LEGACY_AUTOSAVE_KEY); return; }
             slots.unshift({ id: AUTOSAVE_SLOT_ID, name: AUTOSAVE_SLOT_NAME, isAutosave: true,
@@ -208,9 +212,15 @@
         function renderSaveSelectList() {
             const container = document.getElementById('saveSelectList');
             const all = loadSaveSlotsForMenu();
-            const auto = all.find(s => s.isAutosave);
+            const defaultAuto = all.find(s => s.isAutosave && !s.parentId);
             const named = all.filter(s => !s.isAutosave).sort((a,b) => new Date(b.savedAt||0) - new Date(a.savedAt||0));
-            const ordered = auto ? [auto, ...named] : named;
+            const ordered = [];
+            if(defaultAuto) ordered.push(defaultAuto);
+            named.forEach(n => {
+                ordered.push(n);
+                const companion = all.find(s => s.isAutosave && s.parentId === n.id);
+                if(companion) ordered.push(companion);
+            });
             if(ordered.length === 0) {
                 container.innerHTML = '<div style="color:#444;font-size:0.85rem;padding:8px 0;">저장된 세이브가 없습니다. 새 세이브를 만들어 시작하세요.</div>';
                 return;
@@ -254,6 +264,26 @@
 
         function continueSave(id) {
             try { sessionStorage.setItem('dnoBootLoadSlotId', id); } catch(e) {}
+            location.href = 'dno.html';
+        }
+
+        // 로컬 세이브 슬롯이 아니라, 예전에 "파일로 저장"으로 다운로드해둔 .json 파일을
+        // 그대로 불러와 이어서 시작 — localStorage 세이브 목록에는 등록되지 않고,
+        // 이후 자동저장은 기본 "기존 저장" 슬롯을 계속 덮어씀.
+        async function importSaveFile(input) {
+            const file = input.files?.[0];
+            if(!file) return;
+            try {
+                const text = await file.text();
+                const obj = JSON.parse(text);
+                const parl = obj.parliament || obj.data;
+                if(!parl || !Array.isArray(parl.parties)) throw new Error('형식이 올바르지 않음');
+                sessionStorage.setItem('dnoBootImportedStateJSON', text);
+            } catch(e) {
+                alert('저장 파일을 불러올 수 없습니다. (형식이 올바르지 않거나 손상된 파일)');
+                input.value = '';
+                return;
+            }
             location.href = 'dno.html';
         }
 
