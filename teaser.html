@@ -6,6 +6,7 @@
     <title>DATANET: PARLIAMENT SIMULATION [BETA]</title>
 
     <script src="js/uimode.js"></script>
+    <script src="js/thememode.js"></script>
     <script src="js/theme.js"></script>
 
     <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
@@ -863,7 +864,7 @@
                             <div id="elecCountModeHint" style="display:none;font-size:0.72rem;color:#444;margin-top:4px;">지도에서 지역구를 하나씩 클릭해 직접 개표합니다</div>
                         </div>
                     </div>
-                    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;background:#000;border:1px solid #333;padding:8px 10px;">
+                    <div class="theme-panel-box" style="display:flex;align-items:center;gap:10px;margin-bottom:10px;background:#000;border:1px solid #333;padding:8px 10px;">
                         <label style="flex:0 0 70px;color:#aaa;font-size:0.85rem;margin:0;">개표 속도</label>
                         <input type="range" id="elecSpeed" min="1" max="100" value="80"
                             oninput="document.getElementById('elecSpeedVal').innerText=this.value"
@@ -1424,7 +1425,7 @@
 
         </div><!-- end controls-content -->
 
-        <div style="padding: 15px; border-top: 2px solid var(--tno-border); background: #000;">
+        <div class="theme-panel-box" style="padding: 15px; border-top: 2px solid var(--tno-border); background: #000;">
             <button class="simulate-btn" onclick="simulate()">>> PROTOCOL EXECUTE <<</button>
         </div>
     </div>
