@@ -4232,7 +4232,7 @@
         function getAppState() {
             const systemType = document.querySelector('input[name="systemType"]:checked')?.value || 'bicameral';
             return {
-                meta: { app: "DATANET_PARLIAMENT_SIM", version: "1.2", savedAt: new Date().toISOString() },
+                meta: { app: "DATANET_PARLIAMENT_SIM", version: "1.3", savedAt: new Date().toISOString() },
                 ui: { currentMainTab, currentSubTab },
                 config: {
                     systemType,
@@ -4343,7 +4343,7 @@
 
         function saveJSON() {
             const state = getAppState();
-            downloadJSON(`dno-save-v1.2-${formatKstTimestampCompact()}.json`, state);
+            downloadJSON(`dno-save-v1.3-${formatKstTimestampCompact()}.json`, state);
         }
 
         function setAppState(state) {
