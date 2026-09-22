@@ -4759,7 +4759,12 @@
             ].join('');
             bar.innerHTML = `
                 <div class="save-tab-list">${tabsHtml}</div>
-                <div class="save-tab-new" id="saveTabNewBtn" onclick="showSaveTabNewInput()" title="새 세이브">+</div>
+                <div class="save-tab-new" id="saveTabNewBtn" onclick="showSaveTabNewMenu()" title="새 세이브">+</div>
+                <div class="save-tab-new-menu" id="saveTabNewMenu" style="display:none;">
+                    <div class="save-tab-new-menu-item" onclick="pendingPresetFile=null;showSaveTabNewInput();">🆕 새로 생성</div>
+                    <div class="save-tab-new-menu-item" onclick="showSaveTabPresetList()">📦 프리셋에서 생성</div>
+                </div>
+                <div class="save-tab-preset-list" id="saveTabPresetList" style="display:none;"></div>
                 <div class="save-tab-new-input-wrap" id="saveTabNewInputWrap" style="display:none;">
                     <input type="text" id="saveTabNewInput" maxlength="40" placeholder="새 세이브 이름"
                         onkeydown="if(event.key==='Enter'){confirmSaveTabNew();}else if(event.key==='Escape'){hideSaveTabNewInput();}">
@@ -4769,25 +4774,87 @@
             `;
         }
 
+        function hideSaveTabAllPopups() {
+            const menu = document.getElementById('saveTabNewMenu');
+            const presetList = document.getElementById('saveTabPresetList');
+            if(menu) menu.style.display = 'none';
+            if(presetList) presetList.style.display = 'none';
+        }
+
+        function showSaveTabNewMenu() {
+            hideSaveTabAllPopups();
+            pendingPresetFile = null;
+            const menu = document.getElementById('saveTabNewMenu');
+            if(menu) menu.style.display = 'flex';
+        }
+
         function showSaveTabNewInput() {
+            hideSaveTabAllPopups();
             document.getElementById('saveTabNewBtn').style.display = 'none';
             const wrap = document.getElementById('saveTabNewInputWrap');
             wrap.style.display = 'flex';
             const input = document.getElementById('saveTabNewInput');
-            input.value = '';
+            if(!pendingPresetFile) input.value = '';
             input.focus();
+            input.select();
         }
 
         function hideSaveTabNewInput() {
+            pendingPresetFile = null;
+            hideSaveTabAllPopups();
             const btn = document.getElementById('saveTabNewBtn');
             const wrap = document.getElementById('saveTabNewInputWrap');
             if(btn) btn.style.display = '';
             if(wrap) wrap.style.display = 'none';
         }
 
+        // ===== 프리셋에서 새 세이브 만들기 =====
+        // presets/index.json에 등록된 [{file, title}] 목록을 읽어 제목을 보여주고,
+        // 고르면 presets/<file>을 그 상태 그대로 새 탭(세이브)에 담아 즉시 전환한다.
+        // 개발자/배포자가 presets/ 폴더에 .json 파일을 추가하고 index.json에
+        // 등록하기만 하면 누구나 그 프리셋을 쓸 수 있다 (자세한 방법은 README 참고).
+        const PRESET_INDEX_URL = 'presets/index.json';
+        let presetListCache = null;
+        let pendingPresetFile = null;
+
+        async function loadPresetList() {
+            if(presetListCache) return presetListCache;
+            try {
+                const res = await fetch(PRESET_INDEX_URL);
+                if(!res.ok) throw new Error('index fetch failed');
+                const list = await res.json();
+                presetListCache = Array.isArray(list) ? list.filter(p => p && p.file && p.title) : [];
+            } catch(e) { presetListCache = []; }
+            return presetListCache;
+        }
+
+        async function showSaveTabPresetList() {
+            hideSaveTabAllPopups();
+            const wrap = document.getElementById('saveTabPresetList');
+            wrap.style.display = 'flex';
+            wrap.innerHTML = `<div class="save-tab-preset-empty">불러오는 중...</div>`;
+            const list = await loadPresetList();
+            if(wrap.style.display === 'none') return; // 로딩 중 닫혔으면 무시
+            if(list.length === 0) {
+                wrap.innerHTML = `<div class="save-tab-preset-empty">등록된 프리셋이 없습니다</div>`;
+                return;
+            }
+            wrap.innerHTML = list.map((p, i) => `<div class="save-tab-preset-item" onclick="selectPresetForNewTab(${i})">${p.title}</div>`).join('');
+        }
+
+        function selectPresetForNewTab(index) {
+            const preset = (presetListCache || [])[index];
+            if(!preset) return;
+            pendingPresetFile = preset.file;
+            showSaveTabNewInput();
+            const input = document.getElementById('saveTabNewInput');
+            input.value = preset.title;
+        }
+
         // "+" 탭에서 새 이름을 입력해 확인 — saveNamedSlot()과 동일한 검증(예약어/중복/최대 개수)을
-        // 거친 뒤, 현재 화면 상태를 그대로 첫 저장으로 등록하고 그 탭으로 전환한다.
-        function confirmSaveTabNew() {
+        // 거친 뒤, 프리셋이 선택되어 있으면 그 프리셋 상태로, 아니면 현재 화면 상태 그대로
+        // 새 탭을 등록하고 그 탭으로 전환한다.
+        async function confirmSaveTabNew() {
             const input = document.getElementById('saveTabNewInput');
             const name = (input?.value || '').trim();
             if(!name) return;
@@ -4795,12 +4862,30 @@
             const namedSlotsCheck = loadSaveSlots().filter(s => !s.isAutosave);
             if(namedSlotsCheck.some(s => s.name === name)) { showCustomAlert(`"${name}" 세이브가 이미 있습니다. 다른 이름을 입력하세요.`); return; }
             if(namedSlotsCheck.length >= MAX_SAVE_SLOTS) { showCustomAlert(`저장 슬롯은 최대 ${MAX_SAVE_SLOTS}개까지 만들 수 있습니다. 기존 슬롯을 삭제한 뒤 다시 시도하세요.`); return; }
+
+            const presetFile = pendingPresetFile;
+            let presetState = null;
+            if(presetFile) {
+                try {
+                    const res = await fetch('presets/' + presetFile);
+                    if(!res.ok) throw new Error('preset fetch failed');
+                    presetState = await res.json();
+                } catch(e) { showCustomAlert('프리셋을 불러오지 못했습니다.'); return; }
+            }
+
             if(autosaveEnabled) autosaveNow(); // 지금 탭(있다면)의 진행 상황을 먼저 그 탭 전용 자동저장에 남겨둠
+            const state = presetFile ? presetState : getAppState();
             const slots = loadSaveSlots();
             const id = 'slot'+Date.now();
             const now = new Date().toISOString();
-            slots.push({ id, name, isAutosave: false, createdAt: now, savedAt: now, state: getAppState() });
+            slots.push({ id, name, isAutosave: false, createdAt: now, savedAt: now, state });
             persistSaveSlots(slots);
+
+            if(presetFile) {
+                try { setAppState(state); }
+                catch(e) { showCustomAlert('프리셋 데이터 형식이 올바르지 않습니다.'); return; }
+                simulate(); refreshUI();
+            }
             setActiveSlotId(id);
             hideSaveTabNewInput();
             renderSaveTabUI();
@@ -4834,6 +4919,14 @@
             simulate(); refreshUI();
             renderSaveTabUI();
         }
+
+        // 탭 바 바깥을 클릭하면 "+" 드롭다운(메뉴/프리셋 목록)을 닫음 — 이름 입력 중인 상자는
+        // 실수로 날아가지 않도록 그대로 둔다.
+        document.addEventListener('click', (e) => {
+            const bar = document.getElementById('saveTabBar');
+            if(!bar || bar.contains(e.target)) return;
+            hideSaveTabAllPopups();
+        });
 
         // ===== 실행 취소 / 다시 실행 (Ctrl+Z / Ctrl+Shift+Z) =====
         // 개별 변경마다 undo 지점을 만들지 않고, 전체 상태 스냅샷 방식으로 구현.

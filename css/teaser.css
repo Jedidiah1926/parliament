@@ -117,6 +117,36 @@
         }
         .save-tab-new-input-wrap button:hover { color: var(--tno-neon); border-color: var(--tno-neon); }
 
+        .save-tab-new-menu, .save-tab-preset-list {
+            display: none;
+            position: absolute;
+            top: 36px;
+            right: 0;
+            flex-direction: column;
+            background: #0a0c10;
+            border: 1px solid var(--tno-border);
+            z-index: 901;
+            min-width: 180px;
+            max-height: 320px;
+            overflow-y: auto;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+        }
+        .save-tab-new-menu-item, .save-tab-preset-item {
+            padding: 10px 14px;
+            color: var(--tno-text);
+            cursor: pointer;
+            white-space: nowrap;
+            border-bottom: 1px solid #1a1a1a;
+            font-size: 0.85rem;
+        }
+        .save-tab-new-menu-item:last-child, .save-tab-preset-item:last-child { border-bottom: none; }
+        .save-tab-new-menu-item:hover, .save-tab-preset-item:hover { color: var(--tno-neon); background: rgba(255,255,255,0.03); }
+        .save-tab-preset-empty {
+            padding: 10px 14px;
+            color: #555;
+            font-size: 0.8rem;
+        }
+
         /* 조작 탭(.controls)과 시각 탭(.display-area) 사이의 드래그 폭 조절 핸들 —
            기존 20px 여백을 대체하며, 그 자리에 얇은 세로선을 그려 드래그 가능함을 표시한다 */
         .panel-resizer {
@@ -163,9 +193,9 @@
 
         .lang-switch {
             position: absolute;
-            top: 15px;
+            top: 44px;
             right: 20px;
-            z-index: 2000;
+            z-index: 800;
             font-family: 'NeoDunggeunmo', 'VT323', monospace;
             color: var(--tno-neon);
             text-decoration: none;
