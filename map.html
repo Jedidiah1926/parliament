@@ -79,6 +79,17 @@
     color: #fff !important;
     border-color: #fff !important;
   }
+  /* ── 모던 플랫 버튼: TNO 특유의 네모 테두리 버튼 대신 테두리 없는 은은한 배경 채움 ── */
+  html[data-theme-mode="light"] .btn.secondary,
+  html[data-theme-mode="dark"] .btn.secondary {
+    border: none !important;
+    background: color-mix(in srgb, var(--tno-text) 5%, transparent) !important;
+    color: var(--tno-text) !important;
+  }
+  html[data-theme-mode="light"] .btn.secondary:hover,
+  html[data-theme-mode="dark"] .btn.secondary:hover {
+    background: color-mix(in srgb, var(--tno-text) 10%, transparent) !important;
+  }
   * { box-sizing: border-box; }
   body {
     font-family: 'NeoDunggeunmo', 'VT323', monospace;
