@@ -23,6 +23,7 @@
       "*.html",
       "js/**/*",
       "css/**/*",
+      "presets/**/*",
       "!electron/smoketest.js",
       "!README.md",
       "!package.json",
