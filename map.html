@@ -4,6 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>MINISTRY OF TRANSPORT</title>
+<script src="js/thememode.js"></script>
 <script src="js/theme.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/neodgm/neodgm-webfont@latest/neodgm/style.css">
@@ -16,6 +17,67 @@
     --tno-text: #e0e0e0;
     --tno-border: #4a5a6a;
     --tno-gold: #ffd700;
+  }
+  /* ===== 테마 모드: 라이트/다크 (CRT 없는 깔끔한 UI) — TNO는 위 :root 기본값 그대로 ===== */
+  html[data-theme-mode="light"] {
+    --tno-bg: #ffffff;
+    --tno-panel: #eef1f6;
+    --tno-neon: #17181c;
+    --tno-neon-dim: rgba(23, 24, 28, .08);
+    --tno-text: #1b2130;
+    --tno-border: #d7dce4;
+    --tno-gold: #b8860b;
+  }
+  html[data-theme-mode="dark"] {
+    --tno-bg: #14161d;
+    --tno-panel: #1e2129;
+    --tno-neon: #e9eaee;
+    --tno-neon-dim: rgba(233, 234, 238, .14);
+    --tno-text: #e4e7ee;
+    --tno-border: #333949;
+    --tno-gold: #d3a530;
+  }
+  html[data-theme-mode="light"] *,
+  html[data-theme-mode="dark"] * {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Pretendard", "Malgun Gothic", sans-serif !important;
+    text-transform: none !important;
+    text-shadow: none !important;
+    box-shadow: none !important;
+    letter-spacing: normal !important;
+  }
+  html[data-theme-mode="light"] body::after,
+  html[data-theme-mode="dark"] body::after {
+    display: none !important;
+  }
+  html[data-theme-mode="light"] .panel,
+  html[data-theme-mode="dark"] .panel,
+  html[data-theme-mode="light"] button,
+  html[data-theme-mode="light"] input,
+  html[data-theme-mode="light"] select,
+  html[data-theme-mode="dark"] button,
+  html[data-theme-mode="dark"] input,
+  html[data-theme-mode="dark"] select {
+    border-radius: 8px !important;
+  }
+  html[data-theme-mode="light"] #preview,
+  html[data-theme-mode="light"] input[type="text"],
+  html[data-theme-mode="light"] input[type="checkbox"],
+  html[data-theme-mode="light"] ::-webkit-scrollbar,
+  html[data-theme-mode="light"] ::-webkit-scrollbar-track,
+  html[data-theme-mode="light"] ::-webkit-scrollbar-corner,
+  html[data-theme-mode="dark"] #preview,
+  html[data-theme-mode="dark"] input[type="text"],
+  html[data-theme-mode="dark"] input[type="checkbox"],
+  html[data-theme-mode="dark"] ::-webkit-scrollbar,
+  html[data-theme-mode="dark"] ::-webkit-scrollbar-track,
+  html[data-theme-mode="dark"] ::-webkit-scrollbar-corner {
+    background: var(--tno-panel) !important;
+  }
+  /* 라이트 모드는 강조색이 거의 검정이라 그 위의 검정 글자/체크 표시를 흰색으로 바꿔야 보임 */
+  html[data-theme-mode="light"] .btn,
+  html[data-theme-mode="light"] input[type="checkbox"]:checked::after {
+    color: #fff !important;
+    border-color: #fff !important;
   }
   * { box-sizing: border-box; }
   body {

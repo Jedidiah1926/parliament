@@ -9,6 +9,52 @@
             --tno-gold: #ffd700;
         }
 
+        /* ===== 테마 모드: 라이트/다크 (CRT 없는 깔끔한 UI) — TNO는 위 :root 기본값 그대로 ===== */
+        html[data-theme-mode="light"] {
+            --tno-bg: #ffffff;
+            --tno-panel: #eef1f6;
+            --tno-neon: #17181c;
+            --tno-neon-dim: rgba(23, 24, 28, .08);
+            --tno-text: #1b2130;
+            --tno-border: #d7dce4;
+            --tno-alert: #c8372c;
+            --tno-gold: #b8860b;
+        }
+        html[data-theme-mode="dark"] {
+            --tno-bg: #14161d;
+            --tno-panel: #1e2129;
+            --tno-neon: #e9eaee;
+            --tno-neon-dim: rgba(233, 234, 238, .14);
+            --tno-text: #e4e7ee;
+            --tno-border: #333949;
+            --tno-alert: #e5675c;
+            --tno-gold: #d3a530;
+        }
+        html[data-theme-mode="light"] *,
+        html[data-theme-mode="dark"] * {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Pretendard", "Malgun Gothic", sans-serif !important;
+            text-transform: none !important;
+            text-shadow: none !important;
+            box-shadow: none !important;
+            letter-spacing: normal !important;
+        }
+        html[data-theme-mode="light"] body::after,
+        html[data-theme-mode="dark"] body::after {
+            display: none !important;
+        }
+        html[data-theme-mode="light"] .terminal-container,
+        html[data-theme-mode="dark"] .terminal-container {
+            border-radius: 12px !important;
+        }
+        html[data-theme-mode="light"] .corner,
+        html[data-theme-mode="dark"] .corner {
+            display: none !important;
+        }
+        html[data-theme-mode="light"] .maintenance-box,
+        html[data-theme-mode="dark"] .maintenance-box {
+            background: var(--tno-panel) !important;
+        }
+
         body {
             font-family: 'NeoDunggeunmo', 'VT323', monospace;
             background-color: var(--tno-bg);
