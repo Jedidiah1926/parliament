@@ -53,9 +53,9 @@
                 <div class="lang-select-group">
                     <button class="lang-select-btn" id="themeModeBtnLight" onclick="selectThemeMode('light')">라이트<br>모드</button>
                     <button class="lang-select-btn" id="themeModeBtnDark" onclick="selectThemeMode('dark')">다크<br>모드</button>
-                    <button class="lang-select-btn" id="themeModeBtnTno" onclick="selectThemeMode('tno')">TNO<br>모드</button>
+                    <button class="lang-select-btn" id="themeModeBtnTno" onclick="selectThemeMode('tno')">네온<br>모드</button>
                 </div>
-                <div style="color:var(--tno-text);font-size:0.85rem;margin-top:6px;">라이트/다크는 CRT 효과 없는 깔끔한 화면, TNO는 기존의 레트로 터미널 화면입니다</div>
+                <div style="color:var(--tno-text);font-size:0.85rem;margin-top:6px;">라이트/다크는 CRT 효과 없는 깔끔한 화면, 네온은 기존의 레트로 터미널 화면입니다</div>
             </div>
 
             <div id="themeColorSection">
@@ -68,7 +68,7 @@
                         style="width:90px;background:#000;border:1px solid var(--tno-border);color:var(--tno-neon);font-family:inherit;font-size:0.9rem;padding:8px 6px;text-align:center;text-transform:uppercase;">
                     <button class="lang-select-btn" id="themeColorResetBtn" onclick="onThemeColorReset()" style="padding:8px 12px;">기본값<br>으로 초기화</button>
                 </div>
-                <div style="color:var(--tno-text);font-size:0.85rem;margin-top:6px;">TNO 모드의 강조 색(테두리·글자 등)에 적용됩니다</div>
+                <div style="color:var(--tno-text);font-size:0.85rem;margin-top:6px;">네온 모드의 강조 색(테두리·글자 등)에 적용됩니다</div>
             </div>
 
             <a href="main.html" class="menu-btn" style="text-align:center;">&lt;&lt; BACK</a>
@@ -124,7 +124,7 @@
             document.getElementById('themeColorHexInput').disabled = !isTno;
             document.getElementById('themeColorResetBtn').disabled = !isTno;
             document.getElementById('themeColorSection').style.opacity = isTno ? '1' : '0.4';
-            document.getElementById('themeColorTnoOnlyNote').textContent = isTno ? '' : '(TNO 모드에서만 변경 가능)';
+            document.getElementById('themeColorTnoOnlyNote').textContent = isTno ? '' : '(네온 모드에서만 변경 가능)';
         }
         function onThemeColorChange(hex) {
             setThemeColor(hex);

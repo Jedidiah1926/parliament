@@ -57,21 +57,30 @@
     html[data-theme-mode="dark"] .rd-header {
       background: var(--tno-panel) !important;
     }
-    html[data-theme-mode="light"] .rd-version-btn,
     html[data-theme-mode="light"] .rd-card,
     html[data-theme-mode="light"] ::-webkit-scrollbar,
     html[data-theme-mode="light"] ::-webkit-scrollbar-track,
     html[data-theme-mode="light"] ::-webkit-scrollbar-corner,
-    html[data-theme-mode="dark"] .rd-version-btn,
     html[data-theme-mode="dark"] .rd-card,
     html[data-theme-mode="dark"] ::-webkit-scrollbar,
     html[data-theme-mode="dark"] ::-webkit-scrollbar-track,
     html[data-theme-mode="dark"] ::-webkit-scrollbar-corner {
       background: var(--tno-panel) !important;
     }
-    /* 라이트 모드는 강조색이 거의 검정이라 그 위의 검정 글자를 흰색으로 바꿔야 보임 */
-    html[data-theme-mode="light"] .rd-version-btn.active {
-      color: #fff !important;
+    /* ── 모던 플랫 버튼: TNO 특유의 네모 테두리 버튼 대신 테두리 없는 은은한 배경 채움 ── */
+    html[data-theme-mode="light"] .rd-version-btn,
+    html[data-theme-mode="dark"] .rd-version-btn {
+      border: none !important;
+      background: color-mix(in srgb, var(--tno-text) 5%, transparent) !important;
+    }
+    html[data-theme-mode="light"] .rd-version-btn:hover,
+    html[data-theme-mode="dark"] .rd-version-btn:hover {
+      background: color-mix(in srgb, var(--tno-text) 10%, transparent) !important;
+    }
+    html[data-theme-mode="light"] .rd-version-btn.active,
+    html[data-theme-mode="dark"] .rd-version-btn.active {
+      background: var(--tno-neon) !important;
+      color: var(--tno-bg) !important;
     }
     html[data-theme-mode="light"] button,
     html[data-theme-mode="light"] input,

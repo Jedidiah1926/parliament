@@ -160,6 +160,62 @@
         html[data-theme-mode="light"] .lang-switch:hover {
             color: #fff !important;
         }
+        /* ── 모던 플랫 버튼: TNO 특유의 네모 테두리 탭 대신 테두리 없는 은은한 배경 채움 ── */
+        html[data-theme-mode="light"] .sub-tab-btn,
+        html[data-theme-mode="light"] .sub-tab-btn-3,
+        html[data-theme-mode="light"] .sub-tab-btn-danger,
+        html[data-theme-mode="light"] .system-radio-btn,
+        html[data-theme-mode="light"] .disp-tab-btn,
+        html[data-theme-mode="light"] .display-tab-btn,
+        html[data-theme-mode="light"] .mobile-panel-btn,
+        html[data-theme-mode="dark"] .sub-tab-btn,
+        html[data-theme-mode="dark"] .sub-tab-btn-3,
+        html[data-theme-mode="dark"] .sub-tab-btn-danger,
+        html[data-theme-mode="dark"] .system-radio-btn,
+        html[data-theme-mode="dark"] .disp-tab-btn,
+        html[data-theme-mode="dark"] .display-tab-btn,
+        html[data-theme-mode="dark"] .mobile-panel-btn {
+            border: none !important;
+            background: color-mix(in srgb, var(--tno-text) 5%, transparent) !important;
+        }
+        html[data-theme-mode="light"] .sub-tab-btn:hover,
+        html[data-theme-mode="light"] .sub-tab-btn-3:hover,
+        html[data-theme-mode="light"] .system-radio-btn:hover,
+        html[data-theme-mode="light"] .disp-tab-btn:hover,
+        html[data-theme-mode="light"] .display-tab-btn:hover,
+        html[data-theme-mode="light"] .mobile-panel-btn:hover,
+        html[data-theme-mode="dark"] .sub-tab-btn:hover,
+        html[data-theme-mode="dark"] .sub-tab-btn-3:hover,
+        html[data-theme-mode="dark"] .system-radio-btn:hover,
+        html[data-theme-mode="dark"] .disp-tab-btn:hover,
+        html[data-theme-mode="dark"] .display-tab-btn:hover,
+        html[data-theme-mode="dark"] .mobile-panel-btn:hover {
+            background: color-mix(in srgb, var(--tno-text) 10%, transparent) !important;
+        }
+        html[data-theme-mode="light"] .sub-tab-btn.active,
+        html[data-theme-mode="light"] .system-radio-btn.active,
+        html[data-theme-mode="light"] .system-radio-btn:has(input:checked),
+        html[data-theme-mode="light"] .disp-tab-btn.active,
+        html[data-theme-mode="light"] .display-tab-btn.active,
+        html[data-theme-mode="light"] .mobile-panel-btn.active,
+        html[data-theme-mode="dark"] .sub-tab-btn.active,
+        html[data-theme-mode="dark"] .system-radio-btn.active,
+        html[data-theme-mode="dark"] .system-radio-btn:has(input:checked),
+        html[data-theme-mode="dark"] .disp-tab-btn.active,
+        html[data-theme-mode="dark"] .display-tab-btn.active,
+        html[data-theme-mode="dark"] .mobile-panel-btn.active {
+            background: var(--tno-neon) !important;
+            color: var(--tno-bg) !important;
+        }
+        html[data-theme-mode="light"] .sub-tab-btn-3.active,
+        html[data-theme-mode="dark"] .sub-tab-btn-3.active {
+            background: var(--tno-gold) !important;
+            color: var(--tno-bg) !important;
+        }
+        html[data-theme-mode="light"] .sub-tab-btn-danger.active,
+        html[data-theme-mode="dark"] .sub-tab-btn-danger.active {
+            background: color-mix(in srgb, var(--tno-alert) 18%, transparent) !important;
+        }
 
         body {
             font-family: 'NeoDunggeunmo', 'VT323', monospace;
