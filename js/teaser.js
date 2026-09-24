@@ -6494,6 +6494,250 @@
             simulate(); refreshUI();
         }
         function removeParty(i) { const pid=parties[i].id; parties.splice(i,1); coalitions.forEach(c=>c.members=c.members.filter(x=>x!==pid)); simulate(); refreshUI(); }
+
+        // ===== 합당 (흡수합당 / 신설합당) =====
+        // 흡수합당: 존속 정당 하나가 다른 정당들을 흡수 — 존속 정당의 이름·색·당수는 그대로
+        // 신설합당: 여러 정당이 합쳐 새 정당을 창당 — 합쳐진 정당들은 모두 사라진다
+        // 의석·의원(비례 명단·지역구)·파벌·연정·지지율/성향·내각 소속은 모두 합쳐지는 쪽(대상 정당)으로 옮기고,
+        // 선거 기록·지난 표결처럼 이미 지나간 기록은 당시 정당 이름 그대로 남긴다.
+        let partyMergeMode = 'absorb';
+        let partyMergeChecked = new Set();
+        let partyMergeIdeologyTouched = false; // 사용자가 새 정당 이념을 직접 고르기 전까진 합쳐지는 최대 정당의 이념을 따라감
+
+        function mergeablePartyList() { return parties.filter(p => p.ideologyId !== IND_IDEOLOGY_ID); }
+
+        function partySeatSummaryText(p) {
+            return chamberList().map(ch => `${chamberDisplayName(ch)} ${p[seatKeyFor(ch)] || 0}`).join(' · ');
+        }
+
+        function openPartyMergeDialog() {
+            const list = mergeablePartyList();
+            if(list.length < 2) { showCustomAlert('합당하려면 정당이 2개 이상 있어야 합니다.'); return; }
+            partyMergeChecked = new Set();
+            const survivorSel = document.getElementById('mergeSurvivorSelect');
+            const largest = list.reduce((a, b) => ((b.seatsHouse || 0) > (a.seatsHouse || 0) ? b : a), list[0]);
+            survivorSel.innerHTML = list.map(p => `<option value="${p.id}">${escapeHtmlText(p.name)}</option>`).join('');
+            survivorSel.value = String(largest.id);
+            document.getElementById('mergeNewName').value = '';
+            document.getElementById('mergeNewAbbr').value = '';
+            document.getElementById('mergeNewColor').value = '#6a5acd';
+            const ideoSel = document.getElementById('mergeNewIdeology');
+            ideoSel.innerHTML = ideologies.filter(i => i.id !== IND_IDEOLOGY_ID).map(i => `<option value="${i.id}">${escapeHtmlText(i.name)}</option>`).join('');
+            ideoSel.value = String(largest.ideologyId);
+            partyMergeIdeologyTouched = false;
+            document.getElementById('mergeKeepAsFaction').checked = true;
+            setPartyMergeMode('absorb');
+            document.getElementById('partyMergeOverlay').style.display = 'flex';
+        }
+
+        function closePartyMergeDialog() {
+            document.getElementById('partyMergeOverlay').style.display = 'none';
+        }
+
+        function setPartyMergeMode(mode) {
+            partyMergeMode = mode === 'new' ? 'new' : 'absorb';
+            const isNew = partyMergeMode === 'new';
+            document.getElementById('mergeModeAbsorbBtn').classList.toggle('active', !isNew);
+            document.getElementById('mergeModeNewBtn').classList.toggle('active', isNew);
+            document.getElementById('mergeAbsorbSection').style.display = isNew ? 'none' : '';
+            document.getElementById('mergeNewSection').style.display = isNew ? '' : 'none';
+            document.getElementById('mergeSourcesLabel').textContent = isNew ? '합칠 정당 (2개 이상)' : '흡수될 정당';
+            document.getElementById('mergeKeepAsFactionText').textContent = isNew ? '합쳐지는 정당들을 새 정당의 계파로 남기기' : '흡수되는 정당을 계파로 남기기';
+            document.getElementById('mergeModeHint').textContent = isNew
+                ? '고른 정당들이 모두 해산하고 새 정당으로 합쳐집니다. 의석·의원·연정·지지율이 새 정당으로 옮겨집니다.'
+                : '존속 정당이 이름·색·당수를 유지한 채 다른 정당들을 흡수합니다. 흡수된 정당의 의석·의원·연정·지지율이 존속 정당으로 옮겨집니다.';
+            renderPartyMergeDialog();
+        }
+
+        function renderPartyMergeDialog() {
+            const isNew = partyMergeMode === 'new';
+            const survivorId = Number(document.getElementById('mergeSurvivorSelect').value);
+            const list = mergeablePartyList().filter(p => isNew || p.id !== survivorId);
+            if(!isNew) partyMergeChecked.delete(survivorId);
+            document.getElementById('mergeSourceList').innerHTML = list.map(p => `
+                <label style="display:flex;align-items:center;gap:8px;padding:6px 8px;border:1px solid #222;margin-bottom:4px;cursor:pointer;">
+                    <input type="checkbox" ${partyMergeChecked.has(p.id) ? 'checked' : ''} onchange="togglePartyMergeSource(${p.id}, this.checked)">
+                    <span style="width:10px;height:10px;display:inline-block;flex-shrink:0;background:${p.color};"></span>
+                    <span style="flex:1;min-width:0;color:#ccc;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtmlText(p.name)}</span>
+                    <span style="color:#666;font-size:0.75rem;white-space:nowrap;">${partySeatSummaryText(p)}</span>
+                </label>`).join('');
+            renderPartyMergePreview();
+        }
+
+        function togglePartyMergeSource(id, on) {
+            if(on) partyMergeChecked.add(id); else partyMergeChecked.delete(id);
+            renderPartyMergePreview();
+        }
+
+        // 현재 선택으로 합당했을 때 결과를 미리 보여주고, 실행 가능 여부(에러 메시지)를 돌려준다
+        function partyMergePlan() {
+            const isNew = partyMergeMode === 'new';
+            const sources = mergeablePartyList().filter(p => partyMergeChecked.has(p.id));
+            if(isNew) {
+                const name = document.getElementById('mergeNewName').value.trim();
+                if(sources.length < 2) return { error: '합칠 정당을 2개 이상 고르세요.' };
+                if(!name) return { error: '새 정당 이름을 입력하세요.', sources };
+                const srcIds = new Set(sources.map(p => p.id));
+                if(parties.some(p => !srcIds.has(p.id) && p.name === name)) return { error: `"${name}" 정당이 이미 있습니다.`, sources };
+                return { sources, targetName: name };
+            }
+            const survivor = parties.find(p => p.id === Number(document.getElementById('mergeSurvivorSelect').value));
+            if(!survivor) return { error: '존속 정당을 고르세요.' };
+            if(sources.length < 1) return { error: '흡수될 정당을 1개 이상 고르세요.', survivor };
+            return { sources, survivor, targetName: survivor.name };
+        }
+
+        function renderPartyMergePreview() {
+            const el = document.getElementById('mergePreview');
+            const plan = partyMergePlan();
+            if(partyMergeMode === 'new' && !partyMergeIdeologyTouched && plan.sources && plan.sources.length) {
+                const biggest = plan.sources.reduce((a, b) => ((b.seatsHouse || 0) > (a.seatsHouse || 0) ? b : a), plan.sources[0]);
+                document.getElementById('mergeNewIdeology').value = String(biggest.ideologyId);
+            }
+            const all = [...(plan.survivor ? [plan.survivor] : []), ...(plan.sources || [])];
+            const totals = chamberList().map(ch => `${chamberDisplayName(ch)} ${all.reduce((a, p) => a + (p[seatKeyFor(ch)] || 0), 0)}석`).join(' · ');
+            const names = all.map(p => escapeHtmlText(p.name)).join(' + ');
+            el.innerHTML = plan.error
+                ? `<span style="color:#888;">${escapeHtmlText(plan.error)}</span>`
+                : `<div style="color:#aaa;">${names}</div><div style="color:var(--tno-neon);margin-top:4px;">→ ${escapeHtmlText(plan.targetName)} : ${totals}</div>`;
+            document.getElementById('mergeConfirmBtn').disabled = !!plan.error;
+        }
+
+        function executePartyMerge() {
+            const plan = partyMergePlan();
+            if(plan.error) { showCustomAlert(plan.error); return; }
+            const keepAsFaction = document.getElementById('mergeKeepAsFaction').checked;
+            let target;
+            if(partyMergeMode === 'new') {
+                target = {
+                    id: Date.now(), name: plan.targetName,
+                    abbr: document.getElementById('mergeNewAbbr').value.trim(),
+                    color: document.getElementById('mergeNewColor').value || '#6a5acd',
+                    ideologyId: Number(document.getElementById('mergeNewIdeology').value),
+                    seatsHouse: 0, seatsSenate: 0, seatsThird: 0, inHouse: false, inSenate: false, inThird: false,
+                    isRuling: false, leaderName: '', leaderPhoto: '', logoPhoto: '', showLogoInStats: false, hideStatsPhoto: false,
+                    description: '', factions: [],
+                };
+            } else {
+                target = plan.survivor;
+            }
+            const srcNames = plan.sources.map(p => p.name);
+            mergePartiesInto(target, plan.sources, keepAsFaction, partyMergeMode === 'new');
+            closePartyMergeDialog();
+            syncListMembers();
+            simulate(); refreshUI();
+            showCustomAlert(partyMergeMode === 'new'
+                ? `${srcNames.join(', ')}이(가) 합당해 "${target.name}"을(를) 창당했습니다.`
+                : `"${target.name}"이(가) ${srcNames.join(', ')}을(를) 흡수했습니다.`);
+        }
+
+        // 합당의 실제 데이터 이동 — target이 새 정당이면(isNewParty) 첫 번째로 합쳐지는 정당 자리에 끼워 넣는다
+        function mergePartiesInto(target, sources, keepAsFaction, isNewParty) {
+            const srcIds = new Set(sources.map(p => p.id));
+            const mapId = id => (srcIds.has(id) ? target.id : id);
+            const dedupe = arr => arr.filter((v, i) => arr.indexOf(v) === i);
+            const chambers = ['house', 'senate', 'third'];
+            if(!target.factions) target.factions = [];
+
+            // 연정: 대상 정당이 원래 속한 연정(새 정당이면 합쳐지는 정당이 처음 속한 연정)에만 남긴다
+            const homeCoalition = coalitions.find(c => !isNewParty && (c.members || []).includes(target.id))
+                || coalitions.find(c => (c.members || []).some(m => srcIds.has(m)));
+
+            // 파벌·의원 이동 (정당별로 파벌 id가 겹치면 새 id로 바꾸고 의원 소속도 함께 바꿈)
+            sources.forEach(src => {
+                const factionRemap = {};
+                (src.factions || []).forEach(f => {
+                    let fid = f.id;
+                    if(target.factions.some(x => x.id === fid)) { fid = `${f.id}_${target.id}_${Math.random().toString(36).slice(2, 7)}`; factionRemap[f.id] = fid; }
+                    target.factions.push({ ...f, id: fid });
+                });
+                let asFactionId = null;
+                if(keepAsFaction) {
+                    asFactionId = `f${Date.now()}_${src.id}`;
+                    const fac = { id: asFactionId, name: src.name, color: src.color, ideologyId: src.ideologyId,
+                        seatsHouse: 0, seatsSenate: 0, seatsThird: 0, leaderName: src.leaderName || '', leaderPhoto: src.leaderPhoto || '',
+                        logoPhoto: src.logoPhoto || '', usePartyColor: false };
+                    // 원래 파벌에 속하지 않았던 나머지 의석만 이 계파 몫
+                    chambers.forEach(ch => {
+                        const k = seatKeyFor(ch);
+                        const inFactions = (src.factions || []).reduce((a, f) => a + (f[k] || 0), 0);
+                        fac[k] = Math.max(0, (src[k] || 0) - inFactions);
+                    });
+                    target.factions.push(fac);
+                }
+                const remapFaction = fid => (fid == null ? asFactionId : (factionRemap[fid] || fid));
+                chambers.forEach(ch => {
+                    const lm = listMembers[ch] || (listMembers[ch] = {});
+                    const moved = (lm[src.id] || []).map(m => ({ ...m, factionId: remapFaction(m.factionId) }));
+                    lm[target.id] = [...(lm[target.id] || []), ...moved];
+                    delete lm[src.id];
+                    Object.values(districtMembers[ch] || {}).forEach(m => {
+                        if(m && m.partyId === src.id) { m.partyId = target.id; m.factionId = remapFaction(m.factionId); }
+                    });
+                });
+            });
+
+            // 의석 합산
+            chambers.forEach(ch => {
+                const k = seatKeyFor(ch), ik = inKeyFor(ch);
+                target[k] = (target[k] || 0) + sources.reduce((a, p) => a + (p[k] || 0), 0);
+                target[ik] = !!target[ik] || sources.some(p => p[ik]);
+            });
+            target.isRuling = !!target.isRuling || sources.some(p => p.isRuling);
+
+            // 연정 구성원·대표당·각외협력 정리
+            coalitions.forEach(c => {
+                let members = dedupe((c.members || []).map(mapId));
+                if(c !== homeCoalition) members = members.filter(m => m !== target.id);
+                c.members = members;
+                if(c.leadPartyId != null) {
+                    c.leadPartyId = mapId(c.leadPartyId);
+                    if(!members.includes(c.leadPartyId)) c.leadPartyId = null;
+                }
+                c.externalSupporters = dedupe((c.externalSupporters || []).map(mapId)).filter(x => !members.includes(x));
+            });
+
+            // 지지율(전국·권역)·지역구 성향은 합산 (성향은 100 상한)
+            chambers.forEach(ch => {
+                const st = elecStore[ch] || {};
+                let prob = st[target.id]?.prob || 0, err = st[target.id]?.err || 0, had = !!st[target.id];
+                sources.forEach(p => { if(st[p.id]) { prob += st[p.id].prob || 0; err = Math.max(err, st[p.id].err || 0); had = true; delete st[p.id]; } });
+                if(had) st[target.id] = { ...(st[target.id] || {}), prob, err };
+                Object.values(regionVoteStore[ch] || {}).forEach(byParty => {
+                    let p2 = byParty[target.id]?.prob || 0, had2 = !!byParty[target.id];
+                    sources.forEach(p => { if(byParty[p.id]) { p2 += byParty[p.id].prob || 0; had2 = true; delete byParty[p.id]; } });
+                    if(had2) byParty[target.id] = { ...(byParty[target.id] || {}), prob: p2 };
+                });
+            });
+            Object.values(districtSvgTendency).forEach(byCh => Object.values(byCh || {}).forEach(byParty => {
+                let v = byParty[target.id] || 0, had = target.id in byParty;
+                sources.forEach(p => { if(p.id in byParty) { v += Number(byParty[p.id]) || 0; had = true; delete byParty[p.id]; } });
+                if(had) byParty[target.id] = Math.min(100, v);
+            }));
+            const mergedTendency = { ...(tendencyData[target.id] || {}) };
+            let hadTendency = !!tendencyData[target.id];
+            sources.forEach(p => {
+                Object.entries(tendencyData[p.id] || {}).forEach(([key, v]) => { mergedTendency[key] = Math.min(100, (mergedTendency[key] || 0) + (Number(v) || 0)); hadTendency = true; });
+                delete tendencyData[p.id];
+            });
+            if(hadTendency) tendencyData[target.id] = mergedTendency;
+
+            // 내각·대통령 등 소속 정당과 좌석 연결
+            [president, pm, collectiveChair, pmNominee, ...deputyPms, ...cabinetMembers].forEach(o => {
+                if(!o) return;
+                if(srcIds.has(o.partyId)) o.partyId = target.id;
+                if(o.linkedSeat && srcIds.has(o.linkedSeat.partyId)) o.linkedSeat = { ...o.linkedSeat, partyId: target.id };
+            });
+            sources.forEach(p => {
+                if(presElectionCandidateOverrides[p.id] && !presElectionCandidateOverrides[target.id]) presElectionCandidateOverrides[target.id] = presElectionCandidateOverrides[p.id];
+                delete presElectionCandidateOverrides[p.id];
+            });
+
+            // 정당 목록에서 합쳐진 정당 제거, 새 정당은 첫 번째로 합쳐진 정당 자리에
+            const firstIdx = parties.findIndex(p => srcIds.has(p.id));
+            for(let i = parties.length - 1; i >= 0; i--) if(srcIds.has(parties[i].id)) parties.splice(i, 1);
+            if(isNewParty) parties.splice(Math.max(0, Math.min(firstIdx, parties.length)), 0, target);
+        }
         // 정당 복제 — 색상/로고/당수/파벌 구성 등 "정체성"은 그대로 복사하고, 의석 수·집권 여부·연정
         // 소속처럼 그 정당 고유의 정치적 상태는 복제하지 않고 초기화(0/없음)해 사용자가 새로 지정하게 한다
         function duplicateParty(i) {

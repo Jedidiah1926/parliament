@@ -123,6 +123,7 @@ html[data-theme-family="modern"] a { color: var(--m-info); }
 /* ======== GENERATED: hardcoded retro color -> token remap (class rules) ======== */
 html[data-theme-family="modern"] .lang-select-btn:not(:where([style*="background"])),
 html[data-theme-family="modern"] .menu-btn:not(:where([style*="background"])),
+html[data-theme-family="modern"] .save-fav-btn:not(:where([style*="background"])),
 html[data-theme-family="modern"] .save-select-item:not(:where([style*="background"])) {
     background: color-mix(in srgb, var(--m-text) 4%, transparent) !important;
 }
@@ -159,9 +160,11 @@ html[data-theme-family="modern"] .rd-card:not(:where([style*="background"])),
 html[data-theme-family="modern"] .rd-header:not(:where([style*="background"])),
 html[data-theme-family="modern"] .rd-version-btn:not(:where([style*="background"])),
 html[data-theme-family="modern"] .ruling-selector:not(:where([style*="background"])),
+html[data-theme-family="modern"] .save-rename-input:not(:where([style*="background"])),
 html[data-theme-family="modern"] .save-select-head:not(:where([style*="background"])),
 html[data-theme-family="modern"] .save-select-list:not(:where([style*="background"]))::-webkit-scrollbar,
 html[data-theme-family="modern"] .save-select-new-row input:not(:where([style*="background"])),
+html[data-theme-family="modern"] .save-select-search input:not(:where([style*="background"])),
 html[data-theme-family="modern"] .save-tab-bar:not(:where([style*="background"])),
 html[data-theme-family="modern"] .save-tab-new-input-wrap input:not(:where([style*="background"])),
 html[data-theme-family="modern"] .save-tab-new-menu:not(:where([style*="background"])),
@@ -548,6 +551,7 @@ html[data-theme-family="modern"] .mobile-panel-btn:hover:not(:where([style^="col
 html[data-theme-family="modern"] .mobile-panel-btn:not(:where([style^="color"],[style*=";color"],[style*="; color"],[style*=" color"])),
 html[data-theme-family="modern"] .nation-name-disp:not(:where([style^="color"],[style*=";color"],[style*="; color"],[style*=" color"])),
 html[data-theme-family="modern"] .party-status-badge.status-dissolved:not(:where([style^="color"],[style*=";color"],[style*="; color"],[style*=" color"])),
+html[data-theme-family="modern"] .preset-card-desc:not(:where([style^="color"],[style*=";color"],[style*="; color"],[style*=" color"])),
 html[data-theme-family="modern"] .save-select-import-btn:not(:where([style^="color"],[style*=";color"],[style*="; color"],[style*=" color"])),
 html[data-theme-family="modern"] .save-tab-new-input-wrap button:not(:where([style^="color"],[style*=";color"],[style*="; color"],[style*=" color"])),
 html[data-theme-family="modern"] .seat-info-card-header button:not(:where([style^="color"],[style*=";color"],[style*="; color"],[style*=" color"])),
@@ -576,6 +580,8 @@ html[data-theme-family="modern"] .main-tab-btn:not(:where([style^="color"],[styl
 html[data-theme-family="modern"] .maintenance-eta:not(:where([style^="color"],[style*=";color"],[style*="; color"],[style*=" color"])),
 html[data-theme-family="modern"] .rd-version-btn:not(:where([style^="color"],[style*=";color"],[style*="; color"],[style*=" color"])),
 html[data-theme-family="modern"] .remove-btn:not(:where([style^="color"],[style*=";color"],[style*="; color"],[style*=" color"])),
+html[data-theme-family="modern"] .save-fav-btn:not(:where([style^="color"],[style*=";color"],[style*="; color"],[style*=" color"])),
+html[data-theme-family="modern"] .save-select-empty:not(:where([style^="color"],[style*=";color"],[style*="; color"],[style*=" color"])),
 html[data-theme-family="modern"] .save-select-item-time:not(:where([style^="color"],[style*=";color"],[style*="; color"],[style*=" color"])),
 html[data-theme-family="modern"] .save-tab-close:not(:where([style^="color"],[style*=";color"],[style*="; color"],[style*=" color"])),
 html[data-theme-family="modern"] .save-tab-new:not(:where([style^="color"],[style*=";color"],[style*="; color"],[style*=" color"])),

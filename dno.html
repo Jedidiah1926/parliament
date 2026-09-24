@@ -106,6 +106,51 @@
         </div>
     </div>
 
+    <!-- 합당 대화상자 (흡수합당 / 신설합당) -->
+    <div id="partyMergeOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:6000;align-items:center;justify-content:center;" onclick="if(event.target===this) closePartyMergeDialog();">
+        <div style="background:#0a0c10;border:1px solid var(--tno-neon);box-shadow:0 0 16px color-mix(in srgb, var(--tno-neon) 30%, transparent);padding:20px;width:460px;max-width:92vw;max-height:88vh;overflow-y:auto;font-family:'NeoDunggeunmo','VT323',monospace;">
+            <div style="color:var(--tno-neon);font-size:1rem;margin-bottom:14px;letter-spacing:1px;">▌ 합당</div>
+            <div class="sub-tab-container-3" style="margin-bottom:10px;">
+                <button class="sub-tab-btn-3 active" id="mergeModeAbsorbBtn" onclick="setPartyMergeMode('absorb')">흡수합당</button>
+                <button class="sub-tab-btn-3" id="mergeModeNewBtn" onclick="setPartyMergeMode('new')">신설합당 (새 정당 창당)</button>
+            </div>
+            <div id="mergeModeHint" style="color:#888;font-size:0.78rem;margin-bottom:14px;line-height:1.5;"></div>
+
+            <div id="mergeAbsorbSection" style="margin-bottom:12px;">
+                <label>존속 정당</label>
+                <select id="mergeSurvivorSelect" style="width:100%;" onchange="renderPartyMergeDialog()"></select>
+            </div>
+            <div id="mergeNewSection" style="display:none;margin-bottom:12px;">
+                <label>새 정당 이름</label>
+                <input type="text" id="mergeNewName" maxlength="40" placeholder="예: 통합민주당" style="width:100%;box-sizing:border-box;margin-bottom:8px;" oninput="renderPartyMergePreview()">
+                <div style="display:flex;gap:8px;align-items:flex-end;margin-bottom:8px;">
+                    <div style="flex:1;min-width:0;">
+                        <label>약칭</label>
+                        <input type="text" id="mergeNewAbbr" maxlength="12" placeholder="선택" style="width:100%;box-sizing:border-box;">
+                    </div>
+                    <div>
+                        <label>색</label>
+                        <input type="color" id="mergeNewColor" value="#6a5acd" style="width:44px;height:32px;padding:0;">
+                    </div>
+                </div>
+                <label>이념</label>
+                <select id="mergeNewIdeology" style="width:100%;" onchange="partyMergeIdeologyTouched=true;"></select>
+            </div>
+
+            <label id="mergeSourcesLabel">흡수될 정당</label>
+            <div id="mergeSourceList" style="margin-bottom:10px;"></div>
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;color:#ccc;font-size:0.85rem;margin-bottom:12px;">
+                <input type="checkbox" id="mergeKeepAsFaction" checked onchange="renderPartyMergePreview()"> <span id="mergeKeepAsFactionText">흡수되는 정당을 계파로 남기기</span>
+            </label>
+            <div id="mergePreview" style="border-top:1px solid #222;padding-top:10px;font-size:0.85rem;line-height:1.5;"></div>
+
+            <div style="display:flex;gap:8px;margin-top:16px;">
+                <button class="add-btn" id="mergeConfirmBtn" style="flex:1;margin-top:0;" onclick="executePartyMerge()">합당</button>
+                <button class="add-btn" style="flex:1;margin-top:0;background:transparent;color:#888;border-color:#333;" onclick="closePartyMergeDialog()">취소</button>
+            </div>
+        </div>
+    </div>
+
     <!-- 좌석 클릭 시 뜨는 정보 카드 (display:none 인라인 기본값 — 외부 CSS 로드 실패/캐시 문제와 무관하게 항상 숨김 상태로 시작) -->
     <div class="seat-info-card" id="seatInfoCard" style="display:none;">
         <div class="seat-info-card-header">
@@ -162,6 +207,7 @@
                     <div id="innerContentPartyInfo" class="sub-tab-content">
                         <div id="partyInfoList"></div>
                         <button class="add-btn" onclick="addParty('house')">[+] 정당 추가</button>
+                        <button class="add-btn" onclick="openPartyMergeDialog()">[⇄] 합당 (흡수합당 · 신설합당)</button>
                     </div>
 
                     <div id="innerContentPartyLeader" class="sub-tab-content">
