@@ -13,6 +13,7 @@
      4. 컴포넌트 (레이아웃·탭·입력·카드·버튼·대화상자)
      5. 기타 페이지 (메인/설정·로드맵·점검·맵 메이커)
      6. 세로 탭 사이드바 (js/sidenav.js)
+     7. 모바일 화면 모드 (아래 탭 바 · 실행 버튼 · 하위 탭 칩)
 
    인라인 style=""과 페이지 CSS를 덮어써야 하는 곳이 많아 !important를 의도적으로 쓴다.
    ===================================================================== */
@@ -2785,3 +2786,84 @@ html[data-theme-family="modern"] .save-select-close { border-radius: 8px; border
 html[data-theme-family="modern"] #saveSelectOverlay > .save-select-modal { padding: 0 !important; overflow: hidden; }
 html[data-theme-family="modern"] .save-rename-input { padding: 3px 8px !important; font-size: 13px; border-radius: 7px !important; }
 html[data-theme-family="modern"] .lang-select-btn .lang-remove { color: currentColor; opacity: .55; }
+
+/* ===================== 7. 모바일 화면 모드 ===================== */
+/* 레이아웃은 css/sidenav.css 끝부분 — 여기선 라이트/다크 모양만 */
+/* 머리: 헤더 띠 대신 국가명을 제목처럼 (현재 위치는 아래 탭 바 + 칩 줄이 보여줌) */
+html[data-theme-family="modern"][data-ui-mode="mobile"] body.has-side-nav .tno-header-strip { display: none !important; }
+html[data-theme-family="modern"][data-ui-mode="mobile"] body.has-side-nav .nation-id-bar { padding: 16px 18px 12px; }
+html[data-theme-family="modern"][data-ui-mode="mobile"] body.has-side-nav .nation-name-disp { color: var(--m-text) !important; font-size: 17px; font-weight: 700; }
+
+html[data-theme-family="modern"] .mobile-nav {
+    background: color-mix(in srgb, var(--m-surface) 86%, transparent) !important;
+    -webkit-backdrop-filter: saturate(1.6) blur(18px);
+    backdrop-filter: saturate(1.6) blur(18px);
+    border-top: 1px solid var(--m-border) !important;
+    box-shadow: none !important;
+    font-family: inherit;
+}
+html[data-theme-family="modern"] .mobile-nav-btn[data-tone="info"] { --tone: var(--m-info); }
+html[data-theme-family="modern"] .mobile-nav-btn[data-tone="danger"] { --tone: var(--m-danger); }
+html[data-theme-family="modern"] .mobile-nav-btn[data-tone="gold"] { --tone: var(--m-gold); }
+html[data-theme-family="modern"] .mobile-nav-btn[data-tone="success"] { --tone: var(--m-success); }
+html[data-theme-family="modern"] .mobile-nav-btn[data-tone="seats"] { --tone: var(--m-text); }
+html[data-theme-family="modern"] .mobile-nav-btn {
+    border: none !important;
+    margin-top: 0;
+    background: transparent !important;
+    color: var(--m-text-3) !important;
+    text-shadow: none !important;
+    gap: 4px;
+}
+html[data-theme-family="modern"] .mnb-icon {
+    width: 52px;
+    height: 28px;
+    border-radius: 14px;
+    font-size: 16px;
+    transition: background .15s;
+}
+html[data-theme-family="modern"] .mnb-label { font-size: 11.5px; font-weight: 600; }
+html[data-theme-family="modern"] .mobile-nav-btn.active { color: var(--m-text) !important; }
+html[data-theme-family="modern"] .mobile-nav-btn.active .mnb-icon {
+    background: color-mix(in srgb, var(--tone) 16%, transparent);
+    color: color-mix(in srgb, var(--tone) 80%, var(--m-text));
+}
+html[data-theme-family="modern"] .mobile-nav-btn.active .mnb-label { font-weight: 700; }
+
+html[data-theme-family="modern"] .mobile-exec-fab {
+    background: var(--m-accent) !important;
+    border: none !important;
+    border-radius: 16px;
+    color: var(--m-on-accent) !important;
+    font-family: inherit;
+    letter-spacing: 0;
+    box-shadow: var(--m-shadow-lg) !important;
+}
+html[data-theme-family="modern"] .mobile-exec-fab .fab-label { font-weight: 700; }
+html[data-theme-family="modern"] .mobile-exec-fab .fab-icon { font-size: 12px; }
+
+/* 하위 탭 칩 줄 */
+html[data-theme-family="modern"][data-ui-mode="mobile"] body.has-side-nav .main-tab-content > .sub-tab-container {
+    background: var(--m-surface) !important;
+    border-bottom: 1px solid var(--m-border) !important;
+    gap: 6px;
+    margin: 0 -18px 16px;
+    padding: 10px 18px;
+}
+html[data-theme-family="modern"][data-ui-mode="mobile"] body.has-side-nav .main-tab-content > .sub-tab-container > .sub-tab-btn {
+    border: none !important;
+    border-radius: 999px !important;
+    margin: 0;
+    min-height: 36px;
+    padding: 7px 15px;
+    background: var(--m-surface-2) !important;
+    color: var(--m-text-2) !important;
+    font-size: 14px;
+    font-weight: 600;
+}
+html[data-theme-family="modern"][data-ui-mode="mobile"] body.has-side-nav .main-tab-content > .sub-tab-container > .sub-tab-btn.active {
+    background: var(--m-accent) !important;
+    color: var(--m-on-accent) !important;
+}
+html[data-theme-family="modern"][data-ui-mode="mobile"] body.has-side-nav .main-tab-content > .sub-tab-container > .sub-tab-btn-danger { color: var(--m-danger) !important; }
+html[data-theme-family="modern"][data-ui-mode="mobile"] body.has-side-nav .main-tab-content > .sub-tab-container > .sub-tab-btn-danger.active { background: var(--m-danger) !important; color: #fff !important; }

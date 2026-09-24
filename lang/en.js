@@ -1805,6 +1805,10 @@ window.DnoLangPacks.en = {
    "Seats"
   ],
   [
+   "실행",
+   "Run"
+  ],
+  [
    "지역구",
    "District"
   ],

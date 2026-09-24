@@ -138,3 +138,142 @@ body.side-nav-collapsed .mn-group.active .mn-group-head {
 .mn-brand-title { display: none; }
 .mn-brand { align-self: center; }
 .mn-brand-sub { color: var(--tno-neon); text-shadow: 0 0 5px var(--tno-neon-dim); font-size: 1rem; margin-top: 0; white-space: normal; line-height: 1.25; }
+
+/* =====================================================================
+   모바일 화면 모드 — 아래 탭 바 + 떠 있는 실행 버튼 (js/sidenav.js)
+   ---------------------------------------------------------------------
+   사이드바 대신 화면 맨 아래에 묶음(의회·국가·여론·내각) + "의석" 탭을 두고,
+   위쪽 가로 메인 탭 줄 · 컨트롤/의석 전환 줄 · 패널 끝의 실행 막대를 숨긴다.
+   항목(하위 탭)은 세이브 탭 바 바로 아래에 붙어 따라오는 가로 스크롤 칩 줄이 된다.
+   ===================================================================== */
+.mobile-nav, .mobile-exec-fab { display: none; }
+
+html[data-ui-mode="mobile"] body.has-side-nav {
+    --mnav-h: 58px;
+    --safe-b: env(safe-area-inset-bottom, 0px);
+    padding-left: max(10px, env(safe-area-inset-left, 0px));
+    padding-right: max(10px, env(safe-area-inset-right, 0px));
+    /* 아래 탭 바 + 실행 버튼에 마지막 내용이 가리지 않도록 */
+    padding-bottom: calc(var(--mnav-h) + var(--safe-b) + 84px);
+}
+html[data-ui-mode="mobile"] body.has-side-nav .main-tab-container,
+html[data-ui-mode="mobile"] body.has-side-nav .mobile-panel-switch,
+html[data-ui-mode="mobile"] body.has-side-nav .controls > .theme-panel-box { display: none !important; }
+
+/* ---- 아래 탭 바 ---- */
+html[data-ui-mode="mobile"] body.has-side-nav .mobile-nav {
+    display: flex;
+    position: fixed;
+    left: 0; right: 0; bottom: 0;
+    z-index: 890;
+    height: calc(var(--mnav-h) + var(--safe-b));
+    padding: 0 max(4px, env(safe-area-inset-right, 0px)) var(--safe-b) max(4px, env(safe-area-inset-left, 0px));
+    box-sizing: border-box;
+}
+.mobile-nav-btn {
+    flex: 1 1 0;
+    min-width: 0;
+    min-height: 44px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    padding: 6px 2px;
+    background: transparent;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+}
+.mnb-icon { font-size: 18px; line-height: 1; height: 20px; display: grid; place-items: center; }
+.mnb-label { font-size: 11.5px; line-height: 1.1; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* ---- 떠 있는 실행 버튼 ---- */
+html[data-ui-mode="mobile"] body.has-side-nav .mobile-exec-fab {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    position: fixed;
+    right: max(16px, env(safe-area-inset-right, 0px));
+    bottom: calc(var(--mnav-h) + var(--safe-b) + 14px);
+    z-index: 889;
+    height: 52px;
+    padding: 0 22px 0 18px;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+}
+.fab-icon { font-size: 14px; line-height: 1; }
+.fab-label { font-size: 15px; line-height: 1; }
+.mobile-exec-fab:active { transform: scale(.96); }
+
+/* ---- 하위 탭 → 붙어 따라오는 가로 스크롤 칩 줄 ---- */
+html[data-ui-mode="mobile"] body.has-side-nav .main-tab-content > .sub-tab-container {
+    position: sticky;
+    top: 36px;
+    z-index: 40;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none;
+    margin: 0 -15px 12px;
+    padding: 8px 15px 0;
+}
+html[data-ui-mode="mobile"] body.has-side-nav .main-tab-content > .sub-tab-container::-webkit-scrollbar { display: none; }
+html[data-ui-mode="mobile"] body.has-side-nav .main-tab-content > .sub-tab-container > .sub-tab-btn {
+    flex: 0 0 auto;
+    min-width: 64px;
+    min-height: 40px;
+    padding: 8px 14px;
+    white-space: nowrap;
+}
+
+/* ---- 손가락으로 누르기 좋은 크기 ---- */
+html[data-ui-mode="mobile"] .sub-tab-btn-3,
+html[data-ui-mode="mobile"] .system-radio-btn { min-height: 38px; }
+html[data-ui-mode="mobile"] .add-btn { min-height: 42px; }
+@media (pointer: coarse) {
+    /* iOS Safari가 입력칸을 누를 때 화면을 확대하지 않도록 16px 이상 */
+    html[data-ui-mode="mobile"] input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]),
+    html[data-ui-mode="mobile"] select,
+    html[data-ui-mode="mobile"] textarea { font-size: 16px; }
+}
+
+/* ---- 네온 모양 ---- */
+.mobile-nav {
+    background: #000;
+    border-top: 2px solid var(--tno-border);
+    box-shadow: 0 -4px 16px color-mix(in srgb, var(--tno-neon) 8%, transparent);
+    font-family: 'NeoDunggeunmo', 'VT323', monospace;
+}
+.mobile-nav-btn[data-tone="info"] { --tone: var(--tno-neon); }
+.mobile-nav-btn[data-tone="danger"] { --tone: var(--tno-alert); }
+.mobile-nav-btn[data-tone="gold"] { --tone: var(--tno-gold); }
+.mobile-nav-btn[data-tone="success"] { --tone: var(--vote-yea); }
+.mobile-nav-btn[data-tone="seats"] { --tone: var(--tno-neon); }
+.mobile-nav-btn {
+    border: none;
+    border-top: 2px solid transparent;
+    margin-top: -2px;
+    color: #666;
+    font-family: inherit;
+}
+.mobile-nav-btn.active {
+    color: var(--tone);
+    border-top-color: var(--tone);
+    background: linear-gradient(to bottom, color-mix(in srgb, var(--tone) 14%, transparent), transparent);
+    text-shadow: 0 0 5px color-mix(in srgb, var(--tone) 70%, transparent);
+}
+.mobile-exec-fab {
+    background: var(--tno-neon);
+    border: 1px solid var(--tno-neon);
+    color: #000;
+    font-family: 'NeoDunggeunmo', 'VT323', monospace;
+    letter-spacing: 1px;
+    box-shadow: 0 0 18px var(--tno-neon), 0 4px 14px rgba(0, 0, 0, .6);
+}
+html[data-ui-mode="mobile"] body.has-side-nav .main-tab-content > .sub-tab-container {
+    background: var(--tno-panel);
+}
+/* 네온 머리 띠는 모바일에서 조금 얇게 */
+html[data-ui-mode="mobile"] body.has-side-nav .tno-header-strip { padding-top: 6px; padding-bottom: 6px; font-size: .95rem; }

@@ -6,7 +6,12 @@
     'use strict';
 
     const isMobileLayout = () => document.documentElement.getAttribute('data-ui-mode') === 'mobile';
-    const navTarget = () => (!isMobileLayout() && document.getElementById('sideNav')) ? '#sideNav' : '.main-tab-container';
+    const hasEl = id => !!document.getElementById(id);
+    // 메뉴: 데스크톱은 세로 사이드바, 모바일은 아래 탭 바 (없으면 원래 가로 탭 줄)
+    const navTarget = () => isMobileLayout()
+        ? (hasEl('mobileNav') ? '#mobileNav' : '.main-tab-container')
+        : (hasEl('sideNav') ? '#sideNav' : '.main-tab-container');
+    const execTarget = () => (isMobileLayout() && hasEl('mobileExecFab')) ? '#mobileExecFab' : '.simulate-btn';
     const go = (main, sub) => () => { if (typeof switchSubTab === 'function') switchSubTab(main, sub); };
     // 모바일 화면 모드에선 편집 패널/좌석 화면 중 하나만 보이므로 필요한 쪽으로 전환
     const showPanel = which => () => { if (isMobileLayout() && typeof setMobilePanel === 'function') setMobilePanel(which); };
@@ -19,7 +24,9 @@
         {
             target: navTarget,
             title: '메뉴',
-            text: '의회 · 국가 · 여론 · 내각 네 묶음으로 기능이 나뉘어 있습니다. 묶음 제목을 누르면 접히고, 맨 위 버튼으로 메뉴 전체를 아이콘만 남기고 접을 수 있어요.',
+            text: () => isMobileLayout()
+                ? '화면 아래 탭 바에서 의회 · 국가 · 여론 · 내각 묶음을 고르고, 위쪽 칩 줄에서 세부 항목을 고릅니다. 맨 오른쪽 "의석"을 누르면 의석 화면으로 넘어가요.'
+                : '의회 · 국가 · 여론 · 내각 네 묶음으로 기능이 나뉘어 있습니다. 묶음 제목을 누르면 접히고, 맨 위 버튼으로 메뉴 전체를 아이콘만 남기고 접을 수 있어요.',
         },
         {
             before: [go('setup', 'party'), showPanel('controls')],
@@ -41,9 +48,11 @@
         },
         {
             before: [showPanel('controls')],
-            target: '.simulate-btn',
+            target: execTarget,
             title: '다시 계산',
-            text: '설정을 바꾼 뒤 이 버튼을 누르면 의석 화면이 새로 그려집니다. 입력 칸 밖에서 Enter 키를 눌러도 같습니다.',
+            text: () => isMobileLayout()
+                ? '설정을 바꾼 뒤 떠 있는 "실행" 버튼을 누르면 의석 화면이 새로 그려집니다.'
+                : '설정을 바꾼 뒤 이 버튼을 누르면 의석 화면이 새로 그려집니다. 입력 칸 밖에서 Enter 키를 눌러도 같습니다.',
         },
         {
             before: [go('nation', 'legislation'), showPanel('controls')],
@@ -149,7 +158,7 @@
         (step.before || []).forEach(fn => { try { fn(); } catch (e) { /* 탭 전환 실패는 안내만 계속 */ } });
         layer.querySelector('.tut-step').textContent = `${index + 1} / ${STEPS.length}`;
         layer.querySelector('.tut-title').textContent = step.title;
-        layer.querySelector('.tut-text').textContent = step.text;
+        layer.querySelector('.tut-text').textContent = typeof step.text === 'function' ? step.text() : step.text;
         layer.querySelector('.tut-prev').disabled = index === 0;
         layer.querySelector('.tut-next').textContent = index === STEPS.length - 1 ? '시작하기' : '다음';
         const el = resolveTarget(step);

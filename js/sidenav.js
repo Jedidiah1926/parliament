@@ -3,7 +3,9 @@
 // 항목으로 보여주는 세로 사이드바를 .controls 왼쪽에 만든다 (모든 테마 공통).
 // 사이드바는 기존 탭 버튼을 그대로 복제·클릭하는 "리모컨"일 뿐이라 탭 전환 로직은 전혀 바꾸지 않으며,
 // MutationObserver로 원래 버튼의 활성/표시/라벨(언어 전환 포함) 변화를 따라간다.
-// 모양은 css/sidenav.css(네온 기본) + css/modern.css(라이트/다크), 모바일 화면 모드에선 숨기고 기존 가로 탭을 쓴다.
+// 모양은 css/sidenav.css(네온 기본) + css/modern.css(라이트/다크).
+// 모바일 화면 모드에서는 사이드바 대신 같은 묶음을 화면 아래 탭 바(+ "의석" 화면 전환)로 보여주고,
+// 실행(PROTOCOL EXECUTE) 버튼을 엄지가 닿는 곳에 떠 있는 버튼으로 둔다.
 (function () {
     'use strict';
 
@@ -111,6 +113,51 @@
         const nationSrc = document.getElementById('nationNameDisp');
         const nationDst = nav.querySelector('#mnNationName');
 
+        // ---- 모바일: 아래 탭 바(묶음 4개 + 의석 화면) + 떠 있는 실행 버튼 ----
+        const panelNow = () => document.documentElement.getAttribute('data-mobile-panel') || 'controls';
+        const setPanel = p => { if (typeof window.setMobilePanel === 'function') window.setMobilePanel(p); };
+        const mobileNav = document.createElement('nav');
+        mobileNav.className = 'mobile-nav';
+        mobileNav.id = 'mobileNav';
+        mobileNav.setAttribute('aria-label', '메뉴');
+        const mobileItems = groups.map(grp => {
+            const b = document.createElement('button');
+            b.type = 'button';
+            b.className = 'mobile-nav-btn';
+            b.dataset.tone = GROUP_TONES[grp.key] || 'info';
+            b.innerHTML = '<span class="mnb-icon"></span><span class="mnb-label"></span>';
+            b.addEventListener('click', () => {
+                const wasHere = panelNow() === 'controls' && grp.mainBtn.classList.contains('active');
+                setPanel('controls');
+                if (!grp.mainBtn.classList.contains('active')) grp.mainBtn.click();
+                if (!wasHere || window.scrollY > 0) window.scrollTo({ top: 0, behavior: wasHere ? 'smooth' : 'auto' });
+            });
+            mobileNav.appendChild(b);
+            return { b, grp };
+        });
+        const seatsBtn = document.createElement('button');
+        seatsBtn.type = 'button';
+        seatsBtn.className = 'mobile-nav-btn mobile-nav-seats';
+        seatsBtn.dataset.tone = 'seats';
+        // 의석 아이콘: 글꼴마다 기호 모양이 달라 반원형 의석 모양을 직접 그림
+        seatsBtn.innerHTML = '<span class="mnb-icon"><svg width="20" height="12" viewBox="0 0 20 12" aria-hidden="true" fill="currentColor">'
+            + '<circle cx="2" cy="10.5" r="1.6"/><circle cx="3.6" cy="5.6" r="1.6"/><circle cx="7.2" cy="2.3" r="1.6"/><circle cx="12.8" cy="2.3" r="1.6"/>'
+            + '<circle cx="16.4" cy="5.6" r="1.6"/><circle cx="18" cy="10.5" r="1.6"/><circle cx="6.8" cy="8" r="1.6"/><circle cx="13.2" cy="8" r="1.6"/><circle cx="10" cy="6" r="1.6"/>'
+            + '</svg></span><span class="mnb-label">의석</span>';
+        seatsBtn.addEventListener('click', () => { setPanel('display'); window.scrollTo({ top: 0 }); });
+        mobileNav.appendChild(seatsBtn);
+        document.body.appendChild(mobileNav);
+
+        const execSrc = document.querySelector('.simulate-btn');
+        const fab = document.createElement('button');
+        fab.type = 'button';
+        fab.className = 'mobile-exec-fab';
+        fab.id = 'mobileExecFab';
+        fab.title = '다시 계산 (PROTOCOL EXECUTE)';
+        fab.innerHTML = '<span class="fab-icon">▶</span><span class="fab-label">실행</span>';
+        fab.addEventListener('click', () => { if (execSrc) execSrc.click(); });
+        if (execSrc) document.body.appendChild(fab);
+
         function sync() {
             let activeGroup = null, activeItem = null;
             groups.forEach(grp => {
@@ -144,6 +191,18 @@
                 }
             }
             if (nationSrc) nationDst.textContent = nationSrc.textContent.trim();
+            const onDisplay = panelNow() === 'display';
+            mobileItems.forEach(({ b, grp }) => {
+                const { icon, label } = splitIcon(grp.mainBtn.textContent);
+                b.querySelector('.mnb-icon').textContent = icon;
+                b.querySelector('.mnb-label').textContent = label;
+                b.style.display = isHidden(grp.mainBtn) ? 'none' : '';
+                const on = !onDisplay && grp.mainBtn.classList.contains('active');
+                b.classList.toggle('active', on);
+                b.setAttribute('aria-current', on ? 'page' : 'false');
+            });
+            seatsBtn.classList.toggle('active', onDisplay);
+            seatsBtn.setAttribute('aria-current', onDisplay ? 'page' : 'false');
         }
 
         let scheduled = false;
@@ -157,6 +216,7 @@
         observer.observe(document.querySelector('.main-tab-container'), opts);
         groups.forEach(grp => grp.items[0] && observer.observe(grp.items[0].src.parentElement, opts));
         if (nationSrc) observer.observe(nationSrc, { childList: true, characterData: true, subtree: true });
+        new MutationObserver(scheduleSync).observe(document.documentElement, { attributes: true, attributeFilter: ['data-mobile-panel', 'data-ui-mode'] });
 
         const collapseBtn = nav.querySelector('#mnCollapseBtn');
         function applyCollapsed(on) {
