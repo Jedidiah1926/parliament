@@ -2739,3 +2739,42 @@ html[data-theme-family="modern"] input[type="range"]::-webkit-slider-thumb {
    모던 모드에선 원문을 숨기고 data-modern-label의 깔끔한 라벨만 보여준다 */
 html[data-theme-family="modern"] button[data-modern-label] { font-size: 0 !important; padding: 13px !important; }
 html[data-theme-family="modern"] button[data-modern-label]::before { content: attr(data-modern-label); font-size: 15px; font-weight: 700; }
+
+/* 온보딩(세이브 선택) 2단 모달 — main.html */
+html[data-theme-family="modern"] .save-select-overlay { background: rgba(9, 9, 11, .45) !important; backdrop-filter: blur(3px); }
+html[data-theme-family="modern"] .save-select-col + .save-select-col { border-left-color: var(--m-border) !important; border-top-color: var(--m-border) !important; }
+html[data-theme-family="modern"] .save-select-col-title { color: var(--m-text) !important; font-size: 16px; font-weight: 700; }
+html[data-theme-family="modern"] .save-select-empty { color: var(--m-text-3) !important; }
+html[data-theme-family="modern"] .save-select-search input,
+html[data-theme-family="modern"] .save-select-new-row input {
+    background: var(--m-surface) !important;
+    border: 1px solid var(--m-border-strong) !important;
+    border-radius: 9px !important;
+    color: var(--m-text) !important;
+}
+html[data-theme-family="modern"] .save-select-search input:focus,
+html[data-theme-family="modern"] .save-select-new-row input:focus { border-color: var(--m-text-3) !important; box-shadow: var(--m-ring) !important; }
+html[data-theme-family="modern"] .save-select-start-btn { background: var(--m-accent) !important; color: var(--m-on-accent) !important; font-size: 14px; }
+html[data-theme-family="modern"] .save-select-start-btn:hover { background: var(--m-accent) !important; color: var(--m-on-accent) !important; opacity: .86; }
+html[data-theme-family="modern"] .preset-card-desc { color: var(--m-text-3) !important; font-size: 12.5px; }
+html[data-theme-family="modern"] .preset-badge {
+    border: none !important;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--m-gold) 16%, transparent);
+    color: var(--m-gold) !important;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 8px;
+}
+html[data-theme-family="modern"] .preset-card-tutorial { box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--m-gold) 45%, transparent) !important; }
+html[data-theme-family="modern"] .save-fav-btn {
+    background: var(--m-surface-2) !important;
+    border: none !important;
+    border-radius: 10px;
+    color: var(--m-text-4) !important;
+}
+html[data-theme-family="modern"] .save-fav-btn:hover { color: var(--m-gold) !important; background: var(--m-surface-3) !important; }
+html[data-theme-family="modern"] .save-fav-btn.on { color: var(--m-gold) !important; background: color-mix(in srgb, var(--m-gold) 14%, var(--m-surface-2)) !important; }
+html[data-theme-family="modern"] .save-select-close { border-radius: 8px; border-color: var(--m-border) !important; color: var(--m-text-2) !important; background: transparent !important; }
+html[data-theme-family="modern"] #saveSelectOverlay > .save-select-modal { padding: 0 !important; overflow: hidden; }
+html[data-theme-family="modern"] .save-rename-input { padding: 3px 8px !important; font-size: 13px; border-radius: 7px !important; }

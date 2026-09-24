@@ -1320,3 +1320,17 @@
         html[data-ui-mode="mobile"][data-mobile-panel="controls"] .display-area { display: none; }
         html[data-ui-mode="mobile"][data-mobile-panel="display"] .controls { display: none; }
                     
+
+        /* 세이브 이름 바꾸기 입력칸 (탭 더블클릭 / 설정 > 저장 목록의 ✎) */
+        .save-rename-input {
+            width: 150px;
+            max-width: 100%;
+            box-sizing: border-box;
+            background: #000;
+            border: 1px solid var(--tno-neon);
+            color: var(--tno-text);
+            font-family: inherit;
+            font-size: 0.85rem;
+            padding: 2px 6px;
+        }
+        .save-rename-input:focus { outline: none; box-shadow: 0 0 6px var(--tno-neon-dim); }

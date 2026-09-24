@@ -4240,6 +4240,7 @@
         window.onload = function() {
             let restored = false;
             let bootNewSaveName = null;
+            let bootPresetId = null;
             try {
                 loadAutosavePreference();
                 let bootSlotId = null;
@@ -4251,6 +4252,8 @@
                     sessionStorage.removeItem('dnoBootLoadSlotId');
                     bootNewSaveName = sessionStorage.getItem('dnoBootNewSaveName');
                     sessionStorage.removeItem('dnoBootNewSaveName');
+                    bootPresetId = sessionStorage.getItem('dnoBootPresetId');
+                    sessionStorage.removeItem('dnoBootPresetId');
                 } catch(e) { /* sessionStorage 접근 불가 — 일반 부팅으로 진행 */ }
                 if(bootImportedJSON) {
                     try { setAppState(JSON.parse(bootImportedJSON)); setActiveSlotId(null); restored = true; }
@@ -4266,12 +4269,47 @@
                 }
             } catch(e) { /* 자동저장 초기화 실패 — 기본 상태로 계속 진행 */ }
             if(!restored) { toggleSystem(); simulate(); refreshUI(); renderBillList(); renderArchiveList(); syncBillSelect(); elecRenderList(); elecRenderRecords(); updateNationIdBar(); updateDispInfoBar(); renderCabinetRoleLabelInputs(); }
+            // 프리셋으로 시작: 프리셋을 불러와 적용한 뒤에 새 세이브로 등록·자동저장한다 (먼저 자동저장하면
+            // 아직 적용 전인 기본 상태가 "기존 저장"을 덮어쓰게 되므로 그 전에는 저장하지 않음)
+            if(bootPresetId) { startFromPresetOnBoot(bootPresetId, bootNewSaveName); return; }
             try {
                 if(bootNewSaveName) createNamedSlotFromCurrentState(bootNewSaveName);
                 if(autosaveEnabled) { autosaveNow(); startAutosaveTimer(); }
                 renderSaveTabUI();
             } catch(e) { /* 자동저장 UI 갱신 실패는 앱 동작에 영향 없음 */ }
         };
+
+        // 이름이 겹치면 " (2)", " (3)"...을 붙여 비어 있는 이름을 만든다
+        function escapeHtmlText(text) {
+            const div = document.createElement('div');
+            div.textContent = text == null ? '' : String(text);
+            return div.innerHTML;
+        }
+
+        function uniqueSaveName(base) {
+            const names = new Set(loadSaveSlots().filter(s => !s.isAutosave).map(s => s.name));
+            if(!names.has(base) && base !== AUTOSAVE_SLOT_NAME) return base;
+            for(let i = 2; ; i++) { const n = `${base} (${i})`; if(!names.has(n)) return n; }
+        }
+
+        // 온보딩(main.html)에서 프리셋을 골라 들어온 경우 — 프리셋을 복제해 새 세이브로 만들고 그 세이브로 시작
+        async function startFromPresetOnBoot(presetId, name) {
+            let preset = null;
+            try {
+                preset = await DnoPresets.find(presetId);
+                const state = await DnoPresets.loadState(preset);
+                setAppState(state);
+                simulate(); refreshUI();
+                createNamedSlotFromCurrentState(uniqueSaveName(name || preset.title));
+            } catch(e) {
+                showCustomAlert('프리셋을 불러오지 못했습니다.');
+            }
+            try {
+                if(autosaveEnabled) { autosaveNow(); startAutosaveTimer(); }
+                renderSaveTabUI();
+            } catch(e) { /* 자동저장 UI 갱신 실패는 앱 동작에 영향 없음 */ }
+            if(preset && preset.tutorial && window.DnoTutorial) window.DnoTutorial.start();
+        }
 
         // ===== SAVE / LOAD (v5) =====
         function getAppState() {
@@ -4871,13 +4909,72 @@
             container.innerHTML = ordered.map(s => `
                 <div style="display:flex;align-items:center;gap:8px;padding:6px 8px;background:#0a0c10;border:1px solid ${s.isAutosave?'#2a4444':'#222'};margin-bottom:4px;${s.parentId?'margin-left:14px;':''}">
                     <div style="flex:1;min-width:0;overflow:hidden;">
-                        <div style="color:${s.isAutosave?'var(--tno-neon)':'#ccc'};font-size:0.85rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${s.isAutosave?'🔄 ':''}${s.name}</div>
+                        <div class="save-slot-name" data-slot-id="${s.id}" style="color:${s.isAutosave?'var(--tno-neon)':'#ccc'};font-size:0.85rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${s.isAutosave?'🔄 ':''}${escapeHtmlText(s.name)}</div>
                         <div style="color:#555;font-size:0.7rem;">${s.savedAt ? new Date(s.savedAt).toLocaleString('ko-KR') : '-'}</div>
                     </div>
                     <button class="add-btn" style="width:auto;margin-top:0;padding:4px 10px;font-size:0.8rem;" onclick="loadNamedSlot('${s.id}')">불러오기</button>
+                    ${s.isAutosave ? '' : `<button class="dup-btn" title="이름 변경" onclick="startRenameSaveSlotInList('${s.id}')">✎</button>`}
                     ${s.isAutosave ? '' : `<button class="remove-btn" onclick="deleteNamedSlot('${s.id}')">X</button>`}
                 </div>
             `).join('');
+        }
+
+        // ===== 세이브 이름 바꾸기 =====
+        // 이름 붙은 세이브만 바꿀 수 있고("기존 저장"은 예약), 연결된 전용 자동저장("{이름} 자동저장")도 함께 바뀐다.
+        // 세이브 id는 그대로라 즐겨찾기·활성 탭 등 id로 연결된 정보는 유지된다.
+        function renameNamedSlot(id, newName) {
+            const name = (newName || '').trim();
+            const slots = loadSaveSlots();
+            const slot = slots.find(s => s.id === id && !s.isAutosave);
+            if(!slot) return false;
+            if(!name || name === slot.name) return true;
+            if(name === AUTOSAVE_SLOT_NAME) { showCustomAlert(`"${AUTOSAVE_SLOT_NAME}"은(는) 예약된 이름입니다. 다른 이름을 입력하세요.`); return false; }
+            if(slots.some(s => !s.isAutosave && s.id !== id && s.name === name)) { showCustomAlert(`"${name}" 세이브가 이미 있습니다. 다른 이름을 입력하세요.`); return false; }
+            slot.name = name;
+            const companion = getNamedAutosaveSlot(slots, id);
+            if(companion) companion.name = `${name} 자동저장`;
+            if(!persistSaveSlots(slots)) { showCustomAlert('이름을 바꾸지 못했습니다. (브라우저 저장 공간이 부족할 수 있습니다)'); return false; }
+            renderSaveTabUI();
+            return true;
+        }
+
+        // 요소 안의 이름 글자를 입력칸으로 바꿔 그 자리에서 수정 — Enter/바깥 클릭은 확정, Esc는 취소
+        function inlineRenameEdit(el, currentName, onCommit) {
+            if(!el || el.querySelector('input')) return;
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.maxLength = 40;
+            input.value = currentName;
+            input.className = 'save-rename-input';
+            let done = false;
+            const finish = commit => {
+                if(done) return;
+                done = true;
+                if(!commit || !onCommit(input.value)) renderSaveTabUI();
+            };
+            input.addEventListener('keydown', e => {
+                e.stopPropagation();
+                if(e.key === 'Enter') { e.preventDefault(); finish(true); }
+                else if(e.key === 'Escape') { e.preventDefault(); finish(false); }
+            });
+            input.addEventListener('click', e => e.stopPropagation());
+            input.addEventListener('dblclick', e => e.stopPropagation());
+            input.addEventListener('blur', () => finish(true));
+            el.replaceChildren(input);
+            input.focus();
+            input.select();
+        }
+
+        function startRenameSaveTab(id) {
+            const slot = loadSaveSlots().find(s => s.id === id && !s.isAutosave);
+            const nameEl = document.querySelector(`.save-tab[data-slot-id="${id}"] .save-tab-name`);
+            if(slot && nameEl) inlineRenameEdit(nameEl, slot.name, v => renameNamedSlot(id, v));
+        }
+
+        function startRenameSaveSlotInList(id) {
+            const slot = loadSaveSlots().find(s => s.id === id && !s.isAutosave);
+            const nameEl = document.querySelector(`.save-slot-name[data-slot-id="${id}"]`);
+            if(slot && nameEl) inlineRenameEdit(nameEl, slot.name, v => renameNamedSlot(id, v));
         }
 
         // ===== 최상단 세이브 탭 바 (데스크톱 앱: 크롬 탭처럼 클릭으로 즉시 전환) =====
@@ -4896,8 +4993,8 @@
                     <span class="save-tab-name">${AUTOSAVE_SLOT_NAME}</span>
                 </div>`,
                 ...named.map(n => `
-                    <div class="save-tab${activeSlotId===n.id?' active':''}" onclick="switchToSaveTab('${n.id}')" title="${n.name}">
-                        <span class="save-tab-name">${n.name}</span>
+                    <div class="save-tab${activeSlotId===n.id?' active':''}" data-slot-id="${n.id}" onclick="switchToSaveTab('${n.id}')" ondblclick="startRenameSaveTab('${n.id}')" title="${escapeHtmlText(n.name)} — 더블클릭하면 이름 변경">
+                        <span class="save-tab-name">${escapeHtmlText(n.name)}</span>
                         <span class="save-tab-close" onclick="event.stopPropagation();deleteSaveTab('${n.id}')">×</span>
                     </div>
                 `)
@@ -4906,7 +5003,7 @@
                 <div class="save-tab-list">${tabsHtml}</div>
                 <div class="save-tab-new" id="saveTabNewBtn" onclick="showSaveTabNewMenu()" title="새 세이브">+</div>
                 <div class="save-tab-new-menu" id="saveTabNewMenu" style="display:none;">
-                    <div class="save-tab-new-menu-item" onclick="pendingPresetFile=null;showSaveTabNewInput();">🆕 새로 생성</div>
+                    <div class="save-tab-new-menu-item" onclick="pendingPresetId=null;showSaveTabNewInput();">🆕 새로 생성</div>
                     <div class="save-tab-new-menu-item" onclick="showSaveTabPresetList()">📦 프리셋에서 생성</div>
                 </div>
                 <div class="save-tab-preset-list" id="saveTabPresetList" style="display:none;"></div>
@@ -4928,7 +5025,7 @@
 
         function showSaveTabNewMenu() {
             hideSaveTabAllPopups();
-            pendingPresetFile = null;
+            pendingPresetId = null;
             const menu = document.getElementById('saveTabNewMenu');
             if(menu) menu.style.display = 'flex';
         }
@@ -4939,13 +5036,13 @@
             const wrap = document.getElementById('saveTabNewInputWrap');
             wrap.style.display = 'flex';
             const input = document.getElementById('saveTabNewInput');
-            if(!pendingPresetFile) input.value = '';
+            if(!pendingPresetId) input.value = '';
             input.focus();
             input.select();
         }
 
         function hideSaveTabNewInput() {
-            pendingPresetFile = null;
+            pendingPresetId = null;
             hideSaveTabAllPopups();
             const btn = document.getElementById('saveTabNewBtn');
             const wrap = document.getElementById('saveTabNewInputWrap');
@@ -4958,18 +5055,12 @@
         // 고르면 presets/<file>을 그 상태 그대로 새 탭(세이브)에 담아 즉시 전환한다.
         // 개발자/배포자가 presets/ 폴더에 .json 파일을 추가하고 index.json에
         // 등록하기만 하면 누구나 그 프리셋을 쓸 수 있다 (자세한 방법은 README 참고).
-        const PRESET_INDEX_URL = 'presets/index.json';
+        // (목록·불러오기는 js/presets.js의 DnoPresets가 담당 — 내장 프리셋 + presets/index.json)
         let presetListCache = null;
-        let pendingPresetFile = null;
+        let pendingPresetId = null;
 
         async function loadPresetList() {
-            if(presetListCache) return presetListCache;
-            try {
-                const res = await fetch(PRESET_INDEX_URL);
-                if(!res.ok) throw new Error('index fetch failed');
-                const list = await res.json();
-                presetListCache = Array.isArray(list) ? list.filter(p => p && p.file && p.title) : [];
-            } catch(e) { presetListCache = []; }
+            if(!presetListCache) presetListCache = window.DnoPresets ? await DnoPresets.list() : [];
             return presetListCache;
         }
 
@@ -4984,16 +5075,16 @@
                 wrap.innerHTML = `<div class="save-tab-preset-empty">등록된 프리셋이 없습니다</div>`;
                 return;
             }
-            wrap.innerHTML = list.map((p, i) => `<div class="save-tab-preset-item" onclick="selectPresetForNewTab(${i})">${p.title}</div>`).join('');
+            wrap.innerHTML = list.map((p, i) => `<div class="save-tab-preset-item" onclick="selectPresetForNewTab(${i})">${escapeHtmlText(p.title)}</div>`).join('');
         }
 
         function selectPresetForNewTab(index) {
             const preset = (presetListCache || [])[index];
             if(!preset) return;
-            pendingPresetFile = preset.file;
+            pendingPresetId = preset.id;
             showSaveTabNewInput();
             const input = document.getElementById('saveTabNewInput');
-            input.value = preset.title;
+            input.value = uniqueSaveName(preset.title);
         }
 
         // "+" 탭에서 새 이름을 입력해 확인 — saveNamedSlot()과 동일한 검증(예약어/중복/최대 개수)을
@@ -5008,25 +5099,24 @@
             if(namedSlotsCheck.some(s => s.name === name)) { showCustomAlert(`"${name}" 세이브가 이미 있습니다. 다른 이름을 입력하세요.`); return; }
             if(namedSlotsCheck.length >= MAX_SAVE_SLOTS) { showCustomAlert(`저장 슬롯은 최대 ${MAX_SAVE_SLOTS}개까지 만들 수 있습니다. 기존 슬롯을 삭제한 뒤 다시 시도하세요.`); return; }
 
-            const presetFile = pendingPresetFile;
-            let presetState = null;
-            if(presetFile) {
+            const presetId = pendingPresetId;
+            let presetState = null, presetMeta = null;
+            if(presetId) {
                 try {
-                    const res = await fetch('presets/' + presetFile);
-                    if(!res.ok) throw new Error('preset fetch failed');
-                    presetState = await res.json();
+                    presetMeta = await DnoPresets.find(presetId);
+                    presetState = await DnoPresets.loadState(presetMeta);
                 } catch(e) { showCustomAlert('프리셋을 불러오지 못했습니다.'); return; }
             }
 
             if(autosaveEnabled) autosaveNow(); // 지금 탭(있다면)의 진행 상황을 먼저 그 탭 전용 자동저장에 남겨둠
-            const state = presetFile ? presetState : getAppState();
+            const state = presetId ? presetState : getAppState();
             const slots = loadSaveSlots();
             const id = 'slot'+Date.now();
             const now = new Date().toISOString();
             slots.push({ id, name, isAutosave: false, createdAt: now, savedAt: now, state });
             persistSaveSlots(slots);
 
-            if(presetFile) {
+            if(presetId) {
                 try { setAppState(state); }
                 catch(e) { showCustomAlert('프리셋 데이터 형식이 올바르지 않습니다.'); return; }
                 simulate(); refreshUI();
@@ -5034,6 +5124,7 @@
             setActiveSlotId(id);
             hideSaveTabNewInput();
             renderSaveTabUI();
+            if(presetMeta && presetMeta.tutorial && window.DnoTutorial) window.DnoTutorial.start();
         }
 
         function deleteSaveTab(id) {

@@ -13,6 +13,7 @@
 
     <link rel="stylesheet" href="css/main.css">
     <link rel="stylesheet" href="css/modern.css">
+    <script src="js/presets.js"></script>
 
     <script src="js/maintenance.js"></script>
 </head>
@@ -123,26 +124,37 @@
     </div>
 
     <div class="save-select-overlay" id="saveSelectOverlay" style="display:none;">
-        <div class="save-select-modal">
+        <div class="save-select-modal save-select-wide">
             <div class="corner top-left"></div>
             <div class="corner bottom-right"></div>
             <div class="save-select-head">
                 <span>SAVE SELECT</span>
                 <button class="save-select-close" onclick="closeSaveSelectModal()">X</button>
             </div>
-            <div class="save-select-body">
-                <div class="settings-label">새 세이브 만들기</div>
-                <div class="save-select-new-row">
-                    <input type="text" id="newSaveNameInput" placeholder="예: 2차 총선 직후" maxlength="40" onkeydown="if(event.key==='Enter'){event.preventDefault();startNewSave();}">
-                    <button class="menu-btn save-select-start-btn" onclick="startNewSave()">생성 후 시작</button>
-                </div>
-
-                <div class="settings-label" style="margin-top:22px;">이어하기</div>
-                <div class="save-select-list" id="saveSelectList"></div>
-                <input type="file" id="saveFileInput" accept=".json,application/json" style="position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;" onchange="importSaveFile(this)">
-                <button class="save-select-item save-select-import-btn" onclick="document.getElementById('saveFileInput').click()">
-                    <span class="save-select-item-name">📁 저장 파일(.json) 불러오기</span>
-                </button>
+            <div class="save-select-columns">
+                <!-- 왼쪽: 새로 시작 (빈 세이브 / 프리셋 복제) -->
+                <section class="save-select-col save-select-col-presets">
+                    <div class="save-select-col-title">새로 시작</div>
+                    <div class="settings-label">빈 세이브</div>
+                    <div class="save-select-new-row">
+                        <input type="text" id="newSaveNameInput" placeholder="예: 2차 총선 직후" maxlength="40" onkeydown="if(event.key==='Enter'){event.preventDefault();startNewSave();}">
+                        <button class="menu-btn save-select-start-btn" onclick="startNewSave()">생성 후 시작</button>
+                    </div>
+                    <div class="settings-label" style="margin-top:22px;">프리셋 — 고르면 복사본이 새 세이브로 만들어집니다</div>
+                    <div class="save-select-list" id="presetSelectList"></div>
+                </section>
+                <!-- 오른쪽: 저장 파일 (검색·즐겨찾기) -->
+                <section class="save-select-col save-select-col-saves">
+                    <div class="save-select-col-title">이어하기</div>
+                    <div class="save-select-search">
+                        <input type="search" id="saveSearchInput" placeholder="세이브 검색" maxlength="40" oninput="renderSaveSelectList()">
+                    </div>
+                    <div class="save-select-list" id="saveSelectList"></div>
+                    <input type="file" id="saveFileInput" accept=".json,application/json" style="position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;" onchange="importSaveFile(this)">
+                    <button class="save-select-item save-select-import-btn" onclick="document.getElementById('saveFileInput').click()">
+                        <span class="save-select-item-name">📁 저장 파일(.json) 불러오기</span>
+                    </button>
+                </section>
             </div>
         </div>
     </div>
@@ -211,45 +223,100 @@
             catch(e) { return []; }
         }
 
+        // 즐겨찾기는 세이브 슬롯 배열과 따로 보관 — dno.js가 슬롯 배열을 통째로 다시 쓰더라도 지워지지 않게
+        const SAVE_FAVORITES_KEY = 'dnoSaveFavorites';
+        const MAX_SAVE_SLOTS = 20; // dno.js와 동일 (전용 자동저장 슬롯 제외)
+        function loadFavorites() {
+            try { return new Set(JSON.parse(localStorage.getItem(SAVE_FAVORITES_KEY) || '[]')); } catch(e) { return new Set(); }
+        }
+        function toggleFavorite(id) {
+            const fav = loadFavorites();
+            if(fav.has(id)) fav.delete(id); else fav.add(id);
+            try { localStorage.setItem(SAVE_FAVORITES_KEY, JSON.stringify(Array.from(fav))); } catch(e) {}
+            renderSaveSelectList();
+        }
+
         function renderSaveSelectList() {
             const container = document.getElementById('saveSelectList');
             const all = loadSaveSlotsForMenu();
+            const fav = loadFavorites();
+            const query = (document.getElementById('saveSearchInput')?.value || '').trim().toLowerCase();
+            const byTime = (a, b) => new Date(b.savedAt||0) - new Date(a.savedAt||0);
             const defaultAuto = all.find(s => s.isAutosave && !s.parentId);
-            const named = all.filter(s => !s.isAutosave).sort((a,b) => new Date(b.savedAt||0) - new Date(a.savedAt||0));
+            const named = all.filter(s => !s.isAutosave).sort(byTime);
+            // 즐겨찾기한 세이브가 맨 위, 그다음 기본 자동저장, 나머지는 최근 저장 순 — 전용 자동저장은 부모 바로 아래
+            const tops = [...named.filter(n => fav.has(n.id)), ...(defaultAuto ? [defaultAuto] : []), ...named.filter(n => !fav.has(n.id))];
+            if(defaultAuto && fav.has(defaultAuto.id)) { tops.splice(tops.indexOf(defaultAuto), 1); tops.unshift(defaultAuto); }
             const ordered = [];
-            if(defaultAuto) ordered.push(defaultAuto);
-            named.forEach(n => {
+            tops.forEach(n => {
                 ordered.push(n);
-                const companion = all.find(s => s.isAutosave && s.parentId === n.id);
-                if(companion) ordered.push(companion);
+                if(!n.isAutosave) {
+                    const companion = all.find(s => s.isAutosave && s.parentId === n.id);
+                    if(companion) ordered.push(companion);
+                }
             });
-            if(ordered.length === 0) {
-                container.innerHTML = '<div style="color:#444;font-size:0.85rem;padding:8px 0;">저장된 세이브가 없습니다. 새 세이브를 만들어 시작하세요.</div>';
+            const matches = s => !query || String(s.name || '').toLowerCase().includes(query);
+            const shown = ordered.filter(matches);
+            if(all.length === 0) {
+                container.innerHTML = '<div class="save-select-empty">저장된 세이브가 없습니다. 왼쪽에서 새로 시작하세요.</div>';
                 return;
             }
-            container.innerHTML = ordered.map(s => `
-                <button class="save-select-item${s.isAutosave ? ' save-select-item-auto' : ''}" onclick="continueSave('${s.id}')">
-                    <span class="save-select-item-name">${s.isAutosave ? '🔄 ' : ''}${escapeSaveName(s.name)}</span>
-                    <span class="save-select-item-time">${s.savedAt ? new Date(s.savedAt).toLocaleString('ko-KR') : '-'}</span>
-                </button>
-            `).join('');
+            if(shown.length === 0) {
+                container.innerHTML = '<div class="save-select-empty">검색 결과가 없습니다.</div>';
+                return;
+            }
+            container.innerHTML = shown.map(s => {
+                const isFav = fav.has(s.id);
+                const isCompanion = s.isAutosave && s.parentId;
+                return `
+                <div class="save-select-row${isCompanion ? ' save-select-row-companion' : ''}">
+                    ${isCompanion ? '' : `<button class="save-fav-btn${isFav ? ' on' : ''}" onclick="toggleFavorite('${s.id}')" title="${isFav ? '즐겨찾기 해제' : '즐겨찾기'}" aria-pressed="${isFav}">${isFav ? '★' : '☆'}</button>`}
+                    <button class="save-select-item${s.isAutosave ? ' save-select-item-auto' : ''}" onclick="continueSave('${s.id}')">
+                        <span class="save-select-item-name">${s.isAutosave ? '🔄 ' : ''}${escapeSaveName(s.name)}</span>
+                        <span class="save-select-item-time">${s.savedAt ? new Date(s.savedAt).toLocaleString('ko-KR') : '-'}</span>
+                    </button>
+                </div>`;
+            }).join('');
+        }
+
+        async function renderPresetSelectList() {
+            const container = document.getElementById('presetSelectList');
+            container.innerHTML = '<div class="save-select-empty">불러오는 중...</div>';
+            const list = window.DnoPresets ? await DnoPresets.list() : [];
+            if(list.length === 0) {
+                container.innerHTML = '<div class="save-select-empty">등록된 프리셋이 없습니다.</div>';
+                return;
+            }
+            container.innerHTML = list.map((p, i) => `
+                <button class="save-select-item preset-card${p.tutorial ? ' preset-card-tutorial' : ''}" onclick="startFromPreset(${i})">
+                    <span class="preset-card-top">
+                        <span class="save-select-item-name">${escapeSaveName(p.title)}</span>
+                        ${p.tutorial ? '<span class="preset-badge">튜토리얼</span>' : ''}
+                    </span>
+                    ${p.description ? `<span class="preset-card-desc">${escapeSaveName(p.description)}</span>` : ''}
+                </button>`).join('');
+            container.dataset.count = String(list.length);
         }
 
         function escapeSaveName(name) {
             const div = document.createElement('div');
-            div.textContent = name;
+            div.textContent = name == null ? '' : String(name);
             return div.innerHTML;
         }
 
         function openSaveSelectModal() {
             document.getElementById('newSaveNameInput').value = '';
+            document.getElementById('saveSearchInput').value = '';
             renderSaveSelectList();
+            renderPresetSelectList();
             document.getElementById('saveSelectOverlay').style.display = 'flex';
         }
 
         function closeSaveSelectModal() {
             document.getElementById('saveSelectOverlay').style.display = 'none';
         }
+
+        function namedSlotCount() { return loadSaveSlotsForMenu().filter(s => !s.isAutosave).length; }
 
         function startNewSave() {
             const input = document.getElementById('newSaveNameInput');
@@ -260,7 +327,22 @@
                 alert(`"${name}" 세이브가 이미 있습니다. 다른 이름을 입력하세요.`);
                 return;
             }
+            if(namedSlotCount() >= MAX_SAVE_SLOTS) { alert(`저장 슬롯은 최대 ${MAX_SAVE_SLOTS}개까지 만들 수 있습니다. 기존 세이브를 삭제한 뒤 다시 시도하세요.`); return; }
             try { sessionStorage.setItem('dnoBootNewSaveName', name); } catch(e) {}
+            location.href = 'dno.html';
+        }
+
+        // 프리셋을 고르면 그 상태의 복사본을 새 세이브(프리셋 제목, 겹치면 번호 붙임)로 만들어 바로 시작 —
+        // 실제 복제는 dno.html이 프리셋을 불러온 뒤에 한다
+        async function startFromPreset(index) {
+            const list = window.DnoPresets ? await DnoPresets.list() : [];
+            const preset = list[index];
+            if(!preset) return;
+            if(namedSlotCount() >= MAX_SAVE_SLOTS) { alert(`저장 슬롯은 최대 ${MAX_SAVE_SLOTS}개까지 만들 수 있습니다. 기존 세이브를 삭제한 뒤 다시 시도하세요.`); return; }
+            try {
+                sessionStorage.setItem('dnoBootPresetId', preset.id);
+                sessionStorage.setItem('dnoBootNewSaveName', preset.title);
+            } catch(e) {}
             location.href = 'dno.html';
         }
 

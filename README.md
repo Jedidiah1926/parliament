@@ -151,7 +151,9 @@ npm run build:win     # Windows 설치형 exe 빌드 → dist/DATANET Parliament
 
 ### 프리셋 추가하는 법
 
-`presets/` 폴더의 `index.json`이 프리셋 목록(제목 + 파일명)을 관리합니다. 새 프리셋을 추가하려면:
+프리셋은 시작 화면(세이브 선택)의 왼쪽 목록과, 게임 안 "+" 탭의 "프리셋에서 생성" 목록에 표시됩니다. 프리셋을 고르면 그 상태의 **복사본이 새 세이브로** 만들어지므로 원본 프리셋은 바뀌지 않습니다.
+
+`presets/` 폴더의 `index.json`이 배포자가 추가하는 프리셋 목록을 관리합니다. 새 프리셋을 추가하려면:
 
 1. 게임에서 원하는 시나리오 상태를 만든 뒤, 국가 > 설정 > 저장 탭의 **SAVE**(파일로 저장) 버튼으로 `.json` 파일을 하나 받습니다.
 2. 그 파일을 `presets/` 폴더 안에 넣습니다 (예: `presets/founding_1948.json`).
@@ -159,11 +161,13 @@ npm run build:win     # Windows 설치형 exe 빌드 → dist/DATANET Parliament
 
 ```json
 [
-  { "file": "founding_1948.json", "title": "건국 초기 (1948)" }
+  { "file": "founding_1948.json", "title": "건국 초기 (1948)", "description": "선택 — 목록에 함께 표시되는 설명" }
 ]
 ```
 
-`title`이 "프리셋에서 생성" 목록에 그대로 표시됩니다. 이렇게 등록해두면 이 저장소로 배포되는 모든 사용자가 같은 프리셋을 바로 쓸 수 있습니다 (사용자가 직접 파일을 올리는 기능과는 별개로, 개발자/배포자가 미리 준비해두는 방식입니다).
+`title`이 목록에 그대로 표시되고, `"tutorial": true`를 넣으면 그 프리셋으로 시작할 때 조작법 튜토리얼이 함께 켜집니다.
+
+> `index.json` 방식은 `fetch`를 쓰기 때문에 웹(http)으로 열었을 때만 동작합니다. 데스크톱 앱(Electron)은 파일(`file://`)로 열려 JSON을 읽을 수 없으므로, 앱과 함께 기본 제공되는 **내장 프리셋**은 `presets/*.js`로 감싸 두고 `js/presets.js`의 `BUILTIN` 목록에 등록합니다 (예: 튜토리얼 공화국 — `presets/tutorial.js`).
 
 **SAVE** 버튼을 누르면 현재 상태 전체를 `.json` 파일로 저장합니다.
 
