@@ -1,15 +1,15 @@
-// ===== DATANET PARLIAMENT SIMULATION — 모던(라이트/다크) 세로 탭 사이드바 =====
-// 라이트/다크 모드의 데스크톱 화면에서, 메인 탭(의회/국가/여론/내각)을 접을 수 있는 그룹으로,
-// 그 아래 2단 탭을 항목으로 보여주는 세로 사이드바를 .controls 왼쪽에 만든다.
+// ===== DATANET PARLIAMENT SIMULATION — 세로 탭 사이드바 =====
+// 데스크톱 화면에서 메인 탭(의회/국가/여론/내각)을 접을 수 있는 그룹으로, 그 아래 2단 탭을
+// 항목으로 보여주는 세로 사이드바를 .controls 왼쪽에 만든다 (모든 테마 공통).
 // 사이드바는 기존 탭 버튼을 그대로 복제·클릭하는 "리모컨"일 뿐이라 탭 전환 로직은 전혀 바꾸지 않으며,
 // MutationObserver로 원래 버튼의 활성/표시/라벨(언어 전환 포함) 변화를 따라간다.
-// 네온 모드와 모바일 화면 모드에서는 CSS(modern.css)가 사이드바를 숨기고 기존 가로 탭을 그대로 쓴다.
+// 모양은 css/sidenav.css(네온 기본) + css/modern.css(라이트/다크), 모바일 화면 모드에선 숨기고 기존 가로 탭을 쓴다.
 (function () {
     'use strict';
 
-    const COLLAPSE_KEY = 'dnoModernNavCollapsed';
-    const CLOSED_GROUPS_KEY = 'dnoModernNavClosedGroups';
-    // Chrome 탭 그룹처럼 그룹마다 구분색 — 토큰(--m-info 등)이라 라이트/다크에 맞춰 자동으로 바뀐다
+    const COLLAPSE_KEY = 'dnoSideNavCollapsed';
+    const CLOSED_GROUPS_KEY = 'dnoSideNavClosedGroups';
+    // Chrome 탭 그룹처럼 그룹마다 구분색 — 실제 색은 테마별 CSS가 data-tone에 맞춰 정한다
     const GROUP_TONES = { setup: 'info', nation: 'danger', election: 'gold', cabinet: 'success' };
 
     function safeGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
@@ -41,8 +41,8 @@
         if (!controls || !mainBtns.length) return;
 
         const nav = document.createElement('nav');
-        nav.className = 'modern-nav';
-        nav.id = 'modernNav';
+        nav.className = 'side-nav';
+        nav.id = 'sideNav';
         nav.setAttribute('aria-label', '메뉴');
         nav.innerHTML = `
             <div class="mn-head">
@@ -95,7 +95,7 @@
             });
             head.addEventListener('click', () => {
                 // 접힌 사이드바(아이콘만)에서는 그룹을 여닫지 않고 그 메뉴로 바로 이동
-                if (document.body.classList.contains('modern-nav-collapsed') || !items.length) {
+                if (document.body.classList.contains('side-nav-collapsed') || !items.length) {
                     mainBtn.click();
                     return;
                 }
@@ -160,14 +160,14 @@
 
         const collapseBtn = nav.querySelector('#mnCollapseBtn');
         function applyCollapsed(on) {
-            document.body.classList.toggle('modern-nav-collapsed', on);
+            document.body.classList.toggle('side-nav-collapsed', on);
             // 폭이 바뀌면 캔버스들이 ResizeObserver로 다시 그려진다 — 여기선 상태만 저장
             safeSet(COLLAPSE_KEY, on ? '1' : '0');
         }
-        collapseBtn.addEventListener('click', () => applyCollapsed(!document.body.classList.contains('modern-nav-collapsed')));
+        collapseBtn.addEventListener('click', () => applyCollapsed(!document.body.classList.contains('side-nav-collapsed')));
         applyCollapsed(safeGet(COLLAPSE_KEY) === '1');
 
-        document.body.classList.add('has-modern-nav');
+        document.body.classList.add('has-side-nav');
         sync();
     }
 

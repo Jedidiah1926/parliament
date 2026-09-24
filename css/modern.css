@@ -12,7 +12,7 @@
         (텍스트는 밝기 위계를 그대로, 어두운 배경은 표면색으로, 채도 있는 색은 의미별 색으로)
      4. 컴포넌트 (레이아웃·탭·입력·카드·버튼·대화상자)
      5. 기타 페이지 (메인/설정·로드맵·점검·맵 메이커)
-     6. 세로 탭 사이드바 (js/modernnav.js)
+     6. 세로 탭 사이드바 (js/sidenav.js)
 
    인라인 style=""과 페이지 CSS를 덮어써야 하는 곳이 많아 !important를 의도적으로 쓴다.
    ===================================================================== */
@@ -2609,119 +2609,98 @@ html[data-theme-family="modern"] .item { border-bottom-color: var(--m-border) !i
 html[data-theme-family="modern"] .small,
 html[data-theme-family="modern"] footer { color: var(--m-text-3) !important; }
 
-/* ===================== 6. 세로 탭 사이드바 (js/modernnav.js) ===================== */
-/* 기본은 숨김 — 라이트/다크 + 데스크톱 화면 모드에서만 보이고, 그때는 기존 가로 탭 줄과 헤더 띠를 숨긴다 */
-.modern-nav, .mn-section-title { display: none; }
-html[data-theme-family="modern"]:not([data-ui-mode="mobile"]) body.has-modern-nav .main-tab-container,
-html[data-theme-family="modern"]:not([data-ui-mode="mobile"]) body.has-modern-nav .main-tab-content > .sub-tab-container,
-html[data-theme-family="modern"]:not([data-ui-mode="mobile"]) body.has-modern-nav .tno-header-strip,
-html[data-theme-family="modern"]:not([data-ui-mode="mobile"]) body.has-modern-nav .nation-id-bar { display: none !important; }
-
-html[data-theme-family="modern"]:not([data-ui-mode="mobile"]) body.has-modern-nav .modern-nav {
-    display: flex;
-    flex-direction: column;
-    flex: 0 0 220px;
-    min-width: 0;
-    margin-right: 12px;
-    overflow: hidden;
-    transition: flex-basis .18s ease;
+/* ===================== 6. 세로 탭 사이드바 (js/sidenav.js) ===================== */
+/* 레이아웃·표시 규칙과 네온 모양은 css/sidenav.css — 여기선 라이트/다크 모양만 덮어쓴다 */
+html[data-theme-family="modern"] .side-nav {
+    background: none !important;
+    border: none !important;
 }
-html[data-theme-family="modern"]:not([data-ui-mode="mobile"]) body.has-modern-nav.modern-nav-collapsed .modern-nav { flex-basis: 52px; }
-
-html[data-theme-family="modern"] .mn-head { display: flex; align-items: flex-start; gap: 6px; padding: 4px 2px 16px 8px; }
-html[data-theme-family="modern"] .mn-brand { flex: 1; min-width: 0; padding-top: 5px; }
-html[data-theme-family="modern"] .mn-brand-title,
-html[data-theme-family="modern"] .mn-brand-sub { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-html[data-theme-family="modern"] .mn-brand-title { font-size: 14px; font-weight: 700; color: var(--m-text); }
-html[data-theme-family="modern"] .mn-brand-sub { font-size: 12px; color: var(--m-text-3); margin-top: 2px; }
+html[data-theme-family="modern"]:not([data-ui-mode="mobile"]) body.has-side-nav.side-nav-collapsed .side-nav { flex-basis: 52px; }
+html[data-theme-family="modern"] .mn-head {
+    background: none !important;
+    border-bottom: none !important;
+    padding: 4px 2px 16px 8px;
+}
+html[data-theme-family="modern"] .mn-brand { padding-top: 5px; align-self: flex-start; }
+html[data-theme-family="modern"] .mn-brand-title { display: block; font-size: 14px; font-weight: 700; color: var(--m-text); white-space: nowrap; }
+html[data-theme-family="modern"] .mn-brand-sub { font-size: 12px; color: var(--m-text-3) !important; margin-top: 2px; white-space: nowrap; line-height: normal; }
 html[data-theme-family="modern"] .mn-collapse {
-    flex: 0 0 auto;
     width: 34px; height: 34px;
-    display: grid; place-items: center;
     background: transparent !important;
     border: none !important;
     border-radius: 9px;
     color: var(--m-text-3) !important;
-    cursor: pointer;
 }
 html[data-theme-family="modern"] .mn-collapse:hover { background: var(--m-surface-3) !important; color: var(--m-text) !important; }
 
-html[data-theme-family="modern"] .mn-groups { flex: 1; overflow-y: auto; overflow-x: hidden; display: flex; flex-direction: column; gap: 10px; padding: 0 2px 12px; }
+html[data-theme-family="modern"] .mn-groups { gap: 10px; padding: 0 2px 12px; }
 html[data-theme-family="modern"] .mn-group[data-tone="info"] { --tone: var(--m-info); }
 html[data-theme-family="modern"] .mn-group[data-tone="danger"] { --tone: var(--m-danger); }
 html[data-theme-family="modern"] .mn-group[data-tone="gold"] { --tone: var(--m-gold); }
 html[data-theme-family="modern"] .mn-group[data-tone="success"] { --tone: var(--m-success); }
 html[data-theme-family="modern"] .mn-group-head {
-    width: 100%;
-    display: flex; align-items: center; gap: 8px;
     padding: 7px 10px;
     background: color-mix(in srgb, var(--tone) 13%, transparent) !important;
     border: none !important;
     border-radius: 9px !important;
     color: color-mix(in srgb, var(--tone) 78%, var(--m-text)) !important;
     font-size: 13px; font-weight: 700;
-    cursor: pointer;
 }
 html[data-theme-family="modern"] .mn-group-head:hover { background: color-mix(in srgb, var(--tone) 20%, transparent) !important; }
-html[data-theme-family="modern"] .mn-icon { flex: 0 0 18px; text-align: center; font-size: 14px; line-height: 1; }
-html[data-theme-family="modern"] .mn-label { flex: 1; min-width: 0; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-html[data-theme-family="modern"] .mn-chev { flex: 0 0 auto; opacity: .7; transition: transform .15s; }
-html[data-theme-family="modern"] .mn-group.closed .mn-chev { transform: rotate(180deg); }
+html[data-theme-family="modern"] .mn-icon { font-size: 14px; }
+html[data-theme-family="modern"] .mn-chev { opacity: .7; }
 html[data-theme-family="modern"] .mn-items {
-    display: flex; flex-direction: column; gap: 2px;
     margin: 5px 0 0 11px;
     padding-left: 8px;
     border-left: 2px solid color-mix(in srgb, var(--tone) 50%, transparent);
 }
-html[data-theme-family="modern"] .mn-group.closed .mn-items { display: none; }
 html[data-theme-family="modern"] .mn-item {
-    display: block;
-    text-align: left;
     background: transparent !important;
     border: none !important;
     border-radius: 8px !important;
     padding: 7px 10px;
     font-size: 13.5px;
     color: var(--m-text-2) !important;
-    cursor: pointer;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 html[data-theme-family="modern"] .mn-item:hover { background: var(--m-surface-3) !important; color: var(--m-text) !important; }
-html[data-theme-family="modern"] body.has-modern-nav .mn-item.active {
+html[data-theme-family="modern"] body.has-side-nav .mn-item.active {
     background: var(--m-surface) !important;
     color: var(--m-text) !important;
     font-weight: 600;
     box-shadow: var(--m-shadow-sm), inset 0 0 0 1px var(--m-border) !important;
 }
 html[data-theme-family="modern"] .mn-item.danger { color: var(--m-danger) !important; }
-html[data-theme-family="modern"] .mn-item:disabled { opacity: .45; cursor: not-allowed; }
 
-/* 접힌 사이드바: 그룹 아이콘만 세로로 */
-html[data-theme-family="modern"] body.modern-nav-collapsed .mn-head { flex-direction: column; align-items: center; padding: 4px 0 16px; }
-html[data-theme-family="modern"] body.modern-nav-collapsed .mn-brand,
-html[data-theme-family="modern"] body.modern-nav-collapsed .mn-label,
-html[data-theme-family="modern"] body.modern-nav-collapsed .mn-chev,
-html[data-theme-family="modern"] body.modern-nav-collapsed .mn-items { display: none !important; }
-html[data-theme-family="modern"] body.modern-nav-collapsed .mn-groups { gap: 6px; padding: 0 4px; }
-html[data-theme-family="modern"] body.modern-nav-collapsed .mn-group-head { justify-content: center; padding: 10px 0; }
-html[data-theme-family="modern"] body.modern-nav-collapsed .mn-group.active .mn-group-head { box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--tone) 70%, transparent) !important; }
+html[data-theme-family="modern"] body.side-nav-collapsed .mn-head { padding: 4px 0 16px; }
+html[data-theme-family="modern"] body.side-nav-collapsed .mn-groups { gap: 6px; padding: 0 4px; }
+html[data-theme-family="modern"] body.side-nav-collapsed .mn-group-head { padding: 10px 0; }
+html[data-theme-family="modern"] body.side-nav-collapsed .mn-group.active .mn-group-head { box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--tone) 70%, transparent) !important; }
 
-/* 편집 패널 머리: 현재 위치(그룹 › 항목) */
-html[data-theme-family="modern"]:not([data-ui-mode="mobile"]) body.has-modern-nav .mn-section-title {
+/* 편집 패널 머리: 라이트/다크에선 헤더 띠 대신 현재 위치(그룹 › 항목) */
+html[data-theme-family="modern"]:not([data-ui-mode="mobile"]) body.has-side-nav .tno-header-strip { display: none !important; }
+html[data-theme-family="modern"]:not([data-ui-mode="mobile"]) body.has-side-nav .mn-section-title {
     display: flex;
     align-items: baseline;
     gap: 8px;
-    padding: 18px 20px 14px;
-    border-bottom: 1px solid var(--m-border);
-    font-size: 17px;
-    font-weight: 700;
-    color: var(--m-text);
     white-space: nowrap;
     overflow: hidden;
 }
-html[data-theme-family="modern"] .mn-crumb { color: var(--m-text-3); font-weight: 600; font-size: 14px; }
-html[data-theme-family="modern"] .mn-crumb-sep { color: var(--m-text-4); font-weight: 400; font-size: 14px; }
-html[data-theme-family="modern"] .mn-crumb-current { overflow: hidden; text-overflow: ellipsis; }
+html[data-theme-family="modern"] .mn-section-title {
+    justify-content: flex-start;
+    background: none !important;
+    border-bottom: 1px solid var(--m-border) !important;
+    padding: 18px 20px 14px;
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--m-text) !important;
+}
+html[data-theme-family="modern"] .mn-crumb { color: var(--m-text-3) !important; font-weight: 600; font-size: 14px; }
+html[data-theme-family="modern"] .mn-crumb-sep { color: var(--m-text-4) !important; font-weight: 400; font-size: 14px; }
+
+/* 상단 세이브 탭 바: 탭 높이를 바 높이에 정확히 맞춰 세로 스크롤바가 생기지 않게 */
+html[data-theme-family="modern"] .save-tab-list { overflow-y: hidden; }
+html[data-theme-family="modern"] .save-tab { margin: 6px 2px 0; }
+html[data-theme-family="modern"] .save-tab.active { margin-bottom: 0; border-bottom: none !important; }
 
 /* 네온 모드의 터미널 기호("> 제목", ">> 버튼 <<")는 모던 모드에서 숨김 */
 html[data-theme-family="modern"] .tno-prompt { display: none; }
