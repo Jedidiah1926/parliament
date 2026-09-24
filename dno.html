@@ -13,6 +13,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/neodgm/neodgm-webfont@latest/neodgm/style.css">
 
     <link rel="stylesheet" href="css/dno.css">
+    <link rel="stylesheet" href="css/modern.css">
 </head>
 <body>
 
@@ -508,7 +509,7 @@
                     <button onclick="cancelAmendment()" title="취소">✕</button>
                 </div>
                 <div class="vote-panel" style="margin-bottom:10px;">
-                    <div class="vote-panel-title">> 새 법안 작성 (NEW BILL)</div>
+                    <div class="vote-panel-title"><span class="tno-prompt">&gt; </span>새 법안 작성 (NEW BILL)</div>
                     <input type="text" class="vote-bill-input" id="newBillTitle" placeholder="법안 제목..." style="margin-bottom:6px;">
                     <textarea id="newBillContent" placeholder="법안 내용을 입력하세요..." style="
                         background:#000; border:1px solid var(--tno-border); color:#ccc;
@@ -537,7 +538,7 @@
 
                 <!-- 기존 법안 수정 -->
                 <div class="vote-panel">
-                    <div class="vote-panel-title">> 기존 법안 수정 (EDIT BILL)</div>
+                    <div class="vote-panel-title"><span class="tno-prompt">&gt; </span>기존 법안 수정 (EDIT BILL)</div>
                     <select id="editBillSelect" style="width:100%; background:#000; border:1px solid var(--tno-border); color:var(--tno-gold); font-family:'NeoDunggeunmo','VT323',monospace; font-size:0.95rem; padding:6px;margin-bottom:10px;" onchange="selectBillForEdit(this.value)">
                         <option value="">-- 수정할 법안 선택 --</option>
                     </select>
@@ -586,7 +587,7 @@
             <div id="contentVote" class="sub-tab-content">
                 <!-- 법안 선택 -->
                 <div class="vote-panel" style="margin-bottom:10px;">
-                    <div class="vote-panel-title">> 심의 법안 선택 (SELECT BILL)</div>
+                    <div class="vote-panel-title"><span class="tno-prompt">&gt; </span>심의 법안 선택 (SELECT BILL)</div>
                     <div id="voteActiveBillDisplay" style="
                         background:#050505; border:1px solid #333; padding:8px;
                         margin-bottom:8px; min-height:36px;
@@ -604,7 +605,7 @@
 
                 <!-- 투표 입력 모드 -->
                 <div class="vote-panel" id="voteModePanel">
-                    <div class="vote-panel-title">> 투표 입력 모드</div>
+                    <div class="vote-panel-title"><span class="tno-prompt">&gt; </span>투표 입력 모드</div>
                     <div class="vote-btn-row">
                         <button class="vote-ctrl-btn yea" onclick="setVoteMode('yea')">▲ 찬성</button>
                         <button class="vote-ctrl-btn nay" onclick="setVoteMode('nay')">▼ 반대</button>
@@ -625,7 +626,7 @@
 
                 <!-- 정당 일괄 투표 -->
                 <div class="vote-panel" id="partyBulkPanel">
-                    <div class="vote-panel-title">> 정당 일괄 투표 (PARTY BULK)</div>
+                    <div class="vote-panel-title"><span class="tno-prompt">&gt; </span>정당 일괄 투표 (PARTY BULK)</div>
                     <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:8px;" id="bulkChamberSelectGroup">
                         <label style="display:flex;align-items:center;gap:6px;cursor:pointer;color:#aaa;font-size:0.85rem;padding:4px 6px;background:#0a0c10;border:1px solid #222;" id="bulkHouseWrap">
                             <input type="checkbox" name="bulkChamber" value="house" checked onchange="onBulkChamberChange()"> <span id="bulkHouseLabel">하원</span>
@@ -708,7 +709,7 @@
             <div id="contentCouncil" class="sub-tab-content">
                 <!-- 법안 선택 -->
                 <div class="vote-panel" style="margin-bottom:10px;">
-                    <div class="vote-panel-title">> 심의 법안 선택 (COUNCIL BILL)</div>
+                    <div class="vote-panel-title"><span class="tno-prompt">&gt; </span>심의 법안 선택 (COUNCIL BILL)</div>
                     <div id="councilActiveBillDisplay" style="
                         background:#050505; border:1px solid #333; padding:8px;
                         margin-bottom:8px; min-height:36px;
@@ -726,7 +727,7 @@
 
                 <!-- 국무회의 의결 정족수 설정 -->
                 <div class="vote-panel" style="margin-bottom:10px;">
-                    <div class="vote-panel-title">> 국무회의 의결 정족수</div>
+                    <div class="vote-panel-title"><span class="tno-prompt">&gt; </span>국무회의 의결 정족수</div>
                     <select id="councilThresholdSelect" style="width:100%; background:#000; border:1px solid var(--tno-border); color:var(--tno-gold); font-family:'NeoDunggeunmo','VT323',monospace; font-size:0.9rem; padding:4px 8px;" onchange="toggleCouncilCustomThreshold()">
                         <option value="0.5">과반 (재적 과반수)</option>
                         <option value="0.667">특별다수 (2/3 이상)</option>
@@ -795,7 +796,7 @@
                             <span style="color:#444;">(설정 탭에서 변경)</span>
                         </div>
                         <button id="presElecRunBtn" onclick="runPresidentialElection()"
-                            style="background:var(--tno-neon);color:#000;font-weight:bold;border:none;width:100%;padding:14px;font-size:1.3rem;letter-spacing:2px;box-shadow:0 0 10px var(--tno-neon);cursor:pointer;font-family:inherit;">>> 개표 시작 <<</button>
+                            style="background:var(--tno-neon);color:#000;font-weight:bold;border:none;width:100%;padding:14px;font-size:1.3rem;letter-spacing:2px;box-shadow:0 0 10px var(--tno-neon);cursor:pointer;font-family:inherit;" data-modern-label="개표 시작">&gt;&gt; 개표 시작 &lt;&lt;</button>
                         <div id="presElecResultPanel" style="display:none;margin-top:10px;"></div>
                     </div>
 
@@ -898,7 +899,7 @@
                         </div>
                     </div>
                     <button id="elecRunBtn" onclick="elecRun()"
-                        style="background:var(--tno-neon);color:#000;font-weight:bold;border:none;width:100%;padding:14px;font-size:1.3rem;letter-spacing:2px;margin-top:10px;box-shadow:0 0 10px var(--tno-neon);cursor:pointer;font-family:inherit;">>> 개표 시작 <<</button>
+                        style="background:var(--tno-neon);color:#000;font-weight:bold;border:none;width:100%;padding:14px;font-size:1.3rem;letter-spacing:2px;margin-top:10px;box-shadow:0 0 10px var(--tno-neon);cursor:pointer;font-family:inherit;" data-modern-label="개표 시작">&gt;&gt; 개표 시작 &lt;&lt;</button>
                     <div id="elecMidControls" style="display:none;margin-top:8px;">
                         <div style="display:flex;gap:6px;">
                             <button onclick="elecTogglePause()" id="elecPauseBtn"
@@ -935,7 +936,7 @@
                             <span style="color:#444;">(선거 &gt; 설정 탭에서 변경 — 대선과 방식을 공유합니다)</span>
                         </div>
                         <button id="pmElecRunBtn" onclick="runPmElection()"
-                            style="background:var(--tno-neon);color:#000;font-weight:bold;border:none;width:100%;padding:14px;font-size:1.3rem;letter-spacing:2px;box-shadow:0 0 10px var(--tno-neon);cursor:pointer;font-family:inherit;">>> 개표 시작 <<</button>
+                            style="background:var(--tno-neon);color:#000;font-weight:bold;border:none;width:100%;padding:14px;font-size:1.3rem;letter-spacing:2px;box-shadow:0 0 10px var(--tno-neon);cursor:pointer;font-family:inherit;" data-modern-label="개표 시작">&gt;&gt; 개표 시작 &lt;&lt;</button>
                         <div id="pmElecResultPanel" style="display:none;margin-top:10px;"></div>
                     </div>
                     </div><!-- end innerContentElecGeneral -->
@@ -1437,7 +1438,7 @@
         </div><!-- end controls-content -->
 
         <div class="theme-panel-box" style="padding: 15px; border-top: 2px solid var(--tno-border); background: #000;">
-            <button class="simulate-btn" onclick="simulate()">>> PROTOCOL EXECUTE <<</button>
+            <button class="simulate-btn" onclick="simulate()" data-modern-label="PROTOCOL EXECUTE">&gt;&gt; PROTOCOL EXECUTE &lt;&lt;</button>
         </div>
     </div>
 
@@ -1532,7 +1533,7 @@
         <div class="disp-panel" id="dispPanelCabinet">
             <div class="chamber-box">
                 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-                    <h3 style="margin:0;border:none;padding:0;">> 내각</h3>
+                    <h3 style="margin:0;border:none;padding:0;"><span class="tno-prompt">&gt; </span>내각</h3>
                 </div>
                 <div id="cabinetCouncilControls" style="display:none;align-items:center;gap:8px;margin-bottom:10px;padding:8px;background:#0a0c10;border:1px solid var(--tno-alert);flex-wrap:wrap;">
                     <span style="color:var(--tno-alert);font-size:0.8rem;white-space:nowrap;">! 국무회의 표결 중</span>
@@ -1552,7 +1553,7 @@
         <div class="disp-panel" id="dispPanelDistrict">
             <div class="chamber-box" style="display:flex;flex-direction:column;height:100%;box-sizing:border-box;">
                 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-shrink:0;">
-                    <h3 style="margin:0;border:none;padding:0;">> 지역구 맵</h3>
+                    <h3 style="margin:0;border:none;padding:0;"><span class="tno-prompt">&gt; </span>지역구 맵</h3>
                     <div style="display:flex;gap:4px;">
                         <span id="districtZoomControls" style="display:none;gap:4px;">
                             <button onclick="districtZoom(1.2)"      style="background:#111;border:1px solid #333;color:#aaa;padding:3px 10px;cursor:pointer;font-family:inherit;">+</button>
@@ -1579,7 +1580,7 @@
         <div class="disp-panel" id="dispPanelTendency">
             <div class="chamber-box">
                 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-                    <h3 style="margin:0;border:none;padding:0;">> 성향 맵</h3>
+                    <h3 style="margin:0;border:none;padding:0;"><span class="tno-prompt">&gt; </span>성향 맵</h3>
                 </div>
                 <div id="tendencyMaps"></div>
             </div>
@@ -1589,7 +1590,7 @@
         <div class="disp-panel" id="dispPanelRegion">
             <div class="chamber-box">
                 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-                    <h3 style="margin:0;border:none;padding:0;">> 권역 배정 맵</h3>
+                    <h3 style="margin:0;border:none;padding:0;"><span class="tno-prompt">&gt; </span>권역 배정 맵</h3>
                 </div>
                 <div style="font-size:0.78rem;color:#666;margin-bottom:8px;">아래에서 "칠하기" 권역을 고른 뒤, 지도(또는 그리드)의 지역구를 클릭해 그 권역에 배정/해제하세요.</div>
                 <div id="regionMapWrap"></div>
@@ -1600,7 +1601,7 @@
         <div class="disp-panel" id="dispPanelElecResultHouse">
             <div class="chamber-box">
                 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-                    <h3 id="elecResultTitleHouse" style="margin:0;border:none;padding:0;">> 선거 결과</h3>
+                    <h3 id="elecResultTitleHouse" style="margin:0;border:none;padding:0;"><span class="tno-prompt">&gt; </span>선거 결과</h3>
                     <div style="display:flex;gap:4px;">
                         <button onclick="elecSetView('arc','house')" id="elecViewArcBtnHouse"
                             style="background:var(--tno-neon);color:#000;border:1px solid var(--tno-neon);padding:4px 10px;font-family:inherit;font-size:0.8rem;cursor:pointer;">반원</button>
@@ -1624,7 +1625,7 @@
         <div class="disp-panel" id="dispPanelElecResultSenate">
             <div class="chamber-box">
                 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-                    <h3 id="elecResultTitleSenate" style="margin:0;border:none;padding:0;">> 선거 결과</h3>
+                    <h3 id="elecResultTitleSenate" style="margin:0;border:none;padding:0;"><span class="tno-prompt">&gt; </span>선거 결과</h3>
                     <div style="display:flex;gap:4px;">
                         <button onclick="elecSetView('arc','senate')" id="elecViewArcBtnSenate"
                             style="background:var(--tno-neon);color:#000;border:1px solid var(--tno-neon);padding:4px 10px;font-family:inherit;font-size:0.8rem;cursor:pointer;">반원</button>
@@ -1648,7 +1649,7 @@
         <div class="disp-panel" id="dispPanelElecResultThird">
             <div class="chamber-box">
                 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-                    <h3 id="elecResultTitleThird" style="margin:0;border:none;padding:0;">> 선거 결과</h3>
+                    <h3 id="elecResultTitleThird" style="margin:0;border:none;padding:0;"><span class="tno-prompt">&gt; </span>선거 결과</h3>
                     <div style="display:flex;gap:4px;">
                         <button onclick="elecSetView('arc','third')" id="elecViewArcBtnThird"
                             style="background:var(--tno-neon);color:#000;border:1px solid var(--tno-neon);padding:4px 10px;font-family:inherit;font-size:0.8rem;cursor:pointer;">반원</button>
@@ -1670,6 +1671,7 @@
     </div>
 
     <script src="js/dno.js"></script>
+    <script src="js/modernnav.js"></script>
     <script src="js/lang.js"></script>
 </body>
 </html>
