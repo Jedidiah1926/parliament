@@ -1173,7 +1173,8 @@
         // 내각 카드 그리드 PNG/JPG 내보내기 — 반원 내보내기와 달리 base canvas가 없으므로 처음부터 직접 그림
         async function renderCabinetExportCanvas() {
             await ensureExportFontsLoaded();
-            const font = "'NeoDunggeunmo','VT323',monospace";
+            const pal = exportPalette();
+            const font = pal.font;
             const displayRows = getCabinetDisplayRows();
             const allCards = displayRows.flat();
             const photoMap = new Map();
@@ -1200,7 +1201,7 @@
             cvs.width = totalW + pad*2;
             cvs.height = totalH + pad*2;
             const ctx = cvs.getContext('2d');
-            ctx.fillStyle = '#000';
+            ctx.fillStyle = tc('#000', '--m-surface');
             ctx.fillRect(0, 0, cvs.width, cvs.height);
             ctx.textBaseline = 'middle';
             ctx.textAlign = 'center';
@@ -1214,27 +1215,27 @@
                     const cx = x + cardW/2;
 
                     ctx.font = `${Math.round(labelH*0.75)}px ${font}`;
-                    ctx.fillStyle = '#e0e0e0';
+                    ctx.fillStyle = pal.text;
                     ctx.fillText(c.label, cx, cy + labelH/2, cardW);
                     cy += labelH + gapSm;
 
                     const photoX = x + (cardW - photoW)/2;
-                    ctx.fillStyle = '#000';
+                    ctx.fillStyle = tc('#000', '--m-surface-2');
                     ctx.fillRect(photoX, cy, photoW, photoH);
                     const img = photoMap.get(c);
                     if(img) drawImageCover(ctx, img, photoX, cy, photoW, photoH);
                     else {
-                        ctx.fillStyle = '#2a3a3a';
+                        ctx.fillStyle = tc('#2a3a3a', '--m-text-4');
                         ctx.font = `${Math.round(photoH*0.4)}px ${font}`;
                         ctx.fillText('👤', cx, cy + photoH/2, photoW);
                     }
-                    ctx.strokeStyle = '#2a2a2a';
+                    ctx.strokeStyle = tc('#2a2a2a', '--m-border');
                     ctx.lineWidth = Math.max(1, Math.round(scale));
                     ctx.strokeRect(photoX + 0.5, cy + 0.5, photoW - 1, photoH - 1);
                     cy += photoH + gapSm;
 
                     ctx.font = `${Math.round(nameH*0.8)}px ${font}`;
-                    ctx.fillStyle = '#ccc';
+                    ctx.fillStyle = pal.text2;
                     ctx.fillText(c.name || '이름 미지정', cx, cy + nameH/2, cardW);
                     cy += nameH + gapSm;
 
@@ -1250,7 +1251,7 @@
                     ctx.strokeRect(badgeX + 0.5, cy + 0.5, badgeW - 1, badgeH - 1);
                     ctx.fillStyle = partyColor;
                     ctx.shadowColor = partyColor;
-                    ctx.shadowBlur = Math.round(8*scale);
+                    ctx.shadowBlur = isModernTheme() ? 0 : Math.round(8*scale);
                     ctx.fillText(partyName, cx, cy + badgeH/2, badgeW - Math.round(8*scale));
                     ctx.shadowBlur = 0;
                     ctx.shadowColor = 'transparent';
@@ -3212,11 +3213,12 @@
 
         // 캔버스에 헤더 행(국기+국가 이름 좌측, 날짜/회기 우측)을 직접 그림
         async function drawExportHeader(ctx, info, width, headerH, scale, font) {
+            const pal = exportPalette();
             ctx.textAlign = 'left';
             ctx.textBaseline = 'middle';
-            ctx.fillStyle = '#0a0c10';
+            ctx.fillStyle = pal.bg;
             ctx.fillRect(0, 0, width, headerH);
-            ctx.strokeStyle = '#333';
+            ctx.strokeStyle = pal.rule;
             ctx.lineWidth = Math.max(1, Math.round(scale));
             ctx.beginPath();
             ctx.moveTo(0, headerH - 0.5);
@@ -3238,7 +3240,7 @@
             }
             if(info.name) {
                 ctx.font = `${Math.round(22 * scale)}px ${font}`;
-                ctx.fillStyle = '#eee';
+                ctx.fillStyle = pal.text;
                 ctx.fillText(info.name, x, midY);
             }
 
@@ -3247,14 +3249,14 @@
                 const rightX = width - pad;
                 if(info.date && info.session) {
                     ctx.font = `${Math.round(16 * scale)}px ${font}`;
-                    ctx.fillStyle = '#ccc';
+                    ctx.fillStyle = pal.text2;
                     ctx.fillText(info.date, rightX, midY - Math.round(9 * scale));
                     ctx.font = `${Math.round(14 * scale)}px ${font}`;
-                    ctx.fillStyle = '#888';
+                    ctx.fillStyle = pal.text3;
                     ctx.fillText(info.session, rightX, midY + Math.round(9 * scale));
                 } else {
                     ctx.font = `${Math.round(16 * scale)}px ${font}`;
-                    ctx.fillStyle = '#ccc';
+                    ctx.fillStyle = pal.text2;
                     ctx.fillText(info.date || info.session, rightX, midY);
                 }
                 ctx.textAlign = 'left';
@@ -3265,26 +3267,27 @@
         // 통계 영역의 <style> 배치 문제와 무관하게 항상 안전하게 렌더링됨
         function buildExportHeaderSvgMarkup(info, width, headerH) {
             if(!info) return '';
-            const font = "NeoDunggeunmo, VT323, monospace";
+            const pal = exportPalette();
+            const font = pal.svgFont;
             const pad = 14, midY = headerH / 2;
             let x = pad;
-            let markup = `<rect x="0" y="0" width="${width}" height="${headerH}" fill="#0a0c10"/>`
-                       + `<line x1="0" y1="${headerH}" x2="${width}" y2="${headerH}" stroke="#333" stroke-width="1"/>`;
+            let markup = `<rect x="0" y="0" width="${width}" height="${headerH}" fill="${pal.bg}"/>`
+                       + `<line x1="0" y1="${headerH}" x2="${width}" y2="${headerH}" stroke="${pal.rule}" stroke-width="1"/>`;
             if(info.flag) {
                 const fh = 36, fw = 54;
                 markup += `<image href="${info.flag}" x="${x}" y="${midY - fh / 2}" width="${fw}" height="${fh}" preserveAspectRatio="xMidYMid slice"/>`;
                 x += fw + 10;
             }
             if(info.name) {
-                markup += `<text x="${x}" y="${midY}" fill="#eee" font-family="${font}" font-size="22" dominant-baseline="middle">${escapeXml(info.name)}</text>`;
+                markup += `<text x="${x}" y="${midY}" fill="${pal.text}" font-family="${font}" font-size="22" dominant-baseline="middle">${escapeXml(info.name)}</text>`;
             }
             if(info.date || info.session) {
                 const rightX = width - pad;
                 if(info.date && info.session) {
-                    markup += `<text x="${rightX}" y="${midY - 9}" fill="#ccc" font-family="${font}" font-size="16" text-anchor="end" dominant-baseline="middle">${escapeXml(info.date)}</text>`;
-                    markup += `<text x="${rightX}" y="${midY + 9}" fill="#888" font-family="${font}" font-size="14" text-anchor="end" dominant-baseline="middle">${escapeXml(info.session)}</text>`;
+                    markup += `<text x="${rightX}" y="${midY - 9}" fill="${pal.text2}" font-family="${font}" font-size="16" text-anchor="end" dominant-baseline="middle">${escapeXml(info.date)}</text>`;
+                    markup += `<text x="${rightX}" y="${midY + 9}" fill="${pal.text3}" font-family="${font}" font-size="14" text-anchor="end" dominant-baseline="middle">${escapeXml(info.session)}</text>`;
                 } else {
-                    markup += `<text x="${rightX}" y="${midY}" fill="#ccc" font-family="${font}" font-size="16" text-anchor="end" dominant-baseline="middle">${escapeXml(info.date || info.session)}</text>`;
+                    markup += `<text x="${rightX}" y="${midY}" fill="${pal.text2}" font-family="${font}" font-size="16" text-anchor="end" dominant-baseline="middle">${escapeXml(info.date || info.session)}</text>`;
                 }
             }
             return markup;
@@ -3323,7 +3326,7 @@
                     cvs.width = Math.max(1, Math.round(rect.width * scale));
                     cvs.height = Math.max(1, Math.round(rect.height * scale));
                     const ctx = cvs.getContext('2d');
-                    ctx.fillStyle = '#0a0c10';
+                    ctx.fillStyle = exportPalette().bg;
                     ctx.fillRect(0, 0, cvs.width, cvs.height);
                     ctx.drawImage(img, 0, 0, cvs.width, cvs.height);
                     URL.revokeObjectURL(url);
@@ -3445,7 +3448,8 @@
 
             await ensureExportFontsLoaded();
             await Promise.all(rows.map(async row => { if(row.photoSrc) row.photoImg = await loadImageAsync(row.photoSrc); }));
-            const font = "'NeoDunggeunmo','VT323',monospace";
+            const pal = exportPalette();
+            const font = pal.font;
 
             const scale = (baseCanvas.width / (target.clientWidth || target.getBoundingClientRect().width || baseCanvas.width)) || 1;
             const pad = Math.round(10 * scale), barW = Math.round(4 * scale);
@@ -3461,7 +3465,7 @@
             out.width = baseCanvas.width;
             out.height = headerH + baseCanvas.height + statsH;
             const ctx = out.getContext('2d');
-            ctx.fillStyle = '#0a0c10';
+            ctx.fillStyle = pal.bg;
             ctx.fillRect(0, 0, out.width, out.height);
             if(headerInfo) await drawExportHeader(ctx, headerInfo, out.width, headerH, scale, font);
             ctx.drawImage(baseCanvas, 0, headerH);
@@ -3473,18 +3477,23 @@
                 const y = cursorY;
                 const rowH = rowHeights[i];
                 const innerH = rowH - Math.round(4 * scale);
-                ctx.fillStyle = '#000';
+                ctx.fillStyle = pal.card;
                 ctx.fillRect(pad, y, out.width - pad * 2, innerH);
+                if(pal.cardBorder) {
+                    ctx.strokeStyle = pal.cardBorder;
+                    ctx.lineWidth = Math.max(1, Math.round(scale));
+                    ctx.strokeRect(pad + 0.5, y + 0.5, out.width - pad * 2 - 1, innerH - 1);
+                }
                 ctx.fillStyle = row.barColor;
                 ctx.fillRect(pad, y, barW, innerH);
 
                 const photoX = pad + barW + Math.round(6 * scale);
                 if(row.photoImg) {
                     const photoY = y + Math.round(4 * scale);
-                    ctx.fillStyle = '#0a0c10';
+                    ctx.fillStyle = pal.photoBg;
                     ctx.fillRect(photoX, photoY, photoW, photoH);
                     drawImageCover(ctx, row.photoImg, photoX, photoY, photoW, photoH);
-                    ctx.strokeStyle = '#222';
+                    ctx.strokeStyle = pal.photoStroke;
                     ctx.lineWidth = Math.max(1, Math.round(scale));
                     ctx.strokeRect(photoX + 0.5, photoY + 0.5, photoW - 1, photoH - 1);
                 }
@@ -3498,7 +3507,7 @@
                     const tag = row.statusTags[t];
                     const w = ctx.measureText(tag.text).width;
                     tagX -= w;
-                    ctx.fillStyle = tag.color || '#fff';
+                    ctx.fillStyle = tag.color || pal.tag;
                     ctx.fillText(tag.text, tagX, nameY);
                     tagX -= Math.round(8 * scale);
                 }
@@ -3513,7 +3522,7 @@
                 segs.forEach((s, si) => {
                     const w = segWidths[si] * fit;
                     ctx.font = segFont(s);
-                    ctx.fillStyle = s.color || '#eee';
+                    ctx.fillStyle = s.color || pal.text;
                     ctx.fillText(s.text, segX, nameY, Math.max(1, w));
                     segX += w;
                 });
@@ -3530,7 +3539,7 @@
                         ctx.arc(px + dotR, py, dotR, 0, Math.PI * 2);
                         ctx.fill();
                         px += dotR * 2 + Math.round(4 * scale);
-                        ctx.fillStyle = '#aaa';
+                        ctx.fillStyle = pal.pill;
                         ctx.fillText(pill.text, px, py);
                         px += ctx.measureText(pill.text).width + Math.round(10 * scale);
                     }
@@ -3539,7 +3548,7 @@
                 // 무소속 개별 의원 목록 (펼치기 체크 시) — 카드 하단에 작은 글씨로 한 줄씩 추가
                 if(row.independentMembers.length) {
                     ctx.font = `${indLineSize}px ${font}`;
-                    ctx.fillStyle = '#888';
+                    ctx.fillStyle = pal.text3;
                     row.independentMembers.forEach((line, li) => {
                         const ly = y + Math.round(52 * scale) + li * indLineH + indLineH / 2;
                         ctx.fillText('· ' + line, textX, ly, out.width - pad * 2 - (textX - pad));
@@ -3612,7 +3621,18 @@
                 clone.querySelectorAll('.leader-photo-box img').forEach(img => img.remove());
             }
 
-            const css = getExportInlineCss();
+            // 모던(라이트/다크) 테마일 땐 html[data-theme-*] 선택자를 래퍼 div의 클래스로 바꿔,
+            // SVG 안(html 요소 없음)에서도 화면과 같은 테마 규칙이 적용되게 한다
+            const modern = isModernTheme();
+            const themeMode = document.documentElement.getAttribute('data-theme-mode');
+            let css = getExportInlineCss();
+            if(modern) {
+                css = css.replaceAll('html[data-theme-family="modern"]', '.export-theme-modern')
+                         .replaceAll('html[data-theme-mode="light"]', '.export-theme-light')
+                         .replaceAll('html[data-theme-mode="dark"]', '.export-theme-dark');
+            }
+            const pal = exportPalette();
+            const wrapClass = modern ? ` class="export-theme-modern export-theme-${themeMode}"` : '';
             const html = new XMLSerializer().serializeToString(clone);
             const headerH = headerInfo ? EXPORT_HEADER_H : 0;
             const totalH = rect.height + headerH;
@@ -3623,7 +3643,7 @@
             return `<svg xmlns="http://www.w3.org/2000/svg" width="${rect.width}" height="${totalH}" viewBox="0 0 ${rect.width} ${totalH}">`
                 + `<style><![CDATA[${css}]]></style>`
                 + buildExportHeaderSvgMarkup(headerInfo, rect.width, headerH)
-                + `<foreignObject y="${headerH}" width="100%" height="${rect.height}"><div xmlns="http://www.w3.org/1999/xhtml" style="width:${rect.width}px;background:#0a0c10;font-family:'NeoDunggeunmo','VT323',monospace;">`
+                + `<foreignObject y="${headerH}" width="100%" height="${rect.height}"><div xmlns="http://www.w3.org/1999/xhtml"${wrapClass} style="width:${rect.width}px;background:${pal.bg};font-family:${pal.font.replace(/"/g, "'")};">`
                 + `${html}</div></foreignObject></svg>`;
         }
 
@@ -3639,7 +3659,7 @@
             const headerH = headerInfo ? EXPORT_HEADER_H : 0;
             const totalH = rect.height + headerH;
             return `<svg xmlns="http://www.w3.org/2000/svg" width="${rect.width}" height="${totalH}" viewBox="0 0 ${rect.width} ${totalH}">`
-                + `<rect x="0" y="0" width="${rect.width}" height="${totalH}" fill="#0a0c10"/>`
+                + `<rect x="0" y="0" width="${rect.width}" height="${totalH}" fill="${exportPalette().bg}"/>`
                 + buildExportHeaderSvgMarkup(headerInfo, rect.width, headerH)
                 + `<g transform="translate(0, ${headerH})">${vizMarkup}</g></svg>`;
         }
@@ -3696,7 +3716,7 @@
                 opaque.width = target.width;
                 opaque.height = target.height;
                 const octx = opaque.getContext('2d');
-                octx.fillStyle = '#0a0c10';
+                octx.fillStyle = exportPalette().bg;
                 octx.fillRect(0, 0, opaque.width, opaque.height);
                 octx.drawImage(target, 0, 0);
                 if(isMartialLawShadedTarget(target)) {
@@ -4081,12 +4101,13 @@
                 }
                 return;
             }
-            ctx.fillStyle = "#fff";
-            ctx.font = "30px 'NeoDunggeunmo'";
+            const modernFont = isModernTheme() ? tc('', '--m-font') : null;
+            ctx.fillStyle = tc("#fff", '--m-text');
+            ctx.font = modernFont ? `700 30px ${modernFont}` : "30px 'NeoDunggeunmo'";
             ctx.textAlign = "center";
             ctx.fillText(total, CX, CY);
-            ctx.font = "16px 'NeoDunggeunmo'";
-            ctx.fillStyle = "var(--tno-neon)";
+            ctx.font = modernFont ? `500 13px ${modernFont}` : "16px 'NeoDunggeunmo'";
+            ctx.fillStyle = tc("#fff", '--m-text-3');
             ctx.fillText("SEATS", CX, CY + 25);
         }
 
@@ -4204,7 +4225,7 @@
                 if(hoveredSeat[chamber] === i) {
                     ctx.beginPath();
                     ctx.arc(d.x, d.y, d.r * 1.14, 0, Math.PI*2);
-                    ctx.strokeStyle = '#fff';
+                    ctx.strokeStyle = tc('#fff', '--m-text');
                     ctx.lineWidth = 1.5;
                     ctx.shadowColor = 'rgba(255,255,255,0.6)';
                     ctx.shadowBlur = 6;
@@ -4218,6 +4239,41 @@
             const CX = dots[0]?.cx ?? W/2;
             const CY = dots[0]?.cy ?? H - 40;
             drawChamberCenter(ctx, CX, CY, total, chamber, cvsId, W);
+        }
+
+
+        // ===== 캔버스 테마 색 =====
+        // 캔버스는 CSS 변수를 못 쓰므로, 모던(라이트/다크) 모드일 때만 디자인 토큰의 실제 값을 읽어 쓰고
+        // 네온 모드에서는 넘겨받은 기존 색을 그대로 돌려준다 (네온 모드 화면·내보내기는 픽셀 단위로 그대로)
+        let canvasTokenCache = null;
+        function isModernTheme() {
+            return document.documentElement.getAttribute('data-theme-family') === 'modern';
+        }
+        function tc(tnoColor, token) {
+            if(!isModernTheme()) return tnoColor;
+            const mode = document.documentElement.getAttribute('data-theme-mode');
+            if(!canvasTokenCache || canvasTokenCache.mode !== mode) canvasTokenCache = { mode, vals: {} };
+            const vals = canvasTokenCache.vals;
+            if(!(token in vals)) vals[token] = getComputedStyle(document.documentElement).getPropertyValue(token).trim();
+            return vals[token] || tnoColor;
+        }
+        // 내보내기(PNG/JPG/SVG) 색·폰트 — 화면과 같은 테마로 내보낸다
+        function exportPalette() {
+            return {
+                bg: tc('#0a0c10', '--m-surface'),
+                card: tc('#000', '--m-surface'),
+                cardBorder: isModernTheme() ? tc('', '--m-border') : null,
+                photoBg: tc('#0a0c10', '--m-surface-2'),
+                photoStroke: tc('#222', '--m-border'),
+                rule: tc('#333', '--m-border'),
+                text: tc('#eee', '--m-text'),
+                text2: tc('#ccc', '--m-text-2'),
+                text3: tc('#888', '--m-text-3'),
+                pill: tc('#aaa', '--m-text-2'),
+                tag: tc('#fff', '--m-text'),
+                font: isModernTheme() ? tc('', '--m-font') : "'NeoDunggeunmo','VT323',monospace",
+                svgFont: isModernTheme() ? tc('', '--m-font').replace(/"/g, "'") : 'NeoDunggeunmo, VT323, monospace',
+            };
         }
 
         // ===== MAIN SIMULATE =====
@@ -4270,6 +4326,13 @@
             });
             const districtCvs = document.getElementById('districtCanvas');
             if(districtCvs) canvasResizeObserver.observe(districtCvs);
+        });
+
+        // 다른 탭(설정 화면)에서 테마를 바꾸면, 캔버스에 직접 그린 색(좌석 수 글씨·빈 지역구 칸 등)도 새 테마로 다시 그린다
+        window.addEventListener('thememodechange', () => {
+            canvasTokenCache = null;
+            simulate();
+            document.querySelectorAll('canvas').forEach(cvs => { if(cvs.offsetParent) redrawCanvasForCurrentSize(cvs); });
         });
         let suppressAutosaveOnUnload = false;
         window.addEventListener('beforeunload', () => { if(autosaveEnabled && !suppressAutosaveOnUnload) autosaveNow(); });
@@ -5286,9 +5349,10 @@
             });
             resizer.addEventListener('pointermove', e => {
                 if(!dragging) return;
-                const bodyRect = document.body.getBoundingClientRect();
-                const maxWidth = window.innerWidth - MIN_DISPLAY_WIDTH - Math.round(resizer.getBoundingClientRect().width);
-                const width = Math.max(MIN_WIDTH, Math.min(maxWidth, e.clientX - bodyRect.left));
+                // 패널 왼쪽 끝 기준으로 폭을 잰다 — 모던 모드에선 왼쪽에 세로 탭 사이드바가 있어 body 왼쪽과 다름
+                const controlsLeft = controls.getBoundingClientRect().left;
+                const maxWidth = window.innerWidth - controlsLeft - MIN_DISPLAY_WIDTH - Math.round(resizer.getBoundingClientRect().width);
+                const width = Math.max(MIN_WIDTH, Math.min(maxWidth, e.clientX - controlsLeft));
                 applyControlsPanelWidth(width);
                 schedulePanelResizeRedraw();
             });
@@ -5538,15 +5602,32 @@
             updateSplitDissolutionUI();
         }
 
+        // 네온 모드의 터미널 표기("> 제목", ">> 버튼 <<")에서 기호만 span.tno-prompt로 감싼다 —
+        // 네온 모드에선 글자 그대로 보이고, 모던(라이트/다크) 모드는 css/modern.css가 기호를 숨긴다
+        function setPromptText(el, text, withSuffix = false) {
+            if(!el) return;
+            const pre = document.createElement('span');
+            pre.className = 'tno-prompt';
+            pre.textContent = withSuffix ? '>> ' : '> ';
+            const parts = [pre, text];
+            if(withSuffix) {
+                const suf = document.createElement('span');
+                suf.className = 'tno-prompt';
+                suf.textContent = ' <<';
+                parts.push(suf);
+            }
+            el.replaceChildren(...parts);
+        }
+
         function updateNames() {
             const sName = document.getElementById('senateNameInput').value;
             const hName = document.getElementById('houseNameInput').value;
             const tNameEl = document.getElementById('thirdNameInput');
             const tName = tNameEl ? tNameEl.value : '삼원';
-            document.getElementById('senateTitle').innerText = "> " + sName;
-            document.getElementById('houseTitle').innerText = "> " + hName;
+            setPromptText(document.getElementById('senateTitle'), sName);
+            setPromptText(document.getElementById('houseTitle'), hName);
             const thirdTitleEl = document.getElementById('thirdTitle');
-            if(thirdTitleEl) thirdTitleEl.innerText = "> " + tName;
+            if(thirdTitleEl) setPromptText(thirdTitleEl, tName);
             document.getElementById('houseVoteResultTitle').textContent = `[ ${hName} 표결 결과 ]`;
             document.getElementById('senateVoteResultTitle').textContent = `[ ${sName} 표결 결과 ]`;
             const thirdVoteResultTitle = document.getElementById('thirdVoteResultTitle');
@@ -6199,7 +6280,7 @@
             const grid = districtGrid[chamber] || {};
             const keys = Object.keys(grid);
             if(keys.length === 0) {
-                ctx.fillStyle = '#444';
+                ctx.fillStyle = tc('#444', '--m-text-4');
                 ctx.font = '14px monospace';
                 ctx.textAlign = 'center';
                 ctx.fillText('설정된 지역구가 없습니다', w/2, h/2);
@@ -9046,7 +9127,7 @@
                         ctx.stroke();
                         ctx.shadowBlur = 0;
                     } else {
-                        ctx.strokeStyle = '#1a1d22';
+                        ctx.strokeStyle = tc('#1a1d22', '--m-border');
                         ctx.lineWidth = 0.8;
                         ctx.stroke();
                     }
@@ -9352,7 +9433,7 @@
             const isAll = partyId === '__all__';
             const w = cvs.clientWidth || 260;
             const bounds = tendencyGetBounds();
-            if(!bounds) { cvs.width=w; cvs.height=60; const c=cvs.getContext('2d'); c.fillStyle='#333'; c.font='12px monospace'; c.fillText('지역구를 먼저 설정하세요',8,35); return; }
+            if(!bounds) { cvs.width=w; cvs.height=60; const c=cvs.getContext('2d'); c.fillStyle=tc('#333', '--m-text-3'); c.font='12px monospace'; c.fillText('지역구를 먼저 설정하세요',8,35); return; }
 
             const { minQ, maxQ, minR, maxR } = bounds;
             // flat-top: x방향은 q, y방향은 r
@@ -9408,8 +9489,8 @@
                             ctx.fillText(bestVal+'%', cx, cy);
                         }
                     } else {
-                        ctx.fillStyle = '#111'; ctx.fill();
-                        ctx.strokeStyle = '#222'; ctx.lineWidth=0.8; ctx.stroke();
+                        ctx.fillStyle = tc('#111', '--m-surface-3'); ctx.fill();
+                        ctx.strokeStyle = tc('#222', '--m-border'); ctx.lineWidth=0.8; ctx.stroke();
                     }
                 } else {
                     const val = tendencyData[partyId]?.[key] || 0;
@@ -9428,8 +9509,8 @@
                             ctx.fillText(val+'%', cx, cy);
                         }
                     } else {
-                        ctx.fillStyle = '#111'; ctx.fill();
-                        ctx.strokeStyle = '#1a1d22'; ctx.lineWidth=0.8; ctx.stroke();
+                        ctx.fillStyle = tc('#111', '--m-surface-3'); ctx.fill();
+                        ctx.strokeStyle = tc('#1a1d22', '--m-border'); ctx.lineWidth=0.8; ctx.stroke();
                     }
                 }
                 // 지역구 구분 테두리 오버레이 (하원=네온, 상원=골드, 삼원=보라)
@@ -11022,7 +11103,7 @@
             const keys = regionChamberKeys(chamber);
             const w = cvs.clientWidth || 260;
             const bounds = regionGetBounds(chamber);
-            if(!bounds) { cvs.width=w; cvs.height=60; const c=cvs.getContext('2d'); c.fillStyle='#333'; c.font='12px monospace'; c.fillText('지역구를 먼저 설정하세요',8,35); return; }
+            if(!bounds) { cvs.width=w; cvs.height=60; const c=cvs.getContext('2d'); c.fillStyle=tc('#333', '--m-text-3'); c.font='12px monospace'; c.fillText('지역구를 먼저 설정하세요',8,35); return; }
             const { minQ, maxQ, minR, maxR } = bounds;
             const spanQ = maxQ - minQ + 1, spanR = maxR - minR + 1;
             const sizeByW = w / (spanQ * 1.5 + 0.5);
@@ -11055,8 +11136,8 @@
                     ctx.lineWidth = isActive ? 2 : 1;
                     ctx.stroke();
                 } else {
-                    ctx.fillStyle = '#111'; ctx.fill();
-                    ctx.strokeStyle = '#333'; ctx.lineWidth = 0.8; ctx.stroke();
+                    ctx.fillStyle = tc('#111', '--m-surface-3'); ctx.fill();
+                    ctx.strokeStyle = tc('#333', '--m-border'); ctx.lineWidth = 0.8; ctx.stroke();
                 }
             });
         }
@@ -11363,7 +11444,7 @@
                 ctx.moveTo(...corners[0]);
                 corners.slice(1).forEach(c => ctx.lineTo(...c));
                 ctx.closePath();
-                ctx.fillStyle = '#0a0c10';
+                ctx.fillStyle = tc('#0a0c10', '--m-surface-2');
                 ctx.fill();
                 ctx.strokeStyle = '#222';
                 ctx.lineWidth = 0.8;
@@ -11509,7 +11590,7 @@
             const runBtn   = document.getElementById('elecRunBtn');
             const midCtrl  = document.getElementById('elecMidControls');
             const postBtns = document.getElementById('elecPostBtns');
-            runBtn.style.background='#222'; runBtn.style.color='#888'; runBtn.textContent='>> 개표 중... <<';
+            runBtn.style.background='#222'; runBtn.style.color='#888'; runBtn.textContent='>> 개표 중... <<'; runBtn.dataset.modernLabel='개표 중...';
             if(midCtrl)  midCtrl.style.display='block';
             if(postBtns) postBtns.style.display='none';
 
@@ -11584,7 +11665,7 @@
             // (이 조건 없이 막으면 지역구만 개표할 때 안내 문구 하나 없이 조용히 실패한 것처럼 보임)
             if(propSeats > 0 && !isRegionalList && wTotal<=0) {
                 elecRunning=false;
-                runBtn.style.background='var(--tno-neon)'; runBtn.style.color='#000'; runBtn.textContent='>> 개표 시작 <<';
+                runBtn.style.background='var(--tno-neon)'; runBtn.style.color='#000'; runBtn.textContent='>> 개표 시작 <<'; runBtn.dataset.modernLabel='개표 시작';
                 showCustomAlert('지지율을 입력해 주세요.\n각 정당의 지지율(%) 칸에 숫자를 입력하세요.');
                 return;
             }
@@ -11772,7 +11853,7 @@
             elecSaveRecord(elecTitle, elecYear, chamber, seatMap, weighted, districtResults);
 
             elecRunning=false;
-            runBtn.style.background='var(--tno-neon)'; runBtn.style.color='#000'; runBtn.textContent='>> 개표 시작 <<';
+            runBtn.style.background='var(--tno-neon)'; runBtn.style.color='#000'; runBtn.textContent='>> 개표 시작 <<'; runBtn.dataset.modernLabel='개표 시작';
         }
 
         function buildElecMap(chamber, totalSeats) {
@@ -12095,7 +12176,7 @@
                 if(hoveredSeat[chamber] === i) {
                     ctx.beginPath();
                     ctx.arc(pt.x, pt.y, dotR * 1.14, 0, Math.PI*2);
-                    ctx.strokeStyle = '#fff';
+                    ctx.strokeStyle = tc('#fff', '--m-text');
                     ctx.lineWidth = 1.5;
                     ctx.shadowColor = 'rgba(255,255,255,0.6)';
                     ctx.shadowBlur = 6;
