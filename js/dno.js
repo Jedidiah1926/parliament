@@ -3347,6 +3347,7 @@
                 const nameSpan = headerRow?.children?.[0];
                 const statusSpan = headerRow?.children?.[1];
                 const nameText = (nameSpan ? nameSpan.textContent : block.textContent).replace(/\s+/g, ' ').trim();
+                const nameSegments = nameSpan ? extractColoredTextSegments(nameSpan) : null;
                 const statusTags = statusSpan
                     ? Array.from(statusSpan.children).map(s => ({ text: s.textContent.trim(), color: getComputedStyle(s).color })).filter(t => t.text)
                     : [];
@@ -3368,11 +3369,32 @@
                     }
                 }
                 const photoSrc = statsOptions.includePhotos ? (block.querySelector('.leader-photo-box img')?.src || null) : null;
-                return { barColor, nameText, statusTags, pills, independentMembers, photoSrc };
+                return { barColor, nameText, nameSegments, statusTags, pills, independentMembers, photoSrc };
             }).filter(r => r.nameText);
 
             if(statsOptions.includeExtraParties && chamber) rows.push(...extractExtraPartyRows(chamber, statsOptions));
             return rows;
+        }
+
+        // 이름 줄을 색상별 조각으로 나눔 — 인라인 색이 지정된 span(비율 회색, 의석 변동 ▲초록/▼빨강 등)은
+        // 화면과 같은 색·굵기를 유지하고, 나머지 일반 텍스트는 color:null(기본색)로 둔다
+        function extractColoredTextSegments(el) {
+            const segs = [];
+            el.childNodes.forEach(node => {
+                const text = node.textContent.replace(/\s+/g, ' ');
+                if(!text.trim()) return;
+                const isStyledEl = node.nodeType === Node.ELEMENT_NODE && node.style?.color;
+                const cs = isStyledEl ? getComputedStyle(node) : null;
+                segs.push({ text, color: cs ? cs.color : null, bold: cs ? parseInt(cs.fontWeight, 10) >= 600 : false });
+            });
+            if(!segs.length) return null;
+            segs[0].text = segs[0].text.trimStart();
+            segs[segs.length - 1].text = segs[segs.length - 1].text.trimEnd();
+            // 화면에선 flex gap이 조각 사이를 띄워주므로, 공백 없이 맞붙는 조각 사이엔 한 칸을 넣어준다
+            for(let i = 1; i < segs.length; i++) {
+                if(!/\s$/.test(segs[i - 1].text) && !/^\s/.test(segs[i].text)) segs[i].text = ' ' + segs[i].text;
+            }
+            return segs;
         }
 
         // 원외정당(의석 0)은 화면에서 접혀 있으면 DOM에 카드 자체가 없으므로, 데이터에서 직접
@@ -3481,9 +3503,20 @@
                     tagX -= Math.round(8 * scale);
                 }
 
-                ctx.font = `${nameSize}px ${font}`;
-                ctx.fillStyle = '#eee';
-                ctx.fillText(row.nameText, textX, nameY, Math.max(10, tagX - textX - Math.round(6 * scale)));
+                // 이름 줄은 조각별로 화면과 같은 색으로 그림(의석 변동 ▲초록/▼빨강 등) — 전체 폭이 넘치면 같은 비율로 압축
+                const nameMaxW = Math.max(10, tagX - textX - Math.round(6 * scale));
+                const segs = row.nameSegments || [{ text: row.nameText, color: null, bold: false }];
+                const segFont = s => `${s.bold ? 'bold ' : ''}${nameSize}px ${font}`;
+                const segWidths = segs.map(s => { ctx.font = segFont(s); return ctx.measureText(s.text).width; });
+                const fit = Math.min(1, nameMaxW / (segWidths.reduce((a, b) => a + b, 0) || 1));
+                let segX = textX;
+                segs.forEach((s, si) => {
+                    const w = segWidths[si] * fit;
+                    ctx.font = segFont(s);
+                    ctx.fillStyle = s.color || '#eee';
+                    ctx.fillText(s.text, segX, nameY, Math.max(1, w));
+                    segX += w;
+                });
 
                 if(row.pills.length) {
                     let px = textX;
@@ -4189,6 +4222,55 @@
 
         // ===== MAIN SIMULATE =====
         window.addEventListener('resize', () => { simulate(); });
+
+        // 캔버스는 CSS 폭(100%)만 컨테이너를 따라가고 비트맵은 마지막으로 그린 크기 그대로라, 창 크기·패널 폭이
+        // 바뀌면 다시 그리기 전까지 가로로 찌그러진다. simulate()가 다시 그리지 않는 선거 결과·지역구 캔버스까지
+        // 포함해, 화면 비율과 비트맵 비율이 어긋난 캔버스만 마지막으로 그렸던 데이터로 다시 그린다
+        const lastChamberDraw = {};
+        const lastElecDistrictDraw = {};
+        function redrawCanvasForCurrentSize(cvs) {
+            const id = cvs.id;
+            if(lastChamberDraw[id]) {
+                const a = lastChamberDraw[id];
+                drawChamber(id, a.map, a.total, a.chamber);
+                return;
+            }
+            let m = id.match(/^(house|senate|third)DistrictCanvas$/);
+            if(m) { drawChamberDistrict(m[1]); return; }
+            m = id.match(/^elecDistrictResultCanvas(House|Senate|Third)$/);
+            if(m) {
+                const chamber = m[1].toLowerCase();
+                const a = lastElecDistrictDraw[chamber];
+                if(a) elecDrawDistrictResult(a.districtResults, a.progress, chamber);
+                return;
+            }
+            if(id === 'districtCanvas') districtDrawCanvas();
+        }
+        function isCanvasDistorted(cvs) {
+            if(!cvs.offsetParent || !cvs.width || !cvs.height || !cvs.clientWidth || !cvs.clientHeight) return false;
+            return Math.abs((cvs.clientWidth / cvs.clientHeight) / (cvs.width / cvs.height) - 1) > 0.01;
+        }
+        const pendingCanvasRedraws = new Set();
+        const canvasResizeObserver = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(entries => {
+            entries.forEach(e => pendingCanvasRedraws.add(e.target));
+            requestAnimationFrame(() => {
+                const targets = Array.from(pendingCanvasRedraws);
+                pendingCanvasRedraws.clear();
+                targets.forEach(cvs => { if(isCanvasDistorted(cvs)) redrawCanvasForCurrentSize(cvs); });
+            });
+        });
+        window.addEventListener('load', () => {
+            if(!canvasResizeObserver) return;
+            ['house', 'senate', 'third'].forEach(ch => {
+                const suf = ch.charAt(0).toUpperCase() + ch.slice(1);
+                [ch + 'Canvas', ch + 'DistrictCanvas', 'elecCanvas' + suf, 'elecDistrictResultCanvas' + suf].forEach(id => {
+                    const el = document.getElementById(id);
+                    if(el) canvasResizeObserver.observe(el);
+                });
+            });
+            const districtCvs = document.getElementById('districtCanvas');
+            if(districtCvs) canvasResizeObserver.observe(districtCvs);
+        });
         let suppressAutosaveOnUnload = false;
         window.addEventListener('beforeunload', () => { if(autosaveEnabled && !suppressAutosaveOnUnload) autosaveNow(); });
 
@@ -11207,6 +11289,7 @@
             const cvs = document.getElementById('elecDistrictResultCanvas'+suf);
             const svgWrap = document.getElementById('elecDistrictResultSvg'+suf);
             if(!cvs) return;
+            lastElecDistrictDraw[chamber] = { districtResults, progress };
             if(districtMapMode === 'svg') {
                 cvs.style.display = 'none';
                 if(svgWrap) {
@@ -11882,6 +11965,7 @@
         function drawChamber(cvsId, map, total, chamber) {
             const cvs = document.getElementById(cvsId);
             if(!cvs) return;
+            lastChamberDraw[cvsId] = { map, total, chamber };
             // CSS width:100%는 유지한 채, 부모(래퍼)의 실제 렌더 너비만 측정
             // (cvs 자체의 style.width를 px로 고정하지 않아야 매번 컨테이너 크기 변화에 반응함)
             const parent = cvs.parentElement;
