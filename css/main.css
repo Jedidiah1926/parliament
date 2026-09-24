@@ -519,3 +519,10 @@
         html[data-ui-mode="mobile"] .save-select-columns { grid-template-columns: 1fr; overflow-y: auto; }
         html[data-ui-mode="mobile"] .save-select-col { overflow: visible; }
         html[data-ui-mode="mobile"] .save-select-col + .save-select-col { border-left: none; border-top: 1px solid var(--tno-border); }
+
+        /* 언어 선택: 불러온 언어 팩이 늘어나면 줄바꿈, 팩 삭제(✕) 표시 */
+        .lang-select-wrap { flex-wrap: wrap; }
+        .lang-select-wrap .lang-select-btn { flex: 1 1 120px; }
+        .lang-select-btn .lang-remove { margin-left: 8px; color: #666; font-size: 0.8rem; }
+        .lang-select-btn .lang-remove:hover { color: var(--tno-alert); }
+        .lang-tool-btn { font-size: 0.85rem; padding: 10px 6px; text-transform: none; }

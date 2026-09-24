@@ -2784,3 +2784,4 @@ html[data-theme-family="modern"] .save-fav-btn.on { color: var(--m-gold) !import
 html[data-theme-family="modern"] .save-select-close { border-radius: 8px; border-color: var(--m-border) !important; color: var(--m-text-2) !important; background: transparent !important; }
 html[data-theme-family="modern"] #saveSelectOverlay > .save-select-modal { padding: 0 !important; overflow: hidden; }
 html[data-theme-family="modern"] .save-rename-input { padding: 3px 8px !important; font-size: 13px; border-radius: 7px !important; }
+html[data-theme-family="modern"] .lang-select-btn .lang-remove { color: currentColor; opacity: .55; }
