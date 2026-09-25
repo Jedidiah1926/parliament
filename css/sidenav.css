@@ -1,9 +1,10 @@
 /* =====================================================================
    세로 탭 사이드바 (js/sidenav.js) — 공통 레이아웃 + 네온 모양
    ---------------------------------------------------------------------
-   데스크톱 화면 모드에서 모든 테마에 표시되고, 그때는 기존 가로 탭 줄(1·2단)과
-   국가명 줄을 숨긴다(국가명은 사이드바 머리로 옮겨짐). 패널 머리는 네온 모드에선
-   원래의 "MINISTRY OF INTERIOR" 띠를 그대로 두고, 라이트/다크에서만 현재 위치(그룹 › 항목)로 바꾼다.
+   데스크톱 화면 모드에서 모든 테마에 표시되고, 그때는 기존 가로 탭 줄(1·2단)을 숨긴다.
+   네온 모드는 패널 머리를 원래대로("MINISTRY OF INTERIOR" 띠 + 그 아래 짙은 회색 국가명 줄) 두고
+   사이드바 머리엔 접기 버튼만 둔다. 라이트/다크에서만 국가명을 사이드바 머리로 옮기고
+   패널 머리를 현재 위치(그룹 › 항목)로 바꾼다 (modern.css 6번 구역).
    모바일 화면 모드에서는 숨기고 기존 가로 탭을 그대로 쓴다.
    라이트/다크 모양은 css/modern.css 6번 구역이 덮어쓴다.
    ===================================================================== */
@@ -11,8 +12,7 @@
 /* ---- 표시/숨김 ---- */
 .side-nav, .mn-section-title { display: none; }
 html:not([data-ui-mode="mobile"]) body.has-side-nav .main-tab-container,
-html:not([data-ui-mode="mobile"]) body.has-side-nav .main-tab-content > .sub-tab-container,
-html:not([data-ui-mode="mobile"]) body.has-side-nav .nation-id-bar { display: none !important; }
+html:not([data-ui-mode="mobile"]) body.has-side-nav .main-tab-content > .sub-tab-container { display: none !important; }
 
 /* ---- 레이아웃 (공통) ---- */
 html:not([data-ui-mode="mobile"]) body.has-side-nav .side-nav {
@@ -134,10 +134,9 @@ body.side-nav-collapsed .mn-group.active .mn-group-head {
     box-shadow: 0 0 8px color-mix(in srgb, var(--tone) 50%, transparent), inset 0 0 0 1px var(--tone);
 }
 
-/* 네온 모드는 패널 머리에 "MINISTRY OF INTERIOR" 띠가 있으므로 사이드바 머리엔 국가명만 */
-.mn-brand-title { display: none; }
-.mn-brand { align-self: center; }
-.mn-brand-sub { color: var(--tno-neon); text-shadow: 0 0 5px var(--tno-neon-dim); font-size: 1rem; margin-top: 0; white-space: normal; line-height: 1.25; }
+/* 네온 모드는 패널 머리의 "MINISTRY OF INTERIOR" 띠와 그 아래 국가명 줄을 그대로 쓰므로 사이드바 머리엔 접기 버튼만 */
+.mn-brand { display: none; }
+.mn-head { justify-content: flex-end; }
 
 /* =====================================================================
    모바일 화면 모드 — 아래 탭 바 + 떠 있는 실행 버튼 (js/sidenav.js)
