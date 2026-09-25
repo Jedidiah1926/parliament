@@ -1334,3 +1334,18 @@
             padding: 2px 6px;
         }
         .save-rename-input:focus { outline: none; box-shadow: 0 0 6px var(--tno-neon-dim); }
+
+        /* 의회 > 구성: 의회별 정당 의석 배정 합계 (파벌 합계와 같은 방식 — 총 의석을 넘으면 넘친 만큼은 반원에 그려지지 않음) */
+        .seat-sum-line {
+            display: flex;
+            justify-content: space-between;
+            gap: 8px;
+            font-size: 0.8rem;
+            padding: 5px 8px;
+            margin-bottom: 8px;
+            border: 1px solid currentColor;
+        }
+        .seat-sum-line b { font-weight: normal; }
+        .seat-sum-line.ok    { color: #00cc66; }
+        .seat-sum-line.under { color: var(--tno-gold); }
+        .seat-sum-line.over  { color: #cc3333; background: rgba(204, 51, 51, 0.08); }

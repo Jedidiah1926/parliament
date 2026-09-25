@@ -281,3 +281,5 @@ html[data-ui-mode="mobile"] body.has-side-nav .main-tab-content > .sub-tab-conta
 }
 /* 네온 머리 띠는 모바일에서 조금 얇게 */
 html[data-ui-mode="mobile"] body.has-side-nav .tno-header-strip { padding-top: 6px; padding-bottom: 6px; font-size: .95rem; }
+/* 모바일: 알림 토스트가 아래 탭 바·실행 버튼에 가리지 않게 */
+html[data-ui-mode="mobile"] body.has-side-nav .kbd-toast { bottom: calc(var(--mnav-h) + var(--safe-b) + 76px); }

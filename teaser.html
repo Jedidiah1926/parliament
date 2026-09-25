@@ -230,7 +230,7 @@
                             </div>
                             <div>
                                 <label style="color:var(--tno-neon);font-size:0.85rem;">총 의석 수</label>
-                                <input type="number" id="houseTotal" value="300" oninput="elecUpdateDistrictInfo()">
+                                <input type="number" id="houseTotal" value="300" oninput="elecUpdateDistrictInfo(); updateSeatSumLines()">
                             </div>
                         </div>
                         <div id="partyListHouse"></div>
@@ -245,7 +245,7 @@
                             </div>
                             <div>
                                 <label style="color:var(--tno-neon);font-size:0.85rem;">총 의석 수</label>
-                                <input type="number" id="senateTotal" value="100" oninput="elecUpdateDistrictInfo()">
+                                <input type="number" id="senateTotal" value="100" oninput="elecUpdateDistrictInfo(); updateSeatSumLines()">
                             </div>
                         </div>
                         <div id="partyListSenate"></div>
@@ -260,7 +260,7 @@
                             </div>
                             <div>
                                 <label style="color:var(--tno-neon);font-size:0.85rem;">총 의석 수</label>
-                                <input type="number" id="thirdTotal" value="100" oninput="elecUpdateDistrictInfo()">
+                                <input type="number" id="thirdTotal" value="100" oninput="elecUpdateDistrictInfo(); updateSeatSumLines()">
                             </div>
                         </div>
                         <div id="partyListThird"></div>

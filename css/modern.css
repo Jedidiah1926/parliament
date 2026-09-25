@@ -2872,3 +2872,16 @@ html[data-theme-family="modern"][data-ui-mode="mobile"] body.has-side-nav .main-
 }
 html[data-theme-family="modern"][data-ui-mode="mobile"] body.has-side-nav .main-tab-content > .sub-tab-container > .sub-tab-btn-danger { color: var(--m-danger) !important; }
 html[data-theme-family="modern"][data-ui-mode="mobile"] body.has-side-nav .main-tab-content > .sub-tab-container > .sub-tab-btn-danger.active { background: var(--m-danger) !important; color: #fff !important; }
+
+/* 의회 > 구성: 의석 배정 합계 */
+html[data-theme-family="modern"] .seat-sum-line {
+    border: none;
+    border-radius: 10px;
+    padding: 8px 12px;
+    font-size: 13px;
+    font-weight: 600;
+}
+html[data-theme-family="modern"] .seat-sum-line b { font-weight: 700; }
+html[data-theme-family="modern"] .seat-sum-line.ok    { color: var(--m-success); background: color-mix(in srgb, var(--m-success) 11%, transparent); }
+html[data-theme-family="modern"] .seat-sum-line.under { color: var(--m-gold); background: color-mix(in srgb, var(--m-gold) 11%, transparent); }
+html[data-theme-family="modern"] .seat-sum-line.over  { color: var(--m-danger); background: color-mix(in srgb, var(--m-danger) 11%, transparent); }
