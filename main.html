@@ -199,7 +199,7 @@
         const SAVE_SLOTS_KEY = 'dnoParliamentSaveSlots';
         const LEGACY_AUTOSAVE_KEY = 'dnoParliamentAutosave'; // 세이브 슬롯 통합 이전, 단일 키에 저장하던 구버전 자동저장
         const AUTOSAVE_SLOT_ID = 'autosave';
-        const AUTOSAVE_SLOT_NAME = '기존 저장';
+        const AUTOSAVE_SLOT_NAME = '새 의회 (1)';
 
         // 구버전 자동저장 데이터가 남아있는데 아직 새 슬롯 배열로 옮겨지지 않았다면
         // (dno.html을 아직 한 번도 다시 열지 않은 사용자) 여기서도 옮겨서 목록에 바로 보이게 함.
@@ -219,8 +219,12 @@
 
         function loadSaveSlotsForMenu() {
             migrateLegacyAutosaveForMenu();
-            try { return JSON.parse(localStorage.getItem(SAVE_SLOTS_KEY) || '[]'); }
+            let slots;
+            try { slots = JSON.parse(localStorage.getItem(SAVE_SLOTS_KEY) || '[]'); }
             catch(e) { return []; }
+            // 기본(전역) 자동저장 슬롯은 항상 현재 이름으로 (예전 이름 "기존 저장"으로 저장된 기록 포함)
+            if(Array.isArray(slots)) slots.forEach(s => { if(s && s.isAutosave && !s.parentId) s.name = AUTOSAVE_SLOT_NAME; });
+            return slots;
         }
 
         // 즐겨찾기는 세이브 슬롯 배열과 따로 보관 — dno.js가 슬롯 배열을 통째로 다시 쓰더라도 지워지지 않게
@@ -353,7 +357,7 @@
 
         // 로컬 세이브 슬롯이 아니라, 예전에 "파일로 저장"으로 다운로드해둔 .json 파일을
         // 그대로 불러와 이어서 시작 — localStorage 세이브 목록에는 등록되지 않고,
-        // 이후 자동저장은 기본 "기존 저장" 슬롯을 계속 덮어씀.
+        // 이후 자동저장은 기본 "새 의회 (1)" 슬롯을 계속 덮어씀.
         async function importSaveFile(input) {
             const file = input.files?.[0];
             if(!file) return;
