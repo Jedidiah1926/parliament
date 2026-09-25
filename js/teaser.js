@@ -4630,7 +4630,7 @@
             if(uiMain === 'save') uiMain = 'nation';
             switchMainTab(uiMain);
             if(uiMain !== 'election') {
-                const fallback = uiMain==='setup' ? 'party' : 'legislation';
+                const fallback = uiMain==='setup' ? 'party' : uiMain==='cabinet' ? 'system' : uiMain==='help' ? 'helpsetup' : 'legislation';
                 switchSubTab(uiMain, currentSubTab[uiMain] || fallback, false);
             }
         }
@@ -5413,7 +5413,7 @@
             document.querySelectorAll('.main-tab-content').forEach(c => c.classList.remove('active'));
             document.getElementById('mainContent' + main.charAt(0).toUpperCase() + main.slice(1)).classList.add('active');
             if(main === 'election') { elecRenderList(); elecRenderRecords(); return; }
-            switchSubTab(main, currentSubTab[main] || (main === 'setup' ? 'party' : main === 'cabinet' ? 'system' : 'legislation'), false);
+            switchSubTab(main, currentSubTab[main] || (main === 'setup' ? 'party' : main === 'cabinet' ? 'system' : main === 'help' ? 'helpsetup' : 'legislation'), false);
         }
 
         function switchSubTab(main, sub, doMainSwitch = true) {
@@ -5836,6 +5836,10 @@
                 container.innerHTML = '<div style="text-align:center;color:#555;padding:20px;">[배정된 정당 없음]</div>';
                 return;
             }
+            const sumLine = document.createElement('div');
+            sumLine.dataset.seatSum = type;
+            container.appendChild(sumLine);
+            fillSeatSumLine(sumLine, type);
             visibleParties.forEach(p => {
                 const idx = p.originalIdx;
                 const seatKey = seatKeyFor(type);
@@ -5869,8 +5873,8 @@
                             <span style="color:#666;font-size:0.8rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;">${ideologyName}</span>
                             <div style="display:flex;align-items:center;gap:5px;flex-shrink:0;">
                                 <label style="color:#555;font-size:0.75rem;white-space:nowrap;">${thisChamberName} 의석</label>
-                                <input type="number" value="${p[seatKey]}" min="0"
-                                    onchange="updateParty(${idx},'${seatKey}',parseInt(this.value)||0)"
+                                <input type="number" value="${p[seatKey]}" min="0" max="${Math.max(p[seatKey]||0, chamberTotalSeats(type) - chamberSeatSum(type, p.id))}"
+                                    onchange="setPartySeats(${idx},'${type}',this.value)"
                                     ${p.status==='dissolved'?'disabled':''}
                                     style="width:65px;${p.status==='dissolved'?'opacity:0.5;cursor:not-allowed;':''}">
                             </div>
@@ -6757,6 +6761,40 @@
         // 반드시 정렬이 끝난 뒤에 refreshUI()를 호출해야 카드에 새겨진 인덱스(idx)가
         // 최신 배열 순서와 어긋나지 않는다. 순서가 바뀌면 그 다음 입력이 엉뚱한 정당에 적용된다.
         function updateParty(i,k,v) { parties[i][k]=v; simulate(); refreshUI(); }
+
+        // ── 의회별 의석 합계 ──────────────────────
+        // 한 의회에 속한 정당들의 의석 합이 총 의석 수를 넘으면 넘친 만큼은 반원에 그려지지 않는다(getMap이 총 의석에서 끊음).
+        // 그래서 파벌 합계처럼 의회별 합계를 보여주고, 정당 의석 입력은 남은 자리까지만 받는다.
+        function chamberTotalSeats(ch) {
+            const el = document.getElementById(ch==='senate' ? 'senateTotal' : ch==='third' ? 'thirdTotal' : 'houseTotal');
+            return el ? (parseInt(el.value) || 0) : 0;
+        }
+        function chamberSeatSum(ch, exceptPartyId) {
+            const seatKey = seatKeyFor(ch), inKey = inKeyFor(ch);
+            return parties.reduce((s, p) => s + ((p[inKey] && p.id !== exceptPartyId) ? (p[seatKey] || 0) : 0), 0);
+        }
+        function fillSeatSumLine(el, ch) {
+            const total = chamberTotalSeats(ch), sum = chamberSeatSum(ch);
+            const state = sum === total ? 'ok' : sum < total ? 'under' : 'over';
+            el.className = `seat-sum-line ${state}`;
+            el.innerHTML = `<span>배정 합계 <b>${sum}</b> / ${total}석</span><span>${
+                state === 'ok' ? '✓' : state === 'under' ? `${total - sum}석 남음` : `✗ ${sum - total}석 초과 — 초과분은 화면에 안 보임`}</span>`;
+        }
+        function updateSeatSumLines() {
+            document.querySelectorAll('[data-seat-sum]').forEach(el => fillSeatSumLine(el, el.dataset.seatSum));
+        }
+        function setPartySeats(idx, ch, value) {
+            const p = parties[idx];
+            if(!p) return;
+            const seatKey = seatKeyFor(ch);
+            const want = Math.max(0, parseInt(value) || 0);
+            const cap = Math.max(0, chamberTotalSeats(ch) - chamberSeatSum(ch, p.id));
+            const v = Math.min(want, cap);
+            if(v < want) showKbdToast(cap === 0
+                ? `남은 의석이 없습니다 — 총 의석 수를 늘리거나 다른 정당 의석을 줄이세요`
+                : `남은 의석이 ${cap}석이라 ${cap}석으로 맞췄습니다`);
+            updateParty(idx, seatKey, v);
+        }
 
         // 정당 카드 "통계 표시" — 당수 사진/당 로고/표시 안 함(X) 중 하나를 고름. X를 고르면 그 정당의
         // leaderPhoto/logoPhoto 자체는 그대로 두고, 하원/상원/삼원 통계 카드에만 사진을 비워 보여준다.

@@ -9,6 +9,15 @@
     box-shadow: 0 0 0 9999px rgba(0, 0, 0, .62), 0 0 18px var(--tno-neon);
     transition: left .2s ease, top .2s ease, width .2s ease, height .2s ease;
 }
+/* 개표처럼 지켜봐야 하는 단계: 화면을 어둡게 하지 않고 테두리만 */
+.tut-nodim .tut-spot { box-shadow: 0 0 18px var(--tno-neon); }
+.tut-nodim.tut-no-target .tut-spot { box-shadow: none; }
+/* 모바일에서 지켜보는 단계: 작게 줄인 말풍선 (설명은 두 줄까지) */
+.tut-compact .tut-bubble { padding: 10px 14px 10px; }
+.tut-compact .tut-progress { display: none; }
+.tut-compact .tut-title { font-size: 1rem; margin-bottom: 4px; }
+.tut-compact .tut-text { font-size: .85rem; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.tut-compact .tut-actions { margin-top: 8px; }
 .tut-no-target .tut-spot { left: 50% !important; top: 50% !important; width: 0 !important; height: 0 !important; border: none; box-shadow: 0 0 0 9999px rgba(0, 0, 0, .62); }
 .tut-bubble {
     position: fixed;
@@ -87,6 +96,11 @@ html[data-theme-family="modern"] .tut-spot {
     border-radius: 14px;
     box-shadow: 0 0 0 9999px rgba(9, 9, 11, .5), 0 0 0 2px var(--m-accent) !important;
 }
+html[data-theme-family="modern"] .tut-nodim .tut-spot { box-shadow: 0 0 0 2px var(--m-accent), var(--m-shadow-lg) !important; }
+html[data-theme-family="modern"] .tut-nodim.tut-no-target .tut-spot { box-shadow: none !important; }
+html[data-theme-family="modern"] .tut-compact .tut-bubble { padding: 12px 14px 10px; }
+html[data-theme-family="modern"] .tut-compact .tut-title { font-size: 15px; }
+html[data-theme-family="modern"] .tut-compact .tut-text { font-size: 13px; }
 html[data-theme-family="modern"] .tut-no-target .tut-spot { box-shadow: 0 0 0 9999px rgba(9, 9, 11, .5) !important; }
 html[data-theme-family="modern"] .tut-bubble {
     background: var(--m-surface);

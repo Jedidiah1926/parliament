@@ -1809,6 +1809,14 @@ window.DnoLangPacks.en = {
    "Run"
   ],
   [
+   "ⓘ 도움말",
+   "ⓘ Help"
+  ],
+  [
+   "열기 →",
+   "Open →"
+  ],
+  [
    "지역구",
    "District"
   ],

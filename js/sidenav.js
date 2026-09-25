@@ -12,7 +12,7 @@
     const COLLAPSE_KEY = 'dnoSideNavCollapsed';
     const CLOSED_GROUPS_KEY = 'dnoSideNavClosedGroups';
     // Chrome 탭 그룹처럼 그룹마다 구분색 — 실제 색은 테마별 CSS가 data-tone에 맞춰 정한다
-    const GROUP_TONES = { setup: 'info', nation: 'danger', election: 'gold', cabinet: 'success' };
+    const GROUP_TONES = { setup: 'info', nation: 'danger', election: 'gold', cabinet: 'success', help: 'muted' };
 
     function safeGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
     function safeSet(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* 저장 불가 환경 — 무시 */ } }

@@ -58,6 +58,9 @@
         // 이원집정부제 + 양원제 전용: 의회 해산권을 원별로 나눠 대통령=상원 해산, 총리=하원 해산으로 지정 가능
         // (기본은 꺼짐 — 켜면 기존 단일 "의회 해산" 권한 주체 설정 대신 이 두 개별 권한을 사용)
         let splitDissolutionHolders = false;
+        // 건설적 불신임제(독일·이스라엘식): 켜면 내각 불신임안에 후임 총리를 함께 지명해야 하고,
+        // 가결되면 공석 없이 그 후임이 바로 총리가 된다 (끄면 기존처럼 가결 시 총리 공석)
+        let constructiveNoConfidence = false;
 
         // ── 총리 선출 과정 ──────────────
         let pmDirectElectionEnabled = false; // 총리직선제 체크박스 — 켜면 국가>선거>총선에서 "총리 선거" 실행 가능
@@ -550,8 +553,7 @@
             if(noConfidenceSection) {
                 const canNoConfidence = govType === 'parliamentary' || govType === 'semi';
                 noConfidenceSection.style.display = canNoConfidence ? '' : 'none';
-                const label = document.getElementById('noConfidenceBtnLabel');
-                if(label) label.textContent = `내각 불신임안`;
+                if(canNoConfidence) renderNoConfidenceSection();
             }
         }
 
@@ -865,15 +867,71 @@
 
         // ── 내각 불신임 (의원내각제/이원집정부제 전용) ──────────────
         function submitNoConfidenceBill() {
+            let successor = null;
+            if(constructiveNoConfidence) {
+                const name = (document.getElementById('ncSuccessorName')?.value || '').trim();
+                const partyVal = document.getElementById('ncSuccessorParty')?.value || '';
+                if(!name) { showCustomAlert('건설적 불신임제에서는 후임 총리를 함께 지명해야 합니다.\n후임 총리 이름을 입력하세요.'); return; }
+                successor = { name, partyId: partyVal ? parseInt(partyVal) : null };
+            }
+            const pmLabel = effRoleLabel('pm');
             const bill = {
-                id: 'b'+Date.now(), title: `내각 불신임안`, content: '', threshold: 0.5, numer: null, denom: null, tags: ['불신임안'],
+                id: 'b'+Date.now(),
+                title: successor ? `건설적 불신임안 — 후임 ${pmLabel}: ${successor.name}` : `내각 불신임안`,
+                content: successor ? `현 ${pmLabel}를 불신임하고 ${successor.name}${successor.partyId ? `(${parties.find(p => p.id === successor.partyId)?.name || ''})` : ''}을(를) 후임 ${pmLabel}로 선출한다.` : '',
+                threshold: 0.5, numer: null, denom: null, tags: successor ? ['불신임안', '건설적불신임'] : ['불신임안'],
                 houseStatus: 'pending', senateStatus: 'pending', thirdStatus: 'pending', houseVote: null, senateVote: null, thirdVote: null,
                 version: 1, parentBillId: null, isAmendment: false, voteHistory: [],
                 isNoConfidence: true, noConfidenceApplied: false,
+                ...(successor ? { constructiveSuccessor: successor } : {}),
             };
             bills.push(bill);
             renderBillList(); syncBillSelect();
-            showCustomAlert(`내각 불신임안이 국가 > 입법 탭에 상정되었습니다.`);
+            if(successor) { const n = document.getElementById('ncSuccessorName'); if(n) n.value = ''; }
+            showCustomAlert(successor
+                ? `건설적 불신임안(후임 ${pmLabel}: ${successor.name})이 국가 > 입법 탭에 상정되었습니다.\n가결되면 ${successor.name}이(가) 곧바로 새 ${pmLabel}가 됩니다.`
+                : `내각 불신임안이 국가 > 입법 탭에 상정되었습니다.`);
+        }
+
+        function setConstructiveNoConfidence(checked) {
+            constructiveNoConfidence = !!checked;
+            renderNoConfidenceSection();
+        }
+
+        // 불신임 영역: 건설적 불신임제 체크 상태에 따라 후임 총리 지명 칸과 안내 문구를 바꾼다
+        function renderNoConfidenceSection() {
+            const chk = document.getElementById('constructiveNoConfidenceCheckbox');
+            if(chk) chk.checked = constructiveNoConfidence;
+            const fields = document.getElementById('ncSuccessorFields');
+            if(fields) fields.style.display = constructiveNoConfidence ? '' : 'none';
+            const pmLabel = effRoleLabel('pm');
+            const sel = document.getElementById('ncSuccessorParty');
+            if(sel) {
+                const prev = sel.value;
+                const eligible = parties.filter(p => p.ideologyId !== IND_IDEOLOGY_ID && p.status !== 'dissolved' && p.status !== 'banned');
+                sel.innerHTML = `<option value="">-- 후임 ${pmLabel} 소속 정당 --</option>` + eligible.map(p => `<option value="${p.id}">${escapeHtmlText(p.name)}</option>`).join('');
+                if(eligible.some(p => String(p.id) === prev)) sel.value = prev;
+            }
+            const nameEl = document.getElementById('ncSuccessorName');
+            if(nameEl) nameEl.placeholder = `후임 ${pmLabel} 이름`;
+            const btnLabel = document.getElementById('noConfidenceBtnLabel');
+            if(btnLabel) btnLabel.textContent = constructiveNoConfidence ? '건설적 불신임안' : '내각 불신임안';
+            const note = document.getElementById('noConfidenceNote');
+            if(note) note.textContent = constructiveNoConfidence
+                ? `가결되면 지명한 후임이 곧바로 새 ${pmLabel}가 되고, 기존 내각(부${pmLabel}·국무위원)은 물러납니다 — 공석이 생기지 않습니다`
+                : `가결되면 국가 > 입법 탭에서 확인할 수 있으며, 통과 시 현재 ${pmLabel}가 해임됩니다`;
+        }
+
+        // 후임 소속 정당을 고르면, 이름 칸이 비어 있을 때 그 정당 당수 이름을 채워 준다
+        function onNcSuccessorPartyChange() {
+            const sel = document.getElementById('ncSuccessorParty');
+            const nameEl = document.getElementById('ncSuccessorName');
+            if(!sel || !nameEl) return;
+            const p = parties.find(x => String(x.id) === sel.value);
+            if(p && p.leaderName && (!nameEl.value.trim() || nameEl.dataset.autofill === '1')) {
+                nameEl.value = p.leaderName;
+                nameEl.dataset.autofill = '1';
+            }
         }
 
         // 내각 불신임안이 가결되면 총리·부총리·국무위원 전원의 재직자 정보를 초기화 —
@@ -883,7 +941,11 @@
                 if(!b.isNoConfidence || b.noConfidenceApplied) return;
                 if(getBillOverallStatus(b) !== 'passed') return;
                 b.noConfidenceApplied = true;
-                pm = { name: '', photo: '', partyId: null, linkedSeat: null };
+                // 건설적 불신임: 불신임과 동시에 지명된 후임이 새 총리가 된다 (공석 없음)
+                const successor = b.constructiveSuccessor;
+                pm = successor
+                    ? { name: successor.name, photo: '', partyId: successor.partyId ?? null, linkedSeat: null }
+                    : { name: '', photo: '', partyId: null, linkedSeat: null };
                 // 불신임 가결 직후엔 공석으로 유지 — 다수당 대표가 곧바로 다시 총리가 되는 게 아니라,
                 // "고정" 상태를 유지한 채 이름을 비워 공석으로 표시하고, 새 총리는 "고정 해제"로
                 // 다수당 대표를 다시 반영하거나 직접 지정하는 등 명시적인 절차를 거치도록 함
@@ -894,6 +956,7 @@
                 renderDeputyPmsList();
                 renderCabinetMembersList();
                 renderCabinetDisplay();
+                if(successor) showCustomAlert(`건설적 불신임안이 가결되어 ${successor.name}이(가) 새 ${effRoleLabel('pm')}가 되었습니다.\n기존 내각은 물러났으니 내각 > 내각에서 새 국무위원을 채워 주세요.`);
             });
         }
 
@@ -1293,6 +1356,7 @@
         // 상원/하원 분할 해산권은 원 이름이 설정에 따라 바뀌므로, EMERGENCY_POWERS의 고정 label 대신
         // 항상 현재 이름(chamberDisplayName)으로 다시 계산해서 반환한다
         function emergencyPowerLabel(key) {
+            if(key === 'dissolution' && dissolutionScope() !== 'all') return `${chamberDisplayName(dissolutionScope())} 해산`;
             if(key === 'dissolutionSenate') return `${chamberDisplayName('senate')} 해산`;
             if(key === 'dissolutionHouse')  return `${chamberDisplayName('house')} 해산`;
             return EMERGENCY_POWERS[key]?.label || '';
@@ -1358,6 +1422,18 @@
 
         const DISSOLUTION_KEYS = ['dissolution', 'dissolutionSenate', 'dissolutionHouse'];
 
+        // 의회 해산 대상 — 'all'(의회 전체) 또는 한 원('house'/'senate'/'third')만. 원이 둘 이상일 때만 고를 수 있고,
+        // 지금 없는 원을 가리키고 있으면(원 구성 변경 등) 의회 전체로 본다
+        function dissolutionScope() {
+            const sc = emergencyPowers.dissolution.scope;
+            return (sc && sc !== 'all' && chamberList().length > 1 && chamberList().includes(sc)) ? sc : 'all';
+        }
+        function setDissolutionScope(scope) {
+            if(emergencyPowers.dissolution.active) { showCustomAlert('이미 선포된 해산의 대상은 바꿀 수 없습니다.\n총선을 반영해 해제한 뒤 다시 고르세요.'); return; }
+            emergencyPowers.dissolution.scope = scope;
+            renderEmergencyPowers();
+        }
+
         function toggleEmergencyActive(key) {
             if(!EMERGENCY_POWERS[key]) return;
             if(emergencyPowers[key].holder === 'none') { showCustomAlert('먼저 권한 주체를 지정하세요.'); return; }
@@ -1369,7 +1445,11 @@
             if(!emergencyPowers[key].active) {
                 showCustomConfirm(`${emergencyPowerLabel(key)}을(를) 선포합니다. 계속하시겠습니까?`, () => {
                     emergencyPowers[key].active = true;
-                    if(key === 'dissolution') clearAllSeatsForDissolution();
+                    if(key === 'dissolution') {
+                        const scope = dissolutionScope();
+                        if(scope === 'all') clearAllSeatsForDissolution();
+                        else { clearChamberSeatsForDissolution(scope); simulate(); refreshUI(); }
+                    }
                     if(key === 'dissolutionSenate') { clearChamberSeatsForDissolution('senate'); simulate(); refreshUI(); }
                     if(key === 'dissolutionHouse') { clearChamberSeatsForDissolution('house'); simulate(); refreshUI(); }
                     if(key === 'martialLaw' && !emergencyPowers.martialLaw.suspendParliament) submitMartialLawLiftBill();
@@ -1648,6 +1728,15 @@
                         const lbl = emergencyPowerLabel(key);
                         const label = locked ? `! ${lbl} 선포됨 (총선으로만 해제) !` : `! ${lbl} ${st.active ? '해제' : '선포'} !`;
                         const btn = `<button class="add-btn" style="margin-top:8px;border-style:solid;border-color:${cfg.color};color:${cfg.color};text-shadow:0 0 4px ${cfg.color};background:${bg};box-shadow:${shadow};${locked?'cursor:default;opacity:0.85;':''}" onclick="toggleEmergencyActive('${key}')">${label}</button>`;
+                        if(key === 'dissolution' && chamberList().length > 1) {
+                            const scope = dissolutionScope();
+                            const opts = [['all', '의회 전체'], ...chamberList().map(ch => [ch, `${chamberDisplayName(ch)}만`])];
+                            return btn + `
+                            <div style="color:#888;font-size:0.76rem;margin:8px 0 4px;">해산 대상</div>
+                            <div class="system-radio-group">${opts.map(([v, t]) =>
+                                `<button type="button" class="system-radio-btn${scope === v ? ' active' : ''}" ${st.active ? 'disabled' : ''} onclick="setDissolutionScope('${v}')">${escapeHtmlText(t)}</button>`).join('')}</div>
+                            <div style="color:#555;font-size:0.72rem;margin-top:4px;">한 원만 해산하면 그 원의 의석만 비워지고, 그 원의 총선을 반영하면 해제됩니다.</div>`;
+                        }
                         if(key === 'martialLaw') {
                             return btn + `
                             <label style="display:flex;align-items:flex-start;gap:6px;margin-top:6px;cursor:${st.active?'default':'pointer'};color:#888;font-size:0.76rem;line-height:1.4;">
@@ -4443,6 +4532,7 @@
                     pmDirectElectionEnabled: pmDirectElectionEnabled,
                     pmMajorityLocked: pmMajorityLocked,
                     splitDissolutionHolders: splitDissolutionHolders,
+                    constructiveNoConfidence: constructiveNoConfidence,
                     pmNominee: pmNominee,
                     pmNomineeBillId: pmNomineeBillId,
                     vetoHolder: vetoHolder,
@@ -4672,6 +4762,7 @@
             pmDirectElectionEnabled = !!cfg.pmDirectElectionEnabled;
             pmMajorityLocked = !!cfg.pmMajorityLocked;
             splitDissolutionHolders = !!cfg.splitDissolutionHolders;
+            constructiveNoConfidence = !!cfg.constructiveNoConfidence;
             pmNominee = { name: '', photo: '', partyId: null, linkedSeat: null, ...(cfg.pmNominee || {}) };
             pmNomineeBillId = cfg.pmNomineeBillId ?? null;
             Object.keys(EMERGENCY_POWERS).forEach(k => {
@@ -4732,7 +4823,7 @@
             if(uiMain === 'save') uiMain = 'nation';
             switchMainTab(uiMain);
             if(uiMain !== 'election') {
-                const fallback = uiMain==='setup' ? 'party' : 'legislation';
+                const fallback = uiMain==='setup' ? 'party' : uiMain==='cabinet' ? 'system' : uiMain==='help' ? 'helpsetup' : 'legislation';
                 switchSubTab(uiMain, currentSubTab[uiMain] || fallback, false);
             }
         }
@@ -5525,7 +5616,7 @@
             document.querySelectorAll('.main-tab-content').forEach(c => c.classList.remove('active'));
             document.getElementById('mainContent' + main.charAt(0).toUpperCase() + main.slice(1)).classList.add('active');
             if(main === 'election') { elecRenderList(); elecRenderRecords(); return; }
-            switchSubTab(main, currentSubTab[main] || (main === 'setup' ? 'party' : main === 'cabinet' ? 'system' : 'legislation'), false);
+            switchSubTab(main, currentSubTab[main] || (main === 'setup' ? 'party' : main === 'cabinet' ? 'system' : main === 'help' ? 'helpsetup' : 'legislation'), false);
         }
 
         function switchSubTab(main, sub, doMainSwitch = true) {
@@ -5975,6 +6066,10 @@
                 container.innerHTML = '<div style="text-align:center;color:#555;padding:20px;">[배정된 정당 없음]</div>';
                 return;
             }
+            const sumLine = document.createElement('div');
+            sumLine.dataset.seatSum = type;
+            container.appendChild(sumLine);
+            fillSeatSumLine(sumLine, type);
             visibleParties.forEach(p => {
                 const idx = p.originalIdx;
                 const seatKey = seatKeyFor(type);
@@ -6008,8 +6103,8 @@
                             <span style="color:#666;font-size:0.8rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;">${ideologyName}</span>
                             <div style="display:flex;align-items:center;gap:5px;flex-shrink:0;">
                                 <label style="color:#555;font-size:0.75rem;white-space:nowrap;">${thisChamberName} 의석</label>
-                                <input type="number" value="${p[seatKey]}" min="0"
-                                    onchange="updateParty(${idx},'${seatKey}',parseInt(this.value)||0)"
+                                <input type="number" value="${p[seatKey]}" min="0" max="${Math.max(p[seatKey]||0, chamberTotalSeats(type) - chamberSeatSum(type, p.id))}"
+                                    onchange="setPartySeats(${idx},'${type}',this.value)"
                                     ${p.status==='dissolved'?'disabled':''}
                                     style="width:65px;${p.status==='dissolved'?'opacity:0.5;cursor:not-allowed;':''}">
                             </div>
@@ -6896,6 +6991,40 @@
         // 반드시 정렬이 끝난 뒤에 refreshUI()를 호출해야 카드에 새겨진 인덱스(idx)가
         // 최신 배열 순서와 어긋나지 않는다. 순서가 바뀌면 그 다음 입력이 엉뚱한 정당에 적용된다.
         function updateParty(i,k,v) { parties[i][k]=v; simulate(); refreshUI(); }
+
+        // ── 의회별 의석 합계 ──────────────────────
+        // 한 의회에 속한 정당들의 의석 합이 총 의석 수를 넘으면 넘친 만큼은 반원에 그려지지 않는다(getMap이 총 의석에서 끊음).
+        // 그래서 파벌 합계처럼 의회별 합계를 보여주고, 정당 의석 입력은 남은 자리까지만 받는다.
+        function chamberTotalSeats(ch) {
+            const el = document.getElementById(ch==='senate' ? 'senateTotal' : ch==='third' ? 'thirdTotal' : 'houseTotal');
+            return el ? (parseInt(el.value) || 0) : 0;
+        }
+        function chamberSeatSum(ch, exceptPartyId) {
+            const seatKey = seatKeyFor(ch), inKey = inKeyFor(ch);
+            return parties.reduce((s, p) => s + ((p[inKey] && p.id !== exceptPartyId) ? (p[seatKey] || 0) : 0), 0);
+        }
+        function fillSeatSumLine(el, ch) {
+            const total = chamberTotalSeats(ch), sum = chamberSeatSum(ch);
+            const state = sum === total ? 'ok' : sum < total ? 'under' : 'over';
+            el.className = `seat-sum-line ${state}`;
+            el.innerHTML = `<span>배정 합계 <b>${sum}</b> / ${total}석</span><span>${
+                state === 'ok' ? '✓' : state === 'under' ? `${total - sum}석 남음` : `✗ ${sum - total}석 초과 — 초과분은 화면에 안 보임`}</span>`;
+        }
+        function updateSeatSumLines() {
+            document.querySelectorAll('[data-seat-sum]').forEach(el => fillSeatSumLine(el, el.dataset.seatSum));
+        }
+        function setPartySeats(idx, ch, value) {
+            const p = parties[idx];
+            if(!p) return;
+            const seatKey = seatKeyFor(ch);
+            const want = Math.max(0, parseInt(value) || 0);
+            const cap = Math.max(0, chamberTotalSeats(ch) - chamberSeatSum(ch, p.id));
+            const v = Math.min(want, cap);
+            if(v < want) showKbdToast(cap === 0
+                ? `남은 의석이 없습니다 — 총 의석 수를 늘리거나 다른 정당 의석을 줄이세요`
+                : `남은 의석이 ${cap}석이라 ${cap}석으로 맞췄습니다`);
+            updateParty(idx, seatKey, v);
+        }
 
         // 정당 카드 "통계 표시" — 당수 사진/당 로고/표시 안 함(X) 중 하나를 고름. X를 고르면 그 정당의
         // leaderPhoto/logoPhoto 자체는 그대로 두고, 하원/상원/삼원 통계 카드에만 사진을 비워 보여준다.
@@ -10857,7 +10986,10 @@
             elecLastResults = {};
             // 총선 반영으로 의회가 새로 구성되므로, 선포돼 있던 의회 해산은 여기서만 해제된다.
             // 해산권이 원별로 분할돼 있으면, 이번에 반영된 원(pending)의 해산만 해제된다
-            const wasDissolved = emergencyPowers.dissolution.active;
+            // 한 원만 해산한 경우엔 그 원의 선거가 반영될 때만 해제
+            const dissolvedLabel = emergencyPowerLabel('dissolution');
+            const scopeNow = dissolutionScope();
+            const wasDissolved = emergencyPowers.dissolution.active && (scopeNow === 'all' || pending.includes(scopeNow));
             if(wasDissolved) emergencyPowers.dissolution.active = false;
             const releasedSenate = emergencyPowers.dissolutionSenate.active && pending.includes('senate');
             if(releasedSenate) emergencyPowers.dissolutionSenate.active = false;
@@ -10870,7 +11002,7 @@
                 showCustomAlert('선거 결과가 반영되었습니다.\n\n파벌이 있는 정당의 파벌별 의석은 선거 전 분포가 무효화되어 0으로 초기화되었습니다.\n정당 탭에서 파벌 의석을 다시 배분해 주세요.');
             }
             if(wasDissolved) {
-                showCustomAlert('새 총선이 반영되어 의회 해산 상태가 해제되었습니다.');
+                showCustomAlert(`새 총선이 반영되어 ${dissolvedLabel} 상태가 해제되었습니다.`);
             } else if(releasedSenate && releasedHouse) {
                 showCustomAlert('새 총선이 반영되어 상원·하원 해산 상태가 모두 해제되었습니다.');
             } else if(releasedSenate) {

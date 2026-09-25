@@ -33,7 +33,7 @@
 
     // 실습 중 만든 것들을 단계 사이에 이어 쓰기 위한 기록
     const T = {};
-    function resetProgress() { T.basePartyIds = null; T.newPartyId = null; T.billBase = null; T.execClicked = false; T.probBase = null; T.cabinetBase = null; }
+    function resetProgress() { T.basePartyIds = null; T.newPartyId = null; T.billBase = null; T.execClicked = false; T.probBase = null; T.cabinetBase = null; T.totalBase = null; }
     const tutParty = () => partyList().find(p => p.id === T.newPartyId) || null;
     const tutPartyIdx = () => partyList().findIndex(p => p.id === T.newPartyId);
     // 정당 › 정보 목록에서 새 정당의 이름 칸 / 구성 › 하원 목록에서 새 정당의 의석 칸
@@ -65,6 +65,15 @@
         const p = majorityParty();
         return p ? document.querySelector(`#leaderList input[onchange^="updateLeaderField(${p.id},'leaderName'"]`) : null;
     };
+    const houseTotal = () => { const t = document.getElementById('houseTotal'); return t ? (parseInt(t.value, 10) || 0) : 0; };
+    const freeHouseSeats = () => houseTotal() - partyList().reduce((sum, p) => sum + (p.inHouse ? (p.seatsHouse || 0) : 0), 0);
+    const electionRunning = () => typeof elecRunning !== 'undefined' && elecRunning === true;
+    // 개표 화면: 보이는 선거결과 패널 (모바일은 좁으니 반원 부분만 비춰 말풍선이 결과를 덜 가리게)
+    const resultTarget = () => {
+        const panel = ['House', 'Senate', 'Third'].map(c => document.getElementById('dispPanelElecResult' + c)).find(el => el && el.offsetParent !== null);
+        if (!panel) return '.display-area';
+        return isMobileLayout() ? (panel.querySelector('[id^="elecViewArc"]') || panel) : (panel.querySelector('.chamber-box') || panel);
+    };
     const pmBlock = () => { const n = document.getElementById('pmNameInput'); return n ? n.parentElement.parentElement : null; };
     const seatCardOpen = () => { const c = document.getElementById('seatInfoCard'); return !!c && c.style.display === 'block'; };
 
@@ -84,8 +93,8 @@
                     allow: () => isMobileLayout() ? ['#mobileNav', '.main-tab-content > .sub-tab-container'] : [navTarget()],
                     title: '메뉴 이동하기',
                     text: () => isMobileLayout()
-                        ? '기능은 의회 · 국가 · 여론 · 내각 네 묶음으로 나뉘어 있습니다. 화면 아래 탭 바에서 "의회"를 누르고, 위쪽 칩 줄에서 "정당"을 골라보세요.'
-                        : '기능은 의회 · 국가 · 여론 · 내각 네 묶음으로 나뉘어 있습니다. 왼쪽 메뉴에서 의회 › 정당을 눌러보세요.',
+                        ? '기능은 의회 · 국가 · 여론 · 내각 네 묶음으로 나뉘어 있고, 회색 "도움말"에는 모든 탭의 설명이 있어요. 화면 아래 탭 바에서 "의회"를 누르고, 위쪽 칩 줄에서 "정당"을 골라보세요.'
+                        : '기능은 의회 · 국가 · 여론 · 내각 네 묶음으로 나뉘어 있고, 맨 아래 회색 "도움말"에는 모든 탭의 설명이 있어요. 왼쪽 메뉴에서 의회 › 정당을 눌러보세요.',
                     task: () => isActive('mainTabSetup') && isActive('subTabParty'),
                     done: '정당 화면이 열렸어요.',
                 },
@@ -146,10 +155,20 @@
                 },
                 {
                     before: [go('setup', 'settings'), call('switchSetupInnerTab', 'house'), showPanel('controls')],
+                    target: () => { const t = document.getElementById('houseTotal'); return t ? t.closest('div[style*="grid"]') || t : null; },
+                    allow: ['#houseTotal', '#partyListHouse'],
+                    title: '빈자리 만들기',
+                    enter: () => { if (T.totalBase == null) T.totalBase = houseTotal(); },
+                    text: () => `의회 › 구성의 "배정 합계"는 정당 의석을 모두 더한 값이고, 총 의석 수를 넘을 수 없습니다. 기존 정당들이 이미 ${T.totalBase}석을 다 차지하고 있으면 새 정당이 앉을 자리가 없어요. 총 의석 수를 늘리거나(예: ${T.totalBase + 20}) 다른 정당 의석을 줄여 빈자리를 만들어 보세요.`,
+                    task: () => !tutParty() || freeHouseSeats() > 0 || (tutParty().seatsHouse || 0) > 0,
+                    done: () => `${freeHouseSeats()}석이 비었어요.`,
+                },
+                {
+                    before: [go('setup', 'settings'), call('switchSetupInnerTab', 'house'), showPanel('controls')],
                     target: () => seatInput(),
                     allow: () => { const el = seatInput(); return el ? [el.closest('.card-item'), '#houseTotal'] : ['#houseTotal']; },
                     title: '의석 나눠주기',
-                    text: () => `의회 › 구성에서는 의회별 총 의석과 정당별 의석을 정합니다. ${tutParty() ? `"${tutParty().name}"` : '새 정당'}의 의석 칸에 숫자(예: 20)를 넣어보세요.`,
+                    text: () => `이제 ${tutParty() ? `"${tutParty().name}"` : '새 정당'}의 의석 칸에 숫자를 넣어보세요. 남은 자리(${freeHouseSeats() + ((tutParty() && tutParty().seatsHouse) || 0)}석)까지만 넣을 수 있어요.`,
                     task: () => {
                         const p = tutParty();
                         if (!p) return true;
@@ -221,12 +240,17 @@
                     text: '국가 › 선거 › 총선에서 "개표 시작"을 누르면 지지율에 따라 개표가 진행됩니다. 지금 눌러보세요.',
                     task: electionStarted,
                     done: '개표가 시작됐어요!',
+                    autoNext: true, // 개표가 시작되면 바로 결과 화면을 보여주는 다음 단계로
                 },
                 {
                     before: [showPanel('display')],
-                    target: () => visible('#dispTabElecResultHouse') ? '#dispTabElecResultHouse' : '.disp-tab-bar',
-                    title: '개표 결과',
-                    text: '의석 화면 위에 "선거결과" 탭이 생겼습니다. 개표가 끝나면 결과를 이미지로 내보낼 수 있고, 결과대로 의석이 바뀝니다. 개표 속도는 선거 설정에서 조절할 수 있어요.',
+                    target: () => resultTarget(),
+                    noDim: true, // 개표가 진행되는 모습을 가리지 않게 어둡게 하지 않는다
+                    title: '개표 지켜보기',
+                    text: () => (electionRunning()
+                        ? '개표가 진행 중입니다. 반원에 의석이 하나씩 채워지는 모습을 지켜보세요. '
+                        : '개표가 끝났어요. ')
+                        + '결과대로 의석이 바뀌고, 결과는 오른쪽 클릭(길게 누르기)으로 이미지로 내보낼 수 있어요. 개표 속도는 선거 설정에서 조절합니다.',
                 },
             ],
         },
@@ -422,6 +446,14 @@
             const upper = clampY(12), lower = clampY(vh - bh - 12);
             top = overlap(upper) <= overlap(lower) ? upper : lower;
         }
+        const step = curStep();
+        if (step && step.noDim && isMobileLayout()) {
+            // 모바일에서 지켜보는 단계: 말풍선을 작게 줄여 아래 탭 바 바로 위에 붙인다 (보여줄 화면을 가리지 않게)
+            const nav = document.getElementById('mobileNav');
+            const floor = nav && getComputedStyle(nav).display !== 'none' ? nav.getBoundingClientRect().top : vh; // fixed 요소라 offsetParent로는 판별 불가
+            left = (vw - bw) / 2;
+            top = floor - bh - 8;
+        }
         bubble.style.left = Math.round(clampX(left)) + 'px';
         bubble.style.top = Math.round(clampY(top)) + 'px';
     }
@@ -457,7 +489,14 @@
             if (step.task && !taskDone) {
                 let ok = false;
                 try { ok = !!step.task(); } catch (e) { ok = false; }
-                if (ok) { taskDone = true; renderTaskState(); }
+                if (ok) {
+                    taskDone = true;
+                    renderTaskState();
+                    if (step.autoNext) {
+                        const at = [lessonIdx, stepIdx];
+                        setTimeout(() => { if (active && mode === 'step' && lessonIdx === at[0] && stepIdx === at[1]) next(); }, 700);
+                    }
+                }
             }
             if (typeof step.text === 'function') {
                 const t = stepText(step, 'text');
@@ -514,6 +553,8 @@
         taskDone = false;
         if (step.task) { try { taskDone = !!step.task(); } catch (e) { taskDone = false; } }
         layer.classList.toggle('tut-is-task', !!step.task);
+        layer.classList.toggle('tut-nodim', !!step.noDim);
+        layer.classList.toggle('tut-compact', !!step.noDim && isMobileLayout());
         renderHead(`${i + 1} / ${steps.length}${step.task ? ' · 실습' : ''}`);
         setBody({ title: step.title, text: stepText(step, 'text') });
         const prevBtn = q('.tut-prev');
@@ -539,6 +580,7 @@
 
     function showComplete() {
         leaveCurrent();
+        layer.classList.remove('tut-nodim', 'tut-compact');
         markDone(lessonIdx);
         setMode('complete');
         layer.classList.remove('tut-is-task');
@@ -563,6 +605,7 @@
 
     function showMenu() {
         leaveCurrent();
+        layer.classList.remove('tut-nodim', 'tut-compact');
         setMode('menu');
         layer.classList.remove('tut-is-task');
         taskDone = false;

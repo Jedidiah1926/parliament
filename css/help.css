@@ -1,0 +1,65 @@
+/* ===== 도움말 그룹 (js/help.js) — 기본은 네온 모양, 라이트/다크는 아래 [data-theme-family="modern"] 규칙이 덮어쓴다 ===== */
+.help-intro { color: #888; font-size: .9rem; line-height: 1.55; margin: 2px 0 12px; }
+.help-card {
+    background: #0a0c10;
+    border: 1px solid #222;
+    border-left: 3px solid #555;
+    padding: 10px 12px;
+    margin-bottom: 8px;
+}
+.help-card.is-hidden { opacity: .55; }
+.help-card-head { display: flex; align-items: baseline; gap: 6px; }
+.help-card-path { color: #555; font-size: .8rem; white-space: nowrap; }
+.help-card-title { flex: 1; min-width: 0; color: var(--tno-neon); font-size: 1.05rem; text-shadow: 0 0 4px var(--tno-neon-dim); }
+.help-open {
+    flex: 0 0 auto;
+    background: transparent;
+    border: 1px solid #333;
+    color: #888;
+    font-family: inherit;
+    font-size: .8rem;
+    padding: 3px 8px;
+    cursor: pointer;
+    text-transform: none;
+}
+.help-open:hover:not(:disabled) { border-color: var(--tno-neon); color: var(--tno-neon); }
+.help-open:disabled { opacity: .4; cursor: default; }
+.help-desc { color: #bbb; font-size: .9rem; line-height: 1.55; margin: 6px 0 0; }
+.help-inner {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 5px 10px;
+    margin: 8px 0 0;
+    padding-top: 8px;
+    border-top: 1px dashed #222;
+    font-size: .85rem;
+    line-height: 1.5;
+}
+.help-inner dt { color: var(--tno-gold); white-space: nowrap; }
+.help-inner dd { color: #999; margin: 0; }
+
+/* ---- 라이트/다크 ---- */
+html[data-theme-family="modern"] .help-intro { color: var(--m-text-3); font-size: 13.5px; }
+html[data-theme-family="modern"] .help-card {
+    background: var(--m-surface-2);
+    border: none;
+    border-radius: 12px;
+    padding: 12px 14px;
+}
+html[data-theme-family="modern"] .help-card-path { color: var(--m-text-4); font-size: 12px; font-weight: 600; }
+html[data-theme-family="modern"] .help-card-title { color: var(--m-text); font-size: 15px; font-weight: 700; text-shadow: none; }
+html[data-theme-family="modern"] .help-open {
+    border: none;
+    border-radius: 8px;
+    background: var(--m-surface);
+    color: var(--m-text-2);
+    font-size: 12px;
+    font-weight: 600;
+    padding: 5px 10px;
+    box-shadow: var(--m-shadow-sm);
+}
+html[data-theme-family="modern"] .help-open:hover:not(:disabled) { color: var(--m-text); background: var(--m-surface); }
+html[data-theme-family="modern"] .help-desc { color: var(--m-text-2); font-size: 13.5px; }
+html[data-theme-family="modern"] .help-inner { border-top: 1px solid var(--m-border); font-size: 13px; }
+html[data-theme-family="modern"] .help-inner dt { color: var(--m-text); font-weight: 600; }
+html[data-theme-family="modern"] .help-inner dd { color: var(--m-text-3); }

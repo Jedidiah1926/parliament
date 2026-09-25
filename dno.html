@@ -15,6 +15,7 @@
     <link rel="stylesheet" href="css/dno.css">
     <link rel="stylesheet" href="css/sidenav.css">
     <link rel="stylesheet" href="css/tutorial.css">
+    <link rel="stylesheet" href="css/help.css">
     <link rel="stylesheet" href="css/modern.css">
 </head>
 <body>
@@ -179,6 +180,7 @@
                 <button class="main-tab-btn active" onclick="switchMainTab('nation')" id="mainTabNation">🏛 국가</button>
                 <button class="main-tab-btn" onclick="switchMainTab('election')" id="mainTabElection">🗳 여론</button>
                 <button class="main-tab-btn" onclick="switchMainTab('cabinet')" id="mainTabCabinet">💼︎ 내각</button>
+                <button class="main-tab-btn" onclick="switchMainTab('help')" id="mainTabHelp">ⓘ 도움말</button>
             </div>
 
             <!-- ===== 의회 그룹 (정당 그룹이 여기로 통합됨) ===== -->
@@ -231,7 +233,7 @@
                             </div>
                             <div>
                                 <label style="color:var(--tno-neon);font-size:0.85rem;">총 의석 수</label>
-                                <input type="number" id="houseTotal" value="300" oninput="elecUpdateDistrictInfo()">
+                                <input type="number" id="houseTotal" value="300" oninput="elecUpdateDistrictInfo(); updateSeatSumLines()">
                             </div>
                         </div>
                         <div id="partyListHouse"></div>
@@ -246,7 +248,7 @@
                             </div>
                             <div>
                                 <label style="color:var(--tno-neon);font-size:0.85rem;">총 의석 수</label>
-                                <input type="number" id="senateTotal" value="100" oninput="elecUpdateDistrictInfo()">
+                                <input type="number" id="senateTotal" value="100" oninput="elecUpdateDistrictInfo(); updateSeatSumLines()">
                             </div>
                         </div>
                         <div id="partyListSenate"></div>
@@ -261,7 +263,7 @@
                             </div>
                             <div>
                                 <label style="color:var(--tno-neon);font-size:0.85rem;">총 의석 수</label>
-                                <input type="number" id="thirdTotal" value="100" oninput="elecUpdateDistrictInfo()">
+                                <input type="number" id="thirdTotal" value="100" oninput="elecUpdateDistrictInfo(); updateSeatSumLines()">
                             </div>
                         </div>
                         <div id="partyListThird"></div>
@@ -316,7 +318,7 @@
                     <button class="sub-tab-btn" onclick="switchSubTab('nation','legislation')" id="subTabLegislation">입법</button>
                     <button class="sub-tab-btn" onclick="switchSubTab('nation','election')" id="subTabElection">선거</button>
                     <button class="sub-tab-btn" onclick="switchSubTab('nation','record')" id="subTabRecord">기록</button>
-                    <button class="sub-tab-btn sub-tab-btn-danger" onclick="switchSubTab('nation','fraud')" id="subTabFraud">?</button>
+                    <button class="sub-tab-btn sub-tab-btn-danger" onclick="switchSubTab('nation','fraud')" id="subTabFraud">⚠</button>
                 </div>
 
                 <!-- 설정 탭: 국가 식별 정보 + 전역 표시 옵션 -->
@@ -1436,8 +1438,16 @@
                     <!-- 내각 불신임 (의원내각제/이원집정부제 전용) -->
                     <div id="noConfidenceSection" style="display:none;margin-top:16px;padding-top:14px;border-top:1px solid #222;">
                         <label style="color:#888;font-size:0.8rem;margin-bottom:6px;display:block;">내각 불신임</label>
+                        <label style="cursor:pointer;display:flex;align-items:flex-start;gap:6px;margin-bottom:8px;color:#aaa;font-size:0.85rem;line-height:1.4;">
+                            <input type="checkbox" id="constructiveNoConfidenceCheckbox" onchange="setConstructiveNoConfidence(this.checked)" style="margin-top:2px;flex-shrink:0;">
+                            <span>건설적 불신임제 (독일 · 이스라엘식) — 불신임안에 후임을 함께 지명</span>
+                        </label>
+                        <div id="ncSuccessorFields" style="display:none;margin-bottom:8px;">
+                            <select id="ncSuccessorParty" onchange="onNcSuccessorPartyChange()" style="width:100%;box-sizing:border-box;background:#000;border:1px solid #333;color:var(--tno-gold);font-family:inherit;font-size:0.85rem;padding:5px;margin-bottom:6px;"></select>
+                            <input type="text" id="ncSuccessorName" placeholder="후임 총리 이름" oninput="this.dataset.autofill='0'" style="background:#000;border:1px solid #2a2a2a;color:#e0e0e0;font-family:inherit;font-size:0.95rem;padding:5px 8px;width:100%;box-sizing:border-box;">
+                        </div>
                         <button onclick="submitNoConfidenceBill()" style="width:100%;background:transparent;border:1px solid var(--tno-alert);color:var(--tno-alert);padding:9px;font-family:inherit;font-size:0.9rem;cursor:pointer;">! <span id="noConfidenceBtnLabel">총리 불신임안</span> 발의 !</button>
-                        <div style="color:#555;font-size:0.72rem;margin-top:4px;">가결되면 국가 &gt; 입법 탭에서 확인할 수 있으며, 통과 시 현재 총리가 해임됩니다</div>
+                        <div id="noConfidenceNote" style="color:#555;font-size:0.72rem;margin-top:4px;">가결되면 국가 &gt; 입법 탭에서 확인할 수 있으며, 통과 시 현재 총리가 해임됩니다</div>
                     </div>
 
                     <div id="pmEmergencyPowers"></div>
@@ -1481,6 +1491,20 @@
                     <button class="add-btn" id="addCabinetMemberBtn" onclick="addCabinetMember()">[+] 국무위원 추가</button>
                     <div id="cabinetMembersList" style="margin-top:10px;"></div>
                 </div>
+            </div>
+
+            <!-- ===== 도움말 그룹 — 각 탭의 역할 설명 (내용은 js/help.js가 채움) ===== -->
+            <div id="mainContentHelp" class="main-tab-content">
+                <div class="sub-tab-container">
+                    <button class="sub-tab-btn active" onclick="switchSubTab('help','helpsetup')" id="subTabHelpsetup">의회</button>
+                    <button class="sub-tab-btn" onclick="switchSubTab('help','helpnation')" id="subTabHelpnation">국가</button>
+                    <button class="sub-tab-btn" onclick="switchSubTab('help','helpelection')" id="subTabHelpelection">여론</button>
+                    <button class="sub-tab-btn" onclick="switchSubTab('help','helpcabinet')" id="subTabHelpcabinet">내각</button>
+                </div>
+                <div id="contentHelpsetup" class="sub-tab-content help-page active" data-help="setup"></div>
+                <div id="contentHelpnation" class="sub-tab-content help-page" data-help="nation"></div>
+                <div id="contentHelpelection" class="sub-tab-content help-page" data-help="election"></div>
+                <div id="contentHelpcabinet" class="sub-tab-content help-page" data-help="cabinet"></div>
             </div>
 
         </div><!-- end controls-content -->
@@ -1720,6 +1744,7 @@
 
     <script src="js/presets.js"></script>
     <script src="js/tutorial.js"></script>
+    <script src="js/help.js"></script>
     <script src="js/dno.js"></script>
     <script src="js/sidenav.js"></script>
     <script src="js/lang.js"></script>

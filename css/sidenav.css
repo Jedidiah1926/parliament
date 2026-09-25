@@ -41,6 +41,8 @@ html:not([data-ui-mode="mobile"]) body.has-side-nav.side-nav-collapsed .side-nav
 .mn-items { display: flex; flex-direction: column; gap: 2px; }
 .mn-group.closed .mn-items { display: none; }
 .mn-item { display: block; width: 100%; text-align: left; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* 줄 높이를 숫자로 고정 — ⚠ 같은 기호는 다른(대체) 글꼴로 그려져 기본 줄 높이가 달라지므로, 모든 항목 높이를 똑같이 맞춘다 */
+.mn-item, .main-tab-content > .sub-tab-container > .sub-tab-btn { line-height: 1.4; }
 .mn-item:disabled { opacity: .45; cursor: not-allowed; }
 .mn-crumb-current { overflow: hidden; text-overflow: ellipsis; }
 
@@ -87,6 +89,7 @@ body.side-nav-collapsed .mn-group-head { justify-content: center; }
 .mn-group[data-tone="danger"] { --tone: var(--tno-alert); }
 .mn-group[data-tone="gold"] { --tone: var(--tno-gold); }
 .mn-group[data-tone="success"] { --tone: var(--vote-yea); }
+.mn-group[data-tone="muted"] { --tone: #8b929c; } /* 도움말: 회색 */
 .mn-group-head {
     background: color-mix(in srgb, var(--tone) 8%, transparent);
     border: 1px solid color-mix(in srgb, var(--tone) 40%, transparent);
@@ -255,6 +258,7 @@ html[data-ui-mode="mobile"] .add-btn { min-height: 42px; }
 .mobile-nav-btn[data-tone="gold"] { --tone: var(--tno-gold); }
 .mobile-nav-btn[data-tone="success"] { --tone: var(--vote-yea); }
 .mobile-nav-btn[data-tone="seats"] { --tone: var(--tno-neon); }
+.mobile-nav-btn[data-tone="muted"] { --tone: #8b929c; }
 .mobile-nav-btn {
     border: none;
     border-top: 2px solid transparent;
@@ -281,3 +285,5 @@ html[data-ui-mode="mobile"] body.has-side-nav .main-tab-content > .sub-tab-conta
 }
 /* 네온 머리 띠는 모바일에서 조금 얇게 */
 html[data-ui-mode="mobile"] body.has-side-nav .tno-header-strip { padding-top: 6px; padding-bottom: 6px; font-size: .95rem; }
+/* 모바일: 알림 토스트가 아래 탭 바·실행 버튼에 가리지 않게 */
+html[data-ui-mode="mobile"] body.has-side-nav .kbd-toast { bottom: calc(var(--mnav-h) + var(--safe-b) + 76px); }
