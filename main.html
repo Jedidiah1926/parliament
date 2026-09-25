@@ -15,6 +15,7 @@
     <link rel="stylesheet" href="css/modern.css">
     <script src="js/presets.js"></script>
 
+    <script src="js/lang.js"></script>
     <script src="js/maintenance.js"></script>
 </head>
 <body>
@@ -381,6 +382,13 @@
         window.addEventListener('keydown', (e) => {
             if(e.key === 'Escape' && document.getElementById('saveSelectOverlay').style.display !== 'none') closeSaveSelectModal();
         });
+
+        // 언어가 한국어가 아니면, 세이브 창의 목록처럼 페이지를 연 뒤에 새로 그려지는 부분도 번역한다 (js/lang.js)
+        const translateSaveWindow = () => { if(window.DnoLang && window.DnoLang.translateSubtree) window.DnoLang.translateSubtree(document.getElementById('saveSelectOverlay')); };
+        const _renderSaveSelectList = renderSaveSelectList;
+        renderSaveSelectList = function() { const r = _renderSaveSelectList.apply(this, arguments); translateSaveWindow(); return r; };
+        const _renderPresetSelectList = renderPresetSelectList;
+        renderPresetSelectList = async function() { const r = await _renderPresetSelectList.apply(this, arguments); translateSaveWindow(); return r; };
     </script>
 
 </body>
