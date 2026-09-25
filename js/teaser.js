@@ -4240,6 +4240,7 @@
         window.onload = function() {
             let restored = false;
             let bootNewSaveName = null;
+            let bootPresetId = null;
             try {
                 loadAutosavePreference();
                 let bootSlotId = null;
@@ -4251,6 +4252,8 @@
                     sessionStorage.removeItem('dnoBootLoadSlotId');
                     bootNewSaveName = sessionStorage.getItem('dnoBootNewSaveName');
                     sessionStorage.removeItem('dnoBootNewSaveName');
+                    bootPresetId = sessionStorage.getItem('dnoBootPresetId');
+                    sessionStorage.removeItem('dnoBootPresetId');
                 } catch(e) { /* sessionStorage 접근 불가 — 일반 부팅으로 진행 */ }
                 if(bootImportedJSON) {
                     try { setAppState(JSON.parse(bootImportedJSON)); setActiveSlotId(null); restored = true; }
@@ -4266,12 +4269,47 @@
                 }
             } catch(e) { /* 자동저장 초기화 실패 — 기본 상태로 계속 진행 */ }
             if(!restored) { toggleSystem(); simulate(); refreshUI(); renderBillList(); renderArchiveList(); syncBillSelect(); elecRenderList(); elecRenderRecords(); updateNationIdBar(); updateDispInfoBar(); renderCabinetRoleLabelInputs(); }
+            // 프리셋으로 시작: 프리셋을 불러와 적용한 뒤에 새 세이브로 등록·자동저장한다 (먼저 자동저장하면
+            // 아직 적용 전인 기본 상태가 "기존 저장"을 덮어쓰게 되므로 그 전에는 저장하지 않음)
+            if(bootPresetId) { startFromPresetOnBoot(bootPresetId, bootNewSaveName); return; }
             try {
                 if(bootNewSaveName) createNamedSlotFromCurrentState(bootNewSaveName);
                 if(autosaveEnabled) { autosaveNow(); startAutosaveTimer(); }
                 renderSaveTabUI();
             } catch(e) { /* 자동저장 UI 갱신 실패는 앱 동작에 영향 없음 */ }
         };
+
+        // 이름이 겹치면 " (2)", " (3)"...을 붙여 비어 있는 이름을 만든다
+        function escapeHtmlText(text) {
+            const div = document.createElement('div');
+            div.textContent = text == null ? '' : String(text);
+            return div.innerHTML;
+        }
+
+        function uniqueSaveName(base) {
+            const names = new Set(loadSaveSlots().filter(s => !s.isAutosave).map(s => s.name));
+            if(!names.has(base) && base !== AUTOSAVE_SLOT_NAME) return base;
+            for(let i = 2; ; i++) { const n = `${base} (${i})`; if(!names.has(n)) return n; }
+        }
+
+        // 온보딩(main.html)에서 프리셋을 골라 들어온 경우 — 프리셋을 복제해 새 세이브로 만들고 그 세이브로 시작
+        async function startFromPresetOnBoot(presetId, name) {
+            let preset = null;
+            try {
+                preset = await DnoPresets.find(presetId);
+                const state = await DnoPresets.loadState(preset);
+                setAppState(state);
+                simulate(); refreshUI();
+                createNamedSlotFromCurrentState(uniqueSaveName(name || preset.title));
+            } catch(e) {
+                showCustomAlert('프리셋을 불러오지 못했습니다.');
+            }
+            try {
+                if(autosaveEnabled) { autosaveNow(); startAutosaveTimer(); }
+                renderSaveTabUI();
+            } catch(e) { /* 자동저장 UI 갱신 실패는 앱 동작에 영향 없음 */ }
+            if(preset && preset.tutorial && window.DnoTutorial) window.DnoTutorial.start();
+        }
 
         // ===== SAVE / LOAD (v5) =====
         function getAppState() {
@@ -4871,13 +4909,72 @@
             container.innerHTML = ordered.map(s => `
                 <div style="display:flex;align-items:center;gap:8px;padding:6px 8px;background:#0a0c10;border:1px solid ${s.isAutosave?'#2a4444':'#222'};margin-bottom:4px;${s.parentId?'margin-left:14px;':''}">
                     <div style="flex:1;min-width:0;overflow:hidden;">
-                        <div style="color:${s.isAutosave?'var(--tno-neon)':'#ccc'};font-size:0.85rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${s.isAutosave?'🔄 ':''}${s.name}</div>
+                        <div class="save-slot-name" data-slot-id="${s.id}" style="color:${s.isAutosave?'var(--tno-neon)':'#ccc'};font-size:0.85rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${s.isAutosave?'🔄 ':''}${escapeHtmlText(s.name)}</div>
                         <div style="color:#555;font-size:0.7rem;">${s.savedAt ? new Date(s.savedAt).toLocaleString('ko-KR') : '-'}</div>
                     </div>
                     <button class="add-btn" style="width:auto;margin-top:0;padding:4px 10px;font-size:0.8rem;" onclick="loadNamedSlot('${s.id}')">불러오기</button>
+                    ${s.isAutosave ? '' : `<button class="dup-btn" title="이름 변경" onclick="startRenameSaveSlotInList('${s.id}')">✎</button>`}
                     ${s.isAutosave ? '' : `<button class="remove-btn" onclick="deleteNamedSlot('${s.id}')">X</button>`}
                 </div>
             `).join('');
+        }
+
+        // ===== 세이브 이름 바꾸기 =====
+        // 이름 붙은 세이브만 바꿀 수 있고("기존 저장"은 예약), 연결된 전용 자동저장("{이름} 자동저장")도 함께 바뀐다.
+        // 세이브 id는 그대로라 즐겨찾기·활성 탭 등 id로 연결된 정보는 유지된다.
+        function renameNamedSlot(id, newName) {
+            const name = (newName || '').trim();
+            const slots = loadSaveSlots();
+            const slot = slots.find(s => s.id === id && !s.isAutosave);
+            if(!slot) return false;
+            if(!name || name === slot.name) return true;
+            if(name === AUTOSAVE_SLOT_NAME) { showCustomAlert(`"${AUTOSAVE_SLOT_NAME}"은(는) 예약된 이름입니다. 다른 이름을 입력하세요.`); return false; }
+            if(slots.some(s => !s.isAutosave && s.id !== id && s.name === name)) { showCustomAlert(`"${name}" 세이브가 이미 있습니다. 다른 이름을 입력하세요.`); return false; }
+            slot.name = name;
+            const companion = getNamedAutosaveSlot(slots, id);
+            if(companion) companion.name = `${name} 자동저장`;
+            if(!persistSaveSlots(slots)) { showCustomAlert('이름을 바꾸지 못했습니다. (브라우저 저장 공간이 부족할 수 있습니다)'); return false; }
+            renderSaveTabUI();
+            return true;
+        }
+
+        // 요소 안의 이름 글자를 입력칸으로 바꿔 그 자리에서 수정 — Enter/바깥 클릭은 확정, Esc는 취소
+        function inlineRenameEdit(el, currentName, onCommit) {
+            if(!el || el.querySelector('input')) return;
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.maxLength = 40;
+            input.value = currentName;
+            input.className = 'save-rename-input';
+            let done = false;
+            const finish = commit => {
+                if(done) return;
+                done = true;
+                if(!commit || !onCommit(input.value)) renderSaveTabUI();
+            };
+            input.addEventListener('keydown', e => {
+                e.stopPropagation();
+                if(e.key === 'Enter') { e.preventDefault(); finish(true); }
+                else if(e.key === 'Escape') { e.preventDefault(); finish(false); }
+            });
+            input.addEventListener('click', e => e.stopPropagation());
+            input.addEventListener('dblclick', e => e.stopPropagation());
+            input.addEventListener('blur', () => finish(true));
+            el.replaceChildren(input);
+            input.focus();
+            input.select();
+        }
+
+        function startRenameSaveTab(id) {
+            const slot = loadSaveSlots().find(s => s.id === id && !s.isAutosave);
+            const nameEl = document.querySelector(`.save-tab[data-slot-id="${id}"] .save-tab-name`);
+            if(slot && nameEl) inlineRenameEdit(nameEl, slot.name, v => renameNamedSlot(id, v));
+        }
+
+        function startRenameSaveSlotInList(id) {
+            const slot = loadSaveSlots().find(s => s.id === id && !s.isAutosave);
+            const nameEl = document.querySelector(`.save-slot-name[data-slot-id="${id}"]`);
+            if(slot && nameEl) inlineRenameEdit(nameEl, slot.name, v => renameNamedSlot(id, v));
         }
 
         // ===== 최상단 세이브 탭 바 (데스크톱 앱: 크롬 탭처럼 클릭으로 즉시 전환) =====
@@ -4896,8 +4993,8 @@
                     <span class="save-tab-name">${AUTOSAVE_SLOT_NAME}</span>
                 </div>`,
                 ...named.map(n => `
-                    <div class="save-tab${activeSlotId===n.id?' active':''}" onclick="switchToSaveTab('${n.id}')" title="${n.name}">
-                        <span class="save-tab-name">${n.name}</span>
+                    <div class="save-tab${activeSlotId===n.id?' active':''}" data-slot-id="${n.id}" onclick="switchToSaveTab('${n.id}')" ondblclick="startRenameSaveTab('${n.id}')" title="${escapeHtmlText(n.name)} — 더블클릭하면 이름 변경">
+                        <span class="save-tab-name">${escapeHtmlText(n.name)}</span>
                         <span class="save-tab-close" onclick="event.stopPropagation();deleteSaveTab('${n.id}')">×</span>
                     </div>
                 `)
@@ -4906,7 +5003,7 @@
                 <div class="save-tab-list">${tabsHtml}</div>
                 <div class="save-tab-new" id="saveTabNewBtn" onclick="showSaveTabNewMenu()" title="새 세이브">+</div>
                 <div class="save-tab-new-menu" id="saveTabNewMenu" style="display:none;">
-                    <div class="save-tab-new-menu-item" onclick="pendingPresetFile=null;showSaveTabNewInput();">🆕 새로 생성</div>
+                    <div class="save-tab-new-menu-item" onclick="pendingPresetId=null;showSaveTabNewInput();">🆕 새로 생성</div>
                     <div class="save-tab-new-menu-item" onclick="showSaveTabPresetList()">📦 프리셋에서 생성</div>
                 </div>
                 <div class="save-tab-preset-list" id="saveTabPresetList" style="display:none;"></div>
@@ -4928,7 +5025,7 @@
 
         function showSaveTabNewMenu() {
             hideSaveTabAllPopups();
-            pendingPresetFile = null;
+            pendingPresetId = null;
             const menu = document.getElementById('saveTabNewMenu');
             if(menu) menu.style.display = 'flex';
         }
@@ -4939,13 +5036,13 @@
             const wrap = document.getElementById('saveTabNewInputWrap');
             wrap.style.display = 'flex';
             const input = document.getElementById('saveTabNewInput');
-            if(!pendingPresetFile) input.value = '';
+            if(!pendingPresetId) input.value = '';
             input.focus();
             input.select();
         }
 
         function hideSaveTabNewInput() {
-            pendingPresetFile = null;
+            pendingPresetId = null;
             hideSaveTabAllPopups();
             const btn = document.getElementById('saveTabNewBtn');
             const wrap = document.getElementById('saveTabNewInputWrap');
@@ -4958,18 +5055,12 @@
         // 고르면 presets/<file>을 그 상태 그대로 새 탭(세이브)에 담아 즉시 전환한다.
         // 개발자/배포자가 presets/ 폴더에 .json 파일을 추가하고 index.json에
         // 등록하기만 하면 누구나 그 프리셋을 쓸 수 있다 (자세한 방법은 README 참고).
-        const PRESET_INDEX_URL = 'presets/index.json';
+        // (목록·불러오기는 js/presets.js의 DnoPresets가 담당 — 내장 프리셋 + presets/index.json)
         let presetListCache = null;
-        let pendingPresetFile = null;
+        let pendingPresetId = null;
 
         async function loadPresetList() {
-            if(presetListCache) return presetListCache;
-            try {
-                const res = await fetch(PRESET_INDEX_URL);
-                if(!res.ok) throw new Error('index fetch failed');
-                const list = await res.json();
-                presetListCache = Array.isArray(list) ? list.filter(p => p && p.file && p.title) : [];
-            } catch(e) { presetListCache = []; }
+            if(!presetListCache) presetListCache = window.DnoPresets ? await DnoPresets.list() : [];
             return presetListCache;
         }
 
@@ -4984,16 +5075,16 @@
                 wrap.innerHTML = `<div class="save-tab-preset-empty">등록된 프리셋이 없습니다</div>`;
                 return;
             }
-            wrap.innerHTML = list.map((p, i) => `<div class="save-tab-preset-item" onclick="selectPresetForNewTab(${i})">${p.title}</div>`).join('');
+            wrap.innerHTML = list.map((p, i) => `<div class="save-tab-preset-item" onclick="selectPresetForNewTab(${i})">${escapeHtmlText(p.title)}</div>`).join('');
         }
 
         function selectPresetForNewTab(index) {
             const preset = (presetListCache || [])[index];
             if(!preset) return;
-            pendingPresetFile = preset.file;
+            pendingPresetId = preset.id;
             showSaveTabNewInput();
             const input = document.getElementById('saveTabNewInput');
-            input.value = preset.title;
+            input.value = uniqueSaveName(preset.title);
         }
 
         // "+" 탭에서 새 이름을 입력해 확인 — saveNamedSlot()과 동일한 검증(예약어/중복/최대 개수)을
@@ -5008,25 +5099,24 @@
             if(namedSlotsCheck.some(s => s.name === name)) { showCustomAlert(`"${name}" 세이브가 이미 있습니다. 다른 이름을 입력하세요.`); return; }
             if(namedSlotsCheck.length >= MAX_SAVE_SLOTS) { showCustomAlert(`저장 슬롯은 최대 ${MAX_SAVE_SLOTS}개까지 만들 수 있습니다. 기존 슬롯을 삭제한 뒤 다시 시도하세요.`); return; }
 
-            const presetFile = pendingPresetFile;
-            let presetState = null;
-            if(presetFile) {
+            const presetId = pendingPresetId;
+            let presetState = null, presetMeta = null;
+            if(presetId) {
                 try {
-                    const res = await fetch('presets/' + presetFile);
-                    if(!res.ok) throw new Error('preset fetch failed');
-                    presetState = await res.json();
+                    presetMeta = await DnoPresets.find(presetId);
+                    presetState = await DnoPresets.loadState(presetMeta);
                 } catch(e) { showCustomAlert('프리셋을 불러오지 못했습니다.'); return; }
             }
 
             if(autosaveEnabled) autosaveNow(); // 지금 탭(있다면)의 진행 상황을 먼저 그 탭 전용 자동저장에 남겨둠
-            const state = presetFile ? presetState : getAppState();
+            const state = presetId ? presetState : getAppState();
             const slots = loadSaveSlots();
             const id = 'slot'+Date.now();
             const now = new Date().toISOString();
             slots.push({ id, name, isAutosave: false, createdAt: now, savedAt: now, state });
             persistSaveSlots(slots);
 
-            if(presetFile) {
+            if(presetId) {
                 try { setAppState(state); }
                 catch(e) { showCustomAlert('프리셋 데이터 형식이 올바르지 않습니다.'); return; }
                 simulate(); refreshUI();
@@ -5034,6 +5124,7 @@
             setActiveSlotId(id);
             hideSaveTabNewInput();
             renderSaveTabUI();
+            if(presetMeta && presetMeta.tutorial && window.DnoTutorial) window.DnoTutorial.start();
         }
 
         function deleteSaveTab(id) {
@@ -6403,6 +6494,250 @@
             simulate(); refreshUI();
         }
         function removeParty(i) { const pid=parties[i].id; parties.splice(i,1); coalitions.forEach(c=>c.members=c.members.filter(x=>x!==pid)); simulate(); refreshUI(); }
+
+        // ===== 합당 (흡수합당 / 신설합당) =====
+        // 흡수합당: 존속 정당 하나가 다른 정당들을 흡수 — 존속 정당의 이름·색·당수는 그대로
+        // 신설합당: 여러 정당이 합쳐 새 정당을 창당 — 합쳐진 정당들은 모두 사라진다
+        // 의석·의원(비례 명단·지역구)·파벌·연정·지지율/성향·내각 소속은 모두 합쳐지는 쪽(대상 정당)으로 옮기고,
+        // 선거 기록·지난 표결처럼 이미 지나간 기록은 당시 정당 이름 그대로 남긴다.
+        let partyMergeMode = 'absorb';
+        let partyMergeChecked = new Set();
+        let partyMergeIdeologyTouched = false; // 사용자가 새 정당 이념을 직접 고르기 전까진 합쳐지는 최대 정당의 이념을 따라감
+
+        function mergeablePartyList() { return parties.filter(p => p.ideologyId !== IND_IDEOLOGY_ID); }
+
+        function partySeatSummaryText(p) {
+            return chamberList().map(ch => `${chamberDisplayName(ch)} ${p[seatKeyFor(ch)] || 0}`).join(' · ');
+        }
+
+        function openPartyMergeDialog() {
+            const list = mergeablePartyList();
+            if(list.length < 2) { showCustomAlert('합당하려면 정당이 2개 이상 있어야 합니다.'); return; }
+            partyMergeChecked = new Set();
+            const survivorSel = document.getElementById('mergeSurvivorSelect');
+            const largest = list.reduce((a, b) => ((b.seatsHouse || 0) > (a.seatsHouse || 0) ? b : a), list[0]);
+            survivorSel.innerHTML = list.map(p => `<option value="${p.id}">${escapeHtmlText(p.name)}</option>`).join('');
+            survivorSel.value = String(largest.id);
+            document.getElementById('mergeNewName').value = '';
+            document.getElementById('mergeNewAbbr').value = '';
+            document.getElementById('mergeNewColor').value = '#6a5acd';
+            const ideoSel = document.getElementById('mergeNewIdeology');
+            ideoSel.innerHTML = ideologies.filter(i => i.id !== IND_IDEOLOGY_ID).map(i => `<option value="${i.id}">${escapeHtmlText(i.name)}</option>`).join('');
+            ideoSel.value = String(largest.ideologyId);
+            partyMergeIdeologyTouched = false;
+            document.getElementById('mergeKeepAsFaction').checked = true;
+            setPartyMergeMode('absorb');
+            document.getElementById('partyMergeOverlay').style.display = 'flex';
+        }
+
+        function closePartyMergeDialog() {
+            document.getElementById('partyMergeOverlay').style.display = 'none';
+        }
+
+        function setPartyMergeMode(mode) {
+            partyMergeMode = mode === 'new' ? 'new' : 'absorb';
+            const isNew = partyMergeMode === 'new';
+            document.getElementById('mergeModeAbsorbBtn').classList.toggle('active', !isNew);
+            document.getElementById('mergeModeNewBtn').classList.toggle('active', isNew);
+            document.getElementById('mergeAbsorbSection').style.display = isNew ? 'none' : '';
+            document.getElementById('mergeNewSection').style.display = isNew ? '' : 'none';
+            document.getElementById('mergeSourcesLabel').textContent = isNew ? '합칠 정당 (2개 이상)' : '흡수될 정당';
+            document.getElementById('mergeKeepAsFactionText').textContent = isNew ? '합쳐지는 정당들을 새 정당의 계파로 남기기' : '흡수되는 정당을 계파로 남기기';
+            document.getElementById('mergeModeHint').textContent = isNew
+                ? '고른 정당들이 모두 해산하고 새 정당으로 합쳐집니다. 의석·의원·연정·지지율이 새 정당으로 옮겨집니다.'
+                : '존속 정당이 이름·색·당수를 유지한 채 다른 정당들을 흡수합니다. 흡수된 정당의 의석·의원·연정·지지율이 존속 정당으로 옮겨집니다.';
+            renderPartyMergeDialog();
+        }
+
+        function renderPartyMergeDialog() {
+            const isNew = partyMergeMode === 'new';
+            const survivorId = Number(document.getElementById('mergeSurvivorSelect').value);
+            const list = mergeablePartyList().filter(p => isNew || p.id !== survivorId);
+            if(!isNew) partyMergeChecked.delete(survivorId);
+            document.getElementById('mergeSourceList').innerHTML = list.map(p => `
+                <label style="display:flex;align-items:center;gap:8px;padding:6px 8px;border:1px solid #222;margin-bottom:4px;cursor:pointer;">
+                    <input type="checkbox" ${partyMergeChecked.has(p.id) ? 'checked' : ''} onchange="togglePartyMergeSource(${p.id}, this.checked)">
+                    <span style="width:10px;height:10px;display:inline-block;flex-shrink:0;background:${p.color};"></span>
+                    <span style="flex:1;min-width:0;color:#ccc;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtmlText(p.name)}</span>
+                    <span style="color:#666;font-size:0.75rem;white-space:nowrap;">${partySeatSummaryText(p)}</span>
+                </label>`).join('');
+            renderPartyMergePreview();
+        }
+
+        function togglePartyMergeSource(id, on) {
+            if(on) partyMergeChecked.add(id); else partyMergeChecked.delete(id);
+            renderPartyMergePreview();
+        }
+
+        // 현재 선택으로 합당했을 때 결과를 미리 보여주고, 실행 가능 여부(에러 메시지)를 돌려준다
+        function partyMergePlan() {
+            const isNew = partyMergeMode === 'new';
+            const sources = mergeablePartyList().filter(p => partyMergeChecked.has(p.id));
+            if(isNew) {
+                const name = document.getElementById('mergeNewName').value.trim();
+                if(sources.length < 2) return { error: '합칠 정당을 2개 이상 고르세요.' };
+                if(!name) return { error: '새 정당 이름을 입력하세요.', sources };
+                const srcIds = new Set(sources.map(p => p.id));
+                if(parties.some(p => !srcIds.has(p.id) && p.name === name)) return { error: `"${name}" 정당이 이미 있습니다.`, sources };
+                return { sources, targetName: name };
+            }
+            const survivor = parties.find(p => p.id === Number(document.getElementById('mergeSurvivorSelect').value));
+            if(!survivor) return { error: '존속 정당을 고르세요.' };
+            if(sources.length < 1) return { error: '흡수될 정당을 1개 이상 고르세요.', survivor };
+            return { sources, survivor, targetName: survivor.name };
+        }
+
+        function renderPartyMergePreview() {
+            const el = document.getElementById('mergePreview');
+            const plan = partyMergePlan();
+            if(partyMergeMode === 'new' && !partyMergeIdeologyTouched && plan.sources && plan.sources.length) {
+                const biggest = plan.sources.reduce((a, b) => ((b.seatsHouse || 0) > (a.seatsHouse || 0) ? b : a), plan.sources[0]);
+                document.getElementById('mergeNewIdeology').value = String(biggest.ideologyId);
+            }
+            const all = [...(plan.survivor ? [plan.survivor] : []), ...(plan.sources || [])];
+            const totals = chamberList().map(ch => `${chamberDisplayName(ch)} ${all.reduce((a, p) => a + (p[seatKeyFor(ch)] || 0), 0)}석`).join(' · ');
+            const names = all.map(p => escapeHtmlText(p.name)).join(' + ');
+            el.innerHTML = plan.error
+                ? `<span style="color:#888;">${escapeHtmlText(plan.error)}</span>`
+                : `<div style="color:#aaa;">${names}</div><div style="color:var(--tno-neon);margin-top:4px;">→ ${escapeHtmlText(plan.targetName)} : ${totals}</div>`;
+            document.getElementById('mergeConfirmBtn').disabled = !!plan.error;
+        }
+
+        function executePartyMerge() {
+            const plan = partyMergePlan();
+            if(plan.error) { showCustomAlert(plan.error); return; }
+            const keepAsFaction = document.getElementById('mergeKeepAsFaction').checked;
+            let target;
+            if(partyMergeMode === 'new') {
+                target = {
+                    id: Date.now(), name: plan.targetName,
+                    abbr: document.getElementById('mergeNewAbbr').value.trim(),
+                    color: document.getElementById('mergeNewColor').value || '#6a5acd',
+                    ideologyId: Number(document.getElementById('mergeNewIdeology').value),
+                    seatsHouse: 0, seatsSenate: 0, seatsThird: 0, inHouse: false, inSenate: false, inThird: false,
+                    isRuling: false, leaderName: '', leaderPhoto: '', logoPhoto: '', showLogoInStats: false, hideStatsPhoto: false,
+                    description: '', factions: [],
+                };
+            } else {
+                target = plan.survivor;
+            }
+            const srcNames = plan.sources.map(p => p.name);
+            mergePartiesInto(target, plan.sources, keepAsFaction, partyMergeMode === 'new');
+            closePartyMergeDialog();
+            syncListMembers();
+            simulate(); refreshUI();
+            showCustomAlert(partyMergeMode === 'new'
+                ? `${srcNames.join(', ')}이(가) 합당해 "${target.name}"을(를) 창당했습니다.`
+                : `"${target.name}"이(가) ${srcNames.join(', ')}을(를) 흡수했습니다.`);
+        }
+
+        // 합당의 실제 데이터 이동 — target이 새 정당이면(isNewParty) 첫 번째로 합쳐지는 정당 자리에 끼워 넣는다
+        function mergePartiesInto(target, sources, keepAsFaction, isNewParty) {
+            const srcIds = new Set(sources.map(p => p.id));
+            const mapId = id => (srcIds.has(id) ? target.id : id);
+            const dedupe = arr => arr.filter((v, i) => arr.indexOf(v) === i);
+            const chambers = ['house', 'senate', 'third'];
+            if(!target.factions) target.factions = [];
+
+            // 연정: 대상 정당이 원래 속한 연정(새 정당이면 합쳐지는 정당이 처음 속한 연정)에만 남긴다
+            const homeCoalition = coalitions.find(c => !isNewParty && (c.members || []).includes(target.id))
+                || coalitions.find(c => (c.members || []).some(m => srcIds.has(m)));
+
+            // 파벌·의원 이동 (정당별로 파벌 id가 겹치면 새 id로 바꾸고 의원 소속도 함께 바꿈)
+            sources.forEach(src => {
+                const factionRemap = {};
+                (src.factions || []).forEach(f => {
+                    let fid = f.id;
+                    if(target.factions.some(x => x.id === fid)) { fid = `${f.id}_${target.id}_${Math.random().toString(36).slice(2, 7)}`; factionRemap[f.id] = fid; }
+                    target.factions.push({ ...f, id: fid });
+                });
+                let asFactionId = null;
+                if(keepAsFaction) {
+                    asFactionId = `f${Date.now()}_${src.id}`;
+                    const fac = { id: asFactionId, name: src.name, color: src.color, ideologyId: src.ideologyId,
+                        seatsHouse: 0, seatsSenate: 0, seatsThird: 0, leaderName: src.leaderName || '', leaderPhoto: src.leaderPhoto || '',
+                        logoPhoto: src.logoPhoto || '', usePartyColor: false };
+                    // 원래 파벌에 속하지 않았던 나머지 의석만 이 계파 몫
+                    chambers.forEach(ch => {
+                        const k = seatKeyFor(ch);
+                        const inFactions = (src.factions || []).reduce((a, f) => a + (f[k] || 0), 0);
+                        fac[k] = Math.max(0, (src[k] || 0) - inFactions);
+                    });
+                    target.factions.push(fac);
+                }
+                const remapFaction = fid => (fid == null ? asFactionId : (factionRemap[fid] || fid));
+                chambers.forEach(ch => {
+                    const lm = listMembers[ch] || (listMembers[ch] = {});
+                    const moved = (lm[src.id] || []).map(m => ({ ...m, factionId: remapFaction(m.factionId) }));
+                    lm[target.id] = [...(lm[target.id] || []), ...moved];
+                    delete lm[src.id];
+                    Object.values(districtMembers[ch] || {}).forEach(m => {
+                        if(m && m.partyId === src.id) { m.partyId = target.id; m.factionId = remapFaction(m.factionId); }
+                    });
+                });
+            });
+
+            // 의석 합산
+            chambers.forEach(ch => {
+                const k = seatKeyFor(ch), ik = inKeyFor(ch);
+                target[k] = (target[k] || 0) + sources.reduce((a, p) => a + (p[k] || 0), 0);
+                target[ik] = !!target[ik] || sources.some(p => p[ik]);
+            });
+            target.isRuling = !!target.isRuling || sources.some(p => p.isRuling);
+
+            // 연정 구성원·대표당·각외협력 정리
+            coalitions.forEach(c => {
+                let members = dedupe((c.members || []).map(mapId));
+                if(c !== homeCoalition) members = members.filter(m => m !== target.id);
+                c.members = members;
+                if(c.leadPartyId != null) {
+                    c.leadPartyId = mapId(c.leadPartyId);
+                    if(!members.includes(c.leadPartyId)) c.leadPartyId = null;
+                }
+                c.externalSupporters = dedupe((c.externalSupporters || []).map(mapId)).filter(x => !members.includes(x));
+            });
+
+            // 지지율(전국·권역)·지역구 성향은 합산 (성향은 100 상한)
+            chambers.forEach(ch => {
+                const st = elecStore[ch] || {};
+                let prob = st[target.id]?.prob || 0, err = st[target.id]?.err || 0, had = !!st[target.id];
+                sources.forEach(p => { if(st[p.id]) { prob += st[p.id].prob || 0; err = Math.max(err, st[p.id].err || 0); had = true; delete st[p.id]; } });
+                if(had) st[target.id] = { ...(st[target.id] || {}), prob, err };
+                Object.values(regionVoteStore[ch] || {}).forEach(byParty => {
+                    let p2 = byParty[target.id]?.prob || 0, had2 = !!byParty[target.id];
+                    sources.forEach(p => { if(byParty[p.id]) { p2 += byParty[p.id].prob || 0; had2 = true; delete byParty[p.id]; } });
+                    if(had2) byParty[target.id] = { ...(byParty[target.id] || {}), prob: p2 };
+                });
+            });
+            Object.values(districtSvgTendency).forEach(byCh => Object.values(byCh || {}).forEach(byParty => {
+                let v = byParty[target.id] || 0, had = target.id in byParty;
+                sources.forEach(p => { if(p.id in byParty) { v += Number(byParty[p.id]) || 0; had = true; delete byParty[p.id]; } });
+                if(had) byParty[target.id] = Math.min(100, v);
+            }));
+            const mergedTendency = { ...(tendencyData[target.id] || {}) };
+            let hadTendency = !!tendencyData[target.id];
+            sources.forEach(p => {
+                Object.entries(tendencyData[p.id] || {}).forEach(([key, v]) => { mergedTendency[key] = Math.min(100, (mergedTendency[key] || 0) + (Number(v) || 0)); hadTendency = true; });
+                delete tendencyData[p.id];
+            });
+            if(hadTendency) tendencyData[target.id] = mergedTendency;
+
+            // 내각·대통령 등 소속 정당과 좌석 연결
+            [president, pm, collectiveChair, pmNominee, ...deputyPms, ...cabinetMembers].forEach(o => {
+                if(!o) return;
+                if(srcIds.has(o.partyId)) o.partyId = target.id;
+                if(o.linkedSeat && srcIds.has(o.linkedSeat.partyId)) o.linkedSeat = { ...o.linkedSeat, partyId: target.id };
+            });
+            sources.forEach(p => {
+                if(presElectionCandidateOverrides[p.id] && !presElectionCandidateOverrides[target.id]) presElectionCandidateOverrides[target.id] = presElectionCandidateOverrides[p.id];
+                delete presElectionCandidateOverrides[p.id];
+            });
+
+            // 정당 목록에서 합쳐진 정당 제거, 새 정당은 첫 번째로 합쳐진 정당 자리에
+            const firstIdx = parties.findIndex(p => srcIds.has(p.id));
+            for(let i = parties.length - 1; i >= 0; i--) if(srcIds.has(parties[i].id)) parties.splice(i, 1);
+            if(isNewParty) parties.splice(Math.max(0, Math.min(firstIdx, parties.length)), 0, target);
+        }
         // 정당 복제 — 색상/로고/당수/파벌 구성 등 "정체성"은 그대로 복사하고, 의석 수·집권 여부·연정
         // 소속처럼 그 정당 고유의 정치적 상태는 복제하지 않고 초기화(0/없음)해 사용자가 새로 지정하게 한다
         function duplicateParty(i) {

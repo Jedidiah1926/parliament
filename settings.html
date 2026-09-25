@@ -34,11 +34,13 @@
 
             <div>
                 <div class="settings-label">LANGUAGE / 언어</div>
-                <div class="lang-select-group">
-                    <button class="lang-select-btn" id="langBtnKr" onclick="selectLang('kr')">한국어</button>
-                    <button class="lang-select-btn" id="langBtnEn" onclick="selectLang('en')">English</button>
-                    <button class="lang-select-btn" id="langBtnLocked" disabled title="Coming soon">🔒︎</button>
+                <div class="lang-select-group lang-select-wrap" id="langButtonGroup"></div>
+                <div class="lang-select-group lang-select-wrap" style="margin-top:6px;">
+                    <button class="lang-select-btn lang-tool-btn" onclick="document.getElementById('langPackFileInput').click()">언어 팩 불러오기 (.json)</button>
+                    <button class="lang-select-btn lang-tool-btn" onclick="downloadLangTemplate()">번역 템플릿 받기</button>
                 </div>
+                <input type="file" id="langPackFileInput" accept=".json,application/json" style="position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;" onchange="importLangPack(this)">
+                <div style="color:var(--tno-text);font-size:0.85rem;margin-top:6px;">바꾼 언어는 각 화면을 다시 열 때 적용됩니다. 다른 사람이 만든 언어 팩(.json)을 불러와 쓸 수 있고, 번역 템플릿으로 새 언어를 만들 수 있습니다.</div>
             </div>
 
             <div>
@@ -85,12 +87,60 @@
             setLang(lang);
             renderLangButtons();
         }
+        // 기본 언어(한국어·English) + 불러온 언어 팩을 버튼으로 — 불러온 팩은 ✕로 삭제
         function renderLangButtons() {
             const cur = getLang();
-            document.getElementById('langBtnKr').classList.toggle('active', cur === 'kr');
-            document.getElementById('langBtnEn').classList.toggle('active', cur === 'en');
+            const group = document.getElementById('langButtonGroup');
+            group.innerHTML = '';
+            DnoLang.list().forEach(l => {
+                const btn = document.createElement('button');
+                btn.className = 'lang-select-btn' + (l.code === cur ? ' active' : '');
+                btn.id = 'langBtn' + l.code.charAt(0).toUpperCase() + l.code.slice(1).replace(/-/g, '');
+                btn.textContent = l.name;
+                btn.title = l.installed ? `${l.name} (${l.code})${l.author ? ' — ' + l.author : ''}` : l.name;
+                btn.onclick = () => selectLang(l.code);
+                if(l.installed) {
+                    const x = document.createElement('span');
+                    x.className = 'lang-remove';
+                    x.textContent = '✕';
+                    x.title = '언어 팩 삭제';
+                    x.onclick = e => {
+                        e.stopPropagation();
+                        if(confirm(`"${l.name}" 언어 팩을 삭제할까요?`)) { DnoLang.remove(l.code); renderLangButtons(); }
+                    };
+                    btn.appendChild(x);
+                }
+                group.appendChild(btn);
+            });
         }
         renderLangButtons();
+
+        async function importLangPack(input) {
+            const file = input.files && input.files[0];
+            input.value = '';
+            if(!file) return;
+            let raw;
+            try { raw = JSON.parse(await file.text()); }
+            catch(e) { alert('언어 팩을 읽을 수 없습니다. (올바른 JSON 파일이 아닙니다)'); return; }
+            const result = DnoLang.install(raw);
+            if(!result.ok) { alert('언어 팩을 불러오지 못했습니다: ' + result.error); return; }
+            renderLangButtons();
+            if(confirm(`"${result.name}" 언어 팩을 불러왔습니다. 지금 이 언어로 바꿀까요?`)) selectLang(result.code);
+        }
+
+        async function downloadLangTemplate() {
+            try {
+                const text = await DnoLang.template();
+                const url = URL.createObjectURL(new Blob([text], { type: 'application/json' }));
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'dno-lang-template.json';
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                setTimeout(() => URL.revokeObjectURL(url), 2000);
+            } catch(e) { alert('번역 템플릿을 만들지 못했습니다.'); }
+        }
 
         function selectUiMode(mode) {
             setUiMode(mode);

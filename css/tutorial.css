@@ -1,0 +1,133 @@
+/* ===== 튜토리얼(조작법 안내) — js/tutorial.js =====
+   기본은 네온 모양, 라이트/다크는 아래 [data-theme-family="modern"] 규칙이 덮어쓴다 */
+.tut-layer { position: fixed; inset: 0; z-index: 8000; }
+.tut-catcher { position: absolute; inset: 0; }
+.tut-spot {
+    position: fixed;
+    pointer-events: none;
+    border: 2px solid var(--tno-neon);
+    box-shadow: 0 0 0 9999px rgba(0, 0, 0, .62), 0 0 18px var(--tno-neon);
+    transition: left .2s ease, top .2s ease, width .2s ease, height .2s ease;
+}
+.tut-no-target .tut-spot { left: 50% !important; top: 50% !important; width: 0 !important; height: 0 !important; border: none; box-shadow: 0 0 0 9999px rgba(0, 0, 0, .62); }
+.tut-bubble {
+    position: fixed;
+    width: 340px;
+    max-width: calc(100vw - 24px);
+    box-sizing: border-box;
+    background: #0a0c10;
+    border: 1px solid var(--tno-neon);
+    box-shadow: 0 0 16px color-mix(in srgb, var(--tno-neon) 35%, transparent);
+    color: var(--tno-text);
+    font-family: 'NeoDunggeunmo', 'VT323', monospace;
+    padding: 16px 18px 14px;
+    transition: left .2s ease, top .2s ease;
+}
+.tut-step { display: flex; justify-content: space-between; gap: 8px; color: var(--tno-gold); font-size: .8rem; letter-spacing: 1px; margin-bottom: 6px; }
+.tut-count { color: #777; white-space: nowrap; }
+.tut-progress { display: flex; gap: 4px; margin-bottom: 10px; }
+.tut-progress span { flex: 1; height: 3px; background: #2a2a2a; }
+.tut-progress span.past { background: color-mix(in srgb, var(--tno-neon) 45%, transparent); }
+.tut-progress span.now { background: var(--tno-neon); box-shadow: 0 0 4px var(--tno-neon); }
+.tut-title { color: var(--tno-neon); font-size: 1.15rem; text-shadow: 0 0 5px var(--tno-neon); margin-bottom: 8px; }
+.tut-text { color: #ccc; font-size: .95rem; line-height: 1.55; }
+/* 실습 단계: 비춘 곳(허용 영역)을 직접 누를 수 있게 가림막을 치운다 — 나머지 클릭은 tutorial.js가 막음 */
+.tut-layer.tut-is-task { pointer-events: none; }
+.tut-layer.tut-is-task .tut-catcher { display: none; }
+.tut-layer.tut-is-task .tut-bubble { pointer-events: auto; }
+.tut-task {
+    display: flex; align-items: flex-start; gap: 8px;
+    margin-top: 12px; padding: 8px 10px;
+    border: 1px dashed var(--tno-gold);
+    color: var(--tno-gold);
+    font-size: .88rem; line-height: 1.45;
+}
+.tut-task-icon { flex: 0 0 auto; animation: tut-blink 1.2s steps(2, start) infinite; }
+.tut-task.done { border-style: solid; border-color: var(--vote-yea); color: var(--vote-yea); background: color-mix(in srgb, var(--vote-yea) 8%, transparent); }
+.tut-task.done .tut-task-icon { animation: none; }
+@keyframes tut-blink { to { visibility: hidden; } }
+
+/* 목차 */
+.tut-menu { display: flex; flex-direction: column; gap: 6px; margin-top: 12px; }
+.tut-lesson-btn {
+    display: flex; align-items: center; gap: 10px; width: 100%;
+    text-align: left; cursor: pointer; font-family: inherit;
+    background: transparent; border: 1px solid var(--tno-border); color: #ccc;
+    padding: 9px 10px;
+}
+.tut-lesson-btn:hover, .tut-lesson-btn.next { border-color: var(--tno-neon); }
+.tut-lesson-no { flex: 0 0 auto; color: var(--tno-gold); font-size: .85rem; }
+.tut-lesson-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.tut-lesson-title { color: var(--tno-neon); font-size: 1rem; }
+.tut-lesson-sum { color: #777; font-size: .78rem; }
+.tut-lesson-mark { flex: 0 0 auto; color: #666; }
+.tut-lesson-btn.done .tut-lesson-mark { color: var(--vote-yea); }
+
+.tut-actions { display: flex; align-items: center; gap: 6px; margin-top: 14px; }
+.tut-spacer { flex: 1; }
+.tut-actions button {
+    font-family: inherit;
+    font-size: .9rem;
+    padding: 6px 12px;
+    cursor: pointer;
+    background: transparent;
+    border: 1px solid var(--tno-border);
+    color: #aaa;
+}
+.tut-actions button:hover:not(:disabled) { border-color: var(--tno-neon); color: var(--tno-neon); }
+.tut-actions button:disabled { opacity: .35; cursor: default; }
+.tut-actions .tut-skip, .tut-actions .tut-toc { border-color: transparent; color: #666; padding-left: 0; padding-right: 6px; }
+.tut-actions .tut-next.tut-ready { box-shadow: 0 0 12px var(--tno-neon); }
+.tut-actions .tut-next { background: var(--tno-neon); border-color: var(--tno-neon); color: #000; }
+.tut-actions .tut-next:hover { background: #fff; color: #000; }
+
+/* ---- 라이트/다크 ---- */
+html[data-theme-family="modern"] .tut-spot {
+    border: none;
+    border-radius: 14px;
+    box-shadow: 0 0 0 9999px rgba(9, 9, 11, .5), 0 0 0 2px var(--m-accent) !important;
+}
+html[data-theme-family="modern"] .tut-no-target .tut-spot { box-shadow: 0 0 0 9999px rgba(9, 9, 11, .5) !important; }
+html[data-theme-family="modern"] .tut-bubble {
+    background: var(--m-surface);
+    border: 1px solid var(--m-border);
+    border-radius: 16px;
+    box-shadow: var(--m-shadow-lg) !important;
+    color: var(--m-text);
+    padding: 18px 20px 16px;
+}
+html[data-theme-family="modern"] .tut-step { color: var(--m-text-3); font-size: 12px; font-weight: 600; }
+html[data-theme-family="modern"] .tut-count { color: var(--m-text-4); }
+html[data-theme-family="modern"] .tut-progress span { height: 4px; border-radius: 2px; background: var(--m-surface-3); box-shadow: none; }
+html[data-theme-family="modern"] .tut-progress span.past { background: var(--m-text-4); }
+html[data-theme-family="modern"] .tut-progress span.now { background: var(--m-accent); }
+html[data-theme-family="modern"] .tut-task { border: none; border-radius: 10px; background: color-mix(in srgb, var(--m-gold) 12%, transparent); color: var(--m-gold); font-size: 13px; font-weight: 600; }
+html[data-theme-family="modern"] .tut-task.done { background: color-mix(in srgb, var(--m-success) 13%, transparent); color: var(--m-success); }
+html[data-theme-family="modern"] .tut-task-icon { animation: none; }
+html[data-theme-family="modern"] .tut-lesson-btn { border: none; border-radius: 12px; background: var(--m-surface-2); color: var(--m-text); padding: 11px 12px; }
+html[data-theme-family="modern"] .tut-lesson-btn:hover { background: var(--m-surface-3); }
+html[data-theme-family="modern"] .tut-lesson-btn.next { box-shadow: inset 0 0 0 1.5px var(--m-accent); }
+html[data-theme-family="modern"] .tut-lesson-no { color: var(--m-text-3); font-size: 12px; font-weight: 700; }
+html[data-theme-family="modern"] .tut-lesson-title { color: var(--m-text); font-size: 14px; font-weight: 700; }
+html[data-theme-family="modern"] .tut-lesson-sum { color: var(--m-text-3); font-size: 12px; }
+html[data-theme-family="modern"] .tut-lesson-mark { color: var(--m-text-4); }
+html[data-theme-family="modern"] .tut-lesson-btn.done .tut-lesson-mark { color: var(--m-success); }
+html[data-theme-family="modern"] .tut-title { color: var(--m-text); font-size: 17px; font-weight: 700; }
+html[data-theme-family="modern"] .tut-text { color: var(--m-text-2); font-size: 14px; }
+html[data-theme-family="modern"] .tut-actions button {
+    border: none;
+    border-radius: 9px;
+    background: var(--m-surface-2);
+    color: var(--m-text);
+    font-size: 13px;
+    font-weight: 600;
+    padding: 8px 14px;
+}
+html[data-theme-family="modern"] .tut-actions button:hover:not(:disabled) { background: var(--m-surface-3); color: var(--m-text); }
+html[data-theme-family="modern"] .tut-actions .tut-skip,
+html[data-theme-family="modern"] .tut-actions .tut-toc { background: transparent; color: var(--m-text-3); padding-left: 0; padding-right: 6px; }
+html[data-theme-family="modern"] .tut-actions .tut-toc:hover:not(:disabled),
+html[data-theme-family="modern"] .tut-actions .tut-skip:hover:not(:disabled) { background: transparent; color: var(--m-text); }
+html[data-theme-family="modern"] .tut-actions .tut-next.tut-ready { box-shadow: var(--m-ring); }
+html[data-theme-family="modern"] .tut-actions .tut-next { background: var(--m-accent); color: var(--m-on-accent); }
+html[data-theme-family="modern"] .tut-actions .tut-next:hover { background: var(--m-accent); color: var(--m-on-accent); opacity: .86; }
