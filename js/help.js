@@ -10,8 +10,19 @@
         if (typeof switchMainTab === 'function') switchMainTab('election');
         if (typeof elecSwitchSub === 'function') elecSwitchSub(sub);
     };
+    const isMobile = () => document.documentElement.getAttribute('data-ui-mode') === 'mobile';
+    const showPanel = which => { if (isMobile() && typeof setMobilePanel === 'function') setMobilePanel(which); };
+    // 시각(오른쪽 화면) 탭 열기 — 모바일에선 의석 화면으로 넘어간다
+    const disp = (tab, before) => () => {
+        if (before) before();
+        if (typeof switchDispTab === 'function') switchDispTab(tab);
+        showPanel('display');
+    };
 
-    // btn: 원래 탭 버튼 id (이름·숨김 여부를 여기서 읽음), suffix: 이름 뒤에 붙일 설명, inner: [안쪽 탭 이름, 설명]
+    // btn: 원래 탭 버튼 id (이름·숨김 여부를 여기서 읽음) — 없으면 title을 그대로 씀
+    // suffix: 이름 뒤에 붙일 설명, inner: [안쪽 탭 이름, 설명], open: "열기 →"로 할 일 (없으면 버튼 숨김)
+    // path: 카드 머리의 위치 표시 (없으면 페이지의 path, 그것도 없으면 메뉴 묶음 이름)
+    // hiddenNote: 원래 탭이 지금 숨겨져 있을 때 붙일 안내, openWhenHidden: 숨겨져 있어도 "열기"로 나타나게 할 수 있음
     const PAGES = {
         setup: {
             intro: '의회를 이루는 정당 · 의석 · 의원 · 연정을 다룹니다.',
@@ -132,6 +143,104 @@
                 },
             ],
         },
+        layout: {
+            intro: '화면 맨 위의 세이브 탭 바와 왼쪽 메뉴(사이드바) 쓰는 법입니다.',
+            tabs: [
+                {
+                    path: '맨 위', title: '⌂ 집 아이콘',
+                    desc: '탭 바 맨 왼쪽. 누르면 지금 상태를 바로 저장한 뒤 메인 화면(시작 화면)으로 돌아갑니다.',
+                },
+                {
+                    path: '맨 위', title: '세이브 탭',
+                    desc: '탭 하나하나가 세이브(나라 하나)입니다. 누르면 확인창 없이 그 세이브로 바로 바뀌고, 진행 상황은 세이브마다 따로 자동저장돼요.',
+                    inner: [
+                        ['새 의회 (1)', '맨 앞의 기본 자동저장 — 어느 세이브에도 속하지 않은 작업을 담아 두어 기존 데이터가 사라지지 않게 합니다.'],
+                        ['이름 바꾸기', '탭 이름을 더블클릭 (또는 국가 › 설정 › 저장의 ✎).'],
+                        ['×', '그 세이브 삭제 (확인 후).'],
+                    ],
+                },
+                {
+                    path: '맨 위', title: '+ 새 세이브',
+                    desc: '새 세이브를 만듭니다.',
+                    inner: [
+                        ['새로 생성', '아무것도 없는 기본 상태에서 새로 시작 — 지금 화면은 복사되지 않아요.'],
+                        ['프리셋에서 생성', '튜토리얼 공화국처럼 미리 준비된 나라의 복사본으로 시작.'],
+                    ],
+                },
+                {
+                    path: '왼쪽', title: '메뉴 묶음과 항목',
+                    desc: '의회 · 국가 · 여론 · 내각 · 도움말 다섯 묶음과 그 안의 항목. 항목을 누르면 그 기능 화면이 열리고, 묶음 제목을 누르면 접히거나 펼쳐집니다 (다음에 열어도 그대로 기억).',
+                },
+                {
+                    path: '왼쪽', title: '사이드바 접기',
+                    desc: '사이드바 머리 오른쪽의 접기 버튼으로 아이콘만 남기고 접어 편집 화면을 넓게 쓸 수 있어요. 접힌 상태에선 아이콘을 누르면 그 묶음으로 바로 이동합니다.',
+                },
+                {
+                    path: '가운데', title: '편집 패널 머리 · 폭 조절',
+                    desc: '편집 패널 맨 위에는 라이트/다크에선 지금 위치(묶음 › 항목), 네온에선 "MINISTRY OF INTERIOR" 띠와 국가명이 보입니다. 편집 패널과 시각 화면 사이 경계를 끌면 폭을 바꿀 수 있고, 더블클릭하면 기본 폭으로 돌아가요.',
+                },
+                {
+                    path: '공통', title: '실행 버튼과 단축키',
+                    desc: '설정을 바꾼 뒤 "PROTOCOL EXECUTE"(실행)를 누르면 시각 화면이 새로 그려집니다.',
+                    inner: [
+                        ['Enter', '입력 칸 밖에서 누르면 실행.'],
+                        ['Ctrl+S', '바로 저장.'],
+                        ['Ctrl+Z', '되돌리기 (Ctrl+Shift+Z로 다시 실행).'],
+                        ['Esc', '열려 있는 확인 · 안내 · 내보내기 창 닫기.'],
+                    ],
+                },
+                {
+                    path: '모바일', title: '모바일 화면 모드',
+                    desc: '메인 메뉴 › 설정의 화면 모드(UI MODE)에서 모바일을 고르면 사이드바 대신 화면 아래 탭 바(묶음 + 의석)와 떠 있는 실행 버튼을 씁니다. 세부 항목은 위쪽 칩 줄에서 고르고, "의석"을 누르면 시각 화면으로 넘어가요.',
+                },
+            ],
+        },
+        visual: {
+            intro: '화면 오른쪽(모바일은 "의석")의 시각 탭 — 설정한 내용이 그림으로 보이는 곳입니다.',
+            path: '시각',
+            tabs: [
+                {
+                    btn: 'dispTabHouse', open: disp('house'),
+                    desc: '하원(첫 번째 의회)의 의석을 반원으로 보여줍니다. 위쪽 "반원 / 지역구"로 지역구 지도 보기로 바꿀 수 있고, 아래에는 여당 · 야당별 정당 카드(의석 수 · 비율 · 파벌)와 원외정당, 의장단이 나와요.',
+                },
+                {
+                    btn: 'dispTabSenate', open: disp('senate'), hiddenNote: '양원제 · 삼원제일 때 나타나요',
+                    desc: '상원(두 번째 의회)의 의석. 보는 법은 하원과 같습니다.',
+                },
+                {
+                    btn: 'dispTabThird', open: disp('third'), hiddenNote: '삼원제일 때 나타나요',
+                    desc: '삼원(세 번째 의회)의 의석.',
+                },
+                {
+                    btn: 'dispTabCabinet', open: disp('cabinet'),
+                    desc: '대통령 · 총리 · 부총리 · 국무위원 등 정부 구성원을 카드로 한눈에 보여줍니다. 내각 묶음에서 정한 내용이 여기 반영돼요.',
+                },
+                {
+                    btn: 'dispTabDistrict', open: () => { goElec('district')(); showPanel('display'); }, openWhenHidden: true,
+                    desc: '지역구 지도. 여론 › 지역구를 열면 나타나고, 지역구를 눌러 편집할 수 있어요. 탭의 ×로 닫습니다.',
+                },
+                {
+                    btn: 'dispTabTendency', open: () => { goElec('tendency')(); showPanel('display'); }, openWhenHidden: true,
+                    desc: '정당별 성향 지도. 여론 › 성향을 열면 나타나며, 지역구마다 어느 정당 쪽인지 색으로 보여요.',
+                },
+                {
+                    btn: 'dispTabRegion', open: () => { goElec('region')(); showPanel('display'); }, openWhenHidden: true,
+                    desc: '권역 지도. 여론 › 권역을 열면 나타나고, 지역구를 칠해 권역으로 묶습니다.',
+                },
+                {
+                    btn: 'dispTabElecResultHouse', title: '선거결과', open: disp('elecResultHouse'), hiddenNote: '총선을 개표하면 원마다 생겨요',
+                    desc: '총선 개표 화면과 결과. 개표가 진행되는 모습, 정당별 득표와 직전 대비 의석 변동(▲/▼)을 보여주고, 결과를 확인한 뒤 국가 › 선거의 "✔ 의회에 반영"을 누르면 그 결과대로 의석이 바뀝니다.',
+                },
+                {
+                    title: '날짜 · 회기', open: () => { go('nation', 'config')(); if (typeof switchConfigInnerTab === 'function') switchConfigInnerTab('date'); showPanel('controls'); },
+                    desc: '시각 화면 오른쪽 위에 보이는 현재 날짜와 회기. 국가 › 설정 › 날짜에서 정합니다 ("열기"로 이동).',
+                },
+                {
+                    title: '좌석 정보 · 이미지 내보내기',
+                    desc: '좌석(점)을 누르면 그 자리의 정당 · 의원 정보 카드가 뜹니다. 반원 · 지도 · 선거 결과 · 내각 화면에서 오른쪽 클릭(모바일은 길게 누르기) → "내보내기..."를 고르면 이미지로 저장할 수 있어요.',
+                },
+            ],
+        },
     };
 
     const isHidden = el => !el || el.hidden || getComputedStyle(el).display === 'none';
@@ -150,10 +259,10 @@
         intro.textContent = page.intro;
         host.appendChild(intro);
         page.tabs.forEach(tab => {
-            const src = document.getElementById(tab.btn);
-            const hidden = isHidden(src);
+            const src = tab.btn ? document.getElementById(tab.btn) : null;
+            const hidden = !!tab.btn && isHidden(src);
             const card = document.createElement('div');
-            card.className = 'help-card' + (hidden ? ' is-hidden' : '');
+            card.className = 'help-card' + (hidden && !tab.openWhenHidden ? ' is-hidden' : '');
             card.innerHTML = `
                 <div class="help-card-head">
                     <span class="help-card-path"></span>
@@ -161,14 +270,17 @@
                     <button type="button" class="help-open">열기 →</button>
                 </div>
                 <p class="help-desc"></p>`;
-            card.querySelector('.help-card-path').textContent = groupLabel(key).replace(/^\S+\s+/, '') + ' ›';
-            card.querySelector('.help-card-title').textContent = (src ? src.textContent.trim() : tab.btn) + (tab.suffix || '');
-            card.querySelector('.help-desc').textContent = tab.desc + (hidden ? ' (지금 설정에선 숨겨져 있어요)' : '');
+            card.querySelector('.help-card-path').textContent = (tab.path || page.path || groupLabel(key).replace(/^\S+\s+/, '')) + ' ›';
+            const srcLabel = src ? (src.querySelector('.disp-tab-label') || src).textContent.trim() : '';
+            card.querySelector('.help-card-title').textContent = (tab.title || srcLabel || tab.btn) + (tab.suffix || '');
+            card.querySelector('.help-desc').textContent = tab.desc + (hidden && !tab.openWhenHidden ? ` (${tab.hiddenNote || '지금 설정에선 숨겨져 있어요'})` : '');
             const openBtn = card.querySelector('.help-open');
-            openBtn.disabled = hidden;
+            if (!tab.open) openBtn.style.display = 'none';
+            openBtn.disabled = hidden && !tab.openWhenHidden;
             openBtn.addEventListener('click', () => {
+                if (!tab.open) return;
+                showPanel('controls'); // 편집 화면 쪽 탭이 기본 — 시각 탭은 open 안에서 의석 화면으로 넘어간다
                 tab.open();
-                if (typeof setMobilePanel === 'function' && document.documentElement.getAttribute('data-ui-mode') === 'mobile') setMobilePanel('controls');
                 window.scrollTo({ top: 0 });
             });
             if (tab.inner && tab.inner.length) {
