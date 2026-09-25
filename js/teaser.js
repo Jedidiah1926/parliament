@@ -4235,9 +4235,31 @@
             document.querySelectorAll('canvas').forEach(cvs => { if(cvs.offsetParent) redrawCanvasForCurrentSize(cvs); });
         });
         let suppressAutosaveOnUnload = false;
+
+        // ── 새로 시작할 때 쓰는 깨끗한 기본 상태 ──
+        // setAppState는 저장 기록에 없는 값(지역구 격자·성향 등)을 건드리지 않고 그대로 두기 때문에, 화면에 떠 있던
+        // 이전 세이브의 값이 섞여 들어갈 수 있다. 새 세이브·프리셋·구버전/외부 파일은 먼저 깨끗한 기본 상태로 되돌린 뒤 적용한다.
+        let FRESH_STATE_JSON = null;
+        function freshAppState() { return FRESH_STATE_JSON ? JSON.parse(FRESH_STATE_JSON) : null; }
+        function applyStateFromScratch(state) {
+            const fresh = freshAppState();
+            if(fresh) setAppState(fresh);
+            if(state) setAppState(state);
+        }
+        // 지금 버전이 저장한 세이브는 모든 값을 담고 있어 바로 적용하고(빠름), 빠진 값이 있는 기록만 기본 상태부터 적용
+        function stateIsComplete(state) {
+            const e = state && state.election;
+            return !!(e && e.elecStore && e.district && e.district.grid && e.tendency && e.tendency.data);
+        }
+        function applyStateSafely(state) {
+            if(stateIsComplete(state)) setAppState(state);
+            else applyStateFromScratch(state);
+        }
         window.addEventListener('beforeunload', () => { if(autosaveEnabled && !suppressAutosaveOnUnload) autosaveNow(); });
 
         window.onload = function() {
+            // 아무것도 불러오기 전의 깨끗한 기본 상태를 기억해 둔다 — 새 세이브·프리셋은 여기서부터 시작
+            try { FRESH_STATE_JSON = JSON.stringify(getAppState()); } catch(e) { FRESH_STATE_JSON = null; }
             let restored = false;
             let bootNewSaveName = null;
             let bootPresetId = null;
@@ -4256,13 +4278,13 @@
                     sessionStorage.removeItem('dnoBootPresetId');
                 } catch(e) { /* sessionStorage 접근 불가 — 일반 부팅으로 진행 */ }
                 if(bootImportedJSON) {
-                    try { setAppState(JSON.parse(bootImportedJSON)); setActiveSlotId(null); restored = true; }
+                    try { applyStateSafely(JSON.parse(bootImportedJSON)); setActiveSlotId(null); restored = true; }
                     catch(e) { restored = false; }
                 } else if(bootNewSaveName) {
                     restored = false;
                 } else if(bootSlotId) {
                     const slot = loadSaveSlots().find(s => s.id === bootSlotId);
-                    if(slot) { setAppState(slot.state); setActiveSlotId(slot.isAutosave ? (slot.parentId || null) : slot.id); restored = true; }
+                    if(slot) { applyStateSafely(slot.state); setActiveSlotId(slot.isAutosave ? (slot.parentId || null) : slot.id); restored = true; }
                     else restored = autosaveEnabled && loadFromAutosave();
                 } else {
                     restored = autosaveEnabled && loadFromAutosave();
@@ -4298,7 +4320,7 @@
             try {
                 preset = await DnoPresets.find(presetId);
                 const state = await DnoPresets.loadState(preset);
-                setAppState(state);
+                applyStateFromScratch(state); // 프리셋에 없는 값은 이전 세이브가 아니라 기본값으로
                 simulate(); refreshUI();
                 createNamedSlotFromCurrentState(uniqueSaveName(name || preset.title));
             } catch(e) {
@@ -4647,7 +4669,7 @@
         async function loadJSONFromFile(file) {
             const text = await file.text();
             const obj = JSON.parse(text);
-            setAppState(obj);
+            applyStateSafely(obj);
         }
 
         // ===== 저장 슬롯 (localStorage) =====
@@ -4877,7 +4899,7 @@
             const slot = loadSaveSlots().find(s => s.id === id); if(!slot) return;
             showCustomConfirm(`"${slot.name}" 슬롯을 불러올까요?\n현재 화면의 저장하지 않은 변경사항은 사라집니다.`, () => {
                 if(autosaveEnabled) autosaveNow(); // 지금 탭의 진행 상황을 먼저 그 탭 전용 자동저장에 남겨둠
-                setAppState(slot.state);
+                applyStateSafely(slot.state);
                 setActiveSlotId(slot.isAutosave ? (slot.parentId || null) : slot.id);
                 simulate(); refreshUI();
                 renderSaveTabUI();
@@ -5125,18 +5147,21 @@
             }
 
             if(autosaveEnabled) autosaveNow(); // 지금 탭(있다면)의 진행 상황을 먼저 그 탭 전용 자동저장에 남겨둠
-            const state = presetId ? presetState : getAppState();
+            // 새 세이브는 지금 화면을 복사하지 않고 완전히 처음(기본 상태)부터 — 프리셋이면 기본 상태 위에 프리셋을 적용
+            const prevState = getAppState();
+            try { applyStateFromScratch(presetId ? presetState : null); }
+            catch(e) {
+                try { setAppState(prevState); } catch(e2) { /* 되돌리기 실패 — 아래 안내만 */ }
+                showCustomAlert(presetId ? '프리셋 데이터 형식이 올바르지 않습니다.' : '새 세이브를 만들지 못했습니다.');
+                return;
+            }
+            simulate(); refreshUI();
+            const state = getAppState();
             const slots = loadSaveSlots();
             const id = 'slot'+Date.now();
             const now = new Date().toISOString();
             slots.push({ id, name, isAutosave: false, createdAt: now, savedAt: now, state });
             persistSaveSlots(slots);
-
-            if(presetId) {
-                try { setAppState(state); }
-                catch(e) { showCustomAlert('프리셋 데이터 형식이 올바르지 않습니다.'); return; }
-                simulate(); refreshUI();
-            }
             setActiveSlotId(id);
             hideSaveTabNewInput();
             renderSaveTabUI();
@@ -5164,7 +5189,7 @@
                 target = getNamedAutosaveSlot(slots, id) || parent;
             }
             if(target) {
-                try { setAppState(target.state); }
+                try { applyStateSafely(target.state); }
                 catch(e) { showCustomAlert('세이브를 불러오지 못했습니다.'); return; }
             }
             setActiveSlotId(toDefault ? null : id);
