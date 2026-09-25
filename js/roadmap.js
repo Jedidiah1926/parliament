@@ -542,6 +542,12 @@
         btn.classList.toggle('active', btn.dataset.version === versionKey);
       });
 
+      // 버전을 바꿀 때마다 카드를 새로 그리므로, 언어가 한국어가 아니면 새로 그린 부분을 다시 번역
+      if (window.DnoLang && window.DnoLang.translateSubtree) {
+        window.DnoLang.translateSubtree(titleEl);
+        window.DnoLang.translateSubtree(track);
+      }
+
       requestAnimationFrame(syncRoadmapSize);
     }
 

@@ -41,6 +41,18 @@ window.DnoLangPacks.en = {
   {
    "re": "(\\d+)판",
    "to": "$1 round"
+  },
+  {
+   "re": "예정된 점검: (.+?) ~ (.+?) \\(KST\\)",
+   "to": "Scheduled maintenance: $1 – $2 (KST)"
+  },
+  {
+   "re": "예정된 점검: (.+?) \\(KST\\)부터",
+   "to": "Scheduled maintenance from $1 (KST)"
+  },
+  {
+   "re": "저장 슬롯은 최대 (\\d+)개까지 만들 수 있습니다\\. 기존 (?:세이브를|슬롯을) 삭제한 뒤 다시 시도하세요\\.",
+   "to": "You can have up to $1 saves. Delete an existing save and try again."
   }
  ],
  "dict": [
@@ -1999,6 +2011,606 @@ window.DnoLangPacks.en = {
   [
    "합당",
    "Merge"
+  ],
+  [
+   "프로토콜 실행",
+   "Execute Protocol"
+  ],
+  [
+   "로드맵 및 업데이트 내역 보기",
+   "View Roadmap & Update History"
+  ],
+  [
+   "새로 시작",
+   "Start New"
+  ],
+  [
+   "빈 세이브",
+   "Blank Save"
+  ],
+  [
+   "예: 2차 총선 직후",
+   "e.g. Right after the 2nd general election"
+  ],
+  [
+   "생성 후 시작",
+   "Create & Start"
+  ],
+  [
+   "프리셋 — 고르면 복사본이 새 세이브로 만들어집니다",
+   "Presets — picking one creates a copy as a new save"
+  ],
+  [
+   "튜토리얼 공화국",
+   "Tutorial Republic"
+  ],
+  [
+   "튜토리얼",
+   "Tutorial"
+  ],
+  [
+   "처음이라면 여기서 시작하세요 — 가상의 나라에서 짧은 과정(#1~#5)으로 나눠 화면 구성과 기본 조작을 직접 해보며 배웁니다.",
+   "New here? Start here — learn the layout and basic controls hands-on in a fictional country, in short lessons (#1–#5)."
+  ],
+  [
+   "이어하기",
+   "Continue"
+  ],
+  [
+   "세이브 검색",
+   "Search saves"
+  ],
+  [
+   "저장된 세이브가 없습니다. 왼쪽에서 새로 시작하세요.",
+   "No saves yet. Start a new one on the left."
+  ],
+  [
+   "저장 파일(.json) 불러오기",
+   "Load save file (.json)"
+  ],
+  [
+   "검색 결과가 없습니다.",
+   "No results."
+  ],
+  [
+   "등록된 프리셋이 없습니다.",
+   "No presets available."
+  ],
+  [
+   "불러오는 중...",
+   "Loading..."
+  ],
+  [
+   "새 의회 (1)",
+   "New Parliament (1)"
+  ],
+  [
+   "즐겨찾기 해제",
+   "Remove from favorites"
+  ],
+  [
+   "즐겨찾기",
+   "Favorite"
+  ],
+  [
+   "세이브 이름을 입력하세요.",
+   "Enter a save name."
+  ],
+  [
+   "세이브가 이미 있습니다. 다른 이름을 입력하세요.",
+   "save already exists. Please enter a different name."
+  ],
+  [
+   "은(는) 예약된 이름입니다. 다른 이름을 입력하세요.",
+   " is a reserved name. Please enter a different name."
+  ],
+  [
+   "저장 파일을 불러올 수 없습니다. (형식이 올바르지 않거나 손상된 파일)",
+   "Couldn't load the save file. (Invalid format or corrupted file)"
+  ],
+  [
+   "- 설정에 데스크톱(가로형)/모바일(세로형) UI 모드 추가, 모바일 전용 레이아웃 및 좌우 패널 전환 버튼 신설",
+   "- Added Desktop (landscape) / Mobile (portrait) UI modes to Settings, with a mobile-only layout and buttons to switch between the left and right panels"
+  ],
+  [
+   "- 의회 > 구성 정당 카드 UI 개편 (로고 + 이름·상태 / 이념·의석 2행 레이아웃)",
+   "- Redesigned the party cards in Parliament > Composition (logo + name/status / ideology/seats two-row layout)"
+  ],
+  [
+   "- 활동 금지된 정당은 표결·과반 계산에서 제외되고, 좌석 클릭 및 일괄 투표가 차단되도록 수정",
+   "- Banned parties are now excluded from votes and majority calculations, and seat clicks and bulk voting are blocked for them"
+  ],
+  [
+   "- 각외협력을 다른 연정 소속 정당도 설정할 수 있도록 개선",
+   "- Parties belonging to another coalition can now also be set as confidence-and-supply partners"
+  ],
+  [
+   "- 순서 변경(⋮⋮) 핸들이 모바일 터치 드래그로도 동작하도록 수정",
+   "- The reorder (⋮⋮) handle now works with touch dragging on mobile"
+  ],
+  [
+   "- 의회 > 의원 탭을 지역구 당선자 전용으로 분리하고, 의회 > 비례 탭을 신설해 정당별 비례 의석을 개별 명단으로 관리 (무소속의 비례 당선도 지원)",
+   "- Split Parliament > Members into a district-winners-only tab and added a new Parliament > List tab to manage each party's proportional seats as an individual roster (independents can also win list seats)"
+  ],
+  [
+   "- 의회 > 의원 / 비례 탭에 검색(이름·#좌석번호) 및 정당·이념 다중 선택 필터 팝업 추가, 좌석 번호 표시",
+   "- Added search (name / #seat number) and a multi-select party/ideology filter popup to the Members / List tabs, and show seat numbers"
+  ],
+  [
+   "- 지역구 맵 미리보기 크기를 편집 화면과 동일하게 확대",
+   "- Enlarged the district map preview to match the editing screen"
+  ],
+  [
+   "- 파일명 체계 정리 (main/dno/roadmap/settings/teaser) 및 저장 파일 버전 v1.1로 업데이트",
+   "- Cleaned up file names (main/dno/roadmap/settings/teaser) and updated the save file version to v1.1"
+  ],
+  [
+   "- 지역구/비례 의원 카드에도 (무소속이 아니어도) 사진을 등록할 수 있도록 개선",
+   "- District and list member cards can now have photos too (not only independents)"
+  ],
+  [
+   "- 디스플레이 탭 바 구분선을 모바일 화면에서만 표시하도록 수정하고, 탭 버튼과 구분선이 붙어 보이도록 여백 제거",
+   "- The display tab bar divider now shows only on mobile, and removed the gap so tab buttons sit flush against it"
+  ],
+  [
+   "- 반원 중앙에 의석 수 대신 각 원(하원/상원/삼원)의 로고를 표시하는 기능 추가, 국가 > 설정에서 의석 수/로고 전환 버튼과 로고 업로드란 신설 (의석 수 입력은 기존대로 의회 > 구성에 유지)",
+   "- Added the option to show each chamber's logo (House/Senate/Third) in the middle of the hemicycle instead of the seat count, with a seat-count/logo toggle and logo upload in Nation > Settings (seat counts are still entered in Parliament > Composition)"
+  ],
+  [
+   "- 로고 업로드란 클릭 시 파일 선택창이 뜨지 않던 문제, 로고 표시 크기 및 위치(반원 중앙 하단 정렬) 조정",
+   "- Fixed the logo upload box not opening the file picker, and adjusted the logo's size and position (bottom-centered in the hemicycle)"
+  ],
+  [
+   "- 로드맵 페이지 접속 시 항상 1.4 항목이 열리던 문제 수정 (진행 중인 최신 버전이 자동으로 열리도록 개선)",
+   "- Fixed the roadmap always opening on 1.4 (it now opens the latest version in progress)"
+  ],
+  [
+   "- 여러 의원실을 한 번에 개표한 뒤 \"의회 반영\"을 눌러도 마지막 의원실만 지역구 당선자 정보가 반영되고 나머지 의원실은 당선자가 표시되지 않던 문제 수정",
+   "- Fixed an issue where, after counting several chambers at once, \"Apply to Parliament\" only applied district winners to the last chamber and left the others without winners"
+  ],
+  [
+   "- 버그 수정 (정당 정보 재정렬 시 초기화 문제, 파벌 당수 이름 미반영 문제, 의회 구성 변경 시 비례 탭 내부 탭이 갱신되지 않던 문제 등)",
+   "- Bug fixes (party info resetting when reordered, faction leader names not applying, List tab's inner tabs not updating when the chamber setup changed, and more)"
+  ],
+  [
+   "- 맵 메이커(구 맵 메이커, MINISTRY OF TRANSPORT)에서 만든 실제 지도 모양의 지역구를 .jsx로 내보내고, 지역구 탭에서 업로드해 하원·상원·삼원이 하나의 지도를 공유하는 \"지도\" 지역구 시스템 추가",
+   "- Added the \"Map\" district system: export real map-shaped districts from the Map Maker (formerly MINISTRY OF TRANSPORT) as .jsx and upload them in the District tab, with the House, Senate and Third chamber sharing one map"
+  ],
+  [
+   "- 지역구별로 원별 의석 수를 따로 지정할 수 있고, 도형을 클릭하면 이름·약칭·의석 수를 편집 가능 (약칭을 지정하면 지도 위 도형 가운데에 표시)",
+   "- Each district can have its own seat count per chamber, and clicking a shape lets you edit its name, abbreviation and seats (the abbreviation is shown in the middle of the shape)"
+  ],
+  [
+   "- 정당별 성향(%)은 지역구 탭이 아닌 성향 탭에서 지도를 직접 클릭해 편집하도록 이동, 육각형 방식과 달리 원(하원/상원/삼원)별로 독립된 성향 데이터를 가짐",
+   "- Party leanings (%) are now edited by clicking the map in the Tendency tab instead of the District tab, and unlike the hex system each chamber (House/Senate/Third) has its own leaning data"
+  ],
+  [
+   "- 국가 > 설정에 \"지역구 시스템\" 전환 토글 추가 (기본값 육각형, 지도로 전환 시 기존 구 지역구 탭이 지도 편집용으로 대체됨)",
+   "- Added a \"District system\" toggle to Nation > Settings (default hex; switching to Map replaces the old District tab with map editing)"
+  ],
+  [
+   "- 지도 지역구의 의석이 여러 개면 더 이상 한 정당이 전부 가져가지 않고, 비례 의석과 같은 최대잔여법으로 지역구 안에서도 여러 정당이 나눠 가지도록 개표 방식 개편, 개표 결과 지도에 정당별 획득 의석 수 배지 표시",
+   "- Multi-seat map districts no longer go entirely to one party — seats are split among parties within the district using the largest remainder method (like list seats), and the result map shows each party's seats as badges"
+  ],
+  [
+   "- 성향 종합 지도와 개표 결과 지도 모두, 1위가 여러 정당으로 동률(경합)이면 빗금 무늬로 표시하고, 단독 1위는 득표율이 높을수록 정당 고유색에 가깝게, 낮을수록 흰색에 가깝게 표시",
+   "- On both the overall tendency map and the result map, ties for first place are shown with hatching, and a sole leader is shown closer to the party color the higher its share (closer to white when lower)"
+  ],
+  [
+   "- 지도 업로드 시 배경/틀로 잘못 포함된 거대한 도형이 지역구들을 한쪽에 몰아넣던 문제, 도형 좌표 규모가 저장된 값과 달라 지역구가 안 보이던 문제 수정 (자동 경계상자 보정 + 이상치 도형 제외), 잘못 섞인 도형을 지도에서 직접 삭제하는 기능 추가",
+   "- Fixed huge background/frame shapes squeezing districts into a corner on upload, and districts disappearing when shape coordinates didn't match the saved scale (automatic bounding-box correction + outlier exclusion); added deleting stray shapes directly on the map"
+  ],
+  [
+   "- 지도 지역구 테두리 색을 자유롭게 지정하고, 설정에서 고른 테마 색과 동기화하는 기능 추가",
+   "- Map district border colors can be set freely or synced with the theme color chosen in Settings"
+  ],
+  [
+   "- 설정에 테마 색(강조색) 선택 기능 신설 (HEX 직접 입력, 기본값 초기화, 다른 탭에도 실시간 반영), 그동안 특정 화면에서만 고정 청록색으로 하드코딩돼 있던 옅은 배경/그림자 색상들도 모두 테마 색을 따라가도록 수정",
+   "- Added a theme (accent) color picker to Settings (direct HEX input, reset to default, applied live across tabs), and faint backgrounds/shadows that were hard-coded cyan on some screens now follow the theme color"
+  ],
+  [
+   "- 정당·이념·연정·지역구 목록의 순서 변경(⋮⋮) 드래그가 카드를 포인터 위치까지 끌고 가다가 갑자기 맨 위로 튕기던 문제, 정당 목록을 드래그로 옮겨도 이념순 자동정렬이 되돌리던 문제 수정",
+   "- Fixed reorder (⋮⋮) dragging in party/ideology/coalition/district lists suddenly jumping to the top, and ideology auto-sort undoing manual party reordering"
+  ],
+  [
+   "- 캔버스/SVG 우클릭 시 뜨는 \"내보내기...\" 메뉴 신설 — 반원·지역구 지도 등 모든 시각화를 PNG/JPG/SVG 형식으로 다운로드 가능",
+   "- Added an \"Export...\" menu on right-clicking any canvas/SVG — download every visualization (hemicycle, district maps, etc.) as PNG/JPG/SVG"
+  ],
+  [
+   "- 내보내기 창에 \"아래 의석 수 등 통계 포함\" 체크박스 추가, 실제 화면과 동일한 카드 디자인(색상 띠·이름·의석·%·상태 태그·범례)으로 재현 (SVG는 실제 DOM을 그대로 담아 픽셀 단위로 동일, PNG/JPG는 캔버스 도형으로 재구성)",
+   "- Added an \"Include stats below (seat counts, etc.)\" checkbox to the export dialog, reproducing the on-screen card design (color strip, name, seats, %, status tags, legend) — SVG embeds the real DOM pixel-for-pixel, PNG/JPG are rebuilt as canvas shapes"
+  ],
+  [
+   "- 통계 포함 내보내기에 \"무소속 펼치기\"(개별 의원 명단 표시), \"원외정당 포함하기\"(의석 0 seats 정당도 포함), \"당수/로고 사진 포함\" 세부 옵션 추가 — 모두 화면 실제 접힘 상태에는 영향 없이 내보내기에만 반영",
+   "- Added detail options to exports with stats: \"Expand independents\" (list individual members), \"Include extra-parliamentary parties\" (parties with 0 seats) and \"Include leader/logo photos\" — these only affect the export, not the on-screen collapsed state"
+  ],
+  [
+   "- 내보내기 창에 \"최상단에 포함\" 옵션(국기/국가 이름/날짜/회기) 추가 — 체크한 항목만 레터헤드 형태로 이미지 맨 위에 표시",
+   "- Added \"Include at top\" options to the export dialog (flag / nation name / date / session) — checked items appear as a letterhead at the top of the image"
+  ],
+  [
+   "- 모든 체크박스를 브라우저 기본 모양 대신 네온 테두리의 박스형 체크로 교체",
+   "- Replaced all checkboxes with neon-bordered box checks instead of the browser default"
+  ],
+  [
+   "- 의석 현황 화면 우측 상단 날짜/회기 표시를 두 줄로 나누고 날짜를 회기보다 밝게 표시하도록 변경 (내보내기 헤더와 동일한 스타일)",
+   "- Split the date/session display at the top right of the seat screen into two lines with the date brighter than the session (same style as the export header)"
+  ],
+  [
+   "- 반원 중앙에 로고를 표시할 때 직사각형 로고까지 정사각형으로 늘려 원형으로 잘라내던 문제 수정 — 정사각형/원형 로고는 기존과 동일하게, 그 외 비율은 원본 비율을 유지한 채 표시",
+   "- Fixed rectangular logos being stretched square and cropped into a circle in the middle of the hemicycle — square/round logos look the same as before, other shapes keep their original aspect ratio"
+  ],
+  [
+   "- 좌석 클릭 시 뜨는 정보 창에 각외협력 관계가 전혀 표시되지 않던 문제 수정",
+   "- Fixed confidence-and-supply relationships never showing in the seat info window"
+  ],
+  [
+   "- 무소속 의원 개개인에게 활동중/활동 금지 상태 지정 기능 추가 — 과반 계산·좌석 정보 창·통계 카드에 정당과 동일하게 반영",
+   "- Individual independent members can now be set Active/Banned — reflected in majority calculations, the seat info window and stat cards just like parties"
+  ],
+  [
+   "- 지역구 시스템 기본값을 육각형에서 지도로 변경, \"육각형\"을 \"그리드\"로 이름 변경 및 선택 버튼 순서를 지도·그리드 순으로 조정",
+   "- Changed the default district system from hex to Map, renamed \"Hex\" to \"Grid\", and reordered the buttons to Map, Grid"
+  ],
+  [
+   "- 활동 금지된 정당은 지지율 탭에서 입력이 비활성화되고 살짝 흐리게 표시되며 이름 옆에 네온 스타일 \"활동 금지\" 배지가 붙음 (수치는 저장은 되지만) — 지지율 분포 및 차기 선거 의석 배분 계산에서는 실제로 반영되지 않도록 수정",
+   "- Banned parties have their inputs disabled and slightly dimmed in the Support tab with a neon \"Banned\" badge next to the name (values are still saved) — they are no longer counted in the support distribution or next-election seat allocation"
+  ],
+  [
+   "- 상위 탭의 \"저장\"을 없애고 국가 > 설정 최하단으로 이동, 그 자리에 \"내각\" 탭 신설 (Coming Soon)",
+   "- Removed \"Save\" from the top tabs and moved it to the bottom of Nation > Settings; added a \"Cabinet\" tab in its place (Coming Soon)"
+  ],
+  [
+   "- 지역구 지도(SVG)에도 육각형 지도와 동일하게 이동/확대 기능 추가 — 휠클릭 드래그로 이동, Shift+스크롤로 확대/축소, 위치 초기화 버튼",
+   "- Added pan/zoom to the district map (SVG) like the hex map — middle-click drag to pan, Shift+scroll to zoom, and a reset-position button"
+  ],
+  [
+   "- 상단 고정바에 있던 단원제/양원제/삼원제 선택 버튼을 국가 > 설정으로 이동",
+   "- Moved the unicameral/bicameral/tricameral buttons from the fixed top bar to Nation > Settings"
+  ],
+  [
+   "- 국가 > 설정을 의회/상징/날짜/저장 4개 내부 탭으로 분리하고 기존 설정 항목들을 재배치, 의회 탭에 각 원(하원/상원/삼원)의 의장·부의장 사진·이름 설정 기능 신설",
+   "- Split Nation > Settings into four inner tabs (Parliament / Symbols / Date / Save), rearranged the existing options, and added speaker and deputy speaker photos/names for each chamber in the Parliament tab"
+  ],
+  [
+   "- \"내각\" 탭 신설 (설정/대통령/총리/내각 4개 하위 탭)",
+   "- Added the \"Cabinet\" tab (four sub-tabs: Settings / President / Prime Minister / Cabinet)"
+  ],
+  [
+   "· 설정: 정부 형태(대통령제/이원집정부제/의원내각제) 지정",
+   "· Settings: choose the form of government (presidential / semi-presidential / parliamentary)"
+  ],
+  [
+   "· 설정: 법안 거부권 주체(없음/대통령/총리) 지정 및 표결 시스템에 통합 — 모든 원을 통과한 법안은 거부권자의 서명을 거쳐야 최종 가결되며, 거부 시 별도로 부결 처리 (서명 대기/거부됨 상태 및 기록 탭 액션 버튼 추가)",
+   "· Settings: choose who holds the bill veto (none / president / PM), integrated into voting — bills that pass every chamber need the veto holder's signature to finally pass and are rejected separately if vetoed (added Awaiting signature / Vetoed states and action buttons in the Records tab)"
+  ],
+  [
+   "· 설정: 국가 비상사태(노랑)·의회 해산(주황)·계엄령(빨강) 각각 권한 주체 지정 및 선포/해제 기능, 선포 시 네온 스타일 \"! OO !\" 경고 배지 표시",
+   "· Settings: assign who holds the state of emergency (yellow), dissolution (orange) and martial law (red) powers, with declare/lift actions and a neon \"! XX !\" warning badge when declared"
+  ],
+  [
+   "· 대통령/총리: 사진·이름 설정 (정당 지도자와 동일한 카드 UI)",
+   "· President / PM: set photo and name (same card UI as party leaders)"
+  ],
+  [
+   "· 내각: 국무위원(사진·이름·직책) 추가/수정/삭제",
+   "· Cabinet: add/edit/remove ministers (photo, name, position)"
+  ],
+  [
+   "- \"전체에 반영\" 동기화 체크박스의 배경·테두리가 하드코딩된 청록색 대신 테마 색을 따라가도록 수정",
+   "- The \"Apply to all\" sync checkbox's background and border now follow the theme color instead of hard-coded cyan"
+  ],
+  [
+   "- 시작 화면의 점검 안내/자동 리디렉션 페이지(index.html)에도 설정에서 고른 테마 색이 반영되도록 수정 (그동안 테마 색 모듈이 로드되지 않아 항상 기본 청록색으로 고정돼 있던 문제)",
+   "- The maintenance notice / auto-redirect start page (index.html) now uses the theme color chosen in Settings (the theme color module wasn't loaded, so it was always the default cyan)"
+  ],
+  [
+   "- 위 신규 상태(정부 형태, 대통령, 총리, 내각 구성원, 거부권 주체, 비상사태 권한/상태, 의장단)를 저장/불러오기에 모두 반영",
+   "- All of the new state above (form of government, president, PM, cabinet members, veto holder, emergency powers/status, speakers) is saved and loaded"
+  ],
+  [
+   "- 대통령/총리/국무위원에 당적(소속 정당) 표시 기능 추가, 대통령제에서는 총리 탭·라벨이 자동으로 \"국무총리\"로 전환",
+   "- Added party affiliation to the president, PM and ministers; under a presidential system the PM tab and label automatically switch to \"Prime Minister (appointed)\""
+  ],
+  [
+   "- 비상 권한 선포/해제 버튼이 항상 해당 색(노랑/주황/빨강)과 \"! 라벨 !\" 문구를 갖도록 수정, 실제 선포 버튼은 권한 주체로 지정된 대통령/총리(또는 집단지도체제일 땐 내각) 탭에 표시",
+   "- Emergency power declare/lift buttons now always use their color (yellow/orange/red) and \"! label !\" text, and the actual declare button appears in the tab of the assigned holder (president/PM, or the cabinet under collective leadership)"
+  ],
+  [
+   "- 정부 형태에 따라 거부권·비상 권한 주체로 고를 수 있는 대상 제한 (대통령제: 대통령만, 의원내각제: 총리만, 이원집정부제: 둘 다, 집단지도체제: 내각만)",
+   "- Limited who can hold the veto and emergency powers by form of government (presidential: president only, parliamentary: PM only, semi-presidential: both, collective leadership: cabinet only)"
+  ],
+  [
+   "- 우측 디스플레이 패널에 하원/상원/삼원처럼 항상 표시되는 \"내각\" 탭 신설 — 대통령/총리(또는 의장)·국무위원을 사진·이름·당적 카드로 표시",
+   "- Added an always-visible \"Cabinet\" tab to the right display panel, like House/Senate/Third — shows the president/PM (or chair) and ministers as cards with photo, name and party"
+  ],
+  [
+   "- 대통령·총리·국무위원을 실제 의원(지역구 당선자/비례 의원/무소속)과 연결해 이름·사진·당적을 자동으로 불러오고 계속 동기화하는 기능 추가 (수동 입력으로 언제든 되돌리기 가능)",
+   "- The president, PM and ministers can be linked to actual members (district winners / list members / independents) to pull in and keep syncing name, photo and party (switch back to manual input at any time)"
+  ],
+  [
+   "- 국가 > 선거 > 선거를 대선/총선/설정 3개 내부 탭으로 분리, \"대선(대통령 선거)\" 신설 — 단순 다수 대표제/결선투표제/선거인단제 중 방식을 고르고, 후보별 득표율(또는 선거인단)을 계산해 당선자를 대통령에 자동 반영",
+   "- Split Nation > Elections into three inner tabs (Presidential / General / Settings) and added presidential elections — choose plurality, runoff or electoral college, and the winner is calculated from vote shares (or electors) and set as president automatically"
+  ],
+  [
+   "- 각 정당의 선거 후보를 기본값(당수) 대신 의원 연결 또는 직접 입력으로 재지정할 수 있는 \"후보 설정\" 추가 (대선/총리 선거 공용)",
+   "- Added \"Candidate settings\" to replace each party's default candidate (its leader) with a linked member or manual entry (shared by presidential and PM elections)"
+  ],
+  [
+   "- 총리 선출 과정 구현: 대통령제는 대통령이 후보를 지명하면 의회 심의(임명동의안 자동 발의)를 거쳐 확정, 의원내각제/이원집정부제는 기준 원의 다수당 대표가 자동으로 총리가 됨(총리직선제 체크박스로 총선 탭에서 직접선거로 전환 가능)",
+   "- Implemented PM selection: under a presidential system the president nominates and parliament confirms (a consent motion is filed automatically); under parliamentary/semi-presidential systems the majority party leader of the base chamber becomes PM automatically (a direct PM election can be enabled with a checkbox in the General tab)"
+  ],
+  [
+   "- 의원내각제/이원집정부제에서 내각(총리) 불신임안을 발의하고, 가결 시 현재 총리가 해임되는 기능 추가",
+   "- Under parliamentary/semi-presidential systems, a motion of no confidence in the cabinet (PM) can be filed, removing the current PM if it passes"
+  ],
+  [
+   "- \"집단지도체제\" 정부 형태 신설 — 대통령/총리 탭이 사라지고 의장 1인 + 장관 여러 명이 모두 \"내각\" 탭으로 통합, 거부권·비상 권한 주체도 \"내각\"으로 지정 가능",
+   "- Added the \"collective leadership\" form of government — the president/PM tabs disappear and a single chair plus ministers are all managed in the \"Cabinet\" tab, which can also hold the veto and emergency powers"
+  ],
+  [
+   "- 집권 세력 강조(HIGHLIGHT GOV) 체크박스를 국가 > 설정 > 상징에서 의회 탭으로 이동",
+   "- Moved the HIGHLIGHT GOV checkbox from Nation > Settings > Symbols to the Parliament tab"
+  ],
+  [
+   "- 국무위원(장관) 목록에 순서 변경(⋮⋮) 드래그 추가",
+   "- Added reorder (⋮⋮) dragging to the minister list"
+  ],
+  [
+   "- 우측 디스플레이 패널의 \"내각\" 탭도 우클릭 → 내보내기로 PNG/JPG/SVG 다운로드 가능",
+   "- The \"Cabinet\" tab in the right display panel can also be exported as PNG/JPG/SVG via right-click → Export"
+  ],
+  [
+   "- 비례 의원을 내각 직책에 연결할 때 사진이 반영되지 않던 문제 수정",
+   "- Fixed photos not carrying over when linking a list member to a cabinet position"
+  ],
+  [
+   "- 대선/총리 직선에 무소속 후보도 출마할 수 있도록 개선",
+   "- Independent candidates can now run in presidential and direct PM elections"
+  ],
+  [
+   "- 선거 후보 설정에서 의원 불러오기 목록이 해당 정당 소속 의원으로만 제한되도록 수정 (다른 정당 의원이 함께 뜨던 문제)",
+   "- The member picker in candidate settings now only lists that party's members (other parties' members used to appear too)"
+  ],
+  [
+   "- 각 원(하원/상원/삼원)의 부의장을 여러 명 추가/삭제할 수 있도록 개선 (기존 1명 고정 → 기본 0명)",
+   "- Each chamber (House/Senate/Third) can now have any number of deputy speakers (previously fixed at 1; now 0 by default)"
+  ],
+  [
+   "- 지역구 지도(SVG) 기본 배색을 밝은 단색 채우기 대신 어두운 톤 + 정당·성향 색의 네온 광원으로 변경, 도형 전체를 칠하는 대신 경계 안쪽에서 은은하게 빛나도록 표시",
+   "- Changed the district map (SVG) default colors from bright solid fills to a dark tone with neon glows in party/tendency colors, softly glowing inside the borders instead of filling whole shapes"
+  ],
+  [
+   "- SVG 지도 안내 문구 오타 수정 (\"뉴 지역구 탭\" → \"지역구 탭\")",
+   "- Fixed a typo in the SVG map hint (\"New District tab\" → \"District tab\")"
+  ],
+  [
+   "- 단순 다수 대표제/이원집정부제/집단지도체제 버튼 및 대선·총리 선거 요약 문구의 줄바꿈 위치 정리",
+   "- Tidied line breaks in the plurality / semi-presidential / collective leadership buttons and the presidential/PM election summaries"
+  ],
+  [
+   "- 입법 > 상정 탭의 국회/국무회의 버튼에서 실제 선택된 쪽을 구분하기 어렵던 문제 수정 (선택된 쪽만 색이 채워지고 ✔ 표시)",
+   "- Made the selected option clear on the Parliament / Cabinet Council buttons in Legislation > Table (only the selected one is filled and marked ✔)"
+  ],
+  [
+   "- 저장 파일 버전 v1.2로 업데이트",
+   "- Updated the save file version to v1.2"
+  ],
+  [
+   "- 부정선거 추가",
+   "- Added election fraud"
+  ],
+  [
+   "- 부정선거 탭 잠금 해제 (정식 공개)",
+   "- Unlocked the election fraud tab (official release)"
+  ],
+  [
+   "- 의석 현황 화면 우측 상단 날짜/회기 글씨 크기 확대",
+   "- Enlarged the date/session text at the top right of the seat screen"
+  ],
+  [
+   "- 사진 포함 내보내기 최상단 헤더의 국기·국가 이름·날짜·회기 글씨 크기 확대",
+   "- Enlarged the flag, nation name, date and session in the header of exports with photos"
+  ],
+  [
+   "- 정당/파벌 옆에 복제(사본) 버튼 추가",
+   "- Added a duplicate (copy) button next to parties/factions"
+  ],
+  [
+   "- 선거 결과 카드에 직전 대비 의석 증감(▲/▼) 표시",
+   "- Election result cards show seat changes from the previous election (▲/▼)"
+  ],
+  [
+   "- 조작 탭과 화면 탭 사이 경계를 드래그로 리사이즈 가능, 더블클릭으로 기본 폭 복원, 리사이즈 시 반원 캔버스가 찌그러지던 문제 수정",
+   "- The border between the control and display panels can be dragged to resize (double-click restores the default width); fixed the hemicycle canvas distorting on resize"
+  ],
+  [
+   "- 키보드 단축키 추가: Ctrl+S(즉시 저장 + \"저장됨\" 토스트), Enter(입력 중이 아닐 때 프로토콜 실행), Esc(열려 있는 확인/알림/내보내기 창 닫기)",
+   "- Added keyboard shortcuts: Ctrl+S (save now + \"Saved\" toast), Enter (execute protocol when not typing), Esc (close open confirm/alert/export windows)"
+  ],
+  [
+   "- 입법 > 기록 탭에 가결/부결(거부권 포함)/서명 대기 상태 필터 추가",
+   "- Added Passed / Rejected (incl. vetoed) / Awaiting signature status filters to Legislation > Records"
+  ],
+  [
+   "- 저장 시스템 전면 개편: 자동저장을 이름 붙인 세이브마다 전용 자동저장(\"OO 자동저장\")을 따로 갖도록 개편, 세이브 전환/삭제 시에도 서로 진행 상황이 섞이지 않음. 특정 세이브에 속하지 않는 기본 자동저장 슬롯은 \"기존 저장\"으로 이름 구분",
+   "- Overhauled the save system: each named save now has its own autosave (\"XX Autosave\"), so progress never mixes when switching or deleting saves. The default autosave slot that belongs to no save is labeled separately (formerly \"Existing Save\")"
+  ],
+  [
+   "- 자동저장 주기를 15초/30초/1분/3분/5분/10분 중 설정 > 저장 탭에서 선택 가능",
+   "- The autosave interval can be set to 15s / 30s / 1m / 3m / 5m / 10m in Settings > Save"
+  ],
+  [
+   "- 메인 화면 \"프로토콜 실행\" 버튼을 누르면 새 세이브를 만들거나 기존 세이브(자동저장 포함)를 골라 이어할 수 있는 온보딩 창 신설, 저장 파일(.json) 업로드로 바로 이어하기도 가능",
+   "- Pressing \"Execute Protocol\" on the main screen now opens an onboarding window to create a new save or continue an existing one (including autosaves), or continue straight from an uploaded save file (.json)"
+  ],
+  [
+   "- 이전 버전에서 쓰던 구 방식 자동저장 데이터를 새 저장 슬롯 형식으로 자동 이관 — 업데이트 후 세이브가 사라진 것처럼 보이는 문제 방지",
+   "- Old-style autosave data from earlier versions is migrated to the new save slot format automatically — so saves don't seem to vanish after updating"
+  ],
+  [
+   "- 화면 최상단에 크롬 탭 스타일의 세이브 탭 바 신설 — 클릭 한 번으로 확인창 없이 세이브 사이를 즉시 전환, \"+\"로 새 세이브를 새로 만들거나 미리 등록해둔 프리셋에서 시작 가능 (presets/ 폴더 + index.json으로 시나리오 배포·공유)",
+   "- Added a Chrome-style save tab bar at the very top — switch between saves instantly with one click, no confirmation, and use \"+\" to create a new save or start from a registered preset (distribute/share scenarios via the presets/ folder + index.json)"
+  ],
+  [
+   "- Electron 기반 Windows 데스크톱 앱(.exe) 패키징 지원 추가 (npm run build:win)",
+   "- Added packaging as an Electron-based Windows desktop app (.exe) (npm run build:win)"
+  ],
+  [
+   "- 남아있던 브라우저 기본 알림/확인 팝업을 모두 앱 자체 스타일 알림/확인 창으로 교체",
+   "- Replaced all remaining browser alert/confirm popups with the app's own styled dialogs"
+  ],
+  [
+   "- 무소속 통계 카드에서 당수 이름/사진이 표시되지 않도록 수정, 개별 의원 목록의 스크롤 높이 제한 제거",
+   "- Independent stat cards no longer show a leader name/photo, and removed the scroll height limit on the individual member list"
+  ],
+  [
+   "- 의장단/내각 표시 카드의 이름 잘림 폭 확대",
+   "- Widened the name area on speaker/cabinet display cards so names are truncated less"
+  ],
+  [
+   "- 내보내기 헤더 국가 이름 볼드체 제거",
+   "- Removed bold from the nation name in export headers"
+  ],
+  [
+   "- 부정선거 시도 카드 내부 체크박스 등 폼 요소 색을 경고색(빨강)으로 통일",
+   "- Unified checkboxes and other controls inside the election fraud card to the warning color (red)"
+  ],
+  [
+   "- JS/CSS 파일을 js/, css/ 폴더로 정리 (내부 구조 변경, HTML 진입점 경로는 그대로 유지)",
+   "- Organized JS/CSS files into js/ and css/ folders (internal change; HTML entry paths unchanged)"
+  ],
+  [
+   "- 저장 파일 버전 v1.3으로 업데이트",
+   "- Updated the save file version to v1.3"
+  ],
+  [
+   "- 테마 모드 3종(라이트/다크/네온) 추가 — 기존 TNO 스타일은 \"네온\"으로 이름 변경",
+   "- Added three theme modes (Light / Dark / Neon) — the original TNO style is now called \"Neon\""
+  ],
+  [
+   "- 라이트/다크 모드 UI 대대적 개편: 전용 스타일시트(css/modern.css) 분리, 테두리 없는 모노톤 버튼 등 현대적인 디자인",
+   "- Major Light/Dark UI overhaul: a dedicated stylesheet (css/modern.css) and a modern design with borderless monotone buttons"
+  ],
+  [
+   "- 접고 펼 수 있는 세로 탭 사이드바 신설(라이트/다크/네온 공통), 라이트/다크는 패널 머리에 현재 위치(그룹 › 항목) 표시, 네온은 \"MINISTRY OF INTERIOR\" 띠 유지",
+   "- Added a collapsible vertical tab sidebar (all themes); Light/Dark show the current location (group › item) in the panel header, Neon keeps the \"MINISTRY OF INTERIOR\" strip"
+  ],
+  [
+   "- 최상단 세이브 탭 바 높이가 맞지 않아 생기던 스크롤바 제거",
+   "- Removed the scrollbar caused by the top save tab bar's height mismatch"
+  ],
+  [
+   "- 선거 결과 내보내기에서 의석 변동 텍스트를 화면과 같은 빨강/초록으로 표시",
+   "- Seat change text in exported election results now uses the same red/green as on screen"
+  ],
+  [
+   "- 창 크기 조절 시 선거 결과 · 지역구 지도 등 캔버스가 찌그러지던 문제 수정",
+   "- Fixed election results, district maps and other canvases distorting when resizing the window"
+  ],
+  [
+   "- 시작 화면 개편: 창을 키워 왼쪽엔 프리셋, 오른쪽엔 세이브 — 세이브 검색 · ★ 즐겨찾기, 프리셋을 고르면 그 설정의 복사본이 새 세이브로 생성",
+   "- Redesigned the start screen: a larger window with presets on the left and saves on the right — save search and ★ favorites; picking a preset creates a copy as a new save"
+  ],
+  [
+   "- \"튜토리얼 공화국\" 프리셋과 조작법 튜토리얼 추가",
+   "- Added the \"Tutorial Republic\" preset and a controls tutorial"
+  ],
+  [
+   "- 세이브 이름 변경 (탭 더블클릭 또는 설정 > 저장 목록의 ✎)",
+   "- Rename saves (double-click the tab, or ✎ in the Settings > Save list)"
+  ],
+  [
+   "- 합당 기능 추가: 흡수합당(존속 정당이 흡수) · 신설합당(새 정당 창당) — 의석 · 의원 · 파벌 · 연정 · 지지율 · 내각 소속을 함께 이전, 합쳐지는 정당을 계파로 남기기 가능",
+   "- Added party mergers: absorption (a surviving party absorbs others) and new-party mergers — seats, members, factions, coalitions, support and cabinet affiliations move over, and merged parties can be kept as factions"
+  ],
+  [
+   "- 언어 전환을 언어별 파일(언어 팩) 구조로 개편, 커뮤니티 번역(.json) 불러오기/삭제 및 번역 템플릿 내려받기 지원",
+   "- Reworked language switching into per-language files (language packs), with loading/removing community translations (.json) and downloading a translation template"
+  ],
+  [
+   "- 모바일 UI 개편: 화면 아래 탭 바(의회 · 국가 · 여론 · 내각 · 의석), 떠 있는 실행 버튼, 위에 붙어 따라오는 하위 탭 칩 줄, 누르기 쉬운 버튼 크기 · 노치 여백 · iOS 입력칸 확대 방지",
+   "- Mobile UI overhaul: a bottom tab bar (Parliament · Nation · Opinion · Cabinet · Seats), a floating execute button, a sticky sub-tab chip row, larger touch targets, notch-safe spacing and no iOS zoom on inputs"
+  ],
+  [
+   "- 모바일 실행 버튼을 편집 패널과 같은 폭으로 (네온은 \">> PROTOCOL EXECUTE <<\" 문구 유지)",
+   "- The mobile execute button now matches the edit panel's width (Neon keeps the \">> PROTOCOL EXECUTE <<\" text)"
+  ],
+  [
+   "- 튜토리얼을 직접 해보는 실습형으로 개편 — 표시된 곳을 실제로 조작해야 다음 단계로 넘어감, #1 화면 둘러보기 · #2 정당과 의석 · #3 입법 · #4 여론과 선거 · #5 내각 과정으로 나누고 목차 · 과정 완료 카드 추가",
+   "- Reworked the tutorial into a hands-on one — you must actually use the highlighted control to move on; split into #1 Tour · #2 Parties & Seats · #3 Legislation · #4 Opinion & Elections · #5 Cabinet, with a lesson list and completion cards"
+  ],
+  [
+   "- 튜토리얼 개표 단계가 개표 장면을 가리지 않도록 화면을 어둡게 하지 않고 말풍선을 옆(모바일은 아래)으로",
+   "- The tutorial's vote-count step no longer dims the screen and moves its bubble aside (below on mobile) so the count stays visible"
+  ],
+  [
+   "- 네온 모드의 국가명을 사이드바 머리가 아닌 원래 자리(헤더 아래 짙은 회색 줄)에 표시",
+   "- In Neon mode the nation name is back in its original place (the dark gray bar under the header) instead of the sidebar header"
+  ],
+  [
+   "- 의회 > 구성에 원별 \"배정 합계\" 표시, 정당 의석은 총 의석 수를 넘겨 입력할 수 없도록 제한 (넘친 의석이 반원에 보이지 않던 문제 방지)",
+   "- Parliament > Composition shows an \"Assigned total\" per chamber, and party seats can no longer exceed the total (seats over the limit used to be invisible in the hemicycle)"
+  ],
+  [
+   "- 메뉴 맨 아래에 회색 \"도움말\" 묶음 추가 — 의회 · 국가 · 여론 · 내각의 모든 탭이 무슨 역할인지 설명하고 해당 탭으로 바로 이동",
+   "- Added a gray \"Help\" group at the bottom of the menu — explains what every tab in Parliament, Nation, Opinion and Cabinet does, with shortcuts to open them"
+  ],
+  [
+   "- 건설적 불신임제(독일 · 이스라엘식) 추가 — 불신임안에 후임을 함께 지명하고, 가결되면 공석 없이 그 후임이 바로 총리가 됨",
+   "- Added the constructive vote of no confidence (German/Israeli style) — the motion names a successor, who becomes PM immediately if it passes, leaving no vacancy"
+  ],
+  [
+   "- 의회 해산 시 의회 전체 또는 한 원(예: 하원)만 해산 가능 — 그 원의 총선을 반영해야 해제",
+   "- Dissolution can now target the whole parliament or a single chamber (e.g. the lower house) — lifted once that chamber's general election is applied"
+  ],
+  [
+   "- 부정선거 탭 표기를 ⚠로 통일하고 다른 탭과 높이를 맞춤",
+   "- The election fraud tab is now consistently labeled ⚠ and matches the other tabs' height"
+  ],
+  [
+   "- 최상단 세이브 탭 바 맨 왼쪽에 메인 화면으로 돌아가는 집 아이콘 추가 (누르면 바로 저장 후 이동)",
+   "- Added a home icon at the far left of the save tab bar to return to the main screen (saves first)"
+  ],
+  [
+   "- old2.html 추가 — UI 개편 전 화면을 체험할 수 있는 페이지 (세이브는 따로 보관)",
+   "- Added old2.html — a page to try the pre-overhaul UI (saves are kept separately)"
+  ],
+  [
+   "- 데스크톱 앱에 영어 언어 팩이 빠져 있던 문제 수정",
+   "- Fixed the English language pack missing from the desktop app"
+  ],
+  [
+   "1.5.9 - 프로그램 출시",
+   "1.5.9 - Program Release"
+  ],
+  [
+   "- Steam 서비스 준비",
+   "- Preparing for Steam release"
+  ],
+  [
+   "- Steam 개발자 계정을 위한 펀딩 시작",
+   "- Starting funding for a Steam developer account"
+  ],
+  [
+   "0.2.1 - 영어 개발 시작",
+   "0.2.1 - English Development Begins"
+  ],
+  [
+   "- 언어 설정 추가",
+   "- Added language settings"
+  ],
+  [
+   "- 초기 개발 성공",
+   "- Initial development succeeded"
+  ],
+  [
+   "- 저장 버전명 체계 변경 (v1.0부터 시작, KST 기준 타임스탬프)",
+   "- Changed the save version naming scheme (starting at v1.0, KST timestamps)"
+  ],
+  [
+   "설정 / SETTINGS",
+   "SETTINGS"
   ]
  ]
 };
