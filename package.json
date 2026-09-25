@@ -1,6 +1,6 @@
 {
   "name": "datanet-parliament-simulation",
-  "version": "1.5.5",
+  "version": "1.5.6",
   "description": "DATANET: PARLIAMENT SIMULATION — desktop build",
   "private": true,
   "main": "electron/main.js",
