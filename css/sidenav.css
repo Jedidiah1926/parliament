@@ -41,6 +41,8 @@ html:not([data-ui-mode="mobile"]) body.has-side-nav.side-nav-collapsed .side-nav
 .mn-items { display: flex; flex-direction: column; gap: 2px; }
 .mn-group.closed .mn-items { display: none; }
 .mn-item { display: block; width: 100%; text-align: left; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* 줄 높이를 숫자로 고정 — ⚠ 같은 기호는 다른(대체) 글꼴로 그려져 기본 줄 높이가 달라지므로, 모든 항목 높이를 똑같이 맞춘다 */
+.mn-item, .main-tab-content > .sub-tab-container > .sub-tab-btn { line-height: 1.4; }
 .mn-item:disabled { opacity: .45; cursor: not-allowed; }
 .mn-crumb-current { overflow: hidden; text-overflow: ellipsis; }
 
