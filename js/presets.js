@@ -69,7 +69,24 @@
             state = await res.json();
         }
         if (!state) throw new Error('preset data missing');
-        return JSON.parse(JSON.stringify(state));
+        const copy = JSON.parse(JSON.stringify(state));
+        applyLocalized(copy, preset.id);
+        return copy;
+    }
+
+    // 지금 언어용 덮어쓰기(DNO_PRESET_I18N[id][lang] = {'경로.0.이름': 값})가 있으면 적용 —
+    // 당명·이념명처럼 입력칸 값으로 보이는 문자열은 화면 번역으로 바뀌지 않기 때문
+    function applyLocalized(state, id) {
+        const lang = typeof window.getLang === 'function' ? window.getLang() : 'kr';
+        const overrides = window.DNO_PRESET_I18N && window.DNO_PRESET_I18N[id] && window.DNO_PRESET_I18N[id][lang];
+        if (!overrides) return;
+        for (const [path, value] of Object.entries(overrides)) {
+            const keys = path.split('.');
+            const last = keys.pop();
+            let obj = state;
+            for (const k of keys) { obj = obj && typeof obj === 'object' ? obj[k] : undefined; }
+            if (obj && typeof obj === 'object' && typeof obj[last] === 'string') obj[last] = value;
+        }
     }
 
     window.DnoPresets = { list, find, loadState };
