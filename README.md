@@ -165,7 +165,7 @@ npm run build:win     # Windows 설치형 exe 빌드 → dist/DATANET Parliament
 ]
 ```
 
-`title`이 목록에 그대로 표시되고, `"tutorial": true`를 넣으면 그 프리셋으로 시작할 때 조작법 튜토리얼이 함께 켜집니다.
+`title`이 목록에 그대로 표시되고, `"tutorial": true`를 넣으면 그 프리셋으로 시작할 때 조작법 튜토리얼이 함께 켜집니다. 튜토리얼은 #1 ~ #5의 짧은 과정으로 나뉘어 있고, 표시된 곳을 직접 조작해야(정당 추가·의석 입력·법안 등록 등) 다음 단계로 넘어갑니다. 단계 내용은 `js/tutorial.js`의 `LESSONS`에 있습니다.
 
 > `index.json` 방식은 `fetch`를 쓰기 때문에 웹(http)으로 열었을 때만 동작합니다. 데스크톱 앱(Electron)은 파일(`file://`)로 열려 JSON을 읽을 수 없으므로, 앱과 함께 기본 제공되는 **내장 프리셋**은 `presets/*.js`로 감싸 두고 `js/presets.js`의 `BUILTIN` 목록에 등록합니다 (예: 튜토리얼 공화국 — `presets/tutorial.js`).
 

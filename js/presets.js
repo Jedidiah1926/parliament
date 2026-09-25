@@ -12,7 +12,7 @@
         {
             id: 'builtin:tutorial',
             title: '튜토리얼 공화국',
-            description: '처음이라면 여기서 시작하세요 — 가상의 나라에서 화면 구성과 기본 조작을 단계별로 안내합니다.',
+            description: '처음이라면 여기서 시작하세요 — 가상의 나라에서 짧은 과정(#1~#5)으로 나눠 화면 구성과 기본 조작을 직접 해보며 배웁니다.',
             tutorial: true,
             script: 'presets/tutorial.js',
         },
