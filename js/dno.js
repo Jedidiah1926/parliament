@@ -4605,6 +4605,7 @@
                         grid: JSON.parse(JSON.stringify(districtGrid)),
                         view: { ...districtView },
                         names: JSON.parse(JSON.stringify(districtNames)),
+                        population: JSON.parse(JSON.stringify(districtPopulation)),
                         order: JSON.parse(JSON.stringify(districtOrder)),
                         members: JSON.parse(JSON.stringify(districtMembers)),
                         mapMode: districtMapMode,
@@ -4650,7 +4651,7 @@
                 throw new Error("Invalid parliament data");
 
             ideologies = parl.ideologies;
-            parties    = parl.parties.map(p => ({ leaderName:'', leaderPhoto:'', logoPhoto:'', showLogoInStats:false, hideStatsPhoto:false, description:'', factions:[], seatsThird:0, inThird:false, abbr:'', fraudAttempt:null, ...p, factions:(p.factions||[]).map(f=>({leaderName:'',leaderPhoto:'',logoPhoto:'',usePartyColor:false,seatsThird:0,...f})) }));
+            parties    = parl.parties.map(p => ({ leaderName:'', leaderPhoto:'', floorLeaderName:'', floorLeaderPhoto:'', logoPhoto:'', showLogoInStats:false, hideStatsPhoto:false, description:'', factions:[], seatsThird:0, inThird:false, abbr:'', fraudAttempt:null, ...p, factions:(p.factions||[]).map(f=>({leaderName:'',leaderPhoto:'',logoPhoto:'',usePartyColor:false,seatsThird:0,...f})) }));
             coalitions = parl.coalitions.map(c => ({ leadPartyId:null, externalSupporters:[], externalSupportLabel:'각외협력', ...c }));
             manualSort = parl.manualSort ?? false;
             // 구버전 저장 파일 호환: districtKey 필드가 없으면 비례(미연결) 무소속으로 취급
@@ -4713,6 +4714,7 @@
             }
             if(elec.district?.view) Object.assign(districtView, elec.district.view);
             districtNames = elec.district?.names ? { house:{}, senate:{}, third:{}, ...elec.district.names } : { house:{}, senate:{}, third:{} };
+            districtPopulation = elec.district?.population ? { house:{}, senate:{}, third:{}, ...elec.district.population } : { house:{}, senate:{}, third:{} };
             districtOrder = elec.district?.order ? { house:[], senate:[], third:[], ...elec.district.order } : { house:[], senate:[], third:[] };
             districtMembers = elec.district?.members ? { house:{}, senate:{}, third:{}, ...elec.district.members } : { house:{}, senate:{}, third:{} };
             districtMapMode = elec.district?.mapMode === 'svg' ? 'svg' : 'hex';
@@ -7603,6 +7605,24 @@
                 const photo = p.leaderPhoto||'';
                 const hasFactions = (p.factions||[]).length > 0;
 
+                // 원내대표 — 의회 안에서 당을 이끄는 사람 (당수와 따로 지정)
+                const flPhoto = p.floorLeaderPhoto||'';
+                const floorLeaderHtml = `<div class="dyn-row" style="display:flex;gap:8px;align-items:stretch;margin-top:8px;border-top:1px dashed #222;padding-top:8px;">
+                        <div style="display:flex;flex-direction:column;align-items:center;gap:2px;flex-shrink:0;">
+                            <div class="leader-photo-box dyn-photo" data-ratio="0.8" title="클릭하여 사진 업로드" style="width:44px;height:55px;">
+                                ${flPhoto?`<img src="${flPhoto}" alt="원내대표">`:'<div class="photo-ph" style="font-size:0.9rem;">👤</div>'}
+                                <input type="file" accept="image/*" onchange="uploadFloorLeaderPhoto(this,${p.id})">
+                            </div>
+                            <span style="font-size:0.65rem;color:#444;flex-shrink:0;">원내대표</span>
+                        </div>
+                        <div class="dyn-ref" style="flex:1;min-width:0;display:flex;flex-direction:column;gap:5px;">
+                            <input type="text" value="${p.floorLeaderName||''}" placeholder="원내대표 이름"
+                                style="background:#000;border:1px solid #2a2a2a;color:#ccc;font-family:inherit;font-size:0.88rem;padding:5px 8px;width:100%;box-sizing:border-box;"
+                                onchange="updateLeaderField(${p.id},'floorLeaderName',this.value);refreshUI();">
+                            ${flPhoto?`<button onclick="removeFloorLeaderPhoto(${p.id})" style="background:transparent;border:1px solid #333;color:#555;font-family:inherit;font-size:0.75rem;padding:2px 8px;cursor:pointer;text-align:left;">✕ 사진 제거</button>`:''}
+                        </div>
+                    </div>`;
+
                 // 파벌 섹션 HTML
                 let factionHtml = '';
                 if(hasFactions) {
@@ -7674,6 +7694,7 @@
                             <div style="color:#555;font-size:0.68rem;">◆ 위에서 의석을 고르고 "붙여넣기"를 누르면 현재 당수 이름·사진이 그 의석에 복사됩니다</div>
                         </div>
                     </div>
+                    ${floorLeaderHtml}
                     ${factionHtml}
                 `;
                 container.appendChild(div);
@@ -7684,6 +7705,21 @@
         function removeLeaderPhoto(pid) {
             const p = parties.find(x=>x.id===pid);
             if(p){ p.leaderPhoto=''; simulate(); refreshUI(); }
+        }
+
+        function uploadFloorLeaderPhoto(input, pid) {
+            const file = input.files?.[0]; if(!file) return;
+            const reader = new FileReader();
+            reader.onload = e => {
+                const p = parties.find(x=>x.id===pid);
+                if(p){ p.floorLeaderPhoto=e.target.result; simulate(); refreshUI(); }
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function removeFloorLeaderPhoto(pid) {
+            const p = parties.find(x=>x.id===pid);
+            if(p){ p.floorLeaderPhoto=''; simulate(); refreshUI(); }
         }
 
         // ===== 정당 탭: 무소속 (의원 개별 정보) =====
@@ -8637,6 +8673,7 @@
         // ─────────────────────────────────────────
         let districtGrid = { house: {}, senate: {}, third: {} };
         let districtNames = { house: {}, senate: {}, third: {} }; // { "q,r": "이름" }
+        let districtPopulation = { house: {}, senate: {}, third: {} }; // { "q,r"|svgKey: 인구(정수) } — SVG 지역구는 이름처럼 세 원이 공유
         let districtMembers = { house: {}, senate: {}, third: {} }; // { "q,r": {name, partyId, factionId, vacant} } — 지역구 당선 의원 개별 정보
         let districtOrder = { house: [], senate: [], third: [] }; // 목록 표시 순서 (드래그로 변경 가능)
         let selectedDistrictKey = null; // '이름' 모드에서 클릭 선택된 칸
@@ -9030,7 +9067,7 @@
                 renderDistrictSvgInto(svgWrap, {
                     clickable: true,
                     getFill: key => key === selectedDistrictKey ? 'rgba(255,215,0,0.25)' : 'transparent',
-                    title: key => districtNames.house[key] || key,
+                    title: key => (districtNames.house[key] || key) + (districtPopulation.house[key] != null ? ` · 인구 ${districtPopulation.house[key].toLocaleString()}` : ''),
                     onClickKey: key => {
                         selectedDistrictKey = key;
                         districtRenderNamePanel();
@@ -9163,7 +9200,7 @@
                 districtSeatCounts = {};
                 districtSvgTendency = {};
                 districtAbbr = {};
-                ['house','senate','third'].forEach(ch => { districtGrid[ch] = {}; districtNames[ch] = {}; districtMembers[ch] = {}; });
+                ['house','senate','third'].forEach(ch => { districtGrid[ch] = {}; districtNames[ch] = {}; districtPopulation[ch] = {}; districtMembers[ch] = {}; });
                 shapes.forEach(s => {
                     // 기본값: 하원은 1석, 상원/삼원은 해당 원이 존재하면 1석 (뒤에서 지역구별로 조정 가능)
                     districtSeatCounts[s.key] = { house: 1, senate: hasSenateChamber()?1:0, third: hasThirdChamber()?1:0 };
@@ -9236,7 +9273,7 @@
                 districtSeatCounts = {};
                 districtSvgTendency = {};
                 districtAbbr = {};
-                ['house','senate','third'].forEach(ch => { districtGrid[ch] = {}; districtNames[ch] = {}; districtMembers[ch] = {}; districtOrderSync(ch); });
+                ['house','senate','third'].forEach(ch => { districtGrid[ch] = {}; districtNames[ch] = {}; districtPopulation[ch] = {}; districtMembers[ch] = {}; districtOrderSync(ch); });
                 selectedDistrictKey = null;
                 document.getElementById('districtNamePanel').style.display = 'none';
                 districtUpdateModeUI();
@@ -9323,6 +9360,7 @@
                 ['house','senate','third'].forEach(ch => {
                     delete districtGrid[ch][key];
                     delete districtNames[ch][key];
+                    delete districtPopulation[ch][key];
                     delete districtMembers[ch][key];
                     districtOrderSync(ch);
                 });
@@ -9406,6 +9444,7 @@
                     <input type="text" placeholder="지역구 이름 (예: 종로구)" value="${districtNames[districtChamber][key]||''}"
                         style="width:100%;box-sizing:border-box;background:#000;border:1px solid #665500;color:var(--tno-gold);font-family:inherit;font-size:0.9rem;padding:6px;"
                         oninput="districtSetName(this.value)">
+                    ${districtPopulationInputHtml(districtChamber, key, 'margin-top:6px;')}
                 `;
                 return;
             }
@@ -9428,6 +9467,7 @@
                 <input type="text" placeholder="약칭 (예: 종로) — 지정하면 지도 가운데에 표시됩니다" value="${districtAbbr[key]||''}" maxlength="6"
                     style="width:100%;box-sizing:border-box;background:#000;border:1px solid #333;color:var(--tno-text);font-family:inherit;font-size:0.85rem;padding:6px;margin-bottom:8px;"
                     oninput="districtSvgSetAbbr(this.value)">
+                ${districtPopulationInputHtml('house', key, 'margin-bottom:8px;')}
                 <div style="color:#666;font-size:0.72rem;margin-bottom:4px;">의석 수 (원별, 0이면 그 원엔 없는 지역구)</div>
                 <div style="display:grid;grid-template-columns:repeat(${chambers.length},1fr);gap:6px;margin-bottom:10px;">
                     ${chambers.map(ch => `
@@ -9498,6 +9538,14 @@
                 return;
             }
 
+            const totalPop = keys.reduce((sum, k) => sum + (districtPopulation[ch][k] || 0), 0);
+            if(totalPop > 0) {
+                const sumEl = document.createElement('div');
+                sumEl.style.cssText = 'color:#666;font-size:0.75rem;text-align:right;margin-bottom:5px;';
+                sumEl.textContent = `총 인구: ${totalPop.toLocaleString()}`;
+                container.appendChild(sumEl);
+            }
+
             keys.forEach(key => {
                 const div = document.createElement('div');
                 div.className = 'drag-card-district';
@@ -9509,10 +9557,34 @@
                     <input type="text" value="${name}" placeholder="(이름 없음)"
                         style="flex:1;min-width:0;background:#000;border:1px solid #2a2a2a;color:#ddd;font-family:inherit;font-size:0.85rem;padding:4px 6px;"
                         onchange="districtSetNameByKey('${ch}','${key}',this.value)">
+                    <input type="number" min="0" step="1" value="${districtPopulation[ch][key] ?? ''}" placeholder="인구" title="인구"
+                        style="width:96px;flex-shrink:0;background:#000;border:1px solid #2a2a2a;color:#aaa;font-family:inherit;font-size:0.8rem;padding:4px 6px;text-align:right;"
+                        onchange="districtSetPopulation('${ch}','${key}',this.value)">
                 `;
                 container.appendChild(div);
                 startDragReorder(div.querySelector('.drag-handle'), 'districtListPanel', '.drag-card-district', districtOrder[ch], renderDistrictListPanel);
             });
+        }
+
+        // 지역구 인구 — 비우면 삭제. SVG 지역구는 이름처럼 세 원이 한 도형을 공유하므로 세 원에 함께 저장
+        function districtSetPopulation(ch, key, value) {
+            const n = Math.max(0, Math.floor(Number(String(value).replace(/,/g, ''))));
+            const chs = districtMapMode === 'svg' ? ['house','senate','third'] : [ch];
+            chs.forEach(c => {
+                if(String(value).trim() === '' || !isFinite(n)) delete districtPopulation[c][key];
+                else districtPopulation[c][key] = n;
+            });
+            renderDistrictListPanel();
+            if(key === selectedDistrictKey) districtRenderNamePanel();
+        }
+
+        function districtPopulationInputHtml(ch, key, extraStyle) {
+            return `<div style="display:flex;align-items:center;gap:6px;${extraStyle||''}">
+                    <span style="color:#666;font-size:0.75rem;flex-shrink:0;">인구</span>
+                    <input type="number" min="0" step="1" placeholder="예: 150000" value="${districtPopulation[ch]?.[key] ?? ''}"
+                        style="flex:1;min-width:0;box-sizing:border-box;background:#000;border:1px solid #333;color:var(--tno-text);font-family:inherit;font-size:0.85rem;padding:6px;"
+                        onchange="districtSetPopulation('${ch}','${key}',this.value)">
+                </div>`;
         }
 
         function districtSetNameByKey(ch, key, name) {
@@ -9734,6 +9806,7 @@
             }
             districtGrid[districtChamber] = {};
             districtNames[districtChamber] = {};
+            districtPopulation[districtChamber] = {};
             districtOrder[districtChamber] = [];
             selectedDistrictKey = null;
             const namePanel = document.getElementById('districtNamePanel');
@@ -12821,7 +12894,7 @@
                 }
 
                 // 사진/이름 결정
-                let photo = '', leaderName = '', isLogo = false, hidePhotoBox = false;
+                let photo = '', leaderName = '', floorLeaderName = '', isLogo = false, hidePhotoBox = false;
                 let isIndependentCard = false;
                 if(s.coalitionName) {
                     const coal = coalObj;
@@ -12839,10 +12912,11 @@
                     hidePhotoBox = !!party?.hideStatsPhoto;
                     photo      = (party && !hidePhotoBox) ? (isLogo ? (party.logoPhoto||party.leaderPhoto||'') : (party.leaderPhoto||party.logoPhoto||'')) : '';
                     leaderName = party?.leaderName || '';
+                    floorLeaderName = party?.floorLeaderName || '';
                     isIndependentCard = party?.ideologyId === IND_IDEOLOGY_ID;
                     // 무소속은 개별 의원만 있고 당대표 개념이 없으므로, 당수 탭에 값이 들어있어도
                     // (대선/총리 후보 지정 등 다른 용도로 쓰일 수 있음) 이 통계 카드에는 항상 숨김
-                    if(isIndependentCard) { hidePhotoBox = true; photo = ''; leaderName = ''; }
+                    if(isIndependentCard) { hidePhotoBox = true; photo = ''; leaderName = ''; floorLeaderName = ''; }
                 }
 
                 // 무소속 카드: 접고 펼 수 있는 개별 의원 리스트
@@ -12884,8 +12958,8 @@
                                 <span style="flex-shrink:0;font-size:0.9rem;">${statusHtml}</span>
                             </div>
                             ${extNoteHtml}
-                            <!-- 행2: 당수 이름 -->
-                            <div style="color:#888;font-size:0.82rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${leaderName||'　'}</div>
+                            <!-- 행2: 당수 이름 (원내대표가 있으면 옆에 함께) -->
+                            <div style="color:#888;font-size:0.82rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${leaderName||(floorLeaderName?'':'　')}${floorLeaderName?`<span style="color:#666;">${leaderName?' · ':''}원내대표 ${floorLeaderName}</span>`:''}</div>
                             <!-- 행3: 당 목록 (줄바꿈 허용) -->
                             <div style="opacity:0.8;line-height:1.8;flex-wrap:wrap;display:flex;gap:2px;">${subs}</div>
                             ${independentListHtml}

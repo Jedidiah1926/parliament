@@ -23,6 +23,106 @@ window.DnoLangPacks.en = {
  "ordinal": "en",
  "patterns": [
   {
+   "re": "\"(.+?)\" 슬롯을 삭제할까요\\?\\n\\(연결된 \"(.+?) 자동저장\"도 함께 삭제됩니다\\)",
+   "to": "Delete the save \"$1\"?\n(Its linked \"$2 Autosave\" will be deleted too)"
+  },
+  {
+   "re": "\"(.+?)\" 슬롯이 이미 있습니다\\. 덮어쓸까요\\?",
+   "to": "A save named \"$1\" already exists. Overwrite it?"
+  },
+  {
+   "re": "\"(.+?)\" 슬롯을 불러올까요\\?\\n현재 화면의 저장하지 않은 변경사항은 사라집니다\\.",
+   "to": "Load the save \"$1\"?\nUnsaved changes on the current screen will be lost."
+  },
+  {
+   "re": "\"(.+?)\" 슬롯을 불러왔습니다\\.",
+   "to": "Loaded the save \"$1\"."
+  },
+  {
+   "re": "\"(.+?)\"은\\(는\\) 예약된 이름입니다\\. 다른 이름을 입력하세요\\.",
+   "to": "\"$1\" is a reserved name. Please enter a different name."
+  },
+  {
+   "re": "\"(.+?)\" 세이브가 이미 있습니다\\. 다른 이름을 입력하세요\\.",
+   "to": "A save named \"$1\" already exists. Please enter a different name."
+  },
+  {
+   "re": "\"(.+?)\" 언어 팩을 삭제할까요\\?",
+   "to": "Delete the language pack \"$1\"?"
+  },
+  {
+   "re": "\"(.+?)\" 언어 팩을 불러왔습니다\\. 지금 이 언어로 바꿀까요\\?",
+   "to": "Loaded the language pack \"$1\". Switch to this language now?"
+  },
+  {
+   "re": "\"(.+?)\" 도형을 지도에서 완전히 삭제합니다\\.\\n\\(배경/틀처럼 잘못 포함된 도형을 뺄 때 사용\\) 계속하시겠습니까\\?",
+   "to": "The shape \"$1\" will be permanently removed from the map.\n(Use this to drop shapes such as backgrounds or frames that were included by mistake.) Continue?"
+  },
+  {
+   "re": "선거 탭 > 지역구 체크박스에서 \"보궐\"을 선택하고 개표하면\\n이 지역구\\((.+?)\\)가 자동으로 대상에 포함됩니다\\.",
+   "to": "Select \"By-election\" in the district checkboxes on the Election tab and run the count —\nthis district ($1) will be included automatically."
+  },
+  {
+   "re": "^이 지역구를 궐석 처리하시겠습니까\\?\\n\\(보궐선거로 다시 채울 때까지 소속 정당 의석에서 1석 감소합니다\\)$",
+   "to": "Vacate this district's seat?\n(The party loses 1 seat until it is refilled by a by-election)"
+  },
+  {
+   "re": "^보궐선거 결과 \\((.+?)\\)\\n\\n",
+   "to": "By-election results ($1)\n\n"
+  },
+  {
+   "re": "\\n\\n의회>의원 탭에서 당선자 이름을 입력해 주세요\\.$",
+   "to": "\n\nEnter the winners' names in Parliament > Members."
+  },
+  {
+   "re": "^(.+?)에 대한 (.+?) 임명동의안이 국가 > 입법 탭에 상정되었습니다\\.$",
+   "to": "A confirmation motion for $1 as {{map:$2|총리=PM;국무총리=Premier;대통령=President;국왕=Monarch;내각=Cabinet}} has been placed on the floor in Nation > Legislation."
+  },
+  {
+   "re": "^건설적 불신임안이 가결되어 (.+?)이\\(가\\) 새 (.+?)가 되었습니다\\.\\n기존 내각은 물러났으니 내각 > 내각에서 새 국무위원을 채워 주세요\\.$",
+   "to": "The constructive no-confidence motion passed and $1 is the new {{map:$2|총리=PM;국무총리=Premier;대통령=President;국왕=Monarch;내각=Cabinet}}.\nThe previous cabinet has stepped down — fill in new ministers in Cabinet > Cabinet."
+  },
+  {
+   "re": "^(.+?)이\\(가\\) (.+?)으로 취임했습니다\\.$",
+   "to": "$1 took office as {{map:$2|총리=PM;국무총리=Premier;대통령=President;국왕=Monarch;내각=Cabinet}}."
+  },
+  {
+   "re": "^(.+?)은 스스로 해제할 수 없습니다\\.\\n국가 > 선거 > 총선에서 새 선거를 반영해야 해제됩니다\\.$",
+   "to": "{{map:$1|국가 비상사태=A State of Emergency;의회 해산=The Dissolution of Parliament;상원 해산=The Dissolution of the Senate;하원 해산=The Dissolution of the House;계엄령=Martial Law}} cannot be lifted by itself.\nIt is lifted once a new general election is applied in Nation > Election > General."
+  },
+  {
+   "re": "^(.+?)을\\(를\\) 선포합니다\\. 계속하시겠습니까\\?$",
+   "to": "Declare {{map:$1|국가 비상사태=a State of Emergency;의회 해산=the Dissolution of Parliament;상원 해산=the Dissolution of the Senate;하원 해산=the Dissolution of the House;계엄령=Martial Law}}. Continue?"
+  },
+  {
+   "re": "^국무회의 표결 결과 — 찬성 (\\d+) · 반대 (\\d+) · 기권 (\\d+) \\(총 (\\d+)인\\)\\n\\n『(.+?)』이\\(가\\) (가결|부결)됩니다\\. 확정하시겠습니까\\?$",
+   "to": "Cabinet vote — Yea $1 · Nay $2 · Abstain $3 (total $4)\n\n\"$5\" will be {{map:$6|가결=passed;부결=rejected}}. Confirm?"
+  },
+  {
+   "re": "^『(.+?)』이\\(가\\) 국무회의 의결로 (가결|부결)되었습니다\\.$",
+   "to": "\"$1\" was {{map:$2|가결=passed;부결=rejected}} by cabinet resolution."
+  },
+  {
+   "re": "^(.+?)의 거부권을 행사해 이 법안을 최종 부결시킵니다\\. 계속하시겠습니까\\?$",
+   "to": "Use the {{map:$1|총리=PM;국무총리=Premier;대통령=President;국왕=Monarch;내각=Cabinet}}'s veto to finally reject this bill. Continue?"
+  },
+  {
+   "re": "^(.+?) 표결을 먼저 확정하세요\\.$",
+   "to": "Finalize the $1 vote first."
+  },
+  {
+   "re": "^(.+?)에서 부결된 법안은 (.+?)에 상정되지 않습니다\\.$",
+   "to": "A bill rejected in the $1 is not sent to the $2."
+  },
+  {
+   "re": "^새 총선이 반영되어 상원·하원 해산 상태가 모두 해제되었습니다\\.$",
+   "to": "The new general election was applied — the dissolution of both the Senate and the House has been lifted."
+  },
+  {
+   "re": "^새 총선이 반영되어 (.+?) 상태가 해제되었습니다\\.$",
+   "to": "The new general election was applied — {{map:$1|국가 비상사태=a State of Emergency;의회 해산=the Dissolution of Parliament;상원 해산=the Dissolution of the Senate;하원 해산=the Dissolution of the House;계엄령=Martial Law}} has been lifted."
+  },
+  {
    "re": "^\\s*완료\\s*$",
    "to": "Done"
   },
@@ -424,6 +524,186 @@ window.DnoLangPacks.en = {
   }
  ],
  "dict": [
+  [
+   "집단지도체제",
+   "Collective leadership"
+  ],
+  [
+   "입헌군주제",
+   "Constitutional monarchy"
+  ],
+  [
+   "이원집정부제",
+   "Semi-presidential"
+  ],
+  [
+   "대통령제",
+   "Presidential"
+  ],
+  [
+   "국왕",
+   "Monarch"
+  ],
+  [
+   "계엄령",
+   "Martial law"
+  ],
+  [
+   "국가 비상사태",
+   "State of Emergency"
+  ],
+  [
+   "내보내기 중 오류가 발생했습니다: ",
+   "An error occurred while exporting: "
+  ],
+  [
+   "언어 팩을 불러오지 못했습니다: ",
+   "Could not load the language pack: "
+  ],
+  [
+   "먼저 총리 후보(이름 또는 의원 연결)를 지정하세요.",
+   "Choose a PM nominee first (a name or a linked member)."
+  ],
+  [
+   "건설적 불신임제에서는 후임 총리를 함께 지명해야 합니다.\n후임 총리 이름을 입력하세요.",
+   "Under a constructive vote of no confidence, a successor PM must be named.\nEnter the successor PM's name."
+  ],
+  [
+   "이미 선포된 해산의 대상은 바꿀 수 없습니다.\n총선을 반영해 해제한 뒤 다시 고르세요.",
+   "The target of a dissolution already declared cannot be changed.\nApply a general election to lift it, then choose again."
+  ],
+  [
+   "먼저 권한 주체를 지정하세요.",
+   "Choose who holds this power first."
+  ],
+  [
+   "의회 전체가 이미 해산된 상태에서는 해산권을 분할할 수 없습니다.\n총선을 반영해 해제한 뒤 다시 시도하세요.",
+   "The dissolution power cannot be split while the whole parliament is dissolved.\nApply a general election to lift it and try again."
+  ],
+  [
+   "상원 또는 하원이 이미 해산된 상태에서는 해산권 분할을 끌 수 없습니다.\n총선을 반영해 해제한 뒤 다시 시도하세요.",
+   "Splitting the dissolution power cannot be turned off while the Senate or the House is dissolved.\nApply a general election to lift it and try again."
+  ],
+  [
+   "계엄 해제 결의안이 국가 > 입법 탭에 자동으로 상정되었습니다.\n의회가 가결하면 계엄령이 해제됩니다.",
+   "A resolution to lift martial law was automatically placed on the floor in Nation > Legislation.\nMartial law is lifted if parliament passes it."
+  ],
+  [
+   "의회가 정지된 계엄령 상태에서만 사용할 수 있습니다.",
+   "Only available under martial law while parliament is suspended."
+  ],
+  [
+   "국무회의에 참여할 인원이 없습니다 (모든 자리가 공석입니다).",
+   "There is no one to take part in the cabinet meeting (all positions are vacant)."
+  ],
+  [
+   "표결한 국무위원이 없습니다.\n내각 디스플레이에서 각 인물의 찬성·반대·기권을 먼저 표시하세요.",
+   "No cabinet member has voted.\nMark each person's Yea · Nay · Abstain in the cabinet display first."
+  ],
+  [
+   "계엄령으로 의회가 정지된 상태에서는 표결을 진행할 수 없습니다.\n법안은 국무회의를 통해 통과시킬 수 있습니다.",
+   "Votes cannot be held while parliament is suspended under martial law.\nBills can be passed through the cabinet meeting instead."
+  ],
+  [
+   "계엄령으로 의회가 정지된 상태에서는 국회로 상정할 수 없습니다.",
+   "Bills cannot be sent to parliament while it is suspended under martial law."
+  ],
+  [
+   "프리셋을 불러오지 못했습니다.",
+   "Could not load the preset."
+  ],
+  [
+   "프리셋 데이터 형식이 올바르지 않습니다.",
+   "The preset data format is invalid."
+  ],
+  [
+   "새 세이브를 만들지 못했습니다.",
+   "Could not create a new save."
+  ],
+  [
+   "이 브라우저/환경에서는 자동저장(localStorage)을 사용할 수 없습니다.\n(예: 파일을 직접 열었거나, 브라우저의 저장소 차단 설정)",
+   "Autosave (localStorage) is not available in this browser/environment.\n(e.g. the file was opened directly, or the browser blocks storage)"
+  ],
+  [
+   "현재 자동저장 데이터를 삭제하고 처음 상태로 되돌리시겠습니까?\n(이름 붙여 저장한 슬롯과 다른 세이브의 자동저장에는 영향이 없습니다)",
+   "Delete the current autosave data and reset to the initial state?\n(Named saves and other saves' autosaves are not affected)"
+  ],
+  [
+   "이 브라우저/환경에서는 저장 슬롯(localStorage)을 사용할 수 없습니다.",
+   "Save slots (localStorage) are not available in this browser/environment."
+  ],
+  [
+   "저장할 이름을 입력하세요.",
+   "Enter a name for the save."
+  ],
+  [
+   "저장에 실패했습니다. (브라우저 저장 공간이 부족할 수 있습니다)",
+   "Saving failed. (The browser may be out of storage space)"
+  ],
+  [
+   "이름을 바꾸지 못했습니다. (브라우저 저장 공간이 부족할 수 있습니다)",
+   "Could not rename. (The browser may be out of storage space)"
+  ],
+  [
+   "세이브를 불러오지 못했습니다.",
+   "Could not load the save."
+  ],
+  [
+   "합당하려면 정당이 2개 이상 있어야 합니다.",
+   "You need at least 2 parties to merge."
+  ],
+  [
+   "기준 원에 참여 중인 정당이 없습니다. 정당 탭 또는 선거 > 설정 탭에서 기준 원을 확인하세요.",
+   "No party takes part in the base chamber. Check the base chamber in the Party tab or Election > Settings."
+  ],
+  [
+   "기존 지역구 데이터가 모두 새 지도로 대체됩니다.\n(이름·의석 수·성향·당선자 정보 포함) 계속하시겠습니까?",
+   "All existing district data will be replaced by the new map.\n(Including names, seat counts, tendencies and winners) Continue?"
+  ],
+  [
+   "맵 메이커에서 내보낸 .jsx 파일에서 지역구로 쓸 도형을 찾을 수 없습니다.",
+   "No shapes usable as districts were found in the .jsx file exported from Map Maker."
+  ],
+  [
+   "구 지역구(그리드) 방식으로 되돌립니다.\nSVG 지도로 만든 지역구/의석/성향/당선자 데이터가 모두 삭제됩니다. 계속하시겠습니까?",
+   "Revert to the old (grid) districts.\nAll districts/seats/tendencies/winners made with the SVG map will be deleted. Continue?"
+  ],
+  [
+   "모든 지역구의 이름을 초기화하시겠습니까? (지도 도형·의석 수·성향은 유지됩니다)",
+   "Reset the names of all districts? (Map shapes, seat counts and tendencies are kept)"
+  ],
+  [
+   "권역별 득표율이 없습니다.\n여론 > 권역 탭에서 권역을 만들고 지역구를 배정하거나(자동 집계), 득표율을 직접 입력하세요.",
+   "There are no regional vote shares.\nCreate regions in Opinion > Regions and assign districts (automatic), or enter vote shares directly."
+  ],
+  [
+   "언어 팩을 읽을 수 없습니다. (올바른 JSON 파일이 아닙니다)",
+   "Could not read the language pack. (Not a valid JSON file)"
+  ],
+  [
+   "번역 템플릿을 만들지 못했습니다.",
+   "Could not create the translation template."
+  ],
+  [
+   "원내대표 이름",
+   "Floor leader name"
+  ],
+  [
+   "원내대표",
+   "Floor leader"
+  ],
+  [
+   "예: 150000",
+   "e.g. 150000"
+  ],
+  [
+   "인구",
+   "Population"
+  ],
+  [
+   "총 인구",
+   "Total population"
+  ],
   [
    "⚙ 의회",
    "⚙ Parliament"
