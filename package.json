@@ -24,6 +24,8 @@
       "js/**/*",
       "css/**/*",
       "presets/**/*",
+    "lang/**/*",
+    "old2/**/*",
       "!electron/smoketest.js",
       "!README.md",
       "!package.json",
