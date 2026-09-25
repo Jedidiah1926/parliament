@@ -525,6 +525,22 @@ window.DnoLangPacks.en = {
  ],
  "dict": [
   [
+   "집단지도체제",
+   "Collective leadership"
+  ],
+  [
+   "입헌군주제",
+   "Constitutional monarchy"
+  ],
+  [
+   "이원집정부제",
+   "Semi-presidential"
+  ],
+  [
+   "대통령제",
+   "Presidential"
+  ],
+  [
    "국왕",
    "Monarch"
   ],
