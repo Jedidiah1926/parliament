@@ -2833,12 +2833,15 @@ html[data-theme-family="modern"] .mobile-nav-btn.active .mnb-label { font-weight
 html[data-theme-family="modern"] .mobile-exec-fab {
     background: var(--m-accent) !important;
     border: none !important;
-    border-radius: 16px;
+    border-radius: 14px;
     color: var(--m-on-accent) !important;
     font-family: inherit;
     letter-spacing: 0;
     box-shadow: var(--m-shadow-lg) !important;
 }
+html[data-theme-family="modern"] .mobile-exec-fab .fab-neon { display: none; }
+html[data-theme-family="modern"] .mobile-exec-fab .fab-icon,
+html[data-theme-family="modern"] .mobile-exec-fab .fab-label { display: inline; }
 html[data-theme-family="modern"] .mobile-exec-fab .fab-label { font-weight: 700; }
 html[data-theme-family="modern"] .mobile-exec-fab .fab-icon { font-size: 12px; }
 

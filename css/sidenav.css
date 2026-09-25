@@ -188,24 +188,29 @@ html[data-ui-mode="mobile"] body.has-side-nav .mobile-nav {
 .mnb-icon { font-size: 18px; line-height: 1; height: 20px; display: grid; place-items: center; }
 .mnb-label { font-size: 11.5px; line-height: 1.1; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-/* ---- 떠 있는 실행 버튼 ---- */
+/* ---- 떠 있는 실행 버튼 — 편집 패널과 같은 폭으로 아래 탭 바 바로 위에 ---- */
 html[data-ui-mode="mobile"] body.has-side-nav .mobile-exec-fab {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 8px;
     position: fixed;
-    right: max(16px, env(safe-area-inset-right, 0px));
-    bottom: calc(var(--mnav-h) + var(--safe-b) + 14px);
+    left: max(10px, env(safe-area-inset-left, 0px));
+    right: max(10px, env(safe-area-inset-right, 0px));
+    bottom: calc(var(--mnav-h) + var(--safe-b) + 10px);
     z-index: 889;
-    height: 52px;
-    padding: 0 22px 0 18px;
+    height: 54px;
+    padding: 0 16px;
+    box-sizing: border-box;
     cursor: pointer;
     -webkit-tap-highlight-color: transparent;
     touch-action: manipulation;
 }
+.fab-neon { font-size: 1.3rem; letter-spacing: 2px; font-weight: bold; white-space: nowrap; }
+.fab-icon, .fab-label { display: none; }
 .fab-icon { font-size: 14px; line-height: 1; }
 .fab-label { font-size: 15px; line-height: 1; }
-.mobile-exec-fab:active { transform: scale(.96); }
+.mobile-exec-fab:active { transform: scale(.985); }
 
 /* ---- 하위 탭 → 붙어 따라오는 가로 스크롤 칩 줄 ---- */
 html[data-ui-mode="mobile"] body.has-side-nav .main-tab-content > .sub-tab-container {
@@ -266,12 +271,12 @@ html[data-ui-mode="mobile"] .add-btn { min-height: 42px; }
 }
 .mobile-exec-fab {
     background: var(--tno-neon);
-    border: 1px solid var(--tno-neon);
+    border: none;
     color: #000;
     font-family: 'NeoDunggeunmo', 'VT323', monospace;
-    letter-spacing: 1px;
-    box-shadow: 0 0 18px var(--tno-neon), 0 4px 14px rgba(0, 0, 0, .6);
+    box-shadow: 0 0 10px var(--tno-neon), 0 4px 14px rgba(0, 0, 0, .6);
 }
+.mobile-exec-fab:active { background: #fff; box-shadow: 0 0 20px var(--tno-neon); }
 html[data-ui-mode="mobile"] body.has-side-nav .main-tab-content > .sub-tab-container {
     background: var(--tno-panel);
 }

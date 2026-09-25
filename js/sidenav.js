@@ -154,7 +154,8 @@
         fab.className = 'mobile-exec-fab';
         fab.id = 'mobileExecFab';
         fab.title = '다시 계산 (PROTOCOL EXECUTE)';
-        fab.innerHTML = '<span class="fab-icon">▶</span><span class="fab-label">실행</span>';
+        // 네온은 원래 실행 막대 문구 그대로, 라이트/다크는 "▶ 실행" (CSS가 테마별로 하나만 보여줌)
+        fab.innerHTML = '<span class="fab-neon">&gt;&gt; PROTOCOL EXECUTE &lt;&lt;</span><span class="fab-icon">▶</span><span class="fab-label">실행</span>';
         fab.addEventListener('click', () => { if (execSrc) execSrc.click(); });
         if (execSrc) document.body.appendChild(fab);
 
