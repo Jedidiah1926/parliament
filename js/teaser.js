@@ -4270,7 +4270,7 @@
             } catch(e) { /* 자동저장 초기화 실패 — 기본 상태로 계속 진행 */ }
             if(!restored) { toggleSystem(); simulate(); refreshUI(); renderBillList(); renderArchiveList(); syncBillSelect(); elecRenderList(); elecRenderRecords(); updateNationIdBar(); updateDispInfoBar(); renderCabinetRoleLabelInputs(); }
             // 프리셋으로 시작: 프리셋을 불러와 적용한 뒤에 새 세이브로 등록·자동저장한다 (먼저 자동저장하면
-            // 아직 적용 전인 기본 상태가 "기존 저장"을 덮어쓰게 되므로 그 전에는 저장하지 않음)
+            // 아직 적용 전인 기본 상태가 "새 의회 (1)"을 덮어쓰게 되므로 그 전에는 저장하지 않음)
             if(bootPresetId) { startFromPresetOnBoot(bootPresetId, bootNewSaveName); return; }
             try {
                 if(bootNewSaveName) createNamedSlotFromCurrentState(bootNewSaveName);
@@ -4654,7 +4654,7 @@
         // 이름 붙인 세이브마다 자기 전용 자동저장 슬롯("{이름} 자동저장")을 따로 가진다 —
         // 그 세이브를 불러오거나 만든 이후로는 자동저장이 그 전용 슬롯에만 계속 덮어써지고,
         // 세이브 자체(수동 저장 지점)와 다른 세이브들에는 영향이 없다. 아직 어떤 이름 붙은
-        // 세이브도 활성화하지 않은 기본 상태에서는 "기존 저장"이라는 전역 자동저장 슬롯
+        // 세이브도 활성화하지 않은 기본 상태에서는 "새 의회 (1)"이라는 전역 자동저장 슬롯
         // 하나에 계속 덮어쓴다 (예전 버전에서 "자동저장"이라 부르던 바로 그 슬롯).
         // Safari의 file:// 접근 차단, 프라이빗 모드, 저장소 차단 설정 등에서는
         // localStorage 자체에 접근하는 것만으로도 예외가 발생할 수 있으므로
@@ -4668,7 +4668,7 @@
         const AUTOSAVE_INTERVAL_OPTIONS = [15, 30, 60, 180, 300, 600]; // 초 단위 — 15초/30초/1분/3분/5분/10분
         const AUTOSAVE_INTERVAL_DEFAULT = 15;
         const AUTOSAVE_SLOT_ID = 'autosave';
-        const AUTOSAVE_SLOT_NAME = '기존 저장';
+        const AUTOSAVE_SLOT_NAME = '새 의회 (1)';
         const MAX_SAVE_SLOTS = 20; // 전용 자동저장 슬롯 제외, 사용자가 이름 붙인 슬롯 기준
         let autosaveEnabled = true;
         let autosaveIntervalSec = AUTOSAVE_INTERVAL_DEFAULT;
@@ -4697,10 +4697,14 @@
 
         function loadSaveSlots() {
             if(!localStorageAvailable) return [];
-            try { return JSON.parse(safeLsGet(SAVE_SLOTS_KEY) || '[]'); } catch(e) { return []; }
+            let slots;
+            try { slots = JSON.parse(safeLsGet(SAVE_SLOTS_KEY) || '[]'); } catch(e) { return []; }
+            // 기본(전역) 자동저장 슬롯은 항상 현재 이름으로 — 예전 이름("기존 저장")으로 저장된 기록도 새 이름으로 보이고, 다음 저장 때 반영됨
+            if(Array.isArray(slots)) slots.forEach(s => { if(s && s.isAutosave && !s.parentId) s.name = AUTOSAVE_SLOT_NAME; });
+            return slots;
         }
         function persistSaveSlots(slots) { return safeLsSet(SAVE_SLOTS_KEY, JSON.stringify(slots)); }
-        // 기본(전역) 자동저장 — 특정 세이브에 연결되지 않은 "기존 저장" 슬롯
+        // 기본(전역) 자동저장 — 특정 세이브에 연결되지 않은 "새 의회 (1)" 슬롯
         function getAutosaveSlot(slots) { return slots.find(s => s.isAutosave && !s.parentId); }
         // parentId로 연결된, 특정 이름 붙은 세이브 전용 자동저장 슬롯
         function getNamedAutosaveSlot(slots, parentId) { return slots.find(s => s.isAutosave && s.parentId === parentId); }
@@ -4760,7 +4764,7 @@
         }
 
         // 활성 세이브(activeSlotId)가 있으면 그 세이브 전용 자동저장 슬롯에,
-        // 없으면 기본 "기존 저장" 슬롯에 계속 덮어쓴다.
+        // 없으면 기본 "새 의회 (1)" 슬롯에 계속 덮어쓴다.
         function autosaveNow() {
             if(!autosaveEnabled || !localStorageAvailable) return;
             const slots = loadSaveSlots();
@@ -4790,7 +4794,7 @@
             if(autosaveTimer) { clearInterval(autosaveTimer); autosaveTimer = null; }
         }
 
-        // 활성 세이브가 있으면 그 세이브의 전용 자동저장을, 없으면 기본 "기존 저장"을 복원
+        // 활성 세이브가 있으면 그 세이브의 전용 자동저장을, 없으면 기본 "새 의회 (1)"을 복원
         function loadFromAutosave() {
             if(!localStorageAvailable) return false;
             const slots = loadSaveSlots();
@@ -4920,7 +4924,7 @@
         }
 
         // ===== 세이브 이름 바꾸기 =====
-        // 이름 붙은 세이브만 바꿀 수 있고("기존 저장"은 예약), 연결된 전용 자동저장("{이름} 자동저장")도 함께 바뀐다.
+        // 이름 붙은 세이브만 바꿀 수 있고("새 의회 (1)"은 예약), 연결된 전용 자동저장("{이름} 자동저장")도 함께 바뀐다.
         // 세이브 id는 그대로라 즐겨찾기·활성 탭 등 id로 연결된 정보는 유지된다.
         function renameNamedSlot(id, newName) {
             const name = (newName || '').trim();
@@ -4978,7 +4982,7 @@
         }
 
         // ===== 최상단 세이브 탭 바 (데스크톱 앱: 크롬 탭처럼 클릭으로 즉시 전환) =====
-        // 이름 붙은 세이브마다 탭 하나씩, 맨 앞엔 항상 "기존 저장"(특정 세이브에 속하지 않은
+        // 이름 붙은 세이브마다 탭 하나씩, 맨 앞엔 항상 "새 의회 (1)"(특정 세이브에 속하지 않은
         // 기본 세션) 탭이 고정. 탭을 클릭하면 지금 탭의 상태를 그 탭 전용 자동저장에 즉시
         // 남겨두고(autosaveNow), 목적지 탭의 최신 상태(전용 자동저장이 있으면 그것, 없으면
         // 수동 저장 지점)를 그대로 불러온다 — 확인창 없이 즉시 전환되는 게 핵심.
