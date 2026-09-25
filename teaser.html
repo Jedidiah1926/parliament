@@ -15,6 +15,7 @@
     <link rel="stylesheet" href="css/teaser.css">
     <link rel="stylesheet" href="css/sidenav.css">
     <link rel="stylesheet" href="css/tutorial.css">
+    <link rel="stylesheet" href="css/help.css">
     <link rel="stylesheet" href="css/modern.css">
 </head>
 <body>
@@ -178,6 +179,7 @@
                 <button class="main-tab-btn active" onclick="switchMainTab('nation')" id="mainTabNation">🏛 국가</button>
                 <button class="main-tab-btn" onclick="switchMainTab('election')" id="mainTabElection">🗳 여론</button>
                 <button class="main-tab-btn" onclick="switchMainTab('cabinet')" id="mainTabCabinet">💼︎ 내각</button>
+                <button class="main-tab-btn" onclick="switchMainTab('help')" id="mainTabHelp">ⓘ 도움말</button>
             </div>
 
             <!-- ===== 의회 그룹 (정당 그룹이 여기로 통합됨) ===== -->
@@ -1472,6 +1474,20 @@
                 </div>
             </div>
 
+            <!-- ===== 도움말 그룹 — 각 탭의 역할 설명 (내용은 js/help.js가 채움) ===== -->
+            <div id="mainContentHelp" class="main-tab-content">
+                <div class="sub-tab-container">
+                    <button class="sub-tab-btn active" onclick="switchSubTab('help','helpsetup')" id="subTabHelpsetup">의회</button>
+                    <button class="sub-tab-btn" onclick="switchSubTab('help','helpnation')" id="subTabHelpnation">국가</button>
+                    <button class="sub-tab-btn" onclick="switchSubTab('help','helpelection')" id="subTabHelpelection">여론</button>
+                    <button class="sub-tab-btn" onclick="switchSubTab('help','helpcabinet')" id="subTabHelpcabinet">내각</button>
+                </div>
+                <div id="contentHelpsetup" class="sub-tab-content help-page active" data-help="setup"></div>
+                <div id="contentHelpnation" class="sub-tab-content help-page" data-help="nation"></div>
+                <div id="contentHelpelection" class="sub-tab-content help-page" data-help="election"></div>
+                <div id="contentHelpcabinet" class="sub-tab-content help-page" data-help="cabinet"></div>
+            </div>
+
         </div><!-- end controls-content -->
 
         <div class="theme-panel-box" style="padding: 15px; border-top: 2px solid var(--tno-border); background: #000;">
@@ -1711,6 +1727,7 @@
 
     <script src="js/presets.js"></script>
     <script src="js/tutorial.js"></script>
+    <script src="js/help.js"></script>
     <script src="js/teaser.js"></script>
     <script src="js/sidenav.js"></script>
     <script src="js/lang.js"></script>

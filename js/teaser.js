@@ -4630,7 +4630,7 @@
             if(uiMain === 'save') uiMain = 'nation';
             switchMainTab(uiMain);
             if(uiMain !== 'election') {
-                const fallback = uiMain==='setup' ? 'party' : 'legislation';
+                const fallback = uiMain==='setup' ? 'party' : uiMain==='cabinet' ? 'system' : uiMain==='help' ? 'helpsetup' : 'legislation';
                 switchSubTab(uiMain, currentSubTab[uiMain] || fallback, false);
             }
         }
@@ -5413,7 +5413,7 @@
             document.querySelectorAll('.main-tab-content').forEach(c => c.classList.remove('active'));
             document.getElementById('mainContent' + main.charAt(0).toUpperCase() + main.slice(1)).classList.add('active');
             if(main === 'election') { elecRenderList(); elecRenderRecords(); return; }
-            switchSubTab(main, currentSubTab[main] || (main === 'setup' ? 'party' : main === 'cabinet' ? 'system' : 'legislation'), false);
+            switchSubTab(main, currentSubTab[main] || (main === 'setup' ? 'party' : main === 'cabinet' ? 'system' : main === 'help' ? 'helpsetup' : 'legislation'), false);
         }
 
         function switchSubTab(main, sub, doMainSwitch = true) {

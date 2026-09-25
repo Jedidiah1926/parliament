@@ -2647,6 +2647,7 @@ html[data-theme-family="modern"] .mn-group[data-tone="info"] { --tone: var(--m-i
 html[data-theme-family="modern"] .mn-group[data-tone="danger"] { --tone: var(--m-danger); }
 html[data-theme-family="modern"] .mn-group[data-tone="gold"] { --tone: var(--m-gold); }
 html[data-theme-family="modern"] .mn-group[data-tone="success"] { --tone: var(--m-success); }
+html[data-theme-family="modern"] .mn-group[data-tone="muted"] { --tone: var(--m-text-3); }
 html[data-theme-family="modern"] .mn-group-head {
     padding: 7px 10px;
     background: color-mix(in srgb, var(--tone) 13%, transparent) !important;
@@ -2809,6 +2810,7 @@ html[data-theme-family="modern"] .mobile-nav-btn[data-tone="danger"] { --tone: v
 html[data-theme-family="modern"] .mobile-nav-btn[data-tone="gold"] { --tone: var(--m-gold); }
 html[data-theme-family="modern"] .mobile-nav-btn[data-tone="success"] { --tone: var(--m-success); }
 html[data-theme-family="modern"] .mobile-nav-btn[data-tone="seats"] { --tone: var(--m-text); }
+html[data-theme-family="modern"] .mobile-nav-btn[data-tone="muted"] { --tone: var(--m-text-3); }
 html[data-theme-family="modern"] .mobile-nav-btn {
     border: none !important;
     margin-top: 0;
