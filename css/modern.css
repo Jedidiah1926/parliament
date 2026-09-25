@@ -2168,6 +2168,8 @@ html[data-theme-family="modern"] .save-tab.active {
     margin-bottom: -1px;
     font-weight: 600;
 }
+html[data-theme-family="modern"] .save-tab-home { border-right: none; color: var(--m-text-3); border-radius: 8px; margin: 5px 2px 5px 6px; width: 32px; filter: none; }
+html[data-theme-family="modern"] .save-tab-home:hover { color: var(--m-text); background: var(--m-surface-3); filter: none; }
 html[data-theme-family="modern"] .save-tab-new { border-right: none !important; color: var(--m-text-3) !important; border-radius: 8px; margin: 5px 2px; }
 html[data-theme-family="modern"] .save-tab-new-menu,
 html[data-theme-family="modern"] .save-tab-preset-list,

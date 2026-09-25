@@ -41,6 +41,19 @@
             border-bottom: 2px solid var(--tno-border);
             font-size: 0.85rem;
         }
+        /* 상단 탭 바 맨 왼쪽: 메인 화면으로 돌아가는 집 아이콘 */
+        .save-tab-home {
+            flex: 0 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            color: #888;
+            border-right: 1px solid #222;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .save-tab-home:hover { color: var(--tno-neon); background: rgba(255,255,255,0.03); filter: drop-shadow(0 0 4px var(--tno-neon)); }
         .save-tab-list {
             display: flex;
             align-items: stretch;
