@@ -1438,8 +1438,16 @@
                     <!-- 내각 불신임 (의원내각제/이원집정부제 전용) -->
                     <div id="noConfidenceSection" style="display:none;margin-top:16px;padding-top:14px;border-top:1px solid #222;">
                         <label style="color:#888;font-size:0.8rem;margin-bottom:6px;display:block;">내각 불신임</label>
+                        <label style="cursor:pointer;display:flex;align-items:flex-start;gap:6px;margin-bottom:8px;color:#aaa;font-size:0.85rem;line-height:1.4;">
+                            <input type="checkbox" id="constructiveNoConfidenceCheckbox" onchange="setConstructiveNoConfidence(this.checked)" style="margin-top:2px;flex-shrink:0;">
+                            <span>건설적 불신임제 (독일 · 이스라엘식) — 불신임안에 후임을 함께 지명</span>
+                        </label>
+                        <div id="ncSuccessorFields" style="display:none;margin-bottom:8px;">
+                            <select id="ncSuccessorParty" onchange="onNcSuccessorPartyChange()" style="width:100%;box-sizing:border-box;background:#000;border:1px solid #333;color:var(--tno-gold);font-family:inherit;font-size:0.85rem;padding:5px;margin-bottom:6px;"></select>
+                            <input type="text" id="ncSuccessorName" placeholder="후임 총리 이름" oninput="this.dataset.autofill='0'" style="background:#000;border:1px solid #2a2a2a;color:#e0e0e0;font-family:inherit;font-size:0.95rem;padding:5px 8px;width:100%;box-sizing:border-box;">
+                        </div>
                         <button onclick="submitNoConfidenceBill()" style="width:100%;background:transparent;border:1px solid var(--tno-alert);color:var(--tno-alert);padding:9px;font-family:inherit;font-size:0.9rem;cursor:pointer;">! <span id="noConfidenceBtnLabel">총리 불신임안</span> 발의 !</button>
-                        <div style="color:#555;font-size:0.72rem;margin-top:4px;">가결되면 국가 &gt; 입법 탭에서 확인할 수 있으며, 통과 시 현재 총리가 해임됩니다</div>
+                        <div id="noConfidenceNote" style="color:#555;font-size:0.72rem;margin-top:4px;">가결되면 국가 &gt; 입법 탭에서 확인할 수 있으며, 통과 시 현재 총리가 해임됩니다</div>
                     </div>
 
                     <div id="pmEmergencyPowers"></div>
