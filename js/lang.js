@@ -135,7 +135,8 @@
     window.setLang = setLang;
     // translateSubtree(el): 페이지 로드 뒤에 새로 그려진 부분(시작 화면 세이브 목록, 로드맵 버전 탭 등)을 번역.
     // 한국어일 땐 아무 일도 하지 않고, 팩이 준비되기 전에 불리면 준비된 뒤에 번역한다.
-    window.DnoLang = { list: listLanguages, install: installPack, remove: removePack, template: buildTemplate, validate: normalizePack, format: PACK_FORMAT, translateSubtree: () => {} };
+    // t(s): 문자열 하나를 번역 (한국어이거나 팩이 아직 준비 전이면 그대로)
+    window.DnoLang = { list: listLanguages, install: installPack, remove: removePack, template: buildTemplate, validate: normalizePack, format: PACK_FORMAT, translateSubtree: () => {}, t: s => s };
 
     const current = getLang();
     if (current === SOURCE_LANG.code) return; // 기본값(한국어)일 때는 아무 것도 하지 않는다
@@ -217,8 +218,17 @@
         }
         translateNodeDeep(root);
     }
+    translateTree.attrsOnly = function (el, translateString) {
+        ['placeholder', 'title', 'alt'].forEach(attr => {
+            if (el.hasAttribute && el.hasAttribute(attr)) {
+                const v = el.getAttribute(attr);
+                const t = translateString(v);
+                if (t !== v) el.setAttribute(attr, t);
+            }
+        });
+    };
 
-    // 초기 화면 로드 시점에 한 번 번역한다. 이후 새로 그려지는 부분은 그 페이지가 DnoLang.translateSubtree()로 번역을 요청한다.
+    // 초기 화면 로드 시점에 전체를 번역하고, 그 뒤에 새로 그려지거나 바뀐 부분은 MutationObserver로 계속 번역한다.
     // dno.js/roadmap.js의 자체 초기 렌더링(window.onload)이 끝난 뒤에 실행되도록 load 이벤트를 기다린다.
     const pageLoaded = new Promise(resolve => {
         if (document.readyState === 'complete') resolve();
@@ -238,7 +248,18 @@
         translate = buildTranslator(pack);
         translateTree(document.documentElement, translate);
         window.DnoLang.translateSubtree = el => { if (el) translateTree(el, translate); };
+        window.DnoLang.t = s => translate(s);
         waiting.forEach(el => { if (el.isConnected) translateTree(el, translate); });
         waiting.clear();
+        // 앱이 나중에 다시 그리는 부분(목록 갱신, 도움말, 튜토리얼 말풍선, 알림창 등)도 계속 번역한다.
+        // 번역 결과가 같으면 건드리지 않으므로, 이 번역이 다시 변경을 일으켜도 한 번 더 확인하고 멈춘다.
+        const observer = new MutationObserver(mutations => {
+            for (const m of mutations) {
+                if (m.type === 'childList') m.addedNodes.forEach(n => { if (n.isConnected) translateTree(n, translate); });
+                else if (m.type === 'characterData') { if (m.target.parentNode && m.target.parentNode.tagName !== 'TEXTAREA') translateTree(m.target, translate); }
+                else if (m.type === 'attributes') translateTree.attrsOnly(m.target, translate);
+            }
+        });
+        observer.observe(document.body, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['placeholder', 'title', 'alt'] });
     }).catch(() => { /* 팩을 읽지 못하면 한국어 그대로 표시 */ });
 })();

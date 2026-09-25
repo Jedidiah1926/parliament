@@ -23,6 +23,374 @@ window.DnoLangPacks.en = {
  "ordinal": "en",
  "patterns": [
   {
+   "re": "^\\s*완료\\s*$",
+   "to": "Done"
+  },
+  {
+   "re": "^\\s*날짜\\s*$",
+   "to": "Date"
+  },
+  {
+   "re": "^\\s*저장\\s*$",
+   "to": "Save"
+  },
+  {
+   "re": "개\\s*\\|\\s*지역구를 클릭하면 의석 수·성향을 편집할 수 있습니다",
+   "to": " | click a district to edit its seats and leanings"
+  },
+  {
+   "re": "(#\\d+) · 내각\\s*$",
+   "to": "$1 · Cabinet"
+  },
+  {
+   "re": "^\\s*연\\s*$",
+   "to": "Year"
+  },
+  {
+   "re": "^\\s*월\\s*$",
+   "to": "Month"
+  },
+  {
+   "re": "^\\s*일\\s*$",
+   "to": "Day"
+  },
+  {
+   "re": "^\\s*색\\s*$",
+   "to": "Color"
+  },
+  {
+   "re": "^\\s*석\\s*$",
+   "to": "seats"
+  },
+  {
+   "re": "^\\s*(국회|하원|상원|삼원)만\\s*$",
+   "to": "$1 only"
+  },
+  {
+   "re": "(\\d{4})\\. (\\d{1,2})\\. (\\d{1,2})\\. (오전|오후) (\\d{1,2}):(\\d{2}):(\\d{2})",
+   "to": "$1-$2-$3 $5:$6:$7 {{map:$4|오전=AM;오후=PM}}"
+  },
+  {
+   "re": "마지막 저장\\((.+?)\\):",
+   "to": "Last saved ($1):"
+  },
+  {
+   "re": "기준: (.+?), (\\d+)석 필요",
+   "to": "Threshold: $1, $2 seats needed"
+  },
+  {
+   "re": "👑 다수당\\((.+?)\\) 대표 자동 반영",
+   "to": "👑 Majority party ($1) leader applied automatically"
+  },
+  {
+   "re": "현재 선출 방식: 다수당 방식 — 기준 원\\((.+?)\\)의 다수당 대표가 자동으로 (.+?)이 됩니다",
+   "to": "Current method: majority — the majority party leader of the base chamber ($1) automatically becomes {{map:$2|총리=PM;국무총리=Premier}}"
+  },
+  {
+   "re": "현재 선출 방식: 대통령 임명제 — 대통령이 후보를 지명하면 의회 심의를 거쳐 (.+?)으로 확정됩니다",
+   "to": "Current method: presidential appointment — the president nominates a candidate and parliament confirms them as {{map:$2|총리=PM;국무총리=Premier}}"
+  },
+  {
+   "re": "! (.+?) 선포됨 \\(총선으로만 해제\\) !",
+   "to": "! $1 declared (lifted only by a general election) !"
+  },
+  {
+   "re": "! (.+?) (선포|해제) !",
+   "to": "! {{map:$2|선포=Declare;해제=Lift}}: $1 !"
+  },
+  {
+   "re": "(\\d+)개 지역구 \\(SVG\\)",
+   "to": "$1 districts (SVG)"
+  },
+  {
+   "re": "(\\d+)석 초과 — 초과분은 화면에 안 보임",
+   "to": "$1 seats over — the excess isn't shown"
+  },
+  {
+   "re": "(\\d+)석 남음",
+   "to": "$1 seats left"
+  },
+  {
+   "re": "(\\d+)석이 비었어요\\.",
+   "to": "$1 seats are now free."
+  },
+  {
+   "re": "(\\d+)단계",
+   "to": "$1 steps"
+  },
+  {
+   "re": "이제 \"(.+?)\"의 의석 칸에 숫자를 넣어보세요\\. 남은 자리\\((\\d+)석\\)까지만 넣을 수 있어요\\.",
+   "to": "Now enter a number in \"$1\"'s seat box. You can enter up to the free seats ($2)."
+  },
+  {
+   "re": "이제 새 정당의 의석 칸에 숫자를 넣어보세요\\. 남은 자리\\((\\d+)석\\)까지만 넣을 수 있어요\\.",
+   "to": "Now enter a number in the new party's seat box. You can enter up to the free seats ($1)."
+  },
+  {
+   "re": "의회 › 구성의 \"배정 합계\"는 정당 의석을 모두 더한 값이고, 총 의석 수를 넘을 수 없습니다\\. 기존 정당들이 이미 (\\d+)석을 다 차지하고 있으면 새 정당이 앉을 자리가 없어요\\. 총 의석 수를 늘리거나\\(예: (\\d+)\\) 다른 정당 의석을 줄여 빈자리를 만들어 보세요\\.",
+   "to": "\"Assigned total\" in Parliament › Composition is the sum of all party seats, and it can't exceed the total. If the existing parties already fill all $1 seats, there's no room for a new party. Raise the total (e.g. $2) or cut another party's seats to make room."
+  },
+  {
+   "re": "의회 › 정당 › 당수에서 정당 대표를 정합니다\\. 다수당 \"(.+?)\"의 당수 이름을 적어보세요\\.",
+   "to": "Party leaders are set in Parliament › Parties › Leaders. Enter a leader name for the majority party \"$1\"."
+  },
+  {
+   "re": "의회 › 정당 › 당수에서 정당 대표를 정합니다\\. 다수당의 당수 이름을 적어보세요\\.",
+   "to": "Party leaders are set in Parliament › Parties › Leaders. Enter a leader name for the majority party."
+  },
+  {
+   "re": "다음은 (#\\d+) \"(.+?)\" \\((.+?)\\)입니다\\. 바로 이어서 하거나, 나중에 목차에서 골라 할 수 있어요\\.",
+   "to": "Next up is $1 \"$2\" ($3). Continue right away, or pick it later from the lesson list."
+  },
+  {
+   "re": "(#\\d+) 시작 →",
+   "to": "Start $1 →"
+  },
+  {
+   "re": "(#\\d+) 마치기",
+   "to": "Finish $1"
+  },
+  {
+   "re": "(#\\d+) (.+) 완료!",
+   "to": "$1 $2 complete!"
+  },
+  {
+   "re": "(\\d+) / (\\d+) 완료",
+   "to": "$1 / $2 done"
+  },
+  {
+   "re": "^\\s*도움말\\s*$",
+   "to": "Help"
+  },
+  {
+   "re": "^\\s*시각\\s*$",
+   "to": "Visuals"
+  },
+  {
+   "re": "^\\s*형식\\s*$",
+   "to": "Format"
+  },
+  {
+   "re": "^\\s*내보내기\\s*$",
+   "to": "Export"
+  },
+  {
+   "re": "^\\s*확인\\s*$",
+   "to": "OK"
+  },
+  {
+   "re": "^\\s*약칭\\s*$",
+   "to": "Abbr."
+  },
+  {
+   "re": "^\\s*선택\\s*$",
+   "to": "Select"
+  },
+  {
+   "re": "^\\s*활동중\\s*$",
+   "to": "Active"
+  },
+  {
+   "re": "^\\s*붙여넣기\\s*$",
+   "to": "Paste"
+  },
+  {
+   "re": "^\\s*상징\\s*$",
+   "to": "Symbols"
+  },
+  {
+   "re": "^\\s*의장단\\s*$",
+   "to": "Presiding officers"
+  },
+  {
+   "re": "^\\s*그리드\\s*$",
+   "to": "Grid"
+  },
+  {
+   "re": "^\\s*의결일\\s*$",
+   "to": "Resolution date"
+  },
+  {
+   "re": "^\\s*국무회의\\s*$",
+   "to": "Cabinet Council"
+  },
+  {
+   "re": "^\\s*대선\\s*$",
+   "to": "Presidential"
+  },
+  {
+   "re": "^\\s*총선\\s*$",
+   "to": "General"
+  },
+  {
+   "re": "^\\s*자동\\s*$",
+   "to": "Auto"
+  },
+  {
+   "re": "^\\s*대표제\\s*$",
+   "to": "the-post"
+  },
+  {
+   "re": "^\\s*됩니다\\.\\s*$",
+   "to": "."
+  },
+  {
+   "re": "^\\s*전국형\\s*$",
+   "to": "National"
+  },
+  {
+   "re": "^\\s*권역형\\s*$",
+   "to": "Regional"
+  },
+  {
+   "re": "^\\s*권역\\s*$",
+   "to": "Regions"
+  },
+  {
+   "re": "^\\s*여론\\s*$",
+   "to": "Opinion"
+  },
+  {
+   "re": "^\\s*대통령제\\s*$",
+   "to": "Presidential"
+  },
+  {
+   "re": "^\\s*이원\\s*$",
+   "to": "Semi-"
+  },
+  {
+   "re": "^\\s*집정부제\\s*$",
+   "to": "presidential"
+  },
+  {
+   "re": "^\\s*입헌\\s*$",
+   "to": "Constitutional"
+  },
+  {
+   "re": "^\\s*군주제\\s*$",
+   "to": "monarchy"
+  },
+  {
+   "re": "^\\s*집단\\s*$",
+   "to": "Collective"
+  },
+  {
+   "re": "^\\s*지도체제\\s*$",
+   "to": "leadership"
+  },
+  {
+   "re": "^\\s*국무총리\\s*$",
+   "to": "Premier"
+  },
+  {
+   "re": "^\\s*국무위원\\s*$",
+   "to": "Cabinet member"
+  },
+  {
+   "re": "^\\s*부총리\\s*$",
+   "to": "Deputy PM"
+  },
+  {
+   "re": "^\\s*장관\\s*$",
+   "to": "Minister"
+  },
+  {
+   "re": "^\\s*의회\\s*$",
+   "to": "Parliament"
+  },
+  {
+   "re": "^\\s*내각\\s*$",
+   "to": "Cabinet"
+  },
+  {
+   "re": "^\\s*대통령\\s*$",
+   "to": "President"
+  },
+  {
+   "re": "^\\s*총리\\s*$",
+   "to": "PM"
+  },
+  {
+   "re": "^\\s*지도\\s*$",
+   "to": "Map"
+  },
+  {
+   "re": "^\\s*의장\\s*$",
+   "to": "Speaker"
+  },
+  {
+   "re": "^\\s*남음\\s*$",
+   "to": "left"
+  },
+  {
+   "re": "^\\s*그만하기\\s*$",
+   "to": "Quit"
+  },
+  {
+   "re": "^\\s*끝내기\\s*$",
+   "to": "Finish"
+  },
+  {
+   "re": "^\\s*나중에\\s*$",
+   "to": "Later"
+  },
+  {
+   "re": "^\\s*목차\\s*$",
+   "to": "Lessons"
+  },
+  {
+   "re": "^\\s*이전\\s*$",
+   "to": "Back"
+  },
+  {
+   "re": "^\\s*다음\\s*$",
+   "to": "Next"
+  },
+  {
+   "re": "^\\s*건너뛰기\\s*$",
+   "to": "Skip"
+  },
+  {
+   "re": "^\\s*실행\\s*$",
+   "to": "Run"
+  },
+  {
+   "re": "^\\s*신당\\s*$",
+   "to": "New Party"
+  },
+  {
+   "re": "^\\s*세이브\\s*$",
+   "to": "Save"
+  },
+  {
+   "re": "^\\s*메뉴\\s*$",
+   "to": "Menu"
+  },
+  {
+   "re": "^\\s*왼쪽\\s*$",
+   "to": "Left"
+  },
+  {
+   "re": "^\\s*가운데\\s*$",
+   "to": "Center"
+  },
+  {
+   "re": "^\\s*공통\\s*$",
+   "to": "General"
+  },
+  {
+   "re": "^\\s*모바일\\s*$",
+   "to": "Mobile"
+  },
+  {
+   "re": "^\\s*됩니다\\.\\s*$",
+   "to": "."
+  },
+  {
+   "re": "^\\s*부의장\\s*$",
+   "to": "Deputy speaker"
+  },
+  {
    "re": "(\\d+|\\?)년\\s*(\\d+|\\?)월\\s*(\\d+|\\?)일",
    "to": "{{month:$2}} $3, $1"
   },
@@ -2611,6 +2979,1410 @@ window.DnoLangPacks.en = {
   [
    "설정 / SETTINGS",
    "SETTINGS"
+  ],
+  [
+   "메인 화면으로",
+   "Back to main screen"
+  ],
+  [
+   "새 세이브 이름",
+   "New save name"
+  ],
+  [
+   "새 세이브",
+   "New save"
+  ],
+  [
+   "🆕 새로 생성",
+   "🆕 Create new"
+  ],
+  [
+   "📦 프리셋에서 생성",
+   "📦 Create from preset"
+  ],
+  [
+   "◀ 컨트롤",
+   "◀ Controls"
+  ],
+  [
+   "의석 현황 ▶",
+   "Seats ▶"
+  ],
+  [
+   "사이드바 접기/펼치기",
+   "Collapse/expand sidebar"
+  ],
+  [
+   "사이드바 · 상단 바",
+   "Sidebar · Top Bar"
+  ],
+  [
+   "💼︎ 내각",
+   "💼︎ Cabinet"
+  ],
+  [
+   "드래그하여 폭 조절 (더블클릭: 기본값으로 초기화)",
+   "Drag to resize (double-click: reset to default)"
+  ],
+  [
+   "다시 계산 (PROTOCOL EXECUTE)",
+   "Recalculate (PROTOCOL EXECUTE)"
+  ],
+  [
+   "⬇ 내보내기...",
+   "⬇ Export..."
+  ],
+  [
+   "▌ 내보내기",
+   "▌ Export"
+  ],
+  [
+   "최상단에 포함",
+   "Include at top"
+  ],
+  [
+   "아래 의석 수 등 통계 포함",
+   "Include stats below (seat counts, etc.)"
+  ],
+  [
+   "당수/로고 사진 포함",
+   "Include leader/logo photos"
+  ],
+  [
+   "무소속 펼치기",
+   "Expand independents"
+  ],
+  [
+   "원외정당 포함하기",
+   "Include extra-parliamentary parties"
+  ],
+  [
+   "예: 통합민주당",
+   "e.g. United Democratic Party"
+  ],
+  [
+   "✦ 이념 순 자동정렬",
+   "✦ Auto-sorted by ideology"
+  ],
+  [
+   "정당 복제",
+   "Duplicate party"
+  ],
+  [
+   "당수 사진",
+   "Leader photo"
+  ],
+  [
+   "당 로고 업로드",
+   "Upload party logo"
+  ],
+  [
+   "당 로고",
+   "Party logo"
+  ],
+  [
+   "클릭하여 사진 업로드",
+   "Click to upload a photo"
+  ],
+  [
+   "-- 의석 선택 (붙여넣기 대상) --",
+   "-- Select a seat (paste target) --"
+  ],
+  [
+   "◆ 위에서 의석을 고르고 \"붙여넣기\"를 누르면 현재 당수 이름·사진이 그 의석에 복사됩니다",
+   "◆ Pick a seat above and press \"Paste\" to copy the current leader's name and photo to that seat"
+  ],
+  [
+   "배정 합계",
+   "Assigned total"
+  ],
+  [
+   "드래그로 순서 변경",
+   "Drag to reorder"
+  ],
+  [
+   "-- 대표당 미지정 --",
+   "-- No lead party --"
+  ],
+  [
+   "★ 집권",
+   "★ Ruling"
+  ],
+  [
+   "연정에 정식 참여하지 않지만 신임투표·예산안 등에서 정부를 지지하는 정당",
+   "Parties that don't formally join the coalition but support the government in confidence votes, budgets, etc."
+  ],
+  [
+   "검색 (이름 / #좌석번호)",
+   "Search (name / #seat number)"
+  ],
+  [
+   "좌석 번호",
+   "Seat number"
+  ],
+  [
+   "👑 당수로 지정",
+   "👑 Make leader"
+  ],
+  [
+   "-- 소속 없음 --",
+   "-- No affiliation --"
+  ],
+  [
+   "— 정식 참여",
+   "— full member"
+  ],
+  [
+   "이름 미지정",
+   "Unnamed"
+  ],
+  [
+   "원 구성",
+   "Chambers"
+  ],
+  [
+   "의장 이름",
+   "Speaker name"
+  ],
+  [
+   "[+] 부의장 추가",
+   "[+] Add deputy speaker"
+  ],
+  [
+   "지역구 시스템 (기본: 지도)",
+   "District system (default: Map)"
+  ],
+  [
+   "지도 모드로 바꾸면 선거 > 지역구 탭에서 SVG 지도를 업로드할 수 있습니다",
+   "In Map mode you can upload an SVG map in Elections > Districts"
+  ],
+  [
+   "지도 글씨·배지 크기",
+   "Map text/badge size"
+  ],
+  [
+   "국회 반원 중앙 표시",
+   "House hemicycle center"
+  ],
+  [
+   "상원 반원 중앙 표시",
+   "Senate hemicycle center"
+  ],
+  [
+   "삼원 반원 중앙 표시",
+   "Third chamber hemicycle center"
+  ],
+  [
+   "클릭하여 로고 업로드",
+   "Click to upload a logo"
+  ],
+  [
+   "클릭해서 로고를 올리고, [로고]를 선택하면 반원 중앙에 표시됩니다",
+   "Click to upload a logo, then choose [Logo] to show it in the middle of the hemicycle"
+  ],
+  [
+   "반원 중앙에 표시할 로고",
+   "Logo shown in the hemicycle center"
+  ],
+  [
+   "저장 주기",
+   "Autosave interval"
+  ],
+  [
+   "15초",
+   "15s"
+  ],
+  [
+   "30초",
+   "30s"
+  ],
+  [
+   "1분",
+   "1m"
+  ],
+  [
+   "3분",
+   "3m"
+  ],
+  [
+   "5분",
+   "5m"
+  ],
+  [
+   "10분",
+   "10m"
+  ],
+  [
+   "이름 붙여 저장 (브라우저에 보관)",
+   "Save with a name (kept in the browser)"
+  ],
+  [
+   "심의 선택",
+   "Select for deliberation"
+  ],
+  [
+   "[ 국회 표결 결과 ]",
+   "[ Parliament vote result ]"
+  ],
+  [
+   "심의 법안 선택 (COUNCIL BILL)",
+   "Select bill (COUNCIL BILL)"
+  ],
+  [
+   "국무회의 의결 정족수",
+   "Cabinet Council quorum"
+  ],
+  [
+   "! 계엄령 중 — 국무회의로 법안 통과",
+   "! Martial law — bills pass through the Cabinet Council"
+  ],
+  [
+   "의회 표결이 정지된 동안, 내각 디스플레이(우측 \"내각\" 탭)에서 국무위원별로 찬성·반대·기권을 표시하세요. 아래에 실시간 집계가 표시됩니다.",
+   "While parliamentary voting is suspended, mark each minister's yea/nay/abstain in the cabinet display (the \"Cabinet\" tab on the right). The live tally appears below."
+  ],
+  [
+   "[ 국무회의 표결 결과 ]",
+   "[ Cabinet Council vote result ]"
+  ],
+  [
+   "▶ 국무회의로 의결",
+   "▶ Resolve in the Cabinet Council"
+  ],
+  [
+   "! 국무회의 표결 중",
+   "! Cabinet Council voting"
+  ],
+  [
+   "전원 찬성",
+   "All yea"
+  ],
+  [
+   "전원 반대",
+   "All nay"
+  ],
+  [
+   "예: 제1회 대통령 선거",
+   "e.g. 1st Presidential Election"
+  ],
+  [
+   "예: 제1회 총리 선거",
+   "e.g. 1st Prime Minister Election"
+  ],
+  [
+   "단순 다수 대표제",
+   "First-past-the-post"
+  ],
+  [
+   "기준 원:",
+   "Base chamber:"
+  ],
+  [
+   "(설정 탭에서 변경)",
+   "(change in the Settings tab)"
+  ],
+  [
+   "총리 선거",
+   "PM election"
+  ],
+  [
+   "개표 방식",
+   "Counting method"
+  ],
+  [
+   "지도에서 지역구를 하나씩 클릭해 직접 개표합니다",
+   "Click districts on the map one by one to count them yourself"
+  ],
+  [
+   "(활성 지역구 수)",
+   "(active districts)"
+  ],
+  [
+   "(선거 > 설정 탭에서 변경 — 대선과 방식을 공유합니다)",
+   "(change in Elections > Settings — shared with the presidential election)"
+  ],
+  [
+   "대선·총리 선거 방식",
+   "Presidential / PM election method"
+  ],
+  [
+   "— 총리직선제일 때 총리 선거에도 그대로 적용됩니다",
+   "— also used for PM elections when the PM is directly elected"
+  ],
+  [
+   "단순 다수",
+   "First-past-"
+  ],
+  [
+   "결선투표제",
+   "Two-round"
+  ],
+  [
+   "선거인단제",
+   "Electoral college"
+  ],
+  [
+   "1위 후보가 과반이 아니어도 최다 득표로 당선됩니다",
+   "The top candidate wins with the most votes even without a majority"
+  ],
+  [
+   "기준 원",
+   "Base chamber"
+  ],
+  [
+   "— 지지율(선거인단제는 지역구 결과)을 가져올 원",
+   "— the chamber whose support (district results for the electoral college) is used"
+  ],
+  [
+   "후보 설정",
+   "Candidates"
+  ],
+  [
+   "— 기본값은 당수, 의원 연결 또는 직접 입력으로 다른 인물을 세울 수 있습니다 (대선/총리 선거 공용)",
+   "— defaults to the party leader; link a member or type a name to field someone else (shared by presidential/PM elections)"
+  ],
+  [
+   "후보 이름 (비우면 당수)",
+   "Candidate name (blank = leader)"
+  ],
+  [
+   "후보 이름 (비우면 대표)",
+   "Candidate name (blank = leader)"
+  ],
+  [
+   "-- 의원에서 불러오기 --",
+   "-- Load from a member --"
+  ],
+  [
+   "정당별로 다음 총선 개표 1회에 한해 부정선거를 시도할 수 있습니다. 발각되면 활동 금지 처분을 받습니다.",
+   "Each party can attempt election fraud once, in the next general election count. If caught, the party is banned."
+  ],
+  [
+   "⚠ 부정선거 시도",
+   "⚠ Attempt election fraud"
+  ],
+  [
+   "(다음 총선 개표 1회에 적용)",
+   "(applies to the next general election count only)"
+  ],
+  [
+   "맵 메이커",
+   "Map Maker"
+  ],
+  [
+   "에서 내보낸 .jsx 파일을 업로드하면, 그리드 대신 실제 지도 모양으로 지역구를 만들 수 있습니다.",
+   " — upload a .jsx file exported from it to use real map-shaped districts instead of the grid."
+  ],
+  [
+   "하나의 지도를 하원·상원·삼원이 함께 쓰며, 지역구를 클릭하면 원별 의석 수와 정당별 성향(%)을 지정할 수 있습니다.",
+   "The House, Senate and Third chamber share one map; click a district to set its seats per chamber and party leanings (%)."
+  ],
+  [
+   "업로드하면",
+   "Uploading"
+  ],
+  [
+   "기존 지역구 데이터가 새 지도로 대체",
+   "replaces the existing district data with the new map"
+  ],
+  [
+   "⬆ 지역구 지도 업로드 (.jsx)",
+   "⬆ Upload district map (.jsx)"
+  ],
+  [
+   "파일 없음",
+   "No file"
+  ],
+  [
+   "테두리 색",
+   "Border color"
+  ],
+  [
+   "테마 색과 동기화",
+   "Sync with theme color"
+  ],
+  [
+   "채우기는 항상 투명입니다",
+   "Fill is always transparent"
+  ],
+  [
+   "글씨 테두리 색",
+   "Text outline color"
+  ],
+  [
+   "지역구 약칭 글씨의 테두리 색입니다",
+   "Outline color for district abbreviations"
+  ],
+  [
+   "지도 안 지역구 수:",
+   "Districts on map:"
+  ],
+  [
+   "개 | 지역구를 클릭하면 의석 수·성향을 편집할 수 있습니다",
+   " | click a district to edit its seats and leanings"
+  ],
+  [
+   "권역형 비례대표에서 지역구를 묶는 단위입니다. 원별로 독립적으로 설정합니다. (전국형을 쓸 경우 설정하지 않아도 됩니다)",
+   "Regions group districts for regional list PR. Set them separately per chamber. (Not needed if you use national lists.)"
+  ],
+  [
+   "▌ 권역 목록 (칠하기 대상을 선택하세요)",
+   "▌ Regions (choose one to paint)"
+  ],
+  [
+   "[+] 권역 추가",
+   "[+] Add region"
+  ],
+  [
+   "▌ 권역별 득표율",
+   "▌ Vote share by region"
+  ],
+  [
+   "자동 집계",
+   "Automatic"
+  ],
+  [
+   "수동 입력",
+   "Manual"
+  ],
+  [
+   "자동 집계: 권역에 속한 지역구들의 성향(%)을 평균해 득표율로 사용합니다. 수동 입력: 권역마다 직접 지지율을 입력합니다.",
+   "Automatic: averages the leanings (%) of the region's districts as its vote share. Manual: enter support for each region yourself."
+  ],
+  [
+   "완전연동형(100%)",
+   "Fully compensatory (100%)"
+  ],
+  [
+   "병립형(0%)",
+   "Parallel (0%)"
+  ],
+  [
+   "완전연동형",
+   "Fully compensatory"
+  ],
+  [
+   "연동 비율(%)",
+   "Compensation (%)"
+  ],
+  [
+   "0% = 병립형(지역구·비례 독립 배분) · 100% = 완전연동형(전체 의석을 득표율에 맞춤) · 그 사이는 준연동형처럼 절충 · 권역형은",
+   "0% = parallel (districts and lists allocated independently) · 100% = fully compensatory (all seats match vote share) · in between is a semi-compensatory mix · regional lists need"
+  ],
+  [
+   "0% = 병립형(지역구·비례 독립 배분) · 100% = 완전연동형(전체 의석을 득표율에 맞춤) · 그 사이는 준연동형처럼 절충",
+   "0% = parallel (districts and lists allocated independently) · 100% = fully compensatory (all seats match vote share) · in between is a semi-compensatory mix"
+  ],
+  [
+   "비례대표 방식 (국회) —",
+   "List PR method (House) —"
+  ],
+  [
+   "비례대표 방식 (상원) —",
+   "List PR method (Senate) —"
+  ],
+  [
+   "여론 > 권역",
+   "Opinion > Regions"
+  ],
+  [
+   "탭에서 권역을 먼저 설정하세요",
+   "regions to be set up first"
+  ],
+  [
+   "오차(±%)",
+   "Margin (±%)"
+  ],
+  [
+   "↺ 위치 초기화",
+   "↺ Reset view"
+  ],
+  [
+   "· Shift+스크롤: 확대/축소 · 휠클릭 드래그: 이동",
+   "· Shift+scroll: zoom · middle-click drag: pan"
+  ],
+  [
+   "권역 배정 맵",
+   "Region assignment map"
+  ],
+  [
+   "아래에서 \"칠하기\" 권역을 고른 뒤, 지도(또는 그리드)의 지역구를 클릭해 그 권역에 배정/해제하세요.",
+   "Choose a region to \"paint\" below, then click districts on the map (or grid) to add/remove them."
+  ],
+  [
+   "SVG 지도가 없습니다 — 지역구 탭에서 업로드하세요",
+   "No SVG map — upload one in the District tab"
+  ],
+  [
+   "지역구 탭에서 지도를 먼저 업로드하세요",
+   "Upload a map in the District tab first"
+  ],
+  [
+   "아직 권역이 없습니다. 아래 [+] 버튼으로 추가하세요.",
+   "No regions yet. Add one with the [+] button below."
+  ],
+  [
+   "권역을 먼저 추가하세요.",
+   "Add a region first."
+  ],
+  [
+   "정부 형태",
+   "Form of government"
+  ],
+  [
+   "의원내각제",
+   "Parliamentary"
+  ],
+  [
+   "직책 이름 (내각 디스플레이에 표시될 이름을 직접 바꿀 수 있습니다 — 비워두면 기본값 사용)",
+   "Position titles (rename them as shown in the cabinet display — leave blank for defaults)"
+  ],
+  [
+   "총리 / 국무총리",
+   "Prime Minister / Premier"
+  ],
+  [
+   "의장 (집단지도체제)",
+   "Chair (collective leadership)"
+  ],
+  [
+   "장관 / 국무위원",
+   "Minister / Cabinet member"
+  ],
+  [
+   "법안 거부권(veto) 주체",
+   "Bill veto holder"
+  ],
+  [
+   "거부권이 있으면, 표결 통과된 법안을 국가 > 입법 탭에서 거부할 수 있습니다",
+   "With a veto, bills that pass a vote can be vetoed in Nation > Legislation"
+  ],
+  [
+   "국가 비상사태 권한 주체",
+   "State of emergency power holder"
+  ],
+  [
+   "의회 해산 권한 주체",
+   "Dissolution power holder"
+  ],
+  [
+   "해산권 분할 —",
+   "Split dissolution —"
+  ],
+  [
+   "해산: 대통령 /",
+   "dissolution: President /"
+  ],
+  [
+   "해산: 총리",
+   "dissolution: PM"
+  ],
+  [
+   "계엄령 권한 주체",
+   "Martial law power holder"
+  ],
+  [
+   "대통령 이름",
+   "President name"
+  ],
+  [
+   "🔗 의원과 연결됨 — 이름·사진·당적 자동 반영",
+   "🔗 Linked to a member — name, photo and party applied automatically"
+  ],
+  [
+   "연결 해제",
+   "Unlink"
+  ],
+  [
+   "✕ 사진 제거",
+   "✕ Remove photo"
+  ],
+  [
+   "총리직선제",
+   "Direct PM election"
+  ],
+  [
+   "국무총리 이름",
+   "Premier name"
+  ],
+  [
+   "총리 이름",
+   "PM name"
+  ],
+  [
+   "🔒 현재 총리로 고정 (의석 변동에 영향받지 않음)",
+   "🔒 Lock the current PM (unaffected by seat changes)"
+  ],
+  [
+   "🔓 고정 해제 (다시 다수당 대표를 실시간 반영)",
+   "🔓 Unlock (follow the majority party leader again)"
+  ],
+  [
+   "🔒 내각 불신임으로 총리가 공석입니다 — 직접 지정하거나, 아래 \"고정 해제\"로 현재 다수당 대표를 새 총리로 반영하세요.",
+   "🔒 The PM post is vacant after a no-confidence vote — set one directly, or use \"Unlock\" below to make the current majority party leader PM."
+  ],
+  [
+   "🔒 총리가 고정되어 있습니다 — 다수당이 바뀌어도 총리는 유지되며, 내각 불신임이 가결되면 공석이 됩니다.",
+   "🔒 The PM is locked — they stay in office even if the majority changes, and the post becomes vacant if a no-confidence vote passes."
+  ],
+  [
+   "[+] 부총리 추가",
+   "[+] Add deputy PM"
+  ],
+  [
+   "총리 후보 지명 (대통령 임명제)",
+   "Nominate PM (presidential appointment)"
+  ],
+  [
+   "총리 후보",
+   "PM nominee"
+  ],
+  [
+   "후보 이름",
+   "Candidate name"
+  ],
+  [
+   "지명 → 의회 심의 상정",
+   "Nominate → send to parliament"
+  ],
+  [
+   "내각 불신임",
+   "No confidence"
+  ],
+  [
+   "건설적 불신임제 (독일 · 이스라엘식) — 불신임안에 후임을 함께 지명",
+   "Constructive vote of no confidence (German/Israeli style) — name a successor in the motion"
+  ],
+  [
+   "-- 후임 총리 소속 정당 --",
+   "-- Successor PM's party --"
+  ],
+  [
+   "후임 총리 이름",
+   "Successor PM name"
+  ],
+  [
+   "건설적 불신임안",
+   "Constructive no-confidence motion"
+  ],
+  [
+   "내각 불신임안",
+   "No-confidence motion"
+  ],
+  [
+   "발의 !",
+   "file !"
+  ],
+  [
+   "가결되면 국가 > 입법 탭에서 확인할 수 있으며, 통과 시 현재 총리가 해임됩니다",
+   "Shown in Nation > Legislation once filed; if it passes, the current PM is dismissed"
+  ],
+  [
+   "가결되면 지명한 후임이 곧바로 새 총리가 되고, 기존 내각(부총리·국무위원)은 물러납니다 — 공석이 생기지 않습니다",
+   "If it passes, the named successor becomes PM right away and the old cabinet (deputy PMs, ministers) steps down — no vacancy"
+  ],
+  [
+   "[+] 국무위원 추가",
+   "[+] Add cabinet member"
+  ],
+  [
+   "[+] 장관 추가",
+   "[+] Add minister"
+  ],
+  [
+   "▌ 비상 권한",
+   "▌ Emergency powers"
+  ],
+  [
+   "해산 대상",
+   "Dissolve"
+  ],
+  [
+   "의회 전체",
+   "Whole parliament"
+  ],
+  [
+   "한 원만 해산하면 그 원의 의석만 비워지고, 그 원의 총선을 반영하면 해제됩니다.",
+   "Dissolving one chamber empties only its seats; it's lifted once that chamber's general election is applied."
+  ],
+  [
+   "의회 해산",
+   "Dissolution"
+  ],
+  [
+   "존속 정당이 이름·색·당수를 유지한 채 다른 정당들을 흡수합니다. 흡수된 정당의 의석·의원·연정·지지율이 존속 정당으로 옮겨집니다.",
+   "The surviving party keeps its name, color and leader and absorbs the others. The absorbed parties' seats, members, coalitions and support move to it."
+  ],
+  [
+   "흡수될 정당을 1개 이상 고르세요.",
+   "Pick at least one party to absorb."
+  ],
+  [
+   "고른 정당들이 모두 해산하고 새 정당으로 합쳐집니다. 의석·의원·연정·지지율이 새 정당으로 옮겨집니다.",
+   "All selected parties dissolve and merge into a new party. Seats, members, coalitions and support move to the new party."
+  ],
+  [
+   "합칠 정당 (2개 이상)",
+   "Parties to merge (2 or more)"
+  ],
+  [
+   "합쳐지는 정당들을 새 정당의 계파로 남기기",
+   "Keep merged parties as factions of the new party"
+  ],
+  [
+   "합칠 정당을 2개 이상 고르세요.",
+   "Pick at least two parties to merge."
+  ],
+  [
+   "의석 수",
+   "Seat count"
+  ],
+  [
+   "지금 설정에선 숨겨져 있어요",
+   "hidden with the current settings"
+  ],
+  [
+   "의회 ›",
+   "Parliament ›"
+  ],
+  [
+   "여론 ›",
+   "Opinion ›"
+  ],
+  [
+   "내각 ›",
+   "Cabinet ›"
+  ],
+  [
+   "시각 ›",
+   "Visuals ›"
+  ],
+  [
+   "맨 위 ›",
+   "Top ›"
+  ],
+  [
+   "왼쪽 ›",
+   "Left ›"
+  ],
+  [
+   "가운데 ›",
+   "Center ›"
+  ],
+  [
+   "공통 ›",
+   "General ›"
+  ],
+  [
+   "모바일 ›",
+   "Mobile ›"
+  ],
+  [
+   "⚠ (부정선거)",
+   "⚠ (Election fraud)"
+  ],
+  [
+   " (부정선거)",
+   " (Election fraud)"
+  ],
+  [
+   "의회를 이루는 정당 · 의석 · 의원 · 연정을 다룹니다.",
+   "Parties, seats, members and coalitions that make up parliament."
+  ],
+  [
+   "나라의 정당을 만들고 꾸밉니다.",
+   "Create and customize your nation's parties."
+  ],
+  [
+   "정당이 속할 이념을 추가하고 순서를 정합니다. 자동 정렬일 때 정당은 이 순서대로 반원에 앉아요.",
+   "Add ideologies and set their order. With auto-sort, parties sit in the hemicycle in this order."
+  ],
+  [
+   "정당 추가 · 복제 · 삭제, 이름 · 약칭 · 색 · 이념 · 상태, 소속 의회, 파벌, 합당(흡수합당 · 신설합당).",
+   "Add, duplicate and delete parties; name, abbreviation, color, ideology, status, chambers, factions, and mergers (absorption / new party)."
+  ],
+  [
+   "정당 대표와 파벌 대표의 이름 · 사진. 의원내각제에선 다수당 당수가 자동으로 총리가 됩니다.",
+   "Names and photos of party and faction leaders. Under a parliamentary system, the majority party leader automatically becomes PM."
+  ],
+  [
+   "의회별 이름과 총 의석 수, 정당마다 몇 석인지 정합니다. \"배정 합계\"는 총 의석 수를 넘을 수 없어요.",
+   "Set each chamber's name and total seats, and how many seats each party has. The \"Assigned total\" can't exceed the total."
+  ],
+  [
+   "원마다 따로 정합니다. 상원 · 삼원은 국가 › 설정에서 양원제 · 삼원제를 골랐을 때 나타나요.",
+   "Set separately per chamber. The Senate and Third chamber appear when you choose bicameral/tricameral in Nation › Settings."
+  ],
+  [
+   "지역구에서 당선된 의원 명단입니다. 이름 · 사진을 채우고, 궐석(빈자리)으로 처리하면 보궐선거를 치를 수 있어요. 지역구 선거를 치른 뒤에 채워집니다.",
+   "The roster of district winners. Fill in names and photos, and mark seats vacant to hold by-elections. Filled after a district election."
+  ],
+  [
+   "비례대표 의원 명단입니다. 자리마다 소속 정당 · 이름 · 사진을 정하고, 그 의원을 당수로 지정할 수 있어요.",
+   "The list (PR) member roster. Set each seat's party, name and photo, and make a member party leader."
+  ],
+  [
+   "정당들을 묶어 연립정부를 만듭니다. 집권 연정(★) · 대표당 · 각외협력 정당을 정하고, 단독 집권이나 무집권 상태로 둘 수도 있어요. 집권 세력은 반원에서 금색 테두리로 표시됩니다.",
+   "Group parties into coalition governments. Set the ruling coalition (★), lead party and confidence-and-supply parties, or leave single-party or no government. The governing side gets a gold outline in the hemicycle."
+  ],
+  [
+   "나라 전체의 설정과 입법 · 선거 · 기록을 다룹니다.",
+   "Nation-wide settings, legislation, elections and records."
+  ],
+  [
+   "나라의 기본 틀을 정합니다.",
+   "Set up the basics of your nation."
+  ],
+  [
+   "단원제 · 양원제 · 삼원제, 의장단(의장 · 부의장), 지역구 표시 방식(지도 · 그리드), 집권 세력 강조.",
+   "Unicameral/bicameral/tricameral, presiding officers (speaker, deputies), district display (map/grid), highlight government."
+  ],
+  [
+   "국가명 · 국기, 반원 가운데에 의석 수 또는 의회 로고 표시.",
+   "Nation name and flag, and whether the hemicycle center shows the seat count or a chamber logo."
+  ],
+  [
+   "화면 오른쪽 위에 보이는 현재 날짜와 회기, 표시 방식.",
+   "The current date and session shown at the top right, and how they're displayed."
+  ],
+  [
+   "자동저장 주기, 이름 붙여 저장 · 불러오기, 파일(.json)로 저장 · 불러오기, 초기화.",
+   "Autosave interval, named saves and loading, saving/loading files (.json), and reset."
+  ],
+  [
+   "법안을 만들고 통과시키는 과정입니다.",
+   "Drafting bills and getting them passed."
+  ],
+  [
+   "새 법안 작성(제목 · 내용 · 태그 · 가결 기준), 기존 법안 수정과 개정안.",
+   "Write new bills (title, text, tags, passing threshold), edit existing bills and amendments."
+  ],
+  [
+   "법안을 의회 또는 국무회의에 올립니다. 검색 · 태그로 찾을 수 있어요.",
+   "Table bills in parliament or the Cabinet Council. Find them by search or tags."
+  ],
+  [
+   "정당별 · 의원별 찬반 표결. 거부권이 있으면 통과된 법안을 거부할 수 있습니다.",
+   "Vote yea/nay by party or by member. With a veto, passed bills can be vetoed."
+  ],
+  [
+   "내각이 의결하는 법안의 표결과 의결 정족수.",
+   "Votes on bills decided by the cabinet, and the quorum."
+  ],
+  [
+   "선거를 치르고 개표합니다. 결과는 여론 탭의 지지율 · 성향을 바탕으로 정해져요.",
+   "Hold elections and count votes. Results are based on support and leanings from the Opinion tabs."
+  ],
+  [
+   "대통령(총리직선제면 총리) 선거 개표.",
+   "Count presidential elections (or PM elections under direct PM election)."
+  ],
+  [
+   "의회 선거 — 비례 · 지역구 · 전체 방식, 궐석 지역구만 다시 뽑는 보궐선거, 개표 속도.",
+   "Parliamentary elections — list, district or both, by-elections for vacant districts only, and counting speed."
+  ],
+  [
+   "대선 방식(단순 다수 · 결선투표 · 선거인단), 지지율을 가져올 기준 원, 후보.",
+   "Presidential method (first-past-the-post / two-round / electoral college), the base chamber for support, and candidates."
+  ],
+  [
+   "지나간 일을 모아 둡니다.",
+   "A record of what has happened."
+  ],
+  [
+   "가결 · 부결 · 거부된 법안 보관함 (상태별로 걸러 보기).",
+   "Archive of passed, rejected and vetoed bills (filter by status)."
+  ],
+  [
+   "지난 선거 결과.",
+   "Past election results."
+  ],
+  [
+   "정당별로 다음 총선 개표 1회에 한해 부정선거를 시도할 수 있습니다. 발각되면 그 정당은 활동 금지 처분을 받아요.",
+   "Each party can attempt election fraud once, in the next general election count. If caught, the party is banned."
+  ],
+  [
+   "선거 결과를 좌우하는 지역구 · 성향 · 지지율을 정합니다. 여기서 정한 값으로 국가 › 선거에서 개표해요.",
+   "Set the districts, leanings and support that decide elections. Nation › Elections counts votes using these values."
+  ],
+  [
+   "지역구를 만들고 원별 의석 수를 정합니다. 맵 메이커에서 만든 지도(.jsx)를 올리면 실제 지도 모양의 지역구를 쓸 수 있어요.",
+   "Create districts and set their seats per chamber. Upload a map (.jsx) made in the Map Maker to use real map-shaped districts."
+  ],
+  [
+   "지역구마다 정당별 성향(%)을 정합니다. 지역구 선거에서 어느 정당이 이길지가 여기서 갈려요.",
+   "Set each party's leaning (%) per district. This decides who wins district elections."
+  ],
+  [
+   "권역형 비례대표를 쓸 때 지역구를 권역으로 묶습니다. 권역 득표율은 지역구 성향을 평균하는 자동 집계나 직접 입력 중에서 고릅니다.",
+   "Group districts into regions for regional list PR. Region vote shares are either averaged from district leanings or entered by hand."
+  ],
+  [
+   "정당별 지지율(%)과 오차 범위를 정합니다. 비례대표 의석과 대선 결과의 바탕이 되고, 선거를 치르려면 꼭 필요해요. 전국형 · 권역형 비례를 고를 수 있습니다.",
+   "Set each party's support (%) and margin of error. It drives list seats and presidential results and is required to hold an election. Choose national or regional lists."
+  ],
+  [
+   "정부를 이끄는 사람들과 그 권한을 다룹니다. 의석 화면의 \"내각\" 탭에 한눈에 보여요.",
+   "The people who lead the government and their powers. See them at a glance in the \"Cabinet\" tab of the seat screen."
+  ],
+  [
+   "정부 형태(대통령제 · 이원집정부제 · 의원내각제 · 입헌군주제 · 집단지도체제)와 직책 이름, 그리고 법안 거부권 · 비상사태 · 의회 해산 · 계엄령 권한을 누가 가질지 정합니다. 의회 해산은 의회 전체 또는 한 원(예: 하원)만 고를 수 있어요.",
+   "Choose the form of government (presidential / semi-presidential / parliamentary / constitutional monarchy / collective leadership), position titles, and who holds the veto, state of emergency, dissolution and martial law powers. Dissolution can target the whole parliament or one chamber (e.g. the lower house)."
+  ],
+  [
+   "대통령의 이름 · 사진 · 소속 정당. 의원에서 불러오면 그 의원 정보와 연결돼 함께 바뀝니다.",
+   "The president's name, photo and party. Load from a member to link them so they stay in sync."
+  ],
+  [
+   "총리 선출 방식(다수당 대표 자동 · 총리직선제), 현재 총리 고정, 부총리, 내각 불신임안 발의. 건설적 불신임제(독일 · 이스라엘식)를 켜면 불신임안에 후임을 함께 지명하고, 가결되면 그 후임이 바로 총리가 됩니다.",
+   "How the PM is chosen (majority leader automatically / direct election), locking the current PM, deputy PMs, and filing no-confidence motions. With the constructive vote of no confidence (German/Israeli style), the motion names a successor who becomes PM immediately if it passes."
+  ],
+  [
+   "장관 · 국무위원을 추가하고 직책 · 이름 · 사진 · 소속 정당을 정합니다.",
+   "Add ministers and cabinet members and set their positions, names, photos and parties."
+  ],
+  [
+   "화면 맨 위의 세이브 탭 바와 왼쪽 메뉴(사이드바) 쓰는 법입니다.",
+   "How to use the save tab bar at the top and the menu (sidebar) on the left."
+  ],
+  [
+   "⌂ 집 아이콘",
+   "⌂ Home icon"
+  ],
+  [
+   "탭 바 맨 왼쪽. 누르면 지금 상태를 바로 저장한 뒤 메인 화면(시작 화면)으로 돌아갑니다.",
+   "At the far left of the tab bar. Saves right away, then returns to the main (start) screen."
+  ],
+  [
+   "세이브 탭",
+   "Save tabs"
+  ],
+  [
+   "탭 하나하나가 세이브(나라 하나)입니다. 누르면 확인창 없이 그 세이브로 바로 바뀌고, 진행 상황은 세이브마다 따로 자동저장돼요.",
+   "Each tab is a save (one nation). Click to switch to it instantly with no confirmation; progress is autosaved separately for each save."
+  ],
+  [
+   "맨 앞의 기본 자동저장 — 어느 세이브에도 속하지 않은 작업을 담아 두어 기존 데이터가 사라지지 않게 합니다.",
+   "The default autosave at the front — holds work that doesn't belong to any save so existing data is never lost."
+  ],
+  [
+   "이름 바꾸기",
+   "Rename"
+  ],
+  [
+   "탭 이름을 더블클릭 (또는 국가 › 설정 › 저장의 ✎).",
+   "Double-click the tab name (or ✎ in Nation › Settings › Save)."
+  ],
+  [
+   "그 세이브 삭제 (확인 후).",
+   "Delete that save (after confirming)."
+  ],
+  [
+   "+ 새 세이브",
+   "+ New save"
+  ],
+  [
+   "새 세이브를 만듭니다.",
+   "Creates a new save."
+  ],
+  [
+   "새로 생성",
+   "Create new"
+  ],
+  [
+   "아무것도 없는 기본 상태에서 새로 시작 — 지금 화면은 복사되지 않아요.",
+   "Start fresh from the default state — the current screen isn't copied."
+  ],
+  [
+   "프리셋에서 생성",
+   "Create from preset"
+  ],
+  [
+   "튜토리얼 공화국처럼 미리 준비된 나라의 복사본으로 시작.",
+   "Start from a copy of a ready-made nation, like the Tutorial Republic."
+  ],
+  [
+   "메뉴 묶음과 항목",
+   "Menu groups and items"
+  ],
+  [
+   "의회 · 국가 · 여론 · 내각 · 도움말 다섯 묶음과 그 안의 항목. 항목을 누르면 그 기능 화면이 열리고, 묶음 제목을 누르면 접히거나 펼쳐집니다 (다음에 열어도 그대로 기억).",
+   "Five groups — Parliament, Nation, Opinion, Cabinet, Help — and their items. Click an item to open that screen; click a group title to collapse or expand it (remembered next time)."
+  ],
+  [
+   "사이드바 접기",
+   "Collapse sidebar"
+  ],
+  [
+   "사이드바 머리 오른쪽의 접기 버튼으로 아이콘만 남기고 접어 편집 화면을 넓게 쓸 수 있어요. 접힌 상태에선 아이콘을 누르면 그 묶음으로 바로 이동합니다.",
+   "Use the collapse button at the right of the sidebar header to shrink it to icons and widen the edit area. When collapsed, click an icon to jump to that group."
+  ],
+  [
+   "편집 패널 머리 · 폭 조절",
+   "Edit panel header · resizing"
+  ],
+  [
+   "편집 패널 맨 위에는 라이트/다크에선 지금 위치(묶음 › 항목), 네온에선 \"MINISTRY OF INTERIOR\" 띠와 국가명이 보입니다. 편집 패널과 시각 화면 사이 경계를 끌면 폭을 바꿀 수 있고, 더블클릭하면 기본 폭으로 돌아가요.",
+   "The top of the edit panel shows your location (group › item) in Light/Dark, or the \"MINISTRY OF INTERIOR\" strip and nation name in Neon. Drag the border between the edit panel and visuals to resize; double-click to reset."
+  ],
+  [
+   "실행 버튼과 단축키",
+   "Execute button and shortcuts"
+  ],
+  [
+   "설정을 바꾼 뒤 \"PROTOCOL EXECUTE\"(실행)를 누르면 시각 화면이 새로 그려집니다.",
+   "After changing settings, press \"PROTOCOL EXECUTE\" to redraw the visuals."
+  ],
+  [
+   "입력 칸 밖에서 누르면 실행.",
+   "Execute (when not typing in a field)."
+  ],
+  [
+   "바로 저장.",
+   "Save now."
+  ],
+  [
+   "되돌리기 (Ctrl+Shift+Z로 다시 실행).",
+   "Undo (Ctrl+Shift+Z to redo)."
+  ],
+  [
+   "열려 있는 확인 · 안내 · 내보내기 창 닫기.",
+   "Close open confirm, notice or export windows."
+  ],
+  [
+   "모바일 화면 모드",
+   "Mobile UI mode"
+  ],
+  [
+   "메인 메뉴 › 설정의 화면 모드(UI MODE)에서 모바일을 고르면 사이드바 대신 화면 아래 탭 바(묶음 + 의석)와 떠 있는 실행 버튼을 씁니다. 세부 항목은 위쪽 칩 줄에서 고르고, \"의석\"을 누르면 시각 화면으로 넘어가요.",
+   "Choose Mobile under UI MODE in Main menu › Settings to use a bottom tab bar (groups + Seats) and a floating execute button instead of the sidebar. Pick items from the chip row at the top; tap \"Seats\" for the visuals."
+  ],
+  [
+   "화면 오른쪽(모바일은 \"의석\")의 시각 탭 — 설정한 내용이 그림으로 보이는 곳입니다.",
+   "The visual tabs on the right (\"Seats\" on mobile) — where your settings are drawn."
+  ],
+  [
+   "하원(첫 번째 의회)의 의석을 반원으로 보여줍니다. 위쪽 \"반원 / 지역구\"로 지역구 지도 보기로 바꿀 수 있고, 아래에는 여당 · 야당별 정당 카드(의석 수 · 비율 · 파벌)와 원외정당, 의장단이 나와요.",
+   "Shows the House (first chamber) seats as a hemicycle. Switch to the district map with \"Hemicycle / District\" at the top; below are party cards for government and opposition (seats, share, factions), extra-parliamentary parties and presiding officers."
+  ],
+  [
+   "상원(두 번째 의회)의 의석. 보는 법은 하원과 같습니다.",
+   "Senate (second chamber) seats. Works the same as the House."
+  ],
+  [
+   "삼원(세 번째 의회)의 의석.",
+   "Third chamber seats."
+  ],
+  [
+   "대통령 · 총리 · 부총리 · 국무위원 등 정부 구성원을 카드로 한눈에 보여줍니다. 내각 묶음에서 정한 내용이 여기 반영돼요.",
+   "Shows the president, PM, deputy PMs, ministers and other government members as cards. Reflects what you set in the Cabinet group."
+  ],
+  [
+   "지역구 지도. 여론 › 지역구를 열면 나타나고, 지역구를 눌러 편집할 수 있어요. 탭의 ×로 닫습니다.",
+   "District map. Appears when you open Opinion › Districts; click a district to edit it. Close with the × on the tab."
+  ],
+  [
+   "정당별 성향 지도. 여론 › 성향을 열면 나타나며, 지역구마다 어느 정당 쪽인지 색으로 보여요.",
+   "Party leaning map. Appears when you open Opinion › Tendency and colors each district by which party it leans toward."
+  ],
+  [
+   "권역 지도. 여론 › 권역을 열면 나타나고, 지역구를 칠해 권역으로 묶습니다.",
+   "Region map. Appears when you open Opinion › Regions; paint districts to group them into regions."
+  ],
+  [
+   "총선 개표 화면과 결과. 개표가 진행되는 모습, 정당별 득표와 직전 대비 의석 변동(▲/▼)을 보여주고, 결과를 확인한 뒤 국가 › 선거의 \"✔ 의회에 반영\"을 누르면 그 결과대로 의석이 바뀝니다.",
+   "General election count and results. Shows the count in progress, votes by party and seat changes (▲/▼); after checking, press \"✔ Apply to Parliament\" in Nation › Elections to update the seats."
+  ],
+  [
+   "총선을 개표하면 원마다 생겨요",
+   "appears per chamber after a general election count"
+  ],
+  [
+   "양원제 · 삼원제일 때 나타나요",
+   "appears with bicameral/tricameral"
+  ],
+  [
+   "삼원제일 때 나타나요",
+   "appears with tricameral"
+  ],
+  [
+   "날짜 · 회기",
+   "Date · Session"
+  ],
+  [
+   "시각 화면 오른쪽 위에 보이는 현재 날짜와 회기. 국가 › 설정 › 날짜에서 정합니다 (\"열기\"로 이동).",
+   "The current date and session at the top right of the visuals. Set them in Nation › Settings › Date (\"Open\" takes you there)."
+  ],
+  [
+   "좌석 정보 · 이미지 내보내기",
+   "Seat info · image export"
+  ],
+  [
+   "좌석(점)을 누르면 그 자리의 정당 · 의원 정보 카드가 뜹니다. 반원 · 지도 · 선거 결과 · 내각 화면에서 오른쪽 클릭(모바일은 길게 누르기) → \"내보내기...\"를 고르면 이미지로 저장할 수 있어요.",
+   "Click a seat (dot) to see that seat's party and member info. Right-click (long-press on mobile) the hemicycle, maps, election results or cabinet view and choose \"Export...\" to save an image."
+  ],
+  [
+   "화면 둘러보기",
+   "Screen Tour"
+  ],
+  [
+   "메뉴 이동 · 의석 화면 · 세이브",
+   "Menus · seat screen · saves"
+  ],
+  [
+   "튜토리얼 공화국에 오신 것을 환영합니다",
+   "Welcome to the Tutorial Republic"
+  ],
+  [
+   "가상의 나라 \"튜토리얼 공화국\"에서 기본 조작을 직접 해보며 배웁니다. 튜토리얼은 #1 ~ #5로 짧게 나뉘어 있고, 밝게 표시된 곳을 실제로 조작해야 다음 단계로 넘어가요. 이 나라는 복사본(새 세이브)이라 마음껏 바꿔도 괜찮습니다.",
+   "Learn the basics hands-on in the fictional \"Tutorial Republic\". The tutorial is split into short lessons #1–#5, and you move on by actually using the highlighted control. This nation is a copy (a new save), so feel free to change anything."
+  ],
+  [
+   "메뉴 이동하기",
+   "Using the menu"
+  ],
+  [
+   "기능은 의회 · 국가 · 여론 · 내각 네 묶음으로 나뉘어 있고, 회색 \"도움말\"에는 모든 탭의 설명이 있어요. 화면 아래 탭 바에서 \"의회\"를 누르고, 위쪽 칩 줄에서 \"정당\"을 골라보세요.",
+   "Features are grouped into Parliament, Nation, Opinion and Cabinet, and the gray \"Help\" explains every tab. Tap \"Parliament\" in the bottom tab bar, then pick \"Parties\" in the chip row at the top."
+  ],
+  [
+   "기능은 의회 · 국가 · 여론 · 내각 네 묶음으로 나뉘어 있고, 맨 아래 회색 \"도움말\"에는 모든 탭의 설명이 있어요. 왼쪽 메뉴에서 의회 › 정당을 눌러보세요.",
+   "Features are grouped into Parliament, Nation, Opinion and Cabinet, and the gray \"Help\" at the bottom explains every tab. Click Parliament › Parties in the left menu."
+  ],
+  [
+   "정당 화면이 열렸어요.",
+   "The Parties screen is open."
+  ],
+  [
+   "의석 살펴보기",
+   "Exploring the seats"
+  ],
+  [
+   "의석은 반원 모양으로 그려집니다. 아래 탭 바의 \"의석\"을 눌러 의석 화면으로 간 뒤, 좌석(점) 하나를 눌러보세요.",
+   "Seats are drawn as a hemicycle. Tap \"Seats\" in the bottom tab bar to go to the seat screen, then tap a seat (dot)."
+  ],
+  [
+   "의석은 반원 모양으로 그려집니다. 좌석(점) 하나를 눌러보세요.",
+   "Seats are drawn as a hemicycle. Click a seat (dot)."
+  ],
+  [
+   "그 자리의 정당 · 의원 정보가 떴어요. 좌석을 오른쪽 클릭(길게 누르기)하면 이미지로 내보낼 수도 있어요.",
+   "That seat's party and member info appeared. Right-click (long-press) a seat to export an image."
+  ],
+  [
+   "맨 위의 탭 하나하나가 세이브입니다. +로 새 세이브(또는 프리셋 복사본)를 만들고, 탭 이름을 더블클릭하면 이름을 바꿀 수 있어요. 진행 상황은 자동으로 저장됩니다.",
+   "Each tab at the top is a save. Use + to create a new save (or a preset copy), and double-click a tab name to rename it. Progress is saved automatically."
+  ],
+  [
+   "정당과 의석",
+   "Parties & Seats"
+  ],
+  [
+   "정당 만들기 · 이름 짓기 · 의석 배정 · 다시 계산",
+   "Create a party · name it · assign seats · recalculate"
+  ],
+  [
+   "정당 만들기",
+   "Creating a party"
+  ],
+  [
+   "의회 › 정당 › 정보에서는 정당을 추가하고 이름 · 색 · 이념을 정합니다. \"[+] 정당 추가\"를 눌러 새 정당을 만들어 보세요.",
+   "Parliament › Parties › Info is where you add parties and set their name, color and ideology. Press \"[+] Add party\" to create a new one."
+  ],
+  [
+   "새 정당 \"신당\"이 목록에 생겼어요.",
+   "The new party \"New Party\" appeared in the list."
+  ],
+  [
+   "정당 이름 짓기",
+   "Naming the party"
+  ],
+  [
+   "방금 만든 정당의 이름 칸에 원하는 이름을 입력해 보세요. 옆의 색 칸으로 정당 색도 바꿀 수 있어요.",
+   "Type a name in the new party's name box. You can also change its color with the color box next to it."
+  ],
+  [
+   "멋진 이름이네요!",
+   "Nice name!"
+  ],
+  [
+   "빈자리 만들기",
+   "Making room"
+  ],
+  [
+   "의석 나눠주기",
+   "Assigning seats"
+  ],
+  [
+   "의석이 배정됐어요.",
+   "Seats assigned."
+  ],
+  [
+   "다시 계산하기",
+   "Recalculating"
+  ],
+  [
+   "설정을 바꾼 뒤에는 실행 버튼을 눌러 의석 화면을 새로 그립니다. 지금 눌러보세요. 아래 탭 바의 \"의석\"에서 새 정당의 자리를 확인할 수 있어요.",
+   "After changing settings, press the execute button to redraw the seat screen. Press it now. You can see the new party's seats under \"Seats\" in the bottom tab bar."
+  ],
+  [
+   "설정을 바꾼 뒤에는 이 버튼을 눌러 의석 화면을 새로 그립니다. 지금 눌러보세요. (입력 칸 밖에서 Enter 키를 눌러도 같아요)",
+   "After changing settings, press this button to redraw the seat screen. Press it now. (Pressing Enter outside a text field does the same.)"
+  ],
+  [
+   "의석 화면이 새로 그려졌어요. 새 정당의 자리도 생겼을 거예요.",
+   "The seat screen was redrawn. The new party should have seats now."
+  ],
+  [
+   "법안 제출 · 상정과 표결",
+   "Submitting · tabling and voting"
+  ],
+  [
+   "법안 제출하기",
+   "Submitting a bill"
+  ],
+  [
+   "국가 › 입법에서는 법안을 작성해 의회에 올리고 표결합니다. 법안 제목을 적고 \"[+] 법안 등록\"을 눌러보세요.",
+   "Nation › Legislation is where you write bills, table them in parliament and vote. Enter a bill title and press \"[+] Register bill\"."
+  ],
+  [
+   "법안이 등록됐어요!",
+   "Bill registered!"
+  ],
+  [
+   "상정과 표결",
+   "Tabling and voting"
+  ],
+  [
+   "등록한 법안은 상정 탭에서 의회(또는 국무회의)에 올리고, 표결 탭에서 정당별 · 의원별로 찬반 표를 던집니다. 가결 · 부결된 법안은 기록 탭에 남아요.",
+   "Registered bills are tabled in parliament (or the Cabinet Council) from the Table tab, and voted on by party or member in the Vote tab. Passed and rejected bills stay in the Records tab."
+  ],
+  [
+   "여론과 선거",
+   "Opinion & Elections"
+  ],
+  [
+   "지지율 입력 · 개표",
+   "Entering support · counting votes"
+  ],
+  [
+   "지지율 정하기",
+   "Setting support"
+  ],
+  [
+   "여론 › 지지율에서 정당마다 예상 지지율(%)을 정합니다. 선거는 이 숫자를 바탕으로 치러져요. 한 정당 이상에 지지율을 입력해 보세요 (예: 40).",
+   "Opinion › Support is where you set each party's expected support (%). Elections are based on these numbers. Enter support for at least one party (e.g. 40)."
+  ],
+  [
+   "지지율이 입력됐어요.",
+   "Support entered."
+  ],
+  [
+   "선거 치르기",
+   "Holding an election"
+  ],
+  [
+   "국가 › 선거 › 총선에서 \"개표 시작\"을 누르면 지지율에 따라 개표가 진행됩니다. 지금 눌러보세요.",
+   "In Nation › Elections › General, press \"Start count\" to count votes based on support. Press it now."
+  ],
+  [
+   "개표가 시작됐어요!",
+   "The count has started!"
+  ],
+  [
+   "개표 지켜보기",
+   "Watching the count"
+  ],
+  [
+   "개표가 진행 중입니다. 반원에 의석이 하나씩 채워지는 모습을 지켜보세요. ",
+   "The count is in progress. Watch the hemicycle fill up seat by seat. "
+  ],
+  [
+   "개표가 끝났어요. ",
+   "The count is finished. "
+  ],
+  [
+   "결과대로 의석이 바뀌고, 결과는 오른쪽 클릭(길게 누르기)으로 이미지로 내보낼 수 있어요. 개표 속도는 선거 설정에서 조절합니다.",
+   "Seats change to match the result, and you can export it as an image with right-click (long-press). Adjust the counting speed in the election settings."
+  ],
+  [
+   "총리와 당수 · 국무위원 · 내각 화면",
+   "PM and leaders · cabinet members · cabinet view"
+  ],
+  [
+   "총리는 누가 될까?",
+   "Who becomes PM?"
+  ],
+  [
+   "내각 › 설정에서 대통령제 · 이원집정부제 · 의원내각제 등 정부 형태를 고릅니다. 튜토리얼 공화국은 의원내각제라, 의석이 가장 많은 정당의 대표(당수)가 자동으로 총리가 돼요 (👑 표시).",
+   "Cabinet › Settings is where you choose the form of government (presidential, semi-presidential, parliamentary, ...). The Tutorial Republic is parliamentary, so the leader of the party with the most seats automatically becomes PM (marked 👑)."
+  ],
+  [
+   "다수당 대표 정하기",
+   "Choosing the majority leader"
+  ],
+  [
+   "당수가 정해졌어요. 이제 내각 › 총리에도 이 사람이 총리로 표시됩니다.",
+   "Leader set. They now appear as PM in Cabinet › PM too."
+  ],
+  [
+   "국무위원 추가하기",
+   "Adding a cabinet member"
+  ],
+  [
+   "내각 › 내각에서 장관 같은 국무위원을 추가합니다. \"[+] 국무위원 추가\"를 눌러보세요.",
+   "Cabinet › Cabinet is where you add ministers and other cabinet members. Press \"[+] Add cabinet member\"."
+  ],
+  [
+   "국무위원 자리가 생겼어요. 이름 · 직책 · 소속 정당을 채울 수 있어요.",
+   "A cabinet seat was added. You can fill in the name, position and party."
+  ],
+  [
+   "내각 화면",
+   "Cabinet view"
+  ],
+  [
+   "의석 화면의 \"내각\" 탭에서 총리와 국무위원이 한눈에 보입니다. 오른쪽 클릭(길게 누르기)으로 이미지로 내보낼 수 있어요.",
+   "The \"Cabinet\" tab of the seat screen shows the PM and cabinet at a glance. Export it as an image with right-click (long-press)."
+  ],
+  [
+   "테마와 언어",
+   "Theme & Language"
+  ],
+  [
+   "메인 메뉴 › 설정에서 라이트 · 다크 · 네온 테마와 언어를 바꿀 수 있습니다. 이 튜토리얼은 시작 화면의 프리셋 목록에서 언제든 다시 할 수 있어요.",
+   "Change the Light / Dark / Neon theme and the language in Main menu › Settings. You can redo this tutorial any time from the preset list on the start screen."
+  ],
+  [
+   "직접 해보세요 — 해내면 \"다음\"이 열립니다",
+   "Try it yourself — \"Next\" unlocks when you do"
+  ],
+  [
+   "튜토리얼 목차",
+   "Tutorial lessons"
+  ],
+  [
+   " · 실습",
+   " · Hands-on"
+  ],
+  [
+   "#1 ~ #5를 모두 마쳤습니다. 이제 이 나라를 마음대로 바꿔보거나, 시작 화면에서 새 세이브를 만들어 나만의 나라를 꾸려보세요.",
+   "You've finished #1–#5. Now change this nation however you like, or create a new save from the start screen and build your own."
+  ],
+  [
+   "무엇을 배워볼까요?",
+   "What would you like to learn?"
+  ],
+  [
+   "하나하나 몇 단계로 짧게 끝납니다. 순서대로 하지 않고 골라서 해도 괜찮아요.",
+   "Each one takes just a few steps. You can do them in any order."
+  ],
+  [
+   "새 정당",
+   "New Party"
+  ],
+  [
+   "맨 위",
+   "Top"
   ]
  ]
 };
