@@ -23,6 +23,18 @@ window.DnoLangPacks.en = {
  "ordinal": "en",
  "patterns": [
   {
+   "re": "^\\s*테마\\s*$",
+   "to": "Theme"
+  },
+  {
+   "re": "^\\s*화면\\s*$",
+   "to": "Display"
+  },
+  {
+   "re": "^\\s*언어\\s*$",
+   "to": "Language"
+  },
+  {
    "re": "^\"(.+?)\" 열림$",
    "to": "Opened \"$1\""
   },
@@ -536,6 +548,38 @@ window.DnoLangPacks.en = {
   }
  ],
  "dict": [
+  [
+   "← 메인으로",
+   "← Main menu"
+  ],
+  [
+   "바꾼 언어는 각 화면을 다시 열 때 적용됩니다.",
+   "A new language applies when each screen is reopened."
+  ],
+  [
+   "LANGUAGE / 언어",
+   "LANGUAGE"
+  ],
+  [
+   "LANGUAGE PACK / 언어 팩",
+   "LANGUAGE PACK"
+  ],
+  [
+   "다른 사람이 만든 언어 팩(.json)을 불러와 쓸 수 있고, 번역 템플릿으로 새 언어를 만들 수 있습니다.",
+   "You can load language packs (.json) made by others, or create a new language from the translation template."
+  ],
+  [
+   "설정 분류",
+   "Settings categories"
+  ],
+  [
+   "기기에 맞는 화면 배치를 고릅니다.",
+   "Choose the layout that fits your device."
+  ],
+  [
+   "라이트/다크는 CRT 효과 없는 깔끔한 화면, 네온은 기존의 레트로 터미널 화면입니다.",
+   "Light/Dark are clean screens without CRT effects; Neon is the original retro terminal look."
+  ],
   [
    "현재 세이브",
    "Current save"

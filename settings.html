@@ -18,7 +18,7 @@
 </head>
 <body class="settings-page">
 
-    <div class="terminal-container">
+    <div class="terminal-container settings-shell">
         <div class="corner top-left"></div>
         <div class="corner bottom-right"></div>
 
@@ -26,63 +26,98 @@
             SETTINGS
         </div>
 
-        <div class="content">
-            <div class="status-line neon-only">
-                SYSTEM: ONLINE<br>
-                LANGUAGE MODULE
-            </div>
-
-            <div>
-                <div class="settings-label">LANGUAGE / 언어</div>
-                <div class="lang-select-group lang-select-wrap" id="langButtonGroup"></div>
-                <div class="lang-select-group lang-select-wrap" style="margin-top:6px;">
-                    <button class="lang-select-btn lang-tool-btn" onclick="document.getElementById('langPackFileInput').click()">언어 팩 불러오기 (.json)</button>
-                    <button class="lang-select-btn lang-tool-btn" onclick="downloadLangTemplate()">번역 템플릿 받기</button>
+        <!-- 두 단 설정 화면: 왼쪽 분류 목록 · 오른쪽 그 분류의 설정 -->
+        <div class="settings-layout">
+            <nav class="settings-nav" aria-label="설정 분류">
+                <div class="status-line neon-only">
+                    SYSTEM: ONLINE<br>
+                    CONFIG MODULE
                 </div>
-                <input type="file" id="langPackFileInput" accept=".json,application/json" style="position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;" onchange="importLangPack(this)">
-                <div style="color:var(--tno-text);font-size:0.85rem;margin-top:6px;">바꾼 언어는 각 화면을 다시 열 때 적용됩니다. 다른 사람이 만든 언어 팩(.json)을 불러와 쓸 수 있고, 번역 템플릿으로 새 언어를 만들 수 있습니다.</div>
-            </div>
+                <button class="settings-nav-item" data-section="lang" onclick="showSettingsSection('lang')"><span class="settings-nav-icon">🌐</span>언어</button>
+                <button class="settings-nav-item" data-section="display" onclick="showSettingsSection('display')"><span class="settings-nav-icon">🖥</span>화면</button>
+                <button class="settings-nav-item" data-section="theme" onclick="showSettingsSection('theme')"><span class="settings-nav-icon">🎨</span>테마</button>
+                <div class="settings-nav-spacer"></div>
+                <a href="main.html" class="settings-nav-item settings-nav-back">← 메인으로</a>
+            </nav>
 
-            <div>
-                <div class="settings-label">UI MODE / 화면 모드</div>
-                <div class="lang-select-group">
-                    <button class="lang-select-btn" id="uiModeBtnDesktop" onclick="selectUiMode('desktop')">데스크톱<br>(가로형)</button>
-                    <button class="lang-select-btn" id="uiModeBtnMobile" onclick="selectUiMode('mobile')">모바일<br>(세로형)</button>
+            <main class="settings-panel">
+                <!-- 언어 -->
+                <section class="settings-section" id="settingsSectionLang" data-section="lang">
+                    <h2 class="settings-section-title">언어</h2>
+                    <div class="settings-section-desc">바꾼 언어는 각 화면을 다시 열 때 적용됩니다.</div>
+                    <div class="settings-group">
+                        <div class="settings-label">LANGUAGE / 언어</div>
+                        <div class="lang-select-group lang-select-wrap" id="langButtonGroup"></div>
+                    </div>
+                    <div class="settings-group">
+                        <div class="settings-label">LANGUAGE PACK / 언어 팩</div>
+                        <div class="lang-select-group lang-select-wrap">
+                            <button class="lang-select-btn lang-tool-btn" onclick="document.getElementById('langPackFileInput').click()">언어 팩 불러오기 (.json)</button>
+                            <button class="lang-select-btn lang-tool-btn" onclick="downloadLangTemplate()">번역 템플릿 받기</button>
+                        </div>
+                        <input type="file" id="langPackFileInput" accept=".json,application/json" style="position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;" onchange="importLangPack(this)">
+                        <div class="settings-hint">다른 사람이 만든 언어 팩(.json)을 불러와 쓸 수 있고, 번역 템플릿으로 새 언어를 만들 수 있습니다.</div>
+                    </div>
+                </section>
+
+                <!-- 화면 -->
+                <section class="settings-section" id="settingsSectionDisplay" data-section="display">
+                    <h2 class="settings-section-title">화면</h2>
+                    <div class="settings-section-desc">기기에 맞는 화면 배치를 고릅니다.</div>
+                    <div class="settings-group">
+                        <div class="settings-label">UI MODE / 화면 모드</div>
+                        <div class="lang-select-group">
+                            <button class="lang-select-btn" id="uiModeBtnDesktop" onclick="selectUiMode('desktop')">데스크톱<br>(가로형)</button>
+                            <button class="lang-select-btn" id="uiModeBtnMobile" onclick="selectUiMode('mobile')">모바일<br>(세로형)</button>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 테마 -->
+                <section class="settings-section" id="settingsSectionTheme" data-section="theme">
+                    <h2 class="settings-section-title">테마</h2>
+                    <div class="settings-section-desc">라이트/다크는 CRT 효과 없는 깔끔한 화면, 네온은 기존의 레트로 터미널 화면입니다.</div>
+                    <div class="settings-group">
+                        <div class="settings-label">THEME MODE / 테마 모드</div>
+                        <div class="lang-select-group">
+                            <button class="lang-select-btn" id="themeModeBtnLight" onclick="selectThemeMode('light')">라이트<br>모드</button>
+                            <button class="lang-select-btn" id="themeModeBtnDark" onclick="selectThemeMode('dark')">다크<br>모드</button>
+                            <button class="lang-select-btn" id="themeModeBtnTno" onclick="selectThemeMode('tno')">네온<br>모드</button>
+                        </div>
+                    </div>
+                    <div class="settings-group" id="themeColorSection">
+                        <div class="settings-label">THEME COLOR / 테마 색 <span id="themeColorTnoOnlyNote" style="color:#666;font-size:0.75rem;text-transform:none;"></span></div>
+                        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                            <input type="color" id="themeColorInput" onchange="onThemeColorChange(this.value)"
+                                style="width:52px;height:40px;padding:0;border:2px solid var(--tno-border);background:none;cursor:pointer;">
+                            <input type="text" id="themeColorHexInput" maxlength="7" placeholder="#00ffff"
+                                onchange="onThemeColorHexChange(this.value)"
+                                style="width:90px;background:#000;border:1px solid var(--tno-border);color:var(--tno-neon);font-family:inherit;font-size:0.9rem;padding:8px 6px;text-align:center;text-transform:uppercase;">
+                            <button class="lang-select-btn" id="themeColorResetBtn" onclick="onThemeColorReset()" style="padding:8px 12px;">기본값<br>으로 초기화</button>
+                        </div>
+                        <div class="settings-hint">네온 모드의 강조 색(테두리·글자 등)에 적용됩니다</div>
+                    </div>
+                </section>
+
+                <div class="footer">
+                    &copy; 2025-2026 Absatzmarke / Abwehr
                 </div>
-            </div>
-
-            <div>
-                <div class="settings-label">THEME MODE / 테마 모드</div>
-                <div class="lang-select-group">
-                    <button class="lang-select-btn" id="themeModeBtnLight" onclick="selectThemeMode('light')">라이트<br>모드</button>
-                    <button class="lang-select-btn" id="themeModeBtnDark" onclick="selectThemeMode('dark')">다크<br>모드</button>
-                    <button class="lang-select-btn" id="themeModeBtnTno" onclick="selectThemeMode('tno')">네온<br>모드</button>
-                </div>
-                <div style="color:var(--tno-text);font-size:0.85rem;margin-top:6px;">라이트/다크는 CRT 효과 없는 깔끔한 화면, 네온은 기존의 레트로 터미널 화면입니다</div>
-            </div>
-
-            <div id="themeColorSection">
-                <div class="settings-label">THEME COLOR / 테마 색 <span id="themeColorTnoOnlyNote" style="color:#666;font-size:0.75rem;text-transform:none;"></span></div>
-                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-                    <input type="color" id="themeColorInput" onchange="onThemeColorChange(this.value)"
-                        style="width:52px;height:40px;padding:0;border:2px solid var(--tno-border);background:none;cursor:pointer;">
-                    <input type="text" id="themeColorHexInput" maxlength="7" placeholder="#00ffff"
-                        onchange="onThemeColorHexChange(this.value)"
-                        style="width:90px;background:#000;border:1px solid var(--tno-border);color:var(--tno-neon);font-family:inherit;font-size:0.9rem;padding:8px 6px;text-align:center;text-transform:uppercase;">
-                    <button class="lang-select-btn" id="themeColorResetBtn" onclick="onThemeColorReset()" style="padding:8px 12px;">기본값<br>으로 초기화</button>
-                </div>
-                <div style="color:var(--tno-text);font-size:0.85rem;margin-top:6px;">네온 모드의 강조 색(테두리·글자 등)에 적용됩니다</div>
-            </div>
-
-            <a href="main.html" class="menu-btn" style="text-align:center;">&lt;&lt; BACK</a>
-
-            <div class="footer">
-                &copy; 2025-2026 Absatzmarke / Abwehr
-            </div>
+            </main>
         </div>
     </div>
 
     <script>
+        // ===== 분류 전환 — 선택한 분류는 주소(#lang 등)에 남겨 새로고침해도 그대로 =====
+        const SETTINGS_SECTIONS = ['lang', 'display', 'theme'];
+        function showSettingsSection(key) {
+            if(!SETTINGS_SECTIONS.includes(key)) key = SETTINGS_SECTIONS[0];
+            document.querySelectorAll('.settings-section').forEach(sec => sec.classList.toggle('active', sec.dataset.section === key));
+            document.querySelectorAll('.settings-nav-item[data-section]').forEach(b => b.classList.toggle('active', b.dataset.section === key));
+            if(location.hash !== '#' + key) history.replaceState(null, '', '#' + key);
+            document.querySelector('.settings-panel')?.scrollTo(0, 0);
+        }
+        showSettingsSection((location.hash || '').slice(1));
+
         function selectLang(lang) {
             setLang(lang);
             renderLangButtons();
