@@ -12,7 +12,7 @@
     const COLLAPSE_KEY = 'dnoSideNavCollapsed';
     const CLOSED_GROUPS_KEY = 'dnoSideNavClosedGroups';
     // Chrome 탭 그룹처럼 그룹마다 구분색 — 실제 색은 테마별 CSS가 data-tone에 맞춰 정한다
-    const GROUP_TONES = { setup: 'info', law: 'law', nation: 'purple', vote: 'danger', election: 'gold', cabinet: 'success', help: 'muted' };
+    const GROUP_TONES = { setup: 'info', law: 'purple', nation: 'orange', vote: 'danger', election: 'gold', cabinet: 'success', help: 'muted' };
 
     const WARN_ICON = '<span class="mn-item-icon"><svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true">'
         + '<path d="M10 2.8 18.2 17H1.8Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>'

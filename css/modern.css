@@ -2653,7 +2653,7 @@ html[data-theme-family="modern"] .mn-group[data-tone="gold"] { --tone: var(--m-g
 html[data-theme-family="modern"] .mn-group[data-tone="success"] { --tone: var(--m-success); }
 html[data-theme-family="modern"] .mn-group[data-tone="muted"] { --tone: var(--m-text-3); }
 html[data-theme-family="modern"] .mn-group[data-tone="purple"] { --tone: #8b5cf6; }
-html[data-theme-family="modern"] .mn-group[data-tone="law"] { --tone: #0d9488; } /* 입법: 라이트·다크에선 여론(주황빛 금색)과 구분되게 청록 */
+html[data-theme-family="modern"] .mn-group[data-tone="orange"] { --tone: #0d9488; } /* 국가: 라이트·다크에선 여론(주황빛 금색)과 구분되게 청록 */
 html[data-theme-family="modern"] .mn-group-head {
     padding: 7px 10px;
     background: color-mix(in srgb, var(--tone) 13%, transparent) !important;
@@ -2818,7 +2818,7 @@ html[data-theme-family="modern"] .mobile-nav-btn[data-tone="success"] { --tone: 
 html[data-theme-family="modern"] .mobile-nav-btn[data-tone="seats"] { --tone: var(--m-text); }
 html[data-theme-family="modern"] .mobile-nav-btn[data-tone="muted"] { --tone: var(--m-text-3); }
 html[data-theme-family="modern"] .mobile-nav-btn[data-tone="purple"] { --tone: #8b5cf6; }
-html[data-theme-family="modern"] .mobile-nav-btn[data-tone="law"] { --tone: #0d9488; } /* 입법: 라이트·다크에선 여론(주황빛 금색)과 구분되게 청록 */
+html[data-theme-family="modern"] .mobile-nav-btn[data-tone="orange"] { --tone: #0d9488; } /* 국가: 라이트·다크에선 여론(주황빛 금색)과 구분되게 청록 */
 html[data-theme-family="modern"] .mobile-nav-btn {
     border: none !important;
     margin-top: 0;
