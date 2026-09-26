@@ -582,3 +582,72 @@
         .lang-select-btn .lang-remove { margin-left: 8px; color: #666; font-size: 0.8rem; }
         .lang-select-btn .lang-remove:hover { color: var(--tno-alert); }
         .lang-tool-btn { font-size: 0.85rem; padding: 10px 6px; text-transform: none; }
+
+/* ===== 메인 화면 (Hemicycle) — 왼쪽 위 제목 · 왼쪽 아래 버전 · 오른쪽 아래 메뉴 ===== */
+body.home-page { display: block; height: 100vh; overflow: hidden; text-transform: none; }
+.home {
+    position: relative; height: 100vh; box-sizing: border-box;
+    padding: clamp(28px, 7vh, 80px) clamp(24px, 5vw, 72px) clamp(20px, 4vh, 40px);
+    display: grid;
+    grid-template-columns: 1fr minmax(320px, 440px);
+    grid-template-rows: auto 1fr auto;
+    grid-template-areas: "brand ." ". ." "meta menu";
+    column-gap: 40px;
+}
+.home-brand { grid-area: brand; }
+.home-brand .status-line { margin-bottom: 18px; }
+.home-title {
+    margin: 0; font-weight: normal; line-height: 1;
+    font-family: 'VT323', 'NeoDunggeunmo', monospace;
+    font-size: clamp(56px, 10vw, 128px);
+    color: var(--tno-neon); text-shadow: 0 0 18px color-mix(in srgb, var(--tno-neon) 60%, transparent);
+    letter-spacing: 2px;
+}
+.home-subtitle { margin-top: 12px; font-size: clamp(16px, 2vw, 24px); color: var(--tno-text); letter-spacing: 1px; }
+.home-meta { grid-area: meta; align-self: end; font-size: 0.8rem; color: #666; line-height: 1.6; letter-spacing: 1px; }
+.home-menu {
+    grid-area: menu; align-self: end;
+    display: flex; flex-direction: column; gap: 6px;
+    padding: 10px; background: var(--tno-panel); border: 1px solid var(--tno-border);
+    box-shadow: 0 0 24px color-mix(in srgb, var(--tno-neon) 8%, transparent);
+}
+.home-menu-row { position: relative; display: flex; gap: 6px; }
+.home-menu-row > .home-menu-item { flex: 1; min-width: 0; }
+.home-menu-item {
+    display: flex; align-items: center; gap: 14px;
+    padding: 14px 16px; text-decoration: none; color: var(--tno-text);
+    border: 1px solid transparent; transition: .12s;
+}
+.home-menu-item:hover { border-color: var(--tno-neon); background: color-mix(in srgb, var(--tno-neon) 8%, transparent); color: var(--tno-neon); }
+.home-menu-primary { border-color: var(--tno-neon); color: var(--tno-neon); background: color-mix(in srgb, var(--tno-neon) 10%, transparent); text-shadow: 0 0 6px var(--tno-neon); }
+.home-menu-icon { width: 36px; height: 36px; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; border: 1px solid currentColor; }
+.home-menu-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.home-menu-label { font-size: 1.15rem; letter-spacing: 1px; }
+.home-menu-desc { font-size: 0.78rem; color: #777; text-shadow: none; }
+.home-menu-chev { font-size: 1.4rem; opacity: .6; }
+.home-lang-btn {
+    flex-shrink: 0; width: 64px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+    background: transparent; border: 1px solid var(--tno-border); color: var(--tno-text); cursor: pointer; font-family: inherit; transition: .12s;
+}
+.home-lang-btn:hover, .home-lang-btn[aria-expanded="true"] { border-color: var(--tno-neon); color: var(--tno-neon); }
+.home-lang-code { font-size: 0.7rem; letter-spacing: 1px; }
+.home-lang-menu {
+    position: absolute; right: 0; bottom: calc(100% + 8px); z-index: 20; min-width: 200px;
+    display: flex; flex-direction: column; padding: 6px;
+    background: var(--tno-panel); border: 1px solid var(--tno-neon);
+    box-shadow: 0 0 16px color-mix(in srgb, var(--tno-neon) 25%, transparent);
+}
+.home-lang-item {
+    display: flex; justify-content: space-between; align-items: center; gap: 10px;
+    background: transparent; border: 1px solid transparent; color: var(--tno-text);
+    font-family: inherit; font-size: 0.95rem; padding: 9px 12px; cursor: pointer; text-align: left;
+}
+.home-lang-item:hover { border-color: #333; }
+.home-lang-item.active { color: var(--tno-neon); }
+.home-lang-more { margin-top: 4px; padding: 8px 12px 4px; border-top: 1px solid #222; color: #777; font-size: 0.8rem; text-decoration: none; }
+.home-lang-more:hover { color: var(--tno-neon); }
+/* 좁은 화면: 제목 → 메뉴 → 버전 정보 순으로 세로 배치 */
+@media (max-width: 760px) {
+    body.home-page { overflow-y: auto; height: auto; }
+    .home { height: auto; min-height: 100vh; grid-template-columns: 1fr; grid-template-rows: auto 1fr auto auto; grid-template-areas: "brand" "." "menu" "meta"; row-gap: 28px; }
+}
