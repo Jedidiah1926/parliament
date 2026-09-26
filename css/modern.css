@@ -2178,6 +2178,25 @@ html[data-theme-family="modern"] .save-tab.active {
 html[data-theme-family="modern"] .save-tab-home { border-right: none; color: var(--m-text-3); border-radius: 8px; margin: 5px 2px 5px 6px; width: 32px; filter: none; }
 html[data-theme-family="modern"] .save-tab-home:hover { color: var(--m-text); background: var(--m-surface-3); filter: none; }
 html[data-theme-family="modern"] .save-tab-new { border-right: none !important; color: var(--m-text-3) !important; border-radius: 8px; margin: 5px 2px; }
+html[data-theme-family="modern"] .save-tab-save {
+    border-left: none; color: var(--m-text-2); border-radius: 8px; margin: 5px 2px; padding: 0 12px;
+    font-family: var(--m-font); font-size: 13px; font-weight: 600;
+}
+html[data-theme-family="modern"] .save-tab-save:hover { color: var(--m-text); background: var(--m-surface-3); }
+html[data-theme-family="modern"] .save-tab-save.active { color: var(--m-text); background: var(--m-surface-3); box-shadow: none; }
+html[data-theme-family="modern"] .save-panel-overlay { background: rgba(0,0,0,.18); }
+html[data-theme-family="modern"] .save-panel {
+    background: var(--m-surface); border: 1px solid var(--m-border); border-radius: 16px;
+    box-shadow: 0 20px 50px rgba(0,0,0,.22); overflow: hidden;
+}
+html[data-theme-family="modern"] .save-panel-head { border-bottom-color: var(--m-border); padding: 12px 16px; }
+html[data-theme-family="modern"] .save-panel-title { color: var(--m-text); font-weight: 700; font-size: 15px; letter-spacing: 0; }
+html[data-theme-family="modern"] .save-panel-close { color: var(--m-text-3); border-radius: 8px; }
+html[data-theme-family="modern"] .save-panel-close:hover { color: var(--m-text); background: var(--m-surface-2); }
+html[data-theme-family="modern"] .save-panel-body { padding: 16px; }
+html[data-theme-family="modern"] #saveCurrentCard { border: 1px solid var(--m-border) !important; border-radius: 12px; background: var(--m-surface-2) !important; }
+html[data-theme-family="modern"] .save-panel-body .add-btn[onclick^="resetAutosaveData"] { background: transparent !important; color: var(--m-danger) !important; border: 1px solid color-mix(in srgb, var(--m-danger) 40%, transparent) !important; }
+html[data-theme-family="modern"] .save-panel-body .add-btn[onclick^="resetAutosaveData"]:hover { background: color-mix(in srgb, var(--m-danger) 8%, transparent) !important; }
 html[data-theme-family="modern"] .save-tab-new-menu,
 html[data-theme-family="modern"] .save-tab-preset-list,
 html[data-theme-family="modern"] .canvas-export-menu,
@@ -2624,6 +2643,12 @@ html[data-theme-family="modern"] .rd-card {
 html[data-theme-family="modern"] .rd-title { color: var(--m-text) !important; font-weight: 700; border-bottom-color: var(--m-border) !important; }
 html[data-theme-family="modern"] .rd-desc { color: var(--m-text-2) !important; }
 html[data-theme-family="modern"] .rd-track-line { background: var(--m-border) !important; }
+/* 로드맵 스크롤바: 네온의 검은 트랙 · 카드색 막대 대신 배경 없는 가는 회색 막대 */
+html[data-theme-family="modern"] .rd-desc,
+html[data-theme-family="modern"] .rd-track-viewport,
+html[data-theme-family="modern"] .rd-header { scrollbar-width: thin; scrollbar-color: var(--m-border-strong) transparent !important; }
+html[data-theme-family="modern"] .rd-desc::-webkit-scrollbar-track { background: transparent !important; }
+html[data-theme-family="modern"] .rd-desc::-webkit-scrollbar-thumb { background: var(--m-border-strong) !important; box-shadow: none !important; border-radius: 999px; }
 
 /* 맵 메이커 (map.html 인라인 스타일) */
 html[data-theme-family="modern"] h1 { color: var(--m-text) !important; font-weight: 800; }
@@ -2664,8 +2689,9 @@ html[data-theme-family="modern"] .mn-head {
 html[data-theme-family="modern"] .mn-brand { display: block; padding-top: 5px; align-self: flex-start; }
 /* 라이트/다크는 국가명을 사이드바 머리로 옮기므로 패널의 국가명 줄은 숨김 (네온은 원래 자리 유지) */
 html[data-theme-family="modern"]:not([data-ui-mode="mobile"]) body.has-side-nav .nation-id-bar { display: none !important; }
-html[data-theme-family="modern"] .mn-brand-title { display: block; font-size: 14px; font-weight: 700; color: var(--m-text); white-space: nowrap; }
-html[data-theme-family="modern"] .mn-brand-sub { font-size: 12px; color: var(--m-text-3) !important; margin-top: 2px; white-space: nowrap; line-height: normal; }
+/* 라이트/다크: "Ministry of Interior"는 빼고 국가명을 사이드바 머리 제목으로 */
+html[data-theme-family="modern"] .mn-brand-title { display: none !important; }
+html[data-theme-family="modern"] .mn-brand-sub { margin-top: 0; font-size: 15px; font-weight: 700; color: var(--m-text) !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: normal; }
 html[data-theme-family="modern"] .mn-collapse {
     width: 34px; height: 34px;
     background: transparent !important;
@@ -2743,6 +2769,9 @@ html[data-theme-family="modern"] .mn-section-title {
 }
 html[data-theme-family="modern"] .mn-crumb { color: var(--m-text-3) !important; font-weight: 600; font-size: 14px; }
 html[data-theme-family="modern"] .mn-crumb-sep { color: var(--m-text-4) !important; font-weight: 400; font-size: 14px; }
+/* 사이드바를 접었을 때만 경로 맨 앞에 국가명 (펼쳤을 땐 사이드바 머리에 있음) */
+html[data-theme-family="modern"]:not([data-ui-mode="mobile"]) body.side-nav-collapsed .mn-crumb-nation { display: inline; }
+html[data-theme-family="modern"] .mn-crumb.mn-crumb-nation { color: var(--m-text) !important; font-weight: 700; max-width: 40%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* 상단 세이브 탭 바: 탭 높이를 바 높이에 정확히 맞춰 세로 스크롤바가 생기지 않게 */
 html[data-theme-family="modern"] .save-tab-list { overflow-y: hidden; }

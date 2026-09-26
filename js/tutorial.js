@@ -159,7 +159,7 @@
                     allow: ['#houseTotal', '#partyListHouse'],
                     title: '빈자리 만들기',
                     enter: () => { if (T.totalBase == null) T.totalBase = houseTotal(); },
-                    text: () => `의회 › 구성의 "배정 합계"는 정당 의석을 모두 더한 값이고, 총 의석 수를 넘을 수 없습니다. 기존 정당들이 이미 ${T.totalBase}석을 다 차지하고 있으면 새 정당이 앉을 자리가 없어요. 총 의석 수를 늘리거나(예: ${T.totalBase + 20}) 다른 정당 의석을 줄여 빈자리를 만들어 보세요.`,
+                    text: () => `의회 › 의회 구성의 "배정 합계"는 정당 의석을 모두 더한 값이고, 총 의석 수를 넘을 수 없습니다. 기존 정당들이 이미 ${T.totalBase}석을 다 차지하고 있으면 새 정당이 앉을 자리가 없어요. 총 의석 수를 늘리거나(예: ${T.totalBase + 20}) 다른 정당 의석을 줄여 빈자리를 만들어 보세요.`,
                     task: () => !tutParty() || freeHouseSeats() > 0 || (tutParty().seatsHouse || 0) > 0,
                     done: () => `${freeHouseSeats()}석이 비었어요.`,
                 },
@@ -262,7 +262,7 @@
                     before: [go('cabinet', 'pm'), showPanel('controls')],
                     target: () => pmBlock(),
                     title: '총리는 누가 될까?',
-                    text: '내각 › 설정에서 대통령제 · 이원집정부제 · 의원내각제 등 정부 형태를 고릅니다. 튜토리얼 공화국은 의원내각제라, 의석이 가장 많은 정당의 대표(당수)가 자동으로 총리가 돼요 (👑 표시).',
+                    text: '내각 › 내각 설정에서 대통령제 · 이원집정부제 · 의원내각제 등 정부 형태를 고릅니다. 튜토리얼 공화국은 의원내각제라, 의석이 가장 많은 정당의 대표(당수)가 자동으로 총리가 돼요 (👑 표시).',
                 },
                 {
                     before: [go('setup', 'party'), call('switchPartyGroupInnerTab', 'leader'), showPanel('controls')],

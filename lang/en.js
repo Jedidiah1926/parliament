@@ -251,7 +251,7 @@ window.DnoLangPacks.en = {
    "to": "Now enter a number in the new party's seat box. You can enter up to the free seats ($1)."
   },
   {
-   "re": "의회 › 구성의 \"배정 합계\"는 정당 의석을 모두 더한 값이고, 총 의석 수를 넘을 수 없습니다\\. 기존 정당들이 이미 (\\d+)석을 다 차지하고 있으면 새 정당이 앉을 자리가 없어요\\. 총 의석 수를 늘리거나\\(예: (\\d+)\\) 다른 정당 의석을 줄여 빈자리를 만들어 보세요\\.",
+   "re": "의회 › 의회 구성의 \"배정 합계\"는 정당 의석을 모두 더한 값이고, 총 의석 수를 넘을 수 없습니다\\. 기존 정당들이 이미 (\\d+)석을 다 차지하고 있으면 새 정당이 앉을 자리가 없어요\\. 총 의석 수를 늘리거나\\(예: (\\d+)\\) 다른 정당 의석을 줄여 빈자리를 만들어 보세요\\.",
    "to": "\"Assigned total\" in Parliament › Composition is the sum of all party seats, and it can't exceed the total. If the existing parties already fill all $1 seats, there's no room for a new party. Raise the total (e.g. $2) or cut another party's seats to make room."
   },
   {
@@ -701,8 +701,8 @@ window.DnoLangPacks.en = {
    "Browser storage is not available here. Use \"Save to file\" below."
   ],
   [
-   "국무회의에서 가결 · 부결된 법안 보관함입니다 (상태별로 걸러 보기). 의회가 의결한 법안은 입법 › 기록에 있어요.",
-   "The archive of bills passed or rejected by the cabinet council (filterable by status). Bills decided by parliament are in Legislation › Record."
+   "국무회의에서 가결 · 부결된 법안 보관함입니다 (상태별로 걸러 보기). 의회가 의결한 법안은 입법 › 표결 기록에 있어요.",
+   "The archive of bills passed or rejected by the cabinet council (filterable by status). Bills decided by parliament are in Legislation › Vote Records."
   ],
   [
    "국무회의에서 의결된 법안이 없습니다",
@@ -725,7 +725,7 @@ window.DnoLangPacks.en = {
    "Parliament Settings"
   ],
   [
-   "의회를 이루는 이념 · 정당 · 의석 · 의원 · 집권 세력과 의회 자체의 설정을 다룹니다.",
+   "의회 자체의 설정과 의회를 이루는 이념 · 정당 · 의석 · 집권 세력 · 의원을 다룹니다.",
    "Ideologies, parties, seats, members and the governing bloc that make up parliament, plus the settings of parliament itself."
   ],
   [
@@ -789,8 +789,8 @@ window.DnoLangPacks.en = {
    "Nation-wide settings, legislation and the legislative record."
   ],
   [
-   "가결 · 부결 · 거부된 법안 보관함입니다 (상태별로 걸러 보기). 선거 기록은 선거 › 기록에 있어요.",
-   "The archive of passed, rejected and vetoed bills (filterable by status). Election records are in Election › Record."
+   "가결 · 부결 · 거부된 법안 보관함입니다 (상태별로 걸러 보기). 선거 기록은 선거 › 선거 기록에 있어요.",
+   "The archive of passed, rejected and vetoed bills (filterable by status). Election records are in Election › Election Records."
   ],
   [
    "선거 결과를 좌우하는 지역구 · 성향 · 지지율을 정합니다. 여기서 정한 값으로 선거 탭에서 개표해요.",
@@ -4425,12 +4425,12 @@ window.DnoLangPacks.en = {
    "Set up the basics of your nation."
   ],
   [
-   "단원제 · 양원제 · 삼원제, 의장단(의장 · 부의장), 지역구 표시 방식(지도 · 그리드), 집권 세력 강조.",
-   "Unicameral/bicameral/tricameral, presiding officers (speaker, deputies), district display (map/grid), highlight government."
+   "단원제 · 양원제 · 삼원제, 의장단(의장 · 부의장), 원별 반원 가운데 표시(의석 수 · 의회 로고), 집권 세력 강조.",
+   "Unicameral/bicameral/tricameral, presiding officers (speaker, deputies), what each hemicycle center shows (seat count or chamber logo), highlight government."
   ],
   [
-   "국가명 · 국기, 반원 가운데에 의석 수 또는 의회 로고 표시.",
-   "Nation name and flag, and whether the hemicycle center shows the seat count or a chamber logo."
+   "국가명과 국기.",
+   "Nation name and flag."
   ],
   [
    "화면 오른쪽 위에 보이는 현재 날짜와 회기, 표시 방식.",
@@ -4905,7 +4905,7 @@ window.DnoLangPacks.en = {
    "Who becomes PM?"
   ],
   [
-   "내각 › 설정에서 대통령제 · 이원집정부제 · 의원내각제 등 정부 형태를 고릅니다. 튜토리얼 공화국은 의원내각제라, 의석이 가장 많은 정당의 대표(당수)가 자동으로 총리가 돼요 (👑 표시).",
+   "내각 › 내각 설정에서 대통령제 · 이원집정부제 · 의원내각제 등 정부 형태를 고릅니다. 튜토리얼 공화국은 의원내각제라, 의석이 가장 많은 정당의 대표(당수)가 자동으로 총리가 돼요 (👑 표시).",
    "Cabinet › Settings is where you choose the form of government (presidential, semi-presidential, parliamentary, ...). The Tutorial Republic is parliamentary, so the leader of the party with the most seats automatically becomes PM (marked 👑)."
   ],
   [
@@ -5103,6 +5103,66 @@ window.DnoLangPacks.en = {
   [
    "- 네온 테마 메인 화면 제목 글꼴을 둥근모로",
    "- Neon main screen title now uses the NeoDunggeunmo font"
+  ],
+  [
+   "- 상단 탭 바 오른쪽에 \"저장\" 버튼 — 국가 › 저장이 떠 있는 저장 창으로 옮겨짐(자동저장 · 세이브 목록 · 다른 이름으로 저장 · 파일), + 버튼은 크롬처럼 마지막 탭 바로 오른쪽으로",
+   "- \"Save\" button on the right of the top tab bar — Nation › Save moved into a floating save panel (autosave · save list · save as · file); the + button now sits right after the last tab, like Chrome"
+  ],
+  [
+   "- 라이트/다크 사이드바 머리에서 \"Ministry of Interior\"를 빼고 국가명을 제목으로 (사이드바를 접으면 화면 위 경로 맨 앞에 국가명)",
+   "- Light/dark sidebar header drops \"Ministry of Interior\" and shows the nation name as the title (when collapsed, the nation name leads the breadcrumb)"
+  ],
+  [
+   "- 맵 메이커 네온 모드 글자가 가짜 굵게로 뭉개지던 문제, 라이트/다크 로드맵 스크롤바(검은 트랙) 정리",
+   "- Fixed smeared faux-bold text in the neon Map Maker, and cleaned up the light/dark roadmap scrollbars (black track)"
+  ],
+  [
+   "저장 · 자동저장 · 세이브 목록 · 파일",
+   "Save · Autosave · Save list · File"
+  ],
+  [
+   "새 탭",
+   "New tab"
+  ],
+  [
+   "- 국가 › 국가 설정 탭 신설 — 지역구 시스템(지도 · 그리드)과 지도 글씨 · 배지 크기를 의회 › 의회 설정에서 옮김, 원별 반원 중앙 표시(의석 수 · 로고)는 국가 › 상징에서 의회 › 의회 설정으로",
+   "- New Nation › Nation Settings tab — district system (map/grid) and map label/badge size moved here from Parliament › Parliament Settings; per-chamber hemicycle center display (seats/logo) moved from Nation › Symbols to Parliament › Parliament Settings"
+  ],
+  [
+   "지역구 시스템(지도 · 그리드)과 지도 위 글씨 · 배지 크기.",
+   "District system (map/grid) and the size of map labels and badges."
+  ],
+  [
+   "지도 모드에서는 여론 › 지역구 탭에서 SVG 지도(.jsx)를 올릴 수 있습니다",
+   "In map mode, upload the district map (.jsx) in Polls \u203a Districts"
+  ],
+  [
+   "의회 구성",
+   "Parliament Composition"
+  ],
+  [
+   "- 의회 탭 순서 변경: 의회 설정 · 이념 · 정당 · 의회 구성(구 구성) · 집권과 연정 · 지역구 의원 · 비례대표, 국가 › 설정은 국가 설정 · 내각 › 설정은 내각 설정 · 내각 › 기록은 국무회의 기록 · 선거 › 기록은 선거 기록 · 입법 › 기록은 표결 기록으로 이름 변경",
+   "- Parliament tab order: Parliament Settings · Ideologies · Parties · Composition (formerly Setup) · Government & Coalitions · District Members · List Members; Nation › Settings renamed Nation Settings and Cabinet › Settings renamed Cabinet Settings, Cabinet › Record renamed Council Records, Election › Record renamed Election Records, Legislation › Record renamed Vote Records"
+  ],
+  [
+   "국가 설정",
+   "Nation Settings"
+  ],
+  [
+   "내각 설정",
+   "Cabinet Settings"
+  ],
+  [
+   "국무회의 기록",
+   "Council Records"
+  ],
+  [
+   "선거 기록",
+   "Election Records"
+  ],
+  [
+   "표결 기록",
+   "Vote Records"
   ]
  ]
 };

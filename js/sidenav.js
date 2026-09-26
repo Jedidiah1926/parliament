@@ -194,6 +194,13 @@
                 });
             });
             title.innerHTML = '';
+            // 라이트/다크에서 사이드바를 접으면 머리의 국가명이 안 보이므로, 경로 맨 앞에 국가명을 붙인다 (CSS로 그때만 표시)
+            const nationName = nationSrc ? nationSrc.textContent.trim() : '';
+            if (nationName && activeGroup) {
+                const n = document.createElement('span'); n.className = 'mn-crumb mn-crumb-nation'; n.textContent = nationName;
+                const sep0 = document.createElement('span'); sep0.className = 'mn-crumb-sep mn-crumb-nation'; sep0.textContent = '›';
+                title.append(n, sep0);
+            }
             if (activeGroup) {
                 const a = document.createElement('span'); a.className = 'mn-crumb'; a.textContent = activeGroup;
                 title.appendChild(a);

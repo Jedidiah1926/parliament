@@ -48,6 +48,7 @@ html:not([data-ui-mode="mobile"]) body.has-side-nav.side-nav-collapsed .side-nav
 .mn-item-icon { display: inline-flex; align-items: center; height: 1.4em; vertical-align: top; }
 .mn-item-icon svg { display: block; }
 .mn-crumb-current { overflow: hidden; text-overflow: ellipsis; }
+.mn-crumb-nation { display: none; }
 
 /* 접힌 사이드바: 그룹 아이콘만 세로로 */
 body.side-nav-collapsed .mn-head { flex-direction: column; align-items: center; }
