@@ -701,8 +701,8 @@ window.DnoLangPacks.en = {
    "Browser storage is not available here. Use \"Save to file\" below."
   ],
   [
-   "국무회의에서 가결 · 부결된 법안 보관함입니다 (상태별로 걸러 보기). 의회가 의결한 법안은 입법 › 기록에 있어요.",
-   "The archive of bills passed or rejected by the cabinet council (filterable by status). Bills decided by parliament are in Legislation › Record."
+   "국무회의에서 가결 · 부결된 법안 보관함입니다 (상태별로 걸러 보기). 의회가 의결한 법안은 입법 › 표결 기록에 있어요.",
+   "The archive of bills passed or rejected by the cabinet council (filterable by status). Bills decided by parliament are in Legislation › Vote Records."
   ],
   [
    "국무회의에서 의결된 법안이 없습니다",
@@ -789,8 +789,8 @@ window.DnoLangPacks.en = {
    "Nation-wide settings, legislation and the legislative record."
   ],
   [
-   "가결 · 부결 · 거부된 법안 보관함입니다 (상태별로 걸러 보기). 선거 기록은 선거 › 기록에 있어요.",
-   "The archive of passed, rejected and vetoed bills (filterable by status). Election records are in Election › Record."
+   "가결 · 부결 · 거부된 법안 보관함입니다 (상태별로 걸러 보기). 선거 기록은 선거 › 선거 기록에 있어요.",
+   "The archive of passed, rejected and vetoed bills (filterable by status). Election records are in Election › Election Records."
   ],
   [
    "선거 결과를 좌우하는 지역구 · 성향 · 지지율을 정합니다. 여기서 정한 값으로 선거 탭에서 개표해요.",
@@ -5141,8 +5141,8 @@ window.DnoLangPacks.en = {
    "Parliament Composition"
   ],
   [
-   "- 의회 탭 순서 변경: 의회 설정 · 이념 · 정당 · 의회 구성(구 구성) · 집권과 연정 · 지역구 의원 · 비례대표, 국가 › 설정은 국가 설정 · 내각 › 설정은 내각 설정 · 내각 › 기록은 국무회의 기록으로 이름 변경",
-   "- Parliament tab order: Parliament Settings · Ideologies · Parties · Composition (formerly Setup) · Government & Coalitions · District Members · List Members; Nation › Settings renamed Nation Settings and Cabinet › Settings renamed Cabinet Settings, Cabinet › Record renamed Council Records"
+   "- 의회 탭 순서 변경: 의회 설정 · 이념 · 정당 · 의회 구성(구 구성) · 집권과 연정 · 지역구 의원 · 비례대표, 국가 › 설정은 국가 설정 · 내각 › 설정은 내각 설정 · 내각 › 기록은 국무회의 기록 · 선거 › 기록은 선거 기록 · 입법 › 기록은 표결 기록으로 이름 변경",
+   "- Parliament tab order: Parliament Settings · Ideologies · Parties · Composition (formerly Setup) · Government & Coalitions · District Members · List Members; Nation › Settings renamed Nation Settings and Cabinet › Settings renamed Cabinet Settings, Cabinet › Record renamed Council Records, Election › Record renamed Election Records, Legislation › Record renamed Vote Records"
   ],
   [
    "국가 설정",
@@ -5155,6 +5155,14 @@ window.DnoLangPacks.en = {
   [
    "국무회의 기록",
    "Council Records"
+  ],
+  [
+   "선거 기록",
+   "Election Records"
+  ],
+  [
+   "표결 기록",
+   "Vote Records"
   ]
  ]
 };
