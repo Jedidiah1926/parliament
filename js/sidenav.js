@@ -178,7 +178,7 @@
                 grp.items.forEach(({ el, src }) => {
                     const text = src.textContent.replace(/\s+/g, ' ').trim();
                     // ⚠(부정선거)는 글꼴마다 기호 위치가 달라 위로 뜨므로, 글자 대신 가운데 맞춘 경고 아이콘을 그린다
-                    if (text === '⚠') {
+                    if (text.replace(/[\uFE0E\uFE0F]/g, '') === '⚠') {
                         if (el.dataset.icon !== 'warn') { el.innerHTML = WARN_ICON; el.dataset.icon = 'warn'; }
                     } else {
                         el.textContent = text;
