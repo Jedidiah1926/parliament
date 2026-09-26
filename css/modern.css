@@ -3035,3 +3035,7 @@ html[data-theme-family="modern"] .thr-same,
 html[data-theme-family="modern"] .thr-ch { color: var(--m-text-3); }
 html[data-theme-family="modern"] .thr-slash { color: var(--m-text-3); }
 html[data-theme-family="modern"] .thr-preview { color: var(--m-text-2); font-weight: 600; }
+html[data-theme-family="modern"] .gov-hl-color > label { color: var(--m-text-3); }
+html[data-theme-family="modern"] .gov-hl-color-row input[type="color"] { border: 1px solid var(--m-border) !important; border-radius: 8px; overflow: hidden; }
+html[data-theme-family="modern"] .gov-hl-color-reset { background: var(--m-surface-2); border: none; border-radius: 9px; color: var(--m-text-2); font-weight: 600; }
+html[data-theme-family="modern"] .gov-hl-color-reset:hover { background: var(--m-surface-3); color: var(--m-text); }

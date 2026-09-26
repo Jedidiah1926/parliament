@@ -8,6 +8,7 @@
   "scripts": {
     "start": "electron .",
     "smoketest": "electron electron/smoketest.js",
+    "build:logo": "node tools/build-logo.js",
     "build:win": "electron-builder --win",
     "build:win:portable": "electron-builder --win portable"
   },

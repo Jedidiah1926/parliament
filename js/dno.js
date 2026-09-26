@@ -124,6 +124,38 @@
             return p ? p.color : '#666';
         }
 
+        // ── 로고 제작 모드 (logo.html) — 의회 메뉴만 남긴 화면 ──
+        const IS_LOGO_MODE = document.documentElement.getAttribute('data-app-mode') === 'logo';
+
+        // ── 집권 정당 강조 색 — 비어 있으면 기본 금색(#ffd700 / 테마의 금색) ──
+        let govHighlightColor = '';
+        function normalizeHexColor(v) {
+            let t = String(v || '').trim().replace(/^#?/, '#');
+            if(/^#[0-9a-f]{3}$/i.test(t)) t = '#' + t.slice(1).split('').map(c => c + c).join('');
+            return /^#[0-9a-f]{6}$/i.test(t) ? t.toUpperCase() : '';
+        }
+        function govHl(fallback) { return govHighlightColor || fallback; }
+        function govHlGlow(fallback) {
+            if(!govHighlightColor) return fallback;
+            const n = parseInt(govHighlightColor.slice(1), 16);
+            return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, 0.8)`;
+        }
+        function syncGovHighlightColorUI() {
+            const hex = govHighlightColor || '#FFD700';
+            const picker = document.getElementById('govHlColorPicker');
+            const text = document.getElementById('govHlColorHex');
+            if(picker) picker.value = hex.toLowerCase();
+            if(text && document.activeElement !== text) text.value = govHighlightColor;
+        }
+        function setGovHighlightColor(value, fromText) {
+            const hex = value ? normalizeHexColor(value) : '';
+            if(value && !hex) return; // 입력 중인 불완전한 HEX는 무시
+            govHighlightColor = hex;
+            syncGovHighlightColorUI();
+            if(!fromText) { const t = document.getElementById('govHlColorHex'); if(t) t.value = hex; }
+            simulate();
+        }
+
         // ── 대통령/총리/국무위원을 실제 의원(지역구·비례·무소속)과 연결 — 이름·사진·당적 자동 반영 ──────────────
         function chamberDisplayName(ch) {
             return document.getElementById(ch+'NameInput')?.value || ({house:'하원',senate:'상원',third:'삼원'}[ch] || ch);
@@ -4550,9 +4582,9 @@
                     ctx.stroke();
                     ctx.shadowBlur = 0;
                 } else if(d.isRuling && highlightGov) {
-                    ctx.shadowColor = "rgba(255, 215, 0, 0.8)";
+                    ctx.shadowColor = govHlGlow("rgba(255, 215, 0, 0.8)");
                     ctx.shadowBlur = 10;
-                    ctx.strokeStyle = "#ffd700";
+                    ctx.strokeStyle = govHl("#ffd700");
                     ctx.lineWidth = 2;
                     ctx.stroke();
                     ctx.shadowBlur = 0;
@@ -4690,6 +4722,14 @@
         });
         let suppressAutosaveOnUnload = false;
 
+        // 로고 제작 모드: 의회 메뉴만 쓰므로 저장된 화면 위치와 상관없이 의회 탭에서 시작
+        if(IS_LOGO_MODE) {
+            window.addEventListener('load', () => setTimeout(() => {
+                if(currentMainTab !== 'setup') switchMainTab('setup');
+                syncGovHighlightColorUI();
+            }, 0));
+        }
+
         // ── 새로 시작할 때 쓰는 깨끗한 기본 상태 ──
         // setAppState는 저장 기록에 없는 값(지역구 격자·성향 등)을 건드리지 않고 그대로 두기 때문에, 화면에 떠 있던
         // 이전 세이브의 값이 섞여 들어갈 수 있다. 새 세이브·프리셋·구버전/외부 파일은 먼저 깨끗한 기본 상태로 되돌린 뒤 적용한다.
@@ -4800,6 +4840,7 @@
                 config: {
                     systemType,
                     highlightGov:  document.getElementById('chkGovHighlight')?.checked ?? true,
+                    govHighlightColor,
                     nationName:    document.getElementById('nationNameInput')?.value   ?? "",
                     nationFlag,
                     nationDateMode: nationDateMode,
@@ -5031,6 +5072,8 @@
             chamberLogoImgCache.house = chamberLogoImgCache.senate = chamberLogoImgCache.third = null;
             ['house','senate','third'].forEach(ch => { updateChamberLogoUI(ch); updateChamberCenterModeUI(ch); });
             if(gd('chkGovHighlight')) gd('chkGovHighlight').checked = cfg.highlightGov ?? true;
+            govHighlightColor = normalizeHexColor(cfg.govHighlightColor || '');
+            syncGovHighlightColorUI();
             if(gd('nationNameInput')) gd('nationNameInput').value = cfg.nationName ?? "";
             if(gd('nationDateEra'))   gd('nationDateEra').value   = cfg.nationDateEra ?? "";
             if(gd('nationDateYear'))  gd('nationDateYear').value  = cfg.nationDateYear ?? "";
@@ -5201,14 +5244,16 @@
             } catch(e) { return false; }
         }
 
+        // logo.html(로고 제작 모드)은 본 게임 세이브와 섞이지 않도록 저장 키에 따로 접두어를 붙인다
+        const LS_PREFIX = IS_LOGO_MODE ? 'hemicycleLogo:' : '';
         function safeLsGet(key) {
-            try { return localStorage.getItem(key); } catch(e) { return null; }
+            try { return localStorage.getItem(LS_PREFIX + key); } catch(e) { return null; }
         }
         function safeLsSet(key, value) {
-            try { localStorage.setItem(key, value); return true; } catch(e) { return false; }
+            try { localStorage.setItem(LS_PREFIX + key, value); return true; } catch(e) { return false; }
         }
         function safeLsRemove(key) {
-            try { localStorage.removeItem(key); } catch(e) { /* 무시 */ }
+            try { localStorage.removeItem(LS_PREFIX + key); } catch(e) { /* 무시 */ }
         }
 
         function normalizeSaveMeta(state) {
@@ -7085,15 +7130,15 @@
                     const isExtSupport = !isGov && rulingCoal && rulingCoal.externalSupporters?.includes(p.id);
                     if(isGov) {
                         ctx.save();
-                        ctx.shadowColor = 'rgba(255,215,0,0.8)';
+                        ctx.shadowColor = govHlGlow('rgba(255,215,0,0.8)');
                         ctx.shadowBlur = 6;
-                        ctx.strokeStyle = '#ffd700';
+                        ctx.strokeStyle = govHl('#ffd700');
                         ctx.lineWidth = 2;
                         ctx.stroke();
                         ctx.restore();
                     } else if(isExtSupport) {
                         ctx.save();
-                        ctx.strokeStyle = '#ffd700';
+                        ctx.strokeStyle = govHl('#ffd700');
                         ctx.lineWidth = 1.5;
                         ctx.setLineDash([2,2]);
                         ctx.stroke();
@@ -11380,9 +11425,9 @@
                 const isExtSupport = !isGov && rulingCoal && rulingCoal.externalSupporters?.includes(p.id);
                 // 각외협력 정당은 (다른 연정 소속이더라도) 그 연정 카드가 아니라 각외협력 항목으로 별도 집계
                 const effectiveCoal = (isExtSupport || (isPartyRuling && !(coal && coal.isRuling))) ? null : coal;
-                let stroke = highlightGov&&isGov ? 'var(--tno-gold)' : (effectiveCoal?effectiveCoal.color:null);
+                let stroke = highlightGov&&isGov ? govHl('var(--tno-gold)') : (effectiveCoal?effectiveCoal.color:null);
                 let strokeDashed = false;
-                if(isExtSupport && rulingCoal) { stroke = highlightGov ? '#ffd700' : rulingCoal.color; strokeDashed = true; }
+                if(isExtSupport && rulingCoal) { stroke = highlightGov ? govHl('#ffd700') : rulingCoal.color; strokeDashed = true; }
 
                 // 파벌 의석 배분
                 const factions = (p.factions||[]).filter(f=>(f[seatKey]||0)>0);
@@ -11395,7 +11440,7 @@
                         const fCoalRuling = !isPartyRuling && (fCoal && fCoal.isRuling);
                         const fIsGov = isPartyRuling || fCoalRuling;
                         const fEffCoal = (isPartyRuling && !(fCoal && fCoal.isRuling)) ? null : fCoal;
-                        const fStroke = highlightGov&&fIsGov ? 'var(--tno-gold)' : (fEffCoal?fEffCoal.color:null);
+                        const fStroke = highlightGov&&fIsGov ? govHl('var(--tno-gold)') : (fEffCoal?fEffCoal.color:null);
                         for(let k=0; k<(f[seatKey]||0); k++){
                             if(map.length>=total) break;
                             map.push({color:fc, partyName:p.name, factionName:f.name, partyStatus:p.status||'active',
@@ -12025,7 +12070,7 @@
                 const isPartyRuling = p.isRuling;
                 const effectiveCoal = (isPartyRuling && !(coal && coal.isRuling)) ? null : coal;
                 const isGov = isPartyRuling || (!isPartyRuling && coal?.isRuling);
-                const stroke = isGov ? 'var(--tno-gold)' : (effectiveCoal?.color || null);
+                const stroke = isGov ? govHl('var(--tno-gold)') : (effectiveCoal?.color || null);
                 for(let k=0; k<rp.seats; k++) {
                     map.push({color:p.color, partyName:p.name, ideology:ideologyName(p.ideologyId)||'?', coalitionName:effectiveCoal?.name, strokeColor:stroke, isRuling:isGov});
                 }
@@ -12885,15 +12930,15 @@
                     const isExtSupport = !isGov && rulingCoal && rulingCoal.externalSupporters?.includes(p.id);
                     if(isGov) {
                         ctx.save();
-                        ctx.shadowColor = 'rgba(255,215,0,0.8)';
+                        ctx.shadowColor = govHlGlow('rgba(255,215,0,0.8)');
                         ctx.shadowBlur = 6;
-                        ctx.strokeStyle = '#ffd700';
+                        ctx.strokeStyle = govHl('#ffd700');
                         ctx.lineWidth = 2;
                         ctx.stroke();
                         ctx.restore();
                     } else if(isExtSupport) {
                         ctx.save();
-                        ctx.strokeStyle = '#ffd700';
+                        ctx.strokeStyle = govHl('#ffd700');
                         ctx.lineWidth = 1.5;
                         ctx.setLineDash([2,2]);
                         ctx.stroke();
@@ -13282,9 +13327,9 @@
                 const isExtSupport = !isGov && rulingCoal && rulingCoal.externalSupporters?.includes(p.id);
                 // 각외협력 정당은 (다른 연정 소속이더라도) 그 연정 카드가 아니라 각외협력 항목으로 별도 집계
                 const effectiveCoal = (isExtSupport || (isPartyRuling && !(coal && coal.isRuling))) ? null : coal;
-                let stroke = hG&&isGov ? 'var(--tno-gold)' : (effectiveCoal?effectiveCoal.color:null);
+                let stroke = hG&&isGov ? govHl('var(--tno-gold)') : (effectiveCoal?effectiveCoal.color:null);
                 let strokeDashed = false;
-                if(isExtSupport && rulingCoal) { stroke = hG ? '#ffd700' : rulingCoal.color; strokeDashed = true; }
+                if(isExtSupport && rulingCoal) { stroke = hG ? govHl('#ffd700') : rulingCoal.color; strokeDashed = true; }
 
                 // 개표 결과에는 파벌 구분이 없다 (의회에 반영하면 파벌 의석은 다시 나눠야 함)
                 const factions = counts ? [] : (p.factions||[]).filter(f=>(f[seatKey]||0)>0);
@@ -13297,7 +13342,7 @@
                         const fCoalRuling = !isPartyRuling && (fCoal && fCoal.isRuling);
                         const fIsGov = isPartyRuling || fCoalRuling;
                         const fEffCoal = (isPartyRuling && !(fCoal && fCoal.isRuling)) ? null : fCoal;
-                        const fStroke = hG&&fIsGov ? 'var(--tno-gold)' : (fEffCoal?fEffCoal.color:null);
+                        const fStroke = hG&&fIsGov ? govHl('var(--tno-gold)') : (fEffCoal?fEffCoal.color:null);
                         for(let k=0; k<(f[seatKey]||0); k++){
                             if(map.length>=totalSeats) break;
                             map.push({color:fc, partyName:p.name, factionName:f.name,
@@ -13358,9 +13403,9 @@
                     const effectiveCoal = (isExtSupport || (isPartyRuling && !(coal && coal.isRuling))) ? null : coal;
                     let stroke = null;
                     let strokeDashed = false;
-                    if(highlightGov && isGov) stroke = "var(--tno-gold)";
+                    if(highlightGov && isGov) stroke = govHl("var(--tno-gold)");
                     else if(effectiveCoal) stroke = effectiveCoal.color;
-                    if(isExtSupport && rulingCoal) { stroke = highlightGov ? '#ffd700' : rulingCoal.color; strokeDashed = true; }
+                    if(isExtSupport && rulingCoal) { stroke = highlightGov ? govHl('#ffd700') : rulingCoal.color; strokeDashed = true; }
 
                     const factions = (p.factions||[]).filter(f=>(f[seatKey]||0)>0);
                     if(factions.length > 0) {
@@ -13373,7 +13418,7 @@
                             const fCoalRuling = !isPartyRuling && (fCoal && fCoal.isRuling);
                             const fIsGov = isPartyRuling || fCoalRuling;
                             const fEffCoal = (isPartyRuling && !(fCoal && fCoal.isRuling)) ? null : fCoal; // 당 연정 폴백 제거
-                            const fStroke = highlightGov&&fIsGov ? 'var(--tno-gold)' : (fEffCoal?fEffCoal.color:null);
+                            const fStroke = highlightGov&&fIsGov ? govHl('var(--tno-gold)') : (fEffCoal?fEffCoal.color:null);
                             for(let k=0; k<(f[seatKey]||0); k++){
                                 if(map.length>=targetTotal) break;
                                 map.push({color:fc, partyName:p.name, factionName:f.name, partyStatus:p.status||'active',
@@ -13404,13 +13449,13 @@
                                 const indExtCoal = !indCoal && rulingCoal ? (rulingCoal.externalSupporters?.includes(indKey) ? rulingCoal : null) : null;
                                 if(indCoal) {
                                     indIsGov = !!indCoal.isRuling;
-                                    indStroke = highlightGov && indIsGov ? 'var(--tno-gold)' : indCoal.color;
+                                    indStroke = highlightGov && indIsGov ? govHl('var(--tno-gold)') : indCoal.color;
                                     indDashed = false;
                                     indCoalName = indCoal.name;
                                     indExtSupport = false;
                                 } else if(indExtCoal) {
                                     indIsGov = false;
-                                    indStroke = highlightGov ? '#ffd700' : indExtCoal.color;
+                                    indStroke = highlightGov ? govHl('#ffd700') : indExtCoal.color;
                                     indDashed = true;
                                     indCoalName = null;
                                     indExtSupport = indExtCoal.externalSupportLabel || '각외협력';
@@ -13562,9 +13607,9 @@
                     ctx.stroke();
                     ctx.shadowBlur = 0;
                 } else if(d.isRuling && highlightGov) {
-                    ctx.shadowColor = "rgba(255, 215, 0, 0.8)";
+                    ctx.shadowColor = govHlGlow("rgba(255, 215, 0, 0.8)");
                     ctx.shadowBlur = 10;
-                    ctx.strokeStyle = "#ffd700";
+                    ctx.strokeStyle = govHl("#ffd700");
                     ctx.lineWidth = 2;
                     ctx.stroke();
                     ctx.shadowBlur = 0;

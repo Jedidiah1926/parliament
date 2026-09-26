@@ -6288,6 +6288,14 @@ window.DnoLangPacks.en = {
   [
    "모든 원에 같은 비율",
    "Same ratio for every chamber"
+  ],
+  [
+   "집권 정당 강조 색",
+   "Ruling party highlight colour"
+  ],
+  [
+   "기본값",
+   "Default"
   ]
  ]
 };

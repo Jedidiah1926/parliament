@@ -1446,3 +1446,22 @@ html[data-ui-mode="mobile"] .save-panel { max-height: calc(100vh - 56px - var(--
         .thr-row input[type="number"]:disabled { opacity: .55; }
         .thr-slash { color: #666; font-size: 1.1rem; }
         .thr-preview { flex: 0 0 auto; min-width: 7.5em; color: var(--tno-gold); font-size: 0.8rem; white-space: nowrap; }
+
+        /* ---- 로고 제작 모드 (logo.html): 의회 메뉴만 ---- */
+        .logo-only { display: none !important; }
+        html[data-app-mode="logo"] .logo-only { display: block !important; }
+        html[data-app-mode="logo"] .main-tab-btn:not(#mainTabSetup),
+        html[data-app-mode="logo"] #saveTabBar,
+        html[data-app-mode="logo"] #dispInfoBar,
+        html[data-app-mode="logo"] #dispTabCabinet { display: none !important; }
+
+        .gov-hl-color { margin: -6px 0 16px; }
+        .gov-hl-color > label { color: #888; font-size: 0.8rem; margin-bottom: 6px; display: block; }
+        .gov-hl-color-row { display: flex; align-items: center; gap: 6px; }
+        .gov-hl-color-row input[type="color"] { flex: 0 0 38px; width: 38px; height: 30px; padding: 0; border: 1px solid #333; background: none; cursor: pointer; }
+        .gov-hl-color-row input[type="text"] { flex: 1 1 auto; min-width: 0; font-family: inherit; text-transform: uppercase; }
+        .gov-hl-color-reset { flex: 0 0 auto; background: #000; border: 1px solid #333; color: #aaa; font-family: inherit; padding: 5px 10px; cursor: pointer; }
+        .gov-hl-color-reset:hover { color: var(--tno-neon); border-color: var(--tno-neon); }
+        /* 로고 모드에는 위쪽 세이브 탭 바가 없으므로 그 자리만큼 비워둔 여백을 줄인다 */
+        html[data-app-mode="logo"] body { padding-top: 20px !important; }
+        html[data-app-mode="logo"][data-ui-mode="mobile"] .mobile-panel-switch { top: 0; }
