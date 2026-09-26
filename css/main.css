@@ -76,26 +76,61 @@
             text-shadow: 0 0 10px var(--tno-neon);
         }
 
-        /* ── 설정 페이지: 항목이 늘어나 카드가 화면보다 길어지므로, 화면을 꽉 채우고 세로로 스크롤 ── */
-        body.settings-page {
-            display: block;
-            height: auto;
-            min-height: 100vh;
-            overflow-x: hidden;
+        /* ── 설정 페이지: 화면 전체를 쓰는 두 단 구성 (왼쪽 분류 목록 · 오른쪽 설정) ── */
+        body.settings-page { display: block; height: 100vh; overflow: hidden; }
+        body.settings-page .terminal-container.settings-shell {
+            width: 100%; max-width: none; height: 100vh;
+            box-sizing: border-box; border: none; box-shadow: none;
+            display: flex; flex-direction: column;
+        }
+        body.settings-page .corner { display: none; }
+        .settings-layout { flex: 1; min-height: 0; display: flex; }
+        .settings-nav {
+            width: 240px; flex-shrink: 0; box-sizing: border-box;
+            padding: 20px 14px; display: flex; flex-direction: column; gap: 4px;
+            border-right: 1px solid var(--tno-border);
             overflow-y: auto;
         }
-        body.settings-page .terminal-container {
-            width: 100%;
-            max-width: none;
-            min-height: 100vh;
-            box-sizing: border-box;
-            border: none;
-            box-shadow: none;
+        .settings-nav .status-line { margin-bottom: 14px; }
+        .settings-nav-item {
+            display: flex; align-items: center; gap: 10px;
+            width: 100%; box-sizing: border-box; text-align: left; text-decoration: none;
+            background: transparent; border: 1px solid transparent;
+            color: #888; font-family: inherit; font-size: 1rem; letter-spacing: 1px;
+            padding: 10px 12px; cursor: pointer; transition: .12s;
         }
-        body.settings-page .header-strip { position: sticky; top: 0; z-index: 5; }
-        body.settings-page .corner { display: none; } /* 화면 가장자리 밖으로 삐져나와 가로 스크롤이 생김 */
-        /* 내용은 읽기 좋은 폭의 가운데 기둥으로 */
-        body.settings-page .content { max-width: 960px; margin: 0 auto; box-sizing: border-box; }
+        .settings-nav-item:hover { color: #ccc; border-color: #333; }
+        .settings-nav-item.active {
+            color: var(--tno-neon); border-color: var(--tno-neon);
+            background: color-mix(in srgb, var(--tno-neon) 8%, transparent);
+            text-shadow: 0 0 5px var(--tno-neon);
+        }
+        .settings-nav-icon { width: 1.4em; text-align: center; flex-shrink: 0; }
+        .settings-nav-spacer { flex: 1; }
+        .settings-nav-back { color: #666; }
+        .settings-panel { flex: 1; min-width: 0; overflow-y: auto; padding: 28px 40px; box-sizing: border-box; }
+        .settings-section { display: none; max-width: 760px; }
+        .settings-section.active { display: block; }
+        .settings-section-title { margin: 0 0 6px; font-size: 1.4rem; font-weight: normal; color: var(--tno-neon); letter-spacing: 2px; }
+        .settings-section-desc { color: #777; font-size: 0.9rem; margin-bottom: 26px; text-transform: none; }
+        .settings-group { margin-bottom: 26px; }
+        .settings-group .lang-select-group { margin-bottom: 0; }
+        .settings-group .lang-select-group + .lang-select-group { margin-top: 6px; }
+        .settings-hint { color: var(--tno-text); font-size: 0.85rem; margin-top: 8px; opacity: .8; text-transform: none; }
+        .settings-panel .footer { max-width: 760px; margin-top: 40px; }
+        /* 좁은 화면: 분류 목록을 위쪽 가로 탭 줄로 */
+        @media (max-width: 700px) {
+            .settings-layout { flex-direction: column; }
+            .settings-nav { width: auto; flex-direction: row; padding: 8px; gap: 4px; border-right: none; border-bottom: 1px solid var(--tno-border); overflow-x: auto; overflow-y: hidden; }
+            .settings-nav .status-line, .settings-nav-spacer { display: none; }
+            .settings-nav-item { width: auto; flex-shrink: 0; padding: 8px 12px; font-size: 0.9rem; }
+            .settings-panel { padding: 20px 16px; }
+        }
+        html[data-ui-mode="mobile"] .settings-layout { flex-direction: column; }
+        html[data-ui-mode="mobile"] .settings-nav { width: auto; flex-direction: row; padding: 8px; border-right: none; border-bottom: 1px solid var(--tno-border); overflow-x: auto; }
+        html[data-ui-mode="mobile"] .settings-nav .status-line, html[data-ui-mode="mobile"] .settings-nav-spacer { display: none; }
+        html[data-ui-mode="mobile"] .settings-nav-item { width: auto; flex-shrink: 0; }
+        html[data-ui-mode="mobile"] .settings-panel { padding: 20px 16px; }
 
         .content {
             padding: 40px 30px;
