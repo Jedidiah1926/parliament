@@ -22,6 +22,8 @@ window.DnoLangPacks.en = {
  ],
  "ordinal": "en",
  "patterns": [
+  {"re": "^정기회 시작 — (.+)$", "to": "Regular session opened — $1"},
+  {"re": "^제(\\d+)대 (.+) 시작$", "to": "The {{ordinal:$1}} $2 begins"},
   {"re": "^연$", "to": "Year"},
   {"re": "^월$", "to": "Month"},
   {"re": "^일$", "to": "Day"},
@@ -5276,6 +5278,26 @@ window.DnoLangPacks.en = {
   [
    "- 국가 › 날짜: 연 · 월 · 일 입력칸이 기본(직접 입력은 선택), 진행 버튼은 날짜 줄로 옮김 · 날짜를 정하기 전에 ▶를 누르면 연도 칸으로 안내",
    "- Nation › Date: year · month · day fields are now the default (free text is optional), advance buttons moved to the date line; pressing ▶ before a date is set takes you to the year field"
+  ],
+  [
+   "자동 진행",
+   "Automatic progression"
+  ],
+  [
+   "날짜가 정기회 시작일을 지나면 다음 회기를 정기회로 시작",
+   "When the date passes the regular-session start date, open the next session as a regular session"
+  ],
+  [
+   "정기회 시작일",
+   "Regular session starts on"
+  ],
+  [
+   "하원 총선 결과가 확정되면 대수 +1 (보궐선거 · 재개표는 제외)",
+   "Term +1 when a lower-house general election result is confirmed (not by-elections or recounts)"
+  ],
+  [
+   "회기가 개별형일 때 동작합니다. 날짜 연동은 연 · 월 · 일 날짜에서만 동작합니다.",
+   "Works when the session is set to Individual. Date-based progression only works with year/month/day dates."
   ]
  ]
 };

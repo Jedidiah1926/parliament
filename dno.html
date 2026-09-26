@@ -756,6 +756,27 @@
                             <button class="add-btn" onclick="advanceNationSession()" style="width:100%;margin-top:0;">▶ 다음 회기</button>
                         </div>
                     </div>
+
+                    <!-- 자동 진행: 날짜로 정기회 시작 · 총선으로 대수 올리기 (회기가 개별형일 때 동작) -->
+                    <div style="margin-top:16px;">
+                        <label style="color:#888;font-size:0.8rem;margin-bottom:6px;display:block;">자동 진행</label>
+                        <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer;margin-bottom:6px;">
+                            <input type="checkbox" id="nationAutoRegularSession" style="margin-top:3px;">
+                            <span style="font-size:0.85rem;">날짜가 정기회 시작일을 지나면 다음 회기를 정기회로 시작</span>
+                        </label>
+                        <div style="display:flex;align-items:center;gap:6px;margin:0 0 10px 24px;font-size:0.8rem;color:#888;">
+                            <span>정기회 시작일</span>
+                            <input type="number" id="nationRegularSessionMonth" value="9" min="1" max="12" style="width:56px;text-align:center;box-sizing:border-box;">
+                            <span>월</span>
+                            <input type="number" id="nationRegularSessionDay" value="1" min="1" max="31" style="width:56px;text-align:center;box-sizing:border-box;">
+                            <span>일</span>
+                        </div>
+                        <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer;">
+                            <input type="checkbox" id="nationAutoTermOnElection" style="margin-top:3px;">
+                            <span style="font-size:0.85rem;">하원 총선 결과가 확정되면 대수 +1 (보궐선거 · 재개표는 제외)</span>
+                        </label>
+                        <div style="color:#555;font-size:0.72rem;margin-top:6px;">회기가 개별형일 때 동작합니다. 날짜 연동은 연 · 월 · 일 날짜에서만 동작합니다.</div>
+                    </div>
                 </div>
 
                 <!-- 설정: 지역구 시스템(지도/그리드) · 지도 글씨·배지 크기 -->

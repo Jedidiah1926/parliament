@@ -1779,12 +1779,42 @@
             const m = parseInt(mEl.value) || 1;
             const d = parseInt(dEl.value) || 1;
             const dt = new Date(y, m-1, d);
+            const before = new Date(dt);
             if(unit === 'month') dt.setMonth(dt.getMonth() + amount);
             else dt.setDate(dt.getDate() + amount);
             yEl.value = dt.getFullYear();
             mEl.value = dt.getMonth() + 1;
             dEl.value = dt.getDate();
             updateDispInfoBar();
+            autoStartRegularSessions(before, dt);
+        }
+
+        // ===== 자동 진행 (국가 › 날짜 › 자동 진행) =====
+        // 날짜를 넘기다 정기회 시작일(기본 9월 1일)을 지나면, 지난 횟수만큼 다음 회기를 정기회로 시작 (회기 개별형일 때)
+        function autoStartRegularSessions(from, to) {
+            if(!document.getElementById('nationAutoRegularSession')?.checked || nationSessionMode !== 'individual' || !(to > from)) return;
+            const m = Math.min(12, Math.max(1, parseInt(document.getElementById('nationRegularSessionMonth')?.value) || 9));
+            const d = Math.min(31, Math.max(1, parseInt(document.getElementById('nationRegularSessionDay')?.value) || 1));
+            let count = 0;
+            for(let y = from.getFullYear(); y <= to.getFullYear(); y++) {
+                const start = new Date(y, m - 1, d);
+                if(start > from && start <= to) count++;
+            }
+            if(!count) return;
+            const keepNext = nationNextSessionType;
+            for(let i = 0; i < count; i++) { nationNextSessionType = 'regular'; advanceNationSession(); }
+            setNationNextSessionType(keepNext); // 날짜 줄에서 골라 둔 "다음:" 선택은 그대로 둔다
+            if(typeof showKbdToast === 'function') showKbdToast(`정기회 시작 — ${formatNationSession()}`);
+        }
+        // 하원 총선 결과가 확정되면 대수 +1 (회기 개별형일 때 · 보궐선거와 재개표는 제외 — elecRun에서 호출)
+        function autoAdvanceTermOnElection() {
+            if(!document.getElementById('nationAutoTermOnElection')?.checked || nationSessionMode !== 'individual') return;
+            const termEl = document.getElementById('nationSessionTerm');
+            if(!termEl) return;
+            termEl.value = (parseInt(termEl.value) || 0) + 1;
+            updateDispInfoBar();
+            const orgName = document.getElementById('nationSessionOrgName')?.value?.trim() || '국회';
+            if(typeof showKbdToast === 'function') showKbdToast(`제${termEl.value}대 ${orgName} 시작`);
         }
 
         // 개별형 회기: 다음 회기 (회기 번호만 +1, 대수는 총선 등 큰 이벤트 때 수동으로 바꾸는 값이라 유지)
@@ -4616,6 +4646,10 @@
                     nationSessionNumber: document.getElementById('nationSessionNumber')?.value ?? "",
                     nationSessionType: nationSessionType,
                     nationNextSessionType: nationNextSessionType,
+                    nationAutoRegularSession: !!document.getElementById('nationAutoRegularSession')?.checked,
+                    nationRegularSessionMonth: document.getElementById('nationRegularSessionMonth')?.value ?? "9",
+                    nationRegularSessionDay: document.getElementById('nationRegularSessionDay')?.value ?? "1",
+                    nationAutoTermOnElection: !!document.getElementById('nationAutoTermOnElection')?.checked,
                     govType: govType,
                     president: president,
                     pm: pm,
@@ -4843,6 +4877,13 @@
             setNationSessionMode(cfg.nationSessionMode ?? "simple");
             setNationSessionType(cfg.nationSessionType ?? "regular");
             setNationNextSessionType(cfg.nationNextSessionType ?? cfg.nationSessionType ?? "regular"); // 예전 파일: 다음 회기도 지금과 같은 종류
+            { // 자동 진행 설정 (예전 파일: 꺼짐 · 정기회 9월 1일)
+                const set = (id, prop, v) => { const el = document.getElementById(id); if(el) el[prop] = v; };
+                set('nationAutoRegularSession', 'checked', !!cfg.nationAutoRegularSession);
+                set('nationRegularSessionMonth', 'value', cfg.nationRegularSessionMonth ?? '9');
+                set('nationRegularSessionDay', 'value', cfg.nationRegularSessionDay ?? '1');
+                set('nationAutoTermOnElection', 'checked', !!cfg.nationAutoTermOnElection);
+            }
             president = { name: '', photo: '', partyId: null, linkedSeat: null, ...(cfg.president || {}) };
             pm = { name: '', photo: '', partyId: null, linkedSeat: null, ...(cfg.pm || {}) };
             if(Array.isArray(cfg.deputyPms)) {
@@ -13035,6 +13076,7 @@
 
             // 기록 저장
             elecSaveRecord(elecTitle, elecYear, chamber, seatMap, weighted, districtResults);
+            if(chamber === 'house' && !isByElection && !isRerun) autoAdvanceTermOnElection();
 
             elecRunning=false;
             runBtn.style.background='var(--tno-neon)'; runBtn.style.color='#000'; runBtn.textContent='>> 개표 시작 <<'; runBtn.dataset.modernLabel='개표 시작';
