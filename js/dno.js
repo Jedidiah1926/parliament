@@ -4451,6 +4451,7 @@
             canvasTokenCache = null;
             simulate();
             document.querySelectorAll('canvas').forEach(cvs => { if(cvs.offsetParent) redrawCanvasForCurrentSize(cvs); });
+            if(document.getElementById('regionMapWrap')?.offsetParent) renderRegionMap(); // 권역 지도 바탕색(라이트/다크)
         });
         let suppressAutosaveOnUnload = false;
 
@@ -9001,14 +9002,26 @@
             }
             const shapeEls = [];
             let selectedOverlayEl = null;
+            // innerGlow 바탕: 라이트 모드는 흰 바탕에 옅게, 다크/네온은 어두운 바탕에 옅게 섞는다
+            const glowOnLight = document.documentElement.getAttribute('data-theme-mode') === 'light';
+            const glowMix = c => glowOnLight ? `color-mix(in srgb, ${c} 38%, #ffffff)` : `color-mix(in srgb, ${c} 22%, #06070a)`;
+            // groupOf(key): 같은 묶음(예: 권역)끼리는 지역구 사이 경계선을 지우고 묶음 바깥 테두리만 그린다
+            const groups = new Map(); // groupId → { color, shapes: [] }
             map.shapes.forEach(s => {
                 const el = document.createElementNS(svgNS, s.tag);
                 Object.entries(s.attrs||{}).forEach(([k,v]) => el.setAttribute(k, v));
                 const fillColor = (opts.getFill ? opts.getFill(s.key) : null) || 'transparent';
+                const groupId = opts.groupOf ? opts.groupOf(s.key) : null;
+                if(groupId != null) {
+                    if(!groups.has(groupId)) groups.set(groupId, { color: fillColor, shapes: [] });
+                    groups.get(groupId).shapes.push(s);
+                }
                 // innerGlow: 도형 전체를 단색으로 칠하는 대신, 어두운 바탕 위에 경계 안쪽에서
                 // 옅어지는 네온 광원만 보이도록 함 (권역 지도 등에서 사용)
-                el.setAttribute('fill', opts.innerGlow && fillColor !== 'transparent' ? `color-mix(in srgb, ${fillColor} 22%, #06070a)` : fillColor);
-                el.setAttribute('stroke', map.strokeColor || '#00ffff');
+                const shownFill = opts.innerGlow && fillColor !== 'transparent' ? glowMix(fillColor) : fillColor;
+                el.setAttribute('fill', shownFill);
+                // 묶음에 속한 지역구는 테두리를 채움색과 같게 해 이웃한 같은 묶음 지역구와의 경계선이 보이지 않게 한다
+                el.setAttribute('stroke', groupId != null ? shownFill : (map.strokeColor || '#00ffff'));
                 el.setAttribute('stroke-width', opts.strokeWidth || '1.5');
                 // 지도 좌표 규모(viewBox)가 저장된 값과 다르거나 매우 클 수 있어, 테두리가 화면 픽셀
                 // 기준 두께를 유지하도록 함 (확대해도 실선이 얇아지거나 안 보이지 않게)
@@ -9035,7 +9048,7 @@
                 shapeEls.push({ s, el });
                 // innerGlow: 도형과 동일한 모양을 클립으로 삼아, 그 안에서만 보이는 흐린 네온 테두리를
                 // 겹쳐 그림 — 경계 쪽은 밝고 중앙으로 갈수록 옅어지는 광원 느낌을 줌
-                if(opts.innerGlow && fillColor !== 'transparent') {
+                if(opts.innerGlow && fillColor !== 'transparent' && groupId == null) {
                     const clipId = 'clip_' + Math.random().toString(36).slice(2, 10);
                     const clipPath = document.createElementNS(svgNS, 'clipPath');
                     clipPath.setAttribute('id', clipId);
@@ -9072,6 +9085,56 @@
                     overlay.setAttribute('data-decor', '1');
                     selectedOverlayEl = overlay;
                 }
+            });
+            // 묶음(권역)마다 바깥 테두리와 안쪽 빛을 그린다 — 묶음 모양(여러 지역구의 합집합)을 마스크로 써서
+            // 합집합 바깥으로 나간 선만 남기면 지역구 사이 경계선은 사라지고 묶음 둘레만 남는다
+            groups.forEach(g => {
+                const uid = Math.random().toString(36).slice(2, 10);
+                const cloneAll = (parent, attrs) => g.shapes.forEach(s => {
+                    const c = document.createElementNS(svgNS, s.tag);
+                    Object.entries(s.attrs||{}).forEach(([k,v]) => c.setAttribute(k, v));
+                    Object.entries(attrs).forEach(([k,v]) => c.setAttribute(k, v));
+                    parent.appendChild(c);
+                });
+                // 합집합 바깥만 보이게 하는 마스크(흰 바탕에 묶음 모양을 검게)
+                const mask = document.createElementNS(svgNS, 'mask');
+                mask.setAttribute('id', 'gout_' + uid);
+                mask.setAttribute('maskUnits', 'userSpaceOnUse');
+                ['x','y'].forEach(k => mask.setAttribute(k, '-100000'));
+                ['width','height'].forEach(k => mask.setAttribute(k, '200000'));
+                const bg = document.createElementNS(svgNS, 'rect');
+                [['x','-100000'],['y','-100000'],['width','200000'],['height','200000'],['fill','#fff']].forEach(([k,v]) => bg.setAttribute(k, v));
+                mask.appendChild(bg);
+                // 검은 모양에도 얇은 테두리를 줘서, 붙어 있는 지역구 사이 안티앨리어싱 틈으로 선이 새지 않게 한다
+                cloneAll(mask, { fill: '#000', stroke: '#000', 'stroke-width': '2', 'stroke-linejoin': 'round', 'vector-effect': 'non-scaling-stroke' });
+                svg.appendChild(mask);
+                // 합집합 모양 클립(안쪽 빛용)
+                const clip = document.createElementNS(svgNS, 'clipPath');
+                clip.setAttribute('id', 'gin_' + uid);
+                cloneAll(clip, {});
+                svg.appendChild(clip);
+                const strokeAttrs = w => ({ fill: 'none', stroke: g.color, 'stroke-width': String(w), 'stroke-linejoin': 'round', 'vector-effect': 'non-scaling-stroke' });
+                // 안쪽 빛: 바깥 테두리를 흐리게 번지게 한 뒤 묶음 안쪽으로만 잘라 보여준다
+                if(opts.innerGlow) {
+                    const inner = document.createElementNS(svgNS, 'g');
+                    inner.setAttribute('clip-path', `url(#gin_${uid})`);
+                    inner.setAttribute('pointer-events', 'none');
+                    inner.setAttribute('data-decor', '1');
+                    const blurG = document.createElementNS(svgNS, 'g');
+                    blurG.style.filter = 'blur(3px)';
+                    blurG.setAttribute('opacity', '0.8');
+                    const masked = document.createElementNS(svgNS, 'g');
+                    masked.setAttribute('mask', `url(#gout_${uid})`);
+                    cloneAll(masked, strokeAttrs((opts.innerGlowWidth || 8) * 2));
+                    blurG.appendChild(masked); inner.appendChild(blurG); svg.appendChild(inner);
+                }
+                // 바깥 테두리
+                const outline = document.createElementNS(svgNS, 'g');
+                outline.setAttribute('mask', `url(#gout_${uid})`);
+                outline.setAttribute('pointer-events', 'none');
+                outline.setAttribute('data-decor', '1');
+                cloneAll(outline, strokeAttrs(7));
+                svg.appendChild(outline);
             });
             if(selectedOverlayEl) svg.appendChild(selectedOverlayEl);
             wrapEl.appendChild(svg);
@@ -11884,7 +11947,14 @@
                         if(!districtGrid[ch][key]) return 'transparent';
                         const regionId = districtRegionMap[ch]?.[key];
                         const region = (regions[ch]||[]).find(r => r.id === regionId);
-                        return region ? region.color : 'rgba(255,255,255,0.25)';
+                        // 미배정 칸: 라이트 모드는 흰 바탕에서 보이도록 어두운 회색, 다크/네온은 밝은 회색
+                        return region ? region.color : (document.documentElement.getAttribute('data-theme-mode') === 'light' ? 'rgba(0,0,0,0.35)' : 'rgba(255,255,255,0.25)');
+                    },
+                    // 같은 권역의 지역구끼리는 경계선을 지우고 권역 둘레만 그린다
+                    groupOf: key => {
+                        if(!districtGrid[ch][key]) return null;
+                        const regionId = districtRegionMap[ch]?.[key];
+                        return (regions[ch]||[]).some(r => r.id === regionId) ? regionId : null;
                     },
                     title: key => {
                         const nm = districtNames.house[key] || key;
