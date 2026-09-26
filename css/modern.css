@@ -2507,6 +2507,8 @@ html[data-theme-family="modern"] .lang-switch:hover { background: var(--m-accent
 
 /* 메인 메뉴·설정·점검 페이지 (main.css / index.css) */
 html[data-theme-family="modern"] .corner { display: none !important; }
+/* 터미널 느낌의 장식 문구(SYSTEM: ONLINE 등)는 네온 모드에서만 */
+html[data-theme-family="modern"] .neon-only { display: none !important; }
 html[data-theme-family="modern"] .terminal-container {
     background: var(--m-surface) !important;
     border: 1px solid var(--m-border) !important;
@@ -2514,6 +2516,12 @@ html[data-theme-family="modern"] .terminal-container {
     box-shadow: var(--m-shadow) !important;
     overflow: hidden;
 }
+html[data-theme-family="modern"] body.settings-page .terminal-container {
+    border: none !important;
+    border-radius: 0;
+    box-shadow: none !important;
+}
+html[data-theme-family="modern"] body.settings-page .header-strip { background: var(--m-surface) !important; }
 html[data-theme-family="modern"] .header-strip {
     background: none !important;
     color: var(--m-text) !important;

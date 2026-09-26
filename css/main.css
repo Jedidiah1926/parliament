@@ -76,6 +76,27 @@
             text-shadow: 0 0 10px var(--tno-neon);
         }
 
+        /* ── 설정 페이지: 항목이 늘어나 카드가 화면보다 길어지므로, 화면을 꽉 채우고 세로로 스크롤 ── */
+        body.settings-page {
+            display: block;
+            height: auto;
+            min-height: 100vh;
+            overflow-x: hidden;
+            overflow-y: auto;
+        }
+        body.settings-page .terminal-container {
+            width: 100%;
+            max-width: none;
+            min-height: 100vh;
+            box-sizing: border-box;
+            border: none;
+            box-shadow: none;
+        }
+        body.settings-page .header-strip { position: sticky; top: 0; z-index: 5; }
+        body.settings-page .corner { display: none; } /* 화면 가장자리 밖으로 삐져나와 가로 스크롤이 생김 */
+        /* 내용은 읽기 좋은 폭의 가운데 기둥으로 */
+        body.settings-page .content { max-width: 960px; margin: 0 auto; box-sizing: border-box; }
+
         .content {
             padding: 40px 30px;
             display: flex;
