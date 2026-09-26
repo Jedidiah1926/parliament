@@ -4574,10 +4574,14 @@
         }
 
         // ===== SAVE / LOAD (v5) =====
+        // 저장 형식 식별자 — 이름을 Hemicycle로 바꾸면서 새 형식으로. 예전 형식(DATANET)도 그대로 읽고,
+        // 읽는 순간 새 식별자로 고쳐 두어 다음 저장부터는 Hemicycle 형식으로 남는다
+        const SAVE_APP_ID = 'HEMICYCLE';
+        const LEGACY_SAVE_APP_IDS = ['DATANET_PARLIAMENT_SIM'];
         function getAppState() {
             const systemType = document.querySelector('input[name="systemType"]:checked')?.value || 'bicameral';
             return {
-                meta: { app: "DATANET_PARLIAMENT_SIM", version: "1.3", savedAt: new Date().toISOString() },
+                meta: { app: SAVE_APP_ID, version: "1.3", savedAt: new Date().toISOString() },
                 ui: { currentMainTab, currentSubTab },
                 config: {
                     systemType,
@@ -4979,12 +4983,26 @@
             try { localStorage.removeItem(key); } catch(e) { /* 무시 */ }
         }
 
+        function normalizeSaveMeta(state) {
+            if(!state || typeof state !== 'object') return false;
+            if(!state.meta || typeof state.meta !== 'object') { state.meta = { app: SAVE_APP_ID }; return true; }
+            if(state.meta.app === SAVE_APP_ID) return false;
+            state.meta.app = SAVE_APP_ID;
+            return true;
+        }
+
         function loadSaveSlots() {
             if(!localStorageAvailable) return [];
             let slots;
             try { slots = JSON.parse(safeLsGet(SAVE_SLOTS_KEY) || '[]'); } catch(e) { return []; }
             // 기본(전역) 자동저장 슬롯은 항상 현재 이름으로 — 예전 이름("기존 저장")으로 저장된 기록도 새 이름으로 보이고, 다음 저장 때 반영됨
             if(Array.isArray(slots)) slots.forEach(s => { if(s && s.isAutosave && !s.parentId) s.name = AUTOSAVE_SLOT_NAME; });
+            // 브라우저에 남아 있던 예전 형식(DATANET) 세이브는 읽을 때 Hemicycle 형식으로 바꿔 한 번 다시 저장
+            if(Array.isArray(slots)) {
+                let migrated = false;
+                slots.forEach(sl => { if(sl && normalizeSaveMeta(sl.state)) migrated = true; });
+                if(migrated) persistSaveSlots(slots);
+            }
             return slots;
         }
         function persistSaveSlots(slots) { return safeLsSet(SAVE_SLOTS_KEY, JSON.stringify(slots)); }
