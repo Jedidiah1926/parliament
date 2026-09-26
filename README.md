@@ -47,6 +47,8 @@ npm run build:win     # Windows 설치형 exe 빌드 → dist/Hemicycle-Setup-<�
 - Windows에서 빌드하는 게 가장 확실하지만, `electron-builder`는 Wine이 설치된 macOS/Linux에서도 Windows 타깃 빌드를 지원합니다.
 - 빌드 설정은 `package.json`의 `build` 항목(electron-builder)에서 관리하며, 앱 이름·버전·설치 마법사 옵션(바탕화면/시작메뉴 바로가기 등)을 그곳에서 조정합니다.
 - 데스크톱 앱은 로컬 파일(`localStorage`)에 세이브를 저장하므로 브라우저 버전과 데이터가 공유되지 않습니다.
+- 창 크기 · 위치 · 최대화 · 전체 화면 · 확대 배율 · 마지막 테마는 `%APPDATA%\Hemicycle\window-state.json`에 기억해 다음에 그대로 엽니다 (모니터 구성이 바뀌어 화면 밖이면 기본 위치로).
+- 단축키: `Ctrl +` / `Ctrl −` / `Ctrl 0` 확대 · 축소 · 원래 크기(Ctrl+휠도 가능), `F11` 전체 화면, `Ctrl R` 새로고침. 화면 선명도는 윈도우 배율(125% · 150% · 4K)을 자동으로 따릅니다.
 - 예전 이름(DATANET Parliament Simulation)으로 설치했던 경우: Hemicycle은 별도의 앱으로 설치되며, 처음 실행할 때 예전 앱의 세이브·설정을 새 데이터 폴더(`%APPDATA%\Hemicycle`)로 자동으로 옮겨 옵니다. 옮겨진 걸 확인한 뒤 예전 앱은 제거해도 됩니다 (예전 데이터 폴더는 지워지지 않고 남습니다).
 
 ---

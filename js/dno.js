@@ -1245,7 +1245,7 @@
             const photoMap = new Map();
             await Promise.all(allCards.map(async c => { if(c.photo) photoMap.set(c, await loadImageAsync(c.photo)); }));
 
-            const scale = window.devicePixelRatio || 1;
+            const scale = renderDpr();
             const pad = Math.round(16*scale), cardW = Math.round(130*scale), cardGap = Math.round(22*scale), rowGap = Math.round(20*scale);
             const photoW = Math.round(70*scale), photoH = Math.round(88*scale);
             const labelH = Math.round(20*scale), gapSm = Math.round(6*scale), nameH = Math.round(18*scale), badgeH = Math.round(18*scale);
@@ -3284,8 +3284,32 @@
 
         function setExportFormat(fmt) {
             exportFormat = fmt;
-            document.querySelectorAll('#exportDialogOverlay .sub-tab-btn-3').forEach(b => b.classList.toggle('active', b.dataset.format === fmt));
+            document.querySelectorAll('#exportDialogOverlay .sub-tab-btn-3[data-format]').forEach(b => b.classList.toggle('active', b.dataset.format === fmt));
+            const sec = document.getElementById('exportScaleSection');
+            if(sec) sec.style.display = fmt === 'svg' ? 'none' : '';
         }
+
+        // ===== 내보내기 해상도 (1× · 2× · 3×) =====
+        // 화면 배율과 상관없이 고른 배율로 다시 그려 내보낸다 (예: 배율 100% 모니터에서도 2×면 두 배 크기로 선명하게).
+        // 마지막으로 고른 값을 기억하고, 처음엔 2×
+        const EXPORT_SCALE_KEY = 'dnoExportScale';
+        let exportScale = (() => { const v = parseInt(safeLsGet(EXPORT_SCALE_KEY), 10); return [1, 2, 3].includes(v) ? v : 2; })();
+        function setExportScale(v) {
+            if(![1, 2, 3].includes(v)) return;
+            exportScale = v;
+            safeLsSet(EXPORT_SCALE_KEY, String(v));
+            document.querySelectorAll('#exportDialogOverlay .sub-tab-btn-3[data-scale]').forEach(b => b.classList.toggle('active', +b.dataset.scale === v));
+            const hint = document.getElementById('exportScaleHint');
+            const t = exportDialogTarget;
+            if(hint && t) {
+                const r = t.getBoundingClientRect();
+                const w = Math.round((t.clientWidth || r.width) * v), h = Math.round((t.clientHeight || r.height) * v);
+                hint.textContent = w > 0 && h > 0 ? `약 ${w} × ${h} 픽셀 (통계 · 머리를 넣으면 그만큼 커짐)` : '';
+            }
+        }
+        // 그림을 그릴 때 쓰는 픽셀 배율 — 평소엔 화면 배율, 내보내는 동안만 고른 해상도
+        let exportDprOverride = null;
+        function renderDpr() { return exportDprOverride || window.devicePixelRatio || 1; }
 
         function onExportIncludeStatsChange() {
             const show = document.getElementById('exportIncludeStats').checked;
@@ -3306,6 +3330,7 @@
             document.getElementById('exportIncludeExtraParties').checked = false;
             onExportIncludeStatsChange();
             setExportFormat('png');
+            setExportScale(exportScale);
             // 내각 카드 그리드는 통계/헤더 옵션이 적용되지 않으므로 해당 섹션을 숨긴다
             const headerStatsSection = document.getElementById('exportHeaderStatsSection');
             if(headerStatsSection) headerStatsSection.style.display = canvasExportTarget.dataset?.exportKind === 'cabinet' ? 'none' : '';
@@ -3527,7 +3552,7 @@
                 const url = URL.createObjectURL(blob);
                 const img = new Image();
                 img.onload = () => {
-                    const scale = window.devicePixelRatio || 1;
+                    const scale = renderDpr();
                     const cvs = document.createElement('canvas');
                     cvs.width = Math.max(1, Math.round(rect.width * scale));
                     cvs.height = Math.max(1, Math.round(rect.height * scale));
@@ -3644,8 +3669,8 @@
         // 시각화(canvas 또는 svg)를 캔버스에 그린 뒤, includeStats면 그 아래에 통계 행을 이어서 그려
         // 최종 캔버스를 반환. 통계는 <foreignObject> 없이 canvas 2D 도형(rect+text)으로 직접 그림
         // (foreignObject로 그리면 Chromium이 래스터화 시 캔버스를 오염시켜 toDataURL이 막힘)
-        async function renderExportCanvas(target, box, statsOptions = {}, headerOptions = {}) {
-            const baseCanvas = target.tagName === 'CANVAS' ? target : await rasterizeSvgElement(target, 'image/png');
+        async function renderExportCanvas(target, box, statsOptions = {}, headerOptions = {}, baseOverride = null) {
+            const baseCanvas = baseOverride || (target.tagName === 'CANVAS' ? target : await rasterizeSvgElement(target, 'image/png'));
             const statsEl = box ? findStatsElementIn(box) : null;
             const chamber = statsEl ? inferChamberFromStatsId(statsEl.id) : null;
             const rows = statsEl ? extractStatsRows(statsEl, chamber, statsOptions) : [];
@@ -3894,7 +3919,43 @@
             }
         }
 
+        // 고른 해상도로 다시 그린 뒤 내보내고, 끝나면 화면 배율로 되돌려 다시 그린다.
+        // 캔버스는 마지막으로 그린 데이터로 다시 그리고, 해상도를 따르지 않는 캔버스는 부드럽게 확대한 사본을 쓴다
         async function exportVisualElement(target, includeStats, format, statsOptions = {}, headerOptions = {}) {
+            if(format === 'svg') return exportVisualElementAt(target, includeStats, format, statsOptions, headerOptions, null);
+            const isCanvas = target.tagName === 'CANVAS';
+            exportDprOverride = exportScale;
+            try {
+                let base = null;
+                if(isCanvas) {
+                    redrawCanvasForCurrentSize(target);
+                    const cssW = target.clientWidth || target.getBoundingClientRect().width;
+                    const wantW = Math.round(cssW * exportScale);
+                    if(cssW > 0 && target.width < wantW * 0.9) {
+                        // 이 캔버스는 해상도를 따르지 않음 — 원하는 크기로 확대한 사본
+                        base = document.createElement('canvas');
+                        base.width = wantW;
+                        base.height = Math.round(target.height * wantW / target.width);
+                        const bctx = base.getContext('2d');
+                        bctx.imageSmoothingEnabled = true;
+                        bctx.imageSmoothingQuality = 'high';
+                        bctx.drawImage(target, 0, 0, base.width, base.height);
+                    } else {
+                        // 되돌려 다시 그리기 전에 지금 픽셀을 복사해 둔다
+                        base = document.createElement('canvas');
+                        base.width = target.width; base.height = target.height;
+                        base.getContext('2d').drawImage(target, 0, 0);
+                    }
+                    base.__cssWidth = cssW;
+                }
+                return await exportVisualElementAt(target, includeStats, format, statsOptions, headerOptions, base);
+            } finally {
+                exportDprOverride = null;
+                if(isCanvas) redrawCanvasForCurrentSize(target);
+            }
+        }
+
+        async function exportVisualElementAt(target, includeStats, format, statsOptions = {}, headerOptions = {}, baseCanvas = null) {
             // 내각 카드 그리드는 반원/지역구와 구조가 전혀 달라(의석 통계 없음) 별도 경로로 처리
             if(target.dataset?.exportKind === 'cabinet') {
                 const filenameBase = `cabinet_${formatKstTimestampCompact()}`;
@@ -3918,13 +3979,14 @@
             // 비어 보이고 JPG는 알파를 지원하지 않아 검게 나옴 — 통계 포함 경로와 배경을 통일)
             if(!box && !headerInfo && target.tagName === 'CANVAS' && format !== 'svg') {
                 const mime = format === 'jpg' ? 'image/jpeg' : 'image/png';
+                const src = baseCanvas || target;
                 const opaque = document.createElement('canvas');
-                opaque.width = target.width;
-                opaque.height = target.height;
+                opaque.width = src.width;
+                opaque.height = src.height;
                 const octx = opaque.getContext('2d');
                 octx.fillStyle = exportPalette().bg;
                 octx.fillRect(0, 0, opaque.width, opaque.height);
-                octx.drawImage(target, 0, 0);
+                octx.drawImage(src, 0, 0);
                 if(isMartialLawShadedTarget(target)) {
                     const scale = opaque.width / (target.clientWidth || target.getBoundingClientRect().width || opaque.width) || 1;
                     drawMartialLawShadeOnCanvas(octx, 0, 0, opaque.width, opaque.height, scale);
@@ -3943,7 +4005,7 @@
                 return;
             }
             const mime = format === 'jpg' ? 'image/jpeg' : 'image/png';
-            const cvs = await renderExportCanvas(target, box, statsOptions, headerOptions);
+            const cvs = await renderExportCanvas(target, box, statsOptions, headerOptions, baseCanvas);
             downloadDataUrl(cvs.toDataURL(mime, 0.95), `${filenameBase}.${format}`);
         }
 
@@ -4371,7 +4433,7 @@
             const dots = dotCache[chamber];
             if(!dots || dots.length === 0) return;
             const cvs = document.getElementById(cvsId);
-            const dpr = window.devicePixelRatio || 1;
+            const dpr = renderDpr();
             const ctx = cvs.getContext('2d');
             const W = cvs.width / dpr;
             const H = cvs.height / dpr;
@@ -13319,7 +13381,7 @@
             const parent = cvs.parentElement;
             let width = parent?.clientWidth || parent?.offsetWidth || cvs.clientWidth || 566;
             if(width <= 50) return; // 너무 좁으면 스킵
-            const dpr = window.devicePixelRatio || 1;
+            const dpr = renderDpr();
             const heightBuffer = 160;
             const cssHeight = width / 2 + heightBuffer;
             cvs.width  = width * dpr;

@@ -22,6 +22,7 @@ window.DnoLangPacks.en = {
  ],
  "ordinal": "en",
  "patterns": [
+  {"re": "^약 (\\d+) × (\\d+) 픽셀 \\(통계 · 머리를 넣으면 그만큼 커짐\\)$", "to": "About $1 × $2 pixels (larger with stats or a header)"},
   {"re": "^\\- 날짜의 \"직접 입력\"과 회기의 \"단순형\" 삭제 — 날짜는 연호\\(선택\\) \\+ 연 · 월 · 일, 회기는 대수 · 이름 · 회기 번호로만 \\(예전 세이브의 글자는 불러올 때 칸으로 옮김, 예: \"레이와 1년 4월 20일\" → 연호 레이와 · 1 · 4 · 20\\), 연호 1년처럼 두 자리 이하 연도도 그대로 넘어감$", "to": "- Removed free-text dates and \"simple\" sessions — dates are an optional era name + year · month · day, sessions are term · name · number (old saves are converted on load, e.g. \"Reiwa 1, April 20\" → era Reiwa · 1 · 4 · 20); years of two digits or less (like era year 1) now advance correctly"},
   {"re": "^지도나 목록에서 지역구를 누르면 편집 칸이 열립니다\\. 이름 · 약칭 · 인구, 그리고 원마다 몇 석을 뽑을지\\(0석이면 그 원엔 없는 지역구\\) 정해요\\. 지도는 휠 클릭 드래그로 이동, Shift\\+스크롤로 확대하고 ↺로 되돌립니다\\.$", "to": "Click a district on the map or in the list to open its editor. Set the name, abbreviation, population, and how many seats each chamber elects there (0 seats means that chamber has no such district). Middle-drag to pan the map, Shift+scroll to zoom, and ↺ to reset."},
   {"re": "^가결된 법안의 \"개정안 발의\"를 누르면 그 법안을 바탕으로 개정안\\(제2판 · 제3판 …\\)을 새로 제출합니다\\. 기록에는 몇 판째인지 함께 남아요\\.$", "to": "Pressing \"Propose amendment\" on a passed bill submits a new amendment (2nd · 3rd edition …) based on it. Records keep which edition it is."},
@@ -5955,6 +5956,18 @@ window.DnoLangPacks.en = {
   [
    "- 튜토리얼 공화국 프리셋에 날짜(2026년 3월 2일)와 회기(제1대 국회 제1회 정기회)를 넣음",
    "- The Tutorial Republic preset now has a date (March 2, 2026) and session (1st National Assembly, 1st Regular Session)"
+  ],
+  [
+   "해상도",
+   "Resolution"
+  ],
+  [
+   "- 데스크톱 앱: Ctrl +/−/0 확대 · 축소(Ctrl+휠 포함), F11 전체 화면, Ctrl+R 새로고침 · 창 크기 · 위치 · 최대화 · 전체 화면 · 확대 배율을 기억 · 켤 때 마지막 테마 색으로 열어 빈 창이 번쩍이지 않게",
+   "- Desktop app: Ctrl +/−/0 zoom (Ctrl+wheel too), F11 fullscreen, Ctrl+R reload · remembers window size, position, maximized/fullscreen state and zoom · opens in the last theme's color without a blank flash"
+  ],
+  [
+   "- 이미지 내보내기에 해상도 선택(1× · 2× · 3×, 기본 2×) — 화면 배율과 상관없이 다시 그려 선명하게, 마지막 선택을 기억",
+   "- Image export resolution (1× · 2× · 3×, default 2×) — redrawn crisply regardless of screen scaling; remembers the last choice"
   ]
  ]
 };
