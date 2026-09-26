@@ -135,12 +135,21 @@
             return /^#[0-9a-f]{6}$/i.test(t) ? t.toUpperCase() : '';
         }
         function govHl(fallback) { return govHighlightColor || fallback; }
+        // 네온식 빛번짐(글로우) 켜기/끄기 — 끄면 테두리 선만 남는다
+        let govHighlightGlow = true;
         function govHlGlow(fallback) {
+            if(!govHighlightGlow) return 'rgba(0, 0, 0, 0)';
             if(!govHighlightColor) return fallback;
             const n = parseInt(govHighlightColor.slice(1), 16);
             return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, 0.8)`;
         }
+        function setGovHighlightGlow(on) {
+            govHighlightGlow = !!on;
+            simulate();
+        }
         function syncGovHighlightColorUI() {
+            const glowChk = document.getElementById('chkGovHlGlow');
+            if(glowChk) glowChk.checked = govHighlightGlow;
             const hex = govHighlightColor || '#FFD700';
             const picker = document.getElementById('govHlColorPicker');
             const text = document.getElementById('govHlColorHex');
@@ -4841,6 +4850,7 @@
                     systemType,
                     highlightGov:  document.getElementById('chkGovHighlight')?.checked ?? true,
                     govHighlightColor,
+                    govHighlightGlow,
                     nationName:    document.getElementById('nationNameInput')?.value   ?? "",
                     nationFlag,
                     nationDateMode: nationDateMode,
@@ -5073,6 +5083,7 @@
             ['house','senate','third'].forEach(ch => { updateChamberLogoUI(ch); updateChamberCenterModeUI(ch); });
             if(gd('chkGovHighlight')) gd('chkGovHighlight').checked = cfg.highlightGov ?? true;
             govHighlightColor = normalizeHexColor(cfg.govHighlightColor || '');
+            govHighlightGlow = cfg.govHighlightGlow ?? true;
             syncGovHighlightColorUI();
             if(gd('nationNameInput')) gd('nationNameInput').value = cfg.nationName ?? "";
             if(gd('nationDateEra'))   gd('nationDateEra').value   = cfg.nationDateEra ?? "";

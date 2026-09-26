@@ -476,6 +476,7 @@
                             <input type="text" id="govHlColorHex" placeholder="#FFD700" maxlength="7" spellcheck="false" oninput="setGovHighlightColor(this.value, true)" onblur="syncGovHighlightColorUI(); this.value = govHighlightColor">
                             <button type="button" class="gov-hl-color-reset" onclick="setGovHighlightColor('')">기본값</button>
                         </div>
+                        <label class="gov-hl-glow"><input type="checkbox" id="chkGovHlGlow" checked onchange="setGovHighlightGlow(this.checked)"> 네온 빛번짐</label>
                     </div>
 
                     <div style="margin-bottom:16px;">

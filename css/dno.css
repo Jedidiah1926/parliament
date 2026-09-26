@@ -1465,3 +1465,4 @@ html[data-ui-mode="mobile"] .save-panel { max-height: calc(100vh - 56px - var(--
         /* 로고 모드에는 위쪽 세이브 탭 바가 없으므로 그 자리만큼 비워둔 여백을 줄인다 */
         html[data-app-mode="logo"] body { padding-top: 20px !important; }
         html[data-app-mode="logo"][data-ui-mode="mobile"] .mobile-panel-switch { top: 0; }
+        .gov-hl-color > label.gov-hl-glow { display: flex; align-items: center; gap: 6px; margin: 8px 0 0; color: #aaa; cursor: pointer; }
