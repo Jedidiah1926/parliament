@@ -2057,6 +2057,19 @@
         let activeBillTagFilter = null;
         let activeArchiveTagFilter = null;
         let activeArchiveStatusFilter = null; // null(전체) | 'passed' | 'rejected'(부결+거부권 행사) | 'awaiting_veto'
+        // 국무회의가 의결한 법안은 입법 > 기록이 아니라 내각 > 기록에 모은다 (필터 상태는 따로)
+        let activeCouncilArchiveTagFilter = null;
+        let activeCouncilArchiveStatusFilter = null;
+        const ARCHIVE_SCOPES = {
+            law:     { list: 'archiveList',        search: 'archiveSearchInput',        status: 'archiveStatusFilter',        tags: 'archiveTagFilter',
+                       include: b => billTabledTo(b) !== 'council',
+                       get: () => ({ tag: activeArchiveTagFilter, status: activeArchiveStatusFilter }),
+                       set: (k, v) => { if(k === 'tag') activeArchiveTagFilter = v; else activeArchiveStatusFilter = v; } },
+            council: { list: 'councilArchiveList', search: 'councilArchiveSearchInput', status: 'councilArchiveStatusFilter', tags: 'councilArchiveTagFilter',
+                       include: b => billTabledTo(b) === 'council',
+                       get: () => ({ tag: activeCouncilArchiveTagFilter, status: activeCouncilArchiveStatusFilter }),
+                       set: (k, v) => { if(k === 'tag') activeCouncilArchiveTagFilter = v; else activeCouncilArchiveStatusFilter = v; } },
+        };
 
         // ===== VOTE STATE =====
         let voteState = { house: {}, senate: {}, third: {} };
@@ -2589,13 +2602,16 @@
             if(statusFilter === 'rejected') return overall === 'failed' || overall === 'vetoed';
             return overall === statusFilter;
         }
-        function toggleArchiveStatusFilter(key) {
-            activeArchiveStatusFilter = activeArchiveStatusFilter === key ? null : key;
-            renderArchiveList();
+        function toggleArchiveStatusFilter(key, scope = 'law') {
+            const sc = ARCHIVE_SCOPES[scope];
+            sc.set('status', sc.get().status === key ? null : key);
+            renderArchiveList(scope);
         }
-        function renderArchiveStatusFilter(done) {
-            const el = document.getElementById('archiveStatusFilter');
+        function renderArchiveStatusFilter(done, scope = 'law') {
+            const sc = ARCHIVE_SCOPES[scope];
+            const el = document.getElementById(sc.status);
             if(!el) return;
+            const activeStatus = sc.get().status;
             const options = [
                 { key: 'passed', label: '✔ 가결' },
                 { key: 'rejected', label: '✘ 부결/거부' },
@@ -2603,7 +2619,7 @@
             ].filter(o => done.some(b => billMatchesStatusFilter(b, o.key)));
             if(options.length === 0) { el.innerHTML = ''; return; }
             el.innerHTML = options.map(o =>
-                `<span class="tag-badge ${activeArchiveStatusFilter===o.key?'active':''}" onclick="toggleArchiveStatusFilter('${o.key}')">${o.label}</span>`
+                `<span class="tag-badge ${activeStatus===o.key?'active':''}" onclick="toggleArchiveStatusFilter('${o.key}','${scope}')">${o.label}</span>`
             ).join('');
         }
 
@@ -2685,24 +2701,28 @@
         }
 
         // 기록 탭 — 가결/부결 완료 법안만 + 검색/태그 필터
-        function renderArchiveList() {
-            const container = document.getElementById('archiveList');
+        // 기록 목록 — scope: 'law'(입법 > 기록, 의회가 의결한 법안) | 'council'(내각 > 기록, 국무회의가 의결한 법안), 없으면 둘 다
+        function renderArchiveList(scope) {
+            if(!scope) { renderArchiveList('law'); renderArchiveList('council'); return; }
+            const sc = ARCHIVE_SCOPES[scope];
+            const container = document.getElementById(sc.list);
             if(!container) return;
-            const query = document.getElementById('archiveSearchInput')?.value || '';
-            const done = [...bills.filter(b => getBillOverallStatus(b) !== 'pending')].reverse();
+            const query = document.getElementById(sc.search)?.value || '';
+            const done = [...bills.filter(b => getBillOverallStatus(b) !== 'pending' && sc.include(b))].reverse();
+            const { tag: activeTag, status: activeStatus } = sc.get();
 
             // 결과별 필터 + 태그 필터 바 렌더
-            renderArchiveStatusFilter(done);
+            renderArchiveStatusFilter(done, scope);
             const allTags = getAllTags(done);
-            renderTagFilter('archiveTagFilter', allTags, activeArchiveTagFilter, (t) => {
-                activeArchiveTagFilter = activeArchiveTagFilter === t ? null : t;
-                renderArchiveList();
+            renderTagFilter(sc.tags, allTags, activeTag, (t) => {
+                sc.set('tag', sc.get().tag === t ? null : t);
+                renderArchiveList(scope);
             });
 
-            const filtered = done.filter(b => billMatchesStatusFilter(b, activeArchiveStatusFilter) && billMatchesFilter(b, query, activeArchiveTagFilter));
+            const filtered = done.filter(b => billMatchesStatusFilter(b, activeStatus) && billMatchesFilter(b, query, activeTag));
 
             if(done.length === 0) {
-                container.innerHTML = '<div style="color:#333; text-align:center; padding:20px; border:1px dashed #222;">완료된 법안이 없습니다</div>';
+                container.innerHTML = `<div style="color:#333; text-align:center; padding:20px; border:1px dashed #222;">${scope === 'council' ? '국무회의에서 의결된 법안이 없습니다' : '완료된 법안이 없습니다'}</div>`;
                 return;
             }
             if(filtered.length === 0) {
@@ -5756,6 +5776,7 @@
             if(sub === 'president') { renderPresidentSection(); renderEmergencyPowers(); }
             if(sub === 'pm') { renderPmSection(); renderDeputyPmsList(); renderEmergencyPowers(); }
             if(sub === 'cabinetmembers') { renderCabinetMembersList(); renderChairSection(); renderEmergencyPowers(); }
+            if(sub === 'councilArchive') renderArchiveList('council');
             if(sub === 'council') { syncCouncilBillSelect(); renderCouncilActiveBillDisplay(); renderCouncilThresholdUI(); renderCabinetDisplay(); }
             if(sub === 'coalition') { renderCoalitions(); }
             if(sub === 'list') { listMemberInnerTab = 'house'; switchListMemberInnerTab('house'); }

@@ -169,6 +169,10 @@
                     btn: 'subTabCouncil', open: go('cabinet', 'council'),
                     desc: '내각이 의결하는 법안의 표결과 의결 정족수. 계엄령으로 의회가 정지된 동안에는 여기서 법안을 통과시킵니다.',
                 },
+                {
+                    btn: 'subTabCouncilArchive', open: go('cabinet', 'councilArchive'),
+                    desc: '국무회의에서 가결 · 부결된 법안 보관함입니다 (상태별로 걸러 보기). 의회가 의결한 법안은 입법 › 기록에 있어요.',
+                },
             ],
         },
         layout: {

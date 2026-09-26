@@ -533,6 +533,18 @@ window.DnoLangPacks.en = {
  ],
  "dict": [
   [
+   "국무회의에서 가결 · 부결된 법안 보관함입니다 (상태별로 걸러 보기). 의회가 의결한 법안은 입법 › 기록에 있어요.",
+   "The archive of bills passed or rejected by the cabinet council (filterable by status). Bills decided by parliament are in Legislation › Record."
+  ],
+  [
+   "국무회의에서 의결된 법안이 없습니다",
+   "No bills decided by the cabinet council"
+  ],
+  [
+   "내각 구성원",
+   "Cabinet Members"
+  ],
+  [
    "원마다 따로 정합니다. 상원 · 삼원은 의회 › 의회 설정에서 양원제 · 삼원제를 골랐을 때 나타나요.",
    "Set separately per chamber. The Senate and Third chamber appear when you choose bicameral/tricameral in Parliament › Parliament Settings."
   ],
