@@ -6761,6 +6761,15 @@
             refreshUI();
         }
 
+        function pasteFloorLeaderToSeat(pid, val) {
+            const link = parseMemberPickerValue(val);
+            if(!link) return;
+            const p = parties.find(x => x.id === pid);
+            if(!p) return;
+            writeLinkedSeatInfo(link, p.floorLeaderName || '', p.floorLeaderPhoto || '');
+            refreshUI();
+        }
+
         // 이 의원의 이름·사진이 현재 당수 정보와 일치하는지 — 일치하면 "당수로 지정" 버튼을 숨겨서
         // 이미 당수인 사람에게 다시 버튼을 보여주지 않는다 (이름 없는 빈 카드끼리의 우연한 일치는 제외)
         function isPartyLeaderMatch(partyId, name, photo) {
@@ -7796,6 +7805,15 @@
                                 style="background:#000;border:1px solid #2a2a2a;color:#ccc;font-family:inherit;font-size:0.88rem;padding:5px 8px;width:100%;box-sizing:border-box;"
                                 onchange="updateLeaderField(${p.id},'floorLeaderName',this.value);refreshUI();">
                             ${flPhoto?`<button onclick="removeFloorLeaderPhoto(${p.id})" style="background:transparent;border:1px solid #333;color:#555;font-family:inherit;font-size:0.75rem;padding:2px 8px;cursor:pointer;text-align:left;">✕ 사진 제거</button>`:''}
+                            <div style="display:flex;gap:6px;">
+                                <select id="floorLeaderSeatSelect_${p.id}"
+                                    style="flex:1;min-width:0;box-sizing:border-box;background:#000;border:1px solid #333;color:#888;font-family:inherit;font-size:0.75rem;padding:4px;">
+                                    ${partyMemberPickerOptionsHtml(p.id)}
+                                </select>
+                                <button onclick="pasteFloorLeaderToSeat(${p.id},document.getElementById('floorLeaderSeatSelect_${p.id}').value)"
+                                    style="flex-shrink:0;background:transparent;border:1px solid #333;color:#6cf;font-family:inherit;font-size:0.72rem;padding:4px 8px;cursor:pointer;">붙여넣기</button>
+                            </div>
+                            <div style="color:#555;font-size:0.68rem;">◆ 위에서 의석을 고르고 "붙여넣기"를 누르면 현재 원내대표 이름·사진이 그 의석에 복사됩니다</div>
                         </div>
                     </div>`;
 

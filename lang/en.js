@@ -533,6 +533,10 @@ window.DnoLangPacks.en = {
  ],
  "dict": [
   [
+   "◆ 위에서 의석을 고르고 \"붙여넣기\"를 누르면 현재 원내대표 이름·사진이 그 의석에 복사됩니다",
+   "◆ Pick a seat above and press \"Paste\" to copy the current floor leader's name and photo to that seat"
+  ],
+  [
    "현재 선출 방식: 총리직선제 — 선거 > 총선 탭에서 \"총리 선거\"로 개표하세요",
    "Current method: direct PM election — count it as a \"PM election\" in Election > General"
   ],
