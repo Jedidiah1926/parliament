@@ -6309,6 +6309,18 @@ window.DnoLangPacks.en = {
   [
    "네온 빛번짐",
    "Neon glow"
+  ],
+  [
+   "소식",
+   "News"
+  ],
+  [
+   "Hemicycle 공식 유튜브",
+   "Hemicycle on YouTube"
+  ],
+  [
+   "@Hemicycles · 업데이트 소식과 공지",
+   "@Hemicycles · updates and announcements"
   ]
  ]
 };

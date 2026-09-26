@@ -596,7 +596,7 @@ body.home-page { display: block; height: 100vh; overflow: hidden; text-transform
     display: grid;
     grid-template-columns: 1fr minmax(320px, 440px);
     grid-template-rows: auto 1fr auto;
-    grid-template-areas: "brand ." ". ." "meta menu";
+    grid-template-areas: "brand news" ". ." "meta menu";
     column-gap: 40px;
 }
 .home-brand { grid-area: brand; }
@@ -665,5 +665,25 @@ body.home-page { display: block; height: 100vh; overflow: hidden; text-transform
 /* 좁은 화면: 제목 → 메뉴 → 버전 정보 순으로 세로 배치 */
 @media (max-width: 760px) {
     body.home-page { overflow-y: auto; height: auto; }
-    .home { height: auto; min-height: 100vh; grid-template-columns: 1fr; grid-template-rows: auto 1fr auto auto; grid-template-areas: "brand" "." "menu" "meta"; row-gap: 28px; }
+    .home { height: auto; min-height: 100vh; grid-template-columns: 1fr; grid-template-rows: auto 1fr auto auto auto; grid-template-areas: "brand" "." "menu" "news" "meta"; row-gap: 28px; }
 }
+
+/* 소식 (오른쪽 위) — 공식 채널 링크 */
+.home-news {
+    grid-area: news; align-self: start;
+    display: flex; flex-direction: column; gap: 4px;
+    padding: 10px; background: var(--tno-panel); border: 1px solid var(--tno-border);
+}
+.home-news-head { padding: 2px 6px 4px; font-size: 0.78rem; color: #777; letter-spacing: 2px; text-transform: uppercase; }
+.home-news-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 12px; text-decoration: none; color: var(--tno-text);
+    border: 1px solid transparent; transition: .12s;
+}
+.home-news-item:hover { border-color: var(--tno-neon); background: color-mix(in srgb, var(--tno-neon) 8%, transparent); color: var(--tno-neon); }
+.home-news-icon { width: 36px; height: 36px; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; }
+.home-news-yt { color: #ff0033; }
+.home-news-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.home-news-label { font-size: 1rem; letter-spacing: 1px; }
+.home-news-desc { font-size: 0.75rem; color: #777; text-shadow: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.home-news-ext { font-size: 1.1rem; opacity: .6; }
