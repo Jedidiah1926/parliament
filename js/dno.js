@@ -11735,7 +11735,12 @@
             // (마지막 의원실 결과만 elecLastResult에 남아 있어, 예전에는 그 의원실만 반영되고
             // 나머지 의원실은 지역구 당선자 정보가 비어 있는 채로 남는 문제가 있었음)
             const pending = Object.keys(elecLastResults);
-            if(pending.length === 0) { if(elecLastResult) pending.push(elecLastResult.chamber || (elecLastResult.isSenate?'senate':'house')); else return; }
+            // 이미 반영한 결과는 다시 반영하지 않는다 — 예전엔 두 번 누르거나 보궐선거 · 수동 편집 뒤에 누르면
+            // 지난 총선 결과로 의회가 조용히 되돌아갔다
+            if(pending.length === 0) {
+                if(elecLastResult && !elecLastResult.applied) pending.push(elecLastResult.chamber || (elecLastResult.isSenate?'senate':'house'));
+                else { showCustomAlert('반영할 새 개표 결과가 없습니다. (이미 의회에 반영했습니다)'); return; }
+            }
 
             let hadFactions = false;
             let lastCh = null;
@@ -11762,6 +11767,7 @@
                 lastCh = ch;
             });
             elecLastResults = {};
+            if(elecLastResult) elecLastResult.applied = true;
             // 총선 반영으로 의회가 새로 구성되므로, 선포돼 있던 의회 해산은 여기서만 해제된다.
             // 해산권이 원별로 분할돼 있으면, 이번에 반영된 원(pending)의 해산만 해제된다
             // 한 원만 해산한 경우엔 그 원의 선거가 반영될 때만 해제

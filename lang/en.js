@@ -5361,6 +5361,14 @@ window.DnoLangPacks.en = {
   [
    "- 모바일에서 저장 · 날짜/회기 창이 아래 탭 바를 덮지 않게",
    "- On mobile, the save and date/session panels no longer cover the bottom tab bar"
+  ],
+  [
+   "반영할 새 개표 결과가 없습니다. (이미 의회에 반영했습니다)",
+   "There's no new count to apply. (It has already been applied to parliament.)"
+  ],
+  [
+   "- 안정화: 이미 반영한 개표 결과를 \"✔ 의회에 반영\"으로 또 누르면(보궐선거 · 수동 편집 뒤 포함) 의회가 지난 총선 결과로 조용히 되돌아가던 문제 수정 — 이제 \"반영할 새 개표 결과가 없습니다\" 안내",
+   "- Stability: pressing \"\u2714 Apply to Parliament\" again on an already-applied count (including after a by-election or manual edits) no longer silently reverts parliament to the last general election \u2014 it now says there is no new count to apply"
   ]
  ]
 };
