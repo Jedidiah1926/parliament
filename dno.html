@@ -1554,9 +1554,31 @@
             <button class="disp-tab-btn"         id="dispTabElecResultHouse" data-tab="elecResultHouse" onclick="switchDispTab('elecResultHouse')" style="display:none;"><span class="disp-tab-label">하원 선거결과</span><span class="disp-tab-close" onclick="event.stopPropagation();closeDispTab('elecResultHouse')">×</span></button>
             <button class="disp-tab-btn"         id="dispTabElecResultSenate" data-tab="elecResultSenate" onclick="switchDispTab('elecResultSenate')" style="display:none;"><span class="disp-tab-label">상원 선거결과</span><span class="disp-tab-close" onclick="event.stopPropagation();closeDispTab('elecResultSenate')">×</span></button>
             <button class="disp-tab-btn"         id="dispTabElecResultThird" data-tab="elecResultThird" onclick="switchDispTab('elecResultThird')" style="display:none;"><span class="disp-tab-label">삼원 선거결과</span><span class="disp-tab-close" onclick="event.stopPropagation();closeDispTab('elecResultThird')">×</span></button>
+            <!-- 날짜 · 회기 줄: 1줄 = 날짜 + 진행(▶ +1일 · ▶▶ +7일 · ▶▶▶ +1개월) + 설정, 2줄 = 회기 + 다음 회기 + …(정기회/임시회)
+                 진행 버튼은 수동 진행형 날짜, 다음 회기 · … 는 개별형 회기일 때만 보임 -->
             <div class="disp-info-bar" id="dispInfoBar">
-                <span id="dispInfoDate">날짜 미설정</span>
-                <span id="dispInfoSession">회기 미설정</span>
+                <span id="dispInfoDate" class="dib-text">날짜 미설정</span>
+                <span class="dib-controls" id="dispDateControls">
+                    <button type="button" class="dib-btn dib-play" onclick="advanceNationDate(1,'day')" title="하루 진행 (+1일)" aria-label="하루 진행">▶</button>
+                    <button type="button" class="dib-btn dib-play" onclick="advanceNationDate(7,'day')" title="일주일 진행 (+7일)" aria-label="일주일 진행">▶▶</button>
+                    <button type="button" class="dib-btn dib-play" onclick="advanceNationDate(1,'month')" title="한 달 진행 (+1개월)" aria-label="한 달 진행">▶▶▶</button>
+                </span>
+                <button type="button" class="dib-btn dib-settings" onclick="openNationDateSettings()" title="날짜 · 회기 설정" aria-label="날짜 · 회기 설정">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+                </button>
+                <span id="dispInfoSession" class="dib-text dib-sub">회기 미설정</span>
+                <span class="dib-controls" id="dispSessionControls">
+                    <button type="button" class="dib-btn dib-word" onclick="advanceNationSession()" title="회기 번호 +1">다음 회기</button>
+                    <span class="dib-more-wrap">
+                        <button type="button" class="dib-btn dib-word" id="dispSessionMoreBtn" onclick="toggleDispSessionMenu(event)" title="더 보기" aria-haspopup="true" aria-expanded="false">…</button>
+                        <div class="dib-menu" id="dispSessionMenu" style="display:none;" role="menu">
+                            <button type="button" class="dib-menu-item" id="dispSessionTypeRegular" role="menuitemradio" onclick="setNationSessionType('regular');closeDispSessionMenu()">정기회</button>
+                            <button type="button" class="dib-menu-item" id="dispSessionTypeExtra" role="menuitemradio" onclick="setNationSessionType('extraordinary');closeDispSessionMenu()">임시회</button>
+                            <div class="dib-menu-sep"></div>
+                            <button type="button" class="dib-menu-item" onclick="closeDispSessionMenu();openNationDateSettings()">날짜 · 회기 설정…</button>
+                        </div>
+                    </span>
+                </span>
             </div>
         </div>
 

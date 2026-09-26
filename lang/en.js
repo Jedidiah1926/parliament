@@ -5167,6 +5167,54 @@ window.DnoLangPacks.en = {
   [
    "- 오른쪽 화면의 날짜 · 회기 표시를 탭 줄 위 별도 줄로 — 회기 이름이 길어져도 국회 · 상원 등 탭이 눌려 세로로 찌그러지지 않음",
    "- The date/session line on the right screen now sits on its own row above the tabs, so long session names no longer squeeze the tabs"
+  ],
+  [
+   "하루 진행 (+1일)",
+   "Advance 1 day (+1 day)"
+  ],
+  [
+   "일주일 진행 (+7일)",
+   "Advance 1 week (+7 days)"
+  ],
+  [
+   "한 달 진행 (+1개월)",
+   "Advance 1 month (+1 month)"
+  ],
+  [
+   "하루 진행",
+   "Advance 1 day"
+  ],
+  [
+   "일주일 진행",
+   "Advance 1 week"
+  ],
+  [
+   "한 달 진행",
+   "Advance 1 month"
+  ],
+  [
+   "날짜 · 회기 설정…",
+   "Date & session settings…"
+  ],
+  [
+   "날짜 · 회기 설정",
+   "Date & session settings"
+  ],
+  [
+   "다음 회기",
+   "Next session"
+  ],
+  [
+   "회기 번호 +1",
+   "Session number +1"
+  ],
+  [
+   "더 보기",
+   "More"
+  ],
+  [
+   "- 날짜 · 회기 줄을 두 줄 컨트롤 바로 — 날짜 옆 ▶(+1일) · ▶▶(+7일) · ▶▶▶(+1개월) 진행 버튼과 설정(⚙) 버튼, 회기 옆 다음 회기 · …(정기회/임시회, 설정) 메뉴 (진행 버튼은 수동 진행형 날짜 · 개별형 회기일 때 표시)",
+   "- Date/session line becomes a two-row control bar — ▶ (+1 day) · ▶▶ (+7 days) · ▶▶▶ (+1 month) and a settings (⚙) button next to the date, Next session and a … menu (regular/extraordinary, settings) next to the session (advance buttons show with manual-progress dates and individual sessions)"
   ]
  ]
 };

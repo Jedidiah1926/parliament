@@ -2289,6 +2289,18 @@ html[data-theme-family="modern"] .system-radio-btn:has(input:checked) {
 html[data-theme-family="modern"] :not(.sub-tab-container-3) > .sub-tab-btn-3 { background: var(--m-surface-2) !important; }
 html[data-theme-family="modern"] :not(.sub-tab-container-3) > .sub-tab-btn-3.active { background: var(--m-accent) !important; color: var(--m-on-accent) !important; }
 
+/* 날짜 · 회기 줄 (탭 위) */
+html[data-theme-family="modern"] .disp-info-bar #dispInfoDate { font-size: 17px; font-weight: 600; }
+html[data-theme-family="modern"] .disp-info-bar #dispInfoSession { font-size: 13px; color: var(--m-text-3) !important; }
+html[data-theme-family="modern"] .dib-btn { color: var(--m-text-3); border: none; border-radius: 7px; font-family: var(--m-font); font-weight: 600; }
+html[data-theme-family="modern"] .dib-btn:hover { color: var(--m-text); background: var(--m-surface-3); }
+html[data-theme-family="modern"] .dib-play { color: var(--m-text-2); }
+html[data-theme-family="modern"] .dib-menu { background: var(--m-surface); border: 1px solid var(--m-border); border-radius: 12px; box-shadow: var(--m-shadow-lg); }
+html[data-theme-family="modern"] .dib-menu-item { color: var(--m-text); border-radius: 8px; font-family: var(--m-font); }
+html[data-theme-family="modern"] .dib-menu-item:hover { background: var(--m-surface-2); color: var(--m-text); }
+html[data-theme-family="modern"] .dib-menu-item.active { color: var(--m-text); font-weight: 600; }
+html[data-theme-family="modern"] .dib-menu-sep { background: var(--m-border); }
+
 /* 오른쪽 화면 탭 (국회/상원/내각 등) */
 html[data-theme-family="modern"] .disp-tab-bar,
 html[data-theme-family="modern"] .display-tab-container { gap: 4px; margin-bottom: 10px !important; }
