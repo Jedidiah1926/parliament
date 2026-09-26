@@ -23,6 +23,10 @@ window.DnoLangPacks.en = {
  "ordinal": "en",
  "patterns": [
   {
+   "re": "^\\s*\\+ 서브\\s*$",
+   "to": "+ Sub"
+  },
+  {
    "re": "^\\s*방식\\s*$",
    "to": "Method"
   },
@@ -528,6 +532,14 @@ window.DnoLangPacks.en = {
   }
  ],
  "dict": [
+  [
+   "서브 이념 추가",
+   "Add sub-ideology"
+  ],
+  [
+   "새 서브 이념",
+   "New sub-ideology"
+  ],
   [
    "집권과 연정",
    "Government & Coalitions"
