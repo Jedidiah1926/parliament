@@ -67,8 +67,8 @@
                     <div class="settings-group">
                         <div class="settings-label">UI MODE / 화면 모드</div>
                         <div class="lang-select-group">
-                            <button class="lang-select-btn" id="uiModeBtnDesktop" onclick="selectUiMode('desktop')">데스크톱<br>(가로형)</button>
-                            <button class="lang-select-btn" id="uiModeBtnMobile" onclick="selectUiMode('mobile')">모바일<br>(세로형)</button>
+                            <button class="lang-select-btn" id="uiModeBtnDesktop" onclick="selectUiMode('desktop')">데스크톱 (가로형)</button>
+                            <button class="lang-select-btn" id="uiModeBtnMobile" onclick="selectUiMode('mobile')">모바일 (세로형)</button>
                         </div>
                     </div>
                 </section>
@@ -80,9 +80,9 @@
                     <div class="settings-group">
                         <div class="settings-label">THEME MODE / 테마 모드</div>
                         <div class="lang-select-group">
-                            <button class="lang-select-btn" id="themeModeBtnLight" onclick="selectThemeMode('light')">라이트<br>모드</button>
-                            <button class="lang-select-btn" id="themeModeBtnDark" onclick="selectThemeMode('dark')">다크<br>모드</button>
-                            <button class="lang-select-btn" id="themeModeBtnTno" onclick="selectThemeMode('tno')">네온<br>모드</button>
+                            <button class="lang-select-btn" id="themeModeBtnLight" onclick="selectThemeMode('light')">라이트 모드</button>
+                            <button class="lang-select-btn" id="themeModeBtnDark" onclick="selectThemeMode('dark')">다크 모드</button>
+                            <button class="lang-select-btn" id="themeModeBtnTno" onclick="selectThemeMode('tno')">네온 모드</button>
                         </div>
                     </div>
                     <div class="settings-group" id="themeColorSection">
@@ -93,7 +93,7 @@
                             <input type="text" id="themeColorHexInput" maxlength="7" placeholder="#00ffff"
                                 onchange="onThemeColorHexChange(this.value)"
                                 style="width:90px;background:#000;border:1px solid var(--tno-border);color:var(--tno-neon);font-family:inherit;font-size:0.9rem;padding:8px 6px;text-align:center;text-transform:uppercase;">
-                            <button class="lang-select-btn" id="themeColorResetBtn" onclick="onThemeColorReset()" style="padding:8px 12px;">기본값<br>으로 초기화</button>
+                            <button class="lang-select-btn" id="themeColorResetBtn" onclick="onThemeColorReset()" style="padding:8px 12px;">기본값으로 초기화</button>
                         </div>
                         <div class="settings-hint">네온 모드의 강조 색(테두리·글자 등)에 적용됩니다</div>
                     </div>
@@ -118,6 +118,7 @@
             document.querySelector('.settings-panel')?.scrollTo(0, 0);
         }
         showSettingsSection((location.hash || '').slice(1));
+        window.addEventListener('hashchange', () => showSettingsSection((location.hash || '').slice(1)));
 
         function selectLang(lang) {
             setLang(lang);
