@@ -11,6 +11,47 @@
     '.settings-nav'
   ].join(',');
 
+  // 스타일은 여기서 직접 넣는다 — 스크립트만 새로 받고 CSS는 예전 캐시가 쓰이면
+  // 선택 표시가 버튼처럼 자리를 차지해 버튼이 밀리고 떨리던 문제 방지
+  const STYLE = `
+.seg-thumb { display: none; }
+html[data-theme-family="modern"] .seg-anim { position: relative; }
+html[data-theme-family="modern"] .seg-anim > .seg-thumb {
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 0;
+    pointer-events: none;
+    background: var(--m-surface);
+    box-shadow: var(--m-shadow-sm);
+    transition: transform .28s cubic-bezier(.3, .9, .3, 1), width .28s cubic-bezier(.3, .9, .3, 1), height .28s cubic-bezier(.3, .9, .3, 1), opacity .15s ease;
+    will-change: transform;
+}
+html[data-theme-family="modern"] .settings-nav.seg-anim > .seg-thumb { box-shadow: var(--m-shadow-sm), inset 0 0 0 1px var(--m-border); }
+html[data-theme-family="modern"] .seg-anim > .seg-thumb.seg-thumb-instant { transition: none; }
+html[data-theme-family="modern"] .seg-anim > :not(.seg-thumb) {
+    position: relative;
+    z-index: 1;
+    transition: color .2s ease, background-color .2s ease;
+}
+html[data-theme-family="modern"] .seg-anim > .active:not(.seg-thumb),
+html[data-theme-family="modern"] .seg-anim > .system-radio-btn:has(input:checked) {
+    background: transparent !important;
+    box-shadow: none !important;
+}
+@media (prefers-reduced-motion: reduce) {
+    html[data-theme-family="modern"] .seg-anim > .seg-thumb { transition: none; }
+}
+`;
+  function injectStyle() {
+    if (document.getElementById('segAnimStyle')) return;
+    const style = document.createElement('style');
+    style.id = 'segAnimStyle';
+    style.textContent = STYLE;
+    (document.head || document.documentElement).appendChild(style);
+  }
+
   const isModern = () => document.documentElement.getAttribute('data-theme-family') === 'modern';
   const tracked = new Set();
   let resizeObserver = null;
@@ -68,6 +109,12 @@
     const thumb = document.createElement('span');
     thumb.className = 'seg-thumb';
     thumb.setAttribute('aria-hidden', 'true');
+    // 어떤 경우에도 버튼 줄의 자리를 차지하지 않도록 위치 지정은 인라인으로도 고정
+    thumb.style.position = 'absolute';
+    thumb.style.top = '0';
+    thumb.style.left = '0';
+    thumb.style.margin = '0';
+    thumb.style.pointerEvents = 'none';
     group.insertBefore(thumb, group.firstChild);
     group._segThumb = thumb;
     group.classList.add('seg-anim');
@@ -100,6 +147,7 @@
   }
 
   function init() {
+    injectStyle();
     if ('ResizeObserver' in window) resizeObserver = new ResizeObserver(schedule);
     scan(document.body);
     new MutationObserver(mutations => {
