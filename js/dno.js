@@ -9093,6 +9093,8 @@
             svg.style.width = '100%';
             svg.style.height = '100%';
             svg.style.display = 'block';
+            // onClickBackground: 지역구가 아닌 지도 바탕을 누르면 (예: 선택 해제) — 도형 위 클릭은 도형이 먼저 받는다
+            if(opts.onClickBackground) svg.addEventListener('click', e => { if(e.target === svg) opts.onClickBackground(); });
             // 정당 동률(경합) 빗금 패턴 등, getFill이 fill="url(#...)"로 참조할 <defs>가 필요할 때 사용
             if(opts.defs) {
                 const defsWrap = document.createElementNS(svgNS, 'g');
@@ -9503,6 +9505,7 @@
                         districtRenderNamePanel();
                         districtRenderMap();
                     },
+                    onClickBackground: () => { if(selectedDistrictKey) clearSelectedDistrict(); },
                     panZoom: districtSvgView
                 });
                 const cntEl = document.getElementById('districtCount');
@@ -10810,6 +10813,8 @@
             }
 
             const onSelect = key => { selectedDistrictKey = key; tendencyRenderMaps(); };
+            // 지도 바탕(지역구 아닌 곳)을 누르면 선택 해제
+            const onDeselect = () => { if(selectedDistrictKey) clearSelectedDistrict(); };
 
             const overall = tendencySvgBuildOverallFill();
             const overallWrap = document.createElement('div');
@@ -10824,7 +10829,8 @@
                 title: overall.getTitle,
                 defs: overall.defs,
                 selectedKey: selectedDistrictKey,
-                onClickKey: onSelect
+                onClickKey: onSelect,
+                onClickBackground: onDeselect
             });
 
             const partyGroup = document.createElement('div');
@@ -10847,7 +10853,8 @@
                     getFill: pf.getFill,
                     title: pf.getTitle,
                     selectedKey: selectedDistrictKey,
-                    onClickKey: onSelect
+                    onClickKey: onSelect,
+                    onClickBackground: onDeselect
                 });
             });
 
