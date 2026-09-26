@@ -4905,7 +4905,7 @@ window.DnoLangPacks.en = {
    "Who becomes PM?"
   ],
   [
-   "내각 › 설정에서 대통령제 · 이원집정부제 · 의원내각제 등 정부 형태를 고릅니다. 튜토리얼 공화국은 의원내각제라, 의석이 가장 많은 정당의 대표(당수)가 자동으로 총리가 돼요 (👑 표시).",
+   "내각 › 내각 설정에서 대통령제 · 이원집정부제 · 의원내각제 등 정부 형태를 고릅니다. 튜토리얼 공화국은 의원내각제라, 의석이 가장 많은 정당의 대표(당수)가 자동으로 총리가 돼요 (👑 표시).",
    "Cabinet › Settings is where you choose the form of government (presidential, semi-presidential, parliamentary, ...). The Tutorial Republic is parliamentary, so the leader of the party with the most seats automatically becomes PM (marked 👑)."
   ],
   [
@@ -5125,8 +5125,8 @@ window.DnoLangPacks.en = {
    "New tab"
   ],
   [
-   "- 국가 › 설정 탭 신설 — 지역구 시스템(지도 · 그리드)과 지도 글씨 · 배지 크기를 의회 › 의회 설정에서 옮김, 원별 반원 중앙 표시(의석 수 · 로고)는 국가 › 상징에서 의회 › 의회 설정으로",
-   "- New Nation › Settings tab — district system (map/grid) and map label/badge size moved here from Parliament › Parliament Settings; per-chamber hemicycle center display (seats/logo) moved from Nation › Symbols to Parliament › Parliament Settings"
+   "- 국가 › 국가 설정 탭 신설 — 지역구 시스템(지도 · 그리드)과 지도 글씨 · 배지 크기를 의회 › 의회 설정에서 옮김, 원별 반원 중앙 표시(의석 수 · 로고)는 국가 › 상징에서 의회 › 의회 설정으로",
+   "- New Nation › Nation Settings tab — district system (map/grid) and map label/badge size moved here from Parliament › Parliament Settings; per-chamber hemicycle center display (seats/logo) moved from Nation › Symbols to Parliament › Parliament Settings"
   ],
   [
    "지역구 시스템(지도 · 그리드)과 지도 위 글씨 · 배지 크기.",
@@ -5141,8 +5141,20 @@ window.DnoLangPacks.en = {
    "Parliament Composition"
   ],
   [
-   "- 의회 탭 순서 변경: 의회 설정 · 이념 · 정당 · 의회 구성(구 구성) · 집권과 연정 · 지역구 의원 · 비례대표",
-   "- Parliament tab order: Parliament Settings · Ideologies · Parties · Composition (formerly Setup) · Government & Coalitions · District Members · List Members"
+   "- 의회 탭 순서 변경: 의회 설정 · 이념 · 정당 · 의회 구성(구 구성) · 집권과 연정 · 지역구 의원 · 비례대표, 국가 › 설정은 국가 설정 · 내각 › 설정은 내각 설정 · 내각 › 기록은 국무회의 기록으로 이름 변경",
+   "- Parliament tab order: Parliament Settings · Ideologies · Parties · Composition (formerly Setup) · Government & Coalitions · District Members · List Members; Nation › Settings renamed Nation Settings and Cabinet › Settings renamed Cabinet Settings, Cabinet › Record renamed Council Records"
+  ],
+  [
+   "국가 설정",
+   "Nation Settings"
+  ],
+  [
+   "내각 설정",
+   "Cabinet Settings"
+  ],
+  [
+   "국무회의 기록",
+   "Council Records"
   ]
  ]
 };

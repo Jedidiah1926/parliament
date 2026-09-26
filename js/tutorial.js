@@ -262,7 +262,7 @@
                     before: [go('cabinet', 'pm'), showPanel('controls')],
                     target: () => pmBlock(),
                     title: '총리는 누가 될까?',
-                    text: '내각 › 설정에서 대통령제 · 이원집정부제 · 의원내각제 등 정부 형태를 고릅니다. 튜토리얼 공화국은 의원내각제라, 의석이 가장 많은 정당의 대표(당수)가 자동으로 총리가 돼요 (👑 표시).',
+                    text: '내각 › 내각 설정에서 대통령제 · 이원집정부제 · 의원내각제 등 정부 형태를 고릅니다. 튜토리얼 공화국은 의원내각제라, 의석이 가장 많은 정당의 대표(당수)가 자동으로 총리가 돼요 (👑 표시).',
                 },
                 {
                     before: [go('setup', 'party'), call('switchPartyGroupInnerTab', 'leader'), showPanel('controls')],
