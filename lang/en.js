@@ -22,6 +22,9 @@ window.DnoLangPacks.en = {
  ],
  "ordinal": "en",
  "patterns": [
+  {"re": "^면$", "to": "Area"},
+  {"re": "^선$", "to": "Line"},
+  {"re": "^원$", "to": "Circle"},
   {"re": "^정기회 시작 — (.+)$", "to": "Regular session opened — $1"},
   {"re": "^제(\\d+)대 (.+) 시작$", "to": "The {{ordinal:$1}} $2 begins"},
   {"re": "^연$", "to": "Year"},
@@ -5326,6 +5329,26 @@ window.DnoLangPacks.en = {
   [
    "- 라이트/다크에서는 지역구 지도 테두리 색 · 글씨 테두리 색 설정을 숨기고 고정색 사용 (다크 글씨 테두리 #404245, 라이트 #52525B) — 네온에서만 변경 가능",
    "- In light/dark the district map border and label-outline color settings are hidden and fixed colors are used (dark label outline #404245, light #52525B) — changeable in neon only"
+  ],
+  [
+   "스크롤: 확대 · 축소",
+   "Scroll: zoom"
+  ],
+  [
+   "휠 클릭 드래그: 이동",
+   "Middle-drag: pan"
+  ],
+  [
+   "클릭: 선택",
+   "Click: select"
+  ],
+  [
+   "사각형",
+   "Rectangle"
+  ],
+  [
+   "- 맵 메이커: 미리보기에서 스크롤로 확대 · 축소, 휠 클릭 드래그로 이동, ↺ 위치 초기화 · 도형 종류를 선 / 면 / 사각형 / 원으로 표시 · ⌖(하이라이트) 버튼 대신 목록 줄과 지도 도형이 마우스를 올리면 서로 강조 · 한글 이름이 __로 보이던 문제 수정",
+   "- Map Maker: scroll to zoom, middle-drag to pan and ↺ reset in the preview · shapes labelled line / area / rectangle / circle · the ⌖ (highlight) button is replaced by linked hover between list rows and map shapes · fixed Korean names showing as __"
   ]
  ]
 };
