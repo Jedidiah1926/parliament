@@ -3031,34 +3031,11 @@ html[data-theme-family="modern"] .home-lang-more:hover { background: var(--m-sur
 html[data-theme-family="modern"] .home-lang-remove { color: var(--m-text-3); }
 html[data-theme-family="modern"] .home-lang-remove:hover { color: var(--m-danger, #e5484d); }
 
-/* ---- 세그먼트 컨트롤 선택 표시 애니메이션 (js/segmented.js) ----
-   선택된 버튼 자체의 배경 대신, 묶음 안에 깔린 .seg-thumb 하나가 버튼 사이를 미끄러지듯 옮겨 간다 */
-.seg-thumb { display: none; }
-html[data-theme-family="modern"] .seg-anim { position: relative; }
-html[data-theme-family="modern"] .seg-anim > .seg-thumb {
-    display: block;
-    position: absolute;
-    top: 0;
-    left: 0;
-    z-index: 0;
-    pointer-events: none;
-    background: var(--m-surface);
-    box-shadow: var(--m-shadow-sm);
-    transition: transform .28s cubic-bezier(.3, .9, .3, 1), width .28s cubic-bezier(.3, .9, .3, 1), height .28s cubic-bezier(.3, .9, .3, 1), opacity .15s ease;
-    will-change: transform;
-}
-html[data-theme-family="modern"] .settings-nav.seg-anim > .seg-thumb { box-shadow: var(--m-shadow-sm), inset 0 0 0 1px var(--m-border); }
-html[data-theme-family="modern"] .seg-anim > .seg-thumb.seg-thumb-instant { transition: none; }
-html[data-theme-family="modern"] .seg-anim > :not(.seg-thumb) {
-    position: relative;
-    z-index: 1;
-    transition: color .2s ease, background-color .2s ease;
-}
-html[data-theme-family="modern"] .seg-anim > .active:not(.seg-thumb),
-html[data-theme-family="modern"] .seg-anim > .system-radio-btn:has(input:checked) {
-    background: transparent !important;
-    box-shadow: none !important;
-}
-@media (prefers-reduced-motion: reduce) {
-    html[data-theme-family="modern"] .seg-anim > .seg-thumb { transition: none; }
-}
+html[data-theme-family="modern"] .thr-same,
+html[data-theme-family="modern"] .thr-ch { color: var(--m-text-3); }
+html[data-theme-family="modern"] .thr-slash { color: var(--m-text-3); }
+html[data-theme-family="modern"] .thr-preview { color: var(--m-text-2); font-weight: 600; }
+html[data-theme-family="modern"] .gov-hl-color > label { color: var(--m-text-3); }
+html[data-theme-family="modern"] .gov-hl-color-row input[type="color"] { border: 1px solid var(--m-border) !important; border-radius: 8px; overflow: hidden; }
+html[data-theme-family="modern"] .gov-hl-color-reset { background: var(--m-surface-2); border: none; border-radius: 9px; color: var(--m-text-2); font-weight: 600; }
+html[data-theme-family="modern"] .gov-hl-color-reset:hover { background: var(--m-surface-3); color: var(--m-text); }

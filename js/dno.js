@@ -124,6 +124,38 @@
             return p ? p.color : '#666';
         }
 
+        // ── 로고 제작 모드 (logo.html) — 의회 메뉴만 남긴 화면 ──
+        const IS_LOGO_MODE = document.documentElement.getAttribute('data-app-mode') === 'logo';
+
+        // ── 집권 정당 강조 색 — 비어 있으면 기본 금색(#ffd700 / 테마의 금색) ──
+        let govHighlightColor = '';
+        function normalizeHexColor(v) {
+            let t = String(v || '').trim().replace(/^#?/, '#');
+            if(/^#[0-9a-f]{3}$/i.test(t)) t = '#' + t.slice(1).split('').map(c => c + c).join('');
+            return /^#[0-9a-f]{6}$/i.test(t) ? t.toUpperCase() : '';
+        }
+        function govHl(fallback) { return govHighlightColor || fallback; }
+        function govHlGlow(fallback) {
+            if(!govHighlightColor) return fallback;
+            const n = parseInt(govHighlightColor.slice(1), 16);
+            return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, 0.8)`;
+        }
+        function syncGovHighlightColorUI() {
+            const hex = govHighlightColor || '#FFD700';
+            const picker = document.getElementById('govHlColorPicker');
+            const text = document.getElementById('govHlColorHex');
+            if(picker) picker.value = hex.toLowerCase();
+            if(text && document.activeElement !== text) text.value = govHighlightColor;
+        }
+        function setGovHighlightColor(value, fromText) {
+            const hex = value ? normalizeHexColor(value) : '';
+            if(value && !hex) return; // 입력 중인 불완전한 HEX는 무시
+            govHighlightColor = hex;
+            syncGovHighlightColorUI();
+            if(!fromText) { const t = document.getElementById('govHlColorHex'); if(t) t.value = hex; }
+            simulate();
+        }
+
         // ── 대통령/총리/국무위원을 실제 의원(지역구·비례·무소속)과 연결 — 이름·사진·당적 자동 반영 ──────────────
         function chamberDisplayName(ch) {
             return document.getElementById(ch+'NameInput')?.value || ({house:'하원',senate:'상원',third:'삼원'}[ch] || ch);
@@ -2146,23 +2178,120 @@
         let hoveredSeat = { house: -1, senate: -1, third: -1 };
 
         // ===== BILL FUNCTIONS =====
+        // ── 가결 기준 "지정..." — 원(하원/상원/삼원)마다 분자/분모를 둘 수 있다 ──
+        // "모든 원에 같은 비율"(기본)이면 첫 줄(하원) 비율을 나머지 원에 그대로 쓰고, 원마다 필요한 의석은 자동 계산.
+        // 끄면 원마다 비율을 따로 입력 → bill.chamberThresholds = { house:{numer,denom}, senate:{...}, third:{...} }
+        const THR_CHAMBERS = ['house', 'senate', 'third'];
+        function thrActiveChambers() {
+            return THR_CHAMBERS.filter(ch => ch === 'house' || (ch === 'senate' && hasSenateChamber()) || (ch === 'third' && hasThirdChamber()));
+        }
+        function thrIds(prefix, ch) {
+            // 하원 입력칸은 기존 id(customNumer / editCustomNumer)를 그대로 쓴다
+            const base = prefix === 'edit' ? 'editCustom' : 'custom';
+            const suffix = ch === 'house' ? '' : (ch === 'senate' ? 'Senate' : 'Third');
+            return { numer: base + 'Numer' + suffix, denom: base + 'Denom' + suffix, preview: base + 'Preview' + suffix, same: base + 'SameRatio' };
+        }
+        function chamberValidSeatCount(ch) {
+            const dots = dotCache[ch] || [];
+            if(dots.length) return dots.filter(d => d.partyName !== 'Vacant' && d.partyStatus !== 'banned').length;
+            const el = document.getElementById({house:'houseTotal', senate:'senateTotal', third:'thirdTotal'}[ch]);
+            return el ? (parseInt(el.value) || 0) : 0;
+        }
+        function requiredSeatsFor(validSeats, threshold) {
+            return threshold >= 1.0 ? validSeats : Math.floor(validSeats * threshold) + 1;
+        }
+        function renderCustomThresholdEditor(prefix, init) {
+            const wrap = document.getElementById(prefix === 'edit' ? 'editCustomThresholdWrap' : 'customThresholdWrap');
+            if(!wrap) return;
+            const chambers = thrActiveChambers();
+            const same = init ? !init.chamberThresholds : true;
+            const sameId = thrIds(prefix, 'house').same;
+            wrap.innerHTML = (chambers.length > 1 ? `<label class="thr-same"><input type="checkbox" id="${sameId}" ${same ? 'checked' : ''}> 모든 원에 같은 비율</label>` : '')
+                + chambers.map(ch => {
+                    const ids = thrIds(prefix, ch);
+                    const src = init ? (init.chamberThresholds?.[ch] || { numer: init.numer, denom: init.denom }) : null;
+                    return `<div class="thr-row" data-ch="${ch}">
+                        <span class="thr-ch">${escapeHtmlText(chamberDisplayName(ch))}</span>
+                        <input type="number" id="${ids.numer}" min="1" placeholder="분자" value="${src?.numer ?? ''}">
+                        <span class="thr-slash">/</span>
+                        <input type="number" id="${ids.denom}" min="1" placeholder="분모" value="${src?.denom ?? ''}">
+                        <span class="thr-preview" id="${ids.preview}"></span>
+                    </div>`;
+                }).join('');
+            const update = () => updateCustomThresholdPreview(prefix);
+            wrap.querySelectorAll('input').forEach(inp => { inp.oninput = update; inp.onchange = update; });
+            update();
+        }
+        function updateCustomThresholdPreview(prefix) {
+            const chambers = thrActiveChambers();
+            const sameEl = document.getElementById(thrIds(prefix, 'house').same);
+            const same = !sameEl || sameEl.checked;
+            const houseIds = thrIds(prefix, 'house');
+            const hn = document.getElementById(houseIds.numer)?.value || '';
+            const hd = document.getElementById(houseIds.denom)?.value || '';
+            chambers.forEach(ch => {
+                const ids = thrIds(prefix, ch);
+                const nEl = document.getElementById(ids.numer), dEl = document.getElementById(ids.denom);
+                if(!nEl || !dEl) return;
+                if(ch !== 'house') {
+                    // 같은 비율: 하원 값을 그대로 따라가고 직접 고칠 수 없게
+                    nEl.disabled = dEl.disabled = same;
+                    if(same) { nEl.value = hn; dEl.value = hd; }
+                }
+                const n = parseInt(nEl.value), d = parseInt(dEl.value);
+                const out = document.getElementById(ids.preview);
+                if(!out) return;
+                if(!n || !d) { out.textContent = ''; return; }
+                const th = n / d;
+                const seats = chamberValidSeatCount(ch);
+                out.textContent = `= ${(th * 100).toFixed(1)}%` + (seats ? ` · ${Math.min(requiredSeatsFor(seats, th), seats)}석` : '');
+            });
+        }
+        // 폼 값 → { threshold, numer, denom, chamberThresholds }
+        function readCustomThreshold(prefix) {
+            const houseIds = thrIds(prefix, 'house');
+            const n = parseInt(document.getElementById(houseIds.numer)?.value);
+            const d = parseInt(document.getElementById(houseIds.denom)?.value);
+            if(!n || !d) return null;
+            const sameEl = document.getElementById(houseIds.same);
+            let chamberThresholds = null;
+            if(sameEl && !sameEl.checked) {
+                chamberThresholds = {};
+                thrActiveChambers().forEach(ch => {
+                    const ids = thrIds(prefix, ch);
+                    const cn = parseInt(document.getElementById(ids.numer)?.value);
+                    const cd = parseInt(document.getElementById(ids.denom)?.value);
+                    chamberThresholds[ch] = (cn && cd) ? { numer: cn, denom: cd } : { numer: n, denom: d };
+                });
+            }
+            return { threshold: n / d, numer: n, denom: d, chamberThresholds };
+        }
+        // 표결 · 표시에 쓰는 원별 가결 기준
+        function billThresholdFor(bill, ch) {
+            const c = bill?.chamberThresholds?.[ch];
+            if(c && c.numer && c.denom) return { threshold: c.numer / c.denom, numer: c.numer, denom: c.denom };
+            return { threshold: bill?.threshold || 0.5, numer: bill?.numer, denom: bill?.denom };
+        }
+        // 법안 카드용 기준 이름 — 원마다 다르면 "하원 3/5 · 상원 2/3"
+        function billThresholdLabel(bill) {
+            const ct = bill?.chamberThresholds;
+            if(ct) {
+                const chambers = thrActiveChambers().filter(ch => ct[ch]);
+                const labels = chambers.map(ch => getThresholdLabel(ct[ch].numer / ct[ch].denom, ct[ch].numer, ct[ch].denom));
+                if(chambers.length > 1 && labels.some(l => l !== labels[0])) {
+                    return chambers.map((ch, i) => `${chamberDisplayName(ch)} ${labels[i]}`).join(' · ');
+                }
+            }
+            return getThresholdLabel(bill?.threshold || 0.5, bill?.numer, bill?.denom);
+        }
+
         function toggleCustomThreshold() {
             const sel = document.getElementById('newBillThreshold');
             const wrap = document.getElementById('customThresholdWrap');
             const isCustom = sel.value === 'custom';
-            wrap.style.display = isCustom ? 'flex' : 'none';
-            if(isCustom) {
-                const numer = document.getElementById('customNumer');
-                const denom = document.getElementById('customDenom');
-                const updatePreview = () => {
-                    const n = parseInt(numer.value) || 0;
-                    const d = parseInt(denom.value) || 1;
-                    document.getElementById('customThresholdPreview').textContent =
-                        n && d ? `= ${(n/d*100).toFixed(1)}%` : '';
-                };
-                numer.oninput = updatePreview;
-                denom.oninput = updatePreview;
-            }
+            wrap.style.display = isCustom ? 'block' : 'none';
+            if(isCustom && !wrap.children.length) renderCustomThresholdEditor('new', null);
+            else if(isCustom) updateCustomThresholdPreview('new');
         }
 
         function getThresholdValue() {
@@ -2188,14 +2317,16 @@
             const threshold = getThresholdValue();
             const sel = document.getElementById('newBillThreshold');
             const isCustom = sel.value === 'custom';
-            const numer = isCustom ? parseInt(document.getElementById('customNumer').value) || null : null;
-            const denom = isCustom ? parseInt(document.getElementById('customDenom').value) || null : null;
+            const custom = isCustom ? readCustomThreshold('new') : null;
+            const numer = custom ? custom.numer : null;
+            const denom = custom ? custom.denom : null;
+            const chamberThresholds = custom ? custom.chamberThresholds : null;
             const tagsRaw = document.getElementById('newBillTags')?.value || '';
             const tags = tagsRaw.split(',').map(t => t.trim()).filter(t => t.length > 0);
             if(!title) { showCustomAlert('법안 제목을 입력하세요.'); return; }
             const amendedBill = amendmentSourceId ? bills.find(b => b.id === amendmentSourceId) : null;
             const version = amendedBill ? (amendedBill.version || 1) + 1 : 1;
-            bills.push({ id: 'b'+Date.now(), title, content, threshold, numer, denom, tags,
+            bills.push({ id: 'b'+Date.now(), title, content, threshold, numer, denom, chamberThresholds, tags,
                 houseStatus: 'pending', senateStatus: 'pending', thirdStatus: 'pending', houseVote: null, senateVote: null, thirdVote: null,
                 version, parentBillId: amendedBill ? amendedBill.id : null, isAmendment: !!amendedBill, voteHistory: [],
                 tabledTo: isCouncilVotingMode() ? 'council' : 'parliament' });
@@ -2401,32 +2532,17 @@
             const isCustom = bill.numer && bill.denom;
             const threshSel = document.getElementById('editBillThreshold');
             threshSel.value = isCustom ? 'custom' : String(bill.threshold ?? 0.5);
+            renderCustomThresholdEditor('edit', isCustom ? bill : null);
             toggleEditCustomThreshold();
-            if(isCustom) {
-                document.getElementById('editCustomNumer').value = bill.numer;
-                document.getElementById('editCustomDenom').value = bill.denom;
-                const preview = document.getElementById('editCustomThresholdPreview');
-                if(preview) preview.textContent = `= ${(bill.numer/bill.denom*100).toFixed(1)}%`;
-            }
         }
 
         function toggleEditCustomThreshold() {
             const sel = document.getElementById('editBillThreshold');
             const wrap = document.getElementById('editCustomThresholdWrap');
             const isCustom = sel.value === 'custom';
-            wrap.style.display = isCustom ? 'flex' : 'none';
-            if(isCustom) {
-                const numer = document.getElementById('editCustomNumer');
-                const denom = document.getElementById('editCustomDenom');
-                const updatePreview = () => {
-                    const n = parseInt(numer.value) || 0;
-                    const d = parseInt(denom.value) || 1;
-                    document.getElementById('editCustomThresholdPreview').textContent =
-                        n && d ? `= ${(n/d*100).toFixed(1)}%` : '';
-                };
-                numer.oninput = updatePreview;
-                denom.oninput = updatePreview;
-            }
+            wrap.style.display = isCustom ? 'block' : 'none';
+            if(isCustom && !wrap.children.length) renderCustomThresholdEditor('edit', null);
+            else if(isCustom) updateCustomThresholdPreview('edit');
         }
 
         function saveEditBill() {
@@ -2442,12 +2558,11 @@
             const threshSel = document.getElementById('editBillThreshold');
             const isCustom = threshSel.value === 'custom';
             if(isCustom) {
-                const n = parseInt(document.getElementById('editCustomNumer').value);
-                const d = parseInt(document.getElementById('editCustomDenom').value);
-                if(n && d) { bill.threshold = n/d; bill.numer = n; bill.denom = d; }
+                const custom = readCustomThreshold('edit');
+                if(custom) { bill.threshold = custom.threshold; bill.numer = custom.numer; bill.denom = custom.denom; bill.chamberThresholds = custom.chamberThresholds; }
             } else {
                 bill.threshold = parseFloat(threshSel.value) || 0.5;
-                bill.numer = null; bill.denom = null;
+                bill.numer = null; bill.denom = null; bill.chamberThresholds = null;
             }
             renderBillList(); renderArchiveList(); syncBillSelect(); renderActiveBillDisplay();
             // 저장 후 "-- 수정할 법안 선택 --" 상태로 초기화
@@ -2725,7 +2840,7 @@
             filtered.forEach(bill => {
                 const dest = billTabledTo(bill);
                 const isActive = dest === 'council' ? bill.id === activeCouncilBillId : bill.id === activeBillId;
-                const thLabel = getThresholdLabel(bill.threshold || 0.5, bill.numer, bill.denom);
+                const thLabel = billThresholdLabel(bill);
                 const suspended = isCouncilVotingMode();
                 // 선택된 상정 대상은 색이 채워진 강조 스타일로, 선택되지 않은 쪽은 흐린 회색으로 — 한눈에 구분되도록
                 const routeBtn = (d, txt, color) => {
@@ -2801,7 +2916,7 @@
             container.innerHTML = '';
             filtered.forEach(bill => {
                 const overall = getBillOverallStatus(bill);
-                const thLabel = getThresholdLabel(bill.threshold || 0.5, bill.numer, bill.denom);
+                const thLabel = billThresholdLabel(bill);
                 const div = document.createElement('div');
                 div.className = 'bill-card';
                 div.style.borderLeftColor = (overall === 'passed') ? 'var(--vote-yea)' : (overall === 'awaiting_veto') ? 'var(--tno-gold)' : 'var(--vote-nay)';
@@ -2859,13 +2974,13 @@
             });
             // 활동 금지된 정당은 표결에 참여할 수 없으므로 유효 의석(과반 기준)에서 제외
             const validSeats = dots.filter(d=>d.partyName!=='Vacant' && d.partyStatus!=='banned').length;
-            const threshold = bill.threshold || 0.5;
-            const required = threshold >= 1.0 ? validSeats : Math.floor(validSeats * threshold) + 1;
+            const { threshold, numer: thNumer, denom: thDenom } = billThresholdFor(bill, chamber);
+            const required = requiredSeatsFor(validSeats, threshold);
             const result = yea >= required ? 'pass' : 'fail';
 
             if(!bill.voteHistory) bill.voteHistory = [];
             const nowISO = new Date().toISOString();
-            const logVote = (ch, res) => bill.voteHistory.push({ chamber: ch, result: res, date: bill.voteDate || '', yea, nay, abs, total: validSeats, required, threshold, numer: bill.numer, denom: bill.denom, at: nowISO });
+            const logVote = (ch, res) => bill.voteHistory.push({ chamber: ch, result: res, date: bill.voteDate || '', yea, nay, abs, total: validSeats, required, threshold, numer: thNumer, denom: thDenom, at: nowISO });
             const logSkip = (ch) => bill.voteHistory.push({ chamber: ch, result: 'skip', date: '', at: nowISO });
 
             if(chamber==='house') {
@@ -4132,8 +4247,9 @@
             const t = validSeats || 1;
 
             // 현재 법안의 가결 기준 적용 (확정된 표결이면 확정 당시 required도 함께 사용)
-            const threshold = bill?.threshold || 0.5;
-            const required = isConfirmed ? (bill[voteKey].required ?? Math.floor(validSeats * threshold) + 1) : (threshold >= 1.0 ? validSeats : Math.floor(validSeats * threshold) + 1);
+            const chTh = billThresholdFor(bill, chamber);
+            const threshold = chTh.threshold;
+            const required = isConfirmed ? (bill[voteKey].required ?? requiredSeatsFor(validSeats, threshold)) : requiredSeatsFor(validSeats, threshold);
 
             document.getElementById(prefix+'CntYea').textContent = yea;
             document.getElementById(prefix+'CntNay').textContent = nay;
@@ -4163,13 +4279,13 @@
                 barOuter.style.position = 'relative';
                 const pct = Math.min(threshold * 100, 100).toFixed(1);
                 marker.style.cssText = `position:absolute; left:${pct}%; top:0; bottom:0; width:2px; background:var(--tno-gold); box-shadow:0 0 5px var(--tno-gold); z-index:2; pointer-events:none;`;
-                const thLabel = getThresholdLabel(threshold, bill?.numer, bill?.denom);
+                const thLabel = getThresholdLabel(threshold, chTh.numer, chTh.denom);
                 labelEl.style.cssText = `position:absolute; left:${pct}%; top:-18px; transform:translateX(-50%); font-size:0.75rem; color:var(--tno-gold); white-space:nowrap; pointer-events:none; font-family:'NeoDunggeunmo','VT323',monospace;`;
                 labelEl.textContent = `${thLabel} (${required}석)`;
             }
 
             const thresholdLabels = { 0.5:'과반', 0.667:'2/3', 0.75:'3/4', 1.0:'전원일치' };
-            const thLabel = getThresholdLabel(threshold, bill?.numer, bill?.denom);
+            const thLabel = getThresholdLabel(threshold, chTh.numer, chTh.denom);
 
             // 부가 정보 (찬성수/기준, 기준명, 부족석)
             const infoEl = document.getElementById(prefix+'VoteInfo');
@@ -4466,9 +4582,9 @@
                     ctx.stroke();
                     ctx.shadowBlur = 0;
                 } else if(d.isRuling && highlightGov) {
-                    ctx.shadowColor = "rgba(255, 215, 0, 0.8)";
+                    ctx.shadowColor = govHlGlow("rgba(255, 215, 0, 0.8)");
                     ctx.shadowBlur = 10;
-                    ctx.strokeStyle = "#ffd700";
+                    ctx.strokeStyle = govHl("#ffd700");
                     ctx.lineWidth = 2;
                     ctx.stroke();
                     ctx.shadowBlur = 0;
@@ -4606,6 +4722,14 @@
         });
         let suppressAutosaveOnUnload = false;
 
+        // 로고 제작 모드: 의회 메뉴만 쓰므로 저장된 화면 위치와 상관없이 의회 탭에서 시작
+        if(IS_LOGO_MODE) {
+            window.addEventListener('load', () => setTimeout(() => {
+                if(currentMainTab !== 'setup') switchMainTab('setup');
+                syncGovHighlightColorUI();
+            }, 0));
+        }
+
         // ── 새로 시작할 때 쓰는 깨끗한 기본 상태 ──
         // setAppState는 저장 기록에 없는 값(지역구 격자·성향 등)을 건드리지 않고 그대로 두기 때문에, 화면에 떠 있던
         // 이전 세이브의 값이 섞여 들어갈 수 있다. 새 세이브·프리셋·구버전/외부 파일은 먼저 깨끗한 기본 상태로 되돌린 뒤 적용한다.
@@ -4716,6 +4840,7 @@
                 config: {
                     systemType,
                     highlightGov:  document.getElementById('chkGovHighlight')?.checked ?? true,
+                    govHighlightColor,
                     nationName:    document.getElementById('nationNameInput')?.value   ?? "",
                     nationFlag,
                     nationDateMode: nationDateMode,
@@ -4947,6 +5072,8 @@
             chamberLogoImgCache.house = chamberLogoImgCache.senate = chamberLogoImgCache.third = null;
             ['house','senate','third'].forEach(ch => { updateChamberLogoUI(ch); updateChamberCenterModeUI(ch); });
             if(gd('chkGovHighlight')) gd('chkGovHighlight').checked = cfg.highlightGov ?? true;
+            govHighlightColor = normalizeHexColor(cfg.govHighlightColor || '');
+            syncGovHighlightColorUI();
             if(gd('nationNameInput')) gd('nationNameInput').value = cfg.nationName ?? "";
             if(gd('nationDateEra'))   gd('nationDateEra').value   = cfg.nationDateEra ?? "";
             if(gd('nationDateYear'))  gd('nationDateYear').value  = cfg.nationDateYear ?? "";
@@ -5117,14 +5244,16 @@
             } catch(e) { return false; }
         }
 
+        // logo.html(로고 제작 모드)은 본 게임 세이브와 섞이지 않도록 저장 키에 따로 접두어를 붙인다
+        const LS_PREFIX = IS_LOGO_MODE ? 'hemicycleLogo:' : '';
         function safeLsGet(key) {
-            try { return localStorage.getItem(key); } catch(e) { return null; }
+            try { return localStorage.getItem(LS_PREFIX + key); } catch(e) { return null; }
         }
         function safeLsSet(key, value) {
-            try { localStorage.setItem(key, value); return true; } catch(e) { return false; }
+            try { localStorage.setItem(LS_PREFIX + key, value); return true; } catch(e) { return false; }
         }
         function safeLsRemove(key) {
-            try { localStorage.removeItem(key); } catch(e) { /* 무시 */ }
+            try { localStorage.removeItem(LS_PREFIX + key); } catch(e) { /* 무시 */ }
         }
 
         function normalizeSaveMeta(state) {
@@ -7001,15 +7130,15 @@
                     const isExtSupport = !isGov && rulingCoal && rulingCoal.externalSupporters?.includes(p.id);
                     if(isGov) {
                         ctx.save();
-                        ctx.shadowColor = 'rgba(255,215,0,0.8)';
+                        ctx.shadowColor = govHlGlow('rgba(255,215,0,0.8)');
                         ctx.shadowBlur = 6;
-                        ctx.strokeStyle = '#ffd700';
+                        ctx.strokeStyle = govHl('#ffd700');
                         ctx.lineWidth = 2;
                         ctx.stroke();
                         ctx.restore();
                     } else if(isExtSupport) {
                         ctx.save();
-                        ctx.strokeStyle = '#ffd700';
+                        ctx.strokeStyle = govHl('#ffd700');
                         ctx.lineWidth = 1.5;
                         ctx.setLineDash([2,2]);
                         ctx.stroke();
@@ -11296,9 +11425,9 @@
                 const isExtSupport = !isGov && rulingCoal && rulingCoal.externalSupporters?.includes(p.id);
                 // 각외협력 정당은 (다른 연정 소속이더라도) 그 연정 카드가 아니라 각외협력 항목으로 별도 집계
                 const effectiveCoal = (isExtSupport || (isPartyRuling && !(coal && coal.isRuling))) ? null : coal;
-                let stroke = highlightGov&&isGov ? 'var(--tno-gold)' : (effectiveCoal?effectiveCoal.color:null);
+                let stroke = highlightGov&&isGov ? govHl('var(--tno-gold)') : (effectiveCoal?effectiveCoal.color:null);
                 let strokeDashed = false;
-                if(isExtSupport && rulingCoal) { stroke = highlightGov ? '#ffd700' : rulingCoal.color; strokeDashed = true; }
+                if(isExtSupport && rulingCoal) { stroke = highlightGov ? govHl('#ffd700') : rulingCoal.color; strokeDashed = true; }
 
                 // 파벌 의석 배분
                 const factions = (p.factions||[]).filter(f=>(f[seatKey]||0)>0);
@@ -11311,7 +11440,7 @@
                         const fCoalRuling = !isPartyRuling && (fCoal && fCoal.isRuling);
                         const fIsGov = isPartyRuling || fCoalRuling;
                         const fEffCoal = (isPartyRuling && !(fCoal && fCoal.isRuling)) ? null : fCoal;
-                        const fStroke = highlightGov&&fIsGov ? 'var(--tno-gold)' : (fEffCoal?fEffCoal.color:null);
+                        const fStroke = highlightGov&&fIsGov ? govHl('var(--tno-gold)') : (fEffCoal?fEffCoal.color:null);
                         for(let k=0; k<(f[seatKey]||0); k++){
                             if(map.length>=total) break;
                             map.push({color:fc, partyName:p.name, factionName:f.name, partyStatus:p.status||'active',
@@ -11941,7 +12070,7 @@
                 const isPartyRuling = p.isRuling;
                 const effectiveCoal = (isPartyRuling && !(coal && coal.isRuling)) ? null : coal;
                 const isGov = isPartyRuling || (!isPartyRuling && coal?.isRuling);
-                const stroke = isGov ? 'var(--tno-gold)' : (effectiveCoal?.color || null);
+                const stroke = isGov ? govHl('var(--tno-gold)') : (effectiveCoal?.color || null);
                 for(let k=0; k<rp.seats; k++) {
                     map.push({color:p.color, partyName:p.name, ideology:ideologyName(p.ideologyId)||'?', coalitionName:effectiveCoal?.name, strokeColor:stroke, isRuling:isGov});
                 }
@@ -12801,15 +12930,15 @@
                     const isExtSupport = !isGov && rulingCoal && rulingCoal.externalSupporters?.includes(p.id);
                     if(isGov) {
                         ctx.save();
-                        ctx.shadowColor = 'rgba(255,215,0,0.8)';
+                        ctx.shadowColor = govHlGlow('rgba(255,215,0,0.8)');
                         ctx.shadowBlur = 6;
-                        ctx.strokeStyle = '#ffd700';
+                        ctx.strokeStyle = govHl('#ffd700');
                         ctx.lineWidth = 2;
                         ctx.stroke();
                         ctx.restore();
                     } else if(isExtSupport) {
                         ctx.save();
-                        ctx.strokeStyle = '#ffd700';
+                        ctx.strokeStyle = govHl('#ffd700');
                         ctx.lineWidth = 1.5;
                         ctx.setLineDash([2,2]);
                         ctx.stroke();
@@ -13198,9 +13327,9 @@
                 const isExtSupport = !isGov && rulingCoal && rulingCoal.externalSupporters?.includes(p.id);
                 // 각외협력 정당은 (다른 연정 소속이더라도) 그 연정 카드가 아니라 각외협력 항목으로 별도 집계
                 const effectiveCoal = (isExtSupport || (isPartyRuling && !(coal && coal.isRuling))) ? null : coal;
-                let stroke = hG&&isGov ? 'var(--tno-gold)' : (effectiveCoal?effectiveCoal.color:null);
+                let stroke = hG&&isGov ? govHl('var(--tno-gold)') : (effectiveCoal?effectiveCoal.color:null);
                 let strokeDashed = false;
-                if(isExtSupport && rulingCoal) { stroke = hG ? '#ffd700' : rulingCoal.color; strokeDashed = true; }
+                if(isExtSupport && rulingCoal) { stroke = hG ? govHl('#ffd700') : rulingCoal.color; strokeDashed = true; }
 
                 // 개표 결과에는 파벌 구분이 없다 (의회에 반영하면 파벌 의석은 다시 나눠야 함)
                 const factions = counts ? [] : (p.factions||[]).filter(f=>(f[seatKey]||0)>0);
@@ -13213,7 +13342,7 @@
                         const fCoalRuling = !isPartyRuling && (fCoal && fCoal.isRuling);
                         const fIsGov = isPartyRuling || fCoalRuling;
                         const fEffCoal = (isPartyRuling && !(fCoal && fCoal.isRuling)) ? null : fCoal;
-                        const fStroke = hG&&fIsGov ? 'var(--tno-gold)' : (fEffCoal?fEffCoal.color:null);
+                        const fStroke = hG&&fIsGov ? govHl('var(--tno-gold)') : (fEffCoal?fEffCoal.color:null);
                         for(let k=0; k<(f[seatKey]||0); k++){
                             if(map.length>=totalSeats) break;
                             map.push({color:fc, partyName:p.name, factionName:f.name,
@@ -13274,9 +13403,9 @@
                     const effectiveCoal = (isExtSupport || (isPartyRuling && !(coal && coal.isRuling))) ? null : coal;
                     let stroke = null;
                     let strokeDashed = false;
-                    if(highlightGov && isGov) stroke = "var(--tno-gold)";
+                    if(highlightGov && isGov) stroke = govHl("var(--tno-gold)");
                     else if(effectiveCoal) stroke = effectiveCoal.color;
-                    if(isExtSupport && rulingCoal) { stroke = highlightGov ? '#ffd700' : rulingCoal.color; strokeDashed = true; }
+                    if(isExtSupport && rulingCoal) { stroke = highlightGov ? govHl('#ffd700') : rulingCoal.color; strokeDashed = true; }
 
                     const factions = (p.factions||[]).filter(f=>(f[seatKey]||0)>0);
                     if(factions.length > 0) {
@@ -13289,7 +13418,7 @@
                             const fCoalRuling = !isPartyRuling && (fCoal && fCoal.isRuling);
                             const fIsGov = isPartyRuling || fCoalRuling;
                             const fEffCoal = (isPartyRuling && !(fCoal && fCoal.isRuling)) ? null : fCoal; // 당 연정 폴백 제거
-                            const fStroke = highlightGov&&fIsGov ? 'var(--tno-gold)' : (fEffCoal?fEffCoal.color:null);
+                            const fStroke = highlightGov&&fIsGov ? govHl('var(--tno-gold)') : (fEffCoal?fEffCoal.color:null);
                             for(let k=0; k<(f[seatKey]||0); k++){
                                 if(map.length>=targetTotal) break;
                                 map.push({color:fc, partyName:p.name, factionName:f.name, partyStatus:p.status||'active',
@@ -13320,13 +13449,13 @@
                                 const indExtCoal = !indCoal && rulingCoal ? (rulingCoal.externalSupporters?.includes(indKey) ? rulingCoal : null) : null;
                                 if(indCoal) {
                                     indIsGov = !!indCoal.isRuling;
-                                    indStroke = highlightGov && indIsGov ? 'var(--tno-gold)' : indCoal.color;
+                                    indStroke = highlightGov && indIsGov ? govHl('var(--tno-gold)') : indCoal.color;
                                     indDashed = false;
                                     indCoalName = indCoal.name;
                                     indExtSupport = false;
                                 } else if(indExtCoal) {
                                     indIsGov = false;
-                                    indStroke = highlightGov ? '#ffd700' : indExtCoal.color;
+                                    indStroke = highlightGov ? govHl('#ffd700') : indExtCoal.color;
                                     indDashed = true;
                                     indCoalName = null;
                                     indExtSupport = indExtCoal.externalSupportLabel || '각외협력';
@@ -13478,9 +13607,9 @@
                     ctx.stroke();
                     ctx.shadowBlur = 0;
                 } else if(d.isRuling && highlightGov) {
-                    ctx.shadowColor = "rgba(255, 215, 0, 0.8)";
+                    ctx.shadowColor = govHlGlow("rgba(255, 215, 0, 0.8)");
                     ctx.shadowBlur = 10;
-                    ctx.strokeStyle = "#ffd700";
+                    ctx.strokeStyle = govHl("#ffd700");
                     ctx.lineWidth = 2;
                     ctx.stroke();
                     ctx.shadowBlur = 0;
