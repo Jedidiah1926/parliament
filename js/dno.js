@@ -9018,10 +9018,13 @@
                 }
                 // innerGlow: 도형 전체를 단색으로 칠하는 대신, 어두운 바탕 위에 경계 안쪽에서
                 // 옅어지는 네온 광원만 보이도록 함 (권역 지도 등에서 사용)
-                const shownFill = opts.innerGlow && fillColor !== 'transparent' ? glowMix(fillColor) : fillColor;
+                // ungroupedFill/ungroupedStroke: 묶음에 속하지 않은 칸(예: 권역 미배정)은 빛 효과 없이 단색 + 옅은 경계선으로
+                const plainUngrouped = opts.groupOf && groupId == null && opts.ungroupedFill;
+                const shownFill = plainUngrouped ? opts.ungroupedFill(s.key)
+                    : (opts.innerGlow && fillColor !== 'transparent' ? glowMix(fillColor) : fillColor);
                 el.setAttribute('fill', shownFill);
                 // 묶음에 속한 지역구는 테두리를 채움색과 같게 해 이웃한 같은 묶음 지역구와의 경계선이 보이지 않게 한다
-                el.setAttribute('stroke', groupId != null ? shownFill : (map.strokeColor || '#00ffff'));
+                el.setAttribute('stroke', groupId != null ? shownFill : (plainUngrouped && opts.ungroupedStroke ? opts.ungroupedStroke : (map.strokeColor || '#00ffff')));
                 el.setAttribute('stroke-width', opts.strokeWidth || '1.5');
                 // 지도 좌표 규모(viewBox)가 저장된 값과 다르거나 매우 클 수 있어, 테두리가 화면 픽셀
                 // 기준 두께를 유지하도록 함 (확대해도 실선이 얇아지거나 안 보이지 않게)
@@ -9048,7 +9051,7 @@
                 shapeEls.push({ s, el });
                 // innerGlow: 도형과 동일한 모양을 클립으로 삼아, 그 안에서만 보이는 흐린 네온 테두리를
                 // 겹쳐 그림 — 경계 쪽은 밝고 중앙으로 갈수록 옅어지는 광원 느낌을 줌
-                if(opts.innerGlow && fillColor !== 'transparent' && groupId == null) {
+                if(opts.innerGlow && fillColor !== 'transparent' && groupId == null && !plainUngrouped) {
                     const clipId = 'clip_' + Math.random().toString(36).slice(2, 10);
                     const clipPath = document.createElementNS(svgNS, 'clipPath');
                     clipPath.setAttribute('id', clipId);
@@ -11950,6 +11953,10 @@
                         // 미배정 칸: 라이트 모드는 흰 바탕에서 보이도록 어두운 회색, 다크/네온은 밝은 회색
                         return region ? region.color : (document.documentElement.getAttribute('data-theme-mode') === 'light' ? 'rgba(0,0,0,0.35)' : 'rgba(255,255,255,0.25)');
                     },
+                    // 미배정 칸도 권역과 같은 결로 — 빛 효과 없는 단색 + 옅은 경계선 (어느 칸인지는 보이게)
+                    ungroupedFill: key => !districtGrid[ch][key] ? 'transparent'
+                        : (document.documentElement.getAttribute('data-theme-mode') === 'light' ? '#e4e6ea' : '#2b2f3a'),
+                    ungroupedStroke: document.documentElement.getAttribute('data-theme-mode') === 'light' ? '#b8bcc4' : '#4d5462',
                     // 같은 권역의 지역구끼리는 경계선을 지우고 권역 둘레만 그린다
                     groupOf: key => {
                         if(!districtGrid[ch][key]) return null;
