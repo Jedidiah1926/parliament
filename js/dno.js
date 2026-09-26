@@ -9193,7 +9193,6 @@
             const vbParts = String(map.viewBox || '0 0 100 100').split(/[\s,]+/).map(Number);
             const vb = { x: vbParts[0] || 0, y: vbParts[1] || 0, w: vbParts[2] || 100, h: vbParts[3] || 100 };
             const groupFilters = []; // { el: feMorphology, px } — 그린 뒤 화면 배율에 맞춰 radius를 정함
-            const blurFilters = [];  // { el: feGaussianBlur, px }
             const addFilter = (id, parts) => {
                 const f = document.createElementNS(svgNS, 'filter');
                 f.setAttribute('id', id);
@@ -9227,20 +9226,7 @@
                     });
                     svg.appendChild(layer);
                 };
-                // 안쪽 빛: 둘레에서 넓게 깎아 낸 띠를 흐리게 번지게 한 뒤 묶음 안쪽으로만 남긴다
-                if(opts.innerGlow) {
-                    const erodeGlow = fe('feMorphology', { in: 'SourceAlpha', operator: 'erode', radius: '1', result: 'er' });
-                    const blur = fe('feGaussianBlur', { in: 'band', stdDeviation: '1', result: 'bl' });
-                    addFilter('gglow_' + uid, [
-                        erodeGlow,
-                        fe('feComposite', { in: 'SourceGraphic', in2: 'er', operator: 'out', result: 'band' }),
-                        blur,
-                        fe('feComposite', { in: 'bl', in2: 'SourceAlpha', operator: 'in' }),
-                    ]);
-                    groupFilters.push({ el: erodeGlow, px: (opts.innerGlowWidth || 8) });
-                    blurFilters.push({ el: blur, px: 3 });
-                    unionLayer('gglow_' + uid, '0.8');
-                }
+                // (안쪽 빛 띠는 두껍고 옛날 느낌이라 그리지 않는다 — 단색 채움 + 얇은 테두리만)
                 // 테두리: 둘레에서 조금 깎아 낸 띠
                 const erodeLine = fe('feMorphology', { in: 'SourceAlpha', operator: 'erode', radius: '1', result: 'er' });
                 addFilter('gline_' + uid, [
@@ -9260,7 +9246,6 @@
                     const vw = cur[2] || vb.w, vh = cur[3] || vb.h;
                     const unitsPerPx = r.width > 0 && r.height > 0 ? Math.max(vw / r.width, vh / r.height) : vw / 600;
                     groupFilters.forEach(({ el, px }) => el.setAttribute('radius', String(px * unitsPerPx)));
-                    blurFilters.forEach(({ el, px }) => el.setAttribute('stdDeviation', String(px * unitsPerPx)));
                 };
                 applyFilterScale();
                 // 확대/축소(viewBox 변경)나 창 크기 변화에도 두께가 유지되도록 다시 맞춘다
