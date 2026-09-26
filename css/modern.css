@@ -2529,6 +2529,7 @@ html[data-theme-family="modern"] .settings-nav-item.active { background: var(--m
 html[data-theme-family="modern"] .settings-section-title { color: var(--m-text) !important; font-weight: 700; letter-spacing: 0; font-size: 22px; }
 html[data-theme-family="modern"] .settings-section-desc { color: var(--m-text-3) !important; }
 html[data-theme-family="modern"] .settings-hint { color: var(--m-text-2) !important; }
+html[data-theme-family="modern"] .settings-footer { border-top-color: var(--m-border) !important; background: var(--m-surface); }
 html[data-theme-family="modern"] .header-strip {
     background: none !important;
     color: var(--m-text) !important;
