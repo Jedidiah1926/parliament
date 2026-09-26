@@ -2624,6 +2624,12 @@ html[data-theme-family="modern"] .rd-card {
 html[data-theme-family="modern"] .rd-title { color: var(--m-text) !important; font-weight: 700; border-bottom-color: var(--m-border) !important; }
 html[data-theme-family="modern"] .rd-desc { color: var(--m-text-2) !important; }
 html[data-theme-family="modern"] .rd-track-line { background: var(--m-border) !important; }
+/* 로드맵 스크롤바: 네온의 검은 트랙 · 카드색 막대 대신 배경 없는 가는 회색 막대 */
+html[data-theme-family="modern"] .rd-desc,
+html[data-theme-family="modern"] .rd-track-viewport,
+html[data-theme-family="modern"] .rd-header { scrollbar-width: thin; scrollbar-color: var(--m-border-strong) transparent !important; }
+html[data-theme-family="modern"] .rd-desc::-webkit-scrollbar-track { background: transparent !important; }
+html[data-theme-family="modern"] .rd-desc::-webkit-scrollbar-thumb { background: var(--m-border-strong) !important; box-shadow: none !important; border-radius: 999px; }
 
 /* 맵 메이커 (map.html 인라인 스타일) */
 html[data-theme-family="modern"] h1 { color: var(--m-text) !important; font-weight: 800; }
