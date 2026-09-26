@@ -90,8 +90,10 @@
   .mm-viewbar { display: flex; align-items: center; gap: 10px; }
   #preview.panning { cursor: grabbing; }
   /* 목록에 마우스를 올린 도형 / 지도에서 마우스를 올린 도형의 목록 줄 — 서로 연결해 어느 것인지 바로 보이게 */
-  #svgContainer svg .mm-hl { stroke: var(--tno-neon) !important; stroke-width: 2.5px !important; vector-effect: non-scaling-stroke; paint-order: stroke; }
-  #svgContainer svg .mm-sel { fill-opacity: 0.55; }
+  /* 도형 상태 4가지: 기본 / 호버(굵은 강조 테두리 + 살짝 밝게) / 선택(강조색으로 칠함) / 선택+호버(강조색 + 굵은 테두리) */
+  #svgContainer { --mm-accent: var(--tno-neon); }
+  #svgContainer svg .mm-sel { fill: color-mix(in srgb, var(--mm-accent) 45%, #1a1d26) !important; fill-opacity: 1 !important; }
+  #svgContainer svg .mm-hl { stroke: var(--mm-accent) !important; stroke-width: 3px !important; vector-effect: non-scaling-stroke; filter: brightness(1.2); }
   .item.hl { background: color-mix(in srgb, var(--tno-neon) 10%, transparent); }
   .mm-kind { font-size: 12px; padding: 1px 7px; border: 1px solid var(--tno-border); color: #8a94a3; white-space: nowrap; }
   .mm-kind.kind-area { color: var(--tno-neon); border-color: color-mix(in srgb, var(--tno-neon) 50%, transparent); }
