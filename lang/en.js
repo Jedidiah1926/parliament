@@ -4975,6 +4975,134 @@ window.DnoLangPacks.en = {
   [
    "맨 위",
    "Top"
+  ],
+  [
+   "id/label 우선 사용",
+   "Prefer id/label"
+  ],
+  [
+   "내보낼 때",
+   "Wrap export in"
+  ],
+  [
+   "래퍼 포함",
+   "wrapper"
+  ],
+  [
+   "업로드한 SVG가 여기 표시됩니다",
+   "Your uploaded SVG appears here"
+  ],
+  [
+   "SVG 지도를 지역구 지도 파일(.jsx)로 — 만든 파일은 여론 › 지역구에서 불러옵니다",
+   "Turn an SVG map into a district map file (.jsx) — load it in Polls › Districts"
+  ],
+  [
+   "SVG 파일을 선택하세요.",
+   "Choose an SVG file."
+  ],
+  [
+   "SVG에서 지역구 도형 찾기",
+   "Find district shapes in the SVG"
+  ],
+  [
+   "① ⬆ SVG 열기 → ② ▶ 분석 → ③ 오른쪽 목록에서 이름 고치기 · 고르기 → ④ 내보내기",
+   "① ⬆ Open SVG → ② ▶ Analyze → ③ Rename · pick in the list on the right → ④ Export"
+  ],
+  [
+   "▶ 분석",
+   "▶ Analyze"
+  ],
+  [
+   "⬆ SVG 열기",
+   "⬆ Open SVG"
+  ],
+  [
+   "내보내기",
+   "Export"
+  ],
+  [
+   "먼저 SVG를 파싱하세요.",
+   "Analyze an SVG first."
+  ],
+  [
+   "모두 선택",
+   "Select all"
+  ],
+  [
+   "선택 해제",
+   "Deselect all"
+  ],
+  [
+   "선택된 요소가 없습니다.",
+   "Nothing selected."
+  ],
+  [
+   "선택한 것만 내보내기",
+   "Export selected"
+  ],
+  [
+   "수정된 SVG 다운로드",
+   "Download edited SVG"
+  ],
+  [
+   "요소 목록",
+   "Elements"
+  ],
+  [
+   "유효한 SVG가 아닙니다.",
+   "Not a valid SVG."
+  ],
+  [
+   "찾은 도형",
+   "Shapes found"
+  ],
+  [
+   "하이라이트",
+   "Highlight"
+  ],
+  [
+   "SVG 지도로 지역구 지도 만들기",
+   "Build district maps from SVG"
+  ],
+  [
+   "화면 · 테마",
+   "Display · Theme"
+  ],
+  [
+   "탭 닫기",
+   "Close tab"
+  ],
+  [
+   "📂 닫은 탭 다시 열기",
+   "📂 Reopen closed tab"
+  ],
+  [
+   "닫은 탭이 없습니다",
+   "No closed tabs"
+  ],
+  [
+   "이 탭을 닫을까요?\n자동저장이 꺼져 있어 저장하지 않은 변경사항은 사라집니다.",
+   "Close this tab?\nAutosave is off, so unsaved changes will be lost."
+  ],
+  [
+   "- 맵 메이커 새 디자인 — 한 화면에 들어오는 앱 레이아웃(스크롤 없음), 라이트 · 다크 · 네온 테마 적용, 메인으로 돌아가는 버튼",
+   "- Map Maker redesign — fits on one screen (no scrolling), follows the light · dark · neon themes, back-to-main button"
+  ],
+  [
+   "- 메인 화면 메뉴에 맵 메이커 추가, 언어 설정(언어 팩 불러오기 · 번역 템플릿 · 삭제 포함)은 메인 화면 🌐 버튼으로 옮김",
+   "- Map Maker added to the main menu; language settings (including loading packs, translation template, deletion) moved to the 🌐 button on the main screen"
+  ],
+  [
+   "- 마우스를 올리면 뜨는 말풍선과 알림 · 확인 창이 라이트 · 다크 · 네온 테마를 따름 (네온에선 버튼 색에 맞춘 말풍선)",
+   "- Hover tooltips and alert/confirm dialogs now follow the light · dark · neon themes (neon tooltips match the button color)"
+  ],
+  [
+   "- 세이브 탭을 모두 닫을 수 있음(맨 앞 탭 포함) — 탭을 닫아도 세이브는 지워지지 않고, 모두 닫으면 아래 화면이 비며 \"+ › 닫은 탭 다시 열기\"로 다시 열 수 있음",
+   "- Every save tab can now be closed (including the first) — closing a tab no longer deletes the save; closing all leaves the screen empty, and \"+ › Reopen closed tab\" brings them back"
+  ],
+  [
+   "- 네온 테마 메인 화면 제목 글꼴을 둥근모로",
+   "- Neon main screen title now uses the NeoDunggeunmo font"
   ]
  ]
 };

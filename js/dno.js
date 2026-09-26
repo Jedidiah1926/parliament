@@ -1383,22 +1383,11 @@
 
         // ── 브라우저 기본 alert/confirm 대신 앱 자체 UI로 표시 (권한 선포 등 확인/안내용) ──────────────
         function showCustomAlert(message) {
-            const overlay = document.getElementById('customAlertOverlay');
-            if(!overlay) { alert(message); return; }
-            document.getElementById('customAlertMessage').textContent = message;
-            overlay.style.display = 'flex';
-            document.getElementById('customAlertOkBtn').onclick = () => { overlay.style.display = 'none'; };
+            window.DnoUI ? DnoUI.alert(message) : alert(message);
         }
         function showCustomConfirm(message, onConfirm, onCancel) {
-            const overlay = document.getElementById('customConfirmOverlay');
-            if(!overlay) { if(confirm(message)) onConfirm(); else onCancel?.(); return; }
-            document.getElementById('customConfirmMessage').textContent = message;
-            overlay.style.display = 'flex';
-            const okBtn = document.getElementById('customConfirmOkBtn');
-            const cancelBtn = document.getElementById('customConfirmCancelBtn');
-            const cleanup = () => { overlay.style.display = 'none'; okBtn.onclick = null; cancelBtn.onclick = null; };
-            okBtn.onclick = () => { cleanup(); onConfirm(); };
-            cancelBtn.onclick = () => { cleanup(); onCancel?.(); };
+            if(!window.DnoUI) { if(confirm(message)) onConfirm(); else onCancel?.(); return; }
+            DnoUI.confirm(message).then(ok => ok ? onConfirm() : onCancel?.());
         }
 
         // 지정된 한 원의 의석을 비운다 — 지역구는 궐석 처리(기록 보존), 비례 명단은 초기화, 정당별 의석 수는 0으로
@@ -5016,6 +5005,9 @@
             activeSlotId = id || null;
             if(activeSlotId) safeLsSet(ACTIVE_SLOT_KEY, activeSlotId);
             else safeLsRemove(ACTIVE_SLOT_KEY);
+            // 무엇이든 열면(탭 전환·세이브 열기·새로 만들기) 그 탭을 탭 바에 띄우고 빈 화면 상태를 끝낸다
+            ensureTabOpen(currentTabId());
+            setNoOpenTab(false);
         }
 
         // 구버전(단일 AUTOSAVE_KEY) 자동저장 데이터를 새 통합 슬롯 배열로 옮김 —
@@ -5033,11 +5025,54 @@
             safeLsRemove(LEGACY_AUTOSAVE_KEY);
         }
 
+        // ===== 열린 탭 목록 (진짜 프로그램처럼) — 탭을 닫아도 세이브는 지워지지 않는다(삭제는 저장 목록에서) =====
+        // 저장값이 없으면(이전 버전) 기본 세션 + 모든 세이브가 열린 것으로 본다. 탭을 모두 닫으면 아래 화면은 빈다.
+        const OPEN_TABS_KEY = 'dnoOpenSaveTabs';
+        let noOpenTab = false;
+        function currentTabId() { return activeSlotId || AUTOSAVE_SLOT_ID; }
+        function loadOpenTabs(slots = loadSaveSlots()) {
+            const named = slots.filter(s => !s.isAutosave).sort((a,b) => new Date(a.createdAt||a.savedAt||0) - new Date(b.createdAt||b.savedAt||0));
+            let ids = null;
+            try { ids = JSON.parse(safeLsGet(OPEN_TABS_KEY) || 'null'); } catch(e) { ids = null; }
+            if(!Array.isArray(ids)) ids = [AUTOSAVE_SLOT_ID, ...named.map(n => n.id)];
+            const valid = new Set([AUTOSAVE_SLOT_ID, ...named.map(n => n.id)]);
+            return ids.filter((id, i) => valid.has(id) && ids.indexOf(id) === i);
+        }
+        function saveOpenTabs(ids) { if(localStorageAvailable) safeLsSet(OPEN_TABS_KEY, JSON.stringify(ids)); }
+        function ensureTabOpen(id) {
+            const ids = loadOpenTabs();
+            if(!ids.includes(id)) { ids.push(id); saveOpenTabs(ids); }
+        }
+        function setNoOpenTab(on) {
+            noOpenTab = !!on;
+            document.body?.classList.toggle('no-open-tab', noOpenTab);
+        }
+        // 탭 닫기 — 지금 탭을 닫으면 오른쪽(없으면 왼쪽) 탭으로 옮겨 가고, 남은 탭이 없으면 빈 화면
+        function closeSaveTab(id) {
+            const ids = loadOpenTabs();
+            const idx = ids.indexOf(id);
+            if(idx < 0) return;
+            const isCurrent = !noOpenTab && id === currentTabId();
+            const doClose = () => {
+                if(isCurrent) autosaveNow();
+                ids.splice(idx, 1);
+                saveOpenTabs(ids);
+                if(!isCurrent) { renderSaveTabBar(); return; }
+                const next = ids[idx] || ids[idx - 1];
+                setNoOpenTab(true);
+                if(next) switchToSaveTab(next);
+                else { hideSaveTabNewInput(); renderSaveTabUI(); }
+            };
+            if(isCurrent && !autosaveEnabled && localStorageAvailable) showCustomConfirm('이 탭을 닫을까요?\n자동저장이 꺼져 있어 저장하지 않은 변경사항은 사라집니다.', doClose);
+            else doClose();
+        }
+
         function loadAutosavePreference() {
             localStorageAvailable = checkLocalStorageAvailable();
             if(!localStorageAvailable) { autosaveEnabled = false; return; }
             migrateLegacyAutosave();
             loadActiveSlotId();
+            ensureTabOpen(currentTabId());
             const stored = safeLsGet(AUTOSAVE_ENABLED_KEY);
             autosaveEnabled = stored === null ? true : stored === 'true';
             const storedInterval = parseInt(safeLsGet(AUTOSAVE_INTERVAL_KEY), 10);
@@ -5068,7 +5103,7 @@
         // 활성 세이브(activeSlotId)가 있으면 그 세이브 전용 자동저장 슬롯에,
         // 없으면 기본 "새 의회 (1)" 슬롯에 계속 덮어쓴다.
         function autosaveNow() {
-            if(!autosaveEnabled || !localStorageAvailable) return;
+            if(!autosaveEnabled || !localStorageAvailable || noOpenTab) return; // 탭을 모두 닫은 빈 화면에선 저장할 것이 없음
             const slots = loadSaveSlots();
             const savedAt = new Date().toISOString();
             const state = getAppState();
@@ -5379,19 +5414,20 @@
             const bar = document.getElementById('saveTabBar');
             if(!bar) return;
             const all = loadSaveSlots();
-            const named = all.filter(s => !s.isAutosave).sort((a,b) => new Date(a.createdAt||a.savedAt||0) - new Date(b.createdAt||b.savedAt||0));
-            const isDefaultActive = !activeSlotId;
-            const tabsHtml = [
-                `<div class="save-tab${isDefaultActive?' active':''}" onclick="switchToSaveTab('${AUTOSAVE_SLOT_ID}')" title="${AUTOSAVE_SLOT_NAME}">
-                    <span class="save-tab-name">${AUTOSAVE_SLOT_NAME}</span>
-                </div>`,
-                ...named.map(n => `
-                    <div class="save-tab${activeSlotId===n.id?' active':''}" data-slot-id="${n.id}" onclick="switchToSaveTab('${n.id}')" ondblclick="startRenameSaveTab('${n.id}')" title="${escapeHtmlText(n.name)} — 더블클릭하면 이름 변경">
-                        <span class="save-tab-name">${escapeHtmlText(n.name)}</span>
-                        <span class="save-tab-close" onclick="event.stopPropagation();deleteSaveTab('${n.id}')">×</span>
-                    </div>
-                `)
-            ].join('');
+            const openIds = loadOpenTabs(all);
+            const cur = noOpenTab ? null : currentTabId();
+            const tabsHtml = openIds.map(id => {
+                const close = `<span class="save-tab-close" role="button" title="탭 닫기" onclick="event.stopPropagation();closeSaveTab('${id}')">×</span>`;
+                if(id === AUTOSAVE_SLOT_ID) return `
+                    <div class="save-tab${cur===id?' active':''}" onclick="switchToSaveTab('${AUTOSAVE_SLOT_ID}')" title="${AUTOSAVE_SLOT_NAME}">
+                        <span class="save-tab-name">${AUTOSAVE_SLOT_NAME}</span>${close}
+                    </div>`;
+                const n = all.find(s => s.id === id);
+                return `
+                    <div class="save-tab${cur===id?' active':''}" data-slot-id="${n.id}" onclick="switchToSaveTab('${n.id}')" ondblclick="startRenameSaveTab('${n.id}')" title="${escapeHtmlText(n.name)} — 더블클릭하면 이름 변경">
+                        <span class="save-tab-name">${escapeHtmlText(n.name)}</span>${close}
+                    </div>`;
+            }).join('');
             bar.innerHTML = `
                 <a class="save-tab-home" href="main.html" onclick="return goHomeScreen()" title="메인 화면으로" aria-label="메인 화면으로">
                     <svg viewBox="0 0 20 20" width="17" height="17" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
@@ -5403,6 +5439,7 @@
                 <div class="save-tab-new-menu" id="saveTabNewMenu" style="display:none;">
                     <div class="save-tab-new-menu-item" onclick="pendingPresetId=null;showSaveTabNewInput();">🆕 새로 생성</div>
                     <div class="save-tab-new-menu-item" onclick="showSaveTabPresetList()">📦 프리셋에서 생성</div>
+                    <div class="save-tab-new-menu-item" onclick="showSaveTabOpenList()">📂 닫은 탭 다시 열기</div>
                 </div>
                 <div class="save-tab-preset-list" id="saveTabPresetList" style="display:none;"></div>
                 <div class="save-tab-new-input-wrap" id="saveTabNewInputWrap" style="display:none;">
@@ -5483,6 +5520,28 @@
             wrap.innerHTML = list.map((p, i) => `<div class="save-tab-preset-item" onclick="selectPresetForNewTab(${i})">${escapeHtmlText(p.title)}</div>`).join('');
         }
 
+        // 닫아 둔 탭(세이브) 다시 열기 — 목록에서 고르면 그 탭을 다시 띄우고 바로 전환
+        function showSaveTabOpenList() {
+            hideSaveTabAllPopups();
+            const wrap = document.getElementById('saveTabPresetList');
+            const all = loadSaveSlots();
+            const openIds = new Set(loadOpenTabs(all));
+            const closed = [
+                ...(!openIds.has(AUTOSAVE_SLOT_ID) ? [{ id: AUTOSAVE_SLOT_ID, name: AUTOSAVE_SLOT_NAME }] : []),
+                ...all.filter(s => !s.isAutosave && !openIds.has(s.id)).sort((a,b) => new Date(b.savedAt||0) - new Date(a.savedAt||0)),
+            ];
+            wrap.style.display = 'flex';
+            wrap.innerHTML = closed.length
+                ? closed.map(s => `<div class="save-tab-preset-item" onclick="reopenSaveTab('${s.id}')">${escapeHtmlText(s.name)}</div>`).join('')
+                : `<div class="save-tab-preset-empty">닫은 탭이 없습니다</div>`;
+        }
+        function reopenSaveTab(id) {
+            hideSaveTabAllPopups();
+            ensureTabOpen(id);
+            if(noOpenTab || id !== currentTabId()) switchToSaveTab(id);
+            else renderSaveTabBar();
+        }
+
         function selectPresetForNewTab(index) {
             const preset = (presetListCache || [])[index];
             if(!preset) return;
@@ -5542,9 +5601,9 @@
         // 탭 클릭 시 즉시 전환 — 나가는 탭의 상태는 자동저장으로 남기고, 확인창 없이 대상 탭으로 교체
         function switchToSaveTab(id) {
             const toDefault = (id === AUTOSAVE_SLOT_ID);
-            const alreadyThere = toDefault ? !activeSlotId : (activeSlotId === id);
+            const alreadyThere = !noOpenTab && (toDefault ? !activeSlotId : (activeSlotId === id));
             if(alreadyThere) return;
-            if(autosaveEnabled) autosaveNow();
+            autosaveNow();
 
             const slots = loadSaveSlots();
             let target = null;
@@ -5555,10 +5614,11 @@
                 if(!parent) return;
                 target = getNamedAutosaveSlot(slots, id) || parent;
             }
-            if(target) {
-                try { applyStateSafely(target.state); }
-                catch(e) { showCustomAlert('세이브를 불러오지 못했습니다.'); return; }
+            try {
+                if(target) applyStateSafely(target.state);
+                else applyStateFromScratch(null); // 기본 세션에 자동저장이 아직 없으면 처음 상태로
             }
+            catch(e) { showCustomAlert('세이브를 불러오지 못했습니다.'); return; }
             setActiveSlotId(toDefault ? null : id);
             simulate(); refreshUI();
             renderSaveTabUI();
@@ -5662,10 +5722,6 @@
         // Esc로 닫을 대상 중 실제로 열려 있는 것 하나만(우선순위대로) 닫는다
         function handleGlobalEscape() {
             const isVisible = el => el && getComputedStyle(el).display !== 'none';
-            const confirmOverlay = document.getElementById('customConfirmOverlay');
-            if(isVisible(confirmOverlay)) { document.getElementById('customConfirmCancelBtn')?.click(); return; }
-            const alertOverlay = document.getElementById('customAlertOverlay');
-            if(isVisible(alertOverlay)) { document.getElementById('customAlertOkBtn')?.click(); return; }
             const exportOverlay = document.getElementById('exportDialogOverlay');
             if(isVisible(exportOverlay)) { closeExportDialog(); return; }
             const seatCard = document.getElementById('seatInfoCard');

@@ -7,6 +7,7 @@
 
     <script src="js/uimode.js"></script>
     <script src="js/thememode.js"></script>
+    <script src="js/dialogs.js"></script>
     <script src="js/theme.js"></script>
 
     <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
@@ -38,23 +39,6 @@
     </div>
 
     <!-- 내보내기 옵션 창 -->
-    <!-- 권한(거부권/비상사태 등) 관련 확인/안내를 브라우저 기본 alert/confirm 대신 앱 자체 UI로 표시 -->
-    <div id="customConfirmOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:7000;align-items:center;justify-content:center;">
-        <div style="background:#0a0c10;border:1px solid var(--tno-neon);box-shadow:0 0 16px color-mix(in srgb, var(--tno-neon) 30%, transparent);padding:20px;width:320px;max-width:90vw;font-family:'NeoDunggeunmo','VT323',monospace;">
-            <div id="customConfirmMessage" style="color:#ddd;font-size:0.95rem;margin-bottom:20px;line-height:1.6;white-space:pre-line;"></div>
-            <div style="display:flex;gap:8px;">
-                <button id="customConfirmOkBtn" class="add-btn" style="flex:1;margin-top:0;">확인</button>
-                <button id="customConfirmCancelBtn" class="add-btn" style="flex:1;margin-top:0;background:transparent;color:#888;border-color:#333;">취소</button>
-            </div>
-        </div>
-    </div>
-    <div id="customAlertOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:7000;align-items:center;justify-content:center;">
-        <div style="background:#0a0c10;border:1px solid var(--tno-gold);box-shadow:0 0 16px color-mix(in srgb, var(--tno-gold) 30%, transparent);padding:20px;width:320px;max-width:90vw;font-family:'NeoDunggeunmo','VT323',monospace;">
-            <div id="customAlertMessage" style="color:#ddd;font-size:0.95rem;margin-bottom:20px;line-height:1.6;white-space:pre-line;"></div>
-            <button id="customAlertOkBtn" class="add-btn" style="width:100%;margin-top:0;">확인</button>
-        </div>
-    </div>
-
     <div id="exportDialogOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:6000;align-items:center;justify-content:center;" onclick="if(event.target===this) closeExportDialog();">
         <div style="background:#0a0c10;border:1px solid var(--tno-neon);box-shadow:0 0 16px color-mix(in srgb, var(--tno-neon) 30%, transparent);padding:20px;width:300px;max-width:90vw;font-family:'NeoDunggeunmo','VT323',monospace;">
             <div style="color:var(--tno-neon);font-size:1rem;margin-bottom:16px;letter-spacing:1px;">▌ 내보내기</div>

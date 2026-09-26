@@ -6,6 +6,7 @@
     <title>Hemicycle</title>
     
     <script src="js/thememode.js"></script>
+    <script src="js/dialogs.js"></script>
     <script src="js/theme.js"></script>
 
     <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
@@ -42,15 +43,20 @@
                 <span class="home-menu-text"><span class="home-menu-label">시작하기</span><span class="home-menu-desc">새로 만들거나 이어서 하기</span></span>
                 <span class="home-menu-chev" aria-hidden="true">›</span>
             </a>
-            <a href="roadmap.html" class="home-menu-item">
+            <a href="map.html" class="home-menu-item">
                 <span class="home-menu-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4 3.5 6v14L9 18l6 2 5.5-2V4L15 6z"/><path d="M9 4v14M15 6v14"/></svg></span>
+                <span class="home-menu-text"><span class="home-menu-label">맵 메이커</span><span class="home-menu-desc">SVG 지도로 지역구 지도 만들기</span></span>
+                <span class="home-menu-chev" aria-hidden="true">›</span>
+            </a>
+            <a href="roadmap.html" class="home-menu-item">
+                <span class="home-menu-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 21V4"/><path d="M5 4h11l-2 4 2 4H5"/></svg></span>
                 <span class="home-menu-text"><span class="home-menu-label">로드맵 · 업데이트</span><span class="home-menu-desc">앞으로의 계획과 바뀐 점</span></span>
                 <span class="home-menu-chev" aria-hidden="true">›</span>
             </a>
             <div class="home-menu-row">
                 <a href="settings.html" class="home-menu-item">
                     <span class="home-menu-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></span>
-                    <span class="home-menu-text"><span class="home-menu-label">설정</span><span class="home-menu-desc">언어 · 화면 · 테마</span></span>
+                    <span class="home-menu-text"><span class="home-menu-label">설정</span><span class="home-menu-desc">화면 · 테마</span></span>
                     <span class="home-menu-chev" aria-hidden="true">›</span>
                 </a>
                 <!-- 언어 바로 바꾸기 (설정 > 언어와 같은 기능) -->
@@ -59,6 +65,7 @@
                     <span class="home-lang-code" id="homeLangCode"></span>
                 </button>
                 <div class="home-lang-menu" id="homeLangMenu" style="display:none;" role="menu"></div>
+                <input type="file" id="langPackFileInput" accept=".json,application/json" style="position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;" onchange="importLangPack(this)">
             </div>
         </nav>
 
@@ -396,7 +403,7 @@
     </script>
 
     <script>
-        // ===== 메인 화면 언어 바로 바꾸기 (설정 > 언어와 같음 — 고르면 이 화면을 다시 불러와 적용) =====
+        // ===== 메인 화면 언어 바로 바꾸기 (고르면 이 화면을 다시 불러와 적용 · 언어 팩 불러오기/템플릿/삭제도 여기서) =====
         function renderHomeLangMenu() {
             const menu = document.getElementById('homeLangMenu');
             const codeEl = document.getElementById('homeLangCode');
@@ -407,8 +414,47 @@
             if(codeEl) codeEl.textContent = (cur === 'kr' ? 'KO' : cur.toUpperCase());
             menu.innerHTML = list.map(l => `
                 <button type="button" class="home-lang-item${l.code === cur ? ' active' : ''}" role="menuitemradio" aria-checked="${l.code === cur}" onclick="pickHomeLang('${l.code}')">
-                    <span>${l.name.replace(/[<>&]/g, '')}</span>${l.code === cur ? '<span class="home-lang-check">✓</span>' : ''}
-                </button>`).join('') + `<a class="home-lang-more" href="settings.html#lang">언어 팩 관리…</a>`;
+                    <span>${l.name.replace(/[<>&]/g, '')}</span>${l.code === cur ? '<span class="home-lang-check">✓</span>' : ''}${l.installed ? `<span class="home-lang-remove" role="button" title="언어 팩 삭제" onclick="removeHomeLangPack(event, '${l.code}')">✕</span>` : ''}
+                </button>`).join('') + `
+                <div class="home-lang-tools">
+                    <button type="button" class="home-lang-more" onclick="document.getElementById('langPackFileInput').click()">언어 팩 불러오기 (.json)</button>
+                    <button type="button" class="home-lang-more" onclick="downloadLangTemplate()">번역 템플릿 받기</button>
+                </div>`;
+        }
+        // 불러온 언어 팩 삭제 — 쓰던 언어였다면 한국어로 돌아가 다시 불러옴
+        async function removeHomeLangPack(e, code) {
+            e.stopPropagation();
+            const item = DnoLang.list().find(l => l.code === code);
+            if(!item || !(await DnoUI.confirm(`"${item.name}" 언어 팩을 삭제할까요?`, { tone: 'danger', okText: '삭제' }))) return;
+            const wasCurrent = getLang() === code;
+            DnoLang.remove(code);
+            if(wasCurrent) { location.reload(); return; }
+            renderHomeLangMenu();
+        }
+        async function importLangPack(input) {
+            const file = input.files && input.files[0];
+            input.value = '';
+            if(!file) return;
+            let raw;
+            try { raw = JSON.parse(await file.text()); }
+            catch(e) { alert('언어 팩을 읽을 수 없습니다. (올바른 JSON 파일이 아닙니다)'); return; }
+            const result = DnoLang.install(raw);
+            if(!result.ok) { alert('언어 팩을 불러오지 못했습니다: ' + result.error); return; }
+            renderHomeLangMenu();
+            if(await DnoUI.confirm(`"${result.name}" 언어 팩을 불러왔습니다. 지금 이 언어로 바꿀까요?`)) { setLang(result.code); location.reload(); }
+        }
+        async function downloadLangTemplate() {
+            try {
+                const text = await DnoLang.template();
+                const url = URL.createObjectURL(new Blob([text], { type: 'application/json' }));
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'dno-lang-template.json';
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                setTimeout(() => URL.revokeObjectURL(url), 2000);
+            } catch(e) { alert('번역 템플릿을 만들지 못했습니다.'); }
         }
         function toggleHomeLangMenu(e) {
             e.stopPropagation();
