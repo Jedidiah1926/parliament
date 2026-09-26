@@ -1774,7 +1774,7 @@
             const mEl = document.getElementById('nationDateMonth');
             const dEl = document.getElementById('nationDateDay');
             // 아직 날짜를 안 정했으면 넘길 기준이 없으므로 설정(국가 › 날짜)을 열어 연도 칸으로
-            if(!yEl.value && !mEl.value && !dEl.value) { openNationDateSettings(); setTimeout(() => yEl.focus(), 150); return; }
+            if(!yEl.value && !mEl.value && !dEl.value) { openDatePanel(); setTimeout(() => yEl.focus(), 50); return; }
             const y = parseInt(yEl.value) || 1;
             const m = parseInt(mEl.value) || 1;
             const d = parseInt(dEl.value) || 1;
@@ -1874,9 +1874,31 @@
             }
         }
         // 날짜 줄의 설정 버튼 — 국가 › 날짜 탭을 연다 (모바일은 조작 화면으로 넘어감)
-        function openNationDateSettings() {
-            if(document.documentElement.getAttribute('data-ui-mode') === 'mobile' && typeof setMobilePanel === 'function') setMobilePanel('controls');
-            switchSubTab('nation', 'date');
+        // 날짜 줄의 ⚙ — 날짜 · 회기 설정 창(구 국가 › 날짜)을 ⚙ 바로 아래에 띄운다 (다시 누르면 닫힘)
+        function openNationDateSettings() { isDatePanelOpen() ? closeDatePanel() : openDatePanel(); }
+        function openDatePanel() {
+            const ov = document.getElementById('datePanelLayer');
+            const panel = document.getElementById('datePanel');
+            if(!ov || !panel) return;
+            if(typeof closeSavePanel === 'function') closeSavePanel();
+            ov.style.display = '';
+            const btn = document.getElementById('dispDateSettingsBtn');
+            const r = btn && btn.offsetParent !== null ? btn.getBoundingClientRect() : null;
+            if(r && r.width) {
+                panel.style.top = Math.round(r.bottom + 6) + 'px';
+                panel.style.right = Math.max(12, Math.round(window.innerWidth - r.right)) + 'px';
+            } else { panel.style.top = ''; panel.style.right = ''; }
+            btn?.classList.add('active');
+            panel.querySelector('.save-panel-close')?.focus({ preventScroll: true });
+        }
+        function closeDatePanel() {
+            const ov = document.getElementById('datePanelLayer');
+            if(ov) ov.style.display = 'none';
+            document.getElementById('dispDateSettingsBtn')?.classList.remove('active');
+        }
+        function isDatePanelOpen() {
+            const ov = document.getElementById('datePanelLayer');
+            return !!ov && ov.style.display !== 'none';
         }
 
         // ── 무소속 개별 의원 데이터 ──────────────
@@ -4960,7 +4982,7 @@
             // 구버전 파일 호환: 저장 메인탭이 국가>설정 하단으로 통합되기 전 위치를 가리키던 경우 재매핑
             if(uiMain === 'save') { uiMain = 'nation'; currentSubTab.nation = 'symbol'; }
             // 국가 > 저장은 떠 있는 저장 창으로 옮겨짐 — 예전 파일이 저장 탭을 가리키면 상징으로
-            if(currentSubTab.nation === 'save') currentSubTab.nation = 'symbol';
+            if(currentSubTab.nation === 'save' || currentSubTab.nation === 'date') currentSubTab.nation = 'symbol'; // 저장 · 날짜는 떠 있는 창으로 옮겨짐
             // 구버전 파일 호환: 국가 > 선거 / ⚠ 가 선거 메인탭으로 옮겨지기 전 위치
             if(currentSubTab.nation === 'election' || currentSubTab.nation === 'fraud') {
                 currentSubTab.vote = currentSubTab.nation === 'fraud' ? 'fraud' : 'elecGeneral';
@@ -5534,6 +5556,7 @@
         function openSavePanel() {
             const ov = document.getElementById('savePanelLayer');
             if(!ov) return;
+            if(typeof closeDatePanel === 'function') closeDatePanel();
             hideSaveTabAllPopups();
             renderSaveTabUI();
             ov.style.display = '';
@@ -5823,6 +5846,7 @@
         function handleGlobalEscape() {
             const isVisible = el => el && getComputedStyle(el).display !== 'none';
             if(isSavePanelOpen()) { closeSavePanel(); return; }
+            if(isDatePanelOpen()) { closeDatePanel(); return; }
             const exportOverlay = document.getElementById('exportDialogOverlay');
             if(isVisible(exportOverlay)) { closeExportDialog(); return; }
             const seatCard = document.getElementById('seatInfoCard');
@@ -5995,6 +6019,8 @@
             if(main === 'nation' && sub === 'config') sub = configInnerTab;
             // 구 위치(국가 > 저장) 호환 — 탭 바 오른쪽 "저장" 창으로 옮겨짐
             if(main === 'nation' && sub === 'save') { openSavePanel(); return; }
+            // 구 위치(국가 > 날짜) 호환 — 날짜 줄의 ⚙로 여는 날짜 · 회기 설정 창으로 옮겨짐
+            if(main === 'nation' && sub === 'date') { openDatePanel(); return; }
             // 구 위치(국가 > 의회) 호환 — 의회 > 의회 설정으로 옮겨짐
             if(main === 'nation' && sub === 'assembly') { main = 'setup'; doMainSwitch = true; }
             // 구 위치(국가 > 입법 / 기록) 호환 — 입법 메인탭으로 옮겨짐
@@ -6044,12 +6070,13 @@
         function switchConfigInnerTab(inner) {
             if(inner === 'assembly') { switchSubTab('setup', 'assembly'); return; }
             if(inner === 'save') { openSavePanel(); return; }
-            if(!['symbol','date','nationSettings'].includes(inner)) inner = 'symbol';
+            if(inner === 'date') { openDatePanel(); return; }
+            if(!['symbol','nationSettings'].includes(inner)) inner = 'symbol';
             switchSubTab('nation', inner);
         }
         // 국가 하위탭이 열릴 때 그 화면을 그린다 (switchSubTab에서 호출)
         function onConfigSubTabShown(sub) {
-            if(!['symbol','date','nationSettings'].includes(sub)) return;
+            if(!['symbol','nationSettings'].includes(sub)) return;
             configInnerTab = sub;
             if(sub === 'symbol') renderNationConfig();
         }
