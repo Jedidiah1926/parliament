@@ -566,6 +566,11 @@
         }
         .save-fav-btn:hover { color: var(--tno-gold); border-color: var(--tno-gold); }
         .save-fav-btn.on { color: var(--tno-gold); border-color: var(--tno-gold); text-shadow: 0 0 6px var(--tno-gold); }
+        .save-del-btn {
+            flex: 0 0 44px; display: inline-flex; align-items: center; justify-content: center;
+            background: rgba(255, 255, 255, 0.02); border: 1px solid var(--tno-border); color: #555; cursor: pointer;
+        }
+        .save-del-btn:hover { color: #ff5555; border-color: #ff5555; }
 
         @media (max-width: 760px) {
             .save-select-columns { grid-template-columns: 1fr; overflow-y: auto; }

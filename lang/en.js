@@ -22,6 +22,8 @@ window.DnoLangPacks.en = {
  ],
  "ordinal": "en",
  "patterns": [
+  {"re": "\"(.+?)\"을\\(를\\) 정말 삭제하시겠습니까\\?\\n연결된 \"(.+?)\"도 함께 삭제됩니다\\.\\n\\n삭제하면 되돌릴 수 없습니다\\. \\(Shift\\+클릭하면 이 확인 없이 바로 삭제\\)", "to": "Really delete \"$1\"?\nIts linked \"$2\" will be deleted too.\n\nThis can't be undone. (Shift+click to delete without this prompt)"},
+  {"re": "\"(.+?)\"을\\(를\\) 정말 삭제하시겠습니까\\?\\n\\n삭제하면 되돌릴 수 없습니다\\. \\(Shift\\+클릭하면 이 확인 없이 바로 삭제\\)", "to": "Really delete \"$1\"?\n\nThis can't be undone. (Shift+click to delete without this prompt)"},
   {
    "re": "^\\s*테마\\s*$",
    "to": "Theme"
@@ -5215,6 +5217,26 @@ window.DnoLangPacks.en = {
   [
    "- 날짜 · 회기 줄을 두 줄 컨트롤 바로 — 날짜 옆 ▶(+1일) · ▶▶(+7일) · ▶▶▶(+1개월) 진행 버튼과 설정(⚙) 버튼, 회기 옆 다음 회기 · …(정기회/임시회, 설정) 메뉴 (진행 버튼은 수동 진행형 날짜 · 개별형 회기일 때 표시)",
    "- Date/session line becomes a two-row control bar — ▶ (+1 day) · ▶▶ (+7 days) · ▶▶▶ (+1 month) and a settings (⚙) button next to the date, Next session and a … menu (regular/extraordinary, settings) next to the session (advance buttons show with manual-progress dates and individual sessions)"
+  ],
+  [
+   "삭제 (Shift+클릭: 확인 없이 바로 삭제)",
+   "Delete (Shift+click: delete without confirming)"
+  ],
+  [
+   "세이브 삭제",
+   "Delete save"
+  ],
+  [
+   "삭제하지 못했습니다. (저장 공간 오류)",
+   "Couldn't delete. (storage error)"
+  ],
+  [
+   "- 시작 화면 이어하기 목록의 세이브마다 휴지통 버튼 — 클릭하면 되돌릴 수 없다는 확인창, Shift+클릭하면 바로 삭제 (이름 붙은 세이브는 전용 자동저장도 함께)",
+   "- Trash button on every save in the start screen's Continue list — click asks to confirm (can't be undone), Shift+click deletes right away (a named save takes its own autosave with it)"
+  ],
+  [
+   "- 네온 글꼴(네오둥근모)을 fonts 폴더에 함께 배포 — 인터넷 없이(데스크톱 앱)도 글꼴이 보임",
+   "- The neon font (NeoDunggeunmo) now ships in the fonts folder, so it shows even offline (desktop app)"
   ]
  ]
 };

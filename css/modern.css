@@ -2863,6 +2863,8 @@ html[data-theme-family="modern"] .save-fav-btn {
 }
 html[data-theme-family="modern"] .save-fav-btn:hover { color: var(--m-gold) !important; background: var(--m-surface-3) !important; }
 html[data-theme-family="modern"] .save-fav-btn.on { color: var(--m-gold) !important; background: color-mix(in srgb, var(--m-gold) 14%, var(--m-surface-2)) !important; }
+html[data-theme-family="modern"] .save-del-btn { background: var(--m-surface-2) !important; border: none !important; border-radius: 10px; color: var(--m-text-4) !important; }
+html[data-theme-family="modern"] .save-del-btn:hover { color: var(--m-danger) !important; background: color-mix(in srgb, var(--m-danger) 12%, var(--m-surface-2)) !important; }
 html[data-theme-family="modern"] .save-select-close { border-radius: 8px; border-color: var(--m-border) !important; color: var(--m-text-2) !important; background: transparent !important; }
 html[data-theme-family="modern"] #saveSelectOverlay > .save-select-modal { padding: 0 !important; overflow: hidden; }
 html[data-theme-family="modern"] .save-rename-input { padding: 3px 8px !important; font-size: 13px; border-radius: 7px !important; }

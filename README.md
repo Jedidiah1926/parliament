@@ -30,7 +30,7 @@ Hemicycle(구 DATANET Parliament Simulation)은 설치나 빌드 없이 **브라
 | `teaser.html` | 티저 페이지 (구 `dno.pre.html`) |
 | `lang.js` | 언어 설정 저장 및 한국어→영어 실시간 치환 엔진 (`dno.html`/`roadmap.html`에서 사용) |
 
-`index.html` 또는 `dno.html`을 브라우저에서 직접 열면 됩니다. Chrome, Firefox, Edge 최신 버전에서 동작하며, 최초 실행 시 픽셀 폰트를 외부 CDN(Google Fonts / jsDelivr)에서 불러오므로 인터넷 연결이 필요합니다.
+`index.html` 또는 `dno.html`을 브라우저에서 직접 열면 됩니다. Chrome, Firefox, Edge 최신 버전에서 동작하며, 한글 글꼴(네오둥근모 · Pretendard)은 `fonts/` 폴더에 함께 들어 있어 인터넷 없이도 보이고, 영문 보조 글꼴 VT323만 Google Fonts에서 불러옵니다.
 
 ---
 
@@ -221,7 +221,8 @@ npm run build:win     # Windows 설치형 exe 빌드 → dist/Hemicycle-Setup-<�
 1970~80년대 군사·정부용 데이터 터미널의 시각 언어에서 영감을 받았습니다. 스캔라인 오버레이, CRT 글로우 효과, 고정폭 픽셀 폰트, 네온 시안 포인트 컬러가 특징입니다.
 
 사용 폰트:
-- **네오둥근모 (NeoDunggeunmo)** — 한글 픽셀 폰트 (jsDelivr CDN), 한국어 버전
+- **네오둥근모 (NeoDunggeunmo)** — 한글 픽셀 폰트 (SIL OFL 1.1, `fonts/neodgm/`에 함께 배포)
+- **Pretendard** — 라이트/다크 테마 글꼴 (SIL OFL 1.1, `fonts/pretendard/`에 함께 배포)
 - **VT323** — 영문 모노스페이스 폰트 (Google Fonts)
 
 ---

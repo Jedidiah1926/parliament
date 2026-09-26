@@ -1,0 +1,10 @@
+/* 네오둥근모 (NeoDunggeunmo, SIL OFL 1.1 — LICENSE.txt) — github.com/neodgm/neodgm-webfont 'latest' 태그의 파일을 그대로 함께 배포.
+   인터넷 없이도(데스크톱 앱) 네온 테마 글꼴이 보이도록 CDN 대신 이 파일을 쓴다 */
+@font-face {
+  font-family: 'NeoDunggeunmo';
+  font-weight: normal;
+  font-style: normal;
+  font-display: block;
+  src: local('NeoDunggeunmo'), url('neodgm.woff2') format('woff2'),
+       url('neodgm.woff') format('woff');
+}
