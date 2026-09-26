@@ -5314,6 +5314,18 @@ window.DnoLangPacks.en = {
   [
    "- 날짜 · 회기 설정을 날짜 줄 ⚙로 여는 떠 있는 창으로 (구 국가 › 날짜) · 자동 진행: 날짜가 정기회 시작일(기본 9월 1일)을 지나면 정기회로 다음 회기, 하원 총선 확정 시 대수 +1 (둘 다 켜고 끌 수 있음)",
    "- Date & session settings open as a floating panel from the date line's ⚙ (formerly Nation › Date) · Automatic progression: passing the regular-session start date (default Sep 1) opens a regular session, and a confirmed lower-house general election bumps the term (both toggleable)"
+  ],
+  [
+   "① ⬆ SVG 열기(바로 분석) → ② 오른쪽 목록에서 이름 고치기 · 고르기 → ③ 내보내기",
+   "① ⬆ Open SVG (analyzed right away) → ② Rename · pick in the list on the right → ③ Export"
+  ],
+  [
+   "- 맵 메이커: SVG를 열면 바로 분석 (분석 버튼 없앰)",
+   "- Map Maker: opening an SVG analyzes it right away (no separate Analyze button)"
+  ],
+  [
+   "- 라이트/다크에서는 지역구 지도 테두리 색 · 글씨 테두리 색 설정을 숨기고 고정색 사용 (다크 글씨 테두리 #404245, 라이트 #52525B) — 네온에서만 변경 가능",
+   "- In light/dark the district map border and label-outline color settings are hidden and fixed colors are used (dark label outline #404245, light #52525B) — changeable in neon only"
   ]
  ]
 };

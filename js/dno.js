@@ -9509,7 +9509,7 @@
                             textEl.setAttribute('font-size', fontSize);
                             textEl.setAttribute('fill', '#fff');
                             textEl.setAttribute('paint-order', 'stroke');
-                            textEl.setAttribute('stroke', map.abbrStrokeColor || districtSvgEffectiveStroke(map));
+                            textEl.setAttribute('stroke', districtSvgEffectiveAbbrStroke(map));
                             textEl.setAttribute('stroke-width', fontSize * 0.12);
                             textEl.setAttribute('pointer-events', 'none');
                             textEl.textContent = abbr;
@@ -9776,8 +9776,6 @@
                 if(strokeHexInput) { strokeHexInput.value = color.toUpperCase(); strokeHexInput.disabled = locked; }
                 const syncBtn = document.getElementById('districtSvgStrokeSyncBtn');
                 if(syncBtn) syncBtn.style.display = locked ? 'none' : '';
-                const lockNote = document.getElementById('districtSvgStrokeLockNote');
-                if(lockNote) lockNote.style.display = locked ? '' : 'none';
                 const abbrColor = districtSvgMap.abbrStrokeColor || color;
                 if(abbrStrokeInput) abbrStrokeInput.value = abbrColor;
                 if(abbrStrokeHexInput) abbrStrokeHexInput.value = abbrColor.toUpperCase();
@@ -9866,6 +9864,15 @@
         const DISTRICT_STROKE_LIGHT = '#A3A3A3';
         const DISTRICT_STROKE_DARK = '#5C6370';
         function districtStrokeLocked() { return document.documentElement.getAttribute('data-theme-family') === 'modern'; }
+        // 지역구 약칭 글씨(흰 글씨)의 테두리 색 — 라이트/다크는 고정색, 네온만 사용자가 고른 색(없으면 지도 테두리 색)
+        const DISTRICT_ABBR_STROKE_LIGHT = '#52525B';
+        const DISTRICT_ABBR_STROKE_DARK = '#404245';
+        function districtSvgEffectiveAbbrStroke(map) {
+            const mode = document.documentElement.getAttribute('data-theme-mode');
+            if(mode === 'light') return DISTRICT_ABBR_STROKE_LIGHT;
+            if(mode === 'dark') return DISTRICT_ABBR_STROKE_DARK;
+            return (map && map.abbrStrokeColor) || districtSvgEffectiveStroke(map);
+        }
         function districtSvgEffectiveStroke(map) {
             const mode = document.documentElement.getAttribute('data-theme-mode');
             if(mode === 'light') return DISTRICT_STROKE_LIGHT;
@@ -9898,6 +9905,7 @@
         }
 
         function districtSvgSetAbbrStrokeColor(color) {
+            if(districtStrokeLocked()) { districtUpdateModeUI(); return; } // 라이트/다크는 고정색
             if(!districtSvgMap) return;
             districtSvgMap.abbrStrokeColor = color;
             districtUpdateModeUI();

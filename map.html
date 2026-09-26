@@ -142,7 +142,6 @@
       <div class="mm-actions">
         <input id="fileInput" type="file" accept=".svg,image/svg+xml" />
         <label for="fileInput" class="btn secondary file-label">⬆ SVG 열기</label>
-        <button id="btnParse" class="btn secondary" title="SVG에서 지역구 도형 찾기">▶ 분석</button>
         <button id="btnExportAll" class="btn">내보내기</button>
       </div>
     </header>
@@ -160,7 +159,7 @@
           <div id="svgContainer">
             <div class="mm-empty">
               <div class="mm-empty-title">업로드한 SVG가 여기 표시됩니다</div>
-              <div class="small">① ⬆ SVG 열기 → ② ▶ 분석 → ③ 오른쪽 목록에서 이름 고치기 · 고르기 → ④ 내보내기</div>
+              <div class="small">① ⬆ SVG 열기(바로 분석) → ② 오른쪽 목록에서 이름 고치기 · 고르기 → ③ 내보내기</div>
             </div>
           </div>
         </div>
@@ -193,7 +192,6 @@ let svgDoc = null;
 let shapes = []; // {el, tag, id, defaultId, selected}
 
 const fileInput = document.getElementById('fileInput');
-const btnParse = document.getElementById('btnParse');
 const svgContainer = document.getElementById('svgContainer');
 const elementsList = document.getElementById('elementsList');
 const countEl = document.getElementById('count');
@@ -205,8 +203,10 @@ const btnDownloadSVG = document.getElementById('btnDownloadSVG');
 const btnClear = document.getElementById('btnClear');
 const fileNameDisplay = document.getElementById('fileNameDisplay');
 
+// 파일을 열면 바로 분석 (따로 누르는 분석 버튼 없음)
 fileInput.addEventListener('change', () => {
   fileNameDisplay.textContent = fileInput.files?.[0]?.name || '파일 없음';
+  if (fileInput.files && fileInput.files.length) parseUploaded();
 });
 
 function readFileAsText(file) {
@@ -431,7 +431,8 @@ function downloadComponents(list, singleFile = true) {
   download(filename, jsx);
 }
 
-btnParse.addEventListener('click', parseUploaded);
+// "id/label 우선 사용"을 바꾸면 열린 파일을 다시 분석해 이름 규칙을 바로 반영
+document.getElementById('toggleIds')?.addEventListener('change', () => { if (fileInput.files && fileInput.files.length) parseUploaded(); });
 btnExportAll.addEventListener('click', ()=> downloadComponents(shapes, true));
 btnExportSelected.addEventListener('click', ()=> downloadComponents(getSelectedShapes(), true));
 btnSelectAll.addEventListener('click', ()=> {
