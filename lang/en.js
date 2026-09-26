@@ -22,6 +22,11 @@ window.DnoLangPacks.en = {
  ],
  "ordinal": "en",
  "patterns": [
+  {"re": "^연$", "to": "Year"},
+  {"re": "^월$", "to": "Month"},
+  {"re": "^일$", "to": "Day"},
+  {"re": "\"(.+?)\"을\\(를\\) 정말 삭제하시겠습니까\\?\\n연결된 \"(.+?)\"도 함께 삭제됩니다\\.\\n\\n삭제하면 되돌릴 수 없습니다\\. \\(Shift\\+클릭하면 이 확인 없이 바로 삭제\\)", "to": "Really delete \"$1\"?\nIts linked \"$2\" will be deleted too.\n\nThis can't be undone. (Shift+click to delete without this prompt)"},
+  {"re": "\"(.+?)\"을\\(를\\) 정말 삭제하시겠습니까\\?\\n\\n삭제하면 되돌릴 수 없습니다\\. \\(Shift\\+클릭하면 이 확인 없이 바로 삭제\\)", "to": "Really delete \"$1\"?\n\nThis can't be undone. (Shift+click to delete without this prompt)"},
   {
    "re": "^\\s*테마\\s*$",
    "to": "Theme"
@@ -5167,6 +5172,110 @@ window.DnoLangPacks.en = {
   [
    "- 오른쪽 화면의 날짜 · 회기 표시를 탭 줄 위 별도 줄로 — 회기 이름이 길어져도 국회 · 상원 등 탭이 눌려 세로로 찌그러지지 않음",
    "- The date/session line on the right screen now sits on its own row above the tabs, so long session names no longer squeeze the tabs"
+  ],
+  [
+   "하루 진행 (+1일)",
+   "Advance 1 day (+1 day)"
+  ],
+  [
+   "일주일 진행 (+7일)",
+   "Advance 1 week (+7 days)"
+  ],
+  [
+   "한 달 진행 (+1개월)",
+   "Advance 1 month (+1 month)"
+  ],
+  [
+   "하루 진행",
+   "Advance 1 day"
+  ],
+  [
+   "일주일 진행",
+   "Advance 1 week"
+  ],
+  [
+   "한 달 진행",
+   "Advance 1 month"
+  ],
+  [
+   "날짜 · 회기 설정…",
+   "Date & session settings…"
+  ],
+  [
+   "날짜 · 회기 설정",
+   "Date & session settings"
+  ],
+  [
+   "다음 회기",
+   "Next session"
+  ],
+  [
+   "회기 번호 +1",
+   "Session number +1"
+  ],
+  [
+   "더 보기",
+   "More"
+  ],
+  [
+   "- 날짜 · 회기 줄을 두 줄 컨트롤 바로 — 날짜 옆 ▶(+1일) · ▶▶(+7일) · ▶▶▶(+1개월) 진행 버튼과 설정(⚙) 버튼, 회기 옆 \"다음: 정기회/임시회\" 토글(다음 회기부터 적용) · 다음 회기 (진행 버튼은 연 · 월 · 일 날짜 · 개별형 회기일 때 표시)",
+   "- Date/session line becomes a two-row control bar — ▶ (+1 day) · ▶▶ (+7 days) · ▶▶▶ (+1 month) and a settings (⚙) button next to the date, a \"Next: regular/extraordinary\" toggle (applies from the next session), and Next session next to the session (advance buttons show with year/month/day dates and individual sessions)"
+  ],
+  [
+   "삭제 (Shift+클릭: 확인 없이 바로 삭제)",
+   "Delete (Shift+click: delete without confirming)"
+  ],
+  [
+   "세이브 삭제",
+   "Delete save"
+  ],
+  [
+   "삭제하지 못했습니다. (저장 공간 오류)",
+   "Couldn't delete. (storage error)"
+  ],
+  [
+   "- 시작 화면 이어하기 목록의 세이브마다 휴지통 버튼 — 클릭하면 되돌릴 수 없다는 확인창, Shift+클릭하면 바로 삭제 (이름 붙은 세이브는 전용 자동저장도 함께)",
+   "- Trash button on every save in the start screen's Continue list — click asks to confirm (can't be undone), Shift+click deletes right away (a named save takes its own autosave with it)"
+  ],
+  [
+   "- 네온 글꼴(네오둥근모)을 fonts 폴더에 함께 배포 — 인터넷 없이(데스크톱 앱)도 글꼴이 보임",
+   "- The neon font (NeoDunggeunmo) now ships in the fonts folder, so it shows even offline (desktop app)"
+  ],
+  [
+   "다음: 정기회",
+   "Next: Regular"
+  ],
+  [
+   "다음: 임시회",
+   "Next: Extraordinary"
+  ],
+  [
+   "다음 회기를 정기회로 열지 임시회로 열지 — 누르면 전환 (지금 회기는 그대로, 다음 회기부터 적용 · 지금 회기 종류는 설정에서)",
+   "Whether the next session opens as regular or extraordinary — click to switch (the current session stays as is; change the current session's type in settings)"
+  ],
+  [
+   "회기 번호 +1 (골라 둔 종류로)",
+   "Session number +1 (with the chosen type)"
+  ],
+  [
+   "지금 회기 종류 (다음 회기 종류는 오른쪽 위 날짜 줄의 \"다음:\" 버튼으로)",
+   "Current session type (pick the next session's type with the \"Next:\" button on the date line, top right)"
+  ],
+  [
+   "연 · 월 · 일",
+   "Year · Month · Day"
+  ],
+  [
+   "직접 입력",
+   "Type it in"
+  ],
+  [
+   "오른쪽 위 날짜 줄의 ▶ · ▶▶ · ▶▶▶ 로 하루 · 일주일 · 한 달씩 넘길 수 있습니다",
+   "Use ▶ · ▶▶ · ▶▶▶ on the date line (top right) to advance a day, a week or a month"
+  ],
+  [
+   "- 국가 › 날짜: 연 · 월 · 일 입력칸이 기본(직접 입력은 선택), 진행 버튼은 날짜 줄로 옮김 · 날짜를 정하기 전에 ▶를 누르면 연도 칸으로 안내",
+   "- Nation › Date: year · month · day fields are now the default (free text is optional), advance buttons moved to the date line; pressing ▶ before a date is set takes you to the year field"
   ]
  ]
 };

@@ -10,7 +10,7 @@
     <script src="js/theme.js"></script>
 
     <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/neodgm/neodgm-webfont@latest/neodgm/style.css">
+    <link rel="stylesheet" href="fonts/neodgm/style.css">
 
     <link rel="stylesheet" href="css/main.css">
     <link rel="stylesheet" href="css/modern.css">
@@ -291,8 +291,33 @@
                         <span class="save-select-item-name">${s.isAutosave ? '🔄 ' : ''}${escapeSaveName(s.name)}</span>
                         <span class="save-select-item-time">${s.savedAt ? new Date(s.savedAt).toLocaleString('ko-KR') : '-'}</span>
                     </button>
+                    <button class="save-del-btn" onclick="deleteSaveFromMenu(event, '${s.id}')" title="삭제 (Shift+클릭: 확인 없이 바로 삭제)" aria-label="삭제">${TRASH_ICON}</button>
                 </div>`;
             }).join('');
+        }
+
+        // ===== 세이브 삭제 (휴지통) — 그냥 클릭은 확인창, Shift+클릭은 바로 삭제 =====
+        // 이름 붙은 세이브를 지우면 그 세이브 전용 자동저장도 함께 지워진다. 자동저장만 지우면 그 자동저장만 사라진다.
+        const TRASH_ICON = '<svg viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 5.5h13M8 5.5V4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v1.5M5.5 5.5l.7 10.6a1 1 0 0 0 1 .9h5.6a1 1 0 0 0 1-.9l.7-10.6M8.5 8.5v5.5M11.5 8.5v5.5"/></svg>';
+        async function deleteSaveFromMenu(e, id) {
+            e.stopPropagation();
+            const all = loadSaveSlotsForMenu();
+            const slot = all.find(s => s.id === id);
+            if(!slot) return;
+            const isNamed = !slot.isAutosave;
+            if(!e.shiftKey) {
+                const extra = isNamed && all.some(s => s.parentId === id) ? `\n연결된 "${slot.name} 자동저장"도 함께 삭제됩니다.` : '';
+                const ok = await DnoUI.confirm(`"${slot.name}"을(를) 정말 삭제하시겠습니까?${extra}\n\n삭제하면 되돌릴 수 없습니다. (Shift+클릭하면 이 확인 없이 바로 삭제)`, { title: '세이브 삭제', tone: 'danger', okText: '삭제', focusCancel: true });
+                if(!ok) return;
+            }
+            const rest = loadSaveSlotsForMenu().filter(s => s.id !== id && !(isNamed && s.parentId === id));
+            try { localStorage.setItem(SAVE_SLOTS_KEY, JSON.stringify(rest)); }
+            catch(err) { DnoUI.alert('삭제하지 못했습니다. (저장 공간 오류)'); return; }
+            const fav = loadFavorites();
+            if(fav.delete(id)) { try { localStorage.setItem(SAVE_FAVORITES_KEY, JSON.stringify(Array.from(fav))); } catch(err) {} }
+            // 이어서 하던 세이브였다면 "지금 세이브" 표시도 정리 (다음에 열면 기본 세션으로)
+            if(isNamed) { try { if(localStorage.getItem('dnoParliamentActiveSlotId') === id) localStorage.removeItem('dnoParliamentActiveSlotId'); } catch(err) {} }
+            renderSaveSelectList();
         }
 
         async function renderPresetSelectList() {

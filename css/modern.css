@@ -2289,6 +2289,15 @@ html[data-theme-family="modern"] .system-radio-btn:has(input:checked) {
 html[data-theme-family="modern"] :not(.sub-tab-container-3) > .sub-tab-btn-3 { background: var(--m-surface-2) !important; }
 html[data-theme-family="modern"] :not(.sub-tab-container-3) > .sub-tab-btn-3.active { background: var(--m-accent) !important; color: var(--m-on-accent) !important; }
 
+/* 날짜 · 회기 줄 (탭 위) */
+html[data-theme-family="modern"] .disp-info-bar #dispInfoDate { font-size: 17px; font-weight: 600; }
+html[data-theme-family="modern"] .disp-info-bar #dispInfoSession { font-size: 13px; color: var(--m-text-3) !important; }
+html[data-theme-family="modern"] .dib-btn { color: var(--m-text-3); border: none; border-radius: 7px; font-family: var(--m-font); font-weight: 600; }
+html[data-theme-family="modern"] .dib-btn:hover { color: var(--m-text); background: var(--m-surface-3); }
+html[data-theme-family="modern"] .dib-play { color: var(--m-text-2); }
+html[data-theme-family="modern"] .dib-next-type { background: var(--m-surface-2); color: var(--m-text-2); }
+html[data-theme-family="modern"] .dib-next-type.is-extra { background: color-mix(in srgb, var(--m-gold) 14%, var(--m-surface-2)); color: var(--m-gold); }
+
 /* 오른쪽 화면 탭 (국회/상원/내각 등) */
 html[data-theme-family="modern"] .disp-tab-bar,
 html[data-theme-family="modern"] .display-tab-container { gap: 4px; margin-bottom: 10px !important; }
@@ -2851,6 +2860,8 @@ html[data-theme-family="modern"] .save-fav-btn {
 }
 html[data-theme-family="modern"] .save-fav-btn:hover { color: var(--m-gold) !important; background: var(--m-surface-3) !important; }
 html[data-theme-family="modern"] .save-fav-btn.on { color: var(--m-gold) !important; background: color-mix(in srgb, var(--m-gold) 14%, var(--m-surface-2)) !important; }
+html[data-theme-family="modern"] .save-del-btn { background: var(--m-surface-2) !important; border: none !important; border-radius: 10px; color: var(--m-text-4) !important; }
+html[data-theme-family="modern"] .save-del-btn:hover { color: var(--m-danger) !important; background: color-mix(in srgb, var(--m-danger) 12%, var(--m-surface-2)) !important; }
 html[data-theme-family="modern"] .save-select-close { border-radius: 8px; border-color: var(--m-border) !important; color: var(--m-text-2) !important; background: transparent !important; }
 html[data-theme-family="modern"] #saveSelectOverlay > .save-select-modal { padding: 0 !important; overflow: hidden; }
 html[data-theme-family="modern"] .save-rename-input { padding: 3px 8px !important; font-size: 13px; border-radius: 7px !important; }

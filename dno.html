@@ -11,7 +11,7 @@
     <script src="js/theme.js"></script>
 
     <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/neodgm/neodgm-webfont@latest/neodgm/style.css">
+    <link rel="stylesheet" href="fonts/neodgm/style.css">
 
     <link rel="stylesheet" href="css/dno.css">
     <link rel="stylesheet" href="css/sidenav.css">
@@ -698,23 +698,29 @@
                     <div>
                         <label style="color:#888;font-size:0.8rem;margin-bottom:6px;display:block;">현재 날짜</label>
                         <div class="system-radio-group" style="margin-bottom:8px;">
-                            <button type="button" class="system-radio-btn active" id="nationDateModeSimpleBtn" onclick="setNationDateMode('simple')">단순형</button>
-                            <button type="button" class="system-radio-btn" id="nationDateModeProgBtn" onclick="setNationDateMode('progressive')">수동 진행형</button>
+                            <button type="button" class="system-radio-btn active" id="nationDateModeProgBtn" onclick="setNationDateMode('progressive')">연 · 월 · 일</button>
+                            <button type="button" class="system-radio-btn" id="nationDateModeSimpleBtn" onclick="setNationDateMode('simple')">직접 입력</button>
                         </div>
-                        <div id="nationDateSimpleWrap">
+                        <div id="nationDateSimpleWrap" style="display:none;">
                             <input type="text" id="nationDateInput" placeholder="예: 1952년 3월 15일" oninput="updateDispInfoBar()" style="width:100%;box-sizing:border-box;">
                         </div>
-                        <div id="nationDateProgWrap" style="display:none;">
-                            <div style="display:flex;gap:6px;margin-bottom:8px;">
-                                <input type="number" id="nationDateYear" placeholder="연" oninput="updateDispInfoBar()" style="flex:1;min-width:0;text-align:center;">
-                                <input type="number" id="nationDateMonth" placeholder="월" min="1" max="12" oninput="updateDispInfoBar()" style="flex:1;min-width:0;text-align:center;">
-                                <input type="number" id="nationDateDay" placeholder="일" min="1" max="31" oninput="updateDispInfoBar()" style="flex:1;min-width:0;text-align:center;">
-                            </div>
+                        <!-- 연 · 월 · 일: 오른쪽 위 날짜 줄의 ▶ · ▶▶ · ▶▶▶ 로 하루 · 일주일 · 한 달씩 진행 -->
+                        <div id="nationDateProgWrap">
                             <div style="display:flex;gap:6px;">
-                                <button class="add-btn" onclick="advanceNationDate(1,'day')" style="flex:1;min-width:0;margin-top:0;">+1일</button>
-                                <button class="add-btn" onclick="advanceNationDate(7,'day')" style="flex:1;min-width:0;margin-top:0;">+7일</button>
-                                <button class="add-btn" onclick="advanceNationDate(1,'month')" style="flex:1;min-width:0;margin-top:0;">+1개월</button>
+                                <div style="flex:1;min-width:0;">
+                                    <label style="color:#555;font-size:0.72rem;margin-bottom:2px;display:block;">연</label>
+                                    <input type="number" id="nationDateYear" placeholder="2025" oninput="updateDispInfoBar()" style="width:100%;box-sizing:border-box;text-align:center;">
+                                </div>
+                                <div style="flex:1;min-width:0;">
+                                    <label style="color:#555;font-size:0.72rem;margin-bottom:2px;display:block;">월</label>
+                                    <input type="number" id="nationDateMonth" placeholder="1" min="1" max="12" oninput="updateDispInfoBar()" style="width:100%;box-sizing:border-box;text-align:center;">
+                                </div>
+                                <div style="flex:1;min-width:0;">
+                                    <label style="color:#555;font-size:0.72rem;margin-bottom:2px;display:block;">일</label>
+                                    <input type="number" id="nationDateDay" placeholder="1" min="1" max="31" oninput="updateDispInfoBar()" style="width:100%;box-sizing:border-box;text-align:center;">
+                                </div>
                             </div>
+                            <div style="color:#555;font-size:0.72rem;margin-top:6px;">오른쪽 위 날짜 줄의 ▶ · ▶▶ · ▶▶▶ 로 하루 · 일주일 · 한 달씩 넘길 수 있습니다</div>
                         </div>
                     </div>
 
@@ -742,6 +748,7 @@
                                     <input type="number" id="nationSessionNumber" placeholder="1" oninput="updateDispInfoBar()" style="width:100%;text-align:center;box-sizing:border-box;">
                                 </div>
                             </div>
+                            <label style="color:#555;font-size:0.72rem;margin-bottom:2px;display:block;">지금 회기 종류 (다음 회기 종류는 오른쪽 위 날짜 줄의 "다음:" 버튼으로)</label>
                             <div class="system-radio-group" style="margin-bottom:8px;">
                                 <button type="button" class="system-radio-btn active" id="nationSessionTypeRegularBtn" onclick="setNationSessionType('regular')">정기회</button>
                                 <button type="button" class="system-radio-btn" id="nationSessionTypeExtraBtn" onclick="setNationSessionType('extraordinary')">임시회</button>
@@ -1554,9 +1561,23 @@
             <button class="disp-tab-btn"         id="dispTabElecResultHouse" data-tab="elecResultHouse" onclick="switchDispTab('elecResultHouse')" style="display:none;"><span class="disp-tab-label">하원 선거결과</span><span class="disp-tab-close" onclick="event.stopPropagation();closeDispTab('elecResultHouse')">×</span></button>
             <button class="disp-tab-btn"         id="dispTabElecResultSenate" data-tab="elecResultSenate" onclick="switchDispTab('elecResultSenate')" style="display:none;"><span class="disp-tab-label">상원 선거결과</span><span class="disp-tab-close" onclick="event.stopPropagation();closeDispTab('elecResultSenate')">×</span></button>
             <button class="disp-tab-btn"         id="dispTabElecResultThird" data-tab="elecResultThird" onclick="switchDispTab('elecResultThird')" style="display:none;"><span class="disp-tab-label">삼원 선거결과</span><span class="disp-tab-close" onclick="event.stopPropagation();closeDispTab('elecResultThird')">×</span></button>
+            <!-- 날짜 · 회기 줄: 1줄 = 날짜 + 진행(▶ +1일 · ▶▶ +7일 · ▶▶▶ +1개월) + 설정, 2줄 = 회기 + 다음 회기 종류 토글 + 다음 회기
+                 진행 버튼은 연 · 월 · 일 날짜, 다음 회기 버튼들은 개별형 회기일 때만 보임 -->
             <div class="disp-info-bar" id="dispInfoBar">
-                <span id="dispInfoDate">날짜 미설정</span>
-                <span id="dispInfoSession">회기 미설정</span>
+                <span id="dispInfoDate" class="dib-text">날짜 미설정</span>
+                <span class="dib-controls" id="dispDateControls">
+                    <button type="button" class="dib-btn dib-play" onclick="advanceNationDate(1,'day')" title="하루 진행 (+1일)" aria-label="하루 진행">▶</button>
+                    <button type="button" class="dib-btn dib-play" onclick="advanceNationDate(7,'day')" title="일주일 진행 (+7일)" aria-label="일주일 진행">▶▶</button>
+                    <button type="button" class="dib-btn dib-play" onclick="advanceNationDate(1,'month')" title="한 달 진행 (+1개월)" aria-label="한 달 진행">▶▶▶</button>
+                </span>
+                <button type="button" class="dib-btn dib-settings" onclick="openNationDateSettings()" title="날짜 · 회기 설정" aria-label="날짜 · 회기 설정">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+                </button>
+                <span id="dispInfoSession" class="dib-text dib-sub">회기 미설정</span>
+                <span class="dib-controls" id="dispSessionControls">
+                    <button type="button" class="dib-btn dib-word dib-next-type" id="dispNextSessionTypeBtn" onclick="toggleNationNextSessionType()" title="다음 회기를 정기회로 열지 임시회로 열지 — 누르면 전환 (지금 회기는 그대로, 다음 회기부터 적용 · 지금 회기 종류는 설정에서)">다음: 정기회</button>
+                    <button type="button" class="dib-btn dib-word" onclick="advanceNationSession()" title="회기 번호 +1 (골라 둔 종류로)">다음 회기</button>
+                </span>
             </div>
         </div>
 

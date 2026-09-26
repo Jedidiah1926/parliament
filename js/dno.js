@@ -44,9 +44,10 @@
         }
 
         // ── 날짜/회기 (v1.4.8) ──────────────
-        let nationDateMode = 'simple';       // 'simple' | 'progressive'
+        let nationDateMode = 'progressive';  // 'progressive'(연 · 월 · 일, 기본) | 'simple'(글자로 직접 입력)
         let nationSessionMode = 'simple';    // 'simple' | 'individual'
         let nationSessionType = 'regular';   // 'regular'(정기회) | 'extraordinary'(임시회) — 개별형에서만 사용
+        let nationNextSessionType = 'regular'; // 다음 회기의 종류 — 날짜 줄의 토글로 고르고, "다음 회기"를 누를 때 적용 (지금 회기 종류는 국가 › 날짜에서만 바꿈)
 
         // ── 내각 > 설정: 정부 형태 (v1.5.P) ──────────────
         let govType = 'parliamentary'; // 'presidential'(대통령제) | 'semi'(이원집정부제) | 'parliamentary'(의원내각제) | 'collective'(집단지도체제)
@@ -1772,6 +1773,8 @@
             const yEl = document.getElementById('nationDateYear');
             const mEl = document.getElementById('nationDateMonth');
             const dEl = document.getElementById('nationDateDay');
+            // 아직 날짜를 안 정했으면 넘길 기준이 없으므로 설정(국가 › 날짜)을 열어 연도 칸으로
+            if(!yEl.value && !mEl.value && !dEl.value) { openNationDateSettings(); setTimeout(() => yEl.focus(), 150); return; }
             const y = parseInt(yEl.value) || 1;
             const m = parseInt(mEl.value) || 1;
             const d = parseInt(dEl.value) || 1;
@@ -1789,7 +1792,15 @@
             const numEl = document.getElementById('nationSessionNumber');
             const num = parseInt(numEl.value) || 0;
             numEl.value = num + 1;
+            setNationSessionType(nationNextSessionType); // 골라 둔 다음 회기 종류가 이제 지금 회기 종류가 됨
+        }
+        // 날짜 줄의 정기회/임시회 토글 — 지금 회기는 그대로, 다음 회기부터 적용
+        function setNationNextSessionType(type) {
+            nationNextSessionType = type === 'extraordinary' ? 'extraordinary' : 'regular';
             updateDispInfoBar();
+        }
+        function toggleNationNextSessionType() {
+            setNationNextSessionType(nationNextSessionType === 'regular' ? 'extraordinary' : 'regular');
         }
 
         function formatNationDate() {
@@ -1820,6 +1831,22 @@
             const sessEl = document.getElementById('dispInfoSession');
             if(dateEl) dateEl.textContent = formatNationDate() || '날짜 미설정';
             if(sessEl) sessEl.textContent = formatNationSession() || '회기 미설정';
+            // 진행 버튼은 수동 진행형 날짜, 다음 회기 · … 는 개별형 회기일 때만 (단순형은 글자를 직접 쓰는 방식이라 진행할 값이 없음)
+            const dateCtl = document.getElementById('dispDateControls');
+            const sessCtl = document.getElementById('dispSessionControls');
+            if(dateCtl) dateCtl.style.visibility = nationDateMode === 'progressive' ? '' : 'hidden';
+            if(sessCtl) sessCtl.style.visibility = nationSessionMode === 'individual' ? '' : 'hidden';
+            const nextBtn = document.getElementById('dispNextSessionTypeBtn');
+            if(nextBtn) {
+                const extra = nationNextSessionType === 'extraordinary';
+                nextBtn.textContent = extra ? '다음: 임시회' : '다음: 정기회';
+                nextBtn.classList.toggle('is-extra', extra);
+            }
+        }
+        // 날짜 줄의 설정 버튼 — 국가 › 날짜 탭을 연다 (모바일은 조작 화면으로 넘어감)
+        function openNationDateSettings() {
+            if(document.documentElement.getAttribute('data-ui-mode') === 'mobile' && typeof setMobilePanel === 'function') setMobilePanel('controls');
+            switchSubTab('nation', 'date');
         }
 
         // ── 무소속 개별 의원 데이터 ──────────────
@@ -4588,6 +4615,7 @@
                     nationSessionOrgName: document.getElementById('nationSessionOrgName')?.value ?? "",
                     nationSessionNumber: document.getElementById('nationSessionNumber')?.value ?? "",
                     nationSessionType: nationSessionType,
+                    nationNextSessionType: nationNextSessionType,
                     govType: govType,
                     president: president,
                     pm: pm,
@@ -4814,6 +4842,7 @@
             setNationDateMode(cfg.nationDateMode ?? "simple");
             setNationSessionMode(cfg.nationSessionMode ?? "simple");
             setNationSessionType(cfg.nationSessionType ?? "regular");
+            setNationNextSessionType(cfg.nationNextSessionType ?? cfg.nationSessionType ?? "regular"); // 예전 파일: 다음 회기도 지금과 같은 종류
             president = { name: '', photo: '', partyId: null, linkedSeat: null, ...(cfg.president || {}) };
             pm = { name: '', photo: '', partyId: null, linkedSeat: null, ...(cfg.pm || {}) };
             if(Array.isArray(cfg.deputyPms)) {

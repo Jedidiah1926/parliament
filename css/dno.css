@@ -349,22 +349,39 @@
             flex-shrink: 0;
             margin-bottom: 0;
         }
-        /* 국가 날짜/회기 표시 — 탭 줄 위에 따로 한 줄(오른쪽 정렬). 회기 이름이 아무리 길어도 탭이 눌려 찌그러지지 않고,
-           이 줄 안에서 줄바꿈된다 (DOM은 탭 뒤에 있지만 order로 맨 위에 그림) */
+        /* 국가 날짜/회기 표시 — 탭 줄 위, 오른쪽 정렬 두 줄:
+           [날짜][▶ ▶▶ ▶▶▶][설정] / [회기][다음 회기 …]. 글자 칸은 남는 폭을 쓰고 길면 그 칸 안에서 줄바꿈 —
+           탭은 눌리지 않는다 (DOM은 탭 뒤에 있지만 order로 맨 위에 그림) */
         .disp-info-bar {
             order: -1;
             flex: 0 0 100%;
+            box-sizing: border-box;
             min-width: 0;
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: flex-end;
-            align-items: baseline;
-            gap: 2px 14px;
-            padding: 0 10px 8px;
+            display: grid;
+            grid-template-columns: minmax(0, auto) auto auto;
+            justify-content: end;
+            align-items: center;
+            gap: 2px 10px;
+            padding: 0 6px 8px;
             letter-spacing: 0.5px;
-            text-align: right;
-            overflow-wrap: anywhere;
         }
+        .dib-text { text-align: right; overflow-wrap: anywhere; min-width: 0; }
+        #dispInfoDate { grid-column: 1; grid-row: 1; }
+        #dispDateControls { grid-column: 2; grid-row: 1; }
+        .dib-settings { grid-column: 3; grid-row: 1; }
+        #dispInfoSession { grid-column: 1; grid-row: 2; }
+        #dispSessionControls { grid-column: 2 / span 2; grid-row: 2; }
+        .dib-controls { display: flex; align-items: center; gap: 2px; }
+        .dib-btn {
+            background: transparent; border: 1px solid transparent; color: #777; cursor: pointer;
+            font-family: inherit; font-size: 0.8rem; line-height: 1; padding: 5px 7px; white-space: nowrap;
+        }
+        .dib-btn:hover { color: var(--tno-neon); border-color: color-mix(in srgb, var(--tno-neon) 40%, transparent); }
+        .dib-play { letter-spacing: -2px; font-size: 0.72rem; }
+        .dib-settings { display: inline-flex; align-items: center; padding: 4px 6px; }
+        .dib-word { font-size: 0.8rem; }
+        .dib-next-type { border-color: var(--tno-border); color: #999; }
+        .dib-next-type.is-extra { color: var(--tno-gold); border-color: color-mix(in srgb, var(--tno-gold) 50%, transparent); }
         .disp-info-bar #dispInfoDate {
             color: #ccc;
             font-size: 0.95rem;
