@@ -2057,6 +2057,19 @@
         let activeBillTagFilter = null;
         let activeArchiveTagFilter = null;
         let activeArchiveStatusFilter = null; // null(전체) | 'passed' | 'rejected'(부결+거부권 행사) | 'awaiting_veto'
+        // 국무회의가 의결한 법안은 입법 > 기록이 아니라 내각 > 기록에 모은다 (필터 상태는 따로)
+        let activeCouncilArchiveTagFilter = null;
+        let activeCouncilArchiveStatusFilter = null;
+        const ARCHIVE_SCOPES = {
+            law:     { list: 'archiveList',        search: 'archiveSearchInput',        status: 'archiveStatusFilter',        tags: 'archiveTagFilter',
+                       include: b => billTabledTo(b) !== 'council',
+                       get: () => ({ tag: activeArchiveTagFilter, status: activeArchiveStatusFilter }),
+                       set: (k, v) => { if(k === 'tag') activeArchiveTagFilter = v; else activeArchiveStatusFilter = v; } },
+            council: { list: 'councilArchiveList', search: 'councilArchiveSearchInput', status: 'councilArchiveStatusFilter', tags: 'councilArchiveTagFilter',
+                       include: b => billTabledTo(b) === 'council',
+                       get: () => ({ tag: activeCouncilArchiveTagFilter, status: activeCouncilArchiveStatusFilter }),
+                       set: (k, v) => { if(k === 'tag') activeCouncilArchiveTagFilter = v; else activeCouncilArchiveStatusFilter = v; } },
+        };
 
         // ===== VOTE STATE =====
         let voteState = { house: {}, senate: {}, third: {} };
@@ -2589,13 +2602,16 @@
             if(statusFilter === 'rejected') return overall === 'failed' || overall === 'vetoed';
             return overall === statusFilter;
         }
-        function toggleArchiveStatusFilter(key) {
-            activeArchiveStatusFilter = activeArchiveStatusFilter === key ? null : key;
-            renderArchiveList();
+        function toggleArchiveStatusFilter(key, scope = 'law') {
+            const sc = ARCHIVE_SCOPES[scope];
+            sc.set('status', sc.get().status === key ? null : key);
+            renderArchiveList(scope);
         }
-        function renderArchiveStatusFilter(done) {
-            const el = document.getElementById('archiveStatusFilter');
+        function renderArchiveStatusFilter(done, scope = 'law') {
+            const sc = ARCHIVE_SCOPES[scope];
+            const el = document.getElementById(sc.status);
             if(!el) return;
+            const activeStatus = sc.get().status;
             const options = [
                 { key: 'passed', label: '✔ 가결' },
                 { key: 'rejected', label: '✘ 부결/거부' },
@@ -2603,7 +2619,7 @@
             ].filter(o => done.some(b => billMatchesStatusFilter(b, o.key)));
             if(options.length === 0) { el.innerHTML = ''; return; }
             el.innerHTML = options.map(o =>
-                `<span class="tag-badge ${activeArchiveStatusFilter===o.key?'active':''}" onclick="toggleArchiveStatusFilter('${o.key}')">${o.label}</span>`
+                `<span class="tag-badge ${activeStatus===o.key?'active':''}" onclick="toggleArchiveStatusFilter('${o.key}','${scope}')">${o.label}</span>`
             ).join('');
         }
 
@@ -2685,24 +2701,28 @@
         }
 
         // 기록 탭 — 가결/부결 완료 법안만 + 검색/태그 필터
-        function renderArchiveList() {
-            const container = document.getElementById('archiveList');
+        // 기록 목록 — scope: 'law'(입법 > 기록, 의회가 의결한 법안) | 'council'(내각 > 기록, 국무회의가 의결한 법안), 없으면 둘 다
+        function renderArchiveList(scope) {
+            if(!scope) { renderArchiveList('law'); renderArchiveList('council'); return; }
+            const sc = ARCHIVE_SCOPES[scope];
+            const container = document.getElementById(sc.list);
             if(!container) return;
-            const query = document.getElementById('archiveSearchInput')?.value || '';
-            const done = [...bills.filter(b => getBillOverallStatus(b) !== 'pending')].reverse();
+            const query = document.getElementById(sc.search)?.value || '';
+            const done = [...bills.filter(b => getBillOverallStatus(b) !== 'pending' && sc.include(b))].reverse();
+            const { tag: activeTag, status: activeStatus } = sc.get();
 
             // 결과별 필터 + 태그 필터 바 렌더
-            renderArchiveStatusFilter(done);
+            renderArchiveStatusFilter(done, scope);
             const allTags = getAllTags(done);
-            renderTagFilter('archiveTagFilter', allTags, activeArchiveTagFilter, (t) => {
-                activeArchiveTagFilter = activeArchiveTagFilter === t ? null : t;
-                renderArchiveList();
+            renderTagFilter(sc.tags, allTags, activeTag, (t) => {
+                sc.set('tag', sc.get().tag === t ? null : t);
+                renderArchiveList(scope);
             });
 
-            const filtered = done.filter(b => billMatchesStatusFilter(b, activeArchiveStatusFilter) && billMatchesFilter(b, query, activeArchiveTagFilter));
+            const filtered = done.filter(b => billMatchesStatusFilter(b, activeStatus) && billMatchesFilter(b, query, activeTag));
 
             if(done.length === 0) {
-                container.innerHTML = '<div style="color:#333; text-align:center; padding:20px; border:1px dashed #222;">완료된 법안이 없습니다</div>';
+                container.innerHTML = `<div style="color:#333; text-align:center; padding:20px; border:1px dashed #222;">${scope === 'council' ? '국무회의에서 의결된 법안이 없습니다' : '완료된 법안이 없습니다'}</div>`;
                 return;
             }
             if(filtered.length === 0) {
@@ -5080,6 +5100,7 @@
         function renderSaveTabUI() {
             renderSaveSlotList();
             renderSaveTabBar();
+            renderSaveCurrentCard();
             const toggle = document.getElementById('autosaveToggle');
             const info = document.getElementById('autosaveStatusText');
             const intervalSelect = document.getElementById('autosaveIntervalSelect');
@@ -5168,32 +5189,108 @@
             });
         }
 
+        // ===== 국가 > 저장: 현재 세이브 카드 · 세이브 목록 =====
+        // 즐겨찾기는 시작 화면(main.html)과 같은 저장소를 쓴다 — 어느 쪽에서 ★를 눌러도 양쪽에 반영
+        const SAVE_FAVORITES_KEY = 'dnoSaveFavorites';
+        function loadSaveFavorites() {
+            try { return new Set(JSON.parse(localStorage.getItem(SAVE_FAVORITES_KEY) || '[]')); } catch(e) { return new Set(); }
+        }
+        function toggleSaveFavorite(id) {
+            const fav = loadSaveFavorites();
+            if(fav.has(id)) fav.delete(id); else fav.add(id);
+            try { localStorage.setItem(SAVE_FAVORITES_KEY, JSON.stringify(Array.from(fav))); } catch(e) {}
+            renderSaveSlotList();
+        }
+
+        // 지금 진행 중인 세이브 — 이름, 마지막 저장 시각, 지금 저장(Ctrl+S와 같음), 이름 변경
+        function renderSaveCurrentCard() {
+            const card = document.getElementById('saveCurrentCard');
+            if(!card) return;
+            if(!localStorageAvailable) { card.innerHTML = '<div style="color:#666;font-size:0.8rem;">이 환경에서는 브라우저 저장을 사용할 수 없습니다. 아래 "파일로 저장"을 쓰세요.</div>'; return; }
+            const all = loadSaveSlots();
+            const named = activeSlotId ? all.find(s => s.id === activeSlotId && !s.isAutosave) : null;
+            const latest = activeSlotId ? (getNamedAutosaveSlot(all, activeSlotId) || named) : getAutosaveSlot(all);
+            const name = named ? named.name : AUTOSAVE_SLOT_NAME;
+            const when = latest?.savedAt ? new Date(latest.savedAt).toLocaleString('ko-KR') : '아직 저장 안 됨';
+            card.innerHTML = `
+                <div style="color:#666;font-size:0.72rem;letter-spacing:1px;margin-bottom:2px;">현재 세이브</div>
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <div style="flex:1;min-width:0;">
+                        <div class="save-current-name" style="color:var(--tno-neon);font-size:1.05rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtmlText(name)}</div>
+                        <div style="color:#666;font-size:0.72rem;">마지막 저장: ${when}</div>
+                    </div>
+                    ${named ? `<button class="dup-btn" title="이름 변경" onclick="startRenameCurrentSave()">✎</button>` : ''}
+                    <button class="add-btn" style="width:auto;margin-top:0;padding:6px 12px;white-space:nowrap;" onclick="saveCurrentNow()" title="Ctrl+S">💾 지금 저장</button>
+                </div>`;
+        }
+        function saveCurrentNow() {
+            autosaveNow();
+            if(typeof showKbdToast === 'function') showKbdToast('✔ 저장됨');
+            renderSaveTabUI();
+        }
+        function startRenameCurrentSave() {
+            if(!activeSlotId) return;
+            const slot = loadSaveSlots().find(s => s.id === activeSlotId && !s.isAutosave);
+            const nameEl = document.querySelector('#saveCurrentCard .save-current-name');
+            if(slot && nameEl) inlineRenameEdit(nameEl, slot.name, v => renameNamedSlot(activeSlotId, v));
+        }
+
+        // 목록에서 고른 저장 지점을 그대로 연다 (시작 화면의 "이어하기"와 같음) — 지금 진행 상황은 먼저 자동저장에 남겨 두고,
+        // 세이브(수동 저장 지점)를 고르면 그 시점, "OO 자동저장"을 고르면 가장 최근 상태가 열린다
+        function openSaveSlot(id) {
+            const slot = loadSaveSlots().find(s => s.id === id); if(!slot) return;
+            const go = () => {
+                if(autosaveEnabled) autosaveNow();
+                try { applyStateSafely(slot.state); }
+                catch(e) { showCustomAlert('세이브를 불러오지 못했습니다.'); return; }
+                setActiveSlotId(slot.isAutosave ? (slot.parentId || null) : slot.id);
+                simulate(); refreshUI();
+                renderSaveTabUI();
+                if(typeof showKbdToast === 'function') showKbdToast(`"${slot.name}" 열림`);
+            };
+            // 자동저장이 꺼져 있으면 지금 화면이 저장되지 않으므로 한 번 묻는다
+            if(autosaveEnabled) go();
+            else showCustomConfirm(`"${slot.name}" 슬롯을 불러올까요?\n현재 화면의 저장하지 않은 변경사항은 사라집니다.`, go);
+        }
+
         function renderSaveSlotList() {
             const container = document.getElementById('saveSlotList');
             if(!container) return;
             if(!localStorageAvailable) { container.innerHTML = ''; return; }
             const all = loadSaveSlots();
+            const fav = loadSaveFavorites();
+            const query = (document.getElementById('saveSlotSearchInput')?.value || '').trim().toLowerCase();
+            const byTime = (a, b) => new Date(b.savedAt||0) - new Date(a.savedAt||0);
             const defaultAuto = getAutosaveSlot(all);
-            const named = all.filter(s => !s.isAutosave).sort((a,b) => new Date(b.savedAt||0) - new Date(a.savedAt||0));
+            const named = all.filter(s => !s.isAutosave).sort(byTime);
+            // 시작 화면과 같은 순서: 즐겨찾기 → 기본 자동저장 → 최근 저장 순, 전용 자동저장은 부모 바로 아래
+            const tops = [...named.filter(n => fav.has(n.id)), ...(defaultAuto ? [defaultAuto] : []), ...named.filter(n => !fav.has(n.id))];
+            if(defaultAuto && fav.has(defaultAuto.id)) { tops.splice(tops.indexOf(defaultAuto), 1); tops.unshift(defaultAuto); }
             const ordered = [];
-            if(defaultAuto) ordered.push(defaultAuto);
-            named.forEach(n => {
+            tops.forEach(n => {
                 ordered.push(n);
-                const companion = getNamedAutosaveSlot(all, n.id);
-                if(companion) ordered.push(companion);
+                if(!n.isAutosave) { const companion = getNamedAutosaveSlot(all, n.id); if(companion) ordered.push(companion); }
             });
-            if(ordered.length === 0) { container.innerHTML = '<div style="color:#444;font-size:0.78rem;padding:6px 0;">저장된 슬롯이 없습니다</div>'; return; }
-            container.innerHTML = ordered.map(s => `
-                <div style="display:flex;align-items:center;gap:8px;padding:6px 8px;background:#0a0c10;border:1px solid ${s.isAutosave?'#2a4444':'#222'};margin-bottom:4px;${s.parentId?'margin-left:14px;':''}">
-                    <div style="flex:1;min-width:0;overflow:hidden;">
-                        <div class="save-slot-name" data-slot-id="${s.id}" style="color:${s.isAutosave?'var(--tno-neon)':'#ccc'};font-size:0.85rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${s.isAutosave?'🔄 ':''}${escapeHtmlText(s.name)}</div>
+            const shown = ordered.filter(s => !query || String(s.name || '').toLowerCase().includes(query));
+            if(ordered.length === 0) { container.innerHTML = '<div style="color:#444;font-size:0.78rem;padding:6px 0;">저장된 세이브가 없습니다</div>'; return; }
+            if(shown.length === 0) { container.innerHTML = '<div style="color:#444;font-size:0.78rem;padding:6px 0;">검색 결과가 없습니다</div>'; return; }
+            // "현재" 표시: 지금 진행 중인 세이브(기본 세션이면 기본 자동저장)
+            const isCurrent = s => s.isAutosave ? (!s.parentId && !activeSlotId) : s.id === activeSlotId;
+            container.innerHTML = shown.map(s => {
+                const isFav = fav.has(s.id);
+                const isCompanion = s.isAutosave && s.parentId;
+                const cur = isCurrent(s);
+                return `
+                <div style="display:flex;align-items:center;gap:6px;padding:6px 8px;background:#0a0c10;border:1px solid ${cur ? 'var(--tno-neon)' : (s.isAutosave ? '#2a4444' : '#222')};margin-bottom:4px;${isCompanion ? 'margin-left:18px;' : ''}">
+                    ${isCompanion ? '' : `<button class="save-fav-btn${isFav ? ' on' : ''}" onclick="toggleSaveFavorite('${s.id}')" title="${isFav ? '즐겨찾기 해제' : '즐겨찾기'}" aria-pressed="${isFav}" style="background:transparent;border:none;cursor:pointer;font-size:1rem;padding:0 2px;color:${isFav ? 'var(--tno-gold)' : '#555'};">${isFav ? '★' : '☆'}</button>`}
+                    <div style="flex:1;min-width:0;overflow:hidden;cursor:pointer;" onclick="openSaveSlot('${s.id}')" title="클릭하면 이 저장 지점을 엽니다">
+                        <div class="save-slot-name" data-slot-id="${s.id}" style="color:${s.isAutosave ? 'var(--tno-neon)' : '#ccc'};font-size:0.85rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${s.isAutosave ? '🔄 ' : ''}${escapeHtmlText(s.name)}${cur ? ' <span style="color:var(--tno-gold);font-size:0.72rem;">● 현재</span>' : ''}</div>
                         <div style="color:#555;font-size:0.7rem;">${s.savedAt ? new Date(s.savedAt).toLocaleString('ko-KR') : '-'}</div>
                     </div>
-                    <button class="add-btn" style="width:auto;margin-top:0;padding:4px 10px;font-size:0.8rem;" onclick="loadNamedSlot('${s.id}')">불러오기</button>
                     ${s.isAutosave ? '' : `<button class="dup-btn" title="이름 변경" onclick="startRenameSaveSlotInList('${s.id}')">✎</button>`}
-                    ${s.isAutosave ? '' : `<button class="remove-btn" onclick="deleteNamedSlot('${s.id}')">X</button>`}
-                </div>
-            `).join('');
+                    ${s.isAutosave ? '' : `<button class="remove-btn" title="삭제" onclick="deleteNamedSlot('${s.id}')">X</button>`}
+                </div>`;
+            }).join('');
         }
 
         // ===== 세이브 이름 바꾸기 =====
@@ -5756,6 +5853,7 @@
             if(sub === 'president') { renderPresidentSection(); renderEmergencyPowers(); }
             if(sub === 'pm') { renderPmSection(); renderDeputyPmsList(); renderEmergencyPowers(); }
             if(sub === 'cabinetmembers') { renderCabinetMembersList(); renderChairSection(); renderEmergencyPowers(); }
+            if(sub === 'councilArchive') renderArchiveList('council');
             if(sub === 'council') { syncCouncilBillSelect(); renderCouncilActiveBillDisplay(); renderCouncilThresholdUI(); renderCabinetDisplay(); }
             if(sub === 'coalition') { renderCoalitions(); }
             if(sub === 'list') { listMemberInnerTab = 'house'; switchListMemberInnerTab('house'); }
@@ -9089,58 +9187,86 @@
                     selectedOverlayEl = overlay;
                 }
             });
-            // 묶음(권역)마다 바깥 테두리와 안쪽 빛을 그린다 — 묶음 모양(여러 지역구의 합집합)을 마스크로 써서
-            // 합집합 바깥으로 나간 선만 남기면 지역구 사이 경계선은 사라지고 묶음 둘레만 남는다
+            // 묶음(권역)마다 테두리와 안쪽 빛을 그린다 — 테두리는 묶음 안쪽에만 그려서 이웃 권역으로 넘치지 않게 한다.
+            // 묶음 모양(여러 지역구의 합집합)을 필터로 조금 깎아(erode) 원래 모양에서 빼면 둘레의 띠만 남는데,
+            // 지역구 사이 경계는 합집합 안쪽이라 깎여도 띠가 생기지 않는다. 깎는 폭은 화면 픽셀 기준이라 지도를 그린 뒤 정한다
+            const vbParts = String(map.viewBox || '0 0 100 100').split(/[\s,]+/).map(Number);
+            const vb = { x: vbParts[0] || 0, y: vbParts[1] || 0, w: vbParts[2] || 100, h: vbParts[3] || 100 };
+            const groupFilters = []; // { el: feMorphology, px } — 그린 뒤 화면 배율에 맞춰 radius를 정함
+            const blurFilters = [];  // { el: feGaussianBlur, px }
+            const addFilter = (id, parts) => {
+                const f = document.createElementNS(svgNS, 'filter');
+                f.setAttribute('id', id);
+                f.setAttribute('filterUnits', 'userSpaceOnUse');
+                // 필터 영역은 지도 크기(+여유)로만 — 너무 넓으면 브라우저가 필터를 잘라 먹는다
+                f.setAttribute('x', vb.x - vb.w * 0.05); f.setAttribute('y', vb.y - vb.h * 0.05);
+                f.setAttribute('width', vb.w * 1.1); f.setAttribute('height', vb.h * 1.1);
+                f.setAttribute('color-interpolation-filters', 'sRGB');
+                parts.forEach(p => f.appendChild(p));
+                svg.appendChild(f);
+            };
+            const fe = (tag, attrs) => { const e = document.createElementNS(svgNS, tag); Object.entries(attrs).forEach(([k,v]) => e.setAttribute(k, v)); return e; };
             groups.forEach(g => {
                 const uid = Math.random().toString(36).slice(2, 10);
-                const cloneAll = (parent, attrs) => g.shapes.forEach(s => {
-                    const c = document.createElementNS(svgNS, s.tag);
-                    Object.entries(s.attrs||{}).forEach(([k,v]) => c.setAttribute(k, v));
-                    Object.entries(attrs).forEach(([k,v]) => c.setAttribute(k, v));
-                    parent.appendChild(c);
-                });
-                // 합집합 바깥만 보이게 하는 마스크(흰 바탕에 묶음 모양을 검게)
-                const mask = document.createElementNS(svgNS, 'mask');
-                mask.setAttribute('id', 'gout_' + uid);
-                mask.setAttribute('maskUnits', 'userSpaceOnUse');
-                ['x','y'].forEach(k => mask.setAttribute(k, '-100000'));
-                ['width','height'].forEach(k => mask.setAttribute(k, '200000'));
-                const bg = document.createElementNS(svgNS, 'rect');
-                [['x','-100000'],['y','-100000'],['width','200000'],['height','200000'],['fill','#fff']].forEach(([k,v]) => bg.setAttribute(k, v));
-                mask.appendChild(bg);
-                // 검은 모양에도 얇은 테두리를 줘서, 붙어 있는 지역구 사이 안티앨리어싱 틈으로 선이 새지 않게 한다
-                cloneAll(mask, { fill: '#000', stroke: '#000', 'stroke-width': '2', 'stroke-linejoin': 'round', 'vector-effect': 'non-scaling-stroke' });
-                svg.appendChild(mask);
-                // 합집합 모양 클립(안쪽 빛용)
-                const clip = document.createElementNS(svgNS, 'clipPath');
-                clip.setAttribute('id', 'gin_' + uid);
-                cloneAll(clip, {});
-                svg.appendChild(clip);
-                const strokeAttrs = w => ({ fill: 'none', stroke: g.color, 'stroke-width': String(w), 'stroke-linejoin': 'round', 'vector-effect': 'non-scaling-stroke' });
-                // 안쪽 빛: 바깥 테두리를 흐리게 번지게 한 뒤 묶음 안쪽으로만 잘라 보여준다
+                // 묶음 모양을 묶음 색으로 칠한 층 — 얇은 같은 색 테두리로 지역구 사이 안티앨리어싱 틈을 메운다
+                const unionLayer = (filterId, opacity) => {
+                    const layer = document.createElementNS(svgNS, 'g');
+                    layer.setAttribute('filter', `url(#${filterId})`);
+                    layer.setAttribute('pointer-events', 'none');
+                    layer.setAttribute('data-decor', '1');
+                    if(opacity != null) layer.setAttribute('opacity', opacity);
+                    g.shapes.forEach(s => {
+                        const c = document.createElementNS(svgNS, s.tag);
+                        Object.entries(s.attrs||{}).forEach(([k,v]) => c.setAttribute(k, v));
+                        c.setAttribute('fill', g.color);
+                        c.setAttribute('stroke', g.color);
+                        c.setAttribute('stroke-width', '1.5');
+                        c.setAttribute('stroke-linejoin', 'round');
+                        c.setAttribute('vector-effect', 'non-scaling-stroke');
+                        layer.appendChild(c);
+                    });
+                    svg.appendChild(layer);
+                };
+                // 안쪽 빛: 둘레에서 넓게 깎아 낸 띠를 흐리게 번지게 한 뒤 묶음 안쪽으로만 남긴다
                 if(opts.innerGlow) {
-                    const inner = document.createElementNS(svgNS, 'g');
-                    inner.setAttribute('clip-path', `url(#gin_${uid})`);
-                    inner.setAttribute('pointer-events', 'none');
-                    inner.setAttribute('data-decor', '1');
-                    const blurG = document.createElementNS(svgNS, 'g');
-                    blurG.style.filter = 'blur(3px)';
-                    blurG.setAttribute('opacity', '0.8');
-                    const masked = document.createElementNS(svgNS, 'g');
-                    masked.setAttribute('mask', `url(#gout_${uid})`);
-                    cloneAll(masked, strokeAttrs((opts.innerGlowWidth || 8) * 2));
-                    blurG.appendChild(masked); inner.appendChild(blurG); svg.appendChild(inner);
+                    const erodeGlow = fe('feMorphology', { in: 'SourceAlpha', operator: 'erode', radius: '1', result: 'er' });
+                    const blur = fe('feGaussianBlur', { in: 'band', stdDeviation: '1', result: 'bl' });
+                    addFilter('gglow_' + uid, [
+                        erodeGlow,
+                        fe('feComposite', { in: 'SourceGraphic', in2: 'er', operator: 'out', result: 'band' }),
+                        blur,
+                        fe('feComposite', { in: 'bl', in2: 'SourceAlpha', operator: 'in' }),
+                    ]);
+                    groupFilters.push({ el: erodeGlow, px: (opts.innerGlowWidth || 8) });
+                    blurFilters.push({ el: blur, px: 3 });
+                    unionLayer('gglow_' + uid, '0.8');
                 }
-                // 바깥 테두리
-                const outline = document.createElementNS(svgNS, 'g');
-                outline.setAttribute('mask', `url(#gout_${uid})`);
-                outline.setAttribute('pointer-events', 'none');
-                outline.setAttribute('data-decor', '1');
-                cloneAll(outline, strokeAttrs(7));
-                svg.appendChild(outline);
+                // 테두리: 둘레에서 조금 깎아 낸 띠
+                const erodeLine = fe('feMorphology', { in: 'SourceAlpha', operator: 'erode', radius: '1', result: 'er' });
+                addFilter('gline_' + uid, [
+                    erodeLine,
+                    fe('feComposite', { in: 'SourceGraphic', in2: 'er', operator: 'out' }),
+                ]);
+                groupFilters.push({ el: erodeLine, px: 2.5 });
+                unionLayer('gline_' + uid);
             });
             if(selectedOverlayEl) svg.appendChild(selectedOverlayEl);
             wrapEl.appendChild(svg);
+            // 묶음 테두리 두께를 화면 픽셀 기준으로 — 지도 좌표 1단위가 화면에서 몇 픽셀인지 재서 필터 반지름을 정한다
+            if(groupFilters.length) {
+                const applyFilterScale = () => {
+                    const r = svg.getBoundingClientRect();
+                    const cur = String(svg.getAttribute('viewBox') || '').split(/[\s,]+/).map(Number);
+                    const vw = cur[2] || vb.w, vh = cur[3] || vb.h;
+                    const unitsPerPx = r.width > 0 && r.height > 0 ? Math.max(vw / r.width, vh / r.height) : vw / 600;
+                    groupFilters.forEach(({ el, px }) => el.setAttribute('radius', String(px * unitsPerPx)));
+                    blurFilters.forEach(({ el, px }) => el.setAttribute('stdDeviation', String(px * unitsPerPx)));
+                };
+                applyFilterScale();
+                // 확대/축소(viewBox 변경)나 창 크기 변화에도 두께가 유지되도록 다시 맞춘다
+                new MutationObserver(applyFilterScale).observe(svg, { attributes: true, attributeFilter: ['viewBox'] });
+                if(window.ResizeObserver) new ResizeObserver(applyFilterScale).observe(svg);
+            }
 
             // 약칭 표시 + (선거 결과 지도라면) 정당별 획득 의석 수 배지 — 도형이 실제로 배치된 뒤에만
             // getBBox로 중심을 구할 수 있으므로 여기서 처리. 배지가 있으면 약칭은 위로, 배지는 아래로 배치

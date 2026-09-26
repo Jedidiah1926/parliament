@@ -23,6 +23,10 @@ window.DnoLangPacks.en = {
  "ordinal": "en",
  "patterns": [
   {
+   "re": "^\"(.+?)\" 열림$",
+   "to": "Opened \"$1\""
+  },
+  {
    "re": "^\\s*\\+ 서브\\s*$",
    "to": "+ Sub"
   },
@@ -532,6 +536,74 @@ window.DnoLangPacks.en = {
   }
  ],
  "dict": [
+  [
+   "현재 세이브",
+   "Current save"
+  ],
+  [
+   "💾 지금 저장",
+   "💾 Save now"
+  ],
+  [
+   "세이브 목록",
+   "Saves"
+  ],
+  [
+   "📦 프리셋에서",
+   "📦 From preset"
+  ],
+  [
+   "● 현재",
+   "● Current"
+  ],
+  [
+   "다른 이름으로 저장",
+   "Save as new"
+  ],
+  [
+   "지금 상태를 새 세이브로 복사해 두고, 그 세이브로 이어서 진행합니다.",
+   "Copies the current state into a new save and continues in that save."
+  ],
+  [
+   "파일 (.json)",
+   "File (.json)"
+  ],
+  [
+   "✕ 현재 세이브의 자동저장 초기화",
+   "✕ Reset autosave of current save"
+  ],
+  [
+   "이름 변경",
+   "Rename"
+  ],
+  [
+   "클릭하면 이 저장 지점을 엽니다",
+   "Click to open this save point"
+  ],
+  [
+   "아직 저장 안 됨",
+   "Not saved yet"
+  ],
+  [
+   "저장된 세이브가 없습니다",
+   "No saves yet"
+  ],
+  [
+   "이 환경에서는 브라우저 저장을 사용할 수 없습니다. 아래 \"파일로 저장\"을 쓰세요.",
+   "Browser storage is not available here. Use \"Save to file\" below."
+  ],
+  [
+   "국무회의에서 가결 · 부결된 법안 보관함입니다 (상태별로 걸러 보기). 의회가 의결한 법안은 입법 › 기록에 있어요.",
+   "The archive of bills passed or rejected by the cabinet council (filterable by status). Bills decided by parliament are in Legislation › Record."
+  ],
+  [
+   "국무회의에서 의결된 법안이 없습니다",
+   "No bills decided by the cabinet council"
+  ],
+  [
+   "내각 구성원",
+   "Cabinet Members"
+  ],
   [
    "원마다 따로 정합니다. 상원 · 삼원은 의회 › 의회 설정에서 양원제 · 삼원제를 골랐을 때 나타나요.",
    "Set separately per chamber. The Senate and Third chamber appear when you choose bicameral/tricameral in Parliament › Parliament Settings."
