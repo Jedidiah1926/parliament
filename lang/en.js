@@ -6048,6 +6048,18 @@ window.DnoLangPacks.en = {
   [
    "- 정식 출시",
    "- Full release"
+  ],
+  [
+   "0.2.2 - 영어 번역 · 템플릿",
+   "0.2.2 - English Translation · Template"
+  ],
+  [
+   "- 영어 번역 — 시뮬레이터 화면 전체 · 알림/확인창 · 튜토리얼 · 도움말 · 로드맵 · 맵 메이커",
+   "- English translation — the whole simulator, alerts/confirmations, tutorial, help, roadmap and Map Maker"
+  ],
+  [
+   "- 번역 템플릿 설정 기능 — 메인 화면 🌐에서 번역 템플릿 받기 · 언어 팩(.json) 불러오기 · 삭제",
+   "- Translation template tools — download the translation template, load language packs (.json) and delete them from 🌐 on the main screen"
   ]
  ]
 };
