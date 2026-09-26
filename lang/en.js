@@ -5968,6 +5968,98 @@ window.DnoLangPacks.en = {
   [
    "- 이미지 내보내기에 해상도 선택(1× · 2× · 3×, 기본 2×) — 화면 배율과 상관없이 다시 그려 선명하게, 마지막 선택을 기억",
    "- Image export resolution (1× · 2× · 3×, default 2×) — redrawn crisply regardless of screen scaling; remembers the last choice"
+  ],
+  [
+   "1.5.8 - 후보 단일화",
+   "1.5.8 - Candidate Unification"
+  ],
+  [
+   "- 후보 단일화 추가",
+   "- Candidate unification added"
+  ],
+  [
+   "1.5.9 - 지선",
+   "1.5.9 - Local Elections"
+  ],
+  [
+   "- 지방선거(지선) 추가",
+   "- Local elections added"
+  ],
+  [
+   "1.6: 텀블벅 펀딩",
+   "1.6: Tumblbug Funding"
+  ],
+  [
+   "1.6.0 - 텀블벅 펀딩 출시",
+   "1.6.0 - Tumblbug Funding Launch"
+  ],
+  [
+   "- 텀블벅 펀딩 출시",
+   "- Tumblbug crowdfunding launch"
+  ],
+  [
+   "- Steam 개발자 계정을 위한 펀딩",
+   "- Funding for a Steam developer account"
+  ],
+  [
+   "1.7: 나무위키식 의회 틀",
+   "1.7: Namuwiki-style Parliament Templates"
+  ],
+  [
+   "1.7.0 - 나무위키식 의회 틀",
+   "1.7.0 - Namuwiki-style Parliament Templates"
+  ],
+  [
+   "- 나무위키식 의회 틀 추가",
+   "- Namuwiki-style parliament templates added"
+  ],
+  [
+   "1.8: 데모 출시",
+   "1.8: Demo Release"
+  ],
+  [
+   "1.8.0 - Stove/Steam 데모 출시",
+   "1.8.0 - Stove/Steam Demo Release"
+  ],
+  [
+   "- Stove · Steam 데모 출시",
+   "- Stove · Steam demo release"
+  ],
+  [
+   "1.9: 얼리 액세스",
+   "1.9: Early Access"
+  ],
+  [
+   "1.9.0 - Steam 얼리 액세스 출시",
+   "1.9.0 - Steam Early Access Launch"
+  ],
+  [
+   "- Steam 얼리 액세스 출시",
+   "- Steam Early Access launch"
+  ],
+  [
+   "2.0: 정식 출시",
+   "2.0: Full Release"
+  ],
+  [
+   "2.0.0 - 정식 출시",
+   "2.0.0 - Full Release"
+  ],
+  [
+   "- 정식 출시",
+   "- Full release"
+  ],
+  [
+   "0.2.2 - 영어 번역 · 템플릿",
+   "0.2.2 - English Translation · Template"
+  ],
+  [
+   "- 영어 번역 — 시뮬레이터 화면 전체 · 알림/확인창 · 튜토리얼 · 도움말 · 로드맵 · 맵 메이커",
+   "- English translation — the whole simulator, alerts/confirmations, tutorial, help, roadmap and Map Maker"
+  ],
+  [
+   "- 번역 템플릿 설정 기능 — 메인 화면 🌐에서 번역 템플릿 받기 · 언어 팩(.json) 불러오기 · 삭제",
+   "- Translation template tools — download the translation template, load language packs (.json) and delete them from 🌐 on the main screen"
   ]
  ]
 };

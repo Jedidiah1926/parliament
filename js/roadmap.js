@@ -73,11 +73,18 @@
               <br>- 프로젝트 시작`
           },
           {
-            status: 'current',
+            status: 'done',
             title: '0.2.1 - 영어 개발 시작',
             desc: `2026.08.29
               <br>- 언어 설정 추가
               <br>- 초기 개발 성공`
+          },
+          {
+            status: 'current',
+            title: '0.2.2 - 영어 번역 · 템플릿',
+            desc: `2026.09.26
+              <br>- 영어 번역 — 시뮬레이터 화면 전체 · 알림/확인창 · 튜토리얼 · 도움말 · 로드맵 · 맵 메이커
+              <br>- 번역 템플릿 설정 기능 — 메인 화면 🌐에서 번역 템플릿 받기 · 언어 팩(.json) 불러오기 · 삭제`
           }
         ]
       },
@@ -518,49 +525,72 @@
           },
           {
             status: 'future',
-            title: '1.5.8 - ?',
+            title: '1.5.8 - 후보 단일화',
             desc: `2026.10.XX
-              <br>- ???`
+              <br>- 후보 단일화 추가`
           },
           {
             status: 'future',
-            title: '1.5.9 - 프로그램 출시',
-            desc: `2026.11.XX
-              <br>- Steam 서비스 준비
-              <br>- Steam 개발자 계정을 위한 펀딩 시작`
+            title: '1.5.9 - 지선',
+            desc: `2026.10.XX
+              <br>- 지방선거(지선) 추가`
           }
         ]
       },
       '1.6': {
-        title: '1.6',
+        title: '1.6: 텀블벅 펀딩',
         cards: [
           {
             status: 'future',
-            title: '1.6.0 - ?',
-            desc: `2026.XX.XX
-              <br>- ?`
+            title: '1.6.0 - 텀블벅 펀딩 출시',
+            desc: `202X.XX.XX
+              <br>- 텀블벅 펀딩 출시
+              <br>- Steam 개발자 계정을 위한 펀딩`
           }
         ]
       },
       '1.7': {
-        title: '1.7',
+        title: '1.7: 나무위키식 의회 틀',
         cards: [
           {
             status: 'future',
-            title: '1.7.0 - ?',
-            desc: `2026.XX.XX
-              <br>- ?`
+            title: '1.7.0 - 나무위키식 의회 틀',
+            desc: `202X.XX.XX
+              <br>- 나무위키식 의회 틀 추가`
+          }
+        ]
+      },
+      '1.8': {
+        title: '1.8: 데모 출시',
+        cards: [
+          {
+            status: 'future',
+            title: '1.8.0 - Stove/Steam 데모 출시',
+            desc: `202X.XX.XX
+              <br>- Steam 서비스 준비
+              <br>- Stove · Steam 데모 출시`
+          }
+        ]
+      },
+      '1.9': {
+        title: '1.9: 얼리 액세스',
+        cards: [
+          {
+            status: 'future',
+            title: '1.9.0 - Steam 얼리 액세스 출시',
+            desc: `202X.XX.XX
+              <br>- Steam 얼리 액세스 출시`
           }
         ]
       },
       '2.0': {
-        title: '2.0',
+        title: '2.0: 정식 출시',
         cards: [
           {
             status: 'future',
-            title: '2.0.0 - ?',
+            title: '2.0.0 - 정식 출시',
             desc: `202X.XX.XX
-              <br>- ?`
+              <br>- 정식 출시`
           }
         ]
       }
