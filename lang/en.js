@@ -6284,6 +6284,10 @@ window.DnoLangPacks.en = {
   [
    "자세히 보기 ›",
    "Details ›"
+  ],
+  [
+   "모든 원에 같은 비율",
+   "Same ratio for every chamber"
   ]
  ]
 };

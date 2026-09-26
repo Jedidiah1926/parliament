@@ -1436,3 +1436,13 @@ body.no-open-tab > *:not(.save-tab-bar):not(.save-panel-overlay):not(.dno-dialog
 body.no-open-tab { overflow: hidden; }
 /* 모바일: 떠 있는 창(저장 · 날짜/회기)이 아래 탭 바를 덮지 않게 높이를 제한 */
 html[data-ui-mode="mobile"] .save-panel { max-height: calc(100vh - 56px - var(--mnav-h, 64px) - env(safe-area-inset-bottom, 0px) - 8px); }
+
+        /* 가결 기준 "지정..." — 원별 분자/분모 */
+        .thr-custom { margin-top: 6px; }
+        .thr-same { display: flex; align-items: center; gap: 6px; color: #888; font-size: 0.8rem; margin-bottom: 6px; cursor: pointer; }
+        .thr-row { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
+        .thr-ch { flex: 0 0 3.2em; color: #888; font-size: 0.8rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .thr-row input[type="number"] { flex: 1 1 0; min-width: 0; text-align: center; }
+        .thr-row input[type="number"]:disabled { opacity: .55; }
+        .thr-slash { color: #666; font-size: 1.1rem; }
+        .thr-preview { flex: 0 0 auto; min-width: 7.5em; color: var(--tno-gold); font-size: 0.8rem; white-space: nowrap; }

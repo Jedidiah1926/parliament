@@ -2146,23 +2146,120 @@
         let hoveredSeat = { house: -1, senate: -1, third: -1 };
 
         // ===== BILL FUNCTIONS =====
+        // ── 가결 기준 "지정..." — 원(하원/상원/삼원)마다 분자/분모를 둘 수 있다 ──
+        // "모든 원에 같은 비율"(기본)이면 첫 줄(하원) 비율을 나머지 원에 그대로 쓰고, 원마다 필요한 의석은 자동 계산.
+        // 끄면 원마다 비율을 따로 입력 → bill.chamberThresholds = { house:{numer,denom}, senate:{...}, third:{...} }
+        const THR_CHAMBERS = ['house', 'senate', 'third'];
+        function thrActiveChambers() {
+            return THR_CHAMBERS.filter(ch => ch === 'house' || (ch === 'senate' && hasSenateChamber()) || (ch === 'third' && hasThirdChamber()));
+        }
+        function thrIds(prefix, ch) {
+            // 하원 입력칸은 기존 id(customNumer / editCustomNumer)를 그대로 쓴다
+            const base = prefix === 'edit' ? 'editCustom' : 'custom';
+            const suffix = ch === 'house' ? '' : (ch === 'senate' ? 'Senate' : 'Third');
+            return { numer: base + 'Numer' + suffix, denom: base + 'Denom' + suffix, preview: base + 'Preview' + suffix, same: base + 'SameRatio' };
+        }
+        function chamberValidSeatCount(ch) {
+            const dots = dotCache[ch] || [];
+            if(dots.length) return dots.filter(d => d.partyName !== 'Vacant' && d.partyStatus !== 'banned').length;
+            const el = document.getElementById({house:'houseTotal', senate:'senateTotal', third:'thirdTotal'}[ch]);
+            return el ? (parseInt(el.value) || 0) : 0;
+        }
+        function requiredSeatsFor(validSeats, threshold) {
+            return threshold >= 1.0 ? validSeats : Math.floor(validSeats * threshold) + 1;
+        }
+        function renderCustomThresholdEditor(prefix, init) {
+            const wrap = document.getElementById(prefix === 'edit' ? 'editCustomThresholdWrap' : 'customThresholdWrap');
+            if(!wrap) return;
+            const chambers = thrActiveChambers();
+            const same = init ? !init.chamberThresholds : true;
+            const sameId = thrIds(prefix, 'house').same;
+            wrap.innerHTML = (chambers.length > 1 ? `<label class="thr-same"><input type="checkbox" id="${sameId}" ${same ? 'checked' : ''}> 모든 원에 같은 비율</label>` : '')
+                + chambers.map(ch => {
+                    const ids = thrIds(prefix, ch);
+                    const src = init ? (init.chamberThresholds?.[ch] || { numer: init.numer, denom: init.denom }) : null;
+                    return `<div class="thr-row" data-ch="${ch}">
+                        <span class="thr-ch">${escapeHtmlText(chamberDisplayName(ch))}</span>
+                        <input type="number" id="${ids.numer}" min="1" placeholder="분자" value="${src?.numer ?? ''}">
+                        <span class="thr-slash">/</span>
+                        <input type="number" id="${ids.denom}" min="1" placeholder="분모" value="${src?.denom ?? ''}">
+                        <span class="thr-preview" id="${ids.preview}"></span>
+                    </div>`;
+                }).join('');
+            const update = () => updateCustomThresholdPreview(prefix);
+            wrap.querySelectorAll('input').forEach(inp => { inp.oninput = update; inp.onchange = update; });
+            update();
+        }
+        function updateCustomThresholdPreview(prefix) {
+            const chambers = thrActiveChambers();
+            const sameEl = document.getElementById(thrIds(prefix, 'house').same);
+            const same = !sameEl || sameEl.checked;
+            const houseIds = thrIds(prefix, 'house');
+            const hn = document.getElementById(houseIds.numer)?.value || '';
+            const hd = document.getElementById(houseIds.denom)?.value || '';
+            chambers.forEach(ch => {
+                const ids = thrIds(prefix, ch);
+                const nEl = document.getElementById(ids.numer), dEl = document.getElementById(ids.denom);
+                if(!nEl || !dEl) return;
+                if(ch !== 'house') {
+                    // 같은 비율: 하원 값을 그대로 따라가고 직접 고칠 수 없게
+                    nEl.disabled = dEl.disabled = same;
+                    if(same) { nEl.value = hn; dEl.value = hd; }
+                }
+                const n = parseInt(nEl.value), d = parseInt(dEl.value);
+                const out = document.getElementById(ids.preview);
+                if(!out) return;
+                if(!n || !d) { out.textContent = ''; return; }
+                const th = n / d;
+                const seats = chamberValidSeatCount(ch);
+                out.textContent = `= ${(th * 100).toFixed(1)}%` + (seats ? ` · ${Math.min(requiredSeatsFor(seats, th), seats)}석` : '');
+            });
+        }
+        // 폼 값 → { threshold, numer, denom, chamberThresholds }
+        function readCustomThreshold(prefix) {
+            const houseIds = thrIds(prefix, 'house');
+            const n = parseInt(document.getElementById(houseIds.numer)?.value);
+            const d = parseInt(document.getElementById(houseIds.denom)?.value);
+            if(!n || !d) return null;
+            const sameEl = document.getElementById(houseIds.same);
+            let chamberThresholds = null;
+            if(sameEl && !sameEl.checked) {
+                chamberThresholds = {};
+                thrActiveChambers().forEach(ch => {
+                    const ids = thrIds(prefix, ch);
+                    const cn = parseInt(document.getElementById(ids.numer)?.value);
+                    const cd = parseInt(document.getElementById(ids.denom)?.value);
+                    chamberThresholds[ch] = (cn && cd) ? { numer: cn, denom: cd } : { numer: n, denom: d };
+                });
+            }
+            return { threshold: n / d, numer: n, denom: d, chamberThresholds };
+        }
+        // 표결 · 표시에 쓰는 원별 가결 기준
+        function billThresholdFor(bill, ch) {
+            const c = bill?.chamberThresholds?.[ch];
+            if(c && c.numer && c.denom) return { threshold: c.numer / c.denom, numer: c.numer, denom: c.denom };
+            return { threshold: bill?.threshold || 0.5, numer: bill?.numer, denom: bill?.denom };
+        }
+        // 법안 카드용 기준 이름 — 원마다 다르면 "하원 3/5 · 상원 2/3"
+        function billThresholdLabel(bill) {
+            const ct = bill?.chamberThresholds;
+            if(ct) {
+                const chambers = thrActiveChambers().filter(ch => ct[ch]);
+                const labels = chambers.map(ch => getThresholdLabel(ct[ch].numer / ct[ch].denom, ct[ch].numer, ct[ch].denom));
+                if(chambers.length > 1 && labels.some(l => l !== labels[0])) {
+                    return chambers.map((ch, i) => `${chamberDisplayName(ch)} ${labels[i]}`).join(' · ');
+                }
+            }
+            return getThresholdLabel(bill?.threshold || 0.5, bill?.numer, bill?.denom);
+        }
+
         function toggleCustomThreshold() {
             const sel = document.getElementById('newBillThreshold');
             const wrap = document.getElementById('customThresholdWrap');
             const isCustom = sel.value === 'custom';
-            wrap.style.display = isCustom ? 'flex' : 'none';
-            if(isCustom) {
-                const numer = document.getElementById('customNumer');
-                const denom = document.getElementById('customDenom');
-                const updatePreview = () => {
-                    const n = parseInt(numer.value) || 0;
-                    const d = parseInt(denom.value) || 1;
-                    document.getElementById('customThresholdPreview').textContent =
-                        n && d ? `= ${(n/d*100).toFixed(1)}%` : '';
-                };
-                numer.oninput = updatePreview;
-                denom.oninput = updatePreview;
-            }
+            wrap.style.display = isCustom ? 'block' : 'none';
+            if(isCustom && !wrap.children.length) renderCustomThresholdEditor('new', null);
+            else if(isCustom) updateCustomThresholdPreview('new');
         }
 
         function getThresholdValue() {
@@ -2188,14 +2285,16 @@
             const threshold = getThresholdValue();
             const sel = document.getElementById('newBillThreshold');
             const isCustom = sel.value === 'custom';
-            const numer = isCustom ? parseInt(document.getElementById('customNumer').value) || null : null;
-            const denom = isCustom ? parseInt(document.getElementById('customDenom').value) || null : null;
+            const custom = isCustom ? readCustomThreshold('new') : null;
+            const numer = custom ? custom.numer : null;
+            const denom = custom ? custom.denom : null;
+            const chamberThresholds = custom ? custom.chamberThresholds : null;
             const tagsRaw = document.getElementById('newBillTags')?.value || '';
             const tags = tagsRaw.split(',').map(t => t.trim()).filter(t => t.length > 0);
             if(!title) { showCustomAlert('법안 제목을 입력하세요.'); return; }
             const amendedBill = amendmentSourceId ? bills.find(b => b.id === amendmentSourceId) : null;
             const version = amendedBill ? (amendedBill.version || 1) + 1 : 1;
-            bills.push({ id: 'b'+Date.now(), title, content, threshold, numer, denom, tags,
+            bills.push({ id: 'b'+Date.now(), title, content, threshold, numer, denom, chamberThresholds, tags,
                 houseStatus: 'pending', senateStatus: 'pending', thirdStatus: 'pending', houseVote: null, senateVote: null, thirdVote: null,
                 version, parentBillId: amendedBill ? amendedBill.id : null, isAmendment: !!amendedBill, voteHistory: [],
                 tabledTo: isCouncilVotingMode() ? 'council' : 'parliament' });
@@ -2401,32 +2500,17 @@
             const isCustom = bill.numer && bill.denom;
             const threshSel = document.getElementById('editBillThreshold');
             threshSel.value = isCustom ? 'custom' : String(bill.threshold ?? 0.5);
+            renderCustomThresholdEditor('edit', isCustom ? bill : null);
             toggleEditCustomThreshold();
-            if(isCustom) {
-                document.getElementById('editCustomNumer').value = bill.numer;
-                document.getElementById('editCustomDenom').value = bill.denom;
-                const preview = document.getElementById('editCustomThresholdPreview');
-                if(preview) preview.textContent = `= ${(bill.numer/bill.denom*100).toFixed(1)}%`;
-            }
         }
 
         function toggleEditCustomThreshold() {
             const sel = document.getElementById('editBillThreshold');
             const wrap = document.getElementById('editCustomThresholdWrap');
             const isCustom = sel.value === 'custom';
-            wrap.style.display = isCustom ? 'flex' : 'none';
-            if(isCustom) {
-                const numer = document.getElementById('editCustomNumer');
-                const denom = document.getElementById('editCustomDenom');
-                const updatePreview = () => {
-                    const n = parseInt(numer.value) || 0;
-                    const d = parseInt(denom.value) || 1;
-                    document.getElementById('editCustomThresholdPreview').textContent =
-                        n && d ? `= ${(n/d*100).toFixed(1)}%` : '';
-                };
-                numer.oninput = updatePreview;
-                denom.oninput = updatePreview;
-            }
+            wrap.style.display = isCustom ? 'block' : 'none';
+            if(isCustom && !wrap.children.length) renderCustomThresholdEditor('edit', null);
+            else if(isCustom) updateCustomThresholdPreview('edit');
         }
 
         function saveEditBill() {
@@ -2442,12 +2526,11 @@
             const threshSel = document.getElementById('editBillThreshold');
             const isCustom = threshSel.value === 'custom';
             if(isCustom) {
-                const n = parseInt(document.getElementById('editCustomNumer').value);
-                const d = parseInt(document.getElementById('editCustomDenom').value);
-                if(n && d) { bill.threshold = n/d; bill.numer = n; bill.denom = d; }
+                const custom = readCustomThreshold('edit');
+                if(custom) { bill.threshold = custom.threshold; bill.numer = custom.numer; bill.denom = custom.denom; bill.chamberThresholds = custom.chamberThresholds; }
             } else {
                 bill.threshold = parseFloat(threshSel.value) || 0.5;
-                bill.numer = null; bill.denom = null;
+                bill.numer = null; bill.denom = null; bill.chamberThresholds = null;
             }
             renderBillList(); renderArchiveList(); syncBillSelect(); renderActiveBillDisplay();
             // 저장 후 "-- 수정할 법안 선택 --" 상태로 초기화
@@ -2725,7 +2808,7 @@
             filtered.forEach(bill => {
                 const dest = billTabledTo(bill);
                 const isActive = dest === 'council' ? bill.id === activeCouncilBillId : bill.id === activeBillId;
-                const thLabel = getThresholdLabel(bill.threshold || 0.5, bill.numer, bill.denom);
+                const thLabel = billThresholdLabel(bill);
                 const suspended = isCouncilVotingMode();
                 // 선택된 상정 대상은 색이 채워진 강조 스타일로, 선택되지 않은 쪽은 흐린 회색으로 — 한눈에 구분되도록
                 const routeBtn = (d, txt, color) => {
@@ -2801,7 +2884,7 @@
             container.innerHTML = '';
             filtered.forEach(bill => {
                 const overall = getBillOverallStatus(bill);
-                const thLabel = getThresholdLabel(bill.threshold || 0.5, bill.numer, bill.denom);
+                const thLabel = billThresholdLabel(bill);
                 const div = document.createElement('div');
                 div.className = 'bill-card';
                 div.style.borderLeftColor = (overall === 'passed') ? 'var(--vote-yea)' : (overall === 'awaiting_veto') ? 'var(--tno-gold)' : 'var(--vote-nay)';
@@ -2859,13 +2942,13 @@
             });
             // 활동 금지된 정당은 표결에 참여할 수 없으므로 유효 의석(과반 기준)에서 제외
             const validSeats = dots.filter(d=>d.partyName!=='Vacant' && d.partyStatus!=='banned').length;
-            const threshold = bill.threshold || 0.5;
-            const required = threshold >= 1.0 ? validSeats : Math.floor(validSeats * threshold) + 1;
+            const { threshold, numer: thNumer, denom: thDenom } = billThresholdFor(bill, chamber);
+            const required = requiredSeatsFor(validSeats, threshold);
             const result = yea >= required ? 'pass' : 'fail';
 
             if(!bill.voteHistory) bill.voteHistory = [];
             const nowISO = new Date().toISOString();
-            const logVote = (ch, res) => bill.voteHistory.push({ chamber: ch, result: res, date: bill.voteDate || '', yea, nay, abs, total: validSeats, required, threshold, numer: bill.numer, denom: bill.denom, at: nowISO });
+            const logVote = (ch, res) => bill.voteHistory.push({ chamber: ch, result: res, date: bill.voteDate || '', yea, nay, abs, total: validSeats, required, threshold, numer: thNumer, denom: thDenom, at: nowISO });
             const logSkip = (ch) => bill.voteHistory.push({ chamber: ch, result: 'skip', date: '', at: nowISO });
 
             if(chamber==='house') {
@@ -4132,8 +4215,9 @@
             const t = validSeats || 1;
 
             // 현재 법안의 가결 기준 적용 (확정된 표결이면 확정 당시 required도 함께 사용)
-            const threshold = bill?.threshold || 0.5;
-            const required = isConfirmed ? (bill[voteKey].required ?? Math.floor(validSeats * threshold) + 1) : (threshold >= 1.0 ? validSeats : Math.floor(validSeats * threshold) + 1);
+            const chTh = billThresholdFor(bill, chamber);
+            const threshold = chTh.threshold;
+            const required = isConfirmed ? (bill[voteKey].required ?? requiredSeatsFor(validSeats, threshold)) : requiredSeatsFor(validSeats, threshold);
 
             document.getElementById(prefix+'CntYea').textContent = yea;
             document.getElementById(prefix+'CntNay').textContent = nay;
@@ -4163,13 +4247,13 @@
                 barOuter.style.position = 'relative';
                 const pct = Math.min(threshold * 100, 100).toFixed(1);
                 marker.style.cssText = `position:absolute; left:${pct}%; top:0; bottom:0; width:2px; background:var(--tno-gold); box-shadow:0 0 5px var(--tno-gold); z-index:2; pointer-events:none;`;
-                const thLabel = getThresholdLabel(threshold, bill?.numer, bill?.denom);
+                const thLabel = getThresholdLabel(threshold, chTh.numer, chTh.denom);
                 labelEl.style.cssText = `position:absolute; left:${pct}%; top:-18px; transform:translateX(-50%); font-size:0.75rem; color:var(--tno-gold); white-space:nowrap; pointer-events:none; font-family:'NeoDunggeunmo','VT323',monospace;`;
                 labelEl.textContent = `${thLabel} (${required}석)`;
             }
 
             const thresholdLabels = { 0.5:'과반', 0.667:'2/3', 0.75:'3/4', 1.0:'전원일치' };
-            const thLabel = getThresholdLabel(threshold, bill?.numer, bill?.denom);
+            const thLabel = getThresholdLabel(threshold, chTh.numer, chTh.denom);
 
             // 부가 정보 (찬성수/기준, 기준명, 부족석)
             const infoEl = document.getElementById(prefix+'VoteInfo');

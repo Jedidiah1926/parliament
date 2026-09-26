@@ -3031,3 +3031,7 @@ html[data-theme-family="modern"] .home-lang-more:hover { background: var(--m-sur
 html[data-theme-family="modern"] .home-lang-remove { color: var(--m-text-3); }
 html[data-theme-family="modern"] .home-lang-remove:hover { color: var(--m-danger, #e5484d); }
 
+html[data-theme-family="modern"] .thr-same,
+html[data-theme-family="modern"] .thr-ch { color: var(--m-text-3); }
+html[data-theme-family="modern"] .thr-slash { color: var(--m-text-3); }
+html[data-theme-family="modern"] .thr-preview { color: var(--m-text-2); font-weight: 600; }

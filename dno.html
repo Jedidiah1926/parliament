@@ -566,12 +566,7 @@
                             <option value="1.0">전원 일치</option>
                             <option value="custom">지정...</option>
                         </select>
-                        <div id="customThresholdWrap" style="display:none; margin-top:6px; display:none; align-items:center; gap:6px;">
-                            <input type="number" id="customNumer" min="1" placeholder="분자" style="flex:1; text-align:center;">
-                            <span style="color:#666; font-size:1.2rem;">/</span>
-                            <input type="number" id="customDenom" min="1" placeholder="분모" style="flex:1; text-align:center;">
-                            <span id="customThresholdPreview" style="color:#ffd700; font-size:0.85rem; white-space:nowrap;"></span>
-                        </div>
+                        <div id="customThresholdWrap" class="thr-custom" style="display:none;"></div>
                     </div>
                     <button class="add-btn" style="border-style:solid; margin-top:8px; color:var(--tno-neon); border-color:var(--tno-neon);" onclick="addBill()">[+] 법안 등록</button>
                 </div>
@@ -599,12 +594,7 @@
                                 <option value="1.0">전원 일치</option>
                                 <option value="custom">지정...</option>
                             </select>
-                            <div id="editCustomThresholdWrap" style="display:none; margin-top:6px; align-items:center; gap:6px;">
-                                <input type="number" id="editCustomNumer" min="1" placeholder="분자" style="flex:1; text-align:center;">
-                                <span style="color:#666; font-size:1.2rem;">/</span>
-                                <input type="number" id="editCustomDenom" min="1" placeholder="분모" style="flex:1; text-align:center;">
-                                <span id="editCustomThresholdPreview" style="color:#ffd700; font-size:0.85rem; white-space:nowrap;"></span>
-                            </div>
+                            <div id="editCustomThresholdWrap" class="thr-custom" style="display:none;"></div>
                         </div>
                         <button class="add-btn" style="border-style:solid; margin-top:8px; color:var(--tno-gold); border-color:var(--tno-gold);" onclick="saveEditBill()">[✔] 수정 저장</button>
                     </div>
