@@ -5369,6 +5369,10 @@ window.DnoLangPacks.en = {
   [
    "- 안정화: 이미 반영한 개표 결과를 \"✔ 의회에 반영\"으로 또 누르면(보궐선거 · 수동 편집 뒤 포함) 의회가 지난 총선 결과로 조용히 되돌아가던 문제 수정 — 이제 \"반영할 새 개표 결과가 없습니다\" 안내",
    "- Stability: pressing \"\u2714 Apply to Parliament\" again on an already-applied count (including after a by-election or manual edits) no longer silently reverts parliament to the last general election \u2014 it now says there is no new count to apply"
+  ],
+  [
+   "- 로드맵 화면 머리에 \"← 메인으로\" 버튼",
+   "- \"\u2190 Main menu\" button in the roadmap header"
   ]
  ]
 };

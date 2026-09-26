@@ -124,6 +124,20 @@
       scrollbar-color: var(--tno-neon) #000;
     }
 
+    /* 메인 화면으로 돌아가는 버튼 (헤더 맨 앞) */
+    .rd-back {
+      flex: 0 0 auto;
+      padding: 4px 10px;
+      border: 1px solid var(--tno-neon);
+      color: var(--tno-neon);
+      background: rgba(0, 0, 0, .6);
+      text-decoration: none;
+      font-size: .95rem;
+      white-space: nowrap;
+      text-transform: none;
+    }
+    .rd-back:hover { background: color-mix(in srgb, var(--tno-neon) 15%, #000); box-shadow: 0 0 8px var(--tno-neon); }
+
     .rd-header-title {
       flex: 0 0 auto;
       font-size: 1.2rem;
