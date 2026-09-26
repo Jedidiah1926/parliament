@@ -21,6 +21,8 @@
     --tno-gold: #ffd700;
   }
   * { box-sizing: border-box; }
+  /* 네온: 둥근모는 굵은 글꼴이 없어 브라우저가 가짜 굵게를 만들면 글자가 뭉개진다 — 다른 네온 화면처럼 보통 굵기로 */
+  html:not([data-theme-family="modern"]) body, html:not([data-theme-family="modern"]) body * { font-weight: normal; font-synthesis: none; }
   body {
     font-family: 'NeoDunggeunmo', 'VT323', monospace;
     background: var(--tno-bg);
