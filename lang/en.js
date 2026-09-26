@@ -4903,8 +4903,8 @@ window.DnoLangPacks.en = {
    "The count is finished. "
   ],
   [
-   "결과대로 의석이 바뀌고, 결과는 오른쪽 클릭(길게 누르기)으로 이미지로 내보낼 수 있어요. 개표 속도는 선거 설정에서 조절합니다.",
-   "Seats change to match the result, and you can export it as an image with right-click (long-press). Adjust the counting speed in the election settings."
+   "결과를 확인한 뒤 선거 › 총선의 \"✔ 의회에 반영\"을 누르면 그 결과대로 의석이 바뀌어요. 결과는 오른쪽 클릭(길게 누르기)으로 이미지로 내보낼 수 있고, 개표 속도는 선거 설정에서 조절합니다.",
+   "After checking the result, press \"✔ Apply to Parliament\" in Elections › General to change the seats to match it. You can export the result as an image with right-click (long-press), and adjust the counting speed in the election settings."
   ],
   [
    "총리와 당수 · 국무위원 · 내각 화면",
@@ -5353,6 +5353,14 @@ window.DnoLangPacks.en = {
   [
    "- 네온 메인 화면의 시작하기를 금색으로 (집권 세력 강조처럼) — 마우스를 올린 다른 메뉴(시안)와 구분",
    "- The neon main screen's Start is now gold (like the governing-bloc highlight), so it stands apart from a hovered menu item (cyan)"
+  ],
+  [
+   "- 안정화: 개표가 끝나기 전·\"✔ 의회에 반영\"을 누르기 전에 실제 의석이 먼저 바뀌던 문제 수정 — 개표는 따로 집계하고 반영할 때만 의석이 바뀜 (재개표의 \"직전 대비 ▲▼\" 기준도 바로잡힘, 개표 도중 창을 닫아도 의석이 반쯤 센 상태로 저장되지 않음)",
+   "- Stability: seats no longer change before a count finishes or before pressing \"✔ Apply to Parliament\" — the count is tallied separately and seats change only on apply (also fixes the recount's \"vs. previous ▲▼\" baseline, and closing the window mid-count no longer saves half-counted seats)"
+  ],
+  [
+   "- 모바일에서 저장 · 날짜/회기 창이 아래 탭 바를 덮지 않게",
+   "- On mobile, the save and date/session panels no longer cover the bottom tab bar"
   ]
  ]
 };

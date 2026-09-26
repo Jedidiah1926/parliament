@@ -12961,7 +12961,10 @@
             elecLastResults[chamber] = elecLastResult;
 
             // ── 비례 풀 생성 + 셔플 ─────────────────
-            parties.forEach(p=>{ p[seatKey]=0; });
+            // 개표는 별도 집계(counts)에만 쌓는다 — 실제 의석(party[seatKey])은 "✔ 의회에 반영"을 누를 때만 바뀐다
+            // (예전엔 개표가 실제 의석을 바로 바꿔서, 반영 전에도 의회가 바뀌고 재개표의 "직전 대비" 기준이 틀어졌다)
+            const counts = {};
+            parties.forEach(p=>{ counts[p.id]=0; });
             let pool=[];
             weighted.forEach(p => { const n = listSeatMap[p.id]||0; for(let i=0;i<n;i++) pool.push(p.id); });
             for(let i=pool.length-1;i>0;i--){
@@ -12997,7 +13000,7 @@
                     revealedKeys.add(key);
                     districtResults.filter(d => d.key === key).forEach(({ partyId }) => {
                         const p = parties.find(x => x.id === partyId);
-                        if(p) { p[seatKey]++; revealedSeats++; }
+                        if(p) { counts[p.id]=(counts[p.id]||0)+1; revealedSeats++; }
                     });
                     elecDrawDistrictResultManualSvg(chamber, districtResults, revealedKeys, revealOne);
                     const distName = districtNames[chamber][key];
@@ -13005,7 +13008,7 @@
                     const pct = (revealedSeats/totalSeats*100).toFixed(1)+'%';
                     document.getElementById('elecProgressBar').style.width = pct;
                     document.getElementById('elecResultBar'+suf).style.width = pct;
-                    const map = buildElecMap(chamber, totalSeats);
+                    const map = buildElecMap(chamber, totalSeats, counts);
                     updateStats('elecResultStats'+suf, map, totalSeats);
                 };
                 document.getElementById('elecResultTitle'+suf).innerText = `> ${elecTitle} (${elecYear}) — ${chamberName}: 지도에서 지역구를 클릭해 개표하세요`;
@@ -13030,7 +13033,7 @@
 
                     const { key, partyId } = districtResults[i];
                     const p = parties.find(x=>x.id===partyId);
-                    if(p){ p[seatKey]++; }
+                    if(p){ counts[p.id]=(counts[p.id]||0)+1; }
 
                     elecDrawDistrictResult(districtResults, i+1, chamber);
 
@@ -13042,7 +13045,7 @@
                     document.getElementById('elecResultBar'+suf).style.width   = pct;
 
                     if(i % Math.max(1, Math.floor(districtResults.length/30)) === 0 || i === districtResults.length-1) {
-                        const map = buildElecMap(chamber, totalSeats);
+                        const map = buildElecMap(chamber, totalSeats, counts);
                         updateStats('elecResultStats'+suf, map, totalSeats);
                     }
                     if(districtSpeed > 0) await new Promise(r=>setTimeout(r, districtSpeed));
@@ -13064,7 +13067,7 @@
                 if(elecSkipToEnd) {
                     for(let j=i; j<pool.length; j++) {
                         const pp=parties.find(x=>x.id===pool[j]);
-                        if(pp){ pp[seatKey]++; }
+                        if(pp){ counts[pp.id]=(counts[pp.id]||0)+1; }
                     }
                     break;
                 }
@@ -13072,20 +13075,20 @@
                 if(elecSkipToEnd) {
                     for(let j=i; j<pool.length; j++) {
                         const pp=parties.find(x=>x.id===pool[j]);
-                        if(pp){ pp[seatKey]++; }
+                        if(pp){ counts[pp.id]=(counts[pp.id]||0)+1; }
                     }
                     break;
                 }
 
                 const p = parties.find(x=>x.id===pool[i]);
-                if(p){ p[seatKey]++; }
+                if(p){ counts[p.id]=(counts[p.id]||0)+1; }
 
                 const pct = ((districtSeats + i + 1)/totalSeats*100).toFixed(1)+'%';
                 document.getElementById('elecProgressBar').style.width=pct;
                 document.getElementById('elecResultBar'+suf).style.width=pct;
 
                 if(i%drawEvery===0 || i===pool.length-1) {
-                    const map = buildElecMap(chamber, totalSeats);
+                    const map = buildElecMap(chamber, totalSeats, counts);
                     drawChamber('elecCanvas'+suf, map, totalSeats, '_elec');
                     updateStats('elecResultStats'+suf, map, totalSeats);
                 }
@@ -13096,7 +13099,7 @@
             // 최종 렌더
             document.getElementById('elecProgressBar').style.width='100%';
             document.getElementById('elecResultBar'+suf).style.width='100%';
-            const finalMap = buildElecMap(chamber, totalSeats);
+            const finalMap = buildElecMap(chamber, totalSeats, counts);
             drawChamber('elecCanvas'+suf, finalMap, totalSeats, '_elec');
             updateStats('elecResultStats'+suf, finalMap, totalSeats);
             if(districtSeats > 0) elecDrawDistrictResult(districtResults, districtResults.length, chamber);
@@ -13114,13 +13117,14 @@
             runBtn.style.background='var(--tno-neon)'; runBtn.style.color='#000'; runBtn.textContent='>> 개표 시작 <<'; runBtn.dataset.modernLabel='개표 시작';
         }
 
-        function buildElecMap(chamber, totalSeats) {
+        // counts: 개표 중 집계({ partyId: 석 }) — 주면 실제 의석 대신 이것으로 그린다
+        function buildElecMap(chamber, totalSeats, counts) {
             const hG = document.getElementById('chkGovHighlight').checked;
             const seatKey = seatKeyFor(chamber);
             const rulingCoal = coalitions.find(c=>c.isRuling);
             let map=[];
             parties.forEach(p=>{
-                const cnt = p[seatKey];
+                const cnt = counts ? (counts[p.id]||0) : p[seatKey];
                 const coal = coalitions.find(c=>c.members.includes(p.id));
                 const isPartyRuling = p.isRuling;
                 const isCoalRuling  = !isPartyRuling && (coal && coal.isRuling);
@@ -13132,7 +13136,8 @@
                 let strokeDashed = false;
                 if(isExtSupport && rulingCoal) { stroke = hG ? '#ffd700' : rulingCoal.color; strokeDashed = true; }
 
-                const factions = (p.factions||[]).filter(f=>(f[seatKey]||0)>0);
+                // 개표 결과에는 파벌 구분이 없다 (의회에 반영하면 파벌 의석은 다시 나눠야 함)
+                const factions = counts ? [] : (p.factions||[]).filter(f=>(f[seatKey]||0)>0);
                 if(factions.length > 0) {
                     let placed = 0;
                     factions.forEach(f => {
