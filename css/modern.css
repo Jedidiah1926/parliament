@@ -2507,6 +2507,8 @@ html[data-theme-family="modern"] .lang-switch:hover { background: var(--m-accent
 
 /* 메인 메뉴·설정·점검 페이지 (main.css / index.css) */
 html[data-theme-family="modern"] .corner { display: none !important; }
+/* 터미널 느낌의 장식 문구(SYSTEM: ONLINE 등)는 네온 모드에서만 */
+html[data-theme-family="modern"] .neon-only { display: none !important; }
 html[data-theme-family="modern"] .terminal-container {
     background: var(--m-surface) !important;
     border: 1px solid var(--m-border) !important;
@@ -2514,6 +2516,12 @@ html[data-theme-family="modern"] .terminal-container {
     box-shadow: var(--m-shadow) !important;
     overflow: hidden;
 }
+html[data-theme-family="modern"] body.settings-page .terminal-container {
+    border: none !important;
+    border-radius: 0;
+    box-shadow: none !important;
+}
+html[data-theme-family="modern"] body.settings-page .header-strip { background: var(--m-surface) !important; }
 html[data-theme-family="modern"] .header-strip {
     background: none !important;
     color: var(--m-text) !important;
@@ -2649,11 +2657,13 @@ html[data-theme-family="modern"] .mn-collapse:hover { background: var(--m-surfac
 html[data-theme-family="modern"] .mn-groups { gap: 10px; padding: 0 2px 12px; }
 html[data-theme-family="modern"] .mn-group[data-tone="info"] { --tone: var(--m-info); }
 html[data-theme-family="modern"] .mn-group[data-tone="danger"] { --tone: var(--m-danger); }
-html[data-theme-family="modern"] .mn-group[data-tone="gold"] { --tone: var(--m-gold); }
+/* 여론: 라이트·다크에선 귤색 (라이트는 짙게, 다크는 밝게) */
+html[data-theme-mode="light"] .mn-group[data-tone="gold"] { --tone: #ea580c; }
+html[data-theme-mode="dark"] .mn-group[data-tone="gold"] { --tone: #fb923c; }
 html[data-theme-family="modern"] .mn-group[data-tone="success"] { --tone: var(--m-success); }
 html[data-theme-family="modern"] .mn-group[data-tone="muted"] { --tone: var(--m-text-3); }
 html[data-theme-family="modern"] .mn-group[data-tone="purple"] { --tone: #8b5cf6; }
-html[data-theme-family="modern"] .mn-group[data-tone="orange"] { --tone: #0d9488; } /* 국가: 라이트·다크에선 여론(주황빛 금색)과 구분되게 청록 */
+html[data-theme-family="modern"] .mn-group[data-tone="orange"] { --tone: var(--m-gold); } /* 국가: 라이트·다크에선 갈색빛 금색(예전 여론 색) */
 html[data-theme-family="modern"] .mn-group-head {
     padding: 7px 10px;
     background: color-mix(in srgb, var(--tone) 13%, transparent) !important;
@@ -2813,12 +2823,14 @@ html[data-theme-family="modern"] .mobile-nav {
 }
 html[data-theme-family="modern"] .mobile-nav-btn[data-tone="info"] { --tone: var(--m-info); }
 html[data-theme-family="modern"] .mobile-nav-btn[data-tone="danger"] { --tone: var(--m-danger); }
-html[data-theme-family="modern"] .mobile-nav-btn[data-tone="gold"] { --tone: var(--m-gold); }
+/* 여론: 라이트·다크에선 귤색 (라이트는 짙게, 다크는 밝게) */
+html[data-theme-mode="light"] .mobile-nav-btn[data-tone="gold"] { --tone: #ea580c; }
+html[data-theme-mode="dark"] .mobile-nav-btn[data-tone="gold"] { --tone: #fb923c; }
 html[data-theme-family="modern"] .mobile-nav-btn[data-tone="success"] { --tone: var(--m-success); }
 html[data-theme-family="modern"] .mobile-nav-btn[data-tone="seats"] { --tone: var(--m-text); }
 html[data-theme-family="modern"] .mobile-nav-btn[data-tone="muted"] { --tone: var(--m-text-3); }
 html[data-theme-family="modern"] .mobile-nav-btn[data-tone="purple"] { --tone: #8b5cf6; }
-html[data-theme-family="modern"] .mobile-nav-btn[data-tone="orange"] { --tone: #0d9488; } /* 국가: 라이트·다크에선 여론(주황빛 금색)과 구분되게 청록 */
+html[data-theme-family="modern"] .mobile-nav-btn[data-tone="orange"] { --tone: var(--m-gold); } /* 국가: 라이트·다크에선 갈색빛 금색(예전 여론 색) */
 html[data-theme-family="modern"] .mobile-nav-btn {
     border: none !important;
     margin-top: 0;
