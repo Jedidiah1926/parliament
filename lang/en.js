@@ -6060,6 +6060,230 @@ window.DnoLangPacks.en = {
   [
    "- 번역 템플릿 설정 기능 — 메인 화면 🌐에서 번역 템플릿 받기 · 언어 팩(.json) 불러오기 · 삭제",
    "- Translation template tools — download the translation template, load language packs (.json) and delete them from 🌐 on the main screen"
+  ],
+  [
+   "- 영어 번역",
+   "- English translation"
+  ],
+  [
+   "- 번역 템플릿 설정",
+   "- Translation template tools"
+  ],
+  [
+   "- 무소속 로직 리워크",
+   "- Independents logic rework"
+  ],
+  [
+   "- 의석 번호 추가",
+   "- Seat numbers"
+  ],
+  [
+   "- 로드맵 · 메인 화면 리워크",
+   "- Roadmap · main screen rework"
+  ],
+  [
+   "- 저장 v10",
+   "- Save v10"
+  ],
+  [
+   "- 지역구 이름 설정",
+   "- District names"
+  ],
+  [
+   "- 슬라이딩 순서 변경",
+   "- Drag-to-reorder"
+  ],
+  [
+   "- 정당 · 연정 카드 접기",
+   "- Collapsible party · coalition cards"
+  ],
+  [
+   "- 법안 제출 · 상정 분리",
+   "- Bill submission and tabling split"
+  ],
+  [
+   "- 입법 · 선거 기록 리워크",
+   "- Legislation · election records rework"
+  ],
+  [
+   "- 법안 버전 표기",
+   "- Bill versions"
+  ],
+  [
+   "- 좌석 정보 카드",
+   "- Seat info card"
+  ],
+  [
+   "- 저장 v12",
+   "- Save v12"
+  ],
+  [
+   "- 정당 해산 · 금지 표기",
+   "- Party dissolution · ban labels"
+  ],
+  [
+   "- 선거 > 지지율 탭",
+   "- Elections > Polling tab"
+  ],
+  [
+   "- 점검 안내 시작 화면",
+   "- Maintenance start screen"
+  ],
+  [
+   "- 저장 v13",
+   "- Save v13"
+  ],
+  [
+   "- 국가명 · 국기 설정",
+   "- Country name · flag"
+  ],
+  [
+   "- 원외정당 시스템",
+   "- Extra-parliamentary parties"
+  ],
+  [
+   "- 날짜 · 회기 설정",
+   "- Date · session settings"
+  ],
+  [
+   "- 탭 디자인 정리",
+   "- Tab design cleanup"
+  ],
+  [
+   "- 자동저장",
+   "- Autosave"
+  ],
+  [
+   "- 저장 탭 신설",
+   "- New Save tab"
+  ],
+  [
+   "- 실행 취소 · 다시 실행",
+   "- Undo · redo"
+  ],
+  [
+   "- 저장 버전 v1.0",
+   "- Save version v1.0"
+  ],
+  [
+   "- 데스크톱 · 모바일 UI 모드",
+   "- Desktop · mobile UI modes"
+  ],
+  [
+   "- 비례대표 개별 명단",
+   "- Individual list-seat rosters"
+  ],
+  [
+   "- 의원 검색 · 필터",
+   "- Member search · filters"
+  ],
+  [
+   "- 반원 중앙 로고",
+   "- Logo in the hemicycle centre"
+  ],
+  [
+   "- 지도 지역구 시스템",
+   "- Map district system"
+  ],
+  [
+   "- 지역구 안 의석 나눠 갖기",
+   "- Seats shared within a district"
+  ],
+  [
+   "- 경합 빗금 · 득표율 색 농도",
+   "- Tie hatching · vote-share shading"
+  ],
+  [
+   "- 테마 색 설정",
+   "- Theme colour"
+  ],
+  [
+   "- 이미지 내보내기 (PNG · JPG · SVG)",
+   "- Image export (PNG · JPG · SVG)"
+  ],
+  [
+   "- 통계 · 머리글 포함 옵션",
+   "- Stats · header options"
+  ],
+  [
+   "- 무소속 활동 금지 상태",
+   "- Banned status for independents"
+  ],
+  [
+   "- 내각 탭 신설",
+   "- New Cabinet tab"
+  ],
+  [
+   "- 거부권 · 비상 권한",
+   "- Veto · emergency powers"
+  ],
+  [
+   "- 대선 · 총리 선출 · 불신임",
+   "- Presidential election · PM election · no-confidence"
+  ],
+  [
+   "- 집단지도체제",
+   "- Collective leadership"
+  ],
+  [
+   "- 부정선거 탭 정식 공개",
+   "- Election fraud tab unlocked"
+  ],
+  [
+   "- 날짜 · 회기 표시 정리",
+   "- Date · session display cleanup"
+  ],
+  [
+   "- 세이브 슬롯 · 세이브 탭 바",
+   "- Save slots · save tab bar"
+  ],
+  [
+   "- 자동저장 주기 설정",
+   "- Autosave interval"
+  ],
+  [
+   "- Windows 데스크톱 앱",
+   "- Windows desktop app"
+  ],
+  [
+   "- 정당 복제 · 단축키",
+   "- Party duplication · shortcuts"
+  ],
+  [
+   "- 라이트 · 다크 · 네온 테마",
+   "- Light · dark · neon themes"
+  ],
+  [
+   "- 사이드바 · 모바일 UI 개편",
+   "- Sidebar · mobile UI overhaul"
+  ],
+  [
+   "- 튜토리얼 · 도움말",
+   "- Tutorial · help"
+  ],
+  [
+   "- 합당 · 건설적 불신임제",
+   "- Party mergers · constructive no-confidence"
+  ],
+  [
+   "- Hemicycle 이름 확정 · 메인 화면 개편",
+   "- Named Hemicycle · main screen redesign"
+  ],
+  [
+   "- 입법 · 선거 메뉴 신설",
+   "- New Legislation · Elections menus"
+  ],
+  [
+   "- 날짜 · 회기 줄 · 연호",
+   "- Date · session bar · era names"
+  ],
+  [
+   "- 튜토리얼 확장 · 맵 메이커 개편",
+   "- Expanded tutorial · Map Maker redesign"
+  ],
+  [
+   "자세히 보기 ›",
+   "Details ›"
   ]
  ]
 };

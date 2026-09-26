@@ -82,6 +82,7 @@
           {
             status: 'current',
             title: '0.2.2 - 영어 번역 · 템플릿',
+            summary: ['영어 번역', '번역 템플릿 설정'],
             desc: `2026.09.26
               <br>- 영어 번역 — 시뮬레이터 화면 전체 · 알림/확인창 · 튜토리얼 · 도움말 · 로드맵 · 맵 메이커
               <br>- 번역 템플릿 설정 기능 — 메인 화면 🌐에서 번역 템플릿 받기 · 언어 팩(.json) 불러오기 · 삭제`
@@ -219,6 +220,7 @@
           {
             status: 'done',
             title: '1.4.3 - 정당 리워크 Part.I',
+            summary: ['무소속 로직 리워크', '의석 번호 추가', '로드맵 · 메인 화면 리워크', '저장 v10'],
             desc: `2026.07.09
               <br>- 정당 시스템 리워크 I (무소속 로직 리워크)
               <br>- 의회 시스템 리워크 II (의석 번호 추가)
@@ -229,6 +231,7 @@
           {
             status: 'done',
             title: '1.4.4 - 지역구 리워크',
+            summary: ['지역구 이름 설정', '슬라이딩 순서 변경', '정당 · 연정 카드 접기', '법안 제출 · 상정 분리'],
             desc: `2026.07.10
               <br>- 지역구 시스템 리워크 (지역구 이름 설정 추가)
               <br>- 순서 시스템 리워크 (기존 화살표에서 슬라이딩 방식으로)
@@ -246,6 +249,7 @@
           {
             status: 'done',
             title: '1.4.6 - 기록 리워크',
+            summary: ['입법 · 선거 기록 리워크', '법안 버전 표기', '좌석 정보 카드', '저장 v12'],
             desc: `2026.08.26
               <br>- 입법기록 리워크 (개정안 발의, 법안 버전 표기, 표결 세부 타임라인 추가)
               <br>- 선거기록 리워크 (정당별 세부 기록, 저장 시각 표기 추가)
@@ -260,6 +264,7 @@
           {
             status: 'done',
             title: '1.4.7 - 정당 리워크 Part.II',
+            summary: ['정당 해산 · 금지 표기', '선거 > 지지율 탭', '점검 안내 시작 화면', '저장 v13'],
             desc: `2026.08.27
               <br>- 정당 시스템 리워크 II (정당 해산/금지 표기 추가)
               <br>- 저장 시스템 버전 업데이트 (v13)
@@ -275,6 +280,7 @@
           {
             status: 'done',
             title: '1.4.8 - 의회 리워크 Part.II',
+            summary: ['국가명 · 국기 설정', '원외정당 시스템', '날짜 · 회기 설정', '탭 디자인 정리'],
             desc: `2026.08.28
               <br>- 국가명·국기 설정 추가 (국가 > 설정, 헤더에 상시 표시)
               <br>- 의회 시스템 리워크 III (원외정당 시스템 추가, 의원실별로 정확히 판정하도록 개선)
@@ -287,6 +293,7 @@
           {
             status: 'done',
             title: '1.4.9 - 저장 리워크',
+            summary: ['자동저장', '저장 탭 신설', '실행 취소 · 다시 실행', '저장 버전 v1.0'],
             desc: `2026.08.29
               <br>- 자동저장 기능 추가 (localStorage 기반, 새로고침해도 유지)
               <br>- 저장 탭 신설 (자동저장 켜기/끄기, 저장 데이터 초기화, 파일로 저장/불러오기)
@@ -305,6 +312,7 @@
           {
             status: 'done',
             title: '1.5.0 - 지역구/비례 시스템 개편',
+            summary: ['데스크톱 · 모바일 UI 모드', '비례대표 개별 명단', '의원 검색 · 필터', '반원 중앙 로고'],
             desc: `2026.08.30
               <br>- 설정에 데스크톱(가로형)/모바일(세로형) UI 모드 추가, 모바일 전용 레이아웃 및 좌우 패널 전환 버튼 신설
               <br>- 의회 > 구성 정당 카드 UI 개편 (로고 + 이름·상태 / 이념·의석 2행 레이아웃)
@@ -326,6 +334,7 @@
           {
             status: 'done',
             title: '1.5.M - Maps',
+            summary: ['지도 지역구 시스템', '지역구 안 의석 나눠 갖기', '경합 빗금 · 득표율 색 농도', '테마 색 설정'],
             desc: `2026.09.09
               <br>- 맵 메이커(구 맵 메이커, MINISTRY OF TRANSPORT)에서 만든 실제 지도 모양의 지역구를 .jsx로 내보내고, 지역구 탭에서 업로드해 하원·상원·삼원이 하나의 지도를 공유하는 "지도" 지역구 시스템 추가
               <br>- 지역구별로 원별 의석 수를 따로 지정할 수 있고, 도형을 클릭하면 이름·약칭·의석 수를 편집 가능 (약칭을 지정하면 지도 위 도형 가운데에 표시)
@@ -341,6 +350,7 @@
           {
             status: 'done',
             title: '1.5.A - Assets',
+            summary: ['이미지 내보내기 (PNG · JPG · SVG)', '통계 · 머리글 포함 옵션', '무소속 활동 금지 상태'],
             desc: `2026.09.14
               <br>- 캔버스/SVG 우클릭 시 뜨는 "내보내기..." 메뉴 신설 — 반원·지역구 지도 등 모든 시각화를 PNG/JPG/SVG 형식으로 다운로드 가능
               <br>- 내보내기 창에 "아래 의석 수 등 통계 포함" 체크박스 추가, 실제 화면과 동일한 카드 디자인(색상 띠·이름·의석·%·상태 태그·범례)으로 재현 (SVG는 실제 DOM을 그대로 담아 픽셀 단위로 동일, PNG/JPG는 캔버스 도형으로 재구성)
@@ -358,6 +368,7 @@
           {
             status: 'done',
             title: '1.5.P - Powers',
+            summary: ['내각 탭 신설', '거부권 · 비상 권한', '대선 · 총리 선출 · 불신임', '집단지도체제'],
             desc: `2026.09.15
               <br>- 지역구 지도(SVG)에도 육각형 지도와 동일하게 이동/확대 기능 추가 — 휠클릭 드래그로 이동, Shift+스크롤로 확대/축소, 위치 초기화 버튼
               <br>- 상단 고정바에 있던 단원제/양원제/삼원제 선택 버튼을 국가 > 설정으로 이동
@@ -397,6 +408,7 @@
           {
             status: 'done',
             title: '1.5.S - Scandals',
+            summary: ['부정선거 추가', '부정선거 탭 정식 공개', '날짜 · 회기 표시 정리'],
             desc: `2026.09.16
               <br>- 부정선거 추가
               <br>- 부정선거 탭 잠금 해제 (정식 공개)
@@ -406,6 +418,7 @@
           {
             status: 'done',
             title: '1.5.5 - Saves',
+            summary: ['세이브 슬롯 · 세이브 탭 바', '자동저장 주기 설정', 'Windows 데스크톱 앱', '정당 복제 · 단축키'],
             desc: `2026.09.20 ~ 2026.09.22
               <br>- 정당/파벌 옆에 복제(사본) 버튼 추가
               <br>- 선거 결과 카드에 직전 대비 의석 증감(▲/▼) 표시
@@ -429,6 +442,7 @@
           {
             status: 'done',
             title: '1.5.6 - Themes',
+            summary: ['라이트 · 다크 · 네온 테마', '사이드바 · 모바일 UI 개편', '튜토리얼 · 도움말', '합당 · 건설적 불신임제'],
             desc: `2026.09.22 ~ 2026.09.25
               <br>- 테마 모드 3종(라이트/다크/네온) 추가 — 기존 TNO 스타일은 "네온"으로 이름 변경
               <br>- 라이트/다크 모드 UI 대대적 개편: 전용 스타일시트(css/modern.css) 분리, 테두리 없는 모노톤 버튼 등 현대적인 디자인
@@ -462,6 +476,7 @@
           {
             status: 'current',
             title: '1.5.7 - Hemicycle',
+            summary: ['Hemicycle 이름 확정 · 메인 화면 개편', '입법 · 선거 메뉴 신설', '날짜 · 회기 줄 · 연호', '튜토리얼 확장 · 맵 메이커 개편'],
             desc: `2026.09.26
               <br>- 원내대표에도 "의석 선택 → 붙여넣기" 추가 — 원내대표 이름 · 사진을 고른 의석(지역구 · 비례 · 무소속)에 복사
               <br>- 의회와 국가 사이에 "입법" 메뉴 신설 — 제출 · 상정 · 표결 · 기록 (구 국가 > 입법 · 기록)
@@ -538,6 +553,7 @@
         ]
       },
       '1.6': {
+        slots: 10,
         title: '1.6: 텀블벅 펀딩',
         cards: [
           {
@@ -550,6 +566,7 @@
         ]
       },
       '1.7': {
+        slots: 10,
         title: '1.7: 나무위키식 의회 틀',
         cards: [
           {
@@ -561,6 +578,7 @@
         ]
       },
       '1.8': {
+        slots: 10,
         title: '1.8: 데모 출시',
         cards: [
           {
@@ -573,6 +591,7 @@
         ]
       },
       '1.9': {
+        slots: 10,
         title: '1.9: 얼리 액세스',
         cards: [
           {
@@ -605,100 +624,182 @@
         .replaceAll("'", '&#039;');
     }
 
+    // 로드맵은 큰 버전(0 · 1 · 2)마다 한 줄. 한 줄 안에 x.0 ~ x.9 구간이 이어지고,
+    // 구간 제목은 가로로 스크롤해도 그 구간이 끝날 때까지 왼쪽에 붙어 따라온다(position: sticky).
+    function majorOf(sectionKey) {
+      return sectionKey.split('.')[0];
+    }
 
-    function renderRoadmap(versionKey) {
-      const data = roadmapData[versionKey];
-      const titleEl = document.getElementById('roadmapVersionTitle');
+    function getSectionKeys(major) {
+      return Object.keys(roadmapData).filter(key => majorOf(key) === major);
+    }
+
+    // 카드에는 날짜 + 요약(summary)만. 요약이 없으면 원래 설명(짧은 카드)을 그대로 쓴다.
+    function cardDate(item) {
+      return String(item.desc || '').split('<br>')[0].trim();
+    }
+
+    function cardBodyHTML(item) {
+      if (!item.summary) return item.desc;
+      return [escapeHTML(cardDate(item))]
+        .concat(item.summary.map(line => '- ' + escapeHTML(line)))
+        .join('<br>');
+    }
+
+    function versionOfTitle(title) {
+      return String(title).split(' - ')[0].trim();
+    }
+
+    function renderRoadmap(major, focusCurrent) {
       const track = document.getElementById('roadmapTrack');
-      const line = document.getElementById('roadmapLine');
+      const viewport = document.getElementById('roadmapViewport');
+      if (!track || !viewport) return;
 
-      if (!data || !titleEl || !track || !line) return;
+      track.innerHTML = '';
 
-      titleEl.textContent = data.title;
+      getSectionKeys(major).forEach(key => {
+        const data = roadmapData[key];
+        const section = document.createElement('section');
+        section.className = 'rd-section';
+        section.dataset.section = key;
 
-      track.querySelectorAll('.rd-card').forEach(card => card.remove());
+        const title = document.createElement('h1');
+        title.className = 'rd-section-title';
+        title.textContent = data.title;
+        section.appendChild(title);
 
-      data.cards.forEach(item => {
-        const article = document.createElement('article');
-        article.className = `rd-card ${item.status || 'future'}`;
+        const row = document.createElement('div');
+        row.className = 'rd-section-cards';
 
-        article.innerHTML = `
-          <h2 class="rd-title">${escapeHTML(item.title)}</h2>
-          <p class="rd-desc">${item.desc}</p>
-        `;
+        data.cards.forEach(item => {
+          const article = document.createElement('article');
+          article.className = `rd-card ${item.status || 'future'}`;
+          if (item.summary) {
+            article.classList.add('has-detail');
+            article.tabIndex = 0;
+            article.setAttribute('role', 'button');
+            article.addEventListener('click', () => openDetail(item));
+            article.addEventListener('keydown', e => {
+              if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openDetail(item); }
+            });
+          }
+          article.innerHTML = `
+            <h2 class="rd-title">${escapeHTML(item.title)}</h2>
+            <p class="rd-desc">${cardBodyHTML(item)}</p>
+            ${item.summary ? '<span class="rd-more">자세히 보기 ›</span>' : ''}
+          `;
+          row.appendChild(article);
+        });
 
-        track.appendChild(article);
+        // 아직 정하지 않은 버전은 번호만 적힌 흐린 카드로 자리를 채운다 (예: 1.6.1 ~ 1.6.9)
+        const used = new Set(data.cards.map(item => versionOfTitle(item.title)));
+        for (let i = 0; i < (data.slots || 0); i++) {
+          const version = `${key}.${i}`;
+          if (used.has(version) || row.children.length >= data.slots) continue;
+          const slot = document.createElement('article');
+          slot.className = 'rd-card placeholder';
+          slot.setAttribute('aria-hidden', 'true');
+          slot.innerHTML = `<h2 class="rd-title">${escapeHTML(version)}</h2>`;
+          row.appendChild(slot);
+        }
+
+        section.appendChild(row);
+        track.appendChild(section);
       });
 
       document.querySelectorAll('.rd-version-btn').forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.version === versionKey);
+        btn.classList.toggle('active', btn.dataset.major === major);
       });
 
-      // 버전을 바꿀 때마다 카드를 새로 그리므로, 언어가 한국어가 아니면 새로 그린 부분을 다시 번역
-      if (window.DnoLang && window.DnoLang.translateSubtree) {
-        window.DnoLang.translateSubtree(titleEl);
-        window.DnoLang.translateSubtree(track);
-      }
+      // 새로 그린 부분은 언어가 한국어가 아니면 다시 번역
+      if (window.DnoLang && window.DnoLang.translateSubtree) window.DnoLang.translateSubtree(track);
 
-      requestAnimationFrame(syncRoadmapSize);
+      syncRoadmapSize();
+      viewport.scrollLeft = 0;
+      if (focusCurrent) {
+        const current = Array.from(track.querySelectorAll('.rd-card.current')).pop();
+        if (current) {
+          // 진행 중인 카드를 왼쪽에서 두 번째 칸쯤에 오도록 (좁은 화면에서는 맨 왼쪽)
+          const vpRect = viewport.getBoundingClientRect();
+          const cardRect = current.getBoundingClientRect();
+          const lead = vpRect.width < cardRect.width * 2.5 ? 0 : cardRect.width * 1.1;
+          viewport.scrollLeft = Math.max(0, cardRect.left - vpRect.left - lead);
+        }
+      }
     }
 
     function syncRoadmapSize() {
       const viewport = document.getElementById('roadmapViewport');
       const track = document.getElementById('roadmapTrack');
-      const line = document.getElementById('roadmapLine');
-      const cards = Array.from(track.querySelectorAll('.rd-card'));
+      if (!viewport || !track) return;
 
-      if (!viewport || !track || !line || cards.length === 0) return;
-
-      const gapText = getComputedStyle(track).gap || '14px';
-      const gap = parseFloat(gapText) || 14;
-
+      const gap = parseFloat(getComputedStyle(track).columnGap) || 14;
       const viewportWidth = viewport.clientWidth;
       const visibleCards = 5;
-
       const minCardWidth = viewportWidth <= 880
         ? Math.min(260, Math.max(160, viewportWidth * 0.72))
-        : 220;
-
+        : 200;
       const naturalCardWidth = (viewportWidth - gap * (visibleCards - 1)) / visibleCards;
-      const cardWidth = Math.max(minCardWidth, naturalCardWidth);
-
-      const totalWidth = cards.length * cardWidth + Math.max(0, cards.length - 1) * gap;
-      const trackWidth = Math.max(viewportWidth, totalWidth);
-
-      track.style.width = trackWidth + 'px';
-
-      cards.forEach(card => {
-        card.style.flexBasis = cardWidth + 'px';
-      });
-
-      line.style.left = '0px';
-      line.style.width = trackWidth + 'px';
+      track.style.setProperty('--rd-card-w', Math.max(minCardWidth, naturalCardWidth) + 'px');
     }
 
-    document.querySelectorAll('.rd-version-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        renderRoadmap(btn.dataset.version);
-      });
+    // 세로 휠을 가로 이동으로: 아래로 굴리면 오른쪽, 위로 굴리면 왼쪽
+    function initWheelScroll() {
+      const viewport = document.getElementById('roadmapViewport');
+      if (!viewport) return;
+      viewport.addEventListener('wheel', e => {
+        if (e.ctrlKey) return;
+        if (Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return;
+        const unit = e.deltaMode === 1 ? 40 : e.deltaMode === 2 ? viewport.clientWidth : 1;
+        viewport.scrollLeft += e.deltaY * unit;
+        e.preventDefault();
+      }, { passive: false });
+    }
+
+    // 자세한 설명: 카드를 누르면 화면 위에 떠 있는 창으로 원래 설명 전체를 보여준다
+    function openDetail(item) {
+      closeDetail();
+      const layer = document.createElement('div');
+      layer.className = 'rd-detail-layer';
+      layer.id = 'rdDetailLayer';
+      layer.innerHTML = `
+        <div class="rd-detail rd-card ${item.status || 'future'}" role="dialog" aria-modal="true">
+          <div class="rd-detail-head">
+            <h2 class="rd-title">${escapeHTML(item.title)}</h2>
+            <button class="rd-detail-close" type="button" aria-label="닫기">×</button>
+          </div>
+          <p class="rd-desc">${item.desc}</p>
+        </div>
+      `;
+      layer.addEventListener('click', e => { if (e.target === layer) closeDetail(); });
+      layer.querySelector('.rd-detail-close').addEventListener('click', closeDetail);
+      document.body.appendChild(layer);
+      if (window.DnoLang && window.DnoLang.translateSubtree) window.DnoLang.translateSubtree(layer);
+      layer.querySelector('.rd-detail-close').focus();
+    }
+
+    function closeDetail() {
+      const layer = document.getElementById('rdDetailLayer');
+      if (layer) layer.remove();
+    }
+
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') closeDetail();
     });
 
-    // 새 버전 섹션이 추가될 때마다 이 값을 손으로 고쳐야 했던 문제 방지 —
-    // 가장 마지막에 등장하는 "현재 진행 중"(status:'current') 카드가 속한 섹션을 자동으로 기본 화면으로 선택
-    function getDefaultVersionKey() {
+    document.querySelectorAll('.rd-version-btn').forEach(btn => {
+      btn.addEventListener('click', () => renderRoadmap(btn.dataset.major, false));
+    });
+
+    // 가장 마지막 "현재 진행 중"(status:'current') 카드가 속한 큰 버전을 기본으로 열고 그 카드로 이동
+    function getDefaultMajor() {
       const keys = Object.keys(roadmapData);
       for (let i = keys.length - 1; i >= 0; i--) {
-        if (roadmapData[keys[i]].cards.some(card => card.status === 'current')) return keys[i];
+        if (roadmapData[keys[i]].cards.some(card => card.status === 'current')) return majorOf(keys[i]);
       }
-      return keys[keys.length - 1];
+      return majorOf(keys[keys.length - 1]);
     }
 
-    window.addEventListener('load', () => renderRoadmap(getDefaultVersionKey()));
+    initWheelScroll();
+    window.addEventListener('load', () => renderRoadmap(getDefaultMajor(), true));
     window.addEventListener('resize', syncRoadmapSize);
-
-    if ('ResizeObserver' in window) {
-      const observer = new ResizeObserver(syncRoadmapSize);
-      observer.observe(document.getElementById('roadmapViewport'));
-      observer.observe(document.getElementById('roadmapTrack'));
-    }
-  

@@ -2643,7 +2643,7 @@ html[data-theme-family="modern"] .rd-version-btn {
 }
 html[data-theme-family="modern"] .rd-version-btn:hover { color: var(--m-text) !important; }
 html[data-theme-family="modern"] .rd-version-btn.active { background: var(--m-surface) !important; color: var(--m-text) !important; box-shadow: var(--m-shadow-sm) !important; }
-html[data-theme-family="modern"] .rd-version { color: var(--m-text) !important; font-weight: 800; border-bottom-color: var(--m-border) !important; }
+html[data-theme-family="modern"] .rd-section-title { color: var(--m-text) !important; font-family: inherit; font-weight: 800; letter-spacing: -.5px; text-shadow: none !important; }
 html[data-theme-family="modern"] .rd-card {
     background: var(--m-surface) !important;
     border: 1px solid var(--m-border) !important;
@@ -2653,7 +2653,20 @@ html[data-theme-family="modern"] .rd-card {
 }
 html[data-theme-family="modern"] .rd-title { color: var(--m-text) !important; font-weight: 700; border-bottom-color: var(--m-border) !important; }
 html[data-theme-family="modern"] .rd-desc { color: var(--m-text-2) !important; }
-html[data-theme-family="modern"] .rd-track-line { background: var(--m-border) !important; }
+html[data-theme-family="modern"] .rd-section-cards::before { background: var(--m-border) !important; box-shadow: none !important; }
+html[data-theme-family="modern"] .rd-card.placeholder {
+    background: repeating-linear-gradient(45deg, var(--m-surface-2), var(--m-surface-2) 8px, transparent 8px, transparent 16px), var(--m-surface) !important;
+    border: 1px dashed var(--m-border-strong) !important;
+    box-shadow: none !important;
+    opacity: .5;
+}
+html[data-theme-family="modern"] .rd-card.placeholder .rd-title { color: var(--m-text-3) !important; }
+html[data-theme-family="modern"] .rd-more { color: var(--m-text-3); font-weight: 600; opacity: 1; }
+html[data-theme-family="modern"] .rd-card.has-detail:hover .rd-more { color: var(--m-text); }
+html[data-theme-family="modern"] .rd-detail-layer { background: rgba(0, 0, 0, .35); backdrop-filter: blur(2px); }
+html[data-theme-family="modern"] .rd-detail.rd-card { border-radius: 18px; box-shadow: var(--m-shadow) !important; }
+html[data-theme-family="modern"] .rd-detail-close { border: none; border-radius: 9px; background: var(--m-surface-2); color: var(--m-text); }
+html[data-theme-family="modern"] .rd-detail-close:hover { background: var(--m-surface-3); color: var(--m-text); }
 /* 로드맵 스크롤바: 네온의 검은 트랙 · 카드색 막대 대신 배경 없는 가는 회색 막대 */
 html[data-theme-family="modern"] .rd-desc,
 html[data-theme-family="modern"] .rd-track-viewport,

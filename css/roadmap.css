@@ -197,21 +197,6 @@
       overflow: hidden;
     }
 
-    .rd-version {
-      margin: 0 0 clamp(18px, 2vw, 26px);
-      padding: 0 0 12px;
-      border-bottom: 1px solid var(--tno-border);
-      color: var(--tno-gold);
-      font-family: 'NeoDunggeunmo', 'VT323', monospace;
-      font-size: clamp(2rem, 4.1vw, 3.6rem);
-      font-weight: normal;
-      line-height: 1;
-      letter-spacing: 3px;
-      text-align: left;
-      text-shadow: 0 0 10px rgba(255,215,0,.55);
-      flex: 0 0 auto;
-    }
-
     .rd-track-viewport {
       flex: 1 1 auto;
       min-height: 0;
@@ -220,35 +205,79 @@
       overflow-y: hidden;
       scrollbar-color: var(--tno-neon) #000;
       scrollbar-width: thin;
-      padding-top: 22px;
       padding-bottom: 14px;
       position: relative;
     }
 
+    /* 한 줄 = 큰 버전(0 · 1 · 2). 구간(x.0 ~ x.9)이 가로로 이어진다 */
     .rd-track-inner {
-      position: relative;
       display: flex;
       align-items: stretch;
+      width: max-content;
       height: 100%;
       min-height: 0;
       gap: var(--rd-gap);
+      --rd-card-w: 220px;
     }
 
-    .rd-track-line {
+    .rd-section {
+      display: flex;
+      flex-direction: column;
+      flex: 0 0 auto;
+      min-height: 0;
+    }
+
+    /* 구간 제목: 스크롤해도 그 구간이 끝날 때까지 왼쪽 끝에 붙어 따라온다 */
+    .rd-section-title {
+      position: sticky;
+      left: 0;
+      z-index: 2;
+      align-self: flex-start;
+      margin: 0;
+      padding: 0 var(--rd-gap) 0 2px;
+      color: var(--tno-gold);
+      font-family: 'NeoDunggeunmo', 'VT323', monospace;
+      font-size: clamp(1.7rem, 3.4vw, 3rem);
+      font-weight: normal;
+      line-height: 1.1;
+      letter-spacing: 2px;
+      white-space: nowrap;
+      text-shadow: 0 0 10px rgba(255,215,0,.55);
+      flex: 0 0 auto;
+    }
+
+    .rd-section-cards {
+      position: relative;
+      align-self: flex-start;
+      display: flex;
+      align-items: stretch;
+      gap: var(--rd-gap);
+      flex: 1 1 auto;
+      min-height: 0;
+      padding-top: 22px;
+      margin-top: clamp(8px, 1.4vw, 16px);
+    }
+
+    /* 카드 위를 지나는 연결선 — 다음 구간까지 끊기지 않게 간격만큼 더 길게 */
+    .rd-section-cards::before {
+      content: '';
       position: absolute;
       z-index: 0;
       top: 21px;
       left: 0;
+      right: calc(-1 * var(--rd-gap));
       height: 2px;
       background: var(--tno-border);
       box-shadow: 0 0 6px var(--tno-neon-dim);
       pointer-events: none;
     }
+    .rd-section:last-child .rd-section-cards::before { right: 0; }
 
     .rd-card {
       position: relative;
       z-index: 1;
-      flex: 0 0 auto;
+      flex: 0 0 var(--rd-card-w);
+      width: var(--rd-card-w);
       min-width: 0;
       height: 100%;
       min-height: 0;
@@ -348,13 +377,74 @@
       box-shadow: 0 0 8px var(--card-color, var(--tno-neon));
     }
 
+    /* 요약 카드: 누르면 자세한 설명 창이 뜬다 */
+    .rd-card .rd-desc { overflow: hidden; }
+    .rd-card.has-detail { cursor: pointer; }
+    .rd-card.has-detail:focus-visible { outline: 2px solid var(--card-color, var(--tno-neon)); outline-offset: 2px; }
+    .rd-more {
+      flex: 0 0 auto;
+      margin-top: 8px;
+      color: var(--card-color, var(--tno-neon));
+      font-size: .85rem;
+      opacity: .75;
+    }
+    .rd-card.has-detail:hover .rd-more { opacity: 1; }
+
+    /* 아직 정하지 않은 버전 자리 — 번호만 적힌 흐린 카드 */
+    .rd-card.placeholder {
+      --card-color: #3a4450;
+      background: repeating-linear-gradient(45deg, rgba(255,255,255,.025), rgba(255,255,255,.025) 8px, transparent 8px, transparent 16px), #0b0d11;
+      border-style: dashed;
+      opacity: .45;
+      pointer-events: none;
+    }
+    .rd-card.placeholder .rd-title { border-bottom: none; text-shadow: none; }
+
+    /* 자세한 설명 창 (저장 창처럼 화면 위에 뜬다) */
+    .rd-detail-layer {
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      background: rgba(0, 0, 0, .6);
+    }
+    .rd-detail.rd-card {
+      width: min(640px, 100%);
+      height: auto;
+      max-height: min(78vh, 720px);
+      padding: 18px 20px 16px;
+      background: #0d0f14;
+      box-shadow: 0 0 24px color-mix(in srgb, var(--card-color, var(--tno-neon)) 30%, transparent);
+    }
+    .rd-detail.rd-card::before { display: none; }
+    .rd-detail .rd-desc { overflow-y: auto; }
+    .rd-detail-head { display: flex; align-items: flex-start; gap: 12px; }
+    .rd-detail-head .rd-title { flex: 1 1 auto; }
+    .rd-detail-close {
+      flex: 0 0 auto;
+      width: 30px;
+      height: 30px;
+      padding: 0;
+      border: 1px solid var(--card-color, var(--tno-neon));
+      background: #000;
+      color: var(--card-color, var(--tno-neon));
+      font-family: inherit;
+      font-size: 1.2rem;
+      line-height: 1;
+      cursor: pointer;
+    }
+    .rd-detail-close:hover { background: var(--card-color, var(--tno-neon)); color: #000; }
+
     @media (max-width: 880px) {
       body { padding: 12px; }
       .rd-frame { width: 100%; }
       .rd-content { padding: 16px 12px 14px; }
-      .rd-track-viewport { padding-bottom: 14px; }
       .rd-header { gap: 9px; }
       .rd-version-btn { padding: 5px 9px; }
+      .rd-section-title { white-space: normal; max-width: calc(100vw - 64px); }
     }
 
     @media (max-height: 560px) {
@@ -362,9 +452,9 @@
       .rd-header { padding: 8px 12px; min-height: 42px; }
       .rd-header-divider { height: 20px; }
       .rd-content { padding: 12px; }
-      .rd-version { margin-bottom: 14px; padding-bottom: 8px; }
-      .rd-track-viewport { padding-top: 18px; padding-bottom: 12px; }
-      .rd-track-line { top: 17px; }
+      .rd-track-viewport { padding-bottom: 12px; }
+      .rd-section-cards { padding-top: 18px; margin-top: 6px; }
+      .rd-section-cards::before { top: 17px; }
       .rd-card { height: 100%; min-height: 0; padding-top: 25px; }
       .rd-title { margin-bottom: 7px; padding-bottom: 6px; }
       .rd-desc { font-size: .88rem; line-height: 1.45; }
