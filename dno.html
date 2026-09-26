@@ -366,7 +366,7 @@
                     <div id="listMemberList"></div>
                 </div>
 
-                <!-- 의회 설정 (구 국가 > 의회): 원 구성 + 의장/부의장 + 지역구 시스템 -->
+                <!-- 의회 설정 (구 국가 > 의회): 원 구성 + 의장/부의장 + 원별 반원 중앙 표시(의석 수/로고) -->
                 <div id="contentAssembly" class="sub-tab-content">
                     <label style="cursor:pointer; margin-bottom:16px; display:block;">
                         <input type="checkbox" id="chkGovHighlight" onchange="simulate()" checked>
@@ -387,23 +387,52 @@
                         <div id="chamberLeadersList"></div>
                     </div>
 
-                    <!-- 지역구 시스템 (육각형 / 지도) -->
+                    <!-- 의원실별 반원 중앙 표시 (의석 수 / 로고) -->
                     <div style="margin-top:16px;">
-                        <label style="color:#888;font-size:0.8rem;margin-bottom:6px;display:block;">지역구 시스템 (기본: 지도)</label>
-                        <div class="system-radio-group">
-                            <button type="button" class="system-radio-btn active" id="districtSystemModeSvgBtn" onclick="setDistrictMapMode('svg')">지도</button>
-                            <button type="button" class="system-radio-btn" id="districtSystemModeHexBtn" onclick="setDistrictMapMode('hex')">그리드</button>
+                        <label id="chamberCenterLabelHouse" style="color:#888;font-size:0.8rem;margin-bottom:6px;display:block;">하원 반원 중앙 표시</label>
+                        <div class="system-radio-group" style="margin-bottom:8px;">
+                            <button type="button" class="system-radio-btn active" id="chamberCenterModeSeatsBtnHouse" onclick="setChamberCenterMode('house','seats')">의석 수</button>
+                            <button type="button" class="system-radio-btn" id="chamberCenterModeLogoBtnHouse" onclick="setChamberCenterMode('house','logo')">로고</button>
                         </div>
-                        <div style="color:#555;font-size:0.72rem;margin-top:4px;">지도 모드로 바꾸면 선거 &gt; 지역구 탭에서 SVG 지도를 업로드할 수 있습니다</div>
-                        <!-- 지도 위 약칭/의석 배지 크기 — 지역구 자체 크기와 무관하게 지도 전체에서 하나의 기준으로 통일되지만, 취향에 따라 일괄 조정 가능 -->
-                        <div style="margin-top:10px;">
-                            <label style="color:#888;font-size:0.8rem;margin-bottom:4px;display:block;">지도 글씨·배지 크기</label>
-                            <div style="display:flex;align-items:center;gap:8px;">
-                                <input type="range" id="districtLabelScaleSlider" min="50" max="200" value="100"
-                                    oninput="setDistrictLabelScale(this.value)"
-                                    style="-webkit-appearance:none;flex:1;background:transparent;">
-                                <span id="districtLabelScaleVal" style="color:var(--tno-neon);width:44px;text-align:right;font-size:0.85rem;">100%</span>
+                        <div id="chamberCenterLogoWrapHouse" style="display:flex;align-items:center;gap:10px;">
+                            <div class="leader-photo-box" id="chamberLogoPreviewHouse" style="width:52px;height:52px;flex-shrink:0;" title="클릭하여 로고 업로드">
+                                <div class="photo-ph">⚑</div>
+                                <input type="file" accept="image/*" onchange="uploadChamberLogo(this,'house')">
                             </div>
+                            <div style="min-width:0;">
+                                <div style="color:#666;font-size:0.72rem;">클릭해서 로고를 올리고, [로고]를 선택하면 반원 중앙에 표시됩니다</div>
+                                <button id="chamberLogoRemoveBtnHouse" onclick="removeChamberLogo('house')" style="display:none;background:transparent;border:1px solid #333;color:#555;font-family:inherit;font-size:0.75rem;padding:4px 10px;cursor:pointer;margin-top:4px;">✕ 로고 제거</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="chamberCenterSenateWrap" style="margin-top:16px;">
+                        <label style="color:#888;font-size:0.8rem;margin-bottom:6px;display:block;" id="chamberCenterLabelSenate">상원 반원 중앙 표시</label>
+                        <div class="system-radio-group" style="margin-bottom:8px;">
+                            <button type="button" class="system-radio-btn active" id="chamberCenterModeSeatsBtnSenate" onclick="setChamberCenterMode('senate','seats')">의석 수</button>
+                            <button type="button" class="system-radio-btn" id="chamberCenterModeLogoBtnSenate" onclick="setChamberCenterMode('senate','logo')">로고</button>
+                        </div>
+                        <div id="chamberCenterLogoWrapSenate" style="display:flex;align-items:center;gap:10px;">
+                            <div class="leader-photo-box" id="chamberLogoPreviewSenate" style="width:52px;height:52px;" title="반원 중앙에 표시할 로고">
+                                <div class="photo-ph">⚑</div>
+                                <input type="file" accept="image/*" onchange="uploadChamberLogo(this,'senate')">
+                            </div>
+                            <button id="chamberLogoRemoveBtnSenate" onclick="removeChamberLogo('senate')" style="display:none;background:transparent;border:1px solid #333;color:#555;font-family:inherit;font-size:0.75rem;padding:4px 10px;cursor:pointer;">✕ 로고 제거</button>
+                        </div>
+                    </div>
+
+                    <div id="chamberCenterThirdWrap" style="margin-top:16px;display:none;">
+                        <label style="color:#888;font-size:0.8rem;margin-bottom:6px;display:block;" id="chamberCenterLabelThird">삼원 반원 중앙 표시</label>
+                        <div class="system-radio-group" style="margin-bottom:8px;">
+                            <button type="button" class="system-radio-btn active" id="chamberCenterModeSeatsBtnThird" onclick="setChamberCenterMode('third','seats')">의석 수</button>
+                            <button type="button" class="system-radio-btn" id="chamberCenterModeLogoBtnThird" onclick="setChamberCenterMode('third','logo')">로고</button>
+                        </div>
+                        <div id="chamberCenterLogoWrapThird" style="display:flex;align-items:center;gap:10px;">
+                            <div class="leader-photo-box" id="chamberLogoPreviewThird" style="width:52px;height:52px;" title="반원 중앙에 표시할 로고">
+                                <div class="photo-ph">⚑</div>
+                                <input type="file" accept="image/*" onchange="uploadChamberLogo(this,'third')">
+                            </div>
+                            <button id="chamberLogoRemoveBtnThird" onclick="removeChamberLogo('third')" style="display:none;background:transparent;border:1px solid #333;color:#555;font-family:inherit;font-size:0.75rem;padding:4px 10px;cursor:pointer;">✕ 로고 제거</button>
                         </div>
                     </div>
                 </div>
@@ -638,6 +667,7 @@
                 <div class="sub-tab-container">
                     <button class="sub-tab-btn active" onclick="switchSubTab('nation','symbol')" id="subTabSymbol">상징</button>
                     <button class="sub-tab-btn" onclick="switchSubTab('nation','date')" id="subTabDate">날짜</button>
+                    <button class="sub-tab-btn" onclick="switchSubTab('nation','nationSettings')" id="subTabNationSettings">설정</button>
                 </div>
 
                 <!-- 국가 하위탭: 상징 · 의회 · 날짜 · 저장 (구 국가 > 설정의 내부 탭) -->
@@ -661,54 +691,6 @@
                         </div>
                     </div>
 
-                    <!-- 의원실별 반원 중앙 표시 (의석 수 / 로고) -->
-                    <div style="margin-top:16px;">
-                        <label id="chamberCenterLabelHouse" style="color:#888;font-size:0.8rem;margin-bottom:6px;display:block;">하원 반원 중앙 표시</label>
-                        <div class="system-radio-group" style="margin-bottom:8px;">
-                            <button type="button" class="system-radio-btn active" id="chamberCenterModeSeatsBtnHouse" onclick="setChamberCenterMode('house','seats')">의석 수</button>
-                            <button type="button" class="system-radio-btn" id="chamberCenterModeLogoBtnHouse" onclick="setChamberCenterMode('house','logo')">로고</button>
-                        </div>
-                        <div id="chamberCenterLogoWrapHouse" style="display:flex;align-items:center;gap:10px;">
-                            <div class="leader-photo-box" id="chamberLogoPreviewHouse" style="width:52px;height:52px;flex-shrink:0;" title="클릭하여 로고 업로드">
-                                <div class="photo-ph">⚑</div>
-                                <input type="file" accept="image/*" onchange="uploadChamberLogo(this,'house')">
-                            </div>
-                            <div style="min-width:0;">
-                                <div style="color:#666;font-size:0.72rem;">클릭해서 로고를 올리고, [로고]를 선택하면 반원 중앙에 표시됩니다</div>
-                                <button id="chamberLogoRemoveBtnHouse" onclick="removeChamberLogo('house')" style="display:none;background:transparent;border:1px solid #333;color:#555;font-family:inherit;font-size:0.75rem;padding:4px 10px;cursor:pointer;margin-top:4px;">✕ 로고 제거</button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div id="chamberCenterSenateWrap" style="margin-top:16px;">
-                        <label style="color:#888;font-size:0.8rem;margin-bottom:6px;display:block;" id="chamberCenterLabelSenate">상원 반원 중앙 표시</label>
-                        <div class="system-radio-group" style="margin-bottom:8px;">
-                            <button type="button" class="system-radio-btn active" id="chamberCenterModeSeatsBtnSenate" onclick="setChamberCenterMode('senate','seats')">의석 수</button>
-                            <button type="button" class="system-radio-btn" id="chamberCenterModeLogoBtnSenate" onclick="setChamberCenterMode('senate','logo')">로고</button>
-                        </div>
-                        <div id="chamberCenterLogoWrapSenate" style="display:flex;align-items:center;gap:10px;">
-                            <div class="leader-photo-box" id="chamberLogoPreviewSenate" style="width:52px;height:52px;" title="반원 중앙에 표시할 로고">
-                                <div class="photo-ph">⚑</div>
-                                <input type="file" accept="image/*" onchange="uploadChamberLogo(this,'senate')">
-                            </div>
-                            <button id="chamberLogoRemoveBtnSenate" onclick="removeChamberLogo('senate')" style="display:none;background:transparent;border:1px solid #333;color:#555;font-family:inherit;font-size:0.75rem;padding:4px 10px;cursor:pointer;">✕ 로고 제거</button>
-                        </div>
-                    </div>
-
-                    <div id="chamberCenterThirdWrap" style="margin-top:16px;display:none;">
-                        <label style="color:#888;font-size:0.8rem;margin-bottom:6px;display:block;" id="chamberCenterLabelThird">삼원 반원 중앙 표시</label>
-                        <div class="system-radio-group" style="margin-bottom:8px;">
-                            <button type="button" class="system-radio-btn active" id="chamberCenterModeSeatsBtnThird" onclick="setChamberCenterMode('third','seats')">의석 수</button>
-                            <button type="button" class="system-radio-btn" id="chamberCenterModeLogoBtnThird" onclick="setChamberCenterMode('third','logo')">로고</button>
-                        </div>
-                        <div id="chamberCenterLogoWrapThird" style="display:flex;align-items:center;gap:10px;">
-                            <div class="leader-photo-box" id="chamberLogoPreviewThird" style="width:52px;height:52px;" title="반원 중앙에 표시할 로고">
-                                <div class="photo-ph">⚑</div>
-                                <input type="file" accept="image/*" onchange="uploadChamberLogo(this,'third')">
-                            </div>
-                            <button id="chamberLogoRemoveBtnThird" onclick="removeChamberLogo('third')" style="display:none;background:transparent;border:1px solid #333;color:#555;font-family:inherit;font-size:0.75rem;padding:4px 10px;cursor:pointer;">✕ 로고 제거</button>
-                        </div>
-                    </div>
                 </div>
 
                 <!-- 날짜: 현재 날짜 + 회기 -->
@@ -765,6 +747,29 @@
                                 <button type="button" class="system-radio-btn" id="nationSessionTypeExtraBtn" onclick="setNationSessionType('extraordinary')">임시회</button>
                             </div>
                             <button class="add-btn" onclick="advanceNationSession()" style="width:100%;margin-top:0;">▶ 다음 회기</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 설정: 지역구 시스템(지도/그리드) · 지도 글씨·배지 크기 -->
+                <div id="contentNationSettings" class="sub-tab-content">
+                    <!-- 지역구 시스템 (육각형 / 지도) -->
+                    <div>
+                        <label style="color:#888;font-size:0.8rem;margin-bottom:6px;display:block;">지역구 시스템 (기본: 지도)</label>
+                        <div class="system-radio-group">
+                            <button type="button" class="system-radio-btn active" id="districtSystemModeSvgBtn" onclick="setDistrictMapMode('svg')">지도</button>
+                            <button type="button" class="system-radio-btn" id="districtSystemModeHexBtn" onclick="setDistrictMapMode('hex')">그리드</button>
+                        </div>
+                        <div style="color:#555;font-size:0.72rem;margin-top:4px;">지도 모드에서는 여론 › 지역구 탭에서 SVG 지도(.jsx)를 올릴 수 있습니다</div>
+                        <!-- 지도 위 약칭/의석 배지 크기 — 지역구 자체 크기와 무관하게 지도 전체에서 하나의 기준으로 통일되지만, 취향에 따라 일괄 조정 가능 -->
+                        <div style="margin-top:10px;">
+                            <label style="color:#888;font-size:0.8rem;margin-bottom:4px;display:block;">지도 글씨·배지 크기</label>
+                            <div style="display:flex;align-items:center;gap:8px;">
+                                <input type="range" id="districtLabelScaleSlider" min="50" max="200" value="100"
+                                    oninput="setDistrictLabelScale(this.value)"
+                                    style="-webkit-appearance:none;flex:1;background:transparent;">
+                                <span id="districtLabelScaleVal" style="color:var(--tno-neon);width:44px;text-align:right;font-size:0.85rem;">100%</span>
+                            </div>
                         </div>
                     </div>
                 </div>

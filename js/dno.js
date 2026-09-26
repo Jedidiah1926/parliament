@@ -5974,12 +5974,12 @@
         function switchConfigInnerTab(inner) {
             if(inner === 'assembly') { switchSubTab('setup', 'assembly'); return; }
             if(inner === 'save') { openSavePanel(); return; }
-            if(!['symbol','date'].includes(inner)) inner = 'symbol';
+            if(!['symbol','date','nationSettings'].includes(inner)) inner = 'symbol';
             switchSubTab('nation', inner);
         }
         // 국가 하위탭이 열릴 때 그 화면을 그린다 (switchSubTab에서 호출)
         function onConfigSubTabShown(sub) {
-            if(!['symbol','date'].includes(sub)) return;
+            if(!['symbol','date','nationSettings'].includes(sub)) return;
             configInnerTab = sub;
             if(sub === 'symbol') renderNationConfig();
         }
@@ -6056,7 +6056,7 @@
             if(listSenateBtn) listSenateBtn.style.display = hasSenate ? '' : 'none';
             const listThirdBtn = document.getElementById('innerTabListThird');
             if(listThirdBtn) listThirdBtn.style.display = hasThird ? '' : 'none';
-            // 국가>설정의 의원실별 반원 중앙 표시(의석 수/로고) 설정 블록도 동기화
+            // 의회 > 의회 설정의 원별 반원 중앙 표시(의석 수/로고) 설정 블록도 동기화
             const centerSenateWrap = document.getElementById('chamberCenterSenateWrap');
             if(centerSenateWrap) centerSenateWrap.style.display = hasSenate ? '' : 'none';
             const centerThirdWrap = document.getElementById('chamberCenterThirdWrap');

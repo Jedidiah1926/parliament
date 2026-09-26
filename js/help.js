@@ -58,7 +58,7 @@
                 },
                 {
                     btn: 'subTabAssembly', open: go('setup', 'assembly'),
-                    desc: '단원제 · 양원제 · 삼원제, 의장단(의장 · 부의장), 지역구 표시 방식(지도 · 그리드), 집권 세력 강조.',
+                    desc: '단원제 · 양원제 · 삼원제, 의장단(의장 · 부의장), 원별 반원 가운데 표시(의석 수 · 의회 로고), 집권 세력 강조.',
                 },
             ],
         },
@@ -88,11 +88,15 @@
             tabs: [
                 {
                     btn: 'subTabSymbol', open: go('nation', 'symbol'),
-                    desc: '국가명 · 국기, 반원 가운데에 의석 수 또는 의회 로고 표시.',
+                    desc: '국가명과 국기.',
                 },
                 {
                     btn: 'subTabDate', open: go('nation', 'date'),
                     desc: '화면 오른쪽 위에 보이는 현재 날짜와 회기, 표시 방식.',
+                },
+                {
+                    btn: 'subTabNationSettings', open: go('nation', 'nationSettings'),
+                    desc: '지역구 시스템(지도 · 그리드)과 지도 위 글씨 · 배지 크기.',
                 },
                 {
                     btn: 'saveTabSaveBtn', title: '저장', open: () => { if(typeof openSavePanel === 'function') openSavePanel(); },

@@ -4425,12 +4425,12 @@ window.DnoLangPacks.en = {
    "Set up the basics of your nation."
   ],
   [
-   "단원제 · 양원제 · 삼원제, 의장단(의장 · 부의장), 지역구 표시 방식(지도 · 그리드), 집권 세력 강조.",
-   "Unicameral/bicameral/tricameral, presiding officers (speaker, deputies), district display (map/grid), highlight government."
+   "단원제 · 양원제 · 삼원제, 의장단(의장 · 부의장), 원별 반원 가운데 표시(의석 수 · 의회 로고), 집권 세력 강조.",
+   "Unicameral/bicameral/tricameral, presiding officers (speaker, deputies), what each hemicycle center shows (seat count or chamber logo), highlight government."
   ],
   [
-   "국가명 · 국기, 반원 가운데에 의석 수 또는 의회 로고 표시.",
-   "Nation name and flag, and whether the hemicycle center shows the seat count or a chamber logo."
+   "국가명과 국기.",
+   "Nation name and flag."
   ],
   [
    "화면 오른쪽 위에 보이는 현재 날짜와 회기, 표시 방식.",
@@ -5123,6 +5123,18 @@ window.DnoLangPacks.en = {
   [
    "새 탭",
    "New tab"
+  ],
+  [
+   "- 국가 › 설정 탭 신설 — 지역구 시스템(지도 · 그리드)과 지도 글씨 · 배지 크기를 의회 › 의회 설정에서 옮김, 원별 반원 중앙 표시(의석 수 · 로고)는 국가 › 상징에서 의회 › 의회 설정으로",
+   "- New Nation › Settings tab — district system (map/grid) and map label/badge size moved here from Parliament › Parliament Settings; per-chamber hemicycle center display (seats/logo) moved from Nation › Symbols to Parliament › Parliament Settings"
+  ],
+  [
+   "지역구 시스템(지도 · 그리드)과 지도 위 글씨 · 배지 크기.",
+   "District system (map/grid) and the size of map labels and badges."
+  ],
+  [
+   "지도 모드에서는 여론 › 지역구 탭에서 SVG 지도(.jsx)를 올릴 수 있습니다",
+   "In map mode, upload the district map (.jsx) in Polls \u203a Districts"
   ]
  ]
 };
