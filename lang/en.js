@@ -533,6 +533,10 @@ window.DnoLangPacks.en = {
  ],
  "dict": [
   [
+   "내각이 의결하는 법안의 표결과 의결 정족수. 계엄령으로 의회가 정지된 동안에는 여기서 법안을 통과시킵니다.",
+   "Votes on bills decided by the cabinet, and the quorum. While parliament is suspended under martial law, bills are passed here."
+  ],
+  [
    "◆ 위에서 의석을 고르고 \"붙여넣기\"를 누르면 현재 원내대표 이름·사진이 그 의석에 복사됩니다",
    "◆ Pick a seat above and press \"Paste\" to copy the current floor leader's name and photo to that seat"
   ],

@@ -2654,7 +2654,7 @@
                     return `<button class="bill-select-btn" style="${style}${disabled?'opacity:0.4;cursor:not-allowed;':''}" ${disabled?'disabled title="계엄령으로 의회가 정지된 상태에서는 선택할 수 없습니다"':''} onclick="setBillTabledTo('${bill.id}','${d}')">${selected?'✔ ':''}${txt}</button>`;
                 };
                 const selectAction = dest === 'council'
-                    ? `selectBillForCouncilVote('${bill.id}'); switchSubTab('nation','legislation'); switchLegislationInnerTab('council');`
+                    ? `selectBillForCouncilVote('${bill.id}'); switchSubTab('cabinet','council');`
                     : `selectBillForVote('${bill.id}'); switchTab('vote');`;
                 const div = document.createElement('div');
                 div.className = 'bill-card' + (isActive ? ' selected' : '');
@@ -5677,7 +5677,7 @@
 
         // 국무회의 탭을 벗어날 때, 심의 중이던 법안이 이미 결론(가결/부결) 났으면 선택 초기화 (표결 탭과 동일한 패턴)
         function checkResetCouncilSelectionOnLeave() {
-            if(currentMainTab === 'nation' && currentSubTab['nation'] === 'legislation' && legislationInnerTab === 'council' && activeCouncilBillId) {
+            if(currentMainTab === 'cabinet' && currentSubTab['cabinet'] === 'council' && activeCouncilBillId) {
                 const bill = bills.find(b=>b.id===activeCouncilBillId);
                 if(bill && getBillOverallStatus(bill) !== 'pending') {
                     activeCouncilBillId = null;
@@ -5687,6 +5687,7 @@
 
         function switchMainTab(main) {
             checkResetVoteSelectionOnLeave();
+            checkResetCouncilSelectionOnLeave();
             closeSeatInfoCard();
             currentMainTab = main;
             document.querySelectorAll('.main-tab-btn').forEach(b => b.classList.remove('active'));
@@ -5704,7 +5705,10 @@
             // 구 위치(국가 > 선거 / ⚠) 호환 — 선거 메인탭으로 옮겨짐
             if(main === 'nation' && sub === 'election') { main = 'vote'; sub = 'elec' + electionInnerTab.charAt(0).toUpperCase() + electionInnerTab.slice(1); doMainSwitch = true; }
             if(main === 'nation' && sub === 'fraud') { main = 'vote'; doMainSwitch = true; }
+            // 구 위치(국가 > 입법 > 국무회의) 호환 — 내각 > 국무회의로 옮겨짐
+            if(main === 'nation' && sub === 'council') { main = 'cabinet'; doMainSwitch = true; }
             if(doMainSwitch && currentMainTab !== main) switchMainTab(main);
+            if(sub !== 'council') checkResetCouncilSelectionOnLeave();
             currentSubTab[main] = sub;
             const groupEl = document.getElementById('mainContent' + main.charAt(0).toUpperCase() + main.slice(1));
             if(!groupEl) return;
@@ -5733,6 +5737,7 @@
             if(sub === 'president') { renderPresidentSection(); renderEmergencyPowers(); }
             if(sub === 'pm') { renderPmSection(); renderDeputyPmsList(); renderEmergencyPowers(); }
             if(sub === 'cabinetmembers') { renderCabinetMembersList(); renderChairSection(); renderEmergencyPowers(); }
+            if(sub === 'council') { syncCouncilBillSelect(); renderCouncilActiveBillDisplay(); renderCouncilThresholdUI(); renderCabinetDisplay(); }
             if(sub === 'coalition') { renderCoalitions(); }
             if(sub === 'list') { listMemberInnerTab = 'house'; switchListMemberInnerTab('house'); }
             if(sub === 'members') { membersInnerTab = 'house'; switchMembersInnerTab('house'); }
@@ -5751,20 +5756,19 @@
             if(inner === 'save') renderSaveTabUI();
         }
 
-        // 국가 > 입법 내부 탭 (제출/상정/표결) — 구 입법 메인탭이 국가로 통합됨
+        // 국가 > 입법 내부 탭 (제출/상정/표결) — 구 입법 메인탭이 국가로 통합됨. 국무회의는 내각 > 국무회의로 옮겨짐
         let legislationInnerTab = 'bill';
         function switchLegislationInnerTab(inner) {
+            if(inner === 'council') { switchSubTab('cabinet', 'council'); return; } // 예전 호출 호환
             if(inner !== 'vote') checkResetVoteSelectionOnLeave();
-            if(inner !== 'council') checkResetCouncilSelectionOnLeave();
             legislationInnerTab = inner;
-            ['bill','table','vote','council'].forEach(k => {
+            ['bill','table','vote'].forEach(k => {
                 document.getElementById('innerTabLeg'+k.charAt(0).toUpperCase()+k.slice(1))?.classList.toggle('active', k===inner);
                 document.getElementById('content'+k.charAt(0).toUpperCase()+k.slice(1))?.classList.toggle('active', k===inner);
             });
             if(inner === 'vote') { renderBulkPartyList(); syncBillSelect(); renderActiveBillDisplay(); updateConfirmButtons(); }
             if(inner === 'bill') renderBillList();
             if(inner === 'table') renderBillList();
-            if(inner === 'council') { syncCouncilBillSelect(); renderCouncilActiveBillDisplay(); renderCouncilThresholdUI(); renderCabinetDisplay(); }
         }
 
         // 국가 > 기록 (입법 기록) — 선거 기록은 선거 > 기록으로 옮겨짐. 예전 호출(elecRecord)은 그쪽으로 보낸다
