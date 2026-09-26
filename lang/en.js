@@ -6353,6 +6353,54 @@ window.DnoLangPacks.en = {
   [
    "- 버전 표시 v1.5.7",
    "- Version label v1.5.7"
+  ],
+  [
+   "- 내부 파일 구조 정리 및 저장 파일 버전 v1.1로 업데이트",
+   "- Cleaned up the internal file structure and updated the save file version to v1.1"
+  ],
+  [
+   "- 자동저장 기능 추가 (새로고침해도 유지)",
+   "- Added autosave (persists across refreshes)"
+  ],
+  [
+   "- 내보내기 창에 \"아래 의석 수 등 통계 포함\" 체크박스 추가, 실제 화면과 동일한 카드 디자인(색상 띠·이름·의석·%·상태 태그·범례)으로 재현 (SVG는 화면을 그대로 담아 픽셀 단위로 동일, PNG/JPG는 도형으로 다시 그림)",
+   "- Added an \"Include stats below (seat counts, etc.)\" checkbox to the export dialog, reproducing the on-screen card design (color strip, name, seats, %, status tags, legend) — SVG captures the screen pixel-for-pixel, PNG/JPG are redrawn as shapes"
+  ],
+  [
+   "- 시작 화면의 점검 안내/자동 이동 화면에도 설정에서 고른 테마 색이 반영되도록 수정 (그동안 항상 기본 청록색으로 고정돼 있던 문제)",
+   "- The maintenance notice / auto-redirect start screen now uses the theme color chosen in Settings (it was always the default cyan)"
+  ],
+  [
+   "- 화면 최상단에 크롬 탭 스타일의 세이브 탭 바 신설 — 클릭 한 번으로 확인창 없이 세이브 사이를 즉시 전환, \"+\"로 새 세이브를 새로 만들거나 미리 등록해둔 프리셋에서 시작 가능 (프리셋으로 시나리오 배포·공유)",
+   "- Added a Chrome-style save tab bar at the very top — switch between saves instantly with one click, no confirmation, and use \"+\" to create a new save or start from a registered preset (distribute/share scenarios as presets)"
+  ],
+  [
+   "- Windows 데스크톱 앱(.exe) 추가",
+   "- Added a Windows desktop app (.exe)"
+  ],
+  [
+   "- 내부 파일 구조 정리",
+   "- Cleaned up the internal file structure"
+  ],
+  [
+   "- 라이트/다크 모드 UI 대대적 개편: 테두리 없는 모노톤 버튼 등 현대적인 디자인",
+   "- Major Light/Dark UI overhaul: a modern design with borderless monotone buttons"
+  ],
+  [
+   "- UI 개편 전 화면을 체험할 수 있는 페이지 추가 (세이브는 따로 보관)",
+   "- Added a page to try the pre-overhaul UI (saves are kept separately)"
+  ],
+  [
+   "- 로드맵 0.0.1 · 0.0.2의 \"일반 테마\" · \"TNO 테마\"를 누르면 그 시절 화면으로",
+   "- Roadmap 0.0.1 · 0.0.2: \"General theme\" and \"TNO theme\" link to those old screens"
+  ],
+  [
+   "- 로고 제작 화면 — 의회 메뉴만 남기고, 집권 정당 강조 색을 HEX 코드로 바꾸고 네온 빛번짐을 켜고 끌 수 있음 · 본 게임 세이브와 따로 저장",
+   "- Logo maker — only the Parliament menu, with a HEX colour for the ruling-party highlight and a neon glow toggle · saved separately from the main game"
+  ],
+  [
+   "- 개편 전 화면은 라이트/다크 설정과 상관없이 항상 네온으로",
+   "- The pre-redesign screen always uses the neon theme, whatever light/dark setting is chosen"
   ]
  ]
 };
