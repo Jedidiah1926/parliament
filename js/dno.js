@@ -4472,6 +4472,7 @@
             simulate();
             document.querySelectorAll('canvas').forEach(cvs => { if(cvs.offsetParent) redrawCanvasForCurrentSize(cvs); });
             if(document.getElementById('regionMapWrap')?.offsetParent) renderRegionMap(); // 권역 지도 바탕색(라이트/다크)
+            if(districtSvgMap) { districtUpdateModeUI(); districtRenderMap(); } // 지역구 테두리 색(라이트/다크 고정색)
         });
         let suppressAutosaveOnUnload = false;
 
@@ -9122,7 +9123,7 @@
                     : (opts.innerGlow && fillColor !== 'transparent' ? glowMix(fillColor) : fillColor);
                 el.setAttribute('fill', shownFill);
                 // 묶음에 속한 지역구는 테두리를 채움색과 같게 해 이웃한 같은 묶음 지역구와의 경계선이 보이지 않게 한다
-                el.setAttribute('stroke', groupId != null ? shownFill : (plainUngrouped && opts.ungroupedStroke ? opts.ungroupedStroke : (map.strokeColor || '#00ffff')));
+                el.setAttribute('stroke', groupId != null ? shownFill : (plainUngrouped && opts.ungroupedStroke ? opts.ungroupedStroke : districtSvgEffectiveStroke(map)));
                 el.setAttribute('stroke-width', opts.strokeWidth || '1.5');
                 // 지도 좌표 규모(viewBox)가 저장된 값과 다르거나 매우 클 수 있어, 테두리가 화면 픽셀
                 // 기준 두께를 유지하도록 함 (확대해도 실선이 얇아지거나 안 보이지 않게)
@@ -9133,11 +9134,13 @@
                     el.addEventListener('click', () => opts.onClickKey?.(s.key));
                     if(opts.groupOf && shownFill !== 'transparent') {
                         // 권역 지도: 마우스를 올리면 채움색만 밝게 — 경계선은 그대로 둬서 옆 권역·지역구 경계가 계속 보이게
-                        const hoverFill = `color-mix(in srgb, ${shownFill} ${glowOnLight ? 35 : 70}%, #ffffff)`;
+                        // 라이트는 어둡게(밝히면 흰 바탕에 묻힘), 다크·네온은 밝게
+                        const hoverFill = glowOnLight ? `color-mix(in srgb, ${shownFill} 80%, #000000)` : `color-mix(in srgb, ${shownFill} 70%, #ffffff)`;
                         el.addEventListener('mouseenter', () => { el.setAttribute('fill', hoverFill); if(groupId != null) el.setAttribute('stroke', hoverFill); });
                         el.addEventListener('mouseleave', () => { el.setAttribute('fill', shownFill); if(groupId != null) el.setAttribute('stroke', shownFill); });
                     } else {
-                        el.addEventListener('mouseenter', () => { el.style.filter = 'brightness(1.5)'; });
+                        // 라이트 모드는 밝히면 흰 바탕과 구분이 안 되므로 어둡게
+                        el.addEventListener('mouseenter', () => { el.style.filter = glowOnLight ? 'brightness(0.8)' : 'brightness(1.5)'; });
                         el.addEventListener('mouseleave', () => { el.style.filter = ''; });
                     }
                 }
@@ -9299,7 +9302,7 @@
                             textEl.setAttribute('font-size', fontSize);
                             textEl.setAttribute('fill', '#fff');
                             textEl.setAttribute('paint-order', 'stroke');
-                            textEl.setAttribute('stroke', map.abbrStrokeColor || map.strokeColor || '#00ffff');
+                            textEl.setAttribute('stroke', map.abbrStrokeColor || districtSvgEffectiveStroke(map));
                             textEl.setAttribute('stroke-width', fontSize * 0.12);
                             textEl.setAttribute('pointer-events', 'none');
                             textEl.textContent = abbr;
@@ -9562,9 +9565,14 @@
             if(fileName) fileName.textContent = districtSvgMap ? '업로드됨' : '파일 없음';
             if(shapeCount) shapeCount.textContent = districtSvgMap ? String(districtSvgMap.shapes.length) : '0';
             if(districtSvgMap) {
-                const color = districtSvgMap.strokeColor || '#00ffff';
-                if(strokeInput) strokeInput.value = color;
-                if(strokeHexInput) strokeHexInput.value = color.toUpperCase();
+                const color = districtSvgEffectiveStroke(districtSvgMap);
+                const locked = districtStrokeLocked();
+                if(strokeInput) { strokeInput.value = color.toLowerCase(); strokeInput.disabled = locked; }
+                if(strokeHexInput) { strokeHexInput.value = color.toUpperCase(); strokeHexInput.disabled = locked; }
+                const syncBtn = document.getElementById('districtSvgStrokeSyncBtn');
+                if(syncBtn) syncBtn.style.display = locked ? 'none' : '';
+                const lockNote = document.getElementById('districtSvgStrokeLockNote');
+                if(lockNote) lockNote.style.display = locked ? '' : 'none';
                 const abbrColor = districtSvgMap.abbrStrokeColor || color;
                 if(abbrStrokeInput) abbrStrokeInput.value = abbrColor;
                 if(abbrStrokeHexInput) abbrStrokeHexInput.value = abbrColor.toUpperCase();
@@ -9649,7 +9657,19 @@
             reader.readAsText(file);
         }
 
+        // 지역구 지도 테두리 색 — 라이트/다크는 테마에 맞춘 고정색(바꿀 수 없음), 네온만 사용자가 고른 색
+        const DISTRICT_STROKE_LIGHT = '#A3A3A3';
+        const DISTRICT_STROKE_DARK = '#5C6370';
+        function districtStrokeLocked() { return document.documentElement.getAttribute('data-theme-family') === 'modern'; }
+        function districtSvgEffectiveStroke(map) {
+            const mode = document.documentElement.getAttribute('data-theme-mode');
+            if(mode === 'light') return DISTRICT_STROKE_LIGHT;
+            if(mode === 'dark') return DISTRICT_STROKE_DARK;
+            return (map && map.strokeColor) || '#00ffff';
+        }
+
         function districtSvgSetStrokeColor(color) {
+            if(districtStrokeLocked()) { districtUpdateModeUI(); return; }
             if(!districtSvgMap) return;
             districtSvgMap.strokeColor = color;
             districtUpdateModeUI();
@@ -9668,6 +9688,7 @@
         // 지역구 테두리 색을 현재 사이트 테마 색(설정에서 고른 색)과 동일하게 맞춤
         function districtSvgSyncStrokeColorWithTheme() {
             if(typeof getThemeColor !== 'function') return;
+            if(districtStrokeLocked()) return;
             districtSvgSetStrokeColor(getThemeColor());
         }
 
