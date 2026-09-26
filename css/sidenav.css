@@ -94,6 +94,7 @@ body.side-nav-collapsed .mn-group-head { justify-content: center; }
 .mn-group[data-tone="success"] { --tone: var(--vote-yea); }
 .mn-group[data-tone="muted"] { --tone: #8b929c; } /* 도움말: 회색 */
 .mn-group[data-tone="purple"] { --tone: #b58cff; } /* 국가: 보라 */
+.mn-group[data-tone="law"] { --tone: #ff9f43; } /* 입법: 주황 */
 .mn-group-head {
     background: color-mix(in srgb, var(--tone) 8%, transparent);
     border: 1px solid color-mix(in srgb, var(--tone) 40%, transparent);
@@ -125,10 +126,11 @@ body.side-nav-collapsed .mn-group-head { justify-content: center; }
 }
 .mn-item:hover { color: #bbb; border-color: #333; }
 .mn-item.active {
-    color: var(--tno-neon);
-    border-color: var(--tno-neon);
-    background: color-mix(in srgb, var(--tno-neon) 7%, transparent);
-    text-shadow: 0 0 4px var(--tno-neon);
+    /* 선택된 항목은 그 묶음의 색(--tone)을 따른다 — 의회는 하늘색, 국가는 보라 … */
+    color: var(--tone, var(--tno-neon));
+    border-color: var(--tone, var(--tno-neon));
+    background: color-mix(in srgb, var(--tone, var(--tno-neon)) 9%, transparent);
+    text-shadow: 0 0 4px var(--tone, var(--tno-neon));
 }
 .mn-item.danger { color: var(--tno-alert); }
 .mn-item.danger.active { border-color: var(--tno-alert); background: color-mix(in srgb, var(--tno-alert) 10%, transparent); text-shadow: 0 0 4px var(--tno-alert); }
@@ -264,6 +266,7 @@ html[data-ui-mode="mobile"] .add-btn { min-height: 42px; }
 .mobile-nav-btn[data-tone="seats"] { --tone: var(--tno-neon); }
 .mobile-nav-btn[data-tone="muted"] { --tone: #8b929c; }
 .mobile-nav-btn[data-tone="purple"] { --tone: #b58cff; }
+.mobile-nav-btn[data-tone="law"] { --tone: #ff9f43; }
 .mobile-nav-btn {
     border: none;
     border-top: 2px solid transparent;

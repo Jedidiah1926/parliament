@@ -2132,8 +2132,7 @@
             if(!orig) return;
             if(getBillOverallStatus(orig) !== 'passed') { showCustomAlert('가결된 법안만 개정안을 발의할 수 있습니다.'); return; }
             amendmentSourceId = id;
-            switchMainTab('legislation');
-            switchSubTab('legislation', 'bill');
+            switchSubTab('law', 'bill');
             document.getElementById('newBillTitle').value = orig.title + ' 개정안';
             document.getElementById('newBillContent').value = orig.content || '';
             document.getElementById('newBillTags').value = (orig.tags || []).join(', ');
@@ -2654,7 +2653,7 @@
                     return `<button class="bill-select-btn" style="${style}${disabled?'opacity:0.4;cursor:not-allowed;':''}" ${disabled?'disabled title="계엄령으로 의회가 정지된 상태에서는 선택할 수 없습니다"':''} onclick="setBillTabledTo('${bill.id}','${d}')">${selected?'✔ ':''}${txt}</button>`;
                 };
                 const selectAction = dest === 'council'
-                    ? `selectBillForCouncilVote('${bill.id}'); switchSubTab('nation','legislation'); switchLegislationInnerTab('council');`
+                    ? `selectBillForCouncilVote('${bill.id}'); switchSubTab('cabinet','council');`
                     : `selectBillForVote('${bill.id}'); switchTab('vote');`;
                 const div = document.createElement('div');
                 div.className = 'bill-card' + (isActive ? ' selected' : '');
@@ -3118,7 +3117,7 @@
 
             if(hit === -1) return;
 
-            const onVoteTab = currentMainTab === 'nation' && currentSubTab.nation === 'legislation' && legislationInnerTab === 'vote';
+            const onVoteTab = currentMainTab === 'law' && currentSubTab.law === 'vote';
             if(!onVoteTab || currentVoteMode === 'info') {
                 showSeatInfoCard(chamber, hit, e.clientX, e.clientY);
                 return;
@@ -4055,7 +4054,7 @@
         let chamberCenterMode = { house: 'seats', senate: 'seats', third: 'seats' }; // 'seats' | 'logo'
         const chamberLogoImgCache = { house: null, senate: null, third: null }; // { src, img } — 매 프레임 새로 디코딩하지 않도록 캐시
 
-        // ── 국가 > 설정 > 의회: 각 원의 의장/부의장 ──────────────
+        // ── 의회 > 의회 설정: 각 원의 의장/부의장 ──────────────
         // deputies: 부의장 — 여러 명 추가/삭제 가능 (기본 0명), 부총리(deputyPms)와 동일한 패턴
         let chamberLeaders = {
             house:  { speaker: { name: '', photo: '' }, deputies: [] },
@@ -4862,8 +4861,8 @@
 
             // ── 탭 복원 (마지막) ──
             let uiMain = state.ui?.currentMainTab || 'setup';
-            const uiSub  = state.ui?.currentSubTab  || { setup:'party', nation:'legislation' };
-            currentSubTab = { setup:'party', nation:'legislation', ...uiSub };
+            const uiSub  = state.ui?.currentSubTab  || { setup:'party', law:'bill' };
+            currentSubTab = { setup:'party', ...uiSub };
             // 구버전 파일 호환: 정당 메인탭이 의회로 통합되기 전 위치를 가리키던 경우 재매핑
             // (당시 party>ideology/partyInfo/leader/coalitionLeader/independent 중 무엇이었든, 지금은 모두 setup>party로 합쳐짐)
             if(uiMain === 'party') { uiMain = 'setup'; currentSubTab.setup = 'party'; }
@@ -4874,12 +4873,23 @@
             if(uiMain === 'legislation' || uiMain === 'record') { currentSubTab.nation = uiMain; uiMain = 'nation'; }
             if(currentSubTab.election === 'record') currentSubTab.election = 'vote';
             // 구버전 파일 호환: 저장 메인탭이 국가>설정 하단으로 통합되기 전 위치를 가리키던 경우 재매핑
-            if(uiMain === 'save') uiMain = 'nation';
+            if(uiMain === 'save') { uiMain = 'nation'; currentSubTab.nation = 'save'; }
             // 구버전 파일 호환: 국가 > 선거 / ⚠ 가 선거 메인탭으로 옮겨지기 전 위치
             if(currentSubTab.nation === 'election' || currentSubTab.nation === 'fraud') {
                 currentSubTab.vote = currentSubTab.nation === 'fraud' ? 'fraud' : 'elecGeneral';
-                currentSubTab.nation = 'legislation';
+                delete currentSubTab.nation;
                 if(uiMain === 'nation') uiMain = 'vote';
+            }
+            // 구버전 파일 호환: 국가 > 입법 / 기록이 입법 메인탭으로 옮겨지기 전 위치
+            if(currentSubTab.nation === 'legislation' || currentSubTab.nation === 'record') {
+                currentSubTab.law = currentSubTab.nation === 'record' ? 'archive' : 'bill';
+                delete currentSubTab.nation;
+                if(uiMain === 'nation') uiMain = 'law';
+            }
+            // 구버전 파일 호환: 국가 > 의회가 의회 > 의회 설정으로 옮겨지기 전 위치
+            if(currentSubTab.nation === 'assembly' || currentSubTab.nation === 'config') {
+                if(uiMain === 'nation') { uiMain = 'setup'; currentSubTab.setup = 'assembly'; }
+                delete currentSubTab.nation;
             }
             switchMainTab(uiMain);
             if(uiMain !== 'election') {
@@ -5663,11 +5673,11 @@
 
         // ===== 2단 탭 전환 =====
         let currentMainTab = 'nation';
-        let currentSubTab = { setup: 'party', nation: 'config' };
+        let currentSubTab = { setup: 'party', nation: 'symbol' };
 
         // 표결 탭을 벗어날 때, 선택된 법안이 완전히 결론(가결/부결) 났으면 선택 초기화
         function checkResetVoteSelectionOnLeave() {
-            if(currentMainTab === 'nation' && currentSubTab['nation'] === 'legislation' && legislationInnerTab === 'vote' && activeBillId) {
+            if(currentMainTab === 'law' && currentSubTab['law'] === 'vote' && activeBillId) {
                 const bill = bills.find(b=>b.id===activeBillId);
                 if(bill && getBillOverallStatus(bill) !== 'pending') {
                     activeBillId = null;
@@ -5677,7 +5687,7 @@
 
         // 국무회의 탭을 벗어날 때, 심의 중이던 법안이 이미 결론(가결/부결) 났으면 선택 초기화 (표결 탭과 동일한 패턴)
         function checkResetCouncilSelectionOnLeave() {
-            if(currentMainTab === 'nation' && currentSubTab['nation'] === 'legislation' && legislationInnerTab === 'council' && activeCouncilBillId) {
+            if(currentMainTab === 'cabinet' && currentSubTab['cabinet'] === 'council' && activeCouncilBillId) {
                 const bill = bills.find(b=>b.id===activeCouncilBillId);
                 if(bill && getBillOverallStatus(bill) !== 'pending') {
                     activeCouncilBillId = null;
@@ -5687,6 +5697,7 @@
 
         function switchMainTab(main) {
             checkResetVoteSelectionOnLeave();
+            checkResetCouncilSelectionOnLeave();
             closeSeatInfoCard();
             currentMainTab = main;
             document.querySelectorAll('.main-tab-btn').forEach(b => b.classList.remove('active'));
@@ -5697,14 +5708,25 @@
             switchSubTab(main, currentSubTab[main] || defaultSubTabFor(main), false);
         }
         function defaultSubTabFor(main) {
-            return main === 'setup' ? 'party' : main === 'cabinet' ? 'system' : main === 'help' ? 'helpsetup' : main === 'vote' ? 'elecGeneral' : 'legislation';
+            return main === 'setup' ? 'party' : main === 'cabinet' ? 'system' : main === 'help' ? 'helpsetup' : main === 'vote' ? 'elecGeneral' : main === 'law' ? 'bill' : 'symbol';
         }
 
         function switchSubTab(main, sub, doMainSwitch = true) {
             // 구 위치(국가 > 선거 / ⚠) 호환 — 선거 메인탭으로 옮겨짐
             if(main === 'nation' && sub === 'election') { main = 'vote'; sub = 'elec' + electionInnerTab.charAt(0).toUpperCase() + electionInnerTab.slice(1); doMainSwitch = true; }
             if(main === 'nation' && sub === 'fraud') { main = 'vote'; doMainSwitch = true; }
+            // 구 위치(국가 > 입법 > 국무회의) 호환 — 내각 > 국무회의로 옮겨짐
+            if(main === 'nation' && sub === 'council') { main = 'cabinet'; doMainSwitch = true; }
+            // 구 위치(국가 > 설정 > 의회/상징/날짜/저장) 호환 — 국가의 하위탭으로 펼쳐짐
+            if(main === 'nation' && sub === 'config') sub = configInnerTab;
+            // 구 위치(국가 > 의회) 호환 — 의회 > 의회 설정으로 옮겨짐
+            if(main === 'nation' && sub === 'assembly') { main = 'setup'; doMainSwitch = true; }
+            // 구 위치(국가 > 입법 / 기록) 호환 — 입법 메인탭으로 옮겨짐
+            if(main === 'nation' && sub === 'legislation') { main = 'law'; sub = legislationInnerTab; doMainSwitch = true; }
+            if(main === 'nation' && sub === 'record') { main = 'law'; sub = 'archive'; doMainSwitch = true; }
+            if(main === 'law' && sub !== 'vote') checkResetVoteSelectionOnLeave();
             if(doMainSwitch && currentMainTab !== main) switchMainTab(main);
+            if(sub !== 'council') checkResetCouncilSelectionOnLeave();
             currentSubTab[main] = sub;
             const groupEl = document.getElementById('mainContent' + main.charAt(0).toUpperCase() + main.slice(1));
             if(!groupEl) return;
@@ -5715,13 +5737,13 @@
             if(btn) btn.classList.add('active');
             if(content) content.classList.add('active');
             refreshUI();
-            if(sub === 'config') { switchConfigInnerTab(configInnerTab); }
-            if(sub === 'legislation') { switchLegislationInnerTab('bill'); }
+            if(main === 'nation') onConfigSubTabShown(sub);
+            if(sub === 'assembly') renderChamberLeaders();
+            if(main === 'law') onLegislationSubTabShown(sub);
             if(sub === 'elecPresidential') onElectionSubTabShown('presidential');
             if(sub === 'elecGeneral') onElectionSubTabShown('general');
             if(sub === 'elecSettings') onElectionSubTabShown('settings');
             if(sub === 'elecRecord') elecRenderRecords();
-            if(sub === 'record') { switchRecordInnerTab('archive'); }
             if(sub === 'fraud') { renderFraudTab(); }
             if(sub === 'party') { switchPartyGroupInnerTab('info'); }
             if(sub === 'ideology') { renderIdeologyList(); }
@@ -5733,54 +5755,54 @@
             if(sub === 'president') { renderPresidentSection(); renderEmergencyPowers(); }
             if(sub === 'pm') { renderPmSection(); renderDeputyPmsList(); renderEmergencyPowers(); }
             if(sub === 'cabinetmembers') { renderCabinetMembersList(); renderChairSection(); renderEmergencyPowers(); }
+            if(sub === 'council') { syncCouncilBillSelect(); renderCouncilActiveBillDisplay(); renderCouncilThresholdUI(); renderCabinetDisplay(); }
             if(sub === 'coalition') { renderCoalitions(); }
             if(sub === 'list') { listMemberInnerTab = 'house'; switchListMemberInnerTab('house'); }
             if(sub === 'members') { membersInnerTab = 'house'; switchMembersInnerTab('house'); }
         }
 
-        // 국가 > 설정 내부 탭 (의회/상징/날짜/저장)
-        let configInnerTab = 'assembly';
+        // 국가 하위탭 (상징/날짜/저장) — 구 국가 > 설정의 내부 탭. 의회는 의회 > 의회 설정으로 옮겨짐
+        let configInnerTab = 'symbol';
+        // 예전 호출 호환: 국가의 해당 하위탭(의회는 의회 > 의회 설정)으로 이동
         function switchConfigInnerTab(inner) {
-            configInnerTab = inner;
-            ['assembly','symbol','date','save'].forEach(k => {
-                document.getElementById('innerTabConfig'+k.charAt(0).toUpperCase()+k.slice(1))?.classList.toggle('active', k===inner);
-                document.getElementById('innerContentConfig'+k.charAt(0).toUpperCase()+k.slice(1))?.classList.toggle('active', k===inner);
-            });
-            if(inner === 'assembly') renderChamberLeaders();
-            if(inner === 'symbol') renderNationConfig();
-            if(inner === 'save') renderSaveTabUI();
+            if(inner === 'assembly') { switchSubTab('setup', 'assembly'); return; }
+            if(!['symbol','date','save'].includes(inner)) inner = 'symbol';
+            switchSubTab('nation', inner);
+        }
+        // 국가 하위탭이 열릴 때 그 화면을 그린다 (switchSubTab에서 호출)
+        function onConfigSubTabShown(sub) {
+            if(!['symbol','date','save'].includes(sub)) return;
+            configInnerTab = sub;
+            if(sub === 'symbol') renderNationConfig();
+            if(sub === 'save') renderSaveTabUI();
         }
 
-        // 국가 > 입법 내부 탭 (제출/상정/표결) — 구 입법 메인탭이 국가로 통합됨
+        // 입법 메인탭 (제출/상정/표결/기록) — 구 국가 > 입법 · 기록. 국무회의는 내각 > 국무회의
         let legislationInnerTab = 'bill';
+        // 예전 호출 호환: 입법 메인탭의 해당 하위탭으로 이동
         function switchLegislationInnerTab(inner) {
-            if(inner !== 'vote') checkResetVoteSelectionOnLeave();
-            if(inner !== 'council') checkResetCouncilSelectionOnLeave();
-            legislationInnerTab = inner;
-            ['bill','table','vote','council'].forEach(k => {
-                document.getElementById('innerTabLeg'+k.charAt(0).toUpperCase()+k.slice(1))?.classList.toggle('active', k===inner);
-                document.getElementById('content'+k.charAt(0).toUpperCase()+k.slice(1))?.classList.toggle('active', k===inner);
-            });
-            if(inner === 'vote') { renderBulkPartyList(); syncBillSelect(); renderActiveBillDisplay(); updateConfirmButtons(); }
-            if(inner === 'bill') renderBillList();
-            if(inner === 'table') renderBillList();
-            if(inner === 'council') { syncCouncilBillSelect(); renderCouncilActiveBillDisplay(); renderCouncilThresholdUI(); renderCabinetDisplay(); }
+            if(inner === 'council') { switchSubTab('cabinet', 'council'); return; }
+            if(!['bill','table','vote'].includes(inner)) inner = 'bill';
+            switchSubTab('law', inner);
+        }
+        // 입법 하위탭이 열릴 때 그 화면을 그린다 (switchSubTab에서 호출)
+        function onLegislationSubTabShown(sub) {
+            if(['bill','table','vote'].includes(sub)) legislationInnerTab = sub;
+            if(sub === 'vote') { renderBulkPartyList(); syncBillSelect(); renderActiveBillDisplay(); updateConfirmButtons(); }
+            if(sub === 'bill' || sub === 'table') renderBillList();
+            if(sub === 'archive') renderArchiveList();
         }
 
-        // 국가 > 기록 (입법 기록) — 선거 기록은 선거 > 기록으로 옮겨짐. 예전 호출(elecRecord)은 그쪽으로 보낸다
-        let recordInnerTab = 'archive';
+        // 예전 호출 호환: 입법 기록은 입법 > 기록, 선거 기록은 선거 > 기록
         function switchRecordInnerTab(inner) {
             if(inner === 'elecRecord') { switchSubTab('vote', 'elecRecord'); return; }
-            recordInnerTab = 'archive';
-            document.getElementById('contentArchive')?.classList.add('active');
-            renderArchiveList();
+            switchSubTab('law', 'archive');
         }
 
         // 구버전 switchTab 호환
         function switchTab(tabName) {
             if(['ideology','house','senate','coalition'].includes(tabName)) switchSubTab('setup', tabName==='house'||tabName==='senate'?'settings':tabName);
-            else if(['bill','table','vote'].includes(tabName)) { switchSubTab('nation','legislation'); switchLegislationInnerTab(tabName); }
-            else if(tabName === 'archive') { switchSubTab('nation','record'); switchRecordInnerTab('archive'); }
+            else if(['bill','table','vote','archive'].includes(tabName)) switchSubTab('law', tabName);
         }
 
         // 의회 > 설정 내부 탭 (하원/상원/삼원)
@@ -6758,6 +6780,15 @@
             const p = parties.find(x => x.id === pid);
             if(!p) return;
             writeLinkedSeatInfo(link, p.leaderName || '', p.leaderPhoto || '');
+            refreshUI();
+        }
+
+        function pasteFloorLeaderToSeat(pid, val) {
+            const link = parseMemberPickerValue(val);
+            if(!link) return;
+            const p = parties.find(x => x.id === pid);
+            if(!p) return;
+            writeLinkedSeatInfo(link, p.floorLeaderName || '', p.floorLeaderPhoto || '');
             refreshUI();
         }
 
@@ -7796,6 +7827,15 @@
                                 style="background:#000;border:1px solid #2a2a2a;color:#ccc;font-family:inherit;font-size:0.88rem;padding:5px 8px;width:100%;box-sizing:border-box;"
                                 onchange="updateLeaderField(${p.id},'floorLeaderName',this.value);refreshUI();">
                             ${flPhoto?`<button onclick="removeFloorLeaderPhoto(${p.id})" style="background:transparent;border:1px solid #333;color:#555;font-family:inherit;font-size:0.75rem;padding:2px 8px;cursor:pointer;text-align:left;">✕ 사진 제거</button>`:''}
+                            <div style="display:flex;gap:6px;">
+                                <select id="floorLeaderSeatSelect_${p.id}"
+                                    style="flex:1;min-width:0;box-sizing:border-box;background:#000;border:1px solid #333;color:#888;font-family:inherit;font-size:0.75rem;padding:4px;">
+                                    ${partyMemberPickerOptionsHtml(p.id)}
+                                </select>
+                                <button onclick="pasteFloorLeaderToSeat(${p.id},document.getElementById('floorLeaderSeatSelect_${p.id}').value)"
+                                    style="flex-shrink:0;background:transparent;border:1px solid #333;color:#6cf;font-family:inherit;font-size:0.72rem;padding:4px 8px;cursor:pointer;">붙여넣기</button>
+                            </div>
+                            <div style="color:#555;font-size:0.68rem;">◆ 위에서 의석을 고르고 "붙여넣기"를 누르면 현재 원내대표 이름·사진이 그 의석에 복사됩니다</div>
                         </div>
                     </div>`;
 
@@ -12820,7 +12860,7 @@
 
             updateVoteResults();
             renderBulkPartyList();
-            if(currentSubTab?.legislation === 'bill') renderBillList();
+            if(currentSubTab?.law === 'bill') renderBillList();
             checkPmConfirmationBills();
             checkNoConfidenceBills();
             checkMartialLawLiftBills();
