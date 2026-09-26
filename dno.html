@@ -742,6 +742,7 @@
                                     <input type="number" id="nationSessionNumber" placeholder="1" oninput="updateDispInfoBar()" style="width:100%;text-align:center;box-sizing:border-box;">
                                 </div>
                             </div>
+                            <label style="color:#555;font-size:0.72rem;margin-bottom:2px;display:block;">지금 회기 종류 (다음 회기 종류는 오른쪽 위 날짜 줄의 "다음:" 버튼으로)</label>
                             <div class="system-radio-group" style="margin-bottom:8px;">
                                 <button type="button" class="system-radio-btn active" id="nationSessionTypeRegularBtn" onclick="setNationSessionType('regular')">정기회</button>
                                 <button type="button" class="system-radio-btn" id="nationSessionTypeExtraBtn" onclick="setNationSessionType('extraordinary')">임시회</button>
@@ -1568,13 +1569,11 @@
                 </button>
                 <span id="dispInfoSession" class="dib-text dib-sub">회기 미설정</span>
                 <span class="dib-controls" id="dispSessionControls">
-                    <button type="button" class="dib-btn dib-word" onclick="advanceNationSession()" title="회기 번호 +1">다음 회기</button>
+                    <button type="button" class="dib-btn dib-word dib-next-type" id="dispNextSessionTypeBtn" onclick="toggleNationNextSessionType()" title="다음 회기를 정기회로 열지 임시회로 열지 — 누르면 전환 (지금 회기는 그대로, 다음 회기부터 적용 · 지금 회기 종류는 설정에서)">다음: 정기회</button>
+                    <button type="button" class="dib-btn dib-word" onclick="advanceNationSession()" title="회기 번호 +1 (골라 둔 종류로)">다음 회기</button>
                     <span class="dib-more-wrap">
                         <button type="button" class="dib-btn dib-word" id="dispSessionMoreBtn" onclick="toggleDispSessionMenu(event)" title="더 보기" aria-haspopup="true" aria-expanded="false">…</button>
                         <div class="dib-menu" id="dispSessionMenu" style="display:none;" role="menu">
-                            <button type="button" class="dib-menu-item" id="dispSessionTypeRegular" role="menuitemradio" onclick="setNationSessionType('regular');closeDispSessionMenu()">정기회</button>
-                            <button type="button" class="dib-menu-item" id="dispSessionTypeExtra" role="menuitemradio" onclick="setNationSessionType('extraordinary');closeDispSessionMenu()">임시회</button>
-                            <div class="dib-menu-sep"></div>
                             <button type="button" class="dib-menu-item" onclick="closeDispSessionMenu();openNationDateSettings()">날짜 · 회기 설정…</button>
                         </div>
                     </span>

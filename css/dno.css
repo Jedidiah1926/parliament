@@ -355,6 +355,7 @@
         .disp-info-bar {
             order: -1;
             flex: 0 0 100%;
+            box-sizing: border-box;
             min-width: 0;
             display: grid;
             grid-template-columns: minmax(0, auto) auto auto;
@@ -379,6 +380,8 @@
         .dib-play { letter-spacing: -2px; font-size: 0.72rem; }
         .dib-settings { display: inline-flex; align-items: center; padding: 4px 6px; }
         .dib-word { font-size: 0.8rem; }
+        .dib-next-type { border-color: var(--tno-border); color: #999; }
+        .dib-next-type.is-extra { color: var(--tno-gold); border-color: color-mix(in srgb, var(--tno-gold) 50%, transparent); }
         .dib-more-wrap { position: relative; display: inline-flex; }
         .dib-menu {
             position: absolute; top: calc(100% + 4px); right: 0; z-index: 50; min-width: 170px;

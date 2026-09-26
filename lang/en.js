@@ -5215,8 +5215,8 @@ window.DnoLangPacks.en = {
    "More"
   ],
   [
-   "- 날짜 · 회기 줄을 두 줄 컨트롤 바로 — 날짜 옆 ▶(+1일) · ▶▶(+7일) · ▶▶▶(+1개월) 진행 버튼과 설정(⚙) 버튼, 회기 옆 다음 회기 · …(정기회/임시회, 설정) 메뉴 (진행 버튼은 수동 진행형 날짜 · 개별형 회기일 때 표시)",
-   "- Date/session line becomes a two-row control bar — ▶ (+1 day) · ▶▶ (+7 days) · ▶▶▶ (+1 month) and a settings (⚙) button next to the date, Next session and a … menu (regular/extraordinary, settings) next to the session (advance buttons show with manual-progress dates and individual sessions)"
+   "- 날짜 · 회기 줄을 두 줄 컨트롤 바로 — 날짜 옆 ▶(+1일) · ▶▶(+7일) · ▶▶▶(+1개월) 진행 버튼과 설정(⚙) 버튼, 회기 옆 \"다음: 정기회/임시회\" 토글(다음 회기부터 적용) · 다음 회기 · … 메뉴 (진행 버튼은 수동 진행형 날짜 · 개별형 회기일 때 표시)",
+   "- Date/session line becomes a two-row control bar — ▶ (+1 day) · ▶▶ (+7 days) · ▶▶▶ (+1 month) and a settings (⚙) button next to the date, a \"Next: regular/extraordinary\" toggle (applies from the next session), Next session and a … menu next to the session (advance buttons show with manual-progress dates and individual sessions)"
   ],
   [
    "삭제 (Shift+클릭: 확인 없이 바로 삭제)",
@@ -5237,6 +5237,26 @@ window.DnoLangPacks.en = {
   [
    "- 네온 글꼴(네오둥근모)을 fonts 폴더에 함께 배포 — 인터넷 없이(데스크톱 앱)도 글꼴이 보임",
    "- The neon font (NeoDunggeunmo) now ships in the fonts folder, so it shows even offline (desktop app)"
+  ],
+  [
+   "다음: 정기회",
+   "Next: Regular"
+  ],
+  [
+   "다음: 임시회",
+   "Next: Extraordinary"
+  ],
+  [
+   "다음 회기를 정기회로 열지 임시회로 열지 — 누르면 전환 (지금 회기는 그대로, 다음 회기부터 적용 · 지금 회기 종류는 설정에서)",
+   "Whether the next session opens as regular or extraordinary — click to switch (the current session stays as is; change the current session's type in settings)"
+  ],
+  [
+   "회기 번호 +1 (골라 둔 종류로)",
+   "Session number +1 (with the chosen type)"
+  ],
+  [
+   "지금 회기 종류 (다음 회기 종류는 오른쪽 위 날짜 줄의 \"다음:\" 버튼으로)",
+   "Current session type (pick the next session's type with the \"Next:\" button on the date line, top right)"
   ]
  ]
 };
