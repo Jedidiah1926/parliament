@@ -460,3 +460,11 @@
       .rd-desc { font-size: .88rem; line-height: 1.45; }
     }
   
+
+    /* 설명 안의 링크 (예: 0.0.1 일반 테마 → old.html) */
+    .rd-link {
+      color: var(--card-color, var(--tno-neon));
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+    .rd-link:hover { text-shadow: 0 0 6px var(--card-color, var(--tno-neon)); }

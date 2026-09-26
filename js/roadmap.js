@@ -13,13 +13,13 @@
             status: 'done',
             title: '0.0.1 - 일반 테마',
             desc: `2025.12.03
-              <br>- 일반 테마 추가`
+              <br>- <a class="rd-link" href="old.html">일반 테마</a> 추가`
           },
           {
             status: 'done',
             title: '0.0.2 - TNO 테마',
             desc: `2025.12.30
-              <br>- TNO 테마 추가
+              <br>- <a class="rd-link" href="old2.html">TNO 테마</a> 추가
               <br>- 일반 테마 삭제
               <br>- 베타 삭제`
           }

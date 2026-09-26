@@ -22,6 +22,7 @@ window.DnoLangPacks.en = {
  ],
  "ordinal": "en",
  "patterns": [
+  {"re": "^ 추가(\\s*)$", "to": " added$1"},
   {"re": "^약 (\\d+) × (\\d+) 픽셀 \\(통계 · 머리를 넣으면 그만큼 커짐\\)$", "to": "About $1 × $2 pixels (larger with stats or a header)"},
   {"re": "^\\- 날짜의 \"직접 입력\"과 회기의 \"단순형\" 삭제 — 날짜는 연호\\(선택\\) \\+ 연 · 월 · 일, 회기는 대수 · 이름 · 회기 번호로만 \\(예전 세이브의 글자는 불러올 때 칸으로 옮김, 예: \"레이와 1년 4월 20일\" → 연호 레이와 · 1 · 4 · 20\\), 연호 1년처럼 두 자리 이하 연도도 그대로 넘어감$", "to": "- Removed free-text dates and \"simple\" sessions — dates are an optional era name + year · month · day, sessions are term · name · number (old saves are converted on load, e.g. \"Reiwa 1, April 20\" → era Reiwa · 1 · 4 · 20); years of two digits or less (like era year 1) now advance correctly"},
   {"re": "^지도나 목록에서 지역구를 누르면 편집 칸이 열립니다\\. 이름 · 약칭 · 인구, 그리고 원마다 몇 석을 뽑을지\\(0석이면 그 원엔 없는 지역구\\) 정해요\\. 지도는 휠 클릭 드래그로 이동, Shift\\+스크롤로 확대하고 ↺로 되돌립니다\\.$", "to": "Click a district on the map or in the list to open its editor. Set the name, abbreviation, population, and how many seats each chamber elects there (0 seats means that chamber has no such district). Middle-drag to pan the map, Shift+scroll to zoom, and ↺ to reset."},
@@ -6296,6 +6297,18 @@ window.DnoLangPacks.en = {
   [
    "기본값",
    "Default"
+  ],
+  [
+   "일반 테마",
+   "General theme"
+  ],
+  [
+   "TNO 테마",
+   "TNO theme"
+  ],
+  [
+   "네온 빛번짐",
+   "Neon glow"
   ]
  ]
 };
