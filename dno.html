@@ -34,15 +34,12 @@
             <div class="save-panel-body" id="contentDate">
                     <div>
                         <label style="color:#888;font-size:0.8rem;margin-bottom:6px;display:block;">현재 날짜</label>
-                        <div class="system-radio-group" style="margin-bottom:8px;">
-                            <button type="button" class="system-radio-btn active" id="nationDateModeProgBtn" onclick="setNationDateMode('progressive')">연 · 월 · 일</button>
-                            <button type="button" class="system-radio-btn" id="nationDateModeSimpleBtn" onclick="setNationDateMode('simple')">직접 입력</button>
-                        </div>
-                        <div id="nationDateSimpleWrap" style="display:none;">
-                            <input type="text" id="nationDateInput" placeholder="예: 1952년 3월 15일" oninput="updateDispInfoBar()" style="width:100%;box-sizing:border-box;">
-                        </div>
-                        <!-- 연 · 월 · 일: 오른쪽 위 날짜 줄의 ▶ · ▶▶ · ▶▶▶ 로 하루 · 일주일 · 한 달씩 진행 -->
+                        <!-- 연호(선택) + 연 · 월 · 일: 오른쪽 위 날짜 줄의 ▶ · ▶▶ · ▶▶▶ 로 하루 · 일주일 · 한 달씩 진행 -->
                         <div id="nationDateProgWrap">
+                            <div style="margin-bottom:6px;">
+                                <label style="color:#555;font-size:0.72rem;margin-bottom:2px;display:block;">연호 (선택 — 비워 두면 연도만 표시)</label>
+                                <input type="text" id="nationDateEra" maxlength="24" placeholder="예: 레이와 → 레이와 1년 4월 20일" oninput="updateDispInfoBar()" style="width:100%;box-sizing:border-box;">
+                            </div>
                             <div style="display:flex;gap:6px;">
                                 <div style="flex:1;min-width:0;">
                                     <label style="color:#555;font-size:0.72rem;margin-bottom:2px;display:block;">연</label>
@@ -63,14 +60,7 @@
 
                     <div style="margin-top:16px;">
                         <label style="color:#888;font-size:0.8rem;margin-bottom:6px;display:block;">회기</label>
-                        <div class="system-radio-group" style="margin-bottom:8px;">
-                            <button type="button" class="system-radio-btn active" id="nationSessionModeSimpleBtn" onclick="setNationSessionMode('simple')">단순형</button>
-                            <button type="button" class="system-radio-btn" id="nationSessionModeIndivBtn" onclick="setNationSessionMode('individual')">개별형</button>
-                        </div>
-                        <div id="nationSessionSimpleWrap">
-                            <input type="text" id="nationSessionInput" placeholder="예: 제21대 국회 제1회 임시회" oninput="updateDispInfoBar()" style="width:100%;box-sizing:border-box;">
-                        </div>
-                        <div id="nationSessionIndivWrap" style="display:none;">
+                        <div id="nationSessionIndivWrap">
                             <div style="display:flex;gap:6px;margin-bottom:8px;">
                                 <div style="flex:1;">
                                     <label style="color:#555;font-size:0.72rem;margin-bottom:2px;">대수</label>
@@ -112,7 +102,7 @@
                             <input type="checkbox" id="nationAutoTermOnElection" style="margin-top:3px;">
                             <span style="font-size:0.85rem;">하원 총선 결과가 확정되면 대수 +1 (보궐선거 · 재개표는 제외)</span>
                         </label>
-                        <div style="color:#555;font-size:0.72rem;margin-top:6px;">회기가 개별형일 때 동작합니다. 날짜 연동은 연 · 월 · 일 날짜에서만 동작합니다.</div>
+                        <div style="color:#555;font-size:0.72rem;margin-top:6px;">대수와 회기 번호를 정해 둬야 동작합니다.</div>
                     </div>
             </div>
         </div>

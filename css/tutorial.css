@@ -57,7 +57,13 @@
 @keyframes tut-blink { to { visibility: hidden; } }
 
 /* 목차 */
-.tut-menu { display: flex; flex-direction: column; gap: 6px; margin-top: 12px; }
+.tut-menu { display: flex; flex-direction: column; gap: 6px; margin-top: 12px; max-height: min(60vh, 520px); overflow-y: auto; padding-right: 2px; }
+.tut-mode-menu .tut-bubble { width: 380px; }
+/* 목차 묶음 머리: 기본 튜토리얼 / 세부 튜토리얼 */
+.tut-group-head { display: flex; flex-direction: column; gap: 1px; margin: 8px 0 2px; }
+.tut-group-head:first-child { margin-top: 0; }
+.tut-group-name { color: var(--tno-gold); font-size: .9rem; letter-spacing: 1px; }
+.tut-group-sub { color: #666; font-size: .74rem; }
 .tut-lesson-btn {
     display: flex; align-items: center; gap: 10px; width: 100%;
     text-align: left; cursor: pointer; font-family: inherit;
@@ -126,6 +132,8 @@ html[data-theme-family="modern"] .tut-lesson-title { color: var(--m-text); font-
 html[data-theme-family="modern"] .tut-lesson-sum { color: var(--m-text-3); font-size: 12px; }
 html[data-theme-family="modern"] .tut-lesson-mark { color: var(--m-text-4); }
 html[data-theme-family="modern"] .tut-lesson-btn.done .tut-lesson-mark { color: var(--m-success); }
+html[data-theme-family="modern"] .tut-group-name { color: var(--m-text); font-size: 13px; font-weight: 800; letter-spacing: 0; }
+html[data-theme-family="modern"] .tut-group-sub { color: var(--m-text-3); font-size: 12px; }
 html[data-theme-family="modern"] .tut-title { color: var(--m-text); font-size: 17px; font-weight: 700; }
 html[data-theme-family="modern"] .tut-text { color: var(--m-text-2); font-size: 14px; }
 html[data-theme-family="modern"] .tut-actions button {
