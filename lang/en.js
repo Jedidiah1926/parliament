@@ -5349,6 +5349,10 @@ window.DnoLangPacks.en = {
   [
    "- 맵 메이커: 미리보기에서 스크롤로 확대 · 축소, 휠 클릭 드래그로 이동, ↺ 위치 초기화 · 도형 종류를 선 / 면 / 사각형 / 원으로 표시 · ⌖(하이라이트) 버튼 대신 목록 줄과 지도 도형이 마우스를 올리면 서로 강조 · 한글 이름이 __로 보이던 문제 수정 · 도형 색 상태를 기본 / 호버(굵은 테두리) / 선택(강조색) / 선택+호버로 네 가지 모두 구분 (선택한 도형에서 마우스를 빼면 호버 색이 남던 문제 수정)",
    "- Map Maker: scroll to zoom, middle-drag to pan and ↺ reset in the preview · shapes labelled line / area / rectangle / circle · the ⌖ (highlight) button is replaced by linked hover between list rows and map shapes · fixed Korean names showing as __ · shapes now show four distinct states — normal / hover (thick outline) / selected (accent fill) / selected + hover (fixed a selected shape keeping the hover color after the mouse left)"
+  ],
+  [
+   "- 네온 메인 화면의 시작하기를 금색으로 (집권 세력 강조처럼) — 마우스를 올린 다른 메뉴(시안)와 구분",
+   "- The neon main screen's Start is now gold (like the governing-bloc highlight), so it stands apart from a hovered menu item (cyan)"
   ]
  ]
 };
