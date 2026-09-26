@@ -541,8 +541,8 @@ window.DnoLangPacks.en = {
    "In Election › General, press \"Start count\" to count votes based on support. Press it now."
   ],
   [
-   "📊 여론",
-   "📊 Opinion"
+   "📊︎ 여론",
+   "📊︎ Opinion"
   ],
   [
    "🗳 선거",
