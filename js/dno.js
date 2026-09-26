@@ -4054,7 +4054,7 @@
         let chamberCenterMode = { house: 'seats', senate: 'seats', third: 'seats' }; // 'seats' | 'logo'
         const chamberLogoImgCache = { house: null, senate: null, third: null }; // { src, img } — 매 프레임 새로 디코딩하지 않도록 캐시
 
-        // ── 국가 > 설정 > 의회: 각 원의 의장/부의장 ──────────────
+        // ── 의회 > 의회 설정: 각 원의 의장/부의장 ──────────────
         // deputies: 부의장 — 여러 명 추가/삭제 가능 (기본 0명), 부총리(deputyPms)와 동일한 패턴
         let chamberLeaders = {
             house:  { speaker: { name: '', photo: '' }, deputies: [] },
@@ -4886,6 +4886,11 @@
                 delete currentSubTab.nation;
                 if(uiMain === 'nation') uiMain = 'law';
             }
+            // 구버전 파일 호환: 국가 > 의회가 의회 > 의회 설정으로 옮겨지기 전 위치
+            if(currentSubTab.nation === 'assembly' || currentSubTab.nation === 'config') {
+                if(uiMain === 'nation') { uiMain = 'setup'; currentSubTab.setup = 'assembly'; }
+                delete currentSubTab.nation;
+            }
             switchMainTab(uiMain);
             if(uiMain !== 'election') {
                 switchSubTab(uiMain, currentSubTab[uiMain] || defaultSubTabFor(uiMain), false);
@@ -5714,6 +5719,8 @@
             if(main === 'nation' && sub === 'council') { main = 'cabinet'; doMainSwitch = true; }
             // 구 위치(국가 > 설정 > 의회/상징/날짜/저장) 호환 — 국가의 하위탭으로 펼쳐짐
             if(main === 'nation' && sub === 'config') sub = configInnerTab;
+            // 구 위치(국가 > 의회) 호환 — 의회 > 의회 설정으로 옮겨짐
+            if(main === 'nation' && sub === 'assembly') { main = 'setup'; doMainSwitch = true; }
             // 구 위치(국가 > 입법 / 기록) 호환 — 입법 메인탭으로 옮겨짐
             if(main === 'nation' && sub === 'legislation') { main = 'law'; sub = legislationInnerTab; doMainSwitch = true; }
             if(main === 'nation' && sub === 'record') { main = 'law'; sub = 'archive'; doMainSwitch = true; }
@@ -5731,6 +5738,7 @@
             if(content) content.classList.add('active');
             refreshUI();
             if(main === 'nation') onConfigSubTabShown(sub);
+            if(sub === 'assembly') renderChamberLeaders();
             if(main === 'law') onLegislationSubTabShown(sub);
             if(sub === 'elecPresidential') onElectionSubTabShown('presidential');
             if(sub === 'elecGeneral') onElectionSubTabShown('general');
@@ -5753,18 +5761,18 @@
             if(sub === 'members') { membersInnerTab = 'house'; switchMembersInnerTab('house'); }
         }
 
-        // 국가 하위탭 (상징/의회/날짜/저장) — 구 국가 > 설정의 내부 탭
+        // 국가 하위탭 (상징/날짜/저장) — 구 국가 > 설정의 내부 탭. 의회는 의회 > 의회 설정으로 옮겨짐
         let configInnerTab = 'symbol';
-        // 예전 호출 호환: 국가의 해당 하위탭으로 이동
+        // 예전 호출 호환: 국가의 해당 하위탭(의회는 의회 > 의회 설정)으로 이동
         function switchConfigInnerTab(inner) {
-            if(!['assembly','symbol','date','save'].includes(inner)) inner = 'symbol';
+            if(inner === 'assembly') { switchSubTab('setup', 'assembly'); return; }
+            if(!['symbol','date','save'].includes(inner)) inner = 'symbol';
             switchSubTab('nation', inner);
         }
         // 국가 하위탭이 열릴 때 그 화면을 그린다 (switchSubTab에서 호출)
         function onConfigSubTabShown(sub) {
-            if(!['assembly','symbol','date','save'].includes(sub)) return;
+            if(!['symbol','date','save'].includes(sub)) return;
             configInnerTab = sub;
-            if(sub === 'assembly') renderChamberLeaders();
             if(sub === 'symbol') renderNationConfig();
             if(sub === 'save') renderSaveTabUI();
         }

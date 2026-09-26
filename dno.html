@@ -194,6 +194,7 @@
                     <button class="sub-tab-btn" onclick="switchSubTab('setup','members')" id="subTabMembers">지역구 의원</button>
                     <button class="sub-tab-btn" onclick="switchSubTab('setup','list')" id="subTabList">비례대표</button>
                     <button class="sub-tab-btn" onclick="switchSubTab('setup','coalition')" id="subTabCoalition">집권과 연정</button>
+                    <button class="sub-tab-btn" onclick="switchSubTab('setup','assembly')" id="subTabAssembly">의회 설정</button>
                 </div>
 
                 <!-- 이념 탭 -->
@@ -312,7 +313,49 @@
                     </div>
                     <div id="listMemberList"></div>
                 </div>
-            </div>
+
+                <!-- 의회 설정 (구 국가 > 의회): 원 구성 + 의장/부의장 + 지역구 시스템 -->
+                <div id="contentAssembly" class="sub-tab-content">
+                    <label style="cursor:pointer; margin-bottom:16px; display:block;">
+                        <input type="checkbox" id="chkGovHighlight" onchange="simulate()" checked>
+                        <span style="color:var(--tno-gold); text-shadow:0 0 5px var(--tno-gold);">집권 세력 강조 (HIGHLIGHT GOV)</span>
+                    </label>
+
+                    <div style="margin-bottom:16px;">
+                        <label style="color:#888;font-size:0.8rem;margin-bottom:6px;display:block;">원 구성</label>
+                        <div class="system-radio-group">
+                            <label class="system-radio-btn"><input type="radio" name="systemType" value="unicameral" onchange="toggleSystem()"> 단원제</label>
+                            <label class="system-radio-btn"><input type="radio" name="systemType" value="bicameral" checked onchange="toggleSystem()"> 양원제</label>
+                            <label class="system-radio-btn"><input type="radio" name="systemType" value="tricameral" onchange="toggleSystem()"> 삼원제</label>
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom:16px;">
+                        <label style="color:#888;font-size:0.8rem;margin-bottom:6px;display:block;">의장단</label>
+                        <div id="chamberLeadersList"></div>
+                    </div>
+
+                    <!-- 지역구 시스템 (육각형 / 지도) -->
+                    <div style="margin-top:16px;">
+                        <label style="color:#888;font-size:0.8rem;margin-bottom:6px;display:block;">지역구 시스템 (기본: 지도)</label>
+                        <div class="system-radio-group">
+                            <button type="button" class="system-radio-btn active" id="districtSystemModeSvgBtn" onclick="setDistrictMapMode('svg')">지도</button>
+                            <button type="button" class="system-radio-btn" id="districtSystemModeHexBtn" onclick="setDistrictMapMode('hex')">그리드</button>
+                        </div>
+                        <div style="color:#555;font-size:0.72rem;margin-top:4px;">지도 모드로 바꾸면 선거 &gt; 지역구 탭에서 SVG 지도를 업로드할 수 있습니다</div>
+                        <!-- 지도 위 약칭/의석 배지 크기 — 지역구 자체 크기와 무관하게 지도 전체에서 하나의 기준으로 통일되지만, 취향에 따라 일괄 조정 가능 -->
+                        <div style="margin-top:10px;">
+                            <label style="color:#888;font-size:0.8rem;margin-bottom:4px;display:block;">지도 글씨·배지 크기</label>
+                            <div style="display:flex;align-items:center;gap:8px;">
+                                <input type="range" id="districtLabelScaleSlider" min="50" max="200" value="100"
+                                    oninput="setDistrictLabelScale(this.value)"
+                                    style="-webkit-appearance:none;flex:1;background:transparent;">
+                                <span id="districtLabelScaleVal" style="color:var(--tno-neon);width:44px;text-align:right;font-size:0.85rem;">100%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div><!-- end mainContentSetup -->
 
             <!-- ===== 입법 그룹 (구 국가 > 입법 · 기록) ===== -->
             <div id="mainContentLaw" class="main-tab-content">
@@ -542,54 +585,11 @@
             <div id="mainContentNation" class="main-tab-content active">
                 <div class="sub-tab-container">
                     <button class="sub-tab-btn active" onclick="switchSubTab('nation','symbol')" id="subTabSymbol">상징</button>
-                    <button class="sub-tab-btn" onclick="switchSubTab('nation','assembly')" id="subTabAssembly">의회</button>
                     <button class="sub-tab-btn" onclick="switchSubTab('nation','date')" id="subTabDate">날짜</button>
                     <button class="sub-tab-btn" onclick="switchSubTab('nation','save')" id="subTabSave">저장</button>
                 </div>
 
                 <!-- 국가 하위탭: 상징 · 의회 · 날짜 · 저장 (구 국가 > 설정의 내부 탭) -->
-
-                <!-- 의회: 원 구성 + 의장/부의장 + 지역구 시스템 -->
-                <div id="contentAssembly" class="sub-tab-content">
-                    <label style="cursor:pointer; margin-bottom:16px; display:block;">
-                        <input type="checkbox" id="chkGovHighlight" onchange="simulate()" checked>
-                        <span style="color:var(--tno-gold); text-shadow:0 0 5px var(--tno-gold);">집권 세력 강조 (HIGHLIGHT GOV)</span>
-                    </label>
-
-                    <div style="margin-bottom:16px;">
-                        <label style="color:#888;font-size:0.8rem;margin-bottom:6px;display:block;">원 구성</label>
-                        <div class="system-radio-group">
-                            <label class="system-radio-btn"><input type="radio" name="systemType" value="unicameral" onchange="toggleSystem()"> 단원제</label>
-                            <label class="system-radio-btn"><input type="radio" name="systemType" value="bicameral" checked onchange="toggleSystem()"> 양원제</label>
-                            <label class="system-radio-btn"><input type="radio" name="systemType" value="tricameral" onchange="toggleSystem()"> 삼원제</label>
-                        </div>
-                    </div>
-
-                    <div style="margin-bottom:16px;">
-                        <label style="color:#888;font-size:0.8rem;margin-bottom:6px;display:block;">의장단</label>
-                        <div id="chamberLeadersList"></div>
-                    </div>
-
-                    <!-- 지역구 시스템 (육각형 / 지도) -->
-                    <div style="margin-top:16px;">
-                        <label style="color:#888;font-size:0.8rem;margin-bottom:6px;display:block;">지역구 시스템 (기본: 지도)</label>
-                        <div class="system-radio-group">
-                            <button type="button" class="system-radio-btn active" id="districtSystemModeSvgBtn" onclick="setDistrictMapMode('svg')">지도</button>
-                            <button type="button" class="system-radio-btn" id="districtSystemModeHexBtn" onclick="setDistrictMapMode('hex')">그리드</button>
-                        </div>
-                        <div style="color:#555;font-size:0.72rem;margin-top:4px;">지도 모드로 바꾸면 선거 &gt; 지역구 탭에서 SVG 지도를 업로드할 수 있습니다</div>
-                        <!-- 지도 위 약칭/의석 배지 크기 — 지역구 자체 크기와 무관하게 지도 전체에서 하나의 기준으로 통일되지만, 취향에 따라 일괄 조정 가능 -->
-                        <div style="margin-top:10px;">
-                            <label style="color:#888;font-size:0.8rem;margin-bottom:4px;display:block;">지도 글씨·배지 크기</label>
-                            <div style="display:flex;align-items:center;gap:8px;">
-                                <input type="range" id="districtLabelScaleSlider" min="50" max="200" value="100"
-                                    oninput="setDistrictLabelScale(this.value)"
-                                    style="-webkit-appearance:none;flex:1;background:transparent;">
-                                <span id="districtLabelScaleVal" style="color:var(--tno-neon);width:44px;text-align:right;font-size:0.85rem;">100%</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
 
                 <!-- 상징: 국가명/국기 + 반원 표기(의석 수/로고) -->
                 <div id="contentSymbol" class="sub-tab-content active">

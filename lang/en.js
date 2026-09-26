@@ -533,6 +533,22 @@ window.DnoLangPacks.en = {
  ],
  "dict": [
   [
+   "원마다 따로 정합니다. 상원 · 삼원은 의회 › 의회 설정에서 양원제 · 삼원제를 골랐을 때 나타나요.",
+   "Set separately per chamber. The Senate and Third chamber appear when you choose bicameral/tricameral in Parliament › Parliament Settings."
+  ],
+  [
+   "탭 이름을 더블클릭 (또는 국가 › 저장의 ✎).",
+   "Double-click the tab name (or ✎ in Nation › Save)."
+  ],
+  [
+   "의회 설정",
+   "Parliament Settings"
+  ],
+  [
+   "의회를 이루는 이념 · 정당 · 의석 · 의원 · 집권 세력과 의회 자체의 설정을 다룹니다.",
+   "Ideologies, parties, seats, members and the governing bloc that make up parliament, plus the settings of parliament itself."
+  ],
+  [
    "⚖ 입법",
    "⚖ Legislation"
   ],
