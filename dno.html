@@ -178,7 +178,8 @@
             <div class="main-tab-container">
                 <button class="main-tab-btn" onclick="switchMainTab('setup')" id="mainTabSetup">⚙ 의회</button>
                 <button class="main-tab-btn active" onclick="switchMainTab('nation')" id="mainTabNation">🏛 국가</button>
-                <button class="main-tab-btn" onclick="switchMainTab('election')" id="mainTabElection">🗳 여론</button>
+                <button class="main-tab-btn" onclick="switchMainTab('vote')" id="mainTabVote">🗳 선거</button>
+                <button class="main-tab-btn" onclick="switchMainTab('election')" id="mainTabElection">📊 여론</button>
                 <button class="main-tab-btn" onclick="switchMainTab('cabinet')" id="mainTabCabinet">💼︎ 내각</button>
                 <button class="main-tab-btn" onclick="switchMainTab('help')" id="mainTabHelp">ⓘ 도움말</button>
             </div>
@@ -189,8 +190,8 @@
                     <button class="sub-tab-btn" onclick="switchSubTab('setup','ideology')" id="subTabIdeology">이념</button>
                     <button class="sub-tab-btn active" onclick="switchSubTab('setup','party')" id="subTabParty">정당</button>
                     <button class="sub-tab-btn" onclick="switchSubTab('setup','settings')" id="subTabSettings">구성</button>
-                    <button class="sub-tab-btn" onclick="switchSubTab('setup','members')" id="subTabMembers">의원</button>
-                    <button class="sub-tab-btn" onclick="switchSubTab('setup','list')" id="subTabList">비례</button>
+                    <button class="sub-tab-btn" onclick="switchSubTab('setup','members')" id="subTabMembers">지역구 의원</button>
+                    <button class="sub-tab-btn" onclick="switchSubTab('setup','list')" id="subTabList">비례대표</button>
                     <button class="sub-tab-btn" onclick="switchSubTab('setup','coalition')" id="subTabCoalition">집권과 연정</button>
                 </div>
 
@@ -317,9 +318,7 @@
                 <div class="sub-tab-container">
                     <button class="sub-tab-btn active" onclick="switchSubTab('nation','config')" id="subTabConfig">설정</button>
                     <button class="sub-tab-btn" onclick="switchSubTab('nation','legislation')" id="subTabLegislation">입법</button>
-                    <button class="sub-tab-btn" onclick="switchSubTab('nation','election')" id="subTabElection">선거</button>
                     <button class="sub-tab-btn" onclick="switchSubTab('nation','record')" id="subTabRecord">기록</button>
-                    <button class="sub-tab-btn sub-tab-btn-danger" onclick="switchSubTab('nation','fraud')" id="subTabFraud">⚠</button>
                 </div>
 
                 <!-- 설정 탭: 국가 식별 정보 + 전역 표시 옵션 -->
@@ -822,209 +821,9 @@
                 </div><!-- end contentLegislation -->
 
                 <!-- 선거 탭 (구 여론>선거, 국가로 이동) -->
-                <div id="contentElection" class="sub-tab-content">
-                    <div class="sub-tab-container-3">
-                        <button class="sub-tab-btn-3" onclick="switchElectionInnerTab('presidential')" id="innerTabElecPresidential">대선</button>
-                        <button class="sub-tab-btn-3 active" onclick="switchElectionInnerTab('general')" id="innerTabElecGeneral">총선</button>
-                        <button class="sub-tab-btn-3" onclick="switchElectionInnerTab('settings')" id="innerTabElecSettings">방식</button>
-                    </div>
 
-                    <!-- 대선 -->
-                    <div id="innerContentElecPresidential" class="sub-tab-content">
-                        <div style="display:grid;grid-template-columns:1fr 90px;gap:8px;margin-bottom:10px;">
-                            <div>
-                                <label style="color:#888;font-size:0.8rem;margin-bottom:3px;">선거 제목</label>
-                                <input type="text" id="presElecTitle" placeholder="예: 제1회 대통령 선거" style="width:100%;box-sizing:border-box;">
-                            </div>
-                            <div>
-                                <label style="color:#888;font-size:0.8rem;margin-bottom:3px;">연도</label>
-                                <input type="number" id="presElecYear" placeholder="1952" style="width:100%;box-sizing:border-box;">
-                            </div>
-                        </div>
-                        <div style="background:#0a0c10;border:1px solid #2a2a2a;padding:8px 10px;margin-bottom:10px;font-size:0.78rem;color:#888;line-height:1.7;">
-                            선거 방식: <span id="presElecModeSummary" style="color:var(--tno-gold);">단순 다수 대표제</span><br>
-                            기준 원: <span id="presElecChamberSummary" style="color:var(--tno-gold);">하원</span>
-                            <span style="color:#444;">(설정 탭에서 변경)</span>
-                        </div>
-                        <button id="presElecRunBtn" onclick="runPresidentialElection()"
-                            style="background:var(--tno-neon);color:#000;font-weight:bold;border:none;width:100%;padding:14px;font-size:1.3rem;letter-spacing:2px;box-shadow:0 0 10px var(--tno-neon);cursor:pointer;font-family:inherit;" data-modern-label="개표 시작">&gt;&gt; 개표 시작 &lt;&lt;</button>
-                        <div id="presElecResultPanel" style="display:none;margin-top:10px;"></div>
-                    </div>
-
-                    <!-- 총선 -->
-                    <div id="innerContentElecGeneral" class="sub-tab-content active">
-                    <!-- 총리직선제가 켜져 있을 때만 표시 — 이번 총선 탭에서 의원 선거를 할지 총리 선거를 할지 선택 -->
-                    <div class="system-radio-group" id="elecKindToggleGroup" style="display:none;">
-                        <button type="button" class="system-radio-btn active" id="elecKindMemberBtn" onclick="setElectionKind('member')">의원 선거</button>
-                        <button type="button" class="system-radio-btn" id="elecKindPmBtn" onclick="setElectionKind('pm')">총리 선거</button>
-                    </div>
-
-                    <div id="electionKindMemberWrap">
-                    <div style="display:grid;grid-template-columns:1fr 90px;gap:8px;margin-bottom:10px;">
-                        <div>
-                            <label style="color:#888;font-size:0.8rem;margin-bottom:3px;">선거 제목</label>
-                            <input type="text" id="elecTitle" placeholder="예: 제1회 총선거" style="width:100%;box-sizing:border-box;">
-                        </div>
-                        <div>
-                            <label style="color:#888;font-size:0.8rem;margin-bottom:3px;">연도</label>
-                            <input type="number" id="elecYear" placeholder="1952" style="width:100%;box-sizing:border-box;">
-                        </div>
-                    </div>
-                    <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:10px;border-bottom:1px solid #222;padding-bottom:10px;" id="elecChamberSelectGroup">
-                        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;color:#aaa;font-size:0.9rem;padding:4px 6px;background:#0a0c10;border:1px solid #222;" id="elecHouseWrap">
-                            <input type="checkbox" name="elecTarget" value="house" checked onchange="onElecTargetChange()"> <span id="elecHouseLabel">하원</span>
-                        </label>
-                        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;color:#aaa;font-size:0.9rem;padding:4px 6px;background:#0a0c10;border:1px solid #222;" id="elecSenateWrap">
-                            <input type="checkbox" name="elecTarget" value="senate" onchange="onElecTargetChange()"> <span id="elecSenateLabel">상원</span>
-                        </label>
-                        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;color:#aaa;font-size:0.9rem;padding:4px 6px;background:#0a0c10;border:1px solid #222;display:none;" id="elecThirdWrap">
-                            <input type="checkbox" name="elecTarget" value="third" onchange="onElecTargetChange()"> <span id="elecThirdLabel">삼원</span>
-                        </label>
-                        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;color:var(--tno-neon);font-size:0.9rem;padding:4px 6px;background:color-mix(in srgb, var(--tno-neon) 10%, transparent);border:1px solid var(--tno-neon-dim);" id="elecBothWrap">
-                            <input type="checkbox" id="elecTargetAll" onchange="onElecTargetAllChange(this.checked)"> <span id="elecBothLabel">전체</span>
-                        </label>
-                    </div>
-                    <!-- 선거 방식 -->
-                    <div style="margin-bottom:10px;">
-                        <div style="color:#666;font-size:0.8rem;margin-bottom:4px;">선거 방식</div>
-                        <div style="display:flex;gap:6px;">
-                            <label style="flex:1;cursor:pointer;padding:6px 8px;background:#0a0c10;border:1px solid #2a2a2a;display:flex;align-items:center;gap:6px;font-size:0.85rem;color:#aaa;">
-                                <input type="checkbox" id="elecModeProportional" checked onchange="onElecModeChange()"> 비례
-                            </label>
-                            <label style="flex:1;cursor:pointer;padding:6px 8px;background:#0a0c10;border:1px solid #2a2a2a;display:flex;align-items:center;gap:6px;font-size:0.85rem;color:#aaa;">
-                                <input type="checkbox" id="elecModeDistrict" onchange="onElecModeChange()"> 지역구
-                            </label>
-                            <label style="flex:1;cursor:pointer;padding:6px 8px;background:color-mix(in srgb, var(--tno-neon) 10%, transparent);border:1px solid var(--tno-neon-dim);display:flex;align-items:center;gap:6px;font-size:0.85rem;color:var(--tno-neon);">
-                                <input type="checkbox" id="elecModeAll" onchange="onElecModeAllChange(this.checked)"> 전체
-                            </label>
-                        </div>
-                        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:6px 8px;background:#0a0c10;border:1px solid #663333;margin-top:6px;font-size:0.85rem;color:#cc8888;" title="궐석 처리된 지역구만 대상으로 다시 개표">
-                            <input type="checkbox" id="elecModeByElection" onchange="elecUpdateDistrictInfo()"> 보궐 (궐석 지역구만 재선거)
-                        </label>
-                        <div id="elecModeInfo" style="display:none;margin-top:6px;padding:6px 8px;background:#0a0c10;border:1px solid #2a2a2a;font-size:0.78rem;color:#666;line-height:1.6;">
-                            <div id="elecModeInfoHouse"></div>
-                            <div id="elecModeInfoSenate" style="display:none;"></div>
-                            <div id="elecModeInfoThird" style="display:none;"></div>
-                            <div style="font-size:0.72rem;color:#444;margin-top:3px;">지역구는 성향 탭의 지지도로 결정, 비례는 아래 지지율로 결정</div>
-                            <!-- 지도(SVG) 지역구 전용 — 자동으로 순서대로 개표할지, 지도에서 직접 지역구를 클릭해 하나씩 열어볼지 -->
-                            <div id="elecCountModeRow" style="display:none;gap:8px;align-items:center;margin-top:8px;">
-                                <label style="color:#666;font-size:0.8rem;white-space:nowrap;flex-shrink:0;">개표 방식</label>
-                                <div class="system-radio-group" style="flex:1;">
-                                    <button type="button" class="system-radio-btn active" id="elecCountModeAutoBtn" onclick="setElecCountMode('auto')">자동</button>
-                                    <button type="button" class="system-radio-btn" id="elecCountModeManualBtn" onclick="setElecCountMode('manual')">선택</button>
-                                </div>
-                            </div>
-                            <div id="elecCountModeHint" style="display:none;font-size:0.72rem;color:#444;margin-top:4px;">지도에서 지역구를 하나씩 클릭해 직접 개표합니다</div>
-                        </div>
-                    </div>
-                    <div class="theme-panel-box" style="display:flex;align-items:center;gap:10px;margin-bottom:10px;background:#000;border:1px solid #333;padding:8px 10px;">
-                        <label style="flex:0 0 70px;color:#aaa;font-size:0.85rem;margin:0;">개표 속도</label>
-                        <input type="range" id="elecSpeed" min="1" max="100" value="80"
-                            oninput="document.getElementById('elecSpeedVal').innerText=this.value"
-                            style="-webkit-appearance:none;width:100%;background:transparent;">
-                        <span id="elecSpeedVal" style="width:28px;color:var(--tno-neon);text-align:right;">80</span>
-                    </div>
-                    <div style="height:14px;background:#111;border:1px solid var(--tno-border);margin-bottom:8px;overflow:hidden;">
-                        <div id="elecProgressBar" style="height:100%;background:var(--tno-neon);width:0%;box-shadow:0 0 6px var(--tno-neon);transition:width 0.06s;"></div>
-                    </div>
-                    <!-- 지지율 바 (읽기 전용 — 실제 설정은 지지율 탭에서) -->
-                    <div id="elecProbBars" style="margin-bottom:10px;"></div>
-                    <!-- 지역구 패널 -->
-                    <div id="elecDistrictPanel" style="display:none;">
-                        <div style="background:#0a0c10;border:1px solid #2a2a2a;padding:10px;margin-bottom:8px;">
-                            <div style="color:#888;font-size:0.8rem;margin-bottom:8px;">지역구 설정</div>
-                            <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;">
-                                <label style="color:#666;font-size:0.8rem;white-space:nowrap;flex-shrink:0;">지역구 의석</label>
-                                <span id="elecDistrictSeats" style="color:var(--tno-neon);font-size:0.9rem;">0석 (활성 지역구 수)</span>
-                            </div>
-                            <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;">
-                                <label style="color:#666;font-size:0.8rem;white-space:nowrap;flex-shrink:0;">노이즈 (±%)</label>
-                                <input type="number" id="elecDistrictNoise" value="15" min="0" max="50"
-                                    style="width:70px;background:#000;border:1px solid #333;color:var(--tno-neon);font-family:inherit;font-size:0.9rem;padding:4px;text-align:center;">
-                                <span style="color:#444;font-size:0.78rem;">각 지역구 결과에 추가되는 랜덤 변동</span>
-                            </div>
-                        </div>
-                        <div style="background:#0a0c10;border:1px solid #2a2a2a;padding:8px;margin-bottom:8px;font-size:0.78rem;color:#555;line-height:1.5;">
-                            성향 탭에서 설정한 지지도를 기반으로 각 지역구의 당선자를 결정합니다.<br>
-                            성향 데이터가 없는 지역구는 무작위로 배정됩니다.
-                        </div>
-                    </div>
-                    <button id="elecRunBtn" onclick="elecRun()"
-                        style="background:var(--tno-neon);color:#000;font-weight:bold;border:none;width:100%;padding:14px;font-size:1.3rem;letter-spacing:2px;margin-top:10px;box-shadow:0 0 10px var(--tno-neon);cursor:pointer;font-family:inherit;" data-modern-label="개표 시작">&gt;&gt; 개표 시작 &lt;&lt;</button>
-                    <div id="elecMidControls" style="display:none;margin-top:8px;">
-                        <div style="display:flex;gap:6px;">
-                            <button onclick="elecTogglePause()" id="elecPauseBtn"
-                                style="flex:1;background:transparent;border:1px solid var(--tno-gold);color:var(--tno-gold);padding:8px;font-family:inherit;font-size:0.9rem;cursor:pointer;">⏸ 일시정지</button>
-                            <button onclick="elecFinishNow()" id="elecFinishBtn"
-                                style="flex:1;background:transparent;border:1px solid #888;color:#aaa;padding:8px;font-family:inherit;font-size:0.9rem;cursor:pointer;">⏩ 즉시 완료</button>
-                        </div>
-                    </div>
-                    <div id="elecPostBtns" style="display:none;margin-top:8px;">
-                        <div style="display:flex;gap:6px;">
-                            <button onclick="elecApplyToParliament()"
-                                style="flex:1;background:var(--tno-neon);color:#000;border:none;padding:9px;font-family:inherit;font-size:0.9rem;cursor:pointer;letter-spacing:1px;">✔ 의회에 반영</button>
-                            <button onclick="elecRerun()"
-                                style="flex:1;background:transparent;border:1px solid var(--tno-neon);color:var(--tno-neon);padding:9px;font-family:inherit;font-size:0.9rem;cursor:pointer;">↺ 재개표</button>
-                        </div>
-                    </div>
-                    </div><!-- end electionKindMemberWrap -->
-
-                    <!-- 총리 선거 (총리직선제 활성화 시) -->
-                    <div id="electionKindPmWrap" style="display:none;">
-                        <div style="display:grid;grid-template-columns:1fr 90px;gap:8px;margin-bottom:10px;">
-                            <div>
-                                <label style="color:#888;font-size:0.8rem;margin-bottom:3px;">선거 제목</label>
-                                <input type="text" id="pmElecTitle" placeholder="예: 제1회 총리 선거" style="width:100%;box-sizing:border-box;">
-                            </div>
-                            <div>
-                                <label style="color:#888;font-size:0.8rem;margin-bottom:3px;">연도</label>
-                                <input type="number" id="pmElecYear" placeholder="1952" style="width:100%;box-sizing:border-box;">
-                            </div>
-                        </div>
-                        <div style="background:#0a0c10;border:1px solid #2a2a2a;padding:8px 10px;margin-bottom:10px;font-size:0.78rem;color:#888;line-height:1.7;">
-                            선거 방식: <span id="pmElecModeSummary" style="color:var(--tno-gold);">단순 다수 대표제</span><br>
-                            기준 원: <span id="pmElecChamberSummary" style="color:var(--tno-gold);">하원</span>
-                            <span style="color:#444;">(선거 &gt; 설정 탭에서 변경 — 대선과 방식을 공유합니다)</span>
-                        </div>
-                        <button id="pmElecRunBtn" onclick="runPmElection()"
-                            style="background:var(--tno-neon);color:#000;font-weight:bold;border:none;width:100%;padding:14px;font-size:1.3rem;letter-spacing:2px;box-shadow:0 0 10px var(--tno-neon);cursor:pointer;font-family:inherit;" data-modern-label="개표 시작">&gt;&gt; 개표 시작 &lt;&lt;</button>
-                        <div id="pmElecResultPanel" style="display:none;margin-top:10px;"></div>
-                    </div>
-                    </div><!-- end innerContentElecGeneral -->
-
-                    <!-- 설정 -->
-                    <div id="innerContentElecSettings" class="sub-tab-content">
-                        <div style="margin-top:6px;">
-                            <label style="color:#888;font-size:0.8rem;margin-bottom:6px;display:block;">대선·총리 선거 방식 <span style="color:#555;font-weight:normal;">— 총리직선제일 때 총리 선거에도 그대로 적용됩니다</span></label>
-                            <div class="system-radio-group">
-                                <button type="button" class="system-radio-btn active" id="presElecModePluralityBtn" onclick="setPresElectionMode('plurality')">단순 다수<br>대표제</button>
-                                <button type="button" class="system-radio-btn" id="presElecModeRunoffBtn" onclick="setPresElectionMode('runoff')">결선투표제</button>
-                                <button type="button" class="system-radio-btn" id="presElecModeElectoralBtn" onclick="setPresElectionMode('electoral')">선거인단제</button>
-                            </div>
-                            <div style="color:#555;font-size:0.72rem;margin-top:4px;" id="presElecModeHint">1위 후보가 과반이 아니어도 최다 득표로 당선됩니다</div>
-                        </div>
-                        <div style="margin-top:16px;">
-                            <label style="color:#888;font-size:0.8rem;margin-bottom:6px;display:block;">기준 원 <span style="color:#555;font-weight:normal;">— 지지율(선거인단제는 지역구 결과)을 가져올 원</span></label>
-                            <div class="system-radio-group" id="presElecChamberGroup">
-                                <button type="button" class="system-radio-btn active" id="presElecChamberHouseBtn" onclick="setPresElectionChamberBasis('house')">하원</button>
-                                <button type="button" class="system-radio-btn" id="presElecChamberSenateBtn" onclick="setPresElectionChamberBasis('senate')" style="display:none;">상원</button>
-                                <button type="button" class="system-radio-btn" id="presElecChamberThirdBtn" onclick="setPresElectionChamberBasis('third')" style="display:none;">삼원</button>
-                            </div>
-                        </div>
-                        <div style="margin-top:20px;padding-top:14px;border-top:1px solid #222;">
-                            <label style="color:#888;font-size:0.8rem;margin-bottom:6px;display:block;">후보 설정 <span style="color:#555;font-weight:normal;">— 기본값은 당수, 의원 연결 또는 직접 입력으로 다른 인물을 세울 수 있습니다 (대선/총리 선거 공용)</span></label>
-                            <div id="electionCandidatesConfig"></div>
-                        </div>
-                    </div>
-                </div><!-- end contentElection -->
-
-                <!-- 기록 탭 (내부 탭: 입법/선거) -->
+                <!-- 기록 탭 (입법 기록 — 선거 기록은 선거 > 기록으로 이동) -->
                 <div id="contentRecord" class="sub-tab-content">
-                    <div class="sub-tab-container-3">
-                        <button class="sub-tab-btn-3 active" onclick="switchRecordInnerTab('archive')" id="innerTabRecArchive">입법</button>
-                        <button class="sub-tab-btn-3" onclick="switchRecordInnerTab('elecRecord')" id="innerTabRecElecRecord">선거</button>
-                    </div>
-
                     <!-- 입법 기록 -->
                     <div id="contentArchive" class="sub-tab-content active">
                         <div class="bill-search-bar" style="margin-bottom:8px;">
@@ -1035,21 +834,222 @@
                         <div class="bill-tag-filter" id="archiveTagFilter"></div>
                         <div id="archiveList"></div>
                     </div>
-
-                    <!-- 선거 기록 -->
-                    <div id="contentElecRecord" class="sub-tab-content">
-                        <div id="elecRecordList" style="margin-top:8px;"></div>
-                    </div>
                 </div><!-- end contentRecord -->
+
+            </div><!-- end mainContentNation -->
+
+            <!-- ===== 선거 그룹 (구 국가 > 선거 · 기록 > 선거 · ⚠) ===== -->
+            <div id="mainContentVote" class="main-tab-content">
+                <div class="sub-tab-container">
+                    <button class="sub-tab-btn" onclick="switchSubTab('vote','elecPresidential')" id="subTabElecPresidential">대선</button>
+                    <button class="sub-tab-btn active" onclick="switchSubTab('vote','elecGeneral')" id="subTabElecGeneral">총선</button>
+                    <button class="sub-tab-btn" onclick="switchSubTab('vote','elecSettings')" id="subTabElecSettings">방식</button>
+                    <button class="sub-tab-btn" onclick="switchSubTab('vote','elecRecord')" id="subTabElecRecord">기록</button>
+                    <button class="sub-tab-btn sub-tab-btn-danger" onclick="switchSubTab('vote','fraud')" id="subTabFraud">⚠</button>
+                </div>
+
+
+                <!-- 대선 -->
+                <div id="contentElecPresidential" class="sub-tab-content">
+                    <div style="display:grid;grid-template-columns:1fr 90px;gap:8px;margin-bottom:10px;">
+                        <div>
+                            <label style="color:#888;font-size:0.8rem;margin-bottom:3px;">선거 제목</label>
+                            <input type="text" id="presElecTitle" placeholder="예: 제1회 대통령 선거" style="width:100%;box-sizing:border-box;">
+                        </div>
+                        <div>
+                            <label style="color:#888;font-size:0.8rem;margin-bottom:3px;">연도</label>
+                            <input type="number" id="presElecYear" placeholder="1952" style="width:100%;box-sizing:border-box;">
+                        </div>
+                    </div>
+                    <div style="background:#0a0c10;border:1px solid #2a2a2a;padding:8px 10px;margin-bottom:10px;font-size:0.78rem;color:#888;line-height:1.7;">
+                        선거 방식: <span id="presElecModeSummary" style="color:var(--tno-gold);">단순 다수 대표제</span><br>
+                        기준 원: <span id="presElecChamberSummary" style="color:var(--tno-gold);">하원</span>
+                        <span style="color:#444;">(설정 탭에서 변경)</span>
+                    </div>
+                    <button id="presElecRunBtn" onclick="runPresidentialElection()"
+                        style="background:var(--tno-neon);color:#000;font-weight:bold;border:none;width:100%;padding:14px;font-size:1.3rem;letter-spacing:2px;box-shadow:0 0 10px var(--tno-neon);cursor:pointer;font-family:inherit;" data-modern-label="개표 시작">&gt;&gt; 개표 시작 &lt;&lt;</button>
+                    <div id="presElecResultPanel" style="display:none;margin-top:10px;"></div>
+                </div>
+
+                <!-- 총선 -->
+                <div id="contentElecGeneral" class="sub-tab-content active">
+                <!-- 총리직선제가 켜져 있을 때만 표시 — 이번 총선 탭에서 의원 선거를 할지 총리 선거를 할지 선택 -->
+                <div class="system-radio-group" id="elecKindToggleGroup" style="display:none;">
+                    <button type="button" class="system-radio-btn active" id="elecKindMemberBtn" onclick="setElectionKind('member')">의원 선거</button>
+                    <button type="button" class="system-radio-btn" id="elecKindPmBtn" onclick="setElectionKind('pm')">총리 선거</button>
+                </div>
+
+                <div id="electionKindMemberWrap">
+                <div style="display:grid;grid-template-columns:1fr 90px;gap:8px;margin-bottom:10px;">
+                    <div>
+                        <label style="color:#888;font-size:0.8rem;margin-bottom:3px;">선거 제목</label>
+                        <input type="text" id="elecTitle" placeholder="예: 제1회 총선거" style="width:100%;box-sizing:border-box;">
+                    </div>
+                    <div>
+                        <label style="color:#888;font-size:0.8rem;margin-bottom:3px;">연도</label>
+                        <input type="number" id="elecYear" placeholder="1952" style="width:100%;box-sizing:border-box;">
+                    </div>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:10px;border-bottom:1px solid #222;padding-bottom:10px;" id="elecChamberSelectGroup">
+                    <label style="display:flex;align-items:center;gap:6px;cursor:pointer;color:#aaa;font-size:0.9rem;padding:4px 6px;background:#0a0c10;border:1px solid #222;" id="elecHouseWrap">
+                        <input type="checkbox" name="elecTarget" value="house" checked onchange="onElecTargetChange()"> <span id="elecHouseLabel">하원</span>
+                    </label>
+                    <label style="display:flex;align-items:center;gap:6px;cursor:pointer;color:#aaa;font-size:0.9rem;padding:4px 6px;background:#0a0c10;border:1px solid #222;" id="elecSenateWrap">
+                        <input type="checkbox" name="elecTarget" value="senate" onchange="onElecTargetChange()"> <span id="elecSenateLabel">상원</span>
+                    </label>
+                    <label style="display:flex;align-items:center;gap:6px;cursor:pointer;color:#aaa;font-size:0.9rem;padding:4px 6px;background:#0a0c10;border:1px solid #222;display:none;" id="elecThirdWrap">
+                        <input type="checkbox" name="elecTarget" value="third" onchange="onElecTargetChange()"> <span id="elecThirdLabel">삼원</span>
+                    </label>
+                    <label style="display:flex;align-items:center;gap:6px;cursor:pointer;color:var(--tno-neon);font-size:0.9rem;padding:4px 6px;background:color-mix(in srgb, var(--tno-neon) 10%, transparent);border:1px solid var(--tno-neon-dim);" id="elecBothWrap">
+                        <input type="checkbox" id="elecTargetAll" onchange="onElecTargetAllChange(this.checked)"> <span id="elecBothLabel">전체</span>
+                    </label>
+                </div>
+                <!-- 선거 방식 -->
+                <div style="margin-bottom:10px;">
+                    <div style="color:#666;font-size:0.8rem;margin-bottom:4px;">선거 방식</div>
+                    <div style="display:flex;gap:6px;">
+                        <label style="flex:1;cursor:pointer;padding:6px 8px;background:#0a0c10;border:1px solid #2a2a2a;display:flex;align-items:center;gap:6px;font-size:0.85rem;color:#aaa;">
+                            <input type="checkbox" id="elecModeProportional" checked onchange="onElecModeChange()"> 비례
+                        </label>
+                        <label style="flex:1;cursor:pointer;padding:6px 8px;background:#0a0c10;border:1px solid #2a2a2a;display:flex;align-items:center;gap:6px;font-size:0.85rem;color:#aaa;">
+                            <input type="checkbox" id="elecModeDistrict" onchange="onElecModeChange()"> 지역구
+                        </label>
+                        <label style="flex:1;cursor:pointer;padding:6px 8px;background:color-mix(in srgb, var(--tno-neon) 10%, transparent);border:1px solid var(--tno-neon-dim);display:flex;align-items:center;gap:6px;font-size:0.85rem;color:var(--tno-neon);">
+                            <input type="checkbox" id="elecModeAll" onchange="onElecModeAllChange(this.checked)"> 전체
+                        </label>
+                    </div>
+                    <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:6px 8px;background:#0a0c10;border:1px solid #663333;margin-top:6px;font-size:0.85rem;color:#cc8888;" title="궐석 처리된 지역구만 대상으로 다시 개표">
+                        <input type="checkbox" id="elecModeByElection" onchange="elecUpdateDistrictInfo()"> 보궐 (궐석 지역구만 재선거)
+                    </label>
+                    <div id="elecModeInfo" style="display:none;margin-top:6px;padding:6px 8px;background:#0a0c10;border:1px solid #2a2a2a;font-size:0.78rem;color:#666;line-height:1.6;">
+                        <div id="elecModeInfoHouse"></div>
+                        <div id="elecModeInfoSenate" style="display:none;"></div>
+                        <div id="elecModeInfoThird" style="display:none;"></div>
+                        <div style="font-size:0.72rem;color:#444;margin-top:3px;">지역구는 성향 탭의 지지도로 결정, 비례는 아래 지지율로 결정</div>
+                        <!-- 지도(SVG) 지역구 전용 — 자동으로 순서대로 개표할지, 지도에서 직접 지역구를 클릭해 하나씩 열어볼지 -->
+                        <div id="elecCountModeRow" style="display:none;gap:8px;align-items:center;margin-top:8px;">
+                            <label style="color:#666;font-size:0.8rem;white-space:nowrap;flex-shrink:0;">개표 방식</label>
+                            <div class="system-radio-group" style="flex:1;">
+                                <button type="button" class="system-radio-btn active" id="elecCountModeAutoBtn" onclick="setElecCountMode('auto')">자동</button>
+                                <button type="button" class="system-radio-btn" id="elecCountModeManualBtn" onclick="setElecCountMode('manual')">선택</button>
+                            </div>
+                        </div>
+                        <div id="elecCountModeHint" style="display:none;font-size:0.72rem;color:#444;margin-top:4px;">지도에서 지역구를 하나씩 클릭해 직접 개표합니다</div>
+                    </div>
+                </div>
+                <div class="theme-panel-box" style="display:flex;align-items:center;gap:10px;margin-bottom:10px;background:#000;border:1px solid #333;padding:8px 10px;">
+                    <label style="flex:0 0 70px;color:#aaa;font-size:0.85rem;margin:0;">개표 속도</label>
+                    <input type="range" id="elecSpeed" min="1" max="100" value="80"
+                        oninput="document.getElementById('elecSpeedVal').innerText=this.value"
+                        style="-webkit-appearance:none;width:100%;background:transparent;">
+                    <span id="elecSpeedVal" style="width:28px;color:var(--tno-neon);text-align:right;">80</span>
+                </div>
+                <div style="height:14px;background:#111;border:1px solid var(--tno-border);margin-bottom:8px;overflow:hidden;">
+                    <div id="elecProgressBar" style="height:100%;background:var(--tno-neon);width:0%;box-shadow:0 0 6px var(--tno-neon);transition:width 0.06s;"></div>
+                </div>
+                <!-- 지지율 바 (읽기 전용 — 실제 설정은 지지율 탭에서) -->
+                <div id="elecProbBars" style="margin-bottom:10px;"></div>
+                <!-- 지역구 패널 -->
+                <div id="elecDistrictPanel" style="display:none;">
+                    <div style="background:#0a0c10;border:1px solid #2a2a2a;padding:10px;margin-bottom:8px;">
+                        <div style="color:#888;font-size:0.8rem;margin-bottom:8px;">지역구 설정</div>
+                        <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;">
+                            <label style="color:#666;font-size:0.8rem;white-space:nowrap;flex-shrink:0;">지역구 의석</label>
+                            <span id="elecDistrictSeats" style="color:var(--tno-neon);font-size:0.9rem;">0석 (활성 지역구 수)</span>
+                        </div>
+                        <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;">
+                            <label style="color:#666;font-size:0.8rem;white-space:nowrap;flex-shrink:0;">노이즈 (±%)</label>
+                            <input type="number" id="elecDistrictNoise" value="15" min="0" max="50"
+                                style="width:70px;background:#000;border:1px solid #333;color:var(--tno-neon);font-family:inherit;font-size:0.9rem;padding:4px;text-align:center;">
+                            <span style="color:#444;font-size:0.78rem;">각 지역구 결과에 추가되는 랜덤 변동</span>
+                        </div>
+                    </div>
+                    <div style="background:#0a0c10;border:1px solid #2a2a2a;padding:8px;margin-bottom:8px;font-size:0.78rem;color:#555;line-height:1.5;">
+                        성향 탭에서 설정한 지지도를 기반으로 각 지역구의 당선자를 결정합니다.<br>
+                        성향 데이터가 없는 지역구는 무작위로 배정됩니다.
+                    </div>
+                </div>
+                <button id="elecRunBtn" onclick="elecRun()"
+                    style="background:var(--tno-neon);color:#000;font-weight:bold;border:none;width:100%;padding:14px;font-size:1.3rem;letter-spacing:2px;margin-top:10px;box-shadow:0 0 10px var(--tno-neon);cursor:pointer;font-family:inherit;" data-modern-label="개표 시작">&gt;&gt; 개표 시작 &lt;&lt;</button>
+                <div id="elecMidControls" style="display:none;margin-top:8px;">
+                    <div style="display:flex;gap:6px;">
+                        <button onclick="elecTogglePause()" id="elecPauseBtn"
+                            style="flex:1;background:transparent;border:1px solid var(--tno-gold);color:var(--tno-gold);padding:8px;font-family:inherit;font-size:0.9rem;cursor:pointer;">⏸ 일시정지</button>
+                        <button onclick="elecFinishNow()" id="elecFinishBtn"
+                            style="flex:1;background:transparent;border:1px solid #888;color:#aaa;padding:8px;font-family:inherit;font-size:0.9rem;cursor:pointer;">⏩ 즉시 완료</button>
+                    </div>
+                </div>
+                <div id="elecPostBtns" style="display:none;margin-top:8px;">
+                    <div style="display:flex;gap:6px;">
+                        <button onclick="elecApplyToParliament()"
+                            style="flex:1;background:var(--tno-neon);color:#000;border:none;padding:9px;font-family:inherit;font-size:0.9rem;cursor:pointer;letter-spacing:1px;">✔ 의회에 반영</button>
+                        <button onclick="elecRerun()"
+                            style="flex:1;background:transparent;border:1px solid var(--tno-neon);color:var(--tno-neon);padding:9px;font-family:inherit;font-size:0.9rem;cursor:pointer;">↺ 재개표</button>
+                    </div>
+                </div>
+                </div><!-- end electionKindMemberWrap -->
+
+                <!-- 총리 선거 (총리직선제 활성화 시) -->
+                <div id="electionKindPmWrap" style="display:none;">
+                    <div style="display:grid;grid-template-columns:1fr 90px;gap:8px;margin-bottom:10px;">
+                        <div>
+                            <label style="color:#888;font-size:0.8rem;margin-bottom:3px;">선거 제목</label>
+                            <input type="text" id="pmElecTitle" placeholder="예: 제1회 총리 선거" style="width:100%;box-sizing:border-box;">
+                        </div>
+                        <div>
+                            <label style="color:#888;font-size:0.8rem;margin-bottom:3px;">연도</label>
+                            <input type="number" id="pmElecYear" placeholder="1952" style="width:100%;box-sizing:border-box;">
+                        </div>
+                    </div>
+                    <div style="background:#0a0c10;border:1px solid #2a2a2a;padding:8px 10px;margin-bottom:10px;font-size:0.78rem;color:#888;line-height:1.7;">
+                        선거 방식: <span id="pmElecModeSummary" style="color:var(--tno-gold);">단순 다수 대표제</span><br>
+                        기준 원: <span id="pmElecChamberSummary" style="color:var(--tno-gold);">하원</span>
+                        <span style="color:#444;">(선거 &gt; 설정 탭에서 변경 — 대선과 방식을 공유합니다)</span>
+                    </div>
+                    <button id="pmElecRunBtn" onclick="runPmElection()"
+                        style="background:var(--tno-neon);color:#000;font-weight:bold;border:none;width:100%;padding:14px;font-size:1.3rem;letter-spacing:2px;box-shadow:0 0 10px var(--tno-neon);cursor:pointer;font-family:inherit;" data-modern-label="개표 시작">&gt;&gt; 개표 시작 &lt;&lt;</button>
+                    <div id="pmElecResultPanel" style="display:none;margin-top:10px;"></div>
+                </div>
+                </div><!-- end contentElecGeneral -->
+
+                <!-- 설정 -->
+                <div id="contentElecSettings" class="sub-tab-content">
+                    <div style="margin-top:6px;">
+                        <label style="color:#888;font-size:0.8rem;margin-bottom:6px;display:block;">대선·총리 선거 방식 <span style="color:#555;font-weight:normal;">— 총리직선제일 때 총리 선거에도 그대로 적용됩니다</span></label>
+                        <div class="system-radio-group">
+                            <button type="button" class="system-radio-btn active" id="presElecModePluralityBtn" onclick="setPresElectionMode('plurality')">단순 다수<br>대표제</button>
+                            <button type="button" class="system-radio-btn" id="presElecModeRunoffBtn" onclick="setPresElectionMode('runoff')">결선투표제</button>
+                            <button type="button" class="system-radio-btn" id="presElecModeElectoralBtn" onclick="setPresElectionMode('electoral')">선거인단제</button>
+                        </div>
+                        <div style="color:#555;font-size:0.72rem;margin-top:4px;" id="presElecModeHint">1위 후보가 과반이 아니어도 최다 득표로 당선됩니다</div>
+                    </div>
+                    <div style="margin-top:16px;">
+                        <label style="color:#888;font-size:0.8rem;margin-bottom:6px;display:block;">기준 원 <span style="color:#555;font-weight:normal;">— 지지율(선거인단제는 지역구 결과)을 가져올 원</span></label>
+                        <div class="system-radio-group" id="presElecChamberGroup">
+                            <button type="button" class="system-radio-btn active" id="presElecChamberHouseBtn" onclick="setPresElectionChamberBasis('house')">하원</button>
+                            <button type="button" class="system-radio-btn" id="presElecChamberSenateBtn" onclick="setPresElectionChamberBasis('senate')" style="display:none;">상원</button>
+                            <button type="button" class="system-radio-btn" id="presElecChamberThirdBtn" onclick="setPresElectionChamberBasis('third')" style="display:none;">삼원</button>
+                        </div>
+                    </div>
+                    <div style="margin-top:20px;padding-top:14px;border-top:1px solid #222;">
+                        <label style="color:#888;font-size:0.8rem;margin-bottom:6px;display:block;">후보 설정 <span style="color:#555;font-weight:normal;">— 기본값은 당수, 의원 연결 또는 직접 입력으로 다른 인물을 세울 수 있습니다 (대선/총리 선거 공용)</span></label>
+                        <div id="electionCandidatesConfig"></div>
+                    </div>
+                </div>
+
+                <!-- 선거 기록 -->
+                <div id="contentElecRecord" class="sub-tab-content">
+                    <div id="elecRecordList" style="margin-top:8px;"></div>
+                </div>
 
                 <!-- 부정선거 탭: 정당별로 부정선거 시도를 설정 (정당 탭에는 노출하지 않음) -->
                 <div id="contentFraud" class="sub-tab-content">
                     <div style="color:#664444;font-size:0.78rem;margin-bottom:10px;line-height:1.5;">정당별로 다음 총선 개표 1회에 한해 부정선거를 시도할 수 있습니다. 발각되면 활동 금지 처분을 받습니다.</div>
                     <div id="fraudPartyList"></div>
                 </div><!-- end contentFraud -->
-            </div><!-- end mainContentNation -->
+            </div><!-- end mainContentVote -->
 
-            <!-- ===== 선거 그룹 ===== -->
+            <!-- ===== 여론 그룹 ===== -->
             <div id="mainContentElection" class="main-tab-content">
                 <div class="sub-tab-container" style="margin-top:10px;">
                     <button class="sub-tab-btn active" id="elecSubTabDistrict" onclick="elecSwitchSub('district')">지역구</button>
@@ -1499,6 +1499,7 @@
                 <div class="sub-tab-container">
                     <button class="sub-tab-btn active" onclick="switchSubTab('help','helpsetup')" id="subTabHelpsetup">의회</button>
                     <button class="sub-tab-btn" onclick="switchSubTab('help','helpnation')" id="subTabHelpnation">국가</button>
+                    <button class="sub-tab-btn" onclick="switchSubTab('help','helpvote')" id="subTabHelpvote">선거</button>
                     <button class="sub-tab-btn" onclick="switchSubTab('help','helpelection')" id="subTabHelpelection">여론</button>
                     <button class="sub-tab-btn" onclick="switchSubTab('help','helpcabinet')" id="subTabHelpcabinet">내각</button>
                     <button class="sub-tab-btn" onclick="switchSubTab('help','helplayout')" id="subTabHelplayout">사이드바 · 상단 바</button>
@@ -1506,6 +1507,7 @@
                 </div>
                 <div id="contentHelpsetup" class="sub-tab-content help-page active" data-help="setup"></div>
                 <div id="contentHelpnation" class="sub-tab-content help-page" data-help="nation"></div>
+                <div id="contentHelpvote" class="sub-tab-content help-page" data-help="vote"></div>
                 <div id="contentHelpelection" class="sub-tab-content help-page" data-help="election"></div>
                 <div id="contentHelpcabinet" class="sub-tab-content help-page" data-help="cabinet"></div>
                 <div id="contentHelplayout" class="sub-tab-content help-page" data-help="layout"></div>

@@ -526,7 +526,7 @@
             const hint = document.getElementById('pmSelectionMethodHint');
             if(hint) hint.textContent = method === 'appoint' ? `현재 선출 방식: ${effRoleLabel('president')} 임명제 — ${effRoleLabel('president')}이 후보를 지명하면 의회 심의를 거쳐 ${effRoleLabel('pm')}으로 확정됩니다`
                 : method === 'majority' ? `현재 선출 방식: 다수당 방식 — 기준 원(${chamberDisplayName(presElectionChamberBasis)})의 다수당 대표가 자동으로 ${effRoleLabel('pm')}이 됩니다`
-                : `현재 선출 방식: 총리직선제 — 국가 > 선거 > 총선 탭에서 "총리 선거"로 개표하세요`;
+                : `현재 선출 방식: 총리직선제 — 선거 > 총선 탭에서 "총리 선거"로 개표하세요`;
 
             const nomineeSection = document.getElementById('pmNomineeSection');
             if(nomineeSection) nomineeSection.style.display = method === 'appoint' ? '' : 'none';
@@ -1439,7 +1439,7 @@
             if(emergencyPowers[key].holder === 'none') { showCustomAlert('먼저 권한 주체를 지정하세요.'); return; }
             // 의회 해산(원별 분할 포함)은 한 번 선포되면 임의로 해제할 수 없고, 총선을 새로 반영해야만 풀린다
             if(DISSOLUTION_KEYS.includes(key) && emergencyPowers[key].active) {
-                showCustomAlert(`${emergencyPowerLabel(key)}은 스스로 해제할 수 없습니다.\n국가 > 선거 > 총선에서 새 선거를 반영해야 해제됩니다.`);
+                showCustomAlert(`${emergencyPowerLabel(key)}은 스스로 해제할 수 없습니다.\n선거 > 총선에서 새 선거를 반영해야 해제됩니다.`);
                 return;
             }
             if(!emergencyPowers[key].active) {
@@ -4875,10 +4875,15 @@
             if(currentSubTab.election === 'record') currentSubTab.election = 'vote';
             // 구버전 파일 호환: 저장 메인탭이 국가>설정 하단으로 통합되기 전 위치를 가리키던 경우 재매핑
             if(uiMain === 'save') uiMain = 'nation';
+            // 구버전 파일 호환: 국가 > 선거 / ⚠ 가 선거 메인탭으로 옮겨지기 전 위치
+            if(currentSubTab.nation === 'election' || currentSubTab.nation === 'fraud') {
+                currentSubTab.vote = currentSubTab.nation === 'fraud' ? 'fraud' : 'elecGeneral';
+                currentSubTab.nation = 'legislation';
+                if(uiMain === 'nation') uiMain = 'vote';
+            }
             switchMainTab(uiMain);
             if(uiMain !== 'election') {
-                const fallback = uiMain==='setup' ? 'party' : uiMain==='cabinet' ? 'system' : uiMain==='help' ? 'helpsetup' : 'legislation';
-                switchSubTab(uiMain, currentSubTab[uiMain] || fallback, false);
+                switchSubTab(uiMain, currentSubTab[uiMain] || defaultSubTabFor(uiMain), false);
             }
         }
 
@@ -5689,10 +5694,16 @@
             document.querySelectorAll('.main-tab-content').forEach(c => c.classList.remove('active'));
             document.getElementById('mainContent' + main.charAt(0).toUpperCase() + main.slice(1)).classList.add('active');
             if(main === 'election') { elecRenderList(); elecRenderRecords(); return; }
-            switchSubTab(main, currentSubTab[main] || (main === 'setup' ? 'party' : main === 'cabinet' ? 'system' : main === 'help' ? 'helpsetup' : 'legislation'), false);
+            switchSubTab(main, currentSubTab[main] || defaultSubTabFor(main), false);
+        }
+        function defaultSubTabFor(main) {
+            return main === 'setup' ? 'party' : main === 'cabinet' ? 'system' : main === 'help' ? 'helpsetup' : main === 'vote' ? 'elecGeneral' : 'legislation';
         }
 
         function switchSubTab(main, sub, doMainSwitch = true) {
+            // 구 위치(국가 > 선거 / ⚠) 호환 — 선거 메인탭으로 옮겨짐
+            if(main === 'nation' && sub === 'election') { main = 'vote'; sub = 'elec' + electionInnerTab.charAt(0).toUpperCase() + electionInnerTab.slice(1); doMainSwitch = true; }
+            if(main === 'nation' && sub === 'fraud') { main = 'vote'; doMainSwitch = true; }
             if(doMainSwitch && currentMainTab !== main) switchMainTab(main);
             currentSubTab[main] = sub;
             const groupEl = document.getElementById('mainContent' + main.charAt(0).toUpperCase() + main.slice(1));
@@ -5706,7 +5717,10 @@
             refreshUI();
             if(sub === 'config') { switchConfigInnerTab(configInnerTab); }
             if(sub === 'legislation') { switchLegislationInnerTab('bill'); }
-            if(sub === 'election') { switchElectionInnerTab(electionInnerTab); }
+            if(sub === 'elecPresidential') onElectionSubTabShown('presidential');
+            if(sub === 'elecGeneral') onElectionSubTabShown('general');
+            if(sub === 'elecSettings') onElectionSubTabShown('settings');
+            if(sub === 'elecRecord') elecRenderRecords();
             if(sub === 'record') { switchRecordInnerTab('archive'); }
             if(sub === 'fraud') { renderFraudTab(); }
             if(sub === 'party') { switchPartyGroupInnerTab('info'); }
@@ -5753,16 +5767,13 @@
             if(inner === 'council') { syncCouncilBillSelect(); renderCouncilActiveBillDisplay(); renderCouncilThresholdUI(); renderCabinetDisplay(); }
         }
 
-        // 국가 > 기록 내부 탭 (입법/선거) — 구 기록 메인탭이 국가로 통합됨
+        // 국가 > 기록 (입법 기록) — 선거 기록은 선거 > 기록으로 옮겨짐. 예전 호출(elecRecord)은 그쪽으로 보낸다
         let recordInnerTab = 'archive';
         function switchRecordInnerTab(inner) {
-            recordInnerTab = inner;
-            ['archive','elecRecord'].forEach(k => {
-                document.getElementById('innerTabRec'+k.charAt(0).toUpperCase()+k.slice(1))?.classList.toggle('active', k===inner);
-                document.getElementById('content'+k.charAt(0).toUpperCase()+k.slice(1))?.classList.toggle('active', k===inner);
-            });
-            if(inner === 'archive') renderArchiveList();
-            if(inner === 'elecRecord') elecRenderRecords();
+            if(inner === 'elecRecord') { switchSubTab('vote', 'elecRecord'); return; }
+            recordInnerTab = 'archive';
+            document.getElementById('contentArchive')?.classList.add('active');
+            renderArchiveList();
         }
 
         // 구버전 switchTab 호환
@@ -8483,7 +8494,7 @@
         let elecLastResults = {};      // 반영 대기 중인 개표 결과 (의원실별) — 여러 의원실을 한 번에 개표해도 모두 반영되도록 의원실 키로 누적
 
         // ═══════════════════════════════════════
-        // 국가 > 선거 > 대선 (대통령 선거)
+        // 선거 > 대선 (대통령 선거)
         // ═══════════════════════════════════════
         let electionInnerTab = 'general'; // 'presidential' | 'general' | 'settings'
         let electionKind = 'member'; // 총선 탭 내부 — 'member'(의원 선거) | 'pm'(총리 선거, 총리직선제 활성화 시에만 선택 가능)
@@ -8493,12 +8504,14 @@
         let pmElectionLastResult = null;   // 총리 선거 마지막 개표 결과
         let presElectionRecords = []; // 대선/총리선거 기록 (office 필드로 구분)
 
+        // 선거 메인탭의 대선/총선/방식 하위탭으로 이동 (구 국가 > 선거 내부 탭 — 예전 호출도 그대로 동작)
         function switchElectionInnerTab(inner) {
+            if(!['presidential','general','settings'].includes(inner)) inner = 'general';
+            switchSubTab('vote', 'elec' + inner.charAt(0).toUpperCase() + inner.slice(1));
+        }
+        // 대선/총선/방식 하위탭이 열릴 때 그 화면을 그린다 (switchSubTab에서 호출)
+        function onElectionSubTabShown(inner) {
             electionInnerTab = inner;
-            ['presidential','general','settings'].forEach(k => {
-                document.getElementById('innerTabElec'+k.charAt(0).toUpperCase()+k.slice(1))?.classList.toggle('active', k===inner);
-                document.getElementById('innerContentElec'+k.charAt(0).toUpperCase()+k.slice(1))?.classList.toggle('active', k===inner);
-            });
             elecRenderList();
             if(inner === 'presidential') { updateElectionSettingsSummary(); renderPresElecResultPanel(); }
             if(inner === 'general') {

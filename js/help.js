@@ -1,5 +1,5 @@
 // ===== DATANET PARLIAMENT SIMULATION — 도움말 그룹 =====
-// 메뉴 맨 아래 회색 "도움말" 묶음(의회 · 국가 · 여론 · 내각)의 내용을 채운다.
+// 메뉴 맨 아래 회색 "도움말" 묶음(의회 · 국가 · 선거 · 여론 · 내각)의 내용을 채운다.
 // 각 탭이 무슨 역할을 하는지 카드로 보여주고, "열기 →"로 그 탭에 바로 간다.
 // 탭 이름은 원래 버튼에서 그대로 읽어오므로 직책 이름 바꾸기(대통령 → 국왕 등)나 언어 전환도 따라간다.
 (function () {
@@ -59,7 +59,7 @@
             ],
         },
         nation: {
-            intro: '나라 전체의 설정과 입법 · 선거 · 기록을 다룹니다.',
+            intro: '나라 전체의 설정과 입법 · 입법 기록을 다룹니다.',
             tabs: [
                 {
                     btn: 'subTabConfig', open: go('nation', 'config'),
@@ -82,30 +82,38 @@
                     ],
                 },
                 {
-                    btn: 'subTabElection', open: go('nation', 'election'),
-                    desc: '선거를 치르고 개표합니다. 결과는 여론 탭의 지지율 · 성향을 바탕으로 정해져요.',
-                    inner: [
-                        ['대선', '대통령(총리직선제면 총리) 선거 개표.'],
-                        ['총선', '의회 선거 — 비례 · 지역구 · 전체 방식, 궐석 지역구만 다시 뽑는 보궐선거, 개표 속도.'],
-                        ['방식', '대선 방식(단순 다수 · 결선투표 · 선거인단), 지지율을 가져올 기준 원, 후보.'],
-                    ],
-                },
-                {
                     btn: 'subTabRecord', open: go('nation', 'record'),
-                    desc: '지나간 일을 모아 둡니다.',
-                    inner: [
-                        ['입법', '가결 · 부결 · 거부된 법안 보관함 (상태별로 걸러 보기).'],
-                        ['선거', '지난 선거 결과.'],
-                    ],
+                    desc: '가결 · 부결 · 거부된 법안 보관함입니다 (상태별로 걸러 보기). 선거 기록은 선거 › 기록에 있어요.',
+                },
+            ],
+        },
+        vote: {
+            intro: '선거를 치르고 개표합니다. 결과는 여론 탭의 지지율 · 성향을 바탕으로 정해져요.',
+            tabs: [
+                {
+                    btn: 'subTabElecPresidential', open: go('vote', 'elecPresidential'),
+                    desc: '대통령(총리직선제면 총리) 선거 개표.',
                 },
                 {
-                    btn: 'subTabFraud', open: go('nation', 'fraud'), suffix: ' (부정선거)',
+                    btn: 'subTabElecGeneral', open: go('vote', 'elecGeneral'),
+                    desc: '의회 선거 — 비례 · 지역구 · 전체 방식, 궐석 지역구만 다시 뽑는 보궐선거, 개표 속도.',
+                },
+                {
+                    btn: 'subTabElecSettings', open: go('vote', 'elecSettings'),
+                    desc: '대선 방식(단순 다수 · 결선투표 · 선거인단), 지지율을 가져올 기준 원, 후보.',
+                },
+                {
+                    btn: 'subTabElecRecord', open: go('vote', 'elecRecord'),
+                    desc: '지난 선거 결과.',
+                },
+                {
+                    btn: 'subTabFraud', open: go('vote', 'fraud'), suffix: ' (부정선거)',
                     desc: '정당별로 다음 총선 개표 1회에 한해 부정선거를 시도할 수 있습니다. 발각되면 그 정당은 활동 금지 처분을 받아요.',
                 },
             ],
         },
         election: {
-            intro: '선거 결과를 좌우하는 지역구 · 성향 · 지지율을 정합니다. 여기서 정한 값으로 국가 › 선거에서 개표해요.',
+            intro: '선거 결과를 좌우하는 지역구 · 성향 · 지지율을 정합니다. 여기서 정한 값으로 선거 탭에서 개표해요.',
             tabs: [
                 {
                     btn: 'elecSubTabDistrict', open: goElec('district'),
@@ -232,7 +240,7 @@
                 },
                 {
                     btn: 'dispTabElecResultHouse', title: '선거결과', open: disp('elecResultHouse'), hiddenNote: '총선을 개표하면 원마다 생겨요',
-                    desc: '총선 개표 화면과 결과. 개표가 진행되는 모습, 정당별 득표와 직전 대비 의석 변동(▲/▼)을 보여주고, 결과를 확인한 뒤 국가 › 선거의 "✔ 의회에 반영"을 누르면 그 결과대로 의석이 바뀝니다.',
+                    desc: '총선 개표 화면과 결과. 개표가 진행되는 모습, 정당별 득표와 직전 대비 의석 변동(▲/▼)을 보여주고, 결과를 확인한 뒤 선거 › 총선의 "✔ 의회에 반영"을 누르면 그 결과대로 의석이 바뀝니다.',
                 },
                 {
                     title: '날짜 · 회기', open: () => { go('nation', 'config')(); if (typeof switchConfigInnerTab === 'function') switchConfigInnerTab('date'); showPanel('controls'); },

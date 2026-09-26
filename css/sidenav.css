@@ -90,6 +90,7 @@ body.side-nav-collapsed .mn-group-head { justify-content: center; }
 .mn-group[data-tone="gold"] { --tone: var(--tno-gold); }
 .mn-group[data-tone="success"] { --tone: var(--vote-yea); }
 .mn-group[data-tone="muted"] { --tone: #8b929c; } /* 도움말: 회색 */
+.mn-group[data-tone="vote"] { --tone: #b58cff; } /* 선거: 보라 */
 .mn-group-head {
     background: color-mix(in srgb, var(--tone) 8%, transparent);
     border: 1px solid color-mix(in srgb, var(--tone) 40%, transparent);
@@ -259,6 +260,7 @@ html[data-ui-mode="mobile"] .add-btn { min-height: 42px; }
 .mobile-nav-btn[data-tone="success"] { --tone: var(--vote-yea); }
 .mobile-nav-btn[data-tone="seats"] { --tone: var(--tno-neon); }
 .mobile-nav-btn[data-tone="muted"] { --tone: #8b929c; }
+.mobile-nav-btn[data-tone="vote"] { --tone: #b58cff; }
 .mobile-nav-btn {
     border: none;
     border-top: 2px solid transparent;

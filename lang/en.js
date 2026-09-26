@@ -95,8 +95,8 @@ window.DnoLangPacks.en = {
    "to": "$1 took office as {{map:$2|총리=PM;국무총리=Premier;대통령=President;국왕=Monarch;내각=Cabinet}}."
   },
   {
-   "re": "^(.+?)은 스스로 해제할 수 없습니다\\.\\n국가 > 선거 > 총선에서 새 선거를 반영해야 해제됩니다\\.$",
-   "to": "{{map:$1|국가 비상사태=A State of Emergency;의회 해산=The Dissolution of Parliament;상원 해산=The Dissolution of the Senate;하원 해산=The Dissolution of the House;계엄령=Martial Law}} cannot be lifted by itself.\nIt is lifted once a new general election is applied in Nation > Election > General."
+   "re": "^(.+?)은 스스로 해제할 수 없습니다\\.\\n선거 > 총선에서 새 선거를 반영해야 해제됩니다\\.$",
+   "to": "{{map:$1|국가 비상사태=A State of Emergency;의회 해산=The Dissolution of Parliament;상원 해산=The Dissolution of the Senate;하원 해산=The Dissolution of the House;계엄령=Martial Law}} cannot be lifted by itself.\nIt is lifted once a new general election is applied in Election > General."
   },
   {
    "re": "^(.+?)을\\(를\\) 선포합니다\\. 계속하시겠습니까\\?$",
@@ -532,6 +532,46 @@ window.DnoLangPacks.en = {
   }
  ],
  "dict": [
+  [
+   "현재 선출 방식: 총리직선제 — 선거 > 총선 탭에서 \"총리 선거\"로 개표하세요",
+   "Current method: direct PM election — count it as a \"PM election\" in Election > General"
+  ],
+  [
+   "선거 › 총선에서 \"개표 시작\"을 누르면 지지율에 따라 개표가 진행됩니다. 지금 눌러보세요.",
+   "In Election › General, press \"Start count\" to count votes based on support. Press it now."
+  ],
+  [
+   "📊 여론",
+   "📊 Opinion"
+  ],
+  [
+   "🗳 선거",
+   "🗳 Election"
+  ],
+  [
+   "지역구 의원",
+   "District Members"
+  ],
+  [
+   "비례대표",
+   "Proportional"
+  ],
+  [
+   "나라 전체의 설정과 입법 · 입법 기록을 다룹니다.",
+   "Nation-wide settings, legislation and the legislative record."
+  ],
+  [
+   "가결 · 부결 · 거부된 법안 보관함입니다 (상태별로 걸러 보기). 선거 기록은 선거 › 기록에 있어요.",
+   "The archive of passed, rejected and vetoed bills (filterable by status). Election records are in Election › Record."
+  ],
+  [
+   "선거 결과를 좌우하는 지역구 · 성향 · 지지율을 정합니다. 여기서 정한 값으로 선거 탭에서 개표해요.",
+   "Set the districts, leanings and support that decide elections. The Election tab counts votes using these values."
+  ],
+  [
+   "총선 개표 화면과 결과. 개표가 진행되는 모습, 정당별 득표와 직전 대비 의석 변동(▲/▼)을 보여주고, 결과를 확인한 뒤 선거 › 총선의 \"✔ 의회에 반영\"을 누르면 그 결과대로 의석이 바뀝니다.",
+   "General election count and results. Shows the count in progress, votes by party and seat changes (▲/▼); after checking, press \"✔ Apply to Parliament\" in Election › General to update the seats."
+  ],
   [
    "서브 이념 추가",
    "Add sub-ideology"
