@@ -9187,58 +9187,86 @@
                     selectedOverlayEl = overlay;
                 }
             });
-            // 묶음(권역)마다 바깥 테두리와 안쪽 빛을 그린다 — 묶음 모양(여러 지역구의 합집합)을 마스크로 써서
-            // 합집합 바깥으로 나간 선만 남기면 지역구 사이 경계선은 사라지고 묶음 둘레만 남는다
+            // 묶음(권역)마다 테두리와 안쪽 빛을 그린다 — 테두리는 묶음 안쪽에만 그려서 이웃 권역으로 넘치지 않게 한다.
+            // 묶음 모양(여러 지역구의 합집합)을 필터로 조금 깎아(erode) 원래 모양에서 빼면 둘레의 띠만 남는데,
+            // 지역구 사이 경계는 합집합 안쪽이라 깎여도 띠가 생기지 않는다. 깎는 폭은 화면 픽셀 기준이라 지도를 그린 뒤 정한다
+            const vbParts = String(map.viewBox || '0 0 100 100').split(/[\s,]+/).map(Number);
+            const vb = { x: vbParts[0] || 0, y: vbParts[1] || 0, w: vbParts[2] || 100, h: vbParts[3] || 100 };
+            const groupFilters = []; // { el: feMorphology, px } — 그린 뒤 화면 배율에 맞춰 radius를 정함
+            const blurFilters = [];  // { el: feGaussianBlur, px }
+            const addFilter = (id, parts) => {
+                const f = document.createElementNS(svgNS, 'filter');
+                f.setAttribute('id', id);
+                f.setAttribute('filterUnits', 'userSpaceOnUse');
+                // 필터 영역은 지도 크기(+여유)로만 — 너무 넓으면 브라우저가 필터를 잘라 먹는다
+                f.setAttribute('x', vb.x - vb.w * 0.05); f.setAttribute('y', vb.y - vb.h * 0.05);
+                f.setAttribute('width', vb.w * 1.1); f.setAttribute('height', vb.h * 1.1);
+                f.setAttribute('color-interpolation-filters', 'sRGB');
+                parts.forEach(p => f.appendChild(p));
+                svg.appendChild(f);
+            };
+            const fe = (tag, attrs) => { const e = document.createElementNS(svgNS, tag); Object.entries(attrs).forEach(([k,v]) => e.setAttribute(k, v)); return e; };
             groups.forEach(g => {
                 const uid = Math.random().toString(36).slice(2, 10);
-                const cloneAll = (parent, attrs) => g.shapes.forEach(s => {
-                    const c = document.createElementNS(svgNS, s.tag);
-                    Object.entries(s.attrs||{}).forEach(([k,v]) => c.setAttribute(k, v));
-                    Object.entries(attrs).forEach(([k,v]) => c.setAttribute(k, v));
-                    parent.appendChild(c);
-                });
-                // 합집합 바깥만 보이게 하는 마스크(흰 바탕에 묶음 모양을 검게)
-                const mask = document.createElementNS(svgNS, 'mask');
-                mask.setAttribute('id', 'gout_' + uid);
-                mask.setAttribute('maskUnits', 'userSpaceOnUse');
-                ['x','y'].forEach(k => mask.setAttribute(k, '-100000'));
-                ['width','height'].forEach(k => mask.setAttribute(k, '200000'));
-                const bg = document.createElementNS(svgNS, 'rect');
-                [['x','-100000'],['y','-100000'],['width','200000'],['height','200000'],['fill','#fff']].forEach(([k,v]) => bg.setAttribute(k, v));
-                mask.appendChild(bg);
-                // 검은 모양에도 얇은 테두리를 줘서, 붙어 있는 지역구 사이 안티앨리어싱 틈으로 선이 새지 않게 한다
-                cloneAll(mask, { fill: '#000', stroke: '#000', 'stroke-width': '2', 'stroke-linejoin': 'round', 'vector-effect': 'non-scaling-stroke' });
-                svg.appendChild(mask);
-                // 합집합 모양 클립(안쪽 빛용)
-                const clip = document.createElementNS(svgNS, 'clipPath');
-                clip.setAttribute('id', 'gin_' + uid);
-                cloneAll(clip, {});
-                svg.appendChild(clip);
-                const strokeAttrs = w => ({ fill: 'none', stroke: g.color, 'stroke-width': String(w), 'stroke-linejoin': 'round', 'vector-effect': 'non-scaling-stroke' });
-                // 안쪽 빛: 바깥 테두리를 흐리게 번지게 한 뒤 묶음 안쪽으로만 잘라 보여준다
+                // 묶음 모양을 묶음 색으로 칠한 층 — 얇은 같은 색 테두리로 지역구 사이 안티앨리어싱 틈을 메운다
+                const unionLayer = (filterId, opacity) => {
+                    const layer = document.createElementNS(svgNS, 'g');
+                    layer.setAttribute('filter', `url(#${filterId})`);
+                    layer.setAttribute('pointer-events', 'none');
+                    layer.setAttribute('data-decor', '1');
+                    if(opacity != null) layer.setAttribute('opacity', opacity);
+                    g.shapes.forEach(s => {
+                        const c = document.createElementNS(svgNS, s.tag);
+                        Object.entries(s.attrs||{}).forEach(([k,v]) => c.setAttribute(k, v));
+                        c.setAttribute('fill', g.color);
+                        c.setAttribute('stroke', g.color);
+                        c.setAttribute('stroke-width', '1.5');
+                        c.setAttribute('stroke-linejoin', 'round');
+                        c.setAttribute('vector-effect', 'non-scaling-stroke');
+                        layer.appendChild(c);
+                    });
+                    svg.appendChild(layer);
+                };
+                // 안쪽 빛: 둘레에서 넓게 깎아 낸 띠를 흐리게 번지게 한 뒤 묶음 안쪽으로만 남긴다
                 if(opts.innerGlow) {
-                    const inner = document.createElementNS(svgNS, 'g');
-                    inner.setAttribute('clip-path', `url(#gin_${uid})`);
-                    inner.setAttribute('pointer-events', 'none');
-                    inner.setAttribute('data-decor', '1');
-                    const blurG = document.createElementNS(svgNS, 'g');
-                    blurG.style.filter = 'blur(3px)';
-                    blurG.setAttribute('opacity', '0.8');
-                    const masked = document.createElementNS(svgNS, 'g');
-                    masked.setAttribute('mask', `url(#gout_${uid})`);
-                    cloneAll(masked, strokeAttrs((opts.innerGlowWidth || 8) * 2));
-                    blurG.appendChild(masked); inner.appendChild(blurG); svg.appendChild(inner);
+                    const erodeGlow = fe('feMorphology', { in: 'SourceAlpha', operator: 'erode', radius: '1', result: 'er' });
+                    const blur = fe('feGaussianBlur', { in: 'band', stdDeviation: '1', result: 'bl' });
+                    addFilter('gglow_' + uid, [
+                        erodeGlow,
+                        fe('feComposite', { in: 'SourceGraphic', in2: 'er', operator: 'out', result: 'band' }),
+                        blur,
+                        fe('feComposite', { in: 'bl', in2: 'SourceAlpha', operator: 'in' }),
+                    ]);
+                    groupFilters.push({ el: erodeGlow, px: (opts.innerGlowWidth || 8) });
+                    blurFilters.push({ el: blur, px: 3 });
+                    unionLayer('gglow_' + uid, '0.8');
                 }
-                // 바깥 테두리
-                const outline = document.createElementNS(svgNS, 'g');
-                outline.setAttribute('mask', `url(#gout_${uid})`);
-                outline.setAttribute('pointer-events', 'none');
-                outline.setAttribute('data-decor', '1');
-                cloneAll(outline, strokeAttrs(7));
-                svg.appendChild(outline);
+                // 테두리: 둘레에서 조금 깎아 낸 띠
+                const erodeLine = fe('feMorphology', { in: 'SourceAlpha', operator: 'erode', radius: '1', result: 'er' });
+                addFilter('gline_' + uid, [
+                    erodeLine,
+                    fe('feComposite', { in: 'SourceGraphic', in2: 'er', operator: 'out' }),
+                ]);
+                groupFilters.push({ el: erodeLine, px: 2.5 });
+                unionLayer('gline_' + uid);
             });
             if(selectedOverlayEl) svg.appendChild(selectedOverlayEl);
             wrapEl.appendChild(svg);
+            // 묶음 테두리 두께를 화면 픽셀 기준으로 — 지도 좌표 1단위가 화면에서 몇 픽셀인지 재서 필터 반지름을 정한다
+            if(groupFilters.length) {
+                const applyFilterScale = () => {
+                    const r = svg.getBoundingClientRect();
+                    const cur = String(svg.getAttribute('viewBox') || '').split(/[\s,]+/).map(Number);
+                    const vw = cur[2] || vb.w, vh = cur[3] || vb.h;
+                    const unitsPerPx = r.width > 0 && r.height > 0 ? Math.max(vw / r.width, vh / r.height) : vw / 600;
+                    groupFilters.forEach(({ el, px }) => el.setAttribute('radius', String(px * unitsPerPx)));
+                    blurFilters.forEach(({ el, px }) => el.setAttribute('stdDeviation', String(px * unitsPerPx)));
+                };
+                applyFilterScale();
+                // 확대/축소(viewBox 변경)나 창 크기 변화에도 두께가 유지되도록 다시 맞춘다
+                new MutationObserver(applyFilterScale).observe(svg, { attributes: true, attributeFilter: ['viewBox'] });
+                if(window.ResizeObserver) new ResizeObserver(applyFilterScale).observe(svg);
+            }
 
             // 약칭 표시 + (선거 결과 지도라면) 정당별 획득 의석 수 배지 — 도형이 실제로 배치된 뒤에만
             // getBBox로 중심을 구할 수 있으므로 여기서 처리. 배지가 있으면 약칭은 위로, 배지는 아래로 배치
