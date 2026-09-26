@@ -449,6 +449,15 @@
             border-color: var(--tno-alert);
             box-shadow: 0 0 5px color-mix(in srgb, var(--tno-alert) 40%, transparent);
         }
+        /* 일부만 선택됨(예: 합당 창에서 정당의 파벌 일부만 고름) — 가운데 가로줄 */
+        input[type="checkbox"]:indeterminate { border-color: var(--tno-neon); }
+        input[type="checkbox"]:indeterminate:not(:checked)::after {
+            content: "";
+            position: absolute;
+            left: 3px; right: 3px; top: 50%;
+            height: 2px; margin-top: -1px;
+            background: var(--tno-neon);
+        }
         input[type="checkbox"]:checked::after {
             content: "";
             position: absolute;

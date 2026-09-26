@@ -23,6 +23,10 @@ window.DnoLangPacks.en = {
  "ordinal": "en",
  "patterns": [
   {
+   "re": "^\\s*방식\\s*$",
+   "to": "Method"
+  },
+  {
    "re": "\"(.+?)\" 슬롯을 삭제할까요\\?\\n\\(연결된 \"(.+?) 자동저장\"도 함께 삭제됩니다\\)",
    "to": "Delete the save \"$1\"?\n(Its linked \"$2 Autosave\" will be deleted too)"
   },
@@ -524,6 +528,34 @@ window.DnoLangPacks.en = {
   }
  ],
  "dict": [
+  [
+   "집권과 연정",
+   "Government & Coalitions"
+  ],
+  [
+   "의회를 이루는 이념 · 정당 · 의석 · 의원 · 집권 세력을 다룹니다.",
+   "Ideologies, parties, seats, members and the governing bloc that make up parliament."
+  ],
+  [
+   "기준 원에 참여 중인 정당이 없습니다. 정당 탭 또는 선거 > 방식 탭에서 기준 원을 확인하세요.",
+   "No party takes part in the base chamber. Check the base chamber in the Party tab or Election > Method."
+  ],
+  [
+   "합칠 정당 · 파벌 (2개 이상 — 파벌만 골라 떼어 올 수도 있어요)",
+   "Parties / factions to merge (2 or more — you can also pick just some factions)"
+  ],
+  [
+   "흡수될 정당 · 파벌 (파벌만 골라 떼어 올 수도 있어요)",
+   "Parties / factions to absorb (you can also pick just some factions)"
+  ],
+  [
+   "합칠 정당(또는 파벌)을 2개 이상 고르세요.",
+   "Pick at least two parties (or factions) to merge."
+  ],
+  [
+   "흡수될 정당(또는 파벌)을 1개 이상 고르세요.",
+   "Pick at least one party (or faction) to absorb."
+  ],
   [
    "집단지도체제",
    "Collective leadership"

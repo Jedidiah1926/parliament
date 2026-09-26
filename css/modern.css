@@ -2334,6 +2334,8 @@ html[data-theme-family="modern"] input[type="checkbox"] {
 html[data-theme-family="modern"] input[type="checkbox"]:hover { border-color: var(--m-text-3) !important; }
 html[data-theme-family="modern"] input[type="checkbox"]:checked { background: var(--m-accent) !important; border-color: var(--m-accent) !important; }
 html[data-theme-family="modern"] input[type="checkbox"]:checked::after { border-color: var(--m-on-accent) !important; }
+html[data-theme-family="modern"] input[type="checkbox"]:indeterminate { border-color: var(--m-accent) !important; }
+html[data-theme-family="modern"] input[type="checkbox"]:indeterminate:not(:checked)::after { background: var(--m-accent) !important; border: none !important; }
 html[data-theme-family="modern"] input[type="checkbox"].chk-alert:checked { background: var(--m-danger) !important; border-color: var(--m-danger) !important; }
 html[data-theme-family="modern"] input[type="radio"] { accent-color: var(--m-accent); }
 
