@@ -91,12 +91,12 @@
                     desc: '국가명과 국기.',
                 },
                 {
-                    btn: 'subTabDate', open: go('nation', 'date'),
+                    btn: 'dispDateSettingsBtn', title: '날짜 · 회기 설정', open: () => { if(typeof openDatePanel === 'function') openDatePanel(); },
                     desc: '화면 오른쪽 위에 보이는 현재 날짜와 회기, 표시 방식.',
                 },
                 {
                     btn: 'subTabNationSettings', open: go('nation', 'nationSettings'),
-                    desc: '지역구 시스템(지도 · 그리드)과 지도 위 글씨 · 배지 크기.',
+                    desc: '지도 위 글씨 · 배지 크기.',
                 },
                 {
                     btn: 'saveTabSaveBtn', title: '저장', open: () => { if(typeof openSavePanel === 'function') openSavePanel(); },
@@ -268,8 +268,8 @@
                     desc: '총선 개표 화면과 결과. 개표가 진행되는 모습, 정당별 득표와 직전 대비 의석 변동(▲/▼)을 보여주고, 결과를 확인한 뒤 선거 › 총선의 "✔ 의회에 반영"을 누르면 그 결과대로 의석이 바뀝니다.',
                 },
                 {
-                    title: '날짜 · 회기', open: () => { go('nation', 'date')(); showPanel('controls'); },
-                    desc: '시각 화면 오른쪽 위에 보이는 현재 날짜와 회기. 국가 › 날짜에서 정합니다 ("열기"로 이동).',
+                    title: '날짜 · 회기', open: () => { showPanel('display'); if(typeof openDatePanel === 'function') openDatePanel(); },
+                    desc: '시각 화면 오른쪽 위의 현재 날짜와 회기. ▶ · ▶▶ · ▶▶▶로 하루 · 일주일 · 한 달씩 넘기고, 다음 회기 종류를 골라 다음 회기로 넘깁니다. ⚙로 날짜 · 회기 설정 창을 엽니다.',
                 },
                 {
                     title: '좌석 정보 · 이미지 내보내기',

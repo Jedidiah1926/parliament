@@ -2680,6 +2680,13 @@ html[data-theme-family="modern"] #count { color: var(--m-text) !important; font-
 html[data-theme-family="modern"] .mm-empty-title { color: var(--m-text-2) !important; }
 html[data-theme-family="modern"] .mm-toolbar { color: var(--m-text-2) !important; }
 html[data-theme-family="modern"] .mm-back { text-decoration: none; }
+html[data-theme-family="modern"] #svgContainer { --mm-accent: var(--m-info); }
+html[data-theme-family="modern"] #svgContainer svg .mm-sel { fill: color-mix(in srgb, var(--m-info) 45%, var(--m-surface)) !important; }
+html[data-theme-mode="light"] #svgContainer svg .mm-hl { filter: brightness(0.92); }
+html[data-theme-family="modern"] .item.hl { background: var(--m-surface-2) !important; }
+html[data-theme-family="modern"] .mm-kind { border: none; border-radius: 6px; background: var(--m-surface-2); color: var(--m-text-3); font-weight: 600; }
+html[data-theme-family="modern"] .mm-kind.kind-area { background: color-mix(in srgb, var(--m-info) 14%, var(--m-surface-2)); color: var(--m-info); }
+html[data-theme-family="modern"] .mm-kind.kind-line { background: color-mix(in srgb, var(--m-gold) 14%, var(--m-surface-2)); color: var(--m-gold); }
 html[data-theme-family="modern"] .small,
 html[data-theme-family="modern"] footer { color: var(--m-text-3) !important; }
 

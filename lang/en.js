@@ -22,6 +22,11 @@ window.DnoLangPacks.en = {
  ],
  "ordinal": "en",
  "patterns": [
+  {"re": "^면$", "to": "Area"},
+  {"re": "^선$", "to": "Line"},
+  {"re": "^원$", "to": "Circle"},
+  {"re": "^정기회 시작 — (.+)$", "to": "Regular session opened — $1"},
+  {"re": "^제(\\d+)대 (.+) 시작$", "to": "The {{ordinal:$1}} $2 begins"},
   {"re": "^연$", "to": "Year"},
   {"re": "^월$", "to": "Month"},
   {"re": "^일$", "to": "Day"},
@@ -5276,6 +5281,74 @@ window.DnoLangPacks.en = {
   [
    "- 국가 › 날짜: 연 · 월 · 일 입력칸이 기본(직접 입력은 선택), 진행 버튼은 날짜 줄로 옮김 · 날짜를 정하기 전에 ▶를 누르면 연도 칸으로 안내",
    "- Nation › Date: year · month · day fields are now the default (free text is optional), advance buttons moved to the date line; pressing ▶ before a date is set takes you to the year field"
+  ],
+  [
+   "자동 진행",
+   "Automatic progression"
+  ],
+  [
+   "날짜가 정기회 시작일을 지나면 다음 회기를 정기회로 시작",
+   "When the date passes the regular-session start date, open the next session as a regular session"
+  ],
+  [
+   "정기회 시작일",
+   "Regular session starts on"
+  ],
+  [
+   "하원 총선 결과가 확정되면 대수 +1 (보궐선거 · 재개표는 제외)",
+   "Term +1 when a lower-house general election result is confirmed (not by-elections or recounts)"
+  ],
+  [
+   "회기가 개별형일 때 동작합니다. 날짜 연동은 연 · 월 · 일 날짜에서만 동작합니다.",
+   "Works when the session is set to Individual. Date-based progression only works with year/month/day dates."
+  ],
+  [
+   "지도의 지역구를 클릭해 그 권역에 배정/해제하세요.",
+   "click a district on the map to assign it to that region or remove it."
+  ],
+  [
+   "지도 위 글씨 · 배지 크기.",
+   "Size of the labels and badges on the map."
+  ],
+  [
+   "- 지역구 그리드(육각형) 방식 삭제 — 지역구는 지도 방식 하나만, 국가 설정의 지역구 시스템 선택도 없어짐 (예전 그리드 세이브는 불러올 때 이름 · 의석 · 성향 · 당선자를 그대로 지도 방식 데이터로 변환)",
+   "- Removed the grid (hex) district system — districts use maps only, and the district-system choice in Nation Settings is gone (old grid saves are converted on load, keeping names, seats, tendencies and members)"
+  ],
+  [
+   "- 날짜 · 회기 설정을 날짜 줄 ⚙로 여는 떠 있는 창으로 (구 국가 › 날짜) · 자동 진행: 날짜가 정기회 시작일(기본 9월 1일)을 지나면 정기회로 다음 회기, 하원 총선 확정 시 대수 +1 (둘 다 켜고 끌 수 있음)",
+   "- Date & session settings open as a floating panel from the date line's ⚙ (formerly Nation › Date) · Automatic progression: passing the regular-session start date (default Sep 1) opens a regular session, and a confirmed lower-house general election bumps the term (both toggleable)"
+  ],
+  [
+   "① ⬆ SVG 열기(바로 분석) → ② 오른쪽 목록에서 이름 고치기 · 고르기 → ③ 내보내기",
+   "① ⬆ Open SVG (analyzed right away) → ② Rename · pick in the list on the right → ③ Export"
+  ],
+  [
+   "- 맵 메이커: SVG를 열면 바로 분석 (분석 버튼 없앰)",
+   "- Map Maker: opening an SVG analyzes it right away (no separate Analyze button)"
+  ],
+  [
+   "- 라이트/다크에서는 지역구 지도 테두리 색 · 글씨 테두리 색 설정을 숨기고 고정색 사용 (다크 글씨 테두리 #404245, 라이트 #52525B) — 네온에서만 변경 가능",
+   "- In light/dark the district map border and label-outline color settings are hidden and fixed colors are used (dark label outline #404245, light #52525B) — changeable in neon only"
+  ],
+  [
+   "스크롤: 확대 · 축소",
+   "Scroll: zoom"
+  ],
+  [
+   "휠 클릭 드래그: 이동",
+   "Middle-drag: pan"
+  ],
+  [
+   "클릭: 선택",
+   "Click: select"
+  ],
+  [
+   "사각형",
+   "Rectangle"
+  ],
+  [
+   "- 맵 메이커: 미리보기에서 스크롤로 확대 · 축소, 휠 클릭 드래그로 이동, ↺ 위치 초기화 · 도형 종류를 선 / 면 / 사각형 / 원으로 표시 · ⌖(하이라이트) 버튼 대신 목록 줄과 지도 도형이 마우스를 올리면 서로 강조 · 한글 이름이 __로 보이던 문제 수정 · 도형 색 상태를 기본 / 호버(굵은 테두리) / 선택(강조색) / 선택+호버로 네 가지 모두 구분 (선택한 도형에서 마우스를 빼면 호버 색이 남던 문제 수정)",
+   "- Map Maker: scroll to zoom, middle-drag to pan and ↺ reset in the preview · shapes labelled line / area / rectangle / circle · the ⌖ (highlight) button is replaced by linked hover between list rows and map shapes · fixed Korean names showing as __ · shapes now show four distinct states — normal / hover (thick outline) / selected (accent fill) / selected + hover (fixed a selected shape keeping the hover color after the mouse left)"
   ]
  ]
 };

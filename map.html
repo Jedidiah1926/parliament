@@ -87,6 +87,17 @@
   }
   .controls { display:flex; gap:8px; flex-wrap:wrap; margin-top:8px; align-items:center; }
   .controls label { color: var(--tno-text); font-size: 14px; }
+  .mm-viewbar { display: flex; align-items: center; gap: 10px; }
+  #preview.panning { cursor: grabbing; }
+  /* 목록에 마우스를 올린 도형 / 지도에서 마우스를 올린 도형의 목록 줄 — 서로 연결해 어느 것인지 바로 보이게 */
+  /* 도형 상태 4가지: 기본 / 호버(굵은 강조 테두리 + 살짝 밝게) / 선택(강조색으로 칠함) / 선택+호버(강조색 + 굵은 테두리) */
+  #svgContainer { --mm-accent: var(--tno-neon); }
+  #svgContainer svg .mm-sel { fill: color-mix(in srgb, var(--mm-accent) 45%, #1a1d26) !important; fill-opacity: 1 !important; }
+  #svgContainer svg .mm-hl { stroke: var(--mm-accent) !important; stroke-width: 3px !important; vector-effect: non-scaling-stroke; filter: brightness(1.2); }
+  .item.hl { background: color-mix(in srgb, var(--tno-neon) 10%, transparent); }
+  .mm-kind { font-size: 12px; padding: 1px 7px; border: 1px solid var(--tno-border); color: #8a94a3; white-space: nowrap; }
+  .mm-kind.kind-area { color: var(--tno-neon); border-color: color-mix(in srgb, var(--tno-neon) 50%, transparent); }
+  .mm-kind.kind-line { color: var(--tno-gold); border-color: color-mix(in srgb, var(--tno-gold) 50%, transparent); }
   .item { display:flex; gap:6px; flex-wrap:wrap; row-gap:6px; align-items:center; padding:6px; border-bottom:1px solid var(--tno-border); }
   .item button { margin-left:auto; }
   input[type="text"] {
@@ -142,7 +153,6 @@
       <div class="mm-actions">
         <input id="fileInput" type="file" accept=".svg,image/svg+xml" />
         <label for="fileInput" class="btn secondary file-label">⬆ SVG 열기</label>
-        <button id="btnParse" class="btn secondary" title="SVG에서 지역구 도형 찾기">▶ 분석</button>
         <button id="btnExportAll" class="btn">내보내기</button>
       </div>
     </header>
@@ -156,11 +166,16 @@
           <label><input id="wrapSvg" type="checkbox" checked /> 내보낼 때 <code>&lt;svg viewBox&gt;</code> 래퍼 포함</label>
           <button id="btnClear" class="btn secondary">초기화</button>
         </div>
+        <div class="mm-viewbar">
+          <span class="small">스크롤: 확대 · 축소 &nbsp;·&nbsp; 휠 클릭 드래그: 이동 &nbsp;·&nbsp; 클릭: 선택</span>
+          <span class="mm-spacer"></span>
+          <button id="btnResetView" class="btn secondary">↺ 위치 초기화</button>
+        </div>
         <div id="preview">
           <div id="svgContainer">
             <div class="mm-empty">
               <div class="mm-empty-title">업로드한 SVG가 여기 표시됩니다</div>
-              <div class="small">① ⬆ SVG 열기 → ② ▶ 분석 → ③ 오른쪽 목록에서 이름 고치기 · 고르기 → ④ 내보내기</div>
+              <div class="small">① ⬆ SVG 열기(바로 분석) → ② 오른쪽 목록에서 이름 고치기 · 고르기 → ③ 내보내기</div>
             </div>
           </div>
         </div>
@@ -193,7 +208,6 @@ let svgDoc = null;
 let shapes = []; // {el, tag, id, defaultId, selected}
 
 const fileInput = document.getElementById('fileInput');
-const btnParse = document.getElementById('btnParse');
 const svgContainer = document.getElementById('svgContainer');
 const elementsList = document.getElementById('elementsList');
 const countEl = document.getElementById('count');
@@ -205,8 +219,10 @@ const btnDownloadSVG = document.getElementById('btnDownloadSVG');
 const btnClear = document.getElementById('btnClear');
 const fileNameDisplay = document.getElementById('fileNameDisplay');
 
+// 파일을 열면 바로 분석 (따로 누르는 분석 버튼 없음)
 fileInput.addEventListener('change', () => {
   fileNameDisplay.textContent = fileInput.files?.[0]?.name || '파일 없음';
+  if (fileInput.files && fileInput.files.length) parseUploaded();
 });
 
 function readFileAsText(file) {
@@ -251,12 +267,95 @@ async function parseUploaded() {
     const defaultId = origId || `${tag}_${idx+1}`;
     const safe = sanitizeId(defaultId, `${tag}_${idx+1}`);
     // rawName: 한글 등 원문 그대로 (표시/내보내기용). id는 항상 영문 JS 식별자로 써야 해서 sanitize된 값을 씀
-    shapes.push({ el, tag, id: safe, defaultId: safe, rawName: origId || safe, selected: false, origId });
+    shapes.push({ el, tag, kind: shapeKind(el, tag), id: safe, defaultId: safe, rawName: origId || safe, selected: false, origId });
   });
 
   renderList();
   attachHoverHandlers();
+  initPanZoom(clone);
 }
+
+// 도형 종류: 선(채우기 없는 path · polyline · line) / 면(채운 path · polygon) / 사각형(rect) / 원(circle · ellipse)
+// 지역구로 쓰는 건 보통 "면" — 선은 경계선 등 장식이라 대개 내보낼 필요가 없다
+function shapeKind(el, tag) {
+  if (tag === 'rect') return 'rect';
+  if (tag === 'circle' || tag === 'ellipse') return 'circle';
+  if (tag === 'polyline' || tag === 'line') return 'line';
+  const fillAttr = (el.getAttribute('fill') || '').trim().toLowerCase();
+  let fill = fillAttr;
+  if (!fill) { try { fill = (getComputedStyle(el).fill || '').toLowerCase(); } catch (e) { fill = ''; } }
+  return (fill === 'none' || fill === 'transparent') ? 'line' : 'area';
+}
+const KIND_LABEL = { area: '면', line: '선', rect: '사각형', circle: '원' };
+
+function setHighlight(s, on) {
+  s.el.classList.toggle('mm-hl', on);
+  const row = elementsList.children[shapes.indexOf(s)];
+  if (row) row.classList.toggle('hl', on);
+  return row;
+}
+function setSelected(s, on) {
+  s.selected = on;
+  s.el.classList.toggle('mm-sel', on);
+  const row = elementsList.children[shapes.indexOf(s)];
+  const cb = row && row.querySelector('input[type="checkbox"]');
+  if (cb) cb.checked = on;
+}
+
+// ===== 미리보기 확대 · 이동 — 스크롤: 확대/축소(마우스 위치 기준), 휠 클릭 드래그: 이동, ↺: 처음 보기로 =====
+let view = null; // { svg, base:{x,y,w,h}, cur:{x,y,w,h} }
+function readViewBox(svg) {
+  const vb = (svg.getAttribute('viewBox') || '').split(/[\s,]+/).map(Number);
+  if (vb.length === 4 && vb.every(n => !isNaN(n)) && vb[2] > 0 && vb[3] > 0) return { x: vb[0], y: vb[1], w: vb[2], h: vb[3] };
+  const w = parseFloat(svg.getAttribute('width')) || 0, h = parseFloat(svg.getAttribute('height')) || 0;
+  if (w > 0 && h > 0) return { x: 0, y: 0, w, h };
+  try { const b = svg.getBBox(); if (b.width > 0 && b.height > 0) return { x: b.x, y: b.y, w: b.width, h: b.height }; } catch (e) {}
+  return { x: 0, y: 0, w: 100, h: 100 };
+}
+function applyView() { const c = view.cur; view.svg.setAttribute('viewBox', `${c.x} ${c.y} ${c.w} ${c.h}`); }
+function initPanZoom(svg) {
+  const base = readViewBox(svg);
+  view = { svg, base, cur: { ...base } };
+  applyView();
+}
+function resetView() { if (!view) return; view.cur = { ...view.base }; applyView(); }
+function svgPoint(clientX, clientY) {
+  const m = view.svg.getScreenCTM();
+  if (!m) return null;
+  const pt = view.svg.createSVGPoint(); pt.x = clientX; pt.y = clientY;
+  return pt.matrixTransform(m.inverse());
+}
+(function setupPreviewNav() {
+  const preview = document.getElementById('preview');
+  let panning = false, lastX = 0, lastY = 0;
+  preview.addEventListener('wheel', e => {
+    if (!view) return;
+    e.preventDefault(); // 이 캔버스 안에서는 스크롤 = 확대/축소 (shift 없이도)
+    const p = svgPoint(e.clientX, e.clientY); if (!p) return;
+    const f = e.deltaY < 0 ? 1.15 : 1 / 1.15;
+    const c = view.cur;
+    const w = Math.min(view.base.w * 4, Math.max(view.base.w / 40, c.w / f));
+    const k = w / c.w;
+    view.cur = { x: p.x - (p.x - c.x) * k, y: p.y - (p.y - c.y) * k, w, h: c.h * k };
+    applyView();
+  }, { passive: false });
+  preview.addEventListener('mousedown', e => {
+    if (e.button !== 1 || !view) return; // 휠 클릭 드래그로 이동
+    panning = true; lastX = e.clientX; lastY = e.clientY;
+    preview.classList.add('panning');
+    e.preventDefault();
+  });
+  window.addEventListener('mousemove', e => {
+    if (!panning) return;
+    const m = view.svg.getScreenCTM(); if (!m) return;
+    view.cur.x -= (e.clientX - lastX) / m.a;
+    view.cur.y -= (e.clientY - lastY) / m.d;
+    lastX = e.clientX; lastY = e.clientY;
+    applyView();
+  });
+  window.addEventListener('mouseup', () => { if (panning) { panning = false; preview.classList.remove('panning'); } });
+  preview.addEventListener('auxclick', e => { if (e.button === 1) e.preventDefault(); }); // 휠 클릭 자동 스크롤 막기
+})();
 
 function renderList() {
   elementsList.innerHTML = '';
@@ -272,39 +371,29 @@ function renderList() {
     // name input
     const input = document.createElement('input');
     input.type = 'text';
-    input.value = s.id;
+    input.value = s.rawName || s.id; // 한글 이름도 원문 그대로 (컴포넌트 이름용 영문 식별자는 내보낼 때 따로 만든다)
     input.title = s.origId || '';
     input.oninput = (e) => {
       s.rawName = e.target.value || s.defaultId; // 표시/내보내기용 원문(한글 등 포함)
       s.id = sanitizeId(e.target.value || s.defaultId, s.defaultId); // JS 컴포넌트 이름용 영문 식별자
     };
     div.appendChild(input);
-    // tag
-    const tagSpan = document.createElement('div');
-    tagSpan.textContent = s.tag;
-    tagSpan.style.opacity = 0.6; tagSpan.style.marginLeft='6px';
-    div.appendChild(tagSpan);
+    // 종류: 선 / 면 / 사각형 / 원 (원래 SVG 태그는 마우스를 올리면)
+    const kindSpan = document.createElement('span');
+    kindSpan.className = 'mm-kind kind-' + s.kind;
+    kindSpan.textContent = KIND_LABEL[s.kind] || s.tag;
+    kindSpan.title = `<${s.tag}>`;
+    div.appendChild(kindSpan);
     // select checkbox
     const chk = document.createElement('input');
     chk.type = 'checkbox';
     chk.style.marginLeft = '8px';
-    chk.onchange = (ev) => {
-      s.selected = ev.target.checked;
-      s.el.style.opacity = s.selected ? 0.7 : 1;
-    };
+    chk.title = '선택';
+    chk.onchange = (ev) => setSelected(s, ev.target.checked);
     div.appendChild(chk);
-    // zoom / highlight button
-    const btn = document.createElement('button');
-    btn.textContent = '⌖';
-    btn.title = '하이라이트';
-    btn.className = 'btn secondary icon';
-    btn.onclick = () => {
-      // scroll into view / flash
-      s.el.style.transition = 'filter 200ms, transform 200ms';
-      s.el.style.filter = 'drop-shadow(0 6px 16px rgba(0,0,0,0.2))';
-      setTimeout(()=> s.el.style.filter='', 600);
-    };
-    div.appendChild(btn);
+    // 목록 줄에 마우스를 올리면 지도에서 그 도형을 강조
+    div.onmouseenter = () => setHighlight(s, true);
+    div.onmouseleave = () => setHighlight(s, false);
     // export single button
     const btn2 = document.createElement('button');
     btn2.textContent = '⇩';
@@ -317,23 +406,13 @@ function renderList() {
   countEl.textContent = shapes.length;
 }
 
+// 지도에서 도형에 마우스를 올리면 목록의 그 줄을 강조하고 보이게 스크롤, 클릭하면 선택/해제
 function attachHoverHandlers() {
   shapes.forEach(s => {
-    s.el.style.transition = 'opacity 120ms ease, transform 120ms ease';
-    s.el.onmouseenter = () => { s.el.style.opacity = 0.85; s.el.style.transform = 'translateY(-2px)'; };
-    s.el.onmouseleave = () => { if (!s.selected) s.el.style.opacity = 1; s.el.style.transform=''; };
-    s.el.onclick = () => {
-      // toggle select
-      s.selected = !s.selected;
-      // sync checkbox in list
-      const idx = shapes.indexOf(s);
-      const listItem = elementsList.children[idx];
-      if (listItem) {
-        const cb = listItem.querySelector('input[type="checkbox"]');
-        if(cb) cb.checked = s.selected;
-      }
-      s.el.style.opacity = s.selected ? 0.7 : 1;
-    };
+    s.el.style.cursor = 'pointer';
+    s.el.onmouseenter = () => { const row = setHighlight(s, true); if (row) row.scrollIntoView({ block: 'nearest' }); };
+    s.el.onmouseleave = () => setHighlight(s, false);
+    s.el.onclick = () => setSelected(s, !s.selected);
   });
 }
 
@@ -431,25 +510,13 @@ function downloadComponents(list, singleFile = true) {
   download(filename, jsx);
 }
 
-btnParse.addEventListener('click', parseUploaded);
+// "id/label 우선 사용"을 바꾸면 열린 파일을 다시 분석해 이름 규칙을 바로 반영
+document.getElementById('toggleIds')?.addEventListener('change', () => { if (fileInput.files && fileInput.files.length) parseUploaded(); });
 btnExportAll.addEventListener('click', ()=> downloadComponents(shapes, true));
 btnExportSelected.addEventListener('click', ()=> downloadComponents(getSelectedShapes(), true));
-btnSelectAll.addEventListener('click', ()=> {
-  shapes.forEach((s,i)=> {
-    s.selected = true;
-    const cb = elementsList.children[i].querySelector('input[type="checkbox"]');
-    if(cb) cb.checked = true;
-    s.el.style.opacity = 0.7;
-  });
-});
-btnDeselectAll.addEventListener('click', ()=> {
-  shapes.forEach((s,i)=> {
-    s.selected = false;
-    const cb = elementsList.children[i].querySelector('input[type="checkbox"]');
-    if(cb) cb.checked = false;
-    s.el.style.opacity = 1;
-  });
-});
+btnSelectAll.addEventListener('click', ()=> shapes.forEach(s => setSelected(s, true)));
+btnDeselectAll.addEventListener('click', ()=> shapes.forEach(s => setSelected(s, false)));
+document.getElementById('btnResetView').addEventListener('click', resetView);
 btnDownloadSVG.addEventListener('click', ()=> {
   // download original SVG text (possibly post-edit if you want to support edits)
   if (!lastSVGText) return alert('먼저 SVG를 파싱하세요.');
@@ -462,6 +529,7 @@ btnClear.addEventListener('click', ()=> {
   elementsList.innerHTML = '';
   shapes = [];
   svgDoc = null;
+  view = null;
   lastSVGText = '';
   countEl.textContent = '0';
 });

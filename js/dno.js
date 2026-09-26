@@ -1774,17 +1774,47 @@
             const mEl = document.getElementById('nationDateMonth');
             const dEl = document.getElementById('nationDateDay');
             // 아직 날짜를 안 정했으면 넘길 기준이 없으므로 설정(국가 › 날짜)을 열어 연도 칸으로
-            if(!yEl.value && !mEl.value && !dEl.value) { openNationDateSettings(); setTimeout(() => yEl.focus(), 150); return; }
+            if(!yEl.value && !mEl.value && !dEl.value) { openDatePanel(); setTimeout(() => yEl.focus(), 50); return; }
             const y = parseInt(yEl.value) || 1;
             const m = parseInt(mEl.value) || 1;
             const d = parseInt(dEl.value) || 1;
             const dt = new Date(y, m-1, d);
+            const before = new Date(dt);
             if(unit === 'month') dt.setMonth(dt.getMonth() + amount);
             else dt.setDate(dt.getDate() + amount);
             yEl.value = dt.getFullYear();
             mEl.value = dt.getMonth() + 1;
             dEl.value = dt.getDate();
             updateDispInfoBar();
+            autoStartRegularSessions(before, dt);
+        }
+
+        // ===== 자동 진행 (국가 › 날짜 › 자동 진행) =====
+        // 날짜를 넘기다 정기회 시작일(기본 9월 1일)을 지나면, 지난 횟수만큼 다음 회기를 정기회로 시작 (회기 개별형일 때)
+        function autoStartRegularSessions(from, to) {
+            if(!document.getElementById('nationAutoRegularSession')?.checked || nationSessionMode !== 'individual' || !(to > from)) return;
+            const m = Math.min(12, Math.max(1, parseInt(document.getElementById('nationRegularSessionMonth')?.value) || 9));
+            const d = Math.min(31, Math.max(1, parseInt(document.getElementById('nationRegularSessionDay')?.value) || 1));
+            let count = 0;
+            for(let y = from.getFullYear(); y <= to.getFullYear(); y++) {
+                const start = new Date(y, m - 1, d);
+                if(start > from && start <= to) count++;
+            }
+            if(!count) return;
+            const keepNext = nationNextSessionType;
+            for(let i = 0; i < count; i++) { nationNextSessionType = 'regular'; advanceNationSession(); }
+            setNationNextSessionType(keepNext); // 날짜 줄에서 골라 둔 "다음:" 선택은 그대로 둔다
+            if(typeof showKbdToast === 'function') showKbdToast(`정기회 시작 — ${formatNationSession()}`);
+        }
+        // 하원 총선 결과가 확정되면 대수 +1 (회기 개별형일 때 · 보궐선거와 재개표는 제외 — elecRun에서 호출)
+        function autoAdvanceTermOnElection() {
+            if(!document.getElementById('nationAutoTermOnElection')?.checked || nationSessionMode !== 'individual') return;
+            const termEl = document.getElementById('nationSessionTerm');
+            if(!termEl) return;
+            termEl.value = (parseInt(termEl.value) || 0) + 1;
+            updateDispInfoBar();
+            const orgName = document.getElementById('nationSessionOrgName')?.value?.trim() || '국회';
+            if(typeof showKbdToast === 'function') showKbdToast(`제${termEl.value}대 ${orgName} 시작`);
         }
 
         // 개별형 회기: 다음 회기 (회기 번호만 +1, 대수는 총선 등 큰 이벤트 때 수동으로 바꾸는 값이라 유지)
@@ -1844,9 +1874,31 @@
             }
         }
         // 날짜 줄의 설정 버튼 — 국가 › 날짜 탭을 연다 (모바일은 조작 화면으로 넘어감)
-        function openNationDateSettings() {
-            if(document.documentElement.getAttribute('data-ui-mode') === 'mobile' && typeof setMobilePanel === 'function') setMobilePanel('controls');
-            switchSubTab('nation', 'date');
+        // 날짜 줄의 ⚙ — 날짜 · 회기 설정 창(구 국가 › 날짜)을 ⚙ 바로 아래에 띄운다 (다시 누르면 닫힘)
+        function openNationDateSettings() { isDatePanelOpen() ? closeDatePanel() : openDatePanel(); }
+        function openDatePanel() {
+            const ov = document.getElementById('datePanelLayer');
+            const panel = document.getElementById('datePanel');
+            if(!ov || !panel) return;
+            if(typeof closeSavePanel === 'function') closeSavePanel();
+            ov.style.display = '';
+            const btn = document.getElementById('dispDateSettingsBtn');
+            const r = btn && btn.offsetParent !== null ? btn.getBoundingClientRect() : null;
+            if(r && r.width) {
+                panel.style.top = Math.round(r.bottom + 6) + 'px';
+                panel.style.right = Math.max(12, Math.round(window.innerWidth - r.right)) + 'px';
+            } else { panel.style.top = ''; panel.style.right = ''; }
+            btn?.classList.add('active');
+            panel.querySelector('.save-panel-close')?.focus({ preventScroll: true });
+        }
+        function closeDatePanel() {
+            const ov = document.getElementById('datePanelLayer');
+            if(ov) ov.style.display = 'none';
+            document.getElementById('dispDateSettingsBtn')?.classList.remove('active');
+        }
+        function isDatePanelOpen() {
+            const ov = document.getElementById('datePanelLayer');
+            return !!ov && ov.style.display !== 'none';
         }
 
         // ── 무소속 개별 의원 데이터 ──────────────
@@ -4616,6 +4668,10 @@
                     nationSessionNumber: document.getElementById('nationSessionNumber')?.value ?? "",
                     nationSessionType: nationSessionType,
                     nationNextSessionType: nationNextSessionType,
+                    nationAutoRegularSession: !!document.getElementById('nationAutoRegularSession')?.checked,
+                    nationRegularSessionMonth: document.getElementById('nationRegularSessionMonth')?.value ?? "9",
+                    nationRegularSessionDay: document.getElementById('nationRegularSessionDay')?.value ?? "1",
+                    nationAutoTermOnElection: !!document.getElementById('nationAutoTermOnElection')?.checked,
                     govType: govType,
                     president: president,
                     pm: pm,
@@ -4789,11 +4845,12 @@
             districtPopulation = elec.district?.population ? { house:{}, senate:{}, third:{}, ...elec.district.population } : { house:{}, senate:{}, third:{} };
             districtOrder = elec.district?.order ? { house:[], senate:[], third:[], ...elec.district.order } : { house:[], senate:[], third:[] };
             districtMembers = elec.district?.members ? { house:{}, senate:{}, third:{}, ...elec.district.members } : { house:{}, senate:{}, third:{} };
-            districtMapMode = elec.district?.mapMode === 'svg' ? 'svg' : 'hex';
+            districtMapMode = 'svg'; // 지역구는 지도 방식 하나만 (그리드는 삭제) — 예전 그리드 세이브는 아래에서 변환
             districtSvgMap = elec.district?.svgMap || null;
             districtSeatCounts = elec.district?.seatCounts || {};
             districtSvgTendency = elec.district?.svgTendency || {};
             districtAbbr = elec.district?.abbr || {};
+            if(elec.district?.mapMode !== 'svg') migrateHexDistrictsToMap(elec.tendency?.data);
             ['house','senate','third'].forEach(ch => districtOrderSync(ch)); // 구버전 파일은 순서 배열이 없으므로 좌표 등장순으로 자동 생성
             selectedDistrictKey = null;
             districtUpdateModeUI();
@@ -4843,6 +4900,13 @@
             setNationSessionMode(cfg.nationSessionMode ?? "simple");
             setNationSessionType(cfg.nationSessionType ?? "regular");
             setNationNextSessionType(cfg.nationNextSessionType ?? cfg.nationSessionType ?? "regular"); // 예전 파일: 다음 회기도 지금과 같은 종류
+            { // 자동 진행 설정 (예전 파일: 꺼짐 · 정기회 9월 1일)
+                const set = (id, prop, v) => { const el = document.getElementById(id); if(el) el[prop] = v; };
+                set('nationAutoRegularSession', 'checked', !!cfg.nationAutoRegularSession);
+                set('nationRegularSessionMonth', 'value', cfg.nationRegularSessionMonth ?? '9');
+                set('nationRegularSessionDay', 'value', cfg.nationRegularSessionDay ?? '1');
+                set('nationAutoTermOnElection', 'checked', !!cfg.nationAutoTermOnElection);
+            }
             president = { name: '', photo: '', partyId: null, linkedSeat: null, ...(cfg.president || {}) };
             pm = { name: '', photo: '', partyId: null, linkedSeat: null, ...(cfg.pm || {}) };
             if(Array.isArray(cfg.deputyPms)) {
@@ -4919,7 +4983,7 @@
             // 구버전 파일 호환: 저장 메인탭이 국가>설정 하단으로 통합되기 전 위치를 가리키던 경우 재매핑
             if(uiMain === 'save') { uiMain = 'nation'; currentSubTab.nation = 'symbol'; }
             // 국가 > 저장은 떠 있는 저장 창으로 옮겨짐 — 예전 파일이 저장 탭을 가리키면 상징으로
-            if(currentSubTab.nation === 'save') currentSubTab.nation = 'symbol';
+            if(currentSubTab.nation === 'save' || currentSubTab.nation === 'date') currentSubTab.nation = 'symbol'; // 저장 · 날짜는 떠 있는 창으로 옮겨짐
             // 구버전 파일 호환: 국가 > 선거 / ⚠ 가 선거 메인탭으로 옮겨지기 전 위치
             if(currentSubTab.nation === 'election' || currentSubTab.nation === 'fraud') {
                 currentSubTab.vote = currentSubTab.nation === 'fraud' ? 'fraud' : 'elecGeneral';
@@ -5493,6 +5557,7 @@
         function openSavePanel() {
             const ov = document.getElementById('savePanelLayer');
             if(!ov) return;
+            if(typeof closeDatePanel === 'function') closeDatePanel();
             hideSaveTabAllPopups();
             renderSaveTabUI();
             ov.style.display = '';
@@ -5782,6 +5847,7 @@
         function handleGlobalEscape() {
             const isVisible = el => el && getComputedStyle(el).display !== 'none';
             if(isSavePanelOpen()) { closeSavePanel(); return; }
+            if(isDatePanelOpen()) { closeDatePanel(); return; }
             const exportOverlay = document.getElementById('exportDialogOverlay');
             if(isVisible(exportOverlay)) { closeExportDialog(); return; }
             const seatCard = document.getElementById('seatInfoCard');
@@ -5954,6 +6020,8 @@
             if(main === 'nation' && sub === 'config') sub = configInnerTab;
             // 구 위치(국가 > 저장) 호환 — 탭 바 오른쪽 "저장" 창으로 옮겨짐
             if(main === 'nation' && sub === 'save') { openSavePanel(); return; }
+            // 구 위치(국가 > 날짜) 호환 — 날짜 줄의 ⚙로 여는 날짜 · 회기 설정 창으로 옮겨짐
+            if(main === 'nation' && sub === 'date') { openDatePanel(); return; }
             // 구 위치(국가 > 의회) 호환 — 의회 > 의회 설정으로 옮겨짐
             if(main === 'nation' && sub === 'assembly') { main = 'setup'; doMainSwitch = true; }
             // 구 위치(국가 > 입법 / 기록) 호환 — 입법 메인탭으로 옮겨짐
@@ -6003,12 +6071,13 @@
         function switchConfigInnerTab(inner) {
             if(inner === 'assembly') { switchSubTab('setup', 'assembly'); return; }
             if(inner === 'save') { openSavePanel(); return; }
-            if(!['symbol','date','nationSettings'].includes(inner)) inner = 'symbol';
+            if(inner === 'date') { openDatePanel(); return; }
+            if(!['symbol','nationSettings'].includes(inner)) inner = 'symbol';
             switchSubTab('nation', inner);
         }
         // 국가 하위탭이 열릴 때 그 화면을 그린다 (switchSubTab에서 호출)
         function onConfigSubTabShown(sub) {
-            if(!['symbol','date','nationSettings'].includes(sub)) return;
+            if(!['symbol','nationSettings'].includes(sub)) return;
             configInnerTab = sub;
             if(sub === 'symbol') renderNationConfig();
         }
@@ -9440,7 +9509,7 @@
                             textEl.setAttribute('font-size', fontSize);
                             textEl.setAttribute('fill', '#fff');
                             textEl.setAttribute('paint-order', 'stroke');
-                            textEl.setAttribute('stroke', map.abbrStrokeColor || districtSvgEffectiveStroke(map));
+                            textEl.setAttribute('stroke', districtSvgEffectiveAbbrStroke(map));
                             textEl.setAttribute('stroke-width', fontSize * 0.12);
                             textEl.setAttribute('pointer-events', 'none');
                             textEl.textContent = abbr;
@@ -9689,9 +9758,6 @@
             const chamberSelectRow = document.getElementById('districtChamberSelectRow');
             if(chamberSelectRow) chamberSelectRow.style.display = isSvg ? 'none' : '';
 
-            // 국가>설정의 지역구 시스템 토글 버튼 상태 동기화
-            document.getElementById('districtSystemModeHexBtn')?.classList.toggle('active', !isSvg);
-            document.getElementById('districtSystemModeSvgBtn')?.classList.toggle('active', isSvg);
 
             const info = document.getElementById('districtSvgInfo');
             const fileName = document.getElementById('districtSvgFileName');
@@ -9710,8 +9776,6 @@
                 if(strokeHexInput) { strokeHexInput.value = color.toUpperCase(); strokeHexInput.disabled = locked; }
                 const syncBtn = document.getElementById('districtSvgStrokeSyncBtn');
                 if(syncBtn) syncBtn.style.display = locked ? 'none' : '';
-                const lockNote = document.getElementById('districtSvgStrokeLockNote');
-                if(lockNote) lockNote.style.display = locked ? '' : 'none';
                 const abbrColor = districtSvgMap.abbrStrokeColor || color;
                 if(abbrStrokeInput) abbrStrokeInput.value = abbrColor;
                 if(abbrStrokeHexInput) abbrStrokeHexInput.value = abbrColor.toUpperCase();
@@ -9800,6 +9864,15 @@
         const DISTRICT_STROKE_LIGHT = '#A3A3A3';
         const DISTRICT_STROKE_DARK = '#5C6370';
         function districtStrokeLocked() { return document.documentElement.getAttribute('data-theme-family') === 'modern'; }
+        // 지역구 약칭 글씨(흰 글씨)의 테두리 색 — 라이트/다크는 고정색, 네온만 사용자가 고른 색(없으면 지도 테두리 색)
+        const DISTRICT_ABBR_STROKE_LIGHT = '#52525B';
+        const DISTRICT_ABBR_STROKE_DARK = '#404245';
+        function districtSvgEffectiveAbbrStroke(map) {
+            const mode = document.documentElement.getAttribute('data-theme-mode');
+            if(mode === 'light') return DISTRICT_ABBR_STROKE_LIGHT;
+            if(mode === 'dark') return DISTRICT_ABBR_STROKE_DARK;
+            return (map && map.abbrStrokeColor) || districtSvgEffectiveStroke(map);
+        }
         function districtSvgEffectiveStroke(map) {
             const mode = document.documentElement.getAttribute('data-theme-mode');
             if(mode === 'light') return DISTRICT_STROKE_LIGHT;
@@ -9832,6 +9905,7 @@
         }
 
         function districtSvgSetAbbrStrokeColor(color) {
+            if(districtStrokeLocked()) { districtUpdateModeUI(); return; } // 라이트/다크는 고정색
             if(!districtSvgMap) return;
             districtSvgMap.abbrStrokeColor = color;
             districtUpdateModeUI();
@@ -9853,36 +9927,35 @@
             districtSvgSetAbbrStrokeColor(getThemeColor());
         }
 
-        function districtSvgRevertToHex() {
-            showCustomConfirm('구 지역구(그리드) 방식으로 되돌립니다.\nSVG 지도로 만든 지역구/의석/성향/당선자 데이터가 모두 삭제됩니다. 계속하시겠습니까?', () => {
-                districtMapMode = 'hex';
-                districtSvgMap = null;
-                districtSeatCounts = {};
-                districtSvgTendency = {};
-                districtAbbr = {};
-                ['house','senate','third'].forEach(ch => { districtGrid[ch] = {}; districtNames[ch] = {}; districtPopulation[ch] = {}; districtMembers[ch] = {}; districtOrderSync(ch); });
-                selectedDistrictKey = null;
-                document.getElementById('districtNamePanel').style.display = 'none';
-                districtUpdateModeUI();
-                districtRenderMap();
-                renderDistrictListPanel();
-                elecUpdateDistrictInfo();
+
+        // 예전 그리드(육각형) 세이브 → 지도 방식 데이터로 변환: 칸 하나가 1석짜리 지역구, 이름 · 인구 · 당선자 · 순서는 그대로,
+        // 칸별 성향(정당 → 강도)은 지역구가 있는 원마다 복사. 지도 파일이 없으니 여론 › 지역구에서 지도를 올리면 새 지도로 대체된다
+        function migrateHexDistrictsToMap(hexTendency) {
+            const chs = ['house','senate','third'];
+            const keys = new Set();
+            chs.forEach(ch => Object.keys(districtGrid[ch] || {}).forEach(k => keys.add(k)));
+            if(!keys.size) return;
+            const tend = hexTendency && typeof hexTendency === 'object' ? hexTendency : {};
+            keys.forEach(k => {
+                const seats = {};
+                chs.forEach(ch => { seats[ch] = districtGrid[ch]?.[k] ? 1 : 0; });
+                districtSeatCounts[k] = seats;
+                chs.forEach(ch => {
+                    if(!seats[ch]) return;
+                    Object.keys(tend).forEach(pid => {
+                        const v = tend[pid]?.[k];
+                        if(v === undefined) return;
+                        districtSvgTendency[k] = districtSvgTendency[k] || {};
+                        districtSvgTendency[k][ch] = districtSvgTendency[k][ch] || {};
+                        districtSvgTendency[k][ch][pid] = v;
+                    });
+                });
             });
         }
 
-        // 국가>설정의 지역구 시스템 토글에서 호출 — 육각형 데이터는 지도로 바꿔도 그대로 보존되고
-        // (SVG 지도를 업로드하는 순간 대체됨), 지도 데이터가 있는 상태에서 육각형으로 되돌릴 때만
-        // 기존 되돌리기와 동일하게 확인 후 초기화한다
         function setDistrictMapMode(mode) {
-            if(mode !== 'hex' && mode !== 'svg') return;
-            if(mode === districtMapMode) return;
-            if(mode === 'hex') {
-                const hasSvgData = !!districtSvgMap || Object.keys(districtSeatCounts).length > 0;
-                if(hasSvgData) { districtSvgRevertToHex(); return; }
-                districtMapMode = 'hex';
-            } else {
-                districtMapMode = 'svg';
-            }
+            if(mode !== 'svg' || mode === districtMapMode) return; // 그리드 방식은 삭제됨 — 예전 호출 호환용
+            districtMapMode = 'svg';
             selectedDistrictKey = null;
             document.getElementById('districtNamePanel').style.display = 'none';
             districtUpdateModeUI();
@@ -13035,6 +13108,7 @@
 
             // 기록 저장
             elecSaveRecord(elecTitle, elecYear, chamber, seatMap, weighted, districtResults);
+            if(chamber === 'house' && !isByElection && !isRerun) autoAdvanceTermOnElection();
 
             elecRunning=false;
             runBtn.style.background='var(--tno-neon)'; runBtn.style.color='#000'; runBtn.textContent='>> 개표 시작 <<'; runBtn.dataset.modernLabel='개표 시작';

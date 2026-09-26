@@ -24,6 +24,100 @@
     <!-- 최상단 세이브 탭 바 — 크롬 탭처럼 클릭 한 번으로 세이브 사이를 즉시 오갈 수 있음 -->
     <div class="save-tab-bar" id="saveTabBar"></div>
 
+    <!-- 날짜 · 회기 설정 창 — 날짜 줄의 ⚙ 버튼으로 여는 떠 있는 창 (구 국가 > 날짜) -->
+    <div class="save-panel-overlay date-panel-overlay" id="datePanelLayer" style="display:none;" onmousedown="if(event.target===this) closeDatePanel()">
+        <div class="save-panel date-panel" id="datePanel" role="dialog" aria-modal="true" aria-labelledby="datePanelTitle">
+            <div class="save-panel-head">
+                <span class="save-panel-title" id="datePanelTitle">날짜 · 회기 설정</span>
+                <button type="button" class="save-panel-close" onclick="closeDatePanel()" title="닫기" aria-label="닫기">×</button>
+            </div>
+            <div class="save-panel-body" id="contentDate">
+                    <div>
+                        <label style="color:#888;font-size:0.8rem;margin-bottom:6px;display:block;">현재 날짜</label>
+                        <div class="system-radio-group" style="margin-bottom:8px;">
+                            <button type="button" class="system-radio-btn active" id="nationDateModeProgBtn" onclick="setNationDateMode('progressive')">연 · 월 · 일</button>
+                            <button type="button" class="system-radio-btn" id="nationDateModeSimpleBtn" onclick="setNationDateMode('simple')">직접 입력</button>
+                        </div>
+                        <div id="nationDateSimpleWrap" style="display:none;">
+                            <input type="text" id="nationDateInput" placeholder="예: 1952년 3월 15일" oninput="updateDispInfoBar()" style="width:100%;box-sizing:border-box;">
+                        </div>
+                        <!-- 연 · 월 · 일: 오른쪽 위 날짜 줄의 ▶ · ▶▶ · ▶▶▶ 로 하루 · 일주일 · 한 달씩 진행 -->
+                        <div id="nationDateProgWrap">
+                            <div style="display:flex;gap:6px;">
+                                <div style="flex:1;min-width:0;">
+                                    <label style="color:#555;font-size:0.72rem;margin-bottom:2px;display:block;">연</label>
+                                    <input type="number" id="nationDateYear" placeholder="2025" oninput="updateDispInfoBar()" style="width:100%;box-sizing:border-box;text-align:center;">
+                                </div>
+                                <div style="flex:1;min-width:0;">
+                                    <label style="color:#555;font-size:0.72rem;margin-bottom:2px;display:block;">월</label>
+                                    <input type="number" id="nationDateMonth" placeholder="1" min="1" max="12" oninput="updateDispInfoBar()" style="width:100%;box-sizing:border-box;text-align:center;">
+                                </div>
+                                <div style="flex:1;min-width:0;">
+                                    <label style="color:#555;font-size:0.72rem;margin-bottom:2px;display:block;">일</label>
+                                    <input type="number" id="nationDateDay" placeholder="1" min="1" max="31" oninput="updateDispInfoBar()" style="width:100%;box-sizing:border-box;text-align:center;">
+                                </div>
+                            </div>
+                            <div style="color:#555;font-size:0.72rem;margin-top:6px;">오른쪽 위 날짜 줄의 ▶ · ▶▶ · ▶▶▶ 로 하루 · 일주일 · 한 달씩 넘길 수 있습니다</div>
+                        </div>
+                    </div>
+
+                    <div style="margin-top:16px;">
+                        <label style="color:#888;font-size:0.8rem;margin-bottom:6px;display:block;">회기</label>
+                        <div class="system-radio-group" style="margin-bottom:8px;">
+                            <button type="button" class="system-radio-btn active" id="nationSessionModeSimpleBtn" onclick="setNationSessionMode('simple')">단순형</button>
+                            <button type="button" class="system-radio-btn" id="nationSessionModeIndivBtn" onclick="setNationSessionMode('individual')">개별형</button>
+                        </div>
+                        <div id="nationSessionSimpleWrap">
+                            <input type="text" id="nationSessionInput" placeholder="예: 제21대 국회 제1회 임시회" oninput="updateDispInfoBar()" style="width:100%;box-sizing:border-box;">
+                        </div>
+                        <div id="nationSessionIndivWrap" style="display:none;">
+                            <div style="display:flex;gap:6px;margin-bottom:8px;">
+                                <div style="flex:1;">
+                                    <label style="color:#555;font-size:0.72rem;margin-bottom:2px;">대수</label>
+                                    <input type="number" id="nationSessionTerm" placeholder="21" oninput="updateDispInfoBar()" style="width:100%;text-align:center;box-sizing:border-box;">
+                                </div>
+                                <div style="flex:1;">
+                                    <label style="color:#555;font-size:0.72rem;margin-bottom:2px;">이름</label>
+                                    <input type="text" id="nationSessionOrgName" placeholder="국회" oninput="updateDispInfoBar()" style="width:100%;text-align:center;box-sizing:border-box;">
+                                </div>
+                                <div style="flex:1;">
+                                    <label style="color:#555;font-size:0.72rem;margin-bottom:2px;">회기</label>
+                                    <input type="number" id="nationSessionNumber" placeholder="1" oninput="updateDispInfoBar()" style="width:100%;text-align:center;box-sizing:border-box;">
+                                </div>
+                            </div>
+                            <label style="color:#555;font-size:0.72rem;margin-bottom:2px;display:block;">지금 회기 종류 (다음 회기 종류는 오른쪽 위 날짜 줄의 "다음:" 버튼으로)</label>
+                            <div class="system-radio-group" style="margin-bottom:8px;">
+                                <button type="button" class="system-radio-btn active" id="nationSessionTypeRegularBtn" onclick="setNationSessionType('regular')">정기회</button>
+                                <button type="button" class="system-radio-btn" id="nationSessionTypeExtraBtn" onclick="setNationSessionType('extraordinary')">임시회</button>
+                            </div>
+                            <button class="add-btn" onclick="advanceNationSession()" style="width:100%;margin-top:0;">▶ 다음 회기</button>
+                        </div>
+                    </div>
+
+                    <!-- 자동 진행: 날짜로 정기회 시작 · 총선으로 대수 올리기 (회기가 개별형일 때 동작) -->
+                    <div style="margin-top:16px;">
+                        <label style="color:#888;font-size:0.8rem;margin-bottom:6px;display:block;">자동 진행</label>
+                        <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer;margin-bottom:6px;">
+                            <input type="checkbox" id="nationAutoRegularSession" style="margin-top:3px;">
+                            <span style="font-size:0.85rem;">날짜가 정기회 시작일을 지나면 다음 회기를 정기회로 시작</span>
+                        </label>
+                        <div style="display:flex;align-items:center;gap:6px;margin:0 0 10px 24px;font-size:0.8rem;color:#888;">
+                            <span>정기회 시작일</span>
+                            <input type="number" id="nationRegularSessionMonth" value="9" min="1" max="12" style="width:56px;text-align:center;box-sizing:border-box;">
+                            <span>월</span>
+                            <input type="number" id="nationRegularSessionDay" value="1" min="1" max="31" style="width:56px;text-align:center;box-sizing:border-box;">
+                            <span>일</span>
+                        </div>
+                        <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer;">
+                            <input type="checkbox" id="nationAutoTermOnElection" style="margin-top:3px;">
+                            <span style="font-size:0.85rem;">하원 총선 결과가 확정되면 대수 +1 (보궐선거 · 재개표는 제외)</span>
+                        </label>
+                        <div style="color:#555;font-size:0.72rem;margin-top:6px;">회기가 개별형일 때 동작합니다. 날짜 연동은 연 · 월 · 일 날짜에서만 동작합니다.</div>
+                    </div>
+            </div>
+        </div>
+    </div>
+
     <!-- 저장 창 — 상단 탭 바 오른쪽 "저장" 버튼으로 여는 떠 있는 창 (구 국가 > 저장) -->
     <div class="save-panel-overlay" id="savePanelLayer" style="display:none;" onmousedown="if(event.target===this) closeSavePanel()">
         <div class="save-panel" role="dialog" aria-modal="true" aria-labelledby="savePanelTitle">
@@ -666,7 +760,6 @@
             <div id="mainContentNation" class="main-tab-content active">
                 <div class="sub-tab-container">
                     <button class="sub-tab-btn active" onclick="switchSubTab('nation','symbol')" id="subTabSymbol">상징</button>
-                    <button class="sub-tab-btn" onclick="switchSubTab('nation','date')" id="subTabDate">날짜</button>
                     <button class="sub-tab-btn" onclick="switchSubTab('nation','nationSettings')" id="subTabNationSettings">국가 설정</button>
                 </div>
 
@@ -693,83 +786,13 @@
 
                 </div>
 
-                <!-- 날짜: 현재 날짜 + 회기 -->
-                <div id="contentDate" class="sub-tab-content">
-                    <div>
-                        <label style="color:#888;font-size:0.8rem;margin-bottom:6px;display:block;">현재 날짜</label>
-                        <div class="system-radio-group" style="margin-bottom:8px;">
-                            <button type="button" class="system-radio-btn active" id="nationDateModeProgBtn" onclick="setNationDateMode('progressive')">연 · 월 · 일</button>
-                            <button type="button" class="system-radio-btn" id="nationDateModeSimpleBtn" onclick="setNationDateMode('simple')">직접 입력</button>
-                        </div>
-                        <div id="nationDateSimpleWrap" style="display:none;">
-                            <input type="text" id="nationDateInput" placeholder="예: 1952년 3월 15일" oninput="updateDispInfoBar()" style="width:100%;box-sizing:border-box;">
-                        </div>
-                        <!-- 연 · 월 · 일: 오른쪽 위 날짜 줄의 ▶ · ▶▶ · ▶▶▶ 로 하루 · 일주일 · 한 달씩 진행 -->
-                        <div id="nationDateProgWrap">
-                            <div style="display:flex;gap:6px;">
-                                <div style="flex:1;min-width:0;">
-                                    <label style="color:#555;font-size:0.72rem;margin-bottom:2px;display:block;">연</label>
-                                    <input type="number" id="nationDateYear" placeholder="2025" oninput="updateDispInfoBar()" style="width:100%;box-sizing:border-box;text-align:center;">
-                                </div>
-                                <div style="flex:1;min-width:0;">
-                                    <label style="color:#555;font-size:0.72rem;margin-bottom:2px;display:block;">월</label>
-                                    <input type="number" id="nationDateMonth" placeholder="1" min="1" max="12" oninput="updateDispInfoBar()" style="width:100%;box-sizing:border-box;text-align:center;">
-                                </div>
-                                <div style="flex:1;min-width:0;">
-                                    <label style="color:#555;font-size:0.72rem;margin-bottom:2px;display:block;">일</label>
-                                    <input type="number" id="nationDateDay" placeholder="1" min="1" max="31" oninput="updateDispInfoBar()" style="width:100%;box-sizing:border-box;text-align:center;">
-                                </div>
-                            </div>
-                            <div style="color:#555;font-size:0.72rem;margin-top:6px;">오른쪽 위 날짜 줄의 ▶ · ▶▶ · ▶▶▶ 로 하루 · 일주일 · 한 달씩 넘길 수 있습니다</div>
-                        </div>
-                    </div>
 
-                    <div style="margin-top:16px;">
-                        <label style="color:#888;font-size:0.8rem;margin-bottom:6px;display:block;">회기</label>
-                        <div class="system-radio-group" style="margin-bottom:8px;">
-                            <button type="button" class="system-radio-btn active" id="nationSessionModeSimpleBtn" onclick="setNationSessionMode('simple')">단순형</button>
-                            <button type="button" class="system-radio-btn" id="nationSessionModeIndivBtn" onclick="setNationSessionMode('individual')">개별형</button>
-                        </div>
-                        <div id="nationSessionSimpleWrap">
-                            <input type="text" id="nationSessionInput" placeholder="예: 제21대 국회 제1회 임시회" oninput="updateDispInfoBar()" style="width:100%;box-sizing:border-box;">
-                        </div>
-                        <div id="nationSessionIndivWrap" style="display:none;">
-                            <div style="display:flex;gap:6px;margin-bottom:8px;">
-                                <div style="flex:1;">
-                                    <label style="color:#555;font-size:0.72rem;margin-bottom:2px;">대수</label>
-                                    <input type="number" id="nationSessionTerm" placeholder="21" oninput="updateDispInfoBar()" style="width:100%;text-align:center;box-sizing:border-box;">
-                                </div>
-                                <div style="flex:1;">
-                                    <label style="color:#555;font-size:0.72rem;margin-bottom:2px;">이름</label>
-                                    <input type="text" id="nationSessionOrgName" placeholder="국회" oninput="updateDispInfoBar()" style="width:100%;text-align:center;box-sizing:border-box;">
-                                </div>
-                                <div style="flex:1;">
-                                    <label style="color:#555;font-size:0.72rem;margin-bottom:2px;">회기</label>
-                                    <input type="number" id="nationSessionNumber" placeholder="1" oninput="updateDispInfoBar()" style="width:100%;text-align:center;box-sizing:border-box;">
-                                </div>
-                            </div>
-                            <label style="color:#555;font-size:0.72rem;margin-bottom:2px;display:block;">지금 회기 종류 (다음 회기 종류는 오른쪽 위 날짜 줄의 "다음:" 버튼으로)</label>
-                            <div class="system-radio-group" style="margin-bottom:8px;">
-                                <button type="button" class="system-radio-btn active" id="nationSessionTypeRegularBtn" onclick="setNationSessionType('regular')">정기회</button>
-                                <button type="button" class="system-radio-btn" id="nationSessionTypeExtraBtn" onclick="setNationSessionType('extraordinary')">임시회</button>
-                            </div>
-                            <button class="add-btn" onclick="advanceNationSession()" style="width:100%;margin-top:0;">▶ 다음 회기</button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 설정: 지역구 시스템(지도/그리드) · 지도 글씨·배지 크기 -->
+                <!-- 국가 설정: 지도 글씨·배지 크기 -->
                 <div id="contentNationSettings" class="sub-tab-content">
-                    <!-- 지역구 시스템 (육각형 / 지도) -->
+                    <!-- 지도 글씨 · 배지 크기 (지역구는 지도 방식 하나만 — 그리드는 1.5.6에서 삭제) -->
                     <div>
-                        <label style="color:#888;font-size:0.8rem;margin-bottom:6px;display:block;">지역구 시스템 (기본: 지도)</label>
-                        <div class="system-radio-group">
-                            <button type="button" class="system-radio-btn active" id="districtSystemModeSvgBtn" onclick="setDistrictMapMode('svg')">지도</button>
-                            <button type="button" class="system-radio-btn" id="districtSystemModeHexBtn" onclick="setDistrictMapMode('hex')">그리드</button>
-                        </div>
-                        <div style="color:#555;font-size:0.72rem;margin-top:4px;">지도 모드에서는 여론 › 지역구 탭에서 SVG 지도(.jsx)를 올릴 수 있습니다</div>
                         <!-- 지도 위 약칭/의석 배지 크기 — 지역구 자체 크기와 무관하게 지도 전체에서 하나의 기준으로 통일되지만, 취향에 따라 일괄 조정 가능 -->
-                        <div style="margin-top:10px;">
+                        <div>
                             <label style="color:#888;font-size:0.8rem;margin-bottom:4px;display:block;">지도 글씨·배지 크기</label>
                             <div style="display:flex;align-items:center;gap:8px;">
                                 <input type="range" id="districtLabelScaleSlider" min="50" max="200" value="100"
@@ -1059,16 +1082,16 @@
                         </div>
 
                         <div id="districtSvgInfo" style="display:none;">
-                            <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;padding:8px;background:#0a0c10;border:1px solid #222;flex-wrap:wrap;">
+                            <!-- 테두리 색 · 글씨 테두리 색: 네온에서만 고를 수 있음 (라이트/다크는 테마에 맞춘 고정색이라 숨김) -->
+                            <div class="neon-only" style="display:flex;align-items:center;gap:8px;margin-bottom:10px;padding:8px;background:#0a0c10;border:1px solid #222;flex-wrap:wrap;">
                                 <span style="color:#888;font-size:0.85rem;">테두리 색</span>
                                 <input type="color" id="districtSvgStrokeColorInput" value="#00ffff" oninput="districtSvgSetStrokeColor(this.value)" style="width:36px;height:28px;padding:0;border:1px solid #333;background:none;cursor:pointer;">
                                 <input type="text" id="districtSvgStrokeColorHexInput" maxlength="7" placeholder="#00ffff" onchange="districtSvgSetStrokeColorHex(this.value)"
                                     style="width:78px;background:#000;border:1px solid #333;color:var(--tno-neon);font-family:inherit;font-size:0.8rem;padding:5px;text-align:center;text-transform:uppercase;">
                                 <button id="districtSvgStrokeSyncBtn" onclick="districtSvgSyncStrokeColorWithTheme()" style="background:transparent;border:1px solid #333;color:#888;padding:5px 8px;font-family:inherit;font-size:0.75rem;cursor:pointer;">테마 색과 동기화</button>
-                                <span id="districtSvgStrokeLockNote" style="color:#666;font-size:0.75rem;display:none;">라이트/다크 모드에서는 테마에 맞춘 고정색입니다 (네온 모드에서 변경)</span>
                                 <span style="color:#444;font-size:0.75rem;">채우기는 항상 투명입니다</span>
                             </div>
-                            <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;padding:8px;background:#0a0c10;border:1px solid #222;flex-wrap:wrap;">
+                            <div class="neon-only" style="display:flex;align-items:center;gap:8px;margin-bottom:10px;padding:8px;background:#0a0c10;border:1px solid #222;flex-wrap:wrap;">
                                 <span style="color:#888;font-size:0.85rem;">글씨 테두리 색</span>
                                 <input type="color" id="districtSvgAbbrStrokeColorInput" value="#00ffff" oninput="districtSvgSetAbbrStrokeColor(this.value)" style="width:36px;height:28px;padding:0;border:1px solid #333;background:none;cursor:pointer;">
                                 <input type="text" id="districtSvgAbbrStrokeColorHexInput" maxlength="7" placeholder="#00ffff" onchange="districtSvgSetAbbrStrokeColorHex(this.value)"
@@ -1570,7 +1593,7 @@
                     <button type="button" class="dib-btn dib-play" onclick="advanceNationDate(7,'day')" title="일주일 진행 (+7일)" aria-label="일주일 진행">▶▶</button>
                     <button type="button" class="dib-btn dib-play" onclick="advanceNationDate(1,'month')" title="한 달 진행 (+1개월)" aria-label="한 달 진행">▶▶▶</button>
                 </span>
-                <button type="button" class="dib-btn dib-settings" onclick="openNationDateSettings()" title="날짜 · 회기 설정" aria-label="날짜 · 회기 설정">
+                <button type="button" class="dib-btn dib-settings" id="dispDateSettingsBtn" onclick="event.stopPropagation();openNationDateSettings()" title="날짜 · 회기 설정" aria-label="날짜 · 회기 설정">
                     <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
                 </button>
                 <span id="dispInfoSession" class="dib-text dib-sub">회기 미설정</span>
@@ -1710,7 +1733,7 @@
                 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
                     <h3 style="margin:0;border:none;padding:0;"><span class="tno-prompt">&gt; </span>권역 배정 맵</h3>
                 </div>
-                <div style="font-size:0.78rem;color:#666;margin-bottom:8px;">아래에서 "칠하기" 권역을 고른 뒤, 지도(또는 그리드)의 지역구를 클릭해 그 권역에 배정/해제하세요.</div>
+                <div style="font-size:0.78rem;color:#666;margin-bottom:8px;">아래에서 "칠하기" 권역을 고른 뒤, 지도의 지역구를 클릭해 그 권역에 배정/해제하세요.</div>
                 <div id="regionMapWrap"></div>
             </div>
         </div>
