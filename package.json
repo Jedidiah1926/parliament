@@ -1,5 +1,6 @@
 {
-  "name": "datanet-parliament-simulation",
+  "name": "hemicycle",
+  "productName": "Hemicycle",
   "version": "1.5.6",
   "description": "Hemicycle — desktop build",
   "private": true,
@@ -15,7 +16,7 @@
     "electron-builder": "^25.0.0"
   },
   "build": {
-    "appId": "com.abwehr.datanet-parliament",
+    "appId": "com.pilcrow1926.hemicycle",
     "productName": "Hemicycle",
     "asar": true,
     "files": [

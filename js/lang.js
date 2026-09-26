@@ -123,7 +123,7 @@
             name: '',
             author: '',
             version: '1',
-            _help: 'dict의 각 항목은 ["한국어 원문", "번역"]입니다. 두 번째 칸만 바꾸세요. code(예: "ja")와 name(예: "日本語")을 채운 뒤 설정 > 언어 팩 불러오기로 적용합니다. 자세한 형식은 README "번역(언어 팩) 만들기" 참고.',
+            _help: 'dict의 각 항목은 ["한국어 원문", "번역"]입니다. 두 번째 칸만 바꾸세요. code(예: "ja")와 name(예: "日本語")을 채운 뒤 메인 화면 🌐 > 언어 팩 불러오기로 적용합니다. 자세한 형식은 README "번역(언어 팩) 만들기" 참고.',
             months: en.months,
             ordinal: en.ordinal,
             patterns: en.patterns,

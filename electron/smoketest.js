@@ -12,7 +12,7 @@ app.whenReady().then(async () => {
     await win.loadFile(path.join(__dirname, '..', 'main.html'));
     title = await win.webContents.executeJavaScript('document.title');
     const hasMenuBtn = await win.webContents.executeJavaScript(
-        `!!document.querySelector('.menu-btn')`
+        `!!document.querySelector('.home-menu-item')`
     );
     console.log('SMOKETEST_RESULT', JSON.stringify({ loaded, title, hasMenuBtn }));
 

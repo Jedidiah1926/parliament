@@ -1386,3 +1386,7 @@
     background: color-mix(in srgb, var(--region-color) 12%, transparent);
     white-space: nowrap;
 }
+
+/* 탭을 모두 닫은 상태 — 탭 바만 남기고 아래는 비운다 (진짜 프로그램처럼) */
+body.no-open-tab > *:not(.save-tab-bar):not(.dno-dialog-overlay):not(.dno-tip):not(.kbd-toast):not(script):not(style) { display: none !important; }
+body.no-open-tab { overflow: hidden; }
