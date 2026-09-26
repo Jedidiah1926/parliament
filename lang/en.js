@@ -251,7 +251,7 @@ window.DnoLangPacks.en = {
    "to": "Now enter a number in the new party's seat box. You can enter up to the free seats ($1)."
   },
   {
-   "re": "의회 › 구성의 \"배정 합계\"는 정당 의석을 모두 더한 값이고, 총 의석 수를 넘을 수 없습니다\\. 기존 정당들이 이미 (\\d+)석을 다 차지하고 있으면 새 정당이 앉을 자리가 없어요\\. 총 의석 수를 늘리거나\\(예: (\\d+)\\) 다른 정당 의석을 줄여 빈자리를 만들어 보세요\\.",
+   "re": "의회 › 의회 구성의 \"배정 합계\"는 정당 의석을 모두 더한 값이고, 총 의석 수를 넘을 수 없습니다\\. 기존 정당들이 이미 (\\d+)석을 다 차지하고 있으면 새 정당이 앉을 자리가 없어요\\. 총 의석 수를 늘리거나\\(예: (\\d+)\\) 다른 정당 의석을 줄여 빈자리를 만들어 보세요\\.",
    "to": "\"Assigned total\" in Parliament › Composition is the sum of all party seats, and it can't exceed the total. If the existing parties already fill all $1 seats, there's no room for a new party. Raise the total (e.g. $2) or cut another party's seats to make room."
   },
   {
@@ -725,7 +725,7 @@ window.DnoLangPacks.en = {
    "Parliament Settings"
   ],
   [
-   "의회를 이루는 이념 · 정당 · 의석 · 의원 · 집권 세력과 의회 자체의 설정을 다룹니다.",
+   "의회 자체의 설정과 의회를 이루는 이념 · 정당 · 의석 · 집권 세력 · 의원을 다룹니다.",
    "Ideologies, parties, seats, members and the governing bloc that make up parliament, plus the settings of parliament itself."
   ],
   [
@@ -5135,6 +5135,14 @@ window.DnoLangPacks.en = {
   [
    "지도 모드에서는 여론 › 지역구 탭에서 SVG 지도(.jsx)를 올릴 수 있습니다",
    "In map mode, upload the district map (.jsx) in Polls \u203a Districts"
+  ],
+  [
+   "의회 구성",
+   "Parliament Composition"
+  ],
+  [
+   "- 의회 탭 순서 변경: 의회 설정 · 이념 · 정당 · 의회 구성(구 구성) · 집권과 연정 · 지역구 의원 · 비례대표",
+   "- Parliament tab order: Parliament Settings · Ideologies · Parties · Composition (formerly Setup) · Government & Coalitions · District Members · List Members"
   ]
  ]
 };
