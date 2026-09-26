@@ -4888,7 +4888,9 @@
             if(uiMain === 'legislation' || uiMain === 'record') { currentSubTab.nation = uiMain; uiMain = 'nation'; }
             if(currentSubTab.election === 'record') currentSubTab.election = 'vote';
             // 구버전 파일 호환: 저장 메인탭이 국가>설정 하단으로 통합되기 전 위치를 가리키던 경우 재매핑
-            if(uiMain === 'save') { uiMain = 'nation'; currentSubTab.nation = 'save'; }
+            if(uiMain === 'save') { uiMain = 'nation'; currentSubTab.nation = 'symbol'; }
+            // 국가 > 저장은 떠 있는 저장 창으로 옮겨짐 — 예전 파일이 저장 탭을 가리키면 상징으로
+            if(currentSubTab.nation === 'save') currentSubTab.nation = 'symbol';
             // 구버전 파일 호환: 국가 > 선거 / ⚠ 가 선거 메인탭으로 옮겨지기 전 위치
             if(currentSubTab.nation === 'election' || currentSubTab.nation === 'fraud') {
                 currentSubTab.vote = currentSubTab.nation === 'fraud' ? 'fraud' : 'elecGeneral';
@@ -5435,7 +5437,8 @@
                     </svg>
                 </a>
                 <div class="save-tab-list">${tabsHtml}</div>
-                <div class="save-tab-new" id="saveTabNewBtn" onclick="showSaveTabNewMenu()" title="새 세이브">+</div>
+                <div class="save-tab-new-wrap">
+                <div class="save-tab-new" id="saveTabNewBtn" onclick="showSaveTabNewMenu()" title="새 탭">+</div>
                 <div class="save-tab-new-menu" id="saveTabNewMenu" style="display:none;">
                     <div class="save-tab-new-menu-item" onclick="pendingPresetId=null;showSaveTabNewInput();">🆕 새로 생성</div>
                     <div class="save-tab-new-menu-item" onclick="showSaveTabPresetList()">📦 프리셋에서 생성</div>
@@ -5448,8 +5451,35 @@
                     <button onclick="confirmSaveTabNew()">✓</button>
                     <button onclick="hideSaveTabNewInput()">✕</button>
                 </div>
+                </div>
+                <div class="save-tab-spacer"></div>
+                <button type="button" class="save-tab-save" id="saveTabSaveBtn" onclick="event.stopPropagation();toggleSavePanel()" title="저장 · 자동저장 · 세이브 목록 · 파일" aria-haspopup="dialog">
+                    <svg viewBox="0 0 20 20" width="15" height="15" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M3.5 4.5a1 1 0 0 1 1-1h9l3 3v9a1 1 0 0 1-1 1h-11a1 1 0 0 1-1-1z"/><path d="M6.5 3.5v4h6v-4M6 16.5v-5h8v5"/></svg>
+                    <span>저장</span>
+                </button>
             `;
         }
+
+        // ===== 저장 창 (탭 바 오른쪽 "저장" 버튼) — 구 국가 > 저장을 떠 있는 창으로 =====
+        function openSavePanel() {
+            const ov = document.getElementById('savePanelLayer');
+            if(!ov) return;
+            hideSaveTabAllPopups();
+            renderSaveTabUI();
+            ov.style.display = '';
+            document.getElementById('saveTabSaveBtn')?.classList.add('active');
+            ov.querySelector('.save-panel-close')?.focus({ preventScroll: true });
+        }
+        function closeSavePanel() {
+            const ov = document.getElementById('savePanelLayer');
+            if(ov) ov.style.display = 'none';
+            document.getElementById('saveTabSaveBtn')?.classList.remove('active');
+        }
+        function isSavePanelOpen() {
+            const ov = document.getElementById('savePanelLayer');
+            return !!ov && ov.style.display !== 'none';
+        }
+        function toggleSavePanel() { isSavePanelOpen() ? closeSavePanel() : openSavePanel(); }
 
         // 상단 탭 바 맨 왼쪽 집 아이콘 — 지금 상태를 바로 저장한 뒤 메인 화면(main.html)으로 돌아간다
         function goHomeScreen() {
@@ -5722,6 +5752,7 @@
         // Esc로 닫을 대상 중 실제로 열려 있는 것 하나만(우선순위대로) 닫는다
         function handleGlobalEscape() {
             const isVisible = el => el && getComputedStyle(el).display !== 'none';
+            if(isSavePanelOpen()) { closeSavePanel(); return; }
             const exportOverlay = document.getElementById('exportDialogOverlay');
             if(isVisible(exportOverlay)) { closeExportDialog(); return; }
             const seatCard = document.getElementById('seatInfoCard');
@@ -5892,6 +5923,8 @@
             if(main === 'nation' && sub === 'council') { main = 'cabinet'; doMainSwitch = true; }
             // 구 위치(국가 > 설정 > 의회/상징/날짜/저장) 호환 — 국가의 하위탭으로 펼쳐짐
             if(main === 'nation' && sub === 'config') sub = configInnerTab;
+            // 구 위치(국가 > 저장) 호환 — 탭 바 오른쪽 "저장" 창으로 옮겨짐
+            if(main === 'nation' && sub === 'save') { openSavePanel(); return; }
             // 구 위치(국가 > 의회) 호환 — 의회 > 의회 설정으로 옮겨짐
             if(main === 'nation' && sub === 'assembly') { main = 'setup'; doMainSwitch = true; }
             // 구 위치(국가 > 입법 / 기록) 호환 — 입법 메인탭으로 옮겨짐
@@ -5940,15 +5973,15 @@
         // 예전 호출 호환: 국가의 해당 하위탭(의회는 의회 > 의회 설정)으로 이동
         function switchConfigInnerTab(inner) {
             if(inner === 'assembly') { switchSubTab('setup', 'assembly'); return; }
-            if(!['symbol','date','save'].includes(inner)) inner = 'symbol';
+            if(inner === 'save') { openSavePanel(); return; }
+            if(!['symbol','date'].includes(inner)) inner = 'symbol';
             switchSubTab('nation', inner);
         }
         // 국가 하위탭이 열릴 때 그 화면을 그린다 (switchSubTab에서 호출)
         function onConfigSubTabShown(sub) {
-            if(!['symbol','date','save'].includes(sub)) return;
+            if(!['symbol','date'].includes(sub)) return;
             configInnerTab = sub;
             if(sub === 'symbol') renderNationConfig();
-            if(sub === 'save') renderSaveTabUI();
         }
 
         // 입법 메인탭 (제출/상정/표결/기록) — 구 국가 > 입법 · 기록. 국무회의는 내각 > 국무회의

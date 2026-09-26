@@ -5103,6 +5103,26 @@ window.DnoLangPacks.en = {
   [
    "- 네온 테마 메인 화면 제목 글꼴을 둥근모로",
    "- Neon main screen title now uses the NeoDunggeunmo font"
+  ],
+  [
+   "- 상단 탭 바 오른쪽에 \"저장\" 버튼 — 국가 › 저장이 떠 있는 저장 창으로 옮겨짐(자동저장 · 세이브 목록 · 다른 이름으로 저장 · 파일), + 버튼은 크롬처럼 마지막 탭 바로 오른쪽으로",
+   "- \"Save\" button on the right of the top tab bar — Nation › Save moved into a floating save panel (autosave · save list · save as · file); the + button now sits right after the last tab, like Chrome"
+  ],
+  [
+   "- 라이트/다크 사이드바 머리에서 \"Ministry of Interior\"를 빼고 국가명을 제목으로",
+   "- Light/dark sidebar header drops \"Ministry of Interior\" and shows the nation name as the title"
+  ],
+  [
+   "- 맵 메이커 네온 모드 글자가 가짜 굵게로 뭉개지던 문제, 라이트/다크 로드맵 스크롤바(검은 트랙) 정리",
+   "- Fixed smeared faux-bold text in the neon Map Maker, and cleaned up the light/dark roadmap scrollbars (black track)"
+  ],
+  [
+   "저장 · 자동저장 · 세이브 목록 · 파일",
+   "Save · Autosave · Save list · File"
+  ],
+  [
+   "새 탭",
+   "New tab"
   ]
  ]
 };

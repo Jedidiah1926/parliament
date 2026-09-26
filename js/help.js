@@ -95,7 +95,7 @@
                     desc: '화면 오른쪽 위에 보이는 현재 날짜와 회기, 표시 방식.',
                 },
                 {
-                    btn: 'subTabSave', open: go('nation', 'save'),
+                    btn: 'saveTabSaveBtn', title: '저장', open: () => { if(typeof openSavePanel === 'function') openSavePanel(); },
                     desc: '자동저장 주기, 이름 붙여 저장 · 불러오기, 파일(.json)로 저장 · 불러오기, 초기화.',
                 },
             ],

@@ -58,9 +58,39 @@
             display: flex;
             align-items: stretch;
             overflow-x: auto;
-            flex: 1;
+            flex: 0 1 auto;
             min-width: 0;
         }
+        /* + 는 크롬처럼 마지막 탭 바로 오른쪽, 저장 버튼은 맨 오른쪽 */
+        .save-tab-new-wrap { position: relative; display: flex; align-items: stretch; flex: 0 0 auto; }
+        .save-tab-new-wrap .save-tab-new { border-right: none; }
+        .save-tab-spacer { flex: 1 1 0; min-width: 8px; }
+        .save-tab-save {
+            flex: 0 0 auto; display: flex; align-items: center; gap: 6px; padding: 0 14px;
+            background: transparent; border: none; border-left: 1px solid #222; color: #888;
+            font-family: inherit; font-size: 0.85rem; cursor: pointer;
+        }
+        .save-tab-save:hover, .save-tab-save.active { color: var(--tno-neon); background: rgba(255,255,255,0.03); }
+        .save-tab-save.active { box-shadow: inset 0 -2px 0 var(--tno-neon); }
+
+        /* 저장 창 — 탭 바 아래 오른쪽에 떠 있는 창 */
+        .save-panel-overlay { position: fixed; inset: 0; z-index: 950; background: rgba(0,0,0,0.45); }
+        .save-panel {
+            position: absolute; top: 44px; right: 12px; width: 440px; max-width: calc(100vw - 24px);
+            max-height: calc(100vh - 60px); display: flex; flex-direction: column;
+            background: #0d1016; border: 1px solid var(--tno-neon);
+            box-shadow: 0 0 20px color-mix(in srgb, var(--tno-neon) 25%, transparent), 0 12px 40px rgba(0,0,0,0.6);
+            animation: savePanelIn .14s ease-out;
+        }
+        @keyframes savePanelIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+        .save-panel-head {
+            flex: 0 0 auto; display: flex; align-items: center; justify-content: space-between;
+            padding: 10px 14px; border-bottom: 1px solid var(--tno-border);
+        }
+        .save-panel-title { color: var(--tno-neon); font-size: 1.05rem; letter-spacing: 1px; }
+        .save-panel-close { background: none; border: none; color: #777; font-size: 1.3rem; line-height: 1; cursor: pointer; padding: 2px 6px; font-family: inherit; }
+        .save-panel-close:hover { color: var(--tno-neon); }
+        .save-panel-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 14px; }
         .save-tab-list::-webkit-scrollbar { height: 4px; }
         .save-tab-list::-webkit-scrollbar-thumb { background: var(--tno-border); }
         .save-tab {
@@ -135,8 +165,8 @@
         .save-tab-new-menu, .save-tab-preset-list {
             display: none;
             position: absolute;
-            top: 36px;
-            right: 0;
+            top: 100%;
+            left: 0;
             flex-direction: column;
             background: #0a0c10;
             border: 1px solid var(--tno-border);
@@ -1388,5 +1418,5 @@
 }
 
 /* 탭을 모두 닫은 상태 — 탭 바만 남기고 아래는 비운다 (진짜 프로그램처럼) */
-body.no-open-tab > *:not(.save-tab-bar):not(.dno-dialog-overlay):not(.dno-tip):not(.kbd-toast):not(script):not(style) { display: none !important; }
+body.no-open-tab > *:not(.save-tab-bar):not(.save-panel-overlay):not(.dno-dialog-overlay):not(.dno-tip):not(.kbd-toast):not(script):not(style) { display: none !important; }
 body.no-open-tab { overflow: hidden; }
