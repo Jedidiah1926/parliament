@@ -5,7 +5,7 @@ window.DnoLangPacks.en = {
  "format": "dno-lang-pack@1",
  "code": "en",
  "name": "English",
- "author": "DATANET",
+ "author": "Hemicycle",
  "months": [
   "January",
   "February",

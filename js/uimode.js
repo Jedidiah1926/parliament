@@ -1,4 +1,4 @@
-// ===== DATANET PARLIAMENT SIMULATION — UI 모드(데스크톱/모바일) 모듈 =====
+// ===== Hemicycle — UI 모드(데스크톱/모바일) 모듈 =====
 // 사용자가 settings.html에서 고른 데스크톱(가로형)/모바일(세로형) 레이아웃을
 // localStorage에 저장하고, <html>에 data-ui-mode 속성으로 반영한다.
 // dno.css의 [data-ui-mode="mobile"] 규칙이 실제 레이아웃 전환을 담당한다.

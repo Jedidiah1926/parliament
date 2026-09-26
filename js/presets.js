@@ -1,4 +1,4 @@
-// ===== DATANET PARLIAMENT SIMULATION — 프리셋 목록/불러오기 (main.html·dno.html 공용) =====
+// ===== Hemicycle — 프리셋 목록/불러오기 (main.html·dno.html 공용) =====
 // 프리셋은 두 가지 경로로 모인다:
 //   1) 내장 프리셋(BUILTIN) — presets/*.js에 JS로 감싸 두고 <script>로 불러온다.
 //      데스크톱 앱(Electron)은 file://로 열려 fetch로 JSON을 읽을 수 없기 때문.
