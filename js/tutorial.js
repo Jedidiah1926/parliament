@@ -87,14 +87,14 @@
                     text: '가상의 나라 "튜토리얼 공화국"에서 기본 조작을 직접 해보며 배웁니다. 튜토리얼은 #1 ~ #5로 짧게 나뉘어 있고, 밝게 표시된 곳을 실제로 조작해야 다음 단계로 넘어가요. 이 나라는 복사본(새 세이브)이라 마음껏 바꿔도 괜찮습니다.',
                 },
                 {
-                    // 일부러 다른 화면(국가 › 설정)을 띄워 두고 메뉴로 돌아오게 한다
-                    before: [go('nation', 'config'), showPanel('controls')],
+                    // 일부러 다른 화면(국가 › 상징)을 띄워 두고 메뉴로 돌아오게 한다
+                    before: [go('nation', 'symbol'), showPanel('controls')],
                     target: navTarget,
                     allow: () => isMobileLayout() ? ['#mobileNav', '.main-tab-content > .sub-tab-container'] : [navTarget()],
                     title: '메뉴 이동하기',
                     text: () => isMobileLayout()
-                        ? '기능은 의회 · 국가 · 여론 · 내각 네 묶음으로 나뉘어 있고, 회색 "도움말"에는 모든 탭의 설명이 있어요. 화면 아래 탭 바에서 "의회"를 누르고, 위쪽 칩 줄에서 "정당"을 골라보세요.'
-                        : '기능은 의회 · 국가 · 여론 · 내각 네 묶음으로 나뉘어 있고, 맨 아래 회색 "도움말"에는 모든 탭의 설명이 있어요. 왼쪽 메뉴에서 의회 › 정당을 눌러보세요.',
+                        ? '기능은 의회 · 입법 · 국가 · 선거 · 여론 · 내각 여섯 묶음으로 나뉘어 있고, 회색 "도움말"에는 모든 탭의 설명이 있어요. 화면 아래 탭 바에서 "의회"를 누르고, 위쪽 칩 줄에서 "정당"을 골라보세요.'
+                        : '기능은 의회 · 입법 · 국가 · 선거 · 여론 · 내각 여섯 묶음으로 나뉘어 있고, 맨 아래 회색 "도움말"에는 모든 탭의 설명이 있어요. 왼쪽 메뉴에서 의회 › 정당을 눌러보세요.',
                     task: () => isActive('mainTabSetup') && isActive('subTabParty'),
                     done: '정당 화면이 열렸어요.',
                 },
@@ -197,18 +197,18 @@
             summary: '법안 제출 · 상정과 표결',
             steps: [
                 {
-                    before: [go('nation', 'legislation'), call('switchLegislationInnerTab', 'bill'), showPanel('controls')],
+                    before: [go('law', 'bill'), showPanel('controls')],
                     enter: () => { if (T.billBase == null) T.billBase = billList().length; },
                     target: () => billForm(),
                     allow: () => { const f = billForm(); return f ? [f] : []; },
                     title: '법안 제출하기',
-                    text: '국가 › 입법에서는 법안을 작성해 의회에 올리고 표결합니다. 법안 제목을 적고 "[+] 법안 등록"을 눌러보세요.',
+                    text: '입법 메뉴에서는 법안을 작성해 의회에 올리고 표결합니다. 법안 제목을 적고 "[+] 법안 등록"을 눌러보세요.',
                     task: () => billList().length > (T.billBase || 0),
                     done: '법안이 등록됐어요!',
                 },
                 {
-                    before: [go('nation', 'legislation'), call('switchLegislationInnerTab', 'table'), showPanel('controls')],
-                    target: '#innerTabLegTable',
+                    before: [go('law', 'table'), showPanel('controls')],
+                    target: '#subTabTable',
                     title: '상정과 표결',
                     text: '등록한 법안은 상정 탭에서 의회(또는 국무회의)에 올리고, 표결 탭에서 정당별 · 의원별로 찬반 표를 던집니다. 가결 · 부결된 법안은 기록 탭에 남아요.',
                 },

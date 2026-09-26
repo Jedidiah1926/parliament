@@ -533,6 +533,30 @@ window.DnoLangPacks.en = {
  ],
  "dict": [
   [
+   "⚖ 입법",
+   "⚖ Legislation"
+  ],
+  [
+   "의회 · 입법 · 국가 · 선거 · 여론 · 내각 · 도움말 일곱 묶음과 그 안의 항목. 항목을 누르면 그 기능 화면이 열리고, 묶음 제목을 누르면 접히거나 펼쳐집니다 (다음에 열어도 그대로 기억).",
+   "Seven groups — Parliament, Legislation, Nation, Election, Opinion, Cabinet, Help — and their items. Click an item to open that screen; click a group title to collapse or expand it (remembered next time)."
+  ],
+  [
+   "시각 화면 오른쪽 위에 보이는 현재 날짜와 회기. 국가 › 날짜에서 정합니다 (\"열기\"로 이동).",
+   "The current date and session at the top right of the visuals. Set them in Nation › Date (\"Open\" takes you there)."
+  ],
+  [
+   "기능은 의회 · 입법 · 국가 · 선거 · 여론 · 내각 여섯 묶음으로 나뉘어 있고, 회색 \"도움말\"에는 모든 탭의 설명이 있어요. 화면 아래 탭 바에서 \"의회\"를 누르고, 위쪽 칩 줄에서 \"정당\"을 골라보세요.",
+   "Features are grouped into Parliament, Legislation, Nation, Election, Opinion and Cabinet, and the gray \"Help\" explains every tab. Tap \"Parliament\" in the bottom tab bar, then pick \"Parties\" in the chip row at the top."
+  ],
+  [
+   "기능은 의회 · 입법 · 국가 · 선거 · 여론 · 내각 여섯 묶음으로 나뉘어 있고, 맨 아래 회색 \"도움말\"에는 모든 탭의 설명이 있어요. 왼쪽 메뉴에서 의회 › 정당을 눌러보세요.",
+   "Features are grouped into Parliament, Legislation, Nation, Election, Opinion and Cabinet, and the gray \"Help\" at the bottom explains every tab. Click Parliament › Parties in the left menu."
+  ],
+  [
+   "입법 메뉴에서는 법안을 작성해 의회에 올리고 표결합니다. 법안 제목을 적고 \"[+] 법안 등록\"을 눌러보세요.",
+   "The Legislation menu is where you write bills, table them in parliament and vote. Enter a bill title and press \"[+] Register bill\"."
+  ],
+  [
    "내각이 의결하는 법안의 표결과 의결 정족수. 계엄령으로 의회가 정지된 동안에는 여기서 법안을 통과시킵니다.",
    "Votes on bills decided by the cabinet, and the quorum. While parliament is suspended under martial law, bills are passed here."
   ],
