@@ -382,20 +382,6 @@
         .dib-word { font-size: 0.8rem; }
         .dib-next-type { border-color: var(--tno-border); color: #999; }
         .dib-next-type.is-extra { color: var(--tno-gold); border-color: color-mix(in srgb, var(--tno-gold) 50%, transparent); }
-        .dib-more-wrap { position: relative; display: inline-flex; }
-        .dib-menu {
-            position: absolute; top: calc(100% + 4px); right: 0; z-index: 50; min-width: 170px;
-            display: flex; flex-direction: column; padding: 4px;
-            background: #0a0c10; border: 1px solid var(--tno-border); box-shadow: 0 6px 18px rgba(0,0,0,.5);
-        }
-        .dib-menu-item {
-            background: transparent; border: none; color: var(--tno-text); font-family: inherit; font-size: 0.85rem;
-            text-align: left; padding: 8px 10px; cursor: pointer; white-space: nowrap;
-        }
-        .dib-menu-item:hover { color: var(--tno-neon); background: rgba(255,255,255,.04); }
-        .dib-menu-item.active { color: var(--tno-neon); }
-        .dib-menu-item.active::after { content: ' ✓'; }
-        .dib-menu-sep { height: 1px; background: #222; margin: 4px 2px; }
         .disp-info-bar #dispInfoDate {
             color: #ccc;
             font-size: 0.95rem;

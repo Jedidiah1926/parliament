@@ -22,6 +22,9 @@ window.DnoLangPacks.en = {
  ],
  "ordinal": "en",
  "patterns": [
+  {"re": "^연$", "to": "Year"},
+  {"re": "^월$", "to": "Month"},
+  {"re": "^일$", "to": "Day"},
   {"re": "\"(.+?)\"을\\(를\\) 정말 삭제하시겠습니까\\?\\n연결된 \"(.+?)\"도 함께 삭제됩니다\\.\\n\\n삭제하면 되돌릴 수 없습니다\\. \\(Shift\\+클릭하면 이 확인 없이 바로 삭제\\)", "to": "Really delete \"$1\"?\nIts linked \"$2\" will be deleted too.\n\nThis can't be undone. (Shift+click to delete without this prompt)"},
   {"re": "\"(.+?)\"을\\(를\\) 정말 삭제하시겠습니까\\?\\n\\n삭제하면 되돌릴 수 없습니다\\. \\(Shift\\+클릭하면 이 확인 없이 바로 삭제\\)", "to": "Really delete \"$1\"?\n\nThis can't be undone. (Shift+click to delete without this prompt)"},
   {
@@ -5215,8 +5218,8 @@ window.DnoLangPacks.en = {
    "More"
   ],
   [
-   "- 날짜 · 회기 줄을 두 줄 컨트롤 바로 — 날짜 옆 ▶(+1일) · ▶▶(+7일) · ▶▶▶(+1개월) 진행 버튼과 설정(⚙) 버튼, 회기 옆 \"다음: 정기회/임시회\" 토글(다음 회기부터 적용) · 다음 회기 · … 메뉴 (진행 버튼은 수동 진행형 날짜 · 개별형 회기일 때 표시)",
-   "- Date/session line becomes a two-row control bar — ▶ (+1 day) · ▶▶ (+7 days) · ▶▶▶ (+1 month) and a settings (⚙) button next to the date, a \"Next: regular/extraordinary\" toggle (applies from the next session), Next session and a … menu next to the session (advance buttons show with manual-progress dates and individual sessions)"
+   "- 날짜 · 회기 줄을 두 줄 컨트롤 바로 — 날짜 옆 ▶(+1일) · ▶▶(+7일) · ▶▶▶(+1개월) 진행 버튼과 설정(⚙) 버튼, 회기 옆 \"다음: 정기회/임시회\" 토글(다음 회기부터 적용) · 다음 회기 (진행 버튼은 연 · 월 · 일 날짜 · 개별형 회기일 때 표시)",
+   "- Date/session line becomes a two-row control bar — ▶ (+1 day) · ▶▶ (+7 days) · ▶▶▶ (+1 month) and a settings (⚙) button next to the date, a \"Next: regular/extraordinary\" toggle (applies from the next session), and Next session next to the session (advance buttons show with year/month/day dates and individual sessions)"
   ],
   [
    "삭제 (Shift+클릭: 확인 없이 바로 삭제)",
@@ -5257,6 +5260,22 @@ window.DnoLangPacks.en = {
   [
    "지금 회기 종류 (다음 회기 종류는 오른쪽 위 날짜 줄의 \"다음:\" 버튼으로)",
    "Current session type (pick the next session's type with the \"Next:\" button on the date line, top right)"
+  ],
+  [
+   "연 · 월 · 일",
+   "Year · Month · Day"
+  ],
+  [
+   "직접 입력",
+   "Type it in"
+  ],
+  [
+   "오른쪽 위 날짜 줄의 ▶ · ▶▶ · ▶▶▶ 로 하루 · 일주일 · 한 달씩 넘길 수 있습니다",
+   "Use ▶ · ▶▶ · ▶▶▶ on the date line (top right) to advance a day, a week or a month"
+  ],
+  [
+   "- 국가 › 날짜: 연 · 월 · 일 입력칸이 기본(직접 입력은 선택), 진행 버튼은 날짜 줄로 옮김 · 날짜를 정하기 전에 ▶를 누르면 연도 칸으로 안내",
+   "- Nation › Date: year · month · day fields are now the default (free text is optional), advance buttons moved to the date line; pressing ▶ before a date is set takes you to the year field"
   ]
  ]
 };

@@ -2297,11 +2297,6 @@ html[data-theme-family="modern"] .dib-btn:hover { color: var(--m-text); backgrou
 html[data-theme-family="modern"] .dib-play { color: var(--m-text-2); }
 html[data-theme-family="modern"] .dib-next-type { background: var(--m-surface-2); color: var(--m-text-2); }
 html[data-theme-family="modern"] .dib-next-type.is-extra { background: color-mix(in srgb, var(--m-gold) 14%, var(--m-surface-2)); color: var(--m-gold); }
-html[data-theme-family="modern"] .dib-menu { background: var(--m-surface); border: 1px solid var(--m-border); border-radius: 12px; box-shadow: var(--m-shadow-lg); }
-html[data-theme-family="modern"] .dib-menu-item { color: var(--m-text); border-radius: 8px; font-family: var(--m-font); }
-html[data-theme-family="modern"] .dib-menu-item:hover { background: var(--m-surface-2); color: var(--m-text); }
-html[data-theme-family="modern"] .dib-menu-item.active { color: var(--m-text); font-weight: 600; }
-html[data-theme-family="modern"] .dib-menu-sep { background: var(--m-border); }
 
 /* 오른쪽 화면 탭 (국회/상원/내각 등) */
 html[data-theme-family="modern"] .disp-tab-bar,

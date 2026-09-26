@@ -44,7 +44,7 @@
         }
 
         // ── 날짜/회기 (v1.4.8) ──────────────
-        let nationDateMode = 'simple';       // 'simple' | 'progressive'
+        let nationDateMode = 'progressive';  // 'progressive'(연 · 월 · 일, 기본) | 'simple'(글자로 직접 입력)
         let nationSessionMode = 'simple';    // 'simple' | 'individual'
         let nationSessionType = 'regular';   // 'regular'(정기회) | 'extraordinary'(임시회) — 개별형에서만 사용
         let nationNextSessionType = 'regular'; // 다음 회기의 종류 — 날짜 줄의 토글로 고르고, "다음 회기"를 누를 때 적용 (지금 회기 종류는 국가 › 날짜에서만 바꿈)
@@ -1773,6 +1773,8 @@
             const yEl = document.getElementById('nationDateYear');
             const mEl = document.getElementById('nationDateMonth');
             const dEl = document.getElementById('nationDateDay');
+            // 아직 날짜를 안 정했으면 넘길 기준이 없으므로 설정(국가 › 날짜)을 열어 연도 칸으로
+            if(!yEl.value && !mEl.value && !dEl.value) { openNationDateSettings(); setTimeout(() => yEl.focus(), 150); return; }
             const y = parseInt(yEl.value) || 1;
             const m = parseInt(mEl.value) || 1;
             const d = parseInt(dEl.value) || 1;
@@ -1843,27 +1845,9 @@
         }
         // 날짜 줄의 설정 버튼 — 국가 › 날짜 탭을 연다 (모바일은 조작 화면으로 넘어감)
         function openNationDateSettings() {
-            closeDispSessionMenu();
             if(document.documentElement.getAttribute('data-ui-mode') === 'mobile' && typeof setMobilePanel === 'function') setMobilePanel('controls');
             switchSubTab('nation', 'date');
         }
-        function toggleDispSessionMenu(e) {
-            e?.stopPropagation();
-            const menu = document.getElementById('dispSessionMenu');
-            if(!menu) return;
-            const open = menu.style.display === 'none';
-            menu.style.display = open ? '' : 'none';
-            document.getElementById('dispSessionMoreBtn')?.setAttribute('aria-expanded', String(open));
-        }
-        function closeDispSessionMenu() {
-            const menu = document.getElementById('dispSessionMenu');
-            if(menu) menu.style.display = 'none';
-            document.getElementById('dispSessionMoreBtn')?.setAttribute('aria-expanded', 'false');
-        }
-        document.addEventListener('click', e => {
-            const menu = document.getElementById('dispSessionMenu');
-            if(menu && menu.style.display !== 'none' && !menu.contains(e.target)) closeDispSessionMenu();
-        });
 
         // ── 무소속 개별 의원 데이터 ──────────────
         // districtKey가 있으면 지역구 당선(의원 탭에 표시), 없으면 비례 당선(비례 탭에 표시)
@@ -5798,8 +5782,6 @@
         function handleGlobalEscape() {
             const isVisible = el => el && getComputedStyle(el).display !== 'none';
             if(isSavePanelOpen()) { closeSavePanel(); return; }
-            const sessMenu = document.getElementById('dispSessionMenu');
-            if(sessMenu && sessMenu.style.display !== 'none') { closeDispSessionMenu(); return; }
             const exportOverlay = document.getElementById('exportDialogOverlay');
             if(isVisible(exportOverlay)) { closeExportDialog(); return; }
             const seatCard = document.getElementById('seatInfoCard');
