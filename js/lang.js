@@ -154,7 +154,8 @@
         // 긴 문구가 짧은 부분 문자열보다 먼저 매칭되도록 길이 내림차순으로 정렬한 뒤
         // 하나의 정규식 alternation으로 합쳐 한 번에 치환한다 (겹치는 후보 중 먼저 오는 것이 우선됨)
         const escapeRe = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        const sortedDict = pack.dict.slice().sort((a, b) => b[0].length - a[0].length);
+        // 네온 테마는 이모지 뒤에 텍스트 표시 선택자(U+FE0E)를 붙이므로(js/thememode.js), 사전 매칭에서는 이를 무시한다
+        const sortedDict = pack.dict.map(e => [e[0].replace(/\uFE0E/g, ''), e[1]]).sort((a, b) => b[0].length - a[0].length);
         const dictMap = new Map(sortedDict);
         const dictRegex = sortedDict.length ? new RegExp(sortedDict.map(p => escapeRe(p[0])).join('|'), 'g') : null;
         const months = pack.months;
@@ -185,11 +186,14 @@
             };
             return [re, replacer];
         });
-        return function translateString(s) {
-            if (!s) return s;
+        return function translateString(orig) {
+            if (!orig) return orig;
+            let s = orig.replace(/\uFE0E/g, '');
+            const base = s;
             for (const [re, rep] of patterns) s = s.replace(re, rep);
             if (dictRegex) s = s.replace(dictRegex, m => dictMap.get(m) ?? m);
-            return s;
+            // 번역할 게 없었다면 선택자를 떼지 않은 원래 글자를 그대로 돌려준다 (이모지 표시 방식과 서로 되돌리며 반복하지 않게)
+            return s === base ? orig : (window.DnoEmoji ? window.DnoEmoji.fix(s) : s);
         };
     }
 

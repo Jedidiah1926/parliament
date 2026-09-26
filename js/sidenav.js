@@ -12,7 +12,12 @@
     const COLLAPSE_KEY = 'dnoSideNavCollapsed';
     const CLOSED_GROUPS_KEY = 'dnoSideNavClosedGroups';
     // Chrome 탭 그룹처럼 그룹마다 구분색 — 실제 색은 테마별 CSS가 data-tone에 맞춰 정한다
-    const GROUP_TONES = { setup: 'info', nation: 'danger', vote: 'vote', election: 'gold', cabinet: 'success', help: 'muted' };
+    const GROUP_TONES = { setup: 'info', nation: 'purple', vote: 'danger', election: 'gold', cabinet: 'success', help: 'muted' };
+
+    const WARN_ICON = '<span class="mn-item-icon"><svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true">'
+        + '<path d="M10 2.8 18.2 17H1.8Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>'
+        + '<line x1="10" y1="8" x2="10" y2="12.2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>'
+        + '<circle cx="10" cy="14.6" r="1" fill="currentColor"/></svg></span>';
 
     function safeGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
     function safeSet(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* 저장 불가 환경 — 무시 */ } }
@@ -171,14 +176,21 @@
                 grp.g.style.display = isHidden(grp.mainBtn) ? 'none' : '';
                 if (isActive) activeGroup = label;
                 grp.items.forEach(({ el, src }) => {
-                    el.textContent = src.textContent.replace(/\s+/g, ' ').trim();
-                    el.title = el.textContent;
+                    const text = src.textContent.replace(/\s+/g, ' ').trim();
+                    // ⚠(부정선거)는 글꼴마다 기호 위치가 달라 위로 뜨므로, 글자 대신 가운데 맞춘 경고 아이콘을 그린다
+                    if (text.replace(/[\uFE0E\uFE0F]/g, '') === '⚠') {
+                        if (el.dataset.icon !== 'warn') { el.innerHTML = WARN_ICON; el.dataset.icon = 'warn'; }
+                    } else {
+                        el.textContent = text;
+                        delete el.dataset.icon;
+                    }
+                    el.title = text;
                     el.style.display = isHidden(src) ? 'none' : '';
                     el.disabled = src.disabled;
                     el.classList.toggle('danger', src.classList.contains('sub-tab-btn-danger'));
                     const on = isActive && src.classList.contains('active');
                     el.classList.toggle('active', on);
-                    if (on) activeItem = el.textContent;
+                    if (on) activeItem = text;
                 });
             });
             title.innerHTML = '';
