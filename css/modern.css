@@ -2914,3 +2914,17 @@ html[data-theme-family="modern"] .seat-sum-line b { font-weight: 700; }
 html[data-theme-family="modern"] .seat-sum-line.ok    { color: var(--m-success); background: color-mix(in srgb, var(--m-success) 11%, transparent); }
 html[data-theme-family="modern"] .seat-sum-line.under { color: var(--m-gold); background: color-mix(in srgb, var(--m-gold) 11%, transparent); }
 html[data-theme-family="modern"] .seat-sum-line.over  { color: var(--m-danger); background: color-mix(in srgb, var(--m-danger) 11%, transparent); }
+
+/* 권역 목록: 지금 칠하기 대상인 권역 (카드 기본 배경·그림자를 덮어씀) */
+html[data-theme-family="modern"] .card-item.region-active {
+    background: color-mix(in srgb, var(--region-color) 14%, var(--m-surface)) !important;
+    box-shadow: 0 0 0 2px var(--region-color), var(--m-shadow-sm) !important;
+}
+html[data-theme-family="modern"] .region-active-badge {
+    border-radius: 999px;
+    border: none;
+    background: var(--region-color);
+    color: #fff;
+    font-weight: 600;
+    text-shadow: 0 0 2px rgba(0,0,0,.45);
+}

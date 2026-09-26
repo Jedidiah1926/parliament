@@ -549,6 +549,18 @@ window.DnoLangPacks.en = {
  ],
  "dict": [
   [
+   "눌러서 이 권역으로 칠하기",
+   "Click to paint with this region"
+  ],
+  [
+   "지금 이 권역으로 칠하는 중",
+   "Currently painting with this region"
+  ],
+  [
+   "🖌 칠하는 중",
+   "🖌 Painting"
+  ],
+  [
    "← 메인으로",
    "← Main menu"
   ],

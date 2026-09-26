@@ -12031,10 +12031,11 @@
                 const count = Object.values(districtRegionMap[ch]||{}).filter(v => v === r.id).length;
                 const active = r.id === regionActiveId;
                 return `
-                <div class="card-item" style="border-left-color:${r.color};${active?'box-shadow:0 0 8px '+r.color+';':''}display:flex;align-items:center;gap:8px;margin-bottom:6px;padding:6px 8px;cursor:pointer;" onclick="regionSetActiveId('${r.id}')">
+                <div class="card-item${active ? ' region-active' : ''}" style="--region-color:${r.color};border-left-color:${r.color};display:flex;align-items:center;gap:8px;margin-bottom:6px;padding:6px 8px;cursor:pointer;" onclick="regionSetActiveId('${r.id}')" title="${active ? '지금 이 권역으로 칠하는 중' : '눌러서 이 권역으로 칠하기'}">
                     <input type="color" value="${r.color}" onclick="event.stopPropagation()" onchange="regionUpdateField('${ch}','${r.id}','color',this.value)" style="width:28px;height:28px;padding:0;border:1px solid #333;background:none;cursor:pointer;flex-shrink:0;">
                     <input type="text" value="${r.name}" onclick="event.stopPropagation()" onchange="regionUpdateField('${ch}','${r.id}','name',this.value)"
                         style="flex:1;min-width:0;background:#000;border:1px solid #2a2a2a;color:#e0e0e0;font-family:inherit;font-size:0.9rem;padding:5px 8px;box-sizing:border-box;">
+                    ${active ? `<span class="region-active-badge" style="flex-shrink:0;">🖌 칠하는 중</span>` : ''}
                     <span style="color:#666;font-size:0.75rem;flex-shrink:0;">${count}개 지역구</span>
                     <button onclick="event.stopPropagation();regionRemoveRegion('${ch}','${r.id}')" style="background:transparent;border:1px solid #333;color:#a55;font-family:inherit;font-size:0.75rem;padding:3px 8px;cursor:pointer;flex-shrink:0;">삭제</button>
                 </div>`;
