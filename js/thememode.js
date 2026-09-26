@@ -54,16 +54,14 @@
     });
 
     // ===== 이모지 표시 방식 =====
-    // 네온은 이모지를 글자형(흑백, 글자색을 따름 — 예: 👑︎)으로, 라이트/다크는 원래 컬러 이모지로 보여준다.
-    // 이모지 뒤에 텍스트 표시 선택자(U+FE0E)를 붙이거나 떼는 방식이라, 화면에 그려진 글자(텍스트 노드)를 직접 바꾸고
+    // 모든 테마(네온 · 라이트 · 다크)에서 이모지를 글자형(흑백, 글자색을 따름 — 예: 👑︎)으로 보여준다.
+    // 이모지 뒤에 텍스트 표시 선택자(U+FE0E)를 붙이는 방식이라, 화면에 그려진 글자(텍스트 노드)를 직접 바꾸고
     // 나중에 새로 그려지는 부분도 MutationObserver로 따라간다. (CSS font-variant-emoji는 데스크톱 앱의 Chromium이 지원하지 않음)
     // 사용자가 입력하는 칸(textarea/input 값)은 건드리지 않는다.
     const EMOJI_TEXT = /(\p{Extended_Pictographic})[\uFE0E\uFE0F]?/gu;
-    const EMOJI_TEXT_VS = /(\p{Extended_Pictographic})\uFE0E/gu;
-    const isNeon = () => document.documentElement.getAttribute('data-theme-family') !== 'modern';
     function emojiFix(str) {
         if (!str) return str;
-        return isNeon() ? str.replace(EMOJI_TEXT, '$1\uFE0E') : str.replace(EMOJI_TEXT_VS, '$1');
+        return str.replace(EMOJI_TEXT, '$1\uFE0E');
     }
     function emojiFixTree(root) {
         if (!root) return;
@@ -96,7 +94,6 @@
                 else if (m.type === 'characterData') emojiFixTree(m.target);
             }
         }).observe(document.body, { childList: true, subtree: true, characterData: true });
-        window.addEventListener('thememodechange', () => emojiFixTree(document.body));
     }
     if (document.body) startEmojiMode();
     else document.addEventListener('DOMContentLoaded', startEmojiMode);
