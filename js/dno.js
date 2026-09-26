@@ -5100,6 +5100,7 @@
         function renderSaveTabUI() {
             renderSaveSlotList();
             renderSaveTabBar();
+            renderSaveCurrentCard();
             const toggle = document.getElementById('autosaveToggle');
             const info = document.getElementById('autosaveStatusText');
             const intervalSelect = document.getElementById('autosaveIntervalSelect');
@@ -5188,32 +5189,108 @@
             });
         }
 
+        // ===== 국가 > 저장: 현재 세이브 카드 · 세이브 목록 =====
+        // 즐겨찾기는 시작 화면(main.html)과 같은 저장소를 쓴다 — 어느 쪽에서 ★를 눌러도 양쪽에 반영
+        const SAVE_FAVORITES_KEY = 'dnoSaveFavorites';
+        function loadSaveFavorites() {
+            try { return new Set(JSON.parse(localStorage.getItem(SAVE_FAVORITES_KEY) || '[]')); } catch(e) { return new Set(); }
+        }
+        function toggleSaveFavorite(id) {
+            const fav = loadSaveFavorites();
+            if(fav.has(id)) fav.delete(id); else fav.add(id);
+            try { localStorage.setItem(SAVE_FAVORITES_KEY, JSON.stringify(Array.from(fav))); } catch(e) {}
+            renderSaveSlotList();
+        }
+
+        // 지금 진행 중인 세이브 — 이름, 마지막 저장 시각, 지금 저장(Ctrl+S와 같음), 이름 변경
+        function renderSaveCurrentCard() {
+            const card = document.getElementById('saveCurrentCard');
+            if(!card) return;
+            if(!localStorageAvailable) { card.innerHTML = '<div style="color:#666;font-size:0.8rem;">이 환경에서는 브라우저 저장을 사용할 수 없습니다. 아래 "파일로 저장"을 쓰세요.</div>'; return; }
+            const all = loadSaveSlots();
+            const named = activeSlotId ? all.find(s => s.id === activeSlotId && !s.isAutosave) : null;
+            const latest = activeSlotId ? (getNamedAutosaveSlot(all, activeSlotId) || named) : getAutosaveSlot(all);
+            const name = named ? named.name : AUTOSAVE_SLOT_NAME;
+            const when = latest?.savedAt ? new Date(latest.savedAt).toLocaleString('ko-KR') : '아직 저장 안 됨';
+            card.innerHTML = `
+                <div style="color:#666;font-size:0.72rem;letter-spacing:1px;margin-bottom:2px;">현재 세이브</div>
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <div style="flex:1;min-width:0;">
+                        <div class="save-current-name" style="color:var(--tno-neon);font-size:1.05rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtmlText(name)}</div>
+                        <div style="color:#666;font-size:0.72rem;">마지막 저장: ${when}</div>
+                    </div>
+                    ${named ? `<button class="dup-btn" title="이름 변경" onclick="startRenameCurrentSave()">✎</button>` : ''}
+                    <button class="add-btn" style="width:auto;margin-top:0;padding:6px 12px;white-space:nowrap;" onclick="saveCurrentNow()" title="Ctrl+S">💾 지금 저장</button>
+                </div>`;
+        }
+        function saveCurrentNow() {
+            autosaveNow();
+            if(typeof showKbdToast === 'function') showKbdToast('✔ 저장됨');
+            renderSaveTabUI();
+        }
+        function startRenameCurrentSave() {
+            if(!activeSlotId) return;
+            const slot = loadSaveSlots().find(s => s.id === activeSlotId && !s.isAutosave);
+            const nameEl = document.querySelector('#saveCurrentCard .save-current-name');
+            if(slot && nameEl) inlineRenameEdit(nameEl, slot.name, v => renameNamedSlot(activeSlotId, v));
+        }
+
+        // 목록에서 고른 저장 지점을 그대로 연다 (시작 화면의 "이어하기"와 같음) — 지금 진행 상황은 먼저 자동저장에 남겨 두고,
+        // 세이브(수동 저장 지점)를 고르면 그 시점, "OO 자동저장"을 고르면 가장 최근 상태가 열린다
+        function openSaveSlot(id) {
+            const slot = loadSaveSlots().find(s => s.id === id); if(!slot) return;
+            const go = () => {
+                if(autosaveEnabled) autosaveNow();
+                try { applyStateSafely(slot.state); }
+                catch(e) { showCustomAlert('세이브를 불러오지 못했습니다.'); return; }
+                setActiveSlotId(slot.isAutosave ? (slot.parentId || null) : slot.id);
+                simulate(); refreshUI();
+                renderSaveTabUI();
+                if(typeof showKbdToast === 'function') showKbdToast(`"${slot.name}" 열림`);
+            };
+            // 자동저장이 꺼져 있으면 지금 화면이 저장되지 않으므로 한 번 묻는다
+            if(autosaveEnabled) go();
+            else showCustomConfirm(`"${slot.name}" 슬롯을 불러올까요?\n현재 화면의 저장하지 않은 변경사항은 사라집니다.`, go);
+        }
+
         function renderSaveSlotList() {
             const container = document.getElementById('saveSlotList');
             if(!container) return;
             if(!localStorageAvailable) { container.innerHTML = ''; return; }
             const all = loadSaveSlots();
+            const fav = loadSaveFavorites();
+            const query = (document.getElementById('saveSlotSearchInput')?.value || '').trim().toLowerCase();
+            const byTime = (a, b) => new Date(b.savedAt||0) - new Date(a.savedAt||0);
             const defaultAuto = getAutosaveSlot(all);
-            const named = all.filter(s => !s.isAutosave).sort((a,b) => new Date(b.savedAt||0) - new Date(a.savedAt||0));
+            const named = all.filter(s => !s.isAutosave).sort(byTime);
+            // 시작 화면과 같은 순서: 즐겨찾기 → 기본 자동저장 → 최근 저장 순, 전용 자동저장은 부모 바로 아래
+            const tops = [...named.filter(n => fav.has(n.id)), ...(defaultAuto ? [defaultAuto] : []), ...named.filter(n => !fav.has(n.id))];
+            if(defaultAuto && fav.has(defaultAuto.id)) { tops.splice(tops.indexOf(defaultAuto), 1); tops.unshift(defaultAuto); }
             const ordered = [];
-            if(defaultAuto) ordered.push(defaultAuto);
-            named.forEach(n => {
+            tops.forEach(n => {
                 ordered.push(n);
-                const companion = getNamedAutosaveSlot(all, n.id);
-                if(companion) ordered.push(companion);
+                if(!n.isAutosave) { const companion = getNamedAutosaveSlot(all, n.id); if(companion) ordered.push(companion); }
             });
-            if(ordered.length === 0) { container.innerHTML = '<div style="color:#444;font-size:0.78rem;padding:6px 0;">저장된 슬롯이 없습니다</div>'; return; }
-            container.innerHTML = ordered.map(s => `
-                <div style="display:flex;align-items:center;gap:8px;padding:6px 8px;background:#0a0c10;border:1px solid ${s.isAutosave?'#2a4444':'#222'};margin-bottom:4px;${s.parentId?'margin-left:14px;':''}">
-                    <div style="flex:1;min-width:0;overflow:hidden;">
-                        <div class="save-slot-name" data-slot-id="${s.id}" style="color:${s.isAutosave?'var(--tno-neon)':'#ccc'};font-size:0.85rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${s.isAutosave?'🔄 ':''}${escapeHtmlText(s.name)}</div>
+            const shown = ordered.filter(s => !query || String(s.name || '').toLowerCase().includes(query));
+            if(ordered.length === 0) { container.innerHTML = '<div style="color:#444;font-size:0.78rem;padding:6px 0;">저장된 세이브가 없습니다</div>'; return; }
+            if(shown.length === 0) { container.innerHTML = '<div style="color:#444;font-size:0.78rem;padding:6px 0;">검색 결과가 없습니다</div>'; return; }
+            // "현재" 표시: 지금 진행 중인 세이브(기본 세션이면 기본 자동저장)
+            const isCurrent = s => s.isAutosave ? (!s.parentId && !activeSlotId) : s.id === activeSlotId;
+            container.innerHTML = shown.map(s => {
+                const isFav = fav.has(s.id);
+                const isCompanion = s.isAutosave && s.parentId;
+                const cur = isCurrent(s);
+                return `
+                <div style="display:flex;align-items:center;gap:6px;padding:6px 8px;background:#0a0c10;border:1px solid ${cur ? 'var(--tno-neon)' : (s.isAutosave ? '#2a4444' : '#222')};margin-bottom:4px;${isCompanion ? 'margin-left:18px;' : ''}">
+                    ${isCompanion ? '' : `<button class="save-fav-btn${isFav ? ' on' : ''}" onclick="toggleSaveFavorite('${s.id}')" title="${isFav ? '즐겨찾기 해제' : '즐겨찾기'}" aria-pressed="${isFav}" style="background:transparent;border:none;cursor:pointer;font-size:1rem;padding:0 2px;color:${isFav ? 'var(--tno-gold)' : '#555'};">${isFav ? '★' : '☆'}</button>`}
+                    <div style="flex:1;min-width:0;overflow:hidden;cursor:pointer;" onclick="openSaveSlot('${s.id}')" title="클릭하면 이 저장 지점을 엽니다">
+                        <div class="save-slot-name" data-slot-id="${s.id}" style="color:${s.isAutosave ? 'var(--tno-neon)' : '#ccc'};font-size:0.85rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${s.isAutosave ? '🔄 ' : ''}${escapeHtmlText(s.name)}${cur ? ' <span style="color:var(--tno-gold);font-size:0.72rem;">● 현재</span>' : ''}</div>
                         <div style="color:#555;font-size:0.7rem;">${s.savedAt ? new Date(s.savedAt).toLocaleString('ko-KR') : '-'}</div>
                     </div>
-                    <button class="add-btn" style="width:auto;margin-top:0;padding:4px 10px;font-size:0.8rem;" onclick="loadNamedSlot('${s.id}')">불러오기</button>
                     ${s.isAutosave ? '' : `<button class="dup-btn" title="이름 변경" onclick="startRenameSaveSlotInList('${s.id}')">✎</button>`}
-                    ${s.isAutosave ? '' : `<button class="remove-btn" onclick="deleteNamedSlot('${s.id}')">X</button>`}
-                </div>
-            `).join('');
+                    ${s.isAutosave ? '' : `<button class="remove-btn" title="삭제" onclick="deleteNamedSlot('${s.id}')">X</button>`}
+                </div>`;
+            }).join('');
         }
 
         // ===== 세이브 이름 바꾸기 =====
