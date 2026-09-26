@@ -44,6 +44,9 @@ html:not([data-ui-mode="mobile"]) body.has-side-nav.side-nav-collapsed .side-nav
 /* 줄 높이를 숫자로 고정 — ⚠ 같은 기호는 다른(대체) 글꼴로 그려져 기본 줄 높이가 달라지므로, 모든 항목 높이를 똑같이 맞춘다 */
 .mn-item, .main-tab-content > .sub-tab-container > .sub-tab-btn { line-height: 1.4; }
 .mn-item:disabled { opacity: .45; cursor: not-allowed; }
+/* 글자 대신 아이콘만 있는 항목(⚠ 부정선거) — 다른 항목과 같은 줄 높이 안에서 세로 가운데 */
+.mn-item-icon { display: inline-flex; align-items: center; height: 1.4em; vertical-align: top; }
+.mn-item-icon svg { display: block; }
 .mn-crumb-current { overflow: hidden; text-overflow: ellipsis; }
 
 /* 접힌 사이드바: 그룹 아이콘만 세로로 */
