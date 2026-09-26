@@ -117,7 +117,7 @@
         .settings-group .lang-select-group { margin-bottom: 0; }
         .settings-group .lang-select-group + .lang-select-group { margin-top: 6px; }
         .settings-hint { color: var(--tno-text); font-size: 0.85rem; margin-top: 8px; opacity: .8; text-transform: none; }
-        .settings-panel .footer { max-width: 760px; margin-top: 40px; }
+        .settings-footer { flex-shrink: 0; margin: 0 !important; padding: 10px 16px; text-align: center; border-top: 1px solid var(--tno-border); }
         /* 좁은 화면: 분류 목록을 위쪽 가로 탭 줄로 */
         @media (max-width: 700px) {
             .settings-layout { flex-direction: column; }

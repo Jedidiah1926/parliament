@@ -549,6 +549,30 @@ window.DnoLangPacks.en = {
  ],
  "dict": [
   [
+   "기본값으로 초기화",
+   "Reset to default"
+  ],
+  [
+   "모바일 (세로형)",
+   "Mobile (portrait)"
+  ],
+  [
+   "데스크톱 (가로형)",
+   "Desktop (landscape)"
+  ],
+  [
+   "네온 모드",
+   "Neon mode"
+  ],
+  [
+   "다크 모드",
+   "Dark mode"
+  ],
+  [
+   "라이트 모드",
+   "Light mode"
+  ],
+  [
    "눌러서 이 권역으로 칠하기",
    "Click to paint with this region"
   ],
