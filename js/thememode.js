@@ -1,4 +1,4 @@
-// ===== DATANET PARLIAMENT SIMULATION — 테마 모드(라이트/다크/네온) 모듈 =====
+// ===== Hemicycle — 테마 모드(라이트/다크/네온) 모듈 =====
 // 라이트/다크는 CRT 이펙트·픽셀 폰트 없이 깔끔한 모던 UI로, 네온(내부값 'tno')은 기존의 레트로 CRT
 // 터미널 감성을 그대로 유지한다. localStorage에 저장하고 <html>에 두 속성으로 반영한다:
 //   data-theme-mode   = 'light' | 'dark' | 'tno'   — 모드별 색 토큰(css/modern.css)

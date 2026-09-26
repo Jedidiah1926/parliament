@@ -1,5 +1,5 @@
 /* =====================================================================
-   DATANET PARLIAMENT SIMULATION — 모던 UI (라이트/다크 모드 전용)
+   Hemicycle — 모던 UI (라이트/다크 모드 전용)
    ---------------------------------------------------------------------
    네온 모드(data-theme-mode="tno")는 각 페이지 CSS(dno.css 등)의 기존 레트로
    스타일을 그대로 쓰고, 이 파일의 규칙은 모두 html[data-theme-family="modern"]
@@ -17,7 +17,14 @@
 
    인라인 style=""과 페이지 CSS를 덮어써야 하는 곳이 많아 !important를 의도적으로 쓴다.
    ===================================================================== */
-@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css');
+/* 라이트/다크 글꼴: Pretendard (SIL OFL 1.1, fonts/pretendard/LICENSE.txt) — 인터넷 없이도(데스크톱 앱) 보이도록 파일을 함께 배포 */
+@font-face {
+    font-family: 'Pretendard Variable';
+    font-weight: 45 920;
+    font-style: normal;
+    font-display: swap;
+    src: local('Pretendard Variable'), url('../fonts/pretendard/PretendardVariable.woff2') format('woff2-variations'), url('../fonts/pretendard/PretendardVariable.woff2') format('woff2');
+}
 
 /* ===================== 1. 디자인 토큰 ===================== */
 html[data-theme-mode="light"] {
@@ -2929,3 +2936,25 @@ html[data-theme-family="modern"] .region-active-badge {
     font-weight: 600;
     text-shadow: 0 0 2px rgba(0,0,0,.45);
 }
+
+/* ===== 메인 화면 (Hemicycle) — 라이트/다크 ===== */
+html[data-theme-family="modern"] .home-title { font-family: inherit; font-weight: 600; letter-spacing: -2px; color: var(--m-text); text-shadow: none; }
+html[data-theme-family="modern"] .home-subtitle { color: var(--m-text-2); letter-spacing: 0; }
+html[data-theme-family="modern"] .home-meta { color: var(--m-text-3); letter-spacing: 0; }
+html[data-theme-family="modern"] .home-menu { background: var(--m-surface); border: 1px solid var(--m-border); border-radius: 20px; box-shadow: var(--m-shadow); padding: 8px; }
+html[data-theme-family="modern"] .home-menu-item { border: none; border-radius: 14px; color: var(--m-text); text-shadow: none; }
+html[data-theme-family="modern"] .home-menu-item:hover { background: var(--m-surface-2); color: var(--m-text); }
+html[data-theme-family="modern"] .home-menu-primary { background: var(--m-accent); color: var(--m-on-accent); }
+html[data-theme-family="modern"] .home-menu-primary:hover { background: var(--m-accent); color: var(--m-on-accent); filter: brightness(1.12); }
+html[data-theme-family="modern"] .home-menu-icon { border: none; border-radius: 11px; background: var(--m-surface-2); color: var(--m-text-2); }
+html[data-theme-family="modern"] .home-menu-primary .home-menu-icon { background: color-mix(in srgb, var(--m-on-accent) 18%, transparent); color: var(--m-on-accent); }
+html[data-theme-family="modern"] .home-menu-label { font-weight: 600; font-size: 16px; letter-spacing: 0; }
+html[data-theme-family="modern"] .home-menu-desc { color: var(--m-text-3); font-size: 12.5px; }
+html[data-theme-family="modern"] .home-menu-primary .home-menu-desc { color: color-mix(in srgb, var(--m-on-accent) 75%, transparent); }
+html[data-theme-family="modern"] .home-lang-btn { border: none; border-radius: 14px; background: var(--m-surface-2); color: var(--m-text-2); }
+html[data-theme-family="modern"] .home-lang-btn:hover, html[data-theme-family="modern"] .home-lang-btn[aria-expanded="true"] { background: var(--m-surface-3); color: var(--m-text); }
+html[data-theme-family="modern"] .home-lang-menu { background: var(--m-surface); border: 1px solid var(--m-border); border-radius: 14px; box-shadow: var(--m-shadow); }
+html[data-theme-family="modern"] .home-lang-item { border: none; border-radius: 9px; color: var(--m-text); }
+html[data-theme-family="modern"] .home-lang-item:hover { background: var(--m-surface-2); }
+html[data-theme-family="modern"] .home-lang-item.active { color: var(--m-text); font-weight: 600; }
+html[data-theme-family="modern"] .home-lang-more { border-top-color: var(--m-border); color: var(--m-text-3); }

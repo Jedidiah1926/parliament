@@ -1,7 +1,7 @@
 {
   "name": "datanet-parliament-simulation",
   "version": "1.5.6",
-  "description": "DATANET: PARLIAMENT SIMULATION — desktop build",
+  "description": "Hemicycle — desktop build",
   "private": true,
   "main": "electron/main.js",
   "scripts": {
@@ -16,13 +16,14 @@
   },
   "build": {
     "appId": "com.abwehr.datanet-parliament",
-    "productName": "DATANET Parliament Simulation",
+    "productName": "Hemicycle",
     "asar": true,
     "files": [
       "electron/**/*",
       "*.html",
       "js/**/*",
       "css/**/*",
+      "fonts/**/*",
       "presets/**/*",
     "lang/**/*",
     "old2/**/*",

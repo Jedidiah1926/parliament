@@ -5,7 +5,7 @@ window.DnoLangPacks.en = {
  "format": "dno-lang-pack@1",
  "code": "en",
  "name": "English",
- "author": "DATANET",
+ "author": "Hemicycle",
  "months": [
   "January",
   "February",
@@ -548,6 +548,34 @@ window.DnoLangPacks.en = {
   }
  ],
  "dict": [
+  [
+   "메인 메뉴",
+   "Main menu"
+  ],
+  [
+   "언어 팩 관리…",
+   "Manage language packs…"
+  ],
+  [
+   "언어 · 화면 · 테마",
+   "Language · Display · Theme"
+  ],
+  [
+   "앞으로의 계획과 바뀐 점",
+   "Plans and what changed"
+  ],
+  [
+   "새로 만들거나 이어서 하기",
+   "New game or continue"
+  ],
+  [
+   "로드맵 · 업데이트",
+   "Roadmap & Updates"
+  ],
+  [
+   "시작하기",
+   "Start"
+  ],
   [
    "기본값으로 초기화",
    "Reset to default"

@@ -1,4 +1,4 @@
-// ===== DATANET PARLIAMENT SIMULATION — 테마 색 모듈 (TNO 모드 전용 커스텀 강조색) =====
+// ===== Hemicycle — 테마 색 모듈 (TNO 모드 전용 커스텀 강조색) =====
 // 사용자가 settings.html에서 고른 테마 색(네온 강조색)을 localStorage에 저장하고,
 // --tno-neon / --tno-neon-dim 커스텀 프로퍼티로 반영한다. 단, 이 커스텀 색은 TNO
 // 모드에서만 의미가 있다 — 라이트/다크 모드는 CRT 감성이 아니라 깔끔한 UI를 지향하므로

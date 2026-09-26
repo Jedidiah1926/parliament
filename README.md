@@ -1,4 +1,4 @@
-# DATANET: PARLIAMENT SIMULATION
+# Hemicycle
 
 > 레트로 CRT 터미널 스타일의 의회 시뮬레이터 — 정당·연정·의석 구성, 입법·표결, 선거를 브라우저에서 직접 운영합니다.
 
@@ -6,7 +6,7 @@
 
 ## 개요
 
-DATANET Parliament Simulation은 설치나 빌드 없이 **브라우저에서 바로 실행**되는 의회 시뮬레이션 도구입니다.
+Hemicycle(구 DATANET Parliament Simulation)은 설치나 빌드 없이 **브라우저에서 바로 실행**되는 의회 시뮬레이션 도구입니다.
 
 - 단원제 / 양원제 / 삼원제 자유 전환
 - 이념 스펙트럼에 따른 정당·연정 구성, 무소속 개별 의원 관리
@@ -41,7 +41,7 @@ Electron으로 감싸 설치형 Windows 앱(.exe)으로도 빌드할 수 있습�
 ```bash
 npm install          # Electron / electron-builder 설치 (최초 1회)
 npm start             # 개발 중 바로 실행해보기
-npm run build:win     # Windows 설치형 exe 빌드 → dist/DATANET Parliament Simulation-Setup-<버전>.exe
+npm run build:win     # Windows 설치형 exe 빌드 → dist/Hemicycle-Setup-<버전>.exe
 ```
 
 - Windows에서 빌드하는 게 가장 확실하지만, `electron-builder`는 Wine이 설치된 macOS/Linux에서도 Windows 타깃 빌드를 지원합니다.

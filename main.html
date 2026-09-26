@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DATANET ORDER</title>
+    <title>Hemicycle</title>
     
     <script src="js/thememode.js"></script>
     <script src="js/theme.js"></script>
@@ -18,47 +18,57 @@
     <script src="js/lang.js"></script>
     <script src="js/maintenance.js"></script>
 </head>
-<body>
+<body class="home-page">
 
     <div class="maint-notice-bar" id="maintNoticeBar" style="display:none;">
         ⚠ <span id="maintNoticeText"></span>
     </div>
 
-    <div class="terminal-container">
-        <div class="corner top-left"></div>
-        <div class="corner bottom-right"></div>
-
-        <div class="header-strip">
-            DATANET MAIN TERMINAL
-        </div>
-
-        <div class="content">
+    <!-- 메인 화면: 왼쪽 위 제목 · 왼쪽 아래 버전 정보 · 오른쪽 아래 메뉴 -->
+    <div class="home">
+        <div class="home-brand">
             <div class="status-line neon-only">
                 SYSTEM: ONLINE<br>
                 AUTHORIZED ACCESS ONLY<br>
                 <span class="alert-text">ENCRYPTION ACTIVE</span>
             </div>
+            <h1 class="home-title">Hemicycle</h1>
+            <div class="home-subtitle">We Shall Fight on the MAPS</div>
+        </div>
 
-            <div class="menu-options">
-                <a href="#" class="menu-btn" onclick="openSaveSelectModal(); return false;">
-                    프로토콜 실행
+        <nav class="home-menu" aria-label="메인 메뉴">
+            <a href="#" class="home-menu-item home-menu-primary" onclick="openSaveSelectModal(); return false;">
+                <span class="home-menu-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor"/></svg></span>
+                <span class="home-menu-text"><span class="home-menu-label">시작하기</span><span class="home-menu-desc">새로 만들거나 이어서 하기</span></span>
+                <span class="home-menu-chev" aria-hidden="true">›</span>
+            </a>
+            <a href="roadmap.html" class="home-menu-item">
+                <span class="home-menu-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4 3.5 6v14L9 18l6 2 5.5-2V4L15 6z"/><path d="M9 4v14M15 6v14"/></svg></span>
+                <span class="home-menu-text"><span class="home-menu-label">로드맵 · 업데이트</span><span class="home-menu-desc">앞으로의 계획과 바뀐 점</span></span>
+                <span class="home-menu-chev" aria-hidden="true">›</span>
+            </a>
+            <div class="home-menu-row">
+                <a href="settings.html" class="home-menu-item">
+                    <span class="home-menu-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></span>
+                    <span class="home-menu-text"><span class="home-menu-label">설정</span><span class="home-menu-desc">언어 · 화면 · 테마</span></span>
+                    <span class="home-menu-chev" aria-hidden="true">›</span>
                 </a>
-                <a href="roadmap.html" class="menu-btn">
-                    로드맵 및 업데이트 내역 보기
-                </a>
-                <a href="settings.html" class="menu-btn">
-                    설정 / SETTINGS
-                </a>
+                <!-- 언어 바로 바꾸기 (설정 > 언어와 같은 기능) -->
+                <button type="button" class="home-lang-btn" id="homeLangBtn" onclick="toggleHomeLangMenu(event)" title="언어" aria-haspopup="true" aria-expanded="false">
+                    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.6 2.6 3.9 5.6 3.9 9s-1.3 6.4-3.9 9c-2.6-2.6-3.9-5.6-3.9-9S9.4 5.6 12 3z"/></svg>
+                    <span class="home-lang-code" id="homeLangCode"></span>
+                </button>
+                <div class="home-lang-menu" id="homeLangMenu" style="display:none;" role="menu"></div>
             </div>
-            
-            <div class="version-box">
-                <div class="version-head">
-                    <div class="version-tag">VERSION: v1.5.6</div>
-                    <div class="version-tag">We shall fight on the MAPS</div>
-                    <div class="build-tag">BUILD: 2026-09-25</div>
-                </div>
+        </nav>
 
-                <!-- <div class="changelog">
+        <div class="home-meta">
+            <div>VERSION: v1.5.6</div>
+            <div>BUILD: 2026-09-25</div>
+            <div>&copy; 2025-2026 Pilcrow1926</div>
+        </div>
+
+        <!-- <div class="changelog">
                     <div class="changelog-title">// OPERATOR FIELD LOG — RESTRICTED</div>
 
                     <div class="log-entry">
@@ -116,12 +126,6 @@
                     </div>
 
                 </div> -->
-            </div>
-
-            <div class="footer">
-                &copy; 2025-2026 Pilcrow1926
-            </div>
-        </div>
     </div>
 
     <div class="save-select-overlay" id="saveSelectOverlay" style="display:none;">
@@ -391,5 +395,42 @@
         renderPresetSelectList = async function() { const r = await _renderPresetSelectList.apply(this, arguments); translateSaveWindow(); return r; };
     </script>
 
+    <script>
+        // ===== 메인 화면 언어 바로 바꾸기 (설정 > 언어와 같음 — 고르면 이 화면을 다시 불러와 적용) =====
+        function renderHomeLangMenu() {
+            const menu = document.getElementById('homeLangMenu');
+            const codeEl = document.getElementById('homeLangCode');
+            if(!menu || !window.DnoLang) return;
+            const cur = getLang();
+            const list = DnoLang.list();
+            const curItem = list.find(l => l.code === cur);
+            if(codeEl) codeEl.textContent = (cur === 'kr' ? 'KO' : cur.toUpperCase());
+            menu.innerHTML = list.map(l => `
+                <button type="button" class="home-lang-item${l.code === cur ? ' active' : ''}" role="menuitemradio" aria-checked="${l.code === cur}" onclick="pickHomeLang('${l.code}')">
+                    <span>${l.name.replace(/[<>&]/g, '')}</span>${l.code === cur ? '<span class="home-lang-check">✓</span>' : ''}
+                </button>`).join('') + `<a class="home-lang-more" href="settings.html#lang">언어 팩 관리…</a>`;
+        }
+        function toggleHomeLangMenu(e) {
+            e.stopPropagation();
+            const menu = document.getElementById('homeLangMenu');
+            const open = menu.style.display === 'none';
+            if(open) renderHomeLangMenu();
+            menu.style.display = open ? '' : 'none';
+            document.getElementById('homeLangBtn').setAttribute('aria-expanded', String(open));
+        }
+        function pickHomeLang(code) {
+            if(code !== getLang()) { setLang(code); location.reload(); return; }
+            document.getElementById('homeLangMenu').style.display = 'none';
+        }
+        document.addEventListener('click', e => {
+            const menu = document.getElementById('homeLangMenu');
+            if(menu && menu.style.display !== 'none' && !menu.contains(e.target)) {
+                menu.style.display = 'none';
+                document.getElementById('homeLangBtn')?.setAttribute('aria-expanded', 'false');
+            }
+        });
+        document.addEventListener('keydown', e => { if(e.key === 'Escape') { const m = document.getElementById('homeLangMenu'); if(m) m.style.display = 'none'; } });
+        renderHomeLangMenu();
+    </script>
 </body>
 </html>
