@@ -9131,8 +9131,15 @@
                 if(opts.clickable) {
                     el.style.cursor = 'pointer';
                     el.addEventListener('click', () => opts.onClickKey?.(s.key));
-                    el.addEventListener('mouseenter', () => { el.style.filter = 'brightness(1.5)'; });
-                    el.addEventListener('mouseleave', () => { el.style.filter = ''; });
+                    if(opts.groupOf && shownFill !== 'transparent') {
+                        // 권역 지도: 마우스를 올리면 채움색만 밝게 — 경계선은 그대로 둬서 옆 권역·지역구 경계가 계속 보이게
+                        const hoverFill = `color-mix(in srgb, ${shownFill} ${glowOnLight ? 35 : 70}%, #ffffff)`;
+                        el.addEventListener('mouseenter', () => { el.setAttribute('fill', hoverFill); if(groupId != null) el.setAttribute('stroke', hoverFill); });
+                        el.addEventListener('mouseleave', () => { el.setAttribute('fill', shownFill); if(groupId != null) el.setAttribute('stroke', shownFill); });
+                    } else {
+                        el.addEventListener('mouseenter', () => { el.style.filter = 'brightness(1.5)'; });
+                        el.addEventListener('mouseleave', () => { el.style.filter = ''; });
+                    }
                 }
                 // 브라우저 기본 <title> 툴팁 대신, 앱 전체에서 쓰는 네온 스타일 툴팁 박스(#tooltipBox)를 사용
                 if(opts.title) {
