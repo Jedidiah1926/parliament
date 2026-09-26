@@ -5298,6 +5298,22 @@ window.DnoLangPacks.en = {
   [
    "회기가 개별형일 때 동작합니다. 날짜 연동은 연 · 월 · 일 날짜에서만 동작합니다.",
    "Works when the session is set to Individual. Date-based progression only works with year/month/day dates."
+  ],
+  [
+   "지도의 지역구를 클릭해 그 권역에 배정/해제하세요.",
+   "click a district on the map to assign it to that region or remove it."
+  ],
+  [
+   "지도 위 글씨 · 배지 크기.",
+   "Size of the labels and badges on the map."
+  ],
+  [
+   "- 지역구 그리드(육각형) 방식 삭제 — 지역구는 지도 방식 하나만, 국가 설정의 지역구 시스템 선택도 없어짐 (예전 그리드 세이브는 불러올 때 이름 · 의석 · 성향 · 당선자를 그대로 지도 방식 데이터로 변환)",
+   "- Removed the grid (hex) district system — districts use maps only, and the district-system choice in Nation Settings is gone (old grid saves are converted on load, keeping names, seats, tendencies and members)"
+  ],
+  [
+   "- 날짜 · 회기 설정을 날짜 줄 ⚙로 여는 떠 있는 창으로 (구 국가 › 날짜) · 자동 진행: 날짜가 정기회 시작일(기본 9월 1일)을 지나면 정기회로 다음 회기, 하원 총선 확정 시 대수 +1 (둘 다 켜고 끌 수 있음)",
+   "- Date & session settings open as a floating panel from the date line's ⚙ (formerly Nation › Date) · Automatic progression: passing the regular-session start date (default Sep 1) opens a regular session, and a confirmed lower-house general election bumps the term (both toggleable)"
   ]
  ]
 };

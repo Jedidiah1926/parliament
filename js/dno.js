@@ -4845,11 +4845,12 @@
             districtPopulation = elec.district?.population ? { house:{}, senate:{}, third:{}, ...elec.district.population } : { house:{}, senate:{}, third:{} };
             districtOrder = elec.district?.order ? { house:[], senate:[], third:[], ...elec.district.order } : { house:[], senate:[], third:[] };
             districtMembers = elec.district?.members ? { house:{}, senate:{}, third:{}, ...elec.district.members } : { house:{}, senate:{}, third:{} };
-            districtMapMode = elec.district?.mapMode === 'svg' ? 'svg' : 'hex';
+            districtMapMode = 'svg'; // 지역구는 지도 방식 하나만 (그리드는 삭제) — 예전 그리드 세이브는 아래에서 변환
             districtSvgMap = elec.district?.svgMap || null;
             districtSeatCounts = elec.district?.seatCounts || {};
             districtSvgTendency = elec.district?.svgTendency || {};
             districtAbbr = elec.district?.abbr || {};
+            if(elec.district?.mapMode !== 'svg') migrateHexDistrictsToMap(elec.tendency?.data);
             ['house','senate','third'].forEach(ch => districtOrderSync(ch)); // 구버전 파일은 순서 배열이 없으므로 좌표 등장순으로 자동 생성
             selectedDistrictKey = null;
             districtUpdateModeUI();
@@ -9757,9 +9758,6 @@
             const chamberSelectRow = document.getElementById('districtChamberSelectRow');
             if(chamberSelectRow) chamberSelectRow.style.display = isSvg ? 'none' : '';
 
-            // 국가>설정의 지역구 시스템 토글 버튼 상태 동기화
-            document.getElementById('districtSystemModeHexBtn')?.classList.toggle('active', !isSvg);
-            document.getElementById('districtSystemModeSvgBtn')?.classList.toggle('active', isSvg);
 
             const info = document.getElementById('districtSvgInfo');
             const fileName = document.getElementById('districtSvgFileName');
@@ -9921,36 +9919,35 @@
             districtSvgSetAbbrStrokeColor(getThemeColor());
         }
 
-        function districtSvgRevertToHex() {
-            showCustomConfirm('구 지역구(그리드) 방식으로 되돌립니다.\nSVG 지도로 만든 지역구/의석/성향/당선자 데이터가 모두 삭제됩니다. 계속하시겠습니까?', () => {
-                districtMapMode = 'hex';
-                districtSvgMap = null;
-                districtSeatCounts = {};
-                districtSvgTendency = {};
-                districtAbbr = {};
-                ['house','senate','third'].forEach(ch => { districtGrid[ch] = {}; districtNames[ch] = {}; districtPopulation[ch] = {}; districtMembers[ch] = {}; districtOrderSync(ch); });
-                selectedDistrictKey = null;
-                document.getElementById('districtNamePanel').style.display = 'none';
-                districtUpdateModeUI();
-                districtRenderMap();
-                renderDistrictListPanel();
-                elecUpdateDistrictInfo();
+
+        // 예전 그리드(육각형) 세이브 → 지도 방식 데이터로 변환: 칸 하나가 1석짜리 지역구, 이름 · 인구 · 당선자 · 순서는 그대로,
+        // 칸별 성향(정당 → 강도)은 지역구가 있는 원마다 복사. 지도 파일이 없으니 여론 › 지역구에서 지도를 올리면 새 지도로 대체된다
+        function migrateHexDistrictsToMap(hexTendency) {
+            const chs = ['house','senate','third'];
+            const keys = new Set();
+            chs.forEach(ch => Object.keys(districtGrid[ch] || {}).forEach(k => keys.add(k)));
+            if(!keys.size) return;
+            const tend = hexTendency && typeof hexTendency === 'object' ? hexTendency : {};
+            keys.forEach(k => {
+                const seats = {};
+                chs.forEach(ch => { seats[ch] = districtGrid[ch]?.[k] ? 1 : 0; });
+                districtSeatCounts[k] = seats;
+                chs.forEach(ch => {
+                    if(!seats[ch]) return;
+                    Object.keys(tend).forEach(pid => {
+                        const v = tend[pid]?.[k];
+                        if(v === undefined) return;
+                        districtSvgTendency[k] = districtSvgTendency[k] || {};
+                        districtSvgTendency[k][ch] = districtSvgTendency[k][ch] || {};
+                        districtSvgTendency[k][ch][pid] = v;
+                    });
+                });
             });
         }
 
-        // 국가>설정의 지역구 시스템 토글에서 호출 — 육각형 데이터는 지도로 바꿔도 그대로 보존되고
-        // (SVG 지도를 업로드하는 순간 대체됨), 지도 데이터가 있는 상태에서 육각형으로 되돌릴 때만
-        // 기존 되돌리기와 동일하게 확인 후 초기화한다
         function setDistrictMapMode(mode) {
-            if(mode !== 'hex' && mode !== 'svg') return;
-            if(mode === districtMapMode) return;
-            if(mode === 'hex') {
-                const hasSvgData = !!districtSvgMap || Object.keys(districtSeatCounts).length > 0;
-                if(hasSvgData) { districtSvgRevertToHex(); return; }
-                districtMapMode = 'hex';
-            } else {
-                districtMapMode = 'svg';
-            }
+            if(mode !== 'svg' || mode === districtMapMode) return; // 그리드 방식은 삭제됨 — 예전 호출 호환용
+            districtMapMode = 'svg';
             selectedDistrictKey = null;
             document.getElementById('districtNamePanel').style.display = 'none';
             districtUpdateModeUI();

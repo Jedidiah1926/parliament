@@ -96,7 +96,7 @@
                 },
                 {
                     btn: 'subTabNationSettings', open: go('nation', 'nationSettings'),
-                    desc: '지역구 시스템(지도 · 그리드)과 지도 위 글씨 · 배지 크기.',
+                    desc: '지도 위 글씨 · 배지 크기.',
                 },
                 {
                     btn: 'saveTabSaveBtn', title: '저장', open: () => { if(typeof openSavePanel === 'function') openSavePanel(); },
