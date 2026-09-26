@@ -2769,6 +2769,9 @@ html[data-theme-family="modern"] .mn-section-title {
 }
 html[data-theme-family="modern"] .mn-crumb { color: var(--m-text-3) !important; font-weight: 600; font-size: 14px; }
 html[data-theme-family="modern"] .mn-crumb-sep { color: var(--m-text-4) !important; font-weight: 400; font-size: 14px; }
+/* 사이드바를 접었을 때만 경로 맨 앞에 국가명 (펼쳤을 땐 사이드바 머리에 있음) */
+html[data-theme-family="modern"]:not([data-ui-mode="mobile"]) body.side-nav-collapsed .mn-crumb-nation { display: inline; }
+html[data-theme-family="modern"] .mn-crumb.mn-crumb-nation { color: var(--m-text) !important; font-weight: 700; max-width: 40%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* 상단 세이브 탭 바: 탭 높이를 바 높이에 정확히 맞춰 세로 스크롤바가 생기지 않게 */
 html[data-theme-family="modern"] .save-tab-list { overflow-y: hidden; }

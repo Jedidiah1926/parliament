@@ -5109,8 +5109,8 @@ window.DnoLangPacks.en = {
    "- \"Save\" button on the right of the top tab bar — Nation › Save moved into a floating save panel (autosave · save list · save as · file); the + button now sits right after the last tab, like Chrome"
   ],
   [
-   "- 라이트/다크 사이드바 머리에서 \"Ministry of Interior\"를 빼고 국가명을 제목으로",
-   "- Light/dark sidebar header drops \"Ministry of Interior\" and shows the nation name as the title"
+   "- 라이트/다크 사이드바 머리에서 \"Ministry of Interior\"를 빼고 국가명을 제목으로 (사이드바를 접으면 화면 위 경로 맨 앞에 국가명)",
+   "- Light/dark sidebar header drops \"Ministry of Interior\" and shows the nation name as the title (when collapsed, the nation name leads the breadcrumb)"
   ],
   [
    "- 맵 메이커 네온 모드 글자가 가짜 굵게로 뭉개지던 문제, 라이트/다크 로드맵 스크롤바(검은 트랙) 정리",
