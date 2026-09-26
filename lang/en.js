@@ -5163,6 +5163,10 @@ window.DnoLangPacks.en = {
   [
    "표결 기록",
    "Vote Records"
+  ],
+  [
+   "- 오른쪽 화면의 날짜 · 회기 표시를 탭 줄 위 별도 줄로 — 회기 이름이 길어져도 국회 · 상원 등 탭이 눌려 세로로 찌그러지지 않음",
+   "- The date/session line on the right screen now sits on its own row above the tabs, so long session names no longer squeeze the tabs"
   ]
  ]
 };
