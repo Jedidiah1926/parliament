@@ -1,4 +1,4 @@
-const { app, BrowserWindow, Menu, screen } = require('electron');
+const { app, BrowserWindow, Menu, screen, shell } = require('electron');
 const path = require('path');
 const fs = require('fs');
 
@@ -71,6 +71,15 @@ function createWindow() {
     });
 
     Menu.setApplicationMenu(null);
+    // 바깥 링크(유튜브 채널 등)는 앱 창 안이 아니라 기본 브라우저로 연다
+    const isExternal = url => /^https?:\/\//i.test(url);
+    win.webContents.setWindowOpenHandler(({ url }) => {
+        if (isExternal(url)) shell.openExternal(url);
+        return { action: 'deny' };
+    });
+    win.webContents.on('will-navigate', (e, url) => {
+        if (isExternal(url)) { e.preventDefault(); shell.openExternal(url); }
+    });
     win.once('ready-to-show', () => {
         if (saved.maximized) win.maximize();
         if (saved.fullscreen) win.setFullScreen(true);
