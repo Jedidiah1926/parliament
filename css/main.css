@@ -624,7 +624,14 @@ body.home-page { display: block; height: 100vh; overflow: hidden; text-transform
     border: 1px solid transparent; transition: .12s;
 }
 .home-menu-item:hover { border-color: var(--tno-neon); background: color-mix(in srgb, var(--tno-neon) 8%, transparent); color: var(--tno-neon); }
-.home-menu-primary { border-color: var(--tno-neon); color: var(--tno-neon); background: color-mix(in srgb, var(--tno-neon) 10%, transparent); text-shadow: 0 0 6px var(--tno-neon); }
+/* 시작하기: 네온에서는 집권 세력 강조처럼 금색 — 마우스를 올린 다른 메뉴(시안)와 바로 구분되게 */
+.home-menu-primary, .home-menu-primary:hover {
+    border-color: var(--tno-gold); color: var(--tno-gold);
+    background: color-mix(in srgb, var(--tno-gold) 9%, transparent);
+    text-shadow: 0 0 6px var(--tno-gold);
+    box-shadow: 0 0 10px color-mix(in srgb, var(--tno-gold) 35%, transparent), inset 0 0 12px color-mix(in srgb, var(--tno-gold) 12%, transparent);
+}
+.home-menu-primary:hover { background: color-mix(in srgb, var(--tno-gold) 15%, transparent); }
 .home-menu-icon { width: 36px; height: 36px; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; border: 1px solid currentColor; }
 .home-menu-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
 .home-menu-label { font-size: 1.15rem; letter-spacing: 1px; }
