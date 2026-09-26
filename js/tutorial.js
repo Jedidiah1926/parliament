@@ -233,11 +233,11 @@
                     leave: () => { const el = document.activeElement; if (el && el.closest && el.closest('#elecInputList')) el.blur(); },
                 },
                 {
-                    before: [go('nation', 'election'), call('switchElectionInnerTab', 'general'), showPanel('controls')],
+                    before: [go('vote', 'elecGeneral'), showPanel('controls')],
                     target: '#elecRunBtn',
-                    allow: ['#elecRunBtn', '#contentElection'],
+                    allow: ['#elecRunBtn', '#contentElecGeneral'],
                     title: '선거 치르기',
-                    text: '국가 › 선거 › 총선에서 "개표 시작"을 누르면 지지율에 따라 개표가 진행됩니다. 지금 눌러보세요.',
+                    text: '선거 › 총선에서 "개표 시작"을 누르면 지지율에 따라 개표가 진행됩니다. 지금 눌러보세요.',
                     task: electionStarted,
                     done: '개표가 시작됐어요!',
                     autoNext: true, // 개표가 시작되면 바로 결과 화면을 보여주는 다음 단계로

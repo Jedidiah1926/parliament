@@ -526,7 +526,7 @@
             const hint = document.getElementById('pmSelectionMethodHint');
             if(hint) hint.textContent = method === 'appoint' ? `현재 선출 방식: ${effRoleLabel('president')} 임명제 — ${effRoleLabel('president')}이 후보를 지명하면 의회 심의를 거쳐 ${effRoleLabel('pm')}으로 확정됩니다`
                 : method === 'majority' ? `현재 선출 방식: 다수당 방식 — 기준 원(${chamberDisplayName(presElectionChamberBasis)})의 다수당 대표가 자동으로 ${effRoleLabel('pm')}이 됩니다`
-                : `현재 선출 방식: 총리직선제 — 국가 > 선거 > 총선 탭에서 "총리 선거"로 개표하세요`;
+                : `현재 선출 방식: 총리직선제 — 선거 > 총선 탭에서 "총리 선거"로 개표하세요`;
 
             const nomineeSection = document.getElementById('pmNomineeSection');
             if(nomineeSection) nomineeSection.style.display = method === 'appoint' ? '' : 'none';
@@ -1439,7 +1439,7 @@
             if(emergencyPowers[key].holder === 'none') { showCustomAlert('먼저 권한 주체를 지정하세요.'); return; }
             // 의회 해산(원별 분할 포함)은 한 번 선포되면 임의로 해제할 수 없고, 총선을 새로 반영해야만 풀린다
             if(DISSOLUTION_KEYS.includes(key) && emergencyPowers[key].active) {
-                showCustomAlert(`${emergencyPowerLabel(key)}은 스스로 해제할 수 없습니다.\n국가 > 선거 > 총선에서 새 선거를 반영해야 해제됩니다.`);
+                showCustomAlert(`${emergencyPowerLabel(key)}은 스스로 해제할 수 없습니다.\n선거 > 총선에서 새 선거를 반영해야 해제됩니다.`);
                 return;
             }
             if(!emergencyPowers[key].active) {
@@ -1993,6 +1993,36 @@
             { id: 106, name: "권위주의" },
             { id: 107, name: "국가사회주의" }
         ];
+
+        // ── 서브 이념 ── 이념마다 subs: [{id, name}]를 둘 수 있고, 정당·파벌·무소속 의원은 이념 또는 서브 이념을 고른다.
+        // 서브 이념은 부모 이념 자리에 붙어 정렬되고(부모 순서 → 서브 순서), 필터에서 부모를 고르면 서브도 함께 걸린다
+        function findIdeology(id) {
+            if(id == null) return null;
+            for(const ide of ideologies) {
+                if(ide.id === id) return ide;
+                const sub = (ide.subs || []).find(s => s.id === id);
+                if(sub) return { ...sub, parentId: ide.id, parentName: ide.name };
+            }
+            return null;
+        }
+        function ideologyName(id) { return findIdeology(id)?.name || ''; }
+        function ideologyParentId(id) { const f = findIdeology(id); return f ? (f.parentId ?? f.id) : null; }
+        // 자동 정렬용 순서 값 — 없는 이념은 맨 뒤
+        function ideologySortKey(id) {
+            for(let i = 0; i < ideologies.length; i++) {
+                if(ideologies[i].id === id) return i * 1000;
+                const si = (ideologies[i].subs || []).findIndex(s => s.id === id);
+                if(si >= 0) return i * 1000 + si + 1;
+            }
+            return 1e9;
+        }
+        // <select>용 이념 목록 — 서브 이념은 부모 아래에 들여 써서 보여 준다
+        function ideologyOptionsHtml(selectedId, { excludeInd = true } = {}) {
+            return ideologies.filter(ide => !excludeInd || ide.id !== IND_IDEOLOGY_ID).map(ide =>
+                `<option value="${ide.id}" ${selectedId===ide.id?'selected':''}>${ide.name}</option>` +
+                (ide.subs || []).map(sub => `<option value="${sub.id}" ${selectedId===sub.id?'selected':''}>\u00a0\u00a0└ ${sub.name}</option>`).join('')
+            ).join('');
+        }
 
         let parties = [
             { id: 1, name: "국가재건당", color: "#2E2E2E", seatsHouse: 140, seatsSenate: 60, seatsThird: 0, ideologyId: 101, isRuling: true,  inHouse: true, inSenate: true, inThird: false, leaderName: "", leaderPhoto: "", logoPhoto: "", showLogoInStats: false, hideStatsPhoto: false, description: "", factions: [] },
@@ -3493,7 +3523,7 @@
         // 같은 모양의 행을 만들어 통계 내보내기에 추가한다 (실제 화면 접기 상태는 건드리지 않음)
         function extractExtraPartyRows(chamber, statsOptions = {}) {
             return extraParliamentaryPartyList(chamber).map(p => {
-                const ideoName = ideologies.find(i => i.id === p.ideologyId)?.name || '';
+                const ideoName = ideologyName(p.ideologyId) || '';
                 const statusTags = p.status === 'dissolved' ? [{ text: '해산', color: '#999' }]
                                   : p.status === 'banned' ? [{ text: '활동 금지', color: '#ff0055' }] : [];
                 const isLogo = p.showLogoInStats ?? false;
@@ -4845,10 +4875,15 @@
             if(currentSubTab.election === 'record') currentSubTab.election = 'vote';
             // 구버전 파일 호환: 저장 메인탭이 국가>설정 하단으로 통합되기 전 위치를 가리키던 경우 재매핑
             if(uiMain === 'save') uiMain = 'nation';
+            // 구버전 파일 호환: 국가 > 선거 / ⚠ 가 선거 메인탭으로 옮겨지기 전 위치
+            if(currentSubTab.nation === 'election' || currentSubTab.nation === 'fraud') {
+                currentSubTab.vote = currentSubTab.nation === 'fraud' ? 'fraud' : 'elecGeneral';
+                currentSubTab.nation = 'legislation';
+                if(uiMain === 'nation') uiMain = 'vote';
+            }
             switchMainTab(uiMain);
             if(uiMain !== 'election') {
-                const fallback = uiMain==='setup' ? 'party' : uiMain==='cabinet' ? 'system' : uiMain==='help' ? 'helpsetup' : 'legislation';
-                switchSubTab(uiMain, currentSubTab[uiMain] || fallback, false);
+                switchSubTab(uiMain, currentSubTab[uiMain] || defaultSubTabFor(uiMain), false);
             }
         }
 
@@ -5659,10 +5694,16 @@
             document.querySelectorAll('.main-tab-content').forEach(c => c.classList.remove('active'));
             document.getElementById('mainContent' + main.charAt(0).toUpperCase() + main.slice(1)).classList.add('active');
             if(main === 'election') { elecRenderList(); elecRenderRecords(); return; }
-            switchSubTab(main, currentSubTab[main] || (main === 'setup' ? 'party' : main === 'cabinet' ? 'system' : main === 'help' ? 'helpsetup' : 'legislation'), false);
+            switchSubTab(main, currentSubTab[main] || defaultSubTabFor(main), false);
+        }
+        function defaultSubTabFor(main) {
+            return main === 'setup' ? 'party' : main === 'cabinet' ? 'system' : main === 'help' ? 'helpsetup' : main === 'vote' ? 'elecGeneral' : 'legislation';
         }
 
         function switchSubTab(main, sub, doMainSwitch = true) {
+            // 구 위치(국가 > 선거 / ⚠) 호환 — 선거 메인탭으로 옮겨짐
+            if(main === 'nation' && sub === 'election') { main = 'vote'; sub = 'elec' + electionInnerTab.charAt(0).toUpperCase() + electionInnerTab.slice(1); doMainSwitch = true; }
+            if(main === 'nation' && sub === 'fraud') { main = 'vote'; doMainSwitch = true; }
             if(doMainSwitch && currentMainTab !== main) switchMainTab(main);
             currentSubTab[main] = sub;
             const groupEl = document.getElementById('mainContent' + main.charAt(0).toUpperCase() + main.slice(1));
@@ -5676,7 +5717,10 @@
             refreshUI();
             if(sub === 'config') { switchConfigInnerTab(configInnerTab); }
             if(sub === 'legislation') { switchLegislationInnerTab('bill'); }
-            if(sub === 'election') { switchElectionInnerTab(electionInnerTab); }
+            if(sub === 'elecPresidential') onElectionSubTabShown('presidential');
+            if(sub === 'elecGeneral') onElectionSubTabShown('general');
+            if(sub === 'elecSettings') onElectionSubTabShown('settings');
+            if(sub === 'elecRecord') elecRenderRecords();
             if(sub === 'record') { switchRecordInnerTab('archive'); }
             if(sub === 'fraud') { renderFraudTab(); }
             if(sub === 'party') { switchPartyGroupInnerTab('info'); }
@@ -5723,16 +5767,13 @@
             if(inner === 'council') { syncCouncilBillSelect(); renderCouncilActiveBillDisplay(); renderCouncilThresholdUI(); renderCabinetDisplay(); }
         }
 
-        // 국가 > 기록 내부 탭 (입법/선거) — 구 기록 메인탭이 국가로 통합됨
+        // 국가 > 기록 (입법 기록) — 선거 기록은 선거 > 기록으로 옮겨짐. 예전 호출(elecRecord)은 그쪽으로 보낸다
         let recordInnerTab = 'archive';
         function switchRecordInnerTab(inner) {
-            recordInnerTab = inner;
-            ['archive','elecRecord'].forEach(k => {
-                document.getElementById('innerTabRec'+k.charAt(0).toUpperCase()+k.slice(1))?.classList.toggle('active', k===inner);
-                document.getElementById('content'+k.charAt(0).toUpperCase()+k.slice(1))?.classList.toggle('active', k===inner);
-            });
-            if(inner === 'archive') renderArchiveList();
-            if(inner === 'elecRecord') elecRenderRecords();
+            if(inner === 'elecRecord') { switchSubTab('vote', 'elecRecord'); return; }
+            recordInnerTab = 'archive';
+            document.getElementById('contentArchive')?.classList.add('active');
+            renderArchiveList();
         }
 
         // 구버전 switchTab 호환
@@ -6049,8 +6090,8 @@
         function autoSortParties() {
             manualSort = false;
             parties.sort((a,b) => {
-                const ia = ideologies.findIndex(i=>i.id===a.ideologyId);
-                const ib = ideologies.findIndex(i=>i.id===b.ideologyId);
+                const ia = ideologySortKey(a.ideologyId);
+                const ib = ideologySortKey(b.ideologyId);
                 if(a.ideologyId===IND_IDEOLOGY_ID && b.ideologyId!==IND_IDEOLOGY_ID) return 1;
                 if(b.ideologyId===IND_IDEOLOGY_ID && a.ideologyId!==IND_IDEOLOGY_ID) return -1;
                 return ia - ib;
@@ -6080,10 +6121,24 @@
                 const div = document.createElement('div');
                 div.className = 'drag-card-ideology';
                 div.style.display='flex'; div.style.gap='5px'; div.style.marginBottom='5px'; div.style.alignItems='center';
+                div.style.flexWrap = 'wrap';
+                const isInd = ide.id === IND_IDEOLOGY_ID;
+                const subs = ide.subs || [];
+                // 서브 이념: 부모 카드 안에 들여 써서 표시 (드래그 정렬은 부모 이념만, 서브는 ▲▼로)
+                const subsHtml = subs.map((sub, si) => `
+                    <div style="display:flex;gap:5px;align-items:center;width:100%;padding-left:28px;box-sizing:border-box;">
+                        <span style="color:#555;flex-shrink:0;">└</span>
+                        <input type="text" value="${sub.name}" style="flex:1;min-width:0;font-size:0.9rem;" onchange="updateSubIdeology(${ide.id}, ${sub.id}, this.value)">
+                        <button class="order-btn" onclick="moveSubIdeology(${ide.id}, ${sub.id}, -1)" ${si===0?'disabled style="opacity:0.2"':''}>▲</button>
+                        <button class="order-btn" onclick="moveSubIdeology(${ide.id}, ${sub.id}, 1)" ${si===subs.length-1?'disabled style="opacity:0.2"':''}>▼</button>
+                        <button class="remove-btn" onclick="removeSubIdeology(${ide.id}, ${sub.id})">X</button>
+                    </div>`).join('');
                 div.innerHTML = `
                     <span class="drag-handle">⋮⋮</span>
-                    <input type="text" value="${ide.name}" onchange="updateIdeology(${index}, 'name', this.value)">
-                    ${ide.id===IND_IDEOLOGY_ID ? '' : `<button class="remove-btn" onclick="removeIdeology(${index})">X</button>`}
+                    <input type="text" value="${ide.name}" style="flex:1;min-width:0;" onchange="updateIdeology(${index}, 'name', this.value)">
+                    ${isInd ? '' : `<button class="dup-btn" title="서브 이념 추가" onclick="addSubIdeology(${ide.id})">+ 서브</button>`}
+                    ${isInd ? '' : `<button class="remove-btn" onclick="removeIdeology(${index})">X</button>`}
+                    ${subsHtml}
                 `;
                 container.appendChild(div);
                 startDragReorder(div.querySelector('.drag-handle'), 'ideologyList', '.drag-card-ideology', ideologies, renderIdeologyList);
@@ -6118,7 +6173,7 @@
                 const idx = p.originalIdx;
                 const seatKey = seatKeyFor(type);
                 const photo = p.logoPhoto || '';
-                const ideologyName = ideologies.find(i => i.id === p.ideologyId)?.name || '';
+                const ideoLabel = ideologyName(p.ideologyId) || '';
                 const div = document.createElement('div');
                 div.className = `card-item drag-card-partylist-${type} ${p.isRuling?'is-ruling':''}`;
                 div.dataset.pid = p.id;
@@ -6144,7 +6199,7 @@
                         </div>
                         <!-- 2행: 이념 + 의석 수 입력 -->
                         <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;min-width:0;">
-                            <span style="color:#666;font-size:0.8rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;">${ideologyName}</span>
+                            <span style="color:#666;font-size:0.8rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;">${ideoLabel}</span>
                             <div style="display:flex;align-items:center;gap:5px;flex-shrink:0;">
                                 <label style="color:#555;font-size:0.75rem;white-space:nowrap;">${thisChamberName} 의석</label>
                                 <input type="number" value="${p[seatKey]}" min="0" max="${Math.max(p[seatKey]||0, chamberTotalSeats(type) - chamberSeatSum(type, p.id))}"
@@ -6751,12 +6806,51 @@
             designatePartyLeader(party.id, ind.name || '', ind.photo || '');
         }
 
-        function addIdeology() { ideologies.push({ id: Date.now(), name: "새 이념" }); refreshUI(); }
+        function addIdeology() { ideologies.push({ id: Date.now(), name: window.DnoLang ? DnoLang.t("새 이념") : "새 이념" }); refreshUI(); }
         function addIndependentIdeology() {
             if(!ideologies.find(i=>i.id===IND_IDEOLOGY_ID)) ideologies.push({id:IND_IDEOLOGY_ID, name:"무소속"});
             simulate(); refreshUI();
         }
-        function removeIdeology(idx) { if(ideologies.length>1) { const id=ideologies[idx].id; ideologies.splice(idx,1); parties.forEach(p=>{if(p.ideologyId===id)p.ideologyId=ideologies[0].id;}); simulate(); refreshUI(); }}
+        function removeIdeology(idx) {
+            if(ideologies.length<=1) return;
+            const ide = ideologies[idx];
+            const gone = new Set([ide.id, ...(ide.subs || []).map(s => s.id)]);
+            ideologies.splice(idx,1);
+            parties.forEach(p=>{if(gone.has(p.ideologyId))p.ideologyId=ideologies[0].id;});
+            reassignIdeologyRefs(gone, null);
+            simulate(); refreshUI();
+        }
+        // 이념이 지워졌을 때 파벌·무소속 의원이 가리키던 이념을 바꾼다 (toId가 null이면 파벌은 정당 이념을 따르게)
+        function reassignIdeologyRefs(goneIds, toId) {
+            parties.forEach(p => (p.factions || []).forEach(f => { if(gone(f.ideologyId)) f.ideologyId = toId ?? p.ideologyId; }));
+            independents.forEach(ind => { if(gone(ind.ideologyId)) ind.ideologyId = toId; });
+            function gone(id) { return goneIds.has(id); }
+        }
+        function addSubIdeology(parentId) {
+            const ide = ideologies.find(i => i.id === parentId); if(!ide) return;
+            if(!ide.subs) ide.subs = [];
+            ide.subs.push({ id: Date.now(), name: window.DnoLang ? DnoLang.t('새 서브 이념') : '새 서브 이념' }); // 영어 모드면 기본 이름도 번역
+            refreshUI();
+        }
+        function updateSubIdeology(parentId, subId, name) {
+            const sub = ideologies.find(i => i.id === parentId)?.subs?.find(s => s.id === subId);
+            if(sub) { sub.name = name; simulate(); refreshUI(); }
+        }
+        function moveSubIdeology(parentId, subId, dir) {
+            const subs = ideologies.find(i => i.id === parentId)?.subs; if(!subs) return;
+            const i = subs.findIndex(s => s.id === subId), j = i + dir;
+            if(i < 0 || j < 0 || j >= subs.length) return;
+            [subs[i], subs[j]] = [subs[j], subs[i]];
+            simulate(); refreshUI();
+        }
+        // 서브 이념을 지우면 그 서브를 고른 정당·파벌·무소속 의원은 부모 이념으로 돌아간다
+        function removeSubIdeology(parentId, subId) {
+            const ide = ideologies.find(i => i.id === parentId); if(!ide?.subs) return;
+            ide.subs = ide.subs.filter(s => s.id !== subId);
+            parties.forEach(p => { if(p.ideologyId === subId) p.ideologyId = parentId; });
+            reassignIdeologyRefs(new Set([subId]), parentId);
+            simulate(); refreshUI();
+        }
         function updateIdeology(i,k,v) { ideologies[i][k]=v; simulate(); refreshUI(); }
         function moveIdeology(i,d) { if((d===-1&&i>0)||(d===1&&i<ideologies.length-1)){ [ideologies[i], ideologies[i+d]] = [ideologies[i+d], ideologies[i]]; simulate(); refreshUI(); }}
         function addParty(chamber) {
@@ -6805,7 +6899,7 @@
             document.getElementById('mergeNewAbbr').value = '';
             document.getElementById('mergeNewColor').value = '#6a5acd';
             const ideoSel = document.getElementById('mergeNewIdeology');
-            ideoSel.innerHTML = ideologies.filter(i => i.id !== IND_IDEOLOGY_ID).map(i => `<option value="${i.id}">${escapeHtmlText(i.name)}</option>`).join('');
+            ideoSel.innerHTML = ideologyOptionsHtml(null);
             ideoSel.value = String(largest.ideologyId);
             partyMergeIdeologyTouched = false;
             document.getElementById('mergeKeepAsFaction').checked = true;
@@ -7188,7 +7282,7 @@
             list.forEach(p => {
                 const isLogo = p.showLogoInStats ?? false;
                 const photo  = p.hideStatsPhoto ? '' : (isLogo ? (p.logoPhoto||p.leaderPhoto||'') : (p.leaderPhoto||p.logoPhoto||''));
-                const ideoName = ideologies.find(i=>i.id===p.ideologyId)?.name || '';
+                const ideoName = ideologyName(p.ideologyId) || '';
                 h += `<div class="stat-block" style="border-left-color:${p.color};">
                     <div class="dyn-row" style="display:flex;gap:8px;align-items:stretch;">
                         ${p.hideStatsPhoto ? '' : `<div class="leader-photo-box dyn-photo" data-ratio="${isLogo?'1':'0.75'}" style="flex-shrink:0;background:#0a0c10;border:1px solid #222;overflow:hidden;">
@@ -7401,7 +7495,7 @@
                     <!-- 행2: 이념만 (의석은 의회 탭에서) -->
                     <div style="display:flex;gap:5px;align-items:center;margin-bottom:5px;">
                         <select style="flex:1;font-size:0.8rem;" onchange="updateFaction(${p.id},'${f.id}','ideologyId',parseInt(this.value))">
-                            ${ideologies.map(ide=>`<option value="${ide.id}" ${f.ideologyId===ide.id?'selected':''}>${ide.name}</option>`).join('')}
+                            ${ideologyOptionsHtml(f.ideologyId, { excludeInd: false })}
                         </select>
                     </div>
                     <!-- 행3: 색상 옵션 + 신당 분리 -->
@@ -7602,7 +7696,7 @@
                     <!-- 행3: 이념 (항상 보임) -->
                     <div style="margin-bottom:6px;">
                         <select onchange="updateParty(${idx},'ideologyId',parseInt(this.value))" style="width:100%;">
-                            ${ideologies.filter(ide=>ide.id!==IND_IDEOLOGY_ID).map(ide=>`<option value="${ide.id}" ${p.ideologyId===ide.id?'selected':''}>${ide.name}</option>`).join('')}
+                            ${ideologyOptionsHtml(p.ideologyId)}
                         </select>
                     </div>
                     <!-- 행3.5: 정당 상태 (항상 보임) -->
@@ -7921,10 +8015,14 @@
                 </div>
                 <div style="color:#888;font-size:0.78rem;letter-spacing:1px;margin-bottom:6px;">이념</div>
                 <div style="display:flex;flex-direction:column;gap:4px;max-height:140px;overflow-y:auto;">
-                    ${ideologies.filter(i=>i.id!==IND_IDEOLOGY_ID && usedIdeologyIds.includes(i.id)).map(i => `
-                        <label style="display:flex;align-items:center;gap:6px;font-size:0.83rem;color:#ccc;cursor:pointer;">
+                    ${ideologies.filter(i=>i.id!==IND_IDEOLOGY_ID).flatMap(i => {
+                        const subs = (i.subs || []).filter(sb => usedIdeologyIds.includes(sb.id));
+                        if(!usedIdeologyIds.includes(i.id) && !subs.length) return [];
+                        return [{ i, sub:false }, ...subs.map(sb => ({ i: sb, sub:true }))];
+                    }).map(({ i, sub }) => `
+                        <label style="display:flex;align-items:center;gap:6px;font-size:0.83rem;color:#ccc;cursor:pointer;${sub?'padding-left:16px;':''}">
                             <input type="checkbox" ${st.ideologyIds.has(String(i.id))?'checked':''} onchange="toggleMemberFilterIdeology('${ns}','${i.id}',this.checked)">
-                            ${i.name}
+                            ${sub?'└ ':''}${i.name}
                         </label>
                     `).join('') || '<div style="color:#444;font-size:0.78rem;">해당 이념 없음</div>'}
                 </div>
@@ -7944,7 +8042,8 @@
                 filtered = filtered.filter(e => (e.name||'').toLowerCase().includes(q) || (e.personName||'').toLowerCase().includes(q));
             }
             if(st.partyIds.size>0) filtered = filtered.filter(e => st.partyIds.has(String(e.partyId)));
-            if(st.ideologyIds.size>0) filtered = filtered.filter(e => st.ideologyIds.has(String(e.effectiveIdeologyId)));
+            // 부모 이념을 고르면 그 아래 서브 이념 의원도 함께 걸린다
+            if(st.ideologyIds.size>0) filtered = filtered.filter(e => st.ideologyIds.has(String(e.effectiveIdeologyId)) || st.ideologyIds.has(String(ideologyParentId(e.effectiveIdeologyId))));
             return filtered;
         }
 
@@ -7985,7 +8084,7 @@
                     <select ${dis} onchange="updateIndependent('${ind.id}','ideologyId',this.value?parseInt(this.value):null)"
                         style="width:100%;background:#000;border:1px solid #2a2a2a;color:#aaa;font-family:inherit;font-size:0.85rem;padding:4px;">
                         <option value="">이념 미지정</option>
-                        ${ideologies.filter(i=>i.id!==IND_IDEOLOGY_ID).map(i=>`<option value="${i.id}" ${ind.ideologyId===i.id?'selected':''}>${i.name}</option>`).join('')}
+                        ${ideologyOptionsHtml(ind.ideologyId)}
                     </select>
                     <select ${dis} onchange="updateIndependent('${ind.id}','status',this.value)"
                         style="width:100%;background:#000;border:1px solid #2a2a2a;color:#aaa;font-family:inherit;font-size:0.85rem;padding:4px;">
@@ -8395,7 +8494,7 @@
         let elecLastResults = {};      // 반영 대기 중인 개표 결과 (의원실별) — 여러 의원실을 한 번에 개표해도 모두 반영되도록 의원실 키로 누적
 
         // ═══════════════════════════════════════
-        // 국가 > 선거 > 대선 (대통령 선거)
+        // 선거 > 대선 (대통령 선거)
         // ═══════════════════════════════════════
         let electionInnerTab = 'general'; // 'presidential' | 'general' | 'settings'
         let electionKind = 'member'; // 총선 탭 내부 — 'member'(의원 선거) | 'pm'(총리 선거, 총리직선제 활성화 시에만 선택 가능)
@@ -8405,12 +8504,14 @@
         let pmElectionLastResult = null;   // 총리 선거 마지막 개표 결과
         let presElectionRecords = []; // 대선/총리선거 기록 (office 필드로 구분)
 
+        // 선거 메인탭의 대선/총선/방식 하위탭으로 이동 (구 국가 > 선거 내부 탭 — 예전 호출도 그대로 동작)
         function switchElectionInnerTab(inner) {
+            if(!['presidential','general','settings'].includes(inner)) inner = 'general';
+            switchSubTab('vote', 'elec' + inner.charAt(0).toUpperCase() + inner.slice(1));
+        }
+        // 대선/총선/방식 하위탭이 열릴 때 그 화면을 그린다 (switchSubTab에서 호출)
+        function onElectionSubTabShown(inner) {
             electionInnerTab = inner;
-            ['presidential','general','settings'].forEach(k => {
-                document.getElementById('innerTabElec'+k.charAt(0).toUpperCase()+k.slice(1))?.classList.toggle('active', k===inner);
-                document.getElementById('innerContentElec'+k.charAt(0).toUpperCase()+k.slice(1))?.classList.toggle('active', k===inner);
-            });
             elecRenderList();
             if(inner === 'presidential') { updateElectionSettingsSummary(); renderPresElecResultPanel(); }
             if(inner === 'general') {
@@ -10693,7 +10794,7 @@
                         for(let k=0; k<(f[seatKey]||0); k++){
                             if(map.length>=total) break;
                             map.push({color:fc, partyName:p.name, factionName:f.name, partyStatus:p.status||'active',
-                                ideology:ideologies.find(i=>i.id===f.ideologyId)?.name||ideologies.find(i=>i.id===p.ideologyId)?.name||'?',
+                                ideology:ideologyName(f.ideologyId)||ideologyName(p.ideologyId)||'?',
                                 coalitionName:fEffCoal?.name, strokeColor:fStroke, isRuling:fIsGov, externalSupport:isExtSupport?(rulingCoal.externalSupportLabel||'각외협력'):false});
                         }
                         placed += f[seatKey]||0;
@@ -10702,14 +10803,14 @@
                     for(let k=placed; k<cnt; k++){
                         if(map.length>=total) break;
                         map.push({color:p.color, partyName:p.name, factionName:null, partyStatus:p.status||'active',
-                            ideology:ideologies.find(i=>i.id===p.ideologyId)?.name||'?',
+                            ideology:ideologyName(p.ideologyId)||'?',
                             coalitionName:effectiveCoal?.name, strokeColor:stroke, strokeDashed, isRuling:isGov, externalSupport:isExtSupport?(rulingCoal.externalSupportLabel||'각외협력'):false});
                     }
                 } else {
                     for(let k=0;k<cnt;k++){
                         if(map.length>=total) break;
                         map.push({color:p.color, partyName:p.name, factionName:null, partyStatus:p.status||'active',
-                            ideology:ideologies.find(i=>i.id===p.ideologyId)?.name||'?',
+                            ideology:ideologyName(p.ideologyId)||'?',
                             coalitionName:effectiveCoal?.name, strokeColor:stroke, strokeDashed, isRuling:isGov, externalSupport:isExtSupport?(rulingCoal.externalSupportLabel||'각외협력'):false});
                     }
                 }
@@ -11315,7 +11416,7 @@
                 const isGov = isPartyRuling || (!isPartyRuling && coal?.isRuling);
                 const stroke = isGov ? 'var(--tno-gold)' : (effectiveCoal?.color || null);
                 for(let k=0; k<rp.seats; k++) {
-                    map.push({color:p.color, partyName:p.name, ideology:ideologies.find(i=>i.id===p.ideologyId)?.name||'?', coalitionName:effectiveCoal?.name, strokeColor:stroke, isRuling:isGov});
+                    map.push({color:p.color, partyName:p.name, ideology:ideologyName(p.ideologyId)||'?', coalitionName:effectiveCoal?.name, strokeColor:stroke, isRuling:isGov});
                 }
             });
             while(map.length < total) map.push({color:'#222', partyName:'Vacant', ideology:'-', strokeColor:'#333', isRuling:false});
@@ -12571,7 +12672,7 @@
                         for(let k=0; k<(f[seatKey]||0); k++){
                             if(map.length>=totalSeats) break;
                             map.push({color:fc, partyName:p.name, factionName:f.name,
-                                ideology:ideologies.find(i=>i.id===f.ideologyId)?.name||ideologies.find(i=>i.id===p.ideologyId)?.name||'?',
+                                ideology:ideologyName(f.ideologyId)||ideologyName(p.ideologyId)||'?',
                                 coalitionName:fEffCoal?.name, strokeColor:fStroke, isRuling:fIsGov, externalSupport:isExtSupport?(rulingCoal.externalSupportLabel||'각외협력'):false});
                         }
                         placed += f[seatKey]||0;
@@ -12579,14 +12680,14 @@
                     for(let k=placed; k<cnt; k++){
                         if(map.length>=totalSeats) break;
                         map.push({color:p.color, partyName:p.name, factionName:null,
-                            ideology:ideologies.find(i=>i.id===p.ideologyId)?.name||'?',
+                            ideology:ideologyName(p.ideologyId)||'?',
                             coalitionName:effectiveCoal?.name, strokeColor:stroke, strokeDashed, isRuling:isGov, externalSupport:isExtSupport?(rulingCoal.externalSupportLabel||'각외협력'):false});
                     }
                 } else {
                     for(let k=0;k<cnt;k++){
                         if(map.length>=totalSeats) break;
                         map.push({color:p.color, partyName:p.name, factionName:null,
-                            ideology:ideologies.find(i=>i.id===p.ideologyId)?.name||'?',
+                            ideology:ideologyName(p.ideologyId)||'?',
                             coalitionName:effectiveCoal?.name, strokeColor:stroke, strokeDashed, isRuling:isGov, externalSupport:isExtSupport?(rulingCoal.externalSupportLabel||'각외협력'):false});
                     }
                 }
@@ -12604,8 +12705,8 @@
 
             if(!manualSort) {
                 parties.sort((a,b) => {
-                    const ia = ideologies.findIndex(i=>i.id===a.ideologyId);
-                    const ib = ideologies.findIndex(i=>i.id===b.ideologyId);
+                    const ia = ideologySortKey(a.ideologyId);
+                    const ib = ideologySortKey(b.ideologyId);
                     if(a.ideologyId===IND_IDEOLOGY_ID && b.ideologyId!==IND_IDEOLOGY_ID) return 1;
                     if(b.ideologyId===IND_IDEOLOGY_ID && a.ideologyId!==IND_IDEOLOGY_ID) return -1;
                     return ia - ib;
@@ -12647,7 +12748,7 @@
                             for(let k=0; k<(f[seatKey]||0); k++){
                                 if(map.length>=targetTotal) break;
                                 map.push({color:fc, partyName:p.name, factionName:f.name, partyStatus:p.status||'active',
-                                    ideology:ideologies.find(i=>i.id===f.ideologyId)?.name||ideologies.find(i=>i.id===p.ideologyId)?.name||'?',
+                                    ideology:ideologyName(f.ideologyId)||ideologyName(p.ideologyId)||'?',
                                     coalitionName:fEffCoal?.name, strokeColor:fStroke, isRuling:fIsGov, externalSupport:isExtSupport?(rulingCoal.externalSupportLabel||'각외협력'):false});
                             }
                             placed += f[seatKey]||0;
@@ -12655,7 +12756,7 @@
                         for(let k=placed; k<cnt; k++){
                             if(map.length>=targetTotal) break;
                             map.push({color:p.color, partyName:p.name, factionName:null, partyStatus:p.status||'active',
-                                ideology:ideologies.find(i=>i.id===p.ideologyId)?.name||'?',
+                                ideology:ideologyName(p.ideologyId)||'?',
                                 coalitionName:effectiveCoal?.name, strokeColor:stroke, strokeDashed, isRuling:isGov, externalSupport:isExtSupport?(rulingCoal.externalSupportLabel||'각외협력'):false});
                         }
                     } else {
@@ -12690,7 +12791,7 @@
                                 }
                             }
                             map.push({color:p.color, partyName:p.name, factionName:null, partyStatus:indEntry?.status || p.status || 'active',
-                                ideology:ideologies.find(i=>i.id===p.ideologyId)?.name||'?',
+                                ideology:ideologyName(p.ideologyId)||'?',
                                 coalitionName:indCoalName, strokeColor:indStroke, strokeDashed:indDashed, isRuling:indIsGov, externalSupport:indExtSupport,
                                 independentName: indEntry?.name || null, independentSeatIndex: indEntry?.seatIndex || null});
                         }
@@ -13031,7 +13132,7 @@
                     independentToggleHtml = `<span onclick="event.stopPropagation();toggleIndependentPanel('${panelId}')" style="cursor:pointer;color:#888;font-size:0.85rem;user-select:none;flex-shrink:0;" id="${panelId}_arrow">▶</span>`;
                     independentListHtml = `<div id="${panelId}" style="display:none;margin-top:6px;border-top:1px dashed #333;padding-top:6px;">
                         ${listItems.length===0 ? '<div style="color:#444;font-size:0.78rem;">개별 정보 없음</div>' : listItems.map(ind => {
-                            const indIdeo = ind.ideologyId ? ideologies.find(i=>i.id===ind.ideologyId)?.name : null;
+                            const indIdeo = ind.ideologyId ? ideologyName(ind.ideologyId) : null;
                             const districtLabel = ind.districtKey ? (districtNames[chamber]?.[ind.districtKey] || ind.districtKey) : null;
                             return `<div style="display:flex;align-items:center;gap:6px;padding:3px 0;font-size:0.8rem;color:#aaa;border-bottom:1px solid #1a1a1a;">
                                 <div style="width:22px;height:27px;flex-shrink:0;background:#0a0c10;border:1px solid #333;overflow:hidden;">

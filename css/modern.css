@@ -2652,6 +2652,7 @@ html[data-theme-family="modern"] .mn-group[data-tone="danger"] { --tone: var(--m
 html[data-theme-family="modern"] .mn-group[data-tone="gold"] { --tone: var(--m-gold); }
 html[data-theme-family="modern"] .mn-group[data-tone="success"] { --tone: var(--m-success); }
 html[data-theme-family="modern"] .mn-group[data-tone="muted"] { --tone: var(--m-text-3); }
+html[data-theme-family="modern"] .mn-group[data-tone="vote"] { --tone: #8b5cf6; }
 html[data-theme-family="modern"] .mn-group-head {
     padding: 7px 10px;
     background: color-mix(in srgb, var(--tone) 13%, transparent) !important;
@@ -2815,6 +2816,7 @@ html[data-theme-family="modern"] .mobile-nav-btn[data-tone="gold"] { --tone: var
 html[data-theme-family="modern"] .mobile-nav-btn[data-tone="success"] { --tone: var(--m-success); }
 html[data-theme-family="modern"] .mobile-nav-btn[data-tone="seats"] { --tone: var(--m-text); }
 html[data-theme-family="modern"] .mobile-nav-btn[data-tone="muted"] { --tone: var(--m-text-3); }
+html[data-theme-family="modern"] .mobile-nav-btn[data-tone="vote"] { --tone: #8b5cf6; }
 html[data-theme-family="modern"] .mobile-nav-btn {
     border: none !important;
     margin-top: 0;
