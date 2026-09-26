@@ -11735,7 +11735,12 @@
             // (마지막 의원실 결과만 elecLastResult에 남아 있어, 예전에는 그 의원실만 반영되고
             // 나머지 의원실은 지역구 당선자 정보가 비어 있는 채로 남는 문제가 있었음)
             const pending = Object.keys(elecLastResults);
-            if(pending.length === 0) { if(elecLastResult) pending.push(elecLastResult.chamber || (elecLastResult.isSenate?'senate':'house')); else return; }
+            // 이미 반영한 결과는 다시 반영하지 않는다 — 예전엔 두 번 누르거나 보궐선거 · 수동 편집 뒤에 누르면
+            // 지난 총선 결과로 의회가 조용히 되돌아갔다
+            if(pending.length === 0) {
+                if(elecLastResult && !elecLastResult.applied) pending.push(elecLastResult.chamber || (elecLastResult.isSenate?'senate':'house'));
+                else { showCustomAlert('반영할 새 개표 결과가 없습니다. (이미 의회에 반영했습니다)'); return; }
+            }
 
             let hadFactions = false;
             let lastCh = null;
@@ -11762,6 +11767,7 @@
                 lastCh = ch;
             });
             elecLastResults = {};
+            if(elecLastResult) elecLastResult.applied = true;
             // 총선 반영으로 의회가 새로 구성되므로, 선포돼 있던 의회 해산은 여기서만 해제된다.
             // 해산권이 원별로 분할돼 있으면, 이번에 반영된 원(pending)의 해산만 해제된다
             // 한 원만 해산한 경우엔 그 원의 선거가 반영될 때만 해제
@@ -12961,7 +12967,10 @@
             elecLastResults[chamber] = elecLastResult;
 
             // ── 비례 풀 생성 + 셔플 ─────────────────
-            parties.forEach(p=>{ p[seatKey]=0; });
+            // 개표는 별도 집계(counts)에만 쌓는다 — 실제 의석(party[seatKey])은 "✔ 의회에 반영"을 누를 때만 바뀐다
+            // (예전엔 개표가 실제 의석을 바로 바꿔서, 반영 전에도 의회가 바뀌고 재개표의 "직전 대비" 기준이 틀어졌다)
+            const counts = {};
+            parties.forEach(p=>{ counts[p.id]=0; });
             let pool=[];
             weighted.forEach(p => { const n = listSeatMap[p.id]||0; for(let i=0;i<n;i++) pool.push(p.id); });
             for(let i=pool.length-1;i>0;i--){
@@ -12997,7 +13006,7 @@
                     revealedKeys.add(key);
                     districtResults.filter(d => d.key === key).forEach(({ partyId }) => {
                         const p = parties.find(x => x.id === partyId);
-                        if(p) { p[seatKey]++; revealedSeats++; }
+                        if(p) { counts[p.id]=(counts[p.id]||0)+1; revealedSeats++; }
                     });
                     elecDrawDistrictResultManualSvg(chamber, districtResults, revealedKeys, revealOne);
                     const distName = districtNames[chamber][key];
@@ -13005,7 +13014,7 @@
                     const pct = (revealedSeats/totalSeats*100).toFixed(1)+'%';
                     document.getElementById('elecProgressBar').style.width = pct;
                     document.getElementById('elecResultBar'+suf).style.width = pct;
-                    const map = buildElecMap(chamber, totalSeats);
+                    const map = buildElecMap(chamber, totalSeats, counts);
                     updateStats('elecResultStats'+suf, map, totalSeats);
                 };
                 document.getElementById('elecResultTitle'+suf).innerText = `> ${elecTitle} (${elecYear}) — ${chamberName}: 지도에서 지역구를 클릭해 개표하세요`;
@@ -13030,7 +13039,7 @@
 
                     const { key, partyId } = districtResults[i];
                     const p = parties.find(x=>x.id===partyId);
-                    if(p){ p[seatKey]++; }
+                    if(p){ counts[p.id]=(counts[p.id]||0)+1; }
 
                     elecDrawDistrictResult(districtResults, i+1, chamber);
 
@@ -13042,7 +13051,7 @@
                     document.getElementById('elecResultBar'+suf).style.width   = pct;
 
                     if(i % Math.max(1, Math.floor(districtResults.length/30)) === 0 || i === districtResults.length-1) {
-                        const map = buildElecMap(chamber, totalSeats);
+                        const map = buildElecMap(chamber, totalSeats, counts);
                         updateStats('elecResultStats'+suf, map, totalSeats);
                     }
                     if(districtSpeed > 0) await new Promise(r=>setTimeout(r, districtSpeed));
@@ -13064,7 +13073,7 @@
                 if(elecSkipToEnd) {
                     for(let j=i; j<pool.length; j++) {
                         const pp=parties.find(x=>x.id===pool[j]);
-                        if(pp){ pp[seatKey]++; }
+                        if(pp){ counts[pp.id]=(counts[pp.id]||0)+1; }
                     }
                     break;
                 }
@@ -13072,20 +13081,20 @@
                 if(elecSkipToEnd) {
                     for(let j=i; j<pool.length; j++) {
                         const pp=parties.find(x=>x.id===pool[j]);
-                        if(pp){ pp[seatKey]++; }
+                        if(pp){ counts[pp.id]=(counts[pp.id]||0)+1; }
                     }
                     break;
                 }
 
                 const p = parties.find(x=>x.id===pool[i]);
-                if(p){ p[seatKey]++; }
+                if(p){ counts[p.id]=(counts[p.id]||0)+1; }
 
                 const pct = ((districtSeats + i + 1)/totalSeats*100).toFixed(1)+'%';
                 document.getElementById('elecProgressBar').style.width=pct;
                 document.getElementById('elecResultBar'+suf).style.width=pct;
 
                 if(i%drawEvery===0 || i===pool.length-1) {
-                    const map = buildElecMap(chamber, totalSeats);
+                    const map = buildElecMap(chamber, totalSeats, counts);
                     drawChamber('elecCanvas'+suf, map, totalSeats, '_elec');
                     updateStats('elecResultStats'+suf, map, totalSeats);
                 }
@@ -13096,7 +13105,7 @@
             // 최종 렌더
             document.getElementById('elecProgressBar').style.width='100%';
             document.getElementById('elecResultBar'+suf).style.width='100%';
-            const finalMap = buildElecMap(chamber, totalSeats);
+            const finalMap = buildElecMap(chamber, totalSeats, counts);
             drawChamber('elecCanvas'+suf, finalMap, totalSeats, '_elec');
             updateStats('elecResultStats'+suf, finalMap, totalSeats);
             if(districtSeats > 0) elecDrawDistrictResult(districtResults, districtResults.length, chamber);
@@ -13114,13 +13123,14 @@
             runBtn.style.background='var(--tno-neon)'; runBtn.style.color='#000'; runBtn.textContent='>> 개표 시작 <<'; runBtn.dataset.modernLabel='개표 시작';
         }
 
-        function buildElecMap(chamber, totalSeats) {
+        // counts: 개표 중 집계({ partyId: 석 }) — 주면 실제 의석 대신 이것으로 그린다
+        function buildElecMap(chamber, totalSeats, counts) {
             const hG = document.getElementById('chkGovHighlight').checked;
             const seatKey = seatKeyFor(chamber);
             const rulingCoal = coalitions.find(c=>c.isRuling);
             let map=[];
             parties.forEach(p=>{
-                const cnt = p[seatKey];
+                const cnt = counts ? (counts[p.id]||0) : p[seatKey];
                 const coal = coalitions.find(c=>c.members.includes(p.id));
                 const isPartyRuling = p.isRuling;
                 const isCoalRuling  = !isPartyRuling && (coal && coal.isRuling);
@@ -13132,7 +13142,8 @@
                 let strokeDashed = false;
                 if(isExtSupport && rulingCoal) { stroke = hG ? '#ffd700' : rulingCoal.color; strokeDashed = true; }
 
-                const factions = (p.factions||[]).filter(f=>(f[seatKey]||0)>0);
+                // 개표 결과에는 파벌 구분이 없다 (의회에 반영하면 파벌 의석은 다시 나눠야 함)
+                const factions = counts ? [] : (p.factions||[]).filter(f=>(f[seatKey]||0)>0);
                 if(factions.length > 0) {
                     let placed = 0;
                     factions.forEach(f => {
