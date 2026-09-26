@@ -22,6 +22,12 @@ window.DnoLangPacks.en = {
  ],
  "ordinal": "en",
  "patterns": [
+  {"re": "^\\- 날짜의 \"직접 입력\"과 회기의 \"단순형\" 삭제 — 날짜는 연호\\(선택\\) \\+ 연 · 월 · 일, 회기는 대수 · 이름 · 회기 번호로만 \\(예전 세이브의 글자는 불러올 때 칸으로 옮김, 예: \"레이와 1년 4월 20일\" → 연호 레이와 · 1 · 4 · 20\\), 연호 1년처럼 두 자리 이하 연도도 그대로 넘어감$", "to": "- Removed free-text dates and \"simple\" sessions — dates are an optional era name + year · month · day, sessions are term · name · number (old saves are converted on load, e.g. \"Reiwa 1, April 20\" → era Reiwa · 1 · 4 · 20); years of two digits or less (like era year 1) now advance correctly"},
+  {"re": "^지도나 목록에서 지역구를 누르면 편집 칸이 열립니다\\. 이름 · 약칭 · 인구, 그리고 원마다 몇 석을 뽑을지\\(0석이면 그 원엔 없는 지역구\\) 정해요\\. 지도는 휠 클릭 드래그로 이동, Shift\\+스크롤로 확대하고 ↺로 되돌립니다\\.$", "to": "Click a district on the map or in the list to open its editor. Set the name, abbreviation, population, and how many seats each chamber elects there (0 seats means that chamber has no such district). Middle-drag to pan the map, Shift+scroll to zoom, and ↺ to reset."},
+  {"re": "^가결된 법안의 \"개정안 발의\"를 누르면 그 법안을 바탕으로 개정안\\(제2판 · 제3판 …\\)을 새로 제출합니다\\. 기록에는 몇 판째인지 함께 남아요\\.$", "to": "Pressing \"Propose amendment\" on a passed bill submits a new amendment (2nd · 3rd edition …) based on it. Records keep which edition it is."},
+  {"re": "^⚙를 누르면 이 창이 뜹니다\\. 날짜는 연 · 월 · 일로 정하고, 앞에 연호\\(예: 레이와 → \"레이와 1년 4월 20일\"\\)를 붙일 수 있어요 — 비워 두면 연도만 보입니다\\. 회기는 대수 · 이름 · 회기 번호와 지금 회기 종류를 정합니다\\.$", "to": "⚙ opens this panel. Set the date by year · month · day, and optionally put an era name in front (e.g. Reiwa → \"Reiwa 1, April 20\") — leave it blank to show just the year. For the session, set the term, name, session number and the current session type."},
+  {"re": "^예: 레이와 → 레이와 1년 4월 20일$", "to": "e.g. Reiwa → Reiwa 1, April 20"},
+  {"re": "^기본 튜토리얼\\(#1 ~ #(\\d+)\\)을 모두 마쳤습니다! 이제 기본 흐름은 다 알아요\\. 이어서 세부 튜토리얼 #(\\d+) \"(.+?)\"부터 해보거나, 목차에서 필요한 기능만 골라 배우세요\\.$", "to": "You've finished the basic tutorial (#1 – #$1)! You now know the core flow. Continue with detailed tutorial #$2 \"$3\", or pick just the features you need from the lesson list."},
   {"re": "^면$", "to": "Area"},
   {"re": "^선$", "to": "Line"},
   {"re": "^원$", "to": "Circle"},
@@ -5369,6 +5375,586 @@ window.DnoLangPacks.en = {
   [
    "- 안정화: 이미 반영한 개표 결과를 \"✔ 의회에 반영\"으로 또 누르면(보궐선거 · 수동 편집 뒤 포함) 의회가 지난 총선 결과로 조용히 되돌아가던 문제 수정 — 이제 \"반영할 새 개표 결과가 없습니다\" 안내",
    "- Stability: pressing \"\u2714 Apply to Parliament\" again on an already-applied count (including after a by-election or manual edits) no longer silently reverts parliament to the last general election \u2014 it now says there is no new count to apply"
+  ],
+  [
+   "- 로드맵 화면 머리에 \"← 메인으로\" 버튼",
+   "- \"\u2190 Main menu\" button in the roadmap header"
+  ],
+  [
+   "메뉴 이동 · 의석 화면 · 날짜 줄 · 세이브 탭",
+   "Menus · seat view · date line · save tabs"
+  ],
+  [
+   "가상의 나라 \"튜토리얼 공화국\"에서 직접 조작해 보며 배웁니다. 튜토리얼은 두 가지예요 — 기본 튜토리얼(#1 ~ #6)은 처음 쓰는 분을 위한 핵심 흐름이고, 세부 튜토리얼은 이념 · 파벌 · 지도 · 선거 방식 · 정부 권한 같은 기능을 필요한 것만 골라 배웁니다. 밝게 표시된 곳을 실제로 조작해야 넘어가는 단계도 있어요. 이 나라는 복사본(새 세이브)이라 마음껏 바꿔도 괜찮습니다.",
+   "You'll learn by doing in the fictional \"Tutorial Republic\". There are two kinds of tutorials — the basic tutorial (#1 – #6) walks newcomers through the core flow, and the detailed tutorials cover features like ideologies, factions, maps, election systems and government powers so you can pick just what you need. Some steps only move on once you've actually done the highlighted thing. This country is a copy (a new save), so feel free to change anything."
+  ],
+  [
+   "날짜와 회기",
+   "Date and session"
+  ],
+  [
+   "시각 화면 맨 위 줄에는 나라의 현재 날짜와 회기가 보입니다. ▶ · ▶▶ · ▶▶▶로 하루 · 일주일 · 한 달씩 넘기고, \"다음 회기\"로 회기를 올려요. ⚙를 누르면 날짜 · 회기 설정 창이 뜹니다. (자세한 건 세부 튜토리얼 \"날짜와 회기\")",
+   "The top line of the visual screen shows the country's current date and session. ▶ · ▶▶ · ▶▶▶ advance a day, a week or a month, and \"Next session\" moves the session on. ⚙ opens the date & session settings. (More in the detailed tutorial \"Date and session\")"
+  ],
+  [
+   "맨 위의 탭 하나하나가 세이브(나라 하나)입니다. 누르면 그 나라로 바로 바뀌고, 진행 상황은 세이브마다 따로 자동저장돼요. +는 새 탭(새로 만들기 · 프리셋 · 닫은 탭 다시 열기), 탭 이름을 더블클릭하면 이름 바꾸기, ×는 탭만 닫기(세이브는 남아요)입니다. 맨 왼쪽 ⌂는 저장하고 메인 화면으로 돌아갑니다.",
+   "Each tab at the top is a save (one country). Click one to switch to it instantly; each save autosaves its own progress. + opens a new tab (new · preset · reopen closed tab), double-click a tab name to rename it, and × only closes the tab (the save stays). ⌂ on the far left saves and returns to the main screen."
+  ],
+  [
+   "법안 제출 · 상정 · 표결 · 표결 기록",
+   "Submit bills · table · vote · vote records"
+  ],
+  [
+   "입법 › 제출에서 법안을 작성합니다. 법안 제목을 적고 \"[+] 법안 등록\"을 눌러보세요. (내용 · 태그 · 가결 기준은 비워 둬도 돼요)",
+   "Write bills in Legislation › Submit. Enter a bill title and press \"[+] Register Bill\". (Content, tags and passing threshold can stay empty)"
+  ],
+  [
+   "상정하기",
+   "Tabling"
+  ],
+  [
+   "입법 › 상정에는 등록된 법안이 모입니다. 법안마다 의회에 올릴지 국무회의에 올릴지 고르고, 법안을 누르면 표결로 넘어가요. 검색과 태그로 찾을 수 있습니다.",
+   "Legislation › Table collects registered bills. For each bill choose whether it goes to parliament or the cabinet council, and click a bill to move on to voting. You can search and filter by tag."
+  ],
+  [
+   "표결하기",
+   "Voting"
+  ],
+  [
+   "입법 › 표결에서 심의할 법안을 고른 뒤, 찬성 · 반대 · 기권을 골라 반원의 좌석을 누르거나 정당별로 한 번에 표를 던집니다. 원마다 \"표결 확정\"을 누르면 가결 · 부결이 정해지고, 양원제면 하원을 통과한 뒤 상원 표결로 넘어가요.",
+   "In Legislation › Vote, pick the bill under consideration, choose yea · nay · abstain and click seats on the hemicycle, or cast votes for a whole party at once. Pressing \"Confirm vote\" for each chamber decides pass or fail; in a bicameral system a bill passed by the lower house moves on to the upper house."
+  ],
+  [
+   "입법 › 표결 기록에는 가결 · 부결 · 거부된 법안이 남습니다. 상태 · 태그로 걸러 보고, 가결된 법안에서 개정안을 낼 수 있어요.",
+   "Legislation › Vote Records keeps passed, rejected and vetoed bills. Filter by status or tag, and propose an amendment from a passed bill."
+  ],
+  [
+   "지지율 입력 · 개표 · 의회에 반영",
+   "Enter support · count · apply to parliament"
+  ],
+  [
+   "의회에 반영하기",
+   "Apply to parliament"
+  ],
+  [
+   "개표만으로는 의회가 바뀌지 않습니다. 개표가 끝나면 \"✔ 의회에 반영\"을 눌러 결과대로 의석을 바꿔보세요. (마음에 안 들면 \"재개표\"로 다시 셀 수 있어요)",
+   "Counting alone doesn't change parliament. When the count finishes, press \"✔ Apply to Parliament\" to change the seats to match the result. (If you don't like it, \"Recount\" counts again)"
+  ],
+  [
+   "새 의회가 구성됐어요! 의석 화면의 반원이 선거 결과대로 바뀌었습니다.",
+   "A new parliament is formed! The hemicycle now matches the election result."
+  ],
+  [
+   "내각 › 내각 구성원에서 장관 같은 국무위원을 추가합니다. \"[+] 국무위원 추가\"를 눌러보세요.",
+   "Add cabinet members such as ministers in Cabinet › Cabinet Members. Press \"[+] Add Cabinet Member\"."
+  ],
+  [
+   "저장과 메인 화면",
+   "Saving and the main screen"
+  ],
+  [
+   "저장 창 · 탭 닫기와 다시 열기 · 도움말 · 메인 화면",
+   "Save panel · closing and reopening tabs · help · main screen"
+  ],
+  [
+   "저장 창 열기",
+   "Open the save panel"
+  ],
+  [
+   "맨 위 탭 바 오른쪽 끝의 \"저장\" 버튼을 눌러보세요. 저장과 관련된 것이 모두 이 창에 모여 있어요.",
+   "Press the \"Save\" button at the right end of the top tab bar. Everything about saving is gathered in this panel."
+  ],
+  [
+   "저장 창이 열렸어요.",
+   "The save panel is open."
+  ],
+  [
+   "저장 창 둘러보기",
+   "A look around the save panel"
+  ],
+  [
+   "맨 위는 지금 세이브와 \"지금 저장\"(Ctrl+S와 같음), 그 아래는 자동저장과 저장 주기입니다. 세이브 목록에서 ★로 즐겨찾기 · 이름 바꾸기 · 삭제를 하고, \"다른 이름으로 저장\"으로 지금 상태를 새 세이브로 복사해요. 파일(.json)로 저장해 두면 다른 기기에서도 불러올 수 있습니다.",
+   "At the top are the current save and \"Save now\" (same as Ctrl+S), then autosave and its interval. In the save list you can star favorites, rename and delete, and \"Save as\" copies the current state into a new save. Saving to a file (.json) lets you load it on another device."
+  ],
+  [
+   "탭 닫기와 다시 열기",
+   "Closing and reopening tabs"
+  ],
+  [
+   "탭의 ×는 세이브를 지우지 않고 탭만 닫습니다. 탭을 모두 닫으면 아래 화면이 비어요. 닫은 탭은 + › \"닫은 탭 다시 열기\"로 다시 띄웁니다. 세이브를 정말 지우려면 저장 창의 세이브 목록이나 시작 화면의 🗑를 쓰세요.",
+   "A tab's × closes only the tab without deleting the save. If you close every tab, the screen below goes blank. Bring closed tabs back with + › \"Reopen closed tab\". To really delete a save, use the save list in the save panel or 🗑 on the start screen."
+  ],
+  [
+   "메뉴 맨 아래 회색 \"도움말\" 묶음에는 모든 탭이 무슨 일을 하는지 카드로 정리돼 있고, \"열기 →\"로 그 탭에 바로 갈 수 있어요. 헷갈릴 때 먼저 찾아보세요.",
+   "The grey \"Help\" group at the bottom of the menu explains what every tab does as cards, and \"Open →\" takes you straight to that tab. Look there first when something is unclear."
+  ],
+  [
+   "메인 화면",
+   "Main screen"
+  ],
+  [
+   "⌂를 누르면 저장한 뒤 메인 화면으로 갑니다. 메인 화면에서는 시작하기(세이브 고르기 · 프리셋 · 파일 불러오기), 맵 메이커, 로드맵, 설정(라이트 · 다크 · 네온 테마, 데스크톱 · 모바일 화면 모드)을 고르고, 🌐로 언어를 바꿉니다. 이 튜토리얼은 시작하기 › 프리셋의 \"튜토리얼 공화국\"으로 언제든 다시 할 수 있어요.",
+   "⌂ saves and takes you to the main screen. There you choose Start (pick a save · preset · load a file), Map Maker, Roadmap and Settings (light · dark · neon theme, desktop · mobile layout), and change the language with 🌐. You can replay this tutorial any time with the \"Tutorial Republic\" preset under Start."
+  ],
+  [
+   "이념과 서브 이념",
+   "Ideologies and sub-ideologies"
+  ],
+  [
+   "이념 추가 · 하위 이념 · 좌석 순서",
+   "Add ideologies · sub-ideologies · seat order"
+  ],
+  [
+   "이념 목록",
+   "Ideology list"
+  ],
+  [
+   "의회 › 이념에서 정당이 속할 이념을 만듭니다. 위에서 아래 순서가 반원의 왼쪽 → 오른쪽 순서예요. 순서를 바꾸면 \"자동 정렬\"을 켠 정당들의 자리도 따라 바뀝니다.",
+   "Create the ideologies parties belong to in Parliament › Ideology. Top-to-bottom order is the hemicycle's left-to-right order. Reordering also moves the seats of parties with \"auto sort\" on."
+  ],
+  [
+   "이념 · 서브 이념 추가",
+   "Adding ideologies and sub-ideologies"
+  ],
+  [
+   "\"이념 추가\"로 새 이념을 만들고, 이념 옆의 하위 이념 버튼으로 서브 이념(예: 보수주의 › 온건 보수)을 만들 수 있어요. 정당의 이념 칸에서 서브 이념까지 골라 더 세밀하게 자리를 정합니다.",
+   "\"Add Ideology\" creates a new ideology, and the sub-ideology button next to an ideology creates a sub-ideology (e.g. Conservatism › Moderate conservatism). Picking a sub-ideology in a party's ideology field places it more precisely."
+  ],
+  [
+   "정당 자리 정렬",
+   "Ordering party seats"
+  ],
+  [
+   "정당 목록의 순서가 반원의 자리 순서입니다. 자동 정렬을 누르면 이념 순서대로 정당을 다시 줄 세워요. 직접 끌거나 순서 버튼으로 옮길 수도 있습니다.",
+   "The order of the party list is the order of seats on the hemicycle. Auto sort lines parties up again in ideology order. You can also drag them or move them with the order buttons."
+  ],
+  [
+   "정당 심화",
+   "Parties in depth"
+  ],
+  [
+   "복제 · 상태 · 파벌 · 합당 · 당수와 원내대표",
+   "Duplicate · status · factions · merging · leaders and floor leaders"
+  ],
+  [
+   "정당 카드",
+   "Party card"
+  ],
+  [
+   "정당 카드에서 이름 · 약칭 · 색 · 이념 · 로고를 정하고, 어느 원(하원 · 상원 · 삼원)에 속하는지 고릅니다. 상태를 \"활동 금지\"로 바꾸면 그 정당은 표결 · 선거에서 빠져요. 복제 버튼은 정당을 그대로 복사합니다.",
+   "On a party card set the name, abbreviation, color, ideology and logo, and choose which chambers (lower · upper · third) it sits in. Setting the status to \"Banned\" removes the party from votes and elections. The duplicate button copies a party as is."
+  ],
+  [
+   "파벌",
+   "Factions"
+  ],
+  [
+   "정당 안에 파벌(계파)을 만들 수 있어요. 파벌마다 이름 · 색 · 의석을 정하면 반원에서 한 정당 안의 파벌이 색으로 나뉘어 보이고, 표결 때 파벌별로 표를 던질 수 있습니다.",
+   "You can create factions inside a party. Give each faction a name, color and seats, and the hemicycle shows the party split by faction color; in votes each faction can vote separately."
+  ],
+  [
+   "합당 창에서 여러 정당을 하나로 합칩니다. 흡수합당은 한 정당이 나머지를 흡수하고, 신설합당은 새 이름 · 이념의 정당을 만들어요. 합쳐지는 정당을 새 정당의 파벌로 남길 수도 있고, 정당의 파벌도 골라 합칠 수 있습니다.",
+   "The merge dialog combines several parties into one. An absorbing merger has one party absorb the others, while a new merger creates a party with a new name and ideology. Merged parties can be kept as factions of the new party, and you can pick parties' factions to merge too."
+  ],
+  [
+   "당수와 원내대표",
+   "Leaders and floor leaders"
+  ],
+  [
+   "정당 › 당수에서 정당 대표와 파벌 대표의 이름 · 사진을 정합니다. 원내대표도 따로 둘 수 있고, \"의석 선택 → 붙여넣기\"로 반원에서 고른 의원의 이름 · 사진을 그대로 가져올 수 있어요.",
+   "Party › Leaders sets the name and photo of party and faction leaders. You can also have a floor leader, and \"Pick seat → paste\" copies the name and photo of a member chosen on the hemicycle."
+  ],
+  [
+   "의회 설정과 연정",
+   "Parliament settings and coalitions"
+  ],
+  [
+   "단원제 · 양원제 · 삼원제 · 의장단 · 반원 가운데 · 연립정부",
+   "Unicameral · bicameral · tricameral · presiding officers · hemicycle center · coalition government"
+  ],
+  [
+   "의회 › 의회 설정에서 단원제 · 양원제 · 삼원제를 고릅니다. 원이 늘어나면 의회 구성 · 표결 · 선거 · 시각 화면에 그 원이 함께 나타나요. 원 이름(예: 국회 · 원로원)은 의회 › 의회 구성에서 바꿉니다.",
+   "Choose unicameral, bicameral or tricameral in Parliament › Parliament Settings. Added chambers appear across composition, voting, elections and the visual screen. Rename chambers (e.g. National Assembly · Senate) in Parliament › Parliament Composition."
+  ],
+  [
+   "원마다 의장과 부의장의 이름 · 사진을 정합니다. 부의장은 여러 명 둘 수 있고, 의장단은 시각 화면의 원 현황 아래에 표시돼요.",
+   "Set the names and photos of each chamber's speaker and deputy speakers. You can have several deputies, and presiding officers appear below the chamber overview on the visual screen."
+  ],
+  [
+   "반원 가운데 표시",
+   "Hemicycle center"
+  ],
+  [
+   "반원 가운데에 총 의석 수를 보여줄지, 그 원의 로고 이미지를 보여줄지 원마다 고릅니다. 로고 칸을 눌러 이미지를 올린 뒤 \"로고\"를 고르세요.",
+   "For each chamber, choose whether the center of the hemicycle shows the total seat count or the chamber's logo image. Click the logo box to upload an image, then choose \"Logo\"."
+  ],
+  [
+   "의회 › 집권과 연정에서 정당들을 묶어 연립정부를 만듭니다. 집권 연정(★)과 대표당, 연정 밖에서 지지하는 각외협력 정당을 정하고, 단독 집권이나 무집권으로 둘 수도 있어요. 집권 세력은 반원에서 금색 테두리로 표시됩니다(의회 설정의 \"집권 세력 강조\").",
+   "Parliament › Government & Coalitions groups parties into a coalition government. Set the ruling coalition (★), its lead party and parties giving external support, or leave a single-party government or no government. The governing bloc is outlined in gold on the hemicycle (\"Highlight government\" in Parliament Settings)."
+  ],
+  [
+   "지역구 의원 · 비례대표",
+   "District members · list members"
+  ],
+  [
+   "의회 › 지역구 의원과 비례대표에서 의원 한 명 한 명의 이름 · 사진을 채웁니다. 지역구 의원을 궐석(빈자리)으로 처리하면 선거 › 총선에서 보궐선거로 그 자리만 다시 뽑을 수 있어요.",
+   "Fill in each member's name and photo in Parliament › District Members and List Members. Mark a district member as vacant and you can hold a by-election for just that seat in Elections › General."
+  ],
+  [
+   "지역구와 지도",
+   "Districts and maps"
+  ],
+  [
+   "맵 메이커 · 지도 올리기 · 지역구 편집 · 성향 · 권역",
+   "Map Maker · uploading a map · editing districts · tendency · regions"
+  ],
+  [
+   "맵 메이커로 지도 만들기",
+   "Making a map with Map Maker"
+  ],
+  [
+   "지역구는 실제 지도 모양으로 만듭니다. 메인 화면 › 맵 메이커에서 SVG 지도 파일을 열면 도형이 선 · 면 · 사각형 · 원으로 나뉘어 보이고, 지역구로 쓸 도형(보통 \"면\")을 골라 이름을 붙인 뒤 지역구 지도 파일(.jsx)로 내보냅니다. 미리보기는 스크롤로 확대 · 축소, 휠 클릭 드래그로 이동해요.",
+   "Districts take the shape of a real map. Open an SVG map in Main screen › Map Maker, and its shapes are sorted into line · area · rectangle · circle; pick the shapes to use as districts (usually \"area\"), name them, and export a district map file (.jsx). Scroll to zoom the preview and middle-drag to pan."
+  ],
+  [
+   "지역구 지도 올리기",
+   "Uploading the district map"
+  ],
+  [
+   "여론 › 지역구에서 맵 메이커로 만든 .jsx 파일을 올립니다. 올리면 도형 하나하나가 지역구가 되고, 하원 · 상원 · 삼원이 같은 지도를 함께 씁니다. (새 지도를 올리면 기존 지역구 정보는 새 지도로 바뀌어요)",
+   "Upload the .jsx file made with Map Maker in Polls › Districts. Each shape becomes a district, and the lower, upper and third chambers share the same map. (Uploading a new map replaces the existing district data)"
+  ],
+  [
+   "지역구 편집",
+   "Editing districts"
+  ],
+  [
+   "여론 › 성향에서 지역구마다 정당별 성향(%)을 정합니다. 지역구 선거에서 누가 이길지가 여기서 갈려요. 시각 화면에는 종합 지도와 정당별 지도가 함께 보입니다.",
+   "Polls › Tendency sets each party's tendency (%) in every district, which decides who wins district races. The visual screen shows an overall map and one map per party."
+  ],
+  [
+   "권역형 비례대표를 쓸 때는 여론 › 권역에서 지역구를 권역으로 묶습니다. 권역을 고른 뒤 지도에서 지역구를 눌러(끌어서 여러 개) 칠해요. 권역 득표율은 성향을 평균하는 자동 집계나 직접 입력 중에서 고릅니다.",
+   "When using regional list seats, group districts into regions in Polls › Regions. Pick a region and click districts on the map (drag for several) to paint them. Regional vote shares come either from averaging tendencies automatically or from your own input."
+  ],
+  [
+   "지도 글씨 크기",
+   "Map label size"
+  ],
+  [
+   "국가 › 국가 설정에서 지도 위 약칭 글씨와 의석 배지의 크기를 한꺼번에 조절합니다.",
+   "Nation › Nation Settings adjusts the size of district labels and seat badges on the map all at once."
+  ],
+  [
+   "선거 심화",
+   "Elections in depth"
+  ],
+  [
+   "선거 방식 · 비례 배분 · 선택 개표 · 보궐선거 · 대선 · 선거 기록",
+   "Election methods · list allocation · manual count · by-elections · presidential · election records"
+  ],
+  [
+   "총선 방식",
+   "General election method"
+  ],
+  [
+   "선거 › 총선에서 뽑을 원과 방식을 고릅니다. 비례만 · 지역구만 · 둘 다(혼합)를 고를 수 있고, 지역구는 여론 › 성향, 비례는 여론 › 지지율을 바탕으로 정해져요.",
+   "Choose the chambers and method in Elections › General — list only, districts only, or both (mixed). Districts are decided by Polls › Tendency and list seats by Polls › Support."
+  ],
+  [
+   "자동 개표와 선택 개표",
+   "Automatic and manual count"
+  ],
+  [
+   "지역구 지도가 있는 선거는 개표 방식을 고릅니다(지도를 올리면 나타나요). 자동 개표는 지역구가 무작위 순서로 하나씩 열리고, 선택 개표는 결과 지도에서 지역구를 직접 눌러 하나씩 엽니다. 아래 막대로 개표 속도도 바꿀 수 있어요.",
+   "Elections with a district map let you choose how to count (it appears once a map is uploaded). Automatic counting opens districts one by one in random order, while manual counting lets you open each district yourself by clicking it on the result map. The slider below changes the counting speed."
+  ],
+  [
+   "보궐선거",
+   "By-elections"
+  ],
+  [
+   "\"보궐\"을 켜고 개표하면 궐석 처리된 지역구만 다시 뽑아 바로 반영합니다. 궐석은 의회 › 지역구 의원에서 처리해요.",
+   "Turn on \"By-election\" and count to re-elect only the vacant districts and apply the result right away. Mark seats vacant in Parliament › District Members."
+  ],
+  [
+   "비례 배분 방식",
+   "List allocation method"
+  ],
+  [
+   "여론 › 지지율에서 원마다 비례대표를 어떻게 나눌지 정합니다. 전국 단위(전국형)로 나눌지, 권역마다 나눌지(권역형)를 고르고, 지지율마다 오차 범위를 줄 수 있어요.",
+   "Polls › Support sets how each chamber's list seats are allocated — nationwide or per region — and you can give each party's support a margin of error."
+  ],
+  [
+   "선거 › 대선에서 대통령(총리직선제면 총리) 선거를 개표합니다. 방식(단순 다수 · 결선투표 · 선거인단)과 후보는 선거 › 방식에서 정해요.",
+   "Elections › Presidential counts the presidential election (or the prime minister's, with direct PM elections). The method (plurality · runoff · electoral college) and candidates are set in Elections › Method."
+  ],
+  [
+   "치른 선거는 선거 › 선거 기록에 남고, 누르면 그때의 결과 화면을 다시 볼 수 있어요.",
+   "Past elections are kept in Elections › Election Records, and clicking one shows its result screen again."
+  ],
+  [
+   "입법 심화",
+   "Legislation in depth"
+  ],
+  [
+   "가결 기준 · 태그 · 개정안 · 거부권 · 국무회의",
+   "Passing threshold · tags · amendments · veto · cabinet council"
+  ],
+  [
+   "법안마다 가결 기준을 정합니다. 과반 · 3/5 · 2/3 같은 정해진 기준이나 직접 분수를 넣을 수 있어요. 태그를 달아 두면 상정 · 기록에서 걸러 보기 쉽습니다.",
+   "Each bill has a passing threshold — a preset one such as majority, 3/5 or 2/3, or your own fraction. Tags make bills easy to filter in tabling and records."
+  ],
+  [
+   "거부권",
+   "Veto"
+  ],
+  [
+   "내각 › 내각 설정에서 법안 거부권을 누가 가질지(대통령 · 총리 · 내각 · 없음) 정합니다. 거부권이 있으면 입법 › 표결에서 통과된 법안을 거부할 수 있어요.",
+   "Cabinet › Cabinet Settings decides who holds the bill veto (president · prime minister · cabinet · nobody). With a veto, passed bills can be vetoed in Legislation › Vote."
+  ],
+  [
+   "상정에서 \"국무회의\"로 올린 법안은 내각 › 국무회의에서 국무위원들이 표결합니다. 의결 정족수를 정할 수 있고, 계엄령으로 의회가 정지된 동안에는 여기서 법안을 통과시켜요. 결과는 내각 › 국무회의 기록에 남습니다.",
+   "Bills sent to the \"Cabinet council\" in tabling are voted on by cabinet members in Cabinet › Cabinet Council. You can set the quorum, and while martial law suspends parliament, bills pass here. Results are kept in Cabinet › Council Records."
+  ],
+  [
+   "정부 형태와 권한",
+   "Government and powers"
+  ],
+  [
+   "정부 형태 · 직책 이름 · 비상 권한 · 의회 해산 · 불신임",
+   "Form of government · titles · emergency powers · dissolution · no-confidence"
+  ],
+  [
+   "대통령제 · 이원집정부제 · 의원내각제 · 입헌군주제 · 집단지도체제 중에서 고릅니다. 형태에 따라 대통령 · 총리 · 의장 탭이 나타나거나 숨고, 직책 이름(대통령 → 국왕 등)도 바꿀 수 있어요.",
+   "Choose presidential, semi-presidential, parliamentary, constitutional monarchy or collective leadership. Depending on the form, the president, prime minister and chair tabs appear or hide, and titles can be renamed (President → King, etc.)."
+  ],
+  [
+   "비상 권한과 의회 해산",
+   "Emergency powers and dissolution"
+  ],
+  [
+   "비상사태 · 의회 해산 · 계엄령 권한을 누가 가질지 정하고, 가진 사람의 탭에서 선포합니다. 해산은 의회 전체나 한 원만 할 수 있고, 해산된 원은 다음 총선을 의회에 반영할 때 풀려요. 계엄령으로 의회를 정지하면 법안은 국무회의에서만 통과됩니다.",
+   "Decide who holds the state of emergency, dissolution and martial law powers, and declare them from that person's tab. Dissolution can cover all of parliament or one chamber, and a dissolved chamber is restored when the next general election is applied. Under martial law that suspends parliament, bills pass only in the cabinet council."
+  ],
+  [
+   "총리와 불신임",
+   "Prime minister and no-confidence"
+  ],
+  [
+   "내각 › 총리에서 총리 선출 방식(다수당 대표 자동 · 총리직선제)을 고르고, 지금 총리를 고정하거나 부총리를 둡니다. 내각 불신임안을 발의할 수 있고, 건설적 불신임제(독일 · 이스라엘식)를 켜면 불신임안에 후임 총리를 함께 지명해요.",
+   "In Cabinet › Prime Minister choose how the PM is selected (majority leader automatically · direct election), pin the current PM or add deputy PMs. You can move a motion of no confidence, and with constructive no-confidence (German · Israeli style) the motion must name a successor."
+  ],
+  [
+   "내각 › 대통령에서 이름 · 사진 · 소속 정당을 정합니다. 반원의 의원에서 불러오면 그 의원 정보와 연결돼 함께 바뀌어요.",
+   "Cabinet › President sets the name, photo and party. Loading a member from the hemicycle links them, so changes follow that member."
+  ],
+  [
+   "날짜 넘기기 · 다음 회기 · 설정 창 · 자동 진행",
+   "Advancing the date · next session · settings panel · automatic progression"
+  ],
+  [
+   "날짜 넘기기",
+   "Advancing the date"
+  ],
+  [
+   "날짜 줄의 ▶는 하루, ▶▶는 일주일, ▶▶▶는 한 달을 넘깁니다. 월말 · 윤년도 달력대로 계산해요. 지금 한 번 눌러보세요.",
+   "On the date line, ▶ advances a day, ▶▶ a week and ▶▶▶ a month, following the real calendar including month ends and leap years. Try pressing one now."
+  ],
+  [
+   "날짜가 넘어갔어요.",
+   "The date moved forward."
+  ],
+  [
+   "\"다음: 정기회 / 다음: 임시회\" 버튼으로 다음 회기를 어떤 종류로 열지 고르고(지금 회기는 그대로), \"다음 회기\"를 누르면 회기 번호가 1 올라가면서 고른 종류가 적용됩니다.",
+   "Use the \"Next: Regular / Next: Extraordinary\" button to choose what kind the next session will be (the current one stays as is), and \"Next session\" raises the session number and applies the chosen kind."
+  ],
+  [
+   "날짜 · 회기 설정 창",
+   "Date & session settings"
+  ],
+  [
+   "\"자동 진행\"을 켜면 날짜를 넘기다 정기회 시작일(기본 9월 1일)을 지날 때 다음 회기가 정기회로 열리고, 하원 총선 결과를 의회에 반영하면 대수가 1 올라갑니다. 둘 다 켜고 끌 수 있어요.",
+   "With \"Automatic progression\" on, passing the regular-session start date (Sep 1 by default) while advancing the date opens the next session as a regular session, and applying a lower-house general election raises the term by one. Both can be switched on or off."
+  ],
+  [
+   "부정선거",
+   "Election fraud"
+  ],
+  [
+   "부정선거 시도와 발각",
+   "Attempting fraud and getting caught"
+  ],
+  [
+   "부정선거 (⚠)",
+   "Election fraud (⚠)"
+  ],
+  [
+   "선거 › ⚠에서 정당별로 다음 총선 개표 1회에 한해 부정선거를 시도할 수 있습니다. 성공하면 표가 그 정당 쪽으로 옮겨지지만, 발각되면 그 정당은 활동 금지 처분을 받아요.",
+   "In Elections › ⚠ each party can attempt fraud once, for the next general election count. If it works, votes shift toward that party; if it's discovered, the party is banned."
+  ],
+  [
+   "화면 다루기와 내보내기",
+   "Working the screen and exporting"
+  ],
+  [
+   "시각 탭 · 이미지 내보내기 · 사이드바 · 폭 조절 · 단축키",
+   "Visual tabs · image export · sidebar · resizing · shortcuts"
+  ],
+  [
+   "시각 탭",
+   "Visual tabs"
+  ],
+  [
+   "시각 화면 위의 탭으로 하원 · 상원 · 내각을 오가고, 여론의 지역구 · 성향 · 권역을 열거나 총선을 개표하면 그 지도와 선거결과 탭이 생깁니다(× 로 닫기). 원 화면 오른쪽 위의 \"반원 / 지역구\"로 지역구 지도 보기로 바꿀 수 있어요.",
+   "The tabs above the visual screen switch between the lower house, upper house and cabinet; opening Polls' districts, tendency or regions, or counting a general election, adds those map and result tabs (close with ×). \"Hemicycle / Districts\" at the top right of a chamber switches to the district map view."
+  ],
+  [
+   "이미지로 내보내기",
+   "Exporting images"
+  ],
+  [
+   "반원 · 지도 · 선거 결과 · 내각 화면에서 오른쪽 클릭(모바일은 길게 누르기) → \"내보내기...\"를 고르면 PNG · JPG · SVG 이미지로 저장합니다. 정당 통계와 국기 · 국가명 · 날짜 머리를 함께 넣을 수 있어요.",
+   "On the hemicycle, maps, election results or cabinet, right-click (long-press on mobile) → \"Export...\" saves a PNG · JPG · SVG image. You can include party statistics and a header with the flag, nation name and date."
+  ],
+  [
+   "사이드바와 폭 조절",
+   "Sidebar and resizing"
+  ],
+  [
+   "모바일에서는 아래 탭 바로 묶음을 고르고, 위쪽 칩 줄에서 세부 항목을 고릅니다. 떠 있는 실행 버튼으로 다시 계산해요.",
+   "On mobile, pick a group from the bottom tab bar and an item from the chip row at the top. The floating run button recalculates."
+  ],
+  [
+   "사이드바 머리의 접기 버튼으로 아이콘만 남겨 편집 화면을 넓게 쓸 수 있어요. 편집 패널과 시각 화면 사이 경계를 끌면 폭을 바꾸고, 더블클릭하면 원래 폭으로 돌아갑니다.",
+   "The collapse button in the sidebar header leaves only icons so the editing area gets wider. Drag the border between the editing panel and the visual screen to resize, and double-click it to restore the default width."
+  ],
+  [
+   "단축키",
+   "Shortcuts"
+  ],
+  [
+   "Enter(입력 칸 밖) — 다시 계산 · Ctrl+S — 바로 저장 · Ctrl+Z — 되돌리기 · Ctrl+Shift+Z — 다시 실행 · Esc — 열린 창 닫기. 튜토리얼에서는 ← · → 로 단계를 오가고 Esc로 그만둡니다.",
+   "Enter (outside input fields) — recalculate · Ctrl+S — save now · Ctrl+Z — undo · Ctrl+Shift+Z — redo · Esc — close open panels. In the tutorial, ← · → move between steps and Esc stops."
+  ],
+  [
+   "세부 튜토리얼까지 모두 마쳤습니다. 이제 이 나라를 마음대로 바꿔보거나, 시작 화면에서 새 세이브를 만들어 나만의 나라를 꾸려보세요. 궁금한 기능은 메뉴 맨 아래 \"도움말\"에서 찾을 수 있어요.",
+   "You've finished the detailed tutorials too. Now reshape this country however you like, or create a new save from the start screen and build your own. Any feature you're curious about is explained under \"Help\" at the bottom of the menu."
+  ],
+  [
+   "처음이라면 기본 튜토리얼을 순서대로, 그다음 필요한 세부 튜토리얼만 골라 하세요. 하나하나 몇 단계로 짧게 끝납니다.",
+   "If you're new, take the basic tutorial in order, then pick only the detailed tutorials you need. Each one takes just a few steps."
+  ],
+  [
+   "기본 튜토리얼",
+   "Basic tutorial"
+  ],
+  [
+   "처음 쓰는 분을 위한 핵심 흐름 — 순서대로 추천",
+   "The core flow for newcomers — best in order"
+  ],
+  [
+   "세부 튜토리얼",
+   "Detailed tutorials"
+  ],
+  [
+   "기능별 자세한 설명 — 필요한 것만 골라서",
+   "Feature by feature — pick what you need"
+  ],
+  [
+   "하원 · 상원 · 삼원",
+   "Lower · Upper · Third"
+  ],
+  [
+   "날짜 줄의 ⚙로 여는 창. 연호(선택) · 연 · 월 · 일, 회기의 대수 · 이름 · 회기 번호 · 지금 회기 종류, 그리고 자동 진행(정기회 시작일이 지나면 정기회로 · 하원 총선 반영 시 대수 +1).",
+   "Opened with ⚙ on the date line. Era name (optional) · year · month · day; the session's term · name · number · current type; and automatic progression (regular session after its start date · term +1 when a lower-house election is applied)."
+  ],
+  [
+   "탭 바 오른쪽 끝 \"저장\" 버튼으로 여는 창. 지금 저장(Ctrl+S), 자동저장과 주기, 세이브 목록(즐겨찾기 · 이름 바꾸기 · 삭제), 다른 이름으로 저장, 파일(.json)로 저장 · 불러오기, 자동저장 초기화.",
+   "Opened with the \"Save\" button at the right end of the tab bar. Save now (Ctrl+S), autosave and interval, the save list (favorites · rename · delete), save as, save to / load from file (.json), and resetting autosave."
+  ],
+  [
+   "의회 선거 — 비례 · 지역구 · 혼합 방식, 자동 · 선택 개표, 궐석 지역구만 다시 뽑는 보궐선거, 개표 속도. 개표가 끝나면 \"✔ 의회에 반영\"을 눌러야 의석이 바뀝니다.",
+   "Parliamentary elections — list · district · mixed methods, automatic or manual counting, by-elections that re-elect only vacant districts, and counting speed. When the count finishes, press \"✔ Apply to Parliament\" to change the seats."
+  ],
+  [
+   "기본 자동저장 — 어느 세이브에도 속하지 않은 작업을 담아 두어 기존 데이터가 사라지지 않게 합니다.",
+   "The default autosave — holds work that doesn't belong to any save so existing data isn't lost."
+  ],
+  [
+   "탭 이름을 더블클릭 (또는 저장 창의 ✎).",
+   "Double-click the tab name (or ✎ in the save panel)."
+  ],
+  [
+   "탭만 닫기 — 세이브는 지워지지 않아요. 탭을 모두 닫으면 아래 화면이 빕니다. 세이브 삭제는 저장 창의 세이브 목록이나 시작 화면의 🗑에서.",
+   "Closes only the tab — the save isn't deleted. Closing every tab leaves the screen below blank. Delete saves from the save list in the save panel or 🗑 on the start screen."
+  ],
+  [
+   "닫은 탭 다시 열기",
+   "Reopen closed tab"
+  ],
+  [
+   "×로 닫아 둔 세이브를 다시 탭으로 띄웁니다.",
+   "Brings a save you closed with × back as a tab."
+  ],
+  [
+   "저장 버튼",
+   "Save button"
+  ],
+  [
+   "탭 바 오른쪽 끝. 저장 창(지금 저장 · 자동저장 · 세이브 목록 · 다른 이름으로 저장 · 파일)을 엽니다. 국가 › 저장에 있던 것이 모두 여기로 옮겨졌어요.",
+   "At the right end of the tab bar. Opens the save panel (save now · autosave · save list · save as · file). Everything that used to be in Nation › Save has moved here."
+  ],
+  [
+   "열려 있는 확인 · 안내 · 내보내기 · 저장 · 날짜 창 닫기.",
+   "Close open confirmation · notice · export · save · date panels."
+  ],
+  [
+   "테마 · 언어 · 튜토리얼",
+   "Theme · language · tutorial"
+  ],
+  [
+   "⌂로 메인 화면에 가면 설정(라이트 · 다크 · 네온 테마, 모바일 · 데스크톱 화면)과 🌐 언어(언어 팩 불러오기 포함)를 바꿀 수 있어요. 튜토리얼은 시작하기 › 프리셋의 \"튜토리얼 공화국\"으로 언제든 다시 할 수 있고, 기본 튜토리얼(핵심 흐름)과 세부 튜토리얼(기능별)로 나뉘어 있습니다.",
+   "From the main screen (⌂) you can change Settings (light · dark · neon theme, mobile · desktop layout) and the 🌐 language (including loading language packs). Replay the tutorial any time with the \"Tutorial Republic\" preset under Start; it's split into the basic tutorial (core flow) and detailed tutorials (by feature)."
+  ],
+  [
+   "메인 화면 › 설정의 화면(모바일 · 데스크톱)에서 모바일을 고르면 사이드바 대신 화면 아래 탭 바(묶음 + 의석)와 떠 있는 실행 버튼을 씁니다. 세부 항목은 위쪽 칩 줄에서 고르고, \"의석\"을 누르면 시각 화면으로 넘어가요.",
+   "Choose mobile under Main screen › Settings › Display (mobile · desktop) to use a bottom tab bar (groups + seats) and a floating run button instead of the sidebar. Pick items from the chip row at the top, and \"Seats\" switches to the visual screen."
+  ],
+  [
+   "시각 화면 맨 위 줄의 현재 날짜와 회기. ▶ · ▶▶ · ▶▶▶로 하루 · 일주일 · 한 달씩 넘기고, \"다음: 정기회 / 임시회\"로 다음 회기 종류를 골라(지금 회기는 그대로) \"다음 회기\"로 넘깁니다. ⚙로 날짜 · 회기 설정 창을 엽니다.",
+   "The current date and session on the top line of the visual screen. ▶ · ▶▶ · ▶▶▶ advance a day, a week or a month; choose the next session's type with \"Next: Regular / Extraordinary\" (the current session stays as is) and move on with \"Next session\". ⚙ opens the date & session settings."
+  ],
+  [
+   "연호 (선택 — 비워 두면 연도만 표시)",
+   "Era name (optional — leave blank to show just the year)"
+  ],
+  [
+   "대수와 회기 번호를 정해 둬야 동작합니다.",
+   "Works once a term and session number are set."
+  ],
+  [
+   "예: 레이와 → 레이와 1년 4월 20일",
+   "e.g. Reiwa → Reiwa 1, April 20"
+  ],
+  [
+   "- 튜토리얼 대폭 확장 — 기본 튜토리얼 6개(화면 둘러보기 · 정당과 의석 · 입법 · 여론과 선거 · 내각 · 저장과 메인 화면)와 세부 튜토리얼 10개(이념 · 정당 심화 · 의회 설정과 연정 · 지역구와 지도 · 선거 심화 · 입법 심화 · 정부 형태와 권한 · 날짜와 회기 · 부정선거 · 화면 다루기)로 나눠 목차에 묶음별로 표시, 바뀐 화면(저장 창 · 날짜 줄 · 의회에 반영 · 탭 닫기) 반영",
+   "- Tutorial greatly expanded — 6 basic lessons (screen tour · parties & seats · legislation · opinion & elections · cabinet · saving & the main screen) and 10 detailed lessons (ideologies · parties in depth · parliament settings & coalitions · districts & maps · elections in depth · legislation in depth · government & powers · date & session · election fraud · working the screen), grouped in the lesson list; updated for the new save panel, date line, apply-to-parliament and tab closing"
+  ],
+  [
+   "- 튜토리얼 중 앱의 알림 · 확인창이 막히거나 Enter가 튜토리얼로 새던 문제 수정, 마친 과정 기록을 과정 이름(id)으로 (예전 기록은 그대로 옮김)",
+   "- Fixed app dialogs being blocked during the tutorial and Enter leaking into the tutorial; completed lessons are now recorded by id (old records carried over)"
+  ],
+  [
+   "- 도움말 갱신 — 저장 버튼 · 날짜 · 회기 설정 창 · 탭 닫기와 다시 열기 · 의회에 반영 · 테마 · 언어 · 튜토리얼 안내",
+   "- Help updated — save button · date & session settings · closing and reopening tabs · apply to parliament · theme, language and tutorial"
+  ],
+  [
+   "- 날짜의 \"직접 입력\"과 회기의 \"단순형\" 삭제 — 날짜는 연호(선택) + 연 · 월 · 일, 회기는 대수 · 이름 · 회기 번호로만 (예전 세이브의 글자는 불러올 때 칸으로 옮김, 예: \"레이와 1년 4월 20일\" → 연호 레이와 · 1 · 4 · 20), 연호 1년처럼 두 자리 이하 연도도 그대로 넘어감",
+   "- Removed free-text dates and \"simple\" sessions — dates are an optional era name + year · month · day, sessions are term · name · number (old saves are converted on load, e.g. \"Reiwa 1, April 20\" → era Reiwa · 1 · 4 · 20); years of two digits or less (like era year 1) now advance correctly"
+  ],
+  [
+   "- 튜토리얼 공화국 프리셋에 날짜(2026년 3월 2일)와 회기(제1대 국회 제1회 정기회)를 넣음",
+   "- The Tutorial Republic preset now has a date (March 2, 2026) and session (1st National Assembly, 1st Regular Session)"
   ]
  ]
 };

@@ -1,5 +1,6 @@
 // ===== Hemicycle — 튜토리얼(조작법 안내) =====
 // "튜토리얼 공화국" 프리셋으로 시작하면 자동으로 켜지는 단계별 안내. 짧은 과정(#1 · #2 · #3 …)으로 나뉘어 있고,
+// 과정은 기본 튜토리얼(핵심 흐름, 순서대로)과 세부 튜토리얼(기능별, 골라서)로 나뉜다.
 // 각 단계마다 화면의 한 곳을 밝게 비추고(나머지는 어둡게) 옆에 설명 말풍선을 띄운다.
 // 필요한 탭은 단계에 들어갈 때 알아서 연다.
 //
@@ -12,7 +13,8 @@
 (function () {
     'use strict';
 
-    const DONE_KEY = 'dnoTutorialDone';
+    const DONE_KEY = 'dnoTutorialDone';          // 예전 기록(과정 순서 번호)
+    const DONE_IDS_KEY = 'dnoTutorialDoneIds';   // 지금 기록(과정 id)
     const isMobileLayout = () => document.documentElement.getAttribute('data-ui-mode') === 'mobile';
     const hasEl = id => !!document.getElementById(id);
     // 메뉴: 데스크톱은 세로 사이드바, 모바일은 아래 탭 바 (없으면 원래 가로 탭 줄)
@@ -33,7 +35,7 @@
 
     // 실습 중 만든 것들을 단계 사이에 이어 쓰기 위한 기록
     const T = {};
-    function resetProgress() { T.basePartyIds = null; T.newPartyId = null; T.billBase = null; T.execClicked = false; T.probBase = null; T.cabinetBase = null; T.totalBase = null; }
+    function resetProgress() { T.basePartyIds = null; T.newPartyId = null; T.billBase = null; T.execClicked = false; T.probBase = null; T.cabinetBase = null; T.totalBase = null; T.dateBase = null; }
     const tutParty = () => partyList().find(p => p.id === T.newPartyId) || null;
     const tutPartyIdx = () => partyList().findIndex(p => p.id === T.newPartyId);
     // 정당 › 정보 목록에서 새 정당의 이름 칸 / 구성 › 하원 목록에서 새 정당의 의석 칸
@@ -77,18 +79,33 @@
     const pmBlock = () => { const n = document.getElementById('pmNameInput'); return n ? n.parentElement.parentElement : null; };
     const seatCardOpen = () => { const c = document.getElementById('seatInfoCard'); return !!c && c.style.display === 'block'; };
 
+    // ---- 1.5.7에서 추가된 화면(저장 창 · 날짜 줄 · 날짜/회기 창 · 개표 반영)용 도우미 ----
+    /* global isSavePanelOpen, isDatePanelOpen, elecLastResult */
+    const savePanelOpen = () => typeof isSavePanelOpen === 'function' && isSavePanelOpen();
+    const datePanelOpen = () => typeof isDatePanelOpen === 'function' && isDatePanelOpen();
+    const closePanels = () => { call('closeSavePanel')(); call('closeDatePanel')(); };
+    // 개표 결과를 의회에 반영했는지 (개표를 안 했으면 이 단계는 건너뜀)
+    const elecApplied = () => (typeof elecLastResult === 'undefined' || !elecLastResult) ? true : !!elecLastResult.applied;
+    // id로 찾은 요소를 감싸는 가까운 블록 (없으면 그 요소 자체)
+    const byId = (id, up) => () => { const el = document.getElementById(id); return el ? ((up && el.closest(up)) || el) : null; };
+    const helpTarget = () => isMobileLayout() ? navTarget() : (document.querySelector('#sideNav .mn-group[data-tone="muted"]') ? '#sideNav .mn-group[data-tone="muted"]' : navTarget());
+
+    // group: 'basic'(기본 — 처음이라면 순서대로) · 'detail'(세부 — 필요한 기능만 골라서)
+    // id: 마친 과정 기록용 고유 이름 (순서가 바뀌거나 과정이 늘어도 ✓ 표시가 어긋나지 않게)
     const LESSONS = [
+        // ===================== 기본 튜토리얼 =====================
         {
+            id: 'tour', group: 'basic',
             title: '화면 둘러보기',
-            summary: '메뉴 이동 · 의석 화면 · 세이브',
+            summary: '메뉴 이동 · 의석 화면 · 날짜 줄 · 세이브 탭',
             steps: [
                 {
                     title: '튜토리얼 공화국에 오신 것을 환영합니다',
-                    text: '가상의 나라 "튜토리얼 공화국"에서 기본 조작을 직접 해보며 배웁니다. 튜토리얼은 #1 ~ #5로 짧게 나뉘어 있고, 밝게 표시된 곳을 실제로 조작해야 다음 단계로 넘어가요. 이 나라는 복사본(새 세이브)이라 마음껏 바꿔도 괜찮습니다.',
+                    text: '가상의 나라 "튜토리얼 공화국"에서 직접 조작해 보며 배웁니다. 튜토리얼은 두 가지예요 — 기본 튜토리얼(#1 ~ #6)은 처음 쓰는 분을 위한 핵심 흐름이고, 세부 튜토리얼은 이념 · 파벌 · 지도 · 선거 방식 · 정부 권한 같은 기능을 필요한 것만 골라 배웁니다. 밝게 표시된 곳을 실제로 조작해야 넘어가는 단계도 있어요. 이 나라는 복사본(새 세이브)이라 마음껏 바꿔도 괜찮습니다.',
                 },
                 {
                     // 일부러 다른 화면(국가 › 상징)을 띄워 두고 메뉴로 돌아오게 한다
-                    before: [go('nation', 'symbol'), showPanel('controls')],
+                    before: [closePanels, go('nation', 'symbol'), showPanel('controls')],
                     target: navTarget,
                     allow: () => isMobileLayout() ? ['#mobileNav', '.main-tab-content > .sub-tab-container'] : [navTarget()],
                     title: '메뉴 이동하기',
@@ -111,14 +128,21 @@
                     done: '그 자리의 정당 · 의원 정보가 떴어요. 좌석을 오른쪽 클릭(길게 누르기)하면 이미지로 내보낼 수도 있어요.',
                 },
                 {
-                    before: [call('closeSeatInfoCard'), showPanel('controls')],
+                    before: [call('closeSeatInfoCard'), showPanel('display')],
+                    target: '#dispInfoBar',
+                    title: '날짜와 회기',
+                    text: '시각 화면 맨 위 줄에는 나라의 현재 날짜와 회기가 보입니다. ▶ · ▶▶ · ▶▶▶로 하루 · 일주일 · 한 달씩 넘기고, "다음 회기"로 회기를 올려요. ⚙를 누르면 날짜 · 회기 설정 창이 뜹니다. (자세한 건 세부 튜토리얼 "날짜와 회기")',
+                },
+                {
+                    before: [showPanel('controls')],
                     target: '#saveTabBar',
-                    title: '세이브',
-                    text: '맨 위의 탭 하나하나가 세이브입니다. +로 새 세이브(또는 프리셋 복사본)를 만들고, 탭 이름을 더블클릭하면 이름을 바꿀 수 있어요. 진행 상황은 자동으로 저장됩니다.',
+                    title: '세이브 탭',
+                    text: '맨 위의 탭 하나하나가 세이브(나라 하나)입니다. 누르면 그 나라로 바로 바뀌고, 진행 상황은 세이브마다 따로 자동저장돼요. +는 새 탭(새로 만들기 · 프리셋 · 닫은 탭 다시 열기), 탭 이름을 더블클릭하면 이름 바꾸기, ×는 탭만 닫기(세이브는 남아요)입니다. 맨 왼쪽 ⌂는 저장하고 메인 화면으로 돌아갑니다.',
                 },
             ],
         },
         {
+            id: 'parties', group: 'basic',
             title: '정당과 의석',
             summary: '정당 만들기 · 이름 짓기 · 의석 배정 · 다시 계산',
             steps: [
@@ -193,8 +217,9 @@
             ],
         },
         {
+            id: 'law', group: 'basic',
             title: '입법',
-            summary: '법안 제출 · 상정과 표결',
+            summary: '법안 제출 · 상정 · 표결 · 표결 기록',
             steps: [
                 {
                     before: [go('law', 'bill'), showPanel('controls')],
@@ -202,21 +227,34 @@
                     target: () => billForm(),
                     allow: () => { const f = billForm(); return f ? [f] : []; },
                     title: '법안 제출하기',
-                    text: '입법 메뉴에서는 법안을 작성해 의회에 올리고 표결합니다. 법안 제목을 적고 "[+] 법안 등록"을 눌러보세요.',
+                    text: '입법 › 제출에서 법안을 작성합니다. 법안 제목을 적고 "[+] 법안 등록"을 눌러보세요. (내용 · 태그 · 가결 기준은 비워 둬도 돼요)',
                     task: () => billList().length > (T.billBase || 0),
                     done: '법안이 등록됐어요!',
                 },
                 {
                     before: [go('law', 'table'), showPanel('controls')],
-                    target: '#subTabTable',
-                    title: '상정과 표결',
-                    text: '등록한 법안은 상정 탭에서 의회(또는 국무회의)에 올리고, 표결 탭에서 정당별 · 의원별로 찬반 표를 던집니다. 가결 · 부결된 법안은 기록 탭에 남아요.',
+                    target: '#billList',
+                    title: '상정하기',
+                    text: '입법 › 상정에는 등록된 법안이 모입니다. 법안마다 의회에 올릴지 국무회의에 올릴지 고르고, 법안을 누르면 표결로 넘어가요. 검색과 태그로 찾을 수 있습니다.',
+                },
+                {
+                    before: [go('law', 'vote'), showPanel('controls')],
+                    target: '#contentVote',
+                    title: '표결하기',
+                    text: '입법 › 표결에서 심의할 법안을 고른 뒤, 찬성 · 반대 · 기권을 골라 반원의 좌석을 누르거나 정당별로 한 번에 표를 던집니다. 원마다 "표결 확정"을 누르면 가결 · 부결이 정해지고, 양원제면 하원을 통과한 뒤 상원 표결로 넘어가요.',
+                },
+                {
+                    before: [go('law', 'archive'), showPanel('controls')],
+                    target: '#contentArchive',
+                    title: '표결 기록',
+                    text: '입법 › 표결 기록에는 가결 · 부결 · 거부된 법안이 남습니다. 상태 · 태그로 걸러 보고, 가결된 법안에서 개정안을 낼 수 있어요.',
                 },
             ],
         },
         {
+            id: 'election', group: 'basic',
             title: '여론과 선거',
-            summary: '지지율 입력 · 개표',
+            summary: '지지율 입력 · 개표 · 의회에 반영',
             steps: [
                 {
                     before: [call('switchMainTab', 'election'), call('elecSwitchSub', 'prob'), call('switchElecProbChamber', 'house'), showPanel('controls')],
@@ -252,9 +290,19 @@
                         : '개표가 끝났어요. ')
                         + '결과를 확인한 뒤 선거 › 총선의 "✔ 의회에 반영"을 누르면 그 결과대로 의석이 바뀌어요. 결과는 오른쪽 클릭(길게 누르기)으로 이미지로 내보낼 수 있고, 개표 속도는 선거 설정에서 조절합니다.',
                 },
+                {
+                    before: [go('vote', 'elecGeneral'), showPanel('controls')],
+                    target: () => document.getElementById('elecPostBtns') && document.getElementById('elecPostBtns').offsetParent ? '#elecPostBtns' : '#elecRunBtn',
+                    allow: ['#elecPostBtns', '#contentElecGeneral'],
+                    title: '의회에 반영하기',
+                    text: '개표만으로는 의회가 바뀌지 않습니다. 개표가 끝나면 "✔ 의회에 반영"을 눌러 결과대로 의석을 바꿔보세요. (마음에 안 들면 "재개표"로 다시 셀 수 있어요)',
+                    task: elecApplied,
+                    done: '새 의회가 구성됐어요! 의석 화면의 반원이 선거 결과대로 바뀌었습니다.',
+                },
             ],
         },
         {
+            id: 'cabinet', group: 'basic',
             title: '내각',
             summary: '총리와 당수 · 국무위원 · 내각 화면',
             steps: [
@@ -285,7 +333,7 @@
                     target: '#addCabinetMemberBtn',
                     allow: ['#addCabinetMemberBtn'],
                     title: '국무위원 추가하기',
-                    text: '내각 › 내각에서 장관 같은 국무위원을 추가합니다. "[+] 국무위원 추가"를 눌러보세요.',
+                    text: '내각 › 내각 구성원에서 장관 같은 국무위원을 추가합니다. "[+] 국무위원 추가"를 눌러보세요.',
                     task: () => cabinetList().length > (T.cabinetBase || 0),
                     done: '국무위원 자리가 생겼어요. 이름 · 직책 · 소속 정당을 채울 수 있어요.',
                 },
@@ -295,22 +343,390 @@
                     title: '내각 화면',
                     text: '의석 화면의 "내각" 탭에서 총리와 국무위원이 한눈에 보입니다. 오른쪽 클릭(길게 누르기)으로 이미지로 내보낼 수 있어요.',
                 },
+            ],
+        },
+        {
+            id: 'save', group: 'basic',
+            title: '저장과 메인 화면',
+            summary: '저장 창 · 탭 닫기와 다시 열기 · 도움말 · 메인 화면',
+            steps: [
                 {
-                    before: [go('setup', 'party'), call('switchDispTab', 'house'), showPanel('controls')],
-                    title: '테마와 언어',
-                    text: '메인 메뉴 › 설정에서 라이트 · 다크 · 네온 테마와 언어를 바꿀 수 있습니다. 이 튜토리얼은 시작 화면의 프리셋 목록에서 언제든 다시 할 수 있어요.',
+                    before: [closePanels, call('switchDispTab', 'house'), showPanel('controls')],
+                    target: '#saveTabSaveBtn',
+                    allow: ['#saveTabSaveBtn', '#savePanelLayer'],
+                    title: '저장 창 열기',
+                    text: '맨 위 탭 바 오른쪽 끝의 "저장" 버튼을 눌러보세요. 저장과 관련된 것이 모두 이 창에 모여 있어요.',
+                    task: savePanelOpen,
+                    done: '저장 창이 열렸어요.',
+                },
+                {
+                    before: [call('openSavePanel')],
+                    target: '#savePanelLayer .save-panel',
+                    title: '저장 창 둘러보기',
+                    text: '맨 위는 지금 세이브와 "지금 저장"(Ctrl+S와 같음), 그 아래는 자동저장과 저장 주기입니다. 세이브 목록에서 ★로 즐겨찾기 · 이름 바꾸기 · 삭제를 하고, "다른 이름으로 저장"으로 지금 상태를 새 세이브로 복사해요. 파일(.json)로 저장해 두면 다른 기기에서도 불러올 수 있습니다.',
+                },
+                {
+                    before: [closePanels, showPanel('controls')],
+                    target: () => document.getElementById('saveTabNewBtn') ? '#saveTabNewBtn' : '#saveTabBar',
+                    title: '탭 닫기와 다시 열기',
+                    text: '탭의 ×는 세이브를 지우지 않고 탭만 닫습니다. 탭을 모두 닫으면 아래 화면이 비어요. 닫은 탭은 + › "닫은 탭 다시 열기"로 다시 띄웁니다. 세이브를 정말 지우려면 저장 창의 세이브 목록이나 시작 화면의 🗑를 쓰세요.',
+                },
+                {
+                    before: [showPanel('controls')],
+                    target: helpTarget,
+                    title: '도움말',
+                    text: '메뉴 맨 아래 회색 "도움말" 묶음에는 모든 탭이 무슨 일을 하는지 카드로 정리돼 있고, "열기 →"로 그 탭에 바로 갈 수 있어요. 헷갈릴 때 먼저 찾아보세요.',
+                },
+                {
+                    before: [showPanel('controls')],
+                    target: '#saveTabBar .save-tab-home',
+                    title: '메인 화면',
+                    text: '⌂를 누르면 저장한 뒤 메인 화면으로 갑니다. 메인 화면에서는 시작하기(세이브 고르기 · 프리셋 · 파일 불러오기), 맵 메이커, 로드맵, 설정(라이트 · 다크 · 네온 테마, 데스크톱 · 모바일 화면 모드)을 고르고, 🌐로 언어를 바꿉니다. 이 튜토리얼은 시작하기 › 프리셋의 "튜토리얼 공화국"으로 언제든 다시 할 수 있어요.',
+                },
+            ],
+        },
+
+        // ===================== 세부 튜토리얼 =====================
+        {
+            id: 'ideology', group: 'detail',
+            title: '이념과 서브 이념',
+            summary: '이념 추가 · 하위 이념 · 좌석 순서',
+            steps: [
+                {
+                    before: [closePanels, go('setup', 'ideology'), showPanel('controls')],
+                    target: '#contentIdeology',
+                    title: '이념 목록',
+                    text: '의회 › 이념에서 정당이 속할 이념을 만듭니다. 위에서 아래 순서가 반원의 왼쪽 → 오른쪽 순서예요. 순서를 바꾸면 "자동 정렬"을 켠 정당들의 자리도 따라 바뀝니다.',
+                },
+                {
+                    before: [go('setup', 'ideology'), showPanel('controls')],
+                    target: () => document.querySelector('#contentIdeology button[onclick="addIdeology()"]') || '#contentIdeology',
+                    title: '이념 · 서브 이념 추가',
+                    text: '"이념 추가"로 새 이념을 만들고, 이념 옆의 하위 이념 버튼으로 서브 이념(예: 보수주의 › 온건 보수)을 만들 수 있어요. 정당의 이념 칸에서 서브 이념까지 골라 더 세밀하게 자리를 정합니다.',
+                },
+                {
+                    before: [go('setup', 'party'), call('switchPartyGroupInnerTab', 'info'), showPanel('controls')],
+                    target: () => document.querySelector('#innerContentPartyInfo button[onclick="autoSortParties()"]') || '#innerContentPartyInfo',
+                    title: '정당 자리 정렬',
+                    text: '정당 목록의 순서가 반원의 자리 순서입니다. 자동 정렬을 누르면 이념 순서대로 정당을 다시 줄 세워요. 직접 끌거나 순서 버튼으로 옮길 수도 있습니다.',
+                },
+            ],
+        },
+        {
+            id: 'party-adv', group: 'detail',
+            title: '정당 심화',
+            summary: '복제 · 상태 · 파벌 · 합당 · 당수와 원내대표',
+            steps: [
+                {
+                    before: [closePanels, go('setup', 'party'), call('switchPartyGroupInnerTab', 'info'), showPanel('controls')],
+                    target: '#partyInfoList',
+                    title: '정당 카드',
+                    text: '정당 카드에서 이름 · 약칭 · 색 · 이념 · 로고를 정하고, 어느 원(하원 · 상원 · 삼원)에 속하는지 고릅니다. 상태를 "활동 금지"로 바꾸면 그 정당은 표결 · 선거에서 빠져요. 복제 버튼은 정당을 그대로 복사합니다.',
+                },
+                {
+                    before: [go('setup', 'party'), call('switchPartyGroupInnerTab', 'info'), showPanel('controls')],
+                    target: () => { const b = document.querySelector('#partyInfoList button[onclick^="addFaction"]'); return b ? (b.closest('.card-item') || b) : '#partyInfoList'; },
+                    title: '파벌',
+                    text: '정당 안에 파벌(계파)을 만들 수 있어요. 파벌마다 이름 · 색 · 의석을 정하면 반원에서 한 정당 안의 파벌이 색으로 나뉘어 보이고, 표결 때 파벌별로 표를 던질 수 있습니다.',
+                },
+                {
+                    before: [go('setup', 'party'), call('switchPartyGroupInnerTab', 'info'), showPanel('controls')],
+                    target: () => document.querySelector('button[onclick="openPartyMergeDialog()"]') || '#innerContentPartyInfo',
+                    title: '합당',
+                    text: '합당 창에서 여러 정당을 하나로 합칩니다. 흡수합당은 한 정당이 나머지를 흡수하고, 신설합당은 새 이름 · 이념의 정당을 만들어요. 합쳐지는 정당을 새 정당의 파벌로 남길 수도 있고, 정당의 파벌도 골라 합칠 수 있습니다.',
+                },
+                {
+                    before: [go('setup', 'party'), call('switchPartyGroupInnerTab', 'leader'), showPanel('controls')],
+                    target: '#innerContentPartyLeader',
+                    title: '당수와 원내대표',
+                    text: '정당 › 당수에서 정당 대표와 파벌 대표의 이름 · 사진을 정합니다. 원내대표도 따로 둘 수 있고, "의석 선택 → 붙여넣기"로 반원에서 고른 의원의 이름 · 사진을 그대로 가져올 수 있어요.',
+                },
+            ],
+        },
+        {
+            id: 'assembly', group: 'detail',
+            title: '의회 설정과 연정',
+            summary: '단원제 · 양원제 · 삼원제 · 의장단 · 반원 가운데 · 연립정부',
+            steps: [
+                {
+                    before: [closePanels, go('setup', 'assembly'), showPanel('controls')],
+                    target: () => { const r = document.querySelector('input[name="systemType"]'); return r ? r.closest('div') : '#contentAssembly'; },
+                    title: '원 구성',
+                    text: '의회 › 의회 설정에서 단원제 · 양원제 · 삼원제를 고릅니다. 원이 늘어나면 의회 구성 · 표결 · 선거 · 시각 화면에 그 원이 함께 나타나요. 원 이름(예: 국회 · 원로원)은 의회 › 의회 구성에서 바꿉니다.',
+                },
+                {
+                    before: [go('setup', 'assembly'), showPanel('controls')],
+                    target: '#chamberLeadersList',
+                    title: '의장단',
+                    text: '원마다 의장과 부의장의 이름 · 사진을 정합니다. 부의장은 여러 명 둘 수 있고, 의장단은 시각 화면의 원 현황 아래에 표시돼요.',
+                },
+                {
+                    before: [go('setup', 'assembly'), showPanel('controls')],
+                    target: byId('chamberCenterLabelHouse', 'div'),
+                    title: '반원 가운데 표시',
+                    text: '반원 가운데에 총 의석 수를 보여줄지, 그 원의 로고 이미지를 보여줄지 원마다 고릅니다. 로고 칸을 눌러 이미지를 올린 뒤 "로고"를 고르세요.',
+                },
+                {
+                    before: [go('setup', 'coalition'), showPanel('controls')],
+                    target: '#contentCoalition',
+                    title: '집권과 연정',
+                    text: '의회 › 집권과 연정에서 정당들을 묶어 연립정부를 만듭니다. 집권 연정(★)과 대표당, 연정 밖에서 지지하는 각외협력 정당을 정하고, 단독 집권이나 무집권으로 둘 수도 있어요. 집권 세력은 반원에서 금색 테두리로 표시됩니다(의회 설정의 "집권 세력 강조").',
+                },
+                {
+                    before: [go('setup', 'members'), showPanel('controls')],
+                    target: '#contentMembers',
+                    title: '지역구 의원 · 비례대표',
+                    text: '의회 › 지역구 의원과 비례대표에서 의원 한 명 한 명의 이름 · 사진을 채웁니다. 지역구 의원을 궐석(빈자리)으로 처리하면 선거 › 총선에서 보궐선거로 그 자리만 다시 뽑을 수 있어요.',
+                },
+            ],
+        },
+        {
+            id: 'map', group: 'detail',
+            title: '지역구와 지도',
+            summary: '맵 메이커 · 지도 올리기 · 지역구 편집 · 성향 · 권역',
+            steps: [
+                {
+                    before: [closePanels, showPanel('controls')],
+                    title: '맵 메이커로 지도 만들기',
+                    text: '지역구는 실제 지도 모양으로 만듭니다. 메인 화면 › 맵 메이커에서 SVG 지도 파일을 열면 도형이 선 · 면 · 사각형 · 원으로 나뉘어 보이고, 지역구로 쓸 도형(보통 "면")을 골라 이름을 붙인 뒤 지역구 지도 파일(.jsx)로 내보냅니다. 미리보기는 스크롤로 확대 · 축소, 휠 클릭 드래그로 이동해요.',
+                },
+                {
+                    before: [call('switchMainTab', 'election'), call('elecSwitchSub', 'district'), showPanel('controls')],
+                    target: '#districtSvgEditUI',
+                    title: '지역구 지도 올리기',
+                    text: '여론 › 지역구에서 맵 메이커로 만든 .jsx 파일을 올립니다. 올리면 도형 하나하나가 지역구가 되고, 하원 · 상원 · 삼원이 같은 지도를 함께 씁니다. (새 지도를 올리면 기존 지역구 정보는 새 지도로 바뀌어요)',
+                },
+                {
+                    before: [call('switchMainTab', 'election'), call('elecSwitchSub', 'district'), showPanel('controls')],
+                    target: '#districtListPanel',
+                    title: '지역구 편집',
+                    text: '지도나 목록에서 지역구를 누르면 편집 칸이 열립니다. 이름 · 약칭 · 인구, 그리고 원마다 몇 석을 뽑을지(0석이면 그 원엔 없는 지역구) 정해요. 지도는 휠 클릭 드래그로 이동, Shift+스크롤로 확대하고 ↺로 되돌립니다.',
+                },
+                {
+                    before: [call('switchMainTab', 'election'), call('elecSwitchSub', 'tendency'), showPanel('controls')],
+                    target: '#elecSubTendency',
+                    title: '성향',
+                    text: '여론 › 성향에서 지역구마다 정당별 성향(%)을 정합니다. 지역구 선거에서 누가 이길지가 여기서 갈려요. 시각 화면에는 종합 지도와 정당별 지도가 함께 보입니다.',
+                },
+                {
+                    before: [call('switchMainTab', 'election'), call('elecSwitchSub', 'region'), showPanel('controls')],
+                    target: '#elecSubRegion',
+                    title: '권역',
+                    text: '권역형 비례대표를 쓸 때는 여론 › 권역에서 지역구를 권역으로 묶습니다. 권역을 고른 뒤 지도에서 지역구를 눌러(끌어서 여러 개) 칠해요. 권역 득표율은 성향을 평균하는 자동 집계나 직접 입력 중에서 고릅니다.',
+                },
+                {
+                    before: [go('nation', 'nationSettings'), showPanel('controls')],
+                    target: '#contentNationSettings',
+                    title: '지도 글씨 크기',
+                    text: '국가 › 국가 설정에서 지도 위 약칭 글씨와 의석 배지의 크기를 한꺼번에 조절합니다.',
+                },
+            ],
+        },
+        {
+            id: 'election-adv', group: 'detail',
+            title: '선거 심화',
+            summary: '선거 방식 · 비례 배분 · 선택 개표 · 보궐선거 · 대선 · 선거 기록',
+            steps: [
+                {
+                    before: [closePanels, go('vote', 'elecGeneral'), showPanel('controls')],
+                    target: byId('elecModeProportional', 'div'),
+                    title: '총선 방식',
+                    text: '선거 › 총선에서 뽑을 원과 방식을 고릅니다. 비례만 · 지역구만 · 둘 다(혼합)를 고를 수 있고, 지역구는 여론 › 성향, 비례는 여론 › 지지율을 바탕으로 정해져요.',
+                },
+                {
+                    before: [go('vote', 'elecGeneral'), showPanel('controls')],
+                    target: () => { const r = document.getElementById('elecCountModeRow'); return r && r.offsetParent ? r : '#elecRunBtn'; },
+                    title: '자동 개표와 선택 개표',
+                    text: '지역구 지도가 있는 선거는 개표 방식을 고릅니다(지도를 올리면 나타나요). 자동 개표는 지역구가 무작위 순서로 하나씩 열리고, 선택 개표는 결과 지도에서 지역구를 직접 눌러 하나씩 엽니다. 아래 막대로 개표 속도도 바꿀 수 있어요.',
+                },
+                {
+                    before: [go('vote', 'elecGeneral'), showPanel('controls')],
+                    target: byId('elecModeByElection', 'label'),
+                    title: '보궐선거',
+                    text: '"보궐"을 켜고 개표하면 궐석 처리된 지역구만 다시 뽑아 바로 반영합니다. 궐석은 의회 › 지역구 의원에서 처리해요.',
+                },
+                {
+                    before: [call('switchMainTab', 'election'), call('elecSwitchSub', 'prob'), showPanel('controls')],
+                    target: '#elecSystemSettings',
+                    title: '비례 배분 방식',
+                    text: '여론 › 지지율에서 원마다 비례대표를 어떻게 나눌지 정합니다. 전국 단위(전국형)로 나눌지, 권역마다 나눌지(권역형)를 고르고, 지지율마다 오차 범위를 줄 수 있어요.',
+                },
+                {
+                    before: [go('vote', 'elecPresidential'), showPanel('controls')],
+                    target: '#contentElecPresidential',
+                    title: '대선',
+                    text: '선거 › 대선에서 대통령(총리직선제면 총리) 선거를 개표합니다. 방식(단순 다수 · 결선투표 · 선거인단)과 후보는 선거 › 방식에서 정해요.',
+                },
+                {
+                    before: [go('vote', 'elecRecord'), showPanel('controls')],
+                    target: '#contentElecRecord',
+                    title: '선거 기록',
+                    text: '치른 선거는 선거 › 선거 기록에 남고, 누르면 그때의 결과 화면을 다시 볼 수 있어요.',
+                },
+            ],
+        },
+        {
+            id: 'law-adv', group: 'detail',
+            title: '입법 심화',
+            summary: '가결 기준 · 태그 · 개정안 · 거부권 · 국무회의',
+            steps: [
+                {
+                    before: [closePanels, go('law', 'bill'), showPanel('controls')],
+                    target: byId('newBillThreshold', 'div'),
+                    title: '가결 기준',
+                    text: '법안마다 가결 기준을 정합니다. 과반 · 3/5 · 2/3 같은 정해진 기준이나 직접 분수를 넣을 수 있어요. 태그를 달아 두면 상정 · 기록에서 걸러 보기 쉽습니다.',
+                },
+                {
+                    before: [go('law', 'archive'), showPanel('controls')],
+                    target: '#contentArchive',
+                    title: '개정안',
+                    text: '가결된 법안의 "개정안 발의"를 누르면 그 법안을 바탕으로 개정안(제2판 · 제3판 …)을 새로 제출합니다. 기록에는 몇 판째인지 함께 남아요.',
+                },
+                {
+                    before: [go('cabinet', 'system'), showPanel('controls')],
+                    target: byId('vetoHolderPresidentBtn', 'div'),
+                    title: '거부권',
+                    text: '내각 › 내각 설정에서 법안 거부권을 누가 가질지(대통령 · 총리 · 내각 · 없음) 정합니다. 거부권이 있으면 입법 › 표결에서 통과된 법안을 거부할 수 있어요.',
+                },
+                {
+                    before: [go('cabinet', 'council'), showPanel('controls')],
+                    target: '#contentCouncil',
+                    title: '국무회의',
+                    text: '상정에서 "국무회의"로 올린 법안은 내각 › 국무회의에서 국무위원들이 표결합니다. 의결 정족수를 정할 수 있고, 계엄령으로 의회가 정지된 동안에는 여기서 법안을 통과시켜요. 결과는 내각 › 국무회의 기록에 남습니다.',
+                },
+            ],
+        },
+        {
+            id: 'government', group: 'detail',
+            title: '정부 형태와 권한',
+            summary: '정부 형태 · 직책 이름 · 비상 권한 · 의회 해산 · 불신임',
+            steps: [
+                {
+                    before: [closePanels, go('cabinet', 'system'), showPanel('controls')],
+                    target: byId('govTypePresidentialBtn', 'div'),
+                    title: '정부 형태',
+                    text: '대통령제 · 이원집정부제 · 의원내각제 · 입헌군주제 · 집단지도체제 중에서 고릅니다. 형태에 따라 대통령 · 총리 · 의장 탭이 나타나거나 숨고, 직책 이름(대통령 → 국왕 등)도 바꿀 수 있어요.',
+                },
+                {
+                    before: [go('cabinet', 'system'), showPanel('controls')],
+                    target: '#dissolutionHolderGroup',
+                    title: '비상 권한과 의회 해산',
+                    text: '비상사태 · 의회 해산 · 계엄령 권한을 누가 가질지 정하고, 가진 사람의 탭에서 선포합니다. 해산은 의회 전체나 한 원만 할 수 있고, 해산된 원은 다음 총선을 의회에 반영할 때 풀려요. 계엄령으로 의회를 정지하면 법안은 국무회의에서만 통과됩니다.',
+                },
+                {
+                    before: [go('cabinet', 'pm'), showPanel('controls')],
+                    target: () => document.getElementById('noConfidenceSection') && document.getElementById('noConfidenceSection').offsetParent ? '#noConfidenceSection' : '#contentPm',
+                    title: '총리와 불신임',
+                    text: '내각 › 총리에서 총리 선출 방식(다수당 대표 자동 · 총리직선제)을 고르고, 지금 총리를 고정하거나 부총리를 둡니다. 내각 불신임안을 발의할 수 있고, 건설적 불신임제(독일 · 이스라엘식)를 켜면 불신임안에 후임 총리를 함께 지명해요.',
+                },
+                {
+                    before: [go('cabinet', 'president'), showPanel('controls')],
+                    target: '#contentPresident',
+                    title: '대통령',
+                    text: '내각 › 대통령에서 이름 · 사진 · 소속 정당을 정합니다. 반원의 의원에서 불러오면 그 의원 정보와 연결돼 함께 바뀌어요.',
+                },
+            ],
+        },
+        {
+            id: 'date', group: 'detail',
+            title: '날짜와 회기',
+            summary: '날짜 넘기기 · 다음 회기 · 설정 창 · 자동 진행',
+            steps: [
+                {
+                    before: [closePanels, call('switchDispTab', 'house'), showPanel('display')],
+                    target: '#dispInfoBar',
+                    title: '날짜 넘기기',
+                    text: '날짜 줄의 ▶는 하루, ▶▶는 일주일, ▶▶▶는 한 달을 넘깁니다. 월말 · 윤년도 달력대로 계산해요. 지금 한 번 눌러보세요.',
+                    enter: () => { T.dateBase = (document.getElementById('dispInfoDate') || {}).textContent; },
+                    allow: ['#dispInfoBar'],
+                    task: () => { const el = document.getElementById('dispInfoDate'); return !el || el.textContent !== T.dateBase; },
+                    done: '날짜가 넘어갔어요.',
+                },
+                {
+                    before: [closePanels, showPanel('display')],
+                    target: () => document.getElementById('dispNextSessionTypeBtn') ? '#dispNextSessionTypeBtn' : '#dispInfoBar',
+                    title: '다음 회기',
+                    text: '"다음: 정기회 / 다음: 임시회" 버튼으로 다음 회기를 어떤 종류로 열지 고르고(지금 회기는 그대로), "다음 회기"를 누르면 회기 번호가 1 올라가면서 고른 종류가 적용됩니다.',
+                },
+                {
+                    before: [showPanel('display'), call('openDatePanel')],
+                    target: '#datePanel',
+                    title: '날짜 · 회기 설정 창',
+                    text: '⚙를 누르면 이 창이 뜹니다. 날짜는 연 · 월 · 일로 정하고, 앞에 연호(예: 레이와 → "레이와 1년 4월 20일")를 붙일 수 있어요 — 비워 두면 연도만 보입니다. 회기는 대수 · 이름 · 회기 번호와 지금 회기 종류를 정합니다.',
+                },
+                {
+                    before: [showPanel('display'), call('openDatePanel')],
+                    target: () => { const el = document.getElementById('nationAutoRegularSession'); return el ? el.closest('div[style*="margin-top"]') || el : '#datePanel'; },
+                    title: '자동 진행',
+                    text: '"자동 진행"을 켜면 날짜를 넘기다 정기회 시작일(기본 9월 1일)을 지날 때 다음 회기가 정기회로 열리고, 하원 총선 결과를 의회에 반영하면 대수가 1 올라갑니다. 둘 다 켜고 끌 수 있어요.',
+                    leave: closePanels,
+                },
+            ],
+        },
+        {
+            id: 'fraud', group: 'detail',
+            title: '부정선거',
+            summary: '부정선거 시도와 발각',
+            steps: [
+                {
+                    before: [closePanels, go('vote', 'fraud'), showPanel('controls')],
+                    target: '#contentFraud',
+                    title: '부정선거 (⚠)',
+                    text: '선거 › ⚠에서 정당별로 다음 총선 개표 1회에 한해 부정선거를 시도할 수 있습니다. 성공하면 표가 그 정당 쪽으로 옮겨지지만, 발각되면 그 정당은 활동 금지 처분을 받아요.',
+                },
+            ],
+        },
+        {
+            id: 'view', group: 'detail',
+            title: '화면 다루기와 내보내기',
+            summary: '시각 탭 · 이미지 내보내기 · 사이드바 · 폭 조절 · 단축키',
+            steps: [
+                {
+                    before: [closePanels, call('switchDispTab', 'house'), showPanel('display')],
+                    target: '.disp-tab-bar',
+                    title: '시각 탭',
+                    text: '시각 화면 위의 탭으로 하원 · 상원 · 내각을 오가고, 여론의 지역구 · 성향 · 권역을 열거나 총선을 개표하면 그 지도와 선거결과 탭이 생깁니다(× 로 닫기). 원 화면 오른쪽 위의 "반원 / 지역구"로 지역구 지도 보기로 바꿀 수 있어요.',
+                },
+                {
+                    before: [call('switchDispTab', 'house'), showPanel('display')],
+                    target: '#houseCanvas',
+                    title: '이미지로 내보내기',
+                    text: '반원 · 지도 · 선거 결과 · 내각 화면에서 오른쪽 클릭(모바일은 길게 누르기) → "내보내기..."를 고르면 PNG · JPG · SVG 이미지로 저장합니다. 정당 통계와 국기 · 국가명 · 날짜 머리를 함께 넣을 수 있어요.',
+                },
+                {
+                    before: [showPanel('controls')],
+                    target: () => isMobileLayout() ? navTarget() : (document.getElementById('mnCollapseBtn') ? '#mnCollapseBtn' : navTarget()),
+                    title: '사이드바와 폭 조절',
+                    text: () => isMobileLayout()
+                        ? '모바일에서는 아래 탭 바로 묶음을 고르고, 위쪽 칩 줄에서 세부 항목을 고릅니다. 떠 있는 실행 버튼으로 다시 계산해요.'
+                        : '사이드바 머리의 접기 버튼으로 아이콘만 남겨 편집 화면을 넓게 쓸 수 있어요. 편집 패널과 시각 화면 사이 경계를 끌면 폭을 바꾸고, 더블클릭하면 원래 폭으로 돌아갑니다.',
+                },
+                {
+                    before: [showPanel('controls')],
+                    title: '단축키',
+                    text: 'Enter(입력 칸 밖) — 다시 계산 · Ctrl+S — 바로 저장 · Ctrl+Z — 되돌리기 · Ctrl+Shift+Z — 다시 실행 · Esc — 열린 창 닫기. 튜토리얼에서는 ← · → 로 단계를 오가고 Esc로 그만둡니다.',
                 },
             ],
         },
     ];
+    const basicCount = LESSONS.filter(l => l.group === 'basic').length;
 
     // ---- 마친 과정 기록 ----
-    function doneSet() {
-        try { return new Set(JSON.parse(localStorage.getItem(DONE_KEY) || '[]')); } catch (e) { return new Set(); }
+    // 과정 id로 기록 (예전엔 순서 번호로 기록 — 예전 #1 ~ #5는 지금의 같은 과정 id로 옮겨 온다)
+    const LEGACY_IDS = ['tour', 'parties', 'law', 'election', 'cabinet'];
+    function doneIds() {
+        let ids = null;
+        try { ids = JSON.parse(localStorage.getItem(DONE_IDS_KEY) || 'null'); } catch (e) { ids = null; }
+        if (!Array.isArray(ids)) {
+            ids = [];
+            try { (JSON.parse(localStorage.getItem(DONE_KEY) || '[]') || []).forEach(i => { if (LEGACY_IDS[i]) ids.push(LEGACY_IDS[i]); }); } catch (e) { /* 무시 */ }
+        }
+        return new Set(ids);
     }
+    function doneSet() { const ids = doneIds(); return new Set(LESSONS.map((l, i) => ids.has(l.id) ? i : -1).filter(i => i >= 0)); }
     function markDone(li) {
-        const set = doneSet(); set.add(li);
-        try { localStorage.setItem(DONE_KEY, JSON.stringify([...set])); } catch (e) { /* 저장 못 해도 진행엔 지장 없음 */ }
+        const ids = doneIds(); ids.add(LESSONS[li].id);
+        try { localStorage.setItem(DONE_IDS_KEY, JSON.stringify([...ids])); } catch (e) { /* 저장 못 해도 진행엔 지장 없음 */ }
     }
 
     // mode: 'step'(과정 진행 중) · 'complete'(과정 완료 카드) · 'menu'(목차)
@@ -388,7 +804,7 @@
         if (!(target instanceof Node)) return false;
         if (bubble && bubble.contains(target)) return true;
         // 앱 자체 확인/안내창은 언제나 누를 수 있어야 한다 (예: 법안 제목 없이 등록 → 안내창)
-        if (target instanceof Element && target.closest('#customAlertOverlay, #customConfirmOverlay')) return true;
+        if (target instanceof Element && target.closest('.dno-dialog-overlay, #customAlertOverlay, #customConfirmOverlay')) return true;
         const step = curStep();
         return !!step && allowedEls(step).some(el => el === target || el.contains(target));
     }
@@ -586,13 +1002,16 @@
         layer.classList.remove('tut-is-task');
         taskDone = false;
         const last = lessonIdx >= LESSONS.length - 1;
+        const basicDone = LESSONS[lessonIdx].group === 'basic' && lessonIdx === basicCount - 1;
         renderHead('완료');
         const nextLesson = LESSONS[lessonIdx + 1];
         setBody({
             title: `#${lessonIdx + 1} ${LESSONS[lessonIdx].title} 완료!`,
             text: last
-                ? '#1 ~ #5를 모두 마쳤습니다. 이제 이 나라를 마음대로 바꿔보거나, 시작 화면에서 새 세이브를 만들어 나만의 나라를 꾸려보세요.'
-                : `다음은 #${lessonIdx + 2} "${nextLesson.title}" (${nextLesson.summary})입니다. 바로 이어서 하거나, 나중에 목차에서 골라 할 수 있어요.`,
+                ? '세부 튜토리얼까지 모두 마쳤습니다. 이제 이 나라를 마음대로 바꿔보거나, 시작 화면에서 새 세이브를 만들어 나만의 나라를 꾸려보세요. 궁금한 기능은 메뉴 맨 아래 "도움말"에서 찾을 수 있어요.'
+                : basicDone
+                    ? `기본 튜토리얼(#1 ~ #${basicCount})을 모두 마쳤습니다! 이제 기본 흐름은 다 알아요. 이어서 세부 튜토리얼 #${lessonIdx + 2} "${nextLesson.title}"부터 해보거나, 목차에서 필요한 기능만 골라 배우세요.`
+                    : `다음은 #${lessonIdx + 2} "${nextLesson.title}" (${nextLesson.summary})입니다. 바로 이어서 하거나, 나중에 목차에서 골라 할 수 있어요.`,
         });
         q('.tut-prev').style.display = 'none';
         q('.tut-toc').style.display = '';
@@ -612,14 +1031,20 @@
         const done = doneSet();
         const firstTodo = LESSONS.findIndex((_, i) => !done.has(i));
         renderHead(`${done.size} / ${LESSONS.length} 완료`);
-        setBody({ title: '무엇을 배워볼까요?', text: '하나하나 몇 단계로 짧게 끝납니다. 순서대로 하지 않고 골라서 해도 괜찮아요.', menu: true });
+        setBody({ title: '무엇을 배워볼까요?', text: '처음이라면 기본 튜토리얼을 순서대로, 그다음 필요한 세부 튜토리얼만 골라 하세요. 하나하나 몇 단계로 짧게 끝납니다.', menu: true });
         const menuEl = q('.tut-menu');
-        menuEl.innerHTML = LESSONS.map((l, i) => `
+        const GROUPS = [
+            ['basic', '기본 튜토리얼', '처음 쓰는 분을 위한 핵심 흐름 — 순서대로 추천'],
+            ['detail', '세부 튜토리얼', '기능별 자세한 설명 — 필요한 것만 골라서'],
+        ];
+        menuEl.innerHTML = GROUPS.map(([g, name, sub]) => `
+            <div class="tut-group-head"><span class="tut-group-name">${name}</span><span class="tut-group-sub">${sub}</span></div>`
+            + LESSONS.map((l, i) => l.group !== g ? '' : `
             <button type="button" class="tut-lesson-btn${done.has(i) ? ' done' : ''}${i === firstTodo ? ' next' : ''}" data-lesson="${i}">
                 <span class="tut-lesson-no">#${i + 1}</span>
                 <span class="tut-lesson-main"><span class="tut-lesson-title"></span><span class="tut-lesson-sum"></span></span>
                 <span class="tut-lesson-mark">${done.has(i) ? '✓' : '›'}</span>
-            </button>`).join('');
+            </button>`).join('')).join('');
         menuEl.querySelectorAll('.tut-lesson-btn').forEach(btn => {
             const l = LESSONS[+btn.dataset.lesson];
             btn.querySelector('.tut-lesson-title').textContent = l.title;
@@ -638,6 +1063,7 @@
     function onKey(e) {
         if (!active) return;
         if (isEditable(e.target)) return; // 입력 칸에서의 Enter/화살표/Esc는 그대로 입력 칸 몫
+        if (document.querySelector('.dno-dialog-overlay')) return; // 앱의 알림 · 확인창이 떠 있으면 그 창이 키를 처리
         if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); stop(); }
         else if (e.key === 'ArrowRight' || e.key === 'Enter') {
             // 실습 단계에선 누를 수 있게 허용한 버튼 위의 Enter는 그대로 둔다
@@ -680,6 +1106,9 @@
 
     window.DnoTutorial = {
         start, stop, next, showMenu,
+        // goto(과정, 단계) — 튜토리얼이 켜져 있을 때 특정 단계로 바로 이동 (0부터)
+        goto: (li, si = 0) => { if (!active || !LESSONS[li]) return; lessonIdx = li; showStep(Math.max(0, Math.min(si, LESSONS[li].steps.length - 1))); },
+        lessonGroups: () => LESSONS.map(l => ({ id: l.id, group: l.group, title: l.title, steps: l.steps.length, targets: l.steps.map(st => !!st.target) })),
         isActive: () => active,
         lessons: LESSONS.map(l => ({ title: l.title, steps: l.steps.length })),
         state: () => ({ mode, lesson: lessonIdx, step: stepIdx, taskDone }),

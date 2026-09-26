@@ -44,8 +44,9 @@
         }
 
         // ── 날짜/회기 (v1.4.8) ──────────────
-        let nationDateMode = 'progressive';  // 'progressive'(연 · 월 · 일, 기본) | 'simple'(글자로 직접 입력)
-        let nationSessionMode = 'simple';    // 'simple' | 'individual'
+        // 날짜는 연호(선택) + 연 · 월 · 일, 회기는 대수 · 이름 · 회기 번호 · 종류 하나로만 (예전의 글자 직접 입력 · 단순형은 1.5.7에서 삭제 — 불러올 때 변환)
+        const nationDateMode = 'progressive';
+        const nationSessionMode = 'individual';
         let nationSessionType = 'regular';   // 'regular'(정기회) | 'extraordinary'(임시회) — 개별형에서만 사용
         let nationNextSessionType = 'regular'; // 다음 회기의 종류 — 날짜 줄의 토글로 고르고, "다음 회기"를 누를 때 적용 (지금 회기 종류는 국가 › 날짜에서만 바꿈)
 
@@ -1746,26 +1747,30 @@
             updateDispInfoBar();
         }
 
-        function setNationDateMode(mode) {
-            nationDateMode = mode;
-            document.getElementById('nationDateModeSimpleBtn')?.classList.toggle('active', mode==='simple');
-            document.getElementById('nationDateModeProgBtn')?.classList.toggle('active', mode==='progressive');
-            const simpleWrap = document.getElementById('nationDateSimpleWrap');
-            const progWrap   = document.getElementById('nationDateProgWrap');
-            if(simpleWrap) simpleWrap.style.display = mode==='simple' ? '' : 'none';
-            if(progWrap)   progWrap.style.display   = mode==='progressive' ? '' : 'none';
-            updateDispInfoBar();
-        }
+        // 예전 호출 호환 (모드 선택은 없어짐)
+        function setNationDateMode() { updateDispInfoBar(); }
+        function setNationSessionMode() { updateDispInfoBar(); }
 
-        function setNationSessionMode(mode) {
-            nationSessionMode = mode;
-            document.getElementById('nationSessionModeSimpleBtn')?.classList.toggle('active', mode==='simple');
-            document.getElementById('nationSessionModeIndivBtn')?.classList.toggle('active', mode==='individual');
-            const simpleWrap = document.getElementById('nationSessionSimpleWrap');
-            const indivWrap  = document.getElementById('nationSessionIndivWrap');
-            if(simpleWrap) simpleWrap.style.display = mode==='simple' ? '' : 'none';
-            if(indivWrap)  indivWrap.style.display  = mode==='individual' ? '' : 'none';
-            updateDispInfoBar();
+        // 예전 세이브의 "직접 입력" 날짜 · "단순형" 회기 글자를 새 칸으로 옮긴다
+        // 날짜: "레이와 1년 4월 20일" → 연호 "레이와" · 1 · 4 · 20 (숫자를 못 찾으면 글자 전체를 연호 칸에 남김)
+        // 회기: "제21대 국회 제1회 임시회" → 21 · 국회 · 1 · 임시회
+        function migrateLegacyNationDateSession(cfg) {
+            const set = (id, v) => { const el = document.getElementById(id); if(el) el.value = v; };
+            const val = id => document.getElementById(id)?.value || '';
+            if(cfg.nationDateMode === 'simple' && (cfg.nationDate || '').trim() && !val('nationDateYear') && !val('nationDateMonth') && !val('nationDateDay')) {
+                const t = cfg.nationDate.trim();
+                const m = t.match(/^(.*?)(\d+)\s*년(?:\s*(\d+)\s*월)?(?:\s*(\d+)\s*일)?/);
+                if(m) { set('nationDateEra', m[1].trim()); set('nationDateYear', m[2]); set('nationDateMonth', m[3] || ''); set('nationDateDay', m[4] || ''); }
+                else set('nationDateEra', t);
+            }
+            if(cfg.nationSessionMode !== 'individual' && (cfg.nationSession || '').trim() && !val('nationSessionTerm') && !val('nationSessionNumber')) {
+                const t = cfg.nationSession.trim();
+                const m = t.match(/제\s*(\d+)\s*대\s*(.*?)\s*제\s*(\d+)\s*회\s*(정기회|임시회)?/);
+                if(m) {
+                    set('nationSessionTerm', m[1]); set('nationSessionOrgName', m[2].trim()); set('nationSessionNumber', m[3]);
+                    if(m[4]) nationSessionType = m[4] === '임시회' ? 'extraordinary' : 'regular';
+                }
+            }
         }
 
         // 수동 진행형 날짜: +1일/+7일/+1개월 진행 (달력 계산은 실제 Date 객체로 처리해 월말/윤년 등을 정확히 넘김)
@@ -1778,7 +1783,7 @@
             const y = parseInt(yEl.value) || 1;
             const m = parseInt(mEl.value) || 1;
             const d = parseInt(dEl.value) || 1;
-            const dt = new Date(y, m-1, d);
+            const dt = new Date(2000, m-1, d); dt.setFullYear(y, m-1, d); // 0 ~ 99년을 1900년대로 바꾸지 않게 (연호 1년 등)
             const before = new Date(dt);
             if(unit === 'month') dt.setMonth(dt.getMonth() + amount);
             else dt.setDate(dt.getDate() + amount);
@@ -1792,12 +1797,12 @@
         // ===== 자동 진행 (국가 › 날짜 › 자동 진행) =====
         // 날짜를 넘기다 정기회 시작일(기본 9월 1일)을 지나면, 지난 횟수만큼 다음 회기를 정기회로 시작 (회기 개별형일 때)
         function autoStartRegularSessions(from, to) {
-            if(!document.getElementById('nationAutoRegularSession')?.checked || nationSessionMode !== 'individual' || !(to > from)) return;
+            if(!document.getElementById('nationAutoRegularSession')?.checked || !(to > from)) return;
             const m = Math.min(12, Math.max(1, parseInt(document.getElementById('nationRegularSessionMonth')?.value) || 9));
             const d = Math.min(31, Math.max(1, parseInt(document.getElementById('nationRegularSessionDay')?.value) || 1));
             let count = 0;
             for(let y = from.getFullYear(); y <= to.getFullYear(); y++) {
-                const start = new Date(y, m - 1, d);
+                const start = new Date(2000, m - 1, d); start.setFullYear(y, m - 1, d);
                 if(start > from && start <= to) count++;
             }
             if(!count) return;
@@ -1808,7 +1813,7 @@
         }
         // 하원 총선 결과가 확정되면 대수 +1 (회기 개별형일 때 · 보궐선거와 재개표는 제외 — elecRun에서 호출)
         function autoAdvanceTermOnElection() {
-            if(!document.getElementById('nationAutoTermOnElection')?.checked || nationSessionMode !== 'individual') return;
+            if(!document.getElementById('nationAutoTermOnElection')?.checked) return;
             const termEl = document.getElementById('nationSessionTerm');
             if(!termEl) return;
             termEl.value = (parseInt(termEl.value) || 0) + 1;
@@ -1834,26 +1839,21 @@
         }
 
         function formatNationDate() {
-            if(nationDateMode === 'progressive') {
-                const y = document.getElementById('nationDateYear')?.value;
-                const m = document.getElementById('nationDateMonth')?.value;
-                const d = document.getElementById('nationDateDay')?.value;
-                if(!y && !m && !d) return '';
-                return `${y||'?'}년 ${m||'?'}월 ${d||'?'}일`;
-            }
-            return document.getElementById('nationDateInput')?.value?.trim() || '';
+            const era = document.getElementById('nationDateEra')?.value?.trim() || '';
+            const y = document.getElementById('nationDateYear')?.value;
+            const m = document.getElementById('nationDateMonth')?.value;
+            const d = document.getElementById('nationDateDay')?.value;
+            if(!y && !m && !d) return era; // 날짜 없이 연호만 적어 둔 경우엔 연호만
+            return `${era ? era + ' ' : ''}${y||'?'}년 ${m||'?'}월 ${d||'?'}일`;
         }
 
         function formatNationSession() {
-            if(nationSessionMode === 'individual') {
-                const term = document.getElementById('nationSessionTerm')?.value;
-                const orgName = document.getElementById('nationSessionOrgName')?.value?.trim() || '국회';
-                const num  = document.getElementById('nationSessionNumber')?.value;
-                if(!term && !num) return '';
-                const typeLabel = nationSessionType === 'extraordinary' ? '임시회' : '정기회';
-                return `제${term||'?'}대 ${orgName} 제${num||'?'}회 ${typeLabel}`;
-            }
-            return document.getElementById('nationSessionInput')?.value?.trim() || '';
+            const term = document.getElementById('nationSessionTerm')?.value;
+            const orgName = document.getElementById('nationSessionOrgName')?.value?.trim() || '국회';
+            const num  = document.getElementById('nationSessionNumber')?.value;
+            if(!term && !num) return '';
+            const typeLabel = nationSessionType === 'extraordinary' ? '임시회' : '정기회';
+            return `제${term||'?'}대 ${orgName} 제${num||'?'}회 ${typeLabel}`;
         }
 
         function updateDispInfoBar() {
@@ -1864,8 +1864,8 @@
             // 진행 버튼은 수동 진행형 날짜, 다음 회기 · … 는 개별형 회기일 때만 (단순형은 글자를 직접 쓰는 방식이라 진행할 값이 없음)
             const dateCtl = document.getElementById('dispDateControls');
             const sessCtl = document.getElementById('dispSessionControls');
-            if(dateCtl) dateCtl.style.visibility = nationDateMode === 'progressive' ? '' : 'hidden';
-            if(sessCtl) sessCtl.style.visibility = nationSessionMode === 'individual' ? '' : 'hidden';
+            if(dateCtl) dateCtl.style.visibility = '';
+            if(sessCtl) sessCtl.style.visibility = '';
             const nextBtn = document.getElementById('dispNextSessionTypeBtn');
             if(nextBtn) {
                 const extra = nationNextSessionType === 'extraordinary';
@@ -4657,12 +4657,11 @@
                     nationName:    document.getElementById('nationNameInput')?.value   ?? "",
                     nationFlag,
                     nationDateMode: nationDateMode,
-                    nationDate:    document.getElementById('nationDateInput')?.value    ?? "",
+                    nationDateEra: document.getElementById('nationDateEra')?.value ?? "",
                     nationDateYear:  document.getElementById('nationDateYear')?.value   ?? "",
                     nationDateMonth: document.getElementById('nationDateMonth')?.value  ?? "",
                     nationDateDay:   document.getElementById('nationDateDay')?.value    ?? "",
                     nationSessionMode: nationSessionMode,
-                    nationSession: document.getElementById('nationSessionInput')?.value ?? "",
                     nationSessionTerm:   document.getElementById('nationSessionTerm')?.value   ?? "",
                     nationSessionOrgName: document.getElementById('nationSessionOrgName')?.value ?? "",
                     nationSessionNumber: document.getElementById('nationSessionNumber')?.value ?? "",
@@ -4887,18 +4886,17 @@
             ['house','senate','third'].forEach(ch => { updateChamberLogoUI(ch); updateChamberCenterModeUI(ch); });
             if(gd('chkGovHighlight')) gd('chkGovHighlight').checked = cfg.highlightGov ?? true;
             if(gd('nationNameInput')) gd('nationNameInput').value = cfg.nationName ?? "";
-            if(gd('nationDateInput')) gd('nationDateInput').value = cfg.nationDate ?? "";
+            if(gd('nationDateEra'))   gd('nationDateEra').value   = cfg.nationDateEra ?? "";
             if(gd('nationDateYear'))  gd('nationDateYear').value  = cfg.nationDateYear ?? "";
             if(gd('nationDateMonth')) gd('nationDateMonth').value = cfg.nationDateMonth ?? "";
             if(gd('nationDateDay'))   gd('nationDateDay').value   = cfg.nationDateDay ?? "";
-            if(gd('nationSessionInput')) gd('nationSessionInput').value = cfg.nationSession ?? "";
             if(gd('nationSessionTerm'))   gd('nationSessionTerm').value   = cfg.nationSessionTerm ?? "";
             if(gd('nationSessionOrgName')) gd('nationSessionOrgName').value = cfg.nationSessionOrgName ?? "";
             if(gd('nationSessionNumber')) gd('nationSessionNumber').value = cfg.nationSessionNumber ?? "";
             nationFlag = cfg.nationFlag ?? "";
-            setNationDateMode(cfg.nationDateMode ?? "simple");
-            setNationSessionMode(cfg.nationSessionMode ?? "simple");
             setNationSessionType(cfg.nationSessionType ?? "regular");
+            migrateLegacyNationDateSession(cfg); // 예전 "직접 입력" 날짜 · "단순형" 회기 → 연호 · 연 · 월 · 일 / 대수 · 이름 · 회기
+            setNationSessionType(nationSessionType);
             setNationNextSessionType(cfg.nationNextSessionType ?? cfg.nationSessionType ?? "regular"); // 예전 파일: 다음 회기도 지금과 같은 종류
             { // 자동 진행 설정 (예전 파일: 꺼짐 · 정기회 9월 1일)
                 const set = (id, prop, v) => { const el = document.getElementById(id); if(el) el[prop] = v; };
