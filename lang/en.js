@@ -549,6 +549,14 @@ window.DnoLangPacks.en = {
  ],
  "dict": [
   [
+   "로드맵 · 업데이트",
+   "Roadmap & Updates"
+  ],
+  [
+   "시작하기",
+   "Start"
+  ],
+  [
    "기본값으로 초기화",
    "Reset to default"
   ],
