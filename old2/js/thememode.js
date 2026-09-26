@@ -10,20 +10,19 @@
     'use strict';
 
     const THEME_MODE_KEY = 'dnoThemeMode';
+    // (THEME_MODE_KEY는 다른 탭에서 테마를 바꿨을 때 오는 storage 이벤트를 알아보는 데만 쓴다)
     const VALID_MODES = ['tno', 'light', 'dark'];
     const DEFAULT_MODE = 'tno';
 
-    function safeGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
-    function safeSet(k, v) { try { localStorage.setItem(k, v); return true; } catch (e) { return false; } }
-
+    // old2.html은 UI 개편 전(네온/TNO 시절) 화면을 보여주는 페이지라 항상 네온(TNO)으로 고정한다.
+    // 본 게임에서 고른 라이트/다크 설정은 읽지도, 덮어쓰지도 않는다.
     function getThemeMode() {
-        const v = safeGet(THEME_MODE_KEY);
-        return VALID_MODES.includes(v) ? v : DEFAULT_MODE;
+        return DEFAULT_MODE;
     }
 
     function setThemeMode(mode) {
         if (!VALID_MODES.includes(mode)) return;
-        safeSet(THEME_MODE_KEY, mode);
+        mode = DEFAULT_MODE;
         document.documentElement.setAttribute('data-theme-mode', mode);
         // 라이트/다크로 바뀌면 TNO 전용 커스텀 네온 색은 더 이상 적용하지 않음(테마별 고정 강조색 사용)
         if (window.applyThemeColorForMode) window.applyThemeColorForMode();

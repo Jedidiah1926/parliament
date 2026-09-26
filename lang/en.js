@@ -6321,6 +6321,38 @@ window.DnoLangPacks.en = {
   [
    "@Hemicycles · 업데이트 소식과 공지",
    "@Hemicycles · updates and announcements"
+  ],
+  [
+   "- 로드맵 새 디자인 — 위 탭을 큰 버전(0 · 1 · 2)으로, 한 줄 가로 스크롤(휠을 내리면 오른쪽), 구간 제목이 스크롤을 따라 왼쪽에 붙어 이동 · 카드에는 요약만, 누르면 자세한 내용이 떠 있는 창으로 · 아직 정하지 않은 버전은 흐린 카드로 자리 표시",
+   "- New roadmap design — top tabs are major versions (0 · 1 · 2), one horizontally scrolling row (scroll down to move right), section titles stick to the left as you scroll · cards show a summary and open the full notes in a popup · undecided versions are shown as faded placeholder cards"
+  ],
+  [
+   "- 로드맵 0.0.1 · 0.0.2의 \"일반 테마\" · \"TNO 테마\"를 누르면 그 시절 화면(old.html · old2.html)으로",
+   "- Roadmap 0.0.1 · 0.0.2: \"General theme\" and \"TNO theme\" link to those old screens (old.html · old2.html)"
+  ],
+  [
+   "- 라이트/다크: 붙어 있는 버튼 묶음(0 · 1 · 2, 정보 · 당수, 정부 형태, 설정 목록 등)의 선택 표시가 미끄러지듯 이동",
+   "- Light/dark: the selection in grouped buttons (0 · 1 · 2, info · leader, government form, settings list, etc.) slides smoothly"
+  ],
+  [
+   "- 가결 기준 \"지정...\"을 원마다 — \"모든 원에 같은 비율\"을 켜면 첫 줄 비율을 그대로, 끄면 하원 · 상원 · 삼원 비율을 따로 · 줄마다 비율과 필요한 의석 수 자동 계산, 표결 · 기준선 · 기록 · 법안 카드도 원별 기준을 따름",
+   "- Custom pass threshold per chamber — with \"same ratio for every chamber\" the first row applies to all, otherwise each chamber gets its own ratio · each row shows the percentage and required seats, and votes, markers, records and bill cards use each chamber's threshold"
+  ],
+  [
+   "- logo.html(로고 제작 화면) — 의회 메뉴만 남기고, 집권 정당 강조 색을 HEX 코드로 바꾸고 네온 빛번짐을 켜고 끌 수 있음 · 본 게임 세이브와 따로 저장",
+   "- logo.html (logo maker) — only the Parliament menu, with a HEX colour for the ruling-party highlight and a neon glow toggle · saved separately from the main game"
+  ],
+  [
+   "- 메인 화면 오른쪽 위에 \"소식\" — 공식 유튜브 채널(@Hemicycles) 링크 · 데스크톱 앱에서는 바깥 링크를 기본 브라우저로 엶",
+   "- \"News\" at the top right of the main screen — link to the official YouTube channel (@Hemicycles) · the desktop app opens outside links in the default browser"
+  ],
+  [
+   "- old2.html(개편 전 화면)은 라이트/다크 설정과 상관없이 항상 네온으로",
+   "- old2.html (the pre-redesign screen) always uses the neon theme, whatever light/dark setting is chosen"
+  ],
+  [
+   "- 버전 표시 v1.5.7",
+   "- Version label v1.5.7"
   ]
  ]
 };
