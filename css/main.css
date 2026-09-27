@@ -689,4 +689,8 @@ body.home-page { display: block; height: 100vh; overflow: hidden; text-transform
 .home-news-ext { font-size: 1.1rem; opacity: .6; }
 
 /* 공개 베타 테스트(OBT) 표시 — 부제목 아래, 꾸밈 없는 작은 글씨 */
-.home-stage { margin-top: 10px; font-size: 0.85rem; color: #777; letter-spacing: 2px; cursor: default; }
+.home-stage {
+    margin-top: 10px; padding: 0; border: none; background: none; box-shadow: none;
+    font-size: 0.85rem; letter-spacing: 2px; cursor: default;
+    color: var(--tno-neon); text-shadow: 0 0 6px color-mix(in srgb, var(--tno-neon) 45%, transparent);
+}

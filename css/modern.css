@@ -3052,4 +3052,4 @@ html[data-theme-family="modern"] .home-news-ext { color: var(--m-text-3); }
 html[data-theme-family="modern"] .rd-subtitle { color: var(--m-text-3); font-weight: 500; }
 html[data-theme-family="modern"] .rd-ver { font-weight: 800; letter-spacing: -.3px; }
 html[data-theme-family="modern"] .rd-name { color: var(--m-text); font-weight: 600; }
-html[data-theme-family="modern"] .home-stage { color: var(--m-text-3); font-size: 13px; font-weight: 600; letter-spacing: 1px; }
+html[data-theme-family="modern"] .home-stage { color: var(--m-text); text-shadow: none; border: none; background: none; box-shadow: none; padding: 0; border-radius: 0; font-size: 13px; font-weight: 600; letter-spacing: 1px; }
