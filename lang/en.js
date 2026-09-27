@@ -6733,6 +6733,30 @@ window.DnoLangPacks.en = {
   [
    "- 상단 탭 바 오른쪽에 \"저장\" 버튼 — 국가 › 저장이 떠 있는 저장 창으로 옮겨짐(자동저장 · 세이브 목록 · 다른 이름으로 저장 · 파일), + 버튼은 브라우저처럼 마지막 탭 바로 오른쪽으로",
    "- \"Save\" button on the right of the top tab bar — Nation › Save moved into a floating save panel (autosave · save list · save as · file); the + button now sits right after the last tab, like browser"
+  ],
+  [
+   "파일 (.hemi)",
+   "File (.hemi)"
+  ],
+  [
+   "저장 파일(.hemi) 불러오기",
+   "Load save file (.hemi)"
+  ],
+  [
+   "- 메인 화면 \"프로토콜 실행\" 버튼을 누르면 새 세이브를 만들거나 기존 세이브(자동저장 포함)를 골라 이어할 수 있는 온보딩 창 신설, 저장 파일(.hemi) 업로드로 바로 이어하기도 가능",
+   "- Pressing \"Execute Protocol\" on the main screen now opens an onboarding window to create a new save or continue an existing one (including autosaves), or continue straight from an uploaded save file (.hemi)"
+  ],
+  [
+   "자동저장 주기, 이름 붙여 저장 · 불러오기, 파일(.hemi)로 저장 · 불러오기, 초기화.",
+   "Autosave interval, named saves and loading, saving/loading files (.hemi), and reset."
+  ],
+  [
+   "맨 위는 지금 세이브와 \"지금 저장\"(Ctrl+S와 같음), 그 아래는 자동저장과 저장 주기입니다. 세이브 목록에서 ★로 즐겨찾기 · 이름 바꾸기 · 삭제를 하고, \"다른 이름으로 저장\"으로 지금 상태를 새 세이브로 복사해요. 파일(.hemi)로 저장해 두면 다른 기기에서도 불러올 수 있습니다.",
+   "At the top are the current save and \"Save now\" (same as Ctrl+S), then autosave and its interval. In the save list you can star favorites, rename and delete, and \"Save as\" copies the current state into a new save. Saving to a file (.hemi) lets you load it on another device."
+  ],
+  [
+   "탭 바 오른쪽 끝 \"저장\" 버튼으로 여는 창. 지금 저장(Ctrl+S), 자동저장과 주기, 세이브 목록(즐겨찾기 · 이름 바꾸기 · 삭제), 다른 이름으로 저장, 파일(.hemi)로 저장 · 불러오기, 자동저장 초기화.",
+   "Opened with the \"Save\" button at the right end of the tab bar. Save now (Ctrl+S), autosave and interval, the save list (favorites · rename · delete), save as, save to / load from file (.hemi), and resetting autosave."
   ]
  ]
 };

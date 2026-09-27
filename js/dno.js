@@ -4961,9 +4961,24 @@
                    `${pad(kst.getUTCHours())}${pad(kst.getUTCMinutes())}${pad(kst.getUTCSeconds())}${pad(kst.getUTCMilliseconds(), 3)}`;
         }
 
+        // 세이브 파일 확장자 — 내용은 JSON 그대로, 이름만 Hemicycle 전용 (.hemi). 예전 .json 파일도 계속 불러올 수 있음
+        const SAVE_FILE_EXT = '.hemi';
+        const SAVE_FILE_ACCEPT = '.hemi,.json,application/json';
+
+        // 파일 이름: hemicycle-<세이브 이름>-<KST 타임스탬프>.hemi (파일 이름에 쓸 수 없는 글자는 빼고)
+        function saveFileName() {
+            let name = '';
+            try {
+                const slot = loadSaveSlots().find(sl => sl.id === currentTabId());
+                name = (slot && slot.name) || document.getElementById('nationNameInput')?.value || '';
+            } catch(e) { /* 이름 없이 저장 */ }
+            name = String(name).replace(/[\\/:*?"<>|\x00-\x1f]/g, '').replace(/\s+/g, '_').slice(0, 40);
+            return `hemicycle-${name ? name + '-' : ''}${formatKstTimestampCompact()}${SAVE_FILE_EXT}`;
+        }
+
         function saveJSON() {
             const state = getAppState();
-            downloadJSON(`dno-save-v1.3-${formatKstTimestampCompact()}.json`, state);
+            downloadJSON(saveFileName(), state);
         }
 
         function setAppState(state) {
@@ -5206,7 +5221,9 @@
         }
 
         function downloadJSON(filename, obj) {
-            const blob = new Blob([JSON.stringify(obj, null, 2)], { type: "application/json" });
+            // 브라우저가 .json을 덧붙이지 않도록, .hemi 세이브는 일반 파일 형식으로 내려받는다
+            const type = filename.endsWith(SAVE_FILE_EXT) ? "application/octet-stream" : "application/json";
+            const blob = new Blob([JSON.stringify(obj, null, 2)], { type });
             const a = document.createElement("a");
             a.href = URL.createObjectURL(blob);
             a.download = filename;
