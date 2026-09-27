@@ -683,11 +683,24 @@
         .join('<br>');
     }
 
-    // 제목 끝의 "..."는 흐린 부제목으로 (예: 1.6.0 - 테니스 코트의 맹세 "Serment du Jeu de paume")
+    // 카드 제목 배치: 윗줄에 작은 버전 번호, 아랫줄에 제목, 끝의 "..."는 흐린 부제목
+    // 예) 1.6.0 - 테니스 코트의 맹세 "Serment du Jeu de paume" → 1.6.0 / 테니스 코트의 맹세 / Serment du Jeu de paume
     function cardTitleHTML(title) {
-      const m = String(title).match(/^(.*?)\s*"([^"]+)"\s*$/);
-      if (!m) return escapeHTML(title);
-      return `${escapeHTML(m[1])}<span class="rd-subtitle">${escapeHTML(m[2])}</span>`;
+      let rest = String(title);
+      let html = '';
+      const v = rest.match(/^(\d+\.\d+\.[0-9A-Za-z]+)\s+-\s+(.+)$/);
+      if (v) {
+        html += `<span class="rd-ver">${escapeHTML(v[1])}</span>`;
+        rest = v[2];
+      }
+      const q = rest.match(/^(.*?)\s*"([^"]+)"\s*$/);
+      if (q) return html + `<span class="rd-name">${escapeHTML(q[1])}</span><span class="rd-subtitle">${escapeHTML(q[2])}</span>`;
+      return html + `<span class="rd-name">${escapeHTML(rest)}</span>`;
+    }
+
+    // 번역 사전에는 "1.6.0 - 제목"이 통째로 들어 있으므로, 나눠 그리기 전에 제목 전체를 먼저 번역한다
+    function trTitle(title) {
+      return (window.DnoLang && window.DnoLang.t) ? window.DnoLang.t(title) : title;
     }
 
     function versionOfTitle(title) {
@@ -728,7 +741,7 @@
             });
           }
           article.innerHTML = `
-            <h2 class="rd-title">${cardTitleHTML(item.title)}</h2>
+            <h2 class="rd-title">${cardTitleHTML(trTitle(item.title))}</h2>
             <p class="rd-desc">${cardBodyHTML(item)}</p>
             ${item.summary ? '<span class="rd-more">자세히 보기 ›</span>' : ''}
           `;
@@ -809,7 +822,7 @@
       layer.innerHTML = `
         <div class="rd-detail rd-card ${item.status || 'future'}" role="dialog" aria-modal="true">
           <div class="rd-detail-head">
-            <h2 class="rd-title">${cardTitleHTML(item.title)}</h2>
+            <h2 class="rd-title">${cardTitleHTML(trTitle(item.title))}</h2>
             <button class="rd-detail-close" type="button" aria-label="닫기">×</button>
           </div>
           <p class="rd-desc">${item.desc}</p>
@@ -846,4 +859,13 @@
 
     initWheelScroll();
     window.addEventListener('load', () => renderRoadmap(getDefaultMajor(), true));
+    // 언어 팩이 준비되면 카드 제목을 번역된 제목으로 다시 나눠 그린다 (스크롤 위치는 그대로)
+    window.addEventListener('dnolangready', () => {
+      const active = document.querySelector('.rd-version-btn.active');
+      const viewport = document.getElementById('roadmapViewport');
+      if (!active || !viewport) return;
+      const left = viewport.scrollLeft;
+      renderRoadmap(active.dataset.major, false);
+      viewport.scrollLeft = left;
+    });
     window.addEventListener('resize', syncRoadmapSize);

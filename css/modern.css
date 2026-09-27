@@ -3052,3 +3052,5 @@ html[data-theme-family="modern"] .home-news-ext { color: var(--m-text-3); }
 html[data-theme-family="modern"] .home-stage { border: none; border-radius: 999px; background: color-mix(in srgb, var(--m-gold) 14%, var(--m-surface)); color: var(--m-gold); text-shadow: none; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--m-gold) 35%, transparent); font-size: 12.5px; font-weight: 700; letter-spacing: .5px; }
 html[data-theme-family="modern"] .home-stage-dot { border-radius: 50%; box-shadow: none; animation: none; }
 html[data-theme-family="modern"] .rd-subtitle { color: var(--m-text-3); font-weight: 500; }
+html[data-theme-family="modern"] .rd-ver { font-weight: 800; letter-spacing: -.3px; }
+html[data-theme-family="modern"] .rd-name { color: var(--m-text); font-weight: 600; }
