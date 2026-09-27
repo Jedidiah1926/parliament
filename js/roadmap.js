@@ -564,26 +564,19 @@
       },
       '1.6': {
         slots: 10,
-        title: '1.6: 텀블벅 펀딩',
-        cards: [
-          {
-            status: 'future',
-            title: '1.6.0 - 텀블벅 펀딩 출시',
-            desc: `202X.XX.XX
-              <br>- 텀블벅 펀딩 출시
-              <br>- Steam 개발자 계정을 위한 펀딩`
-          }
-        ]
+        title: '1.6',
+        cards: []
       },
       '1.7': {
         slots: 10,
-        title: '1.7: 나무위키식 의회 틀',
+        title: '1.7: 텀블벅 펀딩',
         cards: [
           {
             status: 'future',
-            title: '1.7.0 - 나무위키식 의회 틀',
+            title: '1.7.0 - 텀블벅 펀딩 출시',
             desc: `202X.XX.XX
-              <br>- 나무위키식 의회 틀 추가`
+              <br>- 텀블벅 펀딩 출시
+              <br>- Steam 개발자 계정을 위한 펀딩`
           }
         ]
       },

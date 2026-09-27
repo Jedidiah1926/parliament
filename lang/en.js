@@ -6485,6 +6485,14 @@ window.DnoLangPacks.en = {
   [
    "- 국민투표 — 인구 시스템과 연계해 찬반 득표수 · 투표율로 결과 결정",
    "- Referendums — tied to the population system, decided by yes/no vote counts and turnout"
+  ],
+  [
+   "1.7: 텀블벅 펀딩",
+   "1.7: Tumblbug Funding"
+  ],
+  [
+   "1.7.0 - 텀블벅 펀딩 출시",
+   "1.7.0 - Tumblbug Funding Launch"
   ]
  ]
 };
