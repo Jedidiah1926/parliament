@@ -616,7 +616,7 @@
           },
           {
             status: 'future',
-            title: '1.6.5 - 왕은 죽었다, 국왕 만세 "Le roi est mort, vive le roi!"',
+            title: '1.6.5 - 왕은 죽었다, 국왕 만세! "Le roi est mort, vive le roi!"',
             summary: ['왕정복고', '숨겨진 정부 형태: 절대군주제', '왕위 주장자 · 계승 분쟁', '친위 쿠데타 · 공화 혁명'],
             desc: `202X.XX.XX
               <br>- 왕정복고 — 군주제 정당의 쿠데타 · 혁명으로 군주제 부활

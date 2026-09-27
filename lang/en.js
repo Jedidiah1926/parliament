@@ -6555,8 +6555,8 @@ window.DnoLangPacks.en = {
    "1.6.4 - Thy glory is slain upon thy high places"
   ],
   [
-   "1.6.5 - 왕은 죽었다, 국왕 만세",
-   "1.6.5 - The king is dead, long live the king"
+   "1.6.5 - 왕은 죽었다, 국왕 만세!",
+   "1.6.5 - The king is dead, long live the king!"
   ],
   [
    "- 왕정복고 — 군주제 정당의 쿠데타 · 혁명으로 군주제 부활",
