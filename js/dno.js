@@ -12755,7 +12755,8 @@
                 const total = entries.reduce((s,e) => s + e.n, 0);
                 if(total <= 0) { fillMap[key] = 'transparent'; titleMap[key] = nm; return; }
                 const withParty = entries.map(e => ({ ...e, party: parties.find(p => String(p.id)===String(e.pid)) })).filter(e => e.party);
-                badgeMap[key] = withParty.slice().sort((a,b) => b.n - a.n);
+                // 한 정당이 그 지역구 의석을 전부 가져갔다면(1석 지역구 포함) 색만으로 충분하므로 의석 수 배지는 숨김
+                if(withParty.length > 1) badgeMap[key] = withParty.slice().sort((a,b) => b.n - a.n);
                 if(withParty.length === 0) { fillMap[key] = 'transparent'; titleMap[key] = nm; return; }
                 const maxN = Math.max(...withParty.map(e => e.n));
                 const top = withParty.filter(e => e.n === maxN);
