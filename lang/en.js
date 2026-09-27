@@ -5112,7 +5112,7 @@ window.DnoLangPacks.en = {
   ],
   [
    "- 마우스를 올리면 뜨는 말풍선과 알림 · 확인 창이 라이트 · 다크 · 네온 테마를 따름 (네온에선 버튼 색에 맞춘 말풍선)",
-   "- Hover tooltips and alert/confirm dialogs now follow the light · dark · neon themes (neon tooltips match the button color)"
+   "- Tooltips and alert/confirm dialogs now follow the light · dark · neon themes (neon tooltips match the button color)"
   ],
   [
    "- 세이브 탭을 모두 닫을 수 있음(맨 앞 탭 포함) — 탭을 닫아도 세이브는 지워지지 않고, 모두 닫으면 아래 화면이 비며 \"+ › 닫은 탭 다시 열기\"로 다시 열 수 있음",
@@ -6368,7 +6368,7 @@ window.DnoLangPacks.en = {
   ],
   [
    "- 시작 화면의 점검 안내/자동 이동 화면에도 설정에서 고른 테마 색이 반영되도록 수정 (그동안 항상 기본 청록색으로 고정돼 있던 문제)",
-   "- The maintenance notice / auto-redirect start screen now uses the theme color chosen in Settings (it was always the default cyan)"
+   "- The maintenance notice / auto-forward start screen now uses the theme color chosen in Settings (it was always the default cyan)"
   ],
   [
    "- 화면 최상단에 크롬 탭 스타일의 세이브 탭 바 신설 — 클릭 한 번으로 확인창 없이 세이브 사이를 즉시 전환, \"+\"로 새 세이브를 새로 만들거나 미리 등록해둔 프리셋에서 시작 가능 (프리셋으로 시나리오 배포·공유)",
@@ -6401,6 +6401,146 @@ window.DnoLangPacks.en = {
   [
    "- 개편 전 화면은 라이트/다크 설정과 상관없이 항상 네온으로",
    "- The pre-redesign screen always uses the neon theme, whatever light/dark setting is chosen"
+  ],
+  [
+   "- 무소속 시스템 리워크",
+   "- Independents system rework"
+  ],
+  [
+   "- 정당 시스템 리워크 I (무소속 시스템 리워크)",
+   "- Party system rework I (reworked independent system)"
+  ],
+  [
+   "- 좌석 정보 카드 추가 (마우스를 올리는 대신 클릭으로 확인, 무소속 이름·파벌·집권 세력 표기)",
+   "- Added a seat info card (click instead of mouse-over; shows independent name, faction, and ruling power)"
+  ],
+  [
+   "- 좌석에 마우스를 올리면 흰색 고리 표시 추가",
+   "- Added a white ring on seat mouse-over"
+  ],
+  [
+   "- 시작 화면 리워크 (점검 안내 · 자동 이동 화면으로 전환)",
+   "- Landing screen rework (switched to a maintenance-notice/auto-forward screen)"
+  ],
+  [
+   "- 점검 기간 자동화 (자동으로 점검 안내 표시 및 자동 이동)",
+   "- Automated maintenance windows (auto-shows the notice and forwards)"
+  ],
+  [
+   "- 순서 변경(⋮⋮) 손잡이가 모바일 터치 드래그로도 동작하도록 수정",
+   "- The reorder (⋮⋮) grip now works with touch dragging on mobile"
+  ],
+  [
+   "- 설정에 테마 색(강조색) 선택 기능 신설 (HEX 직접 입력, 기본값 초기화, 다른 탭에도 실시간 반영), 그동안 특정 화면에서만 청록색으로 고정돼 있던 옅은 배경/그림자 색상들도 모두 테마 색을 따라가도록 수정",
+   "- Added a theme (accent) color picker to Settings (direct HEX input, reset to default, applied live across tabs), and faint backgrounds/shadows that were fixed to cyan on some screens now follow the theme color"
+  ],
+  [
+   "- 반원 · 지도 우클릭 시 뜨는 \"내보내기...\" 메뉴 신설 — 반원·지역구 지도 등 모든 시각화를 PNG/JPG/SVG 형식으로 다운로드 가능",
+   "- Added an \"Export...\" menu on right-clicking any hemicycle/map — download every visualization (hemicycle, district maps, etc.) as PNG/JPG/SVG"
+  ],
+  [
+   "- \"전체에 반영\" 동기화 체크박스의 배경·테두리가 고정된 청록색 대신 테마 색을 따라가도록 수정",
+   "- The \"Apply to all\" sync checkbox's background and border now follow the theme color instead of a fixed cyan"
+  ],
+  [
+   "- 조작 탭과 화면 탭 사이 경계를 드래그로 크기 조절 가능, 더블클릭으로 기본 폭 복원, 크기를 바꿀 때 반원이 찌그러지던 문제 수정",
+   "- The border between the control and display panels can be dragged to resize (double-click restores the default width); fixed the hemicycle view distorting on size change"
+  ],
+  [
+   "- 키보드 단축키 추가: Ctrl+S(즉시 저장 + \"저장됨\" 알림), Enter(입력 중이 아닐 때 프로토콜 실행), Esc(열려 있는 확인/알림/내보내기 창 닫기)",
+   "- Added keyboard shortcuts: Ctrl+S (save now + \"Saved\" notice), Enter (execute protocol when not typing), Esc (close open confirm/alert/export windows)"
+  ],
+  [
+   "- 이전 버전에서 쓰던 구 방식 자동저장 데이터를 새 저장 방식으로 자동으로 옮김 — 업데이트 후 세이브가 사라진 것처럼 보이는 문제 방지",
+   "- Old-style autosave data from earlier versions is moved to the new save format automatically — so saves don't seem to vanish after updating"
+  ],
+  [
+   "- 창 크기 조절 시 선거 결과 · 지역구 지도 등이 찌그러지던 문제 수정",
+   "- Fixed election results, district maps and other views distorting when resizing the window"
+  ],
+  [
+   "- 맵 메이커: 미리보기에서 스크롤로 확대 · 축소, 휠 클릭 드래그로 이동, ↺ 위치 초기화 · 도형 종류를 선 / 면 / 사각형 / 원으로 표시 · ⌖(하이라이트) 버튼 대신 목록 줄과 지도 도형이 마우스를 올리면 서로 강조 · 한글 이름이 __로 보이던 문제 수정 · 도형 색 상태를 기본 / 마우스 올림(굵은 테두리) / 선택(강조색) / 선택+마우스 올림로 네 가지 모두 구분 (선택한 도형에서 마우스를 빼면 마우스 올림 색이 남던 문제 수정)",
+   "- Map Maker: scroll to zoom, middle-drag to pan and ↺ reset in the preview · shapes labelled line / area / rectangle / circle · the ⌖ (highlight) button is replaced by linked mouse-over between list rows and map shapes · fixed Korean names showing as __ · shapes now show four distinct states — normal / mouse-over (thick outline) / selected (accent fill) / selected + mouse-over (fixed a selected shape keeping the mouse-over color after the mouse left)"
+  ],
+  [
+   "- 튜토리얼 중 앱의 알림 · 확인창이 막히거나 Enter가 튜토리얼로 새던 문제 수정, 마친 과정 기록을 과정 이름으로 (예전 기록은 그대로 옮김)",
+   "- Fixed app dialogs being blocked during the tutorial and Enter leaking into the tutorial; completed lessons are now recorded by lesson name (old records carried over)"
+  ],
+  [
+   "지금은 공개 베타 테스트 기간이에요 — 기능과 세이브 형식이 바뀔 수 있어요",
+   "This is an open beta test — features and the save format may change"
+  ],
+  [
+   "- 후보 단일화 — 선거 전에 여러 정당의 후보를 한 명으로 합쳐 출마",
+   "- Candidate unification — parties merge behind a single candidate before an election"
+  ],
+  [
+   "- 나무위키식 의회 틀 — 의석 배치 · 정당별 의석 · 집권 세력을 한눈에 보여주는 틀",
+   "- Namuwiki-style parliament box — seat layout, seats per party and the ruling bloc at a glance"
+  ],
+  [
+   "- 지방선거(지선) 추가 — 지역구 인구 수에 따라 실제 득표수가 계산됨",
+   "- Local elections — vote counts calculated from each district's population"
+  ],
+  [
+   "- 국민투표 — 인구 시스템과 연계해 찬반 득표수 · 투표율로 결과 결정",
+   "- Referendums — tied to the population system, decided by yes/no vote counts and turnout"
+  ],
+  [
+   "1.7: 텀블벅 펀딩",
+   "1.7: Tumblbug Funding"
+  ],
+  [
+   "1.7.0 - 텀블벅 펀딩 출시",
+   "1.7.0 - Tumblbug Funding Launch"
+  ],
+  [
+   "1.6.0 - 테니스 코트의 맹세 \"Serment du Jeu de paume\"",
+   "1.6.0 - The Tennis Court Oath \"Serment du Jeu de paume\""
+  ],
+  [
+   "1.6.1 - 주사위는 던져졌다 \"Alea iacta est\"",
+   "1.6.1 - The die is cast \"Alea iacta est\""
+  ],
+  [
+   "1.6.3 - 대담하라! \"De l'audace!\"",
+   "1.6.3 - Be bold! \"De l'audace!\""
+  ],
+  [
+   "- 법령정보센터식 법전 — 가결된 법안을 조문 형태로 모아 보는 입법 기록",
+   "- Statute book in the style of a national law portal — passed bills collected as articles"
+  ],
+  [
+   "- 헌법 및 개정안 시스템 추가",
+   "- Constitution and amendment system"
+  ],
+  [
+   "- 쿠데타 추가",
+   "- Coups"
+  ],
+  [
+   "- 혁명 추가",
+   "- Revolutions"
+  ],
+  [
+   "- 국회공성전 추가",
+   "- Storming the parliament"
+  ],
+  [
+   "- 정당 세력 변화 타임라인 추가",
+   "- Timeline of party strength over time"
+  ],
+  [
+   "1.6.0 - 테니스 코트의 맹세",
+   "1.6.0 - The Tennis Court Oath"
+  ],
+  [
+   "1.6.1 - 주사위는 던져졌다",
+   "1.6.1 - The die is cast"
+  ],
+  [
+   "1.6.3 - 대담하라!",
+   "1.6.3 - Be bold!"
   ]
  ]
 };
