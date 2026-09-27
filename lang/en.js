@@ -6593,6 +6593,110 @@ window.DnoLangPacks.en = {
   [
    "- 친위 쿠데타 · 공화 혁명",
    "- Self-coup · republican revolution"
+  ],
+  [
+   "- 쿠데타 (군부 · 정당 · 친위)",
+   "- Coups (military · party · self-coup)"
+  ],
+  [
+   "- 숨겨진 정부 형태: 군정",
+   "- Hidden government form: military junta"
+  ],
+  [
+   "- 성공 · 실패 결과",
+   "- Success and failure outcomes"
+  ],
+  [
+   "- 민정 이양 · 역쿠데타",
+   "- Return to civilian rule · counter-coups"
+  ],
+  [
+   "- 혁명 (주도 이념별 결과)",
+   "- Revolutions (outcome depends on ideology)"
+  ],
+  [
+   "- 숨겨진 정부 형태: 당-국가 체제",
+   "- Hidden government form: party-state"
+  ],
+  [
+   "- 민주 혁명 · 새 헌법",
+   "- Democratic revolution · new constitution"
+  ],
+  [
+   "- 국호 · 국기 교체",
+   "- New country name and flag"
+  ],
+  [
+   "- 계엄 중 봉쇄 돌파",
+   "- Breaking the martial-law blockade"
+  ],
+  [
+   "- 물리적 의사 방해 (의장석 점거)",
+   "- Physical obstruction (occupying the Speaker's chair)"
+  ],
+  [
+   "- 지지율 페널티 · 국회선진화법",
+   "- Support penalties · anti-brawl law"
+  ],
+  [
+   "- 쿠데타 추가 — 주도 세력: 군부 · 정당 · 대통령(친위 쿠데타)",
+   "- Coups — led by the military, a party or the president (self-coup)"
+  ],
+  [
+   "- 숨겨진 정부 형태: 군정 — 군부가 일으키면 주도 정당 없이 군사평의회가 집권 (의장이 대통령 · 총리를 겸함, 의회 정지 · 선거 중단, 거부권 · 비상 권한 독점)",
+   "- Hidden government form: military junta — a military coup puts a junta in power with no leading party (its chair is both president and PM, parliament is suspended, elections halted, veto and emergency powers monopolised)"
+  ],
+  [
+   "- 성공 확률 — 여당 의석 · 지지율 · 계엄 여부 등을 반영",
+   "- Success chance — based on the ruling seats, support, martial law and more"
+  ],
+  [
+   "- 성공: 계엄 선포 · 의회 해산 또는 정지 · 반대 정당 활동 금지 / 실패: 주도 세력 처벌 · 역풍으로 지지율 하락",
+   "- Success: martial law, parliament dissolved or suspended, opposition parties banned / Failure: leaders punished, support drops from the backlash"
+  ],
+  [
+   "- 군정에서 벗어나기 — 민정 이양(선거 재개) · 역쿠데타 · 혁명",
+   "- Leaving military rule — return to civilian rule (elections resume), counter-coups, revolution"
+  ],
+  [
+   "- 혁명 추가 — 민중이 주체, 여론 · 인구와 연계",
+   "- Revolutions — driven by the people, tied to public opinion and population"
+  ],
+  [
+   "- 주도 이념에 따라 결과 체제가 달라짐",
+   "- The resulting regime depends on the leading ideology"
+  ],
+  [
+   "- 공산주의 혁명 → 숨겨진 정부 형태: 당-국가 체제 (혁명 정당 일당 집권 · 다른 정당은 금지 또는 우당(통일전선)으로, 최고 지도자 총서기 · 국가주석 · 총리, 의회는 최고인민회의로 거의 만장일치, 단일 후보 찬반 선거)",
+   "- Communist revolution → hidden government form: party-state (one-party rule by the revolutionary party, other parties banned or kept as allied united-front parties, a general secretary above the state president and premier, a supreme people's assembly voting near-unanimously, single-candidate yes/no elections)"
+  ],
+  [
+   "- 민주 혁명 → 독재 · 군정 붕괴, 일반 정부 형태 복귀 + 새 헌법",
+   "- Democratic revolution → dictatorships and juntas fall, a normal government form returns with a new constitution"
+  ],
+  [
+   "- 혁명 이후 국호 · 국기 교체와 새 총선",
+   "- A new country name and flag and a fresh general election after the revolution"
+  ],
+  [
+   "- 국회공성전 추가",
+   "- Storming the parliament"
+  ],
+  [
+   "- 계엄 중 봉쇄 돌파 — 의원들이 본회의장에 들어가야 계엄 해제 결의안을 표결할 수 있음 (들어오지 못한 의원은 표결 제외)",
+   "- Breaking the martial-law blockade — members must get into the chamber to vote on lifting martial law (those who can't get in don't vote)"
+  ],
+  [
+   "- 물리적 의사 방해 — 계엄과 무관하게, 반대 법안 표결을 막으려 의장석 점거 · 몸싸움",
+   "- Physical obstruction — regardless of martial law, occupying the Speaker's chair and brawling to stop a vote on a bill you oppose"
+  ],
+  [
+   "- 성공 확률 — 참여 의원 수 · 정당 결속도 · 의장 경호권 발동 · 직권상정 등을 반영, 성공하면 표결 무산",
+   "- Success chance — based on how many members join, party cohesion, the Speaker calling security and forcing the bill to a vote; success cancels the vote"
+  ],
+  [
+   "- 폭력을 쓴 정당은 지지율 페널티, 부상으로 결석하는 의원 · \"국회선진화법\" 설정으로 페널티 강화",
+   "- Parties that use violence lose support; injured members may miss votes; an \"anti-brawl law\" setting makes the penalties harsher"
   ]
  ]
 };
