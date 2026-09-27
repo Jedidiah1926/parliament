@@ -6469,6 +6469,22 @@ window.DnoLangPacks.en = {
   [
    "지금은 공개 베타 테스트 기간이에요 — 기능과 세이브 형식이 바뀔 수 있어요",
    "This is an open beta test — features and the save format may change"
+  ],
+  [
+   "- 후보 단일화 — 선거 전에 여러 정당의 후보를 한 명으로 합쳐 출마",
+   "- Candidate unification — parties merge behind a single candidate before an election"
+  ],
+  [
+   "- 나무위키식 의회 틀 — 의석 배치 · 정당별 의석 · 집권 세력을 한눈에 보여주는 틀",
+   "- Namuwiki-style parliament box — seat layout, seats per party and the ruling bloc at a glance"
+  ],
+  [
+   "- 지방선거(지선) 추가 — 지역구 인구 수에 따라 실제 득표수가 계산됨",
+   "- Local elections — vote counts calculated from each district's population"
+  ],
+  [
+   "- 국민투표 — 인구 시스템과 연계해 찬반 득표수 · 투표율로 결과 결정",
+   "- Referendums — tied to the population system, decided by yes/no vote counts and turnout"
   ]
  ]
 };
