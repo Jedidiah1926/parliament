@@ -4976,9 +4976,15 @@
             return `hemicycle-${name ? name + '-' : ''}${formatKstTimestampCompact()}${SAVE_FILE_EXT}`;
         }
 
-        function saveJSON() {
+        async function saveJSON() {
             const state = getAppState();
-            downloadJSON(saveFileName(), state);
+            const filename = saveFileName();
+            if(!window.HemiFile) { downloadJSON(filename, state); return; }
+            try {
+                downloadBlob(filename, await window.HemiFile.encode(state));
+            } catch(e) {
+                downloadJSON(filename, state); // 압축에 실패하면 압축 없이라도 저장
+            }
         }
 
         function setAppState(state) {
@@ -5220,6 +5226,14 @@
             }
         }
 
+        function downloadBlob(filename, blob) {
+            const a = document.createElement("a");
+            a.href = URL.createObjectURL(blob);
+            a.download = filename;
+            document.body.appendChild(a); a.click(); a.remove();
+            setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+        }
+
         function downloadJSON(filename, obj) {
             // 브라우저가 .json을 덧붙이지 않도록, .hemi 세이브는 일반 파일 형식으로 내려받는다
             const type = filename.endsWith(SAVE_FILE_EXT) ? "application/octet-stream" : "application/json";
@@ -5232,7 +5246,7 @@
         }
 
         async function loadJSONFromFile(file) {
-            const text = await file.text();
+            const text = window.HemiFile ? await window.HemiFile.readText(file) : await file.text();
             const obj = JSON.parse(text);
             applyStateSafely(obj);
         }

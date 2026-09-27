@@ -7,6 +7,7 @@
     
     <script src="js/thememode.js"></script>
     <script src="js/dialogs.js"></script>
+    <script src="js/savefile.js"></script>
     <script src="js/theme.js"></script>
 
     <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
@@ -413,7 +414,7 @@
             const file = input.files?.[0];
             if(!file) return;
             try {
-                const text = await file.text();
+                const text = window.HemiFile ? await window.HemiFile.readText(file) : await file.text();
                 const obj = JSON.parse(text);
                 const parl = obj.parliament || obj.data;
                 if(!parl || !Array.isArray(parl.parties)) throw new Error('형식이 올바르지 않음');
