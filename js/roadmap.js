@@ -571,7 +571,9 @@
             title: '1.6.0 - 테니스 코트의 맹세 "Serment du Jeu de paume"',
             desc: `202X.XX.XX
               <br>- 법령정보센터식 법전 — 가결된 법안을 조문 형태로 모아 보는 입법 기록
-              <br>- 헌법 및 개정안 시스템 추가`
+              <br>- 헌법 및 개정안 시스템 추가
+              <br>- 법안에 조항 개념 추가 — 제1조 · 제2조처럼 조항 단위로 쓰고 고치기
+              <br>- 입법 화면 개편`
           },
           {
             status: 'future',
@@ -581,7 +583,7 @@
           },
           {
             status: 'future',
-            title: '1.6.2 - Vive la Révolution!',
+            title: '1.6.2 - Vive la Révolution! "Vive la France!"',
             desc: `202X.XX.XX
               <br>- 혁명 추가`
           },
@@ -593,7 +595,7 @@
           },
           {
             status: 'future',
-            title: '1.6.4 - How the mighty have fallen',
+            title: '1.6.4 - 네 영광이 산 위에서 죽임을 당하였도다 "How the mighty have fallen"',
             desc: `202X.XX.XX
               <br>- 정당 세력 변화 타임라인 추가`
           }
