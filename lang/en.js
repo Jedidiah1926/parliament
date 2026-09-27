@@ -6541,6 +6541,14 @@ window.DnoLangPacks.en = {
   [
    "1.6.3 - 대담하라!",
    "1.6.3 - Be bold!"
+  ],
+  [
+   "- 법안에 조항 개념 추가 — 제1조 · 제2조처럼 조항 단위로 쓰고 고치기",
+   "- Bills get articles — write and amend them article by article (Article 1, Article 2…)"
+  ],
+  [
+   "- 입법 화면 개편",
+   "- Legislation screen redesign"
   ]
  ]
 };
