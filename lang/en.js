@@ -6553,6 +6553,46 @@ window.DnoLangPacks.en = {
   [
    "1.6.4 - 네 영광이 산 위에서 꺾였도다",
    "1.6.4 - Thy glory is slain upon thy high places"
+  ],
+  [
+   "1.6.5 - 왕은 죽었다, 국왕 만세",
+   "1.6.5 - The king is dead, long live the king"
+  ],
+  [
+   "- 왕정복고 — 군주제 정당의 쿠데타 · 혁명으로 군주제 부활",
+   "- Restoration — monarchist parties bring back the crown through a coup or revolution"
+  ],
+  [
+   "- 숨겨진 정부 형태: 절대군주제 — 왕이 총리 임명 · 거부권 · 비상 권한을 가짐",
+   "- Hidden government form: absolute monarchy — the monarch appoints the PM and holds the veto and emergency powers"
+  ],
+  [
+   "- 왕가와 왕위 주장자 — 정당마다 지지하는 주장자, 계승 규칙(남계 · 여성 계승 등)",
+   "- Royal houses and claimants — each party backs a claimant; succession rules (male-line, female succession, etc.)"
+  ],
+  [
+   "- 계승 분쟁 — 카를로스파처럼 정통 왕위를 두고 다툼",
+   "- Succession disputes — rival claims to the legitimate throne, Carlist-style"
+  ],
+  [
+   "- 친위 쿠데타(입헌군주제 → 절대군주제) · 공화 혁명(군주제 폐지)",
+   "- Self-coup (constitutional → absolute monarchy) · republican revolution (abolishing the monarchy)"
+  ],
+  [
+   "- 왕정복고",
+   "- Restoration"
+  ],
+  [
+   "- 숨겨진 정부 형태: 절대군주제",
+   "- Hidden government form: absolute monarchy"
+  ],
+  [
+   "- 왕위 주장자 · 계승 분쟁",
+   "- Claimants · succession disputes"
+  ],
+  [
+   "- 친위 쿠데타 · 공화 혁명",
+   "- Self-coup · republican revolution"
   ]
  ]
 };
