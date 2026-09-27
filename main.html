@@ -176,9 +176,9 @@
                         <input type="search" id="saveSearchInput" placeholder="세이브 검색" maxlength="40" oninput="renderSaveSelectList()">
                     </div>
                     <div class="save-select-list" id="saveSelectList"></div>
-                    <input type="file" id="saveFileInput" accept=".json,application/json" style="position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;" onchange="importSaveFile(this)">
+                    <input type="file" id="saveFileInput" accept=".hemi,.json,application/json" style="position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;" onchange="importSaveFile(this)">
                     <button class="save-select-item save-select-import-btn" onclick="document.getElementById('saveFileInput').click()">
-                        <span class="save-select-item-name">📁 저장 파일(.json) 불러오기</span>
+                        <span class="save-select-item-name">📁 저장 파일(.hemi) 불러오기</span>
                     </button>
                 </section>
             </div>
@@ -406,7 +406,7 @@
             location.href = 'dno.html';
         }
 
-        // 로컬 세이브 슬롯이 아니라, 예전에 "파일로 저장"으로 다운로드해둔 .json 파일을
+        // 로컬 세이브 슬롯이 아니라, 예전에 "파일로 저장"으로 다운로드해둔 .hemi(예전 .json) 파일을
         // 그대로 불러와 이어서 시작 — localStorage 세이브 목록에는 등록되지 않고,
         // 이후 자동저장은 기본 "새 의회 (1)" 슬롯을 계속 덮어씀.
         async function importSaveFile(input) {
