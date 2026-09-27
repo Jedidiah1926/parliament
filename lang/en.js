@@ -6697,6 +6697,42 @@ window.DnoLangPacks.en = {
   [
    "- 폭력을 쓴 정당은 지지율 페널티, 부상으로 결석하는 의원 · \"국회선진화법\" 설정으로 페널티 강화",
    "- Parties that use violence lose support; injured members may miss votes; an \"anti-brawl law\" setting makes the penalties harsher"
+  ],
+  [
+   "- 원별 지역구 분리 — 하원 · 상원(· 삼원)이 서로 다른 지역구 지도를 쓸 수 있게 (공유 · 분리 중 선택)",
+   "- Separate districts per chamber — the lower and upper (and third) chambers can use different district maps (choose shared or separate)"
+  ],
+  [
+   "0.0.2 - 네온 테마",
+   "0.0.2 - Neon Theme"
+  ],
+  [
+   "네온 테마",
+   "Neon theme"
+  ],
+  [
+   "- 테마 모드 3종(라이트/다크/네온) 추가",
+   "- Added three theme modes (Light / Dark / Neon)"
+  ],
+  [
+   "- 로드맵 0.0.1 · 0.0.2의 \"일반 테마\" · \"네온 테마\"를 누르면 그 시절 화면으로",
+   "- Roadmap 0.0.1 · 0.0.2: \"General theme\" and \"Neon theme\" link to those old screens"
+  ],
+  [
+   "- 위키식 의회 틀 — 의석 배치 · 정당별 의석 · 집권 세력을 한눈에 보여주는 틀",
+   "- Wiki-style parliament box — seat layout, seats per party and the ruling bloc at a glance"
+  ],
+  [
+   "- 가결된 법안을 조문 형태로 모아 보는 입법 기록",
+   "- A legislative record that collects passed bills as articles"
+  ],
+  [
+   "- 화면 최상단에 브라우저 탭 스타일의 세이브 탭 바 신설 — 클릭 한 번으로 확인창 없이 세이브 사이를 즉시 전환, \"+\"로 새 세이브를 새로 만들거나 미리 등록해둔 프리셋에서 시작 가능 (프리셋으로 시나리오 배포·공유)",
+   "- Added a browser-style save tab bar at the very top — switch between saves instantly with one click, no confirmation, and use \"+\" to create a new save or start from a registered preset (distribute/share scenarios as presets)"
+  ],
+  [
+   "- 상단 탭 바 오른쪽에 \"저장\" 버튼 — 국가 › 저장이 떠 있는 저장 창으로 옮겨짐(자동저장 · 세이브 목록 · 다른 이름으로 저장 · 파일), + 버튼은 브라우저처럼 마지막 탭 바로 오른쪽으로",
+   "- \"Save\" button on the right of the top tab bar — Nation › Save moved into a floating save panel (autosave · save list · save as · file); the + button now sits right after the last tab, like browser"
   ]
  ]
 };
