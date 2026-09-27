@@ -6493,6 +6493,54 @@ window.DnoLangPacks.en = {
   [
    "1.7.0 - 텀블벅 펀딩 출시",
    "1.7.0 - Tumblbug Funding Launch"
+  ],
+  [
+   "1.6.0 - 테니스 코트의 맹세 \"Serment du Jeu de paume\"",
+   "1.6.0 - The Tennis Court Oath \"Serment du Jeu de paume\""
+  ],
+  [
+   "1.6.1 - 주사위는 던져졌다 \"Alea iacta est\"",
+   "1.6.1 - The die is cast \"Alea iacta est\""
+  ],
+  [
+   "1.6.3 - 대담하라! \"De l'audace!\"",
+   "1.6.3 - Be bold! \"De l'audace!\""
+  ],
+  [
+   "- 법령정보센터식 법전 — 가결된 법안을 조문 형태로 모아 보는 입법 기록",
+   "- Statute book in the style of a national law portal — passed bills collected as articles"
+  ],
+  [
+   "- 헌법 및 개정안 시스템 추가",
+   "- Constitution and amendment system"
+  ],
+  [
+   "- 쿠데타 추가",
+   "- Coups"
+  ],
+  [
+   "- 혁명 추가",
+   "- Revolutions"
+  ],
+  [
+   "- 국회공성전 추가",
+   "- Storming the parliament"
+  ],
+  [
+   "- 정당 세력 변화 타임라인 추가",
+   "- Timeline of party strength over time"
+  ],
+  [
+   "1.6.0 - 테니스 코트의 맹세",
+   "1.6.0 - The Tennis Court Oath"
+  ],
+  [
+   "1.6.1 - 주사위는 던져졌다",
+   "1.6.1 - The die is cast"
+  ],
+  [
+   "1.6.3 - 대담하라!",
+   "1.6.3 - Be bold!"
   ]
  ]
 };

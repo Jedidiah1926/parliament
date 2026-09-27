@@ -564,8 +564,40 @@
       },
       '1.6': {
         slots: 10,
-        title: '1.6',
-        cards: []
+        title: '1.6: Give me liberty, or give me death!',
+        cards: [
+          {
+            status: 'future',
+            title: '1.6.0 - 테니스 코트의 맹세 "Serment du Jeu de paume"',
+            desc: `202X.XX.XX
+              <br>- 법령정보센터식 법전 — 가결된 법안을 조문 형태로 모아 보는 입법 기록
+              <br>- 헌법 및 개정안 시스템 추가`
+          },
+          {
+            status: 'future',
+            title: '1.6.1 - 주사위는 던져졌다 "Alea iacta est"',
+            desc: `202X.XX.XX
+              <br>- 쿠데타 추가`
+          },
+          {
+            status: 'future',
+            title: '1.6.2 - Vive la Révolution!',
+            desc: `202X.XX.XX
+              <br>- 혁명 추가`
+          },
+          {
+            status: 'future',
+            title: '1.6.3 - 대담하라! "De l\'audace!"',
+            desc: `202X.XX.XX
+              <br>- 국회공성전 추가`
+          },
+          {
+            status: 'future',
+            title: '1.6.4 - How the mighty have fallen',
+            desc: `202X.XX.XX
+              <br>- 정당 세력 변화 타임라인 추가`
+          }
+        ]
       },
       '1.7': {
         slots: 10,
@@ -649,6 +681,13 @@
         .join('<br>');
     }
 
+    // 제목 끝의 "..."는 흐린 부제목으로 (예: 1.6.0 - 테니스 코트의 맹세 "Serment du Jeu de paume")
+    function cardTitleHTML(title) {
+      const m = String(title).match(/^(.*?)\s*"([^"]+)"\s*$/);
+      if (!m) return escapeHTML(title);
+      return `${escapeHTML(m[1])}<span class="rd-subtitle">${escapeHTML(m[2])}</span>`;
+    }
+
     function versionOfTitle(title) {
       return String(title).split(' - ')[0].trim();
     }
@@ -687,7 +726,7 @@
             });
           }
           article.innerHTML = `
-            <h2 class="rd-title">${escapeHTML(item.title)}</h2>
+            <h2 class="rd-title">${cardTitleHTML(item.title)}</h2>
             <p class="rd-desc">${cardBodyHTML(item)}</p>
             ${item.summary ? '<span class="rd-more">자세히 보기 ›</span>' : ''}
           `;
@@ -768,7 +807,7 @@
       layer.innerHTML = `
         <div class="rd-detail rd-card ${item.status || 'future'}" role="dialog" aria-modal="true">
           <div class="rd-detail-head">
-            <h2 class="rd-title">${escapeHTML(item.title)}</h2>
+            <h2 class="rd-title">${cardTitleHTML(item.title)}</h2>
             <button class="rd-detail-close" type="button" aria-label="닫기">×</button>
           </div>
           <p class="rd-desc">${item.desc}</p>

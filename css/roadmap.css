@@ -468,3 +468,14 @@
       text-underline-offset: 3px;
     }
     .rd-link:hover { text-shadow: 0 0 6px var(--card-color, var(--tno-neon)); }
+
+    /* 제목의 "..." 부분 — 흐린 부제목 */
+    .rd-subtitle {
+      display: block;
+      margin-top: 4px;
+      color: #7d8a90;
+      font-size: .8em;
+      letter-spacing: .5px;
+      text-transform: none;
+      text-shadow: none;
+    }
