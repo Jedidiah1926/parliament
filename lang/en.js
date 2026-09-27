@@ -6465,6 +6465,10 @@ window.DnoLangPacks.en = {
   [
    "- 튜토리얼 중 앱의 알림 · 확인창이 막히거나 Enter가 튜토리얼로 새던 문제 수정, 마친 과정 기록을 과정 이름으로 (예전 기록은 그대로 옮김)",
    "- Fixed app dialogs being blocked during the tutorial and Enter leaking into the tutorial; completed lessons are now recorded by lesson name (old records carried over)"
+  ],
+  [
+   "지금은 공개 베타 테스트 기간이에요 — 기능과 세이브 형식이 바뀔 수 있어요",
+   "This is an open beta test — features and the save format may change"
   ]
  ]
 };

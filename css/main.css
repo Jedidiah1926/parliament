@@ -687,3 +687,17 @@ body.home-page { display: block; height: 100vh; overflow: hidden; text-transform
 .home-news-label { font-size: 1rem; letter-spacing: 1px; }
 .home-news-desc { font-size: 0.75rem; color: #777; text-shadow: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .home-news-ext { font-size: 1.1rem; opacity: .6; }
+
+/* 공개 베타 테스트(OBT) 표시 — 제목 바로 아래 */
+.home-stage {
+    display: inline-flex; align-items: center; gap: 8px;
+    margin-top: 14px; padding: 5px 12px;
+    border: 1px solid var(--tno-gold); color: var(--tno-gold);
+    font-size: 0.85rem; letter-spacing: 2px;
+    text-shadow: 0 0 6px color-mix(in srgb, var(--tno-gold) 60%, transparent);
+    box-shadow: 0 0 10px color-mix(in srgb, var(--tno-gold) 20%, transparent);
+    cursor: default;
+}
+.home-stage-dot { width: 8px; height: 8px; background: currentColor; box-shadow: 0 0 6px currentColor; animation: homeStageBlink 1.6s steps(2, start) infinite; }
+@keyframes homeStageBlink { to { visibility: hidden; } }
+@media (prefers-reduced-motion: reduce) { .home-stage-dot { animation: none; } }
