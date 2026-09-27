@@ -486,3 +486,13 @@
       word-break: keep-all;
       overflow-wrap: break-word;
     }
+
+    /* 카드 제목: 윗줄 작은 버전 번호 · 제목 · 흐린 부제목 */
+    .rd-ver {
+      display: block;
+      margin-bottom: 3px;
+      font-size: .78em;
+      opacity: .7;
+      letter-spacing: 1px;
+    }
+    .rd-name { display: block; }

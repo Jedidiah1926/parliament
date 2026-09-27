@@ -255,6 +255,8 @@
         window.DnoLang.t = s => translate(s);
         waiting.forEach(el => { if (el.isConnected) translateTree(el, translate); });
         waiting.clear();
+        // 번역된 문자열로 직접 다시 그려야 하는 화면(로드맵 카드 제목 등)에 알림
+        window.dispatchEvent(new Event('dnolangready'));
         // 앱이 나중에 다시 그리는 부분(목록 갱신, 도움말, 튜토리얼 말풍선, 알림창 등)도 계속 번역한다.
         // 번역 결과가 같으면 건드리지 않으므로, 이 번역이 다시 변경을 일으켜도 한 번 더 확인하고 멈춘다.
         const observer = new MutationObserver(mutations => {
