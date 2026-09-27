@@ -6697,6 +6697,10 @@ window.DnoLangPacks.en = {
   [
    "- 폭력을 쓴 정당은 지지율 페널티, 부상으로 결석하는 의원 · \"국회선진화법\" 설정으로 페널티 강화",
    "- Parties that use violence lose support; injured members may miss votes; an \"anti-brawl law\" setting makes the penalties harsher"
+  ],
+  [
+   "- 원별 지역구 분리 — 하원 · 상원(· 삼원)이 서로 다른 지역구 지도를 쓸 수 있게 (공유 · 분리 중 선택)",
+   "- Separate districts per chamber — the lower and upper (and third) chambers can use different district maps (choose shared or separate)"
   ]
  ]
 };
