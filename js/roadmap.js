@@ -595,7 +595,7 @@
           },
           {
             status: 'future',
-            title: '1.6.4 - 네 영광이 산 위에서 죽임을 당하였도다 "How the mighty have fallen"',
+            title: '1.6.4 - 네 영광이 산 위에서 꺾였도다 "How the mighty have fallen"',
             desc: `202X.XX.XX
               <br>- 정당 세력 변화 타임라인 추가`
           }
