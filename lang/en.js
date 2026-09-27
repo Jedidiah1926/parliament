@@ -6701,6 +6701,30 @@ window.DnoLangPacks.en = {
   [
    "- 원별 지역구 분리 — 하원 · 상원(· 삼원)이 서로 다른 지역구 지도를 쓸 수 있게 (공유 · 분리 중 선택)",
    "- Separate districts per chamber — the lower and upper (and third) chambers can use different district maps (choose shared or separate)"
+  ],
+  [
+   "0.0.2 - 네온 테마",
+   "0.0.2 - Neon Theme"
+  ],
+  [
+   "네온 테마",
+   "Neon theme"
+  ],
+  [
+   "- 테마 모드 3종(라이트/다크/네온) 추가",
+   "- Added three theme modes (Light / Dark / Neon)"
+  ],
+  [
+   "- 로드맵 0.0.1 · 0.0.2의 \"일반 테마\" · \"네온 테마\"를 누르면 그 시절 화면으로",
+   "- Roadmap 0.0.1 · 0.0.2: \"General theme\" and \"Neon theme\" link to those old screens"
+  ],
+  [
+   "- 위키식 의회 틀 — 의석 배치 · 정당별 의석 · 집권 세력을 한눈에 보여주는 틀",
+   "- Wiki-style parliament box — seat layout, seats per party and the ruling bloc at a glance"
+  ],
+  [
+   "- 가결된 법안을 조문 형태로 모아 보는 입법 기록",
+   "- A legislative record that collects passed bills as articles"
   ]
  ]
 };
