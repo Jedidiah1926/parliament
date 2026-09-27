@@ -6725,6 +6725,14 @@ window.DnoLangPacks.en = {
   [
    "- 가결된 법안을 조문 형태로 모아 보는 입법 기록",
    "- A legislative record that collects passed bills as articles"
+  ],
+  [
+   "- 화면 최상단에 브라우저 탭 스타일의 세이브 탭 바 신설 — 클릭 한 번으로 확인창 없이 세이브 사이를 즉시 전환, \"+\"로 새 세이브를 새로 만들거나 미리 등록해둔 프리셋에서 시작 가능 (프리셋으로 시나리오 배포·공유)",
+   "- Added a browser-style save tab bar at the very top — switch between saves instantly with one click, no confirmation, and use \"+\" to create a new save or start from a registered preset (distribute/share scenarios as presets)"
+  ],
+  [
+   "- 상단 탭 바 오른쪽에 \"저장\" 버튼 — 국가 › 저장이 떠 있는 저장 창으로 옮겨짐(자동저장 · 세이브 목록 · 다른 이름으로 저장 · 파일), + 버튼은 브라우저처럼 마지막 탭 바로 오른쪽으로",
+   "- \"Save\" button on the right of the top tab bar — Nation › Save moved into a floating save panel (autosave · save list · save as · file); the + button now sits right after the last tab, like browser"
   ]
  ]
 };
