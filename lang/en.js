@@ -6551,7 +6551,7 @@ window.DnoLangPacks.en = {
    "- Legislation screen redesign"
   ],
   [
-   "1.6.4 - 네 영광이 산 위에서 죽임을 당하였도다",
+   "1.6.4 - 네 영광이 산 위에서 꺾였도다",
    "1.6.4 - Thy glory is slain upon thy high places"
   ]
  ]
