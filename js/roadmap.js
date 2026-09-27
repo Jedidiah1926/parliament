@@ -583,7 +583,7 @@
           },
           {
             status: 'future',
-            title: '1.6.2 - Vive la Révolution!',
+            title: '1.6.2 - Vive la Révolution! "Vive la France!"',
             desc: `202X.XX.XX
               <br>- 혁명 추가`
           },
