@@ -296,19 +296,48 @@
                 container.innerHTML = '<div class="save-select-empty">검색 결과가 없습니다.</div>';
                 return;
             }
-            container.innerHTML = shown.map(s => {
+            // 카드 한 장 = 세이브 하나: 이름 · 게임 속 날짜 / 설명란에 실제 저장 시각,
+            // 그 세이브 전용 자동저장은 구분선 아래 한 줄로 (실제 시각만)
+            const cards = shown.filter(s => !(s.isAutosave && s.parentId && named.some(n => n.id === s.parentId)));
+            container.innerHTML = cards.map(s => {
                 const isFav = fav.has(s.id);
-                const isCompanion = s.isAutosave && s.parentId;
+                const companion = s.isAutosave ? null : all.find(x => x.isAutosave && x.parentId === s.id);
+                const ingame = saveIngameDate(s.state);
                 return `
-                <div class="save-select-row${isCompanion ? ' save-select-row-companion' : ''}">
-                    ${isCompanion ? '' : `<button class="save-fav-btn${isFav ? ' on' : ''}" onclick="toggleFavorite('${s.id}')" title="${isFav ? '즐겨찾기 해제' : '즐겨찾기'}" aria-pressed="${isFav}">${isFav ? '★' : '☆'}</button>`}
-                    <button class="save-select-item${s.isAutosave ? ' save-select-item-auto' : ''}" onclick="continueSave('${s.id}')">
-                        <span class="save-select-item-name">${s.isAutosave ? '🔄 ' : ''}${escapeSaveName(s.name)}</span>
-                        <span class="save-select-item-time">${s.savedAt ? new Date(s.savedAt).toLocaleString('ko-KR') : '-'}</span>
-                    </button>
+                <div class="save-select-row">
+                    <button class="save-fav-btn${isFav ? ' on' : ''}" onclick="toggleFavorite('${s.id}')" title="${isFav ? '즐겨찾기 해제' : '즐겨찾기'}" aria-pressed="${isFav}">${isFav ? '★' : '☆'}</button>
+                    <div class="save-select-item preset-card save-card${s.isAutosave ? ' save-select-item-auto' : ''}">
+                        <button class="save-card-main" onclick="continueSave('${s.id}')">
+                            <span class="preset-card-top">
+                                <span class="save-select-item-name">${s.isAutosave ? '🔄 ' : ''}${escapeSaveName(s.name)}</span>
+                                ${ingame ? `<span class="preset-card-date">${escapeSaveName(ingame)}</span>` : ''}
+                            </span>
+                            <span class="preset-card-desc">${saveRealTime(s.savedAt)}</span>
+                        </button>
+                        ${companion ? `
+                            <div class="save-card-sep"></div>
+                            <button class="save-card-auto" onclick="continueSave('${companion.id}')" title="이 세이브의 자동저장에서 이어하기">
+                                <span>🔄 자동저장</span>
+                                <span class="save-select-item-time">${saveRealTime(companion.savedAt)}</span>
+                            </button>` : ''}
+                    </div>
                     <button class="save-del-btn" onclick="deleteSaveFromMenu(event, '${s.id}')" title="삭제 (Shift+클릭: 확인 없이 바로 삭제)" aria-label="삭제">${TRASH_ICON}</button>
                 </div>`;
             }).join('');
+        }
+
+        // 세이브 안의 게임 속 날짜 (연호 · 연 · 월 · 일) — 날짜를 정하지 않은 세이브는 빈칸
+        function saveIngameDate(state) {
+            const c = state?.config || {};
+            if(!c.nationDateYear) return '';
+            const era = c.nationDateEra ? c.nationDateEra + ' ' : '';
+            return `${era}${c.nationDateYear}년${c.nationDateMonth ? ` ${c.nationDateMonth}월` : ''}${c.nationDateDay ? ` ${c.nationDateDay}일` : ''}`;
+        }
+        // 실제로 저장한 시각 (현실 시간)
+        function saveRealTime(iso) {
+            if(!iso) return '-';
+            const lang = typeof getLang === 'function' ? getLang() : 'ko';
+            return new Date(iso).toLocaleString(lang === 'en' ? 'en-US' : 'ko-KR');
         }
 
         // ===== 세이브 삭제 (휴지통) — 그냥 클릭은 확인창, Shift+클릭은 바로 삭제 =====
