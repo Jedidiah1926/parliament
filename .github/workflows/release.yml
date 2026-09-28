@@ -1,12 +1,18 @@
 # Windows 데스크톱 앱 빌드 → GitHub Release에 올리기
-# v로 시작하는 태그(예: v1.5.7-obt)를 올리면 Windows 서버에서 설치 프로그램(.exe)과 포터블(.zip)을 만들어
-# 같은 이름의 Release를 만들고 파일을 붙인다. 태그에 -obt / -beta 등이 붙으면 "사전 출시(pre-release)"로 표시.
+# v로 시작하는 태그(예: v1.5.7-obt)를 올리거나, Actions 탭에서 "Run workflow"로 태그 이름을 넣고 실행하면
+# Windows 서버에서 설치 프로그램(.exe)과 포터블(.zip)을 만들어 그 태그의 Release를 만들고 파일을 붙인다
+# (수동 실행이면 태그도 새로 만든다). 태그에 -obt / -beta 등이 붙으면 "사전 출시(pre-release)"로 표시.
 name: Release (Windows)
 
 on:
   push:
     tags: ['v*']
   workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release 태그 이름 (예: v1.5.7-obt)'
+        required: true
+        default: 'v1.5.7-obt'
 
 permissions:
   contents: write
@@ -30,11 +36,13 @@ jobs:
           CSC_IDENTITY_AUTO_DISCOVERY: 'false'
 
       - name: Publish release
-        if: startsWith(github.ref, 'refs/tags/')
+        if: startsWith(github.ref, 'refs/tags/') || inputs.tag != ''
         uses: softprops/action-gh-release@v2
         with:
-          name: Hemicycle ${{ github.ref_name }}
-          prerelease: ${{ contains(github.ref_name, '-') }}
+          tag_name: ${{ inputs.tag || github.ref_name }}
+          target_commitish: ${{ github.sha }}
+          name: Hemicycle ${{ inputs.tag || github.ref_name }}
+          prerelease: ${{ contains(inputs.tag || github.ref_name, '-') }}
           body_path: .github/release-notes.md
           files: |
             dist/*.exe
