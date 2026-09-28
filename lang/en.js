@@ -6757,6 +6757,22 @@ window.DnoLangPacks.en = {
   [
    "탭 바 오른쪽 끝 \"저장\" 버튼으로 여는 창. 지금 저장(Ctrl+S), 자동저장과 주기, 세이브 목록(즐겨찾기 · 이름 바꾸기 · 삭제), 다른 이름으로 저장, 파일(.hemi)로 저장 · 불러오기, 자동저장 초기화.",
    "Opened with the \"Save\" button at the right end of the tab bar. Save now (Ctrl+S), autosave and interval, the save list (favorites · rename · delete), save as, save to / load from file (.hemi), and resetting autosave."
+  ],
+  [
+   "당선 정당 직접 지정",
+   "Assign winners manually"
+  ],
+  [
+   "— 선거 없이 이 지역구 의석을 정합니다 (선거를 돌리면 선거 결과로 바뀜)",
+   "— set this district's seats without an election (running an election replaces them)"
+  ],
+  [
+   "— 비어 있음 —",
+   "— empty —"
+  ],
+  [
+   "지도에 의석 수 숫자 박스 표시",
+   "Show seat-count boxes on the map"
   ]
  ]
 };
