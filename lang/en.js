@@ -6805,6 +6805,38 @@ window.DnoLangPacks.en = {
   [
    "권역 하나를 여러 명을 뽑는 선거구로 씁니다 (예: 일본 참의원의 도도부현 선거구). 의석 수와 정당별 당선 의석을 직접 정하면 정당 의석에 바로 반영되고, 선거를 돌려도 비례 의석과 겹치지 않게 따로 유지됩니다.",
    "Use a region as one multi-member constituency (e.g. the prefectural districts of Japan's House of Councillors). Set its seats and each party's winners directly; they count toward party seats right away and are kept separate from list seats when an election runs."
+  ],
+  [
+   "- 숨겨진 정부 형태: 전제군주정 — 왕이 총리 임명 · 거부권 · 비상 권한을 가짐",
+   "- Hidden government form: autocratic monarchy — the monarch appoints the PM and holds the veto and emergency powers"
+  ],
+  [
+   "- 친위 쿠데타(입헌군주제 → 전제군주정) · 공화 혁명(군주제 폐지)",
+   "- Self-coup (constitutional → autocratic monarchy) · republican revolution (abolishing the monarchy)"
+  ],
+  [
+   "- 숨겨진 정부 형태: 전제군주정",
+   "- Hidden government form: autocratic monarchy"
+  ],
+  [
+   "- 상임위원회 추가 — 법안이 본회의 전에 소관 상임위원회 심사를 거침",
+   "- Standing committees — bills are reviewed by the relevant committee before the plenary vote"
+  ],
+  [
+   "- 냉전 국가 순위 — 꾸밈용 (기능 없음)",
+   "- Cold War country ranking — decorative only (no gameplay effect)"
+  ],
+  [
+   "- 조문식 입법 기록",
+   "- Article-style legislative record"
+  ],
+  [
+   "- 헌법 · 개정안",
+   "- Constitution · amendments"
+  ],
+  [
+   "- 법안 조항 · 상임위원회",
+   "- Bill articles · standing committees"
   ]
  ]
 };
