@@ -344,10 +344,12 @@
                 return;
             }
             container.innerHTML = list.map((p, i) => `
-                <button class="save-select-item preset-card${p.tutorial ? ' preset-card-tutorial' : ''}" onclick="startFromPreset(${i})">
+                <button class="save-select-item preset-card${p.tutorial ? ' preset-card-tutorial' : ''}${p.comingSoon ? ' preset-card-soon' : ''}" ${p.comingSoon ? 'disabled' : `onclick="startFromPreset(${i})"`}>
                     <span class="preset-card-top">
                         <span class="save-select-item-name">${escapeSaveName(p.title)}</span>
                         ${p.tutorial ? '<span class="preset-badge">튜토리얼</span>' : ''}
+                        ${p.comingSoon ? '<span class="preset-badge preset-badge-soon">준비 중</span>' : ''}
+                        ${p.date ? `<span class="preset-card-date">${escapeSaveName(p.date)}</span>` : ''}
                     </span>
                     ${p.description ? `<span class="preset-card-desc">${escapeSaveName(p.description)}</span>` : ''}
                 </button>`).join('');
@@ -393,7 +395,7 @@
         async function startFromPreset(index) {
             const list = window.DnoPresets ? await DnoPresets.list() : [];
             const preset = list[index];
-            if(!preset) return;
+            if(!preset || preset.comingSoon) return;
             if(namedSlotCount() >= MAX_SAVE_SLOTS) { alert(`저장 슬롯은 최대 ${MAX_SAVE_SLOTS}개까지 만들 수 있습니다. 기존 세이브를 삭제한 뒤 다시 시도하세요.`); return; }
             try {
                 sessionStorage.setItem('dnoBootPresetId', preset.id);

@@ -1466,3 +1466,6 @@ html[data-ui-mode="mobile"] .save-panel { max-height: calc(100vh - 56px - var(--
         html[data-app-mode="logo"] body { padding-top: 20px !important; }
         html[data-app-mode="logo"][data-ui-mode="mobile"] .mobile-panel-switch { top: 0; }
         .gov-hl-color > label.gov-hl-glow { display: flex; align-items: center; gap: 6px; margin: 8px 0 0; color: #aaa; cursor: pointer; }
+        .save-tab-preset-date { color: #777; font-size: 0.75rem; margin-left: 6px; }
+        .save-tab-preset-soon { opacity: .5; cursor: default; }
+        .save-tab-preset-soon:hover { color: inherit !important; background: transparent !important; }

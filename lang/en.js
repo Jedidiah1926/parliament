@@ -6789,6 +6789,10 @@ window.DnoLangPacks.en = {
   [
    "일본국",
    "Japan"
+  ],
+  [
+   "준비 중",
+   "Coming soon"
   ]
  ]
 };

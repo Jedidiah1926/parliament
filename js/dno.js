@@ -5874,7 +5874,9 @@
                 wrap.innerHTML = `<div class="save-tab-preset-empty">등록된 프리셋이 없습니다</div>`;
                 return;
             }
-            wrap.innerHTML = list.map((p, i) => `<div class="save-tab-preset-item" onclick="selectPresetForNewTab(${i})">${escapeHtmlText(p.title)}</div>`).join('');
+            wrap.innerHTML = list.map((p, i) => p.comingSoon
+                ? `<div class="save-tab-preset-item save-tab-preset-soon" title="준비 중">${escapeHtmlText(p.title)} <span class="save-tab-preset-date">준비 중</span></div>`
+                : `<div class="save-tab-preset-item" onclick="selectPresetForNewTab(${i})">${escapeHtmlText(p.title)}${p.date ? ` <span class="save-tab-preset-date">${escapeHtmlText(p.date)}</span>` : ''}</div>`).join('');
         }
 
         // 닫아 둔 탭(세이브) 다시 열기 — 목록에서 고르면 그 탭을 다시 띄우고 바로 전환
