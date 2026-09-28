@@ -4920,6 +4920,7 @@
                     presElectionLastResult: presElectionLastResult ? JSON.parse(JSON.stringify(presElectionLastResult)) : null,
                     pmElectionLastResult: pmElectionLastResult ? JSON.parse(JSON.stringify(pmElectionLastResult)) : null,
                     presElectionCandidateOverrides: JSON.parse(JSON.stringify(presElectionCandidateOverrides)),
+                    candidateUnions: JSON.parse(JSON.stringify(candidateUnions)),
                     electionKind: electionKind,
                     presElecTitle:  document.getElementById('presElecTitle')?.value || '',
                     presElecYear:   document.getElementById('presElecYear')?.value  || '',
@@ -4934,6 +4935,8 @@
                         members: JSON.parse(JSON.stringify(districtMembers)),
                         mapMode: districtMapMode,
                         svgMap: districtSvgMap ? JSON.parse(JSON.stringify(districtSvgMap)) : null,
+                        svgSplit: { ...districtSvgSplit },
+                        svgMaps: JSON.parse(JSON.stringify(districtSvgMaps)),
                         seatCounts: JSON.parse(JSON.stringify(districtSeatCounts)),
                         svgTendency: JSON.parse(JSON.stringify(districtSvgTendency)),
                         abbr: JSON.parse(JSON.stringify(districtAbbr)),
@@ -5047,6 +5050,8 @@
             presElectionLastResult = elec.presElectionLastResult ?? null;
             pmElectionLastResult = elec.pmElectionLastResult ?? null;
             presElectionCandidateOverrides = (elec.presElectionCandidateOverrides && typeof elec.presElectionCandidateOverrides === 'object') ? elec.presElectionCandidateOverrides : {};
+            candidateUnions = Array.isArray(elec.candidateUnions) ? elec.candidateUnions.filter(u => u && Array.isArray(u.partyIds))
+                .map(u => ({ id: String(u.id || ('u' + Math.random().toString(36).slice(2, 8))), name: String(u.name || ''), partyIds: u.partyIds, pres: u.pres !== false, district: u.district !== false })) : [];
             electionKind = elec.electionKind === 'pm' ? 'pm' : 'member';
             if(ge('presElecTitle')) ge('presElecTitle').value = elec.presElecTitle || '';
             if(ge('presElecYear'))  ge('presElecYear').value  = elec.presElecYear  || '';
@@ -5065,6 +5070,8 @@
             districtMembers = elec.district?.members ? { house:{}, senate:{}, third:{}, ...elec.district.members } : { house:{}, senate:{}, third:{} };
             districtMapMode = 'svg'; // 지역구는 지도 방식 하나만 (그리드는 삭제) — 예전 그리드 세이브는 아래에서 변환
             districtSvgMap = elec.district?.svgMap || null;
+            districtSvgSplit = { senate: !!elec.district?.svgSplit?.senate, third: !!elec.district?.svgSplit?.third };
+            districtSvgMaps = { senate: elec.district?.svgMaps?.senate || null, third: elec.district?.svgMaps?.third || null };
             districtSeatCounts = elec.district?.seatCounts || {};
             districtSvgTendency = elec.district?.svgTendency || {};
             districtAbbr = elec.district?.abbr || {};
@@ -6409,6 +6416,12 @@
             if(!hasSenate && districtChamber === 'senate') districtSetChamber('house');
             if(!hasThird && districtChamber === 'third') districtSetChamber('house');
             // 존재하지 않는 의원실의 지역구 데이터 자체를 삭제 (뉴 지역구는 지도 자체는 유지, 그 원의 의석 수만 0으로)
+            // 없어진 원이 따로 쓰던 지역구 지도는 함께 정리
+            [['senate', hasSenate], ['third', hasThird]].forEach(([c, has]) => {
+                if(has || !districtSvgSplit[c]) return;
+                districtDropSplitKeys(c);
+                districtSvgSplit[c] = false; districtSvgMaps[c] = null; districtOrder[c] = [];
+            });
             if(!hasSenate && districtGrid.senate && Object.keys(districtGrid.senate).length > 0) {
                 districtGrid.senate = {};
                 districtMembers.senate = {};
@@ -7122,6 +7135,7 @@
                     const regionTitle = r => `${r.name}: ` + Object.entries(r.seatResults).filter(([, n]) => n > 0).sort((a, b) => b[1] - a[1])
                         .map(([pid, n]) => `${parties.find(p => String(p.id) === String(pid))?.name || '?'} ${n}석`).join(' · ');
                     renderDistrictSvgInto(svgWrap, {
+                        chamber,
                         getFill: key => { const r = regionOf(key); return r ? regionFill(r) : result.getFill(key); },
                         title: key => { const r = regionOf(key); return r ? regionTitle(r) : result.getTitle(key); },
                         seatBadges: result.getBadges, defs: result.defs });
@@ -7742,6 +7756,12 @@
                 if(presElectionCandidateOverrides[p.id] && !presElectionCandidateOverrides[target.id]) presElectionCandidateOverrides[target.id] = presElectionCandidateOverrides[p.id];
                 delete presElectionCandidateOverrides[p.id];
             });
+            // 후보 단일화: 합쳐진 정당 자리를 새 정당이 이어받는다
+            candidateUnions.forEach(u => {
+                if(!u.partyIds.some(id => srcIds.has(id))) return;
+                u.partyIds = u.partyIds.filter(id => !srcIds.has(id) && id !== target.id);
+                u.partyIds.push(target.id);
+            });
 
             // 정당 목록에서 합쳐진 정당 제거, 새 정당은 첫 번째로 합쳐진 정당 자리에
             const firstIdx = parties.findIndex(p => srcIds.has(p.id));
@@ -8161,8 +8181,9 @@
         function fraudDistrictOptionsHtml(chamber, selected) {
             const sel = new Set(selected || []);
             if(districtMapMode === 'svg') {
-                if(!districtSvgMap) return '';
-                return districtSvgMap.shapes.filter(s => districtGrid[chamber]?.[s.key]).map(s =>
+                const map = districtSvgMapFor(chamber);
+                if(!map) return '';
+                return map.shapes.filter(s => districtGrid[chamber]?.[s.key]).map(s =>
                     `<option value="${s.key}" ${sel.has(s.key)?'selected':''}>${districtNames.house[s.key]||s.key}</option>`
                 ).join('');
             }
@@ -9116,7 +9137,7 @@
                 if(!pmDirectElectionEnabled && electionKind === 'pm') electionKind = 'member';
                 setElectionKind(electionKind);
             }
-            if(inner === 'settings') applyPresElectionChamberRestrictions();
+            if(inner === 'settings') { applyPresElectionChamberRestrictions(); renderCandidateUnions(); }
         }
 
         // 총선 탭 내부에서 "의원 선거"(기존 총선)와 "총리 선거"(총리직선제 활성화 시) 중 선택
@@ -9181,9 +9202,130 @@
 
         // 대선/총리선거 후보 명단 — 기준 원에 참여 중이고 활동 금지되지 않은 정당들 (무소속도 정당 탭에서
         // "무소속" 항목을 추가해두었다면 다른 정당과 동일하게 후보로 출마 가능)
-        function presElectionCandidates() {
+
+        // ===== 후보 단일화 — 선거 전에 여러 정당의 후보를 한 명으로 합쳐 출마 =====
+        // candidateUnions = [{ id, name, partyIds:[...], pres: 대선·총리 선거에 적용, district: 총선 지역구에 적용 }]
+        // 한 정당은 단일화 하나에만 들어갈 수 있고, 두 정당 이상 모여야 효력이 있다.
+        //   대선·총리 선거: 기준 원 지지율이 가장 높은 정당의 후보가 나서고, 참여 정당의 지지율을 모두 합쳐 받는다
+        //   총선 지역구: 지역구마다 성향이 가장 높은 참여 정당이 후보를 내고, 참여 정당의 성향을 합쳐 받는다 (비례 투표는 따로)
+        let candidateUnions = [];
+        function candidateUnionMembers(u) {
+            return (u?.partyIds || []).map(id => parties.find(p => String(p.id) === String(id))).filter(Boolean);
+        }
+        function activeCandidateUnions(scope) {
+            return candidateUnions.filter(u => u[scope] && candidateUnionMembers(u).length >= 2);
+        }
+        function candidateUnionOf(partyId, scope) {
+            return activeCandidateUnions(scope).find(u => u.partyIds.some(id => String(id) === String(partyId))) || null;
+        }
+        function candidateUnionLabel(u) {
+            return u.name?.trim() || candidateUnionMembers(u).map(p => p.name).join(' · ');
+        }
+        // 정당별 점수 표 { partyId: 값 }에 단일화를 적용 — 참여 정당 중 가장 높은 정당에게 합계를 몰아주고 나머지는 0
+        // 반환: { scores, withdrawn:Set(후보를 내지 않은 정당 id) }
+        function applyCandidateUnions(scores, scope) {
+            const out = { ...scores };
+            const withdrawn = new Set();
+            activeCandidateUnions(scope).forEach(u => {
+                const members = candidateUnionMembers(u).filter(p => p.id in out);
+                if(members.length < 2) return;
+                const lead = members.reduce((best, p) => (out[p.id] || 0) > (out[best.id] || 0) ? p : best, members[0]);
+                const total = members.reduce((sum, p) => sum + (out[p.id] || 0), 0);
+                members.forEach(p => { if(p !== lead) { out[p.id] = 0; withdrawn.add(String(p.id)); } });
+                out[lead.id] = total;
+            });
+            return { scores: out, withdrawn };
+        }
+        function addCandidateUnion() {
+            candidateUnions.push({ id: 'u' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), name: '', partyIds: [], pres: true, district: true });
+            renderCandidateUnions();
+        }
+        function removeCandidateUnion(id) {
+            candidateUnions = candidateUnions.filter(u => u.id !== id);
+            renderCandidateUnions();
+        }
+        function updateCandidateUnion(id, field, value) {
+            const u = candidateUnions.find(x => x.id === id);
+            if(!u) return;
+            u[field] = value;
+            if(field !== 'name') renderCandidateUnions();
+        }
+        function toggleCandidateUnionParty(id, partyId, on) {
+            const u = candidateUnions.find(x => x.id === id);
+            if(!u) return;
+            const pid = String(partyId);
+            if(on) {
+                // 다른 단일화에 있던 정당이면 그쪽에서 빼 온다
+                candidateUnions.forEach(x => { x.partyIds = x.partyIds.filter(v => String(v) !== pid); });
+                const party = parties.find(p => String(p.id) === pid);
+                if(party) u.partyIds.push(party.id);
+            } else {
+                u.partyIds = u.partyIds.filter(v => String(v) !== pid);
+            }
+            renderCandidateUnions();
+        }
+        function renderCandidateUnions() {
+            const box = document.getElementById('candidateUnionList');
+            if(!box) return;
+            // 없어진 정당은 목록에서 정리
+            candidateUnions.forEach(u => { u.partyIds = u.partyIds.filter(id => parties.some(p => String(p.id) === String(id))); });
+            if(!candidateUnions.length) {
+                box.innerHTML = '<div style="color:#555;font-size:0.78rem;margin-bottom:6px;">단일화한 정당이 없습니다</div>';
+            } else {
+                box.innerHTML = candidateUnions.map(u => {
+                    const members = candidateUnionMembers(u);
+                    const inOther = pid => candidateUnions.some(x => x !== u && x.partyIds.some(v => String(v) === String(pid)));
+                    return `
+                    <div class="cand-union" style="border:1px solid #2a2a2a;background:#0a0c10;padding:8px;margin-bottom:8px;">
+                        <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px;">
+                            <input type="text" value="${escapeHtmlText(u.name || '')}" placeholder="단일화 이름 (비우면 정당 이름을 이어 붙임)"
+                                style="flex:1;min-width:0;box-sizing:border-box;background:#000;border:1px solid #333;color:var(--tno-text);font-family:inherit;font-size:0.85rem;padding:5px 6px;"
+                                onchange="updateCandidateUnion('${u.id}','name',this.value)">
+                            <button onclick="removeCandidateUnion('${u.id}')" style="background:transparent;border:1px solid #663333;color:#cc6666;font-family:inherit;font-size:0.75rem;padding:4px 8px;cursor:pointer;white-space:nowrap;">단일화 해제</button>
+                        </div>
+                        <div style="display:flex;flex-wrap:wrap;gap:4px 10px;margin-bottom:6px;">
+                            ${parties.map(p => {
+                                const on = u.partyIds.some(v => String(v) === String(p.id));
+                                return `<label style="display:flex;align-items:center;gap:4px;font-size:0.8rem;color:${on ? 'var(--tno-text)' : '#777'};cursor:pointer;" title="${inOther(p.id) ? '다른 단일화에서 옮겨 옵니다' : ''}">
+                                    <input type="checkbox" ${on ? 'checked' : ''} onchange="toggleCandidateUnionParty('${u.id}','${p.id}',this.checked)">
+                                    <span style="width:8px;height:8px;border-radius:50%;background:${p.color};flex-shrink:0;"></span>${escapeHtmlText(p.name)}${inOther(p.id) ? ' <span style="color:#555;">*</span>' : ''}
+                                </label>`;
+                            }).join('')}
+                        </div>
+                        <div style="display:flex;flex-wrap:wrap;gap:4px 12px;font-size:0.78rem;color:#888;">
+                            <label style="display:flex;align-items:center;gap:4px;cursor:pointer;"><input type="checkbox" ${u.pres ? 'checked' : ''} onchange="updateCandidateUnion('${u.id}','pres',this.checked)"> 대선 · 총리 선거</label>
+                            <label style="display:flex;align-items:center;gap:4px;cursor:pointer;"><input type="checkbox" ${u.district ? 'checked' : ''} onchange="updateCandidateUnion('${u.id}','district',this.checked)"> 총선 지역구</label>
+                        </div>
+                        ${members.length < 2 ? '<div style="color:#886644;font-size:0.72rem;margin-top:4px;">두 정당 이상 골라야 단일화가 적용됩니다</div>' : ''}
+                    </div>`;
+                }).join('');
+            }
+            renderElectionCandidatesConfig();
+        }
+
+        function presElectionEligible() {
             const ch = presElectionChamberBasis;
             return parties.filter(p => p[inKeyFor(ch)] && p.status !== 'banned');
+        }
+        // 후보 단일화로 후보를 내지 않는 정당은 빼고, 단일화 후보는 참여 정당 중 기준 원 지지율이 가장 높은 정당의 후보
+        function presElectionCandidates() {
+            const eligible = presElectionEligible();
+            const store = elecStore[presElectionChamberBasis] || {};
+            const probs = Object.fromEntries(eligible.map(p => [p.id, store[p.id]?.prob || 0]));
+            const { withdrawn } = applyCandidateUnions(probs, 'pres');
+            return eligible.filter(p => !withdrawn.has(String(p.id)));
+        }
+        // 단일화 후보가 받는 지지율 — 같은 단일화에 든 (후보 자격 있는) 정당의 지지율 합
+        function presUnionProb(party, store) {
+            const u = candidateUnionOf(party.id, 'pres');
+            if(!u) return store[party.id]?.prob || 0;
+            const eligibleIds = new Set(presElectionEligible().map(p => String(p.id)));
+            return candidateUnionMembers(u).filter(p => eligibleIds.has(String(p.id))).reduce((sum, p) => sum + (store[p.id]?.prob || 0), 0);
+        }
+        // 결과 표시용 — 단일화 후보면 "(A당 · B당 단일화)"처럼 참여 정당을 함께 보여 준다
+        function presUnionPartyLabel(party) {
+            const u = party ? candidateUnionOf(party.id, 'pres') : null;
+            return u ? `${candidateUnionLabel(u)} 단일 후보` : (party?.name || '');
         }
 
         // 각 정당의 실제 후보 — 기본은 당수, 후보 설정에서 의원 연결/직접 입력으로 재지정 가능
@@ -9272,7 +9414,7 @@
             const store = elecStore[chamberBasis] || {};
             const weighted = candidates.map(p => {
                 const st = store[p.id] || { prob:0, err:0 };
-                const w = Math.max(0, st.prob + (Math.random()*2-1)*(st.err||0));
+                const w = Math.max(0, presUnionProb(p, store) + (Math.random()*2-1)*(st.err||0));
                 return { partyId: p.id, w };
             });
             const total = weighted.reduce((s,c) => s+c.w, 0);
@@ -9289,9 +9431,15 @@
             const results = elecSimulateDistricts(chamberBasis); // [{key, partyId}]
             const electorCounts = {};
             let totalElectors = 0;
+            // 단일화에 든 정당이 가져간 선거인단은 그 단일화의 후보에게
+            const unionCandidate = pid => {
+                const u = candidateUnionOf(pid, 'pres');
+                return u ? (candidates.find(c => u.partyIds.some(id => String(id) === String(c.id)))?.id ?? pid) : pid;
+            };
             results.forEach(r => {
-                if(!candidateIds.has(r.partyId)) return; // 후보 자격 없는 정당(무소속/활동금지)이 가져간 지역구는 집계 제외
-                electorCounts[r.partyId] = (electorCounts[r.partyId]||0) + 1;
+                const pid = unionCandidate(r.partyId);
+                if(!candidateIds.has(pid)) return; // 후보 자격 없는 정당(무소속/활동금지)이 가져간 지역구는 집계 제외
+                electorCounts[pid] = (electorCounts[pid]||0) + 1;
                 totalElectors++;
             });
             return candidates.map(p => ({ partyId: p.id, electors: electorCounts[p.id]||0, pct: totalElectors>0 ? (electorCounts[p.id]||0)/totalElectors*100 : 0 }));
@@ -9368,7 +9516,7 @@
                 return `
                     <div style="display:flex;align-items:center;gap:8px;padding:6px 8px;background:${isWinner?'color-mix(in srgb, var(--tno-neon) 10%, transparent)':'#0a0c10'};border:1px solid ${isWinner?'var(--tno-neon)':'#222'};margin-bottom:4px;">
                         <span style="width:9px;height:9px;border-radius:50%;flex-shrink:0;background:${party?.color||'#666'};"></span>
-                        <span style="flex:1;color:${isWinner?'var(--tno-neon)':'#ccc'};font-size:0.88rem;">${candidate?.name || party?.name || '(후보 없음)'} <span style="color:#666;font-size:0.78rem;">(${party?.name||''})</span></span>
+                        <span style="flex:1;color:${isWinner?'var(--tno-neon)':'#ccc'};font-size:0.88rem;">${candidate?.name || party?.name || '(후보 없음)'} <span style="color:#666;font-size:0.78rem;">(${escapeHtmlText(presUnionPartyLabel(party))})</span></span>
                         <span style="color:${isWinner?'var(--tno-neon)':'#888'};font-size:0.85rem;">${valLabel}</span>
                         ${isWinner?'<span style="color:var(--tno-neon);font-size:0.8rem;">★ 당선</span>':''}
                     </div>
@@ -9586,8 +9734,26 @@
 
         // ── 뉴 지역구 (SVG 기반 지도, 하원/상원/삼원이 하나의 지도를 공유) ──────────────
         let districtMapMode = 'svg'; // 'hex'(그리드, 구 지역구) | 'svg'(뉴 지역구, 기본값) — 지역구 시스템 전체의 방식
-        // districtSvgMap = { viewBox, strokeColor, shapes:[{key, tag, attrs:{...}}] } | null — 세 원 공용
+        // districtSvgMap = { viewBox, strokeColor, shapes:[{key, tag, attrs:{...}}] } | null — 하원 지도 (상원 · 삼원도 기본은 이 지도를 함께 씀)
         let districtSvgMap = null;
+        // 원별 지역구 분리 — 상원 · 삼원이 하원 지도를 함께 쓸지(공유), 자기 지도를 따로 쓸지(분리)
+        // 분리한 원의 지도는 districtSvgMaps[ch]에 두고, 도형 키 앞에 "@원/"을 붙여 하원 지도의 지역구와 겹치지 않게 한다
+        let districtSvgSplit = { senate: false, third: false };
+        let districtSvgMaps = { senate: null, third: null };
+        function districtSvgMapFor(ch) {
+            return (ch === 'senate' || ch === 'third') && districtSvgSplit[ch] ? districtSvgMaps[ch] : districtSvgMap;
+        }
+        const districtSplitPrefix = ch => '@' + ch + '/';
+        // 지역구 키가 속한 지도의 주인 원 — 분리한 원의 지도면 그 원, 아니면 하원(공용 지도)
+        function districtKeyOwner(key) {
+            const m = /^@(senate|third)\//.exec(String(key));
+            return m ? m[1] : 'house';
+        }
+        // 이 지역구(키)가 들어 있는 지도를 쓰는 원 목록
+        function districtChambersForKey(key) {
+            const owner = districtKeyOwner(key);
+            return chamberList().filter(ch => ch === owner || (owner === 'house' && !districtSvgSplit[ch]));
+        }
         // districtSeatCounts[key] = { house, senate, third } — 그 지역구가 각 원에 배정하는 의석 수 (0이면 그 원엔 참여 안 함)
         let districtSeatCounts = {};
         // 원별 지역구 의석 결과 { house: { key: { partyId: 의석 수 } } } — null이면 그 원의 마지막 선거 기록에서 계산.
@@ -9636,7 +9802,7 @@
         // (지역구 편집 패널·의회 화면 지역구 보기·선거 결과 지역구 보기가 모두 이 함수를 공유)
         function renderDistrictSvgInto(wrapEl, opts = {}) {
             if(!wrapEl) return;
-            const map = districtSvgMap;
+            const map = districtSvgMapFor(opts.chamber || 'house');
             wrapEl.innerHTML = '';
             if(!map || !Array.isArray(map.shapes) || map.shapes.length === 0) {
                 wrapEl.innerHTML = '<div style="text-align:center;color:#444;font-size:0.85rem;padding:30px 10px;">SVG 지도가 없습니다 — 지역구 탭에서 업로드하세요</div>';
@@ -10052,6 +10218,7 @@
                 districtInitSvgPanZoom(svgWrap);
                 // SVG 지역구는 도형이 파일에서 이미 정해져 있으므로 추가/제거 모드가 없고, 클릭하면 항상 편집 패널이 열림
                 renderDistrictSvgInto(svgWrap, {
+                    chamber: districtChamber,
                     clickable: true,
                     getFill: key => key === selectedDistrictKey ? 'rgba(255,215,0,0.25)' : 'transparent',
                     title: key => (districtNames.house[key] || key) + (districtPopulation.house[key] != null ? ` · 인구 ${districtPopulation.house[key].toLocaleString()}` : ''),
@@ -10064,7 +10231,7 @@
                     panZoom: districtSvgView
                 });
                 const cntEl = document.getElementById('districtCount');
-                if(cntEl) cntEl.textContent = `${districtSvgMap?.shapes?.length||0}개 지역구 (SVG)`;
+                if(cntEl) cntEl.textContent = `${districtSvgMapFor(districtChamber)?.shapes?.length||0}개 지역구 (SVG)`;
             } else {
                 districtDrawCanvas();
             }
@@ -10094,6 +10261,7 @@
             selectedDistrictKey = null;
             const namePanel = document.getElementById('districtNamePanel');
             if(namePanel) namePanel.style.display = 'none';
+            districtUpdateModeUI();
             districtRenderMap();
         }
 
@@ -10104,9 +10272,24 @@
             const svgUI = document.getElementById('districtSvgEditUI');
             if(hexUI) hexUI.style.display = isSvg ? 'none' : '';
             if(svgUI) svgUI.style.display = isSvg ? '' : 'none';
-            // 지도(SVG) 방식은 세 원이 지도 하나를 공유하므로 "하원/상원/삼원 지역구" 선택 버튼이 필요 없음
+            // 지도(SVG) 방식에서도 원이 둘 이상이면 원을 골라 그 원이 쓸 지도(하원과 공유 · 따로)를 정한다
+            const multi = chamberList().length > 1;
+            if(isSvg && !chamberList().includes(districtChamber)) districtChamber = 'house';
             const chamberSelectRow = document.getElementById('districtChamberSelectRow');
-            if(chamberSelectRow) chamberSelectRow.style.display = isSvg ? 'none' : '';
+            if(chamberSelectRow) chamberSelectRow.style.display = (!isSvg || multi) ? 'flex' : 'none';
+            const shareRow = document.getElementById('districtMapShareRow');
+            if(shareRow) {
+                const showShare = isSvg && districtChamber !== 'house';
+                shareRow.style.display = showShare ? '' : 'none';
+                if(showShare) {
+                    const sharedBtn = document.getElementById('districtMapShareBtnShared');
+                    if(sharedBtn) sharedBtn.textContent = `${chamberDisplayName('house')} 지도 공유`;
+                    const split = !!districtSvgSplit[districtChamber];
+                    document.getElementById('districtMapShareBtnShared')?.classList.toggle('active', !split);
+                    document.getElementById('districtMapShareBtnSplit')?.classList.toggle('active', split);
+                }
+            }
+            const districtSvgMap = districtSvgMapFor(districtChamber); // 아래 표시는 지금 고른 원이 쓰는 지도 기준
 
 
             const info = document.getElementById('districtSvgInfo');
@@ -10162,11 +10345,175 @@
             return { viewBox, shapes };
         }
 
+        // ===== 원별 지역구 분리 =====
+        // 지역구 표시 이름 — 따로 쓰는 원의 지도 키는 앞의 "@원/"을 떼고 보여 준다
+        function districtShapeLabel(key) {
+            const k = String(key);
+            return districtKeyOwner(k) === 'house' ? k : k.slice(districtSplitPrefix(districtKeyOwner(k)).length);
+        }
+        // 한 원의 지역구 데이터(키 → 값)를 옮기거나 지운다 — 공유 ↔ 분리 전환에 사용
+        function districtMoveChamberKey(ch, fromKey, toKey) {
+            const moveIn = (store) => {
+                if(!store) return;
+                if(toKey && store[fromKey] !== undefined) store[toKey] = store[fromKey];
+                delete store[fromKey];
+            };
+            if(toKey) {
+                districtSeatCounts[toKey] = districtSeatCounts[toKey] || { house:0, senate:0, third:0 };
+                districtSeatCounts[toKey][ch] = districtSeatCounts[fromKey]?.[ch] || 0;
+                if(districtSeatCounts[toKey][ch] > 0) districtGrid[ch][toKey] = true;
+                const tend = districtSvgTendency[fromKey]?.[ch];
+                if(tend) {
+                    districtSvgTendency[toKey] = districtSvgTendency[toKey] || { house:{}, senate:{}, third:{} };
+                    districtSvgTendency[toKey][ch] = tend;
+                }
+            }
+            if(districtSeatCounts[fromKey]) districtSeatCounts[fromKey][ch] = 0;
+            if(districtSvgTendency[fromKey]) delete districtSvgTendency[fromKey][ch];
+            delete districtGrid[ch][fromKey];
+            moveIn(districtMembers[ch]);
+            moveIn(districtRegionMap[ch]);
+            moveIn(districtSeatResults[ch]);
+            if(toKey) {
+                // 이름 · 인구 · 약칭은 지도에 딸린 값이라 복사 (원래 지역구에도 그대로 남김)
+                ['house','senate','third'].forEach(c => {
+                    if(districtNames[c]?.[fromKey] !== undefined) districtNames[c][toKey] = districtNames[c][fromKey];
+                });
+                if(districtPopulation.house?.[fromKey] != null) districtPopulation.house[toKey] = districtPopulation.house[fromKey];
+                if(districtPopulation[ch]?.[fromKey] != null) districtPopulation[ch][toKey] = districtPopulation[ch][fromKey];
+                if(districtAbbr[fromKey] !== undefined) districtAbbr[toKey] = districtAbbr[fromKey];
+            }
+        }
+        // 따로 쓰는 원의 지역구 키를 전부 지운다
+        function districtDropSplitKeys(ch) {
+            const prefix = districtSplitPrefix(ch);
+            const keys = new Set([...(districtSvgMaps[ch]?.shapes || []).map(s => s.key), ...Object.keys(districtSeatCounts).filter(k => k.startsWith(prefix))]);
+            keys.forEach(k => {
+                delete districtSeatCounts[k]; delete districtSvgTendency[k]; delete districtAbbr[k];
+                ['house','senate','third'].forEach(c => {
+                    delete districtGrid[c][k]; delete districtNames[c][k]; delete districtPopulation[c][k];
+                    delete districtMembers[c][k]; delete districtRegionMap[c]?.[k];
+                    if(districtSeatResults[c]) delete districtSeatResults[c][k];
+                });
+            });
+        }
+        // 공유 ↔ 분리 전환. 분리할 때는 지금 쓰던 하원 지도를 복사해 그대로 이어 쓰고(의석 · 당선자 · 성향 · 권역 유지),
+        // 그 원만의 지도를 올리면 그때 새 지도로 바뀐다. 다시 공유로 돌리면 같은 지역구(원래 이름이 같은 도형)의 값은 하원 지도로 되돌린다
+        function districtSetMapShare(mode) {
+            const ch = districtChamber;
+            if(ch === 'house' || districtMapMode !== 'svg') return;
+            const split = mode === 'split';
+            if(!!districtSvgSplit[ch] === split) return;
+            const name = chamberDisplayName(ch);
+            const apply = () => {
+                const prefix = districtSplitPrefix(ch);
+                // 지도 색 · 숫자 박스가 기대는 당선 결과를 지금 값으로 고정해 둔 뒤 키를 옮긴다
+                if(!districtSeatResults[ch]) districtSeatResults[ch] = JSON.parse(JSON.stringify(districtEffectiveBreakdown(ch) || {}));
+                if(split) {
+                    const base = districtSvgMap;
+                    districtSvgMaps[ch] = base ? { ...JSON.parse(JSON.stringify(base)), shapes: base.shapes.map(sh => ({ ...JSON.parse(JSON.stringify(sh)), key: prefix + sh.key })) } : null;
+                    (base?.shapes || []).forEach(sh => districtMoveChamberKey(ch, sh.key, prefix + sh.key));
+                    districtOrder[ch] = (districtOrder[ch] || []).map(k => prefix + k);
+                    districtSvgSplit[ch] = true;
+                } else {
+                    const houseKeys = new Set((districtSvgMap?.shapes || []).map(sh => sh.key));
+                    (districtSvgMaps[ch]?.shapes || []).forEach(sh => {
+                        const orig = districtShapeLabel(sh.key);
+                        if(houseKeys.has(orig)) districtMoveChamberKey(ch, sh.key, orig);
+                    });
+                    districtOrder[ch] = (districtOrder[ch] || []).map(k => districtShapeLabel(k)).filter(k => houseKeys.has(k));
+                    districtDropSplitKeys(ch);
+                    districtSvgMaps[ch] = null;
+                    districtSvgSplit[ch] = false;
+                }
+                districtOrderSync(ch);
+                selectedDistrictKey = null;
+                const panel = document.getElementById('districtNamePanel');
+                if(panel) panel.style.display = 'none';
+                districtUpdateModeUI();
+                districtRedrawAllMaps();
+                renderDistrictListPanel();
+                elecUpdateDistrictInfo();
+                if(typeof renderRegionMap === 'function' && document.getElementById('regionMapWrap')?.offsetParent) renderRegionMap();
+            };
+            if(split) {
+                showCustomConfirm(`${name}이(가) 하원과 다른 지역구 지도를 쓰도록 나눕니다.\n지금 지도를 복사해 그대로 이어 쓰며, 이후 ${name} 지도를 따로 올릴 수 있습니다. 계속하시겠습니까?`, apply);
+            } else {
+                showCustomConfirm(`${name}이(가) 다시 하원 지도를 함께 쓰도록 합칩니다.\n하원 지도에 없는 ${name} 지역구의 데이터(의석 · 성향 · 당선자)는 사라집니다. 계속하시겠습니까?`, apply);
+            }
+        }
+        // 따로 쓰는 원의 지도를 새 파일로 교체
+        function districtSplitReplaceMap(ch, parsed) {
+            const prefix = districtSplitPrefix(ch);
+            const old = districtSvgMaps[ch];
+            districtDropSplitKeys(ch);
+            districtGrid[ch] = {}; districtMembers[ch] = {}; districtSeatResults[ch] = {};
+            if(districtRegionMap[ch]) districtRegionMap[ch] = {};
+            districtSvgMaps[ch] = {
+                viewBox: parsed.viewBox,
+                strokeColor: old?.strokeColor || districtSvgMap?.strokeColor || '#00ffff',
+                abbrStrokeColor: old?.abbrStrokeColor || districtSvgMap?.abbrStrokeColor || null,
+                shapes: parsed.shapes.map(sh => ({ ...sh, key: prefix + sh.key }))
+            };
+            districtSvgMaps[ch].shapes.forEach(sh => {
+                districtSeatCounts[sh.key] = { house: 0, senate: 0, third: 0, [ch]: 1 };
+                districtGrid[ch][sh.key] = true;
+                const nm = districtShapeLabel(sh.key);
+                ['house','senate','third'].forEach(c => { districtNames[c][sh.key] = nm; });
+            });
+            districtOrder[ch] = [];
+            districtOrderSync(ch);
+            selectedDistrictKey = null;
+            const panel = document.getElementById('districtNamePanel');
+            if(panel) panel.style.display = 'none';
+            districtUpdateModeUI();
+            districtRenderMap();
+            renderDistrictListPanel();
+            elecUpdateDistrictInfo();
+        }
+        // 하원 지도를 새로 올릴 때 따로 쓰는 원의 지역구 데이터를 잠시 떼어 두었다가 되돌린다
+        function districtSplitSnapshot() {
+            const snap = {};
+            ['senate','third'].forEach(ch => {
+                if(!districtSvgSplit[ch]) return;
+                const prefix = districtSplitPrefix(ch);
+                const pick = store => Object.fromEntries(Object.entries(store || {}).filter(([k]) => k.startsWith(prefix)));
+                snap[ch] = {
+                    seatCounts: pick(districtSeatCounts), tendency: pick(districtSvgTendency), abbr: pick(districtAbbr),
+                    grid: pick(districtGrid[ch]), members: pick(districtMembers[ch]), order: [...(districtOrder[ch] || [])],
+                    seatResults: pick(districtSeatResults[ch]), region: pick(districtRegionMap[ch]),
+                    names: Object.fromEntries(['house','senate','third'].map(c => [c, pick(districtNames[c])])),
+                    population: Object.fromEntries(['house','senate','third'].map(c => [c, pick(districtPopulation[c])]))
+                };
+            });
+            return snap;
+        }
+        function districtSplitRestore(snap) {
+            Object.entries(snap || {}).forEach(([ch, d]) => {
+                Object.assign(districtSeatCounts, d.seatCounts);
+                Object.assign(districtSvgTendency, d.tendency);
+                Object.assign(districtAbbr, d.abbr);
+                districtGrid[ch] = { ...d.grid };
+                districtMembers[ch] = { ...d.members };
+                districtOrder[ch] = d.order;
+                districtSeatResults[ch] = { ...d.seatResults };
+                districtRegionMap[ch] = { ...(districtRegionMap[ch] || {}), ...d.region };
+                ['house','senate','third'].forEach(c => {
+                    Object.assign(districtNames[c], d.names[c]);
+                    Object.assign(districtPopulation[c], d.population[c]);
+                });
+            });
+        }
+
         function districtSvgUpload(input) {
             const file = input.files?.[0]; if(!file) return;
-            const hasExisting = districtMapMode === 'svg' || ['house','senate','third'].some(c => Object.keys(districtGrid[c]||{}).length > 0);
+            const own = districtChamber !== 'house' && districtSvgSplit[districtChamber];
+            const hasExisting = own ? !!districtSvgMaps[districtChamber]
+                : (districtMapMode === 'svg' || ['house','senate','third'].some(c => Object.keys(districtGrid[c]||{}).length > 0));
             if(hasExisting) {
-                showCustomConfirm('기존 지역구 데이터가 모두 새 지도로 대체됩니다.\n(이름·의석 수·성향·당선자 정보 포함) 계속하시겠습니까?',
+                showCustomConfirm(own
+                    ? `${chamberDisplayName(districtChamber)}의 지역구 데이터가 새 지도로 대체됩니다.\n(이름·의석 수·성향·당선자 정보 포함) 계속하시겠습니까?`
+                    : '기존 지역구 데이터가 모두 새 지도로 대체됩니다.\n(이름·의석 수·성향·당선자 정보 포함) 계속하시겠습니까?',
                     () => districtSvgUploadProceed(input, file),
                     () => { input.value = ''; });
                 return;
@@ -10180,6 +10527,14 @@
                 const text = e.target.result;
                 const { viewBox, shapes } = parseDistrictJsx(text);
                 if(shapes.length === 0) { showCustomAlert('맵 메이커에서 내보낸 .jsx 파일에서 지역구로 쓸 도형을 찾을 수 없습니다.'); return; }
+                // 따로 쓰는 원의 지도를 올린 경우: 그 원의 지역구만 새 지도로 바꾼다
+                if(districtChamber !== 'house' && districtSvgSplit[districtChamber]) {
+                    districtSplitReplaceMap(districtChamber, { viewBox, shapes });
+                    input.value = '';
+                    return;
+                }
+                // 하원(공용) 지도를 올린 경우: 따로 쓰는 원의 지도와 지역구 데이터는 그대로 둔다
+                const keptSplit = districtSplitSnapshot();
 
                 const strokeColor = districtSvgMap?.strokeColor || '#00ffff';
                 const abbrStrokeColor = districtSvgMap?.abbrStrokeColor || null;
@@ -10192,12 +10547,13 @@
                 ['house','senate','third'].forEach(ch => { districtGrid[ch] = {}; districtNames[ch] = {}; districtPopulation[ch] = {}; districtMembers[ch] = {}; });
                 shapes.forEach(s => {
                     // 기본값: 하원은 1석, 상원/삼원은 해당 원이 존재하면 1석 (뒤에서 지역구별로 조정 가능)
-                    districtSeatCounts[s.key] = { house: 1, senate: hasSenateChamber()?1:0, third: hasThirdChamber()?1:0 };
+                    districtSeatCounts[s.key] = { house: 1, senate: hasSenateChamber() && !districtSvgSplit.senate ? 1 : 0, third: hasThirdChamber() && !districtSvgSplit.third ? 1 : 0 };
                     ['house','senate','third'].forEach(ch => {
                         if(districtSeatCounts[s.key][ch] > 0) districtGrid[ch][s.key] = true;
                         districtNames[ch][s.key] = s.key;
                     });
                 });
+                districtSplitRestore(keptSplit);
                 ['house','senate','third'].forEach(ch => districtOrderSync(ch));
                 selectedDistrictKey = null;
                 document.getElementById('districtNamePanel').style.display = 'none';
@@ -10233,8 +10589,9 @@
 
         function districtSvgSetStrokeColor(color) {
             if(districtStrokeLocked()) { districtUpdateModeUI(); return; }
-            if(!districtSvgMap) return;
-            districtSvgMap.strokeColor = color;
+            const map = districtSvgMapFor(districtChamber);
+            if(!map) return;
+            map.strokeColor = color;
             districtUpdateModeUI();
             districtRenderMap();
         }
@@ -10257,8 +10614,9 @@
 
         function districtSvgSetAbbrStrokeColor(color) {
             if(districtStrokeLocked()) { districtUpdateModeUI(); return; } // 라이트/다크는 고정색
-            if(!districtSvgMap) return;
-            districtSvgMap.abbrStrokeColor = color;
+            const map = districtSvgMapFor(districtChamber);
+            if(!map) return;
+            map.abbrStrokeColor = color;
             districtUpdateModeUI();
             districtRenderMap();
         }
@@ -10365,9 +10723,11 @@
 
         // 지도에 잘못 섞여 들어온 도형(예: 배경/틀 사각형)을 통째로 제거 — 지도 자체에서 삭제되며 복구 불가
         function districtSvgRemoveShape(key) {
-            if(!districtSvgMap) return;
-            showCustomConfirm(`"${key}" 도형을 지도에서 완전히 삭제합니다.\n(배경/틀처럼 잘못 포함된 도형을 뺄 때 사용) 계속하시겠습니까?`, () => {
-                districtSvgMap.shapes = districtSvgMap.shapes.filter(s => s.key !== key);
+            const owner = districtKeyOwner(key);
+            const map = owner === 'house' ? districtSvgMap : districtSvgMaps[owner];
+            if(!map) return;
+            showCustomConfirm(`"${districtNames.house[key] || key}" 도형을 지도에서 완전히 삭제합니다.\n(배경/틀처럼 잘못 포함된 도형을 뺄 때 사용) 계속하시겠습니까?`, () => {
+                map.shapes = map.shapes.filter(s => s.key !== key);
                 delete districtSeatCounts[key];
                 delete districtSvgTendency[key];
                 delete districtAbbr[key];
@@ -10465,7 +10825,8 @@
             }
 
             // 뉴 지역구(SVG): 이름 + 의석 수(하원/상원/삼원). 정당별 성향(%)은 '성향' 탭에서 이 지도를 직접 클릭해 편집한다
-            const chambers = chamberList();
+            // 원별로 지도를 나눴다면 이 지역구가 든 지도를 쓰는 원만 보여 준다
+            const chambers = districtChambersForKey(key);
             const chLabel = {
                 house:  document.getElementById('houseNameInput')?.value  || '하원',
                 senate: document.getElementById('senateNameInput')?.value || '상원',
@@ -10475,7 +10836,7 @@
             const activeChambers = chambers.filter(ch => (seats[ch]||0) > 0);
 
             panel.innerHTML = `
-                <div style="color:#888;font-size:0.78rem;margin-bottom:5px;">선택한 지역구 <span style="color:#666;">(${key})</span></div>
+                <div style="color:#888;font-size:0.78rem;margin-bottom:5px;">선택한 지역구 <span style="color:#666;">(${escapeHtmlText(districtShapeLabel(key))})</span></div>
                 <input type="text" placeholder="지역구 이름 (예: 종로구)" value="${districtNames.house[key]||''}"
                     style="width:100%;box-sizing:border-box;background:#000;border:1px solid #665500;color:var(--tno-gold);font-family:inherit;font-size:0.9rem;padding:6px;margin-bottom:8px;"
                     oninput="districtSvgSetName(this.value)">
@@ -10636,7 +10997,7 @@
                 const name = districtNames[ch][key] || '';
                 div.innerHTML = `
                     <span class="drag-handle">⋮⋮</span>
-                    <span style="color:#555;font-size:0.75rem;flex-shrink:0;width:56px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${key}">${key}</span>
+                    <span style="color:#555;font-size:0.75rem;flex-shrink:0;width:56px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${escapeHtmlText(districtShapeLabel(key))}">${escapeHtmlText(districtShapeLabel(key))}</span>
                     <input type="text" value="${name}" placeholder="(이름 없음)"
                         style="flex:1;min-width:0;background:#000;border:1px solid #2a2a2a;color:#ddd;font-family:inherit;font-size:0.85rem;padding:4px 6px;"
                         onchange="districtSetNameByKey('${ch}','${key}',this.value)">
@@ -11380,7 +11741,7 @@
             const patternDefs = new Map();
             const fillMap = {};
             const titleMap = {};
-            (districtSvgMap?.shapes || []).forEach(s => {
+            (districtSvgMapFor(tendencySvgChamber)?.shapes || []).forEach(s => {
                 const key = s.key;
                 const nm = districtNames.house[key] || key;
                 const seats = districtSeatCounts[key]?.[tendencySvgChamber] || 0;
@@ -11415,7 +11776,7 @@
         function tendencySvgBuildPartyFill(p) {
             const fillMap = {};
             const titleMap = {};
-            (districtSvgMap?.shapes || []).forEach(s => {
+            (districtSvgMapFor(tendencySvgChamber)?.shapes || []).forEach(s => {
                 const key = s.key;
                 const nm = districtNames.house[key] || key;
                 const seats = districtSeatCounts[key]?.[tendencySvgChamber] || 0;
@@ -11438,7 +11799,8 @@
             const panel = document.getElementById('tendencySvgDistrictPanel');
             if(!container) return;
             container.innerHTML = '';
-            if(!districtSvgMap) {
+            const tendencyMap = districtSvgMapFor(tendencySvgChamber);
+            if(!tendencyMap) {
                 container.innerHTML = '<div style="text-align:center;color:#444;font-size:0.85rem;padding:30px 10px;">지역구 탭에서 지도를 먼저 업로드하세요</div>';
                 if(panel) panel.innerHTML = '';
                 return;
@@ -11456,6 +11818,7 @@
             overallWrap.appendChild(overallMapDiv);
             container.appendChild(overallWrap);
             renderDistrictSvgInto(overallMapDiv, {
+                chamber: tendencySvgChamber,
                 clickable: true,
                 getFill: overall.getFill,
                 title: overall.getTitle,
@@ -11480,6 +11843,7 @@
                 pWrap.appendChild(pMapDiv);
                 partyGroup.appendChild(pWrap);
                 renderDistrictSvgInto(pMapDiv, {
+                    chamber: tendencySvgChamber,
                     clickable: true,
                     hideAbbr: true,
                     getFill: pf.getFill,
@@ -11496,10 +11860,10 @@
             const pickerHtml = `
                 <select onchange="tendencySvgSelectDistrict(this.value)" style="width:100%;box-sizing:border-box;background:#000;border:1px solid #333;color:var(--tno-neon);font-family:inherit;font-size:0.85rem;padding:6px;margin-bottom:8px;">
                     <option value="">— 지역구 선택 —</option>
-                    ${districtSvgMap.shapes.map(s => `<option value="${s.key}"${s.key===key?' selected':''}>${districtNames.house[s.key]||s.key}</option>`).join('')}
+                    ${tendencyMap.shapes.map(s => `<option value="${s.key}"${s.key===key?' selected':''}>${districtNames.house[s.key]||s.key}</option>`).join('')}
                 </select>
             `;
-            if(!key || !districtSvgMap.shapes.some(s => s.key === key)) {
+            if(!key || !tendencyMap.shapes.some(s => s.key === key)) {
                 panel.innerHTML = pickerHtml + '<div style="color:#444;font-size:0.78rem;text-align:center;padding:14px;border:1px solid #222;background:#0a0c10;">위 지도를 클릭하거나, 위 목록에서 지역구를 선택하세요</div>';
                 return;
             }
@@ -12742,9 +13106,10 @@
             if(!wrap) return;
             const ch = regionPaintChamber;
             if(districtMapMode === 'svg') {
-                if(!districtSvgMap) { wrap.innerHTML = '<div style="text-align:center;color:#444;font-size:0.85rem;padding:30px 10px;">지역구 탭에서 지도를 먼저 업로드하세요</div>'; return; }
+                if(!districtSvgMapFor(ch)) { wrap.innerHTML = '<div style="text-align:center;color:#444;font-size:0.85rem;padding:30px 10px;">지역구 탭에서 지도를 먼저 업로드하세요</div>'; return; }
                 wrap.innerHTML = '';
                 renderDistrictSvgInto(wrap, {
+                    chamber: ch,
                     clickable: true,
                     innerGlow: true,
                     getFill: key => {
@@ -12895,8 +13260,11 @@
             const districtKeys = Object.keys(districtGrid[chamber] || {});
             districtKeys.forEach(key => {
                 let bestParty = null, bestScore = -1;
+                const { scores: unionSupport, withdrawn } = applyCandidateUnions(
+                    Object.fromEntries(parties.map(p => [p.id, tendencyData[p.id]?.[key] || 0])), 'district');
                 parties.forEach(p => {
-                    const support = tendencyData[p.id]?.[key] || 0;
+                    if(withdrawn.has(String(p.id))) return;
+                    const support = unionSupport[p.id] || 0;
                     // 노이즈: ±15% 정도 랜덤
                     const noise = (Math.random() * 30 - 15);
                     const score = support + noise;
@@ -12921,15 +13289,19 @@
             Object.keys(districtGrid[chamber] || {}).forEach(key => {
                 const seatCount = districtSeatCounts[key]?.[chamber] || 0;
                 if(seatCount <= 0) return;
+                // 후보 단일화: 이 지역구에서 성향이 가장 높은 참여 정당이 후보를 내고, 참여 정당의 성향을 합쳐 받는다
+                const { scores: support, withdrawn } = applyCandidateUnions(
+                    Object.fromEntries(parties.map(p => [p.id, districtSvgTendency[key]?.[chamber]?.[p.id] || 0])), 'district');
                 const scored = parties.map(p => {
-                    const support = districtSvgTendency[key]?.[chamber]?.[p.id] || 0;
+                    if(withdrawn.has(String(p.id))) return { id: p.id, score: 0 };
                     const noise = (Math.random() * 30 - 15);
-                    return { id: p.id, score: Math.max(0, support + noise) };
+                    return { id: p.id, score: Math.max(0, (support[p.id] || 0) + noise) };
                 });
                 const total = scored.reduce((s,p) => s + p.score, 0);
                 if(total <= 0) {
-                    // 지지도 데이터가 전혀 없으면 무작위 한 정당이 그 지역구 의석을 모두 차지
-                    const p = parties[Math.floor(Math.random()*parties.length)];
+                    // 지지도 데이터가 전혀 없으면 무작위 한 정당이 그 지역구 의석을 모두 차지 (단일화로 후보를 내지 않은 정당 제외)
+                    const running = parties.filter(x => !withdrawn.has(String(x.id)));
+                    const p = running[Math.floor(Math.random()*running.length)] || parties[0];
                     for(let i=0; i<seatCount; i++) results.push({ key, partyId: p.id });
                     return;
                 }
@@ -12963,7 +13335,7 @@
             const fillMap = {};
             const titleMap = {};
             const badgeMap = {};
-            (districtSvgMap?.shapes || []).forEach(s => {
+            (districtSvgMapFor(chamber)?.shapes || []).forEach(s => {
                 const key = s.key;
                 const nm = districtNames[chamber]?.[key] || districtNames.house[key] || key;
                 const seats = districtSeatCounts[key]?.[chamber] || 0;
@@ -13016,6 +13388,7 @@
             const revealedResults = districtResults.filter(d => revealedKeys.has(d.key));
             const result = elecSvgBuildResultFill(elecBuildDistrictSeatBreakdown(revealedResults), chamber);
             renderDistrictSvgInto(svgWrap, {
+                chamber,
                 clickable: true,
                 getFill: key => {
                     if(revealedKeys.has(key)) return result.getFill(key);
@@ -13089,6 +13462,7 @@
                     const countedSoFar = {};
                     if(!isComplete) revealed.forEach(r => { countedSoFar[r.key] = true; });
                     renderDistrictSvgInto(svgWrap, {
+                        chamber,
                         getFill: key => {
                             if(!isComplete && (districtSeatCounts[key]?.[chamber] || 0) > 0 && !countedSoFar[key]) return 'rgba(255,255,255,0.1)';
                             return result.getFill(key);

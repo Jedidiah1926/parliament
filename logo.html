@@ -1007,6 +1007,11 @@
                         </div>
                     </div>
                     <div style="margin-top:20px;padding-top:14px;border-top:1px solid #222;">
+                        <label style="color:#888;font-size:0.8rem;margin-bottom:6px;display:block;">후보 단일화 <span style="color:#555;font-weight:normal;">— 여러 정당이 후보를 한 명으로 합쳐 출마합니다. 지지가 가장 높은 정당이 후보를 내고 참여 정당의 지지를 합쳐 받습니다 (비례 투표는 따로)</span></label>
+                        <div id="candidateUnionList"></div>
+                        <button class="add-btn" onclick="addCandidateUnion()" style="width:100%;margin-top:0;">+ 단일화 추가</button>
+                    </div>
+                    <div style="margin-top:20px;padding-top:14px;border-top:1px solid #222;">
                         <label style="color:#888;font-size:0.8rem;margin-bottom:6px;display:block;">후보 설정 <span style="color:#555;font-weight:normal;">— 기본값은 당수, 의원 연결 또는 직접 입력으로 다른 인물을 세울 수 있습니다 (대선/총리 선거 공용)</span></label>
                         <div id="electionCandidatesConfig"></div>
                     </div>
@@ -1038,7 +1043,7 @@
 
                 <!-- 지역구 서브탭 - 설정만 (맵은 우측) -->
                 <div id="elecSubDistrict" class="sub-tab-content active">
-                    <!-- 지역구 종류 선택 — 지도(SVG) 방식은 세 원이 지도 하나를 공유하므로 이 선택이 필요 없어 숨김 -->
+                    <!-- 원 선택 — 원이 둘 이상일 때 표시. 고른 원이 쓰는 지도(하원과 공유 · 따로)를 편집한다 -->
                     <div id="districtChamberSelectRow" style="display:none;gap:6px;margin:8px 0 10px;">
                         <button id="districtChamberHouseBtn" onclick="districtSetChamber('house')"
                             style="flex:1;padding:6px;font-family:inherit;font-size:0.85rem;background:#0a1a2a;color:var(--tno-neon);border:2px solid var(--tno-neon);cursor:pointer;letter-spacing:1px;" id="districtChamberHouseBtn">
@@ -1076,9 +1081,17 @@
 
                     <!-- 지도(뉴 지역구) 편집 UI — 지역구 시스템이 지도일 때만 표시 -->
                     <div id="districtSvgEditUI">
+                        <!-- 원별 지역구 분리 — 상원 · 삼원을 골랐을 때만 표시 -->
+                        <div id="districtMapShareRow" style="display:none;margin-bottom:10px;">
+                            <div style="color:#888;font-size:0.8rem;margin-bottom:4px;">이 원의 지역구 지도</div>
+                            <div class="system-radio-group">
+                                <button type="button" class="system-radio-btn" id="districtMapShareBtnShared" onclick="districtSetMapShare('shared')">하원 지도 공유</button>
+                                <button type="button" class="system-radio-btn" id="districtMapShareBtnSplit" onclick="districtSetMapShare('split')">따로 쓰기</button>
+                            </div>
+                        </div>
                         <div style="padding:8px;background:#0a0c10;border:1px solid #222;font-size:0.78rem;color:#666;margin-bottom:10px;line-height:1.5;">
                             <a href="map.html" target="_blank" style="color:var(--tno-neon);">맵 메이커</a>에서 내보낸 .jsx 파일을 업로드하면, 그리드 대신 실제 지도 모양으로 지역구를 만들 수 있습니다.<br>
-                            하나의 지도를 하원·상원·삼원이 함께 쓰며, 지역구를 클릭하면 원별 의석 수와 정당별 성향(%)을 지정할 수 있습니다.<br>
+                            기본은 하원 지도를 상원·삼원이 함께 쓰며, 원을 골라 <b style="color:#aaa;">따로 쓰기</b>를 누르면 그 원만의 지도를 올릴 수 있습니다. 지역구를 클릭하면 원별 의석 수와 정당별 성향(%)을 지정할 수 있습니다.<br>
                             업로드하면 <b style="color:#cc8888;">기존 지역구 데이터가 새 지도로 대체</b>됩니다.
                         </div>
 
