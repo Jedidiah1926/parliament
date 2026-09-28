@@ -6793,6 +6793,18 @@ window.DnoLangPacks.en = {
   [
    "준비 중",
    "Coming soon"
+  ],
+  [
+   "제작자: sushdjr0106",
+   "By sushdjr0106"
+  ],
+  [
+   "▌ 권역 선거구 의석",
+   "▌ Regional constituency seats"
+  ],
+  [
+   "권역 하나를 여러 명을 뽑는 선거구로 씁니다 (예: 일본 참의원의 도도부현 선거구). 의석 수와 정당별 당선 의석을 직접 정하면 정당 의석에 바로 반영되고, 선거를 돌려도 비례 의석과 겹치지 않게 따로 유지됩니다.",
+   "Use a region as one multi-member constituency (e.g. the prefectural districts of Japan's House of Councillors). Set its seats and each party's winners directly; they count toward party seats right away and are kept separate from list seats when an election runs."
   ]
  ]
 };

@@ -3057,3 +3057,10 @@ html[data-theme-family="modern"] .preset-card-date { color: var(--m-text-3); fon
 html[data-theme-family="modern"] .preset-card-soon:hover { background: transparent !important; }
 html[data-theme-family="modern"] .preset-badge-soon { background: var(--m-surface-2) !important; color: var(--m-text-3) !important; }
 html[data-theme-family="modern"] .save-tab-preset-date { color: var(--m-text-3); }
+html[data-theme-family="modern"] .save-card { padding: 0 !important; }
+html[data-theme-family="modern"] .save-card:hover { background: var(--m-surface-2) !important; }
+html[data-theme-family="modern"] .save-card-main:hover, html[data-theme-family="modern"] .save-card-auto:hover { background: var(--m-surface-3); border-radius: 10px; }
+html[data-theme-family="modern"] .save-card-main:hover .save-select-item-name { color: var(--m-text); }
+html[data-theme-family="modern"] .save-card-sep { border-top: 1px solid var(--m-border); margin: 0 12px; }
+html[data-theme-family="modern"] .save-card-auto { color: var(--m-text-3); font-size: 12.5px; }
+html[data-theme-family="modern"] .save-card-auto:hover { color: var(--m-text); }
