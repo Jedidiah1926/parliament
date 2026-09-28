@@ -84,6 +84,7 @@ function createWindow(url) {
         show: false, // 첫 화면이 다 그려진 뒤에 보여줘서 빈 창이 번쩍이지 않게
         backgroundColor: THEME_BG[saved.theme] || THEME_BG.tno,
         autoHideMenuBar: true,
+        icon: path.join(__dirname, '..', 'icons', 'icon.png'),
         webPreferences: {
             nodeIntegration: false,
             contextIsolation: true,
