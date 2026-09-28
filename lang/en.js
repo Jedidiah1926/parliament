@@ -6837,6 +6837,34 @@ window.DnoLangPacks.en = {
   [
    "- 법안 조항 · 상임위원회",
    "- Bill articles · standing committees"
+  ],
+  [
+   "WINDOW / 창 표시",
+   "WINDOW"
+  ],
+  [
+   "테두리 없는 전체 화면",
+   "Borderless fullscreen"
+  ],
+  [
+   "창 모드",
+   "Windowed"
+  ],
+  [
+   "전체 화면",
+   "Fullscreen"
+  ],
+  [
+   "F11 키로 전체 화면과 창 모드를 오갈 수 있습니다",
+   "Press F11 to switch between fullscreen and windowed"
+  ],
+  [
+   "전체 화면은 다른 화면으로 옮기면 창 모드로 돌아갑니다",
+   "Fullscreen returns to windowed when you move to another screen"
+  ],
+  [
+   "- 화면 표시 방식 — 창 모드 · 전체 화면 · 테두리 없는 전체 화면 중 선택 (설정 → 화면)",
+   "- Display mode — choose windowed, fullscreen or borderless fullscreen (Settings → Display)"
   ]
  ]
 };
