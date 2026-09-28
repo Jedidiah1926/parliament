@@ -16,6 +16,13 @@
             tutorial: true,
             script: 'presets/tutorial.js',
         },
+        {
+            id: 'builtin:japan',
+            title: '일본국',
+            description: '제작자: sushdjr0106 · 의석 수 일부 수정',
+            author: 'sushdjr0106',
+            script: 'presets/japan.js',
+        },
     ];
     const INDEX_URL = 'presets/index.json';
     let listCache = null;
