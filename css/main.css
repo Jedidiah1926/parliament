@@ -694,3 +694,9 @@ body.home-page { display: block; height: 100vh; overflow: hidden; text-transform
     font-size: 0.85rem; letter-spacing: 2px; cursor: default;
     color: var(--tno-neon); text-shadow: 0 0 6px color-mix(in srgb, var(--tno-neon) 45%, transparent);
 }
+
+/* 프리셋 카드: 게임 속 시작 날짜 · 준비 중 */
+.preset-card-date { margin-left: auto; flex: 0 0 auto; color: #888; font-size: 0.78rem; letter-spacing: 1px; }
+.preset-card-soon { opacity: .5; cursor: default; }
+.preset-card-soon:hover { border-color: var(--tno-border) !important; background: transparent !important; }
+.preset-badge-soon { border-color: #666; color: #999; text-shadow: none; }

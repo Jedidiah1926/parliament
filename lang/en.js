@@ -6781,6 +6781,18 @@ window.DnoLangPacks.en = {
   [
    "번역 템플릿 받기 (EN · 영어 기준)",
    "Translation template (EN · English-based)"
+  ],
+  [
+   "제작자: sushdjr0106 · 의석 수 일부 수정",
+   "By sushdjr0106 · some seat counts adjusted"
+  ],
+  [
+   "일본국",
+   "Japan"
+  ],
+  [
+   "준비 중",
+   "Coming soon"
   ]
  ]
 };
