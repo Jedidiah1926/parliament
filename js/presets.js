@@ -21,10 +21,9 @@
         {
             id: 'builtin:japan',
             title: '일본국',
-            description: '제작자: sushdjr0106 · 의석 수 일부 수정',
+            description: '제작자: sushdjr0106',
             date: '2026년 2월 9일',
             author: 'sushdjr0106',
-            comingSoon: true, // 세이브 데이터가 들어오면 지운다 (presets/japan.js 참고)
             script: 'presets/japan.js',
         },
     ];

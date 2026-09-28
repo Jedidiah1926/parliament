@@ -7107,7 +7107,24 @@
                     svgWrap.style.display = '';
                     const breakdown = districtEffectiveBreakdown(chamber);
                     const result = elecSvgBuildResultFill(breakdown, chamber);
-                    renderDistrictSvgInto(svgWrap, { getFill: result.getFill, title: result.getTitle, seatBadges: result.getBadges, defs: result.defs });
+                    // 이 원에 자기 의석이 없는 지역구는, 속한 권역에 직접 지정한 의석이 있으면 그 권역의 1위 정당 색으로
+                    const regionOf = key => {
+                        if((districtSeatCounts[key]?.[chamber] || 0) > 0) return null;
+                        const r = (regions[chamber] || []).find(x => x.id === districtRegionMap[chamber]?.[key]);
+                        return r && Object.keys(r.seatResults || {}).length ? r : null;
+                    };
+                    const regionFill = r => {
+                        const entries = Object.entries(r.seatResults).filter(([, n]) => n > 0).sort((a, b) => b[1] - a[1]);
+                        const total = entries.reduce((a, [, n]) => a + n, 0);
+                        const top = parties.find(p => String(p.id) === String(entries[0]?.[0]));
+                        return top ? tendencyColorForPct(top.color, entries[0][1] / total * 100) : 'transparent';
+                    };
+                    const regionTitle = r => `${r.name}: ` + Object.entries(r.seatResults).filter(([, n]) => n > 0).sort((a, b) => b[1] - a[1])
+                        .map(([pid, n]) => `${parties.find(p => String(p.id) === String(pid))?.name || '?'} ${n}석`).join(' · ');
+                    renderDistrictSvgInto(svgWrap, {
+                        getFill: key => { const r = regionOf(key); return r ? regionFill(r) : result.getFill(key); },
+                        title: key => { const r = regionOf(key); return r ? regionTitle(r) : result.getTitle(key); },
+                        seatBadges: result.getBadges, defs: result.defs });
                 }
                 return;
             }
@@ -9477,6 +9494,78 @@
         function getElectionSystem(chamber) {
             if(!electionSystem[chamber]) electionSystem[chamber] = { listScope: 'national', compensationPct: 100 };
             return electionSystem[chamber];
+        }
+
+        // ── 권역 선거구 의석 (예: 일본 참의원의 도도부현 선거구) ──
+        // 권역마다 의석 수(r.seats)를 두고, 정당별 당선 의석(r.seatResults = { partyId: n })을 직접 지정한다.
+        // 이 의석은 선거의 비례 의석 풀에서 미리 빼 두고, 선거 결과를 반영할 때 정당 의석에 다시 더한다.
+        function regionReservedSeats(ch) {
+            return (regions[ch] || []).reduce((sum, r) => sum + Math.max(0, parseInt(r.seats) || 0), 0);
+        }
+        function regionSeatTotalsByParty(ch) {
+            const totals = {};
+            (regions[ch] || []).forEach(r => Object.entries(r.seatResults || {}).forEach(([pid, n]) => { totals[pid] = (totals[pid] || 0) + (n || 0); }));
+            return totals;
+        }
+        function regionSetSeats(ch, id, value) {
+            const r = (regions[ch] || []).find(x => x.id === id);
+            if(!r) return;
+            r.seats = Math.max(0, parseInt(value) || 0);
+            renderRegionSeatPanel();
+            elecUpdateDistrictInfo();
+        }
+        function regionSetSeatResult(ch, id, pid, value) {
+            const r = (regions[ch] || []).find(x => x.id === id);
+            if(!r) return;
+            const next = Math.max(0, parseInt(value) || 0);
+            const prev = (r.seatResults || {})[pid] || 0;
+            if(next === prev) return;
+            r.seatResults = { ...(r.seatResults || {}) };
+            if(next) r.seatResults[pid] = next; else delete r.seatResults[pid];
+            const party = parties.find(p => String(p.id) === String(pid));
+            if(party) {
+                const seatKey = seatKeyFor(ch);
+                party[seatKey] = Math.max(0, (party[seatKey] || 0) + next - prev);
+                if(next > prev) party[inKeyFor(ch)] = true;
+            }
+            simulate(); refreshUI();
+            renderRegionSeatPanel();
+            districtRedrawAllMaps();
+        }
+        function renderRegionSeatPanel() {
+            const panel = document.getElementById('regionSeatPanel');
+            if(!panel) return;
+            const ch = regionPaintChamber;
+            const list = regions[ch] || [];
+            if(list.length === 0) { panel.innerHTML = '<div style="color:#444;font-size:0.78rem;">권역을 먼저 추가하세요.</div>'; return; }
+            panel.innerHTML = list.map(r => {
+                const seats = Math.max(0, parseInt(r.seats) || 0);
+                const res = r.seatResults || {};
+                const used = Object.values(res).reduce((a, b) => a + (b || 0), 0);
+                const shown = parties.filter(p => seats > 0 || res[p.id]);
+                return `
+                <div class="region-seat-block" style="margin-bottom:10px;padding:8px;background:#0a0c10;border:1px solid #222;">
+                    <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
+                        <span style="width:9px;height:9px;background:${r.color};border-radius:50%;flex-shrink:0;"></span>
+                        <span style="color:#aaa;font-size:0.85rem;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtmlText(r.name)}</span>
+                        <span style="color:#666;font-size:0.75rem;">의석</span>
+                        <input type="number" min="0" value="${seats}" onchange="regionSetSeats('${ch}','${r.id}',this.value)"
+                            style="width:60px;box-sizing:border-box;background:#000;border:1px solid #333;color:var(--tno-neon);font-family:inherit;font-size:0.85rem;padding:4px;text-align:center;">
+                    </div>
+                    ${seats > 0 || used > 0 ? `
+                        <div class="region-seat-used" style="font-size:0.72rem;margin-bottom:5px;color:${used > seats ? '#ff5566' : used === seats ? 'var(--vote-yea, #00ff88)' : '#888'};">배정 ${used} / ${seats}석${used > seats ? ' — 의석 수보다 많아요' : ''}</div>
+                        ${shown.map(p => `
+                            <div style="display:grid;grid-template-columns:1fr 60px;gap:6px;margin-bottom:4px;align-items:center;">
+                                <div style="display:flex;align-items:center;gap:6px;min-width:0;">
+                                    <span style="width:8px;height:8px;background:${p.color};border-radius:50%;flex-shrink:0;"></span>
+                                    <span style="font-size:0.82rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${escapeHtmlText(p.name)}">${escapeHtmlText(p.name)}</span>
+                                </div>
+                                <input type="number" min="0" value="${res[p.id] || 0}" onchange="regionSetSeatResult('${ch}','${r.id}','${p.id}',this.value)"
+                                    style="width:100%;box-sizing:border-box;background:#000;border:1px solid var(--tno-border);color:var(--tno-neon);font-family:inherit;font-size:0.85rem;padding:4px;text-align:center;">
+                            </div>`).join('')}
+                    ` : ''}
+                </div>`;
+            }).join('');
         }
 
         function districtOrderSync(ch) {
@@ -12086,9 +12175,10 @@
                 if(!result) return;
                 const { seatMap, districtResults } = result;
                 const seatKey = seatKeyFor(ch);
+                const regionTotals = regionSeatTotalsByParty(ch); // 직접 지정한 권역 선거구 의석은 선거와 별개로 유지
                 parties.forEach(p => {
                     const s = seatMap.find(x=>x.id===p.id);
-                    p[seatKey] = s?.n||0;
+                    p[seatKey] = (s?.n||0) + (regionTotals[p.id] || 0);
                     // 파벌 의석은 선거 이전 분포이므로 무효화 (재분배 필요)
                     if((p.factions||[]).length > 0) {
                         hadFactions = true;
@@ -12361,8 +12451,9 @@
                 const total = parseInt(document.getElementById(chTotalId[ch])?.value) || 0;
                 const dist  = districtActiveSeatCount(ch);
                 const distSeats = Math.min(dist, total);
-                const propSeats = Math.max(0, total - distSeats);
-                el.innerHTML = `<span style="color:${chColors[ch]}">${chNames[ch]}</span> 지역구 <b>${distSeats}</b>석 + 비례 <b>${propSeats}</b>석`;
+                const regSeats = Math.min(regionReservedSeats(ch), Math.max(0, total - distSeats));
+                const propSeats = Math.max(0, total - distSeats - regSeats);
+                el.innerHTML = `<span style="color:${chColors[ch]}">${chNames[ch]}</span> 지역구 <b>${distSeats}</b>석${regSeats ? ` + 권역 <b>${regSeats}</b>석` : ''} + 비례 <b>${propSeats}</b>석`;
                 el.style.display = '';
             });
         }
@@ -12517,6 +12608,15 @@
         }
 
         function regionRemoveRegion(ch, id) {
+            const removed = (regions[ch]||[]).find(r => r.id === id);
+            if(removed && removed.seatResults) {
+                const seatKey = seatKeyFor(ch);
+                Object.entries(removed.seatResults).forEach(([pid, n]) => {
+                    const party = parties.find(p => String(p.id) === String(pid));
+                    if(party) party[seatKey] = Math.max(0, (party[seatKey] || 0) - (n || 0));
+                });
+                simulate(); refreshUI();
+            }
             regions[ch] = (regions[ch]||[]).filter(r => r.id !== id);
             Object.keys(districtRegionMap[ch]||{}).forEach(k => { if(districtRegionMap[ch][k] === id) delete districtRegionMap[ch][k]; });
             if(regionVoteStore[ch]) delete regionVoteStore[ch][id];
@@ -12567,6 +12667,7 @@
             document.getElementById('regionVoteModeManualBtn')?.classList.toggle('active', regionVoteMode[ch] === 'manual');
 
             renderRegionList();
+            renderRegionSeatPanel();
             renderRegionManualVotePanel();
             renderRegionMap();
         }
@@ -13160,10 +13261,10 @@
                 propSeats = 0;
             } else if(elecMode === 'mixed') {
                 districtSeats = Math.min(activeDistrictCount, totalSeats);
-                propSeats = totalSeats - districtSeats;
+                propSeats = Math.max(0, totalSeats - districtSeats - regionReservedSeats(chamber)); // 권역 선거구 의석은 직접 지정분이라 비례에서 제외
             } else {
                 districtSeats = 0;
-                propSeats = totalSeats;
+                propSeats = Math.max(0, totalSeats - regionReservedSeats(chamber));
             }
 
             // 비례 의석이 있으면 지지율 검사 (활동 금지된 정당은 저장된 수치가 있어도 반영 대상에서 제외)
