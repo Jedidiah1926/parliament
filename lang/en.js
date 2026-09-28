@@ -6773,6 +6773,14 @@ window.DnoLangPacks.en = {
   [
    "지도에 의석 수 숫자 박스 표시",
    "Show seat-count boxes on the map"
+  ],
+  [
+   "번역 템플릿 받기 (KO · 한국어 기준)",
+   "Translation template (KO · Korean-based)"
+  ],
+  [
+   "번역 템플릿 받기 (EN · 영어 기준)",
+   "Translation template (EN · English-based)"
   ]
  ]
 };
