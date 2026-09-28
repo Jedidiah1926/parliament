@@ -114,20 +114,26 @@
         return loadBuiltin(code);
     }
 
-    // 번역가용 템플릿: 영어 팩을 그대로 복사해 이름·코드만 비워 둔다 — 두 번째 칸(번역)만 바꾸면 된다
-    async function buildTemplate() {
+    // 번역가용 템플릿 두 가지 — 첫 번째 칸(한국어 원문)은 앱이 찾는 열쇠라 그대로 두고, 두 번째 칸(번역)만 바꾸면 된다
+    //  · base 'ko': 두 번째 칸에 한국어 원문을 그대로 채워 둠 (한국어를 보고 번역할 때)
+    //  · base 'en': 두 번째 칸에 영어 번역을 채워 둠 (영어를 보고 번역할 때)
+    // 규칙(patterns)의 "to"는 어느 쪽이든 영어 예시로 들어 있으니 함께 번역한다
+    async function buildTemplate(base) {
         const en = await loadBuiltin('en');
+        const ko = base === 'ko';
         return JSON.stringify({
             format: PACK_FORMAT,
             code: '',
             name: '',
             author: '',
             version: '1',
-            _help: 'dict의 각 항목은 ["한국어 원문", "번역"]입니다. 두 번째 칸만 바꾸세요. code(예: "ja")와 name(예: "日本語")을 채운 뒤 메인 화면 🌐 > 언어 팩 불러오기로 적용합니다. 자세한 형식은 README "번역(언어 팩) 만들기" 참고.',
-            months: en.months,
-            ordinal: en.ordinal,
+            _help: ko
+                ? 'dict의 각 항목은 ["한국어 원문", "번역"]입니다. 두 번째 칸에 한국어 원문이 그대로 들어 있으니 그 칸만 번역하세요 (첫 번째 칸은 바꾸지 마세요). patterns의 "to"는 영어 예시이니 함께 번역하세요. code(예: "ja")와 name(예: "日本語")을 채운 뒤 메인 화면 🌐 > 언어 팩 불러오기로 적용합니다.'
+                : 'dict의 각 항목은 ["한국어 원문", "번역"]입니다. 두 번째 칸에 영어 번역이 들어 있으니 그 칸만 바꾸세요 (첫 번째 칸은 바꾸지 마세요). code(예: "ja")와 name(예: "日本語")을 채운 뒤 메인 화면 🌐 > 언어 팩 불러오기로 적용합니다. / Each dict entry is ["Korean source", "translation"]. Replace only the second (English) column.',
+            months: ko ? ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월'] : en.months,
+            ordinal: ko ? '' : en.ordinal,
             patterns: en.patterns,
-            dict: en.dict,
+            dict: ko ? en.dict.map(e => [e[0], e[0]]) : en.dict,
         }, null, 1);
     }
 

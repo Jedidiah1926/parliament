@@ -458,7 +458,8 @@
                 </button>`).join('') + `
                 <div class="home-lang-tools">
                     <button type="button" class="home-lang-more" onclick="document.getElementById('langPackFileInput').click()">언어 팩 불러오기 (.json)</button>
-                    <button type="button" class="home-lang-more" onclick="downloadLangTemplate()">번역 템플릿 받기</button>
+                    <button type="button" class="home-lang-more" onclick="downloadLangTemplate('ko')">번역 템플릿 받기 (KO · 한국어 기준)</button>
+                    <button type="button" class="home-lang-more" onclick="downloadLangTemplate('en')">번역 템플릿 받기 (EN · 영어 기준)</button>
                 </div>`;
         }
         // 불러온 언어 팩 삭제 — 쓰던 언어였다면 한국어로 돌아가 다시 불러옴
@@ -483,13 +484,13 @@
             renderHomeLangMenu();
             if(await DnoUI.confirm(`"${result.name}" 언어 팩을 불러왔습니다. 지금 이 언어로 바꿀까요?`)) { setLang(result.code); location.reload(); }
         }
-        async function downloadLangTemplate() {
+        async function downloadLangTemplate(base) {
             try {
-                const text = await DnoLang.template();
+                const text = await DnoLang.template(base);
                 const url = URL.createObjectURL(new Blob([text], { type: 'application/json' }));
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = 'dno-lang-template.json';
+                a.download = `hemicycle-lang-template-${base === 'ko' ? 'ko' : 'en'}.json`;
                 document.body.appendChild(a);
                 a.click();
                 a.remove();
