@@ -9587,6 +9587,33 @@
         function showSeatsOnMobile() {
             if(typeof getUiMode === 'function' && getUiMode() === 'mobile' && typeof setMobilePanel === 'function') setMobilePanel('display');
         }
+        // 모바일: 컨트롤 쪽 개표 버튼(일시정지 · 즉시 완료 / 의회에 반영 · 재개표)이 보이는 동안 의석 현황 쪽에도 같은 버튼을 띄운다
+        function syncMobileElecBar() {
+            const bar = document.getElementById('mobileElecBar');
+            if(!bar) return;
+            const shown = id => { const el = document.getElementById(id); return !!el && el.style.display !== 'none' && el.style.display !== ''; };
+            const mid = shown('elecMidControls');
+            const post = shown('elecPostBtns');
+            bar.classList.toggle('show', mid || post);
+            ['mobileElecPauseBtn', 'mobileElecFinishBtn'].forEach(id => { const b = document.getElementById(id); if(b) b.style.display = mid ? '' : 'none'; });
+            // 이미 반영한 결과면 "의회에 반영"은 숨긴다 (재개표만 남김)
+            const pendingApply = Object.keys(elecLastResults || {}).length > 0 || !!(elecLastResult && !elecLastResult.applied);
+            const applyBtn = document.getElementById('mobileElecApplyBtn');
+            if(applyBtn) applyBtn.style.display = post && !mid && pendingApply ? '' : 'none';
+            const rerunBtn = document.getElementById('mobileElecRerunBtn');
+            if(rerunBtn) rerunBtn.style.display = post && !mid ? '' : 'none';
+            const src = document.getElementById('elecPauseBtn');
+            const dst = document.getElementById('mobileElecPauseBtn');
+            if(src && dst && dst.textContent !== src.textContent) dst.textContent = src.textContent;
+        }
+        window.addEventListener('load', () => {
+            const obs = new MutationObserver(syncMobileElecBar);
+            ['elecMidControls', 'elecPostBtns', 'elecPauseBtn'].forEach(id => {
+                const el = document.getElementById(id);
+                if(el) obs.observe(el, { attributes: true, attributeFilter: ['style'], childList: true, characterData: true, subtree: true });
+            });
+            syncMobileElecBar();
+        });
         function switchDispTab(tab) {
             document.querySelectorAll('.disp-tab-btn').forEach(b => b.classList.remove('active'));
             document.querySelectorAll('.disp-panel').forEach(p => p.classList.remove('active'));
@@ -12579,6 +12606,7 @@
             if(wasDissolved || releasedSenate || releasedHouse) renderEmergencyPowers();
             simulate(); refreshUI();
             if(lastCh) { showSeatsOnMobile(); switchDispTab(lastCh); }
+            syncMobileElecBar();
             if(hadFactions) {
                 showCustomAlert('선거 결과가 반영되었습니다.\n\n파벌이 있는 정당의 파벌별 의석은 선거 전 분포가 무효화되어 0으로 초기화되었습니다.\n정당 탭에서 파벌 의석을 다시 배분해 주세요.');
             }
