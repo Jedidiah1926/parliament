@@ -12,7 +12,7 @@
 
     const THEME_MODE_KEY = 'dnoThemeMode';
     const VALID_MODES = ['tno', 'light', 'dark'];
-    const DEFAULT_MODE = 'tno';
+    const DEFAULT_MODE = 'light'; // 처음 켰을 때(저장된 테마가 없을 때) 기본은 라이트
 
     function safeGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
     function safeSet(k, v) { try { localStorage.setItem(k, v); return true; } catch (e) { return false; } }
