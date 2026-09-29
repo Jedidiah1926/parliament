@@ -9,15 +9,15 @@ app.whenReady().then(async () => {
     win.webContents.on('console-message', (e, level, message) => {
         if (level >= 2) console.log('RENDERER ERROR:', message);
     });
-    await win.loadFile(path.join(__dirname, '..', 'main.html'));
+    await win.loadFile(path.join(__dirname, '..', 'index.html'));
     title = await win.webContents.executeJavaScript('document.title');
     const hasMenuBtn = await win.webContents.executeJavaScript(
         `!!document.querySelector('.home-menu-item')`
     );
     console.log('SMOKETEST_RESULT', JSON.stringify({ loaded, title, hasMenuBtn }));
 
-    // dno.html도 직접 로드해 탭 바/시뮬레이션이 정상 동작하는지 확인
-    await win.loadFile(path.join(__dirname, '..', 'dno.html'));
+    // main.html(시뮬레이터)도 직접 로드해 탭 바/시뮬레이션이 정상 동작하는지 확인
+    await win.loadFile(path.join(__dirname, '..', 'main.html'));
     await new Promise(r => setTimeout(r, 500));
     const dnoOk = await win.webContents.executeJavaScript(
         `typeof simulate === 'function' && typeof loadSaveSlots === 'function'`

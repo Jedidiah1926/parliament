@@ -1,7 +1,7 @@
 /* =====================================================================
    Hemicycle — 모던 UI (라이트/다크 모드 전용)
    ---------------------------------------------------------------------
-   네온 모드(data-theme-mode="tno")는 각 페이지 CSS(dno.css 등)의 기존 레트로
+   네온 모드(data-theme-mode="tno")는 각 페이지 CSS(main.css 등)의 기존 레트로
    스타일을 그대로 쓰고, 이 파일의 규칙은 모두 html[data-theme-family="modern"]
    (라이트/다크) 아래에서만 적용된다. 모든 페이지가 페이지 CSS 뒤에 이 파일을 불러온다.
 
@@ -2847,7 +2847,7 @@ html[data-theme-family="modern"] input[type="range"]::-webkit-slider-thumb {
 html[data-theme-family="modern"] button[data-modern-label] { font-size: 0 !important; padding: 13px !important; }
 html[data-theme-family="modern"] button[data-modern-label]::before { content: attr(data-modern-label); font-size: 15px; font-weight: 700; }
 
-/* 온보딩(세이브 선택) 2단 모달 — main.html */
+/* 온보딩(세이브 선택) 2단 모달 — index.html */
 html[data-theme-family="modern"] .save-select-overlay { background: rgba(9, 9, 11, .45) !important; backdrop-filter: blur(3px); }
 html[data-theme-family="modern"] .save-select-col + .save-select-col { border-left-color: var(--m-border) !important; border-top-color: var(--m-border) !important; }
 html[data-theme-family="modern"] .save-select-col-title { color: var(--m-text) !important; font-size: 16px; font-weight: 700; }

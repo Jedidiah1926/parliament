@@ -14,7 +14,7 @@ Hemicycle(구 DATANET Parliament Simulation)은 설치나 빌드 없이 **브라
 - 지역구·비례대표를 혼합할 수 있는 선거 시뮬레이션과 기록 보관
 - 전체 상태를 `.json`으로 저장/불러오기
 
-한국어 화면(`dno.html`)을 기준으로 개발되며, 설정에서 영어를 선택하면 `lang.js`가 화면에 표시되는 텍스트를 실시간으로 영어로 치환해 보여줍니다 — 별도의 영어 전용 HTML/JS 사본을 유지하지 않습니다.
+한국어 화면(`main.html`)을 기준으로 개발되며, 설정에서 영어를 선택하면 `lang.js`가 화면에 표시되는 텍스트를 실시간으로 영어로 치환해 보여줍니다 — 별도의 영어 전용 HTML/JS 사본을 유지하지 않습니다.
 
 ---
 
@@ -22,21 +22,21 @@ Hemicycle(구 DATANET Parliament Simulation)은 설치나 빌드 없이 **브라
 
 | 파일 | 설명 |
 |------|------|
-| `index.html` | 점검 시간대 자동 판정 후 `main.html`로 리디렉션 |
-| `main.html` | 시작 메뉴 (버전 정보, 로드맵 링크, 시뮬레이터 실행) |
-| `dno.html` | 시뮬레이터 본체 |
+| `index.html` | 시작 메뉴 (버전 정보, 로드맵 링크, 시뮬레이터 실행) |
+| `main.html` | 시뮬레이터 본체 (`js/main.js` · `css/main.css`) |
+| `dno.html` | 예전 주소 호환용 — `main.html`로 이동 |
 | `settings.html` | 설정 화면 (언어 선택) |
 | `roadmap.html` | 개발 로드맵 및 업데이트 내역 |
 | `teaser.html` | 티저 페이지 (구 `dno.pre.html`) |
-| `lang.js` | 언어 설정 저장 및 한국어→영어 실시간 치환 엔진 (`dno.html`/`roadmap.html`에서 사용) |
+| `lang.js` | 언어 설정 저장 및 한국어→영어 실시간 치환 엔진 (`main.html`/`roadmap.html`에서 사용) |
 
-`index.html` 또는 `dno.html`을 브라우저에서 직접 열면 됩니다. Chrome, Firefox, Edge 최신 버전에서 동작하며, 한글 글꼴(네오둥근모 · Pretendard)은 `fonts/` 폴더에 함께 들어 있어 인터넷 없이도 보이고, 영문 보조 글꼴 VT323만 Google Fonts에서 불러옵니다.
+`index.html` 또는 `main.html`을 브라우저에서 직접 열면 됩니다. Chrome, Firefox, Edge 최신 버전에서 동작하며, 한글 글꼴(네오둥근모 · Pretendard)은 `fonts/` 폴더에 함께 들어 있어 인터넷 없이도 보이고, 영문 보조 글꼴 VT323만 Google Fonts에서 불러옵니다.
 
 ---
 
 ## 데스크톱 앱 (Windows .exe) 빌드
 
-Electron으로 감싸 설치형 Windows 앱(.exe)으로도 빌드할 수 있습니다. 게임 내부 로직·화면은 웹 버전과 완전히 동일하며, `electron/main.js`가 `main.html`을 창으로 띄우는 껍데기만 추가된 구조입니다.
+Electron으로 감싸 설치형 Windows 앱(.exe)으로도 빌드할 수 있습니다. 게임 내부 로직·화면은 웹 버전과 완전히 동일하며, `electron/main.js`가 `index.html`을 창으로 띄우는 껍데기만 추가된 구조입니다.
 
 ```bash
 npm install          # Electron / electron-builder 설치 (최초 1회)

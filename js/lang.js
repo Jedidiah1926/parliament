@@ -239,7 +239,7 @@
     };
 
     // 초기 화면 로드 시점에 전체를 번역하고, 그 뒤에 새로 그려지거나 바뀐 부분은 MutationObserver로 계속 번역한다.
-    // dno.js/roadmap.js의 자체 초기 렌더링(window.onload)이 끝난 뒤에 실행되도록 load 이벤트를 기다린다.
+    // main.js/roadmap.js의 자체 초기 렌더링(window.onload)이 끝난 뒤에 실행되도록 load 이벤트를 기다린다.
     const pageLoaded = new Promise(resolve => {
         if (document.readyState === 'complete') resolve();
         else window.addEventListener('load', () => resolve());

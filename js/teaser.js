@@ -3460,7 +3460,7 @@
             return out;
         }
 
-        // 같은 출처(dno.css)의 스타일 규칙 텍스트를 모아 반환 — 외부(구글 폰트 등) 스타일시트는
+        // 같은 출처(main.css)의 스타일 규칙 텍스트를 모아 반환 — 외부(구글 폰트 등) 스타일시트는
         // CORS 때문에 JS로 규칙을 읽을 수 없으므로 제외하고, 대신 @import로 원본 주소를 그대로 참조.
         // (이 함수는 SVG 형식 내보내기에만 쓰여 래스터화하지 않으므로, 캔버스 오염 문제와 무관함)
         let cachedInlineCss = null;
@@ -4314,7 +4314,7 @@
             for(let i = 2; ; i++) { const n = `${base} (${i})`; if(!names.has(n)) return n; }
         }
 
-        // 온보딩(main.html)에서 프리셋을 골라 들어온 경우 — 프리셋을 복제해 새 세이브로 만들고 그 세이브로 시작
+        // 온보딩(index.html)에서 프리셋을 골라 들어온 경우 — 프리셋을 복제해 새 세이브로 만들고 그 세이브로 시작
         async function startFromPresetOnBoot(presetId, name) {
             let preset = null;
             try {
@@ -5026,7 +5026,7 @@
                 `)
             ].join('');
             bar.innerHTML = `
-                <a class="save-tab-home" href="main.html" onclick="return goHomeScreen()" title="메인 화면으로" aria-label="메인 화면으로">
+                <a class="save-tab-home" href="index.html" onclick="return goHomeScreen()" title="메인 화면으로" aria-label="메인 화면으로">
                     <svg viewBox="0 0 20 20" width="17" height="17" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M2.8 9.6 10 3.4l7.2 6.2"/><path d="M4.9 8v8.6h3.6v-4.7h3v4.7h3.6V8"/>
                     </svg>
@@ -5047,10 +5047,10 @@
             `;
         }
 
-        // 상단 탭 바 맨 왼쪽 집 아이콘 — 지금 상태를 바로 저장한 뒤 메인 화면(main.html)으로 돌아간다
+        // 상단 탭 바 맨 왼쪽 집 아이콘 — 지금 상태를 바로 저장한 뒤 메인 화면(index.html)으로 돌아간다
         function goHomeScreen() {
             try { autosaveNow(); } catch(e) { /* 저장 실패해도 이동은 계속 */ }
-            location.href = 'main.html';
+            location.href = 'index.html';
             return false;
         }
 
