@@ -2,6 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
+    <link rel="icon" type="image/png" href="icons/favicon.png">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hemicycle — Settings</title>
 
@@ -52,6 +53,15 @@
                             <button class="lang-select-btn" id="uiModeBtnDesktop" onclick="selectUiMode('desktop')">데스크톱 (가로형)</button>
                             <button class="lang-select-btn" id="uiModeBtnMobile" onclick="selectUiMode('mobile')">모바일 (세로형)</button>
                         </div>
+                    </div>
+                    <div class="settings-group" id="displayModeGroup">
+                        <div class="settings-label">WINDOW / 창 표시</div>
+                        <div class="lang-select-group">
+                            <button class="lang-select-btn" id="displayModeBtnWindowed" onclick="selectDisplayMode('windowed')">창 모드</button>
+                            <button class="lang-select-btn" id="displayModeBtnFullscreen" onclick="selectDisplayMode('fullscreen')">전체 화면</button>
+                            <button class="lang-select-btn" id="displayModeBtnBorderless" onclick="selectDisplayMode('borderless')">테두리 없는 전체 화면</button>
+                        </div>
+                        <div class="settings-hint" id="displayModeHint">F11 키로 전체 화면과 창 모드를 오갈 수 있습니다</div>
                     </div>
                 </section>
 
@@ -112,6 +122,46 @@
             document.getElementById('uiModeBtnMobile').classList.toggle('active', cur === 'mobile');
         }
         renderUiModeButtons();
+
+        // ===== 창 표시 방식 — 앱에서는 창 모드 · 전체 화면 · 테두리 없는 전체 화면,
+        // 웹에서는 창 모드 · 전체 화면만 (웹의 전체 화면은 다른 페이지로 옮기면 풀림) =====
+        const desktopApi = window.hemicycleDesktop || null;
+        let displayMode = 'windowed';
+        function renderDisplayModeButtons() {
+            ['windowed', 'fullscreen', 'borderless'].forEach(m => {
+                const btn = document.getElementById('displayModeBtn' + m[0].toUpperCase() + m.slice(1));
+                if(btn) btn.classList.toggle('active', displayMode === m);
+            });
+        }
+        async function selectDisplayMode(mode) {
+            if(desktopApi) {
+                displayMode = await desktopApi.setDisplayMode(mode);
+            } else {
+                try {
+                    if(mode === 'fullscreen' && !document.fullscreenElement) await document.documentElement.requestFullscreen();
+                    else if(mode === 'windowed' && document.fullscreenElement) await document.exitFullscreen();
+                } catch(e) { /* 전체 화면을 허용하지 않는 환경 */ }
+                displayMode = document.fullscreenElement ? 'fullscreen' : 'windowed';
+            }
+            renderDisplayModeButtons();
+        }
+        (function initDisplayMode() {
+            if(desktopApi) {
+                desktopApi.onDisplayModeChange(mode => { displayMode = mode; renderDisplayModeButtons(); });
+                desktopApi.getDisplayMode().then(mode => { displayMode = mode; renderDisplayModeButtons(); });
+            } else {
+                const group = document.getElementById('displayModeGroup');
+                if(!document.fullscreenEnabled) { group.style.display = 'none'; return; }
+                document.getElementById('displayModeBtnBorderless').style.display = 'none';
+                document.getElementById('displayModeHint').textContent = '전체 화면은 다른 화면으로 옮기면 창 모드로 돌아갑니다';
+                document.addEventListener('fullscreenchange', () => {
+                    displayMode = document.fullscreenElement ? 'fullscreen' : 'windowed';
+                    renderDisplayModeButtons();
+                });
+                displayMode = document.fullscreenElement ? 'fullscreen' : 'windowed';
+            }
+            renderDisplayModeButtons();
+        })();
 
         function selectThemeMode(mode) {
             setThemeMode(mode);

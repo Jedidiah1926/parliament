@@ -22,6 +22,11 @@ window.DnoLangPacks.en = {
  ],
  "ordinal": "en",
  "patterns": [
+  {"re": "^(.+) 지도 공유$", "to": "Share the $1 map"},
+  {"re": "^([\\s\\S]+)이\\(가\\) 하원과 다른 지역구 지도를 쓰도록 나눕니다\\.\\n지금 지도를 복사해 그대로 이어 쓰며, 이후 ([\\s\\S]+) 지도를 따로 올릴 수 있습니다\\. 계속하시겠습니까\\?$", "to": "$1 will use a district map separate from the House.\nThe current map is copied so nothing changes yet; you can then upload a map just for $2. Continue?"},
+  {"re": "^([\\s\\S]+)이\\(가\\) 다시 하원 지도를 함께 쓰도록 합칩니다\\.\\n하원 지도에 없는 ([\\s\\S]+) 지역구의 데이터\\(의석 · 성향 · 당선자\\)는 사라집니다\\. 계속하시겠습니까\\?$", "to": "$1 will share the House map again.\n$2 districts that aren't on the House map lose their data (seats · leanings · winners). Continue?"},
+  {"re": "^([\\s\\S]+)의 지역구 데이터가 새 지도로 대체됩니다\\.\\n\\(이름·의석 수·성향·당선자 정보 포함\\) 계속하시겠습니까\\?$", "to": "$1's district data will be replaced by the new map.\n(Including names, seat counts, leanings and winners) Continue?"},
+  {"re": "^\\((.+) 단일 후보\\)$", "to": "($1 joint candidate)"},
   {"re": "^ 추가(\\s*)$", "to": " added$1"},
   {"re": "^약 (\\d+) × (\\d+) 픽셀 \\(통계 · 머리를 넣으면 그만큼 커짐\\)$", "to": "About $1 × $2 pixels (larger with stats or a header)"},
   {"re": "^\\- 날짜의 \"직접 입력\"과 회기의 \"단순형\" 삭제 — 날짜는 연호\\(선택\\) \\+ 연 · 월 · 일, 회기는 대수 · 이름 · 회기 번호로만 \\(예전 세이브의 글자는 불러올 때 칸으로 옮김, 예: \"레이와 1년 4월 20일\" → 연호 레이와 · 1 · 4 · 20\\), 연호 1년처럼 두 자리 이하 연도도 그대로 넘어감$", "to": "- Removed free-text dates and \"simple\" sessions — dates are an optional era name + year · month · day, sessions are term · name · number (old saves are converted on load, e.g. \"Reiwa 1, April 20\" → era Reiwa · 1 · 4 · 20); years of two digits or less (like era year 1) now advance correctly"},
@@ -6837,6 +6842,110 @@ window.DnoLangPacks.en = {
   [
    "- 법안 조항 · 상임위원회",
    "- Bill articles · standing committees"
+  ],
+  [
+   "WINDOW / 창 표시",
+   "WINDOW"
+  ],
+  [
+   "테두리 없는 전체 화면",
+   "Borderless fullscreen"
+  ],
+  [
+   "창 모드",
+   "Windowed"
+  ],
+  [
+   "전체 화면",
+   "Fullscreen"
+  ],
+  [
+   "F11 키로 전체 화면과 창 모드를 오갈 수 있습니다",
+   "Press F11 to switch between fullscreen and windowed"
+  ],
+  [
+   "전체 화면은 다른 화면으로 옮기면 창 모드로 돌아갑니다",
+   "Fullscreen returns to windowed when you move to another screen"
+  ],
+  [
+   "- 화면 표시 방식 — 창 모드 · 전체 화면 · 테두리 없는 전체 화면 중 선택 (설정 → 화면)",
+   "- Display mode — choose windowed, fullscreen or borderless fullscreen (Settings → Display)"
+  ],
+  [
+   "이 원의 지역구 지도",
+   "This chamber's district map"
+  ],
+  [
+   "하원 지도 공유",
+   "Share the House map"
+  ],
+  [
+   "따로 쓰기",
+   "Separate map"
+  ],
+  [
+   "기본은 하원 지도를 상원·삼원이 함께 쓰며, 원을 골라 ",
+   "By default the Senate and Third chamber share the House map; pick a chamber and press "
+  ],
+  [
+   "를 누르면 그 원만의 지도를 올릴 수 있습니다. 지역구를 클릭하면 원별 의석 수와 정당별 성향(%)을 지정할 수 있습니다.",
+   " to upload a map just for it. Click a district to set its seats per chamber and party leanings (%)."
+  ],
+  [
+   "후보 단일화",
+   "Candidate unification"
+  ],
+  [
+   "— 여러 정당이 후보를 한 명으로 합쳐 출마합니다. 지지가 가장 높은 정당이 후보를 내고 참여 정당의 지지를 합쳐 받습니다 (비례 투표는 따로)",
+   "— Several parties field one joint candidate. The member with the highest support runs and receives the combined support of all members (list votes stay separate)"
+  ],
+  [
+   "+ 단일화 추가",
+   "+ Add unification"
+  ],
+  [
+   "단일화한 정당이 없습니다",
+   "No parties have unified"
+  ],
+  [
+   "단일화 이름 (비우면 정당 이름을 이어 붙임)",
+   "Unification name (blank joins the party names)"
+  ],
+  [
+   "단일화 해제",
+   "Dissolve unification"
+  ],
+  [
+   "다른 단일화에서 옮겨 옵니다",
+   "Moves it from another unification"
+  ],
+  [
+   "대선 · 총리 선거",
+   "Presidential · PM elections"
+  ],
+  [
+   "총선 지역구",
+   "General election districts"
+  ],
+  [
+   "두 정당 이상 골라야 단일화가 적용됩니다",
+   "Pick two or more parties for the unification to apply"
+  ],
+  [
+   "원별 지역구 분리",
+   "Per-chamber district maps"
+  ],
+  [
+   "화면 표시 방식 · 앱 아이콘",
+   "Display modes · app icon"
+  ],
+  [
+   "- 앱 · 설치 파일 · 브라우저 탭 아이콘에 Hemicycle 로고",
+   "- Hemicycle logo as the app, installer and browser tab icon"
+  ],
+  [
+   "- 버전 표시 v1.5.8",
+   "- Version label v1.5.8"
   ]
  ]
 };

@@ -1,7 +1,7 @@
 {
   "name": "hemicycle",
   "productName": "Hemicycle",
-  "version": "1.5.7",
+  "version": "1.5.8",
   "description": "Hemicycle — desktop build",
   "private": true,
   "main": "electron/main.js",
@@ -27,8 +27,9 @@
       "css/**/*",
       "fonts/**/*",
       "presets/**/*",
-    "lang/**/*",
-    "old2/**/*",
+      "lang/**/*",
+      "old2/**/*",
+      "icons/**/*",
       "!electron/smoketest.js",
       "!README.md",
       "!package.json",
@@ -41,10 +42,13 @@
       "target": [
         { "target": "nsis", "arch": ["x64"] }
       ],
-      "artifactName": "${productName}-${version}-win-x64.${ext}"
+      "artifactName": "${productName}-${version}-win-x64.${ext}",
+      "icon": "icons/icon.ico"
     },
     "nsis": {
       "artifactName": "${productName}-Setup-${version}.${ext}",
+      "installerIcon": "icons/icon.ico",
+      "uninstallerIcon": "icons/icon.ico",
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
