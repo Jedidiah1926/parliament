@@ -82,7 +82,7 @@ function createWindow(url) {
         resizable: !borderless,
         maximizable: !borderless,
         show: false, // 첫 화면이 다 그려진 뒤에 보여줘서 빈 창이 번쩍이지 않게
-        backgroundColor: THEME_BG[saved.theme] || THEME_BG.tno,
+        backgroundColor: THEME_BG[saved.theme] || THEME_BG.light,
         autoHideMenuBar: true,
         // 창 · 작업 표시줄 아이콘은 반원 로고 (실행 파일 · 설치 파일 아이콘은 글자가 들어간 전체 로고 — icons/icon.ico)
         icon: path.join(__dirname, '..', 'icons', process.platform === 'win32' ? 'window.ico' : 'window.png'),
