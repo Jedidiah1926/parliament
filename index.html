@@ -450,12 +450,13 @@
             if(codeEl) codeEl.textContent = (cur === 'kr' ? 'KO' : cur.toUpperCase());
             menu.innerHTML = list.map(l => `
                 <button type="button" class="home-lang-item${l.code === cur ? ' active' : ''}" role="menuitemradio" aria-checked="${l.code === cur}" onclick="pickHomeLang('${l.code}')">
-                    <span>${l.name.replace(/[<>&]/g, '')}</span>${l.code === cur ? '<span class="home-lang-check">✓</span>' : ''}${l.installed ? `<span class="home-lang-remove" role="button" title="언어 팩 삭제" onclick="removeHomeLangPack(event, '${l.code}')">✕</span>` : ''}
+                    <span>${l.name.replace(/[<>&]/g, '')}</span>${l.code === cur ? '<span class="home-lang-check">✓</span>' : ''}${l.installed ? `<span class="home-lang-remove" role="button" title="언어 팩 삭제" onclick="removeHomeLangPack(event, '${l.code}')">✕</span>` : ''}${l.external ? `<span class="home-lang-src">${l.external === 'workshop' ? '창작마당' : '모드 폴더'}</span>` : ''}
                 </button>`).join('') + `
                 <div class="home-lang-tools">
                     <button type="button" class="home-lang-more" onclick="document.getElementById('langPackFileInput').click()">언어 팩 불러오기 (.json)</button>
                     <button type="button" class="home-lang-more" onclick="downloadLangTemplate('ko')">번역 템플릿 받기 (KO · 한국어 기준)</button>
                     <button type="button" class="home-lang-more" onclick="downloadLangTemplate('en')">번역 템플릿 받기 (EN · 영어 기준)</button>
+                    ${window.hemicycleDesktop && window.hemicycleDesktop.openModsFolder ? '<button type="button" class="home-lang-more" onclick="window.hemicycleDesktop.openModsFolder()">모드 폴더 열기</button>' : ''}
                 </div>`;
         }
         // 불러온 언어 팩 삭제 — 쓰던 언어였다면 한국어로 돌아가 다시 불러옴

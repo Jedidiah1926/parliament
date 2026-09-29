@@ -4,6 +4,8 @@
 // 누구나 새 언어를 만들어 공유(창작마당)하고, 설정 화면에서 .json 파일로 불러와 쓸 수 있다.
 //   - 기본 제공 팩: lang/<code>.js (JSON을 JS로 감싼 것 — 데스크톱 앱 file://에서도 읽힘)
 //   - 불러온 팩: localStorage(dnoLangPacks)에 보관
+//   - 모드 · 창작마당 팩(데스크톱 앱): 모드 폴더와 Steam 창작마당 구독 아이템에서 앱이 읽어 넘겨준다
+//     (window.hemicycleDesktop.modLanguagePacks — electron/mods.js 참고). 지우려면 폴더를 지우거나 구독을 끊는다
 // 팩 형식은 README의 "번역(언어 팩) 만들기" 참고 (형식 식별자: dno-lang-pack@1).
 (function () {
     'use strict';
@@ -25,7 +27,24 @@
         } catch (e) { return {}; }
     }
 
-    function isKnown(code) { return code === SOURCE_LANG.code || !!BUILTIN[code] || !!loadInstalled()[code]; }
+    // 모드 · 창작마당 팩 — 형식 검사를 통과한 것만, 같은 코드는 먼저 온 것(모드 폴더 → 창작마당 순)만 쓴다
+    const EXTERNAL = (function () {
+        const out = {};
+        const list = (window.hemicycleDesktop && Array.isArray(window.hemicycleDesktop.modLanguagePacks)) ? window.hemicycleDesktop.modLanguagePacks : [];
+        list.forEach(entry => {
+            const res = normalizePack(entry && entry.pack);
+            if (res.error) { console.warn('언어 팩을 건너뜀:', entry && entry.folder, res.error); return; }
+            if (out[res.pack.code]) return;
+            out[res.pack.code] = { ...res.pack, source: entry.source === 'workshop' ? 'workshop' : 'local', itemId: entry.itemId || null };
+        });
+        return out;
+    })();
+    function externalPack(code) {
+        // 직접 불러온 팩(localStorage)이 같은 코드를 쓰면 그쪽이 우선
+        return loadInstalled()[code] ? null : (EXTERNAL[code] || null);
+    }
+
+    function isKnown(code) { return code === SOURCE_LANG.code || !!BUILTIN[code] || !!loadInstalled()[code] || !!EXTERNAL[code]; }
 
     function getLang() {
         const v = safeGet(LANG_KEY);
@@ -42,6 +61,7 @@
             { code: SOURCE_LANG.code, name: SOURCE_LANG.name, builtin: true },
             ...Object.values(BUILTIN).map(b => ({ code: b.code, name: b.name, builtin: true })),
             ...Object.values(installed).map(p => ({ code: p.code, name: p.name, author: p.author || '', installed: true })),
+            ...Object.values(EXTERNAL).filter(p => !installed[p.code]).map(p => ({ code: p.code, name: p.name, author: p.author || '', external: p.source })),
         ];
     }
 
@@ -86,7 +106,7 @@
         if (!installed[code]) return false;
         delete installed[code];
         safeSet(PACKS_KEY, JSON.stringify(installed));
-        if (safeGet(LANG_KEY) === code) safeSet(LANG_KEY, SOURCE_LANG.code);
+        if (safeGet(LANG_KEY) === code && !EXTERNAL[code]) safeSet(LANG_KEY, SOURCE_LANG.code);
         return true;
     }
 
@@ -111,6 +131,8 @@
     function getPack(code) {
         const installed = loadInstalled()[code];
         if (installed) return Promise.resolve(installed);
+        const ext = externalPack(code);
+        if (ext) return Promise.resolve(ext);
         return loadBuiltin(code);
     }
 
@@ -128,8 +150,8 @@
             author: '',
             version: '1',
             _help: ko
-                ? 'dict의 각 항목은 ["한국어 원문", "번역"]입니다. 두 번째 칸에 한국어 원문이 그대로 들어 있으니 그 칸만 번역하세요 (첫 번째 칸은 바꾸지 마세요). patterns의 "to"는 영어 예시이니 함께 번역하세요. code(예: "ja")와 name(예: "日本語")을 채운 뒤 메인 화면 🌐 > 언어 팩 불러오기로 적용합니다.'
-                : 'dict의 각 항목은 ["한국어 원문", "번역"]입니다. 두 번째 칸에 영어 번역이 들어 있으니 그 칸만 바꾸세요 (첫 번째 칸은 바꾸지 마세요). code(예: "ja")와 name(예: "日本語")을 채운 뒤 메인 화면 🌐 > 언어 팩 불러오기로 적용합니다. / Each dict entry is ["Korean source", "translation"]. Replace only the second (English) column.',
+                ? 'dict의 각 항목은 ["한국어 원문", "번역"]입니다. 두 번째 칸에 한국어 원문이 그대로 들어 있으니 그 칸만 번역하세요 (첫 번째 칸은 바꾸지 마세요). patterns의 "to"는 영어 예시이니 함께 번역하세요. code(예: "ja")와 name(예: "日本語")을 채운 뒤 메인 화면 🌐 > 언어 팩 불러오기로 적용합니다. 데스크톱 앱에서는 🌐 > 모드 폴더 열기로 연 폴더 안에 새 폴더를 만들어 이 파일을 넣어도 되고, 그 폴더가 그대로 창작마당 아이템이 됩니다.'
+                : 'dict의 각 항목은 ["한국어 원문", "번역"]입니다. 두 번째 칸에 영어 번역이 들어 있으니 그 칸만 바꾸세요 (첫 번째 칸은 바꾸지 마세요). code(예: "ja")와 name(예: "日本語")을 채운 뒤 메인 화면 🌐 > 언어 팩 불러오기로 적용합니다. 데스크톱 앱에서는 🌐 > 모드 폴더 열기로 연 폴더 안에 새 폴더를 만들어 이 파일을 넣어도 됩니다 (그 폴더가 그대로 창작마당 아이템). / Each dict entry is ["Korean source", "translation"]. Replace only the second (English) column. In the desktop app you can also put this file in its own folder inside 🌐 > Open mods folder — that folder is a Workshop item as-is.',
             months: ko ? ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월'] : en.months,
             ordinal: ko ? '' : en.ordinal,
             patterns: en.patterns,

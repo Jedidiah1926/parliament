@@ -6954,6 +6954,22 @@ window.DnoLangPacks.en = {
   [
    "- 점검 안내 기능 삭제 — 사이트 주소로 들어오면 바로 메인 화면",
    "- Removed the maintenance notice — the site address now opens the main screen directly"
+  ],
+  [
+   "창작마당",
+   "Workshop"
+  ],
+  [
+   "모드 폴더",
+   "Mods folder"
+  ],
+  [
+   "모드 폴더 열기",
+   "Open mods folder"
+  ],
+  [
+   "- 언어 팩 모드 폴더 — 데스크톱 앱에서 폴더째 넣은 언어 팩을 바로 불러옴 (창작마당 대비)",
+   "- Language pack mods folder \u2014 the desktop app loads language packs dropped in as folders (ready for the Workshop)"
   ]
  ]
 };

@@ -1,0 +1,4 @@
+{
+  "appId": null,
+  "_comment": "Steam 출시 후 Steamworks에서 받은 App ID(숫자)를 appId에 넣고 `npm install steamworks.js`를 하면 창작마당 구독 아이템(언어 팩)을 읽고, tools/workshop-upload.js로 올릴 수 있습니다. 비워 두면 창작마당 기능은 꺼진 채 모드 폴더만 씁니다."
+}
