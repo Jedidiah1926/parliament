@@ -27,7 +27,8 @@
         return isValidHex(v) ? v : DEFAULT_COLOR;
     }
 
-    function isTnoMode() { return !window.getThemeMode || window.getThemeMode() === 'tno'; }
+    // 모드 테마가 켜져 있으면 그 테마의 색을 쓰도록 커스텀 강조색은 걸지 않는다
+    function isTnoMode() { return (!window.getThemeMode || window.getThemeMode() === 'tno') && !(window.getThemeMod && window.getThemeMod()); }
 
     function applyThemeColor(hex) {
         const root = document.documentElement.style;

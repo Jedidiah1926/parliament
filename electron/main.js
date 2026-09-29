@@ -1,6 +1,7 @@
 const { app, BrowserWindow, Menu, ipcMain, screen, shell } = require('electron');
 const path = require('path');
 const fs = require('fs');
+const mods = require('./mods');
 
 // 데이터 폴더(세이브·설정이 든 브라우저 저장소)는 앱 이름 "Hemicycle"을 따른다.
 // 예전 이름(DATANET Parliament Simulation) 시절의 폴더가 있고 새 폴더가 아직 없으면, 처음 켤 때 한 번 통째로 옮겨 와
@@ -235,6 +236,13 @@ function setDisplayMode(mode) {
 }
 
 ipcMain.handle('display-mode:get', () => saved.displayMode);
+// 모드(창작마당) — 언어 팩 · 테마는 페이지가 뜰 때 바로 적용해야 해서 목록을 동기로 돌려준다 (프리셋은 목록만)
+ipcMain.on('mods:list', event => {
+    try { event.returnValue = mods.listMods(); }
+    catch (e) { console.error('mods scan failed:', e); event.returnValue = { languages: [], themes: [], presets: [] }; }
+});
+ipcMain.handle('mods:preset', (event, key) => mods.loadPreset(key));
+ipcMain.handle('mods:open-folder', () => shell.openPath(mods.modsDir()));
 ipcMain.handle('display-mode:set', (event, mode) => setDisplayMode(mode));
 
 app.whenReady().then(() => {

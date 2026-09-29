@@ -55,6 +55,11 @@
                             <button class="lang-select-btn" id="themeModeBtnTno" onclick="selectThemeMode('tno')">네온 모드</button>
                         </div>
                     </div>
+                    <!-- 모드 테마 (데스크톱 앱 — 모드 폴더 · 창작마당) — 있을 때만 보임 -->
+                    <div class="settings-group" id="themeModGroup" style="display:none;">
+                        <div class="settings-label">MOD THEMES / 모드 테마</div>
+                        <div class="lang-select-group" id="themeModList"></div>
+                    </div>
                     <div class="settings-group" id="themeColorSection">
                         <div class="settings-label">THEME COLOR / 테마 색 <span id="themeColorTnoOnlyNote" style="color:#666;font-size:0.75rem;text-transform:none;"></span></div>
                         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
@@ -169,10 +174,30 @@
             renderThemeColorInputs();
         }
         function renderThemeModeButtons() {
-            const cur = getThemeMode();
+            const mod = window.getThemeMod ? getThemeMod() : '';
+            const cur = mod ? '' : getThemeMode(); // 모드 테마를 쓰는 중이면 기본 테마 버튼은 선택 해제
             document.getElementById('themeModeBtnLight').classList.toggle('active', cur === 'light');
             document.getElementById('themeModeBtnDark').classList.toggle('active', cur === 'dark');
             document.getElementById('themeModeBtnTno').classList.toggle('active', cur === 'tno');
+            const mods = window.listModThemes ? listModThemes() : [];
+            const group = document.getElementById('themeModGroup');
+            const box = document.getElementById('themeModList');
+            if(!group || !box) return;
+            group.style.display = mods.length ? '' : 'none';
+            box.innerHTML = '';
+            mods.forEach(t => {
+                const btn = document.createElement('button');
+                btn.className = 'lang-select-btn' + (t.id === mod ? ' active' : '');
+                btn.textContent = t.name;
+                btn.title = (t.source === 'workshop' ? '창작마당' : '모드 폴더') + (t.author ? ' · ' + t.author : '');
+                btn.onclick = () => selectThemeMod(t.id);
+                box.appendChild(btn);
+            });
+        }
+        function selectThemeMod(id) {
+            setThemeMod(id);
+            renderThemeModeButtons();
+            renderThemeColorInputs();
         }
         renderThemeModeButtons();
 

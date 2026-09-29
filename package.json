@@ -20,6 +20,9 @@
     "appId": "com.pilcrow1926.hemicycle",
     "productName": "Hemicycle",
     "asar": true,
+    "asarUnpack": [
+      "node_modules/steamworks.js/**/*"
+    ],
     "files": [
       "electron/**/*",
       "*.html",

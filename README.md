@@ -190,9 +190,9 @@ npm run build:win     # Windows 설치형 exe 빌드 → dist/Hemicycle-Setup-<�
 
 화면은 한국어로 만들어져 있고, 다른 언어는 **언어 팩**(한국어 원문 → 번역 사전)으로 표시합니다. 언어 팩은 코드 없이 데이터만 담은 `.json` 파일이라 누구나 새 언어를 만들어 공유할 수 있습니다.
 
-1. 메인 메뉴 › 설정의 **번역 템플릿 받기**로 `dno-lang-template.json`을 받습니다 (영어 번역이 채워진 상태).
+1. 메인 화면 🌐 › **번역 템플릿 받기**(한국어 기준 · 영어 기준)로 템플릿 `.json`을 받습니다.
 2. `code`(예: `"ja"`, `"zh-tw"`)와 `name`(예: `"日本語"`)을 채우고, `dict`의 각 항목 `["한국어 원문", "번역"]`에서 **두 번째 칸만** 바꿉니다.
-3. 설정의 **언어 팩 불러오기 (.json)**로 파일을 고르면 언어 목록에 추가되고 바로 쓸 수 있습니다 (브라우저에 저장, ✕로 삭제).
+3. 메인 화면 🌐 › **언어 팩 불러오기 (.json)**로 파일을 고르면 언어 목록에 추가되고 바로 쓸 수 있습니다 (브라우저에 저장, ✕로 삭제).
 
 ```json
 {
@@ -217,6 +217,51 @@ npm run build:win     # Windows 설치형 exe 빌드 → dist/Hemicycle-Setup-<�
 - `patterns`: 숫자가 섞인 문구(날짜·의석 수 등)를 위한 정규식 규칙. `to`에서 `$1`은 괄호 그룹, `{{month:$2}}`는 `months`의 달 이름, `{{ordinal:$1}}`은 서수(`"ordinal": "en"`이면 1st/2nd…, `"none"`이면 숫자 그대로), `{{map:$4|정기회=Regular Session;임시회=Extraordinary Session}}`는 값 바꾸기, `{{dict:$1}}`은 사전 찾기입니다.
 - `code`는 `kr`(기본 한국어)와 기본 제공 언어(`en`)를 쓸 수 없습니다 — 기본 영어를 고쳐 쓰려면 `en-custom`처럼 다른 코드를 쓰세요.
 - 기본 제공 언어는 `lang/<code>.js`에 같은 형식의 JSON을 JS로 감싸 두고 `js/lang.js`의 `BUILTIN`에 등록합니다 (데스크톱 앱이 `file://`로 열려 JSON 파일을 직접 읽을 수 없기 때문).
+
+### 모드 폴더 · Steam 창작마당 (데스크톱 앱)
+
+언어 팩 · 테마 · 프리셋은 **폴더 하나**에 담으면 그 폴더가 그대로 Steam 창작마당 아이템이 됩니다.
+
+```
+내-모드/
+├─ <내용 파일>          언어 팩(.json) · 테마(.json) · 프리셋(세이브 .hemi / .json)
+├─ hemicycle-item.json  (선택) 종류 · 창작마당 정보
+└─ preview.png          (선택) 창작마당 미리보기 그림
+```
+
+```json
+{ "type": "language | theme | preset", "file": "pack.json", "title": "…", "description": "…", "tags": ["Language"] }
+```
+
+`hemicycle-item.json`이 없으면 폴더 안 파일을 보고 종류를 알아서 정합니다 — `"format": "dno-lang-pack@1"`은 언어 팩, `"format": "hemicycle-theme@1"`은 테마, `.hemi` 파일이나 세이브 형식 `.json`은 프리셋(제목은 폴더 이름).
+
+**테마** (`hemicycle-theme@1`) — 바탕 테마(라이트 · 다크 · 네온)의 화면 규칙을 그대로 쓰고 색 변수만 바꿉니다.
+
+```json
+{
+  "format": "hemicycle-theme@1",
+  "id": "sepia",
+  "name": "세피아",
+  "author": "만든 사람",
+  "base": "light",
+  "colors": { "--m-bg": "#f3e9d2", "--m-surface": "#fbf5e6", "--m-accent": "#6b4f2a" },
+  "css": "선택 — 추가 CSS (바깥 파일 · 주소는 막힘)"
+}
+```
+
+- `base`: `light` · `dark` · `neon`. `colors`에는 `--m-…`(라이트/다크 — `css/modern.css` 맨 위 목록) · `--tno-…`(네온) 변수만 쓸 수 있습니다.
+- 설정 › 테마의 **모드 테마**에서 고릅니다. 테마가 없어지면(구독 해제 등) 바탕 테마로 열립니다.
+
+**프리셋** — 게임에서 **파일로 저장**한 `.hemi`를 폴더에 넣고, `hemicycle-item.json`에 `"type": "preset"` · `title` · `description` · `date`(게임 속 시작 날짜) · `author`를 적습니다. 시작 화면과 `+` 탭의 프리셋 목록에 나오고, 고르면 복사본이 새 세이브로 만들어집니다.
+
+**읽어 오는 곳**
+- **모드 폴더**: 메인 화면 🌐 › **모드 폴더 열기**(`%APPDATA%\Hemicycle\mods`)에 폴더를 넣습니다. 목록에 `모드 폴더` 표시가 붙습니다. 창작마당에 올리기 전 시험용으로도 씁니다.
+- **창작마당**: 구독한 아이템은 `창작마당` 표시와 함께 나옵니다 (지우려면 구독 해제). 같은 언어 코드 · 테마 id가 여럿이면 직접 불러온 것 → 모드 폴더 → 창작마당 순으로 하나만 씁니다.
+
+**창작마당 켜기 (Steam 출시 후)** — 지금은 꺼져 있고 모드 폴더만 동작합니다.
+1. `electron/steam.json`의 `appId`에 Steamworks App ID를 넣고 `npm install steamworks.js`
+2. 앱이 켜질 때 구독 아이템의 설치 폴더를 읽습니다 (`electron/mods.js`)
+3. 올리기: Steam에 로그인한 상태에서 `node tools/workshop-upload.js <폴더> [--note "변경 내용"]` — 종류는 폴더 내용으로 정하고(태그 기본값 `Language` · `Theme` · `Preset`), 처음 올리면 만든 아이템 id를 `hemicycle-item.json`의 `workshopId`에 적어 두고 다음부터는 그 아이템을 업데이트합니다.
 
 ## 디자인
 

@@ -3029,6 +3029,7 @@ html[data-theme-family="modern"] .home-lang-tools { border-top-color: var(--m-bo
 html[data-theme-family="modern"] .home-lang-more { color: var(--m-text-2); border-radius: 9px; font-family: inherit; }
 html[data-theme-family="modern"] .home-lang-more:hover { background: var(--m-surface-2); color: var(--m-text); }
 html[data-theme-family="modern"] .home-lang-remove { color: var(--m-text-3); }
+html[data-theme-family="modern"] .home-lang-src { color: var(--m-text-3); border-color: var(--m-border); border-radius: 5px; }
 html[data-theme-family="modern"] .home-lang-remove:hover { color: var(--m-danger, #e5484d); }
 
 html[data-theme-family="modern"] .thr-same,
