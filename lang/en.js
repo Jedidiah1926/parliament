@@ -6946,6 +6946,14 @@ window.DnoLangPacks.en = {
   [
    "- 버전 표시 v1.5.8",
    "- Version label v1.5.8"
+  ],
+  [
+   "- 앱 · 설치 파일 · 브라우저 탭 아이콘에 Hemicycle 로고 (창 · 작업 표시줄은 반원 로고)",
+   "- Hemicycle logo as the app, installer and browser tab icon (the window and taskbar use the seat-arc logo)"
+  ],
+  [
+   "- 점검 안내 기능 삭제 — 사이트 주소로 들어오면 바로 메인 화면",
+   "- Removed the maintenance notice — the site address now opens the main screen directly"
   ]
  ]
 };

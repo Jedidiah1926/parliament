@@ -9,7 +9,7 @@ app.whenReady().then(async () => {
     win.webContents.on('console-message', (e, level, message) => {
         if (level >= 2) console.log('RENDERER ERROR:', message);
     });
-    await win.loadFile(path.join(__dirname, '..', 'main.html'));
+    await win.loadFile(path.join(__dirname, '..', 'index.html'));
     title = await win.webContents.executeJavaScript('document.title');
     const hasMenuBtn = await win.webContents.executeJavaScript(
         `!!document.querySelector('.home-menu-item')`

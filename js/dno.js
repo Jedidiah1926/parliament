@@ -4817,7 +4817,7 @@
             for(let i = 2; ; i++) { const n = `${base} (${i})`; if(!names.has(n)) return n; }
         }
 
-        // 온보딩(main.html)에서 프리셋을 골라 들어온 경우 — 프리셋을 복제해 새 세이브로 만들고 그 세이브로 시작
+        // 온보딩(index.html)에서 프리셋을 골라 들어온 경우 — 프리셋을 복제해 새 세이브로 만들고 그 세이브로 시작
         async function startFromPresetOnBoot(presetId, name) {
             let preset = null;
             try {
@@ -5541,7 +5541,7 @@
             else doSave();
         }
 
-        // 새 세이브 생성 흐름(main.html)에서 넘어온 이름으로, 방금 초기화된 현재 상태를 그대로 첫 저장으로 등록
+        // 새 세이브 생성 흐름(index.html)에서 넘어온 이름으로, 방금 초기화된 현재 상태를 그대로 첫 저장으로 등록
         function createNamedSlotFromCurrentState(name) {
             if(!localStorageAvailable || !name) return;
             const slots = loadSaveSlots();
@@ -5579,7 +5579,7 @@
         }
 
         // ===== 국가 > 저장: 현재 세이브 카드 · 세이브 목록 =====
-        // 즐겨찾기는 시작 화면(main.html)과 같은 저장소를 쓴다 — 어느 쪽에서 ★를 눌러도 양쪽에 반영
+        // 즐겨찾기는 시작 화면(index.html)과 같은 저장소를 쓴다 — 어느 쪽에서 ★를 눌러도 양쪽에 반영
         const SAVE_FAVORITES_KEY = 'dnoSaveFavorites';
         function loadSaveFavorites() {
             try { return new Set(JSON.parse(localStorage.getItem(SAVE_FAVORITES_KEY) || '[]')); } catch(e) { return new Set(); }
@@ -5764,7 +5764,7 @@
                     </div>`;
             }).join('');
             bar.innerHTML = `
-                <a class="save-tab-home" href="main.html" onclick="return goHomeScreen()" title="메인 화면으로" aria-label="메인 화면으로">
+                <a class="save-tab-home" href="index.html" onclick="return goHomeScreen()" title="메인 화면으로" aria-label="메인 화면으로">
                     <svg viewBox="0 0 20 20" width="17" height="17" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M2.8 9.6 10 3.4l7.2 6.2"/><path d="M4.9 8v8.6h3.6v-4.7h3v4.7h3.6V8"/>
                     </svg>
@@ -5815,10 +5815,10 @@
         }
         function toggleSavePanel() { isSavePanelOpen() ? closeSavePanel() : openSavePanel(); }
 
-        // 상단 탭 바 맨 왼쪽 집 아이콘 — 지금 상태를 바로 저장한 뒤 메인 화면(main.html)으로 돌아간다
+        // 상단 탭 바 맨 왼쪽 집 아이콘 — 지금 상태를 바로 저장한 뒤 메인 화면(index.html)으로 돌아간다
         function goHomeScreen() {
             try { autosaveNow(); } catch(e) { /* 저장 실패해도 이동은 계속 */ }
-            location.href = 'main.html';
+            location.href = 'index.html';
             return false;
         }
 

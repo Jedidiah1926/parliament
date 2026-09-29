@@ -197,7 +197,7 @@ function createWindow(url) {
     });
 
     if (url) win.loadURL(url);
-    else win.loadFile(path.join(__dirname, '..', 'main.html'));
+    else win.loadFile(path.join(__dirname, '..', 'index.html'));
     return win;
 }
 
