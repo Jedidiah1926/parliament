@@ -343,6 +343,7 @@
                         <span class="save-select-item-name">${escapeSaveName(p.title)}</span>
                         ${p.tutorial ? '<span class="preset-badge">튜토리얼</span>' : ''}
                         ${p.comingSoon ? '<span class="preset-badge preset-badge-soon">준비 중</span>' : ''}
+                        ${p.source ? `<span class="preset-badge preset-badge-soon">${p.source === 'workshop' ? '창작마당' : '모드 폴더'}</span>` : ''}
                         ${p.date ? `<span class="preset-card-date">${escapeSaveName(p.date)}</span>` : ''}
                     </span>
                     ${p.description ? `<span class="preset-card-desc">${escapeSaveName(p.description)}</span>` : ''}

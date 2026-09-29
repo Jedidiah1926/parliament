@@ -236,11 +236,12 @@ function setDisplayMode(mode) {
 }
 
 ipcMain.handle('display-mode:get', () => saved.displayMode);
-// 모드(창작마당) 언어 팩 — 페이지가 뜰 때 언어를 바로 정해야 해서 동기로 돌려준다
-ipcMain.on('mods:language-packs', event => {
-    try { event.returnValue = mods.listLanguagePacks(); }
-    catch (e) { console.error('mods scan failed:', e); event.returnValue = []; }
+// 모드(창작마당) — 언어 팩 · 테마는 페이지가 뜰 때 바로 적용해야 해서 목록을 동기로 돌려준다 (프리셋은 목록만)
+ipcMain.on('mods:list', event => {
+    try { event.returnValue = mods.listMods(); }
+    catch (e) { console.error('mods scan failed:', e); event.returnValue = { languages: [], themes: [], presets: [] }; }
 });
+ipcMain.handle('mods:preset', (event, key) => mods.loadPreset(key));
 ipcMain.handle('mods:open-folder', () => shell.openPath(mods.modsDir()));
 ipcMain.handle('display-mode:set', (event, mode) => setDisplayMode(mode));
 

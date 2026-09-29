@@ -6968,8 +6968,12 @@ window.DnoLangPacks.en = {
    "Open mods folder"
   ],
   [
-   "- 언어 팩 모드 폴더 — 데스크톱 앱에서 폴더째 넣은 언어 팩을 바로 불러옴 (창작마당 대비)",
-   "- Language pack mods folder \u2014 the desktop app loads language packs dropped in as folders (ready for the Workshop)"
+   "- 모드 폴더 — 데스크톱 앱에서 폴더째 넣은 언어 팩 · 테마 · 프리셋을 바로 불러옴 (창작마당 대비)",
+   "- Mods folder — the desktop app loads language packs, themes and presets dropped in as folders (ready for the Workshop)"
+  ],
+  [
+   "MOD THEMES / 모드 테마",
+   "MOD THEMES"
   ]
  ]
 };

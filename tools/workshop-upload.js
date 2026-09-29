@@ -1,4 +1,4 @@
-// Steam 창작마당에 언어 팩 올리기 (Steam 출시 후에 쓰는 도구 — 미리 준비해 둔 것)
+// Steam 창작마당에 모드(언어 팩 · 테마 · 프리셋) 올리기 (Steam 출시 후에 쓰는 도구 — 미리 준비해 둔 것)
 //
 // 준비:
 //   1) electron/steam.json의 appId에 Steamworks App ID를 넣는다 (또는 HEMICYCLE_STEAM_APP_ID 환경 변수)
@@ -9,13 +9,16 @@
 //   node tools/workshop-upload.js <아이템 폴더>                 새 아이템을 만들어 올림 (만든 id를 폴더의 hemicycle-item.json에 적어 둠)
 //   node tools/workshop-upload.js <아이템 폴더> --note "변경 내용"  hemicycle-item.json에 id가 있으면 그 아이템을 업데이트
 //
-// 아이템 폴더 구조는 electron/mods.js 맨 위 설명과 같다 (pack.json + 선택: hemicycle-item.json · preview.png).
-// hemicycle-item.json의 title · description · tags · visibility를 창작마당 정보로 쓰고, 없으면 언어 팩의 name · author로 채운다.
+// 아이템 폴더 구조는 electron/mods.js 맨 위 설명과 같다 (내용 파일 + 선택: hemicycle-item.json · preview.png).
+// hemicycle-item.json의 title · description · tags · visibility를 창작마당 정보로 쓰고, 없으면 내용 파일의 name · author 등으로 채운다.
 const fs = require('fs');
 const path = require('path');
+const zlib = require('zlib');
 
-const PACK_FORMAT = 'dno-lang-pack@1';
+const LANG_FORMAT = 'dno-lang-pack@1';
+const THEME_FORMAT = 'hemicycle-theme@1';
 const ITEM_MANIFEST = 'hemicycle-item.json';
+const TYPE_TAG = { language: 'Language', theme: 'Theme', preset: 'Preset' };
 
 function fail(msg) { console.error('✖ ' + msg); process.exit(1); }
 
@@ -37,18 +40,40 @@ if (fs.existsSync(manifestPath)) {
     try { manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8').replace(/^﻿/, '')); }
     catch (e) { fail(`${ITEM_MANIFEST}을 읽지 못했습니다: ${e.message}`); }
 }
-if (manifest.type && manifest.type !== 'language') fail(`지원하지 않는 아이템 종류입니다: ${manifest.type}`);
-const packFiles = manifest.file ? [manifest.file] : fs.readdirSync(folder).filter(f => /\.json$/i.test(f) && f !== ITEM_MANIFEST);
-const packs = packFiles.map(f => {
-    try { return JSON.parse(fs.readFileSync(path.join(folder, f), 'utf8').replace(/^﻿/, '')); } catch (e) { return null; }
-}).filter(p => p && p.format === PACK_FORMAT);
-if (!packs.length) fail(`폴더에 언어 팩(format: "${PACK_FORMAT}")이 없습니다.`);
-const pack = packs[0];
-if (!pack.code || !pack.name) fail('언어 팩의 code · name을 채우세요.');
+if (manifest.type && !TYPE_TAG[manifest.type]) fail(`지원하지 않는 아이템 종류입니다: ${manifest.type}`);
+function readJson(file) {
+    let buf = fs.readFileSync(file);
+    if (buf.length >= 2 && buf[0] === 0x1f && buf[1] === 0x8b) buf = zlib.gunzipSync(buf);
+    return JSON.parse(buf.toString('utf8').replace(/^\uFEFF/, ''));
+}
+const isSave = o => { const parl = o && (o.parliament || o.data); return !!(parl && Array.isArray(parl.parties)); };
+const files = manifest.file ? [manifest.file] : fs.readdirSync(folder).filter(f => /\.(json|hemi)$/i.test(f) && f !== ITEM_MANIFEST);
+let type = manifest.type || '';
+let content = null;
+for (const f of files) {
+    let obj;
+    try { obj = readJson(path.join(folder, f)); } catch (e) { continue; }
+    const t = obj && obj.format === LANG_FORMAT ? 'language' : obj && obj.format === THEME_FORMAT ? 'theme' : isSave(obj) ? 'preset' : '';
+    if (t && (!type || type === t)) { type = t; content = obj; break; }
+}
+if (!content) fail('폴더에 올릴 내용이 없습니다 (언어 팩 · 테마 · 프리셋 세이브 파일).');
 
-const title = String(manifest.title || `${pack.name} (${pack.code}) — Hemicycle language pack`).slice(0, 128);
-const description = String(manifest.description || `${pack.name} translation for Hemicycle.${pack.author ? ` By ${pack.author}.` : ''}`);
-const tags = Array.isArray(manifest.tags) && manifest.tags.length ? manifest.tags.map(String) : ['Language'];
+let defTitle, defDesc;
+if (type === 'language') {
+    if (!content.code || !content.name) fail('언어 팩의 code · name을 채우세요.');
+    defTitle = `${content.name} (${content.code}) — Hemicycle language pack`;
+    defDesc = `${content.name} translation for Hemicycle.${content.author ? ` By ${content.author}.` : ''}`;
+} else if (type === 'theme') {
+    if (!content.id || !content.name) fail('테마의 id · name을 채우세요.');
+    defTitle = `${content.name} — Hemicycle theme`;
+    defDesc = `${content.name} theme for Hemicycle.${content.author ? ` By ${content.author}.` : ''}`;
+} else {
+    defTitle = `${path.basename(folder)} — Hemicycle preset`;
+    defDesc = 'Scenario preset for Hemicycle.';
+}
+const title = String(manifest.title || defTitle).slice(0, 128);
+const description = String(manifest.description || defDesc);
+const tags = Array.isArray(manifest.tags) && manifest.tags.length ? manifest.tags.map(String) : [TYPE_TAG[type]];
 const previewPath = ['preview.png', 'preview.jpg', 'preview.gif'].map(f => path.join(folder, f)).find(f => fs.existsSync(f));
 
 (async () => {
@@ -62,7 +87,7 @@ const previewPath = ['preview.png', 'preview.jpg', 'preview.gif'].map(f => path.
         const created = await client.workshop.createItem(appId);
         itemId = created.itemId;
         if (created.needsToAcceptAgreement) console.log('! Steam 창작마당 이용 약관에 동의해야 아이템이 공개됩니다.');
-        manifest = { type: 'language', ...manifest, workshopId: String(itemId) };
+        manifest = { type, ...manifest, workshopId: String(itemId) };
         fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + '\n');
         console.log(`새 아이템을 만들었습니다: ${itemId} (${ITEM_MANIFEST}에 기록)`);
     }

@@ -17,7 +17,71 @@
     function safeGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
     function safeSet(k, v) { try { localStorage.setItem(k, v); return true; } catch (e) { return false; } }
 
+    // ===== 모드 테마 (데스크톱 앱 — 모드 폴더 · Steam 창작마당) =====
+    // 형식 hemicycle-theme@1: { id, name, author, base: 'light'|'dark'|'neon', colors: { '--m-bg': '#...', ... }, css? }
+    // 바탕 테마(base)의 화면 규칙을 그대로 쓰고 색 변수(--m-* · --tno-*)만 바꾼다. css는 선택 — 바깥 파일 · 주소는 막는다
+    const THEME_MOD_KEY = 'dnoThemeMod';
+    const THEME_FORMAT = 'hemicycle-theme@1';
+    const BASE_MODE = { light: 'light', dark: 'dark', neon: 'tno', tno: 'tno' };
+    const MAX_THEME_CSS = 100000;
+    function cleanCss(css) {
+        return String(css || '').slice(0, MAX_THEME_CSS)
+            .replace(/<\/?style/gi, '')
+            .replace(/@import[^;]*;?/gi, '')
+            .replace(/url\s*\([^)]*\)/gi, 'none')
+            .replace(/expression\s*\(/gi, '(');
+    }
+    function normalizeTheme(raw, source) {
+        if (!raw || typeof raw !== 'object' || raw.format !== THEME_FORMAT) return null;
+        const id = String(raw.id || '').trim().toLowerCase();
+        if (!/^[a-z0-9][a-z0-9_-]{0,39}$/.test(id) || VALID_MODES.includes(id)) return null;
+        const name = String(raw.name || '').trim().slice(0, 40);
+        const base = BASE_MODE[String(raw.base || '').toLowerCase()];
+        if (!name || !base) return null;
+        const colors = {};
+        Object.entries(raw.colors && typeof raw.colors === 'object' ? raw.colors : {}).forEach(([k, v]) => {
+            if (!/^--(m|tno)-[a-z0-9-]{1,40}$/.test(k) || typeof v !== 'string') return;
+            if (/[;{}<>]|url\s*\(|expression/i.test(v) || v.length > 200) return;
+            colors[k] = v.trim();
+        });
+        return { id, name, author: String(raw.author || '').slice(0, 60), base, colors, css: cleanCss(raw.css), source };
+    }
+    const MOD_THEMES = (function () {
+        const out = {};
+        const d = window.hemicycleDesktop;
+        (d && Array.isArray(d.modThemes) ? d.modThemes : []).forEach(entry => {
+            const t = normalizeTheme(entry && entry.theme, entry && entry.source === 'workshop' ? 'workshop' : 'local');
+            if (t && !out[t.id]) out[t.id] = t;
+        });
+        return out;
+    })();
+    function getThemeMod() {
+        const id = safeGet(THEME_MOD_KEY);
+        return id && MOD_THEMES[id] ? id : '';
+    }
+    function applyModTheme(id) {
+        const root = document.documentElement;
+        let el = document.getElementById('hemiModThemeStyle');
+        const t = id ? MOD_THEMES[id] : null;
+        if (!t) {
+            root.removeAttribute('data-theme-mod');
+            if (el) el.remove();
+            return;
+        }
+        root.setAttribute('data-theme-mod', t.id);
+        if (!el) {
+            el = document.createElement('style');
+            el.id = 'hemiModThemeStyle';
+            (document.head || root).appendChild(el);
+        }
+        const vars = Object.entries(t.colors).map(([k, v]) => `    ${k}: ${v};`).join('\n');
+        // 바탕 테마 규칙(html[data-theme-mode=...])보다 우선하도록 속성을 하나 더 건다
+        el.textContent = `html[data-theme-mod="${t.id}"][data-theme-mode] {\n${vars}\n}\n${t.css}`;
+    }
+
     function getThemeMode() {
+        const mod = getThemeMod();
+        if (mod) return MOD_THEMES[mod].base;
         const v = safeGet(THEME_MODE_KEY);
         return VALID_MODES.includes(v) ? v : DEFAULT_MODE;
     }
@@ -26,24 +90,43 @@
         const root = document.documentElement;
         root.setAttribute('data-theme-mode', mode);
         root.setAttribute('data-theme-family', mode === 'tno' ? 'tno' : 'modern');
+        applyModTheme(getThemeMod());
     }
 
+    // 기본 테마(라이트 · 다크 · 네온)를 고르면 모드 테마는 해제
     function setThemeMode(mode) {
         if (!VALID_MODES.includes(mode)) return;
         safeSet(THEME_MODE_KEY, mode);
+        try { localStorage.removeItem(THEME_MOD_KEY); } catch (e) { /* 저장 불가 환경 */ }
         applyAttributes(mode);
         // 라이트/다크로 바뀌면 네온 전용 커스텀 강조색은 더 이상 적용하지 않음(테마별 고정 강조색 사용)
         if (window.applyThemeColorForMode) window.applyThemeColorForMode();
         window.dispatchEvent(new CustomEvent('thememodechange', { detail: { mode } }));
     }
 
+    // 모드 테마 고르기 — 바탕 테마를 함께 저장해 두어, 모드가 없어져도(구독 해제 등) 비슷한 화면으로 열린다
+    function setThemeMod(id) {
+        const t = MOD_THEMES[id];
+        if (!t) return;
+        safeSet(THEME_MODE_KEY, t.base);
+        safeSet(THEME_MOD_KEY, t.id);
+        applyAttributes(t.base);
+        if (window.applyThemeColorForMode) window.applyThemeColorForMode();
+        window.dispatchEvent(new CustomEvent('thememodechange', { detail: { mode: t.base, mod: t.id } }));
+    }
+
     window.getThemeMode = getThemeMode;
     window.setThemeMode = setThemeMode;
+    window.getThemeMod = getThemeMod;
+    window.setThemeMod = setThemeMod;
+    window.listModThemes = function () {
+        return Object.values(MOD_THEMES).map(t => ({ id: t.id, name: t.name, author: t.author, base: t.base, source: t.source }));
+    };
 
     applyAttributes(getThemeMode());
 
     window.addEventListener('storage', function (e) {
-        if (e.key === THEME_MODE_KEY || e.key === null) {
+        if (e.key === THEME_MODE_KEY || e.key === THEME_MOD_KEY || e.key === null) {
             applyAttributes(getThemeMode());
             if (window.applyThemeColorForMode) window.applyThemeColorForMode();
             window.dispatchEvent(new CustomEvent('thememodechange', { detail: { mode: getThemeMode() } }));
