@@ -9583,6 +9583,10 @@
         }
 
         // ── 탭 전환 ────────────────────────────
+        // 모바일(세로형)에서는 컨트롤 · 의석 현황이 따로 보이므로, 선거를 돌리거나 결과를 반영하면 의석 현황 쪽으로 바로 넘긴다
+        function showSeatsOnMobile() {
+            if(typeof getUiMode === 'function' && getUiMode() === 'mobile' && typeof setMobilePanel === 'function') setMobilePanel('display');
+        }
         function switchDispTab(tab) {
             document.querySelectorAll('.disp-tab-btn').forEach(b => b.classList.remove('active'));
             document.querySelectorAll('.disp-panel').forEach(p => p.classList.remove('active'));
@@ -12516,6 +12520,7 @@
                 summary.push(`${districtNames[chamber][key]||key} : ${party?.name||'?'}`);
             });
             simulate(); refreshUI();
+            showSeatsOnMobile();
             switchDispTab(chamber);
             showCustomAlert(`보궐선거 결과 (${chamberName})\n\n${summary.join('\n')}\n\n의회>의원 탭에서 당선자 이름을 입력해 주세요.`);
         }
@@ -12573,7 +12578,7 @@
             if(releasedHouse) emergencyPowers.dissolutionHouse.active = false;
             if(wasDissolved || releasedSenate || releasedHouse) renderEmergencyPowers();
             simulate(); refreshUI();
-            if(lastCh) switchDispTab(lastCh);
+            if(lastCh) { showSeatsOnMobile(); switchDispTab(lastCh); }
             if(hadFactions) {
                 showCustomAlert('선거 결과가 반영되었습니다.\n\n파벌이 있는 정당의 파벌별 의석은 선거 전 분포가 무효화되어 0으로 초기화되었습니다.\n정당 탭에서 파벌 의석을 다시 배분해 주세요.');
             }
@@ -13796,6 +13801,7 @@
             const suf = chamber.charAt(0).toUpperCase() + chamber.slice(1);
             document.getElementById('dispTabElecResult'+suf).style.display='';
             document.getElementById('dispTabElecResult'+suf).querySelector('.disp-tab-label').textContent = `${chamberName} 선거결과`;
+            showSeatsOnMobile();
             switchDispTab('elecResult'+suf);
             document.getElementById('elecResultTitle'+suf).innerText = `> ${elecTitle} (${elecYear}) — ${chamberName} 개표 중...`;
             document.getElementById('elecResultBar'+suf).style.width='0%';
