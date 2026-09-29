@@ -6930,6 +6930,22 @@ window.DnoLangPacks.en = {
   [
    "두 정당 이상 골라야 단일화가 적용됩니다",
    "Pick two or more parties for the unification to apply"
+  ],
+  [
+   "원별 지역구 분리",
+   "Per-chamber district maps"
+  ],
+  [
+   "화면 표시 방식 · 앱 아이콘",
+   "Display modes · app icon"
+  ],
+  [
+   "- 앱 · 설치 파일 · 브라우저 탭 아이콘에 Hemicycle 로고",
+   "- Hemicycle logo as the app, installer and browser tab icon"
+  ],
+  [
+   "- 버전 표시 v1.5.8",
+   "- Version label v1.5.8"
   ]
  ]
 };

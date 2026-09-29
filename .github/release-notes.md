@@ -1,10 +1,16 @@
-## Hemicycle OBT 1.5.7 (Open Beta Test)
+## Hemicycle OBT 1.5.8 (Open Beta Test)
 
 Windows 64비트용 데스크톱 앱입니다.
 
+### 바뀐 점
+- 후보 단일화 — 여러 정당이 후보를 한 명으로 합쳐 출마 (대선 · 총리 선거 · 총선 지역구)
+- 원별 지역구 분리 — 상원 · 삼원이 하원 지도를 함께 쓰거나 자기 지도를 따로 쓸 수 있게
+- 화면 표시 방식 — 창 모드 · 전체 화면 · 테두리 없는 전체 화면 (설정 → 화면)
+- 앱 아이콘에 Hemicycle 로고
+
 ### 받기
-- **Hemicycle-Setup-1.5.7.exe** — 설치 프로그램 (설치 위치 선택 · 바탕화면/시작 메뉴 바로가기)
-- **Hemicycle-1.5.7-win-x64.zip** — 설치 없이 쓰는 포터블 버전 (압축을 풀고 `Hemicycle.exe` 실행)
+- **Hemicycle-Setup-1.5.8.exe** — 설치 프로그램 (설치 위치 선택 · 바탕화면/시작 메뉴 바로가기)
+- **Hemicycle-1.5.8-win-x64.zip** — 설치 없이 쓰는 포터블 버전 (압축을 풀고 `Hemicycle.exe` 실행)
 
 ### 참고
 - 코드 서명이 없는 앱이라 처음 실행할 때 Windows 보안 경고(SmartScreen)가 뜰 수 있습니다 — "추가 정보 → 실행"을 누르세요.
