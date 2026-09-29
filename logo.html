@@ -1596,6 +1596,13 @@
     <div class="panel-resizer" id="panelResizer" title="드래그하여 폭 조절 (더블클릭: 기본값으로 초기화)"></div>
 
     <div class="display-area">
+        <!-- 모바일 전용 — 개표 중 · 개표 후 버튼을 의석 현황 쪽에도 보여 준다 (컨트롤 쪽 버튼과 같은 동작, 표시 여부도 그쪽을 따라감) -->
+        <div class="mobile-elec-bar" id="mobileElecBar">
+            <button type="button" id="mobileElecPauseBtn" class="mobile-elec-btn mobile-elec-btn-gold" onclick="elecTogglePause()">⏸ 일시정지</button>
+            <button type="button" id="mobileElecFinishBtn" class="mobile-elec-btn" onclick="elecFinishNow()">⏩ 즉시 완료</button>
+            <button type="button" id="mobileElecApplyBtn" class="mobile-elec-btn mobile-elec-btn-primary" onclick="elecApplyToParliament()">✔ 의회에 반영</button>
+            <button type="button" id="mobileElecRerunBtn" class="mobile-elec-btn" onclick="elecRerun()">↺ 재개표</button>
+        </div>
         <!-- 디스플레이 탭 -->
         <div class="disp-tab-bar">
             <button class="disp-tab-btn active" id="dispTabHouse"     data-tab="house"  onclick="switchDispTab('house')">하원</button>

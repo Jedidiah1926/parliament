@@ -1383,6 +1383,21 @@
             box-shadow: 0 0 6px var(--tno-neon-dim);
             text-shadow: 0 0 4px var(--tno-neon);
         }
+        /* 모바일 전용 개표 버튼 줄 (의석 현황 쪽) — 컨트롤 쪽 개표 버튼이 보일 때만 js가 .show를 붙인다 */
+        .mobile-elec-bar { display: none; }
+        html[data-ui-mode="mobile"] .mobile-elec-bar.show { display: flex; gap: 6px; margin-bottom: 10px; }
+        .mobile-elec-btn {
+            flex: 1;
+            background: transparent;
+            border: 1px solid #888;
+            color: #aaa;
+            font-family: inherit;
+            font-size: 0.9rem;
+            padding: 9px 6px;
+            cursor: pointer;
+        }
+        .mobile-elec-btn-gold { border-color: var(--tno-gold); color: var(--tno-gold); }
+        .mobile-elec-btn-primary { background: var(--tno-neon); border-color: var(--tno-neon); color: #000; letter-spacing: 1px; }
         /* 선택된 패널만 보이도록 — 한쪽을 완전히 display:none 처리해 스크롤 길이도 줄인다 */
         html[data-ui-mode="mobile"][data-mobile-panel="controls"] .display-area { display: none; }
         html[data-ui-mode="mobile"][data-mobile-panel="display"] .controls { display: none; }

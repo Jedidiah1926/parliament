@@ -3064,3 +3064,18 @@ html[data-theme-family="modern"] .save-card-main:hover .save-select-item-name { 
 html[data-theme-family="modern"] .save-card-sep { border-top: 1px solid var(--m-border); margin: 0 12px; }
 html[data-theme-family="modern"] .save-card-auto { color: var(--m-text-3); font-size: 12.5px; }
 html[data-theme-family="modern"] .save-card-auto:hover { color: var(--m-text); }
+
+/* 모바일 개표 버튼 줄 (의석 현황 쪽) */
+html[data-theme-family="modern"] .mobile-elec-btn {
+    background: var(--m-surface-2);
+    border: 1px solid var(--m-border);
+    color: var(--m-text);
+    border-radius: 10px;
+    font-weight: 600;
+}
+html[data-theme-family="modern"] .mobile-elec-btn-primary {
+    background: var(--m-accent);
+    border-color: var(--m-accent);
+    color: var(--m-on-accent);
+    letter-spacing: 0;
+}
