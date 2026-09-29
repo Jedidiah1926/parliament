@@ -27,7 +27,7 @@
     // 모바일 화면 모드에선 편집 패널/좌석 화면 중 하나만 보이므로 필요한 쪽으로 전환
     const showPanel = which => () => { if (isMobileLayout() && typeof setMobilePanel === 'function') setMobilePanel(which); };
 
-    // ---- 앱 상태 읽기 (dno.js/teaser.js의 최상위 let 변수는 window 속성이 아니라 이름으로만 보인다) ----
+    // ---- 앱 상태 읽기 (main.js/teaser.js의 최상위 let 변수는 window 속성이 아니라 이름으로만 보인다) ----
     /* global parties, bills */
     const partyList = () => (typeof parties !== 'undefined' && Array.isArray(parties)) ? parties : [];
     const billList = () => (typeof bills !== 'undefined' && Array.isArray(bills)) ? bills : [];
@@ -57,7 +57,7 @@
         .filter(el => /^elecSetProb\(/.test(el.getAttribute('oninput') || el.getAttribute('onchange') || ''));
     const electionStarted = () => (typeof elecRunning !== 'undefined' && elecRunning === true)
         || ['dispTabElecResultHouse', 'dispTabElecResultSenate', 'dispTabElecResultThird'].some(id => { const el = document.getElementById(id); return !!el && el.style.display !== 'none'; });
-    // 의원내각제 자동 총리: 다수당 대표 (dno.js의 pmAutoSource()가 정한 정당)
+    // 의원내각제 자동 총리: 다수당 대표 (main.js의 pmAutoSource()가 정한 정당)
     /* global pmAutoSource */
     const majorityParty = () => {
         const src = typeof pmAutoSource === 'function' ? pmAutoSource() : null;

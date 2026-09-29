@@ -14,7 +14,7 @@
     <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="fonts/neodgm/style.css">
 
-    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/index.css">
     <link rel="stylesheet" href="css/modern.css">
     <script src="js/presets.js"></script>
 
@@ -184,7 +184,7 @@
 
     <script>
         // ===== 세이브 선택 (온보딩) 모달 =====
-        // 시작 화면(index.html)은 dno.js를 로드하지 않으므로, dno.js가 쓰는 것과 같은 localStorage 키를
+        // 시작 화면(index.html)은 main.js를 로드하지 않으므로, main.js가 쓰는 것과 같은 localStorage 키를
         // 그대로 읽어서 세이브 목록을 보여준다. 실제 상태(state) 파싱/적용은 하지 않고
         // 목록 표시와 부팅 시 넘길 sessionStorage 플래그 설정만 담당 — 무거운 state 객체를
         // 여기서 손댈 필요가 없다.
@@ -194,7 +194,7 @@
         const AUTOSAVE_SLOT_NAME = '새 의회 (1)';
 
         // 구버전 자동저장 데이터가 남아있는데 아직 새 슬롯 배열로 옮겨지지 않았다면
-        // (dno.html을 아직 한 번도 다시 열지 않은 사용자) 여기서도 옮겨서 목록에 바로 보이게 함.
+        // (main.html을 아직 한 번도 다시 열지 않은 사용자) 여기서도 옮겨서 목록에 바로 보이게 함.
         function migrateLegacyAutosaveForMenu() {
             const legacyRaw = localStorage.getItem(LEGACY_AUTOSAVE_KEY);
             if(!legacyRaw) return;
@@ -219,9 +219,9 @@
             return slots;
         }
 
-        // 즐겨찾기는 세이브 슬롯 배열과 따로 보관 — dno.js가 슬롯 배열을 통째로 다시 쓰더라도 지워지지 않게
+        // 즐겨찾기는 세이브 슬롯 배열과 따로 보관 — main.js가 슬롯 배열을 통째로 다시 쓰더라도 지워지지 않게
         const SAVE_FAVORITES_KEY = 'dnoSaveFavorites';
-        const MAX_SAVE_SLOTS = 20; // dno.js와 동일 (전용 자동저장 슬롯 제외)
+        const MAX_SAVE_SLOTS = 20; // main.js와 동일 (전용 자동저장 슬롯 제외)
         function loadFavorites() {
             try { return new Set(JSON.parse(localStorage.getItem(SAVE_FAVORITES_KEY) || '[]')); } catch(e) { return new Set(); }
         }
@@ -381,11 +381,11 @@
             }
             if(namedSlotCount() >= MAX_SAVE_SLOTS) { alert(`저장 슬롯은 최대 ${MAX_SAVE_SLOTS}개까지 만들 수 있습니다. 기존 세이브를 삭제한 뒤 다시 시도하세요.`); return; }
             try { sessionStorage.setItem('dnoBootNewSaveName', name); } catch(e) {}
-            location.href = 'dno.html';
+            location.href = 'main.html';
         }
 
         // 프리셋을 고르면 그 상태의 복사본을 새 세이브(프리셋 제목, 겹치면 번호 붙임)로 만들어 바로 시작 —
-        // 실제 복제는 dno.html이 프리셋을 불러온 뒤에 한다
+        // 실제 복제는 main.html이 프리셋을 불러온 뒤에 한다
         async function startFromPreset(index) {
             const list = window.DnoPresets ? await DnoPresets.list() : [];
             const preset = list[index];
@@ -395,12 +395,12 @@
                 sessionStorage.setItem('dnoBootPresetId', preset.id);
                 sessionStorage.setItem('dnoBootNewSaveName', window.DnoLang ? DnoLang.t(preset.title) : preset.title); // 영어 등에서는 세이브 이름도 번역
             } catch(e) {}
-            location.href = 'dno.html';
+            location.href = 'main.html';
         }
 
         function continueSave(id) {
             try { sessionStorage.setItem('dnoBootLoadSlotId', id); } catch(e) {}
-            location.href = 'dno.html';
+            location.href = 'main.html';
         }
 
         // 로컬 세이브 슬롯이 아니라, 예전에 "파일로 저장"으로 다운로드해둔 .hemi(예전 .json) 파일을
@@ -420,7 +420,7 @@
                 input.value = '';
                 return;
             }
-            location.href = 'dno.html';
+            location.href = 'main.html';
         }
 
         document.getElementById('saveSelectOverlay').addEventListener('click', (e) => {
