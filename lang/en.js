@@ -7274,6 +7274,14 @@ window.DnoLangPacks.en = {
   [
    "국민투표에 부칠 안건(질문)을 적어 주세요.",
    "Enter the question to put to the referendum."
+  ],
+  [
+   "인구 기반 득표수",
+   "Population-based vote counts"
+  ],
+  [
+   "- 버전 표시 v1.5.9",
+   "- Version label v1.5.9"
   ]
  ]
 };
