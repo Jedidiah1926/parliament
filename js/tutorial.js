@@ -90,6 +90,14 @@
     const byId = (id, up) => () => { const el = document.getElementById(id); return el ? ((up && el.closest(up)) || el) : null; };
     const helpTarget = () => isMobileLayout() ? navTarget() : (document.querySelector('#sideNav .mn-group[data-tone="muted"]') ? '#sideNav .mn-group[data-tone="muted"]' : navTarget());
 
+    // ---- 후보 단일화 · 부정선거 과정용 도우미 ----
+    /* global candidateUnions */
+    const unionList = () => (typeof candidateUnions !== 'undefined' && Array.isArray(candidateUnions)) ? candidateUnions : [];
+    const unionSection = () => { const el = document.getElementById('candidateUnionList'); return el ? el.parentElement : '#contentElecSettings'; };
+    const lastUnionCard = () => { const cards = document.querySelectorAll('#candidateUnionList .cand-union'); return cards.length ? cards[cards.length - 1] : null; };
+    const fraudCheckbox = () => document.querySelector('#fraudPartyList input[onchange^="toggleFraudAttempt"]');
+    const fraudBlock = () => { const on = document.querySelector('#fraudPartyList input[onchange^="toggleFraudAttempt"]:checked'); return on ? on.closest('div[style*="border:1px solid"]') || on.closest('label') : null; };
+
     // group: 'basic'(기본 — 처음이라면 순서대로) · 'detail'(세부 — 필요한 기능만 골라서)
     // id: 마친 과정 기록용 고유 이름 (순서가 바뀌거나 과정이 늘어도 ✓ 표시가 어긋나지 않게)
     const LESSONS = [
@@ -483,7 +491,7 @@
         {
             id: 'map', group: 'detail',
             title: '지역구와 지도',
-            summary: '맵 메이커 · 지도 올리기 · 지역구 편집 · 성향 · 권역',
+            summary: '맵 메이커 · 지도 올리기 · 원별 지도 · 지역구 편집 · 당선 정당 지정 · 성향 · 권역',
             steps: [
                 {
                     before: [closePanels, showPanel('controls')],
@@ -494,13 +502,31 @@
                     before: [call('switchMainTab', 'election'), call('elecSwitchSub', 'district'), showPanel('controls')],
                     target: '#districtSvgEditUI',
                     title: '지역구 지도 올리기',
-                    text: '여론 › 지역구에서 맵 메이커로 만든 .jsx 파일을 올립니다. 올리면 도형 하나하나가 지역구가 되고, 하원 · 상원 · 삼원이 같은 지도를 함께 씁니다. (새 지도를 올리면 기존 지역구 정보는 새 지도로 바뀌어요)',
+                    text: '여론 › 지역구에서 맵 메이커로 만든 .jsx 파일을 올립니다. 올리면 도형 하나하나가 지역구가 되고, 기본으로는 하원 · 상원 · 삼원이 같은 지도를 함께 씁니다. (새 지도를 올리면 기존 지역구 정보는 새 지도로 바뀌어요)',
+                },
+                {
+                    before: [call('switchMainTab', 'election'), call('elecSwitchSub', 'district'), showPanel('controls')],
+                    target: () => { const r = document.getElementById('districtChamberSelectRow'); return r && r.offsetParent ? r : '#districtSvgEditUI'; },
+                    title: '원마다 다른 지도',
+                    text: '원이 둘 이상이면 위쪽에서 원을 고를 수 있습니다. 상원 · 삼원을 고르면 "하원 지도 공유 / 따로 쓰기"가 나와요. 따로 쓰기를 누르면 지금 지도를 복사해 그대로 이어 쓰고(의석 · 당선자 · 성향 유지), 그 원만의 지도를 새로 올릴 수 있습니다. 다시 공유로 돌리면 하원 지도에 있는 지역구의 값만 되돌아와요.',
                 },
                 {
                     before: [call('switchMainTab', 'election'), call('elecSwitchSub', 'district'), showPanel('controls')],
                     target: '#districtListPanel',
                     title: '지역구 편집',
                     text: '지도나 목록에서 지역구를 누르면 편집 칸이 열립니다. 이름 · 약칭 · 인구, 그리고 원마다 몇 석을 뽑을지(0석이면 그 원엔 없는 지역구) 정해요. 지도는 휠 클릭 드래그로 이동, Shift+스크롤로 확대하고 ↺로 되돌립니다.',
+                },
+                {
+                    before: [call('switchMainTab', 'election'), call('elecSwitchSub', 'district'), showPanel('controls')],
+                    target: () => { const el = document.getElementById('districtNamePanel'); return el && el.offsetParent ? el : '#districtListPanel'; },
+                    title: '당선 정당 직접 지정',
+                    text: '선거를 돌리지 않고 지역구 결과를 정할 수도 있어요. 지역구 편집 칸의 "당선 정당 직접 지정"에서 의석마다 정당을 고르면, 정당 의석 수 · 지역구 의원 · 지도 색이 함께 바뀝니다. 나중에 선거를 돌리면 선거 결과로 덮어써져요.',
+                },
+                {
+                    before: [go('nation', 'nationSettings'), showPanel('controls')],
+                    target: byId('districtSeatBadgesChk', 'label'),
+                    title: '의석 숫자 박스',
+                    text: '여러 석을 뽑는 지역구를 여러 정당이 나눠 가지면, 지도 위에 정당별 의석 수 숫자 박스가 뜹니다(한 정당이 다 가져가면 색만 칠해요). 국가 › 국가 설정에서 박스를 켜고 끌 수 있어요.',
                 },
                 {
                     before: [call('switchMainTab', 'election'), call('elecSwitchSub', 'tendency'), showPanel('controls')],
@@ -513,6 +539,12 @@
                     target: '#elecSubRegion',
                     title: '권역',
                     text: '권역형 비례대표를 쓸 때는 여론 › 권역에서 지역구를 권역으로 묶습니다. 권역을 고른 뒤 지도에서 지역구를 눌러(끌어서 여러 개) 칠해요. 권역 득표율은 성향을 평균하는 자동 집계나 직접 입력 중에서 고릅니다.',
+                },
+                {
+                    before: [call('switchMainTab', 'election'), call('elecSwitchSub', 'region'), showPanel('controls')],
+                    target: () => { const el = document.getElementById('regionSeatPanel'); return el && el.offsetParent && el.children.length ? el : '#elecSubRegion'; },
+                    title: '권역 의석 지정',
+                    text: '권역 자체에 의석을 줄 수도 있어요(예: 여러 지역구를 묶어 한꺼번에 뽑는 선거구). 권역마다 의석 수와 정당별 당선 수를 정하면, 그 의석은 비례 의석에서 빠지고 선거를 돌려도 그대로 남습니다.',
                 },
                 {
                     before: [go('nation', 'nationSettings'), showPanel('controls')],
@@ -562,6 +594,82 @@
                     target: '#contentElecRecord',
                     title: '선거 기록',
                     text: '치른 선거는 선거 › 선거 기록에 남고, 누르면 그때의 결과 화면을 다시 볼 수 있어요.',
+                },
+            ],
+        },
+        {
+            id: 'union', group: 'detail',
+            title: '후보 단일화',
+            summary: '여러 정당이 후보 한 명으로 · 대선과 지역구에 따로 적용',
+            steps: [
+                {
+                    before: [closePanels, go('vote', 'elecSettings'), showPanel('controls')],
+                    enter: () => { T.unionBase = unionList().length; },
+                    target: unionSection,
+                    title: '후보 단일화란?',
+                    text: '선거 전에 여러 정당이 후보를 한 명으로 합치는 기능입니다. 참여 정당 중 지지가 가장 높은 정당이 후보를 내고, 나머지 정당의 지지를 모두 합쳐 받아요. 비례대표 투표는 단일화와 상관없이 각 정당이 따로 받습니다.',
+                },
+                {
+                    before: [go('vote', 'elecSettings'), showPanel('controls')],
+                    target: () => document.querySelector('#contentElecSettings button[onclick^="addCandidateUnion"]'),
+                    allow: ['#contentElecSettings button[onclick^="addCandidateUnion"]'],
+                    title: '단일화 만들기',
+                    text: '"+ 단일화 추가"를 눌러 보세요.',
+                    task: () => unionList().length > (T.unionBase || 0),
+                    done: '빈 단일화가 생겼어요.',
+                },
+                {
+                    before: [go('vote', 'elecSettings'), showPanel('controls')],
+                    target: () => lastUnionCard() || unionSection(),
+                    allow: () => [lastUnionCard() || '#candidateUnionList'],
+                    title: '참여 정당 고르기',
+                    text: '단일화에 참여할 정당을 두 개 이상 체크해 보세요. 한 정당은 단일화 하나에만 들어갈 수 있고, 이름은 비워 두면 정당 이름을 이어 붙여 써요.',
+                    task: () => { const u = unionList()[unionList().length - 1]; return !u || (u.partyIds || []).length >= 2; },
+                    done: '단일화가 적용됐어요.',
+                },
+                {
+                    before: [go('vote', 'elecSettings'), showPanel('controls')],
+                    target: () => lastUnionCard() || unionSection(),
+                    title: '어디에 적용할까',
+                    text: '"대선 · 총리 선거"를 켜면 기준 원 지지율이 가장 높은 정당이 단일 후보로 나서고, 결과에 "(A당 · B당 단일 후보)"로 표시돼요. "총선 지역구"를 켜면 지역구마다 성향이 가장 높은 참여 정당이 후보를 냅니다. 필요 없어지면 "단일화 해제"를 누르세요.',
+                    leave: closePanels,
+                },
+            ],
+        },
+        {
+            id: 'fraud', group: 'detail',
+            title: '부정선거',
+            summary: '시도 켜기 · 부풀리기와 지역구 조작 · 발각 확률 · 결과',
+            steps: [
+                {
+                    before: [closePanels, go('vote', 'fraud'), showPanel('controls')],
+                    target: '#contentFraud',
+                    title: '부정선거 (⚠)',
+                    text: '선거 › ⚠에서는 정당별로 부정선거를 꾸밀 수 있습니다. 시도는 다음 총선 개표 한 번에만 적용되고, 들키면 큰 대가를 치러요.',
+                },
+                {
+                    before: [go('vote', 'fraud'), showPanel('controls')],
+                    target: () => fraudCheckbox() ? fraudCheckbox().closest('label') : '#fraudPartyList',
+                    allow: ['#fraudPartyList'],
+                    title: '시도 켜기',
+                    text: '아무 정당이나 "⚠ 부정선거 시도"를 체크해 보세요. 설정 칸이 열립니다.',
+                    task: () => partyList().some(p => p.fraudAttempt),
+                    done: '부정선거 계획이 세워졌어요.',
+                },
+                {
+                    before: [go('vote', 'fraud'), showPanel('controls')],
+                    target: () => fraudBlock() || '#fraudPartyList',
+                    allow: ['#fraudPartyList'],
+                    title: '무엇을 조작할까',
+                    text: '대상 의원실을 고르고, 비례 득표율을 몇 %p 부풀릴지 정합니다. 지역구 개표 조작에서 고른 지역구는 실제 결과와 상관없이 이 정당이 이겨요(지역구 지도가 있을 때). 발각 확률은 조작 규모에 따라 자동으로 계산되고, "수동"을 켜면 직접 정할 수 있습니다.',
+                },
+                {
+                    before: [go('vote', 'fraud'), showPanel('controls')],
+                    target: () => fraudBlock() || '#fraudPartyList',
+                    allow: ['#fraudPartyList'],
+                    title: '들키면 어떻게 될까',
+                    text: '총선을 개표하는 순간 발각 여부가 정해집니다. 들키지 않으면 조작이 결과에 그대로 반영되고, 들키면 조작은 무효가 되며 그 정당은 활동 금지 처분을 받아요(알림이 뜹니다). 어느 쪽이든 시도는 개표 한 번으로 사라집니다. 그만두려면 체크를 풀면 돼요.',
+                    leave: closePanels,
                 },
             ],
         },
@@ -660,19 +768,6 @@
                     title: '자동 진행',
                     text: '"자동 진행"을 켜면 날짜를 넘기다 정기회 시작일(기본 9월 1일)을 지날 때 다음 회기가 정기회로 열리고, 하원 총선 결과를 의회에 반영하면 대수가 1 올라갑니다. 둘 다 켜고 끌 수 있어요.',
                     leave: closePanels,
-                },
-            ],
-        },
-        {
-            id: 'fraud', group: 'detail',
-            title: '부정선거',
-            summary: '부정선거 시도와 발각',
-            steps: [
-                {
-                    before: [closePanels, go('vote', 'fraud'), showPanel('controls')],
-                    target: '#contentFraud',
-                    title: '부정선거 (⚠)',
-                    text: '선거 › ⚠에서 정당별로 다음 총선 개표 1회에 한해 부정선거를 시도할 수 있습니다. 성공하면 표가 그 정당 쪽으로 옮겨지지만, 발각되면 그 정당은 활동 금지 처분을 받아요.',
                 },
             ],
         },
@@ -1022,6 +1117,8 @@
         requestAnimationFrame(place);
     }
 
+    // 목차: 전체 진행 막대 · "이어서 하기" · 기본/세부 탭 · 과정 카드 (세부는 넓은 화면에서 두 줄)
+    let menuTab = null; // 'basic' | 'detail' — 목차를 다시 열어도 보던 탭 유지
     function showMenu() {
         leaveCurrent();
         layer.classList.remove('tut-nodim', 'tut-compact');
@@ -1029,28 +1126,60 @@
         layer.classList.remove('tut-is-task');
         taskDone = false;
         const done = doneSet();
+        const idxOf = g => LESSONS.map((l, i) => (l.group === g ? i : -1)).filter(i => i >= 0);
+        const tabs = { basic: idxOf('basic'), detail: idxOf('detail') };
+        const doneIn = g => tabs[g].filter(i => done.has(i)).length;
         const firstTodo = LESSONS.findIndex((_, i) => !done.has(i));
+        if (!menuTab) menuTab = doneIn('basic') < tabs.basic.length ? 'basic' : 'detail';
+        const allDone = done.size === LESSONS.length;
         renderHead(`${done.size} / ${LESSONS.length} 완료`);
-        setBody({ title: '무엇을 배워볼까요?', text: '처음이라면 기본 튜토리얼을 순서대로, 그다음 필요한 세부 튜토리얼만 골라 하세요. 하나하나 몇 단계로 짧게 끝납니다.', menu: true });
+        setBody({
+            title: allDone ? '모든 과정을 마쳤어요' : done.size ? '이어서 배워볼까요?' : '무엇을 배워볼까요?',
+            text: allDone
+                ? '다시 보고 싶은 과정을 골라 언제든 복습할 수 있어요.'
+                : '처음이라면 기본 튜토리얼을 순서대로 하고, 그다음 필요한 세부 튜토리얼만 골라 하세요. 과정마다 몇 단계로 짧게 끝납니다.',
+            menu: true,
+        });
         const menuEl = q('.tut-menu');
-        const GROUPS = [
-            ['basic', '기본 튜토리얼', '처음 쓰는 분을 위한 핵심 흐름 — 순서대로 추천'],
-            ['detail', '세부 튜토리얼', '기능별 자세한 설명 — 필요한 것만 골라서'],
-        ];
-        menuEl.innerHTML = GROUPS.map(([g, name, sub]) => `
-            <div class="tut-group-head"><span class="tut-group-name">${name}</span><span class="tut-group-sub">${sub}</span></div>`
-            + LESSONS.map((l, i) => l.group !== g ? '' : `
-            <button type="button" class="tut-lesson-btn${done.has(i) ? ' done' : ''}${i === firstTodo ? ' next' : ''}" data-lesson="${i}">
-                <span class="tut-lesson-no">#${i + 1}</span>
-                <span class="tut-lesson-main"><span class="tut-lesson-title"></span><span class="tut-lesson-sum"></span></span>
-                <span class="tut-lesson-mark">${done.has(i) ? '✓' : '›'}</span>
-            </button>`).join('')).join('');
+        const TAB_INFO = {
+            basic: ['기본 튜토리얼', '처음 쓰는 분을 위한 핵심 흐름 — 순서대로 추천'],
+            detail: ['세부 튜토리얼', '기능별 자세한 설명 — 필요한 것만 골라서'],
+        };
+        const pct = Math.round(done.size / LESSONS.length * 100);
+        menuEl.innerHTML = `
+            <div class="tut-menu-bar" aria-hidden="true"><span style="width:${pct}%"></span></div>
+            ${!allDone && done.size > 0 ? `<button type="button" class="tut-continue" data-lesson="${firstTodo}"><span class="tut-continue-label">이어서 하기</span><span class="tut-continue-title"></span><span class="tut-lesson-mark">›</span></button>` : ''}
+            <div class="tut-tabs" role="tablist">
+                ${['basic', 'detail'].map(g => `
+                <button type="button" role="tab" class="tut-tab${menuTab === g ? ' active' : ''}" data-tab="${g}" aria-selected="${menuTab === g}">
+                    ${TAB_INFO[g][0]} <span class="tut-tab-count">${doneIn(g)}/${tabs[g].length}</span>
+                </button>`).join('')}
+            </div>
+            <div class="tut-tab-sub">${TAB_INFO[menuTab][1]}</div>
+            <div class="tut-lesson-list tut-list-${menuTab}">
+                ${tabs[menuTab].map(i => `
+                <button type="button" class="tut-lesson-btn${done.has(i) ? ' done' : ''}${i === firstTodo ? ' next' : ''}" data-lesson="${i}">
+                    <span class="tut-lesson-no">#${i + 1}</span>
+                    <span class="tut-lesson-main"><span class="tut-lesson-title"></span><span class="tut-lesson-sum"></span></span>
+                    <span class="tut-lesson-mark">${done.has(i) ? '✓' : '›'}</span>
+                </button>`).join('')}
+            </div>`;
         menuEl.querySelectorAll('.tut-lesson-btn').forEach(btn => {
             const l = LESSONS[+btn.dataset.lesson];
             btn.querySelector('.tut-lesson-title').textContent = l.title;
             btn.querySelector('.tut-lesson-sum').textContent = `${l.summary} · ${l.steps.length}단계`;
             btn.addEventListener('click', () => startLesson(+btn.dataset.lesson));
         });
+        const cont = menuEl.querySelector('.tut-continue');
+        if (cont) {
+            cont.querySelector('.tut-continue-title').textContent = `#${firstTodo + 1} ${LESSONS[firstTodo].title}`;
+            cont.addEventListener('click', () => startLesson(firstTodo));
+        }
+        menuEl.querySelectorAll('.tut-tab').forEach(btn => btn.addEventListener('click', () => {
+            if (menuTab === btn.dataset.tab) return;
+            menuTab = btn.dataset.tab;
+            showMenu();
+        }));
         q('.tut-prev').style.display = 'none';
         q('.tut-toc').style.display = 'none';
         q('.tut-next').style.display = 'none';

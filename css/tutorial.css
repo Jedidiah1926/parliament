@@ -58,7 +58,30 @@
 
 /* 목차 */
 .tut-menu { display: flex; flex-direction: column; gap: 6px; margin-top: 12px; max-height: min(60vh, 520px); overflow-y: auto; padding-right: 2px; }
-.tut-mode-menu .tut-bubble { width: 380px; }
+.tut-mode-menu .tut-bubble { width: 560px; }
+/* 전체 진행 막대 · 이어서 하기 · 기본/세부 탭 */
+.tut-menu-bar { height: 4px; background: #2a2a2a; flex: 0 0 auto; }
+.tut-menu-bar span { display: block; height: 100%; background: var(--tno-neon); box-shadow: 0 0 4px var(--tno-neon); }
+.tut-continue {
+    display: flex; align-items: center; gap: 10px; width: 100%; flex: 0 0 auto;
+    text-align: left; cursor: pointer; font-family: inherit;
+    background: color-mix(in srgb, var(--tno-neon) 12%, transparent); border: 1px solid var(--tno-neon); color: var(--tno-neon);
+    padding: 10px 12px;
+}
+.tut-continue-label { flex: 0 0 auto; font-size: .8rem; color: var(--tno-gold); }
+.tut-continue-title { flex: 1; min-width: 0; font-size: 1rem; }
+.tut-tabs { display: flex; gap: 6px; flex: 0 0 auto; }
+.tut-tab {
+    flex: 1; cursor: pointer; font-family: inherit; font-size: .95rem;
+    background: transparent; border: 1px solid var(--tno-border); color: #888; padding: 7px 8px;
+}
+.tut-tab.active { border-color: var(--tno-neon); color: var(--tno-neon); }
+.tut-tab-count { font-size: .75rem; opacity: .75; margin-left: 4px; }
+.tut-tab-sub { color: #666; font-size: .74rem; flex: 0 0 auto; }
+.tut-lesson-list { display: grid; grid-template-columns: 1fr; gap: 6px; }
+.tut-list-detail { grid-template-columns: 1fr 1fr; }
+@media (max-width: 620px) { .tut-list-detail { grid-template-columns: 1fr; } }
+.tut-list-detail .tut-lesson-btn { align-items: flex-start; }
 /* 목차 묶음 머리: 기본 튜토리얼 / 세부 튜토리얼 */
 .tut-group-head { display: flex; flex-direction: column; gap: 1px; margin: 8px 0 2px; }
 .tut-group-head:first-child { margin-top: 0; }
@@ -153,3 +176,16 @@ html[data-theme-family="modern"] .tut-actions .tut-skip:hover:not(:disabled) { b
 html[data-theme-family="modern"] .tut-actions .tut-next.tut-ready { box-shadow: var(--m-ring); }
 html[data-theme-family="modern"] .tut-actions .tut-next { background: var(--m-accent); color: var(--m-on-accent); }
 html[data-theme-family="modern"] .tut-actions .tut-next:hover { background: var(--m-accent); color: var(--m-on-accent); opacity: .86; }
+
+html[data-theme-family="modern"] .tut-menu-bar { height: 6px; border-radius: 3px; background: var(--m-surface-3); overflow: hidden; }
+html[data-theme-family="modern"] .tut-menu-bar span { background: var(--m-success); box-shadow: none; border-radius: 3px; }
+html[data-theme-family="modern"] .tut-continue { border: none; border-radius: 12px; background: var(--m-accent); color: var(--m-on-accent); padding: 12px 14px; }
+html[data-theme-family="modern"] .tut-continue:hover { opacity: .9; }
+html[data-theme-family="modern"] .tut-continue-label { color: inherit; opacity: .7; font-size: 12px; font-weight: 600; }
+html[data-theme-family="modern"] .tut-continue-title { font-size: 14px; font-weight: 700; }
+html[data-theme-family="modern"] .tut-continue .tut-lesson-mark { color: inherit; }
+html[data-theme-family="modern"] .tut-tabs { gap: 4px; padding: 4px; border-radius: 12px; background: var(--m-surface-2); }
+html[data-theme-family="modern"] .tut-tab { border: none; border-radius: 9px; color: var(--m-text-3); font-size: 13px; font-weight: 700; padding: 8px; }
+html[data-theme-family="modern"] .tut-tab:hover { color: var(--m-text); }
+html[data-theme-family="modern"] .tut-tab.active { background: var(--m-surface); color: var(--m-text); box-shadow: var(--m-shadow-sm); }
+html[data-theme-family="modern"] .tut-tab-sub { color: var(--m-text-3); font-size: 12px; }

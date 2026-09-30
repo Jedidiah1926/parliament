@@ -22,6 +22,7 @@ window.DnoLangPacks.en = {
  ],
  "ordinal": "en",
  "patterns": [
+  {"re": "^#(\\d+) (.+)$", "to": "#$1 {{dict:$2}}"},
   {"re": "^(.+) 지도 공유$", "to": "Share the $1 map"},
   {"re": "^([\\s\\S]+)이\\(가\\) 하원과 다른 지역구 지도를 쓰도록 나눕니다\\.\\n지금 지도를 복사해 그대로 이어 쓰며, 이후 ([\\s\\S]+) 지도를 따로 올릴 수 있습니다\\. 계속하시겠습니까\\?$", "to": "$1 will use a district map separate from the House.\nThe current map is copied so nothing changes yet; you can then upload a map just for $2. Continue?"},
   {"re": "^([\\s\\S]+)이\\(가\\) 다시 하원 지도를 함께 쓰도록 합칩니다\\.\\n하원 지도에 없는 ([\\s\\S]+) 지역구의 데이터\\(의석 · 성향 · 당선자\\)는 사라집니다\\. 계속하시겠습니까\\?$", "to": "$1 will share the House map again.\n$2 districts that aren't on the House map lose their data (seats · leanings · winners). Continue?"},
@@ -3032,8 +3033,8 @@ window.DnoLangPacks.en = {
    "Tutorial"
   ],
   [
-   "처음이라면 여기서 시작하세요 — 가상의 나라에서 짧은 과정(#1~#5)으로 나눠 화면 구성과 기본 조작을 직접 해보며 배웁니다.",
-   "New here? Start here — learn the layout and basic controls hands-on in a fictional country, in short lessons (#1–#5)."
+   "처음이라면 여기서 시작하세요. 가상의 나라에서 기본 튜토리얼 6개로 화면과 조작을 직접 해보며 익히고, 선거 · 지도 · 단일화 · 부정선거 같은 기능은 세부 튜토리얼에서 골라 배울 수 있어요.",
+   "Start here if you're new. In a made-up country, six basic lessons walk you through the screens and controls hands-on, and detailed lessons cover features like elections, maps, candidate unification and election fraud whenever you need them."
   ],
   [
    "이어하기",
@@ -6974,6 +6975,146 @@ window.DnoLangPacks.en = {
   [
    "MOD THEMES / 모드 테마",
    "MOD THEMES"
+  ],
+  [
+   "\"+ 단일화 추가\"를 눌러 보세요.",
+   "Press \"+ Add unification\"."
+  ],
+  [
+   "\"대선 · 총리 선거\"를 켜면 기준 원 지지율이 가장 높은 정당이 단일 후보로 나서고, 결과에 \"(A당 · B당 단일 후보)\"로 표시돼요. \"총선 지역구\"를 켜면 지역구마다 성향이 가장 높은 참여 정당이 후보를 냅니다. 필요 없어지면 \"단일화 해제\"를 누르세요.",
+   "With \"Presidential · PM elections\" on, the member with the highest support in the base chamber runs as the joint candidate, shown in results as \"(Party A · Party B joint candidate)\". With \"General election districts\" on, the member with the strongest leaning runs in each district. Press \"Dissolve unification\" when you no longer need it."
+  ],
+  [
+   "권역 의석 지정",
+   "Region seats"
+  ],
+  [
+   "권역 자체에 의석을 줄 수도 있어요(예: 여러 지역구를 묶어 한꺼번에 뽑는 선거구). 권역마다 의석 수와 정당별 당선 수를 정하면, 그 의석은 비례 의석에서 빠지고 선거를 돌려도 그대로 남습니다.",
+   "Regions can hold seats of their own (e.g. a constituency that elects several members across grouped districts). Set each region's seats and winners per party — those seats come out of the list seats and stay put when you run an election."
+  ],
+  [
+   "다시 보고 싶은 과정을 골라 언제든 복습할 수 있어요.",
+   "Pick any lesson to go over it again."
+  ],
+  [
+   "단일화 만들기",
+   "Create a unification"
+  ],
+  [
+   "단일화가 적용됐어요.",
+   "The unification is in effect."
+  ],
+  [
+   "단일화에 참여할 정당을 두 개 이상 체크해 보세요. 한 정당은 단일화 하나에만 들어갈 수 있고, 이름은 비워 두면 정당 이름을 이어 붙여 써요.",
+   "Tick two or more parties to join. A party can only be in one unification, and if you leave the name blank the party names are joined together."
+  ],
+  [
+   "대상 의원실을 고르고, 비례 득표율을 몇 %p 부풀릴지 정합니다. 지역구 개표 조작에서 고른 지역구는 실제 결과와 상관없이 이 정당이 이겨요(지역구 지도가 있을 때). 발각 확률은 조작 규모에 따라 자동으로 계산되고, \"수동\"을 켜면 직접 정할 수 있습니다.",
+   "Pick the target chamber and how many points to inflate the list vote by. Districts chosen under district rigging go to this party no matter the real result (when there is a district map). The chance of being caught is worked out from the scale of the fraud, or set it yourself with \"Manual\"."
+  ],
+  [
+   "들키면 어떻게 될까",
+   "What if they get caught"
+  ],
+  [
+   "맵 메이커 · 지도 올리기 · 원별 지도 · 지역구 편집 · 당선 정당 지정 · 성향 · 권역",
+   "Map maker · upload a map · per-chamber maps · edit districts · set winners · leanings · regions"
+  ],
+  [
+   "모든 과정을 마쳤어요",
+   "You've finished every lesson"
+  ],
+  [
+   "무엇을 조작할까",
+   "What to rig"
+  ],
+  [
+   "부정선거 계획이 세워졌어요.",
+   "The fraud plan is set."
+  ],
+  [
+   "빈 단일화가 생겼어요.",
+   "An empty unification was created."
+  ],
+  [
+   "선거 › ⚠에서는 정당별로 부정선거를 꾸밀 수 있습니다. 시도는 다음 총선 개표 한 번에만 적용되고, 들키면 큰 대가를 치러요.",
+   "Under Elections › ⚠ each party can plot election fraud. An attempt only applies to the next general election count, and getting caught costs dearly."
+  ],
+  [
+   "선거 전에 여러 정당이 후보를 한 명으로 합치는 기능입니다. 참여 정당 중 지지가 가장 높은 정당이 후보를 내고, 나머지 정당의 지지를 모두 합쳐 받아요. 비례대표 투표는 단일화와 상관없이 각 정당이 따로 받습니다.",
+   "Before an election, several parties can merge behind one candidate. The member with the highest support fields the candidate and receives the combined support of the others. List votes are still counted for each party separately."
+  ],
+  [
+   "선거를 돌리지 않고 지역구 결과를 정할 수도 있어요. 지역구 편집 칸의 \"당선 정당 직접 지정\"에서 의석마다 정당을 고르면, 정당 의석 수 · 지역구 의원 · 지도 색이 함께 바뀝니다. 나중에 선거를 돌리면 선거 결과로 덮어써져요.",
+   "You can also set a district's result without running an election. Pick a party for each seat under \"Set winners manually\" in the district editor, and party seat counts, district members and map colours all follow. Running an election later overwrites it."
+  ],
+  [
+   "시도 켜기 · 부풀리기와 지역구 조작 · 발각 확률 · 결과",
+   "Turn on an attempt · inflation and district rigging · chance of being caught · outcome"
+  ],
+  [
+   "시도 켜기",
+   "Turn on an attempt"
+  ],
+  [
+   "아무 정당이나 \"⚠ 부정선거 시도\"를 체크해 보세요. 설정 칸이 열립니다.",
+   "Tick \"⚠ Attempt election fraud\" for any party. Its settings will open."
+  ],
+  [
+   "어디에 적용할까",
+   "Where it applies"
+  ],
+  [
+   "여러 석을 뽑는 지역구를 여러 정당이 나눠 가지면, 지도 위에 정당별 의석 수 숫자 박스가 뜹니다(한 정당이 다 가져가면 색만 칠해요). 국가 › 국가 설정에서 박스를 켜고 끌 수 있어요.",
+   "When several parties split a multi-member district, the map shows number boxes with each party's seats (if one party takes them all, only the colour is shown). Turn the boxes on or off in Nation › Nation settings."
+  ],
+  [
+   "여러 정당이 후보 한 명으로 · 대선과 지역구에 따로 적용",
+   "Several parties, one candidate · applies to presidential and district races separately"
+  ],
+  [
+   "여론 › 지역구에서 맵 메이커로 만든 .jsx 파일을 올립니다. 올리면 도형 하나하나가 지역구가 되고, 기본으로는 하원 · 상원 · 삼원이 같은 지도를 함께 씁니다. (새 지도를 올리면 기존 지역구 정보는 새 지도로 바뀌어요)",
+   "Upload the .jsx file made in the map maker under Opinion › Districts. Each shape becomes a district, and by default the House, Senate and Third chamber share the same map. (Uploading a new map replaces the existing district data.)"
+  ],
+  [
+   "원마다 다른 지도",
+   "A different map per chamber"
+  ],
+  [
+   "원이 둘 이상이면 위쪽에서 원을 고를 수 있습니다. 상원 · 삼원을 고르면 \"하원 지도 공유 / 따로 쓰기\"가 나와요. 따로 쓰기를 누르면 지금 지도를 복사해 그대로 이어 쓰고(의석 · 당선자 · 성향 유지), 그 원만의 지도를 새로 올릴 수 있습니다. 다시 공유로 돌리면 하원 지도에 있는 지역구의 값만 되돌아와요.",
+   "With more than one chamber you can pick a chamber at the top. For the Senate or Third chamber, \"Share the House map / Separate map\" appears. Separate map copies the current map so everything carries on (seats, winners, leanings), and then you can upload a map just for that chamber. Switching back to shared restores values only for districts on the House map."
+  ],
+  [
+   "의석 숫자 박스",
+   "Seat number boxes"
+  ],
+  [
+   "이어서 배워볼까요?",
+   "Ready to pick up where you left off?"
+  ],
+  [
+   "참여 정당 고르기",
+   "Choose the parties"
+  ],
+  [
+   "처음이라면 기본 튜토리얼을 순서대로 하고, 그다음 필요한 세부 튜토리얼만 골라 하세요. 과정마다 몇 단계로 짧게 끝납니다.",
+   "New here? Do the basic lessons in order, then pick only the detailed lessons you need. Each lesson is just a few steps."
+  ],
+  [
+   "총선을 개표하는 순간 발각 여부가 정해집니다. 들키지 않으면 조작이 결과에 그대로 반영되고, 들키면 조작은 무효가 되며 그 정당은 활동 금지 처분을 받아요(알림이 뜹니다). 어느 쪽이든 시도는 개표 한 번으로 사라집니다. 그만두려면 체크를 풀면 돼요.",
+   "Whether it's caught is decided the moment the general election is counted. If not caught, the rigging goes straight into the result; if caught, it has no effect and the party is banned (you'll get a notice). Either way the attempt is used up after one count. Untick it to call it off."
+  ],
+  [
+   "후보 단일화란?",
+   "What is candidate unification?"
+  ],
+  [
+   "이어서 하기",
+   "Continue"
+  ],
+  [
+   "- 튜토리얼 목차 개편(이어서 하기 · 기본/세부 탭) · 후보 단일화 · 부정선거 · 지역구 튜토리얼 보강",
+   "- Tutorial menu redesign (continue button \u00b7 basic/detailed tabs) \u00b7 new and expanded lessons for candidate unification, election fraud and districts"
   ]
  ]
 };
