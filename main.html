@@ -18,6 +18,7 @@
     <link rel="stylesheet" href="css/main.css">
     <link rel="stylesheet" href="css/sidenav.css">
     <link rel="stylesheet" href="css/tutorial.css">
+    <link rel="stylesheet" href="css/popvote.css">
     <link rel="stylesheet" href="css/help.css">
     <link rel="stylesheet" href="css/modern.css">
 </head>
@@ -817,6 +818,8 @@
                 <div class="sub-tab-container">
                     <button class="sub-tab-btn" onclick="switchSubTab('vote','elecPresidential')" id="subTabElecPresidential">대선</button>
                     <button class="sub-tab-btn active" onclick="switchSubTab('vote','elecGeneral')" id="subTabElecGeneral">총선</button>
+                    <button class="sub-tab-btn" onclick="switchSubTab('vote','elecLocal')" id="subTabElecLocal">지선</button>
+                    <button class="sub-tab-btn" onclick="switchSubTab('vote','referendum')" id="subTabReferendum">국민투표</button>
                     <button class="sub-tab-btn" onclick="switchSubTab('vote','elecSettings')" id="subTabElecSettings">방식</button>
                     <button class="sub-tab-btn" onclick="switchSubTab('vote','elecRecord')" id="subTabElecRecord">선거 기록</button>
                     <button class="sub-tab-btn sub-tab-btn-danger" onclick="switchSubTab('vote','fraud')" id="subTabFraud">⚠</button>
@@ -985,6 +988,16 @@
                     <div id="pmElecResultPanel" style="display:none;margin-top:10px;"></div>
                 </div>
                 </div><!-- end contentElecGeneral -->
+
+                <!-- 지방선거 (js/popvote.js) — 지역구 인구로 실제 득표수 계산 -->
+                <div id="contentElecLocal" class="sub-tab-content">
+                    <div id="pvLocalForm" class="pv-form"></div>
+                </div>
+
+                <!-- 국민투표 (js/popvote.js) -->
+                <div id="contentReferendum" class="sub-tab-content">
+                    <div id="pvRefForm" class="pv-form"></div>
+                </div>
 
                 <!-- 설정 -->
                 <div id="contentElecSettings" class="sub-tab-content">
@@ -1614,6 +1627,7 @@
             <button class="disp-tab-btn"         id="dispTabElecResultHouse" data-tab="elecResultHouse" onclick="switchDispTab('elecResultHouse')" style="display:none;"><span class="disp-tab-label">하원 선거결과</span><span class="disp-tab-close" onclick="event.stopPropagation();closeDispTab('elecResultHouse')">×</span></button>
             <button class="disp-tab-btn"         id="dispTabElecResultSenate" data-tab="elecResultSenate" onclick="switchDispTab('elecResultSenate')" style="display:none;"><span class="disp-tab-label">상원 선거결과</span><span class="disp-tab-close" onclick="event.stopPropagation();closeDispTab('elecResultSenate')">×</span></button>
             <button class="disp-tab-btn"         id="dispTabElecResultThird" data-tab="elecResultThird" onclick="switchDispTab('elecResultThird')" style="display:none;"><span class="disp-tab-label">삼원 선거결과</span><span class="disp-tab-close" onclick="event.stopPropagation();closeDispTab('elecResultThird')">×</span></button>
+            <button class="disp-tab-btn"         id="dispTabPopVote" data-tab="popVote" onclick="switchDispTab('popVote')" style="display:none;"><span class="disp-tab-label">지선 결과</span><span class="disp-tab-close" onclick="event.stopPropagation();closeDispTab('popVote')">×</span></button>
             <!-- 날짜 · 회기 줄: 1줄 = 날짜 + 진행(▶ +1일 · ▶▶ +7일 · ▶▶▶ +1개월) + 설정, 2줄 = 회기 + 다음 회기 종류 토글 + 다음 회기
                  진행 버튼은 연 · 월 · 일 날짜, 다음 회기 버튼들은 개별형 회기일 때만 보임 -->
             <div class="disp-info-bar" id="dispInfoBar">
@@ -1769,6 +1783,10 @@
         </div>
 
         <!-- 하원 선거 결과 패널 -->
+        <!-- 지방선거 · 국민투표 결과 (js/popvote.js) -->
+        <div class="disp-panel" id="dispPanelPopVote">
+            <div class="chamber-box pv-form"><div id="pvDisplay"></div></div>
+        </div>
         <div class="disp-panel" id="dispPanelElecResultHouse">
             <div class="chamber-box">
                 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
@@ -1845,6 +1863,7 @@
     <script src="js/tutorial.js"></script>
     <script src="js/help.js"></script>
     <script src="js/main.js"></script>
+    <script src="js/popvote.js"></script>
     <script src="js/sidenav.js"></script>
     <script src="js/segmented.js"></script>
     <script src="js/lang.js"></script>

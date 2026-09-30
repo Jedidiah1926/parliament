@@ -1,0 +1,60 @@
+/* ===== 지방선거 · 국민투표 (js/popvote.js) — 기본은 네온, 라이트/다크는 아래 modern 규칙 ===== */
+.pv-form { --pv-yes: #16a34a; --pv-no: #dc2626; }
+.pv-form input[type="text"], .pv-form input[type="number"], .pv-form select { width: 100%; box-sizing: border-box; }
+.pv-grid2 { display: grid; grid-template-columns: 1fr 110px; gap: 8px; margin-bottom: 10px; }
+.pv-grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 10px; }
+@media (max-width: 520px) { .pv-grid3 { grid-template-columns: 1fr 1fr; } }
+.pv-label { display: flex; align-items: center; gap: 4px; color: #888; font-size: .8rem; margin-bottom: 3px; }
+.pv-dim { color: #666; }
+.pv-small { font-size: .75rem; line-height: 1.5; }
+.pv-note { background: #0a0c10; border: 1px solid #2a2a2a; padding: 8px 10px; margin: 4px 0 10px; font-size: .76rem; color: #777; line-height: 1.6; }
+.pv-run {
+    width: 100%; padding: 14px; cursor: pointer; font-family: inherit; font-weight: bold; font-size: 1.3rem; letter-spacing: 2px;
+    background: var(--tno-neon); color: #000; border: none; box-shadow: 0 0 10px var(--tno-neon);
+}
+.pv-stances { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 6px; margin-bottom: 10px; }
+.pv-label-block { display: block; }
+.pv-stance { display: flex; align-items: center; gap: 6px; background: #0a0c10; border: 1px solid #222; padding: 5px 8px; min-width: 0; }
+.pv-stance-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: .85rem; color: #ccc; }
+.pv-stance select { width: 84px !important; min-width: 84px !important; flex: 0 0 84px; }
+.pv-dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; flex: 0 0 auto; vertical-align: middle; }
+.pv-result { margin-top: 12px; padding: 12px; background: #0a0c10; border: 1px solid var(--tno-border); }
+.pv-result-title { color: var(--tno-neon); font-size: 1.05rem; margin-bottom: 4px; }
+.pv-map { width: 100%; max-height: 420px; margin: 10px 0; }
+.pv-table { width: 100%; border-collapse: collapse; font-size: .85rem; margin-top: 6px; }
+.pv-table th { text-align: left; color: #777; font-weight: normal; font-size: .75rem; border-bottom: 1px solid #333; padding: 4px; }
+.pv-table td { padding: 5px 4px; border-bottom: 1px solid #1c1c1c; color: #ccc; }
+.pv-table th:not(:first-child), .pv-table td:not(:first-child) { text-align: right; }
+.pv-details { margin-top: 10px; font-size: .85rem; }
+.pv-details summary { cursor: pointer; color: #999; }
+.pv-units { display: flex; flex-direction: column; gap: 5px; margin-top: 6px; }
+.pv-unit { border-left: 3px solid #888; padding: 4px 8px; background: rgba(255,255,255,.02); color: #ccc; }
+.pv-verdict { font-size: 1.6rem; font-weight: bold; margin: 6px 0; }
+.pv-verdict.pv-yes { color: var(--pv-yes); }
+.pv-verdict.pv-no { color: var(--pv-no); }
+.pv-bar { display: flex; height: 14px; background: #222; margin: 6px 0; overflow: hidden; }
+.pv-bar-yes { background: var(--pv-yes); }
+.pv-bar-no { background: var(--pv-no); }
+.pv-ref-nums { display: flex; justify-content: space-between; gap: 10px; font-size: .9rem; margin-bottom: 4px; color: #ccc; }
+.pv-records { margin-top: 14px; border-top: 1px solid #222; padding-top: 8px; }
+.pv-record-row { display: flex; gap: 6px; margin-top: 5px; }
+.pv-record-open { flex: 1; min-width: 0; text-align: left; cursor: pointer; font-family: inherit; font-size: .82rem; background: transparent; border: 1px solid #333; color: #aaa; padding: 5px 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pv-record-del { flex: 0 0 auto; cursor: pointer; background: transparent; border: 1px solid #442222; color: #aa5555; font-family: inherit; padding: 0 8px; }
+
+html[data-theme-family="modern"] .pv-label { color: var(--m-text-3); font-size: 12px; font-weight: 600; }
+html[data-theme-family="modern"] .pv-dim { color: var(--m-text-3); }
+html[data-theme-family="modern"] .pv-note { background: var(--m-surface-2); border: none; border-radius: 10px; color: var(--m-text-2); font-size: 12px; }
+html[data-theme-family="modern"] .pv-run { background: var(--m-accent); color: var(--m-on-accent); box-shadow: none; border-radius: 12px; font-size: 15px; letter-spacing: 0; }
+html[data-theme-family="modern"] .pv-stance { background: var(--m-surface-2); border: none; border-radius: 9px; }
+html[data-theme-family="modern"] .pv-stance-name { color: var(--m-text); }
+html[data-theme-family="modern"] .pv-result { background: var(--m-surface); border: 1px solid var(--m-border); border-radius: 14px; }
+html[data-theme-family="modern"] .pv-result-title { color: var(--m-text); font-weight: 700; font-size: 15px; }
+html[data-theme-family="modern"] .pv-table th { color: var(--m-text-3); border-bottom-color: var(--m-border); font-size: 12px; }
+html[data-theme-family="modern"] .pv-table td { color: var(--m-text); border-bottom-color: var(--m-border); }
+html[data-theme-family="modern"] .pv-details summary { color: var(--m-text-2); }
+html[data-theme-family="modern"] .pv-unit { background: var(--m-surface-2); color: var(--m-text); border-radius: 0 8px 8px 0; }
+html[data-theme-family="modern"] .pv-bar { background: var(--m-surface-3); border-radius: 7px; }
+html[data-theme-family="modern"] .pv-ref-nums { color: var(--m-text); }
+html[data-theme-family="modern"] .pv-records { border-top-color: var(--m-border); }
+html[data-theme-family="modern"] .pv-record-open { border: none; border-radius: 8px; background: var(--m-surface-2); color: var(--m-text); }
+html[data-theme-family="modern"] .pv-record-del { border: none; border-radius: 8px; background: transparent; color: var(--m-danger); }

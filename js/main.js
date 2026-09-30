@@ -4921,6 +4921,7 @@
                     pmElectionLastResult: pmElectionLastResult ? JSON.parse(JSON.stringify(pmElectionLastResult)) : null,
                     presElectionCandidateOverrides: JSON.parse(JSON.stringify(presElectionCandidateOverrides)),
                     candidateUnions: JSON.parse(JSON.stringify(candidateUnions)),
+                    popVote: window.PopVote ? window.PopVote.getState() : null, // 지방선거 · 국민투표 (js/popvote.js)
                     electionKind: electionKind,
                     presElecTitle:  document.getElementById('presElecTitle')?.value || '',
                     presElecYear:   document.getElementById('presElecYear')?.value  || '',
@@ -5053,6 +5054,7 @@
             candidateUnions = Array.isArray(elec.candidateUnions) ? elec.candidateUnions.filter(u => u && Array.isArray(u.partyIds))
                 .map(u => ({ id: String(u.id || ('u' + Math.random().toString(36).slice(2, 8))), name: String(u.name || ''), partyIds: u.partyIds, pres: u.pres !== false, district: u.district !== false })) : [];
             electionKind = elec.electionKind === 'pm' ? 'pm' : 'member';
+            if(window.PopVote) window.PopVote.setState(elec.popVote);
             if(ge('presElecTitle')) ge('presElecTitle').value = elec.presElecTitle || '';
             if(ge('presElecYear'))  ge('presElecYear').value  = elec.presElecYear  || '';
             if(ge('pmElecTitle')) ge('pmElecTitle').value = elec.pmElecTitle || '';
@@ -6290,6 +6292,8 @@
             if(sub === 'elecSettings') onElectionSubTabShown('settings');
             if(sub === 'elecRecord') elecRenderRecords();
             if(sub === 'fraud') { renderFraudTab(); }
+            if(sub === 'elecLocal' && window.PopVote) PopVote.renderLocal();
+            if(sub === 'referendum' && window.PopVote) PopVote.renderRef();
             if(sub === 'party') { switchPartyGroupInnerTab('info'); }
             if(sub === 'ideology') { renderIdeologyList(); }
             if(sub === 'settings') { switchSetupInnerTab('house'); }

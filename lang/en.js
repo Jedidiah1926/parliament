@@ -22,6 +22,25 @@ window.DnoLangPacks.en = {
  ],
  "ordinal": "en",
  "patterns": [
+  {"re": "투표율 기준 (\\d+(?:\\.\\d+)?)%", "to": "turnout threshold $1%"},
+  {"re": "([\\d,]+)표\\(([\\d.]+)%\\)", "to": "$1 votes ($2%)"},
+  {"re": "^표 \\(([\\d.]+)%\\)$", "to": " votes ($1%)"},
+  {"re": "인구 미입력 (\\d+)곳은 ([\\d,]+)명으로 계산", "to": "$1 without population counted as $2"},
+  {"re": "유권자 ([\\d,]+)명", "to": "$1 eligible voters"},
+  {"re": "(^| )투표 ([\\d,]+)명", "to": "$1$2 voted"},
+  {"re": "\\(([\\d,]+) / ([\\d,]+)명\\)", "to": "($1 / $2 voters)"},
+  {"re": "^지역구 (\\d+)곳 · 인구 입력 (\\d+)곳 \\(합계 ([\\d,]+)명\\)", "to": "$1 districts · population set for $2 (total $3)"},
+  {"re": " · 권역 (\\d+)개", "to": " · $1 regions"},
+  {"re": " \\(권역이 없어 지역구 단위로 치러요\\)", "to": " (no regions, so each district elects one)"},
+  {"re": "^지역구가 없어 전국 하나로 계산합니다 \\(유권자 ([\\d,]+)명, 지지율 탭의 전국 지지율 사용\\)\\.$", "to": "No districts, so the whole country votes as one ($1 voters, using national support from the Support tab)."},
+  {"re": "^— (.+) (\\d+)명$", "to": "— $2 × {{dict:$1}}"},
+  {"re": "^(\\d+)년 지방선거$", "to": "$1 local elections"},
+  {"re": "^(권역|지역구)별 결과 \\((\\d+)\\)$", "to": "Results by {{map:$1|권역=region;지역구=district}} ($2)"},
+  {"re": "^지난 기록 \\((\\d+)\\)$", "to": "Past results ($1)"},
+  {"re": "^— 찬성 ([\\d.]+)%$", "to": "— $1% yes"},
+  {"re": "^찬성 ([\\d,]+) · 반대 ([\\d,]+) · ", "to": "Yes $1 · No $2 · "},
+  {"re": "투표율 ([\\d.]+)%", "to": "turnout $1%"},
+  {"re": "^(.+) — (가결|부결)$", "to": "$1 — {{dict:$2}}"},
   {"re": "^#(\\d+) (.+)$", "to": "#$1 {{dict:$2}}"},
   {"re": "^(.+) 지도 공유$", "to": "Share the $1 map"},
   {"re": "^([\\s\\S]+)이\\(가\\) 하원과 다른 지역구 지도를 쓰도록 나눕니다\\.\\n지금 지도를 복사해 그대로 이어 쓰며, 이후 ([\\s\\S]+) 지도를 따로 올릴 수 있습니다\\. 계속하시겠습니까\\?$", "to": "$1 will use a district map separate from the House.\nThe current map is copied so nothing changes yet; you can then upload a map just for $2. Continue?"},
@@ -7115,6 +7134,146 @@ window.DnoLangPacks.en = {
   [
    "- 튜토리얼 목차 개편(이어서 하기 · 기본/세부 탭) · 후보 단일화 · 부정선거 · 지역구 튜토리얼 보강",
    "- Tutorial menu redesign (continue button \u00b7 basic/detailed tabs) \u00b7 new and expanded lessons for candidate unification, election fraud and districts"
+  ],
+  [
+   "지선",
+   "Local"
+  ],
+  [
+   "국민투표",
+   "Referendum"
+  ],
+  [
+   "지선 결과",
+   "Local results"
+  ],
+  [
+   "국민투표 결과",
+   "Referendum results"
+  ],
+  [
+   "뽑는 자리",
+   "Office"
+  ],
+  [
+   "선거 단위",
+   "Unit"
+  ],
+  [
+   "권역마다 1명",
+   "One per region"
+  ],
+  [
+   "지역구마다 1명",
+   "One per district"
+  ],
+  [
+   "지도 · 인구 기준 원",
+   "Map · population chamber"
+  ],
+  [
+   "투표율 (%)",
+   "Turnout (%)"
+  ],
+  [
+   "투표율 기준 (%)",
+   "Turnout threshold (%)"
+  ],
+  [
+   "득표율은 지역구 성향(없으면 전국 지지율)에 노이즈를 더해 정하고, 득표수는 인구 × 투표율로 계산합니다.",
+   "Vote shares come from district leanings (or national support if none) plus noise, and vote counts are population × turnout."
+  ],
+  [
+   "안건 (질문)",
+   "Question"
+  ],
+  [
+   "정당별 입장",
+   "Party positions"
+  ],
+  [
+   "— 지지층이 입장대로 찬반을 나눕니다 (찬성 85% · 중립 50% · 반대 15%가 찬성)",
+   "— each party's voters split as their party says (Yes 85% · Neutral 50% · No 15% vote yes)"
+  ],
+  [
+   "중립",
+   "Neutral"
+  ],
+  [
+   "가결",
+   "Passed"
+  ],
+  [
+   "부결",
+   "Rejected"
+  ],
+  [
+   "부결 (투표율 미달)",
+   "Rejected (turnout too low)"
+  ],
+  [
+   "당선",
+   "Won"
+  ],
+  [
+   "득표",
+   "Votes"
+  ],
+  [
+   "득표율",
+   "Vote share"
+  ],
+  [
+   "투표율 기준을 켜면 투표율이 그보다 낮을 때 찬성이 많아도 부결됩니다.",
+   "With a turnout threshold, the question fails below it even if Yes wins."
+  ],
+  [
+   "예: 제1회 전국동시지방선거",
+   "e.g. 1st Nationwide Local Elections"
+  ],
+  [
+   "예: 도지사 · 시장",
+   "e.g. Governor · Mayor"
+  ],
+  [
+   "예: 헌법 개정안에 찬성하십니까?",
+   "e.g. Do you approve the constitutional amendment?"
+  ],
+  [
+   "기록 삭제",
+   "Delete record"
+  ],
+  [
+   "이 기록을 삭제할까요?",
+   "Delete this record?"
+  ],
+  [
+   "정당이 없습니다.",
+   "No parties."
+  ],
+  [
+   "지방선거",
+   "Local elections"
+  ],
+  [
+   "당선자 없음",
+   "no winner"
+  ],
+  [
+   "단체장",
+   "local heads"
+  ],
+  [
+   "지역구가 없습니다 — 여론 › 지역구에서 지도를 올려 주세요.",
+   "No districts — upload a map under Opinion › Districts."
+  ],
+  [
+   "지방선거를 치를 지역이 없습니다.\n여론 › 지역구에서 지도를 올리고 지역구를 만든 뒤(권역 단위면 여론 › 권역에서 권역도) 다시 시도하세요.",
+   "There's nowhere to hold local elections.\nUpload a map and create districts under Opinion › Districts (and regions under Opinion › Regions for regional units), then try again."
+  ],
+  [
+   "국민투표에 부칠 안건(질문)을 적어 주세요.",
+   "Enter the question to put to the referendum."
   ]
  ]
 };
