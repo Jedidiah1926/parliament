@@ -22,6 +22,9 @@ window.DnoLangPacks.en = {
  ],
  "ordinal": "en",
  "patterns": [
+  {"re": "^현직 단체장 \\((\\d+) / (\\d+)\\)$", "to": "Current officeholders ($1 / $2)"},
+  {"re": "^\\((권역|지역구) (\\d+)곳\\)$", "to": "($2 {{map:$1|권역=regions;지역구=districts}})"},
+  {"re": " \\(권역이 없어 권역 단체장은 뽑지 않아요\\)", "to": " (no regions, so no regional heads are elected)"},
   {"re": "투표율 기준 (\\d+(?:\\.\\d+)?)%", "to": "turnout threshold $1%"},
   {"re": "([\\d,]+)표\\(([\\d.]+)%\\)", "to": "$1 votes ($2%)"},
   {"re": "^표 \\(([\\d.]+)%\\)$", "to": " votes ($1%)"},
@@ -7282,6 +7285,70 @@ window.DnoLangPacks.en = {
   [
    "- 버전 표시 v1.5.9",
    "- Version label v1.5.9"
+  ],
+  [
+   "권역마다",
+   "Per region"
+  ],
+  [
+   "지역구마다",
+   "Per district"
+  ],
+  [
+   "예: 지사",
+   "e.g. Governor"
+  ],
+  [
+   "예: 시장",
+   "e.g. Mayor"
+  ],
+  [
+   "권역 단체장 · 지역구 단체장 중 하나 이상을 골라 주세요.",
+   "Pick at least one: regional heads or district heads."
+  ],
+  [
+   "권역이 없습니다 — 여론 › 권역에서 권역을 만들고 지역구를 배정하세요.",
+   "No regions — create regions and assign districts under Opinion › Regions."
+  ],
+  [
+   "✔ 현직 단체장에 반영됨",
+   "✔ Applied to current officeholders"
+  ],
+  [
+   "✔ 당선자를 현직 단체장으로 반영",
+   "✔ Make the winners the current officeholders"
+  ],
+  [
+   "🏛 단체장 현황 보기",
+   "🏛 View officeholders"
+  ],
+  [
+   "권역 없음",
+   "No region"
+  ],
+  [
+   "공석",
+   "Vacant"
+  ],
+  [
+   "— 공석 —",
+   "— Vacant —"
+  ],
+  [
+   "이름 미입력",
+   "Name not set"
+  ],
+  [
+   "지방자치",
+   "Local government"
+  ],
+  [
+   "지방자치 현황",
+   "Local government overview"
+  ],
+  [
+   "사진",
+   "Photo"
   ]
  ]
 };

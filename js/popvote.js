@@ -19,7 +19,8 @@
     const STANCE_YES = { yes: 0.85, neutral: 0.5, no: 0.15 };
 
     const S = {
-        local: { title: '', year: '', office: '단체장', unit: 'region', chamber: 'house', turnout: 55, noise: 8, records: [], last: null },
+        // holders: 현직 단체장 { '<단위>:<원>:<권역 id | 지역구 키>': { partyId, name, photo, office, since } }
+        local: { title: '', year: '', officeRegion: '지사', officeDistrict: '시장', doRegion: true, doDistrict: true, chamber: 'house', turnout: 55, noise: 8, records: [], last: null, holders: {} },
         ref: { question: '', year: '', chamber: 'house', turnout: 55, quorumOn: true, quorum: 50, stances: {}, records: [], last: null },
     };
 
@@ -68,48 +69,63 @@
     }
 
     // ===================== 지방선거 =====================
-    function localUnits(ch, unit) {
+    // 두 단계를 한 번에 뽑는다 (둘 중 하나만도 가능):
+    //   권역 단체장(예: 지사) — 권역마다 1명, 권역에 속한 지역구 표를 모두 합쳐 최다 득표
+    //   지역구 단체장(예: 시장) — 지역구마다 1명
+    // 결과를 "현직에 반영"하면 내각 화면처럼 권역장 아래에 그 권역의 지역구장이 붙은 현황으로 남는다
+    const LEVELS = ['region', 'district'];
+    function regionUnits(ch) {
         const keys = districtKeys(ch);
-        if (unit === 'region') {
-            const list = (regions[ch] || []).map(r => ({ id: r.id, name: r.name, color: r.color, keys: keys.filter(k => districtRegionMap[ch]?.[k] === r.id) })).filter(u => u.keys.length);
-            if (list.length) return list;
-        }
-        return keys.map(k => ({ id: k, name: nameOf(ch, k), keys: [k] }));
+        return (regions[ch] || []).map(r => ({ id: r.id, name: r.name, color: r.color, keys: keys.filter(k => districtRegionMap[ch]?.[k] === r.id) })).filter(u => u.keys.length);
+    }
+    function districtUnits(ch) { return districtKeys(ch).map(k => ({ id: k, name: nameOf(ch, k), keys: [k] })); }
+    function unitsOf(ch, level) { return level === 'region' ? regionUnits(ch) : districtUnits(ch); }
+    const officeOf = level => (level === 'region' ? S.local.officeRegion : S.local.officeDistrict) || (level === 'region' ? '지사' : '시장');
+
+    // 지역구 하나의 개표 — 표는 권역 · 지역구 두 선거에 같이 쓰지 않고 선거마다 따로 흔든다
+    function countDistrict(ch, k, L) {
+        let pop = popOf(ch, k); let missing = false;
+        if (pop == null) { pop = DEFAULT_POP; missing = true; }
+        const turnout = clamp(L.turnout + rand(5), 5, 100) / 100;
+        const cast = Math.round(pop * turnout);
+        const votes = {};
+        Object.entries(partySharesFor(ch, k, L.noise)).forEach(([pid, s]) => { votes[pid] = cast * s; });
+        return { pop, cast, votes, missing };
+    }
+    function runLevel(ch, level, L) {
+        let missingPop = 0;
+        const results = unitsOf(ch, level).map(u => {
+            const votes = {};
+            let voters = 0, electorate = 0;
+            u.keys.forEach(k => {
+                const c = countDistrict(ch, k, L);
+                if (c.missing) missingPop++;
+                electorate += c.pop; voters += c.cast;
+                Object.entries(c.votes).forEach(([pid, v]) => { votes[pid] = (votes[pid] || 0) + v; });
+            });
+            Object.keys(votes).forEach(pid => { votes[pid] = Math.round(votes[pid]); });
+            const ranked = Object.entries(votes).sort((a, b) => b[1] - a[1]);
+            return { id: u.id, name: u.name, keys: u.keys, electorate, voters, votes, winner: ranked[0] ? ranked[0][0] : null };
+        });
+        return { unit: level, office: officeOf(level), results, missingPop };
     }
 
     function runLocal() {
         readLocalInputs();
         const L = S.local;
         const ch = chamberOk(L.chamber);
-        const units = localUnits(ch, L.unit);
-        if (!units.length) {
+        const want = LEVELS.filter(lv => (lv === 'region' ? L.doRegion : L.doDistrict));
+        if (!want.length) { showCustomAlert('권역 단체장 · 지역구 단체장 중 하나 이상을 골라 주세요.'); return; }
+        if (!districtKeys(ch).length) {
             showCustomAlert('지방선거를 치를 지역이 없습니다.\n여론 › 지역구에서 지도를 올리고 지역구를 만든 뒤(권역 단위면 여론 › 권역에서 권역도) 다시 시도하세요.');
             return;
         }
-        let missingPop = 0;
-        const results = units.map(u => {
-            const votes = {};
-            let voters = 0, electorate = 0;
-            u.keys.forEach(k => {
-                let pop = popOf(ch, k);
-                if (pop == null) { pop = DEFAULT_POP; missingPop++; }
-                const turnout = clamp(L.turnout + rand(5), 5, 100) / 100;
-                const cast = Math.round(pop * turnout);
-                electorate += pop;
-                voters += cast;
-                const shares = partySharesFor(ch, k, L.noise);
-                Object.entries(shares).forEach(([pid, s]) => { votes[pid] = (votes[pid] || 0) + cast * s; });
-            });
-            Object.keys(votes).forEach(pid => { votes[pid] = Math.round(votes[pid]); });
-            const ranked = Object.entries(votes).sort((a, b) => b[1] - a[1]);
-            return { id: u.id, name: u.name, keys: u.keys, electorate, voters, votes, winner: ranked[0] ? ranked[0][0] : null };
-        });
+        const levels = want.map(lv => runLevel(ch, lv, L)).filter(lv => lv.results.length);
+        if (!levels.length) { showCustomAlert('권역이 없습니다 — 여론 › 권역에서 권역을 만들고 지역구를 배정하세요.'); return; }
         const rec = {
             id: 'loc' + Date.now().toString(36),
             title: L.title || `${L.year ? L.year + '년 ' : ''}지방선거`,
-            year: L.year, office: L.office || '단체장',
-            unit: L.unit === 'region' && units.some(u => (regions[ch] || []).some(r => r.id === u.id)) ? 'region' : 'district',
-            chamber: ch, results, missingPop, at: Date.now(),
+            year: L.year, chamber: ch, levels, at: Date.now(),
         };
         L.last = rec;
         L.records.unshift(rec);
@@ -117,11 +133,16 @@
         renderLocal();
         showOnDisplay('local', rec, true);
     }
+    // 예전(한 단계만 뽑던) 기록도 같은 모양으로
+    function levelsOf(rec) {
+        if (Array.isArray(rec.levels)) return rec.levels;
+        return rec.results ? [{ unit: rec.unit || 'district', office: rec.office || '단체장', results: rec.results, missingPop: rec.missingPop || 0 }] : [];
+    }
 
-    function localSummary(rec) {
+    function levelSummary(lv) {
         const won = {}, total = {};
         let allVotes = 0, voters = 0, electorate = 0;
-        rec.results.forEach(r => {
+        lv.results.forEach(r => {
             if (r.winner != null) won[r.winner] = (won[r.winner] || 0) + 1;
             Object.entries(r.votes).forEach(([pid, v]) => { total[pid] = (total[pid] || 0) + v; allVotes += v; });
             voters += r.voters; electorate += r.electorate;
@@ -133,21 +154,25 @@
 
     function renderLocalResult(rec, box, withMap) {
         if (!rec) { box.innerHTML = ''; return; }
-        const sum = localSummary(rec);
-        const unitWord = rec.unit === 'region' ? '권역' : '지역구';
+        const levels = levelsOf(rec);
+        const first = levels[0] ? levelSummary(levels[0]) : null;
+        const missing = Math.max(0, ...levels.map(l => l.missingPop || 0));
         box.innerHTML = `
             <div class="pv-result">
-                <div class="pv-result-title">${esc(rec.title)} <span class="pv-dim">— ${esc(rec.office)} ${rec.results.length}명</span></div>
-                <div class="pv-dim pv-small">투표율 ${pct(sum.voters, sum.electorate).toFixed(1)}% · 유권자 ${fmt(sum.electorate)}명 · 투표 ${fmt(sum.voters)}명${rec.missingPop ? ` · 인구 미입력 ${rec.missingPop}곳은 ${fmt(DEFAULT_POP)}명으로 계산` : ''}</div>
+                <div class="pv-result-title">${esc(rec.title)} <span class="pv-dim">— ${levels.map(l => `${esc(l.office)} ${l.results.length}명`).join(' · ')}</span></div>
+                ${first ? `<div class="pv-dim pv-small">투표율 ${pct(first.voters, first.electorate).toFixed(1)}% · 유권자 ${fmt(first.electorate)}명 · 투표 ${fmt(first.voters)}명${missing ? ` · 인구 미입력 ${missing}곳은 ${fmt(DEFAULT_POP)}명으로 계산` : ''}</div>` : ''}
+                ${rec.applied ? '<div class="pv-applied">✔ 현직 단체장에 반영됨</div>' : `<button type="button" class="pv-apply" onclick="PopVote.applyLocal('${rec.id}')">✔ 당선자를 현직 단체장으로 반영</button>`}
                 ${withMap ? '<div class="pv-map" data-map="local"></div>' : ''}
+                ${levels.map(lv => { const sum = levelSummary(lv); const unitWord = lv.unit === 'region' ? '권역' : '지역구'; return `
+                <div class="pv-level-head">${esc(lv.office)} <span class="pv-dim">(${unitWord} ${lv.results.length}곳)</span></div>
                 <table class="pv-table">
                     <thead><tr><th>정당</th><th>당선</th><th>득표</th><th>득표율</th></tr></thead>
                     <tbody>${sum.rows.map(r => { const p = partyById(r.pid); return `
                         <tr><td><span class="pv-dot" style="background:${p ? p.color : '#888'}"></span>${esc(p ? p.name : '?')}</td>
                         <td>${r.won}</td><td>${fmt(r.votes)}</td><td>${pct(r.votes, sum.allVotes).toFixed(1)}%</td></tr>`; }).join('')}</tbody>
                 </table>
-                <details class="pv-details"><summary>${unitWord}별 결과 (${rec.results.length})</summary>
-                    <div class="pv-units">${rec.results.map(r => {
+                <details class="pv-details"><summary>${unitWord}별 결과 (${lv.results.length})</summary>
+                    <div class="pv-units">${lv.results.map(r => {
                         const p = partyById(r.winner);
                         const top = Object.entries(r.votes).sort((a, b) => b[1] - a[1]).slice(0, 3);
                         const all = Object.values(r.votes).reduce((a, b) => a + b, 0);
@@ -156,12 +181,16 @@
                             <div class="pv-dim pv-small">${top.map(([pid, v]) => `${esc(partyById(pid)?.name || '?')} ${fmt(v)}표(${pct(v, all).toFixed(1)}%)`).join(' · ')} · 투표율 ${pct(r.voters, r.electorate).toFixed(1)}%</div>
                         </div>`;
                     }).join('')}</div>
-                </details>
+                </details>`; }).join('')}
             </div>`;
         const mapEl = box.querySelector('[data-map="local"]');
         if (!mapEl) return;
-        const byKey = {};
-        rec.results.forEach(r => r.keys.forEach(k => { byKey[k] = r; }));
+        // 지도: 지역구장 결과가 있으면 지역구마다, 없으면 권역마다 당선 정당 색 (권역 경계는 굵게)
+        const dLv = levels.find(l => l.unit === 'district');
+        const rLv = levels.find(l => l.unit === 'region');
+        const byKey = {}, regionOfKey = {};
+        (dLv || rLv).results.forEach(r => r.keys.forEach(k => { byKey[k] = r; }));
+        if (rLv) rLv.results.forEach(r => r.keys.forEach(k => { regionOfKey[k] = r; }));
         drawMap(mapEl, rec.chamber, key => {
             const r = byKey[key];
             const p = r && partyById(r.winner);
@@ -172,8 +201,157 @@
             const r = byKey[key];
             if (!r) return nameOf(rec.chamber, key);
             const p = partyById(r.winner);
-            return `${r.name}: ${p ? p.name : '당선자 없음'}`;
-        }, rec.unit === 'region' ? key => byKey[key]?.id ?? null : null);
+            const rg = regionOfKey[key];
+            const rp = rg && rg !== r ? partyById(rg.winner) : null;
+            return `${r.name}: ${p ? p.name : '당선자 없음'}${rg && rg !== r ? ` · ${rg.name} ${rLv.office}: ${rp ? rp.name : '당선자 없음'}` : ''}`;
+        }, !dLv && rLv ? key => regionOfKey[key]?.id ?? null : null);
+    }
+
+    // ===================== 현직 단체장 =====================
+    // holders['<region|district>:<원>:<권역 id | 지역구 키>'] = { partyId, name, photo, office, since }
+    const holderKey = (unit, ch, id) => `${unit}:${ch}:${id}`;
+    // 개표 결과를 현직으로 — 같은 정당이 다시 이기면 이름 · 사진은 그대로(재선), 바뀌면 비워서 새로 적게 한다
+    function applyLocal(id) {
+        const rec = S.local.records.find(r => r.id === id) || (S.local.last && S.local.last.id === id ? S.local.last : null);
+        if (!rec || rec.applied) return;
+        const H = S.local.holders;
+        levelsOf(rec).forEach(lv => lv.results.forEach(r => {
+            const key = holderKey(lv.unit, rec.chamber, r.id);
+            const prev = H[key];
+            const same = prev && String(prev.partyId) === String(r.winner);
+            H[key] = { partyId: r.winner, name: same ? prev.name : '', photo: same ? prev.photo : '', office: lv.office, since: same ? prev.since : (rec.year || '') };
+        }));
+        rec.applied = true;
+        S.local.chamber = rec.chamber;
+        renderLocal();
+        showHoldersOnDisplay(true);
+    }
+    function setHolder(key, field, value) {
+        const H = S.local.holders;
+        const lv = String(key).split(':')[0];
+        const h = H[key] || (H[key] = { partyId: '', name: '', photo: '', office: officeOf(lv), since: '' });
+        h[field] = value;
+        if (field === 'partyId' && !value && !h.name && !h.photo) delete H[key];
+        renderHolders();
+        if (ge('dispTabPopVote')?.dataset.view === 'holders') showHoldersOnDisplay(false);
+    }
+    function uploadHolderPhoto(input, key) {
+        const file = input.files && input.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = e => setHolder(key, 'photo', e.target.result);
+        reader.readAsDataURL(file);
+    }
+    // 권역 → 그 권역의 지역구 묶음 (권역에 안 든 지역구는 맨 끝 "권역 없음")
+    function holderTree(ch) {
+        const H = S.local.holders;
+        const regs = regionUnits(ch);
+        const inRegion = new Set();
+        const groups = regs.map(r => {
+            r.keys.forEach(k => inRegion.add(k));
+            return { region: r, rKey: holderKey('region', ch, r.id), head: H[holderKey('region', ch, r.id)] || null,
+                districts: r.keys.map(k => ({ id: k, name: nameOf(ch, k), key: holderKey('district', ch, k), h: H[holderKey('district', ch, k)] || null })) };
+        });
+        const rest = districtKeys(ch).filter(k => !inRegion.has(k));
+        if (rest.length) groups.push({ region: null, rKey: null, head: null, districts: rest.map(k => ({ id: k, name: nameOf(ch, k), key: holderKey('district', ch, k), h: H[holderKey('district', ch, k)] || null })) });
+        return groups;
+    }
+    function partyOptions(sel) {
+        return `<option value="">— 공석 —</option>` + parties.map(p => `<option value="${p.id}" ${String(p.id) === String(sel) ? 'selected' : ''}>${esc(p.name)}</option>`).join('');
+    }
+    const filledH = h => !!(h && h.partyId !== '' && h.partyId != null);
+    function holderEditRow(key, name, h, office, big) {
+        const p = h ? partyById(h.partyId) : null;
+        return `<div class="pv-holder${big ? ' pv-holder-big' : ''}" style="border-left-color:${p ? p.color : '#555'}">
+            <label class="pv-holder-photo" title="사진">${h && h.photo ? `<img src="${h.photo}" alt="">` : '👤'}
+                <input type="file" accept="image/*" data-key="${esc(key)}" onchange="PopVote.uploadHolderPhoto(this, this.dataset.key)"></label>
+            <div class="pv-holder-main">
+                <div class="pv-holder-unit">${esc(name)} <span class="pv-dim">${esc(office)}${h && h.since ? ` · ${esc(h.since)}~` : ''}</span></div>
+                <div class="pv-holder-fields">
+                    <input type="text" value="${esc(h ? h.name : '')}" placeholder="이름" data-key="${esc(key)}" onchange="PopVote.setHolder(this.dataset.key,'name',this.value)">
+                    <select data-key="${esc(key)}" onchange="PopVote.setHolder(this.dataset.key,'partyId',this.value)">${partyOptions(h ? h.partyId : '')}</select>
+                </div>
+            </div>
+        </div>`;
+    }
+    function renderHolders() {
+        const box = ge('pvHolders');
+        if (!box) return;
+        const ch = chamberOk(S.local.chamber);
+        const groups = holderTree(ch);
+        if (!groups.length) { box.innerHTML = ''; return; }
+        const all = groups.flatMap(g => (g.region ? [g.head] : []).concat(g.districts.map(d => d.h)));
+        const filled = all.filter(filledH).length;
+        box.innerHTML = `
+            <details class="pv-details pv-holders" ${filled ? 'open' : ''}>
+                <summary>현직 단체장 (${filled} / ${all.length})</summary>
+                <button type="button" class="pv-holders-map" onclick="PopVote.showHolders()">🏛 단체장 현황 보기</button>
+                ${groups.map(g => `
+                <div class="pv-holder-group">
+                    ${g.region ? holderEditRow(g.rKey, g.region.name, g.head, (g.head && g.head.office) || officeOf('region'), true) : '<div class="pv-holder-nogroup">권역 없음</div>'}
+                    <details class="pv-holder-sub"><summary>${esc(officeOf('district'))} ${g.districts.filter(d => filledH(d.h)).length} / ${g.districts.length}</summary>
+                        <div class="pv-holder-list">${g.districts.map(d => holderEditRow(d.key, d.name, d.h, (d.h && d.h.office) || officeOf('district'), false)).join('')}</div>
+                    </details>
+                </div>`).join('')}
+            </details>`;
+    }
+    // 오른쪽 시각 화면: 내각 화면처럼 권역장 카드 아래에 그 권역의 지역구장 카드
+    function holderCard(name, h, office, big) {
+        const p = h ? partyById(h.partyId) : null;
+        return `<div class="pv-hcard${big ? ' pv-hcard-big' : ''}" style="border-left-color:${p ? p.color : '#555'}">
+            <span class="pv-holder-photo${big ? '' : ' pv-holder-photo-sm'}">${h && h.photo ? `<img src="${h.photo}" alt="">` : '👤'}</span>
+            <span class="pv-hcard-main">
+                <span class="pv-hcard-office">${esc(name)} ${esc(office)}</span>
+                <b class="pv-hcard-name">${esc(h && h.name ? h.name : (filledH(h) ? '이름 미입력' : '공석'))}</b>
+                ${p ? `<span class="pv-hcard-party"><span class="pv-dot" style="background:${p.color}"></span>${esc(p.name)}</span>` : ''}
+            </span>
+        </div>`;
+    }
+    function showHoldersOnDisplay(open) {
+        const btn = ge('dispTabPopVote');
+        const box = ge('pvDisplay');
+        if (!btn || !box) return;
+        const ch = chamberOk(S.local.chamber);
+        const groups = holderTree(ch);
+        btn.querySelector('.disp-tab-label').textContent = '지방자치';
+        btn.dataset.view = 'holders';
+        btn.style.display = '';
+        const counts = (list) => { const c = {}; list.forEach(h => { const pid = filledH(h) ? String(h.partyId) : ''; c[pid] = (c[pid] || 0) + 1; }); return c; };
+        const chips = c => Object.keys(c).sort((a, b) => (a === '') - (b === '') || c[b] - c[a])
+            .map(pid => { const p = partyById(pid); return `<span class="pv-count-chip"><span class="pv-dot" style="background:${p ? p.color : '#888'}"></span>${esc(p ? p.name : '공석')} ${c[pid]}</span>`; }).join('');
+        const heads = groups.filter(g => g.region).map(g => g.head);
+        const dists = groups.flatMap(g => g.districts.map(d => d.h));
+        box.innerHTML = `
+            <div class="pv-result">
+                <div class="pv-result-title">지방자치 현황</div>
+                ${heads.length ? `<div class="pv-level-head">${esc(officeOf('region'))} ${heads.length}명</div><div class="pv-holder-counts">${chips(counts(heads))}</div>` : ''}
+                ${dists.length ? `<div class="pv-level-head">${esc(officeOf('district'))} ${dists.length}명</div><div class="pv-holder-counts">${chips(counts(dists))}</div>` : ''}
+                <div class="pv-map" data-map="holders"></div>
+                ${groups.map(g => `
+                <div class="pv-hgroup">
+                    ${g.region ? holderCard(g.region.name, g.head, (g.head && g.head.office) || officeOf('region'), true) : '<div class="pv-holder-nogroup">권역 없음</div>'}
+                    <div class="pv-hgrid">${g.districts.map(d => holderCard(d.name, d.h, (d.h && d.h.office) || officeOf('district'), false)).join('')}</div>
+                </div>`).join('')}
+            </div>`;
+        // 지도: 지역구장 정당 색, 권역 경계는 굵게 — 지역구장이 하나도 없으면 권역장 색
+        const H = S.local.holders;
+        const anyDistrict = dists.some(filledH);
+        const regionOfKey = {};
+        groups.forEach(g => { if (g.region) g.region.keys.forEach(k => { regionOfKey[k] = g; }); });
+        drawMap(box.querySelector('[data-map="holders"]'), ch, key => {
+            const h = anyDistrict ? H[holderKey('district', ch, key)] : regionOfKey[key]?.head;
+            const p = filledH(h) ? partyById(h.partyId) : null;
+            return p ? tendencyColorForPct(p.color, 75) : 'transparent';
+        }, key => {
+            const dh = H[holderKey('district', ch, key)];
+            const g = regionOfKey[key];
+            const line = (label, h) => `${label}: ${h && h.name ? h.name + ' ' : ''}${filledH(h) ? `(${partyById(h.partyId)?.name || '?'})` : '공석'}`;
+            return [line(nameOf(ch, key), dh), g ? line(g.region.name, g.head) : ''].filter(Boolean).join(' · ');
+        }, key => regionOfKey[key]?.region.id ?? null);
+        if (open) {
+            if (typeof showSeatsOnMobile === 'function') showSeatsOnMobile();
+            if (typeof switchDispTab === 'function') switchDispTab('popVote');
+        }
     }
 
     // ===================== 국민투표 =====================
@@ -271,6 +449,7 @@
         const box = ge('pvDisplay');
         if (!btn || !box || !rec) return;
         btn.querySelector('.disp-tab-label').textContent = kind === 'local' ? '지선 결과' : '국민투표 결과';
+        btn.dataset.view = kind;
         btn.style.display = '';
         if (kind === 'local') renderLocalResult(rec, box, true); else renderRefResult(rec, box, true);
         if (open) {
@@ -298,8 +477,12 @@
         const L = S.local;
         L.title = ge('pvLocalTitle')?.value || '';
         L.year = ge('pvLocalYear')?.value || '';
-        L.office = ge('pvLocalOffice')?.value || '단체장';
-        L.unit = ge('pvLocalUnit')?.value === 'district' ? 'district' : 'region';
+        if (ge('pvLocalOfficeRegion')) {
+            L.officeRegion = ge('pvLocalOfficeRegion').value.trim() || '지사';
+            L.officeDistrict = ge('pvLocalOfficeDistrict').value.trim() || '시장';
+            L.doRegion = !!ge('pvLocalDoRegion').checked;
+            L.doDistrict = !!ge('pvLocalDoDistrict').checked;
+        }
         L.chamber = ge('pvLocalChamber')?.value || 'house';
         L.turnout = clamp(parseFloat(ge('pvLocalTurnout')?.value) || 55, 1, 100);
         L.noise = clamp(parseFloat(ge('pvLocalNoise')?.value) || 0, 0, 50);
@@ -322,7 +505,7 @@
         const total = withPop.reduce((a, k) => a + popOf(ch, k), 0);
         const regionCount = (regions[ch] || []).length;
         return `지역구 ${keys.length}곳 · 인구 입력 ${withPop.length}곳 (합계 ${fmt(total)}명)`
-            + (unit === 'region' ? ` · 권역 ${regionCount}개${regionCount ? '' : ' (권역이 없어 지역구 단위로 치러요)'}` : '');
+            + (unit === 'region' ? ` · 권역 ${regionCount}개${regionCount ? '' : ' (권역이 없어 권역 단체장은 뽑지 않아요)'}` : '');
     }
 
     function renderLocal() {
@@ -335,22 +518,25 @@
                 <div><label class="pv-label">선거 제목</label><input type="text" id="pvLocalTitle" value="${esc(L.title)}" placeholder="예: 제1회 전국동시지방선거"></div>
                 <div><label class="pv-label">연도</label><input type="number" id="pvLocalYear" value="${esc(L.year)}" placeholder="1995"></div>
             </div>
-            <div class="pv-grid2">
-                <div><label class="pv-label">뽑는 자리</label><input type="text" id="pvLocalOffice" value="${esc(L.office)}" placeholder="예: 도지사 · 시장"></div>
-                <div><label class="pv-label">선거 단위</label><select id="pvLocalUnit" onchange="PopVote.refresh()">
-                    <option value="region" ${L.unit === 'region' ? 'selected' : ''}>권역마다 1명</option>
-                    <option value="district" ${L.unit === 'district' ? 'selected' : ''}>지역구마다 1명</option></select></div>
+            <label class="pv-label pv-label-block">뽑는 자리</label>
+            <div class="pv-offices">
+                <label class="pv-office"><input type="checkbox" id="pvLocalDoRegion" ${L.doRegion ? 'checked' : ''}> 권역마다
+                    <input type="text" id="pvLocalOfficeRegion" value="${esc(L.officeRegion)}" placeholder="예: 지사"></label>
+                <label class="pv-office"><input type="checkbox" id="pvLocalDoDistrict" ${L.doDistrict ? 'checked' : ''}> 지역구마다
+                    <input type="text" id="pvLocalOfficeDistrict" value="${esc(L.officeDistrict)}" placeholder="예: 시장"></label>
             </div>
             <div class="pv-grid3">
                 <div><label class="pv-label">지도 · 인구 기준 원</label><select id="pvLocalChamber" onchange="PopVote.refresh()">${chamberOptions(L.chamber)}</select></div>
                 <div><label class="pv-label">투표율 (%)</label><input type="number" id="pvLocalTurnout" min="1" max="100" value="${L.turnout}"></div>
                 <div><label class="pv-label">노이즈 (±%)</label><input type="number" id="pvLocalNoise" min="0" max="50" value="${L.noise}"></div>
             </div>
-            <div class="pv-note">${esc(popStatus(L.chamber, L.unit))}<br>득표율은 지역구 성향(없으면 전국 지지율)에 노이즈를 더해 정하고, 득표수는 인구 × 투표율로 계산합니다.</div>
+            <div class="pv-note">${esc(popStatus(L.chamber, 'region'))}<br>득표율은 지역구 성향(없으면 전국 지지율)에 노이즈를 더해 정하고, 득표수는 인구 × 투표율로 계산합니다.</div>
             <button type="button" class="pv-run" onclick="PopVote.runLocal()" data-modern-label="개표 시작">&gt;&gt; 개표 시작 &lt;&lt;</button>
             <div id="pvLocalResult"></div>
+            <div id="pvHolders"></div>
             ${recordsHtml('local')}`;
         renderLocalResult(L.last, ge('pvLocalResult'));
+        renderHolders();
     }
 
     function renderRef() {
@@ -415,18 +601,28 @@
     }
     function setState(st) {
         const base = {
-            local: { title: '', year: '', office: '단체장', unit: 'region', chamber: 'house', turnout: 55, noise: 8, records: [], last: null },
+            // holders: 현직 단체장 { '<단위>:<원>:<권역 id | 지역구 키>': { partyId, name, photo, office, since } }
+        local: { title: '', year: '', officeRegion: '지사', officeDistrict: '시장', doRegion: true, doDistrict: true, chamber: 'house', turnout: 55, noise: 8, records: [], last: null, holders: {} },
             ref: { question: '', year: '', chamber: 'house', turnout: 55, quorumOn: true, quorum: 50, stances: {}, records: [], last: null },
         };
         const src = st && typeof st === 'object' ? st : {};
         ['local', 'ref'].forEach(k => {
             S[k] = { ...base[k], ...(src[k] && typeof src[k] === 'object' ? src[k] : {}) };
             if (!Array.isArray(S[k].records)) S[k].records = [];
+            if (k === 'local' && (!S[k].holders || typeof S[k].holders !== 'object')) S[k].holders = {};
+            // 예전(한 단계만 뽑던) 설정 → 두 단계
+            if (k === 'local' && src.local && src.local.office && !src.local.officeRegion) {
+                if (src.local.unit === 'district') { S.local.officeDistrict = src.local.office; S.local.doRegion = false; }
+                else { S.local.officeRegion = src.local.office; }
+            }
             if (S[k].last && S[k].records.length && !S[k].records.some(r => r.id === S[k].last.id)) S[k].last = null;
         });
         if (ge('pvLocalForm')) renderLocal();
         if (ge('pvRefForm')) renderRef();
     }
 
-    window.PopVote = { runLocal, runRef, renderLocal, renderRef, refresh, show, remove, getState, setState };
+    window.PopVote = {
+        runLocal, runRef, renderLocal, renderRef, refresh, show, remove, getState, setState,
+        applyLocal, setHolder, uploadHolderPhoto, showHolders: () => showHoldersOnDisplay(true),
+    };
 })();
