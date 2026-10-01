@@ -7349,6 +7349,42 @@ window.DnoLangPacks.en = {
   [
    "사진",
    "Photo"
+  ],
+  [
+   "0.2 : Multi",
+   "0.2 : Multi"
+  ],
+  [
+   "0.2.3 - 테마 템플릿 · Steam 이식 준비",
+   "0.2.3 - Theme template · Steam port prep"
+  ],
+  [
+   "테마 템플릿",
+   "Theme template"
+  ],
+  [
+   "Steam 이식 준비",
+   "Steam port prep"
+  ],
+  [
+   "- 테마 템플릿 추가 — 설정 → 테마에서 지금 테마의 색이 채워진 템플릿을 받아 색을 바꾼 나만의 테마를 만들 수 있게 (라이트 · 다크 · 네온 바탕, 설정 → 테마 → 모드 테마에서 선택)",
+   "- Theme template — download a template filled with the current theme's colours from Settings → Theme and make your own recoloured theme (based on light · dark · neon, picked under Settings → Theme → Mod themes)"
+  ],
+  [
+   "- Steam 이식을 위한 조치 — 언어 팩 · 테마 · 프리셋을 폴더째 넣어 쓰는 모드 폴더, Steam 창작마당 구독 · 업로드 준비",
+   "- Groundwork for the Steam port — a mods folder for language packs, themes and presets dropped in as folders, ready for Steam Workshop subscriptions and uploads"
+  ],
+  [
+   "THEME TEMPLATE / 테마 템플릿",
+   "THEME TEMPLATE"
+  ],
+  [
+   "테마 템플릿 받기 (.json)",
+   "Download theme template (.json)"
+  ],
+  [
+   "지금 테마의 색이 채워진 테마 파일을 받습니다. id · name과 색을 바꾼 뒤 데스크톱 앱의 모드 폴더에 폴더째 넣으면 \"모드 테마\"에 나타납니다.",
+   "Downloads a theme file filled with the current theme's colours. Change the id, name and colours, then put it in its own folder inside the desktop app's mods folder and it shows up under \"Mod themes\"."
   ]
  ]
 };
