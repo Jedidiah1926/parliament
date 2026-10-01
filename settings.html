@@ -60,6 +60,11 @@
                         <div class="settings-label">MOD THEMES / 모드 테마</div>
                         <div class="lang-select-group" id="themeModList"></div>
                     </div>
+                    <div class="settings-group">
+                        <div class="settings-label">THEME TEMPLATE / 테마 템플릿</div>
+                        <button class="lang-select-btn" onclick="downloadThemeTemplate()" style="width:100%;">테마 템플릿 받기 (.json)</button>
+                        <div class="settings-hint">지금 테마의 색이 채워진 테마 파일을 받습니다. id · name과 색을 바꾼 뒤 데스크톱 앱의 모드 폴더에 폴더째 넣으면 "모드 테마"에 나타납니다.</div>
+                    </div>
                     <div class="settings-group" id="themeColorSection">
                         <div class="settings-label">THEME COLOR / 테마 색 <span id="themeColorTnoOnlyNote" style="color:#666;font-size:0.75rem;text-transform:none;"></span></div>
                         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
@@ -193,6 +198,32 @@
                 btn.onclick = () => selectThemeMod(t.id);
                 box.appendChild(btn);
             });
+        }
+        // 테마 템플릿(hemicycle-theme@1) — 지금 보이는 테마의 색 변수를 그대로 채워 둔다
+        function downloadThemeTemplate() {
+            const mode = getThemeMode();
+            const cs = getComputedStyle(document.documentElement);
+            const names = mode === 'tno'
+                ? ['--tno-bg', '--tno-panel', '--tno-neon', '--tno-text', '--tno-border', '--tno-alert', '--tno-gold']
+                : ['--m-bg', '--m-surface', '--m-surface-2', '--m-surface-3', '--m-border', '--m-border-strong', '--m-text', '--m-text-2', '--m-text-3', '--m-text-4',
+                   '--m-accent', '--m-on-accent', '--m-danger', '--m-success', '--m-info', '--m-gold', '--m-purple'];
+            const colors = {};
+            names.forEach(n => { const v = cs.getPropertyValue(n).trim(); if(v) colors[n] = v; });
+            const tpl = {
+                format: 'hemicycle-theme@1',
+                id: 'my-theme',
+                name: '나의 테마',
+                author: '',
+                base: mode === 'tno' ? 'neon' : mode,
+                colors,
+                css: '',
+                _help: 'id(영문 소문자 · 숫자 · - · _)와 name을 정하고 colors의 색을 바꾸세요. base는 light · dark · neon 중 하나입니다. 이 파일을 폴더에 넣고 그 폴더를 데스크톱 앱 메인 화면 🌐 > 모드 폴더 열기로 연 곳에 넣으면 설정 > 테마 > 모드 테마에 나타납니다.',
+            };
+            const url = URL.createObjectURL(new Blob([JSON.stringify(tpl, null, 2)], { type: 'application/json' }));
+            const a = document.createElement('a');
+            a.href = url; a.download = 'hemicycle-theme-template.json';
+            document.body.appendChild(a); a.click(); a.remove();
+            setTimeout(() => URL.revokeObjectURL(url), 2000);
         }
         function selectThemeMod(id) {
             setThemeMod(id);
