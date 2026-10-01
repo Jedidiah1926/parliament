@@ -58,3 +58,69 @@ html[data-theme-family="modern"] .pv-ref-nums { color: var(--m-text); }
 html[data-theme-family="modern"] .pv-records { border-top-color: var(--m-border); }
 html[data-theme-family="modern"] .pv-record-open { border: none; border-radius: 8px; background: var(--m-surface-2); color: var(--m-text); }
 html[data-theme-family="modern"] .pv-record-del { border: none; border-radius: 8px; background: transparent; color: var(--m-danger); }
+
+/* 현직 단체장 */
+.pv-apply { width: 100%; margin: 8px 0 4px; padding: 9px; cursor: pointer; font-family: inherit; font-size: .9rem; background: var(--tno-neon); color: #000; border: none; }
+.pv-applied { margin: 6px 0; color: var(--vote-yea, #2ecc71); font-size: .85rem; }
+.pv-holders { margin-top: 14px; }
+.pv-holders-map { margin: 8px 0; width: 100%; cursor: pointer; font-family: inherit; font-size: .85rem; background: transparent; border: 1px solid var(--tno-border); color: #aaa; padding: 7px; }
+.pv-holder-list { display: flex; flex-direction: column; gap: 6px; }
+.pv-holder { display: flex; gap: 8px; align-items: center; border-left: 3px solid #555; padding: 6px 8px; background: rgba(255,255,255,.02); }
+.pv-holder-photo { position: relative; flex: 0 0 38px; width: 38px; height: 46px; display: flex; align-items: center; justify-content: center; overflow: hidden; background: #111; border: 1px solid #333; cursor: pointer; font-size: 1.1rem; }
+.pv-holder-photo img { width: 100%; height: 100%; object-fit: cover; }
+.pv-holder-photo input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.pv-holder-photo-sm { flex-basis: 30px; width: 30px; height: 36px; cursor: default; font-size: .9rem; }
+.pv-holder-main { flex: 1; min-width: 0; }
+.pv-holder-unit { font-size: .85rem; color: #ccc; margin-bottom: 4px; }
+.pv-holder-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.pv-holder-counts { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0; }
+.pv-count-chip { display: inline-flex; align-items: center; font-size: .82rem; color: #ccc; border: 1px solid #333; padding: 2px 8px; }
+.pv-holder-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 6px; margin-top: 10px; }
+.pv-holder-card { display: flex; gap: 8px; align-items: center; border-left: 3px solid #555; padding: 5px 8px; background: rgba(255,255,255,.02); min-width: 0; }
+.pv-holder-card-main { display: flex; flex-direction: column; min-width: 0; font-size: .85rem; color: #ccc; }
+.pv-holder-card-main > * { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+html[data-theme-family="modern"] .pv-apply { background: var(--m-accent); color: var(--m-on-accent); border-radius: 10px; font-weight: 600; }
+html[data-theme-family="modern"] .pv-applied { color: var(--m-success); font-weight: 600; font-size: 13px; }
+html[data-theme-family="modern"] .pv-holders-map { border: none; border-radius: 10px; background: var(--m-surface-2); color: var(--m-text); font-weight: 600; }
+html[data-theme-family="modern"] .pv-holder, html[data-theme-family="modern"] .pv-holder-card { background: var(--m-surface-2); border-radius: 0 10px 10px 0; }
+html[data-theme-family="modern"] .pv-holder-photo { background: var(--m-surface-3); border: none; border-radius: 8px; }
+html[data-theme-family="modern"] .pv-holder-unit, html[data-theme-family="modern"] .pv-holder-card-main { color: var(--m-text); }
+html[data-theme-family="modern"] .pv-count-chip { border: none; border-radius: 999px; background: var(--m-surface-2); color: var(--m-text); padding: 3px 10px; }
+
+/* 뽑는 자리 (권역 · 지역구) */
+.pv-offices { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
+@media (max-width: 520px) { .pv-offices { grid-template-columns: 1fr; } }
+.pv-office { display: flex; align-items: center; gap: 6px; font-size: .82rem; color: #aaa; white-space: nowrap; }
+.pv-office input[type="text"] { flex: 1; min-width: 0; }
+.pv-level-head { margin: 12px 0 4px; font-size: .9rem; color: var(--tno-gold); }
+/* 현직 단체장 — 편집 목록 */
+.pv-holder-group { margin-top: 10px; padding-top: 8px; border-top: 1px solid #222; }
+.pv-holder-group:first-of-type { border-top: none; }
+.pv-holder-big .pv-holder-photo { flex-basis: 46px; width: 46px; height: 56px; }
+.pv-holder-big .pv-holder-unit { font-size: .92rem; }
+.pv-holder-sub { margin: 6px 0 0 14px; font-size: .82rem; }
+.pv-holder-sub summary { cursor: pointer; color: #888; margin-bottom: 6px; }
+.pv-holder-nogroup { color: #777; font-size: .85rem; }
+/* 현직 단체장 — 시각 화면 (내각 화면처럼 권역장 아래 지역구장) */
+.pv-hgroup { margin-top: 14px; padding-top: 12px; border-top: 1px solid #222; }
+.pv-hcard { display: flex; gap: 10px; align-items: center; border-left: 3px solid #555; padding: 6px 10px; background: rgba(255,255,255,.02); min-width: 0; }
+.pv-hcard-big { padding: 10px 12px; margin-bottom: 8px; }
+.pv-hcard-big .pv-holder-photo { flex-basis: 56px; width: 56px; height: 70px; font-size: 1.4rem; }
+.pv-hcard-main { display: flex; flex-direction: column; min-width: 0; gap: 1px; }
+.pv-hcard-main > * { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pv-hcard-office { font-size: .75rem; color: #888; }
+.pv-hcard-name { font-size: .95rem; color: #e0e0e0; font-weight: normal; }
+.pv-hcard-big .pv-hcard-name { font-size: 1.15rem; color: var(--tno-neon); }
+.pv-hcard-party { font-size: .78rem; color: #aaa; }
+.pv-hgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 6px; margin-left: 16px; }
+@media (max-width: 520px) { .pv-hgrid { margin-left: 0; } }
+
+html[data-theme-family="modern"] .pv-office { color: var(--m-text-2); font-size: 13px; }
+html[data-theme-family="modern"] .pv-level-head { color: var(--m-text); font-weight: 700; font-size: 13px; }
+html[data-theme-family="modern"] .pv-holder-group, html[data-theme-family="modern"] .pv-hgroup { border-top-color: var(--m-border); }
+html[data-theme-family="modern"] .pv-holder-sub summary, html[data-theme-family="modern"] .pv-holder-nogroup { color: var(--m-text-3); }
+html[data-theme-family="modern"] .pv-hcard { background: var(--m-surface-2); border-radius: 0 10px 10px 0; }
+html[data-theme-family="modern"] .pv-hcard-office, html[data-theme-family="modern"] .pv-hcard-party { color: var(--m-text-3); font-size: 12px; }
+html[data-theme-family="modern"] .pv-hcard-name { color: var(--m-text); font-weight: 600; font-size: 14px; }
+html[data-theme-family="modern"] .pv-hcard-big .pv-hcard-name { color: var(--m-text); font-size: 17px; font-weight: 700; }
