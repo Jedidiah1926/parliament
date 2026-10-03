@@ -5297,8 +5297,9 @@
             } catch(e) { return false; }
         }
 
-        // logo.html(로고 제작 모드)은 본 게임 세이브와 섞이지 않도록 저장 키에 따로 접두어를 붙인다
-        const LS_PREFIX = IS_LOGO_MODE ? 'hemicycleLogo:' : '';
+        // logo.html(로고 제작 모드) · teaser.html(다음 업데이트 미리보기)은 본 게임 세이브와 섞이지 않도록 저장 키에 따로 접두어를 붙인다
+        const IS_TEASER_MODE = document.documentElement.getAttribute('data-app-mode') === 'teaser';
+        const LS_PREFIX = IS_LOGO_MODE ? 'hemicycleLogo:' : IS_TEASER_MODE ? 'hemicycleTeaser:' : '';
         function safeLsGet(key) {
             try { return localStorage.getItem(LS_PREFIX + key); } catch(e) { return null; }
         }

@@ -27,7 +27,7 @@ Hemicycle(구 DATANET Parliament Simulation)은 설치나 빌드 없이 **브라
 | `dno.html` | 예전 주소 호환용 — `main.html`로 이동 |
 | `settings.html` | 설정 화면 (언어 선택) |
 | `roadmap.html` | 개발 로드맵 및 업데이트 내역 |
-| `teaser.html` | `main.html`과 같은 화면 (`npm run build:logo`가 main.html을 복사해 만듦) |
+| `teaser.html` | 다음 업데이트 미리보기 — `main.html`과 같은 화면에 `js/teaser.js`를 얹음 (`npm run build:logo`가 만듦, 저장 공간은 본 게임과 따로). 지금은 1.6.6 미수복 지역 · 영토 통일 |
 | `lang.js` | 언어 설정 저장 및 한국어→영어 실시간 치환 엔진 (`main.html`/`roadmap.html`에서 사용) |
 
 `index.html` 또는 `main.html`을 브라우저에서 직접 열면 됩니다. Chrome, Firefox, Edge 최신 버전에서 동작하며, 한글 글꼴(네오둥근모 · Pretendard)은 `fonts/` 폴더에 함께 들어 있어 인터넷 없이도 보이고, 영문 보조 글꼴 VT323만 Google Fonts에서 불러옵니다.

@@ -22,6 +22,10 @@ window.DnoLangPacks.en = {
  ],
  "ordinal": "en",
  "patterns": [
+  {"re": "^떨어진 땅 (\\d+)곳이 도형 하나로 묶여 있습니다 — 눌러서 따로따로 나누기$", "to": "$1 separate pieces of land are bundled into this one shape — click to split them"},
+  {"re": "^미수복 지역 (\\d+)곳을 모두 되찾아 일반 지역구로 편입합니다\\. 계속하시겠습니까\\?$", "to": "Recover all $1 unrecovered districts and fold them back in as ordinary districts? Continue?"},
+  {"re": "^(.+) \\(미수복 지역\\)$", "to": "$1 (unrecovered territory)"},
+  {"re": " 외 (\\d+)곳$", "to": " and $1 more"},
   {"re": "^현직 단체장 \\((\\d+) / (\\d+)\\)$", "to": "Current officeholders ($1 / $2)"},
   {"re": "^\\((권역|지역구) (\\d+)곳\\)$", "to": "($2 {{map:$1|권역=regions;지역구=districts}})"},
   {"re": " \\(권역이 없어 권역 단체장은 뽑지 않아요\\)", "to": " (no regions, so no regional heads are elected)"},
@@ -7405,6 +7409,25 @@ window.DnoLangPacks.en = {
   [
    "- 영토 통일 — 미수복 지역을 되찾아 일반 지역구로 편입 (선거 · 의석에 다시 포함)",
    "- Territorial unification — recover unrecovered territory and fold it back in as ordinary districts (counted in elections and seats again)"
-  ]
+  ],
+  [
+   "1.6.6 미리보기",
+   "1.6.6 preview"
+  ],
+  [
+   "— 실제로 다스리지 못하는 지역구 (선거 · 의석에서 빠짐)",
+   "— a district the country doesn't actually control (left out of elections and seats)"
+  ],
+  [
+   "지역구를 눌러 편집 칸에서 \"미수복 지역\"을 체크하세요",
+   "Click a district and tick \"Unrecovered territory\" in its editor"
+  ],
+  ["선택한 도형 합치기", "Merge selected shapes"],
+  ["고른 도형들을 지역구 하나로 합칩니다", "Merge the selected shapes into one district"],
+  ["떨어진 땅 여러 곳이 도형 하나로 묶여 있으면 목록의 ✂로 나누고, 같은 지역구는 골라서 합치세요", "If separate pieces of land are bundled into one shape, split them with ✂ in the list; select shapes of the same district to merge them"],
+  ["합칠 도형을 두 개 이상 고르세요.", "Select two or more shapes to merge."],
+  ["면(path · polygon)끼리만 합칠 수 있습니다.", "Only area shapes (path · polygon) can be merged."],
+  ["좌표 변환(transform)이 서로 다른 도형은 합칠 수 없습니다.", "Shapes with different transforms cannot be merged."],
+  ["먼저 SVG를 여세요.", "Open an SVG first."]
  ]
 };
