@@ -7389,6 +7389,22 @@ window.DnoLangPacks.en = {
   [
    "1.6.6 - 즉시, 지체 없이",
    "1.6.6 - Immediately, without delay"
+  ],
+  [
+   "영토 통일",
+   "Territorial unification"
+  ],
+  [
+   "미수복 지역",
+   "Unrecovered territory"
+  ],
+  [
+   "- 미수복 지역 — 지역구 지도에서 실제로 다스리지 못하는 지역구를 \"미수복\"으로 지정해 따로 표시 (선거 · 의석에서는 빠짐)",
+   "- Unrecovered territory — mark districts on the map that the country claims but doesn't control as \"unrecovered\" and show them apart (left out of elections and seats)"
+  ],
+  [
+   "- 영토 통일 — 미수복 지역을 되찾아 일반 지역구로 편입 (선거 · 의석에 다시 포함)",
+   "- Territorial unification — recover unrecovered territory and fold it back in as ordinary districts (counted in elections and seats again)"
   ]
  ]
 };
