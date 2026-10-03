@@ -115,7 +115,6 @@
         }
         const keys = Object.keys(unrecovered);
         el.innerHTML = `
-            <div class="teaser-badge">1.6.6 미리보기</div>
             <div class="teaser-unrec-row">
                 <span class="teaser-unrec-count">미수복 지역 ${keys.length}곳</span>
                 <button type="button" class="teaser-unify" ${keys.length ? '' : 'disabled'}>영토 통일</button>
@@ -137,7 +136,6 @@
     const style = document.createElement('style');
     style.textContent = `
         .teaser-unrec-summary { margin-bottom: 10px; padding: 8px 10px; border: 1px dashed var(--tno-gold); background: rgba(255,215,0,.04); font-size: .85rem; }
-        .teaser-badge { display: inline-block; font-size: .7rem; color: var(--tno-gold); border: 1px solid var(--tno-gold); padding: 0 6px; margin-bottom: 6px; letter-spacing: 1px; }
         .teaser-unrec-count { font-weight: bold; }
         .teaser-unrec-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; color: #ccc; }
         .teaser-unify { cursor: pointer; font-family: inherit; font-size: .8rem; background: transparent; border: 1px solid var(--tno-neon); color: var(--tno-neon); padding: 4px 10px; }
@@ -147,7 +145,6 @@
         .teaser-unrec-toggle { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin: 4px 0 8px; font-size: .85rem; color: var(--tno-gold); cursor: pointer; }
         .teaser-unrec-toggle .teaser-dim { flex-basis: 100%; font-size: .72rem; }
         html[data-theme-family="modern"] .teaser-unrec-summary { border: 1px dashed var(--m-border-strong); border-radius: 12px; background: var(--m-surface-2); }
-        html[data-theme-family="modern"] .teaser-badge { color: var(--m-gold); border-color: var(--m-gold); border-radius: 6px; font-weight: 700; }
         html[data-theme-family="modern"] .teaser-unrec-row { color: var(--m-text); }
         html[data-theme-family="modern"] .teaser-unify { border: none; border-radius: 8px; background: var(--m-accent); color: var(--m-on-accent); font-weight: 600; }
         html[data-theme-family="modern"] .teaser-dim { color: var(--m-text-3); }
