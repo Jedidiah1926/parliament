@@ -117,7 +117,7 @@
         el.innerHTML = `
             <div class="teaser-badge">1.6.6 미리보기</div>
             <div class="teaser-unrec-row">
-                <span>미수복 지역 <b>${keys.length}</b>곳</span>
+                <span class="teaser-unrec-count">미수복 지역 ${keys.length}곳</span>
                 <button type="button" class="teaser-unify" ${keys.length ? '' : 'disabled'}>영토 통일</button>
             </div>
             ${keys.length ? `<div class="teaser-dim teaser-small">${keys.slice(0, 12).map(k => esc(nameOf(k))).join(' · ')}${keys.length > 12 ? ` 외 ${keys.length - 12}곳` : ''}</div>` : '<div class="teaser-dim teaser-small">지역구를 눌러 편집 칸에서 "미수복 지역"을 체크하세요</div>'}`;
@@ -138,6 +138,7 @@
     style.textContent = `
         .teaser-unrec-summary { margin-bottom: 10px; padding: 8px 10px; border: 1px dashed var(--tno-gold); background: rgba(255,215,0,.04); font-size: .85rem; }
         .teaser-badge { display: inline-block; font-size: .7rem; color: var(--tno-gold); border: 1px solid var(--tno-gold); padding: 0 6px; margin-bottom: 6px; letter-spacing: 1px; }
+        .teaser-unrec-count { font-weight: bold; }
         .teaser-unrec-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; color: #ccc; }
         .teaser-unify { cursor: pointer; font-family: inherit; font-size: .8rem; background: transparent; border: 1px solid var(--tno-neon); color: var(--tno-neon); padding: 4px 10px; }
         .teaser-unify:disabled { opacity: .4; cursor: default; }

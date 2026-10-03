@@ -22,6 +22,7 @@ window.DnoLangPacks.en = {
  ],
  "ordinal": "en",
  "patterns": [
+  {"re": "^미수복 지역 (\\d+)곳$", "to": "Unrecovered territories: $1"},
   {"re": "^떨어진 땅 (\\d+)곳이 도형 하나로 묶여 있습니다 — 눌러서 따로따로 나누기$", "to": "$1 separate pieces of land are bundled into this one shape — click to split them"},
   {"re": "^미수복 지역 (\\d+)곳을 모두 되찾아 일반 지역구로 편입합니다\\. 계속하시겠습니까\\?$", "to": "Recover all $1 unrecovered districts and fold them back in as ordinary districts? Continue?"},
   {"re": "^(.+) \\(미수복 지역\\)$", "to": "$1 (unrecovered territory)"},
