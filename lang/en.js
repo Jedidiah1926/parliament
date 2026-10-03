@@ -4176,8 +4176,8 @@ window.DnoLangPacks.en = {
    "Parliamentary"
   ],
   [
-   "직책 이름 (내각 디스플레이에 표시될 이름을 직접 바꿀 수 있습니다 — 비워두면 기본값 사용)",
-   "Position titles (rename them as shown in the cabinet display — leave blank for defaults)"
+   "내각 · 직책 이름 (내각 디스플레이에 표시될 이름을 직접 바꿀 수 있습니다 — 비워두면 기본값 사용)",
+   "Cabinet & position titles (rename them as shown in the cabinet display — leave blank for defaults)"
   ],
   [
    "총리 / 국무총리",
@@ -7428,6 +7428,7 @@ window.DnoLangPacks.en = {
   ["먼저 SVG를 여세요.", "Open an SVG first."],
   [": 성향 미지정", ": no tendency set"],
   [" (이 원에 의석 없음)", " (no seats in this chamber)"],
-  [" (경합): ", " (tied): "]
+  [" (경합): ", " (tied): "],
+  ["내각 (오른쪽 내각 탭 · 제목에 뜨는 이름)", "Cabinet (name shown on the cabinet tab and its title, e.g. Bundeskabinett)"]
  ]
 };

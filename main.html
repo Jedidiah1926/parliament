@@ -1240,8 +1240,13 @@
                     </div>
 
                     <div style="margin-top:16px;">
-                        <label style="color:#888;font-size:0.8rem;margin-bottom:6px;display:block;">직책 이름 (내각 디스플레이에 표시될 이름을 직접 바꿀 수 있습니다 — 비워두면 기본값 사용)</label>
+                        <label style="color:#888;font-size:0.8rem;margin-bottom:6px;display:block;">내각 · 직책 이름 (내각 디스플레이에 표시될 이름을 직접 바꿀 수 있습니다 — 비워두면 기본값 사용)</label>
                         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                            <div style="grid-column:1 / -1;">
+                                <span style="color:#555;font-size:0.72rem;display:block;margin-bottom:2px;">내각 (오른쪽 내각 탭 · 제목에 뜨는 이름)</span>
+                                <input type="text" id="roleLabelCabinetInput" placeholder="내각" oninput="updateCabinetRoleLabel('cabinet',this.value)"
+                                    style="width:100%;box-sizing:border-box;background:#000;border:1px solid #2a2a2a;color:#e0e0e0;font-family:inherit;font-size:0.85rem;padding:5px 8px;">
+                            </div>
                             <div>
                                 <span style="color:#555;font-size:0.72rem;display:block;margin-bottom:2px;">대통령</span>
                                 <input type="text" id="roleLabelPresidentInput" placeholder="대통령" oninput="updateCabinetRoleLabel('president',this.value)"
@@ -1718,7 +1723,7 @@
         <div class="disp-panel" id="dispPanelCabinet">
             <div class="chamber-box">
                 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-                    <h3 style="margin:0;border:none;padding:0;"><span class="tno-prompt">&gt; </span>내각</h3>
+                    <h3 id="cabinetDispTitle" style="margin:0;border:none;padding:0;"><span class="tno-prompt">&gt; </span>내각</h3>
                 </div>
                 <div id="cabinetCouncilControls" style="display:none;align-items:center;gap:8px;margin-bottom:10px;padding:8px;background:#0a0c10;border:1px solid var(--tno-alert);flex-wrap:wrap;">
                     <span style="color:var(--tno-alert);font-size:0.8rem;white-space:nowrap;">! 국무회의 표결 중</span>
