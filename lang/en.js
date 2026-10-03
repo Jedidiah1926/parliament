@@ -7385,6 +7385,10 @@ window.DnoLangPacks.en = {
   [
    "지금 테마의 색이 채워진 테마 파일을 받습니다. id · name과 색을 바꾼 뒤 데스크톱 앱의 모드 폴더에 폴더째 넣으면 \"모드 테마\"에 나타납니다.",
    "Downloads a theme file filled with the current theme's colours. Change the id, name and colours, then put it in its own folder inside the desktop app's mods folder and it shows up under \"Mod themes\"."
+  ],
+  [
+   "1.6.6 - 즉시, 지체 없이",
+   "1.6.6 - Immediately, without delay"
   ]
  ]
 };
