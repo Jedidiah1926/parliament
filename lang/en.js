@@ -7389,6 +7389,22 @@ window.DnoLangPacks.en = {
   [
    "1.6.6 - 즉시, 지체 없이",
    "1.6.6 - Immediately, without delay"
+  ],
+  [
+   "영토 통일",
+   "Territorial unification"
+  ],
+  [
+   "통일 의회 구성",
+   "Unified parliament"
+  ],
+  [
+   "- 영토 통일 — 다른 나라(세이브)를 불러와 하나로 합침: 지역구 지도 · 정당 · 의석 병합 (흡수 통일 · 대등 통일)",
+   "- Territorial unification — bring in another country (save) and merge them: district maps, parties and seats (absorption or merger of equals)"
+  ],
+  [
+   "- 통일 의회 구성 — 두 의회의 의석을 합치고 정당 합당 · 연정 재편",
+   "- Unified parliament — combine both parliaments' seats, with party mergers and coalition reshuffles"
   ]
  ]
 };
