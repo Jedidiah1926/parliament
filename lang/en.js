@@ -7429,6 +7429,9 @@ window.DnoLangPacks.en = {
   ["합칠 도형을 두 개 이상 고르세요.", "Select two or more shapes to merge."],
   ["면(path · polygon)끼리만 합칠 수 있습니다.", "Only area shapes (path · polygon) can be merged."],
   ["좌표 변환(transform)이 서로 다른 도형은 합칠 수 없습니다.", "Shapes with different transforms cannot be merged."],
-  ["먼저 SVG를 여세요.", "Open an SVG first."]
+  ["먼저 SVG를 여세요.", "Open an SVG first."],
+  [": 성향 미지정", ": no tendency set"],
+  [" (이 원에 의석 없음)", " (no seats in this chamber)"],
+  [" (경합): ", " (tied): "]
  ]
 };
