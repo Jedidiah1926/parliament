@@ -432,6 +432,13 @@
             padding-top: 2px;
         }
         .disp-panel.active { display: flex; }
+        /* 네온: 탭과 그 아래 화면 상자가 떨어져 보이지 않게 — 탭을 상자 위 테두리에 겹치고, 고른 탭은 상자와 이어지게 */
+        html[data-theme-family="tno"] .disp-panel { padding-top: 0; }
+        html[data-theme-family="tno"] .disp-tab-btn { position: relative; z-index: 1; margin-bottom: -2px; }
+        html[data-theme-family="tno"] .disp-tab-btn.active {
+            background: var(--tno-panel);
+            border-bottom: 2px solid var(--tno-panel);
+        }
 
         .chamber-box {
             background: var(--tno-panel);

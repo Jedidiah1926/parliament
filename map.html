@@ -467,6 +467,18 @@ function generateComponentText(items, includeSvgWrapper = true) {
         keep.push([aname, a.value]);
       }
     }
+    // 바깥 그룹(<g transform=...>)의 변환도 함께 — 도형 자기 transform만 담으면 그룹에 걸린 뒤집기 · 회전 · 이동이
+    // 빠져서 게임에 올렸을 때 지도가 뒤집히거나 돌아가 보였음. SVG transform 목록은 바깥 → 안쪽 순서로 이어 붙이면 된다
+    const chain = [];
+    for (let node = it.el.parentElement; node && node.tagName && node.tagName.toLowerCase() !== 'svg'; node = node.parentElement) {
+      const t = node.getAttribute && node.getAttribute('transform');
+      if (t && t.trim()) chain.unshift(t.trim());
+    }
+    const ownIdx = keep.findIndex(([k]) => k === 'transform');
+    if (chain.length) {
+      if (ownIdx >= 0) keep[ownIdx][1] = chain.join(' ') + ' ' + keep[ownIdx][1];
+      else keep.push(['transform', chain.join(' ')]);
+    }
     // build attribute string, but use placeholders for fill/stroke so props override
     keep.forEach(([k,v])=>{
       if (k==='fill') return;

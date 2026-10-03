@@ -9835,6 +9835,19 @@
 
         // SVG 지도를 지정된 컨테이너에 그리고, 도형별 채우기 색/클릭/툴팁을 옵션으로 받는다
         // (지역구 편집 패널·의회 화면 지역구 보기·선거 결과 지역구 보기가 모두 이 함수를 공유)
+        // 도형의 경계상자를 지도(svg) 좌표로 — getBBox()는 도형 자기 transform(뒤집기 · 회전 · 이동)을 빼고 재므로,
+        // transform이 있는 도형은 네 꼭짓점을 변환해 다시 잰다 (약칭 · 의석 배지 위치와 지도 맞춤 영역에 사용)
+        function districtShapeBBox(el) {
+            const b = el.getBBox();
+            const list = el.transform && el.transform.baseVal;
+            if(!list || !list.numberOfItems) return b;
+            const m = list.consolidate().matrix;
+            const pts = [[b.x, b.y], [b.x + b.width, b.y], [b.x, b.y + b.height], [b.x + b.width, b.y + b.height]]
+                .map(([x, y]) => [m.a * x + m.c * y + m.e, m.b * x + m.d * y + m.f]);
+            const xs = pts.map(p => p[0]), ys = pts.map(p => p[1]);
+            const x = Math.min(...xs), y = Math.min(...ys);
+            return { x, y, width: Math.max(...xs) - x, height: Math.max(...ys) - y };
+        }
         function renderDistrictSvgInto(wrapEl, opts = {}) {
             if(!wrapEl) return;
             const map = districtSvgMapFor(opts.chamber || 'house');
@@ -10030,7 +10043,7 @@
                 let refSize = 10;
                 try {
                     const sizes = shapeEls
-                        .map(({ el }) => { try { const bb = el.getBBox(); return Math.min(bb.width, bb.height); } catch(e) { return 0; } })
+                        .map(({ el }) => { try { const bb = districtShapeBBox(el); return Math.min(bb.width, bb.height); } catch(e) { return 0; } })
                         .filter(v => v > 0)
                         .sort((a,b) => a-b);
                     if(sizes.length > 0) refSize = sizes[Math.floor(sizes.length/2)];
@@ -10041,7 +10054,7 @@
                     const badges = (opts.seatBadges && districtSeatBadgesOn) ? opts.seatBadges(s.key) : null;
                     if(!abbr && !(badges && badges.length)) return;
                     try {
-                        const b = el.getBBox();
+                        const b = districtShapeBBox(el);
                         if(!b || (b.width === 0 && b.height === 0)) return;
                         const cx = b.x + b.width/2;
                         const cy = b.y + b.height/2;
@@ -10112,7 +10125,7 @@
                 svg.querySelectorAll('path,circle,rect,polygon,polyline,ellipse').forEach(el => {
                     if(el.hasAttribute('data-decor')) return; // 약칭/의석 배지 장식용 rect는 실제 도형이 아니므로 제외
                     if(el.closest('pattern')) return; // 경합 빗금 <pattern> 안의 rect도 실제 도형이 아니며, 좌표가 0~1 사이라 경계상자를 심하게 왜곡시킴
-                    const b = el.getBBox();
+                    const b = districtShapeBBox(el);
                     if(!b || (b.width === 0 && b.height === 0)) return;
                     boxes.push(b);
                 });
