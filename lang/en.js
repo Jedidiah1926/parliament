@@ -7395,16 +7395,16 @@ window.DnoLangPacks.en = {
    "Territorial unification"
   ],
   [
-   "통일 의회 구성",
-   "Unified parliament"
+   "미수복 지역",
+   "Unrecovered territory"
   ],
   [
-   "- 영토 통일 — 다른 나라(세이브)를 불러와 하나로 합침: 지역구 지도 · 정당 · 의석 병합 (흡수 통일 · 대등 통일)",
-   "- Territorial unification — bring in another country (save) and merge them: district maps, parties and seats (absorption or merger of equals)"
+   "- 미수복 지역 — 지역구 지도에서 실제로 다스리지 못하는 지역구를 \"미수복\"으로 지정해 따로 표시 (선거 · 의석에서는 빠짐)",
+   "- Unrecovered territory — mark districts on the map that the country claims but doesn't control as \"unrecovered\" and show them apart (left out of elections and seats)"
   ],
   [
-   "- 통일 의회 구성 — 두 의회의 의석을 합치고 정당 합당 · 연정 재편",
-   "- Unified parliament — combine both parliaments' seats, with party mergers and coalition reshuffles"
+   "- 영토 통일 — 미수복 지역을 되찾아 일반 지역구로 편입 (선거 · 의석에 다시 포함)",
+   "- Territorial unification — recover unrecovered territory and fold it back in as ordinary districts (counted in elections and seats again)"
   ]
  ]
 };
