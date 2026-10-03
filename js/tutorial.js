@@ -27,7 +27,7 @@
     // 모바일 화면 모드에선 편집 패널/좌석 화면 중 하나만 보이므로 필요한 쪽으로 전환
     const showPanel = which => () => { if (isMobileLayout() && typeof setMobilePanel === 'function') setMobilePanel(which); };
 
-    // ---- 앱 상태 읽기 (main.js/teaser.js의 최상위 let 변수는 window 속성이 아니라 이름으로만 보인다) ----
+    // ---- 앱 상태 읽기 (main.js의 최상위 let 변수는 window 속성이 아니라 이름으로만 보인다) ----
     /* global parties, bills */
     const partyList = () => (typeof parties !== 'undefined' && Array.isArray(parties)) ? parties : [];
     const billList = () => (typeof bills !== 'undefined' && Array.isArray(bills)) ? bills : [];
