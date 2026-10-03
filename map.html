@@ -101,6 +101,8 @@
   .mm-kind.kind-line { color: var(--tno-gold); border-color: color-mix(in srgb, var(--tno-gold) 50%, transparent); }
   .item { display:flex; gap:6px; flex-wrap:wrap; row-gap:6px; align-items:center; padding:6px; border-bottom:1px solid var(--tno-border); }
   .item button { margin-left:auto; }
+  .item .mm-cut { color: var(--tno-gold); border-color: var(--tno-gold); }
+  .item .mm-cut + .btn { margin-left: 0; }
   input[type="text"] {
     width:100px; padding:5px 8px; background:#000; border:1px solid var(--tno-border);
     color: var(--tno-text); font-family: inherit;
@@ -177,6 +179,7 @@
             <div class="mm-empty">
               <div class="mm-empty-title">업로드한 SVG가 여기 표시됩니다</div>
               <div class="small">① ⬆ SVG 열기(바로 분석) → ② 오른쪽 목록에서 이름 고치기 · 고르기 → ③ 내보내기</div>
+              <div class="small">떨어진 땅 여러 곳이 도형 하나로 묶여 있으면 목록의 ✂로 나누고, 같은 지역구는 골라서 합치세요</div>
             </div>
           </div>
         </div>
@@ -192,6 +195,9 @@
           <div class="mm-row">
             <button id="btnSelectAll" class="btn secondary">모두 선택</button>
             <button id="btnDeselectAll" class="btn secondary">선택 해제</button>
+          </div>
+          <div class="mm-row">
+            <button id="btnMergeSelected" class="btn secondary" title="고른 도형들을 지역구 하나로 합칩니다">선택한 도형 합치기</button>
           </div>
           <div class="mm-row">
             <button id="btnExportSelected" class="btn secondary">선택한 것만 내보내기</button>
@@ -395,6 +401,16 @@ function renderList() {
     // 목록 줄에 마우스를 올리면 지도에서 그 도형을 강조
     div.onmouseenter = () => setHighlight(s, true);
     div.onmouseleave = () => setHighlight(s, false);
+    // 떨어진 땅이 여러 곳 묶인 도형이면 나누기 버튼
+    const parts = shapePieces(s);
+    if (parts) {
+      const cut = document.createElement('button');
+      cut.textContent = `✂ ${parts.length}`;
+      cut.title = `떨어진 땅 ${parts.length}곳이 도형 하나로 묶여 있습니다 — 눌러서 따로따로 나누기`;
+      cut.className = 'btn secondary icon mm-cut';
+      cut.onclick = () => splitShape(s);
+      div.appendChild(cut);
+    }
     // export single button
     const btn2 = document.createElement('button');
     btn2.textContent = '⇩';
@@ -415,6 +431,201 @@ function attachHoverHandlers() {
     s.el.onmouseleave = () => setHighlight(s, false);
     s.el.onclick = () => setSelected(s, !s.selected);
   });
+}
+
+// ===== 떨어진 땅 나누기 · 도형 합치기 =====
+// 지도를 만든 사람이 서로 떨어진 땅(예: 다른 주 두세 곳)을 <path> 하나에 묶어 두면 게임에서 지역구 하나로 잡혀 쓰기 어렵다.
+// path를 하위 경로로 쪼갠 뒤, 구멍(다른 조각 안쪽)은 바깥 조각에, 바로 옆 작은 섬은 가까운 땅에 붙여 "떨어진 땅" 단위로 나눈다
+function parsePathData(d) {
+  const segs = [];
+  const str = String(d || '');
+  let i = 0, cmd = null;
+  const ARGC = { m: 2, l: 2, h: 1, v: 1, c: 6, s: 4, q: 4, t: 2, a: 7, z: 0 };
+  const skip = () => { while (i < str.length && /[\s,]/.test(str[i])) i++; };
+  const num = flag => {
+    skip();
+    if (flag && (str[i] === '0' || str[i] === '1')) return Number(str[i++]); // 호(a)의 플래그는 붙여 쓸 수 있음
+    const m = /^[-+]?(?:\d*\.\d+|\d+\.?)(?:[eE][-+]?\d+)?/.exec(str.slice(i, i + 40));
+    if (!m) return null;
+    i += m[0].length;
+    return Number(m[0]);
+  };
+  for (;;) {
+    skip();
+    if (i >= str.length) break;
+    if (/[a-zA-Z]/.test(str[i])) cmd = str[i++];
+    else if (!cmd) return null;
+    const lc = cmd.toLowerCase();
+    if (!(lc in ARGC)) return null;
+    if (lc === 'z') { segs.push({ cmd, args: [] }); cmd = null; continue; }
+    const args = [];
+    for (let k = 0; k < ARGC[lc]; k++) {
+      const v = num(lc === 'a' && (k === 3 || k === 4));
+      if (v == null || Number.isNaN(v)) return null;
+      args.push(v);
+    }
+    segs.push({ cmd, args });
+    if (cmd === 'm') cmd = 'l'; else if (cmd === 'M') cmd = 'L'; // M 뒤에 이어지는 좌표는 선긋기
+  }
+  return segs;
+}
+// 하위 경로마다 따로 떼어 쓸 수 있는 d — 각 하위 경로의 첫 이동(m)을 절대 좌표(M)로 바꿔 둔다
+function splitSubpaths(d) {
+  const segs = parsePathData(d);
+  if (!segs || !segs.length) return null;
+  const subs = [];
+  let cx = 0, cy = 0, sx = 0, sy = 0, cur = null;
+  segs.forEach(({ cmd, args }) => {
+    const rel = cmd === cmd.toLowerCase();
+    const lc = cmd.toLowerCase();
+    if (lc === 'm') {
+      cx = rel ? cx + args[0] : args[0];
+      cy = rel ? cy + args[1] : args[1];
+      sx = cx; sy = cy;
+      cur = [`M${cx} ${cy}`];
+      subs.push(cur);
+      return;
+    }
+    if (!cur) { cur = [`M${cx} ${cy}`]; subs.push(cur); }
+    cur.push(cmd + args.join(' '));
+    if (lc === 'z') { cx = sx; cy = sy; return; }
+    if (lc === 'h') { cx = rel ? cx + args[0] : args[0]; return; }
+    if (lc === 'v') { cy = rel ? cy + args[0] : args[0]; return; }
+    const n = args.length;
+    cx = rel ? cx + args[n - 2] : args[n - 2];
+    cy = rel ? cy + args[n - 1] : args[n - 1];
+  });
+  return subs.map(p => p.join(''));
+}
+// 도형의 "떨어진 땅" 목록 [d, ...] (큰 것부터) — 한 덩어리뿐이면 null
+function shapePieces(s) {
+  if (!s || s.tag !== 'path' || !s.el.isConnected) return null;
+  const d = s.el.getAttribute('d') || '';
+  if (s._piecesFor === d) return s._pieces;
+  s._piecesFor = d;
+  s._pieces = null;
+  const subs = splitSubpaths(d);
+  if (!subs || subs.length < 2) return null;
+  // 같은 부모 안에 임시로 그려 크기를 잰다 (같은 좌표계)
+  const parent = s.el.parentNode;
+  const els = subs.map(sd => {
+    const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    p.setAttribute('d', sd);
+    p.setAttribute('visibility', 'hidden');
+    parent.appendChild(p);
+    return p;
+  });
+  const info = els.map((el, idx) => {
+    let bb = { x: 0, y: 0, width: 0, height: 0 }, start = null;
+    try { bb = el.getBBox(); } catch (e) {}
+    try { const pt = el.getPointAtLength(0); start = { x: pt.x, y: pt.y }; } catch (e) {}
+    return { idx, bb, area: bb.width * bb.height, start };
+  });
+  const up = info.map((a, k) => k);
+  const find = k => { while (up[k] !== k) { up[k] = up[up[k]]; k = up[k]; } return k; };
+  const join = (a, b) => { const ra = find(a), rb = find(b); if (ra !== rb) up[ra] = rb; };
+  const contains = (o, a) => a.bb.x >= o.bb.x && a.bb.y >= o.bb.y && a.bb.x + a.bb.width <= o.bb.x + o.bb.width && a.bb.y + a.bb.height <= o.bb.y + o.bb.height;
+  // 구멍: 시작점이 더 큰 다른 조각 안(채움 영역)에 있으면 그 조각에 딸린 것
+  info.forEach(a => {
+    if (!a.start) return;
+    const svgEl = s.el.ownerSVGElement;
+    for (const b of info) {
+      if (b === a || b.area <= a.area || !contains(b, a)) continue;
+      let inside = false;
+      try { const pt = svgEl.createSVGPoint(); pt.x = a.start.x; pt.y = a.start.y; inside = els[b.idx].isPointInFill(pt); } catch (e) {}
+      if (inside) { join(a.idx, b.idx); break; }
+    }
+  });
+  // 가까운 땅끼리(본토 옆 작은 섬 등) 한 덩어리로 — 도형 전체 크기의 3% 안쪽으로 붙어 있으면
+  const x0 = Math.min(...info.map(a => a.bb.x)), y0 = Math.min(...info.map(a => a.bb.y));
+  const x1 = Math.max(...info.map(a => a.bb.x + a.bb.width)), y1 = Math.max(...info.map(a => a.bb.y + a.bb.height));
+  const gap = Math.max(x1 - x0, y1 - y0) * 0.03;
+  info.forEach(a => info.forEach(b => {
+    if (b.idx <= a.idx) return;
+    if (a.bb.x - gap <= b.bb.x + b.bb.width && b.bb.x - gap <= a.bb.x + a.bb.width
+      && a.bb.y - gap <= b.bb.y + b.bb.height && b.bb.y - gap <= a.bb.y + a.bb.height) join(a.idx, b.idx);
+  }));
+  els.forEach(el => el.remove());
+  const groups = new Map();
+  info.forEach(a => { const r = find(a.idx); if (!groups.has(r)) groups.set(r, []); groups.get(r).push(a.idx); });
+  if (groups.size < 2) return null;
+  s._pieces = [...groups.values()]
+    .map(idxs => ({ d: idxs.sort((x, y) => x - y).map(k => subs[k]).join(''), area: idxs.reduce((t, k) => t + info[k].area, 0) }))
+    .sort((a, b) => b.area - a.area)
+    .map(p => p.d);
+  return s._pieces;
+}
+function newShapeEntry(el, base, name) {
+  const safe = sanitizeId(name, base.defaultId);
+  return { el, tag: el.tagName.toLowerCase(), kind: base.kind, id: safe, defaultId: safe, rawName: name, selected: false, origId: name };
+}
+// 도형 하나를 떨어진 땅마다 따로 — 가장 큰 땅은 원래 이름, 나머지는 "이름_2", "이름_3" …
+function splitShape(s) {
+  const parts = shapePieces(s);
+  if (!parts) return;
+  const at = shapes.indexOf(s);
+  const baseName = s.rawName || s.id;
+  const used = new Set(shapes.map(x => x.rawName));
+  const added = [];
+  s.el.setAttribute('d', parts[0]);
+  let anchor = s.el;
+  parts.slice(1).forEach((d, i) => {
+    const el = s.el.cloneNode(false);
+    el.removeAttribute('id');
+    el.classList.remove('mm-hl', 'mm-sel');
+    el.setAttribute('d', d);
+    anchor.after(el);
+    anchor = el;
+    let n = i + 2, name;
+    do { name = `${baseName}_${n++}`; } while (used.has(name));
+    used.add(name);
+    added.push(newShapeEntry(el, s, name));
+  });
+  s._piecesFor = null;
+  shapes.splice(at + 1, 0, ...added);
+  setSelected(s, false);
+  renderList();
+  attachHoverHandlers();
+  const row = elementsList.children[at];
+  if (row) row.scrollIntoView({ block: 'nearest' });
+}
+// 고른 도형들을 하나로 (같은 지역구인데 따로 그려진 땅 · 나눈 뒤 다시 묶을 땅) — 첫 번째 도형 이름을 쓴다
+function polyToPathD(el) {
+  const pts = (el.getAttribute('points') || '').trim();
+  if (!pts) return '';
+  return 'M' + pts + (el.tagName.toLowerCase() === 'polygon' ? 'Z' : '');
+}
+function mergeSelected() {
+  const list = getSelectedShapes();
+  if (list.length < 2) return alert('합칠 도형을 두 개 이상 고르세요.');
+  if (list.some(x => !['path', 'polygon'].includes(x.tag))) return alert('면(path · polygon)끼리만 합칠 수 있습니다.');
+  const frame = x => {
+    const chain = [];
+    for (let node = x.el; node && node.tagName && node.tagName.toLowerCase() !== 'svg'; node = node.parentElement) {
+      const t = node.getAttribute && node.getAttribute('transform');
+      if (t && t.trim()) chain.unshift(t.trim());
+    }
+    return chain.join(' ');
+  };
+  const f0 = frame(list[0]);
+  if (list.some(x => frame(x) !== f0)) return alert('좌표 변환(transform)이 서로 다른 도형은 합칠 수 없습니다.');
+  const first = list[0];
+  const d = list.map(x => x.tag === 'path' ? (x.el.getAttribute('d') || '') : polyToPathD(x.el)).join(' ');
+  let target = first.el;
+  if (first.tag !== 'path') {
+    target = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    Array.from(first.el.attributes).forEach(a => { if (a.name !== 'points') target.setAttribute(a.name, a.value); });
+    first.el.replaceWith(target);
+    first.el = target;
+    first.tag = 'path';
+  }
+  target.setAttribute('d', d);
+  list.slice(1).forEach(x => x.el.remove());
+  shapes = shapes.filter(x => !list.slice(1).includes(x));
+  first._piecesFor = null;
+  shapes.forEach(x => setSelected(x, false));
+  renderList();
+  attachHoverHandlers();
 }
 
 /* Export logic: create a .jsx text with React components */
@@ -530,10 +741,26 @@ btnExportSelected.addEventListener('click', ()=> downloadComponents(getSelectedS
 btnSelectAll.addEventListener('click', ()=> shapes.forEach(s => setSelected(s, true)));
 btnDeselectAll.addEventListener('click', ()=> shapes.forEach(s => setSelected(s, false)));
 document.getElementById('btnResetView').addEventListener('click', resetView);
+document.getElementById('btnMergeSelected').addEventListener('click', mergeSelected);
 btnDownloadSVG.addEventListener('click', ()=> {
-  // download original SVG text (possibly post-edit if you want to support edits)
-  if (!lastSVGText) return alert('먼저 SVG를 파싱하세요.');
-  download('edited.svg', lastSVGText);
+  // 나누기 · 합치기 · 이름 고치기를 반영한 지금 지도를 SVG로 (화면 확대 상태와 강조 표시는 빼고)
+  if (!lastSVGText || !view) return alert('먼저 SVG를 여세요.');
+  const out = view.svg.cloneNode(true);
+  const b = view.base;
+  out.setAttribute('viewBox', `${b.x} ${b.y} ${b.w} ${b.h}`);
+  out.style.removeProperty('width'); out.style.removeProperty('height');
+  if (!out.getAttribute('style')) out.removeAttribute('style');
+  const live = Array.from(view.svg.querySelectorAll('path,polygon,polyline,rect,circle,ellipse'));
+  const copies = Array.from(out.querySelectorAll('path,polygon,polyline,rect,circle,ellipse'));
+  copies.forEach((el, i) => {
+    el.classList.remove('mm-hl', 'mm-sel');
+    if (!el.getAttribute('class')) el.removeAttribute('class');
+    el.style.removeProperty('cursor');
+    if (!el.getAttribute('style')) el.removeAttribute('style');
+    const s = shapes.find(x => x.el === live[i]);
+    if (s && s.rawName) el.setAttribute('id', s.rawName);
+  });
+  download('edited.svg', new XMLSerializer().serializeToString(out));
 });
 btnClear.addEventListener('click', ()=> {
   fileInput.value = '';
