@@ -7412,10 +7412,6 @@ window.DnoLangPacks.en = {
    "- Territorial unification — recover unrecovered territory and fold it back in as ordinary districts (counted in elections and seats again)"
   ],
   [
-   "1.6.6 미리보기",
-   "1.6.6 preview"
-  ],
-  [
    "— 실제로 다스리지 못하는 지역구 (선거 · 의석에서 빠짐)",
    "— a district the country doesn't actually control (left out of elections and seats)"
   ],
