@@ -695,7 +695,7 @@
         ]
       },
       '2.0': {
-        title: '2.0: 정식 출시',
+        title: '2.0: No majority, no compromise',
         cards: [
           {
             status: 'future',
