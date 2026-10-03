@@ -84,9 +84,9 @@
 
         // 내각 디스플레이의 직책 이름(대통령/총리·국무총리/부총리/의장/장관·국무위원)을 사용자가 직접 바꿀 수 있게 함 —
         // 비워두면(기본값) 정부 형태에 따른 자동 라벨(pmRoleLabel/cabinetMemberRoleLabel)을 그대로 사용
-        let cabinetRoleLabels = { president: '', pm: '', deputyPm: '', chair: '', cabinetMember: '' };
+        let cabinetRoleLabels = { president: '', pm: '', deputyPm: '', chair: '', cabinetMember: '', cabinet: '' };
         function cabinetRoleLabelDefault(key) {
-            return { president: presidentRoleLabel(), pm: pmRoleLabel(), deputyPm: '부총리', chair: '의장', cabinetMember: cabinetMemberRoleLabel() }[key];
+            return { president: presidentRoleLabel(), pm: pmRoleLabel(), deputyPm: '부총리', chair: '의장', cabinetMember: cabinetMemberRoleLabel(), cabinet: '내각' }[key];
         }
         function effRoleLabel(key) {
             return cabinetRoleLabels[key] || cabinetRoleLabelDefault(key);
@@ -100,9 +100,19 @@
             renderPmSection();
             renderPresidentSection();
             renderCabinetDisplay();
+            applyCabinetDisplayName();
+        }
+        // 내각 디스플레이 탭 · 패널 제목에 뜨는 이름 (예: Bundeskabinett) — 비워두면 "내각"
+        function applyCabinetDisplayName() {
+            const name = effRoleLabel('cabinet');
+            const tab = document.getElementById('dispTabCabinet');
+            if(tab) tab.textContent = name;
+            const title = document.getElementById('cabinetDispTitle');
+            if(title) setPromptText(title, name);
         }
         function renderCabinetRoleLabelInputs() {
-            ['president','pm','deputyPm','chair','cabinetMember'].forEach(key => {
+            applyCabinetDisplayName();
+            ['president','pm','deputyPm','chair','cabinetMember','cabinet'].forEach(key => {
                 const input = document.getElementById('roleLabel'+key.charAt(0).toUpperCase()+key.slice(1)+'Input');
                 if(!input) return;
                 input.placeholder = cabinetRoleLabelDefault(key);
@@ -5149,7 +5159,7 @@
             }
             collectiveChair = { name: '', photo: '', partyId: null, linkedSeat: null, ...(cfg.collectiveChair || {}) };
             cabinetMembers = Array.isArray(cfg.cabinetMembers) ? cfg.cabinetMembers.map(m => ({ partyId: null, linkedSeat: null, ...m })) : [];
-            cabinetRoleLabels = { president: '', pm: '', deputyPm: '', chair: '', cabinetMember: '', ...(cfg.cabinetRoleLabels || {}) };
+            cabinetRoleLabels = { president: '', pm: '', deputyPm: '', chair: '', cabinetMember: '', cabinet: '', ...(cfg.cabinetRoleLabels || {}) };
             pmDirectElectionEnabled = !!cfg.pmDirectElectionEnabled;
             pmMajorityLocked = !!cfg.pmMajorityLocked;
             splitDissolutionHolders = !!cfg.splitDissolutionHolders;
