@@ -22,6 +22,9 @@ window.DnoLangPacks.en = {
  ],
  "ordinal": "en",
  "patterns": [
+  {"re": "^미수복 지역 (\\d+)곳을 모두 되찾아 일반 지역구로 편입합니다\\. 계속하시겠습니까\\?$", "to": "Recover all $1 unrecovered districts and fold them back in as ordinary districts? Continue?"},
+  {"re": "^(.+) \\(미수복 지역\\)$", "to": "$1 (unrecovered territory)"},
+  {"re": " 외 (\\d+)곳$", "to": " and $1 more"},
   {"re": "^현직 단체장 \\((\\d+) / (\\d+)\\)$", "to": "Current officeholders ($1 / $2)"},
   {"re": "^\\((권역|지역구) (\\d+)곳\\)$", "to": "($2 {{map:$1|권역=regions;지역구=districts}})"},
   {"re": " \\(권역이 없어 권역 단체장은 뽑지 않아요\\)", "to": " (no regions, so no regional heads are elected)"},
@@ -7405,6 +7408,18 @@ window.DnoLangPacks.en = {
   [
    "- 영토 통일 — 미수복 지역을 되찾아 일반 지역구로 편입 (선거 · 의석에 다시 포함)",
    "- Territorial unification — recover unrecovered territory and fold it back in as ordinary districts (counted in elections and seats again)"
+  ],
+  [
+   "1.6.6 미리보기",
+   "1.6.6 preview"
+  ],
+  [
+   "— 실제로 다스리지 못하는 지역구 (선거 · 의석에서 빠짐)",
+   "— a district the country doesn't actually control (left out of elections and seats)"
+  ],
+  [
+   "지역구를 눌러 편집 칸에서 \"미수복 지역\"을 체크하세요",
+   "Click a district and tick \"Unrecovered territory\" in its editor"
   ]
  ]
 };
