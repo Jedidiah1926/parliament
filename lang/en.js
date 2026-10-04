@@ -6072,10 +6072,6 @@ window.DnoLangPacks.en = {
    "- Steam Early Access launch"
   ],
   [
-   "2.0: 정식 출시",
-   "2.0: Full Release"
-  ],
-  [
    "2.0.0 - 정식 출시",
    "2.0.0 - Full Release"
   ],
