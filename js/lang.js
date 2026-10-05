@@ -164,7 +164,10 @@
     // translateSubtree(el): 페이지 로드 뒤에 새로 그려진 부분(시작 화면 세이브 목록, 로드맵 버전 탭 등)을 번역.
     // 한국어일 땐 아무 일도 하지 않고, 팩이 준비되기 전에 불리면 준비된 뒤에 번역한다.
     // t(s): 문자열 하나를 번역 (한국어이거나 팩이 아직 준비 전이면 그대로)
-    window.DnoLang = { list: listLanguages, install: installPack, remove: removePack, template: buildTemplate, validate: normalizePack, format: PACK_FORMAT, translateSubtree: () => {}, t: s => s };
+    // setDataStrings(list): 세이브에 든 데이터(정당 · 지역구 · 의원 · 법안 이름 등) — 화면 번역에서 건드리지 않는다 (1.6.0, js/main.js가 알려 줌)
+    // exact(s): 사전에 통째로 있는 글자면 그 번역, 아니면 null (예전 세이브의 기본 이름을 한 번 바꿀 때 사용) · ready: 팩이 준비됐는지
+    window.DnoLang = { list: listLanguages, install: installPack, remove: removePack, template: buildTemplate, validate: normalizePack, format: PACK_FORMAT,
+        translateSubtree: () => {}, t: s => s, setDataStrings: () => {}, exact: () => null, ready: false };
 
     const current = getLang();
     if (current === SOURCE_LANG.code) return; // 기본값(한국어)일 때는 아무 것도 하지 않는다
@@ -214,16 +217,51 @@
             };
             return [re, replacer];
         });
-        return function translateString(orig) {
+        const translateString = function translateString(orig) {
             if (!orig) return orig;
             let s = orig.replace(/\uFE0E/g, '');
             const base = s;
+            // 세이브 데이터(이름 등)는 번역하지 않는다 — 글자 전체가 데이터면 그대로, 섞여 있으면 데이터 부분을 잠시 빼 두었다가 되돌림
+            const whole = s.trim();
+            if (dataSet.has(whole)) return orig;
+            // 글자 전체가 사전에 있는 UI 문구면(예: "무소속 포함하기") 데이터 단어가 섞여 있어도 UI로 번역
+            if (dictMap.has(whole)) { const t = s.replace(whole, dictMap.get(whole)); return window.DnoEmoji ? window.DnoEmoji.fix(t) : t; }
+            const held = [];
+            if (dataRe) s = s.replace(dataRe, m => { held.push(m); return '\uE000' + (held.length - 1) + '\uE001'; });
             for (const [re, rep] of patterns) s = s.replace(re, rep);
             if (dictRegex) s = s.replace(dictRegex, m => dictMap.get(m) ?? m);
+            if (held.length) s = s.replace(/\uE000(\d+)\uE001/g, (_, i) => held[+i] ?? '');
             // 번역할 게 없었다면 선택자를 떼지 않은 원래 글자를 그대로 돌려준다 (이모지 표시 방식과 서로 되돌리며 반복하지 않게)
             return s === base ? orig : (window.DnoEmoji ? window.DnoEmoji.fix(s) : s);
         };
+        translateString.exact = v => { const k = String(v == null ? '' : v).replace(/\uFE0E/g, ''); return dictMap.has(k) ? dictMap.get(k) : null; };
+        return translateString;
     }
+
+    // ── 세이브 데이터 보호 (1.6.0) ──
+    // 화면 번역은 메뉴 · 버튼 · 안내 같은 UI 글자에만. 사용자가 정한 이름(정당 "국회" 등)이 "Parliament"로 바뀌지 않도록,
+    // main.js가 알려 준 데이터 글자는 번역에서 뺀다. 앞뒤가 한글 · 영문 · 숫자로 이어진 경우(다른 단어의 일부)는 데이터로 보지 않는다
+    let dataSet = new Set();
+    let dataRe = null;
+    let dataKey = '';
+    function setDataStrings(list) {
+        const uniq = [...new Set((list || []).map(v => String(v == null ? '' : v).replace(/\uFE0E/g, '').trim()).filter(v => v.length >= 2 && !/^[\d\s.,:%#()-]+$/.test(v)))];
+        const key = uniq.join('\u0001');
+        if (key === dataKey) return false;
+        dataKey = key;
+        dataSet = new Set(uniq);
+        const esc = v => v.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const sorted = uniq.slice().sort((a, b) => b.length - a.length);
+        try { dataRe = sorted.length ? new RegExp('(?<![가-힣A-Za-z0-9])(?:' + sorted.map(esc).join('|') + ')(?![가-힣A-Za-z0-9])', 'g') : null; }
+        catch (e) { dataRe = null; }
+        return true;
+    }
+    window.DnoLang.setDataStrings = setDataStrings;
+    // translate="no"가 붙은 요소(조문 등 데이터 덩어리) 안은 번역하지 않는다
+    const noTranslate = node => {
+        const el = node && (node.nodeType === Node.ELEMENT_NODE ? node : node.parentElement);
+        return !!(el && el.closest && el.closest('[translate="no"]'));
+    };
 
     function translateTree(root, translateString) {
         function translateAttrs(el) {
@@ -244,10 +282,12 @@
             if (node.nodeType !== Node.ELEMENT_NODE) return;
             const tag = node.tagName;
             if (tag === 'SCRIPT' || tag === 'STYLE') return;
+            if (node.getAttribute('translate') === 'no') return;
             translateAttrs(node);
             if (tag === 'TEXTAREA') return; // 텍스트에어리어 내용은 사용자가 입력한 법안 본문 — 번역하지 않음
             for (const child of Array.from(node.childNodes)) translateNodeDeep(child);
         }
+        if (noTranslate(root)) return;
         translateNodeDeep(root);
     }
     translateTree.attrsOnly = function (el, translateString) {
@@ -281,6 +321,8 @@
         translateTree(document.documentElement, translate);
         window.DnoLang.translateSubtree = el => { if (el) translateTree(el, translate); };
         window.DnoLang.t = s => translate(s);
+        window.DnoLang.exact = s => translate.exact(s);
+        window.DnoLang.ready = true;
         waiting.forEach(el => { if (el.isConnected) translateTree(el, translate); });
         waiting.clear();
         // 번역된 문자열로 직접 다시 그려야 하는 화면(로드맵 카드 제목 등)에 알림
