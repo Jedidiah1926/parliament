@@ -688,11 +688,11 @@
       },
       '1.7': {
         slots: 10,
-        title: '1.7: 텀블벅 펀딩',
+        title: '1.7: ?',
         cards: [
           {
             status: 'future',
-            title: '1.7.0 - 텀블벅 펀딩 출시',
+            title: '1.7.0 - The Fund Rises',
             desc: `202X.XX.XX
               <br>- 텀블벅 펀딩 출시
               <br>- Steam 개발자 계정을 위한 펀딩`
@@ -701,11 +701,11 @@
       },
       '1.8': {
         slots: 10,
-        title: '1.8: 데모 출시',
+        title: '1.8: ?',
         cards: [
           {
             status: 'future',
-            title: '1.8.0 - Stove/Steam 데모 출시',
+            title: '1.8.0 - Steam on the Stove',
             desc: `202X.XX.XX
               <br>- Steam 서비스 준비
               <br>- Stove · Steam 데모 출시`
@@ -714,18 +714,18 @@
       },
       '1.9': {
         slots: 10,
-        title: '1.9: 얼리 액세스',
+        title: '1.9: ?',
         cards: [
           {
             status: 'future',
-            title: '1.9.0 - Steam 얼리 액세스 출시',
+            title: '1.9.0 - Late Steam Ages',
             desc: `202X.XX.XX
               <br>- Steam 얼리 액세스 출시`
           }
         ]
       },
       '2.0': {
-        title: '2.0: No majority, no compromise',
+        title: '2.0: No majority, No compromise',
         cards: [
           {
             status: 'future',
