@@ -7482,6 +7482,8 @@ window.DnoLangPacks.en = {
   ["- 프리셋 경로 덮어쓰기(당명 · 이념명 등을 언어별로 바꿔 넣던 방식) 삭제, 화면 번역은 메뉴 · 버튼 · 안내 같은 UI 문구에만 — 정당 · 지역구 · 법안 이름처럼 세이브에 든 데이터는 번역하지 않음 (사용자가 넣은 \"국회\"가 \"Parliament\"로 바뀌던 문제)", "- Remove preset path overrides (the old way of swapping party and ideology names per language); on-screen translation applies only to UI text such as menus, buttons and notices \u2014 data in a save like party, district and bill names is never translated (so a user's own \"\uad6d\ud68c\" no longer turns into \"Parliament\")"],
   ["- 프리셋 · 튜토리얼의 언어별 파일도 창작마당 · 모드 폴더로 배포 · 구독 — 언어 팩과 함께 올리면 그 언어로 프리셋 · 튜토리얼이 열림", "- Per-language preset and tutorial files can also be shared through the Steam Workshop and the mods folder \u2014 upload them alongside a language pack and presets and tutorials open in that language"],
   ["언어별 프리셋 · 튜토리얼 (창작마당)", "Per-language presets \u00b7 tutorials (Workshop)"],
-  ["언어별 프리셋 · 튜토리얼", "Per-language presets \u00b7 tutorials"]
+  ["언어별 프리셋 · 튜토리얼", "Per-language presets \u00b7 tutorials"],
+  ["- 의석 번호 통일 — 의원 카드의 #번호(지역구 목록 순서)와 반원 좌석 정보의 #번호(정당별 좌석 배치 순서)가 따로 매겨져 같은 번호가 다른 의원을 가리키던 문제 수정: 의원마다 반원의 실제 좌석을 정해 카드 번호와 좌석 번호가 같은 의원을 가리키고, 좌석을 누르면 그 의원(이름 · 지역구)이 보이게", "- Unified seat numbers \u2014 the # on member cards (district list order) and the # in the hemicycle seat info (seating order by party) were counted separately, so the same number pointed to different members: each member gets their actual hemicycle seat, card and seat numbers point to the same member, and clicking a seat shows that member (name \u00b7 district)"],
+  ["의석 번호 통일", "Unified seat numbers"]
  ]
 };
