@@ -490,6 +490,10 @@ window.DnoLangPacks.en = {
    "to": "Map"
   },
   {
+   "re": "^\\s*목록\\s*$",
+   "to": "List"
+  },
+  {
    "re": "^\\s*의장\\s*$",
    "to": "Speaker"
   },
@@ -6826,6 +6830,14 @@ window.DnoLangPacks.en = {
   [
    "제작자: sushdjr0106",
    "By sushdjr0106"
+  ],
+  [
+   "미합중국",
+   "United States of America"
+  ],
+  [
+   "제작자: ttorri",
+   "By ttorri"
   ],
   [
    "▌ 권역 선거구 의석",

@@ -28,6 +28,14 @@
             author: 'sushdjr0106',
             script: 'presets/japan.js',
         },
+        {
+            id: 'builtin:usa',
+            title: '미합중국',
+            description: '제작자: ttorri',
+            date: '2026년 11월 13일',
+            author: 'ttorri',
+            script: 'presets/usa.js',
+        },
     ];
     const INDEX_URL = 'presets/index.json';
     let listCache = null;

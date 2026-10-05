@@ -159,6 +159,7 @@
         const levels = levelsOf(rec);
         const first = levels[0] ? levelSummary(levels[0]) : null;
         const missing = Math.max(0, ...levels.map(l => l.missingPop || 0));
+        const canToggle = !withMap && hasMap(rec.chamber); // 오른쪽 결과 탭은 위에 큰 지도가 따로 있다
         box.innerHTML = `
             <div class="pv-result">
                 <div class="pv-result-title">${esc(rec.title)} <span class="pv-dim">— ${levels.map(l => `${esc(l.office)} ${l.results.length}명`).join(' · ')}</span></div>
@@ -173,7 +174,8 @@
                         <tr><td><span class="pv-dot" style="background:${p ? p.color : '#888'}"></span>${esc(p ? p.name : '?')}</td>
                         <td>${r.won}</td><td>${fmt(r.votes)}</td><td>${pct(r.votes, sum.allVotes).toFixed(1)}%</td></tr>`; }).join('')}</tbody>
                 </table>
-                <details class="pv-details"><summary>${unitWord}별 결과 (${lv.results.length})</summary>
+                <details class="pv-details${canToggle ? ' pv-units-host' : ''}" data-level="${levels.indexOf(lv)}"><summary>${unitWord}별 결과 (${lv.results.length})</summary>
+                    ${canToggle ? unitsToggleHtml() : ''}
                     <div class="pv-units">${lv.results.map(r => {
                         const p = partyById(r.winner);
                         const top = Object.entries(r.votes).sort((a, b) => b[1] - a[1]).slice(0, 3);
@@ -183,8 +185,13 @@
                             <div class="pv-dim pv-small">${top.map(([pid, v]) => `${esc(partyById(pid)?.name || '?')} ${fmt(v)}표(${pct(v, all).toFixed(1)}%)`).join(' · ')} · 투표율 ${pct(r.voters, r.electorate).toFixed(1)}%</div>
                         </div>`;
                     }).join('')}</div>
+                    ${canToggle ? '<div class="pv-map" data-map="local-units"></div>' : ''}
                 </details>`; }).join('')}
             </div>`;
+        box.querySelectorAll('.pv-units-host').forEach(host => {
+            const lv = levels[+host.dataset.level];
+            setupUnitsHost(host, el => drawLevelMap(el, rec, lv));
+        });
         const mapEl = box.querySelector('[data-map="local"]');
         if (!mapEl) return;
         // 지도: 지역구장 결과가 있으면 지역구마다, 없으면 권역마다 당선 정당 색 (권역 경계는 굵게)
@@ -414,6 +421,7 @@
     function renderRefResult(rec, box, withMap) {
         if (!rec) { box.innerHTML = ''; return; }
         const yesP = pct(rec.yes, rec.voters), noP = pct(rec.no, rec.voters);
+        const canToggle = !withMap && hasMap(rec.chamber) && rec.parts.some(x => x.key); // 오른쪽 결과 탭은 위에 큰 지도가 따로 있다
         const verdict = rec.passed ? '가결' : rec.quorumFail ? '부결 (투표율 미달)' : '부결';
         box.innerHTML = `
             <div class="pv-result">
@@ -426,12 +434,18 @@
                 </div>
                 <div class="pv-dim pv-small">투표율 ${pct(rec.voters, rec.electorate).toFixed(1)}% (${fmt(rec.voters)} / ${fmt(rec.electorate)}명)${rec.quorumOn ? ` · 투표율 기준 ${rec.quorum}%` : ''}${rec.missingPop ? ` · 인구 미입력 ${rec.missingPop}곳은 ${fmt(DEFAULT_POP)}명으로 계산` : ''}</div>
                 ${withMap && (rec.parts.length > 1 || rec.parts[0]?.key) ? '<div class="pv-map" data-map="ref"></div>' : ''}
-                ${rec.parts.length > 1 ? `<details class="pv-details"><summary>지역구별 결과 (${rec.parts.length})</summary><div class="pv-units">${rec.parts.map(x => `
+                ${rec.parts.length > 1 ? `<details class="pv-details${canToggle ? ' pv-units-host' : ''}"><summary>지역구별 결과 (${rec.parts.length})</summary>${canToggle ? unitsToggleHtml() : ''}<div class="pv-units">${rec.parts.map(x => `
                     <div class="pv-unit" style="border-left-color:${x.yes > x.no ? 'var(--pv-yes)' : 'var(--pv-no)'}"><div><b>${esc(x.name)}</b> — 찬성 ${pct(x.yes, x.voters).toFixed(1)}%</div>
-                    <div class="pv-dim pv-small">찬성 ${fmt(x.yes)} · 반대 ${fmt(x.no)} · 투표율 ${pct(x.voters, x.electorate).toFixed(1)}%</div></div>`).join('')}</div></details>` : ''}
+                    <div class="pv-dim pv-small">찬성 ${fmt(x.yes)} · 반대 ${fmt(x.no)} · 투표율 ${pct(x.voters, x.electorate).toFixed(1)}%</div></div>`).join('')}</div>${canToggle ? '<div class="pv-map" data-map="ref-units"></div>' : ''}</details>` : ''}
             </div>`;
+        const host = box.querySelector('.pv-units-host');
+        if (host) setupUnitsHost(host, el => drawRefMap(el, rec));
         const mapEl = box.querySelector('[data-map="ref"]');
-        if (!mapEl) return;
+        if (mapEl) drawRefMap(mapEl, rec);
+    }
+
+    // 국민투표 지도 — 찬성이 많은 지역구는 초록, 반대가 많은 지역구는 빨강 (차이가 클수록 진하게)
+    function drawRefMap(mapEl, rec) {
         const byKey = {};
         rec.parts.forEach(x => { if (x.key) byKey[x.key] = x; });
         drawMap(mapEl, rec.chamber, key => {
@@ -459,6 +473,55 @@
             else if (typeof showSeatsOnMobile === 'function') showSeatsOnMobile();
             if (typeof switchDispTab === 'function') switchDispTab('popVote');
         }
+    }
+
+    // ---- 단위별 결과: 목록 ↔ 지도 ----
+    // 왼쪽 패널의 "지역구별 · 권역별 결과"를 목록 대신 지도로도 본다. 고른 보기는 이 기기에 기억하고 모든 결과에 같이 적용
+    let unitsView = (() => { try { return localStorage.getItem('pvUnitsView') === 'map' ? 'map' : 'list'; } catch (e) { return 'list'; } })();
+    const hasMap = ch => typeof districtSvgMapFor === 'function' && !!districtSvgMapFor(ch);
+    function unitsToggleHtml() {
+        return `<div class="pv-view-toggle" role="group">${[['list', '목록'], ['map', '지도']].map(([v, t]) =>
+            `<button type="button" data-v="${v}" onclick="PopVote.setUnitsView('${v}')">${t}</button>`).join('')}</div>`;
+    }
+    function setupUnitsHost(host, draw) {
+        const mapEl = host.querySelector('.pv-map');
+        if (mapEl) mapEl._pvDraw = draw;
+        applyUnitsView(host);
+    }
+    function applyUnitsView(host) {
+        const map = unitsView === 'map';
+        const list = host.querySelector('.pv-units');
+        const mapEl = host.querySelector('.pv-map');
+        if (list) list.hidden = map;
+        if (mapEl) {
+            mapEl.hidden = !map;
+            // 지도는 처음 지도 보기로 바꿀 때 한 번만 그린다
+            if (map && !mapEl.dataset.drawn && mapEl._pvDraw) { mapEl.dataset.drawn = '1'; mapEl._pvDraw(mapEl); }
+        }
+        host.querySelectorAll('.pv-view-toggle button').forEach(b => b.classList.toggle('active', b.dataset.v === unitsView));
+    }
+    function setUnitsView(v) {
+        unitsView = v === 'map' ? 'map' : 'list';
+        try { localStorage.setItem('pvUnitsView', unitsView); } catch (e) { /* 저장 불가 환경 */ }
+        document.querySelectorAll('.pv-units-host').forEach(applyUnitsView);
+    }
+    // 지방선거 한 단계(권역장 또는 지역구장)의 지도 — 당선 정당 색, 득표율이 높을수록 진하게 (권역 단계는 권역 경계를 굵게)
+    function drawLevelMap(el, rec, lv) {
+        const byKey = {};
+        lv.results.forEach(r => r.keys.forEach(k => { byKey[k] = r; }));
+        drawMap(el, rec.chamber, key => {
+            const r = byKey[key];
+            const p = r && partyById(r.winner);
+            if (!p) return 'transparent';
+            const all = Object.values(r.votes).reduce((a, b) => a + b, 0);
+            return tendencyColorForPct(p.color, 45 + pct(r.votes[r.winner] || 0, all) * 0.55);
+        }, key => {
+            const r = byKey[key];
+            if (!r) return nameOf(rec.chamber, key);
+            const p = partyById(r.winner);
+            const all = Object.values(r.votes).reduce((a, b) => a + b, 0);
+            return `${r.name}: ${p ? `${p.name} ${pct(r.votes[r.winner] || 0, all).toFixed(1)}%` : '당선자 없음'}`;
+        }, lv.unit === 'region' ? key => byKey[key]?.id ?? null : null);
     }
 
     // ---- 지도 (지역구 지도가 있을 때만) ----
@@ -625,6 +688,6 @@
 
     window.PopVote = {
         runLocal, runRef, renderLocal, renderRef, refresh, show, remove, getState, setState,
-        applyLocal, setHolder, uploadHolderPhoto, showHolders: () => showHoldersOnDisplay(true),
+        applyLocal, setHolder, uploadHolderPhoto, setUnitsView, showHolders: () => showHoldersOnDisplay(true),
     };
 })();
