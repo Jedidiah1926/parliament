@@ -7489,7 +7489,9 @@ window.DnoLangPacks.en = {
   ["국가 › 사람 탭", "Nation › People tab"],
   ["인물을 의석 · 직책에 배정", "Assign people to seats · posts"],
   ["의석이 사라져도 인물은 유지", "People stay when seats disappear"],
-  ["- 국가 › 사람 탭 신설 — 이름 · 사진 · 소속 정당 · 파벌 · 이념을 가진 인물을 미리 만들어 둠", "- New Nation › People tab — create people in advance, each with a name, photo, party, faction and ideology"],
+  ["- 국가 › 사람 탭 신설 — 인물마다 이름 · 사진 · 이념 · 소속 정당 · 파벌 · 배정된 자리(의석) · 지역구 후보 · 내각 자리 등을 자유롭게 정해 미리 만들어 둠", "- New Nation › People tab — create people in advance and customize each one freely: name, photo, ideology, party, faction, assigned seat, district candidacy, cabinet post and more"],
+  ["- 지역구 후보 — 선거 전에 사람 탭의 인물을 지역구 후보로 내세우고, 당선되면 그 지역구 의석에 바로 배정 (낙선해도 인물은 남음)", "- District candidates — field people from the People tab as district candidates before an election; winners are assigned to that district's seat right away (losers stay in the People tab)"],
+  ["- 내각 자리 — 대통령 · 총리 · 장관 등 내각 직책도 사람 탭의 인물로 배정 (의원이 아닌 인물도 가능)", "- Cabinet posts — fill president, prime minister, ministers and other cabinet posts with people from the People tab (non-members too)"],
   ["- 지역구 의원 · 비례대표(· 당수 · 원내대표 · 내각)에 사람 탭의 인물을 골라 배정 — 지금처럼 의석마다 이름 · 사진을 따로 적지 않음", "- Assign people from the People tab to district seats and list seats (and party leaders, floor leaders, cabinet) — no more typing a name and photo for each seat"],
   ["- 선거 · 당적 변경 · 궐석 등으로 의석이 사라져도 인물은 사람 탭에 그대로 남고, 다음 선거나 보궐선거 때 다시 배정 (지금은 의석이 없어지면 그 자리의 이름 · 사진도 함께 사라짐)", "- When a seat disappears through an election, a party switch or a vacancy, the person stays in the People tab and can be assigned again at the next election or by-election (today the name and photo vanish with the seat)"],
   ["- 한 인물이 의원 · 장관처럼 여러 자리를 겸하면 사람 탭 한 곳에서 관리 — 이름 · 사진을 고치면 배정된 모든 자리에 반영", "- A person holding several posts, such as member and minister, is managed in one place — editing their name or photo updates every post they hold"]
