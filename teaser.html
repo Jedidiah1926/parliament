@@ -548,10 +548,13 @@
             <div id="mainContentLaw" class="main-tab-content">
                 <div class="sub-tab-container">
                     <button class="sub-tab-btn active" onclick="switchSubTab('law','bill')" id="subTabBill">제출</button>
+                    <button class="sub-tab-btn" onclick="switchSubTab('law','committee')" id="subTabCommittee">위원회</button>
                     <button class="sub-tab-btn" onclick="switchSubTab('law','table')" id="subTabTable">상정</button>
                     <button class="sub-tab-btn" onclick="switchSubTab('law','vote')" id="subTabVote">표결</button>
                     <button class="sub-tab-btn" onclick="switchSubTab('law','archive')" id="subTabArchive">표결 기록</button>
+                    <button class="sub-tab-btn" onclick="switchSubTab('law','lawbook')" id="subTabLawbook">법령</button>
                 </div>
+                <div id="lawPipeline" class="law-pipeline"></div>
 
             <!-- 제출 탭: 법안 작성 폼만 -->
             <div id="contentBill" class="sub-tab-content active">
@@ -561,13 +564,15 @@
                 </div>
                 <div class="vote-panel" style="margin-bottom:10px;">
                     <div class="vote-panel-title"><span class="tno-prompt">&gt; </span>새 법안 작성 (NEW BILL)</div>
-                    <input type="text" class="vote-bill-input" id="newBillTitle" placeholder="법안 제목..." style="margin-bottom:6px;">
-                    <textarea id="newBillContent" placeholder="법안 내용을 입력하세요..." style="
-                        background:#000; border:1px solid var(--tno-border); color:#ccc;
-                        font-family:'NeoDunggeunmo','VT323',monospace; font-size:0.85rem;
-                        width:100%; box-sizing:border-box; padding:8px; resize:vertical;
-                        min-height:80px; outline:none; line-height:1.5;
-                    "></textarea>
+                    <div class="bill-kind-row">
+                        <select id="newBillKind" class="bill-kind-select" onchange="legisOnBillKindChange()">
+                            <option value="law">법률안</option>
+                            <option value="constitution">헌법 개정안</option>
+                        </select>
+                        <input type="text" class="vote-bill-input" id="newBillTitle" placeholder="법안 제목...">
+                    </div>
+                    <div class="art-editor-label">조문 <span>— 제1조 · 제2조처럼 조 단위로 씁니다 (비워 둬도 돼요)</span></div>
+                    <div id="newBillArticles" class="art-editor"></div>
                     <input type="text" id="newBillTags" placeholder="태그 (쉼표로 구분, 예: 경제, 안보)" style="background:#000; border:1px solid var(--tno-border); color:#aaa; font-family:'NeoDunggeunmo','VT323',monospace; font-size:0.85rem; width:100%; box-sizing:border-box; padding:5px 8px; margin-top:6px;">
                     <div style="margin-top:8px;">
                         <label style="color:#888; font-size:0.85rem; margin-bottom:4px;">가결 기준</label>
@@ -590,12 +595,8 @@
                     </select>
                     <div id="editBillForm" style="display:none;">
                         <input type="text" class="vote-bill-input" id="editBillTitle" placeholder="법안 제목..." style="margin-bottom:6px;">
-                        <textarea id="editBillContent" placeholder="법안 내용을 입력하세요..." style="
-                            background:#000; border:1px solid var(--tno-border); color:#ccc;
-                            font-family:'NeoDunggeunmo','VT323',monospace; font-size:0.85rem;
-                            width:100%; box-sizing:border-box; padding:8px; resize:vertical;
-                            min-height:80px; outline:none; line-height:1.5;
-                        "></textarea>
+                        <div class="art-editor-label">조문</div>
+                        <div id="editBillArticles" class="art-editor"></div>
                         <input type="text" id="editBillTags" placeholder="태그 (쉼표로 구분, 예: 경제, 안보)" style="background:#000; border:1px solid var(--tno-border); color:#aaa; font-family:'NeoDunggeunmo','VT323',monospace; font-size:0.85rem; width:100%; box-sizing:border-box; padding:5px 8px; margin-top:6px;">
                         <div style="margin-top:8px;">
                             <label style="color:#888; font-size:0.85rem; margin-bottom:4px;">가결 기준</label>
@@ -610,6 +611,12 @@
                         <button class="add-btn" style="border-style:solid; margin-top:8px; color:var(--tno-gold); border-color:var(--tno-gold);" onclick="saveEditBill()">[✔] 수정 저장</button>
                     </div>
                 </div>
+            </div>
+
+            <!-- 위원회 탭: 상임위원회 · 위원 배정 · 심사 (js/legis.js) -->
+            <div id="contentCommittee" class="sub-tab-content">
+                <div class="cm-intro">상임위원회는 법안을 본회의에 올리기 전에 먼저 심사합니다. 위원은 그 원의 정당 의석 비율대로 배정되고, 위원 과반이 찬성하면 본회의로, 부결되면 폐기돼요.</div>
+                <div id="committeeList"></div>
             </div>
 
             <!-- 상정 탭: 법안 검색 + 대기 중 목록 -->
@@ -755,6 +762,11 @@
                     <div class="bill-tag-filter" id="archiveStatusFilter"></div>
                     <div class="bill-tag-filter" id="archiveTagFilter"></div>
                     <div id="archiveList"></div>
+                </div>
+
+                <!-- 법령 탭: 헌법 + 가결된 법률을 조문 그대로 (js/legis.js) -->
+                <div id="contentLawbook" class="sub-tab-content">
+                    <div id="lawBook"></div>
                 </div>
             </div><!-- end mainContentLaw -->
 
@@ -1866,6 +1878,7 @@
     <script src="js/tutorial.js"></script>
     <script src="js/help.js"></script>
     <script src="js/main.js"></script>
+    <script src="js/legis.js"></script>
     <script src="js/popvote.js"></script>
     <script src="js/teaser.js"></script>
     <script src="js/sidenav.js"></script>
