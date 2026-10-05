@@ -157,7 +157,7 @@
                     <div style="height:1px;background:#222;margin:18px 0;"></div>
 
                     <span style="color:var(--tno-neon);font-size:0.95rem;display:block;margin-bottom:6px;">다른 이름으로 저장</span>
-                    <div style="color:#666;font-size:0.75rem;margin-bottom:6px;">지금 상태를 새 세이브로 복사해 두고, 그 세이브로 이어서 진행합니다.</div>
+                    <div style="color:#666;font-size:0.75rem;margin-bottom:6px;">지금 상태를 새 세이브로 복사해 두고, 그 세이브로 이어서 진행합니다. 지금 시점을 따로 남겨 두고 싶을 때 쓰세요.</div>
                     <div style="display:flex;gap:6px;margin-bottom:10px;">
                         <input type="text" id="saveSlotNameInput" placeholder="예: 2차 총선 직후" maxlength="40" style="flex:1;" onkeydown="if(event.key==='Enter'){event.preventDefault();saveNamedSlot();}">
                         <button class="add-btn" onclick="saveNamedSlot()" style="width:auto;margin-top:0;padding:8px 14px;white-space:nowrap;">저장</button>
@@ -172,9 +172,6 @@
                     </div>
                     <input id="fileLoadJsonTab" type="file" accept=".hemi,.json,application/json" style="display:none;">
 
-                    <div style="height:1px;background:#222;margin:18px 0;"></div>
-
-                    <button class="add-btn" onclick="resetAutosaveData()" style="width:100%;margin-top:0;border-color:#663333;color:#ff6666;">✕ 현재 세이브의 자동저장 초기화</button>
             </div>
         </div>
     </div>

@@ -117,6 +117,8 @@
             text-overflow: ellipsis;
             white-space: nowrap;
         }
+        /* 저장하지 않은 변경사항이 있는 탭 — 이름 뒤에 점 (js/main.js setSaveDirty) */
+        .save-tab.dirty .save-tab-name::after { content: ' ●'; color: var(--tno-gold); font-size: 0.7em; vertical-align: middle; }
         .save-tab-close {
             color: #555;
             font-size: 0.9rem;
