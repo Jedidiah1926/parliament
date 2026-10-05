@@ -7485,7 +7485,7 @@ window.DnoLangPacks.en = {
   ["언어별 프리셋 · 튜토리얼", "Per-language presets \u00b7 tutorials"],
   ["- 의석 번호 통일 — 의원 카드의 #번호(지역구 목록 순서)와 반원 좌석 정보의 #번호(정당별 좌석 배치 순서)가 따로 매겨져 같은 번호가 다른 의원을 가리키던 문제 수정: 의원마다 반원의 실제 좌석을 정해 카드 번호와 좌석 번호가 같은 의원을 가리키고, 좌석을 누르면 그 의원(이름 · 지역구)이 보이게", "- Unified seat numbers \u2014 the # on member cards (district list order) and the # in the hemicycle seat info (seating order by party) were counted separately, so the same number pointed to different members: each member gets their actual hemicycle seat, card and seat numbers point to the same member, and clicking a seat shows that member (name \u00b7 district)"],
   ["의석 번호 통일", "Unified seat numbers"],
-  ["1.6.7 - 절대 권력은 절대적으로 부패한다 \"Absolute power corrupts absolutely.\"", "1.6.7 - Absolute power corrupts absolutely \"Absolute power corrupts absolutely.\""],
+  ["1.6.7 - 인간은 자유롭게 태어났다 \"L'homme est né libre.\"", "1.6.7 - Man is born free \"L'homme est né libre.\""],
   ["국가 › 사람 탭", "Nation › People tab"],
   ["인물 커스텀 (이념 · 정당 · 파벌 · 자리)", "Custom people (ideology · party · faction · posts)"],
   ["지역구 후보 · 내각 자리 배정", "District candidates · cabinet posts"],
