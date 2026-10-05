@@ -120,7 +120,7 @@ function legisOnBillKindChange() {
     const current = legisReadArticles('newBillArticles');
     if (!current.length && constitution) legisRenderArticleEditor('newBillArticles', constitution.articles);
     const title = document.getElementById('newBillTitle');
-    if (title && !title.value.trim()) title.value = `${constitution?.title || '헌법'} 개정안`;
+    if (title && !title.value.trim()) title.value = legisUiText(`${constitution?.title || legisUiText('헌법')} 개정안`);
     const thr = document.getElementById('newBillThreshold');
     if (thr && thr.value === '0.5') { thr.value = '0.667'; if (typeof toggleCustomThreshold === 'function') toggleCustomThreshold(); }
 }
@@ -129,11 +129,16 @@ function legisProposeConstitutionAmendment() {
     switchSubTab('law', 'bill');
     const kind = document.getElementById('newBillKind');
     if (kind) kind.value = 'constitution';
-    document.getElementById('newBillTitle').value = `${constitution?.title || '헌법'} 개정안`;
+    document.getElementById('newBillTitle').value = legisUiText(`${constitution?.title || legisUiText('헌법')} 개정안`);
     legisRenderArticleEditor('newBillArticles', constitution ? constitution.articles : []);
     const thr = document.getElementById('newBillThreshold');
     if (thr) { thr.value = '0.667'; if (typeof toggleCustomThreshold === 'function') toggleCustomThreshold(); }
     document.getElementById('newBillTitle')?.focus();
+}
+// 새로 만드는 데이터(기본 위원회 이름 · 개정안 제목 등)는 지금 화면 언어로 — 화면 번역은 데이터를 바꾸지 않으므로 만들 때 바꿔 둔다
+function legisUiText(ko) {
+    if (!window.DnoLang) return ko;
+    return (DnoLang.exact && DnoLang.exact(ko)) || (DnoLang.t ? DnoLang.t(ko) : ko);
 }
 function billKindLabel(bill) {
     return bill && bill.kind === 'constitution' ? '헌법 개정안' : '';
@@ -141,15 +146,16 @@ function billKindLabel(bill) {
 
 // ── 상임위원회 ───────────────────────────────
 const COMMITTEE_DEFAULT_SIZE = 15;
+// 기본 위원회 — [이름, 소관 태그, 영어 태그]. 이름은 지금 화면 언어 사전으로, 태그는 영어 화면이면 영어 태그로 만든다
 const COMMITTEE_PRESETS = [
-    ['법제사법위원회', ['법무', '사법', '법제']],
-    ['기획재정위원회', ['경제', '재정', '예산', '세금']],
-    ['외교통일위원회', ['외교', '통일']],
-    ['국방위원회', ['국방', '안보', '군사']],
-    ['행정안전위원회', ['행정', '치안', '선거']],
-    ['교육위원회', ['교육']],
-    ['보건복지위원회', ['보건', '복지']],
-    ['환경노동위원회', ['환경', '노동']],
+    ['법제사법위원회', ['법무', '사법', '법제'], ['Justice', 'Judiciary', 'Legislation']],
+    ['기획재정위원회', ['경제', '재정', '예산', '세금'], ['Economy', 'Finance', 'Budget', 'Tax']],
+    ['외교통일위원회', ['외교', '통일'], ['Diplomacy', 'Unification']],
+    ['국방위원회', ['국방', '안보', '군사'], ['Defense', 'Security', 'Military']],
+    ['행정안전위원회', ['행정', '치안', '선거'], ['Administration', 'Policing', 'Elections']],
+    ['교육위원회', ['교육'], ['Education']],
+    ['보건복지위원회', ['보건', '복지'], ['Health', 'Welfare']],
+    ['환경노동위원회', ['환경', '노동'], ['Environment', 'Labor']],
 ];
 function committeeById(id) { return committees.find(c => c.id === id) || null; }
 function committeeChamberOk(c) {
@@ -236,12 +242,16 @@ function confirmCommitteeVote(billId) {
 }
 function addCommittee(name, tags) {
     const ch = (typeof chamberList === 'function' ? chamberList() : ['house'])[0];
-    committees.push({ id: 'cm' + Date.now() + Math.floor(Math.random() * 1000), name: name || '새 위원회', chamber: ch, size: COMMITTEE_DEFAULT_SIZE, chairPartyId: null, tags: tags || [] });
+    committees.push({ id: 'cm' + Date.now() + Math.floor(Math.random() * 1000), name: name || legisUiText('새 위원회'), chamber: ch, size: COMMITTEE_DEFAULT_SIZE, chairPartyId: null, tags: tags || [] });
     renderCommitteeTab();
 }
 function addDefaultCommittees() {
     const have = new Set(committees.map(c => c.name));
-    COMMITTEE_PRESETS.forEach(([n, t], i) => { if (!have.has(n)) committees.push({ id: 'cm' + Date.now() + i, name: n, chamber: 'house', size: COMMITTEE_DEFAULT_SIZE, chairPartyId: null, tags: t.slice() }); });
+    const en = typeof getLang === 'function' && getLang() === 'en';
+    COMMITTEE_PRESETS.forEach(([n, t, tEn], i) => {
+        const name = legisUiText(n);
+        if (!have.has(name)) committees.push({ id: 'cm' + Date.now() + i, name, chamber: 'house', size: COMMITTEE_DEFAULT_SIZE, chairPartyId: null, tags: (en ? tEn : t).slice() });
+    });
     renderCommitteeTab(); renderBillList();
 }
 function updateCommittee(id, field, value) {
@@ -324,7 +334,7 @@ function legisApplyEnactments() {
     bills.forEach(b => {
         if (b.kind !== 'constitution' || b.enacted || getBillOverallStatus(b) !== 'passed') return;
         const arts = billArticles(b).map(a => ({ title: a.title || '', text: a.text || '' }));
-        if (!constitution) constitution = { title: '헌법', preamble: '', articles: [], revisions: [] };
+        if (!constitution) constitution = { title: legisUiText('헌법'), preamble: '', articles: [], revisions: [] };
         constitution.articles = arts;
         constitution.revisions = constitution.revisions || [];
         constitution.revisions.push({ billId: b.id, title: b.title, date: b.voteDate || '', at: new Date().toISOString() });
@@ -367,7 +377,7 @@ function renderLawBookTab() {
         consHtml = `
             <div class="vote-panel lb-cons">
                 <div class="vote-panel-title"><span class="tno-prompt">&gt; </span>${constitution ? '헌법 직접 편집' : '헌법 제정'}</div>
-                <input type="text" id="consTitleInput" class="vote-bill-input" placeholder="이름 (예: 대한민국헌법)" value="${legisEsc(constitution?.title || '헌법')}" style="margin-bottom:6px;">
+                <input type="text" id="consTitleInput" class="vote-bill-input" placeholder="이름 (예: 대한민국헌법)" value="${legisEsc(constitution?.title || legisUiText('헌법'))}" style="margin-bottom:6px;">
                 <textarea id="consPreambleInput" class="art-text" rows="2" placeholder="전문 (선택)">${legisEsc(constitution?.preamble || '')}</textarea>
                 <div id="consArticles"></div>
                 <div class="lb-btns">
@@ -389,7 +399,7 @@ function renderLawBookTab() {
                 </div>
                 ${constitution.preamble ? `<div class="lb-preamble" translate="no">${legisEsc(constitution.preamble)}</div>` : ''}
                 ${articlesHtml(constitution.articles) || '<div class="cm-note">조문이 없습니다.</div>'}
-                <div class="lb-revs">${revs.length ? `개정 ${revs.length}회 — ${revs.map((r, i) => `${i + 1}차${r.date ? ` (${legisEsc(r.date)})` : ''}`).join(' · ')}` : '개정 이력 없음'}</div>
+                <div class="lb-revs">${revs.length ? `개정 ${revs.length}회 — ${revs.map((r, i) => `#${i + 1}${r.date ? ` (${legisEsc(r.date)})` : ''}`).join(' · ')}` : '개정 이력 없음'}</div>
             </div>`;
     } else {
         consHtml = `

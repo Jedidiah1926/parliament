@@ -227,7 +227,7 @@
         {
             id: 'law', group: 'basic',
             title: '입법',
-            summary: '법안 제출 · 상정 · 표결 · 표결 기록',
+            summary: '법안 제출 · 위원회 · 상정 · 표결 · 표결 기록 · 법령',
             steps: [
                 {
                     before: [go('law', 'bill'), showPanel('controls')],
@@ -235,15 +235,21 @@
                     target: () => billForm(),
                     allow: () => { const f = billForm(); return f ? [f] : []; },
                     title: '법안 제출하기',
-                    text: '입법 › 제출에서 법안을 작성합니다. 법안 제목을 적고 "[+] 법안 등록"을 눌러보세요. (내용 · 태그 · 가결 기준은 비워 둬도 돼요)',
+                    text: '입법 › 제출에서 법안을 작성합니다. 법안 제목을 적고 "[+] 법안 등록"을 눌러보세요. (조문 · 태그 · 가결 기준은 비워 둬도 돼요 — 조문은 제1조 · 제2조처럼 조 단위로 씁니다)',
                     task: () => billList().length > (T.billBase || 0),
                     done: '법안이 등록됐어요!',
+                },
+                {
+                    before: [go('law', 'committee'), showPanel('controls')],
+                    target: '#contentCommittee',
+                    title: '상임위원회',
+                    text: '입법 › 위원회에서 상임위원회를 만들면, 법안이 본회의 전에 소관 위원회 심사를 먼저 거칩니다. 위원은 정당 의석 비율대로 배정되고, 위원 과반이 찬성해야 본회의로 넘어가요. 위원회가 없으면 법안은 바로 본회의로 갑니다.',
                 },
                 {
                     before: [go('law', 'table'), showPanel('controls')],
                     target: '#billList',
                     title: '상정하기',
-                    text: '입법 › 상정에는 등록된 법안이 모입니다. 법안마다 의회에 올릴지 국무회의에 올릴지 고르고, 법안을 누르면 표결로 넘어가요. 검색과 태그로 찾을 수 있습니다.',
+                    text: '입법 › 상정에는 등록된 법안이 모입니다. 법안마다 의회에 올릴지 국무회의에 올릴지, 소관 위원회를 어디로 할지 고르고, "심의 선택"을 누르면 표결로 넘어가요. 검색과 태그로 찾을 수 있습니다.',
                 },
                 {
                     before: [go('law', 'vote'), showPanel('controls')],
@@ -256,6 +262,12 @@
                     target: '#contentArchive',
                     title: '표결 기록',
                     text: '입법 › 표결 기록에는 가결 · 부결 · 거부된 법안이 남습니다. 상태 · 태그로 걸러 보고, 가결된 법안에서 개정안을 낼 수 있어요.',
+                },
+                {
+                    before: [go('law', 'lawbook'), showPanel('controls')],
+                    target: '#contentLawbook',
+                    title: '법령',
+                    text: '입법 › 법령에는 헌법과 가결된 법률이 조문 그대로 모입니다. 헌법을 제정하고, 헌법 개정안(가결 기준 2/3)을 통과시키면 헌법이 바뀌고 개정 이력이 남아요.',
                 },
             ],
         },
