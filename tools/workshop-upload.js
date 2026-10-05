@@ -18,7 +18,7 @@ const zlib = require('zlib');
 const LANG_FORMAT = 'dno-lang-pack@1';
 const THEME_FORMAT = 'hemicycle-theme@1';
 const ITEM_MANIFEST = 'hemicycle-item.json';
-const TYPE_TAG = { language: 'Language', theme: 'Theme', preset: 'Preset' };
+const TYPE_TAG = { language: 'Language', theme: 'Theme', preset: 'Preset', 'preset-language': 'Preset' };
 
 function fail(msg) { console.error('✖ ' + msg); process.exit(1); }
 
@@ -54,7 +54,7 @@ for (const f of files) {
     let obj;
     try { obj = readJson(path.join(folder, f)); } catch (e) { continue; }
     const t = obj && obj.format === LANG_FORMAT ? 'language' : obj && obj.format === THEME_FORMAT ? 'theme' : isSave(obj) ? 'preset' : '';
-    if (t && (!type || type === t)) { type = t; content = obj; break; }
+    if (t && (!type || type === t || (type === 'preset-language' && t === 'preset'))) { type = type || t; content = obj; break; }
 }
 if (!content) fail('폴더에 올릴 내용이 없습니다 (언어 팩 · 테마 · 프리셋 세이브 파일).');
 

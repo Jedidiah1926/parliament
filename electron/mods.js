@@ -1,13 +1,19 @@
 // ===== 모드(창작마당) 불러오기 — 언어 팩 · 테마 · 프리셋 =====
 // 모드 하나 = 폴더 하나 (Steam 창작마당 아이템 하나와 같은 구조):
 //   <폴더>/
-//     hemicycle-item.json   (선택) { "type": "language" | "theme" | "preset", "file": "...", "title", "description", "tags", ... }
+//     hemicycle-item.json   (선택) { "type": "language" | "theme" | "preset" | "preset-language", "file": "...", "title", "description", "tags", ... }
 //     <내용 파일>            언어 팩(.json) · 테마(.json) · 프리셋(세이브 파일 .hemi 또는 .json)
 //     preview.png           (선택) 창작마당 미리보기 그림 — 올릴 때만 쓰임
 // hemicycle-item.json이 없으면 폴더 안 파일을 보고 알아서 판단한다:
 //   - "format": "dno-lang-pack@1"      → 언어 팩
 //   - "format": "hemicycle-theme@1"    → 테마
 //   - .hemi 파일, 또는 세이브 형식(.json) → 프리셋 (제목은 폴더 이름)
+//
+// 언어별 프리셋 파일 (1.6.0) — 프리셋은 언어마다 따로 만든 파일을 쓴다 (그 언어 파일이 없으면 기본 파일 그대로)
+//   - 프리셋 폴더에 usa.hemi(기본)와 usa.en.hemi(영어)처럼 "이름.언어코드.hemi"를 함께 두거나,
+//     hemicycle-item.json에 "langs": { "en": { "file": "usa.en.hemi", "title": "...", "description": "..." } }
+//   - 언어 팩 폴더의 hemicycle-item.json에 "presets": { "builtin:tutorial": "tutorial.fr.hemi" } — 그 언어로 내장 프리셋을 열 때 쓰임
+//   - "type": "preset-language", "preset": "builtin:tutorial", "lang": "fr", "file": "tutorial.fr.hemi" — 다른 프리셋에 언어 파일만 더함
 //
 // 읽어 오는 곳
 //   1) 모드 폴더: <사용자 데이터>/mods/<폴더>  — 직접 넣은 모드, 창작마당에 올리기 전 시험용
@@ -23,6 +29,7 @@ const LANG_FORMAT = 'dno-lang-pack@1';
 const THEME_FORMAT = 'hemicycle-theme@1';
 const MAX_JSON_BYTES = 3000000;      // 언어 팩 · 테마
 const MAX_PRESET_BYTES = 30000000;   // 프리셋(세이브) — 사진이 들어가면 커질 수 있음
+const LANG_FILE_RE = /^(.+)\.([a-z]{2,3}(?:-[a-z0-9]+)?)\.(hemi|json)$/i; // 이름.언어코드.hemi
 
 function modsDir() {
     const dir = path.join(app.getPath('userData'), 'mods');
@@ -93,14 +100,28 @@ const presetFiles = new Map(); // key → 파일 경로
 
 // ---- 폴더 하나 읽기 → { languages, themes, presets } ----
 function readItemFolder(folder, source, itemId) {
-    const out = { languages: [], themes: [], presets: [] };
+    const out = { languages: [], themes: [], presets: [], presetLangs: [] };
     const base = { source, itemId: itemId || null, folder: path.basename(folder) };
     let manifest = null;
     try { manifest = readJson(path.join(folder, ITEM_MANIFEST)); } catch (e) { manifest = null; }
     manifest = manifest && typeof manifest === 'object' ? manifest : {};
     const type = manifest.type ? String(manifest.type) : '';
-    if (type && !['language', 'theme', 'preset'].includes(type)) return out; // 모르는 종류(나중에 생길 다른 모드)
+    if (type && !['language', 'theme', 'preset', 'preset-language'].includes(type)) return out; // 모르는 종류(나중에 생길 다른 모드)
+    // 다른 프리셋에 더하는 언어 파일
+    const addPresetLang = (target, lang, f, title, description) => {
+        const file = path.join(folder, String(f || ''));
+        if (!target || !lang || !f || !inside(folder, file) || !fs.existsSync(file)) return;
+        try { if (!isSaveState(readJson(file, MAX_PRESET_BYTES))) return; } catch (e) { return; }
+        const key = `${source}:${itemId || base.folder}:${f}`;
+        presetFiles.set(key, file);
+        out.presetLangs.push({ ...base, target: String(target), lang: String(lang), key, title: String(title || ''), description: String(description || '') });
+    };
+    if (type === 'preset-language') {
+        addPresetLang(manifest.preset, manifest.lang, manifest.file, manifest.title, manifest.description);
+        return out;
+    }
 
+    const variants = []; // 언어 파일 (이름.언어코드.hemi)
     let files;
     if (manifest.file) files = [String(manifest.file)];
     else {
@@ -114,7 +135,14 @@ function readItemFolder(folder, source, itemId) {
             const isHemi = /\.hemi$/i.test(f);
             if (!isHemi && type !== 'preset') {
                 const obj = readJson(file, MAX_PRESET_BYTES);
-                if (obj && obj.format === LANG_FORMAT && (!type || type === 'language')) { out.languages.push({ ...base, pack: obj }); return; }
+                if (obj && obj.format === LANG_FORMAT && (!type || type === 'language')) {
+                    out.languages.push({ ...base, pack: obj });
+                    // 언어 팩과 함께 올린 프리셋 언어 파일
+                    if (manifest.presets && typeof manifest.presets === 'object' && obj.code) {
+                        Object.entries(manifest.presets).forEach(([target, pf]) => addPresetLang(target, obj.code, pf));
+                    }
+                    return;
+                }
                 if (obj && obj.format === THEME_FORMAT && (!type || type === 'theme')) { out.themes.push({ ...base, theme: obj }); return; }
                 if (type) return;
                 if (!isSaveState(obj)) return;
@@ -127,18 +155,49 @@ function readItemFolder(folder, source, itemId) {
             }
             const key = `${source}:${itemId || base.folder}:${f}`;
             presetFiles.set(key, file);
+            // "이름.언어코드.hemi"는 같은 이름 프리셋의 언어 파일 — 아래에서 기본 파일에 붙인다
+            const lm = LANG_FILE_RE.exec(f);
+            if (lm && !(manifest.file && manifest.file === f)) { variants.push({ stem: lm[1].toLowerCase(), lang: lm[2].toLowerCase(), key }); return; }
             out.presets.push({
+                stem: f.replace(/\.(hemi|json)$/i, '').toLowerCase(),
                 ...base,
                 key,
                 title: String(manifest.title || base.folder).slice(0, 80),
                 description: String(manifest.description || ''),
                 date: String(manifest.date || ''),
                 author: String(manifest.author || ''),
+                langs: {},
             });
         } catch (e) {
             console.warn('모드 파일을 읽지 못했습니다:', file, e && e.message);
         }
     });
+    // 언어 파일을 기본 프리셋에 붙인다 (기본 파일이 하나뿐이면 이름이 달라도 그 프리셋의 언어 파일로)
+    variants.forEach(v => {
+        const target = out.presets.find(p => p.stem === v.stem) || (out.presets.length === 1 ? out.presets[0] : null);
+        if (target) target.langs[v.lang] = { key: v.key };
+        else out.presets.push({ ...base, stem: v.stem, key: v.key, title: String(manifest.title || base.folder).slice(0, 80), description: String(manifest.description || ''), date: String(manifest.date || ''), author: String(manifest.author || ''), langs: {} });
+    });
+    // hemicycle-item.json의 "langs" — 언어별 파일 · 제목 · 설명 (프리셋이 하나일 때)
+    if (manifest.langs && typeof manifest.langs === 'object' && out.presets.length === 1) {
+        const target = out.presets[0];
+        Object.entries(manifest.langs).forEach(([lang, v]) => {
+            const spec = typeof v === 'string' ? { file: v } : (v || {});
+            const entry = { ...(target.langs[lang] || {}) };
+            if (spec.file) {
+                const file = path.join(folder, String(spec.file));
+                if (inside(folder, file) && fs.existsSync(file)) {
+                    const key = `${source}:${itemId || base.folder}:${spec.file}`;
+                    presetFiles.set(key, file);
+                    entry.key = key;
+                }
+            }
+            if (spec.title) entry.title = String(spec.title).slice(0, 80);
+            if (spec.description) entry.description = String(spec.description);
+            if (entry.key || entry.title || entry.description) target.langs[String(lang).toLowerCase()] = entry;
+        });
+    }
+    out.presets.forEach(p => { delete p.stem; });
     return out;
 }
 
@@ -162,9 +221,9 @@ function listMods() {
     const folders = dirs.concat(steamItemFolders().map(({ itemId, folder }) => ({ source: 'workshop', itemId, folder })));
     const sig = folderSignature(folders);
     if (cache && cache.sig === sig) return cache.result;
-    const all = { languages: [], themes: [], presets: [] };
+    const all = { languages: [], themes: [], presets: [], presetLangs: [] };
     presetFiles.clear();
-    const add = r => { all.languages.push(...r.languages); all.themes.push(...r.themes); all.presets.push(...r.presets); };
+    const add = r => { all.languages.push(...r.languages); all.themes.push(...r.themes); all.presets.push(...r.presets); all.presetLangs.push(...(r.presetLangs || [])); };
     folders.forEach(({ source, itemId, folder }) => add(readItemFolder(folder, source, itemId)));
     cache = { sig, result: all };
     return all;

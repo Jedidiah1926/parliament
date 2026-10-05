@@ -57,8 +57,9 @@ function articlesHtml(arts, limit) {
     if (!list.length) return '';
     const shown = limit ? list.slice(0, limit) : list;
     const more = limit && list.length > limit ? `<div class="art-more">… 외 ${list.length - limit}개 조</div>` : '';
+    // 조 번호는 UI(번역됨), 조 제목 · 본문은 세이브 데이터라 번역하지 않는다(translate="no")
     return `<ol class="art-list">${shown.map((a, i) => `
-        <li><span class="art-head">제${i + 1}조${a.title ? `(${legisEsc(a.title)})` : ''}</span> <span class="art-body">${legisEsc(a.text || '')}</span></li>`).join('')}</ol>${more}`;
+        <li><span class="art-head">제${i + 1}조</span>${a.title ? `<span class="art-head" translate="no">(${legisEsc(a.title)})</span>` : ''} <span class="art-body" translate="no">${legisEsc(a.text || '')}</span></li>`).join('')}</ol>${more}`;
 }
 // 법안 카드 본문 — 조항이 있으면 조문으로, 없으면 아무것도
 function billBodyHtml(bill, limit) {
@@ -386,7 +387,7 @@ function renderLawBookTab() {
                         <button class="bill-select-btn" onclick="constitutionEditing=true; renderLawBookTab();">✎ 직접 편집</button>
                     </div>
                 </div>
-                ${constitution.preamble ? `<div class="lb-preamble">${legisEsc(constitution.preamble)}</div>` : ''}
+                ${constitution.preamble ? `<div class="lb-preamble" translate="no">${legisEsc(constitution.preamble)}</div>` : ''}
                 ${articlesHtml(constitution.articles) || '<div class="cm-note">조문이 없습니다.</div>'}
                 <div class="lb-revs">${revs.length ? `개정 ${revs.length}회 — ${revs.map((r, i) => `${i + 1}차${r.date ? ` (${legisEsc(r.date)})` : ''}`).join(' · ')}` : '개정 이력 없음'}</div>
             </div>`;

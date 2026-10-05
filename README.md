@@ -172,6 +172,16 @@ npm run build:win     # Windows 설치형 exe 빌드 → dist/Hemicycle-Setup-<�
 
 `title`이 목록에 그대로 표시되고, `"tutorial": true`를 넣으면 그 프리셋으로 시작할 때 조작법 튜토리얼이 함께 켜집니다. 튜토리얼은 **기본 튜토리얼**(#1 ~ #6, 처음 쓰는 분을 위한 핵심 흐름)과 **세부 튜토리얼**(#7 ~, 이념 · 파벌 · 지도 · 선거 방식 · 후보 단일화 · 부정선거 · 정부 권한 · 날짜 등 기능별)로 나뉘어 있고, 표시된 곳을 직접 조작해야(정당 추가 · 의석 입력 · 법안 등록 · 의회에 반영 등) 다음 단계로 넘어가는 단계도 있습니다. 단계 내용은 `js/tutorial.js`의 `LESSONS`에 있고(과정마다 `id` · `group: 'basic' | 'detail'`), 마친 과정은 `id`로 기록됩니다.
 
+#### 언어별 프리셋 파일 (1.6.0)
+
+프리셋은 **언어마다 따로 만든 파일**을 씁니다. 화면 번역(언어 팩)은 메뉴 · 버튼 · 안내 같은 UI 글자에만 적용되고, 세이브에 든 데이터(정당 · 지역구 · 의원 · 법안 이름 등)는 번역하지 않습니다 — 그래서 영어 화면에서 영어 이름으로 시작하려면 영어 파일이 필요합니다. 그 언어 파일이 없으면 기본(한국어) 파일을 그대로 엽니다.
+
+- `index.json` 항목: `"langs": { "en": { "file": "founding_1948.en.json", "title": "Founding (1948)", "description": "..." } }`
+- 내장 프리셋: `node tools/make-preset.js <세이브> <이름> --lang en` → `presets/<이름>.en.js`(데이터 id `builtin:<이름>@en`), `js/presets.js`의 그 항목에 `langs: { en: { script: 'presets/<이름>.en.js' } }`
+- 모드 · 창작마당: 아래 "모드" 절의 **언어별 프리셋 파일** 참고
+
+예전 세이브(언어 정보가 없는 세이브)를 한국어가 아닌 화면에서 처음 열면, 언어 팩 사전에 통째로 있는 기본 이름(기본 정당 · 이념 · 원 이름 등)만 그 언어로 한 번 바꿔 둡니다 — 예전에 화면 번역으로 보이던 모습 그대로입니다.
+
 > `index.json` 방식은 `fetch`를 쓰기 때문에 웹(http)으로 열었을 때만 동작합니다. 데스크톱 앱(Electron)은 파일(`file://`)로 열려 JSON을 읽을 수 없으므로, 앱과 함께 기본 제공되는 **내장 프리셋**은 `presets/*.js`로 감싸 두고 `js/presets.js`의 `BUILTIN` 목록에 등록합니다 (예: 튜토리얼 공화국 — `presets/tutorial.js`).
 
 **SAVE** 버튼을 누르면 현재 상태 전체를 `.json` 파일로 저장합니다.
@@ -255,6 +265,11 @@ npm run build:win     # Windows 설치형 exe 빌드 → dist/Hemicycle-Setup-<�
 - 설정 › 테마의 **모드 테마**에서 고릅니다. 테마가 없어지면(구독 해제 등) 바탕 테마로 열립니다.
 
 **프리셋** — 게임에서 **파일로 저장**한 `.hemi`를 폴더에 넣고, `hemicycle-item.json`에 `"type": "preset"` · `title` · `description` · `date`(게임 속 시작 날짜) · `author`를 적습니다. 시작 화면과 `+` 탭의 프리셋 목록에 나오고, 고르면 복사본이 새 세이브로 만들어집니다.
+
+**언어별 프리셋 파일** — 그 언어로 화면을 쓰면 그 언어 파일을 엽니다 (없으면 기본 파일).
+- 같은 폴더에 `usa.hemi`(기본)와 `usa.en.hemi`(영어)처럼 `이름.언어코드.hemi`를 함께 두거나, `hemicycle-item.json`에 `"langs": { "en": { "file": "usa.en.hemi", "title": "United States", "description": "..." } }`
+- **언어 팩과 함께**: 언어 팩 폴더의 `hemicycle-item.json`에 `"presets": { "builtin:tutorial": "tutorial.fr.hemi" }` — 그 언어로 내장 프리셋(예: 튜토리얼 공화국)을 열 때 쓰입니다
+- **언어 파일만**: `{ "type": "preset-language", "preset": "builtin:tutorial", "lang": "fr", "file": "tutorial.fr.hemi", "title": "République tutorielle" }`
 
 **읽어 오는 곳**
 - **모드 폴더**: 메인 화면 🌐 › **모드 폴더 열기**(`%APPDATA%\Hemicycle\mods`)에 폴더를 넣습니다. 목록에 `모드 폴더` 표시가 붙습니다. 창작마당에 올리기 전 시험용으로도 씁니다.
