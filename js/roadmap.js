@@ -674,7 +674,7 @@
           },
           {
             status: 'future',
-            title: '1.6.7 - 인민의, 인민에 의한, 인민을 위한 "of the people, by the people, for the people"',
+            title: '1.6.7 - 절대 권력은 절대적으로 부패한다 "Absolute power corrupts absolutely."',
             summary: ['국가 › 사람 탭', '인물을 의석 · 직책에 배정', '의석이 사라져도 인물은 유지'],
             desc: `202X.XX.XX
               <br>- 국가 › 사람 탭 신설 — 이름 · 사진 · 소속 정당 · 파벌 · 이념을 가진 인물을 미리 만들어 둠
