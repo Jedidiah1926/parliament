@@ -688,7 +688,7 @@
       },
       '1.7': {
         slots: 10,
-        title: '1.7: 텀블벅 펀딩',
+        title: '1.7: ?',
         cards: [
           {
             status: 'future',
@@ -701,7 +701,7 @@
       },
       '1.8': {
         slots: 10,
-        title: '1.8: 데모 출시',
+        title: '1.8: ?',
         cards: [
           {
             status: 'future',
@@ -714,7 +714,7 @@
       },
       '1.9': {
         slots: 10,
-        title: '1.9: 얼리 액세스',
+        title: '1.9: ?',
         cards: [
           {
             status: 'future',
@@ -725,7 +725,7 @@
         ]
       },
       '2.0': {
-        title: '2.0: No majority, no compromise',
+        title: '2.0: No majority, No compromise',
         cards: [
           {
             status: 'future',
