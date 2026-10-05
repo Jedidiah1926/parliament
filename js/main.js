@@ -6831,7 +6831,8 @@
                     </div>`).join('');
                 div.innerHTML = `
                     <span class="drag-handle">⋮⋮</span>
-                    <input type="text" value="${ide.name}" style="flex:1;min-width:0;" onchange="updateIdeology(${index}, 'name', this.value)">
+                    <input type="text" value="${ide.name}" style="flex:1;min-width:0;${isInd && ide.disabled ? 'opacity:0.45;' : ''}" onchange="updateIdeology(${index}, 'name', this.value)">
+                    ${isInd ? `<label class="ind-toggle" title="끄면 무소속이 모든 원에서 빠집니다 (선거 · 지지율 · 의석에 나오지 않음). 다시 켜면 원래대로 돌아옵니다." style="display:flex;align-items:center;gap:4px;font-size:0.8rem;color:#888;cursor:pointer;white-space:nowrap;"><input type="checkbox" ${ide.disabled ? '' : 'checked'} onchange="setIndependentEnabled(this.checked)"> 사용</label>` : ''}
                     ${isInd ? '' : `<button class="dup-btn" title="서브 이념 추가" onclick="addSubIdeology(${ide.id})">+ 서브</button>`}
                     ${isInd ? '' : `<button class="remove-btn" onclick="removeIdeology(${index})">X</button>`}
                     ${subsHtml}
@@ -6839,6 +6840,31 @@
                 container.appendChild(div);
                 startDragReorder(div.querySelector('.drag-handle'), 'ideologyList', '.drag-card-ideology', ideologies, renderIdeologyList);
             });
+        }
+
+        // 의회 › 이념의 무소속 "사용" — 끄면 무소속 정당이 모든 원에서 빠지고(참여 해제), 켜면 끄기 전 참여 상태로 되돌린다.
+        // 무소속 의석이 남아 있으면 끌 수 없다 (지역구 당선자 · 비례 명단이 무소속을 가리키고 있으므로)
+        function setIndependentEnabled(on) {
+            const ide = ideologies.find(i => i.id === IND_IDEOLOGY_ID);
+            if(!ide) return;
+            const p = getIndependentParty();
+            if(!on) {
+                const held = chamberList().reduce((a, ch) => a + (p[seatKeyFor(ch)] || 0), 0);
+                if(held > 0) {
+                    showCustomAlert(`무소속 의석이 ${held}석 남아 있어 끌 수 없습니다.\n의회 › 의회 구성에서 무소속 의석을 0으로 만든 뒤 다시 시도하세요.`);
+                    renderIdeologyList();
+                    return;
+                }
+                p.indPrevIn = { inHouse: !!p.inHouse, inSenate: !!p.inSenate, inThird: !!p.inThird };
+                p.inHouse = p.inSenate = p.inThird = false;
+                ide.disabled = true;
+            } else {
+                Object.assign(p, p.indPrevIn || { inHouse: true, inSenate: true, inThird: true });
+                delete p.indPrevIn;
+                delete ide.disabled;
+            }
+            renderIdeologyList();
+            simulate(); refreshUI();
         }
 
         function renderPartyList(type) {
@@ -12622,7 +12648,7 @@
                 if(c === fromChamber) return;
                 if(party && !party[inKeyFor(c)]) return; // 그 원에 없는 정당이면 건너뜀
                 if(!elecStore[c]) elecStore[c] = {};
-                elecStore[c][partyId] = { prob: entry.prob, err: entry.err };
+                elecStore[c][partyId] = { ...(elecStore[c][partyId] || {}), prob: entry.prob, err: entry.err };
             });
         }
 
@@ -12821,7 +12847,30 @@
             `;
             container.appendChild(swRow);
 
+            // ── 무소속 포함하기 (무당파 칸 바로 아래) — 끄면 무당파 표가 무소속에게는 가지 않는다 ──
+            // (켜져 있으면 무소속 지지율이 0이어도 무당파 표 중 무작위 몫을 받아 무소속이 당선될 수 있음)
+            const indParty = parties.find(p => p.ideologyId === IND_IDEOLOGY_ID && p[inKeyFor(ch)]);
+            if(indParty) {
+                const incRow = document.createElement('label');
+                incRow.className = 'elec-swing-ind';
+                incRow.style.cssText = 'display:flex;align-items:center;gap:6px;margin:-2px 0 9px 16px;font-size:0.78rem;color:#888;cursor:pointer;';
+                incRow.title = '켜면 무당파 표의 일부가 무소속에게도 갑니다 (무소속 지지율이 0이어도). 끄면 무당파 표는 정당에만 나눠집니다.';
+                incRow.innerHTML = `<input type="checkbox" ${sw.includeInd ? 'checked' : ''} onchange="elecSetSwingIncludeInd('${ch}', this.checked)"> 무소속 포함하기`;
+                container.appendChild(incRow);
+            }
+
             elecUpdateAllBars();
+        }
+        function elecSetSwingIncludeInd(chamber, on) {
+            const store = elecStore[chamber] || (elecStore[chamber] = {});
+            if(!store['__swing__']) store['__swing__'] = { prob:0, err:0 };
+            store['__swing__'].includeInd = !!on;
+            // "전체에 반영"이 켜져 있으면 다른 원의 무당파 설정도 같이
+            if(elecProbSyncAll) chamberList().forEach(c => {
+                if(c === chamber) return;
+                const st = elecStore[c] || (elecStore[c] = {});
+                st['__swing__'] = { ...(st['__swing__'] || { prob:0, err:0 }), includeInd: !!on };
+            });
         }
 
         // ── 개표 일시정지 / 재개 ───────────────
@@ -13598,6 +13647,10 @@
         // ─────────────────────────────────────────
         // 지역구 선거 시뮬레이션
         // ─────────────────────────────────────────
+        // 지역구 선거에 후보를 내는 정당 — 그 원에 참여하고 활동 금지가 아닌 정당 (끈 무소속 · 다른 원 전용 정당은 지역구도 가져가지 않음)
+        function partyRunsInChamber(p, chamber) {
+            return !!p && !!p[inKeyFor(chamber)] && p.status !== 'banned';
+        }
         function elecSimulateDistricts(chamber) {
             if(districtMapMode === 'svg') return elecSimulateDistrictsSvg(chamber);
             // 각 지역구마다 1위 결정 (성향 + 노이즈)
@@ -13609,7 +13662,7 @@
                 const { scores: unionSupport, withdrawn } = applyCandidateUnions(
                     Object.fromEntries(parties.map(p => [p.id, tendencyData[p.id]?.[key] || 0])), 'district');
                 parties.forEach(p => {
-                    if(withdrawn.has(String(p.id))) return;
+                    if(withdrawn.has(String(p.id)) || !partyRunsInChamber(p, chamber)) return;
                     const support = unionSupport[p.id] || 0;
                     // 노이즈: ±15% 정도 랜덤
                     const noise = (Math.random() * 30 - 15);
@@ -13619,8 +13672,9 @@
                 if(bestParty && bestScore > 0) {
                     results.push({ key, partyId: bestParty.id });
                 } else {
-                    // 지지도 없으면 랜덤 당
-                    const p = parties[Math.floor(Math.random()*parties.length)];
+                    // 지지도 없으면 그 원에 나온 정당 중 랜덤
+                    const pool = parties.filter(x => partyRunsInChamber(x, chamber));
+                    const p = pool[Math.floor(Math.random()*pool.length)] || parties[0];
                     results.push({ key, partyId: p.id });
                 }
             });
@@ -13639,14 +13693,14 @@
                 const { scores: support, withdrawn } = applyCandidateUnions(
                     Object.fromEntries(parties.map(p => [p.id, districtSvgTendency[key]?.[chamber]?.[p.id] || 0])), 'district');
                 const scored = parties.map(p => {
-                    if(withdrawn.has(String(p.id))) return { id: p.id, score: 0 };
+                    if(withdrawn.has(String(p.id)) || !partyRunsInChamber(p, chamber)) return { id: p.id, score: 0 };
                     const noise = (Math.random() * 30 - 15);
                     return { id: p.id, score: Math.max(0, (support[p.id] || 0) + noise) };
                 });
                 const total = scored.reduce((s,p) => s + p.score, 0);
                 if(total <= 0) {
                     // 지지도 데이터가 전혀 없으면 무작위 한 정당이 그 지역구 의석을 모두 차지 (단일화로 후보를 내지 않은 정당 제외)
-                    const running = parties.filter(x => !withdrawn.has(String(x.id)));
+                    const running = parties.filter(x => !withdrawn.has(String(x.id)) && partyRunsInChamber(x, chamber));
                     const p = running[Math.floor(Math.random()*running.length)] || parties[0];
                     for(let i=0; i<seatCount; i++) results.push({ key, partyId: p.id });
                     return;
@@ -14059,14 +14113,16 @@
             const swingA = swingRaw * ratioA; // 완전 랜덤 그룹
             const swingB = swingRaw * ratioB; // 지지율×친화도 그룹
 
+            // 무소속은 "무소속 포함하기"를 켰을 때만 무당파 표를 받는다 (끄면 지지율 0인 무소속이 무작위 몫으로 당선되던 문제 방지)
+            const swingTakes = p => p.status !== 'banned' && (p.ideologyId !== IND_IDEOLOGY_ID || !!swingSt.includeInd);
             // 그룹A: 각 당에 균등 랜덤 분배 (난수 비중) — 활동 금지된 정당은 무당파 배분도 받지 않음
-            const randWeights = parties.map(p => p.status==='banned' ? 0 : Math.random());
+            const randWeights = parties.map(p => swingTakes(p) ? Math.random() : 0);
             const randTotal   = randWeights.reduce((a,b)=>a+b,0);
 
             // 그룹B: 각 당의 (지지율 × 친화도 계수) 비중으로 분배
             // 친화도 계수: 0.5~1.5 사이 랜덤 (매 선거 당마다 다름)
             const affinities = parties.map(() => 0.5 + Math.random());
-            const bWeights   = partyWeighted.map((p,i) => Math.max(0, p.w) * affinities[i]);
+            const bWeights   = partyWeighted.map((p,i) => swingTakes(parties[i]) ? Math.max(0, p.w) * affinities[i] : 0);
             const bTotal     = bWeights.reduce((a,b)=>a+b,0);
 
             // 각 당에 무당파 배분량 합산

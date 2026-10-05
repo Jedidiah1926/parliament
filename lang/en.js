@@ -22,6 +22,9 @@ window.DnoLangPacks.en = {
  ],
  "ordinal": "en",
  "patterns": [
+  {"re": "^\\s*사용\\s*$", "to": "Use"},
+  {"re": "^무소속 의석이 (\\d+)석 남아 있어 끌 수 없습니다\\.", "to": "Independents still hold $1 seats, so this can't be turned off."},
+  {"re": "의회 › 의회 구성에서 무소속 의석을 0으로 만든 뒤 다시 시도하세요\\.", "to": "Set the independents' seats to 0 in Parliament › Composition and try again."},
   {"re": "^(\\d+) / (\\d+)명 표시 중 — 더 보기$", "to": "Showing $1 / $2 \u2014 show more"},
   {"re": "^세이브 (\\d+)개 · 약 ([\\d.]+)(MB|KB) 사용$", "to": "$1 save(s) · about $2 $3 used"},
   {"re": "^(\\d+)초마다 · 탭을 옮기거나 닫을 때 \"(.+)\"에 저장$", "to": "Every $1 s · and when switching or closing tabs, into \"$2\""},
@@ -7495,6 +7498,15 @@ window.DnoLangPacks.en = {
   ["- 내각 자리 — 대통령 · 총리 · 장관 등 내각 직책도 사람 탭의 인물로 배정 (의원이 아닌 인물도 가능)", "- Cabinet posts — fill president, prime minister, ministers and other cabinet posts with people from the People tab (non-members too)"],
   ["- 지역구 의원 · 비례대표(· 당수 · 원내대표 · 내각)에 사람 탭의 인물을 골라 배정 — 지금처럼 의석마다 이름 · 사진을 따로 적지 않음", "- Assign people from the People tab to district seats and list seats (and party leaders, floor leaders, cabinet) — no more typing a name and photo for each seat"],
   ["- 선거 · 당적 변경 · 궐석 등으로 의석이 사라져도 인물은 사람 탭에 그대로 남고, 다음 선거나 보궐선거 때 다시 배정 (지금은 의석이 없어지면 그 자리의 이름 · 사진도 함께 사라짐)", "- When a seat disappears through an election, a party switch or a vacancy, the person stays in the People tab and can be assigned again at the next election or by-election (today the name and photo vanish with the seat)"],
-  ["- 한 인물이 의원 · 장관처럼 여러 자리를 겸하면 사람 탭 한 곳에서 관리 — 이름 · 사진을 고치면 배정된 모든 자리에 반영", "- A person holding several posts, such as member and minister, is managed in one place — editing their name or photo updates every post they hold"]
+  ["- 한 인물이 의원 · 장관처럼 여러 자리를 겸하면 사람 탭 한 곳에서 관리 — 이름 · 사진을 고치면 배정된 모든 자리에 반영", "- A person holding several posts, such as member and minister, is managed in one place — editing their name or photo updates every post they hold"],
+  ["무소속 포함하기", "Include independents"],
+  ["켜면 무당파 표의 일부가 무소속에게도 갑니다 (무소속 지지율이 0이어도). 끄면 무당파 표는 정당에만 나눠집니다.", "When on, part of the undecided vote also goes to independents (even at 0% support). When off, undecided votes go to parties only."],
+  ["끄면 무소속이 모든 원에서 빠집니다 (선거 · 지지율 · 의석에 나오지 않음). 다시 켜면 원래대로 돌아옵니다.", "When off, independents are removed from every chamber (no elections, polling or seats). Turn it back on to restore them."],
+  ["무소속 \"사용\"", "Independents \"On\""],
+  ["끄면 무소속이 모든 원에서 빠집니다 (선거 · 지지율 · 의석에 나오지 않음). 다시 켜면 끄기 전대로 돌아와요. 무소속 의석이 남아 있으면 먼저 0으로 만들어야 끌 수 있습니다.", "When off, independents are removed from every chamber (no elections, polling or seats); turning it back on restores the previous state. If independents still hold seats, set them to 0 first."],
+  ["개표 때마다 무당파 표를 정당에 나눠 비례대표 의석 배분에 더합니다.\nS = max(0, 무당파 지지율 ± 오차),  r = 0~1 난수 (선거마다)\n① 무작위 몫 S·r — 정당마다 난수 u(0~1) → 정당 i의 몫 = S·r · uᵢ / Σu  (지지율과 무관)\n② 지지율 몫 S·(1−r) — 정당 지지율 wᵢ(오차 반영) × 친화도 aᵢ(0.5~1.5 난수) → 몫 = S·(1−r) · wᵢaᵢ / Σwa\n최종 가중치 = wᵢ + ①몫 + ②몫 → 이 비율로 비례 의석을 배분. 활동 금지 정당은 받지 않고, 지역구 결과는 성향(%)으로 따로 정해져요.", "Each count splits the undecided vote among parties and adds it to the list-seat allocation.\nS = max(0, undecided share ± margin),  r = random 0–1 (per election)\n① Random share S·r — a random u (0–1) per party → party i gets S·r · uᵢ / Σu  (independent of support)\n② Support share S·(1−r) — party support wᵢ (with margin) × affinity aᵢ (random 0.5–1.5) → share = S·(1−r) · wᵢaᵢ / Σwa\nFinal weight = wᵢ + ① + ② → list seats are allocated in this ratio. Banned parties get nothing, and district results are decided separately by tendency (%)."],
+  ["무당파 칸 바로 아래. 켜면 무소속도 무당파 표를 받습니다 — ①은 지지율과 무관해서 무소속 지지율이 0이어도 의석을 얻을 수 있어요. 끄면(기본) 무소속은 ① · ② 모두에서 빠집니다.", "Right below the undecided row. When on, independents also receive undecided votes — ① ignores support, so independents can win seats even at 0%. When off (default), independents are left out of both ① and ②."],
+  ["- 여론 › 지지율의 무당파 칸 아래에 \"무소속 포함하기\" — 끄면(기본) 무당파 표가 무소속에게 가지 않음 (무소속 지지율이 0인데도 무당파 표의 무작위 몫으로 무소속이 당선되던 문제), 도움말에 무당파 배분 방식을 수식으로 설명", "- \"Include independents\" under the undecided row in Opinion › Polling — when off (default), undecided votes don't go to independents (they used to win seats from the random share even at 0% support); the help explains the undecided-vote formula"],
+  ["- 의회 › 이념에서 무소속을 켜고 끌 수 있게 — 끄면 무소속이 모든 원에서 빠짐, 지역구 선거에서 그 원에 참여하지 않거나 활동 금지된 정당이 지역구를 가져가던 문제 수정", "- Independents can be switched on and off in Parliament › Ideologies — when off they leave every chamber; fixed parties not running in a chamber, or banned, winning its districts"]
  ]
 };

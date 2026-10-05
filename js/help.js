@@ -34,6 +34,7 @@
                 {
                     btn: 'subTabIdeology', open: go('setup', 'ideology'),
                     desc: '정당이 속할 이념을 추가하고 순서를 정합니다. 자동 정렬일 때 정당은 이 순서대로 반원에 앉아요.',
+                    inner: [['무소속 "사용"', '끄면 무소속이 모든 원에서 빠집니다 (선거 · 지지율 · 의석에 나오지 않음). 다시 켜면 끄기 전대로 돌아와요. 무소속 의석이 남아 있으면 먼저 0으로 만들어야 끌 수 있습니다.']],
                 },
                 {
                     btn: 'subTabParty', open: go('setup', 'party'),
@@ -149,6 +150,14 @@
                 {
                     btn: 'elecSubTabProb', open: goElec('prob'),
                     desc: '정당별 지지율(%)과 오차 범위를 정합니다. 비례대표 의석과 대선 결과의 바탕이 되고, 선거를 치르려면 꼭 필요해요. 전국형 · 권역형 비례를 고를 수 있습니다.',
+                    inner: [
+                        ['무당파', '개표 때마다 무당파 표를 정당에 나눠 비례대표 의석 배분에 더합니다.\n'
+                            + 'S = max(0, 무당파 지지율 ± 오차),  r = 0~1 난수 (선거마다)\n'
+                            + '① 무작위 몫 S·r — 정당마다 난수 u(0~1) → 정당 i의 몫 = S·r · uᵢ / Σu  (지지율과 무관)\n'
+                            + '② 지지율 몫 S·(1−r) — 정당 지지율 wᵢ(오차 반영) × 친화도 aᵢ(0.5~1.5 난수) → 몫 = S·(1−r) · wᵢaᵢ / Σwa\n'
+                            + '최종 가중치 = wᵢ + ①몫 + ②몫 → 이 비율로 비례 의석을 배분. 활동 금지 정당은 받지 않고, 지역구 결과는 성향(%)으로 따로 정해져요.'],
+                        ['무소속 포함하기', '무당파 칸 바로 아래. 켜면 무소속도 무당파 표를 받습니다 — ①은 지지율과 무관해서 무소속 지지율이 0이어도 의석을 얻을 수 있어요. 끄면(기본) 무소속은 ① · ② 모두에서 빠집니다.'],
+                    ],
                 },
             ],
         },
@@ -335,7 +344,7 @@
                 dl.className = 'help-inner';
                 tab.inner.forEach(([name, text]) => {
                     const dt = document.createElement('dt'); dt.textContent = name;
-                    const dd = document.createElement('dd'); dd.textContent = text;
+                    const dd = document.createElement('dd'); dd.textContent = text; dd.style.whiteSpace = 'pre-line'; // 수식처럼 줄을 나눈 설명
                     dl.append(dt, dd);
                 });
                 card.appendChild(dl);
