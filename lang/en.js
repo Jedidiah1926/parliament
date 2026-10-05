@@ -7484,6 +7484,14 @@ window.DnoLangPacks.en = {
   ["언어별 프리셋 · 튜토리얼 (창작마당)", "Per-language presets \u00b7 tutorials (Workshop)"],
   ["언어별 프리셋 · 튜토리얼", "Per-language presets \u00b7 tutorials"],
   ["- 의석 번호 통일 — 의원 카드의 #번호(지역구 목록 순서)와 반원 좌석 정보의 #번호(정당별 좌석 배치 순서)가 따로 매겨져 같은 번호가 다른 의원을 가리키던 문제 수정: 의원마다 반원의 실제 좌석을 정해 카드 번호와 좌석 번호가 같은 의원을 가리키고, 좌석을 누르면 그 의원(이름 · 지역구)이 보이게", "- Unified seat numbers \u2014 the # on member cards (district list order) and the # in the hemicycle seat info (seating order by party) were counted separately, so the same number pointed to different members: each member gets their actual hemicycle seat, card and seat numbers point to the same member, and clicking a seat shows that member (name \u00b7 district)"],
-  ["의석 번호 통일", "Unified seat numbers"]
+  ["의석 번호 통일", "Unified seat numbers"],
+  ["1.6.7 - 인민의, 인민에 의한, 인민을 위한 \"of the people, by the people, for the people\"", "1.6.7 - Government of the people \"of the people, by the people, for the people\""],
+  ["국가 › 사람 탭", "Nation › People tab"],
+  ["인물을 의석 · 직책에 배정", "Assign people to seats · posts"],
+  ["의석이 사라져도 인물은 유지", "People stay when seats disappear"],
+  ["- 국가 › 사람 탭 신설 — 이름 · 사진 · 소속 정당 · 파벌 · 이념을 가진 인물을 미리 만들어 둠", "- New Nation › People tab — create people in advance, each with a name, photo, party, faction and ideology"],
+  ["- 지역구 의원 · 비례대표(· 당수 · 원내대표 · 내각)에 사람 탭의 인물을 골라 배정 — 지금처럼 의석마다 이름 · 사진을 따로 적지 않음", "- Assign people from the People tab to district seats and list seats (and party leaders, floor leaders, cabinet) — no more typing a name and photo for each seat"],
+  ["- 선거 · 당적 변경 · 궐석 등으로 의석이 사라져도 인물은 사람 탭에 그대로 남고, 다음 선거나 보궐선거 때 다시 배정 (지금은 의석이 없어지면 그 자리의 이름 · 사진도 함께 사라짐)", "- When a seat disappears through an election, a party switch or a vacancy, the person stays in the People tab and can be assigned again at the next election or by-election (today the name and photo vanish with the seat)"],
+  ["- 한 인물이 의원 · 장관처럼 여러 자리를 겸하면 사람 탭 한 곳에서 관리 — 이름 · 사진을 고치면 배정된 모든 자리에 반영", "- A person holding several posts, such as member and minister, is managed in one place — editing their name or photo updates every post they hold"]
  ]
 };
