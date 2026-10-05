@@ -6828,6 +6828,14 @@ window.DnoLangPacks.en = {
    "By sushdjr0106"
   ],
   [
+   "미합중국",
+   "United States of America"
+  ],
+  [
+   "제작자: ttorri",
+   "By ttorri"
+  ],
+  [
    "▌ 권역 선거구 의석",
    "▌ Regional constituency seats"
   ],
