@@ -490,6 +490,10 @@ window.DnoLangPacks.en = {
    "to": "Map"
   },
   {
+   "re": "^\\s*목록\\s*$",
+   "to": "List"
+  },
+  {
    "re": "^\\s*의장\\s*$",
    "to": "Speaker"
   },
