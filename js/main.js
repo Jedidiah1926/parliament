@@ -2332,7 +2332,9 @@
 
         function addBill() {
             const title = document.getElementById('newBillTitle').value.trim();
-            const content = document.getElementById('newBillContent').value.trim();
+            const articles = legisReadArticles('newBillArticles');
+            const content = articlesToText(articles);
+            const kind = document.getElementById('newBillKind')?.value === 'constitution' ? 'constitution' : 'law';
             const threshold = getThresholdValue();
             const sel = document.getElementById('newBillThreshold');
             const isCustom = sel.value === 'custom';
@@ -2345,12 +2347,18 @@
             if(!title) { showCustomAlert('법안 제목을 입력하세요.'); return; }
             const amendedBill = amendmentSourceId ? bills.find(b => b.id === amendmentSourceId) : null;
             const version = amendedBill ? (amendedBill.version || 1) + 1 : 1;
-            bills.push({ id: 'b'+Date.now(), title, content, threshold, numer, denom, chamberThresholds, tags,
+            const newBill = { id: 'b'+Date.now(), title, content, articles, kind, threshold, numer, denom, chamberThresholds, tags,
                 houseStatus: 'pending', senateStatus: 'pending', thirdStatus: 'pending', houseVote: null, senateVote: null, thirdVote: null,
                 version, parentBillId: amendedBill ? amendedBill.id : null, isAmendment: !!amendedBill, voteHistory: [],
-                tabledTo: isCouncilVotingMode() ? 'council' : 'parliament' });
+                tabledTo: isCouncilVotingMode() ? 'council' : 'parliament', committeeId: null, committeeStatus: null, committeeVote: null };
+            // 태그가 소관과 겹치는 상임위원회가 있으면 그 위원회 심사부터 (입법 › 상정에서 바꿀 수 있음)
+            const suggested = newBill.tabledTo === 'parliament' ? suggestCommitteeFor(newBill) : null;
+            if(suggested) { newBill.committeeId = suggested.id; newBill.committeeStatus = 'pending'; }
+            bills.push(newBill);
             document.getElementById('newBillTitle').value = '';
-            document.getElementById('newBillContent').value = '';
+            legisRenderArticleEditor('newBillArticles', []);
+            const kindSel = document.getElementById('newBillKind'); if(kindSel) kindSel.value = 'law';
+            if(kind === 'constitution') { const thrSel = document.getElementById('newBillThreshold'); if(thrSel) { thrSel.value = '0.5'; toggleCustomThreshold(); } }
             document.getElementById('newBillTags').value = '';
             amendmentSourceId = null;
             renderAmendmentBanner();
@@ -2365,7 +2373,8 @@
             amendmentSourceId = id;
             switchSubTab('law', 'bill');
             document.getElementById('newBillTitle').value = orig.title + ' 개정안';
-            document.getElementById('newBillContent').value = orig.content || '';
+            legisRenderArticleEditor('newBillArticles', billArticles(orig));
+            const kindSel = document.getElementById('newBillKind'); if(kindSel) kindSel.value = orig.kind === 'constitution' ? 'constitution' : 'law';
             document.getElementById('newBillTags').value = (orig.tags || []).join(', ');
             renderAmendmentBanner();
         }
@@ -2417,6 +2426,8 @@
         }
 
         function selectBillForVote(id) {
+            const blocked = id ? legisPlenaryBlock(bills.find(b => b.id === id)) : null;
+            if(blocked) { showCustomAlert(blocked); syncBillSelect(); return; }
             activeBillId = id;
             voteState = { house: {}, senate: {}, third: {} };
             renderBillList();
@@ -2450,7 +2461,7 @@
             const bill = bills.find(b=>b.id===activeBillId);
             el.innerHTML = `
                 <div style="color:var(--tno-gold); font-size:1rem; margin-bottom:3px;">${bill.title}</div>
-                ${bill.content ? `<div style="color:#666; font-size:0.8rem; white-space:pre-wrap; max-height:50px; overflow:hidden;">${bill.content}</div>` : ''}
+                ${billBodyHtml(bill, 2)}
             `;
             sel.value = activeBillId;
         }
@@ -2487,7 +2498,7 @@
             const bill = bills.find(b=>b.id===activeCouncilBillId);
             el.innerHTML = `
                 <div style="color:var(--tno-gold); font-size:1rem; margin-bottom:3px;">${bill.title}</div>
-                ${bill.content ? `<div style="color:#666; font-size:0.8rem; white-space:pre-wrap; max-height:50px; overflow:hidden;">${bill.content}</div>` : ''}
+                ${billBodyHtml(bill, 2)}
             `;
             sel.value = activeCouncilBillId;
         }
@@ -2499,7 +2510,9 @@
                 bills.filter(b => getBillOverallStatus(b) === 'pending' && billTabledTo(b) === 'parliament').forEach(b => {
                     const opt = document.createElement('option');
                     opt.value = b.id;
-                    opt.textContent = b.title + getBillStatusSuffix(b);
+                    const block = legisPlenaryBlock(b);
+                    opt.textContent = b.title + getBillStatusSuffix(b) + (block ? ' (위원회 심사 중)' : '');
+                    if(block) opt.disabled = true;
                     sel.appendChild(opt);
                 });
                 sel.value = activeBillId || '';
@@ -2546,7 +2559,7 @@
             if(!bill) { form.style.display = 'none'; return; }
             form.style.display = 'block';
             document.getElementById('editBillTitle').value = bill.title || '';
-            document.getElementById('editBillContent').value = bill.content || '';
+            legisRenderArticleEditor('editBillArticles', billArticles(bill));
             document.getElementById('editBillTags').value = (bill.tags||[]).join(', ');
             const isCustom = bill.numer && bill.denom;
             const threshSel = document.getElementById('editBillThreshold');
@@ -2571,7 +2584,8 @@
             const title = document.getElementById('editBillTitle').value.trim();
             if(!title) { showCustomAlert('법안 제목을 입력하세요.'); return; }
             bill.title = title;
-            bill.content = document.getElementById('editBillContent').value.trim();
+            bill.articles = legisReadArticles('editBillArticles');
+            bill.content = articlesToText(bill.articles);
             const tagsRaw = document.getElementById('editBillTags')?.value || '';
             bill.tags = tagsRaw.split(',').map(t=>t.trim()).filter(t=>t.length>0);
             const threshSel = document.getElementById('editBillThreshold');
@@ -2606,6 +2620,7 @@
         function getBillOverallStatus(bill) {
             const isBi = hasSenateChamber();
             const isTri = hasThirdChamber();
+            if(bill.committeeStatus === 'fail' && billTabledTo(bill) === 'parliament') return 'failed'; // 상임위원회에서 부결 → 폐기
             if(bill.houseStatus === 'fail') return 'failed';
             if(isBi) {
                 if(bill.senateStatus === 'skip' || bill.senateStatus === 'fail') return 'failed';
@@ -2667,8 +2682,17 @@
             const rows = [];
 
             let overallRow = `<span class="bill-status-badge ${oc}">${ol}</span>`;
+            if(bill.kind === 'constitution') overallRow += `<span class="bill-version-badge bill-kind-cons">헌법 개정안</span>`;
             if(bill.voteDate) overallRow += `<span style="color:#666;font-size:0.75rem;">📅 ${bill.voteDate}</span>`;
             rows.push(overallRow);
+            // 상임위원회 심사 상태
+            const billCommittee = billTabledTo(bill) === 'parliament' && bill.committeeId ? committeeById(bill.committeeId) : null;
+            if(billCommittee) {
+                const cv = bill.committeeVote;
+                const cls = bill.committeeStatus === 'pass' ? 'house-pass' : bill.committeeStatus === 'fail' ? 'house-fail' : 'pending';
+                const lbl = bill.committeeStatus === 'pass' ? '✔통과' : bill.committeeStatus === 'fail' ? '✘부결' : '심사 중';
+                rows.push(`<span class="bill-status-badge ${cls}">${escapeHtmlText(billCommittee.name)} ${lbl}</span>${cv ? `<span style="color:#555; font-size:0.75rem;">(찬${cv.yea}/반${cv.nay}/기${cv.abs})</span>` : ''}`);
+            }
 
             if(billTabledTo(bill) === 'council' && bill.houseStatus !== 'pending') {
                 // 국무회의로 상정된 법안은 국회/상원 대신 [국무회의 ✔가결/✘부결]로 표시
@@ -2719,7 +2743,8 @@
 
         // 법안 세부 표결 기록(타임라인) + 개정안 목록 HTML — 실제 표결 결과 패널과 동일한 막대그래프로 표시
         function buildBillHistoryHtml(bill) {
-            const chamberLabel = ch => ch === 'cabinetCouncil' ? '국무회의'
+            const chamberLabel = (ch, h) => ch === 'committee' ? (h?.committeeName || '상임위원회')
+                : ch === 'cabinetCouncil' ? '국무회의'
                 : ch === 'senate' ? (document.getElementById('senateNameInput')?.value || '상원')
                 : ch === 'third' ? (document.getElementById('thirdNameInput')?.value || '삼원')
                 : (document.getElementById('houseNameInput')?.value || '하원');
@@ -2727,7 +2752,7 @@
             const historyRows = history.length === 0
                 ? '<div style="color:#444;">표결 기록 없음</div>'
                 : history.map(h => {
-                    if(h.result === 'skip') return `<div class="vote-verdict verdict-pending" style="margin:6px 0;">⊘ ${chamberLabel(h.chamber)} 미상정</div>`;
+                    if(h.result === 'skip') return `<div class="vote-verdict verdict-pending" style="margin:6px 0;">⊘ ${chamberLabel(h.chamber, h)} 미상정</div>`;
                     const total = h.total || 1;
                     const none = Math.max(0, total - h.yea - h.nay - h.abs);
                     const threshold = h.threshold ?? 0.5;
@@ -2736,7 +2761,7 @@
                     const dateStr = h.date ? ` · ${h.date}` : '';
                     return `
                         <div class="vote-result-wrap" style="margin-top:8px; padding:8px;">
-                            <div class="vote-result-title">[ ${chamberLabel(h.chamber)} 표결 결과 ]${dateStr}</div>
+                            <div class="vote-result-title">[ ${chamberLabel(h.chamber, h)} ${h.chamber === 'committee' ? '심사' : '표결'} 결과 ]${dateStr}</div>
                             <div class="vote-bar-outer">
                                 <div class="vote-bar-yea" style="width:${(h.yea/total*100).toFixed(1)}%"></div>
                                 <div class="vote-bar-nay" style="width:${(h.nay/total*100).toFixed(1)}%"></div>
@@ -2832,6 +2857,7 @@
 
         // 법안 제출 탭 — 대기 중인 법안만 + 검색/태그 필터
         function renderBillList() {
+            renderLawPipeline();
             const container = document.getElementById('billList');
             if(!container) return;
             const query = document.getElementById('billSearchInput')?.value || '';
@@ -2873,6 +2899,18 @@
                 const selectAction = dest === 'council'
                     ? `selectBillForCouncilVote('${bill.id}'); switchSubTab('cabinet','council');`
                     : `selectBillForVote('${bill.id}'); switchTab('vote');`;
+                // 소관 상임위원회 — 본회의(국회)로 올릴 법안만. 심사가 끝나기 전에는 본회의 심의를 고를 수 없다
+                const block = legisPlenaryBlock(bill);
+                const cmLocked = bill.committeeStatus === 'pass' || bill.committeeStatus === 'fail';
+                const committeeRow = dest === 'parliament' && committees.length ? `
+                    <div style="margin-top:4px; display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+                        <span style="color:#666; font-size:0.75rem;">소관 위원회:</span>
+                        <select class="bill-committee-select" ${cmLocked ? 'disabled' : ''} onclick="event.stopPropagation()" onchange="setBillCommittee('${bill.id}', this.value)">
+                            <option value="">없음 (바로 본회의)</option>
+                            ${committees.map(c => `<option value="${c.id}" ${bill.committeeId === c.id ? 'selected' : ''}>${escapeHtmlText(c.name)}</option>`).join('')}
+                        </select>
+                        ${bill.committeeStatus === 'pending' && committeeById(bill.committeeId) ? `<button class="bill-select-btn" onclick="event.stopPropagation(); switchSubTab('law','committee');">위원회 심사로 →</button>` : ''}
+                    </div>` : '';
                 const div = document.createElement('div');
                 div.className = 'bill-card' + (isActive ? ' selected' : '');
                 div.innerHTML = `
@@ -2880,19 +2918,20 @@
                         ${isActive ? '<span style="color:var(--tno-neon); font-size:0.8rem;">[심의중]</span>' : ''}
                         ${bill.title}
                     </div>
-                    ${bill.content ? `<div class="bill-card-body">${bill.content}</div>` : ''}
+                    ${billBodyHtml(bill, 3)}
                     <div style="margin-top:4px;">${buildTagHtml(bill)}</div>
                     <div style="margin-top:4px; display:flex; align-items:center; gap:6px;">
                         <span style="color:#666; font-size:0.75rem;">상정:</span>
                         ${routeBtn('parliament', '국회', 'var(--tno-gold)')}
                         ${routeBtn('council', '국무회의', 'var(--tno-alert)')}
                     </div>
+                    ${committeeRow}
                     <div class="bill-card-footer">
                         ${buildBillBadges(bill)}
                         <span style="color:#555; font-size:0.75rem; margin-left:4px;">[${thLabel}]</span>
                         ${(bill.voteHistory||[]).length > 0 ? `<span class="bill-history-toggle" onclick="event.stopPropagation(); toggleBillHistory('${bill.id}')">▾ 세부 기록</span>` : ''}
                         <div style="margin-left:auto; display:flex; gap:5px;">
-                            ${!isActive ? `<button class="bill-select-btn" onclick="${selectAction}">심의 선택</button>` : ''}
+                            ${!isActive ? (block ? `<button class="bill-select-btn" disabled style="opacity:0.4;cursor:not-allowed;" title="${escapeHtmlText(block)}">위원회 심사 중</button>` : `<button class="bill-select-btn" onclick="${selectAction}">심의 선택</button>`) : ''}
                             <button class="bill-remove-btn" onclick="removeBill('${bill.id}')">삭제</button>
                         </div>
                     </div>
@@ -2906,6 +2945,7 @@
         // 기록 목록 — scope: 'law'(입법 > 기록, 의회가 의결한 법안) | 'council'(내각 > 기록, 국무회의가 의결한 법안), 없으면 둘 다
         function renderArchiveList(scope) {
             if(!scope) { renderArchiveList('law'); renderArchiveList('council'); return; }
+            legisApplyEnactments(); // 가결된 헌법 개정안을 헌법에 반영
             const sc = ARCHIVE_SCOPES[scope];
             const container = document.getElementById(sc.list);
             if(!container) return;
@@ -2941,7 +2981,7 @@
                 div.style.borderLeftColor = (overall === 'passed') ? 'var(--vote-yea)' : (overall === 'awaiting_veto') ? 'var(--tno-gold)' : 'var(--vote-nay)';
                 div.innerHTML = `
                     <div class="bill-card-title">${bill.title}</div>
-                    ${bill.content ? `<div class="bill-card-body">${bill.content}</div>` : ''}
+                    ${billBodyHtml(bill, 3)}
                     <div style="margin-top:4px;">${buildTagHtml(bill)}</div>
                     <div class="bill-card-footer">
                         ${buildBillBadges(bill)}
@@ -2949,7 +2989,9 @@
                         <span class="bill-history-toggle" onclick="event.stopPropagation(); toggleBillHistory('${bill.id}')">▾ 세부 기록</span>
                         <div style="display:flex; gap:5px;">
                             ${overall === 'awaiting_veto' ? `<button class="bill-amend-btn" onclick="signBill('${bill.id}')">✍ ${vetoHolderLabel()} 서명</button><button class="bill-remove-btn" onclick="vetoBill('${bill.id}')">🛑 거부권 행사</button>` : ''}
-                            ${overall === 'passed' ? `<button class="bill-amend-btn" onclick="startAmendment('${bill.id}')">📝 개정안 발의</button>` : ''}
+                            ${overall === 'passed' ? (bill.kind === 'constitution'
+                                ? `<button class="bill-amend-btn" onclick="switchSubTab('law','lawbook')">📜 헌법 보기</button>`
+                                : `<button class="bill-amend-btn" onclick="startAmendment('${bill.id}')">📝 개정안 발의</button>`) : ''}
                             <button class="bill-remove-btn" onclick="removeBill('${bill.id}')">삭제</button>
                         </div>
                     </div>
@@ -4938,7 +4980,8 @@
                     voteState,
                     activeBillTagFilter,
                     activeArchiveTagFilter,
-                    activeArchiveStatusFilter
+                    activeArchiveStatusFilter,
+                    ...legisGetState()
                 },
                 election: {
                     elecStore:      JSON.parse(JSON.stringify(elecStore)),
@@ -5058,6 +5101,7 @@
             activeBillTagFilter    = leg.activeBillTagFilter    ?? null;
             activeArchiveTagFilter = leg.activeArchiveTagFilter ?? null;
             activeArchiveStatusFilter = leg.activeArchiveStatusFilter ?? null;
+            legisSetState(leg); // 상임위원회 · 헌법 (1.6.0)
 
             // ── 선거 데이터 복원 ──
             const elec = state.election || {};
@@ -6459,6 +6503,10 @@
             if(sub === 'vote') { renderBulkPartyList(); syncBillSelect(); renderActiveBillDisplay(); updateConfirmButtons(); }
             if(sub === 'bill' || sub === 'table') renderBillList();
             if(sub === 'archive') renderArchiveList();
+            if(sub === 'committee') renderCommitteeTab();
+            if(sub === 'lawbook') renderLawBookTab();
+            renderLawPipeline();
+            if(sub === 'bill' && !document.querySelector('#newBillArticles .art-row')) legisRenderArticleEditor('newBillArticles', []);
         }
 
         // 예전 호출 호환: 입법 기록은 입법 > 기록, 선거 기록은 선거 > 기록
@@ -6470,7 +6518,7 @@
         // 구버전 switchTab 호환
         function switchTab(tabName) {
             if(['ideology','house','senate','coalition'].includes(tabName)) switchSubTab('setup', tabName==='house'||tabName==='senate'?'settings':tabName);
-            else if(['bill','table','vote','archive'].includes(tabName)) switchSubTab('law', tabName);
+            else if(['bill','committee','table','vote','archive','lawbook'].includes(tabName)) switchSubTab('law', tabName);
         }
 
         // 의회 > 설정 내부 탭 (하원/상원/삼원)
