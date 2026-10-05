@@ -217,15 +217,16 @@
             const opts = ['<option value="">-- 의원에서 불러오기 --</option>'];
             chamberList().forEach(ch => {
                 const chLabel = chamberDisplayName(ch);
-                districtMemberKeys(ch).forEach((key, i) => {
+                districtMemberKeys(ch).forEach(key => {
                     const m = districtMembers[ch][key];
                     if(!m || m.vacant) return;
+                    const seatNo = memberSeatNo(ch, 'd:' + key);
                     if(filterPartyId !== undefined && m.partyId !== filterPartyId) return;
                     const party = parties.find(p => p.id === m.partyId);
                     const isInd = party?.ideologyId === IND_IDEOLOGY_ID;
                     const ind = isInd ? independents.find(x => x.chamber === ch && x.districtKey === key) : null;
                     const nm = isInd ? (ind?.name || '무소속') : (m.name || '(이름 없음)');
-                    opts.push(`<option value="district:${ch}:${key}">[${chLabel}] #${i+1} ${nm} (${party?.name||''})</option>`);
+                    opts.push(`<option value="district:${ch}:${key}">[${chLabel}] #${seatNo ?? '—'} ${nm} (${party?.name||''})</option>`);
                 });
                 parties.filter(p => p.ideologyId !== IND_IDEOLOGY_ID && (filterPartyId === undefined || p.id === filterPartyId)).forEach(p => {
                     (listMembers[ch]?.[p.id]||[]).forEach(m => {
@@ -235,7 +236,7 @@
                 });
                 if(filterPartyId === undefined || filterIsInd) {
                     independents.filter(x => x.chamber === ch && !x.districtKey).forEach(ind => {
-                        const label = ind.name || `#${computeIndependentOffset(ch) + ind.seatIndex}`;
+                        const label = ind.name || `#${independentSeatNo(ind) ?? '—'}`;
                         opts.push(`<option value="independent:${ind.id}">[${chLabel} 비례·무소속] ${label}</option>`);
                     });
                 }
@@ -4233,9 +4234,9 @@
             const d = dotCache[chamber][hit];
             if(!d) return;
             const nameLabel = d.independentName ? d.independentName : d.partyName;
-            const seatLabel = d.independentSeatIndex
-                ? `#${computeIndependentOffset(chamber) + d.independentSeatIndex}`
-                : `#${hit+1}`;
+            // 좌석 번호는 반원 좌석 순서 하나로 통일 — 의원 카드의 #번호와 같다
+            const seatLabel = `#${hit+1}`;
+            const seated = seatMemberInfo(chamber, hit);
 
             const titleEl = document.getElementById('seatInfoCardTitle');
             if(titleEl) {
@@ -4246,6 +4247,8 @@
             }
 
             const rows = [];
+            if(seated && seated.name && d.partyName !== '무소속') rows.push(`의원: ${escapeHtmlText(seated.name)}`);
+            if(seated) rows.push(`${seated.kind === 'district' ? '지역구' : '선출'}: ${escapeHtmlText(seated.place)}`);
             if(d.partyName !== '무소속') rows.push(`정당: ${nameLabel}`);
             if(d.factionName) rows.push(`파벌: ${d.factionName}`);
             rows.push(`이념: ${d.ideology}`);
@@ -7186,7 +7189,7 @@
                 const indLabelFor = (indKey) => {
                     const ind = independents.find(x => 'ind__'+x.id === indKey);
                     if(!ind) return indKey;
-                    return ind.name ? ind.name : `#${computeIndependentOffset(ind.chamber) + ind.seatIndex}`;
+                    return ind.name ? ind.name : `#${independentSeatNo(ind) ?? '—'}`;
                 };
                 const memberIndKeys = coal.members.filter(m => typeof m === 'string' && m.startsWith('ind__'));
                 const extIndKeys = coal.externalSupporters.filter(m => typeof m === 'string' && m.startsWith('ind__'));
@@ -7516,13 +7519,14 @@
             const opts = ['<option value="">-- 의석 선택 (붙여넣기 대상) --</option>'];
             chamberList().forEach(ch => {
                 const chLabel = chamberDisplayName(ch);
-                districtMemberKeys(ch).forEach((key, i) => {
+                districtMemberKeys(ch).forEach(key => {
                     const m = districtMembers[ch]?.[key];
                     if(!m || m.vacant || m.partyId !== partyId) return;
+                    const seatNo = memberSeatNo(ch, 'd:' + key);
                     const isInd = party?.ideologyId === IND_IDEOLOGY_ID;
                     const ind = isInd ? independents.find(x => x.chamber === ch && x.districtKey === key) : null;
                     const nm = isInd ? (ind?.name || '무소속') : (m.name || '(이름 없음)');
-                    opts.push(`<option value="district:${ch}:${key}">[${chLabel}] #${i+1} ${nm}</option>`);
+                    opts.push(`<option value="district:${ch}:${key}">[${chLabel}] #${seatNo ?? '—'} ${nm}</option>`);
                 });
                 (listMembers[ch]?.[partyId]||[]).forEach(m => {
                     if(m.vacant) return;
@@ -7530,7 +7534,7 @@
                 });
                 if(party?.ideologyId === IND_IDEOLOGY_ID) {
                     independents.filter(x => x.chamber === ch && !x.districtKey).forEach(ind => {
-                        const label = ind.name || `#${computeIndependentOffset(ch) + ind.seatIndex}`;
+                        const label = ind.name || `#${independentSeatNo(ind) ?? '—'}`;
                         opts.push(`<option value="independent:${ind.id}">[${chLabel} 비례·무소속] ${label}</option>`);
                     });
                 }
@@ -8848,7 +8852,7 @@
             let filtered = entries;
             if(query.startsWith('#')) {
                 const numQ = query.slice(1).trim();
-                if(numQ) filtered = filtered.filter(e => String(e.seatNo).includes(numQ));
+                if(numQ) filtered = filtered.filter(e => e.seatNo != null && String(e.seatNo).includes(numQ));
             } else if(query) {
                 const q = query.toLowerCase();
                 filtered = filtered.filter(e => (e.name||'').toLowerCase().includes(q) || (e.personName||'').toLowerCase().includes(q));
@@ -8942,7 +8946,8 @@
         // 특정 의원실의 지역구 당선자 목록을 좌석 번호(표시 순서 기준 1부터)와 함께 반환
         function getDistrictMemberEntries(ch) {
             const keys = districtMemberKeys(ch);
-            return keys.map((key, i) => ({ key, member: districtMembers[ch][key], name: districtMemberLabel(ch, key), seatNo: i+1 }));
+            // 좌석 번호는 반원의 실제 좌석 (궐석이면 없음) — 좌석 정보 카드의 #번호와 같다
+            return keys.map(key => ({ key, member: districtMembers[ch][key], name: districtMemberLabel(ch, key), seatNo: memberSeatNo(ch, 'd:' + key) }));
         }
 
         // 의원 카드의 유효 이념(파벌 지정 시 파벌 이념 우선) id 반환
@@ -9019,7 +9024,7 @@
                         </div>
                         <div class="dyn-ref" style="flex:1;display:flex;flex-direction:column;gap:6px;min-width:0;">
                             <div style="display:flex;align-items:center;gap:8px;">
-                                <span style="color:#555;font-size:0.75rem;flex-shrink:0;" title="좌석 번호">#${seatNo}</span>
+                                <span style="color:#555;font-size:0.75rem;flex-shrink:0;" title="반원 좌석 번호">#${seatNo ?? '—'}</span>
                                 <span style="width:9px;height:9px;background:${party?.color||'#666'};border-radius:50%;flex-shrink:0;"></span>
                                 <span style="color:#ccc;font-size:0.9rem;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${key}">${name}</span>
                                 ${member.vacant?'<span style="color:#cc3333;font-size:0.75rem;">[궐석]</span>':''}
@@ -9214,11 +9219,12 @@
                 return;
             }
 
-            const entries = raw.map((e,i) => {
+            const entries = raw.map(e => {
                 const party = parties.find(p=>p.id===e.partyId);
                 const personName = e.kind==='ind' ? e.ind.name : e.member.name;
                 const effectiveIdeologyId = e.kind==='ind' ? (e.ind.ideologyId ?? null) : memberEffectiveIdeologyId(e.member, party);
-                return { ...e, seatNo:i+1, name:null, personName, effectiveIdeologyId };
+                const seatNo = memberSeatNo(ch, e.kind === 'ind' ? 'i:' + e.ind.id : 'l:' + e.partyId + ':' + e.member.id);
+                return { ...e, seatNo, name:null, personName, effectiveIdeologyId };
             });
 
             const filtered = applyMemberFilters('list', entries, ch);
@@ -9251,7 +9257,7 @@
                         </div>
                         <div class="dyn-ref" style="flex:1;display:flex;flex-direction:column;gap:6px;min-width:0;">
                             <div style="display:flex;align-items:center;gap:8px;">
-                                <span style="color:#555;font-size:0.75rem;flex-shrink:0;" title="좌석 번호">#${e.seatNo}</span>
+                                <span style="color:#555;font-size:0.75rem;flex-shrink:0;" title="반원 좌석 번호">#${e.seatNo ?? '—'}</span>
                                 <span style="width:9px;height:9px;background:${party?.color||'#666'};border-radius:50%;flex-shrink:0;"></span>
                                 <span style="color:#888;font-size:0.8rem;">비례</span>
                             </div>
@@ -14497,7 +14503,7 @@
                             const fStroke = highlightGov&&fIsGov ? govHl('var(--tno-gold)') : (fEffCoal?fEffCoal.color:null);
                             for(let k=0; k<(f[seatKey]||0); k++){
                                 if(map.length>=targetTotal) break;
-                                map.push({color:fc, partyName:p.name, factionName:f.name, partyStatus:p.status||'active',
+                                map.push({color:fc, partyId:p.id, factionId:f.id, partyName:p.name, factionName:f.name, partyStatus:p.status||'active',
                                     ideology:ideologyName(f.ideologyId)||ideologyName(p.ideologyId)||'?',
                                     coalitionName:fEffCoal?.name, strokeColor:fStroke, isRuling:fIsGov, externalSupport:isExtSupport?(rulingCoal.externalSupportLabel||'각외협력'):false});
                             }
@@ -14505,7 +14511,7 @@
                         });
                         for(let k=placed; k<cnt; k++){
                             if(map.length>=targetTotal) break;
-                            map.push({color:p.color, partyName:p.name, factionName:null, partyStatus:p.status||'active',
+                            map.push({color:p.color, partyId:p.id, factionId:null, partyName:p.name, factionName:null, partyStatus:p.status||'active',
                                 ideology:ideologyName(p.ideologyId)||'?',
                                 coalitionName:effectiveCoal?.name, strokeColor:stroke, strokeDashed, isRuling:isGov, externalSupport:isExtSupport?(rulingCoal.externalSupportLabel||'각외협력'):false});
                         }
@@ -14540,7 +14546,7 @@
                                     indExtSupport = false;
                                 }
                             }
-                            map.push({color:p.color, partyName:p.name, factionName:null, partyStatus:indEntry?.status || p.status || 'active',
+                            map.push({color:p.color, partyId:p.id, factionId:null, independentId: indEntry?.id || null, partyName:p.name, factionName:null, partyStatus:indEntry?.status || p.status || 'active',
                                 ideology:ideologyName(p.ideologyId)||'?',
                                 coalitionName:indCoalName, strokeColor:indStroke, strokeDashed:indDashed, isRuling:indIsGov, externalSupport:indExtSupport,
                                 independentName: indEntry?.name || null, independentSeatIndex: indEntry?.seatIndex || null});
@@ -14552,11 +14558,14 @@
             };
 
             const hMap = getMap(hTotal, 'seatsHouse', 'inHouse');
+            seatMaps = { house: hMap, senate: [], third: [] }; // 좌석 순서(번호) — 의원 ↔ 좌석 배정의 기준 (drawChamber 여부와 무관)
+            seatAssignCache = {};
             drawChamber('houseCanvas', hMap, hTotal, 'house');
             updateStats('houseStats', hMap, hTotal);
 
             if(isBicameral) {
                 const sMap = getMap(sTotal, 'seatsSenate', 'inSenate');
+                seatMaps.senate = sMap;
                 drawChamber('senateCanvas', sMap, sTotal, 'senate');
                 updateStats('senateStats', sMap, sTotal);
             }
@@ -14564,6 +14573,7 @@
             if(hasThirdChamber()) {
                 const tTotal = parseInt(document.getElementById('thirdTotal')?.value) || 100;
                 const tMap = getMap(tTotal, 'seatsThird', 'inThird');
+                seatMaps.third = tMap;
                 drawChamber('thirdCanvas', tMap, tTotal, 'third');
                 updateStats('thirdStats', tMap, tTotal);
             }
@@ -14575,6 +14585,83 @@
             checkNoConfidenceBills();
             checkMartialLawLiftBills();
             renderCabinetDisplay();
+        }
+
+        // ── 의원 ↔ 반원 좌석 배정 (1.6.0 의석 번호 통일) ──
+        // 반원 좌석 번호(왼쪽부터 1, 2, …)를 기준으로, 정당마다 그 정당 좌석에 소속 의원을 차례로 앉힌다 —
+        // 파벌 좌석에는 그 파벌 의원을 먼저, 나머지는 지역구 의원(지역구 순서) → 비례대표 순. 무소속은 좌석마다 개별 의원이 정해져 있다.
+        // 의원 키: 지역구 'd:<지역구 키>' · 비례 'l:<정당 id>:<의원 id>' · 비례 무소속 'i:<무소속 id>'
+        let seatMaps = { house: [], senate: [], third: [] };
+        let seatAssignCache = {};
+        function seatAssignments(ch) {
+            if(seatAssignCache[ch]) return seatAssignCache[ch];
+            const map = seatMaps[ch] || [];
+            const out = { byMember: {}, bySeat: [] };
+            const seatsByParty = new Map();
+            map.forEach((d, i) => {
+                if(d.partyId == null) return;
+                const k = String(d.partyId);
+                if(!seatsByParty.has(k)) seatsByParty.set(k, []);
+                seatsByParty.get(k).push(i);
+            });
+            const sit = (key, i) => { out.byMember[key] = i; out.bySeat[i] = key; };
+            parties.forEach(p => {
+                const seats = seatsByParty.get(String(p.id)) || [];
+                if(!seats.length) return;
+                if(p.ideologyId === IND_IDEOLOGY_ID) {
+                    seats.forEach(i => {
+                        const ind = map[i].independentId ? independents.find(x => x.id === map[i].independentId) : null;
+                        if(ind) sit(ind.districtKey ? 'd:' + ind.districtKey : 'i:' + ind.id, i);
+                    });
+                    return;
+                }
+                const members = [];
+                (typeof districtMemberKeys === 'function' ? districtMemberKeys(ch) : []).forEach(k => {
+                    const m = districtMembers[ch]?.[k];
+                    if(m && !m.vacant && String(m.partyId) === String(p.id)) members.push({ key: 'd:' + k, factionId: m.factionId || null });
+                });
+                (listMembers[ch]?.[p.id] || []).forEach(m => { if(!m.vacant) members.push({ key: 'l:' + p.id + ':' + m.id, factionId: m.factionId || null }); });
+                const used = new Set();
+                const byFaction = {};
+                seats.forEach(i => { const f = map[i].factionId; if(f != null) (byFaction[f] = byFaction[f] || []).push(i); });
+                Object.entries(byFaction).forEach(([fid, fseats]) => {
+                    const fm = members.filter(m => !used.has(m.key) && m.factionId != null && String(m.factionId) === String(fid));
+                    fseats.forEach((i, n) => { const m = fm[n]; if(m) { sit(m.key, i); used.add(m.key); } });
+                });
+                const rest = members.filter(m => !used.has(m.key));
+                let r = 0;
+                seats.forEach(i => { if(out.bySeat[i] || r >= rest.length) return; const m = rest[r++]; sit(m.key, i); used.add(m.key); });
+            });
+            seatAssignCache[ch] = out;
+            return out;
+        }
+        function independentSeatNo(ind) {
+            return ind ? memberSeatNo(ind.chamber, ind.districtKey ? 'd:' + ind.districtKey : 'i:' + ind.id) : null;
+        }
+        // 의원의 좌석 번호 (1부터) — 궐석 · 좌석에 앉지 못한 의원은 null
+        function memberSeatNo(ch, key) {
+            const i = seatAssignments(ch).byMember[key];
+            return i == null ? null : i + 1;
+        }
+        // 좌석에 앉은 의원 정보 — 좌석 정보 카드용 { name, place }
+        function seatMemberInfo(ch, i) {
+            const key = seatAssignments(ch).bySeat[i];
+            if(!key) return null;
+            if(key.startsWith('d:')) {
+                const dk = key.slice(2);
+                const m = districtMembers[ch]?.[dk];
+                const ind = independents.find(x => x.chamber === ch && x.districtKey === dk);
+                const party = m ? parties.find(p => p.id === m.partyId) : null;
+                const name = party?.ideologyId === IND_IDEOLOGY_ID ? (ind?.name || '') : (m?.name || '');
+                return { name, place: typeof districtMemberLabel === 'function' ? districtMemberLabel(ch, dk) : dk, kind: 'district' };
+            }
+            if(key.startsWith('l:')) {
+                const [, pid, mid] = key.split(':');
+                const m = (listMembers[ch]?.[pid] || listMembers[ch]?.[parseInt(pid)] || []).find(x => String(x.id) === mid);
+                return { name: m?.name || '', place: '비례대표', kind: 'list' };
+            }
+            const ind = independents.find(x => x.id === key.slice(2));
+            return { name: ind?.name || '', place: '비례대표', kind: 'list' };
         }
 
         function drawChamber(cvsId, map, total, chamber) {
@@ -14655,6 +14742,9 @@
                 factionName: map[i]?.factionName || null,
                 independentName: map[i]?.independentName || null,
                 independentSeatIndex: map[i]?.independentSeatIndex || null,
+                partyId: map[i]?.partyId ?? null,
+                factionId: map[i]?.factionId ?? null,
+                independentId: map[i]?.independentId || null,
             }));
 
             const highlightGov = document.getElementById('chkGovHighlight').checked;
