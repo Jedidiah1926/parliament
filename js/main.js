@@ -4922,7 +4922,7 @@
         function getAppState() {
             const systemType = document.querySelector('input[name="systemType"]:checked')?.value || 'bicameral';
             return {
-                meta: { app: SAVE_APP_ID, version: "1.3", savedAt: new Date().toISOString() },
+                meta: { app: SAVE_APP_ID, version: "1.3", savedAt: new Date().toISOString(), dataLang: dataLang || null },
                 ui: { currentMainTab, currentSubTab },
                 config: {
                     systemType,
@@ -5078,6 +5078,8 @@
             const parl = state.parliament || state.data;
             if(!parl || !Array.isArray(parl.parties) || !Array.isArray(parl.ideologies) || !Array.isArray(parl.coalitions))
                 throw new Error("Invalid parliament data");
+            dataLang = state.meta?.dataLang || null;
+            setTimeout(localizeLegacyData, 0); // 언어 정보 없는 세이브를 한국어가 아닌 화면에서 열었으면 기본 이름을 그 언어로 (1.6.0)
 
             ideologies = parl.ideologies;
             parties    = parl.parties.map(p => ({ leaderName:'', leaderPhoto:'', floorLeaderName:'', floorLeaderPhoto:'', logoPhoto:'', showLogoInStats:false, hideStatsPhoto:false, description:'', factions:[], seatsThird:0, inThird:false, abbr:'', fraudAttempt:null, ...p, factions:(p.factions||[]).map(f=>({leaderName:'',leaderPhoto:'',logoPhoto:'',usePartyColor:false,seatsThird:0,...f})) }));
@@ -5704,6 +5706,7 @@
         // 새 세이브 생성 흐름(index.html)에서 넘어온 이름으로, 방금 초기화된 현재 상태를 그대로 첫 저장으로 등록
         function createNamedSlotFromCurrentState(name) {
             if(!localStorageAvailable || !name) return;
+            if(!dataLang && typeof getLang === 'function' && getLang() === 'kr') dataLang = 'kr';
             const slots = loadSaveSlots();
             if(slots.some(s => !s.isAutosave && s.name === name)) return; // 이미 있으면 조용히 건너뜀
             const id = 'slot'+Date.now();
@@ -6743,7 +6746,62 @@
             if(regionT) regionT.textContent = tName;
         }
 
+        // ── 세이브 데이터 언어 (1.6.0) ──
+        // 화면 번역은 UI 글자에만 하고 세이브에 든 이름 · 제목은 그대로 둔다. 그래서 데이터 자체가 어느 언어로 쓰였는지 기억한다(meta.dataLang).
+        // 언어 정보가 없는 세이브(예전 세이브 · 새로 만든 기본 상태)를 한국어가 아닌 화면에서 열면, 사전에 통째로 있는 기본 이름
+        // (기본 정당 · 이념 · 원 이름 등)만 그 언어로 한 번 바꿔 둔다 — 예전에 화면 번역으로 보이던 모습 그대로
+        let dataLang = null;
+        function localizeLegacyData() {
+            const ui = typeof getLang === 'function' ? getLang() : 'kr';
+            if(dataLang) return;
+            if(ui === 'kr') return;
+            if(!window.DnoLang || !DnoLang.ready) return; // 언어 팩이 준비되면 다시 (dnolangready)
+            let st;
+            try { st = getAppState(); } catch(e) { return; }
+            let changed = 0;
+            const walk = o => {
+                if(Array.isArray(o)) { o.forEach((v, i) => { if(typeof v === 'string') { const t = /[가-힣]/.test(v) ? DnoLang.exact(v) : null; if(t) { o[i] = t; changed++; } } else if(v && typeof v === 'object') walk(v); }); return; }
+                Object.keys(o).forEach(k => {
+                    const v = o[k];
+                    if(typeof v === 'string') { if(/[가-힣]/.test(v) && !v.startsWith('data:')) { const t = DnoLang.exact(v); if(t) { o[k] = t; changed++; } } }
+                    else if(v && typeof v === 'object') walk(v);
+                });
+            };
+            Object.keys(st).forEach(k => { if(k !== 'meta' && k !== 'ui' && st[k] && typeof st[k] === 'object') walk(st[k]); });
+            st.meta = { ...(st.meta || {}), dataLang: ui };
+            try { setAppState(st); } catch(e) { dataLang = ui; return; }
+            simulate(); refreshUI();
+            if(changed && typeof setSaveDirty === 'function') setSaveDirty(true);
+        }
+        window.addEventListener('dnolangready', () => setTimeout(localizeLegacyData, 0));
+        // 화면 번역에서 뺄 데이터 글자 — 정당 · 파벌 · 이념 · 연정 · 국가 · 원 · 지역구 · 의원 · 내각 · 법안 · 위원회 이름 등
+        function collectDataStrings() {
+            const out = [];
+            const add = v => { if(typeof v === 'string' && v) out.push(v); };
+            parties.forEach(p => { add(p.name); add(p.abbr); add(p.leaderName); add(p.floorLeaderName); (p.factions||[]).forEach(f => { add(f.name); add(f.leaderName); }); });
+            ideologies.forEach(i => { add(i.name); (i.subs||[]).forEach(sb => add(sb.name)); });
+            coalitions.forEach(c => { add(c.name); add(c.externalSupportLabel); });
+            ['nationNameInput','houseNameInput','senateNameInput','thirdNameInput'].forEach(id => add(document.getElementById(id)?.value));
+            ['house','senate','third'].forEach(ch => {
+                Object.values(districtNames[ch] || {}).forEach(add);
+                Object.values(districtMembers[ch] || {}).forEach(m => add(m && m.name));
+                Object.values(listMembers[ch] || {}).forEach(arr => (arr || []).forEach(m => add(m && m.name)));
+            });
+            independents.forEach(x => add(x.name));
+            [president, pm, pmNominee].forEach(x => add(x && x.name));
+            cabinetMembers.forEach(m => { add(m.name); add(m.position); });
+            Object.values(cabinetRoleLabels || {}).forEach(add);
+            bills.forEach(b => { add(b.title); (b.tags || []).forEach(add); });
+            if(typeof committees !== 'undefined') committees.forEach(c => add(c.name));
+            if(typeof constitution !== 'undefined' && constitution) add(constitution.title);
+            return out;
+        }
+        function syncDataStrings() {
+            if(window.DnoLang && DnoLang.setDataStrings && typeof getLang === 'function' && getLang() !== 'kr') DnoLang.setDataStrings(collectDataStrings());
+        }
+
         function refreshUI() {
+            syncDataStrings();
             syncDistrictIndependentLinks();
             syncIndependents();
             syncListMembers();
@@ -14585,6 +14643,7 @@
             checkNoConfidenceBills();
             checkMartialLawLiftBills();
             renderCabinetDisplay();
+            syncDataStrings();
         }
 
         // ── 의원 ↔ 반원 좌석 배정 (1.6.0 의석 번호 통일) ──
