@@ -8881,6 +8881,7 @@
             const container = document.getElementById('membersList');
             if(!container) return;
             if(!isSetupSubTabShown('Members')) return;
+            memberPagerStop(container);
             container.innerHTML = '';
 
             const chambers = chamberList();
@@ -8916,7 +8917,8 @@
                 return;
             }
 
-            filtered.forEach(({key, member, name, seatNo}) => {
+            // 지역구 의원이 수백 명이어도 버벅이지 않게 앞쪽 카드만 그리고, 목록 끝에 가까워지면 이어서 그린다 (renderMemberCardsPaged)
+            const buildCard = ({key, member, name, seatNo}) => {
                 const party = parties.find(p=>p.id===member.partyId);
                 const div = document.createElement('div');
                 div.className = 'card-item';
@@ -8972,9 +8974,9 @@
                         </div>
                     `;
                 }
-                container.appendChild(div);
-            });
-            fitDynPhotos(container);
+                return div;
+            };
+            renderMemberCardsPaged('members', container, filtered, buildCard, ch);
         }
 
         function updateDistrictMember(ch, key, field, value) {
@@ -8982,7 +8984,8 @@
             if(!m) return;
             m[field] = value;
             if(field !== 'name') simulate();
-            if(field === 'name') { renderMembersList(); renderCabinetDisplay(); }
+            // 이름은 입력칸에 이미 보이므로 목록 전체를 다시 그리지 않는다 (의원이 많으면 글자 하나 고칠 때마다 멈칫했음)
+            if(field === 'name') renderCabinetDisplay();
         }
 
         // 지역구 의원 정당 변경 (당적 변경/이적) — 기존 정당 의석 -1, 새 정당 의석 +1
@@ -9047,7 +9050,7 @@
             const m = arr?.find(x=>String(x.id)===String(memberId));
             if(!m) return;
             m[field] = value;
-            if(field === 'name') { renderListMemberList(); renderCabinetDisplay(); }
+            if(field === 'name') renderCabinetDisplay(); // 목록은 다시 그리지 않음 (updateDistrictMember와 같은 이유)
             else simulate();
         }
 
@@ -9105,7 +9108,7 @@
             const container = document.getElementById('listMemberList');
             if(!container) return;
             if(!isSetupSubTabShown('List')) return;
-            const token = ++listMemberRenderToken; // 이어 그리던 이전 작업이 있으면 멈춤
+            memberPagerStop(container);
             container.innerHTML = '';
 
             const chambers = chamberList();
@@ -9150,8 +9153,7 @@
                 return;
             }
 
-            // 비례 의원이 수백 명이면 카드를 한 번에 다 그릴 때 화면이 한동안 멈춘다 — 앞쪽 카드는 바로 그리고
-            // 나머지는 프레임마다 조금씩 이어 그린다. 그 사이에 다시 그리기가 시작되면 이전 작업은 멈춘다
+            // 비례 의원이 수백 명이어도 버벅이지 않게 앞쪽 카드만 그리고, 목록 끝에 가까워지면 이어서 그린다 (renderMemberCardsPaged)
             const chamberPartyOptions = parties.filter(p=>p[inKeyFor(ch)]);
             const buildCard = e => {
                 const party = parties.find(p=>p.id===e.partyId);
@@ -9163,7 +9165,6 @@
                     div.dataset.indId = ind.id;
                     div.style.cssText = 'display:flex;gap:10px;align-items:stretch;border-left-color:#999;margin-bottom:8px;';
                     div.innerHTML = `<span class="drag-handle" style="align-self:center;">⋮⋮</span>` + buildIndependentCardBody(ind, { seatNo: e.seatNo });
-                    container.appendChild(div);
                     startIndependentDragReorder(div.querySelector('.drag-handle'), 'listMemberList', '.drag-card-indmember', ch, renderListMemberList);
                 } else {
                     const m = e.member;
@@ -9197,20 +9198,77 @@
                             ${!isPartyLeaderMatch(e.partyId, m.name, m.photo)?`<button onclick="designatePartyLeaderFromListSeat('${ch}','${e.partyId}','${m.id}')" style="background:transparent;border:1px solid #443300;color:#c9a227;font-family:inherit;font-size:0.75rem;padding:2px 8px;cursor:pointer;text-align:left;">👑 당수로 지정</button>`:''}
                         </div>
                     `;
-                    container.appendChild(div);
                 }
                 return div;
             };
-            const FIRST_CHUNK = 40, CHUNK = 60;
-            const drawChunk = (from, size) => {
-                if(token !== listMemberRenderToken || !container.isConnected) return;
-                const divs = filtered.slice(from, from + size).map(buildCard);
-                fitDynPhotos(container, divs.filter(d => d.classList.contains('dyn-row')));
-                if(from + size < filtered.length) requestAnimationFrame(() => drawChunk(from + size, CHUNK));
-            };
-            drawChunk(0, FIRST_CHUNK);
+            renderMemberCardsPaged('list', container, filtered, buildCard, ch);
         }
-        let listMemberRenderToken = 0;
+
+        // ── 의원 카드 목록 나눠 그리기 (지역구 의원 · 비례대표 공용) ──
+        // 수백 장을 한 번에(또는 뒤에서 계속) 그리면 탭을 열거나 고칠 때마다 화면이 멈춘다. 처음엔 MEMBER_PAGE장만 그리고,
+        // 목록 끝(“더 보기” 줄)이 화면에 가까워지면 다음 MEMBER_PAGE장을 붙인다. 이미 펼친 장수와 스크롤 위치는
+        // 같은 목록(원 · 검색 · 필터가 같음)을 다시 그릴 때 그대로 유지하고, 원이나 검색 · 필터가 바뀌면 처음부터.
+        const MEMBER_PAGE = 40;
+        const memberPagerView = { members: { key: null, shown: MEMBER_PAGE }, list: { key: null, shown: MEMBER_PAGE } };
+        // 다시 그리기 직전(목록을 비우기 전)에 부름 — 이어 그리기를 멈추고 지금 스크롤 위치를 기억해 둔다
+        function memberPagerStop(container) {
+            if(!container) return;
+            if(container._memberPager) { container._memberPager.disconnect(); container._memberPager = null; }
+            if(container.childElementCount) {
+                const scroller = memberScrollParent(container);
+                container._memberKeepTop = scroller ? scroller.scrollTop : null;
+            }
+        }
+        function memberScrollParent(el) {
+            for(let p = el.parentElement; p && p !== document.body; p = p.parentElement) {
+                const oy = getComputedStyle(p).overflowY;
+                if(oy === 'auto' || oy === 'scroll') return p;
+            }
+            return null;
+        }
+        function renderMemberCardsPaged(ns, container, items, buildCard, ch) {
+            const st = memberFilterState[ns];
+            const viewKey = [ch, st.query || '', [...st.partyIds].sort().join(','), [...st.ideologyIds].sort().join(',')].join('|');
+            const view = memberPagerView[ns];
+            const sameView = view.key === viewKey;
+            if(!sameView) { view.key = viewKey; view.shown = MEMBER_PAGE; }
+            const scroller = memberScrollParent(container);
+            const keepTop = sameView ? container._memberKeepTop : null; // 같은 목록이면 보던 자리 그대로
+            container._memberKeepTop = null;
+            if(container._memberPager) { container._memberPager.disconnect(); container._memberPager = null; }
+
+            const more = document.createElement('button');
+            more.type = 'button';
+            more.className = 'member-list-more';
+            container.appendChild(more);
+            let drawn = 0;
+            const drawUpTo = n => {
+                const end = Math.min(n, items.length);
+                if(end <= drawn) return;
+                const divs = [];
+                const frag = document.createDocumentFragment();
+                for(let i = drawn; i < end; i++) { const d = buildCard(items[i]); divs.push(d); frag.appendChild(d); }
+                container.insertBefore(frag, more);
+                fitDynPhotos(container, divs.filter(d => d.classList.contains('dyn-row')));
+                drawn = end;
+                view.shown = Math.max(view.shown, drawn);
+                more.style.display = drawn < items.length ? '' : 'none';
+                more.textContent = `${drawn} / ${items.length}명 표시 중 — 더 보기`;
+            };
+            more.onclick = () => drawUpTo(drawn + MEMBER_PAGE);
+            drawUpTo(view.shown);
+            if(scroller && keepTop != null) scroller.scrollTop = keepTop;
+            if(drawn >= items.length || typeof IntersectionObserver === 'undefined') return;
+            const io = new IntersectionObserver(es => {
+                if(!es.some(e => e.isIntersecting) || drawn >= items.length) return;
+                drawUpTo(drawn + MEMBER_PAGE);
+                if(drawn >= items.length) { memberPagerStop(container); return; }
+                // 붙인 카드가 짧아 "더 보기"가 여전히 가까이 있으면 다시 확인하도록 관찰을 새로 건다
+                io.unobserve(more); io.observe(more);
+            }, { root: scroller, rootMargin: '0px 0px 800px 0px' });
+            io.observe(more);
+            container._memberPager = io;
+        }
 
 
 

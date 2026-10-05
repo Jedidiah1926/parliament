@@ -22,6 +22,7 @@ window.DnoLangPacks.en = {
  ],
  "ordinal": "en",
  "patterns": [
+  {"re": "^(\\d+) / (\\d+)명 표시 중 — 더 보기$", "to": "Showing $1 / $2 \u2014 show more"},
   {"re": "^세이브 (\\d+)개 · 약 ([\\d.]+)(MB|KB) 사용$", "to": "$1 save(s) · about $2 $3 used"},
   {"re": "^(\\d+)초마다 · 탭을 옮기거나 닫을 때 \"(.+)\"에 저장$", "to": "Every $1 s · and when switching or closing tabs, into \"$2\""},
   {"re": "^(\\d+)분마다 · 탭을 옮기거나 닫을 때 \"(.+)\"에 저장$", "to": "Every $1 min · and when switching or closing tabs, into \"$2\""},
@@ -7475,6 +7476,7 @@ window.DnoLangPacks.en = {
   ["- \"새 의회 (1)\"(어느 세이브에도 속하지 않던 기본 세션) 삭제 — 탭은 모두 이름 붙은 세이브, 프리셋으로 시작하면 프리셋 제목으로 탭이 열림 (남아 있던 기록은 \"이전 자동저장\"이라는 보통 세이브로 옮김)", "- Removed \"New Parliament (1)\" (the default session that belonged to no save) — every tab is a named save, and starting from a preset opens a tab named after it (leftover data becomes an ordinary save called \"Previous autosave\")"],
   ["- 세이브 · 자동저장 개편 — 세이브 하나에 가장 최근 상태 하나만 보관(따로 쌓이던 \"OO 자동저장\" 없앰 · 큰 지도가 든 세이브가 저장 공간을 두 배로 쓰던 문제 해결), 자동저장과 지금 저장(Ctrl+S)이 모두 그 세이브에 저장, 바뀐 게 없으면 다시 쓰지 않음", "- Save & autosave overhaul — each save keeps just its latest state (no more separate \"… Autosave\" entries, so saves with big maps no longer use twice the storage); autosave and Save now (Ctrl+S) both write into that save, and nothing is rewritten when nothing changed"],
   ["- 저장하지 않은 변경사항이 있으면 탭 이름 옆에 ● — 자동저장이 꺼져 있으면 탭을 옮기거나 닫을 때 · 메인으로 갈 때 저장할지 묻고, 저장 창의 ↺로 마지막 저장 상태로 되돌리기", "- A ● next to the tab name shows unsaved changes — with autosave off you're asked whether to save when switching or closing tabs or going to the main screen, and ↺ in the save window reverts to the last save"],
-  ["- 저장 공간이 가득 차 저장하지 못하면 알림 · 저장 창에 사용량 표시, \"파일 불러오기\"는 파일 이름으로 새 탭을 만들어 엶 (지금 세이브를 덮어쓰지 않음), 탭을 모두 닫아 두면 다시 열어도 빈 화면", "- A warning when storage is full and a save fails, storage usage in the save window, loading a file opens it in a new tab named after the file (instead of overwriting the current save), and closing every tab keeps the screen empty after reopening"]
+  ["- 저장 공간이 가득 차 저장하지 못하면 알림 · 저장 창에 사용량 표시, \"파일 불러오기\"는 파일 이름으로 새 탭을 만들어 엶 (지금 세이브를 덮어쓰지 않음), 탭을 모두 닫아 두면 다시 열어도 빈 화면", "- A warning when storage is full and a save fails, storage usage in the save window, loading a file opens it in a new tab named after the file (instead of overwriting the current save), and closing every tab keeps the screen empty after reopening"],
+  ["- 지역구 의원 · 비례대표가 수백 명일 때 탭을 열거나 고치면 화면이 멈추던 문제 개선 — 앞쪽 40명만 먼저 그리고 스크롤하면 이어서 그림(보던 위치 유지), 이름을 고칠 때 목록 전체를 다시 그리지 않음", "- Opening or editing the district members / list seats tabs no longer freezes with hundreds of members — the first 40 are drawn and more appear as you scroll (keeping your place), and editing a name no longer redraws the whole list"]
  ]
 };
