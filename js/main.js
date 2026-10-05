@@ -4248,7 +4248,7 @@
 
             const rows = [];
             if(seated && seated.name && d.partyName !== '무소속') rows.push(`의원: ${escapeHtmlText(seated.name)}`);
-            if(seated) rows.push(`${seated.kind === 'district' ? '지역구' : '선출'}: ${escapeHtmlText(seated.place)}`);
+            if(seated) rows.push(seated.kind === 'district' ? `지역구: ${escapeHtmlText(seated.place)}` : '비례대표');
             if(d.partyName !== '무소속') rows.push(`정당: ${nameLabel}`);
             if(d.factionName) rows.push(`파벌: ${d.factionName}`);
             rows.push(`이념: ${d.ideology}`);
