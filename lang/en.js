@@ -7629,6 +7629,8 @@ window.DnoLangPacks.en = {
   ["입법 › 위원회에서 상임위원회를 만들면, 법안이 본회의 전에 소관 위원회 심사를 먼저 거칩니다. 위원은 정당 의석 비율대로 배정되고, 위원 과반이 찬성해야 본회의로 넘어가요. 위원회가 없으면 법안은 바로 본회의로 갑니다.", "Create standing committees in Legislation › Committees and bills are reviewed by the responsible committee before the floor. Members are allotted by party seat share, and a majority must vote yes for the bill to reach the floor. Without committees, bills go straight to the floor."],
   ["입법 › 상정에는 등록된 법안이 모입니다. 법안마다 의회에 올릴지 국무회의에 올릴지, 소관 위원회를 어디로 할지 고르고, \"심의 선택\"을 누르면 표결로 넘어가요. 검색과 태그로 찾을 수 있습니다.", "Registered bills gather in Legislation › Floor. For each bill choose whether it goes to the legislature or the cabinet council and which committee reviews it, then press \"Select for deliberation\" to move on to the vote. Search and tags help you find them."],
   ["입법 › 법령에는 헌법과 가결된 법률이 조문 그대로 모입니다. 헌법을 제정하고, 헌법 개정안(가결 기준 2/3)을 통과시키면 헌법이 바뀌고 개정 이력이 남아요.", "Legislation › Statutes collects the constitution and passed laws, article by article. Enact a constitution, and when a constitutional amendment (2/3 threshold) passes, the constitution changes and the amendment is recorded."],
-  ["상임위원회", "Standing committees"]
+  ["상임위원회", "Standing committees"],
+  ["궐석 처리 (사퇴/사망)", "Vacate seat (resigned/died)"],
+  ["직책 (예: 외교부 장관)", "Position (e.g. Minister of Foreign Affairs)"]
  ]
 };
