@@ -81,8 +81,8 @@
         </nav>
 
         <div class="home-meta">
-            <div>VERSION: v1.5.9 (OBT)</div>
-            <div>BUILD: 2026-09-30</div>
+            <div>VERSION: v1.6.0 (OBT)</div>
+            <div>BUILD: 2026-10-05</div>
             <div>&copy; 2025-2026 Pilcrow1926</div>
         </div>
 
@@ -302,8 +302,8 @@
         // 실제로 저장한 시각 (현실 시간)
         function saveRealTime(iso) {
             if(!iso) return '-';
-            const lang = typeof getLang === 'function' ? getLang() : 'ko';
-            return new Date(iso).toLocaleString(lang === 'en' ? 'en-US' : 'ko-KR');
+            const lang = typeof getLang === 'function' ? getLang() : 'kr';
+            return new Date(iso).toLocaleString(lang === 'en' ? 'en-US' : lang === 'jp' ? 'ja-JP' : 'ko-KR');
         }
 
         // ===== 세이브 삭제 (휴지통) — 그냥 클릭은 확인창, Shift+클릭은 바로 삭제 =====
@@ -452,7 +452,7 @@
                 </button>`).join('') + `
                 <div class="home-lang-tools">
                     <button type="button" class="home-lang-more" onclick="document.getElementById('langPackFileInput').click()">언어 팩 불러오기 (.json)</button>
-                    <button type="button" class="home-lang-more" onclick="downloadLangTemplate('ko')">번역 템플릿 받기 (KO · 한국어 기준)</button>
+                    <button type="button" class="home-lang-more" onclick="downloadLangTemplate('kr')">번역 템플릿 받기 (KR · 한국어 기준)</button>
                     <button type="button" class="home-lang-more" onclick="downloadLangTemplate('en')">번역 템플릿 받기 (EN · 영어 기준)</button>
                     ${window.hemicycleDesktop && window.hemicycleDesktop.openModsFolder ? '<button type="button" class="home-lang-more" onclick="window.hemicycleDesktop.openModsFolder()">모드 폴더 열기</button>' : ''}
                 </div>`;
@@ -485,7 +485,7 @@
                 const url = URL.createObjectURL(new Blob([text], { type: 'application/json' }));
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = `hemicycle-lang-template-${base === 'ko' ? 'ko' : 'en'}.json`;
+                a.download = `hemicycle-lang-template-${base === 'kr' ? 'kr' : 'en'}.json`;
                 document.body.appendChild(a);
                 a.click();
                 a.remove();

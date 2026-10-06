@@ -547,10 +547,13 @@
             <div id="mainContentLaw" class="main-tab-content">
                 <div class="sub-tab-container">
                     <button class="sub-tab-btn active" onclick="switchSubTab('law','bill')" id="subTabBill">제출</button>
+                    <button class="sub-tab-btn" onclick="switchSubTab('law','committee')" id="subTabCommittee">위원회</button>
                     <button class="sub-tab-btn" onclick="switchSubTab('law','table')" id="subTabTable">상정</button>
                     <button class="sub-tab-btn" onclick="switchSubTab('law','vote')" id="subTabVote">표결</button>
                     <button class="sub-tab-btn" onclick="switchSubTab('law','archive')" id="subTabArchive">표결 기록</button>
+                    <button class="sub-tab-btn" onclick="switchSubTab('law','lawbook')" id="subTabLawbook">법령</button>
                 </div>
+                <div id="lawPipeline" class="law-pipeline"></div>
 
             <!-- 제출 탭: 법안 작성 폼만 -->
             <div id="contentBill" class="sub-tab-content active">
@@ -560,13 +563,15 @@
                 </div>
                 <div class="vote-panel" style="margin-bottom:10px;">
                     <div class="vote-panel-title"><span class="tno-prompt">&gt; </span>새 법안 작성 (NEW BILL)</div>
-                    <input type="text" class="vote-bill-input" id="newBillTitle" placeholder="법안 제목..." style="margin-bottom:6px;">
-                    <textarea id="newBillContent" placeholder="법안 내용을 입력하세요..." style="
-                        background:#000; border:1px solid var(--tno-border); color:#ccc;
-                        font-family:'NeoDunggeunmo','VT323',monospace; font-size:0.85rem;
-                        width:100%; box-sizing:border-box; padding:8px; resize:vertical;
-                        min-height:80px; outline:none; line-height:1.5;
-                    "></textarea>
+                    <div class="bill-kind-row">
+                        <select id="newBillKind" class="bill-kind-select" onchange="legisOnBillKindChange()">
+                            <option value="law">법률안</option>
+                            <option value="constitution">헌법 개정안</option>
+                        </select>
+                        <input type="text" class="vote-bill-input" id="newBillTitle" placeholder="법안 제목...">
+                    </div>
+                    <div class="art-editor-label">조문 <span>— 제1조 · 제2조처럼 조 단위로 씁니다 (비워 둬도 돼요)</span></div>
+                    <div id="newBillArticles" class="art-editor"></div>
                     <input type="text" id="newBillTags" placeholder="태그 (쉼표로 구분, 예: 경제, 안보)" style="background:#000; border:1px solid var(--tno-border); color:#aaa; font-family:'NeoDunggeunmo','VT323',monospace; font-size:0.85rem; width:100%; box-sizing:border-box; padding:5px 8px; margin-top:6px;">
                     <div style="margin-top:8px;">
                         <label style="color:#888; font-size:0.85rem; margin-bottom:4px;">가결 기준</label>
@@ -589,12 +594,8 @@
                     </select>
                     <div id="editBillForm" style="display:none;">
                         <input type="text" class="vote-bill-input" id="editBillTitle" placeholder="법안 제목..." style="margin-bottom:6px;">
-                        <textarea id="editBillContent" placeholder="법안 내용을 입력하세요..." style="
-                            background:#000; border:1px solid var(--tno-border); color:#ccc;
-                            font-family:'NeoDunggeunmo','VT323',monospace; font-size:0.85rem;
-                            width:100%; box-sizing:border-box; padding:8px; resize:vertical;
-                            min-height:80px; outline:none; line-height:1.5;
-                        "></textarea>
+                        <div class="art-editor-label">조문</div>
+                        <div id="editBillArticles" class="art-editor"></div>
                         <input type="text" id="editBillTags" placeholder="태그 (쉼표로 구분, 예: 경제, 안보)" style="background:#000; border:1px solid var(--tno-border); color:#aaa; font-family:'NeoDunggeunmo','VT323',monospace; font-size:0.85rem; width:100%; box-sizing:border-box; padding:5px 8px; margin-top:6px;">
                         <div style="margin-top:8px;">
                             <label style="color:#888; font-size:0.85rem; margin-bottom:4px;">가결 기준</label>
@@ -609,6 +610,12 @@
                         <button class="add-btn" style="border-style:solid; margin-top:8px; color:var(--tno-gold); border-color:var(--tno-gold);" onclick="saveEditBill()">[✔] 수정 저장</button>
                     </div>
                 </div>
+            </div>
+
+            <!-- 위원회 탭: 상임위원회 · 위원 배정 · 심사 (js/legis.js) -->
+            <div id="contentCommittee" class="sub-tab-content">
+                <div class="cm-intro">상임위원회는 법안을 본회의에 올리기 전에 먼저 심사합니다. 위원은 그 원의 정당 의석 비율대로 배정되고, 위원 과반이 찬성하면 본회의로, 부결되면 폐기돼요.</div>
+                <div id="committeeList"></div>
             </div>
 
             <!-- 상정 탭: 법안 검색 + 대기 중 목록 -->
@@ -755,12 +762,19 @@
                     <div class="bill-tag-filter" id="archiveTagFilter"></div>
                     <div id="archiveList"></div>
                 </div>
+
+                <!-- 법령 탭: 헌법 + 가결된 법률을 조문 그대로 (js/legis.js) -->
+                <div id="contentLawbook" class="sub-tab-content">
+                    <div id="lawBook"></div>
+                </div>
             </div><!-- end mainContentLaw -->
 
             <!-- ===== 국가 그룹 ===== -->
             <div id="mainContentNation" class="main-tab-content active">
                 <div class="sub-tab-container">
                     <button class="sub-tab-btn active" onclick="switchSubTab('nation','symbol')" id="subTabSymbol">상징</button>
+                    <button class="sub-tab-btn" onclick="switchSubTab('nation','territory')" id="subTabTerritory">지역</button>
+                    <button class="sub-tab-btn" onclick="switchSubTab('nation','regions')" id="subTabRegions">권역</button>
                     <button class="sub-tab-btn" onclick="switchSubTab('nation','nationSettings')" id="subTabNationSettings">국가 설정</button>
                 </div>
 
@@ -787,6 +801,131 @@
 
                 </div>
 
+
+                <!-- 지역: 지역구 지도 · 지역구 편집 (1.6.0에서 국가 › 지역 → 국가 › 지역) -->
+                <div id="contentTerritory" class="sub-tab-content">
+                    <!-- 지역구 편집 사이드패널 (구/뉴 지역구 공용 — 선택된 지역구가 있을 때만 표시, 내용은 JS가 채움) -->
+                    <div id="districtNamePanel" style="display:none;padding:8px;background:#0a0c10;border:1px solid #665500;margin:8px 0;"></div>
+
+                    <!-- 지역구 서브탭 - 설정만 (맵은 우측) -->
+                    <div id="elecSubDistrict">
+                        <!-- 원 선택 — 원이 둘 이상일 때 표시. 고른 원이 쓰는 지도(하원과 공유 · 따로)를 편집한다 -->
+                        <div id="districtChamberSelectRow" style="display:none;gap:6px;margin:8px 0 10px;">
+                            <button id="districtChamberHouseBtn" onclick="districtSetChamber('house')"
+                                style="flex:1;padding:6px;font-family:inherit;font-size:0.85rem;background:#0a1a2a;color:var(--tno-neon);border:2px solid var(--tno-neon);cursor:pointer;letter-spacing:1px;" id="districtChamberHouseBtn">
+                                <span id="districtChamberHouseLabel">하원</span> 지역구
+                            </button>
+                            <button id="districtChamberSenateBtn" onclick="districtSetChamber('senate')"
+                                style="flex:1;padding:6px;font-family:inherit;font-size:0.85rem;background:transparent;color:#664400;border:2px solid #664400;cursor:pointer;letter-spacing:1px;">
+                                <span id="districtChamberSenateLabel">상원</span> 지역구
+                            </button>
+                            <button id="districtChamberThirdBtn" onclick="districtSetChamber('third')" style="display:none;flex:1;padding:6px;font-family:inherit;font-size:0.85rem;background:transparent;color:#6a0080;border:2px solid #6a0080;cursor:pointer;letter-spacing:1px;">
+                                <span id="districtChamberThirdLabel">삼원</span> 지역구
+                            </button>
+                        </div>
+
+                        <!-- 육각형(구 지역구) 편집 UI — 지역구 시스템이 육각형일 때만 표시 -->
+                        <div id="districtHexEditUI" style="display:none;">
+                            <div style="margin:0 0 6px;font-size:0.8rem;color:#555;">편집 모드</div>
+                            <div style="display:flex;gap:6px;margin-bottom:10px;">
+                                <button id="districtModeAdd" onclick="districtSetMode('add')"
+                                    style="flex:1;padding:8px;font-family:inherit;font-size:0.9rem;background:#0a2a1a;color:#00cc66;border:2px solid #00cc66;cursor:pointer;letter-spacing:1px;box-shadow:0 0 8px #00cc6688;">추가</button>
+                                <button id="districtModeRemove" onclick="districtSetMode('remove')"
+                                    style="flex:1;padding:8px;font-family:inherit;font-size:0.9rem;background:transparent;color:#663333;border:2px solid #663333;cursor:pointer;letter-spacing:1px;">제거</button>
+                                <button id="districtModeName" onclick="districtSetMode('name')"
+                                    style="flex:1;padding:8px;font-family:inherit;font-size:0.9rem;background:transparent;color:#666633;border:2px solid #666633;cursor:pointer;letter-spacing:1px;">이름</button>
+                                <button id="districtModeNone" onclick="districtSetMode('none')"
+                                    style="flex:0 0 44px;padding:8px;font-family:inherit;font-size:0.9rem;background:transparent;color:#555;border:2px solid #444;cursor:pointer;" title="선택 해제 (이동/확대만)">✕</button>
+                            </div>
+                            <div style="padding:6px 8px;background:#0a0c10;border:1px solid #222;font-size:0.78rem;color:#444;margin-bottom:10px;">
+                                클릭/드래그로 칸 편집 (이름 모드는 클릭만) &nbsp;|&nbsp; 휠: 확대/축소 &nbsp;|&nbsp; 휠클릭+드래그: 이동
+                            </div>
+                            <div style="display:flex;justify-content:flex-end;align-items:center;margin-bottom:14px;">
+                                <button onclick="districtClearAll()" style="background:transparent;border:1px solid #333;color:#555;padding:3px 10px;cursor:pointer;font-family:inherit;font-size:0.8rem;">전체 초기화</button>
+                            </div>
+                        </div>
+
+                        <!-- 지도(뉴 지역구) 편집 UI — 지역구 시스템이 지도일 때만 표시 -->
+                        <div id="districtSvgEditUI">
+                            <!-- 원별 지역구 분리 — 상원 · 삼원을 골랐을 때만 표시 -->
+                            <div id="districtMapShareRow" style="display:none;margin-bottom:10px;">
+                                <div style="color:#888;font-size:0.8rem;margin-bottom:4px;">이 원의 지역구 지도</div>
+                                <div class="system-radio-group">
+                                    <button type="button" class="system-radio-btn" id="districtMapShareBtnShared" onclick="districtSetMapShare('shared')">하원 지도 공유</button>
+                                    <button type="button" class="system-radio-btn" id="districtMapShareBtnSplit" onclick="districtSetMapShare('split')">따로 쓰기</button>
+                                </div>
+                            </div>
+                            <div style="padding:8px;background:#0a0c10;border:1px solid #222;font-size:0.78rem;color:#666;margin-bottom:10px;line-height:1.5;">
+                                <a href="map.html" target="_blank" style="color:var(--tno-neon);">맵 메이커</a>에서 내보낸 .jsx 파일을 업로드하면, 그리드 대신 실제 지도 모양으로 지역구를 만들 수 있습니다.<br>
+                                기본은 하원 지도를 상원·삼원이 함께 쓰며, 원을 골라 <b style="color:#aaa;">따로 쓰기</b>를 누르면 그 원만의 지도를 올릴 수 있습니다. 지역구를 클릭하면 원별 의석 수와 정당별 성향(%)을 지정할 수 있습니다.<br>
+                                업로드하면 <b style="color:#cc8888;">기존 지역구 데이터가 새 지도로 대체</b>됩니다.
+                            </div>
+
+                            <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
+                                <input type="file" id="districtSvgFileInput" accept=".jsx,.js,text/javascript" style="position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;" onchange="districtSvgUpload(this)">
+                                <label for="districtSvgFileInput" class="add-btn" style="margin:0;display:inline-block;cursor:pointer;">⬆ 지역구 지도 업로드 (.jsx)</label>
+                                <span id="districtSvgFileName" style="color:#555;font-size:0.8rem;">파일 없음</span>
+                            </div>
+
+                            <div id="districtSvgInfo" style="display:none;">
+                                <!-- 테두리 색 · 글씨 테두리 색: 네온에서만 고를 수 있음 (라이트/다크는 테마에 맞춘 고정색이라 숨김) -->
+                                <div class="neon-only" style="display:flex;align-items:center;gap:8px;margin-bottom:10px;padding:8px;background:#0a0c10;border:1px solid #222;flex-wrap:wrap;">
+                                    <span style="color:#888;font-size:0.85rem;">테두리 색</span>
+                                    <input type="color" id="districtSvgStrokeColorInput" value="#00ffff" oninput="districtSvgSetStrokeColor(this.value)" style="width:36px;height:28px;padding:0;border:1px solid #333;background:none;cursor:pointer;">
+                                    <input type="text" id="districtSvgStrokeColorHexInput" maxlength="7" placeholder="#00ffff" onchange="districtSvgSetStrokeColorHex(this.value)"
+                                        style="width:78px;background:#000;border:1px solid #333;color:var(--tno-neon);font-family:inherit;font-size:0.8rem;padding:5px;text-align:center;text-transform:uppercase;">
+                                    <button id="districtSvgStrokeSyncBtn" onclick="districtSvgSyncStrokeColorWithTheme()" style="background:transparent;border:1px solid #333;color:#888;padding:5px 8px;font-family:inherit;font-size:0.75rem;cursor:pointer;">테마 색과 동기화</button>
+                                    <span style="color:#444;font-size:0.75rem;">채우기는 항상 투명입니다</span>
+                                </div>
+                                <div class="neon-only" style="display:flex;align-items:center;gap:8px;margin-bottom:10px;padding:8px;background:#0a0c10;border:1px solid #222;flex-wrap:wrap;">
+                                    <span style="color:#888;font-size:0.85rem;">글씨 테두리 색</span>
+                                    <input type="color" id="districtSvgAbbrStrokeColorInput" value="#00ffff" oninput="districtSvgSetAbbrStrokeColor(this.value)" style="width:36px;height:28px;padding:0;border:1px solid #333;background:none;cursor:pointer;">
+                                    <input type="text" id="districtSvgAbbrStrokeColorHexInput" maxlength="7" placeholder="#00ffff" onchange="districtSvgSetAbbrStrokeColorHex(this.value)"
+                                        style="width:78px;background:#000;border:1px solid #333;color:var(--tno-neon);font-family:inherit;font-size:0.8rem;padding:5px;text-align:center;text-transform:uppercase;">
+                                    <button onclick="districtSvgSyncAbbrStrokeColorWithTheme()" style="background:transparent;border:1px solid #333;color:#888;padding:5px 8px;font-family:inherit;font-size:0.75rem;cursor:pointer;">테마 색과 동기화</button>
+                                    <span style="color:#444;font-size:0.75rem;">지역구 약칭 글씨의 테두리 색입니다</span>
+                                </div>
+                                <div style="font-size:0.8rem;color:#555;margin-bottom:10px;">지도 안 지역구 수: <span id="districtSvgShapeCount" style="color:var(--tno-neon);">0</span>개 &nbsp;|&nbsp; 지역구를 클릭하면 의석 수·성향을 편집할 수 있습니다</div>
+                            </div>
+                        </div>
+
+                        <!-- 지역구 목록 패널 (이름 일괄 관리, 공용) -->
+                        <div style="color:#666;font-size:0.8rem;margin-bottom:6px;letter-spacing:1px;border-top:1px solid #222;padding-top:10px;">▌ 지역구 목록</div>
+                        <div class="sub-tab-container-3" id="districtListInnerTabs">
+                            <button class="sub-tab-btn-3 active" onclick="switchDistrictListInnerTab('house')" id="innerTabDistListHouse">하원</button>
+                            <button class="sub-tab-btn-3" onclick="switchDistrictListInnerTab('senate')" id="innerTabDistListSenate">상원</button>
+                            <button class="sub-tab-btn-3" onclick="switchDistrictListInnerTab('third')" id="innerTabDistListThird" style="display:none;">삼원</button>
+                        </div>
+                        <div id="districtListPanel"></div>
+                    </div>
+                </div>
+
+                <div id="contentRegions" class="sub-tab-content">
+                    <!-- 권역 (1.6.0에서 국가 › 권역 → 국가 › 권역) -->
+                    <div id="elecSubRegion">
+                        <div class="sub-tab-container-3" id="regionChamberTabs">
+                            <button class="sub-tab-btn-3 active" onclick="regionSetChamber('house')" id="innerTabRegionHouse">하원</button>
+                            <button class="sub-tab-btn-3" onclick="regionSetChamber('senate')" id="innerTabRegionSenate">상원</button>
+                            <button class="sub-tab-btn-3" onclick="regionSetChamber('third')" id="innerTabRegionThird" style="display:none;">삼원</button>
+                        </div>
+                        <div style="font-size:0.72rem;color:#555;margin:8px 0;">권역형 비례대표에서 지역구를 묶는 단위입니다. 원별로 독립적으로 설정합니다. (전국형을 쓸 경우 설정하지 않아도 됩니다)</div>
+                        <div style="color:#666;font-size:0.8rem;margin-bottom:6px;letter-spacing:1px;">▌ 권역 목록 (칠하기 대상을 선택하세요)</div>
+                        <div id="regionList"></div>
+                        <button class="add-btn" onclick="regionAddRegion()">[+] 권역 추가</button>
+
+                        <div style="color:#666;font-size:0.8rem;margin:14px 0 6px;letter-spacing:1px;border-top:1px solid #222;padding-top:10px;">▌ 권역 선거구 의석</div>
+                        <div style="font-size:0.72rem;color:#555;margin-bottom:8px;">권역 하나를 여러 명을 뽑는 선거구로 씁니다 (예: 일본 참의원의 도도부현 선거구). 의석 수와 정당별 당선 의석을 직접 정하면 정당 의석에 바로 반영되고, 선거를 돌려도 비례 의석과 겹치지 않게 따로 유지됩니다.</div>
+                        <div id="regionSeatPanel"></div>
+
+                        <div style="color:#666;font-size:0.8rem;margin:14px 0 6px;letter-spacing:1px;border-top:1px solid #222;padding-top:10px;">▌ 권역별 득표율</div>
+                        <div style="display:flex;gap:6px;margin-bottom:8px;">
+                            <button class="sub-tab-btn-3 active" id="regionVoteModeAutoBtn" onclick="regionSetVoteMode('auto')">자동 집계</button>
+                            <button class="sub-tab-btn-3" id="regionVoteModeManualBtn" onclick="regionSetVoteMode('manual')">수동 입력</button>
+                        </div>
+                        <div style="font-size:0.72rem;color:#555;margin-bottom:8px;">자동 집계: 권역에 속한 지역구들의 성향(%)을 평균해 득표율로 사용합니다. 수동 입력: 권역마다 직접 지지율을 입력합니다.</div>
+                        <div id="regionVoteManualPanel"></div>
+                    </div>
+                </div>
 
                 <!-- 국가 설정: 지도 글씨·배지 크기 -->
                 <div id="contentNationSettings" class="sub-tab-content">
@@ -1028,6 +1167,12 @@
 
                 <!-- 선거 기록 -->
                 <div id="contentElecRecord" class="sub-tab-content">
+                    <!-- 총선 · 대선(총리 선거) · 지방선거 · 국민투표 기록을 한곳에 — 검색 · 종류 필터 -->
+                    <div class="bill-search-bar" style="margin-bottom:8px;">
+                        <input type="text" id="elecRecordSearchInput" placeholder="기록 검색..." oninput="elecRenderRecords();">
+                        <button onclick="document.getElementById('elecRecordSearchInput').value=''; elecRenderRecords();" style="background:transparent;border:1px solid #333;color:#555;padding:4px 8px;font-family:'NeoDunggeunmo','VT323',monospace;cursor:pointer;" title="초기화">✕</button>
+                    </div>
+                    <div class="bill-tag-filter" id="elecRecordKindFilter"></div>
                     <div id="elecRecordList" style="margin-top:8px;"></div>
                 </div>
 
@@ -1041,109 +1186,12 @@
             <!-- ===== 여론 그룹 ===== -->
             <div id="mainContentElection" class="main-tab-content">
                 <div class="sub-tab-container" style="margin-top:10px;">
-                    <button class="sub-tab-btn active" id="elecSubTabDistrict" onclick="elecSwitchSub('district')">지역구</button>
-                    <button class="sub-tab-btn" id="elecSubTabTendency" onclick="elecSwitchSub('tendency')">성향</button>
-                    <button class="sub-tab-btn" id="elecSubTabRegion" onclick="elecSwitchSub('region')">권역</button>
+                    <button class="sub-tab-btn active" id="elecSubTabTendency" onclick="elecSwitchSub('tendency')">성향</button>
                     <button class="sub-tab-btn" id="elecSubTabProb" onclick="elecSwitchSub('prob')">지지율</button>
                 </div>
 
-                <!-- 지역구 편집 사이드패널 (구/뉴 지역구 공용 — 선택된 지역구가 있을 때만 표시, 내용은 JS가 채움) -->
-                <div id="districtNamePanel" style="display:none;padding:8px;background:#0a0c10;border:1px solid #665500;margin:8px 0;"></div>
-
-                <!-- 지역구 서브탭 - 설정만 (맵은 우측) -->
-                <div id="elecSubDistrict" class="sub-tab-content active">
-                    <!-- 원 선택 — 원이 둘 이상일 때 표시. 고른 원이 쓰는 지도(하원과 공유 · 따로)를 편집한다 -->
-                    <div id="districtChamberSelectRow" style="display:none;gap:6px;margin:8px 0 10px;">
-                        <button id="districtChamberHouseBtn" onclick="districtSetChamber('house')"
-                            style="flex:1;padding:6px;font-family:inherit;font-size:0.85rem;background:#0a1a2a;color:var(--tno-neon);border:2px solid var(--tno-neon);cursor:pointer;letter-spacing:1px;" id="districtChamberHouseBtn">
-                            <span id="districtChamberHouseLabel">하원</span> 지역구
-                        </button>
-                        <button id="districtChamberSenateBtn" onclick="districtSetChamber('senate')"
-                            style="flex:1;padding:6px;font-family:inherit;font-size:0.85rem;background:transparent;color:#664400;border:2px solid #664400;cursor:pointer;letter-spacing:1px;">
-                            <span id="districtChamberSenateLabel">상원</span> 지역구
-                        </button>
-                        <button id="districtChamberThirdBtn" onclick="districtSetChamber('third')" style="display:none;flex:1;padding:6px;font-family:inherit;font-size:0.85rem;background:transparent;color:#6a0080;border:2px solid #6a0080;cursor:pointer;letter-spacing:1px;">
-                            <span id="districtChamberThirdLabel">삼원</span> 지역구
-                        </button>
-                    </div>
-
-                    <!-- 육각형(구 지역구) 편집 UI — 지역구 시스템이 육각형일 때만 표시 -->
-                    <div id="districtHexEditUI" style="display:none;">
-                        <div style="margin:0 0 6px;font-size:0.8rem;color:#555;">편집 모드</div>
-                        <div style="display:flex;gap:6px;margin-bottom:10px;">
-                            <button id="districtModeAdd" onclick="districtSetMode('add')"
-                                style="flex:1;padding:8px;font-family:inherit;font-size:0.9rem;background:#0a2a1a;color:#00cc66;border:2px solid #00cc66;cursor:pointer;letter-spacing:1px;box-shadow:0 0 8px #00cc6688;">추가</button>
-                            <button id="districtModeRemove" onclick="districtSetMode('remove')"
-                                style="flex:1;padding:8px;font-family:inherit;font-size:0.9rem;background:transparent;color:#663333;border:2px solid #663333;cursor:pointer;letter-spacing:1px;">제거</button>
-                            <button id="districtModeName" onclick="districtSetMode('name')"
-                                style="flex:1;padding:8px;font-family:inherit;font-size:0.9rem;background:transparent;color:#666633;border:2px solid #666633;cursor:pointer;letter-spacing:1px;">이름</button>
-                            <button id="districtModeNone" onclick="districtSetMode('none')"
-                                style="flex:0 0 44px;padding:8px;font-family:inherit;font-size:0.9rem;background:transparent;color:#555;border:2px solid #444;cursor:pointer;" title="선택 해제 (이동/확대만)">✕</button>
-                        </div>
-                        <div style="padding:6px 8px;background:#0a0c10;border:1px solid #222;font-size:0.78rem;color:#444;margin-bottom:10px;">
-                            클릭/드래그로 칸 편집 (이름 모드는 클릭만) &nbsp;|&nbsp; 휠: 확대/축소 &nbsp;|&nbsp; 휠클릭+드래그: 이동
-                        </div>
-                        <div style="display:flex;justify-content:flex-end;align-items:center;margin-bottom:14px;">
-                            <button onclick="districtClearAll()" style="background:transparent;border:1px solid #333;color:#555;padding:3px 10px;cursor:pointer;font-family:inherit;font-size:0.8rem;">전체 초기화</button>
-                        </div>
-                    </div>
-
-                    <!-- 지도(뉴 지역구) 편집 UI — 지역구 시스템이 지도일 때만 표시 -->
-                    <div id="districtSvgEditUI">
-                        <!-- 원별 지역구 분리 — 상원 · 삼원을 골랐을 때만 표시 -->
-                        <div id="districtMapShareRow" style="display:none;margin-bottom:10px;">
-                            <div style="color:#888;font-size:0.8rem;margin-bottom:4px;">이 원의 지역구 지도</div>
-                            <div class="system-radio-group">
-                                <button type="button" class="system-radio-btn" id="districtMapShareBtnShared" onclick="districtSetMapShare('shared')">하원 지도 공유</button>
-                                <button type="button" class="system-radio-btn" id="districtMapShareBtnSplit" onclick="districtSetMapShare('split')">따로 쓰기</button>
-                            </div>
-                        </div>
-                        <div style="padding:8px;background:#0a0c10;border:1px solid #222;font-size:0.78rem;color:#666;margin-bottom:10px;line-height:1.5;">
-                            <a href="map.html" target="_blank" style="color:var(--tno-neon);">맵 메이커</a>에서 내보낸 .jsx 파일을 업로드하면, 그리드 대신 실제 지도 모양으로 지역구를 만들 수 있습니다.<br>
-                            기본은 하원 지도를 상원·삼원이 함께 쓰며, 원을 골라 <b style="color:#aaa;">따로 쓰기</b>를 누르면 그 원만의 지도를 올릴 수 있습니다. 지역구를 클릭하면 원별 의석 수와 정당별 성향(%)을 지정할 수 있습니다.<br>
-                            업로드하면 <b style="color:#cc8888;">기존 지역구 데이터가 새 지도로 대체</b>됩니다.
-                        </div>
-
-                        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
-                            <input type="file" id="districtSvgFileInput" accept=".jsx,.js,text/javascript" style="position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;" onchange="districtSvgUpload(this)">
-                            <label for="districtSvgFileInput" class="add-btn" style="margin:0;display:inline-block;cursor:pointer;">⬆ 지역구 지도 업로드 (.jsx)</label>
-                            <span id="districtSvgFileName" style="color:#555;font-size:0.8rem;">파일 없음</span>
-                        </div>
-
-                        <div id="districtSvgInfo" style="display:none;">
-                            <!-- 테두리 색 · 글씨 테두리 색: 네온에서만 고를 수 있음 (라이트/다크는 테마에 맞춘 고정색이라 숨김) -->
-                            <div class="neon-only" style="display:flex;align-items:center;gap:8px;margin-bottom:10px;padding:8px;background:#0a0c10;border:1px solid #222;flex-wrap:wrap;">
-                                <span style="color:#888;font-size:0.85rem;">테두리 색</span>
-                                <input type="color" id="districtSvgStrokeColorInput" value="#00ffff" oninput="districtSvgSetStrokeColor(this.value)" style="width:36px;height:28px;padding:0;border:1px solid #333;background:none;cursor:pointer;">
-                                <input type="text" id="districtSvgStrokeColorHexInput" maxlength="7" placeholder="#00ffff" onchange="districtSvgSetStrokeColorHex(this.value)"
-                                    style="width:78px;background:#000;border:1px solid #333;color:var(--tno-neon);font-family:inherit;font-size:0.8rem;padding:5px;text-align:center;text-transform:uppercase;">
-                                <button id="districtSvgStrokeSyncBtn" onclick="districtSvgSyncStrokeColorWithTheme()" style="background:transparent;border:1px solid #333;color:#888;padding:5px 8px;font-family:inherit;font-size:0.75rem;cursor:pointer;">테마 색과 동기화</button>
-                                <span style="color:#444;font-size:0.75rem;">채우기는 항상 투명입니다</span>
-                            </div>
-                            <div class="neon-only" style="display:flex;align-items:center;gap:8px;margin-bottom:10px;padding:8px;background:#0a0c10;border:1px solid #222;flex-wrap:wrap;">
-                                <span style="color:#888;font-size:0.85rem;">글씨 테두리 색</span>
-                                <input type="color" id="districtSvgAbbrStrokeColorInput" value="#00ffff" oninput="districtSvgSetAbbrStrokeColor(this.value)" style="width:36px;height:28px;padding:0;border:1px solid #333;background:none;cursor:pointer;">
-                                <input type="text" id="districtSvgAbbrStrokeColorHexInput" maxlength="7" placeholder="#00ffff" onchange="districtSvgSetAbbrStrokeColorHex(this.value)"
-                                    style="width:78px;background:#000;border:1px solid #333;color:var(--tno-neon);font-family:inherit;font-size:0.8rem;padding:5px;text-align:center;text-transform:uppercase;">
-                                <button onclick="districtSvgSyncAbbrStrokeColorWithTheme()" style="background:transparent;border:1px solid #333;color:#888;padding:5px 8px;font-family:inherit;font-size:0.75rem;cursor:pointer;">테마 색과 동기화</button>
-                                <span style="color:#444;font-size:0.75rem;">지역구 약칭 글씨의 테두리 색입니다</span>
-                            </div>
-                            <div style="font-size:0.8rem;color:#555;margin-bottom:10px;">지도 안 지역구 수: <span id="districtSvgShapeCount" style="color:var(--tno-neon);">0</span>개 &nbsp;|&nbsp; 지역구를 클릭하면 의석 수·성향을 편집할 수 있습니다</div>
-                        </div>
-                    </div>
-
-                    <!-- 지역구 목록 패널 (이름 일괄 관리, 공용) -->
-                    <div style="color:#666;font-size:0.8rem;margin-bottom:6px;letter-spacing:1px;border-top:1px solid #222;padding-top:10px;">▌ 지역구 목록</div>
-                    <div class="sub-tab-container-3" id="districtListInnerTabs">
-                        <button class="sub-tab-btn-3 active" onclick="switchDistrictListInnerTab('house')" id="innerTabDistListHouse">하원</button>
-                        <button class="sub-tab-btn-3" onclick="switchDistrictListInnerTab('senate')" id="innerTabDistListSenate">상원</button>
-                        <button class="sub-tab-btn-3" onclick="switchDistrictListInnerTab('third')" id="innerTabDistListThird" style="display:none;">삼원</button>
-                    </div>
-                    <div id="districtListPanel"></div>
-                </div>
-
                 <!-- 성향 서브탭 - 강도 설정만 (맵은 우측) -->
-                <div id="elecSubTendency" class="sub-tab-content">
+                <div id="elecSubTendency" class="sub-tab-content active">
                     <!-- 지도(뉴 지역구) 방식일 때만 표시 — 원별로 성향 데이터가 다르므로 편집할 원을 먼저 선택 -->
                     <div class="sub-tab-container-3" id="tendencySvgChamberTabs" style="display:none;">
                         <button class="sub-tab-btn-3 active" id="tendencySvgChamberHouseBtn" onclick="tendencySetSvgChamber('house')">하원</button>
@@ -1169,31 +1217,6 @@
 
                     <!-- 지도(SVG) 방식: 우측 지도에서 지역구를 클릭해 선택하면, 그 지역구의 정당별 성향(%)을 목록으로 편집 -->
                     <div id="tendencySvgDistrictPanel" style="display:none;"></div>
-                </div>
-
-                <!-- 권역 서브탭 -->
-                <div id="elecSubRegion" class="sub-tab-content">
-                    <div class="sub-tab-container-3" id="regionChamberTabs">
-                        <button class="sub-tab-btn-3 active" onclick="regionSetChamber('house')" id="innerTabRegionHouse">하원</button>
-                        <button class="sub-tab-btn-3" onclick="regionSetChamber('senate')" id="innerTabRegionSenate">상원</button>
-                        <button class="sub-tab-btn-3" onclick="regionSetChamber('third')" id="innerTabRegionThird" style="display:none;">삼원</button>
-                    </div>
-                    <div style="font-size:0.72rem;color:#555;margin:8px 0;">권역형 비례대표에서 지역구를 묶는 단위입니다. 원별로 독립적으로 설정합니다. (전국형을 쓸 경우 설정하지 않아도 됩니다)</div>
-                    <div style="color:#666;font-size:0.8rem;margin-bottom:6px;letter-spacing:1px;">▌ 권역 목록 (칠하기 대상을 선택하세요)</div>
-                    <div id="regionList"></div>
-                    <button class="add-btn" onclick="regionAddRegion()">[+] 권역 추가</button>
-
-                    <div style="color:#666;font-size:0.8rem;margin:14px 0 6px;letter-spacing:1px;border-top:1px solid #222;padding-top:10px;">▌ 권역 선거구 의석</div>
-                    <div style="font-size:0.72rem;color:#555;margin-bottom:8px;">권역 하나를 여러 명을 뽑는 선거구로 씁니다 (예: 일본 참의원의 도도부현 선거구). 의석 수와 정당별 당선 의석을 직접 정하면 정당 의석에 바로 반영되고, 선거를 돌려도 비례 의석과 겹치지 않게 따로 유지됩니다.</div>
-                    <div id="regionSeatPanel"></div>
-
-                    <div style="color:#666;font-size:0.8rem;margin:14px 0 6px;letter-spacing:1px;border-top:1px solid #222;padding-top:10px;">▌ 권역별 득표율</div>
-                    <div style="display:flex;gap:6px;margin-bottom:8px;">
-                        <button class="sub-tab-btn-3 active" id="regionVoteModeAutoBtn" onclick="regionSetVoteMode('auto')">자동 집계</button>
-                        <button class="sub-tab-btn-3" id="regionVoteModeManualBtn" onclick="regionSetVoteMode('manual')">수동 입력</button>
-                    </div>
-                    <div style="font-size:0.72rem;color:#555;margin-bottom:8px;">자동 집계: 권역에 속한 지역구들의 성향(%)을 평균해 득표율로 사용합니다. 수동 입력: 권역마다 직접 지지율을 입력합니다.</div>
-                    <div id="regionVoteManualPanel"></div>
                 </div>
 
                 <!-- 지지율 서브탭 -->
@@ -1865,6 +1888,7 @@
     <script src="js/tutorial.js"></script>
     <script src="js/help.js"></script>
     <script src="js/main.js"></script>
+    <script src="js/legis.js"></script>
     <script src="js/popvote.js"></script>
     <script src="js/sidenav.js"></script>
     <script src="js/segmented.js"></script>

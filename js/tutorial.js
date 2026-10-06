@@ -227,7 +227,7 @@
         {
             id: 'law', group: 'basic',
             title: '입법',
-            summary: '법안 제출 · 상정 · 표결 · 표결 기록',
+            summary: '법안 제출 · 위원회 · 상정 · 표결 · 표결 기록 · 법령',
             steps: [
                 {
                     before: [go('law', 'bill'), showPanel('controls')],
@@ -235,15 +235,21 @@
                     target: () => billForm(),
                     allow: () => { const f = billForm(); return f ? [f] : []; },
                     title: '법안 제출하기',
-                    text: '입법 › 제출에서 법안을 작성합니다. 법안 제목을 적고 "[+] 법안 등록"을 눌러보세요. (내용 · 태그 · 가결 기준은 비워 둬도 돼요)',
+                    text: '입법 › 제출에서 법안을 작성합니다. 법안 제목을 적고 "[+] 법안 등록"을 눌러보세요. (조문 · 태그 · 가결 기준은 비워 둬도 돼요 — 조문은 제1조 · 제2조처럼 조 단위로 씁니다)',
                     task: () => billList().length > (T.billBase || 0),
                     done: '법안이 등록됐어요!',
+                },
+                {
+                    before: [go('law', 'committee'), showPanel('controls')],
+                    target: '#contentCommittee',
+                    title: '상임위원회',
+                    text: '입법 › 위원회에서 상임위원회를 만들면, 법안이 본회의 전에 소관 위원회 심사를 먼저 거칩니다. 위원은 정당 의석 비율대로 배정되고, 위원 과반이 찬성해야 본회의로 넘어가요. 위원회가 없으면 법안은 바로 본회의로 갑니다.',
                 },
                 {
                     before: [go('law', 'table'), showPanel('controls')],
                     target: '#billList',
                     title: '상정하기',
-                    text: '입법 › 상정에는 등록된 법안이 모입니다. 법안마다 의회에 올릴지 국무회의에 올릴지 고르고, 법안을 누르면 표결로 넘어가요. 검색과 태그로 찾을 수 있습니다.',
+                    text: '입법 › 상정에는 등록된 법안이 모입니다. 법안마다 의회에 올릴지 국무회의에 올릴지, 소관 위원회를 어디로 할지 고르고, "심의 선택"을 누르면 표결로 넘어가요. 검색과 태그로 찾을 수 있습니다.',
                 },
                 {
                     before: [go('law', 'vote'), showPanel('controls')],
@@ -256,6 +262,12 @@
                     target: '#contentArchive',
                     title: '표결 기록',
                     text: '입법 › 표결 기록에는 가결 · 부결 · 거부된 법안이 남습니다. 상태 · 태그로 걸러 보고, 가결된 법안에서 개정안을 낼 수 있어요.',
+                },
+                {
+                    before: [go('law', 'lawbook'), showPanel('controls')],
+                    target: '#contentLawbook',
+                    title: '법령',
+                    text: '입법 › 법령에는 헌법과 가결된 법률이 조문 그대로 모입니다. 헌법을 제정하고, 헌법 개정안(가결 기준 2/3)을 통과시키면 헌법이 바뀌고 개정 이력이 남아요.',
                 },
             ],
         },
@@ -499,25 +511,25 @@
                     text: '지역구는 실제 지도 모양으로 만듭니다. 메인 화면 › 맵 메이커에서 SVG 지도 파일을 열면 도형이 선 · 면 · 사각형 · 원으로 나뉘어 보이고, 지역구로 쓸 도형(보통 "면")을 골라 이름을 붙인 뒤 지역구 지도 파일(.jsx)로 내보냅니다. 미리보기는 스크롤로 확대 · 축소, 휠 클릭 드래그로 이동해요.',
                 },
                 {
-                    before: [call('switchMainTab', 'election'), call('elecSwitchSub', 'district'), showPanel('controls')],
+                    before: [go('nation', 'territory'), showPanel('controls')],
                     target: '#districtSvgEditUI',
                     title: '지역구 지도 올리기',
-                    text: '여론 › 지역구에서 맵 메이커로 만든 .jsx 파일을 올립니다. 올리면 도형 하나하나가 지역구가 되고, 기본으로는 하원 · 상원 · 삼원이 같은 지도를 함께 씁니다. (새 지도를 올리면 기존 지역구 정보는 새 지도로 바뀌어요)',
+                    text: '국가 › 지역에서 맵 메이커로 만든 .jsx 파일을 올립니다. 올리면 도형 하나하나가 지역구가 되고, 기본으로는 하원 · 상원 · 삼원이 같은 지도를 함께 씁니다. (새 지도를 올리면 기존 지역구 정보는 새 지도로 바뀌어요)',
                 },
                 {
-                    before: [call('switchMainTab', 'election'), call('elecSwitchSub', 'district'), showPanel('controls')],
+                    before: [go('nation', 'territory'), showPanel('controls')],
                     target: () => { const r = document.getElementById('districtChamberSelectRow'); return r && r.offsetParent ? r : '#districtSvgEditUI'; },
                     title: '원마다 다른 지도',
                     text: '원이 둘 이상이면 위쪽에서 원을 고를 수 있습니다. 상원 · 삼원을 고르면 "하원 지도 공유 / 따로 쓰기"가 나와요. 따로 쓰기를 누르면 지금 지도를 복사해 그대로 이어 쓰고(의석 · 당선자 · 성향 유지), 그 원만의 지도를 새로 올릴 수 있습니다. 다시 공유로 돌리면 하원 지도에 있는 지역구의 값만 되돌아와요.',
                 },
                 {
-                    before: [call('switchMainTab', 'election'), call('elecSwitchSub', 'district'), showPanel('controls')],
+                    before: [go('nation', 'territory'), showPanel('controls')],
                     target: '#districtListPanel',
                     title: '지역구 편집',
                     text: '지도나 목록에서 지역구를 누르면 편집 칸이 열립니다. 이름 · 약칭 · 인구, 그리고 원마다 몇 석을 뽑을지(0석이면 그 원엔 없는 지역구) 정해요. 지도는 휠 클릭 드래그로 이동, Shift+스크롤로 확대하고 ↺로 되돌립니다.',
                 },
                 {
-                    before: [call('switchMainTab', 'election'), call('elecSwitchSub', 'district'), showPanel('controls')],
+                    before: [go('nation', 'territory'), showPanel('controls')],
                     target: () => { const el = document.getElementById('districtNamePanel'); return el && el.offsetParent ? el : '#districtListPanel'; },
                     title: '당선 정당 직접 지정',
                     text: '선거를 돌리지 않고 지역구 결과를 정할 수도 있어요. 지역구 편집 칸의 "당선 정당 직접 지정"에서 의석마다 정당을 고르면, 정당 의석 수 · 지역구 의원 · 지도 색이 함께 바뀝니다. 나중에 선거를 돌리면 선거 결과로 덮어써져요.',
@@ -535,13 +547,13 @@
                     text: '여론 › 성향에서 지역구마다 정당별 성향(%)을 정합니다. 지역구 선거에서 누가 이길지가 여기서 갈려요. 시각 화면에는 종합 지도와 정당별 지도가 함께 보입니다.',
                 },
                 {
-                    before: [call('switchMainTab', 'election'), call('elecSwitchSub', 'region'), showPanel('controls')],
+                    before: [go('nation', 'regions'), showPanel('controls')],
                     target: '#elecSubRegion',
                     title: '권역',
-                    text: '권역형 비례대표를 쓸 때는 여론 › 권역에서 지역구를 권역으로 묶습니다. 권역을 고른 뒤 지도에서 지역구를 눌러(끌어서 여러 개) 칠해요. 권역 득표율은 성향을 평균하는 자동 집계나 직접 입력 중에서 고릅니다.',
+                    text: '권역형 비례대표를 쓸 때는 국가 › 권역에서 지역구를 권역으로 묶습니다. 권역을 고른 뒤 지도에서 지역구를 눌러(끌어서 여러 개) 칠해요. 권역 득표율은 성향을 평균하는 자동 집계나 직접 입력 중에서 고릅니다.',
                 },
                 {
-                    before: [call('switchMainTab', 'election'), call('elecSwitchSub', 'region'), showPanel('controls')],
+                    before: [go('nation', 'regions'), showPanel('controls')],
                     target: () => { const el = document.getElementById('regionSeatPanel'); return el && el.offsetParent && el.children.length ? el : '#elecSubRegion'; },
                     title: '권역 의석 지정',
                     text: '권역 자체에 의석을 줄 수도 있어요(예: 여러 지역구를 묶어 한꺼번에 뽑는 선거구). 권역마다 의석 수와 정당별 당선 수를 정하면, 그 의석은 비례 의석에서 빠지고 선거를 돌려도 그대로 남습니다.',

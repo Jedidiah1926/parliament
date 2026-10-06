@@ -1498,6 +1498,102 @@ html[data-ui-mode="mobile"] .save-panel { max-height: calc(100vh - 56px - var(--
         .save-tab-preset-date { color: #777; font-size: 0.75rem; margin-left: 6px; }
         .save-tab-preset-soon { opacity: .5; cursor: default; }
         .save-tab-preset-soon:hover { color: inherit !important; background: transparent !important; }
+
+/* ===== 입법 1.6.0 — 조문 편집기 · 조문 목록 · 상임위원회 · 법령 (js/legis.js) ===== */
+.bill-kind-row { display: flex; gap: 6px; margin-bottom: 6px; }
+.bill-kind-row .vote-bill-input { flex: 1; min-width: 0; margin: 0; }
+.bill-kind-select { flex: 0 0 auto; width: auto !important; background: #000; border: 1px solid var(--tno-border); color: var(--tno-gold); font-family: inherit; font-size: 0.85rem; padding: 4px 6px; }
+.art-editor-label { color: #888; font-size: 0.8rem; margin: 4px 0; }
+.art-editor-label span { color: #555; font-size: 0.72rem; }
+.art-editor { display: flex; flex-direction: column; gap: 6px; }
+.art-row { border: 1px solid #222; background: #05070a; padding: 6px; }
+.art-row-head { display: flex; align-items: center; gap: 5px; margin-bottom: 4px; }
+.art-no { color: var(--tno-gold); font-size: 0.85rem; white-space: nowrap; min-width: 3.2em; }
+.art-title { flex: 1; min-width: 0; background: #000; border: 1px solid #2a2a2a; color: #ccc; font-family: inherit; font-size: 0.82rem; padding: 3px 6px; }
+.art-text { width: 100%; box-sizing: border-box; background: #000; border: 1px solid #2a2a2a; color: #ccc; font-family: inherit; font-size: 0.85rem; padding: 6px; resize: vertical; min-height: 44px; line-height: 1.5; outline: none; }
+.art-add { align-self: flex-start; background: transparent; border: 1px dashed #444; color: #888; font-family: inherit; font-size: 0.8rem; padding: 4px 10px; cursor: pointer; }
+.art-add:hover { color: var(--tno-neon); border-color: var(--tno-neon); }
+.art-list { margin: 4px 0 0; padding: 0; list-style: none; }
+.art-list li { margin: 0 0 3px; line-height: 1.55; white-space: pre-wrap; }
+.art-head { color: var(--tno-gold); white-space: nowrap; }
+.art-body { color: #aaa; }
+.art-more { color: #555; font-size: 0.75rem; }
+.bill-card-body.art-card-body { max-height: none; }
+.bill-kind-cons { border-color: var(--tno-alert) !important; color: var(--tno-alert) !important; }
+.bill-committee-select { width: auto !important; background: #000; border: 1px solid #333; color: var(--tno-gold); font-family: inherit; font-size: 0.78rem; padding: 2px 4px; }
+.cm-intro { color: #666; font-size: 0.78rem; line-height: 1.6; margin-bottom: 10px; }
+.cm-empty { color: #777; font-size: 0.85rem; line-height: 1.6; padding: 14px; border: 1px dashed #333; text-align: center; }
+.cm-empty-btns { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-top: 10px; }
+.cm-empty-btns .add-btn { width: auto; margin-top: 0; padding: 6px 12px; }
+.cm-card { margin-bottom: 10px; }
+.cm-head { display: flex; gap: 6px; align-items: center; margin-bottom: 8px; }
+.cm-name { flex: 1; min-width: 0; font-size: 1rem !important; color: var(--tno-gold) !important; }
+.cm-fields { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
+.cm-fields label { display: flex; align-items: center; gap: 5px; color: #888; font-size: 0.78rem; }
+.cm-fields input[type="number"] { width: 64px !important; }
+.cm-fields select { width: auto !important; }
+.cm-fields .cm-tags { flex: 1 1 100%; }
+.cm-fields .cm-tags input { flex: 1; min-width: 0; }
+.cm-bar { display: flex; height: 10px; border: 1px solid #222; overflow: hidden; }
+.cm-bar span { display: block; height: 100%; }
+.cm-legend { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 6px; font-size: 0.75rem; color: #999; }
+.cm-legend i, .cm-stance-row i { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 4px; vertical-align: middle; }
+.cm-sub { color: #666; font-size: 0.75rem; margin: 6px 0; }
+.cm-note { color: #555; font-size: 0.78rem; padding: 6px 0; }
+.cm-bill { border-top: 1px dotted #222; padding-top: 8px; margin-top: 8px; }
+.cm-bill-title { color: #ddd; font-size: 0.92rem; margin-bottom: 4px; }
+.cm-stances { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 5px; margin: 6px 0; }
+.cm-stance-row { display: flex; align-items: center; gap: 6px; font-size: 0.8rem; color: #ccc; background: #0a0c10; border: 1px solid #1f1f1f; padding: 4px 6px; }
+.cm-stance-row span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cm-stance-row em { color: #777; font-style: normal; font-size: 0.72rem; }
+.cm-stance-row select { width: 70px !important; flex: 0 0 70px; }
+.cm-confirm { margin-top: 4px; }
+.lb-section-title { color: var(--tno-neon); font-size: 0.95rem; letter-spacing: 1px; margin: 12px 0 6px; }
+.lb-section-title:first-child { margin-top: 0; }
+.lb-count { color: #666; font-size: 0.8rem; }
+.lb-cons { margin-bottom: 10px; }
+.lb-cons-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 6px; }
+.lb-cons-title { flex: 1; min-width: 0; color: var(--tno-gold); font-size: 1.05rem; }
+.lb-btns { display: flex; gap: 6px; flex-wrap: wrap; }
+.lb-btns .add-btn { width: auto; margin-top: 6px; padding: 6px 12px; }
+.lb-preamble { color: #999; font-size: 0.82rem; line-height: 1.6; white-space: pre-wrap; margin-bottom: 6px; padding-bottom: 6px; border-bottom: 1px dotted #222; }
+.lb-revs, .lb-meta { color: #666; font-size: 0.75rem; margin-top: 6px; }
+.lb-law { cursor: default; }
+#consArticles { margin: 6px 0; }
+
+html[data-theme-family="modern"] .bill-kind-select,
+html[data-theme-family="modern"] .bill-committee-select { background: var(--m-surface-2); border: 1px solid var(--m-border); color: var(--m-text); border-radius: 8px; }
+html[data-theme-family="modern"] .art-row { background: var(--m-surface-2); border: none; border-radius: 10px; }
+html[data-theme-family="modern"] .art-no, html[data-theme-family="modern"] .art-head { color: var(--m-accent); font-weight: 700; }
+html[data-theme-family="modern"] .art-title,
+html[data-theme-family="modern"] .art-text { background: var(--m-surface); border: 1px solid var(--m-border); color: var(--m-text); border-radius: 8px; }
+html[data-theme-family="modern"] .art-add { border-color: var(--m-border); color: var(--m-text-2); border-radius: 8px; }
+html[data-theme-family="modern"] .art-body { color: var(--m-text-2); }
+html[data-theme-family="modern"] .art-editor-label { color: var(--m-text-3); font-weight: 600; }
+html[data-theme-family="modern"] .cm-intro, html[data-theme-family="modern"] .cm-note, html[data-theme-family="modern"] .cm-sub,
+html[data-theme-family="modern"] .lb-revs, html[data-theme-family="modern"] .lb-meta { color: var(--m-text-3); }
+html[data-theme-family="modern"] .cm-empty { border: 1px dashed var(--m-border); border-radius: 12px; color: var(--m-text-2); }
+html[data-theme-family="modern"] .cm-name { color: var(--m-text) !important; font-weight: 700; }
+html[data-theme-family="modern"] .cm-fields label, html[data-theme-family="modern"] .cm-legend { color: var(--m-text-2); }
+html[data-theme-family="modern"] .cm-bar { border: none; border-radius: 6px; }
+html[data-theme-family="modern"] .cm-bill { border-top: 1px solid var(--m-border); }
+html[data-theme-family="modern"] .cm-bill-title { color: var(--m-text); font-weight: 600; }
+html[data-theme-family="modern"] .cm-stance-row { background: var(--m-surface-2); border: none; border-radius: 9px; color: var(--m-text); }
+html[data-theme-family="modern"] .lb-section-title { color: var(--m-text); font-weight: 700; letter-spacing: 0; }
+html[data-theme-family="modern"] .lb-cons-title { color: var(--m-text); font-weight: 700; }
+html[data-theme-family="modern"] .lb-preamble { color: var(--m-text-2); border-bottom-color: var(--m-border); }
+
+/* 입법 단계 막대 (js/legis.js renderLawPipeline) */
+.law-pipeline { display: flex; align-items: center; flex-wrap: wrap; gap: 4px; margin: 0 0 10px; }
+.lp-step { background: transparent; border: 1px solid #2a2a2a; color: #777; font-family: inherit; font-size: 0.75rem; padding: 3px 8px; cursor: pointer; white-space: nowrap; }
+.lp-step b { color: var(--tno-gold); font-weight: normal; }
+.lp-step.active { border-color: var(--tno-neon); color: var(--tno-neon); }
+.lp-arrow { color: #444; font-size: 0.8rem; }
+html[data-theme-family="modern"] .lp-step { border: none; background: var(--m-surface-2); color: var(--m-text-2); border-radius: 999px; font-size: 12px; padding: 4px 10px; }
+html[data-theme-family="modern"] .lp-step b { color: var(--m-accent); font-weight: 700; }
+html[data-theme-family="modern"] .lp-step.active { background: var(--m-accent); color: var(--m-on-accent); }
+html[data-theme-family="modern"] .lp-step.active b { color: var(--m-on-accent); }
+html[data-theme-family="modern"] .lp-arrow { color: var(--m-text-3); }
         /* 지도 확대 · 축소 버튼 (모든 SVG 지도 공용 — js/main.js mapZoomAttach). 기호 크기가 고르게 보이도록 기본 글꼴로 그린다 */
         .map-zoom { position: absolute; top: 6px; right: 6px; z-index: 3; display: flex; align-items: center; gap: 1px; padding: 2px; background: rgba(5,7,10,.82); border: 1px solid #333; user-select: none; }
         .map-zoom button { cursor: pointer; width: 24px; height: 24px; padding: 0; display: inline-flex; align-items: center; justify-content: center; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; font-size: 16px; line-height: 1; background: transparent; border: none; color: var(--tno-neon); }
@@ -1510,3 +1606,8 @@ html[data-ui-mode="mobile"] .save-panel { max-height: calc(100vh - 56px - var(--
         html[data-theme-family="modern"] .map-zoom button { color: var(--m-text); border-radius: 6px; }
         html[data-theme-family="modern"] .map-zoom button:hover { background: var(--m-surface-2); }
         html[data-theme-family="modern"] .map-zoom-level { color: var(--m-text-3); }
+        /* 선거 › 선거 기록: 기록 종류 표시 (총선 · 대선 · 총리 선거 · 지방선거 · 국민투표) */
+        .elec-record-kind { display: inline-block; margin-right: 6px; padding: 0 5px; font-size: .7rem; line-height: 1.5; vertical-align: 2px; color: var(--k); border: 1px solid var(--k); }
+        html[data-theme-family="modern"] .elec-record-kind { border-radius: 6px; font-weight: 600; }
+        .elec-record-card { background: #080b10; border: 1px solid #2a2a2a; border-left: 4px solid var(--k, var(--tno-neon)); padding: 10px; margin-bottom: 8px; }
+        html[data-theme-family="modern"] .elec-record-card { background: var(--m-surface); border: 1px solid var(--m-border); border-left: 4px solid var(--k, var(--m-accent)); border-radius: 10px; }

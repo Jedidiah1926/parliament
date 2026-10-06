@@ -16,6 +16,24 @@
     const SOURCE_LANG = { code: 'kr', name: '한국어' };
     const BUILTIN = { en: { code: 'en', name: 'English', script: 'lang/en.js' } };
     const MAX_PACK_BYTES = 1500000; // localStorage 용량(보통 5MB)을 세이브와 나눠 쓰므로 팩 하나의 상한
+    // 언어별 네온 폰트 — 네온 테마 글꼴(네오둥근모)에 없는 글자를 쓰는 언어는 그 글자를 지원하는 픽셀 폰트로 바꾼다.
+    // 화면 곳곳의 font-family가 'NeoDunggeunmo' 이름을 직접 쓰므로, 같은 이름의 @font-face를 뒤에 하나 더 넣어 통째로 갈아 끼운다.
+    //   maruminya: 마루미냐 한글(x12y12pxMaruMinyaHangul, SIL OFL 1.1 — fonts/maruminya/OFL.txt) — 한국어 · 일본어 12px 픽셀 폰트
+    //              github.com/quiple/x12y12pxMaruMinyaHangul (원본: hicchicc/x12y12pxMaruMinya)
+    // 언어 코드로 정해 두거나(일본어 jp), 언어 팩에 "neonFont": "maruminya"를 적는다
+    const NEON_FONTS = { maruminya: 'fonts/maruminya/x12y12pxMaruMinyaHangul.woff2' };
+    const NEON_FONT_BY_LANG = { jp: 'maruminya' };
+    let neonFontApplied = '';
+    function applyNeonFont(code, pack) {
+        const key = (pack && NEON_FONTS[pack.neonFont] ? pack.neonFont : '') || NEON_FONT_BY_LANG[String(code || '').split('-')[0]];
+        if (!key || !NEON_FONTS[key] || neonFontApplied === key) return;
+        neonFontApplied = key;
+        const style = document.createElement('style');
+        style.id = 'dnoNeonFont';
+        style.textContent = `@font-face { font-family: 'NeoDunggeunmo'; font-weight: normal; font-style: normal; font-display: block; src: url('${NEON_FONTS[key]}') format('woff2'); }`;
+        (document.head || document.documentElement).appendChild(style);
+        document.documentElement.setAttribute('data-neon-font', key);
+    }
 
     function safeGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
     function safeSet(k, v) { try { localStorage.setItem(k, v); return true; } catch (e) { return false; } }
@@ -70,7 +88,7 @@
         if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return { error: '언어 팩 형식이 아닙니다.' };
         if (raw.format && raw.format !== PACK_FORMAT) return { error: `지원하지 않는 형식입니다 (${String(raw.format)}).` };
         const code = String(raw.code || '').trim().toLowerCase();
-        if (!/^[a-z]{2,3}(-[a-z0-9]{2,8})?$/.test(code)) return { error: '언어 코드(code)가 올바르지 않습니다. 예: "ja", "zh-tw", "en-gb"' };
+        if (!/^[a-z]{2,3}(-[a-z0-9]{2,8})?$/.test(code)) return { error: '언어 코드(code)가 올바르지 않습니다. 예: "jp", "zh-tw", "en-gb"' };
         if (code === SOURCE_LANG.code || code === 'ko') return { error: '한국어는 기본 언어라 팩으로 불러올 수 없습니다.' };
         if (BUILTIN[code]) return { error: `"${code}"는 기본 제공 언어의 코드입니다. 다른 코드(예: "${code}-custom")를 쓰세요.` };
         const name = String(raw.name || '').trim();
@@ -87,7 +105,8 @@
         }
         const months = Array.isArray(raw.months) && raw.months.length === 12 ? raw.months.map(String) : null;
         const ordinal = raw.ordinal === 'en' ? 'en' : 'none';
-        return { pack: { format: PACK_FORMAT, code, name, author: String(raw.author || ''), version: String(raw.version || ''), months, ordinal, patterns, dict } };
+        const neonFont = NEON_FONTS[raw.neonFont] ? String(raw.neonFont) : undefined; // 네온 테마 글꼴 (위 NEON_FONTS 참고)
+        return { pack: { format: PACK_FORMAT, code, name, author: String(raw.author || ''), version: String(raw.version || ''), months, ordinal, patterns, dict, ...(neonFont ? { neonFont } : {}) } };
     }
 
     function installPack(raw) {
@@ -137,12 +156,12 @@
     }
 
     // 번역가용 템플릿 두 가지 — 첫 번째 칸(한국어 원문)은 앱이 찾는 열쇠라 그대로 두고, 두 번째 칸(번역)만 바꾸면 된다
-    //  · base 'ko': 두 번째 칸에 한국어 원문을 그대로 채워 둠 (한국어를 보고 번역할 때)
+    //  · base 'kr': 두 번째 칸에 한국어 원문을 그대로 채워 둠 (한국어를 보고 번역할 때)
     //  · base 'en': 두 번째 칸에 영어 번역을 채워 둠 (영어를 보고 번역할 때)
     // 규칙(patterns)의 "to"는 어느 쪽이든 영어 예시로 들어 있으니 함께 번역한다
     async function buildTemplate(base) {
         const en = await loadBuiltin('en');
-        const ko = base === 'ko';
+        const ko = base === 'kr' || base === 'ko';
         return JSON.stringify({
             format: PACK_FORMAT,
             code: '',
@@ -150,8 +169,8 @@
             author: '',
             version: '1',
             _help: ko
-                ? 'dict의 각 항목은 ["한국어 원문", "번역"]입니다. 두 번째 칸에 한국어 원문이 그대로 들어 있으니 그 칸만 번역하세요 (첫 번째 칸은 바꾸지 마세요). patterns의 "to"는 영어 예시이니 함께 번역하세요. code(예: "ja")와 name(예: "日本語")을 채운 뒤 메인 화면 🌐 > 언어 팩 불러오기로 적용합니다. 데스크톱 앱에서는 🌐 > 모드 폴더 열기로 연 폴더 안에 새 폴더를 만들어 이 파일을 넣어도 되고, 그 폴더가 그대로 창작마당 아이템이 됩니다.'
-                : 'dict의 각 항목은 ["한국어 원문", "번역"]입니다. 두 번째 칸에 영어 번역이 들어 있으니 그 칸만 바꾸세요 (첫 번째 칸은 바꾸지 마세요). code(예: "ja")와 name(예: "日本語")을 채운 뒤 메인 화면 🌐 > 언어 팩 불러오기로 적용합니다. 데스크톱 앱에서는 🌐 > 모드 폴더 열기로 연 폴더 안에 새 폴더를 만들어 이 파일을 넣어도 됩니다 (그 폴더가 그대로 창작마당 아이템). / Each dict entry is ["Korean source", "translation"]. Replace only the second (English) column. In the desktop app you can also put this file in its own folder inside 🌐 > Open mods folder — that folder is a Workshop item as-is.',
+                ? 'dict의 각 항목은 ["한국어 원문", "번역"]입니다. 두 번째 칸에 한국어 원문이 그대로 들어 있으니 그 칸만 번역하세요 (첫 번째 칸은 바꾸지 마세요). patterns의 "to"는 영어 예시이니 함께 번역하세요. code(예: "jp")와 name(예: "日本語")을 채운 뒤 메인 화면 🌐 > 언어 팩 불러오기로 적용합니다. 데스크톱 앱에서는 🌐 > 모드 폴더 열기로 연 폴더 안에 새 폴더를 만들어 이 파일을 넣어도 되고, 그 폴더가 그대로 창작마당 아이템이 됩니다.'
+                : 'dict의 각 항목은 ["한국어 원문", "번역"]입니다. 두 번째 칸에 영어 번역이 들어 있으니 그 칸만 바꾸세요 (첫 번째 칸은 바꾸지 마세요). code(예: "jp")와 name(예: "日本語")을 채운 뒤 메인 화면 🌐 > 언어 팩 불러오기로 적용합니다. 데스크톱 앱에서는 🌐 > 모드 폴더 열기로 연 폴더 안에 새 폴더를 만들어 이 파일을 넣어도 됩니다 (그 폴더가 그대로 창작마당 아이템). / Each dict entry is ["Korean source", "translation"]. Replace only the second (English) column. In the desktop app you can also put this file in its own folder inside 🌐 > Open mods folder — that folder is a Workshop item as-is.',
             months: ko ? ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월'] : en.months,
             ordinal: ko ? '' : en.ordinal,
             patterns: en.patterns,
@@ -164,10 +183,14 @@
     // translateSubtree(el): 페이지 로드 뒤에 새로 그려진 부분(시작 화면 세이브 목록, 로드맵 버전 탭 등)을 번역.
     // 한국어일 땐 아무 일도 하지 않고, 팩이 준비되기 전에 불리면 준비된 뒤에 번역한다.
     // t(s): 문자열 하나를 번역 (한국어이거나 팩이 아직 준비 전이면 그대로)
-    window.DnoLang = { list: listLanguages, install: installPack, remove: removePack, template: buildTemplate, validate: normalizePack, format: PACK_FORMAT, translateSubtree: () => {}, t: s => s };
+    // setDataStrings(list): 세이브에 든 데이터(정당 · 지역구 · 의원 · 법안 이름 등) — 화면 번역에서 건드리지 않는다 (1.6.0, js/main.js가 알려 줌)
+    // exact(s): 사전에 통째로 있는 글자면 그 번역, 아니면 null (예전 세이브의 기본 이름을 한 번 바꿀 때 사용) · ready: 팩이 준비됐는지
+    window.DnoLang = { list: listLanguages, install: installPack, remove: removePack, template: buildTemplate, validate: normalizePack, format: PACK_FORMAT,
+        translateSubtree: () => {}, t: s => s, setDataStrings: () => {}, exact: () => null, ready: false };
 
     const current = getLang();
     if (current === SOURCE_LANG.code) return; // 기본값(한국어)일 때는 아무 것도 하지 않는다
+    applyNeonFont(current); // 언어 코드로 정해 둔 네온 폰트 (팩에 neonFont가 있으면 팩을 읽은 뒤 한 번 더)
 
     // ===== 번역 엔진 =====
     function ordinalEn(v) {
@@ -214,16 +237,51 @@
             };
             return [re, replacer];
         });
-        return function translateString(orig) {
+        const translateString = function translateString(orig) {
             if (!orig) return orig;
             let s = orig.replace(/\uFE0E/g, '');
             const base = s;
+            // 세이브 데이터(이름 등)는 번역하지 않는다 — 글자 전체가 데이터면 그대로, 섞여 있으면 데이터 부분을 잠시 빼 두었다가 되돌림
+            const whole = s.trim();
+            if (dataSet.has(whole)) return orig;
+            // 글자 전체가 사전에 있는 UI 문구면(예: "무소속 포함하기") 데이터 단어가 섞여 있어도 UI로 번역
+            if (dictMap.has(whole)) { const t = s.replace(whole, dictMap.get(whole)); return window.DnoEmoji ? window.DnoEmoji.fix(t) : t; }
+            const held = [];
+            if (dataRe) s = s.replace(dataRe, m => { held.push(m); return '\uE000' + (held.length - 1) + '\uE001'; });
             for (const [re, rep] of patterns) s = s.replace(re, rep);
             if (dictRegex) s = s.replace(dictRegex, m => dictMap.get(m) ?? m);
+            if (held.length) s = s.replace(/\uE000(\d+)\uE001/g, (_, i) => held[+i] ?? '');
             // 번역할 게 없었다면 선택자를 떼지 않은 원래 글자를 그대로 돌려준다 (이모지 표시 방식과 서로 되돌리며 반복하지 않게)
             return s === base ? orig : (window.DnoEmoji ? window.DnoEmoji.fix(s) : s);
         };
+        translateString.exact = v => { const k = String(v == null ? '' : v).replace(/\uFE0E/g, ''); return dictMap.has(k) ? dictMap.get(k) : null; };
+        return translateString;
     }
+
+    // ── 세이브 데이터 보호 (1.6.0) ──
+    // 화면 번역은 메뉴 · 버튼 · 안내 같은 UI 글자에만. 사용자가 정한 이름(정당 "국회" 등)이 "Parliament"로 바뀌지 않도록,
+    // main.js가 알려 준 데이터 글자는 번역에서 뺀다. 앞뒤가 한글 · 영문 · 숫자로 이어진 경우(다른 단어의 일부)는 데이터로 보지 않는다
+    let dataSet = new Set();
+    let dataRe = null;
+    let dataKey = '';
+    function setDataStrings(list) {
+        const uniq = [...new Set((list || []).map(v => String(v == null ? '' : v).replace(/\uFE0E/g, '').trim()).filter(v => v.length >= 2 && !/^[\d\s.,:%#()-]+$/.test(v)))];
+        const key = uniq.join('\u0001');
+        if (key === dataKey) return false;
+        dataKey = key;
+        dataSet = new Set(uniq);
+        const esc = v => v.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const sorted = uniq.slice().sort((a, b) => b.length - a.length);
+        try { dataRe = sorted.length ? new RegExp('(?<![가-힣A-Za-z0-9])(?:' + sorted.map(esc).join('|') + ')(?![가-힣A-Za-z0-9])', 'g') : null; }
+        catch (e) { dataRe = null; }
+        return true;
+    }
+    window.DnoLang.setDataStrings = setDataStrings;
+    // translate="no"가 붙은 요소(조문 등 데이터 덩어리) 안은 번역하지 않는다
+    const noTranslate = node => {
+        const el = node && (node.nodeType === Node.ELEMENT_NODE ? node : node.parentElement);
+        return !!(el && el.closest && el.closest('[translate="no"]'));
+    };
 
     function translateTree(root, translateString) {
         function translateAttrs(el) {
@@ -244,10 +302,12 @@
             if (node.nodeType !== Node.ELEMENT_NODE) return;
             const tag = node.tagName;
             if (tag === 'SCRIPT' || tag === 'STYLE') return;
+            if (node.getAttribute('translate') === 'no') return;
             translateAttrs(node);
             if (tag === 'TEXTAREA') return; // 텍스트에어리어 내용은 사용자가 입력한 법안 본문 — 번역하지 않음
             for (const child of Array.from(node.childNodes)) translateNodeDeep(child);
         }
+        if (noTranslate(root)) return;
         translateNodeDeep(root);
     }
     translateTree.attrsOnly = function (el, translateString) {
@@ -276,11 +336,14 @@
 
     const waiting = new Set(); // 팩 준비 전에 번역 요청된 부분
     window.DnoLang.translateSubtree = el => { if (el) waiting.add(el); };
+    packReady.then(pack => applyNeonFont(current, pack)).catch(() => {});
     Promise.all([packReady, pageLoaded]).then(([pack]) => {
         translate = buildTranslator(pack);
         translateTree(document.documentElement, translate);
         window.DnoLang.translateSubtree = el => { if (el) translateTree(el, translate); };
         window.DnoLang.t = s => translate(s);
+        window.DnoLang.exact = s => translate.exact(s);
+        window.DnoLang.ready = true;
         waiting.forEach(el => { if (el.isConnected) translateTree(el, translate); });
         waiting.clear();
         // 번역된 문자열로 직접 다시 그려야 하는 화면(로드맵 카드 제목 등)에 알림

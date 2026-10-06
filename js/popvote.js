@@ -1,5 +1,5 @@
 // ===== Hemicycle 1.5.9 "Pops" — 지방선거 · 국민투표 =====
-// 두 선거 모두 지역구 인구(여론 › 지역구의 "인구")로 실제 득표수를 계산한다:
+// 두 선거 모두 지역구 인구(국가 › 지역의 "인구")로 실제 득표수를 계산한다:
 //   유권자 = 인구, 투표자 = 인구 × 투표율(지역마다 조금씩 흔들림), 득표 = 투표자 × 득표율
 //   - 지방선거: 단위(권역 또는 지역구)마다 단체장 1명 — 최다 득표 정당이 당선. 정당 득표율은 지역구 성향(%)
 //     (없으면 지지율 탭의 전국 지지율) + 노이즈, 후보 단일화("총선 지역구" 적용)도 반영
@@ -119,11 +119,11 @@
         const want = LEVELS.filter(lv => (lv === 'region' ? L.doRegion : L.doDistrict));
         if (!want.length) { showCustomAlert('권역 단체장 · 지역구 단체장 중 하나 이상을 골라 주세요.'); return; }
         if (!districtKeys(ch).length) {
-            showCustomAlert('지방선거를 치를 지역이 없습니다.\n여론 › 지역구에서 지도를 올리고 지역구를 만든 뒤(권역 단위면 여론 › 권역에서 권역도) 다시 시도하세요.');
+            showCustomAlert('지방선거를 치를 지역이 없습니다.\n국가 › 지역에서 지도를 올리고 지역구를 만든 뒤(권역 단위면 국가 › 권역에서 권역도) 다시 시도하세요.');
             return;
         }
         const levels = want.map(lv => runLevel(ch, lv, L)).filter(lv => lv.results.length);
-        if (!levels.length) { showCustomAlert('권역이 없습니다 — 여론 › 권역에서 권역을 만들고 지역구를 배정하세요.'); return; }
+        if (!levels.length) { showCustomAlert('권역이 없습니다 — 국가 › 권역에서 권역을 만들고 지역구를 배정하세요.'); return; }
         const rec = {
             id: 'loc' + Date.now().toString(36),
             title: L.title || `${L.year ? L.year + '년 ' : ''}지방선거`,
@@ -132,6 +132,7 @@
         L.last = rec;
         L.records.unshift(rec);
         L.records = L.records.slice(0, MAX_RECORDS);
+        recordsChanged();
         renderLocal();
         showOnDisplay('local', rec, true);
     }
@@ -426,6 +427,7 @@
         R.last = rec;
         R.records.unshift(rec);
         R.records = R.records.slice(0, MAX_RECORDS);
+        recordsChanged();
         renderRef();
         showOnDisplay('ref', rec, true);
     }
@@ -597,7 +599,7 @@
 
     function popStatus(ch, unit) {
         const keys = districtKeys(ch);
-        if (!keys.length) return '지역구가 없습니다 — 여론 › 지역구에서 지도를 올려 주세요.';
+        if (!keys.length) return '지역구가 없습니다 — 국가 › 지역에서 지도를 올려 주세요.';
         const withPop = keys.filter(k => popOf(ch, k) != null);
         const total = withPop.reduce((a, k) => a + popOf(ch, k), 0);
         const regionCount = (regions[ch] || []).length;
@@ -631,7 +633,7 @@
             <button type="button" class="pv-run" onclick="PopVote.runLocal()" data-modern-label="개표 시작">&gt;&gt; 개표 시작 &lt;&lt;</button>
             <div id="pvLocalResult"></div>
             <div id="pvHolders"></div>
-            ${recordsHtml('local')}`;
+`;
         renderLocalResult(L.last, ge('pvLocalResult'));
         renderHolders();
     }
@@ -659,18 +661,31 @@
             <div class="pv-note">${esc(districtKeys(R.chamber).length ? popStatus(R.chamber, 'district') : `지역구가 없어 전국 하나로 계산합니다 (유권자 ${fmt(NATION_VOTERS)}명, 지지율 탭의 전국 지지율 사용).`)}<br>투표율 기준을 켜면 투표율이 그보다 낮을 때 찬성이 많아도 부결됩니다.</div>
             <button type="button" class="pv-run" onclick="PopVote.runRef()" data-modern-label="개표 시작">&gt;&gt; 개표 시작 &lt;&lt;</button>
             <div id="pvRefResult"></div>
-            ${recordsHtml('ref')}`;
+`;
         renderRefResult(R.last, ge('pvRefResult'));
     }
 
-    function recordsHtml(kind) {
-        const list = S[kind].records;
-        if (!list.length) return '';
-        return `<details class="pv-details pv-records"><summary>지난 기록 (${list.length})</summary>${list.map(r => `
-            <div class="pv-record-row">
-                <button type="button" class="pv-record-open" onclick="PopVote.show('${kind}','${r.id}')">${esc(kind === 'local' ? r.title : r.question)}${kind === 'ref' ? ` — ${r.passed ? '가결' : '부결'}` : ''}</button>
-                <button type="button" class="pv-record-del" title="기록 삭제" onclick="PopVote.remove('${kind}','${r.id}')">✕</button>
-            </div>`).join('')}</details>`;
+    // ---- 기록: 지방선거 · 국민투표 기록은 선거 › 선거 기록에 총선 · 대선 기록과 함께 나온다 (main.js elecRenderRecords) ----
+    function recordsChanged() { if (typeof elecRenderRecords === 'function') elecRenderRecords(); }
+    // 선거 기록 카드에 쓸 요약 — { at, title, year, chamber, lines:[{ label, chips:[{ color, name, n }] }], verdict, search }
+    function recordInfo(kind, r) {
+        const chamber = typeof chamberDisplayName === 'function' && chamberList().includes(r.chamber) ? chamberDisplayName(r.chamber) : '';
+        if (kind === 'local') {
+            const lines = levelsOf(r).map(lv => ({
+                office: lv.office || '', count: lv.results.length,
+                chips: levelSummary(lv).rows.filter(x => x.won > 0).map(x => { const p = partyById(x.pid); return { color: p ? p.color : '#888', name: p ? p.name : '?', n: x.won }; }),
+            }));
+            return { at: r.at || 0, title: r.title || '지방선거', year: r.year || '', chamber, lines,
+                search: [r.title, r.year, chamber, ...lines.map(l => l.office), ...lines.flatMap(l => l.chips.map(c => c.name))].join(' ') };
+        }
+        const verdict = r.quorumFail ? '투표율 미달 · 부결' : r.passed ? '가결' : '부결';
+        return { at: r.at || 0, title: r.question || '국민투표', year: r.year || '', chamber, passed: !!r.passed,
+            verdict, yesPct: pct(r.yes, r.voters), turnoutPct: pct(r.voters, r.electorate),
+            search: [r.question, r.year, chamber, verdict].join(' ') };
+    }
+    function records() {
+        return [...S.local.records.map(r => ({ kind: 'local', id: r.id, ...recordInfo('local', r) })),
+                ...S.ref.records.map(r => ({ kind: 'ref', id: r.id, ...recordInfo('ref', r) }))];
     }
 
     function show(kind, id) {
@@ -685,6 +700,7 @@
             S[kind].records = S[kind].records.filter(x => x.id !== id);
             if (S[kind].last && S[kind].last.id === id) S[kind].last = null;
             if (kind === 'local') renderLocal(); else renderRef();
+            recordsChanged();
         });
     }
     function refresh() {
@@ -716,10 +732,11 @@
         });
         if (ge('pvLocalForm')) renderLocal();
         if (ge('pvRefForm')) renderRef();
+        recordsChanged();
     }
 
     window.PopVote = {
-        runLocal, runRef, renderLocal, renderRef, refresh, show, remove, getState, setState,
+        runLocal, runRef, renderLocal, renderRef, refresh, show, remove, getState, setState, records,
         applyLocal, setHolder, uploadHolderPhoto, setUnitsView, showHolders: () => showHoldersOnDisplay(true),
     };
 })();

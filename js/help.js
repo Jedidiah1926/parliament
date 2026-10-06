@@ -64,15 +64,24 @@
             ],
         },
         law: {
-            intro: '법안을 만들고 통과시키는 과정입니다.',
+            intro: '법안을 만들고 통과시키는 과정입니다. 메뉴 위의 단계 막대(제출 › 위원회 › 본회의 › 서명 · 기록 › 법령)에 단계마다 법안 수가 보이고, 누르면 그 탭으로 갑니다.',
             tabs: [
                 {
                     btn: 'subTabBill', open: go('law', 'bill'),
-                    desc: '새 법안 작성(제목 · 내용 · 태그 · 가결 기준), 기존 법안 수정과 개정안.',
+                    desc: '새 법안 작성 — 종류(법률안 · 헌법 개정안), 제목, 조문(제1조 · 제2조 … 조 단위로 쓰고 순서를 바꿈), 태그, 가결 기준. 기존 법안 수정과 개정안도 여기서.',
+                    inner: [['헌법 개정안', '고르면 지금 헌법 조문이 채워지고 가결 기준이 2/3로 바뀝니다. 가결되면 그 조문이 새 헌법이 돼요.']],
+                },
+                {
+                    btn: 'subTabCommittee', open: go('law', 'committee'),
+                    desc: '상임위원회 — 법안을 본회의 전에 먼저 심사합니다. 위원은 그 원의 정당 의석 비율대로 배정되고, 정당마다 찬성 · 반대 · 기권을 골라 "심사 확정"을 누르면 위원 과반 찬성일 때 본회의로, 부결이면 폐기돼요.',
+                    inner: [
+                        ['기본 위원회', '법제사법 · 기획재정 · 외교통일 · 국방 · 행정안전 · 교육 · 보건복지 · 환경노동 8개를 한 번에 만듭니다.'],
+                        ['소관 태그', '법안 태그가 위원회 소관 태그와 겹치면 그 위원회로 자동 지정됩니다 (상정 탭에서 바꾸거나 "없음"으로 바로 본회의).'],
+                    ],
                 },
                 {
                     btn: 'subTabTable', open: go('law', 'table'),
-                    desc: '법안을 의회 또는 국무회의에 올립니다. 검색 · 태그로 찾을 수 있어요.',
+                    desc: '법안을 의회 또는 국무회의에 올리고, 의회로 올릴 법안은 소관 위원회를 고릅니다. 위원회 심사가 끝나야 "심의 선택"이 열려요. 검색 · 태그로 찾을 수 있습니다.',
                 },
                 {
                     btn: 'subTabVote', open: go('law', 'vote'),
@@ -82,14 +91,27 @@
                     btn: 'subTabArchive', open: go('law', 'archive'),
                     desc: '가결 · 부결 · 거부된 법안 보관함입니다 (상태별로 걸러 보기). 선거 기록은 선거 › 선거 기록에 있어요.',
                 },
+                {
+                    btn: 'subTabLawbook', open: go('law', 'lawbook'),
+                    desc: '법령집 — 헌법과 가결된 법률을 조문 그대로 모아 봅니다. 법률은 개정 계보마다 가장 최근 판이 보이고(제정 · 개정 횟수), 여기서 개정안을 낼 수 있어요.',
+                    inner: [['헌법', '"헌법 제정하기"로 처음 만들고, "직접 편집"(표결 없이 바로) 또는 "개정안 발의"(표결을 거쳐)로 고칩니다. 개정 이력이 남아요.']],
+                },
             ],
         },
         nation: {
-            intro: '나라의 기본 틀을 정합니다.',
+            intro: '나라의 기본 틀 — 상징 · 지역(지역구) · 권역을 정합니다.',
             tabs: [
                 {
                     btn: 'subTabSymbol', open: go('nation', 'symbol'),
                     desc: '국가명과 국기.',
+                },
+                {
+                    btn: 'subTabTerritory', open: go('nation', 'territory'),
+                    desc: '지역구를 만들고 원별 의석 수 · 인구를 정합니다. 맵 메이커에서 만든 지도(.jsx)를 올리면 실제 지도 모양의 지역구를 쓸 수 있어요. (1.5.9까지는 여론 › 지역구)',
+                },
+                {
+                    btn: 'subTabRegions', open: go('nation', 'regions'),
+                    desc: '지역구를 권역으로 묶습니다 — 권역형 비례대표 · 지방선거 권역 단체장의 단위. 권역 득표율은 지역구 성향을 평균하는 자동 집계나 직접 입력 중에서 고릅니다. (1.5.9까지는 여론 › 권역)',
                 },
                 {
                     btn: 'dispDateSettingsBtn', title: '날짜 · 회기 설정', open: () => { showPanel('display'); if(typeof openDatePanel === 'function') openDatePanel(); },
@@ -133,19 +155,11 @@
             ],
         },
         election: {
-            intro: '선거 결과를 좌우하는 지역구 · 성향 · 지지율을 정합니다. 여기서 정한 값으로 선거 탭에서 개표해요.',
+            intro: '선거 결과를 좌우하는 성향 · 지지율을 정합니다 (지역구 · 권역은 국가 묶음). 여기서 정한 값으로 선거 탭에서 개표해요.',
             tabs: [
-                {
-                    btn: 'elecSubTabDistrict', open: goElec('district'),
-                    desc: '지역구를 만들고 원별 의석 수를 정합니다. 맵 메이커에서 만든 지도(.jsx)를 올리면 실제 지도 모양의 지역구를 쓸 수 있어요.',
-                },
                 {
                     btn: 'elecSubTabTendency', open: goElec('tendency'),
                     desc: '지역구마다 정당별 성향(%)을 정합니다. 지역구 선거에서 어느 정당이 이길지가 여기서 갈려요.',
-                },
-                {
-                    btn: 'elecSubTabRegion', open: goElec('region'),
-                    desc: '권역형 비례대표를 쓸 때 지역구를 권역으로 묶습니다. 권역 득표율은 지역구 성향을 평균하는 자동 집계나 직접 입력 중에서 고릅니다.',
                 },
                 {
                     btn: 'elecSubTabProb', open: goElec('prob'),
@@ -272,16 +286,16 @@
                     desc: '대통령 · 총리 · 부총리 · 국무위원 등 정부 구성원을 카드로 한눈에 보여줍니다. 내각 묶음에서 정한 내용이 여기 반영돼요.',
                 },
                 {
-                    btn: 'dispTabDistrict', open: () => { goElec('district')(); showPanel('display'); }, openWhenHidden: true,
-                    desc: '지역구 지도. 여론 › 지역구를 열면 나타나고, 지역구를 눌러 편집할 수 있어요. 탭의 ×로 닫습니다.',
+                    btn: 'dispTabDistrict', open: () => { go('nation', 'territory')(); showPanel('display'); }, openWhenHidden: true,
+                    desc: '지역구 지도. 국가 › 지역을 열면 나타나고, 지역구를 눌러 편집할 수 있어요. 탭의 ×로 닫습니다.',
                 },
                 {
                     btn: 'dispTabTendency', open: () => { goElec('tendency')(); showPanel('display'); }, openWhenHidden: true,
                     desc: '정당별 성향 지도. 여론 › 성향을 열면 나타나며, 지역구마다 어느 정당 쪽인지 색으로 보여요.',
                 },
                 {
-                    btn: 'dispTabRegion', open: () => { goElec('region')(); showPanel('display'); }, openWhenHidden: true,
-                    desc: '권역 지도. 여론 › 권역을 열면 나타나고, 지역구를 칠해 권역으로 묶습니다.',
+                    btn: 'dispTabRegion', open: () => { go('nation', 'regions')(); showPanel('display'); }, openWhenHidden: true,
+                    desc: '권역 지도. 국가 › 권역을 열면 나타나고, 지역구를 칠해 권역으로 묶습니다.',
                 },
                 {
                     btn: 'dispTabElecResultHouse', title: '선거결과', open: disp('elecResultHouse'), hiddenNote: '총선을 개표하면 원마다 생겨요',

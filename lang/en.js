@@ -22,6 +22,33 @@ window.DnoLangPacks.en = {
  ],
  "ordinal": "en",
  "patterns": [
+  {"re": "^\\s*당선:\\s*$", "to": "Elected:"},
+  {"re": "^찬성 ([\\d.]+)% · 투표율 ([\\d.]+)%$", "to": "Yes $1% · Turnout $2%"},
+  {"re": "^\\s*지역\\s*$", "to": "Districts"},
+  {"re": "^\\s*원\\s*$", "to": "Chamber"},
+  {"re": "^제(\\d+)조$", "to": "Art. $1"},
+  {"re": "^기본 위원회 만들기 \\((\\d+)개\\)$", "to": "Create default committees ($1)"},
+  {"re": "^심사 중 (\\d+)건 · 심사 끝 (\\d+)건$", "to": "Under review $1 · Reviewed $2"},
+  {"re": "^(\\d+)명$", "to": "$1 members"},
+  {"re": "^▶ 위원회 심사 확정 \\(위원 (\\d+)명 중 과반 (\\d+)명 찬성이면 통과\\)$", "to": "▶ Confirm committee review (passes with $2 of $1 members in favor)"},
+  {"re": "^(.+) 심사 중$", "to": "$1: under review"},
+  {"re": "^(.+) ✔통과$", "to": "$1 ✔ passed"},
+  {"re": "^(.+) ✘부결$", "to": "$1 ✘ rejected"},
+  {"re": "^\\[ (.+?) 심사 결과 \\]", "to": "[ $1 review result ]"},
+  {"re": "^\\[ (.+?) (?:표결|Vote) 결과 \\]", "to": "[ $1 vote result ]"},
+  {"re": "^제정 (.+)$", "to": "Enacted $1"},
+  {"re": " · 개정 (\\d+)회", "to": " · amended $1×"},
+  {"re": "\\(최근 (.+)\\)", "to": "(latest $1)"},
+  {"re": "^개정 (\\d+)회 — ", "to": "Amended $1× — "},
+  {"re": "^의원: ", "to": "Member: "},
+  {"re": "^지역구: (.+)$", "to": "District: $1"},
+  {"re": "^… 외 (\\d+)개 조$", "to": "… and $1 more articles"},
+  {"re": "^위원 과반 (\\d+)명", "to": "majority of $1 members"},
+  {"re": "(.+)에서 부결돼 폐기된 법안입니다\\.$", "to": "This bill died after being rejected in $1."},
+  {"re": "^(.+) 심사가 끝나야 본회의에 올릴 수 있습니다\\.$", "to": "The bill can go to the floor only after $1 finishes its review."},
+  {"re": "^✔ (.+) 통과 — 본회의에 올릴 수 있어요$", "to": "✔ Passed $1 — it can go to the floor"},
+  {"re": "^✘ (.+)에서 부결 — 폐기$", "to": "✘ Rejected in $1 — the bill dies"},
+  {"re": "^\\\"(.+)\\\"을\\(를\\) 삭제할까요\\?(\\n심사 중인 법안 (\\d+)건은 위원회 심사 없이 본회의로 넘어갑니다\\.)?$", "to": "Delete \"$1\"?"},
   {"re": "^지역구별 결과 \\((\\d+)\\)$", "to": "Results by district ($1)"},
   {"re": "^\\s*사용\\s*$", "to": "Use"},
   {"re": "^무소속 의석이 (\\d+)석 남아 있어 끌 수 없습니다\\.", "to": "Independents still hold $1 seats, so this can't be turned off."},
@@ -1051,8 +1078,8 @@ window.DnoLangPacks.en = {
    "Reset the names of all districts? (Map shapes, seat counts and tendencies are kept)"
   ],
   [
-   "권역별 득표율이 없습니다.\n여론 > 권역 탭에서 권역을 만들고 지역구를 배정하거나(자동 집계), 득표율을 직접 입력하세요.",
-   "There are no regional vote shares.\nCreate regions in Opinion > Regions and assign districts (automatic), or enter vote shares directly."
+   "권역별 득표율이 없습니다.\n국가 > 권역 탭에서 권역을 만들고 지역구를 배정하거나(자동 집계), 득표율을 직접 입력하세요.",
+   "There are no regional vote shares.\nCreate regions in Nation > Regions and assign districts (automatic), or enter vote shares directly."
   ],
   [
    "언어 팩을 읽을 수 없습니다. (올바른 JSON 파일이 아닙니다)",
@@ -4139,8 +4166,8 @@ window.DnoLangPacks.en = {
    "List PR method (Senate) —"
   ],
   [
-   "여론 > 권역",
-   "Opinion > Regions"
+   "국가 > 권역",
+   "Nation > Regions"
   ],
   [
    "탭에서 권역을 먼저 설정하세요",
@@ -4735,16 +4762,16 @@ window.DnoLangPacks.en = {
    "Shows the president, PM, deputy PMs, ministers and other government members as cards. Reflects what you set in the Cabinet group."
   ],
   [
-   "지역구 지도. 여론 › 지역구를 열면 나타나고, 지역구를 눌러 편집할 수 있어요. 탭의 ×로 닫습니다.",
-   "District map. Appears when you open Opinion › Districts; click a district to edit it. Close with the × on the tab."
+   "지역구 지도. 국가 › 지역를 열면 나타나고, 지역구를 눌러 편집할 수 있어요. 탭의 ×로 닫습니다.",
+   "District map. Appears when you open Nation › Districts; click a district to edit it. Close with the × on the tab."
   ],
   [
    "정당별 성향 지도. 여론 › 성향을 열면 나타나며, 지역구마다 어느 정당 쪽인지 색으로 보여요.",
    "Party leaning map. Appears when you open Opinion › Tendency and colors each district by which party it leans toward."
   ],
   [
-   "권역 지도. 여론 › 권역을 열면 나타나고, 지역구를 칠해 권역으로 묶습니다.",
-   "Region map. Appears when you open Opinion › Regions; paint districts to group them into regions."
+   "권역 지도. 국가 › 권역을 열면 나타나고, 지역구를 칠해 권역으로 묶습니다.",
+   "Region map. Appears when you open Nation › Regions; paint districts to group them into regions."
   ],
   [
    "총선 개표 화면과 결과. 개표가 진행되는 모습, 정당별 득표와 직전 대비 의석 변동(▲/▼)을 보여주고, 결과를 확인한 뒤 국가 › 선거의 \"✔ 의회에 반영\"을 누르면 그 결과대로 의석이 바뀝니다.",
@@ -5059,8 +5086,8 @@ window.DnoLangPacks.en = {
    "Your uploaded SVG appears here"
   ],
   [
-   "SVG 지도를 지역구 지도 파일(.jsx)로 — 만든 파일은 여론 › 지역구에서 불러옵니다",
-   "Turn an SVG map into a district map file (.jsx) — load it in Polls › Districts"
+   "SVG 지도를 지역구 지도 파일(.jsx)로 — 만든 파일은 국가 › 지역에서 불러옵니다",
+   "Turn an SVG map into a district map file (.jsx) — load it in Nation › Districts"
   ],
   [
    "SVG 파일을 선택하세요.",
@@ -5199,8 +5226,8 @@ window.DnoLangPacks.en = {
    "District system (map/grid) and the size of map labels and badges."
   ],
   [
-   "지도 모드에서는 여론 › 지역구 탭에서 SVG 지도(.jsx)를 올릴 수 있습니다",
-   "In map mode, upload the district map (.jsx) in Polls \u203a Districts"
+   "지도 모드에서는 국가 › 지역 탭에서 SVG 지도(.jsx)를 올릴 수 있습니다",
+   "In map mode, upload the district map (.jsx) in Nation › Districts"
   ],
   [
    "의회 구성",
@@ -5671,8 +5698,8 @@ window.DnoLangPacks.en = {
    "Uploading the district map"
   ],
   [
-   "여론 › 지역구에서 맵 메이커로 만든 .jsx 파일을 올립니다. 올리면 도형 하나하나가 지역구가 되고, 하원 · 상원 · 삼원이 같은 지도를 함께 씁니다. (새 지도를 올리면 기존 지역구 정보는 새 지도로 바뀌어요)",
-   "Upload the .jsx file made with Map Maker in Polls › Districts. Each shape becomes a district, and the lower, upper and third chambers share the same map. (Uploading a new map replaces the existing district data)"
+   "국가 › 지역에서 맵 메이커로 만든 .jsx 파일을 올립니다. 올리면 도형 하나하나가 지역구가 되고, 하원 · 상원 · 삼원이 같은 지도를 함께 씁니다. (새 지도를 올리면 기존 지역구 정보는 새 지도로 바뀌어요)",
+   "Upload the .jsx file made with Map Maker in Nation › Districts. Each shape becomes a district, and the lower, upper and third chambers share the same map. (Uploading a new map replaces the existing district data)"
   ],
   [
    "지역구 편집",
@@ -5683,8 +5710,8 @@ window.DnoLangPacks.en = {
    "Polls › Tendency sets each party's tendency (%) in every district, which decides who wins district races. The visual screen shows an overall map and one map per party."
   ],
   [
-   "권역형 비례대표를 쓸 때는 여론 › 권역에서 지역구를 권역으로 묶습니다. 권역을 고른 뒤 지도에서 지역구를 눌러(끌어서 여러 개) 칠해요. 권역 득표율은 성향을 평균하는 자동 집계나 직접 입력 중에서 고릅니다.",
-   "When using regional list seats, group districts into regions in Polls › Regions. Pick a region and click districts on the map (drag for several) to paint them. Regional vote shares come either from averaging tendencies automatically or from your own input."
+   "권역형 비례대표를 쓸 때는 국가 › 권역에서 지역구를 권역으로 묶습니다. 권역을 고른 뒤 지도에서 지역구를 눌러(끌어서 여러 개) 칠해요. 권역 득표율은 성향을 평균하는 자동 집계나 직접 입력 중에서 고릅니다.",
+   "When using regional list seats, group districts into regions in Nation › Regions. Pick a region and click districts on the map (drag for several) to paint them. Regional vote shares come either from averaging tendencies automatically or from your own input."
   ],
   [
    "지도 글씨 크기",
@@ -7127,8 +7154,8 @@ window.DnoLangPacks.en = {
    "Several parties, one candidate · applies to presidential and district races separately"
   ],
   [
-   "여론 › 지역구에서 맵 메이커로 만든 .jsx 파일을 올립니다. 올리면 도형 하나하나가 지역구가 되고, 기본으로는 하원 · 상원 · 삼원이 같은 지도를 함께 씁니다. (새 지도를 올리면 기존 지역구 정보는 새 지도로 바뀌어요)",
-   "Upload the .jsx file made in the map maker under Opinion › Districts. Each shape becomes a district, and by default the House, Senate and Third chamber share the same map. (Uploading a new map replaces the existing district data.)"
+   "국가 › 지역에서 맵 메이커로 만든 .jsx 파일을 올립니다. 올리면 도형 하나하나가 지역구가 되고, 기본으로는 하원 · 상원 · 삼원이 같은 지도를 함께 씁니다. (새 지도를 올리면 기존 지역구 정보는 새 지도로 바뀌어요)",
+   "Upload the .jsx file made in the map maker under Nation › Districts. Each shape becomes a district, and by default the House, Senate and Third chamber share the same map. (Uploading a new map replaces the existing district data.)"
   ],
   [
    "원마다 다른 지도",
@@ -7299,12 +7326,12 @@ window.DnoLangPacks.en = {
    "local heads"
   ],
   [
-   "지역구가 없습니다 — 여론 › 지역구에서 지도를 올려 주세요.",
-   "No districts — upload a map under Opinion › Districts."
+   "지역구가 없습니다 — 국가 › 지역에서 지도를 올려 주세요.",
+   "No districts — upload a map under Nation › Districts."
   ],
   [
-   "지방선거를 치를 지역이 없습니다.\n여론 › 지역구에서 지도를 올리고 지역구를 만든 뒤(권역 단위면 여론 › 권역에서 권역도) 다시 시도하세요.",
-   "There's nowhere to hold local elections.\nUpload a map and create districts under Opinion › Districts (and regions under Opinion › Regions for regional units), then try again."
+   "지방선거를 치를 지역이 없습니다.\n국가 › 지역에서 지도를 올리고 지역구를 만든 뒤(권역 단위면 국가 › 권역에서 권역도) 다시 시도하세요.",
+   "There's nowhere to hold local elections.\nUpload a map and create districts under Nation › Districts (and regions under Nation › Regions for regional units), then try again."
   ],
   [
    "국민투표에 부칠 안건(질문)을 적어 주세요.",
@@ -7318,6 +7345,18 @@ window.DnoLangPacks.en = {
   ["- 권역으로 묶은 지도(권역 탭 · 지방선거 권역 단계 · 지방자치 현황)에서 권역 테두리가 군데군데 끊기던 문제 수정 — 권역 안쪽 경계선은 없애고 바깥 둘레만 지도 기본 선으로, 지방자치 현황 지도에 권역별 · 지역구별 보기", "- Fixed region outlines breaking off in places on region-grouped maps (Regions tab, the region level of local elections, local government overview) — borders inside a region are gone and only the outer edge is drawn with the map's default line; the local government map gets By region · By district views"],
   ["권역별 득표율", "Vote share by region"],
   ["지역구별 · 권역별 결과", "Results by district · region"],
+  ["대통령 선거", "Presidential election"],
+  ["조건에 맞는 기록이 없습니다", "No records match"],
+  ["투표율 미달 · 부결", "Rejected · turnout below quorum"],
+  ["나라의 기본 틀 — 상징 · 지역(지역구) · 권역을 정합니다.", "The basic framework of the nation — symbols, districts and regions."],
+  ["지역구를 만들고 원별 의석 수 · 인구를 정합니다. 맵 메이커에서 만든 지도(.jsx)를 올리면 실제 지도 모양의 지역구를 쓸 수 있어요. (1.5.9까지는 여론 › 지역구)", "Create districts and set each chamber's seats and population. Upload a map made in the map maker (.jsx) to use real map-shaped districts. (Opinion › Districts up to 1.5.9)"],
+  ["지역구를 권역으로 묶습니다 — 권역형 비례대표 · 지방선거 권역 단체장의 단위. 권역 득표율은 지역구 성향을 평균하는 자동 집계나 직접 입력 중에서 고릅니다. (1.5.9까지는 여론 › 권역)", "Group districts into regions — the unit for regional list seats and regional heads in local elections. Regional vote shares come either from averaging district tendencies automatically or from direct input. (Opinion › Regions up to 1.5.9)"],
+  ["선거 결과를 좌우하는 성향 · 지지율을 정합니다 (지역구 · 권역은 국가 묶음). 여기서 정한 값으로 선거 탭에서 개표해요.", "Set the tendencies and support rates that decide elections (districts and regions are under Nation). The Elections tab counts votes from these values."],
+  ["국가 › 지역 · 권역", "Nation › Districts · Regions"],
+  ["선거 기록 통합 · 검색", "Unified election records · search"],
+  ["- 여론 › 지역구 · 여론 › 권역을 국가 › 지역 · 국가 › 권역으로 옮김 (여론에는 성향 · 지지율만)", "- Opinion › Districts and Opinion › Regions move to Nation › Districts and Nation › Regions (Opinion keeps only Tendency and Support)"],
+  ["- 선거 › 선거 기록에 지방선거 · 국민투표 · 대선(총리 선거) 기록도 함께 — 최근 순, 기록 검색 · 종류 필터 (국무회의 기록처럼 기록이 없어도 검색 창 표시)", "- Elections › Records now also lists local elections, referendums and presidential (PM) elections — newest first, with record search and type filters (the search box shows even with no records, like the cabinet records)"],
+  ["- 국가 › 미수복 탭 신설 (국가 › 지역 · 권역은 1.6.0)", "- A new Nation › Unrecovered tab (Nation › Districts and Regions arrive in 1.6.0)"],
   ["권역별", "By region"],
   ["지역구별", "By district"],
   [
@@ -7345,8 +7384,8 @@ window.DnoLangPacks.en = {
    "Pick at least one: regional heads or district heads."
   ],
   [
-   "권역이 없습니다 — 여론 › 권역에서 권역을 만들고 지역구를 배정하세요.",
-   "No regions — create regions and assign districts under Opinion › Regions."
+   "권역이 없습니다 — 국가 › 권역에서 권역을 만들고 지역구를 배정하세요.",
+   "No regions — create regions and assign districts under Nation › Regions."
   ],
   [
    "✔ 현직 단체장에 반영됨",
@@ -7509,7 +7548,7 @@ window.DnoLangPacks.en = {
   ["국가 › 지역 · 미수복 탭", "Nation › Regions · Unrecovered tabs"],
   ["- 미수복 지역 종류 — 종류를 여러 개 만들어 이름 · 빗금 색을 정함 (예: 오스트리아 · 알자스로렌-룩셈부르크 · 동방영토 · 북방영토), 칠하기 도구로 지도에서 여러 지역구를 한 번에 지정", "- Kinds of unrecovered territory — create several kinds, each with its own name and hatch color (e.g. Austria · Alsace-Lorraine-Luxembourg · Eastern Territories · Northern Territories), and mark many districts at once on the map with the paint tool"],
   ["- 종류별 통합 — 미수복 지역을 종류마다 따로 본국에 통합 (전체를 한 번에 되찾는 영토 통일도 가능)", "- Integration by kind — integrate each kind of unrecovered territory into the home nation separately (or reclaim everything at once with territorial unification)"],
-  ["- 여론 › 지역구를 국가 › 지역으로 옮기고, 국가 › 미수복 탭 신설", "- Opinion › Districts moves to Nation › Regions, plus a new Nation › Unrecovered tab"],
+  ["- 여론 › 지역구를 국가 › 지역으로 옮기고, 국가 › 미수복 탭 신설", "- Opinion › Districts moves to Nation › Districts, plus a new Nation › Unrecovered tab"],
   ["- 내장 프리셋 \"서독\" 추가", "- Built-in preset \"West Germany\""],
   ["1.6.8 - 갈라질 수도 없고 분리될 수도 없다 \"Indivisibiliter ac inseparabiliter\"", "1.6.8 - Indivisible and inseparable \"Indivisibiliter ac inseparabiliter\""],
   ["1.6.8 - 갈라질 수도 없고 분리될 수도 없다", "1.6.8 - Indivisible and inseparable"],
@@ -7539,6 +7578,84 @@ window.DnoLangPacks.en = {
   ["개표 때마다 무당파 표를 정당에 나눠 비례대표 의석 배분에 더합니다.\nS = max(0, 무당파 지지율 ± 오차),  r = 0~1 난수 (선거마다)\n① 무작위 몫 S·r — 정당마다 난수 u(0~1) → 정당 i의 몫 = S·r · uᵢ / Σu  (지지율과 무관)\n② 지지율 몫 S·(1−r) — 정당 지지율 wᵢ(오차 반영) × 친화도 aᵢ(0.5~1.5 난수) → 몫 = S·(1−r) · wᵢaᵢ / Σwa\n최종 가중치 = wᵢ + ①몫 + ②몫 → 이 비율로 비례 의석을 배분. 활동 금지 정당은 받지 않고, 지역구 결과는 성향(%)으로 따로 정해져요.", "Each count splits the undecided vote among parties and adds it to the list-seat allocation.\nS = max(0, undecided share ± margin),  r = random 0–1 (per election)\n① Random share S·r — a random u (0–1) per party → party i gets S·r · uᵢ / Σu  (independent of support)\n② Support share S·(1−r) — party support wᵢ (with margin) × affinity aᵢ (random 0.5–1.5) → share = S·(1−r) · wᵢaᵢ / Σwa\nFinal weight = wᵢ + ① + ② → list seats are allocated in this ratio. Banned parties get nothing, and district results are decided separately by tendency (%)."],
   ["무당파 칸 바로 아래. 켜면 무소속도 무당파 표를 받습니다 — ①은 지지율과 무관해서 무소속 지지율이 0이어도 의석을 얻을 수 있어요. 끄면(기본) 무소속은 ① · ② 모두에서 빠집니다.", "Right below the undecided row. When on, independents also receive undecided votes — ① ignores support, so independents can win seats even at 0%. When off (default), independents are left out of both ① and ②."],
   ["- 여론 › 지지율의 무당파 칸 아래에 \"무소속 포함하기\" — 끄면(기본) 무당파 표가 무소속에게 가지 않음 (무소속 지지율이 0인데도 무당파 표의 무작위 몫으로 무소속이 당선되던 문제), 도움말에 무당파 배분 방식을 수식으로 설명", "- \"Include independents\" under the undecided row in Opinion › Polling — when off (default), undecided votes don't go to independents (they used to win seats from the random share even at 0% support); the help explains the undecided-vote formula"],
-  ["- 의회 › 이념에서 무소속을 켜고 끌 수 있게 — 끄면 무소속이 모든 원에서 빠짐, 지역구 선거에서 그 원에 참여하지 않거나 활동 금지된 정당이 지역구를 가져가던 문제 수정", "- Independents can be switched on and off in Parliament › Ideologies — when off they leave every chamber; fixed parties not running in a chamber, or banned, winning its districts"]
+  ["- 의회 › 이념에서 무소속을 켜고 끌 수 있게 — 끄면 무소속이 모든 원에서 빠짐, 지역구 선거에서 그 원에 참여하지 않거나 활동 금지된 정당이 지역구를 가져가던 문제 수정", "- Independents can be switched on and off in Parliament › Ideologies — when off they leave every chamber; fixed parties not running in a chamber, or banned, winning its districts"],
+  ["위원회", "Committees"],
+  ["법령", "Statutes"],
+  ["본회의", "Floor"],
+  ["서명 · 기록", "Signing · Records"],
+  ["법률안", "Bill"],
+  ["헌법 개정안", "Constitutional amendment"],
+  ["조문", "Articles"],
+  ["— 제1조 · 제2조처럼 조 단위로 씁니다 (비워 둬도 돼요)", "— written article by article (Article 1, Article 2 …; can be left empty)"],
+  ["조 제목 (선택, 예: 목적)", "Article title (optional, e.g. Purpose)"],
+  ["조문 내용", "Article text"],
+  ["+ 조 추가", "+ Add article"],
+  ["이 조 삭제", "Delete this article"],
+  ["상임위원회는 법안을 본회의에 올리기 전에 먼저 심사합니다. 위원은 그 원의 정당 의석 비율대로 배정되고, 위원 과반이 찬성하면 본회의로, 부결되면 폐기돼요.", "Standing committees review bills before they reach the floor. Members are allotted by each party's share of seats in that chamber; a bill goes to the floor if a majority of members vote yes, and dies if rejected."],
+  ["아직 상임위원회가 없습니다. 위원회를 만들면 법안을 본회의 전에 소관 위원회에서 먼저 심사해요.", "No standing committees yet. Once you create them, bills are reviewed by the responsible committee before reaching the floor."],
+  ["+ 위원회 추가", "+ Add committee"],
+  ["위원회 삭제", "Delete committee"],
+  ["새 위원회", "New Committee"],
+  ["헌법", "Constitution"],
+  ["아직 헌법이 없습니다.", "There is no constitution yet."],
+  ["헌법 제정하기", "Enact a constitution"],
+  ["헌법 제정", "Enact constitution"],
+  ["헌법 직접 편집", "Edit constitution directly"],
+  ["법률", "Laws"],
+  ["법률 검색...", "Search laws..."],
+  ["아직 가결된 법률이 없습니다. 의회에서 가결된 법률안이 조문 그대로 여기에 모여요.", "No laws have passed yet. Bills passed by the legislature are collected here, article by article."],
+  ["조문이 없습니다.", "No articles."],
+  ["예: 경제, 예산", "e.g. Economy, Budget"],
+  ["없음 (바로 본회의)", "None (straight to the floor)"],
+  ["위원 수", "Members"],
+  ["위원장", "Chair"],
+  ["소관 태그", "Jurisdiction tags"],
+  ["소관 위원회:", "Committee:"],
+  ["위원회 심사로 →", "To committee review →"],
+  ["위원회 심사 중", "In committee"],
+  ["(위원회 심사 중)", "(in committee)"],
+  ["심사 중인 법안이 없습니다. 입법 › 상정에서 법안의 소관 위원회를 고르세요.", "No bills under review. Choose a bill's committee in Legislation › Floor."],
+  ["그 원에 의석을 가진 정당이 없어 위원을 배정할 수 없습니다.", "No party holds seats in that chamber, so no members can be allotted."],
+  ["이름 (예: 대한민국헌법)", "Name (e.g. Constitution of the Republic)"],
+  ["전문 (선택)", "Preamble (optional)"],
+  ["[✔] 저장", "[✔] Save"],
+  ["직접 편집은 표결 없이 바로 바뀝니다 (처음 헌법을 만들 때 · 고칠 때). 표결을 거치려면 \"개정안 발의\"를 쓰세요.", "Direct edits take effect immediately without a vote (for drafting or fixing the constitution). To go through a vote, use \"Propose amendment\"."],
+  ["제정", "Enacted"],
+  ["✎ 직접 편집", "✎ Edit directly"],
+  ["개정 이력 없음", "No amendments yet"],
+  ["개정안 발의", "Propose amendment"],
+  ["📝 개정안 발의", "📝 Propose amendment"],
+  ["📜 헌법 보기", "📜 View constitution"],
+  ["기본 위원회", "Default committees"],
+  ["법제사법위원회", "Legislation and Judiciary Committee"],
+  ["기획재정위원회", "Strategy and Finance Committee"],
+  ["외교통일위원회", "Foreign Affairs and Unification Committee"],
+  ["국방위원회", "National Defense Committee"],
+  ["행정안전위원회", "Public Administration and Security Committee"],
+  ["교육위원회", "Education Committee"],
+  ["보건복지위원회", "Health and Welfare Committee"],
+  ["환경노동위원회", "Environment and Labor Committee"],
+  ["국가 재건을 위해 필요한 모든 조치를 취할 수 있다.\n집행부는 의회의 동의 없이 긴급 법령을 발동할 수 있다.", "All measures necessary for national reconstruction may be taken.\nThe executive may issue emergency decrees without the consent of the legislature."],
+  ["- 버전 표시 v1.6.0", "- Version label v1.6.0"],
+  ["법안을 만들고 통과시키는 과정입니다. 메뉴 위의 단계 막대(제출 › 위원회 › 본회의 › 서명 · 기록 › 법령)에 단계마다 법안 수가 보이고, 누르면 그 탭으로 갑니다.", "The process of drafting bills and getting them passed. The stage bar above the menu (Submit › Committees › Floor › Signing · Records › Statutes) shows the number of bills at each stage — click one to jump to that tab."],
+  ["새 법안 작성 — 종류(법률안 · 헌법 개정안), 제목, 조문(제1조 · 제2조 … 조 단위로 쓰고 순서를 바꿈), 태그, 가결 기준. 기존 법안 수정과 개정안도 여기서.", "Draft a new bill — type (bill · constitutional amendment), title, articles (written article by article, Article 1, Article 2 …, reorderable), tags and passage threshold. Editing existing bills and amendments is here too."],
+  ["고르면 지금 헌법 조문이 채워지고 가결 기준이 2/3로 바뀝니다. 가결되면 그 조문이 새 헌법이 돼요.", "Choosing it fills in the current constitution's articles and sets the threshold to 2/3. If it passes, those articles become the new constitution."],
+  ["상임위원회 — 법안을 본회의 전에 먼저 심사합니다. 위원은 그 원의 정당 의석 비율대로 배정되고, 정당마다 찬성 · 반대 · 기권을 골라 \"심사 확정\"을 누르면 위원 과반 찬성일 때 본회의로, 부결이면 폐기돼요.", "Standing committees — review bills before the floor. Members are allotted by each party's share of seats in that chamber; choose yes · no · abstain for each party and press \"Confirm committee review\": with a majority of members in favor the bill goes to the floor, otherwise it dies."],
+  ["법제사법 · 기획재정 · 외교통일 · 국방 · 행정안전 · 교육 · 보건복지 · 환경노동 8개를 한 번에 만듭니다.", "Creates eight committees at once: Legislation & Judiciary · Strategy & Finance · Foreign Affairs & Unification · Defense · Public Administration & Security · Education · Health & Welfare · Environment & Labor."],
+  ["법안 태그가 위원회 소관 태그와 겹치면 그 위원회로 자동 지정됩니다 (상정 탭에서 바꾸거나 \"없음\"으로 바로 본회의).", "If a bill's tags overlap a committee's jurisdiction tags, it is assigned to that committee automatically (change it in the Floor tab, or pick \"None\" to go straight to the floor)."],
+  ["법안을 의회 또는 국무회의에 올리고, 의회로 올릴 법안은 소관 위원회를 고릅니다. 위원회 심사가 끝나야 \"심의 선택\"이 열려요. 검색 · 태그로 찾을 수 있습니다.", "Send bills to the legislature or the cabinet council, and choose the committee for bills going to the legislature. \"Select for deliberation\" opens once the committee review is done. Find bills by search or tag."],
+  ["법령집 — 헌법과 가결된 법률을 조문 그대로 모아 봅니다. 법률은 개정 계보마다 가장 최근 판이 보이고(제정 · 개정 횟수), 여기서 개정안을 낼 수 있어요.", "Statute book — the constitution and passed laws, article by article. Each law shows its latest version per amendment chain (enactment · number of amendments), and you can propose amendments from here."],
+  ["\"헌법 제정하기\"로 처음 만들고, \"직접 편집\"(표결 없이 바로) 또는 \"개정안 발의\"(표결을 거쳐)로 고칩니다. 개정 이력이 남아요.", "Create it with \"Enact a constitution\", then change it with \"Edit directly\" (no vote) or \"Propose amendment\" (through a vote). Amendments are recorded."],
+  ["법안 제출 · 위원회 · 상정 · 표결 · 표결 기록 · 법령", "Submitting bills · committees · tabling · voting · vote records · statutes"],
+  ["입법 › 제출에서 법안을 작성합니다. 법안 제목을 적고 \"[+] 법안 등록\"을 눌러보세요. (조문 · 태그 · 가결 기준은 비워 둬도 돼요 — 조문은 제1조 · 제2조처럼 조 단위로 씁니다)", "Draft bills in Legislation › Submit. Enter a bill title and press \"[+] Register bill\". (Articles, tags and threshold can be left empty — articles are written one by one, Article 1, Article 2 …)"],
+  ["입법 › 위원회에서 상임위원회를 만들면, 법안이 본회의 전에 소관 위원회 심사를 먼저 거칩니다. 위원은 정당 의석 비율대로 배정되고, 위원 과반이 찬성해야 본회의로 넘어가요. 위원회가 없으면 법안은 바로 본회의로 갑니다.", "Create standing committees in Legislation › Committees and bills are reviewed by the responsible committee before the floor. Members are allotted by party seat share, and a majority must vote yes for the bill to reach the floor. Without committees, bills go straight to the floor."],
+  ["입법 › 상정에는 등록된 법안이 모입니다. 법안마다 의회에 올릴지 국무회의에 올릴지, 소관 위원회를 어디로 할지 고르고, \"심의 선택\"을 누르면 표결로 넘어가요. 검색과 태그로 찾을 수 있습니다.", "Registered bills gather in Legislation › Floor. For each bill choose whether it goes to the legislature or the cabinet council and which committee reviews it, then press \"Select for deliberation\" to move on to the vote. Search and tags help you find them."],
+  ["입법 › 법령에는 헌법과 가결된 법률이 조문 그대로 모입니다. 헌법을 제정하고, 헌법 개정안(가결 기준 2/3)을 통과시키면 헌법이 바뀌고 개정 이력이 남아요.", "Legislation › Statutes collects the constitution and passed laws, article by article. Enact a constitution, and when a constitutional amendment (2/3 threshold) passes, the constitution changes and the amendment is recorded."],
+  ["상임위원회", "Standing committees"],
+  ["궐석 처리 (사퇴/사망)", "Vacate seat (resigned/died)"],
+  ["직책 (예: 외교부 장관)", "Position (e.g. Minister of Foreign Affairs)"],
+  ["[궐석]", "[Vacant]"],
+  ["보궐선거로 채우기", "Fill by by-election"],
+  ["궐석", "Vacant"]
  ]
 };
