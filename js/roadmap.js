@@ -622,13 +622,14 @@
           {
             status: 'future',
             title: '1.6.1 - 주사위는 던져졌다 "Alea iacta est"',
-            summary: ['쿠데타 (군부 · 정당 · 친위)', '숨겨진 정부 형태: 군정', '성공 · 실패 결과', '민정 이양 · 역쿠데타'],
+            summary: ['쿠데타 (군부 · 정당 · 친위)', '숨겨진 정부 형태: 군정', '성공 · 실패 결과', '민정 이양 · 역쿠데타', '군부 설정'],
             desc: `202X.XX.XX
               <br>- 쿠데타 추가 — 주도 세력: 군부 · 정당 · 대통령(친위 쿠데타)
               <br>- 숨겨진 정부 형태: 군정 — 군부가 일으키면 주도 정당 없이 군사평의회가 집권 (의장이 대통령 · 총리를 겸함, 의회 정지 · 선거 중단, 거부권 · 비상 권한 독점)
               <br>- 성공 확률 — 여당 의석 · 지지율 · 계엄 여부 등을 반영
               <br>- 성공: 계엄 선포 · 의회 해산 또는 정지 · 반대 정당 활동 금지 / 실패: 주도 세력 처벌 · 역풍으로 지지율 하락
-              <br>- 군정에서 벗어나기 — 민정 이양(선거 재개) · 역쿠데타 · 혁명`
+              <br>- 군정에서 벗어나기 — 민정 이양(선거 재개) · 역쿠데타 · 혁명
+              <br>- 군부 설정 — 국방부 장관 · 참모 · 장성 등 군 지휘부를 정해 둠 (쿠데타 주도 · 진압에 쓰임)`
           },
           {
             status: 'future',
@@ -699,6 +700,7 @@
           {
             status: 'future',
             title: '1.6.8 - 갈라질 수도 없고 분리될 수도 없다 "Indivisibiliter ac inseparabiliter"',
+            cardName: '갈라질 수도 없고<br>분리될 수도 없다', // 카드에서만 두 줄로 (자세히 보기 창 제목은 한 줄)
             summary: ['종속국', '종속국 의회', '종속국 합병 · 해방'],
             desc: `202X.XX.XX
               <br>- 종속국 — 본국에 딸린 나라를 만들어 둠, 지역구 지도에서 미수복 지역과 비슷하지만 다른 모양으로 따로 표시
@@ -787,17 +789,19 @@
 
     // 카드 제목 배치: 윗줄에 작은 버전 번호, 아랫줄에 제목, 끝의 "..."는 흐린 부제목
     // 예) 1.6.0 - 테니스 코트의 맹세 "Serment du Jeu de paume" → 1.6.0 / 테니스 코트의 맹세 / Serment du Jeu de paume
-    function cardTitleHTML(title) {
+    // cardName: 카드에서만 쓰는 제목(줄바꿈 <br> 허용) — 화면이 한국어일 때만 (번역된 제목에는 원래 제목을 씀)
+    function cardTitleHTML(title, cardName) {
       let rest = String(title);
       let html = '';
+      const nameHTML = n => (cardName ? cardName.split('<br>').map(escapeHTML).join('<br>') : escapeHTML(n));
       const v = rest.match(/^(\d+\.\d+\.[0-9A-Za-z]+)\s+-\s+(.+)$/);
       if (v) {
         html += `<span class="rd-ver">${escapeHTML(v[1])}</span>`;
         rest = v[2];
       }
       const q = rest.match(/^(.*?)\s*"([^"]+)"\s*$/);
-      if (q) return html + `<span class="rd-name">${escapeHTML(q[1])}</span><span class="rd-subtitle">${escapeHTML(q[2])}</span>`;
-      return html + `<span class="rd-name">${escapeHTML(rest)}</span>`;
+      if (q) return html + `<span class="rd-name">${nameHTML(q[1])}</span><span class="rd-subtitle">${escapeHTML(q[2])}</span>`;
+      return html + `<span class="rd-name">${nameHTML(rest)}</span>`;
     }
 
     // 번역 사전에는 "1.6.0 - 제목"이 통째로 들어 있으므로, 나눠 그리기 전에 제목 전체를 먼저 번역한다
@@ -843,7 +847,7 @@
             });
           }
           article.innerHTML = `
-            <h2 class="rd-title">${cardTitleHTML(trTitle(item.title))}</h2>
+            <h2 class="rd-title">${cardTitleHTML(trTitle(item.title), trTitle(item.title) === item.title ? item.cardName : null)}</h2>
             <p class="rd-desc">${cardBodyHTML(item)}</p>
             ${item.summary ? '<span class="rd-more">자세히 보기 ›</span>' : ''}
           `;
@@ -924,7 +928,7 @@
       layer.innerHTML = `
         <div class="rd-detail rd-card ${item.status || 'future'}" role="dialog" aria-modal="true">
           <div class="rd-detail-head">
-            <h2 class="rd-title">${cardTitleHTML(trTitle(item.title))}</h2>
+            <h2 class="rd-title">${cardTitleHTML(trTitle(item.title), trTitle(item.title) === item.title ? item.cardName : null)}</h2>
             <button class="rd-detail-close" type="button" aria-label="닫기">×</button>
           </div>
           <p class="rd-desc">${item.desc}</p>
