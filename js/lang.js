@@ -20,9 +20,9 @@
     // 화면 곳곳의 font-family가 'NeoDunggeunmo' 이름을 직접 쓰므로, 같은 이름의 @font-face를 뒤에 하나 더 넣어 통째로 갈아 끼운다.
     //   maruminya: 마루미냐 한글(x12y12pxMaruMinyaHangul, SIL OFL 1.1 — fonts/maruminya/OFL.txt) — 한국어 · 일본어 12px 픽셀 폰트
     //              github.com/quiple/x12y12pxMaruMinyaHangul (원본: hicchicc/x12y12pxMaruMinya)
-    // 언어 코드로 정해 두거나(일본어 ja), 언어 팩에 "neonFont": "maruminya"를 적는다
+    // 언어 코드로 정해 두거나(일본어 jp), 언어 팩에 "neonFont": "maruminya"를 적는다
     const NEON_FONTS = { maruminya: 'fonts/maruminya/x12y12pxMaruMinyaHangul.woff2' };
-    const NEON_FONT_BY_LANG = { ja: 'maruminya' };
+    const NEON_FONT_BY_LANG = { jp: 'maruminya' };
     let neonFontApplied = '';
     function applyNeonFont(code, pack) {
         const key = (pack && NEON_FONTS[pack.neonFont] ? pack.neonFont : '') || NEON_FONT_BY_LANG[String(code || '').split('-')[0]];
@@ -88,7 +88,7 @@
         if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return { error: '언어 팩 형식이 아닙니다.' };
         if (raw.format && raw.format !== PACK_FORMAT) return { error: `지원하지 않는 형식입니다 (${String(raw.format)}).` };
         const code = String(raw.code || '').trim().toLowerCase();
-        if (!/^[a-z]{2,3}(-[a-z0-9]{2,8})?$/.test(code)) return { error: '언어 코드(code)가 올바르지 않습니다. 예: "ja", "zh-tw", "en-gb"' };
+        if (!/^[a-z]{2,3}(-[a-z0-9]{2,8})?$/.test(code)) return { error: '언어 코드(code)가 올바르지 않습니다. 예: "jp", "zh-tw", "en-gb"' };
         if (code === SOURCE_LANG.code || code === 'ko') return { error: '한국어는 기본 언어라 팩으로 불러올 수 없습니다.' };
         if (BUILTIN[code]) return { error: `"${code}"는 기본 제공 언어의 코드입니다. 다른 코드(예: "${code}-custom")를 쓰세요.` };
         const name = String(raw.name || '').trim();
@@ -156,12 +156,12 @@
     }
 
     // 번역가용 템플릿 두 가지 — 첫 번째 칸(한국어 원문)은 앱이 찾는 열쇠라 그대로 두고, 두 번째 칸(번역)만 바꾸면 된다
-    //  · base 'ko': 두 번째 칸에 한국어 원문을 그대로 채워 둠 (한국어를 보고 번역할 때)
+    //  · base 'kr': 두 번째 칸에 한국어 원문을 그대로 채워 둠 (한국어를 보고 번역할 때)
     //  · base 'en': 두 번째 칸에 영어 번역을 채워 둠 (영어를 보고 번역할 때)
     // 규칙(patterns)의 "to"는 어느 쪽이든 영어 예시로 들어 있으니 함께 번역한다
     async function buildTemplate(base) {
         const en = await loadBuiltin('en');
-        const ko = base === 'ko';
+        const ko = base === 'kr' || base === 'ko';
         return JSON.stringify({
             format: PACK_FORMAT,
             code: '',
@@ -169,8 +169,8 @@
             author: '',
             version: '1',
             _help: ko
-                ? 'dict의 각 항목은 ["한국어 원문", "번역"]입니다. 두 번째 칸에 한국어 원문이 그대로 들어 있으니 그 칸만 번역하세요 (첫 번째 칸은 바꾸지 마세요). patterns의 "to"는 영어 예시이니 함께 번역하세요. code(예: "ja")와 name(예: "日本語")을 채운 뒤 메인 화면 🌐 > 언어 팩 불러오기로 적용합니다. 데스크톱 앱에서는 🌐 > 모드 폴더 열기로 연 폴더 안에 새 폴더를 만들어 이 파일을 넣어도 되고, 그 폴더가 그대로 창작마당 아이템이 됩니다.'
-                : 'dict의 각 항목은 ["한국어 원문", "번역"]입니다. 두 번째 칸에 영어 번역이 들어 있으니 그 칸만 바꾸세요 (첫 번째 칸은 바꾸지 마세요). code(예: "ja")와 name(예: "日本語")을 채운 뒤 메인 화면 🌐 > 언어 팩 불러오기로 적용합니다. 데스크톱 앱에서는 🌐 > 모드 폴더 열기로 연 폴더 안에 새 폴더를 만들어 이 파일을 넣어도 됩니다 (그 폴더가 그대로 창작마당 아이템). / Each dict entry is ["Korean source", "translation"]. Replace only the second (English) column. In the desktop app you can also put this file in its own folder inside 🌐 > Open mods folder — that folder is a Workshop item as-is.',
+                ? 'dict의 각 항목은 ["한국어 원문", "번역"]입니다. 두 번째 칸에 한국어 원문이 그대로 들어 있으니 그 칸만 번역하세요 (첫 번째 칸은 바꾸지 마세요). patterns의 "to"는 영어 예시이니 함께 번역하세요. code(예: "jp")와 name(예: "日本語")을 채운 뒤 메인 화면 🌐 > 언어 팩 불러오기로 적용합니다. 데스크톱 앱에서는 🌐 > 모드 폴더 열기로 연 폴더 안에 새 폴더를 만들어 이 파일을 넣어도 되고, 그 폴더가 그대로 창작마당 아이템이 됩니다.'
+                : 'dict의 각 항목은 ["한국어 원문", "번역"]입니다. 두 번째 칸에 영어 번역이 들어 있으니 그 칸만 바꾸세요 (첫 번째 칸은 바꾸지 마세요). code(예: "jp")와 name(예: "日本語")을 채운 뒤 메인 화면 🌐 > 언어 팩 불러오기로 적용합니다. 데스크톱 앱에서는 🌐 > 모드 폴더 열기로 연 폴더 안에 새 폴더를 만들어 이 파일을 넣어도 됩니다 (그 폴더가 그대로 창작마당 아이템). / Each dict entry is ["Korean source", "translation"]. Replace only the second (English) column. In the desktop app you can also put this file in its own folder inside 🌐 > Open mods folder — that folder is a Workshop item as-is.',
             months: ko ? ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월'] : en.months,
             ordinal: ko ? '' : en.ordinal,
             patterns: en.patterns,
