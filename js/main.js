@@ -10293,6 +10293,8 @@
             if(!wrapEl) return;
             const map = districtSvgMapFor(opts.chamber || 'house');
             wrapEl.innerHTML = '';
+            // 확대 · 축소 상태 — 모든 지도 공용 (opts.noZoom이면 끔). 다시 그려도 같은 지도면 확대한 위치를 그대로 유지
+            const pz = opts.noZoom ? null : mapZoomState(wrapEl, opts);
             if(!map || !Array.isArray(map.shapes) || map.shapes.length === 0) {
                 wrapEl.innerHTML = '<div style="text-align:center;color:#444;font-size:0.85rem;padding:30px 10px;">SVG 지도가 없습니다 — 지역구 탭에서 업로드하세요</div>';
                 return;
@@ -10596,10 +10598,8 @@
                     naturalViewBox = { x: bbox.x-pad, y: bbox.y-pad, w: w+pad*2, h: h+pad*2 };
                     svg.setAttribute('viewBox', `${naturalViewBox.x} ${naturalViewBox.y} ${naturalViewBox.w} ${naturalViewBox.h}`);
                 }
-                // 팬/줌 적용(지역구 편집 지도 전용) — 그리드(육각형) 방식처럼 확대·이동 가능하게, 위에서 구한
-                // 자연 크기(naturalViewBox, 실제 도형 전체가 꼭 맞게 보이는 기본 위치)를 기준으로 계산
-                if(opts.panZoom && naturalViewBox) {
-                    const pz = opts.panZoom;
+                // 팬/줌 적용 — 위에서 구한 자연 크기(naturalViewBox, 실제 도형 전체가 꼭 맞게 보이는 기본 위치)를 기준으로 계산
+                if(pz && naturalViewBox) {
                     pz.baseViewBox = naturalViewBox;
                     const zoom = pz.zoom || 1;
                     const w = naturalViewBox.w / zoom, h = naturalViewBox.h / zoom;
@@ -10608,10 +10608,127 @@
                     svg.setAttribute('viewBox', `${cx - w/2} ${cy - h/2} ${w} ${h}`);
                 }
             } catch(e) { /* getBBox 미지원 환경 등에서는 저장된 viewBox 그대로 사용 */ }
+            if(pz) mapZoomAttach(wrapEl, pz, opts);
         }
 
-        // 지역구 지도(SVG) 편집 화면 전용 팬/줌 상태 — 그리드(육각형)의 이동/확대와 같은 개념을
-        // 실제 지도(SVG) 도형에도 적용. cx/cy는 뷰박스 좌표계 기준 현재 보기의 중심점(null=기본 위치=전체 보기)
+        // ── 지도 확대 · 축소 · 이동 (renderDistrictSvgInto로 그리는 모든 지도 공용) ──────────────
+        // 지도 오른쪽 위 + / − / ⟲ 버튼, Shift(또는 Ctrl)+스크롤로 커서 위치 기준 확대 · 축소,
+        // 휠클릭(가운데 버튼) 드래그로 이동 — 지역구를 누르는 지도가 아니면 확대한 뒤 왼쪽 드래그로도 이동.
+        // 상태 { zoom, cx, cy, baseViewBox }: opts.panZoom(지역구 편집 지도) → opts.zoomKey · 지도 칸 id(다시 만들어지는 지도도 유지) → 지도 칸 자체
+        const MAP_ZOOM_MAX = 12;
+        const mapZoomStates = {};
+        function mapZoomState(wrapEl, opts) {
+            if(opts.panZoom) return opts.panZoom;
+            const key = opts.zoomKey || wrapEl.id;
+            const fresh = () => ({ zoom: 1, cx: null, cy: null, baseViewBox: null });
+            if(key) return mapZoomStates[key] || (mapZoomStates[key] = fresh());
+            return wrapEl._mapZoom || (wrapEl._mapZoom = fresh());
+        }
+        function mapZoomView(pz) {
+            const b = pz.baseViewBox;
+            if(!b) return null;
+            const z = pz.zoom || 1, w = b.w / z, h = b.h / z;
+            const cx = pz.cx ?? (b.x + b.w / 2), cy = pz.cy ?? (b.y + b.h / 2);
+            return { x: cx - w / 2, y: cy - h / 2, w, h };
+        }
+        function mapZoomApply(wrapEl) {
+            const cur = wrapEl._mapZoomCur;
+            if(!cur) return;
+            const svg = wrapEl.querySelector(':scope > svg');
+            const v = mapZoomView(cur.pz);
+            if(svg && v) svg.setAttribute('viewBox', `${v.x} ${v.y} ${v.w} ${v.h}`);
+            wrapEl.classList.toggle('map-zoomed', (cur.pz.zoom || 1) > 1.001);
+            const lvl = wrapEl.querySelector(':scope > .map-zoom .map-zoom-level');
+            if(lvl) lvl.textContent = `${Math.round((cur.pz.zoom || 1) * 100)}%`;
+        }
+        // fx, fy(0~1): 지도 칸 안에서 고정할 지점의 위치 비율
+        function mapZoomBy(wrapEl, factor, fx = 0.5, fy = 0.5) {
+            const pz = wrapEl._mapZoomCur?.pz, v = pz && mapZoomView(pz);
+            if(!v) return;
+            const b = pz.baseViewBox;
+            const px = v.x + fx * v.w, py = v.y + fy * v.h;
+            pz.zoom = Math.max(1, Math.min(MAP_ZOOM_MAX, (pz.zoom || 1) * factor));
+            const w = b.w / pz.zoom, h = b.h / pz.zoom;
+            pz.cx = Math.max(b.x, Math.min(b.x + b.w, px - (fx - 0.5) * w));
+            pz.cy = Math.max(b.y, Math.min(b.y + b.h, py - (fy - 0.5) * h));
+            if(pz.zoom === 1) { pz.cx = null; pz.cy = null; }
+            mapZoomApply(wrapEl);
+        }
+        function mapZoomReset(wrapEl) {
+            const pz = wrapEl._mapZoomCur?.pz;
+            if(!pz) return;
+            pz.zoom = 1; pz.cx = null; pz.cy = null;
+            mapZoomApply(wrapEl);
+        }
+        function mapPanBy(wrapEl, dxPx, dyPx) {
+            const pz = wrapEl._mapZoomCur?.pz, v = pz && mapZoomView(pz);
+            const svg = wrapEl.querySelector(':scope > svg');
+            if(!v || !svg) return;
+            const r = svg.getBoundingClientRect();
+            if(r.width <= 0 || r.height <= 0) return;
+            const b = pz.baseViewBox;
+            const upp = Math.max(v.w / r.width, v.h / r.height); // 화면 1px이 지도 좌표로 얼마인지 (가운데 맞춤 배치 기준)
+            pz.cx = Math.max(b.x, Math.min(b.x + b.w, v.x + v.w / 2 - dxPx * upp));
+            pz.cy = Math.max(b.y, Math.min(b.y + b.h, v.y + v.h / 2 - dyPx * upp));
+            mapZoomApply(wrapEl);
+        }
+        function mapZoomAttach(wrapEl, pz, opts) {
+            wrapEl._mapZoomCur = { pz, clickable: !!opts.clickable };
+            if(getComputedStyle(wrapEl).position === 'static') wrapEl.style.position = 'relative';
+            const ctl = document.createElement('div');
+            ctl.className = 'map-zoom';
+            ctl.title = 'Shift+스크롤: 확대/축소 · 휠클릭 드래그: 이동';
+            ctl.innerHTML = '<button type="button" data-z="in" aria-label="확대">+</button><span class="map-zoom-level">100%</span>'
+                + '<button type="button" data-z="out" aria-label="축소">−</button><button type="button" data-z="reset" aria-label="원래 크기">⟲</button>';
+            ctl.addEventListener('click', e => {
+                e.stopPropagation();
+                const z = e.target.closest('button')?.dataset.z;
+                if(z === 'in') mapZoomBy(wrapEl, 1.4);
+                else if(z === 'out') mapZoomBy(wrapEl, 1 / 1.4);
+                else if(z === 'reset') mapZoomReset(wrapEl);
+            });
+            ctl.addEventListener('mousedown', e => e.stopPropagation());
+            wrapEl.appendChild(ctl);
+            mapZoomApply(wrapEl);
+            if(wrapEl._mapZoomBound) return;
+            wrapEl._mapZoomBound = true;
+            wrapEl.addEventListener('wheel', e => {
+                if(!e.shiftKey && !e.ctrlKey) return; // 그냥 스크롤은 화면 스크롤 그대로
+                if(!wrapEl._mapZoomCur?.pz.baseViewBox) return;
+                e.preventDefault();
+                const r = wrapEl.getBoundingClientRect();
+                mapZoomBy(wrapEl, (e.deltaY || e.deltaX) < 0 ? 1.15 : 1 / 1.15, (e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height);
+            }, { passive: false });
+            let drag = null, suppressClick = false;
+            wrapEl.addEventListener('mousedown', e => {
+                const cur = wrapEl._mapZoomCur;
+                if(!cur?.pz.baseViewBox) return;
+                // 휠클릭은 언제나, 왼쪽 버튼은 지역구를 누르지 않는 지도를 확대했을 때만 이동
+                const left = e.button === 0 && !cur.clickable && (cur.pz.zoom || 1) > 1.001;
+                if(e.button !== 1 && !left) return;
+                e.preventDefault(); // 휠클릭 자동 스크롤 막기
+                drag = { x: e.clientX, y: e.clientY, button: e.button, moved: false };
+                wrapEl.classList.add('map-dragging');
+            });
+            window.addEventListener('mousemove', e => {
+                if(!drag) return;
+                const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+                if(dx || dy) drag.moved = true;
+                drag.x = e.clientX; drag.y = e.clientY;
+                mapPanBy(wrapEl, dx, dy);
+            });
+            window.addEventListener('mouseup', () => {
+                if(!drag) return;
+                // 왼쪽 버튼으로 끌어 옮긴 직후의 클릭은 지역구 선택 · 바탕 클릭으로 치지 않는다 (클릭은 mouseup 바로 뒤에 온다)
+                if(drag.button === 0 && drag.moved) { suppressClick = true; setTimeout(() => { suppressClick = false; }, 0); }
+                drag = null;
+                wrapEl.classList.remove('map-dragging');
+            });
+            wrapEl.addEventListener('click', e => { if(suppressClick) { suppressClick = false; e.stopPropagation(); e.preventDefault(); } }, true);
+        }
+
+        // 지역구 지도(SVG) 편집 화면의 팬/줌 상태 (확대 · 이동은 모든 지도 공용 mapZoomAttach가 처리).
+        // cx/cy는 뷰박스 좌표계 기준 현재 보기의 중심점(null=기본 위치=전체 보기)
         let districtSvgView = { zoom: 1, cx: null, cy: null, baseViewBox: null };
 
         function districtSvgResetView() {
@@ -10619,74 +10736,6 @@
             districtSvgView.cx = null;
             districtSvgView.cy = null;
             districtRenderMap();
-        }
-
-        // fracX/fracY(0~1): 지도 영역 안에서 마우스 커서 위치 비율 — 그 지점을 고정한 채 확대/축소
-        function districtSvgZoom(factor, fracX = 0.5, fracY = 0.5) {
-            const base = districtSvgView.baseViewBox;
-            if(!base) return;
-            const curZoom = districtSvgView.zoom || 1;
-            const curW = base.w / curZoom, curH = base.h / curZoom;
-            const curCx = districtSvgView.cx ?? (base.x + base.w/2);
-            const curCy = districtSvgView.cy ?? (base.y + base.h/2);
-            const vx = (curCx - curW/2) + fracX * curW;
-            const vy = (curCy - curH/2) + fracY * curH;
-            const newZoom = Math.max(1, Math.min(10, curZoom * factor));
-            const newW = base.w / newZoom, newH = base.h / newZoom;
-            districtSvgView.zoom = newZoom;
-            districtSvgView.cx = Math.max(base.x, Math.min(base.x + base.w, vx - (fracX - 0.5) * newW));
-            districtSvgView.cy = Math.max(base.y, Math.min(base.y + base.h, vy - (fracY - 0.5) * newH));
-            districtRenderMap();
-        }
-
-        function districtSvgPanByPixels(wrapEl, dxPx, dyPx) {
-            const base = districtSvgView.baseViewBox;
-            if(!base) return;
-            const rect = wrapEl.getBoundingClientRect();
-            if(rect.width <= 0 || rect.height <= 0) return;
-            const zoom = districtSvgView.zoom || 1;
-            const curW = base.w / zoom, curH = base.h / zoom;
-            const unitPerPxX = curW / rect.width, unitPerPxY = curH / rect.height;
-            const curCx = districtSvgView.cx ?? (base.x + base.w/2);
-            const curCy = districtSvgView.cy ?? (base.y + base.h/2);
-            districtSvgView.cx = Math.max(base.x, Math.min(base.x + base.w, curCx - dxPx * unitPerPxX));
-            districtSvgView.cy = Math.max(base.y, Math.min(base.y + base.h, curCy - dyPx * unitPerPxY));
-            districtRenderMap();
-        }
-
-        // 휠클릭(가운데 버튼) 드래그로 이동, Shift+스크롤로 확대/축소 — 좌클릭은 지역구 선택에 그대로 사용
-        function districtInitSvgPanZoom(wrapEl) {
-            if(wrapEl._svgViewInited) return;
-            wrapEl._svgViewInited = true;
-            let isPanning = false, lastX = 0, lastY = 0;
-
-            wrapEl.addEventListener('mousedown', e => {
-                if(e.button !== 1) return;
-                isPanning = true;
-                lastX = e.clientX; lastY = e.clientY;
-                wrapEl.style.cursor = 'grabbing';
-                e.preventDefault();
-            });
-            window.addEventListener('mousemove', e => {
-                if(!isPanning) return;
-                const dx = e.clientX - lastX, dy = e.clientY - lastY;
-                lastX = e.clientX; lastY = e.clientY;
-                districtSvgPanByPixels(wrapEl, dx, dy);
-            });
-            window.addEventListener('mouseup', () => {
-                if(!isPanning) return;
-                isPanning = false;
-                wrapEl.style.cursor = '';
-            });
-            wrapEl.addEventListener('wheel', e => {
-                if(!e.shiftKey) return; // shift 없는 일반 스크롤은 페이지 스크롤 그대로 유지
-                e.preventDefault();
-                const rect = wrapEl.getBoundingClientRect();
-                const fracX = (e.clientX - rect.left) / rect.width;
-                const fracY = (e.clientY - rect.top) / rect.height;
-                const factor = e.deltaY < 0 ? 1.15 : 1/1.15;
-                districtSvgZoom(factor, fracX, fracY);
-            }, { passive: false });
         }
 
         // 지역구 맵 패널을 지역구 시스템 전체 방식(육각형/SVG)에 맞춰 다시 그림 — 지역구 편집 관련 갱신은 모두 이 함수를 거친다
@@ -10704,7 +10753,6 @@
             const svgViewHint = document.getElementById('districtSvgViewHint');
             if(svgViewHint) svgViewHint.style.display = isSvg ? '' : 'none';
             if(isSvg) {
-                districtInitSvgPanZoom(svgWrap);
                 // SVG 지역구는 도형이 파일에서 이미 정해져 있으므로 추가/제거 모드가 없고, 클릭하면 항상 편집 패널이 열림
                 renderDistrictSvgInto(svgWrap, {
                     chamber: districtChamber,
@@ -12295,6 +12343,7 @@
             container.appendChild(overallWrap);
             renderDistrictSvgInto(overallMapDiv, {
                 chamber: tendencySvgChamber,
+                zoomKey: 'tendency:overall:' + tendencySvgChamber,
                 clickable: true,
                 getFill: overall.getFill,
                 title: overall.getTitle,
@@ -12320,6 +12369,7 @@
                 partyGroup.appendChild(pWrap);
                 renderDistrictSvgInto(pMapDiv, {
                     chamber: tendencySvgChamber,
+                    zoomKey: 'tendency:party:' + tendencySvgChamber + ':' + p.id,
                     clickable: true,
                     hideAbbr: true,
                     getFill: pf.getFill,

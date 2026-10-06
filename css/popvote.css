@@ -20,7 +20,7 @@
 .pv-dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; flex: 0 0 auto; vertical-align: middle; }
 .pv-result { margin-top: 12px; padding: 12px; background: #0a0c10; border: 1px solid var(--tno-border); }
 .pv-result-title { color: var(--tno-neon); font-size: 1.05rem; margin-bottom: 4px; }
-.pv-map { width: 100%; max-height: 420px; margin: 10px 0; }
+.pv-map { position: relative; width: 100%; max-height: min(70vh, 640px); margin: 10px 0; }
 .pv-table { width: 100%; border-collapse: collapse; font-size: .85rem; margin-top: 6px; }
 .pv-table th { text-align: left; color: #777; font-weight: normal; font-size: .75rem; border-bottom: 1px solid #333; padding: 4px; }
 .pv-table td { padding: 5px 4px; border-bottom: 1px solid #1c1c1c; color: #ccc; }

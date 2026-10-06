@@ -525,13 +525,33 @@
     }
 
     // ---- 지도 (지역구 지도가 있을 때만) ----
+    // 확대 · 축소 · 이동은 모든 지도 공용(main.js mapZoomAttach — 오른쪽 위 버튼, Shift+스크롤, 휠클릭 드래그).
+    // 지도 틀의 가로세로 비율은 실제 도형이 차지하는 범위(맞춘 viewBox)로 정한다 — 저장된 viewBox가 도형보다 훨씬 크면
+    // 지도가 틀 가운데에 점처럼 작게 그려지던 문제. 숨은 화면에서 그리면 도형 크기를 잴 수 없어서, 보이게 되면 다시 그린다.
     function drawMap(el, ch, getFill, title, groupOf) {
         if (!el) return;
         const map = typeof districtSvgMapFor === 'function' ? districtSvgMapFor(ch) : null;
         if (!map) { el.remove(); return; }
-        const vb = String(map.viewBox || '0 0 100 100').split(/[\s,]+/).map(Number);
-        if (vb[2] > 0 && vb[3] > 0) el.style.aspectRatio = `${vb[2]} / ${vb[3]}`;
-        renderDistrictSvgInto(el, { chamber: ch, getFill, title, groupOf: groupOf || undefined });
+        if (!el._pz) el._pz = { zoom: 1, cx: null, cy: null, baseViewBox: null };
+        const opts = { chamber: ch, getFill, title, groupOf: groupOf || undefined, panZoom: el._pz };
+        const render = () => {
+            el._pz.baseViewBox = null;
+            renderDistrictSvgInto(el, opts);
+            const b = el._pz.baseViewBox;
+            const vb = b ? [b.w, b.h] : String(map.viewBox || '0 0 100 100').split(/[\s,]+/).map(Number).slice(2);
+            if (vb[0] > 0 && vb[1] > 0) el.style.aspectRatio = `${vb[0]} / ${vb[1]}`;
+            return !!b;
+        };
+        if (render() || !window.ResizeObserver) return;
+        // 숨은 화면(닫힌 탭 · 접힌 목록)에서 그려져 도형 크기를 못 쟀다 — 보이게 되면 한 번 다시 그린다
+        el._pvRO?.disconnect();
+        el._pvRO = new ResizeObserver(() => {
+            if (el.getBoundingClientRect().width <= 0) return;
+            el._pvRO.disconnect();
+            el._pvRO = null;
+            render();
+        });
+        el._pvRO.observe(el);
     }
 
     // ===================== 화면 =====================
