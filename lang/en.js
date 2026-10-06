@@ -7359,6 +7359,7 @@ window.DnoLangPacks.en = {
   ["- 국가 › 미수복 탭 신설 (국가 › 지역 · 권역은 1.6.0)", "- A new Nation › Unrecovered tab (Nation › Districts and Regions arrive in 1.6.0)"],
   ["군부 설정", "Military command"],
   ["- 군부 설정 — 국방부 장관 · 참모 · 장성 등 군 지휘부를 정해 둠 (쿠데타 주도 · 진압에 쓰임)", "- Military command — set up the military leadership such as the defense minister, chiefs of staff and generals (used to lead or put down coups)"],
+  ["Give me liberty, or give me death! : 테니스 코트의 맹세", "Give me liberty, or give me death! : The Tennis Court Oath"],
   ["권역별", "By region"],
   ["지역구별", "By district"],
   [
