@@ -7357,6 +7357,8 @@ window.DnoLangPacks.en = {
   ["- 여론 › 지역구 · 여론 › 권역을 국가 › 지역 · 국가 › 권역으로 옮김 (여론에는 성향 · 지지율만)", "- Opinion › Districts and Opinion › Regions move to Nation › Districts and Nation › Regions (Opinion keeps only Tendency and Support)"],
   ["- 선거 › 선거 기록에 지방선거 · 국민투표 · 대선(총리 선거) 기록도 함께 — 최근 순, 기록 검색 · 종류 필터 (국무회의 기록처럼 기록이 없어도 검색 창 표시)", "- Elections › Records now also lists local elections, referendums and presidential (PM) elections — newest first, with record search and type filters (the search box shows even with no records, like the cabinet records)"],
   ["- 국가 › 미수복 탭 신설 (국가 › 지역 · 권역은 1.6.0)", "- A new Nation › Unrecovered tab (Nation › Districts and Regions arrive in 1.6.0)"],
+  ["군부 설정", "Military command"],
+  ["- 군부 설정 — 국방부 장관 · 참모 · 장성 등 군 지휘부를 정해 둠 (쿠데타 주도 · 진압에 쓰임)", "- Military command — set up the military leadership such as the defense minister, chiefs of staff and generals (used to lead or put down coups)"],
   ["권역별", "By region"],
   ["지역구별", "By district"],
   [
