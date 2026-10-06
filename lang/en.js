@@ -22,6 +22,7 @@ window.DnoLangPacks.en = {
  ],
  "ordinal": "en",
  "patterns": [
+  {"re": "^이 (권역|지역구)만의 직책 \\(비우면 기본 직책 (.+)\\)$", "to": "Title for this $1 only (blank = default title $2)"},
   {"re": "^\\s*당선:\\s*$", "to": "Elected:"},
   {"re": "^찬성 ([\\d.]+)% · 투표율 ([\\d.]+)%$", "to": "Yes $1% · Turnout $2%"},
   {"re": "^\\s*지역\\s*$", "to": "Districts"},
@@ -7369,6 +7370,9 @@ window.DnoLangPacks.en = {
   ["[정당 없음]", "[No parties]"],
   ["정당 · 파벌 로고를 올리고 지웁니다 (정사각형 권장). 의회 구성 카드의 로고는 보기만 하고, 누르면 여기로 와요. 통계 카드에 로고를 쓸지는 정보 탭의 \"통계 표시\"에서 고릅니다.", "Upload and remove party and faction logos (square works best). Logos on the Composition cards are display-only and bring you here when clicked. Whether stats cards show the logo is set under \"Stats display\" on the Info tab."],
   ["- 의회 › 정당에 로고 탭 — 정당 · 파벌 로고를 여기서 올리고 지움 (의회 구성 카드의 로고는 보기만, 누르면 로고 탭으로)", "- A Logo tab under Parliament › Parties — upload and remove party and faction logos here (logos on the Composition cards are display-only and open the Logo tab when clicked)"],
+  ["직책", "Title"],
+  ["기본 직책입니다. 권역 · 지역구마다 직책을 따로 정하려면(예: 서울 특별시장 · 경기 도지사 · 구청장 · 군수) 아래 현직 단체장 목록의 직책 칸에 적으세요.", "These are the default titles. To give a region or district its own title (e.g. Mayor of Seoul, Governor of Gyeonggi, district mayor, county head), type it in the Title box in the incumbent list below."],
+  ["- 지방선거 단체장 직책을 권역 · 지역구마다 따로 — 현직 단체장 목록의 직책 칸에 적으면 그곳만 그 직책(예: 특별시장 · 도지사 · 구청장 · 군수), 비우면 기본 직책. 개표 결과 · 현직 반영 · 지방자치 현황에 그대로", "- Local government titles per region and district — type a title in the incumbent list to use it there only (e.g. special-city mayor, governor, district mayor, county head); leave it blank for the default. Carried into results, incumbents and the local government overview"],
   ["권역별", "By region"],
   ["지역구별", "By district"],
   [
