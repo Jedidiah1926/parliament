@@ -20,7 +20,14 @@
 .pv-dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; flex: 0 0 auto; vertical-align: middle; }
 .pv-result { margin-top: 12px; padding: 12px; background: #0a0c10; border: 1px solid var(--tno-border); }
 .pv-result-title { color: var(--tno-neon); font-size: 1.05rem; margin-bottom: 4px; }
-.pv-map { width: 100%; max-height: 420px; margin: 10px 0; }
+.pv-map { position: relative; width: 100%; max-height: min(70vh, 640px); margin: 10px 0; }
+.pv-map-stage { width: 100%; height: 100%; touch-action: none; }
+.pv-map.pv-map-zoomed .pv-map-stage { cursor: grab; }
+.pv-map.pv-map-dragging .pv-map-stage { cursor: grabbing; }
+.pv-map-zoom { position: absolute; top: 6px; right: 6px; display: flex; align-items: center; gap: 2px; padding: 2px; background: rgba(5,7,10,.8); border: 1px solid #333; z-index: 2; }
+.pv-map-zoom button { cursor: pointer; font-family: inherit; font-size: .9rem; line-height: 1; width: 24px; height: 24px; background: transparent; border: none; color: var(--tno-neon); }
+.pv-map-zoom button:hover { background: rgba(255,255,255,.08); }
+.pv-map-zoom-level { min-width: 40px; text-align: center; font-size: .72rem; color: #888; }
 .pv-table { width: 100%; border-collapse: collapse; font-size: .85rem; margin-top: 6px; }
 .pv-table th { text-align: left; color: #777; font-weight: normal; font-size: .75rem; border-bottom: 1px solid #333; padding: 4px; }
 .pv-table td { padding: 5px 4px; border-bottom: 1px solid #1c1c1c; color: #ccc; }
@@ -56,6 +63,10 @@ html[data-theme-family="modern"] .pv-result-title { color: var(--m-text); font-w
 html[data-theme-family="modern"] .pv-table th { color: var(--m-text-3); border-bottom-color: var(--m-border); font-size: 12px; }
 html[data-theme-family="modern"] .pv-table td { color: var(--m-text); border-bottom-color: var(--m-border); }
 html[data-theme-family="modern"] .pv-details summary { color: var(--m-text-2); }
+html[data-theme-family="modern"] .pv-map-zoom { background: var(--m-surface); border: 1px solid var(--m-border); border-radius: 9px; box-shadow: var(--m-shadow-sm); }
+html[data-theme-family="modern"] .pv-map-zoom button { color: var(--m-text); border-radius: 6px; }
+html[data-theme-family="modern"] .pv-map-zoom button:hover { background: var(--m-surface-2); }
+html[data-theme-family="modern"] .pv-map-zoom-level { color: var(--m-text-3); }
 html[data-theme-family="modern"] .pv-view-toggle { border: none; background: var(--m-surface-2); border-radius: 9px; padding: 2px; }
 html[data-theme-family="modern"] .pv-view-toggle button { color: var(--m-text-2); border-radius: 7px; font-size: 12px; }
 html[data-theme-family="modern"] .pv-view-toggle button.active { background: var(--m-surface); color: var(--m-text); box-shadow: var(--m-shadow-sm); font-weight: 600; }

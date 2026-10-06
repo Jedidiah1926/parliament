@@ -525,13 +525,111 @@
     }
 
     // ---- 지도 (지역구 지도가 있을 때만) ----
+    // 확대 · 축소: 오른쪽 위 + / − / ⟲ 버튼, Shift(또는 Ctrl)+스크롤 — 확대한 뒤에는 끌어서 이동.
+    // 지도 틀의 가로세로 비율은 실제 도형이 차지하는 범위(맞춘 viewBox)로 정한다 — 저장된 viewBox가 도형보다 훨씬 크면
+    // 지도가 틀 가운데에 점처럼 작게 그려지던 문제. 숨은 화면에서 그리면 도형 크기를 잴 수 없어서, 보이게 되면 다시 그린다.
+    const ZOOM_MAX = 12;
+    function mapView(pz) {
+        const b = pz.baseViewBox;
+        if (!b) return null;
+        const w = b.w / pz.zoom, h = b.h / pz.zoom;
+        const cx = pz.cx ?? (b.x + b.w / 2), cy = pz.cy ?? (b.y + b.h / 2);
+        return { x: cx - w / 2, y: cy - h / 2, w, h };
+    }
+    function applyMapView(el) {
+        const svg = el.querySelector('.pv-map-stage > svg');
+        const v = mapView(el._pz);
+        if (svg && v) svg.setAttribute('viewBox', `${v.x} ${v.y} ${v.w} ${v.h}`);
+        el.classList.toggle('pv-map-zoomed', el._pz.zoom > 1.001);
+        const lvl = el.querySelector('.pv-map-zoom-level');
+        if (lvl) lvl.textContent = `${Math.round(el._pz.zoom * 100)}%`;
+    }
+    // fx, fy(0~1): 그 지점을 고정한 채 확대 · 축소
+    function zoomMap(el, factor, fx = 0.5, fy = 0.5) {
+        const pz = el._pz, b = pz.baseViewBox, v = mapView(pz);
+        if (!b || !v) return;
+        const px = v.x + fx * v.w, py = v.y + fy * v.h;
+        pz.zoom = Math.max(1, Math.min(ZOOM_MAX, pz.zoom * factor));
+        const w = b.w / pz.zoom, h = b.h / pz.zoom;
+        pz.cx = Math.max(b.x, Math.min(b.x + b.w, px - (fx - 0.5) * w));
+        pz.cy = Math.max(b.y, Math.min(b.y + b.h, py - (fy - 0.5) * h));
+        if (pz.zoom === 1) { pz.cx = null; pz.cy = null; }
+        applyMapView(el);
+    }
+    function panMap(el, dxPx, dyPx) {
+        const pz = el._pz, b = pz.baseViewBox, v = mapView(pz);
+        const svg = el.querySelector('.pv-map-stage > svg');
+        if (!b || !v || !svg) return;
+        const r = svg.getBoundingClientRect();
+        if (r.width <= 0 || r.height <= 0) return;
+        const upp = Math.max(v.w / r.width, v.h / r.height); // 화면 1px이 지도 좌표로 얼마인지 (meet 배치)
+        pz.cx = Math.max(b.x, Math.min(b.x + b.w, v.x + v.w / 2 - dxPx * upp));
+        pz.cy = Math.max(b.y, Math.min(b.y + b.h, v.y + v.h / 2 - dyPx * upp));
+        applyMapView(el);
+    }
+    function initMapZoom(el) {
+        el.innerHTML = `<div class="pv-map-stage"></div>
+            <div class="pv-map-zoom" title="Shift+스크롤: 확대/축소 · 확대한 뒤 끌어서 이동">
+                <button type="button" data-z="in" aria-label="확대">+</button>
+                <span class="pv-map-zoom-level">100%</span>
+                <button type="button" data-z="out" aria-label="축소">−</button>
+                <button type="button" data-z="reset" aria-label="원래 크기">⟲</button>
+            </div>`;
+        el.querySelector('.pv-map-zoom').addEventListener('click', e => {
+            const z = e.target.closest('button')?.dataset.z;
+            if (z === 'in') zoomMap(el, 1.4);
+            else if (z === 'out') zoomMap(el, 1 / 1.4);
+            else if (z === 'reset') { el._pz.zoom = 1; el._pz.cx = null; el._pz.cy = null; applyMapView(el); }
+        });
+        const stage = el.querySelector('.pv-map-stage');
+        stage.addEventListener('wheel', e => {
+            if (!e.shiftKey && !e.ctrlKey) return; // 그냥 스크롤은 화면 스크롤 그대로
+            e.preventDefault();
+            const r = stage.getBoundingClientRect();
+            zoomMap(el, (e.deltaY || e.deltaX) < 0 ? 1.15 : 1 / 1.15, (e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height);
+        }, { passive: false });
+        let drag = null;
+        stage.addEventListener('pointerdown', e => {
+            if (e.button !== 0 || el._pz.zoom <= 1.001) return;
+            drag = { x: e.clientX, y: e.clientY, id: e.pointerId };
+            stage.setPointerCapture(e.pointerId);
+            el.classList.add('pv-map-dragging');
+        });
+        stage.addEventListener('pointermove', e => {
+            if (!drag || e.pointerId !== drag.id) return;
+            panMap(el, e.clientX - drag.x, e.clientY - drag.y);
+            drag.x = e.clientX; drag.y = e.clientY;
+        });
+        const end = () => { drag = null; el.classList.remove('pv-map-dragging'); };
+        stage.addEventListener('pointerup', end);
+        stage.addEventListener('pointercancel', end);
+    }
     function drawMap(el, ch, getFill, title, groupOf) {
         if (!el) return;
         const map = typeof districtSvgMapFor === 'function' ? districtSvgMapFor(ch) : null;
         if (!map) { el.remove(); return; }
-        const vb = String(map.viewBox || '0 0 100 100').split(/[\s,]+/).map(Number);
-        if (vb[2] > 0 && vb[3] > 0) el.style.aspectRatio = `${vb[2]} / ${vb[3]}`;
-        renderDistrictSvgInto(el, { chamber: ch, getFill, title, groupOf: groupOf || undefined });
+        if (!el._pz) { el._pz = { zoom: 1, cx: null, cy: null, baseViewBox: null }; initMapZoom(el); }
+        const stage = el.querySelector('.pv-map-stage');
+        const opts = { chamber: ch, getFill, title, groupOf: groupOf || undefined, panZoom: el._pz };
+        const render = () => {
+            el._pz.baseViewBox = null;
+            renderDistrictSvgInto(stage, opts);
+            const b = el._pz.baseViewBox;
+            const vb = b ? [b.w, b.h] : String(map.viewBox || '0 0 100 100').split(/[\s,]+/).map(Number).slice(2);
+            if (vb[0] > 0 && vb[1] > 0) el.style.aspectRatio = `${vb[0]} / ${vb[1]}`;
+            applyMapView(el);
+            return !!b;
+        };
+        if (render() || !window.ResizeObserver) return;
+        // 숨은 화면(닫힌 탭 · 접힌 목록)에서 그려져 도형 크기를 못 쟀다 — 보이게 되면 한 번 다시 그린다
+        el._pvRO?.disconnect();
+        el._pvRO = new ResizeObserver(() => {
+            if (el.getBoundingClientRect().width <= 0) return;
+            el._pvRO.disconnect();
+            el._pvRO = null;
+            render();
+        });
+        el._pvRO.observe(el);
     }
 
     // ===================== 화면 =====================
