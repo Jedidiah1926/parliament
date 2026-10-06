@@ -227,6 +227,7 @@ npm run build:win     # Windows 설치형 exe 빌드 → dist/Hemicycle-Setup-<�
 
 - `dict`: 화면에 보이는 한국어 문구 → 번역. 긴 문구가 먼저 매칭되므로 문장 전체와 단어를 함께 넣어도 됩니다. `{ "원문": "번역" }` 객체로 써도 됩니다.
 - `patterns`: 숫자가 섞인 문구(날짜·의석 수 등)를 위한 정규식 규칙. `to`에서 `$1`은 괄호 그룹, `{{month:$2}}`는 `months`의 달 이름, `{{ordinal:$1}}`은 서수(`"ordinal": "en"`이면 1st/2nd…, `"none"`이면 숫자 그대로), `{{map:$4|정기회=Regular Session;임시회=Extraordinary Session}}`는 값 바꾸기, `{{dict:$1}}`은 사전 찾기입니다.
+- `neonFont` (선택): 네온 테마 글꼴. 네오둥근모에 없는 글자(가나 · 한자 등)를 쓰는 언어는 `"maruminya"`(마루미냐 한글 — 한국어 · 일본어 12px 픽셀 폰트, `fonts/maruminya`, SIL OFL 1.1)를 적으면 네온 테마 글꼴이 통째로 바뀝니다. 코드가 `ja`(일본어)인 팩은 적지 않아도 마루미냐 한글을 씁니다.
 - `code`는 `kr`(기본 한국어)와 기본 제공 언어(`en`)를 쓸 수 없습니다 — 기본 영어를 고쳐 쓰려면 `en-custom`처럼 다른 코드를 쓰세요.
 - 기본 제공 언어는 `lang/<code>.js`에 같은 형식의 JSON을 JS로 감싸 두고 `js/lang.js`의 `BUILTIN`에 등록합니다 (데스크톱 앱이 `file://`로 열려 JSON 파일을 직접 읽을 수 없기 때문).
 
