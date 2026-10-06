@@ -350,11 +350,12 @@
                     <button class="add-btn" onclick="addIdeology()">[+] 이념 추가</button>
                 </div>
 
-                <!-- 정당 탭 (내부 탭: 정보/당수) -->
+                <!-- 정당 탭 (내부 탭: 정보/당수/로고) -->
                 <div id="contentParty" class="sub-tab-content active">
                     <div class="sub-tab-container-3">
                         <button class="sub-tab-btn-3 active" onclick="switchPartyGroupInnerTab('info')" id="innerTabPartyInfo">정보</button>
                         <button class="sub-tab-btn-3" onclick="switchPartyGroupInnerTab('leader')" id="innerTabPartyLeader">당수</button>
+                        <button class="sub-tab-btn-3" onclick="switchPartyGroupInnerTab('logo')" id="innerTabPartyLogo">로고</button>
                     </div>
 
                     <div id="innerContentPartyInfo" class="sub-tab-content active">
@@ -365,6 +366,11 @@
 
                     <div id="innerContentPartyLeader" class="sub-tab-content">
                         <div id="leaderList"></div>
+                    </div>
+
+                    <!-- 로고: 정당 · 파벌 로고 올리기 (의회 구성 카드의 로고는 보기만) -->
+                    <div id="innerContentPartyLogo" class="sub-tab-content">
+                        <div id="partyLogoList"></div>
                     </div>
                 </div>
 

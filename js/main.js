@@ -6544,11 +6544,13 @@
         function switchPartyGroupInnerTab(inner) {
             if(inner === 'ideology') { switchSubTab('setup', 'ideology'); return; } // 구버전 호출 호환
             partyGroupInnerTab = inner;
-            ['info','leader'].forEach(k => {
+            if(!['info','leader','logo'].includes(inner)) inner = 'info';
+            ['info','leader','logo'].forEach(k => {
                 document.getElementById('innerTabParty'+k.charAt(0).toUpperCase()+k.slice(1))?.classList.toggle('active', k===inner);
                 document.getElementById('innerContentParty'+k.charAt(0).toUpperCase()+k.slice(1))?.classList.toggle('active', k===inner);
             });
             if(inner==='info') renderPartyInfoList();
+            else if(inner==='logo') renderPartyLogoList();
             else renderLeaderList();
         }
 
@@ -6814,6 +6816,7 @@
             renderCoalitions();
             renderPartyInfoList();
             renderLeaderList();
+            renderPartyLogoList();
             renderListMemberList();
             renderMembersList();
         }
@@ -7014,13 +7017,12 @@
                 div.innerHTML = `
                     <div style="display:grid;grid-template-columns:auto auto 1fr;grid-template-rows:auto auto;column-gap:8px;row-gap:3px;align-items:center;">
                         <span class="drag-handle" style="grid-row:1/3;">⋮⋮</span>
-                        <!-- 당 로고 (정사각형, 업로드 가능, 2행에 걸쳐 표시) -->
-                        <div class="leader-photo-box" title="당 로고 업로드" style="grid-row:1/3;width:45px;height:45px;flex-shrink:0;">
+                        <!-- 당 로고 (정사각형, 2행에 걸쳐 표시) — 올리기는 의회 › 정당 › 로고 -->
+                        <div class="leader-photo-box" title="로고는 의회 › 정당 › 로고에서 바꿉니다 (눌러서 열기)" onclick="openPartyLogoTab()" style="grid-row:1/3;width:45px;height:45px;flex-shrink:0;">
                             ${photo
                                 ? `<img src="${photo}" alt="로고" style="width:100%;height:100%;object-fit:cover;display:block;">`
                                 : `<div style="width:100%;height:100%;background:${p.color}22;display:flex;align-items:center;justify-content:center;font-size:1.2rem;color:${p.color}88;">⚑</div>`
                             }
-                            <input type="file" accept="image/*" onchange="uploadLogoPhoto(this,${p.id})">
                         </div>
                         <!-- 1행: 정당명 + 상태 뱃지 -->
                         <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;min-width:0;">
@@ -7342,9 +7344,58 @@
             const reader = new FileReader();
             reader.onload = e => {
                 const p = parties.find(x=>x.id===pid);
-                if(p){ p.logoPhoto = e.target.result; simulate(); refreshUI(); }
+                if(p){ p.logoPhoto = e.target.result; simulate(); refreshUI(); renderPartyLogoList(); }
             };
             reader.readAsDataURL(file);
+        }
+        function removeLogoPhoto(pid) {
+            const p = parties.find(x=>x.id===pid);
+            if(p){ p.logoPhoto = ''; simulate(); refreshUI(); renderPartyLogoList(); }
+        }
+        function removeFactionLogo(partyIdx, factionId) {
+            const f = parties[partyIdx]?.factions?.find(x=>x.id===factionId);
+            if(f){ f.logoPhoto = ''; refreshUI(); renderPartyLogoList(); }
+        }
+        function openPartyLogoTab() { switchSubTab('setup', 'party'); switchPartyGroupInnerTab('logo'); }
+
+        // 의회 › 정당 › 로고 — 정당마다 로고(정사각형)를 올리고, 그 아래에 파벌 로고 (통계 카드에 로고를 쓸지는 정보 탭의 "통계 표시")
+        function renderPartyLogoList() {
+            const container = document.getElementById('partyLogoList');
+            if(!container || !document.getElementById('innerContentPartyLogo')?.classList.contains('active')) return;
+            if(parties.length === 0) { container.innerHTML = '<div style="text-align:center;color:#555;padding:20px;">[정당 없음]</div>'; return; }
+            const box = (src, color, size, onchange, title) => `
+                <div class="leader-photo-box" title="${title}" style="width:${size}px;height:${size}px;flex-shrink:0;">
+                    ${src ? `<img src="${src}" alt="로고" style="width:100%;height:100%;object-fit:cover;display:block;">`
+                          : `<div style="width:100%;height:100%;background:${color}22;display:flex;align-items:center;justify-content:center;font-size:${size > 50 ? 1.6 : 1}rem;color:${color}88;">⚑</div>`}
+                    <input type="file" accept="image/*" onchange="${onchange}">
+                </div>`;
+            const rmBtn = onclick => `<button onclick="${onclick}" style="background:transparent;border:1px solid #333;color:#555;font-family:inherit;font-size:0.75rem;padding:2px 8px;cursor:pointer;">✕ 로고 제거</button>`;
+            container.innerHTML = parties.map((p, idx) => {
+                const factions = (p.factions || []).map(f => {
+                    const fc = f.usePartyColor ? p.color : f.color;
+                    return `<div style="display:flex;align-items:center;gap:8px;padding:6px 8px;background:#060810;border:1px solid #1e2030;border-left:3px solid ${fc};">
+                        ${box(f.logoPhoto, fc, 40, `uploadFactionPhoto(this,${idx},'${f.id}','logoPhoto')`, '클릭하여 파벌 로고 업로드')}
+                        <span style="flex:1;min-width:0;color:#aaa;font-size:0.85rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtmlText(f.name)}</span>
+                        ${f.logoPhoto ? rmBtn(`removeFactionLogo(${idx},'${f.id}')`) : ''}
+                    </div>`;
+                }).join('');
+                return `<div class="card-item ${p.isRuling ? 'is-ruling' : ''}" style="border-left-color:${p.color};">
+                    <div style="display:flex;gap:10px;align-items:center;">
+                        ${box(p.logoPhoto, p.color, 64, `uploadLogoPhoto(this,${p.id})`, '클릭하여 당 로고 업로드')}
+                        <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:6px;">
+                            <span style="display:flex;align-items:center;gap:6px;min-width:0;">
+                                <span style="width:9px;height:9px;background:${p.color};border-radius:50%;flex-shrink:0;"></span>
+                                <span style="font-size:1rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtmlText(p.name)}</span>
+                            </span>
+                            <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+                                ${p.logoPhoto ? rmBtn(`removeLogoPhoto(${p.id})`) : '<span style="color:#555;font-size:0.75rem;">로고 칸을 눌러 이미지를 올리세요 (정사각형 권장)</span>'}
+                            </div>
+                        </div>
+                    </div>
+                    ${factions ? `<div style="margin-top:8px;border-top:1px dashed #222;padding-top:6px;display:flex;flex-direction:column;gap:6px;">
+                        <div style="color:#555;font-size:0.75rem;letter-spacing:1px;">▌ 파벌 로고</div>${factions}</div>` : ''}
+                </div>`;
+            }).join('');
         }
 
         // ─────────────────────────────────────────
@@ -8317,7 +8368,7 @@
             reader.onload = e => {
                 const p = parties[partyIdx];
                 const f = p?.factions?.find(x=>x.id===factionId);
-                if(f){ f[field]=e.target.result; renderLeaderList(); }
+                if(f){ f[field]=e.target.result; renderLeaderList(); renderPartyLogoList(); }
             };
             reader.readAsDataURL(file);
         }
@@ -8681,7 +8732,6 @@
                     const pIdx = idx;
                     const fCards = (p.factions||[]).map(f => {
                         const fPhoto = f.leaderPhoto||'';
-                        const fLogo  = f.logoPhoto||'';
                         const fc = f.usePartyColor ? p.color : f.color;
                         return `<div class="dyn-row" style="display:flex;gap:8px;align-items:stretch;margin-bottom:8px;padding:8px;background:#060810;border:1px solid #1e2030;border-left:3px solid ${fc};">
                             <div style="display:flex;flex-direction:column;align-items:center;gap:2px;flex-shrink:0;">
@@ -8691,13 +8741,6 @@
                                 </div>
                                 <span style="font-size:0.65rem;color:#444;flex-shrink:0;">당수</span>
                             </div>
-                            <div style="display:flex;flex-direction:column;align-items:center;gap:2px;flex-shrink:0;">
-                                <div class="leader-photo-box dyn-photo" data-ratio="1" style="width:44px;height:44px;">
-                                    ${fLogo?`<img src="${fLogo}" alt="" style="width:100%;height:100%;object-fit:cover;">`:'<div class="photo-ph" style="font-size:0.9rem;">⚑</div>'}
-                                    <input type="file" accept="image/*" onchange="uploadFactionPhoto(this,${pIdx},'${f.id}','logoPhoto')">
-                                </div>
-                                <span style="font-size:0.65rem;color:#444;flex-shrink:0;">로고</span>
-                            </div>
                             <div class="dyn-ref" style="flex:1;min-width:0;display:flex;flex-direction:column;gap:5px;">
                                 <div style="display:flex;align-items:center;gap:5px;">
                                     <span style="width:8px;height:8px;background:${fc};border-radius:50%;flex-shrink:0;"></span>
@@ -8706,7 +8749,7 @@
                                 <input type="text" value="${f.leaderName||''}" placeholder="파벌 당수 이름"
                                     style="background:#000;border:1px solid #2a2a2a;color:#ccc;font-family:inherit;font-size:0.88rem;padding:5px 8px;width:100%;box-sizing:border-box;"
                                     onchange="updateFaction(${p.id},'${f.id}','leaderName',this.value)">
-                                ${fPhoto||fLogo?`<button onclick="(()=>{const pp=parties[${pIdx}];const ff=pp.factions.find(x=>x.id==='${f.id}');if(ff){ff.leaderPhoto='';ff.logoPhoto='';renderLeaderList();}})()"
+                                ${fPhoto?`<button onclick="(()=>{const pp=parties[${pIdx}];const ff=pp.factions.find(x=>x.id==='${f.id}');if(ff){ff.leaderPhoto='';renderLeaderList();}})()"
                                     style="background:transparent;border:1px solid #333;color:#555;font-family:inherit;font-size:0.75rem;padding:2px 8px;cursor:pointer;">✕ 사진 제거</button>`:''}
                             </div>
                         </div>`;
