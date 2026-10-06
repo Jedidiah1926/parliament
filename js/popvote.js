@@ -316,6 +316,7 @@
             </span>
         </div>`;
     }
+    let holdersView = (() => { try { return localStorage.getItem('pvHoldersView') === 'region' ? 'region' : 'district'; } catch (e) { return 'district'; } })();
     function showHoldersOnDisplay(open) {
         const btn = ge('dispTabPopVote');
         const box = ge('pvDisplay');
@@ -335,6 +336,8 @@
                 <div class="pv-result-title">지방자치 현황</div>
                 ${heads.length ? `<div class="pv-level-head">${esc(officeOf('region'))} ${heads.length}명</div><div class="pv-holder-counts">${chips(counts(heads))}</div>` : ''}
                 ${dists.length ? `<div class="pv-level-head">${esc(officeOf('district'))} ${dists.length}명</div><div class="pv-holder-counts">${chips(counts(dists))}</div>` : ''}
+                ${heads.some(filledH) && dists.some(filledH) ? `<div class="pv-view-toggle pv-holders-view" role="group">${[['region', '권역별'], ['district', '지역구별']].map(([v, t]) =>
+                    `<button type="button" data-v="${v}">${t}</button>`).join('')}</div>` : ''}
                 <div class="pv-map" data-map="holders"></div>
                 ${groups.map(g => `
                 <div class="pv-hgroup">
@@ -342,21 +345,30 @@
                     <div class="pv-hgrid">${g.districts.map(d => holderCard(d.name, d.h, (d.h && d.h.office) || officeOf('district'), false)).join('')}</div>
                 </div>`).join('')}
             </div>`;
-        // 지도: 지역구장 정당 색, 권역 경계는 굵게 — 지역구장이 하나도 없으면 권역장 색
+        // 지도: 권역별(권역장 정당 색 · 권역 안쪽 경계 없이 바깥 둘레만) / 지역구별(지역구장 정당 색 · 지역구 경계 그대로)
+        // 둘 다 있으면 위 단추로 바꿔 본다 (고른 보기는 이 기기에 기억). 하나만 있으면 그 보기로
         const H = S.local.holders;
-        const anyDistrict = dists.some(filledH);
         const regionOfKey = {};
         groups.forEach(g => { if (g.region) g.region.keys.forEach(k => { regionOfKey[k] = g; }); });
-        drawMap(box.querySelector('[data-map="holders"]'), ch, key => {
-            const h = anyDistrict ? H[holderKey('district', ch, key)] : regionOfKey[key]?.head;
-            const p = filledH(h) ? partyById(h.partyId) : null;
-            return p ? tendencyColorForPct(p.color, 75) : 'transparent';
-        }, key => {
-            const dh = H[holderKey('district', ch, key)];
+        const hasHeads = heads.some(filledH), hasDists = dists.some(filledH);
+        const view = hasHeads && hasDists ? holdersView : hasHeads ? 'region' : 'district';
+        const mapEl = box.querySelector('[data-map="holders"]');
+        box.querySelectorAll('.pv-holders-view button').forEach(b => {
+            b.classList.toggle('active', b.dataset.v === view);
+            b.addEventListener('click', () => {
+                holdersView = b.dataset.v;
+                try { localStorage.setItem('pvHoldersView', holdersView); } catch (e) { /* 저장 불가 환경 */ }
+                showHoldersOnDisplay(false);
+            });
+        });
+        const colorOf = h => { const p = filledH(h) ? partyById(h.partyId) : null; return p ? tendencyColorForPct(p.color, 75) : 'transparent'; };
+        const line = (label, h) => `${label}: ${h && h.name ? h.name + ' ' : ''}${filledH(h) ? `(${partyById(h.partyId)?.name || '?'})` : '공석'}`;
+        drawMap(mapEl, ch, key => (view === 'region' ? colorOf(regionOfKey[key]?.head) : colorOf(H[holderKey('district', ch, key)])), key => {
             const g = regionOfKey[key];
-            const line = (label, h) => `${label}: ${h && h.name ? h.name + ' ' : ''}${filledH(h) ? `(${partyById(h.partyId)?.name || '?'})` : '공석'}`;
-            return [line(nameOf(ch, key), dh), g ? line(g.region.name, g.head) : ''].filter(Boolean).join(' · ');
-        }, key => regionOfKey[key]?.region.id ?? null);
+            const dl = dists.length ? line(nameOf(ch, key), H[holderKey('district', ch, key)]) : nameOf(ch, key);
+            const rl = g ? line(g.region.name, g.head) : '';
+            return (view === 'region' ? [rl, dl] : [dl, rl]).filter(Boolean).join(' · ');
+        }, view === 'region' ? key => regionOfKey[key]?.region.id ?? null : null);
         if (open) {
             if (typeof showSeatsOnMobile === 'function') showSeatsOnMobile();
             if (typeof switchDispTab === 'function') switchDispTab('popVote');
