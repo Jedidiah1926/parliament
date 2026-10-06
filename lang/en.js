@@ -6670,6 +6670,10 @@ window.DnoLangPacks.en = {
    "- New country name and flag"
   ],
   [
+   "- 선거인단 시스템",
+   "- Electoral college system"
+  ],
+  [
    "- 계엄 중 봉쇄 돌파",
    "- Breaking the martial-law blockade"
   ],
@@ -6720,6 +6724,10 @@ window.DnoLangPacks.en = {
   [
    "- 혁명 이후 국호 · 국기 교체와 새 총선",
    "- A new country name and flag and a fresh general election after the revolution"
+  ],
+  [
+   "- 선거인단 시스템 — 지역(시도)별 선거인 수(인구 비례 · 의석 수 · 직접 입력), 승자독식 · 비례 배분, 과반 기준과 과반 미달 시 의회 결정, 신의 없는 선거인, 지도로 보기",
+   "- Electoral college system — electors per region (by population, by seats, or set by hand), winner-take-all or proportional allocation, a majority threshold with the legislature deciding when no one reaches it, faithless electors, and a map view"
   ],
   [
    "- 국회공성전 추가",
