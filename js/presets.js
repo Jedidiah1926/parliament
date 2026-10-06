@@ -23,7 +23,7 @@
             date: '2026년 3월 2일',
             tutorial: true,
             script: 'presets/tutorial.js',
-            langs: { en: { script: 'presets/tutorial.en.js' } },
+            langs: { en: { script: 'presets/tutorial.en.js', title: 'Tutorial Republic', description: "Start here if you're new. In a made-up country, six basic lessons walk you through the screens and controls hands-on, and detailed lessons cover features like elections, maps, candidate unification and election fraud whenever you need them." } },
         },
         {
             id: 'builtin:japan',
@@ -32,6 +32,7 @@
             date: '2026년 2월 9일',
             author: 'sushdjr0106',
             script: 'presets/japan.js',
+            langs: { en: { script: 'presets/japan.en.js', title: 'Japan', description: 'By sushdjr0106' } },
         },
         {
             id: 'builtin:usa',
@@ -40,6 +41,7 @@
             date: '2026년 11월 13일',
             author: 'ttorri',
             script: 'presets/usa.js',
+            langs: { en: { script: 'presets/usa.en.js', title: 'United States of America', description: 'By ttorri' } },
         },
     ];
     const INDEX_URL = 'presets/index.json';
