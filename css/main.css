@@ -1498,3 +1498,15 @@ html[data-ui-mode="mobile"] .save-panel { max-height: calc(100vh - 56px - var(--
         .save-tab-preset-date { color: #777; font-size: 0.75rem; margin-left: 6px; }
         .save-tab-preset-soon { opacity: .5; cursor: default; }
         .save-tab-preset-soon:hover { color: inherit !important; background: transparent !important; }
+        /* 지도 확대 · 축소 버튼 (모든 SVG 지도 공용 — js/main.js mapZoomAttach). 기호 크기가 고르게 보이도록 기본 글꼴로 그린다 */
+        .map-zoom { position: absolute; top: 6px; right: 6px; z-index: 3; display: flex; align-items: center; gap: 1px; padding: 2px; background: rgba(5,7,10,.82); border: 1px solid #333; user-select: none; }
+        .map-zoom button { cursor: pointer; width: 24px; height: 24px; padding: 0; display: inline-flex; align-items: center; justify-content: center; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; font-size: 16px; line-height: 1; background: transparent; border: none; color: var(--tno-neon); }
+        .map-zoom button[data-z="reset"] { font-size: 14px; }
+        .map-zoom button:hover { background: rgba(255,255,255,.08); }
+        .map-zoom-level { min-width: 40px; text-align: center; font-size: .72rem; color: #888; }
+        .map-zoomed > svg { cursor: grab; }
+        .map-dragging, .map-dragging > svg, .map-dragging > svg * { cursor: grabbing !important; }
+        html[data-theme-family="modern"] .map-zoom { background: var(--m-surface); border: 1px solid var(--m-border); border-radius: 9px; box-shadow: var(--m-shadow-sm); }
+        html[data-theme-family="modern"] .map-zoom button { color: var(--m-text); border-radius: 6px; }
+        html[data-theme-family="modern"] .map-zoom button:hover { background: var(--m-surface-2); }
+        html[data-theme-family="modern"] .map-zoom-level { color: var(--m-text-3); }
