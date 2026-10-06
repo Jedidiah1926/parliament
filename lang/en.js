@@ -7631,6 +7631,9 @@ window.DnoLangPacks.en = {
   ["입법 › 법령에는 헌법과 가결된 법률이 조문 그대로 모입니다. 헌법을 제정하고, 헌법 개정안(가결 기준 2/3)을 통과시키면 헌법이 바뀌고 개정 이력이 남아요.", "Legislation › Statutes collects the constitution and passed laws, article by article. Enact a constitution, and when a constitutional amendment (2/3 threshold) passes, the constitution changes and the amendment is recorded."],
   ["상임위원회", "Standing committees"],
   ["궐석 처리 (사퇴/사망)", "Vacate seat (resigned/died)"],
-  ["직책 (예: 외교부 장관)", "Position (e.g. Minister of Foreign Affairs)"]
+  ["직책 (예: 외교부 장관)", "Position (e.g. Minister of Foreign Affairs)"],
+  ["[궐석]", "[Vacant]"],
+  ["보궐선거로 채우기", "Fill by by-election"],
+  ["궐석", "Vacant"]
  ]
 };
