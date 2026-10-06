@@ -3,7 +3,7 @@
 // (저장 공간은 본 게임과 따로 — main.js의 LS_PREFIX 'hemicycleTeaser:')
 //
 // 1.6.6 "즉시, 지체 없이" 미리보기 — 미수복 지역 · 영토 통일
-//   - 여론 › 지역구는 국가 › 지역으로 옮기고, 국가 › 미수복 탭을 새로 둔다
+//   - 국가 › 미수복 탭을 새로 둔다 (국가 › 지역 · 권역은 1.6.0부터 본 화면, 1.5.9 화면이면 지역구 편집을 국가 › 지역으로 옮김)
 //   - 미수복 지역 종류를 여러 개 만들고(종류마다 이름 · 빗금 색 — 예: 오스트리아 · 동방영토 · 북방영토), "칠하기"로 지도에서
 //     지역구를 차례로 눌러 칠하거나 지역구 편집 칸에서 종류를 고른다. 미수복 지역은 모든 지도에서 영토 색 빗금으로 따로 보이고,
 //     지역구 선거 · 지방선거 · 국민투표에서 빠진다 (그 지역구 의석은 지역구 의석 수에서 빠짐)
@@ -217,37 +217,40 @@
         });
     }
 
-    // ---- 탭 옮기기: 여론 › 지역구 → 국가 › 지역, 국가 › 미수복 신설 ----
-    // (사이드바 · 모바일 탭 바는 js/sidenav.js가 페이지가 다 읽힌 뒤 탭 버튼을 보고 만드므로, 그 전에 버튼 · 내용을 옮겨 둔다)
+    // ---- 국가 › 미수복 탭 신설 (국가 › 지역 · 권역은 1.6.0부터 본 화면에 있음) ----
+    // (사이드바 · 모바일 탭 바는 js/sidenav.js가 페이지가 다 읽힌 뒤 탭 버튼을 보고 만드므로, 그 전에 버튼 · 내용을 넣어 둔다)
     function el(html) { const d = document.createElement('div'); d.innerHTML = html.trim(); return d.firstChild; }
-    (function moveTabs() {
+    (function addUnrecTab() {
         const nation = document.getElementById('mainContentNation');
         const nationBar = nation && nation.querySelector(':scope > .sub-tab-container');
         const districtContent = document.getElementById('elecSubDistrict');
-        const namePanel = document.getElementById('districtNamePanel');
-        if (!nationBar || !districtContent || !namePanel) return;
+        if (!nationBar || !districtContent) return;
         const settingsBtn = document.getElementById('subTabNationSettings');
-        nationBar.insertBefore(el(`<button class="sub-tab-btn" onclick="switchSubTab('nation','territory')" id="subTabTerritory">지역</button>`), settingsBtn);
-        nationBar.insertBefore(el(`<button class="sub-tab-btn" onclick="switchSubTab('nation','unrecovered')" id="subTabUnrecovered">미수복</button>`), settingsBtn);
-        const territory = el(`<div id="contentTerritory" class="sub-tab-content"></div>`);
-        const unrec = el(`<div id="contentUnrecovered" class="sub-tab-content"></div>`);
         const settings = document.getElementById('contentNationSettings');
-        nation.insertBefore(territory, settings);
-        nation.insertBefore(unrec, settings);
-        territory.appendChild(namePanel);
-        territory.appendChild(districtContent);
-        // 국가 탭 안에서는 늘 보이게 — 여론 탭의 하위 내용 표시 규칙(.sub-tab-content.active)에서 뺀다
-        districtContent.classList.remove('sub-tab-content');
+        // 예전 화면(여론 › 지역구가 있던 1.5.9)이면 지역구 편집을 국가 › 지역으로 옮겨 둔다
+        if (!document.getElementById('subTabTerritory')) {
+            const namePanel = document.getElementById('districtNamePanel');
+            nationBar.insertBefore(el(`<button class="sub-tab-btn" onclick="switchSubTab('nation','territory')" id="subTabTerritory">지역</button>`), settingsBtn);
+            const territory = el(`<div id="contentTerritory" class="sub-tab-content"></div>`);
+            nation.insertBefore(territory, settings);
+            if (namePanel) territory.appendChild(namePanel);
+            territory.appendChild(districtContent);
+            districtContent.classList.remove('sub-tab-content');
+            document.getElementById('elecSubTabDistrict')?.remove();
+            document.getElementById('elecSubTabTendency')?.classList.add('active');
+            document.getElementById('elecSubTendency')?.classList.add('active');
+            legacyTabs = true;
+        }
+        nationBar.insertBefore(el(`<button class="sub-tab-btn" onclick="switchSubTab('nation','unrecovered')" id="subTabUnrecovered">미수복</button>`), settingsBtn);
+        nation.insertBefore(el(`<div id="contentUnrecovered" class="sub-tab-content"></div>`), settings);
         districtContent.insertBefore(el(`<div id="teaserUnrecLink" class="teaser-unrec-link"></div>`), districtContent.firstChild);
-        // 여론에서는 지역구를 빼고 성향을 첫 화면으로
-        document.getElementById('elecSubTabDistrict')?.remove();
-        document.getElementById('elecSubTabTendency')?.classList.add('active');
-        document.getElementById('elecSubTendency')?.classList.add('active');
     })();
+    var legacyTabs; // 예전 화면에서 지역구 편집을 옮겼는지
     const onTab = sub => typeof currentMainTab !== 'undefined' && currentMainTab === 'nation' && typeof currentSubTab !== 'undefined' && currentSubTab.nation === sub;
     function onUnrecTab() { return onTab('unrecovered'); }
-    // 오른쪽 화면에 지역구 지도를 띄운다 (여론 › 지역구를 열 때와 같은 준비)
+    // 오른쪽 화면에 지역구 지도를 띄운다 (국가 › 지역을 열 때와 같은 준비)
     function showDistrictMap() {
+        if (typeof showTerritoryTab === 'function') { showTerritoryTab(); return; }
         const t = document.getElementById('dispTabDistrict');
         if (t) t.style.display = '';
         if (typeof switchDispTab === 'function') switchDispTab('district');
@@ -258,33 +261,27 @@
     window.switchSubTab = function (main, sub) {
         const r = origSwitchSub.apply(this, arguments);
         if (main === 'nation' && sub === 'territory') {
-            showDistrictMap();
-            if (typeof renderDistrictListPanel === 'function') renderDistrictListPanel();
-            window.districtRenderNamePanel();
+            if (legacyTabs) showDistrictMap();
             renderUnrecLink();
         }
         if (main === 'nation' && sub === 'unrecovered') { showDistrictMap(); renderUnrecTab(); }
         if (main === 'nation' && sub !== 'unrecovered' && brush) { brush = null; refreshUI(); }
         return r;
     };
-    // 예전 호출(도움말의 여론 › 지역구 바로가기 등)은 국가 › 지역으로
-    const origElecSub = window.elecSwitchSub;
-    window.elecSwitchSub = function (sub) {
-        if (sub === 'district') { window.switchSubTab('nation', 'territory'); return; }
-        return origElecSub.apply(this, arguments);
-    };
-    // 여론 탭을 열면 지금 고른 하위 탭(처음엔 성향)의 화면을 그린다 — 원래는 지역구가 첫 화면이라 따로 그릴 일이 없었다
     const origMain = window.switchMainTab;
     window.switchMainTab = function (main) {
         const r = origMain.apply(this, arguments);
-        if (main === 'election') {
-            const btn = document.querySelector('#mainContentElection > .sub-tab-container .sub-tab-btn.active');
-            const sub = btn ? btn.id.replace(/^elecSubTab/, '').toLowerCase() : 'tendency';
-            origElecSub(sub || 'tendency');
-        }
         if (main !== 'nation' && brush) { brush = null; refreshUI(); }
         return r;
     };
+    // 예전 화면: 여론 › 지역구 바로가기는 국가 › 지역으로 (1.6.0부터는 본 화면이 직접 처리)
+    if (legacyTabs) {
+        const origElecSub = window.elecSwitchSub;
+        window.elecSwitchSub = function (sub) {
+            if (sub === 'district') { window.switchSubTab('nation', 'territory'); return; }
+            return origElecSub.apply(this, arguments);
+        };
+    }
 
     // ---- 국가 › 지역 위쪽: 미수복 요약 한 줄 ----
     function renderUnrecLink() {

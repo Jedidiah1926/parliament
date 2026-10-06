@@ -22,6 +22,9 @@ window.DnoLangPacks.en = {
  ],
  "ordinal": "en",
  "patterns": [
+  {"re": "^\\s*당선:\\s*$", "to": "Elected:"},
+  {"re": "^찬성 ([\\d.]+)% · 투표율 ([\\d.]+)%$", "to": "Yes $1% · Turnout $2%"},
+  {"re": "^\\s*지역\\s*$", "to": "Districts"},
   {"re": "^\\s*원\\s*$", "to": "Chamber"},
   {"re": "^제(\\d+)조$", "to": "Art. $1"},
   {"re": "^기본 위원회 만들기 \\((\\d+)개\\)$", "to": "Create default committees ($1)"},
@@ -1075,8 +1078,8 @@ window.DnoLangPacks.en = {
    "Reset the names of all districts? (Map shapes, seat counts and tendencies are kept)"
   ],
   [
-   "권역별 득표율이 없습니다.\n여론 > 권역 탭에서 권역을 만들고 지역구를 배정하거나(자동 집계), 득표율을 직접 입력하세요.",
-   "There are no regional vote shares.\nCreate regions in Opinion > Regions and assign districts (automatic), or enter vote shares directly."
+   "권역별 득표율이 없습니다.\n국가 > 권역 탭에서 권역을 만들고 지역구를 배정하거나(자동 집계), 득표율을 직접 입력하세요.",
+   "There are no regional vote shares.\nCreate regions in Nation > Regions and assign districts (automatic), or enter vote shares directly."
   ],
   [
    "언어 팩을 읽을 수 없습니다. (올바른 JSON 파일이 아닙니다)",
@@ -4163,8 +4166,8 @@ window.DnoLangPacks.en = {
    "List PR method (Senate) —"
   ],
   [
-   "여론 > 권역",
-   "Opinion > Regions"
+   "국가 > 권역",
+   "Nation > Regions"
   ],
   [
    "탭에서 권역을 먼저 설정하세요",
@@ -4759,16 +4762,16 @@ window.DnoLangPacks.en = {
    "Shows the president, PM, deputy PMs, ministers and other government members as cards. Reflects what you set in the Cabinet group."
   ],
   [
-   "지역구 지도. 여론 › 지역구를 열면 나타나고, 지역구를 눌러 편집할 수 있어요. 탭의 ×로 닫습니다.",
-   "District map. Appears when you open Opinion › Districts; click a district to edit it. Close with the × on the tab."
+   "지역구 지도. 국가 › 지역를 열면 나타나고, 지역구를 눌러 편집할 수 있어요. 탭의 ×로 닫습니다.",
+   "District map. Appears when you open Nation › Districts; click a district to edit it. Close with the × on the tab."
   ],
   [
    "정당별 성향 지도. 여론 › 성향을 열면 나타나며, 지역구마다 어느 정당 쪽인지 색으로 보여요.",
    "Party leaning map. Appears when you open Opinion › Tendency and colors each district by which party it leans toward."
   ],
   [
-   "권역 지도. 여론 › 권역을 열면 나타나고, 지역구를 칠해 권역으로 묶습니다.",
-   "Region map. Appears when you open Opinion › Regions; paint districts to group them into regions."
+   "권역 지도. 국가 › 권역을 열면 나타나고, 지역구를 칠해 권역으로 묶습니다.",
+   "Region map. Appears when you open Nation › Regions; paint districts to group them into regions."
   ],
   [
    "총선 개표 화면과 결과. 개표가 진행되는 모습, 정당별 득표와 직전 대비 의석 변동(▲/▼)을 보여주고, 결과를 확인한 뒤 국가 › 선거의 \"✔ 의회에 반영\"을 누르면 그 결과대로 의석이 바뀝니다.",
@@ -5083,8 +5086,8 @@ window.DnoLangPacks.en = {
    "Your uploaded SVG appears here"
   ],
   [
-   "SVG 지도를 지역구 지도 파일(.jsx)로 — 만든 파일은 여론 › 지역구에서 불러옵니다",
-   "Turn an SVG map into a district map file (.jsx) — load it in Polls › Districts"
+   "SVG 지도를 지역구 지도 파일(.jsx)로 — 만든 파일은 국가 › 지역에서 불러옵니다",
+   "Turn an SVG map into a district map file (.jsx) — load it in Nation › Districts"
   ],
   [
    "SVG 파일을 선택하세요.",
@@ -5223,8 +5226,8 @@ window.DnoLangPacks.en = {
    "District system (map/grid) and the size of map labels and badges."
   ],
   [
-   "지도 모드에서는 여론 › 지역구 탭에서 SVG 지도(.jsx)를 올릴 수 있습니다",
-   "In map mode, upload the district map (.jsx) in Polls \u203a Districts"
+   "지도 모드에서는 국가 › 지역 탭에서 SVG 지도(.jsx)를 올릴 수 있습니다",
+   "In map mode, upload the district map (.jsx) in Nation › Districts"
   ],
   [
    "의회 구성",
@@ -5695,8 +5698,8 @@ window.DnoLangPacks.en = {
    "Uploading the district map"
   ],
   [
-   "여론 › 지역구에서 맵 메이커로 만든 .jsx 파일을 올립니다. 올리면 도형 하나하나가 지역구가 되고, 하원 · 상원 · 삼원이 같은 지도를 함께 씁니다. (새 지도를 올리면 기존 지역구 정보는 새 지도로 바뀌어요)",
-   "Upload the .jsx file made with Map Maker in Polls › Districts. Each shape becomes a district, and the lower, upper and third chambers share the same map. (Uploading a new map replaces the existing district data)"
+   "국가 › 지역에서 맵 메이커로 만든 .jsx 파일을 올립니다. 올리면 도형 하나하나가 지역구가 되고, 하원 · 상원 · 삼원이 같은 지도를 함께 씁니다. (새 지도를 올리면 기존 지역구 정보는 새 지도로 바뀌어요)",
+   "Upload the .jsx file made with Map Maker in Nation › Districts. Each shape becomes a district, and the lower, upper and third chambers share the same map. (Uploading a new map replaces the existing district data)"
   ],
   [
    "지역구 편집",
@@ -5707,8 +5710,8 @@ window.DnoLangPacks.en = {
    "Polls › Tendency sets each party's tendency (%) in every district, which decides who wins district races. The visual screen shows an overall map and one map per party."
   ],
   [
-   "권역형 비례대표를 쓸 때는 여론 › 권역에서 지역구를 권역으로 묶습니다. 권역을 고른 뒤 지도에서 지역구를 눌러(끌어서 여러 개) 칠해요. 권역 득표율은 성향을 평균하는 자동 집계나 직접 입력 중에서 고릅니다.",
-   "When using regional list seats, group districts into regions in Polls › Regions. Pick a region and click districts on the map (drag for several) to paint them. Regional vote shares come either from averaging tendencies automatically or from your own input."
+   "권역형 비례대표를 쓸 때는 국가 › 권역에서 지역구를 권역으로 묶습니다. 권역을 고른 뒤 지도에서 지역구를 눌러(끌어서 여러 개) 칠해요. 권역 득표율은 성향을 평균하는 자동 집계나 직접 입력 중에서 고릅니다.",
+   "When using regional list seats, group districts into regions in Nation › Regions. Pick a region and click districts on the map (drag for several) to paint them. Regional vote shares come either from averaging tendencies automatically or from your own input."
   ],
   [
    "지도 글씨 크기",
@@ -7151,8 +7154,8 @@ window.DnoLangPacks.en = {
    "Several parties, one candidate · applies to presidential and district races separately"
   ],
   [
-   "여론 › 지역구에서 맵 메이커로 만든 .jsx 파일을 올립니다. 올리면 도형 하나하나가 지역구가 되고, 기본으로는 하원 · 상원 · 삼원이 같은 지도를 함께 씁니다. (새 지도를 올리면 기존 지역구 정보는 새 지도로 바뀌어요)",
-   "Upload the .jsx file made in the map maker under Opinion › Districts. Each shape becomes a district, and by default the House, Senate and Third chamber share the same map. (Uploading a new map replaces the existing district data.)"
+   "국가 › 지역에서 맵 메이커로 만든 .jsx 파일을 올립니다. 올리면 도형 하나하나가 지역구가 되고, 기본으로는 하원 · 상원 · 삼원이 같은 지도를 함께 씁니다. (새 지도를 올리면 기존 지역구 정보는 새 지도로 바뀌어요)",
+   "Upload the .jsx file made in the map maker under Nation › Districts. Each shape becomes a district, and by default the House, Senate and Third chamber share the same map. (Uploading a new map replaces the existing district data.)"
   ],
   [
    "원마다 다른 지도",
@@ -7323,12 +7326,12 @@ window.DnoLangPacks.en = {
    "local heads"
   ],
   [
-   "지역구가 없습니다 — 여론 › 지역구에서 지도를 올려 주세요.",
-   "No districts — upload a map under Opinion › Districts."
+   "지역구가 없습니다 — 국가 › 지역에서 지도를 올려 주세요.",
+   "No districts — upload a map under Nation › Districts."
   ],
   [
-   "지방선거를 치를 지역이 없습니다.\n여론 › 지역구에서 지도를 올리고 지역구를 만든 뒤(권역 단위면 여론 › 권역에서 권역도) 다시 시도하세요.",
-   "There's nowhere to hold local elections.\nUpload a map and create districts under Opinion › Districts (and regions under Opinion › Regions for regional units), then try again."
+   "지방선거를 치를 지역이 없습니다.\n국가 › 지역에서 지도를 올리고 지역구를 만든 뒤(권역 단위면 국가 › 권역에서 권역도) 다시 시도하세요.",
+   "There's nowhere to hold local elections.\nUpload a map and create districts under Nation › Districts (and regions under Nation › Regions for regional units), then try again."
   ],
   [
    "국민투표에 부칠 안건(질문)을 적어 주세요.",
@@ -7342,6 +7345,18 @@ window.DnoLangPacks.en = {
   ["- 권역으로 묶은 지도(권역 탭 · 지방선거 권역 단계 · 지방자치 현황)에서 권역 테두리가 군데군데 끊기던 문제 수정 — 권역 안쪽 경계선은 없애고 바깥 둘레만 지도 기본 선으로, 지방자치 현황 지도에 권역별 · 지역구별 보기", "- Fixed region outlines breaking off in places on region-grouped maps (Regions tab, the region level of local elections, local government overview) — borders inside a region are gone and only the outer edge is drawn with the map's default line; the local government map gets By region · By district views"],
   ["권역별 득표율", "Vote share by region"],
   ["지역구별 · 권역별 결과", "Results by district · region"],
+  ["대통령 선거", "Presidential election"],
+  ["조건에 맞는 기록이 없습니다", "No records match"],
+  ["투표율 미달 · 부결", "Rejected · turnout below quorum"],
+  ["나라의 기본 틀 — 상징 · 지역(지역구) · 권역을 정합니다.", "The basic framework of the nation — symbols, districts and regions."],
+  ["지역구를 만들고 원별 의석 수 · 인구를 정합니다. 맵 메이커에서 만든 지도(.jsx)를 올리면 실제 지도 모양의 지역구를 쓸 수 있어요. (1.5.9까지는 여론 › 지역구)", "Create districts and set each chamber's seats and population. Upload a map made in the map maker (.jsx) to use real map-shaped districts. (Opinion › Districts up to 1.5.9)"],
+  ["지역구를 권역으로 묶습니다 — 권역형 비례대표 · 지방선거 권역 단체장의 단위. 권역 득표율은 지역구 성향을 평균하는 자동 집계나 직접 입력 중에서 고릅니다. (1.5.9까지는 여론 › 권역)", "Group districts into regions — the unit for regional list seats and regional heads in local elections. Regional vote shares come either from averaging district tendencies automatically or from direct input. (Opinion › Regions up to 1.5.9)"],
+  ["선거 결과를 좌우하는 성향 · 지지율을 정합니다 (지역구 · 권역은 국가 묶음). 여기서 정한 값으로 선거 탭에서 개표해요.", "Set the tendencies and support rates that decide elections (districts and regions are under Nation). The Elections tab counts votes from these values."],
+  ["국가 › 지역 · 권역", "Nation › Districts · Regions"],
+  ["선거 기록 통합 · 검색", "Unified election records · search"],
+  ["- 여론 › 지역구 · 여론 › 권역을 국가 › 지역 · 국가 › 권역으로 옮김 (여론에는 성향 · 지지율만)", "- Opinion › Districts and Opinion › Regions move to Nation › Districts and Nation › Regions (Opinion keeps only Tendency and Support)"],
+  ["- 선거 › 선거 기록에 지방선거 · 국민투표 · 대선(총리 선거) 기록도 함께 — 최근 순, 기록 검색 · 종류 필터 (국무회의 기록처럼 기록이 없어도 검색 창 표시)", "- Elections › Records now also lists local elections, referendums and presidential (PM) elections — newest first, with record search and type filters (the search box shows even with no records, like the cabinet records)"],
+  ["- 국가 › 미수복 탭 신설 (국가 › 지역 · 권역은 1.6.0)", "- A new Nation › Unrecovered tab (Nation › Districts and Regions arrive in 1.6.0)"],
   ["권역별", "By region"],
   ["지역구별", "By district"],
   [
@@ -7369,8 +7384,8 @@ window.DnoLangPacks.en = {
    "Pick at least one: regional heads or district heads."
   ],
   [
-   "권역이 없습니다 — 여론 › 권역에서 권역을 만들고 지역구를 배정하세요.",
-   "No regions — create regions and assign districts under Opinion › Regions."
+   "권역이 없습니다 — 국가 › 권역에서 권역을 만들고 지역구를 배정하세요.",
+   "No regions — create regions and assign districts under Nation › Regions."
   ],
   [
    "✔ 현직 단체장에 반영됨",
@@ -7533,7 +7548,7 @@ window.DnoLangPacks.en = {
   ["국가 › 지역 · 미수복 탭", "Nation › Regions · Unrecovered tabs"],
   ["- 미수복 지역 종류 — 종류를 여러 개 만들어 이름 · 빗금 색을 정함 (예: 오스트리아 · 알자스로렌-룩셈부르크 · 동방영토 · 북방영토), 칠하기 도구로 지도에서 여러 지역구를 한 번에 지정", "- Kinds of unrecovered territory — create several kinds, each with its own name and hatch color (e.g. Austria · Alsace-Lorraine-Luxembourg · Eastern Territories · Northern Territories), and mark many districts at once on the map with the paint tool"],
   ["- 종류별 통합 — 미수복 지역을 종류마다 따로 본국에 통합 (전체를 한 번에 되찾는 영토 통일도 가능)", "- Integration by kind — integrate each kind of unrecovered territory into the home nation separately (or reclaim everything at once with territorial unification)"],
-  ["- 여론 › 지역구를 국가 › 지역으로 옮기고, 국가 › 미수복 탭 신설", "- Opinion › Districts moves to Nation › Regions, plus a new Nation › Unrecovered tab"],
+  ["- 여론 › 지역구를 국가 › 지역으로 옮기고, 국가 › 미수복 탭 신설", "- Opinion › Districts moves to Nation › Districts, plus a new Nation › Unrecovered tab"],
   ["- 내장 프리셋 \"서독\" 추가", "- Built-in preset \"West Germany\""],
   ["1.6.8 - 갈라질 수도 없고 분리될 수도 없다 \"Indivisibiliter ac inseparabiliter\"", "1.6.8 - Indivisible and inseparable \"Indivisibiliter ac inseparabiliter\""],
   ["1.6.8 - 갈라질 수도 없고 분리될 수도 없다", "1.6.8 - Indivisible and inseparable"],

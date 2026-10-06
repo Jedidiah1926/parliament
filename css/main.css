@@ -1606,3 +1606,8 @@ html[data-theme-family="modern"] .lp-arrow { color: var(--m-text-3); }
         html[data-theme-family="modern"] .map-zoom button { color: var(--m-text); border-radius: 6px; }
         html[data-theme-family="modern"] .map-zoom button:hover { background: var(--m-surface-2); }
         html[data-theme-family="modern"] .map-zoom-level { color: var(--m-text-3); }
+        /* 선거 › 선거 기록: 기록 종류 표시 (총선 · 대선 · 총리 선거 · 지방선거 · 국민투표) */
+        .elec-record-kind { display: inline-block; margin-right: 6px; padding: 0 5px; font-size: .7rem; line-height: 1.5; vertical-align: 2px; color: var(--k); border: 1px solid var(--k); }
+        html[data-theme-family="modern"] .elec-record-kind { border-radius: 6px; font-weight: 600; }
+        .elec-record-card { background: #080b10; border: 1px solid #2a2a2a; border-left: 4px solid var(--k, var(--tno-neon)); padding: 10px; margin-bottom: 8px; }
+        html[data-theme-family="modern"] .elec-record-card { background: var(--m-surface); border: 1px solid var(--m-border); border-left: 4px solid var(--k, var(--m-accent)); border-radius: 10px; }

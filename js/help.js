@@ -99,11 +99,19 @@
             ],
         },
         nation: {
-            intro: '나라의 기본 틀을 정합니다.',
+            intro: '나라의 기본 틀 — 상징 · 지역(지역구) · 권역을 정합니다.',
             tabs: [
                 {
                     btn: 'subTabSymbol', open: go('nation', 'symbol'),
                     desc: '국가명과 국기.',
+                },
+                {
+                    btn: 'subTabTerritory', open: go('nation', 'territory'),
+                    desc: '지역구를 만들고 원별 의석 수 · 인구를 정합니다. 맵 메이커에서 만든 지도(.jsx)를 올리면 실제 지도 모양의 지역구를 쓸 수 있어요. (1.5.9까지는 여론 › 지역구)',
+                },
+                {
+                    btn: 'subTabRegions', open: go('nation', 'regions'),
+                    desc: '지역구를 권역으로 묶습니다 — 권역형 비례대표 · 지방선거 권역 단체장의 단위. 권역 득표율은 지역구 성향을 평균하는 자동 집계나 직접 입력 중에서 고릅니다. (1.5.9까지는 여론 › 권역)',
                 },
                 {
                     btn: 'dispDateSettingsBtn', title: '날짜 · 회기 설정', open: () => { showPanel('display'); if(typeof openDatePanel === 'function') openDatePanel(); },
@@ -147,19 +155,11 @@
             ],
         },
         election: {
-            intro: '선거 결과를 좌우하는 지역구 · 성향 · 지지율을 정합니다. 여기서 정한 값으로 선거 탭에서 개표해요.',
+            intro: '선거 결과를 좌우하는 성향 · 지지율을 정합니다 (지역구 · 권역은 국가 묶음). 여기서 정한 값으로 선거 탭에서 개표해요.',
             tabs: [
-                {
-                    btn: 'elecSubTabDistrict', open: goElec('district'),
-                    desc: '지역구를 만들고 원별 의석 수를 정합니다. 맵 메이커에서 만든 지도(.jsx)를 올리면 실제 지도 모양의 지역구를 쓸 수 있어요.',
-                },
                 {
                     btn: 'elecSubTabTendency', open: goElec('tendency'),
                     desc: '지역구마다 정당별 성향(%)을 정합니다. 지역구 선거에서 어느 정당이 이길지가 여기서 갈려요.',
-                },
-                {
-                    btn: 'elecSubTabRegion', open: goElec('region'),
-                    desc: '권역형 비례대표를 쓸 때 지역구를 권역으로 묶습니다. 권역 득표율은 지역구 성향을 평균하는 자동 집계나 직접 입력 중에서 고릅니다.',
                 },
                 {
                     btn: 'elecSubTabProb', open: goElec('prob'),
@@ -286,16 +286,16 @@
                     desc: '대통령 · 총리 · 부총리 · 국무위원 등 정부 구성원을 카드로 한눈에 보여줍니다. 내각 묶음에서 정한 내용이 여기 반영돼요.',
                 },
                 {
-                    btn: 'dispTabDistrict', open: () => { goElec('district')(); showPanel('display'); }, openWhenHidden: true,
-                    desc: '지역구 지도. 여론 › 지역구를 열면 나타나고, 지역구를 눌러 편집할 수 있어요. 탭의 ×로 닫습니다.',
+                    btn: 'dispTabDistrict', open: () => { go('nation', 'territory')(); showPanel('display'); }, openWhenHidden: true,
+                    desc: '지역구 지도. 국가 › 지역을 열면 나타나고, 지역구를 눌러 편집할 수 있어요. 탭의 ×로 닫습니다.',
                 },
                 {
                     btn: 'dispTabTendency', open: () => { goElec('tendency')(); showPanel('display'); }, openWhenHidden: true,
                     desc: '정당별 성향 지도. 여론 › 성향을 열면 나타나며, 지역구마다 어느 정당 쪽인지 색으로 보여요.',
                 },
                 {
-                    btn: 'dispTabRegion', open: () => { goElec('region')(); showPanel('display'); }, openWhenHidden: true,
-                    desc: '권역 지도. 여론 › 권역을 열면 나타나고, 지역구를 칠해 권역으로 묶습니다.',
+                    btn: 'dispTabRegion', open: () => { go('nation', 'regions')(); showPanel('display'); }, openWhenHidden: true,
+                    desc: '권역 지도. 국가 › 권역을 열면 나타나고, 지역구를 칠해 권역으로 묶습니다.',
                 },
                 {
                     btn: 'dispTabElecResultHouse', title: '선거결과', open: disp('elecResultHouse'), hiddenNote: '총선을 개표하면 원마다 생겨요',
