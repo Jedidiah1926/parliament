@@ -16,6 +16,24 @@
     const SOURCE_LANG = { code: 'kr', name: '한국어' };
     const BUILTIN = { en: { code: 'en', name: 'English', script: 'lang/en.js' } };
     const MAX_PACK_BYTES = 1500000; // localStorage 용량(보통 5MB)을 세이브와 나눠 쓰므로 팩 하나의 상한
+    // 언어별 네온 폰트 — 네온 테마 글꼴(네오둥근모)에 없는 글자를 쓰는 언어는 그 글자를 지원하는 픽셀 폰트로 바꾼다.
+    // 화면 곳곳의 font-family가 'NeoDunggeunmo' 이름을 직접 쓰므로, 같은 이름의 @font-face를 뒤에 하나 더 넣어 통째로 갈아 끼운다.
+    //   maruminya: 마루미냐 한글(x12y12pxMaruMinyaHangul, SIL OFL 1.1 — fonts/maruminya/OFL.txt) — 한국어 · 일본어 12px 픽셀 폰트
+    //              github.com/quiple/x12y12pxMaruMinyaHangul (원본: hicchicc/x12y12pxMaruMinya)
+    // 언어 코드로 정해 두거나(일본어 ja), 언어 팩에 "neonFont": "maruminya"를 적는다
+    const NEON_FONTS = { maruminya: 'fonts/maruminya/x12y12pxMaruMinyaHangul.woff2' };
+    const NEON_FONT_BY_LANG = { ja: 'maruminya' };
+    let neonFontApplied = '';
+    function applyNeonFont(code, pack) {
+        const key = (pack && NEON_FONTS[pack.neonFont] ? pack.neonFont : '') || NEON_FONT_BY_LANG[String(code || '').split('-')[0]];
+        if (!key || !NEON_FONTS[key] || neonFontApplied === key) return;
+        neonFontApplied = key;
+        const style = document.createElement('style');
+        style.id = 'dnoNeonFont';
+        style.textContent = `@font-face { font-family: 'NeoDunggeunmo'; font-weight: normal; font-style: normal; font-display: block; src: url('${NEON_FONTS[key]}') format('woff2'); }`;
+        (document.head || document.documentElement).appendChild(style);
+        document.documentElement.setAttribute('data-neon-font', key);
+    }
 
     function safeGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
     function safeSet(k, v) { try { localStorage.setItem(k, v); return true; } catch (e) { return false; } }
@@ -87,7 +105,8 @@
         }
         const months = Array.isArray(raw.months) && raw.months.length === 12 ? raw.months.map(String) : null;
         const ordinal = raw.ordinal === 'en' ? 'en' : 'none';
-        return { pack: { format: PACK_FORMAT, code, name, author: String(raw.author || ''), version: String(raw.version || ''), months, ordinal, patterns, dict } };
+        const neonFont = NEON_FONTS[raw.neonFont] ? String(raw.neonFont) : undefined; // 네온 테마 글꼴 (위 NEON_FONTS 참고)
+        return { pack: { format: PACK_FORMAT, code, name, author: String(raw.author || ''), version: String(raw.version || ''), months, ordinal, patterns, dict, ...(neonFont ? { neonFont } : {}) } };
     }
 
     function installPack(raw) {
@@ -171,6 +190,7 @@
 
     const current = getLang();
     if (current === SOURCE_LANG.code) return; // 기본값(한국어)일 때는 아무 것도 하지 않는다
+    applyNeonFont(current); // 언어 코드로 정해 둔 네온 폰트 (팩에 neonFont가 있으면 팩을 읽은 뒤 한 번 더)
 
     // ===== 번역 엔진 =====
     function ordinalEn(v) {
@@ -316,6 +336,7 @@
 
     const waiting = new Set(); // 팩 준비 전에 번역 요청된 부분
     window.DnoLang.translateSubtree = el => { if (el) waiting.add(el); };
+    packReady.then(pack => applyNeonFont(current, pack)).catch(() => {});
     Promise.all([packReady, pageLoaded]).then(([pack]) => {
         translate = buildTranslator(pack);
         translateTree(document.documentElement, translate);
