@@ -22,6 +22,7 @@ window.DnoLangPacks.en = {
  ],
  "ordinal": "en",
  "patterns": [
+  {"re": "^지역구별 결과 \\((\\d+)\\)$", "to": "Results by district ($1)"},
   {"re": "^\\s*사용\\s*$", "to": "Use"},
   {"re": "^무소속 의석이 (\\d+)석 남아 있어 끌 수 없습니다\\.", "to": "Independents still hold $1 seats, so this can't be turned off."},
   {"re": "의회 › 의회 구성에서 무소속 의석을 0으로 만든 뒤 다시 시도하세요\\.", "to": "Set the independents' seats to 0 in Parliament › Composition and try again."},
@@ -7314,6 +7315,11 @@ window.DnoLangPacks.en = {
    "Population-based vote counts"
   ],
   ["- 지역구 선거에서 그 지역구 성향이 0인 정당(무소속 등)이 개표 노이즈만으로 당선되던 문제 수정 — 의석이 여럿인 지역구에서 성향을 두 정당에 100% 나눠 줘도 매번 무소속이 나왔음", "- Fixed parties with 0% tendency in a district (such as independents) winning district seats from vote-count noise alone — even with tendency split 100% between two parties, multi-seat districts kept electing independents"],
+  ["- 권역으로 묶은 지도(권역 탭 · 지방선거 권역 단계 · 지방자치 현황)에서 권역 테두리가 군데군데 끊기던 문제 수정 — 권역 안쪽 경계선은 없애고 바깥 둘레만 지도 기본 선으로, 지방자치 현황 지도에 권역별 · 지역구별 보기", "- Fixed region outlines breaking off in places on region-grouped maps (Regions tab, the region level of local elections, local government overview) — borders inside a region are gone and only the outer edge is drawn with the map's default line; the local government map gets By region · By district views"],
+  ["권역별 득표율", "Vote share by region"],
+  ["지역구별 · 권역별 결과", "Results by district · region"],
+  ["권역별", "By region"],
+  ["지역구별", "By district"],
   [
    "- 버전 표시 v1.5.9",
    "- Version label v1.5.9"
