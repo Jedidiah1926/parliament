@@ -13711,9 +13711,12 @@
                 let bestParty = null, bestScore = -1;
                 const { scores: unionSupport, withdrawn } = applyCandidateUnions(
                     Object.fromEntries(parties.map(p => [p.id, tendencyData[p.id]?.[key] || 0])), 'district');
+                // 이 지역구에 성향을 정한 정당이 있으면, 성향이 0인 정당(예: 무소속)은 노이즈만으로 당선되지 않는다
+                const anySupport = parties.some(p => !withdrawn.has(String(p.id)) && partyRunsInChamber(p, chamber) && (unionSupport[p.id] || 0) > 0);
                 parties.forEach(p => {
                     if(withdrawn.has(String(p.id)) || !partyRunsInChamber(p, chamber)) return;
                     const support = unionSupport[p.id] || 0;
+                    if(anySupport && support <= 0) return;
                     // 노이즈: ±15% 정도 랜덤
                     const noise = (Math.random() * 30 - 15);
                     const score = support + noise;
@@ -13742,15 +13745,21 @@
                 // 후보 단일화: 이 지역구에서 성향이 가장 높은 참여 정당이 후보를 내고, 참여 정당의 성향을 합쳐 받는다
                 const { scores: support, withdrawn } = applyCandidateUnions(
                     Object.fromEntries(parties.map(p => [p.id, districtSvgTendency[key]?.[chamber]?.[p.id] || 0])), 'district');
+                // 이 지역구에 성향을 정한 정당이 있으면, 성향이 0인 정당은 노이즈(±15)만으로 표를 얻지 않는다 —
+                // 예전엔 성향 0인 무소속도 노이즈로 표가 생겨, 의석이 여럿인 지역구에서 매번 무소속이 당선됐다
+                const anySupport = parties.some(p => !withdrawn.has(String(p.id)) && partyRunsInChamber(p, chamber) && (support[p.id] || 0) > 0);
                 const scored = parties.map(p => {
                     if(withdrawn.has(String(p.id)) || !partyRunsInChamber(p, chamber)) return { id: p.id, score: 0 };
+                    const base = support[p.id] || 0;
+                    if(anySupport && base <= 0) return { id: p.id, score: 0 };
                     const noise = (Math.random() * 30 - 15);
-                    return { id: p.id, score: Math.max(0, (support[p.id] || 0) + noise) };
+                    return { id: p.id, score: Math.max(0, base + noise) };
                 });
                 const total = scored.reduce((s,p) => s + p.score, 0);
                 if(total <= 0) {
                     // 지지도 데이터가 전혀 없으면 무작위 한 정당이 그 지역구 의석을 모두 차지 (단일화로 후보를 내지 않은 정당 제외)
-                    const running = parties.filter(x => !withdrawn.has(String(x.id)) && partyRunsInChamber(x, chamber));
+                    // 성향을 정한 정당이 있는데 노이즈로 모두 0이 됐으면 그 정당들 중에서만 고른다
+                    const running = parties.filter(x => !withdrawn.has(String(x.id)) && partyRunsInChamber(x, chamber) && (!anySupport || (support[x.id] || 0) > 0));
                     const p = running[Math.floor(Math.random()*running.length)] || parties[0];
                     for(let i=0; i<seatCount; i++) results.push({ key, partyId: p.id });
                     return;

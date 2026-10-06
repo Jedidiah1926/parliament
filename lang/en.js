@@ -7313,6 +7313,7 @@ window.DnoLangPacks.en = {
    "인구 기반 득표수",
    "Population-based vote counts"
   ],
+  ["- 지역구 선거에서 그 지역구 성향이 0인 정당(무소속 등)이 개표 노이즈만으로 당선되던 문제 수정 — 의석이 여럿인 지역구에서 성향을 두 정당에 100% 나눠 줘도 매번 무소속이 나왔음", "- Fixed parties with 0% tendency in a district (such as independents) winning district seats from vote-count noise alone — even with tendency split 100% between two parties, multi-seat districts kept electing independents"],
   [
    "- 버전 표시 v1.5.9",
    "- Version label v1.5.9"
