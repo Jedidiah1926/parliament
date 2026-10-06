@@ -91,7 +91,7 @@
         const light = document.documentElement.getAttribute('data-theme-mode') === 'light';
         const bg = light ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.04)';
         return territories.map(t => `<pattern id="${prefix}${t.id}" data-unrec-hatch="1" patternUnits="userSpaceOnUse" width="1" height="1" patternTransform="rotate(45)">`
-            + `<rect width="1" height="1" fill="${bg}"/><rect width="0.4" height="1" fill="${t.color}" fill-opacity="${light ? 0.65 : 0.55}"/></pattern>`).join('');
+            + `<rect width="1" height="1" fill="${bg}"/><rect width="0.5" height="1" fill="${t.color}"/></pattern>`).join('');
     }
     function fitHatch(svg) {
         const pats = svg.querySelectorAll('pattern[data-unrec-hatch]');
