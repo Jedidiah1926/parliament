@@ -690,3 +690,9 @@ body.home-page { display: block; height: 100vh; overflow: hidden; text-transform
 .save-card-sep { border-top: 1px dashed var(--tno-border); margin: 0 14px; }
 .save-card-auto { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 8px 14px 10px; font-size: 0.8rem; color: #888; }
 .save-card-auto:hover { color: var(--tno-neon); }
+
+        /* 시작하기 창: .hemi ↔ .json 변환 페이지 링크 (휴대폰에서 .hemi가 안 열릴 때) */
+        .save-select-convert-link { display: block; margin-top: 6px; text-align: center; font-size: .78rem; color: #777; text-decoration: none; }
+        .save-select-convert-link:hover { color: var(--tno-neon); }
+        html[data-theme-family="modern"] .save-select-convert-link { color: var(--m-text-3); }
+        html[data-theme-family="modern"] .save-select-convert-link:hover { color: var(--m-text); }
