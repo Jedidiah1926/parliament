@@ -4844,6 +4844,16 @@
                     sessionStorage.removeItem('dnoBootPresetId');
                     bootImportName = sessionStorage.getItem('dnoBootImportedName');
                     sessionStorage.removeItem('dnoBootImportedName');
+                    if(sessionStorage.getItem('dnoBootImportPending')) {
+                        sessionStorage.removeItem('dnoBootImportPending');
+                        // 큰 세이브는 IndexedDB에 맡겨져 있다 — 화면이 다 준비된 뒤 "파일 불러오기"와 같은 방법으로 새 탭에 연다
+                        setTimeout(async () => {
+                            try {
+                                const v = await window.HemiFile.take('bootImport');
+                                if(v && v.text) await loadJSONFromFile(new File([v.text], (v.name || '불러온 세이브') + '.json'));
+                            } catch(e) { showCustomAlert('저장 파일을 불러올 수 없습니다. (형식이 올바르지 않거나 손상된 파일)'); }
+                        }, 0);
+                    }
                 } catch(e) { /* sessionStorage 접근 불가 — 일반 부팅으로 진행 */ }
                 // 새로 만들기 · 프리셋 · 파일 불러오기는 새 세이브가 생기기 전까지 어느 세이브에도 저장하지 않는다
                 // (그 사이 자동저장이 돌면 이전에 열려 있던 세이브를 엉뚱한 상태로 덮어쓰게 됨)

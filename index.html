@@ -177,6 +177,7 @@
                     <button class="save-select-item save-select-import-btn" onclick="document.getElementById('saveFileInput').click()">
                         <span class="save-select-item-name">📁 저장 파일(.hemi) 불러오기</span>
                     </button>
+                    <a class="save-select-convert-link" href="convert.html">🔄 .hemi ↔ .json 변환 (휴대폰에서 .hemi가 안 열릴 때)</a>
                 </section>
             </div>
         </div>
@@ -406,17 +407,32 @@
         async function importSaveFile(input) {
             const file = input.files?.[0];
             if(!file) return;
+            let text;
             try {
-                const text = window.HemiFile ? await window.HemiFile.readText(file) : await file.text();
+                text = window.HemiFile ? await window.HemiFile.readText(file) : await file.text();
                 const obj = JSON.parse(text);
                 const parl = obj.parliament || obj.data;
                 if(!parl || !Array.isArray(parl.parties)) throw new Error('형식이 올바르지 않음');
-                sessionStorage.setItem('dnoBootImportedStateJSON', text);
-                sessionStorage.setItem('dnoBootImportedName', file.name.replace(/\.(hemi|json)$/i, ''));
             } catch(e) {
                 alert('저장 파일을 불러올 수 없습니다. (형식이 올바르지 않거나 손상된 파일)');
                 input.value = '';
                 return;
+            }
+            const name = file.name.replace(/\.(hemi|json)$/i, '');
+            try {
+                sessionStorage.setItem('dnoBootImportedStateJSON', text);
+                sessionStorage.setItem('dnoBootImportedName', name);
+            } catch(e) {
+                // 지도 · 사진이 든 큰 세이브는 sessionStorage 한도를 넘는다 — IndexedDB에 맡겨 두고 게임 화면에서 꺼냄
+                try {
+                    sessionStorage.removeItem('dnoBootImportedStateJSON');
+                    await window.HemiFile.stash('bootImport', { name, text });
+                    sessionStorage.setItem('dnoBootImportPending', '1');
+                } catch(e2) {
+                    alert('파일이 너무 커서 여기서 열 수 없습니다. 시작한 뒤 저장 › 파일 › 불러오기로 열어 보세요.');
+                    input.value = '';
+                    return;
+                }
             }
             location.href = 'main.html';
         }

@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/png" href="icons/favicon.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hemicycle — 세이브 파일 변환</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="fonts/neodgm/style.css">
+
+    <script src="js/lang.js"></script>
+    <script src="js/uimode.js"></script>
+    <script src="js/thememode.js"></script>
+    <script src="js/dialogs.js"></script>
+    <script src="js/theme.js"></script>
+    <script src="js/savefile.js"></script>
+    <style>
+        /* 세이브 파일 변환 (.hemi ↔ .json) — 네온이 기본, 라이트/다크(modern)는 아래 규칙 */
+        :root { --cv-bg: #05070a; --cv-card: #0a0c10; --cv-line: #2a2a2a; --cv-text: #ccc; --cv-dim: #777; --cv-accent: var(--tno-neon, #00e5ff); --cv-on-accent: #000; --cv-ok: #3fbf7f; --cv-err: #e05555; }
+        html[data-theme-family="modern"] { --cv-bg: var(--m-bg, #f4f4f5); --cv-card: var(--m-surface, #fff); --cv-line: var(--m-border, #e4e4e7); --cv-text: var(--m-text, #18181b); --cv-dim: var(--m-text-3, #71717a); --cv-accent: var(--m-accent, #18181b); --cv-on-accent: var(--m-on-accent, #fff); }
+        * { box-sizing: border-box; }
+        body { margin: 0; min-height: 100vh; background: var(--cv-bg); color: var(--cv-text); font-family: 'NeoDunggeunmo', 'VT323', monospace; }
+        html[data-theme-family="modern"] body { font-family: Pretendard, 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif; }
+        .cv-wrap { max-width: 640px; margin: 0 auto; padding: 24px 16px 48px; }
+        .cv-back { color: var(--cv-dim); text-decoration: none; font-size: .9rem; }
+        .cv-back:hover { color: var(--cv-accent); }
+        h1 { font-size: 1.4rem; margin: 14px 0 6px; color: var(--cv-accent); font-weight: normal; letter-spacing: 1px; }
+        html[data-theme-family="modern"] h1 { color: var(--cv-text); font-weight: 700; letter-spacing: 0; }
+        .cv-lead { color: var(--cv-dim); font-size: .88rem; line-height: 1.6; margin: 0 0 18px; }
+        .cv-card { background: var(--cv-card); border: 1px solid var(--cv-line); padding: 16px; margin-bottom: 14px; }
+        html[data-theme-family="modern"] .cv-card { border-radius: 14px; }
+        .cv-drop { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; min-height: 150px; border: 2px dashed var(--cv-line); cursor: pointer; text-align: center; padding: 18px; }
+        .cv-drop.drag { border-color: var(--cv-accent); }
+        html[data-theme-family="modern"] .cv-drop { border-radius: 12px; }
+        .cv-drop b { font-size: 1rem; }
+        .cv-drop span { color: var(--cv-dim); font-size: .82rem; }
+        .cv-btn { cursor: pointer; font-family: inherit; font-size: .95rem; padding: 10px 14px; border: 1px solid var(--cv-accent); background: transparent; color: var(--cv-accent); }
+        .cv-btn.primary { background: var(--cv-accent); color: var(--cv-on-accent); }
+        .cv-btn:disabled { opacity: .4; cursor: default; }
+        html[data-theme-family="modern"] .cv-btn { border-radius: 10px; font-weight: 600; }
+        .cv-row { display: flex; gap: 8px; flex-wrap: wrap; }
+        .cv-row .cv-btn { flex: 1 1 200px; }
+        .cv-info { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; font-size: .88rem; margin-bottom: 14px; }
+        .cv-info dt { color: var(--cv-dim); }
+        .cv-info dd { margin: 0; word-break: break-all; }
+        .cv-ok { color: var(--cv-ok); }
+        .cv-err { color: var(--cv-err); }
+        .cv-opt { display: flex; align-items: center; gap: 6px; font-size: .85rem; color: var(--cv-dim); margin-bottom: 12px; cursor: pointer; }
+        .cv-help { font-size: .82rem; color: var(--cv-dim); line-height: 1.7; }
+        .cv-help b { color: var(--cv-text); font-weight: normal; }
+        html[data-theme-family="modern"] .cv-help b { font-weight: 600; }
+    </style>
+</head>
+<body>
+    <div class="cv-wrap">
+        <a class="cv-back" href="index.html">← 메인으로</a>
+        <h1>세이브 파일 변환 (.hemi ↔ .json)</h1>
+        <p class="cv-lead">.hemi는 세이브 내용(JSON)을 압축한 파일이고, .json은 압축하지 않은 예전 형식입니다. 둘은 내용이 같아서 서로 바꿔도 그대로 불러올 수 있어요. 휴대폰에서 .hemi 파일이 열리지 않으면 여기서 .json으로 바꿔 보세요.</p>
+
+        <div class="cv-card">
+            <label class="cv-drop" id="cvDrop">
+                <b>세이브 파일 고르기</b>
+                <span>.hemi 또는 .json 파일을 누르거나 여기로 끌어다 놓으세요</span>
+                <input type="file" id="cvFile" accept=".hemi,.json,application/json,application/gzip,application/octet-stream" hidden>
+            </label>
+        </div>
+
+        <div class="cv-card" id="cvResult" hidden>
+            <dl class="cv-info" id="cvInfo"></dl>
+            <label class="cv-opt"><input type="checkbox" id="cvPretty"> .json을 사람이 읽기 좋게 줄 바꿈 (파일이 커져요)</label>
+            <div class="cv-row">
+                <button type="button" class="cv-btn primary" id="cvToJson">⬇ .json으로 받기</button>
+                <button type="button" class="cv-btn" id="cvToHemi">⬇ .hemi로 받기</button>
+            </div>
+        </div>
+
+        <div class="cv-card cv-help">
+            <b>바꾼 파일 쓰기</b> — 메인 화면 › 시작하기 › "저장 파일(.hemi) 불러오기", 또는 게임 안의 저장 › 파일 › 불러오기에서 .hemi · .json 어느 쪽이든 열 수 있습니다.<br>
+            <b>파일은 이 기기 안에서만</b> 바뀝니다 — 어디에도 올리지 않아요.
+        </div>
+    </div>
+
+    <script>
+    (function () {
+        'use strict';
+        const $ = id => document.getElementById(id);
+        let current = null; // { name, text, gz, obj }
+
+        const fmtSize = n => n >= 1048576 ? (n / 1048576).toFixed(2) + ' MB' : n >= 1024 ? (n / 1024).toFixed(1) + ' KB' : n + ' B';
+        const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        // 세이브에서 보여 줄 이름 — 국가명(있으면) · 정당 수
+        function describe(obj) {
+            const parl = obj && (obj.parliament || obj.data);
+            if (!parl || !Array.isArray(parl.parties)) return null;
+            const nation = (obj.config && obj.config.nationName) || '';
+            return { nation, parties: parl.parties.length };
+        }
+        function download(blob, name) {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url; a.download = name;
+            document.body.appendChild(a); a.click(); a.remove();
+            setTimeout(() => URL.revokeObjectURL(url), 4000);
+        }
+
+        async function load(file) {
+            if (!file) return;
+            const info = $('cvInfo');
+            $('cvResult').hidden = false;
+            info.innerHTML = '<dt>읽는 중…</dt><dd></dd>';
+            const bytes = new Uint8Array(await file.slice(0, 2).arrayBuffer());
+            const gz = bytes.length >= 2 && bytes[0] === 0x1f && bytes[1] === 0x8b;
+            let text, obj, err = '';
+            try {
+                text = await window.HemiFile.readText(file);
+                obj = JSON.parse(text);
+            } catch (e) {
+                err = gz && !window.HemiFile.compressed ? '이 브라우저는 압축된 .hemi를 풀 수 없습니다 (최신 브라우저로 열어 주세요)' : '세이브 파일이 아니거나 손상된 파일입니다';
+            }
+            const d = obj ? describe(obj) : null;
+            const base = file.name.replace(/\.(hemi|json)$/i, '') || 'hemicycle';
+            current = err ? null : { name: base, text, gz, obj };
+            info.innerHTML = `
+                <dt>파일</dt><dd>${esc(file.name)} (${fmtSize(file.size)})</dd>
+                <dt>형식</dt><dd>${gz ? '.hemi (압축)' : 'JSON (압축 안 함)'}</dd>
+                ${text && !err ? `<dt>풀었을 때</dt><dd>${fmtSize(new Blob([text]).size)}</dd>` : ''}
+                ${d ? `<dt>세이브</dt><dd class="cv-ok">✔ ${d.nation ? esc(d.nation) + ' · ' : ''}정당 ${d.parties}개</dd>` : ''}
+                ${!err && !d ? '<dt>세이브</dt><dd class="cv-err">JSON이지만 Hemicycle 세이브 형식이 아닙니다 — 바꿀 수는 있지만 게임에서 열리지 않을 수 있어요</dd>' : ''}
+                ${err ? `<dt>오류</dt><dd class="cv-err">${esc(err)}</dd>` : ''}`;
+            $('cvToJson').disabled = !current;
+            $('cvToHemi').disabled = !current || !window.HemiFile.compressed;
+            $('cvToHemi').title = window.HemiFile.compressed ? '' : '이 브라우저는 압축 기능이 없어 .hemi를 만들 수 없습니다';
+        }
+
+        $('cvFile').addEventListener('change', e => { load(e.target.files[0]); e.target.value = ''; });
+        const drop = $('cvDrop');
+        ['dragenter', 'dragover'].forEach(t => drop.addEventListener(t, e => { e.preventDefault(); drop.classList.add('drag'); }));
+        ['dragleave', 'drop'].forEach(t => drop.addEventListener(t, e => { e.preventDefault(); drop.classList.remove('drag'); }));
+        drop.addEventListener('drop', e => load(e.dataTransfer.files[0]));
+
+        $('cvToJson').addEventListener('click', () => {
+            if (!current) return;
+            const out = $('cvPretty').checked ? JSON.stringify(current.obj, null, 2) : current.text;
+            download(new Blob([out], { type: 'application/json' }), current.name + '.json');
+        });
+        $('cvToHemi').addEventListener('click', async () => {
+            if (!current) return;
+            download(await window.HemiFile.encode(current.obj), current.name + '.hemi');
+        });
+    })();
+    </script>
+</body>
+</html>
