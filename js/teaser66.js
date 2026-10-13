@@ -1,5 +1,5 @@
-// ===== Hemicycle 티저 (teaser.html 전용) — 다음 업데이트 기능 미리 써 보기 =====
-// teaser.html은 main.html을 그대로 복사한 화면에 이 파일 하나를 더 불러 미리보기 기능을 얹는다.
+// ===== Hemicycle 티저 1.6.6 (teaser66.html 전용) — 다음 업데이트 기능 미리 써 보기 =====
+// teaser66.html은 main.html을 그대로 복사한 화면에 이 파일 하나를 더 불러 미리보기 기능을 얹는다.
 // (저장 공간은 본 게임과 따로 — main.js의 LS_PREFIX 'hemicycleTeaser:')
 //
 // 1.6.6 "즉시, 지체 없이" 미리보기 — 미수복 지역 · 영토 통일
@@ -15,7 +15,7 @@
    switchSubTab, switchMainTab, elecSwitchSub, switchDispTab, districtUpdateModeUI, districtInitCanvas, currentMainTab, currentSubTab */
 (function () {
     'use strict';
-    if (document.documentElement.getAttribute('data-app-mode') !== 'teaser') return;
+    if (document.documentElement.getAttribute('data-app-mode') !== 'teaser' || (document.documentElement.getAttribute('data-teaser') || '66') !== '66') return;
 
     // 미수복 영토는 여러 개 — 영토마다 이름 · 색(빗금 색)이 있고, 지역구는 그중 하나에 속한다
     //   territories = [{ id, name, color }], unrecovered = { 지역구 키: 영토 id }
