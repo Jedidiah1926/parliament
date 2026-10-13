@@ -18,7 +18,8 @@
 (function () {
     'use strict';
     const root = document.documentElement;
-    if (root.getAttribute('data-app-mode') !== 'teaser' || root.getAttribute('data-teaser') !== '61') return;
+    // 1.6.2 티저(teaser62)도 1.6.1 기능을 그대로 쓴다 — 그쪽(js/teaser62.js)은 아래 window.T61로 군정 등을 다룬다
+    if (root.getAttribute('data-app-mode') !== 'teaser' || !['61', '62'].includes(root.getAttribute('data-teaser'))) return;
 
     const esc = s => (typeof escapeHtmlText === 'function' ? escapeHtmlText(String(s ?? '')) : String(s ?? ''));
     const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -237,7 +238,12 @@
     // ---- 군정에서 벗어나기 ----
     function transferToCivilians() {
         if (!T.junta) return;
-        showCustomConfirm('민정 이양 — 계엄령을 해제하고 의회 · 선거를 되살립니다. 쿠데타로 활동 금지된 정당은 복권되고, 대통령 · 총리는 다음 선거까지 공석입니다. 계속하시겠습니까?', () => {
+        showCustomConfirm('민정 이양 — 계엄령을 해제하고 의회 · 선거를 되살립니다. 쿠데타로 활동 금지된 정당은 복권되고, 대통령 · 총리는 다음 선거까지 공석입니다. 계속하시겠습니까?', () => endJunta('transfer'));
+    }
+    // 군정을 끝낸다 — 민정 이양(transfer)과 1.6.2 민주 혁명(revolution)이 함께 쓴다
+    function endJunta(how) {
+        if (!T.junta) return;
+        {
             emergencyPowers.martialLaw.active = false;
             emergencyPowers.martialLaw.suspendParliament = false;
             if (typeof renderEmergencyPowers === 'function') renderEmergencyPowers();
@@ -246,12 +252,12 @@
             Object.assign(president, { name: '', photo: '', partyId: null, linkedSeat: null });
             Object.assign(pm, { name: '', photo: '', partyId: null, linkedSeat: null });
             coalitions.forEach(c => { delete c._wasRuling; });
-            T.log.unshift({ id: uid(), at: Date.now(), date: formatNationDate(), type: 'transfer', leader: T.junta.chairName, target: '', chance: null, success: true,
+            if (how !== 'revolution') T.log.unshift({ id: uid(), at: Date.now(), date: formatNationDate(), type: 'transfer', leader: T.junta.chairName, target: '', chance: null, success: true,
                 effects: ['계엄령 해제 · 의회 활동 재개 · 선거 재개', '대통령 · 총리 공석 (선거로 뽑음)'] });
             T.junta = null;
             rerenderGov();
             refresh();
-        });
+        }
     }
     function restoreBanned() {
         (T.coupBanned || []).forEach(id => { const p = partyById(id); if (p && p.status === 'banned') p.status = 'active'; });
@@ -361,7 +367,9 @@
                 <div class="t61-row t61-wrap">
                     <button type="button" class="t61-btn" data-act="transfer">민정 이양</button>
                     <button type="button" class="t61-btn" data-act="counter">역쿠데타 준비</button>
-                    <button type="button" class="t61-btn" disabled title="1.6.2에서">혁명 (1.6.2)</button>
+                    ${root.getAttribute('data-teaser') === '62'
+                        ? `<button type="button" class="t61-btn" onclick="switchSubTab('cabinet','revolution')">혁명 →</button>`
+                        : '<button type="button" class="t61-btn" disabled title="1.6.2에서">혁명 (1.6.2)</button>'}
                 </div>
             </div>` : '';
         if (T.junta && ui.type !== 'counter') ui.type = 'counter';
@@ -423,6 +431,14 @@
         return `<div class="t61-log-row"><span class="${x.type === 'transfer' ? '' : x.success ? 't61-plus' : 't61-minus'}">${x.type === 'transfer' ? '🕊' : x.success ? '✔' : '✘'}</span>
             <span>${esc(typeName(x.type))} · ${esc(x.leader)}${x.date ? ` · ${esc(x.date)}` : ''}${x.chance != null ? ` · ${x.chance}%` : ''}</span></div>`;
     }
+
+    // 1.6.2 티저가 쓰는 창구
+    window.T61 = {
+        get junta() { return T.junta; },
+        get military() { return T.military; },
+        endJunta, restoreBanned, declareMartialLaw, cutSupport, isGovParty, support, militaryDisloyalty,
+        refresh: () => refresh(),
+    };
 
     function refresh() {
         renderMilitary();
