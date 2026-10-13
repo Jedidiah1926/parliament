@@ -22,6 +22,10 @@ window.DnoLangPacks.en = {
  ],
  "ordinal": "en",
  "patterns": [
+  {"re": "^합계 ([\\d.]+)%$", "to": "Total $1%"},
+  {"re": "그중 (\\d+)곳은 지역구 성향을 따로 정해 그 값이 우선", "to": "$1 of them have their own district tendency, which takes priority"},
+  {"re": "^지역구 (\\d+)곳의 따로 정한 성향 지우고 권역 성향 따르기$", "to": "Clear the own tendency of $1 districts and follow the region"},
+  {"re": "\\(권역 성향: (.+?)\\)", "to": "(regional tendency: $1)"},
   {"re": "정당 (\\d+)개$", "to": "$1 parties"},
   {"re": "^이 (권역|지역구)만의 직책 \\(비우면 기본 직책 (.+)\\)$", "to": "Title for this $1 only (blank = default title $2)"},
   {"re": "^\\s*당선:\\s*$", "to": "Elected:"},
@@ -7402,6 +7406,9 @@ window.DnoLangPacks.en = {
   ["🔄 .hemi ↔ .json 변환", "🔄 Convert .hemi ↔ .json"],
   ["파일이 너무 커서 여기서 열 수 없습니다. 시작한 뒤 저장 › 파일 › 불러오기로 열어 보세요.", "This file is too large to open here. Start the game and open it from Save › File › Load."],
   ["- 휴대폰에서 .hemi 세이브 · .jsx 지도 파일을 고를 수 없던 문제 수정 (모바일 파일 선택 창이 모르는 확장자를 막던 것), 시작 화면에서 큰 세이브를 불러오면 실패하던 문제 수정, .hemi ↔ .json 변환 페이지 추가", "- Fixed being unable to pick .hemi saves and .jsx map files on phones (mobile file pickers blocked the unknown extensions), fixed large saves failing to load from the main screen, and added a .hemi ↔ .json converter page"],
+  ["- 권역별 성향 — 여론 › 성향에서 지역구별 · 권역별 입력을 바꿔 가며, 권역마다 정당 성향을 한 번에 정함. 지역구 성향을 따로 정하지 않은 지역구는 속한 권역 성향으로 총선 지역구 · 지방선거 · 국민투표 · 권역 자동 집계를 치름 (지역구 값이 있으면 그쪽 우선)", "- Regional tendencies — switch between per-district and per-region input in Opinion › Tendency and set party tendencies for a whole region at once. Districts without their own tendency use their region's for district elections, local elections, referendums and regional auto-tallies (a district's own values take priority)"],
+  ["지역구 성향을 하나도 정하지 않은(모두 0인) 지역구는 이 권역 성향으로 총선 지역구 · 지방선거 · 국민투표를 치릅니다. 지도에서 지역구를 누르면 그 권역으로 바뀌어요.", "Districts with no tendency of their own (all 0) use this region's tendency in district elections, local elections and referendums. Clicking a district on the map switches to its region."],
+  ["모두 이 권역 성향을 씁니다", "all use this region's tendency"],
   ["권역별", "By region"],
   ["지역구별", "By district"],
   [
