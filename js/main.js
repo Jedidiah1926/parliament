@@ -5407,9 +5407,11 @@
             } catch(e) { return false; }
         }
 
-        // logo.html(로고 제작 모드) · teaser.html(다음 업데이트 미리보기)은 본 게임 세이브와 섞이지 않도록 저장 키에 따로 접두어를 붙인다
+        // logo.html(로고 제작 모드) · teaser66/61.html(다음 업데이트 미리보기)은 본 게임 세이브와 섞이지 않도록 저장 키에 따로 접두어를 붙인다
         const IS_TEASER_MODE = document.documentElement.getAttribute('data-app-mode') === 'teaser';
-        const LS_PREFIX = IS_LOGO_MODE ? 'hemicycleLogo:' : IS_TEASER_MODE ? 'hemicycleTeaser:' : '';
+        // 티저는 번호(data-teaser)마다 따로 — 1.6.6 티저(66)는 예전 teaser.html과 같은 공간을 그대로 쓴다
+        const TEASER_ID = document.documentElement.getAttribute('data-teaser') || '';
+        const LS_PREFIX = IS_LOGO_MODE ? 'hemicycleLogo:' : IS_TEASER_MODE ? (TEASER_ID && TEASER_ID !== '66' ? `hemicycleTeaser${TEASER_ID}:` : 'hemicycleTeaser:') : '';
         function safeLsGet(key) {
             try { return localStorage.getItem(LS_PREFIX + key); } catch(e) { return null; }
         }
