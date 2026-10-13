@@ -96,6 +96,17 @@
         .settings-group .lang-select-group { margin-bottom: 0; }
         .settings-group .lang-select-group + .lang-select-group { margin-top: 6px; }
         .settings-hint { color: var(--tno-text); font-size: 0.85rem; margin-top: 8px; opacity: .8; text-transform: none; }
+        /* 기타 설정 › 개발자 모드 */
+        .dev-code-row { display: flex; gap: 6px; }
+        .dev-code-row[hidden], #devOnBox[hidden], .dev-locked-note[hidden] { display: none; }
+        .dev-code-input { flex: 1; min-width: 0; background: #000; border: 1px solid var(--tno-border); color: var(--tno-neon); font-family: inherit; font-size: 1rem; padding: 10px; }
+        .dev-code-input:focus { outline: none; border-color: var(--tno-neon); }
+        .dev-code-row .lang-select-btn { flex: 0 0 auto; padding: 10px 18px; }
+        .dev-code-err { color: var(--tno-alert, #ff4d4d); opacity: 1; }
+        .dev-locked-note { color: var(--tno-gold, #ffcc00); opacity: 1; margin: 0 0 10px; }
+        .dev-teaser-list { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
+        .dev-teaser-link { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 12px 14px; text-decoration: none; text-transform: none; text-align: left; }
+        .dev-teaser-link span { font-size: .85rem; opacity: .7; }
         .settings-footer { flex-shrink: 0; margin: 0 !important; padding: 10px 16px; text-align: center; border-top: 1px solid var(--tno-border); }
         /* 좁은 화면: 분류 목록을 위쪽 가로 탭 줄로 */
         @media (max-width: 700px) {

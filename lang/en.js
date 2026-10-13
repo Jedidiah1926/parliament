@@ -23,6 +23,7 @@ window.DnoLangPacks.en = {
  "ordinal": "en",
  "patterns": [
   {"re": "^합계 ([\\d.]+)%$", "to": "Total $1%"},
+  {"re": "^Teaser (\\w+) 화면은 개발자 모드에서만 열 수 있습니다\\.$", "to": "The Teaser $1 screen can only be opened in developer mode."},
   {"re": "그중 (\\d+)곳은 지역구 성향을 따로 정해 그 값이 우선", "to": "$1 of them have their own district tendency, which takes priority"},
   {"re": "^지역구 (\\d+)곳의 따로 정한 성향 지우고 권역 성향 따르기$", "to": "Clear the own tendency of $1 districts and follow the region"},
   {"re": "\\(권역 성향: (.+?)\\)", "to": "(regional tendency: $1)"},
@@ -734,6 +735,62 @@ window.DnoLangPacks.en = {
   [
    "설정 분류",
    "Settings categories"
+  ],
+  [
+   "기타 설정",
+   "Other settings"
+  ],
+  [
+   "그 밖의 설정입니다.",
+   "Other settings."
+  ],
+  [
+   "DEVELOPER MODE / 개발자 모드",
+   "DEVELOPER MODE"
+  ],
+  [
+   "개발자 코드",
+   "Developer code"
+  ],
+  [
+   "확인",
+   "OK"
+  ],
+  [
+   "개발자 코드를 넣으면 다음 업데이트 미리보기(티저) 화면을 열 수 있습니다.",
+   "Enter the developer code to open the next-update preview (teaser) screens."
+  ],
+  [
+   "개발자 모드가 켜져 있습니다.",
+   "Developer mode is on."
+  ],
+  [
+   "개발자 모드가 켜졌습니다.",
+   "Developer mode turned on."
+  ],
+  [
+   "코드가 맞지 않습니다.",
+   "Wrong code."
+  ],
+  [
+   "개발자 모드를 껐습니다.",
+   "Developer mode turned off."
+  ],
+  [
+   "개발자 모드 끄기",
+   "Turn off developer mode"
+  ],
+  [
+   "쿠데타 · 군정 · 군부 설정",
+   "Coups · junta · military setup"
+  ],
+  [
+   "혁명 · 당-국가 체제 · 선거인단 (+1.6.1)",
+   "Revolution · party-state · electoral college (+1.6.1)"
+  ],
+  [
+   "미수복 지역 · 영토 통일",
+   "Unrecovered territories · unification"
   ],
   [
    "기기에 맞는 화면 배치를 고릅니다.",
