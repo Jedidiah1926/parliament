@@ -1,4 +1,4 @@
-// ===== Hemicycle 티저 1.6.2 (teaser62.html 전용) — "Vive la Révolution!" 미리보기 =====
+// ===== Hemicycle 티저 1.6.2 (teaser62 · teaser63) — "Vive la Révolution!" 미리보기 =====
 // teaser62.html = main.html + js/teaser61.js(1.6.1 쿠데타 · 군정 · 군부 설정) + 이 파일. 저장 공간은 따로 ('hemicycleTeaser62:')
 //
 //   - 내각 › 혁명: 민중이 주체 — 주도 이념(민주 · 공산주의)과 혁명 정당을 고르면 성공 확률을 요인별로 보여 준다
@@ -18,7 +18,7 @@
 (function () {
     'use strict';
     const root = document.documentElement;
-    if (root.getAttribute('data-app-mode') !== 'teaser' || root.getAttribute('data-teaser') !== '62') return;
+    if (root.getAttribute('data-app-mode') !== 'teaser' || !['62', '63'].includes(root.getAttribute('data-teaser'))) return;
 
     const esc = s => (typeof escapeHtmlText === 'function' ? escapeHtmlText(String(s ?? '')) : String(s ?? ''));
     const clamp = (v, a, b) => Math.max(a, Math.min(b, v));

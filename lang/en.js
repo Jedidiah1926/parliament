@@ -789,6 +789,10 @@ window.DnoLangPacks.en = {
    "Revolution · party-state · electoral college (+1.6.1)"
   ],
   [
+   "국회공성전 — 봉쇄 돌파 · 의장석 점거 (+1.6.1 · 1.6.2)",
+   "Parliament siege — breaking the blockade · occupying the podium (+1.6.1 · 1.6.2)"
+  ],
+  [
    "미수복 지역 · 영토 통일",
    "Unrecovered territories · unification"
   ],
