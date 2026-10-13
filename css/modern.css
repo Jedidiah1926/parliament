@@ -2564,6 +2564,11 @@ html[data-theme-family="modern"] .settings-nav-item.active { background: var(--m
 html[data-theme-family="modern"] .settings-section-title { color: var(--m-text) !important; font-weight: 700; letter-spacing: 0; font-size: 22px; }
 html[data-theme-family="modern"] .settings-section-desc { color: var(--m-text-3) !important; }
 html[data-theme-family="modern"] .settings-hint { color: var(--m-text-2) !important; }
+html[data-theme-family="modern"] .dev-code-input { background: var(--m-surface); border: 1px solid var(--m-border-strong); border-radius: 10px; color: var(--m-text); font-size: 15px; }
+html[data-theme-family="modern"] .dev-code-input:focus { border-color: var(--m-accent); }
+html[data-theme-family="modern"] .dev-code-err { color: var(--m-danger) !important; }
+html[data-theme-family="modern"] .dev-locked-note { color: var(--m-gold) !important; }
+html[data-theme-family="modern"] .dev-teaser-link span { color: var(--m-text-3); opacity: 1; }
 html[data-theme-family="modern"] .settings-footer { border-top-color: var(--m-border) !important; background: var(--m-surface); }
 html[data-theme-family="modern"] .header-strip {
     background: none !important;

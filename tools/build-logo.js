@@ -25,12 +25,15 @@ const TEASERS = [
     // 1.6.2는 1.6.1 기능 위에 얹는다 — 스크립트 두 개를 순서대로
     { id: '62', file: 'teaser62.html', script: ['js/teaser61.js', 'js/teaser62.js'], title: 'Teaser 1.6.2', note: '1.6.2 혁명 · 당-국가 체제 · 선거인단 (+1.6.1)' },
 ];
+if (!/<script src="js\/uimode\.js"><\/script>/.test(fs.readFileSync(path.join(root, 'main.html'), 'utf8'))) throw new Error('main.html: js/uimode.js 스크립트를 찾지 못했습니다');
 if (!/<script src="js\/popvote\.js"><\/script>/.test(fs.readFileSync(path.join(root, 'main.html'), 'utf8'))) throw new Error('main.html: js/popvote.js 스크립트를 찾지 못했습니다');
 TEASERS.forEach(t => {
     const scripts = [].concat(t.script);
     let teaser = fs.readFileSync(path.join(root, 'main.html'), 'utf8');
     teaser = teaser.replace(htmlTag, `<html lang="ko" data-app-mode="teaser" data-teaser="${t.id}">`);
     teaser = teaser.replace(/<title>[^<]*<\/title>/i, `<title>Hemicycle — ${t.title}</title>`);
+    // 개발자 모드 잠금 — 다른 스크립트보다 먼저 (설정 › 기타 설정에서 코드를 넣어야 열림)
+    teaser = teaser.replace('<script src="js/uimode.js"></script>', '<script src="js/devmode.js"></script>\n    <script src="js/uimode.js"></script>');
     teaser = teaser.replace('<script src="js/popvote.js"></script>', `<script src="js/popvote.js"></script>` + scripts.map(src => `\n    <script src="${src}"></script>`).join(''));
     teaser = teaser.replace(/<!DOCTYPE html>\s*/i, `<!DOCTYPE html>\n<!-- 자동 생성 파일: main.html을 고친 뒤 \`npm run build:logo\`로 다시 만드세요 (tools/build-logo.js) — ${t.file} = main.html + 미리보기(${scripts.join(' + ')}, ${t.note}) -->\n`);
     fs.writeFileSync(path.join(root, t.file), teaser);
