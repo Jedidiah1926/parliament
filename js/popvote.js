@@ -47,7 +47,7 @@
     // 지역구 하나의 정당별 득표율(합 100) — 성향이 있으면 성향, 없으면 전국 지지율
     function partySharesFor(ch, key, noise) {
         const list = runningParties();
-        const tend = districtSvgTendency[key]?.[ch] || {};
+        const tend = typeof districtTendencyFor === 'function' ? districtTendencyFor(key, ch).values : (districtSvgTendency[key]?.[ch] || {}); // 지역구 성향 → 없으면 권역 성향
         const hasTend = list.some(p => (tend[p.id] || 0) > 0);
         const store = elecStore[ch] || {};
         const raw = {};

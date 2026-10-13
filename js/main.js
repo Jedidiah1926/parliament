@@ -5041,7 +5041,8 @@
                         regions: JSON.parse(JSON.stringify(regions)),
                         districtRegionMap: JSON.parse(JSON.stringify(districtRegionMap)),
                         regionVoteMode: JSON.parse(JSON.stringify(regionVoteMode)),
-                        regionVoteStore: JSON.parse(JSON.stringify(regionVoteStore))
+                        regionVoteStore: JSON.parse(JSON.stringify(regionVoteStore)),
+                        regionTendency: JSON.parse(JSON.stringify(regionTendency))
                     }
                 }
             };
@@ -5189,6 +5190,7 @@
             districtRegionMap = { house: {}, senate: {}, third: {}, ...(rs.districtRegionMap || {}) };
             regionVoteMode = { house: 'auto', senate: 'auto', third: 'auto', ...(rs.regionVoteMode || {}) };
             regionVoteStore = { house: {}, senate: {}, third: {}, ...(rs.regionVoteStore || {}) };
+            regionTendency = { house: {}, senate: {}, third: {}, ...(rs.regionTendency || {}) };
             regionActiveId = null;
 
             // ── UI 설정 복원 ──
@@ -10035,6 +10037,9 @@
         let districtRegionMap = { house: {}, senate: {}, third: {} }; // { "q,r"|svgKey: regionId }
         let regionVoteMode = { house: 'auto', senate: 'auto', third: 'auto' }; // 'auto'(지역구 성향 자동 집계) | 'manual'(직접 입력)
         let regionVoteStore = { house: {}, senate: {}, third: {} }; // { regionId: { partyId: {prob} } }
+        // 권역 성향 — { regionId: { partyId: pct } }. 지역구 성향을 따로 정하지 않은(모두 0인) 지역구는 속한 권역의 성향을 쓴다
+        // (지역구마다 하나하나 입력하지 않아도 되도록. 총선 지역구 · 지방선거 · 국민투표 · 권역 자동 집계 · 성향 지도에 반영)
+        let regionTendency = { house: {}, senate: {}, third: {} };
         let regionActiveId = null; // 지도/그리드에서 클릭해 배정할 때 "칠하기" 대상으로 선택된 권역
         let regionPaintChamber = 'house'; // 권역 탭에서 편집 중인 원
 
@@ -11268,6 +11273,35 @@
             });
         }
 
+        // 지역구 하나의 실제로 쓰이는 성향 — 지역구에 따로 정한 값(하나라도 0보다 크면)이 우선, 없으면 속한 권역의 성향
+        // 반환 { values: {partyId: pct}, source: 'district' | 'region' | null, region }
+        const tendencyHasAny = obj => !!obj && Object.values(obj).some(v => (Number(v) || 0) > 0);
+        function districtTendencyFor(key, chamber) {
+            const own = districtSvgTendency[key]?.[chamber];
+            if(tendencyHasAny(own)) return { values: own, source: 'district', region: null };
+            const rid = districtRegionMap[chamber]?.[key];
+            const region = rid != null ? (regions[chamber] || []).find(r => String(r.id) === String(rid)) : null;
+            const rt = region ? regionTendency[chamber]?.[region.id] : null;
+            if(tendencyHasAny(rt)) return { values: rt, source: 'region', region };
+            return { values: {}, source: null, region };
+        }
+        const districtTendencyValue = (key, chamber, partyId) => Number(districtTendencyFor(key, chamber).values[partyId]) || 0;
+        function regionSetTendency(chamber, regionId, partyId, value) {
+            const v = Math.max(0, Math.min(100, parseFloat(value) || 0));
+            regionTendency[chamber] = regionTendency[chamber] || {};
+            regionTendency[chamber][regionId] = regionTendency[chamber][regionId] || {};
+            regionTendency[chamber][regionId][partyId] = v;
+        }
+        // 권역에 속한 지역구들의 따로 정한 성향을 지워, 모두 권역 성향을 따르게 한다
+        function regionClearDistrictTendencies(chamber, regionId) {
+            const keys = Object.keys(districtRegionMap[chamber] || {}).filter(k => String(districtRegionMap[chamber][k]) === String(regionId) && tendencyHasAny(districtSvgTendency[k]?.[chamber]));
+            if(!keys.length) return;
+            showCustomConfirm(`이 권역의 지역구 ${keys.length}곳에 따로 정한 성향을 지우고 권역 성향을 따르게 할까요?`, () => {
+                keys.forEach(k => { if(districtSvgTendency[k]) districtSvgTendency[k][chamber] = {}; });
+                tendencyRenderMaps();
+            });
+        }
+
         function districtSvgSetTendency(key, chamber, partyId, value) {
             const v = Math.max(0, Math.min(100, parseFloat(value)||0));
             districtSvgTendency[key] = districtSvgTendency[key] || { house:{}, senate:{}, third:{} };
@@ -12292,23 +12326,25 @@
                 const seats = districtSeatCounts[key]?.[tendencySvgChamber] || 0;
                 if(seats <= 0) { fillMap[key] = '#141414'; titleMap[key] = `${nm} (이 원에 의석 없음)`; return; }
                 let bestVal = -1, tied = [];
+                const eff = districtTendencyFor(key, tendencySvgChamber);
+                const fromRegion = eff.source === 'region' ? ` (권역 성향: ${eff.region.name})` : '';
                 parties.forEach(p => {
-                    const val = districtSvgTendency[key]?.[tendencySvgChamber]?.[p.id] || 0;
+                    const val = Number(eff.values[p.id]) || 0;
                     if(val > bestVal) { bestVal = val; tied = [p]; }
                     else if(val === bestVal && val > 0) tied.push(p);
                 });
                 // 툴팁에는 값이 매겨진 모든 정당의 %를 높은 순으로 나열 (경합이면 몇 당이 동률인지도 표시)
                 const breakdown = parties
-                    .map(p => ({ p, val: districtSvgTendency[key]?.[tendencySvgChamber]?.[p.id] || 0 }))
+                    .map(p => ({ p, val: Number(eff.values[p.id]) || 0 }))
                     .filter(e => e.val > 0)
                     .sort((a,b) => b.val - a.val)
                     .map(e => `${e.p.name} ${e.val}%`)
                     .join(' · ');
                 if(tied.length === 0 || bestVal <= 0) { fillMap[key] = 'rgba(255,255,255,0.05)'; titleMap[key] = `${nm}: 성향 미지정`; return; }
-                if(tied.length === 1) { fillMap[key] = tendencyColorForPct(tied[0].color, bestVal); titleMap[key] = `${nm}: ${breakdown}`; return; }
+                if(tied.length === 1) { fillMap[key] = tendencyColorForPct(tied[0].color, bestVal); titleMap[key] = `${nm}${fromRegion}: ${breakdown}`; return; }
                 const colors = tied.map(p => tendencyColorForPct(p.color, bestVal));
                 fillMap[key] = tendencyRegisterTiePattern(patternDefs, colors);
-                titleMap[key] = `${nm} (경합): ${breakdown}`;
+                titleMap[key] = `${nm} (경합)${fromRegion}: ${breakdown}`;
             });
             return {
                 getFill: key => fillMap[key] || 'rgba(255,255,255,0.05)',
@@ -12326,9 +12362,10 @@
                 const nm = districtNames.house[key] || key;
                 const seats = districtSeatCounts[key]?.[tendencySvgChamber] || 0;
                 if(seats <= 0) { fillMap[key] = '#141414'; titleMap[key] = `${nm} (이 원에 의석 없음)`; return; }
-                const val = districtSvgTendency[key]?.[tendencySvgChamber]?.[p.id] || 0;
+                const eff = districtTendencyFor(key, tendencySvgChamber);
+                const val = Number(eff.values[p.id]) || 0;
                 fillMap[key] = val > 0 ? tendencyColorForPct(p.color, val) : 'rgba(255,255,255,0.05)';
-                titleMap[key] = `${nm}: ${p.name} ${val}%`;
+                titleMap[key] = `${nm}: ${p.name} ${val}%${eff.source === 'region' ? ` (권역 성향: ${eff.region.name})` : ''}`;
             });
             return {
                 getFill: key => fillMap[key] || 'rgba(255,255,255,0.05)',
@@ -12339,6 +12376,50 @@
         // 지역구 시스템이 지도(SVG)일 때의 성향 탭 렌더링 — 우측엔 (구 지역구 방식의 "전체" 보기와 같은 구성으로)
         // 맨 위에 종합 지도, 그 아래 정당별 지도를 나열하고(모두 클릭해서 지역구 선택 가능),
         // 좌측 패널에 선택된 지역구의 의석 수 + 정당별 성향(%)을 목록(정당명 + 입력칸)으로 편집 — 지지율 탭과 같은 방식
+        // 성향 입력 방식 — 'district'(지역구마다) | 'region'(권역마다, 그 권역의 지역구 중 따로 정하지 않은 곳에 쓰임)
+        let tendencySvgMode = 'district';
+        let tendencyRegionSelected = null;
+        function tendencySetSvgMode(mode) {
+            tendencySvgMode = mode === 'region' ? 'region' : 'district';
+            tendencyRenderMaps();
+        }
+        function tendencySelectRegion(id) { tendencyRegionSelected = id || null; tendencyRenderMaps(); }
+        function tendencyRegionPanelHtml() {
+            const ch = tendencySvgChamber;
+            const regs = regions[ch] || [];
+            if(!regs.length) return `<div style="color:#666;font-size:0.8rem;padding:12px;border:1px solid #222;background:#0a0c10;line-height:1.6;">${escapeHtmlText(chamberDisplayName(ch))}에 권역이 없습니다. 국가 › 권역에서 권역을 만들고 지역구를 배정하면, 권역마다 성향을 한 번에 정할 수 있어요.</div>`;
+            if(!regs.some(r => String(r.id) === String(tendencyRegionSelected))) tendencyRegionSelected = regs[0].id;
+            const r = regs.find(x => String(x.id) === String(tendencyRegionSelected));
+            const keys = Object.keys(districtRegionMap[ch] || {}).filter(k => String(districtRegionMap[ch][k]) === String(r.id) && districtGrid[ch]?.[k]);
+            const own = keys.filter(k => tendencyHasAny(districtSvgTendency[k]?.[ch]));
+            const rt = regionTendency[ch]?.[r.id] || {};
+            const total = parties.reduce((a, p) => a + (Number(rt[p.id]) || 0), 0);
+            return `
+                <select onchange="tendencySelectRegion(this.value)" style="width:100%;box-sizing:border-box;background:#000;border:1px solid #333;color:var(--tno-neon);font-family:inherit;font-size:0.85rem;padding:6px;margin-bottom:8px;">
+                    ${regs.map(x => `<option value="${escapeHtmlText(x.id)}" ${String(x.id) === String(r.id) ? 'selected' : ''}>${escapeHtmlText(x.name)}</option>`).join('')}
+                </select>
+                <div style="color:#888;font-size:0.76rem;margin-bottom:8px;line-height:1.5;">
+                    <span style="display:inline-block;width:10px;height:10px;background:${r.color};border-radius:2px;margin-right:4px;vertical-align:-1px;"></span>${escapeHtmlText(r.name)} — 지역구 ${keys.length}곳
+                    ${own.length ? ` · 그중 ${own.length}곳은 지역구 성향을 따로 정해 그 값이 우선` : ' · 모두 이 권역 성향을 씁니다'}
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 75px;gap:6px;padding:0 2px;margin-bottom:4px;color:#555;font-size:0.8rem;">
+                    <span>정당명</span><span style="text-align:center;">지지율(%)</span>
+                </div>
+                ${parties.map(p => `
+                    <div style="display:grid;grid-template-columns:1fr 75px;gap:6px;margin-bottom:7px;align-items:center;">
+                        <div style="display:flex;align-items:center;gap:6px;min-width:0;">
+                            <span style="width:10px;height:10px;background:${p.color};border-radius:50%;flex-shrink:0;"></span>
+                            <span style="font-size:0.85rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${escapeHtmlText(p.name)}">${escapeHtmlText(p.name)}</span>
+                        </div>
+                        <input type="number" min="0" max="100" value="${Number(rt[p.id]) || 0}"
+                            style="width:100%;box-sizing:border-box;background:#000;border:1px solid #333;color:var(--tno-neon);font-family:inherit;font-size:0.9rem;padding:6px 4px;text-align:center;"
+                            onchange="regionSetTendency('${ch}','${r.id}','${p.id}',this.value); tendencyRenderMaps();">
+                    </div>`).join('')}
+                <div style="color:${total > 0 && Math.abs(total - 100) > 0.01 ? '#a07a3a' : '#555'};font-size:0.74rem;margin:2px 0 8px;">합계 ${Math.round(total * 10) / 10}%</div>
+                ${own.length ? `<button onclick="regionClearDistrictTendencies('${ch}','${r.id}')" style="width:100%;background:transparent;border:1px solid #333;color:#888;padding:5px;font-family:inherit;font-size:0.78rem;cursor:pointer;">지역구 ${own.length}곳의 따로 정한 성향 지우고 권역 성향 따르기</button>` : ''}
+                <div style="color:#555;font-size:0.72rem;margin-top:8px;line-height:1.5;">지역구 성향을 하나도 정하지 않은(모두 0인) 지역구는 이 권역 성향으로 총선 지역구 · 지방선거 · 국민투표를 치릅니다. 지도에서 지역구를 누르면 그 권역으로 바뀌어요.</div>`;
+        }
+
         function tendencySvgRenderMaps() {
             const container = document.getElementById('tendencyMaps');
             const panel = document.getElementById('tendencySvgDistrictPanel');
@@ -12351,7 +12432,13 @@
                 return;
             }
 
-            const onSelect = key => { selectedDistrictKey = key; tendencyRenderMaps(); };
+            // 권역별 입력 중에는 지역구를 누르면 그 지역구가 속한 권역을 고르고, 지도는 권역 둘레로 묶어 보여 준다
+            const regionMode = tendencySvgMode === 'region';
+            const regionOf = key => districtRegionMap[tendencySvgChamber]?.[key] ?? null;
+            const onSelect = key => {
+                if(regionMode) { const rid = regionOf(key); if(rid != null) tendencyRegionSelected = rid; }
+                selectedDistrictKey = key; tendencyRenderMaps();
+            };
             // 지도 바탕(지역구 아닌 곳)을 누르면 선택 해제
             const onDeselect = () => { if(selectedDistrictKey) clearSelectedDistrict(); };
 
@@ -12369,7 +12456,8 @@
                 getFill: overall.getFill,
                 title: overall.getTitle,
                 defs: overall.defs,
-                selectedKey: selectedDistrictKey,
+                groupOf: regionMode ? regionOf : undefined,
+                selectedKey: regionMode ? null : selectedDistrictKey,
                 onClickKey: onSelect,
                 onClickBackground: onDeselect
             });
@@ -12395,13 +12483,19 @@
                     hideAbbr: true,
                     getFill: pf.getFill,
                     title: pf.getTitle,
-                    selectedKey: selectedDistrictKey,
+                    groupOf: regionMode ? regionOf : undefined,
+                    selectedKey: regionMode ? null : selectedDistrictKey,
                     onClickKey: onSelect,
                     onClickBackground: onDeselect
                 });
             });
 
             if(!panel) return;
+            const modeHtml = `<div class="sub-tab-container-3" style="margin-bottom:8px;">
+                    <button class="sub-tab-btn-3 ${regionMode ? '' : 'active'}" onclick="tendencySetSvgMode('district')">지역구별</button>
+                    <button class="sub-tab-btn-3 ${regionMode ? 'active' : ''}" onclick="tendencySetSvgMode('region')">권역별</button>
+                </div>`;
+            if(regionMode) { panel.innerHTML = modeHtml + tendencyRegionPanelHtml(); return; }
             const key = selectedDistrictKey;
             // 지도에서 직접 클릭하는 것 외에, 이름으로 바로 찾아 바꿀 수 있는 선택 목록 — 항상 표시
             const pickerHtml = `
@@ -12411,7 +12505,7 @@
                 </select>
             `;
             if(!key || !tendencyMap.shapes.some(s => s.key === key)) {
-                panel.innerHTML = pickerHtml + '<div style="color:#444;font-size:0.78rem;text-align:center;padding:14px;border:1px solid #222;background:#0a0c10;">위 지도를 클릭하거나, 위 목록에서 지역구를 선택하세요</div>';
+                panel.innerHTML = modeHtml + pickerHtml + '<div style="color:#444;font-size:0.78rem;text-align:center;padding:14px;border:1px solid #222;background:#0a0c10;">위 지도를 클릭하거나, 위 목록에서 지역구를 선택하세요</div>';
                 return;
             }
             const nm = districtNames.house[key] || key;
@@ -12421,12 +12515,18 @@
                 senate: document.getElementById('senateNameInput')?.value || '상원',
                 third:  document.getElementById('thirdNameInput')?.value  || '삼원',
             };
-            panel.innerHTML = pickerHtml + `
+            const effT = districtTendencyFor(key, tendencySvgChamber);
+            const regionHint = effT.source === 'region'
+                ? `<div style="color:#8a8a5a;font-size:0.74rem;margin-bottom:6px;line-height:1.5;">지금은 권역 <b>${escapeHtmlText(effT.region.name)}</b>의 성향을 쓰는 중입니다 (흐린 숫자). 여기에 값을 넣으면 이 지역구만 따로 정해집니다.</div>`
+                : effT.source === 'district' && effT.region && tendencyHasAny(regionTendency[tendencySvgChamber]?.[effT.region.id])
+                    ? `<div style="color:#666;font-size:0.74rem;margin-bottom:6px;">이 지역구는 따로 정한 성향을 씁니다 (권역 ${escapeHtmlText(effT.region.name)} 성향보다 우선). 모두 0으로 지우면 권역 성향을 따릅니다.</div>` : '';
+            panel.innerHTML = modeHtml + pickerHtml + `
                 <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px;">
                     <span style="color:#888;font-size:0.78rem;">선택한 지역구 <span style="color:var(--tno-neon);">${nm}</span></span>
                     <button onclick="clearSelectedDistrict()" style="background:transparent;border:1px solid #333;color:#888;padding:3px 8px;font-family:inherit;font-size:0.72rem;cursor:pointer;flex-shrink:0;">선택 해제</button>
                 </div>
                 ${seats <= 0 ? `<div style="color:#664444;font-size:0.75rem;margin-bottom:6px;">지역구 탭에서 ${chLabel[tendencySvgChamber]}의 의석 수가 0으로 지정되어 있습니다</div>` : ''}
+                ${regionHint}
                 <div style="display:grid;grid-template-columns:1fr 75px;gap:6px;padding:0 2px;margin-bottom:4px;color:#555;font-size:0.8rem;">
                     <span>정당명</span><span style="text-align:center;">지지율(%)</span>
                 </div>
@@ -12436,7 +12536,7 @@
                             <span style="width:10px;height:10px;background:${p.color};border-radius:50%;flex-shrink:0;"></span>
                             <span style="font-size:0.85rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${p.name}">${p.name}</span>
                         </div>
-                        <input type="number" min="0" max="100" value="${districtSvgTendency[key]?.[tendencySvgChamber]?.[p.id]||0}"
+                        <input type="number" min="0" max="100" value="${effT.source === 'region' ? '' : (districtSvgTendency[key]?.[tendencySvgChamber]?.[p.id]||0)}" ${effT.source === 'region' ? `placeholder="${Number(effT.values[p.id]) || 0}" data-region-fallback="1"` : ''}
                             style="width:100%;box-sizing:border-box;background:#000;border:1px solid #333;color:var(--tno-neon);font-family:inherit;font-size:0.9rem;padding:6px 4px;text-align:center;"
                             onchange="districtSvgSetTendency('${key}','${tendencySvgChamber}','${p.id}',this.value); tendencyRenderMaps();">
                     </div>
@@ -13553,7 +13653,7 @@
                 if(p.status === 'banned') return { id:p.id, w:0 };
                 let sum = 0;
                 districtKeys.forEach(k => {
-                    sum += districtMapMode === 'svg' ? (districtSvgTendency[k]?.[chamber]?.[p.id]||0) : (tendencyData[p.id]?.[k]||0);
+                    sum += districtMapMode === 'svg' ? districtTendencyValue(k, chamber, p.id) : (tendencyData[p.id]?.[k]||0);
                 });
                 return { id:p.id, w: sum / districtKeys.length };
             });
@@ -13958,7 +14058,7 @@
                 if(seatCount <= 0) return;
                 // 후보 단일화: 이 지역구에서 성향이 가장 높은 참여 정당이 후보를 내고, 참여 정당의 성향을 합쳐 받는다
                 const { scores: support, withdrawn } = applyCandidateUnions(
-                    Object.fromEntries(parties.map(p => [p.id, districtSvgTendency[key]?.[chamber]?.[p.id] || 0])), 'district');
+                    Object.fromEntries(parties.map(p => [p.id, districtTendencyValue(key, chamber, p.id)])), 'district');
                 // 이 지역구에 성향을 정한 정당이 있으면, 성향이 0인 정당은 노이즈(±15)만으로 표를 얻지 않는다 —
                 // 예전엔 성향 0인 무소속도 노이즈로 표가 생겨, 의석이 여럿인 지역구에서 매번 무소속이 당선됐다
                 const anySupport = parties.some(p => !withdrawn.has(String(p.id)) && partyRunsInChamber(p, chamber) && (support[p.id] || 0) > 0);
