@@ -5,6 +5,7 @@
 //   - 계엄 중 봉쇄 돌파: 계엄군 · 경찰이 국회를 막은 상태에서 의원들이 본회의장에 들어가야 계엄 해제 결의안을 표결할 수 있다.
 //     정당마다 참여율을 정하면 의원 한 명 한 명이 봉쇄를 뚫는지 굴려 보고, 들어간 의원만 표결한다 (가결 기준은 재적 과반 — 못 들어온 의원은 표결 제외).
 //     봉쇄 강도(군 지휘부 충성도가 기본값) · 시민 지원 · 정당 결속도가 입장 확률에 들어간다. 가결되면 계엄 해제.
+//     옆 시각 화면(하원 반원) 위에서 의원들이 봉쇄선을 뚫고 자기 좌석으로 들어가는 애니메이션 (누르면 건너뜀).
 //   - 물리적 의사 방해: 계엄과 무관하게, 반대하는 법안의 표결을 막으려 의장석을 점거하고 몸싸움을 벌인다.
 //     성공 확률 = 참여 의원 수 · 상대 진영 크기 · 정당 결속도 · 의장 경호권 발동 · 직권상정 · 국회선진화법. 성공하면 표결 무산.
 //   - 폭력의 대가: 점거한 정당은 지지율 페널티(경호권으로 몸싸움이 나면 의장 쪽 여당도 조금), 다친 의원은 다음 표결 몇 번을 결석.
@@ -13,7 +14,7 @@
    renderEmergencyPowers, applyMartialLawEffects, showCustomAlert, showCustomConfirm, escapeHtmlText, formatNationDate, bills,
    dotCache, voteState, seatAssignments, seatMemberInfo, requiredSeatsFor, getBillOverallStatus, hasSenateChamber, hasThirdChamber,
    renderBillList, renderArchiveList, syncBillSelect, selectBillForVote, updateVoteResults, updateConfirmButtons, redrawAll,
-   chamberLeaders, simulate, refreshUI */
+   chamberLeaders, simulate, refreshUI, switchDispTab, chamberSetView */
 (function () {
     'use strict';
     const root = document.documentElement;
@@ -36,7 +37,7 @@
     //   log: [{ id, date, kind, title, chance, success, effects }]
     let S = fresh();
     function fresh() { return { advancedAct: false, cohesion: {}, injured: [], log: [] }; }
-    let ui = { blockade: null, citizens: true, rate: {}, billId: '', obstructors: {}, share: 60, guard: false, direct: false, last: null };
+    let ui = { anim: true, blockade: null, citizens: true, rate: {}, billId: '', obstructors: {}, share: 60, guard: false, direct: false, last: null };
 
     const origGet = window.getAppState;
     window.getAppState = function () {
@@ -147,41 +148,184 @@
             });
             const yea = entered.length;
             const success = yea >= odds.need;
-            const byParty = seatParties(entered).map(p => `${p.name} ${entered.filter(s => s.party === p).length}`).join(' · ') || '없음';
-            const effects = [`본회의장 입장 ${yea}명 (${byParty}) · 봉쇄에 막힘 ${blocked.length}명`, `계엄 해제 결의안 — 찬성 ${yea} / 필요 ${odds.need} (재적 ${odds.seats.length})`];
-            // 계엄군과의 몸싸움 — 막힌 의원 일부가 다침
+            // 계엄군과의 몸싸움 — 막힌 의원 일부가 다침 (애니메이션에서 표시하려고 미리 고름)
             const hurtN = Math.round(blocked.length * (0.02 + Math.random() * 0.04));
-            const hurtList = hurtN ? injure(blocked, hurtN) : [];
-            if (hurtList.length) effects.push(`부상 결석: ${hurtList.join(', ')}`);
-            // 결의안 기록 — 상정된 해제 결의안이 있으면 그것을, 없으면 새로
-            let bill = bills.find(b => b.isMartialLawLift && getBillOverallStatus(b) === 'pending');
-            if (!bill) {
-                bill = { id: 'b' + Date.now(), title: '계엄 해제 결의안', content: '', threshold: 0.5, numer: null, denom: null, tags: ['계엄해제'],
-                    houseStatus: 'pending', senateStatus: 'pending', thirdStatus: 'pending', houseVote: null, senateVote: null, thirdVote: null,
-                    version: 1, parentBillId: null, isAmendment: false, voteHistory: [], isMartialLawLift: true, martialLawLiftApplied: false };
-                bills.push(bill);
-            }
-            const res = success ? 'pass' : 'fail';
-            bill.houseStatus = res;
-            if (hasSenateChamber()) bill.senateStatus = success ? 'pass' : 'skip';
-            if (hasThirdChamber()) bill.thirdStatus = success ? 'pass' : 'skip';
-            bill.houseVote = { yea, nay: 0, abs: 0, total: odds.seats.length, required: odds.need };
-            bill.voteDate = bill.voteDate || nowDate();
-            (bill.voteHistory = bill.voteHistory || []).push({ chamber: 'house', result: res, date: bill.voteDate, yea, nay: 0, abs: 0, total: odds.seats.length, required: odds.need, threshold: 0.5, at: new Date().toISOString() });
-            bill.t63Breakthrough = { entered: yea, blocked: blocked.length };
-            if (success) {
-                bill.martialLawLiftApplied = true;
-                bill.vetoStatus = 'signed'; // 계엄 해제 결의안은 거부권 대상이 아님
-                emergencyPowers.martialLaw.active = false;
-                emergencyPowers.martialLaw.suspendParliament = false;
-                try { renderEmergencyPowers(); applyMartialLawEffects(); } catch (e) { /* 화면 준비 전 */ }
-                effects.push('가결 — 계엄령 해제');
-            } else {
-                effects.push('부결 — 계엄 유지 (결의안은 부결로 기록, 다시 시도하려면 새 결의안으로)');
-            }
-            addLog('breakthrough', '계엄 중 봉쇄 돌파', odds.chance, success, effects);
-            rerender();
+            const hurtSeats = blocked.slice().sort(() => Math.random() - 0.5).slice(0, hurtN);
+            playBreakthrough({ entered, blocked, hurtSeats, need: odds.need, success }, () => applyBreakthrough(odds, entered, blocked, hurtSeats, success));
         });
+    }
+    function applyBreakthrough(odds, entered, blocked, hurtSeats, success) {
+        const yea = entered.length;
+        const byParty = seatParties(entered).map(p => `${p.name} ${entered.filter(s => s.party === p).length}`).join(' · ') || '없음';
+        const effects = [`본회의장 입장 ${yea}명 (${byParty}) · 봉쇄에 막힘 ${blocked.length}명`, `계엄 해제 결의안 — 찬성 ${yea} / 필요 ${odds.need} (재적 ${odds.seats.length})`];
+        const hurtList = hurtSeats.length ? injure(hurtSeats, hurtSeats.length) : [];
+        if (hurtList.length) effects.push(`부상 결석: ${hurtList.join(', ')}`);
+        // 결의안 기록 — 상정된 해제 결의안이 있으면 그것을, 없으면 새로
+        let bill = bills.find(b => b.isMartialLawLift && getBillOverallStatus(b) === 'pending');
+        if (!bill) {
+            bill = { id: 'b' + Date.now(), title: '계엄 해제 결의안', content: '', threshold: 0.5, numer: null, denom: null, tags: ['계엄해제'],
+                houseStatus: 'pending', senateStatus: 'pending', thirdStatus: 'pending', houseVote: null, senateVote: null, thirdVote: null,
+                version: 1, parentBillId: null, isAmendment: false, voteHistory: [], isMartialLawLift: true, martialLawLiftApplied: false };
+            bills.push(bill);
+        }
+        const res = success ? 'pass' : 'fail';
+        bill.houseStatus = res;
+        if (hasSenateChamber()) bill.senateStatus = success ? 'pass' : 'skip';
+        if (hasThirdChamber()) bill.thirdStatus = success ? 'pass' : 'skip';
+        bill.houseVote = { yea, nay: 0, abs: 0, total: odds.seats.length, required: odds.need };
+        bill.voteDate = bill.voteDate || nowDate();
+        (bill.voteHistory = bill.voteHistory || []).push({ chamber: 'house', result: res, date: bill.voteDate, yea, nay: 0, abs: 0, total: odds.seats.length, required: odds.need, threshold: 0.5, at: new Date().toISOString() });
+        bill.t63Breakthrough = { entered: yea, blocked: blocked.length };
+        if (success) {
+            bill.martialLawLiftApplied = true;
+            bill.vetoStatus = 'signed'; // 계엄 해제 결의안은 거부권 대상이 아님
+            emergencyPowers.martialLaw.active = false;
+            emergencyPowers.martialLaw.suspendParliament = false;
+            try { renderEmergencyPowers(); applyMartialLawEffects(); } catch (e) { /* 화면 준비 전 */ }
+            effects.push('가결 — 계엄령 해제');
+        } else {
+            effects.push('부결 — 계엄 유지 (결의안은 부결로 기록, 다시 시도하려면 새 결의안으로)');
+        }
+        addLog('breakthrough', '계엄 중 봉쇄 돌파', odds.chance, success, effects);
+        rerender();
+    }
+
+    // ---- 봉쇄 돌파 애니메이션 — 옆 시각 화면(하원 반원) 위에 겹쳐 그린다 ----
+    // 의원들이 아래에서 올라와 봉쇄선에 닿고, 뚫은 의원은 자기 좌석으로 들어가 불이 켜지고, 막힌 의원은 물러난다.
+    // 하원 반원이 보이지 않거나(모바일 · 다른 탭) 움직임 줄이기 설정이면 건너뛰고 바로 결과. 화면을 누르면 끝으로 건너뜀.
+    function houseCanvasReady() {
+        const cvs = document.getElementById('houseCanvas');
+        return cvs && cvs.offsetParent !== null && cvs.clientWidth > 50 && (dotCache.house || []).length ? cvs : null;
+    }
+    function playBreakthrough(r, done) {
+        let finished = false;
+        const finish = () => { if (finished) return; finished = true; done(); };
+        const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if (!ui.anim || reduce) { finish(); return; }
+        // 데스크톱이면 하원 반원 화면을 앞으로
+        try {
+            if (document.getElementById('dispTabHouse')?.style.display !== 'none' && !document.getElementById('dispPanelHouse')?.classList.contains('active')) switchDispTab('house');
+            if (document.getElementById('houseViewArcWrap')?.style.display === 'none') chamberSetView('house', 'arc');
+        } catch (e) { /* 시각 화면 없음 */ }
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+            const cvs = houseCanvasReady();
+            if (!cvs) { finish(); return; }
+            runBreakthroughAnim(cvs, r, finish);
+        }));
+    }
+    function runBreakthroughAnim(cvs, r, finish) {
+        const wrap = cvs.parentElement;
+        wrap.style.position = 'relative';
+        document.getElementById('t63Anim')?.remove();
+        const W = cvs.clientWidth, H = cvs.clientHeight;
+        const dpr = window.devicePixelRatio || 1;
+        const ov = document.createElement('canvas');
+        ov.id = 't63Anim';
+        ov.className = 't63-anim';
+        ov.width = W * dpr; ov.height = H * dpr;
+        ov.style.cssText = `position:absolute;left:${cvs.offsetLeft}px;top:${cvs.offsetTop}px;width:${W}px;height:${H}px;z-index:60;cursor:pointer;`;
+        ov.title = '눌러서 건너뛰기';
+        wrap.appendChild(ov);
+        const shade = document.querySelector('#dispPanelHouse .martial-law-shade');
+        if (shade) shade.style.opacity = '0.35';
+        const ctx = ov.getContext('2d');
+        ctx.scale(dpr, dpr);
+        const modern = root.getAttribute('data-theme-family') === 'modern';
+        const dark = root.getAttribute('data-theme-mode') === 'dark';
+        const C = modern ? { bg: dark ? 'rgba(10,10,12,.88)' : 'rgba(255,255,255,.9)', seat: dark ? '#3f3f46' : '#d4d4d8', text: dark ? '#fafafa' : '#18181b', dim: dark ? '#a1a1aa' : '#71717a', font: 'Pretendard, system-ui, sans-serif' }
+            : { bg: 'rgba(5,7,10,.9)', seat: '#333', text: '#e6e6e6', dim: '#888', font: "'NeoDunggeunmo', monospace" };
+        const ALERT = '#e05555', OK = '#3fbf7f';
+        const dots = dotCache.house;
+        const cy = dots[0] ? dots[0].cy : H - 60;
+        const barrierY = Math.min(H - 22, cy + 26);
+        const dotR = dots[0] ? dots[0].r : 4;
+        const hurtSet = new Set(r.hurtSeats.map(s => s.i));
+        // 의원(움직이는 점) — 들어가는 순서는 무작위, 1.8초에 걸쳐 차례로 출발
+        const movers = r.entered.map(s => ({ s, ok: true })).concat(r.blocked.map(s => ({ s, ok: false }))).sort(() => Math.random() - 0.5);
+        const SPREAD = 1800, WALK = 650, ENTER = 700, BOUNCE = 700;
+        movers.forEach((m, k) => {
+            const d = dots[m.s.i];
+            m.color = (d && d.color) || m.s.party.color || '#888';
+            m.sx = 12 + Math.random() * (W - 24);
+            m.bx = m.sx + (Math.random() - 0.5) * 30;
+            m.start = (k / Math.max(1, movers.length)) * SPREAD + Math.random() * 120;
+            m.tx = d ? d.x : m.bx; m.ty = d ? d.y : cy;
+            m.hurt = hurtSet.has(m.s.i);
+        });
+        const total = SPREAD + 120 + WALK + Math.max(ENTER, BOUNCE) + 200;
+        const ease = t => (t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2);
+        let t0 = null, raf = 0, holdTimer = 0, ended = false;
+
+        function frame(now) {
+            if (t0 == null) t0 = now;
+            const t = ended ? total + 1 : now - t0;
+            ctx.clearRect(0, 0, W, H);
+            ctx.fillStyle = C.bg; ctx.fillRect(0, 0, W, H);
+            // 빈 좌석
+            ctx.lineWidth = 1;
+            dots.forEach(d => { if (d.partyName === 'Vacant') return; ctx.beginPath(); ctx.arc(d.x, d.y, d.r, 0, Math.PI * 2); ctx.strokeStyle = C.seat; ctx.stroke(); });
+            // 봉쇄선
+            ctx.save();
+            ctx.strokeStyle = ALERT; ctx.lineWidth = 3; ctx.setLineDash([10, 6]);
+            ctx.beginPath(); ctx.moveTo(6, barrierY); ctx.lineTo(W - 6, barrierY); ctx.stroke();
+            ctx.restore();
+            let arrived = 0;
+            movers.forEach(m => {
+                const lt = t - m.start;
+                if (lt < 0) return;
+                let x, y, alpha = 1;
+                if (lt < WALK) { const k = ease(lt / WALK); x = m.sx + (m.bx - m.sx) * k; y = H + 8 + (barrierY - H - 8) * k; }
+                else if (m.ok) {
+                    const k = ease(Math.min(1, (lt - WALK) / ENTER));
+                    x = m.bx + (m.tx - m.bx) * k; y = barrierY + (m.ty - barrierY) * k;
+                    if (k >= 1) arrived++;
+                } else {
+                    const k = Math.min(1, (lt - WALK) / BOUNCE);
+                    x = m.bx + Math.sin(k * Math.PI * 6) * 3 * (1 - k); y = barrierY + 4 + k * 40; alpha = 1 - k;
+                }
+                if (alpha <= 0) return;
+                ctx.globalAlpha = alpha;
+                ctx.beginPath(); ctx.arc(x, y, dotR, 0, Math.PI * 2); ctx.fillStyle = m.color; ctx.fill();
+                if (!m.ok && m.hurt && lt >= WALK) { ctx.strokeStyle = ALERT; ctx.lineWidth = 2; ctx.stroke(); }
+                ctx.globalAlpha = 1;
+            });
+            // 봉쇄선 이름 — 움직이는 의원 위에
+            ctx.font = `11px ${C.font}`; ctx.textAlign = 'left';
+            const lw = ctx.measureText('계엄군 봉쇄선').width;
+            ctx.fillStyle = C.bg; ctx.fillRect(4, barrierY + 4, lw + 8, 15);
+            ctx.fillStyle = ALERT; ctx.fillText('계엄군 봉쇄선', 8, barrierY + 15);
+            // 막힌 의원 수 (봉쇄선에 닿은 뒤)
+            const stopped = movers.filter(m => !m.ok && t - m.start >= WALK).length;
+            // 집계
+            const passNow = arrived >= r.need;
+            ctx.textAlign = 'center';
+            ctx.font = `bold 15px ${C.font}`;
+            ctx.fillStyle = passNow ? OK : C.text;
+            ctx.fillText(`입장 ${arrived} / 필요 ${r.need}`, W / 2, 20);
+            ctx.font = `11px ${C.font}`; ctx.fillStyle = C.dim;
+            ctx.fillText(`봉쇄에 막힘 ${stopped}${r.hurtSeats.length ? ` · 부상 ${r.hurtSeats.length}` : ''}`, W / 2, 36);
+            if (t >= total) {
+                ctx.font = `bold 18px ${C.font}`;
+                ctx.fillStyle = r.success ? OK : ALERT;
+                ctx.fillText(r.success ? '가결 — 계엄 해제' : '부결 — 계엄 유지', W / 2, cy - (dots[0] ? Math.hypot(dots[0].x - dots[0].cx, dots[0].y - dots[0].cy) : 60) * 0.35);
+                if (!holdTimer) holdTimer = setTimeout(close, 2200);
+                finish();
+                return;
+            }
+            raf = requestAnimationFrame(frame);
+        }
+        function close() {
+            cancelAnimationFrame(raf); clearTimeout(holdTimer);
+            ov.style.transition = 'opacity .5s'; ov.style.opacity = '0';
+            setTimeout(() => ov.remove(), 520);
+            if (shade) shade.style.opacity = '';
+        }
+        ov.addEventListener('click', () => {
+            if (!ended && !holding()) { ended = true; cancelAnimationFrame(raf); raf = requestAnimationFrame(frame); }
+            else close();
+        });
+        const holding = () => holdTimer !== 0;
+        raf = requestAnimationFrame(frame);
     }
 
     // ================= 물리적 의사 방해 (의장석 점거) =================
@@ -359,6 +503,7 @@
                         <span><input type="number" min="0" max="100" step="5" value="${rateOf(g.p)}" data-rate="${esc(g.p.id)}">%</span><span>${Math.round(g.prob * 100)}%</span><span>${Math.round(g.try * g.prob)}</span></div>`).join('')}
                 </div>
                 <div class="t63-chance"><div class="t63-chance-head"><span>예상 입장 ${Math.round(o.expected)}명 / 필요 ${o.need}명</span><b>${o.chance}%</b></div><div class="t63-bar"><span style="width:${o.chance}%"></span></div></div>
+                <label class="t63-row"><input type="checkbox" data-in="anim" ${ui.anim ? 'checked' : ''}> 옆 반원 화면에 돌파 애니메이션 보기</label>
                 <button type="button" class="t63-go" data-act="break">🚪 봉쇄 돌파 · 계엄 해제 표결</button>`;
         }
         html += '</div>';
@@ -405,6 +550,7 @@
 
         const on = (sel, ev, fn) => box.querySelectorAll(sel).forEach(n => n.addEventListener(ev, () => fn(n)));
         on('[data-in="blockade"]', 'change', n => { ui.blockade = Number(n.value); renderSiege(); });
+        on('[data-in="anim"]', 'change', n => { ui.anim = n.checked; });
         on('[data-in="citizens"]', 'change', n => { ui.citizens = n.checked; renderSiege(); });
         on('[data-rate]', 'change', n => { ui.rate[n.dataset.rate] = clamp(Number(n.value) || 0, 0, 100); renderSiege(); });
         on('[data-in="bill"]', 'change', n => { ui.billId = n.value; renderSiege(); });
