@@ -793,6 +793,10 @@ window.DnoLangPacks.en = {
    "Parliament siege — breaking the blockade · occupying the podium (+1.6.1 · 1.6.2)"
   ],
   [
+   "세력 변화 타임라인 · 위키 틀 · 냉전 국가 순위 (+1.6.1 ~ 1.6.3)",
+   "Party strength timeline · wiki infobox · Cold War nation ranking (+1.6.1 ~ 1.6.3)"
+  ],
+  [
    "미수복 지역 · 영토 통일",
    "Unrecovered territories · unification"
   ],

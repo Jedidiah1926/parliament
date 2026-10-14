@@ -92,7 +92,7 @@
     // 본 게임에서 고르면 teaser63.html로 옮겨 튜토리얼 공화국으로 시작한 뒤 그 과정을 바로 연다.
     /* global emergencyPowers, presElectionMode */
     const devOn = () => !!(window.HemiDev && window.HemiDev.isOn());
-    const onPreviewPage = () => document.documentElement.getAttribute('data-teaser') === '63';
+    const onPreviewPage = () => ['63', '64'].includes(document.documentElement.getAttribute('data-teaser'));
     const logLen = k => { const o = window[k]; return o && Array.isArray(o.log) ? o.log.length : 0; };
     const byId = (id, up) => () => { const el = document.getElementById(id); return el ? ((up && el.closest(up)) || el) : null; };
     const helpTarget = () => isMobileLayout() ? navTarget() : (document.querySelector('#sideNav .mn-group[data-tone="muted"]') ? '#sideNav .mn-group[data-tone="muted"]' : navTarget());

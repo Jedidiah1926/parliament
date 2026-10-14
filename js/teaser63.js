@@ -1,4 +1,4 @@
-// ===== Hemicycle 티저 1.6.3 (teaser63.html 전용) — "De l'audace!" 국회공성전 미리보기 =====
+// ===== Hemicycle 티저 1.6.3 (teaser63 · 64) — "De l'audace!" 국회공성전 미리보기 =====
 // teaser63.html = main.html + js/teaser61.js(1.6.1) + js/teaser62.js(1.6.2) + 이 파일. 저장 공간은 따로 ('hemicycleTeaser63:')
 //
 //   입법 › 공성전
@@ -22,7 +22,7 @@
 (function () {
     'use strict';
     const root = document.documentElement;
-    if (root.getAttribute('data-app-mode') !== 'teaser' || root.getAttribute('data-teaser') !== '63') return;
+    if (root.getAttribute('data-app-mode') !== 'teaser' || !['63', '64'].includes(root.getAttribute('data-teaser'))) return;
 
     const esc = s => (typeof escapeHtmlText === 'function' ? escapeHtmlText(String(s ?? '')) : String(s ?? ''));
     const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
