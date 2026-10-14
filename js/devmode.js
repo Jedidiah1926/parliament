@@ -1,4 +1,4 @@
-// 개발자 모드 — 설정 › 기타 설정에서 개발자 코드를 넣으면 켜지고, 켜져 있어야 티저(teaser61 · teaser62 · teaser66) 화면을 열 수 있다.
+// 개발자 모드 — 설정 › 기타 설정에서 개발자 코드를 넣으면 켜지고, 켜져 있어야 티저(teaser61 · 62 · 63 · 66) 화면을 열 수 있다.
 // 코드는 원문 대신 해시로만 비교한다. 정적 페이지라 진짜 보안은 아니고, 미리보기를 일반 사용자에게 숨기는 용도.
 // 티저 페이지(<html data-app-mode="teaser">)는 <head>에서 이 파일을 먼저 읽어, 개발자 모드가 아니면 설정 화면으로 돌려보낸다.
 (function () {
@@ -8,6 +8,7 @@
     const TEASERS = [
         { id: '61', file: 'teaser61.html', title: 'Teaser 1.6.1', note: '쿠데타 · 군정 · 군부 설정' },
         { id: '62', file: 'teaser62.html', title: 'Teaser 1.6.2', note: '혁명 · 당-국가 체제 · 선거인단 (+1.6.1)' },
+        { id: '63', file: 'teaser63.html', title: 'Teaser 1.6.3', note: '국회공성전 — 봉쇄 돌파 · 의장석 점거 (+1.6.1 · 1.6.2)' },
         { id: '66', file: 'teaser66.html', title: 'Teaser 1.6.6', note: '미수복 지역 · 영토 통일' },
     ];
 
