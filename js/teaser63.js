@@ -467,48 +467,54 @@
 
     const factorRow = x => `<div class="t63-factor"><span>${esc(x.label)}</span><span class="${x.v >= 0 ? 't63-plus' : 't63-minus'}">${x.v >= 0 ? '+' : ''}${x.v}%p</span></div>`;
     const resultCard = e => e ? `<div class="t63-result ${e.success ? 'ok' : 'fail'}">
-            <div class="t63-result-head">${e.success ? '✔ 성공' : '✘ 실패'} — ${esc(e.title)} <span class="t63-dim">(확률 ${e.chance}%)</span></div>
-            <div class="t63-dim">${esc(e.date)}</div>
+            <div class="t63-result-head"><span class="t63-badge ${e.success ? 'ok' : 'fail'}">${e.success ? '✔ 성공' : '✘ 실패'}</span><span>${esc(e.title)}</span></div>
+            <div class="t63-dim t63-small">${esc(e.date)} · 성공 확률 ${e.chance}%</div>
             <ul>${e.effects.map(x => `<li>${esc(x)}</li>`).join('')}</ul>
             ${e.kind === 'obstruct' && !e.success && ui.lastBillId ? '<button type="button" class="t63-btn" data-act="tovote">입법 › 표결로 가기 →</button>' : ''}
         </div>` : '';
+    const chip = (text, cls) => `<span class="t63-stat ${cls || ''}">${text}</span>`;
+    const dot = c => `<i class="t63-dot" style="background:${esc(c)}"></i>`;
+    const blockadeWord = v => (v >= 80 ? '철통' : v >= 60 ? '강함' : v >= 35 ? '보통' : '느슨함');
+    const emptyState = (icon, text, extra) => `<div class="t63-empty"><div class="t63-empty-icon">${icon}</div><div>${text}</div>${extra || ''}</div>`;
+    // 확률 게이지 — 큰 숫자 + 막대
+    const gauge = (label, chance, sub) => `<div class="t63-gauge"><div class="t63-gauge-head"><span>${label}</span><b class="${chance >= 50 ? 'hi' : chance >= 25 ? 'mid' : 'lo'}">${chance}%</b></div>
+        <div class="t63-bar"><span style="width:${chance}%"></span></div>${sub ? `<div class="t63-dim t63-small">${sub}</div>` : ''}</div>`;
 
-    function renderSiege() {
-        const box = document.getElementById('contentSiege');
-        if (!box) return;
+    function renderBreakPanel(seats, last) {
+        const res = last && last.kind === 'breakthrough' ? resultCard(last) : '';
         const ml = emergencyPowers.martialLaw;
-        const junta = T61() && T61().junta;
-        const seats = houseSeats();
-        const ps = seatParties(seats);
-        const last = S.log.find(x => x.id === ui.last);
-        let html = `<div class="t63-intro">국회공성전 — 계엄군의 봉쇄를 뚫고 본회의장에 들어가 계엄을 해제하거나, 의장석을 점거해 반대 법안의 표결을 막습니다. 폭력에는 지지율 페널티와 부상이 따릅니다.</div>`;
-        if (!seats.length) html += '<div class="t63-dim">의석이 없습니다 — 먼저 의회를 구성하세요.</div>';
-
-        // --- 봉쇄 돌파 ---
-        html += '<div class="t63-sec"><div class="t63-sec-title">🚧 계엄 중 봉쇄 돌파</div>';
-        if (!ml.active) {
-            html += `<div class="t63-dim">계엄령이 선포돼 있지 않습니다. 비상 권한(대통령 · 총리 탭)으로 계엄령을 선포하면 열립니다.</div>
-                <button type="button" class="t63-btn" data-act="martial">계엄령 선포 (의회 정지, 시험용)</button>`;
-        } else if (junta) {
-            html += '<div class="t63-dim">군정에서는 의회가 해산돼 있습니다 — 내각 › 쿠데타 · 혁명으로 군정을 끝내세요.</div>';
-        } else {
-            const o = breakthroughOdds();
-            html += `<div class="t63-status">계엄령 선포 중${ml.suspendParliament ? ' · 의회 정지' : ''} — 들어간 의원만 계엄 해제 결의안을 표결합니다 (재적 ${o.seats.length}명 · 과반 ${o.need}명 필요)</div>
-                <div class="t63-row"><span class="t63-lbl">봉쇄 강도</span><input type="range" min="0" max="100" value="${blockade()}" data-in="blockade"><b>${blockade()}</b></div>
+        if (!ml.active) return res + emptyState('🚧', '계엄령이 선포돼 있지 않습니다.<br>대통령 · 총리 탭의 비상 권한으로 계엄령을 선포하면 열립니다.',
+            '<button type="button" class="t63-btn" data-act="martial">계엄령 선포 (의회 정지, 시험용)</button>');
+        if (T61() && T61().junta) return res + emptyState('🎖', '군정에서는 의회가 해산돼 있습니다.<br>내각 › 쿠데타 · 혁명으로 군정을 끝내세요.');
+        const o = breakthroughOdds();
+        const total = Math.max(1, o.seats.length);
+        const needPct = o.need / total * 100;
+        const segs = o.groups.map(g => ({ g, v: g.try * g.prob })).filter(x => x.v > 0.5);
+        let html = `<div class="t63-meter-box">
+                <div class="t63-meter-head"><span>예상 입장 <b>${Math.round(o.expected)}</b>명</span><span class="t63-dim">재적 ${o.seats.length} · 과반 ${o.need}</span></div>
+                <div class="t63-meter">${segs.map(x => `<span style="width:${x.v / total * 100}%;background:${esc(x.g.p.color)}" title="${esc(x.g.p.name)} 약 ${Math.round(x.v)}명"></span>`).join('')}
+                    <em style="left:${needPct}%"></em></div>
+                <div class="t63-meter-legend">${segs.map(x => `<span>${dot(x.g.p.color)}${esc(x.g.p.name)} ${Math.round(x.v)}</span>`).join('')}<span class="t63-need">┃ 과반 ${o.need}</span></div>
+            </div>
+            ${gauge('계엄 해제 성공 확률', o.chance, '들어간 의원만 표결 — 가결 기준은 들어간 인원이 아니라 재적 과반')}
+            <div class="t63-group"><div class="t63-group-title">봉쇄</div>
+                <div class="t63-row"><span class="t63-lbl">봉쇄 강도</span><input type="range" min="0" max="100" value="${blockade()}" data-in="blockade" data-live="blockadeVal"><b id="blockadeVal">${blockade()} · ${blockadeWord(blockade())}</b></div>
                 <div class="t63-dim t63-small">기본값은 군 지휘부의 평균 충성도 (내각 › 군부)</div>
-                <label class="t63-row"><input type="checkbox" data-in="citizens" ${ui.citizens ? 'checked' : ''}> 시민들이 국회 앞에 모여 길을 엶 (입장 확률 +10%p)</label>
-                <div class="t63-table">
-                    <div class="t63-th"><span>정당</span><span>의석</span><span>참여율</span><span>입장 확률</span><span>예상</span></div>
-                    ${o.groups.map(g => `<div class="t63-tr"><span><i style="background:${esc(g.p.color)}"></i>${esc(g.p.name)}${isGovParty(g.p) ? ' ★' : ''}</span><span>${g.n}</span>
-                        <span><input type="number" min="0" max="100" step="5" value="${rateOf(g.p)}" data-rate="${esc(g.p.id)}">%</span><span>${Math.round(g.prob * 100)}%</span><span>${Math.round(g.try * g.prob)}</span></div>`).join('')}
-                </div>
-                <div class="t63-chance"><div class="t63-chance-head"><span>예상 입장 ${Math.round(o.expected)}명 / 필요 ${o.need}명</span><b>${o.chance}%</b></div><div class="t63-bar"><span style="width:${o.chance}%"></span></div></div>
-                <label class="t63-row"><input type="checkbox" data-in="anim" ${ui.anim ? 'checked' : ''}> 옆 반원 화면에 돌파 애니메이션 보기</label>
-                <button type="button" class="t63-go" data-act="break">🚪 봉쇄 돌파 · 계엄 해제 표결</button>`;
-        }
-        html += '</div>';
+                <label class="t63-toggle"><input type="checkbox" data-in="citizens" ${ui.citizens ? 'checked' : ''}><span>시민들이 국회 앞에 모여 길을 엶 <em>입장 확률 +10%p</em></span></label>
+            </div>
+            <div class="t63-group"><div class="t63-group-title">정당별 참여</div>
+                ${o.groups.map(g => `<div class="t63-prow">
+                    <div class="t63-prow-head">${dot(g.p.color)}<b>${esc(g.p.name)}</b>${isGovParty(g.p) ? '<span class="t63-tag">여당</span>' : ''}<span class="t63-dim">${g.n}석</span>
+                        <span class="t63-prow-exp">입장 ${Math.round(g.prob * 100)}% · 예상 <b>${Math.round(g.try * g.prob)}</b></span></div>
+                    <div class="t63-row"><span class="t63-lbl">참여율</span><input type="range" min="0" max="100" step="5" value="${rateOf(g.p)}" data-rate="${esc(g.p.id)}" data-live="rate_${esc(g.p.id)}"><b id="rate_${esc(g.p.id)}">${rateOf(g.p)}%</b></div>
+                </div>`).join('')}
+            </div>
+            <label class="t63-toggle"><input type="checkbox" data-in="anim" ${ui.anim ? 'checked' : ''}><span>옆 반원 화면에 돌파 애니메이션 보기</span></label>
+            <button type="button" class="t63-go" data-act="break">🚪 봉쇄 돌파 · 계엄 해제 표결</button>`;
+        return html + res;
+    }
 
-        // --- 의장석 점거 ---
+    function renderObstructPanel(seats, ps, last) {
         const pb = pendingBills();
         if (ui.billId && !pb.some(b => b.id === ui.billId)) ui.billId = '';
         if (!ui.billId && pb.length) ui.billId = pb[0].id;
@@ -516,39 +522,86 @@
             const opp = ps.filter(p => !isGovParty(p)).sort((a, b) => seats.filter(s => s.party === b).length - seats.filter(s => s.party === a).length)[0];
             if (opp) ui.obstructors[opp.id] = true;
         }
-        html += '<div class="t63-sec"><div class="t63-sec-title">🪑 물리적 의사 방해 (의장석 점거)</div>';
-        if (!pb.length) {
-            html += '<div class="t63-dim">표결을 기다리는 법안이 없습니다 — 입법 › 법안에서 법안을 올리세요.</div>';
-        } else {
-            const o = obstructOdds();
-            html += `<label class="t63-dim">막을 법안</label>
+        if (!pb.length) return emptyState('📜', '표결을 기다리는 법안이 없습니다.<br>입법 › 제출에서 법안을 올리세요.');
+        const o = obstructOdds();
+        const obs = obstructorParties();
+        const total = Math.max(1, o.seats.length);
+        const others = o.seats.filter(s => !obs.includes(s.party));
+        const otherParties = seatParties(others);
+        let html = `<div class="t63-group"><div class="t63-group-title">막을 법안</div>
                 <select data-in="bill">${pb.map(b => `<option value="${esc(b.id)}" ${b.id === ui.billId ? 'selected' : ''}>${esc(b.title)}${b.committeeStatus === 'pending' ? ' (상임위 심사 중)' : ''}${b.t63Obstructed ? ` · 무산 ${b.t63Obstructed}번` : ''}</option>`).join('')}</select>
-                <label class="t63-dim">점거하는 정당</label>
-                <div class="t63-chips">${ps.map(p => `<label class="t63-chip"><input type="checkbox" data-obs="${esc(p.id)}" ${ui.obstructors[p.id] ? 'checked' : ''}><i style="background:${esc(p.color)}"></i>${esc(p.name)}</label>`).join('')}</div>
-                <div class="t63-row"><span class="t63-lbl">참여 의원</span><input type="range" min="5" max="100" step="5" value="${ui.share}" data-in="share"><b>${ui.share}% · ${o.n}명</b></div>
-                <label class="t63-row"><input type="checkbox" data-in="guard" ${ui.guard ? 'checked' : ''}> 의장 경호권 발동 (경위 · 경찰 투입 — 몸싸움 · 부상 늘어남)</label>
-                <label class="t63-row ${S.advancedAct ? 't63-off' : ''}"><input type="checkbox" data-in="direct" ${ui.direct && !S.advancedAct ? 'checked' : ''} ${S.advancedAct ? 'disabled' : ''}> 직권상정 (의장이 바로 본회의에 올림)${S.advancedAct ? ' — 국회선진화법으로 막힘' : ''}</label>
-                <div class="t63-chance"><div class="t63-chance-head"><span>성공 확률</span><b>${o.chance}%</b></div><div class="t63-bar"><span style="width:${o.chance}%"></span></div>
-                    ${o.f.map(factorRow).join('')}<div class="t63-dim t63-small">합계는 5~90% 사이로 맞춥니다.</div></div>
-                <button type="button" class="t63-go" data-act="obstruct">✊ 의장석 점거</button>`;
-        }
-        html += '</div>';
+            </div>
+            <div class="t63-group"><div class="t63-group-title">점거하는 정당</div>
+                <div class="t63-chips">${ps.map(p => `<label class="t63-chip ${ui.obstructors[p.id] ? 'on' : ''}"><input type="checkbox" data-obs="${esc(p.id)}" ${ui.obstructors[p.id] ? 'checked' : ''}>${dot(p.color)}${esc(p.name)}</label>`).join('')}</div>
+                <div class="t63-row"><span class="t63-lbl">참여 의원</span><input type="range" min="5" max="100" step="5" value="${ui.share}" data-in="share" data-live="shareVal"><b id="shareVal">${ui.share}%</b></div>
+            </div>
+            <div class="t63-vs">
+                <div class="t63-vs-head"><span>점거 <b>${o.n}</b>명</span><span>상대 진영 <b>${others.length}</b>명</span></div>
+                <div class="t63-vs-bar">${obs.map(p => { const n = Math.round(o.obsSeats.filter(s => s.party === p).length * ui.share / 100); return n ? `<span style="width:${n / total * 100}%;background:${esc(p.color)}"></span>` : ''; }).join('')}
+                    <span class="t63-vs-gap" style="flex:1"></span>
+                    ${otherParties.map(p => `<span class="t63-vs-opp" style="width:${others.filter(s => s.party === p).length / total * 100}%;background:${esc(p.color)}"></span>`).join('')}</div>
+            </div>
+            <div class="t63-group"><div class="t63-group-title">의장 쪽 대응</div>
+                <label class="t63-toggle"><input type="checkbox" data-in="guard" ${ui.guard ? 'checked' : ''}><span>의장${speakerName() ? ' ' + esc(speakerName()) : ''} 경호권 발동 <em>경위 · 경찰 투입, 몸싸움 · 부상 늘어남</em></span></label>
+                <label class="t63-toggle ${S.advancedAct ? 't63-off' : ''}"><input type="checkbox" data-in="direct" ${ui.direct && !S.advancedAct ? 'checked' : ''} ${S.advancedAct ? 'disabled' : ''}><span>직권상정 <em>${S.advancedAct ? '국회선진화법으로 막힘' : '의장이 바로 본회의에 올림'}</em></span></label>
+            </div>
+            ${gauge('점거 성공 확률', o.chance, '')}
+            <details class="t63-factors"><summary class="t63-dim">확률 계산 보기</summary>${o.f.map(factorRow).join('')}<div class="t63-dim t63-small">합계는 5~90% 사이로 맞춥니다.</div></details>
+            <button type="button" class="t63-go" data-act="obstruct">✊ 의장석 점거</button>`;
+        if (last && last.kind === 'obstruct') html += resultCard(last);
+        return html;
+    }
 
-        html += resultCard(last);
+    function renderSiege() {
+        const box = document.getElementById('contentSiege');
+        if (!box) return;
+        const ml = emergencyPowers.martialLaw;
+        const seats = houseSeats();
+        const ps = seatParties(seats);
+        const last = S.log.find(x => x.id === ui.last);
+        if (!ui.mode) ui.mode = ml.active ? 'break' : 'obstruct';
+        const pbN = pendingBills().length;
+        let html = `<div class="t63-head">
+                <div class="t63-intro">계엄군의 봉쇄를 뚫고 본회의장에 들어가 계엄을 해제하거나, 의장석을 점거해 반대 법안의 표결을 막습니다. 폭력에는 지지율 페널티와 부상이 따릅니다.</div>
+                <div class="t63-stats">
+                    ${ml.active ? chip(`⚠ 계엄 선포 중${ml.suspendParliament ? ' · 의회 정지' : ''}`, 'alert') : chip('계엄 없음')}
+                    ${chip(`국회선진화법 ${S.advancedAct ? '켜짐' : '꺼짐'}`, S.advancedAct ? 'on' : '')}
+                    ${chip(`🩹 부상 결석 ${S.injured.length}`, S.injured.length ? 'warn' : '')}
+                    ${chip(`📜 계류 법안 ${pbN}`)}
+                </div>
+            </div>`;
+        if (!seats.length) html += emptyState('🏛', '의석이 없습니다 — 먼저 의회를 구성하세요.');
+        html += `<div class="t63-modes">
+                <button type="button" class="t63-mode ${ui.mode === 'break' ? 'active' : ''}" data-mode="break"><b>🚧 봉쇄 돌파</b><span>계엄 해제 표결</span>${ml.active ? '<i class="t63-live"></i>' : ''}</button>
+                <button type="button" class="t63-mode ${ui.mode === 'obstruct' ? 'active' : ''}" data-mode="obstruct"><b>🪑 의장석 점거</b><span>표결 막기</span></button>
+            </div>
+            <div class="t63-panel">${ui.mode === 'break' ? renderBreakPanel(seats, last) : renderObstructPanel(seats, ps, last)}</div>`;
 
-        // --- 설정 · 부상 · 기록 ---
-        html += `<div class="t63-sec"><div class="t63-sec-title">⚖ 설정</div>
-            <label class="t63-row"><input type="checkbox" data-in="act" ${S.advancedAct ? 'checked' : ''}> 국회선진화법 — 직권상정 제한, 폭력 페널티 두 배 (국회회의방해죄)</label>
-            <details class="t63-coh"><summary class="t63-dim">정당 결속도 (봉쇄 돌파 입장 확률 · 점거 성공 확률에 반영)</summary>
-                ${ps.map(p => `<div class="t63-row"><span class="t63-lbl"><i style="background:${esc(p.color)}"></i>${esc(p.name)}</span><input type="range" min="0" max="100" step="5" value="${cohesionOf(p)}" data-coh="${esc(p.id)}"><b>${cohesionOf(p)}</b></div>`).join('') || '<div class="t63-dim">정당 없음</div>'}
-            </details></div>`;
-        html += `<div class="t63-sec"><div class="t63-sec-title">🩹 부상 결석 (${S.injured.length})</div>
-            ${S.injured.length ? S.injured.map(x => `<div class="t63-hurt"><span>${esc(x.name)} <span class="t63-dim">${esc(x.party)}</span></span><span class="t63-dim">다음 표결 ${x.left}번 불참</span><button type="button" class="t63-btn t63-mini" data-heal="${esc(x.id)}">회복</button></div>`).join('')
-                : '<div class="t63-dim">다친 의원이 없습니다. 다친 의원은 표결에서 빠지고, 표결을 확정할 때마다 하나씩 회복합니다.</div>'}</div>`;
-        if (S.log.length) html += `<details class="t63-log"><summary>공성전 기록 (${S.log.length})</summary>${S.log.map(e => `<div class="t63-log-row"><span>${e.success ? '✔' : '✘'}</span><span>${esc(e.date)}</span><span>${esc(e.title)}</span><span class="t63-dim">${e.chance}%</span></div>`).join('')}</details>`;
+        // --- 설정 · 부상 · 기록 (접어 둠) ---
+        html += `<details class="t63-fold" ${ui.openSet ? 'open' : ''} data-fold="openSet"><summary>⚖ 설정 · 정당 결속도</summary>
+                <label class="t63-toggle"><input type="checkbox" data-in="act" ${S.advancedAct ? 'checked' : ''}><span>국회선진화법 <em>직권상정 제한, 폭력 페널티 두 배 (국회회의방해죄)</em></span></label>
+                <div class="t63-dim t63-small" style="margin:8px 0 2px">정당 결속도 — 봉쇄 돌파 입장 확률 · 점거 성공 확률에 반영</div>
+                ${ps.map(p => `<div class="t63-row"><span class="t63-lbl">${dot(p.color)}${esc(p.name)}</span><input type="range" min="0" max="100" step="5" value="${cohesionOf(p)}" data-coh="${esc(p.id)}" data-live="coh_${esc(p.id)}"><b id="coh_${esc(p.id)}">${cohesionOf(p)}</b></div>`).join('') || '<div class="t63-dim">정당 없음</div>'}
+            </details>
+            <details class="t63-fold" ${ui.openHurt ? 'open' : ''} data-fold="openHurt"><summary>🩹 부상 결석 (${S.injured.length})</summary>
+                ${S.injured.length ? S.injured.map(x => `<div class="t63-hurt"><span>${esc(x.name)} <span class="t63-dim">${esc(x.party)}</span></span><span class="t63-dim">다음 표결 ${x.left}번 불참</span><button type="button" class="t63-btn t63-mini" data-heal="${esc(x.id)}">회복</button></div>`).join('')
+                    : '<div class="t63-dim">다친 의원이 없습니다. 다친 의원은 표결에서 빠지고, 표결을 확정할 때마다 하나씩 회복합니다.</div>'}
+            </details>
+            <details class="t63-fold" ${ui.openLog ? 'open' : ''} data-fold="openLog"><summary>📋 공성전 기록 (${S.log.length})</summary>
+                ${S.log.length ? S.log.map(e => `<div class="t63-log-row"><span class="${e.success ? 't63-plus' : 't63-minus'}">${e.success ? '✔' : '✘'}</span><span class="t63-dim">${esc(e.date)}</span><span>${esc(e.title)}</span><span class="t63-dim">${e.chance}%</span></div>`).join('') : '<div class="t63-dim">아직 기록이 없습니다.</div>'}
+            </details>`;
         box.innerHTML = html;
 
         const on = (sel, ev, fn) => box.querySelectorAll(sel).forEach(n => n.addEventListener(ev, () => fn(n)));
+        // 슬라이더는 끌 때 숫자만 바꾸고, 놓으면 다시 계산
+        on('[data-live]', 'input', n => {
+            const out = document.getElementById(n.dataset.live);
+            if (!out) return;
+            const v = Number(n.value);
+            out.textContent = n.dataset.in === 'blockade' ? `${v} · ${blockadeWord(v)}` : n.dataset.rate || n.dataset.in === 'share' ? `${v}%` : String(v);
+        });
+        on('[data-mode]', 'click', n => { ui.mode = n.dataset.mode; renderSiege(); });
+        on('[data-fold]', 'toggle', n => { ui[n.dataset.fold] = n.open; });
         on('[data-in="blockade"]', 'change', n => { ui.blockade = Number(n.value); renderSiege(); });
         on('[data-in="anim"]', 'change', n => { ui.anim = n.checked; });
         on('[data-in="citizens"]', 'change', n => { ui.citizens = n.checked; renderSiege(); });
@@ -577,57 +630,106 @@
 
     const style = document.createElement('style');
     style.textContent = `
-        .t63-intro { color: #777; font-size: .78rem; line-height: 1.6; margin: 8px 0 10px; }
-        .t63-sec { border: 1px solid #333; padding: 10px; margin: 0 0 12px; background: rgba(255,255,255,.02); }
-        .t63-sec-title { color: var(--tno-neon); font-size: .95rem; margin-bottom: 8px; letter-spacing: 1px; }
-        .t63-sec > label.t63-dim { display: block; margin: 8px 0 4px; }
-        .t63-sec select { width: 100%; box-sizing: border-box; }
-        .t63-status { font-size: .82rem; color: #e06060; margin-bottom: 8px; }
-        .t63-row { display: flex; align-items: center; gap: 8px; margin: 5px 0; font-size: .85rem; }
-        .t63-row input[type=range] { flex: 1; min-width: 0; }
-        .t63-row b { min-width: 2.5em; text-align: right; font-weight: normal; }
+        #contentSiege { --t63-acc: #f0a030; --t63-alert: #e05555; --t63-ok: #3fbf7f; --t63-line: #333; --t63-soft: rgba(255,255,255,.03); --t63-dim: #888; --t63-text: #ddd; }
+        html[data-theme-family="modern"] #contentSiege { --t63-acc: #d97706; --t63-alert: var(--m-danger, #dc2626); --t63-ok: var(--m-success, #16a34a); --t63-line: var(--m-border); --t63-soft: var(--m-surface-2); --t63-dim: var(--m-text-3); --t63-text: var(--m-text); }
+        .t63-head { margin: 6px 0 10px; }
+        .t63-intro { color: var(--t63-dim); font-size: .78rem; line-height: 1.6; margin-bottom: 8px; }
+        .t63-stats { display: flex; flex-wrap: wrap; gap: 6px; }
+        .t63-stat { font-size: .74rem; padding: 3px 8px; border: 1px solid var(--t63-line); color: var(--t63-dim); white-space: nowrap; }
+        .t63-stat.alert { color: var(--t63-alert); border-color: var(--t63-alert); }
+        .t63-stat.warn { color: var(--t63-acc); border-color: var(--t63-acc); }
+        .t63-stat.on { color: var(--t63-text); border-color: var(--t63-text); }
+        .t63-modes { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 10px; }
+        .t63-mode { position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: 2px; padding: 10px 12px; cursor: pointer; font-family: inherit; text-align: left; background: transparent; border: 1px solid var(--t63-line); color: var(--t63-dim); }
+        .t63-mode b { font-size: .95rem; font-weight: normal; color: var(--t63-text); }
+        .t63-mode span { font-size: .72rem; }
+        .t63-mode.active { border-color: var(--t63-acc); box-shadow: inset 0 -3px 0 var(--t63-acc); }
+        .t63-mode.active b { color: var(--t63-acc); }
+        .t63-live { position: absolute; top: 9px; right: 10px; width: 8px; height: 8px; border-radius: 50%; background: var(--t63-alert); animation: t63pulse 1.2s infinite; }
+        @keyframes t63pulse { 0%, 100% { opacity: 1; } 50% { opacity: .25; } }
+        .t63-panel { border: 1px solid var(--t63-line); padding: 12px; margin-bottom: 10px; background: var(--t63-soft); }
+        .t63-group { margin: 0 0 12px; }
+        .t63-group-title { font-size: .72rem; color: var(--t63-dim); letter-spacing: 1px; margin-bottom: 6px; text-transform: uppercase; }
+        .t63-panel select { width: 100%; box-sizing: border-box; }
+        .t63-row { display: flex; align-items: center; gap: 8px; margin: 4px 0; font-size: .85rem; }
+        .t63-row input[type=range] { flex: 1; min-width: 0; accent-color: var(--t63-acc); }
+        .t63-row b { min-width: 3.2em; text-align: right; font-weight: normal; color: var(--t63-text); white-space: nowrap; }
+        .t63-lbl { min-width: 5.5em; color: var(--t63-dim); font-size: .78rem; display: flex; align-items: center; gap: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .t63-dim { color: var(--t63-dim); font-size: .8rem; } .t63-small { font-size: .72rem; }
         .t63-off { opacity: .5; }
-        .t63-lbl { min-width: 6.5em; color: #999; font-size: .8rem; display: flex; align-items: center; gap: 4px; }
-        .t63-dim { color: #777; font-size: .8rem; } .t63-small { font-size: .72rem; }
-        .t63-table { margin: 8px 0; font-size: .8rem; }
-        .t63-th, .t63-tr { display: grid; grid-template-columns: minmax(0, 2fr) 1fr 1.4fr 1fr 1fr; gap: 6px; align-items: center; padding: 3px 0; }
-        .t63-th { color: #777; border-bottom: 1px solid #333; }
-        .t63-tr { border-bottom: 1px solid #1c1c1c; }
-        .t63-tr > span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .t63-tr input { width: 4.4em; padding: 2px 4px; box-sizing: border-box; }
-        .t63-sec i, .t63-chip i { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 4px; vertical-align: middle; flex-shrink: 0; }
-        .t63-chips { display: flex; flex-wrap: wrap; gap: 6px; }
-        .t63-chip { display: inline-flex; align-items: center; gap: 4px; font-size: .82rem; border: 1px solid #333; padding: 4px 8px; cursor: pointer; }
-        .t63-chance { border: 1px solid #333; padding: 10px; margin: 10px 0; }
-        .t63-chance-head { display: flex; justify-content: space-between; align-items: baseline; color: #aaa; font-size: .85rem; }
-        .t63-chance-head b { font-size: 1.5rem; color: #f0a030; }
-        .t63-bar { height: 8px; background: #222; margin: 6px 0 8px; }
-        .t63-bar span { display: block; height: 100%; background: #f0a030; }
-        .t63-factor { display: flex; justify-content: space-between; gap: 8px; font-size: .78rem; color: #999; padding: 2px 0; }
-        .t63-plus { color: #5fbf7f; } .t63-minus { color: #e06060; }
-        .t63-go { width: 100%; cursor: pointer; font-family: inherit; font-size: 1rem; padding: 10px; background: transparent; border: 2px solid #f0a030; color: #f0a030; letter-spacing: 1px; }
-        .t63-btn { cursor: pointer; font-family: inherit; font-size: .85rem; padding: 6px 12px; background: transparent; border: 1px solid #555; color: #ccc; margin-top: 6px; }
+        .t63-dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; margin-right: 4px; vertical-align: middle; }
+        .t63-toggle { display: flex; align-items: flex-start; gap: 8px; padding: 7px 0; font-size: .85rem; color: var(--t63-text); cursor: pointer; }
+        .t63-toggle input { margin-top: 3px; accent-color: var(--t63-acc); }
+        .t63-toggle em { display: block; font-style: normal; font-size: .72rem; color: var(--t63-dim); }
+        .t63-meter-box { margin-bottom: 10px; }
+        .t63-meter-head { display: flex; justify-content: space-between; align-items: baseline; font-size: .85rem; color: var(--t63-text); margin-bottom: 6px; }
+        .t63-meter-head b { font-size: 1.3rem; font-weight: normal; color: var(--t63-acc); }
+        .t63-meter { position: relative; display: flex; height: 16px; background: rgba(127,127,127,.15); overflow: visible; }
+        .t63-meter span { display: block; height: 100%; }
+        .t63-meter em { position: absolute; top: -4px; bottom: -4px; width: 2px; margin-left: -1px; background: var(--t63-text); }
+        .t63-meter-legend { display: flex; flex-wrap: wrap; gap: 4px 10px; font-size: .72rem; color: var(--t63-dim); margin-top: 6px; }
+        .t63-need { color: var(--t63-text); }
+        .t63-gauge { border: 1px solid var(--t63-line); padding: 10px; margin: 0 0 12px; }
+        .t63-gauge-head { display: flex; justify-content: space-between; align-items: baseline; font-size: .85rem; color: var(--t63-text); }
+        .t63-gauge-head b { font-size: 1.7rem; font-weight: normal; }
+        .t63-gauge-head b.hi { color: var(--t63-ok); } .t63-gauge-head b.mid { color: var(--t63-acc); } .t63-gauge-head b.lo { color: var(--t63-alert); }
+        .t63-bar { height: 8px; background: rgba(127,127,127,.2); margin: 6px 0; }
+        .t63-bar span { display: block; height: 100%; background: var(--t63-acc); }
+        .t63-prow { padding: 8px 0; border-bottom: 1px solid var(--t63-line); }
+        .t63-prow:last-child { border-bottom: none; }
+        .t63-prow-head { display: flex; align-items: center; gap: 6px; font-size: .85rem; flex-wrap: wrap; }
+        .t63-prow-head b { font-weight: normal; color: var(--t63-text); }
+        .t63-prow-exp { margin-left: auto; font-size: .74rem; color: var(--t63-dim); }
+        .t63-prow-exp b { color: var(--t63-acc); }
+        .t63-tag { font-size: .66rem; padding: 0 5px; border: 1px solid var(--t63-acc); color: var(--t63-acc); }
+        .t63-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px; }
+        .t63-chip { display: inline-flex; align-items: center; gap: 2px; font-size: .82rem; border: 1px solid var(--t63-line); padding: 5px 10px; cursor: pointer; color: var(--t63-dim); }
+        .t63-chip input { display: none; }
+        .t63-chip.on { border-color: var(--t63-acc); color: var(--t63-text); background: color-mix(in srgb, var(--t63-acc) 12%, transparent); }
+        .t63-vs { margin: 0 0 12px; }
+        .t63-vs-head { display: flex; justify-content: space-between; font-size: .8rem; color: var(--t63-dim); margin-bottom: 5px; }
+        .t63-vs-head b { color: var(--t63-text); font-weight: normal; font-size: 1rem; }
+        .t63-vs-bar { display: flex; height: 14px; gap: 1px; background: rgba(127,127,127,.12); }
+        .t63-vs-bar span { display: block; height: 100%; }
+        .t63-vs-opp { opacity: .45; }
+        .t63-factors { margin: -6px 0 12px; font-size: .8rem; } .t63-factors summary { cursor: pointer; }
+        .t63-factor { display: flex; justify-content: space-between; gap: 8px; font-size: .78rem; color: var(--t63-dim); padding: 2px 0; }
+        .t63-plus { color: var(--t63-ok); } .t63-minus { color: var(--t63-alert); }
+        .t63-go { width: 100%; cursor: pointer; font-family: inherit; font-size: 1rem; padding: 12px; background: transparent; border: 2px solid var(--t63-acc); color: var(--t63-acc); letter-spacing: 1px; margin-top: 4px; }
+        .t63-go:hover { background: color-mix(in srgb, var(--t63-acc) 14%, transparent); }
+        .t63-btn { cursor: pointer; font-family: inherit; font-size: .85rem; padding: 6px 12px; background: transparent; border: 1px solid var(--t63-line); color: var(--t63-text); margin-top: 8px; }
         .t63-mini { margin: 0; padding: 2px 8px; font-size: .75rem; }
-        .t63-result { margin: 0 0 12px; padding: 10px; border: 1px solid #333; border-left: 4px solid #888; }
-        .t63-result.ok { border-left-color: #5fbf7f; } .t63-result.fail { border-left-color: #e06060; }
-        .t63-result-head { font-size: 1rem; margin-bottom: 4px; }
-        .t63-result ul { margin: 6px 0 0 18px; padding: 0; font-size: .82rem; color: #bbb; }
-        .t63-hurt { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 4px 0; border-bottom: 1px solid #1c1c1c; font-size: .82rem; }
+        .t63-empty { text-align: center; padding: 22px 10px; color: var(--t63-dim); font-size: .85rem; line-height: 1.7; }
+        .t63-empty-icon { font-size: 1.8rem; margin-bottom: 4px; }
+        .t63-panel > .t63-result:first-child { margin: 0 0 4px; }
+        .t63-result { margin-top: 12px; padding: 10px 12px; border: 1px solid var(--t63-line); border-left: 4px solid var(--t63-dim); }
+        .t63-result.ok { border-left-color: var(--t63-ok); } .t63-result.fail { border-left-color: var(--t63-alert); }
+        .t63-result-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: .92rem; color: var(--t63-text); margin-bottom: 2px; }
+        .t63-badge { font-size: .74rem; padding: 1px 7px; border: 1px solid currentColor; }
+        .t63-badge.ok { color: var(--t63-ok); } .t63-badge.fail { color: var(--t63-alert); }
+        .t63-result ul { margin: 6px 0 0 18px; padding: 0; font-size: .8rem; color: var(--t63-dim); line-height: 1.6; }
+        .t63-fold { border: 1px solid var(--t63-line); padding: 0 12px; margin-bottom: 8px; }
+        .t63-fold > summary { cursor: pointer; padding: 9px 0; font-size: .85rem; color: var(--t63-text); }
+        .t63-fold[open] { padding-bottom: 10px; }
+        .t63-hurt { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 5px 0; border-bottom: 1px solid var(--t63-line); font-size: .82rem; color: var(--t63-text); }
         .t63-hurt-row { color: #f0a030; }
-        .t63-coh { margin-top: 6px; } .t63-coh summary, .t63-log summary { cursor: pointer; }
-        .t63-log { margin-top: 4px; font-size: .82rem; } .t63-log summary { color: #999; }
-        .t63-log-row { display: flex; gap: 8px; padding: 3px 0; color: #aaa; border-bottom: 1px solid #1c1c1c; }
-        html[data-theme-family="modern"] .t63-sec, html[data-theme-family="modern"] .t63-chance { border: 1px solid var(--m-border); border-radius: 12px; background: var(--m-surface-2); }
-        html[data-theme-family="modern"] .t63-chance { background: var(--m-surface); }
-        html[data-theme-family="modern"] .t63-sec-title { color: var(--m-text); font-weight: 600; letter-spacing: 0; }
-        html[data-theme-family="modern"] .t63-intro, html[data-theme-family="modern"] .t63-dim, html[data-theme-family="modern"] .t63-lbl, html[data-theme-family="modern"] .t63-th { color: var(--m-text-3); }
-        html[data-theme-family="modern"] .t63-chance-head, html[data-theme-family="modern"] .t63-factor, html[data-theme-family="modern"] .t63-log-row, html[data-theme-family="modern"] .t63-result ul { color: var(--m-text-2); }
-        html[data-theme-family="modern"] .t63-th, html[data-theme-family="modern"] .t63-tr, html[data-theme-family="modern"] .t63-hurt, html[data-theme-family="modern"] .t63-log-row { border-bottom-color: var(--m-border); }
-        html[data-theme-family="modern"] .t63-bar { background: var(--m-border); border-radius: 4px; overflow: hidden; }
-        html[data-theme-family="modern"] .t63-chip { border-color: var(--m-border-strong); border-radius: 999px; }
-        html[data-theme-family="modern"] .t63-go { border-radius: 12px; font-weight: 600; letter-spacing: 0; }
-        html[data-theme-family="modern"] .t63-btn { border: 1px solid var(--m-border-strong); border-radius: 8px; color: var(--m-text); }
-        html[data-theme-family="modern"] .t63-result { border: 1px solid var(--m-border); border-left-width: 4px; border-radius: 10px; background: var(--m-surface); }
+        .t63-log-row { display: grid; grid-template-columns: 1.2em auto 1fr auto; gap: 8px; padding: 4px 0; font-size: .8rem; color: var(--t63-text); border-bottom: 1px solid var(--t63-line); }
+        html[data-theme-family="modern"] .t63-stat { border-radius: 999px; background: var(--m-surface); }
+        html[data-theme-family="modern"] .t63-mode { border-radius: 12px; background: var(--m-surface); }
+        html[data-theme-family="modern"] .t63-mode b { font-weight: 600; }
+        html[data-theme-family="modern"] .t63-mode.active { box-shadow: inset 0 0 0 1px var(--t63-acc); background: color-mix(in srgb, var(--t63-acc) 7%, var(--m-surface)); }
+        html[data-theme-family="modern"] .t63-panel, html[data-theme-family="modern"] .t63-fold { border-radius: 14px; }
+        html[data-theme-family="modern"] .t63-fold { background: var(--m-surface); }
+        html[data-theme-family="modern"] .t63-gauge, html[data-theme-family="modern"] .t63-result { border-radius: 12px; background: var(--m-surface); }
+        html[data-theme-family="modern"] .t63-result { border-left-width: 4px; }
+        html[data-theme-family="modern"] .t63-meter, html[data-theme-family="modern"] .t63-vs-bar, html[data-theme-family="modern"] .t63-bar { border-radius: 6px; overflow: hidden; }
+        html[data-theme-family="modern"] .t63-meter { overflow: visible; }
+        html[data-theme-family="modern"] .t63-meter span:first-child { border-radius: 6px 0 0 6px; }
+        html[data-theme-family="modern"] .t63-chip, html[data-theme-family="modern"] .t63-tag, html[data-theme-family="modern"] .t63-badge { border-radius: 999px; }
+        html[data-theme-family="modern"] .t63-go { border-radius: 12px; font-weight: 600; letter-spacing: 0; border: none; background: var(--t63-acc); color: #fff; }
+        html[data-theme-family="modern"] .t63-go:hover { filter: brightness(1.08); }
+        html[data-theme-family="modern"] .t63-btn { border-radius: 8px; border-color: var(--m-border-strong); }
+        html[data-theme-family="modern"] .t63-group-title { text-transform: none; letter-spacing: 0; font-weight: 600; }
     `;
     document.head.appendChild(style);
     window.addEventListener('load', () => setTimeout(refresh, 0));
