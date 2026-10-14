@@ -94,6 +94,10 @@
     padding: 9px 10px;
 }
 .tut-lesson-btn:hover, .tut-lesson-btn.next { border-color: var(--tno-neon); }
+/* 잠긴 과정 (다음 업데이트 미리보기 — 개발자 모드에서만 열림) */
+.tut-lesson-btn.tut-lesson-locked { cursor: not-allowed; opacity: .45; }
+.tut-lesson-btn.tut-lesson-locked:hover { border-color: var(--tno-border); }
+.tut-lesson-locked .tut-lesson-title { color: #888; }
 .tut-lesson-no { flex: 0 0 auto; color: var(--tno-gold); font-size: .85rem; }
 .tut-lesson-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 .tut-lesson-title { color: var(--tno-neon); font-size: 1rem; }
@@ -150,6 +154,8 @@ html[data-theme-family="modern"] .tut-task-icon { animation: none; }
 html[data-theme-family="modern"] .tut-lesson-btn { border: none; border-radius: 12px; background: var(--m-surface-2); color: var(--m-text); padding: 11px 12px; }
 html[data-theme-family="modern"] .tut-lesson-btn:hover { background: var(--m-surface-3); }
 html[data-theme-family="modern"] .tut-lesson-btn.next { box-shadow: inset 0 0 0 1.5px var(--m-accent); }
+html[data-theme-family="modern"] .tut-lesson-btn.tut-lesson-locked:hover { background: var(--m-surface-2); }
+html[data-theme-family="modern"] .tut-lesson-locked .tut-lesson-title { color: var(--m-text-3); }
 html[data-theme-family="modern"] .tut-lesson-no { color: var(--m-text-3); font-size: 12px; font-weight: 700; }
 html[data-theme-family="modern"] .tut-lesson-title { color: var(--m-text); font-size: 14px; font-weight: 700; }
 html[data-theme-family="modern"] .tut-lesson-sum { color: var(--m-text-3); font-size: 12px; }

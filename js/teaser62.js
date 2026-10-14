@@ -661,5 +661,7 @@
         html[data-theme-family="modern"] .t62-log-row { color: var(--m-text-2); border-bottom-color: var(--m-border); }
     `;
     document.head.appendChild(style);
+    // 튜토리얼(미리보기 과정)이 진행 상황을 읽는 창구
+    window.T62 = { get log() { return S.log; }, get partyState() { return S.partyState; } };
     window.addEventListener('load', () => setTimeout(refresh, 0));
 })();
