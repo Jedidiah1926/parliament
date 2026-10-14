@@ -902,7 +902,7 @@
                     before: [go('law', 'siege'), () => window.T63 && window.T63.setMode('break'), showPanel('controls')],
                     target: () => document.querySelector('#contentSiege .t63-meter-box') || '#contentSiege',
                     title: '누가 들어갈까?',
-                    text: '정당마다 참여율을 정하면 의원 한 명씩 봉쇄를 뚫는지 정해집니다. 봉쇄 강도(군 지휘부 충성도) · 시민 지원 · 정당 결속도가 입장 확률을 바꿔요. 들어간 의원만 표결하지만 가결 기준은 재적 과반이라, 야당만으로 모자라면 여당 의원도 들어와야 합니다.',
+                    text: '정당마다 참여율을 정하면 의원 한 명씩 봉쇄를 뚫는지 정해집니다. 봉쇄 강도(군 지휘부 충성도) · 시민 지원 · 정당 결속도가 입장 확률을 바꿔요. 들어간 의원만 표결하지만 가결 기준은 재적 과반이라, 야당만으로 모자라면 여당 의원도 들어와야 합니다. 표결을 막으려는 정당은 "입구 저지"로 본회의장 입구를 몸으로 막을 수도 있어요.',
                 },
                 {
                     before: [go('law', 'siege'), () => window.T63 && window.T63.setMode('break'), showPanel('controls')],
@@ -910,7 +910,7 @@
                     target: () => document.querySelector('#contentSiege [data-act="break"]') || '#contentSiege',
                     allow: ['#contentSiege', '#dispPanelHouse'],
                     title: '봉쇄 돌파',
-                    text: '"봉쇄 돌파 · 계엄 해제 표결"을 눌러보세요. 옆 반원 화면에서 의원들이 봉쇄선을 뚫고 자리로 들어가는 모습이 나와요 (누르면 건너뜀).',
+                    text: '"봉쇄 돌파 · 계엄 해제 표결"을 눌러보세요. 옆 반원 화면에서 의원들이 봉쇄선 → 입구 → 통로를 따라 자리로 들어가요. 과반에 못 미치면 계엄군이 다시 끌어냅니다 (누르면 건너뜀, 속도는 0.5× ~ 4×).',
                     task: () => logLen('T63') > (T.siegeBase || 0),
                     done: '표결이 끝났어요. 과반이 들어갔으면 계엄이 해제됩니다.',
                 },
@@ -918,7 +918,7 @@
                     before: [go('law', 'siege'), () => window.T63 && window.T63.setMode('obstruct'), showPanel('controls')],
                     target: () => document.querySelector('#contentSiege .t63-panel') || '#contentSiege',
                     title: '의장석 점거',
-                    text: '계엄과 상관없이, 표결을 기다리는 법안을 골라 의장석을 점거할 수 있어요. 참여 의원 수 · 상대 진영 · 결속도 · 의장 경호권 · 직권상정이 성공 확률을 정하고, 성공하면 표결이 무산됩니다.',
+                    text: '계엄과 상관없이, 표결을 기다리는 법안을 골라 의장석을 점거할 수 있어요. 참여 의원 수 · 상대 진영 · 결속도 · 의장 경호권 · 직권상정이 성공 확률을 정하고, 성공하면 표결이 무산됩니다. 옆 반원 화면에서는 점거 의원들이 의장석으로 몰려가고, 경호권을 쓰면 경위들이 들어와 맞붙어요.',
                 },
                 {
                     before: [go('law', 'siege'), showPanel('controls')],
@@ -998,10 +998,11 @@
         },
     ];
     const basicCount = LESSONS.filter(l => l.group === 'basic').length;
-    // 잠긴 과정은 개발자 모드가 꺼져 있으면 목차에 🔒로만 보이고, 진행 수 · 번호 · "다음 과정"에서 빠진다
+    // 잠긴 과정은 개발자 모드가 꺼져 있으면 목차에 🔒로만 보이고, 진행 수 · "다음 과정"에서 빠진다
+    // 번호는 잠긴 과정 자리도 그대로 세어 건너뛴다 (#11 → 🔒 → #13)
     const isAvail = i => !!LESSONS[i] && (!LESSONS[i].locked || devOn());
     const availIdx = () => LESSONS.map((_, i) => i).filter(isAvail);
-    const noOf = i => { const k = availIdx().indexOf(i); return k >= 0 ? k + 1 : '🔒'; };
+    const noOf = i => i + 1;
     const nextAvail = i => { for (let j = i + 1; j < LESSONS.length; j++) if (isAvail(j)) return j; return -1; };
 
     // ---- 마친 과정 기록 ----
