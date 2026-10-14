@@ -436,6 +436,7 @@
     window.T61 = {
         get junta() { return T.junta; },
         get military() { return T.military; },
+        get log() { return T.log; },
         endJunta, restoreBanned, declareMartialLaw, cutSupport, isGovParty, support, militaryDisloyalty,
         refresh: () => refresh(),
     };

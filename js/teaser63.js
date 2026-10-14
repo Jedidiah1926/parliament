@@ -732,5 +732,7 @@
         html[data-theme-family="modern"] .t63-group-title { text-transform: none; letter-spacing: 0; font-weight: 600; }
     `;
     document.head.appendChild(style);
+    // 튜토리얼(미리보기 과정)이 진행 상황을 읽고 모드를 바꾸는 창구
+    window.T63 = { get log() { return S.log; }, setMode(m) { ui.mode = m; renderSiege(); } };
     window.addEventListener('load', () => setTimeout(refresh, 0));
 })();
