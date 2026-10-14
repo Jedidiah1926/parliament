@@ -998,10 +998,11 @@
         },
     ];
     const basicCount = LESSONS.filter(l => l.group === 'basic').length;
-    // 잠긴 과정은 개발자 모드가 꺼져 있으면 목차에 🔒로만 보이고, 진행 수 · 번호 · "다음 과정"에서 빠진다
+    // 잠긴 과정은 개발자 모드가 꺼져 있으면 목차에 🔒로만 보이고, 진행 수 · "다음 과정"에서 빠진다
+    // 번호는 잠긴 과정 자리도 그대로 세어 건너뛴다 (#11 → 🔒 → #13)
     const isAvail = i => !!LESSONS[i] && (!LESSONS[i].locked || devOn());
     const availIdx = () => LESSONS.map((_, i) => i).filter(isAvail);
-    const noOf = i => { const k = availIdx().indexOf(i); return k >= 0 ? k + 1 : '🔒'; };
+    const noOf = i => i + 1;
     const nextAvail = i => { for (let j = i + 1; j < LESSONS.length; j++) if (isAvail(j)) return j; return -1; };
 
     // ---- 마친 과정 기록 ----
