@@ -87,6 +87,13 @@
     // 개표 결과를 의회에 반영했는지 (개표를 안 했으면 이 단계는 건너뜀)
     const elecApplied = () => (typeof elecLastResult === 'undefined' || !elecLastResult) ? true : !!elecLastResult.applied;
     // id로 찾은 요소를 감싸는 가까운 블록 (없으면 그 요소 자체)
+    // ---- 잠긴 과정 (다음 업데이트 미리보기 기능) ----
+    // locked: '1.6.x' — 개발자 모드(설정 › 기타 설정)를 켜야 열리고, 그 기능이 있는 Teaser 1.6.3 화면에서 진행한다.
+    // 본 게임에서 고르면 teaser63.html로 옮겨 튜토리얼 공화국으로 시작한 뒤 그 과정을 바로 연다.
+    /* global emergencyPowers, presElectionMode */
+    const devOn = () => !!(window.HemiDev && window.HemiDev.isOn());
+    const onPreviewPage = () => document.documentElement.getAttribute('data-teaser') === '63';
+    const logLen = k => { const o = window[k]; return o && Array.isArray(o.log) ? o.log.length : 0; };
     const byId = (id, up) => () => { const el = document.getElementById(id); return el ? ((up && el.closest(up)) || el) : null; };
     const helpTarget = () => isMobileLayout() ? navTarget() : (document.querySelector('#sideNav .mn-group[data-tone="muted"]') ? '#sideNav .mn-group[data-tone="muted"]' : navTarget());
 
@@ -610,6 +617,40 @@
             ],
         },
         {
+            id: 'electoral', group: 'detail', locked: '1.6.2',
+            title: '선거인단',
+            summary: '선거인단제 · 선거인 수 · 승자독식과 비례 · 과반 미달',
+            steps: [
+                {
+                    before: [closePanels, go('vote', 'elecSettings'), showPanel('controls')],
+                    target: '#presElecModeElectoralBtn',
+                    allow: ['#presElecModeElectoralBtn'],
+                    title: '선거인단제 고르기',
+                    text: '대선을 국민 득표가 아니라 선거인단으로 치를 수 있어요. 선거 › 방식의 대선 방식에서 "선거인단제"를 눌러보세요.',
+                    task: () => typeof presElectionMode !== 'undefined' && presElectionMode === 'electoral',
+                    done: '선거인단제가 됐어요. 바로 아래에 선거인단 설정이 나타납니다.',
+                },
+                {
+                    before: [go('vote', 'elecSettings'), showPanel('controls')],
+                    target: () => document.getElementById('t62EcPanel') || '#contentElecSettings',
+                    title: '선거인단 설정',
+                    text: '선거인을 권역마다 또는 지역구마다 뽑습니다. 선거인 수는 인구 비례 · 의석 수 + 가산(미국식은 하원 의석 + 2) · 직접 입력 중에 고르고, 그 단위에서 1위가 선거인을 모두 가져가는 승자독식이나 득표대로 나누는 비례 배분을 고릅니다. 신의 없는 선거인 비율도 정할 수 있어요.',
+                },
+                {
+                    before: [go('vote', 'elecSettings'), showPanel('controls')],
+                    target: () => document.getElementById('t62EcPanel') || '#contentElecSettings',
+                    title: '과반과 의회 결정',
+                    text: '선거인 과반을 얻어야 당선입니다. 아무도 과반이 안 되면 의회가 상위 3명 중에서 고르거나(미국식) 선거인을 가장 많이 얻은 후보가 당선되게 할 수 있어요. 선거인은 지역구 지도로 나누므로, 지도가 있는 나라에서 써야 제대로 보입니다.',
+                },
+                {
+                    before: [go('vote', 'elecPresidential'), showPanel('controls')],
+                    target: '#contentElecPresidential',
+                    title: '개표 결과',
+                    text: '선거 › 대선에서 선거를 치르면 후보마다 선거인 수 · 득표율이 나오고, 단위별 선거인 목록과 이긴 후보 색으로 칠한 지도가 결과 아래에 붙어요. 득표율에서 지고도 선거인으로 이기는 일도 생깁니다.',
+                },
+            ],
+        },
+        {
             id: 'union', group: 'detail',
             title: '후보 단일화',
             summary: '여러 정당이 후보 한 명으로 · 대선과 지역구에 따로 적용',
@@ -748,6 +789,137 @@
             ],
         },
         {
+            id: 'coup', group: 'detail', locked: '1.6.1',
+            title: '군부와 쿠데타',
+            summary: '군 지휘부 · 충성도 · 쿠데타 · 군정 · 민정 이양',
+            steps: [
+                {
+                    before: [closePanels, go('cabinet', 'military'), showPanel('controls')],
+                    target: '#contentMilitary',
+                    title: '군부',
+                    text: '내각 › 군부에서 국방부 장관 · 합참의장 · 육해공군 참모총장 같은 군 지휘부를 정합니다. 지휘관마다 정부에 대한 충성도(0~100)가 있고, 충성도가 낮을수록 군부 쿠데타가 성공하기 쉬워요.',
+                },
+                {
+                    before: [go('cabinet', 'military'), showPanel('controls')],
+                    target: () => document.querySelector('#contentMilitary [data-act="seed"]') || '#contentMilitary',
+                    allow: ['#contentMilitary'],
+                    title: '군 지휘부 만들기',
+                    text: '"기본 군 지휘부 만들기"를 눌러 지휘부를 채워 보세요. (이미 있으면 그대로 넘어가요)',
+                    task: () => !!(window.T61 && window.T61.military && window.T61.military.length),
+                    done: '군 지휘부가 생겼어요. 이름 · 직책 · 충성도는 언제든 고칠 수 있어요.',
+                },
+                {
+                    before: [go('cabinet', 'coup'), showPanel('controls')],
+                    target: '#contentCoup',
+                    title: '쿠데타',
+                    text: '내각 › 쿠데타에서 주도 세력을 고릅니다 — 군부(군 지휘관이 주도) · 정당(야당이 군과 손잡고) · 친위 쿠데타(대통령이 스스로 권력 강화). 성공 확률은 여당 의석 · 지지율 · 계엄 여부 · 군의 충성도로 정해지고 요인별로 보여요.',
+                },
+                {
+                    before: [go('cabinet', 'coup'), showPanel('controls')],
+                    enter: () => { T.coupBase = logLen('T61'); },
+                    target: () => document.querySelector('#contentCoup [data-act="go"]') || '#contentCoup',
+                    allow: ['#contentCoup'],
+                    title: '쿠데타 일으키기',
+                    text: '쿠데타를 일으켜 보세요. 성공하든 실패하든 괜찮아요 — 이 나라는 복사본입니다.',
+                    task: () => logLen('T61') > (T.coupBase || 0),
+                    done: '결과가 나왔어요. 성공하면 계엄 · 의회 정지 · 반대 정당 활동 금지가, 실패하면 주도 세력 처벌과 지지율 하락이 따릅니다.',
+                },
+                {
+                    before: [go('cabinet', 'coup'), showPanel('controls')],
+                    target: '#contentCoup',
+                    title: '군정과 그 뒤',
+                    text: '군부 쿠데타가 성공하면 숨겨진 정부 형태 "군정"이 됩니다 — 군사평의회 의장이 대통령 · 총리를 겸하고 선거가 멈춰요. 군정은 민정 이양(선거 재개) · 역쿠데타 · 혁명으로 끝낼 수 있습니다.',
+                },
+            ],
+        },
+        {
+            id: 'revolution', group: 'detail', locked: '1.6.2',
+            title: '혁명',
+            summary: '민주 · 공산주의 혁명 · 당-국가 체제 · 새 헌법 · 국호 교체',
+            steps: [
+                {
+                    before: [closePanels, go('cabinet', 'revolution'), showPanel('controls')],
+                    target: '#contentRevolution',
+                    title: '혁명',
+                    text: '내각 › 혁명은 민중이 일으킵니다. 정부 불신 · 군정이나 계엄 · 활동 금지된 정당 · 혁명 정당의 지지율과 그 정당이 앞서는 지역의 인구가 성공 확률을 정해요.',
+                },
+                {
+                    before: [go('cabinet', 'revolution'), showPanel('controls')],
+                    target: () => { const b = document.querySelector('#contentRevolution [data-kind]'); return b ? b.parentElement : '#contentRevolution'; },
+                    title: '주도 이념',
+                    text: '민주 혁명이 성공하면 독재 · 군정이 무너지고 일반 정부 형태로 돌아가 새 헌법을 세웁니다. 공산주의 혁명이 성공하면 숨겨진 정부 형태 "당-국가 체제"가 돼요 — 혁명 정당이 혼자 집권하고, 의회는 최고인민회의, 선거는 단일 후보 찬반 투표가 됩니다.',
+                },
+                {
+                    before: [go('cabinet', 'revolution'), showPanel('controls')],
+                    enter: () => { T.revBase = logLen('T62'); },
+                    target: () => document.querySelector('#contentRevolution [data-act="go"]') || '#contentRevolution',
+                    allow: ['#contentRevolution'],
+                    title: '혁명 일으키기',
+                    text: '이념과 혁명 정당을 고르고 혁명을 일으켜 보세요. 혁명 뒤 새 국호 · 국기도 미리 정해 둘 수 있어요.',
+                    task: () => logLen('T62') > (T.revBase || 0),
+                    done: '결과가 나왔어요. 실패하면 혁명 정당이 활동 금지되고 정부가 계엄령을 선포합니다.',
+                },
+                {
+                    before: [go('cabinet', 'revolution'), showPanel('controls')],
+                    target: '#contentRevolution',
+                    title: '혁명 뒤',
+                    text: '당-국가 체제에서는 "찬반 선거 치르기"로 최고인민회의 대의원을 뽑고, 다시 민주 혁명을 일으켜야 무너집니다. 혁명이 끝나면 새 총선을 치르세요.',
+                },
+            ],
+        },
+        {
+            id: 'siege', group: 'detail', locked: '1.6.3',
+            title: '국회공성전',
+            summary: '계엄 중 봉쇄 돌파 · 의장석 점거 · 부상 결석 · 국회선진화법',
+            steps: [
+                {
+                    before: [closePanels, go('law', 'siege'), showPanel('controls')],
+                    target: () => document.querySelector('#contentSiege .t63-modes') || '#contentSiege',
+                    title: '국회공성전',
+                    text: '입법 › 공성전에는 두 가지가 있어요 — 계엄군의 봉쇄를 뚫고 본회의장에 들어가 계엄을 해제하는 "봉쇄 돌파"와, 반대 법안의 표결을 막으려 의장석을 점거하는 "의장석 점거"입니다.',
+                },
+                {
+                    before: [go('law', 'siege'), () => window.T63 && window.T63.setMode('break'), showPanel('controls')],
+                    target: () => document.querySelector('#contentSiege .t63-panel') || '#contentSiege',
+                    allow: ['#contentSiege'],
+                    title: '계엄령 선포',
+                    text: () => (typeof emergencyPowers !== 'undefined' && emergencyPowers.martialLaw.active)
+                        ? '봉쇄 돌파는 계엄 중에만 할 수 있어요. 지금은 이미 계엄령이 선포돼 있으니 바로 다음으로 넘어가세요.'
+                        : '봉쇄 돌파는 계엄 중에만 할 수 있어요. "계엄령 선포 (의회 정지, 시험용)"을 눌러보세요.',
+                    task: () => typeof emergencyPowers !== 'undefined' && !!emergencyPowers.martialLaw.active,
+                    done: '계엄령이 선포된 상태예요.',
+                },
+                {
+                    before: [go('law', 'siege'), () => window.T63 && window.T63.setMode('break'), showPanel('controls')],
+                    target: () => document.querySelector('#contentSiege .t63-meter-box') || '#contentSiege',
+                    title: '누가 들어갈까?',
+                    text: '정당마다 참여율을 정하면 의원 한 명씩 봉쇄를 뚫는지 정해집니다. 봉쇄 강도(군 지휘부 충성도) · 시민 지원 · 정당 결속도가 입장 확률을 바꿔요. 들어간 의원만 표결하지만 가결 기준은 재적 과반이라, 야당만으로 모자라면 여당 의원도 들어와야 합니다.',
+                },
+                {
+                    before: [go('law', 'siege'), () => window.T63 && window.T63.setMode('break'), showPanel('controls')],
+                    enter: () => { T.siegeBase = logLen('T63'); },
+                    target: () => document.querySelector('#contentSiege [data-act="break"]') || '#contentSiege',
+                    allow: ['#contentSiege', '#dispPanelHouse'],
+                    title: '봉쇄 돌파',
+                    text: '"봉쇄 돌파 · 계엄 해제 표결"을 눌러보세요. 옆 반원 화면에서 의원들이 봉쇄선을 뚫고 자리로 들어가는 모습이 나와요 (누르면 건너뜀).',
+                    task: () => logLen('T63') > (T.siegeBase || 0),
+                    done: '표결이 끝났어요. 과반이 들어갔으면 계엄이 해제됩니다.',
+                },
+                {
+                    before: [go('law', 'siege'), () => window.T63 && window.T63.setMode('obstruct'), showPanel('controls')],
+                    target: () => document.querySelector('#contentSiege .t63-panel') || '#contentSiege',
+                    title: '의장석 점거',
+                    text: '계엄과 상관없이, 표결을 기다리는 법안을 골라 의장석을 점거할 수 있어요. 참여 의원 수 · 상대 진영 · 결속도 · 의장 경호권 · 직권상정이 성공 확률을 정하고, 성공하면 표결이 무산됩니다.',
+                },
+                {
+                    before: [go('law', 'siege'), showPanel('controls')],
+                    target: () => document.querySelector('#contentSiege .t63-fold') || '#contentSiege',
+                    title: '폭력의 대가',
+                    text: '점거한 정당은 지지율이 떨어지고, 다친 의원은 다음 표결 몇 번을 결석합니다(표결에서 빠지고 좌석 정보에 표시). "국회선진화법"을 켜면 직권상정이 막히고 페널티가 두 배가 돼요.',
+                },
+            ],
+        },
+        {
             id: 'date', group: 'detail',
             title: '날짜와 회기',
             summary: '날짜 넘기기 · 다음 회기 · 설정 창 · 자동 진행',
@@ -817,6 +989,11 @@
         },
     ];
     const basicCount = LESSONS.filter(l => l.group === 'basic').length;
+    // 잠긴 과정은 개발자 모드가 꺼져 있으면 목차에 🔒로만 보이고, 진행 수 · 번호 · "다음 과정"에서 빠진다
+    const isAvail = i => !!LESSONS[i] && (!LESSONS[i].locked || devOn());
+    const availIdx = () => LESSONS.map((_, i) => i).filter(isAvail);
+    const noOf = i => { const k = availIdx().indexOf(i); return k >= 0 ? k + 1 : '🔒'; };
+    const nextAvail = i => { for (let j = i + 1; j < LESSONS.length; j++) if (isAvail(j)) return j; return -1; };
 
     // ---- 마친 과정 기록 ----
     // 과정 id로 기록 (예전엔 순서 번호로 기록 — 예전 #1 ~ #5는 지금의 같은 과정 id로 옮겨 온다)
@@ -876,7 +1053,8 @@
     function next() {
         if (mode === 'menu') return;
         if (mode === 'complete') {
-            if (lessonIdx < LESSONS.length - 1) startLesson(lessonIdx + 1); else stop();
+            const n = nextAvail(lessonIdx);
+            if (n >= 0) startLesson(n); else stop();
             return;
         }
         const step = curStep();
@@ -1038,7 +1216,7 @@
     // 말풍선 머리: "#2 · 정당과 의석" + "3 / 4 · 실습" + 진행 점
     function renderHead(countText) {
         const lesson = LESSONS[lessonIdx];
-        q('.tut-lesson').textContent = mode === 'menu' ? '튜토리얼 목차' : `#${lessonIdx + 1} · ${lesson.title}`;
+        q('.tut-lesson').textContent = mode === 'menu' ? '튜토리얼 목차' : `#${noOf(lessonIdx)} · ${lesson.title}${lesson.locked ? ` (${lesson.locked} 미리보기)` : ''}`;
         q('.tut-count').textContent = countText || '';
         const prog = q('.tut-progress');
         if (mode === 'step') {
@@ -1086,7 +1264,7 @@
         q('.tut-toc').style.display = '';
         q('.tut-skip').textContent = '그만하기';
         q('.tut-next').style.display = '';
-        q('.tut-next').textContent = i === steps.length - 1 ? `#${lessonIdx + 1} 마치기` : '다음';
+        q('.tut-next').textContent = i === steps.length - 1 ? `#${noOf(lessonIdx)} 마치기` : '다음';
         renderTaskState();
         // 탭 전환 직후 레이아웃(목록·캔버스 다시 그리기 등)이 끝난 뒤 대상으로 스크롤하고 위치를 잡는다
         requestAnimationFrame(() => requestAnimationFrame(() => {
@@ -1097,8 +1275,23 @@
     }
 
     function startLesson(li) {
-        lessonIdx = Math.max(0, Math.min(LESSONS.length - 1, li));
+        li = Math.max(0, Math.min(LESSONS.length - 1, li));
+        const l = LESSONS[li];
+        if (l.locked && !devOn()) { showMenu(); return; }
+        // 미리보기 기능은 Teaser 1.6.3 화면에만 있다 — 그 화면으로 옮겨 튜토리얼 공화국으로 시작한 뒤 이 과정을 연다
+        if (l.locked && !onPreviewPage()) { launchPreview(l); return; }
+        lessonIdx = li;
         showStep(0);
+    }
+    const PENDING_KEY = 'dnoTutorialStartLesson';
+    function launchPreview(l) {
+        try {
+            sessionStorage.setItem('dnoBootPresetId', 'builtin:tutorial');
+            sessionStorage.setItem('dnoBootNewSaveName', `튜토리얼 공화국 (${l.locked} 미리보기)`);
+            sessionStorage.setItem(PENDING_KEY, l.id);
+        } catch (e) { /* sessionStorage 없음 — 그냥 화면만 옮긴다 */ }
+        stop();
+        location.href = 'teaser63.html';
     }
 
     function showComplete() {
@@ -1108,22 +1301,24 @@
         setMode('complete');
         layer.classList.remove('tut-is-task');
         taskDone = false;
-        const last = lessonIdx >= LESSONS.length - 1;
+        const nIdx = nextAvail(lessonIdx);
+        const last = nIdx < 0;
         const basicDone = LESSONS[lessonIdx].group === 'basic' && lessonIdx === basicCount - 1;
         renderHead('완료');
-        const nextLesson = LESSONS[lessonIdx + 1];
+        const nextLesson = LESSONS[nIdx];
+        const nextNo = nIdx >= 0 ? noOf(nIdx) : '';
         setBody({
-            title: `#${lessonIdx + 1} ${LESSONS[lessonIdx].title} 완료!`,
+            title: `#${noOf(lessonIdx)} ${LESSONS[lessonIdx].title} 완료!`,
             text: last
                 ? '세부 튜토리얼까지 모두 마쳤습니다. 이제 이 나라를 마음대로 바꿔보거나, 시작 화면에서 새 세이브를 만들어 나만의 나라를 꾸려보세요. 궁금한 기능은 메뉴 맨 아래 "도움말"에서 찾을 수 있어요.'
                 : basicDone
-                    ? `기본 튜토리얼(#1 ~ #${basicCount})을 모두 마쳤습니다! 이제 기본 흐름은 다 알아요. 이어서 세부 튜토리얼 #${lessonIdx + 2} "${nextLesson.title}"부터 해보거나, 목차에서 필요한 기능만 골라 배우세요.`
-                    : `다음은 #${lessonIdx + 2} "${nextLesson.title}" (${nextLesson.summary})입니다. 바로 이어서 하거나, 나중에 목차에서 골라 할 수 있어요.`,
+                    ? `기본 튜토리얼(#1 ~ #${basicCount})을 모두 마쳤습니다! 이제 기본 흐름은 다 알아요. 이어서 세부 튜토리얼 #${nextNo} "${nextLesson.title}"부터 해보거나, 목차에서 필요한 기능만 골라 배우세요.`
+                    : `다음은 #${nextNo} "${nextLesson.title}" (${nextLesson.summary})입니다.${nextLesson.locked && !onPreviewPage() ? ' 미리보기 기능이라 Teaser 1.6.3 화면으로 옮겨 진행해요.' : ''} 바로 이어서 하거나, 나중에 목차에서 골라 할 수 있어요.`,
         });
         q('.tut-prev').style.display = 'none';
         q('.tut-toc').style.display = '';
         q('.tut-next').style.display = '';
-        q('.tut-next').textContent = last ? '끝내기' : `#${lessonIdx + 2} 시작 →`;
+        q('.tut-next').textContent = last ? '끝내기' : `#${nextNo} 시작 →`;
         q('.tut-skip').textContent = last ? '닫기' : '나중에';
         renderTaskState();
         requestAnimationFrame(place);
@@ -1137,14 +1332,16 @@
         setMode('menu');
         layer.classList.remove('tut-is-task');
         taskDone = false;
-        const done = doneSet();
+        const avail = availIdx();
+        const done = new Set([...doneSet()].filter(isAvail));
         const idxOf = g => LESSONS.map((l, i) => (l.group === g ? i : -1)).filter(i => i >= 0);
         const tabs = { basic: idxOf('basic'), detail: idxOf('detail') };
         const doneIn = g => tabs[g].filter(i => done.has(i)).length;
-        const firstTodo = LESSONS.findIndex((_, i) => !done.has(i));
+        const countIn = g => tabs[g].filter(isAvail).length;
+        const firstTodo = avail.find(i => !done.has(i)) ?? -1;
         if (!menuTab) menuTab = doneIn('basic') < tabs.basic.length ? 'basic' : 'detail';
-        const allDone = done.size === LESSONS.length;
-        renderHead(`${done.size} / ${LESSONS.length} 완료`);
+        const allDone = done.size === avail.length;
+        renderHead(`${done.size} / ${avail.length} 완료`);
         setBody({
             title: allDone ? '모든 과정을 마쳤어요' : done.size ? '이어서 배워볼까요?' : '무엇을 배워볼까요?',
             text: allDone
@@ -1157,34 +1354,43 @@
             basic: ['기본 튜토리얼', '처음 쓰는 분을 위한 핵심 흐름 — 순서대로 추천'],
             detail: ['세부 튜토리얼', '기능별 자세한 설명 — 필요한 것만 골라서'],
         };
-        const pct = Math.round(done.size / LESSONS.length * 100);
+        const pct = Math.round(done.size / Math.max(1, avail.length) * 100);
         menuEl.innerHTML = `
             <div class="tut-menu-bar" aria-hidden="true"><span style="width:${pct}%"></span></div>
             ${!allDone && done.size > 0 ? `<button type="button" class="tut-continue" data-lesson="${firstTodo}"><span class="tut-continue-label">이어서 하기</span><span class="tut-continue-title"></span><span class="tut-lesson-mark">›</span></button>` : ''}
             <div class="tut-tabs" role="tablist">
                 ${['basic', 'detail'].map(g => `
                 <button type="button" role="tab" class="tut-tab${menuTab === g ? ' active' : ''}" data-tab="${g}" aria-selected="${menuTab === g}">
-                    ${TAB_INFO[g][0]} <span class="tut-tab-count">${doneIn(g)}/${tabs[g].length}</span>
+                    ${TAB_INFO[g][0]} <span class="tut-tab-count">${doneIn(g)}/${countIn(g)}</span>
                 </button>`).join('')}
             </div>
             <div class="tut-tab-sub">${TAB_INFO[menuTab][1]}</div>
             <div class="tut-lesson-list tut-list-${menuTab}">
-                ${tabs[menuTab].map(i => `
+                ${tabs[menuTab].map(i => isAvail(i) ? `
                 <button type="button" class="tut-lesson-btn${done.has(i) ? ' done' : ''}${i === firstTodo ? ' next' : ''}" data-lesson="${i}">
-                    <span class="tut-lesson-no">#${i + 1}</span>
+                    <span class="tut-lesson-no">#${noOf(i)}</span>
                     <span class="tut-lesson-main"><span class="tut-lesson-title"></span><span class="tut-lesson-sum"></span></span>
                     <span class="tut-lesson-mark">${done.has(i) ? '✓' : '›'}</span>
+                </button>` : `
+                <button type="button" class="tut-lesson-btn tut-lesson-locked" data-lesson="${i}" aria-disabled="true" title="${LESSONS[i].locked} 업데이트에서 열립니다">
+                    <span class="tut-lesson-no">🔒</span>
+                    <span class="tut-lesson-main"><span class="tut-lesson-title"></span><span class="tut-lesson-sum"></span></span>
+                    <span class="tut-lesson-mark"></span>
                 </button>`).join('')}
             </div>`;
         menuEl.querySelectorAll('.tut-lesson-btn').forEach(btn => {
             const l = LESSONS[+btn.dataset.lesson];
             btn.querySelector('.tut-lesson-title').textContent = l.title;
-            btn.querySelector('.tut-lesson-sum').textContent = `${l.summary} · ${l.steps.length}단계`;
+            if (btn.classList.contains('tut-lesson-locked')) {
+                btn.querySelector('.tut-lesson-sum').textContent = `${l.locked} 업데이트에서 열립니다`;
+                return;
+            }
+            btn.querySelector('.tut-lesson-sum').textContent = `${l.summary} · ${l.steps.length}단계${l.locked ? ` · ${l.locked} 미리보기` : ''}`;
             btn.addEventListener('click', () => startLesson(+btn.dataset.lesson));
         });
         const cont = menuEl.querySelector('.tut-continue');
         if (cont) {
-            cont.querySelector('.tut-continue-title').textContent = `#${firstTodo + 1} ${LESSONS[firstTodo].title}`;
+            cont.querySelector('.tut-continue-title').textContent = `#${noOf(firstTodo)} ${LESSONS[firstTodo].title}`;
             cont.addEventListener('click', () => startLesson(firstTodo));
         }
         menuEl.querySelectorAll('.tut-tab').forEach(btn => btn.addEventListener('click', () => {
@@ -1228,6 +1434,11 @@
         window.addEventListener('keydown', onKey, true);
         GUARDED.forEach(t => window.addEventListener(t, guard, true));
         tickId = setInterval(tick, 250);
+        // 본 게임에서 잠긴(미리보기) 과정을 골라 Teaser 1.6.3으로 넘어온 경우 — 그 과정을 바로 연다
+        let pending = null;
+        try { pending = sessionStorage.getItem(PENDING_KEY); sessionStorage.removeItem(PENDING_KEY); } catch (e) { /* 없음 */ }
+        const pendingIdx = pending ? LESSONS.findIndex(l => l.id === pending) : -1;
+        if (typeof lesson !== 'number' && pendingIdx >= 0 && isAvail(pendingIdx) && onPreviewPage()) lesson = pendingIdx;
         if (typeof lesson === 'number') startLesson(lesson);
         else if (doneSet().size > 0) showMenu();
         else startLesson(0);
