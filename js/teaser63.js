@@ -1,4 +1,4 @@
-// ===== Hemicycle 티저 1.6.3 (teaser63.html 전용) — "De l'audace!" 국회공성전 미리보기 =====
+// ===== Hemicycle 티저 1.6.3 (teaser63 · 64) — "De l'audace!" 국회공성전 미리보기 =====
 // teaser63.html = main.html + js/teaser61.js(1.6.1) + js/teaser62.js(1.6.2) + 이 파일. 저장 공간은 따로 ('hemicycleTeaser63:')
 //
 //   입법 › 공성전
@@ -22,7 +22,7 @@
 (function () {
     'use strict';
     const root = document.documentElement;
-    if (root.getAttribute('data-app-mode') !== 'teaser' || root.getAttribute('data-teaser') !== '63') return;
+    if (root.getAttribute('data-app-mode') !== 'teaser' || !['63', '64'].includes(root.getAttribute('data-teaser'))) return;
 
     const esc = s => (typeof escapeHtmlText === 'function' ? escapeHtmlText(String(s ?? '')) : String(s ?? ''));
     const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -299,8 +299,11 @@
             V: Math.max(0.25, W / 1700),
         };
         g.pol = (rad, a) => [CX + rad * Math.cos(a), CY - rad * Math.sin(a)];
-        // 의장석: 가운데 빈 곳, 의석을 바라보는 단상
-        g.podium = { x: CX, y: CY - rIn * 0.42, w: Math.max(26, rIn * 0.62), h: Math.max(9, dotR * 1.8) };
+        // 의장석: 가운데 빈 곳, 의석을 바라보는 단상 — 반원 화면과 같은 자리 (js/teaserpodium.js)
+        const TP = window.TeaserPodium;
+        g.podium = TP ? TP.geom(CX, CY, W, 'house') : { x: CX, y: CY - rIn * 0.42, w: Math.max(26, rIn * 0.62), h: Math.max(9, dotR * 1.8) };
+        if (g.podium.speakerY == null) g.podium.speakerY = g.podium.y - g.podium.h;
+        g.showPodium = kind => (TP ? TP.showIn(kind) : true);
         // 자리 → 자기 줄을 따라 가까운 통로 → 통로를 따라 안쪽 둘레까지
         g.seatToFoot = d => {
             const rad = seatR(d), th = Math.atan2(CY - d.y, d.x - CX);
@@ -339,8 +342,8 @@
             ctx.strokeStyle = color; ctx.lineWidth = 1; ctx.strokeRect(W / 2 - w / 2 - 10, g.bannerY - size - 4, w + 20, size + 12);
             ctx.fillStyle = color; ctx.fillText(text, W / 2, g.bannerY);
         };
-        // 바탕: 좌석(filled면 의원이 앉아 있는 모습, 그 밖은 빈 좌석) · 통로 · 의장석
-        g.base = (filled) => {
+        // 바탕: 좌석(filled면 의원이 앉아 있는 모습, 그 밖은 빈 좌석) · 통로 · 의장석(설정에 따라, speaker면 의장도)
+        g.base = (filled, kind, speaker = true) => {
             ctx.clearRect(0, 0, W, H);
             ctx.fillStyle = C.bg; ctx.fillRect(0, 0, W, H);
             ctx.lineWidth = 1;
@@ -354,11 +357,15 @@
             g.AISLES.forEach(a => { const [x0, y0] = g.pol(rIn, a), [x1, y1] = g.pol(Math.hypot(W / 2, CY), a); ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke(); });
             ctx.beginPath(); ctx.arc(CX, CY, rIn, Math.PI, 0); ctx.stroke();
             ctx.restore();
+            if (!g.showPodium(kind)) return;
             const pd = g.podium;
-            ctx.fillStyle = C.wood; ctx.fillRect(pd.x - pd.w / 2, pd.y - pd.h / 2, pd.w, pd.h);
-            ctx.strokeStyle = g.GOLD; ctx.lineWidth = 1; ctx.strokeRect(pd.x - pd.w / 2, pd.y - pd.h / 2, pd.w, pd.h);
-            ctx.font = `10px ${C.font}`; ctx.textAlign = 'center'; ctx.fillStyle = C.dim;
-            ctx.fillText('의장석', pd.x, pd.y + pd.h / 2 + 11);
+            if (TP) TP.draw(ctx, pd, 'house', { wood: C.wood, speaker, label: '의장석', labelColor: C.dim });
+            else {
+                ctx.fillStyle = C.wood; ctx.fillRect(pd.x - pd.w / 2, pd.y - pd.h / 2, pd.w, pd.h);
+                ctx.strokeStyle = g.GOLD; ctx.lineWidth = 1; ctx.strokeRect(pd.x - pd.w / 2, pd.y - pd.h / 2, pd.w, pd.h);
+                ctx.font = `10px ${C.font}`; ctx.textAlign = 'center'; ctx.fillStyle = C.dim;
+                ctx.fillText('의장석', pd.x, pd.y + pd.h / 2 + 11);
+            }
         };
         // 재생: frame(t)가 true를 돌려주면 끝. 속도(ui.animSpeed)만큼 빨리, 누르면 끝으로, 끝나면 잠깐 두었다 사라짐
         g.run = (frame, total, finish) => {
@@ -437,7 +444,7 @@
         const total = Math.max(SPREAD + 120 + WALK + BOUNCE + HOLD, r.success ? lastArrive : expelEnd, ...movers.map(m => m.end || 0)) + 250;
 
         g.run(t => {
-            g.base(null);
+            g.base(null, 'breakthrough');
             // 계엄군 봉쇄선
             ctx.save();
             ctx.strokeStyle = ALERT; ctx.lineWidth = 3; ctx.setLineDash([10, 6]);
@@ -526,14 +533,14 @@
         // 결과: 실패하면 점거 의원들이 밀려나 자리로, 성공하면 의장이 의장석을 떠난다
         let total = clashEnd + 900;
         if (!r.success) movers.forEach(m => { m.back = m.path.slice().reverse(); m.backLen = polyLen(m.back); m.backStart = clashEnd + Math.random() * 400; total = Math.max(total, m.backStart + m.backLen / V + 200); });
-        const speakerPath = [[podium.x, podium.y - podium.h], [podium.x, podium.y - podium.h - 6], [CX + g.gateHalf * 0.4, gateY], [CX + g.gateHalf * 0.4, g.H + 12]];
+        const speakerPath = [[podium.x, podium.speakerY], [podium.x, podium.speakerY - 6], [CX + g.gateHalf * 0.4, gateY], [CX + g.gateHalf * 0.4, g.H + 12]];
         const speakerLen = polyLen(speakerPath);
         if (r.success) total = Math.max(total, clashEnd + speakerLen / V + 300);
 
         g.run(t => {
-            g.base(i => !partSet.has(i) || !movers.some(m => m.s.i === i && t >= m.start));
+            g.base(i => !partSet.has(i) || !movers.some(m => m.s.i === i && t >= m.start), 'occupy', false);
             // 의장
-            let sx = podium.x, sy = podium.y - podium.h, salpha = 1;
+            let sx = podium.x, sy = podium.speakerY, salpha = 1;
             if (r.success && t > clashEnd) { [sx, sy] = polyAt(speakerPath, (t - clashEnd) * V); if (sy > gateY) salpha = Math.max(0, 1 - (sy - gateY) / 30); }
             g.dot(sx, sy, GOLD, salpha, C.text, dotR * 1.1);
             const clashing = t >= arriveAll * 0.7 && t < clashEnd;
