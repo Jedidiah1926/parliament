@@ -351,12 +351,12 @@ window.DnoLangPacks.en = {
    "to": "\"Assigned total\" in Parliament › Composition is the sum of all party seats, and it can't exceed the total. If the existing parties already fill all $1 seats, there's no room for a new party. Raise the total (e.g. $2) or cut another party's seats to make room."
   },
   {
-   "re": "의회 › 정당 › 당수에서 정당 대표를 정합니다\\. 다수당 \"(.+?)\"의 당수 이름을 적어보세요\\.",
-   "to": "Party leaders are set in Parliament › Parties › Leaders. Enter a leader name for the majority party \"$1\"."
+   "re": "의회 › 정당 › 당수에서 정당 대표를 정합니다\\. 다수당 \"(.+?)\"의 당수 이름을 적어보세요\\.( \\(1983년의 연방총리는 헬무트 콜이었어요\\))?",
+   "to": "Party leaders are set in Parliament › Parties › Leaders. Enter a leader name for the majority party \"$1\". (In 1983 the Federal Chancellor was Helmut Kohl.)"
   },
   {
-   "re": "의회 › 정당 › 당수에서 정당 대표를 정합니다\\. 다수당의 당수 이름을 적어보세요\\.",
-   "to": "Party leaders are set in Parliament › Parties › Leaders. Enter a leader name for the majority party."
+   "re": "의회 › 정당 › 당수에서 정당 대표를 정합니다\\. 다수당의 당수 이름을 적어보세요\\.( \\(1983년의 연방총리는 헬무트 콜이었어요\\))?",
+   "to": "Party leaders are set in Parliament › Parties › Leaders. Enter a leader name for the majority party. (In 1983 the Federal Chancellor was Helmut Kohl.)"
   },
   {
    "re": "다음은 (#\\d+) \"(.+?)\" \\((.+?)\\)입니다\\. 바로 이어서 하거나, 나중에 목차에서 골라 할 수 있어요\\.",
@@ -3173,8 +3173,8 @@ window.DnoLangPacks.en = {
    "Tutorial"
   ],
   [
-   "처음이라면 여기서 시작하세요. 가상의 나라에서 기본 튜토리얼 6개로 화면과 조작을 직접 해보며 익히고, 선거 · 지도 · 단일화 · 부정선거 같은 기능은 세부 튜토리얼에서 골라 배울 수 있어요.",
-   "Start here if you're new. In a made-up country, six basic lessons walk you through the screens and controls hands-on, and detailed lessons cover features like elections, maps, candidate unification and election fraud whenever you need them."
+   "처음이라면 여기서 시작하세요. 1983년 서독(독일연방공화국)에서 기본 튜토리얼 6개로 화면과 조작을 직접 해보며 익히고, 선거 · 지도 · 단일화 · 부정선거 같은 기능은 세부 튜토리얼에서 골라 배울 수 있어요.",
+   "Start here if you're new. In West Germany (the Federal Republic of Germany) in 1983, six basic lessons walk you through the screens and controls hands-on, and detailed lessons cover features like elections, maps, candidate unification and election fraud whenever you need them."
   ],
   [
    "이어하기",
@@ -4753,8 +4753,8 @@ window.DnoLangPacks.en = {
    "Create from preset"
   ],
   [
-   "튜토리얼 공화국처럼 미리 준비된 나라의 복사본으로 시작.",
-   "Start from a copy of a ready-made nation, like the Tutorial Republic."
+   "서독 튜토리얼처럼 미리 준비된 나라의 복사본으로 시작.",
+   "Start from a copy of a ready-made nation, like the West Germany tutorial."
   ],
   [
    "메뉴 묶음과 항목",
@@ -4885,8 +4885,8 @@ window.DnoLangPacks.en = {
    "Menus · seat screen · saves"
   ],
   [
-   "튜토리얼 공화국에 오신 것을 환영합니다",
-   "Welcome to the Tutorial Republic"
+   "서독에 오신 것을 환영합니다",
+   "Welcome to West Germany"
   ],
   [
    "가상의 나라 \"튜토리얼 공화국\"에서 기본 조작을 직접 해보며 배웁니다. 튜토리얼은 #1 ~ #5로 짧게 나뉘어 있고, 밝게 표시된 곳을 실제로 조작해야 다음 단계로 넘어가요. 이 나라는 복사본(새 세이브)이라 마음껏 바꿔도 괜찮습니다.",
@@ -5069,8 +5069,8 @@ window.DnoLangPacks.en = {
    "Who becomes PM?"
   ],
   [
-   "내각 › 내각 설정에서 대통령제 · 이원집정부제 · 의원내각제 등 정부 형태를 고릅니다. 튜토리얼 공화국은 의원내각제라, 의석이 가장 많은 정당의 대표(당수)가 자동으로 총리가 돼요 (👑 표시).",
-   "Cabinet › Settings is where you choose the form of government (presidential, semi-presidential, parliamentary, ...). The Tutorial Republic is parliamentary, so the leader of the party with the most seats automatically becomes PM (marked 👑)."
+   "내각 › 내각 설정에서 대통령제 · 이원집정부제 · 의원내각제 등 정부 형태를 고릅니다. 서독은 의원내각제라, 의석이 가장 많은 정당의 대표(당수)가 자동으로 총리가 돼요 (👑 표시). 서독에서는 이 자리를 \"연방총리\"라고 불러요 — 직책 이름은 나라마다 정할 수 있습니다.",
+   "Cabinet › Settings is where you choose the form of government (presidential, semi-presidential, parliamentary, ...). West Germany is parliamentary, so the leader of the party with the most seats automatically becomes head of government (marked 👑) — here the post is called \"Federal Chancellor\" (each country can name its own posts)."
   ],
   [
    "다수당 대표 정하기",
@@ -5533,8 +5533,8 @@ window.DnoLangPacks.en = {
    "Menus · seat view · date line · save tabs"
   ],
   [
-   "가상의 나라 \"튜토리얼 공화국\"에서 직접 조작해 보며 배웁니다. 튜토리얼은 두 가지예요 — 기본 튜토리얼(#1 ~ #6)은 처음 쓰는 분을 위한 핵심 흐름이고, 세부 튜토리얼은 이념 · 파벌 · 지도 · 선거 방식 · 정부 권한 같은 기능을 필요한 것만 골라 배웁니다. 밝게 표시된 곳을 실제로 조작해야 넘어가는 단계도 있어요. 이 나라는 복사본(새 세이브)이라 마음껏 바꿔도 괜찮습니다.",
-   "You'll learn by doing in the fictional \"Tutorial Republic\". There are two kinds of tutorials — the basic tutorial (#1 – #6) walks newcomers through the core flow, and the detailed tutorials cover features like ideologies, factions, maps, election systems and government powers so you can pick just what you need. Some steps only move on once you've actually done the highlighted thing. This country is a copy (a new save), so feel free to change anything."
+   "1983년 3월, 총선을 막 치른 서독(독일연방공화국)에서 직접 조작해 보며 배웁니다. 연방의회에는 기민·기사연합 · 사회민주당 · 자유민주당 · 녹색당이 있고, 기민·기사연합과 자유민주당이 연정을 꾸려 집권하고 있어요. 튜토리얼은 두 가지예요 — 기본 튜토리얼(#1 ~ #6)은 처음 쓰는 분을 위한 핵심 흐름이고, 세부 튜토리얼은 이념 · 파벌 · 지도 · 선거 방식 · 정부 권한 같은 기능을 필요한 것만 골라 배웁니다. 밝게 표시된 곳을 실제로 조작해야 넘어가는 단계도 있어요. 이 나라는 복사본(새 세이브)이라 마음껏 바꿔도 괜찮습니다.",
+   "You'll learn by doing in West Germany (the Federal Republic of Germany) in March 1983, just after a federal election. The Bundestag has the CDU/CSU, the SPD, the FDP and the Greens, and the CDU/CSU and FDP govern together in a coalition. There are two kinds of tutorials — the basic tutorial (#1 – #6) walks newcomers through the core flow, and the detailed tutorials cover features like ideologies, factions, maps, election systems and government powers so you can pick just what you need. Some steps only move on once you've actually done the highlighted thing. This country is a copy (a new save), so feel free to change anything."
   ],
   [
    "날짜와 회기",
@@ -5641,8 +5641,8 @@ window.DnoLangPacks.en = {
    "Main screen"
   ],
   [
-   "⌂를 누르면 저장한 뒤 메인 화면으로 갑니다. 메인 화면에서는 시작하기(세이브 고르기 · 프리셋 · 파일 불러오기), 맵 메이커, 로드맵, 설정(라이트 · 다크 · 네온 테마, 데스크톱 · 모바일 화면 모드)을 고르고, 🌐로 언어를 바꿉니다. 이 튜토리얼은 시작하기 › 프리셋의 \"튜토리얼 공화국\"으로 언제든 다시 할 수 있어요.",
-   "⌂ saves and takes you to the main screen. There you choose Start (pick a save · preset · load a file), Map Maker, Roadmap and Settings (light · dark · neon theme, desktop · mobile layout), and change the language with 🌐. You can replay this tutorial any time with the \"Tutorial Republic\" preset under Start."
+   "⌂를 누르면 저장한 뒤 메인 화면으로 갑니다. 메인 화면에서는 시작하기(세이브 고르기 · 프리셋 · 파일 불러오기), 맵 메이커, 로드맵, 설정(라이트 · 다크 · 네온 테마, 데스크톱 · 모바일 화면 모드)을 고르고, 🌐로 언어를 바꿉니다. 이 튜토리얼은 시작하기 › 프리셋의 \"서독\"으로 언제든 다시 할 수 있어요.",
+   "⌂ saves and takes you to the main screen. There you choose Start (pick a save · preset · load a file), Map Maker, Roadmap and Settings (light · dark · neon theme, desktop · mobile layout), and change the language with 🌐. You can replay this tutorial any time with the \"West Germany\" preset under Start."
   ],
   [
    "이념과 서브 이념",
@@ -6061,8 +6061,8 @@ window.DnoLangPacks.en = {
    "Theme · language · tutorial"
   ],
   [
-   "⌂로 메인 화면에 가면 설정(라이트 · 다크 · 네온 테마, 모바일 · 데스크톱 화면)과 🌐 언어(언어 팩 불러오기 포함)를 바꿀 수 있어요. 튜토리얼은 시작하기 › 프리셋의 \"튜토리얼 공화국\"으로 언제든 다시 할 수 있고, 기본 튜토리얼(핵심 흐름)과 세부 튜토리얼(기능별)로 나뉘어 있습니다.",
-   "From the main screen (⌂) you can change Settings (light · dark · neon theme, mobile · desktop layout) and the 🌐 language (including loading language packs). Replay the tutorial any time with the \"Tutorial Republic\" preset under Start; it's split into the basic tutorial (core flow) and detailed tutorials (by feature)."
+   "⌂로 메인 화면에 가면 설정(라이트 · 다크 · 네온 테마, 모바일 · 데스크톱 화면)과 🌐 언어(언어 팩 불러오기 포함)를 바꿀 수 있어요. 튜토리얼은 시작하기 › 프리셋의 \"서독\"으로 언제든 다시 할 수 있고, 기본 튜토리얼(핵심 흐름)과 세부 튜토리얼(기능별)로 나뉘어 있습니다.",
+   "From the main screen (⌂) you can change Settings (light · dark · neon theme, mobile · desktop layout) and the 🌐 language (including loading language packs). Replay the tutorial any time with the \"West Germany\" preset under Start; it's split into the basic tutorial (core flow) and detailed tutorials (by feature)."
   ],
   [
    "메인 화면 › 설정의 화면(모바일 · 데스크톱)에서 모바일을 고르면 사이드바 대신 화면 아래 탭 바(묶음 + 의석)와 떠 있는 실행 버튼을 씁니다. 세부 항목은 위쪽 칩 줄에서 고르고, \"의석\"을 누르면 시각 화면으로 넘어가요.",
@@ -7429,6 +7429,8 @@ window.DnoLangPacks.en = {
   ["- 선거 › 선거 기록에 지방선거 · 국민투표 · 대선(총리 선거) 기록도 함께 — 최근 순, 기록 검색 · 종류 필터 (국무회의 기록처럼 기록이 없어도 검색 창 표시)", "- Elections › Records now also lists local elections, referendums and presidential (PM) elections — newest first, with record search and type filters (the search box shows even with no records, like the cabinet records)"],
   ["- 국가 › 미수복 탭 신설 (국가 › 지역 · 권역은 1.6.0)", "- A new Nation › Unrecovered tab (Nation › Districts and Regions arrive in 1.6.0)"],
   ["군부 설정", "Military command"],
+  ["튜토리얼 전면 개정: 서독", "Tutorial overhaul: West Germany"],
+  ["- 튜토리얼 전면 개정 — 가상의 \"튜토리얼 공화국\" 대신 1983년 서독(독일연방공화국, 제10대 연방의회): 실제 정당 · 의석(기민·기사연합 · 사회민주당 · 자유민주당 · 녹색당), 연방의회 · 연방참의원, 주별 지역구 · 성향, 기본법 · 상임위원회, 동독 주는 지역구가 아닌 땅(1.6.6 미리보기에선 미수복 지역)", "- Tutorial overhaul — instead of the made-up \"Tutorial Republic\", West Germany (the Federal Republic of Germany, 10th Bundestag) in 1983: real parties and seats (CDU/CSU · SPD · FDP · Greens), Bundestag and Bundesrat, state districts and leanings, the Basic Law and standing committees, with the East German states as land outside the districts (unrecovered territory in the 1.6.6 preview)"],
   ["- 군부 설정 — 국방부 장관 · 참모 · 장성 등 군 지휘부를 정해 둠 (쿠데타 주도 · 진압에 쓰임)", "- Military command — set up the military leadership such as the defense minister, chiefs of staff and generals (used to lead or put down coups)"],
   ["Give me liberty, or give me death! : 테니스 코트의 맹세", "Give me liberty, or give me death! : The Tennis Court Oath"],
   ["로고는 의회 › 정당 › 로고에서 바꿉니다 (눌러서 열기)", "Change logos in Parliament › Parties › Logo (click to open)"],

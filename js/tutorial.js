@@ -1,5 +1,5 @@
 // ===== Hemicycle — 튜토리얼(조작법 안내) =====
-// "튜토리얼 공화국" 프리셋으로 시작하면 자동으로 켜지는 단계별 안내. 짧은 과정(#1 · #2 · #3 …)으로 나뉘어 있고,
+// "서독"(1983년 독일연방공화국) 튜토리얼 프리셋으로 시작하면 자동으로 켜지는 단계별 안내. 짧은 과정(#1 · #2 · #3 …)으로 나뉘어 있고,
 // 과정은 기본 튜토리얼(핵심 흐름, 순서대로)과 세부 튜토리얼(기능별, 골라서)로 나뉜다.
 // 각 단계마다 화면의 한 곳을 밝게 비추고(나머지는 어둡게) 옆에 설명 말풍선을 띄운다.
 // 필요한 탭은 단계에 들어갈 때 알아서 연다.
@@ -89,7 +89,7 @@
     // id로 찾은 요소를 감싸는 가까운 블록 (없으면 그 요소 자체)
     // ---- 잠긴 과정 (다음 업데이트 미리보기 기능) ----
     // locked: '1.6.x' — 개발자 모드(설정 › 기타 설정)를 켜야 열리고, 그 기능이 있는 Teaser 1.6.3 화면에서 진행한다.
-    // 본 게임에서 고르면 teaser63.html로 옮겨 튜토리얼 공화국으로 시작한 뒤 그 과정을 바로 연다.
+    // 본 게임에서 고르면 teaser63.html로 옮겨 서독 튜토리얼로 시작한 뒤 그 과정을 바로 연다.
     /* global emergencyPowers, presElectionMode */
     const devOn = () => !!(window.HemiDev && window.HemiDev.isOn());
     const onPreviewPage = () => ['63', '64'].includes(document.documentElement.getAttribute('data-teaser'));
@@ -115,8 +115,8 @@
             summary: '메뉴 이동 · 의석 화면 · 날짜 줄 · 세이브 탭',
             steps: [
                 {
-                    title: '튜토리얼 공화국에 오신 것을 환영합니다',
-                    text: '가상의 나라 "튜토리얼 공화국"에서 직접 조작해 보며 배웁니다. 튜토리얼은 두 가지예요 — 기본 튜토리얼(#1 ~ #6)은 처음 쓰는 분을 위한 핵심 흐름이고, 세부 튜토리얼은 이념 · 파벌 · 지도 · 선거 방식 · 정부 권한 같은 기능을 필요한 것만 골라 배웁니다. 밝게 표시된 곳을 실제로 조작해야 넘어가는 단계도 있어요. 이 나라는 복사본(새 세이브)이라 마음껏 바꿔도 괜찮습니다.',
+                    title: '서독에 오신 것을 환영합니다',
+                    text: '1983년 3월, 총선을 막 치른 서독(독일연방공화국)에서 직접 조작해 보며 배웁니다. 연방의회에는 기민·기사연합 · 사회민주당 · 자유민주당 · 녹색당이 있고, 기민·기사연합과 자유민주당이 연정을 꾸려 집권하고 있어요. 튜토리얼은 두 가지예요 — 기본 튜토리얼(#1 ~ #6)은 처음 쓰는 분을 위한 핵심 흐름이고, 세부 튜토리얼은 이념 · 파벌 · 지도 · 선거 방식 · 정부 권한 같은 기능을 필요한 것만 골라 배웁니다. 밝게 표시된 곳을 실제로 조작해야 넘어가는 단계도 있어요. 이 나라는 복사본(새 세이브)이라 마음껏 바꿔도 괜찮습니다.',
                 },
                 {
                     // 일부러 다른 화면(국가 › 상징)을 띄워 두고 메뉴로 돌아오게 한다
@@ -337,14 +337,14 @@
                     before: [go('cabinet', 'pm'), showPanel('controls')],
                     target: () => pmBlock(),
                     title: '총리는 누가 될까?',
-                    text: '내각 › 내각 설정에서 대통령제 · 이원집정부제 · 의원내각제 등 정부 형태를 고릅니다. 튜토리얼 공화국은 의원내각제라, 의석이 가장 많은 정당의 대표(당수)가 자동으로 총리가 돼요 (👑 표시).',
+                    text: '내각 › 내각 설정에서 대통령제 · 이원집정부제 · 의원내각제 등 정부 형태를 고릅니다. 서독은 의원내각제라, 의석이 가장 많은 정당의 대표(당수)가 자동으로 총리가 돼요 (👑 표시). 서독에서는 이 자리를 "연방총리"라고 불러요 — 직책 이름은 나라마다 정할 수 있습니다.',
                 },
                 {
                     before: [go('setup', 'party'), call('switchPartyGroupInnerTab', 'leader'), showPanel('controls')],
                     target: () => leaderInput(),
                     allow: () => { const el = leaderInput(); return el ? [el.closest('.card-item')] : []; },
                     title: '다수당 대표 정하기',
-                    text: () => `의회 › 정당 › 당수에서 정당 대표를 정합니다. 다수당${majorityParty() ? ` "${majorityParty().name}"` : ''}의 당수 이름을 적어보세요.`,
+                    text: () => `의회 › 정당 › 당수에서 정당 대표를 정합니다. 다수당${majorityParty() ? ` "${majorityParty().name}"` : ''}의 당수 이름을 적어보세요. (1983년의 연방총리는 헬무트 콜이었어요)`,
                     task: () => {
                         const p = majorityParty();
                         if (!p) return true; // 자동 총리를 쓰지 않는 나라면 이 단계는 건너뜀
@@ -408,7 +408,7 @@
                     before: [showPanel('controls')],
                     target: '#saveTabBar .save-tab-home',
                     title: '메인 화면',
-                    text: '⌂를 누르면 저장한 뒤 메인 화면으로 갑니다. 메인 화면에서는 시작하기(세이브 고르기 · 프리셋 · 파일 불러오기), 맵 메이커, 로드맵, 설정(라이트 · 다크 · 네온 테마, 데스크톱 · 모바일 화면 모드)을 고르고, 🌐로 언어를 바꿉니다. 이 튜토리얼은 시작하기 › 프리셋의 "튜토리얼 공화국"으로 언제든 다시 할 수 있어요.',
+                    text: '⌂를 누르면 저장한 뒤 메인 화면으로 갑니다. 메인 화면에서는 시작하기(세이브 고르기 · 프리셋 · 파일 불러오기), 맵 메이커, 로드맵, 설정(라이트 · 다크 · 네온 테마, 데스크톱 · 모바일 화면 모드)을 고르고, 🌐로 언어를 바꿉니다. 이 튜토리얼은 시작하기 › 프리셋의 "서독"으로 언제든 다시 할 수 있어요.',
                 },
             ],
         },
@@ -640,7 +640,7 @@
                     before: [go('vote', 'elecSettings'), showPanel('controls')],
                     target: () => document.getElementById('t62EcPanel') || '#contentElecSettings',
                     title: '과반과 의회 결정',
-                    text: '선거인 과반을 얻어야 당선입니다. 아무도 과반이 안 되면 의회가 상위 3명 중에서 고르거나(미국식) 선거인을 가장 많이 얻은 후보가 당선되게 할 수 있어요. 튜토리얼 공화국은 북부 · 서부 · 남부 · 동부 네 권역으로 나뉘어 있어, 권역마다 선거인을 뽑습니다.',
+                    text: '선거인 과반을 얻어야 당선입니다. 아무도 과반이 안 되면 의회가 상위 3명 중에서 고르거나(미국식) 선거인을 가장 많이 얻은 후보가 당선되게 할 수 있어요. 서독은 북독일 · 서독일 · 남독일 세 권역으로 나뉘어 있어, 권역마다 선거인을 뽑습니다.',
                 },
                 {
                     before: [go('vote', 'elecPresidential'), showPanel('controls')],
@@ -1288,7 +1288,7 @@
         li = Math.max(0, Math.min(LESSONS.length - 1, li));
         const l = LESSONS[li];
         if (l.locked && !devOn()) { showMenu(); return; }
-        // 미리보기 기능은 Teaser 1.6.3 화면에만 있다 — 그 화면으로 옮겨 튜토리얼 공화국으로 시작한 뒤 이 과정을 연다
+        // 미리보기 기능은 Teaser 1.6.3 화면에만 있다 — 그 화면으로 옮겨 서독 튜토리얼로 시작한 뒤 이 과정을 연다
         if (l.locked && !onPreviewPage()) { launchPreview(l); return; }
         lessonIdx = li;
         showStep(0);
@@ -1297,7 +1297,7 @@
     function launchPreview(l) {
         try {
             sessionStorage.setItem('dnoBootPresetId', 'builtin:tutorial');
-            sessionStorage.setItem('dnoBootNewSaveName', `튜토리얼 공화국 (${l.locked} 미리보기)`);
+            sessionStorage.setItem('dnoBootNewSaveName', `서독 (${l.locked} 미리보기)`);
             sessionStorage.setItem(PENDING_KEY, l.id);
         } catch (e) { /* sessionStorage 없음 — 그냥 화면만 옮긴다 */ }
         stop();

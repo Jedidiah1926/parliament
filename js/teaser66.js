@@ -12,7 +12,8 @@
 /* global getAppState, setAppState, renderDistrictSvgInto, districtRenderNamePanel, districtActiveSeatCount,
    elecSimulateDistrictsSvg, districtNames, districtSeatCounts, districtGrid, selectedDistrictKey,
    districtMapMode, districtRedrawAllMaps, renderDistrictListPanel, elecUpdateDistrictInfo, showCustomConfirm, escapeHtmlText,
-   switchSubTab, switchMainTab, elecSwitchSub, switchDispTab, districtUpdateModeUI, districtInitCanvas, currentMainTab, currentSubTab */
+   switchSubTab, switchMainTab, elecSwitchSub, switchDispTab, districtUpdateModeUI, districtInitCanvas, currentMainTab, currentSubTab,
+   districtSvgMapFor, districtOrderSync */
 (function () {
     'use strict';
     if (document.documentElement.getAttribute('data-app-mode') !== 'teaser' || (document.documentElement.getAttribute('data-teaser') || '66') !== '66') return;
@@ -51,6 +52,24 @@
             unrecovered[key] = id;
         });
         brush = null;
+        adoptUnrecDistricts();
+    }
+    // 미수복 지역이 지도엔 있지만 지역구가 아닌 땅으로 저장돼 있으면 (예: 서독 튜토리얼의 동독 주 — 본 게임엔 미수복이 없어 지역구에서 뺌)
+    // 의석 수가 정해진 원에서 지역구로 들인다. 미수복이라 선거에선 빠지고, 통일하면 그대로 일반 지역구가 된다
+    function adoptUnrecDistricts() {
+        if (districtMapMode !== 'svg') return;
+        ['house', 'senate', 'third'].forEach(ch => {
+            const shapes = new Set((districtSvgMapFor(ch)?.shapes || []).map(s => s.key));
+            let added = false;
+            Object.keys(unrecovered).forEach(key => {
+                if (!shapes.has(key) || !(districtSeatCounts[key]?.[ch] > 0)) return;
+                districtGrid[ch] = districtGrid[ch] || {};
+                if (districtGrid[ch][key]) return;
+                districtGrid[ch][key] = true;
+                added = true;
+            });
+            if (added) districtOrderSync(ch);
+        });
     }
 
     // ---- 저장 · 불러오기: 세이브에 teaser 칸으로 ----
