@@ -1,7 +1,8 @@
 // ===== Hemicycle 티저 1.6.4 (teaser64.html 전용) — "How the mighty have fallen" 미리보기 =====
 // teaser64.html = main.html + js/teaserpodium.js + js/teaser61.js · 62 · 63 (1.6.1 ~ 1.6.3) + 이 파일. 저장 공간은 따로 ('hemicycleTeaser64:')
 //
-//   - 의회 › 세력 변화: 정당 의석을 시점마다 기록해 세력 변화 타임라인으로 보여 준다 (누적 영역 그래프 + 변화 표).
+//   - 의회 › 세력 변화: 정당 의석을 시점마다 기록하고, 오른쪽 시각 화면 "세력 변화" 탭에 정당 역사 도표로 그린다
+//     (시간은 위 → 아래, 기록마다 의석 비율 띠, 기록 사이는 정당별로 흐르는 띠 — 아래로 스크롤). 왼쪽에는 기록 버튼 · 변화 표.
 //     총선 결과를 의회에 반영할 때 자동으로 기록되고, "지금 기록하기"로 직접 남기거나 선거 기록에서 가져올 수 있다.
 //   - 의회 › 위키 틀: 위키백과 의회 정보상자처럼 의석 배치 · 정당별 의석 · 집권 세력(정부 / 야당) · 지도부를 한눈에 보여 주는 틀,
 //     위키 문법(Infobox legislature)으로 복사 · 반원 그림 저장
@@ -29,7 +30,7 @@
     //   ranking: { title, rows:[{ id, name, flag, bloc, score, prevRank, self }] }
     let S = fresh();
     function fresh() { return { timeline: [], wiki: { place: '', founded: '', nextElection: '', system: '' }, ranking: defaultRanking() }; }
-    let ui = { tlChamber: 'house', tlView: 'area', wikiChamber: 'house' };
+    let ui = { tlChamber: 'house', wikiChamber: 'house' };
 
     const origGet = window.getAppState;
     window.getAppState = function () {
@@ -105,54 +106,82 @@
         return n;
     }
 
-    function timelineChart(snaps, width) {
-        const W = Math.max(300, Math.round(width || 640)), H = Math.round(Math.min(300, Math.max(200, W * 0.55))), L = 34, R = 12, T = 12, B = 46;
+    // ---- 정당 역사 도표 (오른쪽 시각 화면, 아래로 흐름) ----
+    // 기록 하나가 가로 띠 하나(폭 = 의석 비율), 시간은 위에서 아래로. 이웃한 기록 사이는 정당마다 흐르는 띠로 이어
+    // 정당이 생기고 · 커지고 · 줄고 · 사라지는 모습을 보여 준다. 집권 세력은 금색 테두리, 가운데 점선은 과반.
+    function partyOrder(snaps) {
         const ids = [];
+        const idx = id => { const k = parties.findIndex(p => String(p.id) === String(id)); return k < 0 ? 1e6 : k; };
         snaps.forEach(s => s.parties.forEach(p => { if (!ids.some(x => String(x) === String(p.id))) ids.push(p.id); }));
+        const first = id => snaps.findIndex(s => s.parties.some(p => String(p.id) === String(id)));
+        return ids.sort((a, b) => (idx(a) - idx(b)) || (first(a) - first(b)));
+    }
+    function historyChart(snaps, width) {
+        const W = Math.max(320, Math.round(width || 600));
+        const LW = Math.min(132, Math.round(W * 0.26)), X0 = LW + 10, X1 = W - 10, CW = X1 - X0;
+        const BAR = 26, FLOW = 52, TOP = 8;
+        const ids = partyOrder(snaps);
         const info = id => { for (let i = snaps.length - 1; i >= 0; i--) { const p = snaps[i].parties.find(x => String(x.id) === String(id)); if (p) return p; } return { name: '?', color: '#888' }; };
         const seat = (s, id) => (s.parties.find(x => String(x.id) === String(id)) || {}).seats || 0;
-        const n = snaps.length;
-        const xAt = i => (n === 1 ? L + (W - L - R) / 2 : L + (W - L - R) * i / (n - 1));
-        const maxTotal = Math.max(...snaps.map(s => s.total), 1);
-        let body = '';
-        if (ui.tlView === 'area') {
-            // 누적 영역 (점유율 %) — 한 시점뿐이면 막대
-            const cum = snaps.map(() => 0);
+        // 기록마다 정당별 [시작 x, 끝 x] — 의석이 0인 정당도 제자리에 폭 0으로 두어 흐름이 자연스럽게 생기고 사라진다
+        const spans = snaps.map(s => {
+            let x = X0; const m = {};
+            ids.forEach(id => { const w = s.total ? seat(s, id) / s.total * CW : 0; m[id] = [x, x + w]; x += w; });
+            return m;
+        });
+        const yOf = i => TOP + i * (BAR + FLOW);
+        const H = yOf(snaps.length - 1) + BAR + 14;
+        let flows = '', bars = '', labels = '';
+        for (let i = 0; i < snaps.length - 1; i++) {
+            const yb = yOf(i) + BAR, yt = yOf(i + 1), ym = (yb + yt) / 2;
             ids.forEach(id => {
-                const lo = snaps.map((s, i) => cum[i]);
-                snaps.forEach((s, i) => { cum[i] += s.total ? seat(s, id) / s.total : 0; });
-                const y = v => T + (H - T - B) * (1 - v);
+                const [a0, a1] = spans[i][id], [c0, c1] = spans[i + 1][id];
+                if (a1 - a0 < 0.2 && c1 - c0 < 0.2) return;
                 const p = info(id);
-                const tip = `${p.name}: ${snaps.map(s => `${s.label || s.date} ${seat(s, id)}석`).join(' → ')}`;
-                if (n === 1) {
-                    const bw = 60;
-                    body += `<rect x="${xAt(0) - bw / 2}" y="${y(cum[0])}" width="${bw}" height="${y(lo[0]) - y(cum[0])}" fill="${esc(p.color)}"><title>${esc(tip)}</title></rect>`;
-                } else {
-                    const top = snaps.map((s, i) => `${xAt(i)},${y(cum[i])}`).join(' ');
-                    const bot = snaps.map((s, i) => `${xAt(i)},${y(lo[i])}`).reverse().join(' ');
-                    body += `<polygon points="${top} ${bot}" fill="${esc(p.color)}" fill-opacity=".85" stroke="${esc(p.color)}" stroke-width=".5"><title>${esc(tip)}</title></polygon>`;
-                }
+                flows += `<path d="M${a0},${yb} L${a1},${yb} C${a1},${ym} ${c1},${ym} ${c1},${yt} L${c0},${yt} C${c0},${ym} ${a0},${ym} ${a0},${yb} Z" fill="${esc(p.color)}" fill-opacity=".42"><title>${esc(`${p.name}: ${seat(snaps[i], id)} → ${seat(snaps[i + 1], id)}석`)}</title></path>`;
             });
-            body += `<line x1="${L}" x2="${W - R}" y1="${T + (H - T - B) / 2}" y2="${T + (H - T - B) / 2}" class="t64-half"/><text x="${L - 4}" y="${T + (H - T - B) / 2 + 3}" class="t64-ax" text-anchor="end">50%</text>`;
-        } else {
-            // 선 그래프 (의석 수)
-            const y = v => T + (H - T - B) * (1 - v / maxTotal);
-            ids.forEach(id => {
-                const p = info(id);
-                const pts = snaps.map((s, i) => `${xAt(i)},${y(seat(s, id))}`).join(' ');
-                body += `<polyline points="${pts}" fill="none" stroke="${esc(p.color)}" stroke-width="2.5"><title>${esc(p.name)}</title></polyline>`;
-                snaps.forEach((s, i) => { body += `<circle cx="${xAt(i)}" cy="${y(seat(s, id))}" r="3" fill="${esc(p.color)}"><title>${esc(`${p.name} ${seat(s, id)}석 — ${s.label || s.date}`)}</title></circle>`; });
-            });
-            [0, 0.5, 1].forEach(k => { body += `<text x="${L - 4}" y="${y(maxTotal * k) + 3}" class="t64-ax" text-anchor="end">${Math.round(maxTotal * k)}</text>`; });
         }
         snaps.forEach((s, i) => {
-            const maxCh = Math.max(4, Math.floor((W - L - R) / Math.max(1, n) / 7));
-            const lab = (s.label || s.date || `#${i + 1}`).slice(0, maxCh);
-            body += `<text x="${xAt(i)}" y="${H - B + 14}" class="t64-ax" text-anchor="middle">${esc(lab)}</text>`;
-            if (s.date && s.label) body += `<text x="${xAt(i)}" y="${H - B + 27}" class="t64-ax t64-ax-dim" text-anchor="middle">${esc(String(s.date).slice(0, maxCh))}</text>`;
+            const y = yOf(i);
+            const ruling = new Set((s.ruling || []).map(String));
+            ids.forEach(id => {
+                const [x0, x1] = spans[i][id], w = x1 - x0, n = seat(s, id);
+                if (n <= 0) return;
+                const p = info(id);
+                const gov = ruling.has(String(id));
+                bars += `<rect x="${x0}" y="${y}" width="${w}" height="${BAR}" fill="${esc(p.color)}"${gov ? ' class="t64-h-gov"' : ''}><title>${esc(`${p.name} ${n}석 (${Math.round(n / s.total * 100)}%)${gov ? ' · 집권' : ''} — ${s.label || s.date}`)}</title></rect>`;
+                const txt = w > 88 ? `${p.name} ${n}` : w > 26 ? String(n) : '';
+                if (txt) bars += `<text x="${x0 + w / 2}" y="${y + BAR / 2 + 4}" class="t64-h-seg" text-anchor="middle">${esc(txt.length * 7 > w ? String(n) : txt)}</text>`;
+            });
+            const govNames = s.parties.filter(p => ruling.has(String(p.id))).map(p => p.name);
+            labels += `<text x="${LW}" y="${y + 11}" class="t64-h-lab" text-anchor="end">${esc((s.label || s.date || `#${i + 1}`).slice(0, 16))}</text>`;
+            labels += `<text x="${LW}" y="${y + 24}" class="t64-h-sub" text-anchor="end">${esc([s.label ? s.date : '', `${s.total}석`].filter(Boolean).join(' · ').slice(0, 22))}</text>`;
+            if (govNames.length) labels += `<text x="${LW}" y="${y + BAR + 11}" class="t64-h-gov-lab" text-anchor="end">★ ${esc(govNames.join('·').slice(0, 18))}</text>`;
         });
+        const half = `<line x1="${X0 + CW / 2}" x2="${X0 + CW / 2}" y1="0" y2="${H}" class="t64-h-half"/>`;
         const legend = ids.map(id => { const p = info(id); return `<span>${dotHtml(p.color)}${esc(p.name)}</span>`; }).join('');
-        return `<svg viewBox="0 0 ${W} ${H}" class="t64-chart" role="img" aria-label="정당 세력 변화">${body}</svg><div class="t64-legend">${legend}</div>`;
+        return `<div class="t64-legend t64-h-legend">${legend}<span class="t64-dim">★ 집권 · ┆ 과반</span></div>
+            <svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" class="t64-hist" role="img" aria-label="정당 역사 도표">${flows}${half}${bars}${labels}</svg>`;
+    }
+    function renderHistory() {
+        const wrap = document.getElementById('t64HistWrap');
+        if (!wrap) return;
+        const chs = chambers();
+        if (!chs.includes(ui.tlChamber)) ui.tlChamber = chs[0];
+        const snaps = S.timeline.filter(x => x.chamber === ui.tlChamber).sort((a, b) => a.at - b.at);
+        const title = document.getElementById('t64HistTitle');
+        if (title) title.textContent = `${chName(ui.tlChamber)} 세력 변화`;
+        const panel = document.getElementById('dispPanelTimeline');
+        const width = (wrap.clientWidth || (panel && panel.clientWidth) || 600) - 4;
+        wrap.innerHTML = `${chs.length > 1 ? `<div class="t64-seg t64-h-chs">${chs.map(c => `<button type="button" class="${ui.tlChamber === c ? 'on' : ''}" data-hch="${c}">${esc(chName(c))}</button>`).join('')}</div>` : ''}
+            ${snaps.length ? historyChart(snaps, width) : '<div class="t64-empty"><div class="t64-empty-icon">📈</div>아직 기록이 없습니다.<br>왼쪽 의회 › 세력 변화에서 "지금 의석 기록하기"를 누르거나, 총선을 치러 의회에 반영하면 여기에 아래로 쌓여요.</div>'}`;
+        wrap.querySelectorAll('[data-hch]').forEach(b => { b.onclick = () => { ui.tlChamber = b.dataset.hch; renderTimeline(); }; });
+    }
+    function showHistoryTab() {
+        const btn = document.getElementById('dispTabTimeline');
+        if (btn) btn.style.display = '';
+        try { switchDispTab('timeline'); } catch (e) { /* 시각 화면 없음 */ }
+        setTimeout(renderHistory, 60);
     }
     const dotHtml = c => `<i class="t64-dot" style="background:${esc(c)}"></i>`;
     function changeTable(snaps) {
@@ -184,17 +213,13 @@
                 <button type="button" class="t64-btn primary" data-act="snap">📸 지금 의석 기록하기</button>
                 <button type="button" class="t64-btn" data-act="import" ${recCount ? '' : 'disabled'}>선거 기록에서 가져오기${recCount ? ` (${recCount})` : ''}</button>
             </div>
-            ${snaps.length ? `<div class="t64-card">
-                <div class="t64-card-head"><b>${esc(chName(ui.tlChamber))} 세력 변화</b>
-                    <div class="t64-seg"><button type="button" class="${ui.tlView === 'area' ? 'on' : ''}" data-view="area">점유율</button><button type="button" class="${ui.tlView === 'line' ? 'on' : ''}" data-view="line">의석 수</button></div></div>
-                ${timelineChart(snaps, box.clientWidth - 24)}
-            </div>
+            ${snaps.length ? `<div class="t64-card t64-histnote"><span>📊 정당 역사 도표는 오른쪽 시각 화면 "세력 변화" 탭에 아래로 흐르며 그려져요.</span><button type="button" class="t64-btn" data-act="showhist">오른쪽에서 보기</button></div>
             <div class="t64-card">${changeTable(snaps)}</div>
             <details class="t64-fold"><summary>기록 ${snaps.length}개 — 이름 바꾸기 · 지우기</summary>
                 ${snaps.slice().reverse().map(s => `<div class="t64-snap"><input type="text" value="${esc(s.label)}" placeholder="${esc(s.date || '이름 없음')}" data-label="${s.id}"><span class="t64-dim">${esc(s.date)} · ${s.total}석${s.source === 'election' ? ' · 선거' : String(s.source).startsWith('rec:') ? ' · 선거 기록' : ''}</span><button type="button" class="t64-x" data-del="${s.id}" title="지우기">×</button></div>`).join('')}
             </details>` : `<div class="t64-empty"><div class="t64-empty-icon">📈</div>아직 기록이 없습니다.<br>"지금 의석 기록하기"를 누르거나, 총선을 치러 의회에 반영하면 쌓여요.</div>`}`;
         box.querySelectorAll('[data-tlch]').forEach(b => { b.onclick = () => { ui.tlChamber = b.dataset.tlch; renderTimeline(); }; });
-        box.querySelectorAll('[data-view]').forEach(b => { b.onclick = () => { ui.tlView = b.dataset.view; renderTimeline(); }; });
+        const sh = box.querySelector('[data-act="showhist"]'); if (sh) sh.onclick = showHistoryTab;
         box.querySelector('[data-act="snap"]').onclick = () => {
             const n = record('', 'manual', false);
             if (!n) showCustomAlert('기록할 의석이 없습니다.');
@@ -204,6 +229,7 @@
         if (imp) imp.onclick = () => { const n = importRecords(); showCustomAlert(n ? `선거 기록 ${n}개를 가져왔습니다.` : '가져올 선거 기록이 없습니다.'); renderTimeline(); };
         box.querySelectorAll('[data-label]').forEach(i => { i.onchange = () => { const s = S.timeline.find(x => x.id === i.dataset.label); if (s) s.label = i.value.trim(); renderTimeline(); }; });
         box.querySelectorAll('[data-del]').forEach(b => { b.onclick = () => { S.timeline = S.timeline.filter(x => x.id !== b.dataset.del); renderTimeline(); }; });
+        renderHistory();
     }
 
     // ================= 위키식 의회 틀 =================
@@ -406,16 +432,36 @@
         host.appendChild(el(`<div id="content${id}" class="sub-tab-content"></div>`));
     }
     addTab('mainContentSetup', 'subTabList', 'setup', 'timeline', 'Timeline', '세력 변화');
+    // 오른쪽 시각 화면 탭 "세력 변화" — 정당 역사 도표 (아래로 스크롤)
+    (function addDispTab() {
+        const after = document.getElementById('dispTabRegion') || document.getElementById('dispTabCabinet');
+        if (!after) return;
+        const btn = el(`<button class="disp-tab-btn" id="dispTabTimeline" data-tab="timeline" onclick="switchDispTab('timeline')" style="display:none;"><span class="disp-tab-label">세력 변화</span><span class="disp-tab-close" onclick="event.stopPropagation();closeDispTab('timeline')">×</span></button>`);
+        after.parentElement.insertBefore(btn, after.nextSibling);
+        const ref = document.getElementById('dispPanelRegion') || document.getElementById('dispPanelCabinet');
+        if (!ref) return;
+        ref.parentElement.insertBefore(el(`<div class="disp-panel" id="dispPanelTimeline"><div class="chamber-box t64-hist-box">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;"><h3 style="margin:0;border:none;padding:0;"><span class="tno-prompt">&gt; </span><span id="t64HistTitle">세력 변화</span></h3></div>
+            <div id="t64HistWrap"></div></div></div>`), ref.nextSibling);
+    })();
     addTab('mainContentSetup', 'subTabTimeline', 'setup', 'wikibox', 'Wikibox', '위키 틀');
     addTab('mainContentNation', 'subTabNationSettings', 'nation', 'ranking', 'Ranking', '국가 순위');
     const origSwitch = window.switchSubTab;
     window.switchSubTab = function (main, sub) {
         const r = origSwitch.apply(this, arguments);
-        if (main === 'setup' && sub === 'timeline') renderTimeline();
+        if (main === 'setup' && sub === 'timeline') { renderTimeline(); showHistoryTab(); }
         if (main === 'setup' && sub === 'wikibox') renderWikibox();
         if (main === 'nation' && sub === 'ranking') renderRanking();
         return r;
     };
+    const origDisp = window.switchDispTab;
+    window.switchDispTab = function (tab) {
+        const r = origDisp.apply(this, arguments);
+        if (tab === 'timeline') setTimeout(renderHistory, 30);
+        return r;
+    };
+    let resizeTimer = 0;
+    window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(() => { if (document.getElementById('dispPanelTimeline')?.classList.contains('active')) renderHistory(); }, 150); });
     function refresh() { renderTimeline(); renderWikibox(); renderRanking(); }
     window.T64 = { get timeline() { return S.timeline; }, record: (label) => { const n = record(label || '', 'manual', false); renderTimeline(); return n; } };
 
@@ -439,6 +485,18 @@
         .t64-chart { width: 100%; height: auto; display: block; }
         .t64-ax { font-size: 10px; fill: var(--t64-dim); } .t64-ax-dim { opacity: .7; }
         .t64-half { stroke: var(--t64-text); stroke-dasharray: 3 3; opacity: .5; }
+        .t64-histnote { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; font-size: .82rem; color: var(--t64-text); }
+        #dispPanelTimeline { --t64-line: #333; --t64-dim: #888; --t64-text: #ddd; --t64-acc: var(--tno-neon); }
+        html[data-theme-family="modern"] #dispPanelTimeline { --t64-line: var(--m-border); --t64-dim: var(--m-text-3); --t64-text: var(--m-text); --t64-acc: var(--m-accent); }
+        .t64-hist { display: block; }
+        .t64-h-legend { margin: 0 0 10px; position: sticky; top: 0; background: inherit; z-index: 1; padding: 4px 0; }
+        .t64-h-chs { margin-bottom: 8px; }
+        .t64-h-seg { font-size: 11px; fill: #fff; paint-order: stroke; stroke: rgba(0,0,0,.45); stroke-width: 2px; pointer-events: none; }
+        .t64-h-lab { font-size: 11.5px; fill: var(--t64-text); }
+        .t64-h-sub { font-size: 10px; fill: var(--t64-dim); }
+        .t64-h-gov-lab { font-size: 9.5px; fill: #e0b030; }
+        .t64-h-gov { stroke: #e0b030; stroke-width: 2; }
+        .t64-h-half { stroke: var(--t64-text); stroke-dasharray: 3 4; opacity: .45; }
         .t64-legend { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: .75rem; color: var(--t64-dim); margin-top: 4px; }
         .t64-dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 4px; vertical-align: middle; }
         .t64-tablewrap { overflow-x: auto; }
