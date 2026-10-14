@@ -7,10 +7,11 @@
 //     총선 결과를 의회에 반영할 때 자동으로 기록되고, "지금 기록하기"로 직접 남기거나 선거 기록에서 가져올 수 있다.
 //   - 의회 › 위키 틀: 위키 문서의 "원내 구성" 틀처럼 여당 · 야당 정당을 의석과 함께 모은 틀 (가장 큰 정당은 넓은 칸, 나머지는 세 칸씩),
 //     나무위키 문법으로 복사 · 반원 그림 저장
-//   - 국가 › 국가 순위: 냉전 국가 순위 — 꾸밈용 (게임 기능에 영향 없음). 진영 · 점수 · 순위 변동을 직접 꾸민다.
+//   - 세계(국가 아래 새 메뉴) › 국가 순위: 냉전 국가 순위 — 꾸밈용 (게임 기능에 영향 없음). 국기(그림) · 진영 · 하위 이념 · 점수 · 순위 변동.
+//     세계 › 진영: 진영 추가 · 삭제, 색 · 설명, 하위 이념 추가 · 삭제, 진영 구도 막대
 /* global getAppState, setAppState, switchSubTab, parties, coalitions, chamberList, chamberDisplayName, seatKeyFor, chamberLeaders,
    president, pm, govType, nationFlag, chamberLogos, elecRecords, formatNationDate, escapeHtmlText, showCustomAlert, showCustomConfirm,
-   effRoleLabel, dotCache, hasSenateChamber, hasThirdChamber, updateParty */
+   effRoleLabel, dotCache, hasSenateChamber, hasThirdChamber, updateParty, currentSubTab */
 (function () {
     'use strict';
     const root = document.documentElement;
@@ -29,9 +30,10 @@
     //   timeline: [{ id, at, date, label, source, chamber, total, parties:[{id,name,color,seats}], ruling:[id] }]
     //   succession: [{ id, from, to }] — 정당 승계 관계
     //   wiki: { termStart, termEnd, frame } — 원내 구성 틀
-    //   ranking: { title, rows:[{ id, name, flag, bloc, score, prevRank, self }] }
+    //   ranking: { title, rows:[{ id, name, flag, flagKey, flagImg, bloc, ideo, score, prevRank, self }] }
+    //   blocs: [{ id, name, color, desc, ideologies:[{ id, name }] }] — 세계 › 진영
     let S = fresh();
-    function fresh() { return { timeline: [], succession: [], wiki: { termStart: '', termEnd: '', frame: '#233e8b' }, ranking: defaultRanking() }; }
+    function fresh() { return { timeline: [], succession: [], blocs: defaultBlocs(), wiki: { termStart: '', termEnd: '', frame: '#233e8b' }, ranking: defaultRanking() }; }
     let ui = { tlChamber: 'house', wikiChamber: 'house', histView: 'seats', seatMode: 'share', rbPid: null, openSucc: false };
 
     const origGet = window.getAppState;
@@ -50,6 +52,7 @@
         if (!Array.isArray(S.succession)) S.succession = [];
         S.wiki = { ...base.wiki, ...(S.wiki || {}) };
         if (!S.ranking || !Array.isArray(S.ranking.rows)) S.ranking = base.ranking;
+        if (!Array.isArray(S.blocs) || !S.blocs.length && !(src && Array.isArray(src.blocs))) S.blocs = base.blocs;
         refresh();
         return r;
     };
@@ -598,38 +601,168 @@
         };
     }
 
-    // ================= 냉전 국가 순위 (꾸밈용) =================
-    const BLOCS = [['west', '서방 진영', '#3b82f6'], ['east', '동구권', '#dc2626'], ['nonaligned', '비동맹', '#a3a3a3'], ['other', '기타', '#a16207']];
-    const blocOf = k => BLOCS.find(b => b[0] === k) || BLOCS[3];
+    // ================= 세계 › 진영 =================
+    //   S.blocs: [{ id, name, color, desc, ideologies:[{ id, name }] }] — 국가 순위의 국가마다 진영 · 하위 이념을 고른다
+    function defaultBlocs() {
+        const mk = (id, name, color, desc, ideos) => ({ id, name, color, desc, ideologies: ideos.map(n => ({ id: uid(), name: n })) });
+        return [
+            mk('west', '서방 진영', '#3b82f6', '자유 시장 · 의회 민주주의 · 북대서양 동맹', ['자유민주주의', '보수주의', '사회민주주의', '기독교 민주주의']),
+            mk('east', '동구권', '#dc2626', '계획 경제 · 일당 체제 · 바르샤바 조약', ['마르크스-레닌주의', '스탈린주의', '마오쩌둥 사상', '주체사상']),
+            mk('nonaligned', '비동맹', '#a3a3a3', '어느 진영에도 속하지 않는 제3세계', ['티토주의', '아랍 사회주의', '제3세계주의']),
+            mk('other', '기타', '#a16207', '', []),
+        ];
+    }
+    const blocOf = k => S.blocs.find(b => b.id === k) || { id: '', name: '미분류', color: '#777', ideologies: [] };
+    const ideoOf = (b, id) => (b.ideologies || []).find(x => x.id === id) || null;
+    function renderBlocs() {
+        const box = document.getElementById('contentBlocs');
+        if (!box) return;
+        const rows = S.ranking.rows;
+        const total = Math.max(1, rows.length);
+        const members = b => rows.filter(r => r.bloc === b.id);
+        const unassigned = rows.filter(r => !S.blocs.some(b => b.id === r.bloc));
+        box.innerHTML = `<div class="t64-intro">진영을 만들고 색 · 설명 · 하위 이념을 정합니다. 세계 › 국가 순위에서 나라마다 진영과 하위 이념을 고를 수 있어요. (꾸밈용 — 게임 기능에는 영향 없음)</div>
+            <div class="t64-card">
+                <div class="t64-card-head"><b>진영 구도</b><span class="t64-dim">국가 ${rows.length}개</span></div>
+                <div class="t64-bloc-bar">${S.blocs.map(b => { const n = members(b).length; return n ? `<span style="width:${n / total * 100}%;background:${esc(b.color)}" title="${esc(b.name)} ${n}개국"></span>` : ''; }).join('')}${unassigned.length ? `<span style="width:${unassigned.length / total * 100}%;background:#777" title="미분류 ${unassigned.length}개국"></span>` : ''}</div>
+                <div class="t64-legend">${S.blocs.map(b => `<span>${dotHtml(b.color)}${esc(b.name)} ${members(b).length}</span>`).join('')}${unassigned.length ? `<span>${dotHtml('#777')}미분류 ${unassigned.length}</span>` : ''}</div>
+            </div>
+            ${S.blocs.map(b => {
+                const ms = members(b).slice().sort((x, y) => (Number(y.score) || 0) - (Number(x.score) || 0));
+                return `<div class="t64-bloc" style="--bloc:${esc(b.color)}">
+                    <div class="t64-bloc-head">
+                        <input type="color" value="${esc(/^#[0-9a-f]{6}$/i.test(b.color) ? b.color : '#888888')}" data-bc="${esc(b.id)}" title="진영 색">
+                        <input type="text" class="t64-bloc-name" value="${esc(b.name)}" data-bn="${esc(b.id)}" placeholder="진영 이름">
+                        <button type="button" class="t64-x" data-bdel="${esc(b.id)}" title="진영 지우기">×</button>
+                    </div>
+                    <input type="text" class="t64-bloc-desc" value="${esc(b.desc || '')}" data-bd="${esc(b.id)}" placeholder="설명 (예: 계획 경제 · 일당 체제)">
+                    <div class="t64-sub-title">하위 이념</div>
+                    <div class="t64-chips">${(b.ideologies || []).map(x => `<span class="t64-ichip">${esc(x.name)} <small>${rows.filter(r => r.bloc === b.id && r.ideo === x.id).length || ''}</small><button type="button" data-idel="${esc(b.id)}|${esc(x.id)}" title="지우기">×</button></span>`).join('') || '<span class="t64-dim">없음</span>'}</div>
+                    <div class="t64-succ-row"><input type="text" placeholder="하위 이념 추가" data-iadd="${esc(b.id)}"><button type="button" class="t64-btn" data-iaddbtn="${esc(b.id)}">추가</button></div>
+                    <div class="t64-dim t64-small">소속 국가: ${ms.length ? ms.map(r => esc(rowName(r))).join(', ') : '없음'}</div>
+                </div>`;
+            }).join('')}
+            <div class="t64-actions"><button type="button" class="t64-btn primary" data-act="addbloc">+ 진영 추가</button><button type="button" class="t64-btn" data-act="resetblocs">처음 진영으로</button></div>`;
+        const B = id => S.blocs.find(b => b.id === id);
+        box.querySelectorAll('[data-bc]').forEach(i => { i.onchange = () => { const b = B(i.dataset.bc); if (b) { b.color = i.value; renderBlocs(); renderRanking(); } }; });
+        box.querySelectorAll('[data-bn]').forEach(i => { i.onchange = () => { const b = B(i.dataset.bn); if (b) { b.name = i.value.trim() || b.name; renderBlocs(); renderRanking(); } }; });
+        box.querySelectorAll('[data-bd]').forEach(i => { i.onchange = () => { const b = B(i.dataset.bd); if (b) b.desc = i.value.trim(); }; });
+        box.querySelectorAll('[data-bdel]').forEach(btn => {
+            btn.onclick = () => {
+                const b = B(btn.dataset.bdel); if (!b) return;
+                const n = members(b).length;
+                showCustomConfirm(`"${b.name}" 진영을 지울까요?${n ? `\n소속 국가 ${n}개는 미분류가 됩니다.` : ''}`, () => {
+                    S.blocs = S.blocs.filter(x => x !== b);
+                    S.ranking.rows.forEach(r => { if (r.bloc === b.id) { r.bloc = ''; r.ideo = ''; } });
+                    renderBlocs(); renderRanking();
+                });
+            };
+        });
+        const addIdeo = id => {
+            const inp = box.querySelector(`[data-iadd="${CSS.escape(id)}"]`), b = B(id);
+            const name = inp ? inp.value.trim() : '';
+            if (!b || !name) return;
+            (b.ideologies = b.ideologies || []).push({ id: uid(), name });
+            renderBlocs(); renderRanking();
+        };
+        box.querySelectorAll('[data-iaddbtn]').forEach(btn => { btn.onclick = () => addIdeo(btn.dataset.iaddbtn); });
+        box.querySelectorAll('[data-iadd]').forEach(inp => { inp.onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); addIdeo(inp.dataset.iadd); } }; });
+        box.querySelectorAll('[data-idel]').forEach(btn => {
+            btn.onclick = () => {
+                const [bid, iid] = btn.dataset.idel.split('|'); const b = B(bid); if (!b) return;
+                b.ideologies = (b.ideologies || []).filter(x => x.id !== iid);
+                S.ranking.rows.forEach(r => { if (r.bloc === bid && r.ideo === iid) r.ideo = ''; });
+                renderBlocs(); renderRanking();
+            };
+        });
+        box.querySelector('[data-act="addbloc"]').onclick = () => {
+            const palette = ['#8b5cf6', '#10b981', '#f59e0b', '#ec4899', '#14b8a6', '#6366f1'];
+            S.blocs.push({ id: uid(), name: `새 진영 ${S.blocs.length + 1}`, color: palette[S.blocs.length % palette.length], desc: '', ideologies: [] });
+            renderBlocs(); renderRanking();
+        };
+        box.querySelector('[data-act="resetblocs"]').onclick = () => showCustomConfirm('진영을 처음 목록(서방 · 동구권 · 비동맹 · 기타)으로 되돌릴까요?\n고친 진영과 하위 이념은 사라지고, 없는 진영의 국가는 미분류가 됩니다.', () => {
+            S.blocs = defaultBlocs();
+            S.ranking.rows.forEach(r => { if (!S.blocs.some(b => b.id === r.bloc)) r.bloc = ''; r.ideo = ''; });
+            renderBlocs(); renderRanking();
+        });
+    }
+
+    // ================= 세계 › 국가 순위 — 냉전 국가 순위 (꾸밈용) =================
     function defaultRanking() {
         const rows = [
             ['미합중국', '🇺🇸', 'west', 100], ['소비에트 연방', '☭', 'east', 96], ['서독', '🇩🇪', 'west', 74], ['일본', '🇯🇵', 'west', 72], ['영국', '🇬🇧', 'west', 70],
             ['프랑스', '🇫🇷', 'west', 68], ['중화인민공화국', '🇨🇳', 'east', 62], ['동독', '⚒', 'east', 52], ['인도', '🇮🇳', 'nonaligned', 46], ['유고슬라비아', '★', 'nonaligned', 40],
-        ].map(([name, flag, bloc, score]) => ({ id: uid(), name, flag, bloc, score, prevRank: null, self: false }));
+        ].map(([name, flag, bloc, score]) => ({ id: uid(), name, flag, flagKey: '', flagImg: '', bloc, ideo: '', score, prevRank: null, self: false }));
         rows.push({ id: uid(), name: '', flag: '', bloc: 'west', score: 50, prevRank: null, self: true });
         return { title: '냉전 국가 순위', rows };
     }
     const rowName = r => (r.self ? (nationName() || '우리나라') : r.name);
     const ranked = () => S.ranking.rows.slice().sort((a, b) => (Number(b.score) || 0) - (Number(a.score) || 0));
+    // 기본 국기 — 간단히 그린 SVG (이모지 국기는 Windows에서 글자로만 보여서). 직접 올린 그림(flagImg)이 있으면 그쪽을 쓴다
+    const star = (cx, cy, r, fill, rot = -90) => `<polygon fill="${fill}" points="${Array.from({ length: 10 }, (_, i) => { const a = (rot + i * 36) * Math.PI / 180, rr = i % 2 ? r * 0.4 : r; return `${(cx + rr * Math.cos(a)).toFixed(2)},${(cy + rr * Math.sin(a)).toFixed(2)}`; }).join(' ')}"/>`;
+    const hband = cols => cols.map((c, i) => `<rect y="${i * 20 / cols.length}" width="30" height="${20 / cols.length + 0.05}" fill="${c}"/>`).join('');
+    const vband = cols => cols.map((c, i) => `<rect x="${i * 10}" width="10.05" height="20" fill="${c}"/>`).join('');
+    const FLAG_SVG = {
+        us: () => `${Array.from({ length: 13 }, (_, i) => `<rect y="${i * 20 / 13}" width="30" height="${20 / 13 + 0.05}" fill="${i % 2 ? '#fff' : '#b22234'}"/>`).join('')}<rect width="12" height="10.77" fill="#3c3b6e"/>${Array.from({ length: 20 }, (_, i) => `<circle cx="${1.2 + (i % 5) * 2.4 + (Math.floor(i / 5) % 2) * 1.2}" cy="${1.3 + Math.floor(i / 5) * 2.6}" r=".45" fill="#fff"/>`).join('')}`,
+        su: () => `<rect width="30" height="20" fill="#cc0000"/>${star(5.5, 2.6, 1.1, 'none')}<polygon points="5.5,1.4 5.85,2.3 6.8,2.3 6.05,2.85 6.35,3.75 5.5,3.2 4.65,3.75 4.95,2.85 4.2,2.3 5.15,2.3" fill="none" stroke="#ffd700" stroke-width=".3"/><path d="M4.2 7.6 A2.2 2.2 0 1 0 7.4 4.6" fill="none" stroke="#ffd700" stroke-width=".8"/><path d="M4 4.6 L7.6 8.2" stroke="#ffd700" stroke-width=".8"/><rect x="3.4" y="4" width="1.6" height=".8" fill="#ffd700" transform="rotate(45 4.2 4.4)"/>`,
+        de: () => hband(['#000', '#dd0000', '#ffce00']),
+        jp: () => `<rect width="30" height="20" fill="#fff"/><circle cx="15" cy="10" r="6" fill="#bc002d"/>`,
+        gb: () => `<rect width="30" height="20" fill="#012169"/><path d="M0 0 L30 20 M30 0 L0 20" stroke="#fff" stroke-width="4"/><path d="M0 0 L30 20 M30 0 L0 20" stroke="#c8102e" stroke-width="1.4"/><path d="M15 0 V20 M0 10 H30" stroke="#fff" stroke-width="6"/><path d="M15 0 V20 M0 10 H30" stroke="#c8102e" stroke-width="3.4"/>`,
+        fr: () => vband(['#002395', '#fff', '#ed2939']),
+        cn: () => `<rect width="30" height="20" fill="#de2910"/>${star(5, 5, 3, '#ffde00')}${star(10, 2, 1, '#ffde00', -60)}${star(12, 4, 1, '#ffde00', -75)}${star(12, 7, 1, '#ffde00', -100)}${star(10, 9, 1, '#ffde00', -120)}`,
+        dd: () => `${hband(['#000', '#dd0000', '#ffce00'])}<circle cx="15" cy="10" r="3.6" fill="#ffce00" stroke="#7a4b00" stroke-width=".4"/><path d="M13.2 10.6 L15 8 L16.8 10.6 M15 8 V12" stroke="#000" stroke-width=".7" fill="none"/>`,
+        in: () => `${hband(['#ff9933', '#fff', '#138808'])}<circle cx="15" cy="10" r="2.3" fill="none" stroke="#000080" stroke-width=".5"/><circle cx="15" cy="10" r=".5" fill="#000080"/>`,
+        yu: () => `${hband(['#003893', '#fff', '#de0000'])}${star(15, 10, 4.6, '#fcd116')}${star(15, 10, 4, '#de0000')}`,
+    };
+    const FLAG_BY_NAME = { '미합중국': 'us', '미국': 'us', '소비에트 연방': 'su', '소련': 'su', '서독': 'de', '독일': 'de', '일본': 'jp', '영국': 'gb', '프랑스': 'fr', '중화인민공화국': 'cn', '중국': 'cn', '동독': 'dd', '인도': 'in', '유고슬라비아': 'yu' };
+    const flagCache = {};
+    const builtinFlag = key => {
+        if (!FLAG_SVG[key]) return '';
+        if (!flagCache[key]) flagCache[key] = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 30 20" width="30" height="20">${FLAG_SVG[key]()}</svg>`);
+        return flagCache[key];
+    };
+    function flagSrc(r) {
+        if (r.self) return (typeof nationFlag !== 'undefined' && nationFlag) || '';
+        return r.flagImg || builtinFlag(r.flagKey || FLAG_BY_NAME[String(r.name || '').trim()]);
+    }
     function flagHtml(r) {
-        if (r.self && typeof nationFlag !== 'undefined' && nationFlag) return `<img class="t64-rk-flagimg" src="${esc(nationFlag)}" alt="">`;
+        const src = flagSrc(r);
+        if (src) return `<img class="t64-rk-flagimg" src="${esc(src)}" alt="">`;
         return `<span class="t64-rk-flag">${esc(r.flag || '🏳')}</span>`;
+    }
+    // 올린 그림은 90×60 안으로 줄여 저장 (세이브가 커지지 않게)
+    function shrinkImage(file, done) {
+        const rd = new FileReader();
+        rd.onload = ev => {
+            const img = new Image();
+            img.onload = () => {
+                const k = Math.min(1, 90 / img.width, 60 / img.height);
+                const c = document.createElement('canvas');
+                c.width = Math.max(1, Math.round(img.width * k)); c.height = Math.max(1, Math.round(img.height * k));
+                c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+                try { done(c.toDataURL('image/png')); } catch (e) { done(ev.target.result); }
+            };
+            img.onerror = () => done(ev.target.result);
+            img.src = ev.target.result;
+        };
+        rd.readAsDataURL(file);
     }
     function renderRanking() {
         const box = document.getElementById('contentRanking');
         if (!box) return;
         const list = ranked();
-        const counts = BLOCS.map(b => [b, S.ranking.rows.filter(r => r.bloc === b[0]).length]);
-        box.innerHTML = `<div class="t64-intro">꾸밈용 화면입니다 — 게임 기능에는 영향이 없어요. 국가 · 진영 · 점수를 마음대로 꾸며 보세요.</div>
+        const counts = S.blocs.map(b => [b, S.ranking.rows.filter(r => r.bloc === b.id).length]);
+        box.innerHTML = `<div class="t64-intro">꾸밈용 화면입니다 — 게임 기능에는 영향이 없어요. 국가 · 진영 · 점수를 마음대로 꾸며 보세요. 편집에서 국기 칸을 누르면 국기 그림을 올릴 수 있어요.</div>
             <div class="t64-rk">
                 <div class="t64-rk-title">${esc(S.ranking.title || '냉전 국가 순위')}</div>
-                <div class="t64-rk-blocs">${counts.map(([b, n]) => (n ? `<span><i style="background:${b[2]}"></i>${b[1]} ${n}</span>` : '')).join('')}</div>
+                <div class="t64-rk-blocs">${counts.map(([b, n]) => (n ? `<span><i style="background:${esc(b.color)}"></i>${esc(b.name)} ${n}</span>` : '')).join('')}</div>
                 ${list.map((r, i) => {
                     const rank = i + 1, b = blocOf(r.bloc);
                     const mv = r.prevRank ? r.prevRank - rank : 0;
-                    return `<div class="t64-rk-row${r.self ? ' self' : ''}" style="--bloc:${b[2]}" title="${esc(b[1])}">
+                    const ideo = ideoOf(b, r.ideo);
+                    return `<div class="t64-rk-row${r.self ? ' self' : ''}" style="--bloc:${esc(b.color)}" title="${esc(b.name)}${ideo ? ' · ' + esc(ideo.name) : ''}">
                         <span class="t64-rk-no">${rank}</span>${flagHtml(r)}
-                        <span class="t64-rk-name">${esc(rowName(r))}${r.self ? ' <em>우리나라</em>' : ''}</span>
+                        <span class="t64-rk-name">${esc(rowName(r))}${r.self ? ' <em>우리나라</em>' : ''}${ideo ? `<small class="t64-rk-ideo">${esc(ideo.name)}</small>` : ''}</span>
                         <span class="t64-rk-bar"><span style="width:${Math.max(2, Math.min(100, Number(r.score) || 0))}%"></span></span>
                         <span class="t64-rk-score">${Number(r.score) || 0}</span>
                         <span class="t64-rk-mv ${mv > 0 ? 'up' : mv < 0 ? 'down' : ''}">${mv > 0 ? '▲' + mv : mv < 0 ? '▼' + (-mv) : r.prevRank ? '–' : ''}</span>
@@ -644,22 +777,32 @@
             <details class="t64-fold" open><summary>편집</summary>
                 <div class="t64-field"><span>제목</span><input type="text" data-rt="title" value="${esc(S.ranking.title)}"></div>
                 ${list.map(r => `<div class="t64-rk-edit">
-                    <input type="text" class="t64-rk-e-flag" data-rf="flag" data-id="${r.id}" value="${esc(r.flag)}" ${r.self ? 'disabled placeholder="국기"' : 'placeholder="🏳"'} maxlength="8">
+                    ${r.self ? `<span class="t64-rk-e-flag self" title="국가 › 상징의 국기">${flagHtml(r)}</span>` : `<label class="t64-rk-e-flag" title="눌러서 국기 그림 고르기">${flagHtml(r)}<input type="file" accept="image/*" data-rflag="${r.id}" hidden>${r.flagImg ? `<button type="button" class="t64-rk-e-unflag" data-unflag="${r.id}" title="올린 국기 빼기">×</button>` : ''}</label>`}
                     <input type="text" class="t64-rk-e-name" data-rf="name" data-id="${r.id}" value="${esc(r.self ? rowName(r) : r.name)}" ${r.self ? 'disabled title="국가 › 상징의 국가명"' : ''}>
-                    <select data-rf="bloc" data-id="${r.id}">${BLOCS.map(b => `<option value="${b[0]}" ${r.bloc === b[0] ? 'selected' : ''}>${b[1]}</option>`).join('')}</select>
+                    <select data-rf="bloc" data-id="${r.id}" class="t64-rk-e-bloc">${S.blocs.map(b => `<option value="${esc(b.id)}" ${r.bloc === b.id ? 'selected' : ''}>${esc(b.name)}</option>`).join('')}<option value="" ${S.blocs.some(b => b.id === r.bloc) ? '' : 'selected'}>미분류</option></select>
+                    <select data-rf="ideo" data-id="${r.id}" class="t64-rk-e-ideo" ${blocOf(r.bloc).ideologies.length ? '' : 'disabled'}><option value="">하위 이념 —</option>${blocOf(r.bloc).ideologies.map(x => `<option value="${esc(x.id)}" ${r.ideo === x.id ? 'selected' : ''}>${esc(x.name)}</option>`).join('')}</select>
                     <input type="number" class="t64-rk-e-score" data-rf="score" data-id="${r.id}" value="${Number(r.score) || 0}" min="0" max="100">
                     ${r.self ? '<span class="t64-x-ph"></span>' : `<button type="button" class="t64-x" data-rdel="${r.id}" title="지우기">×</button>`}
                 </div>`).join('')}
             </details>`;
         const at = id => S.ranking.rows.find(x => x.id === id);
         box.querySelectorAll('[data-rf]').forEach(i => {
-            i.onchange = () => { const r = at(i.dataset.id); if (!r) return; r[i.dataset.rf] = i.dataset.rf === 'score' ? Math.max(0, Math.min(999, Number(i.value) || 0)) : i.value.trim(); renderRanking(); };
+            i.onchange = () => {
+                const r = at(i.dataset.id); if (!r) return;
+                r[i.dataset.rf] = i.dataset.rf === 'score' ? Math.max(0, Math.min(999, Number(i.value) || 0)) : i.value.trim();
+                if (i.dataset.rf === 'bloc') r.ideo = '';
+                renderRanking(); renderBlocs();
+            };
         });
+        box.querySelectorAll('[data-rflag]').forEach(i => {
+            i.onchange = () => { const f = i.files && i.files[0]; const r = at(i.dataset.rflag); if (!f || !r) return; shrinkImage(f, url => { r.flagImg = url; renderRanking(); }); };
+        });
+        box.querySelectorAll('[data-unflag]').forEach(b => { b.onclick = e => { e.preventDefault(); e.stopPropagation(); const r = at(b.dataset.unflag); if (r) { r.flagImg = ''; renderRanking(); } }; });
         box.querySelector('[data-rt="title"]').onchange = e => { S.ranking.title = e.target.value.trim(); renderRanking(); };
-        box.querySelectorAll('[data-rdel]').forEach(b => { b.onclick = () => { S.ranking.rows = S.ranking.rows.filter(x => x.id !== b.dataset.rdel); renderRanking(); }; });
-        box.querySelector('[data-act="addrow"]').onclick = () => { S.ranking.rows.push({ id: uid(), name: '새 국가', flag: '🏳', bloc: 'other', score: 30, prevRank: null, self: false }); renderRanking(); };
+        box.querySelectorAll('[data-rdel]').forEach(b => { b.onclick = () => { S.ranking.rows = S.ranking.rows.filter(x => x.id !== b.dataset.rdel); renderRanking(); renderBlocs(); }; });
+        box.querySelector('[data-act="addrow"]').onclick = () => { S.ranking.rows.push({ id: uid(), name: '새 국가', flag: '🏳', flagKey: '', flagImg: '', bloc: (S.blocs[S.blocs.length - 1] || {}).id || '', ideo: '', score: 30, prevRank: null, self: false }); renderRanking(); renderBlocs(); };
         box.querySelector('[data-act="mark"]').onclick = () => { ranked().forEach((r, i) => { r.prevRank = i + 1; }); renderRanking(); };
-        box.querySelector('[data-act="reset"]').onclick = () => showCustomConfirm('국가 순위를 처음 목록으로 되돌릴까요?', () => { S.ranking = defaultRanking(); renderRanking(); });
+        box.querySelector('[data-act="reset"]').onclick = () => showCustomConfirm('국가 순위를 처음 목록으로 되돌릴까요?', () => { S.ranking = defaultRanking(); renderRanking(); renderBlocs(); });
     }
 
     // ================= 탭 =================
@@ -687,13 +830,23 @@
             <div id="t64HistWrap"></div></div></div>`), ref.nextSibling);
     })();
     addTab('mainContentSetup', 'subTabTimeline', 'setup', 'wikibox', 'Wikibox', '위키 틀');
-    addTab('mainContentNation', 'subTabNationSettings', 'nation', 'ranking', 'Ranking', '국가 순위');
+    // 세계 (1.6.4) — 국가 아래 새 메인 메뉴: 국가 순위 · 진영
+    (function addWorldMain() {
+        const nationBtn = document.getElementById('mainTabNation'), nationContent = document.getElementById('mainContentNation');
+        if (!nationBtn || !nationContent) return;
+        nationBtn.parentElement.insertBefore(el(`<button class="main-tab-btn" onclick="switchMainTab('world')" id="mainTabWorld">🌐 세계</button>`), nationBtn.nextSibling);
+        nationContent.parentElement.insertBefore(el(`<div id="mainContentWorld" class="main-tab-content"><div class="sub-tab-container"></div></div>`), nationContent.nextSibling);
+        try { if (!currentSubTab.world) currentSubTab.world = 'ranking'; } catch (e) { /* main.js 없음 */ }
+    })();
+    addTab('mainContentWorld', null, 'world', 'ranking', 'Ranking', '국가 순위');
+    addTab('mainContentWorld', 'subTabRanking', 'world', 'blocs', 'Blocs', '진영');
     const origSwitch = window.switchSubTab;
     window.switchSubTab = function (main, sub) {
         const r = origSwitch.apply(this, arguments);
         if (main === 'setup' && sub === 'timeline') { renderTimeline(); showHistoryTab(); }
         if (main === 'setup' && sub === 'wikibox') renderWikibox();
-        if (main === 'nation' && sub === 'ranking') renderRanking();
+        if (main === 'world' && sub === 'ranking') renderRanking();
+        if (main === 'world' && sub === 'blocs') renderBlocs();
         return r;
     };
     const origDisp = window.switchDispTab;
@@ -704,7 +857,7 @@
     };
     let resizeTimer = 0;
     window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(() => { if (document.getElementById('dispPanelTimeline')?.classList.contains('active')) renderHistory(); }, 150); });
-    function refresh() { renderTimeline(); renderWikibox(); renderRanking(); }
+    function refresh() { renderTimeline(); renderWikibox(); renderRanking(); renderBlocs(); }
     window.T64 = { get timeline() { return S.timeline; }, record: (label) => { const n = record(label || '', 'manual', false); renderTimeline(); return n; } };
 
     const style = document.createElement('style');
@@ -743,6 +896,8 @@
         .t64-sub-title { font-size: .8rem; color: var(--t64-text); margin: 6px 0 4px; }
         .t64-succ-row { display: flex; align-items: center; gap: 6px; margin: 4px 0 8px; }
         .t64-succ-row select { flex: 1; min-width: 0; }
+        .t64-succ-row input[type="text"] { flex: 1; min-width: 0; }
+        .t64-succ-row .t64-btn { flex: none; white-space: nowrap; }
         .t64-field select { flex: 1; min-width: 0; }
         .t64-h-legend { margin: 0 0 10px; position: sticky; top: 0; background: inherit; z-index: 1; padding: 4px 0; }
         .t64-h-chs { margin-bottom: 8px; }
@@ -815,13 +970,36 @@
         .t64-rk-row.self { background: color-mix(in srgb, var(--t64-acc) 10%, transparent); }
         .t64-rk-no { font-size: 1rem; color: var(--t64-dim); text-align: center; }
         .t64-rk-row:nth-child(-n+5) .t64-rk-no { color: #e0b030; }
-        .t64-rk-flag { font-size: 1.1rem; text-align: center; } .t64-rk-flagimg { width: 1.6em; height: 1.1em; object-fit: cover; }
+        .t64-rk-flag { font-size: 1.1rem; text-align: center; } .t64-rk-flagimg { width: 1.6em; height: 1.07em; object-fit: cover; display: block; box-shadow: 0 0 0 1px rgba(127,127,127,.35); }
+        .t64-rk-e-flag { position: relative; display: flex; align-items: center; justify-content: center; height: 30px; border: 1px dashed var(--t64-line); cursor: pointer; }
+        .t64-rk-e-flag.self { cursor: default; border-style: solid; opacity: .7; }
+        .t64-rk-e-flag .t64-rk-flagimg { width: 30px; height: 20px; }
+        .t64-rk-e-unflag { position: absolute; top: -6px; right: -6px; width: 16px; height: 16px; line-height: 14px; padding: 0; font-size: 11px; border-radius: 50%; border: 1px solid var(--t64-line); background: var(--t64-soft, #111); color: var(--t64-text); cursor: pointer; }
         .t64-rk-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .t64-rk-name em { font-style: normal; font-size: .68rem; color: var(--t64-acc); border: 1px solid var(--t64-acc); padding: 0 4px; margin-left: 4px; }
         .t64-rk-bloc { font-size: .7rem; color: var(--t64-dim); }
         .t64-rk-bar { height: 6px; background: rgba(127,127,127,.2); } .t64-rk-bar span { display: block; height: 100%; background: var(--bloc); }
         .t64-rk-score { text-align: right; }
         .t64-rk-mv { font-size: .72rem; text-align: right; color: var(--t64-dim); } .t64-rk-mv.up { color: #3fbf7f; } .t64-rk-mv.down { color: #e05555; }
-        .t64-rk-edit { display: grid; grid-template-columns: 2.8em minmax(0, 1fr) 5.8em 3.8em 2em; gap: 6px; align-items: center; margin: 5px 0; }
+        .t64-rk-ideo { display: block; font-size: .66rem; color: var(--t64-dim); overflow: hidden; text-overflow: ellipsis; }
+        .t64-bloc-bar { display: flex; height: 14px; gap: 1px; margin: 6px 0; background: rgba(127,127,127,.15); }
+        .t64-bloc-bar span { display: block; height: 100%; }
+        .t64-bloc { border: 1px solid var(--t64-line); border-left: 5px solid var(--bloc); padding: 10px; margin-bottom: 10px; background: var(--t64-soft); }
+        .t64-bloc-head { display: flex; align-items: center; gap: 6px; }
+        .t64-bloc-head input[type=color] { width: 34px; height: 30px; padding: 0; border: none; background: none; cursor: pointer; flex-shrink: 0; }
+        .t64-bloc-name { flex: 1; min-width: 0; font-size: .95rem; }
+        .t64-bloc-desc { width: 100%; box-sizing: border-box; margin: 6px 0 2px; font-size: .8rem; }
+        .t64-ichip { display: inline-flex; align-items: center; gap: 4px; font-size: .78rem; padding: 3px 4px 3px 9px; border: 1px solid var(--bloc); color: var(--t64-text); }
+        .t64-ichip small { color: var(--t64-dim); }
+        .t64-ichip button { cursor: pointer; border: none; background: transparent; color: var(--t64-dim); font-family: inherit; padding: 0 3px; }
+        html[data-theme-family="modern"] .t64-bloc { border-radius: 12px; }
+        html[data-theme-family="modern"] .t64-ichip { border-radius: 999px; }
+        .t64-rk-edit { display: grid; grid-template-columns: 3em minmax(0, 1fr) minmax(0, 1fr) 3.8em; grid-template-areas: "flag name name del" "flag bloc ideo score"; gap: 5px 6px; align-items: center; padding: 6px 0; border-bottom: 1px dashed var(--t64-line); }
+        .t64-rk-edit > .t64-rk-e-flag { grid-area: flag; height: 100%; min-height: 30px; }
+        .t64-rk-edit > .t64-rk-e-name { grid-area: name; }
+        .t64-rk-edit > .t64-rk-e-bloc { grid-area: bloc; }
+        .t64-rk-edit > .t64-rk-e-ideo { grid-area: ideo; }
+        .t64-rk-edit > .t64-rk-e-score { grid-area: score; }
+        .t64-rk-edit > .t64-x, .t64-rk-edit > .t64-x-ph { grid-area: del; justify-self: end; }
         .t64-rk-edit input, .t64-rk-edit select { min-width: 0; box-sizing: border-box; }
         html[data-theme-family="modern"] .t64-btn, html[data-theme-family="modern"] .t64-x { border-radius: 8px; }
         html[data-theme-family="modern"] .t64-btn.primary { background: var(--m-accent); color: var(--m-on-accent); border-color: var(--m-accent); }
