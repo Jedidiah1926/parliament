@@ -1067,7 +1067,11 @@
     // 위키 틀 · 국가 순위는 HTML이라 <foreignObject>로 담으면 Chromium이 캔버스를 오염시켜 PNG로 못 뽑으므로,
     // 같은 모양을 SVG 도형으로 다시 그린다 (국기 · 로고는 data: 그림이라 SVG 안에서도 그려짐)
     const X = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-    const FONT = "Pretendard, 'Noto Sans KR', 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif";
+    const FONT_MODERN = "Pretendard, 'Noto Sans KR', 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif";
+    const FONT_NEON = "NeoDunggeunmo, 'Noto Sans KR', 'Malgun Gothic', monospace";
+    let FONT = FONT_MODERN;
+    // 둥근모는 SVG 파일에서만 — PNG · JPG는 그림으로 굽는 동안 웹 글꼴을 못 써서 글자 폭이 어긋나므로 기본 고딕
+    const pickFont = format => { FONT = (format === 'svg' && typeof isModernTheme === 'function' && !isModernTheme()) ? FONT_NEON : FONT_MODERN; };
     const measureCtx = document.createElement('canvas').getContext('2d');
     const textW = (t, size, weight = 400) => { measureCtx.font = `${weight} ${size}px ${FONT}`; return measureCtx.measureText(String(t)).width; };
     // 글자를 폭에 맞춰 여러 줄로 (한글은 글자 단위로 끊어도 자연스러움)
@@ -1240,8 +1244,9 @@
             + `<text x="0" y="28" font-size="18" font-weight="800" fill="${X(text)}">${X([nationName(), title].filter(Boolean).join(' · '))}</text>${new XMLSerializer().serializeToString(clone)}</svg>`;
     }
 
-    function t64ExportMarkup(el) {
+    function t64ExportMarkup(el, format) {
         const kind = el && el.dataset.exportKind;
+        pickFont(format);
         if (kind === 't64wiki') return { svg: wikiSvg(wikiData(ui.wikiChamber)), name: 'wikibox' };
         if (kind === 't64rank') return { svg: rankSvg(), name: 'ranking' };
         if (kind === 't64hist') return { svg: histSvg(el), name: ui.histView === 'lineage' ? 'party_lineage' : 'seat_history' };
@@ -1249,7 +1254,7 @@
     }
     function dl(href, filename) { const a = document.createElement('a'); a.href = href; a.download = filename; document.body.appendChild(a); a.click(); a.remove(); }
     async function t64Export(el, format) {
-        const m = t64ExportMarkup(el); if (!m) return;
+        const m = t64ExportMarkup(el, format); if (!m) return;
         const stamp = (typeof formatKstTimestampCompact === 'function') ? formatKstTimestampCompact() : Date.now();
         const base = `${m.name}_${stamp}`;
         if (format === 'svg') {
@@ -1411,6 +1416,9 @@
         /* 원내 구성 틀 — 위키 문서 모양을 따라 늘 밝은 바탕 */
         .t64-wikiwrap { display: flex; justify-content: center; }
         .nbx2 { width: 100%; max-width: 640px; background: #fff; border: 3px solid color-mix(in srgb, var(--nb-frame) 100%, #bbb); color: #222; font-family: 'Pretendard', 'Noto Sans KR', 'Malgun Gothic', sans-serif; box-sizing: border-box; text-align: center; }
+        /* 네온 테마에서는 틀 안쪽 글자도 둥근모로 (라이트 · 다크는 Pretendard) */
+        html:not([data-theme-family="modern"]) .nbx2 { font-family: 'NeoDunggeunmo', 'VT323', monospace; }
+        html:not([data-theme-family="modern"]) .nbx2 .nb-title, html:not([data-theme-family="modern"]) .nbx2 .nb-pname, html:not([data-theme-family="modern"]) .nbx2 .nb-seat { font-weight: normal; }
         .nbx2 .nb-head { background: var(--nb-frame); color: var(--nb-ffg); display: flex; align-items: center; justify-content: center; gap: 16px; padding: 14px 20px; text-align: left; border-bottom: 1px solid rgba(0,0,0,.12); }
         .nbx2 .nb-emblem img { max-height: 60px; max-width: 96px; display: block; }
         .nbx2 .nb-sep { align-self: stretch; width: 1px; background: currentColor; opacity: .35; }
