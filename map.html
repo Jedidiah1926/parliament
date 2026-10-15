@@ -184,7 +184,7 @@
           <label title="색이 이만큼 달라도 같은 지역으로 묶음 — 지역이 잘게 쪼개지면 올리고, 이웃 지역이 합쳐지면 내리세요">색 허용 오차 <input id="traceTol" type="range" min="3" max="80" value="12" /><b id="traceTolVal">12</b></label>
           <label title="이보다 작은 덩어리(글자 · 번진 가장자리)는 이웃 지역에 붙임 — 그림 넓이 대비 천분율">최소 크기 <input id="traceMin" type="range" min="0" max="2" step="0.01" value="0.03" /><b id="traceMinVal">0.03‰</b></label>
           <label title="그림 가장자리를 두른 큰 덩어리(바다 · 바탕)를 도형에서 뺌"><input id="traceBg" type="checkbox" checked /> 바탕 빼기</label>
-          <label title="옅은 내부 경계선(주 · 도)으로 쪼개진 같은 색 조각을 하나로 — 끄면 경계선대로 잘게 나눔 (주 · 도 단위 지역구)"><input id="traceMerge" type="checkbox" checked /> 같은 색 이웃 합치기</label>
+          <label title="검은 선 없이 같은 색으로 맞닿은 조각(압축 얼룩 · 색이 살짝 다른 옅은 선으로 갈라진 조각)을 하나로 — 검은 선으로 나뉜 곳은 합치지 않음. 끄면 조각대로 둠"><input id="traceMerge" type="checkbox" checked /> 같은 색 이웃 합치기</label>
           <button id="btnRetrace" class="btn secondary">다시 추적</button>
           <span class="small" id="traceInfo"></span>
         </div>

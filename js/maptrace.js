@@ -101,7 +101,9 @@
                 if (0.299 * px[i * 4] + 0.587 * px[i * 4 + 1] + 0.114 * px[i * 4 + 2] < 55) dark[i] = 1;
             }
             const darkWide = openMask(dark, W, H, Math.max(2, Math.round(2 * sc)));
-            for (let i = 0; i < N; i++) if (dark[i] && !darkWide[i]) lab[i] = -2;
+            // lineAt: 검은 경계선 화소 — 나중에 "같은 색 이웃 합치기"가 검은 선을 넘어 합치지 않게 기억해 둔다
+            const lineAt = new Uint8Array(N);
+            for (let i = 0; i < N; i++) if (dark[i] && !darkWide[i]) { lab[i] = -2; lineAt[i] = 1; }
             // 같은 색 덩어리 찾기 (시작 화소 색 기준 허용 오차 안의 이웃)
             const tol2 = (o.tolerance * o.tolerance) * 3;
             const comps = [];
@@ -146,6 +148,7 @@
                 if (c.area < minPx) { c.keep = false; c.why = 'small'; }               // 너무 작은 덩어리 (글자 조각 · 점)
                 else if (!c.core) { c.keep = false; c.why = 'nocore'; }                // 속이 없음 = 번진 가장자리 · 가는 선
                 else if (c.area / c.perim < 0.9) { c.keep = false; c.why = 'thin'; }   // 얇은 선 (흰 경계선 등)
+                else if (c.area / c.perim < 0.9 * sc) c.band = true;                 // 원본 2화소 폭 미만의 띠 — 압축으로 생긴 가장자리 띠일 수 있음 (합치기에서 조금 더 너그럽게)
             });
             // 바탕: 그림 가장자리를 가장 많이 두른 큰 덩어리 (바다 · 흰 바탕) — 둘레의 30% 넘게 가장자리에 닿으면 뺀다
             let bg = null;
@@ -204,6 +207,7 @@
                 const find = a => { while (par[a] !== a) { par[a] = par[par[a]]; a = par[a]; } return a; };
                 const lim = Math.max(14, o.tolerance * 0.8) ** 2; // 같은 나라 조각은 평균 색이 거의 똑같다 (압축 잡음 정도) — 비슷한 색의 다른 나라는 합치지 않게 좁게
                 const dist = (A, B) => (A[0] - B[0]) ** 2 + (A[1] - B[1]) ** 2 + (A[2] - B[2]) ** 2;
+                const bandK = 2.5; // 가장자리 띠는 색 차이를 이만큼(제곱 거리 배수) 더 봐줌
                 const pairs = new Map();
                 for (let i = 0; i < N; i++) {
                     const a = lab[i]; if (a < 0) continue;
@@ -213,13 +217,19 @@
                         const b = lab[j];
                         if (b < 0 || b === a) continue;
                         const key = a < b ? a * nC + b : b * nC + a;
-                        if (!pairs.has(key)) { const d = dist(comps[a].color, comps[b].color); if (d <= lim) pairs.set(key, d); }
+                        let e = pairs.get(key);
+                        if (e === undefined) { const d = dist(comps[a].color, comps[b].color); e = d <= lim * bandK ? [d, 0, 0] : null; pairs.set(key, e); }
+                        if (e) { e[1]++; if (lineAt[i] || lineAt[j]) e[2]++; }
                     }
                 }
+                // 검은 선으로 나뉜 곳은 색이 같아도 합치지 않는다 — 맞닿은 경계의 30% 넘게 검은 선이면 지도를 그린 사람이 일부러 나눈 경계
                 const col = comps.map(c => c.color.slice()), area = comps.map(c => c.area);
-                [...pairs.entries()].sort((p1, p2) => p1[1] - p2[1]).forEach(([key]) => {
+                // 단, 아주 작은 조각(원본 5×5화소 미만 — 글자 속 구멍 같은 것)은 검은 선 너머라도 붙인다
+                const tiny = (5 * sc) ** 2;
+                const limOf = key => (comps[Math.floor(key / nC)].band || comps[key % nC].band ? lim * bandK : lim);
+                [...pairs.entries()].filter(([key, e]) => e && e[0] <= limOf(key) && (e[2] <= e[1] * 0.3 || Math.min(comps[Math.floor(key / nC)].area, comps[key % nC].area) < tiny)).sort((p1, p2) => p1[1][0] - p2[1][0]).forEach(([key]) => {
                     const ra = find(Math.floor(key / nC)), rb = find(key % nC);
-                    if (ra === rb || dist(col[ra], col[rb]) > lim) return;
+                    if (ra === rb || dist(col[ra], col[rb]) > limOf(key)) return;
                     const t = area[ra] + area[rb];
                     col[ra] = col[ra].map((v, k) => (v * area[ra] + col[rb][k] * area[rb]) / t);
                     area[ra] = t; par[rb] = ra;
