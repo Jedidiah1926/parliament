@@ -182,7 +182,7 @@ npm run build:win     # Windows 설치형 exe 빌드 → dist/Hemicycle-Setup-<�
 
 예전 세이브(언어 정보가 없는 세이브)를 한국어가 아닌 화면에서 처음 열면, 언어 팩 사전에 통째로 있는 기본 이름(기본 정당 · 이념 · 원 이름 등)만 그 언어로 한 번 바꿔 둡니다 — 예전에 화면 번역으로 보이던 모습 그대로입니다.
 
-> `index.json` 방식은 `fetch`를 쓰기 때문에 웹(http)으로 열었을 때만 동작합니다. 데스크톱 앱(Electron)은 파일(`file://`)로 열려 JSON을 읽을 수 없으므로, 앱과 함께 기본 제공되는 **내장 프리셋**은 `presets/*.js`로 감싸 두고 `js/presets.js`의 `BUILTIN` 목록에 등록합니다 (예: 튜토리얼 공화국 — `presets/tutorial.js`).
+> `index.json` 방식은 `fetch`를 쓰기 때문에 웹(http)으로 열었을 때만 동작합니다. 데스크톱 앱(Electron)은 파일(`file://`)로 열려 JSON을 읽을 수 없으므로, 앱과 함께 기본 제공되는 **내장 프리셋**은 `presets/*.js`로 감싸 두고 `js/presets.js`의 `BUILTIN` 목록에 등록합니다 (예: 서독 튜토리얼 — `presets/tutorial.js`).
 
 **SAVE** 버튼을 누르면 현재 상태 전체를 `.json` 파일로 저장합니다.
 
@@ -269,7 +269,7 @@ npm run build:win     # Windows 설치형 exe 빌드 → dist/Hemicycle-Setup-<�
 
 **언어별 프리셋 파일** — 그 언어로 화면을 쓰면 그 언어 파일을 엽니다 (없으면 기본 파일).
 - 같은 폴더에 `usa.hemi`(기본)와 `usa.en.hemi`(영어)처럼 `이름.언어코드.hemi`를 함께 두거나, `hemicycle-item.json`에 `"langs": { "en": { "file": "usa.en.hemi", "title": "United States", "description": "..." } }`
-- **언어 팩과 함께**: 언어 팩 폴더의 `hemicycle-item.json`에 `"presets": { "builtin:tutorial": "tutorial.fr.hemi" }` — 그 언어로 내장 프리셋(예: 튜토리얼 공화국)을 열 때 쓰입니다
+- **언어 팩과 함께**: 언어 팩 폴더의 `hemicycle-item.json`에 `"presets": { "builtin:tutorial": "tutorial.fr.hemi" }` — 그 언어로 내장 프리셋(예: 서독 튜토리얼)을 열 때 쓰입니다
 - **언어 파일만**: `{ "type": "preset-language", "preset": "builtin:tutorial", "lang": "fr", "file": "tutorial.fr.hemi", "title": "République tutorielle" }`
 
 **읽어 오는 곳**

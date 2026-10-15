@@ -18,12 +18,12 @@
     const BUILTIN = [
         {
             id: 'builtin:tutorial',
-            title: '튜토리얼 공화국',
-            description: '처음이라면 여기서 시작하세요. 가상의 나라에서 기본 튜토리얼 6개로 화면과 조작을 직접 해보며 익히고, 선거 · 지도 · 단일화 · 부정선거 같은 기능은 세부 튜토리얼에서 골라 배울 수 있어요.',
-            date: '2026년 3월 2일',
+            title: '서독',
+            description: '처음이라면 여기서 시작하세요. 1983년 서독(독일연방공화국)에서 기본 튜토리얼 6개로 화면과 조작을 직접 해보며 익히고, 선거 · 지도 · 단일화 · 부정선거 같은 기능은 세부 튜토리얼에서 골라 배울 수 있어요.',
+            date: '1983년 3월 29일',
             tutorial: true,
             script: 'presets/tutorial.js',
-            langs: { en: { script: 'presets/tutorial.en.js', title: 'Tutorial Republic', description: "Start here if you're new. In a made-up country, six basic lessons walk you through the screens and controls hands-on, and detailed lessons cover features like elections, maps, candidate unification and election fraud whenever you need them." } },
+            langs: { en: { script: 'presets/tutorial.en.js', title: 'West Germany', description: "Start here if you're new. In West Germany (the Federal Republic of Germany) in 1983, six basic lessons walk you through the screens and controls hands-on, and detailed lessons cover features like elections, maps, candidate unification and election fraud whenever you need them." } },
         },
         {
             id: 'builtin:japan',
@@ -88,7 +88,7 @@
     async function list() {
         if (!listCache) {
             const all = BUILTIN.map(p => ({ ...p, langs: { ...(p.langs || {}) } })).concat(await fetchIndexPresets(), modPresets());
-            // 모드 · 창작마당에서 더한 언어 파일 (예: 프랑스어 언어 팩과 함께 올린 튜토리얼 공화국 프랑스어 파일)
+            // 모드 · 창작마당에서 더한 언어 파일 (예: 프랑스어 언어 팩과 함께 올린 서독 튜토리얼 프랑스어 파일)
             const d = window.hemicycleDesktop;
             (d && Array.isArray(d.modPresetLangs) ? d.modPresetLangs : []).forEach(x => {
                 const target = all.find(p => p.id === x.target);

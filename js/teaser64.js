@@ -51,7 +51,8 @@
         if (!Array.isArray(S.timeline)) S.timeline = [];
         if (!Array.isArray(S.succession)) S.succession = [];
         S.wiki = { ...base.wiki, ...(S.wiki || {}) };
-        if (!S.ranking || !Array.isArray(S.ranking.rows)) S.ranking = base.ranking;
+        // 저장된 순위가 없으면 (새 세이브 · 프리셋) 우리나라 이름을 보고 처음 목록을 만든다
+        if (!src || !src.ranking || !Array.isArray(S.ranking && S.ranking.rows)) S.ranking = defaultRanking(nationName());
         if (!Array.isArray(S.blocs) || !S.blocs.length && !(src && Array.isArray(src.blocs))) S.blocs = base.blocs;
         refresh();
         return r;
@@ -688,12 +689,17 @@
     }
 
     // ================= 세계 › 국가 순위 — 냉전 국가 순위 (꾸밈용) =================
-    function defaultRanking() {
+    // selfName: 우리나라 이름 — 목록에 있는 나라(예: 서독 튜토리얼의 "독일연방공화국")면 그 줄을 우리나라 줄이 대신한다 (같은 나라가 두 번 나오지 않게)
+    // (처음 읽힐 때 fresh()가 이름 없이 부르므로, 이름이 있을 때만 아래쪽 FLAG_BY_NAME을 쓴다)
+    function defaultRanking(selfName) {
         const rows = [
             ['미합중국', '🇺🇸', 'west', 100], ['소비에트 연방', '☭', 'east', 96], ['서독', '🇩🇪', 'west', 74], ['일본', '🇯🇵', 'west', 72], ['영국', '🇬🇧', 'west', 70],
             ['프랑스', '🇫🇷', 'west', 68], ['중화인민공화국', '🇨🇳', 'east', 62], ['동독', '⚒', 'east', 52], ['인도', '🇮🇳', 'nonaligned', 46], ['유고슬라비아', '★', 'nonaligned', 40],
         ].map(([name, flag, bloc, score]) => ({ id: uid(), name, flag, flagKey: '', flagImg: '', bloc, ideo: '', score, prevRank: null, self: false }));
-        rows.push({ id: uid(), name: '', flag: '', bloc: 'west', score: 50, prevRank: null, self: true });
+        const selfKey = selfName ? FLAG_BY_NAME[selfName] : null;
+        const twin = selfKey ? rows.find(r => FLAG_BY_NAME[r.name] === selfKey) : null;
+        if (twin) rows.splice(rows.indexOf(twin), 1);
+        rows.push({ id: uid(), name: '', flag: '', bloc: twin ? twin.bloc : 'west', score: twin ? twin.score : 50, prevRank: null, self: true });
         return { title: '냉전 국가 순위', rows };
     }
     const rowName = r => (r.self ? (nationName() || '우리나라') : r.name);
@@ -714,7 +720,7 @@
         in: () => `${hband(['#ff9933', '#fff', '#138808'])}<circle cx="15" cy="10" r="2.3" fill="none" stroke="#000080" stroke-width=".5"/><circle cx="15" cy="10" r=".5" fill="#000080"/>`,
         yu: () => `${hband(['#003893', '#fff', '#de0000'])}${star(15, 10, 4.6, '#fcd116')}${star(15, 10, 4, '#de0000')}`,
     };
-    const FLAG_BY_NAME = { '미합중국': 'us', '미국': 'us', '소비에트 연방': 'su', '소련': 'su', '서독': 'de', '독일': 'de', '일본': 'jp', '영국': 'gb', '프랑스': 'fr', '중화인민공화국': 'cn', '중국': 'cn', '동독': 'dd', '인도': 'in', '유고슬라비아': 'yu' };
+    const FLAG_BY_NAME = { '미합중국': 'us', '미국': 'us', '소비에트 연방': 'su', '소련': 'su', '서독': 'de', '독일': 'de', '독일연방공화국': 'de', 'West Germany': 'de', 'Federal Republic of Germany': 'de', '일본': 'jp', '영국': 'gb', '프랑스': 'fr', '중화인민공화국': 'cn', '중국': 'cn', '동독': 'dd', '인도': 'in', '유고슬라비아': 'yu' };
     const flagCache = {};
     const builtinFlag = key => {
         if (!FLAG_SVG[key]) return '';
@@ -802,7 +808,7 @@
         box.querySelectorAll('[data-rdel]').forEach(b => { b.onclick = () => { S.ranking.rows = S.ranking.rows.filter(x => x.id !== b.dataset.rdel); renderRanking(); renderBlocs(); }; });
         box.querySelector('[data-act="addrow"]').onclick = () => { S.ranking.rows.push({ id: uid(), name: '새 국가', flag: '🏳', flagKey: '', flagImg: '', bloc: (S.blocs[S.blocs.length - 1] || {}).id || '', ideo: '', score: 30, prevRank: null, self: false }); renderRanking(); renderBlocs(); };
         box.querySelector('[data-act="mark"]').onclick = () => { ranked().forEach((r, i) => { r.prevRank = i + 1; }); renderRanking(); };
-        box.querySelector('[data-act="reset"]').onclick = () => showCustomConfirm('국가 순위를 처음 목록으로 되돌릴까요?', () => { S.ranking = defaultRanking(); renderRanking(); renderBlocs(); });
+        box.querySelector('[data-act="reset"]').onclick = () => showCustomConfirm('국가 순위를 처음 목록으로 되돌릴까요?', () => { S.ranking = defaultRanking(nationName()); renderRanking(); renderBlocs(); });
     }
 
     // ================= 탭 =================
