@@ -572,7 +572,7 @@
             const c = p.color || '#888', fg = fgFor(c);
             const sup = mark.get(p.id) ? `<sup>${mark.get(p.id)}</sup>` : '';
             return `<div class="nb-party k${k}" style="background:${esc(c)};color:${fg}" title="${esc(p.name)} ${d.seats(p).join(' | ')}석">
-                ${p.logoPhoto ? `<img class="nb-logo" src="${esc(p.logoPhoto)}" alt="">` : ''}
+                ${p.logoPhoto ? (p.logoBg === 'white' ? `<span class="nb-logo-card"><img class="nb-logo" src="${esc(p.logoPhoto)}" alt=""></span>` : `<img class="nb-logo" src="${esc(p.logoPhoto)}" alt="">`) : ''}
                 <div class="nb-pname">${esc(p.name)}${sup}</div>${seatBadge(d.seats(p), c)}</div>`;
         };
         const rows = arr => splitRows(arr).map(row => `<div class="nb-row" style="grid-template-columns:repeat(${row.length},1fr)">${row.map(p => block(p, row.length)).join('')}</div>`).join('');
@@ -621,7 +621,8 @@
                     const c = p.color || '#888', fg = fgFor(c);
                     const sup = mark.get(p.id) ? `[* ${notes[mark.get(p.id) - 1]}]` : '';
                     // 로고가 있으면 위키에 "정당 이름 로고.png"로 올린 그림을 쓴다
-                    const logo = p.logoPhoto ? `[[파일:${p.name} 로고.png|height=40]][br]` : '';
+                    const file = `[[파일:${p.name} 로고.png|height=40]]`;
+                    const logo = p.logoPhoto ? (p.logoBg === 'white' ? `{{{#!wiki style="display:inline-block; background:#fff; padding:4px 10px; border-radius:6px"\n${file}}}}[br]` : `${file}[br]`) : '';
                     return `||<-${6 / row.length}><bgcolor=${c}> ${logo}{{{${fg} {{{+1 ${B}${p.name}${B}}}}}}}${sup}[br]${badge(d.seats(p), c)} `;
                 }).join('') + '||');
             });
@@ -873,7 +874,7 @@
                     const ideo = ideoOf(b, r.ideo);
                     return `<div class="t64-rk-row${r.self ? ' self' : ''}" style="--bloc:${esc(b.color)}" title="${esc(b.name)}${ideo ? ' · ' + esc(ideo.name) : ''}">
                         <span class="t64-rk-no">${rank}</span>${flagHtml(r)}
-                        <span class="t64-rk-name">${esc(rowName(r))}${r.self ? ' <em>우리나라</em>' : ''}${ideo ? `<small class="t64-rk-ideo">${esc(ideo.name)}</small>` : ''}</span>
+                        <span class="t64-rk-name">${esc(rowName(r))}${ideo ? `<small class="t64-rk-ideo">${esc(ideo.name)}</small>` : ''}</span>
                         <span class="t64-rk-bar"><span style="width:${Math.max(2, Math.min(100, Number(r.score) || 0))}%"></span></span>
                         <span class="t64-rk-score">${Number(r.score) || 0}</span>
                         <span class="t64-rk-mv ${mv > 0 ? 'up' : mv < 0 ? 'down' : ''}">${mv > 0 ? '▲' + mv : mv < 0 ? '▼' + (-mv) : r.prevRank ? '–' : ''}</span>
@@ -1030,13 +1031,15 @@
         const nationBtn = document.getElementById('mainTabNation'), nationContent = document.getElementById('mainContentNation');
         if (!nationBtn || !nationContent) return;
         // 경제 — 자리 · 색만 잡아 둔 잠긴 메뉴 (국가 다음, 세계 앞). 누르면 안내만 뜬다
-        const eco = el(`<button class="main-tab-btn" onclick="t64EconomyLocked()" id="mainTabEconomy" title="경제 — 다음 업데이트에서 열립니다">💹 경제 🔒</button>`);
+        const eco = el(`<button class="main-tab-btn" onclick="t64EconomyLocked()" id="mainTabEconomy" title="경제 — 1.6.9 업데이트에서 열립니다">💹 경제 🔒</button>`);
         nationBtn.parentElement.insertBefore(eco, nationBtn.nextSibling);
         nationBtn.parentElement.insertBefore(el(`<button class="main-tab-btn" onclick="switchMainTab('world')" id="mainTabWorld">🌐 세계</button>`), eco.nextSibling);
         nationContent.parentElement.insertBefore(el(`<div id="mainContentWorld" class="main-tab-content"><div class="sub-tab-container"></div></div>`), nationContent.nextSibling);
         try { if (!currentSubTab.world) currentSubTab.world = 'ranking'; } catch (e) { /* main.js 없음 */ }
     })();
-    window.t64EconomyLocked = () => { try { showCustomAlert('🔒 경제 메뉴는 아직 잠겨 있어요 — 다음 업데이트에서 열립니다.'); } catch (e) { /* 알림 없음 */ } };
+    const origSetLogoBg = window.setLogoBg;
+    if (typeof origSetLogoBg === 'function') window.setLogoBg = function () { const r = origSetLogoBg.apply(this, arguments); try { renderWikiPreview(); } catch (e) { /* 아직 없음 */ } return r; };
+    window.t64EconomyLocked = () => { try { showCustomAlert('🔒 경제 메뉴는 아직 잠겨 있어요 — 1.6.9 "보이지 않는 손" 업데이트에서 경제 시스템과 함께 열립니다.'); } catch (e) { /* 알림 없음 */ } };
     addTab('mainContentWorld', null, 'world', 'ranking', 'Ranking', '국가 순위');
     addTab('mainContentWorld', 'subTabRanking', 'world', 'blocs', 'Blocs', '진영');
     const origSwitch = window.switchSubTab;
@@ -1059,6 +1062,244 @@
     let resizeTimer = 0;
     window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(() => { if (document.getElementById('dispPanelTimeline')?.classList.contains('active')) renderHistory(); }, 150); });
     function refresh() { renderTimeline(); renderWikibox(); renderRanking(); renderBlocs(); }
+    // ================= 우클릭 내보내기 (세력 변화 도표 · 위키 틀 · 국가 순위) =================
+    // 본 화면의 우클릭 "내보내기..." 메뉴 · 옵션 창(PNG · JPG · SVG, 해상도)을 그대로 쓰고, 그림은 여기서 그린다.
+    // 위키 틀 · 국가 순위는 HTML이라 <foreignObject>로 담으면 Chromium이 캔버스를 오염시켜 PNG로 못 뽑으므로,
+    // 같은 모양을 SVG 도형으로 다시 그린다 (국기 · 로고는 data: 그림이라 SVG 안에서도 그려짐)
+    const X = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    const FONT = "Pretendard, 'Noto Sans KR', 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif";
+    const measureCtx = document.createElement('canvas').getContext('2d');
+    const textW = (t, size, weight = 400) => { measureCtx.font = `${weight} ${size}px ${FONT}`; return measureCtx.measureText(String(t)).width; };
+    // 글자를 폭에 맞춰 여러 줄로 (한글은 글자 단위로 끊어도 자연스러움)
+    function wrapText(t, size, maxW, weight = 400) {
+        const out = []; let line = '';
+        for (const ch of String(t)) {
+            if (textW(line + ch, size, weight) > maxW && line) { out.push(line); line = ch.trim() ? ch : ''; } else line += ch;
+        }
+        if (line) out.push(line);
+        return out;
+    }
+    const clip = (t, size, maxW, weight = 400) => { let s = String(t); if (textW(s, size, weight) <= maxW) return s; while (s && textW(s + '…', size, weight) > maxW) s = s.slice(0, -1); return s + '…'; };
+    const cssVar = (el, name, fb) => { try { return (getComputedStyle(el).getPropertyValue(name) || '').trim() || fb; } catch (e) { return fb; } };
+
+    // ---- 위키 틀 ----
+    function wikiSvg(d) {
+        const W = 640, frame = S.wiki.frame || '#2b3a67', ffg = fgFor(frame);
+        const { notes, mark, smallMark } = wikiNotes(d);
+        let y = 0; const parts = [];
+        // 머리: 엠블럼 | 제목 · 원내 구성
+        const headH = 92;
+        parts.push(`<rect x="0" y="0" width="${W}" height="${headH}" fill="${X(frame)}"/>`);
+        const tw = Math.max(textW(d.title, 16, 700), textW('원내 구성', 24, 800));
+        const emW = 90, gap = 16, total = emW + gap * 2 + 1 + tw, x0 = (W - total) / 2;
+        parts.push(d.emblem ? `<image href="${X(d.emblem)}" x="${x0}" y="16" width="${emW}" height="60" preserveAspectRatio="xMidYMid meet"/>` : `<g transform="translate(${x0 + 13},26)">${emblemSvg(ffg)}</g>`);
+        parts.push(`<rect x="${x0 + emW + gap}" y="14" width="1" height="64" fill="${ffg}" opacity=".35"/>`);
+        parts.push(`<text x="${x0 + emW + gap * 2 + 1}" y="40" font-size="16" font-weight="700" fill="${ffg}">${X(d.title)}</text>`);
+        parts.push(`<text x="${x0 + emW + gap * 2 + 1}" y="70" font-size="24" font-weight="800" fill="${ffg}">원내 구성</text>`);
+        y = headH;
+        const band = (h, fill, inner) => { parts.push(`<rect x="0" y="${y}" width="${W}" height="${h}" fill="${fill}"/>` + inner(y)); y += h; };
+        const ctext = (cy, t, size, weight, fill) => `<text x="${W / 2}" y="${cy}" font-size="${size}" font-weight="${weight}" fill="${fill}" text-anchor="middle">${X(t)}</text>`;
+        if (d.govName || d.period) {
+            const h = d.govName && d.period ? 58 : 38;
+            band(h, '#dedede', yy => (d.govName ? ctext(yy + (d.period ? 24 : 25), d.govName, 16, 800, '#222') : '') + (d.period ? ctext(yy + (d.govName ? 46 : 25), d.period, 13, 700, '#222') : ''));
+        }
+        // 의석 표시 (한 원 · 양원)
+        const badge = (cx, cy, arr, color, size = 15) => {
+            const c = color || '#5c5c5c', light = fgFor(c) !== '#fff', ink = light ? '#3d3d3d' : c;
+            if (arr.length < 2) {
+                const t = `${arr[0]}석`, w = textW(t, size, 800) + 14, h = size + 8;
+                return `<rect x="${cx - w / 2}" y="${cy - h / 2}" width="${w}" height="${h}" rx="5" fill="#fff"/><text x="${cx}" y="${cy + size * 0.36}" font-size="${size}" font-weight="800" fill="${ink}" text-anchor="middle">${t}</text>`;
+            }
+            const ta = `${arr[0]}석`, tb = `${arr[1]}석`, wa = textW(ta, size, 800) + 16, wb = textW(tb, size, 800) + 12, h = size + 8, x = cx - (wa + wb) / 2;
+            return `<rect x="${x - 1.5}" y="${cy - h / 2 - 1.5}" width="${wa + wb + 3}" height="${h + 3}" rx="6" fill="#fff"/>`
+                + `<path d="M${x} ${cy - h / 2} h${wa} l-5 ${h} h-${wa - 5} z" fill="${light ? '#5c5c5c' : X(c)}"/>`
+                + `<text x="${x + (wa - 3) / 2}" y="${cy + size * 0.36}" font-size="${size}" font-weight="800" fill="#fff" text-anchor="middle">${ta}</text>`
+                + `<text x="${x + wa + wb / 2 - 2}" y="${cy + size * 0.36}" font-size="${size}" font-weight="800" fill="${ink}" text-anchor="middle">${tb}</text>`;
+        };
+        const badgeW = (arr, size = 15) => (arr.length < 2 ? textW(`${arr[0]}석`, size, 800) + 14 : textW(`${arr[0]}석`, size, 800) + 16 + textW(`${arr[1]}석`, size, 800) + 12 + 3);
+        // 글자 + 의석 표시를 한 덩어리로 가운데 정렬 (재적 · 비교섭단체 띠)
+        const labelBadge = (cy, label, fill, arr, color) => {
+            const lw = textW(label, 17, 800), bw = badgeW(arr), x0 = (W - (lw + 10 + bw)) / 2;
+            return `<text x="${x0}" y="${cy + 6}" font-size="17" font-weight="800" fill="${fill}">${X(label)}</text>` + badge(x0 + lw + 10 + bw / 2, cy, arr, color);
+        };
+        const sec = label => band(40, '#dee5e5', yy => ctext(yy + 26, label, 17, 800, '#222'));
+        const rowsOf = arr => splitRows(arr).forEach(row => {
+            const k = row.length, cw = W / k, big = k <= 2;
+            const anyLogo = row.some(p => p.logoPhoto);
+            const h = (big ? 132 : 108) + (anyLogo ? 8 : 0);
+            row.forEach((p, i) => {
+                const c = p.color || '#888', fg = fgFor(c), x = i * cw;
+                const nameSize = big ? 20 : 17;
+                const logoH = p.logoPhoto ? (big ? 54 : 44) : 0;
+                const sup = mark.get(p.id) ? String(mark.get(p.id)) : '';
+                const contentH = logoH + (logoH ? 8 : 0) + nameSize + 8 + 23;
+                let cy = y + (h - contentH) / 2;
+                let g = `<rect x="${x}" y="${y}" width="${cw - (i < k - 1 ? 1 : 0)}" height="${h}" fill="${X(c)}"/>`;
+                if (logoH) {
+                    if (p.logoBg === 'white') g += `<rect x="${x + cw * 0.18}" y="${cy - 5}" width="${cw * 0.64}" height="${logoH + 10}" rx="6" fill="#fff"/><image href="${X(p.logoPhoto)}" x="${x + cw * 0.22}" y="${cy}" width="${cw * 0.56}" height="${logoH}" preserveAspectRatio="xMidYMid meet"/>`;
+                    else g += `<image href="${X(p.logoPhoto)}" x="${x + cw * 0.1}" y="${cy}" width="${cw * 0.8}" height="${logoH}" preserveAspectRatio="xMidYMid meet"/>`;
+                    cy += logoH + 8;
+                }
+                const nm = clip(p.name, nameSize, cw - 24, 800);
+                const nw = textW(nm, nameSize, 800);
+                g += `<text x="${x + cw / 2 - (sup ? 4 : 0)}" y="${cy + nameSize * 0.85}" font-size="${nameSize}" font-weight="800" fill="${fg}" text-anchor="middle">${X(nm)}</text>`;
+                if (sup) g += `<text x="${x + cw / 2 + nw / 2 - 2}" y="${cy + nameSize * 0.35}" font-size="${Math.round(nameSize * 0.6)}" font-weight="800" fill="${fg}">${sup}</text>`;
+                cy += nameSize + 8;
+                g += badge(x + cw / 2, cy + 11, d.seats(p), c);
+                parts.push(g);
+            });
+            parts.push(`<rect x="0" y="${y + h}" width="${W}" height="1" fill="#fff" opacity=".75"/>`);
+            y += h + 1;
+        });
+        if (d.gov.length) { sec(d.gov.length > 1 ? '연립여당' : '여당'); rowsOf(d.gov); if (d.opp.length) { sec('야당'); rowsOf(d.opp); } } else if (d.opp.length) { sec('원내 정당'); rowsOf(d.opp); }
+        const small = [...d.minor, ...d.ind];
+        if (small.length) {
+            const smallSeats = d.chs.map((ch, i) => small.reduce((a, p) => a + d.seats(p)[i], 0));
+            const label = (d.minor.length ? '비교섭단체' : '무소속') + (smallMark ? ` ${smallMark})` : '');
+            band(44, '#808080', yy => labelBadge(yy + 22, label, '#fff', smallSeats, '#7f7f7f'));
+        }
+        band(46, frame, yy => labelBadge(yy + 23, '재적', ffg, d.totals, frame));
+        const custom = (S.wiki.note || '').trim();
+        const noteLines = [];
+        notes.forEach((t, i) => wrapText(`${i + 1}. ${t}`, 13, W - 40).forEach(l => noteLines.push(l)));
+        if (custom) wrapText(`※ ${custom}`, 13, W - 40).forEach(l => noteLines.push(l));
+        const legend = d.chs.length > 1;
+        if (noteLines.length || legend) {
+            const h = 14 + noteLines.length * 22 + (legend ? 32 : 0) + 6;
+            band(h, '#f2f2f2', yy => noteLines.map((l, i) => ctext(yy + 28 + i * 22, l, 13, 400, '#333')).join('')
+                + (legend ? badge(W / 2, yy + 18 + noteLines.length * 22 + 14, [`${chName(d.chs[0])} 의석`.replace(/석$/, ''), `${chName(d.chs[1])} 의석`.replace(/석$/, '')], '#6b6b6b', 12) : ''));
+        }
+        if (S.wiki.footer !== false) band(44, '#ffffff', yy => `<rect x="0" y="${yy}" width="${W}" height="1" fill="#ddd"/>` + ctext(yy + 28, '정당 구분 (원내 · 원외)', 15, 700, '#222'));
+        const H = y;
+        return `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${W + 6}" height="${H + 6}" viewBox="-3 -3 ${W + 6} ${H + 6}" font-family="${X(FONT)}">`
+            + `<rect x="-3" y="-3" width="${W + 6}" height="${H + 6}" fill="${X(frame)}"/><rect x="0" y="0" width="${W}" height="${H}" fill="#fff"/>${parts.join('')}</svg>`;
+    }
+
+    // ---- 국가 순위 ----
+    function rankSvg() {
+        const panel = document.getElementById('dispPanelRanking') || document.body;
+        const bg = cssVar(panel, '--m-surface', '') || (isModernTheme() ? '#fff' : '#0a0c10');
+        const text = cssVar(panel, '--t64-text', '#ddd'), dim = cssVar(panel, '--t64-dim', '#888'), line = cssVar(panel, '--t64-line', '#333'), acc = cssVar(panel, '--t64-acc', '#00ffff');
+        const list = ranked();
+        const W = 720, padX = 24, rowH = 46;
+        const counts = S.blocs.map(b => [b, S.ranking.rows.filter(r => r.bloc === b.id).length]).filter(([, n]) => n);
+        const parts = [];
+        parts.push(`<text x="${W / 2}" y="44" font-size="26" font-weight="800" fill="${X(text)}" text-anchor="middle" letter-spacing="2">${X(S.ranking.title || '냉전 국가 순위')}</text>`);
+        // 진영 범례 (가운데 정렬)
+        const items = counts.map(([b, n]) => ({ b, t: `${b.name} ${n}`, w: 14 + textW(`${b.name} ${n}`, 13) + 16 }));
+        let lx = (W - items.reduce((a, it) => a + it.w, 0)) / 2;
+        items.forEach(it => { parts.push(`<rect x="${lx}" y="62" width="10" height="10" fill="${X(it.b.color)}"/><text x="${lx + 14}" y="71.5" font-size="13" fill="${X(dim)}">${X(it.t)}</text>`); lx += it.w; });
+        let y = 92;
+        const barX = W - padX - 250, barW = 160;
+        list.forEach((r, i) => {
+            const rank = i + 1, b = blocOf(r.bloc), ideo = ideoOf(b, r.ideo);
+            const mv = r.prevRank ? r.prevRank - rank : 0;
+            let g = '';
+            if (r.self) g += `<rect x="${padX}" y="${y}" width="${W - padX * 2}" height="${rowH}" fill="${X(acc)}" opacity=".12"/>`;
+            g += `<rect x="${padX}" y="${y}" width="5" height="${rowH}" fill="${X(b.color)}"/>`;
+            g += `<text x="${padX + 30}" y="${y + rowH / 2 + 6}" font-size="18" fill="${rank <= 5 ? '#e0b030' : X(dim)}" text-anchor="middle">${rank}</text>`;
+            const src = flagSrc(r);
+            if (src) g += `<image href="${X(src)}" x="${padX + 52}" y="${y + rowH / 2 - 12}" width="36" height="24" preserveAspectRatio="xMidYMid slice"/><rect x="${padX + 52}" y="${y + rowH / 2 - 12}" width="36" height="24" fill="none" stroke="#7f7f7f" stroke-opacity=".35"/>`;
+            else g += `<text x="${padX + 70}" y="${y + rowH / 2 + 7}" font-size="20" text-anchor="middle">${X(r.flag || '🏳')}</text>`;
+            const nameX = padX + 102, nameMax = barX - nameX - 16;
+            const nm = clip(rowName(r), 17, nameMax);
+            g += `<text x="${nameX}" y="${y + (ideo ? 21 : rowH / 2 + 6)}" font-size="17" fill="${X(text)}">${X(nm)}</text>`;
+            if (ideo) g += `<text x="${nameX}" y="${y + 38}" font-size="11.5" fill="${X(dim)}">${X(clip(ideo.name, 11.5, nameMax))}</text>`;
+            const pct = Math.max(2, Math.min(100, Number(r.score) || 0));
+            g += `<rect x="${barX}" y="${y + rowH / 2 - 4.5}" width="${barW}" height="9" fill="#7f7f7f" opacity=".2"/><rect x="${barX}" y="${y + rowH / 2 - 4.5}" width="${barW * pct / 100}" height="9" fill="${X(b.color)}"/>`;
+            g += `<text x="${barX + barW + 46}" y="${y + rowH / 2 + 6}" font-size="17" fill="${X(text)}" text-anchor="end">${Number(r.score) || 0}</text>`;
+            if (mv || r.prevRank) g += `<text x="${W - padX - 6}" y="${y + rowH / 2 + 5}" font-size="13" fill="${mv > 0 ? '#3fbf7f' : mv < 0 ? '#e05555' : X(dim)}" text-anchor="end">${mv > 0 ? '▲' + mv : mv < 0 ? '▼' + (-mv) : '–'}</text>`;
+            g += `<rect x="${padX}" y="${y + rowH}" width="${W - padX * 2}" height="1" fill="${X(line)}"/>`;
+            parts.push(g);
+            y += rowH + 1;
+        });
+        const H = y + 24;
+        return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" font-family="${X(FONT)}"><rect width="${W}" height="${H}" fill="${X(bg)}"/>${parts.join('')}</svg>`;
+    }
+
+    // ---- 세력 변화 도표: 화면의 SVG에 계산된 스타일을 박아 넣어 홀로 서게 ----
+    function histSvg(svgEl) {
+        const panel = document.getElementById('dispPanelTimeline') || document.body;
+        const bg = cssVar(panel, '--m-surface', '') || (isModernTheme() ? '#fff' : '#0a0c10');
+        const text = cssVar(panel, '--t64-text', '#ddd');
+        const clone = svgEl.cloneNode(true);
+        const PROPS = ['fill', 'fill-opacity', 'stroke', 'stroke-width', 'stroke-dasharray', 'stroke-opacity', 'opacity', 'font-size', 'font-weight', 'paint-order', 'text-anchor', 'dominant-baseline', 'letter-spacing'];
+        const src = [svgEl, ...svgEl.querySelectorAll('*')], dst = [clone, ...clone.querySelectorAll('*')];
+        src.forEach((el, i) => {
+            const t = dst[i]; if (!t || el.tagName === 'defs' || el.closest('defs')) return;
+            const cs = getComputedStyle(el);
+            const st = PROPS.map(p => { const v = cs.getPropertyValue(p); return v ? `${p}:${v}` : ''; }).filter(Boolean).join(';');
+            t.setAttribute('style', st + ';font-family:' + FONT.replace(/"/g, "'"));
+            t.removeAttribute('class');
+        });
+        const w = Number(svgEl.getAttribute('width')) || svgEl.getBoundingClientRect().width, h = Number(svgEl.getAttribute('height')) || svgEl.getBoundingClientRect().height;
+        const title = document.getElementById('t64HistTitle')?.textContent || '세력 변화';
+        const head = 44;
+        clone.setAttribute('x', 0); clone.setAttribute('y', head); clone.setAttribute('width', w); clone.setAttribute('height', h);
+        return `<svg xmlns="http://www.w3.org/2000/svg" width="${w + 24}" height="${h + head + 16}" viewBox="-12 0 ${w + 24} ${h + head + 16}" font-family="${X(FONT)}"><rect x="-12" width="${w + 24}" height="${h + head + 16}" fill="${X(bg)}"/>`
+            + `<text x="0" y="28" font-size="18" font-weight="800" fill="${X(text)}">${X([nationName(), title].filter(Boolean).join(' · '))}</text>${new XMLSerializer().serializeToString(clone)}</svg>`;
+    }
+
+    function t64ExportMarkup(el) {
+        const kind = el && el.dataset.exportKind;
+        if (kind === 't64wiki') return { svg: wikiSvg(wikiData(ui.wikiChamber)), name: 'wikibox' };
+        if (kind === 't64rank') return { svg: rankSvg(), name: 'ranking' };
+        if (kind === 't64hist') return { svg: histSvg(el), name: ui.histView === 'lineage' ? 'party_lineage' : 'seat_history' };
+        return null;
+    }
+    function dl(href, filename) { const a = document.createElement('a'); a.href = href; a.download = filename; document.body.appendChild(a); a.click(); a.remove(); }
+    async function t64Export(el, format) {
+        const m = t64ExportMarkup(el); if (!m) return;
+        const stamp = (typeof formatKstTimestampCompact === 'function') ? formatKstTimestampCompact() : Date.now();
+        const base = `${m.name}_${stamp}`;
+        if (format === 'svg') {
+            const url = URL.createObjectURL(new Blob([m.svg], { type: 'image/svg+xml;charset=utf-8' }));
+            dl(url, `${base}.svg`); setTimeout(() => URL.revokeObjectURL(url), 2000);
+            return;
+        }
+        const scale = (typeof exportScale !== 'undefined' && [1, 2, 3].includes(exportScale)) ? exportScale : 2;
+        const img = new Image();
+        await new Promise((ok, bad) => { img.onload = ok; img.onerror = () => bad(new Error('그림을 만들지 못했습니다')); img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(m.svg); });
+        const c = document.createElement('canvas');
+        c.width = Math.round(img.width * scale); c.height = Math.round(img.height * scale);
+        const ctx = c.getContext('2d');
+        if (format === 'jpg') { ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height); }
+        ctx.drawImage(img, 0, 0, c.width, c.height);
+        dl(c.toDataURL(format === 'jpg' ? 'image/jpeg' : 'image/png', 0.95), `${base}.${format}`);
+    }
+    // 우클릭: 이 세 화면이면 본 화면의 "내보내기..." 메뉴를 띄우되 대상을 우리 것으로 (본 화면의 svg 우클릭 처리보다 먼저)
+    document.addEventListener('contextmenu', e => {
+        const t = e.target;
+        let el = null, kind = '';
+        if (t.closest && t.closest('#t64WikiWrap .nbx2')) { el = t.closest('#t64WikiWrap .nbx2'); kind = 't64wiki'; }
+        else if (t.closest && t.closest('#t64RankWrap .t64-rk')) { el = t.closest('#t64RankWrap .t64-rk'); kind = 't64rank'; }
+        else if (t.closest && t.closest('#t64HistWrap')) { el = document.querySelector('#t64HistWrap svg.t64-hist'); kind = 't64hist'; }
+        if (!el) return;
+        e.preventDefault(); e.stopPropagation();
+        el.dataset.exportKind = kind;
+        try { canvasExportTarget = el; } catch (err) { return; }
+        const menu = document.getElementById('canvasExportMenu');
+        if (!menu) return;
+        menu.style.display = 'block';
+        try { positionFloatingBox(menu, e.clientX, e.clientY); } catch (err) { menu.style.left = e.clientX + 'px'; menu.style.top = e.clientY + 'px'; }
+    }, true);
+    // 옵션 창: 머리(국기 · 국가명 · 날짜) · 통계 칸은 이 그림들에 맞지 않아 숨김 (내각 카드와 같은 방식)
+    const origOpenExport = window.openExportDialog;
+    if (typeof origOpenExport === 'function') {
+        window.openExportDialog = function () {
+            const r = origOpenExport.apply(this, arguments);
+            try { if (String(canvasExportTarget?.dataset?.exportKind || '').startsWith('t64')) { const sec = document.getElementById('exportHeaderStatsSection'); if (sec) sec.style.display = 'none'; } } catch (e) { /* 없음 */ }
+            return r;
+        };
+    }
+    const origExportAt = window.exportVisualElementAt;
+    if (typeof origExportAt === 'function') {
+        window.exportVisualElementAt = function (target, includeStats, format) {
+            if (String(target?.dataset?.exportKind || '').startsWith('t64')) return t64Export(target, format);
+            return origExportAt.apply(this, arguments);
+        };
+    }
+
     window.T64 = { get timeline() { return S.timeline; }, get ranking() { return S.ranking; }, record: (label) => { const n = record(label || '', 'manual', false); renderTimeline(); return n; } };
 
     const style = document.createElement('style');
@@ -1184,6 +1425,8 @@
         .nbx2 .nb-party { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 14px 8px; min-height: 96px; }
         .nbx2 .nb-party.k1, .nbx2 .nb-party.k2 { min-height: 128px; }
         .nbx2 .nb-logo { max-height: 46px; max-width: 80%; display: block; }
+        .nbx2 .nb-logo-card { display: flex; justify-content: center; background: #fff; border-radius: 6px; padding: 5px 10px; max-width: 80%; box-sizing: border-box; }
+        .nbx2 .nb-logo-card .nb-logo { max-width: 100%; }
         .nbx2 .nb-party.k1 .nb-logo, .nbx2 .nb-party.k2 .nb-logo { max-height: 58px; }
         .nbx2 .nb-pname { font-weight: 800; font-size: 17px; line-height: 1.2; word-break: keep-all; }
         .nbx2 .nb-party.k1 .nb-pname, .nbx2 .nb-party.k2 .nb-pname { font-size: 20px; }
