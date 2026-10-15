@@ -2,7 +2,7 @@
 // MapTrace.traceImage(file, opts) → Promise<{ svgText, count, width, height }>
 //   webp · png · jpg 같은 그림 지도에서 같은 색으로 칠해진 덩어리를 찾아 도형(<path>)으로 바꾼다.
 //   어두운 경계선 · 색이 번진 가장자리 · 얇은 선은 이웃 지역이 나눠 가지고, 가장자리를 둘러싼 큰 덩어리(바다 · 바탕)는 뺄 수 있다.
-//   opts: { tolerance(색 허용 오차 0~255), minArea(최소 크기, 원본 그림 화소 기준 비율 ‰), dropBackground(bool), maxSize(추적 해상도) }
+//   opts: { tolerance(색 허용 오차 0~255), minArea(최소 크기, 그림 넓이 대비 ‰), dropBackground(bool), mergeSame(같은 색 이웃 합치기), maxSize(추적 해상도) }
 // MapTrace.jsxToSvg(text) → { svgText, count } — 맵 메이커가 내보낸 .jsx를 다시 SVG로 (게임의 parseDistrictJsx와 같은 규칙)
 (function () {
     'use strict';
@@ -56,28 +56,54 @@
         return out;
     }
 
+    // 마스크 열림(opening) — 반지름 r의 정사각형 창이 꽉 차는 자리만 남긴 뒤 다시 r만큼 넓힘.
+    // 폭이 2r보다 좁은 부분(경계선)은 사라지고 넓은 면(바다 · 큰 어두운 지역)은 그대로 남는다
+    function openMask(mask, W, H, r) {
+        const integ = src => {
+            const S = new Int32Array((W + 1) * (H + 1));
+            for (let y = 0; y < H; y++) { let row = 0; for (let x = 0; x < W; x++) { row += src[y * W + x]; S[(y + 1) * (W + 1) + x + 1] = S[y * (W + 1) + x + 1] + row; } }
+            return S;
+        };
+        const box = (S, x, y) => {
+            const x0 = Math.max(0, x - r), y0 = Math.max(0, y - r), x1 = Math.min(W, x + r + 1), y1 = Math.min(H, y + r + 1);
+            return [S[y1 * (W + 1) + x1] - S[y0 * (W + 1) + x1] - S[y1 * (W + 1) + x0] + S[y0 * (W + 1) + x0], (x1 - x0) * (y1 - y0)];
+        };
+        const S1 = integ(mask), core = new Uint8Array(W * H);
+        for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const i = y * W + x; if (mask[i]) { const [n, a] = box(S1, x, y); if (n === a) core[i] = 1; } }
+        const S2 = integ(core), out = new Uint8Array(W * H);
+        for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const i = y * W + x; if (mask[i] && box(S2, x, y)[0] > 0) out[i] = 1; }
+        return out;
+    }
+
     async function traceImage(file, opts) {
-        const o = Object.assign({ tolerance: 40, minArea: 0.3, dropBackground: true, maxSize: 1000 }, opts || {});
+        const o = Object.assign({ tolerance: 12, minArea: 0.03, dropBackground: true, mergeSame: true, maxSize: 3000 }, opts || {});
         const { img, url } = await loadImage(file);
         try {
             const IW = img.naturalWidth || img.width, IH = img.naturalHeight || img.height;
             if (!IW || !IH) throw new Error('그림 크기를 알 수 없습니다.');
-            const sc = Math.min(1, o.maxSize / Math.max(IW, IH));
+            // 작은 그림은 부드럽게 키워서 추적 — 경계가 화소 계단 대신 반 화소 단위로 잡혀 더 정확하고 매끈해진다
+            const big = Math.max(IW, IH);
+            const sc = big > o.maxSize ? o.maxSize / big : Math.max(1, Math.min(o.upscale || 2, 2400 / big));
             const W = Math.max(1, Math.round(IW * sc)), H = Math.max(1, Math.round(IH * sc));
             const cv = document.createElement('canvas'); cv.width = W; cv.height = H;
             const cx = cv.getContext('2d', { willReadFrequently: true });
-            cx.imageSmoothingEnabled = false;
+            cx.imageSmoothingEnabled = sc > 1;
+            cx.imageSmoothingQuality = 'high';
             cx.drawImage(img, 0, 0, W, H);
             const px = cx.getImageData(0, 0, W, H).data;
             const N = W * H;
             // lab: -1 미정 · -2 경계(어두운 선 · 버린 덩어리) · -3 투명(바탕) · 0 이상 덩어리 번호
             const lab = new Int32Array(N).fill(-1);
+            // 검은 · 진한 화소 중 가는 선(폭 4화소 이하)만 경계로 — 어두운 바다처럼 넓은 면은 보통 색처럼 덩어리로 묶는다
+            const dark = new Uint8Array(N);
             for (let i = 0; i < N; i++) {
-                const a = px[i * 4 + 3];
-                if (a < 128) { lab[i] = -3; continue; }
-                const r = px[i * 4], g = px[i * 4 + 1], b = px[i * 4 + 2];
-                if (0.299 * r + 0.587 * g + 0.114 * b < 55) lab[i] = -2; // 검은 · 진한 경계선
+                if (px[i * 4 + 3] < 128) { lab[i] = -3; continue; }
+                if (0.299 * px[i * 4] + 0.587 * px[i * 4 + 1] + 0.114 * px[i * 4 + 2] < 55) dark[i] = 1;
             }
+            const darkWide = openMask(dark, W, H, Math.max(2, Math.round(2 * sc)));
+            // lineAt: 검은 경계선 화소 — 나중에 "같은 색 이웃 합치기"가 검은 선을 넘어 합치지 않게 기억해 둔다
+            const lineAt = new Uint8Array(N);
+            for (let i = 0; i < N; i++) if (dark[i] && !darkWide[i]) { lab[i] = -2; lineAt[i] = 1; }
             // 같은 색 덩어리 찾기 (시작 화소 색 기준 허용 오차 안의 이웃)
             const tol2 = (o.tolerance * o.tolerance) * 3;
             const comps = [];
@@ -112,22 +138,53 @@
                 if (i < W || lab[i - W] !== c) comps[c].perim++;
                 if (i >= N - W || lab[i + W] !== c) comps[c].perim++;
             }
-            const minPx = Math.max(6, N * o.minArea / 1000);
+            // 속(3×3이 모두 같은 덩어리인 화소) — 번진 가장자리 · 가는 선은 속이 없고, 작은 나라라도 실제 지역은 속이 있다
+            for (let y = 1; y < H - 1; y++) for (let x = 1; x < W - 1; x++) {
+                const i = y * W + x, c = lab[i]; if (c < 0) continue;
+                if (lab[i - 1] === c && lab[i + 1] === c && lab[i - W] === c && lab[i + W] === c && lab[i - W - 1] === c && lab[i - W + 1] === c && lab[i + W - 1] === c && lab[i + W + 1] === c) comps[c].core = (comps[c].core || 0) + 1;
+            }
+            const minPx = Math.max(9, N * o.minArea / 1000);
             comps.forEach(c => {
-                if (c.area < minPx) c.keep = false;              // 너무 작은 덩어리 (글자 · 번진 가장자리)
-                else if (c.area / c.perim < 0.9) c.keep = false; // 얇은 선 (흰 경계선 등)
+                if (c.area < minPx) { c.keep = false; c.why = 'small'; }               // 너무 작은 덩어리 (글자 조각 · 점)
+                else if (!c.core) { c.keep = false; c.why = 'nocore'; }                // 속이 없음 = 번진 가장자리 · 가는 선
+                else if (c.area / c.perim < 0.9) { c.keep = false; c.why = 'thin'; }   // 얇은 선 (흰 경계선 등)
+                else if (c.area / c.perim < 0.9 * sc) c.band = true;                 // 원본 2화소 폭 미만의 띠 — 압축으로 생긴 가장자리 띠일 수 있음 (합치기에서 조금 더 너그럽게)
             });
             // 바탕: 그림 가장자리를 가장 많이 두른 큰 덩어리 (바다 · 흰 바탕) — 둘레의 30% 넘게 가장자리에 닿으면 뺀다
             let bg = null;
             if (o.dropBackground) {
                 const border = 2 * (W + H);
                 comps.forEach(c => { if (c.keep && c.edge > border * 0.3 && (!bg || c.edge > bg.edge)) bg = c; });
-                if (bg) bg.keep = false;
+                if (bg) {
+                    bg.keep = false;
+                    // 바탕과 같은 색인 안쪽 덩어리(호수 · 내해)도 뺀다
+                    comps.forEach(c => {
+                        if (!c.keep) return;
+                        const dr = c.color[0] - bg.color[0], dg = c.color[1] - bg.color[1], db = c.color[2] - bg.color[2];
+                        if (dr * dr + dg * dg + db * db <= Math.max(tol2 * 2.56, 35 * 35)) { c.keep = false; c.bgLike = true; }
+                    });
+                }
+            }
+            // 버린 작은 조각 중 바탕색에 가까운 것(압축으로 얼룩진 바다 가장자리)은 바다로 — 땅이 바다로 번지지 않게
+            if (bg) {
+                const sea = Math.max((o.tolerance * 2.5) ** 2 * 3, 50 * 50);
+                comps.forEach(c => {
+                    if (c.keep || c === bg) return;
+                    const dr = c.color[0] - bg.color[0], dg = c.color[1] - bg.color[1], db = c.color[2] - bg.color[2];
+                    if (dr * dr + dg * dg + db * db <= sea) c.seaish = true;
+                });
             }
             // 버린 덩어리 화소는 경계로 → 남은 이웃 덩어리가 나눠 가짐 (바탕은 그대로 비워 둠)
             for (let i = 0; i < N; i++) {
                 const c = lab[i];
-                if (c >= 0 && !comps[c].keep) lab[i] = bg && c === bg.id ? -3 : -2;
+                if (c >= 0 && !comps[c].keep) lab[i] = (bg && c === bg.id) || comps[c].bgLike || comps[c].seaish ? -3 : -2;
+            }
+            // 바탕 중 가는 줄기(바탕색으로 그린 경계선 · 좁은 틈)는 이웃 지역이 나눠 갖게 경계로
+            if (bg) {
+                const bgm = new Uint8Array(N);
+                for (let i = 0; i < N; i++) if (lab[i] === -3 && px[i * 4 + 3] >= 128) bgm[i] = 1;
+                const wide = openMask(bgm, W, H, Math.max(1, Math.round(sc)));
+                for (let i = 0; i < N; i++) if (bgm[i] && !wide[i]) lab[i] = -2;
             }
             // 경계 화소를 가까운 덩어리에 나눠 주기 (여러 출발점 너비 우선 탐색)
             let qh = 0, qt = 0;
@@ -140,6 +197,47 @@
                 const i = queue[qh++], c = lab[i], x = i % W;
                 const nb = [x > 0 ? i - 1 : -1, x < W - 1 ? i + 1 : -1, i >= W ? i - W : -1, i < N - W ? i + W : -1];
                 for (const j of nb) { if (j >= 0 && lab[j] === -2) { lab[j] = c; queue[qt++] = j; } }
+            }
+            // 같은 색 이웃 합치기 — 옅은 내부 경계선(주 · 도 경계)으로 쪼개진 같은 나라 조각을 하나로 (평균 색이 거의 같고 맞닿은 덩어리)
+            if (o.mergeSame) {
+                // 맞닿은 쌍을 색이 가까운 순서로 합치되, 합칠 때마다 합쳐진 평균 색으로 다시 비교 — 비슷한 색이 줄줄이 이어져
+                // 다른 나라까지 한 덩어리가 되는 것(갈색 → 회갈색 → 회색 …)을 막는다
+                const nC = comps.length;
+                const par = new Int32Array(nC).map((_, i) => i);
+                const find = a => { while (par[a] !== a) { par[a] = par[par[a]]; a = par[a]; } return a; };
+                const lim = Math.max(14, o.tolerance * 0.8) ** 2; // 같은 나라 조각은 평균 색이 거의 똑같다 (압축 잡음 정도) — 비슷한 색의 다른 나라는 합치지 않게 좁게
+                const dist = (A, B) => (A[0] - B[0]) ** 2 + (A[1] - B[1]) ** 2 + (A[2] - B[2]) ** 2;
+                const bandK = 2.5; // 가장자리 띠는 색 차이를 이만큼(제곱 거리 배수) 더 봐줌
+                const pairs = new Map();
+                for (let i = 0; i < N; i++) {
+                    const a = lab[i]; if (a < 0) continue;
+                    const x = i % W;
+                    for (const j of [x < W - 1 ? i + 1 : -1, i < N - W ? i + W : -1]) {
+                        if (j < 0) continue;
+                        const b = lab[j];
+                        if (b < 0 || b === a) continue;
+                        const key = a < b ? a * nC + b : b * nC + a;
+                        let e = pairs.get(key);
+                        if (e === undefined) { const d = dist(comps[a].color, comps[b].color); e = d <= lim * bandK ? [d, 0, 0] : null; pairs.set(key, e); }
+                        if (e) { e[1]++; if (lineAt[i] || lineAt[j]) e[2]++; }
+                    }
+                }
+                // 검은 선으로 나뉜 곳은 색이 같아도 합치지 않는다 — 맞닿은 경계의 30% 넘게 검은 선이면 지도를 그린 사람이 일부러 나눈 경계
+                const col = comps.map(c => c.color.slice()), area = comps.map(c => c.area);
+                // 단, 아주 작은 조각(원본 5×5화소 미만 — 글자 속 구멍 같은 것)은 검은 선 너머라도 붙인다
+                const tiny = (5 * sc) ** 2;
+                const limOf = key => (comps[Math.floor(key / nC)].band || comps[key % nC].band ? lim * bandK : lim);
+                [...pairs.entries()].filter(([key, e]) => e && e[0] <= limOf(key) && (e[2] <= e[1] * 0.3 || Math.min(comps[Math.floor(key / nC)].area, comps[key % nC].area) < tiny)).sort((p1, p2) => p1[1][0] - p2[1][0]).forEach(([key]) => {
+                    const ra = find(Math.floor(key / nC)), rb = find(key % nC);
+                    if (ra === rb || dist(col[ra], col[rb]) > limOf(key)) return;
+                    const t = area[ra] + area[rb];
+                    col[ra] = col[ra].map((v, k) => (v * area[ra] + col[rb][k] * area[rb]) / t);
+                    area[ra] = t; par[rb] = ra;
+                });
+                let merged = 0;
+                comps.forEach(c => { const r = find(c.id); if (r !== c.id && c.keep) { c.keep = false; merged++; } });
+                comps.forEach(c => { if (find(c.id) === c.id) { c.color = col[c.id]; c.area = area[c.id]; } });
+                if (merged) for (let i = 0; i < N; i++) if (lab[i] >= 0) lab[i] = find(lab[i]);
             }
             // 덩어리마다 화소 경계를 방향 있는 변으로 모아 고리로 잇기 (y가 아래로 느는 좌표계에서 시계 방향)
             const kept = comps.filter(c => c.keep);
@@ -181,7 +279,7 @@
                         if (ring.length < 3) continue;
                         // 일직선 위의 점 빼기 → 단순화
                         const pts = ring.filter((p, i) => { const a = ring[(i - 1 + ring.length) % ring.length], b = ring[(i + 1) % ring.length]; return (b[0] - a[0]) * (p[1] - a[1]) !== (b[1] - a[1]) * (p[0] - a[0]); });
-                        const sp = simplify(pts.length >= 3 ? pts : ring, 1.1);
+                        const sp = simplify(pts.length >= 3 ? pts : ring, Math.max(0.75, sc * 0.5));
                         if (sp.length < 3) continue;
                         d += 'M' + sp.map(p => f(p[0]) + ',' + f(p[1])).join('L') + 'Z';
                     }
@@ -189,7 +287,9 @@
                 if (d) paths.push(`<path id="지역 ${n + 1}" d="${d}" fill="${hex(...c.color)}" fill-rule="evenodd" stroke="#333" stroke-width="${Math.max(0.5, Math.round(k * 10) / 10)}"/>`);
             });
             const svgText = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${IW} ${IH}" width="${IW}" height="${IH}">${paths.join('')}</svg>`;
-            return { svgText, count: paths.length, width: IW, height: IH };
+            const stats = { comps: comps.length, W, H, small: 0, nocore: 0, thin: 0, droppedPx: 0 };
+            comps.forEach(c => { if (c.why) { stats[c.why]++; stats.droppedPx += c.area; } });
+            return { svgText, count: paths.length, width: IW, height: IH, stats };
         } finally {
             URL.revokeObjectURL(url);
         }
