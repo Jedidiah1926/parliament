@@ -94,13 +94,13 @@
     /* global emergencyPowers, presElectionMode */
     const devOn = () => !!(window.HemiDev && window.HemiDev.isOn());
     // 미리보기 화면마다 담긴 기능 버전 (teaser64는 1.6.1 ~ 1.6.4, teaser66은 1.6.1 ~ 1.6.4 + 1.6.6)
-    const PAGE_HAS = { '63': ['1.6.1', '1.6.2', '1.6.3'], '64': ['1.6.1', '1.6.2', '1.6.3', '1.6.4'], '66': ['1.6.1', '1.6.2', '1.6.3', '1.6.4', '1.6.6'] };
+    const PAGE_HAS = { '63': ['1.6.1', '1.6.2', '1.6.3'], '64': ['1.6.1', '1.6.2', '1.6.3', '1.6.4'], '65': ['1.6.1', '1.6.2', '1.6.3', '1.6.4', '1.6.5'], '66': ['1.6.1', '1.6.2', '1.6.3', '1.6.4', '1.6.5', '1.6.6'] };
     const PREVIEW_PAGES = Object.keys(PAGE_HAS);
-    const previewPageFor = l => (l && l.locked === '1.6.6' ? '66' : l && l.locked === '1.6.4' ? '64' : '63');
+    const previewPageFor = l => (l && l.locked === '1.6.6' ? '66' : l && l.locked === '1.6.5' ? '65' : l && l.locked === '1.6.4' ? '64' : '63');
     const curPage = () => document.documentElement.getAttribute('data-teaser');
     // 지금 화면이 미리보기 화면인지 — 과정을 주면 그 과정의 기능이 있는 화면인지
     const onPreviewPage = l => PREVIEW_PAGES.includes(curPage()) && (!l || !l.locked || (PAGE_HAS[curPage()] || []).includes(l.locked));
-    const previewName = l => `Teaser ${{ '63': '1.6.3', '64': '1.6.4', '66': '1.6.6' }[previewPageFor(l)]}`;
+    const previewName = l => `Teaser ${{ '63': '1.6.3', '64': '1.6.4', '65': '1.6.5', '66': '1.6.6' }[previewPageFor(l)]}`;
     const unrecLeft = () => { try { return typeof window.isDistrictUnrecovered === 'function' && Object.keys(districtGrid.house || {}).some(k => window.isDistrictUnrecovered(k)); } catch (e) { return false; } };
     const t64 = () => window.T64 || null;
     const rankSig = () => { const t = t64(); return t && t.ranking ? t.ranking.rows.map(r => `${r.id}:${r.score}`).join(',') : ''; };
@@ -901,7 +901,7 @@
                     target: () => fraudBlock() || '#fraudPartyList',
                     allow: ['#fraudPartyList'],
                     title: '들키면 어떻게 될까',
-                    text: '총선을 개표하는 순간 발각 여부가 정해집니다. 들키지 않으면 조작이 결과에 그대로 반영되고, 들키면 조작은 무효가 되며 그 정당은 활동 금지 처분을 받아요(알림이 뜹니다). 어느 쪽이든 시도는 개표 한 번으로 사라집니다. 그만두려면 체크를 풀면 돼요.',
+                    text: '들킬지는 개표 도중에 드러납니다. 들키지 않으면 조작이 결과에 그대로 반영되고, 들키면 개표 중간(무작위 시점)에 개표가 멈추며 그 정당은 활동 금지 처분을 받고(알림이 뜹니다) 조작 표를 무효로 해 처음부터 다시 개표해요. 어느 쪽이든 시도는 개표 한 번으로 사라집니다. 그만두려면 체크를 풀면 돼요.',
                     leave: closePanels,
                 },
             ],
@@ -1044,6 +1044,45 @@
                     target: '#contentRevolution',
                     title: '혁명 뒤',
                     text: '당-국가 체제에서는 "찬반 선거 치르기"로 최고인민회의 대의원을 뽑고, 다시 민주 혁명을 일으켜야 무너집니다. 혁명이 끝나면 새 총선을 치르세요.',
+                },
+            ],
+        },
+        {
+            id: 'royal', group: 'detail', locked: '1.6.5',
+            title: '왕실 · 왕정복고',
+            summary: '왕가와 왕위 주장자 · 계승 규칙 · 왕정복고 · 전제군주정 · 계승 분쟁 · 친위 쿠데타 · 공화 혁명',
+            steps: [
+                {
+                    before: [closePanels, go('cabinet', 'royal'), showPanel('controls')],
+                    target: '#contentRoyal',
+                    title: '왕실',
+                    text: '내각 › 왕실에서는 군주제를 다룹니다. 공화국에 왕을 되살리는 왕정복고, 왕이 실권을 쥐는 숨겨진 정부 형태 "전제군주정", 왕위 계승과 그 분쟁, 군주제를 없애는 공화 혁명까지요.',
+                },
+                {
+                    before: [go('cabinet', 'royal'), showPanel('controls')],
+                    enter: () => { T.royalDyn = (window.T65 && T65.dynasties.length) || 0; },
+                    target: () => document.querySelector('#contentRoyal [data-act="seed"]') || document.querySelector('#contentRoyal .t65-dyn') || '#contentRoyal',
+                    allow: ['#contentRoyal'],
+                    title: '왕가와 왕위 주장자',
+                    text: '왕가마다 계승 규칙(남계만 · 남자 우선 · 성별 무관)과 왕위 주장자를 정합니다. 주장자 순서(⋮⋮ 끌기)가 출생 순이고, 정당마다 지지하는 주장자를 고를 수 있어요. "예시 왕가 만들기"를 누르거나 왕가를 직접 추가해 보세요.',
+                    task: () => !!window.T65 && T65.dynasties.length > 0,
+                    done: '서독이라면 호엔촐레른가 · 비텔스바흐가가 만들어져요. 지지 정당이 많은 주장자일수록 왕정복고 · 계승 분쟁에 유리합니다.',
+                },
+                {
+                    before: [go('cabinet', 'royal'), showPanel('controls')],
+                    enter: () => { T.royalBase = logLen('T65'); },
+                    target: () => document.querySelector('#contentRoyal [data-act="restore"]') || '#contentRoyal',
+                    allow: ['#contentRoyal'],
+                    title: '왕정복고',
+                    text: '주장자를 지지하는 정당이 하원 과반이면 의회 결의로 입헌군주제를 세우고, 아니면 왕당파 쿠데타로 — 쿠데타는 입헌군주제나 전제군주정을 고를 수 있어요. 성공하면 국호가 "○○ 왕국"으로 바뀌고 새 헌법이 생깁니다.',
+                    task: () => logLen('T65') > (T.royalBase || 0),
+                    done: '결과가 나왔어요. 쿠데타가 실패하면 왕당파 정당이 활동 금지되고 주장자는 망명합니다.',
+                },
+                {
+                    before: [go('cabinet', 'royal'), showPanel('controls')],
+                    target: '#contentRoyal',
+                    title: '왕정에서',
+                    text: '전제군주정에서는 왕이 총리를 임명하고 거부권 · 비상 권한을 쥐며, 입헌 개혁으로 입헌군주제로 돌아갈 수 있어요. 입헌군주제에서는 친위 쿠데타로 전제군주정을 노릴 수 있습니다. 왕이 서거 · 퇴위하면 계승 규칙대로 다음 계승자가 즉위하고, 다른 주장자가 정통성을 내세우면 계승 분쟁(카를로스파처럼)이 벌어져요. 공화 혁명이 성공하면 군주제가 폐지됩니다.',
                 },
             ],
         },

@@ -23,6 +23,9 @@ window.DnoLangPacks.en = {
  "ordinal": "en",
  "patterns": [
   {"re": "^합계 ([\\d.]+)%$", "to": "Total $1%"},
+  {"re": "^⚠ 개표 도중 (.+)의 부정선거가 발각되었습니다! \\(개표율 (\\d+)%\\)\\n조작된 표를 모두 무효 처리하고 처음부터 다시 개표합니다\\.\\n발각된 정당\\((.+)\\)은 활동이 금지됩니다\\.$", "to": "⚠ Election fraud by $1 was uncovered during the count! ($2% counted)\nThe rigged votes are voided and the count starts over.\n$3 is banned."},
+  {"re": "봉쇄조항 ([\\d.]+)% 미달: ", "to": "below the $1% threshold: "},
+  {"re": "개표 중단: 부정선거 발각! \\(개표율 (\\d+)%\\)", "to": "Count halted: election fraud uncovered! ($1% counted)"},
   {"re": "^Teaser (\\w+) 화면은 개발자 모드에서만 열 수 있습니다\\.$", "to": "The Teaser $1 screen can only be opened in developer mode."},
   {"re": "그중 (\\d+)곳은 지역구 성향을 따로 정해 그 값이 우선", "to": "$1 of them have their own district tendency, which takes priority"},
   {"re": "^지역구 (\\d+)곳의 따로 정한 성향 지우고 권역 성향 따르기$", "to": "Clear the own tendency of $1 districts and follow the region"},
@@ -2295,6 +2298,26 @@ window.DnoLangPacks.en = {
   [
    "개표 중... (",
    "Counting... ("
+  ],
+  [
+   "봉쇄조항(%)",
+   "Threshold (%)"
+  ],
+  [
+   "면제: 지역구",
+   "Exempt: districts"
+  ],
+  [
+   "석 이상",
+   "or more"
+  ],
+  [
+   "재개표 중...",
+   "Recounting..."
+  ],
+  [
+   "발각은 개표 도중 무작위 시점에 드러납니다 — 그 순간 개표가 멈추고, 조작된 표를 무효로 해 처음부터 다시 개표하며 활동 금지 처분을 받습니다. 발각되지 않으면 효과가 그대로 반영됩니다. 결과와 무관하게 시도는 개표 1회로 소진됩니다.",
+   "Fraud is uncovered at a random point during the count — counting stops, the rigged votes are voided, the count starts over and the party is banned. If not caught, the effect applies as is. Either way, the attempt is used up after one count."
   ],
   [
    "개표 중...",
@@ -4653,8 +4676,8 @@ window.DnoLangPacks.en = {
    "Past election results."
   ],
   [
-   "정당별로 다음 총선 개표 1회에 한해 부정선거를 시도할 수 있습니다. 발각되면 그 정당은 활동 금지 처분을 받아요.",
-   "Each party can attempt election fraud once, in the next general election count. If caught, the party is banned."
+   "정당별로 다음 총선 개표 1회에 한해 부정선거를 시도할 수 있습니다. 발각은 개표 도중 무작위 시점에 드러나며, 그 순간 개표가 멈추고 조작된 표를 무효로 해 처음부터 다시 개표합니다. 발각된 정당은 활동 금지 처분을 받아요.",
+   "Each party can attempt election fraud once, in the next general election count. Fraud is uncovered at a random point during the count: counting stops, the rigged votes are voided and the count starts over. A party caught is banned."
   ],
   [
    "선거 결과를 좌우하는 지역구 · 성향 · 지지율을 정합니다. 여기서 정한 값으로 국가 › 선거에서 개표해요.",
@@ -7253,8 +7276,8 @@ window.DnoLangPacks.en = {
    "New here? Do the basic lessons in order, then pick only the detailed lessons you need. Each lesson is just a few steps."
   ],
   [
-   "총선을 개표하는 순간 발각 여부가 정해집니다. 들키지 않으면 조작이 결과에 그대로 반영되고, 들키면 조작은 무효가 되며 그 정당은 활동 금지 처분을 받아요(알림이 뜹니다). 어느 쪽이든 시도는 개표 한 번으로 사라집니다. 그만두려면 체크를 풀면 돼요.",
-   "Whether it's caught is decided the moment the general election is counted. If not caught, the rigging goes straight into the result; if caught, it has no effect and the party is banned (you'll get a notice). Either way the attempt is used up after one count. Untick it to call it off."
+   "들킬지는 개표 도중에 드러납니다. 들키지 않으면 조작이 결과에 그대로 반영되고, 들키면 개표 중간(무작위 시점)에 개표가 멈추며 그 정당은 활동 금지 처분을 받고(알림이 뜹니다) 조작 표를 무효로 해 처음부터 다시 개표해요. 어느 쪽이든 시도는 개표 한 번으로 사라집니다. 그만두려면 체크를 풀면 돼요.",
+   "Whether it's caught comes out during the count. If not caught, the rigging goes straight into the result; if caught, counting stops at a random point, the party is banned (you'll get a notice) and the rigged votes are voided and counted again from the start. Either way the attempt is used up after one count. Untick it to call it off."
   ],
   [
    "후보 단일화란?",
@@ -7425,6 +7448,7 @@ window.DnoLangPacks.en = {
   ["선거 결과를 좌우하는 성향 · 지지율을 정합니다 (지역구 · 권역은 국가 묶음). 여기서 정한 값으로 선거 탭에서 개표해요.", "Set the tendencies and support rates that decide elections (districts and regions are under Nation). The Elections tab counts votes from these values."],
   ["국가 › 지역 · 권역", "Nation › Districts · Regions"],
   ["선거 기록 통합 · 검색", "Unified election records · search"],
+  ["봉쇄조항", "Electoral threshold"],
   ["- 여론 › 지역구 · 여론 › 권역을 국가 › 지역 · 국가 › 권역으로 옮김 (여론에는 성향 · 지지율만)", "- Opinion › Districts and Opinion › Regions move to Nation › Districts and Nation › Regions (Opinion keeps only Tendency and Support)"],
   ["- 선거 › 선거 기록에 지방선거 · 국민투표 · 대선(총리 선거) 기록도 함께 — 최근 순, 기록 검색 · 종류 필터 (국무회의 기록처럼 기록이 없어도 검색 창 표시)", "- Elections › Records now also lists local elections, referendums and presidential (PM) elections — newest first, with record search and type filters (the search box shows even with no records, like the cabinet records)"],
   ["- 국가 › 미수복 탭 신설 (국가 › 지역 · 권역은 1.6.0)", "- A new Nation › Unrecovered tab (Nation › Districts and Regions arrive in 1.6.0)"],
@@ -7787,6 +7811,9 @@ window.DnoLangPacks.en = {
   ["보건복지위원회", "Health and Welfare Committee"],
   ["환경노동위원회", "Environment and Labor Committee"],
   ["국가 재건을 위해 필요한 모든 조치를 취할 수 있다.\n집행부는 의회의 동의 없이 긴급 법령을 발동할 수 있다.", "All measures necessary for national reconstruction may be taken.\nThe executive may issue emergency decrees without the consent of the legislature."],
+  ["- 봉쇄조항 — 선거 › 지지율의 비례대표 방식에서 원마다 봉쇄조항(%)을 정함: 전국 득표율이 이보다 낮은 정당은 비례 의석을 받지 못함(지역구 당선은 유지). 지역구 N석 이상 이기면 면제(예: 독일 5% · 지역구 3석). 개표 결과 제목에 미달 정당 표시, 튜토리얼(서독) 연방의회는 5% · 3석", "- Electoral threshold — set a threshold (%) per chamber under Election › Support › list system: parties below this national vote share get no list seats (district wins are kept). Winning N districts or more exempts a party (e.g. Germany 5% · 3 districts). The count result title names the parties below it; the tutorial (West Germany) Bundestag uses 5% · 3 seats"],
+  ["- 그 원에 참여하지 않는 원외 정당(정당 카드에서 그 원 체크를 끈 정당)이 총선 비례 의석을 받던 문제 수정 — 지지율 입력 목록에 없는데도 저장된 지지율 · 무당파 몫으로 의석이 생기던 것. 지역구 후보처럼 개표에서도 빠지고, 직전 대비 ▲▼도 0석에서 비교", "- Fixed extra-parliamentary parties (chamber unchecked on the party card) winning list seats in a general election — they got seats from stored support and the swing share even though they were not in the support list. Like district candidates they now sit out the count, and the ▲▼ change compares from 0 seats"],
+  ["- 부정선거 발각을 개표 도중으로 — 개표를 시작하자마자 드러나는 대신, 조작된 표로 개표가 진행되다가 무작위 시점(15~85%)에 발각: 개표가 멈추고 그 정당은 활동 금지, 조작 표를 무효로 해 처음부터 다시 개표", "- Election fraud is now uncovered during the count — instead of at the very start, counting runs on the rigged votes and the fraud is uncovered at a random point (15–85%): counting stops, the party is banned, the rigged votes are voided and the count starts over"],
   ["- 버전 표시 v1.6.0", "- Version label v1.6.0"],
   ["법안을 만들고 통과시키는 과정입니다. 메뉴 위의 단계 막대(제출 › 위원회 › 본회의 › 서명 · 기록 › 법령)에 단계마다 법안 수가 보이고, 누르면 그 탭으로 갑니다.", "The process of drafting bills and getting them passed. The stage bar above the menu (Submit › Committees › Floor › Signing · Records › Statutes) shows the number of bills at each stage — click one to jump to that tab."],
   ["새 법안 작성 — 종류(법률안 · 헌법 개정안), 제목, 조문(제1조 · 제2조 … 조 단위로 쓰고 순서를 바꿈), 태그, 가결 기준. 기존 법안 수정과 개정안도 여기서.", "Draft a new bill — type (bill · constitutional amendment), title, articles (written article by article, Article 1, Article 2 …, reorderable), tags and passage threshold. Editing existing bills and amendments is here too."],
