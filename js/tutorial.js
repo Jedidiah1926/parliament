@@ -454,7 +454,7 @@
                     before: [go('setup', 'party'), call('switchPartyGroupInnerTab', 'info'), showPanel('controls')],
                     target: () => { const b = document.querySelector('#partyInfoList button[onclick^="addFaction"]'); return b ? (b.closest('.card-item') || b) : '#partyInfoList'; },
                     title: '파벌',
-                    text: '정당 안에 파벌(계파)을 만들 수 있어요. 파벌마다 이름 · 색 · 의석을 정하면 반원에서 한 정당 안의 파벌이 색으로 나뉘어 보이고, 표결 때 파벌별로 표를 던질 수 있습니다.',
+                    text: '정당 안에 파벌(계파)을 만들 수 있어요. 파벌마다 이름 · 색 · 의석을 정하면 반원에서 한 정당 안의 파벌이 색으로 나뉘어 보이고, 표결 때 파벌별로 표를 던질 수 있습니다. 총선 결과를 반영할 때 파벌을 나눠서(선거 전 몫대로 · 지역 기반 파벌은 그 지역구 득표만큼) 반영할지, 정당 몫으로 합쳐서 반영할지도 고릅니다.',
                 },
                 {
                     before: [go('setup', 'party'), call('switchPartyGroupInnerTab', 'info'), showPanel('controls')],

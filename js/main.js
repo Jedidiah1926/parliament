@@ -8387,6 +8387,78 @@
             reader.readAsDataURL(file);
         }
 
+        // ── 총선에서 파벌 의석 ──────────────────
+        // p.factionElection: 'merge'(합쳐서, 기본 — 반영하면 파벌 의석을 0으로 돌려 정당 몫으로) | 'split'(나눠서 — 새 의석을 파벌 몫대로 나눔)
+        // f.homeDistricts: [지역구 키] — 지역 기반 파벌(예: 바이에른에서만 나오는 기독교사회연합). 나눠서 반영할 때
+        //   그 지역구들에서 정당이 얻는 표(성향 × 인구)의 몫만큼 새 의석을 가져가고, 나머지는 선거 전 의석 비율대로 나눈다
+        function setPartyFactionElection(partyId, mode) {
+            const p = parties.find(x => x.id === partyId); if(!p) return;
+            p.factionElection = mode === 'split' ? 'split' : 'merge';
+            renderPartyInfoList();
+        }
+        function toggleFactionHome(partyId, factionId, key, on) {
+            const p = parties.find(x => x.id === partyId); if(!p?.factions) return;
+            const f = p.factions.find(x => x.id === factionId); if(!f) return;
+            const set = new Set(f.homeDistricts || []);
+            if(on) set.add(key); else set.delete(key);
+            f.homeDistricts = [...set];
+            renderPartyInfoList();
+        }
+        function factionHomeHtml(p, f) {
+            if(p.factionElection !== 'split') return '';
+            const keys = districtSortedKeys('house');
+            if(!keys.length) return '';
+            const home = new Set((f.homeDistricts || []).filter(k => districtGrid.house?.[k]));
+            const pid = JSON.stringify(p.id).replace(/"/g, '&quot;');
+            const nm = k => escapeHtmlText(districtNames.house[k] || k);
+            const picked = [...home].map(nm).join(', ');
+            return `<details class="faction-home" style="margin-bottom:5px;font-size:0.78rem;">
+                <summary style="cursor:pointer;color:#888;padding:3px 6px;background:#0a0c10;border:1px solid #222;">지역 기반 ${home.size ? `<span style="color:var(--tno-neon);">${picked}</span>` : '<span style="color:#555;">— 없음 (선거 전 몫대로)</span>'}</summary>
+                <div style="max-height:140px;overflow:auto;display:flex;flex-wrap:wrap;gap:3px 10px;padding:5px 6px;border:1px solid #222;border-top:none;">
+                    ${keys.map(k => `<label style="display:flex;align-items:center;gap:4px;cursor:pointer;color:#999;"><input type="checkbox" ${home.has(k) ? 'checked' : ''} onchange="toggleFactionHome(${pid},'${f.id}',${JSON.stringify(k).replace(/"/g, '&quot;')},this.checked)">${nm(k)}</label>`).join('')}
+                </div>
+            </details>`;
+        }
+        // 지역구에서 정당의 득표 힘 — 성향(%) × 인구 (인구가 없으면 1)
+        function factionDistrictVotes(key, ch, pid) {
+            const t = districtMapMode === 'svg' ? districtTendencyValue(key, ch, pid) : (Number(tendencyData[pid]?.[key]) || 0);
+            const pop = Number(districtPopulation[ch]?.[key] || districtPopulation.house?.[key]) || 1;
+            return t * pop;
+        }
+        // 나눠서 반영: 새 의석 newTotal을 파벌들과 정당 본체(파벌 밖)에 나눠 { 파벌 id: 의석 } 반환 (정당 본체 몫은 나머지)
+        function factionSplitSeats(p, ch, newTotal, prevTotal, prevF) {
+            const fs = p.factions || [];
+            const out = {};
+            fs.forEach(f => { out[f.id] = 0; });
+            if(!fs.length || newTotal <= 0) return out;
+            const all = Object.keys(districtGrid[ch] || {});
+            const allVotes = all.reduce((sum, k) => sum + factionDistrictVotes(k, ch, p.id), 0);
+            // 1) 지역 기반 파벌: 그 지역구 득표 몫만큼
+            const items = []; // { id, exact }
+            let homeSum = 0;
+            fs.forEach(f => {
+                const keys = (f.homeDistricts || []).filter(k => districtGrid[ch]?.[k]);
+                if(!keys.length || allVotes <= 0) return;
+                const share = keys.reduce((sum, k) => sum + factionDistrictVotes(k, ch, p.id), 0) / allVotes;
+                items.push({ id: f.id, exact: share * newTotal });
+                homeSum += share * newTotal;
+            });
+            if(homeSum > newTotal) { items.forEach(it => { it.exact *= newTotal / homeSum; }); homeSum = newTotal; }
+            // 2) 나머지: 정당 본체 + 다른 파벌을 선거 전 의석 비율대로
+            const rest = newTotal - homeSum;
+            const others = fs.map((f, i) => ({ id: f.id, w: prevF[i] || 0 })).filter(o => !items.some(it => it.id === o.id));
+            const coreW = Math.max(0, prevTotal - prevF.reduce((a, b) => a + (b || 0), 0));
+            const sumW = others.reduce((a, o) => a + o.w, 0) + coreW;
+            others.forEach(o => items.push({ id: o.id, exact: sumW > 0 ? rest * o.w / sumW : 0 }));
+            items.push({ id: null, exact: sumW > 0 ? rest * coreW / sumW : rest }); // 정당 본체
+            // 3) 정수로 — 최대 잉여
+            let given = 0;
+            items.forEach(it => { it.n = Math.floor(it.exact + 1e-9); given += it.n; });
+            items.slice().sort((a, b) => (b.exact - b.n) - (a.exact - a.n)).forEach(it => { if(given < newTotal) { it.n++; given++; } });
+            items.forEach(it => { if(it.id != null) out[it.id] = it.n; });
+            return out;
+        }
+
         function renderFactionSection(p, partyIdx, chamberType) {
             // chamberType: 'house' | 'senate' | undefined(정당탭=둘다)
             if(!p.factions) p.factions = [];
@@ -8429,6 +8501,7 @@
                             ${ideologyOptionsHtml(f.ideologyId, { excludeInd: false })}
                         </select>
                     </div>
+                    ${factionHomeHtml(p, f)}
                     <!-- 행3: 색상 옵션 + 신당 분리 -->
                     <div style="display:flex;gap:5px;">
                         <label style="flex:1;display:flex;align-items:center;gap:5px;cursor:pointer;padding:3px 6px;background:#0a0c10;border:1px solid #222;font-size:0.78rem;color:#888;">
@@ -8445,6 +8518,18 @@
                     <span style="color:#555;font-size:0.8rem;letter-spacing:1px;">▌ 파벌</span>
                     <button onclick="addFaction(${p.id})" style="background:transparent;border:1px solid #333;color:#666;font-family:inherit;font-size:0.78rem;padding:2px 8px;cursor:pointer;">+ 파벌 추가</button>
                 </div>
+                ${hasF ? `<div class="faction-elec-mode" style="margin-bottom:6px;">
+                    <div style="display:flex;align-items:center;gap:6px;">
+                        <span style="color:#777;font-size:0.76rem;flex-shrink:0;">총선에서</span>
+                        <div class="system-radio-group" style="flex:1;margin:0;">
+                            <button type="button" class="system-radio-btn ${p.factionElection === 'split' ? 'active' : ''}" onclick="setPartyFactionElection(${JSON.stringify(p.id).replace(/"/g, '&quot;')},'split')">파벌 나눠서</button>
+                            <button type="button" class="system-radio-btn ${p.factionElection !== 'split' ? 'active' : ''}" onclick="setPartyFactionElection(${JSON.stringify(p.id).replace(/"/g, '&quot;')},'merge')">합쳐서</button>
+                        </div>
+                    </div>
+                    <div style="color:#555;font-size:0.72rem;margin-top:3px;">${p.factionElection === 'split'
+                        ? '개표 결과를 의회에 반영하면 새 의석을 선거 전 파벌 몫대로 나눕니다. 지역 기반 파벌은 그 지역구들에서 정당이 얻는 표만큼 가져가요.'
+                        : '개표 결과를 의회에 반영하면 파벌 의석이 정당 몫으로 합쳐집니다 (파벌은 남고 의석은 0 — 다시 배분해야 해요).'}</div>
+                </div>` : ''}
                 ${factionCards}${sumHtml}
             </div>`;
         }
@@ -13218,6 +13303,7 @@
             }
 
             let hadFactions = false;
+            let hadSplit = false;
             let lastCh = null;
             pending.forEach(ch => {
                 const result = elecLastResults[ch] || elecLastResult;
@@ -13227,11 +13313,20 @@
                 const regionTotals = regionSeatTotalsByParty(ch); // 직접 지정한 권역 선거구 의석은 선거와 별개로 유지
                 parties.forEach(p => {
                     const s = seatMap.find(x=>x.id===p.id);
+                    const prevTotal = p[seatKey] || 0;
+                    const prevF = (p.factions || []).map(f => f[seatKey] || 0);
                     p[seatKey] = (s?.n||0) + (regionTotals[p.id] || 0);
-                    // 파벌 의석은 선거 이전 분포이므로 무효화 (재분배 필요)
                     if((p.factions||[]).length > 0) {
-                        hadFactions = true;
-                        p.factions.forEach(f => { f[seatKey] = 0; });
+                        if(p.factionElection === 'split') {
+                            // 나눠서: 새 의석을 파벌 몫대로 (지역 기반 파벌은 그 지역구 득표 몫)
+                            const split = factionSplitSeats(p, ch, p[seatKey], prevTotal, prevF);
+                            p.factions.forEach(f => { f[seatKey] = split[f.id] || 0; });
+                            hadSplit = true;
+                        } else {
+                            // 합쳐서: 파벌 의석은 선거 이전 분포이므로 무효화 (재분배 필요)
+                            hadFactions = true;
+                            p.factions.forEach(f => { f[seatKey] = 0; });
+                        }
                     }
                 });
                 // 지역구 당선자 개별 정보 생성 (이름은 비워둠 — 의회>의원 탭에서 입력)
@@ -13261,7 +13356,7 @@
             if(lastCh) { showSeatsOnMobile(); switchDispTab(lastCh); }
             syncMobileElecBar();
             if(hadFactions) {
-                showCustomAlert('선거 결과가 반영되었습니다.\n\n파벌이 있는 정당의 파벌별 의석은 선거 전 분포가 무효화되어 0으로 초기화되었습니다.\n정당 탭에서 파벌 의석을 다시 배분해 주세요.');
+                showCustomAlert('선거 결과가 반영되었습니다.\n\n파벌을 "합쳐서" 반영하는 정당의 파벌별 의석은 선거 전 분포가 무효화되어 0으로 초기화되었습니다.\n정당 탭에서 파벌 의석을 다시 배분해 주세요.' + (hadSplit ? '\n("파벌 나눠서" 정당은 새 의석을 파벌 몫대로 나눴습니다.)' : ''));
             }
             if(wasDissolved) {
                 showCustomAlert(`새 총선이 반영되어 ${dissolvedLabel} 상태가 해제되었습니다.`);

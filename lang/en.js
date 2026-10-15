@@ -3041,8 +3041,8 @@ window.DnoLangPacks.en = {
    "Election results have been applied."
   ],
   [
-   "파벌이 있는 정당의 파벌별 의석은 선거 전 분포가 무효화되어 0으로 초기화되었습니다.",
-   "Faction-level seats for parties with factions have been invalidated and reset to 0, since the pre-election distribution no longer applies."
+   "파벌을 \"합쳐서\" 반영하는 정당의 파벌별 의석은 선거 전 분포가 무효화되어 0으로 초기화되었습니다.",
+   "Faction-level seats for parties whose factions are merged in elections have been reset to 0, since the pre-election distribution no longer applies."
   ],
   [
    "정당 탭에서 파벌 의석을 다시 배분해 주세요.",
@@ -5697,8 +5697,8 @@ window.DnoLangPacks.en = {
    "Factions"
   ],
   [
-   "정당 안에 파벌(계파)을 만들 수 있어요. 파벌마다 이름 · 색 · 의석을 정하면 반원에서 한 정당 안의 파벌이 색으로 나뉘어 보이고, 표결 때 파벌별로 표를 던질 수 있습니다.",
-   "You can create factions inside a party. Give each faction a name, color and seats, and the hemicycle shows the party split by faction color; in votes each faction can vote separately."
+   "정당 안에 파벌(계파)을 만들 수 있어요. 파벌마다 이름 · 색 · 의석을 정하면 반원에서 한 정당 안의 파벌이 색으로 나뉘어 보이고, 표결 때 파벌별로 표를 던질 수 있습니다. 총선 결과를 반영할 때 파벌을 나눠서(선거 전 몫대로 · 지역 기반 파벌은 그 지역구 득표만큼) 반영할지, 정당 몫으로 합쳐서 반영할지도 고릅니다.",
+   "You can create factions inside a party. Give each faction a name, color and seats, and the hemicycle shows the party split by faction color; in votes each faction can vote separately. You also choose whether factions are split when election results are applied (by pre-election shares, or by their districts' votes for a regional faction) or merged into the party."
   ],
   [
    "합당 창에서 여러 정당을 하나로 합칩니다. 흡수합당은 한 정당이 나머지를 흡수하고, 신설합당은 새 이름 · 이념의 정당을 만들어요. 합쳐지는 정당을 새 정당의 파벌로 남길 수도 있고, 정당의 파벌도 골라 합칠 수 있습니다.",
@@ -7429,6 +7429,16 @@ window.DnoLangPacks.en = {
   ["- 선거 › 선거 기록에 지방선거 · 국민투표 · 대선(총리 선거) 기록도 함께 — 최근 순, 기록 검색 · 종류 필터 (국무회의 기록처럼 기록이 없어도 검색 창 표시)", "- Elections › Records now also lists local elections, referendums and presidential (PM) elections — newest first, with record search and type filters (the search box shows even with no records, like the cabinet records)"],
   ["- 국가 › 미수복 탭 신설 (국가 › 지역 · 권역은 1.6.0)", "- A new Nation › Unrecovered tab (Nation › Districts and Regions arrive in 1.6.0)"],
   ["군부 설정", "Military command"],
+  ["총선에서", "In elections"],
+  ["파벌 나눠서", "Split factions"],
+  ["합쳐서", "Merged"],
+  ["개표 결과를 의회에 반영하면 새 의석을 선거 전 파벌 몫대로 나눕니다. 지역 기반 파벌은 그 지역구들에서 정당이 얻는 표만큼 가져가요.", "When election results are applied, the new seats are divided by the factions' pre-election shares. A regional faction takes the share of the party's votes won in its districts."],
+  ["개표 결과를 의회에 반영하면 파벌 의석이 정당 몫으로 합쳐집니다 (파벌은 남고 의석은 0 — 다시 배분해야 해요).", "When election results are applied, faction seats are merged into the party (factions stay, with 0 seats — reassign them afterwards)."],
+  ["지역 기반", "Regional base"],
+  ["— 없음 (선거 전 몫대로)", "— none (pre-election shares)"],
+  ["(\"파벌 나눠서\" 정당은 새 의석을 파벌 몫대로 나눴습니다.)", "(Parties set to \"Split factions\" had their new seats divided among their factions.)"],
+  ["총선 파벌 나눠서 · 합쳐서", "Split or merged factions in elections"],
+  ["- 총선에서 파벌 나눠서 · 합쳐서 — 정당마다 개표 결과를 반영할 때 파벌 의석을 선거 전 몫대로 나눌지(나눠서), 정당 몫으로 합칠지(합쳐서) 고름. 지역 기반 파벌(예: 바이에른의 기독교사회연합)은 고른 지역구들에서 정당이 얻는 표만큼 새 의석을 가져감", "- Split or merged factions in elections — for each party, choose whether faction seats are divided by their pre-election shares (split) or merged into the party (merged) when results are applied. A regional faction (e.g. the CSU in Bavaria) takes new seats in proportion to the party's votes in its chosen districts"],
   ["튜토리얼 전면 개정: 서독", "Tutorial overhaul: West Germany"],
   ["- 튜토리얼 전면 개정 — 가상의 \"튜토리얼 공화국\" 대신 1983년 서독(독일연방공화국, 제10대 연방의회): 실제 정당 · 의석(기민·기사연합 · 사회민주당 · 자유민주당 · 녹색당), 연방의회 · 연방참의원, 주별 지역구 · 성향, 기본법 · 상임위원회, 동독 주는 지역구가 아닌 땅(1.6.6 미리보기에선 미수복 지역)", "- Tutorial overhaul — instead of the made-up \"Tutorial Republic\", West Germany (the Federal Republic of Germany, 10th Bundestag) in 1983: real parties and seats (CDU/CSU · SPD · FDP · Greens), Bundestag and Bundesrat, state districts and leanings, the Basic Law and standing committees, with the East German states as land outside the districts (unrecovered territory in the 1.6.6 preview)"],
   ["- 군부 설정 — 국방부 장관 · 참모 · 장성 등 군 지휘부를 정해 둠 (쿠데타 주도 · 진압에 쓰임)", "- Military command — set up the military leadership such as the defense minister, chiefs of staff and generals (used to lead or put down coups)"],
