@@ -33,7 +33,7 @@
     //   ranking: { title, rows:[{ id, name, flag, flagKey, flagImg, bloc, ideo, score, prevRank, self }] }
     //   blocs: [{ id, name, color, desc, ideologies:[{ id, name }] }] — 세계 › 진영
     let S = fresh();
-    function fresh() { return { timeline: [], succession: [], blocs: defaultBlocs(), wiki: { termStart: '', termEnd: '', frame: '#233e8b' }, ranking: defaultRanking() }; }
+    function fresh() { return { timeline: [], succession: [], blocs: defaultBlocs(), wiki: { termStart: '', termEnd: '', frame: '#2b3a67' }, ranking: defaultRanking() }; }
     let ui = { tlChamber: 'house', wikiChamber: 'house', histView: 'seats', seatMode: 'share', rbPid: null, openSucc: false };
 
     const origGet = window.getAppState;
@@ -486,18 +486,36 @@
         try { return c.toDataURL('image/png'); } catch (e) { return ''; }
     }
     const IND_ID = 9999;
-    function wikiData(ch) {
-        const ps = parties.filter(p => seatsOf(p, ch) > 0 && p.status !== 'dissolved').sort((a, b) => seatsOf(b, ch) - seatsOf(a, ch));
+    // 틀에 담을 의회: 'house' · 'senate' · 'third' 하나, 또는 'both'(상원 | 하원 의석을 한 칸에 나란히 — 예: 참의원 | 중의원)
+    const wikiModes = () => { const chs = chambers(); return chs.includes('senate') ? [...chs, 'both'] : chs; };
+    const wikiChs = mode => (mode === 'both' ? ['senate', 'house'] : [mode]);
+    const wikiModeName = mode => (mode === 'both' ? `양원 (${chName('senate')} | ${chName('house')})` : chName(mode));
+    function pmName() {
+        try { const r = pmAutoSource(); if (r && r.name) return r.name; } catch (e) { /* main.js 없음 */ }
+        try { return (pm && pm.name) || ''; } catch (e) { return ''; }
+    }
+    function wikiData(mode) {
+        const chs = wikiChs(mode);
+        const main = chs[chs.length - 1]; // 정렬 · 교섭단체 기준이 되는 원 (양원이면 하원)
+        const seats = p => chs.map(ch => seatsOf(p, ch));
+        const tot = p => seats(p).reduce((a, b) => a + b, 0);
+        const ps = parties.filter(p => tot(p) > 0 && p.status !== 'dissolved')
+            .sort((a, b) => (seatsOf(b, main) - seatsOf(a, main)) || (tot(b) - tot(a)));
         const ind = ps.filter(p => p.ideologyId === IND_ID);
-        const named = ps.filter(p => p.ideologyId !== IND_ID);
-        const gov = named.filter(isGovParty), opp = named.filter(p => !isGovParty(p));
-        const total = ps.reduce((a, p) => a + seatsOf(p, ch), 0);
-        const totalEl = document.getElementById(ch === 'senate' ? 'senateTotal' : ch === 'third' ? 'thirdTotal' : 'houseTotal');
-        const quota = totalEl ? (parseInt(totalEl.value, 10) || 0) : 0;
-        const term = (document.getElementById('nationSessionTerm')?.value || '').trim();
+        const min = Math.max(0, Number(S.wiki.groupMin) || 0);
+        const minor = ps.filter(p => p.ideologyId !== IND_ID && min > 0 && seatsOf(p, main) < min);
+        const named = ps.filter(p => p.ideologyId !== IND_ID && !minor.includes(p));
+        const quotaOf = ch => { const el = document.getElementById(ch === 'senate' ? 'senateTotal' : ch === 'third' ? 'thirdTotal' : 'houseTotal'); return el ? (parseInt(el.value, 10) || 0) : 0; };
+        const pmn = pmName();
+        const start = (S.wiki.termStart || '').trim(), end = (S.wiki.termEnd || '').trim();
         return {
-            ch, nation: nationName(), chamber: chName(ch), term: term ? `제${term}대 ${chName(ch)}` : chName(ch), gov, opp, ind, total, quota,
-            emblem: (typeof chamberLogos !== 'undefined' && chamberLogos[ch]) || (typeof nationFlag !== 'undefined' && nationFlag) || '',
+            mode, chs, main, seats,
+            title: (S.wiki.title || '').trim() || [nationName(), mode === 'both' ? '의회' : chName(mode)].filter(Boolean).join(' '),
+            govName: (S.wiki.govName || '').trim() || (pmn ? `${pmn} 내각` : ''),
+            period: start || end ? `(${start}${start ? ' ' : ''}~ ${end || '현재'})` : '',
+            gov: named.filter(isGovParty), opp: named.filter(p => !isGovParty(p)), minor, ind,
+            totals: chs.map(ch => ps.reduce((a, p) => a + seatsOf(p, ch), 0)), quotas: chs.map(quotaOf),
+            emblem: (typeof chamberLogos !== 'undefined' && chamberLogos[main]) || (typeof nationFlag !== 'undefined' && nationFlag) || '',
         };
     }
     // 글자색: 바탕이 밝으면 검정, 어두우면 흰색
@@ -508,96 +526,181 @@
         return (0.299 * r + 0.587 * g + 0.114 * bl) > 165 ? '#1a1a1a' : '#fff';
     }
     const emblemSvg = c => `<svg viewBox="0 0 64 40" width="64" height="40" aria-hidden="true"><path d="M8 16 Q32 -4 56 16Z" fill="${c}"/><rect x="6" y="16" width="52" height="3" fill="${c}"/>${[10, 16, 22, 28, 34, 40, 46, 52].map(x => `<rect x="${x}" y="20" width="3" height="14" fill="${c}"/>`).join('')}<rect x="4" y="34" width="56" height="3" fill="${c}"/></svg>`;
-    // 원내 구성 틀 — 여당 · 야당은 가장 큰 정당을 넓은 칸으로, 나머지는 세 칸씩
+    // 한 줄에 몇 칸씩: 3개까지는 한 줄, 그보다 많으면 세 칸씩 — 남는 수는 위쪽 줄을 두 칸으로 (예: 11개 → 2 · 3 · 3 · 3, 7개 → 2 · 2 · 3)
+    function rowSizes(n) {
+        if (n <= 3) return n ? [n] : [];
+        const r = n % 3;
+        const head = r === 2 ? [2] : r === 1 ? [2, 2] : [];
+        const rest = n - head.reduce((a, b) => a + b, 0);
+        return [...head, ...Array(rest / 3).fill(3)];
+    }
+    const splitRows = arr => { const out = []; let i = 0; rowSizes(arr.length).forEach(k => { out.push(arr.slice(i, i + k)); i += k; }); return out; };
+    // 받침이 있으면 "이라는", 없으면 "라는" (기민·기사연합이라는 · 사회민주당이라는 · 자민당이라는 …)
+    const raneun = w => { const c = String(w || '').trim().slice(-1).charCodeAt(0); return c >= 0xAC00 && c <= 0xD7A3 && (c - 0xAC00) % 28 ? '이라는' : '라는'; };
+    // 각주 — 파벌이 둘 이상인 정당은 "공동교섭단체", 비교섭단체(기준 미달 · 무소속) 목록, 직접 쓴 각주
+    function wikiNotes(d) {
+        const notes = [], mark = new Map();
+        const where = d.mode === 'both' ? '의회' : chName(d.mode);
+        const seatTxt = arr => (d.chs.length > 1 ? arr.map((n, i) => `${chName(d.chs[i])} ${n}석`).join(' · ') : `${arr[0]}석`);
+        [...d.gov, ...d.opp].forEach(p => {
+            const fs = (p.factions || []).map(f => ({ f, s: d.chs.map(ch => seatsOf(f, ch)) })).filter(x => x.s.some(Boolean));
+            if (fs.length < 2) return;
+            const list = fs.map(x => `${x.f.name}(${seatTxt(x.s)})`);
+            notes.push(`${list.slice(0, -1).join(', ')}과 ${list[list.length - 1]}은 ${where}에서 ${p.name}${raneun(p.name)} 공동교섭단체로 활동함.`);
+            mark.set(p.id, notes.length);
+        });
+        const small = [...d.minor, ...d.ind];
+        let smallMark = 0;
+        if (d.minor.length) {
+            notes.push(small.map(p => `${p.name} ${seatTxt(d.seats(p))}`).join(', ') + '.');
+            smallMark = notes.length;
+        }
+        return { notes, mark, smallMark };
+    }
+    // 의석 표시: 한 원이면 "N석", 양원이면 [상원 N석 | 하원 M석]
+    function seatBadge(arr, color) {
+        // (회색은 #3d3d3d · #5c5c5c처럼 흔하지 않은 값으로 — 라이트 · 다크 테마가 #333 · #555 같은 인라인 회색을 테마 색으로 바꿔 버림)
+        const c = color || '#5c5c5c', light = fgFor(c) !== '#fff';
+        const ink = light ? '#3d3d3d' : c;
+        if (arr.length < 2) return `<span class="nb-seat" style="color:${esc(ink)}">${arr[0]}석</span>`;
+        return `<span class="nb-seat split"><span class="a" style="background:${esc(light ? '#5c5c5c' : c)}">${arr[0]}석</span><span class="b" style="color:${esc(ink)}">${arr[1]}석</span></span>`;
+    }
     function namuBox(d) {
-        const frame = S.wiki.frame || '#233e8b';
-        const block = (p, big) => {
+        const frame = S.wiki.frame || '#2b3a67', ffg = fgFor(frame);
+        const { notes, mark, smallMark } = wikiNotes(d);
+        const block = (p, k) => {
             const c = p.color || '#888', fg = fgFor(c);
-            const name = p.logoPhoto ? `<img src="${esc(p.logoPhoto)}" alt="${esc(p.name)}">` : `<span>${esc(p.name)}</span>`;
-            return `<div class="nbx-party${big ? ' big' : ''}" style="background:${esc(c)};color:${fg}" title="${esc(p.name)} ${seatsOf(p, d.ch)}석"><div class="nbx-pname">${name}</div><span class="nbx-seat" style="color:${esc(fg === '#fff' ? c : '#333')}">${seatsOf(p, d.ch)}석</span></div>`;
+            const sup = mark.get(p.id) ? `<sup>${mark.get(p.id)}</sup>` : '';
+            return `<div class="nb-party k${k}" style="background:${esc(c)};color:${fg}" title="${esc(p.name)} ${d.seats(p).join(' | ')}석">
+                ${p.logoPhoto ? `<img class="nb-logo" src="${esc(p.logoPhoto)}" alt="">` : ''}
+                <div class="nb-pname">${esc(p.name)}${sup}</div>${seatBadge(d.seats(p), c)}</div>`;
         };
-        const emblemCell = `<div class="nbx-party nbx-fill">${d.emblem ? `<img src="${esc(d.emblem)}" alt="">` : emblemSvg(frame)}</div>`;
-        const group = (label, arr) => {
-            if (!arr.length) return '';
-            const [first, ...rest] = arr;
-            const pad = rest.length % 3 ? 3 - rest.length % 3 : 0;
-            return `<div class="nbx-sec">${label}</div>${block(first, true)}${rest.length ? `<div class="nbx-grid">${rest.map(p => block(p, false)).join('')}${emblemCell.repeat(pad)}</div>` : ''}`;
-        };
-        const indSeats = d.ind.reduce((a, p) => a + seatsOf(p, d.ch), 0);
-        const left = (d.gov[0] || d.opp[0] || {}).color || frame, right = (d.opp[0] || d.gov[1] || {}).color || frame;
-        const period = [S.wiki.termStart, S.wiki.termEnd].filter(Boolean).join(' ~ ');
-        return `<div class="nbx" style="--nbx-frame:${esc(frame)};--nbx-l:${esc(left)};--nbx-r:${esc(right)}">
-            <div class="nbx-head"><i class="nbx-corner l"></i><i class="nbx-corner r"></i>
-                <div class="nbx-emblem">${d.emblem ? `<img src="${esc(d.emblem)}" alt="">` : emblemSvg(frame)}</div>
-                <div class="nbx-titles"><div class="nbx-nation">${esc([d.nation, d.chamber].filter(Boolean).join(' '))}</div><div class="nbx-title">원내 구성</div></div>
+        const rows = arr => splitRows(arr).map(row => `<div class="nb-row" style="grid-template-columns:repeat(${row.length},1fr)">${row.map(p => block(p, row.length)).join('')}</div>`).join('');
+        const group = (label, arr) => (arr.length ? `<div class="nb-sec">${label}</div>${rows(arr)}` : '');
+        const small = [...d.minor, ...d.ind];
+        const smallSeats = d.chs.map((ch, i) => small.reduce((a, p) => a + d.seats(p)[i], 0));
+        const smallLabel = d.minor.length ? '비교섭단체' : '무소속';
+        const vac = d.quotas.map((q, i) => (q && q > d.totals[i] ? q - d.totals[i] : 0));
+        const legend = d.chs.length > 1 ? `<div class="nb-legend"><span class="nb-seat split"><span class="a" style="background:#6b6b6b">${esc(chName(d.chs[0]))} 의석</span><span class="b" style="color:#6b6b6b">${esc(chName(d.chs[1]))} 의석</span></span></div>` : '';
+        const custom = (S.wiki.note || '').trim();
+        const showNotes = notes.length || custom || legend;
+        return `<div class="nbx2" style="--nb-frame:${esc(frame)};--nb-ffg:${ffg}">
+            <div class="nb-head">
+                <div class="nb-emblem">${d.emblem ? `<img src="${esc(d.emblem)}" alt="">` : emblemSvg(ffg)}</div><i class="nb-sep"></i>
+                <div><div class="nb-nation">${esc(d.title)}</div><div class="nb-title">원내 구성</div></div>
             </div>
-            <details class="nbx-body" open><summary>[ 펼치기 · 접기 ]</summary>
-                <div class="nbx-term"><span class="nbx-badge">${esc(d.term)}</span>${period ? ` ${esc(period)}` : ''}</div>
-                ${d.gov.length ? group('여당', d.gov) + group('야당', d.opp) : group('원내 정당', d.opp)}
-                ${indSeats ? `<div class="nbx-ind">무소속 <span class="nbx-seat">${indSeats}석</span></div>` : ''}
-                <div class="nbx-total">재적 <span class="nbx-seat dark">${d.total}석</span>${d.quota && d.quota !== d.total ? ` <small>(정원 ${d.quota}석 · 궐석 ${d.quota - d.total})</small>` : ''}</div>
+            <details class="nb-body" open><summary>[ 펼치기 · 접기 ]</summary>
+                ${d.govName || d.period ? `<div class="nb-cab">${d.govName ? `<b>${esc(d.govName)}</b>` : ''}${d.period ? `<small>${esc(d.period)}</small>` : ''}</div>` : ''}
+                ${d.gov.length ? group(d.gov.length > 1 ? '연립여당' : '여당', d.gov) + group('야당', d.opp) : group('원내 정당', d.opp)}
+                ${small.length ? `<div class="nb-small">${smallLabel}${smallMark ? `<sup>${smallMark}</sup>` : ''} ${seatBadge(smallSeats, '#7f7f7f')}</div>` : ''}
+                <div class="nb-total">재적 ${seatBadge(d.totals, frame)}${vac.some(Boolean) ? ` <small>(궐석 ${vac.join(' | ')})</small>` : ''}</div>
+                ${showNotes ? `<div class="nb-notes">${notes.map((t, i) => `<div>${i + 1}. ${esc(t)}</div>`).join('')}${custom ? `<div>※ ${esc(custom)}</div>` : ''}${legend}</div>` : ''}
             </details>
-            <div class="nbx-foot">정당 구분 (<b>원내</b>)</div>
+            ${S.wiki.footer === false ? '' : '<div class="nb-foot">정당 구분 (<b>원내</b> · 원외)</div>'}
         </div>`;
     }
-    // 나무위키 문법 — 같은 모양의 표
+    // 나무위키 표 문법 — 6칸(2와 3의 공배수)을 기준으로 두 칸 줄은 <-3>, 세 칸 줄은 <-2>
     function namuMarkup(d) {
-        const frame = S.wiki.frame || '#233e8b';
+        const frame = S.wiki.frame || '#2b3a67', ffg = fgFor(frame);
         const B = "'''";
-        const pill = (c, txt) => `{{{#!wiki style="display:inline-block; background:#fff; padding:0 6px; border-radius:4px"\n{{{${c} ${B}${txt}${B}}}}}}}`;
-        const cell = (p, span) => `||${span ? '<-3>' : ''}<bgcolor=${p.color}> {{{${fgFor(p.color)} {{{+${span ? 3 : 1} ${B}${p.name}${B}}}}}}}[br]${pill(fgFor(p.color) === '#fff' ? p.color : '#333', `${seatsOf(p, d.ch)}석`)} `;
+        const { notes, mark, smallMark } = wikiNotes(d);
+        const chip = (bg, fg, txt) => `{{{#!wiki style="display:inline-block; background:${bg}; color:${fg}; padding:0 6px; border-radius:4px"\n${B}${txt}${B}}}}`;
+        const badge = (arr, c) => {
+            const light = fgFor(c) !== '#fff', ink = light ? '#333' : c;
+            return arr.length < 2 ? chip('#fff', ink, `${arr[0]}석`) : chip(light ? '#555' : c, '#fff', `${arr[0]}석`) + chip('#fff', ink, `${arr[1]}석`);
+        };
+        const full = (bg, body) => `||<-6><bgcolor=${bg}> ${body} ||`;
         const lines = [];
-        lines.push(`||<tablewidth=100%><tablebordercolor=${frame}><-3><bgcolor=#f2f2f2> {{{#555 ${B}${[d.nation, d.chamber].filter(Boolean).join(' ')}${B}}}}[br]{{{+2 ${B}원내 구성${B}}}} ||`);
-        const period = [S.wiki.termStart, S.wiki.termEnd].filter(Boolean).join(' ~ ');
-        lines.push(`||<-3><bgcolor=#fff> {{{#!wiki style="display:inline-block; background:${frame}; color:#fff; padding:0 6px; border-radius:4px"\n${d.term}}}} ${period} ||`);
+        lines.push(`||<tablewidth=100%><tablebordercolor=${frame}><-6><bgcolor=${frame}> {{{${ffg} ${B}${d.title}${B}[br]{{{+2 ${B}원내 구성${B}}}}}}} ||`);
+        if (d.govName || d.period) lines.push(full('#dddddd', `${d.govName ? `${B}${d.govName}${B}` : ''}${d.govName && d.period ? '[br]' : ''}${d.period ? `{{{-1 ${d.period}}}}` : ''}`));
         const group = (label, arr) => {
             if (!arr.length) return;
-            lines.push(`||<-3><bgcolor=#dee5e5> ${B}${label}${B} ||`);
-            const [first, ...rest] = arr;
-            lines.push(cell(first, true) + '||');
-            for (let i = 0; i < rest.length; i += 3) {
-                const chunk = rest.slice(i, i + 3);
-                lines.push(chunk.map(p => cell(p, false)).join('') + '||<bgcolor=#f5f5f5> '.repeat(3 - chunk.length) + '||');
-            }
+            lines.push(full('#dee5e5', `${B}${label}${B}`));
+            splitRows(arr).forEach(row => {
+                lines.push(row.map(p => {
+                    const c = p.color || '#888', fg = fgFor(c);
+                    const sup = mark.get(p.id) ? `[* ${notes[mark.get(p.id) - 1]}]` : '';
+                    // 로고가 있으면 위키에 "정당 이름 로고.png"로 올린 그림을 쓴다
+                    const logo = p.logoPhoto ? `[[파일:${p.name} 로고.png|height=40]][br]` : '';
+                    return `||<-${6 / row.length}><bgcolor=${c}> ${logo}{{{${fg} {{{+1 ${B}${p.name}${B}}}}}}}${sup}[br]${badge(d.seats(p), c)} `;
+                }).join('') + '||');
+            });
         };
-        if (d.gov.length) { group('여당', d.gov); group('야당', d.opp); } else group('원내 정당', d.opp);
-        const indSeats = d.ind.reduce((a, p) => a + seatsOf(p, d.ch), 0);
-        if (indSeats) lines.push(`||<-3><bgcolor=#808080> {{{#fff ${B}무소속${B}}}} ${pill('#808080', `${indSeats}석`)} ||`);
-        lines.push(`||<-3><bgcolor=#f5f5f5> ${B}재적${B} {{{#!wiki style="display:inline-block; background:#5a0000; color:#fff; padding:0 6px; border-radius:4px"\n${B}${d.total}석${B}}}} ||`);
+        if (d.gov.length) { group(d.gov.length > 1 ? '연립여당' : '여당', d.gov); group('야당', d.opp); } else group('원내 정당', d.opp);
+        const small = [...d.minor, ...d.ind];
+        if (small.length) {
+            const smallSeats = d.chs.map((ch, i) => small.reduce((a, p) => a + d.seats(p)[i], 0));
+            lines.push(full('#808080', `{{{#fff ${B}${d.minor.length ? '비교섭단체' : '무소속'}${B}}}}${smallMark ? `[* ${notes[smallMark - 1]}]` : ''} ${badge(smallSeats, '#808080')}`));
+        }
+        lines.push(full(frame, `{{{${ffg} ${B}재적${B}}}} ${badge(d.totals, frame)}`));
+        const custom = (S.wiki.note || '').trim();
+        if (custom || d.chs.length > 1) lines.push(full('#f2f2f2', `{{{-1 ${[custom ? `※ ${custom}` : '', d.chs.length > 1 ? chip('#666', '#fff', `${chName(d.chs[0])} 의석`) + chip('#fff', '#666', `${chName(d.chs[1])} 의석`) : ''].filter(Boolean).join('[br]')}}}}`));
+        if (S.wiki.footer !== false) lines.push(full('#ffffff', `정당 구분 (${B}원내${B} · 원외)`));
         return lines.join('\n');
     }
+    // 오른쪽 시각 화면 "위키 틀" 탭 — 틀 미리보기
+    function renderWikiPreview() {
+        const wrap = document.getElementById('t64WikiWrap');
+        if (!wrap) return;
+        if (!wikiModes().includes(ui.wikiChamber)) ui.wikiChamber = wikiModes()[0];
+        wrap.innerHTML = `<div class="t64-wikiwrap">${namuBox(wikiData(ui.wikiChamber))}</div>`;
+    }
+    function showWikiTab() {
+        const btn = document.getElementById('dispTabWiki');
+        if (btn) btn.style.display = '';
+        try { switchDispTab('wiki'); } catch (e) { /* 시각 화면 없음 */ }
+        renderWikiPreview();
+    }
+    // 왼쪽 의회 › 위키 틀 — 설정 · 문법 복사. 고친 내용은 오른쪽 "위키 틀" 탭에 바로 보인다
     function renderWikibox() {
         const box = document.getElementById('contentWikibox');
+        renderWikiPreview();
         if (!box) return;
-        const chs = chambers();
-        if (!chs.includes(ui.wikiChamber)) ui.wikiChamber = chs[0];
+        const modes = wikiModes();
+        if (!modes.includes(ui.wikiChamber)) ui.wikiChamber = modes[0];
         const d = wikiData(ui.wikiChamber);
-        box.innerHTML = `<div class="t64-intro">위키 문서의 "원내 구성" 틀처럼 여당 · 야당 정당을 의석과 함께 한 장에 모읍니다. 정당 · 연정(집권)에서 자동으로 채워지고, 정당 로고가 있으면 이름 대신 로고가 들어가요.</div>
-            ${chs.length > 1 ? `<div class="system-radio-group t64-tabs">${chs.map(c => `<button type="button" class="system-radio-btn ${ui.wikiChamber === c ? 'active' : ''}" data-wch="${c}">${esc(chName(c))}</button>`).join('')}</div>` : ''}
-            <div class="t64-wikiwrap">${namuBox(d)}</div>
+        const auto = (() => { const pmn = pmName(); return pmn ? `${pmn} 내각` : '예: 콜 내각'; })();
+        box.innerHTML = `<div class="t64-intro">위키 문서의 "원내 구성" 틀을 만듭니다. 정당 · 연정(집권) · 의석에서 자동으로 채워지고, 미리보기는 오른쪽 시각 화면 "위키 틀" 탭에 바로 보여요.</div>
+            ${modes.length > 1 ? `<div class="system-radio-group t64-tabs">${modes.map(c => `<button type="button" class="system-radio-btn ${ui.wikiChamber === c ? 'active' : ''}" data-wch="${c}">${esc(c === 'both' ? '양원' : chName(c))}</button>`).join('')}</div>` : ''}
+            ${ui.wikiChamber === 'both' ? `<div class="t64-dim t64-small" style="margin:-4px 0 8px">정당마다 [${esc(chName('senate'))} | ${esc(chName('house'))}] 의석을 나란히 적어요.</div>` : ''}
             <div class="t64-actions">
                 <button type="button" class="t64-btn primary" data-act="copy">📋 위키 문법 복사</button>
+                <button type="button" class="t64-btn" data-act="showwiki">오른쪽에서 보기</button>
                 <button type="button" class="t64-btn" data-act="img">🖼 반원 그림 저장</button>
             </div>
-            <details class="t64-fold"><summary>틀에 넣을 정보 (직접 입력)</summary>
-                <div class="t64-field"><span>임기 시작</span><input type="text" data-w="termStart" value="${esc(S.wiki.termStart || '')}" placeholder="예: 2024.5.30."></div>
-                <div class="t64-field"><span>임기 끝</span><input type="text" data-w="termEnd" value="${esc(S.wiki.termEnd || '')}" placeholder="예: 2028.5.29."></div>
-                <div class="t64-field"><span>테두리 색</span><input type="color" data-w="frame" value="${esc(S.wiki.frame || '#233e8b')}"></div>
-                <div class="t64-dim t64-small">대수(제N대)는 국가 › 상징의 회기, 엠블럼은 의회 › 의회 설정의 로고(없으면 국기), 정당 로고는 의회 › 정당 › 로고에서 정해요.</div>
-            </details>
-            <details class="t64-fold"><summary>위키 문법 보기</summary><textarea class="t64-markup" readonly>${esc(namuMarkup(d))}</textarea></details>`;
-        box.querySelectorAll('[data-wch]').forEach(b => { b.onclick = () => { ui.wikiChamber = b.dataset.wch; renderWikibox(); }; });
-        box.querySelectorAll('[data-w]').forEach(i => { i.onchange = () => { S.wiki[i.dataset.w] = i.value.trim(); renderWikibox(); }; });
+            <div class="t64-card t64-wk-form">
+                <div class="t64-card-head"><b>틀 머리</b></div>
+                <div class="t64-field"><span>제목</span><input type="text" data-w="title" value="${esc(S.wiki.title || '')}" placeholder="${esc(d.title)}"></div>
+                <div class="t64-field"><span>머리 색</span><input type="color" data-w="frame" value="${esc(S.wiki.frame || '#2b3a67')}"><button type="button" class="t64-btn" data-frame="#ffffff">흰색</button><button type="button" class="t64-btn" data-frame="#2b3a67">남색</button></div>
+                <div class="t64-card-head" style="margin-top:10px"><b>내각</b></div>
+                <div class="t64-field"><span>이름</span><input type="text" data-w="govName" value="${esc(S.wiki.govName || '')}" placeholder="${esc(auto)}"></div>
+                <div class="t64-field"><span>기간</span><input type="text" data-w="termStart" value="${esc(S.wiki.termStart || '')}" placeholder="시작 예: 1982.10.01"><span>~</span><input type="text" data-w="termEnd" value="${esc(S.wiki.termEnd || '')}" placeholder="비우면 현재"></div>
+                <div class="t64-card-head" style="margin-top:10px"><b>정당 구분</b></div>
+                <div class="t64-field"><span>교섭단체 기준</span><input type="number" min="0" data-w="groupMin" value="${Number(S.wiki.groupMin) || 0}" style="width:5em"><span class="t64-dim">석 미만은 비교섭단체 (0이면 무소속만)</span></div>
+                <div class="t64-field"><span>각주</span><input type="text" data-w="note" value="${esc(S.wiki.note || '')}" placeholder="직접 쓰는 설명 (※로 붙음)"></div>
+                <label class="t64-field" style="cursor:pointer"><input type="checkbox" data-w="footer" ${S.wiki.footer === false ? '' : 'checked'}><span>맨 아래 "정당 구분 (원내 · 원외)" 줄</span></label>
+                <div class="t64-dim t64-small">엠블럼은 의회 › 의회 설정의 로고(없으면 국기), 정당 로고는 의회 › 정당 › 로고에서 정해요. 파벌이 둘 이상인 정당은 각주에 공동교섭단체로 적혀요.</div>
+            </div>
+            <details class="t64-fold"><summary>위키 문법 보기</summary><textarea class="t64-markup" readonly>${esc(namuMarkup(d))}</textarea><div class="t64-dim t64-small">로고가 있는 정당은 [[파일:정당 이름 로고.png]]로 들어가요 — 위키에 그 이름으로 로고 그림을 올리면 그대로 보여요.</div></details>`;
+        box.querySelectorAll('[data-wch]').forEach(b => { b.onclick = () => { ui.wikiChamber = b.dataset.wch; renderWikibox(); showWikiTab(); }; });
+        box.querySelectorAll('[data-w]').forEach(i => {
+            const k = i.dataset.w;
+            const apply = () => { S.wiki[k] = i.type === 'checkbox' ? i.checked : k === 'groupMin' ? Math.max(0, Number(i.value) || 0) : i.value.trim(); };
+            if (i.type === 'text' || i.type === 'color') i.oninput = () => { apply(); renderWikiPreview(); };
+            i.onchange = () => { apply(); renderWikibox(); };
+        });
+        box.querySelectorAll('[data-frame]').forEach(b => { b.onclick = () => { S.wiki.frame = b.dataset.frame; renderWikibox(); }; });
+        box.querySelector('[data-act="showwiki"]').onclick = showWikiTab;
         box.querySelector('[data-act="copy"]').onclick = async () => {
-            const text = namuMarkup(d);
+            const text = namuMarkup(wikiData(ui.wikiChamber));
             try { await navigator.clipboard.writeText(text); showCustomAlert('위키 문법을 복사했습니다.'); }
             catch (e) { const ta = box.querySelector('.t64-markup'); if (ta) { ta.closest('details').open = true; ta.select(); } showCustomAlert('복사하지 못했습니다 — "위키 문법 보기"에서 직접 복사하세요.'); }
         };
         box.querySelector('[data-act="img"]').onclick = () => {
-            const url = hemicycleImage(ui.wikiChamber, 600);
+            const url = hemicycleImage(d.main, 600);
             if (!url) { showCustomAlert('반원 그림을 만들 수 없습니다.'); return; }
             const a = document.createElement('a');
-            a.href = url; a.download = `${([d.nation, d.chamber].filter(Boolean).join(' ') || 'hemicycle').replace(/[\\/:*?"<>|]/g, '_')}.png`;
+            a.href = url; a.download = `${(d.title || 'hemicycle').replace(/[\\/:*?"<>|]/g, '_')}.png`;
             document.body.appendChild(a); a.click(); a.remove();
         };
     }
@@ -753,13 +856,15 @@
         };
         rd.readAsDataURL(file);
     }
-    function renderRanking() {
-        const box = document.getElementById('contentRanking');
-        if (!box) return;
+    // 오른쪽 시각 화면 "국가 순위" 탭 — 보는 화면 (꾸밈용 순위표)
+    function renderRankBoard() {
+        const wrap = document.getElementById('t64RankWrap');
+        if (!wrap) return;
         const list = ranked();
         const counts = S.blocs.map(b => [b, S.ranking.rows.filter(r => r.bloc === b.id).length]);
-        box.innerHTML = `<div class="t64-intro">꾸밈용 화면입니다 — 게임 기능에는 영향이 없어요. 국가 · 진영 · 점수를 마음대로 꾸며 보세요. 편집에서 국기 칸을 누르면 국기 그림을 올릴 수 있어요.</div>
-            <div class="t64-rk">
+        const title = document.getElementById('t64RankTitle');
+        if (title) title.textContent = S.ranking.title || '냉전 국가 순위';
+        wrap.innerHTML = list.length ? `<div class="t64-rk">
                 <div class="t64-rk-title">${esc(S.ranking.title || '냉전 국가 순위')}</div>
                 <div class="t64-rk-blocs">${counts.map(([b, n]) => (n ? `<span><i style="background:${esc(b.color)}"></i>${esc(b.name)} ${n}</span>` : '')).join('')}</div>
                 ${list.map((r, i) => {
@@ -774,40 +879,102 @@
                         <span class="t64-rk-mv ${mv > 0 ? 'up' : mv < 0 ? 'down' : ''}">${mv > 0 ? '▲' + mv : mv < 0 ? '▼' + (-mv) : r.prevRank ? '–' : ''}</span>
                     </div>`;
                 }).join('')}
+            </div>` : '<div class="t64-empty"><div class="t64-empty-icon">🌐</div>순위에 나라가 없습니다.<br>왼쪽 세계 › 국가 순위에서 "+ 국가 추가"를 눌러 보세요.</div>';
+    }
+    function showRankTab() {
+        const btn = document.getElementById('dispTabRanking');
+        if (btn) btn.style.display = '';
+        try { switchDispTab('ranking'); } catch (e) { /* 시각 화면 없음 */ }
+        renderRankBoard();
+    }
+    // 왼쪽 세계 › 국가 순위 — 고치는 화면. 입력하는 동안은 오른쪽 순위표만 바로 다시 그리고,
+    // 왼쪽 목록은 입력을 마쳤을 때(또는 ± 연타가 멈췄을 때) 순위대로 다시 줄 세운다 (쓰는 중에 줄이 움직이지 않게)
+    let rankResort = 0;
+    function renderRanking() {
+        const box = document.getElementById('contentRanking');
+        renderRankBoard();
+        if (!box) return;
+        clearTimeout(rankResort);
+        const list = ranked();
+        const blocOpts = r => `${S.blocs.map(b => `<option value="${esc(b.id)}" ${r.bloc === b.id ? 'selected' : ''}>${esc(b.name)}</option>`).join('')}<option value="" ${S.blocs.some(b => b.id === r.bloc) ? '' : 'selected'}>미분류</option>`;
+        const ideoOpts = r => `<option value="">하위 이념 —</option>${blocOf(r.bloc).ideologies.map(x => `<option value="${esc(x.id)}" ${r.ideo === x.id ? 'selected' : ''}>${esc(x.name)}</option>`).join('')}`;
+        box.innerHTML = `<div class="t64-intro">꾸밈용 화면입니다 — 게임 기능에는 영향이 없어요. 고친 내용은 오른쪽 시각 화면 "국가 순위" 탭에 바로 보여요.</div>
+            <div class="t64-card t64-re-head">
+                <div class="t64-field"><span>제목</span><input type="text" data-rt="title" value="${esc(S.ranking.title)}" placeholder="냉전 국가 순위"></div>
+                <div class="t64-actions">
+                    <button type="button" class="t64-btn primary" data-act="addrow">+ 국가 추가</button>
+                    <button type="button" class="t64-btn" data-act="mark" title="지금 순위를 기준으로 저장 — 점수를 바꾸면 순위표에 ▲▼로 변동이 보여요">순위 기준 저장</button>
+                    <button type="button" class="t64-btn" data-act="showrank">오른쪽에서 보기</button>
+                    <button type="button" class="t64-btn" data-act="reset">처음 목록으로</button>
+                </div>
             </div>
-            <div class="t64-actions">
-                <button type="button" class="t64-btn primary" data-act="addrow">+ 국가 추가</button>
-                <button type="button" class="t64-btn" data-act="mark" title="지금 순위를 기준으로 저장 — 점수를 바꾸면 ▲▼로 변동이 보여요">순위 기준 저장</button>
-                <button type="button" class="t64-btn" data-act="reset">처음 목록으로</button>
-            </div>
-            <details class="t64-fold" open><summary>편집</summary>
-                <div class="t64-field"><span>제목</span><input type="text" data-rt="title" value="${esc(S.ranking.title)}"></div>
-                ${list.map(r => `<div class="t64-rk-edit">
-                    ${r.self ? `<span class="t64-rk-e-flag self" title="국가 › 상징의 국기">${flagHtml(r)}</span>` : `<label class="t64-rk-e-flag" title="눌러서 국기 그림 고르기">${flagHtml(r)}<input type="file" accept="image/*" data-rflag="${r.id}" hidden>${r.flagImg ? `<button type="button" class="t64-rk-e-unflag" data-unflag="${r.id}" title="올린 국기 빼기">×</button>` : ''}</label>`}
-                    <input type="text" class="t64-rk-e-name" data-rf="name" data-id="${r.id}" value="${esc(r.self ? rowName(r) : r.name)}" ${r.self ? 'disabled title="국가 › 상징의 국가명"' : ''}>
-                    <select data-rf="bloc" data-id="${r.id}" class="t64-rk-e-bloc">${S.blocs.map(b => `<option value="${esc(b.id)}" ${r.bloc === b.id ? 'selected' : ''}>${esc(b.name)}</option>`).join('')}<option value="" ${S.blocs.some(b => b.id === r.bloc) ? '' : 'selected'}>미분류</option></select>
-                    <select data-rf="ideo" data-id="${r.id}" class="t64-rk-e-ideo" ${blocOf(r.bloc).ideologies.length ? '' : 'disabled'}><option value="">하위 이념 —</option>${blocOf(r.bloc).ideologies.map(x => `<option value="${esc(x.id)}" ${r.ideo === x.id ? 'selected' : ''}>${esc(x.name)}</option>`).join('')}</select>
-                    <input type="number" class="t64-rk-e-score" data-rf="score" data-id="${r.id}" value="${Number(r.score) || 0}" min="0" max="100">
-                    ${r.self ? '<span class="t64-x-ph"></span>' : `<button type="button" class="t64-x" data-rdel="${r.id}" title="지우기">×</button>`}
-                </div>`).join('')}
-            </details>`;
+            <div class="t64-re-hint">국기 칸을 누르면 그림을 올려요 · 점수는 ± 또는 직접 입력 · 진영을 바꾸면 하위 이념이 비워져요</div>
+            <div class="t64-re-list">
+            ${list.map((r, i) => {
+                const b = blocOf(r.bloc);
+                return `<div class="t64-re-row${r.self ? ' self' : ''}" style="--bloc:${esc(b.color)}" data-row="${r.id}">
+                    <span class="t64-re-no">${i + 1}</span>
+                    ${r.self ? `<span class="t64-re-flag self" title="국가 › 상징의 국기">${flagHtml(r)}</span>` : `<label class="t64-re-flag" title="눌러서 국기 그림 고르기">${flagHtml(r)}<input type="file" accept="image/*" data-rflag="${r.id}" hidden>${r.flagImg ? `<button type="button" class="t64-re-unflag" data-unflag="${r.id}" title="올린 국기 빼기">×</button>` : ''}</label>`}
+                    <input type="text" class="t64-re-name" data-rf="name" data-id="${r.id}" value="${esc(r.self ? rowName(r) : r.name)}" ${r.self ? 'disabled title="국가 › 상징의 국가명 — 우리나라"' : 'placeholder="국가 이름"'}>
+                    <span class="t64-re-score"><button type="button" data-step="-1" data-id="${r.id}" title="1점 내리기">−</button><input type="number" data-rf="score" data-id="${r.id}" value="${Number(r.score) || 0}" min="0" max="999"><button type="button" data-step="1" data-id="${r.id}" title="1점 올리기">+</button></span>
+                    ${r.self ? '<span class="t64-re-me" title="우리나라 — 이름 · 국기는 국가 › 상징에서 바꿔요">★</span>' : `<button type="button" class="t64-x" data-rdel="${r.id}" title="지우기">×</button>`}
+                    <span class="t64-re-meta">
+                        <select data-rf="bloc" data-id="${r.id}" title="진영">${blocOpts(r)}</select>
+                        <select data-rf="ideo" data-id="${r.id}" title="하위 이념" ${b.ideologies.length ? '' : 'disabled'}>${ideoOpts(r)}</select>
+                    </span>
+                </div>`;
+            }).join('')}
+            </div>`;
         const at = id => S.ranking.rows.find(x => x.id === id);
+        const resortSoon = () => { clearTimeout(rankResort); rankResort = setTimeout(renderRanking, 900); };
         box.querySelectorAll('[data-rf]').forEach(i => {
+            const f = i.dataset.rf;
+            const apply = () => {
+                const r = at(i.dataset.id); if (!r) return false;
+                if (f === 'name' && !r.flagKey && FLAG_BY_NAME[r.name]) r.flagKey = FLAG_BY_NAME[r.name]; // 이름을 바꿔도 기본 국기는 그대로
+                r[f] = f === 'score' ? Math.max(0, Math.min(999, Number(i.value) || 0)) : i.value.trim();
+                return r;
+            };
+            // 이름 · 점수는 치는 대로 오른쪽 순위표에 반영
+            if (f === 'name' || f === 'score') i.oninput = () => { if (apply()) renderRankBoard(); };
             i.onchange = () => {
-                const r = at(i.dataset.id); if (!r) return;
-                r[i.dataset.rf] = i.dataset.rf === 'score' ? Math.max(0, Math.min(999, Number(i.value) || 0)) : i.value.trim();
-                if (i.dataset.rf === 'bloc') r.ideo = '';
-                renderRanking(); renderBlocs();
+                const r = apply(); if (!r) return;
+                if (f === 'bloc') r.ideo = '';
+                renderRanking();
+                if (f === 'bloc') renderBlocs();
+            };
+        });
+        box.querySelectorAll('[data-step]').forEach(b => {
+            b.onclick = () => {
+                const r = at(b.dataset.id); if (!r) return;
+                r.score = Math.max(0, Math.min(999, (Number(r.score) || 0) + Number(b.dataset.step)));
+                const inp = box.querySelector(`input[data-rf="score"][data-id="${r.id}"]`);
+                if (inp) inp.value = r.score;
+                renderRankBoard();
+                resortSoon();
             };
         });
         box.querySelectorAll('[data-rflag]').forEach(i => {
             i.onchange = () => { const f = i.files && i.files[0]; const r = at(i.dataset.rflag); if (!f || !r) return; shrinkImage(f, url => { r.flagImg = url; renderRanking(); }); };
         });
         box.querySelectorAll('[data-unflag]').forEach(b => { b.onclick = e => { e.preventDefault(); e.stopPropagation(); const r = at(b.dataset.unflag); if (r) { r.flagImg = ''; renderRanking(); } }; });
-        box.querySelector('[data-rt="title"]').onchange = e => { S.ranking.title = e.target.value.trim(); renderRanking(); };
-        box.querySelectorAll('[data-rdel]').forEach(b => { b.onclick = () => { S.ranking.rows = S.ranking.rows.filter(x => x.id !== b.dataset.rdel); renderRanking(); renderBlocs(); }; });
-        box.querySelector('[data-act="addrow"]').onclick = () => { S.ranking.rows.push({ id: uid(), name: '새 국가', flag: '🏳', flagKey: '', flagImg: '', bloc: (S.blocs[S.blocs.length - 1] || {}).id || '', ideo: '', score: 30, prevRank: null, self: false }); renderRanking(); renderBlocs(); };
+        const titleIn = box.querySelector('[data-rt="title"]');
+        titleIn.oninput = () => { S.ranking.title = titleIn.value.trim(); renderRankBoard(); };
+        box.querySelectorAll('[data-rdel]').forEach(b => {
+            b.onclick = () => {
+                const r = at(b.dataset.rdel); if (!r) return;
+                showCustomConfirm(`"${rowName(r)}"을(를) 순위에서 지울까요?`, () => { S.ranking.rows = S.ranking.rows.filter(x => x.id !== r.id); renderRanking(); renderBlocs(); });
+            };
+        });
+        box.querySelector('[data-act="addrow"]').onclick = () => {
+            const r = { id: uid(), name: '새 국가', flag: '🏳', flagKey: '', flagImg: '', bloc: (S.blocs[S.blocs.length - 1] || {}).id || '', ideo: '', score: 30, prevRank: null, self: false };
+            S.ranking.rows.push(r);
+            renderRanking(); renderBlocs();
+            const inp = box.querySelector(`input[data-rf="name"][data-id="${r.id}"]`);
+            if (inp) { inp.focus(); inp.select(); inp.scrollIntoView({ block: 'nearest' }); }
+        };
         box.querySelector('[data-act="mark"]').onclick = () => { ranked().forEach((r, i) => { r.prevRank = i + 1; }); renderRanking(); };
+        box.querySelector('[data-act="showrank"]').onclick = showRankTab;
         box.querySelector('[data-act="reset"]').onclick = () => showCustomConfirm('국가 순위를 처음 목록으로 되돌릴까요?', () => { S.ranking = defaultRanking(nationName()); renderRanking(); renderBlocs(); });
     }
 
@@ -835,41 +1002,69 @@
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;"><h3 style="margin:0;border:none;padding:0;"><span class="tno-prompt">&gt; </span><span id="t64HistTitle">세력 변화</span></h3></div>
             <div id="t64HistWrap"></div></div></div>`), ref.nextSibling);
     })();
+    // 오른쪽 시각 화면 탭 "국가 순위" — 세계 › 국가 순위에서 고친 순위표를 크게 본다
+    (function addRankDispTab() {
+        const after = document.getElementById('dispTabTimeline') || document.getElementById('dispTabCabinet');
+        if (!after) return;
+        after.parentElement.insertBefore(el(`<button class="disp-tab-btn" id="dispTabRanking" data-tab="ranking" onclick="switchDispTab('ranking')" style="display:none;"><span class="disp-tab-label">국가 순위</span><span class="disp-tab-close" onclick="event.stopPropagation();closeDispTab('ranking')">×</span></button>`), after.nextSibling);
+        const ref = document.getElementById('dispPanelTimeline') || document.getElementById('dispPanelCabinet');
+        if (!ref) return;
+        ref.parentElement.insertBefore(el(`<div class="disp-panel" id="dispPanelRanking"><div class="chamber-box t64-rank-box">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;"><h3 style="margin:0;border:none;padding:0;"><span class="tno-prompt">&gt; </span><span id="t64RankTitle">국가 순위</span></h3></div>
+            <div id="t64RankWrap"></div></div></div>`), ref.nextSibling);
+    })();
+    // 오른쪽 시각 화면 탭 "위키 틀" — 원내 구성 틀 미리보기
+    (function addWikiDispTab() {
+        const after = document.getElementById('dispTabTimeline') || document.getElementById('dispTabCabinet');
+        if (!after) return;
+        after.parentElement.insertBefore(el(`<button class="disp-tab-btn" id="dispTabWiki" data-tab="wiki" onclick="switchDispTab('wiki')" style="display:none;"><span class="disp-tab-label">위키 틀</span><span class="disp-tab-close" onclick="event.stopPropagation();closeDispTab('wiki')">×</span></button>`), after.nextSibling);
+        const ref = document.getElementById('dispPanelTimeline') || document.getElementById('dispPanelCabinet');
+        if (!ref) return;
+        ref.parentElement.insertBefore(el(`<div class="disp-panel" id="dispPanelWiki"><div class="chamber-box">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;"><h3 style="margin:0;border:none;padding:0;"><span class="tno-prompt">&gt; </span>위키 틀</h3></div>
+            <div id="t64WikiWrap"></div></div></div>`), ref.nextSibling);
+    })();
     addTab('mainContentSetup', 'subTabTimeline', 'setup', 'wikibox', 'Wikibox', '위키 틀');
     // 세계 (1.6.4) — 국가 아래 새 메인 메뉴: 국가 순위 · 진영
     (function addWorldMain() {
         const nationBtn = document.getElementById('mainTabNation'), nationContent = document.getElementById('mainContentNation');
         if (!nationBtn || !nationContent) return;
-        nationBtn.parentElement.insertBefore(el(`<button class="main-tab-btn" onclick="switchMainTab('world')" id="mainTabWorld">🌐 세계</button>`), nationBtn.nextSibling);
+        // 경제 — 자리 · 색만 잡아 둔 잠긴 메뉴 (국가 다음, 세계 앞). 누르면 안내만 뜬다
+        const eco = el(`<button class="main-tab-btn" onclick="t64EconomyLocked()" id="mainTabEconomy" title="경제 — 다음 업데이트에서 열립니다">💹 경제 🔒</button>`);
+        nationBtn.parentElement.insertBefore(eco, nationBtn.nextSibling);
+        nationBtn.parentElement.insertBefore(el(`<button class="main-tab-btn" onclick="switchMainTab('world')" id="mainTabWorld">🌐 세계</button>`), eco.nextSibling);
         nationContent.parentElement.insertBefore(el(`<div id="mainContentWorld" class="main-tab-content"><div class="sub-tab-container"></div></div>`), nationContent.nextSibling);
         try { if (!currentSubTab.world) currentSubTab.world = 'ranking'; } catch (e) { /* main.js 없음 */ }
     })();
+    window.t64EconomyLocked = () => { try { showCustomAlert('🔒 경제 메뉴는 아직 잠겨 있어요 — 다음 업데이트에서 열립니다.'); } catch (e) { /* 알림 없음 */ } };
     addTab('mainContentWorld', null, 'world', 'ranking', 'Ranking', '국가 순위');
     addTab('mainContentWorld', 'subTabRanking', 'world', 'blocs', 'Blocs', '진영');
     const origSwitch = window.switchSubTab;
     window.switchSubTab = function (main, sub) {
         const r = origSwitch.apply(this, arguments);
         if (main === 'setup' && sub === 'timeline') { renderTimeline(); showHistoryTab(); }
-        if (main === 'setup' && sub === 'wikibox') renderWikibox();
-        if (main === 'world' && sub === 'ranking') renderRanking();
-        if (main === 'world' && sub === 'blocs') renderBlocs();
+        if (main === 'setup' && sub === 'wikibox') { renderWikibox(); showWikiTab(); }
+        if (main === 'world' && sub === 'ranking') { renderRanking(); showRankTab(); }
+        if (main === 'world' && sub === 'blocs') { renderBlocs(); showRankTab(); }
         return r;
     };
     const origDisp = window.switchDispTab;
     window.switchDispTab = function (tab) {
         const r = origDisp.apply(this, arguments);
         if (tab === 'timeline') setTimeout(renderHistory, 30);
+        if (tab === 'ranking') renderRankBoard();
+        if (tab === 'wiki') renderWikiPreview();
         return r;
     };
     let resizeTimer = 0;
     window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(() => { if (document.getElementById('dispPanelTimeline')?.classList.contains('active')) renderHistory(); }, 150); });
     function refresh() { renderTimeline(); renderWikibox(); renderRanking(); renderBlocs(); }
-    window.T64 = { get timeline() { return S.timeline; }, record: (label) => { const n = record(label || '', 'manual', false); renderTimeline(); return n; } };
+    window.T64 = { get timeline() { return S.timeline; }, get ranking() { return S.ranking; }, record: (label) => { const n = record(label || '', 'manual', false); renderTimeline(); return n; } };
 
     const style = document.createElement('style');
     style.textContent = `
-        #contentTimeline, #contentWikibox, #contentRanking { --t64-line: #333; --t64-soft: rgba(255,255,255,.03); --t64-dim: #888; --t64-text: #ddd; --t64-acc: var(--tno-neon); }
-        html[data-theme-family="modern"] #contentTimeline, html[data-theme-family="modern"] #contentWikibox, html[data-theme-family="modern"] #contentRanking { --t64-line: var(--m-border); --t64-soft: var(--m-surface-2); --t64-dim: var(--m-text-3); --t64-text: var(--m-text); --t64-acc: var(--m-accent); }
+        #contentTimeline, #contentWikibox, #contentRanking, #contentBlocs { --t64-line: #333; --t64-soft: rgba(255,255,255,.03); --t64-dim: #888; --t64-text: #ddd; --t64-acc: var(--tno-neon); }
+        html[data-theme-family="modern"] #contentTimeline, html[data-theme-family="modern"] #contentWikibox, html[data-theme-family="modern"] #contentRanking, html[data-theme-family="modern"] #contentBlocs { --t64-line: var(--m-border); --t64-soft: var(--m-surface-2); --t64-dim: var(--m-text-3); --t64-text: var(--m-text); --t64-acc: var(--m-accent); }
         .t64-intro { color: var(--t64-dim); font-size: .78rem; line-height: 1.6; margin: 8px 0 10px; }
         .t64-dim { color: var(--t64-dim); font-size: .8rem; } .t64-small { font-size: .72rem; margin-top: 6px; }
         .t64-tabs { margin-bottom: 10px; }
@@ -887,8 +1082,45 @@
         .t64-ax { font-size: 10px; fill: var(--t64-dim); } .t64-ax-dim { opacity: .7; }
         .t64-half { stroke: var(--t64-text); stroke-dasharray: 3 3; opacity: .5; }
         .t64-histnote { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; font-size: .82rem; color: var(--t64-text); }
-        #dispPanelTimeline { --t64-line: #333; --t64-dim: #888; --t64-text: #ddd; --t64-acc: var(--tno-neon); }
-        html[data-theme-family="modern"] #dispPanelTimeline { --t64-line: var(--m-border); --t64-dim: var(--m-text-3); --t64-text: var(--m-text); --t64-acc: var(--m-accent); }
+        #dispPanelTimeline, #dispPanelRanking { --t64-line: #333; --t64-soft: rgba(255,255,255,.03); --t64-dim: #888; --t64-text: #ddd; --t64-acc: var(--tno-neon); }
+        html[data-theme-family="modern"] #dispPanelTimeline, html[data-theme-family="modern"] #dispPanelRanking { --t64-line: var(--m-border); --t64-soft: var(--m-surface-2); --t64-dim: var(--m-text-3); --t64-text: var(--m-text); --t64-acc: var(--m-accent); }
+        /* 오른쪽 순위표 — 넓은 화면에 맞춰 크게 */
+        #dispPanelRanking .t64-rk { padding: 18px 20px; }
+        #dispPanelRanking .t64-rk-title { font-size: 1.5rem; margin-bottom: 8px; }
+        #dispPanelRanking .t64-rk-blocs { font-size: .85rem; margin-bottom: 14px; }
+        #dispPanelRanking .t64-rk-row { grid-template-columns: 2.2em 2.4em minmax(0, 1fr) minmax(60px, 34%) 3em 2.8em; gap: 12px; padding: 10px 8px 10px 12px; font-size: 1.05rem; border-left-width: 5px; }
+        #dispPanelRanking .t64-rk-no { font-size: 1.2rem; }
+        #dispPanelRanking .t64-rk-flagimg { width: 2.2em; height: 1.47em; }
+        #dispPanelRanking .t64-rk-flag { font-size: 1.5rem; }
+        #dispPanelRanking .t64-rk-bar { height: 9px; }
+        #dispPanelRanking .t64-rk-ideo { font-size: .75rem; }
+        #dispPanelRanking .t64-rk-mv { font-size: .8rem; }
+        /* 왼쪽 국가 순위 편집 */
+        .t64-re-head .t64-actions { margin: 8px 0 0; }
+        .t64-re-hint { font-size: .72rem; color: var(--t64-dim); margin: 0 0 6px; }
+        .t64-re-list { border-top: 1px solid var(--t64-line); }
+        .t64-re-row { display: grid; grid-template-columns: 1.6em 2.8em minmax(0, 1fr) auto 1.9em; grid-template-areas: "no flag name score del" "no flag meta meta meta"; gap: 5px 6px; align-items: center; padding: 7px 4px 7px 6px; border-left: 4px solid var(--bloc); border-bottom: 1px solid var(--t64-line); }
+        .t64-re-row.self { background: color-mix(in srgb, var(--t64-acc) 8%, transparent); }
+        .t64-re-row:hover { background: color-mix(in srgb, var(--bloc) 7%, transparent); }
+        .t64-re-no { grid-area: no; align-self: start; padding-top: 6px; text-align: center; font-size: .85rem; color: var(--t64-dim); }
+        .t64-re-row:nth-child(-n+5) .t64-re-no { color: #e0b030; }
+        .t64-re-flag { grid-area: flag; position: relative; display: flex; align-items: center; justify-content: center; align-self: stretch; min-height: 30px; border: 1px dashed var(--t64-line); cursor: pointer; }
+        .t64-re-flag:hover { border-color: var(--t64-acc); }
+        .t64-re-flag.self { cursor: default; border-style: solid; opacity: .75; }
+        .t64-re-flag .t64-rk-flagimg { width: 30px; height: 20px; }
+        .t64-re-unflag { position: absolute; top: -6px; right: -6px; width: 16px; height: 16px; line-height: 14px; padding: 0; font-size: 11px; border-radius: 50%; border: 1px solid var(--t64-line); background: var(--t64-soft, #111); color: var(--t64-text); cursor: pointer; }
+        .t64-re-name { grid-area: name; min-width: 0; box-sizing: border-box; }
+        .t64-re-score { grid-area: score; display: inline-flex; align-items: stretch; border: 1px solid var(--t64-line); }
+        .t64-re-score button { cursor: pointer; width: 22px; padding: 0; background: transparent; border: none; color: var(--t64-dim); font-family: inherit; font-size: .9rem; }
+        .t64-re-score button:hover { color: var(--t64-acc); }
+        .t64-re-score input { width: 3.2em; min-width: 0; text-align: center; border: none !important; border-left: 1px solid var(--t64-line) !important; border-right: 1px solid var(--t64-line) !important; -moz-appearance: textfield; }
+        .t64-re-score input::-webkit-inner-spin-button, .t64-re-score input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        .t64-re-row > .t64-x { grid-area: del; justify-self: end; }
+        .t64-re-me { grid-area: del; justify-self: center; font-size: .9rem; color: var(--t64-acc); cursor: help; }
+        .t64-re-meta { grid-area: meta; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 6px; }
+        .t64-re-meta select { min-width: 0; box-sizing: border-box; font-size: .8rem; }
+        html[data-theme-family="modern"] .t64-re-score { border-radius: 8px; overflow: hidden; }
+        html[data-theme-family="modern"] .t64-re-flag { border-radius: 6px; }
         .t64-hist { display: block; }
         .t64-h-controls { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
         .t64-h-note { font-size: 10.5px; fill: var(--t64-text); paint-order: stroke; stroke: var(--t64-bg, rgba(0,0,0,.55)); stroke-width: 3px; font-weight: bold; }
@@ -937,36 +1169,42 @@
         .t64-markup { width: 100%; box-sizing: border-box; min-height: 180px; font-family: monospace; font-size: .75rem; }
         /* 원내 구성 틀 — 위키 문서 모양을 따라 늘 밝은 바탕 */
         .t64-wikiwrap { display: flex; justify-content: center; }
-        .nbx { width: 100%; max-width: 560px; background: #fff; border: 3px solid var(--nbx-frame); color: #222; font-family: 'Pretendard', 'Noto Sans KR', 'Malgun Gothic', sans-serif; box-sizing: border-box; }
-        .nbx-head { position: relative; overflow: hidden; background: #f2f2f2; display: flex; align-items: center; justify-content: center; gap: 14px; padding: 14px 60px; border-bottom: 1px solid #ddd; }
-        .nbx-corner { position: absolute; top: 0; bottom: 0; width: 70px; }
-        .nbx-corner.l { left: 0; background: linear-gradient(135deg, var(--nbx-l) 0 38%, color-mix(in srgb, var(--nbx-l) 65%, #fff) 38% 60%, transparent 60%); }
-        .nbx-corner.r { right: 0; background: linear-gradient(225deg, var(--nbx-r) 0 38%, color-mix(in srgb, var(--nbx-r) 65%, #fff) 38% 60%, transparent 60%); }
-        .nbx-emblem img { max-height: 52px; max-width: 90px; display: block; }
-        .nbx-nation { color: #555; font-weight: 700; font-size: 15px; }
-        .nbx-title { font-weight: 800; font-size: 21px; color: #111; }
-        .nbx-body > summary { list-style: none; cursor: pointer; text-align: center; font-weight: 700; padding: 8px 0 2px; font-size: 14px; color: #222; }
-        .nbx-body > summary::-webkit-details-marker { display: none; }
-        .nbx-term { text-align: center; padding: 4px 0 10px; font-size: 14px; font-weight: 600; color: #222; border-bottom: 1px solid #ddd; }
-        .nbx-badge { display: inline-block; background: var(--nbx-frame); color: #fff; border-radius: 5px; padding: 1px 7px; margin-right: 4px; }
-        .nbx-sec { background: #dee5e5; text-align: center; font-weight: 800; padding: 8px; font-size: 15px; color: #111; }
-        .nbx-party { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 14px 8px; text-align: center; min-height: 92px; box-sizing: border-box; }
-        .nbx-party.big { min-height: 132px; padding: 20px 10px; }
-        .nbx-pname span { font-weight: 900; font-size: 22px; letter-spacing: -1px; line-height: 1.15; word-break: keep-all; }
-        .nbx-party.big .nbx-pname span { font-size: 38px; }
-        .nbx-pname img { max-height: 44px; max-width: 100%; display: block; }
-        .nbx-party.big .nbx-pname img { max-height: 64px; }
-        .nbx-seat { display: inline-block; background: #fff; border-radius: 5px; padding: 1px 6px; font-weight: 800; font-size: 14px; }
-        .nbx-seat.dark { background: #5a0000; color: #fff; }
-        .nbx-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: #fff; }
-        .nbx-fill { background: #f4f4f4; } .nbx-fill img { max-height: 46px; max-width: 70%; } .nbx-fill svg { opacity: .8; }
-        .nbx-ind { background: #808080; color: #fff; text-align: center; font-weight: 800; padding: 9px; font-size: 15px; }
-        .nbx-ind .nbx-seat { color: #808080; }
-        .nbx-total { background: #f5f5f5; text-align: center; font-weight: 800; padding: 10px; font-size: 15px; border-top: 1px solid #e3e3e3; }
-        .nbx-total small { font-weight: 500; color: #666; }
-        .nbx-foot { text-align: center; font-size: 13px; padding: 10px; border-top: 6px solid #e3e9e9; color: #222; }
-        .nbx-foot b { text-decoration: underline; }
-        @media (max-width: 520px) { .nbx-party.big .nbx-pname span { font-size: 28px; } .nbx-pname span { font-size: 17px; } .nbx-head { padding: 12px 44px; } }
+        .nbx2 { width: 100%; max-width: 640px; background: #fff; border: 3px solid color-mix(in srgb, var(--nb-frame) 100%, #bbb); color: #222; font-family: 'Pretendard', 'Noto Sans KR', 'Malgun Gothic', sans-serif; box-sizing: border-box; text-align: center; }
+        .nbx2 .nb-head { background: var(--nb-frame); color: var(--nb-ffg); display: flex; align-items: center; justify-content: center; gap: 16px; padding: 14px 20px; text-align: left; border-bottom: 1px solid rgba(0,0,0,.12); }
+        .nbx2 .nb-emblem img { max-height: 60px; max-width: 96px; display: block; }
+        .nbx2 .nb-sep { align-self: stretch; width: 1px; background: currentColor; opacity: .35; }
+        .nbx2 .nb-nation { font-weight: 700; font-size: 16px; }
+        .nbx2 .nb-title { font-weight: 800; font-size: 24px; }
+        .nbx2 .nb-body > summary { list-style: none; cursor: pointer; font-weight: 700; padding: 9px 0; background: #fff; }
+        .nbx2 .nb-body > summary::-webkit-details-marker { display: none; }
+        .nbx2 .nb-cab { background: #dedede; padding: 10px; display: flex; flex-direction: column; gap: 4px; }
+        .nbx2 .nb-cab b { font-size: 16px; } .nbx2 .nb-cab small { font-size: 13px; font-weight: 700; }
+        .nbx2 .nb-sec { background: #dee5e5; font-weight: 800; font-size: 17px; padding: 8px; }
+        .nbx2 .nb-row { display: grid; gap: 1px; background: rgba(255,255,255,.75); }
+        .nbx2 .nb-party { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 14px 8px; min-height: 96px; }
+        .nbx2 .nb-party.k1, .nbx2 .nb-party.k2 { min-height: 128px; }
+        .nbx2 .nb-logo { max-height: 46px; max-width: 80%; display: block; }
+        .nbx2 .nb-party.k1 .nb-logo, .nbx2 .nb-party.k2 .nb-logo { max-height: 58px; }
+        .nbx2 .nb-pname { font-weight: 800; font-size: 17px; line-height: 1.2; word-break: keep-all; }
+        .nbx2 .nb-party.k1 .nb-pname, .nbx2 .nb-party.k2 .nb-pname { font-size: 20px; }
+        .nbx2 sup { font-size: .6em; margin-left: 1px; }
+        .nbx2 .nb-seat { display: inline-block; background: #fff; border-radius: 5px; padding: 1px 7px; font-weight: 800; font-size: 15px; line-height: 1.45; white-space: nowrap; }
+        .nbx2 .nb-seat.split { padding: 0; display: inline-flex; overflow: hidden; border: 1.5px solid #fff; background: #fff; }
+        .nbx2 .nb-seat.split > span { padding: 1px 6px; }
+        .nbx2 .nb-seat.split .a { color: #fff; clip-path: polygon(0 0, 100% 0, calc(100% - 5px) 100%, 0 100%); padding-right: 9px; }
+        .nbx2 .nb-small { background: #808080; color: #fff; font-weight: 800; font-size: 17px; padding: 9px; }
+        .nbx2 .nb-total { background: var(--nb-frame); color: var(--nb-ffg); font-weight: 800; font-size: 17px; padding: 9px; border-top: 1px solid rgba(0,0,0,.08); }
+        .nbx2 .nb-total small { font-weight: 500; opacity: .8; font-size: 12px; }
+        .nbx2 .nb-notes { background: #f2f2f2; font-size: 13px; line-height: 1.75; padding: 10px 14px; color: #333; }
+        .nbx2 .nb-legend { margin-top: 6px; } .nbx2 .nb-legend .nb-seat { font-size: 12px; border-color: #999; }
+        .nbx2 .nb-foot { font-size: 15px; font-weight: 700; padding: 10px; border-top: 1px solid #ddd; }
+        .nbx2 .nb-foot b { font-weight: 900; }
+        #dispPanelWiki .t64-wikiwrap { padding: 4px 0 10px; }
+        .t64-wk-form .t64-field > span:first-child { min-width: 5.2em; }
+        .t64-wk-form .t64-field input[type=text] { flex: 1; min-width: 0; }
+        .t64-wk-form .t64-field input[type=checkbox] { flex: none; width: 16px; height: 16px; margin: 0; }
+        #sideNav .mn-group[data-main="economy"] .mn-group-head { opacity: .55; }
+        @media (max-width: 520px) { .nbx2 .nb-pname { font-size: 15px; } .nbx2 .nb-party.k1 .nb-pname, .nbx2 .nb-party.k2 .nb-pname { font-size: 17px; } .nbx2 .nb-title { font-size: 20px; } }
         /* 냉전 국가 순위 */
         .t64-rk { border: 1px solid var(--t64-line); background: var(--t64-soft); padding: 12px; }
         .t64-rk-title { font-size: 1.15rem; text-align: center; color: var(--t64-text); letter-spacing: 2px; margin-bottom: 6px; }

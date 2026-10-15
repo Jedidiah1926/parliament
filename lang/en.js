@@ -897,20 +897,20 @@ window.DnoLangPacks.en = {
    "⚖ Legislation"
   ],
   [
-   "의회 · 입법 · 국가 · 선거 · 여론 · 내각 · 도움말 일곱 묶음과 그 안의 항목. 항목을 누르면 그 기능 화면이 열리고, 묶음 제목을 누르면 접히거나 펼쳐집니다 (다음에 열어도 그대로 기억).",
-   "Seven groups — Parliament, Legislation, Nation, Election, Opinion, Cabinet, Help — and their items. Click an item to open that screen; click a group title to collapse or expand it (remembered next time)."
+   "의회 · 입법 · 여론 · 선거 · 내각 · 국가 · 도움말 일곱 묶음과 그 안의 항목. 항목을 누르면 그 기능 화면이 열리고, 묶음 제목을 누르면 접히거나 펼쳐집니다 (다음에 열어도 그대로 기억).",
+   "Seven groups — Parliament, Legislation, Opinion, Election, Cabinet, Nation, Help — and their items. Click an item to open that screen; click a group title to collapse or expand it (remembered next time)."
   ],
   [
    "시각 화면 오른쪽 위에 보이는 현재 날짜와 회기. 국가 › 날짜에서 정합니다 (\"열기\"로 이동).",
    "The current date and session at the top right of the visuals. Set them in Nation › Date (\"Open\" takes you there)."
   ],
   [
-   "기능은 의회 · 입법 · 국가 · 선거 · 여론 · 내각 여섯 묶음으로 나뉘어 있고, 회색 \"도움말\"에는 모든 탭의 설명이 있어요. 화면 아래 탭 바에서 \"의회\"를 누르고, 위쪽 칩 줄에서 \"정당\"을 골라보세요.",
-   "Features are grouped into Parliament, Legislation, Nation, Election, Opinion and Cabinet, and the gray \"Help\" explains every tab. Tap \"Parliament\" in the bottom tab bar, then pick \"Parties\" in the chip row at the top."
+   "기능은 의회 · 입법 · 여론 · 선거 · 내각 · 국가 여섯 묶음으로 나뉘어 있고, 회색 \"도움말\"에는 모든 탭의 설명이 있어요. 화면 아래 탭 바에서 \"의회\"를 누르고, 위쪽 칩 줄에서 \"정당\"을 골라보세요.",
+   "Features are grouped into Parliament, Legislation, Opinion, Election, Cabinet and Nation, and the gray \"Help\" explains every tab. Tap \"Parliament\" in the bottom tab bar, then pick \"Parties\" in the chip row at the top."
   ],
   [
-   "기능은 의회 · 입법 · 국가 · 선거 · 여론 · 내각 여섯 묶음으로 나뉘어 있고, 맨 아래 회색 \"도움말\"에는 모든 탭의 설명이 있어요. 왼쪽 메뉴에서 의회 › 정당을 눌러보세요.",
-   "Features are grouped into Parliament, Legislation, Nation, Election, Opinion and Cabinet, and the gray \"Help\" at the bottom explains every tab. Click Parliament › Parties in the left menu."
+   "기능은 의회 · 입법 · 여론 · 선거 · 내각 · 국가 여섯 묶음으로 나뉘어 있고, 맨 아래 회색 \"도움말\"에는 모든 탭의 설명이 있어요. 왼쪽 메뉴에서 의회 › 정당을 눌러보세요.",
+   "Features are grouped into Parliament, Legislation, Opinion, Election, Cabinet and Nation, and the gray \"Help\" at the bottom explains every tab. Click Parliament › Parties in the left menu."
   ],
   [
    "입법 메뉴에서는 법안을 작성해 의회에 올리고 표결합니다. 법안 제목을 적고 \"[+] 법안 등록\"을 눌러보세요.",
@@ -7440,7 +7440,7 @@ window.DnoLangPacks.en = {
   ["총선 파벌 나눠서 · 합쳐서", "Split or merged factions in elections"],
   ["- 총선에서 파벌 나눠서 · 합쳐서 — 정당마다 개표 결과를 반영할 때 파벌 의석을 선거 전 몫대로 나눌지(나눠서), 정당 몫으로 합칠지(합쳐서) 고름. 지역 기반 파벌(예: 바이에른의 기독교사회연합)은 고른 지역구들에서 정당이 얻는 표만큼 새 의석을 가져감", "- Split or merged factions in elections — for each party, choose whether faction seats are divided by their pre-election shares (split) or merged into the party (merged) when results are applied. A regional faction (e.g. the CSU in Bavaria) takes new seats in proportion to the party's votes in its chosen districts"],
   ["튜토리얼 전면 개정: 서독", "Tutorial overhaul: West Germany"],
-  ["- 튜토리얼 전면 개정 — 가상의 \"튜토리얼 공화국\" 대신 1983년 서독(독일연방공화국, 제10대 연방의회): 실제 정당 · 의석(기민·기사연합 · 사회민주당 · 자유민주당 · 녹색당), 연방의회 · 연방참의원, 주별 지역구 · 성향, 기본법 · 상임위원회, 동독 주는 지역구가 아닌 땅(1.6.6 미리보기에선 미수복 지역)", "- Tutorial overhaul — instead of the made-up \"Tutorial Republic\", West Germany (the Federal Republic of Germany, 10th Bundestag) in 1983: real parties and seats (CDU/CSU · SPD · FDP · Greens), Bundestag and Bundesrat, state districts and leanings, the Basic Law and standing committees, with the East German states as land outside the districts (unrecovered territory in the 1.6.6 preview)"],
+  ["- 튜토리얼 전면 개정 — 가상의 \"튜토리얼 공화국\" 대신 1983년 서독(독일연방공화국, 제10대 연방의회): 실제 정당 · 의석(기민·기사연합 · 사회민주당 · 자유민주당 · 녹색당), 연방의회 · 연방평의회, 주별 지역구 · 성향, 기본법 · 상임위원회, 동독 주는 지역구가 아닌 땅(1.6.6 미리보기에선 미수복 지역)", "- Tutorial overhaul — instead of the made-up \"Tutorial Republic\", West Germany (the Federal Republic of Germany, 10th Bundestag) in 1983: real parties and seats (CDU/CSU · SPD · FDP · Greens), Bundestag and Bundesrat, state districts and leanings, the Basic Law and standing committees, with the East German states as land outside the districts (unrecovered territory in the 1.6.6 preview)"],
   ["- 군부 설정 — 국방부 장관 · 참모 · 장성 등 군 지휘부를 정해 둠 (쿠데타 주도 · 진압에 쓰임)", "- Military command — set up the military leadership such as the defense minister, chiefs of staff and generals (used to lead or put down coups)"],
   ["Give me liberty, or give me death! : 테니스 코트의 맹세", "Give me liberty, or give me death! : The Tennis Court Oath"],
   ["로고는 의회 › 정당 › 로고에서 바꿉니다 (눌러서 열기)", "Change logos in Parliament › Parties › Logo (click to open)"],

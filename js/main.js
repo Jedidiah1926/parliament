@@ -7379,7 +7379,7 @@
             if(parties.length === 0) { container.innerHTML = '<div style="text-align:center;color:#555;padding:20px;">[정당 없음]</div>'; return; }
             const box = (src, color, size, onchange, title) => `
                 <div class="leader-photo-box" title="${title}" style="width:${size}px;height:${size}px;flex-shrink:0;">
-                    ${src ? `<img src="${src}" alt="로고" style="width:100%;height:100%;object-fit:cover;display:block;">`
+                    ${src ? `<img src="${src}" alt="로고" style="width:100%;height:100%;object-fit:contain;display:block;background:${color};padding:4px;box-sizing:border-box;">`
                           : `<div style="width:100%;height:100%;background:${color}22;display:flex;align-items:center;justify-content:center;font-size:${size > 50 ? 1.6 : 1}rem;color:${color}88;">⚑</div>`}
                     <input type="file" accept="image/*" onchange="${onchange}">
                 </div>`;

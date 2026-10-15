@@ -88,11 +88,19 @@
     const elecApplied = () => (typeof elecLastResult === 'undefined' || !elecLastResult) ? true : !!elecLastResult.applied;
     // id로 찾은 요소를 감싸는 가까운 블록 (없으면 그 요소 자체)
     // ---- 잠긴 과정 (다음 업데이트 미리보기 기능) ----
-    // locked: '1.6.x' — 개발자 모드(설정 › 기타 설정)를 켜야 열리고, 그 기능이 있는 Teaser 1.6.3 화면에서 진행한다.
-    // 본 게임에서 고르면 teaser63.html로 옮겨 서독 튜토리얼로 시작한 뒤 그 과정을 바로 연다.
+    // locked: '1.6.x' — 개발자 모드(설정 › 기타 설정)를 켜야 열리고, 그 기능이 있는 Teaser 화면에서 진행한다
+    // (1.6.1 ~ 1.6.3 → Teaser 1.6.3, 1.6.4 → Teaser 1.6.4 — 뒤 티저는 앞 기능을 모두 담는다).
+    // 그 화면이 아니면 해당 teaser 화면으로 옮겨 서독 튜토리얼로 시작한 뒤 그 과정을 바로 연다.
     /* global emergencyPowers, presElectionMode */
     const devOn = () => !!(window.HemiDev && window.HemiDev.isOn());
-    const onPreviewPage = () => ['63', '64'].includes(document.documentElement.getAttribute('data-teaser'));
+    const PREVIEW_PAGES = ['63', '64'];
+    const previewPageFor = l => (l && l.locked === '1.6.4' ? '64' : '63');
+    const curPage = () => document.documentElement.getAttribute('data-teaser');
+    // 지금 화면이 미리보기 화면인지 — 과정을 주면 그 과정의 기능이 있는 화면인지
+    const onPreviewPage = l => PREVIEW_PAGES.includes(curPage()) && (!l || !l.locked || Number(curPage()) >= Number(previewPageFor(l)));
+    const previewName = l => `Teaser ${previewPageFor(l) === '64' ? '1.6.4' : '1.6.3'}`;
+    const t64 = () => window.T64 || null;
+    const rankSig = () => { const t = t64(); return t && t.ranking ? t.ranking.rows.map(r => `${r.id}:${r.score}`).join(',') : ''; };
     const logLen = k => { const o = window[k]; return o && Array.isArray(o.log) ? o.log.length : 0; };
     const byId = (id, up) => () => { const el = document.getElementById(id); return el ? ((up && el.closest(up)) || el) : null; };
     const helpTarget = () => isMobileLayout() ? navTarget() : (document.querySelector('#sideNav .mn-group[data-tone="muted"]') ? '#sideNav .mn-group[data-tone="muted"]' : navTarget());
@@ -125,8 +133,8 @@
                     allow: () => isMobileLayout() ? ['#mobileNav', '.main-tab-content > .sub-tab-container'] : [navTarget()],
                     title: '메뉴 이동하기',
                     text: () => isMobileLayout()
-                        ? '기능은 의회 · 입법 · 국가 · 선거 · 여론 · 내각 여섯 묶음으로 나뉘어 있고, 회색 "도움말"에는 모든 탭의 설명이 있어요. 화면 아래 탭 바에서 "의회"를 누르고, 위쪽 칩 줄에서 "정당"을 골라보세요.'
-                        : '기능은 의회 · 입법 · 국가 · 선거 · 여론 · 내각 여섯 묶음으로 나뉘어 있고, 맨 아래 회색 "도움말"에는 모든 탭의 설명이 있어요. 왼쪽 메뉴에서 의회 › 정당을 눌러보세요.',
+                        ? '기능은 의회 · 입법 · 여론 · 선거 · 내각 · 국가 여섯 묶음으로 나뉘어 있고, 회색 "도움말"에는 모든 탭의 설명이 있어요. 화면 아래 탭 바에서 "의회"를 누르고, 위쪽 칩 줄에서 "정당"을 골라보세요.'
+                        : '기능은 의회 · 입법 · 여론 · 선거 · 내각 · 국가 여섯 묶음으로 나뉘어 있고, 맨 아래 회색 "도움말"에는 모든 탭의 설명이 있어요. 왼쪽 메뉴에서 의회 › 정당을 눌러보세요.',
                     task: () => isActive('mainTabSetup') && isActive('subTabParty'),
                     done: '정당 화면이 열렸어요.',
                 },
@@ -508,6 +516,83 @@
             ],
         },
         {
+            id: 'history', group: 'detail', locked: '1.6.4',
+            title: '세력 변화',
+            summary: '의석 기록 · 의석 변화 도표 · 당 변화 · 정당 승계',
+            steps: [
+                {
+                    before: [closePanels, go('setup', 'timeline'), showPanel('controls')],
+                    enter: () => { T.histBase = t64() ? t64().timeline.length : 0; },
+                    target: () => document.querySelector('#contentTimeline .t64-actions') || '#contentTimeline',
+                    allow: ['#contentTimeline'],
+                    title: '의석 기록하기',
+                    text: '의회 › 세력 변화는 시점마다 정당 의석을 기록해 두는 곳이에요. 총선 결과를 의회에 반영하면 저절로 기록되고, "📸 지금 의석 기록하기"로 언제든 남길 수 있어요. 지금 눌러보세요.',
+                    task: () => !t64() || t64().timeline.length > (T.histBase || 0),
+                    done: '지금 의석이 기록됐어요.',
+                },
+                {
+                    before: [go('setup', 'timeline'), () => { const b = document.querySelector('#dispPanelTimeline [data-hview="seats"]'); if (b) b.click(); }, showPanel('display')],
+                    target: () => document.querySelector('#dispPanelTimeline .chamber-box') || '#dispPanelTimeline',
+                    title: '의석 변화',
+                    text: '오른쪽 시각 화면 "세력 변화" 탭에 기록이 아래로 쌓여요. "의석 변화"는 기록마다 정당 의석을 막대로 그리고(점유율 · 의석 수), ▲▼로 앞 기록과 비교해요. 집권 세력은 ★, 가운데 점선은 과반이에요.',
+                },
+                {
+                    before: [go('setup', 'timeline'), () => { const b = document.querySelector('#dispPanelTimeline [data-hview="lineage"]'); if (b) b.click(); }, showPanel('display')],
+                    target: () => document.querySelector('#dispPanelTimeline .chamber-box') || '#dispPanelTimeline',
+                    title: '당 변화',
+                    text: '"당 변화"로 바꾸면 정당이 언제 생기고, 이름을 바꾸고, 사라졌는지 세로 선으로 이어 보여요. 다른 정당을 이어받은 정당은 곡선으로 합쳐지고, 없어진 정당은 ✕로 끝나요.',
+                },
+                {
+                    before: [go('setup', 'timeline'), () => { const d = document.querySelector('#contentTimeline [data-fold="openSucc"]'); if (d) d.open = true; }, showPanel('controls')],
+                    target: () => document.querySelector('#contentTimeline [data-fold="openSucc"]') || '#contentTimeline',
+                    title: '정당 승계',
+                    text: '🔁 정당 승계에서 당명 · 색을 바꾸면(예: 한나라당 → 새누리당) 같은 정당이 이어진 것으로 기록돼요. 서로 다른 두 정당은 "승계 관계 잇기"로 이어 합당 · 후신 관계를 그리고, 이은 관계는 다음 기록부터 도표에 합쳐져요.',
+                },
+                {
+                    before: [go('setup', 'timeline'), () => { const b = document.querySelector('#dispPanelTimeline [data-hview="seats"]'); if (b) b.click(); }, showPanel('controls')],
+                    target: () => document.querySelector('#contentTimeline .t64-table') || '#contentTimeline',
+                    title: '기록 표',
+                    text: '표에서는 기록끼리 정당 의석을 나란히 비교해요. 아래 "기록 N개"에서 기록 이름을 바꾸거나 지우고, 선거 › 선거 기록이 있으면 "선거 기록에서 가져오기"로 한꺼번에 들여옵니다.',
+                },
+            ],
+        },
+        {
+            id: 'wiki', group: 'detail', locked: '1.6.4',
+            title: '위키 틀',
+            summary: '원내 구성 틀 · 양원 의석 · 내각 · 교섭단체 · 위키 문법 복사',
+            steps: [
+                {
+                    before: [closePanels, go('setup', 'wikibox'), showPanel('display')],
+                    target: () => document.querySelector('#dispPanelWiki .nbx2') || '#dispPanelWiki',
+                    title: '원내 구성 틀',
+                    text: '의회 › 위키 틀은 위키 문서의 "원내 구성" 틀처럼 여당 · 야당 정당과 의석을 한 장에 모아요. 정당 · 집권 연정 · 의석에서 저절로 채워지고, 정당 로고(의회 › 정당 › 로고)가 있으면 이름 위에 들어가요. 미리보기는 오른쪽 "위키 틀" 탭에 보여요.',
+                },
+                {
+                    before: [go('setup', 'wikibox'), showPanel('controls')],
+                    target: () => document.querySelector('#contentWikibox .t64-tabs') || '#contentWikibox',
+                    allow: ['#contentWikibox .t64-tabs'],
+                    title: '양원 함께 적기',
+                    text: () => document.querySelector('#contentWikibox [data-wch="both"]')
+                        ? '틀에 담을 원을 고릅니다. "양원"을 고르면 정당마다 [상원 | 하원] 의석을 한 칸에 나란히 적어요. 지금 "양원"을 눌러보세요.'
+                        : '틀에 담을 원을 고릅니다. 양원제면 "양원"을 골라 정당마다 [상원 | 하원] 의석을 한 칸에 나란히 적을 수 있어요.',
+                    task: () => !document.querySelector('#contentWikibox [data-wch="both"]') || !!document.querySelector('#contentWikibox [data-wch="both"].active'),
+                    done: '정당마다 두 원의 의석이 나란히 보여요.',
+                },
+                {
+                    before: [go('setup', 'wikibox'), showPanel('controls')],
+                    target: () => document.querySelector('#contentWikibox .t64-wk-form') || '#contentWikibox',
+                    title: '틀 꾸미기',
+                    text: '틀 머리(제목 · 색), 내각 이름과 기간(비우면 "현재"), 교섭단체 기준(이보다 의석이 적은 정당은 비교섭단체로 묶임), 직접 쓰는 각주를 정해요. 파벌이 둘 이상인 정당(예: 기민·기사연합)은 각주에 공동교섭단체로 적혀요.',
+                },
+                {
+                    before: [go('setup', 'wikibox'), showPanel('controls')],
+                    target: () => document.querySelector('#contentWikibox [data-act="copy"]') || '#contentWikibox',
+                    title: '위키 문법 복사',
+                    text: '"위키 문법 복사"를 누르면 나무위키 표 문법이 복사돼요. 로고가 있는 정당은 [[파일:정당 이름 로고.png]]로 들어가니, 위키에 그 이름으로 로고 그림을 올리면 그대로 보여요. "반원 그림 저장"으로 의석 반원 그림도 받을 수 있어요.',
+                },
+            ],
+        },
+        {
             id: 'map', group: 'detail',
             title: '지역구와 지도',
             summary: '맵 메이커 · 지도 올리기 · 원별 지도 · 지역구 편집 · 당선 정당 지정 · 성향 · 권역',
@@ -570,6 +655,47 @@
                     target: '#contentNationSettings',
                     title: '지도 글씨 크기',
                     text: '국가 › 국가 설정에서 지도 위 약칭 글씨와 의석 배지의 크기를 한꺼번에 조절합니다.',
+                },
+            ],
+        },
+        {
+            id: 'world', group: 'detail', locked: '1.6.4',
+            title: '세계',
+            summary: '국가 순위 · 순위표 · 점수 · 국기 · 진영과 하위 이념',
+            steps: [
+                {
+                    before: [closePanels, go('world', 'ranking'), showPanel('controls')],
+                    target: () => (!isMobileLayout() && document.querySelector('#sideNav .mn-group[data-main="world"]')) || navTarget(),
+                    title: '세계 메뉴',
+                    text: '국가 아래 🌐 세계 메뉴에는 국가 순위와 진영이 있어요 (꾸밈용 — 게임 기능에는 영향 없음). 바로 위 💹 경제는 다음 업데이트에서 열리는 잠긴 메뉴예요.',
+                },
+                {
+                    before: [go('world', 'ranking'), showPanel('display')],
+                    target: () => document.querySelector('#dispPanelRanking .t64-rk') || '#dispPanelRanking',
+                    title: '순위표',
+                    text: '오른쪽 시각 화면 "국가 순위" 탭에 순위표가 크게 보여요. 진영 색 띠 · 국기 · 점수 막대로 나라를 줄 세우고, 우리나라 줄은 밝게 강조돼요 — 이름 · 국기는 국가 › 상징의 것을 그대로 써요.',
+                },
+                {
+                    before: [go('world', 'ranking'), showPanel('controls')],
+                    enter: () => { T.rankBase = rankSig(); },
+                    target: () => document.querySelector('#contentRanking .t64-re-list') || '#contentRanking',
+                    allow: ['#contentRanking'],
+                    title: '점수 바꾸기',
+                    text: '왼쪽 목록에서 아무 나라의 점수를 ± 버튼이나 직접 입력으로 바꿔보세요. 오른쪽 순위표가 바로 바뀌고, 손을 떼면 왼쪽 목록도 순위대로 다시 줄 서요.',
+                    task: () => !t64() || rankSig() !== T.rankBase,
+                    done: '순위표가 바뀌었어요.',
+                },
+                {
+                    before: [go('world', 'ranking'), showPanel('controls')],
+                    target: () => document.querySelector('#contentRanking .t64-re-row') || '#contentRanking',
+                    title: '국기 · 진영 · 하위 이념',
+                    text: '국기 칸을 누르면 그림을 올려요(주요 나라는 기본 국기가 들어 있어요). 아래 두 칸에서 진영과 하위 이념을 고르고, "순위 기준 저장"을 누른 뒤 점수를 바꾸면 순위표에 ▲▼ 변동이 보여요.',
+                },
+                {
+                    before: [go('world', 'blocs'), showPanel('controls')],
+                    target: '#contentBlocs',
+                    title: '진영',
+                    text: '세계 › 진영에서 진영을 추가 · 삭제하고 색 · 설명 · 하위 이념(예: 서방 진영 › 기독교 민주주의)을 정해요. 진영을 지우면 그 나라들은 미분류가 되고, 위쪽 막대로 진영 구도를 한눈에 봐요.',
                 },
             ],
         },
@@ -1288,8 +1414,8 @@
         li = Math.max(0, Math.min(LESSONS.length - 1, li));
         const l = LESSONS[li];
         if (l.locked && !devOn()) { showMenu(); return; }
-        // 미리보기 기능은 Teaser 1.6.3 화면에만 있다 — 그 화면으로 옮겨 서독 튜토리얼로 시작한 뒤 이 과정을 연다
-        if (l.locked && !onPreviewPage()) { launchPreview(l); return; }
+        // 미리보기 기능은 Teaser 화면에만 있다 — 그 화면으로 옮겨 서독 튜토리얼로 시작한 뒤 이 과정을 연다
+        if (l.locked && !onPreviewPage(l)) { launchPreview(l); return; }
         lessonIdx = li;
         showStep(0);
     }
@@ -1301,7 +1427,7 @@
             sessionStorage.setItem(PENDING_KEY, l.id);
         } catch (e) { /* sessionStorage 없음 — 그냥 화면만 옮긴다 */ }
         stop();
-        location.href = 'teaser63.html';
+        location.href = `teaser${previewPageFor(l)}.html`;
     }
 
     function showComplete() {
@@ -1323,7 +1449,7 @@
                 ? '세부 튜토리얼까지 모두 마쳤습니다. 이제 이 나라를 마음대로 바꿔보거나, 시작 화면에서 새 세이브를 만들어 나만의 나라를 꾸려보세요. 궁금한 기능은 메뉴 맨 아래 "도움말"에서 찾을 수 있어요.'
                 : basicDone
                     ? `기본 튜토리얼(#1 ~ #${basicCount})을 모두 마쳤습니다! 이제 기본 흐름은 다 알아요. 이어서 세부 튜토리얼 #${nextNo} "${nextLesson.title}"부터 해보거나, 목차에서 필요한 기능만 골라 배우세요.`
-                    : `다음은 #${nextNo} "${nextLesson.title}" (${nextLesson.summary})입니다.${nextLesson.locked && !onPreviewPage() ? ' 미리보기 기능이라 Teaser 1.6.3 화면으로 옮겨 진행해요.' : ''} 바로 이어서 하거나, 나중에 목차에서 골라 할 수 있어요.`,
+                    : `다음은 #${nextNo} "${nextLesson.title}" (${nextLesson.summary})입니다.${nextLesson.locked && !onPreviewPage(nextLesson) ? ` 미리보기 기능이라 ${previewName(nextLesson)} 화면으로 옮겨 진행해요.` : ''} 바로 이어서 하거나, 나중에 목차에서 골라 할 수 있어요.`,
         });
         q('.tut-prev').style.display = 'none';
         q('.tut-toc').style.display = '';
@@ -1448,7 +1574,7 @@
         let pending = null;
         try { pending = sessionStorage.getItem(PENDING_KEY); sessionStorage.removeItem(PENDING_KEY); } catch (e) { /* 없음 */ }
         const pendingIdx = pending ? LESSONS.findIndex(l => l.id === pending) : -1;
-        if (typeof lesson !== 'number' && pendingIdx >= 0 && isAvail(pendingIdx) && onPreviewPage()) lesson = pendingIdx;
+        if (typeof lesson !== 'number' && pendingIdx >= 0 && isAvail(pendingIdx) && onPreviewPage(LESSONS[pendingIdx])) lesson = pendingIdx;
         if (typeof lesson === 'number') startLesson(lesson);
         else if (doneSet().size > 0) showMenu();
         else startLesson(0);
