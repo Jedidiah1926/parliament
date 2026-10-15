@@ -9,6 +9,7 @@
 <script src="js/thememode.js"></script>
     <script src="js/dialogs.js"></script>
 <script src="js/theme.js"></script>
+<script src="js/maptrace.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="fonts/neodgm/style.css">
 <style>
@@ -141,6 +142,14 @@
   .btn.secondary:hover { background: var(--tno-neon-dim); box-shadow: 0 0 10px var(--tno-neon-dim); }
   .btn.icon { padding:6px 9px; font-size:15px; line-height:1; }
   #count { color: var(--tno-gold); }
+  .mm-fname { display:inline-flex; align-items:center; gap:6px; font-size:12px; color:#8a94a3; }
+  .mm-fname input { width: 120px; }
+  .mm-tracebar { display:flex; align-items:center; gap:12px; flex-wrap:wrap; padding:6px 10px; border-bottom:1px solid var(--tno-border); font-size:12px; color:#8a94a3; }
+  .mm-tracebar[hidden] { display:none; }
+  .mm-tracebar label { display:inline-flex; align-items:center; gap:6px; }
+  .mm-tracebar input[type=range] { width: 110px; }
+  .mm-tracebar b { color: var(--tno-neon); min-width: 2.4em; font-weight: normal; }
+  .mm-trace-title { color: var(--tno-gold); }
 </style>
 <link rel="stylesheet" href="css/modern.css">
 </head>
@@ -151,11 +160,12 @@
       <a href="index.html" class="btn secondary mm-back" title="메인 화면으로">← 메인으로</a>
       <div class="mm-titles">
         <h1>맵 메이커</h1>
-        <div class="small">SVG 지도를 지역구 지도 파일(.jsx)로 — 만든 파일은 국가 › 지역에서 불러옵니다</div>
+        <div class="small">SVG · 그림(webp · png · jpg, 자동 추적) · .jsx 지도를 지역구 지도 파일(.jsx)로 — 만든 파일은 국가 › 지역에서 불러옵니다</div>
       </div>
       <div class="mm-actions">
-        <input id="fileInput" type="file" accept=".svg,image/svg+xml" />
-        <label for="fileInput" class="btn secondary file-label">⬆ SVG 열기</label>
+        <input id="fileInput" type="file" accept=".svg,image/svg+xml,.jsx,.js,text/javascript,.webp,.png,.jpg,.jpeg,.gif,.bmp,image/*" />
+        <label for="fileInput" class="btn secondary file-label" title="SVG · 그림(webp · png · jpg) · 맵 메이커가 만든 .jsx">⬆ 지도 열기</label>
+        <label class="mm-fname" title="내보낼 때 쓸 파일 이름 (.jsx · .svg는 자동으로 붙음)">파일 이름 <input id="exportName" type="text" value="map" spellcheck="false" /></label>
         <button id="btnExportAll" class="btn">내보내기</button>
       </div>
     </header>
@@ -169,6 +179,14 @@
           <label><input id="wrapSvg" type="checkbox" checked /> 내보낼 때 <code>&lt;svg viewBox&gt;</code> 래퍼 포함</label>
           <button id="btnClear" class="btn secondary">초기화</button>
         </div>
+        <div class="mm-tracebar" id="traceBar" hidden>
+          <span class="mm-trace-title">그림 자동 추적</span>
+          <label title="색이 이만큼 달라도 같은 지역으로 묶음 — 지역이 잘게 쪼개지면 올리고, 이웃 지역이 합쳐지면 내리세요">색 허용 오차 <input id="traceTol" type="range" min="5" max="120" value="40" /><b id="traceTolVal">40</b></label>
+          <label title="이보다 작은 덩어리(글자 · 번진 가장자리)는 이웃 지역에 붙임 — 그림 넓이 대비 천분율">최소 크기 <input id="traceMin" type="range" min="0" max="10" step="0.1" value="0.3" /><b id="traceMinVal">0.3‰</b></label>
+          <label title="그림 가장자리를 두른 큰 덩어리(바다 · 바탕)를 도형에서 뺌"><input id="traceBg" type="checkbox" checked /> 바탕 빼기</label>
+          <button id="btnRetrace" class="btn secondary">다시 추적</button>
+          <span class="small" id="traceInfo"></span>
+        </div>
         <div class="mm-viewbar">
           <span class="small">스크롤: 확대 · 축소 &nbsp;·&nbsp; 휠 클릭 드래그: 이동 &nbsp;·&nbsp; 클릭: 선택</span>
           <span class="mm-spacer"></span>
@@ -177,8 +195,9 @@
         <div id="preview">
           <div id="svgContainer">
             <div class="mm-empty">
-              <div class="mm-empty-title">업로드한 SVG가 여기 표시됩니다</div>
-              <div class="small">① ⬆ SVG 열기(바로 분석) → ② 오른쪽 목록에서 이름 고치기 · 고르기 → ③ 내보내기</div>
+              <div class="mm-empty-title">연 지도가 여기 표시됩니다</div>
+              <div class="small">① ⬆ 지도 열기(바로 분석) → ② 오른쪽 목록에서 이름 고치기 · 고르기 → ③ 내보내기</div>
+              <div class="small">SVG가 가장 정확합니다. webp · png · jpg 같은 그림은 화소라 도형이 없어서, 같은 색 덩어리를 따라 도형을 자동으로 만들어요 (경계선이 뚜렷하고 지역마다 색이 다른 지도일수록 잘 됨). 맵 메이커로 만든 .jsx도 다시 열어 고칠 수 있어요</div>
               <div class="small">떨어진 땅 여러 곳이 도형 하나로 묶여 있으면 목록의 ✂로 나누고, 같은 지역구는 골라서 합치세요</div>
             </div>
           </div>
@@ -226,11 +245,44 @@ const btnDownloadSVG = document.getElementById('btnDownloadSVG');
 const btnClear = document.getElementById('btnClear');
 const fileNameDisplay = document.getElementById('fileNameDisplay');
 
-// 파일을 열면 바로 분석 (따로 누르는 분석 버튼 없음)
+// 파일을 열면 바로 분석 (따로 누르는 분석 버튼 없음) — SVG는 그대로, 그림은 자동 추적, .jsx는 SVG로 되돌려서
 fileInput.addEventListener('change', () => {
-  fileNameDisplay.textContent = fileInput.files?.[0]?.name || '파일 없음';
-  if (fileInput.files && fileInput.files.length) parseUploaded();
+  const f = fileInput.files?.[0];
+  fileNameDisplay.textContent = f?.name || '파일 없음';
+  if (f) {
+    const base = f.name.replace(/\.[^.]+$/, '').replace(/[\\/:*?"<>|]+/g, '_').trim();
+    if (base) document.getElementById('exportName').value = base;
+    parseUploaded();
+  }
 });
+const fileKind = f => {
+  const n = (f.name || '').toLowerCase();
+  if (/\.svg$/.test(n) || f.type === 'image/svg+xml') return 'svg';
+  if (/\.(jsx|js)$/.test(n)) return 'jsx';
+  if (/^image\//.test(f.type) || /\.(webp|png|jpe?g|gif|bmp|avif)$/.test(n)) return 'image';
+  return 'svg';
+};
+let traceFile = null;
+const traceBar = document.getElementById('traceBar');
+const traceOpts = () => ({ tolerance: +document.getElementById('traceTol').value, minArea: +document.getElementById('traceMin').value, dropBackground: document.getElementById('traceBg').checked });
+document.getElementById('traceTol').oninput = e => { document.getElementById('traceTolVal').textContent = e.target.value; };
+document.getElementById('traceMin').oninput = e => { document.getElementById('traceMinVal').textContent = e.target.value + '‰'; };
+document.getElementById('btnRetrace').onclick = () => { if (traceFile) runTrace(); };
+async function runTrace() {
+  const info = document.getElementById('traceInfo');
+  info.textContent = '추적 중…';
+  svgContainer.innerHTML = '<div class="mm-empty"><div class="mm-empty-title">그림에서 지역을 찾는 중…</div></div>';
+  await new Promise(r => setTimeout(r, 30));
+  try {
+    const t = await MapTrace.traceImage(traceFile, traceOpts());
+    loadSvgText(t.svgText);
+    info.textContent = `${t.width}×${t.height} · 지역 ${t.count}곳 — 잘게 쪼개지면 허용 오차를 올리고, 이웃이 합쳐지면 내리세요`;
+  } catch (e) {
+    info.textContent = '';
+    svgContainer.innerHTML = '<div class="mm-empty"><div class="mm-empty-title">연 지도가 여기 표시됩니다</div></div>';
+    alert(e.message || String(e));
+  }
+}
 
 function readFileAsText(file) {
   return new Promise((res, rej) => {
@@ -249,8 +301,22 @@ function sanitizeId(s, fallback) {
 async function parseUploaded() {
   elementsList.innerHTML = '';
   shapes = [];
-  if (!fileInput.files || fileInput.files.length === 0) return alert('SVG 파일을 선택하세요.');
-  const text = await readFileAsText(fileInput.files[0]);
+  if (!fileInput.files || fileInput.files.length === 0) return alert('지도 파일을 선택하세요.');
+  const f = fileInput.files[0], kind = fileKind(f);
+  traceBar.hidden = kind !== 'image';
+  if (kind === 'image') { traceFile = f; return runTrace(); }
+  traceFile = null;
+  let text = await readFileAsText(f);
+  if (kind === 'jsx') {
+    const r = MapTrace.jsxToSvg(text);
+    if (!r.count) return alert('이 .jsx에서 지도 도형을 찾지 못했습니다 — 맵 메이커로 만든 파일인지 확인하세요.');
+    text = r.svgText;
+  }
+  loadSvgText(text);
+}
+function loadSvgText(text) {
+  elementsList.innerHTML = '';
+  shapes = [];
   lastSVGText = text;
   // parse to DOM
   const parser = new DOMParser();
@@ -647,6 +713,11 @@ function escapeAttr(s) {
   return s.replace(/"/g, '&quot;').replace(/`/g,'\\`');
 }
 
+// 내보낼 파일 이름 — 앱 바의 "파일 이름" 칸 (비우면 map), 파일 이름에 못 쓰는 글자는 _로
+function exportBaseName() {
+  const v = (document.getElementById('exportName')?.value || '').trim().replace(/\.(jsx|svg)$/i, '').replace(/[\\/:*?"<>|]+/g, '_');
+  return v || 'map';
+}
 function download(filename, text) {
   const a = document.createElement('a');
   const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
@@ -738,12 +809,11 @@ function downloadComponents(list, singleFile = true) {
     return;
   }
   const jsx = generateComponentText(list, document.getElementById('wrapSvg').checked);
-  const filename = 'svg_components.jsx';
-  download(filename, jsx);
+  download(exportBaseName() + '.jsx', jsx);
 }
 
 // "id/label 우선 사용"을 바꾸면 열린 파일을 다시 분석해 이름 규칙을 바로 반영
-document.getElementById('toggleIds')?.addEventListener('change', () => { if (fileInput.files && fileInput.files.length) parseUploaded(); });
+document.getElementById('toggleIds')?.addEventListener('change', () => { if (lastSVGText) loadSvgText(lastSVGText); });
 btnExportAll.addEventListener('click', ()=> downloadComponents(shapes, true));
 btnExportSelected.addEventListener('click', ()=> downloadComponents(getSelectedShapes(), true));
 btnSelectAll.addEventListener('click', ()=> shapes.forEach(s => setSelected(s, true)));
@@ -752,7 +822,7 @@ document.getElementById('btnResetView').addEventListener('click', resetView);
 document.getElementById('btnMergeSelected').addEventListener('click', mergeSelected);
 btnDownloadSVG.addEventListener('click', ()=> {
   // 나누기 · 합치기 · 이름 고치기를 반영한 지금 지도를 SVG로 (화면 확대 상태와 강조 표시는 빼고)
-  if (!lastSVGText || !view) return alert('먼저 SVG를 여세요.');
+  if (!lastSVGText || !view) return alert('먼저 지도를 여세요.');
   const out = view.svg.cloneNode(true);
   const b = view.base;
   out.setAttribute('viewBox', `${b.x} ${b.y} ${b.w} ${b.h}`);
@@ -768,12 +838,13 @@ btnDownloadSVG.addEventListener('click', ()=> {
     const s = shapes.find(x => x.el === live[i]);
     if (s && s.rawName) el.setAttribute('id', s.rawName);
   });
-  download('edited.svg', new XMLSerializer().serializeToString(out));
+  download(exportBaseName() + '.svg', new XMLSerializer().serializeToString(out));
 });
 btnClear.addEventListener('click', ()=> {
   fileInput.value = '';
   fileNameDisplay.textContent = '파일 없음';
-  svgContainer.innerHTML = '<div class="mm-empty"><div class="mm-empty-title">업로드한 SVG가 여기 표시됩니다</div></div>';
+  traceFile = null; traceBar.hidden = true;
+  svgContainer.innerHTML = '<div class="mm-empty"><div class="mm-empty-title">연 지도가 여기 표시됩니다</div></div>';
   elementsList.innerHTML = '';
   shapes = [];
   svgDoc = null;
