@@ -34,7 +34,7 @@
     //   blocs: [{ id, name, color, desc, ideologies:[{ id, name }] }] — 세계 › 진영
     let S = fresh();
     function fresh() { return { timeline: [], succession: [], blocs: defaultBlocs(), wiki: { termStart: '', termEnd: '', frame: '#2b3a67' }, ranking: defaultRanking() }; }
-    let ui = { tlChamber: 'house', wikiChamber: 'house', histView: 'seats', seatMode: 'share', rbPid: null, openSucc: false };
+    let ui = { tlChamber: 'house', wikiChamber: 'house', wikiView: 'in', histView: 'seats', seatMode: 'share', rbPid: null, openSucc: false };
 
     const origGet = window.getAppState;
     window.getAppState = function () {
@@ -596,8 +596,61 @@
                 <div class="nb-total">재적 ${seatBadge(d.totals, frame)}${vac.some(Boolean) ? ` <small>(궐석 ${vac.join(' | ')})</small>` : ''}</div>
                 ${showNotes ? `<div class="nb-notes">${notes.map((t, i) => `<div>${i + 1}. ${esc(t)}</div>`).join('')}${custom ? `<div>※ ${esc(custom)}</div>` : ''}${legend}</div>` : ''}
             </details>
-            ${S.wiki.footer === false ? '' : '<div class="nb-foot">정당 구분 (<b>원내</b> · 원외)</div>'}
+            ${wikiFoot()}
         </div>`;
+    }
+    // 꼬리줄 "정당 구분 (원내 · 원외)" — 눌러서 원내 구성 틀 · 원외정당 틀을 오간다
+    function wikiFoot() {
+        if (S.wiki.footer === false) return '';
+        const b = (k, t) => `<button type="button" class="nb-fbtn${ui.wikiView === k ? ' on' : ''}" data-wview="${k}" title="${k === 'in' ? '원내 구성 틀 보기' : '원외정당 틀 보기'}">${t}</button>`;
+        return `<div class="nb-foot">정당 구분 (${b('in', '원내')} · ${b('out', '원외')})</div>`;
+    }
+    // 원외정당: 고른 원(양원이면 두 원 모두)에 의석이 없는 정당 (무소속 · 해산한 정당 제외)
+    const outParties = d => parties.filter(p => p.ideologyId !== IND_ID && p.status !== 'dissolved' && d.chs.every(ch => seatsOf(p, ch) === 0));
+    const inkFor = c => (fgFor(c) === '#fff' ? c : '#3d3d3d'); // 흰 칸 위 글자색 — 밝은 당색은 진한 회색으로
+    function namuOutBox(d) {
+        const frame = S.wiki.frame || '#2b3a67', ink = inkFor(frame);
+        const outs = outParties(d);
+        const cell = p => {
+            const c = p.color || '#888';
+            const logo = p.logoPhoto ? (p.logoBg === 'white' || p.logoBg === 'none' ? `<img class="nb-ologo" src="${esc(p.logoPhoto)}" alt="">` : `<span class="nb-ocard" style="background:${esc(c)}"><img class="nb-ologo" src="${esc(p.logoPhoto)}" alt=""></span>`) : '';
+            return `<div class="nb-ocell">${logo}<div class="nb-oname" style="color:${esc(inkFor(c))}">${esc(p.name)}</div>${p.abbr ? `<div class="nb-oabbr" style="color:${esc(inkFor(c))}">(${esc(p.abbr)})</div>` : ''}</div>`;
+        };
+        const rows = [];
+        for (let i = 0; i < outs.length; i += 3) {
+            const chunk = outs.slice(i, i + 3);
+            rows.push(`<div class="nb-orow">${chunk.map(cell).join('')}${'<div class="nb-ocell nb-oempty"></div>'.repeat(3 - chunk.length)}</div>`);
+        }
+        return `<div class="nbx2 nbx-out" style="--nb-frame:${esc(frame)};--nb-ink:${esc(ink)}">
+            <div class="nb-ohead">
+                ${d.emblem ? `<img class="nb-oflag" src="${esc(d.emblem)}" alt="">` : ''}
+                <div class="nb-otitle">${esc(nationName() || d.title)}의 원외정당</div>
+            </div>
+            <details class="nb-body" open><summary>[ 펼치기 · 접기 ]</summary>
+                ${d.govName || d.period ? `<div class="nb-cab">${d.govName ? `<b>${esc(d.govName)}</b>` : ''}${d.period ? `<small>${esc(d.period)}</small>` : ''}</div>` : ''}
+                ${rows.length ? rows.join('') : `<div class="nb-oempty-all">${esc(d.mode === 'both' ? '두 원' : chName(d.mode))}에 의석이 없는 정당이 없어요.<br><small>의회 › 정당에서 의석이 0인 정당을 만들거나, 정당을 원에서 빼면 여기에 모여요.</small></div>`}
+            </details>
+            ${wikiFoot()}
+        </div>`;
+    }
+    function namuOutMarkup(d) {
+        const frame = S.wiki.frame || '#2b3a67', ink = inkFor(frame);
+        const B = "'''";
+        const outs = outParties(d);
+        const full = (bg, body) => `||<-3><bgcolor=${bg}> ${body} ||`;
+        const lines = [];
+        lines.push(`||<tablewidth=100%><tablebordercolor=${frame}><-3><bgcolor=#ffffff> {{{+2 {{{${ink} ${B}${nationName() || d.title}의 원외정당${B}}}}}}} ||`);
+        if (d.govName || d.period) lines.push(full('#dddddd', `${d.govName ? `${B}${d.govName}${B}` : ''}${d.govName && d.period ? '[br]' : ''}${d.period ? `{{{-1 ${d.period}}}}` : ''}`));
+        for (let i = 0; i < outs.length; i += 3) {
+            const chunk = outs.slice(i, i + 3);
+            lines.push(chunk.map(p => {
+                const c = inkFor(p.color || '#888');
+                const file = p.logoPhoto ? `[[파일:${p.name} 로고.png|height=40]][br]` : '';
+                return `||<bgcolor=#ffffff> ${file}{{{${c} ${B}${p.name}${B}${p.abbr ? `[br]${B}(${p.abbr})${B}` : ''}}}} `;
+            }).join('') + '||<bgcolor=#f4f4f4> '.repeat(3 - chunk.length) + '||');
+        }
+        if (S.wiki.footer !== false) lines.push(full('#ffffff', `정당 구분 (원내 · ${B}원외${B})`));
+        return lines.join('\n');
     }
     // 나무위키 표 문법 — 6칸(2와 3의 공배수)을 기준으로 두 칸 줄은 <-3>, 세 칸 줄은 <-2>
     function namuMarkup(d) {
@@ -644,8 +697,11 @@
         const wrap = document.getElementById('t64WikiWrap');
         if (!wrap) return;
         if (!wikiModes().includes(ui.wikiChamber)) ui.wikiChamber = wikiModes()[0];
-        wrap.innerHTML = `<div class="t64-wikiwrap">${namuBox(wikiData(ui.wikiChamber))}</div>`;
+        const d = wikiData(ui.wikiChamber);
+        wrap.innerHTML = `<div class="t64-wikiwrap">${ui.wikiView === 'out' ? namuOutBox(d) : namuBox(d)}</div>`;
+        wrap.querySelectorAll('[data-wview]').forEach(b => { b.onclick = () => { ui.wikiView = b.dataset.wview; renderWikibox(); }; });
     }
+    const wikiMarkupNow = () => { const d = wikiData(ui.wikiChamber); return ui.wikiView === 'out' ? namuOutMarkup(d) : namuMarkup(d); };
     function showWikiTab() {
         const btn = document.getElementById('dispTabWiki');
         if (btn) btn.style.display = '';
@@ -663,6 +719,7 @@
         const auto = (() => { const pmn = pmName(); return pmn ? `${pmn} 내각` : '예: 콜 내각'; })();
         box.innerHTML = `<div class="t64-intro">위키 문서의 "원내 구성" 틀을 만듭니다. 정당 · 연정(집권) · 의석에서 자동으로 채워지고, 미리보기는 오른쪽 시각 화면 "위키 틀" 탭에 바로 보여요.</div>
             ${modes.length > 1 ? `<div class="system-radio-group t64-tabs">${modes.map(c => `<button type="button" class="system-radio-btn ${ui.wikiChamber === c ? 'active' : ''}" data-wch="${c}">${esc(c === 'both' ? '양원' : chName(c))}</button>`).join('')}</div>` : ''}
+            <div class="system-radio-group t64-tabs">${[['in', '원내 구성'], ['out', '원외정당']].map(([k, t]) => `<button type="button" class="system-radio-btn ${ui.wikiView === k ? 'active' : ''}" data-wv="${k}">${t}</button>`).join('')}</div>
             ${ui.wikiChamber === 'both' ? `<div class="t64-dim t64-small" style="margin:-4px 0 8px">정당마다 [${esc(chName('senate'))} | ${esc(chName('house'))}] 의석을 나란히 적어요.</div>` : ''}
             <div class="t64-actions">
                 <button type="button" class="t64-btn primary" data-act="copy">📋 위키 문법 복사</button>
@@ -682,8 +739,9 @@
                 <label class="t64-field" style="cursor:pointer"><input type="checkbox" data-w="footer" ${S.wiki.footer === false ? '' : 'checked'}><span>맨 아래 "정당 구분 (원내 · 원외)" 줄</span></label>
                 <div class="t64-dim t64-small">엠블럼은 의회 › 의회 설정의 로고(없으면 국기), 정당 로고는 의회 › 정당 › 로고에서 정해요. 파벌이 둘 이상인 정당은 각주에 공동교섭단체로 적혀요.</div>
             </div>
-            <details class="t64-fold"><summary>위키 문법 보기</summary><textarea class="t64-markup" readonly>${esc(namuMarkup(d))}</textarea><div class="t64-dim t64-small">로고가 있는 정당은 [[파일:정당 이름 로고.png]]로 들어가요 — 위키에 그 이름으로 로고 그림을 올리면 그대로 보여요.</div></details>`;
+            <details class="t64-fold"><summary>위키 문법 보기</summary><textarea class="t64-markup" readonly>${esc(wikiMarkupNow())}</textarea><div class="t64-dim t64-small">로고가 있는 정당은 [[파일:정당 이름 로고.png]]로 들어가요 — 위키에 그 이름으로 로고 그림을 올리면 그대로 보여요.</div></details>`;
         box.querySelectorAll('[data-wch]').forEach(b => { b.onclick = () => { ui.wikiChamber = b.dataset.wch; renderWikibox(); showWikiTab(); }; });
+        box.querySelectorAll('[data-wv]').forEach(b => { b.onclick = () => { ui.wikiView = b.dataset.wv; renderWikibox(); showWikiTab(); }; });
         box.querySelectorAll('[data-w]').forEach(i => {
             const k = i.dataset.w;
             const apply = () => { S.wiki[k] = i.type === 'checkbox' ? i.checked : k === 'groupMin' ? Math.max(0, Number(i.value) || 0) : i.value.trim(); };
@@ -693,7 +751,7 @@
         box.querySelectorAll('[data-frame]').forEach(b => { b.onclick = () => { S.wiki.frame = b.dataset.frame; renderWikibox(); }; });
         box.querySelector('[data-act="showwiki"]').onclick = showWikiTab;
         box.querySelector('[data-act="copy"]').onclick = async () => {
-            const text = namuMarkup(wikiData(ui.wikiChamber));
+            const text = wikiMarkupNow();
             try { await navigator.clipboard.writeText(text); showCustomAlert('위키 문법을 복사했습니다.'); }
             catch (e) { const ta = box.querySelector('.t64-markup'); if (ta) { ta.closest('details').open = true; ta.select(); } showCustomAlert('복사하지 못했습니다 — "위키 문법 보기"에서 직접 복사하세요.'); }
         };
@@ -1179,6 +1237,53 @@
             + `<rect x="-3" y="-3" width="${W + 6}" height="${H + 6}" fill="${X(frame)}"/><rect x="0" y="0" width="${W}" height="${H}" fill="#fff"/>${parts.join('')}</svg>`;
     }
 
+    // ---- 원외정당 틀 ----
+    function wikiOutSvg(d) {
+        const W = 640, frame = S.wiki.frame || '#2b3a67', ink = inkFor(frame);
+        const outs = outParties(d);
+        const parts = []; let y = 0;
+        const ctext = (cy, t, size, weight, fill) => `<text x="${W / 2}" y="${cy}" font-size="${size}" font-weight="${weight}" fill="${X(fill)}" text-anchor="middle">${X(t)}</text>`;
+        const headH = d.emblem ? 136 : 64;
+        if (d.emblem) parts.push(`<image href="${X(d.emblem)}" x="${W / 2 - 55}" y="14" width="110" height="70" preserveAspectRatio="xMidYMid meet"/>`);
+        parts.push(ctext(headH - 20, `${nationName() || d.title}의 원외정당`, 24, 800, ink));
+        parts.push(`<rect x="0" y="${headH}" width="${W}" height="1" fill="#e3e3e3"/>`);
+        y = headH + 1;
+        if (d.govName || d.period) {
+            const h = d.govName && d.period ? 58 : 38;
+            parts.push(`<rect x="0" y="${y}" width="${W}" height="${h}" fill="#dedede"/>` + (d.govName ? ctext(y + (d.period ? 24 : 25), d.govName, 16, 800, '#222') : '') + (d.period ? ctext(y + (d.govName ? 46 : 25), d.period, 13, 700, '#222') : ''));
+            y += h;
+        }
+        const cw = W / 3;
+        if (!outs.length) { parts.push(ctext(y + 40, '의석이 없는 정당이 없어요.', 14, 400, '#555')); y += 64; }
+        for (let i = 0; i < outs.length; i += 3) {
+            const chunk = outs.slice(i, i + 3);
+            const h = chunk.some(p => p.logoPhoto) ? 136 : 96;
+            for (let k = 0; k < 3; k++) {
+                const p = chunk[k], x = k * cw;
+                if (!p) { parts.push(`<rect x="${x}" y="${y}" width="${cw}" height="${h}" fill="#f4f4f4"/>`); continue; }
+                const c = p.color || '#888', col = inkFor(c);
+                const logoH = p.logoPhoto ? 46 : 0;
+                const contentH = logoH + (logoH ? 8 : 0) + 20 + (p.abbr ? 22 : 0);
+                let cy = y + (h - contentH) / 2;
+                let g = '';
+                if (logoH) {
+                    if (p.logoBg === 'white' || p.logoBg === 'none') g += `<image href="${X(p.logoPhoto)}" x="${x + cw * 0.08}" y="${cy}" width="${cw * 0.84}" height="${logoH}" preserveAspectRatio="xMidYMid meet"/>`;
+                    else g += `<rect x="${x + cw * 0.14}" y="${cy - 3}" width="${cw * 0.72}" height="${logoH + 6}" rx="6" fill="${X(c)}"/><image href="${X(p.logoPhoto)}" x="${x + cw * 0.18}" y="${cy}" width="${cw * 0.64}" height="${logoH}" preserveAspectRatio="xMidYMid meet"/>`;
+                    cy += logoH + 8;
+                }
+                g += `<text x="${x + cw / 2}" y="${cy + 16}" font-size="17" font-weight="800" fill="${X(col)}" text-anchor="middle">${X(clip(p.name, 17, cw - 16, 800))}</text>`;
+                if (p.abbr) g += `<text x="${x + cw / 2}" y="${cy + 38}" font-size="16" font-weight="800" fill="${X(col)}" text-anchor="middle">(${X(p.abbr)})</text>`;
+                parts.push(g);
+            }
+            parts.push(`<rect x="0" y="${y}" width="${W}" height="1" fill="#e3e3e3"/><rect x="${cw}" y="${y}" width="1" height="${h}" fill="#e3e3e3"/><rect x="${cw * 2}" y="${y}" width="1" height="${h}" fill="#e3e3e3"/>`);
+            y += h;
+        }
+        if (S.wiki.footer !== false) { parts.push(`<rect x="0" y="${y}" width="${W}" height="1" fill="#ddd"/>` + ctext(y + 28, '정당 구분 (원내 · 원외)', 15, 700, '#222')); y += 44; }
+        const H = y;
+        return `<svg xmlns="http://www.w3.org/2000/svg" width="${W + 6}" height="${H + 6}" viewBox="-3 -3 ${W + 6} ${H + 6}" font-family="${X(FONT)}">`
+            + `<rect x="-3" y="-3" width="${W + 6}" height="${H + 6}" fill="${X(frame)}"/><rect x="0" y="0" width="${W}" height="${H}" fill="#fff"/>${parts.join('')}</svg>`;
+    }
+
     // ---- 국가 순위 ----
     function rankSvg() {
         const panel = document.getElementById('dispPanelRanking') || document.body;
@@ -1247,7 +1352,7 @@
     function t64ExportMarkup(el, format) {
         const kind = el && el.dataset.exportKind;
         pickFont(format);
-        if (kind === 't64wiki') return { svg: wikiSvg(wikiData(ui.wikiChamber)), name: 'wikibox' };
+        if (kind === 't64wiki') return ui.wikiView === 'out' ? { svg: wikiOutSvg(wikiData(ui.wikiChamber)), name: 'wikibox_out' } : { svg: wikiSvg(wikiData(ui.wikiChamber)), name: 'wikibox' };
         if (kind === 't64rank') return { svg: rankSvg(), name: 'ranking' };
         if (kind === 't64hist') return { svg: histSvg(el), name: ui.histView === 'lineage' ? 'party_lineage' : 'seat_history' };
         return null;
@@ -1452,6 +1557,25 @@
         .nbx2 .nb-legend { margin-top: 6px; } .nbx2 .nb-legend .nb-seat { font-size: 12px; border-color: #999; }
         .nbx2 .nb-foot { font-size: 15px; font-weight: 700; padding: 10px; border-top: 1px solid #ddd; }
         .nbx2 .nb-foot b { font-weight: 900; }
+        .nbx2 .nb-fbtn { all: unset; cursor: pointer; font-weight: 500; color: #555; padding: 0 2px; border-radius: 3px; }
+        .nbx2 .nb-fbtn:hover { background: rgba(0,0,0,.06); color: #111; }
+        .nbx2 .nb-fbtn.on { font-weight: 900; color: #111; }
+        /* 원외정당 틀 — 흰 머리(국기 + 제목), 흰 칸 세 개씩 */
+        .nbx2.nbx-out { border-color: var(--nb-frame); }
+        .nbx-out .nb-ohead { background: #fff; padding: 12px 16px 14px; border-bottom: 1px solid #e3e3e3; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+        .nbx-out .nb-oflag { max-height: 70px; max-width: 110px; display: block; }
+        .nbx-out .nb-otitle { font-size: 24px; font-weight: 800; color: var(--nb-ink); }
+        .nbx-out .nb-orow { display: grid; grid-template-columns: repeat(3, 1fr); border-top: 1px solid #e3e3e3; }
+        .nbx-out .nb-ocell { background: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 12px 8px; min-height: 120px; }
+        .nbx-out .nb-ocell + .nb-ocell { border-left: 1px solid #e3e3e3; }
+        .nbx-out .nb-oempty { background: #f4f4f4; }
+        .nbx-out .nb-ologo { max-height: 52px; max-width: 86%; display: block; object-fit: contain; }
+        .nbx-out .nb-ocard { display: block; width: 72%; border-radius: 6px; padding: 5px 8px; box-sizing: border-box; }
+        .nbx-out .nb-ocard .nb-ologo { width: 100%; height: 44px; max-width: none; max-height: none; }
+        .nbx-out .nb-oname { font-size: 17px; font-weight: 800; word-break: keep-all; }
+        .nbx-out .nb-oabbr { font-size: 16px; font-weight: 800; }
+        .nbx-out .nb-oempty-all { background: #fff; padding: 22px 12px; color: #555; font-size: 14px; line-height: 1.7; border-top: 1px solid #e3e3e3; }
+        .nbx-out .nb-oempty-all small { color: #888; }
         #dispPanelWiki .t64-wikiwrap { padding: 4px 0 10px; }
         .t64-wk-form .t64-field > span:first-child { min-width: 5.2em; }
         .t64-wk-form .t64-field input[type=text] { flex: 1; min-width: 0; }

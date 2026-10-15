@@ -3612,7 +3612,7 @@
 
         // 실제 화면의 object-fit:cover와 동일하게, 원본 비율을 유지한 채 대상 박스를 꽉 채우도록(넘치는 부분은 크롭) 그림
         // 로고 그림: 잘리지 않게(contain) 로고 바탕(당색 · 흰 바탕) 위에 — #fefefe는 테마가 인라인 #fff를 바꾸지 않게
-        function logoBgColor(p) { return p && p.logoBg === 'white' ? '#fefefe' : ((p && p.color) || '#888888'); }
+        function logoBgColor(p) { return p && p.logoBg === 'white' ? '#fefefe' : p && p.logoBg === 'none' ? 'transparent' : ((p && p.color) || '#888888'); }
         function logoImgStyle(p) { return `width:100%;height:100%;object-fit:contain;display:block;background:${logoBgColor(p)};padding:3px;box-sizing:border-box;`; }
         function drawImageContain(ctx, img, x, y, w, h, pad = 0) {
             const iw = w - pad * 2, ih = h - pad * 2;
@@ -7392,7 +7392,7 @@
         function setLogoBg(partyId, factionId, mode) {
             const p = parties.find(x => String(x.id) === String(partyId)); if(!p) return;
             const t = factionId == null ? p : (p.factions || []).find(f => f.id === factionId); if(!t) return;
-            t.logoBg = mode === 'white' ? 'white' : 'party';
+            t.logoBg = mode === 'white' ? 'white' : mode === 'none' ? 'none' : 'party';
             renderPartyLogoList();
             refreshUI();
         }
@@ -7403,14 +7403,14 @@
             // 로고 바탕: 당색(기본) · 흰색(바탕이 흰 로고용) — #fefefe는 테마가 인라인 #fff를 바꾸지 않게
             const box = (src, color, size, onchange, title, logoBg) => `
                 <div class="leader-photo-box" title="${title}" style="width:${size}px;height:${size}px;flex-shrink:0;">
-                    ${src ? `<img src="${src}" alt="로고" style="width:100%;height:100%;object-fit:contain;display:block;background:${logoBg === 'white' ? '#fefefe' : color};padding:4px;box-sizing:border-box;">`
+                    ${src ? `<img src="${src}" alt="로고" style="width:100%;height:100%;object-fit:contain;display:block;background:${logoBg === 'white' ? '#fefefe' : logoBg === 'none' ? 'transparent' : color};padding:4px;box-sizing:border-box;">`
                           : `<div style="width:100%;height:100%;background:${color}22;display:flex;align-items:center;justify-content:center;font-size:${size > 50 ? 1.6 : 1}rem;color:${color}88;">⚑</div>`}
                     <input type="file" accept="image/*" onchange="${onchange}">
                 </div>`;
             const rmBtn = onclick => `<button onclick="${onclick}" style="background:transparent;border:1px solid #333;color:#555;font-family:inherit;font-size:0.75rem;padding:2px 8px;cursor:pointer;">✕ 로고 제거</button>`;
             const idArg = v => JSON.stringify(v).replace(/"/g, '&quot;');
-            const bgToggle = (cur, pid, fid) => `<span class="system-radio-group logo-bg-toggle" title="로고 바탕 — 위키 틀 등에서 로고 뒤에 깔리는 색" style="margin:0;display:inline-flex;">
-                ${[['party', '당색 바탕'], ['white', '흰 바탕']].map(([k, t]) => `<button type="button" class="system-radio-btn ${(cur === 'white') === (k === 'white') ? 'active' : ''}" style="font-size:0.72rem;padding:2px 8px;white-space:nowrap;flex:none;" onclick="setLogoBg(${idArg(pid)},${idArg(fid)},'${k}')">${t}</button>`).join('')}</span>`;
+            const bgToggle = (cur, pid, fid) => `<span class="system-radio-group logo-bg-toggle" title="로고 바탕 — 위키 틀 · 의석 카드 등에서 로고 뒤에 깔리는 색" style="margin:0;display:inline-flex;align-items:center;"><span style="font-size:0.72rem;color:#777;padding:0 4px;">바탕</span>
+                ${[['party', '당색'], ['white', '흰색'], ['none', '투명']].map(([k, t]) => `<button type="button" class="system-radio-btn ${(cur === 'white' || cur === 'none' ? cur : 'party') === k ? 'active' : ''}" style="font-size:0.72rem;padding:2px 8px;white-space:nowrap;flex:none;" onclick="setLogoBg(${idArg(pid)},${idArg(fid)},'${k}')">${t}</button>`).join('')}</span>`;
             container.innerHTML = parties.map((p, idx) => {
                 const factions = (p.factions || []).map(f => {
                     const fc = f.usePartyColor ? p.color : f.color;
@@ -8245,7 +8245,7 @@
                 const ideoName = ideologyName(p.ideologyId) || '';
                 h += `<div class="stat-block" style="border-left-color:${p.color};">
                     <div class="dyn-row" style="display:flex;gap:8px;align-items:stretch;">
-                        ${p.hideStatsPhoto ? '' : `<div class="leader-photo-box dyn-photo" data-ratio="${isLogo?'1':'0.75'}" style="flex-shrink:0;background:#0a0c10;border:1px solid #222;overflow:hidden;">
+                        ${p.hideStatsPhoto ? '' : `<div class="leader-photo-box dyn-photo" data-ratio="${(isLogo || (photo && photo === p.logoPhoto))?'1':'0.75'}" style="flex-shrink:0;background:#0a0c10;border:1px solid #222;overflow:hidden;">
                             ${photo?`<img src="${photo}" alt="" ${photo === p.logoPhoto ? `data-logo="1" style="${logoImgStyle(p)}"` : 'style="width:100%;height:100%;object-fit:cover;display:block;"'}>`:''}
                         </div>`}
                         <div class="dyn-ref" style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px;">
@@ -15392,7 +15392,8 @@
                         // 연정의 당수는 항상 대표당의 당수를 그대로 따른다
                         const leadP = coal.leadPartyId ? parties.find(p=>p.id===coal.leadPartyId) : null;
                         hidePhotoBox = !!leadP?.hideStatsPhoto;
-                        photo      = hidePhotoBox ? '' : (leadP?.leaderPhoto || '');
+                        photo      = hidePhotoBox ? '' : (leadP?.leaderPhoto || leadP?.logoPhoto || '');
+                        if(leadP && photo && photo === leadP.logoPhoto && !leadP.leaderPhoto) logoParty = leadP;
                         leaderName = leadP?.leaderName  || '';
                     }
                 } else {
@@ -15438,7 +15439,7 @@
                 return `<div class="stat-block" style="border-left-color:${(s.coalitionName && s.isRuling) ? 'var(--tno-gold)' : (s.partyColor||s.color)};">
                     <div class="dyn-row" style="display:flex;gap:8px;align-items:stretch;">
                         <!-- 사진: JS에서 오른쪽 텍스트 실측 높이에 맞춰 px로 직접 지정. "X"로 표시 안 함을 고르면 칸 자체를 없앰 -->
-                        ${hidePhotoBox ? '' : `<div class="leader-photo-box dyn-photo" data-ratio="${isLogo?'1':'0.75'}" style="flex-shrink:0;background:#0a0c10;border:1px solid #222;overflow:hidden;">
+                        ${hidePhotoBox ? '' : `<div class="leader-photo-box dyn-photo" data-ratio="${(isLogo || logoParty)?'1':'0.75'}" style="flex-shrink:0;background:#0a0c10;border:1px solid #222;overflow:hidden;">
                             ${photo?`<img src="${photo}" alt="" ${logoParty && photo === logoParty.logoPhoto ? `data-logo="1" style="${logoImgStyle(logoParty)}"` : 'style="width:100%;height:100%;object-fit:cover;display:block;"'}>`:''}
                         </div>`}
                         <!-- 오른쪽 3행 -->
