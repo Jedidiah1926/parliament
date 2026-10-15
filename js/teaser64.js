@@ -15,7 +15,7 @@
 (function () {
     'use strict';
     const root = document.documentElement;
-    if (root.getAttribute('data-app-mode') !== 'teaser' || root.getAttribute('data-teaser') !== '64') return;
+    if (root.getAttribute('data-app-mode') !== 'teaser' || !['64', '66'].includes(root.getAttribute('data-teaser'))) return;
 
     const esc = s => (typeof escapeHtmlText === 'function' ? escapeHtmlText(String(s ?? '')) : String(s ?? ''));
     const uid = () => 'w' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);

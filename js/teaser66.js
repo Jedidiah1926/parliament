@@ -24,6 +24,7 @@
     let territories = [];
     let unrecovered = {};
     let brush = null; // 칠하기 도구 — null(끔) | 영토 id | 'erase'
+    let labelColor = 'same'; // 미수복 지역 이름 색 — 'same'(다른 지역과 같게) | 'hatch'(그 종류의 빗금 색)
     const isUnrec = key => !!unrecovered[key] && !!territoryOf(key);
     const territoryById = id => territories.find(t => t.id === id) || null;
     const territoryOf = key => territoryById(unrecovered[key]);
@@ -52,6 +53,7 @@
             unrecovered[key] = id;
         });
         brush = null;
+        labelColor = tz && tz.labelColor === 'hatch' ? 'hatch' : 'same';
         adoptUnrecDistricts();
     }
     // 미수복 지역이 지도엔 있지만 지역구가 아닌 땅으로 저장돼 있으면 (예: 서독 튜토리얼의 동독 주 — 본 게임엔 미수복이 없어 지역구에서 뺌)
@@ -76,7 +78,7 @@
     const origGet = window.getAppState;
     window.getAppState = function () {
         const st = origGet.apply(this, arguments);
-        if (st && typeof st === 'object') st.teaser = { unrecovered: { ...unrecovered }, territories: territories.map(t => ({ ...t })) };
+        if (st && typeof st === 'object') st.teaser = { unrecovered: { ...unrecovered }, territories: territories.map(t => ({ ...t })), labelColor };
         return st;
     };
     const origSet = window.setAppState;
@@ -146,6 +148,10 @@
             o.title = key => (t ? t(key) : nameOf(key)) + (brush === 'erase' ? ' — 눌러서 지우기' : ` — 눌러서 "${territoryById(brush)?.name || ''}"로 칠하기`);
         }
         const r = origRender.call(this, wrapEl, o);
+        // 미수복 지역 이름을 그 종류의 빗금 색으로 (설정에 따라)
+        if (active && labelColor === 'hatch' && wrapEl) {
+            wrapEl.querySelectorAll('svg text[data-key]').forEach(t => { const k = t.getAttribute('data-key'); if (isUnrec(k)) t.setAttribute('fill', territoryOf(k).color); });
+        }
         const svg = active && wrapEl && wrapEl.querySelector('svg');
         if (svg) {
             fitHatch(svg);
@@ -342,6 +348,13 @@
                     <button type="button" class="teaser-unify" ${total ? '' : 'disabled'}>영토 통일 (전체)</button>
                 </div>
                 <div class="teaser-dim teaser-small">실제로 다스리지 못하는 지역구 — 선거 · 의석에서 빠지고 지도에 종류별 빗금으로 표시됩니다. 종류마다 따로 본국에 통합할 수 있습니다.</div>
+                <div class="teaser-unrec-row teaser-label-color">
+                    <span class="teaser-dim">지도의 지역 이름 색</span>
+                    <span class="system-radio-group" style="margin:0;">
+                        <button type="button" class="system-radio-btn ${labelColor === 'same' ? 'active' : ''}" data-lcolor="same">다른 지역과 같게</button>
+                        <button type="button" class="system-radio-btn ${labelColor === 'hatch' ? 'active' : ''}" data-lcolor="hatch">빗금 색으로</button>
+                    </span>
+                </div>
                 <div class="teaser-add-row">
                     <input type="text" class="teaser-add-name" maxlength="40" placeholder="새 종류 이름 (예: 오스트리아, 알자스로렌-룩셈부르크, 동방영토, 북방영토)">
                     <button type="button" class="teaser-btn teaser-add">+ 종류 추가</button>
@@ -358,6 +371,7 @@
                 ${sel && !brush ? `<label class="teaser-unrec-toggle teaser-sel">선택한 지역구: <b>${esc(nameOf(sel))}</b> ${kindSelectHtml(sel)}</label>` : ''}
             </div>`;
         host.querySelector('.teaser-unify').addEventListener('click', unifyAll);
+        host.querySelectorAll('[data-lcolor]').forEach(b => b.addEventListener('click', () => { labelColor = b.dataset.lcolor; refreshUI(); }));
         const nameInput = host.querySelector('.teaser-add-name');
         const add = () => { brush = addTerritory(nameInput.value.trim()).id; refreshUI(); };
         host.querySelector('.teaser-add').addEventListener('click', add);

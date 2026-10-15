@@ -93,8 +93,8 @@
     // 그 화면이 아니면 해당 teaser 화면으로 옮겨 서독 튜토리얼로 시작한 뒤 그 과정을 바로 연다.
     /* global emergencyPowers, presElectionMode */
     const devOn = () => !!(window.HemiDev && window.HemiDev.isOn());
-    // 미리보기 화면마다 담긴 기능 버전 (teaser64는 1.6.1 ~ 1.6.4, teaser66은 1.6.6만)
-    const PAGE_HAS = { '63': ['1.6.1', '1.6.2', '1.6.3'], '64': ['1.6.1', '1.6.2', '1.6.3', '1.6.4'], '66': ['1.6.6'] };
+    // 미리보기 화면마다 담긴 기능 버전 (teaser64는 1.6.1 ~ 1.6.4, teaser66은 1.6.1 ~ 1.6.4 + 1.6.6)
+    const PAGE_HAS = { '63': ['1.6.1', '1.6.2', '1.6.3'], '64': ['1.6.1', '1.6.2', '1.6.3', '1.6.4'], '66': ['1.6.1', '1.6.2', '1.6.3', '1.6.4', '1.6.6'] };
     const PREVIEW_PAGES = Object.keys(PAGE_HAS);
     const previewPageFor = l => (l && l.locked === '1.6.6' ? '66' : l && l.locked === '1.6.4' ? '64' : '63');
     const curPage = () => document.documentElement.getAttribute('data-teaser');

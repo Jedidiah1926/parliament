@@ -2137,6 +2137,26 @@
             return 1e9;
         }
         // <select>용 이념 목록 — 서브 이념은 부모 아래에 들여 써서 보여 준다
+        // 이념 고르기를 두 칸으로: [이념] [서브 이념] — 서브 이념을 고르면 그걸로, 비워 두면("서브 이념 없음") 이념 그대로
+        // setExpr(값 식) → onchange에 넣을 호출 문자열 (예: v => `updateParty(0,'ideologyId',${v})`)
+        function ideologyParentOf(id) {
+            if(id == null) return null;
+            if(ideologies.some(i => i.id === id)) return id;
+            const par = ideologies.find(i => (i.subs || []).some(sb => sb.id === id));
+            return par ? par.id : id;
+        }
+        function ideologyPairHtml(currentId, setExpr, { excludeInd = true, allowNone = false, attrs = '', selStyle = '' } = {}) {
+            const parentId = ideologyParentOf(currentId);
+            const subs = ideologies.find(i => i.id === parentId)?.subs || [];
+            const tops = ideologies.filter(ide => !excludeInd || ide.id !== IND_IDEOLOGY_ID || ide.id === parentId);
+            const sel1 = `<select ${attrs} title="이념" style="flex:1;min-width:0;${selStyle}" onchange="${setExpr(allowNone ? 'this.value?parseInt(this.value):null' : 'parseInt(this.value)')}">`
+                + (allowNone ? `<option value="" ${parentId == null ? 'selected' : ''}>이념 미지정</option>` : '')
+                + tops.map(i => `<option value="${i.id}" ${parentId === i.id ? 'selected' : ''}>${escapeHtmlText(i.name)}</option>`).join('') + '</select>';
+            const sel2 = `<select ${attrs} title="서브 이념 — 비워 두면 이념 그대로" style="flex:1;min-width:0;${selStyle}" ${subs.length ? '' : 'disabled'} onchange="${setExpr('parseInt(this.value)')}">`
+                + `<option value="${parentId ?? ''}" ${currentId === parentId ? 'selected' : ''}>${subs.length ? '서브 이념 없음' : '서브 이념 없음'}</option>`
+                + subs.map(sb => `<option value="${sb.id}" ${currentId === sb.id ? 'selected' : ''}>${escapeHtmlText(sb.name)}</option>`).join('') + '</select>';
+            return `<div class="ideo-pair" style="display:flex;gap:5px;">${sel1}${sel2}</div>`;
+        }
         function ideologyOptionsHtml(selectedId, { excludeInd = true } = {}) {
             return ideologies.filter(ide => !excludeInd || ide.id !== IND_IDEOLOGY_ID).map(ide =>
                 `<option value="${ide.id}" ${selectedId===ide.id?'selected':''}>${ide.name}</option>` +
@@ -6963,15 +6983,14 @@
                 div.style.flexWrap = 'wrap';
                 const isInd = ide.id === IND_IDEOLOGY_ID;
                 const subs = ide.subs || [];
-                // 서브 이념: 부모 카드 안에 들여 써서 표시 (드래그 정렬은 부모 이념만, 서브는 ▲▼로)
-                const subsHtml = subs.map((sub, si) => `
-                    <div style="display:flex;gap:5px;align-items:center;width:100%;padding-left:28px;box-sizing:border-box;">
+                // 서브 이념: 부모 카드 안에 들여 써서 표시 — 서브끼리도 드래그 핸들로 순서를 바꾼다
+                const subsHtml = subs.length ? `<div id="subIdeoList_${ide.id}" style="width:100%;display:flex;flex-direction:column;gap:5px;">${subs.map(sub => `
+                    <div class="drag-card-subideo" style="display:flex;gap:5px;align-items:center;width:100%;padding-left:22px;box-sizing:border-box;">
                         <span style="color:#555;flex-shrink:0;">└</span>
+                        <span class="drag-handle subideo-drag-handle" title="드래그로 순서 변경">⋮⋮</span>
                         <input type="text" value="${sub.name}" style="flex:1;min-width:0;font-size:0.9rem;" onchange="updateSubIdeology(${ide.id}, ${sub.id}, this.value)">
-                        <button class="order-btn" onclick="moveSubIdeology(${ide.id}, ${sub.id}, -1)" ${si===0?'disabled style="opacity:0.2"':''}>▲</button>
-                        <button class="order-btn" onclick="moveSubIdeology(${ide.id}, ${sub.id}, 1)" ${si===subs.length-1?'disabled style="opacity:0.2"':''}>▼</button>
                         <button class="remove-btn" onclick="removeSubIdeology(${ide.id}, ${sub.id})">X</button>
-                    </div>`).join('');
+                    </div>`).join('')}</div>` : '';
                 div.innerHTML = `
                     <span class="drag-handle">⋮⋮</span>
                     <input type="text" value="${ide.name}" style="flex:1;min-width:0;${isInd && ide.disabled ? 'opacity:0.45;' : ''}" onchange="updateIdeology(${index}, 'name', this.value)">
@@ -6982,6 +7001,7 @@
                 `;
                 container.appendChild(div);
                 startDragReorder(div.querySelector('.drag-handle'), 'ideologyList', '.drag-card-ideology', ideologies, renderIdeologyList);
+                div.querySelectorAll('.subideo-drag-handle').forEach(h => startDragReorder(h, `subIdeoList_${ide.id}`, '.drag-card-subideo', ide.subs, () => { renderIdeologyList(); refreshUI(); }));
             });
         }
 
@@ -8488,6 +8508,7 @@
             return out;
         }
 
+        const factionListKey = pid => String(pid).replace(/[^\w-]/g, '_');
         function renderFactionSection(p, partyIdx, chamberType) {
             // chamberType: 'house' | 'senate' | undefined(정당탭=둘다)
             if(!p.factions) p.factions = [];
@@ -8504,40 +8525,41 @@
             const hasF = p.factions.length > 0;
             const sumHtml = ''; // 합계 검증은 의회 탭에서만 표시
 
+            // 파벌 카드 — 정당 카드와 같은 모양: 드래그 핸들(순서) · 색 · 약칭 · 복제 · X / 이름 / 이념 / 지역 기반 / 정당 색 · 신당 분리
+            const pidArg = JSON.stringify(p.id).replace(/"/g, '&quot;');
             const factionCards = p.factions.map((f,fi)=>`
-                <div class="faction-card" style="border-left-color:${f.usePartyColor?p.color:f.color};">
-                    <!-- 행1: 순서 + 색상 + 이름 + X -->
-                    <div style="display:flex;gap:4px;align-items:center;margin-bottom:5px;">
-                        <div style="display:flex;flex-direction:column;gap:2px;flex-shrink:0;">
-                            <button class="order-btn" onclick="moveFaction(${p.id},'${f.id}',-1)" ${fi===0?'disabled style="opacity:0.2"':''}>▲</button>
-                            <button class="order-btn" onclick="moveFaction(${p.id},'${f.id}',1)"  ${fi===p.factions.length-1?'disabled style="opacity:0.2"':''}>▼</button>
-                        </div>
+                <div class="faction-card drag-card-faction" style="border-left-color:${f.usePartyColor?p.color:f.color};">
+                    <!-- 행1: 드래그 핸들 + 색상 + 약칭 + 복제 + X -->
+                    <div style="display:flex;gap:6px;align-items:center;margin-bottom:5px;">
+                        <span class="drag-handle faction-drag-handle" title="드래그로 순서 변경">⋮⋮</span>
                         ${f.usePartyColor
                             ? `<div style="width:28px;height:20px;background:${p.color};border:1px solid #444;flex-shrink:0;" title="정당 색 사용 중"></div>`
                             : `<div class="color-input-group" style="flex-shrink:0;">
-                                <input type="text" class="hex-input" value="${f.color}" onchange="updateFactionColorText(this,${p.id},'${f.id}')">
-                                <input type="color" value="${f.color}" oninput="updateFactionColorPicker(this,${p.id},'${f.id}')">
+                                <input type="text" class="hex-input" value="${f.color}" onchange="updateFactionColorText(this,${pidArg},'${f.id}')">
+                                <input type="color" value="${f.color}" oninput="updateFactionColorPicker(this,${pidArg},'${f.id}')">
                                </div>`
                         }
-                        <input type="text" value="${f.name}" placeholder="파벌명" style="flex:1;font-size:0.9rem;"
-                            onchange="updateFaction(${p.id},'${f.id}','name',this.value)">
-                        <button class="dup-btn" style="font-size:0.8rem;padding:2px 6px;" title="파벌 복제" onclick="duplicateFaction(${p.id},'${f.id}')">⧉</button>
-                        <button class="remove-btn" style="font-size:0.8rem;padding:2px 6px;" onclick="removeFaction(${p.id},'${f.id}')">X</button>
+                        <input type="text" value="${escapeHtmlText(f.abbr||'')}" placeholder="약칭" title="파벌 약자 표기 (예: CSU)"
+                            style="flex:1;min-width:0;font-size:0.85rem;text-align:center;color:#aaa;"
+                            onchange="updateFaction(${pidArg},'${f.id}','abbr',this.value.trim())">
+                        <button class="dup-btn" title="파벌 복제" onclick="duplicateFaction(${pidArg},'${f.id}')">⧉</button>
+                        <button class="remove-btn" onclick="removeFaction(${pidArg},'${f.id}')">X</button>
                     </div>
-                    <!-- 행2: 이념만 (의석은 의회 탭에서) -->
-                    <div style="display:flex;gap:5px;align-items:center;margin-bottom:5px;">
-                        <select style="flex:1;font-size:0.8rem;" onchange="updateFaction(${p.id},'${f.id}','ideologyId',parseInt(this.value))">
-                            ${ideologyOptionsHtml(f.ideologyId, { excludeInd: false })}
-                        </select>
+                    <!-- 행2: 파벌명 -->
+                    <input type="text" value="${escapeHtmlText(f.name)}" placeholder="파벌명" style="width:100%;box-sizing:border-box;font-size:0.95rem;margin-bottom:5px;"
+                        onchange="updateFaction(${pidArg},'${f.id}','name',this.value)">
+                    <!-- 행3: 이념 (의석은 의회 탭에서) -->
+                    <div style="margin-bottom:5px;">
+                        ${ideologyPairHtml(f.ideologyId, v => `updateFaction(${pidArg},'${f.id}','ideologyId',${v})`, { excludeInd: false, selStyle: 'font-size:0.8rem;' })}
                     </div>
                     ${factionHomeHtml(p, f)}
-                    <!-- 행3: 색상 옵션 + 신당 분리 -->
+                    <!-- 행4: 색상 옵션 + 신당 분리 -->
                     <div style="display:flex;gap:5px;">
                         <label style="flex:1;display:flex;align-items:center;gap:5px;cursor:pointer;padding:3px 6px;background:#0a0c10;border:1px solid #222;font-size:0.78rem;color:#888;">
                             <input type="checkbox" ${f.usePartyColor?'checked':''}
-                                onchange="updateFaction(${p.id},'${f.id}','usePartyColor',this.checked)"> 정당 색 사용
+                                onchange="updateFaction(${pidArg},'${f.id}','usePartyColor',this.checked)"> 정당 색 사용
                         </label>
-                        <button onclick="splitFaction(${p.id},'${f.id}')"
+                        <button onclick="splitFaction(${pidArg},'${f.id}')"
                             style="flex:1;background:transparent;border:1px solid #444;color:#888;font-family:inherit;font-size:0.78rem;padding:3px 6px;cursor:pointer;">↗ 신당으로 분리</button>
                     </div>
                 </div>`).join('');
@@ -8559,7 +8581,7 @@
                         ? '개표 결과를 의회에 반영하면 새 의석을 선거 전 파벌 몫대로 나눕니다. 지역 기반 파벌은 그 지역구들에서 정당이 얻는 표만큼 가져가요.'
                         : '개표 결과를 의회에 반영하면 파벌 의석이 정당 몫으로 합쳐집니다 (파벌은 남고 의석은 0 — 다시 배분해야 해요).'}</div>
                 </div>` : ''}
-                ${factionCards}${sumHtml}
+                <div id="factionList_${factionListKey(p.id)}">${factionCards}</div>${sumHtml}
             </div>`;
         }
 
@@ -8741,9 +8763,7 @@
                     </div>
                     <!-- 행3: 이념 (항상 보임) -->
                     <div style="margin-bottom:6px;">
-                        <select onchange="updateParty(${idx},'ideologyId',parseInt(this.value))" style="width:100%;">
-                            ${ideologyOptionsHtml(p.ideologyId)}
-                        </select>
+                        ${ideologyPairHtml(p.ideologyId, v => `updateParty(${idx},'ideologyId',${v})`)}
                     </div>
                     <!-- 행3.5: 정당 상태 (항상 보임) -->
                     <div style="margin-bottom:6px;">
@@ -8789,6 +8809,8 @@
                 `;
                 container.appendChild(div);
                 startDragReorder(div.querySelector('.drag-handle'), 'partyInfoList', '.drag-card-party', parties, renderPartyInfoList);
+                // 파벌 순서도 정당처럼 끌어서
+                div.querySelectorAll('.faction-drag-handle').forEach(h => startDragReorder(h, `factionList_${factionListKey(p.id)}`, '.drag-card-faction', p.factions, () => { renderPartyInfoList(); if(typeof renderLeaderList === 'function') renderLeaderList(); }));
             });
             // 전체 체크박스 초기 동기화
             parties.forEach((p, idx) => syncPartyChamberAll(idx));
@@ -8970,7 +8992,7 @@
             const ind = independents.find(x=>x.id===id);
             if(!ind) return;
             ind[key] = val;
-            if(key === 'name' || key === 'status') rerenderIndependentOwner(ind);
+            if(key === 'name' || key === 'status' || key === 'ideologyId') rerenderIndependentOwner(ind); // 이념을 바꾸면 서브 이념 칸 목록도 다시
             simulate();
         }
 
@@ -9128,11 +9150,7 @@
                             onchange="updateIndependent('${ind.id}','name',this.value)">
                         ${statusBadge}
                     </div>
-                    <select ${dis} onchange="updateIndependent('${ind.id}','ideologyId',this.value?parseInt(this.value):null)"
-                        style="width:100%;background:#000;border:1px solid #2a2a2a;color:#aaa;font-family:inherit;font-size:0.85rem;padding:4px;">
-                        <option value="">이념 미지정</option>
-                        ${ideologyOptionsHtml(ind.ideologyId)}
-                    </select>
+                    ${ideologyPairHtml(ind.ideologyId, v => `updateIndependent('${ind.id}','ideologyId',${v})`, { allowNone: true, attrs: dis, selStyle: 'background:#000;border:1px solid #2a2a2a;color:#aaa;font-family:inherit;font-size:0.85rem;padding:4px;' })}
                     <select ${dis} onchange="updateIndependent('${ind.id}','status',this.value)"
                         style="width:100%;background:#000;border:1px solid #2a2a2a;color:#aaa;font-family:inherit;font-size:0.85rem;padding:4px;">
                         <option value="active" ${(!ind.status||ind.status==='active')?'selected':''}>활동중</option>
@@ -10425,6 +10443,13 @@
             try { localStorage.setItem('dnoDistrictSeatBadges', on ? '1' : '0'); } catch(e) { /* 저장 불가 환경 */ }
             districtRedrawAllMaps();
         }
+        // 지도 위 지역구 이름(약칭) 표시 여부 (화면 설정 — 이 기기에 기억)
+        let districtLabelsOn = (() => { try { return localStorage.getItem('dnoDistrictLabels') !== '0'; } catch(e) { return true; } })();
+        function setDistrictLabels(on) {
+            districtLabelsOn = !!on;
+            try { localStorage.setItem('dnoDistrictLabels', on ? '1' : '0'); } catch(e) { /* 저장 불가 환경 */ }
+            districtRedrawAllMaps();
+        }
         function districtRedrawAllMaps() {
             districtRenderMap();
             tendencyRenderMaps();
@@ -10436,6 +10461,8 @@
         window.addEventListener('load', () => {
             const chk = document.getElementById('districtSeatBadgesChk');
             if(chk) chk.checked = districtSeatBadgesOn;
+            const lchk = document.getElementById('districtLabelsChk');
+            if(lchk) lchk.checked = districtLabelsOn;
         });
         // districtSvgTendency[key] = { house:{partyId:pct}, senate:{...}, third:{...} } — 지역구·원별 정당 지지도(%)
         let districtSvgTendency = {};
@@ -10450,6 +10477,8 @@
             // 현재 화면에 지도가 떠 있을 수 있는 곳들을 다시 그림 (해당 없으면 각 함수 내부에서 조용히 무시됨)
             districtRenderMap();
             tendencyRenderMaps();
+            // 그 밖에 떠 있는 모든 지도(의석 화면 지역구 보기 · 선거 결과 등)의 이름 크기도 바로 맞춤
+            document.querySelectorAll('svg').forEach(sv => { if(typeof sv._labelLayout === 'function') sv._labelLayout(); });
         }
 
         // SVG 지도를 지정된 컨테이너에 그리고, 도형별 채우기 색/클릭/툴팁을 옵션으로 받는다
@@ -10468,6 +10497,73 @@
             return { x, y, width: Math.max(...xs) - x, height: Math.max(...ys) - y };
         }
         const GROUP_SEAM_W = '1.6'; // 묶음(권역) 지역구끼리 틈을 메우는 같은 색 테두리 굵기(화면 px)
+
+        // ── 지역구 이름(약칭) 자리 · 크기 — 구글 지도처럼 ──────────────
+        // 이름은 경계상자 가운데가 아니라 도형 안에서 가장 넉넉한 곳(가장자리에서 가장 먼 칸)에 놓고,
+        // 글자 크기는 화면 픽셀 기준으로 모두 같게 한다. 도형에 안 들어가거나 다른 이름과 겹치면 숨기고,
+        // 확대해서 들어갈 만큼 커지면 다시 보인다 (월경지 · 안쪽 도시 구역 이름이 큰 지역 이름을 덮지 않게)
+        function districtLabelSpot(el, enclaveEls) {
+            try {
+                if(typeof el.isPointInFill !== 'function') return null;
+                const lb = el.getBBox();
+                if(!lb.width || !lb.height) return null;
+                const list = el.transform && el.transform.baseVal;
+                const m = list && list.numberOfItems ? list.consolidate().matrix : null;
+                const encl = m ? [] : (enclaveEls || []).filter(o => !(o.transform && o.transform.baseVal && o.transform.baseVal.numberOfItems));
+                const N = 16, cw = lb.width / N, ch = lb.height / N;
+                const inside = [];
+                for(let j = 0; j < N; j++) for(let i = 0; i < N; i++) {
+                    const pt = { x: lb.x + (i + 0.5) * cw, y: lb.y + (j + 0.5) * ch };
+                    inside.push(el.isPointInFill(pt) && !encl.some(o => o.isPointInFill(pt)) ? 1 : 0);
+                }
+                if(!inside.some(Boolean)) return null;
+                // 칸마다 바깥까지의 거리 (두 번 훑는 체스판 거리) — 가장 먼 칸이 가장 넉넉한 곳
+                const d = inside.map(v => v ? 1e9 : 0), at = (i, j) => (i < 0 || j < 0 || i >= N || j >= N) ? 0 : d[j * N + i];
+                for(let j = 0; j < N; j++) for(let i = 0; i < N; i++) if(d[j*N+i]) d[j*N+i] = Math.min(d[j*N+i], at(i-1,j)+1, at(i,j-1)+1, at(i-1,j-1)+1, at(i+1,j-1)+1);
+                for(let j = N-1; j >= 0; j--) for(let i = N-1; i >= 0; i--) if(d[j*N+i]) d[j*N+i] = Math.min(d[j*N+i], at(i+1,j)+1, at(i,j+1)+1, at(i+1,j+1)+1, at(i-1,j+1)+1);
+                let best = -1, bi = 0, bj = 0;
+                for(let j = 0; j < N; j++) for(let i = 0; i < N; i++) {
+                    const v = d[j*N+i] - (Math.abs(i - N/2) + Math.abs(j - N/2)) * 0.01; // 같으면 가운데 쪽
+                    if(v > best) { best = v; bi = i; bj = j; }
+                }
+                // 그 칸을 지나는 가로 · 세로로 이어진 안쪽 길이 = 글자가 들어갈 수 있는 폭 · 높이
+                let l = bi, r = bi; while(l > 0 && inside[bj*N+l-1]) l--; while(r < N-1 && inside[bj*N+r+1]) r++;
+                let t = bj, bo = bj; while(t > 0 && inside[(t-1)*N+bi]) t--; while(bo < N-1 && inside[(bo+1)*N+bi]) bo++;
+                let x = lb.x + (l + r + 1) / 2 * cw, y = lb.y + (bj + 0.5) * ch;
+                let runW = (r - l + 1) * cw, runH = Math.min((bo - t + 1) * ch, d[bj*N+bi] * 2 * ch);
+                if(m) {
+                    const sx = Math.hypot(m.a, m.b), sy = Math.hypot(m.c, m.d);
+                    [x, y] = [m.a * x + m.c * y + m.e, m.b * x + m.d * y + m.f];
+                    runW *= sx; runH *= sy;
+                }
+                return { x, y, runW, runH };
+            } catch(e) { return null; }
+        }
+        const districtLabelMeasure = (() => { const c = document.createElement('canvas').getContext('2d'); return (text, px, family) => { c.font = `${px}px ${family}`; return c.measureText(text).width; }; })();
+        const DISTRICT_LABEL_PX = 15; // 화면에서 이름 글자 크기 (의회 › 지역 "약칭 크기"로 배율 조절)
+        function districtLayoutLabels(svg, items) {
+            if(!svg || !svg.isConnected || !items.length) return;
+            const rect = svg.getBoundingClientRect();
+            const vb = svg.viewBox && svg.viewBox.baseVal;
+            if(!rect.width || !rect.height || !vb || !vb.width) return;
+            const upp = Math.max(vb.width / rect.width, vb.height / rect.height); // 지도 좌표 1px당
+            const px = DISTRICT_LABEL_PX * (typeof districtLabelScale === 'number' ? districtLabelScale : 1);
+            const fu = px * upp;
+            const family = getComputedStyle(svg).fontFamily || 'sans-serif';
+            const placed = [];
+            items.forEach(it => {
+                const w = districtLabelMeasure(it.text, px, family) * upp, h = fu;
+                const fits = w <= it.spot.runW * 0.94 && h <= it.spot.runH * 0.8;
+                const box = { x1: it.spot.x - w / 2, x2: it.spot.x + w / 2, y1: it.spot.y - h / 2, y2: it.spot.y + h / 2 };
+                const pad = fu * 0.2;
+                const hit = placed.some(o => box.x1 < o.x2 + pad && box.x2 > o.x1 - pad && box.y1 < o.y2 + pad && box.y2 > o.y1 - pad);
+                const show = fits && !hit;
+                it.el.setAttribute('font-size', fu);
+                it.el.setAttribute('stroke-width', fu * 0.14);
+                it.el.style.display = show ? '' : 'none';
+                if(show) placed.push(box);
+            });
+        }
         function renderDistrictSvgInto(wrapEl, opts = {}) {
             if(!wrapEl) return;
             const map = districtSvgMapFor(opts.chamber || 'house');
@@ -10634,13 +10730,38 @@
                     if(sizes.length > 0) refSize = sizes[Math.floor(sizes.length/2)];
                 } catch(e) {}
                 refSize *= (typeof districtLabelScale === 'number' ? districtLabelScale : 1);
-                shapeEls.forEach(({ s, el }) => {
-                    const abbr = opts.hideAbbr ? null : districtAbbr[s.key];
+                const labelItems = [];
+                const shapeBoxes = shapeEls.map(({ el }) => { try { return districtShapeBBox(el); } catch(e) { return null; } });
+                shapeEls.forEach(({ s, el }, si) => {
+                    const abbr = (opts.hideAbbr || !districtLabelsOn) ? null : districtAbbr[s.key];
                     const badges = (opts.seatBadges && districtSeatBadgesOn) ? opts.seatBadges(s.key) : null;
                     if(!abbr && !(badges && badges.length)) return;
                     try {
-                        const b = districtShapeBBox(el);
+                        const b = shapeBoxes[si];
                         if(!b || (b.width === 0 && b.height === 0)) return;
+                        if(abbr && !(badges && badges.length)) {
+                            // 이 도형 안에 들어앉은 더 작은 도형(월경지 · 안쪽 도시 구역)은 이름 자리에서 뺀다
+                            const enclaves = shapeEls.filter((o, oi) => {
+                                const ob = shapeBoxes[oi];
+                                return oi !== si && ob && ob.width * ob.height < b.width * b.height
+                                    && ob.x >= b.x && ob.y >= b.y && ob.x + ob.width <= b.x + b.width && ob.y + ob.height <= b.y + b.height;
+                            }).map(o => o.el);
+                            const spot = districtLabelSpot(el, enclaves) || { x: b.x + b.width / 2, y: b.y + b.height / 2, runW: b.width, runH: b.height };
+                            const textEl = document.createElementNS(svgNS, 'text');
+                            textEl.setAttribute('x', spot.x);
+                            textEl.setAttribute('y', spot.y);
+                            textEl.setAttribute('text-anchor', 'middle');
+                            textEl.setAttribute('dominant-baseline', 'central');
+                            textEl.setAttribute('fill', '#fff');
+                            textEl.setAttribute('paint-order', 'stroke');
+                            textEl.setAttribute('stroke', districtSvgEffectiveAbbrStroke(map));
+                            textEl.setAttribute('pointer-events', 'none');
+                            textEl.setAttribute('data-key', s.key);
+                            textEl.textContent = abbr;
+                            svg.appendChild(textEl);
+                            labelItems.push({ el: textEl, text: abbr, spot, area: b.width * b.height });
+                            return;
+                        }
                         const cx = b.x + b.width/2;
                         const cy = b.y + b.height/2;
                         let abbrY = cy, badgeY = cy;
@@ -10699,6 +10820,14 @@
                         }
                     } catch(e) {}
                 });
+                if(labelItems.length) {
+                    labelItems.sort((a, b) => b.area - a.area); // 큰 지역 이름부터 자리를 잡는다
+                    const relayout = () => districtLayoutLabels(svg, labelItems);
+                    svg._labelLayout = relayout;
+                    requestAnimationFrame(relayout);
+                    new MutationObserver(relayout).observe(svg, { attributes: true, attributeFilter: ['viewBox'] });
+                    if(window.ResizeObserver) new ResizeObserver(relayout).observe(svg);
+                }
             }
 
             // 저장된 viewBox가 실제 도형 좌표와 맞지 않으면(오래된 캐시로 내보낸 파일 등) 도형이 화면
@@ -15366,9 +15495,10 @@
                     return b[1].n - a[1].n;
                 });
                 const abbrOf = n => { const pp = parties.find(x=>x.name===n); return pp?.abbr ? pp.abbr : n; };
+                const fAbbrOf = (pn, fn) => parties.find(x=>x.name===pn)?.factions?.find(f=>f.name===fn)?.abbr || fn;
                 if(hasFactions) {
                     subs = Object.values(s.factions).map(f=>
-                        `<span class="legend-pill"><span style="background:${f.c};width:8px;height:8px;display:inline-block;"></span>${abbrOf(f.partyName)} — ${f.name}(${f.n})</span>`
+                        `<span class="legend-pill" title="${f.partyName} — ${f.name}"><span style="background:${f.c};width:8px;height:8px;display:inline-block;"></span>${abbrOf(f.partyName)} — ${fAbbrOf(f.partyName, f.name)}(${f.n})</span>`
                     ).join('');
                     // 파벌 배정 안 된 나머지 의석
                     partyEntries.forEach(([n,d])=>{

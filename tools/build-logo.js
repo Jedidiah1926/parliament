@@ -20,7 +20,7 @@ console.log('logo.html 생성 완료');
 // 티저(다음 업데이트 미리보기) — main.html과 같은 화면에 미리보기 스크립트를 얹은 것. 저장 공간은 본 게임과 따로(data-app-mode="teaser").
 // 티저마다 data-teaser 번호로 저장 공간을 또 나눈다 (66은 예전 teaser.html과 같은 공간을 그대로 씀)
 const TEASERS = [
-    { id: '66', file: 'teaser66.html', script: ['js/teaserpodium.js', 'js/teaser66.js'], title: 'Teaser 1.6.6', note: '1.6.6 미수복 지역 · 영토 통일' },
+    { id: '66', file: 'teaser66.html', script: ['js/teaserpodium.js', 'js/teaser61.js', 'js/teaser62.js', 'js/teaser63.js', 'js/teaser64.js', 'js/teaser66.js'], title: 'Teaser 1.6.6', note: '1.6.6 미수복 지역 · 영토 통일 (+1.6.1 ~ 1.6.4)' },
     { id: '61', file: 'teaser61.html', script: ['js/teaserpodium.js', 'js/teaser61.js'], title: 'Teaser 1.6.1', note: '1.6.1 쿠데타 · 군정 · 군부 설정' },
     // 1.6.2는 1.6.1 기능 위에, 1.6.3은 1.6.1 · 1.6.2 위에 얹는다 — 스크립트를 순서대로 (js/teaserpodium.js는 모든 티저 공통: 의장석)
     { id: '62', file: 'teaser62.html', script: ['js/teaserpodium.js', 'js/teaser61.js', 'js/teaser62.js'], title: 'Teaser 1.6.2', note: '1.6.2 혁명 · 당-국가 체제 · 선거인단 (+1.6.1)' },
