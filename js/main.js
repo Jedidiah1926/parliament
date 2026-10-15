@@ -2137,6 +2137,26 @@
             return 1e9;
         }
         // <select>용 이념 목록 — 서브 이념은 부모 아래에 들여 써서 보여 준다
+        // 이념 고르기를 두 칸으로: [이념] [서브 이념] — 서브 이념을 고르면 그걸로, 비워 두면("서브 이념 없음") 이념 그대로
+        // setExpr(값 식) → onchange에 넣을 호출 문자열 (예: v => `updateParty(0,'ideologyId',${v})`)
+        function ideologyParentOf(id) {
+            if(id == null) return null;
+            if(ideologies.some(i => i.id === id)) return id;
+            const par = ideologies.find(i => (i.subs || []).some(sb => sb.id === id));
+            return par ? par.id : id;
+        }
+        function ideologyPairHtml(currentId, setExpr, { excludeInd = true, allowNone = false, attrs = '', selStyle = '' } = {}) {
+            const parentId = ideologyParentOf(currentId);
+            const subs = ideologies.find(i => i.id === parentId)?.subs || [];
+            const tops = ideologies.filter(ide => !excludeInd || ide.id !== IND_IDEOLOGY_ID || ide.id === parentId);
+            const sel1 = `<select ${attrs} title="이념" style="flex:1;min-width:0;${selStyle}" onchange="${setExpr(allowNone ? 'this.value?parseInt(this.value):null' : 'parseInt(this.value)')}">`
+                + (allowNone ? `<option value="" ${parentId == null ? 'selected' : ''}>이념 미지정</option>` : '')
+                + tops.map(i => `<option value="${i.id}" ${parentId === i.id ? 'selected' : ''}>${escapeHtmlText(i.name)}</option>`).join('') + '</select>';
+            const sel2 = `<select ${attrs} title="서브 이념 — 비워 두면 이념 그대로" style="flex:1;min-width:0;${selStyle}" ${subs.length ? '' : 'disabled'} onchange="${setExpr('parseInt(this.value)')}">`
+                + `<option value="${parentId ?? ''}" ${currentId === parentId ? 'selected' : ''}>${subs.length ? '서브 이념 없음' : '서브 이념 없음'}</option>`
+                + subs.map(sb => `<option value="${sb.id}" ${currentId === sb.id ? 'selected' : ''}>${escapeHtmlText(sb.name)}</option>`).join('') + '</select>';
+            return `<div class="ideo-pair" style="display:flex;gap:5px;">${sel1}${sel2}</div>`;
+        }
         function ideologyOptionsHtml(selectedId, { excludeInd = true } = {}) {
             return ideologies.filter(ide => !excludeInd || ide.id !== IND_IDEOLOGY_ID).map(ide =>
                 `<option value="${ide.id}" ${selectedId===ide.id?'selected':''}>${ide.name}</option>` +
@@ -6963,15 +6983,14 @@
                 div.style.flexWrap = 'wrap';
                 const isInd = ide.id === IND_IDEOLOGY_ID;
                 const subs = ide.subs || [];
-                // 서브 이념: 부모 카드 안에 들여 써서 표시 (드래그 정렬은 부모 이념만, 서브는 ▲▼로)
-                const subsHtml = subs.map((sub, si) => `
-                    <div style="display:flex;gap:5px;align-items:center;width:100%;padding-left:28px;box-sizing:border-box;">
+                // 서브 이념: 부모 카드 안에 들여 써서 표시 — 서브끼리도 드래그 핸들로 순서를 바꾼다
+                const subsHtml = subs.length ? `<div id="subIdeoList_${ide.id}" style="width:100%;display:flex;flex-direction:column;gap:5px;">${subs.map(sub => `
+                    <div class="drag-card-subideo" style="display:flex;gap:5px;align-items:center;width:100%;padding-left:22px;box-sizing:border-box;">
                         <span style="color:#555;flex-shrink:0;">└</span>
+                        <span class="drag-handle subideo-drag-handle" title="드래그로 순서 변경">⋮⋮</span>
                         <input type="text" value="${sub.name}" style="flex:1;min-width:0;font-size:0.9rem;" onchange="updateSubIdeology(${ide.id}, ${sub.id}, this.value)">
-                        <button class="order-btn" onclick="moveSubIdeology(${ide.id}, ${sub.id}, -1)" ${si===0?'disabled style="opacity:0.2"':''}>▲</button>
-                        <button class="order-btn" onclick="moveSubIdeology(${ide.id}, ${sub.id}, 1)" ${si===subs.length-1?'disabled style="opacity:0.2"':''}>▼</button>
                         <button class="remove-btn" onclick="removeSubIdeology(${ide.id}, ${sub.id})">X</button>
-                    </div>`).join('');
+                    </div>`).join('')}</div>` : '';
                 div.innerHTML = `
                     <span class="drag-handle">⋮⋮</span>
                     <input type="text" value="${ide.name}" style="flex:1;min-width:0;${isInd && ide.disabled ? 'opacity:0.45;' : ''}" onchange="updateIdeology(${index}, 'name', this.value)">
@@ -6982,6 +7001,7 @@
                 `;
                 container.appendChild(div);
                 startDragReorder(div.querySelector('.drag-handle'), 'ideologyList', '.drag-card-ideology', ideologies, renderIdeologyList);
+                div.querySelectorAll('.subideo-drag-handle').forEach(h => startDragReorder(h, `subIdeoList_${ide.id}`, '.drag-card-subideo', ide.subs, () => { renderIdeologyList(); refreshUI(); }));
             });
         }
 
@@ -8488,6 +8508,7 @@
             return out;
         }
 
+        const factionListKey = pid => String(pid).replace(/[^\w-]/g, '_');
         function renderFactionSection(p, partyIdx, chamberType) {
             // chamberType: 'house' | 'senate' | undefined(정당탭=둘다)
             if(!p.factions) p.factions = [];
@@ -8504,40 +8525,41 @@
             const hasF = p.factions.length > 0;
             const sumHtml = ''; // 합계 검증은 의회 탭에서만 표시
 
+            // 파벌 카드 — 정당 카드와 같은 모양: 드래그 핸들(순서) · 색 · 약칭 · 복제 · X / 이름 / 이념 / 지역 기반 / 정당 색 · 신당 분리
+            const pidArg = JSON.stringify(p.id).replace(/"/g, '&quot;');
             const factionCards = p.factions.map((f,fi)=>`
-                <div class="faction-card" style="border-left-color:${f.usePartyColor?p.color:f.color};">
-                    <!-- 행1: 순서 + 색상 + 이름 + X -->
-                    <div style="display:flex;gap:4px;align-items:center;margin-bottom:5px;">
-                        <div style="display:flex;flex-direction:column;gap:2px;flex-shrink:0;">
-                            <button class="order-btn" onclick="moveFaction(${p.id},'${f.id}',-1)" ${fi===0?'disabled style="opacity:0.2"':''}>▲</button>
-                            <button class="order-btn" onclick="moveFaction(${p.id},'${f.id}',1)"  ${fi===p.factions.length-1?'disabled style="opacity:0.2"':''}>▼</button>
-                        </div>
+                <div class="faction-card drag-card-faction" style="border-left-color:${f.usePartyColor?p.color:f.color};">
+                    <!-- 행1: 드래그 핸들 + 색상 + 약칭 + 복제 + X -->
+                    <div style="display:flex;gap:6px;align-items:center;margin-bottom:5px;">
+                        <span class="drag-handle faction-drag-handle" title="드래그로 순서 변경">⋮⋮</span>
                         ${f.usePartyColor
                             ? `<div style="width:28px;height:20px;background:${p.color};border:1px solid #444;flex-shrink:0;" title="정당 색 사용 중"></div>`
                             : `<div class="color-input-group" style="flex-shrink:0;">
-                                <input type="text" class="hex-input" value="${f.color}" onchange="updateFactionColorText(this,${p.id},'${f.id}')">
-                                <input type="color" value="${f.color}" oninput="updateFactionColorPicker(this,${p.id},'${f.id}')">
+                                <input type="text" class="hex-input" value="${f.color}" onchange="updateFactionColorText(this,${pidArg},'${f.id}')">
+                                <input type="color" value="${f.color}" oninput="updateFactionColorPicker(this,${pidArg},'${f.id}')">
                                </div>`
                         }
-                        <input type="text" value="${f.name}" placeholder="파벌명" style="flex:1;font-size:0.9rem;"
-                            onchange="updateFaction(${p.id},'${f.id}','name',this.value)">
-                        <button class="dup-btn" style="font-size:0.8rem;padding:2px 6px;" title="파벌 복제" onclick="duplicateFaction(${p.id},'${f.id}')">⧉</button>
-                        <button class="remove-btn" style="font-size:0.8rem;padding:2px 6px;" onclick="removeFaction(${p.id},'${f.id}')">X</button>
+                        <input type="text" value="${escapeHtmlText(f.abbr||'')}" placeholder="약칭" title="파벌 약자 표기 (예: CSU)"
+                            style="flex:1;min-width:0;font-size:0.85rem;text-align:center;color:#aaa;"
+                            onchange="updateFaction(${pidArg},'${f.id}','abbr',this.value.trim())">
+                        <button class="dup-btn" title="파벌 복제" onclick="duplicateFaction(${pidArg},'${f.id}')">⧉</button>
+                        <button class="remove-btn" onclick="removeFaction(${pidArg},'${f.id}')">X</button>
                     </div>
-                    <!-- 행2: 이념만 (의석은 의회 탭에서) -->
-                    <div style="display:flex;gap:5px;align-items:center;margin-bottom:5px;">
-                        <select style="flex:1;font-size:0.8rem;" onchange="updateFaction(${p.id},'${f.id}','ideologyId',parseInt(this.value))">
-                            ${ideologyOptionsHtml(f.ideologyId, { excludeInd: false })}
-                        </select>
+                    <!-- 행2: 파벌명 -->
+                    <input type="text" value="${escapeHtmlText(f.name)}" placeholder="파벌명" style="width:100%;box-sizing:border-box;font-size:0.95rem;margin-bottom:5px;"
+                        onchange="updateFaction(${pidArg},'${f.id}','name',this.value)">
+                    <!-- 행3: 이념 (의석은 의회 탭에서) -->
+                    <div style="margin-bottom:5px;">
+                        ${ideologyPairHtml(f.ideologyId, v => `updateFaction(${pidArg},'${f.id}','ideologyId',${v})`, { excludeInd: false, selStyle: 'font-size:0.8rem;' })}
                     </div>
                     ${factionHomeHtml(p, f)}
-                    <!-- 행3: 색상 옵션 + 신당 분리 -->
+                    <!-- 행4: 색상 옵션 + 신당 분리 -->
                     <div style="display:flex;gap:5px;">
                         <label style="flex:1;display:flex;align-items:center;gap:5px;cursor:pointer;padding:3px 6px;background:#0a0c10;border:1px solid #222;font-size:0.78rem;color:#888;">
                             <input type="checkbox" ${f.usePartyColor?'checked':''}
-                                onchange="updateFaction(${p.id},'${f.id}','usePartyColor',this.checked)"> 정당 색 사용
+                                onchange="updateFaction(${pidArg},'${f.id}','usePartyColor',this.checked)"> 정당 색 사용
                         </label>
-                        <button onclick="splitFaction(${p.id},'${f.id}')"
+                        <button onclick="splitFaction(${pidArg},'${f.id}')"
                             style="flex:1;background:transparent;border:1px solid #444;color:#888;font-family:inherit;font-size:0.78rem;padding:3px 6px;cursor:pointer;">↗ 신당으로 분리</button>
                     </div>
                 </div>`).join('');
@@ -8559,7 +8581,7 @@
                         ? '개표 결과를 의회에 반영하면 새 의석을 선거 전 파벌 몫대로 나눕니다. 지역 기반 파벌은 그 지역구들에서 정당이 얻는 표만큼 가져가요.'
                         : '개표 결과를 의회에 반영하면 파벌 의석이 정당 몫으로 합쳐집니다 (파벌은 남고 의석은 0 — 다시 배분해야 해요).'}</div>
                 </div>` : ''}
-                ${factionCards}${sumHtml}
+                <div id="factionList_${factionListKey(p.id)}">${factionCards}</div>${sumHtml}
             </div>`;
         }
 
@@ -8741,9 +8763,7 @@
                     </div>
                     <!-- 행3: 이념 (항상 보임) -->
                     <div style="margin-bottom:6px;">
-                        <select onchange="updateParty(${idx},'ideologyId',parseInt(this.value))" style="width:100%;">
-                            ${ideologyOptionsHtml(p.ideologyId)}
-                        </select>
+                        ${ideologyPairHtml(p.ideologyId, v => `updateParty(${idx},'ideologyId',${v})`)}
                     </div>
                     <!-- 행3.5: 정당 상태 (항상 보임) -->
                     <div style="margin-bottom:6px;">
@@ -8789,6 +8809,8 @@
                 `;
                 container.appendChild(div);
                 startDragReorder(div.querySelector('.drag-handle'), 'partyInfoList', '.drag-card-party', parties, renderPartyInfoList);
+                // 파벌 순서도 정당처럼 끌어서
+                div.querySelectorAll('.faction-drag-handle').forEach(h => startDragReorder(h, `factionList_${factionListKey(p.id)}`, '.drag-card-faction', p.factions, () => { renderPartyInfoList(); if(typeof renderLeaderList === 'function') renderLeaderList(); }));
             });
             // 전체 체크박스 초기 동기화
             parties.forEach((p, idx) => syncPartyChamberAll(idx));
@@ -8970,7 +8992,7 @@
             const ind = independents.find(x=>x.id===id);
             if(!ind) return;
             ind[key] = val;
-            if(key === 'name' || key === 'status') rerenderIndependentOwner(ind);
+            if(key === 'name' || key === 'status' || key === 'ideologyId') rerenderIndependentOwner(ind); // 이념을 바꾸면 서브 이념 칸 목록도 다시
             simulate();
         }
 
@@ -9128,11 +9150,7 @@
                             onchange="updateIndependent('${ind.id}','name',this.value)">
                         ${statusBadge}
                     </div>
-                    <select ${dis} onchange="updateIndependent('${ind.id}','ideologyId',this.value?parseInt(this.value):null)"
-                        style="width:100%;background:#000;border:1px solid #2a2a2a;color:#aaa;font-family:inherit;font-size:0.85rem;padding:4px;">
-                        <option value="">이념 미지정</option>
-                        ${ideologyOptionsHtml(ind.ideologyId)}
-                    </select>
+                    ${ideologyPairHtml(ind.ideologyId, v => `updateIndependent('${ind.id}','ideologyId',${v})`, { allowNone: true, attrs: dis, selStyle: 'background:#000;border:1px solid #2a2a2a;color:#aaa;font-family:inherit;font-size:0.85rem;padding:4px;' })}
                     <select ${dis} onchange="updateIndependent('${ind.id}','status',this.value)"
                         style="width:100%;background:#000;border:1px solid #2a2a2a;color:#aaa;font-family:inherit;font-size:0.85rem;padding:4px;">
                         <option value="active" ${(!ind.status||ind.status==='active')?'selected':''}>활동중</option>
@@ -15366,9 +15384,10 @@
                     return b[1].n - a[1].n;
                 });
                 const abbrOf = n => { const pp = parties.find(x=>x.name===n); return pp?.abbr ? pp.abbr : n; };
+                const fAbbrOf = (pn, fn) => parties.find(x=>x.name===pn)?.factions?.find(f=>f.name===fn)?.abbr || fn;
                 if(hasFactions) {
                     subs = Object.values(s.factions).map(f=>
-                        `<span class="legend-pill"><span style="background:${f.c};width:8px;height:8px;display:inline-block;"></span>${abbrOf(f.partyName)} — ${f.name}(${f.n})</span>`
+                        `<span class="legend-pill" title="${f.partyName} — ${f.name}"><span style="background:${f.c};width:8px;height:8px;display:inline-block;"></span>${abbrOf(f.partyName)} — ${fAbbrOf(f.partyName, f.name)}(${f.n})</span>`
                     ).join('');
                     // 파벌 배정 안 된 나머지 의석
                     partyEntries.forEach(([n,d])=>{
