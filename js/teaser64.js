@@ -1425,8 +1425,10 @@
         .nbx2 .nb-party { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 14px 8px; min-height: 96px; }
         .nbx2 .nb-party.k1, .nbx2 .nb-party.k2 { min-height: 128px; }
         .nbx2 .nb-logo { max-height: 46px; max-width: 80%; display: block; }
-        .nbx2 .nb-logo-card { display: flex; justify-content: center; background: #fff; border-radius: 6px; padding: 5px 10px; max-width: 80%; box-sizing: border-box; }
-        .nbx2 .nb-logo-card .nb-logo { max-width: 100%; }
+        /* 흰 바탕 로고: 카드 폭을 정해 둬야 크기 정보가 없는 SVG(예: 녹색당)도 줄어들지 않는다 */
+        .nbx2 .nb-logo-card { display: block; width: 72%; background: #fff; border-radius: 6px; padding: 5px 10px; box-sizing: border-box; }
+        .nbx2 .nb-logo-card .nb-logo { width: 100%; height: 46px; max-width: none; max-height: none; object-fit: contain; }
+        .nbx2 .nb-party.k1 .nb-logo-card .nb-logo, .nbx2 .nb-party.k2 .nb-logo-card .nb-logo { height: 58px; }
         .nbx2 .nb-party.k1 .nb-logo, .nbx2 .nb-party.k2 .nb-logo { max-height: 58px; }
         .nbx2 .nb-pname { font-weight: 800; font-size: 17px; line-height: 1.2; word-break: keep-all; }
         .nbx2 .nb-party.k1 .nb-pname, .nbx2 .nb-party.k2 .nb-pname { font-size: 20px; }
