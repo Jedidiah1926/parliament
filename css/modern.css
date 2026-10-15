@@ -2749,6 +2749,8 @@ html[data-theme-family="modern"] .mn-group[data-tone="purple"] { --tone: #8b5cf6
 html[data-theme-family="modern"] .mn-group[data-tone="orange"] { --tone: var(--m-gold); } /* 국가: 라이트·다크에선 갈색빛 금색(예전 여론 색) */
 html[data-theme-mode="light"] .mn-group[data-tone="pink"] { --tone: #db2777; } /* 세계(teaser64): 분홍 */
 html[data-theme-mode="dark"] .mn-group[data-tone="pink"] { --tone: #f472b6; }
+html[data-theme-mode="light"] .mn-group[data-tone="teal"] { --tone: #0d9488; } /* 경제(teaser64, 잠김): 청록 */
+html[data-theme-mode="dark"] .mn-group[data-tone="teal"] { --tone: #2dd4bf; }
 html[data-theme-family="modern"] .mn-group-head {
     padding: 7px 10px;
     background: color-mix(in srgb, var(--tone) 13%, transparent) !important;
@@ -2923,6 +2925,8 @@ html[data-theme-family="modern"] .mobile-nav-btn[data-tone="purple"] { --tone: #
 html[data-theme-family="modern"] .mobile-nav-btn[data-tone="orange"] { --tone: var(--m-gold); } /* 국가: 라이트·다크에선 갈색빛 금색(예전 여론 색) */
 html[data-theme-mode="light"] .mobile-nav-btn[data-tone="pink"] { --tone: #db2777; }
 html[data-theme-mode="dark"] .mobile-nav-btn[data-tone="pink"] { --tone: #f472b6; }
+html[data-theme-mode="light"] .mobile-nav-btn[data-tone="teal"] { --tone: #0d9488; }
+html[data-theme-mode="dark"] .mobile-nav-btn[data-tone="teal"] { --tone: #2dd4bf; }
 html[data-theme-family="modern"] .mobile-nav-btn {
     border: none !important;
     margin-top: 0;
