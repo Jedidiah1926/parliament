@@ -76,7 +76,7 @@
     }
 
     async function traceImage(file, opts) {
-        const o = Object.assign({ tolerance: 20, minArea: 0.03, dropBackground: true, mergeSame: true, maxSize: 3000 }, opts || {});
+        const o = Object.assign({ tolerance: 12, minArea: 0.03, dropBackground: true, mergeSame: true, maxSize: 3000 }, opts || {});
         const { img, url } = await loadImage(file);
         try {
             const IW = img.naturalWidth || img.width, IH = img.naturalHeight || img.height;
@@ -143,9 +143,9 @@
             }
             const minPx = Math.max(9, N * o.minArea / 1000);
             comps.forEach(c => {
-                if (c.area < minPx) c.keep = false;               // 너무 작은 덩어리 (글자 조각 · 점)
-                else if (!c.core) c.keep = false;                 // 속이 없음 = 번진 가장자리 · 가는 선
-                else if (c.area / c.perim < 0.9) c.keep = false;  // 얇은 선 (흰 경계선 등)
+                if (c.area < minPx) { c.keep = false; c.why = 'small'; }               // 너무 작은 덩어리 (글자 조각 · 점)
+                else if (!c.core) { c.keep = false; c.why = 'nocore'; }                // 속이 없음 = 번진 가장자리 · 가는 선
+                else if (c.area / c.perim < 0.9) { c.keep = false; c.why = 'thin'; }   // 얇은 선 (흰 경계선 등)
             });
             // 바탕: 그림 가장자리를 가장 많이 두른 큰 덩어리 (바다 · 흰 바탕) — 둘레의 30% 넘게 가장자리에 닿으면 뺀다
             let bg = null;
@@ -158,13 +158,13 @@
                     comps.forEach(c => {
                         if (!c.keep) return;
                         const dr = c.color[0] - bg.color[0], dg = c.color[1] - bg.color[1], db = c.color[2] - bg.color[2];
-                        if (dr * dr + dg * dg + db * db <= tol2 * 2.56) { c.keep = false; c.bgLike = true; }
+                        if (dr * dr + dg * dg + db * db <= Math.max(tol2 * 2.56, 35 * 35)) { c.keep = false; c.bgLike = true; }
                     });
                 }
             }
             // 버린 작은 조각 중 바탕색에 가까운 것(압축으로 얼룩진 바다 가장자리)은 바다로 — 땅이 바다로 번지지 않게
             if (bg) {
-                const sea = (o.tolerance * 2.5) ** 2 * 3;
+                const sea = Math.max((o.tolerance * 2.5) ** 2 * 3, 50 * 50);
                 comps.forEach(c => {
                     if (c.keep || c === bg) return;
                     const dr = c.color[0] - bg.color[0], dg = c.color[1] - bg.color[1], db = c.color[2] - bg.color[2];
@@ -202,7 +202,7 @@
                 const nC = comps.length;
                 const par = new Int32Array(nC).map((_, i) => i);
                 const find = a => { while (par[a] !== a) { par[a] = par[par[a]]; a = par[a]; } return a; };
-                const lim = (o.tolerance * 0.7) ** 2 * 3;
+                const lim = Math.max(14, o.tolerance * 0.8) ** 2; // 같은 나라 조각은 평균 색이 거의 똑같다 (압축 잡음 정도) — 비슷한 색의 다른 나라는 합치지 않게 좁게
                 const dist = (A, B) => (A[0] - B[0]) ** 2 + (A[1] - B[1]) ** 2 + (A[2] - B[2]) ** 2;
                 const pairs = new Map();
                 for (let i = 0; i < N; i++) {
@@ -277,7 +277,9 @@
                 if (d) paths.push(`<path id="지역 ${n + 1}" d="${d}" fill="${hex(...c.color)}" fill-rule="evenodd" stroke="#333" stroke-width="${Math.max(0.5, Math.round(k * 10) / 10)}"/>`);
             });
             const svgText = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${IW} ${IH}" width="${IW}" height="${IH}">${paths.join('')}</svg>`;
-            return { svgText, count: paths.length, width: IW, height: IH };
+            const stats = { comps: comps.length, W, H, small: 0, nocore: 0, thin: 0, droppedPx: 0 };
+            comps.forEach(c => { if (c.why) { stats[c.why]++; stats.droppedPx += c.area; } });
+            return { svgText, count: paths.length, width: IW, height: IH, stats };
         } finally {
             URL.revokeObjectURL(url);
         }
