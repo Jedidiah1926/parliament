@@ -89,16 +89,19 @@
     // id로 찾은 요소를 감싸는 가까운 블록 (없으면 그 요소 자체)
     // ---- 잠긴 과정 (다음 업데이트 미리보기 기능) ----
     // locked: '1.6.x' — 개발자 모드(설정 › 기타 설정)를 켜야 열리고, 그 기능이 있는 Teaser 화면에서 진행한다
-    // (1.6.1 ~ 1.6.3 → Teaser 1.6.3, 1.6.4 → Teaser 1.6.4 — 뒤 티저는 앞 기능을 모두 담는다).
+    // (1.6.1 ~ 1.6.3 → Teaser 1.6.3, 1.6.4 → Teaser 1.6.4 — teaser64는 앞 기능도 담는다, 1.6.6 → Teaser 1.6.6).
     // 그 화면이 아니면 해당 teaser 화면으로 옮겨 서독 튜토리얼로 시작한 뒤 그 과정을 바로 연다.
     /* global emergencyPowers, presElectionMode */
     const devOn = () => !!(window.HemiDev && window.HemiDev.isOn());
-    const PREVIEW_PAGES = ['63', '64'];
-    const previewPageFor = l => (l && l.locked === '1.6.4' ? '64' : '63');
+    // 미리보기 화면마다 담긴 기능 버전 (teaser64는 1.6.1 ~ 1.6.4, teaser66은 1.6.6만)
+    const PAGE_HAS = { '63': ['1.6.1', '1.6.2', '1.6.3'], '64': ['1.6.1', '1.6.2', '1.6.3', '1.6.4'], '66': ['1.6.6'] };
+    const PREVIEW_PAGES = Object.keys(PAGE_HAS);
+    const previewPageFor = l => (l && l.locked === '1.6.6' ? '66' : l && l.locked === '1.6.4' ? '64' : '63');
     const curPage = () => document.documentElement.getAttribute('data-teaser');
     // 지금 화면이 미리보기 화면인지 — 과정을 주면 그 과정의 기능이 있는 화면인지
-    const onPreviewPage = l => PREVIEW_PAGES.includes(curPage()) && (!l || !l.locked || Number(curPage()) >= Number(previewPageFor(l)));
-    const previewName = l => `Teaser ${previewPageFor(l) === '64' ? '1.6.4' : '1.6.3'}`;
+    const onPreviewPage = l => PREVIEW_PAGES.includes(curPage()) && (!l || !l.locked || (PAGE_HAS[curPage()] || []).includes(l.locked));
+    const previewName = l => `Teaser ${{ '63': '1.6.3', '64': '1.6.4', '66': '1.6.6' }[previewPageFor(l)]}`;
+    const unrecLeft = () => { try { return typeof window.isDistrictUnrecovered === 'function' && Object.keys(districtGrid.house || {}).some(k => window.isDistrictUnrecovered(k)); } catch (e) { return false; } };
     const t64 = () => window.T64 || null;
     const rankSig = () => { const t = t64(); return t && t.ranking ? t.ranking.rows.map(r => `${r.id}:${r.score}`).join(',') : ''; };
     const logLen = k => { const o = window[k]; return o && Array.isArray(o.log) ? o.log.length : 0; };
@@ -659,6 +662,48 @@
             ],
         },
         {
+            id: 'unrecovered', group: 'detail', locked: '1.6.6',
+            title: '미수복 지역과 영토 통일',
+            summary: '미수복 지역 종류 · 칠하기 · 선거에서 빠짐 · 종류별 통합 · 영토 통일',
+            steps: [
+                {
+                    before: [closePanels, go('nation', 'unrecovered'), showPanel('controls')],
+                    target: () => document.querySelector('#contentUnrecovered .teaser-unrec-summary') || '#contentUnrecovered',
+                    title: '미수복 지역',
+                    text: '국가 › 미수복에서는 나라가 영유권을 주장하지만 실제로 다스리지 못하는 땅(미수복 지역)을 정해요. 서독 튜토리얼에는 동독 주들이 "동독" 미수복 지역으로 들어 있어요.',
+                },
+                {
+                    before: [go('nation', 'unrecovered'), call('switchDispTab', 'house'), call('chamberSetView', 'house', 'district'), showPanel('display')],
+                    target: () => document.querySelector('#houseViewDistrictWrap') || '#dispPanelHouse',
+                    title: '지도와 선거에서',
+                    text: '미수복 지역은 모든 지도에서 종류 색 빗금으로 따로 보이고, 총선 지역구 · 지방선거 · 국민투표에서 빠져요. 그 지역구의 의석도 지역구 의석 수에서 빠집니다.',
+                },
+                {
+                    before: [go('nation', 'unrecovered'), call('chamberSetView', 'house', 'arc'), showPanel('controls')],
+                    target: () => document.querySelector('#contentUnrecovered .teaser-terr') || document.querySelector('#contentUnrecovered .teaser-add-row') || '#contentUnrecovered',
+                    title: '종류와 칠하기',
+                    text: '미수복 지역 종류는 여러 개 둘 수 있어요(예: 오스트리아 · 동방영토 · 북방영토). 종류마다 이름 · 빗금 색을 정하고, "칠하기"를 켠 채 지도에서 지역구를 차례로 눌러 칠해요. 지우개로 다시 일반 지역구로 돌립니다.',
+                },
+                {
+                    before: [go('nation', 'unrecovered'), showPanel('controls')],
+                    target: () => document.querySelector('#contentUnrecovered .teaser-unify') || '#contentUnrecovered',
+                    allow: ['#contentUnrecovered'],
+                    title: '영토 통일',
+                    text: () => unrecLeft()
+                        ? '"통합"은 그 종류만, "영토 통일 (전체)"는 모든 미수복 지역을 되찾아 일반 지역구로 돌려요. 지금 "영토 통일 (전체)"를 눌러 독일을 통일해 보세요.'
+                        : '"통합"은 그 종류만, "영토 통일 (전체)"는 모든 미수복 지역을 되찾아 일반 지역구로 돌려요. 지금은 미수복 지역이 없어요 — 다음으로 넘어가세요.',
+                    task: () => !unrecLeft(),
+                    done: '통일됐어요! 되찾은 지역구는 이제 일반 지역구예요.',
+                },
+                {
+                    before: [go('nation', 'territory'), showPanel('controls')],
+                    target: () => document.getElementById('contentTerritory') || '#mainContentNation',
+                    title: '통일 뒤에는',
+                    text: '되찾은 지역구는 다음 총선부터 의석을 뽑아요 (서독이면 연방의회 지역구가 259석에서 331석으로 늘어요). 의회 › 의회 구성에서 총 의석도 맞춰 늘리고, 여론 › 성향에서 새 지역의 정당 성향을 정해 보세요.',
+                },
+            ],
+        },
+        {
             id: 'world', group: 'detail', locked: '1.6.4',
             title: '세계',
             summary: '국가 순위 · 순위표 · 점수 · 국기 · 진영과 하위 이념',
@@ -667,7 +712,7 @@
                     before: [closePanels, go('world', 'ranking'), showPanel('controls')],
                     target: () => (!isMobileLayout() && document.querySelector('#sideNav .mn-group[data-main="world"]')) || navTarget(),
                     title: '세계 메뉴',
-                    text: '국가 아래 🌐 세계 메뉴에는 국가 순위와 진영이 있어요 (꾸밈용 — 게임 기능에는 영향 없음). 바로 위 💹 경제는 다음 업데이트에서 열리는 잠긴 메뉴예요.',
+                    text: '국가 아래 🌐 세계 메뉴에는 국가 순위와 진영이 있어요 (꾸밈용 — 게임 기능에는 영향 없음). 바로 위 💹 경제는 1.6.9 업데이트(경제 시스템)에서 열리는 잠긴 메뉴예요.',
                 },
                 {
                     before: [go('world', 'ranking'), showPanel('display')],

@@ -7373,36 +7373,48 @@
         function openPartyLogoTab() { switchSubTab('setup', 'party'); switchPartyGroupInnerTab('logo'); }
 
         // 의회 › 정당 › 로고 — 정당마다 로고(정사각형)를 올리고, 그 아래에 파벌 로고 (통계 카드에 로고를 쓸지는 정보 탭의 "통계 표시")
+        // 로고 바탕(당색 · 흰색) — 정당이면 factionId는 null
+        function setLogoBg(partyId, factionId, mode) {
+            const p = parties.find(x => String(x.id) === String(partyId)); if(!p) return;
+            const t = factionId == null ? p : (p.factions || []).find(f => f.id === factionId); if(!t) return;
+            t.logoBg = mode === 'white' ? 'white' : 'party';
+            renderPartyLogoList();
+            refreshUI();
+        }
         function renderPartyLogoList() {
             const container = document.getElementById('partyLogoList');
             if(!container || !document.getElementById('innerContentPartyLogo')?.classList.contains('active')) return;
             if(parties.length === 0) { container.innerHTML = '<div style="text-align:center;color:#555;padding:20px;">[정당 없음]</div>'; return; }
-            const box = (src, color, size, onchange, title) => `
+            // 로고 바탕: 당색(기본) · 흰색(바탕이 흰 로고용) — #fefefe는 테마가 인라인 #fff를 바꾸지 않게
+            const box = (src, color, size, onchange, title, logoBg) => `
                 <div class="leader-photo-box" title="${title}" style="width:${size}px;height:${size}px;flex-shrink:0;">
-                    ${src ? `<img src="${src}" alt="로고" style="width:100%;height:100%;object-fit:contain;display:block;background:${color};padding:4px;box-sizing:border-box;">`
+                    ${src ? `<img src="${src}" alt="로고" style="width:100%;height:100%;object-fit:contain;display:block;background:${logoBg === 'white' ? '#fefefe' : color};padding:4px;box-sizing:border-box;">`
                           : `<div style="width:100%;height:100%;background:${color}22;display:flex;align-items:center;justify-content:center;font-size:${size > 50 ? 1.6 : 1}rem;color:${color}88;">⚑</div>`}
                     <input type="file" accept="image/*" onchange="${onchange}">
                 </div>`;
             const rmBtn = onclick => `<button onclick="${onclick}" style="background:transparent;border:1px solid #333;color:#555;font-family:inherit;font-size:0.75rem;padding:2px 8px;cursor:pointer;">✕ 로고 제거</button>`;
+            const idArg = v => JSON.stringify(v).replace(/"/g, '&quot;');
+            const bgToggle = (cur, pid, fid) => `<span class="system-radio-group logo-bg-toggle" title="로고 바탕 — 위키 틀 등에서 로고 뒤에 깔리는 색" style="margin:0;display:inline-flex;">
+                ${[['party', '당색 바탕'], ['white', '흰 바탕']].map(([k, t]) => `<button type="button" class="system-radio-btn ${(cur === 'white') === (k === 'white') ? 'active' : ''}" style="font-size:0.72rem;padding:2px 8px;" onclick="setLogoBg(${idArg(pid)},${idArg(fid)},'${k}')">${t}</button>`).join('')}</span>`;
             container.innerHTML = parties.map((p, idx) => {
                 const factions = (p.factions || []).map(f => {
                     const fc = f.usePartyColor ? p.color : f.color;
                     return `<div style="display:flex;align-items:center;gap:8px;padding:6px 8px;background:#060810;border:1px solid #1e2030;border-left:3px solid ${fc};">
-                        ${box(f.logoPhoto, fc, 40, `uploadFactionPhoto(this,${idx},'${f.id}','logoPhoto')`, '클릭하여 파벌 로고 업로드')}
+                        ${box(f.logoPhoto, fc, 40, `uploadFactionPhoto(this,${idx},'${f.id}','logoPhoto')`, '클릭하여 파벌 로고 업로드', f.logoBg)}
                         <span style="flex:1;min-width:0;color:#aaa;font-size:0.85rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtmlText(f.name)}</span>
-                        ${f.logoPhoto ? rmBtn(`removeFactionLogo(${idx},'${f.id}')`) : ''}
+                        ${f.logoPhoto ? bgToggle(f.logoBg, p.id, f.id) + rmBtn(`removeFactionLogo(${idx},'${f.id}')`) : ''}
                     </div>`;
                 }).join('');
                 return `<div class="card-item ${p.isRuling ? 'is-ruling' : ''}" style="border-left-color:${p.color};">
                     <div style="display:flex;gap:10px;align-items:center;">
-                        ${box(p.logoPhoto, p.color, 64, `uploadLogoPhoto(this,${p.id})`, '클릭하여 당 로고 업로드')}
+                        ${box(p.logoPhoto, p.color, 64, `uploadLogoPhoto(this,${p.id})`, '클릭하여 당 로고 업로드', p.logoBg)}
                         <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:6px;">
                             <span style="display:flex;align-items:center;gap:6px;min-width:0;">
                                 <span style="width:9px;height:9px;background:${p.color};border-radius:50%;flex-shrink:0;"></span>
                                 <span style="font-size:1rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtmlText(p.name)}</span>
                             </span>
                             <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
-                                ${p.logoPhoto ? rmBtn(`removeLogoPhoto(${p.id})`) : '<span style="color:#555;font-size:0.75rem;">로고 칸을 눌러 이미지를 올리세요 (정사각형 권장)</span>'}
+                                ${p.logoPhoto ? bgToggle(p.logoBg, p.id, null) + rmBtn(`removeLogoPhoto(${p.id})`) : '<span style="color:#555;font-size:0.75rem;">로고 칸을 눌러 이미지를 올리세요 (정사각형 권장)</span>'}
                             </div>
                         </div>
                     </div>
