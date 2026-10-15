@@ -13265,6 +13265,20 @@
                         <button style="background:transparent;border:1px solid #333;color:#888;padding:4px 8px;font-family:inherit;font-size:0.75rem;cursor:pointer;" onclick="setElectionSystemField('${ch}','compensationPct',0)">병립형(0%)</button>
                         <button style="background:transparent;border:1px solid #333;color:#888;padding:4px 8px;font-family:inherit;font-size:0.75rem;cursor:pointer;" onclick="setElectionSystemField('${ch}','compensationPct',100)">완전연동형(100%)</button>
                     </div>
+                    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px;">
+                        <span style="color:#888;font-size:0.85rem;">봉쇄조항(%)</span>
+                        <input type="number" min="0" max="50" step="0.1" value="${parseFloat(sys.threshold) || 0}"
+                            style="width:70px;background:#000;border:1px solid #333;color:var(--tno-neon);font-family:inherit;font-size:0.9rem;padding:4px;text-align:center;"
+                            onchange="setElectionSystemField('${ch}','threshold', Math.max(0,Math.min(50,parseFloat(this.value)||0)))">
+                        <span style="color:#888;font-size:0.85rem;">면제: 지역구</span>
+                        <input type="number" min="0" max="99" value="${parseInt(sys.thresholdSeats) || 0}" title="이만큼 지역구에서 이기면 봉쇄조항을 면제 (0 = 면제 없음)"
+                            style="width:56px;background:#000;border:1px solid #333;color:var(--tno-neon);font-family:inherit;font-size:0.9rem;padding:4px;text-align:center;"
+                            onchange="setElectionSystemField('${ch}','thresholdSeats', Math.max(0,parseInt(this.value)||0))">
+                        <span style="color:#888;font-size:0.85rem;">석 이상</span>
+                        <button style="background:transparent;border:1px solid #333;color:#888;padding:4px 8px;font-family:inherit;font-size:0.75rem;cursor:pointer;" onclick="setElectionSystemField('${ch}','threshold',5)">5%</button>
+                        <button style="background:transparent;border:1px solid #333;color:#888;padding:4px 8px;font-family:inherit;font-size:0.75rem;cursor:pointer;" onclick="setElectionSystemField('${ch}','threshold',0)">없음</button>
+                    </div>
+                    <div style="font-size:0.72rem;color:#555;margin-top:6px;">봉쇄조항: 득표율이 이보다 낮은 정당은 비례 의석을 받지 못합니다 (지역구 당선은 유지) · 0 = 없음${parseFloat(sys.threshold) > 0 ? ` · 지금 <b style="color:var(--tno-neon);">${parseFloat(sys.threshold)}%</b>${parseInt(sys.thresholdSeats) > 0 ? `, 지역구 ${parseInt(sys.thresholdSeats)}석 이상이면 면제` : ''}` : ''}</div>
                     <div style="font-size:0.72rem;color:#555;margin-top:6px;">0% = 병립형(지역구·비례 독립 배분) · 100% = 완전연동형(전체 의석을 득표율에 맞춤) · 그 사이는 준연동형처럼 절충${sys.listScope==='regional' ? ' · 권역형은 <b style="color:var(--tno-neon);">여론 &gt; 권역</b> 탭에서 권역을 먼저 설정하세요' : ''}</div>
                 </div>
             `;
@@ -13922,10 +13936,34 @@
         }
 
         // 정당별 "비례 의석" 배분 — 전국형(national)/권역형(regional) × 병립~연동 절충을 모두 처리
+        // 봉쇄조항 — 전국 득표율(지지율+무당파 가중치 비중)이 sys.threshold% 미만인 정당은 비례 의석 배분에서 빠진다.
+        // 단, sys.thresholdSeats(기본 의석 조항, 예: 독일 지역구 3석)를 넘게 지역구에서 이기면 면제. 지역구 당선 의석은 그대로 유지.
+        // 돌려주는 값: 봉쇄조항에 걸린 정당 id 집합
+        function listThresholdOut(chamber, weighted, districtResults) {
+            const sys = getElectionSystem(chamber);
+            const th = Math.max(0, parseFloat(sys.threshold) || 0);
+            const out = new Set();
+            if(th <= 0) return out;
+            const total = weighted.reduce((a, p) => a + Math.max(0, p.w), 0);
+            if(total <= 0) return out;
+            const exemptSeats = Math.max(0, parseInt(sys.thresholdSeats) || 0);
+            const wins = {};
+            districtResults.forEach(({partyId}) => { wins[partyId] = (wins[partyId]||0) + 1; });
+            weighted.forEach(p => {
+                if(p.w <= 0) return;
+                if(p.w / total * 100 >= th) return;
+                if(exemptSeats > 0 && (wins[p.id] || 0) >= exemptSeats) return;
+                out.add(p.id);
+            });
+            return out;
+        }
+
         function allocateListSeats(chamber, weighted, districtResults, propSeats, totalSeats) {
             const sys = getElectionSystem(chamber);
             const districtWins = {};
             districtResults.forEach(({partyId}) => { districtWins[partyId] = (districtWins[partyId]||0) + 1; });
+            const thOut = listThresholdOut(chamber, weighted, districtResults);
+            if(thOut.size > 0) weighted = weighted.map(p => thOut.has(p.id) ? { ...p, w: 0 } : p);
 
             if(sys.listScope !== 'regional') {
                 return computeListSeats(weighted, districtWins, propSeats, totalSeats, sys.compensationPct);
@@ -13946,7 +13984,8 @@
                 const gPropSeats = groupSeatMap[g.id] || 0;
                 const gDistrictWins = {};
                 districtResults.filter(d => g.keys.includes(d.key)).forEach(({partyId}) => { gDistrictWins[partyId] = (gDistrictWins[partyId]||0)+1; });
-                const gWeights = g.id === '__unassigned__' ? regionAutoVoteWeights(chamber, g.keys) : getRegionVoteWeights(chamber, g.id, g.keys);
+                const gWeights = (g.id === '__unassigned__' ? regionAutoVoteWeights(chamber, g.keys) : getRegionVoteWeights(chamber, g.id, g.keys))
+                    .map(x => thOut.has(x.id) || thOut.has(Number(x.id)) ? { ...x, w: 0 } : x);
                 const gList = computeListSeats(gWeights, gDistrictWins, gPropSeats, g.keys.length + gPropSeats, sys.compensationPct);
                 Object.keys(gList).forEach(id => { result[id] = (result[id]||0) + gList[id]; });
             });
@@ -14673,7 +14712,9 @@
             // 권역형은 국가 단위 지지율(elecStore)이 아니라 권역별 득표 데이터로 배분하므로 별도로 검사
             const isRegionalList = getElectionSystem(chamber).listScope === 'regional';
             const chamberStore = elecStore[chamber] || {};
-            const partyProb = parties.reduce((s,p)=>s+(p.status==='banned'?0:(chamberStore[p.id]?.prob||0)),0);
+            // 그 원에 참여하지 않는 정당(정당 카드에서 그 원 체크를 끈 원외 정당)은 지지율 입력 목록에 없으므로 개표에서도 빠진다 — 지역구 후보와 같은 기준
+            const runsHere = p => partyRunsInChamber(p, chamber);
+            const partyProb = parties.reduce((s,p)=>s+(runsHere(p)?(chamberStore[p.id]?.prob||0):0),0);
             if(propSeats > 0 && !isRegionalList && partyProb<=0) {
                 showCustomAlert('지지율을 입력해 주세요.\n각 정당의 지지율(%) 칸에 숫자를 입력하세요.');
                 return;
@@ -14730,7 +14771,7 @@
                 // ── 오차 적용 후 각 당 지지율 계산 (활동 금지된 정당은 저장된 지지율과 무관하게 가중치 0) ──
                 const partyWeighted = parties.map(p => {
                     const st = effChamberStore[p.id]||{prob:0,err:0};
-                    const w  = p.status==='banned' ? 0 : Math.max(0, st.prob + (Math.random()*2-1)*(st.err||0));
+                    const w  = !runsHere(p) ? 0 : Math.max(0, st.prob + (Math.random()*2-1)*(st.err||0));
                     return { id:p.id, w, origProb: st.prob };
                 });
 
@@ -14746,7 +14787,7 @@
                 const swingB = swingRaw * ratioB; // 지지율×친화도 그룹
 
                 // 무소속은 "무소속 포함하기"를 켰을 때만 무당파 표를 받는다 (끄면 지지율 0인 무소속이 무작위 몫으로 당선되던 문제 방지)
-                const swingTakes = p => p.status !== 'banned' && (p.ideologyId !== IND_IDEOLOGY_ID || !!swingSt.includeInd);
+                const swingTakes = p => runsHere(p) && (p.ideologyId !== IND_IDEOLOGY_ID || !!swingSt.includeInd);
                 // 그룹A: 각 당에 균등 랜덤 분배 (난수 비중) — 활동 금지된 정당은 무당파 배분도 받지 않음
                 const randWeights = parties.map(p => swingTakes(p) ? Math.random() : 0);
                 const randTotal   = randWeights.reduce((a,b)=>a+b,0);
@@ -14801,9 +14842,10 @@
                     const j=Math.floor(Math.random()*(i+1));
                     [pool[i],pool[j]]=[pool[j],pool[i]];
                 }
-                return { weighted, wTotal, districtResults, listSeatMap, seatMap, pool };
+                const thresholdOut = [...listThresholdOut(chamber, weighted, districtResults)];
+                return { weighted, wTotal, districtResults, listSeatMap, seatMap, pool, thresholdOut };
             };
-            let { weighted, wTotal, districtResults, listSeatMap, seatMap, pool } = computeOutcome();
+            let { weighted, wTotal, districtResults, listSeatMap, seatMap, pool, thresholdOut } = computeOutcome();
             // wTotal(지지율+무당파 가중치)은 비례 의석 배분에만 쓰이므로, 비례 의석이 0석인
             // 지역구 전용 개표에서는 지지율을 하나도 입력하지 않았어도 막을 이유가 없음
             // (이 조건 없이 막으면 지역구만 개표할 때 안내 문구 하나 없이 조용히 실패한 것처럼 보임)
@@ -14819,9 +14861,9 @@
             // ── 결과 저장 (반영/재개표용) ───────
             // prevSeatMap: 개표로 이 원의 실제 의석(party[seatKey])이 리셋되기 직전의 스냅샷 —
             // 선거 결과 화면에서 "직전 대비 의석 변동"을 계산하는 기준이 된다
-            const prevSeatMap = parties.map(p => ({ id: p.id, n: p[seatKey]||0 }));
+            const prevSeatMap = parties.map(p => ({ id: p.id, n: p[inKeyFor(chamber)] ? (p[seatKey]||0) : 0 })); // 원외 정당은 직전 의석 0
             const saveLastResult = () => {
-                elecLastResult = { chamber, isSenate: chamber==='senate', seatMap: seatMap.map(x=>({...x})), weighted, districtResults: [...districtResults], mode: elecMode, prevSeatMap };
+                elecLastResult = { chamber, isSenate: chamber==='senate', seatMap: seatMap.map(x=>({...x})), weighted, districtResults: [...districtResults], mode: elecMode, prevSeatMap, thresholdOut };
                 elecLastResults[chamber] = elecLastResult;
             };
             saveLastResult();
@@ -14980,7 +15022,7 @@
                 const names = caughtFraud.map(({ p }) => p.name).join(', ');
                 await (window.DnoUI ? DnoUI.alert(`⚠ 개표 도중 ${names}의 부정선거가 발각되었습니다! (개표율 ${pct}%)\n조작된 표를 모두 무효 처리하고 처음부터 다시 개표합니다.\n발각된 정당(${names})은 활동이 금지됩니다.`) : Promise.resolve(alert(`⚠ 개표 도중 ${names}의 부정선거가 발각되었습니다!`)));
                 applyFraud();
-                ({ weighted, wTotal, districtResults, listSeatMap, seatMap, pool } = computeOutcome());
+                ({ weighted, wTotal, districtResults, listSeatMap, seatMap, pool, thresholdOut } = computeOutcome());
                 saveLastResult();
                 document.getElementById('elecResultTitle'+suf).innerText = `> ${elecTitle} (${elecYear}) — ${chamberName} 재개표 중...`;
                 document.getElementById('elecResultBar'+suf).style.width='0%';
@@ -15000,7 +15042,10 @@
             if(districtSeats > 0) elecDrawDistrictResult(districtResults, districtResults.length, chamber);
 
             // ── 개표 완료 ──────────────────────
-            document.getElementById('elecResultTitle'+suf).innerText = `> ${elecTitle} (${elecYear}) — ${chamberName} 결과 확정`;
+            const thNames = thresholdOut.map(id => parties.find(p => p.id === id)?.name).filter(Boolean);
+            const thPct = parseFloat(getElectionSystem(chamber).threshold) || 0;
+            document.getElementById('elecResultTitle'+suf).innerText = `> ${elecTitle} (${elecYear}) — ${chamberName} 결과 확정`
+                + (thNames.length ? ` · 봉쇄조항 ${thPct}% 미달: ${thNames.length > 4 ? thNames.slice(0, 4).join(', ') + ` 외 ${thNames.length - 4}당` : thNames.join(', ')}` : '');
             if(midCtrl)  midCtrl.style.display='none';
             if(postBtns) postBtns.style.display='block';
 

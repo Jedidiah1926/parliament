@@ -131,7 +131,9 @@
         S.monarchy = { kind, title: x.c.gender === 'f' ? '여왕' : '국왕', since: formatNationDate(), prevGovType: govType,
             prevPresident: { name: president.name || '', photo: president.photo || '', partyId: president.partyId ?? null },
             prevVeto: typeof vetoHolder !== 'undefined' ? vetoHolder : 'none',
-            prevHolders: Object.fromEntries(Object.keys(emergencyPowers).map(k => [k, emergencyPowers[k].holder])), banned: [] };
+            prevHolders: Object.fromEntries(Object.keys(emergencyPowers).map(k => [k, emergencyPowers[k].holder])), banned: [], prevNation: nationName() };
+        const kn = kingdomName(nationName());
+        if (kn && kn !== nationName()) { setNationName(kn); fx.push(`국호 변경: ${S.monarchy.prevNation} → ${kn}`); }
         seatMonarch(x);
         if (kind === 'absolute') makeAbsolute(); else makeConstitutional();
         S.dispute = null;
@@ -140,6 +142,9 @@
     function endMonarchy(gov) {
         const prev = S.monarchy;
         S.monarchy = null; S.dispute = null;
+        // 국호 — 왕정 전의 공화국 이름이 있으면 되돌리고, 없으면 "○○ 공화국"
+        const rep = prev && prev.prevNation && !/(왕국|제국|대공국|공국)$/.test(prev.prevNation) ? prev.prevNation : (nationRoot(nationName()) ? `${nationRoot(nationName())} 공화국` : '');
+        if (rep && rep !== nationName()) setNationName(rep);
         setGovType(gov || (prev && prev.prevGovType && prev.prevGovType !== 'monarchy' ? prev.prevGovType : 'parliamentary'));
         Object.assign(president, { name: '', photo: '', partyId: null, linkedSeat: null });
         if (prev) {
@@ -156,9 +161,18 @@
         legisSetState({ ...cur, constitution: { ...c, revisions } });
     }
     const nationName = () => document.getElementById('nationNameInput')?.value?.trim() || '';
+    function setNationName(nm) {
+        const inp = document.getElementById('nationNameInput');
+        if (!inp || !nm) return;
+        inp.value = nm;
+        try { updateNationIdBar(); } catch (e) { /* 화면 준비 전 */ }
+    }
+    // 나라 이름에서 공화국 꼬리를 떼어 낸 뿌리 (독일연방공화국 → 독일) — 왕정복고 · 공화 혁명 때 국호를 바꾸는 데 씀
+    const nationRoot = nm => (nm || '').replace(/\s*(연방|인민|민주|사회주의|자유|민주주의)*\s*공화국$/, '').replace(/\s*(왕국|제국|대공국|공국)$/, '').trim() || nm || '';
+    const kingdomName = nm => nm && /(왕국|제국|대공국|공국)$/.test(nm) ? nm : (nationRoot(nm) ? `${nationRoot(nm)} 왕국` : '');
     function monarchyConstitution(x, kind) {
         const nm = nationName(), house = x.d.name || '왕가';
-        return kind === 'absolute' ? { title: `${nm ? nm + ' ' : ''}왕국 기본법`,
+        return kind === 'absolute' ? { title: `${nm ? nm + ' ' : ''}기본법`,
             preamble: `${house}의 정통 군주가 하늘과 국민 앞에서 나라를 다스리며, 국민은 군주에게 충성하고 나라의 번영을 위하여 이 기본법을 받든다.`,
             articles: [
                 { title: '군주', text: `${nm || '국가'}의 군주는 ${house}의 정통 계승자이며, 신성하여 침해할 수 없다.` },
@@ -177,7 +191,7 @@
     }
     function republicConstitution(gov) {
         const nm = nationName();
-        return { title: `${nm ? nm + ' ' : ''}공화국 헌법`,
+        return { title: `${nm ? nm + ' ' : ''}헌법`,
             preamble: '우리 국민은 군주제를 폐지하고, 국민 모두가 주권자인 공화국을 세우며 자유와 평등의 질서를 지키기 위하여 이 헌법을 제정한다.',
             articles: [
                 { title: '국체', text: `${nm || '국가'}는 민주공화국이다.` },
@@ -316,7 +330,9 @@
             const x = monarchX();
             const fx = [];
             if (success) {
+                const before = nationName();
                 endMonarchy(ui.repGov);
+                if (nationName() !== before) fx.push(`국호 변경: ${before} → ${nationName()}`);
                 setConstitution(republicConstitution(ui.repGov));
                 fx.push(`군주제 폐지 — ${GOV_NAME[ui.repGov]} 공화국`, `${x ? `${x.c.name}은(는) 왕위 주장자로 남음` : ''}`, '새 공화국 헌법 · 계엄 해제 · 활동 금지 정당 복권', `${effRoleLabel('president')} 공석 — 선거로 뽑으세요`);
                 if (p) cutSupport(p.id, 1.2);
@@ -623,6 +639,10 @@
         .t65-cl-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
         .t65-cl-main input[type=text] { min-width: 0; box-sizing: border-box; }
         .t65-cl-main > input[type=text] { width: 100%; }
+        .t65-cl-main .t65-row { flex-wrap: nowrap; margin: 0; }
+        .t65-cl-main .t65-row select { width: auto; flex: 0 0 auto; min-width: 0; padding-left: 4px; padding-right: 4px; }
+        .t65-cl-main .t65-row .t65-x { flex: 0 0 auto; }
+        .t65-chips select.t65-back { width: auto; }
         .t65-rank { min-width: 2.2em; font-size: .78rem; color: #e0b030; text-align: center; }
         .t65-chips { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
         .t65-chip { display: inline-flex; align-items: center; gap: 3px; font-size: .72rem; padding: 1px 4px 1px 6px; border: 1px solid var(--pc); color: #ddd; border-left-width: 4px; }

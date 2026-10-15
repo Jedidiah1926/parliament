@@ -168,6 +168,9 @@
         return ids;
     }
     let gradSeq = 0;
+    // 도표 조각을 누르면 뜨는 정보 카드 내용 (의석 클릭 카드처럼) — 렌더할 때마다 새로 모은다
+    let histInfo = [];
+    const infoTag = (title, rows) => { histInfo.push({ title, rows: rows.filter(Boolean) }); return ` data-t64i="${histInfo.length - 1}"`; };
     const gradient = (c1, c2, defs) => { const id = `t64g${++gradSeq}`; defs.push(`<linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${esc(c1)}"/><stop offset="1" stop-color="${esc(c2)}"/></linearGradient>`); return `url(#${id})`; };
 
     function seatsChart(snaps, width) {
@@ -193,13 +196,20 @@
         let flows = '', notes = '', bars = '', labels = '';
         for (let i = 0; i < snaps.length - 1; i++) {
             const yb = yOf(i) + BAR, yt = yOf(i + 1), ym = (yb + yt) / 2;
-            const ribbon = (a0, a1, c0, c1, fill, tip) => { flows += `<path d="M${a0},${yb} L${a1},${yb} C${a1},${ym} ${c1},${ym} ${c1},${yt} L${c0},${yt} C${c0},${ym} ${a0},${ym} ${a0},${yb} Z" fill="${fill}" fill-opacity=".45"><title>${esc(tip)}</title></path>`; };
+            const ribbon = (a0, a1, c0, c1, fill, title, rows) => { flows += `<path d="M${a0},${yb} L${a1},${yb} C${a1},${ym} ${c1},${ym} ${c1},${yt} L${c0},${yt} C${c0},${ym} ${a0},${ym} ${a0},${yb} Z" fill="${fill}" fill-opacity=".45" class="t64-h-hit"${infoTag(title, rows)}/>`; };
+            const when = sn => sn.label || sn.date || '';
             ids.forEach(id => {
                 const [a0, a1] = spans[i][id], [c0, c1] = spans[i + 1][id];
                 if (a1 - a0 < 0.2 && c1 - c0 < 0.2) return;
                 const pa = at(snaps[i], id), pc = at(snaps[i + 1], id), p = pc || pa || info(id);
                 const fill = pa && pc && pa.color !== pc.color ? gradient(pa.color, pc.color, defs) : esc(p.color);
-                ribbon(a0, a1, c0, c1, fill, `${p.name}: ${seat(snaps[i], id)} → ${seat(snaps[i + 1], id)}석`);
+                const s0 = seat(snaps[i], id), s1 = seat(snaps[i + 1], id), dd = s1 - s0;
+                ribbon(a0, a1, c0, c1, fill, `${p.name} 의석 변화`, [
+                    `기간: ${esc(when(snaps[i]))} → ${esc(when(snaps[i + 1]))}`,
+                    `의석: ${s0}석 → ${s1}석${dd ? ` <b style="color:${dd > 0 ? '#2ecc71' : '#e74c3c'}">${dd > 0 ? '▲' : '▼'}${Math.abs(dd)}</b>` : ' (변동 없음)'}`,
+                    `점유율: ${Math.round(s0 / (snaps[i].total || 1) * 1000) / 10}% → ${Math.round(s1 / (snaps[i + 1].total || 1) * 1000) / 10}%`,
+                    pa && pc && pa.name !== pc.name ? `당명 변경: ${esc(pa.name)} → ${esc(pc.name)}` : '',
+                    !pa ? '새로 의석을 얻음' : !pc ? '의석을 모두 잃음' : '']);
                 // 같은 정당이 당명을 바꿈 → 흐름 가운데에 새 이름
                 if (pa && pc && pa.name !== pc.name) notes += `<text x="${(a0 + a1 + c0 + c1) / 4}" y="${ym + 4}" class="t64-h-note" text-anchor="middle">→ ${esc(pc.name)}</text>`;
             });
@@ -210,7 +220,7 @@
                 if (!(fa > 0 && tb > 0)) return;
                 const [a0, a1] = spans[i][l.from] || [0, 0], [c0, c1] = spans[i + 1][l.to] || [0, 0];
                 const pf = info(l.from), pt = info(l.to);
-                ribbon(a0, a1, c0, c1, gradient(pf.color, pt.color, defs), `${pf.name} → ${pt.name} (승계)`);
+                ribbon(a0, a1, c0, c1, gradient(pf.color, pt.color, defs), '승계', [`${esc(pf.name)} → ${esc(pt.name)}`, `기간: ${esc(when(snaps[i]))} → ${esc(when(snaps[i + 1]))}`, `의석: ${fa}석 → ${tb}석`]);
                 notes += `<text x="${(a0 + a1 + c0 + c1) / 4}" y="${ym + 4}" class="t64-h-note" text-anchor="middle">→ ${esc(pt.name)}</text>`;
             });
         }
@@ -227,7 +237,13 @@
                 const preds = (S.succession || []).filter(l => sameId(l.to, id) && i && linkStep(l, snaps, (x, pid) => seat(x, pid) > 0) === i - 1 && seat(snaps[i - 1], l.from) > 0 && !seat(sn, l.from)).map(l => l.from);
                 const base = prev == null ? null : prev + preds.reduce((a2, pid) => a2 + seat(snaps[i - 1], pid), 0);
                 const d = base == null || (base === 0 && !preds.length) ? null : n - base;
-                bars += `<rect x="${x0}" y="${y}" width="${w}" height="${BAR}" fill="${esc(p.color)}"${gov ? ' class="t64-h-gov"' : ''}><title>${esc(`${p.name} ${n}석 (${Math.round(n / sn.total * 100)}%)${d ? ` ${d > 0 ? '▲' : '▼'}${Math.abs(d)}` : ''}${gov ? ' · 집권' : ''} — ${sn.label || sn.date}`)}</title></rect>`;
+                const share = Math.round(n / (sn.total || 1) * 1000) / 10;
+                bars += `<rect x="${x0}" y="${y}" width="${w}" height="${BAR}" fill="${esc(p.color)}" class="t64-h-hit${gov ? ' t64-h-gov' : ''}"${infoTag(`${gov ? '★ ' : ''}${p.name}`, [
+                    `기록: ${esc(sn.label || sn.date || `#${i + 1}`)}${sn.label && sn.date ? ` (${esc(sn.date)})` : ''}`,
+                    `의석: <b>${n}석</b> / ${sn.total}석 (${share}%)`,
+                    d ? `앞 기록 대비: <b style="color:${d > 0 ? '#2ecc71' : '#e74c3c'}">${d > 0 ? '▲' : '▼'}${Math.abs(d)}</b>${preds.length ? ` (승계: ${preds.map(pid => esc(info(pid).name)).join(', ')})` : ''}` : (i && base === 0 && !preds.length ? '앞 기록 대비: 새로 진입' : ''),
+                    share > 50 ? '단독 과반' : '',
+                    gov ? '집권 세력' : '']) }/>`;
                 const dTxt = d ? ` ${d > 0 ? '▲' : '▼'}${Math.abs(d)}` : '';
                 const opts = [`${p.name} ${n}${dTxt}`, `${p.name} ${n}`, `${n}${dTxt}`, String(n)];
                 const txt = opts.find(t => t.length * 6.6 + 8 < w) || '';
@@ -241,7 +257,7 @@
         });
         const half = count ? `<line x1="${X0 + CW / 2}" x2="${X0 + CW / 2}" y1="0" y2="${H}" class="t64-h-half"/>` : `<line x1="${X0 + CW / 2}" x2="${X0 + CW / 2}" y1="0" y2="${H}" class="t64-h-half"/>`;
         const legend = ids.map(id => { const p = info(id); return `<span>${dotHtml(p.color)}${esc(p.name)}</span>`; }).join('');
-        return `<div class="t64-legend t64-h-legend">${legend}<span class="t64-dim">★ 집권 · ┆ ${count ? `최대 의석(${maxTotal})의 절반` : '과반'} · ▲▼ 앞 기록 대비</span></div>
+        return `<div class="t64-legend t64-h-legend">${legend}<span class="t64-dim">막대 · 흐름을 누르면 자세히 · ★ 집권 · ┆ ${count ? `최대 의석(${maxTotal})의 절반` : '과반'} · ▲▼ 앞 기록 대비</span></div>
             <svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" class="t64-hist" role="img" aria-label="의석 변화"><defs>${defs.join('')}</defs>${flows}${half}${bars}${notes}${labels}</svg>`;
     }
 
@@ -308,7 +324,10 @@
                 const a = points[k].alive.get(id), b = points[k + 1].alive.get(id);
                 if (!a || !b) { lines += `<line x1="${x}" x2="${x}" y1="${yOf(k)}" y2="${yOf(k + 1)}" stroke="${esc((a || b || {}).color || '#888')}" stroke-width="2" stroke-dasharray="3 4"/>`; continue; }
                 const fill = a.color !== b.color ? gradient(a.color, b.color, defs) : esc(b.color);
-                lines += `<rect x="${x - BW / 2}" y="${yOf(k)}" width="${BW}" height="${ROW}" fill="${fill}"><title>${esc(`${b.name} ${b.seats || 0}석`)}</title></rect>`;
+                lines += `<rect x="${x - BW / 2}" y="${yOf(k)}" width="${BW}" height="${ROW}" fill="${fill}" class="t64-h-hit"${infoTag(b.name, [
+                    `기간: ${esc(points[k].label || points[k].date || '')} → ${esc(points[k + 1].label || points[k + 1].date || '')}`,
+                    `의석: ${a.seats || 0}석 → ${b.seats || 0}석`,
+                    a.name !== b.name ? `당명 변경: ${esc(a.name)} → ${esc(b.name)}` : ''])}/>`;
             }
             // 이름표: 창당한 자리 · 당명이 바뀐 자리
             for (let k = first; k <= last; k++) {
@@ -334,13 +353,13 @@
                 const pt2 = points[k1].alive.get(t), y2 = yOf(k1);
                 const gid = `t64lg${++gradSeq}`;
                 defs.push(`<linearGradient id="${gid}" gradientUnits="userSpaceOnUse" x1="${x}" y1="${y1}" x2="${x2}" y2="${y2}"><stop offset="0" stop-color="${esc(pf ? pf.color : '#888')}"/><stop offset="1" stop-color="${esc(pt2 ? pt2.color : (pf ? pf.color : '#888'))}"/></linearGradient>`);
-                links += `<path d="M${x},${y1} C${x},${y1 + ROW * 0.55} ${x2},${y2 - ROW * 0.55} ${x2},${y2}" fill="none" stroke="url(#${gid})" stroke-width="${BW}"><title>${esc(`${pf ? pf.name : ''} → ${pt2 ? pt2.name : ''} (승계)`)}</title></path>`;
+                links += `<path d="M${x},${y1} C${x},${y1 + ROW * 0.55} ${x2},${y2 - ROW * 0.55} ${x2},${y2}" fill="none" stroke="url(#${gid})" stroke-width="${BW}" class="t64-h-hit"${infoTag('승계', [`${esc(pf ? pf.name : '')} → ${esc(pt2 ? pt2.name : '')}`, `시점: ${esc(points[k1].label || points[k1].date || '')}`])}/>`;
             });
             if (!outs.some(l => linkK(l) >= last) && last < points.length - 1) {
                 nodes += `<text x="${x}" y="${yOf(last) + 18}" class="t64-l-end" text-anchor="middle">✕</text><text x="${x + 11}" y="${yOf(last) + 24}" class="t64-h-sub">소멸</text>`;
             }
         });
-        return `<div class="t64-legend t64-h-legend"><span class="t64-dim">● 창당 · 당명 변경 / 곡선으로 합쳐짐 = 승계 / ✕ 소멸 · 마우스를 올리면 의석</span></div>
+        return `<div class="t64-legend t64-h-legend"><span class="t64-dim">● 창당 · 당명 변경 / 곡선으로 합쳐짐 = 승계 / ✕ 소멸 · 줄을 누르면 자세히</span></div>
             <div class="t64-l-scroll"><svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" class="t64-hist" role="img" aria-label="당 변화"><defs>${defs.join('')}</defs>${rows}${links}${lines}${nodes}</svg></div>`;
     }
 
@@ -360,10 +379,29 @@
             ${lineage ? '' : seg([['share', '점유율'], ['count', '의석 수']], ui.seatMode, 'hmode')}
             ${!lineage && chs.length > 1 ? seg(chs.map(c => [c, chName(c)]), ui.tlChamber, 'hch') : ''}</div>`;
         const empty = '<div class="t64-empty"><div class="t64-empty-icon">📈</div>아직 기록이 없습니다.<br>왼쪽 의회 › 세력 변화에서 "지금 의석 기록하기"를 누르거나, 총선을 치러 의회에 반영하면 여기에 아래로 쌓여요.</div>';
+        histInfo = [];
+        if (typeof closeSeatInfoCard === 'function') closeSeatInfoCard();
         wrap.innerHTML = controls + (lineage ? (S.timeline.length ? lineageChart(width) : empty) : (snaps.length ? seatsChart(snaps, width) : empty));
         wrap.querySelectorAll('[data-hch]').forEach(b => { b.onclick = () => { ui.tlChamber = b.dataset.hch; renderTimeline(); }; });
         wrap.querySelectorAll('[data-hview]').forEach(b => { b.onclick = () => { ui.histView = b.dataset.hview; renderHistory(); }; });
         wrap.querySelectorAll('[data-hmode]').forEach(b => { b.onclick = () => { ui.seatMode = b.dataset.hmode; renderHistory(); }; });
+        // 막대 · 흐름을 누르면 의석 정보 카드(좌석 클릭과 같은 카드)에 자세히 — 같은 조각을 다시 누르면 닫힘
+        wrap.onclick = e => {
+            const t = e.target.closest && e.target.closest('[data-t64i]');
+            const card = document.getElementById('seatInfoCard'), body = document.getElementById('seatInfoCardBody'), title = document.getElementById('seatInfoCardTitle');
+            wrap.querySelectorAll('.t64-h-sel').forEach(x => x.classList.remove('t64-h-sel'));
+            if (!t || !card || !body) { if (!t && typeof closeSeatInfoCard === 'function') closeSeatInfoCard(); return; }
+            const info = histInfo[+t.dataset.t64i];
+            if (!info) return;
+            if (card.style.display === 'block' && card.dataset.t64i === t.dataset.t64i) { closeSeatInfoCard(); return; }
+            if (typeof closeSeatInfoCard === 'function') closeSeatInfoCard();
+            if (title) title.textContent = info.title;
+            body.innerHTML = info.rows.map(r => `<div>${r}</div>`).join('');
+            card.dataset.t64i = t.dataset.t64i;
+            card.style.display = 'block';
+            t.classList.add('t64-h-sel');
+            if (typeof positionFloatingBox === 'function') positionFloatingBox(card, e.clientX, e.clientY);
+        };
     }
     function showHistoryTab() {
         const btn = document.getElementById('dispTabTimeline');
@@ -1473,6 +1511,11 @@
         html[data-theme-family="modern"] .t64-re-score { border-radius: 8px; overflow: hidden; }
         html[data-theme-family="modern"] .t64-re-flag { border-radius: 6px; }
         .t64-hist { display: block; }
+        .t64-h-hit { cursor: pointer; }
+        .t64-h-hit:hover { filter: brightness(1.15); }
+        .t64-h-sel:not([fill="none"]) { stroke: #fff; stroke-width: 2px; paint-order: stroke; }
+        .t64-h-sel[fill="none"] { opacity: .8; }
+        path.t64-h-sel { fill-opacity: .75; }
         .t64-h-controls { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
         .t64-h-note { font-size: 10.5px; fill: var(--t64-text); paint-order: stroke; stroke: var(--t64-bg, rgba(0,0,0,.55)); stroke-width: 3px; font-weight: bold; }
         html[data-theme-family="modern"] .t64-h-note { stroke: rgba(255,255,255,.85); }
