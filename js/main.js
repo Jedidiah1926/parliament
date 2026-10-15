@@ -10468,6 +10468,8 @@
             // 현재 화면에 지도가 떠 있을 수 있는 곳들을 다시 그림 (해당 없으면 각 함수 내부에서 조용히 무시됨)
             districtRenderMap();
             tendencyRenderMaps();
+            // 그 밖에 떠 있는 모든 지도(의석 화면 지역구 보기 · 선거 결과 등)의 이름 크기도 바로 맞춤
+            document.querySelectorAll('svg').forEach(sv => { if(typeof sv._labelLayout === 'function') sv._labelLayout(); });
         }
 
         // SVG 지도를 지정된 컨테이너에 그리고, 도형별 채우기 색/클릭/툴팁을 옵션으로 받는다
@@ -10486,6 +10488,73 @@
             return { x, y, width: Math.max(...xs) - x, height: Math.max(...ys) - y };
         }
         const GROUP_SEAM_W = '1.6'; // 묶음(권역) 지역구끼리 틈을 메우는 같은 색 테두리 굵기(화면 px)
+
+        // ── 지역구 이름(약칭) 자리 · 크기 — 구글 지도처럼 ──────────────
+        // 이름은 경계상자 가운데가 아니라 도형 안에서 가장 넉넉한 곳(가장자리에서 가장 먼 칸)에 놓고,
+        // 글자 크기는 화면 픽셀 기준으로 모두 같게 한다. 도형에 안 들어가거나 다른 이름과 겹치면 숨기고,
+        // 확대해서 들어갈 만큼 커지면 다시 보인다 (월경지 · 안쪽 도시 구역 이름이 큰 지역 이름을 덮지 않게)
+        function districtLabelSpot(el, enclaveEls) {
+            try {
+                if(typeof el.isPointInFill !== 'function') return null;
+                const lb = el.getBBox();
+                if(!lb.width || !lb.height) return null;
+                const list = el.transform && el.transform.baseVal;
+                const m = list && list.numberOfItems ? list.consolidate().matrix : null;
+                const encl = m ? [] : (enclaveEls || []).filter(o => !(o.transform && o.transform.baseVal && o.transform.baseVal.numberOfItems));
+                const N = 16, cw = lb.width / N, ch = lb.height / N;
+                const inside = [];
+                for(let j = 0; j < N; j++) for(let i = 0; i < N; i++) {
+                    const pt = { x: lb.x + (i + 0.5) * cw, y: lb.y + (j + 0.5) * ch };
+                    inside.push(el.isPointInFill(pt) && !encl.some(o => o.isPointInFill(pt)) ? 1 : 0);
+                }
+                if(!inside.some(Boolean)) return null;
+                // 칸마다 바깥까지의 거리 (두 번 훑는 체스판 거리) — 가장 먼 칸이 가장 넉넉한 곳
+                const d = inside.map(v => v ? 1e9 : 0), at = (i, j) => (i < 0 || j < 0 || i >= N || j >= N) ? 0 : d[j * N + i];
+                for(let j = 0; j < N; j++) for(let i = 0; i < N; i++) if(d[j*N+i]) d[j*N+i] = Math.min(d[j*N+i], at(i-1,j)+1, at(i,j-1)+1, at(i-1,j-1)+1, at(i+1,j-1)+1);
+                for(let j = N-1; j >= 0; j--) for(let i = N-1; i >= 0; i--) if(d[j*N+i]) d[j*N+i] = Math.min(d[j*N+i], at(i+1,j)+1, at(i,j+1)+1, at(i+1,j+1)+1, at(i-1,j+1)+1);
+                let best = -1, bi = 0, bj = 0;
+                for(let j = 0; j < N; j++) for(let i = 0; i < N; i++) {
+                    const v = d[j*N+i] - (Math.abs(i - N/2) + Math.abs(j - N/2)) * 0.01; // 같으면 가운데 쪽
+                    if(v > best) { best = v; bi = i; bj = j; }
+                }
+                // 그 칸을 지나는 가로 · 세로로 이어진 안쪽 길이 = 글자가 들어갈 수 있는 폭 · 높이
+                let l = bi, r = bi; while(l > 0 && inside[bj*N+l-1]) l--; while(r < N-1 && inside[bj*N+r+1]) r++;
+                let t = bj, bo = bj; while(t > 0 && inside[(t-1)*N+bi]) t--; while(bo < N-1 && inside[(bo+1)*N+bi]) bo++;
+                let x = lb.x + (l + r + 1) / 2 * cw, y = lb.y + (bj + 0.5) * ch;
+                let runW = (r - l + 1) * cw, runH = Math.min((bo - t + 1) * ch, d[bj*N+bi] * 2 * ch);
+                if(m) {
+                    const sx = Math.hypot(m.a, m.b), sy = Math.hypot(m.c, m.d);
+                    [x, y] = [m.a * x + m.c * y + m.e, m.b * x + m.d * y + m.f];
+                    runW *= sx; runH *= sy;
+                }
+                return { x, y, runW, runH };
+            } catch(e) { return null; }
+        }
+        const districtLabelMeasure = (() => { const c = document.createElement('canvas').getContext('2d'); return (text, px, family) => { c.font = `${px}px ${family}`; return c.measureText(text).width; }; })();
+        const DISTRICT_LABEL_PX = 15; // 화면에서 이름 글자 크기 (의회 › 지역 "약칭 크기"로 배율 조절)
+        function districtLayoutLabels(svg, items) {
+            if(!svg || !svg.isConnected || !items.length) return;
+            const rect = svg.getBoundingClientRect();
+            const vb = svg.viewBox && svg.viewBox.baseVal;
+            if(!rect.width || !rect.height || !vb || !vb.width) return;
+            const upp = Math.max(vb.width / rect.width, vb.height / rect.height); // 지도 좌표 1px당
+            const px = DISTRICT_LABEL_PX * (typeof districtLabelScale === 'number' ? districtLabelScale : 1);
+            const fu = px * upp;
+            const family = getComputedStyle(svg).fontFamily || 'sans-serif';
+            const placed = [];
+            items.forEach(it => {
+                const w = districtLabelMeasure(it.text, px, family) * upp, h = fu;
+                const fits = w <= it.spot.runW * 0.94 && h <= it.spot.runH * 0.8;
+                const box = { x1: it.spot.x - w / 2, x2: it.spot.x + w / 2, y1: it.spot.y - h / 2, y2: it.spot.y + h / 2 };
+                const pad = fu * 0.2;
+                const hit = placed.some(o => box.x1 < o.x2 + pad && box.x2 > o.x1 - pad && box.y1 < o.y2 + pad && box.y2 > o.y1 - pad);
+                const show = fits && !hit;
+                it.el.setAttribute('font-size', fu);
+                it.el.setAttribute('stroke-width', fu * 0.14);
+                it.el.style.display = show ? '' : 'none';
+                if(show) placed.push(box);
+            });
+        }
         function renderDistrictSvgInto(wrapEl, opts = {}) {
             if(!wrapEl) return;
             const map = districtSvgMapFor(opts.chamber || 'house');
@@ -10652,13 +10721,38 @@
                     if(sizes.length > 0) refSize = sizes[Math.floor(sizes.length/2)];
                 } catch(e) {}
                 refSize *= (typeof districtLabelScale === 'number' ? districtLabelScale : 1);
-                shapeEls.forEach(({ s, el }) => {
+                const labelItems = [];
+                const shapeBoxes = shapeEls.map(({ el }) => { try { return districtShapeBBox(el); } catch(e) { return null; } });
+                shapeEls.forEach(({ s, el }, si) => {
                     const abbr = opts.hideAbbr ? null : districtAbbr[s.key];
                     const badges = (opts.seatBadges && districtSeatBadgesOn) ? opts.seatBadges(s.key) : null;
                     if(!abbr && !(badges && badges.length)) return;
                     try {
-                        const b = districtShapeBBox(el);
+                        const b = shapeBoxes[si];
                         if(!b || (b.width === 0 && b.height === 0)) return;
+                        if(abbr && !(badges && badges.length)) {
+                            // 이 도형 안에 들어앉은 더 작은 도형(월경지 · 안쪽 도시 구역)은 이름 자리에서 뺀다
+                            const enclaves = shapeEls.filter((o, oi) => {
+                                const ob = shapeBoxes[oi];
+                                return oi !== si && ob && ob.width * ob.height < b.width * b.height
+                                    && ob.x >= b.x && ob.y >= b.y && ob.x + ob.width <= b.x + b.width && ob.y + ob.height <= b.y + b.height;
+                            }).map(o => o.el);
+                            const spot = districtLabelSpot(el, enclaves) || { x: b.x + b.width / 2, y: b.y + b.height / 2, runW: b.width, runH: b.height };
+                            const textEl = document.createElementNS(svgNS, 'text');
+                            textEl.setAttribute('x', spot.x);
+                            textEl.setAttribute('y', spot.y);
+                            textEl.setAttribute('text-anchor', 'middle');
+                            textEl.setAttribute('dominant-baseline', 'central');
+                            textEl.setAttribute('fill', '#fff');
+                            textEl.setAttribute('paint-order', 'stroke');
+                            textEl.setAttribute('stroke', districtSvgEffectiveAbbrStroke(map));
+                            textEl.setAttribute('pointer-events', 'none');
+                            textEl.setAttribute('data-key', s.key);
+                            textEl.textContent = abbr;
+                            svg.appendChild(textEl);
+                            labelItems.push({ el: textEl, text: abbr, spot, area: b.width * b.height });
+                            return;
+                        }
                         const cx = b.x + b.width/2;
                         const cy = b.y + b.height/2;
                         let abbrY = cy, badgeY = cy;
@@ -10717,6 +10811,14 @@
                         }
                     } catch(e) {}
                 });
+                if(labelItems.length) {
+                    labelItems.sort((a, b) => b.area - a.area); // 큰 지역 이름부터 자리를 잡는다
+                    const relayout = () => districtLayoutLabels(svg, labelItems);
+                    svg._labelLayout = relayout;
+                    requestAnimationFrame(relayout);
+                    new MutationObserver(relayout).observe(svg, { attributes: true, attributeFilter: ['viewBox'] });
+                    if(window.ResizeObserver) new ResizeObserver(relayout).observe(svg);
+                }
             }
 
             // 저장된 viewBox가 실제 도형 좌표와 맞지 않으면(오래된 캐시로 내보낸 파일 등) 도형이 화면
