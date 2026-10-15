@@ -7276,8 +7276,8 @@ window.DnoLangPacks.en = {
    "New here? Do the basic lessons in order, then pick only the detailed lessons you need. Each lesson is just a few steps."
   ],
   [
-   "총선을 개표하는 순간 발각 여부가 정해집니다. 들키지 않으면 조작이 결과에 그대로 반영되고, 들키면 조작은 무효가 되며 그 정당은 활동 금지 처분을 받아요(알림이 뜹니다). 어느 쪽이든 시도는 개표 한 번으로 사라집니다. 그만두려면 체크를 풀면 돼요.",
-   "Whether it's caught is decided the moment the general election is counted. If not caught, the rigging goes straight into the result; if caught, it has no effect and the party is banned (you'll get a notice). Either way the attempt is used up after one count. Untick it to call it off."
+   "들킬지는 개표 도중에 드러납니다. 들키지 않으면 조작이 결과에 그대로 반영되고, 들키면 개표 중간(무작위 시점)에 개표가 멈추며 그 정당은 활동 금지 처분을 받고(알림이 뜹니다) 조작 표를 무효로 해 처음부터 다시 개표해요. 어느 쪽이든 시도는 개표 한 번으로 사라집니다. 그만두려면 체크를 풀면 돼요.",
+   "Whether it's caught comes out during the count. If not caught, the rigging goes straight into the result; if caught, counting stops at a random point, the party is banned (you'll get a notice) and the rigged votes are voided and counted again from the start. Either way the attempt is used up after one count. Untick it to call it off."
   ],
   [
    "후보 단일화란?",

@@ -11,7 +11,8 @@
         { id: '62', file: 'teaser62.html', title: 'Teaser 1.6.2', note: '혁명 · 당-국가 체제 · 선거인단 (+1.6.1)' },
         { id: '63', file: 'teaser63.html', title: 'Teaser 1.6.3', note: '국회공성전 — 봉쇄 돌파 · 의장석 점거 (+1.6.1 · 1.6.2)' },
         { id: '64', file: 'teaser64.html', title: 'Teaser 1.6.4', note: '세력 변화 타임라인 · 위키 틀 · 냉전 국가 순위 (+1.6.1 ~ 1.6.3)' },
-        { id: '66', file: 'teaser66.html', title: 'Teaser 1.6.6', note: '미수복 지역 · 영토 통일 (+1.6.1 ~ 1.6.4)' },
+        { id: '65', file: 'teaser65.html', title: 'Teaser 1.6.5', note: '왕정복고 · 전제군주정 · 왕위 계승 · 친위 쿠데타 · 공화 혁명 (+1.6.1 ~ 1.6.4)' },
+        { id: '66', file: 'teaser66.html', title: 'Teaser 1.6.6', note: '미수복 지역 · 영토 통일 (+1.6.1 ~ 1.6.5)' },
     ];
 
     // cyrb53 — 짧은 53비트 문자열 해시
