@@ -23,6 +23,8 @@ window.DnoLangPacks.en = {
  "ordinal": "en",
  "patterns": [
   {"re": "^합계 ([\\d.]+)%$", "to": "Total $1%"},
+  {"re": "^⚠ 개표 도중 (.+)의 부정선거가 발각되었습니다! \\(개표율 (\\d+)%\\)\\n조작된 표를 모두 무효 처리하고 처음부터 다시 개표합니다\\.\\n발각된 정당\\((.+)\\)은 활동이 금지됩니다\\.$", "to": "⚠ Election fraud by $1 was uncovered during the count! ($2% counted)\nThe rigged votes are voided and the count starts over.\n$3 is banned."},
+  {"re": "개표 중단: 부정선거 발각! \\(개표율 (\\d+)%\\)", "to": "Count halted: election fraud uncovered! ($1% counted)"},
   {"re": "^Teaser (\\w+) 화면은 개발자 모드에서만 열 수 있습니다\\.$", "to": "The Teaser $1 screen can only be opened in developer mode."},
   {"re": "그중 (\\d+)곳은 지역구 성향을 따로 정해 그 값이 우선", "to": "$1 of them have their own district tendency, which takes priority"},
   {"re": "^지역구 (\\d+)곳의 따로 정한 성향 지우고 권역 성향 따르기$", "to": "Clear the own tendency of $1 districts and follow the region"},
@@ -2295,6 +2297,14 @@ window.DnoLangPacks.en = {
   [
    "개표 중... (",
    "Counting... ("
+  ],
+  [
+   "재개표 중...",
+   "Recounting..."
+  ],
+  [
+   "발각은 개표 도중 무작위 시점에 드러납니다 — 그 순간 개표가 멈추고, 조작된 표를 무효로 해 처음부터 다시 개표하며 활동 금지 처분을 받습니다. 발각되지 않으면 효과가 그대로 반영됩니다. 결과와 무관하게 시도는 개표 1회로 소진됩니다.",
+   "Fraud is uncovered at a random point during the count — counting stops, the rigged votes are voided, the count starts over and the party is banned. If not caught, the effect applies as is. Either way, the attempt is used up after one count."
   ],
   [
    "개표 중...",
@@ -4653,8 +4663,8 @@ window.DnoLangPacks.en = {
    "Past election results."
   ],
   [
-   "정당별로 다음 총선 개표 1회에 한해 부정선거를 시도할 수 있습니다. 발각되면 그 정당은 활동 금지 처분을 받아요.",
-   "Each party can attempt election fraud once, in the next general election count. If caught, the party is banned."
+   "정당별로 다음 총선 개표 1회에 한해 부정선거를 시도할 수 있습니다. 발각은 개표 도중 무작위 시점에 드러나며, 그 순간 개표가 멈추고 조작된 표를 무효로 해 처음부터 다시 개표합니다. 발각된 정당은 활동 금지 처분을 받아요.",
+   "Each party can attempt election fraud once, in the next general election count. Fraud is uncovered at a random point during the count: counting stops, the rigged votes are voided and the count starts over. A party caught is banned."
   ],
   [
    "선거 결과를 좌우하는 지역구 · 성향 · 지지율을 정합니다. 여기서 정한 값으로 국가 › 선거에서 개표해요.",

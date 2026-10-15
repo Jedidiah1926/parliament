@@ -8687,7 +8687,7 @@
                                 ${fraudDistrictOptionsHtml(fa.chamber, fa.riggedDistricts)}
                             </select>
                         </div>
-                        <div style="color:#664444;font-size:0.72rem;line-height:1.5;">발각되면 이번 선거에는 부정 효과가 반영되지 않고 활동 금지 처분을 받습니다. 발각되지 않으면 효과가 그대로 반영됩니다. 결과와 무관하게 시도는 개표 1회로 소진됩니다.</div>
+                        <div style="color:#664444;font-size:0.72rem;line-height:1.5;">발각은 개표 도중 무작위 시점에 드러납니다 — 그 순간 개표가 멈추고, 조작된 표를 무효로 해 처음부터 다시 개표하며 활동 금지 처분을 받습니다. 발각되지 않으면 효과가 그대로 반영됩니다. 결과와 무관하게 시도는 개표 1회로 소진됩니다.</div>
                     </div>`}
                 </div>
             `;
@@ -14701,72 +14701,109 @@
 
             const speed = Math.round((101 - parseInt(document.getElementById('elecSpeed').value)) * 1.5);
 
-            // ── 부정선거 시도 판정 — 이 원(chamber)을 대상으로 시도한 정당마다 발각 확률을 굴려,
-            // 발각되면 부정 효과 없이 활동 금지 처분, 발각되지 않으면 득표율 부풀리기/지역구 조작이 그대로 반영됨.
-            // 결과와 무관하게 시도는 이 개표 1회로 소진(초기화)됨.
-            const effChamberStore = JSON.parse(JSON.stringify(chamberStore));
-            const fraudRiggedByKey = {}; // { districtKey: partyId } — 발각되지 않은 시도만 반영
-            const fraudNotices = [];
+            // ── 부정선거 시도 판정 — 이 원(chamber)을 대상으로 시도한 정당마다 발각 여부를 미리 굴려 두되,
+            // 발각은 개표 시작과 동시에가 아니라 개표 도중(무작위 시점)에 드러난다. 그때까지는 조작된 표로 개표가 진행되고,
+            // 발각되는 순간 개표를 멈추고 해당 정당은 활동 금지 → 조작 표를 무효로 하고 처음부터 다시 개표한다.
+            // 발각되지 않으면 득표율 부풀리기/지역구 조작이 그대로 반영됨. 결과와 무관하게 시도는 이 개표 1회로 소진(초기화)됨.
+            const fraudAttempts = [];
             parties.forEach(p => {
                 const fa = p.fraudAttempt;
                 if(!fa || fa.chamber !== chamber) return;
-                const caught = Math.random()*100 < (fa.catchChance ?? 0);
-                if(caught) {
-                    p.status = 'banned';
-                    fraudNotices.push(`⚠ ${p.name}의 부정선거 시도가 발각되어, 이번 선거 결과에 반영되지 않고 활동이 금지됩니다.`);
-                } else {
+                fraudAttempts.push({ p, fa, caught: Math.random()*100 < (fa.catchChance ?? 0) });
+                p.fraudAttempt = null;
+            });
+            let effChamberStore, fraudRiggedByKey; // fraudRiggedByKey: { districtKey: partyId }
+            const applyFraud = () => {
+                effChamberStore = JSON.parse(JSON.stringify(chamberStore));
+                fraudRiggedByKey = {};
+                fraudAttempts.forEach(({ p, fa }) => {
+                    if(p.status === 'banned') return; // 발각되어 활동 금지된 정당의 조작은 무효
                     if(!effChamberStore[p.id]) effChamberStore[p.id] = { prob: 0, err: 0 };
                     effChamberStore[p.id].prob = (effChamberStore[p.id].prob || 0) + (fa.boostPct || 0);
                     (fa.riggedDistricts || []).forEach(key => { fraudRiggedByKey[key] = p.id; });
+                });
+            };
+            applyFraud();
+            const caughtFraud = fraudAttempts.filter(x => x.caught);
+
+            const computeOutcome = () => {
+                // ── 오차 적용 후 각 당 지지율 계산 (활동 금지된 정당은 저장된 지지율과 무관하게 가중치 0) ──
+                const partyWeighted = parties.map(p => {
+                    const st = effChamberStore[p.id]||{prob:0,err:0};
+                    const w  = p.status==='banned' ? 0 : Math.max(0, st.prob + (Math.random()*2-1)*(st.err||0));
+                    return { id:p.id, w, origProb: st.prob };
+                });
+
+                // ── 무당파 계산 ───────────────────────
+                const swingSt   = chamberStore['__swing__']||{prob:0,err:0};
+                const swingRaw  = Math.max(0, swingSt.prob + (Math.random()*2-1)*(swingSt.err||0));
+
+                // ── 무당파 분배 알고리즘 ──────────────
+                // A/B 비율 랜덤 결정 (매 선거마다 다름)
+                const ratioA = Math.random(); // 0~1 사이 랜덤 (그룹A 비율)
+                const ratioB = 1 - ratioA;
+                const swingA = swingRaw * ratioA; // 완전 랜덤 그룹
+                const swingB = swingRaw * ratioB; // 지지율×친화도 그룹
+
+                // 무소속은 "무소속 포함하기"를 켰을 때만 무당파 표를 받는다 (끄면 지지율 0인 무소속이 무작위 몫으로 당선되던 문제 방지)
+                const swingTakes = p => p.status !== 'banned' && (p.ideologyId !== IND_IDEOLOGY_ID || !!swingSt.includeInd);
+                // 그룹A: 각 당에 균등 랜덤 분배 (난수 비중) — 활동 금지된 정당은 무당파 배분도 받지 않음
+                const randWeights = parties.map(p => swingTakes(p) ? Math.random() : 0);
+                const randTotal   = randWeights.reduce((a,b)=>a+b,0);
+
+                // 그룹B: 각 당의 (지지율 × 친화도 계수) 비중으로 분배
+                // 친화도 계수: 0.5~1.5 사이 랜덤 (매 선거 당마다 다름)
+                const affinities = parties.map(() => 0.5 + Math.random());
+                const bWeights   = partyWeighted.map((p,i) => swingTakes(parties[i]) ? Math.max(0, p.w) * affinities[i] : 0);
+                const bTotal     = bWeights.reduce((a,b)=>a+b,0);
+
+                // 각 당에 무당파 배분량 합산
+                const swingBonus = parties.map((p,i) => {
+                    const fromA = randTotal  > 0 ? swingA * (randWeights[i] / randTotal) : 0;
+                    const fromB = bTotal     > 0 ? swingB * (bWeights[i]    / bTotal)    : 0;
+                    return fromA + fromB;
+                });
+
+                // ── 최종 가중치 (정당 지지율 + 무당파 배분) ──
+                const weighted = partyWeighted.map((p,i) => ({
+                    id: p.id,
+                    w:  p.w + swingBonus[i],
+                    origProb: p.origProb,
+                }));
+                const wTotal = weighted.reduce((s,p)=>s+p.w,0);
+
+                // ── 지역구 선거 결과 먼저 계산 (연동형/권역형 비례 배분에 지역구 당선 결과가 필요) ──
+                const districtResults = districtSeats > 0 ? elecSimulateDistricts(chamber) : [];
+                // 발각되지 않은 부정선거 시도의 지역구 개표 조작 반영 — 실제 결과와 무관하게 지정된 정당으로 덮어씀
+                if(Object.keys(fraudRiggedByKey).length > 0) {
+                    districtResults.forEach(d => { if(fraudRiggedByKey[d.key]) d.partyId = fraudRiggedByKey[d.key]; });
                 }
-                p.fraudAttempt = null;
-            });
-            if(fraudNotices.length > 0) { showCustomAlert(fraudNotices.join('\n')); renderPartyInfoList(); }
 
-            // ── 오차 적용 후 각 당 지지율 계산 (활동 금지된 정당은 저장된 지지율과 무관하게 가중치 0) ──
-            const partyWeighted = parties.map(p => {
-                const st = effChamberStore[p.id]||{prob:0,err:0};
-                const w  = p.status==='banned' ? 0 : Math.max(0, st.prob + (Math.random()*2-1)*(st.err||0));
-                return { id:p.id, w, origProb: st.prob };
-            });
+                // ── 비례 의석 배분 (전국형/권역형 × 병립~연동 절충, 원별 설정) ────
+                const listSeatMap = allocateListSeats(chamber, weighted, districtResults, propSeats, totalSeats);
+                const districtWinCounts = {};
+                districtResults.forEach(({partyId}) => { districtWinCounts[partyId] = (districtWinCounts[partyId]||0) + 1; });
+                const seatMap = weighted.map(p => ({
+                    id: p.id,
+                    n: (districtWinCounts[p.id]||0) + (listSeatMap[p.id]||0),
+                    origProb: p.origProb,
+                }));
 
-            // ── 무당파 계산 ───────────────────────
-            const swingSt   = chamberStore['__swing__']||{prob:0,err:0};
-            const swingRaw  = Math.max(0, swingSt.prob + (Math.random()*2-1)*(swingSt.err||0));
-
-            // ── 무당파 분배 알고리즘 ──────────────
-            // A/B 비율 랜덤 결정 (매 선거마다 다름)
-            const ratioA = Math.random(); // 0~1 사이 랜덤 (그룹A 비율)
-            const ratioB = 1 - ratioA;
-            const swingA = swingRaw * ratioA; // 완전 랜덤 그룹
-            const swingB = swingRaw * ratioB; // 지지율×친화도 그룹
-
-            // 무소속은 "무소속 포함하기"를 켰을 때만 무당파 표를 받는다 (끄면 지지율 0인 무소속이 무작위 몫으로 당선되던 문제 방지)
-            const swingTakes = p => p.status !== 'banned' && (p.ideologyId !== IND_IDEOLOGY_ID || !!swingSt.includeInd);
-            // 그룹A: 각 당에 균등 랜덤 분배 (난수 비중) — 활동 금지된 정당은 무당파 배분도 받지 않음
-            const randWeights = parties.map(p => swingTakes(p) ? Math.random() : 0);
-            const randTotal   = randWeights.reduce((a,b)=>a+b,0);
-
-            // 그룹B: 각 당의 (지지율 × 친화도 계수) 비중으로 분배
-            // 친화도 계수: 0.5~1.5 사이 랜덤 (매 선거 당마다 다름)
-            const affinities = parties.map(() => 0.5 + Math.random());
-            const bWeights   = partyWeighted.map((p,i) => swingTakes(parties[i]) ? Math.max(0, p.w) * affinities[i] : 0);
-            const bTotal     = bWeights.reduce((a,b)=>a+b,0);
-
-            // 각 당에 무당파 배분량 합산
-            const swingBonus = parties.map((p,i) => {
-                const fromA = randTotal  > 0 ? swingA * (randWeights[i] / randTotal) : 0;
-                const fromB = bTotal     > 0 ? swingB * (bWeights[i]    / bTotal)    : 0;
-                return fromA + fromB;
-            });
-
-            // ── 최종 가중치 (정당 지지율 + 무당파 배분) ──
-            const weighted = partyWeighted.map((p,i) => ({
-                id: p.id,
-                w:  p.w + swingBonus[i],
-                origProb: p.origProb,
-            }));
-            const wTotal = weighted.reduce((s,p)=>s+p.w,0);
+                // 지역구 개표 순서 셔플 (연출용)
+                for(let i=districtResults.length-1; i>0; i--) {
+                    const j = Math.floor(Math.random()*(i+1));
+                    [districtResults[i], districtResults[j]] = [districtResults[j], districtResults[i]];
+                }
+                // ── 비례 풀 생성 + 셔플 ─────────────────
+                const pool=[];
+                weighted.forEach(p => { const n = listSeatMap[p.id]||0; for(let i=0;i<n;i++) pool.push(p.id); });
+                for(let i=pool.length-1;i>0;i--){
+                    const j=Math.floor(Math.random()*(i+1));
+                    [pool[i],pool[j]]=[pool[j],pool[i]];
+                }
+                return { weighted, wTotal, districtResults, listSeatMap, seatMap, pool };
+            };
+            let { weighted, wTotal, districtResults, listSeatMap, seatMap, pool } = computeOutcome();
             // wTotal(지지율+무당파 가중치)은 비례 의석 배분에만 쓰이므로, 비례 의석이 0석인
             // 지역구 전용 개표에서는 지지율을 하나도 입력하지 않았어도 막을 이유가 없음
             // (이 조건 없이 막으면 지역구만 개표할 때 안내 문구 하나 없이 조용히 실패한 것처럼 보임)
@@ -14777,50 +14814,21 @@
                 return;
             }
 
-            // ── 지역구 선거 결과 먼저 계산 (연동형/권역형 비례 배분에 지역구 당선 결과가 필요) ──
-            let districtResults = [];
-            if(districtSeats > 0) districtResults = elecSimulateDistricts(chamber);
-            // 발각되지 않은 부정선거 시도의 지역구 개표 조작 반영 — 실제 결과와 무관하게 지정된 정당으로 덮어씀
-            if(Object.keys(fraudRiggedByKey).length > 0) {
-                districtResults.forEach(d => { if(fraudRiggedByKey[d.key]) d.partyId = fraudRiggedByKey[d.key]; });
-            }
-
-            // ── 비례 의석 배분 (전국형/권역형 × 병립~연동 절충, 원별 설정) ────
-            const listSeatMap = allocateListSeats(chamber, weighted, districtResults, propSeats, totalSeats);
-            const districtWinCounts = {};
-            districtResults.forEach(({partyId}) => { districtWinCounts[partyId] = (districtWinCounts[partyId]||0) + 1; });
-            const seatMap = weighted.map(p => ({
-                id: p.id,
-                n: (districtWinCounts[p.id]||0) + (listSeatMap[p.id]||0),
-                origProb: p.origProb,
-            }));
-
-            // 지역구 개표 순서 셔플 (연출용)
-            for(let i=districtResults.length-1; i>0; i--) {
-                const j = Math.floor(Math.random()*(i+1));
-                [districtResults[i], districtResults[j]] = [districtResults[j], districtResults[i]];
-            }
-
             const seatKey = seatKeyFor(chamber);
 
             // ── 결과 저장 (반영/재개표용) ───────
             // prevSeatMap: 개표로 이 원의 실제 의석(party[seatKey])이 리셋되기 직전의 스냅샷 —
             // 선거 결과 화면에서 "직전 대비 의석 변동"을 계산하는 기준이 된다
             const prevSeatMap = parties.map(p => ({ id: p.id, n: p[seatKey]||0 }));
-            elecLastResult = { chamber, isSenate: chamber==='senate', seatMap: seatMap.map(x=>({...x})), weighted, districtResults: [...districtResults], mode: elecMode, prevSeatMap };
-            elecLastResults[chamber] = elecLastResult;
+            const saveLastResult = () => {
+                elecLastResult = { chamber, isSenate: chamber==='senate', seatMap: seatMap.map(x=>({...x})), weighted, districtResults: [...districtResults], mode: elecMode, prevSeatMap };
+                elecLastResults[chamber] = elecLastResult;
+            };
+            saveLastResult();
 
-            // ── 비례 풀 생성 + 셔플 ─────────────────
             // 개표는 별도 집계(counts)에만 쌓는다 — 실제 의석(party[seatKey])은 "✔ 의회에 반영"을 누를 때만 바뀐다
             // (예전엔 개표가 실제 의석을 바로 바꿔서, 반영 전에도 의회가 바뀌고 재개표의 "직전 대비" 기준이 틀어졌다)
-            const counts = {};
-            parties.forEach(p=>{ counts[p.id]=0; });
-            let pool=[];
-            weighted.forEach(p => { const n = listSeatMap[p.id]||0; for(let i=0;i<n;i++) pool.push(p.id); });
-            for(let i=pool.length-1;i>0;i--){
-                const j=Math.floor(Math.random()*(i+1));
-                [pool[i],pool[j]]=[pool[j],pool[i]];
-            }
+            let counts = {};
 
             // ── 선거 결과 탭으로 전환 (각 의원실별 독립된 탭) ──────
             const suf = chamber.charAt(0).toUpperCase() + chamber.slice(1);
@@ -14838,113 +14846,149 @@
 
             await new Promise(r=>setTimeout(r,150));
 
-            // ── 1단계: 지역구 개표 애니메이션 ─────
-            if(districtSeats > 0 && districtMapMode === 'svg' && elecCountMode === 'manual') {
-                // 선택 개표: 자동으로 순서를 섞어 넘기지 않고, 사용자가 결과 지도에서 지역구를 하나씩 클릭해 개표
-                const pauseBtn = document.getElementById('elecPauseBtn');
-                if(pauseBtn) pauseBtn.style.display = 'none'; // 자동 진행이 없으므로 일시정지는 의미가 없음
-                const allDistrictKeys = [...new Set(districtResults.map(d => d.key))];
-                const revealedKeys = new Set();
-                let revealedSeats = 0;
-                const revealOne = key => {
-                    if(revealedKeys.has(key)) return;
-                    revealedKeys.add(key);
-                    districtResults.filter(d => d.key === key).forEach(({ partyId }) => {
-                        const p = parties.find(x => x.id === partyId);
-                        if(p) { counts[p.id]=(counts[p.id]||0)+1; revealedSeats++; }
-                    });
-                    elecDrawDistrictResultManualSvg(chamber, districtResults, revealedKeys, revealOne);
-                    const distName = districtNames[chamber][key];
-                    document.getElementById('elecResultTitle'+suf).innerText = `> ${elecTitle} (${elecYear}) — ${chamberName} 개표 중... (${distName || key})`;
-                    const pct = (revealedSeats/totalSeats*100).toFixed(1)+'%';
-                    document.getElementById('elecProgressBar').style.width = pct;
-                    document.getElementById('elecResultBar'+suf).style.width = pct;
-                    const map = buildElecMap(chamber, totalSeats, counts);
-                    updateStats('elecResultStats'+suf, map, totalSeats);
-                };
-                document.getElementById('elecResultTitle'+suf).innerText = `> ${elecTitle} (${elecYear}) — ${chamberName}: 지도에서 지역구를 클릭해 개표하세요`;
-                elecDrawDistrictResultManualSvg(chamber, districtResults, revealedKeys, revealOne);
-                while(revealedKeys.size < allDistrictKeys.length && !elecSkipToEnd) {
-                    await new Promise(r=>setTimeout(r,100));
-                }
-                if(elecSkipToEnd) allDistrictKeys.forEach(k => revealOne(k)); // 즉시 완료 시 남은 지역구 일괄 개표
-                if(pauseBtn) pauseBtn.style.display = ''; // 비례 단계는 다시 자동 애니메이션이므로 복원
-                if(propSeats > 0 && !elecSkipToEnd) {
-                    await new Promise(r=>setTimeout(r,300));
-                    elecSetView('arc', chamber);
-                    await new Promise(r=>setTimeout(r,200));
-                }
-                elecDrawDistrictResult(districtResults, districtResults.length, chamber);
-            } else if(districtSeats > 0) {
-                const districtSpeed = Math.max(speed, 20);
-                for(let i = 0; i < districtResults.length; i++) {
-                    if(elecSkipToEnd) break;
-                    while(elecPaused && !elecSkipToEnd) await new Promise(r=>setTimeout(r,80));
-                    if(elecSkipToEnd) break;
-
-                    const { key, partyId } = districtResults[i];
-                    const p = parties.find(x=>x.id===partyId);
-                    if(p){ counts[p.id]=(counts[p.id]||0)+1; }
-
-                    elecDrawDistrictResult(districtResults, i+1, chamber);
-
-                    const distName = districtNames[chamber][key];
-                    document.getElementById('elecResultTitle'+suf).innerText = `> ${elecTitle} (${elecYear}) — ${chamberName} 개표 중... (${distName || key})`;
-
-                    const pct = ((i+1)/totalSeats*100).toFixed(1)+'%';
-                    document.getElementById('elecProgressBar').style.width = pct;
-                    document.getElementById('elecResultBar'+suf).style.width   = pct;
-
-                    if(i % Math.max(1, Math.floor(districtResults.length/30)) === 0 || i === districtResults.length-1) {
+            // 한 차례 개표 애니메이션 — detectAt(개표된 의석 수)에 이르면 부정선거 발각으로 중단하고 true를 돌려준다
+            const runCount = async (detectAt) => {
+                counts = {};
+                parties.forEach(p=>{ counts[p.id]=0; });
+                const hit = n => detectAt != null && n >= detectAt;
+                // ── 1단계: 지역구 개표 애니메이션 ─────
+                if(districtSeats > 0 && districtMapMode === 'svg' && elecCountMode === 'manual') {
+                    // 선택 개표: 자동으로 순서를 섞어 넘기지 않고, 사용자가 결과 지도에서 지역구를 하나씩 클릭해 개표
+                    const pauseBtn = document.getElementById('elecPauseBtn');
+                    if(pauseBtn) pauseBtn.style.display = 'none'; // 자동 진행이 없으므로 일시정지는 의미가 없음
+                    const allDistrictKeys = [...new Set(districtResults.map(d => d.key))];
+                    const revealedKeys = new Set();
+                    let revealedSeats = 0, aborted = false;
+                    const revealOne = key => {
+                        if(aborted || revealedKeys.has(key)) return;
+                        revealedKeys.add(key);
+                        districtResults.filter(d => d.key === key).forEach(({ partyId }) => {
+                            const p = parties.find(x => x.id === partyId);
+                            if(p) { counts[p.id]=(counts[p.id]||0)+1; revealedSeats++; }
+                        });
+                        elecDrawDistrictResultManualSvg(chamber, districtResults, revealedKeys, revealOne);
+                        const distName = districtNames[chamber][key];
+                        document.getElementById('elecResultTitle'+suf).innerText = `> ${elecTitle} (${elecYear}) — ${chamberName} 개표 중... (${distName || key})`;
+                        const pct = (revealedSeats/totalSeats*100).toFixed(1)+'%';
+                        document.getElementById('elecProgressBar').style.width = pct;
+                        document.getElementById('elecResultBar'+suf).style.width = pct;
                         const map = buildElecMap(chamber, totalSeats, counts);
                         updateStats('elecResultStats'+suf, map, totalSeats);
+                        if(hit(revealedSeats)) aborted = true;
+                    };
+                    document.getElementById('elecResultTitle'+suf).innerText = `> ${elecTitle} (${elecYear}) — ${chamberName}: 지도에서 지역구를 클릭해 개표하세요`;
+                    elecDrawDistrictResultManualSvg(chamber, districtResults, revealedKeys, revealOne);
+                    while(revealedKeys.size < allDistrictKeys.length && !elecSkipToEnd && !aborted) {
+                        await new Promise(r=>setTimeout(r,100));
                     }
-                    if(districtSpeed > 0) await new Promise(r=>setTimeout(r, districtSpeed));
-                }
-                // 지역구 끝나면 비례로 view 전환
-                if(propSeats > 0 && !elecSkipToEnd) {
-                    await new Promise(r=>setTimeout(r,300));
-                    elecSetView('arc', chamber);
-                    await new Promise(r=>setTimeout(r,200));
-                }
-                // 지역구 최종 렌더
-                elecDrawDistrictResult(districtResults, districtResults.length, chamber);
-            }
-
-            // ── 2단계: 비례 개표 애니메이션 ─────
-            const drawEvery = Math.max(1, Math.floor(propSeats/100));
-
-            for(let i=0; i<pool.length; i++) {
-                if(elecSkipToEnd) {
-                    for(let j=i; j<pool.length; j++) {
-                        const pp=parties.find(x=>x.id===pool[j]);
-                        if(pp){ counts[pp.id]=(counts[pp.id]||0)+1; }
+                    if(elecSkipToEnd) allDistrictKeys.forEach(k => revealOne(k)); // 즉시 완료 시 남은 지역구 일괄 개표
+                    if(pauseBtn) pauseBtn.style.display = ''; // 비례 단계는 다시 자동 애니메이션이므로 복원
+                    if(aborted) return true;
+                    if(propSeats > 0 && !elecSkipToEnd) {
+                        await new Promise(r=>setTimeout(r,300));
+                        elecSetView('arc', chamber);
+                        await new Promise(r=>setTimeout(r,200));
                     }
-                    break;
-                }
-                while(elecPaused && !elecSkipToEnd) await new Promise(r=>setTimeout(r,80));
-                if(elecSkipToEnd) {
-                    for(let j=i; j<pool.length; j++) {
-                        const pp=parties.find(x=>x.id===pool[j]);
-                        if(pp){ counts[pp.id]=(counts[pp.id]||0)+1; }
+                    elecDrawDistrictResult(districtResults, districtResults.length, chamber);
+                } else if(districtSeats > 0) {
+                    const districtSpeed = Math.max(speed, 20);
+                    for(let i = 0; i < districtResults.length; i++) {
+                        if(elecSkipToEnd) break;
+                        while(elecPaused && !elecSkipToEnd) await new Promise(r=>setTimeout(r,80));
+                        if(elecSkipToEnd) break;
+
+                        const { key, partyId } = districtResults[i];
+                        const p = parties.find(x=>x.id===partyId);
+                        if(p){ counts[p.id]=(counts[p.id]||0)+1; }
+
+                        elecDrawDistrictResult(districtResults, i+1, chamber);
+
+                        const distName = districtNames[chamber][key];
+                        document.getElementById('elecResultTitle'+suf).innerText = `> ${elecTitle} (${elecYear}) — ${chamberName} 개표 중... (${distName || key})`;
+
+                        const pct = ((i+1)/totalSeats*100).toFixed(1)+'%';
+                        document.getElementById('elecProgressBar').style.width = pct;
+                        document.getElementById('elecResultBar'+suf).style.width   = pct;
+
+                        if(i % Math.max(1, Math.floor(districtResults.length/30)) === 0 || i === districtResults.length-1 || hit(i+1)) {
+                            const map = buildElecMap(chamber, totalSeats, counts);
+                            updateStats('elecResultStats'+suf, map, totalSeats);
+                        }
+                        if(hit(i+1)) return true; // 부정선거 발각 — 개표 중단
+                        if(districtSpeed > 0) await new Promise(r=>setTimeout(r, districtSpeed));
                     }
-                    break;
+                    // 지역구 끝나면 비례로 view 전환
+                    if(propSeats > 0 && !elecSkipToEnd) {
+                        await new Promise(r=>setTimeout(r,300));
+                        elecSetView('arc', chamber);
+                        await new Promise(r=>setTimeout(r,200));
+                    }
+                    // 지역구 최종 렌더
+                    elecDrawDistrictResult(districtResults, districtResults.length, chamber);
                 }
 
-                const p = parties.find(x=>x.id===pool[i]);
-                if(p){ counts[p.id]=(counts[p.id]||0)+1; }
+                // ── 2단계: 비례 개표 애니메이션 ─────
+                const drawEvery = Math.max(1, Math.floor(propSeats/100));
 
-                const pct = ((districtSeats + i + 1)/totalSeats*100).toFixed(1)+'%';
-                document.getElementById('elecProgressBar').style.width=pct;
-                document.getElementById('elecResultBar'+suf).style.width=pct;
+                for(let i=0; i<pool.length; i++) {
+                    if(elecSkipToEnd) {
+                        for(let j=i; j<pool.length; j++) {
+                            const pp=parties.find(x=>x.id===pool[j]);
+                            if(pp){ counts[pp.id]=(counts[pp.id]||0)+1; }
+                        }
+                        break;
+                    }
+                    while(elecPaused && !elecSkipToEnd) await new Promise(r=>setTimeout(r,80));
+                    if(elecSkipToEnd) {
+                        for(let j=i; j<pool.length; j++) {
+                            const pp=parties.find(x=>x.id===pool[j]);
+                            if(pp){ counts[pp.id]=(counts[pp.id]||0)+1; }
+                        }
+                        break;
+                    }
 
-                if(i%drawEvery===0 || i===pool.length-1) {
-                    const map = buildElecMap(chamber, totalSeats, counts);
-                    drawChamber('elecCanvas'+suf, map, totalSeats, '_elec');
-                    updateStats('elecResultStats'+suf, map, totalSeats);
+                    const p = parties.find(x=>x.id===pool[i]);
+                    if(p){ counts[p.id]=(counts[p.id]||0)+1; }
+
+                    const pct = ((districtSeats + i + 1)/totalSeats*100).toFixed(1)+'%';
+                    document.getElementById('elecProgressBar').style.width=pct;
+                    document.getElementById('elecResultBar'+suf).style.width=pct;
+
+                    const stop = hit(districtResults.length + i + 1);
+                    if(i%drawEvery===0 || i===pool.length-1 || stop) {
+                        const map = buildElecMap(chamber, totalSeats, counts);
+                        drawChamber('elecCanvas'+suf, map, totalSeats, '_elec');
+                        updateStats('elecResultStats'+suf, map, totalSeats);
+                    }
+                    if(stop) return true; // 부정선거 발각 — 개표 중단
+
+                    if(speed>0) await new Promise(r=>setTimeout(r,speed));
                 }
+                return false;
+            };
 
-                if(speed>0) await new Promise(r=>setTimeout(r,speed));
+            // 발각될 시도가 있으면 전체 개표 의석의 15~85% 사이 무작위 시점에 발각
+            const countTotal = districtResults.length + pool.length;
+            const fraudDetectAt = caughtFraud.length > 0 ? Math.max(1, Math.round(countTotal * (0.15 + Math.random()*0.7))) : null;
+            const fraudHit = await runCount(fraudDetectAt);
+            if(caughtFraud.length > 0) {
+                // 즉시 완료 등으로 발각 시점을 지나쳐 끝까지 개표했더라도, 결과 확정 전에 발각된다
+                const pct = (Math.min(fraudHit ? fraudDetectAt : countTotal, totalSeats)/totalSeats*100).toFixed(0);
+                document.getElementById('elecResultTitle'+suf).innerText = `> ${elecTitle} (${elecYear}) — ${chamberName} 개표 중단: 부정선거 발각! (개표율 ${pct}%)`;
+                caughtFraud.forEach(({ p }) => { p.status = 'banned'; });
+                renderPartyInfoList();
+                const names = caughtFraud.map(({ p }) => p.name).join(', ');
+                await (window.DnoUI ? DnoUI.alert(`⚠ 개표 도중 ${names}의 부정선거가 발각되었습니다! (개표율 ${pct}%)\n조작된 표를 모두 무효 처리하고 처음부터 다시 개표합니다.\n발각된 정당(${names})은 활동이 금지됩니다.`) : Promise.resolve(alert(`⚠ 개표 도중 ${names}의 부정선거가 발각되었습니다!`)));
+                applyFraud();
+                ({ weighted, wTotal, districtResults, listSeatMap, seatMap, pool } = computeOutcome());
+                saveLastResult();
+                document.getElementById('elecResultTitle'+suf).innerText = `> ${elecTitle} (${elecYear}) — ${chamberName} 재개표 중...`;
+                document.getElementById('elecResultBar'+suf).style.width='0%';
+                document.getElementById('elecProgressBar').style.width='0%';
+                if(districtSeats > 0) elecSetView('district', chamber);
+                else elecSetView('arc', chamber);
+                await new Promise(r=>setTimeout(r,300));
+                await runCount(null);
             }
 
             // 최종 렌더
