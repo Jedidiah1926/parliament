@@ -10443,6 +10443,13 @@
             try { localStorage.setItem('dnoDistrictSeatBadges', on ? '1' : '0'); } catch(e) { /* 저장 불가 환경 */ }
             districtRedrawAllMaps();
         }
+        // 지도 위 지역구 이름(약칭) 표시 여부 (화면 설정 — 이 기기에 기억)
+        let districtLabelsOn = (() => { try { return localStorage.getItem('dnoDistrictLabels') !== '0'; } catch(e) { return true; } })();
+        function setDistrictLabels(on) {
+            districtLabelsOn = !!on;
+            try { localStorage.setItem('dnoDistrictLabels', on ? '1' : '0'); } catch(e) { /* 저장 불가 환경 */ }
+            districtRedrawAllMaps();
+        }
         function districtRedrawAllMaps() {
             districtRenderMap();
             tendencyRenderMaps();
@@ -10454,6 +10461,8 @@
         window.addEventListener('load', () => {
             const chk = document.getElementById('districtSeatBadgesChk');
             if(chk) chk.checked = districtSeatBadgesOn;
+            const lchk = document.getElementById('districtLabelsChk');
+            if(lchk) lchk.checked = districtLabelsOn;
         });
         // districtSvgTendency[key] = { house:{partyId:pct}, senate:{...}, third:{...} } — 지역구·원별 정당 지지도(%)
         let districtSvgTendency = {};
@@ -10724,7 +10733,7 @@
                 const labelItems = [];
                 const shapeBoxes = shapeEls.map(({ el }) => { try { return districtShapeBBox(el); } catch(e) { return null; } });
                 shapeEls.forEach(({ s, el }, si) => {
-                    const abbr = opts.hideAbbr ? null : districtAbbr[s.key];
+                    const abbr = (opts.hideAbbr || !districtLabelsOn) ? null : districtAbbr[s.key];
                     const badges = (opts.seatBadges && districtSeatBadgesOn) ? opts.seatBadges(s.key) : null;
                     if(!abbr && !(badges && badges.length)) return;
                     try {
