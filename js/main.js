@@ -3611,6 +3611,15 @@
         }
 
         // 실제 화면의 object-fit:cover와 동일하게, 원본 비율을 유지한 채 대상 박스를 꽉 채우도록(넘치는 부분은 크롭) 그림
+        // 로고 그림: 잘리지 않게(contain) 로고 바탕(당색 · 흰 바탕) 위에 — #fefefe는 테마가 인라인 #fff를 바꾸지 않게
+        function logoBgColor(p) { return p && p.logoBg === 'white' ? '#fefefe' : ((p && p.color) || '#888888'); }
+        function logoImgStyle(p) { return `width:100%;height:100%;object-fit:contain;display:block;background:${logoBgColor(p)};padding:3px;box-sizing:border-box;`; }
+        function drawImageContain(ctx, img, x, y, w, h, pad = 0) {
+            const iw = w - pad * 2, ih = h - pad * 2;
+            const k = Math.min(iw / img.width, ih / img.height);
+            const dw = img.width * k, dh = img.height * k;
+            ctx.drawImage(img, x + (w - dw) / 2, y + (h - dh) / 2, dw, dh);
+        }
         function drawImageCover(ctx, img, x, y, w, h) {
             const srcRatio = img.width / img.height, dstRatio = w / h;
             let sx = 0, sy = 0, sw = img.width, sh = img.height;
@@ -3779,8 +3788,11 @@
                         }).filter(Boolean);
                     }
                 }
-                const photoSrc = statsOptions.includePhotos ? (block.querySelector('.leader-photo-box img')?.src || null) : null;
-                return { barColor, nameText, nameSegments, statusTags, pills, independentMembers, photoSrc };
+                const photoEl = block.querySelector('.leader-photo-box img');
+                const photoSrc = statsOptions.includePhotos ? (photoEl?.src || null) : null;
+                const photoLogo = !!photoEl && photoEl.dataset.logo === '1';
+                const photoBg = photoLogo ? (photoEl.style.backgroundColor || null) : null;
+                return { barColor, nameText, nameSegments, statusTags, pills, independentMembers, photoSrc, photoLogo, photoBg };
             }).filter(r => r.nameText);
 
             if(statsOptions.includeExtraParties && chamber) rows.push(...extractExtraPartyRows(chamber, statsOptions));
@@ -3817,7 +3829,9 @@
                                   : p.status === 'banned' ? [{ text: '활동 금지', color: '#ff0055' }] : [];
                 const isLogo = p.showLogoInStats ?? false;
                 const photoSrc = (statsOptions.includePhotos && !p.hideStatsPhoto) ? ((isLogo ? (p.logoPhoto||p.leaderPhoto) : (p.leaderPhoto||p.logoPhoto)) || null) : null;
+                const photoLogo = !!photoSrc && photoSrc === p.logoPhoto;
                 return {
+                    photoLogo, photoBg: photoLogo ? logoBgColor(p) : null,
                     barColor: p.color,
                     nameText: `${p.name}${p.abbr ? ` (${p.abbr})` : ''}`,
                     statusTags,
@@ -3898,9 +3912,10 @@
                 const photoX = pad + barW + Math.round(6 * scale);
                 if(row.photoImg) {
                     const photoY = y + Math.round(4 * scale);
-                    ctx.fillStyle = pal.photoBg;
+                    ctx.fillStyle = row.photoLogo && row.photoBg ? row.photoBg : pal.photoBg;
                     ctx.fillRect(photoX, photoY, photoW, photoH);
-                    drawImageCover(ctx, row.photoImg, photoX, photoY, photoW, photoH);
+                    if(row.photoLogo) drawImageContain(ctx, row.photoImg, photoX, photoY, photoW, photoH, Math.round(3 * scale));
+                    else drawImageCover(ctx, row.photoImg, photoX, photoY, photoW, photoH);
                     ctx.strokeStyle = pal.photoStroke;
                     ctx.lineWidth = Math.max(1, Math.round(scale));
                     ctx.strokeRect(photoX + 0.5, photoY + 0.5, photoW - 1, photoH - 1);
@@ -7034,7 +7049,7 @@
                         <!-- 당 로고 (정사각형, 2행에 걸쳐 표시) — 올리기는 의회 › 정당 › 로고 -->
                         <div class="leader-photo-box" title="로고는 의회 › 정당 › 로고에서 바꿉니다 (눌러서 열기)" onclick="openPartyLogoTab()" style="grid-row:1/3;width:45px;height:45px;flex-shrink:0;">
                             ${photo
-                                ? `<img src="${photo}" alt="로고" style="width:100%;height:100%;object-fit:cover;display:block;">`
+                                ? `<img src="${photo}" alt="로고" style="${logoImgStyle(p)}">`
                                 : `<div style="width:100%;height:100%;background:${p.color}22;display:flex;align-items:center;justify-content:center;font-size:1.2rem;color:${p.color}88;">⚑</div>`
                             }
                         </div>
@@ -7395,14 +7410,16 @@
             const rmBtn = onclick => `<button onclick="${onclick}" style="background:transparent;border:1px solid #333;color:#555;font-family:inherit;font-size:0.75rem;padding:2px 8px;cursor:pointer;">✕ 로고 제거</button>`;
             const idArg = v => JSON.stringify(v).replace(/"/g, '&quot;');
             const bgToggle = (cur, pid, fid) => `<span class="system-radio-group logo-bg-toggle" title="로고 바탕 — 위키 틀 등에서 로고 뒤에 깔리는 색" style="margin:0;display:inline-flex;">
-                ${[['party', '당색 바탕'], ['white', '흰 바탕']].map(([k, t]) => `<button type="button" class="system-radio-btn ${(cur === 'white') === (k === 'white') ? 'active' : ''}" style="font-size:0.72rem;padding:2px 8px;" onclick="setLogoBg(${idArg(pid)},${idArg(fid)},'${k}')">${t}</button>`).join('')}</span>`;
+                ${[['party', '당색 바탕'], ['white', '흰 바탕']].map(([k, t]) => `<button type="button" class="system-radio-btn ${(cur === 'white') === (k === 'white') ? 'active' : ''}" style="font-size:0.72rem;padding:2px 8px;white-space:nowrap;flex:none;" onclick="setLogoBg(${idArg(pid)},${idArg(fid)},'${k}')">${t}</button>`).join('')}</span>`;
             container.innerHTML = parties.map((p, idx) => {
                 const factions = (p.factions || []).map(f => {
                     const fc = f.usePartyColor ? p.color : f.color;
                     return `<div style="display:flex;align-items:center;gap:8px;padding:6px 8px;background:#060810;border:1px solid #1e2030;border-left:3px solid ${fc};">
                         ${box(f.logoPhoto, fc, 40, `uploadFactionPhoto(this,${idx},'${f.id}','logoPhoto')`, '클릭하여 파벌 로고 업로드', f.logoBg)}
-                        <span style="flex:1;min-width:0;color:#aaa;font-size:0.85rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtmlText(f.name)}</span>
-                        ${f.logoPhoto ? bgToggle(f.logoBg, p.id, f.id) + rmBtn(`removeFactionLogo(${idx},'${f.id}')`) : ''}
+                        <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px;">
+                            <span style="color:#aaa;font-size:0.85rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtmlText(f.name)}</span>
+                            ${f.logoPhoto ? `<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">${bgToggle(f.logoBg, p.id, f.id)}${rmBtn(`removeFactionLogo(${idx},'${f.id}')`)}</div>` : ''}
+                        </div>
                     </div>`;
                 }).join('');
                 return `<div class="card-item ${p.isRuling ? 'is-ruling' : ''}" style="border-left-color:${p.color};">
@@ -8229,7 +8246,7 @@
                 h += `<div class="stat-block" style="border-left-color:${p.color};">
                     <div class="dyn-row" style="display:flex;gap:8px;align-items:stretch;">
                         ${p.hideStatsPhoto ? '' : `<div class="leader-photo-box dyn-photo" data-ratio="${isLogo?'1':'0.75'}" style="flex-shrink:0;background:#0a0c10;border:1px solid #222;overflow:hidden;">
-                            ${photo?`<img src="${photo}" alt="" style="width:100%;height:100%;object-fit:cover;display:block;">`:''}
+                            ${photo?`<img src="${photo}" alt="" ${photo === p.logoPhoto ? `data-logo="1" style="${logoImgStyle(p)}"` : 'style="width:100%;height:100%;object-fit:cover;display:block;"'}>`:''}
                         </div>`}
                         <div class="dyn-ref" style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px;">
                             <div style="display:flex;justify-content:space-between;align-items:baseline;gap:6px;flex-wrap:wrap;">
@@ -15368,6 +15385,7 @@
                 // 사진/이름 결정
                 let photo = '', leaderName = '', floorLeaderName = '', isLogo = false, hidePhotoBox = false;
                 let isIndependentCard = false;
+                let logoParty = null; // 사진 칸에 이 정당의 로고가 들어가면 (잘리지 않게 로고 바탕 위에)
                 if(s.coalitionName) {
                     const coal = coalObj;
                     if(coal) {
@@ -15383,6 +15401,7 @@
                     isLogo     = party?.showLogoInStats ?? false;
                     hidePhotoBox = !!party?.hideStatsPhoto;
                     photo      = (party && !hidePhotoBox) ? (isLogo ? (party.logoPhoto||party.leaderPhoto||'') : (party.leaderPhoto||party.logoPhoto||'')) : '';
+                    if(party && photo && photo === party.logoPhoto) logoParty = party;
                     leaderName = party?.leaderName || '';
                     floorLeaderName = party?.floorLeaderName || '';
                     isIndependentCard = party?.ideologyId === IND_IDEOLOGY_ID;
@@ -15420,7 +15439,7 @@
                     <div class="dyn-row" style="display:flex;gap:8px;align-items:stretch;">
                         <!-- 사진: JS에서 오른쪽 텍스트 실측 높이에 맞춰 px로 직접 지정. "X"로 표시 안 함을 고르면 칸 자체를 없앰 -->
                         ${hidePhotoBox ? '' : `<div class="leader-photo-box dyn-photo" data-ratio="${isLogo?'1':'0.75'}" style="flex-shrink:0;background:#0a0c10;border:1px solid #222;overflow:hidden;">
-                            ${photo?`<img src="${photo}" alt="" style="width:100%;height:100%;object-fit:cover;display:block;">`:''}
+                            ${photo?`<img src="${photo}" alt="" ${logoParty && photo === logoParty.logoPhoto ? `data-logo="1" style="${logoImgStyle(logoParty)}"` : 'style="width:100%;height:100%;object-fit:cover;display:block;"'}>`:''}
                         </div>`}
                         <!-- 오른쪽 3행 -->
                         <div class="dyn-ref" style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px;">
