@@ -791,18 +791,6 @@ window.DnoLangPacks.en = {
    "Coups · junta · military setup"
   ],
   [
-   "혁명 · 당-국가 체제 · 선거인단 (+1.6.1)",
-   "Revolution · party-state · electoral college (+1.6.1)"
-  ],
-  [
-   "국회공성전 — 봉쇄 돌파 · 의장석 점거 (+1.6.1 · 1.6.2)",
-   "Parliament siege — breaking the blockade · occupying the podium (+1.6.1 · 1.6.2)"
-  ],
-  [
-   "세력 변화 타임라인 · 위키 틀 · 냉전 국가 순위 (+1.6.1 ~ 1.6.3)",
-   "Party strength timeline · wiki infobox · Cold War nation ranking (+1.6.1 ~ 1.6.3)"
-  ],
-  [
    "미수복 지역 · 영토 통일",
    "Unrecovered territories · unification"
   ],
@@ -6667,12 +6655,12 @@ window.DnoLangPacks.en = {
    "1.6.0 - The Tennis Court Oath \"Serment du Jeu de paume\""
   ],
   [
-   "1.6.1 - 주사위는 던져졌다 \"Alea iacta est\"",
-   "1.6.1 - The die is cast \"Alea iacta est\""
+   "1.6.2 - 주사위는 던져졌다 \"Alea iacta est\"",
+   "1.6.2 - The die is cast \"Alea iacta est\""
   ],
   [
-   "1.6.3 - 대담하라! \"De l'audace!\"",
-   "1.6.3 - Be bold! \"De l'audace!\""
+   "1.6.4 - 대담하라! \"De l'audace!\"",
+   "1.6.4 - Be bold! \"De l'audace!\""
   ],
   [
    "- 법령정보센터식 법전 — 가결된 법안을 조문 형태로 모아 보는 입법 기록",
@@ -6703,12 +6691,12 @@ window.DnoLangPacks.en = {
    "1.6.0 - The Tennis Court Oath"
   ],
   [
-   "1.6.1 - 주사위는 던져졌다",
-   "1.6.1 - The die is cast"
+   "1.6.2 - 주사위는 던져졌다",
+   "1.6.2 - The die is cast"
   ],
   [
-   "1.6.3 - 대담하라!",
-   "1.6.3 - Be bold!"
+   "1.6.4 - 대담하라!",
+   "1.6.4 - Be bold!"
   ],
   [
    "- 법안에 조항 개념 추가 — 제1조 · 제2조처럼 조항 단위로 쓰고 고치기",
@@ -6719,12 +6707,12 @@ window.DnoLangPacks.en = {
    "- Legislation screen redesign"
   ],
   [
-   "1.6.4 - 영광이 산 위에서 꺾였도다",
-   "1.6.4 - Thy glory is slain upon thy high places"
+   "1.6.5 - 영광이 산 위에서 꺾였도다",
+   "1.6.5 - Thy glory is slain upon thy high places"
   ],
   [
-   "1.6.5 - 왕은 죽었다, 국왕 만세!",
-   "1.6.5 - The king is dead, long live the king!"
+   "1.6.6 - 왕은 죽었다, 국왕 만세!",
+   "1.6.6 - The king is dead, long live the king!"
   ],
   [
    "- 왕정복고 — 군주제 정당의 쿠데타 · 혁명으로 군주제 부활",
@@ -7485,7 +7473,7 @@ window.DnoLangPacks.en = {
   ["총선 파벌 나눠서 · 합쳐서", "Split or merged factions in elections"],
   ["- 총선에서 파벌 나눠서 · 합쳐서 — 정당마다 개표 결과를 반영할 때 파벌 의석을 선거 전 몫대로 나눌지(나눠서), 정당 몫으로 합칠지(합쳐서) 고름. 지역 기반 파벌(예: 바이에른의 기독교사회연합)은 고른 지역구들에서 정당이 얻는 표만큼 새 의석을 가져감", "- Split or merged factions in elections — for each party, choose whether faction seats are divided by their pre-election shares (split) or merged into the party (merged) when results are applied. A regional faction (e.g. the CSU in Bavaria) takes new seats in proportion to the party's votes in its chosen districts"],
   ["튜토리얼 전면 개정: 서독", "Tutorial overhaul: West Germany"],
-  ["- 튜토리얼 전면 개정 — 가상의 \"튜토리얼 공화국\" 대신 1983년 서독(독일연방공화국, 제10대 연방의회): 실제 정당 · 의석(기민·기사연합 · 사회민주당 · 자유민주당 · 녹색당), 연방의회 · 연방평의회, 주별 지역구 · 성향, 기본법 · 상임위원회, 동독 주는 지역구가 아닌 땅(1.6.6 미리보기에선 미수복 지역)", "- Tutorial overhaul — instead of the made-up \"Tutorial Republic\", West Germany (the Federal Republic of Germany, 10th Bundestag) in 1983: real parties and seats (CDU/CSU · SPD · FDP · Greens), Bundestag and Bundesrat, state districts and leanings, the Basic Law and standing committees, with the East German states as land outside the districts (unrecovered territory in the 1.6.6 preview)"],
+  ["- 튜토리얼 전면 개정 — 가상의 \"튜토리얼 공화국\" 대신 1983년 서독(독일연방공화국, 제10대 연방의회): 실제 정당 · 의석(기민·기사연합 · 사회민주당 · 자유민주당 · 녹색당), 연방의회 · 연방평의회, 주별 지역구 · 성향, 기본법 · 상임위원회, 동독 주는 지역구가 아닌 땅(1.6.7 미리보기에선 미수복 지역)", "- Tutorial overhaul — instead of the made-up \"Tutorial Republic\", West Germany (the Federal Republic of Germany, 10th Bundestag) in 1983: real parties and seats (CDU/CSU · SPD · FDP · Greens), Bundestag and Bundesrat, state districts and leanings, the Basic Law and standing committees, with the East German states as land outside the districts (unrecovered territory in the 1.6.7 preview)"],
   ["- 군부 설정 — 국방부 장관 · 참모 · 장성 등 군 지휘부를 정해 둠 (쿠데타 주도 · 진압에 쓰임)", "- Military command — set up the military leadership such as the defense minister, chiefs of staff and generals (used to lead or put down coups)"],
   ["Give me liberty, or give me death! : 테니스 코트의 맹세", "Give me liberty, or give me death! : The Tennis Court Oath"],
   ["로고는 의회 › 정당 › 로고에서 바꿉니다 (눌러서 열기)", "Change logos in Parliament › Parties › Logo (click to open)"],
@@ -7638,8 +7626,8 @@ window.DnoLangPacks.en = {
    "Downloads a theme file filled with the current theme's colours. Change the id, name and colours, then put it in its own folder inside the desktop app's mods folder and it shows up under \"Mod themes\"."
   ],
   [
-   "1.6.6 - 즉시, 지체 없이",
-   "1.6.6 - Immediately, without delay"
+   "1.6.7 - 즉시, 지체 없이",
+   "1.6.7 - Immediately, without delay"
   ],
   [
    "영토 통일",
@@ -7737,7 +7725,7 @@ window.DnoLangPacks.en = {
   ["- 종속국 의회 — 종속국마다 따로 의회(의석 · 정당 · 선거)를 둠", "- Dependency parliaments — each dependency has its own parliament (seats, parties, elections)"],
   ["- 종속국 합병 — 종속국을 본국에 편입해 일반 지역구로 만듦 (선거 · 의석에 포함)", "- Annexing dependencies — merge a dependency into the home nation as regular districts (counted in elections and seats)"],
   ["- 종속국 해방 — 종속국을 독립시켜 본국에서 떼어 냄", "- Releasing dependencies — grant a dependency independence and split it off from the home nation"],
-  ["1.6.7 - 인간은 자유롭게 태어났다 \"L'homme est né libre.\"", "1.6.7 - Man is born free \"L'homme est né libre.\""],
+  ["1.6.1 - 인간은 자유롭게 태어났다 \"L'homme est né libre.\"", "1.6.1 - Man is born free \"L'homme est né libre.\""],
   ["국가 › 사람 탭", "Nation › People tab"],
   ["인물 커스텀 (이념 · 정당 · 파벌 · 자리)", "Custom people (ideology · party · faction · posts)"],
   ["지역구 후보 · 내각 자리 배정", "District candidates · cabinet posts"],
@@ -7827,7 +7815,7 @@ window.DnoLangPacks.en = {
   ["다시 추적", "Trace again"],
   ["연 지도가 여기 표시됩니다", "The opened map shows here"],
   ["그림에서 지역을 찾는 중…", "Finding regions in the image…"],
-  ["- 사이드바에 1.6.6 기준 전체 메뉴 — 본 게임 · 각 Teaser 화면에 아직 없는 기능(군부 · 쿠데타 · 혁명 · 왕실 · 공성전 · 세력 변화 · 위키 틀 · 미수복 · 경제 · 세계)도 제자리에 🔒와 열리는 버전으로 표시, 누르면 언제 열리는지 안내", "- Sidebar shows the full 1.6.6 menu — features not yet in the main game or a given Teaser (military · coup · revolution · royal house · siege · power shifts · wiki box · unrecovered · economy · world) appear in place with 🔒 and the version they arrive in; clicking tells you when they open"],
+  ["- 사이드바에 1.6.7 기준 전체 메뉴 — 본 게임 · 각 Teaser 화면에 아직 없는 기능(군부 · 쿠데타 · 혁명 · 왕실 · 공성전 · 세력 변화 · 위키 틀 · 미수복 · 경제 · 세계)도 제자리에 🔒와 열리는 버전으로 표시, 누르면 언제 열리는지 안내", "- Sidebar shows the full 1.6.7 menu — features not yet in the main game or a given Teaser (military · coup · revolution · royal house · siege · power shifts · wiki box · unrecovered · economy · world) appear in place with 🔒 and the version they arrive in; clicking tells you when they open"],
   ["국가 순위", "Country ranking"],
   ["진영", "Blocs"],
   ["미수복", "Unrecovered"],
@@ -7841,6 +7829,13 @@ window.DnoLangPacks.en = {
   ["경제", "Economy"],
   ["세계", "World"],
   ["사람", "People"],
+  ["국가 › 사람 — 인물 · 자리 배정 · 지역구 후보", "Nation › People — people · post assignment · district candidates"],
+  ["쿠데타 · 군정 · 군부 설정 (+1.6.1)", "Coup · military rule · military settings (+1.6.1)"],
+  ["혁명 · 당-국가 체제 · 선거인단 (+1.6.1 · 1.6.2)", "Revolution · party-state · electoral college (+1.6.1 · 1.6.2)"],
+  ["국회공성전 — 봉쇄 돌파 · 의장석 점거 (+1.6.1 ~ 1.6.3)", "Parliament siege — breaking the blockade · occupying the podium (+1.6.1 ~ 1.6.3)"],
+  ["세력 변화 타임라인 · 위키 틀 · 냉전 국가 순위 (+1.6.1 ~ 1.6.4)", "Party strength timeline · wiki infobox · Cold War nation ranking (+1.6.1 ~ 1.6.4)"],
+  ["왕정복고 · 전제군주정 · 왕위 계승 · 친위 쿠데타 · 공화 혁명 (+1.6.1 ~ 1.6.5)", "Restoration · absolute monarchy · succession · self-coup · republican revolution (+1.6.1 ~ 1.6.5)"],
+  ["미수복 지역 · 영토 통일 (+1.6.1 ~ 1.6.6)", "Unrecovered territories · reunification (+1.6.1 ~ 1.6.6)"],
   ["- 버전 표시 v1.6.0", "- Version label v1.6.0"],
   ["법안을 만들고 통과시키는 과정입니다. 메뉴 위의 단계 막대(제출 › 위원회 › 본회의 › 서명 · 기록 › 법령)에 단계마다 법안 수가 보이고, 누르면 그 탭으로 갑니다.", "The process of drafting bills and getting them passed. The stage bar above the menu (Submit › Committees › Floor › Signing · Records › Statutes) shows the number of bills at each stage — click one to jump to that tab."],
   ["새 법안 작성 — 종류(법률안 · 헌법 개정안), 제목, 조문(제1조 · 제2조 … 조 단위로 쓰고 순서를 바꿈), 태그, 가결 기준. 기존 법안 수정과 개정안도 여기서.", "Draft a new bill — type (bill · constitutional amendment), title, articles (written article by article, Article 1, Article 2 …, reorderable), tags and passage threshold. Editing existing bills and amendments is here too."],
