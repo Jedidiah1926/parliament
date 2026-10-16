@@ -5,8 +5,11 @@ const { contextBridge, ipcRenderer } = require('electron');
 // 모드 폴더 · Steam 창작마당에서 찾은 모드 — 언어 엔진(lang.js) · 테마(thememode.js)가 페이지 시작 때 바로 읽는다
 let modList = { languages: [], themes: [], presets: [], presetLangs: [] };
 try { modList = ipcRenderer.sendSync('mods:list') || modList; } catch (e) { /* 모드 없이 계속 */ }
+let steamBuild = false;
+try { steamBuild = !!ipcRenderer.sendSync('app:is-steam'); } catch (e) { /* 아님 */ }
 
 contextBridge.exposeInMainWorld('hemicycleDesktop', {
+    isSteamBuild: steamBuild, // Steam 판 — 정식 출시(js/official.js) 뒤에도 플레이를 막지 않음
     modLanguagePacks: modList.languages || [],
     modThemes: modList.themes || [],
     modPresets: modList.presets || [],       // 목록(제목 · 설명 등)만 — 상태는 loadModPreset(key)로

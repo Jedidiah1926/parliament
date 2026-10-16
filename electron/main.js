@@ -252,6 +252,11 @@ ipcMain.handle('update:install', () => updater.install());
 ipcMain.handle('update:set-auto', (event, on) => updater.setAuto(on));
 ipcMain.handle('update:open-releases', () => updater.openReleases());
 ipcMain.handle('update:quit', () => app.quit());
+// Steam 판인지 (electron/steam.json에 appId) — js/official.js가 정식 출시 뒤에도 Steam 판은 막지 않게
+ipcMain.on('app:is-steam', event => {
+    try { event.returnValue = !!(process.env.HEMICYCLE_STEAM_APP_ID || JSON.parse(fs.readFileSync(path.join(__dirname, 'steam.json'), 'utf8')).appId); }
+    catch (e) { event.returnValue = false; }
+});
 
 app.whenReady().then(() => {
     createWindow();
