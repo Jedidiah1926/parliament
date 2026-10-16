@@ -19,6 +19,52 @@
         + '<line x1="10" y1="8" x2="10" y2="12.2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>'
         + '<circle cx="10" cy="14.6" r="1" fill="currentColor"/></svg></span>';
 
+    // ── 1.6.6 기준 전체 메뉴 — 이 화면(본 게임 · 각 Teaser)에 아직 없는 기능도 제자리에 🔒로 보여 준다 ──
+    // 실제 탭 버튼이 있으면 그대로 쓰고, 없을 때만 잠긴 항목을 끼워 넣는다 (그래서 버전마다 따로 적을 필요가 없음).
+    // after: 1.6.6 메뉴에서 바로 앞에 오는 항목(탭 버튼 id) / 그룹(메인 탭 키)
+    const FULL_MENU = {
+        groups: [
+            { key: 'economy', icon: '💹', label: '경제', ver: '1.6.9', after: 'nation' },
+            { key: 'world', icon: '🌐', label: '세계', ver: '1.6.4', after: 'economy', items: [['subTabRanking', '국가 순위'], ['subTabBlocs', '진영']] },
+        ],
+        items: [
+            { main: 'setup', id: 'subTabTimeline', label: '세력 변화', ver: '1.6.4', after: 'subTabList' },
+            { main: 'setup', id: 'subTabWikibox', label: '위키 틀', ver: '1.6.4', after: 'subTabTimeline' },
+            { main: 'law', id: 'subTabSiege', label: '공성전', ver: '1.6.3', after: 'subTabVote' },
+            { main: 'cabinet', id: 'subTabMilitary', label: '군부', ver: '1.6.1', after: 'subTabCabinetmembers' },
+            { main: 'cabinet', id: 'subTabCoup', label: '쿠데타', ver: '1.6.1', after: 'subTabMilitary' },
+            { main: 'cabinet', id: 'subTabRevolution', label: '혁명', ver: '1.6.2', after: 'subTabCoup' },
+            { main: 'cabinet', id: 'subTabRoyal', label: '왕실', ver: '1.6.5', after: 'subTabRevolution' },
+            { main: 'nation', id: 'subTabUnrecovered', label: '미수복', ver: '1.6.6', after: 'subTabRegions' },
+        ],
+    };
+    const LOCK_SVG = '<svg class="mn-lock" viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><rect x="3" y="7" width="10" height="7.5" rx="1.5" fill="currentColor"/>'
+        + '<path d="M5.2 7V5a2.8 2.8 0 0 1 5.6 0v2" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>';
+    // 잠긴 기능을 누르면 — 개발자 모드면 그 기능이 있는 Teaser 화면으로 갈지 묻고, 아니면 언제 열리는지 알려 준다
+    function lockedInfo(label, ver) {
+        const page = { '1.6.1': '61', '1.6.2': '62', '1.6.3': '63', '1.6.4': '64', '1.6.5': '65', '1.6.6': '66' }[ver];
+        const msg = `🔒 "${label}"은(는) ${ver} 업데이트에서 열리는 기능입니다.`;
+        const dev = window.HemiDev && window.HemiDev.isOn && window.HemiDev.isOn();
+        if (dev && page) {
+            const go = () => { location.href = `teaser${page}.html`; };
+            const q = `${msg}\n\nTeaser ${ver} 미리보기 화면으로 갈까요? (미리보기 화면의 저장 공간은 따로입니다)`;
+            if (window.DnoUI && window.DnoUI.confirm) window.DnoUI.confirm(q).then(ok => { if (ok) go(); });
+            else if (confirm(q)) go();
+            return;
+        }
+        if (window.DnoUI && window.DnoUI.alert) window.DnoUI.alert(msg); else alert(msg);
+    }
+    function lockedItem(label, ver) {
+        const it = document.createElement('button');
+        it.type = 'button';
+        it.className = 'mn-item mn-locked';
+        it.title = `${label} — ${ver}에서 열림`;
+        it.innerHTML = `${LOCK_SVG}<span class="mn-locked-label"></span><span class="mn-lock-ver">${ver}</span>`;
+        it.querySelector('.mn-locked-label').textContent = label;
+        it.addEventListener('click', () => lockedInfo(label, ver));
+        return it;
+    }
+
     function safeGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
     function safeSet(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* 저장 불가 환경 — 무시 */ } }
     function closedGroups() {
@@ -113,6 +159,45 @@
             });
             groupsEl.appendChild(g);
             return { key, g, head, mainBtn, items };
+        });
+
+        // ── 이 화면에 없는 1.6.6 기능을 제자리에 잠긴 항목 · 그룹으로 ──
+        const hasBtn = id => !!document.getElementById(id);
+        const placeAfter = (parent, el, ref) => { if (ref && ref.parentElement === parent) parent.insertBefore(el, ref.nextSibling); else parent.appendChild(el); };
+        FULL_MENU.groups.forEach(fg => {
+            if (groups.some(grp => grp.key === fg.key)) return;
+            const g = document.createElement('div');
+            g.className = 'mn-group mn-group-locked' + (!fg.items || closed.has(fg.key) ? ' closed' : '');
+            g.dataset.main = fg.key;
+            g.dataset.tone = GROUP_TONES[fg.key] || 'info';
+            g.innerHTML = `
+                <button type="button" class="mn-group-head" title="${fg.label} — ${fg.ver}에서 열림">
+                    <span class="mn-icon"></span><span class="mn-label"></span><span class="mn-lock-badge" title="언제 열리나요?">${LOCK_SVG}<span class="mn-lock-ver">${fg.ver}</span></span>${fg.items ? '<svg class="mn-chev" viewBox="0 0 12 12" width="12" height="12" aria-hidden="true"><path d="M3 7.5 6 4.5 9 7.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>' : ''}
+                </button>
+                <div class="mn-items"></div>`;
+            g.querySelector('.mn-icon').textContent = fg.icon;
+            g.querySelector('.mn-label').textContent = fg.label;
+            // 항목이 있는 잠긴 그룹(세계)은 다른 그룹처럼 머리를 눌러 접고 펴고, 🔒 버전 표시를 누르면 안내 — 항목이 없으면(경제) 머리를 누르면 안내
+            g.querySelector('.mn-group-head').addEventListener('click', e => {
+                if (!fg.items || e.target.closest('.mn-lock-badge') || document.body.classList.contains('side-nav-collapsed')) { lockedInfo(fg.label, fg.ver); return; }
+                g.classList.toggle('closed');
+                const set = closedGroups();
+                if (g.classList.contains('closed')) set.add(fg.key); else set.delete(fg.key);
+                safeSet(CLOSED_GROUPS_KEY, JSON.stringify(Array.from(set)));
+            });
+            (fg.items || []).forEach(([id, label]) => { const it = lockedItem(label, fg.ver); it.dataset.lockedId = id; g.querySelector('.mn-items').appendChild(it); });
+            const ref = groupsEl.querySelector(`:scope > .mn-group[data-main="${fg.after}"]`);
+            placeAfter(groupsEl, g, ref);
+        });
+        FULL_MENU.items.forEach(fi => {
+            if (hasBtn(fi.id)) return;
+            const grp = groups.find(x => x.key === fi.main);
+            if (!grp) return;
+            const itemsEl = grp.g.querySelector('.mn-items');
+            const it = lockedItem(fi.label, fi.ver);
+            it.dataset.lockedId = fi.id;
+            const real = grp.items.find(x => x.src.id === fi.after);
+            placeAfter(itemsEl, it, real ? real.el : itemsEl.querySelector(`[data-locked-id="${fi.after}"]`));
         });
 
         const nationSrc = document.getElementById('nationNameDisp');
