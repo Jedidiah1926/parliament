@@ -53,11 +53,14 @@ html:not([data-ui-mode="mobile"]) body.has-side-nav.side-nav-collapsed .side-nav
 .mn-locked-label { overflow: hidden; text-overflow: ellipsis; }
 .mn-lock { flex: none; }
 .mn-lock-ver { margin-left: auto; flex: none; font-size: .68em; line-height: 1.3; padding: 0 4px; border: 1px solid currentColor; border-radius: 3px; opacity: .8; }
-.mn-group-locked > .mn-group-head { opacity: .5; cursor: help; }
+.mn-group-locked > .mn-group-head { opacity: .5; }
+.mn-group-locked.closed > .mn-group-head, .mn-group-locked:not(:has(.mn-item)) > .mn-group-head { cursor: help; }
 .mn-group-locked > .mn-group-head:hover { opacity: .8; }
-.mn-group-locked > .mn-group-head .mn-lock { margin-left: auto; }
-.mn-group-locked > .mn-group-head .mn-lock-ver { margin-left: 4px; }
-body.side-nav-collapsed .mn-group-locked .mn-lock, body.side-nav-collapsed .mn-group-locked .mn-lock-ver { display: none; }
+.mn-lock-badge { margin-left: auto; display: inline-flex; align-items: center; gap: 4px; cursor: help; }
+.mn-lock-badge .mn-lock-ver { margin-left: 0; }
+.mn-group-locked > .mn-group-head .mn-chev { margin-left: 6px; }
+/* 잠긴 그룹 머리는 흐리게, 그 안의 잠긴 항목은 항목 자체가 흐리므로 그룹 전체를 겹쳐 흐리게 하지 않는다 */
+body.side-nav-collapsed .mn-lock-badge { display: none; }
 .mn-crumb-current { overflow: hidden; text-overflow: ellipsis; }
 .mn-crumb-nation { display: none; }
 

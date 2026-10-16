@@ -167,17 +167,24 @@
         FULL_MENU.groups.forEach(fg => {
             if (groups.some(grp => grp.key === fg.key)) return;
             const g = document.createElement('div');
-            g.className = 'mn-group mn-group-locked' + (fg.items ? '' : ' closed');
+            g.className = 'mn-group mn-group-locked' + (!fg.items || closed.has(fg.key) ? ' closed' : '');
             g.dataset.main = fg.key;
             g.dataset.tone = GROUP_TONES[fg.key] || 'info';
             g.innerHTML = `
                 <button type="button" class="mn-group-head" title="${fg.label} — ${fg.ver}에서 열림">
-                    <span class="mn-icon"></span><span class="mn-label"></span>${LOCK_SVG}<span class="mn-lock-ver">${fg.ver}</span>
+                    <span class="mn-icon"></span><span class="mn-label"></span><span class="mn-lock-badge" title="언제 열리나요?">${LOCK_SVG}<span class="mn-lock-ver">${fg.ver}</span></span>${fg.items ? '<svg class="mn-chev" viewBox="0 0 12 12" width="12" height="12" aria-hidden="true"><path d="M3 7.5 6 4.5 9 7.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>' : ''}
                 </button>
                 <div class="mn-items"></div>`;
             g.querySelector('.mn-icon').textContent = fg.icon;
             g.querySelector('.mn-label').textContent = fg.label;
-            g.querySelector('.mn-group-head').addEventListener('click', () => lockedInfo(fg.label, fg.ver));
+            // 항목이 있는 잠긴 그룹(세계)은 다른 그룹처럼 머리를 눌러 접고 펴고, 🔒 버전 표시를 누르면 안내 — 항목이 없으면(경제) 머리를 누르면 안내
+            g.querySelector('.mn-group-head').addEventListener('click', e => {
+                if (!fg.items || e.target.closest('.mn-lock-badge') || document.body.classList.contains('side-nav-collapsed')) { lockedInfo(fg.label, fg.ver); return; }
+                g.classList.toggle('closed');
+                const set = closedGroups();
+                if (g.classList.contains('closed')) set.add(fg.key); else set.delete(fg.key);
+                safeSet(CLOSED_GROUPS_KEY, JSON.stringify(Array.from(set)));
+            });
             (fg.items || []).forEach(([id, label]) => { const it = lockedItem(label, fg.ver); it.dataset.lockedId = id; g.querySelector('.mn-items').appendChild(it); });
             const ref = groupsEl.querySelector(`:scope > .mn-group[data-main="${fg.after}"]`);
             placeAfter(groupsEl, g, ref);
