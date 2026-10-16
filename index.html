@@ -478,8 +478,8 @@
                 </button>`).join('') + `
                 <div class="home-lang-tools">
                     <button type="button" class="home-lang-more" onclick="document.getElementById('langPackFileInput').click()">언어 팩 불러오기 (.json)</button>
-                    <button type="button" class="home-lang-more" onclick="downloadLangTemplate('kr')">번역 템플릿 받기 (KR · 한국어 기준)</button>
-                    <button type="button" class="home-lang-more" onclick="downloadLangTemplate('en')">번역 템플릿 받기 (EN · 영어 기준)</button>
+                    ${window.HemiOfficial && window.HemiOfficial.playBlocked() ? '' : `<button type="button" class="home-lang-more" data-official-block onclick="downloadLangTemplate('kr')">번역 템플릿 받기 (KR · 한국어 기준)</button>
+                    <button type="button" class="home-lang-more" data-official-block onclick="downloadLangTemplate('en')">번역 템플릿 받기 (EN · 영어 기준)</button>`}
                     ${window.hemicycleDesktop && window.hemicycleDesktop.openModsFolder ? '<button type="button" class="home-lang-more" onclick="window.hemicycleDesktop.openModsFolder()">모드 폴더 열기</button>' : ''}
                 </div>`;
         }
@@ -506,6 +506,7 @@
             if(await DnoUI.confirm(`"${result.name}" 언어 팩을 불러왔습니다. 지금 이 언어로 바꿀까요?`)) { setLang(result.code); location.reload(); }
         }
         async function downloadLangTemplate(base) {
+            if(window.HemiOfficial && window.HemiOfficial.playBlocked()) { alert('정식 출시 뒤에는 이 판에서 번역 템플릿을 받을 수 없습니다 — Steam 판을 이용해 주세요.'); return; } // js/official.js
             try {
                 const text = await DnoLang.template(base);
                 const url = URL.createObjectURL(new Blob([text], { type: 'application/json' }));
