@@ -1,24 +1,20 @@
-// ===== Hemicycle 티저 1.6.3 (teaser63 · 64) — "De l'audace!" 국회공성전 미리보기 =====
-// teaser63.html = main.html + js/teaser61.js(1.6.1) + js/teaser62.js(1.6.2) + 이 파일. 저장 공간은 따로 ('hemicycleTeaser63:')
+// ===== Hemicycle 티저 1.6.3 (teaser63 ~ 67) — "Vive la Révolution!" 미리보기 =====
+// teaser63.html = main.html + js/teaserpodium.js + js/teaser61.js ~ js/teaser62.js(1.6.1 ~ 1.6.2) + 이 파일. 저장 공간은 따로 ('hemicycleTeaserV2-63:')
 //
-//   입법 › 공성전
-//   - 계엄 중 봉쇄 돌파: 계엄군 · 경찰이 국회를 막은 상태에서 의원들이 본회의장에 들어가야 계엄 해제 결의안을 표결할 수 있다.
-//     정당마다 참여율을 정하면 의원 한 명 한 명이 봉쇄를 뚫는지 굴려 보고, 들어간 의원만 표결한다 (가결 기준은 재적 과반 — 못 들어온 의원은 표결 제외).
-//     봉쇄 강도(군 지휘부 충성도가 기본값) · 시민 지원 · 정당 결속도가 입장 확률에 들어간다. 가결되면 계엄 해제.
-//     입구 저지: 표결을 막으려는 정당이 본회의장 입구를 몸으로 막을 수 있다 (봉쇄선을 뚫은 의원도 막힘, 막은 정당 지지율 하락).
-//     과반에 못 미치면 들어간 의원들도 계엄군에게 봉쇄선 밖으로 끌려 나간다.
-//     옆 시각 화면(하원 반원) 위에서 의원들이 봉쇄선 → 입구 → 통로 → 자기 줄을 따라 자리로 걸어가는 애니메이션 (누르면 건너뜀).
-//   - 물리적 의사 방해: 계엄과 무관하게, 반대하는 법안의 표결을 막으려 의장석을 점거하고 몸싸움을 벌인다.
-//     성공 확률 = 참여 의원 수 · 상대 진영 크기 · 정당 결속도 · 의장 경호권 발동 · 직권상정 · 국회선진화법. 성공하면 표결 무산.
-//     옆 반원 화면에서 점거 의원들이 자리 → 통로 → 의장석으로 몰려가 둘러싸고, 경호권이면 경위가 입구로 들어와 맞붙는 애니메이션.
-//     (애니메이션은 켜고 끌 수 있고 0.5× · 1× · 2× · 4× 속도로 볼 수 있다)
-//   - 폭력의 대가: 점거한 정당은 지지율 페널티(경호권으로 몸싸움이 나면 의장 쪽 여당도 조금), 다친 의원은 다음 표결 몇 번을 결석.
-//     "국회선진화법"을 켜면 직권상정이 막히고 폭력 페널티가 두 배 (국회회의방해죄 고발).
-/* global getAppState, setAppState, switchSubTab, parties, coalitions, elecStore, emergencyPowers, chamberList, chamberDisplayName,
-   renderEmergencyPowers, applyMartialLawEffects, showCustomAlert, showCustomConfirm, escapeHtmlText, formatNationDate, bills,
-   dotCache, voteState, seatAssignments, seatMemberInfo, requiredSeatsFor, getBillOverallStatus, hasSenateChamber, hasThirdChamber,
-   renderBillList, renderArchiveList, syncBillSelect, selectBillForVote, updateVoteResults, updateConfirmButtons, redrawAll,
-   chamberLeaders, simulate, refreshUI, switchDispTab, chamberSetView */
+//   - 내각 › 혁명: 민중이 주체 — 주도 이념(민주 · 공산주의)과 혁명 정당을 고르면 성공 확률을 요인별로 보여 준다
+//     (정부 불신 · 군정/당-국가/계엄 · 활동 금지 정당 · 혁명 정당 지지율 · 그 정당이 앞서는 지역의 인구 · 군의 충성)
+//       공산주의 혁명 성공 → 숨겨진 정부 형태 "당-국가 체제": 혁명 정당 일당 집권, 다른 정당은 활동 금지 또는 우당(통일전선),
+//         총서기 겸 국가주석 · 총리, 의회는 최고인민회의(의석은 혁명 정당 85% · 우당이 나머지 → 거의 만장일치), 선거는 단일 후보 찬반 투표
+//       민주 혁명 성공 → 군정 · 당-국가 체제 · 계엄 붕괴, 막혔던 정당 복권, 새 헌법(법령 › 헌법), 새 총선 안내
+//       둘 다: 혁명 뒤 국호 · 국기를 바꿀 수 있다 / 실패: 혁명 정당 활동 금지 · 지지율 절반, 정부가 계엄령 선포
+//   - 선거인단 시스템 (선거 › 방식에서 선거인단제를 고르면): 선거인 단위(권역 · 지역구), 선거인 수(인구 비례 · 의석 수 + 가산 · 직접 입력),
+//     승자독식 · 비례 배분, 과반 기준과 과반 미달 시(의회 결정 · 최다 득표), 신의 없는 선거인(%), 결과 지도
+/* global getAppState, setAppState, switchSubTab, parties, coalitions, president, pm, elecStore, emergencyPowers, seatKeyFor,
+   chamberList, chamberDisplayName, renderEmergencyPowers, applyMartialLawEffects, simulate, refreshUI, showCustomAlert,
+   showCustomConfirm, escapeHtmlText, formatNationDate, effRoleLabel, elecRun, elecRunByElection, regions, districtRegionMap,
+   districtGrid, districtSeatCounts, districtPopulation, districtNames, districtTendencyFor, candidateUnionOf, nationFlag,
+   renderNationConfig, updateNationIdBar, legisGetState, legisSetState, renderDistrictSvgInto, tendencyColorForPct,
+   presElectionMode, ideologyName, findIdeology */
 (function () {
     'use strict';
     const root = document.documentElement;
@@ -26,22 +22,26 @@
 
     const esc = s => (typeof escapeHtmlText === 'function' ? escapeHtmlText(String(s ?? '')) : String(s ?? ''));
     const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
-    const uid = () => 's' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    const uid = () => 'r' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
     const partyById = id => parties.find(p => String(p.id) === String(id)) || null;
-    const partyByName = n => parties.find(p => p.name === n) || null;
-    const T61 = () => window.T61 || null;
+    const T62 = () => window.T62 || null;
+    const isInd = p => p && p.ideologyId === 9999;
+    const activeParty = p => p && p.status !== 'banned' && p.status !== 'dissolved' && !isInd(p);
+    const support = pid => Math.max(0, Number(elecStore?.house?.[pid]?.prob) || 0);
     const isGovParty = p => !!p && (p.isRuling || coalitions.some(c => c.isRuling && (c.members || []).some(id => String(id) === String(p.id))));
-    const nowDate = () => { try { return formatNationDate(); } catch (e) { return ''; } };
-    const houseName = () => { try { return chamberDisplayName('house'); } catch (e) { return '하원'; } };
-    const speakerName = () => (typeof chamberLeaders !== 'undefined' && chamberLeaders?.house?.speaker?.name) || '';
+    const DEFAULT_POP = 100000;
 
     // ---- 상태 (세이브의 teaser63 칸) ----
-    //   advancedAct: 국회선진화법 · cohesion: { pid: 0~100 } 정당 결속도 (기본 70)
-    //   injured: [{ id, ch, key, name, party, left }] — 다음 표결 left번 결석 (key = 좌석 배정 키라 의석 순서가 바뀌어도 같은 의원)
-    //   log: [{ id, date, kind, title, chance, success, effects }]
+    //   partyState: null | { partyId, allies:[pid], banned:[pid], prevNames:{house,senate,third}, since }
+    //   revBanned: [pid] — 혁명 뒤 활동 금지된 정당 (민주 혁명 때 복권)
+    //   log: [{ id, at, date, kind, party, chance, success, effects }]
+    //   ec: 선거인단 설정
     let S = fresh();
-    function fresh() { return { advancedAct: false, cohesion: {}, injured: [], log: [] }; }
-    let ui = { anim: true, animSpeed: 1, blockade: null, citizens: true, rate: {}, blockers: {}, blockShare: 60, billId: '', obstructors: {}, share: 60, guard: false, direct: false, last: null };
+    function fresh() {
+        return { partyState: null, revBanned: [], log: [],
+            ec: { unit: 'region', electors: 'pop', total: 538, bonus: 2, manual: {}, alloc: 'wta', noMajority: 'parliament', faithless: 0 } };
+    }
+    let ui = { kind: 'democratic', partyId: '', allies: {}, newName: '', newFlag: '', lastId: null };
 
     const origGet = window.getAppState;
     window.getAppState = function () {
@@ -53,957 +53,615 @@
     window.setAppState = function (state) {
         const r = origSet.apply(this, arguments);
         const src = state && state.teaser63;
-        S = { ...fresh(), ...(src && typeof src === 'object' ? JSON.parse(JSON.stringify(src)) : {}) };
-        ['injured', 'log'].forEach(k => { if (!Array.isArray(S[k])) S[k] = []; });
-        if (!S.cohesion || typeof S.cohesion !== 'object') S.cohesion = {};
-        ui.last = null;
+        const base = fresh();
+        S = { ...base, ...(src && typeof src === 'object' ? JSON.parse(JSON.stringify(src)) : {}) };
+        S.ec = { ...base.ec, ...(S.ec || {}) };
+        if (!Array.isArray(S.log)) S.log = [];
+        if (!Array.isArray(S.revBanned)) S.revBanned = [];
         refresh();
         return r;
     };
 
-    // ---- 의석 ----
-    const cohesionOf = p => clamp(Number(S.cohesion[p.id] ?? 70), 0, 100);
-    // 하원 좌석 목록: [{ i, party, key, name }] — 공석 · 활동 금지 정당은 뺀다
-    function houseSeats() {
-        const dots = (typeof dotCache !== 'undefined' && dotCache.house) || [];
-        let bySeat = [];
-        try { bySeat = seatAssignments('house').bySeat || []; } catch (e) { /* 배정 전 */ }
-        return dots.map((d, i) => ({ i, d, party: partyByName(d.partyName), key: bySeat[i] || `#${i}` }))
-            .filter(s => s.d.partyName !== 'Vacant' && s.d.partyStatus !== 'banned' && s.party);
-    }
-    function seatName(s) {
-        let nm = '';
-        try { nm = (seatMemberInfo('house', s.i) || {}).name || ''; } catch (e) { /* 이름 없음 */ }
-        return nm || `${s.party.name} #${s.i + 1}`;
-    }
-    const seatParties = seats => [...new Set(seats.map(s => s.party))];
-    const injuredKeys = ch => new Set(S.injured.filter(x => x.ch === ch).map(x => x.key));
-
-    function cutSupport(p, factor) {
-        chamberList().forEach(ch => { const st = elecStore?.[ch]?.[p.id]; if (st) st.prob = Math.round((Number(st.prob) || 0) * factor * 10) / 10; });
-    }
-    function injure(pool, n) {
-        const picked = [];
-        const cand = pool.slice();
-        while (picked.length < n && cand.length) {
-            const s = cand.splice(Math.floor(Math.random() * cand.length), 1)[0];
-            if (S.injured.some(x => x.ch === 'house' && x.key === s.key)) continue;
-            const left = 1 + Math.floor(Math.random() * 3);
-            S.injured.push({ id: uid(), ch: 'house', key: s.key, name: seatName(s), party: s.party.name, left });
-            picked.push(`${seatName(s)} (${s.party.name}, ${left}번)`);
-        }
-        return picked;
-    }
-    function addLog(kind, title, chance, success, effects) {
-        const entry = { id: uid(), date: nowDate(), kind, title, chance, success, effects };
-        S.log.unshift(entry);
-        S.log = S.log.slice(0, 40);
-        ui.last = entry.id;
-        return entry;
-    }
-    function rerender() {
-        try { simulate(); refreshUI(); } catch (e) { /* 화면 준비 전 */ }
-        try { renderBillList(); renderArchiveList(); syncBillSelect(); updateConfirmButtons(); } catch (e) { /* 입법 화면 준비 전 */ }
-        renderSiege();
-    }
-
-    // ================= 계엄 중 봉쇄 돌파 =================
-    function defaultBlockade() {
-        const mil = T61() && T61().military;
-        if (mil && mil.length) return Math.round(mil.reduce((a, o) => a + (Number(o.loyalty) || 0), 0) / mil.length);
-        return 60;
-    }
-    const blockade = () => ui.blockade ?? defaultBlockade();
-    // 저지: 다른 정당(대개 여당)이 본회의장 입구를 몸으로 막아 해제 결의안 표결을 막으려 한다
-    const blockerParties = () => Object.keys(ui.blockers).filter(k => ui.blockers[k]).map(partyById).filter(Boolean);
-    const isBlocker = p => blockerParties().includes(p);
-    // 정당 참여율 기본값: 정부 · 여당 10%, 나머지 100% (저지하는 정당은 들어가지 않음)
-    const rateOf = p => (isBlocker(p) ? 0 : clamp(Number(ui.rate[p.id] ?? (isGovParty(p) ? 10 : 100)), 0, 100));
-    // 계엄군 봉쇄선을 뚫을 확률 (의원 한 명)
-    const entryProb = p => clamp(0.95 - blockade() * 0.005 + (cohesionOf(p) - 50) * 0.004 + (ui.citizens ? 0.1 : 0), 0.05, 0.97);
-    // 입구를 막는 인원과 그 벽에 막힐 확률
-    function wallInfo(seats) {
-        const hurt = injuredKeys('house');
-        const bl = blockerParties();
-        const pool = seats.filter(s => bl.includes(s.party) && !hurt.has(s.key));
-        const n = Math.round(pool.length * ui.blockShare / 100);
-        const coh = pool.length ? pool.reduce((a, s) => a + cohesionOf(s.party), 0) / pool.length : 50;
-        const stop = n ? clamp(n / Math.max(1, seats.length) * 1.4 * (0.7 + coh / 166), 0.03, 0.6) : 0;
-        return { pool, n, stop };
-    }
-    const passProb = (p, wall) => entryProb(p) * (1 - wall.stop);
-
-    function breakthroughOdds() {
-        const seats = houseSeats();
-        const need = requiredSeatsFor(seats.length, 0.5);
-        const hurt = injuredKeys('house');
-        const wall = wallInfo(seats);
-        const groups = seatParties(seats).map(p => {
-            const n = seats.filter(s => s.party === p && !hurt.has(s.key)).length;
-            return { p, n, try: Math.round(n * rateOf(p) / 100), prob: passProb(p, wall), blocker: isBlocker(p) };
+    // ================= 혁명 =================
+    function houseKeys() { return Object.keys(districtGrid.house || {}).filter(k => districtGrid.house[k]); }
+    const popOf = k => Number(districtPopulation?.house?.[k]) || DEFAULT_POP;
+    // 혁명 정당(없으면 정부 · 여당이 아닌 정당 전체)이 성향 1위인 지역의 인구 비율 — "여론 · 인구와 연계"
+    function popShareLed(partyId) {
+        const keys = houseKeys();
+        if (!keys.length || typeof districtTendencyFor !== 'function') return null;
+        let led = 0, all = 0;
+        keys.forEach(k => {
+            const pop = popOf(k); all += pop;
+            const v = districtTendencyFor(k, 'house').values || {};
+            const ranked = parties.filter(activeParty).map(p => [p, Number(v[p.id]) || 0]).sort((a, b) => b[1] - a[1]);
+            if (!ranked.length || ranked[0][1] <= 0) return;
+            const top = ranked[0][0];
+            if (partyId ? String(top.id) === String(partyId) : !isGovParty(top)) led += pop;
         });
-        const expected = groups.reduce((a, g) => a + g.try * g.prob, 0);
-        // 성공 확률은 몬테카를로로 어림 (400번)
-        let ok = 0;
-        for (let k = 0; k < 400; k++) {
-            let inn = 0;
-            groups.forEach(g => { for (let j = 0; j < g.try; j++) if (Math.random() < g.prob) inn++; });
-            if (inn >= need) ok++;
-        }
-        return { seats, need, groups, expected, wall, chance: Math.round(ok / 4) };
+        return all ? led / all : null;
     }
-
-    function breakthrough() {
-        if (!emergencyPowers.martialLaw.active) { showCustomAlert('계엄령이 선포된 상태에서만 할 수 있습니다.'); return; }
-        if (T61() && T61().junta) { showCustomAlert('군정에서는 의회가 해산돼 있습니다 — 내각 › 쿠데타 · 혁명으로 군정을 끝내세요.'); return; }
-        const odds = breakthroughOdds();
-        showCustomConfirm(`계엄군 봉쇄를 뚫고 ${houseName()} 본회의장에 들어가 계엄 해제 결의안을 표결합니다.${odds.wall.n ? `\n${blockerParties().map(p => p.name).join(' · ')} 의원 ${odds.wall.n}명이 입구를 막고 있습니다.` : ''}\n가결 기준: 재적 ${odds.seats.length}명의 과반 ${odds.need}명 · 예상 성공 확률 ${odds.chance}%\n계속하시겠습니까?`, () => {
-            const hurt = injuredKeys('house');
-            const entered = [], blocked = [], walled = [];
-            seatParties(odds.seats).forEach(p => {
-                const mine = odds.seats.filter(s => s.party === p && !hurt.has(s.key));
-                const tryN = Math.round(mine.length * rateOf(p) / 100);
-                mine.slice().sort(() => Math.random() - 0.5).slice(0, tryN).forEach(s => {
-                    if (Math.random() >= entryProb(p)) blocked.push(s);           // 계엄군 봉쇄선에서 막힘
-                    else if (Math.random() < odds.wall.stop) walled.push(s);      // 입구의 저지 인원에게 막힘
-                    else entered.push(s);
-                });
-            });
-            const wallSeats = odds.wall.pool.slice().sort(() => Math.random() - 0.5).slice(0, odds.wall.n);
-            const success = entered.length >= odds.need;
-            // 몸싸움 부상 — 막힌 의원 일부, 실패하면 끌려 나간 의원 일부, 저지와 부딪혔으면 저지 인원 일부 (애니메이션에 표시하려고 미리 고름)
-            const pick = (arr, rate) => arr.slice().sort(() => Math.random() - 0.5).slice(0, Math.round(arr.length * rate));
-            const hurtSeats = pick(blocked.concat(walled), 0.02 + Math.random() * 0.04)
-                .concat(success ? [] : pick(entered, 0.01 + Math.random() * 0.02))
-                .concat(walled.length ? pick(wallSeats, 0.02 + Math.random() * 0.03) : []);
-            playBreakthrough({ entered, blocked, walled, wallSeats, hurtSeats, need: odds.need, success },
-                () => applyBreakthrough(odds, entered, blocked, walled, wallSeats, hurtSeats, success));
-        });
-    }
-    function applyBreakthrough(odds, entered, blocked, walled, wallSeats, hurtSeats, success) {
-        const yea = entered.length;
-        const byParty = seatParties(entered).map(p => `${p.name} ${entered.filter(s => s.party === p).length}`).join(' · ') || '없음';
-        const effects = [`본회의장 입장 ${yea}명 (${byParty}) · 봉쇄선에 막힘 ${blocked.length}명${walled.length ? ` · 입구 저지에 막힘 ${walled.length}명` : ''}`,
-            `계엄 해제 결의안 — 찬성 ${yea} / 필요 ${odds.need} (재적 ${odds.seats.length})`];
-        if (wallSeats.length) {
-            const bl = blockerParties();
-            const mult = S.advancedAct ? 2 : 1;
-            bl.forEach(p => cutSupport(p, 1 - 0.05 * mult));
-            effects.push(`${bl.map(p => p.name).join(' · ')} 의원 ${wallSeats.length}명이 입구를 막음 — 지지율 ${5 * mult}% 하락${S.advancedAct ? ' (국회선진화법)' : ''}`);
-        }
-        const hurtList = hurtSeats.length ? injure(hurtSeats, hurtSeats.length) : [];
-        if (hurtList.length) effects.push(`부상 결석: ${hurtList.join(', ')}`);
-        // 결의안 기록 — 상정된 해제 결의안이 있으면 그것을, 없으면 새로
-        let bill = bills.find(b => b.isMartialLawLift && getBillOverallStatus(b) === 'pending');
-        if (!bill) {
-            bill = { id: 'b' + Date.now(), title: '계엄 해제 결의안', content: '', threshold: 0.5, numer: null, denom: null, tags: ['계엄해제'],
-                houseStatus: 'pending', senateStatus: 'pending', thirdStatus: 'pending', houseVote: null, senateVote: null, thirdVote: null,
-                version: 1, parentBillId: null, isAmendment: false, voteHistory: [], isMartialLawLift: true, martialLawLiftApplied: false };
-            bills.push(bill);
-        }
-        const res = success ? 'pass' : 'fail';
-        bill.houseStatus = res;
-        if (hasSenateChamber()) bill.senateStatus = success ? 'pass' : 'skip';
-        if (hasThirdChamber()) bill.thirdStatus = success ? 'pass' : 'skip';
-        bill.houseVote = { yea, nay: 0, abs: 0, total: odds.seats.length, required: odds.need };
-        bill.voteDate = bill.voteDate || nowDate();
-        (bill.voteHistory = bill.voteHistory || []).push({ chamber: 'house', result: res, date: bill.voteDate, yea, nay: 0, abs: 0, total: odds.seats.length, required: odds.need, threshold: 0.5, at: new Date().toISOString() });
-        bill.t63Breakthrough = { entered: yea, blocked: blocked.length, walled: walled.length };
-        if (success) {
-            bill.martialLawLiftApplied = true;
-            bill.vetoStatus = 'signed'; // 계엄 해제 결의안은 거부권 대상이 아님
-            emergencyPowers.martialLaw.active = false;
-            emergencyPowers.martialLaw.suspendParliament = false;
-            try { renderEmergencyPowers(); applyMartialLawEffects(); } catch (e) { /* 화면 준비 전 */ }
-            effects.push('가결 — 계엄령 해제');
-        } else {
-            effects.push('부결 — 과반에 못 미쳐 계엄군이 들어간 의원들을 봉쇄선 밖으로 끌어냄, 계엄 유지');
-        }
-        addLog('breakthrough', '계엄 중 봉쇄 돌파', odds.chance, success, effects);
-        rerender();
-    }
-
-    // ---- 봉쇄 돌파 애니메이션 — 옆 시각 화면(하원 반원) 위에 겹쳐 그린다 ----
-    // 의원들이 아래에서 올라와 계엄군 봉쇄선을 지나, 본회의장 입구 → 통로 → 자기 줄을 따라 걸어 자리에 앉는다.
-    // 봉쇄선이나 입구 저지 인원에게 막히면 물러나고, 과반에 못 미치면 들어간 의원들도 봉쇄선 밖으로 끌려 나간다.
-    // 하원 반원이 보이지 않거나(모바일 · 다른 탭) 움직임 줄이기 설정이면 건너뛰고 바로 결과. 화면을 누르면 끝으로 건너뜀.
-    function houseCanvasReady() {
-        const cvs = document.getElementById('houseCanvas');
-        return cvs && cvs.offsetParent !== null && cvs.clientWidth > 50 && (dotCache.house || []).length ? cvs : null;
-    }
-    // 애니메이션을 틀 수 있으면 하원 반원을 앞으로 띄우고 run(cvs), 아니면 바로 finish()
-    function playAnim(run, done) {
-        let finished = false;
-        const finish = () => { if (finished) return; finished = true; done(); };
-        const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-        if (!ui.anim || reduce) { finish(); return; }
-        try {
-            if (document.getElementById('dispTabHouse')?.style.display !== 'none' && !document.getElementById('dispPanelHouse')?.classList.contains('active')) switchDispTab('house');
-            if (document.getElementById('houseViewArcWrap')?.style.display === 'none') chamberSetView('house', 'arc');
-        } catch (e) { /* 시각 화면 없음 */ }
-        requestAnimationFrame(() => requestAnimationFrame(() => {
-            const cvs = houseCanvasReady();
-            if (!cvs) { finish(); return; }
-            run(cvs, finish);
-        }));
-    }
-    const playBreakthrough = (r, done) => playAnim((cvs, finish) => runBreakthroughAnim(cvs, r, finish), done);
-    const playObstruct = (r, done) => playAnim((cvs, finish) => runObstructAnim(cvs, r, finish), done);
-
-    // 점 목록(꺾은선)을 따라 거리 d만큼 간 위치
-    function polyAt(pts, d) {
-        for (let i = 1; i < pts.length; i++) {
-            const [x0, y0] = pts[i - 1], [x1, y1] = pts[i];
-            const seg = Math.hypot(x1 - x0, y1 - y0);
-            if (d <= seg) { const k = seg ? d / seg : 1; return [x0 + (x1 - x0) * k, y0 + (y1 - y0) * k]; }
-            d -= seg;
-        }
-        return pts[pts.length - 1];
-    }
-    const polyLen = pts => pts.reduce((a, p, i) => (i ? a + Math.hypot(p[0] - pts[i - 1][0], p[1] - pts[i - 1][1]) : 0), 0);
-    const ANIM_SPEEDS = [0.5, 1, 2, 4];
-
-    // ---- 애니메이션 공통 무대: 하원 반원 위에 겹친 캔버스 + 본회의장 구조 ----
-    // 아래쪽 계엄군 봉쇄선 → 본회의장 입구(가운데 아래) → 안쪽 둘레(가운데 빈 곳에 의장석) → 방사형 통로 → 자기 줄(호)
-    function animScene(cvs) {
-        const wrap = cvs.parentElement;
-        wrap.style.position = 'relative';
-        document.getElementById('t63Anim')?.remove();
-        const W = cvs.clientWidth, H = cvs.clientHeight;
-        const dpr = window.devicePixelRatio || 1;
-        const ov = document.createElement('canvas');
-        ov.id = 't63Anim';
-        ov.className = 't63-anim';
-        ov.width = W * dpr; ov.height = H * dpr;
-        ov.style.cssText = `position:absolute;left:${cvs.offsetLeft}px;top:${cvs.offsetTop}px;width:${W}px;height:${H}px;z-index:60;cursor:pointer;`;
-        ov.title = '눌러서 건너뛰기';
-        wrap.appendChild(ov);
-        const shade = document.querySelector('#dispPanelHouse .martial-law-shade');
-        if (shade) shade.style.opacity = '0.35';
-        const ctx = ov.getContext('2d');
-        ctx.scale(dpr, dpr);
-        const modern = root.getAttribute('data-theme-family') === 'modern';
-        const dark = root.getAttribute('data-theme-mode') === 'dark';
-        const C = modern ? { bg: dark ? 'rgba(10,10,12,.88)' : 'rgba(255,255,255,.9)', seat: dark ? '#3f3f46' : '#d4d4d8', text: dark ? '#fafafa' : '#18181b', dim: dark ? '#a1a1aa' : '#71717a', wood: dark ? '#5b4636' : '#c8a27a', font: 'Pretendard, system-ui, sans-serif' }
-            : { bg: 'rgba(5,7,10,.9)', seat: '#333', text: '#e6e6e6', dim: '#888', wood: '#6b5233', font: "'NeoDunggeunmo', monospace" };
-        const dots = dotCache.house;
-        const d0 = dots[0] || { cx: W / 2, cy: H - 60, r: 4 };
-        const CX = d0.cx, CY = d0.cy, dotR = d0.r;
-        const seatR = d => Math.hypot(d.x - CX, CY - d.y);
-        const rIn = Math.max(12, Math.min(...dots.filter(d => d.partyName !== 'Vacant').map(seatR)) - dotR * 1.6);
-        const g = {
-            ov, ctx, C, W, H, CX, CY, dotR, dots, rIn, modern,
-            ALERT: '#e05555', OK: '#3fbf7f', GOLD: '#e0b030',
-            barrierY: Math.min(H - 14, CY + 42), gateY: CY + 14, gateHalf: Math.max(14, rIn * 0.75),
-            AISLES: [0.08, 0.3, 0.5, 0.7, 0.92].map(k => k * Math.PI),
-            V: Math.max(0.25, W / 1700),
-        };
-        g.pol = (rad, a) => [CX + rad * Math.cos(a), CY - rad * Math.sin(a)];
-        // 의장석: 가운데 빈 곳, 의석을 바라보는 단상 — 반원 화면과 같은 자리 (js/teaserpodium.js)
-        const TP = window.TeaserPodium;
-        g.podium = TP ? TP.geom(CX, CY, W, 'house') : { x: CX, y: CY - rIn * 0.42, w: Math.max(26, rIn * 0.62), h: Math.max(9, dotR * 1.8) };
-        if (g.podium.speakerY == null) g.podium.speakerY = g.podium.y - g.podium.h;
-        g.showPodium = kind => (TP ? TP.showIn(kind) : true);
-        // 자리 → 자기 줄을 따라 가까운 통로 → 통로를 따라 안쪽 둘레까지
-        g.seatToFoot = d => {
-            const rad = seatR(d), th = Math.atan2(CY - d.y, d.x - CX);
-            const al = g.AISLES.reduce((b, a) => (Math.abs(a - th) < Math.abs(b - th) ? a : b), g.AISLES[0]);
-            const pts = [[d.x, d.y]];
-            const steps = Math.max(1, Math.ceil(Math.abs(th - al) / 0.05));
-            for (let i = 1; i <= steps; i++) pts.push(g.pol(rad, th + (al - th) * i / steps));
-            pts.push(g.pol(rIn, al));
-            return pts;
-        };
-        // 입구 → 통로 → 자기 자리
-        g.seatPath = (d, gx) => [[gx, g.gateY]].concat(g.seatToFoot(d).reverse());
-        g.dot = (x, y, color, alpha = 1, ring = null, r = dotR) => {
-            ctx.globalAlpha = alpha;
-            ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fillStyle = color; ctx.fill();
-            if (ring) { ctx.strokeStyle = ring; ctx.lineWidth = 2; ctx.stroke(); }
-            ctx.globalAlpha = 1;
-        };
-        g.label = (text, x, y, color, align = 'left') => {
-            ctx.font = `11px ${C.font}`; ctx.textAlign = align;
-            const w = ctx.measureText(text).width;
-            const lx = align === 'center' ? x - w / 2 : x;
-            ctx.fillStyle = C.bg; ctx.fillRect(lx - 4, y - 11, w + 8, 15);
-            ctx.fillStyle = color; ctx.fillText(text, x, y);
-        };
-        g.title = (text, sub, color) => {
-            ctx.textAlign = 'center';
-            ctx.font = `bold 15px ${C.font}`; ctx.fillStyle = color || C.text; ctx.fillText(text, W / 2, 20);
-            if (sub) { ctx.font = `11px ${C.font}`; ctx.fillStyle = C.dim; ctx.fillText(sub, W / 2, 36); }
-        };
-        g.bannerY = CY - Math.max(30, Math.min(CY * 0.35, rIn * 0.4 + 30)) - rIn * 0.25;
-        g.banner = (text, color, size = 18) => {
-            ctx.textAlign = 'center'; ctx.font = `bold ${size}px ${C.font}`;
-            const w = ctx.measureText(text).width;
-            ctx.fillStyle = C.bg; ctx.fillRect(W / 2 - w / 2 - 10, g.bannerY - size - 4, w + 20, size + 12);
-            ctx.strokeStyle = color; ctx.lineWidth = 1; ctx.strokeRect(W / 2 - w / 2 - 10, g.bannerY - size - 4, w + 20, size + 12);
-            ctx.fillStyle = color; ctx.fillText(text, W / 2, g.bannerY);
-        };
-        // 바탕: 좌석(filled면 의원이 앉아 있는 모습, 그 밖은 빈 좌석) · 통로 · 의장석(설정에 따라, speaker면 의장도)
-        g.base = (filled, kind, speaker = true) => {
-            ctx.clearRect(0, 0, W, H);
-            ctx.fillStyle = C.bg; ctx.fillRect(0, 0, W, H);
-            ctx.lineWidth = 1;
-            dots.forEach((d, i) => {
-                if (d.partyName === 'Vacant') return;
-                if (filled && filled(i)) g.dot(d.x, d.y, d.color, 0.35);
-                else { ctx.beginPath(); ctx.arc(d.x, d.y, d.r, 0, Math.PI * 2); ctx.strokeStyle = C.seat; ctx.stroke(); }
-            });
-            ctx.save();
-            ctx.strokeStyle = C.seat; ctx.lineWidth = 1; ctx.setLineDash([2, 4]);
-            g.AISLES.forEach(a => { const [x0, y0] = g.pol(rIn, a), [x1, y1] = g.pol(Math.hypot(W / 2, CY), a); ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke(); });
-            ctx.beginPath(); ctx.arc(CX, CY, rIn, Math.PI, 0); ctx.stroke();
-            ctx.restore();
-            if (!g.showPodium(kind)) return;
-            const pd = g.podium;
-            if (TP) TP.draw(ctx, pd, 'house', { wood: C.wood, speaker, label: '의장석', labelColor: C.dim });
-            else {
-                ctx.fillStyle = C.wood; ctx.fillRect(pd.x - pd.w / 2, pd.y - pd.h / 2, pd.w, pd.h);
-                ctx.strokeStyle = g.GOLD; ctx.lineWidth = 1; ctx.strokeRect(pd.x - pd.w / 2, pd.y - pd.h / 2, pd.w, pd.h);
-                ctx.font = `10px ${C.font}`; ctx.textAlign = 'center'; ctx.fillStyle = C.dim;
-                ctx.fillText('의장석', pd.x, pd.y + pd.h / 2 + 11);
-            }
-        };
-        // 재생: frame(t)가 true를 돌려주면 끝. 속도(ui.animSpeed)만큼 빨리, 누르면 끝으로, 끝나면 잠깐 두었다 사라짐
-        g.run = (frame, total, finish) => {
-            const speed = ui.animSpeed || 1;
-            let t0 = null, raf = 0, holdTimer = 0, skipped = false;
-            const close = () => {
-                cancelAnimationFrame(raf); clearTimeout(holdTimer);
-                ov.style.transition = 'opacity .5s'; ov.style.opacity = '0';
-                setTimeout(() => ov.remove(), 520);
-                if (shade) shade.style.opacity = '';
-            };
-            const step = now => {
-                if (t0 == null) t0 = now;
-                const t = skipped ? total + 1 : (now - t0) * speed;
-                frame(Math.min(t, total + 1));
-                if (t >= total) { if (!holdTimer) holdTimer = setTimeout(close, 2200); finish(); return; }
-                raf = requestAnimationFrame(step);
-            };
-            ov.addEventListener('click', () => {
-                if (!skipped && !holdTimer) { skipped = true; cancelAnimationFrame(raf); raf = requestAnimationFrame(step); }
-                else close();
-            });
-            raf = requestAnimationFrame(step);
-        };
-        return g;
-    }
-    const ease = t => (t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2);
-
-    // ---- 봉쇄 돌파 애니메이션 ----
-    // 의원들이 아래에서 올라와 계엄군 봉쇄선을 지나, 입구 → 통로 → 자기 줄을 따라 걸어 자리에 앉는다.
-    // 봉쇄선이나 입구 저지 인원에게 막히면 물러나고, 과반에 못 미치면 들어간 의원들도 봉쇄선 밖으로 끌려 나간다.
-    function runBreakthroughAnim(cvs, r, finish) {
-        const g = animScene(cvs);
-        const { ctx, C, W, H, CX, dotR, dots, V, barrierY, gateY, gateHalf, ALERT, OK } = g;
-        const hurtSet = new Set(r.hurtSeats.map(s => s.i));
-        const SPREAD = 1800, WALK = 650, BOUNCE = 700, HOLD = 500;
-        // 입구를 막는 저지 인원 — 입구 앞에 여러 줄로 미리 서 있다 (넘치는 인원은 숫자로만)
-        const sp = dotR * 1.9;
-        const cols = Math.max(1, Math.floor((2 * gateHalf) / sp));
-        const rowOff = [0, -1, 1, -2].map(k => k * sp * 0.9);
-        const wallers = r.wallSeats.slice(0, cols * rowOff.length).map((s, k) => {
-            const d = dots[s.i];
-            const row = Math.floor(k / cols), col = k % cols;
-            return { color: (d && d.color) || s.party.color, x: CX - gateHalf + sp / 2 + col * sp + (row % 2 ? sp / 2 : 0), y: gateY + 4 + rowOff[row], hurt: hurtSet.has(s.i) };
-        });
-        const wallFront = wallers.length ? Math.max(...wallers.map(w => w.y)) + dotR * 1.6 : gateY;
-        const movers = r.entered.map(s => ({ s, kind: 'in' })).concat(r.blocked.map(s => ({ s, kind: 'troops' })), r.walled.map(s => ({ s, kind: 'wall' }))).sort(() => Math.random() - 0.5);
-        let lastArrive = 0;
-        movers.forEach((m, k) => {
-            const d = dots[m.s.i];
-            m.color = (d && d.color) || m.s.party.color || '#888';
-            m.sx = 12 + Math.random() * (W - 24);
-            m.bx = CX + (m.sx - CX) * 0.6 + (Math.random() - 0.5) * 20;
-            m.start = (k / Math.max(1, movers.length)) * SPREAD + Math.random() * 120;
-            m.hurt = hurtSet.has(m.s.i);
-            m.gx = CX + (Math.random() * 2 - 1) * gateHalf;
-            if (m.kind === 'in') {
-                m.path = [[m.bx, barrierY]].concat(d ? g.seatPath(d, m.gx) : [[m.gx, gateY]]);
-                m.len = polyLen(m.path);
-                lastArrive = Math.max(lastArrive, m.start + WALK + m.len / V);
-            } else if (m.kind === 'wall') {
-                m.path = [[m.bx, barrierY], [m.gx, Math.min(barrierY - 4, wallFront)]];
-                m.len = polyLen(m.path);
-                m.end = m.start + WALK + m.len / V + HOLD + BOUNCE;
-            } else m.end = m.start + WALK + BOUNCE;
-        });
-        // 과반 미달이면 다 들어간 뒤 계엄군이 의원들을 봉쇄선 밖으로 끌어낸다 (자리 → 통로 → 입구 → 봉쇄선 밖)
-        const expelAt = lastArrive + 700;
-        let expelEnd = expelAt;
-        if (!r.success) movers.filter(m => m.kind === 'in').forEach(m => {
-            m.back = m.path.slice().reverse().concat([[m.bx, H + 24]]);
-            m.backLen = polyLen(m.back);
-            m.expelStart = expelAt + Math.random() * 600;
-            expelEnd = Math.max(expelEnd, m.expelStart + m.backLen / (V * 1.5));
-        });
-        const total = Math.max(SPREAD + 120 + WALK + BOUNCE + HOLD, r.success ? lastArrive : expelEnd, ...movers.map(m => m.end || 0)) + 250;
-
-        g.run(t => {
-            g.base(null, 'breakthrough');
-            // 계엄군 봉쇄선
-            ctx.save();
-            ctx.strokeStyle = ALERT; ctx.lineWidth = 3; ctx.setLineDash([10, 6]);
-            ctx.beginPath(); ctx.moveTo(6, barrierY); ctx.lineTo(W - 6, barrierY); ctx.stroke();
-            ctx.restore();
-            wallers.forEach(w => g.dot(w.x, w.y, w.color, 1, w.hurt && t > SPREAD ? ALERT : (g.modern ? '#00000055' : '#ffffff55')));
-            let stopped = 0, walledNow = 0, inCount = 0;
-            movers.forEach(m => {
-                const lt = t - m.start;
-                if (lt < 0) return;
-                let x, y, alpha = 1, ring = null;
-                if (lt < WALK) { const k = ease(lt / WALK); x = m.sx + (m.bx - m.sx) * k; y = H + 8 + (barrierY - H - 8) * k; }
-                else if (m.kind === 'troops') {
-                    stopped++;
-                    const k = Math.min(1, (lt - WALK) / BOUNCE);
-                    x = m.bx + Math.sin(k * Math.PI * 6) * 3 * (1 - k); y = barrierY + 4 + k * 40; alpha = 1 - k;
-                    if (m.hurt) ring = ALERT;
-                } else if (m.kind === 'wall') {
-                    const d = (lt - WALK) * V;
-                    if (d < m.len) [x, y] = polyAt(m.path, d);
-                    else {
-                        walledNow++;
-                        const k = Math.min(1, (lt - WALK - m.len / V - HOLD) / BOUNCE);
-                        const [ex, ey] = m.path[m.path.length - 1];
-                        if (k <= 0) { x = ex + Math.sin(lt / 30) * 2; y = ey; }
-                        else { x = ex + (m.bx - ex) * k; y = ey + (barrierY + 40 - ey) * k; alpha = 1 - k; }
-                        if (m.hurt) ring = ALERT;
-                    }
-                } else {
-                    const d = (lt - WALK) * V;
-                    if (d >= m.len) inCount++;
-                    if (m.back && t >= m.expelStart) {
-                        const bd = (t - m.expelStart) * V * 1.5;   // 끌려 나감
-                        if (bd >= m.backLen) return;
-                        [x, y] = polyAt(m.back, bd);
-                        ring = ALERT;
-                        if (y > barrierY) alpha = Math.max(0, 1 - (y - barrierY) / 24);
-                    } else if (d < m.len) [x, y] = polyAt(m.path, d);
-                    else [x, y] = m.path[m.path.length - 1];
-                }
-                if (alpha <= 0) return;
-                g.dot(x, y, m.color, alpha, ring);
-            });
-            g.label('계엄군 봉쇄선', 8, barrierY + 15, ALERT);
-            if (r.wallSeats.length) g.label(`입구 저지 ${r.wallSeats.length}명`, CX + gateHalf + 10, gateY + 4, C.dim);
-            g.title(`입장 ${inCount} / 필요 ${r.need}`,
-                `봉쇄선에 막힘 ${stopped}${r.walled.length ? ` · 입구 저지에 막힘 ${walledNow}` : ''}${r.hurtSeats.length ? ` · 부상 ${r.hurtSeats.length}` : ''}`,
-                inCount >= r.need ? OK : (!r.success && t >= expelAt ? ALERT : null));
-            if (t > total) g.banner(r.success ? '가결 — 계엄 해제' : '부결 — 계엄 유지', r.success ? OK : ALERT);
-            else if (!r.success && t >= expelAt) g.banner('과반 미달 — 계엄군이 의원들을 끌어냅니다', ALERT, 14);
-        }, total, finish);
-    }
-
-    // ---- 의장석 점거 애니메이션 ----
-    // 점거하는 의원들이 자리에서 일어나 자기 줄 → 통로 → 의장석으로 몰려가 둘러싼다. 경호권을 발동하면 경위들이 입구로 들어와 맞붙는다.
-    // 성공하면 의장이 의장석을 떠나고 점거가 이어지며, 실패하면 점거 의원들이 밀려나 자리로 돌아간다.
-    function runObstructAnim(cvs, r, finish) {
-        const g = animScene(cvs);
-        const { ctx, C, CX, dotR, dots, V, gateY, ALERT, OK, GOLD, podium } = g;
-        const hurtSet = new Set(r.hurtSeats.map(s => s.i));
-        const partSet = new Set(r.part.map(s => s.i));
-        // 의장석 둘레 자리 (안쪽부터 차례로 채움) — 원 모양으로 겹겹이
-        const slots = [];
-        for (let layer = 0; slots.length < r.part.length + 60; layer++) {
-            const rad = podium.w * 0.55 + dotR * 1.3 + layer * dotR * 2.05;
-            const cap = Math.max(6, Math.floor(2 * Math.PI * rad / (dotR * 2.1)));
-            for (let k = 0; k < cap; k++) { const a = (k + (layer % 2) * 0.5) / cap * Math.PI * 2; slots.push([podium.x + rad * Math.cos(a), podium.y + rad * Math.sin(a) * 0.8]); }
-        }
-        const RUSH = 1300, CLASH = 1500;
-        const movers = r.part.map((s, k) => {
-            const d = dots[s.i];
-            const path = d ? g.seatToFoot(d).concat([slots[k]]) : [slots[k], slots[k]];
-            return { s, color: (d && d.color) || s.party.color, path, len: polyLen(path), start: Math.random() * RUSH, hurt: hurtSet.has(s.i) };
-        });
-        // 일찍 출발한 순서대로 안쪽 자리를 차지하도록 정렬해 다시 배정
-        movers.sort((a, b) => a.start - b.start).forEach((m, k) => { const d = dots[m.s.i]; m.path = d ? g.seatToFoot(d).concat([slots[k]]) : [slots[k], slots[k]]; m.len = polyLen(m.path); });
-        const guardN = r.guard ? Math.min(40, Math.max(6, Math.round(r.part.length * 0.35))) : 0;
-        const guards = Array.from({ length: guardN }, (_, k) => {
-            const target = slots[Math.min(slots.length - 1, r.part.length + k)];
-            const gx = CX + (Math.random() * 2 - 1) * g.gateHalf;
-            const path = [[gx, g.H + 10], [gx, gateY], target];
-            return { path, len: polyLen(path), start: RUSH * 0.6 + Math.random() * 600 };
-        });
-        const arriveAll = Math.max(RUSH, ...movers.map(m => m.start + m.len / V), ...guards.map(m => m.start + m.len / V));
-        const clashEnd = arriveAll + CLASH;
-        // 결과: 실패하면 점거 의원들이 밀려나 자리로, 성공하면 의장이 의장석을 떠난다
-        let total = clashEnd + 900;
-        if (!r.success) movers.forEach(m => { m.back = m.path.slice().reverse(); m.backLen = polyLen(m.back); m.backStart = clashEnd + Math.random() * 400; total = Math.max(total, m.backStart + m.backLen / V + 200); });
-        const speakerPath = [[podium.x, podium.speakerY], [podium.x, podium.speakerY - 6], [CX + g.gateHalf * 0.4, gateY], [CX + g.gateHalf * 0.4, g.H + 12]];
-        const speakerLen = polyLen(speakerPath);
-        if (r.success) total = Math.max(total, clashEnd + speakerLen / V + 300);
-
-        g.run(t => {
-            g.base(i => !partSet.has(i) || !movers.some(m => m.s.i === i && t >= m.start), 'occupy', false);
-            // 의장
-            let sx = podium.x, sy = podium.speakerY, salpha = 1;
-            if (r.success && t > clashEnd) { [sx, sy] = polyAt(speakerPath, (t - clashEnd) * V); if (sy > gateY) salpha = Math.max(0, 1 - (sy - gateY) / 30); }
-            g.dot(sx, sy, GOLD, salpha, C.text, dotR * 1.1);
-            const clashing = t >= arriveAll * 0.7 && t < clashEnd;
-            const jit = () => (clashing ? (Math.random() - 0.5) * 3 : 0);
-            guards.forEach(m => {
-                const lt = t - m.start;
-                if (lt < 0) return;
-                const [x, y] = polyAt(m.path, lt * V);
-                g.dot(x + jit(), y + jit(), g.modern ? '#52525b' : '#9aa0a6', 1, null, dotR * 0.95);
-            });
-            let atPodium = 0;
-            movers.forEach(m => {
-                const lt = t - m.start;
-                if (lt < 0) return;
-                let x, y;
-                if (m.back && t >= m.backStart) {
-                    const bd = (t - m.backStart) * V;
-                    [x, y] = polyAt(m.back, bd);
-                } else {
-                    const d = lt * V;
-                    [x, y] = polyAt(m.path, d);
-                    if (d >= m.len) atPodium++;
-                }
-                g.dot(x + jit(), y + jit(), m.color, 1, m.hurt && t > arriveAll ? ALERT : null);
-            });
-            g.title(`의장석 점거 ${atPodium} / ${r.part.length}명${guardN ? ` · 경위 ${guardN}명` : ''}`, `『${r.billTitle}』${r.direct ? ' · 직권상정' : ''}${r.hurtSeats.length ? ` · 부상 ${r.hurtSeats.length}` : ''}`, null);
-            if (t > total) g.banner(r.success ? '표결 무산 — 의장석 점거 성공' : '점거 해산 — 표결 진행', r.success ? OK : ALERT);
-            else if (t >= clashEnd) g.banner(r.success ? '의장이 의장석을 떠납니다' : '점거 의원들이 밀려납니다', r.success ? OK : ALERT, 14);
-            else if (clashing) g.banner('몸싸움', ALERT, 14);
-        }, total, finish);
-    }
-
-    // ================= 물리적 의사 방해 (의장석 점거) =================
-    function pendingBills() {
-        return (typeof bills !== 'undefined' ? bills : []).filter(b => !b.isMartialLawLift && (b.tabledTo || 'parliament') !== 'council'
-            && getBillOverallStatus(b) === 'pending' && b.houseStatus === 'pending');
-    }
-    function obstructorParties() {
-        const ids = Object.keys(ui.obstructors).filter(k => ui.obstructors[k]);
-        return ids.map(partyById).filter(Boolean);
-    }
-    function obstructOdds() {
-        const seats = houseSeats();
-        const hurt = injuredKeys('house');
-        const obs = obstructorParties();
-        const obsSeats = seats.filter(s => obs.includes(s.party) && !hurt.has(s.key));
-        const n = Math.round(obsSeats.length * ui.share / 100);
-        const total = Math.max(1, seats.length);
-        const others = seats.filter(s => !obs.includes(s.party)).length;
-        const coh = obsSeats.length ? obsSeats.reduce((a, s) => a + cohesionOf(s.party), 0) / obsSeats.length : 50;
+    function revChance(kind, partyId) {
         const f = [];
         const add = (label, v) => f.push({ label, v: Math.round(v) });
-        add('기본', 15);
-        add(`점거에 나선 의원 ${n}명 (의석의 ${Math.round(n / total * 100)}%)`, Math.min(40, n / total * 100 * 1.2));
-        add(`상대 진영 ${others}명 (의석의 ${Math.round(others / total * 100)}%)`, -(others / total * 100 - 50) * 0.4);
-        add(`정당 결속도 (평균 ${Math.round(coh)})`, (coh - 50) * 0.4);
-        if (ui.guard) add(`의장${speakerName() ? ' ' + speakerName() : ''} 경호권 발동`, -20);
-        if (ui.direct && !S.advancedAct) add('직권상정', -10);
-        if (S.advancedAct) add('국회선진화법 (위법 부담)', -10);
-        const raw = f.reduce((a, x) => a + x.v, 0);
-        return { f, n, obsSeats, seats, chance: clamp(Math.round(raw), 5, 90) };
+        const t61 = T62();
+        const junta = t61 && t61.junta;
+        const martial = emergencyPowers?.martialLaw?.active;
+        add('기본', 10);
+        if (junta) add('군정에 대한 반감', 20);
+        else if (S.partyState && kind === 'democratic') add('당-국가 체제에 대한 반감', 15);
+        else {
+            const gov = Math.min(100, parties.filter(isGovParty).reduce((a, p) => a + support(p.id), 0));
+            add(`정부 불신 (정부 · 여당 지지율 ${Math.round(gov)}%)`, (100 - gov) * 0.3);
+        }
+        if (martial && !junta) add('계엄령', 10);
+        const bannedN = parties.filter(p => p.status === 'banned').length;
+        if (bannedN) add(`활동 금지된 정당 ${bannedN}곳`, Math.min(20, bannedN * 4));
+        const p = partyById(partyId);
+        if (p) add(`${p.name} 지지율 (${support(p.id)}%)`, support(p.id) * 0.4);
+        else if (kind === 'communist') add('혁명 정당 없음', -30);
+        const share = popShareLed(p ? p.id : null);
+        if (share != null) add(`${p ? p.name + '이(가)' : '반정부 세력이'} 앞서는 지역의 인구 (${Math.round(share * 100)}%)`, share * 20);
+        if (t61 && t61.military && t61.military.length) {
+            const loyal = t61.military.reduce((a, m) => a + (Number(m.loyalty) || 0), 0) / t61.military.length;
+            add(`군의 충성 (평균 ${Math.round(loyal)})`, -(loyal - 50) * 0.4);
+        }
+        return { factors: f, chance: clamp(Math.round(f.reduce((a, x) => a + x.v, 0)), 5, 90) };
     }
 
-    function obstruct() {
-        const bill = bills.find(b => b.id === ui.billId);
-        if (!bill) { showCustomAlert('막을 법안을 고르세요.'); return; }
-        const obs = obstructorParties();
-        if (!obs.length) { showCustomAlert('의장석을 점거할 정당을 고르세요.'); return; }
-        const odds = obstructOdds();
-        if (!odds.n) { showCustomAlert('점거에 나설 의원이 없습니다.'); return; }
-        showCustomConfirm(`『${bill.title}』 표결을 막으려 ${obs.map(p => p.name).join(' · ')} 의원 ${odds.n}명이 의장석을 점거합니다. 성공 확률 ${odds.chance}%.\n계속하시겠습니까?`, () => {
-            const success = Math.random() * 100 < odds.chance;
-            // 점거 인원과 부상자는 미리 정해 애니메이션에 보여 준 뒤 그대로 반영
-            const part = odds.obsSeats.slice().sort(() => Math.random() - 0.5).slice(0, odds.n);
-            const hurtN = Math.max(ui.guard ? 1 : 0, Math.round(odds.n * (0.02 + Math.random() * 0.04) * (ui.guard ? 1.6 : 1)));
-            const pool = part.slice().sort(() => Math.random() - 0.5).concat(odds.seats.filter(s => !obs.includes(s.party)).sort(() => Math.random() - 0.5).slice(0, Math.ceil(hurtN / 4)));
-            const hurtSeats = pool.filter(s => !S.injured.some(x => x.ch === 'house' && x.key === s.key)).slice(0, hurtN);
-            const direct = ui.direct && !S.advancedAct, guard = ui.guard;
-            playObstruct({ part, hurtSeats, success, guard, direct, billTitle: bill.title },
-                () => applyObstruct(bill, obs, odds, success, hurtSeats, guard, direct));
+    function liftMartialLaw() {
+        emergencyPowers.martialLaw.active = false;
+        emergencyPowers.martialLaw.suspendParliament = false;
+        if (typeof renderEmergencyPowers === 'function') renderEmergencyPowers();
+        if (typeof applyMartialLawEffects === 'function') applyMartialLawEffects();
+    }
+    function chamberNameInput(ch) { return document.getElementById(ch + 'NameInput'); }
+    function setChamberName(ch, name) {
+        const inp = chamberNameInput(ch);
+        if (!inp) return;
+        inp.value = name;
+        inp.dispatchEvent(new Event('input', { bubbles: true }));
+        inp.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+    function applyNationIdentity() {
+        if (ui.newName.trim()) { const inp = document.getElementById('nationNameInput'); if (inp) { inp.value = ui.newName.trim(); } }
+        if (ui.newFlag) window.nationFlag = ui.newFlag; // main.js 전역 let — 같은 이름으로 바꾼다
+        try { if (ui.newFlag) nationFlag = ui.newFlag; } catch (e) { /* 이름 접근 불가 */ } // eslint-disable-line no-global-assign
+        try { renderNationConfig(); updateNationIdBar(); } catch (e) { /* 화면 준비 전 */ }
+    }
+    const nationName = () => document.getElementById('nationNameInput')?.value?.trim() || '';
+    function setConstitution(c) {
+        if (typeof legisGetState !== 'function') return;
+        const cur = legisGetState();
+        const prev = cur.constitution;
+        const revisions = prev ? [...(prev.revisions || []), { date: formatNationDate(), note: `혁명으로 "${prev.title}" 폐지 · "${c.title}" 제정` }] : [];
+        legisSetState({ ...cur, constitution: { ...c, revisions } });
+    }
+    function democraticConstitution() {
+        const nm = nationName();
+        return { title: `${nm ? nm + ' ' : ''}헌법`,
+            preamble: '우리 국민은 독재에 맞서 일어선 혁명의 정신을 이어받아, 자유롭고 민주적인 기본 질서를 굳게 세우고 국민 모두의 존엄과 권리를 지키기 위하여 이 헌법을 제정한다.',
+            articles: [
+                { title: '국민주권', text: '주권은 국민에게 있고, 모든 권력은 국민으로부터 나온다.' },
+                { title: '기본권', text: '모든 국민은 인간으로서의 존엄과 가치를 가지며, 국가는 개인이 가지는 불가침의 기본적 인권을 확인하고 이를 보장할 의무를 진다.' },
+                { title: '복수정당제', text: '정당의 설립은 자유이며, 복수정당제는 보장된다.' },
+                { title: '선거', text: '의회 의원과 국가 원수는 국민의 보통 · 평등 · 직접 · 비밀 선거로 뽑는다.' },
+                { title: '권력 분립', text: '입법권은 의회에, 행정권은 정부에, 사법권은 법원에 속한다.' },
+                { title: '계엄의 제한', text: '계엄은 의회의 동의 없이 60일을 넘길 수 없으며, 계엄 중에도 의회의 활동은 정지되지 아니한다.' },
+            ] };
+    }
+    function partyStateConstitution(p) {
+        const nm = nationName();
+        return { title: `${nm ? nm + ' ' : ''}사회주의 헌법`,
+            preamble: `${nm || '우리 나라'}는 ${p.name}의 영도 아래 혁명으로 세워진 인민의 국가이다. 인민은 혁명의 위업을 이어 사회주의 건설을 완성하기 위하여 이 헌법을 채택한다.`,
+            articles: [
+                { title: '국가의 성격', text: `${nm || '국가'}는 노동자 · 농민 · 근로 인텔리를 비롯한 전체 인민의 이익을 대표하는 사회주의 국가이다.` },
+                { title: '당의 영도', text: `국가는 ${p.name}의 영도 아래 모든 활동을 한다.` },
+                { title: '통일전선', text: '국가는 혁명에 찬동하는 우당 및 사회단체와 통일전선을 이룬다.' },
+                { title: '최고주권기관', text: '최고인민회의는 국가의 최고주권기관이다.' },
+                { title: '국가주석', text: '국가주석은 국가의 수반이며, 당의 총서기가 겸임한다.' },
+                { title: '선거', text: '최고인민회의 대의원은 통일전선이 추천한 단일 후보에 대한 찬반 투표로 선출한다.' },
+            ] };
+    }
+    // 당-국가 체제의 의석: 혁명 정당 85% · 우당이 지지율 비율로 나머지 (원마다 총 의석은 그대로)
+    function partyStateSeats(p, allies) {
+        chamberList().forEach(ch => {
+            const key = seatKeyFor(ch);
+            const total = parties.reduce((a, x) => a + (x[key] || 0), 0);
+            if (!total) return;
+            const allyList = allies.map(partyById).filter(Boolean);
+            const allyTotal = allyList.length ? Math.round(total * 0.15) : 0;
+            parties.forEach(x => { x[key] = 0; });
+            p[key] = total - allyTotal;
+            const w = allyList.map(a => Math.max(1, support(a.id)));
+            const sw = w.reduce((a, b) => a + b, 0) || 1;
+            let given = 0;
+            allyList.forEach((a, i) => { const n = i === allyList.length - 1 ? allyTotal - given : Math.round(allyTotal * w[i] / sw); a[key] = n; given += n; });
+            (p.factions || []).forEach(f => { f[key] = 0; });
         });
     }
-    function applyObstruct(bill, obs, odds, success, hurtSeats, guard, direct) {
-        const mult = S.advancedAct ? 2 : 1;
-        const effects = [];
-        if (direct && bill.committeeStatus === 'pending') { bill.committeeStatus = 'pass'; bill.t63DirectTabled = true; effects.push('의장 직권상정 — 상임위원회 심사를 건너뜀'); }
-        if (success) {
-            bill.t63Obstructed = (bill.t63Obstructed || 0) + 1;
-            effects.push(`표결 무산 — 『${bill.title}』은(는) 계속 계류 (지금까지 ${bill.t63Obstructed}번 무산)`);
-        } else {
-            effects.push('점거 해산 — 표결은 그대로 진행됩니다 (입법 › 표결)');
-        }
-        // 지지율 페널티
-        const pen = (success ? 0.05 : 0.08) * mult;
-        obs.forEach(p => cutSupport(p, 1 - pen));
-        effects.push(`${obs.map(p => p.name).join(' · ')} 지지율 ${Math.round(pen * 100)}% 하락 (폭력 사용)${S.advancedAct ? ' — 국회선진화법: 국회회의방해죄 고발로 페널티 두 배' : ''}`);
-        if (guard) {
-            const gov = parties.filter(p => isGovParty(p) && !obs.includes(p));
-            if (gov.length) { gov.forEach(p => cutSupport(p, 1 - 0.02 * mult)); effects.push(`경호권 몸싸움 — ${gov.map(p => p.name).join(' · ')} 지지율 ${2 * mult}% 하락`); }
-        }
-        // 부상 — 점거 의원 위주, 경호권이면 더 많이
-        const hurtList = hurtSeats.length ? injure(hurtSeats, hurtSeats.length) : [];
-        if (hurtList.length) effects.push(`부상 결석: ${hurtList.join(', ')}`);
-        addLog('obstruct', `의장석 점거 — 『${bill.title}』`, odds.chance, success, effects);
-        ui.lastBillId = bill.id;
-        rerender();
+    function endPartyState() {
+        if (!S.partyState) return;
+        const prev = S.partyState.prevNames || {};
+        Object.keys(prev).forEach(ch => { if (prev[ch] != null) setChamberName(ch, prev[ch]); });
+        S.partyState = null;
+    }
+    function restoreRevBanned() {
+        (S.revBanned || []).forEach(id => { const p = partyById(id); if (p && p.status === 'banned') p.status = 'active'; });
+        S.revBanned = [];
     }
 
-    // ---- 부상 결석: 표결에서 빼고, 표결을 확정할 때마다 하나씩 회복 ----
-    function injuredIndexes(ch) {
-        let bySeat = [];
-        try { bySeat = seatAssignments(ch).bySeat || []; } catch (e) { return []; }
-        const keys = injuredKeys(ch);
-        return bySeat.map((k, i) => (keys.has(k) ? i : -1)).filter(i => i >= 0);
+    function revolt() {
+        const kind = ui.kind;
+        const p = partyById(ui.partyId);
+        if (kind === 'communist' && !activeParty(p)) { showCustomAlert('공산주의 혁명은 혁명 정당을 골라야 합니다.'); return; }
+        if (kind === 'communist' && S.partyState) { showCustomAlert('이미 당-국가 체제입니다.'); return; }
+        const { chance } = revChance(kind, ui.partyId);
+        const label = kind === 'communist' ? '공산주의 혁명' : '민주 혁명';
+        showCustomConfirm(`${label}을 일으킵니다${p ? ` — 혁명 정당: ${p.name}` : ''}, 성공 확률 ${chance}%. 계속하시겠습니까?`, () => {
+            const success = Math.random() * 100 < chance;
+            const effects = success ? (kind === 'communist' ? communistWin(p) : democraticWin(p)) : revFail(p);
+            const entry = { id: uid(), at: Date.now(), date: formatNationDate(), kind, party: p ? p.name : '', chance, success, effects };
+            S.log.unshift(entry);
+            ui.lastId = entry.id;
+            ui.newName = ''; ui.newFlag = '';
+            try { simulate(); refreshUI(); } catch (e) { /* 화면 준비 전 */ }
+            if (T62()) T62().refresh();
+            refresh();
+        });
     }
-    function clearInjuredVotes(ch) {
-        if (typeof voteState === 'undefined' || !voteState[ch]) return 0;
-        let n = 0;
-        injuredIndexes(ch).forEach(i => { if (voteState[ch][i]) { delete voteState[ch][i]; n++; } });
-        return n;
+    function communistWin(p) {
+        const fx = [];
+        const t61 = T62();
+        if (t61 && t61.junta) { t61.endJunta('revolution'); fx.push('군정 붕괴'); }
+        liftMartialLaw();
+        const allies = Object.keys(ui.allies).filter(id => ui.allies[id] && String(id) !== String(p.id) && activeParty(partyById(id)));
+        const banned = [];
+        parties.forEach(x => {
+            if (x === p || allies.includes(String(x.id)) || isInd(x) || x.status === 'banned' || x.status === 'dissolved') return;
+            x.status = 'banned'; banned.push(x.id);
+        });
+        S.revBanned = [...new Set([...(S.revBanned || []), ...banned])];
+        parties.forEach(x => { x.isRuling = x === p; });
+        coalitions.forEach(c => { c.isRuling = false; });
+        const prevNames = {};
+        chamberList().forEach(ch => { prevNames[ch] = chamberNameInput(ch)?.value ?? null; });
+        S.partyState = { partyId: p.id, allies, banned, prevNames, since: formatNationDate() };
+        applyNationIdentity();
+        setChamberName('house', '최고인민회의');
+        partyStateSeats(p, allies);
+        const leader = p.leaderName || `${p.name} 총서기`;
+        Object.assign(president, { name: leader, photo: p.leaderPhoto || '', partyId: p.id, linkedSeat: null });
+        setConstitution(partyStateConstitution(p));
+        fx.push(`숨겨진 정부 형태: 당-국가 체제 — ${p.name} 일당 집권`, `총서기 겸 국가주석: ${leader}`,
+            allies.length ? `우당(통일전선) ${allies.length}곳 · 활동 금지 ${banned.length}곳` : `다른 정당 ${banned.length}곳 활동 금지`,
+            '의회 → 최고인민회의 (혁명 정당 85% · 우당이 나머지)', '사회주의 헌법 채택 · 선거는 단일 후보 찬반 투표');
+        if (ui.newName.trim()) fx.push(`국호: ${ui.newName.trim()}`);
+        if (ui.newFlag) fx.push('국기 교체');
+        return fx;
     }
-    const origConfirm = window.confirmChamberVote;
-    window.confirmChamberVote = function (chamber) {
-        clearInjuredVotes(chamber);
-        const before = (typeof bills !== 'undefined' && bills.find(b => b.id === activeBillIdSafe())) || null;
-        const hist = before ? (before.voteHistory || []).length : 0;
-        const r = origConfirm.apply(this, arguments);
-        // 표결이 실제로 확정됐을 때만 회복이 한 번 진행
-        if (before && (before.voteHistory || []).length > hist) {
-            S.injured.forEach(x => { if (x.ch === chamber) x.left -= 1; });
-            S.injured = S.injured.filter(x => x.left > 0);
-            renderSiege();
-        }
-        return r;
+    function democraticWin(p) {
+        const fx = [];
+        const t61 = T62();
+        if (t61 && t61.junta) { t61.endJunta('revolution'); fx.push('군정 붕괴'); }
+        if (S.partyState) { endPartyState(); fx.push('당-국가 체제 붕괴 · 의회 이름 되돌림'); }
+        if (emergencyPowers?.martialLaw?.active) { liftMartialLaw(); fx.push('계엄령 해제'); }
+        const bannedBefore = parties.filter(x => x.status === 'banned').length;
+        restoreRevBanned();
+        if (t61) t61.restoreBanned();
+        const restored = bannedBefore - parties.filter(x => x.status === 'banned').length;
+        if (restored > 0) fx.push(`활동 금지됐던 정당 ${restored}곳 복권`);
+        Object.assign(president, { name: '', photo: '', partyId: null, linkedSeat: null });
+        Object.assign(pm, { name: '', photo: '', partyId: null, linkedSeat: null });
+        parties.forEach(x => { x.isRuling = false; });
+        coalitions.forEach(c => { c.isRuling = false; });
+        applyNationIdentity();
+        setConstitution(democraticConstitution());
+        fx.push('일반 정부 형태로 복귀 · 대통령 · 총리 공석', '새 헌법 제정 (입법 › 법령)', '새 총선을 치르세요 (선거 › 총선)');
+        if (p) fx.push(`혁명을 이끈 ${p.name}의 지지율 상승`), cutSupport(p.id, 1.2);
+        if (ui.newName.trim()) fx.push(`국호: ${ui.newName.trim()}`);
+        if (ui.newFlag) fx.push('국기 교체');
+        return fx;
+    }
+    function cutSupport(pid, factor) {
+        chamberList().forEach(ch => { const st = elecStore?.[ch]?.[pid]; if (st) st.prob = Math.round(Math.min(100, (Number(st.prob) || 0) * factor) * 10) / 10; });
+    }
+    function revFail(p) {
+        const fx = [];
+        if (p) { p.status = 'banned'; cutSupport(p.id, 0.5); fx.push(`${p.name} 활동 금지 · 지지율 절반으로`); }
+        if (!(T62() && T62().junta) && !S.partyState && !emergencyPowers?.martialLaw?.active) {
+            emergencyPowers.martialLaw.holder = 'president';
+            emergencyPowers.martialLaw.suspendParliament = false;
+            emergencyPowers.martialLaw.active = true;
+            if (typeof renderEmergencyPowers === 'function') renderEmergencyPowers();
+            if (typeof applyMartialLawEffects === 'function') applyMartialLawEffects();
+            fx.push('정부가 계엄령 선포 (진압)');
+        } else fx.push('진압당함');
+        return fx;
+    }
+    // 당-국가 체제의 선거: 단일 후보 찬반 투표 (의석은 그대로 다시 나눔)
+    function yesNoElection() {
+        if (!S.partyState) return;
+        const p = partyById(S.partyState.partyId);
+        const turnout = 99 + Math.random() * 0.9;
+        const yes = 97 + Math.random() * 2.9;
+        partyStateSeats(p, S.partyState.allies || []);
+        S.log.unshift({ id: uid(), at: Date.now(), date: formatNationDate(), kind: 'yesno', party: p ? p.name : '', chance: null, success: true,
+            effects: [`최고인민회의 대의원 선거 — 단일 후보 찬반 투표`, `투표율 ${turnout.toFixed(2)}% · 찬성 ${yes.toFixed(2)}%`, '통일전선 후보 전원 당선'] });
+        ui.lastId = S.log[0].id;
+        try { simulate(); refreshUI(); } catch (e) { /* 화면 준비 전 */ }
+        refresh();
+    }
+
+    // 당-국가 체제: 직책 이름 · 선거
+    const origRole = window.effRoleLabel;
+    window.effRoleLabel = function (key) {
+        if (S.partyState && key === 'president') return '국가주석';
+        return origRole.apply(this, arguments);
     };
-    function activeBillIdSafe() { try { return activeBillId; } catch (e) { return null; } } // eslint-disable-line no-undef
-    ['applyPartyVote', 'applyFactionVote'].forEach(fn => {
-        const orig = window[fn];
-        if (typeof orig !== 'function') return;
-        window[fn] = function () {
-            const r = orig.apply(this, arguments);
-            let n = 0;
-            chamberList().forEach(ch => { n += clearInjuredVotes(ch); });
-            if (n) { try { redrawAll(); updateVoteResults(); } catch (e) { /* 화면 준비 전 */ } }
-            return r;
+    const blockIfPartyState = fn => function () {
+        if (S.partyState) { showCustomAlert('당-국가 체제에서는 경쟁 선거가 없습니다 — 내각 › 혁명의 "찬반 선거 치르기"로 최고인민회의 대의원을 뽑습니다.'); return; }
+        return fn.apply(this, arguments);
+    };
+    ['elecRun', 'elecRunByElection'].forEach(n => { if (typeof window[n] === 'function') window[n] = blockIfPartyState(window[n]); });
+
+    // ================= 선거인단 =================
+    // 선거인 단위 — 권역(기준 원의 권역, 권역에 안 든 지역구는 따로 한 단위) 또는 지역구
+    function ecUnits(ch) {
+        const keys = Object.keys(districtGrid[ch] || {}).filter(k => districtGrid[ch][k]);
+        const name = k => districtNames?.[ch]?.[k] || districtNames?.house?.[k] || k;
+        if (S.ec.unit === 'region' && (regions[ch] || []).length) {
+            const units = (regions[ch] || []).map(r => ({ id: 'r:' + r.id, name: r.name, keys: keys.filter(k => String(districtRegionMap[ch]?.[k]) === String(r.id)) })).filter(u => u.keys.length);
+            const inR = new Set(units.flatMap(u => u.keys));
+            keys.filter(k => !inR.has(k)).forEach(k => units.push({ id: 'd:' + k, name: name(k), keys: [k] }));
+            return units;
+        }
+        return keys.map(k => ({ id: 'd:' + k, name: name(k), keys: [k] }));
+    }
+    function largestRemainder(weights, total) {
+        const sum = weights.reduce((a, b) => a + b, 0);
+        if (!sum || total <= 0) return weights.map(() => 0);
+        const raw = weights.map(w => w / sum * total);
+        const out = raw.map(Math.floor);
+        let left = total - out.reduce((a, b) => a + b, 0);
+        raw.map((r, i) => [r - out[i], i]).sort((a, b) => b[0] - a[0]).forEach(([, i]) => { if (left > 0) { out[i]++; left--; } });
+        return out;
+    }
+    function ecElectorCounts(ch, units) {
+        const e = S.ec;
+        if (e.electors === 'manual') return units.map(u => Math.max(0, Math.round(Number(e.manual[u.id]) || 3)));
+        if (e.electors === 'seats') return units.map(u => u.keys.reduce((a, k) => a + (districtSeatCounts[k]?.[ch] || 0), 0) + Math.max(0, Number(e.bonus) || 0));
+        // 인구 비례: 총 선거인 수를 인구로 나누되 단위마다 최소 1명
+        const total = Math.max(units.length, Math.round(Number(e.total) || 538));
+        const pops = units.map(u => u.keys.reduce((a, k) => a + popOf(k), 0));
+        const base = units.map(() => 1);
+        const extra = largestRemainder(pops, total - units.length);
+        return base.map((b, i) => b + extra[i]);
+    }
+    function ecResult(candidates, ch) {
+        const units = ecUnits(ch);
+        if (!units.length) return null;
+        const counts = ecElectorCounts(ch, units);
+        const cid = pid => {
+            const u = typeof candidateUnionOf === 'function' ? candidateUnionOf(pid, 'pres') : null;
+            if (u) { const c = candidates.find(c => u.partyIds.some(id => String(id) === String(c.id))); if (c) return c.id; }
+            return pid;
         };
-    });
-    const origSeatCard = window.showSeatInfoCard;
-    window.showSeatInfoCard = function (chamber, hit) {
-        const r = origSeatCard.apply(this, arguments);
-        let key = null;
-        try { key = (seatAssignments(chamber).bySeat || [])[hit]; } catch (e) { /* 배정 전 */ }
-        const x = key && S.injured.find(y => y.ch === chamber && y.key === key);
-        const body = document.getElementById('seatInfoCardBody');
-        if (x && body) body.insertAdjacentHTML('beforeend', `<div class="t63-hurt-row">🩹 부상 결석 — 다음 표결 ${x.left}번 불참</div>`);
-        return r;
+        const ids = candidates.map(c => c.id);
+        const popTotals = Object.fromEntries(ids.map(id => [id, 0]));
+        const electors = Object.fromEntries(ids.map(id => [id, 0]));
+        const unitRows = units.map((u, ui) => {
+            const votes = Object.fromEntries(ids.map(id => [id, 0]));
+            u.keys.forEach(k => {
+                const t = typeof districtTendencyFor === 'function' ? districtTendencyFor(k, ch).values : {};
+                const has = Object.values(t || {}).some(v => Number(v) > 0);
+                parties.forEach(p => {
+                    const c = cid(p.id);
+                    if (!ids.includes(c)) return;
+                    const base = has ? (Number(t[p.id]) || 0) : (Number(elecStore?.[ch]?.[p.id]?.prob) || 0);
+                    if (base <= 0) return;
+                    votes[c] += Math.max(0, base + (Math.random() * 10 - 5)) * popOf(k);
+                });
+            });
+            const vsum = Object.values(votes).reduce((a, b) => a + b, 0) || 1;
+            ids.forEach(id => { popTotals[id] += votes[id]; });
+            const n = counts[ui];
+            let alloc;
+            if (S.ec.alloc === 'prop') alloc = largestRemainder(ids.map(id => votes[id]), n);
+            else { const win = ids.slice().sort((a, b) => votes[b] - votes[a])[0]; alloc = ids.map(id => (id === win ? n : 0)); }
+            // 신의 없는 선거인: 선거인마다 확률만큼 다른 후보에게
+            let faithless = 0;
+            const fp = clamp(Number(S.ec.faithless) || 0, 0, 100) / 100;
+            if (fp > 0 && ids.length > 1) {
+                const moved = ids.map(() => 0);
+                alloc.forEach((cnt, i) => { for (let j = 0; j < cnt; j++) if (Math.random() < fp) { moved[i]--; let to = Math.floor(Math.random() * (ids.length - 1)); if (to >= i) to++; moved[to]++; faithless++; } });
+                alloc = alloc.map((c, i) => c + moved[i]);
+            }
+            ids.forEach((id, i) => { electors[id] += alloc[i]; });
+            const winner = ids.slice().sort((a, b) => votes[b] - votes[a])[0];
+            return { id: u.id, name: u.name, keys: u.keys, electors: n, alloc: Object.fromEntries(ids.map((id, i) => [id, alloc[i]])), share: votes[winner] / vsum * 100, winner, faithless };
+        });
+        const totalE = counts.reduce((a, b) => a + b, 0);
+        const need = Math.floor(totalE / 2) + 1;
+        const popSum = Object.values(popTotals).reduce((a, b) => a + b, 0) || 1;
+        const round1 = ids.map(id => ({ partyId: id, electors: electors[id], pct: totalE ? electors[id] / totalE * 100 : 0, popPct: popTotals[id] / popSum * 100 })).sort((a, b) => b.electors - a.electors);
+        let winnerPartyId = round1[0] ? round1[0].partyId : null, contingent = null;
+        if (round1[0] && round1[0].electors < need) {
+            if (S.ec.noMajority === 'parliament') {
+                // 과반 미달 — 의회가 상위 3명 중에서 정한다 (기준 원 의석이 가장 많은 쪽, 단일화면 참여 정당 의석 합)
+                const key = seatKeyFor(ch);
+                const seatsFor = id => { const u = typeof candidateUnionOf === 'function' ? candidateUnionOf(id, 'pres') : null; const members = u ? u.partyIds : [id]; return members.reduce((a, m) => a + (partyById(m)?.[key] || 0), 0); };
+                const top3 = round1.slice(0, 3);
+                const pick = top3.slice().sort((a, b) => seatsFor(b.partyId) - seatsFor(a.partyId))[0];
+                winnerPartyId = pick.partyId;
+                contingent = { how: 'parliament', top3: top3.map(x => ({ partyId: x.partyId, seats: seatsFor(x.partyId) })) };
+            } else contingent = { how: 'plurality' };
+        }
+        return { round1, winnerPartyId, units: unitRows, totalE, need, contingent, chamber: ch, unitMode: S.ec.unit };
+    }
+    let lastEC = null;
+    const origRounds = window.computeElectionRounds;
+    window.computeElectionRounds = function (mode, chamberBasis, candidates) {
+        if (mode === 'electoral') {
+            const r = ecResult(candidates, chamberBasis);
+            if (r) { lastEC = r; return { round1: r.round1, round2: null, winnerPartyId: r.winnerPartyId }; }
+        }
+        return origRounds.apply(this, arguments);
     };
+    function ecDetailsHtml(r) {
+        const name = id => { const p = partyById(id); return p ? p.name : '?'; };
+        const color = id => partyById(id)?.color || '#888';
+        const winner = r.round1.find(x => x.partyId === r.winnerPartyId);
+        const faithless = r.units.reduce((a, u) => a + u.faithless, 0);
+        return `
+            <div class="t63-ec">
+                <div class="t63-ec-head">선거인단 ${r.totalE}명 · 과반 ${r.need}명 · ${S.ec.alloc === 'prop' ? '비례 배분' : '승자독식'}${faithless ? ` · 신의 없는 선거인 ${faithless}명` : ''}</div>
+                <div class="t63-ec-bar">${r.round1.filter(x => x.electors > 0).map(x => `<span style="width:${x.pct}%;background:${color(x.partyId)}" title="${esc(name(x.partyId))} ${x.electors}명"></span>`).join('')}<i style="left:${r.need / r.totalE * 100}%"></i></div>
+                ${r.round1.map(x => `<div class="t63-ec-row"><span><span class="t63-dot" style="background:${color(x.partyId)}"></span>${esc(name(x.partyId))}</span><span>선거인 <b>${x.electors}</b> · 득표 ${x.popPct.toFixed(1)}%</span></div>`).join('')}
+                ${r.contingent ? `<div class="t63-ec-note">과반(${r.need}명) 미달 — ${r.contingent.how === 'parliament'
+                    ? `의회가 상위 ${r.contingent.top3.length}명 중에서 정함 (${esc(chamberDisplayName(r.chamber))} 의석: ${r.contingent.top3.map(x => `${esc(name(x.partyId))} ${x.seats}석`).join(' · ')}) → <b>${esc(name(r.winnerPartyId))}</b>`
+                    : `최다 선거인 확보 후보 <b>${esc(name(r.winnerPartyId))}</b> 당선`}</div>` : (winner ? `<div class="t63-ec-note">${esc(name(winner.partyId))} 과반 확보 (${winner.electors}명)</div>` : '')}
+                <div class="t63-ec-map" data-ec-map></div>
+                <details class="t63-ec-units"><summary>${r.unitMode === 'region' ? '권역' : '지역구'}별 선거인 (${r.units.length})</summary>
+                    ${r.units.map(u => `<div class="t63-ec-unit" style="border-left-color:${color(u.winner)}"><b>${esc(u.name)}</b> <span class="t63-dim">선거인 ${u.electors}명</span>
+                        <div class="t63-dim">${Object.entries(u.alloc).filter(([, n]) => n > 0).map(([id, n]) => `${esc(name(id))} ${n}`).join(' · ')}${u.faithless ? ` · 이탈 ${u.faithless}` : ''}</div></div>`).join('')}
+                </details>
+            </div>`;
+    }
+    function appendEcDetails(panelId, result) {
+        const panel = document.getElementById(panelId);
+        if (!panel || !result || result.mode !== 'electoral' || !lastEC || lastEC.round1 !== result.round1) return;
+        const wrap = document.createElement('div');
+        wrap.innerHTML = ecDetailsHtml(lastEC);
+        const firstBtn = panel.querySelector('button');
+        panel.insertBefore(wrap.firstElementChild, firstBtn || null);
+        const mapEl = panel.querySelector('[data-ec-map]');
+        if (mapEl && typeof renderDistrictSvgInto === 'function') {
+            const byKey = {};
+            lastEC.units.forEach(u => u.keys.forEach(k => { byKey[k] = u; }));
+            mapEl.style.aspectRatio = '3 / 2';
+            renderDistrictSvgInto(mapEl, {
+                chamber: lastEC.chamber, zoomKey: 't62:ec:' + panelId,
+                getFill: k => { const u = byKey[k]; const p = u && partyById(u.winner); return p ? tendencyColorForPct(p.color, 45 + Math.min(55, u.share * 0.55)) : 'transparent'; },
+                title: k => { const u = byKey[k]; return u ? `${u.name}: 선거인 ${u.electors}명 · ${Object.entries(u.alloc).filter(([, n]) => n > 0).map(([id, n]) => `${partyById(id)?.name || '?'} ${n}`).join(' · ')}` : k; },
+                groupOf: lastEC.unitMode === 'region' ? k => byKey[k]?.id ?? null : undefined,
+            });
+        }
+    }
+    const origPres = window.renderPresElecResultPanel;
+    window.renderPresElecResultPanel = function () { const r = origPres.apply(this, arguments); appendEcDetails('presElecResultPanel', window.presElectionLastResult || safeGet(() => presElectionLastResult)); return r; };
+    const origPm = window.renderPmElecResultPanel;
+    if (origPm) window.renderPmElecResultPanel = function () { const r = origPm.apply(this, arguments); appendEcDetails('pmElecResultPanel', safeGet(() => pmElectionLastResult)); return r; };
+    function safeGet(fn) { try { return fn(); } catch (e) { return null; } }
 
-    // ================= 화면: 입법 › 공성전 =================
+    // 선거인단 설정 칸 — 선거 › 방식의 선거 방식 버튼 아래 (선거인단제일 때만)
+    function renderEcPanel() {
+        let box = document.getElementById('t63EcPanel');
+        const hint = document.getElementById('presElecModeHint');
+        if (!hint) return;
+        if (!box) { box = document.createElement('div'); box.id = 't63EcPanel'; hint.parentElement.insertBefore(box, hint.nextSibling); }
+        const mode = safeGet(() => presElectionMode);
+        box.style.display = mode === 'electoral' ? '' : 'none';
+        if (mode !== 'electoral') return;
+        const e = S.ec;
+        const ch = safeGet(() => window.presElectionChamberBasis) || safeGet(() => presElectionChamberBasis) || 'house';
+        const units = ecUnits(ch);
+        const counts = ecElectorCounts(ch, units);
+        const totalE = counts.reduce((a, b) => a + b, 0);
+        const radio = (field, v, t) => `<button type="button" class="system-radio-btn ${e[field] === v ? 'active' : ''}" data-f="${field}" data-v="${v}">${t}</button>`;
+        box.innerHTML = `
+            <div class="t63-ecset">
+                <div class="t63-ecset-title">선거인단 설정 <span class="t63-dim">— ${units.length}개 단위 · 선거인 ${totalE}명 · 과반 ${Math.floor(totalE / 2) + 1}명</span></div>
+                <label class="t63-dim">선거인 단위</label>
+                <div class="system-radio-group">${radio('unit', 'region', '권역마다')}${radio('unit', 'district', '지역구마다')}</div>
+                ${e.unit === 'region' && !(regions[ch] || []).length ? '<div class="t63-dim t63-small">이 원에 권역이 없어 지역구마다로 셉니다 (국가 › 권역에서 만들 수 있어요)</div>' : ''}
+                <label class="t63-dim">선거인 수</label>
+                <div class="system-radio-group">${radio('electors', 'pop', '인구 비례')}${radio('electors', 'seats', '의석 수 + 가산')}${radio('electors', 'manual', '직접 입력')}</div>
+                ${e.electors === 'pop' ? `<div class="t63-row"><span class="t63-dim">총 선거인 수</span><input type="number" min="1" data-n="total" value="${e.total}"></div><div class="t63-dim t63-small">인구에 비례해 나누되 단위마다 최소 1명 (인구 미입력 지역구는 ${DEFAULT_POP.toLocaleString()}명으로)</div>` : ''}
+                ${e.electors === 'seats' ? `<div class="t63-row"><span class="t63-dim">단위마다 가산</span><input type="number" min="0" data-n="bonus" value="${e.bonus}"></div><div class="t63-dim t63-small">그 단위의 ${esc(chamberDisplayName(ch))} 지역구 의석 수 + 가산 (미국식: 하원 의석 + 상원 2)</div>` : ''}
+                ${e.electors === 'manual' ? `<details class="t63-manual" open><summary class="t63-dim">단위별 선거인 수</summary>${units.map((u, i) => `<div class="t63-row"><span>${esc(u.name)}</span><input type="number" min="0" data-u="${esc(u.id)}" value="${counts[i]}"></div>`).join('')}</details>` : ''}
+                <label class="t63-dim">배분 방식</label>
+                <div class="system-radio-group">${radio('alloc', 'wta', '승자독식')}${radio('alloc', 'prop', '비례 배분')}</div>
+                <label class="t63-dim">과반 미달이면</label>
+                <div class="system-radio-group">${radio('noMajority', 'parliament', '의회가 결정 (상위 3명)')}${radio('noMajority', 'plurality', '최다 선거인 당선')}</div>
+                <div class="t63-row"><span class="t63-dim">신의 없는 선거인</span><input type="number" min="0" max="100" step="0.5" data-n="faithless" value="${e.faithless}"><span class="t63-dim">%</span></div>
+            </div>`;
+        box.querySelectorAll('[data-f]').forEach(b => { b.onclick = () => { S.ec[b.dataset.f] = b.dataset.v; renderEcPanel(); }; });
+        box.querySelectorAll('[data-n]').forEach(i => { i.onchange = () => { S.ec[i.dataset.n] = Number(i.value) || 0; renderEcPanel(); }; });
+        box.querySelectorAll('[data-u]').forEach(i => { i.onchange = () => { S.ec.manual[i.dataset.u] = Math.max(0, Number(i.value) || 0); renderEcPanel(); }; });
+    }
+    ['setPresElectionMode', 'setPresElectionChamberBasis'].forEach(n => {
+        const o = window[n];
+        if (typeof o === 'function') window[n] = function () { const r = o.apply(this, arguments); renderEcPanel(); return r; };
+    });
+
+    // ================= 화면: 내각 › 혁명 =================
     function el(html) { const d = document.createElement('div'); d.innerHTML = html.trim(); return d.firstChild; }
-    (function addTab() {
-        const law = document.getElementById('mainContentLaw');
-        const bar = law && law.querySelector(':scope > .sub-tab-container');
+    (function addTabs() {
+        const cab = document.getElementById('mainContentCabinet');
+        const bar = cab && cab.querySelector(':scope > .sub-tab-container');
         if (!bar) return;
-        const after = document.getElementById('subTabVote');
-        const btn = el(`<button class="sub-tab-btn" onclick="switchSubTab('law','siege')" id="subTabSiege">공성전</button>`);
+        const after = document.getElementById('subTabCoup');
+        const btn = el(`<button class="sub-tab-btn" onclick="switchSubTab('cabinet','revolution')" id="subTabRevolution">혁명</button>`);
         if (after && after.nextSibling) bar.insertBefore(btn, after.nextSibling); else bar.appendChild(btn);
-        law.appendChild(el(`<div id="contentSiege" class="sub-tab-content"></div>`));
+        cab.appendChild(el(`<div id="contentRevolution" class="sub-tab-content"></div>`));
     })();
     const origSwitch = window.switchSubTab;
     window.switchSubTab = function (main, sub) {
         const r = origSwitch.apply(this, arguments);
-        if (main === 'law' && sub === 'siege') renderSiege();
+        if (main === 'cabinet' && sub === 'revolution') renderRevolution();
+        if (main === 'vote' && sub === 'elecSettings') renderEcPanel();
+        return r;
+    };
+    const origCab = window.renderCabinetDisplay;
+    window.renderCabinetDisplay = function () {
+        const r = origCab.apply(this, arguments);
+        const grid = document.getElementById('cabinetDisplayGrid');
+        if (grid) {
+            let b = document.getElementById('t63PartyStateBanner');
+            const p = S.partyState && partyById(S.partyState.partyId);
+            if (p) {
+                if (!b) { b = el('<div id="t63PartyStateBanner" class="t63-banner"></div>'); grid.parentElement.insertBefore(b, grid); }
+                b.innerHTML = `★ 당-국가 체제 — ${esc(p.name)} 일당 집권 · 총서기 겸 국가주석 <b>${esc(president.name || '')}</b>${S.partyState.since ? ` · ${esc(S.partyState.since)}부터` : ''}`;
+            } else if (b) b.remove();
+        }
         return r;
     };
 
-    const factorRow = x => `<div class="t63-factor"><span>${esc(x.label)}</span><span class="${x.v >= 0 ? 't63-plus' : 't63-minus'}">${x.v >= 0 ? '+' : ''}${x.v}%p</span></div>`;
-    const resultCard = e => e ? `<div class="t63-result ${e.success ? 'ok' : 'fail'}">
-            <div class="t63-result-head"><span class="t63-badge ${e.success ? 'ok' : 'fail'}">${e.success ? '✔ 성공' : '✘ 실패'}</span><span>${esc(e.title)}</span></div>
-            <div class="t63-dim t63-small">${esc(e.date)} · 성공 확률 ${e.chance}%</div>
-            <ul>${e.effects.map(x => `<li>${esc(x)}</li>`).join('')}</ul>
-            ${e.kind === 'obstruct' && !e.success && ui.lastBillId ? '<button type="button" class="t63-btn" data-act="tovote">입법 › 표결로 가기 →</button>' : ''}
-        </div>` : '';
-    const chip = (text, cls) => `<span class="t63-stat ${cls || ''}">${text}</span>`;
-    const dot = c => `<i class="t63-dot" style="background:${esc(c)}"></i>`;
-    const animControls = () => `<div class="t63-animrow">
-            <label class="t63-toggle"><input type="checkbox" data-in="anim" ${ui.anim ? 'checked' : ''}><span>옆 반원 화면에 애니메이션 보기</span></label>
-            <div class="t63-speed ${ui.anim ? '' : 't63-off'}"><span class="t63-dim">속도</span>${ANIM_SPEEDS.map(v => `<button type="button" class="${(ui.animSpeed || 1) === v ? 'on' : ''}" data-speed="${v}">${v}×</button>`).join('')}</div>
-        </div>`;
-    const blockadeWord = v => (v >= 80 ? '철통' : v >= 60 ? '강함' : v >= 35 ? '보통' : '느슨함');
-    const emptyState = (icon, text, extra) => `<div class="t63-empty"><div class="t63-empty-icon">${icon}</div><div>${text}</div>${extra || ''}</div>`;
-    // 확률 게이지 — 큰 숫자 + 막대
-    const gauge = (label, chance, sub) => `<div class="t63-gauge"><div class="t63-gauge-head"><span>${label}</span><b class="${chance >= 50 ? 'hi' : chance >= 25 ? 'mid' : 'lo'}">${chance}%</b></div>
-        <div class="t63-bar"><span style="width:${chance}%"></span></div>${sub ? `<div class="t63-dim t63-small">${sub}</div>` : ''}</div>`;
-
-    function renderBreakPanel(seats, last) {
-        const res = last && last.kind === 'breakthrough' ? resultCard(last) : '';
-        const ml = emergencyPowers.martialLaw;
-        if (!ml.active) return res + emptyState('🚧', '계엄령이 선포돼 있지 않습니다.<br>대통령 · 총리 탭의 비상 권한으로 계엄령을 선포하면 열립니다.',
-            '<button type="button" class="t63-btn" data-act="martial">계엄령 선포 (의회 정지, 시험용)</button>');
-        if (T61() && T61().junta) return res + emptyState('🎖', '군정에서는 의회가 해산돼 있습니다.<br>내각 › 쿠데타 · 혁명으로 군정을 끝내세요.');
-        const o = breakthroughOdds();
-        const total = Math.max(1, o.seats.length);
-        const needPct = o.need / total * 100;
-        const segs = o.groups.map(g => ({ g, v: g.try * g.prob })).filter(x => x.v > 0.5);
-        let html = `<div class="t63-meter-box">
-                <div class="t63-meter-head"><span>예상 입장 <b>${Math.round(o.expected)}</b>명</span><span class="t63-dim">재적 ${o.seats.length} · 과반 ${o.need}</span></div>
-                <div class="t63-meter">${segs.map(x => `<span style="width:${x.v / total * 100}%;background:${esc(x.g.p.color)}" title="${esc(x.g.p.name)} 약 ${Math.round(x.v)}명"></span>`).join('')}
-                    <em style="left:${needPct}%"></em></div>
-                <div class="t63-meter-legend">${segs.map(x => `<span>${dot(x.g.p.color)}${esc(x.g.p.name)} ${Math.round(x.v)}</span>`).join('')}<span class="t63-need">┃ 과반 ${o.need}</span></div>
-            </div>
-            ${gauge('계엄 해제 성공 확률', o.chance, '들어간 의원만 표결 — 가결 기준은 들어간 인원이 아니라 재적 과반')}
-            <div class="t63-group"><div class="t63-group-title">봉쇄</div>
-                <div class="t63-row"><span class="t63-lbl">봉쇄 강도</span><input type="range" min="0" max="100" value="${blockade()}" data-in="blockade" data-live="blockadeVal"><b id="blockadeVal">${blockade()} · ${blockadeWord(blockade())}</b></div>
-                <div class="t63-dim t63-small">기본값은 군 지휘부의 평균 충성도 (내각 › 군부)</div>
-                <label class="t63-toggle"><input type="checkbox" data-in="citizens" ${ui.citizens ? 'checked' : ''}><span>시민들이 국회 앞에 모여 길을 엶 <em>입장 확률 +10%p</em></span></label>
-            </div>
-            <div class="t63-group"><div class="t63-group-title">입구 저지</div>
-                <div class="t63-dim t63-small" style="margin-bottom:6px">표결을 막으려는 정당이 본회의장 입구를 몸으로 막습니다 — 봉쇄선을 뚫은 의원도 여기서 막힐 수 있어요. 막은 정당은 지지율이 떨어지고, 그 의원들은 들어가지 않습니다.</div>
-                <div class="t63-chips">${seatParties(o.seats).map(p => `<label class="t63-chip ${ui.blockers[p.id] ? 'on' : ''}"><input type="checkbox" data-blk="${esc(p.id)}" ${ui.blockers[p.id] ? 'checked' : ''}>${dot(p.color)}${esc(p.name)}</label>`).join('')}</div>
-                ${o.wall.pool.length ? `<div class="t63-row"><span class="t63-lbl">저지 인원</span><input type="range" min="5" max="100" step="5" value="${ui.blockShare}" data-in="blockShare" data-live="blockShareVal"><b id="blockShareVal">${ui.blockShare}%</b></div>
-                <div class="t63-dim t63-small">입구에 ${o.wall.n}명 — 봉쇄선을 뚫은 의원이 입구에서 막힐 확률 ${Math.round(o.wall.stop * 100)}%</div>` : ''}
-            </div>
-            <div class="t63-group"><div class="t63-group-title">정당별 참여</div>
-                ${o.groups.map(g => `<div class="t63-prow${g.blocker ? ' t63-off' : ''}">
-                    <div class="t63-prow-head">${dot(g.p.color)}<b>${esc(g.p.name)}</b>${isGovParty(g.p) ? '<span class="t63-tag">여당</span>' : ''}<span class="t63-dim">${g.n}석</span>
-                        <span class="t63-prow-exp">${g.blocker ? '입구 저지 중' : `입장 ${Math.round(g.prob * 100)}% · 예상 <b>${Math.round(g.try * g.prob)}</b>`}</span></div>
-                    ${g.blocker ? '' : `<div class="t63-row"><span class="t63-lbl">참여율</span><input type="range" min="0" max="100" step="5" value="${rateOf(g.p)}" data-rate="${esc(g.p.id)}" data-live="rate_${esc(g.p.id)}"><b id="rate_${esc(g.p.id)}">${rateOf(g.p)}%</b></div>`}
-                </div>`).join('')}
-            </div>
-            ${animControls()}
-            <button type="button" class="t63-go" data-act="break">🚪 봉쇄 돌파 · 계엄 해제 표결</button>`;
-        return html + res;
-    }
-
-    function renderObstructPanel(seats, ps, last) {
-        const pb = pendingBills();
-        if (ui.billId && !pb.some(b => b.id === ui.billId)) ui.billId = '';
-        if (!ui.billId && pb.length) ui.billId = pb[0].id;
-        if (!obstructorParties().length && ps.length) {
-            const opp = ps.filter(p => !isGovParty(p)).sort((a, b) => seats.filter(s => s.party === b).length - seats.filter(s => s.party === a).length)[0];
-            if (opp) ui.obstructors[opp.id] = true;
-        }
-        if (!pb.length) return emptyState('📜', '표결을 기다리는 법안이 없습니다.<br>입법 › 제출에서 법안을 올리세요.');
-        const o = obstructOdds();
-        const obs = obstructorParties();
-        const total = Math.max(1, o.seats.length);
-        const others = o.seats.filter(s => !obs.includes(s.party));
-        const otherParties = seatParties(others);
-        let html = `<div class="t63-group"><div class="t63-group-title">막을 법안</div>
-                <select data-in="bill">${pb.map(b => `<option value="${esc(b.id)}" ${b.id === ui.billId ? 'selected' : ''}>${esc(b.title)}${b.committeeStatus === 'pending' ? ' (상임위 심사 중)' : ''}${b.t63Obstructed ? ` · 무산 ${b.t63Obstructed}번` : ''}</option>`).join('')}</select>
-            </div>
-            <div class="t63-group"><div class="t63-group-title">점거하는 정당</div>
-                <div class="t63-chips">${ps.map(p => `<label class="t63-chip ${ui.obstructors[p.id] ? 'on' : ''}"><input type="checkbox" data-obs="${esc(p.id)}" ${ui.obstructors[p.id] ? 'checked' : ''}>${dot(p.color)}${esc(p.name)}</label>`).join('')}</div>
-                <div class="t63-row"><span class="t63-lbl">참여 의원</span><input type="range" min="5" max="100" step="5" value="${ui.share}" data-in="share" data-live="shareVal"><b id="shareVal">${ui.share}%</b></div>
-            </div>
-            <div class="t63-vs">
-                <div class="t63-vs-head"><span>점거 <b>${o.n}</b>명</span><span>상대 진영 <b>${others.length}</b>명</span></div>
-                <div class="t63-vs-bar">${obs.map(p => { const n = Math.round(o.obsSeats.filter(s => s.party === p).length * ui.share / 100); return n ? `<span style="width:${n / total * 100}%;background:${esc(p.color)}"></span>` : ''; }).join('')}
-                    <span class="t63-vs-gap" style="flex:1"></span>
-                    ${otherParties.map(p => `<span class="t63-vs-opp" style="width:${others.filter(s => s.party === p).length / total * 100}%;background:${esc(p.color)}"></span>`).join('')}</div>
-            </div>
-            <div class="t63-group"><div class="t63-group-title">의장 쪽 대응</div>
-                <label class="t63-toggle"><input type="checkbox" data-in="guard" ${ui.guard ? 'checked' : ''}><span>의장${speakerName() ? ' ' + esc(speakerName()) : ''} 경호권 발동 <em>경위 · 경찰 투입, 몸싸움 · 부상 늘어남</em></span></label>
-                <label class="t63-toggle ${S.advancedAct ? 't63-off' : ''}"><input type="checkbox" data-in="direct" ${ui.direct && !S.advancedAct ? 'checked' : ''} ${S.advancedAct ? 'disabled' : ''}><span>직권상정 <em>${S.advancedAct ? '국회선진화법으로 막힘' : '의장이 바로 본회의에 올림'}</em></span></label>
-            </div>
-            ${gauge('점거 성공 확률', o.chance, '')}
-            <details class="t63-factors"><summary class="t63-dim">확률 계산 보기</summary>${o.f.map(factorRow).join('')}<div class="t63-dim t63-small">합계는 5~90% 사이로 맞춥니다.</div></details>
-            ${animControls()}
-            <button type="button" class="t63-go" data-act="obstruct">✊ 의장석 점거</button>`;
-        if (last && last.kind === 'obstruct') html += resultCard(last);
-        return html;
-    }
-
-    function renderSiege() {
-        const box = document.getElementById('contentSiege');
+    const kindName = k => ({ democratic: '민주 혁명', communist: '공산주의 혁명', yesno: '찬반 선거' }[k] || k);
+    function renderRevolution() {
+        const box = document.getElementById('contentRevolution');
         if (!box) return;
-        const ml = emergencyPowers.martialLaw;
-        const seats = houseSeats();
-        const ps = seatParties(seats);
-        const last = S.log.find(x => x.id === ui.last);
-        if (!ui.mode) ui.mode = ml.active ? 'break' : 'obstruct';
-        const pbN = pendingBills().length;
-        let html = `<div class="t63-head">
-                <div class="t63-intro">계엄군의 봉쇄를 뚫고 본회의장에 들어가 계엄을 해제하거나, 의장석을 점거해 반대 법안의 표결을 막습니다. 폭력에는 지지율 페널티와 부상이 따릅니다.</div>
-                <div class="t63-stats">
-                    ${ml.active ? chip(`⚠ 계엄 선포 중${ml.suspendParliament ? ' · 의회 정지' : ''}`, 'alert') : chip('계엄 없음')}
-                    ${chip(`국회선진화법 ${S.advancedAct ? '켜짐' : '꺼짐'}`, S.advancedAct ? 'on' : '')}
-                    ${chip(`🩹 부상 결석 ${S.injured.length}`, S.injured.length ? 'warn' : '')}
-                    ${chip(`📜 계류 법안 ${pbN}`)}
-                </div>
-            </div>`;
-        if (!seats.length) html += emptyState('🏛', '의석이 없습니다 — 먼저 의회를 구성하세요.');
-        html += `<div class="t63-modes">
-                <button type="button" class="t63-mode ${ui.mode === 'break' ? 'active' : ''}" data-mode="break"><b>🚧 봉쇄 돌파</b><span>계엄 해제 표결</span>${ml.active ? '<i class="t63-live"></i>' : ''}</button>
-                <button type="button" class="t63-mode ${ui.mode === 'obstruct' ? 'active' : ''}" data-mode="obstruct"><b>🪑 의장석 점거</b><span>표결 막기</span></button>
+        const t61 = T62();
+        const junta = t61 && t61.junta;
+        const ps = S.partyState && partyById(S.partyState.partyId);
+        if (ps && ui.kind === 'communist') ui.kind = 'democratic'; // 당-국가 체제는 민주 혁명으로만 무너뜨린다
+        const kind = ui.kind;
+        const cands = parties.filter(activeParty).filter(p => !(ps && p === ps));
+        if (ui.partyId && !cands.some(p => String(p.id) === String(ui.partyId))) ui.partyId = '';
+        if (kind === 'communist' && !ui.partyId) {
+            const left = cands.filter(p => /사회|공산|혁명|노동/.test((typeof ideologyName === 'function' ? ideologyName(p.ideologyId) : '') + p.name));
+            ui.partyId = (left[0] || cands.slice().sort((a, b) => support(b.id) - support(a.id))[0] || {}).id || '';
+        }
+        const p = partyById(ui.partyId);
+        const { factors, chance } = revChance(kind, ui.partyId);
+        const last = S.log.find(x => x.id === ui.lastId);
+        const status = junta ? `⚔ 군정 (의장 ${esc(junta.chairName)})` : ps ? `★ 당-국가 체제 (${esc(ps.name)})` : emergencyPowers?.martialLaw?.active ? '계엄령 선포 중' : '일반 정부';
+        box.innerHTML = `
+            <div class="t63-intro">민중이 일으키는 혁명입니다. 주도 이념에 따라 결과 체제가 달라져요 — 공산주의 혁명은 당-국가 체제, 민주 혁명은 독재 · 군정을 무너뜨리고 새 헌법을 세웁니다.</div>
+            <div class="t63-status">지금 체제: <b>${status}</b></div>
+            ${ps ? `<div class="t63-ps">
+                <div class="t63-ps-title">★ 당-국가 체제</div>
+                <div class="t63-dim">${esc(ps.name)} 일당 집권 · 총서기 겸 국가주석 ${esc(president.name || '')} · 의회: 최고인민회의${(S.partyState.allies || []).length ? ` · 우당 ${S.partyState.allies.map(id => esc(partyById(id)?.name || '?')).join(' · ')}` : ''}</div>
+                <button type="button" class="t63-btn" data-act="yesno">🗳 찬반 선거 치르기 (최고인민회의 대의원)</button>
+                <div class="t63-dim t63-small">벗어나려면 아래에서 민주 혁명을 일으키세요.</div>
+            </div>` : ''}
+            <label class="t63-dim">주도 이념</label>
+            <div class="system-radio-group">
+                <button type="button" class="system-radio-btn ${kind === 'democratic' ? 'active' : ''}" data-kind="democratic">민주 혁명</button>
+                <button type="button" class="system-radio-btn ${kind === 'communist' ? 'active' : ''}" data-kind="communist" ${ps ? 'disabled' : ''}>공산주의 혁명</button>
             </div>
-            <div class="t63-panel">${ui.mode === 'break' ? renderBreakPanel(seats, last) : renderObstructPanel(seats, ps, last)}</div>`;
-
-        // --- 설정 · 부상 · 기록 (접어 둠) ---
-        html += `<details class="t63-fold" ${ui.openSet ? 'open' : ''} data-fold="openSet"><summary>⚖ 설정 · 정당 결속도</summary>
-                <label class="t63-toggle"><input type="checkbox" data-in="act" ${S.advancedAct ? 'checked' : ''}><span>국회선진화법 <em>직권상정 제한, 폭력 페널티 두 배 (국회회의방해죄)</em></span></label>
-                <div class="t63-dim t63-small" style="margin:8px 0 2px">정당 결속도 — 봉쇄 돌파 입장 확률 · 점거 성공 확률에 반영</div>
-                ${ps.map(p => `<div class="t63-row"><span class="t63-lbl">${dot(p.color)}${esc(p.name)}</span><input type="range" min="0" max="100" step="5" value="${cohesionOf(p)}" data-coh="${esc(p.id)}" data-live="coh_${esc(p.id)}"><b id="coh_${esc(p.id)}">${cohesionOf(p)}</b></div>`).join('') || '<div class="t63-dim">정당 없음</div>'}
+            <label class="t63-dim">혁명 정당 ${kind === 'democratic' ? '(없어도 됨 — 시민 혁명)' : ''}</label>
+            <select data-pick="party">
+                ${kind === 'democratic' ? '<option value="">— 시민 혁명 (정당 없음) —</option>' : ''}
+                ${cands.map(x => `<option value="${esc(x.id)}" ${String(x.id) === String(ui.partyId) ? 'selected' : ''}>${esc(x.name)} · ${esc(typeof ideologyName === 'function' ? (ideologyName(x.ideologyId) || '') : '')} · 지지율 ${support(x.id)}%${isGovParty(x) ? ' · 여당' : ''}</option>`).join('')}
+            </select>
+            ${kind === 'communist' && p ? `<details class="t63-allies" open><summary class="t63-dim">우당(통일전선)으로 남길 정당 — 고르지 않은 정당은 활동 금지</summary>
+                ${cands.filter(x => x !== p).map(x => `<label class="t63-row"><input type="checkbox" data-ally="${esc(x.id)}" ${ui.allies[x.id] ? 'checked' : ''}> ${esc(x.name)}</label>`).join('') || '<div class="t63-dim">다른 정당 없음</div>'}
+            </details>` : ''}
+            <details class="t63-identity"><summary class="t63-dim">혁명 뒤 국호 · 국기 바꾸기 (선택)</summary>
+                <div class="t63-row"><input type="text" data-id="name" placeholder="새 국호 (비우면 그대로)" value="${esc(ui.newName)}"></div>
+                <div class="t63-row"><label class="leader-photo-box t63-flag" title="새 국기">${ui.newFlag ? `<img src="${ui.newFlag}" alt="">` : '<span class="photo-ph">🏳️</span>'}<input type="file" accept="image/*" data-id="flag"></label>
+                    ${ui.newFlag ? '<button type="button" class="t63-btn" data-act="noflag">✕ 국기 빼기</button>' : '<span class="t63-dim t63-small">눌러서 새 국기 고르기</span>'}</div>
             </details>
-            <details class="t63-fold" ${ui.openHurt ? 'open' : ''} data-fold="openHurt"><summary>🩹 부상 결석 (${S.injured.length})</summary>
-                ${S.injured.length ? S.injured.map(x => `<div class="t63-hurt"><span>${esc(x.name)} <span class="t63-dim">${esc(x.party)}</span></span><span class="t63-dim">다음 표결 ${x.left}번 불참</span><button type="button" class="t63-btn t63-mini" data-heal="${esc(x.id)}">회복</button></div>`).join('')
-                    : '<div class="t63-dim">다친 의원이 없습니다. 다친 의원은 표결에서 빠지고, 표결을 확정할 때마다 하나씩 회복합니다.</div>'}
-            </details>
-            <details class="t63-fold" ${ui.openLog ? 'open' : ''} data-fold="openLog"><summary>📋 공성전 기록 (${S.log.length})</summary>
-                ${S.log.length ? S.log.map(e => `<div class="t63-log-row"><span class="${e.success ? 't63-plus' : 't63-minus'}">${e.success ? '✔' : '✘'}</span><span class="t63-dim">${esc(e.date)}</span><span>${esc(e.title)}</span><span class="t63-dim">${e.chance}%</span></div>`).join('') : '<div class="t63-dim">아직 기록이 없습니다.</div>'}
-            </details>`;
-        box.innerHTML = html;
-
-        const on = (sel, ev, fn) => box.querySelectorAll(sel).forEach(n => n.addEventListener(ev, () => fn(n)));
-        // 슬라이더는 끌 때 숫자만 바꾸고, 놓으면 다시 계산
-        on('[data-live]', 'input', n => {
-            const out = document.getElementById(n.dataset.live);
-            if (!out) return;
-            const v = Number(n.value);
-            out.textContent = n.dataset.in === 'blockade' ? `${v} · ${blockadeWord(v)}` : n.dataset.rate || n.dataset.in === 'share' || n.dataset.in === 'blockShare' ? `${v}%` : String(v);
-        });
-        on('[data-mode]', 'click', n => { ui.mode = n.dataset.mode; renderSiege(); });
-        on('[data-fold]', 'toggle', n => { ui[n.dataset.fold] = n.open; });
-        on('[data-in="blockade"]', 'change', n => { ui.blockade = Number(n.value); renderSiege(); });
-        on('[data-in="anim"]', 'change', n => { ui.anim = n.checked; renderSiege(); });
-        on('[data-speed]', 'click', n => { ui.animSpeed = Number(n.dataset.speed) || 1; renderSiege(); });
-        on('[data-blk]', 'change', n => { ui.blockers[n.dataset.blk] = n.checked; renderSiege(); });
-        on('[data-in="blockShare"]', 'change', n => { ui.blockShare = Number(n.value); renderSiege(); });
-        on('[data-in="citizens"]', 'change', n => { ui.citizens = n.checked; renderSiege(); });
-        on('[data-rate]', 'change', n => { ui.rate[n.dataset.rate] = clamp(Number(n.value) || 0, 0, 100); renderSiege(); });
-        on('[data-in="bill"]', 'change', n => { ui.billId = n.value; renderSiege(); });
-        on('[data-obs]', 'change', n => { ui.obstructors[n.dataset.obs] = n.checked; renderSiege(); });
-        on('[data-in="share"]', 'change', n => { ui.share = Number(n.value); renderSiege(); });
-        on('[data-in="guard"]', 'change', n => { ui.guard = n.checked; renderSiege(); });
-        on('[data-in="direct"]', 'change', n => { ui.direct = n.checked; renderSiege(); });
-        on('[data-in="act"]', 'change', n => { S.advancedAct = n.checked; renderSiege(); });
-        on('[data-coh]', 'change', n => { S.cohesion[n.dataset.coh] = Number(n.value); renderSiege(); });
-        on('[data-heal]', 'click', n => { S.injured = S.injured.filter(x => x.id !== n.dataset.heal); renderSiege(); });
-        on('[data-act="break"]', 'click', breakthrough);
-        on('[data-act="obstruct"]', 'click', obstruct);
-        on('[data-act="martial"]', 'click', () => {
-            emergencyPowers.martialLaw.holder = emergencyPowers.martialLaw.holder === 'none' ? 'president' : emergencyPowers.martialLaw.holder;
-            emergencyPowers.martialLaw.suspendParliament = true;
-            emergencyPowers.martialLaw.active = true;
-            try { renderEmergencyPowers(); applyMartialLawEffects(); } catch (e) { /* 화면 준비 전 */ }
-            renderSiege();
-        });
-        on('[data-act="tovote"]', 'click', () => { try { selectBillForVote(ui.lastBillId); } catch (e) { /* 법안 없음 */ } switchSubTab('law', 'vote'); });
+            <div class="t63-chance">
+                <div class="t63-chance-head"><span>성공 확률</span><b>${chance}%</b></div>
+                <div class="t63-bar"><span style="width:${chance}%"></span></div>
+                ${factors.map(x => `<div class="t63-factor"><span>${esc(x.label)}</span><span class="${x.v >= 0 ? 't63-plus' : 't63-minus'}">${x.v >= 0 ? '+' : ''}${x.v}%p</span></div>`).join('')}
+                <div class="t63-dim t63-small">합계는 5~90% 사이로 맞춥니다.</div>
+            </div>
+            <button type="button" class="t63-go" data-act="go">✊ ${kind === 'communist' ? '공산주의 혁명' : '민주 혁명'} 일으키기</button>
+            ${last ? `<div class="t63-result ${last.success ? 'ok' : 'fail'}">
+                <div class="t63-result-head">${last.kind === 'yesno' ? '🗳 찬반 선거' : last.success ? '✔ 성공' : '✘ 실패'} — ${esc(kindName(last.kind))}${last.chance != null ? ` <span class="t63-dim">(확률 ${last.chance}%)</span>` : ''}</div>
+                <div class="t63-dim">${last.party ? `혁명 정당: ${esc(last.party)} · ` : ''}${esc(last.date || '')}</div>
+                <ul>${(last.effects || []).map(e => `<li>${esc(e)}</li>`).join('')}</ul></div>` : ''}
+            ${S.log.length ? `<details class="t63-log"><summary>혁명 기록 (${S.log.length})</summary>${S.log.map(x => `<div class="t63-log-row"><span class="${x.kind === 'yesno' ? '' : x.success ? 't63-plus' : 't63-minus'}">${x.kind === 'yesno' ? '🗳' : x.success ? '✔' : '✘'}</span><span>${esc(kindName(x.kind))}${x.party ? ` · ${esc(x.party)}` : ''}${x.date ? ` · ${esc(x.date)}` : ''}${x.chance != null ? ` · ${x.chance}%` : ''}</span></div>`).join('')}</details>` : ''}`;
+        box.querySelectorAll('[data-kind]').forEach(b => { b.onclick = () => { ui.kind = b.dataset.kind; ui.partyId = ''; ui.lastId = null; renderRevolution(); }; });
+        const sel = box.querySelector('[data-pick="party"]'); if (sel) sel.onchange = () => { ui.partyId = sel.value; renderRevolution(); };
+        box.querySelectorAll('[data-ally]').forEach(c => { c.onchange = () => { ui.allies[c.dataset.ally] = c.checked; }; });
+        const nm = box.querySelector('[data-id="name"]'); if (nm) nm.oninput = () => { ui.newName = nm.value; };
+        const fl = box.querySelector('[data-id="flag"]'); if (fl) fl.onchange = () => { const f = fl.files && fl.files[0]; if (!f) return; const rd = new FileReader(); rd.onload = ev => { ui.newFlag = ev.target.result; renderRevolution(); box.querySelector('.t63-identity').open = true; }; rd.readAsDataURL(f); };
+        const nf = box.querySelector('[data-act="noflag"]'); if (nf) nf.onclick = () => { ui.newFlag = ''; renderRevolution(); };
+        box.querySelector('[data-act="go"]').onclick = revolt;
+        const yn = box.querySelector('[data-act="yesno"]'); if (yn) yn.onclick = yesNoElection;
     }
 
-    function refresh() { renderSiege(); }
+    function refresh() {
+        renderRevolution();
+        renderEcPanel();
+        try { window.renderCabinetDisplay && window.renderCabinetDisplay(); } catch (e) { /* 화면 준비 전 */ }
+    }
 
     const style = document.createElement('style');
     style.textContent = `
-        #contentSiege { --t63-acc: #f0a030; --t63-alert: #e05555; --t63-ok: #3fbf7f; --t63-line: #333; --t63-soft: rgba(255,255,255,.03); --t63-dim: #888; --t63-text: #ddd; }
-        html[data-theme-family="modern"] #contentSiege { --t63-acc: #d97706; --t63-alert: var(--m-danger, #dc2626); --t63-ok: var(--m-success, #16a34a); --t63-line: var(--m-border); --t63-soft: var(--m-surface-2); --t63-dim: var(--m-text-3); --t63-text: var(--m-text); }
-        .t63-head { margin: 6px 0 10px; }
-        .t63-intro { color: var(--t63-dim); font-size: .78rem; line-height: 1.6; margin-bottom: 8px; }
-        .t63-stats { display: flex; flex-wrap: wrap; gap: 6px; }
-        .t63-stat { font-size: .74rem; padding: 3px 8px; border: 1px solid var(--t63-line); color: var(--t63-dim); white-space: nowrap; }
-        .t63-stat.alert { color: var(--t63-alert); border-color: var(--t63-alert); }
-        .t63-stat.warn { color: var(--t63-acc); border-color: var(--t63-acc); }
-        .t63-stat.on { color: var(--t63-text); border-color: var(--t63-text); }
-        .t63-modes { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 10px; }
-        .t63-mode { position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: 2px; padding: 10px 12px; cursor: pointer; font-family: inherit; text-align: left; background: transparent; border: 1px solid var(--t63-line); color: var(--t63-dim); }
-        .t63-mode b { font-size: .95rem; font-weight: normal; color: var(--t63-text); }
-        .t63-mode span { font-size: .72rem; }
-        .t63-mode.active { border-color: var(--t63-acc); box-shadow: inset 0 -3px 0 var(--t63-acc); }
-        .t63-mode.active b { color: var(--t63-acc); }
-        .t63-live { position: absolute; top: 9px; right: 10px; width: 8px; height: 8px; border-radius: 50%; background: var(--t63-alert); animation: t63pulse 1.2s infinite; }
-        @keyframes t63pulse { 0%, 100% { opacity: 1; } 50% { opacity: .25; } }
-        .t63-panel { border: 1px solid var(--t63-line); padding: 12px; margin-bottom: 10px; background: var(--t63-soft); }
-        .t63-group { margin: 0 0 12px; }
-        .t63-group-title { font-size: .72rem; color: var(--t63-dim); letter-spacing: 1px; margin-bottom: 6px; text-transform: uppercase; }
-        .t63-panel select { width: 100%; box-sizing: border-box; }
-        .t63-row { display: flex; align-items: center; gap: 8px; margin: 4px 0; font-size: .85rem; }
-        .t63-row input[type=range] { flex: 1; min-width: 0; accent-color: var(--t63-acc); }
-        .t63-row b { min-width: 3.2em; text-align: right; font-weight: normal; color: var(--t63-text); white-space: nowrap; }
-        .t63-lbl { min-width: 5.5em; color: var(--t63-dim); font-size: .78rem; display: flex; align-items: center; gap: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .t63-dim { color: var(--t63-dim); font-size: .8rem; } .t63-small { font-size: .72rem; }
-        .t63-off { opacity: .5; }
-        .t63-dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; margin-right: 4px; vertical-align: middle; }
-        .t63-toggle { display: flex; align-items: flex-start; gap: 8px; padding: 7px 0; font-size: .85rem; color: var(--t63-text); cursor: pointer; }
-        .t63-toggle input { margin-top: 3px; accent-color: var(--t63-acc); }
-        .t63-toggle em { display: block; font-style: normal; font-size: .72rem; color: var(--t63-dim); }
-        .t63-meter-box { margin-bottom: 10px; }
-        .t63-meter-head { display: flex; justify-content: space-between; align-items: baseline; font-size: .85rem; color: var(--t63-text); margin-bottom: 6px; }
-        .t63-meter-head b { font-size: 1.3rem; font-weight: normal; color: var(--t63-acc); }
-        .t63-meter { position: relative; display: flex; height: 16px; background: rgba(127,127,127,.15); overflow: visible; }
-        .t63-meter span { display: block; height: 100%; }
-        .t63-meter em { position: absolute; top: -4px; bottom: -4px; width: 2px; margin-left: -1px; background: var(--t63-text); }
-        .t63-meter-legend { display: flex; flex-wrap: wrap; gap: 4px 10px; font-size: .72rem; color: var(--t63-dim); margin-top: 6px; }
-        .t63-need { color: var(--t63-text); }
-        .t63-gauge { border: 1px solid var(--t63-line); padding: 10px; margin: 0 0 12px; }
-        .t63-gauge-head { display: flex; justify-content: space-between; align-items: baseline; font-size: .85rem; color: var(--t63-text); }
-        .t63-gauge-head b { font-size: 1.7rem; font-weight: normal; }
-        .t63-gauge-head b.hi { color: var(--t63-ok); } .t63-gauge-head b.mid { color: var(--t63-acc); } .t63-gauge-head b.lo { color: var(--t63-alert); }
-        .t63-bar { height: 8px; background: rgba(127,127,127,.2); margin: 6px 0; }
-        .t63-bar span { display: block; height: 100%; background: var(--t63-acc); }
-        .t63-prow { padding: 8px 0; border-bottom: 1px solid var(--t63-line); }
-        .t63-prow:last-child { border-bottom: none; }
-        .t63-prow-head { display: flex; align-items: center; gap: 6px; font-size: .85rem; flex-wrap: wrap; }
-        .t63-prow-head b { font-weight: normal; color: var(--t63-text); }
-        .t63-prow-exp { margin-left: auto; font-size: .74rem; color: var(--t63-dim); }
-        .t63-prow-exp b { color: var(--t63-acc); }
-        .t63-tag { font-size: .66rem; padding: 0 5px; border: 1px solid var(--t63-acc); color: var(--t63-acc); }
-        .t63-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px; }
-        .t63-chip { display: inline-flex; align-items: center; gap: 2px; font-size: .82rem; border: 1px solid var(--t63-line); padding: 5px 10px; cursor: pointer; color: var(--t63-dim); }
-        .t63-chip input { display: none; }
-        .t63-chip.on { border-color: var(--t63-acc); color: var(--t63-text); background: color-mix(in srgb, var(--t63-acc) 12%, transparent); }
-        .t63-vs { margin: 0 0 12px; }
-        .t63-vs-head { display: flex; justify-content: space-between; font-size: .8rem; color: var(--t63-dim); margin-bottom: 5px; }
-        .t63-vs-head b { color: var(--t63-text); font-weight: normal; font-size: 1rem; }
-        .t63-vs-bar { display: flex; height: 14px; gap: 1px; background: rgba(127,127,127,.12); }
-        .t63-vs-bar span { display: block; height: 100%; }
-        .t63-vs-opp { opacity: .45; }
-        .t63-factors { margin: -6px 0 12px; font-size: .8rem; } .t63-factors summary { cursor: pointer; }
-        .t63-factor { display: flex; justify-content: space-between; gap: 8px; font-size: .78rem; color: var(--t63-dim); padding: 2px 0; }
-        .t63-plus { color: var(--t63-ok); } .t63-minus { color: var(--t63-alert); }
-        .t63-go { width: 100%; cursor: pointer; font-family: inherit; font-size: 1rem; padding: 12px; background: transparent; border: 2px solid var(--t63-acc); color: var(--t63-acc); letter-spacing: 1px; margin-top: 4px; }
-        .t63-go:hover { background: color-mix(in srgb, var(--t63-acc) 14%, transparent); }
-        .t63-btn { cursor: pointer; font-family: inherit; font-size: .85rem; padding: 6px 12px; background: transparent; border: 1px solid var(--t63-line); color: var(--t63-text); margin-top: 8px; }
-        .t63-mini { margin: 0; padding: 2px 8px; font-size: .75rem; }
-        .t63-animrow { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
-        .t63-speed { display: inline-flex; align-items: center; gap: 4px; }
-        .t63-speed button { cursor: pointer; font-family: inherit; font-size: .75rem; padding: 3px 8px; background: transparent; border: 1px solid var(--t63-line); color: var(--t63-dim); }
-        .t63-speed button.on { border-color: var(--t63-acc); color: var(--t63-acc); }
-        html[data-theme-family="modern"] .t63-speed button { border-radius: 999px; }
-        .t63-empty { text-align: center; padding: 22px 10px; color: var(--t63-dim); font-size: .85rem; line-height: 1.7; }
-        .t63-empty-icon { font-size: 1.8rem; margin-bottom: 4px; }
-        .t63-panel > .t63-result:first-child { margin: 0 0 4px; }
-        .t63-result { margin-top: 12px; padding: 10px 12px; border: 1px solid var(--t63-line); border-left: 4px solid var(--t63-dim); }
-        .t63-result.ok { border-left-color: var(--t63-ok); } .t63-result.fail { border-left-color: var(--t63-alert); }
-        .t63-result-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: .92rem; color: var(--t63-text); margin-bottom: 2px; }
-        .t63-badge { font-size: .74rem; padding: 1px 7px; border: 1px solid currentColor; }
-        .t63-badge.ok { color: var(--t63-ok); } .t63-badge.fail { color: var(--t63-alert); }
-        .t63-result ul { margin: 6px 0 0 18px; padding: 0; font-size: .8rem; color: var(--t63-dim); line-height: 1.6; }
-        .t63-fold { border: 1px solid var(--t63-line); padding: 0 12px; margin-bottom: 8px; }
-        .t63-fold > summary { cursor: pointer; padding: 9px 0; font-size: .85rem; color: var(--t63-text); }
-        .t63-fold[open] { padding-bottom: 10px; }
-        .t63-hurt { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 5px 0; border-bottom: 1px solid var(--t63-line); font-size: .82rem; color: var(--t63-text); }
-        .t63-hurt-row { color: #f0a030; }
-        .t63-log-row { display: grid; grid-template-columns: 1.2em auto 1fr auto; gap: 8px; padding: 4px 0; font-size: .8rem; color: var(--t63-text); border-bottom: 1px solid var(--t63-line); }
-        html[data-theme-family="modern"] .t63-stat { border-radius: 999px; background: var(--m-surface); }
-        html[data-theme-family="modern"] .t63-mode { border-radius: 12px; background: var(--m-surface); }
-        html[data-theme-family="modern"] .t63-mode b { font-weight: 600; }
-        html[data-theme-family="modern"] .t63-mode.active { box-shadow: inset 0 0 0 1px var(--t63-acc); background: color-mix(in srgb, var(--t63-acc) 7%, var(--m-surface)); }
-        html[data-theme-family="modern"] .t63-panel, html[data-theme-family="modern"] .t63-fold { border-radius: 14px; }
-        html[data-theme-family="modern"] .t63-fold { background: var(--m-surface); }
-        html[data-theme-family="modern"] .t63-gauge, html[data-theme-family="modern"] .t63-result { border-radius: 12px; background: var(--m-surface); }
-        html[data-theme-family="modern"] .t63-result { border-left-width: 4px; }
-        html[data-theme-family="modern"] .t63-meter, html[data-theme-family="modern"] .t63-vs-bar, html[data-theme-family="modern"] .t63-bar { border-radius: 6px; overflow: hidden; }
-        html[data-theme-family="modern"] .t63-meter { overflow: visible; }
-        html[data-theme-family="modern"] .t63-meter span:first-child { border-radius: 6px 0 0 6px; }
-        html[data-theme-family="modern"] .t63-chip, html[data-theme-family="modern"] .t63-tag, html[data-theme-family="modern"] .t63-badge { border-radius: 999px; }
-        html[data-theme-family="modern"] .t63-go { border-radius: 12px; font-weight: 600; letter-spacing: 0; border: none; background: var(--t63-acc); color: #fff; }
-        html[data-theme-family="modern"] .t63-go:hover { filter: brightness(1.08); }
-        html[data-theme-family="modern"] .t63-btn { border-radius: 8px; border-color: var(--m-border-strong); }
-        html[data-theme-family="modern"] .t63-group-title { text-transform: none; letter-spacing: 0; font-weight: 600; }
+        .t63-intro { color: #777; font-size: .78rem; line-height: 1.6; margin: 8px 0 10px; }
+        .t63-status { font-size: .85rem; color: #aaa; margin-bottom: 10px; }
+        .t63-row { display: flex; align-items: center; gap: 6px; margin: 4px 0; }
+        .t63-row input[type=text] { flex: 1; min-width: 0; }
+        .t63-row input[type=number] { width: 6em; }
+        .t63-dim { color: #777; font-size: .8rem; }
+        .t63-small { font-size: .72rem; }
+        #contentRevolution > label.t63-dim { display: block; margin: 10px 0 4px; }
+        #contentRevolution select { width: 100%; box-sizing: border-box; }
+        .t63-allies, .t63-identity, .t63-manual { margin: 8px 0; font-size: .85rem; }
+        .t63-allies summary, .t63-identity summary, .t63-manual summary { cursor: pointer; }
+        .t63-flag { width: 72px; height: 48px; flex-shrink: 0; }
+        .t63-flag img { width: 100%; height: 100%; object-fit: cover; }
+        .t63-chance { border: 1px solid #333; padding: 10px; margin: 10px 0; background: rgba(255,255,255,.02); }
+        .t63-chance-head { display: flex; justify-content: space-between; align-items: baseline; color: #aaa; }
+        .t63-chance-head b { font-size: 1.6rem; color: #ff6b3d; }
+        .t63-bar { height: 8px; background: #222; margin: 6px 0 8px; }
+        .t63-bar span { display: block; height: 100%; background: #ff6b3d; }
+        .t63-factor { display: flex; justify-content: space-between; gap: 8px; font-size: .78rem; color: #999; padding: 2px 0; }
+        .t63-plus { color: #5fbf7f; } .t63-minus { color: #e06060; }
+        .t63-go { width: 100%; cursor: pointer; font-family: inherit; font-size: 1rem; padding: 10px; background: transparent; border: 2px solid #ff6b3d; color: #ff6b3d; letter-spacing: 1px; }
+        .t63-btn { cursor: pointer; font-family: inherit; font-size: .85rem; padding: 6px 12px; background: transparent; border: 1px solid #555; color: #ccc; margin-top: 6px; }
+        .t63-result { margin-top: 12px; padding: 10px; border: 1px solid #333; border-left: 4px solid #888; }
+        .t63-result.ok { border-left-color: #5fbf7f; } .t63-result.fail { border-left-color: #e06060; }
+        .t63-result-head { font-size: 1rem; margin-bottom: 4px; }
+        .t63-result ul { margin: 6px 0 0 18px; padding: 0; font-size: .82rem; color: #bbb; }
+        .t63-log { margin-top: 12px; font-size: .82rem; } .t63-log summary { cursor: pointer; color: #999; }
+        .t63-log-row { display: flex; gap: 6px; padding: 3px 0; color: #aaa; border-bottom: 1px solid #1c1c1c; }
+        .t63-ps { border: 1px solid #c0392b; padding: 10px; margin: 0 0 12px; background: rgba(80,0,0,.2); }
+        .t63-ps-title { color: #e74c3c; font-size: 1rem; margin-bottom: 4px; letter-spacing: 1px; }
+        .t63-banner { margin: 0 0 10px; padding: 8px 12px; border: 1px solid #c0392b; color: #e74c3c; font-size: .9rem; background: rgba(80,0,0,.3); letter-spacing: 1px; }
+        .t63-ecset { margin-top: 10px; padding: 10px; border: 1px dashed #444; }
+        .t63-ecset > label.t63-dim { display: block; margin: 8px 0 4px; }
+        .t63-ecset-title { color: var(--tno-neon); font-size: .9rem; }
+        .t63-ec { margin: 10px 0; padding: 10px; border: 1px solid #333; }
+        .t63-ec-head { color: #aaa; font-size: .82rem; margin-bottom: 6px; }
+        .t63-ec-bar { position: relative; display: flex; height: 14px; background: #222; margin-bottom: 6px; }
+        .t63-ec-bar span { height: 100%; }
+        .t63-ec-bar i { position: absolute; top: -3px; bottom: -3px; width: 2px; background: #fff; }
+        .t63-ec-row { display: flex; justify-content: space-between; font-size: .82rem; color: #bbb; padding: 2px 0; }
+        .t63-dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; }
+        .t63-ec-note { margin: 6px 0; font-size: .82rem; color: #ddd; }
+        .t63-ec-map { width: 100%; margin: 8px 0; }
+        .t63-ec-units summary { cursor: pointer; color: #999; font-size: .82rem; }
+        .t63-ec-unit { border-left: 3px solid #888; padding: 3px 8px; margin: 4px 0; font-size: .82rem; color: #ccc; }
+        html[data-theme-family="modern"] .t63-intro, html[data-theme-family="modern"] .t63-dim { color: var(--m-text-3); }
+        html[data-theme-family="modern"] .t63-status, html[data-theme-family="modern"] .t63-chance-head, html[data-theme-family="modern"] .t63-factor { color: var(--m-text-2); }
+        html[data-theme-family="modern"] .t63-chance, html[data-theme-family="modern"] .t63-ec, html[data-theme-family="modern"] .t63-ecset { border: 1px solid var(--m-border); border-radius: 12px; background: var(--m-surface-2); }
+        html[data-theme-family="modern"] .t63-bar, html[data-theme-family="modern"] .t63-ec-bar { background: var(--m-border); border-radius: 4px; overflow: hidden; }
+        html[data-theme-family="modern"] .t63-go { border-radius: 12px; font-weight: 600; letter-spacing: 0; }
+        html[data-theme-family="modern"] .t63-btn { border: 1px solid var(--m-border-strong); border-radius: 8px; color: var(--m-text); }
+        html[data-theme-family="modern"] .t63-result { border: 1px solid var(--m-border); border-left-width: 4px; border-radius: 10px; background: var(--m-surface); }
+        html[data-theme-family="modern"] .t63-result ul, html[data-theme-family="modern"] .t63-ec-row, html[data-theme-family="modern"] .t63-ec-unit, html[data-theme-family="modern"] .t63-ec-note { color: var(--m-text-2); }
+        html[data-theme-family="modern"] .t63-ps, html[data-theme-family="modern"] .t63-banner { border-radius: 12px; background: color-mix(in srgb, #c0392b 8%, var(--m-surface)); }
+        html[data-theme-family="modern"] .t63-ecset-title { color: var(--m-text); font-weight: 600; }
+        html[data-theme-family="modern"] .t63-log-row { color: var(--m-text-2); border-bottom-color: var(--m-border); }
     `;
     document.head.appendChild(style);
-    // 튜토리얼(미리보기 과정)이 진행 상황을 읽고 모드를 바꾸는 창구
-    window.T63 = { get log() { return S.log; }, setMode(m) { ui.mode = m; renderSiege(); } };
+    // 튜토리얼(미리보기 과정)이 진행 상황을 읽는 창구
+    window.T63 = { get log() { return S.log; }, get partyState() { return S.partyState; } };
     window.addEventListener('load', () => setTimeout(refresh, 0));
 })();

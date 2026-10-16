@@ -1,57 +1,40 @@
-// ===== Hemicycle 티저 1.6.5 (teaser65 · 66) — "왕은 죽었다, 국왕 만세!" 미리보기 =====
-// teaser65.html = main.html + js/teaser61.js ~ js/teaser64.js(1.6.1 ~ 1.6.4) + 이 파일. 저장 공간은 따로 ('hemicycleTeaser65:')
+// ===== Hemicycle 티저 1.6.5 (teaser65 ~ 67) — "How the mighty have fallen" 미리보기 =====
+// teaser65.html = main.html + js/teaserpodium.js + js/teaser61.js ~ js/teaser64.js(1.6.1 ~ 1.6.4) + 이 파일. 저장 공간은 따로 ('hemicycleTeaserV2-65:')
 //
-//   - 내각 › 왕실: 왕가와 왕위 주장자를 정해 둔다
-//       왕가마다 이름 · 색 · 계승 규칙(남계만 · 남자 우선 · 성별 무관), 주장자마다 이름 · 칭호 · 성별 · 사진 · 지지 정당
-//       주장자 순서(⋮⋮ 끌기)가 곧 출생 순 — 계승 규칙에 따라 계승 순위가 정해진다
-//   - 왕정복고: 공화정에서 군주제를 되살린다
-//       의회 결의 — 주장자를 지지하는 정당이 하원 과반이면 주사위 없이 입헌군주제로
-//       쿠데타 — 지지 정당이 무력으로 (확률은 지지율 · 의석 · 가까운 장성 · 군의 불만 · 정부 의석) → 입헌군주제 또는 전제군주정
-//   - 숨겨진 정부 형태 "전제군주정": 왕이 총리를 임명하고 거부권 · 비상 권한을 모두 쥔다 (대통령제 틀 위에 왕을 앉힘)
-//     입헌군주제는 본 게임의 정부 형태(국왕은 상징적 국가원수, 실권은 총리)를 그대로 쓴다
-//   - 친위 쿠데타: 입헌군주제의 왕이 의회를 누르고 전제군주정으로 / 실패하면 왕이 물러나고 다음 계승자가 즉위
-//   - 입헌 개혁: 전제군주정의 왕이 실권을 내놓고 입헌군주제로 (주사위 없음)
-//   - 공화 혁명: 군주제 폐지 — 고른 정부 형태(의원내각제 · 대통령제 · 이원집정부제)로, 새 공화국 헌법
-//   - 계승: 왕이 서거 · 퇴위하면 계승 규칙대로 다음 계승자가 즉위 (같은 왕가에 없으면 다른 왕가에서)
-//   - 계승 분쟁: 카를로스파처럼 다른 주장자가 정통 왕위를 주장 — 의회 표결(지지 정당 의석) 또는 내전(주사위)으로 결판
-//   - 군주제 동안 대통령 선거는 멈추고, 국가원수 직책 이름은 군주 칭호(국왕 · 황제 · 여왕 …)가 된다
-/* global getAppState, setAppState, switchSubTab, parties, coalitions, president, pm, elecStore, emergencyPowers, seatKeyFor,
-   chamberList, govType, setGovType, vetoHolder, setVetoHolder, setEmergencyHolder, renderEmergencyPowers, applyMartialLawEffects,
-   simulate, refreshUI, showCustomAlert, showCustomConfirm, escapeHtmlText, formatNationDate, effRoleLabel, legisGetState,
-   legisSetState, startDragReorder, updatePresidentRoleLabels, updatePmRoleLabels, runPresidentialElection */
+//   - 의회 › 세력 변화: 정당 의석을 시점마다 기록하고, 오른쪽 시각 화면 "세력 변화" 탭에 정당 역사 도표로 그린다
+//     의석 변화(기록마다 의석 띠 · 점유율/의석 수 · ▲▼, 정당별 흐름 띠)와 당 변화(창당 · 당명 변경 · 승계 · 소멸 계보도) — 아래로 스크롤.
+//     정당 승계: 같은 정당의 당명 · 색 바꾸기(한나라당 → 새누리당), 서로 다른 정당을 앞 → 뒤로 잇기(후신 · 합당 · 분당). 왼쪽에는 기록 버튼 · 변화 표.
+//     총선 결과를 의회에 반영할 때 자동으로 기록되고, "지금 기록하기"로 직접 남기거나 선거 기록에서 가져올 수 있다.
+//   - 의회 › 위키 틀: 위키 문서의 "원내 구성" 틀처럼 여당 · 야당 정당을 의석과 함께 모은 틀 (가장 큰 정당은 넓은 칸, 나머지는 세 칸씩),
+//     나무위키 문법으로 복사 · 반원 그림 저장
+//   - 세계(국가 아래 새 메뉴) › 국가 순위: 냉전 국가 순위 — 꾸밈용 (게임 기능에 영향 없음). 국기(그림) · 진영 · 하위 이념 · 점수 · 순위 변동.
+//     세계 › 진영: 진영 추가 · 삭제, 색 · 설명, 하위 이념 추가 · 삭제, 진영 구도 막대
+/* global getAppState, setAppState, switchSubTab, parties, coalitions, chamberList, chamberDisplayName, seatKeyFor, chamberLeaders,
+   president, pm, govType, nationFlag, chamberLogos, elecRecords, formatNationDate, escapeHtmlText, showCustomAlert, showCustomConfirm,
+   effRoleLabel, dotCache, hasSenateChamber, hasThirdChamber, updateParty, currentSubTab */
 (function () {
     'use strict';
     const root = document.documentElement;
     if (root.getAttribute('data-app-mode') !== 'teaser' || !['65', '66', '67'].includes(root.getAttribute('data-teaser'))) return;
 
     const esc = s => (typeof escapeHtmlText === 'function' ? escapeHtmlText(String(s ?? '')) : String(s ?? ''));
-    const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
-    const uid = () => 'k' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-    const partyById = id => parties.find(p => String(p.id) === String(id)) || null;
-    const T61 = () => window.T61 || null;
-    const isInd = p => p && p.ideologyId === 9999;
-    const activeParty = p => p && p.status !== 'banned' && p.status !== 'dissolved' && !isInd(p);
-    const support = pid => Math.max(0, Number(elecStore?.house?.[pid]?.prob) || 0);
-    const isGovParty = p => !!p && (p.isRuling || coalitions.some(c => c.isRuling && (c.members || []).some(id => String(id) === String(p.id))));
-    function seatShare(filter) {
-        const key = seatKeyFor('house');
-        const total = parties.reduce((a, p) => a + (p[key] || 0), 0);
-        return total ? parties.filter(filter).reduce((a, p) => a + (p[key] || 0), 0) / total : 0;
-    }
-    const RULES = { salic: '남계만 (살리카법)', male: '남자 우선', equal: '성별 무관 (장자)' };
-    const TITLES = ['국왕', '여왕', '황제', '여제', '대공', '술탄'];
-    const PALETTE = ['#7a1f2b', '#1f3a7a', '#5b3a8a', '#2e6b4f', '#8a6a1f', '#444444'];
-    const GOV_NAME = { parliamentary: '의원내각제', presidential: '대통령제', semi: '이원집정부제', collective: '집단지도체제', monarchy: '입헌군주제' };
+    const uid = () => 'w' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    const nowDate = () => { try { return formatNationDate(); } catch (e) { return ''; } };
+    const chName = ch => { try { return chamberDisplayName(ch); } catch (e) { return ch; } };
+    const chambers = () => { try { return chamberList(); } catch (e) { return ['house']; } };
+    const nationName = () => (document.getElementById('nationNameInput')?.value || '').trim();
+    const isGovParty = p => !!p && (p.isRuling || coalitions.some(c => c.isRuling && (c.members || []).some(id => String(id) === String(p.id) || String(id).startsWith(p.id + '__'))));
+    const seatsOf = (p, ch) => Number(p[seatKeyFor(ch)]) || 0;
 
     // ---- 상태 (세이브의 teaser65 칸) ----
-    //   dynasties: [{ id, name, color, rule, claimants: [{ id, name, title, gender:'m'|'f', photo, partyIds:[pid] }] }]
-    //   monarchy: null | { kind:'constitutional'|'absolute', claimantId, dynastyId, title, since,
-    //                      prevGovType, prevPresident, prevVeto, prevHolders:{key:holder}, banned:[pid] }
-    //   dispute: null | { rivalId, since }
-    //   log: [{ id, at, date, kind, who, chance, success, effects }]
+    //   timeline: [{ id, at, date, label, source, chamber, total, parties:[{id,name,color,seats}], ruling:[id] }]
+    //   succession: [{ id, from, to }] — 정당 승계 관계
+    //   wiki: { termStart, termEnd, frame } — 원내 구성 틀
+    //   ranking: { title, rows:[{ id, name, flag, flagKey, flagImg, bloc, ideo, score, prevRank, self }] }
+    //   blocs: [{ id, name, color, desc, ideologies:[{ id, name }] }] — 세계 › 진영
     let S = fresh();
-    function fresh() { return { dynasties: [], monarchy: null, dispute: null, log: [] }; }
-    let ui = { method: 'parliament', claimantId: '', kind: 'constitutional', repParty: '', repGov: 'parliamentary', rivalId: '', lastId: null };
+    function fresh() { return { timeline: [], succession: [], blocs: defaultBlocs(), wiki: { termStart: '', termEnd: '', frame: '#2b3a67' }, ranking: defaultRanking() }; }
+    let ui = { tlChamber: 'house', wikiChamber: 'house', wikiView: 'in', histView: 'seats', seatMode: 'share', rbPid: null, openSucc: false };
 
     const origGet = window.getAppState;
     window.getAppState = function () {
@@ -63,611 +46,1631 @@
     window.setAppState = function (state) {
         const r = origSet.apply(this, arguments);
         const src = state && state.teaser65;
-        S = { ...fresh(), ...(src && typeof src === 'object' ? JSON.parse(JSON.stringify(src)) : {}) };
-        if (!Array.isArray(S.dynasties)) S.dynasties = [];
-        if (!Array.isArray(S.log)) S.log = [];
-        S.dynasties.forEach(d => { if (!Array.isArray(d.claimants)) d.claimants = []; d.claimants.forEach(c => { if (!Array.isArray(c.partyIds)) c.partyIds = []; }); });
+        const base = fresh();
+        S = { ...base, ...(src && typeof src === 'object' ? JSON.parse(JSON.stringify(src)) : {}) };
+        if (!Array.isArray(S.timeline)) S.timeline = [];
+        if (!Array.isArray(S.succession)) S.succession = [];
+        S.wiki = { ...base.wiki, ...(S.wiki || {}) };
+        // 저장된 순위가 없으면 (새 세이브 · 프리셋) 우리나라 이름을 보고 처음 목록을 만든다
+        if (!src || !src.ranking || !Array.isArray(S.ranking && S.ranking.rows)) S.ranking = defaultRanking(nationName());
+        if (!Array.isArray(S.blocs) || !S.blocs.length && !(src && Array.isArray(src.blocs))) S.blocs = base.blocs;
         refresh();
         return r;
     };
 
-    // ---- 주장자 · 계승 ----
-    const allClaimants = () => S.dynasties.flatMap(d => d.claimants.map(c => ({ c, d })));
-    const findClaimant = id => allClaimants().find(x => x.c.id === id) || null;
-    const claimantLabel = x => x ? `${x.c.name || '(이름 없음)'}${x.c.title ? ` (${x.c.title})` : ''} · ${x.d.name || '왕가'}` : '';
-    // 계승 순위 — 왕가 안 순서(출생 순)를 계승 규칙대로 거른다
-    function lineOf(d, excludeId) {
-        const list = d.claimants.filter(c => c.id !== excludeId);
-        if (d.rule === 'salic') return list.filter(c => c.gender !== 'f');
-        if (d.rule === 'male') return [...list.filter(c => c.gender !== 'f'), ...list.filter(c => c.gender === 'f')];
-        return list;
+    // ================= 세력 변화 타임라인 =================
+    function snapshot(ch, label, source, at) {
+        const ps = parties.filter(p => seatsOf(p, ch) > 0);
+        return {
+            id: uid(), at: at || Date.now(), date: nowDate(), label: label || '', source, chamber: ch,
+            total: ps.reduce((a, p) => a + seatsOf(p, ch), 0),
+            parties: ps.map(p => ({ id: p.id, name: p.name, color: p.color, seats: seatsOf(p, ch) })),
+            ruling: ps.filter(isGovParty).map(p => p.id),
+        };
     }
-    // 주장자를 미는 힘 — 지지 정당의 하원 의석 비율 · 지지율
-    const backers = c => (c.partyIds || []).map(partyById).filter(activeParty);
-    const backingSeats = c => seatShare(p => backers(c).includes(p));
-    const backingSupport = c => backers(c).reduce((a, p) => a + support(p.id), 0);
-    const strength = c => backingSeats(c) * 100 + backingSupport(c) * 0.5;
-    const monarchX = () => S.monarchy ? findClaimant(S.monarchy.claimantId) : null;
-    const militaryLoyalty = () => { const m = T61() && T61().military; return m && m.length ? m.reduce((a, x) => a + (Number(x.loyalty) || 0), 0) / m.length : null; };
-
-    // ---- 정부 형태 바꾸기 ----
-    function rerenderGov() {
-        ['updatePresidentRoleLabels', 'updatePmRoleLabels', 'renderPresidentSection', 'renderPmSection', 'renderCabinetDisplay', 'renderEmergencyPowers'].forEach(fn => { try { window[fn] && window[fn](); } catch (e) { /* 화면 준비 전 */ } });
-        try { simulate(); refreshUI(); } catch (e) { /* 화면 준비 전 */ }
+    const sameSeats = (a, b) => a && b && a.parties.length === b.parties.length && a.parties.every(x => (b.parties.find(y => String(y.id) === String(x.id)) || {}).seats === x.seats);
+    const lastOf = ch => S.timeline.filter(x => x.chamber === ch).sort((a, b) => a.at - b.at).pop();
+    function record(label, source, onlyIfChanged) {
+        let n = 0;
+        chambers().forEach(ch => {
+            const snap = snapshot(ch, label, source);
+            if (!snap.total) return;
+            if (onlyIfChanged && sameSeats(snap, lastOf(ch))) return;
+            S.timeline.push(snap); n++;
+        });
+        return n;
     }
-    function seatMonarch(x) {
-        Object.assign(president, { name: x.c.name || '', photo: x.c.photo || '', partyId: null, linkedSeat: null });
-        S.monarchy.claimantId = x.c.id;
-        S.monarchy.dynastyId = x.d.id;
-        if (x.c.gender === 'f' && S.monarchy.title === '국왕') S.monarchy.title = '여왕';
-        if (x.c.gender !== 'f' && S.monarchy.title === '여왕') S.monarchy.title = '국왕';
+    // 총선 결과를 의회에 반영하면 자동으로 기록
+    const origApply = window.elecApplyToParliament;
+    if (typeof origApply === 'function') {
+        window.elecApplyToParliament = function () {
+            const r = origApply.apply(this, arguments);
+            setTimeout(() => {
+                const rec = (typeof elecRecords !== 'undefined' && elecRecords[0]) || null;
+                const fresh = rec && Date.now() - new Date(rec.savedAt).getTime() < 60000;
+                record(fresh ? `${rec.title}${rec.year && rec.year !== '?' ? ` (${rec.year})` : ''}` : '선거 반영', 'election', true);
+                renderTimeline();
+            }, 0);
+            return r;
+        };
     }
-    function setHolders(holder) { Object.keys(emergencyPowers).forEach(k => { try { setEmergencyHolder(k, holder); } catch (e) { emergencyPowers[k].holder = holder; } }); }
-    function declareMartialLaw() {
-        if (T61()) { T61().declareMartialLaw(); return; }
-        emergencyPowers.martialLaw.holder = 'president'; emergencyPowers.martialLaw.suspendParliament = true; emergencyPowers.martialLaw.active = true;
-        try { renderEmergencyPowers(); applyMartialLawEffects(); } catch (e) { /* 화면 준비 전 */ }
-    }
-    function liftMartialLaw() {
-        emergencyPowers.martialLaw.active = false; emergencyPowers.martialLaw.suspendParliament = false;
-        try { renderEmergencyPowers(); applyMartialLawEffects(); } catch (e) { /* 화면 준비 전 */ }
-    }
-    // 전제군주정: 대통령제 틀 위에 왕을 앉힌다 — 왕이 총리 임명 · 거부권 · 비상 권한
-    function makeAbsolute() {
-        S.monarchy.kind = 'absolute';
-        setGovType('presidential');
-        try { setVetoHolder('president'); } catch (e) { /* 없음 */ }
-        setHolders('president');
-    }
-    function makeConstitutional() {
-        S.monarchy.kind = 'constitutional';
-        setGovType('monarchy');
-        try { setVetoHolder('none'); } catch (e) { /* 없음 */ }
-    }
-    function startMonarchy(x, kind) {
-        const t61 = T61();
-        const fx = [];
-        if (t61 && t61.junta) { t61.endJunta('revolution'); fx.push('군정 붕괴'); }
-        S.monarchy = { kind, title: x.c.gender === 'f' ? '여왕' : '국왕', since: formatNationDate(), prevGovType: govType,
-            prevPresident: { name: president.name || '', photo: president.photo || '', partyId: president.partyId ?? null },
-            prevVeto: typeof vetoHolder !== 'undefined' ? vetoHolder : 'none',
-            prevHolders: Object.fromEntries(Object.keys(emergencyPowers).map(k => [k, emergencyPowers[k].holder])), banned: [], prevNation: nationName() };
-        const kn = kingdomName(nationName());
-        if (kn && kn !== nationName()) { setNationName(kn); fx.push(`국호 변경: ${S.monarchy.prevNation} → ${kn}`); }
-        seatMonarch(x);
-        if (kind === 'absolute') makeAbsolute(); else makeConstitutional();
-        S.dispute = null;
-        return fx;
-    }
-    function endMonarchy(gov) {
-        const prev = S.monarchy;
-        S.monarchy = null; S.dispute = null;
-        // 국호 — 왕정 전의 공화국 이름이 있으면 되돌리고, 없으면 "○○ 공화국"
-        const rep = prev && prev.prevNation && !/(왕국|제국|대공국|공국)$/.test(prev.prevNation) ? prev.prevNation : (nationRoot(nationName()) ? `${nationRoot(nationName())} 공화국` : '');
-        if (rep && rep !== nationName()) setNationName(rep);
-        setGovType(gov || (prev && prev.prevGovType && prev.prevGovType !== 'monarchy' ? prev.prevGovType : 'parliamentary'));
-        Object.assign(president, { name: '', photo: '', partyId: null, linkedSeat: null });
-        if (prev) {
-            try { setVetoHolder(prev.prevVeto && prev.prevVeto !== 'president' ? prev.prevVeto : 'none'); } catch (e) { /* 없음 */ }
-            (prev.banned || []).forEach(id => { const p = partyById(id); if (p && p.status === 'banned') p.status = 'active'; });
-        }
-        liftMartialLaw();
-    }
-    function setConstitution(c) {
-        if (typeof legisGetState !== 'function') return;
-        const cur = legisGetState();
-        const prev = cur.constitution;
-        const revisions = prev ? [...(prev.revisions || []), { date: formatNationDate(), note: `"${prev.title}" 폐지 · "${c.title}" 제정` }] : [];
-        legisSetState({ ...cur, constitution: { ...c, revisions } });
-    }
-    const nationName = () => document.getElementById('nationNameInput')?.value?.trim() || '';
-    function setNationName(nm) {
-        const inp = document.getElementById('nationNameInput');
-        if (!inp || !nm) return;
-        inp.value = nm;
-        try { updateNationIdBar(); } catch (e) { /* 화면 준비 전 */ }
-    }
-    // 나라 이름에서 공화국 꼬리를 떼어 낸 뿌리 (독일연방공화국 → 독일) — 왕정복고 · 공화 혁명 때 국호를 바꾸는 데 씀
-    const nationRoot = nm => (nm || '').replace(/\s*(연방|인민|민주|사회주의|자유|민주주의)*\s*공화국$/, '').replace(/\s*(왕국|제국|대공국|공국)$/, '').trim() || nm || '';
-    const kingdomName = nm => nm && /(왕국|제국|대공국|공국)$/.test(nm) ? nm : (nationRoot(nm) ? `${nationRoot(nm)} 왕국` : '');
-    function monarchyConstitution(x, kind) {
-        const nm = nationName(), house = x.d.name || '왕가';
-        return kind === 'absolute' ? { title: `${nm ? nm + ' ' : ''}기본법`,
-            preamble: `${house}의 정통 군주가 하늘과 국민 앞에서 나라를 다스리며, 국민은 군주에게 충성하고 나라의 번영을 위하여 이 기본법을 받든다.`,
-            articles: [
-                { title: '군주', text: `${nm || '국가'}의 군주는 ${house}의 정통 계승자이며, 신성하여 침해할 수 없다.` },
-                { title: '통치권', text: '군주는 국가의 원수로서 통치권을 총람하고, 총리와 각료를 임명하고 해임한다.' },
-                { title: '입법', text: '의회는 군주의 협찬 기관이며, 법률은 군주의 재가로 효력을 가진다. 군주는 법률안을 거부할 수 있다.' },
-                { title: '비상 대권', text: '군주는 국가 비상시 계엄을 선포하고 의회를 정회 또는 해산할 수 있다.' },
-                { title: '왕위 계승', text: `왕위는 ${RULES[x.d.rule] || '정해진 규칙'}에 따라 ${house}에서 계승한다.` },
-            ] } : { title: `${nm ? nm + ' ' : ''}헌법`,
-            preamble: `${nm || '우리 나라'}는 ${house}의 군주를 국가의 상징으로 모시는 입헌군주국이며, 주권은 국민에게 있다.`,
-            articles: [
-                { title: '국체', text: `${nm || '국가'}는 입헌군주국이다. 군주는 국가와 국민 통합의 상징이며 국정에 관한 실권을 가지지 아니한다.` },
-                { title: '국민주권', text: '주권은 국민에게 있고, 모든 권력은 국민으로부터 나온다.' },
-                { title: '내각', text: '행정권은 내각에 속하며, 총리는 의회의 신임에 기초한다.' },
-                { title: '왕위 계승', text: `왕위는 ${RULES[x.d.rule] || '정해진 규칙'}에 따라 ${house}에서 계승한다.` },
-            ] };
-    }
-    function republicConstitution(gov) {
-        const nm = nationName();
-        return { title: `${nm ? nm + ' ' : ''}헌법`,
-            preamble: '우리 국민은 군주제를 폐지하고, 국민 모두가 주권자인 공화국을 세우며 자유와 평등의 질서를 지키기 위하여 이 헌법을 제정한다.',
-            articles: [
-                { title: '국체', text: `${nm || '국가'}는 민주공화국이다.` },
-                { title: '국민주권', text: '주권은 국민에게 있고, 모든 권력은 국민으로부터 나온다.' },
-                { title: '군주제의 폐지', text: '군주제와 귀족 제도는 폐지되며, 어떠한 특권 계급도 인정되지 아니한다.' },
-                { title: '정부 형태', text: `정부는 ${GOV_NAME[gov] || '공화정'}로 구성한다.` },
-                { title: '선거', text: '국가원수와 의회 의원은 국민의 보통 · 평등 · 직접 · 비밀 선거로 뽑는다.' },
-            ] };
-    }
-    function cutSupport(pid, factor) {
-        if (T61()) { T61().cutSupport(pid, factor); return; }
-        chamberList().forEach(ch => { const st = elecStore?.[ch]?.[pid]; if (st) st.prob = Math.round((Number(st.prob) || 0) * factor * 10) / 10; });
-    }
-
-    // ---- 확률 ----
-    function restorationChance(x) {
-        const f = [], add = (label, v) => f.push({ label, v: Math.round(v) });
-        add('기본', 10);
-        if (!x) return { factors: f, chance: 5 };
-        const bs = backers(x.c);
-        add(`지지 정당 지지율 (${Math.round(backingSupport(x.c))}%)`, backingSupport(x.c) * 0.4);
-        add(`지지 정당 의석 (${Math.round(backingSeats(x.c) * 100)}%)`, backingSeats(x.c) * 25);
-        const t61 = T61();
-        if (t61 && t61.military && t61.military.length) {
-            const aligned = t61.military.filter(m => bs.some(p => String(p.id) === String(m.partyId)));
-            if (aligned.length) add(`가까운 장성 ${aligned.length}명`, Math.min(25, 8 * aligned.length));
-            add('군 지휘부의 불만', 20 * t61.militaryDisloyalty());
-        }
-        if (t61 && t61.junta) add('군정에 대한 반감', 10);
-        add('정부 · 여당의 의석', -20 * seatShare(p => isGovParty(p) && !bs.includes(p)));
-        return { factors: f, chance: clamp(Math.round(f.reduce((a, y) => a + y.v, 0)), 5, 90) };
-    }
-    function selfCoupChance() {
-        const f = [], add = (label, v) => f.push({ label, v: Math.round(v) });
-        const x = monarchX();
-        add('기본', 15);
-        if (x) add(`왕당파 의석 (${Math.round(backingSeats(x.c) * 100)}%)`, backingSeats(x.c) * 35);
-        const loyal = militaryLoyalty();
-        if (loyal != null) add(`군의 충성 (평균 ${Math.round(loyal)})`, (loyal - 50) * 0.5);
-        add('입헌 정부 · 여당의 의석', -15 * seatShare(p => isGovParty(p) && !(x && backers(x.c).includes(p))));
-        return { factors: f, chance: clamp(Math.round(f.reduce((a, y) => a + y.v, 0)), 5, 90) };
-    }
-    function republicChance(pid) {
-        const f = [], add = (label, v) => f.push({ label, v: Math.round(v) });
-        const x = monarchX();
-        add('기본', 10);
-        if (S.monarchy && S.monarchy.kind === 'absolute') add('전제 왕권에 대한 반감', 20);
-        if (emergencyPowers?.martialLaw?.active) add('계엄령', 10);
-        const p = partyById(pid);
-        if (p) add(`${p.name} 지지율 (${support(p.id)}%)`, support(p.id) * 0.4);
-        if (x) add(`왕당파 지지율 (${Math.round(backingSupport(x.c))}%)`, -backingSupport(x.c) * 0.3);
-        if (S.dispute) add('계승 분쟁으로 흔들리는 왕실', 10);
-        const loyal = militaryLoyalty();
-        if (loyal != null) add(`군의 충성 (평균 ${Math.round(loyal)})`, -(loyal - 50) * 0.4);
-        return { factors: f, chance: clamp(Math.round(f.reduce((a, y) => a + y.v, 0)), 5, 90) };
-    }
-
-    // ---- 행동 ----
-    function logIt(kind, who, chance, success, effects) {
-        const e = { id: uid(), at: Date.now(), date: formatNationDate(), kind, who, chance, success, effects };
-        S.log.unshift(e); ui.lastId = e.id;
-    }
-    function done() { rerenderGov(); if (T61()) T61().refresh(); refresh(); }
-    function restore() {
-        const x = findClaimant(ui.claimantId);
-        if (!x) { showCustomAlert('왕위에 올릴 주장자를 고르세요 (위 "왕가와 왕위 주장자"에서 먼저 만듭니다).'); return; }
-        if (window.T62 && window.T62.partyState) { showCustomAlert('당-국가 체제에서는 먼저 민주 혁명으로 체제를 무너뜨려야 합니다.'); return; }
-        if (ui.method === 'parliament') {
-            const share = backingSeats(x.c);
-            if (share <= 0.5) { showCustomAlert(`의회 결의로 왕정을 되살리려면 ${x.c.name || '주장자'}을(를) 지지하는 정당이 하원 과반이어야 합니다 (지금 ${Math.round(share * 100)}%). 쿠데타로 해 보세요.`); return; }
-            showCustomConfirm(`의회 결의로 ${claimantLabel(x)}을(를) 입헌군주로 모십니다 (지지 정당 의석 ${Math.round(share * 100)}%). 계속하시겠습니까?`, () => {
-                const fx = startMonarchy(x, 'constitutional');
-                setConstitution(monarchyConstitution(x, 'constitutional'));
-                fx.push(`왕정복고 — 입헌군주제, ${S.monarchy.title} ${x.c.name}`, '국가원수 = 군주 (상징적), 실권은 총리', '새 헌법 (입법 › 법령) · 대통령 선거 중단');
-                logIt('restore', claimantLabel(x), null, true, fx); done();
+    // 선거 기록(총선)에서 가져오기 — 이미 가져온 기록은 건너뜀
+    function importRecords() {
+        const recs = (typeof elecRecords !== 'undefined' ? elecRecords : []).filter(r => r && Array.isArray(r.parties) && r.chamberType);
+        let n = 0;
+        recs.slice().reverse().forEach(r => {
+            const key = 'rec:' + r.id;
+            if (S.timeline.some(x => x.source === key)) return;
+            const ps = r.parties.filter(p => (p.seats || 0) > 0);
+            if (!ps.length) return;
+            S.timeline.push({
+                id: uid(), at: new Date(r.savedAt).getTime() || Date.now(), date: r.year && r.year !== '?' ? String(r.year) : '', label: r.title || '선거',
+                source: key, chamber: r.chamberType, total: ps.reduce((a, p) => a + p.seats, 0),
+                parties: ps.map(p => ({ id: p.id, name: p.name, color: p.color, seats: p.seats })), ruling: [],
             });
-            return;
-        }
-        const { chance } = restorationChance(x);
-        const kindName = ui.kind === 'absolute' ? '전제군주정' : '입헌군주제';
-        showCustomConfirm(`왕당파 쿠데타로 ${claimantLabel(x)}을(를) 왕위에 올립니다 (${kindName}), 성공 확률 ${chance}%. 계속하시겠습니까?`, () => {
-            const success = Math.random() * 100 < chance;
-            let fx = [];
-            if (success) {
-                fx = startMonarchy(x, ui.kind);
-                setConstitution(monarchyConstitution(x, ui.kind));
-                if (ui.kind === 'absolute') {
-                    declareMartialLaw();
-                    fx.push(`왕정복고 — 숨겨진 정부 형태: 전제군주정, ${S.monarchy.title} ${x.c.name}`, '왕이 총리 임명 · 거부권 · 비상 권한', '계엄령 선포 · 왕국 기본법');
-                } else fx.push(`왕정복고 — 입헌군주제, ${S.monarchy.title} ${x.c.name}`, '새 헌법 (입법 › 법령) · 대통령 선거 중단');
-            } else {
-                backers(x.c).forEach(p => { p.status = 'banned'; cutSupport(p.id, 0.5); });
-                fx.push('쿠데타 실패 — 왕당파 정당 활동 금지 · 지지율 절반', `${x.c.name || '주장자'} 망명`);
-            }
-            logIt('restoreCoup', claimantLabel(x), chance, success, fx); done();
+            n++;
         });
-    }
-    function selfCoup() {
-        const x = monarchX();
-        if (!S.monarchy || S.monarchy.kind !== 'constitutional' || !x) return;
-        const { chance } = selfCoupChance();
-        showCustomConfirm(`${S.monarchy.title} ${x.c.name}이(가) 친위 쿠데타로 의회를 누르고 전제군주정을 세웁니다, 성공 확률 ${chance}%. 계속하시겠습니까?`, () => {
-            const success = Math.random() * 100 < chance;
-            const fx = [];
-            if (success) {
-                makeAbsolute(); declareMartialLaw();
-                setConstitution(monarchyConstitution(x, 'absolute'));
-                // 왕을 지지하지 않는 정당은 활동 금지 (공화 혁명 · 입헌 개혁 때 복권)
-                const keep = new Set(backers(x.c).map(p => String(p.id)));
-                parties.forEach(p => { if (!keep.has(String(p.id)) && activeParty(p)) { p.status = 'banned'; S.monarchy.banned.push(p.id); } });
-                fx.push('숨겨진 정부 형태: 전제군주정 — 왕이 총리 임명 · 거부권 · 비상 권한', '계엄령 선포 · 왕국 기본법', `반왕당 정당 ${S.monarchy.banned.length}곳 활동 금지`);
-            } else {
-                const next = succession(true);
-                fx.push(`실패 — ${S.monarchy && x ? `${x.c.name} 퇴위` : '왕 퇴위'}`, ...(next ? [`${next}`] : ['계승자가 없어 왕위가 비었습니다']));
-            }
-            logIt('selfCoup', x.c.name, chance, success, fx); done();
-        });
-    }
-    function reform() {
-        if (!S.monarchy || S.monarchy.kind !== 'absolute') return;
-        showCustomConfirm('입헌 개혁 — 왕이 실권을 내놓고 입헌군주제로 돌아갑니다 (계엄 해제 · 활동 금지 정당 복권 · 새 헌법). 계속하시겠습니까?', () => {
-            const x = monarchX();
-            makeConstitutional(); liftMartialLaw();
-            (S.monarchy.banned || []).forEach(id => { const p = partyById(id); if (p && p.status === 'banned') p.status = 'active'; });
-            S.monarchy.banned = [];
-            if (x) setConstitution(monarchyConstitution(x, 'constitutional'));
-            logIt('reform', x ? x.c.name : '', null, true, ['입헌군주제로 — 국왕은 상징, 실권은 총리', '계엄 해제 · 활동 금지 정당 복권 · 새 헌법']); done();
-        });
-    }
-    function revolt() {
-        if (!S.monarchy) return;
-        const p = partyById(ui.repParty);
-        const { chance } = republicChance(ui.repParty);
-        showCustomConfirm(`공화 혁명을 일으킵니다${p ? ` — 혁명 정당: ${p.name}` : ''} (성공하면 ${GOV_NAME[ui.repGov]}), 성공 확률 ${chance}%. 계속하시겠습니까?`, () => {
-            const success = Math.random() * 100 < chance;
-            const x = monarchX();
-            const fx = [];
-            if (success) {
-                const before = nationName();
-                endMonarchy(ui.repGov);
-                if (nationName() !== before) fx.push(`국호 변경: ${before} → ${nationName()}`);
-                setConstitution(republicConstitution(ui.repGov));
-                fx.push(`군주제 폐지 — ${GOV_NAME[ui.repGov]} 공화국`, `${x ? `${x.c.name}은(는) 왕위 주장자로 남음` : ''}`, '새 공화국 헌법 · 계엄 해제 · 활동 금지 정당 복권', `${effRoleLabel('president')} 공석 — 선거로 뽑으세요`);
-                if (p) cutSupport(p.id, 1.2);
-            } else {
-                if (p) { p.status = 'banned'; cutSupport(p.id, 0.5); S.monarchy.banned.push(p.id); fx.push(`${p.name} 활동 금지 · 지지율 절반`); }
-                declareMartialLaw(); fx.push('왕정이 계엄령 선포');
-            }
-            logIt('republic', p ? p.name : '시민 혁명', chance, success, fx.filter(Boolean)); done();
-        });
-    }
-    // 계승 — 왕이 서거 · 퇴위하면 다음 계승자 (같은 왕가 → 없으면 지지가 가장 센 다른 왕가 주장자). 돌려주는 값: 설명 문구
-    function succession(silent) {
-        const x = monarchX();
-        if (!S.monarchy) return null;
-        let next = x ? lineOf(x.d, x.c.id)[0] : null;
-        let nd = x ? x.d : null;
-        if (!next) {
-            const others = allClaimants().filter(y => !x || y.c.id !== x.c.id).sort((a, b) => strength(b.c) - strength(a.c));
-            if (others[0]) { next = others[0].c; nd = others[0].d; }
-        }
-        if (x && x.d) x.d.claimants = x.d.claimants.filter(c => c.id !== x.c.id); // 물러난 왕은 주장자 목록에서 빠짐
-        if (!next) { Object.assign(president, { name: '', photo: '', partyId: null, linkedSeat: null }); S.monarchy.claimantId = null; return null; }
-        seatMonarch({ c: next, d: nd });
-        if (S.dispute && S.dispute.rivalId === next.id) S.dispute = null;
-        rerenderGov();
-        return `${S.monarchy.title} ${next.name} 즉위 (${nd.name})${nd !== (x && x.d) ? ' — 왕가 교체' : ''}`;
-    }
-    function demise() {
-        const x = monarchX();
-        if (!S.monarchy || !x) return;
-        showCustomConfirm(`${S.monarchy.title} ${x.c.name}의 서거 · 퇴위 — 계승 규칙(${RULES[x.d.rule] || ''})대로 다음 계승자가 즉위합니다. 계속하시겠습니까?`, () => {
-            const msg = succession();
-            logIt('succession', x.c.name, null, true, [`${x.c.name} 서거 · 퇴위`, msg || '계승자가 없어 왕위가 비었습니다']); done();
-        });
-    }
-    function claimDispute() {
-        const r = findClaimant(ui.rivalId), x = monarchX();
-        if (!r || !x || r.c.id === x.c.id) { showCustomAlert('정통 왕위를 주장할 다른 주장자를 고르세요.'); return; }
-        S.dispute = { rivalId: r.c.id, since: formatNationDate() };
-        logIt('dispute', claimantLabel(r), null, true, [`${r.c.name}이(가) 정통 왕위를 주장 — 계승 분쟁 시작`, `지지: ${backers(r.c).map(p => p.name).join(', ') || '없음'}`]); done();
-    }
-    function resolveDispute(how) {
-        const r = S.dispute && findClaimant(S.dispute.rivalId), x = monarchX();
-        if (!r || !x) { S.dispute = null; refresh(); return; }
-        const sx = strength(x.c), sr = strength(r.c);
-        let rivalWins, chance = null;
-        if (how === 'parliament') rivalWins = backingSeats(r.c) > backingSeats(x.c);
-        else {
-            let w = sr / Math.max(1, sx + sr);
-            const t61 = T61();
-            if (t61 && t61.military && t61.military.length) {
-                const al = side => t61.military.filter(m => backers(side).some(p => String(p.id) === String(m.partyId))).length;
-                w = clamp(w + (al(r.c) - al(x.c)) * 0.08, 0.05, 0.95);
-            }
-            chance = Math.round(w * 100);
-            rivalWins = Math.random() < w;
-        }
-        const fx = [];
-        if (rivalWins) {
-            seatMonarch(r);
-            backers(x.c).forEach(p => cutSupport(p.id, 0.8));
-            fx.push(`${r.c.name} 승리 — ${S.monarchy.title} 즉위 (${r.d.name})`, `${x.c.name}의 지지 정당 지지율 하락`);
-        } else {
-            backers(r.c).forEach(p => cutSupport(p.id, 0.8));
-            fx.push(`${x.c.name} 왕위 지킴`, `${r.c.name}의 지지 정당 지지율 하락`);
-        }
-        S.dispute = null;
-        logIt(how === 'parliament' ? 'disputeVote' : 'disputeWar', `${x.c.name} vs ${r.c.name}`, chance, true, fx); done();
+        return n;
     }
 
-    // ---- 직책 이름 · 대통령 선거 ----
-    const origRole = window.effRoleLabel;
-    window.effRoleLabel = function (key) {
-        if (S.monarchy && key === 'president') return S.monarchy.title || '국왕';
-        return origRole.apply(this, arguments);
-    };
-    if (typeof window.runPresidentialElection === 'function') {
-        const origPres = window.runPresidentialElection;
-        window.runPresidentialElection = function () {
-            if (S.monarchy) { showCustomAlert(`군주제에서는 국가원수(${S.monarchy.title})를 선거로 뽑지 않습니다 — 내각 › 왕실에서 계승 · 공화 혁명을 다룹니다.`); return; }
-            return origPres.apply(this, arguments);
+    // ---- 정당 승계 ----
+    //   S.succession: [{ id, from, to }] — 앞 정당(from)이 뒤 정당(to)으로 이어짐 (해산 뒤 후신 · 합당 · 분당 등)
+    //   당명 · 색만 바꾸는 승계(한나라당 → 새누리당 같은)는 같은 정당을 그대로 고치고 그 시점을 기록해, 기록마다 남은 옛 이름으로 보인다.
+    const sameId = (a, b) => String(a) === String(b);
+    const succOf = id => (S.succession || []).filter(l => sameId(l.from, id)).map(l => l.to);
+    // 승계가 일어난 자리: 잇기를 누른 시각(at) 바로 앞의 기록 i → 그다음 기록 i+1에서 합쳐진다 (i+1이 아직 없으면 -1: 다음 기록에서)
+    // 예전 방식(at 없음)은 앞 정당이 사라지고 뒤 정당이 이어받는 첫 자리
+    function linkStep(l, list, alive) {
+        if (l.at != null) {
+            let i = -1;
+            list.forEach((x, k) => { if (x.at <= l.at) i = k; });
+            return i >= 0 && i < list.length - 1 ? i : -1;
+        }
+        for (let i = 0; i < list.length - 1; i++) if (alive(list[i], l.from) && !alive(list[i + 1], l.from) && alive(list[i + 1], l.to)) return i;
+        return -1;
+    }
+    const predOf = id => (S.succession || []).filter(l => sameId(l.to, id)).map(l => l.from);
+    // 기록 · 지금 정당에서 알려진 모든 정당 (가장 최근 이름 · 색)
+    function knownParties() {
+        const m = new Map();
+        S.timeline.slice().sort((a, b) => a.at - b.at).forEach(sn => sn.parties.forEach(p => m.set(String(p.id), { id: p.id, name: p.name, color: p.color })));
+        parties.forEach(p => { if (p.ideologyId !== 9999) m.set(String(p.id), { id: p.id, name: p.name, color: p.color }); });
+        return [...m.values()];
+    }
+    function rebrand(pid, name, color) {
+        const idx = parties.findIndex(p => sameId(p.id, pid));
+        if (idx < 0) return false;
+        const old = parties[idx].name;
+        if (!S.timeline.length) record('', 'manual', false); // 바꾸기 전 모습도 남겨 둠
+        try { updateParty(idx, 'name', name); if (color) updateParty(idx, 'color', color); }
+        catch (e) { parties[idx].name = name; if (color) parties[idx].color = color; }
+        record(`${old} → ${name}`, 'succession', false);
+        return true;
+    }
+
+    // ---- 정당 역사 도표 (오른쪽 시각 화면, 아래로 흐름) ----
+    // 의석 변화: 기록 하나가 가로 띠 하나(폭 = 의석 비율 또는 의석 수), 시간은 위에서 아래로. 이웃한 기록 사이는 정당마다 흐르는 띠로 이어
+    //   정당이 생기고 · 커지고 · 줄고 · 사라지는 모습을 보여 준다. 승계는 앞 정당 띠가 뒤 정당으로 이어져 흐름. 집권 세력은 금색 테두리.
+    // 당 변화: 정당마다 창당부터 소멸까지 세로줄, 당명이 바뀐 자리 · 승계(→) · 소멸(✕)을 표시하는 계보도
+    function partyOrder(snaps) {
+        const ids = [];
+        const idx = id => { const k = parties.findIndex(p => sameId(p.id, id)); return k < 0 ? 1e6 : k; };
+        snaps.forEach(sn => sn.parties.forEach(p => { if (!ids.some(x => sameId(x, p.id))) ids.push(p.id); }));
+        const first = id => snaps.findIndex(sn => sn.parties.some(p => sameId(p.id, id)));
+        ids.sort((a, b) => (idx(a) - idx(b)) || (first(a) - first(b)));
+        // 승계한 정당은 앞 정당 바로 옆에
+        (S.succession || []).forEach(l => {
+            const fi = ids.findIndex(x => sameId(x, l.from)), ti = ids.findIndex(x => sameId(x, l.to));
+            if (fi < 0 || ti < 0 || ti === fi + 1) return;
+            const [t] = ids.splice(ti, 1);
+            ids.splice(ids.findIndex(x => sameId(x, l.from)) + 1, 0, t);
+        });
+        return ids;
+    }
+    let gradSeq = 0;
+    // 도표 조각을 누르면 뜨는 정보 카드 내용 (의석 클릭 카드처럼) — 렌더할 때마다 새로 모은다
+    let histInfo = [];
+    const infoTag = (title, rows) => { histInfo.push({ title, rows: rows.filter(Boolean) }); return ` data-t65i="${histInfo.length - 1}"`; };
+    const gradient = (c1, c2, defs) => { const id = `t65g${++gradSeq}`; defs.push(`<linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${esc(c1)}"/><stop offset="1" stop-color="${esc(c2)}"/></linearGradient>`); return `url(#${id})`; };
+
+    function seatsChart(snaps, width) {
+        const W = Math.max(320, Math.round(width || 600));
+        const LW = Math.min(132, Math.round(W * 0.26)), X0 = LW + 10, X1 = W - 10, CW = X1 - X0;
+        const BAR = 26, FLOW = 56, TOP = 8;
+        const ids = partyOrder(snaps);
+        const at = (sn, id) => sn.parties.find(x => sameId(x.id, id)) || null;
+        const info = id => { for (let i = snaps.length - 1; i >= 0; i--) { const p = at(snaps[i], id); if (p) return p; } const k = knownParties().find(x => sameId(x.id, id)); return k || { name: '?', color: '#888' }; };
+        const seat = (sn, id) => (at(sn, id) || {}).seats || 0;
+        const count = ui.seatMode === 'count';
+        const maxTotal = Math.max(1, ...snaps.map(sn => sn.total));
+        // 기록마다 정당별 [시작 x, 끝 x] — 의석이 0인 정당도 제자리에 폭 0으로 두어 흐름이 자연스럽게 생기고 사라진다
+        const spans = snaps.map(sn => {
+            let x = X0; const m = {};
+            const denom = count ? maxTotal : (sn.total || 1);
+            ids.forEach(id => { const w = seat(sn, id) / denom * CW; m[id] = [x, x + w]; x += w; });
+            return m;
+        });
+        const yOf = i => TOP + i * (BAR + FLOW);
+        const H = yOf(snaps.length - 1) + BAR + 14;
+        const defs = [];
+        let flows = '', notes = '', bars = '', labels = '';
+        for (let i = 0; i < snaps.length - 1; i++) {
+            const yb = yOf(i) + BAR, yt = yOf(i + 1), ym = (yb + yt) / 2;
+            const ribbon = (a0, a1, c0, c1, fill, title, rows) => { flows += `<path d="M${a0},${yb} L${a1},${yb} C${a1},${ym} ${c1},${ym} ${c1},${yt} L${c0},${yt} C${c0},${ym} ${a0},${ym} ${a0},${yb} Z" fill="${fill}" fill-opacity=".45" class="t65-h-hit"${infoTag(title, rows)}/>`; };
+            const when = sn => sn.label || sn.date || '';
+            ids.forEach(id => {
+                const [a0, a1] = spans[i][id], [c0, c1] = spans[i + 1][id];
+                if (a1 - a0 < 0.2 && c1 - c0 < 0.2) return;
+                const pa = at(snaps[i], id), pc = at(snaps[i + 1], id), p = pc || pa || info(id);
+                const fill = pa && pc && pa.color !== pc.color ? gradient(pa.color, pc.color, defs) : esc(p.color);
+                const s0 = seat(snaps[i], id), s1 = seat(snaps[i + 1], id), dd = s1 - s0;
+                ribbon(a0, a1, c0, c1, fill, `${p.name} 의석 변화`, [
+                    `기간: ${esc(when(snaps[i]))} → ${esc(when(snaps[i + 1]))}`,
+                    `의석: ${s0}석 → ${s1}석${dd ? ` <b style="color:${dd > 0 ? '#2ecc71' : '#e74c3c'}">${dd > 0 ? '▲' : '▼'}${Math.abs(dd)}</b>` : ' (변동 없음)'}`,
+                    `점유율: ${Math.round(s0 / (snaps[i].total || 1) * 1000) / 10}% → ${Math.round(s1 / (snaps[i + 1].total || 1) * 1000) / 10}%`,
+                    pa && pc && pa.name !== pc.name ? `당명 변경: ${esc(pa.name)} → ${esc(pc.name)}` : '',
+                    !pa ? '새로 의석을 얻음' : !pc ? '의석을 모두 잃음' : '']);
+                // 같은 정당이 당명을 바꿈 → 흐름 가운데에 새 이름
+                if (pa && pc && pa.name !== pc.name) notes += `<text x="${(a0 + a1 + c0 + c1) / 4}" y="${ym + 4}" class="t65-h-note" text-anchor="middle">→ ${esc(pc.name)}</text>`;
+            });
+            // 승계: 잇기를 누른 다음 기록에서 앞 정당 띠가 뒤 정당 띠로 합쳐짐
+            (S.succession || []).forEach(l => {
+                if (linkStep(l, snaps, (sn, id) => seat(sn, id) > 0) !== i) return;
+                const fa = seat(snaps[i], l.from), tb = seat(snaps[i + 1], l.to);
+                if (!(fa > 0 && tb > 0)) return;
+                const [a0, a1] = spans[i][l.from] || [0, 0], [c0, c1] = spans[i + 1][l.to] || [0, 0];
+                const pf = info(l.from), pt = info(l.to);
+                ribbon(a0, a1, c0, c1, gradient(pf.color, pt.color, defs), '승계', [`${esc(pf.name)} → ${esc(pt.name)}`, `기간: ${esc(when(snaps[i]))} → ${esc(when(snaps[i + 1]))}`, `의석: ${fa}석 → ${tb}석`]);
+                notes += `<text x="${(a0 + a1 + c0 + c1) / 4}" y="${ym + 4}" class="t65-h-note" text-anchor="middle">→ ${esc(pt.name)}</text>`;
+            });
+        }
+        snaps.forEach((sn, i) => {
+            const y = yOf(i);
+            const ruling = new Set((sn.ruling || []).map(String));
+            ids.forEach(id => {
+                const [x0, x1] = spans[i][id], w = x1 - x0, n = seat(sn, id);
+                if (n <= 0) return;
+                const p = at(sn, id);
+                const gov = ruling.has(String(id));
+                const prev = i ? seat(snaps[i - 1], id) : null;
+                // 승계로 이어받은 정당은 앞 정당 의석과 비교
+                const preds = (S.succession || []).filter(l => sameId(l.to, id) && i && linkStep(l, snaps, (x, pid) => seat(x, pid) > 0) === i - 1 && seat(snaps[i - 1], l.from) > 0 && !seat(sn, l.from)).map(l => l.from);
+                const base = prev == null ? null : prev + preds.reduce((a2, pid) => a2 + seat(snaps[i - 1], pid), 0);
+                const d = base == null || (base === 0 && !preds.length) ? null : n - base;
+                const share = Math.round(n / (sn.total || 1) * 1000) / 10;
+                bars += `<rect x="${x0}" y="${y}" width="${w}" height="${BAR}" fill="${esc(p.color)}" class="t65-h-hit${gov ? ' t65-h-gov' : ''}"${infoTag(`${gov ? '★ ' : ''}${p.name}`, [
+                    `기록: ${esc(sn.label || sn.date || `#${i + 1}`)}${sn.label && sn.date ? ` (${esc(sn.date)})` : ''}`,
+                    `의석: <b>${n}석</b> / ${sn.total}석 (${share}%)`,
+                    d ? `앞 기록 대비: <b style="color:${d > 0 ? '#2ecc71' : '#e74c3c'}">${d > 0 ? '▲' : '▼'}${Math.abs(d)}</b>${preds.length ? ` (승계: ${preds.map(pid => esc(info(pid).name)).join(', ')})` : ''}` : (i && base === 0 && !preds.length ? '앞 기록 대비: 새로 진입' : ''),
+                    share > 50 ? '단독 과반' : '',
+                    gov ? '집권 세력' : '']) }/>`;
+                const dTxt = d ? ` ${d > 0 ? '▲' : '▼'}${Math.abs(d)}` : '';
+                const opts = [`${p.name} ${n}${dTxt}`, `${p.name} ${n}`, `${n}${dTxt}`, String(n)];
+                const txt = opts.find(t => t.length * 6.6 + 8 < w) || '';
+                if (txt) bars += `<text x="${x0 + w / 2}" y="${y + BAR / 2 + 4}" class="t65-h-seg" text-anchor="middle">${esc(txt)}</text>`;
+            });
+            const govNames = sn.parties.filter(p => ruling.has(String(p.id))).map(p => p.name);
+            const dTot = i ? sn.total - snaps[i - 1].total : 0;
+            labels += `<text x="${LW}" y="${y + 11}" class="t65-h-lab" text-anchor="end">${esc((sn.label || sn.date || `#${i + 1}`).slice(0, 16))}</text>`;
+            labels += `<text x="${LW}" y="${y + 24}" class="t65-h-sub" text-anchor="end">${esc([sn.label ? sn.date : '', `${sn.total}석${dTot ? ` (${dTot > 0 ? '+' : ''}${dTot})` : ''}`].filter(Boolean).join(' · ').slice(0, 24))}</text>`;
+            if (govNames.length) labels += `<text x="${LW}" y="${y + BAR + 11}" class="t65-h-gov-lab" text-anchor="end">★ ${esc(govNames.join('·').slice(0, 18))}</text>`;
+        });
+        const half = count ? `<line x1="${X0 + CW / 2}" x2="${X0 + CW / 2}" y1="0" y2="${H}" class="t65-h-half"/>` : `<line x1="${X0 + CW / 2}" x2="${X0 + CW / 2}" y1="0" y2="${H}" class="t65-h-half"/>`;
+        const legend = ids.map(id => { const p = info(id); return `<span>${dotHtml(p.color)}${esc(p.name)}</span>`; }).join('');
+        return `<div class="t65-legend t65-h-legend">${legend}<span class="t65-dim">막대 · 흐름을 누르면 자세히 · ★ 집권 · ┆ ${count ? `최대 의석(${maxTotal})의 절반` : '과반'} · ▲▼ 앞 기록 대비</span></div>
+            <svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" class="t65-hist" role="img" aria-label="의석 변화"><defs>${defs.join('')}</defs>${flows}${half}${bars}${notes}${labels}</svg>`;
+    }
+
+    // 당 변화 — 정당 계보도
+    function lineageChart(width) {
+        // 시점: 모든 원의 기록을 시간순으로, 같은 순간(3초 안)에 남긴 기록은 하나로
+        const all = S.timeline.slice().sort((a, b) => a.at - b.at);
+        const points = [];
+        all.forEach(sn => {
+            const last = points[points.length - 1];
+            if (last && sn.at - last.at < 3000) { last.snaps.push(sn); if (!last.label && sn.label) last.label = sn.label; }
+            else points.push({ at: sn.at, label: sn.label, date: sn.date, snaps: [sn] });
+        });
+        if (!points.length) return '';
+        // 시점마다 살아 있는 정당 (어느 원에든 의석이 있으면) · 그때 이름 · 색 · 의석(하원 우선)
+        points.forEach(pt => {
+            pt.alive = new Map();
+            pt.snaps.slice().sort((a, b) => (a.chamber === 'house' ? -1 : 1) - (b.chamber === 'house' ? -1 : 1)).reverse().forEach(sn => sn.parties.forEach(p => pt.alive.set(String(p.id), { ...p })));
+            const h = pt.snaps.find(sn => sn.chamber === 'house');
+            if (h) h.parties.forEach(p => { const e = pt.alive.get(String(p.id)); if (e) e.seats = p.seats; });
+        });
+        const ids = [];
+        points.forEach(pt => pt.alive.forEach((_, id) => { if (!ids.includes(id)) ids.push(id); }));
+        const life = {};
+        ids.forEach(id => { const ks = points.map((pt, k) => (pt.alive.has(id) ? k : -1)).filter(k => k >= 0); life[id] = { first: ks[0], last: ks[ks.length - 1] }; });
+        // 승계마다 합쳐지는 자리: k0(앞 정당) → k1 = k0 + 1(뒤 정당). k1이 아직 없으면 다음 기록에서
+        const linkK = l => {
+            if (l.at != null) { let k = -1; points.forEach((pt, j) => { if (pt.at <= l.at) k = j; }); return k; }
+            const f = life[String(l.from)], t = life[String(l.to)];
+            if (!f || !t) return -1;
+            return t.first > f.last ? f.last : Math.max(f.first, t.first - 1);
+        };
+        // 줄(lane) 배정 — 승계한 정당은 앞 정당이 끝난 줄을 이어 씀
+        const lanes = [];
+        const free = (lane, a, b) => lanes[lane].every(([x, y]) => b < x || a > y);
+        const laneOf = {};
+        const order = ids.slice().sort((a, b) => life[a].first - life[b].first || (parties.findIndex(p => sameId(p.id, a)) - parties.findIndex(p => sameId(p.id, b))));
+        order.forEach(id => {
+            const { first, last } = life[id];
+            let lane = -1;
+            predOf(id).map(String).forEach(pid => { const l = laneOf[pid]; if (lane < 0 && l != null && life[pid] && life[pid].last < first && free(l, first, last)) lane = l; });
+            if (lane < 0) { lane = lanes.findIndex((_, l) => free(l, first, last)); if (lane < 0) { lanes.push([]); lane = lanes.length - 1; } }
+            lanes[lane].push([first, last]); laneOf[id] = lane;
+        });
+        const W0 = Math.max(320, Math.round(width || 600));
+        const LW = Math.min(120, Math.round(W0 * 0.22)), X0 = LW + 14;
+        const laneW = Math.max(74, Math.min(130, (W0 - X0 - 10) / Math.max(1, lanes.length)));
+        const W = Math.max(W0, X0 + laneW * lanes.length + 10);
+        const ROW = 70, TOP = 26, BW = 10;
+        const xOf = id => X0 + laneOf[id] * laneW + 14;
+        const yOf = k => TOP + k * ROW;
+        const pending = (S.succession || []).some(l => life[String(l.from)] && life[String(l.to)] && linkK(l) >= points.length - 1);
+        const H = yOf(points.length - 1) + (pending ? ROW + 10 : 40);
+        const defs = [];
+        let rows = '', lines = '', links = '', nodes = '';
+        points.forEach((pt, k) => {
+            rows += `<line x1="${LW + 4}" x2="${W - 6}" y1="${yOf(k)}" y2="${yOf(k)}" class="t65-l-row"/>`;
+            rows += `<text x="${LW}" y="${yOf(k) + 4}" class="t65-h-lab" text-anchor="end">${esc((pt.label || pt.date || `#${k + 1}`).slice(0, 14))}</text>`;
+            if (pt.label && pt.date) rows += `<text x="${LW}" y="${yOf(k) + 17}" class="t65-h-sub" text-anchor="end">${esc(String(pt.date).slice(0, 16))}</text>`;
+        });
+        ids.forEach(id => {
+            const { first, last } = life[id], x = xOf(id);
+            for (let k = first; k < last; k++) {
+                const a = points[k].alive.get(id), b = points[k + 1].alive.get(id);
+                if (!a || !b) { lines += `<line x1="${x}" x2="${x}" y1="${yOf(k)}" y2="${yOf(k + 1)}" stroke="${esc((a || b || {}).color || '#888')}" stroke-width="2" stroke-dasharray="3 4"/>`; continue; }
+                const fill = a.color !== b.color ? gradient(a.color, b.color, defs) : esc(b.color);
+                lines += `<rect x="${x - BW / 2}" y="${yOf(k)}" width="${BW}" height="${ROW}" fill="${fill}" class="t65-h-hit"${infoTag(b.name, [
+                    `기간: ${esc(points[k].label || points[k].date || '')} → ${esc(points[k + 1].label || points[k + 1].date || '')}`,
+                    `의석: ${a.seats || 0}석 → ${b.seats || 0}석`,
+                    a.name !== b.name ? `당명 변경: ${esc(a.name)} → ${esc(b.name)}` : ''])}/>`;
+            }
+            // 이름표: 창당한 자리 · 당명이 바뀐 자리
+            for (let k = first; k <= last; k++) {
+                const p = points[k].alive.get(id); if (!p) continue;
+                const prev = k > first ? points[k - 1].alive.get(id) : null;
+                const isStart = k === first, renamed = prev && prev.name !== p.name;
+                if (!isStart && !renamed) continue;
+                nodes += `<circle cx="${x}" cy="${yOf(k)}" r="${isStart ? 7 : 6}" fill="${esc(p.color)}" class="t65-l-node"/>`;
+                const sub = isStart ? ((S.succession || []).some(l => sameId(l.to, id) && linkK(l) + 1 === k) ? '승계' : '창당') : `← ${prev.name}`;
+                nodes += `<text x="${x + 11}" y="${yOf(k) - 2}" class="t65-l-name">${esc(p.name)}</text><text x="${x + 11}" y="${yOf(k) + 11}" class="t65-h-sub">${esc(sub)}${p.seats ? ` · ${p.seats}석` : ''}</text>`;
+            }
+            // 끝: 승계로 합쳐지거나, 마지막 기록 전에 사라졌으면 소멸
+            const outs = (S.succession || []).filter(l => sameId(l.from, id) && life[String(l.to)]);
+            outs.forEach(l => {
+                const t = String(l.to), k0 = Math.max(first, Math.min(linkK(l), last)), k1 = k0 + 1, x2 = xOf(t);
+                const pf = points[k0].alive.get(id), y1 = yOf(k0);
+                if (k1 >= points.length) {
+                    // 아직 다음 기록이 없음 — 다음 기록에서 합쳐질 예정
+                    links += `<path d="M${x},${y1} C${x},${y1 + ROW * 0.45} ${x2},${y1 + ROW * 0.35} ${x2},${y1 + ROW * 0.8}" fill="none" stroke="${esc(pf ? pf.color : '#888')}" stroke-width="3" stroke-dasharray="5 4" opacity=".7"/>`;
+                    nodes += `<text x="${(x + x2) / 2}" y="${y1 + ROW * 0.62}" class="t65-h-sub" text-anchor="middle">다음 기록에서 합쳐짐</text>`;
+                    return;
+                }
+                const pt2 = points[k1].alive.get(t), y2 = yOf(k1);
+                const gid = `t65lg${++gradSeq}`;
+                defs.push(`<linearGradient id="${gid}" gradientUnits="userSpaceOnUse" x1="${x}" y1="${y1}" x2="${x2}" y2="${y2}"><stop offset="0" stop-color="${esc(pf ? pf.color : '#888')}"/><stop offset="1" stop-color="${esc(pt2 ? pt2.color : (pf ? pf.color : '#888'))}"/></linearGradient>`);
+                links += `<path d="M${x},${y1} C${x},${y1 + ROW * 0.55} ${x2},${y2 - ROW * 0.55} ${x2},${y2}" fill="none" stroke="url(#${gid})" stroke-width="${BW}" class="t65-h-hit"${infoTag('승계', [`${esc(pf ? pf.name : '')} → ${esc(pt2 ? pt2.name : '')}`, `시점: ${esc(points[k1].label || points[k1].date || '')}`])}/>`;
+            });
+            if (!outs.some(l => linkK(l) >= last) && last < points.length - 1) {
+                nodes += `<text x="${x}" y="${yOf(last) + 18}" class="t65-l-end" text-anchor="middle">✕</text><text x="${x + 11}" y="${yOf(last) + 24}" class="t65-h-sub">소멸</text>`;
+            }
+        });
+        return `<div class="t65-legend t65-h-legend"><span class="t65-dim">● 창당 · 당명 변경 / 곡선으로 합쳐짐 = 승계 / ✕ 소멸 · 줄을 누르면 자세히</span></div>
+            <div class="t65-l-scroll"><svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" class="t65-hist" role="img" aria-label="당 변화"><defs>${defs.join('')}</defs>${rows}${links}${lines}${nodes}</svg></div>`;
+    }
+
+    function renderHistory() {
+        const wrap = document.getElementById('t65HistWrap');
+        if (!wrap) return;
+        const chs = chambers();
+        if (!chs.includes(ui.tlChamber)) ui.tlChamber = chs[0];
+        const snaps = S.timeline.filter(x => x.chamber === ui.tlChamber).sort((a, b) => a.at - b.at);
+        const lineage = ui.histView === 'lineage';
+        const title = document.getElementById('t65HistTitle');
+        if (title) title.textContent = lineage ? '당 변화' : `${chName(ui.tlChamber)} 의석 변화`;
+        const panel = document.getElementById('dispPanelTimeline');
+        const width = (wrap.clientWidth || (panel && panel.clientWidth) || 600) - 4;
+        const seg = (items, cur, attr) => `<div class="t65-seg">${items.map(([k, t]) => `<button type="button" class="${cur === k ? 'on' : ''}" data-${attr}="${k}">${esc(t)}</button>`).join('')}</div>`;
+        const controls = `<div class="t65-h-controls">${seg([['seats', '의석 변화'], ['lineage', '당 변화']], ui.histView, 'hview')}
+            ${lineage ? '' : seg([['share', '점유율'], ['count', '의석 수']], ui.seatMode, 'hmode')}
+            ${!lineage && chs.length > 1 ? seg(chs.map(c => [c, chName(c)]), ui.tlChamber, 'hch') : ''}</div>`;
+        const empty = '<div class="t65-empty"><div class="t65-empty-icon">📈</div>아직 기록이 없습니다.<br>왼쪽 의회 › 세력 변화에서 "지금 의석 기록하기"를 누르거나, 총선을 치러 의회에 반영하면 여기에 아래로 쌓여요.</div>';
+        histInfo = [];
+        if (typeof closeSeatInfoCard === 'function') closeSeatInfoCard();
+        wrap.innerHTML = controls + (lineage ? (S.timeline.length ? lineageChart(width) : empty) : (snaps.length ? seatsChart(snaps, width) : empty));
+        wrap.querySelectorAll('[data-hch]').forEach(b => { b.onclick = () => { ui.tlChamber = b.dataset.hch; renderTimeline(); }; });
+        wrap.querySelectorAll('[data-hview]').forEach(b => { b.onclick = () => { ui.histView = b.dataset.hview; renderHistory(); }; });
+        wrap.querySelectorAll('[data-hmode]').forEach(b => { b.onclick = () => { ui.seatMode = b.dataset.hmode; renderHistory(); }; });
+        // 막대 · 흐름을 누르면 의석 정보 카드(좌석 클릭과 같은 카드)에 자세히 — 같은 조각을 다시 누르면 닫힘
+        wrap.onclick = e => {
+            const t = e.target.closest && e.target.closest('[data-t65i]');
+            const card = document.getElementById('seatInfoCard'), body = document.getElementById('seatInfoCardBody'), title = document.getElementById('seatInfoCardTitle');
+            wrap.querySelectorAll('.t65-h-sel').forEach(x => x.classList.remove('t65-h-sel'));
+            if (!t || !card || !body) { if (!t && typeof closeSeatInfoCard === 'function') closeSeatInfoCard(); return; }
+            const info = histInfo[+t.dataset.t65i];
+            if (!info) return;
+            if (card.style.display === 'block' && card.dataset.t65i === t.dataset.t65i) { closeSeatInfoCard(); return; }
+            if (typeof closeSeatInfoCard === 'function') closeSeatInfoCard();
+            if (title) title.textContent = info.title;
+            body.innerHTML = info.rows.map(r => `<div>${r}</div>`).join('');
+            card.dataset.t65i = t.dataset.t65i;
+            card.style.display = 'block';
+            t.classList.add('t65-h-sel');
+            if (typeof positionFloatingBox === 'function') positionFloatingBox(card, e.clientX, e.clientY);
+        };
+    }
+    function showHistoryTab() {
+        const btn = document.getElementById('dispTabTimeline');
+        if (btn) btn.style.display = '';
+        try { switchDispTab('timeline'); } catch (e) { /* 시각 화면 없음 */ }
+        setTimeout(renderHistory, 60);
+    }
+    const dotHtml = c => `<i class="t65-dot" style="background:${esc(c)}"></i>`;
+    function changeTable(snaps) {
+        const show = snaps.slice(-8);
+        const ids = [];
+        show.forEach(sn => sn.parties.forEach(p => { if (!ids.some(x => sameId(x, p.id))) ids.push(p.id); }));
+        const seat = (sn, id) => (sn.parties.find(x => sameId(x.id, id)) || {}).seats || 0;
+        const info = id => { for (let i = show.length - 1; i >= 0; i--) { const p = show[i].parties.find(x => sameId(x.id, id)); if (p) return p; } return { name: '?', color: '#888' }; };
+        ids.sort((a, b) => seat(show[show.length - 1], b) - seat(show[show.length - 1], a));
+        return `<div class="t65-tablewrap"><table class="t65-table"><thead><tr><th>정당</th>${show.map(sn => `<th title="${esc(sn.date)}">${esc((sn.label || sn.date || '').slice(0, 10))}</th>`).join('')}</tr></thead>
+            <tbody>${ids.map(id => { const p = info(id); return `<tr><td>${dotHtml(p.color)}${esc(p.name)}</td>${show.map((sn, i) => {
+                const v = seat(sn, id), prev = i ? seat(show[i - 1], id) : null, d = prev == null ? 0 : v - prev;
+                const gov = (sn.ruling || []).some(x => sameId(x, id));
+                return `<td class="${gov ? 't65-gov' : ''}">${v || '—'}${d ? `<small class="${d > 0 ? 't65-up' : 't65-down'}">${d > 0 ? '▲' : '▼'}${Math.abs(d)}</small>` : ''}</td>`;
+            }).join('')}</tr>`; }).join('')}</tbody></table></div>
+            <div class="t65-dim t65-small">굵은 칸은 그 시점의 집권 세력 · ▲▼는 바로 앞 기록과의 차이 (최근 8개)</div>`;
+    }
+
+    function successionPanel() {
+        const known = knownParties();
+        const cur = parties.filter(p => p.ideologyId !== 9999 && p.status !== 'dissolved');
+        const nameOf = id => (known.find(k => sameId(k.id, id)) || { name: '?' }).name;
+        const colorOf = id => (known.find(k => sameId(k.id, id)) || { color: '#888' }).color;
+        if (ui.rbPid == null || !cur.some(p => sameId(p.id, ui.rbPid))) ui.rbPid = cur[0] ? cur[0].id : null;
+        const rbParty = cur.find(p => sameId(p.id, ui.rbPid));
+        return `<details class="t65-fold" ${ui.openSucc ? 'open' : ''} data-fold="openSucc"><summary>🔁 정당 승계</summary>
+            <div class="t65-sub-title">당명 · 색 바꾸기 (승계)</div>
+            <div class="t65-dim t65-small" style="margin:0 0 6px">한나라당 → 새누리당처럼 같은 정당이 이름 · 색을 바꿉니다. 의석 · 의원 · 연정은 그대로 이어지고, 그 시점이 기록돼 "당 변화"에 표시돼요.</div>
+            <div class="t65-field"><span>정당</span><select data-rb="pid">${cur.map(p => `<option value="${esc(p.id)}" ${sameId(p.id, ui.rbPid) ? 'selected' : ''}>${esc(p.name)}</option>`).join('')}</select></div>
+            <div class="t65-field"><span>새 이름</span><input type="text" data-rb="name" placeholder="${esc(rbParty ? rbParty.name : '')}"></div>
+            <div class="t65-field"><span>새 색</span><input type="color" data-rb="color" value="${esc(rbParty && /^#[0-9a-f]{6}$/i.test(rbParty.color) ? rbParty.color : '#888888')}"></div>
+            <button type="button" class="t65-btn primary" data-act="rebrand">승계</button>
+            <div class="t65-sub-title" style="margin-top:14px">승계 관계 잇기</div>
+            <div class="t65-dim t65-small" style="margin:0 0 6px">서로 다른 정당을 앞 정당 → 뒤 정당으로 잇습니다 (해산 뒤 후신 · 합당 · 분당). 지금까지의 기록 바로 다음 기록에서 앞 정당 줄이 뒤 정당 줄로 합쳐져요 — 합당이면 앞 정당은 해산하거나 의석을 0으로 두세요.</div>
+            <div class="t65-succ-row"><select data-sl="from">${known.map(k => `<option value="${esc(k.id)}">${esc(k.name)}</option>`).join('')}</select><span>→</span>
+                <select data-sl="to">${known.map((k, i) => `<option value="${esc(k.id)}" ${i === 1 ? 'selected' : ''}>${esc(k.name)}</option>`).join('')}</select>
+                <button type="button" class="t65-btn" data-act="link">잇기</button></div>
+            ${(S.succession || []).map(l => `<div class="t65-snap">${dotHtml(colorOf(l.from))}<span>${esc(nameOf(l.from))}</span><span class="t65-dim">→</span>${dotHtml(colorOf(l.to))}<span style="flex:1">${esc(nameOf(l.to))}</span><button type="button" class="t65-x" data-unlink="${l.id}" title="끊기">×</button></div>`).join('')}
+        </details>`;
+    }
+
+    function renderTimeline() {
+        const box = document.getElementById('contentTimeline');
+        if (!box) return;
+        const chs = chambers();
+        if (!chs.includes(ui.tlChamber)) ui.tlChamber = chs[0];
+        const snaps = S.timeline.filter(x => x.chamber === ui.tlChamber).sort((a, b) => a.at - b.at);
+        const recCount = (typeof elecRecords !== 'undefined' ? elecRecords : []).filter(r => r && r.chamberType && !S.timeline.some(x => x.source === 'rec:' + r.id)).length;
+        box.innerHTML = `<div class="t65-intro">정당 의석을 시점마다 기록해 세력이 어떻게 오르내렸는지(의석 변화), 정당이 어떻게 생기고 바뀌고 이어졌는지(당 변화) 봅니다. 총선 결과를 의회에 반영하면 자동으로 기록돼요.</div>
+            ${chs.length > 1 ? `<div class="system-radio-group t65-tabs">${chs.map(c => `<button type="button" class="system-radio-btn ${ui.tlChamber === c ? 'active' : ''}" data-tlch="${c}">${esc(chName(c))}</button>`).join('')}</div>` : ''}
+            <div class="t65-actions">
+                <button type="button" class="t65-btn primary" data-act="snap">📸 지금 의석 기록하기</button>
+                <button type="button" class="t65-btn" data-act="import" ${recCount ? '' : 'disabled'}>선거 기록에서 가져오기${recCount ? ` (${recCount})` : ''}</button>
+            </div>
+            <div class="t65-card t65-histnote"><span>📊 오른쪽 시각 화면 "세력 변화" 탭에서 의석 변화 · 당 변화 도표를 아래로 스크롤하며 봐요.</span><button type="button" class="t65-btn" data-act="showhist">오른쪽에서 보기</button></div>
+            ${snaps.length ? `<div class="t65-card">${changeTable(snaps)}</div>` : ''}
+            ${successionPanel()}
+            ${snaps.length ? `<details class="t65-fold"><summary>기록 ${snaps.length}개 — 이름 바꾸기 · 지우기</summary>
+                ${snaps.slice().reverse().map(sn => `<div class="t65-snap"><input type="text" value="${esc(sn.label)}" placeholder="${esc(sn.date || '이름 없음')}" data-label="${sn.id}"><span class="t65-dim">${esc(sn.date)} · ${sn.total}석${sn.source === 'election' ? ' · 선거' : sn.source === 'succession' ? ' · 승계' : String(sn.source).startsWith('rec:') ? ' · 선거 기록' : ''}</span><button type="button" class="t65-x" data-del="${sn.id}" title="지우기">×</button></div>`).join('')}
+            </details>` : `<div class="t65-empty"><div class="t65-empty-icon">📈</div>아직 기록이 없습니다.<br>"지금 의석 기록하기"를 누르거나, 총선을 치러 의회에 반영하면 쌓여요.</div>`}`;
+        box.querySelectorAll('[data-tlch]').forEach(b => { b.onclick = () => { ui.tlChamber = b.dataset.tlch; renderTimeline(); }; });
+        box.querySelector('[data-act="showhist"]').onclick = showHistoryTab;
+        box.querySelector('[data-act="snap"]').onclick = () => {
+            const n = record('', 'manual', false);
+            if (!n) showCustomAlert('기록할 의석이 없습니다.');
+            renderTimeline();
+        };
+        const imp = box.querySelector('[data-act="import"]');
+        if (imp) imp.onclick = () => { const n = importRecords(); showCustomAlert(n ? `선거 기록 ${n}개를 가져왔습니다.` : '가져올 선거 기록이 없습니다.'); renderTimeline(); };
+        box.querySelectorAll('[data-label]').forEach(i => { i.onchange = () => { const sn = S.timeline.find(x => x.id === i.dataset.label); if (sn) sn.label = i.value.trim(); renderTimeline(); }; });
+        box.querySelectorAll('[data-del]').forEach(b => { b.onclick = () => { S.timeline = S.timeline.filter(x => x.id !== b.dataset.del); renderTimeline(); }; });
+        box.querySelectorAll('[data-fold]').forEach(d => d.addEventListener('toggle', () => { ui[d.dataset.fold] = d.open; }));
+        const rbSel = box.querySelector('[data-rb="pid"]');
+        if (rbSel) rbSel.onchange = () => { ui.rbPid = rbSel.value; renderTimeline(); };
+        const rb = box.querySelector('[data-act="rebrand"]');
+        if (rb) rb.onclick = () => {
+            const name = box.querySelector('[data-rb="name"]').value.trim();
+            const color = box.querySelector('[data-rb="color"]').value;
+            const p = parties.find(x => sameId(x.id, ui.rbPid));
+            if (!p) { showCustomAlert('승계할 정당을 고르세요.'); return; }
+            if (!name) { showCustomAlert('새 이름을 적으세요.'); return; }
+            showCustomConfirm(`${p.name} → ${name}\n같은 정당이 이름${color && color !== p.color ? ' · 색' : ''}을 바꿉니다. 이 시점이 기록됩니다. 계속하시겠습니까?`, () => {
+                rebrand(p.id, name, color);
+                renderTimeline();
+            });
+        };
+        const lk = box.querySelector('[data-act="link"]');
+        if (lk) lk.onclick = () => {
+            const from = box.querySelector('[data-sl="from"]').value, to = box.querySelector('[data-sl="to"]').value;
+            if (!from || !to || from === to) { showCustomAlert('서로 다른 두 정당을 고르세요.'); return; }
+            if ((S.succession || []).some(l => sameId(l.from, from) && sameId(l.to, to))) { showCustomAlert('이미 이어져 있습니다.'); return; }
+            const toNum = v => (/^\d+$/.test(v) ? Number(v) : v);
+            S.succession = (S.succession || []).concat([{ id: uid(), from: toNum(from), to: toNum(to), at: Date.now() }]);
+            renderTimeline();
+        };
+        box.querySelectorAll('[data-unlink]').forEach(b => { b.onclick = () => { S.succession = (S.succession || []).filter(l => l.id !== b.dataset.unlink); renderTimeline(); }; });
+        renderHistory();
+    }
+
+    // ================= 위키식 의회 틀 =================
+    function hemicycleImage(ch, size = 240) {
+        const dots = (typeof dotCache !== 'undefined' && dotCache[ch]) || [];
+        const real = dots.filter(d => d.partyName !== 'Vacant' || true);
+        if (!real.length) return '';
+        const xs = real.map(d => d.x), ys = real.map(d => d.y), r = real[0].r;
+        const minX = Math.min(...xs) - r, maxX = Math.max(...xs) + r, minY = Math.min(...ys) - r, maxY = Math.max(...ys) + r;
+        const k = size / (maxX - minX);
+        const c = document.createElement('canvas');
+        const dpr = 2;
+        c.width = size * dpr; c.height = Math.ceil((maxY - minY) * k * dpr);
+        const ctx = c.getContext('2d');
+        ctx.scale(dpr, dpr);
+        real.forEach(d => { ctx.beginPath(); ctx.arc((d.x - minX) * k, (d.y - minY) * k, Math.max(0.6, r * k * 0.92), 0, Math.PI * 2); ctx.fillStyle = d.partyName === 'Vacant' ? '#d0d0d0' : d.color; ctx.fill(); });
+        try { return c.toDataURL('image/png'); } catch (e) { return ''; }
+    }
+    const IND_ID = 9999;
+    // 틀에 담을 의회: 'house' · 'senate' · 'third' 하나, 또는 'both'(상원 | 하원 의석을 한 칸에 나란히 — 예: 참의원 | 중의원)
+    const wikiModes = () => { const chs = chambers(); return chs.includes('senate') ? [...chs, 'both'] : chs; };
+    const wikiChs = mode => (mode === 'both' ? ['senate', 'house'] : [mode]);
+    const wikiModeName = mode => (mode === 'both' ? `양원 (${chName('senate')} | ${chName('house')})` : chName(mode));
+    function pmName() {
+        try { const r = pmAutoSource(); if (r && r.name) return r.name; } catch (e) { /* main.js 없음 */ }
+        try { return (pm && pm.name) || ''; } catch (e) { return ''; }
+    }
+    function wikiData(mode) {
+        const chs = wikiChs(mode);
+        const main = chs[chs.length - 1]; // 정렬 · 교섭단체 기준이 되는 원 (양원이면 하원)
+        const seats = p => chs.map(ch => seatsOf(p, ch));
+        const tot = p => seats(p).reduce((a, b) => a + b, 0);
+        const ps = parties.filter(p => tot(p) > 0 && p.status !== 'dissolved')
+            .sort((a, b) => (seatsOf(b, main) - seatsOf(a, main)) || (tot(b) - tot(a)));
+        const ind = ps.filter(p => p.ideologyId === IND_ID);
+        const min = Math.max(0, Number(S.wiki.groupMin) || 0);
+        const minor = ps.filter(p => p.ideologyId !== IND_ID && min > 0 && seatsOf(p, main) < min);
+        const named = ps.filter(p => p.ideologyId !== IND_ID && !minor.includes(p));
+        const quotaOf = ch => { const el = document.getElementById(ch === 'senate' ? 'senateTotal' : ch === 'third' ? 'thirdTotal' : 'houseTotal'); return el ? (parseInt(el.value, 10) || 0) : 0; };
+        const pmn = pmName();
+        const start = (S.wiki.termStart || '').trim(), end = (S.wiki.termEnd || '').trim();
+        return {
+            mode, chs, main, seats,
+            title: (S.wiki.title || '').trim() || [nationName(), mode === 'both' ? '의회' : chName(mode)].filter(Boolean).join(' '),
+            govName: (S.wiki.govName || '').trim() || (pmn ? `${pmn} 내각` : ''),
+            period: start || end ? `(${start}${start ? ' ' : ''}~ ${end || '현재'})` : '',
+            gov: named.filter(isGovParty), opp: named.filter(p => !isGovParty(p)), minor, ind,
+            totals: chs.map(ch => ps.reduce((a, p) => a + seatsOf(p, ch), 0)), quotas: chs.map(quotaOf),
+            emblem: (typeof chamberLogos !== 'undefined' && chamberLogos[main]) || (typeof nationFlag !== 'undefined' && nationFlag) || '',
+        };
+    }
+    // 글자색: 바탕이 밝으면 검정, 어두우면 흰색
+    function fgFor(hex) {
+        const m = /^#?([0-9a-f]{6})$/i.exec(String(hex || '').trim());
+        if (!m) return '#fff';
+        const n = parseInt(m[1], 16), r = n >> 16, g = (n >> 8) & 255, bl = n & 255;
+        return (0.299 * r + 0.587 * g + 0.114 * bl) > 165 ? '#1a1a1a' : '#fff';
+    }
+    const emblemSvg = c => `<svg viewBox="0 0 64 40" width="64" height="40" aria-hidden="true"><path d="M8 16 Q32 -4 56 16Z" fill="${c}"/><rect x="6" y="16" width="52" height="3" fill="${c}"/>${[10, 16, 22, 28, 34, 40, 46, 52].map(x => `<rect x="${x}" y="20" width="3" height="14" fill="${c}"/>`).join('')}<rect x="4" y="34" width="56" height="3" fill="${c}"/></svg>`;
+    // 한 줄에 몇 칸씩: 3개까지는 한 줄, 그보다 많으면 세 칸씩 — 남는 수는 위쪽 줄을 두 칸으로 (예: 11개 → 2 · 3 · 3 · 3, 7개 → 2 · 2 · 3)
+    function rowSizes(n) {
+        if (n <= 3) return n ? [n] : [];
+        const r = n % 3;
+        const head = r === 2 ? [2] : r === 1 ? [2, 2] : [];
+        const rest = n - head.reduce((a, b) => a + b, 0);
+        return [...head, ...Array(rest / 3).fill(3)];
+    }
+    const splitRows = arr => { const out = []; let i = 0; rowSizes(arr.length).forEach(k => { out.push(arr.slice(i, i + k)); i += k; }); return out; };
+    // 받침이 있으면 "이라는", 없으면 "라는" (기민·기사연합이라는 · 사회민주당이라는 · 자민당이라는 …)
+    const raneun = w => { const c = String(w || '').trim().slice(-1).charCodeAt(0); return c >= 0xAC00 && c <= 0xD7A3 && (c - 0xAC00) % 28 ? '이라는' : '라는'; };
+    // 각주 — 파벌이 둘 이상인 정당은 "공동교섭단체", 비교섭단체(기준 미달 · 무소속) 목록, 직접 쓴 각주
+    function wikiNotes(d) {
+        const notes = [], mark = new Map();
+        const where = d.mode === 'both' ? '의회' : chName(d.mode);
+        const seatTxt = arr => (d.chs.length > 1 ? arr.map((n, i) => `${chName(d.chs[i])} ${n}석`).join(' · ') : `${arr[0]}석`);
+        [...d.gov, ...d.opp].forEach(p => {
+            const fs = (p.factions || []).map(f => ({ f, s: d.chs.map(ch => seatsOf(f, ch)) })).filter(x => x.s.some(Boolean));
+            if (fs.length < 2) return;
+            const list = fs.map(x => `${x.f.name}(${seatTxt(x.s)})`);
+            notes.push(`${list.slice(0, -1).join(', ')}과 ${list[list.length - 1]}은 ${where}에서 ${p.name}${raneun(p.name)} 공동교섭단체로 활동함.`);
+            mark.set(p.id, notes.length);
+        });
+        const small = [...d.minor, ...d.ind];
+        let smallMark = 0;
+        if (d.minor.length) {
+            notes.push(small.map(p => `${p.name} ${seatTxt(d.seats(p))}`).join(', ') + '.');
+            smallMark = notes.length;
+        }
+        return { notes, mark, smallMark };
+    }
+    // 의석 표시: 한 원이면 "N석", 양원이면 [상원 N석 | 하원 M석]
+    function seatBadge(arr, color) {
+        // (회색은 #3d3d3d · #5c5c5c처럼 흔하지 않은 값으로 — 라이트 · 다크 테마가 #333 · #555 같은 인라인 회색을 테마 색으로 바꿔 버림)
+        const c = color || '#5c5c5c', light = fgFor(c) !== '#fff';
+        const ink = light ? '#3d3d3d' : c;
+        if (arr.length < 2) return `<span class="nb-seat" style="color:${esc(ink)}">${arr[0]}석</span>`;
+        return `<span class="nb-seat split"><span class="a" style="background:${esc(light ? '#5c5c5c' : c)}">${arr[0]}석</span><span class="b" style="color:${esc(ink)}">${arr[1]}석</span></span>`;
+    }
+    function namuBox(d) {
+        const frame = S.wiki.frame || '#2b3a67', ffg = fgFor(frame);
+        const { notes, mark, smallMark } = wikiNotes(d);
+        const block = (p, k) => {
+            const c = p.color || '#888', fg = fgFor(c);
+            const sup = mark.get(p.id) ? `<sup>${mark.get(p.id)}</sup>` : '';
+            return `<div class="nb-party k${k}" style="background:${esc(c)};color:${fg}" title="${esc(p.name)} ${d.seats(p).join(' | ')}석">
+                ${p.logoPhoto ? (p.logoBg === 'white' ? `<span class="nb-logo-card"><img class="nb-logo" src="${esc(p.logoPhoto)}" alt=""></span>` : `<img class="nb-logo" src="${esc(p.logoPhoto)}" alt="">`) : ''}
+                <div class="nb-pname">${esc(p.name)}${sup}</div>${seatBadge(d.seats(p), c)}</div>`;
+        };
+        const rows = arr => splitRows(arr).map(row => `<div class="nb-row" style="grid-template-columns:repeat(${row.length},1fr)">${row.map(p => block(p, row.length)).join('')}</div>`).join('');
+        const group = (label, arr) => (arr.length ? `<div class="nb-sec">${label}</div>${rows(arr)}` : '');
+        const small = [...d.minor, ...d.ind];
+        const smallSeats = d.chs.map((ch, i) => small.reduce((a, p) => a + d.seats(p)[i], 0));
+        const smallLabel = d.minor.length ? '비교섭단체' : '무소속';
+        const vac = d.quotas.map((q, i) => (q && q > d.totals[i] ? q - d.totals[i] : 0));
+        const legend = d.chs.length > 1 ? `<div class="nb-legend"><span class="nb-seat split"><span class="a" style="background:#6b6b6b">${esc(chName(d.chs[0]))} 의석</span><span class="b" style="color:#6b6b6b">${esc(chName(d.chs[1]))} 의석</span></span></div>` : '';
+        const custom = (S.wiki.note || '').trim();
+        const showNotes = notes.length || custom || legend;
+        return `<div class="nbx2" style="--nb-frame:${esc(frame)};--nb-ffg:${ffg}">
+            <div class="nb-head">
+                <div class="nb-emblem">${d.emblem ? `<img src="${esc(d.emblem)}" alt="">` : emblemSvg(ffg)}</div><i class="nb-sep"></i>
+                <div><div class="nb-nation">${esc(d.title)}</div><div class="nb-title">원내 구성</div></div>
+            </div>
+            <details class="nb-body" open><summary>[ 펼치기 · 접기 ]</summary>
+                ${d.govName || d.period ? `<div class="nb-cab">${d.govName ? `<b>${esc(d.govName)}</b>` : ''}${d.period ? `<small>${esc(d.period)}</small>` : ''}</div>` : ''}
+                ${d.gov.length ? group(d.gov.length > 1 ? '연립여당' : '여당', d.gov) + group('야당', d.opp) : group('원내 정당', d.opp)}
+                ${small.length ? `<div class="nb-small">${smallLabel}${smallMark ? `<sup>${smallMark}</sup>` : ''} ${seatBadge(smallSeats, '#7f7f7f')}</div>` : ''}
+                <div class="nb-total">재적 ${seatBadge(d.totals, frame)}${vac.some(Boolean) ? ` <small>(궐석 ${vac.join(' | ')})</small>` : ''}</div>
+                ${showNotes ? `<div class="nb-notes">${notes.map((t, i) => `<div>${i + 1}. ${esc(t)}</div>`).join('')}${custom ? `<div>※ ${esc(custom)}</div>` : ''}${legend}</div>` : ''}
+            </details>
+            ${wikiFoot()}
+        </div>`;
+    }
+    // 꼬리줄 "정당 구분 (원내 · 원외)" — 눌러서 원내 구성 틀 · 원외정당 틀을 오간다
+    function wikiFoot() {
+        if (S.wiki.footer === false) return '';
+        const b = (k, t) => `<button type="button" class="nb-fbtn${ui.wikiView === k ? ' on' : ''}" data-wview="${k}" title="${k === 'in' ? '원내 구성 틀 보기' : '원외정당 틀 보기'}">${t}</button>`;
+        return `<div class="nb-foot">정당 구분 (${b('in', '원내')} · ${b('out', '원외')})</div>`;
+    }
+    // 원외정당: 고른 원(양원이면 두 원 모두)에 의석이 없는 정당 (무소속 · 해산한 정당 제외)
+    const outParties = d => parties.filter(p => p.ideologyId !== IND_ID && p.status !== 'dissolved' && d.chs.every(ch => seatsOf(p, ch) === 0));
+    const inkFor = c => (fgFor(c) === '#fff' ? c : '#3d3d3d'); // 흰 칸 위 글자색 — 밝은 당색은 진한 회색으로
+    function namuOutBox(d) {
+        const frame = S.wiki.frame || '#2b3a67', ink = inkFor(frame);
+        const outs = outParties(d);
+        const cell = p => {
+            const c = p.color || '#888';
+            const logo = p.logoPhoto ? (p.logoBg === 'white' || p.logoBg === 'none' ? `<img class="nb-ologo" src="${esc(p.logoPhoto)}" alt="">` : `<span class="nb-ocard" style="background:${esc(c)}"><img class="nb-ologo" src="${esc(p.logoPhoto)}" alt=""></span>`) : '';
+            return `<div class="nb-ocell">${logo}<div class="nb-oname" style="color:${esc(inkFor(c))}">${esc(p.name)}</div>${p.abbr ? `<div class="nb-oabbr" style="color:${esc(inkFor(c))}">(${esc(p.abbr)})</div>` : ''}</div>`;
+        };
+        const rows = [];
+        for (let i = 0; i < outs.length; i += 3) {
+            const chunk = outs.slice(i, i + 3);
+            rows.push(`<div class="nb-orow">${chunk.map(cell).join('')}${'<div class="nb-ocell nb-oempty"></div>'.repeat(3 - chunk.length)}</div>`);
+        }
+        return `<div class="nbx2 nbx-out" style="--nb-frame:${esc(frame)};--nb-ink:${esc(ink)}">
+            <div class="nb-ohead">
+                ${d.emblem ? `<img class="nb-oflag" src="${esc(d.emblem)}" alt="">` : ''}
+                <div class="nb-otitle">${esc(nationName() || d.title)}의 원외정당</div>
+            </div>
+            <details class="nb-body" open><summary>[ 펼치기 · 접기 ]</summary>
+                ${d.govName || d.period ? `<div class="nb-cab">${d.govName ? `<b>${esc(d.govName)}</b>` : ''}${d.period ? `<small>${esc(d.period)}</small>` : ''}</div>` : ''}
+                ${rows.length ? rows.join('') : `<div class="nb-oempty-all">${esc(d.mode === 'both' ? '두 원' : chName(d.mode))}에 의석이 없는 정당이 없어요.<br><small>의회 › 정당에서 의석이 0인 정당을 만들거나, 정당을 원에서 빼면 여기에 모여요.</small></div>`}
+            </details>
+            ${wikiFoot()}
+        </div>`;
+    }
+    function namuOutMarkup(d) {
+        const frame = S.wiki.frame || '#2b3a67', ink = inkFor(frame);
+        const B = "'''";
+        const outs = outParties(d);
+        const full = (bg, body) => `||<-3><bgcolor=${bg}> ${body} ||`;
+        const lines = [];
+        lines.push(`||<tablewidth=100%><tablebordercolor=${frame}><-3><bgcolor=#ffffff> {{{+2 {{{${ink} ${B}${nationName() || d.title}의 원외정당${B}}}}}}} ||`);
+        if (d.govName || d.period) lines.push(full('#dddddd', `${d.govName ? `${B}${d.govName}${B}` : ''}${d.govName && d.period ? '[br]' : ''}${d.period ? `{{{-1 ${d.period}}}}` : ''}`));
+        for (let i = 0; i < outs.length; i += 3) {
+            const chunk = outs.slice(i, i + 3);
+            lines.push(chunk.map(p => {
+                const c = inkFor(p.color || '#888');
+                const file = p.logoPhoto ? `[[파일:${p.name} 로고.png|height=40]][br]` : '';
+                return `||<bgcolor=#ffffff> ${file}{{{${c} ${B}${p.name}${B}${p.abbr ? `[br]${B}(${p.abbr})${B}` : ''}}}} `;
+            }).join('') + '||<bgcolor=#f4f4f4> '.repeat(3 - chunk.length) + '||');
+        }
+        if (S.wiki.footer !== false) lines.push(full('#ffffff', `정당 구분 (원내 · ${B}원외${B})`));
+        return lines.join('\n');
+    }
+    // 나무위키 표 문법 — 6칸(2와 3의 공배수)을 기준으로 두 칸 줄은 <-3>, 세 칸 줄은 <-2>
+    function namuMarkup(d) {
+        const frame = S.wiki.frame || '#2b3a67', ffg = fgFor(frame);
+        const B = "'''";
+        const { notes, mark, smallMark } = wikiNotes(d);
+        const chip = (bg, fg, txt) => `{{{#!wiki style="display:inline-block; background:${bg}; color:${fg}; padding:0 6px; border-radius:4px"\n${B}${txt}${B}}}}`;
+        const badge = (arr, c) => {
+            const light = fgFor(c) !== '#fff', ink = light ? '#333' : c;
+            return arr.length < 2 ? chip('#fff', ink, `${arr[0]}석`) : chip(light ? '#555' : c, '#fff', `${arr[0]}석`) + chip('#fff', ink, `${arr[1]}석`);
+        };
+        const full = (bg, body) => `||<-6><bgcolor=${bg}> ${body} ||`;
+        const lines = [];
+        lines.push(`||<tablewidth=100%><tablebordercolor=${frame}><-6><bgcolor=${frame}> {{{${ffg} ${B}${d.title}${B}[br]{{{+2 ${B}원내 구성${B}}}}}}} ||`);
+        if (d.govName || d.period) lines.push(full('#dddddd', `${d.govName ? `${B}${d.govName}${B}` : ''}${d.govName && d.period ? '[br]' : ''}${d.period ? `{{{-1 ${d.period}}}}` : ''}`));
+        const group = (label, arr) => {
+            if (!arr.length) return;
+            lines.push(full('#dee5e5', `${B}${label}${B}`));
+            splitRows(arr).forEach(row => {
+                lines.push(row.map(p => {
+                    const c = p.color || '#888', fg = fgFor(c);
+                    const sup = mark.get(p.id) ? `[* ${notes[mark.get(p.id) - 1]}]` : '';
+                    // 로고가 있으면 위키에 "정당 이름 로고.png"로 올린 그림을 쓴다
+                    const file = `[[파일:${p.name} 로고.png|height=40]]`;
+                    const logo = p.logoPhoto ? (p.logoBg === 'white' ? `{{{#!wiki style="display:inline-block; background:#fff; padding:4px 10px; border-radius:6px"\n${file}}}}[br]` : `${file}[br]`) : '';
+                    return `||<-${6 / row.length}><bgcolor=${c}> ${logo}{{{${fg} {{{+1 ${B}${p.name}${B}}}}}}}${sup}[br]${badge(d.seats(p), c)} `;
+                }).join('') + '||');
+            });
+        };
+        if (d.gov.length) { group(d.gov.length > 1 ? '연립여당' : '여당', d.gov); group('야당', d.opp); } else group('원내 정당', d.opp);
+        const small = [...d.minor, ...d.ind];
+        if (small.length) {
+            const smallSeats = d.chs.map((ch, i) => small.reduce((a, p) => a + d.seats(p)[i], 0));
+            lines.push(full('#808080', `{{{#fff ${B}${d.minor.length ? '비교섭단체' : '무소속'}${B}}}}${smallMark ? `[* ${notes[smallMark - 1]}]` : ''} ${badge(smallSeats, '#808080')}`));
+        }
+        lines.push(full(frame, `{{{${ffg} ${B}재적${B}}}} ${badge(d.totals, frame)}`));
+        const custom = (S.wiki.note || '').trim();
+        if (custom || d.chs.length > 1) lines.push(full('#f2f2f2', `{{{-1 ${[custom ? `※ ${custom}` : '', d.chs.length > 1 ? chip('#666', '#fff', `${chName(d.chs[0])} 의석`) + chip('#fff', '#666', `${chName(d.chs[1])} 의석`) : ''].filter(Boolean).join('[br]')}}}}`));
+        if (S.wiki.footer !== false) lines.push(full('#ffffff', `정당 구분 (${B}원내${B} · 원외)`));
+        return lines.join('\n');
+    }
+    // 오른쪽 시각 화면 "위키 틀" 탭 — 틀 미리보기
+    function renderWikiPreview() {
+        const wrap = document.getElementById('t65WikiWrap');
+        if (!wrap) return;
+        if (!wikiModes().includes(ui.wikiChamber)) ui.wikiChamber = wikiModes()[0];
+        const d = wikiData(ui.wikiChamber);
+        wrap.innerHTML = `<div class="t65-wikiwrap">${ui.wikiView === 'out' ? namuOutBox(d) : namuBox(d)}</div>`;
+        wrap.querySelectorAll('[data-wview]').forEach(b => { b.onclick = () => { ui.wikiView = b.dataset.wview; renderWikibox(); }; });
+    }
+    const wikiMarkupNow = () => { const d = wikiData(ui.wikiChamber); return ui.wikiView === 'out' ? namuOutMarkup(d) : namuMarkup(d); };
+    function showWikiTab() {
+        const btn = document.getElementById('dispTabWiki');
+        if (btn) btn.style.display = '';
+        try { switchDispTab('wiki'); } catch (e) { /* 시각 화면 없음 */ }
+        renderWikiPreview();
+    }
+    // 왼쪽 의회 › 위키 틀 — 설정 · 문법 복사. 고친 내용은 오른쪽 "위키 틀" 탭에 바로 보인다
+    function renderWikibox() {
+        const box = document.getElementById('contentWikibox');
+        renderWikiPreview();
+        if (!box) return;
+        const modes = wikiModes();
+        if (!modes.includes(ui.wikiChamber)) ui.wikiChamber = modes[0];
+        const d = wikiData(ui.wikiChamber);
+        const auto = (() => { const pmn = pmName(); return pmn ? `${pmn} 내각` : '예: 콜 내각'; })();
+        box.innerHTML = `<div class="t65-intro">위키 문서의 "원내 구성" 틀을 만듭니다. 정당 · 연정(집권) · 의석에서 자동으로 채워지고, 미리보기는 오른쪽 시각 화면 "위키 틀" 탭에 바로 보여요.</div>
+            ${modes.length > 1 ? `<div class="system-radio-group t65-tabs">${modes.map(c => `<button type="button" class="system-radio-btn ${ui.wikiChamber === c ? 'active' : ''}" data-wch="${c}">${esc(c === 'both' ? '양원' : chName(c))}</button>`).join('')}</div>` : ''}
+            <div class="system-radio-group t65-tabs">${[['in', '원내 구성'], ['out', '원외정당']].map(([k, t]) => `<button type="button" class="system-radio-btn ${ui.wikiView === k ? 'active' : ''}" data-wv="${k}">${t}</button>`).join('')}</div>
+            ${ui.wikiChamber === 'both' ? `<div class="t65-dim t65-small" style="margin:-4px 0 8px">정당마다 [${esc(chName('senate'))} | ${esc(chName('house'))}] 의석을 나란히 적어요.</div>` : ''}
+            <div class="t65-actions">
+                <button type="button" class="t65-btn primary" data-act="copy">📋 위키 문법 복사</button>
+                <button type="button" class="t65-btn" data-act="showwiki">오른쪽에서 보기</button>
+                <button type="button" class="t65-btn" data-act="img">🖼 반원 그림 저장</button>
+            </div>
+            <div class="t65-card t65-wk-form">
+                <div class="t65-card-head"><b>틀 머리</b></div>
+                <div class="t65-field"><span>제목</span><input type="text" data-w="title" value="${esc(S.wiki.title || '')}" placeholder="${esc(d.title)}"></div>
+                <div class="t65-field"><span>머리 색</span><input type="color" data-w="frame" value="${esc(S.wiki.frame || '#2b3a67')}"><button type="button" class="t65-btn" data-frame="#ffffff">흰색</button><button type="button" class="t65-btn" data-frame="#2b3a67">남색</button></div>
+                <div class="t65-card-head" style="margin-top:10px"><b>내각</b></div>
+                <div class="t65-field"><span>이름</span><input type="text" data-w="govName" value="${esc(S.wiki.govName || '')}" placeholder="${esc(auto)}"></div>
+                <div class="t65-field"><span>기간</span><input type="text" data-w="termStart" value="${esc(S.wiki.termStart || '')}" placeholder="시작 예: 1982.10.01"><span>~</span><input type="text" data-w="termEnd" value="${esc(S.wiki.termEnd || '')}" placeholder="비우면 현재"></div>
+                <div class="t65-card-head" style="margin-top:10px"><b>정당 구분</b></div>
+                <div class="t65-field"><span>교섭단체 기준</span><input type="number" min="0" data-w="groupMin" value="${Number(S.wiki.groupMin) || 0}" style="width:5em"><span class="t65-dim">석 미만은 비교섭단체 (0이면 무소속만)</span></div>
+                <div class="t65-field"><span>각주</span><input type="text" data-w="note" value="${esc(S.wiki.note || '')}" placeholder="직접 쓰는 설명 (※로 붙음)"></div>
+                <label class="t65-field" style="cursor:pointer"><input type="checkbox" data-w="footer" ${S.wiki.footer === false ? '' : 'checked'}><span>맨 아래 "정당 구분 (원내 · 원외)" 줄</span></label>
+                <div class="t65-dim t65-small">엠블럼은 의회 › 의회 설정의 로고(없으면 국기), 정당 로고는 의회 › 정당 › 로고에서 정해요. 파벌이 둘 이상인 정당은 각주에 공동교섭단체로 적혀요.</div>
+            </div>
+            <details class="t65-fold"><summary>위키 문법 보기</summary><textarea class="t65-markup" readonly>${esc(wikiMarkupNow())}</textarea><div class="t65-dim t65-small">로고가 있는 정당은 [[파일:정당 이름 로고.png]]로 들어가요 — 위키에 그 이름으로 로고 그림을 올리면 그대로 보여요.</div></details>`;
+        box.querySelectorAll('[data-wch]').forEach(b => { b.onclick = () => { ui.wikiChamber = b.dataset.wch; renderWikibox(); showWikiTab(); }; });
+        box.querySelectorAll('[data-wv]').forEach(b => { b.onclick = () => { ui.wikiView = b.dataset.wv; renderWikibox(); showWikiTab(); }; });
+        box.querySelectorAll('[data-w]').forEach(i => {
+            const k = i.dataset.w;
+            const apply = () => { S.wiki[k] = i.type === 'checkbox' ? i.checked : k === 'groupMin' ? Math.max(0, Number(i.value) || 0) : i.value.trim(); };
+            if (i.type === 'text' || i.type === 'color') i.oninput = () => { apply(); renderWikiPreview(); };
+            i.onchange = () => { apply(); renderWikibox(); };
+        });
+        box.querySelectorAll('[data-frame]').forEach(b => { b.onclick = () => { S.wiki.frame = b.dataset.frame; renderWikibox(); }; });
+        box.querySelector('[data-act="showwiki"]').onclick = showWikiTab;
+        box.querySelector('[data-act="copy"]').onclick = async () => {
+            const text = wikiMarkupNow();
+            try { await navigator.clipboard.writeText(text); showCustomAlert('위키 문법을 복사했습니다.'); }
+            catch (e) { const ta = box.querySelector('.t65-markup'); if (ta) { ta.closest('details').open = true; ta.select(); } showCustomAlert('복사하지 못했습니다 — "위키 문법 보기"에서 직접 복사하세요.'); }
+        };
+        box.querySelector('[data-act="img"]').onclick = () => {
+            const url = hemicycleImage(d.main, 600);
+            if (!url) { showCustomAlert('반원 그림을 만들 수 없습니다.'); return; }
+            const a = document.createElement('a');
+            a.href = url; a.download = `${(d.title || 'hemicycle').replace(/[\\/:*?"<>|]/g, '_')}.png`;
+            document.body.appendChild(a); a.click(); a.remove();
         };
     }
 
-    // ---- 탭: 내각 › 왕실 ----
+    // ================= 세계 › 진영 =================
+    //   S.blocs: [{ id, name, color, desc, ideologies:[{ id, name }] }] — 국가 순위의 국가마다 진영 · 하위 이념을 고른다
+    function defaultBlocs() {
+        const mk = (id, name, color, desc, ideos) => ({ id, name, color, desc, ideologies: ideos.map(n => ({ id: uid(), name: n })) });
+        return [
+            mk('west', '서방 진영', '#3b82f6', '자유 시장 · 의회 민주주의 · 북대서양 동맹', ['자유민주주의', '보수주의', '사회민주주의', '기독교 민주주의']),
+            mk('east', '동구권', '#dc2626', '계획 경제 · 일당 체제 · 바르샤바 조약', ['마르크스-레닌주의', '스탈린주의', '마오쩌둥 사상', '주체사상']),
+            mk('nonaligned', '비동맹', '#a3a3a3', '어느 진영에도 속하지 않는 제3세계', ['티토주의', '아랍 사회주의', '제3세계주의']),
+            mk('other', '기타', '#a16207', '', []),
+        ];
+    }
+    const blocOf = k => S.blocs.find(b => b.id === k) || { id: '', name: '미분류', color: '#777', ideologies: [] };
+    const ideoOf = (b, id) => (b.ideologies || []).find(x => x.id === id) || null;
+    function renderBlocs() {
+        const box = document.getElementById('contentBlocs');
+        if (!box) return;
+        const rows = S.ranking.rows;
+        const total = Math.max(1, rows.length);
+        const members = b => rows.filter(r => r.bloc === b.id);
+        const unassigned = rows.filter(r => !S.blocs.some(b => b.id === r.bloc));
+        box.innerHTML = `<div class="t65-intro">진영을 만들고 색 · 설명 · 하위 이념을 정합니다. 세계 › 국가 순위에서 나라마다 진영과 하위 이념을 고를 수 있어요. (꾸밈용 — 게임 기능에는 영향 없음)</div>
+            <div class="t65-card">
+                <div class="t65-card-head"><b>진영 구도</b><span class="t65-dim">국가 ${rows.length}개</span></div>
+                <div class="t65-bloc-bar">${S.blocs.map(b => { const n = members(b).length; return n ? `<span style="width:${n / total * 100}%;background:${esc(b.color)}" title="${esc(b.name)} ${n}개국"></span>` : ''; }).join('')}${unassigned.length ? `<span style="width:${unassigned.length / total * 100}%;background:#777" title="미분류 ${unassigned.length}개국"></span>` : ''}</div>
+                <div class="t65-legend">${S.blocs.map(b => `<span>${dotHtml(b.color)}${esc(b.name)} ${members(b).length}</span>`).join('')}${unassigned.length ? `<span>${dotHtml('#777')}미분류 ${unassigned.length}</span>` : ''}</div>
+            </div>
+            ${S.blocs.map(b => {
+                const ms = members(b).slice().sort((x, y) => (Number(y.score) || 0) - (Number(x.score) || 0));
+                return `<div class="t65-bloc" style="--bloc:${esc(b.color)}">
+                    <div class="t65-bloc-head">
+                        <input type="color" value="${esc(/^#[0-9a-f]{6}$/i.test(b.color) ? b.color : '#888888')}" data-bc="${esc(b.id)}" title="진영 색">
+                        <input type="text" class="t65-bloc-name" value="${esc(b.name)}" data-bn="${esc(b.id)}" placeholder="진영 이름">
+                        <button type="button" class="t65-x" data-bdel="${esc(b.id)}" title="진영 지우기">×</button>
+                    </div>
+                    <input type="text" class="t65-bloc-desc" value="${esc(b.desc || '')}" data-bd="${esc(b.id)}" placeholder="설명 (예: 계획 경제 · 일당 체제)">
+                    <div class="t65-sub-title">하위 이념</div>
+                    <div class="t65-chips">${(b.ideologies || []).map(x => `<span class="t65-ichip">${esc(x.name)} <small>${rows.filter(r => r.bloc === b.id && r.ideo === x.id).length || ''}</small><button type="button" data-idel="${esc(b.id)}|${esc(x.id)}" title="지우기">×</button></span>`).join('') || '<span class="t65-dim">없음</span>'}</div>
+                    <div class="t65-succ-row"><input type="text" placeholder="하위 이념 추가" data-iadd="${esc(b.id)}"><button type="button" class="t65-btn" data-iaddbtn="${esc(b.id)}">추가</button></div>
+                    <div class="t65-dim t65-small">소속 국가: ${ms.length ? ms.map(r => esc(rowName(r))).join(', ') : '없음'}</div>
+                </div>`;
+            }).join('')}
+            <div class="t65-actions"><button type="button" class="t65-btn primary" data-act="addbloc">+ 진영 추가</button><button type="button" class="t65-btn" data-act="resetblocs">처음 진영으로</button></div>`;
+        const B = id => S.blocs.find(b => b.id === id);
+        box.querySelectorAll('[data-bc]').forEach(i => { i.onchange = () => { const b = B(i.dataset.bc); if (b) { b.color = i.value; renderBlocs(); renderRanking(); } }; });
+        box.querySelectorAll('[data-bn]').forEach(i => { i.onchange = () => { const b = B(i.dataset.bn); if (b) { b.name = i.value.trim() || b.name; renderBlocs(); renderRanking(); } }; });
+        box.querySelectorAll('[data-bd]').forEach(i => { i.onchange = () => { const b = B(i.dataset.bd); if (b) b.desc = i.value.trim(); }; });
+        box.querySelectorAll('[data-bdel]').forEach(btn => {
+            btn.onclick = () => {
+                const b = B(btn.dataset.bdel); if (!b) return;
+                const n = members(b).length;
+                showCustomConfirm(`"${b.name}" 진영을 지울까요?${n ? `\n소속 국가 ${n}개는 미분류가 됩니다.` : ''}`, () => {
+                    S.blocs = S.blocs.filter(x => x !== b);
+                    S.ranking.rows.forEach(r => { if (r.bloc === b.id) { r.bloc = ''; r.ideo = ''; } });
+                    renderBlocs(); renderRanking();
+                });
+            };
+        });
+        const addIdeo = id => {
+            const inp = box.querySelector(`[data-iadd="${CSS.escape(id)}"]`), b = B(id);
+            const name = inp ? inp.value.trim() : '';
+            if (!b || !name) return;
+            (b.ideologies = b.ideologies || []).push({ id: uid(), name });
+            renderBlocs(); renderRanking();
+        };
+        box.querySelectorAll('[data-iaddbtn]').forEach(btn => { btn.onclick = () => addIdeo(btn.dataset.iaddbtn); });
+        box.querySelectorAll('[data-iadd]').forEach(inp => { inp.onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); addIdeo(inp.dataset.iadd); } }; });
+        box.querySelectorAll('[data-idel]').forEach(btn => {
+            btn.onclick = () => {
+                const [bid, iid] = btn.dataset.idel.split('|'); const b = B(bid); if (!b) return;
+                b.ideologies = (b.ideologies || []).filter(x => x.id !== iid);
+                S.ranking.rows.forEach(r => { if (r.bloc === bid && r.ideo === iid) r.ideo = ''; });
+                renderBlocs(); renderRanking();
+            };
+        });
+        box.querySelector('[data-act="addbloc"]').onclick = () => {
+            const palette = ['#8b5cf6', '#10b981', '#f59e0b', '#ec4899', '#14b8a6', '#6366f1'];
+            S.blocs.push({ id: uid(), name: `새 진영 ${S.blocs.length + 1}`, color: palette[S.blocs.length % palette.length], desc: '', ideologies: [] });
+            renderBlocs(); renderRanking();
+        };
+        box.querySelector('[data-act="resetblocs"]').onclick = () => showCustomConfirm('진영을 처음 목록(서방 · 동구권 · 비동맹 · 기타)으로 되돌릴까요?\n고친 진영과 하위 이념은 사라지고, 없는 진영의 국가는 미분류가 됩니다.', () => {
+            S.blocs = defaultBlocs();
+            S.ranking.rows.forEach(r => { if (!S.blocs.some(b => b.id === r.bloc)) r.bloc = ''; r.ideo = ''; });
+            renderBlocs(); renderRanking();
+        });
+    }
+
+    // ================= 세계 › 국가 순위 — 냉전 국가 순위 (꾸밈용) =================
+    // selfName: 우리나라 이름 — 목록에 있는 나라(예: 서독 튜토리얼의 "독일연방공화국")면 그 줄을 우리나라 줄이 대신한다 (같은 나라가 두 번 나오지 않게)
+    // (처음 읽힐 때 fresh()가 이름 없이 부르므로, 이름이 있을 때만 아래쪽 FLAG_BY_NAME을 쓴다)
+    function defaultRanking(selfName) {
+        const rows = [
+            ['미합중국', '🇺🇸', 'west', 100], ['소비에트 연방', '☭', 'east', 96], ['서독', '🇩🇪', 'west', 74], ['일본', '🇯🇵', 'west', 72], ['영국', '🇬🇧', 'west', 70],
+            ['프랑스', '🇫🇷', 'west', 68], ['중화인민공화국', '🇨🇳', 'east', 62], ['동독', '⚒', 'east', 52], ['인도', '🇮🇳', 'nonaligned', 46], ['유고슬라비아', '★', 'nonaligned', 40],
+        ].map(([name, flag, bloc, score]) => ({ id: uid(), name, flag, flagKey: '', flagImg: '', bloc, ideo: '', score, prevRank: null, self: false }));
+        const selfKey = selfName ? FLAG_BY_NAME[selfName] : null;
+        const twin = selfKey ? rows.find(r => FLAG_BY_NAME[r.name] === selfKey) : null;
+        if (twin) rows.splice(rows.indexOf(twin), 1);
+        rows.push({ id: uid(), name: '', flag: '', bloc: twin ? twin.bloc : 'west', score: twin ? twin.score : 50, prevRank: null, self: true });
+        return { title: '냉전 국가 순위', rows };
+    }
+    const rowName = r => (r.self ? (nationName() || '우리나라') : r.name);
+    const ranked = () => S.ranking.rows.slice().sort((a, b) => (Number(b.score) || 0) - (Number(a.score) || 0));
+    // 기본 국기 — 간단히 그린 SVG (이모지 국기는 Windows에서 글자로만 보여서). 직접 올린 그림(flagImg)이 있으면 그쪽을 쓴다
+    const star = (cx, cy, r, fill, rot = -90) => `<polygon fill="${fill}" points="${Array.from({ length: 10 }, (_, i) => { const a = (rot + i * 36) * Math.PI / 180, rr = i % 2 ? r * 0.4 : r; return `${(cx + rr * Math.cos(a)).toFixed(2)},${(cy + rr * Math.sin(a)).toFixed(2)}`; }).join(' ')}"/>`;
+    const hband = cols => cols.map((c, i) => `<rect y="${i * 20 / cols.length}" width="30" height="${20 / cols.length + 0.05}" fill="${c}"/>`).join('');
+    const vband = cols => cols.map((c, i) => `<rect x="${i * 10}" width="10.05" height="20" fill="${c}"/>`).join('');
+    const FLAG_SVG = {
+        us: () => `${Array.from({ length: 13 }, (_, i) => `<rect y="${i * 20 / 13}" width="30" height="${20 / 13 + 0.05}" fill="${i % 2 ? '#fff' : '#b22234'}"/>`).join('')}<rect width="12" height="10.77" fill="#3c3b6e"/>${Array.from({ length: 20 }, (_, i) => `<circle cx="${1.2 + (i % 5) * 2.4 + (Math.floor(i / 5) % 2) * 1.2}" cy="${1.3 + Math.floor(i / 5) * 2.6}" r=".45" fill="#fff"/>`).join('')}`,
+        su: () => `<rect width="30" height="20" fill="#cc0000"/>${star(5.5, 2.6, 1.1, 'none')}<polygon points="5.5,1.4 5.85,2.3 6.8,2.3 6.05,2.85 6.35,3.75 5.5,3.2 4.65,3.75 4.95,2.85 4.2,2.3 5.15,2.3" fill="none" stroke="#ffd700" stroke-width=".3"/><path d="M4.2 7.6 A2.2 2.2 0 1 0 7.4 4.6" fill="none" stroke="#ffd700" stroke-width=".8"/><path d="M4 4.6 L7.6 8.2" stroke="#ffd700" stroke-width=".8"/><rect x="3.4" y="4" width="1.6" height=".8" fill="#ffd700" transform="rotate(45 4.2 4.4)"/>`,
+        de: () => hband(['#000', '#dd0000', '#ffce00']),
+        jp: () => `<rect width="30" height="20" fill="#fff"/><circle cx="15" cy="10" r="6" fill="#bc002d"/>`,
+        gb: () => `<rect width="30" height="20" fill="#012169"/><path d="M0 0 L30 20 M30 0 L0 20" stroke="#fff" stroke-width="4"/><path d="M0 0 L30 20 M30 0 L0 20" stroke="#c8102e" stroke-width="1.4"/><path d="M15 0 V20 M0 10 H30" stroke="#fff" stroke-width="6"/><path d="M15 0 V20 M0 10 H30" stroke="#c8102e" stroke-width="3.4"/>`,
+        fr: () => vband(['#002395', '#fff', '#ed2939']),
+        cn: () => `<rect width="30" height="20" fill="#de2910"/>${star(5, 5, 3, '#ffde00')}${star(10, 2, 1, '#ffde00', -60)}${star(12, 4, 1, '#ffde00', -75)}${star(12, 7, 1, '#ffde00', -100)}${star(10, 9, 1, '#ffde00', -120)}`,
+        dd: () => `${hband(['#000', '#dd0000', '#ffce00'])}<circle cx="15" cy="10" r="3.6" fill="#ffce00" stroke="#7a4b00" stroke-width=".4"/><path d="M13.2 10.6 L15 8 L16.8 10.6 M15 8 V12" stroke="#000" stroke-width=".7" fill="none"/>`,
+        in: () => `${hband(['#ff9933', '#fff', '#138808'])}<circle cx="15" cy="10" r="2.3" fill="none" stroke="#000080" stroke-width=".5"/><circle cx="15" cy="10" r=".5" fill="#000080"/>`,
+        yu: () => `${hband(['#003893', '#fff', '#de0000'])}${star(15, 10, 4.6, '#fcd116')}${star(15, 10, 4, '#de0000')}`,
+    };
+    const FLAG_BY_NAME = { '미합중국': 'us', '미국': 'us', '소비에트 연방': 'su', '소련': 'su', '서독': 'de', '독일': 'de', '독일연방공화국': 'de', 'West Germany': 'de', 'Federal Republic of Germany': 'de', '일본': 'jp', '영국': 'gb', '프랑스': 'fr', '중화인민공화국': 'cn', '중국': 'cn', '동독': 'dd', '인도': 'in', '유고슬라비아': 'yu' };
+    const flagCache = {};
+    const builtinFlag = key => {
+        if (!FLAG_SVG[key]) return '';
+        if (!flagCache[key]) flagCache[key] = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 30 20" width="30" height="20">${FLAG_SVG[key]()}</svg>`);
+        return flagCache[key];
+    };
+    function flagSrc(r) {
+        if (r.self) return (typeof nationFlag !== 'undefined' && nationFlag) || '';
+        return r.flagImg || builtinFlag(r.flagKey || FLAG_BY_NAME[String(r.name || '').trim()]);
+    }
+    function flagHtml(r) {
+        const src = flagSrc(r);
+        if (src) return `<img class="t65-rk-flagimg" src="${esc(src)}" alt="">`;
+        return `<span class="t65-rk-flag">${esc(r.flag || '🏳')}</span>`;
+    }
+    // 올린 그림은 90×60 안으로 줄여 저장 (세이브가 커지지 않게)
+    function shrinkImage(file, done) {
+        const rd = new FileReader();
+        rd.onload = ev => {
+            const img = new Image();
+            img.onload = () => {
+                const k = Math.min(1, 90 / img.width, 60 / img.height);
+                const c = document.createElement('canvas');
+                c.width = Math.max(1, Math.round(img.width * k)); c.height = Math.max(1, Math.round(img.height * k));
+                c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+                try { done(c.toDataURL('image/png')); } catch (e) { done(ev.target.result); }
+            };
+            img.onerror = () => done(ev.target.result);
+            img.src = ev.target.result;
+        };
+        rd.readAsDataURL(file);
+    }
+    // 오른쪽 시각 화면 "국가 순위" 탭 — 보는 화면 (꾸밈용 순위표)
+    function renderRankBoard() {
+        const wrap = document.getElementById('t65RankWrap');
+        if (!wrap) return;
+        const list = ranked();
+        const counts = S.blocs.map(b => [b, S.ranking.rows.filter(r => r.bloc === b.id).length]);
+        const title = document.getElementById('t65RankTitle');
+        if (title) title.textContent = S.ranking.title || '냉전 국가 순위';
+        wrap.innerHTML = list.length ? `<div class="t65-rk">
+                <div class="t65-rk-title">${esc(S.ranking.title || '냉전 국가 순위')}</div>
+                <div class="t65-rk-blocs">${counts.map(([b, n]) => (n ? `<span><i style="background:${esc(b.color)}"></i>${esc(b.name)} ${n}</span>` : '')).join('')}</div>
+                ${list.map((r, i) => {
+                    const rank = i + 1, b = blocOf(r.bloc);
+                    const mv = r.prevRank ? r.prevRank - rank : 0;
+                    const ideo = ideoOf(b, r.ideo);
+                    return `<div class="t65-rk-row${r.self ? ' self' : ''}" style="--bloc:${esc(b.color)}" title="${esc(b.name)}${ideo ? ' · ' + esc(ideo.name) : ''}">
+                        <span class="t65-rk-no">${rank}</span>${flagHtml(r)}
+                        <span class="t65-rk-name">${esc(rowName(r))}${ideo ? `<small class="t65-rk-ideo">${esc(ideo.name)}</small>` : ''}</span>
+                        <span class="t65-rk-bar"><span style="width:${Math.max(2, Math.min(100, Number(r.score) || 0))}%"></span></span>
+                        <span class="t65-rk-score">${Number(r.score) || 0}</span>
+                        <span class="t65-rk-mv ${mv > 0 ? 'up' : mv < 0 ? 'down' : ''}">${mv > 0 ? '▲' + mv : mv < 0 ? '▼' + (-mv) : r.prevRank ? '–' : ''}</span>
+                    </div>`;
+                }).join('')}
+            </div>` : '<div class="t65-empty"><div class="t65-empty-icon">🌐</div>순위에 나라가 없습니다.<br>왼쪽 세계 › 국가 순위에서 "+ 국가 추가"를 눌러 보세요.</div>';
+    }
+    function showRankTab() {
+        const btn = document.getElementById('dispTabRanking');
+        if (btn) btn.style.display = '';
+        try { switchDispTab('ranking'); } catch (e) { /* 시각 화면 없음 */ }
+        renderRankBoard();
+    }
+    // 왼쪽 세계 › 국가 순위 — 고치는 화면. 입력하는 동안은 오른쪽 순위표만 바로 다시 그리고,
+    // 왼쪽 목록은 입력을 마쳤을 때(또는 ± 연타가 멈췄을 때) 순위대로 다시 줄 세운다 (쓰는 중에 줄이 움직이지 않게)
+    let rankResort = 0;
+    function renderRanking() {
+        const box = document.getElementById('contentRanking');
+        renderRankBoard();
+        if (!box) return;
+        clearTimeout(rankResort);
+        const list = ranked();
+        const blocOpts = r => `${S.blocs.map(b => `<option value="${esc(b.id)}" ${r.bloc === b.id ? 'selected' : ''}>${esc(b.name)}</option>`).join('')}<option value="" ${S.blocs.some(b => b.id === r.bloc) ? '' : 'selected'}>미분류</option>`;
+        const ideoOpts = r => `<option value="">하위 이념 —</option>${blocOf(r.bloc).ideologies.map(x => `<option value="${esc(x.id)}" ${r.ideo === x.id ? 'selected' : ''}>${esc(x.name)}</option>`).join('')}`;
+        box.innerHTML = `<div class="t65-intro">꾸밈용 화면입니다 — 게임 기능에는 영향이 없어요. 고친 내용은 오른쪽 시각 화면 "국가 순위" 탭에 바로 보여요.</div>
+            <div class="t65-card t65-re-head">
+                <div class="t65-field"><span>제목</span><input type="text" data-rt="title" value="${esc(S.ranking.title)}" placeholder="냉전 국가 순위"></div>
+                <div class="t65-actions">
+                    <button type="button" class="t65-btn primary" data-act="addrow">+ 국가 추가</button>
+                    <button type="button" class="t65-btn" data-act="mark" title="지금 순위를 기준으로 저장 — 점수를 바꾸면 순위표에 ▲▼로 변동이 보여요">순위 기준 저장</button>
+                    <button type="button" class="t65-btn" data-act="showrank">오른쪽에서 보기</button>
+                    <button type="button" class="t65-btn" data-act="reset">처음 목록으로</button>
+                </div>
+            </div>
+            <div class="t65-re-hint">국기 칸을 누르면 그림을 올려요 · 점수는 ± 또는 직접 입력 · 진영을 바꾸면 하위 이념이 비워져요</div>
+            <div class="t65-re-list">
+            ${list.map((r, i) => {
+                const b = blocOf(r.bloc);
+                return `<div class="t65-re-row${r.self ? ' self' : ''}" style="--bloc:${esc(b.color)}" data-row="${r.id}">
+                    <span class="t65-re-no">${i + 1}</span>
+                    ${r.self ? `<span class="t65-re-flag self" title="국가 › 상징의 국기">${flagHtml(r)}</span>` : `<label class="t65-re-flag" title="눌러서 국기 그림 고르기">${flagHtml(r)}<input type="file" accept="image/*" data-rflag="${r.id}" hidden>${r.flagImg ? `<button type="button" class="t65-re-unflag" data-unflag="${r.id}" title="올린 국기 빼기">×</button>` : ''}</label>`}
+                    <input type="text" class="t65-re-name" data-rf="name" data-id="${r.id}" value="${esc(r.self ? rowName(r) : r.name)}" ${r.self ? 'disabled title="국가 › 상징의 국가명 — 우리나라"' : 'placeholder="국가 이름"'}>
+                    <span class="t65-re-score"><button type="button" data-step="-1" data-id="${r.id}" title="1점 내리기">−</button><input type="number" data-rf="score" data-id="${r.id}" value="${Number(r.score) || 0}" min="0" max="999"><button type="button" data-step="1" data-id="${r.id}" title="1점 올리기">+</button></span>
+                    ${r.self ? '<span class="t65-re-me" title="우리나라 — 이름 · 국기는 국가 › 상징에서 바꿔요">★</span>' : `<button type="button" class="t65-x" data-rdel="${r.id}" title="지우기">×</button>`}
+                    <span class="t65-re-meta">
+                        <select data-rf="bloc" data-id="${r.id}" title="진영">${blocOpts(r)}</select>
+                        <select data-rf="ideo" data-id="${r.id}" title="하위 이념" ${b.ideologies.length ? '' : 'disabled'}>${ideoOpts(r)}</select>
+                    </span>
+                </div>`;
+            }).join('')}
+            </div>`;
+        const at = id => S.ranking.rows.find(x => x.id === id);
+        const resortSoon = () => { clearTimeout(rankResort); rankResort = setTimeout(renderRanking, 900); };
+        box.querySelectorAll('[data-rf]').forEach(i => {
+            const f = i.dataset.rf;
+            const apply = () => {
+                const r = at(i.dataset.id); if (!r) return false;
+                if (f === 'name' && !r.flagKey && FLAG_BY_NAME[r.name]) r.flagKey = FLAG_BY_NAME[r.name]; // 이름을 바꿔도 기본 국기는 그대로
+                r[f] = f === 'score' ? Math.max(0, Math.min(999, Number(i.value) || 0)) : i.value.trim();
+                return r;
+            };
+            // 이름 · 점수는 치는 대로 오른쪽 순위표에 반영
+            if (f === 'name' || f === 'score') i.oninput = () => { if (apply()) renderRankBoard(); };
+            i.onchange = () => {
+                const r = apply(); if (!r) return;
+                if (f === 'bloc') r.ideo = '';
+                renderRanking();
+                if (f === 'bloc') renderBlocs();
+            };
+        });
+        box.querySelectorAll('[data-step]').forEach(b => {
+            b.onclick = () => {
+                const r = at(b.dataset.id); if (!r) return;
+                r.score = Math.max(0, Math.min(999, (Number(r.score) || 0) + Number(b.dataset.step)));
+                const inp = box.querySelector(`input[data-rf="score"][data-id="${r.id}"]`);
+                if (inp) inp.value = r.score;
+                renderRankBoard();
+                resortSoon();
+            };
+        });
+        box.querySelectorAll('[data-rflag]').forEach(i => {
+            i.onchange = () => { const f = i.files && i.files[0]; const r = at(i.dataset.rflag); if (!f || !r) return; shrinkImage(f, url => { r.flagImg = url; renderRanking(); }); };
+        });
+        box.querySelectorAll('[data-unflag]').forEach(b => { b.onclick = e => { e.preventDefault(); e.stopPropagation(); const r = at(b.dataset.unflag); if (r) { r.flagImg = ''; renderRanking(); } }; });
+        const titleIn = box.querySelector('[data-rt="title"]');
+        titleIn.oninput = () => { S.ranking.title = titleIn.value.trim(); renderRankBoard(); };
+        box.querySelectorAll('[data-rdel]').forEach(b => {
+            b.onclick = () => {
+                const r = at(b.dataset.rdel); if (!r) return;
+                showCustomConfirm(`"${rowName(r)}"을(를) 순위에서 지울까요?`, () => { S.ranking.rows = S.ranking.rows.filter(x => x.id !== r.id); renderRanking(); renderBlocs(); });
+            };
+        });
+        box.querySelector('[data-act="addrow"]').onclick = () => {
+            const r = { id: uid(), name: '새 국가', flag: '🏳', flagKey: '', flagImg: '', bloc: (S.blocs[S.blocs.length - 1] || {}).id || '', ideo: '', score: 30, prevRank: null, self: false };
+            S.ranking.rows.push(r);
+            renderRanking(); renderBlocs();
+            const inp = box.querySelector(`input[data-rf="name"][data-id="${r.id}"]`);
+            if (inp) { inp.focus(); inp.select(); inp.scrollIntoView({ block: 'nearest' }); }
+        };
+        box.querySelector('[data-act="mark"]').onclick = () => { ranked().forEach((r, i) => { r.prevRank = i + 1; }); renderRanking(); };
+        box.querySelector('[data-act="showrank"]').onclick = showRankTab;
+        box.querySelector('[data-act="reset"]').onclick = () => showCustomConfirm('국가 순위를 처음 목록으로 되돌릴까요?', () => { S.ranking = defaultRanking(nationName()); renderRanking(); renderBlocs(); });
+    }
+
+    // ================= 탭 =================
     function el(html) { const d = document.createElement('div'); d.innerHTML = html.trim(); return d.firstChild; }
-    (function addTab() {
-        const cab = document.getElementById('mainContentCabinet');
-        const bar = cab && cab.querySelector(':scope > .sub-tab-container');
+    function addTab(mainId, afterId, main, sub, id, label) {
+        const host = document.getElementById(mainId);
+        const bar = host && host.querySelector(':scope > .sub-tab-container');
         if (!bar) return;
-        const before = document.getElementById('subTabCouncil');
-        bar.insertBefore(el(`<button class="sub-tab-btn" onclick="switchSubTab('cabinet','royal')" id="subTabRoyal">왕실</button>`), before);
-        cab.appendChild(el(`<div id="contentRoyal" class="sub-tab-content"></div>`));
+        const btn = el(`<button class="sub-tab-btn" onclick="switchSubTab('${main}','${sub}')" id="subTab${id}">${label}</button>`);
+        const after = afterId && document.getElementById(afterId);
+        if (after && after.nextSibling) bar.insertBefore(btn, after.nextSibling); else bar.appendChild(btn);
+        host.appendChild(el(`<div id="content${id}" class="sub-tab-content"></div>`));
+    }
+    addTab('mainContentSetup', 'subTabList', 'setup', 'timeline', 'Timeline', '세력 변화');
+    // 오른쪽 시각 화면 탭 "세력 변화" — 정당 역사 도표 (아래로 스크롤)
+    (function addDispTab() {
+        const after = document.getElementById('dispTabRegion') || document.getElementById('dispTabCabinet');
+        if (!after) return;
+        const btn = el(`<button class="disp-tab-btn" id="dispTabTimeline" data-tab="timeline" onclick="switchDispTab('timeline')" style="display:none;"><span class="disp-tab-label">세력 변화</span><span class="disp-tab-close" onclick="event.stopPropagation();closeDispTab('timeline')">×</span></button>`);
+        after.parentElement.insertBefore(btn, after.nextSibling);
+        const ref = document.getElementById('dispPanelRegion') || document.getElementById('dispPanelCabinet');
+        if (!ref) return;
+        ref.parentElement.insertBefore(el(`<div class="disp-panel" id="dispPanelTimeline"><div class="chamber-box t65-hist-box">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;"><h3 style="margin:0;border:none;padding:0;"><span class="tno-prompt">&gt; </span><span id="t65HistTitle">세력 변화</span></h3></div>
+            <div id="t65HistWrap"></div></div></div>`), ref.nextSibling);
     })();
+    // 오른쪽 시각 화면 탭 "국가 순위" — 세계 › 국가 순위에서 고친 순위표를 크게 본다
+    (function addRankDispTab() {
+        const after = document.getElementById('dispTabTimeline') || document.getElementById('dispTabCabinet');
+        if (!after) return;
+        after.parentElement.insertBefore(el(`<button class="disp-tab-btn" id="dispTabRanking" data-tab="ranking" onclick="switchDispTab('ranking')" style="display:none;"><span class="disp-tab-label">국가 순위</span><span class="disp-tab-close" onclick="event.stopPropagation();closeDispTab('ranking')">×</span></button>`), after.nextSibling);
+        const ref = document.getElementById('dispPanelTimeline') || document.getElementById('dispPanelCabinet');
+        if (!ref) return;
+        ref.parentElement.insertBefore(el(`<div class="disp-panel" id="dispPanelRanking"><div class="chamber-box t65-rank-box">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;"><h3 style="margin:0;border:none;padding:0;"><span class="tno-prompt">&gt; </span><span id="t65RankTitle">국가 순위</span></h3></div>
+            <div id="t65RankWrap"></div></div></div>`), ref.nextSibling);
+    })();
+    // 오른쪽 시각 화면 탭 "위키 틀" — 원내 구성 틀 미리보기
+    (function addWikiDispTab() {
+        const after = document.getElementById('dispTabTimeline') || document.getElementById('dispTabCabinet');
+        if (!after) return;
+        after.parentElement.insertBefore(el(`<button class="disp-tab-btn" id="dispTabWiki" data-tab="wiki" onclick="switchDispTab('wiki')" style="display:none;"><span class="disp-tab-label">위키 틀</span><span class="disp-tab-close" onclick="event.stopPropagation();closeDispTab('wiki')">×</span></button>`), after.nextSibling);
+        const ref = document.getElementById('dispPanelTimeline') || document.getElementById('dispPanelCabinet');
+        if (!ref) return;
+        ref.parentElement.insertBefore(el(`<div class="disp-panel" id="dispPanelWiki"><div class="chamber-box">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;"><h3 style="margin:0;border:none;padding:0;"><span class="tno-prompt">&gt; </span>위키 틀</h3></div>
+            <div id="t65WikiWrap"></div></div></div>`), ref.nextSibling);
+    })();
+    addTab('mainContentSetup', 'subTabTimeline', 'setup', 'wikibox', 'Wikibox', '위키 틀');
+    // 세계 (1.6.5) — 국가 아래 새 메인 메뉴: 국가 순위 · 진영
+    (function addWorldMain() {
+        const nationBtn = document.getElementById('mainTabNation'), nationContent = document.getElementById('mainContentNation');
+        if (!nationBtn || !nationContent) return;
+        // 경제 — 자리 · 색만 잡아 둔 잠긴 메뉴 (국가 다음, 세계 앞). 누르면 안내만 뜬다
+        const eco = el(`<button class="main-tab-btn" onclick="t65EconomyLocked()" id="mainTabEconomy" title="경제 — 1.6.9 업데이트에서 열립니다">💹 경제 🔒</button>`);
+        nationBtn.parentElement.insertBefore(eco, nationBtn.nextSibling);
+        nationBtn.parentElement.insertBefore(el(`<button class="main-tab-btn" onclick="switchMainTab('world')" id="mainTabWorld">🌐 세계</button>`), eco.nextSibling);
+        nationContent.parentElement.insertBefore(el(`<div id="mainContentWorld" class="main-tab-content"><div class="sub-tab-container"></div></div>`), nationContent.nextSibling);
+        try { if (!currentSubTab.world) currentSubTab.world = 'ranking'; } catch (e) { /* main.js 없음 */ }
+    })();
+    const origSetLogoBg = window.setLogoBg;
+    if (typeof origSetLogoBg === 'function') window.setLogoBg = function () { const r = origSetLogoBg.apply(this, arguments); try { renderWikiPreview(); } catch (e) { /* 아직 없음 */ } return r; };
+    window.t65EconomyLocked = () => { try { showCustomAlert('🔒 경제 메뉴는 아직 잠겨 있어요 — 1.6.9 "보이지 않는 손" 업데이트에서 경제 시스템과 함께 열립니다.'); } catch (e) { /* 알림 없음 */ } };
+    addTab('mainContentWorld', null, 'world', 'ranking', 'Ranking', '국가 순위');
+    addTab('mainContentWorld', 'subTabRanking', 'world', 'blocs', 'Blocs', '진영');
     const origSwitch = window.switchSubTab;
     window.switchSubTab = function (main, sub) {
         const r = origSwitch.apply(this, arguments);
-        if (main === 'cabinet' && sub === 'royal') refresh();
+        if (main === 'setup' && sub === 'timeline') { renderTimeline(); showHistoryTab(); }
+        if (main === 'setup' && sub === 'wikibox') { renderWikibox(); showWikiTab(); }
+        if (main === 'world' && sub === 'ranking') { renderRanking(); showRankTab(); }
+        if (main === 'world' && sub === 'blocs') { renderBlocs(); showRankTab(); }
         return r;
     };
-    const origCab = window.renderCabinetDisplay;
-    window.renderCabinetDisplay = function () {
-        const r = origCab.apply(this, arguments);
-        const grid = document.getElementById('cabinetDisplayGrid');
-        if (grid) {
-            let b = document.getElementById('t65Banner');
-            const x = monarchX();
-            if (S.monarchy) {
-                if (!b) { b = el('<div id="t65Banner" class="t65-banner"></div>'); grid.parentElement.insertBefore(b, grid); }
-                b.innerHTML = `👑 ${S.monarchy.kind === 'absolute' ? '전제군주정' : '입헌군주제'} — ${esc(S.monarchy.title)} <b>${esc(x ? x.c.name : '(공석)')}</b>${x ? ` · ${esc(x.d.name)}` : ''}${S.monarchy.since ? ` · ${esc(S.monarchy.since)}부터` : ''}${S.dispute ? ' · ⚔ 계승 분쟁 중' : ''}`;
-                b.style.setProperty('--t65-c', (x && x.d.color) || '#7a1f2b');
-            } else if (b) b.remove();
+    const origDisp = window.switchDispTab;
+    window.switchDispTab = function (tab) {
+        const r = origDisp.apply(this, arguments);
+        if (tab === 'timeline') setTimeout(renderHistory, 30);
+        if (tab === 'ranking') renderRankBoard();
+        if (tab === 'wiki') renderWikiPreview();
+        return r;
+    };
+    let resizeTimer = 0;
+    window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(() => { if (document.getElementById('dispPanelTimeline')?.classList.contains('active')) renderHistory(); }, 150); });
+    function refresh() { renderTimeline(); renderWikibox(); renderRanking(); renderBlocs(); }
+    // ================= 우클릭 내보내기 (세력 변화 도표 · 위키 틀 · 국가 순위) =================
+    // 본 화면의 우클릭 "내보내기..." 메뉴 · 옵션 창(PNG · JPG · SVG, 해상도)을 그대로 쓰고, 그림은 여기서 그린다.
+    // 위키 틀 · 국가 순위는 HTML이라 <foreignObject>로 담으면 Chromium이 캔버스를 오염시켜 PNG로 못 뽑으므로,
+    // 같은 모양을 SVG 도형으로 다시 그린다 (국기 · 로고는 data: 그림이라 SVG 안에서도 그려짐)
+    const X = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    const FONT_MODERN = "Pretendard, 'Noto Sans KR', 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif";
+    const FONT_NEON = "NeoDunggeunmo, 'Noto Sans KR', 'Malgun Gothic', monospace";
+    let FONT = FONT_MODERN;
+    // 둥근모는 SVG 파일에서만 — PNG · JPG는 그림으로 굽는 동안 웹 글꼴을 못 써서 글자 폭이 어긋나므로 기본 고딕
+    const pickFont = format => { FONT = (format === 'svg' && typeof isModernTheme === 'function' && !isModernTheme()) ? FONT_NEON : FONT_MODERN; };
+    const measureCtx = document.createElement('canvas').getContext('2d');
+    const textW = (t, size, weight = 400) => { measureCtx.font = `${weight} ${size}px ${FONT}`; return measureCtx.measureText(String(t)).width; };
+    // 글자를 폭에 맞춰 여러 줄로 (한글은 글자 단위로 끊어도 자연스러움)
+    function wrapText(t, size, maxW, weight = 400) {
+        const out = []; let line = '';
+        for (const ch of String(t)) {
+            if (textW(line + ch, size, weight) > maxW && line) { out.push(line); line = ch.trim() ? ch : ''; } else line += ch;
         }
-        return r;
-    };
+        if (line) out.push(line);
+        return out;
+    }
+    const clip = (t, size, maxW, weight = 400) => { let s = String(t); if (textW(s, size, weight) <= maxW) return s; while (s && textW(s + '…', size, weight) > maxW) s = s.slice(0, -1); return s + '…'; };
+    const cssVar = (el, name, fb) => { try { return (getComputedStyle(el).getPropertyValue(name) || '').trim() || fb; } catch (e) { return fb; } };
 
-    // ---- 화면 ----
-    function chanceBox({ factors, chance }) {
-        return `<div class="t65-chance"><div class="t65-chance-head"><span>성공 확률</span><b>${chance}%</b></div>
-            <div class="t65-bar"><span style="width:${chance}%"></span></div>
-            ${factors.map(f => `<div class="t65-factor"><span>${esc(f.label)}</span><span class="${f.v >= 0 ? 't65-plus' : 't65-minus'}">${f.v >= 0 ? '+' : ''}${f.v}%p</span></div>`).join('')}</div>`;
-    }
-    const KIND_NAME = { restore: '왕정복고 (의회 결의)', restoreCoup: '왕정복고 (쿠데타)', selfCoup: '친위 쿠데타', reform: '입헌 개혁', republic: '공화 혁명', succession: '계승', dispute: '계승 분쟁', disputeVote: '분쟁 — 의회 표결', disputeWar: '분쟁 — 내전' };
-    function dynastiesHtml() {
-        const mx = monarchX();
-        return S.dynasties.map(d => {
-            const line = lineOf(d, mx && mx.c.id);
-            const rank = id => { const i = line.findIndex(c => c.id === id); return i < 0 ? null : i + 1; };
-            return `<div class="t65-dyn" style="--t65-c:${esc(d.color)}" data-dyn="${esc(d.id)}">
-                <div class="t65-row">
-                    <input type="color" value="${esc(d.color)}" data-df="color" title="왕가 색">
-                    <input type="text" value="${esc(d.name)}" data-df="name" placeholder="왕가 이름 (예: 호엔촐레른가)" class="t65-grow">
-                    <button type="button" class="t65-x" data-dact="del" title="왕가 지우기">✕</button>
-                </div>
-                <div class="t65-row"><span class="t65-dim">계승 규칙</span><select data-df="rule" class="t65-grow">${Object.entries(RULES).map(([k, t]) => `<option value="${k}" ${d.rule === k ? 'selected' : ''}>${t}</option>`).join('')}</select></div>
-                <div id="t65Cl_${esc(d.id)}" class="t65-claimants">
-                ${d.claimants.map(c => {
-                    const isKing = mx && mx.c.id === c.id, r = rank(c.id);
-                    return `<div class="t65-cl ${isKing ? 'king' : ''}" data-cl="${esc(c.id)}">
-                        <span class="drag-handle t65-handle" title="끌어서 순서(출생 순) 바꾸기">⋮⋮</span>
-                        <label class="leader-photo-box t65-photo" title="사진">${c.photo ? `<img src="${c.photo}" alt="">` : '<div class="photo-ph">👤</div>'}<input type="file" accept="image/*" data-cf="photo"></label>
-                        <div class="t65-cl-main">
-                            <div class="t65-row">
-                                <span class="t65-rank">${isKing ? '👑' : r ? `${r}위` : '—'}</span>
-                                <input type="text" value="${esc(c.name)}" data-cf="name" placeholder="이름" class="t65-grow">
-                                <select data-cf="gender" title="성별"><option value="m" ${c.gender !== 'f' ? 'selected' : ''}>남</option><option value="f" ${c.gender === 'f' ? 'selected' : ''}>여</option></select>
-                                <button type="button" class="t65-x" data-cact="del" title="빼기">✕</button>
-                            </div>
-                            <input type="text" value="${esc(c.title)}" data-cf="title" placeholder="칭호 (예: 프로이센 왕자)">
-                            <div class="t65-chips">${(c.partyIds || []).map(pid => { const p = partyById(pid); return p ? `<span class="t65-chip" style="--pc:${esc(p.color)}">${esc(p.abbr || p.name)}<button type="button" data-unback="${esc(pid)}" title="지지 철회">×</button></span>` : ''; }).join('')}
-                                <select data-cf="back" class="t65-back"><option value="">+ 지지 정당</option>${parties.filter(p => !isInd(p) && !(c.partyIds || []).map(String).includes(String(p.id))).map(p => `<option value="${esc(p.id)}">${esc(p.name)}</option>`).join('')}</select>
-                            </div>
-                        </div>
-                    </div>`;
-                }).join('')}
-                </div>
-                <button type="button" class="t65-add" data-dact="addcl">[+] 주장자 추가</button>
-            </div>`;
-        }).join('');
-    }
-    function render() {
-        const box = document.getElementById('contentRoyal');
-        if (!box) return;
-        const mx = monarchX();
-        const claimOpts = sel => allClaimants().map(({ c, d }) => `<option value="${esc(c.id)}" ${c.id === sel ? 'selected' : ''}>${esc(c.name || '(이름 없음)')} · ${esc(d.name)} · 지지 ${Math.round(backingSeats(c) * 100)}%</option>`).join('');
-        if (!allClaimants().some(x => x.c.id === ui.claimantId)) ui.claimantId = (allClaimants().sort((a, b) => strength(b.c) - strength(a.c))[0] || { c: {} }).c.id || '';
-        let action = '';
-        if (!S.monarchy) {
-            const x = findClaimant(ui.claimantId);
-            action = `<div class="t65-card">
-                <div class="t65-head">👑 왕정복고</div>
-                <div class="t65-dim">공화정에서 군주제를 되살립니다. 주장자를 지지하는 정당이 하원 과반이면 의회 결의로, 아니면 왕당파 쿠데타로.</div>
-                ${allClaimants().length ? `<select data-ui="claimantId">${claimOpts(ui.claimantId)}</select>` : '<div class="t65-dim">먼저 아래에서 왕가와 주장자를 만드세요.</div>'}
-                <div class="system-radio-group"><button type="button" class="system-radio-btn ${ui.method === 'parliament' ? 'active' : ''}" data-method="parliament">의회 결의</button><button type="button" class="system-radio-btn ${ui.method === 'coup' ? 'active' : ''}" data-method="coup">쿠데타</button></div>
-                ${ui.method === 'parliament' ? `<div class="t65-dim">지지 정당 의석: <b>${x ? Math.round(backingSeats(x.c) * 100) : 0}%</b> — 50%를 넘으면 주사위 없이 입헌군주제로</div>`
-                    : `<div class="system-radio-group"><button type="button" class="system-radio-btn ${ui.kind === 'constitutional' ? 'active' : ''}" data-kind="constitutional">입헌군주제</button><button type="button" class="system-radio-btn ${ui.kind === 'absolute' ? 'active' : ''}" data-kind="absolute">전제군주정</button></div>${chanceBox(restorationChance(x))}`}
-                <button type="button" class="t65-go" data-act="restore" ${allClaimants().length ? '' : 'disabled'}>👑 왕정복고</button>
-            </div>`;
-        } else {
-            const abs = S.monarchy.kind === 'absolute';
-            const rival = S.dispute && findClaimant(S.dispute.rivalId);
-            const rivals = allClaimants().filter(y => !mx || y.c.id !== mx.c.id);
-            if (!rivals.some(y => y.c.id === ui.rivalId)) ui.rivalId = (rivals[0] || { c: {} }).c.id || '';
-            const repParties = parties.filter(activeParty);
-            action = `<div class="t65-card t65-reign" style="--t65-c:${esc((mx && mx.d.color) || '#7a1f2b')}">
-                <div class="t65-head">👑 ${abs ? '전제군주정' : '입헌군주제'}</div>
-                <div class="t65-row"><span class="t65-dim">칭호</span><select data-ui="title">${[...new Set([S.monarchy.title, ...TITLES])].map(t => `<option ${t === S.monarchy.title ? 'selected' : ''}>${esc(t)}</option>`).join('')}</select>
-                    <b class="t65-grow">${esc(mx ? mx.c.name : '(공석)')}</b><span class="t65-dim">${esc(mx ? mx.d.name : '')}${S.monarchy.since ? ` · ${esc(S.monarchy.since)}부터` : ''}</span></div>
-                <div class="t65-dim">${abs ? '왕이 총리를 임명하고(내각 › 총리) 거부권 · 비상 권한을 모두 쥡니다. 의회는 협찬 기관입니다.' : '국왕은 상징적 국가원수이고 실권은 총리에게 있습니다 (의원내각제처럼).'}</div>
-                <div class="t65-sub">계승</div>
-                <div class="t65-dim">다음 계승자: <b>${(() => { const n = mx ? lineOf(mx.d, mx.c.id)[0] : null; return n ? esc(n.name || '(이름 없음)') : '없음 — 다른 왕가에서'; })()}</b> (${esc(mx ? RULES[mx.d.rule] || '' : '')})</div>
-                <button type="button" class="t65-btn" data-act="demise">⚱ 서거 · 퇴위 → 다음 계승자 즉위</button>
-                <div class="t65-sub">계승 분쟁</div>
-                ${rival ? `<div class="t65-vs"><span>👑 ${esc(mx ? mx.c.name : '')}<small>지지 의석 ${mx ? Math.round(backingSeats(mx.c) * 100) : 0}%</small></span><b>vs</b><span>⚔ ${esc(rival.c.name)}<small>지지 의석 ${Math.round(backingSeats(rival.c) * 100)}%</small></span></div>
-                    <div class="t65-row"><button type="button" class="t65-btn" data-act="vote">의회 표결로 결판</button><button type="button" class="t65-btn" data-act="war">내전으로 결판 (주사위)</button></div>`
-                    : rivals.length ? `<div class="t65-row"><select data-ui="rivalId" class="t65-grow">${rivals.map(({ c, d }) => `<option value="${esc(c.id)}" ${c.id === ui.rivalId ? 'selected' : ''}>${esc(c.name || '(이름 없음)')} · ${esc(d.name)}</option>`).join('')}</select><button type="button" class="t65-btn" data-act="dispute">정통 왕위 주장</button></div>`
-                    : '<div class="t65-dim">왕위를 다툴 다른 주장자가 없습니다.</div>'}
-                <div class="t65-sub">${abs ? '입헌 개혁 · 공화 혁명' : '친위 쿠데타 · 공화 혁명'}</div>
-                ${abs ? '<button type="button" class="t65-btn" data-act="reform">⚖ 입헌 개혁 (입헌군주제로)</button>'
-                    : `${chanceBox(selfCoupChance())}<button type="button" class="t65-btn" data-act="selfcoup">⚔ 친위 쿠데타 (전제군주정으로)</button>`}
-                <div class="t65-row"><select data-ui="repParty" class="t65-grow"><option value="">— 시민 혁명 (정당 없음) —</option>${repParties.map(p => `<option value="${esc(p.id)}" ${String(p.id) === String(ui.repParty) ? 'selected' : ''}>${esc(p.name)} · 지지율 ${support(p.id)}%</option>`).join('')}</select>
-                    <select data-ui="repGov">${['parliamentary', 'presidential', 'semi'].map(g => `<option value="${g}" ${ui.repGov === g ? 'selected' : ''}>${GOV_NAME[g]}</option>`).join('')}</select></div>
-                ${chanceBox(republicChance(ui.repParty))}
-                <button type="button" class="t65-go" data-act="republic">✊ 공화 혁명</button>
-            </div>`;
+    // ---- 위키 틀 ----
+    function wikiSvg(d) {
+        const W = 640, frame = S.wiki.frame || '#2b3a67', ffg = fgFor(frame);
+        const { notes, mark, smallMark } = wikiNotes(d);
+        let y = 0; const parts = [];
+        // 머리: 엠블럼 | 제목 · 원내 구성
+        const headH = 92;
+        parts.push(`<rect x="0" y="0" width="${W}" height="${headH}" fill="${X(frame)}"/>`);
+        const tw = Math.max(textW(d.title, 16, 700), textW('원내 구성', 24, 800));
+        const emW = 90, gap = 16, total = emW + gap * 2 + 1 + tw, x0 = (W - total) / 2;
+        parts.push(d.emblem ? `<image href="${X(d.emblem)}" x="${x0}" y="16" width="${emW}" height="60" preserveAspectRatio="xMidYMid meet"/>` : `<g transform="translate(${x0 + 13},26)">${emblemSvg(ffg)}</g>`);
+        parts.push(`<rect x="${x0 + emW + gap}" y="14" width="1" height="64" fill="${ffg}" opacity=".35"/>`);
+        parts.push(`<text x="${x0 + emW + gap * 2 + 1}" y="40" font-size="16" font-weight="700" fill="${ffg}">${X(d.title)}</text>`);
+        parts.push(`<text x="${x0 + emW + gap * 2 + 1}" y="70" font-size="24" font-weight="800" fill="${ffg}">원내 구성</text>`);
+        y = headH;
+        const band = (h, fill, inner) => { parts.push(`<rect x="0" y="${y}" width="${W}" height="${h}" fill="${fill}"/>` + inner(y)); y += h; };
+        const ctext = (cy, t, size, weight, fill) => `<text x="${W / 2}" y="${cy}" font-size="${size}" font-weight="${weight}" fill="${fill}" text-anchor="middle">${X(t)}</text>`;
+        if (d.govName || d.period) {
+            const h = d.govName && d.period ? 58 : 38;
+            band(h, '#dedede', yy => (d.govName ? ctext(yy + (d.period ? 24 : 25), d.govName, 16, 800, '#222') : '') + (d.period ? ctext(yy + (d.govName ? 46 : 25), d.period, 13, 700, '#222') : ''));
         }
-        const last = S.log.find(x => x.id === ui.lastId);
-        box.innerHTML = `<div class="t65-intro">왕가와 왕위 주장자를 정하고, 왕정복고 · 계승 · 계승 분쟁 · 친위 쿠데타 · 공화 혁명을 다룹니다. 주장자 순서(⋮⋮ 끌기)가 출생 순이고, 계승 규칙에 따라 계승 순위가 정해져요.</div>
-            ${action}
-            ${last ? `<div class="t65-result ${last.success ? 'ok' : 'fail'}"><div class="t65-head">${last.success ? '✔' : '✘'} ${esc(KIND_NAME[last.kind] || last.kind)}${last.chance != null ? ` <span class="t65-dim">(확률 ${last.chance}%)</span>` : ''}</div><ul>${(last.effects || []).map(e => `<li>${esc(e)}</li>`).join('')}</ul></div>` : ''}
-            <div class="t65-sub">왕가와 왕위 주장자</div>
-            ${dynastiesHtml()}
-            <div class="t65-row"><button type="button" class="t65-add" data-act="adddyn">[+] 왕가 추가</button>${S.dynasties.length ? '' : '<button type="button" class="t65-add" data-act="seed">[+] 예시 왕가 만들기</button>'}</div>
-            ${S.log.length ? `<details class="t65-log"><summary>왕실 기록 (${S.log.length})</summary>${S.log.map(x => `<div class="t65-log-row"><span class="${x.success ? 't65-plus' : 't65-minus'}">${x.success ? '✔' : '✘'}</span><span>${esc(KIND_NAME[x.kind] || x.kind)} · ${esc(x.who || '')}${x.date ? ` · ${esc(x.date)}` : ''}${x.chance != null ? ` · ${x.chance}%` : ''}</span></div>`).join('')}</details>` : ''}`;
-        bind(box);
-    }
-    function bind(box) {
-        const q = s => box.querySelector(s);
-        box.querySelectorAll('[data-ui]').forEach(s => { s.onchange = () => { if (s.dataset.ui === 'title') { S.monarchy.title = s.value; rerenderGov(); } else ui[s.dataset.ui] = s.value; render(); }; });
-        box.querySelectorAll('[data-method]').forEach(b => { b.onclick = () => { ui.method = b.dataset.method; render(); }; });
-        box.querySelectorAll('[data-kind]').forEach(b => { b.onclick = () => { ui.kind = b.dataset.kind; render(); }; });
-        const on = (sel, fn) => { const b = q(sel); if (b) b.onclick = fn; };
-        on('[data-act="restore"]', restore); on('[data-act="selfcoup"]', selfCoup); on('[data-act="reform"]', reform); on('[data-act="republic"]', revolt);
-        on('[data-act="demise"]', demise); on('[data-act="dispute"]', claimDispute); on('[data-act="vote"]', () => resolveDispute('parliament')); on('[data-act="war"]', () => resolveDispute('war'));
-        on('[data-act="adddyn"]', () => { S.dynasties.push({ id: uid(), name: '새 왕가', color: PALETTE[S.dynasties.length % PALETTE.length], rule: 'male', claimants: [] }); render(); });
-        on('[data-act="seed"]', seed);
-        box.querySelectorAll('.t65-dyn').forEach(card => {
-            const d = S.dynasties.find(x => x.id === card.dataset.dyn); if (!d) return;
-            card.querySelectorAll('[data-df]').forEach(i => { i.onchange = () => { d[i.dataset.df] = i.value; render(); rerenderGov(); }; });
-            card.querySelector('[data-dact="del"]').onclick = () => {
-                if (S.monarchy && S.monarchy.dynastyId === d.id) { showCustomAlert('지금 왕위에 있는 왕가는 지울 수 없습니다.'); return; }
-                showCustomConfirm(`"${d.name}" 왕가를 지울까요? 주장자 ${d.claimants.length}명도 함께 지워집니다.`, () => { S.dynasties = S.dynasties.filter(x => x !== d); render(); });
-            };
-            card.querySelector('[data-dact="addcl"]').onclick = () => { d.claimants.push({ id: uid(), name: '', title: '', gender: 'm', photo: '', partyIds: [] }); render(); };
-            card.querySelectorAll('.t65-cl').forEach(row => {
-                const c = d.claimants.find(x => x.id === row.dataset.cl); if (!c) return;
-                row.querySelectorAll('[data-cf]').forEach(i => {
-                    const f = i.dataset.cf;
-                    if (f === 'photo') i.onchange = () => { const file = i.files && i.files[0]; if (!file) return; const rd = new FileReader(); rd.onload = e => { c.photo = e.target.result; if (monarchX() && monarchX().c === c) president.photo = c.photo; render(); rerenderGov(); }; rd.readAsDataURL(file); };
-                    else if (f === 'back') i.onchange = () => { if (i.value) { c.partyIds = [...new Set([...(c.partyIds || []), i.value])]; render(); } };
-                    else i.onchange = () => { c[f] = i.value; if (f === 'name' && monarchX() && monarchX().c === c) { president.name = c.name; rerenderGov(); } render(); };
-                });
-                row.querySelectorAll('[data-unback]').forEach(b => { b.onclick = () => { c.partyIds = c.partyIds.filter(x => String(x) !== String(b.dataset.unback)); render(); }; });
-                row.querySelector('[data-cact="del"]').onclick = () => {
-                    if (monarchX() && monarchX().c === c) { showCustomAlert('지금 왕위에 있는 사람은 뺄 수 없습니다 — "서거 · 퇴위"를 쓰세요.'); return; }
-                    d.claimants = d.claimants.filter(x => x !== c); render();
-                };
-                const h = row.querySelector('.t65-handle');
-                if (h && typeof startDragReorder === 'function') startDragReorder(h, `t65Cl_${d.id}`, '.t65-cl', d.claimants, render);
+        // 의석 표시 (한 원 · 양원)
+        const badge = (cx, cy, arr, color, size = 15) => {
+            const c = color || '#5c5c5c', light = fgFor(c) !== '#fff', ink = light ? '#3d3d3d' : c;
+            if (arr.length < 2) {
+                const t = `${arr[0]}석`, w = textW(t, size, 800) + 14, h = size + 8;
+                return `<rect x="${cx - w / 2}" y="${cy - h / 2}" width="${w}" height="${h}" rx="5" fill="#fff"/><text x="${cx}" y="${cy + size * 0.36}" font-size="${size}" font-weight="800" fill="${ink}" text-anchor="middle">${t}</text>`;
+            }
+            const ta = `${arr[0]}석`, tb = `${arr[1]}석`, wa = textW(ta, size, 800) + 16, wb = textW(tb, size, 800) + 12, h = size + 8, x = cx - (wa + wb) / 2;
+            return `<rect x="${x - 1.5}" y="${cy - h / 2 - 1.5}" width="${wa + wb + 3}" height="${h + 3}" rx="6" fill="#fff"/>`
+                + `<path d="M${x} ${cy - h / 2} h${wa} l-5 ${h} h-${wa - 5} z" fill="${light ? '#5c5c5c' : X(c)}"/>`
+                + `<text x="${x + (wa - 3) / 2}" y="${cy + size * 0.36}" font-size="${size}" font-weight="800" fill="#fff" text-anchor="middle">${ta}</text>`
+                + `<text x="${x + wa + wb / 2 - 2}" y="${cy + size * 0.36}" font-size="${size}" font-weight="800" fill="${ink}" text-anchor="middle">${tb}</text>`;
+        };
+        const badgeW = (arr, size = 15) => (arr.length < 2 ? textW(`${arr[0]}석`, size, 800) + 14 : textW(`${arr[0]}석`, size, 800) + 16 + textW(`${arr[1]}석`, size, 800) + 12 + 3);
+        // 글자 + 의석 표시를 한 덩어리로 가운데 정렬 (재적 · 비교섭단체 띠)
+        const labelBadge = (cy, label, fill, arr, color) => {
+            const lw = textW(label, 17, 800), bw = badgeW(arr), x0 = (W - (lw + 10 + bw)) / 2;
+            return `<text x="${x0}" y="${cy + 6}" font-size="17" font-weight="800" fill="${fill}">${X(label)}</text>` + badge(x0 + lw + 10 + bw / 2, cy, arr, color);
+        };
+        const sec = label => band(40, '#dee5e5', yy => ctext(yy + 26, label, 17, 800, '#222'));
+        const rowsOf = arr => splitRows(arr).forEach(row => {
+            const k = row.length, cw = W / k, big = k <= 2;
+            const anyLogo = row.some(p => p.logoPhoto);
+            const h = (big ? 132 : 108) + (anyLogo ? 8 : 0);
+            row.forEach((p, i) => {
+                const c = p.color || '#888', fg = fgFor(c), x = i * cw;
+                const nameSize = big ? 20 : 17;
+                const logoH = p.logoPhoto ? (big ? 54 : 44) : 0;
+                const sup = mark.get(p.id) ? String(mark.get(p.id)) : '';
+                const contentH = logoH + (logoH ? 8 : 0) + nameSize + 8 + 23;
+                let cy = y + (h - contentH) / 2;
+                let g = `<rect x="${x}" y="${y}" width="${cw - (i < k - 1 ? 1 : 0)}" height="${h}" fill="${X(c)}"/>`;
+                if (logoH) {
+                    if (p.logoBg === 'white') g += `<rect x="${x + cw * 0.18}" y="${cy - 5}" width="${cw * 0.64}" height="${logoH + 10}" rx="6" fill="#fff"/><image href="${X(p.logoPhoto)}" x="${x + cw * 0.22}" y="${cy}" width="${cw * 0.56}" height="${logoH}" preserveAspectRatio="xMidYMid meet"/>`;
+                    else g += `<image href="${X(p.logoPhoto)}" x="${x + cw * 0.1}" y="${cy}" width="${cw * 0.8}" height="${logoH}" preserveAspectRatio="xMidYMid meet"/>`;
+                    cy += logoH + 8;
+                }
+                const nm = clip(p.name, nameSize, cw - 24, 800);
+                const nw = textW(nm, nameSize, 800);
+                g += `<text x="${x + cw / 2 - (sup ? 4 : 0)}" y="${cy + nameSize * 0.85}" font-size="${nameSize}" font-weight="800" fill="${fg}" text-anchor="middle">${X(nm)}</text>`;
+                if (sup) g += `<text x="${x + cw / 2 + nw / 2 - 2}" y="${cy + nameSize * 0.35}" font-size="${Math.round(nameSize * 0.6)}" font-weight="800" fill="${fg}">${sup}</text>`;
+                cy += nameSize + 8;
+                g += badge(x + cw / 2, cy + 11, d.seats(p), c);
+                parts.push(g);
             });
+            parts.push(`<rect x="0" y="${y + h}" width="${W}" height="1" fill="#fff" opacity=".75"/>`);
+            y += h + 1;
         });
-    }
-    // 예시 왕가 — 독일이면 호엔촐레른 · 비텔스바흐 (1983년 무렵의 가주들), 아니면 일반 예시
-    function seed() {
-        const de = /독일|Germany/.test(nationName());
-        const mk = (name, color, rule, list) => ({ id: uid(), name, color, rule, claimants: list.map(([n, t, g]) => ({ id: uid(), name: n, title: t, gender: g || 'm', photo: '', partyIds: [] })) });
-        S.dynasties = de ? [
-            mk('호엔촐레른가', '#3a3a3a', 'salic', [['루이 페르디난트', '프로이센 왕자 · 가주'], ['크리스티안지기스문트', '프로이센 왕자'], ['게오르크 프리드리히', '프로이센 왕자']]),
-            mk('비텔스바흐가', '#1f6fb3', 'salic', [['알브레히트', '바이에른 공작 · 가주'], ['프란츠', '바이에른 공작'], ['막스', '바이에른 공작']]),
-        ] : [
-            mk('왕가 1', PALETTE[0], 'male', [['왕위 주장자', '왕세자'], ['둘째', '왕자'], ['셋째', '공주', 'f']]),
-            mk('왕가 2', PALETTE[1], 'equal', [['다른 주장자', '대공']]),
-        ];
-        render();
+        if (d.gov.length) { sec(d.gov.length > 1 ? '연립여당' : '여당'); rowsOf(d.gov); if (d.opp.length) { sec('야당'); rowsOf(d.opp); } } else if (d.opp.length) { sec('원내 정당'); rowsOf(d.opp); }
+        const small = [...d.minor, ...d.ind];
+        if (small.length) {
+            const smallSeats = d.chs.map((ch, i) => small.reduce((a, p) => a + d.seats(p)[i], 0));
+            const label = (d.minor.length ? '비교섭단체' : '무소속') + (smallMark ? ` ${smallMark})` : '');
+            band(44, '#808080', yy => labelBadge(yy + 22, label, '#fff', smallSeats, '#7f7f7f'));
+        }
+        band(46, frame, yy => labelBadge(yy + 23, '재적', ffg, d.totals, frame));
+        const custom = (S.wiki.note || '').trim();
+        const noteLines = [];
+        notes.forEach((t, i) => wrapText(`${i + 1}. ${t}`, 13, W - 40).forEach(l => noteLines.push(l)));
+        if (custom) wrapText(`※ ${custom}`, 13, W - 40).forEach(l => noteLines.push(l));
+        const legend = d.chs.length > 1;
+        if (noteLines.length || legend) {
+            const h = 14 + noteLines.length * 22 + (legend ? 32 : 0) + 6;
+            band(h, '#f2f2f2', yy => noteLines.map((l, i) => ctext(yy + 28 + i * 22, l, 13, 400, '#333')).join('')
+                + (legend ? badge(W / 2, yy + 18 + noteLines.length * 22 + 14, [`${chName(d.chs[0])} 의석`.replace(/석$/, ''), `${chName(d.chs[1])} 의석`.replace(/석$/, '')], '#6b6b6b', 12) : ''));
+        }
+        if (S.wiki.footer !== false) band(44, '#ffffff', yy => `<rect x="0" y="${yy}" width="${W}" height="1" fill="#ddd"/>` + ctext(yy + 28, '정당 구분 (원내 · 원외)', 15, 700, '#222'));
+        const H = y;
+        return `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${W + 6}" height="${H + 6}" viewBox="-3 -3 ${W + 6} ${H + 6}" font-family="${X(FONT)}">`
+            + `<rect x="-3" y="-3" width="${W + 6}" height="${H + 6}" fill="${X(frame)}"/><rect x="0" y="0" width="${W}" height="${H}" fill="#fff"/>${parts.join('')}</svg>`;
     }
 
-    window.T65 = { get monarchy() { return S.monarchy; }, get dispute() { return S.dispute; }, get log() { return S.log; }, get dynasties() { return S.dynasties; } };
-    function refresh() {
-        render();
-        try { window.renderCabinetDisplay && window.renderCabinetDisplay(); } catch (e) { /* 화면 준비 전 */ }
+    // ---- 원외정당 틀 ----
+    function wikiOutSvg(d) {
+        const W = 640, frame = S.wiki.frame || '#2b3a67', ink = inkFor(frame);
+        const outs = outParties(d);
+        const parts = []; let y = 0;
+        const ctext = (cy, t, size, weight, fill) => `<text x="${W / 2}" y="${cy}" font-size="${size}" font-weight="${weight}" fill="${X(fill)}" text-anchor="middle">${X(t)}</text>`;
+        const headH = d.emblem ? 136 : 64;
+        if (d.emblem) parts.push(`<image href="${X(d.emblem)}" x="${W / 2 - 55}" y="14" width="110" height="70" preserveAspectRatio="xMidYMid meet"/>`);
+        parts.push(ctext(headH - 20, `${nationName() || d.title}의 원외정당`, 24, 800, ink));
+        parts.push(`<rect x="0" y="${headH}" width="${W}" height="1" fill="#e3e3e3"/>`);
+        y = headH + 1;
+        if (d.govName || d.period) {
+            const h = d.govName && d.period ? 58 : 38;
+            parts.push(`<rect x="0" y="${y}" width="${W}" height="${h}" fill="#dedede"/>` + (d.govName ? ctext(y + (d.period ? 24 : 25), d.govName, 16, 800, '#222') : '') + (d.period ? ctext(y + (d.govName ? 46 : 25), d.period, 13, 700, '#222') : ''));
+            y += h;
+        }
+        const cw = W / 3;
+        if (!outs.length) { parts.push(ctext(y + 40, '의석이 없는 정당이 없어요.', 14, 400, '#555')); y += 64; }
+        for (let i = 0; i < outs.length; i += 3) {
+            const chunk = outs.slice(i, i + 3);
+            const h = chunk.some(p => p.logoPhoto) ? 136 : 96;
+            for (let k = 0; k < 3; k++) {
+                const p = chunk[k], x = k * cw;
+                if (!p) { parts.push(`<rect x="${x}" y="${y}" width="${cw}" height="${h}" fill="#f4f4f4"/>`); continue; }
+                const c = p.color || '#888', col = inkFor(c);
+                const logoH = p.logoPhoto ? 46 : 0;
+                const contentH = logoH + (logoH ? 8 : 0) + 20 + (p.abbr ? 22 : 0);
+                let cy = y + (h - contentH) / 2;
+                let g = '';
+                if (logoH) {
+                    if (p.logoBg === 'white' || p.logoBg === 'none') g += `<image href="${X(p.logoPhoto)}" x="${x + cw * 0.08}" y="${cy}" width="${cw * 0.84}" height="${logoH}" preserveAspectRatio="xMidYMid meet"/>`;
+                    else g += `<rect x="${x + cw * 0.14}" y="${cy - 3}" width="${cw * 0.72}" height="${logoH + 6}" rx="6" fill="${X(c)}"/><image href="${X(p.logoPhoto)}" x="${x + cw * 0.18}" y="${cy}" width="${cw * 0.64}" height="${logoH}" preserveAspectRatio="xMidYMid meet"/>`;
+                    cy += logoH + 8;
+                }
+                g += `<text x="${x + cw / 2}" y="${cy + 16}" font-size="17" font-weight="800" fill="${X(col)}" text-anchor="middle">${X(clip(p.name, 17, cw - 16, 800))}</text>`;
+                if (p.abbr) g += `<text x="${x + cw / 2}" y="${cy + 38}" font-size="16" font-weight="800" fill="${X(col)}" text-anchor="middle">(${X(p.abbr)})</text>`;
+                parts.push(g);
+            }
+            parts.push(`<rect x="0" y="${y}" width="${W}" height="1" fill="#e3e3e3"/><rect x="${cw}" y="${y}" width="1" height="${h}" fill="#e3e3e3"/><rect x="${cw * 2}" y="${y}" width="1" height="${h}" fill="#e3e3e3"/>`);
+            y += h;
+        }
+        if (S.wiki.footer !== false) { parts.push(`<rect x="0" y="${y}" width="${W}" height="1" fill="#ddd"/>` + ctext(y + 28, '정당 구분 (원내 · 원외)', 15, 700, '#222')); y += 44; }
+        const H = y;
+        return `<svg xmlns="http://www.w3.org/2000/svg" width="${W + 6}" height="${H + 6}" viewBox="-3 -3 ${W + 6} ${H + 6}" font-family="${X(FONT)}">`
+            + `<rect x="-3" y="-3" width="${W + 6}" height="${H + 6}" fill="${X(frame)}"/><rect x="0" y="0" width="${W}" height="${H}" fill="#fff"/>${parts.join('')}</svg>`;
     }
+
+    // ---- 국가 순위 ----
+    function rankSvg() {
+        const panel = document.getElementById('dispPanelRanking') || document.body;
+        const bg = cssVar(panel, '--m-surface', '') || (isModernTheme() ? '#fff' : '#0a0c10');
+        const text = cssVar(panel, '--t65-text', '#ddd'), dim = cssVar(panel, '--t65-dim', '#888'), line = cssVar(panel, '--t65-line', '#333'), acc = cssVar(panel, '--t65-acc', '#00ffff');
+        const list = ranked();
+        const W = 720, padX = 24, rowH = 46;
+        const counts = S.blocs.map(b => [b, S.ranking.rows.filter(r => r.bloc === b.id).length]).filter(([, n]) => n);
+        const parts = [];
+        parts.push(`<text x="${W / 2}" y="44" font-size="26" font-weight="800" fill="${X(text)}" text-anchor="middle" letter-spacing="2">${X(S.ranking.title || '냉전 국가 순위')}</text>`);
+        // 진영 범례 (가운데 정렬)
+        const items = counts.map(([b, n]) => ({ b, t: `${b.name} ${n}`, w: 14 + textW(`${b.name} ${n}`, 13) + 16 }));
+        let lx = (W - items.reduce((a, it) => a + it.w, 0)) / 2;
+        items.forEach(it => { parts.push(`<rect x="${lx}" y="62" width="10" height="10" fill="${X(it.b.color)}"/><text x="${lx + 14}" y="71.5" font-size="13" fill="${X(dim)}">${X(it.t)}</text>`); lx += it.w; });
+        let y = 92;
+        const barX = W - padX - 250, barW = 160;
+        list.forEach((r, i) => {
+            const rank = i + 1, b = blocOf(r.bloc), ideo = ideoOf(b, r.ideo);
+            const mv = r.prevRank ? r.prevRank - rank : 0;
+            let g = '';
+            if (r.self) g += `<rect x="${padX}" y="${y}" width="${W - padX * 2}" height="${rowH}" fill="${X(acc)}" opacity=".12"/>`;
+            g += `<rect x="${padX}" y="${y}" width="5" height="${rowH}" fill="${X(b.color)}"/>`;
+            g += `<text x="${padX + 30}" y="${y + rowH / 2 + 6}" font-size="18" fill="${rank <= 5 ? '#e0b030' : X(dim)}" text-anchor="middle">${rank}</text>`;
+            const src = flagSrc(r);
+            if (src) g += `<image href="${X(src)}" x="${padX + 52}" y="${y + rowH / 2 - 12}" width="36" height="24" preserveAspectRatio="xMidYMid slice"/><rect x="${padX + 52}" y="${y + rowH / 2 - 12}" width="36" height="24" fill="none" stroke="#7f7f7f" stroke-opacity=".35"/>`;
+            else g += `<text x="${padX + 70}" y="${y + rowH / 2 + 7}" font-size="20" text-anchor="middle">${X(r.flag || '🏳')}</text>`;
+            const nameX = padX + 102, nameMax = barX - nameX - 16;
+            const nm = clip(rowName(r), 17, nameMax);
+            g += `<text x="${nameX}" y="${y + (ideo ? 21 : rowH / 2 + 6)}" font-size="17" fill="${X(text)}">${X(nm)}</text>`;
+            if (ideo) g += `<text x="${nameX}" y="${y + 38}" font-size="11.5" fill="${X(dim)}">${X(clip(ideo.name, 11.5, nameMax))}</text>`;
+            const pct = Math.max(2, Math.min(100, Number(r.score) || 0));
+            g += `<rect x="${barX}" y="${y + rowH / 2 - 4.5}" width="${barW}" height="9" fill="#7f7f7f" opacity=".2"/><rect x="${barX}" y="${y + rowH / 2 - 4.5}" width="${barW * pct / 100}" height="9" fill="${X(b.color)}"/>`;
+            g += `<text x="${barX + barW + 46}" y="${y + rowH / 2 + 6}" font-size="17" fill="${X(text)}" text-anchor="end">${Number(r.score) || 0}</text>`;
+            if (mv || r.prevRank) g += `<text x="${W - padX - 6}" y="${y + rowH / 2 + 5}" font-size="13" fill="${mv > 0 ? '#3fbf7f' : mv < 0 ? '#e05555' : X(dim)}" text-anchor="end">${mv > 0 ? '▲' + mv : mv < 0 ? '▼' + (-mv) : '–'}</text>`;
+            g += `<rect x="${padX}" y="${y + rowH}" width="${W - padX * 2}" height="1" fill="${X(line)}"/>`;
+            parts.push(g);
+            y += rowH + 1;
+        });
+        const H = y + 24;
+        return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" font-family="${X(FONT)}"><rect width="${W}" height="${H}" fill="${X(bg)}"/>${parts.join('')}</svg>`;
+    }
+
+    // ---- 세력 변화 도표: 화면의 SVG에 계산된 스타일을 박아 넣어 홀로 서게 ----
+    function histSvg(svgEl) {
+        const panel = document.getElementById('dispPanelTimeline') || document.body;
+        const bg = cssVar(panel, '--m-surface', '') || (isModernTheme() ? '#fff' : '#0a0c10');
+        const text = cssVar(panel, '--t65-text', '#ddd');
+        const clone = svgEl.cloneNode(true);
+        const PROPS = ['fill', 'fill-opacity', 'stroke', 'stroke-width', 'stroke-dasharray', 'stroke-opacity', 'opacity', 'font-size', 'font-weight', 'paint-order', 'text-anchor', 'dominant-baseline', 'letter-spacing'];
+        const src = [svgEl, ...svgEl.querySelectorAll('*')], dst = [clone, ...clone.querySelectorAll('*')];
+        src.forEach((el, i) => {
+            const t = dst[i]; if (!t || el.tagName === 'defs' || el.closest('defs')) return;
+            const cs = getComputedStyle(el);
+            const st = PROPS.map(p => { const v = cs.getPropertyValue(p); return v ? `${p}:${v}` : ''; }).filter(Boolean).join(';');
+            t.setAttribute('style', st + ';font-family:' + FONT.replace(/"/g, "'"));
+            t.removeAttribute('class');
+        });
+        const w = Number(svgEl.getAttribute('width')) || svgEl.getBoundingClientRect().width, h = Number(svgEl.getAttribute('height')) || svgEl.getBoundingClientRect().height;
+        const title = document.getElementById('t65HistTitle')?.textContent || '세력 변화';
+        const head = 44;
+        clone.setAttribute('x', 0); clone.setAttribute('y', head); clone.setAttribute('width', w); clone.setAttribute('height', h);
+        return `<svg xmlns="http://www.w3.org/2000/svg" width="${w + 24}" height="${h + head + 16}" viewBox="-12 0 ${w + 24} ${h + head + 16}" font-family="${X(FONT)}"><rect x="-12" width="${w + 24}" height="${h + head + 16}" fill="${X(bg)}"/>`
+            + `<text x="0" y="28" font-size="18" font-weight="800" fill="${X(text)}">${X([nationName(), title].filter(Boolean).join(' · '))}</text>${new XMLSerializer().serializeToString(clone)}</svg>`;
+    }
+
+    function t65ExportMarkup(el, format) {
+        const kind = el && el.dataset.exportKind;
+        pickFont(format);
+        if (kind === 't65wiki') return ui.wikiView === 'out' ? { svg: wikiOutSvg(wikiData(ui.wikiChamber)), name: 'wikibox_out' } : { svg: wikiSvg(wikiData(ui.wikiChamber)), name: 'wikibox' };
+        if (kind === 't65rank') return { svg: rankSvg(), name: 'ranking' };
+        if (kind === 't65hist') return { svg: histSvg(el), name: ui.histView === 'lineage' ? 'party_lineage' : 'seat_history' };
+        return null;
+    }
+    function dl(href, filename) { const a = document.createElement('a'); a.href = href; a.download = filename; document.body.appendChild(a); a.click(); a.remove(); }
+    async function t65Export(el, format) {
+        const m = t65ExportMarkup(el, format); if (!m) return;
+        const stamp = (typeof formatKstTimestampCompact === 'function') ? formatKstTimestampCompact() : Date.now();
+        const base = `${m.name}_${stamp}`;
+        if (format === 'svg') {
+            const url = URL.createObjectURL(new Blob([m.svg], { type: 'image/svg+xml;charset=utf-8' }));
+            dl(url, `${base}.svg`); setTimeout(() => URL.revokeObjectURL(url), 2000);
+            return;
+        }
+        const scale = (typeof exportScale !== 'undefined' && [1, 2, 3].includes(exportScale)) ? exportScale : 2;
+        const img = new Image();
+        await new Promise((ok, bad) => { img.onload = ok; img.onerror = () => bad(new Error('그림을 만들지 못했습니다')); img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(m.svg); });
+        const c = document.createElement('canvas');
+        c.width = Math.round(img.width * scale); c.height = Math.round(img.height * scale);
+        const ctx = c.getContext('2d');
+        if (format === 'jpg') { ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height); }
+        ctx.drawImage(img, 0, 0, c.width, c.height);
+        dl(c.toDataURL(format === 'jpg' ? 'image/jpeg' : 'image/png', 0.95), `${base}.${format}`);
+    }
+    // 우클릭: 이 세 화면이면 본 화면의 "내보내기..." 메뉴를 띄우되 대상을 우리 것으로 (본 화면의 svg 우클릭 처리보다 먼저)
+    document.addEventListener('contextmenu', e => {
+        const t = e.target;
+        let el = null, kind = '';
+        if (t.closest && t.closest('#t65WikiWrap .nbx2')) { el = t.closest('#t65WikiWrap .nbx2'); kind = 't65wiki'; }
+        else if (t.closest && t.closest('#t65RankWrap .t65-rk')) { el = t.closest('#t65RankWrap .t65-rk'); kind = 't65rank'; }
+        else if (t.closest && t.closest('#t65HistWrap')) { el = document.querySelector('#t65HistWrap svg.t65-hist'); kind = 't65hist'; }
+        if (!el) return;
+        e.preventDefault(); e.stopPropagation();
+        el.dataset.exportKind = kind;
+        try { canvasExportTarget = el; } catch (err) { return; }
+        const menu = document.getElementById('canvasExportMenu');
+        if (!menu) return;
+        menu.style.display = 'block';
+        try { positionFloatingBox(menu, e.clientX, e.clientY); } catch (err) { menu.style.left = e.clientX + 'px'; menu.style.top = e.clientY + 'px'; }
+    }, true);
+    // 옵션 창: 머리(국기 · 국가명 · 날짜) · 통계 칸은 이 그림들에 맞지 않아 숨김 (내각 카드와 같은 방식)
+    const origOpenExport = window.openExportDialog;
+    if (typeof origOpenExport === 'function') {
+        window.openExportDialog = function () {
+            const r = origOpenExport.apply(this, arguments);
+            try { if (String(canvasExportTarget?.dataset?.exportKind || '').startsWith('t64')) { const sec = document.getElementById('exportHeaderStatsSection'); if (sec) sec.style.display = 'none'; } } catch (e) { /* 없음 */ }
+            return r;
+        };
+    }
+    const origExportAt = window.exportVisualElementAt;
+    if (typeof origExportAt === 'function') {
+        window.exportVisualElementAt = function (target, includeStats, format) {
+            if (String(target?.dataset?.exportKind || '').startsWith('t64')) return t65Export(target, format);
+            return origExportAt.apply(this, arguments);
+        };
+    }
+
+    window.T65 = { get timeline() { return S.timeline; }, get ranking() { return S.ranking; }, record: (label) => { const n = record(label || '', 'manual', false); renderTimeline(); return n; } };
 
     const style = document.createElement('style');
     style.textContent = `
-        .t65-intro { color: #777; font-size: .78rem; line-height: 1.6; margin: 8px 0 10px; }
-        .t65-row { display: flex; align-items: center; gap: 6px; margin: 4px 0; flex-wrap: wrap; }
-        .t65-grow { flex: 1; min-width: 0; }
-        .t65-dim { color: #777; font-size: .8rem; }
-        .t65-sub { color: #888; font-size: .78rem; margin: 12px 0 6px; letter-spacing: 1px; }
-        .t65-card { border: 1px solid #333; padding: 10px; margin: 6px 0 12px; background: rgba(255,255,255,.02); display: flex; flex-direction: column; gap: 6px; }
-        .t65-card select { width: 100%; box-sizing: border-box; }
-        .t65-reign { border-color: var(--t65-c); box-shadow: inset 4px 0 0 var(--t65-c); }
-        .t65-head { font-size: 1rem; color: #e0b030; letter-spacing: 1px; }
-        .t65-chance { border: 1px solid #333; padding: 8px; background: rgba(255,255,255,.02); }
-        .t65-chance-head { display: flex; justify-content: space-between; align-items: baseline; color: #aaa; }
-        .t65-chance-head b { font-size: 1.4rem; color: #e0b030; }
-        .t65-bar { height: 7px; background: #222; margin: 5px 0 6px; } .t65-bar span { display: block; height: 100%; background: #e0b030; }
-        .t65-factor { display: flex; justify-content: space-between; gap: 8px; font-size: .76rem; color: #999; padding: 1px 0; }
-        .t65-plus { color: #5fbf7f; } .t65-minus { color: #e06060; }
-        .t65-go { width: 100%; cursor: pointer; font-family: inherit; font-size: 1rem; padding: 9px; background: transparent; border: 2px solid #e0b030; color: #e0b030; letter-spacing: 1px; }
-        .t65-go:disabled { opacity: .4; cursor: default; }
-        .t65-btn, .t65-add { cursor: pointer; font-family: inherit; font-size: .82rem; padding: 5px 10px; background: transparent; border: 1px solid #555; color: #ccc; }
-        .t65-add { border-style: dashed; color: #888; }
-        .t65-x { cursor: pointer; background: transparent; border: 1px solid #333; color: #777; font-family: inherit; padding: 2px 8px; }
-        .t65-vs { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 8px; border: 1px dashed #555; }
-        .t65-vs span { display: flex; flex-direction: column; } .t65-vs small { color: #888; font-size: .72rem; } .t65-vs b { color: #e06060; }
-        .t65-dyn { border: 1px solid #333; border-left: 5px solid var(--t65-c); padding: 8px; margin-bottom: 10px; background: rgba(255,255,255,.02); }
-        .t65-dyn input[type=color] { width: 34px; height: 28px; padding: 0; border: 1px solid #333; background: none; }
-        .t65-claimants { display: flex; flex-direction: column; gap: 6px; margin: 6px 0; }
-        .t65-cl { display: flex; gap: 8px; align-items: flex-start; padding: 6px; border: 1px solid #2a2a2a; background: rgba(0,0,0,.2); }
-        .t65-cl.king { border-color: #e0b030; box-shadow: 0 0 8px rgba(224,176,48,.25); }
-        .t65-handle { align-self: center; }
-        .t65-photo { width: 44px; height: 56px; flex-shrink: 0; } .t65-photo img { width: 100%; height: 100%; object-fit: cover; }
-        .t65-cl-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
-        .t65-cl-main input[type=text] { min-width: 0; box-sizing: border-box; }
-        .t65-cl-main > input[type=text] { width: 100%; }
-        .t65-cl-main .t65-row { flex-wrap: nowrap; margin: 0; }
-        .t65-cl-main .t65-row select { width: auto; flex: 0 0 auto; min-width: 0; padding-left: 4px; padding-right: 4px; }
-        .t65-cl-main .t65-row .t65-x { flex: 0 0 auto; }
-        .t65-chips select.t65-back { width: auto; }
-        .t65-rank { min-width: 2.2em; font-size: .78rem; color: #e0b030; text-align: center; }
-        .t65-chips { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
-        .t65-chip { display: inline-flex; align-items: center; gap: 3px; font-size: .72rem; padding: 1px 4px 1px 6px; border: 1px solid var(--pc); color: #ddd; border-left-width: 4px; }
-        .t65-chip button { cursor: pointer; background: none; border: none; color: #888; padding: 0 2px; font-family: inherit; }
-        .t65-back { font-size: .74rem; max-width: 9.5em; }
-        .t65-result { margin: 4px 0 10px; padding: 8px 10px; border: 1px solid #333; border-left: 4px solid #888; }
-        .t65-result.ok { border-left-color: #5fbf7f; } .t65-result.fail { border-left-color: #e06060; }
-        .t65-result ul { margin: 6px 0 0 18px; padding: 0; font-size: .8rem; color: #bbb; }
-        .t65-log { margin-top: 12px; font-size: .82rem; } .t65-log summary { cursor: pointer; color: #999; }
-        .t65-log-row { display: flex; gap: 6px; padding: 3px 0; color: #aaa; border-bottom: 1px solid #1c1c1c; }
-        .t65-banner { margin: 0 0 10px; padding: 8px 12px; border: 1px solid var(--t65-c, #7a1f2b); border-left-width: 5px; color: #e0b030; font-size: .9rem; background: color-mix(in srgb, var(--t65-c, #7a1f2b) 18%, transparent); letter-spacing: 1px; }
-        html[data-theme-family="modern"] .t65-intro, html[data-theme-family="modern"] .t65-dim { color: var(--m-text-3); }
-        html[data-theme-family="modern"] .t65-card, html[data-theme-family="modern"] .t65-dyn, html[data-theme-family="modern"] .t65-chance { border-color: var(--m-border); border-radius: 12px; background: var(--m-surface-2); }
-        html[data-theme-family="modern"] .t65-reign { border-color: var(--t65-c); }
-        html[data-theme-family="modern"] .t65-dyn { border-left: 5px solid var(--t65-c); }
-        html[data-theme-family="modern"] .t65-cl { border-color: var(--m-border); background: var(--m-surface); border-radius: 8px; }
-        html[data-theme-family="modern"] .t65-head, html[data-theme-family="modern"] .t65-chance-head b, html[data-theme-family="modern"] .t65-rank { color: #b07d10; }
-        html[data-theme-family="modern"] .t65-bar { background: var(--m-border); border-radius: 4px; overflow: hidden; } html[data-theme-family="modern"] .t65-bar span { background: #c9971a; }
-        html[data-theme-family="modern"] .t65-factor, html[data-theme-family="modern"] .t65-chance-head { color: var(--m-text-2); }
-        html[data-theme-family="modern"] .t65-go { border-color: #c9971a; color: #b07d10; border-radius: 12px; font-weight: 600; letter-spacing: 0; }
-        html[data-theme-family="modern"] .t65-btn, html[data-theme-family="modern"] .t65-add, html[data-theme-family="modern"] .t65-x { border-color: var(--m-border-strong); color: var(--m-text); border-radius: 8px; }
-        html[data-theme-family="modern"] .t65-chip { color: var(--m-text); border-radius: 6px; }
-        html[data-theme-family="modern"] .t65-result { border-color: var(--m-border); border-radius: 10px; background: var(--m-surface); } html[data-theme-family="modern"] .t65-result ul { color: var(--m-text-2); }
-        html[data-theme-family="modern"] .t65-log-row { color: var(--m-text-2); border-bottom-color: var(--m-border); }
-        html[data-theme-family="modern"] .t65-banner { border-radius: 12px; color: #8a6200; background: color-mix(in srgb, var(--t65-c, #7a1f2b) 10%, var(--m-surface)); }
+        #contentTimeline, #contentWikibox, #contentRanking, #contentBlocs { --t65-line: #333; --t65-soft: rgba(255,255,255,.03); --t65-dim: #888; --t65-text: #ddd; --t65-acc: var(--tno-neon); }
+        html[data-theme-family="modern"] #contentTimeline, html[data-theme-family="modern"] #contentWikibox, html[data-theme-family="modern"] #contentRanking, html[data-theme-family="modern"] #contentBlocs { --t65-line: var(--m-border); --t65-soft: var(--m-surface-2); --t65-dim: var(--m-text-3); --t65-text: var(--m-text); --t65-acc: var(--m-accent); }
+        .t65-intro { color: var(--t65-dim); font-size: .78rem; line-height: 1.6; margin: 8px 0 10px; }
+        .t65-dim { color: var(--t65-dim); font-size: .8rem; } .t65-small { font-size: .72rem; margin-top: 6px; }
+        .t65-tabs { margin-bottom: 10px; }
+        .t65-actions { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0; }
+        .t65-btn { cursor: pointer; font-family: inherit; font-size: .85rem; padding: 8px 12px; background: transparent; border: 1px solid var(--t65-line); color: var(--t65-text); }
+        .t65-btn.primary { border-color: var(--t65-acc); color: var(--t65-acc); }
+        .t65-btn:disabled { opacity: .4; cursor: default; }
+        .t65-card { border: 1px solid var(--t65-line); padding: 10px; margin-bottom: 10px; background: var(--t65-soft); }
+        .t65-card-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; color: var(--t65-text); font-size: .9rem; }
+        .t65-card-head b { font-weight: normal; }
+        .t65-seg { display: inline-flex; border: 1px solid var(--t65-line); }
+        .t65-seg button { cursor: pointer; font-family: inherit; font-size: .75rem; padding: 3px 10px; background: transparent; border: none; color: var(--t65-dim); }
+        .t65-seg button.on { background: var(--t65-acc); color: #000; }
+        .t65-chart { width: 100%; height: auto; display: block; }
+        .t65-ax { font-size: 10px; fill: var(--t65-dim); } .t65-ax-dim { opacity: .7; }
+        .t65-half { stroke: var(--t65-text); stroke-dasharray: 3 3; opacity: .5; }
+        .t65-histnote { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; font-size: .82rem; color: var(--t65-text); }
+        #dispPanelTimeline, #dispPanelRanking { --t65-line: #333; --t65-soft: rgba(255,255,255,.03); --t65-dim: #888; --t65-text: #ddd; --t65-acc: var(--tno-neon); }
+        html[data-theme-family="modern"] #dispPanelTimeline, html[data-theme-family="modern"] #dispPanelRanking { --t65-line: var(--m-border); --t65-soft: var(--m-surface-2); --t65-dim: var(--m-text-3); --t65-text: var(--m-text); --t65-acc: var(--m-accent); }
+        /* 오른쪽 순위표 — 넓은 화면에 맞춰 크게 */
+        #dispPanelRanking .t65-rk { padding: 18px 20px; }
+        #dispPanelRanking .t65-rk-title { font-size: 1.5rem; margin-bottom: 8px; }
+        #dispPanelRanking .t65-rk-blocs { font-size: .85rem; margin-bottom: 14px; }
+        #dispPanelRanking .t65-rk-row { grid-template-columns: 2.2em 2.4em minmax(0, 1fr) minmax(60px, 34%) 3em 2.8em; gap: 12px; padding: 10px 8px 10px 12px; font-size: 1.05rem; border-left-width: 5px; }
+        #dispPanelRanking .t65-rk-no { font-size: 1.2rem; }
+        #dispPanelRanking .t65-rk-flagimg { width: 2.2em; height: 1.47em; }
+        #dispPanelRanking .t65-rk-flag { font-size: 1.5rem; }
+        #dispPanelRanking .t65-rk-bar { height: 9px; }
+        #dispPanelRanking .t65-rk-ideo { font-size: .75rem; }
+        #dispPanelRanking .t65-rk-mv { font-size: .8rem; }
+        /* 왼쪽 국가 순위 편집 */
+        .t65-re-head .t65-actions { margin: 8px 0 0; }
+        .t65-re-hint { font-size: .72rem; color: var(--t65-dim); margin: 0 0 6px; }
+        .t65-re-list { border-top: 1px solid var(--t65-line); }
+        .t65-re-row { display: grid; grid-template-columns: 1.6em 2.8em minmax(0, 1fr) auto 1.9em; grid-template-areas: "no flag name score del" "no flag meta meta meta"; gap: 5px 6px; align-items: center; padding: 7px 4px 7px 6px; border-left: 4px solid var(--bloc); border-bottom: 1px solid var(--t65-line); }
+        .t65-re-row.self { background: color-mix(in srgb, var(--t65-acc) 8%, transparent); }
+        .t65-re-row:hover { background: color-mix(in srgb, var(--bloc) 7%, transparent); }
+        .t65-re-no { grid-area: no; align-self: start; padding-top: 6px; text-align: center; font-size: .85rem; color: var(--t65-dim); }
+        .t65-re-row:nth-child(-n+5) .t65-re-no { color: #e0b030; }
+        .t65-re-flag { grid-area: flag; position: relative; display: flex; align-items: center; justify-content: center; align-self: stretch; min-height: 30px; border: 1px dashed var(--t65-line); cursor: pointer; }
+        .t65-re-flag:hover { border-color: var(--t65-acc); }
+        .t65-re-flag.self { cursor: default; border-style: solid; opacity: .75; }
+        .t65-re-flag .t65-rk-flagimg { width: 30px; height: 20px; }
+        .t65-re-unflag { position: absolute; top: -6px; right: -6px; width: 16px; height: 16px; line-height: 14px; padding: 0; font-size: 11px; border-radius: 50%; border: 1px solid var(--t65-line); background: var(--t65-soft, #111); color: var(--t65-text); cursor: pointer; }
+        .t65-re-name { grid-area: name; min-width: 0; box-sizing: border-box; }
+        .t65-re-score { grid-area: score; display: inline-flex; align-items: stretch; border: 1px solid var(--t65-line); }
+        .t65-re-score button { cursor: pointer; width: 22px; padding: 0; background: transparent; border: none; color: var(--t65-dim); font-family: inherit; font-size: .9rem; }
+        .t65-re-score button:hover { color: var(--t65-acc); }
+        .t65-re-score input { width: 3.2em; min-width: 0; text-align: center; border: none !important; border-left: 1px solid var(--t65-line) !important; border-right: 1px solid var(--t65-line) !important; -moz-appearance: textfield; }
+        .t65-re-score input::-webkit-inner-spin-button, .t65-re-score input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        .t65-re-row > .t65-x { grid-area: del; justify-self: end; }
+        .t65-re-me { grid-area: del; justify-self: center; font-size: .9rem; color: var(--t65-acc); cursor: help; }
+        .t65-re-meta { grid-area: meta; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 6px; }
+        .t65-re-meta select { min-width: 0; box-sizing: border-box; font-size: .8rem; }
+        html[data-theme-family="modern"] .t65-re-score { border-radius: 8px; overflow: hidden; }
+        html[data-theme-family="modern"] .t65-re-flag { border-radius: 6px; }
+        .t65-hist { display: block; }
+        .t65-h-hit { cursor: pointer; }
+        .t65-h-hit:hover { filter: brightness(1.15); }
+        .t65-h-sel:not([fill="none"]) { stroke: #fff; stroke-width: 2px; paint-order: stroke; }
+        .t65-h-sel[fill="none"] { opacity: .8; }
+        path.t65-h-sel { fill-opacity: .75; }
+        .t65-h-controls { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+        .t65-h-note { font-size: 10.5px; fill: var(--t65-text); paint-order: stroke; stroke: var(--t65-bg, rgba(0,0,0,.55)); stroke-width: 3px; font-weight: bold; }
+        html[data-theme-family="modern"] .t65-h-note { stroke: rgba(255,255,255,.85); }
+        .t65-l-scroll { overflow-x: auto; }
+        .t65-l-row { stroke: var(--t65-line); stroke-dasharray: 2 4; }
+        .t65-l-name { font-size: 12px; fill: var(--t65-text); font-weight: bold; paint-order: stroke; stroke: rgba(0,0,0,.4); stroke-width: 2px; }
+        html[data-theme-family="modern"] .t65-l-name { stroke: rgba(255,255,255,.9); stroke-width: 3px; }
+        .t65-l-node { stroke: #fff; stroke-width: 2; }
+        .t65-l-end { font-size: 14px; fill: #e05555; font-weight: bold; }
+        .t65-sub-title { font-size: .8rem; color: var(--t65-text); margin: 6px 0 4px; }
+        .t65-succ-row { display: flex; align-items: center; gap: 6px; margin: 4px 0 8px; }
+        .t65-succ-row select { flex: 1; min-width: 0; }
+        .t65-succ-row input[type="text"] { flex: 1; min-width: 0; }
+        .t65-succ-row .t65-btn { flex: none; white-space: nowrap; }
+        .t65-field select { flex: 1; min-width: 0; }
+        .t65-h-legend { margin: 0 0 10px; position: sticky; top: 0; background: inherit; z-index: 1; padding: 4px 0; }
+        .t65-h-chs { margin-bottom: 8px; }
+        .t65-h-seg { font-size: 11px; fill: #fff; paint-order: stroke; stroke: rgba(0,0,0,.45); stroke-width: 2px; pointer-events: none; }
+        .t65-h-lab { font-size: 11.5px; fill: var(--t65-text); }
+        .t65-h-sub { font-size: 10px; fill: var(--t65-dim); }
+        .t65-h-gov-lab { font-size: 9.5px; fill: #e0b030; }
+        .t65-h-gov { stroke: #e0b030; stroke-width: 2; }
+        .t65-h-half { stroke: var(--t65-text); stroke-dasharray: 3 4; opacity: .45; }
+        .t65-legend { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: .75rem; color: var(--t65-dim); margin-top: 4px; }
+        .t65-dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 4px; vertical-align: middle; }
+        .t65-tablewrap { overflow-x: auto; }
+        .t65-table { border-collapse: collapse; width: 100%; font-size: .78rem; color: var(--t65-text); }
+        .t65-table th, .t65-table td { padding: 4px 6px; border-bottom: 1px solid var(--t65-line); text-align: right; white-space: nowrap; }
+        .t65-table th:first-child, .t65-table td:first-child { text-align: left; }
+        .t65-table th { color: var(--t65-dim); font-weight: normal; }
+        .t65-table td.t65-gov { font-weight: bold; }
+        .t65-table small { margin-left: 3px; font-size: .68rem; } .t65-up { color: #3fbf7f; } .t65-down { color: #e05555; }
+        .t65-fold { border: 1px solid var(--t65-line); padding: 0 10px; margin-bottom: 8px; }
+        .t65-fold > summary { cursor: pointer; padding: 8px 0; font-size: .85rem; color: var(--t65-text); }
+        .t65-fold[open] { padding-bottom: 10px; }
+        .t65-snap { display: flex; align-items: center; gap: 6px; padding: 4px 0; border-bottom: 1px solid var(--t65-line); }
+        .t65-snap input { flex: 1; min-width: 0; }
+        .t65-snap .t65-dim { font-size: .72rem; white-space: nowrap; }
+        .t65-x { cursor: pointer; background: transparent; border: 1px solid var(--t65-line); color: var(--t65-dim); font-family: inherit; padding: 1px 7px; }
+        .t65-x-ph { width: 26px; }
+        .t65-empty { text-align: center; padding: 26px 10px; color: var(--t65-dim); font-size: .85rem; line-height: 1.7; border: 1px dashed var(--t65-line); }
+        .t65-empty-icon { font-size: 1.8rem; }
+        .t65-field { display: flex; align-items: center; gap: 8px; margin: 6px 0; font-size: .82rem; color: var(--t65-dim); }
+        .t65-field span { min-width: 5em; } .t65-field input { flex: 1; min-width: 0; }
+        .t65-markup { width: 100%; box-sizing: border-box; min-height: 180px; font-family: monospace; font-size: .75rem; }
+        /* 원내 구성 틀 — 위키 문서 모양을 따라 늘 밝은 바탕 */
+        .t65-wikiwrap { display: flex; justify-content: center; }
+        .nbx2 { width: 100%; max-width: 640px; background: #fff; border: 3px solid color-mix(in srgb, var(--nb-frame) 100%, #bbb); color: #222; font-family: 'Pretendard', 'Noto Sans KR', 'Malgun Gothic', sans-serif; box-sizing: border-box; text-align: center; }
+        /* 네온 테마에서는 틀 안쪽 글자도 둥근모로 (라이트 · 다크는 Pretendard) */
+        html:not([data-theme-family="modern"]) .nbx2 { font-family: 'NeoDunggeunmo', 'VT323', monospace; }
+        html:not([data-theme-family="modern"]) .nbx2 .nb-title, html:not([data-theme-family="modern"]) .nbx2 .nb-pname, html:not([data-theme-family="modern"]) .nbx2 .nb-seat { font-weight: normal; }
+        .nbx2 .nb-head { background: var(--nb-frame); color: var(--nb-ffg); display: flex; align-items: center; justify-content: center; gap: 16px; padding: 14px 20px; text-align: left; border-bottom: 1px solid rgba(0,0,0,.12); }
+        .nbx2 .nb-emblem img { max-height: 60px; max-width: 96px; display: block; }
+        .nbx2 .nb-sep { align-self: stretch; width: 1px; background: currentColor; opacity: .35; }
+        .nbx2 .nb-nation { font-weight: 700; font-size: 16px; }
+        .nbx2 .nb-title { font-weight: 800; font-size: 24px; }
+        .nbx2 .nb-body > summary { list-style: none; cursor: pointer; font-weight: 700; padding: 9px 0; background: #fff; }
+        .nbx2 .nb-body > summary::-webkit-details-marker { display: none; }
+        .nbx2 .nb-cab { background: #dedede; padding: 10px; display: flex; flex-direction: column; gap: 4px; }
+        .nbx2 .nb-cab b { font-size: 16px; } .nbx2 .nb-cab small { font-size: 13px; font-weight: 700; }
+        .nbx2 .nb-sec { background: #dee5e5; font-weight: 800; font-size: 17px; padding: 8px; }
+        .nbx2 .nb-row { display: grid; gap: 1px; background: rgba(255,255,255,.75); }
+        .nbx2 .nb-party { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 14px 8px; min-height: 96px; }
+        .nbx2 .nb-party.k1, .nbx2 .nb-party.k2 { min-height: 128px; }
+        .nbx2 .nb-logo { max-height: 46px; max-width: 80%; display: block; }
+        /* 흰 바탕 로고: 카드 폭을 정해 둬야 크기 정보가 없는 SVG(예: 녹색당)도 줄어들지 않는다 */
+        .nbx2 .nb-logo-card { display: block; width: 72%; background: #fff; border-radius: 6px; padding: 5px 10px; box-sizing: border-box; }
+        .nbx2 .nb-logo-card .nb-logo { width: 100%; height: 46px; max-width: none; max-height: none; object-fit: contain; }
+        .nbx2 .nb-party.k1 .nb-logo-card .nb-logo, .nbx2 .nb-party.k2 .nb-logo-card .nb-logo { height: 58px; }
+        .nbx2 .nb-party.k1 .nb-logo, .nbx2 .nb-party.k2 .nb-logo { max-height: 58px; }
+        .nbx2 .nb-pname { font-weight: 800; font-size: 17px; line-height: 1.2; word-break: keep-all; }
+        .nbx2 .nb-party.k1 .nb-pname, .nbx2 .nb-party.k2 .nb-pname { font-size: 20px; }
+        .nbx2 sup { font-size: .6em; margin-left: 1px; }
+        .nbx2 .nb-seat { display: inline-block; background: #fff; border-radius: 5px; padding: 1px 7px; font-weight: 800; font-size: 15px; line-height: 1.45; white-space: nowrap; }
+        .nbx2 .nb-seat.split { padding: 0; display: inline-flex; overflow: hidden; border: 1.5px solid #fff; background: #fff; }
+        .nbx2 .nb-seat.split > span { padding: 1px 6px; }
+        .nbx2 .nb-seat.split .a { color: #fff; clip-path: polygon(0 0, 100% 0, calc(100% - 5px) 100%, 0 100%); padding-right: 9px; }
+        .nbx2 .nb-small { background: #808080; color: #fff; font-weight: 800; font-size: 17px; padding: 9px; }
+        .nbx2 .nb-total { background: var(--nb-frame); color: var(--nb-ffg); font-weight: 800; font-size: 17px; padding: 9px; border-top: 1px solid rgba(0,0,0,.08); }
+        .nbx2 .nb-total small { font-weight: 500; opacity: .8; font-size: 12px; }
+        .nbx2 .nb-notes { background: #f2f2f2; font-size: 13px; line-height: 1.75; padding: 10px 14px; color: #333; }
+        .nbx2 .nb-legend { margin-top: 6px; } .nbx2 .nb-legend .nb-seat { font-size: 12px; border-color: #999; }
+        .nbx2 .nb-foot { font-size: 15px; font-weight: 700; padding: 10px; border-top: 1px solid #ddd; }
+        .nbx2 .nb-foot b { font-weight: 900; }
+        .nbx2 .nb-fbtn { all: unset; cursor: pointer; font-weight: 500; color: #555; padding: 0 2px; border-radius: 3px; }
+        .nbx2 .nb-fbtn:hover { background: rgba(0,0,0,.06); color: #111; }
+        .nbx2 .nb-fbtn.on { font-weight: 900; color: #111; }
+        /* 원외정당 틀 — 흰 머리(국기 + 제목), 흰 칸 세 개씩 */
+        .nbx2.nbx-out { border-color: var(--nb-frame); }
+        .nbx-out .nb-ohead { background: #fff; padding: 12px 16px 14px; border-bottom: 1px solid #e3e3e3; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+        .nbx-out .nb-oflag { max-height: 70px; max-width: 110px; display: block; }
+        .nbx-out .nb-otitle { font-size: 24px; font-weight: 800; color: var(--nb-ink); }
+        .nbx-out .nb-orow { display: grid; grid-template-columns: repeat(3, 1fr); border-top: 1px solid #e3e3e3; }
+        .nbx-out .nb-ocell { background: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 12px 8px; min-height: 120px; }
+        .nbx-out .nb-ocell + .nb-ocell { border-left: 1px solid #e3e3e3; }
+        .nbx-out .nb-oempty { background: #f4f4f4; }
+        .nbx-out .nb-ologo { max-height: 52px; max-width: 86%; display: block; object-fit: contain; }
+        .nbx-out .nb-ocard { display: block; width: 72%; border-radius: 6px; padding: 5px 8px; box-sizing: border-box; }
+        .nbx-out .nb-ocard .nb-ologo { width: 100%; height: 44px; max-width: none; max-height: none; }
+        .nbx-out .nb-oname { font-size: 17px; font-weight: 800; word-break: keep-all; }
+        .nbx-out .nb-oabbr { font-size: 16px; font-weight: 800; }
+        .nbx-out .nb-oempty-all { background: #fff; padding: 22px 12px; color: #555; font-size: 14px; line-height: 1.7; border-top: 1px solid #e3e3e3; }
+        .nbx-out .nb-oempty-all small { color: #888; }
+        #dispPanelWiki .t65-wikiwrap { padding: 4px 0 10px; }
+        .t65-wk-form .t65-field > span:first-child { min-width: 5.2em; }
+        .t65-wk-form .t65-field input[type=text] { flex: 1; min-width: 0; }
+        .t65-wk-form .t65-field input[type=checkbox] { flex: none; width: 16px; height: 16px; margin: 0; }
+        #sideNav .mn-group[data-main="economy"] .mn-group-head { opacity: .55; }
+        @media (max-width: 520px) { .nbx2 .nb-pname { font-size: 15px; } .nbx2 .nb-party.k1 .nb-pname, .nbx2 .nb-party.k2 .nb-pname { font-size: 17px; } .nbx2 .nb-title { font-size: 20px; } }
+        /* 냉전 국가 순위 */
+        .t65-rk { border: 1px solid var(--t65-line); background: var(--t65-soft); padding: 12px; }
+        .t65-rk-title { font-size: 1.15rem; text-align: center; color: var(--t65-text); letter-spacing: 2px; margin-bottom: 6px; }
+        .t65-rk-blocs { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 12px; font-size: .74rem; color: var(--t65-dim); margin-bottom: 10px; }
+        .t65-rk-blocs i { display: inline-block; width: 10px; height: 10px; margin-right: 4px; vertical-align: middle; }
+        .t65-rk-row { display: grid; grid-template-columns: 1.8em 1.7em minmax(0, 1fr) minmax(36px, 70px) 2.4em 2.4em; align-items: center; gap: 6px; padding: 6px 4px 6px 8px; border-left: 4px solid var(--bloc); border-bottom: 1px solid var(--t65-line); font-size: .85rem; color: var(--t65-text); }
+        .t65-rk-row.self { background: color-mix(in srgb, var(--t65-acc) 10%, transparent); }
+        .t65-rk-no { font-size: 1rem; color: var(--t65-dim); text-align: center; }
+        .t65-rk-row:nth-child(-n+5) .t65-rk-no { color: #e0b030; }
+        .t65-rk-flag { font-size: 1.1rem; text-align: center; } .t65-rk-flagimg { width: 1.6em; height: 1.07em; object-fit: cover; display: block; box-shadow: 0 0 0 1px rgba(127,127,127,.35); }
+        .t65-rk-e-flag { position: relative; display: flex; align-items: center; justify-content: center; height: 30px; border: 1px dashed var(--t65-line); cursor: pointer; }
+        .t65-rk-e-flag.self { cursor: default; border-style: solid; opacity: .7; }
+        .t65-rk-e-flag .t65-rk-flagimg { width: 30px; height: 20px; }
+        .t65-rk-e-unflag { position: absolute; top: -6px; right: -6px; width: 16px; height: 16px; line-height: 14px; padding: 0; font-size: 11px; border-radius: 50%; border: 1px solid var(--t65-line); background: var(--t65-soft, #111); color: var(--t65-text); cursor: pointer; }
+        .t65-rk-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .t65-rk-name em { font-style: normal; font-size: .68rem; color: var(--t65-acc); border: 1px solid var(--t65-acc); padding: 0 4px; margin-left: 4px; }
+        .t65-rk-bloc { font-size: .7rem; color: var(--t65-dim); }
+        .t65-rk-bar { height: 6px; background: rgba(127,127,127,.2); } .t65-rk-bar span { display: block; height: 100%; background: var(--bloc); }
+        .t65-rk-score { text-align: right; }
+        .t65-rk-mv { font-size: .72rem; text-align: right; color: var(--t65-dim); } .t65-rk-mv.up { color: #3fbf7f; } .t65-rk-mv.down { color: #e05555; }
+        .t65-rk-ideo { display: block; font-size: .66rem; color: var(--t65-dim); overflow: hidden; text-overflow: ellipsis; }
+        .t65-bloc-bar { display: flex; height: 14px; gap: 1px; margin: 6px 0; background: rgba(127,127,127,.15); }
+        .t65-bloc-bar span { display: block; height: 100%; }
+        .t65-bloc { border: 1px solid var(--t65-line); border-left: 5px solid var(--bloc); padding: 10px; margin-bottom: 10px; background: var(--t65-soft); }
+        .t65-bloc-head { display: flex; align-items: center; gap: 6px; }
+        .t65-bloc-head input[type=color] { width: 34px; height: 30px; padding: 0; border: none; background: none; cursor: pointer; flex-shrink: 0; }
+        .t65-bloc-name { flex: 1; min-width: 0; font-size: .95rem; }
+        .t65-bloc-desc { width: 100%; box-sizing: border-box; margin: 6px 0 2px; font-size: .8rem; }
+        .t65-ichip { display: inline-flex; align-items: center; gap: 4px; font-size: .78rem; padding: 3px 4px 3px 9px; border: 1px solid var(--bloc); color: var(--t65-text); }
+        .t65-ichip small { color: var(--t65-dim); }
+        .t65-ichip button { cursor: pointer; border: none; background: transparent; color: var(--t65-dim); font-family: inherit; padding: 0 3px; }
+        html[data-theme-family="modern"] .t65-bloc { border-radius: 12px; }
+        html[data-theme-family="modern"] .t65-ichip { border-radius: 999px; }
+        .t65-rk-edit { display: grid; grid-template-columns: 3em minmax(0, 1fr) minmax(0, 1fr) 3.8em; grid-template-areas: "flag name name del" "flag bloc ideo score"; gap: 5px 6px; align-items: center; padding: 6px 0; border-bottom: 1px dashed var(--t65-line); }
+        .t65-rk-edit > .t65-rk-e-flag { grid-area: flag; height: 100%; min-height: 30px; }
+        .t65-rk-edit > .t65-rk-e-name { grid-area: name; }
+        .t65-rk-edit > .t65-rk-e-bloc { grid-area: bloc; }
+        .t65-rk-edit > .t65-rk-e-ideo { grid-area: ideo; }
+        .t65-rk-edit > .t65-rk-e-score { grid-area: score; }
+        .t65-rk-edit > .t65-x, .t65-rk-edit > .t65-x-ph { grid-area: del; justify-self: end; }
+        .t65-rk-edit input, .t65-rk-edit select { min-width: 0; box-sizing: border-box; }
+        html[data-theme-family="modern"] .t65-btn, html[data-theme-family="modern"] .t65-x { border-radius: 8px; }
+        html[data-theme-family="modern"] .t65-btn.primary { background: var(--m-accent); color: var(--m-on-accent); border-color: var(--m-accent); }
+        html[data-theme-family="modern"] .t65-card, html[data-theme-family="modern"] .t65-fold, html[data-theme-family="modern"] .t65-rk, html[data-theme-family="modern"] .t65-empty { border-radius: 12px; }
+        html[data-theme-family="modern"] .t65-seg { border-radius: 999px; overflow: hidden; }
+        html[data-theme-family="modern"] .t65-seg button.on { color: var(--m-on-accent); }
+        html[data-theme-family="modern"] .t65-rk-name em { border-radius: 999px; }
     `;
     document.head.appendChild(style);
     window.addEventListener('load', () => setTimeout(refresh, 0));

@@ -110,8 +110,8 @@ body.side-nav-collapsed .mn-group-head { justify-content: center; }
 .mn-group[data-tone="muted"] { --tone: #8b929c; } /* 도움말: 회색 */
 .mn-group[data-tone="purple"] { --tone: #b58cff; } /* 입법: 보라 */
 .mn-group[data-tone="orange"] { --tone: #ff9f43; } /* 국가: 주황 */
-.mn-group[data-tone="pink"] { --tone: #ff7ac8; } /* 세계(teaser64): 분홍 */
-.mn-group[data-tone="teal"] { --tone: #2fd5c0; } /* 경제(teaser64, 잠김): 청록 */
+.mn-group[data-tone="pink"] { --tone: #ff7ac8; } /* 세계(teaser65): 분홍 */
+.mn-group[data-tone="teal"] { --tone: #2fd5c0; } /* 경제(teaser65, 잠김): 청록 */
 .mn-group-head {
     background: color-mix(in srgb, var(--tone) 8%, transparent);
     border: 1px solid color-mix(in srgb, var(--tone) 40%, transparent);

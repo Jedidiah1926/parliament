@@ -1,10 +1,10 @@
-// ===== Hemicycle 티저 공통 — 의장석 (teaser61 · 62 · 63 · 66) =====
+// ===== Hemicycle 티저 공통 — 의장석 (teaser62 · 62 · 63 · 66) =====
 // 반원 가운데 빈 곳에 의장석(단상 + 의장)을 그릴지 정한다. 의회 › 의회 설정의 "반원 중앙 표시" 아래에 설정이 붙는다.
 //   always — 반원 화면에 늘 그리고, 애니메이션(봉쇄 돌파 · 의장석 점거)에도 그림
 //   anim   — 애니메이션에서만 (기본)
 //   occupy — 의장석 점거 애니메이션에서만
 // 저장은 세이브의 teaserPodium 칸 (티저마다 저장 공간이 따로라 서로 섞이지 않음).
-// 위치는 반원 가운데 표시(의석 수 · 로고) 바로 위 — teaser63의 애니메이션도 TeaserPodium.geom()으로 같은 자리에 그린다.
+// 위치는 반원 가운데 표시(의석 수 · 로고) 바로 위 — teaser64의 애니메이션도 TeaserPodium.geom()으로 같은 자리에 그린다.
 /* global getAppState, setAppState, chamberCenterMode, chamberLogos, isModernTheme, redrawAll */
 (function () {
     'use strict';

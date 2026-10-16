@@ -1,438 +1,453 @@
-// ===== Teaser 1.6.7 — 인간은 자유롭게 태어났다 "L'homme est né libre." =====
-// 국가 › 사람 탭: 인물을 미리 만들어 두고(이름 · 사진 · 이념 · 소속 정당 · 파벌), 의석 · 당직 · 내각 자리에 배정한다.
-//  - 자리(지역구 · 비례 · 무소속 의원, 당수 · 원내대표, 대통령 · 총리 · 부총리 · 내각 구성원)에는 personId를 붙여 연결하고,
-//    인물의 이름 · 사진을 고치면 연결된 모든 자리에 반영한다.
-//  - 지역구 후보: 선거 전에 인물을 지역구 후보로 내세우면, 총선 · 보궐선거 결과를 반영할 때 그 지역구에서 인물의 정당이
-//    이긴 의석에 바로 배정한다 (후보가 없으면 같은 정당의 현역이 다시 그 자리에). 낙선해도 인물은 남는다.
-//  - 선거 · 당적 변경 · 궐석으로 의석이 사라져도 인물은 사람 탭에 그대로 남는다 (예전엔 자리와 함께 이름 · 사진이 사라졌다).
-/* global parties, ideologies, chamberList, chamberDisplayName, districtMembers, districtMemberKeys, districtMemberKeysOf,
-   districtMemberLabel, districtBaseKey, districtSortedKeys, districtNames, listMembers, independents, president, pm,
-   collectiveChair, deputyPms, cabinetMembers, effRoleLabel, simulate, refreshUI, showCustomAlert, showCustomConfirm,
-   escapeHtmlText, ideologyName, startDragReorder, formatNationDate, elecLastResults, elecLastResult */
+// ===== Hemicycle 티저 1.6.7 (teaser67) — 다음 업데이트 기능 미리 써 보기 =====
+// teaser67.html은 main.html을 그대로 복사한 화면에 이 파일 하나를 더 불러 미리보기 기능을 얹는다.
+// (저장 공간은 본 게임과 따로 — main.js의 LS_PREFIX 'hemicycleTeaserV2-67:')
+//
+// 1.6.7 "즉시, 지체 없이" 미리보기 — 미수복 지역 · 영토 통일
+//   - 국가 › 미수복 탭을 새로 둔다 (국가 › 지역 · 권역은 1.6.0부터 본 화면, 1.5.9 화면이면 지역구 편집을 국가 › 지역으로 옮김)
+//   - 미수복 지역 종류를 여러 개 만들고(종류마다 이름 · 빗금 색 — 예: 오스트리아 · 동방영토 · 북방영토), "칠하기"로 지도에서
+//     지역구를 차례로 눌러 칠하거나 지역구 편집 칸에서 종류를 고른다. 미수복 지역은 모든 지도에서 영토 색 빗금으로 따로 보이고,
+//     지역구 선거 · 지방선거 · 국민투표에서 빠진다 (그 지역구 의석은 지역구 의석 수에서 빠짐)
+//   - "통합"은 그 종류만, "영토 통일 (전체)"는 모든 미수복 지역을 되찾아 일반 지역구로 돌린다
+// main.js의 최상위 함수(getAppState · renderDistrictSvgInto 등)는 전역에 이름으로 걸려 있어서 여기서 감싸 덮어쓴다
+/* global getAppState, setAppState, renderDistrictSvgInto, districtRenderNamePanel, districtActiveSeatCount,
+   elecSimulateDistrictsSvg, districtNames, districtSeatCounts, districtGrid, selectedDistrictKey,
+   districtMapMode, districtRedrawAllMaps, renderDistrictListPanel, elecUpdateDistrictInfo, showCustomConfirm, escapeHtmlText,
+   switchSubTab, switchMainTab, elecSwitchSub, switchDispTab, districtUpdateModeUI, districtInitCanvas, currentMainTab, currentSubTab,
+   districtSvgMapFor, districtOrderSync */
 (function () {
     'use strict';
-    const root = document.documentElement;
-    if (root.getAttribute('data-app-mode') !== 'teaser' || !['67'].includes(root.getAttribute('data-teaser'))) return;
+    if (document.documentElement.getAttribute('data-app-mode') !== 'teaser' || !['67'].includes(document.documentElement.getAttribute('data-teaser') || '67')) return;
 
-    const esc = s => (typeof escapeHtmlText === 'function' ? escapeHtmlText(String(s ?? '')) : String(s ?? ''));
-    const uid = () => 'h' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-    const partyById = id => parties.find(p => String(p.id) === String(id)) || null;
-    const sameId = (a, b) => a != null && b != null && String(a) === String(b);
-    const IND = 9999;
-    const chs = () => (typeof chamberList === 'function' ? chamberList() : ['house']);
-    const chName = ch => (typeof chamberDisplayName === 'function' ? chamberDisplayName(ch) : ch);
+    // 미수복 영토는 여러 개 — 영토마다 이름 · 색(빗금 색)이 있고, 지역구는 그중 하나에 속한다
+    //   territories = [{ id, name, color }], unrecovered = { 지역구 키: 영토 id }
+    const PALETTE = ['#9ca3af', '#f87171', '#fbbf24', '#60a5fa', '#a78bfa', '#34d399', '#f472b6', '#fb923c'];
+    let territories = [];
+    let unrecovered = {};
+    let brush = null; // 칠하기 도구 — null(끔) | 영토 id | 'erase'
+    let labelColor = 'same'; // 미수복 지역 이름 색 — 'same'(다른 지역과 같게) | 'hatch'(그 종류의 빗금 색)
+    const isUnrec = key => !!unrecovered[key] && !!territoryOf(key);
+    const territoryById = id => territories.find(t => t.id === id) || null;
+    const territoryOf = key => territoryById(unrecovered[key]);
+    window.isDistrictUnrecovered = isUnrec; // 지방선거 · 국민투표(js/popvote.js)가 이걸 보고 뺀다
+    const esc = s => (typeof escapeHtmlText === 'function' ? escapeHtmlText(String(s)) : String(s));
+    const nameOf = key => districtNames.house?.[key] || key;
+    const keysOf = id => Object.keys(unrecovered).filter(k => unrecovered[k] === id);
 
-    // ---- 상태 (세이브의 teaser67 칸) ----
-    //   people: [{ id, name, photo, ideologyId, partyId, factionId, bio }]
-    //   candidates: { [chamber]: { [지역구 키]: [personId] } }
-    //   lastElection: { date, chamber, elected: [{ personId, place }], lost: [{ personId, place }] } | null
-    let S = fresh();
-    function fresh() { return { people: [], candidates: {}, lastElection: null }; }
-    const ui = { q: '', filter: 'all', openId: null };
+    function addTerritory(name) {
+        let n = 1;
+        while (territories.some(t => t.id === 't' + n)) n++;
+        const t = { id: 't' + n, name: name || `미수복 지역 ${n}`, color: PALETTE[(n - 1) % PALETTE.length] };
+        territories.push(t);
+        return t;
+    }
+    // 세이브 읽기 — 예전 형식({ 키: true }, 영토 하나)도 첫 영토로 옮긴다
+    function loadTeaserState(tz) {
+        territories = Array.isArray(tz?.territories)
+            ? tz.territories.filter(t => t && t.id).map(t => ({ id: String(t.id), name: String(t.name || t.id), color: /^#[0-9a-f]{6}$/i.test(t.color) ? t.color : PALETTE[0] }))
+            : [];
+        unrecovered = {};
+        const u = tz && typeof tz.unrecovered === 'object' ? tz.unrecovered : {};
+        Object.entries(u).forEach(([key, v]) => {
+            let id = typeof v === 'string' ? v : null;
+            if (!id || !territoryById(id)) id = (territories[0] || addTerritory('미수복 지역')).id;
+            unrecovered[key] = id;
+        });
+        brush = null;
+        labelColor = tz && tz.labelColor === 'hatch' ? 'hatch' : 'same';
+        adoptUnrecDistricts();
+    }
+    // 미수복 지역이 지도엔 있지만 지역구가 아닌 땅으로 저장돼 있으면 (예: 서독 튜토리얼의 동독 주 — 본 게임엔 미수복이 없어 지역구에서 뺌)
+    // 의석 수가 정해진 원에서 지역구로 들인다. 미수복이라 선거에선 빠지고, 통일하면 그대로 일반 지역구가 된다
+    function adoptUnrecDistricts() {
+        if (districtMapMode !== 'svg') return;
+        ['house', 'senate', 'third'].forEach(ch => {
+            const shapes = new Set((districtSvgMapFor(ch)?.shapes || []).map(s => s.key));
+            let added = false;
+            Object.keys(unrecovered).forEach(key => {
+                if (!shapes.has(key) || !(districtSeatCounts[key]?.[ch] > 0)) return;
+                districtGrid[ch] = districtGrid[ch] || {};
+                if (districtGrid[ch][key]) return;
+                districtGrid[ch][key] = true;
+                added = true;
+            });
+            if (added) districtOrderSync(ch);
+        });
+    }
 
+    // ---- 저장 · 불러오기: 세이브에 teaser 칸으로 ----
     const origGet = window.getAppState;
     window.getAppState = function () {
         const st = origGet.apply(this, arguments);
-        if (st && typeof st === 'object') st.teaser67 = JSON.parse(JSON.stringify(S));
+        if (st && typeof st === 'object') st.teaser = { unrecovered: { ...unrecovered }, territories: territories.map(t => ({ ...t })), labelColor };
         return st;
     };
     const origSet = window.setAppState;
     window.setAppState = function (state) {
         const r = origSet.apply(this, arguments);
-        const src = state && state.teaser67;
-        S = { ...fresh(), ...(src && typeof src === 'object' ? JSON.parse(JSON.stringify(src)) : {}) };
-        if (!Array.isArray(S.people)) S.people = [];
-        if (!S.candidates || typeof S.candidates !== 'object') S.candidates = {};
-        refresh();
+        loadTeaserState(state && state.teaser);
+        refreshUI();
         return r;
     };
-    const personById = id => S.people.find(p => p.id === id) || null;
 
-    // ---- 자리 목록 — 인물을 앉힐 수 있는 모든 자리 { key, kind, label, group, get(), set(name, photo, personId) } ----
-    function seats() {
-        const out = [];
-        chs().forEach(ch => {
-            const cn = chName(ch);
-            districtMemberKeys(ch).forEach(key => {
-                const m = districtMembers[ch][key];
-                if (!m || m.vacant) return;
-                const party = partyById(m.partyId);
-                const ind = party && party.ideologyId === IND ? independents.find(x => x.chamber === ch && x.districtKey === key) : null;
-                out.push({
-                    key: `d:${ch}:${key}`, kind: 'district', group: `${cn} 지역구`, partyId: m.partyId,
-                    label: `${districtMemberLabel(ch, key)} (${party ? party.name : '?'})`,
-                    obj: m, ind,
-                    name: () => (ind ? ind.name : m.name) || '',
-                });
-            });
-            parties.forEach(p => (listMembers[ch]?.[p.id] || []).forEach((m, i) => {
-                if (!m || m.vacant) return;
-                out.push({ key: `l:${ch}:${p.id}:${m.id}`, kind: 'list', group: `${cn} 비례대표`, partyId: p.id, label: `${p.name} ${i + 1}번`, obj: m, name: () => m.name || '' });
-            }));
-            independents.filter(x => x.chamber === ch && !x.districtKey).forEach((x, i) => {
-                out.push({ key: `i:${x.id}`, kind: 'independent', group: `${cn} 무소속`, partyId: (parties.find(p => p.ideologyId === IND) || {}).id, label: `무소속 ${i + 1}`, obj: x, name: () => x.name || '' });
-            });
-        });
-        parties.filter(p => p.ideologyId !== IND).forEach(p => {
-            out.push({ key: `pl:${p.id}`, kind: 'leader', group: '당직', partyId: p.id, label: `${p.name} 당수`, obj: p, nameKey: 'leaderName', photoKey: 'leaderPhoto', pidKey: 'leaderPersonId', name: () => p.leaderName || '' });
-            out.push({ key: `pf:${p.id}`, kind: 'floor', group: '당직', partyId: p.id, label: `${p.name} 원내대표`, obj: p, nameKey: 'floorLeaderName', photoKey: 'floorLeaderPhoto', pidKey: 'floorLeaderPersonId', name: () => p.floorLeaderName || '' });
-        });
-        const role = k => { try { return effRoleLabel(k); } catch (e) { return k; } };
-        out.push({ key: 'c:president', kind: 'cabinet', group: '내각', label: role('president'), obj: president, name: () => president.name || '' });
-        out.push({ key: 'c:pm', kind: 'cabinet', group: '내각', label: role('pm'), obj: pm, name: () => pm.name || '' });
-        if (typeof collectiveChair !== 'undefined' && collectiveChair) out.push({ key: 'c:chair', kind: 'cabinet', group: '내각', label: '집단지도체제 의장', obj: collectiveChair, name: () => collectiveChair.name || '' });
-        (deputyPms || []).forEach(d => out.push({ key: `c:dpm:${d.id}`, kind: 'cabinet', group: '내각', label: d.position || '부총리', obj: d, name: () => d.name || '' }));
-        (cabinetMembers || []).forEach(c => out.push({ key: `c:cm:${c.id}`, kind: 'cabinet', group: '내각', label: c.position || '내각 구성원', obj: c, name: () => c.name || '' }));
-        return out;
+    // ---- 선거: 미수복 지역구는 개표하지 않고, 지역구 의석 수에서도 뺀다 ----
+    const origSim = window.elecSimulateDistrictsSvg;
+    window.elecSimulateDistrictsSvg = function () {
+        return (origSim.apply(this, arguments) || []).filter(r => !isUnrec(r.key));
+    };
+    const origCount = window.districtActiveSeatCount;
+    window.districtActiveSeatCount = function (chamber) {
+        const total = origCount.apply(this, arguments);
+        const lost = Object.keys(districtGrid[chamber] || {}).filter(isUnrec)
+            .reduce((sum, key) => sum + (districtMapMode !== 'svg' ? 1 : (districtSeatCounts[key]?.[chamber] || 0)), 0);
+        return Math.max(0, total - lost);
+    };
+
+    // ---- 지도: 미수복 지역구는 영토 색 빗금 + 툴팁에 (미수복: 영토 이름) ----
+    // 빗금 굵기는 화면 픽셀 기준 — 지도 좌표 1단위가 화면에서 몇 픽셀인지 재서 패턴 크기를 정한다.
+    // (저장된 viewBox가 실제 도형보다 훨씬 크거나 작은 지도에서도, 작게 그린 지도에서도 같은 굵기로 보이게)
+    // 패턴 id는 그릴 때마다 새로 붙인다 — 같은 id가 여러 지도에 있으면 url(#id)가 다른 지도(다른 배율)의 패턴을 집어 온다
+    const HATCH_PX = 7; // 빗금 한 주기(선 + 틈)의 화면 픽셀
+    let hatchSeq = 0;
+    function hatchDefs(prefix) {
+        const light = document.documentElement.getAttribute('data-theme-mode') === 'light';
+        const bg = light ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.04)';
+        return territories.map(t => `<pattern id="${prefix}${t.id}" data-unrec-hatch="1" patternUnits="userSpaceOnUse" width="1" height="1" patternTransform="rotate(45)">`
+            + `<rect width="1" height="1" fill="${bg}"/><rect width="0.5" height="1" fill="${t.color}"/></pattern>`).join('');
     }
-    const pidOf = s => s.obj[s.pidKey || 'personId'];
-    // 의석의 원 — 한 사람은 한 원에 의석 하나만 (지역구에 당선되면 같은 원의 비례 자리는 비운다)
-    const SEAT_KINDS = ['district', 'list', 'independent'];
-    function seatChamber(s) {
-        if (s.kind === 'district' || s.kind === 'list') return s.key.split(':')[1];
-        if (s.kind === 'independent') return s.obj.chamber;
-        return null;
+    function fitHatch(svg) {
+        const pats = svg.querySelectorAll('pattern[data-unrec-hatch]');
+        if (!pats.length) return;
+        const r = svg.getBoundingClientRect();
+        const vb = String(svg.getAttribute('viewBox') || '0 0 100 100').split(/[\s,]+/).map(Number);
+        const vw = vb[2] || 100, vh = vb[3] || 100;
+        // 보이지 않는 지도(숨은 탭)는 600px 너비로 가정해 두고, 보이게 되면 ResizeObserver가 다시 맞춘다
+        const unitsPerPx = r.width > 0 && r.height > 0 ? Math.max(vw / r.width, vh / r.height) : vw / 600;
+        const size = HATCH_PX * unitsPerPx;
+        pats.forEach(p => p.setAttribute('patternTransform', `rotate(45) scale(${size})`));
     }
-    function seatPerson(s, person) {
-        const ch = seatChamber(s);
-        if (ch) seats().forEach(o => { if (o.key !== s.key && SEAT_KINDS.includes(o.kind) && seatChamber(o) === ch && pidOf(o) === person.id) write(o, null); });
-        write(s, person);
-    }
-    function write(s, person) {
-        const nk = s.nameKey || 'name', pk = s.photoKey || 'photo', ik = s.pidKey || 'personId';
-        if (person) {
-            s.obj[nk] = person.name || '';
-            s.obj[pk] = person.photo || '';
-            s.obj[ik] = person.id;
-            if (s.ind) { s.ind.name = person.name || ''; s.ind.photo = person.photo || ''; s.ind.personId = person.id; }
-            if (s.kind === 'cabinet') {
-                s.obj.linkedSeat = null; // 사람 탭에서 정한 인물이 우선 — 의원 연결은 풀어 둔다
-                if (person.partyId != null) s.obj.partyId = partyById(person.partyId) ? partyById(person.partyId).id : s.obj.partyId;
-            }
-        } else {
-            s.obj[nk] = ''; s.obj[pk] = ''; delete s.obj[ik];
-            if (s.ind) { s.ind.name = ''; s.ind.photo = ''; delete s.ind.personId; }
+    const origRender = window.renderDistrictSvgInto;
+    window.renderDistrictSvgInto = function (wrapEl, opts) {
+        const o = { ...(opts || {}) };
+        const active = Object.keys(unrecovered).some(isUnrec);
+        if (active) {
+            const prefix = `hemiUnrecHatch${++hatchSeq}_`;
+            const g = o.getFill, t = o.title, b = o.seatBadges;
+            o.defs = (o.defs || '') + hatchDefs(prefix);
+            o.getFill = key => (isUnrec(key) ? `url(#${prefix}${unrecovered[key]})` : (g ? g(key) : null));
+            o.title = key => (isUnrec(key) ? `${nameOf(key)} (미수복 지역: ${territoryOf(key).name})` : (t ? t(key) : nameOf(key)));
+            if (b) o.seatBadges = key => (isUnrec(key) ? null : b(key));
         }
-    }
-    const positionsOf = id => seats().filter(s => pidOf(s) === id);
-    // 이름 · 사진을 고치면 연결된 모든 자리에 반영
-    function push(person) { positionsOf(person.id).forEach(s => write(s, person)); }
-    function rerender() {
-        try { simulate(); } catch (e) { /* 화면 준비 전 */ }
-        try { refreshUI(); } catch (e) { /* 화면 준비 전 */ }
-        ['renderMembersList', 'renderCabinetDisplay', 'renderCabinetMembersList', 'renderPartyInfoList', 'renderPresidentCard', 'renderPmCard'].forEach(f => { try { if (typeof window[f] === 'function') window[f](); } catch (e) { /* 없음 */ } });
-    }
-    function assign(personId, seatKey) {
-        const person = personById(personId);
-        const s = seats().find(x => x.key === seatKey);
-        if (!person || !s) return;
-        const prev = pidOf(s) && pidOf(s) !== personId ? personById(pidOf(s)) : null;
-        seatPerson(s, person);
-        rerender(); render();
-        if (prev) showCustomAlert(`${s.label} 자리에 있던 ${prev.name || '(이름 없음)'}은(는) 자리에서 물러났습니다 (사람 탭에는 그대로 남아요).`);
-    }
-    function unassign(seatKey) {
-        const s = seats().find(x => x.key === seatKey);
-        if (!s) return;
-        write(s, null);
-        rerender(); render();
-    }
-
-    // ---- 지역구 후보 ----
-    const candOf = ch => S.candidates[ch] || (S.candidates[ch] = {});
-    function candidaciesOf(id) {
-        const out = [];
-        Object.entries(S.candidates).forEach(([ch, m]) => Object.entries(m || {}).forEach(([key, ids]) => { if ((ids || []).includes(id)) out.push({ ch, key }); }));
-        return out;
-    }
-    const placeName = (ch, key) => `${chName(ch)} · ${(districtNames[ch] && districtNames[ch][key]) || key}`;
-    // 선거 결과를 반영한 뒤: 후보 → 그 지역구에서 후보의 정당이 이긴 의석에 배정, 후보가 없으면 같은 정당 현역을 다시 그 자리에
-    function placeAfterElection(ch, incumbents, onlyBases) {
-        const elected = [], lost = [];
-        const dm = districtMembers[ch] || {};
-        const bases = onlyBases || Array.from(new Set([...Object.keys(candOf(ch)), ...incumbents.map(x => x.base)]));
-        bases.forEach(base => {
-            const keys = districtMemberKeysOf(ch, base).filter(k => dm[k] && !dm[k].vacant);
-            const cands = (candOf(ch)[base] || []).map(personById).filter(Boolean);
-            const used = new Set();
-            keys.forEach(k => {
-                const m = dm[k];
-                if (m.personId && personById(m.personId)) return;
-                const pick = cands.find(p => !used.has(p.id) && sameId(p.partyId, m.partyId))
-                    || incumbents.map(x => x.base === base && sameId(x.partyId, m.partyId) ? personById(x.personId) : null).find(p => p && !used.has(p.id) && !cands.some(c => sameId(c.partyId, p.partyId) && c.id !== p.id));
-                if (!pick) return;
-                used.add(pick.id);
-                const s = seats().find(x => x.key === `d:${ch}:${k}`);
-                if (s) { seatPerson(s, pick); elected.push({ personId: pick.id, place: placeName(ch, base) }); }
-            });
-            cands.forEach(p => { if (!used.has(p.id)) lost.push({ personId: p.id, place: placeName(ch, base) }); });
-            delete candOf(ch)[base]; // 이번 선거에 쓴 후보 명단은 비운다
-        });
-        return { elected, lost };
-    }
-    const incumbentsOf = ch => districtMemberKeys(ch).map(k => { const m = districtMembers[ch][k]; return m && m.personId ? { base: districtBaseKey(ch, k), personId: m.personId, partyId: m.partyId } : null; }).filter(Boolean);
-    const origApply = window.elecApplyToParliament;
-    if (typeof origApply === 'function') {
-        window.elecApplyToParliament = function () {
-            const pending = Object.keys(typeof elecLastResults !== 'undefined' ? elecLastResults : {});
-            if (!pending.length && typeof elecLastResult !== 'undefined' && elecLastResult && !elecLastResult.applied) pending.push(elecLastResult.chamber || (elecLastResult.isSenate ? 'senate' : 'house'));
-            const inc = Object.fromEntries(pending.map(ch => [ch, incumbentsOf(ch)]));
-            const r = origApply.apply(this, arguments);
-            if (pending.length) {
-                const res = { date: formatNationDate(), chamber: pending.map(chName).join(' · '), elected: [], lost: [] };
-                pending.forEach(ch => { const x = placeAfterElection(ch, inc[ch] || []); res.elected.push(...x.elected); res.lost.push(...x.lost); });
-                if (res.elected.length || res.lost.length) S.lastElection = res;
-                rerender(); refresh();
-            }
-            return r;
-        };
-    }
-    const origBy = window.elecRunByElection;
-    if (typeof origBy === 'function') {
-        window.elecRunByElection = async function (chamber, vacantKeys) {
-            const bases = Array.from(new Set((vacantKeys || []).map(k => districtBaseKey(chamber, k))));
-            const r = await origBy.apply(this, arguments);
-            const x = placeAfterElection(chamber, [], bases);
-            if (x.elected.length || x.lost.length) S.lastElection = { date: formatNationDate(), chamber: chName(chamber) + ' 보궐선거', ...x };
-            rerender(); refresh();
-            return r;
-        };
-    }
-
-    // ---- 지금 의원 · 당직 · 내각에 적힌 이름으로 인물 만들기 (같은 이름은 한 사람으로) ----
-    function importFromSeats() {
-        const byName = new Map(S.people.map(p => [p.name.trim(), p]));
-        let made = 0, linked = 0;
-        seats().forEach(s => {
-            if (pidOf(s) && personById(pidOf(s))) return;
-            const nm = s.name().trim();
-            if (!nm) return;
-            let p = byName.get(nm);
-            if (!p) {
-                const party = partyById(s.partyId != null ? s.partyId : s.obj.partyId);
-                const photo = s.ind ? s.ind.photo : s.obj[s.photoKey || 'photo'];
-                p = { id: uid(), name: nm, photo: photo || '', ideologyId: party ? party.ideologyId : null, partyId: party && party.ideologyId !== IND ? party.id : null, factionId: s.obj.factionId || null, bio: '' };
-                S.people.push(p); byName.set(nm, p); made++;
-            }
-            write(s, p); linked++;
-        });
-        rerender(); render();
-        showCustomAlert(made || linked ? `인물 ${made}명을 새로 만들고, 자리 ${linked}곳을 사람 탭의 인물과 연결했습니다.` : '이름이 적힌 자리가 없습니다 — 의원 · 당수 · 내각 자리에 이름을 적거나, 여기서 사람을 직접 추가하세요.');
-    }
-
-    // ---- 탭: 국가 › 사람 ----
-    function el(html) { const d = document.createElement('div'); d.innerHTML = html.trim(); return d.firstChild; }
-    (function addTab() {
-        const nation = document.getElementById('mainContentNation');
-        const bar = nation && nation.querySelector(':scope > .sub-tab-container');
-        if (!bar) return;
-        const settingsBtn = document.getElementById('subTabNationSettings');
-        bar.insertBefore(el(`<button class="sub-tab-btn" onclick="switchSubTab('nation','people')" id="subTabPeople">사람</button>`), settingsBtn);
-        nation.appendChild(el(`<div id="contentPeople" class="sub-tab-content"></div>`));
-    })();
-    const origSwitch = window.switchSubTab;
-    window.switchSubTab = function (main, sub) {
-        const r = origSwitch.apply(this, arguments);
-        if (main === 'nation' && sub === 'people') render();
+        // 칠하기 도구가 켜져 있으면 지역구 편집 지도에서 누르는 지역구를 바로 칠한다 (편집 칸을 열지 않음)
+        if (!brush && onUnrecTab() && wrapEl && wrapEl.id === 'districtSvgWrap' && o.clickable) {
+            // 국가 › 미수복 탭에서는 지역구를 누르면 그 탭 안에서 종류를 고르는 칸이 열린다
+            o.onClickKey = key => { selectedDistrictKey = key; refreshUI(); };
+        }
+        if (brush && wrapEl && wrapEl.id === 'districtSvgWrap' && o.clickable) {
+            o.onClickKey = key => paint(key);
+            const t = o.title;
+            o.title = key => (t ? t(key) : nameOf(key)) + (brush === 'erase' ? ' — 눌러서 지우기' : ` — 눌러서 "${territoryById(brush)?.name || ''}"로 칠하기`);
+        }
+        const r = origRender.call(this, wrapEl, o);
+        // 미수복 지역 이름을 그 종류의 빗금 색으로 (설정에 따라)
+        if (active && labelColor === 'hatch' && wrapEl) {
+            wrapEl.querySelectorAll('svg text[data-key]').forEach(t => { const k = t.getAttribute('data-key'); if (isUnrec(k)) t.setAttribute('fill', territoryOf(k).color); });
+        }
+        const svg = active && wrapEl && wrapEl.querySelector('svg');
+        if (svg) {
+            fitHatch(svg);
+            new MutationObserver(() => fitHatch(svg)).observe(svg, { attributes: true, attributeFilter: ['viewBox'] });
+            if (window.ResizeObserver) new ResizeObserver(() => fitHatch(svg)).observe(svg);
+        }
         return r;
     };
 
-    function ideologyOptions(cur) {
-        const opts = ['<option value="">— 이념 없음 —</option>'];
-        (ideologies || []).forEach(i => {
-            opts.push(`<option value="${i.id}" ${sameId(i.id, cur) ? 'selected' : ''}>${esc(i.name)}</option>`);
-            (i.subs || []).forEach(sb => opts.push(`<option value="${sb.id}" ${sameId(sb.id, cur) ? 'selected' : ''}>　└ ${esc(sb.name)}</option>`));
-        });
-        return opts.join('');
+    // ---- 칠하기 도구: 영토를 고르고 지도에서 지역구를 차례로 눌러 칠한다 ----
+    function paint(key) {
+        if (brush === 'erase') delete unrecovered[key];
+        else if (territoryById(brush)) {
+            // 같은 영토로 이미 칠한 곳을 다시 누르면 지운다
+            if (unrecovered[key] === brush) delete unrecovered[key]; else unrecovered[key] = brush;
+        }
+        refreshUI();
     }
-    function seatOptions(person) {
-        const groups = new Map();
-        seats().forEach(s => {
-            const holder = pidOf(s) ? personById(pidOf(s)) : null;
-            if (holder && holder.id === person.id) return;
-            const now = holder ? holder.name : s.name();
-            if (!groups.has(s.group)) groups.set(s.group, []);
-            groups.get(s.group).push(`<option value="${esc(s.key)}">${esc(s.label)}${now ? ` — 지금: ${esc(now)}` : ''}</option>`);
-        });
-        return '<option value="">＋ 자리 배정…</option>' + [...groups.entries()].map(([g, o]) => `<optgroup label="${esc(g)}">${o.join('')}</optgroup>`).join('')
-            + '<optgroup label="내각"><option value="__newcm">새 내각 구성원 자리로 추가</option></optgroup>';
+    function setBrush(b) {
+        brush = brush === b ? null : b;
+        refreshUI();
     }
-    function candOptions() {
-        const out = ['<option value="">＋ 지역구 후보로…</option>'];
-        chs().forEach(ch => {
-            const keys = typeof districtSortedKeys === 'function' ? districtSortedKeys(ch) : [];
-            if (!keys.length) return;
-            out.push(`<optgroup label="${esc(chName(ch))}">${keys.map(k => `<option value="${esc(ch)}|${esc(k)}">${esc((districtNames[ch] && districtNames[ch][k]) || k)}</option>`).join('')}</optgroup>`);
-        });
-        return out.join('');
-    }
-    const KIND_ICON = { district: '🗳', list: '📜', independent: '🗳', leader: '★', floor: '☆', cabinet: '🏛' };
 
-    function render() {
-        const box = document.getElementById('contentPeople');
-        if (!box || !box.classList.contains('active')) return;
-        const all = seats();
-        const posMap = new Map();
-        all.forEach(s => { const id = pidOf(s); if (id) { if (!posMap.has(id)) posMap.set(id, []); posMap.get(id).push(s); } });
-        const q = ui.q.trim().toLowerCase();
-        const list = S.people.filter(p => {
-            if (q && !(p.name || '').toLowerCase().includes(q)) return false;
-            const n = (posMap.get(p.id) || []).length;
-            if (ui.filter === 'seated' && !n) return false;
-            if (ui.filter === 'none' && n) return false;
-            if (ui.filter === 'cand' && !candidaciesOf(p.id).length) return false;
-            return true;
-        });
-        const counts = { all: S.people.length, seated: S.people.filter(p => posMap.has(p.id)).length };
-        counts.none = counts.all - counts.seated;
-        counts.cand = S.people.filter(p => candidaciesOf(p.id).length).length;
-        const le = S.lastElection;
-        box.innerHTML = `
-            <div class="t67-intro">인물을 미리 만들어 두고 의석 · 당직 · 내각 자리에 배정합니다. 이름 · 사진을 여기서 고치면 배정된 모든 자리에 반영되고, 선거 · 당적 변경 · 궐석으로 자리가 사라져도 인물은 남아요.</div>
-            <div class="t67-bar">
-                <button type="button" class="t67-btn t67-primary" data-act="add">＋ 사람 추가</button>
-                <button type="button" class="t67-btn" data-act="import" title="의원 · 당수 · 원내대표 · 내각 자리에 적힌 이름으로 인물을 만들고 연결 (같은 이름은 한 사람)">의원 · 내각에서 가져오기</button>
-                <input type="search" class="t67-search" data-ui="q" placeholder="이름 검색" value="${esc(ui.q)}">
-            </div>
-            <div class="system-radio-group t67-filter">${[['all', '전체'], ['seated', '자리 있음'], ['none', '자리 없음'], ['cand', '지역구 후보']].map(([k, t]) => `<button type="button" class="system-radio-btn ${ui.filter === k ? 'active' : ''}" data-filter="${k}">${t} <span class="t67-n">${counts[k]}</span></button>`).join('')}</div>
-            ${le ? `<div class="t67-result"><b>지난 선거 (${esc(le.chamber)}${le.date ? ` · ${esc(le.date)}` : ''})</b>
-                ${le.elected.length ? `<div>✔ 당선 · 배정: ${le.elected.map(x => `${esc((personById(x.personId) || {}).name || '?')} <span class="t67-dim">(${esc(x.place)})</span>`).join(', ')}</div>` : ''}
-                ${le.lost.length ? `<div>✘ 낙선: ${le.lost.map(x => `${esc((personById(x.personId) || {}).name || '?')} <span class="t67-dim">(${esc(x.place)})</span>`).join(', ')} — 사람 탭에 남아 다음 선거에 다시 나갈 수 있어요</div>` : ''}
-                <button type="button" class="t67-x" data-act="clearres" title="닫기">✕</button></div>` : ''}
-            <div id="t67List" class="t67-list">${list.length ? list.map(p => card(p, posMap.get(p.id) || [])).join('') : `<div class="t67-empty">${S.people.length ? '조건에 맞는 사람이 없습니다.' : '아직 사람이 없습니다. "＋ 사람 추가"로 만들거나, "의원 · 내각에서 가져오기"로 지금 자리에 적힌 이름을 인물로 옮겨 보세요.'}</div>`}</div>`;
-        bind(box);
+    // ---- 이 지역구가 속한 미수복 지역 종류 고르기 (국가 › 지역의 편집 칸, 국가 › 미수복의 선택 칸 공용) ----
+    function kindSelectHtml(key) {
+        const cur = isUnrec(key) ? unrecovered[key] : '';
+        return `<select class="teaser-unrec-select">
+                <option value="">— 아님 (일반 지역구) —</option>
+                ${territories.map(t => `<option value="${esc(t.id)}" ${t.id === cur ? 'selected' : ''}>${esc(t.name)}</option>`).join('')}
+                <option value="__new">+ 새 종류</option>
+            </select>`;
     }
-    function card(p, pos) {
-        const party = partyById(p.partyId);
-        const color = party ? party.color : '#777';
-        const facs = party ? (party.factions || []) : [];
-        const cands = candidaciesOf(p.id);
-        const open = ui.openId === p.id;
-        return `<div class="t67-card ${open ? 'open' : ''}" data-id="${esc(p.id)}" style="--pc:${esc(color)}">
-            <div class="t67-head">
-                <span class="drag-handle t67-handle" title="끌어서 순서 바꾸기">⋮⋮</span>
-                <label class="leader-photo-box t67-photo" title="사진">${p.photo ? `<img src="${p.photo}" alt="">` : '<div class="photo-ph">👤</div>'}<input type="file" accept="image/*" data-f="photo"></label>
-                <div class="t67-main">
-                    <input type="text" class="t67-name" data-f="name" value="${esc(p.name)}" placeholder="이름">
-                    <div class="t67-sub"><i class="t67-dot"></i>${esc(party ? party.name : '무소속 · 정당 없음')}${p.ideologyId != null && ideologyName(+p.ideologyId) ? ` · ${esc(ideologyName(+p.ideologyId))}` : ''}</div>
-                    <div class="t67-chips">${pos.map(s => `<span class="t67-chip">${KIND_ICON[s.kind] || '•'} ${esc(s.kind === 'district' || s.kind === 'list' || s.kind === 'independent' ? `${s.group} · ${s.label}` : s.label)}<button type="button" data-unassign="${esc(s.key)}" title="자리에서 빼기 (인물은 남음)">×</button></span>`).join('')}
-                        ${cands.map(c => `<span class="t67-chip t67-cand">🎯 ${esc(placeName(c.ch, c.key))} 후보<button type="button" data-uncand="${esc(c.ch)}|${esc(c.key)}" title="후보 취소">×</button></span>`).join('')}
-                        ${!pos.length && !cands.length ? '<span class="t67-none">자리 없음</span>' : ''}</div>
+    function bindKindSelect(box, key) {
+        box.querySelector('select').addEventListener('change', e => {
+            const v = e.target.value;
+            setUnrecovered(key, v === '__new' ? addTerritory().id : v);
+        });
+    }
+    const origPanel = window.districtRenderNamePanel;
+    window.districtRenderNamePanel = function () {
+        const r = origPanel.apply(this, arguments);
+        const panel = document.getElementById('districtNamePanel');
+        const key = typeof selectedDistrictKey !== 'undefined' ? selectedDistrictKey : null;
+        if (panel && key && panel.style.display !== 'none') {
+            const box = document.createElement('label');
+            box.className = 'teaser-unrec-toggle';
+            box.innerHTML = `미수복 지역 ${kindSelectHtml(key)}
+                <span class="teaser-dim">— 실제로 다스리지 못하는 지역구 (선거 · 의석에서 빠짐) · 종류는 국가 › 미수복에서 관리</span>`;
+            bindKindSelect(box, key);
+            panel.insertBefore(box, panel.children[1] || null);
+        }
+        return r;
+    };
+
+    function setUnrecovered(key, id) {
+        if (id && territoryById(id)) unrecovered[key] = id; else delete unrecovered[key];
+        refreshUI();
+    }
+    function dropTerritory(id) {
+        keysOf(id).forEach(k => delete unrecovered[k]);
+        territories = territories.filter(x => x.id !== id);
+        if (brush === id) brush = null;
+        refreshUI();
+    }
+    // 종류별 통합 — 그 종류의 미수복 지역만 되찾아 일반 지역구로 편입 (다른 종류는 그대로)
+    function unifyTerritory(id) {
+        const t = territoryById(id);
+        if (!t) return;
+        const n = keysOf(id).length;
+        if (!n) { dropTerritory(id); return; }
+        showCustomConfirm(`"${t.name}"의 미수복 지역 ${n}곳을 되찾아 본국에 통합합니다 (일반 지역구로 편입 · 다른 미수복 지역은 그대로). 계속하시겠습니까?`, () => dropTerritory(id));
+    }
+    function removeTerritory(id) {
+        const t = territoryById(id);
+        if (!t) return;
+        const n = keysOf(id).length;
+        if (!n) { dropTerritory(id); return; }
+        showCustomConfirm(`"${t.name}" 종류를 지웁니다. 이 종류로 칠한 지역구 ${n}곳은 일반 지역구로 돌아갑니다. 계속하시겠습니까?`, () => dropTerritory(id));
+    }
+    function unifyAll() {
+        const n = Object.keys(unrecovered).filter(isUnrec).length;
+        if (!n) return;
+        showCustomConfirm(`모든 종류의 미수복 지역 ${n}곳을 되찾아 일반 지역구로 편입합니다. 계속하시겠습니까?`, () => {
+            unrecovered = {};
+            territories = [];
+            brush = null;
+            refreshUI();
+        });
+    }
+
+    // ---- 국가 › 미수복 탭 신설 (국가 › 지역 · 권역은 1.6.0부터 본 화면에 있음) ----
+    // (사이드바 · 모바일 탭 바는 js/sidenav.js가 페이지가 다 읽힌 뒤 탭 버튼을 보고 만드므로, 그 전에 버튼 · 내용을 넣어 둔다)
+    function el(html) { const d = document.createElement('div'); d.innerHTML = html.trim(); return d.firstChild; }
+    (function addUnrecTab() {
+        const nation = document.getElementById('mainContentNation');
+        const nationBar = nation && nation.querySelector(':scope > .sub-tab-container');
+        const districtContent = document.getElementById('elecSubDistrict');
+        if (!nationBar || !districtContent) return;
+        const settingsBtn = document.getElementById('subTabNationSettings');
+        const settings = document.getElementById('contentNationSettings');
+        // 예전 화면(여론 › 지역구가 있던 1.5.9)이면 지역구 편집을 국가 › 지역으로 옮겨 둔다
+        if (!document.getElementById('subTabTerritory')) {
+            const namePanel = document.getElementById('districtNamePanel');
+            nationBar.insertBefore(el(`<button class="sub-tab-btn" onclick="switchSubTab('nation','territory')" id="subTabTerritory">지역</button>`), settingsBtn);
+            const territory = el(`<div id="contentTerritory" class="sub-tab-content"></div>`);
+            nation.insertBefore(territory, settings);
+            if (namePanel) territory.appendChild(namePanel);
+            territory.appendChild(districtContent);
+            districtContent.classList.remove('sub-tab-content');
+            document.getElementById('elecSubTabDistrict')?.remove();
+            document.getElementById('elecSubTabTendency')?.classList.add('active');
+            document.getElementById('elecSubTendency')?.classList.add('active');
+            legacyTabs = true;
+        }
+        nationBar.insertBefore(el(`<button class="sub-tab-btn" onclick="switchSubTab('nation','unrecovered')" id="subTabUnrecovered">미수복</button>`), settingsBtn);
+        nation.insertBefore(el(`<div id="contentUnrecovered" class="sub-tab-content"></div>`), settings);
+        districtContent.insertBefore(el(`<div id="teaserUnrecLink" class="teaser-unrec-link"></div>`), districtContent.firstChild);
+    })();
+    var legacyTabs; // 예전 화면에서 지역구 편집을 옮겼는지
+    const onTab = sub => typeof currentMainTab !== 'undefined' && currentMainTab === 'nation' && typeof currentSubTab !== 'undefined' && currentSubTab.nation === sub;
+    function onUnrecTab() { return onTab('unrecovered'); }
+    // 오른쪽 화면에 지역구 지도를 띄운다 (국가 › 지역을 열 때와 같은 준비)
+    function showDistrictMap() {
+        if (typeof showTerritoryTab === 'function') { showTerritoryTab(); return; }
+        const t = document.getElementById('dispTabDistrict');
+        if (t) t.style.display = '';
+        if (typeof switchDispTab === 'function') switchDispTab('district');
+        if (typeof districtUpdateModeUI === 'function') districtUpdateModeUI();
+        setTimeout(() => { if (typeof districtInitCanvas === 'function') districtInitCanvas(); }, 80);
+    }
+    const origSwitchSub = window.switchSubTab;
+    window.switchSubTab = function (main, sub) {
+        const r = origSwitchSub.apply(this, arguments);
+        if (main === 'nation' && sub === 'territory') {
+            if (legacyTabs) showDistrictMap();
+            renderUnrecLink();
+        }
+        if (main === 'nation' && sub === 'unrecovered') { showDistrictMap(); renderUnrecTab(); }
+        if (main === 'nation' && sub !== 'unrecovered' && brush) { brush = null; refreshUI(); }
+        return r;
+    };
+    const origMain = window.switchMainTab;
+    window.switchMainTab = function (main) {
+        const r = origMain.apply(this, arguments);
+        if (main !== 'nation' && brush) { brush = null; refreshUI(); }
+        return r;
+    };
+    // 예전 화면: 여론 › 지역구 바로가기는 국가 › 지역으로 (1.6.0부터는 본 화면이 직접 처리)
+    if (legacyTabs) {
+        const origElecSub = window.elecSwitchSub;
+        window.elecSwitchSub = function (sub) {
+            if (sub === 'district') { window.switchSubTab('nation', 'territory'); return; }
+            return origElecSub.apply(this, arguments);
+        };
+    }
+
+    // ---- 국가 › 지역 위쪽: 미수복 요약 한 줄 ----
+    function renderUnrecLink() {
+        const box = document.getElementById('teaserUnrecLink');
+        if (!box) return;
+        const total = Object.keys(unrecovered).filter(isUnrec).length;
+        box.innerHTML = `<span>미수복 지역 ${total}곳${territories.length ? ` (${territories.length}종류)` : ''}</span>
+            <button type="button" class="teaser-btn">국가 › 미수복에서 관리</button>`;
+        box.querySelector('button').addEventListener('click', () => window.switchSubTab('nation', 'unrecovered'));
+    }
+
+    // ---- 국가 › 미수복: 종류 목록 · 칠하기 도구 · 종류별 통합 · 영토 통일 ----
+    function renderUnrecTab() {
+        const host = document.getElementById('contentUnrecovered');
+        if (!host) return;
+        const total = Object.keys(unrecovered).filter(isUnrec).length;
+        const LIMIT = 40;
+        const cards = territories.map(t => {
+            const keys = keysOf(t.id);
+            return `<div class="teaser-terr ${brush === t.id ? 'painting' : ''}" data-id="${esc(t.id)}">
+                <div class="teaser-terr-head">
+                    <input type="color" class="teaser-terr-color" value="${esc(t.color)}" title="빗금 색">
+                    <input type="text" class="teaser-terr-name" value="${esc(t.name)}" maxlength="40" title="종류 이름">
                 </div>
-                <button type="button" class="t67-more" data-act="toggle" title="자세히">${open ? '▴' : '▾'}</button>
-            </div>
-            ${open ? `<div class="t67-body">
-                <div class="t67-grid">
-                    <label>이념<select data-f="ideologyId">${ideologyOptions(p.ideologyId)}</select></label>
-                    <label>소속 정당<select data-f="partyId"><option value="">— 정당 없음 —</option>${parties.filter(x => x.ideologyId !== IND).map(x => `<option value="${esc(x.id)}" ${sameId(x.id, p.partyId) ? 'selected' : ''}>${esc(x.name)}</option>`).join('')}</select></label>
-                    <label>파벌<select data-f="factionId" ${facs.length ? '' : 'disabled'}><option value="">— 파벌 없음 —</option>${facs.map(f => `<option value="${esc(f.id)}" ${sameId(f.id, p.factionId) ? 'selected' : ''}>${esc(f.name)}</option>`).join('')}</select></label>
+                <div class="teaser-terr-actions">
+                    <span class="teaser-dim">${keys.length}곳</span>
+                    <button type="button" class="teaser-btn teaser-paint ${brush === t.id ? 'active' : ''}">${brush === t.id ? '칠하는 중' : '칠하기'}</button>
+                    <button type="button" class="teaser-btn teaser-unify-one">통합</button>
+                    <button type="button" class="teaser-btn teaser-del">삭제</button>
                 </div>
-                <div class="t67-row"><select data-act="assign" class="t67-grow">${seatOptions(p)}</select><select data-act="cand" class="t67-grow">${candOptions()}</select></div>
-                <textarea data-f="bio" rows="2" placeholder="메모 · 약력">${esc(p.bio || '')}</textarea>
-                <div class="t67-row t67-end"><button type="button" class="t67-btn t67-danger" data-act="del">사람 지우기</button></div>
-            </div>` : ''}
-        </div>`;
-    }
-    function bind(box) {
-        const on = (sel, fn) => box.querySelectorAll(sel).forEach(b => { b.onclick = e => fn(b, e); });
-        on('[data-act="add"]', () => { const p = { id: uid(), name: '', photo: '', ideologyId: null, partyId: null, factionId: null, bio: '' }; S.people.unshift(p); ui.openId = p.id; ui.filter = 'all'; ui.q = ''; render(); const n = box.querySelector(`.t67-card[data-id="${p.id}"] .t67-name`); if (n) n.focus(); });
-        on('[data-act="import"]', importFromSeats);
-        on('[data-act="clearres"]', () => { S.lastElection = null; render(); });
-        on('[data-filter]', b => { ui.filter = b.dataset.filter; render(); });
-        const q = box.querySelector('[data-ui="q"]');
-        if (q) q.oninput = () => { ui.q = q.value; const pos = q.selectionStart; render(); const q2 = box.querySelector('[data-ui="q"]'); if (q2) { q2.focus(); q2.setSelectionRange(pos, pos); } };
-        box.querySelectorAll('.t67-card').forEach(c => {
-            const p = personById(c.dataset.id); if (!p) return;
-            const q1 = s => c.querySelector(s);
-            q1('[data-act="toggle"]').onclick = () => { ui.openId = ui.openId === p.id ? null : p.id; render(); };
-            c.querySelectorAll('[data-f]').forEach(i => {
-                const f = i.dataset.f;
-                if (f === 'photo') i.onchange = () => { const file = i.files && i.files[0]; if (!file) return; const rd = new FileReader(); rd.onload = e => { p.photo = e.target.result; push(p); rerender(); render(); }; rd.readAsDataURL(file); };
-                else if (f === 'name') { i.oninput = () => { p.name = i.value; }; i.onchange = () => { push(p); rerender(); render(); }; }
-                else if (f === 'bio') i.oninput = () => { p.bio = i.value; };
-                else i.onchange = () => {
-                    const v = i.value === '' ? null : i.value;
-                    if (f === 'partyId') { const party = partyById(v); p.partyId = party ? party.id : null; p.factionId = null; if (party && p.ideologyId == null) p.ideologyId = party.ideologyId; }
-                    else if (f === 'ideologyId') p.ideologyId = v == null ? null : +v;
-                    else p[f] = v;
-                    render();
-                };
-            });
-            const as = q1('[data-act="assign"]');
-            if (as) as.onchange = () => {
-                if (as.value === '__newcm') {
-                    const cm = { id: Date.now(), name: '', position: '장관', photo: '', partyId: null, linkedSeat: null };
-                    cabinetMembers.push(cm);
-                    assign(p.id, `c:cm:${cm.id}`);
-                } else if (as.value) assign(p.id, as.value);
-            };
-            const cs = q1('[data-act="cand"]');
-            if (cs) cs.onchange = () => {
-                if (!cs.value) return;
-                const [ch, key] = cs.value.split('|');
-                const list = candOf(ch)[key] || (candOf(ch)[key] = []);
-                if (!list.includes(p.id)) list.push(p.id);
-                if (!p.partyId) showCustomAlert('정당이 없는 후보는 당선돼도 자리에 자동으로 배정되지 않습니다 — 소속 정당을 정해 두세요 (무소속 당선은 자리 배정으로 직접).');
-                render();
-            };
-            c.querySelectorAll('[data-unassign]').forEach(b => { b.onclick = () => unassign(b.dataset.unassign); });
-            c.querySelectorAll('[data-uncand]').forEach(b => { b.onclick = () => { const [ch, key] = b.dataset.uncand.split('|'); candOf(ch)[key] = (candOf(ch)[key] || []).filter(x => x !== p.id); if (!candOf(ch)[key].length) delete candOf(ch)[key]; render(); }; });
-            const del = q1('[data-act="del"]');
-            if (del) del.onclick = () => showCustomConfirm(`${p.name || '(이름 없음)'}을(를) 지울까요? 배정된 자리에서도 빠집니다 (자리는 남고 이름 · 사진만 비워짐).`, () => {
-                positionsOf(p.id).forEach(s => write(s, null));
-                Object.keys(S.candidates).forEach(ch => Object.keys(S.candidates[ch]).forEach(k => { S.candidates[ch][k] = S.candidates[ch][k].filter(x => x !== p.id); if (!S.candidates[ch][k].length) delete S.candidates[ch][k]; }));
-                S.people = S.people.filter(x => x !== p);
-                rerender(); render();
-            });
-            const h = q1('.t67-handle');
-            if (h && typeof startDragReorder === 'function' && !ui.q && ui.filter === 'all') startDragReorder(h, 't67List', '.t67-card', S.people, render);
+                ${keys.length ? `<div class="teaser-chips">${keys.slice(0, LIMIT).map(k => `<span class="teaser-chip" data-key="${esc(k)}">${esc(nameOf(k))}<button type="button" title="이 지역구 빼기">×</button></span>`).join('')}${keys.length > LIMIT ? `<span class="teaser-dim teaser-small">외 ${keys.length - LIMIT}곳</span>` : ''}</div>` : '<div class="teaser-dim teaser-small">아직 칠한 지역구가 없습니다</div>'}
+            </div>`;
+        }).join('');
+        const sel = typeof selectedDistrictKey !== 'undefined' ? selectedDistrictKey : null;
+        host.innerHTML = `
+            <div class="teaser-unrec-summary">
+                <div class="teaser-unrec-row">
+                    <span class="teaser-unrec-count">미수복 지역 ${territories.length}종류 · ${total}곳</span>
+                    <button type="button" class="teaser-unify" ${total ? '' : 'disabled'}>영토 통일 (전체)</button>
+                </div>
+                <div class="teaser-dim teaser-small">실제로 다스리지 못하는 지역구 — 선거 · 의석에서 빠지고 지도에 종류별 빗금으로 표시됩니다. 종류마다 따로 본국에 통합할 수 있습니다.</div>
+                <div class="teaser-unrec-row teaser-label-color">
+                    <span class="teaser-dim">지도의 지역 이름 색</span>
+                    <span class="system-radio-group" style="margin:0;">
+                        <button type="button" class="system-radio-btn ${labelColor === 'same' ? 'active' : ''}" data-lcolor="same">다른 지역과 같게</button>
+                        <button type="button" class="system-radio-btn ${labelColor === 'hatch' ? 'active' : ''}" data-lcolor="hatch">빗금 색으로</button>
+                    </span>
+                </div>
+                <div class="teaser-add-row">
+                    <input type="text" class="teaser-add-name" maxlength="40" placeholder="새 종류 이름 (예: 오스트리아, 알자스로렌-룩셈부르크, 동방영토, 북방영토)">
+                    <button type="button" class="teaser-btn teaser-add">+ 종류 추가</button>
+                </div>
+                ${cards}
+                <div class="teaser-tools">
+                    <button type="button" class="teaser-btn teaser-erase ${brush === 'erase' ? 'active' : ''}" ${total ? '' : 'disabled'}>${brush === 'erase' ? '지우는 중' : '지우개'}</button>
+                </div>
+                <div class="teaser-dim teaser-small">${brush
+                    ? (brush === 'erase' ? '오른쪽 지도에서 미수복 지역을 눌러 일반 지역구로 돌립니다. 다시 "지우는 중"을 누르면 끝납니다.'
+                        : `오른쪽 지도에서 지역구를 차례로 눌러 "${esc(territoryById(brush)?.name || '')}"로 칠합니다 (같은 종류로 칠한 곳을 다시 누르면 지움). 다시 "칠하는 중"을 누르면 끝납니다.`)
+                    : (territories.length ? '"칠하기"를 누른 뒤 오른쪽 지도에서 지역구를 차례로 눌러 여러 곳을 한 번에 칠하세요. 칠하기 도구를 끈 채 지역구를 누르면 아래에서 종류를 고를 수 있습니다.'
+                        : '종류를 추가하고 "칠하기"로 오른쪽 지도에서 지역구를 칠하세요.')}</div>
+                ${sel && !brush ? `<label class="teaser-unrec-toggle teaser-sel">선택한 지역구: <b>${esc(nameOf(sel))}</b> ${kindSelectHtml(sel)}</label>` : ''}
+            </div>`;
+        host.querySelector('.teaser-unify').addEventListener('click', unifyAll);
+        host.querySelectorAll('[data-lcolor]').forEach(b => b.addEventListener('click', () => { labelColor = b.dataset.lcolor; refreshUI(); }));
+        const nameInput = host.querySelector('.teaser-add-name');
+        const add = () => { brush = addTerritory(nameInput.value.trim()).id; refreshUI(); };
+        host.querySelector('.teaser-add').addEventListener('click', add);
+        nameInput.addEventListener('keydown', e => { if (e.key === 'Enter') add(); });
+        host.querySelector('.teaser-erase').addEventListener('click', () => setBrush('erase'));
+        const selBox = host.querySelector('.teaser-sel');
+        if (selBox) bindKindSelect(selBox, sel);
+        host.querySelectorAll('.teaser-terr').forEach(card => {
+            const id = card.dataset.id, t = territoryById(id);
+            card.querySelector('.teaser-paint').addEventListener('click', () => setBrush(id));
+            card.querySelector('.teaser-unify-one').addEventListener('click', () => unifyTerritory(id));
+            card.querySelector('.teaser-del').addEventListener('click', () => removeTerritory(id));
+            card.querySelector('.teaser-terr-name').addEventListener('change', e => { t.name = e.target.value.trim() || t.name; refreshUI(); });
+            card.querySelector('.teaser-terr-color').addEventListener('change', e => { t.color = e.target.value; refreshUI(); });
+            card.querySelectorAll('.teaser-chip button').forEach(b => b.addEventListener('click', () => setUnrecovered(b.parentElement.dataset.key, null)));
         });
     }
-    function refresh() { render(); }
 
-    window.T67 = { get people() { return S.people; }, get candidates() { return S.candidates; }, get lastElection() { return S.lastElection; }, seats, assign, unassign, importFromSeats, positionsOf };
+    function refreshUI() {
+        renderUnrecTab();
+        renderUnrecLink();
+        try {
+            if (typeof districtRedrawAllMaps === 'function') districtRedrawAllMaps();
+            if (typeof renderDistrictListPanel === 'function') renderDistrictListPanel();
+            if (typeof elecUpdateDistrictInfo === 'function') elecUpdateDistrictInfo();
+            if (typeof selectedDistrictKey !== 'undefined' && selectedDistrictKey) window.districtRenderNamePanel();
+        } catch (e) { /* 아직 화면이 덜 그려진 시점 */ }
+    }
 
-    const css = document.createElement('style');
-    css.textContent = `
-        .t67-intro { font-size: .8rem; color: #8a94a3; margin-bottom: 8px; line-height: 1.5; }
-        .t67-bar { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
-        .t67-search { flex: 1; min-width: 120px; }
-        .t67-btn { cursor: pointer; background: transparent; border: 1px solid #333; color: #aaa; font-family: inherit; padding: 5px 10px; }
-        .t67-btn:hover { border-color: var(--tno-neon); color: var(--tno-neon); }
-        .t67-primary { border-color: var(--tno-neon); color: var(--tno-neon); }
-        .t67-danger { color: var(--tno-alert, #e74c3c); border-color: currentColor; }
-        .t67-filter { margin-bottom: 8px; }
-        .t67-n { opacity: .6; font-size: .85em; }
-        .t67-result { position: relative; font-size: .8rem; line-height: 1.6; border: 1px solid #2a2a2a; border-left: 3px solid var(--tno-gold); padding: 6px 28px 6px 8px; margin-bottom: 8px; }
-        .t67-result .t67-x { position: absolute; top: 4px; right: 4px; }
-        .t67-x { cursor: pointer; background: transparent; border: 1px solid #333; color: #777; font-family: inherit; padding: 0 6px; }
-        .t67-dim { color: #777; }
-        .t67-list { display: flex; flex-direction: column; gap: 6px; }
-        .t67-empty { color: #666; font-size: .82rem; text-align: center; padding: 20px 8px; }
-        .t67-card { border: 1px solid #2a2a2a; border-left: 3px solid var(--pc); background: rgba(0,0,0,.2); }
-        .t67-head { display: flex; gap: 8px; align-items: flex-start; padding: 6px; }
-        .t67-handle { align-self: center; }
-        .t67-photo { width: 44px; height: 56px; flex-shrink: 0; } .t67-photo img { width: 100%; height: 100%; object-fit: cover; }
-        .t67-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
-        .t67-name { width: 100%; box-sizing: border-box; }
-        .t67-sub { font-size: .74rem; color: #8a94a3; display: flex; align-items: center; gap: 5px; }
-        .t67-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--pc); display: inline-block; flex: none; }
-        .t67-chips { display: flex; flex-wrap: wrap; gap: 4px; }
-        .t67-chip { display: inline-flex; align-items: center; gap: 3px; font-size: .72rem; border: 1px solid #333; padding: 1px 2px 1px 6px; color: #bbb; }
-        .t67-chip button { cursor: pointer; background: transparent; border: 0; color: #777; font-family: inherit; padding: 0 3px; }
-        .t67-chip button:hover { color: var(--tno-alert, #e74c3c); }
-        .t67-cand { border-style: dashed; color: var(--tno-gold); }
-        .t67-none { font-size: .72rem; color: #666; border: 1px dashed #333; padding: 1px 6px; }
-        .t67-more { cursor: pointer; background: transparent; border: 1px solid #333; color: #888; font-family: inherit; padding: 2px 8px; align-self: flex-start; }
-        .t67-body { padding: 0 8px 8px; display: flex; flex-direction: column; gap: 6px; }
-        .t67-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 6px; }
-        .t67-grid label { display: flex; flex-direction: column; gap: 2px; font-size: .72rem; color: #8a94a3; }
-        .t67-row { display: flex; gap: 6px; flex-wrap: wrap; } .t67-grow { flex: 1; min-width: 150px; } .t67-end { justify-content: flex-end; }
-        .t67-body textarea { width: 100%; box-sizing: border-box; resize: vertical; font-family: inherit; }
-        html[data-theme-family="modern"] .t67-card { border-color: var(--m-border); border-left-color: var(--pc); background: var(--m-surface); border-radius: 8px; }
-        html[data-theme-family="modern"] .t67-btn, html[data-theme-family="modern"] .t67-more, html[data-theme-family="modern"] .t67-x { border-color: var(--m-border-strong); color: var(--m-text); border-radius: 8px; }
-        html[data-theme-family="modern"] .t67-primary { background: var(--m-accent, #2563eb); border-color: transparent; color: #fefefe; }
-        html[data-theme-family="modern"] .t67-chip { border-color: var(--m-border); color: var(--m-text); border-radius: 999px; }
-        html[data-theme-family="modern"] .t67-result { border-color: var(--m-border); border-left-color: #b07d10; border-radius: 8px; }`;
-    document.head.appendChild(css);
+    const style = document.createElement('style');
+    style.textContent = `
+        .teaser-unrec-summary { margin-bottom: 10px; padding: 8px 10px; border: 1px dashed var(--tno-gold); background: rgba(255,215,0,.04); font-size: .85rem; }
+        .teaser-unrec-count { font-weight: bold; }
+        .teaser-unrec-row { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; color: #ccc; }
+        .teaser-unify { cursor: pointer; font-family: inherit; font-size: .8rem; background: transparent; border: 1px solid var(--tno-neon); color: var(--tno-neon); padding: 4px 10px; }
+        .teaser-unify:disabled { opacity: .4; cursor: default; }
+        .teaser-dim { color: #777; }
+        .teaser-small { font-size: .75rem; margin-top: 4px; line-height: 1.5; }
+        .teaser-unrec-toggle { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin: 4px 0 8px; font-size: .85rem; color: var(--tno-gold); cursor: pointer; }
+        .teaser-unrec-toggle .teaser-dim { flex-basis: 100%; font-size: .72rem; }
+        .teaser-unrec-select { font-family: inherit; font-size: .8rem; background: #111; color: inherit; border: 1px solid #444; padding: 2px 4px; max-width: 100%; }
+        .teaser-unrec-link { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; padding: 6px 10px; border: 1px dashed var(--tno-gold); font-size: .8rem; color: #ccc; }
+        .teaser-add-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+        .teaser-add-name { flex: 1 1 200px; min-width: 0; font-family: inherit; font-size: .8rem; background: transparent; color: inherit; border: 1px solid #444; padding: 4px 6px; }
+        .teaser-terr { margin-top: 8px; padding: 8px; border: 1px solid rgba(255,255,255,.08); }
+        .teaser-terr.painting { border-color: var(--tno-neon); box-shadow: 0 0 6px color-mix(in srgb, var(--tno-neon) 40%, transparent); }
+        .teaser-terr-head { display: flex; align-items: center; gap: 6px; }
+        .teaser-terr-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+        .teaser-terr-actions .teaser-dim { margin-right: auto; }
+        .teaser-terr-color { flex: 0 0 auto; width: 26px; height: 22px; padding: 0; border: none; background: none; cursor: pointer; }
+        .teaser-terr-name { flex: 1 1 auto; width: 100%; min-width: 0; box-sizing: border-box; font-family: inherit; font-size: .85rem; background: transparent; color: inherit; border: none; border-bottom: 1px solid #444; padding: 2px; }
+        .teaser-btn { cursor: pointer; font-family: inherit; font-size: .75rem; background: transparent; border: 1px solid #555; color: #bbb; padding: 3px 8px; white-space: nowrap; }
+        .teaser-btn.active { border-color: var(--tno-neon); color: #000; background: var(--tno-neon); }
+        .teaser-btn:disabled { opacity: .4; cursor: default; }
+        .teaser-chips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+        .teaser-chip { display: inline-flex; align-items: center; gap: 2px; font-size: .72rem; padding: 1px 2px 1px 6px; border: 1px solid #333; color: #aaa; }
+        .teaser-chip button { cursor: pointer; background: none; border: none; color: #777; font-family: inherit; font-size: .8rem; padding: 0 3px; }
+        .teaser-chip button:hover { color: #f87171; }
+        .teaser-tools { display: flex; gap: 6px; margin-top: 8px; }
+        .teaser-sel { margin-top: 10px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,.08); }
+        html[data-theme-family="modern"] .teaser-unrec-summary { border: 1px dashed var(--m-border-strong); border-radius: 12px; background: var(--m-surface-2); }
+        html[data-theme-family="modern"] .teaser-unrec-row { color: var(--m-text); }
+        html[data-theme-family="modern"] .teaser-unify { border: none; border-radius: 8px; background: var(--m-accent); color: var(--m-on-accent); font-weight: 600; }
+        html[data-theme-family="modern"] .teaser-dim { color: var(--m-text-3); }
+        html[data-theme-family="modern"] .teaser-unrec-toggle { color: var(--m-text); font-weight: 600; }
+        html[data-theme-family="modern"] .teaser-terr { border: 1px solid var(--m-border); border-radius: 10px; background: var(--m-surface); }
+        html[data-theme-family="modern"] .teaser-terr.painting { border-color: var(--m-accent); box-shadow: none; }
+        html[data-theme-family="modern"] .teaser-terr-name { border-bottom-color: var(--m-border-strong); }
+        html[data-theme-family="modern"] .teaser-unrec-link { border: 1px dashed var(--m-border-strong); border-radius: 10px; color: var(--m-text); }
+        html[data-theme-family="modern"] .teaser-add-name { border: 1px solid var(--m-border-strong); border-radius: 8px; background: var(--m-surface); }
+        html[data-theme-family="modern"] .teaser-chip { border: 1px solid var(--m-border); border-radius: 999px; color: var(--m-text-2); background: var(--m-surface-2); }
+        html[data-theme-family="modern"] .teaser-sel { border-top-color: var(--m-border); }
+        html[data-theme-family="modern"] .teaser-btn { border: 1px solid var(--m-border-strong); border-radius: 8px; color: var(--m-text-2); }
+        html[data-theme-family="modern"] .teaser-btn.active { background: var(--m-accent); color: var(--m-on-accent); border-color: var(--m-accent); }
+        html[data-theme-family="modern"] .teaser-unrec-select { background: var(--m-surface); border: 1px solid var(--m-border-strong); border-radius: 6px; }
+    `;
+    document.head.appendChild(style);
+    window.addEventListener('load', () => setTimeout(refreshUI, 0));
 })();

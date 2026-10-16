@@ -25,25 +25,25 @@
     const FULL_MENU = {
         groups: [
             { key: 'economy', icon: '💹', label: '경제', ver: '1.6.9', after: 'nation' },
-            { key: 'world', icon: '🌐', label: '세계', ver: '1.6.4', after: 'economy', items: [['subTabRanking', '국가 순위'], ['subTabBlocs', '진영']] },
+            { key: 'world', icon: '🌐', label: '세계', ver: '1.6.5', after: 'economy', items: [['subTabRanking', '국가 순위'], ['subTabBlocs', '진영']] },
         ],
         items: [
-            { main: 'setup', id: 'subTabTimeline', label: '세력 변화', ver: '1.6.4', after: 'subTabList' },
-            { main: 'setup', id: 'subTabWikibox', label: '위키 틀', ver: '1.6.4', after: 'subTabTimeline' },
-            { main: 'law', id: 'subTabSiege', label: '공성전', ver: '1.6.3', after: 'subTabVote' },
-            { main: 'cabinet', id: 'subTabMilitary', label: '군부', ver: '1.6.1', after: 'subTabCabinetmembers' },
-            { main: 'cabinet', id: 'subTabCoup', label: '쿠데타', ver: '1.6.1', after: 'subTabMilitary' },
-            { main: 'cabinet', id: 'subTabRevolution', label: '혁명', ver: '1.6.2', after: 'subTabCoup' },
-            { main: 'cabinet', id: 'subTabRoyal', label: '왕실', ver: '1.6.5', after: 'subTabRevolution' },
-            { main: 'nation', id: 'subTabUnrecovered', label: '미수복', ver: '1.6.6', after: 'subTabRegions' },
-            { main: 'nation', id: 'subTabPeople', label: '사람', ver: '1.6.7', after: 'subTabUnrecovered' },
+            { main: 'setup', id: 'subTabTimeline', label: '세력 변화', ver: '1.6.5', after: 'subTabList' },
+            { main: 'setup', id: 'subTabWikibox', label: '위키 틀', ver: '1.6.5', after: 'subTabTimeline' },
+            { main: 'law', id: 'subTabSiege', label: '공성전', ver: '1.6.4', after: 'subTabVote' },
+            { main: 'cabinet', id: 'subTabMilitary', label: '군부', ver: '1.6.2', after: 'subTabCabinetmembers' },
+            { main: 'cabinet', id: 'subTabCoup', label: '쿠데타', ver: '1.6.2', after: 'subTabMilitary' },
+            { main: 'cabinet', id: 'subTabRevolution', label: '혁명', ver: '1.6.3', after: 'subTabCoup' },
+            { main: 'cabinet', id: 'subTabRoyal', label: '왕실', ver: '1.6.6', after: 'subTabRevolution' },
+            { main: 'nation', id: 'subTabUnrecovered', label: '미수복', ver: '1.6.7', after: 'subTabRegions' },
+            { main: 'nation', id: 'subTabPeople', label: '사람', ver: '1.6.1', after: 'subTabUnrecovered' },
         ],
     };
     const LOCK_SVG = '<svg class="mn-lock" viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><rect x="3" y="7" width="10" height="7.5" rx="1.5" fill="currentColor"/>'
         + '<path d="M5.2 7V5a2.8 2.8 0 0 1 5.6 0v2" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>';
     // 잠긴 기능을 누르면 — 개발자 모드면 그 기능이 있는 Teaser 화면으로 갈지 묻고, 아니면 언제 열리는지 알려 준다
     function lockedInfo(label, ver) {
-        const page = { '1.6.1': '61', '1.6.2': '62', '1.6.3': '63', '1.6.4': '64', '1.6.5': '65', '1.6.6': '66', '1.6.7': '67' }[ver];
+        const page = { '1.6.2': '62', '1.6.3': '63', '1.6.4': '64', '1.6.5': '65', '1.6.6': '66', '1.6.7': '67', '1.6.1': '61' }[ver];
         const msg = `🔒 "${label}"은(는) ${ver} 업데이트에서 열리는 기능입니다.`;
         const dev = window.HemiDev && window.HemiDev.isOn && window.HemiDev.isOn();
         if (dev && page) {
@@ -162,7 +162,7 @@
             return { key, g, head, mainBtn, items };
         });
 
-        // ── 이 화면에 없는 1.6.6 기능을 제자리에 잠긴 항목 · 그룹으로 ──
+        // ── 이 화면에 없는 1.6.7 기능을 제자리에 잠긴 항목 · 그룹으로 ──
         const hasBtn = id => !!document.getElementById(id);
         const placeAfter = (parent, el, ref) => { if (ref && ref.parentElement === parent) parent.insertBefore(el, ref.nextSibling); else parent.appendChild(el); };
         FULL_MENU.groups.forEach(fg => {

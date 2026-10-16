@@ -143,7 +143,7 @@
         showSettingsSection((location.hash || '').slice(1));
         window.addEventListener('hashchange', () => showSettingsSection((location.hash || '').slice(1)));
 
-        // ===== 개발자 모드 — 코드를 넣으면 티저(teaser61 · 62 · 66) 화면을 열 수 있다 (js/devmode.js) =====
+        // ===== 개발자 모드 — 코드를 넣으면 티저(teaser61 ~ teaser67) 화면을 열 수 있다 (js/devmode.js) =====
         function renderDevMode(msg) {
             const on = HemiDev.isOn();
             document.getElementById('devCodeForm').hidden = on;
