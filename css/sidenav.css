@@ -47,6 +47,17 @@ html:not([data-ui-mode="mobile"]) body.has-side-nav.side-nav-collapsed .side-nav
 /* 글자 대신 아이콘만 있는 항목(⚠ 부정선거) — 다른 항목과 같은 줄 높이 안에서 세로 가운데 */
 .mn-item-icon { display: inline-flex; align-items: center; height: 1.4em; vertical-align: top; }
 .mn-item-icon svg { display: block; }
+/* 이 화면에 아직 없는 기능 (1.6.6 기준 메뉴의 잠긴 항목 · 그룹) — 누르면 언제 열리는지 안내 */
+.mn-item.mn-locked { display: flex; align-items: center; gap: 6px; opacity: .5; cursor: help; }
+.mn-item.mn-locked:hover { opacity: .8; }
+.mn-locked-label { overflow: hidden; text-overflow: ellipsis; }
+.mn-lock { flex: none; }
+.mn-lock-ver { margin-left: auto; flex: none; font-size: .68em; line-height: 1.3; padding: 0 4px; border: 1px solid currentColor; border-radius: 3px; opacity: .8; }
+.mn-group-locked > .mn-group-head { opacity: .5; cursor: help; }
+.mn-group-locked > .mn-group-head:hover { opacity: .8; }
+.mn-group-locked > .mn-group-head .mn-lock { margin-left: auto; }
+.mn-group-locked > .mn-group-head .mn-lock-ver { margin-left: 4px; }
+body.side-nav-collapsed .mn-group-locked .mn-lock, body.side-nav-collapsed .mn-group-locked .mn-lock-ver { display: none; }
 .mn-crumb-current { overflow: hidden; text-overflow: ellipsis; }
 .mn-crumb-nation { display: none; }
 
