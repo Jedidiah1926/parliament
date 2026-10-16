@@ -22,7 +22,7 @@
 (function () {
     'use strict';
     const root = document.documentElement;
-    if (root.getAttribute('data-app-mode') !== 'teaser' || !['65', '66'].includes(root.getAttribute('data-teaser'))) return;
+    if (root.getAttribute('data-app-mode') !== 'teaser' || !['65', '66', '67'].includes(root.getAttribute('data-teaser'))) return;
 
     const esc = s => (typeof escapeHtmlText === 'function' ? escapeHtmlText(String(s ?? '')) : String(s ?? ''));
     const clamp = (v, a, b) => Math.max(a, Math.min(b, v));

@@ -94,13 +94,13 @@
     /* global emergencyPowers, presElectionMode */
     const devOn = () => !!(window.HemiDev && window.HemiDev.isOn());
     // 미리보기 화면마다 담긴 기능 버전 (teaser64는 1.6.1 ~ 1.6.4, teaser66은 1.6.1 ~ 1.6.4 + 1.6.6)
-    const PAGE_HAS = { '63': ['1.6.1', '1.6.2', '1.6.3'], '64': ['1.6.1', '1.6.2', '1.6.3', '1.6.4'], '65': ['1.6.1', '1.6.2', '1.6.3', '1.6.4', '1.6.5'], '66': ['1.6.1', '1.6.2', '1.6.3', '1.6.4', '1.6.5', '1.6.6'] };
+    const PAGE_HAS = { '63': ['1.6.1', '1.6.2', '1.6.3'], '64': ['1.6.1', '1.6.2', '1.6.3', '1.6.4'], '65': ['1.6.1', '1.6.2', '1.6.3', '1.6.4', '1.6.5'], '66': ['1.6.1', '1.6.2', '1.6.3', '1.6.4', '1.6.5', '1.6.6'], '67': ['1.6.1', '1.6.2', '1.6.3', '1.6.4', '1.6.5', '1.6.6', '1.6.7'] };
     const PREVIEW_PAGES = Object.keys(PAGE_HAS);
-    const previewPageFor = l => (l && l.locked === '1.6.6' ? '66' : l && l.locked === '1.6.5' ? '65' : l && l.locked === '1.6.4' ? '64' : '63');
+    const previewPageFor = l => (l && l.locked === '1.6.7' ? '67' : l && l.locked === '1.6.6' ? '66' : l && l.locked === '1.6.5' ? '65' : l && l.locked === '1.6.4' ? '64' : '63');
     const curPage = () => document.documentElement.getAttribute('data-teaser');
     // 지금 화면이 미리보기 화면인지 — 과정을 주면 그 과정의 기능이 있는 화면인지
     const onPreviewPage = l => PREVIEW_PAGES.includes(curPage()) && (!l || !l.locked || (PAGE_HAS[curPage()] || []).includes(l.locked));
-    const previewName = l => `Teaser ${{ '63': '1.6.3', '64': '1.6.4', '65': '1.6.5', '66': '1.6.6' }[previewPageFor(l)]}`;
+    const previewName = l => `Teaser ${{ '63': '1.6.3', '64': '1.6.4', '65': '1.6.5', '66': '1.6.6', '67': '1.6.7' }[previewPageFor(l)]}`;
     const unrecLeft = () => { try { return typeof window.isDistrictUnrecovered === 'function' && Object.keys(districtGrid.house || {}).some(k => window.isDistrictUnrecovered(k)); } catch (e) { return false; } };
     const t64 = () => window.T64 || null;
     const rankSig = () => { const t = t64(); return t && t.ranking ? t.ranking.rows.map(r => `${r.id}:${r.score}`).join(',') : ''; };
@@ -700,6 +700,41 @@
                     target: () => document.getElementById('contentTerritory') || '#mainContentNation',
                     title: '통일 뒤에는',
                     text: '되찾은 지역구는 다음 총선부터 의석을 뽑아요 (서독이면 연방의회 지역구가 259석에서 331석으로 늘어요). 의회 › 의회 구성에서 총 의석도 맞춰 늘리고, 여론 › 성향에서 새 지역의 정당 성향을 정해 보세요.',
+                },
+            ],
+        },
+        {
+            id: 'people', group: 'detail', locked: '1.6.7',
+            title: '사람',
+            summary: '인물 만들기 · 의석 · 당직 · 내각 자리 배정 · 지역구 후보 · 자리가 사라져도 남는 인물',
+            steps: [
+                {
+                    before: [closePanels, go('nation', 'people'), showPanel('controls')],
+                    target: '#contentPeople',
+                    title: '사람',
+                    text: '국가 › 사람에서는 인물을 미리 만들어 둡니다 — 이름 · 사진 · 이념 · 소속 정당 · 파벌. 의석마다 이름 · 사진을 따로 적는 대신, 여기 인물을 자리에 배정해요.',
+                },
+                {
+                    before: [go('nation', 'people'), showPanel('controls')],
+                    enter: () => { T.peopleBase = (window.T67 && T67.people.length) || 0; },
+                    target: () => document.querySelector('#contentPeople [data-act="import"]') || '#contentPeople',
+                    allow: ['#contentPeople'],
+                    title: '인물 만들기',
+                    text: '"의원 · 내각에서 가져오기"를 누르면 지금 의원 · 당수 · 내각 자리에 적힌 이름으로 인물을 만들고 연결합니다 (같은 이름은 한 사람). "＋ 사람 추가"로 직접 만들어도 돼요.',
+                    task: () => !!window.T67 && T67.people.length > (T.peopleBase || 0),
+                    done: '인물이 생겼어요. 카드의 ▾를 누르면 이념 · 정당 · 파벌을 고치고 자리를 배정할 수 있습니다.',
+                },
+                {
+                    before: [go('nation', 'people'), showPanel('controls')],
+                    target: '#contentPeople',
+                    title: '자리 배정 · 지역구 후보',
+                    text: '"＋ 자리 배정"으로 지역구 · 비례 의석, 당수 · 원내대표, 대통령 · 총리 · 내각 자리에 앉힙니다 — 의원이 아닌 사람도 장관이 될 수 있어요. 이름 · 사진을 고치면 배정된 모든 자리에 반영됩니다. "＋ 지역구 후보로"로 내세우면 총선 · 보궐선거에서 그 정당이 이긴 의석에 바로 배정돼요.',
+                },
+                {
+                    before: [go('nation', 'people'), showPanel('controls')],
+                    target: '#contentPeople',
+                    title: '자리가 사라져도',
+                    text: '선거에서 지거나 당적 변경 · 궐석으로 의석이 사라져도 인물은 사람 탭에 남습니다 ("자리 없음"으로 걸러 보기). 다음 선거에 다시 후보로 내세우거나 다른 자리에 배정하세요.',
                 },
             ],
         },

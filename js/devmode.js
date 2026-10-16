@@ -13,6 +13,7 @@
         { id: '64', file: 'teaser64.html', title: 'Teaser 1.6.4', note: '세력 변화 타임라인 · 위키 틀 · 냉전 국가 순위 (+1.6.1 ~ 1.6.3)' },
         { id: '65', file: 'teaser65.html', title: 'Teaser 1.6.5', note: '왕정복고 · 전제군주정 · 왕위 계승 · 친위 쿠데타 · 공화 혁명 (+1.6.1 ~ 1.6.4)' },
         { id: '66', file: 'teaser66.html', title: 'Teaser 1.6.6', note: '미수복 지역 · 영토 통일 (+1.6.1 ~ 1.6.5)' },
+        { id: '67', file: 'teaser67.html', title: 'Teaser 1.6.7', note: '국가 › 사람 — 인물 · 자리 배정 · 지역구 후보 (+1.6.1 ~ 1.6.6)' },
     ];
 
     // cyrb53 — 짧은 53비트 문자열 해시

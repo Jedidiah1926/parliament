@@ -19,7 +19,7 @@
     'use strict';
     const root = document.documentElement;
     // 1.6.2 티저(teaser62)도 1.6.1 기능을 그대로 쓴다 — 그쪽(js/teaser62.js)은 아래 window.T61로 군정 등을 다룬다
-    if (root.getAttribute('data-app-mode') !== 'teaser' || !['61', '62', '63', '64', '65', '66'].includes(root.getAttribute('data-teaser'))) return;
+    if (root.getAttribute('data-app-mode') !== 'teaser' || !['61', '62', '63', '64', '65', '66', '67'].includes(root.getAttribute('data-teaser'))) return;
 
     const esc = s => (typeof escapeHtmlText === 'function' ? escapeHtmlText(String(s ?? '')) : String(s ?? ''));
     const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -367,7 +367,7 @@
                 <div class="t61-row t61-wrap">
                     <button type="button" class="t61-btn" data-act="transfer">민정 이양</button>
                     <button type="button" class="t61-btn" data-act="counter">역쿠데타 준비</button>
-                    ${['62', '63', '64', '65', '66'].includes(root.getAttribute('data-teaser'))
+                    ${['62', '63', '64', '65', '66', '67'].includes(root.getAttribute('data-teaser'))
                         ? `<button type="button" class="t61-btn" onclick="switchSubTab('cabinet','revolution')">혁명 →</button>`
                         : '<button type="button" class="t61-btn" disabled title="1.6.2에서">혁명 (1.6.2)</button>'}
                 </div>
