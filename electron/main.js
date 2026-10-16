@@ -2,6 +2,7 @@ const { app, BrowserWindow, Menu, ipcMain, screen, shell } = require('electron')
 const path = require('path');
 const fs = require('fs');
 const mods = require('./mods');
+const updater = require('./updater');
 
 // 데이터 폴더(세이브·설정이 든 브라우저 저장소)는 앱 이름 "Hemicycle"을 따른다.
 // 예전 이름(DATANET Parliament Simulation) 시절의 폴더가 있고 새 폴더가 아직 없으면, 처음 켤 때 한 번 통째로 옮겨 와
@@ -244,9 +245,31 @@ ipcMain.on('mods:list', event => {
 ipcMain.handle('mods:preset', (event, key) => mods.loadPreset(key));
 ipcMain.handle('mods:open-folder', () => shell.openPath(mods.modsDir()));
 ipcMain.handle('display-mode:set', (event, mode) => setDisplayMode(mode));
+// 자동 업데이트 (electron/updater.js) — 설정 화면의 "업데이트" 칸이 쓴다
+ipcMain.handle('update:get', () => updater.getState());
+ipcMain.handle('update:check', () => updater.check());
+ipcMain.handle('update:install', () => updater.install());
+ipcMain.handle('update:set-auto', (event, on) => updater.setAuto(on));
+ipcMain.handle('update:open-releases', () => updater.openReleases());
+ipcMain.handle('update:quit', () => app.quit());
+// Steam 판인지 (electron/steam.json에 appId) — js/official.js가 정식 출시 뒤에도 Steam 판은 막지 않게
+ipcMain.on('app:is-steam', event => {
+    try { event.returnValue = !!(process.env.HEMICYCLE_STEAM_APP_ID || JSON.parse(fs.readFileSync(path.join(__dirname, 'steam.json'), 'utf8')).appId); }
+    catch (e) { event.returnValue = false; }
+});
 
 app.whenReady().then(() => {
     createWindow();
+    updater.init({
+        send: st => BrowserWindow.getAllWindows().forEach(w => { if (!w.isDestroyed()) w.webContents.send('update:status', updater.getState()); }),
+        getWin: () => (mainWin && !mainWin.isDestroyed() ? mainWin : BrowserWindow.getAllWindows()[0] || null),
+        settings: { autoUpdate: saved.autoUpdate !== false },
+        save: st => { saved.autoUpdate = !!st.autoUpdate; saveWindowState(saved); },
+        // 설치하려고 다시 시작하기 전에 열린 화면마다 지금 세이브를 저장하고, "저장하지 않은 변경" 확인 창이 끄기를 막지 않게 한다
+        beforeInstall: () => Promise.all(BrowserWindow.getAllWindows().map(w => w.isDestroyed() ? null : w.webContents.executeJavaScript(
+            "try { if (typeof saveActiveNow === 'function') saveActiveNow(true); } catch (e) {} try { suppressAutosaveOnUnload = true; } catch (e) {} true;", true
+        ).catch(() => null))),
+    });
     app.on('activate', () => {
         if (BrowserWindow.getAllWindows().length === 0) createWindow();
     });

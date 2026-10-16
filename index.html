@@ -9,6 +9,7 @@
     <script src="js/thememode.js"></script>
     <script src="js/dialogs.js"></script>
     <script src="js/savefile.js"></script>
+    <script src="js/official.js"></script>
     <script src="js/theme.js"></script>
 
     <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
@@ -43,6 +44,15 @@
                 <span class="home-news-text">
                     <span class="home-news-label">Hemicycle 공식 유튜브</span>
                     <span class="home-news-desc">@Hemicycles · 업데이트 소식과 공지</span>
+                </span>
+                <span class="home-news-ext" aria-hidden="true">↗</span>
+            </a>
+            <!-- Steam 상점 — js/official.js의 official이 true일 때만 보임 (주소는 steamUrl) -->
+            <a class="home-news-item" id="homeSteamLink" hidden target="_blank" rel="noopener noreferrer">
+                <span class="home-news-icon home-news-steam" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22"><circle cx="12" cy="12" r="10" fill="currentColor"/><circle cx="15.5" cy="9" r="2.6" fill="none" stroke="#fff" stroke-width="1.6"/><circle cx="9" cy="15.5" r="1.9" fill="#fff"/><path d="M4 13.6 9 15.5M13.3 10.6 10.6 14" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/></svg></span>
+                <span class="home-news-text">
+                    <span class="home-news-label">Hemicycle Steam 상점</span>
+                    <span class="home-news-desc">찜하기 · 창작마당 · 리뷰</span>
                 </span>
                 <span class="home-news-ext" aria-hidden="true">↗</span>
             </a>
@@ -468,8 +478,8 @@
                 </button>`).join('') + `
                 <div class="home-lang-tools">
                     <button type="button" class="home-lang-more" onclick="document.getElementById('langPackFileInput').click()">언어 팩 불러오기 (.json)</button>
-                    <button type="button" class="home-lang-more" onclick="downloadLangTemplate('kr')">번역 템플릿 받기 (KR · 한국어 기준)</button>
-                    <button type="button" class="home-lang-more" onclick="downloadLangTemplate('en')">번역 템플릿 받기 (EN · 영어 기준)</button>
+                    ${window.HemiOfficial && window.HemiOfficial.playBlocked() ? '' : `<button type="button" class="home-lang-more" data-official-block onclick="downloadLangTemplate('kr')">번역 템플릿 받기 (KR · 한국어 기준)</button>
+                    <button type="button" class="home-lang-more" data-official-block onclick="downloadLangTemplate('en')">번역 템플릿 받기 (EN · 영어 기준)</button>`}
                     ${window.hemicycleDesktop && window.hemicycleDesktop.openModsFolder ? '<button type="button" class="home-lang-more" onclick="window.hemicycleDesktop.openModsFolder()">모드 폴더 열기</button>' : ''}
                 </div>`;
         }
@@ -496,6 +506,7 @@
             if(await DnoUI.confirm(`"${result.name}" 언어 팩을 불러왔습니다. 지금 이 언어로 바꿀까요?`)) { setLang(result.code); location.reload(); }
         }
         async function downloadLangTemplate(base) {
+            if(window.HemiOfficial && window.HemiOfficial.playBlocked()) { alert('정식 출시 뒤에는 이 판에서 번역 템플릿을 받을 수 없습니다 — Steam 판을 이용해 주세요.'); return; } // js/official.js
             try {
                 const text = await DnoLang.template(base);
                 const url = URL.createObjectURL(new Blob([text], { type: 'application/json' }));

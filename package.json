@@ -43,7 +43,12 @@
     },
     "win": {
       "target": [
-        { "target": "nsis", "arch": ["x64"] }
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
       ],
       "artifactName": "${productName}-${version}-win-x64.${ext}",
       "icon": "icons/icon.ico"
@@ -56,6 +61,17 @@
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true
-    }
+    },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "Jedidiah1926",
+        "repo": "parliament"
+      }
+    ],
+    "detectUpdateChannel": false
+  },
+  "dependencies": {
+    "electron-updater": "^6.8.9"
   }
 }

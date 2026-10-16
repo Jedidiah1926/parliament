@@ -98,6 +98,13 @@
         .settings-hint { color: var(--tno-text); font-size: 0.85rem; margin-top: 8px; opacity: .8; text-transform: none; }
         /* 기타 설정 › 개발자 모드 */
         .dev-code-row { display: flex; gap: 6px; }
+        /* 업데이트 (데스크톱 앱 — 설정 › 기타 설정) */
+        #updateGroup[hidden], .update-bar[hidden], #updateInstallBtn[hidden] { display: none; }
+        .update-status { font-size: .85rem; margin: 6px 0; min-height: 1.2em; }
+        .update-bar { height: 6px; background: rgba(127,127,127,.25); border-radius: 3px; overflow: hidden; margin: 4px 0 8px; }
+        .update-bar-fill { height: 100%; width: 0; background: var(--tno-neon, #2563eb); transition: width .2s; }
+        .update-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+        .update-auto { display: flex; align-items: center; gap: 6px; font-size: .85rem; cursor: pointer; }
         .dev-code-row[hidden], #devOnBox[hidden], .dev-locked-note[hidden] { display: none; }
         .dev-code-input { flex: 1; min-width: 0; background: #000; border: 1px solid var(--tno-border); color: var(--tno-neon); font-family: inherit; font-size: 1rem; padding: 10px; }
         .dev-code-input:focus { outline: none; border-color: var(--tno-neon); }
