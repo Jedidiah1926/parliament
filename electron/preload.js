@@ -18,5 +18,15 @@ contextBridge.exposeInMainWorld('hemicycleDesktop', {
     onDisplayModeChange: callback => {
         if (typeof callback !== 'function') return;
         ipcRenderer.on('display-mode:changed', (event, mode) => callback(mode));
+    },
+    // 자동 업데이트 — 상태 { status: idle|checking|none|downloading|downloaded|available|error|off, version, latest, percent, mode: auto|notify|steam|off, autoUpdate }
+    getUpdateState: () => ipcRenderer.invoke('update:get'),
+    checkForUpdates: () => ipcRenderer.invoke('update:check'),
+    installUpdate: () => ipcRenderer.invoke('update:install'),
+    setAutoUpdate: on => ipcRenderer.invoke('update:set-auto', !!on),
+    openReleases: () => ipcRenderer.invoke('update:open-releases'),
+    onUpdateStatus: callback => {
+        if (typeof callback !== 'function') return;
+        ipcRenderer.on('update:status', (event, st) => callback(st));
     }
 });

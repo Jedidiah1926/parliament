@@ -107,6 +107,18 @@
                 <section class="settings-section" id="settingsSectionEtc" data-section="etc">
                     <h2 class="settings-section-title">기타 설정</h2>
                     <div class="settings-section-desc">그 밖의 설정입니다.</div>
+                    <div class="settings-group" id="updateGroup" hidden>
+                        <div class="settings-label">UPDATE / 업데이트</div>
+                        <div class="settings-hint" id="updateVersion"></div>
+                        <div class="update-status" id="updateStatus"></div>
+                        <div class="update-bar" id="updateBarWrap" hidden><div class="update-bar-fill" id="updateBar"></div></div>
+                        <div class="update-row">
+                            <button type="button" class="lang-select-btn" id="updateCheckBtn" onclick="checkUpdateNow()">업데이트 확인</button>
+                            <button type="button" class="lang-select-btn active" id="updateInstallBtn" onclick="installUpdateNow()" hidden>지금 다시 시작해 설치</button>
+                            <button type="button" class="lang-select-btn" onclick="hemicycleDesktop.openReleases()">릴리스 페이지</button>
+                        </div>
+                        <label class="update-auto"><input type="checkbox" id="updateAutoChk" onchange="setAutoUpdate(this.checked)"> 새 버전이 GitHub Release에 올라오면 자동으로 받아 설치</label>
+                    </div>
                     <div class="settings-group">
                         <div class="settings-label">DEVELOPER MODE / 개발자 모드</div>
                         <div class="settings-hint dev-locked-note" id="devLockedNote" hidden></div>
@@ -131,6 +143,38 @@
     </div>
 
     <script>
+        // ===== 자동 업데이트 (데스크톱 앱만 — electron/updater.js) =====
+        // 설치 프로그램으로 깐 앱은 GitHub Release의 새 버전을 뒤에서 받아 두었다가 다시 시작할 때 설치,
+        // 압축판은 새 버전이 있으면 알려 주고 릴리스 페이지를 연다
+        const updApi = window.hemicycleDesktop && window.hemicycleDesktop.getUpdateState ? window.hemicycleDesktop : null;
+        function renderUpdate(st) {
+            if(!st) return;
+            document.getElementById('updateGroup').hidden = false;
+            const modeNote = { auto: '', notify: ' · 압축판 — 새 버전은 알림만 (설치 프로그램으로 깔면 자동 업데이트)', steam: ' · Steam 판 — Steam이 업데이트', off: ' · 개발 실행 — 업데이트 확인 안 함' }[st.mode] || '';
+            document.getElementById('updateVersion').textContent = `지금 버전 ${st.version}${modeNote}`;
+            const msg = {
+                idle: '', off: '', checking: '확인 중…', none: `최신 버전입니다${st.latest ? ` (${st.latest})` : ''}.`,
+                downloading: `새 버전 ${st.latest || ''} 받는 중… ${st.percent || 0}%`,
+                downloaded: `새 버전 ${st.latest || ''}을(를) 받았습니다 — 다시 시작하면 설치됩니다 (앱을 끌 때도 설치).`,
+                available: `새 버전 ${st.latest || ''}이(가) 나왔습니다 — 릴리스 페이지에서 받으세요.`,
+                error: `업데이트를 확인하지 못했습니다 (${st.error || '알 수 없는 오류'}).`,
+            }[st.status] || '';
+            document.getElementById('updateStatus').textContent = msg;
+            document.getElementById('updateBarWrap').hidden = st.status !== 'downloading';
+            document.getElementById('updateBar').style.width = (st.percent || 0) + '%';
+            document.getElementById('updateInstallBtn').hidden = st.status !== 'downloaded';
+            document.getElementById('updateCheckBtn').disabled = st.mode === 'off' || st.status === 'checking' || st.status === 'downloading';
+            document.getElementById('updateAutoChk').checked = st.autoUpdate !== false;
+            document.getElementById('updateAutoChk').disabled = st.mode === 'off' || st.mode === 'steam';
+        }
+        async function checkUpdateNow() { if(updApi) { await updApi.checkForUpdates(); renderUpdate(await updApi.getUpdateState()); } }
+        async function installUpdateNow() { if(updApi) await updApi.installUpdate(); }
+        async function setAutoUpdate(on) { if(updApi) { await updApi.setAutoUpdate(on); renderUpdate(await updApi.getUpdateState()); } }
+        if(updApi) {
+            updApi.onUpdateStatus(renderUpdate);
+            updApi.getUpdateState().then(renderUpdate);
+        }
+
         // ===== 분류 전환 — 선택한 분류는 주소(#display 등)에 남겨 새로고침해도 그대로 =====
         const SETTINGS_SECTIONS = ['theme', 'display', 'etc'];
         function showSettingsSection(key) {
