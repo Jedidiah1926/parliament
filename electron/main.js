@@ -251,6 +251,7 @@ ipcMain.handle('update:check', () => updater.check());
 ipcMain.handle('update:install', () => updater.install());
 ipcMain.handle('update:set-auto', (event, on) => updater.setAuto(on));
 ipcMain.handle('update:open-releases', () => updater.openReleases());
+ipcMain.handle('update:quit', () => app.quit());
 
 app.whenReady().then(() => {
     createWindow();
@@ -259,6 +260,10 @@ app.whenReady().then(() => {
         getWin: () => (mainWin && !mainWin.isDestroyed() ? mainWin : BrowserWindow.getAllWindows()[0] || null),
         settings: { autoUpdate: saved.autoUpdate !== false },
         save: st => { saved.autoUpdate = !!st.autoUpdate; saveWindowState(saved); },
+        // 설치하려고 다시 시작하기 전에 열린 화면마다 지금 세이브를 저장하고, "저장하지 않은 변경" 확인 창이 끄기를 막지 않게 한다
+        beforeInstall: () => Promise.all(BrowserWindow.getAllWindows().map(w => w.isDestroyed() ? null : w.webContents.executeJavaScript(
+            "try { if (typeof saveActiveNow === 'function') saveActiveNow(true); } catch (e) {} try { suppressAutosaveOnUnload = true; } catch (e) {} true;", true
+        ).catch(() => null))),
     });
     app.on('activate', () => {
         if (BrowserWindow.getAllWindows().length === 0) createWindow();

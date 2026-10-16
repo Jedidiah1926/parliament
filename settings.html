@@ -117,7 +117,7 @@
                             <button type="button" class="lang-select-btn active" id="updateInstallBtn" onclick="installUpdateNow()" hidden>지금 다시 시작해 설치</button>
                             <button type="button" class="lang-select-btn" onclick="hemicycleDesktop.openReleases()">릴리스 페이지</button>
                         </div>
-                        <label class="update-auto"><input type="checkbox" id="updateAutoChk" onchange="setAutoUpdate(this.checked)"> 새 버전이 GitHub Release에 올라오면 자동으로 받아 설치</label>
+                        <div class="settings-hint">새 버전이 GitHub Release에 올라오면 반드시 업데이트해야 합니다 — 설치판은 자동으로 받아 저장 후 다시 시작해 설치하고, 업데이트 전까지는 앱을 쓸 수 없습니다.</div>
                     </div>
                     <div class="settings-group">
                         <div class="settings-label">DEVELOPER MODE / 개발자 모드</div>
@@ -155,8 +155,9 @@
             const msg = {
                 idle: '', off: '', checking: '확인 중…', none: `최신 버전입니다${st.latest ? ` (${st.latest})` : ''}.`,
                 downloading: `새 버전 ${st.latest || ''} 받는 중… ${st.percent || 0}%`,
-                downloaded: `새 버전 ${st.latest || ''}을(를) 받았습니다 — 다시 시작하면 설치됩니다 (앱을 끌 때도 설치).`,
-                available: `새 버전 ${st.latest || ''}이(가) 나왔습니다 — 릴리스 페이지에서 받으세요.`,
+                downloaded: `새 버전 ${st.latest || ''}을(를) 받았습니다 — 저장하고 다시 시작해 설치합니다.`,
+                installing: `새 버전 ${st.latest || ''}을(를) 설치하려고 다시 시작합니다…`,
+                available: `새 버전 ${st.latest || ''}이(가) 나왔습니다 — 릴리스 페이지에서 새 설치 프로그램을 받아야 계속 쓸 수 있습니다.`,
                 error: `업데이트를 확인하지 못했습니다 (${st.error || '알 수 없는 오류'}).`,
             }[st.status] || '';
             document.getElementById('updateStatus').textContent = msg;
@@ -164,12 +165,9 @@
             document.getElementById('updateBar').style.width = (st.percent || 0) + '%';
             document.getElementById('updateInstallBtn').hidden = st.status !== 'downloaded';
             document.getElementById('updateCheckBtn').disabled = st.mode === 'off' || st.status === 'checking' || st.status === 'downloading';
-            document.getElementById('updateAutoChk').checked = st.autoUpdate !== false;
-            document.getElementById('updateAutoChk').disabled = st.mode === 'off' || st.mode === 'steam';
         }
         async function checkUpdateNow() { if(updApi) { await updApi.checkForUpdates(); renderUpdate(await updApi.getUpdateState()); } }
         async function installUpdateNow() { if(updApi) await updApi.installUpdate(); }
-        async function setAutoUpdate(on) { if(updApi) { await updApi.setAutoUpdate(on); renderUpdate(await updApi.getUpdateState()); } }
         if(updApi) {
             updApi.onUpdateStatus(renderUpdate);
             updApi.getUpdateState().then(renderUpdate);

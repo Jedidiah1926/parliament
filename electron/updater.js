@@ -1,9 +1,10 @@
 // ===== 자동 업데이트 — GitHub Release에 새 버전이 올라오면 받아서 설치 =====
-// 설치 프로그램(NSIS)으로 깐 앱: electron-updater가 Release의 업데이트 정보(latest.yml · obt.yml 등)를 보고 새 버전을 뒤에서 받아 두고,
-//   다 받으면 "지금 다시 시작해 설치할까요?"를 묻는다 (나중에 하면 앱을 끌 때 설치).
-// 압축(zip)으로 푼 앱 · Steam 판: 스스로 바꿔 끼울 수 없으므로 새 버전이 있으면 알려 주고 Release 페이지를 열어 준다 (Steam은 Steam이 업데이트).
-// 개발 중(npm start)에는 아무것도 하지 않는다.
-const { app, dialog, shell } = require('electron');
+// 업데이트는 필수 — 새 버전이 확인되면 설치하기 전까지 앱을 쓸 수 없다 (preload.js가 모든 화면을 덮는 안내를 띄움).
+// 설치 프로그램(NSIS)으로 깐 앱: electron-updater가 Release의 업데이트 정보(latest.yml)를 보고 새 버전을 받고,
+//   다 받으면 지금 세이브를 저장한 뒤 다시 시작해 설치한다.
+// 압축(zip)으로 푼 앱: 스스로 바꿔 끼울 수 없으므로 새 버전 설치 프로그램을 받으라고 막고 Release 페이지를 열어 준다.
+// Steam 판(Steam이 업데이트) · 개발 중(npm start)에는 확인하지 않는다. 인터넷이 안 돼 확인 자체를 못 하면 막지 않는다.
+const { app, shell } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const https = require('https');
@@ -12,19 +13,24 @@ const OWNER = 'Jedidiah1926';
 const REPO = 'parliament';
 const RELEASES_URL = `https://github.com/${OWNER}/${REPO}/releases`;
 const CHECK_EVERY_MS = 4 * 60 * 60 * 1000; // 켜 둔 동안 4시간마다 다시 확인
-const FIRST_CHECK_DELAY_MS = 5000;
+const FIRST_CHECK_DELAY_MS = 0; // 켜자마자 확인 — 확인되기 전에도 쓸 수 있지만, 새 버전이 있으면 바로 막는다
+const INSTALL_DELAY_MS = 3000; // 다 받은 뒤 다시 시작하기까지 (안내를 읽을 시간)
 
-let state = { status: 'idle', version: app.getVersion(), latest: null, percent: 0, error: null, mode: 'off' };
+let state = { status: 'idle', version: app.getVersion(), latest: null, percent: 0, error: null, mode: 'off', required: false, block: false };
 let send = () => {};
 let getWin = () => null;
 let settings = { autoUpdate: true };
 let saveSettings = () => {};
 let updater = null;
 let timer = null;
-let askedFor = null; // 이미 "다시 시작할까요?"를 물어본 버전 — 같은 버전은 다시 묻지 않음
+let beforeInstall = async () => {};
+let installing = false;
 
 function setState(patch) {
     state = { ...state, ...patch };
+    // 새 버전이 있다고 확인되면(받는 중 · 다 받음 · 압축판 알림) 앱을 막는다. 그 뒤 받기가 실패해도 막은 채로 "다시 시도"
+    if (['downloading', 'downloaded', 'available', 'installing'].includes(state.status)) state.required = true;
+    state.block = state.mode !== 'off' && state.mode !== 'steam' && state.required;
     try { send(state); } catch (e) { /* 창이 없을 때 */ }
 }
 
@@ -84,17 +90,7 @@ async function checkByApi(manual) {
         const rel = (Array.isArray(list) ? list : []).find(r => !r.draft && (wantPre || !r.prerelease));
         const latest = rel ? String(rel.tag_name || '').replace(/^v/, '') : null;
         if (latest && newer(latest, app.getVersion())) {
-            setState({ status: 'available', latest });
-            if (askedFor !== latest || manual) {
-                askedFor = latest;
-                const win = getWin();
-                const r = await dialog.showMessageBox(win || undefined, {
-                    type: 'info', buttons: ['다운로드 페이지 열기', '나중에'], defaultId: 0, cancelId: 1,
-                    title: 'Hemicycle 업데이트', message: `새 버전 ${latest}이(가) 나왔습니다.`,
-                    detail: state.mode === 'steam' ? 'Steam에서 업데이트하세요.' : '이 앱은 압축 파일로 실행 중이라 자동으로 바꿀 수 없습니다. 다운로드 페이지에서 설치 프로그램(Setup)을 받으면 다음부터는 자동으로 업데이트됩니다.',
-                });
-                if (r.response === 0) shell.openExternal(rel.html_url || RELEASES_URL);
-            }
+            setState({ status: 'available', latest, releaseUrl: rel.html_url || RELEASES_URL });
         } else setState({ status: 'none', latest });
     } catch (e) {
         setState({ status: 'error', error: String(e && e.message || e) });
@@ -118,18 +114,10 @@ function setupAutoUpdater() {
     updater.on('update-available', info => setState({ status: 'downloading', latest: info && info.version || null, percent: 0 }));
     updater.on('download-progress', p => setState({ status: 'downloading', percent: Math.round(p && p.percent || 0) }));
     updater.on('error', e => setState({ status: 'error', error: String(e && e.message || e) }));
-    updater.on('update-downloaded', async info => {
+    updater.on('update-downloaded', info => {
         const v = info && info.version || state.latest;
         setState({ status: 'downloaded', latest: v, percent: 100 });
-        if (askedFor === v) return;
-        askedFor = v;
-        const win = getWin();
-        const r = await dialog.showMessageBox(win || undefined, {
-            type: 'info', buttons: ['지금 다시 시작해 설치', '나중에 (끌 때 설치)'], defaultId: 0, cancelId: 1,
-            title: 'Hemicycle 업데이트', message: `새 버전 ${v}을(를) 받았습니다.`,
-            detail: '지금 다시 시작하면 바로 설치됩니다. 저장하지 않은 작업이 있으면 먼저 저장하세요. 나중에를 고르면 앱을 끌 때 설치됩니다.',
-        });
-        if (r.response === 0) installNow();
+        setTimeout(installNow, INSTALL_DELAY_MS); // 필수 업데이트 — 잠깐 안내한 뒤 저장하고 다시 시작해 설치
     });
     return true;
 }
@@ -137,20 +125,22 @@ function setupAutoUpdater() {
 function check(manual) {
     if (state.mode === 'off') { setState({ status: 'off' }); return; }
     if (state.mode === 'auto' && updater) {
-        if (state.status === 'downloading' || state.status === 'downloaded') { if (manual) setState({}); return; }
+        if (['downloading', 'downloaded', 'installing'].includes(state.status)) { if (manual) setState({}); return; }
         updater.checkForUpdates().catch(e => setState({ status: 'error', error: String(e && e.message || e) }));
     } else checkByApi(manual);
 }
 function installNow() {
-    if (state.mode === 'auto' && updater && state.status === 'downloaded') {
+    if (installing || state.mode !== 'auto' || !updater || state.status !== 'downloaded') return false;
+    installing = true;
+    setState({ status: 'installing' });
+    Promise.resolve().then(() => beforeInstall()).catch(() => {}).then(() => {
         setImmediate(() => updater.quitAndInstall(false, true));
-        return true;
-    }
-    return false;
+    });
+    return true;
 }
 function schedule() {
     if (timer) { clearInterval(timer); timer = null; }
-    if (!settings.autoUpdate || state.mode === 'off') return;
+    if (state.mode === 'off' || state.mode === 'steam') return;
     timer = setInterval(() => check(false), CHECK_EVERY_MS);
 }
 
@@ -160,26 +150,22 @@ function init(opts) {
     getWin = opts.getWin || getWin;
     settings = { autoUpdate: true, ...(opts.settings || {}) };
     saveSettings = opts.save || saveSettings;
+    beforeInstall = opts.beforeInstall || beforeInstall;
     const mode = detectMode();
     setState({ mode, status: mode === 'off' ? 'off' : 'idle' });
     if (mode === 'auto' && !setupAutoUpdater()) setState({ mode: 'notify' });
-    if (mode !== 'off' && settings.autoUpdate) setTimeout(() => check(false), FIRST_CHECK_DELAY_MS);
+    if (mode !== 'off' && mode !== 'steam') setTimeout(() => check(false), FIRST_CHECK_DELAY_MS);
     schedule();
 }
-function setAuto(on) {
-    settings.autoUpdate = !!on;
-    saveSettings(settings);
-    schedule();
-    if (on) check(false);
-    return settings.autoUpdate;
-}
+// 업데이트가 필수가 되어 끌 수 없다 — 예전 설정 화면 호환용으로 남겨 둠
+function setAuto() { return true; }
 
 module.exports = {
     init,
-    getState: () => ({ ...state, autoUpdate: settings.autoUpdate, releasesUrl: RELEASES_URL }),
+    getState: () => ({ ...state, autoUpdate: true, releasesUrl: RELEASES_URL }),
     check: () => { check(true); return true; },
     install: installNow,
     setAuto,
-    openReleases: () => shell.openExternal(RELEASES_URL),
+    openReleases: () => shell.openExternal(state.releaseUrl || RELEASES_URL),
     _newer: newer,
 };
