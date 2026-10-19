@@ -5128,7 +5128,7 @@
             setTimeout(localizeLegacyData, 0); // 언어 정보 없는 세이브를 한국어가 아닌 화면에서 열었으면 기본 이름을 그 언어로 (1.6.0)
 
             ideologies = parl.ideologies;
-            parties    = parl.parties.map(p => ({ leaderName:'', leaderPhoto:'', floorLeaderName:'', floorLeaderPhoto:'', logoPhoto:'', showLogoInStats:false, hideStatsPhoto:false, description:'', factions:[], seatsThird:0, inThird:false, abbr:'', fraudAttempt:null, ...p, factions:(p.factions||[]).map(f=>({leaderName:'',leaderPhoto:'',logoPhoto:'',usePartyColor:false,seatsThird:0,...f})) }));
+            parties    = parl.parties.map(p => ({ leaderName:'', leaderPhoto:'', floorLeaderName:'', floorLeaderPhoto:'', floorLeaders:{}, logoPhoto:'', showLogoInStats:false, hideStatsPhoto:false, description:'', factions:[], seatsThird:0, inThird:false, abbr:'', fraudAttempt:null, ...p, factions:(p.factions||[]).map(f=>({leaderName:'',leaderPhoto:'',logoPhoto:'',usePartyColor:false,seatsThird:0,...f})) }));
             coalitions = parl.coalitions.map(c => ({ leadPartyId:null, externalSupporters:[], externalSupportLabel:'각외협력', ...c }));
             manualSort = parl.manualSort ?? false;
             // 구버전 저장 파일 호환: districtKey 필드가 없으면 비례(미연결) 무소속으로 취급
@@ -6831,7 +6831,7 @@
         function collectDataStrings() {
             const out = [];
             const add = v => { if(typeof v === 'string' && v) out.push(v); };
-            parties.forEach(p => { add(p.name); add(p.abbr); add(p.leaderName); add(p.floorLeaderName); (p.factions||[]).forEach(f => { add(f.name); add(f.leaderName); }); });
+            parties.forEach(p => { add(p.name); add(p.abbr); add(p.leaderName); add(p.floorLeaderName); Object.values(p.floorLeaders||{}).forEach(f => add(f && f.name)); (p.factions||[]).forEach(f => { add(f.name); add(f.leaderName); }); });
             ideologies.forEach(i => { add(i.name); (i.subs||[]).forEach(sb => add(sb.name)); });
             coalitions.forEach(c => { add(c.name); add(c.externalSupportLabel); });
             ['nationNameInput','houseNameInput','senateNameInput','thirdNameInput'].forEach(id => add(document.getElementById(id)?.value));
@@ -7688,10 +7688,10 @@
         }
 
         // 당수 탭에서 고른 의석 선택 드롭다운 — 해당 정당 소속 의원만 나열
-        function partyMemberPickerOptionsHtml(partyId) {
+        function partyMemberPickerOptionsHtml(partyId, onlyChamber) {
             const party = parties.find(p => p.id === partyId);
             const opts = ['<option value="">-- 의석 선택 (붙여넣기 대상) --</option>'];
-            chamberList().forEach(ch => {
+            chamberList().filter(ch => !onlyChamber || ch === onlyChamber).forEach(ch => {
                 const chLabel = chamberDisplayName(ch);
                 districtMemberKeys(ch).forEach(key => {
                     const m = districtMembers[ch]?.[key];
@@ -7726,12 +7726,13 @@
             refreshUI();
         }
 
-        function pasteFloorLeaderToSeat(pid, val) {
+        function pasteFloorLeaderToSeat(pid, val, ch) {
             const link = parseMemberPickerValue(val);
             if(!link) return;
             const p = parties.find(x => x.id === pid);
             if(!p) return;
-            writeLinkedSeatInfo(link, p.floorLeaderName || '', p.floorLeaderPhoto || '');
+            const fl = floorLeaderOf(p, ch);
+            writeLinkedSeatInfo(link, fl.name, fl.photo);
             refreshUI();
         }
 
@@ -8849,32 +8850,38 @@
                 const photo = p.leaderPhoto||'';
                 const hasFactions = (p.factions||[]).length > 0;
 
-                // 원내대표 — 의회 안에서 당을 이끄는 사람 (당수와 따로 지정)
-                const flPhoto = p.floorLeaderPhoto||'';
-                const floorLeaderHtml = `<div class="dyn-row" style="display:flex;gap:8px;align-items:stretch;margin-top:8px;border-top:1px dashed #222;padding-top:8px;">
+                // 원내대표 — 의회 안에서 당을 이끄는 사람 (당수와 따로 지정). 양원제 · 삼원제면 원마다 따로
+                const flChs = floorLeaderChambers(p);
+                const floorLeaderHtml = flChs.map(ch => {
+                    const fl = floorLeaderOf(p, ch);
+                    const flPhoto = fl.photo;
+                    const chArg = `'${ch}'`;
+                    const label = flChs.length > 1 || chamberList().length > 1 ? `원내대표 · ${escapeHtmlText(chamberDisplayName(ch))}` : '원내대표';
+                    return `<div class="dyn-row" style="display:flex;gap:8px;align-items:stretch;margin-top:8px;border-top:1px dashed #222;padding-top:8px;">
                         <div style="display:flex;flex-direction:column;align-items:center;gap:2px;flex-shrink:0;">
                             <div class="leader-photo-box dyn-photo" data-ratio="0.8" title="클릭하여 사진 업로드" style="width:44px;height:55px;">
                                 ${flPhoto?`<img src="${flPhoto}" alt="원내대표">`:'<div class="photo-ph" style="font-size:0.9rem;">👤</div>'}
-                                <input type="file" accept="image/*" onchange="uploadFloorLeaderPhoto(this,${p.id})">
+                                <input type="file" accept="image/*" onchange="uploadFloorLeaderPhoto(this,${p.id},${chArg})">
                             </div>
-                            <span style="font-size:0.65rem;color:#444;flex-shrink:0;">원내대표</span>
+                            <span style="font-size:0.65rem;color:#444;flex-shrink:0;max-width:72px;text-align:center;line-height:1.25;word-break:keep-all;">원내대표${label !== '원내대표' ? `<br>${escapeHtmlText(chamberDisplayName(ch))}` : ''}</span>
                         </div>
                         <div class="dyn-ref" style="flex:1;min-width:0;display:flex;flex-direction:column;gap:5px;">
-                            <input type="text" value="${p.floorLeaderName||''}" placeholder="원내대표 이름"
+                            <input type="text" value="${escapeHtmlText(fl.name).replace(/"/g,'&quot;')}" placeholder="${label} 이름"
                                 style="background:#000;border:1px solid #2a2a2a;color:#ccc;font-family:inherit;font-size:0.88rem;padding:5px 8px;width:100%;box-sizing:border-box;"
-                                onchange="updateLeaderField(${p.id},'floorLeaderName',this.value);refreshUI();">
-                            ${flPhoto?`<button onclick="removeFloorLeaderPhoto(${p.id})" style="background:transparent;border:1px solid #333;color:#555;font-family:inherit;font-size:0.75rem;padding:2px 8px;cursor:pointer;text-align:left;">✕ 사진 제거</button>`:''}
+                                onchange="setFloorLeader(${p.id},${chArg},'name',this.value);simulate();refreshUI();">
+                            ${flPhoto?`<button onclick="removeFloorLeaderPhoto(${p.id},${chArg})" style="background:transparent;border:1px solid #333;color:#555;font-family:inherit;font-size:0.75rem;padding:2px 8px;cursor:pointer;text-align:left;">✕ 사진 제거</button>`:''}
                             <div style="display:flex;gap:6px;">
-                                <select id="floorLeaderSeatSelect_${p.id}"
+                                <select id="floorLeaderSeatSelect_${p.id}_${ch}"
                                     style="flex:1;min-width:0;box-sizing:border-box;background:#000;border:1px solid #333;color:#888;font-family:inherit;font-size:0.75rem;padding:4px;">
-                                    ${partyMemberPickerOptionsHtml(p.id)}
+                                    ${partyMemberPickerOptionsHtml(p.id, chamberList().length > 1 ? ch : undefined)}
                                 </select>
-                                <button onclick="pasteFloorLeaderToSeat(${p.id},document.getElementById('floorLeaderSeatSelect_${p.id}').value)"
+                                <button onclick="pasteFloorLeaderToSeat(${p.id},document.getElementById('floorLeaderSeatSelect_${p.id}_${ch}').value,${chArg})"
                                     style="flex-shrink:0;background:transparent;border:1px solid #333;color:#6cf;font-family:inherit;font-size:0.72rem;padding:4px 8px;cursor:pointer;">붙여넣기</button>
                             </div>
-                            <div style="color:#555;font-size:0.68rem;">◆ 위에서 의석을 고르고 "붙여넣기"를 누르면 현재 원내대표 이름·사진이 그 의석에 복사됩니다</div>
+                            <div style="color:#555;font-size:0.68rem;">◆ 위에서 의석을 고르고 "붙여넣기"를 누르면 이 원내대표의 이름·사진이 그 의석에 복사됩니다</div>
                         </div>
                     </div>`;
+                }).join('');
 
                 // 파벌 섹션 HTML
                 let factionHtml = '';
@@ -8952,19 +8959,39 @@
             if(p){ p.leaderPhoto=''; simulate(); refreshUI(); }
         }
 
-        function uploadFloorLeaderPhoto(input, pid) {
+        // 원내대표는 원마다 — 하원(단원제 포함)은 예전 그대로 p.floorLeaderName · p.floorLeaderPhoto,
+        // 상원 · 삼원은 p.floorLeaders[ch] = { name, photo } (예전 세이브의 원내대표는 그대로 하원 원내대표로 읽힌다)
+        function floorLeaderOf(p, ch) {
+            if(!p) return { name: '', photo: '' };
+            if(!ch || ch === 'house') return { name: p.floorLeaderName || '', photo: p.floorLeaderPhoto || '' };
+            const f = (p.floorLeaders || {})[ch] || {};
+            return { name: f.name || '', photo: f.photo || '' };
+        }
+        function setFloorLeader(pid, ch, field, val) {
+            const p = parties.find(x => x.id === pid);
+            if(!p) return;
+            if(!ch || ch === 'house') { p[field === 'photo' ? 'floorLeaderPhoto' : 'floorLeaderName'] = val; return; }
+            p.floorLeaders = p.floorLeaders || {};
+            const f = p.floorLeaders[ch] = p.floorLeaders[ch] || { name: '', photo: '' };
+            f[field === 'photo' ? 'photo' : 'name'] = val;
+        }
+        // 정당 카드에 원내대표 칸을 둘 원 — 단원제면 하나, 양원제 · 삼원제면 그 정당이 참여하는 원마다
+        function floorLeaderChambers(p) {
+            const chs = chamberList();
+            if(chs.length <= 1) return [chs[0] || 'house'];
+            const mine = chs.filter(ch => p[inKeyFor(ch)]);
+            return mine.length ? mine : [chs[0]];
+        }
+
+        function uploadFloorLeaderPhoto(input, pid, ch) {
             const file = input.files?.[0]; if(!file) return;
             const reader = new FileReader();
-            reader.onload = e => {
-                const p = parties.find(x=>x.id===pid);
-                if(p){ p.floorLeaderPhoto=e.target.result; simulate(); refreshUI(); }
-            };
+            reader.onload = e => { setFloorLeader(pid, ch, 'photo', e.target.result); simulate(); refreshUI(); };
             reader.readAsDataURL(file);
         }
 
-        function removeFloorLeaderPhoto(pid) {
-            const p = parties.find(x=>x.id===pid);
-            if(p){ p.floorLeaderPhoto=''; simulate(); refreshUI(); }
+        function removeFloorLeaderPhoto(pid, ch) {
+            setFloorLeader(pid, ch, 'photo', ''); simulate(); refreshUI();
         }
 
         // ===== 정당 탭: 무소속 (의원 개별 정보) =====
@@ -15623,7 +15650,7 @@
                     photo      = (party && !hidePhotoBox) ? (isLogo ? (party.logoPhoto||party.leaderPhoto||'') : (party.leaderPhoto||party.logoPhoto||'')) : '';
                     if(party && photo && photo === party.logoPhoto) logoParty = party;
                     leaderName = party?.leaderName || '';
-                    floorLeaderName = party?.floorLeaderName || '';
+                    floorLeaderName = floorLeaderOf(party, /senate/i.test(id) ? 'senate' : /third/i.test(id) ? 'third' : 'house').name; // 그 원의 원내대표
                     isIndependentCard = party?.ideologyId === IND_IDEOLOGY_ID;
                     // 무소속은 개별 의원만 있고 당대표 개념이 없으므로, 당수 탭에 값이 들어있어도
                     // (대선/총리 후보 지정 등 다른 용도로 쓰일 수 있음) 이 통계 카드에는 항상 숨김

@@ -182,8 +182,7 @@ window.HEMI_OFFICIAL = Object.freeze({
         .hemi-off-btn.primary { background: #3b82f6 !important; border-color: #3b82f6 !important; color: #fff !important; }
         .hemi-off-btn.disabled { opacity: .55; cursor: default; }
         .hemi-off-btn:disabled { opacity: .6; cursor: default; }
-        .home-news-steam { color: #1b2838 !important; }
-        html[data-theme-mode="dark"] .home-news-steam, html[data-theme-mode="tno"] .home-news-steam { color: #c7d5e0 !important; }
+        .home-news-steam svg { filter: drop-shadow(0 0 1px rgba(0,0,0,.35)); }
         .home-news-item.home-news-soon { cursor: default; opacity: .75; }`;
     (document.head || document.documentElement).appendChild(css);
 })();

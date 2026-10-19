@@ -35,6 +35,7 @@
       "icons/**/*",
       "!electron/smoketest.js",
       "!README.md",
+      "!TODO.md",
       "!package.json",
       "!package-lock.json"
     ],

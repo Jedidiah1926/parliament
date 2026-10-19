@@ -75,7 +75,18 @@
         });
         parties.filter(p => p.ideologyId !== IND).forEach(p => {
             out.push({ key: `pl:${p.id}`, kind: 'leader', group: '당직', partyId: p.id, label: `${p.name} 당수`, obj: p, nameKey: 'leaderName', photoKey: 'leaderPhoto', pidKey: 'leaderPersonId', name: () => p.leaderName || '' });
-            out.push({ key: `pf:${p.id}`, kind: 'floor', group: '당직', partyId: p.id, label: `${p.name} 원내대표`, obj: p, nameKey: 'floorLeaderName', photoKey: 'floorLeaderPhoto', pidKey: 'floorLeaderPersonId', name: () => p.floorLeaderName || '' });
+            // 원내대표는 원마다 (양원제 · 삼원제) — 하원은 예전 칸(floorLeaderName …), 상원 · 삼원은 p.floorLeaders[원]
+            const flChs = typeof floorLeaderChambers === 'function' ? floorLeaderChambers(p) : ['house'];
+            const multi = chs().length > 1;
+            flChs.forEach(ch => {
+                if (ch === 'house' || !multi) {
+                    out.push({ key: `pf:${p.id}`, kind: 'floor', group: '당직', partyId: p.id, label: `${p.name} 원내대표${multi ? ` (${chName('house')})` : ''}`, obj: p, nameKey: 'floorLeaderName', photoKey: 'floorLeaderPhoto', pidKey: 'floorLeaderPersonId', name: () => p.floorLeaderName || '' });
+                } else {
+                    p.floorLeaders = p.floorLeaders || {};
+                    const f = p.floorLeaders[ch] = p.floorLeaders[ch] || { name: '', photo: '' };
+                    out.push({ key: `pf:${p.id}:${ch}`, kind: 'floor', group: '당직', partyId: p.id, label: `${p.name} 원내대표 (${chName(ch)})`, obj: f, nameKey: 'name', photoKey: 'photo', pidKey: 'personId', name: () => f.name || '' });
+                }
+            });
         });
         const role = k => { try { return effRoleLabel(k); } catch (e) { return k; } };
         out.push({ key: 'c:president', kind: 'cabinet', group: '내각', label: role('president'), obj: president, name: () => president.name || '' });
