@@ -2,9 +2,10 @@
 // teaser69.html은 main.html에 1.6.1 ~ 1.6.8 미리보기와 이 파일(+ 그래프 js/teaser69charts.js)을 얹는다.
 // (저장 공간은 본 게임과 따로 — main.js의 LS_PREFIX 'hemicycleTeaserV2-69:')
 //
-// 샌드박스 원칙 — 경제는 결과를 강제하지 않고 계산 · 표시 · 제안한다. 모든 수치는 직접 고칠 수 있고, 계산은 턴을 넘길 때만 돈다.
+// 샌드박스 원칙 — 경제는 결과를 강제하지 않고 계산 · 표시 · 제안한다. 모든 수치는 직접 고칠 수 있고, 계산은 날짜가 넘어갈 때만 돈다.
 //   - 메뉴 › 경제: 개요 · 분석 · 통화 · 재정 · 지역 · 시나리오 · 항목, 오른쪽 시각 탭 "경제"(개요: 반원 계기 + 큰 그래프 / 분석: 전문가 그래프)
-//   - 턴: 기본 1분기(1개월 · 1년도), 날짜(▶)가 턴 경계를 지나면 지난 턴만큼 계산
+//   - 턴: 기본 1분기(1개월 · 1년도) — 게임 날짜를 따라간다. 날짜가 분기 경계를 지나면(▶ · 날짜 칸 직접 수정 모두) 지난 만큼 계산,
+//     날짜를 되돌리면 경제는 그대로 두고 지금 날짜부터 이어서 센다. 날짜를 안 쓰는 세이브만 턴 번호로
 //   - 금액은 비율(GDP 대비 %)로 계산하고 화면에만 화폐 단위로 보여 준다
 //   - 예산 · 세율 바꾸기는 기본으로 예산안(법안)을 거친다 (설정에서 끄면 바로 반영), 통화정책은 중앙은행 몫이라 바로
 //   - 경제 성과가 지지율 · 지역구 성향을 조금씩 움직인다 (설정)
@@ -302,7 +303,7 @@
         const rule = E.rules[path];
         if (!rule || typeof rule !== 'object' || rule.mode === 'fixed') return null;
         const left = ruleLeft(rule, ruleK(E) + 1);
-        return left > 0 ? `시나리오 규칙으로 고정 — ${left}턴 남음` : null;
+        return left > 0 ? `시나리오 규칙으로 고정 — ${spanLabel(left)} 남음` : null;
     }
     function getPath(S2, path) { const [a, b] = path.split('.'); if (a === 'dist') return null; return S2[a]?.[b]; }
     function setPath(S2, path, v) {
@@ -682,15 +683,41 @@
     }
 
     // ================= 날짜 연동 =================
+    // 경제는 게임 날짜를 따라간다 — 계산을 마친 시점(dateBase.key + turn)과 지금 날짜의 분기(개월 · 년)를 견줘
+    // 날짜가 앞서 있으면 그만큼 계산하고, 날짜를 되돌렸으면 경제는 그대로 두고 지금 날짜부터 이어서 센다
     function readDate() {
         const y = parseInt(document.getElementById('nationDateYear')?.value, 10), m = parseInt(document.getElementById('nationDateMonth')?.value, 10) || 1;
         return Number.isFinite(y) ? { y, m } : null;
     }
     const dateKey = (d, unit) => (unit === 'year' ? d.y : unit === 'quarter' ? d.y * 4 + Math.floor((d.m - 1) / 3) : d.y * 12 + d.m - 1);
+    const keyNow = () => { const d = readDate(); return d ? dateKey(d, E.unit) : null; };
     function ensureDateBase(at) {
         const d = at || readDate();
         if (d && !E.dateBase) E.dateBase = { key: dateKey(d, E.unit) - E.turn };
         if (E.hist.length && E.dateBase) E.hist.forEach(h => { if (/^T\d+$/.test(h.label)) h.label = turnLabel(E, h.t); });
+    }
+    // 지금 날짜를 계산을 마친 시점으로 (계산 없이)
+    function reanchor() { const k = keyNow(); if (k != null) E.dateBase = { key: k - E.turn }; }
+    // 한 번에 묻지 않고 계산하는 최대 길이 (넘으면 확인) · 한 번에 계산하는 최대 길이
+    const AUTO_MAX = { month: 36, quarter: 20, year: 10 }, RUN_MAX = 120;
+    let asking = false;
+    function syncDate() {
+        const k = keyNow();
+        if (k == null || asking || !inited || !E.hist.length) return;
+        ensureDateBase();
+        const gap = k - (E.dateBase.key + E.turn);
+        if (!gap) return;
+        if (gap < 0) {
+            reanchor(); refreshAll();
+            if (typeof window.showKbdToast === 'function') window.showKbdToast('날짜를 되돌려도 경제 기록은 그대로 — 지금 날짜부터 이어서 계산합니다');
+            return;
+        }
+        // 너무 길면 앞부분은 건너뛰고 (기준만 옮김) 지금 날짜까지 RUN_MAX만큼만 계산
+        const run = () => { const n = Math.min(gap, RUN_MAX); E.dateBase.key += gap - n; runTurns(n); };
+        if (gap <= AUTO_MAX[E.unit]) { run(); return; }
+        asking = true;
+        showCustomConfirm(`날짜가 ${spanLabel(gap)} 앞으로 갔습니다. 그동안의 경제를 계산할까요?${gap > RUN_MAX ? `\n(한 번에 최근 ${spanLabel(RUN_MAX)}까지만 계산하고 그 앞은 건너뜁니다)` : ''}\n\n취소하면 경제는 그대로 두고 지금 날짜부터 이어서 계산합니다.`,
+            () => { asking = false; run(); }, () => { asking = false; reanchor(); refreshAll(); });
     }
     const origAdvance = window.advanceNationDate;
     if (typeof origAdvance === 'function') {
@@ -698,18 +725,31 @@
             const b = readDate();
             const r = origAdvance.apply(this, arguments);
             const a = readDate();
-            if (b && a) {
-                const n = dateKey(a, E.unit) - dateKey(b, E.unit);
-                if (n > 0) { ensureInit(); ensureDateBase(b); runTurns(n); }
+            // 경제를 아직 안 열었으면 넘기기 전 날짜에서 시작한 것으로
+            if (b && a && !(inited && E.hist.length) && dateKey(a, E.unit) > dateKey(b, E.unit)) {
+                ensureInit();
+                E.dateBase = { key: dateKey(b, E.unit) - E.turn };
+                E.hist.forEach(h => { h.label = turnLabel(E, h.t); });
             }
+            syncDate();
             return r;
         };
     }
-    function nextTurn() {
-        const d = readDate();
-        if (d && typeof window.advanceNationDate === 'function') { window.advanceNationDate(E.unit === 'year' ? 12 : E.unit === 'quarter' ? 3 : 1, 'month'); return; }
-        runTurns(1);
+    // 국가 › 날짜 칸을 직접 고쳐도 (입력을 마쳤을 때)
+    document.addEventListener('change', e => { const id = e.target && e.target.id; if (id === 'nationDateYear' || id === 'nationDateMonth') syncDate(); });
+    // 다음 분기(개월 · 년) — 날짜가 있으면 날짜를 넘기고, 경제는 날짜를 따라 계산
+    function nextTurn(n = 1) {
+        if (readDate() && typeof window.advanceNationDate === 'function') { window.advanceNationDate(n * (E.unit === 'year' ? 12 : E.unit === 'quarter' ? 3 : 1), 'month'); return; }
+        runTurns(n);
     }
+    // 기간 글자 — 분기 4개 = 1년처럼 날짜 단위로
+    function spanLabel(n) {
+        n = Math.round(n);
+        if (E.unit === 'year') return `${n}년`;
+        const per = E.unit === 'quarter' ? 4 : 12, word = E.unit === 'quarter' ? '분기' : '개월';
+        return n % per === 0 ? `${n / per}년` : n > per ? `${Math.floor(n / per)}년 ${n % per}${word}` : `${n}${word}`;
+    }
+    const UNIT_WORD = { month: '개월', quarter: '분기', year: '년' };
 
     // ================= 예측 · 민감도 =================
     const simClone = () => { const c = deep({ ...E, hist: [], events: [], ui: null }); c._cyc = E._cyc; return c; };
@@ -786,7 +826,7 @@
         const ch = draftChanges();
         if (!ch.length) { showCustomAlert('바뀐 것이 없습니다 — 재정 탭에서 지출 · 세율을 고친 뒤 예산안을 내세요.'); return; }
         const taxChanged = ch.some(c => c.kind === 'tax' || c.kind === 'temp' && /세/.test(c.label));
-        const lines = ch.map((c, i) => `제${i + 1}조 ${c.label}: ${c.kind === 'temp' ? `${c.to}턴 동안 실시` : `${r2(c.from)}% → ${r2(c.to)}%${c.kind === 'spend' ? ' (GDP 대비)' : ''}`}`);
+        const lines = ch.map((c, i) => `제${i + 1}조 ${c.label}: ${c.kind === 'temp' ? `${spanLabel(c.to)} 동안 실시` : `${r2(c.from)}% → ${r2(c.to)}%${c.kind === 'spend' ? ' (GDP 대비)' : ''}`}`);
         const bill = {
             id: 'b' + Date.now(), title: `${yearLabel()} 예산안 (제${E.budgetNo + 1}차)${taxChanged ? ' · 세법 개정' : ''}`, content: lines.join('\n'),
             threshold: 0.5, numer: null, denom: null, tags: ['예산안'].concat(taxChanged ? ['세법'] : []),
@@ -797,7 +837,7 @@
         E.budgetBill = { id: bill.id, status: 'pending', draft: deep(E.draft), title: bill.title };
         addEvent('budget', `${bill.title} 제출`);
         refreshAll();
-        showCustomAlert(`『${bill.title}』을(를) 입법 › 제출에 올렸습니다. 가결되면 다음 턴부터 반영되고, 그 전까지는 지난 예산(준예산)대로 집행됩니다.\n\n재정 탭의 "예상 표결"로 정당별 예상 찬반을 보고 한 번에 넣을 수 있어요.`);
+        showCustomAlert(`『${bill.title}』을(를) 입법 › 제출에 올렸습니다. 가결되면 다음 ${UNIT_WORD[E.unit]}부터 반영되고, 그 전까지는 지난 예산(준예산)대로 집행됩니다.\n\n재정 탭의 "예상 표결"로 정당별 예상 찬반을 보고 한 번에 넣을 수 있어요.`);
     }
     function checkBudgetBill() {
         const bb = E.budgetBill;
@@ -1005,7 +1045,7 @@
             const a = VAR[k].get(E), b = VAR[k].get(nx), m = Math.max(Math.abs(a), Math.abs(b), k === 'mood' ? 100 : 1);
             const w = v => `${clamp(Math.abs(v) / m * 100, 1, 100).toFixed(0)}%`;
             return `<div class="t69-pv-r"><span>${l}</span><div class="t69-pv-bars"><i style="width:${w(a)}" class="${a < 0 ? 'neg' : ''}" title="지금"></i><i style="width:${w(b)}" class="nx ${b < 0 ? 'neg' : ''}" title="다음"></i></div><b>${a.toFixed(1)}${u} → ${b.toFixed(1)}${u}</b></div>`;
-        }).join('') + '<div class="t69-pv-legend"><i></i>지금 <i class="nx"></i>다음 턴 예측 (흔들림 없이)</div>';
+        }).join('') + `<div class="t69-pv-legend"><i></i>지금 <i class="nx"></i>다음 ${UNIT_WORD[E.unit]} 예측 (흔들림 없이)</div>`;
     }
 
     // ---- 개요 ----
@@ -1017,11 +1057,11 @@
         const revolt = N.mood < E.thresholds.revolt;
         const nx = project(null, 1);
         box.innerHTML = `
-            <div class="t69-intro">보이지 않는 손 — 통화 · 재정 정책이 지역구마다 다르게 작용하고, 그 결과가 민심과 의회로 돌아옵니다. 수치는 모두 직접 고칠 수 있고, 계산은 턴을 넘길 때만 돕니다.</div>
+            <div class="t69-intro">보이지 않는 손 — 통화 · 재정 정책이 지역구마다 다르게 작용하고, 그 결과가 민심과 의회로 돌아옵니다. 수치는 모두 직접 고칠 수 있고, 계산은 날짜(국가 › 날짜)가 다음 ${UNIT_WORD[E.unit]}로 넘어갈 때만 돕니다.</div>
             <div class="t69-top">
                 <div class="t69-rating t69-grade-${rt[0].replace(/[^A-Z]/g, '').length > 2 ? 'top' : rt[0].startsWith('A') ? 'a' : rt[0].startsWith('B') ? 'b' : 'c'}" title="신용등급 — 신뢰도와 국가부채로 정해짐"><b>${rt[0]}</b><span>${rt[1]}</span></div>
-                <div class="t69-turninfo"><div class="t69-turn-now">${esc(turnLabel(E, E.turn))}</div><div class="t69-dim">${E.turn}턴 진행 · GDP ${esc(gdpText())}</div>
-                    <label class="t69-dim">한 턴 <select data-act="unit">${Object.entries(UNIT_NAME).map(([k, v]) => `<option value="${k}" ${E.unit === k ? 'selected' : ''}>${v}</option>`).join('')}</select></label></div>
+                <div class="t69-turninfo"><div class="t69-turn-now">${esc(turnLabel(E, E.turn))}</div><div class="t69-dim">${readDate() ? `${E.turn ? `${esc(E.hist[0].label)}부터 기록` : '시작'} · 날짜를 따라 계산` : `${spanLabel(E.turn)} 진행 · 날짜를 정하면 날짜를 따라 계산`} · GDP ${esc(gdpText())}</div>
+                    <label class="t69-dim">계산 단위 <select data-act="unit">${Object.entries(UNIT_NAME).map(([k, v]) => `<option value="${k}" ${E.unit === k ? 'selected' : ''}>${v}</option>`).join('')}</select></label></div>
                 <button type="button" class="t69-btn t69-primary t69-next" data-act="next">▶ 다음 ${UNIT_NAME[E.unit]}</button>
             </div>
             <div class="t69-sys"><span>계획</span><input type="range" min="0" max="1" step="0.05" value="${E.sys}" data-path="sys" aria-label="경제 체제"><span>시장</span><b data-out="sys">${sysText()}</b></div>
@@ -1042,12 +1082,12 @@
                 <label class="t69-check"><input type="checkbox" data-path="settings.opinion" ${E.settings.opinion ? 'checked' : ''}> 경제 성과를 지지율 · 지역구 성향에 반영</label>
                 <label class="t69-check"><input type="checkbox" data-path="settings.autoEvents" ${E.settings.autoEvents ? 'checked' : ''}> 민심이 무너지면 쿠데타 · 혁명 탭을 바로 열기</label>
                 <label class="t69-check"><input type="checkbox" data-path="settings.rankFollow" ${E.settings.rankFollow ? 'checked' : ''}> 세계 › 국가 순위의 우리나라 점수가 GDP를 따라감</label>
-                <label class="t69-row">턴당 패키지 정책 <input type="number" min="1" max="9" value="${E.settings.pkgLimit}" data-path="settings.pkgLimit" class="t69-num">개</label>
+                <label class="t69-row">${UNIT_NAME[E.unit]}당 패키지 정책 <input type="number" min="1" max="9" value="${E.settings.pkgLimit}" data-path="settings.pkgLimit" class="t69-num">개</label>
                 <label class="t69-row">예산 모양 <select data-path="settings.budgetView"><option value="hemi" ${E.settings.budgetView === 'hemi' ? 'selected' : ''}>예산 반원</option><option value="bars" ${E.settings.budgetView === 'bars' ? 'selected' : ''}>가로 막대 두 줄</option></select></label>
             </details>
             <div class="t69-actions"><button type="button" class="t69-btn" data-act="disp">📈 경제 화면 크게 보기</button><button type="button" class="t69-btn" data-act="analysis">분석 열기</button></div>`;
         bindInputs(box);
-        box.querySelector('[data-act="next"]').onclick = nextTurn;
+        box.querySelector('[data-act="next"]').onclick = () => nextTurn();
         box.querySelector('[data-act="unit"]').onchange = e => { E.unit = e.target.value; E.dateBase = null; ensureDateBase(); refreshAll(); };
         box.querySelectorAll('[data-go]').forEach(b => { b.onclick = () => switchSubTab('economy', b.dataset.go); });
         box.querySelector('[data-act="disp"]').onclick = () => { showDisp('overview'); toggleFull(true); };
@@ -1079,15 +1119,15 @@
         const box = contentOf('analysis'); if (!box) return;
         const mods = currentMods();
         box.innerHTML = `
-            <div class="t69-intro">전문가 분석 — 오른쪽 시각 화면에 크게 그립니다. 모든 그래프는 같은 기간 · 같은 십자선을 쓰고, 마우스를 올리면 그 턴 값이, 미니맵을 끌면 기간 확대가 됩니다. 우클릭으로 그림 내보내기.</div>
+            <div class="t69-intro">전문가 분석 — 오른쪽 시각 화면에 크게 그립니다. 모든 그래프는 같은 기간 · 같은 십자선을 쓰고, 마우스를 올리면 그 시점 값이, 미니맵을 끌면 기간 확대가 됩니다. 우클릭으로 그림 내보내기.</div>
             <div class="t69-presets">${Object.entries(PRESET_MODS).map(([id, p]) => `<button type="button" class="t69-preset ${E.ui.preset === id ? 'on' : ''}" data-preset="${id}"><b>${p.name}</b><span>${p.mods.map(m => MODULES[m].split(' (')[0]).join(' · ')}</span></button>`).join('')}
                 <button type="button" class="t69-preset ${E.ui.preset === 'custom' ? 'on' : ''}" data-preset="custom"><b>직접 고르기</b><span>아래에서 그래프를 골라 배치</span></button></div>
             ${E.ui.preset === 'custom' ? `<div class="t69-card"><div class="t69-card-h">그래프 고르기</div>${Object.entries(MODULES).map(([id, l]) => `<label class="t69-check"><input type="checkbox" data-mod="${id}" ${mods.includes(id) ? 'checked' : ''}> ${l}</label>`).join('')}</div>` : ''}
             <div class="t69-card">
-                <div class="t69-row">기간 <span class="t69-seg">${[['all', '전체'], ['40', '최근 40턴'], ['20', '20턴'], ['8', '8턴']].map(([k, l]) => `<button type="button" data-range="${k}" class="${String(E.ui.range) === k ? 'on' : ''}">${l}</button>`).join('')}</span></div>
+                <div class="t69-row">기간 <span class="t69-seg">${[['all', '전체'], ['40', `최근 ${spanLabel(40)}`], ['20', spanLabel(20)], ['8', spanLabel(8)]].map(([k, l]) => `<button type="button" data-range="${k}" class="${String(E.ui.range) === k ? 'on' : ''}">${l}</button>`).join('')}</span></div>
                 <label class="t69-check"><input type="checkbox" data-path="ui.log" ${E.ui.log ? 'checked' : ''}> 인플레 · 통화 증가 로그 눈금 (하이퍼인플레용)</label>
                 <label class="t69-row">민감도 · 예측 지표 <select data-path="ui.target">${Object.entries(VAR).map(([k, v]) => `<option value="${k}" ${E.ui.target === k ? 'selected' : ''}>${v.label}</option>`).join('')}</select></label>
-                <label class="t69-row">민감도 기간 <select data-path="ui.horizon">${[[1, `1턴`], [4, '4턴'], [8, '8턴']].map(([k, l]) => `<option value="${k}" ${Number(E.ui.horizon) === k ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
+                <label class="t69-row">민감도 기간 <select data-path="ui.horizon">${[1, 4, 8].map(n => [n, spanLabel(n)]).map(([k, l]) => `<option value="${k}" ${Number(E.ui.horizon) === k ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
             </div>
             <div class="t69-actions"><button type="button" class="t69-btn t69-primary" data-act="full">⛶ 크게 보기</button><button type="button" class="t69-btn" data-act="csv">CSV 내보내기</button></div>
             <div class="t69-dim t69-small">용어 — r − g: 국채금리 − 명목성장률(양수면 부채가 저절로 불어남) · 위험 프리미엄: 국채금리 − 기준금리 · 기초재정수지: 이자를 뺀 재정수지 · 실질금리: 기준금리 − 기대 인플레</div>`;
@@ -1120,13 +1160,13 @@
                 ${lp ? `<div class="t69-lock">🔒 ${esc(lp)}</div>` : ''}
                 <div class="t69-dim t69-small">연간 통화 증가 ${(N.print * 4).toFixed(0)}% · 30%/분기를 넘기면 통화 붕괴 위기</div>
             </div>
-            <div class="t69-card"><div class="t69-card-h">패키지 정책 <span class="t69-dim">이번 턴 ${used}/${lim}</span></div>
+            <div class="t69-card"><div class="t69-card-h">패키지 정책 <span class="t69-dim">이번 ${UNIT_WORD[E.unit]} ${used}/${lim}</span></div>
                 <div class="t69-pkgs">
-                    <button type="button" class="t69-pkg" data-pkg="qe" ${used >= lim ? 'disabled' : ''}><b>양적완화</b><span>윤전기를 돌려라 — 4턴 동안 발행 +3%p, 금리 · 국채금리 ↓</span></button>
-                    <button type="button" class="t69-pkg" data-pkg="qt" ${used >= lim ? 'disabled' : ''}><b>양적긴축</b><span>돈줄을 막아라 — 4턴 동안 발행 −2%p, 금리 ↑</span></button>
+                    <button type="button" class="t69-pkg" data-pkg="qe" ${used >= lim ? 'disabled' : ''}><b>양적완화</b><span>윤전기를 돌려라 — ${spanLabel(4)} 동안 발행 +3%p, 금리 · 국채금리 ↓</span></button>
+                    <button type="button" class="t69-pkg" data-pkg="qt" ${used >= lim ? 'disabled' : ''}><b>양적긴축</b><span>돈줄을 막아라 — ${spanLabel(4)} 동안 발행 −2%p, 금리 ↑</span></button>
                     <button type="button" class="t69-pkg" data-pkg="devalue" ${used >= lim ? 'disabled' : ''}><b>평가절하</b><span>통화가치 −12%, 수출(제조업 지역) ↑ · 수입물가 ↑ · 신뢰도 ↓</span></button>
                 </div>
-                ${(E.temps || []).length ? `<div class="t69-dim t69-small">진행 중: ${E.temps.map(tp => `${TEMP_NAME[tp.type]} (${tp.left}턴 남음)`).join(' · ')}</div>` : ''}
+                ${(E.temps || []).length ? `<div class="t69-dim t69-small">진행 중: ${E.temps.map(tp => `${TEMP_NAME[tp.type]} (${spanLabel(tp.left)} 남음)`).join(' · ')}</div>` : ''}
             </div>
             <div class="t69-preview t69-card" data-draft="0"></div>`;
         bindInputs(box);
@@ -1134,13 +1174,13 @@
         box.querySelectorAll('.t69-preview').forEach(renderPreview);
     }
     function usePackage(type) {
-        if ((E.pkgUsed || 0) >= E.settings.pkgLimit) { showCustomAlert(`이번 턴에는 패키지 정책을 ${E.settings.pkgLimit}개까지 쓸 수 있습니다.`); return; }
+        if ((E.pkgUsed || 0) >= E.settings.pkgLimit) { showCustomAlert(`이번 ${UNIT_WORD[E.unit]}에는 패키지 정책을 ${E.settings.pkgLimit}개까지 쓸 수 있습니다.`); return; }
         if (type === 'devalue') { E.nat.cur *= 0.88; E.nat.conf = Math.max(0, E.nat.conf - 5); addEvent('policy', '평가절하 — 통화가치 −12%'); }
         else if (type === 'taxcut' || type === 'taxhike') {
             const tgt = fiscalTarget();
-            if (tgt === E) { E.temps.push({ type, left: 4 }); addEvent('policy', `${TEMP_NAME[type]} (4턴)`); }
+            if (tgt === E) { E.temps.push({ type, left: 4 }); addEvent('policy', `${TEMP_NAME[type]} (${spanLabel(4)})`); }
             else { tgt.temps = tgt.temps || []; tgt.temps.push({ type, left: 4 }); }
-        } else { E.temps.push({ type, left: 4 }); addEvent('policy', `${TEMP_NAME[type]} (4턴)`); }
+        } else { E.temps.push({ type, left: 4 }); addEvent('policy', `${TEMP_NAME[type]} (${spanLabel(4)})`); }
         E.pkgUsed = (E.pkgUsed || 0) + 1;
         recomputeBudget(E);
         refreshAll();
@@ -1187,7 +1227,7 @@
                 ${taxDefs().map(t => { const lk = lockOf('taxes.' + t.id); const v = V.taxes[t.id] ?? t.rate0; return `<div class="t69-slider">
                     <div class="t69-slider-h"><span>${esc(t.name)} <em class="t69-dim">세수 ${pct(taxRevenue(t, v))}</em></span><b data-out="taxes.${t.id}">${r2(v)}%</b></div>
                     <input type="range" min="0" max="${t.max}" step="0.5" value="${v}" data-path="taxes.${t.id}" ${lk ? 'disabled' : ''} aria-label="${esc(t.name)}">${lk ? `<div class="t69-lock">🔒 ${esc(lk)}</div>` : ''}</div>`; }).join('')}
-                <div class="t69-actions"><button type="button" class="t69-btn" data-pkg="taxcut">한시적 감세 (4턴)</button><button type="button" class="t69-btn" data-pkg="taxhike">한시적 증세 (4턴)</button></div>
+                <div class="t69-actions"><button type="button" class="t69-btn" data-pkg="taxcut">한시적 감세 (${spanLabel(4)})</button><button type="button" class="t69-btn" data-pkg="taxhike">한시적 증세 (${spanLabel(4)})</button></div>
                 ${window.T68 && (window.T68.vassals || []).length ? `<label class="t69-row">종속국 공납 <input type="number" class="t69-num" min="0" max="50" step="1" value="${E.tribute}" data-path="root.tribute">% <span class="t69-dim">세입 ${pct(b.rev._tribute || 0, 2)}</span></label>` : ''}
             </div>
             <div class="t69-card"><div class="t69-card-h">국고 · 부채</div>
@@ -1250,22 +1290,22 @@
         const box = contentOf('scenario'); if (!box) return;
         const k = ruleK(E) + 1;
         box.innerHTML = `
-            <div class="t69-intro">시작 값만이 아니라 "값 + 기간"을 정해 시나리오를 만듭니다 — 고정(locked)은 기간 동안 그 값, 전환(transition)은 A → B로 서서히, 구간(schedule)은 턴마다 다른 값. 기간이 끝나면 다시 계산값으로 돌아갑니다. 고정된 값과 관련된 정책은 잠겨요.</div>
+            <div class="t69-intro">시작 값만이 아니라 "값 + 기간"을 정해 시나리오를 만듭니다 — 고정(locked)은 기간 동안 그 값, 전환(transition)은 A → B로 서서히, 구간(schedule)은 ${UNIT_WORD[E.unit]}마다 다른 값. 기간이 끝나면 다시 계산값으로 돌아갑니다. 고정된 값과 관련된 정책은 잠겨요.</div>
             <div class="t69-card"><div class="t69-card-h">프리셋 <span class="t69-dim">고르면 경제를 처음부터 다시 시작</span></div>
-                <div class="t69-presets">${Object.entries(PRESETS).map(([id, p]) => `<button type="button" class="t69-preset ${E.preset === id ? 'on' : ''}" data-ps="${id}"><b>${esc(p.name)}</b><span>${esc(p.desc)}</span></button>`).join('')}
+                <div class="t69-presets">${Object.entries(PRESETS).map(([id, p]) => `<button type="button" class="t69-preset ${E.preset === id ? 'on' : ''}" data-ps="${id}"><b>${esc(p.name)}</b><span>${esc(p.desc.replace(/(\d+)턴/g, (m, n) => spanLabel(+n)))}</span></button>`).join('')}
                 <button type="button" class="t69-preset" data-ps=""><b>기본값</b><span>규칙 없이 기본 경제로</span></button></div></div>
-            <div class="t69-card"><div class="t69-card-h">규칙 <span class="t69-dim">지금 규칙 기준 ${k}턴째</span></div>
+            <div class="t69-card"><div class="t69-card-h">규칙 <span class="t69-dim">지금 규칙 기준 ${k}${UNIT_WORD[E.unit]}째</span></div>
                 ${Object.entries(E.rules).map(([path, rule]) => `<div class="t69-rule" data-rpath="${esc(path)}">
                     <b>${esc((RULE_VARS().find(v => v[0] === path) || [path, path])[1])}</b>
                     <select data-rf="mode">${['locked', 'transition', 'schedule', 'fixed'].map(m => `<option value="${m}" ${rule.mode === m ? 'selected' : ''}>${{ locked: '고정', transition: '전환', schedule: '구간', fixed: '시작값만' }[m]}</option>`).join('')}</select>
                     ${rule.mode === 'transition' ? `<input type="number" data-rf="from" value="${rule.from ?? 0}" class="t69-num" title="시작">→<input type="number" data-rf="to" value="${rule.to ?? 0}" class="t69-num" title="끝">`
-                        : rule.mode === 'schedule' ? `<input type="text" data-rf="segs" value="${esc((rule.segs || []).map(s => `${s.from}-${s.to}:${s.value}`).join(', '))}" placeholder="1-4:25, 5-8:30" title="턴 구간:값, 쉼표로" class="t69-segs">`
+                        : rule.mode === 'schedule' ? `<input type="text" data-rf="segs" value="${esc((rule.segs || []).map(s => `${s.from}-${s.to}:${s.value}`).join(', '))}" placeholder="1-4:25, 5-8:30" title="${UNIT_WORD[E.unit]} 구간:값, 쉼표로" class="t69-segs">`
                         : `<input type="number" data-rf="value" value="${rule.value ?? 0}" class="t69-num">`}
-                    ${rule.mode !== 'fixed' && rule.mode !== 'schedule' ? `<input type="number" data-rf="period" value="${rule.period ?? 4}" min="1" class="t69-num" title="기간(턴)">턴` : ''}
-                    <span class="t69-dim">${ruleLeft(rule, k) ? `${ruleLeft(rule, k)}턴 남음` : '끝남'}</span>
+                    ${rule.mode !== 'fixed' && rule.mode !== 'schedule' ? `<input type="number" data-rf="period" value="${rule.period ?? 4}" min="1" class="t69-num" title="기간(${UNIT_WORD[E.unit]})">${UNIT_WORD[E.unit]}` : ''}
+                    <span class="t69-dim">${ruleLeft(rule, k) ? `${spanLabel(ruleLeft(rule, k))} 남음` : '끝남'}</span>
                     <button type="button" class="t69-x" data-rdel title="규칙 지우기">×</button></div>`).join('') || '<div class="t69-dim">규칙이 없습니다.</div>'}
                 <div class="t69-row"><select data-act="rvar">${RULE_VARS().map(([p, l]) => `<option value="${p}">${esc(l)}</option>`).join('')}</select><button type="button" class="t69-btn" data-act="radd">+ 규칙 추가</button>
-                    <button type="button" class="t69-btn" data-act="rrestart" title="규칙의 1턴째를 지금부터 다시 셈">지금부터 다시 세기</button></div></div>
+                    <button type="button" class="t69-btn" data-act="rrestart" title="규칙의 기간을 지금부터 다시 셈">지금부터 다시 세기</button></div></div>
             <div class="t69-card"><div class="t69-card-h">위기 임계값</div>
                 ${[['hyper', '하이퍼인플레 (인플레 %/년 초과)'], ['default', '국가부도 위기 (부채 % 초과)'], ['depression', '대공황 (실업률 % 초과)'], ['flight', '자본 도피 (신뢰도 미만)'], ['collapse', '통화 붕괴 (발행률 %/분기 초과)'], ['revolt', '쿠데타 · 혁명 위험 (민심 미만)']].map(([k2, l]) => `<label class="t69-row">${l} <input type="number" class="t69-num" value="${E.thresholds[k2]}" data-th="${k2}"></label>`).join('')}</div>
             <div class="t69-card"><div class="t69-card-h">화면 표시</div>
@@ -1448,10 +1488,10 @@
         const tb = document.getElementById('t69Toolbar'); if (!tb) return;
         tb.innerHTML = `<span class="t69-seg">${[['overview', '개요'], ['analysis', '분석'], ['region', '지역']].map(([k, l]) => `<button type="button" data-view="${k}" class="${E.ui.view === k ? 'on' : ''}">${l}</button>`).join('')}</span>
             ${E.ui.view === 'analysis' ? `<span class="t69-dim">${esc(E.ui.preset === 'custom' ? '직접 고른 배치' : PRESET_MODS[E.ui.preset]?.name || '')}</span>` : ''}
-            <span class="t69-seg">${[['all', '전체'], ['40', '40턴'], ['20', '20턴'], ['8', '8턴']].map(([k, l]) => `<button type="button" data-range="${k}" class="${String(E.ui.range) === k && !E.ui.zoom ? 'on' : ''}">${l}</button>`).join('')}</span>
+            <span class="t69-seg">${[['all', '전체'], ['40', spanLabel(40)], ['20', spanLabel(20)], ['8', spanLabel(8)]].map(([k, l]) => `<button type="button" data-range="${k}" class="${String(E.ui.range) === k && !E.ui.zoom ? 'on' : ''}">${l}</button>`).join('')}</span>
             ${E.ui.zoom ? '<button type="button" class="t69-btn t69-sm" data-act="unzoom">확대 해제</button>' : ''}
             <span class="t69-grow"></span>
-            <button type="button" class="t69-btn t69-sm" data-act="csv" title="모든 턴 · 지표 표를 CSV로">CSV</button>
+            <button type="button" class="t69-btn t69-sm" data-act="csv" title="모든 시점 · 지표 표를 CSV로">CSV</button>
             <button type="button" class="t69-btn t69-sm" data-act="full" title="크게 보기 (Esc로 복귀)">${E.ui.full ? '⤡ 작게' : '⛶ 크게'}</button>`;
         tb.querySelectorAll('[data-view]').forEach(b => { b.onclick = () => { E.ui.view = b.dataset.view; renderDisp(); }; });
         tb.querySelectorAll('[data-range]').forEach(b => { b.onclick = () => { E.ui.range = b.dataset.range; E.ui.zoom = null; renderDisp(); if (curSub() === 'analysis') renderTab('analysis'); }; });
@@ -1555,7 +1595,7 @@
         const fmean = k => (fc[k] ? [{ id: k + 'f', label: `${VAR[k].label} 예측(중앙)`, color: VAR[k].color, dash: true, width: 1.5, values: Array(n - 1).fill(null).concat([VAR[k].get(E)], fc[k].mean) }] : []);
         mods.forEach(m => {
             if (m === 'cycleP') {
-                const b = section(box, '경기 순환', '— 같은 십자선 · 회색 = 경기 침체(2턴 이상 마이너스 성장) · 아래 미니맵을 끌어 기간 확대');
+                const b = section(box, '경기 순환', `— 같은 십자선 · 회색 = 경기 침체(${spanLabel(2)} 이상 마이너스 성장) · 아래 미니맵을 끌어 기간 확대`);
                 C.panels(b, { x: xs, range: rng2, markers, shade, onRange, overview: { series: S1('growth') }, panels: [
                     { title: '성장률 (연율, %)', unit: '%', zero: true, series: [S1('growth')].concat(fmean('growth')), fan: fanOf('growth') },
                     { title: '실업률 (%)', unit: '%', series: [S1('unemp')] },
@@ -1564,7 +1604,7 @@
                 ] });
             }
             if (m === 'decompG') {
-                const b = section(box, '성장 기여도 분해', '— 턴마다 성장률(연율)을 원인별로 나눔 · 선 = 실제 성장률');
+                const b = section(box, '성장 기여도 분해', `— ${UNIT_WORD[E.unit]}마다 성장률(연율)을 원인별로 나눔 · 선 = 실제 성장률`);
                 const g = k => padF(H.map(hh => (hh.dec ? hh.dec.g[k] : null)));
                 C.stackBars(b, { x: xs, range: [range[0], range[1]], unit: '%p', net: { label: '성장률', values: padF(col(hh => hh.n.growth)) }, parts: [
                     { id: 'pot', label: '잠재성장 (기술 · 인적자본 · 인프라)', color: 'var(--s1)', values: g('pot') }, { id: 'fiscal', label: '재정 (지출 · 세금 변화)', color: 'var(--s2)', values: g('fiscal') },
@@ -1590,7 +1630,7 @@
                 ] });
             }
             if (m === 'traj') {
-                const b = section(box, '경제 궤적', '— 턴마다 실업률 × 인플레 점을 이은 길 (오른쪽 위 = 스태그플레이션)');
+                const b = section(box, '경제 궤적', `— ${UNIT_WORD[E.unit]}마다 실업률 × 인플레 점을 이은 길 (오른쪽 위 = 스태그플레이션)`);
                 C.trajectory(b, { points: H.map(hh => ({ x: hh.n.unemp, y: hh.n.infl, label: hh.label })), xLabel: '실업률 (%)', yLabel: '인플레 (%)', range });
             }
             if (m === 'debt') {
@@ -1623,7 +1663,7 @@
             if (m === 'map') renderMapTo(section(box, `지역구 지도 — ${MAP_BY[E.ui.mapBy]}`));
             if (m === 'tornado') {
                 const v = E.ui.target, hz = Number(E.ui.horizon) || 4;
-                const b = section(box, `정책 민감도 — ${VAR[v].label}`, `— 조작 하나를 바꿨을 때 ${hz}턴 뒤 ${VAR[v].label} 변화 (흔들림 없이 비교)`);
+                const b = section(box, `정책 민감도 — ${VAR[v].label}`, `— 조작 하나를 바꿨을 때 ${spanLabel(hz)} 뒤 ${VAR[v].label} 변화 (흔들림 없이 비교)`);
                 C.tornado(b, { rows: sensitivity(v, hz), unit: VAR[v].unit === '%' ? '%p' : '', decimals: 2 });
             }
             if (m === 'fan') {
@@ -1637,7 +1677,7 @@
                 C.legend(b, ad.map((a, i) => ({ label: a.name, color: SLOT(i) })));
             }
             if (m === 'table') {
-                const b = section(box, '데이터 표', '— 모든 턴 · 지표 (CSV는 위 버튼)');
+                const b = section(box, '데이터 표', '— 모든 시점 · 지표 (CSV는 위 버튼)');
                 const spec = tableSpec(); spec.rows = spec.rows.slice().reverse();
                 C.table(b, spec);
             }
@@ -1725,7 +1765,7 @@
         const f = d => v => (Number.isFinite(v) ? v.toFixed(d) : '');
         return {
             filename: `economy_${(E.hist[0]?.label || 'T0').replace(/\s+/g, '')}-${(E.hist[E.hist.length - 1]?.label || '').replace(/\s+/g, '')}.csv`,
-            cols: [{ key: 'label', label: '턴' }, { key: 'gdp', label: `GDP(${E.settings.scale}${CUR()})`, fmt: f(0), raw: v => Math.round(v) }, { key: 'growth', label: '성장률%', fmt: f(2), raw: r2 }, { key: 'infl', label: '인플레%', fmt: f(2), raw: r2 },
+            cols: [{ key: 'label', label: '시점' }, { key: 'gdp', label: `GDP(${E.settings.scale}${CUR()})`, fmt: f(0), raw: v => Math.round(v) }, { key: 'growth', label: '성장률%', fmt: f(2), raw: r2 }, { key: 'infl', label: '인플레%', fmt: f(2), raw: r2 },
                 { key: 'unemp', label: '실업률%', fmt: f(2), raw: r2 }, { key: 'rate', label: '기준금리%', fmt: f(2), raw: r2 }, { key: 'yield', label: '국채금리%', fmt: f(2), raw: r2 }, { key: 'debt', label: '부채%', fmt: f(1), raw: r2 },
                 { key: 'balance', label: '재정수지%', fmt: f(2), raw: r2 }, { key: 'cur', label: '통화가치', fmt: f(1), raw: r2 }, { key: 'conf', label: '신뢰도', fmt: f(1), raw: r2 }, { key: 'mood', label: '민심', fmt: f(1), raw: r2 }, { key: 'ev', label: '사건' }],
             rows: E.hist.map(h => ({ label: h.label, ...h.n, ev: (h.ev || []).map(e => e.label).join(' / ') })),
@@ -1807,6 +1847,7 @@
         E.assets = { ...base.assets, ...(src.assets || {}) };
         validateDefs();
         inited = true;
+        reanchor(); // 세이브의 날짜를 계산을 마친 시점으로
     }
     const origGet = window.getAppState;
     window.getAppState = function () {
