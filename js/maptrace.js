@@ -1,6 +1,6 @@
 // ===== 맵 메이커(map.html) 보조 — 그림 지도 자동 추적 · .jsx 지도 다시 열기 =====
 // MapTrace.traceImage(file, opts) → Promise<{ svgText, count, width, height }>
-//   webp · png · jpg 같은 그림 지도에서 같은 색으로 칠해진 덩어리를 찾아 도형(<path>)으로 바꾼다.
+//   webp · png · jpg · bmp 같은 그림 지도에서 같은 색으로 칠해진 덩어리를 찾아 도형(<path>)으로 바꾼다.
 //   어두운 경계선 · 색이 번진 가장자리 · 얇은 선은 이웃 지역이 나눠 가지고, 가장자리를 둘러싼 큰 덩어리(바다 · 바탕)는 뺄 수 있다.
 //   opts: { tolerance(색 허용 오차 0~255), minArea(최소 크기, 그림 넓이 대비 ‰), dropBackground(bool), mergeSame(같은 색 이웃 합치기), maxSize(추적 해상도) }
 // MapTrace.jsxToSvg(text) → { svgText, count } — 맵 메이커가 내보낸 .jsx를 다시 SVG로 (게임의 parseDistrictJsx와 같은 규칙)
@@ -12,9 +12,86 @@
             const url = URL.createObjectURL(file);
             const img = new Image();
             img.onload = () => ok({ img, url });
-            img.onerror = () => { URL.revokeObjectURL(url); bad(new Error('그림을 읽지 못했습니다 (지원하지 않는 형식이거나 손상된 파일).')); };
+            img.onerror = async () => {
+                // 브라우저가 못 읽는 BMP(오래된 헤더 · RLE · 비트필드 등)는 직접 풀어서 캔버스로
+                try {
+                    const canvas = decodeBmp(await file.arrayBuffer());
+                    if (canvas) { ok({ img: canvas, url }); return; }
+                } catch (e) { /* 아래 오류로 */ }
+                URL.revokeObjectURL(url);
+                bad(new Error('그림을 읽지 못했습니다 (지원하지 않는 형식이거나 손상된 파일).'));
+            };
             img.src = url;
         });
+    }
+
+    // ---- BMP 해독 (BITMAPCOREHEADER · BITMAPINFOHEADER ~ V5, 1 · 4 · 8 · 16 · 24 · 32비트, RLE4 · RLE8 · 비트필드) ----
+    // BMP가 아니면 null
+    function decodeBmp(buf) {
+        const dv = new DataView(buf);
+        if (buf.byteLength < 26 || dv.getUint16(0, false) !== 0x424d) return null; // 'BM'
+        const dataOff = dv.getUint32(10, true);
+        const hs = dv.getUint32(14, true);
+        let W, H, bpp, comp = 0, nColors = 0;
+        if (hs === 12) { W = dv.getUint16(18, true); H = dv.getInt16(20, true); bpp = dv.getUint16(24, true); }
+        else { W = dv.getInt32(18, true); H = dv.getInt32(22, true); bpp = dv.getUint16(28, true); comp = dv.getUint32(30, true); nColors = hs >= 36 ? dv.getUint32(46, true) : 0; }
+        const topDown = H < 0; H = Math.abs(H);
+        if (!(W > 0 && H > 0) || W * H > 64e6) throw new Error('bad size');
+        // 팔레트 (BGR(A) — core 헤더는 3바이트씩)
+        const palEntry = hs === 12 ? 3 : 4;
+        const pal = [];
+        if (bpp <= 8) {
+            const n = nColors || (1 << bpp);
+            for (let i = 0; i < n; i++) { const o = 14 + hs + i * palEntry; if (o + 2 >= buf.byteLength) break; pal.push([dv.getUint8(o + 2), dv.getUint8(o + 1), dv.getUint8(o)]); }
+        }
+        // 비트필드 마스크 (BI_BITFIELDS=3 · BI_ALPHABITFIELDS=6) — V4 이상 헤더는 헤더 안, 아니면 헤더 바로 뒤
+        let masks = null;
+        if (comp === 3 || comp === 6) {
+            const mo = hs >= 52 ? 54 : 14 + hs;
+            masks = [dv.getUint32(mo, true), dv.getUint32(mo + 4, true), dv.getUint32(mo + 8, true), comp === 6 || hs >= 56 ? dv.getUint32(mo + 12, true) : 0];
+        } else if (bpp === 16) masks = [0x7c00, 0x03e0, 0x001f, 0];
+        else if (bpp === 32) masks = [0xff0000, 0xff00, 0xff, 0];
+        const chan = m => { if (!m) return null; let sh = 0; while (!((m >>> sh) & 1)) sh++; let bits = 0; while ((m >>> (sh + bits)) & 1) bits++; return { sh, max: (1 << bits) - 1 }; };
+        const ch = masks ? masks.map(chan) : null;
+        const pick = (v, c) => (c ? Math.round(((v >>> c.sh) & c.max) * 255 / c.max) : 255);
+        const out = new Uint8ClampedArray(W * H * 4);
+        const put = (x, y, r, g, b, a) => { const row = topDown ? y : H - 1 - y; const i = (row * W + x) * 4; out[i] = r; out[i + 1] = g; out[i + 2] = b; out[i + 3] = a; };
+        const putPal = (x, y, idx) => { const c = pal[idx] || [0, 0, 0]; put(x, y, c[0], c[1], c[2], 255); };
+        if (comp === 1 || comp === 2) {
+            // RLE8 · RLE4 — y는 파일 순서(아래부터)
+            const four = comp === 2;
+            let o = dataOff, x = 0, y = 0;
+            while (o + 1 < buf.byteLength && y < H) {
+                const n = dv.getUint8(o), v = dv.getUint8(o + 1); o += 2;
+                if (n > 0) { for (let i = 0; i < n && x < W; i++, x++) putPal(x, y, four ? (i & 1 ? v & 15 : v >> 4) : v); }
+                else if (v === 0) { x = 0; y++; }
+                else if (v === 1) break;
+                else if (v === 2) { x += dv.getUint8(o); y += dv.getUint8(o + 1); o += 2; }
+                else {
+                    for (let i = 0; i < v && x < W; i++, x++) { const byte = dv.getUint8(o + (four ? i >> 1 : i)); putPal(x, y, four ? (i & 1 ? byte & 15 : byte >> 4) : byte); }
+                    const used = four ? Math.ceil(v / 2) : v; o += used + (used & 1);
+                }
+            }
+        } else {
+            const stride = Math.floor((bpp * W + 31) / 32) * 4;
+            for (let y = 0; y < H; y++) {
+                const ro = dataOff + y * stride;
+                if (ro + stride > buf.byteLength) break;
+                for (let x = 0; x < W; x++) {
+                    if (bpp === 24) { const o = ro + x * 3; put(x, y, dv.getUint8(o + 2), dv.getUint8(o + 1), dv.getUint8(o), 255); }
+                    else if (bpp === 32) { const v = dv.getUint32(ro + x * 4, true); put(x, y, pick(v, ch[0]), pick(v, ch[1]), pick(v, ch[2]), ch[3] ? pick(v, ch[3]) : 255); }
+                    else if (bpp === 16) { const v = dv.getUint16(ro + x * 2, true); put(x, y, pick(v, ch[0]), pick(v, ch[1]), pick(v, ch[2]), ch[3] ? pick(v, ch[3]) : 255); }
+                    else if (bpp <= 8) { const bit = x * bpp, byte = dv.getUint8(ro + (bit >> 3)); putPal(x, y, (byte >> (8 - bpp - (bit & 7))) & ((1 << bpp) - 1)); }
+                    else throw new Error('bpp');
+                }
+            }
+        }
+        // 32비트인데 알파가 모두 0이면 (알파를 안 쓰는 파일) 불투명으로
+        if (bpp === 32 && ch && ch[3]) { let any = false; for (let i = 3; i < out.length; i += 4) if (out[i]) { any = true; break; } if (!any) for (let i = 3; i < out.length; i += 4) out[i] = 255; }
+        const canvas = document.createElement('canvas');
+        canvas.width = W; canvas.height = H;
+        canvas.getContext('2d').putImageData(new ImageData(out, W, H), 0, 0);
+        return canvas;
     }
 
     const hex = (r, g, b) => '#' + [r, g, b].map(v => Math.round(v).toString(16).padStart(2, '0')).join('');
@@ -321,5 +398,5 @@
         return { svgText: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${esc(viewBox)}">${els.join('')}</svg>`, count: els.length };
     }
 
-    window.MapTrace = { traceImage, jsxToSvg };
+    window.MapTrace = { traceImage, jsxToSvg, decodeBmp };
 })();

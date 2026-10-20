@@ -160,11 +160,11 @@
       <a href="index.html" class="btn secondary mm-back" title="메인 화면으로">← 메인으로</a>
       <div class="mm-titles">
         <h1>맵 메이커</h1>
-        <div class="small">SVG · 그림(webp · png · jpg, 자동 추적) · .jsx 지도를 지역구 지도 파일(.jsx)로 — 만든 파일은 국가 › 지역에서 불러옵니다</div>
+        <div class="small">SVG · 그림(webp · png · jpg · bmp, 자동 추적) · .jsx 지도를 지역구 지도 파일(.jsx)로 — 만든 파일은 국가 › 지역에서 불러옵니다</div>
       </div>
       <div class="mm-actions">
-        <input id="fileInput" type="file" accept=".svg,image/svg+xml,.jsx,.js,text/javascript,.webp,.png,.jpg,.jpeg,.gif,.bmp,image/*" />
-        <label for="fileInput" class="btn secondary file-label" title="SVG · 그림(webp · png · jpg) · 맵 메이커가 만든 .jsx">⬆ 지도 열기</label>
+        <input id="fileInput" type="file" accept=".svg,image/svg+xml,.jsx,.js,text/javascript,.webp,.png,.jpg,.jpeg,.gif,.bmp,.dib,image/bmp,image/x-ms-bmp,image/*" />
+        <label for="fileInput" class="btn secondary file-label" title="SVG · 그림(webp · png · jpg · bmp) · 맵 메이커가 만든 .jsx">⬆ 지도 열기</label>
         <label class="mm-fname" title="내보낼 때 쓸 파일 이름 (.jsx · .svg는 자동으로 붙음)">파일 이름 <input id="exportName" type="text" value="map" spellcheck="false" /></label>
         <button id="btnExportAll" class="btn">내보내기</button>
       </div>
@@ -198,7 +198,7 @@
             <div class="mm-empty">
               <div class="mm-empty-title">연 지도가 여기 표시됩니다</div>
               <div class="small">① ⬆ 지도 열기(바로 분석) → ② 오른쪽 목록에서 이름 고치기 · 고르기 → ③ 내보내기</div>
-              <div class="small">SVG가 가장 정확합니다. webp · png · jpg 같은 그림은 화소라 도형이 없어서, 같은 색 덩어리를 따라 도형을 자동으로 만들어요 (경계선이 뚜렷하고 지역마다 색이 다른 지도일수록 잘 됨). 맵 메이커로 만든 .jsx도 다시 열어 고칠 수 있어요</div>
+              <div class="small">SVG가 가장 정확합니다. webp · png · jpg · bmp 같은 그림은 화소라 도형이 없어서, 같은 색 덩어리를 따라 도형을 자동으로 만들어요 (경계선이 뚜렷하고 지역마다 색이 다른 지도일수록 잘 됨). 맵 메이커로 만든 .jsx도 다시 열어 고칠 수 있어요</div>
               <div class="small">떨어진 땅 여러 곳이 도형 하나로 묶여 있으면 목록의 ✂로 나누고, 같은 지역구는 골라서 합치세요</div>
             </div>
           </div>
@@ -260,7 +260,7 @@ const fileKind = f => {
   const n = (f.name || '').toLowerCase();
   if (/\.svg$/.test(n) || f.type === 'image/svg+xml') return 'svg';
   if (/\.(jsx|js)$/.test(n)) return 'jsx';
-  if (/^image\//.test(f.type) || /\.(webp|png|jpe?g|gif|bmp|avif)$/.test(n)) return 'image';
+  if (/^image\//.test(f.type) || /\.(webp|png|jpe?g|gif|bmp|dib|avif)$/.test(n)) return 'image';
   return 'svg';
 };
 let traceFile = null;
