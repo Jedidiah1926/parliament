@@ -131,6 +131,30 @@
     // opt: { x: [이름], series: [{ id, label, color, values, dash, width }], unit, height, log, zero, markers: [{ i, label, kind }],
     //        shade: [[i0, i1]], fan: [{ color, lo50, hi50, lo90, hi90, start }], range: [i0, i1], group, title, decimals, yMin, yMax, compact }
     const groups = new Map(); // 같은 십자선을 쓰는 그래프 묶음
+    // x 위치 — opt.t(칸마다 시간, 오름차순)가 있으면 시간 길이대로(1개월 칸은 1년 칸의 1/12), 없으면 칸마다 같은 너비
+    function xScale(opt, i0, i1, x0, w) {
+        const t = opt.t && opt.t.length === opt.x.length ? opt.t : null;
+        const pos = i => (t ? t[i] : i), a = pos(i0), span = pos(i1) - a;
+        const X = i => x0 + (span <= 0 ? w / 2 : (pos(i) - a) / span * w);
+        const idxAt = px => {
+            if (span <= 0) return i0;
+            const v = a + (px - x0) / w * span;
+            let best = i0; for (let i = i0; i <= i1; i++) if (Math.abs(pos(i) - v) < Math.abs(pos(best) - v)) best = i;
+            return best;
+        };
+        // 이웃 칸까지 평균 간격 (음영 · 막대 너비)
+        const gap = i => { const a2 = Math.max(i - 1, i0), b2 = Math.min(i + 1, i1); return b2 > a2 ? (X(b2) - X(a2)) / (b2 - a2) : w; };
+        return { X, idxAt, gap };
+    }
+    // x 이름 — 앞 이름과 minGap 이상 떨어질 때만 (오른쪽 끝에 걸려 잘리는 이름은 건너뜀)
+    function xLabels(svg, opt, i0, i1, X, y, right, minGap = 64) {
+        let last = -1e9;
+        for (let i = i0; i <= i1; i++) {
+            const xx = X(i);
+            if (xx - last < minGap || (xx > right - 26 && i !== i0)) continue;
+            T(svg, xx, y, String(opt.x[i] ?? ''), { class: 't69-tick', 'text-anchor': 'middle' }); last = xx;
+        }
+    }
     function lines(container, opt) {
         const draw = () => drawLines(container, opt);
         mount(container, draw);
@@ -155,12 +179,13 @@
         const useLog = opt.log && lo > 0;
         const tf = v => (useLog ? Math.log10(Math.max(v, 1e-6)) : v);
         const tlo = tf(lo), thi = tf(hi);
-        const X = i => padL + (i1 === i0 ? pw / 2 : (i - i0) / (i1 - i0) * pw);
+        const xs = xScale(opt, i0, i1, padL, pw), X = xs.X;
         const Y = v => padT + ph - (tf(v) - tlo) / (thi - tlo) * ph;
         // 침체 음영
         (opt.shade || []).forEach(([a, b]) => {
             const s0 = Math.max(a, i0), s1 = Math.min(b, i1); if (s1 < s0) return;
-            S('rect', { x: X(s0) - (pw / Math.max(1, i1 - i0)) / 2, y: padT, width: Math.max(2, X(s1) - X(s0) + pw / Math.max(1, i1 - i0)), height: ph, class: 't69-shade' }, svg);
+            const l = Math.max(padL, X(s0) - xs.gap(s0) / 2), r = Math.min(padL + pw, X(s1) + xs.gap(s1) / 2);
+            S('rect', { x: l, y: padT, width: Math.max(2, r - l), height: ph, class: 't69-shade' }, svg);
         });
         // 눈금 · 격자 (실선 가는 줄)
         const tv = useLog ? (() => { const out = []; for (let e = Math.floor(tlo); e <= Math.ceil(thi); e++) [1, 2, 5].forEach(m => { const v = m * Math.pow(10, e); if (v >= lo && v <= hi) out.push(v); }); return out; })() : ticks(lo, hi, opt.compact ? 3 : 5);
@@ -170,9 +195,7 @@
         });
         S('line', { x1: padL, x2: W - padR, y1: padT + ph, y2: padT + ph, class: 't69-axis' }, svg);
         // x 눈금 — 겹치지 않을 만큼만
-        const maxLabels = Math.max(2, Math.floor(pw / 64)), step = Math.max(1, Math.ceil((i1 - i0 + 1) / maxLabels));
-        // 오른쪽 끝에 걸려 잘리는 이름은 건너뜀 (이웃 이름과 겹치지 않게 가운데 정렬 유지)
-        if (!opt.noX) for (let i = i0; i <= i1; i += step) { const xx = X(i); if (xx > W - padR - 26 && i !== i0) continue; T(svg, xx, H - (opt.compact ? 5 : 9), String(opt.x[i] ?? ''), { class: 't69-tick', 'text-anchor': 'middle' }); }
+        if (!opt.noX) xLabels(svg, opt, i0, i1, X, H - (opt.compact ? 5 : 9), W - padR);
         // 예측 부채꼴 (90% 옅게, 50% 진하게)
         (opt.fan || []).forEach(f => {
             const band = (loA, hiA, cls) => {
@@ -231,7 +254,7 @@
                 showTip(ev.clientX, ev.clientY, String(opt.x[i] ?? ''), rows);
             }
         };
-        const idxAt = ev => { const r = svg.getBoundingClientRect(); const px = (ev.clientX - r.left) * (W / r.width); return clamp(Math.round(i0 + (px - padL) / pw * (i1 - i0)), i0, i1); };
+        const idxAt = ev => { const r = svg.getBoundingClientRect(); return xs.idxAt((ev.clientX - r.left) * (W / r.width)); };
         const members = opt.group ? (groups.get(opt.group) || groups.set(opt.group, new Set()).get(opt.group)) : null;
         const me = { setCross, alive: () => svg.isConnected };
         if (members) { [...members].forEach(m => { if (!m.alive()) members.delete(m); }); members.add(me); }
@@ -262,7 +285,7 @@
             const div = document.createElement('div'); div.className = 't69-panel';
             container.appendChild(div);
             const last = k === opt.panels.length - 1;
-            lines(div, { x: opt.x, series: p.series, unit: p.unit, title: p.title, height: (p.height || 150) - (last ? 0 : 12), log: p.log, zero: p.zero, fan: p.fan, decimals: p.decimals, markers: opt.markers, shade: opt.shade, range, group, compact: true, noX: !last });
+            lines(div, { x: opt.x, t: opt.t, series: p.series, unit: p.unit, title: p.title, height: (p.height || 150) - (last ? 0 : 12), log: p.log, zero: p.zero, fan: p.fan, decimals: p.decimals, markers: opt.markers, shade: opt.shade, range, group, compact: true, noX: !last });
         });
         if (n > 4 && opt.overview) {
             const mini = document.createElement('div'); mini.className = 't69-mini';
@@ -276,14 +299,14 @@
         const svg = S('svg', { viewBox: `0 0 ${W} ${H}`, width: W, height: H, class: 't69-svg t69-mini-svg', role: 'img', 'aria-label': '기간 고르기 — 끌어서 확대할 기간을 고르세요' }, container);
         const s = opt.overview.series;
         const [lo, hi] = extent([s.values], 0.1);
-        const X = i => padL + (n <= 1 ? 0 : i / (n - 1) * pw), Y = v => 6 + (H - 18) - (v - lo) / (hi - lo) * (H - 18);
+        const xs = xScale(opt, 0, n - 1, padL, pw), X = xs.X, Y = v => 6 + (H - 18) - (v - lo) / (hi - lo) * (H - 18);
         let d = ''; s.values.forEach((v, i) => { if (finite(v)) d += (d ? 'L' : 'M') + X(i).toFixed(1) + ',' + Y(v).toFixed(1); });
         S('path', { d, fill: 'none', stroke: s.color, 'stroke-width': 1.5, opacity: 0.7 }, svg);
         T(svg, 4, H / 2 + 3, '기간', { class: 't69-tick' });
         const win = S('rect', { y: 2, height: H - 10, class: 't69-brush' }, svg);
         const place = (a, b) => { win.setAttribute('x', X(a)); win.setAttribute('width', Math.max(4, X(b) - X(a))); };
         place(range[0], range[1]);
-        const idx = ev => { const r = svg.getBoundingClientRect(); return clamp(Math.round(((ev.clientX - r.left) * (W / r.width) - padL) / pw * (n - 1)), 0, n - 1); };
+        const idx = ev => { const r = svg.getBoundingClientRect(); return xs.idxAt((ev.clientX - r.left) * (W / r.width)); };
         let start = null, moveFrom = null, cur = range.slice();
         svg.addEventListener('pointerdown', ev => {
             svg.setPointerCapture(ev.pointerId);
@@ -326,14 +349,15 @@
         }
         if (hi - lo < 1e-9) hi = lo + 1;
         const pad = (hi - lo) * 0.08; hi += pad; lo -= lo < 0 ? pad : 0;
-        const count = i1 - i0 + 1, slot = pw / count, bw = Math.max(2, Math.min(28, slot - 2));
-        const X = i => padL + (i - i0 + 0.5) * slot, Y = v => padT + ph - (v - lo) / (hi - lo) * ph;
+        const count = i1 - i0 + 1, slot0 = pw / count;
+        const xs = xScale(opt, i0, i1, padL + slot0 / 2, pw - slot0), X = xs.X, Y = v => padT + ph - (v - lo) / (hi - lo) * ph;
+        const slotAt = i => (count === 1 ? pw : xs.gap(i)), bwAt = i => Math.max(1.5, Math.min(28, slotAt(i) - 2));
         ticks(lo, hi, 5).forEach(v => { S('line', { x1: padL, x2: W - padR, y1: Y(v), y2: Y(v), class: Math.abs(v) < 1e-9 ? 't69-axis' : 't69-grid' }, svg); T(svg, padL - 6, Y(v) + 3.5, fmtNum(v, Math.abs(v) < 10 && v % 1 ? 1 : 0), { class: 't69-tick', 'text-anchor': 'end' }); });
-        const maxLabels = Math.max(2, Math.floor(pw / 64)), step = Math.max(1, Math.ceil(count / maxLabels));
-        for (let i = i0; i <= i1; i += step) { const xx = X(i); if (xx > W - padR - 26 && i !== i0) continue; T(svg, xx, H - 9, String(opt.x[i] ?? ''), { class: 't69-tick', 'text-anchor': 'middle' }); }
+        xLabels(svg, opt, i0, i1, X, H - 9, W - padR);
         const dec = opt.decimals ?? 2;
         for (let i = i0; i <= i1; i++) {
             let up = 0, down = 0;
+            const bw = bwAt(i), slot = slotAt(i);
             const g = S('g', { class: 't69-barcol' }, svg);
             opt.parts.forEach(pt => {
                 const v = pt.values[i] || 0; if (Math.abs(v) < 1e-9) return;
@@ -378,6 +402,7 @@
     function drawHemi(container, opt) {
         container.textContent = '';
         container.classList.add('t69-chart');
+        container.classList.add('t69-hemi');
         const W = Math.min(widthOf(container), 400), H = Math.round(W * 0.82);
         const cx = W / 2, cy = H / 2, sum = a => a.reduce((t, x) => t + Math.max(0, x.value), 0);
         const ts = sum(opt.spend), tr = sum(opt.rev), big = Math.max(ts, tr) || 1;
@@ -694,6 +719,7 @@
         }
         .t69-dispbox { color: var(--t69-ink); }
         .t69-svg { display: block; max-width: 100%; height: auto; font-family: inherit; }
+        .t69-hemi > .t69-svg { margin: 0 auto; } /* 반원 예산은 최대 400px — 넓은 화면에서 가운데로 */
         .t69-surface { fill: var(--t69-surface); }
         .t69-grid { stroke: var(--t69-grid); stroke-width: 1; }
         .t69-axis { stroke: var(--t69-axis); stroke-width: 1; }
@@ -734,7 +760,7 @@
         .t69-legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: .74rem; color: var(--t69-ink2); margin: 6px 0 0 46px; }
         .t69-legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; }
         .t69-legend i.line { height: 2px; width: 14px; vertical-align: 3px; background: var(--t69-ink); }
-        .t69-legend2 { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 18px; font-size: .74rem; color: var(--t69-ink2); margin-top: 8px; }
+        .t69-legend2 { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 28px; font-size: .74rem; color: var(--t69-ink2); margin: 8px auto 0; max-width: 560px; } /* 넓은 화면에서 이름과 금액이 멀어지지 않게 */
         .t69-legend2-h { font-weight: 600; color: var(--t69-ink); margin-bottom: 2px; }
         .t69-legend2-r { display: grid; grid-template-columns: 12px minmax(0,1fr) auto; gap: 6px; align-items: center; }
         .t69-legend2-r i { width: 10px; height: 10px; border-radius: 2px; }

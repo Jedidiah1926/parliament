@@ -438,7 +438,17 @@
         });
         const after = sum(keys.map(k => S2.dist[k].gdp));
         const dlnNat = Math.log(after / before) * 100;
-        N.growth = dlnNat / dt;
+        // 성장률은 전년 대비 (통계처럼) — 한 기간 변화를 연율로 늘리면 1개월 · 1분기 흔들림이 12배 · 4배로 커져 미친 듯이 오르내린다.
+        // 누적 로그 지수(같은 지역구끼리 잰 변화만 — 통일로 늘어난 지역구는 성장이 아님)를 1년 전과 비교
+        N.growthQ = dlnNat / dt;
+        const c0 = S2.clock || 0, buf = S2.gbuf && S2.gbuf.length ? S2.gbuf : (S2.gbuf = [{ y: c0 - 1, L: -(N.growth || 0) }, { y: c0, L: 0 }]);
+        S2.clock = c0 + dt;
+        const Lnow = buf[buf.length - 1].L + dlnNat;
+        buf.push({ y: S2.clock, L: Lnow });
+        const yAgo = S2.clock - 1;
+        while (buf.length > 2 && buf[1].y <= yAgo + 1e-9) buf.shift();
+        const [p0, p1] = buf, Lthen = p0.y >= yAgo - 1e-9 || p1.y === p0.y ? p0.L : p0.L + (p1.L - p0.L) * (yAgo - p0.y) / (p1.y - p0.y);
+        N.growth = p0.y > yAgo + 1e-9 ? (Lnow - p0.L) / (S2.clock - p0.y) : Lnow - Lthen;
         N.gap = clamp(N.gap * Math.exp(-1.2 * dt) + (dlnNat - pot * dt), -15, 15);
         const N2 = nationalFromDist(S2, keys);
         N.unemp = N2.unemp; N.gdp = after;
@@ -577,7 +587,7 @@
         const N = S2.nat;
         S2.hist.push({
             t: S2.turn, label: label || turnLabel(S2, S2.turn),
-            n: { gdp: N.gdp, growth: N.growth, infl: N.infl, unemp: N.unemp, rate: N.rate, yield: N.yield, debt: N.debt, balance: N.balance, cur: N.cur, conf: N.conf, mood: N.mood, print: N.print, reserves: N.reserves, rev: N.rev, spend: N.spend, gap: N.gap },
+            yr: S2.clock || 0, n: { gdp: N.gdp, growth: N.growth, gq: N.growthQ, infl: N.infl, unemp: N.unemp, rate: N.rate, yield: N.yield, debt: N.debt, balance: N.balance, cur: N.cur, conf: N.conf, mood: N.mood, print: N.print, reserves: N.reserves, rev: N.rev, spend: N.spend, gap: N.gap },
             dec: rec ? rec.dec : null, bud: rec ? { rev: rec.bud.rev, spend: rec.bud.spend, mand: rec.bud.mand } : budgetSnap(S2),
             a: { ...S2.assets }, ev: ev || [],
         });
@@ -1052,7 +1062,7 @@
     function renderOverview() {
         const box = contentOf('overview'); if (!box) return;
         const N = E.nat, rt = E.rating || ratingOf(E), last = E.hist[E.hist.length - 2];
-        const kp = [['growth', '성장률 (연율)', N.growth, '%', 'analysis'], ['infl', '인플레', N.infl, '%', 'monetary'], ['unemp', '실업률', N.unemp, '%', 'region'], ['debt', '국가부채 (GDP 대비)', N.debt, '%', 'fiscal'], ['mood', '민심', N.mood, '', 'region'], ['conf', '신뢰도', N.conf, '', 'monetary']];
+        const kp = [['growth', '성장률 (전년 대비)', N.growth, '%', 'analysis'], ['infl', '인플레', N.infl, '%', 'monetary'], ['unemp', '실업률', N.unemp, '%', 'region'], ['debt', '국가부채 (GDP 대비)', N.debt, '%', 'fiscal'], ['mood', '민심', N.mood, '', 'region'], ['conf', '신뢰도', N.conf, '', 'monetary']];
         const sig = signals(E).filter(s => s.on);
         const revolt = N.mood < E.thresholds.revolt;
         const nx = project(null, 1);
@@ -1124,7 +1134,7 @@
                 <button type="button" class="t69-preset ${E.ui.preset === 'custom' ? 'on' : ''}" data-preset="custom"><b>직접 고르기</b><span>아래에서 그래프를 골라 배치</span></button></div>
             ${E.ui.preset === 'custom' ? `<div class="t69-card"><div class="t69-card-h">그래프 고르기</div>${Object.entries(MODULES).map(([id, l]) => `<label class="t69-check"><input type="checkbox" data-mod="${id}" ${mods.includes(id) ? 'checked' : ''}> ${l}</label>`).join('')}</div>` : ''}
             <div class="t69-card">
-                <div class="t69-row">기간 <span class="t69-seg">${[['all', '전체'], ['40', `최근 ${spanLabel(40)}`], ['20', spanLabel(20)], ['8', spanLabel(8)]].map(([k, l]) => `<button type="button" data-range="${k}" class="${String(E.ui.range) === k ? 'on' : ''}">${l}</button>`).join('')}</span></div>
+                <div class="t69-row">기간 <span class="t69-seg">${RANGES.map(([k, l]) => `<button type="button" data-range="${k}" class="${String(E.ui.range) === k ? 'on' : ''}">${l}</button>`).join('')}</span></div>
                 <label class="t69-check"><input type="checkbox" data-path="ui.log" ${E.ui.log ? 'checked' : ''}> 인플레 · 통화 증가 로그 눈금 (하이퍼인플레용)</label>
                 <label class="t69-row">민감도 · 예측 지표 <select data-path="ui.target">${Object.entries(VAR).map(([k, v]) => `<option value="${k}" ${E.ui.target === k ? 'selected' : ''}>${v.label}</option>`).join('')}</select></label>
                 <label class="t69-row">민감도 기간 <select data-path="ui.horizon">${[1, 4, 8].map(n => [n, spanLabel(n)]).map(([k, l]) => `<option value="${k}" ${Number(E.ui.horizon) === k ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
@@ -1220,18 +1230,20 @@
                         ${Math.abs(v - (E.spend[d.id] ?? d.s0)) > 1e-6 ? `<div class="t69-dim t69-small">집행 중 ${r2(E.spend[d.id] ?? d.s0)}% → 초안 ${r2(v)}%</div>` : ''}${lk ? `<div class="t69-lock">🔒 ${esc(lk)}</div>` : ''}</div>`; }).join('')}</div>`;
             }).join('')}
             <div class="t69-card"><div class="t69-card-h">의무지출 <span class="t69-dim">자동 계산 · 법으로만 기준 변경</span></div>
-                <div class="t69-kv"><span>국채 이자 (부채 × 국채금리)</span><b>${pct(b.mand.interest)}</b></div>
-                <div class="t69-kv"><span>연금 (노인 인구)</span><b>${pct(b.mand.pension)}</b></div>
-                <div class="t69-kv"><span>실업급여 (실업자)</span><b>${pct(b.mand.unemp)}</b></div></div>
+                <div class="t69-kv"><span>국채 이자 (부채 × 국채금리)</span><b>${pct(b.mand.interest)} · ${money(b.mand.interest)}</b></div>
+                <div class="t69-kv"><span>연금 (노인 인구)</span><b>${pct(b.mand.pension)} · ${money(b.mand.pension)}</b></div>
+                <div class="t69-kv"><span>실업급여 (실업자)</span><b>${pct(b.mand.unemp)} · ${money(b.mand.unemp)}</b></div></div>
             <div class="t69-card"><div class="t69-card-h">세율 <span class="t69-dim">너무 높으면 세수가 오히려 줄어듦 (래퍼 곡선)</span></div>
                 ${taxDefs().map(t => { const lk = lockOf('taxes.' + t.id); const v = V.taxes[t.id] ?? t.rate0; return `<div class="t69-slider">
-                    <div class="t69-slider-h"><span>${esc(t.name)} <em class="t69-dim">세수 ${pct(taxRevenue(t, v))}</em></span><b data-out="taxes.${t.id}">${r2(v)}%</b></div>
+                    <div class="t69-slider-h"><span>${esc(t.name)} <em class="t69-dim">세수 ${pct(taxRevenue(t, v))} · ${money(taxRevenue(t, v))}</em></span><b data-out="taxes.${t.id}">${r2(v)}%</b></div>
                     <input type="range" min="0" max="${t.max}" step="0.5" value="${v}" data-path="taxes.${t.id}" ${lk ? 'disabled' : ''} aria-label="${esc(t.name)}">${lk ? `<div class="t69-lock">🔒 ${esc(lk)}</div>` : ''}</div>`; }).join('')}
                 <div class="t69-actions"><button type="button" class="t69-btn" data-pkg="taxcut">한시적 감세 (${spanLabel(4)})</button><button type="button" class="t69-btn" data-pkg="taxhike">한시적 증세 (${spanLabel(4)})</button></div>
                 ${window.T68 && (window.T68.vassals || []).length ? `<label class="t69-row">종속국 공납 <input type="number" class="t69-num" min="0" max="50" step="1" value="${E.tribute}" data-path="root.tribute">% <span class="t69-dim">세입 ${pct(b.rev._tribute || 0, 2)}</span></label>` : ''}
             </div>
             <div class="t69-card"><div class="t69-card-h">국고 · 부채</div>
-                <div class="t69-kv"><span>국고 (예비비)</span><b>${pct(E.nat.reserves)} · ${money(E.nat.reserves)}</b></div>
+                <div class="t69-kv"><span>국고 (예비비)</span><b>${money(E.nat.reserves)} · GDP의 ${pct(E.nat.reserves)}</b></div>
+                <div class="t69-kv"><span>국가부채</span><b>${money(E.nat.debt)} · GDP의 ${pct(E.nat.debt)}</b></div>
+                <div class="t69-kv"><span>재정수지 (연간)</span><b>${E.nat.balance < 0 ? '적자 ' : '흑자 '}${money(Math.abs(E.nat.balance))} · GDP의 ${pct(Math.abs(E.nat.balance))}</b></div>
                 <div class="t69-actions"><button type="button" class="t69-btn" data-act="repay" ${E.nat.reserves > 0 ? '' : 'disabled'}>부채 상환</button><button type="button" class="t69-btn" data-act="invest" ${E.nat.reserves > 0 ? '' : 'disabled'}>인프라에 투자</button>
                     <label class="t69-check"><input type="checkbox" data-path="root.autoRepay" ${E.autoRepay ? 'checked' : ''}> 흑자는 자동 상환</label></div>
                 <div class="t69-kv"><span>국가부채</span><b>${pct(E.nat.debt)} · ${money(E.nat.debt)}</b></div>
@@ -1457,14 +1469,21 @@
     // 기록 → 그래프 자료
     function series() {
         const H = E.hist, n = H.length;
-        const x = H.map(h => h.label);
+        const x = H.map(h => h.label), t = histT();
         const col = f => H.map(h => { const v = f(h); return Number.isFinite(v) ? v : null; });
-        return { H, n, x, col };
+        return { H, n, x, t, col };
     }
+    const RANGES = [['all', '전체'], ['y10', '10년'], ['y5', '5년'], ['y2', '2년']];
+    // 'y10' = 10년 · 예전 세이브의 칸 수('40')는 분기로 보고 년으로
+    const rangeYears = r => (r === 'all' || r == null ? 0 : /^y\d+$/.test(r) ? Number(r.slice(1)) : (Number(r) || 0) / 4);
     function rangeIdx(n) {
         if (E.ui.zoom && E.ui.zoom[1] < n) return E.ui.zoom;
-        const r = E.ui.range === 'all' ? n : Number(E.ui.range) || n;
-        return [Math.max(0, n - r), Math.max(0, n - 1)];
+        // 기간은 시간(년)으로 — 칸 수로 세면 1개월 · 1분기 · 1년 칸이 섞일 때 길이가 제각각
+        const yrs = rangeYears(E.ui.range);
+        if (!yrs) return [0, Math.max(0, n - 1)];
+        const t = histT(), from = t[t.length - 1] - yrs + 1e-9;
+        let i = n - 1; while (i > 0 && t[i - 1] >= from) i--;
+        return [i, Math.max(0, n - 1)];
     }
     function markersOf(H) {
         const at = new Map(H.map((h, i) => [h.t, i]));
@@ -1478,6 +1497,12 @@
         return out;
     }
     // 예측을 붙인 x축 (지금 + h턴)
+    // 기록마다 시간 위치(년) — 1개월 · 1분기 · 1년 칸이 실제 길이대로 (예전 세이브는 지금 단위로 채움)
+    function histT() {
+        let prev = null;
+        return E.hist.map(h => { const v = Number.isFinite(h.yr) && (prev == null || h.yr >= prev) ? h.yr : (prev == null ? 0 : prev + DT[E.unit]); prev = v; return v; });
+    }
+    const withForecastT = (t, h) => t.concat(Array.from({ length: h }, (_, i) => (t.length ? t[t.length - 1] : 0) + (i + 1) * DT[E.unit]));
     function withForecast(xs, h) { return xs.concat(Array.from({ length: h }, (_, i) => turnLabel(E, E.turn + i + 1))); }
     function fanFor(v, base, h, fc) {
         const pad = Array(base - 1).fill(null), cur = VAR[v].get(E);
@@ -1488,7 +1513,7 @@
         const tb = document.getElementById('t69Toolbar'); if (!tb) return;
         tb.innerHTML = `<span class="t69-seg">${[['overview', '개요'], ['analysis', '분석'], ['region', '지역']].map(([k, l]) => `<button type="button" data-view="${k}" class="${E.ui.view === k ? 'on' : ''}">${l}</button>`).join('')}</span>
             ${E.ui.view === 'analysis' ? `<span class="t69-dim">${esc(E.ui.preset === 'custom' ? '직접 고른 배치' : PRESET_MODS[E.ui.preset]?.name || '')}</span>` : ''}
-            <span class="t69-seg">${[['all', '전체'], ['40', spanLabel(40)], ['20', spanLabel(20)], ['8', spanLabel(8)]].map(([k, l]) => `<button type="button" data-range="${k}" class="${String(E.ui.range) === k && !E.ui.zoom ? 'on' : ''}">${l}</button>`).join('')}</span>
+            <span class="t69-seg">${RANGES.map(([k, l]) => `<button type="button" data-range="${k}" class="${String(E.ui.range) === k && !E.ui.zoom ? 'on' : ''}">${l}</button>`).join('')}</span>
             ${E.ui.zoom ? '<button type="button" class="t69-btn t69-sm" data-act="unzoom">확대 해제</button>' : ''}
             <span class="t69-grow"></span>
             <button type="button" class="t69-btn t69-sm" data-act="csv" title="모든 시점 · 지표 표를 CSV로">CSV</button>
@@ -1534,23 +1559,37 @@
             const v = VAR[k].get(E);
             C.gauge(g, { label: l, value: v, unit: VAR[k].unit === '%' ? '%' : '', min: mn, max: mx, maxPlus: k === 'infl' || k === 'debt', bands: bandsOf(k), status: statusOf(k, v), spark: spark(k), delta: last ? v - last.n[k] : null, decimals: 1, onClick: () => switchSubTab('economy', go) });
         });
+        // 셋째 줄: 금액 — 비율(GDP 대비)만으로는 실제 규모를 알 수 없으니 화폐 단위로 (세입 · 세출 · 이자는 연간)
+        const bq = budgetOf(E, N, distList()), prevN = last ? last.n : null;
+        const chg = (now, before) => (before == null || !Number.isFinite(before) ? '' : `<em class="${now >= before ? 'up' : 'down'}">${now >= before ? '▲' : '▼'} ${Math.round(Math.abs(now - before)).toLocaleString()}</em>`);
+        const amt = pctGdp => pctGdp * N.gdp / 100, amtThen = (k) => (prevN && Number.isFinite(prevN[k]) ? prevN[k] * prevN.gdp / 100 : null);
+        const fin = [
+            ['GDP', gdpText(), `성장률 ${pct(N.growth)} (전년 대비)`, chg(N.gdp, prevN?.gdp)],
+            ['국가부채', money(N.debt), `GDP의 ${pct(N.debt, 0)}`, chg(amt(N.debt), amtThen('debt')), N.debt > E.thresholds.default ? 'critical' : N.debt > 90 ? 'serious' : ''],
+            ['국고 (예비비)', money(N.reserves), N.reserves > 0 ? `GDP의 ${pct(N.reserves)}` : '비어 있음', chg(amt(N.reserves), amtThen('reserves'))],
+            ['세입 (연간)', money(N.rev), `GDP의 ${pct(N.rev)}`, ''],
+            ['세출 (연간)', money(N.spend), `GDP의 ${pct(N.spend)}`, ''],
+            [N.balance < 0 ? '재정 적자 (연간)' : '재정 흑자 (연간)', money(Math.abs(N.balance)), `GDP의 ${pct(Math.abs(N.balance))}`, '', N.balance < -6 ? 'serious' : ''],
+            ['국채 이자 (연간)', money(bq.mand.interest), `국채금리 ${pct(N.yield)}`, ''],
+        ];
+        box.appendChild(el(`<div class="t69-fin" aria-label="재정 금액">${fin.map(([l, v, sub, d, st]) => `<div class="t69-fin-i ${st ? 't69-fin-' + st : ''}"><span>${l}</span><b>${esc(v)}</b><small>${esc(sub)} ${d}</small></div>`).join('')}</div>`));
         // 큰 그래프 — 같은 단위(%)인 지표만 겹쳐 봄 (두 눈금 겹치지 않게)
         const body = section(box, '추이', '— 칩을 눌러 겹쳐 볼 지표를 고르세요 (같은 % 눈금) · 점선은 예측');
         const chips = el(`<div class="t69-chips">${CHIP_VARS.map(k => `<button type="button" data-chip="${k}" class="t69-chip ${E.ui.chips.includes(k) ? 'on' : ''}" aria-pressed="${E.ui.chips.includes(k)}"><i style="background:${VAR[k].color}"></i>${VAR[k].label}</button>`).join('')}</div>`);
         body.appendChild(chips);
         chips.querySelectorAll('[data-chip]').forEach(b => { b.onclick = () => { const s = new Set(E.ui.chips); if (s.has(b.dataset.chip)) { if (s.size > 1) s.delete(b.dataset.chip); } else s.add(b.dataset.chip); E.ui.chips = CHIP_VARS.filter(k => s.has(k)); renderDisp(); }; });
         const chart = document.createElement('div'); body.appendChild(chart);
-        const { H, n, x, col } = series(), h = 4;
+        const { H, n, x, t, col } = series(), h = 4;
         const sel = E.ui.chips.filter(k => CHIP_VARS.includes(k));
         const fc = forecast(sel, h, 32);
-        const xs = withForecast(x, h);
+        const xs = withForecast(x, h), ts = withForecastT(t, h);
         const ser = [];
         sel.forEach(k => {
             ser.push({ id: k, label: VAR[k].label, color: VAR[k].color, values: col(hh => hh.n[k]).concat(Array(h).fill(null)) });
             ser.push({ id: k + '_f', label: `${VAR[k].label} 예측`, color: VAR[k].color, dash: true, width: 1.5, values: Array(n - 1).fill(null).concat([VAR[k].get(E)], fc[k].mean) });
         });
         const [i0] = rangeIdx(n);
-        C.lines(chart, { x: xs, series: ser, unit: '%', height: 260, zero: true, markers: markersOf(H), shade: recessions(H), fan: sel.length ? [fanFor(sel[0], n, h, fc[sel[0]])] : [], range: [i0, xs.length - 1] });
+        C.lines(chart, { x: xs, t: ts, series: ser, unit: '%', height: 260, zero: true, markers: markersOf(H), shade: recessions(H), fan: sel.length ? [fanFor(sel[0], n, h, fc[sel[0]])] : [], range: [i0, xs.length - 1] });
         // 예산
         const bb = section(box, `예산 (연간 · ${E.settings.scale}${CUR()})`, E.settings.budgetView === 'hemi' ? '— 위 세출 · 아래 세입, 넓이 = 금액' : '— 같은 축의 세출 · 세입');
         const sp = budgetPies();
@@ -1578,7 +1617,7 @@
     }
     const REV = i => `var(--rv${Math.min(i, 5) + 1})`;
     function renderAnalysisDisp(box) {
-        const { H, n, x, col } = series();
+        const { H, n, x, t, col } = series();
         const range = rangeIdx(n), markers = markersOf(H), shade = recessions(H);
         const onRange = (a, b) => { E.ui.zoom = [a, b]; renderDisp(); };
         const mods = currentMods();
@@ -1588,25 +1627,25 @@
         if (mods.includes('debt')) need.add('debt');
         if (mods.includes('fan')) need.add(E.ui.target);
         const h = 8, fc = need.size ? forecast([...need], h, 48) : {};
-        const xs = withForecast(x, h), padF = arr => arr.concat(Array(h).fill(null));
+        const xs = withForecast(x, h), ts = withForecastT(t, h), padF = arr => arr.concat(Array(h).fill(null));
         const rng2 = [range[0], E.ui.zoom ? range[1] : xs.length - 1];
         const fanOf = v => (fc[v] ? [fanFor(v, n, h, fc[v])] : []);
         const S1 = (k, extra) => ({ id: k, label: VAR[k].label, color: VAR[k].color, values: padF(col(hh => hh.n[k])), ...(extra || {}) });
         const fmean = k => (fc[k] ? [{ id: k + 'f', label: `${VAR[k].label} 예측(중앙)`, color: VAR[k].color, dash: true, width: 1.5, values: Array(n - 1).fill(null).concat([VAR[k].get(E)], fc[k].mean) }] : []);
         mods.forEach(m => {
             if (m === 'cycleP') {
-                const b = section(box, '경기 순환', `— 같은 십자선 · 회색 = 경기 침체(${spanLabel(2)} 이상 마이너스 성장) · 아래 미니맵을 끌어 기간 확대`);
-                C.panels(b, { x: xs, range: rng2, markers, shade, onRange, overview: { series: S1('growth') }, panels: [
-                    { title: '성장률 (연율, %)', unit: '%', zero: true, series: [S1('growth')].concat(fmean('growth')), fan: fanOf('growth') },
+                const b = section(box, '경기 순환', `— 같은 십자선 · 회색 = 경기 침체(마이너스 성장이 이어진 기간) · 아래 미니맵을 끌어 기간 확대`);
+                C.panels(b, { x: xs, t: ts, range: rng2, markers, shade, onRange, overview: { series: S1('growth') }, panels: [
+                    { title: '성장률 (전년 대비, %)', unit: '%', zero: true, series: [S1('growth')].concat(fmean('growth')), fan: fanOf('growth') },
                     { title: '실업률 (%)', unit: '%', series: [S1('unemp')] },
                     { title: '인플레 (%)', unit: '%', series: [S1('infl')], log: E.ui.log },
                     { title: '기준금리 · 국채금리 (%)', unit: '%', series: [S1('rate'), S1('yield')] },
                 ] });
             }
             if (m === 'decompG') {
-                const b = section(box, '성장 기여도 분해', `— ${UNIT_WORD[E.unit]}마다 성장률(연율)을 원인별로 나눔 · 선 = 실제 성장률`);
+                const b = section(box, '성장 기여도 분해', `— ${UNIT_WORD[E.unit]}마다 그 기간 성장(연율로 환산)을 원인별로 나눔 · 선 = 그 기간 성장률`);
                 const g = k => padF(H.map(hh => (hh.dec ? hh.dec.g[k] : null)));
-                C.stackBars(b, { x: xs, range: [range[0], range[1]], unit: '%p', net: { label: '성장률', values: padF(col(hh => hh.n.growth)) }, parts: [
+                C.stackBars(b, { x: xs, t: ts, range: [range[0], range[1]], unit: '%p', net: { label: '그 기간 성장률 (연율)', values: padF(col(hh => hh.n.gq ?? hh.n.growth)) }, parts: [
                     { id: 'pot', label: '잠재성장 (기술 · 인적자본 · 인프라)', color: 'var(--s1)', values: g('pot') }, { id: 'fiscal', label: '재정 (지출 · 세금 변화)', color: 'var(--s2)', values: g('fiscal') },
                     { id: 'monetary', label: '통화 (실질금리 · 양적완화)', color: 'var(--s3)', values: g('monetary') }, { id: 'money', label: '통화량', color: 'var(--s4)', values: g('money') },
                     { id: 'fx', label: '환율 (수출)', color: 'var(--s5)', values: g('fx') }, { id: 'tax', label: '세율 부작용', color: 'var(--s6)', values: g('tax') }, { id: 'noise', label: '예상 밖 충격', color: 'var(--s7)', values: g('noise') },
@@ -1614,7 +1653,7 @@
             }
             if (m === 'inflP') {
                 const b = section(box, '인플레', '— 로그 눈금은 분석 탭에서');
-                C.panels(b, { x: xs, range: rng2, markers, shade, onRange, overview: { series: S1('infl') }, panels: [
+                C.panels(b, { x: xs, t: ts, range: rng2, markers, shade, onRange, overview: { series: S1('infl') }, panels: [
                     { title: '인플레 (%)', unit: '%', series: [S1('infl')].concat(fmean('infl')), fan: fanOf('infl'), log: E.ui.log },
                     { title: '연간 통화 증가 (%)', unit: '%', series: [{ id: 'm', label: '통화 증가', color: 'var(--s4)', values: padF(col(hh => hh.n.print * 4)) }], log: E.ui.log },
                     { title: '통화가치 (지수, 처음 100)', unit: '', series: [S1('cur')] },
@@ -1623,7 +1662,7 @@
             if (m === 'decompP') {
                 const b = section(box, '인플레 분해', '— 기대 + 과열 + 통화 + 수입물가 + 세금 · 기타 + 조정 지연 = 실제 인플레');
                 const g = k => padF(H.map(hh => (hh.dec ? hh.dec.p[k] : null)));
-                C.stackBars(b, { x: xs, range: [range[0], range[1]], unit: '%p', net: { label: '인플레', values: padF(col(hh => hh.n.infl)) }, parts: [
+                C.stackBars(b, { x: xs, t: ts, range: [range[0], range[1]], unit: '%p', net: { label: '인플레', values: padF(col(hh => hh.n.infl)) }, parts: [
                     { id: 'exp', label: '기대 인플레', color: 'var(--s1)', values: g('exp') }, { id: 'gap', label: '경기 과열', color: 'var(--s2)', values: g('gap') },
                     { id: 'money', label: '과잉 통화', color: 'var(--s3)', values: g('money') }, { id: 'imp', label: '수입물가 (통화가치)', color: 'var(--s4)', values: g('imp') },
                     { id: 'other', label: '세금 · 기타', color: 'var(--s5)', values: g('other') }, { id: 'adj', label: '조정 지연', color: 'var(--s7)', values: g('adj') },
@@ -1635,7 +1674,7 @@
             }
             if (m === 'debt') {
                 const b = section(box, '부채 동학', '— r − g가 양수면 기초재정수지가 0이어도 부채비율이 불어남');
-                C.panels(b, { x: xs, range: rng2, markers, shade, onRange, overview: { series: S1('debt') }, panels: [
+                C.panels(b, { x: xs, t: ts, range: rng2, markers, shade, onRange, overview: { series: S1('debt') }, panels: [
                     { title: '국가부채 (GDP 대비 %)', unit: '%', series: [S1('debt')].concat(fmean('debt')), fan: fanOf('debt') },
                     { title: 'r − g (국채금리 − 명목성장률, %p)', unit: '%p', zero: true, series: [{ id: 'rg', label: 'r − g', color: 'var(--s7)', values: padF(col(hh => hh.n.yield - (hh.n.growth + hh.n.infl))) }] },
                     { title: '기초재정수지 (이자 제외, GDP 대비 %)', unit: '%', zero: true, series: [{ id: 'pb', label: '기초재정수지', color: 'var(--s6)', values: padF(col(hh => hh.n.balance + (hh.bud?.mand?.interest || 0))) }] },
@@ -1643,7 +1682,7 @@
             }
             if (m === 'rates') {
                 const b = section(box, '금리 차', '— 위험 프리미엄이 커지면 시장이 국채를 믿지 않는다는 뜻');
-                C.panels(b, { x: xs, range: rng2, markers, shade, onRange, panels: [
+                C.panels(b, { x: xs, t: ts, range: rng2, markers, shade, onRange, panels: [
                     { title: '기준금리 · 국채금리 (%)', unit: '%', series: [S1('rate'), S1('yield')] },
                     { title: '위험 프리미엄 (국채 − 기준, %p)', unit: '%p', zero: true, series: [{ id: 'prem', label: '위험 프리미엄', color: 'var(--s8)', values: padF(col(hh => hh.n.yield - hh.n.rate)) }] },
                 ] });
@@ -1657,7 +1696,7 @@
                 const groups = [...new Set(itemDefs().map(d => d.group || '기타'))];
                 const parts = groups.map((g, i) => ({ id: g, label: g, color: SLOT(i), values: padF(H.map(hh => sum(itemDefs().filter(d => (d.group || '기타') === g).map(d => hh.bud?.spend?.[d.id] || 0)))) }));
                 parts.push({ id: 'mand', label: '의무지출', color: SLOT(groups.length), values: padF(H.map(hh => sum(Object.values(hh.bud?.mand || {})))) });
-                C.stackBars(b, { x: xs, range: [range[0], range[1]], unit: '%', net: { label: '세입', values: padF(col(hh => hh.n.rev)) }, parts: parts.slice(0, 8) });
+                C.stackBars(b, { x: xs, t: ts, range: [range[0], range[1]], unit: '%', net: { label: '세입', values: padF(col(hh => hh.n.rev)) }, parts: parts.slice(0, 8) });
             }
             if (m === 'scatter') renderScatterTo(section(box, '지역 산점도', '— 원 하나 = 지역구 · 크기 = 인구 · 색 = 민심(파랑 좋음 · 빨강 나쁨) · 지도와 연동'));
             if (m === 'map') renderMapTo(section(box, `지역구 지도 — ${MAP_BY[E.ui.mapBy]}`));
@@ -1668,12 +1707,12 @@
             }
             if (m === 'fan') {
                 const v = E.ui.target, b = section(box, `예측 부채꼴 — ${VAR[v].label}`, '— 지금 정책을 유지할 때, 진한 띠 50% · 옅은 띠 90% 범위');
-                C.lines(b, { x: xs, series: [S1(v)].concat(fmean(v)), fan: fanOf(v), unit: VAR[v].unit, zero: v === 'growth' || v === 'balance', markers, shade, range: rng2, height: 240 });
+                C.lines(b, { x: xs, t: ts, series: [S1(v)].concat(fmean(v)), fan: fanOf(v), unit: VAR[v].unit, zero: v === 'growth' || v === 'balance', markers, shade, range: rng2, height: 240 });
             }
             if (m === 'assets') {
                 const b = section(box, '자산 추이', '— 기준 50 · 지출로 쌓이고 해마다 줄어듦');
                 const ad = assetDefs().slice(0, 8);
-                C.lines(b, { x, series: ad.map((a, i) => ({ id: a.id, label: a.name, color: SLOT(i), values: col(hh => hh.a?.[a.id]) })), unit: '', range, markers, height: 240 });
+                C.lines(b, { x, t, series: ad.map((a, i) => ({ id: a.id, label: a.name, color: SLOT(i), values: col(hh => hh.a?.[a.id]) })), unit: '', range, markers, height: 240 });
                 C.legend(b, ad.map((a, i) => ({ label: a.name, color: SLOT(i) })));
             }
             if (m === 'table') {
@@ -1845,6 +1884,8 @@
         E.spend = { ...base.spend, ...(src.spend || {}) };
         E.taxes = { ...base.taxes, ...(src.taxes || {}) };
         E.assets = { ...base.assets, ...(src.assets || {}) };
+        if (/^\d+$/.test(String(E.ui.range))) E.ui.range = 'y' + Math.max(1, Math.round(Number(E.ui.range) / 4)); // 예전 칸 수 → 년
+        if (!Number.isFinite(E.clock)) { const t = histT(); E.clock = t[t.length - 1] || 0; }
         validateDefs();
         inited = true;
         reanchor(); // 세이브의 날짜를 계산을 마친 시점으로
@@ -1998,6 +2039,13 @@
         .t69-warn { font-size: .74rem; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--t69-grid); color: var(--t69-muted); opacity: .6; }
         .t69-warn.on { opacity: 1; color: var(--t69-ink); font-weight: 600; }
         .t69-warn-warning { border-color: var(--warning); } .t69-warn-serious { border-color: var(--serious); } .t69-warn-critical { border-color: var(--critical); background: color-mix(in srgb, var(--critical) 14%, transparent); }
+        .t69-fin { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 6px; margin: 2px 0 10px; }
+        .t69-fin-i { border: 1px solid var(--t69-grid); border-radius: 10px; padding: 6px 10px; min-width: 0; }
+        .t69-fin-i span { display: block; font-size: .72rem; color: var(--t69-muted); }
+        .t69-fin-i b { display: block; font-size: 1rem; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .t69-fin-i small { display: block; font-size: .7rem; color: var(--t69-muted); }
+        .t69-fin-i small em { font-style: normal; margin-left: 4px; color: var(--t69-ink2); }
+        .t69-fin-serious { border-color: var(--serious); } .t69-fin-critical { border-color: var(--critical); background: color-mix(in srgb, var(--critical) 12%, transparent); }
         .t69-gauges { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 4px; align-items: start; margin-bottom: 6px; }
         @media (max-width: 760px) { .t69-gauges { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
         .t69-sec { margin-top: 14px; }
