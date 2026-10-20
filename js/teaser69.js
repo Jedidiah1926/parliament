@@ -3,7 +3,7 @@
 // (저장 공간은 본 게임과 따로 — main.js의 LS_PREFIX 'hemicycleTeaserV2-69:')
 //
 // 샌드박스 원칙 — 경제는 결과를 강제하지 않고 계산 · 표시 · 제안한다. 모든 수치는 직접 고칠 수 있고, 계산은 날짜가 넘어갈 때만 돈다.
-//   - 메뉴 › 경제: 개요 · 분석 · 통화 · 재정 · 지역 · 시나리오 · 항목, 오른쪽 시각 탭 "경제"(개요: 반원 계기 + 큰 그래프 / 분석: 전문가 그래프)
+//   - 메뉴 › 경제: 개요 · 분석 · 통화 · 재정 · 지역 · 시나리오 · 이벤트 · 항목, 오른쪽 시각 탭 "경제"(개요: 반원 계기 + 큰 그래프 / 분석: 전문가 그래프)
 //   - 턴: 기본 1분기(1개월 · 1년도) — 게임 날짜를 따라간다. 날짜가 분기 경계를 지나면(▶ · 날짜 칸 직접 수정 모두) 지난 만큼 계산,
 //     날짜를 되돌리면 경제는 그대로 두고 지금 날짜부터 이어서 센다. 날짜를 안 쓰는 세이브만 턴 번호로
 //   - 금액은 비율(GDP 대비 %)로 계산하고 화면에만 화폐 단위로 보여 준다
@@ -94,7 +94,7 @@
             defs: { items: [], assets: [], taxes: [] }, tagPrefs: {},
             rules: {}, ruleStart: 0, thresholds: { ...DEFAULT_THRESHOLDS },
             ceiling: null, autoRepay: false, rankBase: null, rating: null,
-            hist: [], events: [], preset: '',
+            hist: [], events: [], sched: [], preset: '',
             ui: { view: 'overview', range: 'all', chips: ['growth', 'infl', 'unemp', 'rate'], preset: 'cycle', layout: null, log: false, target: 'infl', horizon: 4, mapBy: 'gdppc', full: false },
         };
     }
@@ -382,11 +382,64 @@
             return ((S2.assets[a.id] ?? 50) - 50) * c;
         }));
     }
+    // ================= 이벤트 (정한 날짜에 위기 · 호황) =================
+    // fx — 시작할 때 한 번: conf(신뢰도) · cur(통화가치 %) · debtCut(부채 탕감 %) · lvl(GDP 수준 %)
+    //      기간 동안 (연율, 그 기간에 걸친 만큼): g(성장 %/년) · i(인플레 %p) · u(실업 %p, 자연실업률) · cs(신뢰도가 돌아갈 곳)
+    const EVENT_TYPES = {
+        depression: { name: '대공황', icon: '📉', dur: 36, fx: { g: -9, i: -4, u: 5, conf: -25, cs: -15 } },
+        financial: { name: '금융 위기', icon: '🏦', dur: 18, fx: { g: -5, i: -1, u: 2, conf: -20, cs: -10, cur: -10 } },
+        oil: { name: '오일 쇼크', icon: '🛢️', dur: 12, fx: { g: -2.5, i: 7, u: 0.5, conf: -5 } },
+        hyper: { name: '하이퍼인플레이션', icon: '💸', dur: 12, fx: { i: 150, conf: -25, cs: -15, cur: -40 } },
+        default: { name: '국가 부도 (디폴트)', icon: '⚠️', dur: 12, fx: { g: -6, i: 12, u: 2, conf: -35, cs: -20, cur: -35, debtCut: 30 } },
+        collapse: { name: '경제 붕괴', icon: '💥', dur: 24, fx: { g: -15, i: 30, u: 8, conf: -40, cs: -25, cur: -30 } },
+        disaster: { name: '재해 · 전쟁 피해', icon: '🌋', dur: 6, fx: { lvl: -4, g: -2, i: 3, u: 1, conf: -8 } },
+        boom: { name: '호황', icon: '🚀', dur: 24, fx: { g: 4, i: 1.5, u: -1.5, conf: 10, cs: 8 } },
+        custom: { name: '직접 설정', icon: '✏️', dur: 12, fx: {} },
+    };
+    const EV_POWERS = [[0.5, '약함'], [1, '보통'], [1.5, '강함'], [2, '극심']];
+    const evFx = e => (e.type === 'custom' ? e.fx || {} : (EVENT_TYPES[e.type] || EVENT_TYPES.custom).fx);
+    const evName = e => (e.type === 'custom' && e.name ? e.name : (EVENT_TYPES[e.type] || EVENT_TYPES.custom).name);
+    const evBad = e => { const f = evFx(e); return (f.g || 0) + (f.lvl || 0) < 0 || (f.conf || 0) < 0; };
+    function fxText(fx, pw = 1) {
+        const sg = v => (v > 0 ? '+' : '') + r2(v * pw);
+        return [fx.g && `성장 ${sg(fx.g)}%/년`, fx.lvl && `GDP ${sg(fx.lvl)}% 즉시`, fx.i && `인플레 ${sg(fx.i)}%p`, fx.u && `실업 ${sg(fx.u)}%p`, fx.conf && `신뢰도 ${sg(fx.conf)}`, fx.cur && `통화가치 ${sg(fx.cur)}%`, fx.debtCut && `부채 ${r2(fx.debtCut * pw)}% 탕감`].filter(Boolean).join(' · ') || '효과 없음';
+    }
+    // 다음에 계산할 기간의 달 범위 [시작, 끝) — 달 번호 = 년 × 12 + 월 − 1
+    const UNIT_MONTHS = { month: 1, quarter: 3, year: 12 };
+    function periodMonths(S2) { if (!S2.dateBase) return null; const per = UNIT_MONTHS[S2.unit] || 3, k = S2.dateBase.key + S2.turn + 1; return [k * per, k * per + per]; }
+    // 이번 기간에 걸친 이벤트 효과 — 시작 달이 이 기간 안이면 일어남(fired), 끝 달을 지나면 끝남(ended), 시작 달을 건너뛰었으면 지나감(missed)
+    function schedEffects(S2) {
+        const out = { g: 0, i: 0, u: 0, cs: 0, lvl: 0, conf: 0, cur: 0, debtCut: 0 };
+        const pm = periodMonths(S2);
+        if (!pm || !(S2.sched || []).length) return out;
+        const [p0, p1] = pm, len = p1 - p0;
+        S2.sched.forEach(e => {
+            if (e.ended != null || e.missed) return;
+            const fx = evFx(e), pw = e.power ?? 1, ms = e.y * 12 + e.m - 1, me = ms + Math.max(1, e.dur || 1);
+            if (e.fired == null) {
+                if (ms >= p1) return;
+                if (ms < p0) { e.missed = true; return; }
+                e.fired = S2.turn + 1;
+                ['conf', 'cur', 'debtCut', 'lvl'].forEach(k => { out[k] += (fx[k] || 0) * pw; });
+            }
+            const ov = Math.max(0, Math.min(p1, me) - Math.max(p0, ms)) / len;
+            ['g', 'i', 'u', 'cs'].forEach(k => { out[k] += (fx[k] || 0) * pw * ov; });
+            if (me <= p1) e.ended = S2.turn + 1;
+        });
+        return out;
+    }
+
     // 한 턴 — S2를 바꾼다 (예측 · 민감도는 복사본에서). 반환: 분해 · 예산 기록
     function step(S2, r, opts) {
         const o = opts || {};
         const dt = DT[S2.unit] || 0.25, N = S2.nat;
         const keys = o.keys || distList();
+        // 이벤트 — 시작할 때 한 번 (신뢰도 · 통화가치 · 부채 탕감)
+        const ev = schedEffects(S2);
+        if (ev.conf) N.conf = clamp(N.conf + ev.conf, 0, 100);
+        if (ev.cur) N.cur = clamp(N.cur * (1 + ev.cur / 100), 2, 400);
+        if (ev.debtCut) N.debt = Math.max(0, N.debt * (1 - Math.min(100, ev.debtCut) / 100));
+        const evG = ev.g * dt + ev.lvl;
         // 0. 진행 중인 패키지 정책
         let print = N.print, rateAdj = 0, premAdj = 0, qeDemand = 0;
         (S2.temps || []).forEach(tp => {
@@ -429,11 +482,11 @@
             const fs = (d.ind[0] * FX_SENS[0] + d.ind[1] * FX_SENS[1] + d.ind[2] * FX_SENS[2]) / 0.7;
             const fis = 1 + 0.1 * (3 - d.income);
             const local = r ? gauss(r) * 0.15 * Math.sqrt(dt) : 0;
-            const dln = pot * dt + fiscal * fis + monetary * rs + money + fx * fs + taxSide + noise + local + hyperDrag;
+            const dln = pot * dt + fiscal * fis + monetary * rs + money + fx * fs + taxSide + noise + local + hyperDrag + evG;
             dlnBy[k] = dln;
             d.gdp *= Math.exp(dln / 100);
             // 실업 — 오쿤의 법칙 + 자연실업률로 수렴 (농업보조는 농업 지역 일자리에 더 크게)
-            const unK = un + jobs - agriJobs + agriJobs * d.ind[0] * 8 + (d.uBase || 0) * 0.8;
+            const unK = un + jobs - agriJobs + agriJobs * d.ind[0] * 8 + (d.uBase || 0) * 0.8 + ev.u;
             d.unemp = clamp(d.unemp - 0.4 * (dln - pot * dt) + (unK - d.unemp) * (1 - Math.exp(-0.8 * dt)), 0.5, 60);
         });
         const after = sum(keys.map(k => S2.dist[k].gdp));
@@ -459,7 +512,7 @@
         const dCur = N.cur - (S2.prevCur ?? N.cur);
         const pGap = 0.35 * N.gap, pMoney = 0.45 * (m - pot - 2), pImport = clamp(-0.3 * dCur / dt * 0.25, -10, 30);
         const pTax = sum(taxDefs().map(t => ((taxes[t.id] ?? t.rate0) - t.rate0) * ((t.side || {}).infl || 0))) + assetEffect(S2, 'infl');
-        let target = inflE + pGap + pMoney + pImport + pTax;
+        let target = inflE + pGap + pMoney + pImport + pTax + ev.i;
         if (m > 40) target *= 1 + (m - 40) / 40;
         const k = 1 - Math.exp(-2.5 * dt);
         const inflPrev = N.infl;
@@ -492,7 +545,7 @@
             S2.assets[a.id] = clamp(A * (1 - a.decay * dt) + (items.length ? gain : a.decay * 50) * dt + cross * dt, 0, 200);
         });
         // 7. 신뢰도 · 국채금리
-        const Cstar = 77 - 0.25 * Math.max(0, N.debt - 60) - 1.2 * Math.max(0, N.infl - 4) - 1.5 * Math.max(0, -balance - 3) + 0.12 * (N.mood - 50) - 0.6 * Math.max(0, m - 10) + (S2.settings.indep ? 5 : 0) + assetEffect(S2, 'conf') - (shutdown ? 10 : 0);
+        const Cstar = 77 - 0.25 * Math.max(0, N.debt - 60) - 1.2 * Math.max(0, N.infl - 4) - 1.5 * Math.max(0, -balance - 3) + 0.12 * (N.mood - 50) - 0.6 * Math.max(0, m - 10) + (S2.settings.indep ? 5 : 0) + assetEffect(S2, 'conf') - (shutdown ? 10 : 0) + ev.cs;
         N.conf = clamp(N.conf + (Cstar - N.conf) * (1 - Math.exp(-1.4 * dt)), 0, 100);
         N.yield = Math.max(0, rate + Math.max(0, (65 - N.conf) / 6) + Math.max(0, (N.debt - 90) / 20) + premAdj);
         // 8. 지역구 민심 · 소득등급
@@ -521,8 +574,8 @@
         S2.pkgUsed = 0;
         return {
             dec: {
-                g: { pot: pot + hyperDrag / dt, fiscal: fiscal / dt, monetary: monetary / dt, money: money / dt, fx: fx / dt, tax: taxSide / dt, noise: (noise) / dt },
-                p: { exp: inflE, gap: pGap, money: pMoney, imp: pImport, other: pTax, adj: N.infl - target, prev: inflPrev },
+                g: { pot: pot + hyperDrag / dt, fiscal: fiscal / dt, monetary: monetary / dt, money: money / dt, fx: fx / dt, tax: taxSide / dt, noise: (noise) / dt, event: evG / dt },
+                p: { exp: inflE, gap: pGap, money: pMoney, imp: pImport, other: pTax + ev.i, adj: N.infl - target, prev: inflPrev },
             },
             bud: { rev: b.rev, spend: b.spend, mand: b.mand, disc, shutdown },
             realRate, m, dlnBy,
@@ -657,6 +710,10 @@
             const seed = hash(`${E.turn}:${E.nat.gdp.toFixed(3)}:${Date.now()}`);
             const rec = step(E, rng(seed));
             E.turn++;
+            (E.sched || []).forEach(e => {
+                if (e.fired === E.turn && !e.told) { e.told = true; addEvent(evBad(e) ? 'crisis' : 'policy', `${evName(e)} — ${fxText(evFx(e), e.power ?? 1)}`); }
+                if (e.ended === E.turn && e.fired !== E.turn && !e.toldEnd) { e.toldEnd = true; addEvent('policy', `${evName(e)} 끝남`); }
+            });
             applyRules(E, ruleK(E));
             E.nat.unemp = nationalFromDist(E, distList()).unemp;
             crisisCheck(prev);
@@ -762,7 +819,8 @@
     const UNIT_WORD = { month: '개월', quarter: '분기', year: '년' };
 
     // ================= 예측 · 민감도 =================
-    const simClone = () => { const c = deep({ ...E, hist: [], events: [], ui: null }); c._cyc = E._cyc; return c; };
+    // 예측은 아직 안 일어난 이벤트를 모른다 (진행 중인 것만 이어감)
+    const simClone = () => { const c = deep({ ...E, hist: [], events: [], ui: null, sched: (E.sched || []).filter(e => e.fired != null && e.ended == null) }); c._cyc = E._cyc; return c; };
     function withDraft(S2) { if (E.draft) { S2.spend = { ...E.draft.spend }; S2.taxes = { ...E.draft.taxes }; } return S2; }
     const VAR = {
         growth: { label: '성장률', unit: '%', get: s => s.nat.growth, color: 'var(--s1)' },
@@ -973,14 +1031,14 @@
         const world = document.getElementById('mainContentWorld');
         nationContent.parentElement.insertBefore(host, world || nationContent.nextSibling);
         const bar = host.querySelector('.sub-tab-container');
-        [['overview', 'EcoOverview', '개요'], ['analysis', 'EcoAnalysis', '분석'], ['monetary', 'EcoMonetary', '통화'], ['fiscal', 'EcoFiscal', '재정'], ['region', 'EcoRegion', '지역'], ['scenario', 'EcoScenario', '시나리오'], ['items', 'EcoItems', '항목']].forEach(([sub, id, label], i) => {
+        [['overview', 'EcoOverview', '개요'], ['analysis', 'EcoAnalysis', '분석'], ['monetary', 'EcoMonetary', '통화'], ['fiscal', 'EcoFiscal', '재정'], ['region', 'EcoRegion', '지역'], ['scenario', 'EcoScenario', '시나리오'], ['events', 'EcoEvents', '이벤트'], ['items', 'EcoItems', '항목']].forEach(([sub, id, label], i) => {
             bar.appendChild(el(`<button class="sub-tab-btn${i ? '' : ' active'}" onclick="switchSubTab('economy','${sub}')" id="subTab${id.charAt(0).toUpperCase() + id.slice(1)}">${label}</button>`));
             host.appendChild(el(`<div id="content${id.charAt(0).toUpperCase() + id.slice(1)}" class="sub-tab-content t69-content${i ? '' : ' active'}"></div>`));
         });
         try { if (!currentSubTab.economy) currentSubTab.economy = 'overview'; } catch (e) { /* main.js 없음 */ }
     })();
     // 경제 탭 이름 ↔ 하위 탭 id
-    const SUB_ID = { overview: 'EcoOverview', analysis: 'EcoAnalysis', monetary: 'EcoMonetary', fiscal: 'EcoFiscal', region: 'EcoRegion', scenario: 'EcoScenario', items: 'EcoItems' };
+    const SUB_ID = { overview: 'EcoOverview', analysis: 'EcoAnalysis', monetary: 'EcoMonetary', fiscal: 'EcoFiscal', region: 'EcoRegion', scenario: 'EcoScenario', events: 'EcoEvents', items: 'EcoItems' };
     // switchSubTab('economy', 'overview') → id subTabEcoOverview 를 찾게 sub 이름을 바꿔 준다
     const origSwitchSub = window.switchSubTab;
     window.switchSubTab = function (main, sub) {
@@ -999,7 +1057,7 @@
     const contentOf = sub => document.getElementById('content' + SUB_ID[sub]);
     function renderTab(sub) {
         ensureInit();
-        ({ overview: renderOverview, analysis: renderAnalysis, monetary: renderMonetary, fiscal: renderFiscal, region: renderRegion, scenario: renderScenario, items: renderItems })[sub]?.();
+        ({ overview: renderOverview, analysis: renderAnalysis, monetary: renderMonetary, fiscal: renderFiscal, region: renderRegion, scenario: renderScenario, events: renderEvents, items: renderItems })[sub]?.();
     }
     function refreshAll() {
         try { renderTab(curSub()); } catch (e) { console.error(e); }
@@ -1345,6 +1403,79 @@
         box.querySelector('[data-act="reset"]').onclick = () => showCustomConfirm('경제 기록을 모두 지우고 처음부터 시작합니다. 계속하시겠습니까?', () => { newEconomy(E.preset || ''); refreshAll(); });
     }
 
+    // ---- 이벤트 — 정한 날짜에 대공황 · 금융 위기 · 호황 같은 일을 일으킴 ----
+    const ymText = mi => `${Math.floor(mi / 12)}.${String(mi % 12 + 1).padStart(2, '0')}`;
+    function evStatus(e, nowM) {
+        if (e.ended != null) return ['done', '끝남'];
+        if (e.fired != null) return ['on', '진행 중'];
+        if (e.missed) return ['missed', '지나감'];
+        const left = e.y * 12 + e.m - 1 - (nowM ?? 0);
+        return ['wait', nowM == null ? '예정' : left <= 0 ? '이번에' : `${left >= 12 ? `${Math.floor(left / 12)}년 ` : ''}${left % 12 ? `${left % 12}개월 ` : ''}뒤`];
+    }
+    function renderEvents() {
+        const box = contentOf('events'); if (!box) return;
+        E.sched = E.sched || [];
+        const d = readDate(), pm = periodMonths(E), nowM = d ? d.y * 12 + d.m - 1 : null;
+        const next = pm ? { y: Math.floor(pm[0] / 12), m: pm[0] % 12 + 1 } : { y: d ? d.y : 2000, m: 1 };
+        const f = E.ui.evForm || (E.ui.evForm = { type: 'depression' });
+        const T = EVENT_TYPES[f.type] || EVENT_TYPES.depression;
+        const cf = f.fx || (f.fx = { g: -3, i: 0, u: 1, conf: -10, cur: 0 });
+        const list = E.sched.slice().sort((a, b) => (a.y * 12 + a.m) - (b.y * 12 + b.m));
+        box.innerHTML = `
+            <div class="t69-intro">정한 날짜가 되면 경제 위기나 호황이 일어납니다 — 날짜(국가 › 날짜)가 그 달을 지날 때 계산에 들어가고, 정한 기간 동안 이어집니다. 시작할 때 신뢰도 · 통화가치가 한 번 꺾이고, 기간 동안 성장 · 인플레 · 실업을 밀어냅니다. (위기 임계값을 넘어 저절로 오는 위기와는 따로)</div>
+            ${d ? '' : '<div class="t69-alert">국가 › 날짜를 먼저 정해 주세요 — 이벤트는 날짜를 기준으로 일어납니다.</div>'}
+            <div class="t69-card"><div class="t69-card-h">새 이벤트</div>
+                <div class="t69-evtypes">${Object.entries(EVENT_TYPES).map(([k, t]) => `<button type="button" class="t69-evtype ${f.type === k ? 'on' : ''}" data-evt="${k}" aria-pressed="${f.type === k}"><b>${t.icon} ${t.name}</b><span>${k === 'custom' ? '이름과 효과를 직접' : esc(fxText(t.fx))}</span></button>`).join('')}</div>
+                ${f.type === 'custom' ? `<div class="t69-evcustom">
+                    <label class="t69-row">이름 <input type="text" data-cn value="${esc(f.name || '')}" placeholder="예: 대기근" maxlength="24"></label>
+                    ${[['g', '성장 (%/년, 기간 동안)'], ['i', '인플레 (%p, 기간 동안)'], ['u', '실업 (%p, 기간 동안)'], ['conf', '신뢰도 (시작할 때)'], ['cur', '통화가치 (%, 시작할 때)']].map(([k, l]) => `<label class="t69-row">${l} <input type="number" step="0.5" data-cf="${k}" value="${cf[k] ?? 0}" class="t69-num"></label>`).join('')}</div>` : ''}
+                <div class="t69-evwhen">
+                    <span class="t69-evf">시작 <input type="number" data-ef="y" value="${next.y}" class="t69-num t69-yr" aria-label="시작 연도">년 <input type="number" data-ef="m" min="1" max="12" value="${next.m}" class="t69-num t69-mo" aria-label="시작 월">월</span>
+                    <span class="t69-evf">기간 <input type="number" data-ef="dur" min="1" max="240" value="${T.dur}" class="t69-num t69-mo" aria-label="기간(개월)">개월</span>
+                    <span class="t69-evf">세기 <select data-ef="power" aria-label="세기">${EV_POWERS.map(([v, l]) => `<option value="${v}" ${v === 1 ? 'selected' : ''}>${l}</option>`).join('')}</select></span></div>
+                <div class="t69-actions"><button type="button" class="t69-btn t69-primary" data-act="evadd" ${d ? '' : 'disabled'}>+ 이벤트 추가</button>
+                    <button type="button" class="t69-btn" data-act="evnow" ${pm ? '' : 'disabled'} title="날짜와 상관없이 다음 ${UNIT_WORD[E.unit]} 계산에서 바로 시작">다음 ${UNIT_WORD[E.unit]}에 바로</button></div>
+            </div>
+            <div class="t69-card"><div class="t69-card-h">이벤트 목록 <span class="t69-dim">날짜 순 · 일어나기 전에는 날짜 · 기간 · 세기를 고칠 수 있음</span></div>
+                ${list.map(e => {
+                    const [st, stl] = evStatus(e, nowM), ms = e.y * 12 + e.m - 1, edit = e.fired == null && !e.missed;
+                    return `<div class="t69-evrow t69-ev-${st}" data-eid="${esc(e.id)}">
+                        <span class="t69-evst">${stl}</span>
+                        <b>${(EVENT_TYPES[e.type] || EVENT_TYPES.custom).icon} ${esc(evName(e))}</b>
+                        ${edit ? `<span class="t69-evedit"><input type="number" data-er="y" value="${e.y}" class="t69-num t69-yr" aria-label="시작 연도">.<input type="number" data-er="m" min="1" max="12" value="${e.m}" class="t69-num t69-mo" aria-label="시작 월"> · <input type="number" data-er="dur" min="1" max="240" value="${e.dur}" class="t69-num t69-mo" aria-label="기간(개월)">개월
+                            <select data-er="power" aria-label="세기">${EV_POWERS.map(([v, l]) => `<option value="${v}" ${v === (e.power ?? 1) ? 'selected' : ''}>${l}</option>`).join('')}</select></span>`
+                            : `<span class="t69-dim">${ymText(ms)} ~ ${ymText(ms + e.dur - 1)} · ${(EV_POWERS.find(p => p[0] === (e.power ?? 1)) || [0, '보통'])[1]}</span>`}
+                        <span class="t69-dim t69-small t69-evfx">${esc(fxText(evFx(e), e.power ?? 1))}</span>
+                        <button type="button" class="t69-x" data-evdel title="${st === 'on' ? '지우기 — 진행 중이면 여기서 멈춤' : '지우기'}">×</button></div>`;
+                }).join('') || '<div class="t69-dim">아직 이벤트가 없습니다.</div>'}
+            </div>`;
+        box.querySelectorAll('[data-evt]').forEach(b => { b.onclick = () => { f.type = b.dataset.evt; renderEvents(); }; });
+        box.querySelector('[data-cn]')?.addEventListener('input', e => { f.name = e.target.value; });
+        box.querySelectorAll('[data-cf]').forEach(inp => inp.addEventListener('change', () => { cf[inp.dataset.cf] = Number(inp.value) || 0; }));
+        const val = k => box.querySelector(`[data-ef="${k}"]`).value;
+        const add = (y, m) => {
+            const ev = { id: 'ev' + Date.now().toString(36) + Math.floor(Math.random() * 1e4), type: f.type, y: Math.round(num(y, next.y, -9999, 99999)), m: Math.round(num(m, 1, 1, 12)), dur: Math.round(num(val('dur'), T.dur, 1, 240)), power: Number(val('power')) || 1 };
+            if (f.type === 'custom') { ev.name = (f.name || '').trim() || '사건'; ev.fx = { ...cf }; }
+            if (nowM != null && ev.y * 12 + ev.m - 1 < (pm ? pm[0] : nowM)) { showCustomAlert('이미 지난 날짜입니다 — 다음 계산 기간 이후로 정해 주세요. (바로 일으키려면 "다음에 바로")'); return; }
+            E.sched.push(ev);
+            refreshAll();
+        };
+        box.querySelector('[data-act="evadd"]').onclick = () => add(val('y'), val('m'));
+        box.querySelector('[data-act="evnow"]').onclick = () => add(next.y, next.m);
+        box.querySelectorAll('.t69-evrow').forEach(row => {
+            const e = E.sched.find(x => x.id === row.dataset.eid); if (!e) return;
+            row.querySelectorAll('[data-er]').forEach(inp => inp.addEventListener('change', () => {
+                const k = inp.dataset.er;
+                if (k === 'power') e.power = Number(inp.value) || 1;
+                else if (k === 'dur') e.dur = Math.round(num(inp.value, e.dur, 1, 240));
+                else if (k === 'm') e.m = Math.round(num(inp.value, e.m, 1, 12));
+                else e.y = Math.round(num(inp.value, e.y, -9999, 99999));
+                refreshAll();
+            }));
+            row.querySelector('[data-evdel]').onclick = () => { E.sched = E.sched.filter(x => x !== e); refreshAll(); };
+        });
+    }
+
     // ---- 항목 (사용자 정의) ----
     function renderItems() {
         const box = contentOf('items'); if (!box) return;
@@ -1648,7 +1779,7 @@
                 C.stackBars(b, { x: xs, t: ts, range: [range[0], range[1]], unit: '%p', net: { label: '그 기간 성장률 (연율)', values: padF(col(hh => hh.n.gq ?? hh.n.growth)) }, parts: [
                     { id: 'pot', label: '잠재성장 (기술 · 인적자본 · 인프라)', color: 'var(--s1)', values: g('pot') }, { id: 'fiscal', label: '재정 (지출 · 세금 변화)', color: 'var(--s2)', values: g('fiscal') },
                     { id: 'monetary', label: '통화 (실질금리 · 양적완화)', color: 'var(--s3)', values: g('monetary') }, { id: 'money', label: '통화량', color: 'var(--s4)', values: g('money') },
-                    { id: 'fx', label: '환율 (수출)', color: 'var(--s5)', values: g('fx') }, { id: 'tax', label: '세율 부작용', color: 'var(--s6)', values: g('tax') }, { id: 'noise', label: '예상 밖 충격', color: 'var(--s7)', values: g('noise') },
+                    { id: 'fx', label: '환율 (수출)', color: 'var(--s5)', values: g('fx') }, { id: 'tax', label: '세율 부작용', color: 'var(--s6)', values: g('tax') }, { id: 'noise', label: '예상 밖 충격', color: 'var(--s7)', values: g('noise') }, { id: 'event', label: '이벤트 (위기 · 호황)', color: 'var(--s8)', values: g('event') },
                 ] });
             }
             if (m === 'inflP') {
@@ -2039,6 +2170,21 @@
         .t69-warn { font-size: .74rem; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--t69-grid); color: var(--t69-muted); opacity: .6; }
         .t69-warn.on { opacity: 1; color: var(--t69-ink); font-weight: 600; }
         .t69-warn-warning { border-color: var(--warning); } .t69-warn-serious { border-color: var(--serious); } .t69-warn-critical { border-color: var(--critical); background: color-mix(in srgb, var(--critical) 14%, transparent); }
+        .t69-evtypes { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px; margin-bottom: 8px; }
+        .t69-evtype { text-align: left; border: 1px solid var(--t69-line); border-radius: 10px; padding: 6px 8px; background: transparent; color: inherit; cursor: pointer; font: inherit; }
+        .t69-evtype b { display: block; font-size: .82rem; } .t69-evtype span { display: block; font-size: .68rem; color: var(--t69-dim2); margin-top: 2px; }
+        .t69-evtype.on { border-color: var(--t69-acc); box-shadow: inset 0 0 0 1px var(--t69-acc); }
+        .t69-evcustom { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 2px 12px; margin-bottom: 6px; }
+        .t69-evwhen { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; margin: 4px 0 8px; }
+        .t69-evf { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
+        .t69-evf select { width: auto; }
+        .t69-content input.t69-yr { width: 76px; } .t69-content input.t69-mo { width: 54px; }
+        .t69-evrow { display: grid; grid-template-columns: 64px minmax(110px, auto) 1fr auto; align-items: center; gap: 4px 10px; padding: 6px 0; border-top: 1px solid var(--t69-line); }
+        .t69-evrow .t69-evfx { grid-column: 2 / 4; }
+        .t69-evedit { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 2px 4px; } .t69-evedit select { width: auto; }
+        .t69-evst { font-size: .7rem; text-align: center; border-radius: 999px; padding: 1px 6px; border: 1px solid var(--t69-line); color: var(--t69-dim2); }
+        .t69-ev-on .t69-evst { border-color: var(--t69-acc); color: var(--t69-text); font-weight: 600; }
+        .t69-ev-done, .t69-ev-missed { opacity: .6; }
         .t69-fin { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 6px; margin: 2px 0 10px; }
         .t69-fin-i { border: 1px solid var(--t69-grid); border-radius: 10px; padding: 6px 10px; min-width: 0; }
         .t69-fin-i span { display: block; font-size: .72rem; color: var(--t69-muted); }
