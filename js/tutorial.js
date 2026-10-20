@@ -105,6 +105,9 @@
     const t64 = () => window.T65 || null;
     const t68 = () => window.T68 || null;
     const t69 = () => window.T69 || null;
+    const citCount = () => { const c = window.T61 && window.T61.citizens; return c ? Object.values(c).reduce((n, o) => n + Object.keys(o || {}).length, 0) : 0; };
+    const migSig = () => (window.T61 ? JSON.stringify(window.T61.migrantVote) : '');
+    const firstCitCard = () => { const c = document.querySelector('#districtListPanel .t61-cit'); return c ? (c.closest('.drag-card-district') || c) : null; };
     const ecoTurn = () => { const t = t69(); return t ? t.state.turn : 0; };
     const showEco = view => () => { const t = t69(); if (t) { t.ensureInit(); t.showDisp(view); } };
     const firstVassalCard = () => document.querySelector('#contentVassals .t68-card');
@@ -711,7 +714,7 @@
         {
             id: 'economy', group: 'detail', locked: '1.6.9',
             title: '경제',
-            summary: '경제 개요 · 턴 넘기기 · 계기판 · 통화 · 재정과 예산안 · 전문가 분석 · 지역 · 시나리오',
+            summary: '날짜를 따라 도는 경제 · 신용등급과 경고 신호 · 계기판과 금액 · 추이 · 통화 · 재정과 예산안 · 이벤트 · 전문가 분석 · 지역 · 시나리오',
             steps: [
                 {
                     before: [closePanels, go('economy', 'overview'), showPanel('controls')],
@@ -724,16 +727,28 @@
                     enter: () => { T.ecoTurn0 = ecoTurn(); },
                     target: () => document.querySelector('#contentEcoOverview .t69-next') || '#contentEcoOverview',
                     allow: ['#contentEcoOverview'],
-                    title: '턴 넘기기',
-                    text: '경제는 턴을 넘길 때만 계산돼요 (기본 1분기 — 1개월 · 1년으로도 바꿀 수 있음). 오른쪽 위 날짜(▶)를 넘겨도 지난 분기만큼 계산됩니다. "▶ 다음 1분기"를 눌러 보세요.',
+                    title: '날짜를 따라 계산',
+                    text: '경제는 게임 날짜를 따라 계산돼요 — 날짜가 다음 분기로 넘어가면 지난 분기만큼 돌아갑니다 (계산 단위는 1개월 · 1분기 · 1년 중에 고름). 오른쪽 위 날짜 ▶로 넘기든 국가 › 날짜 칸을 직접 고치든 똑같고, 날짜를 되돌리면 경제는 그대로 두고 그 날짜부터 이어서 계산해요. "▶ 다음 1분기"를 눌러 보세요 — 날짜가 3개월 넘어갑니다.',
                     task: () => ecoTurn() > (T.ecoTurn0 || 0),
-                    done: '한 분기가 지났어요!',
+                    done: '한 분기가 지났어요! 날짜도 함께 넘어갔어요.',
+                },
+                {
+                    before: [go('economy', 'overview'), showEco('overview'), showPanel('display')],
+                    target: () => document.querySelector('#dispPanelEconomy .t69-toprow') || '#dispPanelEconomy',
+                    title: '신용등급과 경고 신호',
+                    text: '오른쪽 경제 화면 첫 줄에는 신용등급과 경제 경고 신호가 있어요 — 실질 마이너스 성장 · 과도한 적자 · 금융 위기부터 국가 부도 · 하이퍼인플레이션 · 대공황 · 자본 도피 · 경제 붕괴까지. 위기 기준(경제 › 시나리오에서 정함)에 가까워지면 ◆ 위험, 넘으면 ✖ 위기로 켜지고, 꺼진 신호는 흐리게 보여요.',
                 },
                 {
                     before: [go('economy', 'overview'), showEco('overview'), showPanel('display')],
                     target: () => document.querySelector('#dispPanelEconomy .t69-gauges') || '#dispPanelEconomy',
-                    title: '계기판과 추이',
-                    text: '오른쪽 경제 화면 위쪽 반원 계기는 지표마다 안전 · 경고 · 위험 · 위기 구간을 보여 줘요. 아래 큰 그래프는 칩을 눌러 지표를 겹쳐 보고, 점선은 앞으로의 예측이에요. 계기를 누르면 그 지표를 움직이는 탭으로 갑니다.',
+                    title: '계기판과 금액',
+                    text: '둘째 줄 반원 계기는 지표마다 안전 · 경고 · 위험 · 위기 구간을 보여 주고, 아래 작은 선은 최근 8기간의 흐름 · ▲▼는 지난 기간보다 오르내린 만큼이에요 (날짜를 넘겨야 생겨요). 계기를 누르면 그 지표를 움직이는 탭으로 가요. 셋째 줄에는 GDP · 국가부채 · 국고 · 세입 · 세출 · 재정수지 · 국채 이자가 화폐 단위로 나오고, 성장률은 통계처럼 전년 대비예요.',
+                },
+                {
+                    before: [go('economy', 'overview'), showEco('overview'), showPanel('display')],
+                    target: () => { const c = document.querySelector('#dispPanelEconomy .t69-chips'); return (c && c.parentElement) || '#dispPanelEconomy'; },
+                    title: '추이 그래프',
+                    text: '큰 그래프는 칩을 눌러 지표를 겹쳐 보고, 점선은 앞으로의 예측이에요. 칸 너비는 실제 시간 길이대로라 1개월 · 1분기 · 1년 칸이 섞여도 시간축이 맞고, 위쪽 10년 · 5년 · 2년으로 기간을 좁혀요. 깃발은 위기 · 총선 · 예산안 · 이벤트, 회색 띠는 경기 침체예요. 오른쪽 클릭으로 그림을 내보낼 수 있어요.',
                 },
                 {
                     before: [go('economy', 'monetary'), showPanel('controls')],
@@ -745,19 +760,29 @@
                     before: [go('economy', 'fiscal'), showPanel('controls')],
                     target: () => document.querySelector('#contentEcoFiscal .t69-budgetbox') || '#contentEcoFiscal',
                     title: '재정과 예산안',
-                    text: '지출(GDP 대비 %)과 세율을 고치면 예산안 초안에 모였다가, "예산안 제출"로 입법 › 제출에 올라가요. 의회에서 가결돼야 반영되고, 그 전까지는 지난 예산(준예산)대로 집행돼요. 정당별 예상 표결을 보고 한 번에 넣을 수도 있어요.',
+                    text: '지출(GDP 대비 %)과 세율을 고치면 예산안 초안에 모였다가, "예산안 제출"로 입법 › 제출에 올라가요. 의회에서 가결돼야 반영되고, 그 전까지는 지난 예산(준예산)대로 집행돼요. 정당별 예상 표결을 보고 한 번에 넣을 수도 있어요. 지출 · 세수 · 의무지출 · 국고 · 국가부채는 비율 옆에 금액도 함께 나와요.',
+                },
+                {
+                    before: [go('economy', 'events'), showPanel('controls')],
+                    enter: () => { T.evBase = (t69() && (t69().state.sched || []).length) || 0; },
+                    target: () => document.querySelector('#contentEcoEvents .t69-card') || '#contentEcoEvents',
+                    allow: ['#contentEcoEvents'],
+                    title: '이벤트',
+                    text: '경제 › 이벤트에서는 정한 날짜에 대공황 · 금융 위기 · 오일 쇼크 · 하이퍼인플레이션 · 국가 부도 · 경제 붕괴 · 재해 · 호황을 일으켜요 ("직접 설정"으로 이름 · 효과를 정한 사건도). 종류를 고르고 시작 연 · 월, 기간(개월), 세기를 정해 "+ 이벤트 추가"를 눌러 보세요.',
+                    task: () => !!t69() && (t69().state.sched || []).length > (T.evBase || 0),
+                    done: '이벤트가 예약됐어요! 날짜가 그 달에 닿으면 신뢰도 · 통화가치가 한 번 꺾이고, 기간 동안 성장 · 인플레 · 실업이 움직여요. 일어나기 전에는 아래 목록에서 날짜 · 기간 · 세기를 고치거나 지울 수 있어요.',
                 },
                 {
                     before: [go('economy', 'analysis'), showEco('analysis'), showPanel('controls')],
                     target: () => document.querySelector('#contentEcoAnalysis .t69-presets') || '#contentEcoAnalysis',
                     title: '전문가 분석',
-                    text: '깊게 보고 싶으면 분석에서 경기 순환 · 인플레 · 재정 건전성 · 지역 격차 · 정책 실험을 골라요. 오른쪽에 같은 십자선을 쓰는 연동 패널, 성장 기여도 분해, 부채 동학(r − g), 예산 흐름도, 정책 민감도가 그려집니다. "크게 보기"로 화면 전체에 펼칠 수 있어요.',
+                    text: '깊게 보고 싶으면 분석에서 경기 순환 · 인플레 · 재정 건전성 · 지역 격차 · 정책 실험을 골라요. 오른쪽에 같은 십자선을 쓰는 연동 패널, 성장 기여도 분해(이벤트 몫 포함), 부채 동학(r − g), 예산 흐름도, 정책 민감도가 그려집니다. "크게 보기"로 화면 전체에 펼칠 수 있어요.',
                 },
                 {
                     before: [go('economy', 'region'), showPanel('controls')],
                     target: () => document.querySelector('#contentEcoRegion .t69-dlist') || '#contentEcoRegion',
                     title: '지역 · 시나리오 · 항목',
-                    text: '지역에서 주마다 산업구조 · 연령구조 · 소득등급을 정하면 같은 정책도 지역마다 다르게 작용해요 (금리 인상은 제조업, 복지 삭감은 저소득 지역에 크게). 시나리오에서는 "값 + 기간" 규칙과 프리셋을, 항목에서는 나만의 지출 항목 · 세목 · 자산을 만들 수 있어요.',
+                    text: '지역에서 주마다 산업구조 · 연령구조 · 소득등급을 정하면 같은 정책도 지역마다 다르게 작용해요 (금리 인상은 제조업, 복지 삭감은 저소득 지역에 크게). 시나리오에서는 "값 + 기간" 규칙과 프리셋 · 위기 기준을, 항목에서는 나만의 지출 항목 · 세목 · 자산을 만들 수 있어요.',
                 },
             ],
         },
@@ -844,6 +869,45 @@
             ],
         },
         {
+            id: 'citizens', group: 'detail', locked: '1.6.1',
+            title: '시민 · 이민자',
+            summary: '지역구 시민 / 인구 · 선거마다 이민자 투표권 · 이민자 성향',
+            steps: [
+                {
+                    before: [closePanels, go('nation', 'territory'), showPanel('controls')],
+                    target: () => firstCitCard() || '#districtListPanel',
+                    title: '시민과 이민자',
+                    text: '국가 › 지역의 지역구 목록에는 인구 칸 앞에 "시민" 칸이 있어요 — "시민 / 인구"로 적으면 나머지가 이민자입니다. 비워 두면 그 지역구 인구 전체가 시민이에요.',
+                },
+                {
+                    before: [go('nation', 'territory'), showPanel('controls')],
+                    enter: () => { T.citBase = citCount(); },
+                    target: () => firstCitCard() || '#districtListPanel',
+                    allow: ['#districtListPanel'],
+                    title: '시민 수 적기',
+                    text: '아무 지역구나 "시민" 칸에 인구보다 작은 수를 적어 보세요 (예: 인구 100만이면 90만). 인구가 비어 있으면 인구부터 적어요.',
+                    task: () => citCount() > (T.citBase || 0),
+                    done: '그 지역구에 이민자가 생겼어요. 목록 위 합계 줄과 국가 › 사람 위쪽에 시민 · 인구 · 이민자 수가 나와요.',
+                },
+                {
+                    before: [go('vote', 'elecSettings'), showPanel('controls')],
+                    enter: () => { T.migBase = migSig(); },
+                    target: () => document.getElementById('t61MigrantCard') || '#contentElecSettings',
+                    allow: ['#t61MigrantCard'],
+                    title: '이민자 투표권',
+                    text: '시민은 모든 선거에서 투표해요. 이민자는 선거마다 — 대선 · 총리 직선 / 총선 / 지방선거 / 국민투표 — 투표권을 줄지 선거 › 방식 아래쪽에서 정합니다. 하나를 켜 보세요.',
+                    task: () => migSig() !== T.migBase,
+                    done: '바뀌었어요. 켠 선거에서는 시민과 이민자가 함께 투표해요.',
+                },
+                {
+                    before: [go('vote', 'elecSettings'), showPanel('controls')],
+                    target: () => document.querySelector('#t61MigrantCard .t61-mig-leanon') || document.getElementById('t61MigrantCard') || '#contentElecSettings',
+                    title: '이민자 성향',
+                    text: '"이민자 성향 따로 정하기"를 켜면 정당마다 이민자 지지율을 정해요. 이민자가 투표하는 선거에서는 지역구마다 시민 · 이민자 수만큼 섞어 개표하고(총선 비례 · 대선은 전국 수로), 지방선거 · 국민투표는 유권자 수도 바뀝니다. 끄면 이민자도 그 지역 시민과 같은 성향으로 투표해요.',
+                },
+            ],
+        },
+        {
             id: 'world', group: 'detail', locked: '1.6.5',
             title: '세계',
             summary: '국가 순위 · 순위표 · 점수 · 국기 · 진영과 하위 이념',
@@ -852,7 +916,7 @@
                     before: [closePanels, go('world', 'ranking'), showPanel('controls')],
                     target: () => (!isMobileLayout() && document.querySelector('#sideNav .mn-group[data-main="world"]')) || navTarget(),
                     title: '세계 메뉴',
-                    text: '국가 아래 🌐 세계 메뉴에는 국가 순위와 진영이 있어요 (꾸밈용 — 게임 기능에는 영향 없음). 바로 위 💹 경제는 1.6.9 업데이트(경제 시스템)에서 열리는 잠긴 메뉴예요.',
+                    text: () => `국가 아래 🌐 세계 메뉴에는 국가 순위와 진영이 있어요 (꾸밈용 — 게임 기능에는 영향 없음). 바로 위 💹 경제는 ${t69() ? '1.6.9 경제 시스템이에요 (튜토리얼 "경제" 과정).' : '1.6.9 업데이트(경제 시스템)에서 열리는 잠긴 메뉴예요.'}`,
                 },
                 {
                     before: [go('world', 'ranking'), showPanel('display')],
@@ -1329,7 +1393,7 @@
                     before: [call('switchDispTab', 'house'), showPanel('display')],
                     target: '#houseCanvas',
                     title: '이미지로 내보내기',
-                    text: '반원 · 지도 · 선거 결과 · 내각 화면에서 오른쪽 클릭(모바일은 길게 누르기) → "내보내기..."를 고르면 PNG · JPG · SVG 이미지로 저장합니다. 정당 통계와 국기 · 국가명 · 날짜 머리를 함께 넣을 수 있어요.',
+                    text: () => `반원 · 지도 · 선거 결과 · 내각 화면에서 오른쪽 클릭(모바일은 길게 누르기) → "내보내기..."를 고르면 PNG · JPG · SVG 이미지로 저장합니다. 정당 통계와 국기 · 국가명 · 날짜 머리를 함께 넣을 수 있어요.${onPreviewPage() ? ` 미리보기 화면의 위키 틀 · 국가 순위 · 세력 변화${t69() ? ' · 경제 그래프' : ''}도 같은 방법으로 내보내요.` : ''}`,
                 },
                 {
                     before: [showPanel('controls')],

@@ -4915,8 +4915,8 @@
                 // 파일에서 불러온 세이브도 새 세이브로 (이름: 파일 이름 → 국가 이름 → "불러온 세이브")
                 else if(bootImported) createNamedSlotFromCurrentState(uniqueSaveName((bootImportName || '').trim() || document.getElementById('nationNameInput')?.value?.trim() || '불러온 세이브'));
                 else if(bootEmpty) {
-                    // 열 세이브가 하나도 없음 — 로고 제작 · 미리보기 화면은 바로 쓸 수 있게 세이브를 하나 만들고, 본 게임은 빈 화면(탭 바의 "+"로 시작)
-                    if(IS_LOGO_MODE || IS_TEASER_MODE) createNamedSlotFromCurrentState(IS_LOGO_MODE ? '로고' : '미리보기');
+                    // 열 세이브가 하나도 없음 — 로고 제작 화면은 바로 쓸 수 있게 세이브를 하나 만들고, 본 게임 · 미리보기 화면은 빈 화면(탭 바의 "+"로 시작)
+                    if(IS_LOGO_MODE) createNamedSlotFromCurrentState('로고');
                     else setNoOpenTab(true);
                 }
                 if(activeSlotId && restored) markSavedBaseline();
