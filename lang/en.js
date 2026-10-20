@@ -7985,6 +7985,9 @@ window.DnoLangPacks.en = {
   ["- 예산 반원 · 가로 막대 중 골라 보는 세출 · 세입 구성과 재정 적자", "- Spending and revenue mix with the deficit, shown as a budget hemicycle or two horizontal bars"],
   ["- 국고(흑자 적립 · 부채 상환 · 투자) · 부채 한도(법안으로 상향), 지출 묶음(국방 · 민간 …)", "- Treasury reserves (surpluses saved, debt repayment, investment) · debt ceiling (raised by law), spending groups (defense · civilian …)"],
   ["- 경제 경고 신호(실질 마이너스 성장 · 인플레 위험 · 과도한 적자 · 부채 위험 · 국고 과잉 · 금융 위기)", "- Economic warning signs (negative real growth · inflation critical · excessive deficit · critical debt · bloated reserves · financial crisis)"],
+  ["경제 그래프 · 전문가 분석", "Economy charts · expert analysis"],
+  ["- 전문가 분석 — 연동 다중 패널(같은 십자선 · 기간 확대 · 로그 눈금 · 침체 음영), 예측 부채꼴, 성장 · 인플레 기여도 분해, 부채 동학(r − g), 정책 민감도, 예산 흐름도, 지역 산점도, 데이터 표 · CSV", "- Expert analysis — linked multi-panel charts (shared crosshair · range zoom · log scale · recession shading), forecast fan charts, growth and inflation decomposition, debt dynamics (r − g), policy sensitivity, budget flow diagram, district scatter, data table · CSV"],
+  ["- 분석 프리셋(경기 순환 · 인플레 · 재정 건전성 · 지역 격차)과 크게 보기", "- Analysis presets (business cycle · inflation · fiscal health · regional gaps) and full-screen view"],
   ["궐석", "Vacant"]
  ]
 };
