@@ -17,7 +17,7 @@
 (function () {
     'use strict';
     const root = document.documentElement;
-    if (root.getAttribute('data-app-mode') !== 'teaser' || !['61', '62', '63', '64', '65', '66', '67', '68'].includes(root.getAttribute('data-teaser'))) return;
+    if (root.getAttribute('data-app-mode') !== 'teaser' || !['61', '62', '63', '64', '65', '66', '67', '68', '69'].includes(root.getAttribute('data-teaser'))) return;
 
     const esc = s => (typeof escapeHtmlText === 'function' ? escapeHtmlText(String(s ?? '')) : String(s ?? ''));
     const uid = () => 'h' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);

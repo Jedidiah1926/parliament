@@ -19,7 +19,7 @@
         + '<line x1="10" y1="8" x2="10" y2="12.2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>'
         + '<circle cx="10" cy="14.6" r="1" fill="currentColor"/></svg></span>';
 
-    // ── 최신 Teaser(1.6.8) 기준 전체 메뉴 — 이 화면(본 게임 · 각 Teaser)에 아직 없는 기능도 제자리에 🔒로 보여 준다 ──
+    // ── 최신 Teaser(1.6.9) 기준 전체 메뉴 — 이 화면(본 게임 · 각 Teaser)에 아직 없는 기능도 제자리에 🔒로 보여 준다 ──
     // 실제 탭 버튼이 있으면 그대로 쓰고, 없을 때만 잠긴 항목을 끼워 넣는다 (그래서 버전마다 따로 적을 필요가 없음).
     // after: 전체 메뉴에서 바로 앞에 오는 항목(탭 버튼 id) / 그룹(메인 탭 키)
     const FULL_MENU = {
@@ -44,7 +44,7 @@
         + '<path d="M5.2 7V5a2.8 2.8 0 0 1 5.6 0v2" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>';
     // 잠긴 기능을 누르면 — 개발자 모드면 그 기능이 있는 Teaser 화면으로 갈지 묻고, 아니면 언제 열리는지 알려 준다
     function lockedInfo(label, ver) {
-        const page = { '1.6.2': '62', '1.6.3': '63', '1.6.4': '64', '1.6.5': '65', '1.6.6': '66', '1.6.7': '67', '1.6.8': '68', '1.6.1': '61' }[ver];
+        const page = { '1.6.2': '62', '1.6.3': '63', '1.6.4': '64', '1.6.5': '65', '1.6.6': '66', '1.6.7': '67', '1.6.8': '68', '1.6.9': '69', '1.6.1': '61' }[ver];
         const msg = `🔒 "${label}"은(는) ${ver} 업데이트에서 열리는 기능입니다.`;
         const dev = window.HemiDev && window.HemiDev.isOn && window.HemiDev.isOn();
         if (dev && page) {
@@ -163,7 +163,7 @@
             return { key, g, head, mainBtn, items };
         });
 
-        // ── 이 화면에 없는 1.6.8 기능을 제자리에 잠긴 항목 · 그룹으로 ──
+        // ── 이 화면에 없는 1.6.9 기능을 제자리에 잠긴 항목 · 그룹으로 ──
         const hasBtn = id => !!document.getElementById(id);
         const placeAfter = (parent, el, ref) => { if (ref && ref.parentElement === parent) parent.insertBefore(el, ref.nextSibling); else parent.appendChild(el); };
         FULL_MENU.groups.forEach(fg => {

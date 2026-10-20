@@ -18,7 +18,7 @@
    switchSubTab, switchMainTab, switchDispTab, districtUpdateModeUI, districtInitCanvas, currentMainTab, currentSubTab, districtOrderSync */
 (function () {
     'use strict';
-    if (document.documentElement.getAttribute('data-app-mode') !== 'teaser' || !['68'].includes(document.documentElement.getAttribute('data-teaser') || '68')) return;
+    if (document.documentElement.getAttribute('data-app-mode') !== 'teaser' || !['68', '69'].includes(document.documentElement.getAttribute('data-teaser') || '68')) return;
 
     // vassals = [{ id, name, color, kind, parliament: { name, seats, threshold, parties:[{ id, name, color, support, seats }], elections, shares } }]
     // vassalOf = { 지역구 키: 종속국 id }
