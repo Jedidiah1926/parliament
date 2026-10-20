@@ -146,6 +146,9 @@
   .mm-fname input { width: 120px; }
   .mm-tracebar { display:flex; align-items:center; gap:12px; flex-wrap:wrap; padding:6px 10px; border-bottom:1px solid var(--tno-border); font-size:12px; color:#8a94a3; }
   .mm-tracebar[hidden] { display:none; }
+  .mm-tracebar .mm-pixel-only { display:none; }
+  .mm-tracebar.pixel .mm-pixel-only { display:inline-flex; }
+  .mm-tracebar.pixel .mm-smooth-only { display:none; }
   .mm-tracebar label { display:inline-flex; align-items:center; gap:6px; }
   .mm-tracebar input[type=range] { width: 110px; }
   .mm-tracebar b { color: var(--tno-neon); min-width: 2.4em; font-weight: normal; }
@@ -181,10 +184,12 @@
         </div>
         <div class="mm-tracebar" id="traceBar" hidden>
           <span class="mm-trace-title">그림 자동 추적</span>
-          <label title="색이 이만큼 달라도 같은 지역으로 묶음 — 지역이 잘게 쪼개지면 올리고, 이웃 지역이 합쳐지면 내리세요">색 허용 오차 <input id="traceTol" type="range" min="3" max="80" value="12" /><b id="traceTolVal">12</b></label>
-          <label title="이보다 작은 덩어리(글자 · 번진 가장자리)는 이웃 지역에 붙임 — 그림 넓이 대비 천분율">최소 크기 <input id="traceMin" type="range" min="0" max="2" step="0.01" value="0.03" /><b id="traceMinVal">0.03‰</b></label>
+          <label title="화소마다 색을 정확히 칠한 작은 지도(프로빈스 맵 등) — 색이 정확히 같은 화소끼리 한 지역으로, 키우거나 작은 조각을 지우거나 경계를 다듬지 않고 화소 경계 그대로 땀. 그림을 열면 알아서 켜짐"><input id="tracePixel" type="checkbox" /> 픽셀 지도</label>
+          <label class="mm-pixel-only" title="픽셀 지도에서 같은 색 화소는 떨어져 있어도(섬 · 월경지) 한 지역으로 — 색마다 지역 하나인 프로빈스 맵이면 켜세요. 끄면 이어진 덩어리마다 따로"><input id="traceJoin" type="checkbox" checked /> 같은 색은 떨어져도 한 지역</label>
+          <label class="mm-smooth-only" title="색이 이만큼 달라도 같은 지역으로 묶음 — 지역이 잘게 쪼개지면 올리고, 이웃 지역이 합쳐지면 내리세요">색 허용 오차 <input id="traceTol" type="range" min="3" max="80" value="12" /><b id="traceTolVal">12</b></label>
+          <label class="mm-smooth-only" title="이보다 작은 덩어리(글자 · 번진 가장자리)는 이웃 지역에 붙임 — 그림 넓이 대비 천분율">최소 크기 <input id="traceMin" type="range" min="0" max="2" step="0.01" value="0.03" /><b id="traceMinVal">0.03‰</b></label>
           <label title="그림 가장자리를 두른 큰 덩어리(바다 · 바탕)를 도형에서 뺌"><input id="traceBg" type="checkbox" checked /> 바탕 빼기</label>
-          <label title="검은 선 없이 같은 색으로 맞닿은 조각(압축 얼룩 · 색이 살짝 다른 옅은 선으로 갈라진 조각)을 하나로 — 검은 선으로 나뉜 곳은 합치지 않음. 끄면 조각대로 둠"><input id="traceMerge" type="checkbox" checked /> 같은 색 이웃 합치기</label>
+          <label class="mm-smooth-only" title="검은 선 없이 같은 색으로 맞닿은 조각(압축 얼룩 · 색이 살짝 다른 옅은 선으로 갈라진 조각)을 하나로 — 검은 선으로 나뉜 곳은 합치지 않음. 끄면 조각대로 둠"><input id="traceMerge" type="checkbox" checked /> 같은 색 이웃 합치기</label>
           <button id="btnRetrace" class="btn secondary">다시 추적</button>
           <span class="small" id="traceInfo"></span>
         </div>
@@ -265,7 +270,12 @@ const fileKind = f => {
 };
 let traceFile = null;
 const traceBar = document.getElementById('traceBar');
-const traceOpts = () => ({ tolerance: +document.getElementById('traceTol').value, minArea: +document.getElementById('traceMin').value, dropBackground: document.getElementById('traceBg').checked, mergeSame: document.getElementById('traceMerge').checked });
+const traceOpts = () => ({ tolerance: +document.getElementById('traceTol').value, minArea: +document.getElementById('traceMin').value, dropBackground: document.getElementById('traceBg').checked, mergeSame: document.getElementById('traceMerge').checked,
+  pixel: document.getElementById('tracePixel').checked, joinSameColor: document.getElementById('traceJoin').checked });
+// 픽셀 지도면 허용 오차 · 최소 크기 · 같은 색 합치기는 쓰지 않으므로 숨기고, 픽셀 지도 전용 칸을 보인다
+const syncTraceMode = () => { traceBar.classList.toggle('pixel', document.getElementById('tracePixel').checked); };
+document.getElementById('tracePixel').onchange = () => { syncTraceMode(); if (traceFile) runTrace(); };
+document.getElementById('traceJoin').onchange = () => { if (traceFile) runTrace(); };
 document.getElementById('traceTol').oninput = e => { document.getElementById('traceTolVal').textContent = e.target.value; };
 document.getElementById('traceMin').oninput = e => { document.getElementById('traceMinVal').textContent = e.target.value + '‰'; };
 document.getElementById('btnRetrace').onclick = () => { if (traceFile) runTrace(); };
@@ -277,7 +287,9 @@ async function runTrace() {
   try {
     const t = await MapTrace.traceImage(traceFile, traceOpts());
     loadSvgText(t.svgText);
-    info.textContent = `${t.width}×${t.height} · 지역 ${t.count}곳 — 잘게 쪼개지면 허용 오차를 올리고, 이웃이 합쳐지면 내리세요`;
+    info.textContent = t.pixel
+      ? `${t.width}×${t.height} · 지역 ${t.count}곳 (픽셀 지도 — 색이 정확히 같은 화소끼리${t.stats.lines ? ` · 검은 경계선 ${t.stats.lines}개는 이웃이 나눠 가짐` : ''})`
+      : `${t.width}×${t.height} · 지역 ${t.count}곳 — 잘게 쪼개지면 허용 오차를 올리고, 이웃이 합쳐지면 내리세요`;
   } catch (e) {
     info.textContent = '';
     svgContainer.innerHTML = '<div class="mm-empty"><div class="mm-empty-title">연 지도가 여기 표시됩니다</div></div>';
@@ -305,7 +317,13 @@ async function parseUploaded() {
   if (!fileInput.files || fileInput.files.length === 0) return alert('지도 파일을 선택하세요.');
   const f = fileInput.files[0], kind = fileKind(f);
   traceBar.hidden = kind !== 'image';
-  if (kind === 'image') { traceFile = f; return runTrace(); }
+  if (kind === 'image') {
+    traceFile = f;
+    // 새 그림을 열 때마다 픽셀 지도인지 알아봐서 맞는 방식으로 추적
+    try { document.getElementById('tracePixel').checked = await MapTrace.detectPixelMap(f); } catch (e) { /* 그대로 */ }
+    syncTraceMode();
+    return runTrace();
+  }
   traceFile = null;
   let text = await readFileAsText(f);
   if (kind === 'jsx') {
@@ -573,21 +591,36 @@ function shapePieces(s) {
   s._pieces = null;
   const subs = splitSubpaths(d);
   if (!subs || subs.length < 2) return null;
-  // 같은 부모 안에 임시로 그려 크기를 잰다 (같은 좌표계)
+  // 직선(M · L · Z 절대 좌표)만으로 된 경로(픽셀 지도 추적 결과 등)는 좌표로 바로 잰다 — 도형이 수천 개여도 빠르게.
+  // 그 밖의 경로는 같은 부모 안에 임시로 그려 크기를 잰다 (같은 좌표계)
+  const flat = /^[\sMLZ0-9.,eE+-]*$/.test(d);
+  const polys = flat ? subs.map(sd => { const n = (sd.match(/[-+]?(?:\d*\.\d+|\d+\.?)(?:[eE][-+]?\d+)?/g) || []).map(Number); const pts = []; for (let k = 0; k + 1 < n.length; k += 2) pts.push([n[k], n[k + 1]]); return pts; }) : null;
   const parent = s.el.parentNode;
-  const els = subs.map(sd => {
+  const els = flat ? [] : subs.map(sd => {
     const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
     p.setAttribute('d', sd);
     p.setAttribute('visibility', 'hidden');
     parent.appendChild(p);
     return p;
   });
-  const info = els.map((el, idx) => {
+  const info = subs.map((sd, idx) => {
     let bb = { x: 0, y: 0, width: 0, height: 0 }, start = null;
-    try { bb = el.getBBox(); } catch (e) {}
-    try { const pt = el.getPointAtLength(0); start = { x: pt.x, y: pt.y }; } catch (e) {}
+    if (flat) {
+      const pts = polys[idx];
+      if (pts.length) {
+        const xs = pts.map(p => p[0]), ys = pts.map(p => p[1]);
+        const mx = Math.min(...xs), my = Math.min(...ys);
+        bb = { x: mx, y: my, width: Math.max(...xs) - mx, height: Math.max(...ys) - my };
+        start = { x: pts[0][0], y: pts[0][1] };
+      }
+    } else {
+      try { bb = els[idx].getBBox(); } catch (e) {}
+      try { const pt = els[idx].getPointAtLength(0); start = { x: pt.x, y: pt.y }; } catch (e) {}
+    }
     return { idx, bb, area: bb.width * bb.height, start };
   });
+  // 점이 다각형 안에 있는지 (짝홀 규칙 — 직선 경로용)
+  const inPoly = (pts, x, y) => { let c = false; for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) { const [xi, yi] = pts[i], [xj, yj] = pts[j]; if ((yi > y) !== (yj > y) && x < (xj - xi) * (y - yi) / (yj - yi) + xi) c = !c; } return c; };
   const up = info.map((a, k) => k);
   const find = k => { while (up[k] !== k) { up[k] = up[up[k]]; k = up[k]; } return k; };
   const join = (a, b) => { const ra = find(a), rb = find(b); if (ra !== rb) up[ra] = rb; };
@@ -599,7 +632,8 @@ function shapePieces(s) {
     for (const b of info) {
       if (b === a || b.area <= a.area || !contains(b, a)) continue;
       let inside = false;
-      try { const pt = svgEl.createSVGPoint(); pt.x = a.start.x; pt.y = a.start.y; inside = els[b.idx].isPointInFill(pt); } catch (e) {}
+      if (flat) inside = inPoly(polys[b.idx], a.start.x + 0.01, a.start.y + 0.01); // 꼭짓점이 경계 위에 걸치지 않게 살짝 안쪽
+      else try { const pt = svgEl.createSVGPoint(); pt.x = a.start.x; pt.y = a.start.y; inside = els[b.idx].isPointInFill(pt); } catch (e) {}
       if (inside) { join(a.idx, b.idx); break; }
     }
   });

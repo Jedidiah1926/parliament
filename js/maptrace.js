@@ -2,7 +2,9 @@
 // MapTrace.traceImage(file, opts) → Promise<{ svgText, count, width, height }>
 //   webp · png · jpg · bmp 같은 그림 지도에서 같은 색으로 칠해진 덩어리를 찾아 도형(<path>)으로 바꾼다.
 //   어두운 경계선 · 색이 번진 가장자리 · 얇은 선은 이웃 지역이 나눠 가지고, 가장자리를 둘러싼 큰 덩어리(바다 · 바탕)는 뺄 수 있다.
-//   opts: { tolerance(색 허용 오차 0~255), minArea(최소 크기, 그림 넓이 대비 ‰), dropBackground(bool), mergeSame(같은 색 이웃 합치기), maxSize(추적 해상도) }
+//   opts: { tolerance(색 허용 오차 0~255), minArea(최소 크기, 그림 넓이 대비 ‰), dropBackground(bool), mergeSame(같은 색 이웃 합치기), maxSize(추적 해상도),
+//           pixel(픽셀 지도 — 색이 정확히 같은 화소끼리 한 지역, 키우기 · 작은 조각 지우기 · 단순화 없음), joinSameColor(픽셀 지도에서 같은 색은 떨어져 있어도 한 지역) }
+// MapTrace.detectPixelMap(file) → Promise<bool> — 화소 단위로 칠한 지도(프로빈스 맵 등)인지 (번짐 · 압축 얼룩이 없고 색 수가 적음)
 // MapTrace.jsxToSvg(text) → { svgText, count } — 맵 메이커가 내보낸 .jsx를 다시 SVG로 (게임의 parseDistrictJsx와 같은 규칙)
 (function () {
     'use strict';
@@ -152,12 +154,170 @@
         return out;
     }
 
+    // ---- 픽셀 지도 알아보기 — 화소마다 색을 정확히 칠한 지도는 거의 모든 화소가 "여러 번 쓰인 색"이고 색 수도 적다 (2만 개 이하)
+    //      (JPEG · 번진 가장자리가 있는 그림은 경계마다 한두 번만 쓰인 중간색 화소가 많이 생긴다)
+    async function detectPixelMap(file) {
+        const { img, url } = await loadImage(file);
+        try {
+            const IW = img.naturalWidth || img.width, IH = img.naturalHeight || img.height;
+            if (!IW || !IH) return false;
+            // 아주 큰 그림은 화소를 고르게 골라(섞지 않고) 16M 화소 이하로 줄여 본다 — 색은 그대로 남는다
+            const r = Math.min(1, Math.sqrt(16e6 / (IW * IH)));
+            const W = Math.max(1, Math.round(IW * r)), H = Math.max(1, Math.round(IH * r));
+            const cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+            const cx = cv.getContext('2d', { willReadFrequently: true });
+            cx.imageSmoothingEnabled = false;
+            cx.drawImage(img, 0, 0, W, H);
+            const px = cx.getImageData(0, 0, W, H).data;
+            const N = W * H;
+            const count = new Map();
+            let opaque = 0;
+            for (let i = 0; i < N; i++) {
+                if (px[i * 4 + 3] < 128) continue;
+                opaque++;
+                const k = (px[i * 4] << 16) | (px[i * 4 + 1] << 8) | px[i * 4 + 2];
+                count.set(k, (count.get(k) || 0) + 1);
+                if (count.size > 20000) return false; // 프로빈스 맵도 색은 많아야 1만여 개 — 번진 그림을 키운 것(중간색이 여러 화소로 불어남)은 색이 훨씬 많다
+            }
+            let rare = 0;
+            count.forEach(n => { if (n < 4) rare += n; });
+            return opaque > 0 && rare / opaque < 0.002;
+        } finally {
+            URL.revokeObjectURL(url);
+        }
+    }
+
+    // ---- 픽셀 지도 추적 — 색이 정확히 같은 이웃 화소끼리(4방향) 한 지역, 화소 경계 그대로 (이웃 지역과 틈 없이 맞물림)
+    function tracePixel(img, IW, IH, o) {
+        // 너무 큰 그림만 화소를 고르게 골라 줄인다 (부드럽게 섞지 않음 — 섞으면 새 색이 생긴다)
+        const MAXPX = 16e6;
+        const sc = IW * IH > MAXPX ? Math.sqrt(MAXPX / (IW * IH)) : 1;
+        const W = Math.max(1, Math.round(IW * sc)), H = Math.max(1, Math.round(IH * sc));
+        const cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+        const cx = cv.getContext('2d', { willReadFrequently: true });
+        cx.imageSmoothingEnabled = false;
+        cx.drawImage(img, 0, 0, W, H);
+        const px = cx.getImageData(0, 0, W, H).data;
+        const N = W * H;
+        const key = new Int32Array(N);
+        for (let i = 0; i < N; i++) key[i] = px[i * 4 + 3] < 128 ? -1 : (px[i * 4] << 16) | (px[i * 4 + 1] << 8) | px[i * 4 + 2];
+        // lab: -3 투명(바탕) · -2 경계(가는 검은 선) · 0 이상 지역 번호
+        const lab = new Int32Array(N).fill(-1);
+        const comps = [];
+        const queue = new Int32Array(N);
+        const byColor = new Map(); // joinSameColor: 색 → 지역 번호
+        for (let s = 0; s < N; s++) {
+            if (lab[s] !== -1) continue;
+            const k = key[s];
+            if (k < 0) { lab[s] = -3; continue; }
+            let id;
+            if (o.joinSameColor && byColor.has(k)) id = byColor.get(k);
+            else { id = comps.length; comps.push({ id, key: k, area: 0, edge: 0, keep: true }); byColor.set(k, id); }
+            const c = comps[id];
+            let qh = 0, qt = 0;
+            queue[qt++] = s; lab[s] = id;
+            while (qh < qt) {
+                const i = queue[qh++], x = i % W, y = (i - x) / W;
+                c.area++;
+                if (x === 0 || y === 0 || x === W - 1 || y === H - 1) c.edge++;
+                if (x > 0 && lab[i - 1] === -1 && key[i - 1] === k) { lab[i - 1] = id; queue[qt++] = i - 1; }
+                if (x < W - 1 && lab[i + 1] === -1 && key[i + 1] === k) { lab[i + 1] = id; queue[qt++] = i + 1; }
+                if (y > 0 && lab[i - W] === -1 && key[i - W] === k) { lab[i - W] = id; queue[qt++] = i - W; }
+                if (y < H - 1 && lab[i + W] === -1 && key[i + W] === k) { lab[i + W] = id; queue[qt++] = i + W; }
+            }
+        }
+        // 가는 검은 선은 지역이 아니라 경계 — 이웃 지역이 나눠 갖는다
+        const lum = k => 0.299 * (k >> 16 & 255) + 0.587 * (k >> 8 & 255) + 0.114 * (k & 255);
+        // (아주 어두운 덩어리 중 거의 전부가 폭 4화소 이하인 것만 — 넓은 어두운 프로빈스 · 20화소 미만의 작은 어두운 프로빈스는 그대로 지역)
+        const dark = new Uint8Array(N);
+        for (let i = 0; i < N; i++) { const c = lab[i]; if (c >= 0 && lum(comps[c].key) < 55) dark[i] = 1; }
+        const wide = openMask(dark, W, H, 2);
+        for (let i = 0; i < N; i++) if (dark[i] && !wide[i]) comps[lab[i]].thin = (comps[lab[i]].thin || 0) + 1;
+        comps.forEach(c => { if (c.thin && c.area >= 20 && c.thin >= c.area * 0.8) { c.keep = false; c.line = true; } });
+        // 바탕: 그림 가장자리를 가장 많이 두른 덩어리 (둘레의 30% 넘게) — 같은 색 덩어리(호수 · 내해)도 함께 뺀다
+        let bg = null;
+        if (o.dropBackground) {
+            const border = 2 * (W + H);
+            comps.forEach(c => { if (c.keep && c.edge > border * 0.3 && (!bg || c.edge > bg.edge)) bg = c; });
+            if (bg) comps.forEach(c => { if (c.key === bg.key) { c.keep = false; c.bg = true; } });
+        }
+        for (let i = 0; i < N; i++) { const c = lab[i]; if (c >= 0 && !comps[c].keep) lab[i] = comps[c].bg ? -3 : -2; }
+        // 경계 화소를 가까운 지역에 나눠 주기
+        let qh = 0, qt = 0;
+        for (let i = 0; i < N; i++) {
+            if (lab[i] < 0) continue;
+            const x = i % W;
+            if ((x > 0 && lab[i - 1] === -2) || (x < W - 1 && lab[i + 1] === -2) || (i >= W && lab[i - W] === -2) || (i < N - W && lab[i + W] === -2)) queue[qt++] = i;
+        }
+        while (qh < qt) {
+            const i = queue[qh++], c = lab[i], x = i % W;
+            if (x > 0 && lab[i - 1] === -2) { lab[i - 1] = c; queue[qt++] = i - 1; }
+            if (x < W - 1 && lab[i + 1] === -2) { lab[i + 1] = c; queue[qt++] = i + 1; }
+            if (i >= W && lab[i - W] === -2) { lab[i - W] = c; queue[qt++] = i - W; }
+            if (i < N - W && lab[i + W] === -2) { lab[i + W] = c; queue[qt++] = i + W; }
+        }
+        const kept = comps.filter(c => c.keep);
+        const hexKey = k => '#' + (k & 0xffffff).toString(16).padStart(6, '0');
+        const paths = ringsToPaths(lab, W, H, kept, 1 / sc, 0, c => hexKey(c.key));
+        const svgText = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${IW} ${IH}" width="${IW}" height="${IH}">${paths.join('')}</svg>`;
+        return { svgText, count: paths.length, width: IW, height: IH, pixel: true, stats: { comps: comps.length, lines: comps.filter(c => c.line).length, W, H } };
+    }
+
+    // 지역마다 화소 경계를 방향 있는 변으로 모아 고리로 이어 <path>로 — eps가 0이면 단순화 없이 화소 경계 그대로 (일직선 위의 점만 뺌)
+    function ringsToPaths(lab, W, H, kept, k, eps, colorOf) {
+        const N = W * H, VW = W + 1;
+        const idx = new Map(kept.map((c, n) => [c.id, n]));
+        const edges = kept.map(() => new Map());
+        const addEdge = (m, a, b) => { let l = m.get(a); if (!l) m.set(a, (l = [])); l.push(b); };
+        for (let i = 0; i < N; i++) {
+            const c = lab[i]; if (c < 0) continue;
+            const n = idx.get(c); if (n === undefined) continue;
+            const m = edges[n], x = i % W, y = (i - x) / W;
+            if (y === 0 || lab[i - W] !== c) addEdge(m, y * VW + x, y * VW + x + 1);
+            if (x === W - 1 || lab[i + 1] !== c) addEdge(m, y * VW + x + 1, (y + 1) * VW + x + 1);
+            if (y === H - 1 || lab[i + W] !== c) addEdge(m, (y + 1) * VW + x + 1, (y + 1) * VW + x);
+            if (x === 0 || lab[i - 1] !== c) addEdge(m, (y + 1) * VW + x, y * VW + x);
+        }
+        // 위에서 아래, 왼쪽에서 오른쪽 순으로 번호 (무게중심 기준)
+        const cen = kept.map(() => [0, 0, 0]);
+        for (let i = 0; i < N; i++) { const n = idx.get(lab[i]); if (n !== undefined) { const t = cen[n]; t[0] += i % W; t[1] += Math.floor(i / W); t[2]++; } }
+        const order = kept.map((c, n) => n).sort((a, b) => { const A = cen[a], B = cen[b]; const ay = A[1] / A[2], by = B[1] / B[2]; return Math.abs(ay - by) > H * 0.04 ? ay - by : A[0] / A[2] - B[0] / B[2]; });
+        const f = v => (Math.round(v * k * 100) / 100).toString();
+        const paths = [];
+        order.forEach((n, rank) => {
+            const m = edges[n];
+            let d = '';
+            for (const [start] of m) {
+                while (m.get(start) && m.get(start).length) {
+                    const ring = [];
+                    let cur = start, guard = 0;
+                    do {
+                        const l = m.get(cur);
+                        if (!l || !l.length) break;
+                        const nxt = l.pop();
+                        if (!l.length) m.delete(cur);
+                        ring.push([cur % VW, Math.floor(cur / VW)]);
+                        cur = nxt;
+                    } while (cur !== start && ++guard < 4 * N);
+                    if (ring.length < 3) continue;
+                    const pts = ring.filter((p, i) => { const a = ring[(i - 1 + ring.length) % ring.length], b = ring[(i + 1) % ring.length]; return (b[0] - a[0]) * (p[1] - a[1]) !== (b[1] - a[1]) * (p[0] - a[0]); });
+                    const sp = eps > 0 ? simplify(pts.length >= 3 ? pts : ring, eps) : (pts.length >= 3 ? pts : ring);
+                    if (sp.length < 3) continue;
+                    d += 'M' + sp.map(p => f(p[0]) + ',' + f(p[1])).join('L') + 'Z';
+                }
+            }
+            if (d) paths.push(`<path id="지역 ${rank + 1}" d="${d}" fill="${colorOf(kept[n])}" fill-rule="evenodd" stroke="#333" stroke-width="0.6" vector-effect="non-scaling-stroke"/>`);
+        });
+        return paths;
+    }
+
     async function traceImage(file, opts) {
         const o = Object.assign({ tolerance: 12, minArea: 0.03, dropBackground: true, mergeSame: true, maxSize: 3000 }, opts || {});
         const { img, url } = await loadImage(file);
         try {
             const IW = img.naturalWidth || img.width, IH = img.naturalHeight || img.height;
             if (!IW || !IH) throw new Error('그림 크기를 알 수 없습니다.');
+            if (o.pixel) return tracePixel(img, IW, IH, o);
             // 작은 그림은 부드럽게 키워서 추적 — 경계가 화소 계단 대신 반 화소 단위로 잡혀 더 정확하고 매끈해진다
             const big = Math.max(IW, IH);
             const sc = big > o.maxSize ? o.maxSize / big : Math.max(1, Math.min(o.upscale || 2, 2400 / big));
@@ -398,5 +558,5 @@
         return { svgText: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${esc(viewBox)}">${els.join('')}</svg>`, count: els.length };
     }
 
-    window.MapTrace = { traceImage, jsxToSvg, decodeBmp };
+    window.MapTrace = { traceImage, detectPixelMap, jsxToSvg, decodeBmp };
 })();
