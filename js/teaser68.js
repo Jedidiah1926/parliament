@@ -4,7 +4,7 @@
 //
 // 1.6.8 "갈라질 수도 없고 분리될 수도 없다" 미리보기 — 종속국 · 종속국 의회 · 합병 · 해방
 //   - 국가 › 종속국 탭을 새로 둔다. 종속국을 여러 개 만들고(이름 · 색 · 형태 — 보호국 · 괴뢰국 · 자치령 …),
-//     "칠하기"로 지도에서 지역구를 차례로 눌러 그 종속국 땅으로 정한다. 종속국 땅은 모든 지도에서 그 나라 색 점무늬로 따로 보이고
+//     종속 형태는 기본 목록(보호국 · 보호령 · 동군연합 …)에 더해 직접 추가 · 이름 바꾸기 · 지우기가 된다. "칠하기"로 지도에서 지역구를 차례로 눌러 그 종속국 땅으로 정한다. 종속국 땅은 모든 지도에서 그 나라 색 점무늬로 따로 보이고
 //     (미수복 지역의 빗금과 다르게), 본국의 지역구 선거 · 지방선거 · 국민투표에서 빠진다 (그 지역구 의석은 지역구 의석 수에서 빠짐)
 //   - 종속국마다 따로 의회가 있다 — 의회 이름 · 의석 수 · 봉쇄조항 · 정당(지지율 · 의석)을 정하고 "선거 실시"로 의석을 새로 나눈다.
 //     작은 반원형 의석 그림으로 보여 준다
@@ -24,13 +24,32 @@
     // vassalOf = { 지역구 키: 종속국 id }
     // liberated = [{ id, name, color, kind }] · liberatedOf = { 지역구 키: 독립국 id } — 해방된 나라 (본국에서 떨어져 나감)
     const PALETTE = ['#c084fc', '#38bdf8', '#facc15', '#4ade80', '#fb7185', '#f97316', '#2dd4bf', '#e879f9'];
-    const KINDS = ['보호국', '괴뢰국', '자치령', '위성국', '속국'];
+    // 종속 형태 — 기본 목록에 직접 추가 · 이름 바꾸기 · 지우기 (세이브에 함께 저장)
+    const DEFAULT_KINDS = ['보호국', '보호령', '괴뢰국', '자치령', '위성국', '속국', '동군연합', '신탁통치령'];
+    let kinds = DEFAULT_KINDS.slice();
+    let kindEditFor = null; // "＋ 새 형태"를 고른 종속국 카드 — 그 자리에 형태 이름 칸을 띄운다
+    const cleanKind = k => String(k == null ? '' : k).trim().slice(0, 30);
+    const defaultKind = () => kinds[0] || '종속국';
+    function addKind(k) {
+        k = cleanKind(k);
+        if (k && !kinds.includes(k)) kinds.push(k);
+        return k;
+    }
+    // 형태 칩 이름 칸 폭 — 글자 수에 맞춤 (한글 · 한자는 넓게)
+    const kindChipWidth = k => `${[...k].reduce((w, c) => w + (/[\u1100-\uffff]/.test(c) ? 1 : 0.55), 0.6).toFixed(2)}em`;
+    function renameKind(from, to) {
+        to = cleanKind(to);
+        if (!to || to === from) return;
+        if (kinds.includes(to)) kinds = kinds.filter(k => k !== from); else kinds = kinds.map(k => (k === from ? to : k));
+        vassals.concat(liberated).forEach(v => { if (v.kind === from) v.kind = to; });
+    }
     let vassals = [];
     let vassalOf = {};
     let liberated = [];
     let liberatedOf = {};
     let brush = null; // 칠하기 도구 — null(끔) | 종속국 id | 'erase'
     const openParl = new Set(); // 의회 칸을 펼친 종속국
+    let kindsOpen = false; // 종속 형태 목록을 펼쳤는지
     const vassalById = id => vassals.find(v => v.id === id) || null;
     const libById = id => liberated.find(v => v.id === id) || null;
     const vassalOfKey = key => vassalById(vassalOf[key]);
@@ -59,7 +78,7 @@
     function addVassal(name) {
         const id = newId('v', vassals.concat(liberated));
         const n = Number(id.slice(1));
-        const v = { id, name: name || `종속국 ${n}`, color: PALETTE[(n - 1) % PALETTE.length], kind: KINDS[0], parliament: freshParliament() };
+        const v = { id, name: name || `종속국 ${n}`, color: PALETTE[(n - 1) % PALETTE.length], kind: defaultKind(), parliament: freshParliament() };
         vassals.push(v);
         return v;
     }
@@ -79,9 +98,11 @@
         };
     }
     function loadTeaserState(s) {
+        kinds = Array.isArray(s?.kinds) ? [...new Set(s.kinds.map(cleanKind).filter(Boolean))] : DEFAULT_KINDS.slice();
+        kindEditFor = null;
         const list = (a, withParl) => (Array.isArray(a) ? a.filter(v => v && v.id).map((v, i) => ({
             id: String(v.id), name: String(v.name || v.id), color: hex(v.color) || PALETTE[i % PALETTE.length],
-            kind: KINDS.includes(v.kind) ? v.kind : KINDS[0], ...(withParl ? { parliament: cleanParliament(v.parliament) } : {}),
+            kind: cleanKind(v.kind) || defaultKind(), ...(withParl ? { parliament: cleanParliament(v.parliament) } : {}),
         })) : []);
         vassals = list(s?.vassals, true);
         liberated = list(s?.liberated, false);
@@ -98,7 +119,7 @@
         if (st && typeof st === 'object') {
             st.teaser68 = {
                 vassals: vassals.map(v => ({ ...v, parliament: { ...v.parliament, parties: v.parliament.parties.map(p => ({ ...p })), shares: { ...v.parliament.shares } } })),
-                vassalOf: { ...vassalOf }, liberated: liberated.map(v => ({ ...v })), liberatedOf: { ...liberatedOf },
+                kinds: kinds.slice(), vassalOf: { ...vassalOf }, liberated: liberated.map(v => ({ ...v })), liberatedOf: { ...liberatedOf },
             };
         }
         return st;
@@ -442,7 +463,9 @@
                 <div class="t68-head">
                     <input type="color" class="t68-color" value="${esc(v.color)}" title="점무늬 색">
                     <input type="text" class="t68-name" value="${esc(v.name)}" maxlength="40" title="나라 이름">
-                    <select class="t68-select t68-kind" title="종속 형태">${KINDS.map(k => `<option ${k === v.kind ? 'selected' : ''}>${k}</option>`).join('')}</select>
+                    ${kindEditFor === v.id
+                        ? `<input type="text" class="t68-in t68-kind t68-kind-new" maxlength="30" placeholder="새 형태 (예: 동군연합)" title="새 종속 형태 — Enter로 추가, Esc로 취소">`
+                        : `<select class="t68-select t68-kind" title="종속 형태">${(kinds.includes(v.kind) ? kinds : kinds.concat(v.kind)).map(k => `<option value="${esc(k)}" ${k === v.kind ? 'selected' : ''}>${esc(k)}</option>`).join('')}<option value="__new">＋ 새 형태…</option></select>`}
                 </div>
                 <div class="t68-actions">
                     <span class="t68-dim">${keys.length}곳 · 지역구 의석 ${seats}석</span>
@@ -466,6 +489,15 @@
             <div class="t68-summary">
                 <div class="t68-row t68-between"><span class="t68-count">종속국 ${vassals.length}곳 · 땅 ${total}곳${liberated.length ? ` · 독립국 ${liberated.length}곳` : ''}</span></div>
                 <div class="t68-dim t68-small">본국에 딸린 나라 — 지도에 그 나라 색 점무늬로 따로 보이고, 본국 선거 · 의석에서 빠집니다. 종속국마다 따로 의회(의석 · 정당 · 선거)가 있고, 본국에 합병하거나 해방(독립)시킬 수 있습니다.</div>
+                <details class="t68-kinds" ${kindsOpen ? 'open' : ''}>
+                    <summary>종속 형태 ${kinds.length}가지 <span class="t68-dim">— 직접 추가 · 이름 바꾸기 · 지우기</span></summary>
+                    <div class="t68-chips">${kinds.map((k, i) => `<span class="t68-chip t68-kind-chip" data-i="${i}"><input type="text" value="${esc(k)}" maxlength="30" title="눌러서 이름 바꾸기" style="width:${kindChipWidth(k)}"><span class="t68-dim">${vassals.concat(liberated).filter(v => v.kind === k).length || ''}</span><button type="button" title="이 형태 지우기 (이 형태인 나라는 그대로)">×</button></span>`).join('')}</div>
+                    <div class="t68-row">
+                        <input type="text" class="t68-add-name t68-add-kind" maxlength="30" placeholder="새 형태 (예: 동군연합, 보호령, 번국, 조공국)">
+                        <button type="button" class="t68-btn" data-act="addkind">+ 형태 추가</button>
+                        <button type="button" class="t68-btn" data-act="resetkinds">기본 목록으로</button>
+                    </div>
+                </details>
                 <div class="t68-row">
                     <input type="text" class="t68-add-name" maxlength="40" placeholder="새 종속국 이름 (예: 보헤미아-모라비아 보호령, 만주국, 그린란드)">
                     <button type="button" class="t68-btn" data-act="add">+ 종속국 추가</button>
@@ -480,7 +512,22 @@
                 ${sel && !brush && !isLib(sel) ? `<label class="t68-toggle t68-sel">선택한 지역구: <b>${esc(nameOf(sel))}</b> ${vassalSelectHtml(sel)}</label>` : ''}
                 ${libs ? `<div class="t68-libs"><div class="t68-count">독립국 (해방된 나라)</div>${libs}</div>` : ''}
             </div>`;
-        const nameInput = host.querySelector('.t68-add-name');
+        const kindsBox = host.querySelector('.t68-kinds');
+        kindsBox.addEventListener('toggle', () => { kindsOpen = kindsBox.open; });
+        const kindInput = host.querySelector('.t68-add-kind');
+        const addK = () => { if (addKind(kindInput.value)) renderVassalTab(); };
+        host.querySelector('[data-act="addkind"]').addEventListener('click', addK);
+        kindInput.addEventListener('keydown', e => { if (e.key === 'Enter') addK(); });
+        host.querySelector('[data-act="resetkinds"]').addEventListener('click', () => showCustomConfirm('종속 형태 목록을 기본 목록으로 되돌릴까요? (이미 정한 나라의 형태는 그대로)', () => { kinds = DEFAULT_KINDS.slice(); renderVassalTab(); }));
+        host.querySelectorAll('.t68-kind-chip').forEach(chip => {
+            const old = kinds[Number(chip.dataset.i)];
+            const inp = chip.querySelector('input');
+            inp.addEventListener('change', () => { renameKind(old, inp.value); refreshUI(); });
+            inp.addEventListener('keydown', e => { if (e.key === 'Enter') inp.blur(); });
+            inp.addEventListener('input', () => { inp.style.width = kindChipWidth(inp.value || ' '); });
+            chip.querySelector('button').addEventListener('click', () => { kinds = kinds.filter(k => k !== old); renderVassalTab(); });
+        });
+        const nameInput = host.querySelector('.t68-add-name:not(.t68-add-kind)');
         const add = () => { const v = addVassal(nameInput.value.trim()); brush = v.id; refreshUI(); };
         host.querySelector('[data-act="add"]').addEventListener('click', add);
         nameInput.addEventListener('keydown', e => { if (e.key === 'Enter') add(); });
@@ -500,7 +547,25 @@
             act('elect', () => runElection(v));
             card.querySelector('.t68-name').addEventListener('change', e => { v.name = e.target.value.trim() || v.name; refreshUI(); });
             card.querySelector('.t68-color').addEventListener('change', e => { v.color = e.target.value; refreshUI(); });
-            card.querySelector('.t68-kind').addEventListener('change', e => { v.kind = e.target.value; renderVassalTab(); });
+            const kindSel = card.querySelector('select.t68-kind');
+            if (kindSel) kindSel.addEventListener('change', e => {
+                if (e.target.value === '__new') { kindEditFor = id; renderVassalTab(); return; }
+                v.kind = e.target.value; refreshUI();
+            });
+            const kindNew = card.querySelector('.t68-kind-new');
+            if (kindNew) {
+                let done = false;
+                const finish = ok => {
+                    if (done) return; done = true;
+                    const k = ok ? addKind(kindNew.value) : '';
+                    if (k) v.kind = k;
+                    kindEditFor = null;
+                    refreshUI();
+                };
+                kindNew.addEventListener('keydown', e => { if (e.key === 'Enter') finish(true); else if (e.key === 'Escape') finish(false); });
+                kindNew.addEventListener('blur', () => finish(true));
+                setTimeout(() => kindNew.focus(), 0);
+            }
             card.querySelectorAll('.t68-chip button').forEach(b => b.addEventListener('click', () => setVassal(b.parentElement.dataset.key, null)));
             card.querySelectorAll('[data-f]').forEach(inp => inp.addEventListener('change', () => {
                 const f = inp.dataset.f;
@@ -543,6 +608,8 @@
         get vassals() { return vassals; }, get vassalOf() { return vassalOf; }, get liberated() { return liberated; }, get liberatedOf() { return liberatedOf; },
         add: name => { const v = addVassal(name); refreshUI(); return v; },
         assign: (key, id) => setVassal(key, id),
+        get kinds() { return kinds; },
+        addKind: k => { const r = addKind(k); refreshUI(); return r; },
         elect: id => { const v = vassalById(id); if (v) runElection(v); },
         openParliament: id => { const v = vassalById(id) || vassals[0]; if (v) { openParl.add(v.id); renderVassalTab(); } },
     };
@@ -593,6 +660,13 @@
         .t68-hemi-n { font-size: .2px; fill: currentColor; font-weight: bold; }
         .t68-legend { display: flex; flex-wrap: wrap; gap: 4px 10px; margin-top: 4px; font-size: .72rem; }
         .t68-legend i, .t68-lib i { display: inline-block; width: 9px; height: 9px; margin-right: 4px; border-radius: 50%; vertical-align: middle; }
+        .t68-kinds { margin-top: 8px; font-size: .8rem; }
+        .t68-kinds > summary { cursor: pointer; font-weight: bold; }
+        .t68-kinds > summary .t68-dim { font-weight: normal; font-size: .72rem; }
+        .t68-kind-chip { padding: 1px 2px 1px 4px; }
+        #contentVassals .t68-kind-chip input { min-width: 2em; max-width: 12em; font-family: inherit; font-size: .72rem; background: transparent !important; color: inherit; border: none !important; border-radius: 0; padding: 0 2px; margin: 0; height: auto; box-shadow: none !important; }
+        #contentVassals .t68-kind-chip .t68-dim { font-size: .65rem; }
+        #contentVassals .t68-head .t68-kind-new { flex: 0 0 auto; width: 9em; max-width: 40%; }
         .t68-libs { margin-top: 12px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,.08); }
         .t68-lib { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin-top: 6px; font-size: .8rem; }
         .t68-lib .t68-dim { margin-right: auto; font-size: .72rem; }
