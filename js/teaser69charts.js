@@ -396,6 +396,12 @@
                 const d = `M${p(a0, ri)}L${p(a0, ro2)}A${ro2},${ro2} 0 ${large} ${sw} ${p(a1, ro2)}L${p(a1, ri)}A${ri},${ri} 0 ${large} ${1 - sw} ${p(a0, ri)}Z`;
                 const seg = S('path', { d, fill: it.color, class: 't69-seg' }, svg);
                 seg.setAttribute('tabindex', '0');
+                // 넉넉한 조각에는 이름을 바로 적는다 (색만으로 구별하지 않게)
+                if ((a1 - a0) * (ri + ro2) / 2 > 46 && ro2 - ri > 24) {
+                    const am = (a0 + a1) / 2, rm = (ri + ro2) / 2;
+                    const lx = cx - rm * Math.cos(am), ly = (up ? cy - rm * Math.sin(am) : cy + rm * Math.sin(am)) + 4;
+                    T(svg, lx, ly, it.label.length > 7 ? it.label.slice(0, 6) + '…' : it.label, { class: 't69-seglabel', 'text-anchor': 'middle' });
+                }
                 const show = ev => showTip(ev.clientX, ev.clientY, up ? '세출' : '세입', [{ color: it.color, value: `${fmtNum(it.value)}${opt.unit || ''} (${(it.value / total * 100).toFixed(1)}%)`, label: it.label }]);
                 seg.addEventListener('pointermove', show);
                 seg.addEventListener('focus', () => { const r = seg.getBoundingClientRect(); show({ clientX: r.right, clientY: r.top }); });
@@ -443,6 +449,7 @@
                 if (!(it.value > 0)) return;
                 const x0 = X(acc), x1 = X(acc + it.value); acc += it.value;
                 const r = S('rect', { x: x0 + 1, y, width: Math.max(0.5, x1 - x0 - 2), height: bh, fill: it.color, rx: 2, class: 't69-seg', tabindex: 0 }, svg);
+                if (x1 - x0 > 52) T(svg, (x0 + x1) / 2, y + bh / 2 + 4, it.label.length > 7 ? it.label.slice(0, 6) + '…' : it.label, { class: 't69-seglabel', 'text-anchor': 'middle' });
                 const show = ev => showTip(ev.clientX, ev.clientY, title, [{ color: it.color, value: `${fmtNum(it.value)}${opt.unit || ''} (${(it.value / total * 100).toFixed(1)}%)`, label: it.label }]);
                 r.addEventListener('pointermove', show); r.addEventListener('pointerleave', hideTip);
                 r.addEventListener('focus', () => { const b = r.getBoundingClientRect(); show({ clientX: b.right, clientY: b.top }); }); r.addEventListener('blur', hideTip);
@@ -676,11 +683,14 @@
             --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500; --s5: #d55181; --s6: #008300; --s7: #9085e9; --s8: #e66767;
             --good: #0ca30c; --warning: #fab219; --serious: #ec835a; --critical: #d03b3b;
             --pos: #3987e5; --neg: #e66767; --t69-shade: rgba(255,255,255,.05); --t69-hover: rgba(255,255,255,.06);
+            /* 세입 — 보라 한 가지 색의 진하기 (세출의 여러 색과 겹치지 않게, 큰 세목일수록 진하게) */
+            --rv1: #b3abf3; --rv2: #9085e9; --rv3: #7466d9; --rv4: #5a4bbd; --rv5: #46399c; --rv6: #362b7c;
         }
         html[data-theme-mode="light"] .t69-viz, html[data-theme-mode="light"] .t69-tip {
             --t69-surface: #fcfcfb; --t69-ink: #0b0b0b; --t69-ink2: #52514e; --t69-muted: #898781; --t69-grid: #e1e0d9; --t69-axis: #c3c2b7;
             --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --s4: #eda100; --s5: #e87ba4; --s6: #008300; --s7: #6250d6; --s8: #e34948;
             --pos: #2a78d6; --neg: #e34948; --t69-shade: rgba(0,0,0,.05); --t69-hover: rgba(0,0,0,.05);
+            --rv1: #3b2c99; --rv2: #4f3fc0; --rv3: #6250d6; --rv4: #8476e0; --rv5: #a69deb; --rv6: #c6c0f3;
         }
         .t69-dispbox { color: var(--t69-ink); }
         .t69-svg { display: block; max-width: 100%; height: auto; font-family: inherit; }
@@ -708,6 +718,7 @@
         .t69-barcol.hover rect:not([fill="transparent"]) { filter: brightness(1.15); }
         .t69-seg { stroke: var(--t69-surface); stroke-width: 2; cursor: default; outline: none; }
         .t69-seg:hover, .t69-seg:focus-visible { filter: brightness(1.15); }
+        .t69-seglabel { fill: #fff; font-size: 10.5px; font-weight: 600; pointer-events: none; paint-order: stroke; stroke: rgba(0,0,0,.45); stroke-width: 2.5px; }
         .t69-deficit { stroke: var(--critical); } .t69-surplus { stroke: var(--good); }
         .t69-link { opacity: .32; transition: opacity .12s; outline: none; } .t69-link.hover { opacity: .6; } .t69-link.dim { opacity: .08; }
         .t69-node { outline: none; }
