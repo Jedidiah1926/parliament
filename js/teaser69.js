@@ -546,6 +546,16 @@
         add('financial', '금융 위기', 'critical', N.conf < 30 && N.yield - N.rate > 4);
         add('printing', '통화 붕괴 위험', N.print >= S2.thresholds.collapse ? 'critical' : 'serious', N.print > 10);
         if (S2.ceiling != null) add('ceiling', '부채 한도 근접', N.debt >= S2.ceiling ? 'critical' : 'warning', N.debt > S2.ceiling - 5);
+        // 위기 단계 — 위기 기준(설정)을 넘으면 '위기', 가까워지면 '위험'
+        const t = S2.thresholds;
+        const dflt = N.debt > t.default || (N.conf < t.flight && N.yield - N.rate > 8);
+        add('default', '국가 부도', dflt ? 'critical' : 'serious', dflt || N.debt > t.default * 0.85);
+        add('hyper', '하이퍼인플레이션', N.infl > t.hyper ? 'critical' : 'serious', N.infl > t.hyper * 0.5);
+        add('depression', '대공황', N.unemp > t.depression ? 'critical' : 'serious', N.unemp > t.depression * 0.7);
+        add('flight', '자본 도피', N.conf < t.flight ? 'critical' : 'serious', N.conf < t.flight + 10);
+        // 경제 붕괴 — 성장률 -10% 아래로 추락하거나 위기가 두 개 이상 겹칠 때
+        const crises = out.filter(s => s.on && s.status === 'critical' && s.id !== 'ceiling').length;
+        add('collapse', '경제 붕괴', 'critical', N.growth < -10 || crises >= 2);
         return out;
     }
     const PRINT_BANDS = [[-99, '돈줄 죄기'], [0, '금본위'], [0.5, '정상'], [3, '윤전기 가동'], [10, '돈을 찍어라'], [30, '종이 쪼가리']];
