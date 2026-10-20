@@ -7965,6 +7965,20 @@ window.DnoLangPacks.en = {
   ["이민자 성향 따로 정하기", "Set immigrant leanings separately"],
   ["선거 › 방식에서 설정", "Set in Elections › System"],
   ["시민", "Citizens"],
+  ["경제 시스템 (메뉴 › 경제)", "Economy system (Menu › Economy)"],
+  ["통화 · 재정 정책", "Monetary · fiscal policy"],
+  ["지역구 경제", "District economies"],
+  ["예산안 · 예상 표결", "Budget bills · predicted votes"],
+  ["초기값 · 사용자 정의 항목", "Starting values · custom items"],
+  ["- 경제 시스템 추가 (메뉴 › 경제) — 개요 · 통화 · 재정 · 지역 · 시나리오 · 항목, 오른쪽에 지표 추이 그래프 · 지역구 지도", "- Economy system (Menu › Economy) — Overview · Monetary · Fiscal · Regions · Scenario · Items, with indicator trend charts and a district map on the right"],
+  ["- 턴 진행 — 기본 1분기(1개월 · 1년도 가능), 날짜를 넘기면 지난 턴만큼 계산", "- Turns — one quarter by default (a month or a year also possible); advancing the date computes the turns that passed"],
+  ["- 통화 정책 — 기준금리, 화폐발행률, 양적완화 · 양적긴축 · 평가절하, 중앙은행 독립(자동 금리)", "- Monetary policy — policy rate, money printing rate, QE · QT · devaluation, central bank independence (automatic rate)"],
+  ["- 재정 — 재량지출(군비 · 과학 · 교육 · 인프라 · 복지 …)과 누적 자산, 의무지출(이자 · 연금 · 실업급여), 세목별 세율, 재정수지 · 국가부채", "- Public finance — discretionary spending (military · science · education · infrastructure · welfare …) and the assets it builds, mandatory spending (interest · pensions · unemployment benefits), tax rates by tax, budget balance · national debt"],
+  ["- 지역구 경제 — 산업구조 · 연령구조 · 소득등급 · 실업률 · 민심, 같은 정책도 지역마다 다르게 작용", "- District economies — industry mix · age structure · income level · unemployment · public mood; the same policy hits each district differently"],
+  ["- 의회 연동 — 예산안 · 세법 개정안을 법안으로 표결(못 넘기면 준예산), 정당 · 의원별 예상 표결", "- Parliament — budget and tax bills go to a vote (if they fail, last year's budget carries over), with predicted votes per party and member"],
+  ["- 경제 성과가 지지율 · 지역구 성향에 반영 (설정)", "- Economic performance moves party support and district leanings (optional)"],
+  ["- 위기 이벤트 — 하이퍼인플레 · 국가부도 · 대공황 · 자본 도피 · 통화 붕괴, 쿠데타 · 혁명 경고", "- Crisis events — hyperinflation · sovereign default · depression · capital flight · currency collapse, with coup and revolution warnings"],
+  ["- 초기값 시나리오(고정 · 전환 · 구간)와 프리셋, 사용자 정의 지출 항목 · 세목 · 자산", "- Starting-value scenarios (locked · transition · schedule) and presets, custom spending items · taxes · assets"],
   ["궐석", "Vacant"]
  ]
 };
