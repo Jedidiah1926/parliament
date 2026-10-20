@@ -7981,7 +7981,8 @@ window.DnoLangPacks.en = {
   ["- 경제 성과가 지지율 · 지역구 성향에 반영 (설정)", "- Economic performance moves party support and district leanings (optional)"],
   ["- 위기 이벤트 — 하이퍼인플레 · 국가부도 · 대공황 · 자본 도피 · 통화 붕괴, 쿠데타 · 혁명 경고", "- Crisis events — hyperinflation · sovereign default · depression · capital flight · currency collapse, with coup and revolution warnings"],
   ["- 초기값 시나리오(고정 · 전환 · 구간)와 프리셋, 사용자 정의 지출 항목 · 세목 · 자산", "- Starting-value scenarios (locked · transition · schedule) and presets, custom spending items · taxes · assets"],
-  ["- 개요 화면 — 인플레 · GDP · 부채비율 그래프와 바로 아래 조작, 신용등급(AAA ~ D), 경제 체제(계획 ↔ 시장), 세출 · 세입 원그래프와 재정 적자", "- Overview — inflation, GDP and debt-to-GDP charts with their controls right below, credit rating (AAA to D), economic system (planned ↔ market), spending and revenue pies with the deficit"],
+  ["- 개요 화면 — 지표마다 반원 계기(안전 · 경고 · 위기 구간)와 겹쳐 보는 큰 추이 그래프, 신용등급(AAA ~ D), 경제 체제(계획 ↔ 시장)", "- Overview — a semicircle gauge per indicator (safe · warning · crisis bands) and one large trend chart with overlaid indicators, credit rating (AAA to D), economic system (planned ↔ market)"],
+  ["- 예산 반원 · 가로 막대 중 골라 보는 세출 · 세입 구성과 재정 적자", "- Spending and revenue mix with the deficit, shown as a budget hemicycle or two horizontal bars"],
   ["- 국고(흑자 적립 · 부채 상환 · 투자) · 부채 한도(법안으로 상향), 지출 묶음(국방 · 민간 …)", "- Treasury reserves (surpluses saved, debt repayment, investment) · debt ceiling (raised by law), spending groups (defense · civilian …)"],
   ["- 경제 경고 신호(실질 마이너스 성장 · 인플레 위험 · 과도한 적자 · 부채 위험 · 국고 과잉 · 금융 위기)", "- Economic warning signs (negative real growth · inflation critical · excessive deficit · critical debt · bloated reserves · financial crisis)"],
   ["궐석", "Vacant"]
