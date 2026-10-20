@@ -15,6 +15,7 @@
         { id: '66', file: 'teaser66.html', title: 'Teaser 1.6.6', note: '왕정복고 · 전제군주정 · 왕위 계승 · 친위 쿠데타 · 공화 혁명 (+1.6.1 ~ 1.6.5)' },
         { id: '67', file: 'teaser67.html', title: 'Teaser 1.6.7', note: '미수복 지역 · 영토 통일 (+1.6.1 ~ 1.6.6)' },
         { id: '68', file: 'teaser68.html', title: 'Teaser 1.6.8', note: '종속국 · 종속국 의회 · 합병 · 해방 (+1.6.1 ~ 1.6.7)' },
+        { id: '69', file: 'teaser69.html', title: 'Teaser 1.6.9', note: '경제 시스템 — 통화 · 재정 · 지역구 경제 · 예산안 · 경제 그래프 (+1.6.1 ~ 1.6.8)' },
     ];
 
     // cyrb53 — 짧은 53비트 문자열 해시

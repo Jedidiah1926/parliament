@@ -15,7 +15,7 @@
 (function () {
     'use strict';
     const root = document.documentElement;
-    if (root.getAttribute('data-app-mode') !== 'teaser' || !['65', '66', '67', '68'].includes(root.getAttribute('data-teaser'))) return;
+    if (root.getAttribute('data-app-mode') !== 'teaser' || !['65', '66', '67', '68', '69'].includes(root.getAttribute('data-teaser'))) return;
 
     const esc = s => (typeof escapeHtmlText === 'function' ? escapeHtmlText(String(s ?? '')) : String(s ?? ''));
     const uid = () => 'w' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
@@ -1436,14 +1436,14 @@
     if (typeof origOpenExport === 'function') {
         window.openExportDialog = function () {
             const r = origOpenExport.apply(this, arguments);
-            try { if (String(canvasExportTarget?.dataset?.exportKind || '').startsWith('t64')) { const sec = document.getElementById('exportHeaderStatsSection'); if (sec) sec.style.display = 'none'; } } catch (e) { /* 없음 */ }
+            try { if (String(canvasExportTarget?.dataset?.exportKind || '').startsWith('t65')) { const sec = document.getElementById('exportHeaderStatsSection'); if (sec) sec.style.display = 'none'; } } catch (e) { /* 없음 */ }
             return r;
         };
     }
     const origExportAt = window.exportVisualElementAt;
     if (typeof origExportAt === 'function') {
         window.exportVisualElementAt = function (target, includeStats, format) {
-            if (String(target?.dataset?.exportKind || '').startsWith('t64')) return t65Export(target, format);
+            if (String(target?.dataset?.exportKind || '').startsWith('t65')) return t65Export(target, format);
             return origExportAt.apply(this, arguments);
         };
     }

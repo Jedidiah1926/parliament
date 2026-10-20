@@ -16,7 +16,7 @@
    districtSvgMapFor, districtOrderSync */
 (function () {
     'use strict';
-    if (document.documentElement.getAttribute('data-app-mode') !== 'teaser' || !['67', '68'].includes(document.documentElement.getAttribute('data-teaser') || '67')) return;
+    if (document.documentElement.getAttribute('data-app-mode') !== 'teaser' || !['67', '68', '69'].includes(document.documentElement.getAttribute('data-teaser') || '67')) return;
 
     // 미수복 영토는 여러 개 — 영토마다 이름 · 색(빗금 색)이 있고, 지역구는 그중 하나에 속한다
     //   territories = [{ id, name, color }], unrecovered = { 지역구 키: 영토 id }

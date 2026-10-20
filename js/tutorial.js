@@ -94,9 +94,9 @@
     /* global emergencyPowers, presElectionMode */
     const devOn = () => !!(window.HemiDev && window.HemiDev.isOn());
     // 미리보기 화면마다 담긴 기능 버전 (teaser6N은 1.6.1 ~ 1.6.N)
-    const PAGE_HAS = { '61': ['1.6.1'], '62': ['1.6.1', '1.6.2'], '63': ['1.6.1', '1.6.2', '1.6.3'], '64': ['1.6.1', '1.6.2', '1.6.3', '1.6.4'], '65': ['1.6.1', '1.6.2', '1.6.3', '1.6.4', '1.6.5'], '66': ['1.6.1', '1.6.2', '1.6.3', '1.6.4', '1.6.5', '1.6.6'], '67': ['1.6.1', '1.6.2', '1.6.3', '1.6.4', '1.6.5', '1.6.6', '1.6.7'], '68': ['1.6.1', '1.6.2', '1.6.3', '1.6.4', '1.6.5', '1.6.6', '1.6.7', '1.6.8'] };
+    const PAGE_HAS = { '61': ['1.6.1'], '62': ['1.6.1', '1.6.2'], '63': ['1.6.1', '1.6.2', '1.6.3'], '64': ['1.6.1', '1.6.2', '1.6.3', '1.6.4'], '65': ['1.6.1', '1.6.2', '1.6.3', '1.6.4', '1.6.5'], '66': ['1.6.1', '1.6.2', '1.6.3', '1.6.4', '1.6.5', '1.6.6'], '67': ['1.6.1', '1.6.2', '1.6.3', '1.6.4', '1.6.5', '1.6.6', '1.6.7'], '68': ['1.6.1', '1.6.2', '1.6.3', '1.6.4', '1.6.5', '1.6.6', '1.6.7', '1.6.8'], '69': ['1.6.1', '1.6.2', '1.6.3', '1.6.4', '1.6.5', '1.6.6', '1.6.7', '1.6.8', '1.6.9'] };
     const PREVIEW_PAGES = Object.keys(PAGE_HAS);
-    const previewPageFor = l => (l && /^1\.6\.[1-8]$/.test(l.locked) ? '6' + l.locked.slice(-1) : '68'); // 그 기능이 처음 들어간 버전의 Teaser 화면
+    const previewPageFor = l => (l && /^1\.6\.[1-9]$/.test(l.locked) ? '6' + l.locked.slice(-1) : '69'); // 그 기능이 처음 들어간 버전의 Teaser 화면
     const curPage = () => document.documentElement.getAttribute('data-teaser');
     // 지금 화면이 미리보기 화면인지 — 과정을 주면 그 과정의 기능이 있는 화면인지
     const onPreviewPage = l => PREVIEW_PAGES.includes(curPage()) && (!l || !l.locked || (PAGE_HAS[curPage()] || []).includes(l.locked));
@@ -104,6 +104,9 @@
     const unrecLeft = () => { try { return typeof window.isDistrictUnrecovered === 'function' && Object.keys(districtGrid.house || {}).some(k => window.isDistrictUnrecovered(k)); } catch (e) { return false; } };
     const t64 = () => window.T65 || null;
     const t68 = () => window.T68 || null;
+    const t69 = () => window.T69 || null;
+    const ecoTurn = () => { const t = t69(); return t ? t.state.turn : 0; };
+    const showEco = view => () => { const t = t69(); if (t) { t.ensureInit(); t.showDisp(view); } };
     const firstVassalCard = () => document.querySelector('#contentVassals .t68-card');
     const rankSig = () => { const t = t64(); return t && t.ranking ? t.ranking.rows.map(r => `${r.id}:${r.score}`).join(',') : ''; };
     const logLen = k => { const o = window[k]; return o && Array.isArray(o.log) ? o.log.length : 0; };
@@ -702,6 +705,59 @@
                     target: () => document.getElementById('contentTerritory') || '#mainContentNation',
                     title: '통일 뒤에는',
                     text: '되찾은 지역구는 다음 총선부터 의석을 뽑아요 (서독이면 연방의회 지역구가 259석에서 331석으로 늘어요). 의회 › 의회 구성에서 총 의석도 맞춰 늘리고, 여론 › 성향에서 새 지역의 정당 성향을 정해 보세요.',
+                },
+            ],
+        },
+        {
+            id: 'economy', group: 'detail', locked: '1.6.9',
+            title: '경제',
+            summary: '경제 개요 · 턴 넘기기 · 계기판 · 통화 · 재정과 예산안 · 전문가 분석 · 지역 · 시나리오',
+            steps: [
+                {
+                    before: [closePanels, go('economy', 'overview'), showPanel('controls')],
+                    target: () => document.querySelector('#contentEcoOverview .t69-top') || '#contentEcoOverview',
+                    title: '보이지 않는 손',
+                    text: '메뉴 › 경제에서는 나라 경제를 움직여요. 서독 튜토리얼은 1983년 서독 경제(성장 1.6% · 인플레 3.3% · 실업 약 9%)로 시작합니다. 왼쪽 위 배지는 신용등급(AAA ~ D)이에요.',
+                },
+                {
+                    before: [go('economy', 'overview'), showPanel('controls')],
+                    enter: () => { T.ecoTurn0 = ecoTurn(); },
+                    target: () => document.querySelector('#contentEcoOverview .t69-next') || '#contentEcoOverview',
+                    allow: ['#contentEcoOverview'],
+                    title: '턴 넘기기',
+                    text: '경제는 턴을 넘길 때만 계산돼요 (기본 1분기 — 1개월 · 1년으로도 바꿀 수 있음). 오른쪽 위 날짜(▶)를 넘겨도 지난 분기만큼 계산됩니다. "▶ 다음 1분기"를 눌러 보세요.',
+                    task: () => ecoTurn() > (T.ecoTurn0 || 0),
+                    done: '한 분기가 지났어요!',
+                },
+                {
+                    before: [go('economy', 'overview'), showEco('overview'), showPanel('display')],
+                    target: () => document.querySelector('#dispPanelEconomy .t69-gauges') || '#dispPanelEconomy',
+                    title: '계기판과 추이',
+                    text: '오른쪽 경제 화면 위쪽 반원 계기는 지표마다 안전 · 경고 · 위험 · 위기 구간을 보여 줘요. 아래 큰 그래프는 칩을 눌러 지표를 겹쳐 보고, 점선은 앞으로의 예측이에요. 계기를 누르면 그 지표를 움직이는 탭으로 갑니다.',
+                },
+                {
+                    before: [go('economy', 'monetary'), showPanel('controls')],
+                    target: () => document.querySelector('#contentEcoMonetary .t69-card') || '#contentEcoMonetary',
+                    title: '통화',
+                    text: '기준금리 · 화폐발행률 · 양적완화 같은 통화정책은 중앙은행 몫이라 바로 반영돼요. 금리를 올리면 인플레가 잡히지만 실업이 늘고, 돈을 찍으면 당장은 좋아도 물가와 통화가치가 무너집니다. 아래 막대가 "이대로면 다음 분기"예요.',
+                },
+                {
+                    before: [go('economy', 'fiscal'), showPanel('controls')],
+                    target: () => document.querySelector('#contentEcoFiscal .t69-budgetbox') || '#contentEcoFiscal',
+                    title: '재정과 예산안',
+                    text: '지출(GDP 대비 %)과 세율을 고치면 예산안 초안에 모였다가, "예산안 제출"로 입법 › 제출에 올라가요. 의회에서 가결돼야 반영되고, 그 전까지는 지난 예산(준예산)대로 집행돼요. 정당별 예상 표결을 보고 한 번에 넣을 수도 있어요.',
+                },
+                {
+                    before: [go('economy', 'analysis'), showEco('analysis'), showPanel('controls')],
+                    target: () => document.querySelector('#contentEcoAnalysis .t69-presets') || '#contentEcoAnalysis',
+                    title: '전문가 분석',
+                    text: '깊게 보고 싶으면 분석에서 경기 순환 · 인플레 · 재정 건전성 · 지역 격차 · 정책 실험을 골라요. 오른쪽에 같은 십자선을 쓰는 연동 패널, 성장 기여도 분해, 부채 동학(r − g), 예산 흐름도, 정책 민감도가 그려집니다. "크게 보기"로 화면 전체에 펼칠 수 있어요.',
+                },
+                {
+                    before: [go('economy', 'region'), showPanel('controls')],
+                    target: () => document.querySelector('#contentEcoRegion .t69-dlist') || '#contentEcoRegion',
+                    title: '지역 · 시나리오 · 항목',
+                    text: '지역에서 주마다 산업구조 · 연령구조 · 소득등급을 정하면 같은 정책도 지역마다 다르게 작용해요 (금리 인상은 제조업, 복지 삭감은 저소득 지역에 크게). 시나리오에서는 "값 + 기간" 규칙과 프리셋을, 항목에서는 나만의 지출 항목 · 세목 · 자산을 만들 수 있어요.',
                 },
             ],
         },
