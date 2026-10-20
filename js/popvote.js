@@ -44,6 +44,9 @@
         return Number.isFinite(v) && v > 0 ? v : null;
     }
     function nameOf(ch, key) { return districtNames[ch]?.[key] || districtNames.house?.[key] || key; }
+    // 시민 · 이민자(1.6.1 티저 미리보기 — js/teaser61.js): 유권자 = 시민 + (그 선거에 투표권이 있으면) 이민자, 이민자 성향도 섞는다
+    const voterPop = (ch, key, kind, pop) => (window.HemiVoters ? window.HemiVoters.electorate(ch, key, kind, pop) : pop);
+    const voterShares = (ch, key, kind, shares) => (window.HemiVoters ? window.HemiVoters.shares(ch, key, kind, shares) : shares);
 
     // 지역구 하나의 정당별 득표율(합 100) — 성향이 있으면 성향, 없으면 전국 지지율
     function partySharesFor(ch, key, noise) {
@@ -95,10 +98,11 @@
     function countDistrict(ch, k, L) {
         let pop = popOf(ch, k); let missing = false;
         if (pop == null) { pop = DEFAULT_POP; missing = true; }
+        pop = voterPop(ch, k, 'local', pop);
         const turnout = clamp(L.turnout + rand(5), 5, 100) / 100;
         const cast = Math.round(pop * turnout);
         const votes = {};
-        Object.entries(partySharesFor(ch, k, L.noise)).forEach(([pid, s]) => { votes[pid] = cast * s; });
+        Object.entries(voterShares(ch, k, 'local', partySharesFor(ch, k, L.noise))).forEach(([pid, s]) => { votes[pid] = cast * s; });
         return { pop, cast, votes, missing };
     }
     function runLevel(ch, level, L) {
@@ -409,7 +413,8 @@
             keys.forEach(k => {
                 let pop = popOf(ch, k);
                 if (pop == null) { pop = DEFAULT_POP; missingPop++; }
-                const shares = partySharesFor(ch, k, 5);
+                pop = voterPop(ch, k, 'referendum', pop);
+                const shares = voterShares(ch, k, 'referendum', partySharesFor(ch, k, 5));
                 const yesShare = clamp((Object.keys(shares).length ? partyYes(shares) : 0.5) + rand(0.06), 0.01, 0.99);
                 const turnout = clamp(R.turnout + rand(6), 5, 100) / 100;
                 const cast = Math.round(pop * turnout);

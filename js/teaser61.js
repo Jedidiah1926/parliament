@@ -5,10 +5,15 @@
 //  - 지역구 후보: 선거 전에 인물을 지역구 후보로 내세우면, 총선 · 보궐선거 결과를 반영할 때 그 지역구에서 인물의 정당이
 //    이긴 의석에 바로 배정한다 (후보가 없으면 같은 정당의 현역이 다시 그 자리에). 낙선해도 인물은 남는다.
 //  - 선거 · 당적 변경 · 궐석으로 의석이 사라져도 인물은 사람 탭에 그대로 남는다 (예전엔 자리와 함께 이름 · 사진이 사라졌다).
+//  - 시민 · 이민자: 지역구 인구를 시민권자와 이민자로 나눈다 (국가 › 지역에서 "시민 / 인구"). 시민은 모든 선거에서 투표하고,
+//    이민자는 선거마다(대선 · 총리 직선 / 총선 / 지방선거 / 국민투표) 투표권을 줄지 정한다 (선거 › 방식).
+//    이민자 성향을 따로 정하면 이민자가 투표하는 선거에서 지역구 · 전국 득표가 그만큼 섞이고, 지방선거 · 국민투표는 유권자 수도 바뀐다.
 /* global parties, ideologies, chamberList, chamberDisplayName, districtMembers, districtMemberKeys, districtMemberKeysOf,
    districtMemberLabel, districtBaseKey, districtSortedKeys, districtNames, listMembers, independents, president, pm,
    collectiveChair, deputyPms, cabinetMembers, effRoleLabel, simulate, refreshUI, showCustomAlert, showCustomConfirm,
-   escapeHtmlText, ideologyName, startDragReorder, formatNationDate, elecLastResults, elecLastResult */
+   escapeHtmlText, ideologyName, startDragReorder, formatNationDate, elecLastResults, elecLastResult,
+   districtPopulation, districtGrid, districtMapMode, elecStore, getElecTargets, renderDistrictListPanel, districtRenderNamePanel,
+   selectedDistrictKey, districtChamber */
 (function () {
     'use strict';
     const root = document.documentElement;
@@ -26,8 +31,11 @@
     //   people: [{ id, name, photo, ideologyId, partyId, factionId, bio }]
     //   candidates: { [chamber]: { [지역구 키]: [personId] } }
     //   lastElection: { date, chamber, elected: [{ personId, place }], lost: [{ personId, place }] } | null
+    //   citizens: { house|senate|third: { [지역구 키]: 시민권자 수 } } — 비우면 그 지역구 인구 전체가 시민
+    //   migrantVote: { presidential, general, local, referendum } — 그 선거에서 이민자도 투표하는지
+    //   migrantLean: { on, values: { [partyId]: % } } — 이민자 성향 (끄면 시민과 같은 성향으로 투표)
     let S = fresh();
-    function fresh() { return { people: [], candidates: {}, lastElection: null }; }
+    function fresh() { return { people: [], candidates: {}, lastElection: null, citizens: { house: {}, senate: {}, third: {} }, migrantVote: { presidential: false, general: false, local: false, referendum: false }, migrantLean: { on: false, values: {} } }; }
     const ui = { q: '', filter: 'all', openId: null };
 
     const origGet = window.getAppState;
@@ -43,7 +51,13 @@
         S = { ...fresh(), ...(src && typeof src === 'object' ? JSON.parse(JSON.stringify(src)) : {}) };
         if (!Array.isArray(S.people)) S.people = [];
         if (!S.candidates || typeof S.candidates !== 'object') S.candidates = {};
+        const f = fresh();
+        S.citizens = { ...f.citizens, ...(S.citizens && typeof S.citizens === 'object' ? S.citizens : {}) };
+        S.migrantVote = { ...f.migrantVote, ...(S.migrantVote && typeof S.migrantVote === 'object' ? S.migrantVote : {}) };
+        S.migrantLean = { ...f.migrantLean, ...(S.migrantLean && typeof S.migrantLean === 'object' ? S.migrantLean : {}) };
+        if (!S.migrantLean.values || typeof S.migrantLean.values !== 'object') S.migrantLean.values = {};
         refresh();
+        renderMigrantCard();
         return r;
     };
     const personById = id => S.people.find(p => p.id === id) || null;
@@ -305,6 +319,7 @@
                 <button type="button" class="t61-btn" data-act="import" title="의원 · 당수 · 원내대표 · 내각 자리에 적힌 이름으로 인물을 만들고 연결 (같은 이름은 한 사람)">의원 · 내각에서 가져오기</button>
                 <input type="search" class="t61-search" data-ui="q" placeholder="이름 검색" value="${esc(ui.q)}">
             </div>
+            ${popSummaryHtml()}
             <div class="system-radio-group t61-filter">${[['all', '전체'], ['seated', '자리 있음'], ['none', '자리 없음'], ['cand', '지역구 후보']].map(([k, t]) => `<button type="button" class="system-radio-btn ${ui.filter === k ? 'active' : ''}" data-filter="${k}">${t} <span class="t61-n">${counts[k]}</span></button>`).join('')}</div>
             ${le ? `<div class="t61-result"><b>지난 선거 (${esc(le.chamber)}${le.date ? ` · ${esc(le.date)}` : ''})</b>
                 ${le.elected.length ? `<div>✔ 당선 · 배정: ${le.elected.map(x => `${esc((personById(x.personId) || {}).name || '?')} <span class="t61-dim">(${esc(x.place)})</span>`).join(', ')}</div>` : ''}
@@ -312,6 +327,7 @@
                 <button type="button" class="t61-x" data-act="clearres" title="닫기">✕</button></div>` : ''}
             <div id="t61List" class="t61-list">${list.length ? list.map(p => card(p, posMap.get(p.id) || [])).join('') : `<div class="t61-empty">${S.people.length ? '조건에 맞는 사람이 없습니다.' : '아직 사람이 없습니다. "＋ 사람 추가"로 만들거나, "의원 · 내각에서 가져오기"로 지금 자리에 적힌 이름을 인물로 옮겨 보세요.'}</div>`}</div>`;
         bind(box);
+        box.querySelector('[data-act="migrants"]')?.addEventListener('click', () => { switchSubTab('vote', 'elecSettings'); setTimeout(() => document.getElementById('t61MigrantCard')?.scrollIntoView({ block: 'center' }), 50); });
     }
     function card(p, pos) {
         const party = partyById(p.partyId);
@@ -401,7 +417,245 @@
     }
     function refresh() { render(); }
 
-    window.T61 = { get people() { return S.people; }, get candidates() { return S.candidates; }, get lastElection() { return S.lastElection; }, seats, assign, unassign, importFromSeats, positionsOf };
+    // =====================================================================
+    // ---- 시민 · 이민자 — 지역구 인구 = 시민권자 + 이민자, 선거마다 이민자 투표권 ----
+    // =====================================================================
+    const VOTE_KINDS = [['presidential', '대선 · 총리 직선'], ['general', '총선'], ['local', '지방선거'], ['referendum', '국민투표']];
+    const fmtN = n => Math.round(n).toLocaleString();
+    const excludedKey = k => (typeof window.isDistrictUnrecovered === 'function' && window.isDistrictUnrecovered(k))
+        || (typeof window.isDistrictVassal === 'function' && window.isDistrictVassal(k));
+    function popRaw(ch, k) {
+        const v = districtPopulation[ch]?.[k] ?? districtPopulation.house?.[k];
+        return Number.isFinite(v) && v > 0 ? v : null;
+    }
+    const citRaw = (ch, k) => { const v = S.citizens[ch]?.[k] ?? S.citizens.house?.[k]; return Number.isFinite(v) && v >= 0 ? v : null; };
+    // 시민권자 수 — 따로 적지 않았으면 인구 전체, 인구보다 많이 적었으면 인구까지
+    function citizensOf(ch, k) {
+        const pop = popRaw(ch, k), c = citRaw(ch, k);
+        if (c == null) return pop;
+        return pop == null ? c : Math.min(c, pop);
+    }
+    function migrantsOf(ch, k) {
+        const pop = popRaw(ch, k);
+        return pop == null ? 0 : Math.max(0, pop - (citizensOf(ch, k) || 0));
+    }
+    const migrantsVote = kind => !!S.migrantVote[kind];
+    function totals(ch) {
+        let pop = 0, cit = 0, mig = 0;
+        Object.keys(districtGrid[ch] || {}).filter(k => districtGrid[ch][k] && !excludedKey(k)).forEach(k => {
+            const p = popRaw(ch, k);
+            if (p == null) return;
+            pop += p; cit += citizensOf(ch, k) || 0; mig += migrantsOf(ch, k);
+        });
+        return { pop, cit, mig };
+    }
+    // 이민자 성향 → 정당별 몫(합 1). 꺼져 있거나 비어 있으면 null (시민과 같은 성향)
+    function leanShares(ids) {
+        if (!S.migrantLean.on) return null;
+        const vals = ids.map(id => [String(id), Math.max(0, Number(S.migrantLean.values[id]) || 0)]);
+        const t = vals.reduce((a, [, v]) => a + v, 0);
+        return t > 0 ? Object.fromEntries(vals.map(([id, v]) => [id, v / t])) : null;
+    }
+    const votingParties = () => parties.filter(p => p.status !== 'banned');
+    // 시민 몫(shares, 합 1)과 이민자 성향을 유권자 수로 섞는다
+    function mixShares(shares, c, m) {
+        if (!(m > 0) || !(c + m > 0)) return shares;
+        const lean = leanShares(votingParties().map(p => p.id));
+        if (!lean) return shares;
+        const ids = new Set([...Object.keys(shares), ...Object.keys(lean).filter(id => lean[id] > 0)]);
+        const out = {};
+        ids.forEach(id => { out[id] = (c * (shares[id] || 0) + m * (lean[id] || 0)) / (c + m); });
+        return out;
+    }
+
+    // ---- 지방선거 · 국민투표 (js/popvote.js가 이걸 보고 유권자 수 · 득표율을 바꾼다) ----
+    window.HemiVoters = {
+        electorate(ch, k, kind, pop) {
+            if (popRaw(ch, k) == null) return pop; // 인구를 적지 않은 지역구는 그대로 (모두 시민)
+            return (citizensOf(ch, k) || 0) + (migrantsVote(kind) ? migrantsOf(ch, k) : 0);
+        },
+        shares(ch, k, kind, shares) {
+            if (!migrantsVote(kind)) return shares;
+            return mixShares(shares, citizensOf(ch, k) || 0, migrantsOf(ch, k));
+        },
+        citizensOf, migrantsOf, totals,
+    };
+
+    // ---- 총선 · 대선: 이민자가 투표하면 지역구 성향과 전국 지지율에 이민자 성향을 섞어 개표한다 ----
+    let ctx = null; // 지금 치르는 선거 — 'general' | 'presidential'
+    const origTend = window.districtTendencyFor;
+    if (typeof origTend === 'function') {
+        window.districtTendencyFor = function (key, chamber) {
+            const r = origTend.apply(this, arguments);
+            if (!ctx || !migrantsVote(ctx) || !r || !r.values) return r;
+            const m = migrantsOf(chamber, key);
+            if (!(m > 0)) return r;
+            const T = Object.values(r.values).reduce((a, v) => a + (Number(v) || 0), 0);
+            if (T <= 0) return r;
+            const base = Object.fromEntries(Object.entries(r.values).map(([id, v]) => [id, (Number(v) || 0) / T]));
+            const mixed = mixShares(base, citizensOf(chamber, key) || 0, m);
+            if (mixed === base) return r;
+            return { ...r, values: Object.fromEntries(Object.entries(mixed).map(([id, v]) => [id, v * T])) };
+        };
+    }
+    // 전국 지지율(elecStore)을 그 원의 시민 · 이민자 수로 섞어 둔 채 fn을 치르고, 끝나면 되돌린다
+    function withNationalMix(kind, chambers, fn) {
+        const saved = {};
+        if (migrantsVote(kind) && typeof elecStore === 'object') {
+            const lean = leanShares(votingParties().map(p => p.id));
+            chambers.forEach(ch => {
+                const { cit, mig } = totals(ch);
+                const store = elecStore[ch];
+                if (!lean || !(mig > 0) || !store) return;
+                const sumP = parties.reduce((a, p) => a + (Number(store[p.id]?.prob) || 0), 0);
+                if (sumP <= 0) return;
+                saved[ch] = JSON.parse(JSON.stringify(store));
+                parties.forEach(p => {
+                    const P = Number(store[p.id]?.prob) || 0, l = lean[String(p.id)] || 0;
+                    const np = sumP * (cit * P / sumP + mig * l) / (cit + mig);
+                    if (np > 0 || store[p.id]) store[p.id] = { err: 0, ...(store[p.id] || {}), prob: Math.round(np * 100) / 100 };
+                });
+            });
+        }
+        const restore = () => Object.entries(saved).forEach(([ch, snap]) => { elecStore[ch] = snap; });
+        const prevCtx = ctx;
+        ctx = kind;
+        let r;
+        try { r = fn(); } catch (e) { ctx = prevCtx; restore(); throw e; }
+        if (r && typeof r.then === 'function') return r.finally(() => { ctx = prevCtx; restore(); });
+        ctx = prevCtx; restore();
+        return r;
+    }
+    const origRun = window.elecRun;
+    if (typeof origRun === 'function') {
+        window.elecRun = function () {
+            if (ctx) return origRun.apply(this, arguments); // 여러 원을 차례로 치를 때 안쪽 호출
+            const targets = typeof getElecTargets === 'function' ? getElecTargets() : ['house'];
+            return withNationalMix('general', targets, () => origRun.apply(this, arguments));
+        };
+    }
+    ['runPresidentialElection', 'runPmElection'].forEach(n => {
+        const orig = window[n];
+        if (typeof orig !== 'function') return;
+        window[n] = function () {
+            const basis = typeof presElectionChamberBasis !== 'undefined' ? presElectionChamberBasis : 'house'; // eslint-disable-line no-undef
+            return withNationalMix('presidential', [basis], () => orig.apply(this, arguments));
+        };
+    });
+
+    // ---- 지역구별 시민 수 입력 (국가 › 지역의 지역구 목록 · 편집 칸) — 칸에는 "시민 / 인구" ----
+    function setCitizens(ch, key, value) {
+        const raw = String(value).replace(/,/g, '').trim();
+        const n = Math.max(0, Math.floor(Number(raw)));
+        const list = districtMapMode === 'svg' ? ['house', 'senate', 'third'] : [ch];
+        list.forEach(c => {
+            S.citizens[c] = S.citizens[c] || {};
+            if (raw === '' || !isFinite(n)) delete S.citizens[c][key]; else S.citizens[c][key] = n;
+        });
+        try { renderDistrictListPanel(); } catch (e) { /* 화면 전 */ }
+        if (key === selectedDistrictKey) try { districtRenderNamePanel(); } catch (e) { /* 화면 전 */ }
+        renderMigrantCard();
+    }
+    window.t61SetCitizens = setCitizens;
+    const jsArg = v => JSON.stringify(String(v)).replace(/"/g, '&quot;');
+    const citTitle = (ch, k) => {
+        const pop = popRaw(ch, k);
+        return pop == null ? '시민권자 수 — 인구를 먼저 적으세요' : `시민권자 수 (비우면 인구 전체) · 이민자 ${fmtN(migrantsOf(ch, k))}명`;
+    };
+    const origList = window.renderDistrictListPanel;
+    if (typeof origList === 'function') {
+        window.renderDistrictListPanel = function () {
+            const r = origList.apply(this, arguments);
+            const panel = document.getElementById('districtListPanel');
+            if (!panel) return r;
+            panel.querySelectorAll('.drag-card-district input[type="number"]:not(.t61-cit)').forEach(inp => {
+                const m = /districtSetPopulation\('([^']*)','([^']*)'/.exec(inp.getAttribute('onchange') || '');
+                if (!m || inp.previousElementSibling?.classList.contains('t61-cit-sep')) return;
+                const [, ch, key] = m;
+                inp.placeholder = '인구';
+                const c = document.createElement('input');
+                c.type = 'number'; c.min = '0'; c.step = '1'; c.className = 't61-cit'; c.placeholder = '시민';
+                c.value = citRaw(ch, key) ?? '';
+                c.title = citTitle(ch, key);
+                c.style.cssText = inp.style.cssText.replace(/width:\s*\d+px/, 'width:74px');
+                inp.style.width = '84px'; inp.style.padding = c.style.padding = '4px 3px'; // 이름 칸이 너무 좁아지지 않게 두 숫자 칸을 줄인다
+                c.addEventListener('change', () => setCitizens(ch, key, c.value));
+                const sep = document.createElement('span');
+                sep.className = 't61-cit-sep'; sep.textContent = '/';
+                inp.before(c, sep);
+            });
+            // 합계 줄: 총 인구 → 시민 · 이민자
+            const sum = panel.firstElementChild;
+            const ch = (panel.querySelector('.drag-card-district input[type="number"]:not(.t61-cit)')?.getAttribute('onchange') || '').match(/districtSetPopulation\('([^']*)'/)?.[1];
+            if (sum && ch && /^총 인구/.test(sum.textContent)) {
+                const t = totals(ch);
+                sum.textContent = `시민 ${fmtN(t.cit)} / 인구 ${fmtN(t.pop)} · 이민자 ${fmtN(t.mig)}`;
+            }
+            return r;
+        };
+    }
+    const origPopHtml = window.districtPopulationInputHtml;
+    if (typeof origPopHtml === 'function') {
+        window.districtPopulationInputHtml = function (ch, key, extraStyle) {
+            const html = origPopHtml.apply(this, arguments);
+            const pop = popRaw(ch, key);
+            return html + `<div class="t61-cit-row" style="${extraStyle || ''}">
+                    <span>시민</span>
+                    <input type="number" min="0" step="1" placeholder="${pop == null ? '인구를 먼저 적으세요' : `비우면 인구 전체 (${fmtN(pop)})`}" value="${citRaw(ch, key) ?? ''}"
+                        onchange="t61SetCitizens(${jsArg(ch)},${jsArg(key)},this.value)">
+                    <span class="t61-dim">${pop == null ? '' : `이민자 ${fmtN(migrantsOf(ch, key))}명`}</span>
+                </div>`;
+        };
+    }
+
+    // ---- 사람 탭 위쪽 요약 ----
+    function popSummaryHtml() {
+        const t = totals('house');
+        if (!t.pop) return '';
+        const on = VOTE_KINDS.filter(([k]) => migrantsVote(k)).map(([, n]) => n);
+        return `<div class="t61-pop">
+                <div><b>시민 ${fmtN(t.cit)}</b> / 인구 ${fmtN(t.pop)} · 이민자 ${fmtN(t.mig)} <span class="t61-dim">(${t.pop ? (t.mig / t.pop * 100).toFixed(1) : 0}%)</span></div>
+                <div class="t61-dim">이민자 투표권: ${on.length ? on.join(' · ') : '없음'} — 지역구별 시민 수는 국가 › 지역</div>
+                <button type="button" class="t61-btn" data-act="migrants">선거 › 방식에서 설정</button>
+            </div>`;
+    }
+
+    // ---- 선거 › 방식: 이민자 투표권 카드 ----
+    function renderMigrantCard() {
+        const host = document.getElementById('contentElecSettings');
+        if (!host) return;
+        let box = document.getElementById('t61MigrantCard');
+        if (!box) { box = document.createElement('div'); box.id = 't61MigrantCard'; box.className = 't61-mig'; host.appendChild(box); }
+        const t = totals('house');
+        const lean = S.migrantLean;
+        const ps = votingParties().filter(p => p.ideologyId !== IND || lean.values[p.id]);
+        const leanSum = ps.reduce((a, p) => a + (Number(lean.values[p.id]) || 0), 0);
+        box.innerHTML = `
+            <label class="t61-mig-title">이민자 투표권 <span class="t61-dim">— 시민권자는 모든 선거에서 투표합니다</span></label>
+            <div class="t61-dim t61-small">${t.pop ? `시민 ${fmtN(t.cit)} / 인구 ${fmtN(t.pop)} · 이민자 ${fmtN(t.mig)}명` : '지역구 인구가 없습니다 — 국가 › 지역에서 지역구마다 "시민 / 인구"를 적으세요.'}${t.pop && !t.mig ? ' — 아직 이민자가 없습니다 (국가 › 지역에서 시민 수를 인구보다 적게 적으세요)' : ''}</div>
+            <div class="t61-mig-kinds">${VOTE_KINDS.map(([k, n]) => `<label class="t61-mig-kind"><input type="checkbox" data-kind="${k}" ${migrantsVote(k) ? 'checked' : ''}> ${n}</label>`).join('')}</div>
+            <label class="t61-mig-kind t61-mig-leanon"><input type="checkbox" data-act="leanon" ${lean.on ? 'checked' : ''}> 이민자 성향 따로 정하기</label>
+            ${lean.on ? `<div class="t61-mig-lean">${ps.map(p => `<label><span class="t61-dot" style="--pc:${esc(p.color)}"></span><span class="t61-mig-pn">${esc(p.name)}</span><input type="number" min="0" max="100" step="0.1" data-pid="${esc(p.id)}" value="${lean.values[p.id] ?? ''}" placeholder="0">%</label>`).join('')}</div>
+                <div class="t61-dim t61-small">합 ${Math.round(leanSum * 10) / 10}%${leanSum && Math.abs(leanSum - 100) > 0.5 ? ' (비율로 나눔)' : ''} — 이민자가 투표하는 선거에서 지역구마다 시민 · 이민자 수만큼 섞어 개표합니다 (총선 비례 · 대선은 전국 시민 · 이민자 수로).</div>`
+                : '<div class="t61-dim t61-small">끄면 이민자도 그 지역 시민과 같은 성향으로 투표합니다 — 총선 · 대선 결과는 그대로, 지방선거 · 국민투표의 유권자 · 투표자 수만 바뀝니다.</div>'}`;
+        box.querySelectorAll('[data-kind]').forEach(c => c.addEventListener('change', () => { S.migrantVote[c.dataset.kind] = c.checked; renderMigrantCard(); render(); }));
+        box.querySelector('[data-act="leanon"]').addEventListener('change', e => { S.migrantLean.on = e.target.checked; renderMigrantCard(); });
+        box.querySelectorAll('[data-pid]').forEach(inp => inp.addEventListener('change', () => {
+            const v = Math.max(0, Math.min(100, Number(inp.value) || 0));
+            if (inp.value.trim() === '' || !v) delete S.migrantLean.values[inp.dataset.pid]; else S.migrantLean.values[inp.dataset.pid] = v;
+            renderMigrantCard();
+        }));
+    }
+    const origSwitch2 = window.switchSubTab;
+    window.switchSubTab = function (main, sub) {
+        const r = origSwitch2.apply(this, arguments);
+        if (main === 'vote' && sub === 'elecSettings') renderMigrantCard();
+        return r;
+    };
+    window.addEventListener('load', () => setTimeout(renderMigrantCard, 0));
+
+    window.T61 = { get people() { return S.people; }, get candidates() { return S.candidates; }, get lastElection() { return S.lastElection; }, seats, assign, unassign, importFromSeats, positionsOf,
+        get citizens() { return S.citizens; }, get migrantVote() { return S.migrantVote; }, get migrantLean() { return S.migrantLean; }, setCitizens, totals };
 
     const css = document.createElement('style');
     css.textContent = `
@@ -444,6 +698,27 @@
         html[data-theme-family="modern"] .t61-btn, html[data-theme-family="modern"] .t61-more, html[data-theme-family="modern"] .t61-x { border-color: var(--m-border-strong); color: var(--m-text); border-radius: 8px; }
         html[data-theme-family="modern"] .t61-primary { background: var(--m-accent, #2563eb); border-color: transparent; color: #fefefe; }
         html[data-theme-family="modern"] .t61-chip { border-color: var(--m-border); color: var(--m-text); border-radius: 999px; }
+        .t61-small { font-size: .74rem; line-height: 1.5; margin-top: 3px; }
+        .t61-pop { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 10px; font-size: .78rem; border: 1px dashed #333; padding: 6px 8px; margin-bottom: 8px; }
+        .t61-pop > div { flex: 1 1 100%; } .t61-pop .t61-btn { padding: 2px 8px; font-size: .74rem; margin-top: 3px; }
+        .t61-cit-sep { color: #555; flex-shrink: 0; font-size: .8rem; }
+        .t61-cit-row { display: flex; align-items: center; gap: 6px; font-size: .75rem; color: #666; }
+        .t61-cit-row input { flex: 1; min-width: 0; box-sizing: border-box; background: #000; border: 1px solid #333; color: var(--tno-text); font-family: inherit; font-size: .85rem; padding: 6px; }
+        .t61-cit-row .t61-dim { flex-shrink: 0; }
+        .t61-mig { margin-top: 14px; padding-top: 10px; border-top: 1px solid #222; font-size: .82rem; }
+        .t61-mig-title { color: #888; font-size: .8rem; display: block; }
+        .t61-mig-kinds { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 8px 0 6px; }
+        .t61-mig-kind { display: inline-flex; align-items: center; gap: 5px; cursor: pointer; color: #bbb; }
+        .t61-mig-leanon { margin-top: 4px; }
+        .t61-mig-lean { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 4px 10px; margin-top: 6px; }
+        .t61-mig-lean label { display: flex; align-items: center; gap: 5px; font-size: .78rem; color: #aaa; }
+        .t61-mig-pn { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .t61-mig-lean input { width: 64px; flex: none; box-sizing: border-box; }
+        html[data-theme-family="modern"] .t61-pop { border-color: var(--m-border-strong); border-radius: 10px; background: var(--m-surface-2); }
+        html[data-theme-family="modern"] .t61-mig { border-top-color: var(--m-border); }
+        html[data-theme-family="modern"] .t61-mig-title { color: var(--m-text-2); font-weight: 600; }
+        html[data-theme-family="modern"] .t61-mig-kind, html[data-theme-family="modern"] .t61-mig-lean label { color: var(--m-text); }
+        html[data-theme-family="modern"] .t61-cit-row input { background: var(--m-surface); border: 1px solid var(--m-border-strong); border-radius: 8px; color: var(--m-text); }
         html[data-theme-family="modern"] .t61-result { border-color: var(--m-border); border-left-color: #b07d10; border-radius: 8px; }`;
     document.head.appendChild(css);
 })();
