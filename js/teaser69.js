@@ -1470,17 +1470,20 @@
     function renderOverviewDisp(box) {
         const N = E.nat, last = E.hist[E.hist.length - 2];
         const spark = k => E.hist.slice(-8).map(h => h.n[k]);
-        const gs = document.createElement('div'); gs.className = 't69-gauges'; box.appendChild(gs);
+        // 첫 줄: 신용등급 + 경제 경고 신호 (켜진 신호는 상태색 · 꺼진 신호는 흐리게) / 둘째 줄: 계기 6개
         const rt = E.rating || ratingOf(E);
-        const badge = el(`<div class="t69-rating t69-rating-big" title="신용등급"><b>${rt[0]}</b><span>${rt[1]}</span><em>${esc(turnLabel(E, E.turn))}</em></div>`);
-        gs.appendChild(badge);
+        const sigAll = signals(E);
+        const top = el(`<div class="t69-toprow">
+            <div class="t69-rating t69-rating-row t69-grade-${rt[0].startsWith('A') ? 'a' : rt[0].startsWith('B') ? 'b' : 'c'}" title="신용등급 — 신뢰도와 국가부채로 정해짐"><b>${rt[0]}</b><div><span>${rt[1]}</span><em>${esc(turnLabel(E, E.turn))} · GDP ${esc(gdpText())}</em></div></div>
+            <div class="t69-warnsigns"><div class="t69-warn-h">경제 경고 신호</div><div class="t69-warn-list">${sigAll.map(s => `<span class="t69-warn ${s.on ? 'on t69-warn-' + s.status : ''}" title="${s.on ? STATUS_WORD[s.status] : '꺼짐'}">${s.on ? `<i class="t69-wi t69-st-${s.status}">${C.STATUS[s.status].icon}</i>` : '○'} ${esc(s.label)}</span>`).join('')}</div></div>
+        </div>`);
+        box.appendChild(top);
+        const gs = document.createElement('div'); gs.className = 't69-gauges'; box.appendChild(gs);
         [['infl', '인플레', -5, 60, 'monetary'], ['growth', '성장률', -10, 10, 'fiscal'], ['unemp', '실업률', 0, 40, 'region'], ['debt', '부채비율', 0, 250, 'fiscal'], ['mood', '민심', 0, 100, 'region'], ['conf', '신뢰도', 0, 100, 'monetary']].forEach(([k, l, mn, mx, go]) => {
             const g = document.createElement('div'); gs.appendChild(g);
             const v = VAR[k].get(E);
             C.gauge(g, { label: l, value: v, unit: VAR[k].unit === '%' ? '%' : '', min: mn, max: mx, maxPlus: k === 'infl' || k === 'debt', bands: bandsOf(k), status: statusOf(k, v), spark: spark(k), delta: last ? v - last.n[k] : null, decimals: 1, onClick: () => switchSubTab('economy', go) });
         });
-        const sig = signals(E).filter(s => s.on);
-        if (sig.length) { const sr = el(`<div class="t69-sigrow">${sig.map(s => `<span class="t69-signal">${stDot(s.status)} ${esc(s.label)}</span>`).join('')}</div>`); box.appendChild(sr); }
         // 큰 그래프 — 같은 단위(%)인 지표만 겹쳐 봄 (두 눈금 겹치지 않게)
         const body = section(box, '추이', '— 칩을 눌러 겹쳐 볼 지표를 고르세요 (같은 % 눈금) · 점선은 예측');
         const chips = el(`<div class="t69-chips">${CHIP_VARS.map(k => `<button type="button" data-chip="${k}" class="t69-chip ${E.ui.chips.includes(k) ? 'on' : ''}" aria-pressed="${E.ui.chips.includes(k)}"><i style="background:${VAR[k].color}"></i>${VAR[k].label}</button>`).join('')}</div>`);
@@ -1519,9 +1522,11 @@
         const tnames = Object.fromEntries(taxDefs().map(t => [t.id, t.name]));
         let rev = Object.entries(b.rev).map(([id, v]) => ({ label: tnames[id] || (id === '_tribute' ? '종속국 공납' : '기타 수입'), value: v * G })).sort((a, b2) => b2.value - a.value);
         if (rev.length > 6) { const rest = rev.slice(5); rev = rev.slice(0, 5).concat([{ label: '기타', value: sum(rest.map(r => r.value)) }]); }
-        rev.forEach((r, i) => { r.color = SLOT(i); });
+        // 세입은 세출과 다른 색 계열(보라 한 가지 색의 진하기 — 큰 세목일수록 진하게)로 — 위아래 반원에 같은 색이 다른 뜻으로 나오지 않게
+        rev.forEach((r, i) => { r.color = REV(i); });
         return { spend, rev, b };
     }
+    const REV = i => `var(--rv${Math.min(i, 5) + 1})`;
     function renderAnalysisDisp(box) {
         const { H, n, x, col } = series();
         const range = rangeIdx(n), markers = markersOf(H), shade = recessions(H);
@@ -1632,7 +1637,7 @@
     function sankeySpec() {
         const { b } = budgetPies(), G = E.nat.gdp / 100;
         const tnames = Object.fromEntries(taxDefs().map(t => [t.id, t.name]));
-        const col0 = Object.entries(b.rev).filter(([, v]) => v > 0).map(([id, v], i) => ({ id: 'r_' + id, label: tnames[id] || (id === '_tribute' ? '종속국 공납' : '기타 수입'), value: v * G, color: SLOT(i) }));
+        const col0 = Object.entries(b.rev).filter(([, v]) => v > 0).sort((a, b2) => b2[1] - a[1]).map(([id, v], i) => ({ id: 'r_' + id, label: tnames[id] || (id === '_tribute' ? '종속국 공납' : '기타 수입'), value: v * G, color: REV(i) }));
         const deficit = Math.max(0, -E.nat.balance) * G, surplus = Math.max(0, E.nat.balance) * G;
         if (deficit > 0) col0.push({ id: 'r_debt', label: '국채 발행', value: deficit, color: 'var(--critical)' });
         const total = sum(col0.map(n => n.value));
@@ -1932,9 +1937,18 @@
         .t69-toolbar .t69-seg button.on { background: var(--s1); color: #fff; }
         .t69-grow { flex: 1; }
         #t69Disp { --t69-line: var(--t69-grid); --t69-text: var(--t69-ink); --t69-dim2: var(--t69-muted); }
-        .t69-gauges { display: grid; grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); gap: 4px; align-items: start; margin-bottom: 6px; }
-        .t69-rating-big { align-self: stretch; border-radius: 12px; }
-        .t69-rating-big b { font-size: 1.8rem; }
+        .t69-toprow { display: flex; flex-wrap: wrap; gap: 10px; align-items: stretch; margin-bottom: 8px; }
+        .t69-rating-row { flex-direction: row; gap: 10px; justify-content: flex-start; border-radius: 12px; padding: 6px 14px; }
+        .t69-rating-row b { font-size: 1.8rem; } .t69-rating-row > div { display: flex; flex-direction: column; }
+        .t69-rating-row span { font-size: .8rem; } .t69-rating-row em { font-size: .7rem; color: var(--t69-muted); opacity: 1; }
+        .t69-warnsigns { flex: 1 1 260px; min-width: 0; border: 1px solid var(--t69-grid); border-radius: 12px; padding: 6px 10px; }
+        .t69-warn-h { font-size: .72rem; color: var(--t69-muted); margin-bottom: 4px; }
+        .t69-warn-list { display: flex; flex-wrap: wrap; gap: 4px 6px; }
+        .t69-warn { font-size: .74rem; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--t69-grid); color: var(--t69-muted); opacity: .6; }
+        .t69-warn.on { opacity: 1; color: var(--t69-ink); font-weight: 600; }
+        .t69-warn-warning { border-color: var(--warning); } .t69-warn-serious { border-color: var(--serious); } .t69-warn-critical { border-color: var(--critical); background: color-mix(in srgb, var(--critical) 14%, transparent); }
+        .t69-gauges { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 4px; align-items: start; margin-bottom: 6px; }
+        @media (max-width: 760px) { .t69-gauges { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
         .t69-sec { margin-top: 14px; }
         .t69-sec > h4 { margin: 0 0 6px; font-size: .9rem; color: var(--t69-ink); font-weight: 600; }
         .t69-sec > h4 .t69-dim { font-weight: normal; font-size: .74rem; }
