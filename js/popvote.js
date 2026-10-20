@@ -35,8 +35,9 @@
     const runningParties = () => parties.filter(p => p.status !== 'banned');
 
     // ---- 지역구 · 인구 ----
-    // 미수복 지역(1.6.7 티저 미리보기 — js/teaser67.js)은 선거에서 뺀다
-    const excluded = k => typeof window.isDistrictUnrecovered === 'function' && window.isDistrictUnrecovered(k);
+    // 미수복 지역(1.6.7 티저 미리보기 — js/teaser67.js) · 종속국 땅(1.6.8 — js/teaser68.js)은 선거에서 뺀다
+    const excluded = k => (typeof window.isDistrictUnrecovered === 'function' && window.isDistrictUnrecovered(k))
+        || (typeof window.isDistrictVassal === 'function' && window.isDistrictVassal(k));
     function districtKeys(ch) { return Object.keys(districtGrid[ch] || {}).filter(k => !excluded(k)); }
     function popOf(ch, key) {
         const v = districtPopulation[ch]?.[key] ?? districtPopulation.house?.[key];

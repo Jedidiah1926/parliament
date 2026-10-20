@@ -89,20 +89,22 @@
     // id로 찾은 요소를 감싸는 가까운 블록 (없으면 그 요소 자체)
     // ---- 잠긴 과정 (다음 업데이트 미리보기 기능) ----
     // locked: '1.6.x' — 개발자 모드(설정 › 기타 설정)를 켜야 열리고, 그 기능이 있는 Teaser 화면에서 진행한다
-    // (1.6.2 ~ 1.6.4 → Teaser 1.6.4, 1.6.5 → Teaser 1.6.5 — teaser65는 앞 기능도 담는다, 1.6.7 → Teaser 1.6.7).
+    // (1.6.x → Teaser 1.6.x — 각 Teaser 화면은 1.6.1부터 그 버전까지의 기능을 담는다).
     // 그 화면이 아니면 해당 teaser 화면으로 옮겨 서독 튜토리얼로 시작한 뒤 그 과정을 바로 연다.
     /* global emergencyPowers, presElectionMode */
     const devOn = () => !!(window.HemiDev && window.HemiDev.isOn());
-    // 미리보기 화면마다 담긴 기능 버전 (teaser65는 1.6.2 ~ 1.6.5, teaser67은 1.6.2 ~ 1.6.5 + 1.6.7)
-    const PAGE_HAS = { '61': ['1.6.1'], '62': ['1.6.1', '1.6.2'], '63': ['1.6.1', '1.6.2', '1.6.3'], '64': ['1.6.1', '1.6.2', '1.6.3', '1.6.4'], '65': ['1.6.1', '1.6.2', '1.6.3', '1.6.4', '1.6.5'], '66': ['1.6.1', '1.6.2', '1.6.3', '1.6.4', '1.6.5', '1.6.6'], '67': ['1.6.1', '1.6.2', '1.6.3', '1.6.4', '1.6.5', '1.6.6', '1.6.7'] };
+    // 미리보기 화면마다 담긴 기능 버전 (teaser6N은 1.6.1 ~ 1.6.N)
+    const PAGE_HAS = { '61': ['1.6.1'], '62': ['1.6.1', '1.6.2'], '63': ['1.6.1', '1.6.2', '1.6.3'], '64': ['1.6.1', '1.6.2', '1.6.3', '1.6.4'], '65': ['1.6.1', '1.6.2', '1.6.3', '1.6.4', '1.6.5'], '66': ['1.6.1', '1.6.2', '1.6.3', '1.6.4', '1.6.5', '1.6.6'], '67': ['1.6.1', '1.6.2', '1.6.3', '1.6.4', '1.6.5', '1.6.6', '1.6.7'], '68': ['1.6.1', '1.6.2', '1.6.3', '1.6.4', '1.6.5', '1.6.6', '1.6.7', '1.6.8'] };
     const PREVIEW_PAGES = Object.keys(PAGE_HAS);
-    const previewPageFor = l => (l && /^1\.6\.[1-7]$/.test(l.locked) ? '6' + l.locked.slice(-1) : '67'); // 그 기능이 처음 들어간 버전의 Teaser 화면
+    const previewPageFor = l => (l && /^1\.6\.[1-8]$/.test(l.locked) ? '6' + l.locked.slice(-1) : '68'); // 그 기능이 처음 들어간 버전의 Teaser 화면
     const curPage = () => document.documentElement.getAttribute('data-teaser');
     // 지금 화면이 미리보기 화면인지 — 과정을 주면 그 과정의 기능이 있는 화면인지
     const onPreviewPage = l => PREVIEW_PAGES.includes(curPage()) && (!l || !l.locked || (PAGE_HAS[curPage()] || []).includes(l.locked));
     const previewName = l => `Teaser 1.6.${previewPageFor(l).slice(-1)}`;
     const unrecLeft = () => { try { return typeof window.isDistrictUnrecovered === 'function' && Object.keys(districtGrid.house || {}).some(k => window.isDistrictUnrecovered(k)); } catch (e) { return false; } };
     const t64 = () => window.T65 || null;
+    const t68 = () => window.T68 || null;
+    const firstVassalCard = () => document.querySelector('#contentVassals .t68-card');
     const rankSig = () => { const t = t64(); return t && t.ranking ? t.ranking.rows.map(r => `${r.id}:${r.score}`).join(',') : ''; };
     const logLen = k => { const o = window[k]; return o && Array.isArray(o.log) ? o.log.length : 0; };
     const byId = (id, up) => () => { const el = document.getElementById(id); return el ? ((up && el.closest(up)) || el) : null; };
@@ -700,6 +702,53 @@
                     target: () => document.getElementById('contentTerritory') || '#mainContentNation',
                     title: '통일 뒤에는',
                     text: '되찾은 지역구는 다음 총선부터 의석을 뽑아요 (서독이면 연방의회 지역구가 259석에서 331석으로 늘어요). 의회 › 의회 구성에서 총 의석도 맞춰 늘리고, 여론 › 성향에서 새 지역의 정당 성향을 정해 보세요.',
+                },
+            ],
+        },
+        {
+            id: 'vassals', group: 'detail', locked: '1.6.8',
+            title: '종속국',
+            summary: '종속국 만들기 · 칠하기 · 종속국 의회와 선거 · 합병 · 해방',
+            steps: [
+                {
+                    before: [closePanels, go('nation', 'vassals'), showPanel('controls')],
+                    target: () => document.querySelector('#contentVassals .t68-summary') || '#contentVassals',
+                    title: '종속국',
+                    text: '국가 › 종속국에서는 본국에 딸린 나라(보호국 · 괴뢰국 · 자치령 …)를 정해요. 종속국 땅은 본국 영토처럼 지도에 있지만, 본국 선거 · 의석에서는 빠지고 따로 의회를 둡니다.',
+                },
+                {
+                    before: [go('nation', 'vassals'), showPanel('controls')],
+                    target: () => firstVassalCard() || document.querySelector('#contentVassals [data-act="add"]') || '#contentVassals',
+                    allow: ['#contentVassals'],
+                    title: '종속국 만들기',
+                    text: () => (t68() && t68().vassals.length
+                        ? '종속국이 있어요. 카드에서 이름 · 점무늬 색 · 종속 형태(보호국 · 보호령 · 동군연합 …)를 고칠 수 있어요. 형태는 "＋ 새 형태…"나 위쪽 "종속 형태" 목록에서 원하는 대로 추가해요.'
+                        : '이름을 적고 "+ 종속국 추가"를 눌러 종속국을 하나 만들어 보세요 (예: 서베를린).'),
+                    task: () => !!(t68() && t68().vassals.length),
+                    done: '종속국이 생겼어요!',
+                },
+                {
+                    before: [go('nation', 'vassals'), call('switchDispTab', 'house'), call('chamberSetView', 'house', 'district'), showPanel('display')],
+                    target: () => document.querySelector('#houseViewDistrictWrap') || '#dispPanelHouse',
+                    title: '칠하기와 지도',
+                    text: '"칠하기"를 켠 채 국가 › 종속국 오른쪽 지도에서 지역구를 차례로 눌러 그 나라 땅으로 정해요. 종속국 땅은 모든 지도에서 그 나라 색 점무늬로 보이고(미수복 지역의 빗금과 달라요), 본국 총선 · 지방선거 · 국민투표에서 빠집니다.',
+                },
+                {
+                    before: [go('nation', 'vassals'), call('chamberSetView', 'house', 'arc'), () => { if (t68()) t68().openParliament(); }, showPanel('controls')],
+                    target: () => document.querySelector('#contentVassals .t68-parl') || firstVassalCard() || '#contentVassals',
+                    allow: ['#contentVassals'],
+                    title: '종속국 의회',
+                    text: () => (t68() && t68().vassals.some(v => v.parliament.elections)
+                        ? '종속국마다 따로 의회가 있어요 — 의회 이름 · 의석 수 · 봉쇄조항 · 정당(지지율 · 의석)을 정하고 "선거 실시"로 의석을 다시 나눕니다.'
+                        : '종속국마다 따로 의회가 있어요 — 의회 이름 · 의석 수 · 봉쇄조항 · 정당(지지율 · 의석)을 정해요. "본국 정당 가져오기"나 "+ 정당"으로 정당을 넣고 "선거 실시"를 눌러 보세요.'),
+                    task: () => !!(t68() && t68().vassals.some(v => v.parliament.elections)),
+                    done: '선거를 치렀어요! 반원형 그림이 새 의석이에요.',
+                },
+                {
+                    before: [go('nation', 'vassals'), showPanel('controls')],
+                    target: () => document.querySelector('#contentVassals .t68-actions') || '#contentVassals',
+                    title: '합병과 해방',
+                    text: '"합병"은 종속국을 본국에 합쳐 그 땅을 일반 지역구로 돌려요 (본국 선거 · 의석에 들어가고, 종속국 의회는 해산). "해방"은 종속국을 독립시켜 본국에서 떼어 내요 — 독립국으로 지도에 따로 보이고 선거에서 계속 빠지며, 세계 › 국가 순위에도 올라갑니다.',
                 },
             ],
         },

@@ -1,4 +1,4 @@
-// logo.html(로고 제작 모드)과 teaser61.html ~ teaser67.html(미리보기)은 main.html을 그대로 복사해 만든다 — 직접 고치지 말 것.
+// logo.html(로고 제작 모드)과 teaser61.html ~ teaser68.html(미리보기)은 main.html을 그대로 복사해 만든다 — 직접 고치지 말 것.
 // main.html을 고친 뒤에는 `npm run build:logo`로 다시 만들어야 두 화면이 어긋나지 않는다.
 // 차이는 <html data-app-mode="logo">와 창 제목뿐이고, 나머지(의회 메뉴만 보이기 · 강조 색 · 따로 쓰는 저장 공간)는
 // js/main.js · css/main.css가 data-app-mode를 보고 처리한다.
@@ -28,6 +28,7 @@ const TEASERS = [
     { id: '65', file: 'teaser65.html', script: ['js/teaserpodium.js', 'js/teaser61.js', 'js/teaser62.js', 'js/teaser63.js', 'js/teaser64.js', 'js/teaser65.js'], title: 'Teaser 1.6.5', note: '1.6.5 세력 변화 타임라인 · 위키 틀 · 냉전 국가 순위 (+1.6.1 ~ 1.6.4)' },
     { id: '66', file: 'teaser66.html', script: ['js/teaserpodium.js', 'js/teaser61.js', 'js/teaser62.js', 'js/teaser63.js', 'js/teaser64.js', 'js/teaser65.js', 'js/teaser66.js'], title: 'Teaser 1.6.6', note: '1.6.6 왕정복고 · 전제군주정 · 왕위 계승 · 친위 쿠데타 · 공화 혁명 (+1.6.1 ~ 1.6.5)' },
     { id: '67', file: 'teaser67.html', script: ['js/teaserpodium.js', 'js/teaser61.js', 'js/teaser62.js', 'js/teaser63.js', 'js/teaser64.js', 'js/teaser65.js', 'js/teaser66.js', 'js/teaser67.js'], title: 'Teaser 1.6.7', note: '1.6.7 미수복 지역 · 영토 통일 (+1.6.1 ~ 1.6.6)' },
+    { id: '68', file: 'teaser68.html', script: ['js/teaserpodium.js', 'js/teaser61.js', 'js/teaser62.js', 'js/teaser63.js', 'js/teaser64.js', 'js/teaser65.js', 'js/teaser66.js', 'js/teaser67.js', 'js/teaser68.js'], title: 'Teaser 1.6.8', note: '1.6.8 종속국 · 종속국 의회 · 합병 · 해방 (+1.6.1 ~ 1.6.7)' },
 ];
 if (!/<script src="js\/devmode\.js"><\/script>/.test(fs.readFileSync(path.join(root, 'main.html'), 'utf8'))) throw new Error('main.html: js/devmode.js 스크립트를 찾지 못했습니다 (티저 잠금)');
 if (!/<script src="js\/popvote\.js"><\/script>/.test(fs.readFileSync(path.join(root, 'main.html'), 'utf8'))) throw new Error('main.html: js/popvote.js 스크립트를 찾지 못했습니다');
@@ -42,10 +43,10 @@ TEASERS.forEach(t => {
     fs.writeFileSync(path.join(root, t.file), teaser);
     console.log(t.file + ' 생성 완료');
 });
-// 예전 주소(teaser.html)로 들어오면 1.6.7 티저로 보낸다
+// 예전 주소(teaser.html)로 들어오면 1.6.8 티저로 보낸다
 fs.writeFileSync(path.join(root, 'teaser.html'), `<!DOCTYPE html>
-<!-- 자동 생성 파일 (tools/build-logo.js) — 예전 teaser.html 주소는 teaser67.html(1.6.7 미리보기)로 옮겨졌다 -->
-<html lang="ko"><head><meta charset="UTF-8"><meta http-equiv="refresh" content="0; url=teaser67.html"><title>Hemicycle — Teaser</title></head>
-<body><a href="teaser67.html">teaser67.html로 이동</a> · <a href="teaser61.html">teaser61.html</a> · <a href="teaser62.html">teaser62.html</a> · <a href="teaser63.html">teaser63.html</a> · <a href="teaser64.html">teaser64.html</a> · <a href="teaser65.html">teaser65.html</a> · <a href="teaser66.html">teaser66.html</a></body></html>
+<!-- 자동 생성 파일 (tools/build-logo.js) — 예전 teaser.html 주소는 teaser68.html(1.6.8 미리보기)로 옮겨졌다 -->
+<html lang="ko"><head><meta charset="UTF-8"><meta http-equiv="refresh" content="0; url=teaser68.html"><title>Hemicycle — Teaser</title></head>
+<body><a href="teaser68.html">teaser68.html로 이동</a> · <a href="teaser61.html">teaser61.html</a> · <a href="teaser62.html">teaser62.html</a> · <a href="teaser63.html">teaser63.html</a> · <a href="teaser64.html">teaser64.html</a> · <a href="teaser65.html">teaser65.html</a> · <a href="teaser66.html">teaser66.html</a> · <a href="teaser67.html">teaser67.html</a></body></html>
 `);
-console.log('teaser.html(→ teaser67.html) 생성 완료');
+console.log('teaser.html(→ teaser68.html) 생성 완료');
