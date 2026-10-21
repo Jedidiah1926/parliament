@@ -52,7 +52,7 @@ function fileJson(slot) {
 }
 function writeAtomic(file, json) {
     const tmp = file + '.tmp';
-    fs.writeFileSync(tmp, zlib.gzipSync(Buffer.from(json, 'utf8')));
+    fs.writeFileSync(tmp, zlib.gzipSync(Buffer.from(json, 'utf8'), { level: 9 })); // 무손실 — 가장 작게
     fs.renameSync(tmp, file);
 }
 function readText(file) {

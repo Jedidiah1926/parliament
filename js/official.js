@@ -53,7 +53,7 @@ window.HEMI_OFFICIAL = Object.freeze({
             for (let i = 2; used.has(name); i++) name = fileName(s, `-${i}${ext}`);
             used.add(name);
             let blob;
-            if (fmt === 'json' || !(window.HemiFile && window.HemiFile.compressed)) blob = new Blob([JSON.stringify(s.state, null, 2)], { type: fmt === 'json' ? 'application/json' : 'application/octet-stream' });
+            if (fmt === 'json' || !(window.HemiFile && window.HemiFile.compressed)) blob = new Blob([JSON.stringify(s.state)], { type: fmt === 'json' ? 'application/json' : 'application/octet-stream' });
             else blob = await window.HemiFile.encode(s.state);
             download(blob, name);
             await new Promise(r => setTimeout(r, 350)); // 여러 파일을 한꺼번에 받을 때 브라우저가 놓치지 않게
