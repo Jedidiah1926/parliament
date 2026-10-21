@@ -99,7 +99,7 @@
         /* 기타 설정 › 개발자 모드 */
         .dev-code-row { display: flex; gap: 6px; }
         /* 업데이트 (데스크톱 앱 — 설정 › 기타 설정) */
-        #updateGroup[hidden], #saveDirGroup[hidden], #saveDirResetBtn[hidden], .update-bar[hidden], #updateInstallBtn[hidden] { display: none; }
+        #updateGroup[hidden], #saveDirGroup[hidden], #devModeGroup[hidden], #saveDirResetBtn[hidden], .update-bar[hidden], #updateInstallBtn[hidden] { display: none; }
         .update-status { font-size: .85rem; margin: 6px 0; min-height: 1.2em; }
         .update-bar { height: 6px; background: rgba(127,127,127,.25); border-radius: 3px; overflow: hidden; margin: 4px 0 8px; }
         .update-bar-fill { height: 100%; width: 0; background: var(--tno-neon, #2563eb); transition: width .2s; }

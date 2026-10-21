@@ -58,6 +58,21 @@ npm run build:win     # Windows 설치형 exe 빌드 → dist/Hemicycle-Setup-<�
 
 ---
 
+### Steam 데모 빌드
+
+데모는 Steam으로만 배포하는 따로 된 빌드입니다 (GitHub Release · 자동 업데이트 없음, Steam이 업데이트).
+
+```bash
+node tools/build-demo.js [--app-id <데모 App ID>]   # build/demo/에 데모 파일 준비
+npx electron-builder --config electron-builder.demo.js --win dir   # → dist-demo/win-unpacked/ (이 폴더를 SteamPipe로 업로드)
+# 또는 npm run build:demo (둘을 한 번에, App ID 없이)
+```
+
+- `tools/build-demo.js`: 다음 업데이트 미리보기(`teaser*.html` · `js/teaser6*.js` · `js/teaserpodium.js`)와 로고 제작 화면(`logo.html`)을 빼고, 모든 화면 `<head>` 맨 앞에 `window.HEMI_BUILD = { demo: true }`를 넣는다 — 개발자 모드가 꺼지고(설정에서도 숨김, 코드를 넣어도 안 켜짐) 시작 화면은 "STEAM DEMO · 체험판" · "v1.6.0 (DEMO)". `electron/build.json`(`{ demo: true }`)으로 앱은 GitHub 업데이트를 확인하지 않고(`electron/updater.js` → Steam 모드), 정식 출시 스위치를 켜도 데모는 막히지 않음(`js/official.js`). `--app-id`(또는 환경 변수 `STEAM_DEMO_APP_ID`, 숫자만)를 주면 `electron/steam.json`에 들어가고, Steam 오버레이 · 창작마당은 `steamworks.js`가 깔려 있어야 함.
+- 코드 보호: JS를 `javascript-obfuscator`로 난독화(주석 삭제 · 지역 이름 뒤섞기 · 글자 표). 전역 함수 이름과 속성 이름은 그대로 둔다(HTML `onclick` · 세이브 형식). 계산이 많아 흐름 꼬기(control flow flattening)는 끔. 번역 표(`lang/`) · 프리셋(`presets/`)은 데이터라 그대로, HTML · CSS는 주석만 지움. 원본 저장소 코드는 그대로이고 데모 빌드에서만 바뀐다. 완벽한 보호는 아니고 분석하는 수고를 늘리는 정도.
+- `electron-builder.demo.js`: 앱 파일은 `build/demo/`에서만 가져오고(제품 이름 "Hemicycle Demo", 실행 파일 `Hemicycle.exe`, appId `com.pilcrow1926.hemicycle.demo`), 설치 프로그램 없이 실행 파일 폴더(`dir`)로 만든다. 세이브 폴더(`문서\Hemicycle\Saves`)는 본 게임 앱과 같은 곳.
+- GitHub Actions: Actions 탭 › "Steam Demo (Windows)" › Run workflow(데모 App ID 선택) → 결과물 `Hemicycle-Demo-win-x64`(win-unpacked 폴더)를 받아 Steamworks에 올림.
+
 ## 화면 구성
 
 화면은 좌측 **컨트롤 패널**과 우측 **의석 시각화 패널**로 나뉩니다.

@@ -1,0 +1,50 @@
+# Steam 데모 빌드 (Windows) — Actions 탭에서 "Run workflow"로 실행
+# tools/build-demo.js로 데모 파일(미리보기 · 개발자 모드 제외, JS 난독화)을 만들고, 설치 프로그램 없이 실행 파일 폴더(win-unpacked)를
+# 빌드해 Actions 결과물(artifact) "Hemicycle-Demo-win-x64"로 올린다. 그 폴더를 Steamworks(SteamPipe)에 업로드하면 된다.
+# GitHub Release에는 올리지 않는다 (데모는 Steam으로만 배포 · Steam이 업데이트).
+name: Steam Demo (Windows)
+
+on:
+  workflow_dispatch:
+    inputs:
+      app_id:
+        description: 'Steam 데모 App ID (비우면 Steam 연동 없이 빌드)'
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+
+jobs:
+  demo:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      # App ID가 있으면 Steam 오버레이 · 창작마당용 steamworks.js도 넣는다
+      - name: Install steamworks.js
+        if: inputs.app_id != ''
+        run: npm install --no-save steamworks.js
+
+      - name: Prepare demo files
+        run: node tools/build-demo.js
+        env:
+          STEAM_DEMO_APP_ID: ${{ inputs.app_id }}
+
+      - name: Build demo folder
+        run: npx electron-builder --config electron-builder.demo.js --win dir --x64 --publish never
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Hemicycle-Demo-win-x64
+          path: dist-demo/win-unpacked/
+          if-no-files-found: error

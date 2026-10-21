@@ -37,6 +37,10 @@
             <h1 class="home-title">Hemicycle</h1>
             <div class="home-subtitle">Give me liberty, or give me death! : 테니스 코트의 맹세</div>
             <div class="home-stage" title="지금은 공개 베타 테스트 기간이에요 — 기능과 세이브 형식이 바뀔 수 있어요">OPEN BETA TEST · OBT</div>
+            <script>
+                // Steam 데모 빌드 (tools/build-demo.js)
+                if(window.HEMI_BUILD && window.HEMI_BUILD.demo) { document.currentScript.previousElementSibling.textContent = 'STEAM DEMO · 체험판'; document.currentScript.previousElementSibling.title = '체험판이에요 — 정식판에서 기능이 더 늘어나요'; }
+            </script>
         </div>
 
         <!-- 소식: 공식 채널(공지 · 업데이트 영상) — 게임 런처의 공지 칸처럼 오른쪽 위에 -->
@@ -94,7 +98,8 @@
         </nav>
 
         <div class="home-meta">
-            <div>VERSION: v1.6.0 (OBT)</div>
+            <div id="homeVersion">VERSION: v1.6.0 (OBT)</div>
+            <script>if(window.HEMI_BUILD && window.HEMI_BUILD.demo) document.getElementById('homeVersion').textContent = 'VERSION: v1.6.0 (DEMO)';</script>
             <div>BUILD: 2026-10-05</div>
             <div>&copy; 2025-2026 Pilcrow1926</div>
         </div>

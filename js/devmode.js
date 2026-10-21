@@ -34,15 +34,17 @@
     function safeSet(k, v) { try { localStorage.setItem(k, v); return true; } catch (e) { return false; } }
     function safeDel(k) { try { localStorage.removeItem(k); } catch (e) { /* 저장 공간을 쓸 수 없는 환경 */ } }
 
-    const isOn = () => safeGet(KEY) === CODE_HASH;
+    // Steam 데모 빌드(tools/build-demo.js가 window.HEMI_BUILD.demo를 켬)에는 미리보기 화면이 없으므로 개발자 모드도 없음
+    const DEMO = !!(window.HEMI_BUILD && window.HEMI_BUILD.demo);
+    const isOn = () => !DEMO && safeGet(KEY) === CODE_HASH;
     // 코드가 맞으면 켜고 true — 대소문자 · 앞뒤 공백은 따지지 않는다 (휴대폰 자동 대문자 대비)
     function unlock(code) {
-        if (hash(String(code || '').trim().toLowerCase()) !== CODE_HASH) return false;
+        if (DEMO || hash(String(code || '').trim().toLowerCase()) !== CODE_HASH) return false;
         return safeSet(KEY, CODE_HASH);
     }
     function lock() { safeDel(KEY); }
 
-    window.HemiDev = { isOn, unlock, lock, teasers: TEASERS.slice() };
+    window.HemiDev = { isOn, unlock, lock, demo: DEMO, teasers: DEMO ? [] : TEASERS.slice() };
 
     // 티저 페이지 잠금 — 개발자 모드가 아니면 설정 › 기타 설정으로
     const root = document.documentElement;

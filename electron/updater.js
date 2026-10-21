@@ -47,9 +47,13 @@ function steamBuild() {
         return !!(process.env.HEMICYCLE_STEAM_APP_ID || cfg.appId);
     } catch (e) { return false; }
 }
+// Steam 데모 빌드 (tools/build-demo.js가 electron/build.json을 씀) — Steam으로만 배포하므로 GitHub를 확인하지 않음
+function demoBuild() {
+    try { return !!JSON.parse(fs.readFileSync(path.join(__dirname, 'build.json'), 'utf8')).demo; } catch (e) { return false; }
+}
 function detectMode() {
     if (!app.isPackaged) return 'off';
-    if (steamBuild()) return 'steam';
+    if (steamBuild() || demoBuild()) return 'steam';
     if (process.platform === 'win32' && installedWithNsis()) return 'auto';
     return 'notify';
 }
