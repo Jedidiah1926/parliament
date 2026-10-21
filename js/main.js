@@ -5378,7 +5378,7 @@
         function downloadJSON(filename, obj) {
             // 브라우저가 .json을 덧붙이지 않도록, .hemi 세이브는 일반 파일 형식으로 내려받는다
             const type = filename.endsWith(SAVE_FILE_EXT) ? "application/octet-stream" : "application/json";
-            const blob = new Blob([JSON.stringify(obj, null, 2)], { type });
+            const blob = new Blob([JSON.stringify(obj)], { type });
             const a = document.createElement("a");
             a.href = URL.createObjectURL(blob);
             a.download = filename;
@@ -5664,9 +5664,10 @@
             showCustomAlert(`브라우저 저장 공간이 가득 차서 "${name}"을(를) 저장하지 못했습니다.\n안 쓰는 세이브를 지우거나, "파일로 저장"으로 따로 보관한 뒤 지워 주세요.`);
         }
         function saveStorageUsageText() {
-            const raw = safeLsGet(SAVE_SLOTS_KEY) || '';
+            // 실제로 저장소에 쓰인 크기 (js/slotstore.js가 세이브를 압축해 둠)
+            const len = window.HemiSlotStore ? HemiSlotStore.storedLength(LS_PREFIX + SAVE_SLOTS_KEY) : (safeLsGet(SAVE_SLOTS_KEY) || '').length;
             const n = loadSaveSlots().filter(s => !s.isAutosave).length;
-            const size = raw.length >= 1024 * 1024 ? `${(raw.length / 1024 / 1024).toFixed(1)}MB` : `${Math.max(1, Math.round(raw.length / 1024))}KB`;
+            const size = len >= 1024 * 1024 ? `${(len / 1024 / 1024).toFixed(1)}MB` : `${Math.max(1, Math.round(len / 1024))}KB`;
             return `세이브 ${n}개 · 약 ${size} 사용`;
         }
 
