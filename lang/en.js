@@ -7851,6 +7851,7 @@ window.DnoLangPacks.en = {
   ["왕정복고 · 전제군주정 · 왕위 계승 · 친위 쿠데타 · 공화 혁명 (+1.6.1 ~ 1.6.5)", "Restoration · absolute monarchy · succession · self-coup · republican revolution (+1.6.1 ~ 1.6.5)"],
   ["미수복 지역 · 영토 통일 (+1.6.1 ~ 1.6.6)", "Unrecovered territories · reunification (+1.6.1 ~ 1.6.6)"],
   ["- 데스크톱 앱 필수 업데이트 — GitHub Release에 새 버전이 올라오면 업데이트할 때까지 앱을 쓸 수 없음: 설치판은 자동으로 받아 세이브를 저장하고 다시 시작해 설치, 압축판은 릴리스 페이지에서 새 설치 프로그램을 받도록 안내 (인터넷이 안 돼 확인을 못 하면 막지 않음). 설정 › 기타 설정 › 업데이트에서 버전 · 진행 상황 확인", "- Mandatory desktop updates — when a new version is published on GitHub Releases, the app cannot be used until it is updated: installed builds download it, save the game and restart to install; zip builds point you to the new installer on the releases page (no block when offline and the check cannot run). See version and progress in Settings › Other › Update"],
+  ["- 데스크톱 앱 세이브 폴더 — 세이브를 앱 안이 아니라 정한 폴더(기본 문서\\Hemicycle\\Saves)에 세이브마다 .hemi 파일로 저장, 설정 › 기타 설정 › 저장 위치에서 폴더 열기 · 위치 바꾸기(세이브를 새 폴더로 옮김). 탐색기에서 넣은 .hemi는 세이브로 보이고, 지운 세이브는 휴지통으로", "- Desktop save folder — saves are stored as one .hemi file each in a folder you choose (default Documents\\Hemicycle\\Saves) instead of inside the app; Settings › Other › Save folder can open the folder or change it (saves move to the new folder). .hemi files dropped in show up as saves, and deleted saves go to the Recycle Bin"],
   ["업데이트 확인", "Check for updates"],
   ["지금 다시 시작해 설치", "Restart now to install"],
   ["릴리스 페이지", "Releases page"],

@@ -32,7 +32,17 @@ contextBridge.exposeInMainWorld('hemicycleDesktop', {
     onUpdateStatus: callback => {
         if (typeof callback !== 'function') return;
         ipcRenderer.on('update:status', (event, st) => callback(st));
-    }
+    },
+    // 세이브 폴더 (electron/saves.js) — js/desktopsaves.js가 페이지의 세이브 목록을 폴더의 .hemi 파일과 맞춘다
+    saves: {
+        read: ns => ipcRenderer.sendSync('saves:read', String(ns || '')),
+        write: (ns, text) => ipcRenderer.sendSync('saves:write', String(ns || ''), String(text || '[]')),
+        dir: () => ipcRenderer.sendSync('saves:dir-sync'),
+        info: () => ipcRenderer.invoke('saves:info'),
+        openDir: () => ipcRenderer.invoke('saves:open-dir'),
+        chooseDir: () => ipcRenderer.invoke('saves:choose-dir'),
+        resetDir: () => ipcRenderer.invoke('saves:reset-dir'),
+    },
 });
 
 // ===== 필수 업데이트 — 새 버전이 확인되면 설치할 때까지 모든 화면을 덮어 앱을 쓸 수 없게 한다 (electron/updater.js가 block을 정함) =====

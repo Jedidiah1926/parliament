@@ -107,6 +107,17 @@
                 <section class="settings-section" id="settingsSectionEtc" data-section="etc">
                     <h2 class="settings-section-title">기타 설정</h2>
                     <div class="settings-section-desc">그 밖의 설정입니다.</div>
+                    <div class="settings-group" id="saveDirGroup" hidden>
+                        <div class="settings-label">SAVE FOLDER / 저장 위치</div>
+                        <div class="save-dir-path" id="saveDirPath"></div>
+                        <div class="update-row">
+                            <button type="button" class="lang-select-btn" onclick="openSaveDir()">폴더 열기</button>
+                            <button type="button" class="lang-select-btn" onclick="chooseSaveDir()">위치 바꾸기…</button>
+                            <button type="button" class="lang-select-btn" id="saveDirResetBtn" onclick="resetSaveDir()">기본 위치로</button>
+                        </div>
+                        <div class="settings-hint" id="saveDirMsg"></div>
+                        <div class="settings-hint">세이브는 앱 안이 아니라 이 폴더에 세이브마다 "이름.hemi" 파일로 저장됩니다 — 그대로 백업 · 복사하거나 다른 기기에서 "불러오기"로 열 수 있어요. 탐색기에서 넣은 .hemi 파일은 다음에 시작 화면을 열 때 세이브로 보이고, 게임에서 지운 세이브는 휴지통으로 갑니다. 위치를 바꾸면 지금 세이브가 새 폴더로 옮겨져요. (Program Files처럼 관리자 권한이 필요한 폴더는 쓸 수 없어요)</div>
+                    </div>
                     <div class="settings-group" id="updateGroup" hidden>
                         <div class="settings-label">UPDATE / 업데이트</div>
                         <div class="settings-hint" id="updateVersion"></div>
@@ -172,6 +183,28 @@
             updApi.onUpdateStatus(renderUpdate);
             updApi.getUpdateState().then(renderUpdate);
         }
+
+        // ===== 저장 위치 (데스크톱 앱만 — electron/saves.js) =====
+        const saveApi = window.hemicycleDesktop && window.hemicycleDesktop.saves ? window.hemicycleDesktop.saves : null;
+        function renderSaveDir(info, msg) {
+            if(!info) return;
+            document.getElementById('saveDirGroup').hidden = false;
+            document.getElementById('saveDirPath').textContent = info.dir + (info.isDefault ? '  (기본 위치)' : '');
+            document.getElementById('saveDirResetBtn').hidden = !!info.isDefault;
+            document.getElementById('saveDirMsg').textContent = msg || '';
+        }
+        async function openSaveDir() { if(saveApi) await saveApi.openDir(); }
+        async function chooseSaveDir() {
+            if(!saveApi) return;
+            const r = await saveApi.chooseDir();
+            if(r && !r.canceled) renderSaveDir(r, r.ok ? '세이브를 새 폴더로 옮겼습니다.' : r.error);
+        }
+        async function resetSaveDir() {
+            if(!saveApi) return;
+            const r = await saveApi.resetDir();
+            renderSaveDir(r, r.ok ? '세이브를 기본 위치로 옮겼습니다.' : r.error);
+        }
+        if(saveApi) saveApi.info().then(info => renderSaveDir(info));
 
         // ===== 분류 전환 — 선택한 분류는 주소(#display 등)에 남겨 새로고침해도 그대로 =====
         const SETTINGS_SECTIONS = ['theme', 'display', 'etc'];
