@@ -1,8 +1,9 @@
-const { app, BrowserWindow, Menu, ipcMain, screen, shell } = require('electron');
+const { app, BrowserWindow, Menu, ipcMain, screen, shell, dialog } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const mods = require('./mods');
 const updater = require('./updater');
+const saves = require('./saves');
 
 // 데이터 폴더(세이브·설정이 든 브라우저 저장소)는 앱 이름 "Hemicycle"을 따른다.
 // 예전 이름(DATANET Parliament Simulation) 시절의 폴더가 있고 새 폴더가 아직 없으면, 처음 켤 때 한 번 통째로 옮겨 와
@@ -237,6 +238,36 @@ function setDisplayMode(mode) {
 }
 
 ipcMain.handle('display-mode:get', () => saved.displayMode);
+// ===== 세이브 폴더 (electron/saves.js) — 페이지의 세이브 목록을 폴더의 .hemi 파일과 맞춘다 =====
+// 읽기 · 쓰기는 동기 — 저장 직후 앱이 꺼져도(업데이트 설치 등) 파일에 남아 있게
+ipcMain.on('saves:read', (event, ns) => {
+    try { event.returnValue = saves.read(String(ns || '')); }
+    catch (e) { console.error('saves read failed:', e); event.returnValue = { initialized: true, slots: null, error: String(e && e.message || e) }; }
+});
+ipcMain.on('saves:write', (event, ns, text) => {
+    try { event.returnValue = saves.write(String(ns || ''), String(text || '[]')); }
+    catch (e) { console.error('saves write failed:', e); event.returnValue = { ok: false, error: String(e && e.message || e) }; }
+});
+ipcMain.on('saves:dir-sync', event => { event.returnValue = saves.getDir(); });
+const savesInfo = () => ({ dir: saves.getDir(), isDefault: saves.isDefault(), defaultDir: saves.defaultDir() });
+// 저장 위치를 바꾸면 세이브를 새 폴더로 옮기고, 열린 화면을 다시 불러와 새 폴더를 읽게 한다
+function switchSaveDir(dir) {
+    const r = saves.moveTo(dir);
+    if (!r.ok) return { ...savesInfo(), ok: false, error: r.error };
+    saved.saveDir = saves.isDefault() ? undefined : saves.getDir();
+    saveWindowState(saved);
+    BrowserWindow.getAllWindows().forEach(w => { if (!w.isDestroyed()) w.webContents.reload(); });
+    return { ...savesInfo(), ok: true };
+}
+ipcMain.handle('saves:info', () => savesInfo());
+ipcMain.handle('saves:open-dir', () => { fs.mkdirSync(saves.getDir(), { recursive: true }); return shell.openPath(saves.getDir()); });
+ipcMain.handle('saves:choose-dir', async event => {
+    const win = BrowserWindow.fromWebContents(event.sender);
+    const r = await dialog.showOpenDialog(win, { title: '세이브를 둘 폴더 고르기', defaultPath: saves.getDir(), properties: ['openDirectory', 'createDirectory'] });
+    if (r.canceled || !r.filePaths[0]) return { ...savesInfo(), ok: false, canceled: true };
+    return switchSaveDir(r.filePaths[0]);
+});
+ipcMain.handle('saves:reset-dir', () => switchSaveDir(saves.defaultDir()));
 // 모드(창작마당) — 언어 팩 · 테마는 페이지가 뜰 때 바로 적용해야 해서 목록을 동기로 돌려준다 (프리셋은 목록만)
 ipcMain.on('mods:list', event => {
     try { event.returnValue = mods.listMods(); }
@@ -259,6 +290,11 @@ ipcMain.on('app:is-steam', event => {
 });
 
 app.whenReady().then(() => {
+    saves.init({
+        dir: saved.saveDir,
+        defaultDir: () => path.join(app.getPath('documents'), 'Hemicycle', 'Saves'),
+        trash: p => { if (fs.existsSync(p)) shell.trashItem(p).catch(() => { try { fs.unlinkSync(p); } catch (e) { /* 없음 */ } }); },
+    });
     createWindow();
     updater.init({
         send: st => BrowserWindow.getAllWindows().forEach(w => { if (!w.isDestroyed()) w.webContents.send('update:status', updater.getState()); }),
