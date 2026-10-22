@@ -216,25 +216,132 @@ function setBillCommittee(id, committeeId) {
     renderBillList(); syncBillSelect(); renderCommitteeTab();
 }
 // 위원회 표결 확정 — 정당마다 고른 입장대로 그 정당 위원 수만큼 찬성 · 반대 · 기권. 위원 과반 찬성이면 통과
+// ── 위원회 표결 — 위원 의석 반원에서 의원 한 명씩 (본회의 표결처럼) ──
+// bill.committeeSeatVotes = { sig: 위원 구성, votes: ['yea'|'nay'|'abs', …] } — 구성이 바뀌면(의석 변동) 기본값으로 다시
+let cmVoteMode = 'yea';
+function committeeSeats(bill, c) {
+    const comp = committeeComposition(c);
+    // 왼쪽부터 정당 순서(의회 › 정당 순서)대로 앉힌다
+    const order = new Map(parties.map((p, i) => [String(p.id), i]));
+    const seated = comp.slice().sort((a, b) => (order.get(String(a.id)) ?? 999) - (order.get(String(b.id)) ?? 999));
+    const sig = seated.map(p => `${p.id}:${p.n}`).join(',');
+    const list = [];
+    seated.forEach(p => { for (let k = 0; k < p.n; k++) list.push({ pid: p.id, color: p.color, name: p.name }); });
+    const saved = bill.committeeSeatVotes && bill.committeeSeatVotes.sig === sig ? bill.committeeSeatVotes.votes : null;
+    list.forEach((x, i) => { x.v = (saved && saved[i]) || (partyIsRulingSide(x.pid) ? 'yea' : 'nay'); });
+    if (!saved) bill.committeeSeatVotes = { sig, votes: list.map(x => x.v) };
+    return list;
+}
+function committeeTally(seats) {
+    const t = { yea: 0, nay: 0, abs: 0 };
+    seats.forEach(x => { t[x.v] = (t[x.v] || 0) + 1; });
+    return t;
+}
+// 반원 자리 — 본회의 반원(drawChamber)과 같은 방식으로 줄 수를 정하고, 왼쪽에서 오른쪽으로
+function committeeSeatPoints(n, W, CY) {
+    const CX = W / 2, maxR = Math.min(W / 2, CY) - 4, minR = maxR * 0.42;
+    let best = null;
+    for (let rows = 1; rows < 40 && !best; rows++) {
+        const dot = (maxR - minR) / rows / 2.2;
+        const rr = []; let cap = 0;
+        for (let i = 0; i < rows; i++) { const r = minR + i * dot * 2.2 + dot; const c2 = Math.max(1, Math.floor(Math.PI * r / (dot * 2.2))); rr.push({ r, c: c2 }); cap += c2; }
+        if (cap >= n) best = { dot, rr, cap };
+    }
+    const pts = [];
+    let used = 0;
+    best.rr.forEach((row, i) => {
+        let cnt = Math.round(n * row.c / best.cap);
+        if (i === best.rr.length - 1) cnt = n - used;
+        cnt = Math.max(0, Math.min(cnt, n - used));
+        used += cnt;
+        for (let k = 0; k < cnt; k++) {
+            const a = cnt === 1 ? Math.PI / 2 : Math.PI - Math.PI * k / (cnt - 1);
+            pts.push({ x: CX + row.r * Math.cos(a), y: CY - row.r * Math.sin(a), a });
+        }
+    });
+    pts.sort((p, q) => q.a - p.a);
+    return { pts, r: Math.min(best.dot * 0.92, 14) };
+}
+const CM_VOTE_COLOR = { yea: '#00c46a', nay: '#ff3355', abs: '#8a8f98' };
+function committeeVoteHtml(bill, c) {
+    const seats = committeeSeats(bill, c);
+    if (!seats.length) return '';
+    const W = 320, BASE = 166, H = BASE + 22, { pts, r } = committeeSeatPoints(seats.length, W, BASE);
+    const t = committeeTally(seats), required = requiredSeatsFor(seats.length, 0.5), pass = t.yea >= required;
+    const ring = Math.max(1.4, r * 0.32);
+    const dots = seats.map((x, i) => `<circle class="cm-seat" data-i="${i}" cx="${pts[i].x.toFixed(1)}" cy="${pts[i].y.toFixed(1)}" r="${(r - ring / 2).toFixed(1)}" fill="${x.color}" stroke="${CM_VOTE_COLOR[x.v]}" stroke-width="${ring.toFixed(1)}"><title>${legisEsc(x.name)} — ${{ yea: '찬성', nay: '반대', abs: '기권' }[x.v]}</title></circle>`).join('');
+    const partyRows = [];
+    seats.forEach(x => { if (!partyRows.some(p => String(p.pid) === String(x.pid))) partyRows.push({ pid: x.pid, name: x.name, color: x.color }); });
+    return `
+        <div class="cm-vote-modes" role="group" aria-label="누를 때 던질 표">${[['yea', '▲ 찬성'], ['nay', '▼ 반대'], ['abs', '— 기권']].map(([v, l]) => `<button type="button" class="cm-mode cm-mode-${v}${cmVoteMode === v ? ' on' : ''}" data-mode="${v}" aria-pressed="${cmVoteMode === v}">${l}</button>`).join('')}<span class="cm-vote-hint">의석을 누르거나 끌어서 표를 바꿔요</span></div>
+        <svg class="cm-hemi" viewBox="0 0 ${W} ${H}" role="img" aria-label="위원회 의석 — 찬성 ${t.yea} · 반대 ${t.nay} · 기권 ${t.abs}">${dots}
+            <text x="${W / 2}" y="${BASE - 4}" class="cm-hemi-num">${t.yea} : ${t.nay}</text><text x="${W / 2}" y="${H - 4}" class="cm-hemi-sub ${pass ? 'pass' : 'fail'}">${pass ? '통과 예상' : '부결 예상'} · 과반 ${required}</text></svg>
+        <div class="cm-tally"><span class="y">찬성 ${t.yea}</span><span class="n">반대 ${t.nay}</span><span class="a">기권 ${t.abs}</span></div>
+        <div class="cm-stances">${partyRows.map(p => {
+            const mine = seats.filter(x => String(x.pid) === String(p.pid)), cnt = committeeTally(mine);
+            const all = ['yea', 'nay', 'abs'].find(k => cnt[k] === mine.length);
+            return `<div class="cm-stance-row"><i style="background:${p.color}"></i><span>${legisEsc(p.name)} <em>${mine.length}명${all ? '' : ` · ${cnt.yea}/${cnt.nay}/${cnt.abs}`}</em></span>
+                <span class="cm-seg">${[['yea', '찬성'], ['nay', '반대'], ['abs', '기권']].map(([v, l]) => `<button type="button" class="cm-pv cm-pv-${v}${all === v ? ' on' : ''}" data-pid="${p.pid}" data-v="${v}" aria-pressed="${all === v}">${l}</button>`).join('')}</span></div>`;
+        }).join('')}</div>`;
+}
+function committeeVoteRefresh(billId) {
+    const bill = bills.find(b => b.id === billId), c = bill && committeeById(bill.committeeId), box = document.getElementById('cmVote-' + billId);
+    if (!bill || !c || !box) return;
+    box.innerHTML = committeeVoteHtml(bill, c);
+    committeeVoteBind(billId);
+}
+function committeeVoteSet(billId, fn) {
+    const bill = bills.find(b => b.id === billId), c = bill && committeeById(bill.committeeId);
+    if (!bill || !c) return;
+    const seats = committeeSeats(bill, c);
+    const votes = seats.map((x, i) => fn(x, i) || x.v);
+    bill.committeeSeatVotes = { sig: bill.committeeSeatVotes.sig, votes };
+    committeeVoteRefresh(billId);
+}
+function committeeVoteBind(billId) {
+    const box = document.getElementById('cmVote-' + billId);
+    if (!box) return;
+    box.querySelectorAll('[data-mode]').forEach(b => { b.onclick = () => { cmVoteMode = b.dataset.mode; document.querySelectorAll('.cm-vote').forEach(v => v.querySelectorAll('[data-mode]').forEach(m => { m.classList.toggle('on', m.dataset.mode === cmVoteMode); m.setAttribute('aria-pressed', m.dataset.mode === cmVoteMode); })); }; });
+    box.querySelectorAll('.cm-pv').forEach(b => { b.onclick = () => committeeVoteSet(billId, x => (String(x.pid) === b.dataset.pid ? b.dataset.v : null)); });
+    // 의석 누르기 · 끌어서 칠하기
+    const svg = box.querySelector('.cm-hemi');
+    if (!svg) return;
+    let painting = false;
+    const paint = el => {
+        const i = el && el.dataset && el.dataset.i;
+        if (i == null) return;
+        if (el.getAttribute('stroke') === CM_VOTE_COLOR[cmVoteMode]) return;
+        const bill = bills.find(b => b.id === billId);
+        bill.committeeSeatVotes.votes[+i] = cmVoteMode;
+        el.setAttribute('stroke', CM_VOTE_COLOR[cmVoteMode]);
+    };
+    svg.addEventListener('pointerdown', e => { if (!e.target.classList.contains('cm-seat')) return; painting = true; svg.setPointerCapture(e.pointerId); paint(e.target); e.preventDefault(); });
+    svg.addEventListener('pointermove', e => { if (!painting) return; paint(document.elementFromPoint(e.clientX, e.clientY)); });
+    const end = () => { if (!painting) return; painting = false; committeeVoteRefresh(billId); };
+    svg.addEventListener('pointerup', end);
+    svg.addEventListener('pointercancel', end);
+}
 function confirmCommitteeVote(billId) {
     const bill = bills.find(b => b.id === billId);
     const c = bill && committeeById(bill.committeeId);
     if (!bill || !c) return;
     const comp = committeeComposition(c);
     if (!comp.length) { showCustomAlert('이 위원회에 배정할 위원이 없습니다. 그 원에 의석을 가진 정당이 있어야 합니다.'); return; }
+    const seats = committeeSeats(bill, c);
+    const { yea, nay, abs } = committeeTally(seats);
+    // 정당별로 가장 많이 던진 표 (예전 기록과 같은 모양)
     const stances = {};
-    let yea = 0, nay = 0, abs = 0;
     comp.forEach(p => {
-        const sel = document.querySelector(`.cm-stance[data-bill="${billId}"][data-pid="${p.id}"]`);
-        const v = sel ? sel.value : (partyIsRulingSide(p.id) ? 'yea' : 'nay');
-        stances[p.id] = v;
-        if (v === 'yea') yea += p.n; else if (v === 'nay') nay += p.n; else abs += p.n;
+        const cnt = { yea: 0, nay: 0, abs: 0 };
+        seats.filter(x => String(x.pid) === String(p.id)).forEach(x => { cnt[x.v]++; });
+        stances[p.id] = ['yea', 'nay', 'abs'].reduce((a, k) => (cnt[k] > cnt[a] ? k : a), 'yea');
     });
     const total = comp.reduce((a, p) => a + p.n, 0);
     const required = requiredSeatsFor(total, 0.5);
     const result = yea >= required ? 'pass' : 'fail';
     bill.committeeStatus = result;
-    bill.committeeVote = { yea, nay, abs, total, required, stances };
+    bill.committeeVote = { yea, nay, abs, total, required, stances, seats: seats.map(x => x.v) };
+    delete bill.committeeSeatVotes;
     if (!bill.voteHistory) bill.voteHistory = [];
     bill.voteHistory.push({ chamber: 'committee', committeeName: c.name, result, date: bill.voteDate || '', yea, nay, abs, total, required, threshold: 0.5, at: new Date().toISOString() });
     renderCommitteeTab(); renderBillList(); renderArchiveList(); syncBillSelect();
@@ -366,11 +473,7 @@ function renderCommitteeTab() {
             <div class="cm-bill">
                 <div class="cm-bill-title">${legisEsc(b.title)} ${billKindLabel(b) ? `<span class="bill-version-badge">${billKindLabel(b)}</span>` : ''}</div>
                 ${billBodyHtml(b, 2)}
-                <div class="cm-stances">${comp.map(p => {
-                    const def = b.committeeVote?.stances?.[p.id] || (partyIsRulingSide(p.id) ? 'yea' : 'nay');
-                    return `<label class="cm-stance-row"><i style="background:${p.color}"></i><span>${legisEsc(p.name)} <em>${p.n}명</em></span>
-                        <select class="cm-stance" data-bill="${b.id}" data-pid="${p.id}">${[['yea', '찬성'], ['nay', '반대'], ['abs', '기권']].map(([v, t]) => `<option value="${v}" ${def === v ? 'selected' : ''}>${t}</option>`).join('')}</select></label>`;
-                }).join('')}</div>
+                <div class="cm-vote" id="cmVote-${b.id}">${committeeVoteHtml(b, c)}</div>
                 <button class="add-btn cm-confirm" onclick="confirmCommitteeVote('${b.id}')">▶ 위원회 심사 확정 (위원 ${total}명 중 과반 ${requiredSeatsFor(total, 0.5)}명 찬성이면 통과)</button>
             </div>`).join('') : '<div class="cm-note">심사 중인 법안이 없습니다. 입법 › 상정에서 법안의 소관 위원회를 고르세요.</div>';
         return `
@@ -390,6 +493,7 @@ function renderCommitteeTab() {
             ${reviewHtml}
         </div>`;
     }).join('') + `<button class="add-btn" onclick="addCommittee()">+ 위원회 추가</button>`;
+    box.querySelectorAll('.cm-vote').forEach(v => committeeVoteBind(v.id.replace(/^cmVote-/, '')));
 }
 
 // ── 헌법 · 법령집 ────────────────────────────

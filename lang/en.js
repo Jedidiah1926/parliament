@@ -4207,6 +4207,22 @@ window.DnoLangPacks.en = {
    "No committee tag matches — goes straight to the floor"
   ],
   [
+   "— 기권",
+   "— Abstain"
+  ],
+  [
+   "의석을 누르거나 끌어서 표를 바꿔요",
+   "Click or drag across seats to change votes"
+  ],
+  [
+   "통과 예상",
+   "Expected to pass"
+  ],
+  [
+   "부결 예상",
+   "Expected to fail"
+  ],
+  [
    "🗺 맵 프리셋에서 고르기",
    "🗺 Pick a map preset"
   ],
