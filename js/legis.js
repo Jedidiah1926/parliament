@@ -216,17 +216,23 @@ function setBillCommittee(id, committeeId) {
     renderBillList(); syncBillSelect(); renderCommitteeTab();
 }
 // 위원회 표결 확정 — 정당마다 고른 입장대로 그 정당 위원 수만큼 찬성 · 반대 · 기권. 위원 과반 찬성이면 통과
-// ── 위원회 표결 — 위원 의석 반원에서 의원 한 명씩 (본회의 표결처럼) ──
+// ── 위원회 표결 — 위원 의석(가운데 위원장 · 마주 보는 두 줄)에서 의원 한 명씩 (본회의 표결처럼) ──
 // bill.committeeSeatVotes = { sig: 위원 구성, votes: ['yea'|'nay'|'abs', …] } — 구성이 바뀌면(의석 변동) 기본값으로 다시
 let cmVoteMode = 'yea';
 function committeeSeats(bill, c) {
     const comp = committeeComposition(c);
-    // 왼쪽부터 정당 순서(의회 › 정당 순서)대로 앉힌다
+    const chair = committeeChair(c, comp);
+    // 가운데 위원장 한 자리 + 왼쪽(여당 쪽) · 오른쪽(야당 쪽) 마주 보는 두 줄 — 정당 순서(의회 › 정당)대로 채운다
     const order = new Map(parties.map((p, i) => [String(p.id), i]));
-    const seated = comp.slice().sort((a, b) => (order.get(String(a.id)) ?? 999) - (order.get(String(b.id)) ?? 999));
-    const sig = seated.map(p => `${p.id}:${p.n}`).join(',');
+    const sorted = comp.slice().sort((x, y) => (order.get(String(x.id)) ?? 999) - (order.get(String(y.id)) ?? 999));
     const list = [];
-    seated.forEach(p => { for (let k = 0; k < p.n; k++) list.push({ pid: p.id, color: p.color, name: p.name }); });
+    if (chair) list.push({ pid: chair.id, color: chair.color, name: chair.name, side: 'C' });
+    ['L', 'R'].forEach(side => sorted.forEach(p => {
+        if ((partyIsRulingSide(p.id) ? 'L' : 'R') !== side) return;
+        const n = p.n - (chair && String(chair.id) === String(p.id) ? 1 : 0);
+        for (let k = 0; k < n; k++) list.push({ pid: p.id, color: p.color, name: p.name, side });
+    }));
+    const sig = list.map(x => `${x.pid}${x.side}`).join(',');
     const saved = bill.committeeSeatVotes && bill.committeeSeatVotes.sig === sig ? bill.committeeSeatVotes.votes : null;
     list.forEach((x, i) => { x.v = (saved && saved[i]) || (partyIsRulingSide(x.pid) ? 'yea' : 'nay'); });
     if (!saved) bill.committeeSeatVotes = { sig, votes: list.map(x => x.v) };
@@ -237,45 +243,43 @@ function committeeTally(seats) {
     seats.forEach(x => { t[x.v] = (t[x.v] || 0) + 1; });
     return t;
 }
-// 반원 자리 — 본회의 반원(drawChamber)과 같은 방식으로 줄 수를 정하고, 왼쪽에서 오른쪽으로
-function committeeSeatPoints(n, W, CY) {
-    const CX = W / 2, maxR = Math.min(W / 2, CY) - 4, minR = maxR * 0.42;
-    let best = null;
-    for (let rows = 1; rows < 40 && !best; rows++) {
-        const dot = (maxR - minR) / rows / 2.2;
-        const rr = []; let cap = 0;
-        for (let i = 0; i < rows; i++) { const r = minR + i * dot * 2.2 + dot; const c2 = Math.max(1, Math.floor(Math.PI * r / (dot * 2.2))); rr.push({ r, c: c2 }); cap += c2; }
-        if (cap >= n) best = { dot, rr, cap };
-    }
+// 자리 — 위원장은 위쪽 가운데(통로), 양쪽은 같은 칸 수의 격자를 위에서부터 줄마다 채운다
+function committeeSeatLayout(seats, W) {
+    const nL = seats.filter(x => x.side === 'L').length, nR = seats.filter(x => x.side === 'R').length, side = Math.max(nL, nR, 1);
+    const cols = Math.max(2, Math.ceil(Math.sqrt(side * 1.15)));
+    const rows = Math.ceil(side / cols);
+    const pad = 6, aisleMin = 34;
+    const cell = Math.min(24, (W - pad * 2 - aisleMin) / (cols * 2));
+    const aisle = W - pad * 2 - cell * cols * 2;
+    const top = pad + cell * 0.2;
     const pts = [];
-    let used = 0;
-    best.rr.forEach((row, i) => {
-        let cnt = Math.round(n * row.c / best.cap);
-        if (i === best.rr.length - 1) cnt = n - used;
-        cnt = Math.max(0, Math.min(cnt, n - used));
-        used += cnt;
-        for (let k = 0; k < cnt; k++) {
-            const a = cnt === 1 ? Math.PI / 2 : Math.PI - Math.PI * k / (cnt - 1);
-            pts.push({ x: CX + row.r * Math.cos(a), y: CY - row.r * Math.sin(a), a });
-        }
+    let iL = 0, iR = 0;
+    seats.forEach(x => {
+        if (x.side === 'C') { pts.push({ x: W / 2, y: top + cell / 2 }); return; }
+        const k = x.side === 'L' ? iL++ : iR++;
+        const r = Math.floor(k / cols), col = k % cols;
+        const x0 = x.side === 'L' ? pad : pad + cell * cols + aisle;
+        pts.push({ x: x0 + col * cell + cell / 2, y: top + r * cell + cell / 2 });
     });
-    pts.sort((p, q) => q.a - p.a);
-    return { pts, r: Math.min(best.dot * 0.92, 14) };
+    return { pts, r: cell / 2 * 0.86, bottom: top + rows * cell };
 }
 const CM_VOTE_COLOR = { yea: '#00c46a', nay: '#ff3355', abs: '#8a8f98' };
 function committeeVoteHtml(bill, c) {
     const seats = committeeSeats(bill, c);
     if (!seats.length) return '';
-    const W = 320, BASE = 166, H = BASE + 22, { pts, r } = committeeSeatPoints(seats.length, W, BASE);
+    const W = 320, L = committeeSeatLayout(seats, W), pts = L.pts, r = L.r, H = Math.ceil(L.bottom + 44);
     const t = committeeTally(seats), required = requiredSeatsFor(seats.length, 0.5), pass = t.yea >= required;
-    const ring = Math.max(1.4, r * 0.32);
-    const dots = seats.map((x, i) => `<circle class="cm-seat" data-i="${i}" cx="${pts[i].x.toFixed(1)}" cy="${pts[i].y.toFixed(1)}" r="${(r - ring / 2).toFixed(1)}" fill="${x.color}" stroke="${CM_VOTE_COLOR[x.v]}" stroke-width="${ring.toFixed(1)}"><title>${legisEsc(x.name)} — ${{ yea: '찬성', nay: '반대', abs: '기권' }[x.v]}</title></circle>`).join('');
+    const ring = Math.max(1.4, r * 0.3);
+    const word = { yea: '찬성', nay: '반대', abs: '기권' };
+    const dots = seats.map((x, i) => `<circle class="cm-seat${x.side === 'C' ? ' cm-chair' : ''}" data-i="${i}" cx="${pts[i].x.toFixed(1)}" cy="${pts[i].y.toFixed(1)}" r="${(r - ring / 2).toFixed(1)}" fill="${x.color}" stroke="${CM_VOTE_COLOR[x.v]}" stroke-width="${ring.toFixed(1)}"><title>${x.side === 'C' ? '위원장 · ' : ''}${legisEsc(x.name)} — ${word[x.v]}</title></circle>`).join('');
+    const chairPt = seats[0] && seats[0].side === 'C' ? pts[0] : null;
     const partyRows = [];
     seats.forEach(x => { if (!partyRows.some(p => String(p.pid) === String(x.pid))) partyRows.push({ pid: x.pid, name: x.name, color: x.color }); });
     return `
         <div class="cm-vote-modes" role="group" aria-label="누를 때 던질 표">${[['yea', '▲ 찬성'], ['nay', '▼ 반대'], ['abs', '— 기권']].map(([v, l]) => `<button type="button" class="cm-mode cm-mode-${v}${cmVoteMode === v ? ' on' : ''}" data-mode="${v}" aria-pressed="${cmVoteMode === v}">${l}</button>`).join('')}<span class="cm-vote-hint">의석을 누르거나 끌어서 표를 바꿔요</span></div>
         <svg class="cm-hemi" viewBox="0 0 ${W} ${H}" role="img" aria-label="위원회 의석 — 찬성 ${t.yea} · 반대 ${t.nay} · 기권 ${t.abs}">${dots}
-            <text x="${W / 2}" y="${BASE - 4}" class="cm-hemi-num">${t.yea} : ${t.nay}</text><text x="${W / 2}" y="${H - 4}" class="cm-hemi-sub ${pass ? 'pass' : 'fail'}">${pass ? '통과 예상' : '부결 예상'} · 과반 ${required}</text></svg>
+            ${chairPt ? `<text x="${W / 2}" y="${(chairPt.y + r + 11).toFixed(1)}" class="cm-chair-label">위원장</text>` : ''}
+            <text x="${W / 2}" y="${(L.bottom + 22).toFixed(1)}" class="cm-hemi-num">${t.yea} : ${t.nay}</text><text x="${W / 2}" y="${H - 4}" class="cm-hemi-sub ${pass ? 'pass' : 'fail'}">${pass ? '통과 예상' : '부결 예상'} · 과반 ${required}</text></svg>
         <div class="cm-tally"><span class="y">찬성 ${t.yea}</span><span class="n">반대 ${t.nay}</span><span class="a">기권 ${t.abs}</span></div>
         <div class="cm-stances">${partyRows.map(p => {
             const mine = seats.filter(x => String(x.pid) === String(p.pid)), cnt = committeeTally(mine);

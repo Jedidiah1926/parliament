@@ -1668,3 +1668,5 @@ html[data-theme-family="modern"] .cm-hemi-sub { font-family: var(--m-font, inher
 html[data-theme-family="modern"] .cm-pv.on.cm-pv-abs { color: var(--m-text, #18181b); }
 .cm-stance-row .cm-seg { flex: none; overflow: visible; min-width: auto; }
 .cm-vote .cm-stances { grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); }
+.cm-chair-label { fill: #888; font-size: 9px; text-anchor: middle; font-family: 'NeoDunggeunmo','VT323',monospace; }
+html[data-theme-family="modern"] .cm-chair-label { fill: var(--m-text-3, #71717a); font-family: var(--m-font, inherit); }
