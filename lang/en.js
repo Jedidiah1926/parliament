@@ -8067,7 +8067,7 @@ window.DnoLangPacks.en = {
   ["- 위원회 표결을 위원 의석에서 — 본회의 표결처럼 의석을 누르거나 끌어서 의원 한 명씩 찬성 · 반대 · 기권, 정당별 한 번에 정하기. 위원장은 맨 위 가운데, 여당 쪽 · 야당 쪽이 마주 보는 두 줄 (정당 순서대로)", "- Committee votes on the committee seat map — like floor votes, click or drag seats to set each member to yea · nay · abstain, or set a whole party at once. The chair sits at the top centre, with the ruling and opposition sides on two facing benches (in party order)"],
   ["- 위원회 찬반 고르기가 잘려 보이던 문제 수정", "- Fixed committee yea/nay choices being clipped"],
   ["- 법안 태그 고르기 — 법안을 쓰거나 고칠 때 상임위원회 소관 태그를 눌러 붙이거나 새 태그를 입력", "- Bill tag picker — when writing or editing a bill, click a committee's jurisdiction tags or type a new tag"],
-  ["- 1.6.1 미리보기(Teaser 1.6.1)를 본 게임에 통합 — 예전 1.6.1 미리보기 세이브도 그대로 열림 (사람 · 시민 · 이민자 · 의장석)", "- Merged the 1.6.1 preview (Teaser 1.6.1) into the main game — old 1.6.1 preview saves still open (people · citizens · migrants · speaker podium)"],
+  ["- 1.6.1 미리보기(Teaser 1.6.1)를 본 게임에 통합하고 미리보기 화면은 삭제 — 예전 1.6.1 미리보기 세이브는 시작 화면에서 본 게임 세이브로 옮겨짐 (사람 · 시민 · 이민자 · 의장석)", "- Merged the 1.6.1 preview (Teaser 1.6.1) into the main game and removed the preview page — old 1.6.1 preview saves move into the main game's saves on the start screen (people · citizens · migrants · speaker podium)"],
   ["- 버전 표시 v1.6.1", "- Version label v1.6.1"],
   ["위원회 의석 표결", "Committee seat-map votes"],
   ["법안 태그 고르기", "Bill tag picker"],

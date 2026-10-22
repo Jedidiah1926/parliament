@@ -1,4 +1,4 @@
-// logo.html(로고 제작 모드)과 teaser61.html ~ teaser69.html(미리보기)은 main.html을 그대로 복사해 만든다 — 직접 고치지 말 것.
+// logo.html(로고 제작 모드)과 teaser62.html ~ teaser69.html(미리보기)은 main.html을 그대로 복사해 만든다 — 직접 고치지 말 것.
 // main.html을 고친 뒤에는 `npm run build:logo`로 다시 만들어야 두 화면이 어긋나지 않는다.
 // 차이는 <html data-app-mode="logo">와 창 제목뿐이고, 나머지(의회 메뉴만 보이기 · 강조 색 · 따로 쓰는 저장 공간)는
 // js/main.js · css/main.css가 data-app-mode를 보고 처리한다.
@@ -21,8 +21,7 @@ console.log('logo.html 생성 완료');
 // 티저마다 data-teaser 번호로 저장 공간을 또 나눈다 (js/main.js의 LS_PREFIX: hemicycleTeaserV2-번호:)
 const TEASERS = [
     // 1.6.x 티저 — 번호(data-teaser)는 버전 끝자리, 화면마다 1.6.2부터 그 버전까지의 스크립트를 순서대로 얹는다.
-    // 1.6.1(사람 · 시민 · 이민자 · 의장석 — js/people.js · js/podium.js)은 본 게임에 들어가 main.html이 읽는다. teaser61.html은 예전 1.6.1 미리보기 세이브를 열 수 있게 남겨 둔다 (본 게임과 같은 화면, 저장 공간만 따로).
-    { id: '61', file: 'teaser61.html', script: [], title: 'Teaser 1.6.1', note: '1.6.1 — 본 게임에 통합됨 (예전 미리보기 세이브용)' },
+    // 1.6.1(사람 · 시민 · 이민자 · 의장석 — js/people.js · js/podium.js)은 본 게임에 들어가 main.html이 읽는다 (teaser61.html은 없앰 — 예전 세이브는 시작 화면이 본 게임으로 옮김).
     { id: '62', file: 'teaser62.html', script: ['js/teaser62.js'], title: 'Teaser 1.6.2', note: '1.6.2 쿠데타 · 군정 · 군부 설정 (+1.6.1)' },
     { id: '63', file: 'teaser63.html', script: ['js/teaser62.js', 'js/teaser63.js'], title: 'Teaser 1.6.3', note: '1.6.3 혁명 · 당-국가 체제 · 선거인단 (+1.6.1 · 1.6.2)' },
     { id: '64', file: 'teaser64.html', script: ['js/teaser62.js', 'js/teaser63.js', 'js/teaser64.js'], title: 'Teaser 1.6.4', note: '1.6.4 국회공성전 — 봉쇄 돌파 · 의장석 점거 (+1.6.1 ~ 1.6.3)' },
@@ -49,6 +48,6 @@ TEASERS.forEach(t => {
 fs.writeFileSync(path.join(root, 'teaser.html'), `<!DOCTYPE html>
 <!-- 자동 생성 파일 (tools/build-logo.js) — 예전 teaser.html 주소는 teaser69.html(1.6.9 미리보기)로 옮겨졌다 -->
 <html lang="ko"><head><meta charset="UTF-8"><meta http-equiv="refresh" content="0; url=teaser69.html"><title>Hemicycle — Teaser</title></head>
-<body><a href="teaser69.html">teaser69.html로 이동</a> · <a href="teaser61.html">teaser61.html</a> · <a href="teaser62.html">teaser62.html</a> · <a href="teaser63.html">teaser63.html</a> · <a href="teaser64.html">teaser64.html</a> · <a href="teaser65.html">teaser65.html</a> · <a href="teaser66.html">teaser66.html</a> · <a href="teaser67.html">teaser67.html</a> · <a href="teaser68.html">teaser68.html</a></body></html>
+<body><a href="teaser69.html">teaser69.html로 이동</a> · <a href="teaser62.html">teaser62.html</a> · <a href="teaser63.html">teaser63.html</a> · <a href="teaser64.html">teaser64.html</a> · <a href="teaser65.html">teaser65.html</a> · <a href="teaser66.html">teaser66.html</a> · <a href="teaser67.html">teaser67.html</a> · <a href="teaser68.html">teaser68.html</a></body></html>
 `);
 console.log('teaser.html(→ teaser69.html) 생성 완료');
