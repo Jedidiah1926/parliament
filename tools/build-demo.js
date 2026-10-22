@@ -2,7 +2,7 @@
 // 쓰는 법: node tools/build-demo.js [--app-id 1234567] [--no-obfuscate]
 //   그다음 npx electron-builder --config electron-builder.demo.js --win dir (→ dist-demo/win-unpacked, Steam에 이 폴더를 올림)
 // 하는 일
-//   1) 앱 파일을 복사 — 다음 업데이트 미리보기(teaser*.html · js/teaser6*.js · js/teaserpodium.js)와 로고 제작 화면(logo.html)은 뺀다
+//   1) 앱 파일을 복사 — 다음 업데이트 미리보기(teaser*.html · js/teaser6*.js)와 로고 제작 화면(logo.html)은 뺀다
 //   2) 모든 화면 <head> 맨 앞에 window.HEMI_BUILD = { demo: true } — 개발자 모드가 꺼지고(설정에서도 숨김) 버전 표시가 DEMO로
 //      electron/build.json { demo: true } — 앱이 GitHub 업데이트를 확인하지 않음 (Steam이 업데이트)
 //   3) --app-id를 주면 electron/steam.json에 데모 App ID (Steam 오버레이 · 창작마당은 steamworks.js가 깔려 있어야)
@@ -23,7 +23,7 @@ const OBFUSCATE = !args.includes('--no-obfuscate');
 const COPY_DIRS = ['electron', 'js', 'css', 'fonts', 'presets', 'lang', 'old2', 'icons'];
 const SKIP = [
     /^teaser\d*\.html$/, /^logo\.html$/, /^map\.html$/, /^js\/maptrace\.js$/, // 미리보기 · 로고 제작 · 맵 메이커 (데모는 맵 프리셋만)
-    /^js\/teaser6\d(charts)?\.js$/, /^js\/teaserpodium\.js$/,  // 미리보기 기능
+    /^js\/teaser6\d(charts)?\.js$/,  // 미리보기 기능
     /^electron\/smoketest\.js$/,
 ];
 const skipped = rel => SKIP.some(re => re.test(rel.replace(/\\/g, '/')));

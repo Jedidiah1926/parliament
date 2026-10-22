@@ -1,15 +1,17 @@
-// ===== Hemicycle 티저 공통 — 의장석 (teaser62 · 62 · 63 · 66) =====
+// ===== 의장석 (1.6.1 — 본 게임 · 모든 미리보기 화면 공통, 로고 제작 화면만 빼고) =====
 // 반원 가운데 빈 곳에 의장석(단상 + 의장)을 그릴지 정한다. 의회 › 의회 설정의 "반원 중앙 표시" 아래에 설정이 붙는다.
 //   always — 반원 화면에 늘 그리고, 애니메이션(봉쇄 돌파 · 의장석 점거)에도 그림
 //   anim   — 애니메이션에서만 (기본)
 //   occupy — 의장석 점거 애니메이션에서만
-// 저장은 세이브의 teaserPodium 칸 (티저마다 저장 공간이 따로라 서로 섞이지 않음).
+// 저장은 세이브의 podium 칸 (예전 미리보기 세이브는 teaserPodium 칸). 애니메이션이 없는 화면(1.6.4 미리보기 전)에서는 "항상 표시 / 표시 안 함"만.
 // 위치는 반원 가운데 표시(의석 수 · 로고) 바로 위 — teaser64의 애니메이션도 TeaserPodium.geom()으로 같은 자리에 그린다.
 /* global getAppState, setAppState, chamberCenterMode, chamberLogos, isModernTheme, redrawAll */
 (function () {
     'use strict';
     const root = document.documentElement;
-    if (root.getAttribute('data-app-mode') !== 'teaser') return;
+    if (root.getAttribute('data-app-mode') === 'logo') return;
+    // 봉쇄 돌파 · 의장석 점거 애니메이션은 1.6.4 미리보기부터 (js/teaser64.js)
+    const hasAnim = () => Number(root.getAttribute('data-teaser')) >= 64;
 
     const MODES = [['always', '항상 표시'], ['anim', '애니메이션에서만'], ['occupy', '의장석 점거 때만']];
     let mode = 'anim';
@@ -17,13 +19,13 @@
     const origGet = window.getAppState;
     window.getAppState = function () {
         const st = origGet.apply(this, arguments);
-        if (st && typeof st === 'object') st.teaserPodium = { mode };
+        if (st && typeof st === 'object') st.podium = { mode };
         return st;
     };
     const origSet = window.setAppState;
     window.setAppState = function (state) {
         const r = origSet.apply(this, arguments);
-        const m = state && state.teaserPodium && state.teaserPodium.mode;
+        const pd = state && (state.podium || state.teaserPodium), m = pd && pd.mode;
         mode = MODES.some(x => x[0] === m) ? m : 'anim';
         renderUI();
         return r;
@@ -86,9 +88,10 @@
             box.style.marginTop = '16px';
             anchor.parentElement.insertBefore(box, anchor.nextSibling);
         }
-        box.innerHTML = `<label style="color:#888;font-size:0.8rem;margin-bottom:6px;display:block;">의장석 표시 <span style="color:#666;font-size:0.72rem;">(미리보기)</span></label>
-            <div class="system-radio-group" style="margin-bottom:6px;">${MODES.map(([k, t]) => `<button type="button" class="system-radio-btn ${mode === k ? 'active' : ''}" data-podium="${k}">${t}</button>`).join('')}</div>
-            <div style="color:#666;font-size:0.72rem;">반원 가운데에 의장석(단상과 의장)을 그립니다. "항상 표시"면 반원 화면에도 늘 보이고, 봉쇄 돌파 · 의장석 점거 애니메이션에도 나옵니다.</div>`;
+        const modes = hasAnim() ? MODES : [['always', '항상 표시'], ['anim', '표시 안 함']];
+        box.innerHTML = `<label style="color:#888;font-size:0.8rem;margin-bottom:6px;display:block;">의장석 표시</label>
+            <div class="system-radio-group" style="margin-bottom:6px;">${modes.map(([k, t]) => `<button type="button" class="system-radio-btn ${mode === k || (k === 'anim' && !hasAnim() && mode === 'occupy') ? 'active' : ''}" data-podium="${k}">${t}</button>`).join('')}</div>
+            <div style="color:#666;font-size:0.72rem;">${hasAnim() ? '반원 가운데에 의장석(단상과 의장)을 그립니다. "항상 표시"면 반원 화면에도 늘 보이고, 봉쇄 돌파 · 의장석 점거 애니메이션에도 나옵니다.' : '반원 가운데(의석 수 · 로고 위)에 의장석(단상과 의장)을 그립니다.'}</div>`;
         box.querySelectorAll('[data-podium]').forEach(b => {
             b.onclick = () => {
                 mode = b.dataset.podium;
@@ -98,7 +101,7 @@
         });
     }
 
-    window.TeaserPodium = {
+    window.TeaserPodium = window.HemiPodium = {
         mode: () => mode,
         // 애니메이션에서 의장석을 그릴지: kind = 'breakthrough' | 'occupy'
         showIn: kind => mode === 'always' || mode === 'anim' || (mode === 'occupy' && kind === 'occupy'),

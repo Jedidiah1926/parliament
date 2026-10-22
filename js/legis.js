@@ -243,7 +243,7 @@ function committeeTally(seats) {
     seats.forEach(x => { t[x.v] = (t[x.v] || 0) + 1; });
     return t;
 }
-// 자리 — 위원장은 위쪽 가운데(통로), 양쪽은 같은 칸 수의 격자를 위에서부터 줄마다 채운다
+// 자리 — 위원장은 맨 위 가운데(통로, 양쪽 줄보다 한 칸 위), 양쪽은 같은 칸 수의 격자를 위에서부터 줄마다 채운다
 function committeeSeatLayout(seats, W) {
     const nL = seats.filter(x => x.side === 'L').length, nR = seats.filter(x => x.side === 'R').length, side = Math.max(nL, nR, 1);
     const cols = Math.max(2, Math.ceil(Math.sqrt(side * 1.15)));
@@ -251,7 +251,7 @@ function committeeSeatLayout(seats, W) {
     const pad = 6, aisleMin = 34;
     const cell = Math.min(24, (W - pad * 2 - aisleMin) / (cols * 2));
     const aisle = W - pad * 2 - cell * cols * 2;
-    const top = pad + cell * 0.2;
+    const top = pad + cell * 0.2, hasChair = seats.some(x => x.side === 'C'), benchTop = top + (hasChair ? cell : 0);
     const pts = [];
     let iL = 0, iR = 0;
     seats.forEach(x => {
@@ -259,9 +259,9 @@ function committeeSeatLayout(seats, W) {
         const k = x.side === 'L' ? iL++ : iR++;
         const r = Math.floor(k / cols), col = k % cols;
         const x0 = x.side === 'L' ? pad : pad + cell * cols + aisle;
-        pts.push({ x: x0 + col * cell + cell / 2, y: top + r * cell + cell / 2 });
+        pts.push({ x: x0 + col * cell + cell / 2, y: benchTop + r * cell + cell / 2 });
     });
-    return { pts, r: cell / 2 * 0.86, bottom: top + rows * cell };
+    return { pts, r: cell / 2 * 0.86, bottom: benchTop + rows * cell };
 }
 const CM_VOTE_COLOR = { yea: '#00c46a', nay: '#ff3355', abs: '#8a8f98' };
 function committeeVoteHtml(bill, c) {

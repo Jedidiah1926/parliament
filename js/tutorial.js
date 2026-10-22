@@ -835,7 +835,7 @@
             ],
         },
         {
-            id: 'people', group: 'detail', locked: '1.6.1',
+            id: 'people', group: 'detail',
             title: '사람',
             summary: '인물 만들기 · 의석 · 당직 · 내각 자리 배정 · 지역구 후보 · 자리가 사라져도 남는 인물',
             steps: [
@@ -870,7 +870,7 @@
             ],
         },
         {
-            id: 'citizens', group: 'detail', locked: '1.6.1',
+            id: 'citizens', group: 'detail',
             title: '시민 · 이민자',
             summary: '지역구 시민 / 인구 · 선거마다 이민자 투표권 · 이민자 성향',
             steps: [
