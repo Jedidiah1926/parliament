@@ -1670,3 +1670,21 @@ html[data-theme-family="modern"] .cm-pv.on.cm-pv-abs { color: var(--m-text, #181
 .cm-vote .cm-stances { grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); }
 .cm-chair-label { fill: #888; font-size: 9px; text-anchor: middle; font-family: 'NeoDunggeunmo','VT323',monospace; }
 html[data-theme-family="modern"] .cm-chair-label { fill: var(--m-text-3, #71717a); font-family: var(--m-font, inherit); }
+/* 법안 카드 — 상정(국회 | 국무회의) · 소관 위원회 줄: 이름표와 값을 두 칸으로, 상정 버튼은 붙은 두 칸 */
+.bill-route-grid { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 6px 10px; align-items: center; margin-top: 6px; }
+.bill-route-label { color: #666; font-size: 0.75rem; }
+.bill-route-val { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; min-width: 0; }
+.bill-route-seg { display: inline-flex; }
+.bill-route-btn { font-family: 'NeoDunggeunmo','VT323',monospace; font-size: 0.8rem; padding: 2px 12px; border: 1px solid #333; cursor: pointer; position: relative; }
+.bill-route-seg .bill-route-btn + .bill-route-btn { margin-left: -1px; }
+.bill-route-btn.on { z-index: 1; }
+html[data-theme-family="modern"] .bill-route-label { color: var(--m-text-3, #71717a); }
+html[data-theme-family="modern"] .bill-route-btn { font-family: var(--m-font, inherit); border-radius: 0; padding: 3px 12px; }
+html[data-theme-family="modern"] .bill-route-seg .bill-route-btn:first-child { border-radius: 8px 0 0 8px; }
+html[data-theme-family="modern"] .bill-route-seg .bill-route-btn:last-child { border-radius: 0 8px 8px 0; }
+/* 입법 › 표결 기록 — 원 · 위원회 칩, 고른 곳의 표결 수 요약 */
+.archive-body-filter:empty { display: none; }
+.archive-body-filter .tag-badge.ab-cm { border-style: dashed; }
+.ab-summary { font-size: 0.78rem; color: #888; margin: 2px 0 8px; }
+.ab-summary .y { color: var(--vote-yea); } .ab-summary .n { color: var(--vote-nay); }
+html[data-theme-family="modern"] .ab-summary { color: var(--m-text-3, #71717a); }

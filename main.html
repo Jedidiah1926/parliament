@@ -563,6 +563,7 @@
                     <button class="sub-tab-btn" onclick="switchSubTab('law','vote')" id="subTabVote">표결</button>
                     <button class="sub-tab-btn" onclick="switchSubTab('law','archive')" id="subTabArchive">표결 기록</button>
                     <button class="sub-tab-btn" onclick="switchSubTab('law','lawbook')" id="subTabLawbook">법령</button>
+                    <button class="sub-tab-btn" onclick="switchSubTab('law','constitution')" id="subTabConstitution">헌법</button>
                 </div>
                 <div id="lawPipeline" class="law-pipeline"></div>
 
@@ -769,14 +770,19 @@
                         <input type="text" id="archiveSearchInput" placeholder="기록 검색..." oninput="renderArchiveList('law');">
                         <button onclick="document.getElementById('archiveSearchInput').value=''; renderArchiveList('law');" style="background:transparent;border:1px solid #333;color:#555;padding:4px 8px;font-family:'NeoDunggeunmo','VT323',monospace;cursor:pointer;" title="초기화">✕</button>
                     </div>
+                    <div class="bill-tag-filter archive-body-filter" id="archiveBodyFilter"></div>
                     <div class="bill-tag-filter" id="archiveStatusFilter"></div>
                     <div class="bill-tag-filter" id="archiveTagFilter"></div>
                     <div id="archiveList"></div>
                 </div>
 
-                <!-- 법령 탭: 헌법 + 가결된 법률을 조문 그대로 (js/legis.js) -->
+                <!-- 법령 탭: 가결된 법률을 조문 그대로 (js/legis.js) -->
                 <div id="contentLawbook" class="sub-tab-content">
                     <div id="lawBook"></div>
+                </div>
+                <!-- 헌법 탭: 헌법 조문 · 제정 · 직접 편집 · 개정안 발의 · 개정 이력 (js/legis.js) -->
+                <div id="contentConstitution" class="sub-tab-content">
+                    <div id="constitutionBook"></div>
                 </div>
             </div><!-- end mainContentLaw -->
 

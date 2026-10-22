@@ -347,7 +347,7 @@ function confirmCommitteeVote(billId) {
     bill.committeeVote = { yea, nay, abs, total, required, stances, seats: seats.map(x => x.v) };
     delete bill.committeeSeatVotes;
     if (!bill.voteHistory) bill.voteHistory = [];
-    bill.voteHistory.push({ chamber: 'committee', committeeName: c.name, result, date: bill.voteDate || '', yea, nay, abs, total, required, threshold: 0.5, at: new Date().toISOString() });
+    bill.voteHistory.push({ chamber: 'committee', committeeId: c.id, committeeName: c.name, result, date: bill.voteDate || '', yea, nay, abs, total, required, threshold: 0.5, at: new Date().toISOString() });
     renderCommitteeTab(); renderBillList(); renderArchiveList(); syncBillSelect();
     if (typeof showKbdToast === 'function') showKbdToast(result === 'pass' ? `✔ ${c.name} 통과 — 본회의에 올릴 수 있어요` : `✘ ${c.name}에서 부결 — 폐기`);
 }
@@ -500,7 +500,7 @@ function renderCommitteeTab() {
     box.querySelectorAll('.cm-vote').forEach(v => committeeVoteBind(v.id.replace(/^cmVote-/, '')));
 }
 
-// ── 헌법 · 법령집 ────────────────────────────
+// ── 헌법 · 법령집 (입법 › 법령 · 입법 › 헌법) ────────────────────────────
 // 가결된 헌법 개정안을 헌법에 반영 (한 번만). 표결 · 서명으로 상태가 바뀔 때마다(기록 목록을 그릴 때) 확인한다
 function legisApplyEnactments() {
     bills.forEach(b => {
@@ -543,42 +543,6 @@ function renderLawBookTab() {
     const box = document.getElementById('lawBook');
     if (!box) return;
     legisApplyEnactments();
-    // 헌법
-    let consHtml;
-    if (constitutionEditing) {
-        consHtml = `
-            <div class="vote-panel lb-cons">
-                <div class="vote-panel-title"><span class="tno-prompt">&gt; </span>${constitution ? '헌법 직접 편집' : '헌법 제정'}</div>
-                <input type="text" id="consTitleInput" class="vote-bill-input" placeholder="이름 (예: 대한민국헌법)" value="${legisEsc(constitution?.title || legisUiText('헌법'))}" style="margin-bottom:6px;">
-                <textarea id="consPreambleInput" class="art-text" rows="2" placeholder="전문 (선택)">${legisEsc(constitution?.preamble || '')}</textarea>
-                <div id="consArticles"></div>
-                <div class="lb-btns">
-                    <button class="add-btn" onclick="saveConstitutionEdit()">[✔] 저장</button>
-                    <button class="add-btn" onclick="constitutionEditing=false; renderLawBookTab();">취소</button>
-                </div>
-                <div class="cm-note">직접 편집은 표결 없이 바로 바뀝니다 (처음 헌법을 만들 때 · 고칠 때). 표결을 거치려면 "개정안 발의"를 쓰세요.</div>
-            </div>`;
-    } else if (constitution) {
-        const revs = constitution.revisions || [];
-        consHtml = `
-            <div class="vote-panel lb-cons">
-                <div class="lb-cons-head">
-                    <div class="lb-cons-title">${legisEsc(constitution.title || '헌법')}</div>
-                    <div class="lb-btns">
-                        <button class="bill-amend-btn" onclick="legisProposeConstitutionAmendment()">📝 개정안 발의</button>
-                        <button class="bill-select-btn" onclick="constitutionEditing=true; renderLawBookTab();">✎ 직접 편집</button>
-                    </div>
-                </div>
-                ${constitution.preamble ? `<div class="lb-preamble" translate="no">${legisEsc(constitution.preamble)}</div>` : ''}
-                ${articlesHtml(constitution.articles) || '<div class="cm-note">조문이 없습니다.</div>'}
-                <div class="lb-revs">${revs.length ? `개정 ${revs.length}회 — ${revs.map((r, i) => `#${i + 1}${r.date ? ` (${legisEsc(r.date)})` : ''}`).join(' · ')}` : '개정 이력 없음'}</div>
-            </div>`;
-    } else {
-        consHtml = `
-            <div class="vote-panel lb-cons cm-empty">아직 헌법이 없습니다.
-                <div class="cm-empty-btns"><button class="add-btn" onclick="constitutionEditing=true; renderLawBookTab();">헌법 제정하기</button></div>
-            </div>`;
-    }
     // 법률
     const q = lawBookQuery.trim().toLowerCase();
     const entries = lawBookEntries().filter(e => !q || e.latest.title.toLowerCase().includes(q) || (e.latest.content || '').toLowerCase().includes(q) || (e.latest.tags || []).some(t => String(t).toLowerCase().includes(q)));
@@ -593,11 +557,52 @@ function renderLawBookTab() {
             </div>
         </div>`).join('') : `<div class="cm-note">${q ? '검색 결과가 없습니다.' : '아직 가결된 법률이 없습니다. 의회에서 가결된 법률안이 조문 그대로 여기에 모여요.'}</div>`;
     box.innerHTML = `
-        <div class="lb-section-title">헌법</div>
-        ${consHtml}
         <div class="lb-section-title">법률 <span class="lb-count">${lawBookEntries().length}</span></div>
         <div class="bill-search-bar"><input type="text" placeholder="법률 검색..." value="${legisEsc(lawBookQuery)}" oninput="lawBookQuery=this.value; renderLawBookTab(); const i=document.querySelector('#lawBook .bill-search-bar input'); if(i){i.focus(); i.setSelectionRange(i.value.length,i.value.length);}"></div>
         ${lawsHtml}`;
+}
+// 헌법 탭 — 헌법 조문 · 제정 · 직접 편집 · 개정안 발의 · 개정 이력
+function renderConstitutionTab() {
+    const box = document.getElementById('constitutionBook');
+    if (!box) return;
+    legisApplyEnactments();
+    // 헌법
+    let consHtml;
+    if (constitutionEditing) {
+        consHtml = `
+            <div class="vote-panel lb-cons">
+                <div class="vote-panel-title"><span class="tno-prompt">&gt; </span>${constitution ? '헌법 직접 편집' : '헌법 제정'}</div>
+                <input type="text" id="consTitleInput" class="vote-bill-input" placeholder="이름 (예: 대한민국헌법)" value="${legisEsc(constitution?.title || legisUiText('헌법'))}" style="margin-bottom:6px;">
+                <textarea id="consPreambleInput" class="art-text" rows="2" placeholder="전문 (선택)">${legisEsc(constitution?.preamble || '')}</textarea>
+                <div id="consArticles"></div>
+                <div class="lb-btns">
+                    <button class="add-btn" onclick="saveConstitutionEdit()">[✔] 저장</button>
+                    <button class="add-btn" onclick="constitutionEditing=false; renderConstitutionTab();">취소</button>
+                </div>
+                <div class="cm-note">직접 편집은 표결 없이 바로 바뀝니다 (처음 헌법을 만들 때 · 고칠 때). 표결을 거치려면 "개정안 발의"를 쓰세요.</div>
+            </div>`;
+    } else if (constitution) {
+        const revs = constitution.revisions || [];
+        consHtml = `
+            <div class="vote-panel lb-cons">
+                <div class="lb-cons-head">
+                    <div class="lb-cons-title">${legisEsc(constitution.title || '헌법')}</div>
+                    <div class="lb-btns">
+                        <button class="bill-amend-btn" onclick="legisProposeConstitutionAmendment()">📝 개정안 발의</button>
+                        <button class="bill-select-btn" onclick="constitutionEditing=true; renderConstitutionTab();">✎ 직접 편집</button>
+                    </div>
+                </div>
+                ${constitution.preamble ? `<div class="lb-preamble" translate="no">${legisEsc(constitution.preamble)}</div>` : ''}
+                ${articlesHtml(constitution.articles) || '<div class="cm-note">조문이 없습니다.</div>'}
+                <div class="lb-revs">${revs.length ? `개정 ${revs.length}회 — ${revs.map((r, i) => `#${i + 1}${r.date ? ` (${legisEsc(r.date)})` : ''}`).join(' · ')}` : '개정 이력 없음'}</div>
+            </div>`;
+    } else {
+        consHtml = `
+            <div class="vote-panel lb-cons cm-empty">아직 헌법이 없습니다.
+                <div class="cm-empty-btns"><button class="add-btn" onclick="constitutionEditing=true; renderConstitutionTab();">헌법 제정하기</button></div>
+            </div>`;
+    }
+    box.innerHTML = consHtml;
     if (constitutionEditing) legisRenderArticleEditor('consArticles', constitution ? constitution.articles : []);
 }
 function saveConstitutionEdit() {
@@ -607,7 +612,70 @@ function saveConstitutionEdit() {
     if (!articles.length && !preamble) { showCustomAlert('조문을 하나 이상 적어 주세요.'); return; }
     constitution = { title, preamble, articles, revisions: constitution?.revisions || [] };
     constitutionEditing = false;
-    renderLawBookTab();
+    renderConstitutionTab();
+}
+
+// ── 입법 › 표결 기록 — 원 · 위원회마다 (선거 › 선거 기록의 종류 칩처럼) ──
+// 칩을 고르면 그 원의 본회의 표결 · 그 위원회의 심사를 하나씩 최근 순으로 (심사 중인 법안의 위원회 심사도), 안 고르면 끝난 법안 목록
+let archiveBody = null; // null | 'house' | 'senate' | 'third' | 'cm:<위원회 id>' | 'cmn:<이름>'(지운 위원회)
+function voteBodyKey(h) {
+    if (!h || h.result === 'skip') return null;
+    if (h.chamber === 'committee') {
+        if (h.committeeId && committeeById(h.committeeId)) return 'cm:' + h.committeeId;
+        const c = committees.find(x => x.name === h.committeeName);
+        return c ? 'cm:' + c.id : 'cmn:' + (h.committeeName || '상임위원회');
+    }
+    return ['house', 'senate', 'third'].includes(h.chamber) ? h.chamber : null;
+}
+function legisVoteEvents() {
+    const out = [];
+    bills.forEach(b => (b.voteHistory || []).forEach(h => { const key = voteBodyKey(h); if (key) out.push({ bill: b, h, key }); }));
+    return out.sort((x, y) => String(y.h.at || '').localeCompare(String(x.h.at || '')));
+}
+function archiveBodies(events) {
+    const n = k => events.filter(e => e.key === k).length;
+    const list = (typeof chamberList === 'function' ? chamberList() : ['house']).map(ch => ({ key: ch, label: voteChamberLabel(ch), n: n(ch), committee: false }));
+    committees.forEach(c => list.push({ key: 'cm:' + c.id, label: c.name, n: n('cm:' + c.id), committee: true }));
+    [...new Set(events.filter(e => e.key.startsWith('cmn:')).map(e => e.key))].forEach(k => list.push({ key: k, label: k.slice(4), n: n(k), committee: true }));
+    return list;
+}
+function toggleArchiveBody(key) {
+    archiveBody = archiveBody === key ? null : key;
+    renderArchiveList('law');
+}
+function renderArchiveBodyFilter() {
+    const el = document.getElementById('archiveBodyFilter');
+    if (!el) return;
+    const bodies = archiveBodies(legisVoteEvents());
+    if (archiveBody && !bodies.some(b => b.key === archiveBody)) archiveBody = null;
+    const chip = b => `<span class="tag-badge${archiveBody === b.key ? ' active' : ''}${b.committee ? ' ab-cm' : ''}" data-body="${legisEsc(b.key)}">${b.committee ? '⚖ ' : ''}${legisEsc(b.label)}<span style="opacity:.7;margin-left:5px;">${b.n}</span></span>`;
+    el.innerHTML = bodies.map(chip).join('');
+    el.querySelectorAll('[data-body]').forEach(x => { x.onclick = () => toggleArchiveBody(x.dataset.body); });
+}
+function renderArchiveBodyList(container, sc, query, activeTag) {
+    const events = legisVoteEvents().filter(e => e.key === archiveBody);
+    const statusEl = document.getElementById('archiveStatusFilter');
+    if (statusEl) statusEl.innerHTML = '';
+    const evBills = [...new Set(events.map(e => e.bill))];
+    renderTagFilter(sc.tags, getAllTags(evBills), activeTag, t => { sc.set('tag', sc.get().tag === t ? null : t); renderArchiveList('law'); });
+    const isCm = archiveBody.startsWith('cm');
+    if (!events.length) {
+        container.innerHTML = `<div style="color:#333; text-align:center; padding:20px; border:1px dashed #222;">${isCm ? '이 위원회의 심사 기록이 없습니다' : '이 원의 표결 기록이 없습니다'}</div>`;
+        return;
+    }
+    const shown = events.filter(e => billMatchesFilter(e.bill, query, activeTag));
+    if (!shown.length) {
+        container.innerHTML = '<div style="color:#444; text-align:center; padding:16px; border:1px dashed #222;">검색 결과가 없습니다</div>';
+        return;
+    }
+    const pass = shown.filter(e => e.h.result === 'pass').length;
+    container.innerHTML = `<div class="ab-summary">${isCm ? '심사' : '표결'} ${shown.length}건 · <span class="y">가결 ${pass}</span> · <span class="n">부결 ${shown.length - pass}</span></div>` + shown.map(e => `
+        <div class="bill-card" style="border-left-color:${e.h.result === 'pass' ? 'var(--vote-yea)' : 'var(--vote-nay)'};">
+            <div class="bill-card-title">${legisEsc(e.bill.title)}${(e.bill.version || 1) > 1 ? ` <span class="bill-version-badge">제${e.bill.version}판</span>` : ''}</div>
+            <div style="margin-top:4px;">${buildTagHtml(e.bill)}</div>
+            ${voteHistoryRowHtml(e.h)}
+            <div class="bill-card-footer">${buildBillBadges(e.bill)}</div>
+        </div>`).join('');
 }
 
 // ── 입법 단계 막대 (입법 메뉴 맨 위) — 제출 → 위원회 → 본회의 → 서명 → 법령, 단계마다 법안 수 · 누르면 그 탭으로 ──
@@ -619,7 +687,7 @@ function renderLawPipeline() {
     const inCommittee = pending.filter(b => legisPlenaryBlock(b)).length;
     const plenary = pending.length - inCommittee;
     const awaiting = parl.filter(b => getBillOverallStatus(b) === 'awaiting_veto').length;
-    const laws = lawBookEntries().length + (constitution ? 1 : 0);
+    const laws = lawBookEntries().length;
     const cur = (typeof currentSubTab !== 'undefined' && currentSubTab.law) || 'bill';
     const steps = [
         ['bill', '제출', null],
@@ -642,5 +710,6 @@ function legisSetState(leg) {
         : null;
     constitutionEditing = false;
     lawBookQuery = '';
+    archiveBody = null;
     refreshBillTagPickers(); // 불러온 위원회의 소관 태그로
 }
