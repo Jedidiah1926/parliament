@@ -4167,6 +4167,46 @@ window.DnoLangPacks.en = {
    ", to use real map-shaped districts instead of the grid."
   ],
   [
+   "태그 빼기",
+   "Remove tag"
+  ],
+  [
+   "새 태그",
+   "New tag"
+  ],
+  [
+   "태그 더하기 (Enter)",
+   "Add a tag (Enter)"
+  ],
+  [
+   "태그 — 아래에서 고르거나 새로 입력 (Enter · 쉼표)",
+   "Tags — pick below or type a new one (Enter · comma)"
+  ],
+  [
+   "위원회 소관 태그",
+   "Committee tags"
+  ],
+  [
+   "누르면 붙고, 태그가 겹치는 위원회가 심사해요",
+   "click to add; the committee whose tags match reviews the bill"
+  ],
+  [
+   "상임위원회가 없어요 — 입법 › 위원회에서 만들면 소관 태그를 골라 붙일 수 있어요",
+   "No standing committees yet — create them in Legislation › Committees to pick their tags here"
+  ],
+  [
+   "다른 법안에서 쓴 태그",
+   "Tags used on other bills"
+  ],
+  [
+   "소관 위원회",
+   "Committee"
+  ],
+  [
+   "소관 태그와 겹치지 않아 위원회 심사 없이 본회의로",
+   "No committee tag matches — goes straight to the floor"
+  ],
+  [
    "🗺 맵 프리셋에서 고르기",
    "🗺 Pick a map preset"
   ],

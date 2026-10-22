@@ -274,7 +274,71 @@ function removeCommittee(id) {
     });
 }
 
+// ── 법안 태그 고르기 ───────────────────────────
+// 원래 입력 칸(#newBillTags · #editBillTags, 쉼표로 구분)은 숨겨 두고 값의 원본으로 그대로 쓴다 — 법안 추가 · 수정 코드는 지금처럼 .value를 읽고 쓴다.
+// 그 자리에 고른 태그 칩(×로 빼기) · 새 태그 칸(Enter · 쉼표로 더하기) · 위원회 소관 태그(눌러서 붙이기) · 다른 법안에서 쓴 태그를 그린다.
+const BILL_TAG_INPUTS = ['newBillTags', 'editBillTags'];
+const billTagList = v => String(v || '').split(',').map(t => t.trim()).filter(Boolean);
+function initBillTagPicker(id) {
+    const input = document.getElementById(id);
+    if (!input || input.dataset.tagPicker) return;
+    input.dataset.tagPicker = '1';
+    input.type = 'hidden';
+    const box = document.createElement('div');
+    box.className = 'bill-tag-picker'; box.id = id + 'Picker';
+    input.insertAdjacentElement('afterend', box);
+    // 코드가 .value를 바꿔도(개정안 발의 · 수정할 법안 불러오기 · 추가 뒤 비우기) 칩이 따라오게
+    const desc = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value');
+    Object.defineProperty(input, 'value', { configurable: true, get() { return desc.get.call(this); }, set(v) { desc.set.call(this, v); renderBillTagPicker(id); } });
+    renderBillTagPicker(id);
+}
+function setBillTags(id, list) {
+    const input = document.getElementById(id);
+    if (!input) return;
+    const uniq = [];
+    list.forEach(t => { t = String(t).replace(/,/g, ' ').trim(); if (t && !uniq.includes(t)) uniq.push(t); });
+    input.value = uniq.join(', ');
+}
+function refreshBillTagPickers() { BILL_TAG_INPUTS.forEach(id => { if (document.getElementById(id + 'Picker')) renderBillTagPicker(id); }); }
+function renderBillTagPicker(id) {
+    const input = document.getElementById(id), box = document.getElementById(id + 'Picker');
+    if (!input || !box) return;
+    const T = legisUiText;
+    const tags = billTagList(input.value);
+    const old = box.querySelector('.btp-new');
+    const draft = old ? old.value : '', hadFocus = old && document.activeElement === old;
+    const cms = (typeof committees !== 'undefined' ? committees : []).filter(c => (c.tags || []).length);
+    const cmTags = new Set(cms.flatMap(c => c.tags));
+    // 다른 법안에서 쓴 태그 (소관 태그 말고) — 많이 쓴 순
+    const used = new Map();
+    (typeof bills !== 'undefined' ? bills : []).forEach(b => (b.tags || []).forEach(t => { if (!cmTags.has(t)) used.set(t, (used.get(t) || 0) + 1); }));
+    const others = [...used].sort((a, b) => b[1] - a[1]).slice(0, 14).map(x => x[0]);
+    const opt = t => `<button type="button" class="btp-opt${tags.includes(t) ? ' on' : ''}" data-add="${legisEsc(t)}" aria-pressed="${tags.includes(t)}">${tags.includes(t) ? '✓' : '+'} ${legisEsc(t)}</button>`;
+    const council = typeof isCouncilVotingMode === 'function' && isCouncilVotingMode();
+    const sug = id === 'newBillTags' && !council && tags.length && cms.length ? suggestCommitteeFor({ tags }) : undefined;
+    box.innerHTML = `
+        <div class="btp-row">${tags.map(t => `<span class="btp-chip"># ${legisEsc(t)}<button type="button" data-del="${legisEsc(t)}" aria-label="${legisEsc(T('태그 빼기'))}">×</button></span>`).join('')}<input type="text" class="btp-new" value="${legisEsc(draft)}" placeholder="${legisEsc(T(tags.length ? '태그 더하기 (Enter)' : '태그 — 아래에서 고르거나 새로 입력 (Enter · 쉼표)'))}" aria-label="${legisEsc(T('새 태그'))}"></div>
+        ${cms.length ? `<div class="btp-sec"><div class="btp-h">${legisEsc(T('위원회 소관 태그'))} <span>— ${legisEsc(T('누르면 붙고, 태그가 겹치는 위원회가 심사해요'))}</span></div>
+            ${cms.map(c => `<div class="btp-cm"><span class="btp-cm-name">${legisEsc(c.name)}</span>${c.tags.map(opt).join('')}</div>`).join('')}</div>`
+            : `<div class="btp-hint">${legisEsc(T('상임위원회가 없어요 — 입법 › 위원회에서 만들면 소관 태그를 골라 붙일 수 있어요'))}</div>`}
+        ${others.length ? `<div class="btp-sec"><div class="btp-h">${legisEsc(T('다른 법안에서 쓴 태그'))}</div><div class="btp-cm">${others.map(opt).join('')}</div></div>` : ''}
+        ${sug !== undefined ? `<div class="btp-hint btp-route">${sug ? `→ ${legisEsc(T('소관 위원회'))}: <b>${legisEsc(sug.name)}</b>` : `→ ${legisEsc(T('소관 태그와 겹치지 않아 위원회 심사 없이 본회의로'))}`}</div>` : ''}`;
+    const nw = box.querySelector('.btp-new');
+    const commit = () => { const add = billTagList(nw.value.replace(/[，、]/g, ',')); if (!add.length) return false; nw.value = ''; setBillTags(id, tags.concat(add)); return true; };
+    nw.addEventListener('keydown', e => {
+        if (e.isComposing) return; // 한글 조합 중에는 Enter를 넘김
+        if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); commit(); box.querySelector('.btp-new').focus(); }
+        else if (e.key === 'Backspace' && !nw.value && tags.length) { e.preventDefault(); setBillTags(id, tags.slice(0, -1)); box.querySelector('.btp-new').focus(); }
+    });
+    nw.addEventListener('blur', () => { if (nw.value.trim()) commit(); }); // 입력하다 "법안 추가"를 눌러도 들어가게
+    box.querySelectorAll('[data-del]').forEach(b => { b.onclick = () => setBillTags(id, tags.filter(t => t !== b.dataset.del)); });
+    box.querySelectorAll('[data-add]').forEach(b => { b.onclick = () => { const t = b.dataset.add; setBillTags(id, tags.includes(t) ? tags.filter(x => x !== t) : tags.concat(t)); }; });
+    if (hadFocus) { nw.focus(); nw.setSelectionRange(nw.value.length, nw.value.length); }
+}
+BILL_TAG_INPUTS.forEach(initBillTagPicker);
+
 function renderCommitteeTab() {
+    refreshBillTagPickers(); // 위원회 소관 태그가 바뀌면 법안 태그 고르기 목록도
     const box = document.getElementById('committeeList');
     if (!box) return;
     const chambers = typeof chamberList === 'function' ? chamberList() : ['house'];
@@ -470,4 +534,5 @@ function legisSetState(leg) {
         : null;
     constitutionEditing = false;
     lawBookQuery = '';
+    refreshBillTagPickers(); // 불러온 위원회의 소관 태그로
 }
