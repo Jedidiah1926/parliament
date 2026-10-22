@@ -7,7 +7,7 @@
     const KEY = 'hemicycleDevMode';
     const CODE_HASH = '22zsze7nlqm';
     const TEASERS = [
-        { id: '61', file: 'teaser61.html', title: 'Teaser 1.6.1', note: '국가 › 사람 — 인물 · 자리 배정 · 지역구 후보' },
+        { id: '61', file: 'teaser61.html', title: 'Teaser 1.6.1', note: '본 게임에 통합됨 — 예전 1.6.1 미리보기 세이브용' },
         { id: '62', file: 'teaser62.html', title: 'Teaser 1.6.2', note: '쿠데타 · 군정 · 군부 설정 (+1.6.1)' },
         { id: '63', file: 'teaser63.html', title: 'Teaser 1.6.3', note: '혁명 · 당-국가 체제 · 선거인단 (+1.6.1 · 1.6.2)' },
         { id: '64', file: 'teaser64.html', title: 'Teaser 1.6.4', note: '국회공성전 — 봉쇄 돌파 · 의장석 점거 (+1.6.1 ~ 1.6.3)' },
@@ -34,15 +34,17 @@
     function safeSet(k, v) { try { localStorage.setItem(k, v); return true; } catch (e) { return false; } }
     function safeDel(k) { try { localStorage.removeItem(k); } catch (e) { /* 저장 공간을 쓸 수 없는 환경 */ } }
 
-    const isOn = () => safeGet(KEY) === CODE_HASH;
+    // Steam 데모 빌드(tools/build-demo.js가 window.HEMI_BUILD.demo를 켬)에는 미리보기 화면이 없으므로 개발자 모드도 없음
+    const DEMO = !!(window.HEMI_BUILD && window.HEMI_BUILD.demo);
+    const isOn = () => !DEMO && safeGet(KEY) === CODE_HASH;
     // 코드가 맞으면 켜고 true — 대소문자 · 앞뒤 공백은 따지지 않는다 (휴대폰 자동 대문자 대비)
     function unlock(code) {
-        if (hash(String(code || '').trim().toLowerCase()) !== CODE_HASH) return false;
+        if (DEMO || hash(String(code || '').trim().toLowerCase()) !== CODE_HASH) return false;
         return safeSet(KEY, CODE_HASH);
     }
     function lock() { safeDel(KEY); }
 
-    window.HemiDev = { isOn, unlock, lock, teasers: TEASERS.slice() };
+    window.HemiDev = { isOn, unlock, lock, demo: DEMO, teasers: DEMO ? [] : TEASERS.slice() };
 
     // 티저 페이지 잠금 — 개발자 모드가 아니면 설정 › 기타 설정으로
     const root = document.documentElement;

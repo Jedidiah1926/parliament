@@ -1,4 +1,5 @@
-// ===== Teaser 1.6.1 — 인간은 자유롭게 태어났다 "L'homme est né libre." =====
+// ===== 1.6.1 — 인간은 자유롭게 태어났다 "L'homme est né libre." (사람 · 시민 · 이민자) =====
+// 1.6.1 미리보기(teaser61)에서 본 게임으로 옮겨 왔다 — 본 게임 · 모든 미리보기 화면에서 돈다 (로고 제작 화면만 빼고).
 // 국가 › 사람 탭: 인물을 미리 만들어 두고(이름 · 사진 · 이념 · 소속 정당 · 파벌), 의석 · 당직 · 내각 자리에 배정한다.
 //  - 자리(지역구 · 비례 · 무소속 의원, 당수 · 원내대표, 대통령 · 총리 · 부총리 · 내각 구성원)에는 personId를 붙여 연결하고,
 //    인물의 이름 · 사진을 고치면 연결된 모든 자리에 반영한다.
@@ -17,7 +18,7 @@
 (function () {
     'use strict';
     const root = document.documentElement;
-    if (root.getAttribute('data-app-mode') !== 'teaser' || !['61', '62', '63', '64', '65', '66', '67', '68', '69'].includes(root.getAttribute('data-teaser'))) return;
+    if (root.getAttribute('data-app-mode') === 'logo') return;
 
     const esc = s => (typeof escapeHtmlText === 'function' ? escapeHtmlText(String(s ?? '')) : String(s ?? ''));
     const uid = () => 'h' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
@@ -27,7 +28,7 @@
     const chs = () => (typeof chamberList === 'function' ? chamberList() : ['house']);
     const chName = ch => (typeof chamberDisplayName === 'function' ? chamberDisplayName(ch) : ch);
 
-    // ---- 상태 (세이브의 teaser61 칸) ----
+    // ---- 상태 (세이브의 people 칸 — 1.6.1 미리보기 세이브는 teaser61 칸) ----
     //   people: [{ id, name, photo, ideologyId, partyId, factionId, bio }]
     //   candidates: { [chamber]: { [지역구 키]: [personId] } }
     //   lastElection: { date, chamber, elected: [{ personId, place }], lost: [{ personId, place }] } | null
@@ -41,13 +42,13 @@
     const origGet = window.getAppState;
     window.getAppState = function () {
         const st = origGet.apply(this, arguments);
-        if (st && typeof st === 'object') st.teaser61 = JSON.parse(JSON.stringify(S));
+        if (st && typeof st === 'object') st.people = JSON.parse(JSON.stringify(S));
         return st;
     };
     const origSet = window.setAppState;
     window.setAppState = function (state) {
         const r = origSet.apply(this, arguments);
-        const src = state && state.teaser61;
+        const src = state && (state.people || state.teaser61);
         S = { ...fresh(), ...(src && typeof src === 'object' ? JSON.parse(JSON.stringify(src)) : {}) };
         if (!Array.isArray(S.people)) S.people = [];
         if (!S.candidates || typeof S.candidates !== 'object') S.candidates = {};

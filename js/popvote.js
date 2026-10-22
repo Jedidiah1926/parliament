@@ -44,7 +44,7 @@
         return Number.isFinite(v) && v > 0 ? v : null;
     }
     function nameOf(ch, key) { return districtNames[ch]?.[key] || districtNames.house?.[key] || key; }
-    // 시민 · 이민자(1.6.1 티저 미리보기 — js/teaser61.js): 유권자 = 시민 + (그 선거에 투표권이 있으면) 이민자, 이민자 성향도 섞는다
+    // 시민 · 이민자(1.6.1 — js/people.js): 유권자 = 시민 + (그 선거에 투표권이 있으면) 이민자, 이민자 성향도 섞는다
     const voterPop = (ch, key, kind, pop) => (window.HemiVoters ? window.HemiVoters.electorate(ch, key, kind, pop) : pop);
     const voterShares = (ch, key, kind, shares) => (window.HemiVoters ? window.HemiVoters.shares(ch, key, kind, shares) : shares);
 

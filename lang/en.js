@@ -22,6 +22,16 @@ window.DnoLangPacks.en = {
  ],
  "ordinal": "en",
  "patterns": [
+  {"re": " — 지금: (.+)$", "to": " — now: $1"},
+  {"re": "^(.+) (\\d+)번$", "to": "$1 #$2"},
+  {"re": "(\\S.*) 자리에 있던 (.+)은\\(는\\) 자리에서 물러났습니다 \\(사람 탭에는 그대로 남아요\\)\\.", "to": "$2 stepped down from $1 (they stay in the People tab)."},
+  {"re": "인물 (\\d+)명을 새로 만들고, 자리 (\\d+)곳을 사람 탭의 인물과 연결했습니다\\.", "to": "Created $1 new people and linked $2 posts to people in the People tab."},
+  {"re": "이민자 ([\\d,]+)명", "to": "$1 migrants"},
+  {"re": "이민자 ([\\d,]+)", "to": "Migrants $1"},
+  {"re": "^이민자 투표권: (.+) — 지역구별 시민 수는 국가 › 지역$", "to": "Migrant voting: $1 — citizens per district are set in Nation › Districts"},
+  {"re": "^합 ([\\d.]+)%", "to": "Total $1%"},
+  {"re": "^✔ 당선 · 배정: ", "to": "✔ Elected · assigned: "},
+  {"re": "^✘ 낙선: ", "to": "✘ Lost: "},
   {"re": "^합계 ([\\d.]+)%$", "to": "Total $1%"},
   {"re": "^✔ (\\d+)개 받음 — 다시 받기$", "to": "✔ $1 downloaded — download again"},
   {"re": "^\\((\\d+)개\\)$", "to": "($1)"},
@@ -666,6 +676,38 @@ window.DnoLangPacks.en = {
   }
  ],
  "dict": [
+  ["소속 정당", "Party"],
+  ["사람 지우기", "Delete person"],
+  ["인물을 미리 만들어 두고 의석 · 당직 · 내각 자리에 배정합니다. 이름 · 사진을 여기서 고치면 배정된 모든 자리에 반영되고, 선거 · 당적 변경 · 궐석으로 자리가 사라져도 인물은 남아요.", "Create people in advance and assign them to seats, party posts and cabinet posts. Editing a name or photo here updates every post they hold, and people stay here even when an election, a party switch or a vacancy takes their post away."],
+  ["＋ 사람 추가", "＋ Add person"],
+  ["의원 · 내각에서 가져오기", "Import from members · cabinet"],
+  ["자리 있음", "With a post"],
+  ["자리 없음", "Without a post"],
+  ["지역구 후보", "District candidates"],
+  ["조건에 맞는 사람이 없습니다.", "No one matches."],
+  ["아직 사람이 없습니다. \"＋ 사람 추가\"로 만들거나, \"의원 · 내각에서 가져오기\"로 지금 자리에 적힌 이름을 인물로 옮겨 보세요.", "No people yet. Create one with \"＋ Add person\", or use \"Import from members · cabinet\" to turn the names already written in posts into people."],
+  ["이름이 적힌 자리가 없습니다 — 의원 · 당수 · 내각 자리에 이름을 적거나, 여기서 사람을 직접 추가하세요.", "No post has a name written in it — write names into member, leader or cabinet posts, or add people here directly."],
+  ["— 사람 탭에 남아 다음 선거에 다시 나갈 수 있어요", "— they stay in the People tab and can run again next election"],
+  ["— 이념 없음 —", "— No ideology —"],
+  ["＋ 자리 배정…", "＋ Assign post…"],
+  ["새 내각 구성원 자리로 추가", "Add as a new cabinet member post"],
+  ["＋ 지역구 후보로…", "＋ Make district candidate…"],
+  ["집단지도체제 의장", "Collective leadership chair"],
+  ["부총리", "Deputy PM"],
+  ["당직", "Party posts"],
+  ["지역구 인구가 없습니다 — 국가 › 지역에서 지역구마다 \"시민 / 인구\"를 적으세요.", "No district population — enter \"citizens / population\" for each district in Nation › Districts."],
+  ["— 아직 이민자가 없습니다 (국가 › 지역에서 시민 수를 인구보다 적게 적으세요)", "— no migrants yet (in Nation › Districts, enter fewer citizens than the population)"],
+  ["(비율로 나눔)", "(split proportionally)"],
+  ["— 이민자가 투표하는 선거에서 지역구마다 시민 · 이민자 수만큼 섞어 개표합니다 (총선 비례 · 대선은 전국 시민 · 이민자 수로).", "— in elections where migrants vote, each district's count blends citizens and migrants by their numbers (national totals for list seats and presidential races)."],
+  ["끄면 이민자도 그 지역 시민과 같은 성향으로 투표합니다 — 총선 · 대선 결과는 그대로, 지방선거 · 국민투표의 유권자 · 투표자 수만 바뀝니다.", "When off, migrants vote with the same lean as the local citizens — general and presidential results stay the same; only the electorate and turnout of local elections and referendums change."],
+  ["시민권자 수 — 인구를 먼저 적으세요", "Citizens — enter the population first"],
+  ["의장석 표시", "Speaker podium"],
+  ["항상 표시", "Always show"],
+  ["표시 안 함", "Hide"],
+  ["애니메이션에서만", "Animations only"],
+  ["의장석 점거 때만", "Podium occupation only"],
+  ["반원 가운데(의석 수 · 로고 위)에 의장석(단상과 의장)을 그립니다.", "Draws the speaker's podium (dais and speaker) at the centre of the hemicycle, above the seat count or logo."],
+  ["반원 가운데에 의장석(단상과 의장)을 그립니다. \"항상 표시\"면 반원 화면에도 늘 보이고, 봉쇄 돌파 · 의장석 점거 애니메이션에도 나옵니다.", "Draws the speaker's podium (dais and speaker) at the centre of the hemicycle. With \"Always show\" it stays on the hemicycle and also appears in the blockade-breaking and podium-occupation animations."],
   [
    "메인 메뉴",
    "Main menu"
@@ -4153,6 +4195,134 @@ window.DnoLangPacks.en = {
   [
    "에서 내보낸 .jsx 파일을 업로드하면, 그리드 대신 실제 지도 모양으로 지역구를 만들 수 있습니다.",
    " — upload a .jsx file exported from it to use real map-shaped districts instead of the grid."
+  ],
+  [
+   "에서 내보낸 .jsx 파일을 업로드하거나, ",
+   " — upload a .jsx file exported from it, or pick a country map from "
+  ],
+  [
+   "맵 프리셋",
+   "Map presets"
+  ],
+  [
+   "에서 나라 지도를 고르면 그리드 대신 실제 지도 모양으로 지역구를 만들 수 있습니다.",
+   ", to use real map-shaped districts instead of the grid."
+  ],
+  [
+   "태그 빼기",
+   "Remove tag"
+  ],
+  [
+   "새 태그",
+   "New tag"
+  ],
+  [
+   "태그 더하기 (Enter)",
+   "Add a tag (Enter)"
+  ],
+  [
+   "태그 — 아래에서 고르거나 새로 입력 (Enter · 쉼표)",
+   "Tags — pick below or type a new one (Enter · comma)"
+  ],
+  [
+   "위원회 소관 태그",
+   "Committee tags"
+  ],
+  [
+   "누르면 붙고, 태그가 겹치는 위원회가 심사해요",
+   "click to add; the committee whose tags match reviews the bill"
+  ],
+  [
+   "상임위원회가 없어요 — 입법 › 위원회에서 만들면 소관 태그를 골라 붙일 수 있어요",
+   "No standing committees yet — create them in Legislation › Committees to pick their tags here"
+  ],
+  [
+   "다른 법안에서 쓴 태그",
+   "Tags used on other bills"
+  ],
+  [
+   "소관 위원회",
+   "Committee"
+  ],
+  [
+   "소관 태그와 겹치지 않아 위원회 심사 없이 본회의로",
+   "No committee tag matches — goes straight to the floor"
+  ],
+  [
+   "— 기권",
+   "— Abstain"
+  ],
+  [
+   "의석을 누르거나 끌어서 표를 바꿔요",
+   "Click or drag across seats to change votes"
+  ],
+  [
+   "통과 예상",
+   "Expected to pass"
+  ],
+  [
+   "부결 예상",
+   "Expected to fail"
+  ],
+  [
+   "🗺 맵 프리셋에서 고르기",
+   "🗺 Pick a map preset"
+  ],
+  [
+   "나라를 고르면 그 나라의 행정구역이 지역구 지도가 됩니다. 고른 뒤 지역구를 눌러 의석 수 · 인구 · 성향을 정하세요.",
+   "Pick a country and its administrative divisions become your district map. Then click a district to set seats, population and leanings."
+  ],
+  [
+   "지도를 불러오는 중…",
+   "Loading maps…"
+  ],
+  [
+   "지도를 불러오지 못했습니다.",
+   "Could not load the maps."
+  ],
+  [
+   "지도 자료: Natural Earth (공개 도메인)",
+   "Map data: Natural Earth (public domain)"
+  ],
+  [
+   "🔒 정식판",
+   "🔒 Full game"
+  ],
+  [
+   "정식판에서 열립니다",
+   "Available in the full game"
+  ],
+  [
+   "STEAM DEMO · 체험판",
+   "STEAM DEMO"
+  ],
+  [
+   "체험판",
+   "Demo"
+  ],
+  [
+   "🔒 정식판에서 — 체험판은 국가 › 지역의 맵 프리셋으로",
+   "🔒 Full game only — the demo uses map presets in Nation › Territory"
+  ],
+  [
+   "맵 메이커는 정식판에서 쓸 수 있어요.\n체험판에서는 국가 › 지역의 \"맵 프리셋에서 고르기\"로 나라 지도를 골라 지역구를 만들 수 있습니다.",
+   "The Map Maker is available in the full game.\nIn the demo, use \"Pick a map preset\" in Nation › Territory to choose a country map for your districts."
+  ],
+  [
+   "체험판에서는 저장 파일을 불러올 수 없어요. (정식판에서 열립니다)",
+   "Loading save files isn't available in the demo. (Available in the full game)"
+  ],
+  [
+   "체험판이에요 — 정식판에서 기능이 더 늘어나요",
+   "This is the demo — the full game has more features"
+  ],
+  [
+   "맵 프리셋으로 지도 고르기",
+   "Pick a map with map presets"
+  ],
+  [
+   "맵 프리셋 고르기",
+   "Picking a map preset"
   ],
   [
    "하나의 지도를 하원·상원·삼원이 함께 쓰며, 지역구를 클릭하면 원별 의석 수와 정당별 성향(%)을 지정할 수 있습니다.",
@@ -7853,6 +8023,7 @@ window.DnoLangPacks.en = {
   ["- 데스크톱 앱 필수 업데이트 — GitHub Release에 새 버전이 올라오면 업데이트할 때까지 앱을 쓸 수 없음: 설치판은 자동으로 받아 세이브를 저장하고 다시 시작해 설치, 압축판은 릴리스 페이지에서 새 설치 프로그램을 받도록 안내 (인터넷이 안 돼 확인을 못 하면 막지 않음). 설정 › 기타 설정 › 업데이트에서 버전 · 진행 상황 확인", "- Mandatory desktop updates — when a new version is published on GitHub Releases, the app cannot be used until it is updated: installed builds download it, save the game and restart to install; zip builds point you to the new installer on the releases page (no block when offline and the check cannot run). See version and progress in Settings › Other › Update"],
   ["- 데스크톱 앱 세이브 폴더 — 세이브를 앱 안이 아니라 정한 폴더(기본 문서\\Hemicycle\\Saves)에 세이브마다 .hemi 파일로 저장, 설정 › 기타 설정 › 저장 위치에서 폴더 열기 · 위치 바꾸기(세이브를 새 폴더로 옮김). 탐색기에서 넣은 .hemi는 세이브로 보이고, 지운 세이브는 휴지통으로", "- Desktop save folder — saves are stored as one .hemi file each in a folder you choose (default Documents\\Hemicycle\\Saves) instead of inside the app; Settings › Other › Save folder can open the folder or change it (saves move to the new folder). .hemi files dropped in show up as saves, and deleted saves go to the Recycle Bin"],
   ["- 세이브 저장 공간 줄이기 — 브라우저 저장소의 세이브를 무손실로 압축해 약 1/4로 (사진 · 지도는 그대로, 일본국 프리셋 3.4MB → 0.9MB), 저장 창의 사용량도 압축 뒤 크기로. .json 내보내기는 줄 바꿈 없이", "- Smaller saves in storage — saves in browser storage are compressed losslessly to about a quarter (photos and maps untouched; the Japan preset goes from 3.4MB to 0.9MB), and the save panel shows the compressed usage. .json exports are written without line breaks"],
+  ["- 맵 프리셋 — 국가 › 지역에서 나라 지도 10개(대한민국 · 일본 · 미국 · 독일 · 프랑스 · 영국 · 이탈리아 · 스페인 · 캐나다 · 브라질) 중 하나를 골라 바로 지역구 지도로 (지역구 이름 · 약칭 포함, Natural Earth 지도)", "- Map presets — pick one of 10 country maps (South Korea, Japan, USA, Germany, France, UK, Italy, Spain, Canada, Brazil) in Nation › Territory to use as your district map right away (with district names and abbreviations, Natural Earth data)"],
   ["업데이트 확인", "Check for updates"],
   ["지금 다시 시작해 설치", "Restart now to install"],
   ["릴리스 페이지", "Releases page"],
@@ -7892,6 +8063,14 @@ window.DnoLangPacks.en = {
   ["- 지난 선거 요약 (당선 · 배정 / 낙선), 이름 검색 · 자리 있음 · 자리 없음 · 지역구 후보 필터, ⋮⋮ 끌어서 순서", "- Last election summary (elected · assigned / lost), name search · seated · unseated · candidate filters, drag ⋮⋮ to reorder"],
   ["- 원마다 원내대표 자리 (양원제 · 삼원제)", "- Floor leader posts per chamber (bicameral · tricameral)"],
   ["- 의회 › 의회 설정에 의장석 표시 설정 (모든 미리보기 공통)", "- Speaker podium display setting in Parliament › Settings (all previews)"],
+  ["- 의회 › 의회 설정에 의장석 표시 설정 — 반원 가운데에 의장석(단상과 의장)을 늘 그릴지", "- Speaker podium setting in Parliament › Settings — whether to always draw the podium and speaker at the centre of the hemicycle"],
+  ["- 위원회 표결을 위원 의석에서 — 본회의 표결처럼 의석을 누르거나 끌어서 의원 한 명씩 찬성 · 반대 · 기권, 정당별 한 번에 정하기. 위원장은 맨 위 가운데, 여당 쪽 · 야당 쪽이 마주 보는 두 줄 (정당 순서대로)", "- Committee votes on the committee seat map — like floor votes, click or drag seats to set each member to yea · nay · abstain, or set a whole party at once. The chair sits at the top centre, with the ruling and opposition sides on two facing benches (in party order)"],
+  ["- 위원회 찬반 고르기가 잘려 보이던 문제 수정", "- Fixed committee yea/nay choices being clipped"],
+  ["- 법안 태그 고르기 — 법안을 쓰거나 고칠 때 상임위원회 소관 태그를 눌러 붙이거나 새 태그를 입력", "- Bill tag picker — when writing or editing a bill, click a committee's jurisdiction tags or type a new tag"],
+  ["- 1.6.1 미리보기(Teaser 1.6.1)를 본 게임에 통합 — 예전 1.6.1 미리보기 세이브도 그대로 열림 (사람 · 시민 · 이민자 · 의장석)", "- Merged the 1.6.1 preview (Teaser 1.6.1) into the main game — old 1.6.1 preview saves still open (people · citizens · migrants · speaker podium)"],
+  ["- 버전 표시 v1.6.1", "- Version label v1.6.1"],
+  ["위원회 의석 표결", "Committee seat-map votes"],
+  ["법안 태그 고르기", "Bill tag picker"],
   ["의회 › 세력 변화 · 정당 역사 도표", "Parliament › Power shifts · party history charts"],
   ["위키 틀 (원내 · 원외)", "Wiki box (in · out of parliament)"],
   ["세계 › 국가 순위 · 진영", "World › country ranking · blocs"],

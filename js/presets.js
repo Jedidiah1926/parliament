@@ -103,6 +103,8 @@
                 if (v && v.title) p.title = String(v.title);
                 if (v && v.description) p.description = String(v.description);
             });
+            // Steam 데모: 튜토리얼 프리셋만 고를 수 있고 나머지(일본국 · 미합중국 · 모드 프리셋)는 "정식판"으로 잠김
+            if (window.HEMI_BUILD && window.HEMI_BUILD.demo) all.forEach(p => { if (!p.tutorial) { p.comingSoon = true; p.demoLocked = true; } });
             listCache = all;
         }
         return listCache;

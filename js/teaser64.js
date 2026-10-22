@@ -1,5 +1,5 @@
 // ===== Hemicycle 티저 1.6.4 (teaser64 ~ 67) — "De l'audace!" 국회공성전 미리보기 =====
-// teaser64.html = main.html + js/teaserpodium.js + js/teaser61.js ~ js/teaser63.js(1.6.1 ~ 1.6.3) + 이 파일. 저장 공간은 따로 ('hemicycleTeaserV2-64:')
+// teaser64.html = main.html(1.6.1 포함) + js/teaser62.js ~ js/teaser63.js(1.6.2 ~ 1.6.3) + 이 파일. 저장 공간은 따로 ('hemicycleTeaserV2-64:')
 //
 //   입법 › 공성전
 //   - 계엄 중 봉쇄 돌파: 계엄군 · 경찰이 국회를 막은 상태에서 의원들이 본회의장에 들어가야 계엄 해제 결의안을 표결할 수 있다.
@@ -299,7 +299,7 @@
             V: Math.max(0.25, W / 1700),
         };
         g.pol = (rad, a) => [CX + rad * Math.cos(a), CY - rad * Math.sin(a)];
-        // 의장석: 가운데 빈 곳, 의석을 바라보는 단상 — 반원 화면과 같은 자리 (js/teaserpodium.js)
+        // 의장석: 가운데 빈 곳, 의석을 바라보는 단상 — 반원 화면과 같은 자리 (js/podium.js)
         const TP = window.TeaserPodium;
         g.podium = TP ? TP.geom(CX, CY, W, 'house') : { x: CX, y: CY - rIn * 0.42, w: Math.max(26, rIn * 0.62), h: Math.max(9, dotR * 1.8) };
         if (g.podium.speakerY == null) g.podium.speakerY = g.podium.y - g.podium.h;

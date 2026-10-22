@@ -17,7 +17,8 @@ window.HEMI_OFFICIAL = Object.freeze({
     const cfg = window.HEMI_OFFICIAL || {};
     const isSteamBuild = () => !!(window.hemicycleDesktop && window.hemicycleDesktop.isSteamBuild);
     const isOfficial = () => !!cfg.official;
-    const playBlocked = () => isOfficial() && !isSteamBuild();
+    const isDemoBuild = () => !!(window.HEMI_BUILD && window.HEMI_BUILD.demo); // Steam 데모 빌드
+    const playBlocked = () => isOfficial() && !isSteamBuild() && !isDemoBuild();
     const steamUrl = () => String(cfg.steamUrl || '');
     const SAVE_SLOTS_KEY = 'dnoParliamentSaveSlots'; // js/main.js와 같은 키 (본 게임 저장 공간)
     const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));

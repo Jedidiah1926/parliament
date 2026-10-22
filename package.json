@@ -1,7 +1,7 @@
 {
   "name": "hemicycle",
   "productName": "Hemicycle",
-  "version": "1.6.0",
+  "version": "1.6.1",
   "description": "Hemicycle — desktop build",
   "private": true,
   "main": "electron/main.js",
@@ -10,11 +10,16 @@
     "smoketest": "electron electron/smoketest.js",
     "build:logo": "node tools/build-logo.js",
     "build:win": "electron-builder --win",
-    "build:win:portable": "electron-builder --win portable"
+    "build:win:portable": "electron-builder --win portable",
+    "build:demo": "node tools/build-demo.js && electron-builder --config electron-builder.demo.js --win dir"
   },
   "devDependencies": {
     "electron": "^32.0.0",
-    "electron-builder": "^25.0.0"
+    "electron-builder": "^25.0.0",
+    "javascript-obfuscator": "^4.2.2",
+    "topojson-client": "^3.1.0",
+    "topojson-server": "^3.0.1",
+    "topojson-simplify": "^3.0.3"
   },
   "build": {
     "appId": "com.pilcrow1926.hemicycle",

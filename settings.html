@@ -130,7 +130,7 @@
                         </div>
                         <div class="settings-hint">새 버전이 GitHub Release에 올라오면 반드시 업데이트해야 합니다 — 설치판은 자동으로 받아 저장 후 다시 시작해 설치하고, 업데이트 전까지는 앱을 쓸 수 없습니다.</div>
                     </div>
-                    <div class="settings-group">
+                    <div class="settings-group" id="devModeGroup">
                         <div class="settings-label">DEVELOPER MODE / 개발자 모드</div>
                         <div class="settings-hint dev-locked-note" id="devLockedNote" hidden></div>
                         <form class="dev-code-row" id="devCodeForm" onsubmit="submitDevCode(event)">
@@ -218,6 +218,8 @@
         showSettingsSection((location.hash || '').slice(1));
         window.addEventListener('hashchange', () => showSettingsSection((location.hash || '').slice(1)));
 
+        // Steam 데모 빌드에는 개발자 모드가 없음
+        if(window.HEMI_BUILD && window.HEMI_BUILD.demo) document.getElementById('devModeGroup').hidden = true;
         // ===== 개발자 모드 — 코드를 넣으면 티저(teaser61 ~ teaser69) 화면을 열 수 있다 (js/devmode.js) =====
         function renderDevMode(msg) {
             const on = HemiDev.isOn();

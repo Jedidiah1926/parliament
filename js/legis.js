@@ -216,25 +216,136 @@ function setBillCommittee(id, committeeId) {
     renderBillList(); syncBillSelect(); renderCommitteeTab();
 }
 // 위원회 표결 확정 — 정당마다 고른 입장대로 그 정당 위원 수만큼 찬성 · 반대 · 기권. 위원 과반 찬성이면 통과
+// ── 위원회 표결 — 위원 의석(가운데 위원장 · 마주 보는 두 줄)에서 의원 한 명씩 (본회의 표결처럼) ──
+// bill.committeeSeatVotes = { sig: 위원 구성, votes: ['yea'|'nay'|'abs', …] } — 구성이 바뀌면(의석 변동) 기본값으로 다시
+let cmVoteMode = 'yea';
+function committeeSeats(bill, c) {
+    const comp = committeeComposition(c);
+    const chair = committeeChair(c, comp);
+    // 가운데 위원장 한 자리 + 왼쪽(여당 쪽) · 오른쪽(야당 쪽) 마주 보는 두 줄 — 정당 순서(의회 › 정당)대로 채운다
+    const order = new Map(parties.map((p, i) => [String(p.id), i]));
+    const sorted = comp.slice().sort((x, y) => (order.get(String(x.id)) ?? 999) - (order.get(String(y.id)) ?? 999));
+    const list = [];
+    if (chair) list.push({ pid: chair.id, color: chair.color, name: chair.name, side: 'C' });
+    ['L', 'R'].forEach(side => sorted.forEach(p => {
+        if ((partyIsRulingSide(p.id) ? 'L' : 'R') !== side) return;
+        const n = p.n - (chair && String(chair.id) === String(p.id) ? 1 : 0);
+        for (let k = 0; k < n; k++) list.push({ pid: p.id, color: p.color, name: p.name, side });
+    }));
+    const sig = list.map(x => `${x.pid}${x.side}`).join(',');
+    const saved = bill.committeeSeatVotes && bill.committeeSeatVotes.sig === sig ? bill.committeeSeatVotes.votes : null;
+    list.forEach((x, i) => { x.v = (saved && saved[i]) || (partyIsRulingSide(x.pid) ? 'yea' : 'nay'); });
+    if (!saved) bill.committeeSeatVotes = { sig, votes: list.map(x => x.v) };
+    return list;
+}
+function committeeTally(seats) {
+    const t = { yea: 0, nay: 0, abs: 0 };
+    seats.forEach(x => { t[x.v] = (t[x.v] || 0) + 1; });
+    return t;
+}
+// 자리 — 위원장은 맨 위 가운데(통로, 양쪽 줄보다 한 칸 위), 양쪽은 같은 칸 수의 격자를 위에서부터 줄마다 채운다
+function committeeSeatLayout(seats, W) {
+    const nL = seats.filter(x => x.side === 'L').length, nR = seats.filter(x => x.side === 'R').length, side = Math.max(nL, nR, 1);
+    const cols = Math.max(2, Math.ceil(Math.sqrt(side * 1.15)));
+    const rows = Math.ceil(side / cols);
+    const pad = 6, aisleMin = 34;
+    const cell = Math.min(24, (W - pad * 2 - aisleMin) / (cols * 2));
+    const aisle = W - pad * 2 - cell * cols * 2;
+    const top = pad + cell * 0.2, hasChair = seats.some(x => x.side === 'C'), benchTop = top + (hasChair ? cell : 0);
+    const pts = [];
+    let iL = 0, iR = 0;
+    seats.forEach(x => {
+        if (x.side === 'C') { pts.push({ x: W / 2, y: top + cell / 2 }); return; }
+        const k = x.side === 'L' ? iL++ : iR++;
+        const r = Math.floor(k / cols), col = k % cols;
+        const x0 = x.side === 'L' ? pad : pad + cell * cols + aisle;
+        pts.push({ x: x0 + col * cell + cell / 2, y: benchTop + r * cell + cell / 2 });
+    });
+    return { pts, r: cell / 2 * 0.86, bottom: benchTop + rows * cell };
+}
+const CM_VOTE_COLOR = { yea: '#00c46a', nay: '#ff3355', abs: '#8a8f98' };
+function committeeVoteHtml(bill, c) {
+    const seats = committeeSeats(bill, c);
+    if (!seats.length) return '';
+    const W = 320, L = committeeSeatLayout(seats, W), pts = L.pts, r = L.r, H = Math.ceil(L.bottom + 44);
+    const t = committeeTally(seats), required = requiredSeatsFor(seats.length, 0.5), pass = t.yea >= required;
+    const ring = Math.max(1.4, r * 0.3);
+    const word = { yea: '찬성', nay: '반대', abs: '기권' };
+    const dots = seats.map((x, i) => `<circle class="cm-seat${x.side === 'C' ? ' cm-chair' : ''}" data-i="${i}" cx="${pts[i].x.toFixed(1)}" cy="${pts[i].y.toFixed(1)}" r="${(r - ring / 2).toFixed(1)}" fill="${x.color}" stroke="${CM_VOTE_COLOR[x.v]}" stroke-width="${ring.toFixed(1)}"><title>${x.side === 'C' ? '위원장 · ' : ''}${legisEsc(x.name)} — ${word[x.v]}</title></circle>`).join('');
+    const chairPt = seats[0] && seats[0].side === 'C' ? pts[0] : null;
+    const partyRows = [];
+    seats.forEach(x => { if (!partyRows.some(p => String(p.pid) === String(x.pid))) partyRows.push({ pid: x.pid, name: x.name, color: x.color }); });
+    return `
+        <div class="cm-vote-modes" role="group" aria-label="누를 때 던질 표">${[['yea', '▲ 찬성'], ['nay', '▼ 반대'], ['abs', '— 기권']].map(([v, l]) => `<button type="button" class="cm-mode cm-mode-${v}${cmVoteMode === v ? ' on' : ''}" data-mode="${v}" aria-pressed="${cmVoteMode === v}">${l}</button>`).join('')}<span class="cm-vote-hint">의석을 누르거나 끌어서 표를 바꿔요</span></div>
+        <svg class="cm-hemi" viewBox="0 0 ${W} ${H}" role="img" aria-label="위원회 의석 — 찬성 ${t.yea} · 반대 ${t.nay} · 기권 ${t.abs}">${dots}
+            ${chairPt ? `<text x="${W / 2}" y="${(chairPt.y + r + 11).toFixed(1)}" class="cm-chair-label">위원장</text>` : ''}
+            <text x="${W / 2}" y="${(L.bottom + 22).toFixed(1)}" class="cm-hemi-num">${t.yea} : ${t.nay}</text><text x="${W / 2}" y="${H - 4}" class="cm-hemi-sub ${pass ? 'pass' : 'fail'}">${pass ? '통과 예상' : '부결 예상'} · 과반 ${required}</text></svg>
+        <div class="cm-tally"><span class="y">찬성 ${t.yea}</span><span class="n">반대 ${t.nay}</span><span class="a">기권 ${t.abs}</span></div>
+        <div class="cm-stances">${partyRows.map(p => {
+            const mine = seats.filter(x => String(x.pid) === String(p.pid)), cnt = committeeTally(mine);
+            const all = ['yea', 'nay', 'abs'].find(k => cnt[k] === mine.length);
+            return `<div class="cm-stance-row"><i style="background:${p.color}"></i><span>${legisEsc(p.name)} <em>${mine.length}명${all ? '' : ` · ${cnt.yea}/${cnt.nay}/${cnt.abs}`}</em></span>
+                <span class="cm-seg">${[['yea', '찬성'], ['nay', '반대'], ['abs', '기권']].map(([v, l]) => `<button type="button" class="cm-pv cm-pv-${v}${all === v ? ' on' : ''}" data-pid="${p.pid}" data-v="${v}" aria-pressed="${all === v}">${l}</button>`).join('')}</span></div>`;
+        }).join('')}</div>`;
+}
+function committeeVoteRefresh(billId) {
+    const bill = bills.find(b => b.id === billId), c = bill && committeeById(bill.committeeId), box = document.getElementById('cmVote-' + billId);
+    if (!bill || !c || !box) return;
+    box.innerHTML = committeeVoteHtml(bill, c);
+    committeeVoteBind(billId);
+}
+function committeeVoteSet(billId, fn) {
+    const bill = bills.find(b => b.id === billId), c = bill && committeeById(bill.committeeId);
+    if (!bill || !c) return;
+    const seats = committeeSeats(bill, c);
+    const votes = seats.map((x, i) => fn(x, i) || x.v);
+    bill.committeeSeatVotes = { sig: bill.committeeSeatVotes.sig, votes };
+    committeeVoteRefresh(billId);
+}
+function committeeVoteBind(billId) {
+    const box = document.getElementById('cmVote-' + billId);
+    if (!box) return;
+    box.querySelectorAll('[data-mode]').forEach(b => { b.onclick = () => { cmVoteMode = b.dataset.mode; document.querySelectorAll('.cm-vote').forEach(v => v.querySelectorAll('[data-mode]').forEach(m => { m.classList.toggle('on', m.dataset.mode === cmVoteMode); m.setAttribute('aria-pressed', m.dataset.mode === cmVoteMode); })); }; });
+    box.querySelectorAll('.cm-pv').forEach(b => { b.onclick = () => committeeVoteSet(billId, x => (String(x.pid) === b.dataset.pid ? b.dataset.v : null)); });
+    // 의석 누르기 · 끌어서 칠하기
+    const svg = box.querySelector('.cm-hemi');
+    if (!svg) return;
+    let painting = false;
+    const paint = el => {
+        const i = el && el.dataset && el.dataset.i;
+        if (i == null) return;
+        if (el.getAttribute('stroke') === CM_VOTE_COLOR[cmVoteMode]) return;
+        const bill = bills.find(b => b.id === billId);
+        bill.committeeSeatVotes.votes[+i] = cmVoteMode;
+        el.setAttribute('stroke', CM_VOTE_COLOR[cmVoteMode]);
+    };
+    svg.addEventListener('pointerdown', e => { if (!e.target.classList.contains('cm-seat')) return; painting = true; svg.setPointerCapture(e.pointerId); paint(e.target); e.preventDefault(); });
+    svg.addEventListener('pointermove', e => { if (!painting) return; paint(document.elementFromPoint(e.clientX, e.clientY)); });
+    const end = () => { if (!painting) return; painting = false; committeeVoteRefresh(billId); };
+    svg.addEventListener('pointerup', end);
+    svg.addEventListener('pointercancel', end);
+}
 function confirmCommitteeVote(billId) {
     const bill = bills.find(b => b.id === billId);
     const c = bill && committeeById(bill.committeeId);
     if (!bill || !c) return;
     const comp = committeeComposition(c);
     if (!comp.length) { showCustomAlert('이 위원회에 배정할 위원이 없습니다. 그 원에 의석을 가진 정당이 있어야 합니다.'); return; }
+    const seats = committeeSeats(bill, c);
+    const { yea, nay, abs } = committeeTally(seats);
+    // 정당별로 가장 많이 던진 표 (예전 기록과 같은 모양)
     const stances = {};
-    let yea = 0, nay = 0, abs = 0;
     comp.forEach(p => {
-        const sel = document.querySelector(`.cm-stance[data-bill="${billId}"][data-pid="${p.id}"]`);
-        const v = sel ? sel.value : (partyIsRulingSide(p.id) ? 'yea' : 'nay');
-        stances[p.id] = v;
-        if (v === 'yea') yea += p.n; else if (v === 'nay') nay += p.n; else abs += p.n;
+        const cnt = { yea: 0, nay: 0, abs: 0 };
+        seats.filter(x => String(x.pid) === String(p.id)).forEach(x => { cnt[x.v]++; });
+        stances[p.id] = ['yea', 'nay', 'abs'].reduce((a, k) => (cnt[k] > cnt[a] ? k : a), 'yea');
     });
     const total = comp.reduce((a, p) => a + p.n, 0);
     const required = requiredSeatsFor(total, 0.5);
     const result = yea >= required ? 'pass' : 'fail';
     bill.committeeStatus = result;
-    bill.committeeVote = { yea, nay, abs, total, required, stances };
+    bill.committeeVote = { yea, nay, abs, total, required, stances, seats: seats.map(x => x.v) };
+    delete bill.committeeSeatVotes;
     if (!bill.voteHistory) bill.voteHistory = [];
     bill.voteHistory.push({ chamber: 'committee', committeeName: c.name, result, date: bill.voteDate || '', yea, nay, abs, total, required, threshold: 0.5, at: new Date().toISOString() });
     renderCommitteeTab(); renderBillList(); renderArchiveList(); syncBillSelect();
@@ -274,7 +385,71 @@ function removeCommittee(id) {
     });
 }
 
+// ── 법안 태그 고르기 ───────────────────────────
+// 원래 입력 칸(#newBillTags · #editBillTags, 쉼표로 구분)은 숨겨 두고 값의 원본으로 그대로 쓴다 — 법안 추가 · 수정 코드는 지금처럼 .value를 읽고 쓴다.
+// 그 자리에 고른 태그 칩(×로 빼기) · 새 태그 칸(Enter · 쉼표로 더하기) · 위원회 소관 태그(눌러서 붙이기) · 다른 법안에서 쓴 태그를 그린다.
+const BILL_TAG_INPUTS = ['newBillTags', 'editBillTags'];
+const billTagList = v => String(v || '').split(',').map(t => t.trim()).filter(Boolean);
+function initBillTagPicker(id) {
+    const input = document.getElementById(id);
+    if (!input || input.dataset.tagPicker) return;
+    input.dataset.tagPicker = '1';
+    input.type = 'hidden';
+    const box = document.createElement('div');
+    box.className = 'bill-tag-picker'; box.id = id + 'Picker';
+    input.insertAdjacentElement('afterend', box);
+    // 코드가 .value를 바꿔도(개정안 발의 · 수정할 법안 불러오기 · 추가 뒤 비우기) 칩이 따라오게
+    const desc = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value');
+    Object.defineProperty(input, 'value', { configurable: true, get() { return desc.get.call(this); }, set(v) { desc.set.call(this, v); renderBillTagPicker(id); } });
+    renderBillTagPicker(id);
+}
+function setBillTags(id, list) {
+    const input = document.getElementById(id);
+    if (!input) return;
+    const uniq = [];
+    list.forEach(t => { t = String(t).replace(/,/g, ' ').trim(); if (t && !uniq.includes(t)) uniq.push(t); });
+    input.value = uniq.join(', ');
+}
+function refreshBillTagPickers() { BILL_TAG_INPUTS.forEach(id => { if (document.getElementById(id + 'Picker')) renderBillTagPicker(id); }); }
+function renderBillTagPicker(id) {
+    const input = document.getElementById(id), box = document.getElementById(id + 'Picker');
+    if (!input || !box) return;
+    const T = legisUiText;
+    const tags = billTagList(input.value);
+    const old = box.querySelector('.btp-new');
+    const draft = old ? old.value : '', hadFocus = old && document.activeElement === old;
+    const cms = (typeof committees !== 'undefined' ? committees : []).filter(c => (c.tags || []).length);
+    const cmTags = new Set(cms.flatMap(c => c.tags));
+    // 다른 법안에서 쓴 태그 (소관 태그 말고) — 많이 쓴 순
+    const used = new Map();
+    (typeof bills !== 'undefined' ? bills : []).forEach(b => (b.tags || []).forEach(t => { if (!cmTags.has(t)) used.set(t, (used.get(t) || 0) + 1); }));
+    const others = [...used].sort((a, b) => b[1] - a[1]).slice(0, 14).map(x => x[0]);
+    const opt = t => `<button type="button" class="btp-opt${tags.includes(t) ? ' on' : ''}" data-add="${legisEsc(t)}" aria-pressed="${tags.includes(t)}">${tags.includes(t) ? '✓' : '+'} ${legisEsc(t)}</button>`;
+    const council = typeof isCouncilVotingMode === 'function' && isCouncilVotingMode();
+    const sug = id === 'newBillTags' && !council && tags.length && cms.length ? suggestCommitteeFor({ tags }) : undefined;
+    box.innerHTML = `
+        <div class="btp-row">${tags.map(t => `<span class="btp-chip"># ${legisEsc(t)}<button type="button" data-del="${legisEsc(t)}" aria-label="${legisEsc(T('태그 빼기'))}">×</button></span>`).join('')}<input type="text" class="btp-new" value="${legisEsc(draft)}" placeholder="${legisEsc(T(tags.length ? '태그 더하기 (Enter)' : '태그 — 아래에서 고르거나 새로 입력 (Enter · 쉼표)'))}" aria-label="${legisEsc(T('새 태그'))}"></div>
+        ${cms.length ? `<div class="btp-sec"><div class="btp-h">${legisEsc(T('위원회 소관 태그'))} <span>— ${legisEsc(T('누르면 붙고, 태그가 겹치는 위원회가 심사해요'))}</span></div>
+            ${cms.map(c => `<div class="btp-cm"><span class="btp-cm-name">${legisEsc(c.name)}</span>${c.tags.map(opt).join('')}</div>`).join('')}</div>`
+            : `<div class="btp-hint">${legisEsc(T('상임위원회가 없어요 — 입법 › 위원회에서 만들면 소관 태그를 골라 붙일 수 있어요'))}</div>`}
+        ${others.length ? `<div class="btp-sec"><div class="btp-h">${legisEsc(T('다른 법안에서 쓴 태그'))}</div><div class="btp-cm">${others.map(opt).join('')}</div></div>` : ''}
+        ${sug !== undefined ? `<div class="btp-hint btp-route">${sug ? `→ ${legisEsc(T('소관 위원회'))}: <b>${legisEsc(sug.name)}</b>` : `→ ${legisEsc(T('소관 태그와 겹치지 않아 위원회 심사 없이 본회의로'))}`}</div>` : ''}`;
+    const nw = box.querySelector('.btp-new');
+    const commit = () => { const add = billTagList(nw.value.replace(/[，、]/g, ',')); if (!add.length) return false; nw.value = ''; setBillTags(id, tags.concat(add)); return true; };
+    nw.addEventListener('keydown', e => {
+        if (e.isComposing) return; // 한글 조합 중에는 Enter를 넘김
+        if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); commit(); box.querySelector('.btp-new').focus(); }
+        else if (e.key === 'Backspace' && !nw.value && tags.length) { e.preventDefault(); setBillTags(id, tags.slice(0, -1)); box.querySelector('.btp-new').focus(); }
+    });
+    nw.addEventListener('blur', () => { if (nw.value.trim()) commit(); }); // 입력하다 "법안 추가"를 눌러도 들어가게
+    box.querySelectorAll('[data-del]').forEach(b => { b.onclick = () => setBillTags(id, tags.filter(t => t !== b.dataset.del)); });
+    box.querySelectorAll('[data-add]').forEach(b => { b.onclick = () => { const t = b.dataset.add; setBillTags(id, tags.includes(t) ? tags.filter(x => x !== t) : tags.concat(t)); }; });
+    if (hadFocus) { nw.focus(); nw.setSelectionRange(nw.value.length, nw.value.length); }
+}
+BILL_TAG_INPUTS.forEach(initBillTagPicker);
+
 function renderCommitteeTab() {
+    refreshBillTagPickers(); // 위원회 소관 태그가 바뀌면 법안 태그 고르기 목록도
     const box = document.getElementById('committeeList');
     if (!box) return;
     const chambers = typeof chamberList === 'function' ? chamberList() : ['house'];
@@ -302,11 +477,7 @@ function renderCommitteeTab() {
             <div class="cm-bill">
                 <div class="cm-bill-title">${legisEsc(b.title)} ${billKindLabel(b) ? `<span class="bill-version-badge">${billKindLabel(b)}</span>` : ''}</div>
                 ${billBodyHtml(b, 2)}
-                <div class="cm-stances">${comp.map(p => {
-                    const def = b.committeeVote?.stances?.[p.id] || (partyIsRulingSide(p.id) ? 'yea' : 'nay');
-                    return `<label class="cm-stance-row"><i style="background:${p.color}"></i><span>${legisEsc(p.name)} <em>${p.n}명</em></span>
-                        <select class="cm-stance" data-bill="${b.id}" data-pid="${p.id}">${[['yea', '찬성'], ['nay', '반대'], ['abs', '기권']].map(([v, t]) => `<option value="${v}" ${def === v ? 'selected' : ''}>${t}</option>`).join('')}</select></label>`;
-                }).join('')}</div>
+                <div class="cm-vote" id="cmVote-${b.id}">${committeeVoteHtml(b, c)}</div>
                 <button class="add-btn cm-confirm" onclick="confirmCommitteeVote('${b.id}')">▶ 위원회 심사 확정 (위원 ${total}명 중 과반 ${requiredSeatsFor(total, 0.5)}명 찬성이면 통과)</button>
             </div>`).join('') : '<div class="cm-note">심사 중인 법안이 없습니다. 입법 › 상정에서 법안의 소관 위원회를 고르세요.</div>';
         return `
@@ -326,6 +497,7 @@ function renderCommitteeTab() {
             ${reviewHtml}
         </div>`;
     }).join('') + `<button class="add-btn" onclick="addCommittee()">+ 위원회 추가</button>`;
+    box.querySelectorAll('.cm-vote').forEach(v => committeeVoteBind(v.id.replace(/^cmVote-/, '')));
 }
 
 // ── 헌법 · 법령집 ────────────────────────────
@@ -470,4 +642,5 @@ function legisSetState(leg) {
         : null;
     constitutionEditing = false;
     lawBookQuery = '';
+    refreshBillTagPickers(); // 불러온 위원회의 소관 태그로
 }
