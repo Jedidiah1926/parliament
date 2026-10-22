@@ -16,7 +16,10 @@
   "devDependencies": {
     "electron": "^32.0.0",
     "electron-builder": "^25.0.0",
-    "javascript-obfuscator": "^4.2.2"
+    "javascript-obfuscator": "^4.2.2",
+    "topojson-client": "^3.1.0",
+    "topojson-server": "^3.0.1",
+    "topojson-simplify": "^3.0.3"
   },
   "build": {
     "appId": "com.pilcrow1926.hemicycle",

@@ -4155,6 +4155,78 @@ window.DnoLangPacks.en = {
    " — upload a .jsx file exported from it to use real map-shaped districts instead of the grid."
   ],
   [
+   "에서 내보낸 .jsx 파일을 업로드하거나, ",
+   " — upload a .jsx file exported from it, or pick a country map from "
+  ],
+  [
+   "맵 프리셋",
+   "Map presets"
+  ],
+  [
+   "에서 나라 지도를 고르면 그리드 대신 실제 지도 모양으로 지역구를 만들 수 있습니다.",
+   ", to use real map-shaped districts instead of the grid."
+  ],
+  [
+   "🗺 맵 프리셋에서 고르기",
+   "🗺 Pick a map preset"
+  ],
+  [
+   "나라를 고르면 그 나라의 행정구역이 지역구 지도가 됩니다. 고른 뒤 지역구를 눌러 의석 수 · 인구 · 성향을 정하세요.",
+   "Pick a country and its administrative divisions become your district map. Then click a district to set seats, population and leanings."
+  ],
+  [
+   "지도를 불러오는 중…",
+   "Loading maps…"
+  ],
+  [
+   "지도를 불러오지 못했습니다.",
+   "Could not load the maps."
+  ],
+  [
+   "지도 자료: Natural Earth (공개 도메인)",
+   "Map data: Natural Earth (public domain)"
+  ],
+  [
+   "🔒 정식판",
+   "🔒 Full game"
+  ],
+  [
+   "정식판에서 열립니다",
+   "Available in the full game"
+  ],
+  [
+   "STEAM DEMO · 체험판",
+   "STEAM DEMO"
+  ],
+  [
+   "체험판",
+   "Demo"
+  ],
+  [
+   "🔒 정식판에서 — 체험판은 국가 › 지역의 맵 프리셋으로",
+   "🔒 Full game only — the demo uses map presets in Nation › Territory"
+  ],
+  [
+   "맵 메이커는 정식판에서 쓸 수 있어요.\n체험판에서는 국가 › 지역의 \"맵 프리셋에서 고르기\"로 나라 지도를 골라 지역구를 만들 수 있습니다.",
+   "The Map Maker is available in the full game.\nIn the demo, use \"Pick a map preset\" in Nation › Territory to choose a country map for your districts."
+  ],
+  [
+   "체험판에서는 저장 파일을 불러올 수 없어요. (정식판에서 열립니다)",
+   "Loading save files isn't available in the demo. (Available in the full game)"
+  ],
+  [
+   "체험판이에요 — 정식판에서 기능이 더 늘어나요",
+   "This is the demo — the full game has more features"
+  ],
+  [
+   "맵 프리셋으로 지도 고르기",
+   "Pick a map with map presets"
+  ],
+  [
+   "맵 프리셋 고르기",
+   "Picking a map preset"
+  ],
+  [
    "하나의 지도를 하원·상원·삼원이 함께 쓰며, 지역구를 클릭하면 원별 의석 수와 정당별 성향(%)을 지정할 수 있습니다.",
    "The House, Senate and Third chamber share one map; click a district to set its seats per chamber and party leanings (%)."
   ],
@@ -7853,6 +7925,7 @@ window.DnoLangPacks.en = {
   ["- 데스크톱 앱 필수 업데이트 — GitHub Release에 새 버전이 올라오면 업데이트할 때까지 앱을 쓸 수 없음: 설치판은 자동으로 받아 세이브를 저장하고 다시 시작해 설치, 압축판은 릴리스 페이지에서 새 설치 프로그램을 받도록 안내 (인터넷이 안 돼 확인을 못 하면 막지 않음). 설정 › 기타 설정 › 업데이트에서 버전 · 진행 상황 확인", "- Mandatory desktop updates — when a new version is published on GitHub Releases, the app cannot be used until it is updated: installed builds download it, save the game and restart to install; zip builds point you to the new installer on the releases page (no block when offline and the check cannot run). See version and progress in Settings › Other › Update"],
   ["- 데스크톱 앱 세이브 폴더 — 세이브를 앱 안이 아니라 정한 폴더(기본 문서\\Hemicycle\\Saves)에 세이브마다 .hemi 파일로 저장, 설정 › 기타 설정 › 저장 위치에서 폴더 열기 · 위치 바꾸기(세이브를 새 폴더로 옮김). 탐색기에서 넣은 .hemi는 세이브로 보이고, 지운 세이브는 휴지통으로", "- Desktop save folder — saves are stored as one .hemi file each in a folder you choose (default Documents\\Hemicycle\\Saves) instead of inside the app; Settings › Other › Save folder can open the folder or change it (saves move to the new folder). .hemi files dropped in show up as saves, and deleted saves go to the Recycle Bin"],
   ["- 세이브 저장 공간 줄이기 — 브라우저 저장소의 세이브를 무손실로 압축해 약 1/4로 (사진 · 지도는 그대로, 일본국 프리셋 3.4MB → 0.9MB), 저장 창의 사용량도 압축 뒤 크기로. .json 내보내기는 줄 바꿈 없이", "- Smaller saves in storage — saves in browser storage are compressed losslessly to about a quarter (photos and maps untouched; the Japan preset goes from 3.4MB to 0.9MB), and the save panel shows the compressed usage. .json exports are written without line breaks"],
+  ["- 맵 프리셋 — 국가 › 지역에서 나라 지도 10개(대한민국 · 일본 · 미국 · 독일 · 프랑스 · 영국 · 이탈리아 · 스페인 · 캐나다 · 브라질) 중 하나를 골라 바로 지역구 지도로 (지역구 이름 · 약칭 포함, Natural Earth 지도)", "- Map presets — pick one of 10 country maps (South Korea, Japan, USA, Germany, France, UK, Italy, Spain, Canada, Brazil) in Nation › Territory to use as your district map right away (with district names and abbreviations, Natural Earth data)"],
   ["업데이트 확인", "Check for updates"],
   ["지금 다시 시작해 설치", "Restart now to install"],
   ["릴리스 페이지", "Releases page"],

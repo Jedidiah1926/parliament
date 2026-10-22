@@ -1611,3 +1611,5 @@ html[data-theme-family="modern"] .lp-arrow { color: var(--m-text-3); }
         html[data-theme-family="modern"] .elec-record-kind { border-radius: 6px; font-weight: 600; }
         .elec-record-card { background: #080b10; border: 1px solid #2a2a2a; border-left: 4px solid var(--k, var(--tno-neon)); padding: 10px; margin-bottom: 8px; }
         html[data-theme-family="modern"] .elec-record-card { background: var(--m-surface); border: 1px solid var(--m-border); border-left: 4px solid var(--k, var(--m-accent)); border-radius: 10px; }
+/* Steam 데모 빌드(tools/build-demo.js가 <html data-build="demo">)에서 숨기는 것 — 지도 올리기 · 맵 메이커 안내 등 */
+html[data-build="demo"] .hemi-full-only { display: none !important; }

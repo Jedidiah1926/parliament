@@ -715,3 +715,7 @@ body.home-page { display: block; height: 100vh; overflow: hidden; text-transform
         .save-select-convert-link:hover { color: var(--tno-neon); }
         html[data-theme-family="modern"] .save-select-convert-link { color: var(--m-text-3); }
         html[data-theme-family="modern"] .save-select-convert-link:hover { color: var(--m-text); }
+/* Steam 데모 빌드에서 숨기는 것 */
+html[data-build="demo"] .hemi-full-only { display: none !important; }
+.home-menu-item.home-menu-locked { opacity: .55; cursor: not-allowed; }
+.home-menu-item.home-menu-locked:hover { border-color: inherit; background: none; color: inherit; }

@@ -58,6 +58,10 @@ npm run build:win     # Windows 설치형 exe 빌드 → dist/Hemicycle-Setup-<�
 
 ---
 
+### 맵 프리셋
+
+국가 › 지역의 "🗺 맵 프리셋에서 고르기"는 나라 지도 10개(대한민국 17 시·도 · 일본 47 도도부현 · 미국 50주 + D.C. · 독일 16주 · 프랑스 본토 13 레지옹 · 영국 12 지방 · 이탈리아 20주 · 스페인 17 자치지방 + 세우타 · 멜리야 · 캐나다 13 · 브라질 27) 중 하나를 골라 바로 지역구 지도로 쓰는 창입니다(`js/mappresets.js`, 지역구 이름 · 약칭 포함, 화면 언어가 영어면 영어 이름). 지도 자료 `presets/maps.js`는 창을 처음 열 때 불러오며, `node tools/build-map-presets.js <ne_10m_admin_1_states_provinces.geojson>`이 Natural Earth 1:10m 행정구역(공개 도메인)으로 만듭니다 — 나라마다 앨버스 정적 원추 도법, topojson으로 이웃 경계를 같이 단순화(틈 없음), 프랑스 · 영국 · 이탈리아 · 스페인은 행정구역을 지방 단위로 묶고, 알래스카 · 하와이 · 오키나와 · 카나리아 제도는 옆 상자로.
+
 ### Steam 데모 빌드
 
 데모는 Steam으로만 배포하는 따로 된 빌드입니다 (GitHub Release · 자동 업데이트 없음, Steam이 업데이트).
@@ -69,6 +73,7 @@ npx electron-builder --config electron-builder.demo.js --win dir   # → dist-de
 ```
 
 - `tools/build-demo.js`: 다음 업데이트 미리보기(`teaser*.html` · `js/teaser6*.js` · `js/teaserpodium.js`)와 로고 제작 화면(`logo.html`)을 빼고, 모든 화면 `<head>` 맨 앞에 `window.HEMI_BUILD = { demo: true }`를 넣는다 — 개발자 모드가 꺼지고(설정에서도 숨김, 코드를 넣어도 안 켜짐) 시작 화면은 "STEAM DEMO · 체험판" · "v1.6.0 (DEMO)". `electron/build.json`(`{ demo: true }`)으로 앱은 GitHub 업데이트를 확인하지 않고(`electron/updater.js` → Steam 모드), 정식 출시 스위치를 켜도 데모는 막히지 않음(`js/official.js`). `--app-id`(또는 환경 변수 `STEAM_DEMO_APP_ID`, 숫자만)를 주면 `electron/steam.json`에 들어가고, Steam 오버레이 · 창작마당은 `steamworks.js`가 깔려 있어야 함.
+- 체험판 제한: 맵 메이커(`map.html` · `js/maptrace.js` 빠짐, 시작 화면 메뉴 🔒) 대신 국가 › 지역의 **맵 프리셋**만(지도 올리기 버튼 숨김 — `html[data-build="demo"] .hemi-full-only`), 프리셋은 서독 튜토리얼만(일본국 · 미합중국 · 모드 프리셋은 "🔒 정식판", `js/presets.js`), 저장 파일 불러오기 잠금(시작 화면 · 저장 창 — 정식판 세이브 · 다른 프리셋을 들여와 제한을 우회하지 않게). 파일로 저장 · 세이브 폴더는 그대로라 데모 세이브를 정식판으로 이어 갈 수 있음. 언어 팩 · 테마 모드는 그대로.
 - 코드 보호: JS를 `javascript-obfuscator`로 난독화(주석 삭제 · 지역 이름 뒤섞기 · 글자 표). 전역 함수 이름과 속성 이름은 그대로 둔다(HTML `onclick` · 세이브 형식). 계산이 많아 흐름 꼬기(control flow flattening)는 끔. 번역 표(`lang/`) · 프리셋(`presets/`)은 데이터라 그대로, HTML · CSS는 주석만 지움. 원본 저장소 코드는 그대로이고 데모 빌드에서만 바뀐다. 완벽한 보호는 아니고 분석하는 수고를 늘리는 정도.
 - `electron-builder.demo.js`: 앱 파일은 `build/demo/`에서만 가져오고(제품 이름 "Hemicycle Demo", 실행 파일 `Hemicycle.exe`, appId `com.pilcrow1926.hemicycle.demo`), 설치 프로그램 없이 실행 파일 폴더(`dir`)로 만든다. 세이브 폴더(`문서\Hemicycle\Saves`)는 본 게임 앱과 같은 곳.
 - GitHub Actions: Actions 탭 › "Steam Demo (Windows)" › Run workflow(데모 App ID 선택) → 결과물 `Hemicycle-Demo-win-x64`(win-unpacked 폴더)를 받아 Steamworks에 올림.

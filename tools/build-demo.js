@@ -22,7 +22,7 @@ const OBFUSCATE = !args.includes('--no-obfuscate');
 
 const COPY_DIRS = ['electron', 'js', 'css', 'fonts', 'presets', 'lang', 'old2', 'icons'];
 const SKIP = [
-    /^teaser\d*\.html$/, /^logo\.html$/,                      // 미리보기 · 로고 제작 화면
+    /^teaser\d*\.html$/, /^logo\.html$/, /^map\.html$/, /^js\/maptrace\.js$/, // 미리보기 · 로고 제작 · 맵 메이커 (데모는 맵 프리셋만)
     /^js\/teaser6\d(charts)?\.js$/, /^js\/teaserpodium\.js$/,  // 미리보기 기능
     /^electron\/smoketest\.js$/,
 ];
@@ -49,7 +49,7 @@ for (const f of kept) {
 }
 
 // ---- 2) 데모 표시 ----
-const BUILD_TAG = '<script>window.HEMI_BUILD = Object.freeze({ demo: true });</script>';
+const BUILD_TAG = '<script>window.HEMI_BUILD = Object.freeze({ demo: true }); document.documentElement.setAttribute(\'data-build\', \'demo\');</script>';
 fs.writeFileSync(path.join(OUT, 'electron', 'build.json'), JSON.stringify({ demo: true }));
 // ---- 3) Steam App ID ----
 const steamPath = path.join(OUT, 'electron', 'steam.json');

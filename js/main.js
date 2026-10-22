@@ -5388,6 +5388,8 @@
 
         // 저장 창의 "불러오기" — 파일을 지금 세이브에 덮어쓰지 않고, 파일 이름으로 새 세이브(탭)를 만들어 연다
         async function loadJSONFromFile(file) {
+            // Steam 데모: 저장 파일 불러오기는 정식판에서 (정식판 세이브 · 다른 프리셋을 들여와 제한을 우회하지 않게)
+            if(window.HEMI_BUILD && window.HEMI_BUILD.demo) { showCustomAlert('체험판에서는 저장 파일을 불러올 수 없어요. (정식판에서 열립니다)'); return; }
             const text = window.HemiFile ? await window.HemiFile.readText(file) : await file.text();
             const obj = JSON.parse(text);
             const parl = obj && (obj.parliament || obj.data);
@@ -6099,7 +6101,7 @@
                 return;
             }
             wrap.innerHTML = list.map((p, i) => p.comingSoon
-                ? `<div class="save-tab-preset-item save-tab-preset-soon" title="준비 중">${escapeHtmlText(p.title)} <span class="save-tab-preset-date">준비 중</span></div>`
+                ? `<div class="save-tab-preset-item save-tab-preset-soon" title="${p.demoLocked ? '정식판에서 열립니다' : '준비 중'}">${escapeHtmlText(p.title)} <span class="save-tab-preset-date">${p.demoLocked ? '🔒 정식판' : '준비 중'}</span></div>`
                 : `<div class="save-tab-preset-item" onclick="selectPresetForNewTab(${i})">${escapeHtmlText(p.title)}${p.date ? ` <span class="save-tab-preset-date">${escapeHtmlText(p.date)}</span>` : ''}</div>`).join('');
         }
 
@@ -11347,35 +11349,53 @@
             });
         }
 
-        function districtSvgUpload(input) {
-            const file = input.files?.[0]; if(!file) return;
+        // 지금 원에 이미 지역구가 있으면 새 지도로 바꾸기 전에 묻는다 — 업로드 · 맵 프리셋이 함께 씀
+        function districtConfirmReplaceMap(proceed, cancel) {
             const own = districtChamber !== 'house' && districtSvgSplit[districtChamber];
             const hasExisting = own ? !!districtSvgMaps[districtChamber]
                 : (districtMapMode === 'svg' || ['house','senate','third'].some(c => Object.keys(districtGrid[c]||{}).length > 0));
-            if(hasExisting) {
-                showCustomConfirm(own
-                    ? `${chamberDisplayName(districtChamber)}의 지역구 데이터가 새 지도로 대체됩니다.\n(이름·의석 수·성향·당선자 정보 포함) 계속하시겠습니까?`
-                    : '기존 지역구 데이터가 모두 새 지도로 대체됩니다.\n(이름·의석 수·성향·당선자 정보 포함) 계속하시겠습니까?',
-                    () => districtSvgUploadProceed(input, file),
-                    () => { input.value = ''; });
-                return;
-            }
-            districtSvgUploadProceed(input, file);
+            if(!hasExisting) { proceed(); return; }
+            showCustomConfirm(own
+                ? `${chamberDisplayName(districtChamber)}의 지역구 데이터가 새 지도로 대체됩니다.\n(이름·의석 수·성향·당선자 정보 포함) 계속하시겠습니까?`
+                : '기존 지역구 데이터가 모두 새 지도로 대체됩니다.\n(이름·의석 수·성향·당선자 정보 포함) 계속하시겠습니까?',
+                proceed, cancel);
+        }
+        function districtSvgUpload(input) {
+            const file = input.files?.[0]; if(!file) return;
+            districtConfirmReplaceMap(() => districtSvgUploadProceed(input, file), () => { input.value = ''; });
         }
 
         function districtSvgUploadProceed(input, file) {
             const reader = new FileReader();
             reader.onload = e => {
                 const text = e.target.result;
-                const { viewBox, shapes } = parseDistrictJsx(text);
-                if(shapes.length === 0) { showCustomAlert('맵 메이커에서 내보낸 .jsx 파일에서 지역구로 쓸 도형을 찾을 수 없습니다.'); return; }
-                // 따로 쓰는 원의 지도를 올린 경우: 그 원의 지역구만 새 지도로 바꾼다
-                if(districtChamber !== 'house' && districtSvgSplit[districtChamber]) {
-                    districtSplitReplaceMap(districtChamber, { viewBox, shapes });
-                    input.value = '';
-                    return;
+                const parsed = parseDistrictJsx(text);
+                if(parsed.shapes.length === 0) { showCustomAlert('맵 메이커에서 내보낸 .jsx 파일에서 지역구로 쓸 도형을 찾을 수 없습니다.'); return; }
+                districtApplyMapData(parsed);
+                input.value = '';
+            };
+            reader.readAsText(file);
+        }
+
+        // 지도({ viewBox, shapes })를 지금 원의 지역구 지도로 — 업로드 · 맵 프리셋(js/mappresets.js)이 함께 씀
+        // labels: { [도형 키]: { name, abbr } } — 맵 프리셋은 지역구 이름 · 약칭도 함께 넣는다
+        function districtApplyMapData(parsed, labels) {
+            const { viewBox, shapes } = parsed;
+            // 따로 쓰는 원의 지도: 그 원의 지역구만 새 지도로 바꾼다
+            if(districtChamber !== 'house' && districtSvgSplit[districtChamber]) {
+                districtSplitReplaceMap(districtChamber, parsed);
+                if(labels) {
+                    const prefix = districtSplitPrefix(districtChamber);
+                    Object.entries(labels).forEach(([k, l]) => {
+                        if(l.name) ['house','senate','third'].forEach(c => { districtNames[c][prefix + k] = l.name; });
+                        if(l.abbr) districtAbbr[prefix + k] = l.abbr;
+                    });
+                    districtRenderMap(); renderDistrictListPanel();
                 }
-                // 하원(공용) 지도를 올린 경우: 따로 쓰는 원의 지도와 지역구 데이터는 그대로 둔다
+                return;
+            }
+            {
+                // 하원(공용) 지도: 따로 쓰는 원의 지도와 지역구 데이터는 그대로 둔다
                 const keptSplit = districtSplitSnapshot();
 
                 const strokeColor = districtSvgMap?.strokeColor || '#00ffff';
@@ -11392,8 +11412,9 @@
                     districtSeatCounts[s.key] = { house: 1, senate: hasSenateChamber() && !districtSvgSplit.senate ? 1 : 0, third: hasThirdChamber() && !districtSvgSplit.third ? 1 : 0 };
                     ['house','senate','third'].forEach(ch => {
                         if(districtSeatCounts[s.key][ch] > 0) districtGrid[ch][s.key] = true;
-                        districtNames[ch][s.key] = s.key;
+                        districtNames[ch][s.key] = labels?.[s.key]?.name || s.key;
                     });
+                    if(labels?.[s.key]?.abbr) districtAbbr[s.key] = labels[s.key].abbr;
                 });
                 districtSplitRestore(keptSplit);
                 ['house','senate','third'].forEach(ch => districtOrderSync(ch));
@@ -11404,9 +11425,7 @@
                 districtRenderMap();
                 renderDistrictListPanel();
                 elecUpdateDistrictInfo();
-                input.value = '';
-            };
-            reader.readAsText(file);
+            }
         }
 
         // 지역구 지도 테두리 색 — 라이트/다크는 테마에 맞춘 고정색(바꿀 수 없음), 네온만 사용자가 고른 색
