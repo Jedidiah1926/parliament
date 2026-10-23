@@ -162,8 +162,20 @@
             intro: '선거 결과를 좌우하는 성향 · 지지율을 정합니다 (지역구 · 권역은 국가 묶음). 여기서 정한 값으로 선거 탭에서 개표해요.',
             tabs: [
                 {
+                    btn: 'elecSubTabOverview', open: goElec('overview'),
+                    desc: '종합 — "시민 / 이민자 성향 따로 정하기"(기본 켬)와 시민 · 인구 · 이민자 수, 원마다 정당별 지지율(시민 · 이민자 · 합산)을 한눈에 봅니다. 끄면 이민자 탭이 시민 탭과 묶여(동기화) 이민자도 시민과 같은 성향으로 투표해요 (시민 · 인구 수는 따로).',
+                },
+                {
                     btn: 'elecSubTabTendency', open: goElec('tendency'),
                     desc: '지역구마다 정당별 성향(%)을 정합니다. 지역구 선거에서 어느 정당이 이길지가 여기서 갈려요.',
+                },
+                {
+                    btn: 'elecSubTabMtendency', open: goElec('mtendency'),
+                    desc: '지역구 - 이민자 — 지역구 - 시민과 같은 화면으로 이민자의 지역구 · 권역 성향을 정합니다. 이민자가 투표하는 선거에서 지역구마다 시민 · 이민자 수만큼 섞어 개표해요 (지역구 성향이 없으면 권역 성향 → 이민자 지지율).',
+                },
+                {
+                    btn: 'elecSubTabMprob', open: goElec('mprob'),
+                    desc: '지지율 - 이민자 — 지지율 - 시민과 같은 화면으로 이민자의 정당별 지지율을 정합니다. 이민자가 투표하는 총선 비례 · 대선은 전국 시민 · 이민자 수만큼 섞어 개표해요.',
                 },
                 {
                     btn: 'elecSubTabProb', open: goElec('prob'),

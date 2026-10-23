@@ -907,10 +907,10 @@
                     done: '바뀌었어요. 켠 선거에서는 시민과 이민자가 함께 투표해요.',
                 },
                 {
-                    before: [go('vote', 'elecSettings'), showPanel('controls')],
-                    target: () => document.querySelector('#t61MigrantCard .t61-mig-leanon') || document.getElementById('t61MigrantCard') || '#contentElecSettings',
+                    before: [call('switchMainTab', 'election'), call('elecSwitchSub', 'overview'), showPanel('controls')],
+                    target: () => document.querySelector('#elecSubOverview .op-card') || '#elecSubOverview',
                     title: '이민자 성향',
-                    text: '"이민자 성향 따로 정하기"를 켜면 정당마다 이민자 지지율을 정해요. 이민자가 투표하는 선거에서는 지역구마다 시민 · 이민자 수만큼 섞어 개표하고(총선 비례 · 대선은 전국 수로), 지방선거 · 국민투표는 유권자 수도 바뀝니다. 끄면 이민자도 그 지역 시민과 같은 성향으로 투표해요.',
+                    text: '여론 › 종합의 "시민 / 이민자 성향 따로 정하기"(기본 켬)를 켜 두면 지역구 - 이민자 · 지지율 - 이민자 탭에서 이민자 성향을 시민과 같은 화면으로 따로 정해요. 이민자가 투표하는 선거에서는 지역구마다 시민 · 이민자 수만큼 섞어 개표하고(총선 비례 · 대선은 전국 수로), 지방선거 · 국민투표는 유권자 수도 바뀝니다. 끄면 이민자 탭이 시민 탭과 묶여 이민자도 시민과 같은 성향으로 투표해요.',
                 },
             ],
         },
