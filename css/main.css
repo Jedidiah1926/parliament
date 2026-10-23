@@ -1688,3 +1688,7 @@ html[data-theme-family="modern"] .bill-route-seg .bill-route-btn:last-child { bo
 .ab-summary { font-size: 0.78rem; color: #888; margin: 2px 0 8px; }
 .ab-summary .y { color: var(--vote-yea); } .ab-summary .n { color: var(--vote-nay); }
 html[data-theme-family="modern"] .ab-summary { color: var(--m-text-3, #71717a); }
+/* 내각 › 서명 — 최근 결정 */
+.sign-done { font-size: 0.78rem; padding: 4px 8px; border-left: 3px solid var(--vote-yea); margin: 4px 0; color: #aaa; }
+.sign-done.n { border-left-color: var(--vote-nay); }
+html[data-theme-family="modern"] .sign-done { color: var(--m-text-2, #52525b); }

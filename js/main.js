@@ -2673,7 +2673,7 @@
             const bill = bills.find(b => b.id === id);
             if(!bill) return;
             bill.vetoStatus = 'signed';
-            renderArchiveList();
+            renderArchiveList(); renderSignList(); renderLawPipeline();
         }
 
         function vetoBill(id) {
@@ -2681,7 +2681,7 @@
             if(!bill) return;
             showCustomConfirm(`${vetoHolderLabel()}의 거부권을 행사해 이 법안을 최종 부결시킵니다. 계속하시겠습니까?`, () => {
                 bill.vetoStatus = 'vetoed';
-                renderArchiveList();
+                renderArchiveList(); renderSignList(); renderLawPipeline();
             });
         }
 
@@ -3017,7 +3017,7 @@
                         <span style="color:#555; font-size:0.75rem; margin-left:4px;">[${thLabel}]</span>
                         <span class="bill-history-toggle" onclick="event.stopPropagation(); toggleBillHistory('${bill.id}')">▾ 세부 기록</span>
                         <div style="display:flex; gap:5px;">
-                            ${overall === 'awaiting_veto' ? `<button class="bill-amend-btn" onclick="signBill('${bill.id}')">✍ ${vetoHolderLabel()} 서명</button><button class="bill-remove-btn" onclick="vetoBill('${bill.id}')">🛑 거부권 행사</button>` : ''}
+                            ${overall === 'awaiting_veto' ? `<button class="bill-amend-btn" onclick="switchSubTab('cabinet','sign')" title="서명 · 거부권 행사는 내각 › 서명에서">✍ 서명하러 →</button>` : ''}
                             ${overall === 'passed' ? (bill.kind === 'constitution'
                                 ? `<button class="bill-amend-btn" onclick="switchSubTab('law','constitution')">📜 헌법 보기</button>`
                                 : `<button class="bill-amend-btn" onclick="startAmendment('${bill.id}')">📝 개정안 발의</button>`) : ''}
@@ -6534,6 +6534,7 @@
             if(sub === 'pm') { renderPmSection(); renderDeputyPmsList(); renderEmergencyPowers(); }
             if(sub === 'cabinetmembers') { renderCabinetMembersList(); renderChairSection(); renderEmergencyPowers(); }
             if(sub === 'councilArchive') renderArchiveList('council');
+            if(sub === 'sign') renderSignList();
             if(sub === 'council') { syncCouncilBillSelect(); renderCouncilActiveBillDisplay(); renderCouncilThresholdUI(); renderCabinetDisplay(); }
             if(sub === 'coalition') { renderCoalitions(); }
             if(sub === 'list') { listMemberInnerTab = 'house'; switchListMemberInnerTab('house'); }

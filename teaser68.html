@@ -1273,6 +1273,7 @@
                     <button class="sub-tab-btn" onclick="switchSubTab('cabinet','president')" id="subTabPresident">대통령</button>
                     <button class="sub-tab-btn" onclick="switchSubTab('cabinet','pm')" id="subTabPm">총리</button>
                     <button class="sub-tab-btn" onclick="switchSubTab('cabinet','cabinetmembers')" id="subTabCabinetmembers">내각 구성원</button>
+                    <button class="sub-tab-btn" onclick="switchSubTab('cabinet','sign')" id="subTabSign">서명</button>
                     <button class="sub-tab-btn" onclick="switchSubTab('cabinet','council')" id="subTabCouncil">국무회의</button>
                     <button class="sub-tab-btn" onclick="switchSubTab('cabinet','councilArchive')" id="subTabCouncilArchive">국무회의 기록</button>
                 </div>
@@ -1618,6 +1619,11 @@
                         <button class="vote-ctrl-btn yea" id="counConfirmBtn" style="width:100%;margin-top:8px;padding:9px;" onclick="resolveCabinetCouncilVote()">▶ 국무회의로 의결</button>
                     </div>
                 </div><!-- end contentCouncil -->
+
+                <!-- 서명 탭: 의회를 통과해 거부권 주체의 서명을 기다리는 법안 — 서명 · 거부권 행사 (js/legis.js) -->
+                <div id="contentSign" class="sub-tab-content">
+                    <div id="signList"></div>
+                </div>
 
                 <!-- 기록 탭: 국무회의가 의결한 법안 (의회가 의결한 법안은 입법 > 기록) -->
                 <div id="contentCouncilArchive" class="sub-tab-content">
