@@ -1,5 +1,5 @@
 // ===== Hemicycle 티저 1.6.3 (teaser63 ~ 67) — "Vive la Révolution!" 미리보기 =====
-// teaser63.html = main.html(1.6.1 포함) + js/teaser62.js ~ js/teaser62.js(1.6.2 ~ 1.6.2) + 이 파일. 저장 공간은 따로 ('hemicycleTeaserV2-63:')
+// teaser63.html = main.html(1.6.1 · 1.6.2 포함) + 이 파일. 저장 공간은 따로 ('hemicycleTeaserV2-63:')
 //
 //   - 내각 › 혁명: 민중이 주체 — 주도 이념(민주 · 공산주의)과 혁명 정당을 고르면 성공 확률을 요인별로 보여 준다
 //     (정부 불신 · 군정/당-국가/계엄 · 활동 금지 정당 · 혁명 정당 지지율 · 그 정당이 앞서는 지역의 인구 · 군의 충성)
