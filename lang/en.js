@@ -22,6 +22,9 @@ window.DnoLangPacks.en = {
  ],
  "ordinal": "en",
  "patterns": [
+  {"re": "^(.+) 부의장(\\d*)$", "to": "$1 Deputy Speaker $2"},
+  {"re": "^(.+) 의장$", "to": "$1 Speaker"},
+  {"re": "^(.+) · (.+) 대표$", "to": "$1 · $2 leader"},
   {"re": "^심사 (\\d+)건 · $", "to": "$1 reviews · "},
   {"re": "^표결 (\\d+)건 · $", "to": "$1 votes · "},
   {"re": "^가결 (\\d+)$", "to": "Passed $1"},
@@ -680,6 +683,15 @@ window.DnoLangPacks.en = {
   }
  ],
  "dict": [
+  ["모든 자리에서 가져오기", "Import from all posts"],
+  ["아직 사람이 없습니다. \"＋ 사람 추가\"로 만들거나, \"모든 자리에서 가져오기\"로 지금 자리에 적힌 이름을 인물로 옮겨 보세요.", "No people yet. Create one with \"＋ Add person\", or use \"Import from all posts\" to turn the names already written in posts into people."],
+  ["이름이 적힌 자리가 없습니다 — 의원 · 당수 · 의장 · 내각 같은 자리에 이름을 적거나, 여기서 사람을 직접 추가하세요.", "No post has a name written in it — write names into posts like members, leaders, speakers or the cabinet, or add people here directly."],
+  ["의원 · 당수 · 원내대표 · 파벌 대표 · 의장단 · 대통령(국왕) · 내각 · 지방 단체장 등 이름이 적힌 모든 자리에서 인물을 만들고 연결 (같은 이름은 한 사람)", "Create and link people from every post with a name — members, leaders, floor leaders, faction leaders, speakers, president (monarch), cabinet, local heads (same name = one person)"],
+  ["\"모든 자리에서 가져오기\"를 누르면 의원 · 당수 · 파벌 대표 · 의장단 · 대통령(국왕) · 내각 · 지방 단체장처럼 이름이 적힌 모든 자리에서 인물을 만들고 연결합니다 (같은 이름은 한 사람). \"＋ 사람 추가\"로 직접 만들어도 돼요.", "Press \"Import from all posts\" to create and link people from every post with a name — members, leaders, faction leaders, speakers, president (monarch), cabinet and local heads (the same name is one person). You can also create them directly with \"＋ Add person\"."],
+  ["의장단", "Speakers"],
+  ["지방 단체장", "Local heads"],
+  ["- 사람 탭 \"모든 자리에서 가져오기\" — 의원 · 당수 · 원내대표 · 내각에 더해 파벌 대표 · 의장 · 부의장 · 대통령(국왕) · 현직 지방 단체장에서도 인물을 만들고 연결, 그 자리들에 인물 배정도 가능 (미리보기의 왕가 주장자도)", "- People tab \"Import from all posts\" — besides members, leaders, floor leaders and cabinet, it also creates and links people from faction leaders, speakers, deputy speakers, president (monarch) and current local heads, and people can be assigned to those posts (also royal claimants in previews)"],
+  ["- 사람 탭 검색창이 흰색으로 보이던 문제 수정", "- Fixed the People tab search box showing white"],
   ["가결 · 부결 · 거부된 법안 보관함입니다 (상태별로 걸러 보기). 위쪽 칩에서 원(하원 · 상원 …)이나 위원회를 고르면 그곳의 본회의 표결 · 위원회 심사 기록을 하나씩 봅니다. 선거 기록은 선거 › 선거 기록에 있어요.", "The archive of passed, failed and vetoed bills (filter by status). Pick a chamber (lower house · upper house …) or a committee in the chips at the top to see each of its floor votes or committee reviews. Election records are in Elections › Election records."],
   ["법령집 — 가결된 법률을 조문 그대로 모아 봅니다. 법률은 개정 계보마다 가장 최근 판이 보이고(제정 · 개정 횟수), 여기서 개정안을 낼 수 있어요.", "The statute book — passed laws, article by article. Each amendment line shows its latest version (enactment · number of amendments), and you can propose amendments here."],
   ["헌법 — \"헌법 제정하기\"로 처음 만들고, \"직접 편집\"(표결 없이 바로) 또는 \"개정안 발의\"(표결을 거쳐, 가결 기준 2/3)로 고칩니다. 개정 이력이 남아요.", "Constitution — create it with \"Enact a constitution\", then change it with \"Edit directly\" (instantly, no vote) or \"Propose amendment\" (through a vote, 2/3 to pass). The amendment history is kept."],

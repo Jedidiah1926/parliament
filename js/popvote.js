@@ -731,6 +731,17 @@
         if (ge('pvRefForm')) { readRefInputs(); renderRef(); }
     }
 
+    // 사람 탭(js/people.js)이 인물을 앉힐 수 있는 현직 단체장 자리 — 정당이 정해진 곳만, 이름 · 사진은 그 자리 객체에 바로 쓴다
+    function peopleSeats() {
+        const H = S.local.holders, out = [];
+        const chs = Array.from(new Set(Object.keys(H).map(k => k.split(':')[1]).filter(Boolean)));
+        chs.forEach(ch => holderTree(ch).forEach(g => {
+            if (g.region && filledH(g.head)) out.push({ key: g.rKey, label: `${g.region.name} ${holderOffice('region', ch, g.region.id, g.head)}`, obj: g.head, partyId: g.head.partyId });
+            g.districts.forEach(d => { if (filledH(d.h)) out.push({ key: d.key, label: `${d.name} ${holderOffice('district', ch, d.id, d.h)}`, obj: d.h, partyId: d.h.partyId }); });
+        }));
+        return out;
+    }
+
     // ---- 저장 · 불러오기 ----
     function getState() {
         return JSON.parse(JSON.stringify(S));
@@ -760,7 +771,7 @@
     }
 
     window.PopVote = {
-        runLocal, runRef, renderLocal, renderRef, refresh, show, remove, getState, setState, records,
+        runLocal, runRef, renderLocal, renderRef, refresh, show, remove, getState, setState, records, peopleSeats,
         applyLocal, setHolder, setOffice, uploadHolderPhoto, setUnitsView, showHolders: () => showHoldersOnDisplay(true),
     };
 })();

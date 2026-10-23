@@ -857,7 +857,7 @@
                     target: () => document.querySelector('#contentPeople [data-act="import"]') || '#contentPeople',
                     allow: ['#contentPeople'],
                     title: '인물 만들기',
-                    text: '"의원 · 내각에서 가져오기"를 누르면 지금 의원 · 당수 · 내각 자리에 적힌 이름으로 인물을 만들고 연결합니다 (같은 이름은 한 사람). "＋ 사람 추가"로 직접 만들어도 돼요.',
+                    text: '"모든 자리에서 가져오기"를 누르면 의원 · 당수 · 파벌 대표 · 의장단 · 대통령(국왕) · 내각 · 지방 단체장처럼 이름이 적힌 모든 자리에서 인물을 만들고 연결합니다 (같은 이름은 한 사람). "＋ 사람 추가"로 직접 만들어도 돼요.',
                     task: () => !!window.T61 && T61.people.length > (T.peopleBase || 0),
                     done: '인물이 생겼어요. 카드의 ▾를 누르면 이념 · 정당 · 파벌을 고치고 자리를 배정할 수 있습니다.',
                 },

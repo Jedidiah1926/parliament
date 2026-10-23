@@ -604,6 +604,11 @@
         render();
         try { window.renderCabinetDisplay && window.renderCabinetDisplay(); } catch (e) { /* 화면 준비 전 */ }
     }
+    // 국가 › 사람(js/people.js)에 왕가 사람(주장자)도 자리로 — 인물을 배정하거나 "모든 자리에서 가져오기"로 인물을 만든다
+    (window.HemiPeopleSeats = window.HemiPeopleSeats || []).push({
+        seats: () => allClaimants().map(({ c, d }) => ({ key: `rc:${c.id}`, group: '왕실', label: `${d.name || '왕가'} · ${c.title || '왕족'}`, obj: c })),
+        refresh,
+    });
 
     const style = document.createElement('style');
     style.textContent = `

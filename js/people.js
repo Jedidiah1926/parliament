@@ -109,6 +109,22 @@
         if (typeof collectiveChair !== 'undefined' && collectiveChair) out.push({ key: 'c:chair', kind: 'cabinet', group: '내각', label: '집단지도체제 의장', obj: collectiveChair, name: () => collectiveChair.name || '' });
         (deputyPms || []).forEach(d => out.push({ key: `c:dpm:${d.id}`, kind: 'cabinet', group: '내각', label: d.position || '부총리', obj: d, name: () => d.name || '' }));
         (cabinetMembers || []).forEach(c => out.push({ key: `c:cm:${c.id}`, kind: 'cabinet', group: '내각', label: c.position || '내각 구성원', obj: c, name: () => c.name || '' }));
+        // 의장 · 부의장 (원마다)
+        if (typeof chamberLeaders !== 'undefined' && chamberLeaders) chs().forEach(ch => {
+            const L = chamberLeaders[ch];
+            if (!L) return;
+            if (L.speaker) out.push({ key: `sp:${ch}`, kind: 'speaker', group: '의장단', label: `${chName(ch)} 의장`, obj: L.speaker, name: () => L.speaker.name || '' });
+            const deps = L.deputies || [];
+            deps.forEach((d, i) => out.push({ key: `dp:${ch}:${d.id}`, kind: 'speaker', group: '의장단', label: `${chName(ch)} 부의장${deps.length > 1 ? i + 1 : ''}`, obj: d, name: () => d.name || '' }));
+        });
+        // 파벌 대표
+        parties.forEach(p => (p.factions || []).forEach(f => out.push({ key: `fl:${p.id}:${f.id}`, kind: 'leader', group: '당직', partyId: p.id, label: `${p.name} · ${f.name || '파벌'} 대표`, obj: f, nameKey: 'leaderName', photoKey: 'leaderPhoto', pidKey: 'leaderPersonId', name: () => f.leaderName || '' })));
+        // 현직 지방 단체장 (선거 › 지방선거 — js/popvote.js)
+        if (window.PopVote && typeof PopVote.peopleSeats === 'function') {
+            try { PopVote.peopleSeats().forEach(h => out.push({ key: `lh:${h.key}`, kind: 'local', group: '지방 단체장', partyId: h.partyId, label: h.label, obj: h.obj, name: () => h.obj.name || '' })); } catch (e) { /* 지방선거 준비 전 */ }
+        }
+        // 다른 화면이 더하는 자리 (미리보기의 왕실 등): window.HemiPeopleSeats = [{ seats: () => [{ key, group, label, obj, … }], refresh }]
+        (window.HemiPeopleSeats || []).forEach(src => { try { (src.seats() || []).forEach(x => out.push({ kind: 'extra', name: () => x.obj[x.nameKey || 'name'] || '', ...x })); } catch (e) { /* 그 화면 준비 전 */ } });
         return out;
     }
     const pidOf = s => s.obj[s.pidKey || 'personId'];
@@ -146,7 +162,9 @@
     function rerender() {
         try { simulate(); } catch (e) { /* 화면 준비 전 */ }
         try { refreshUI(); } catch (e) { /* 화면 준비 전 */ }
-        ['renderMembersList', 'renderCabinetDisplay', 'renderCabinetMembersList', 'renderPartyInfoList', 'renderPresidentCard', 'renderPmCard'].forEach(f => { try { if (typeof window[f] === 'function') window[f](); } catch (e) { /* 없음 */ } });
+        ['renderMembersList', 'renderCabinetDisplay', 'renderCabinetMembersList', 'renderPartyInfoList', 'renderPresidentCard', 'renderPmCard', 'renderChamberLeaders'].forEach(f => { try { if (typeof window[f] === 'function') window[f](); } catch (e) { /* 없음 */ } });
+        try { if (window.PopVote) PopVote.refresh(); } catch (e) { /* 지방선거 준비 전 */ }
+        (window.HemiPeopleSeats || []).forEach(src => { try { if (typeof src.refresh === 'function') src.refresh(); } catch (e) { /* 없음 */ } });
     }
     function assign(personId, seatKey) {
         const person = personById(personId);
@@ -225,7 +243,7 @@
         };
     }
 
-    // ---- 지금 의원 · 당직 · 내각에 적힌 이름으로 인물 만들기 (같은 이름은 한 사람으로) ----
+    // ---- 지금 자리(의원 · 당직 · 파벌 대표 · 의장단 · 대통령 · 내각 · 지방 단체장 · 왕실 …)에 적힌 이름으로 인물 만들기 (같은 이름은 한 사람으로) ----
     function importFromSeats() {
         const byName = new Map(S.people.map(p => [p.name.trim(), p]));
         let made = 0, linked = 0;
@@ -243,7 +261,7 @@
             write(s, p); linked++;
         });
         rerender(); render();
-        showCustomAlert(made || linked ? `인물 ${made}명을 새로 만들고, 자리 ${linked}곳을 사람 탭의 인물과 연결했습니다.` : '이름이 적힌 자리가 없습니다 — 의원 · 당수 · 내각 자리에 이름을 적거나, 여기서 사람을 직접 추가하세요.');
+        showCustomAlert(made || linked ? `인물 ${made}명을 새로 만들고, 자리 ${linked}곳을 사람 탭의 인물과 연결했습니다.` : '이름이 적힌 자리가 없습니다 — 의원 · 당수 · 의장 · 내각 같은 자리에 이름을 적거나, 여기서 사람을 직접 추가하세요.');
     }
 
     // ---- 탭: 국가 › 사람 ----
@@ -317,8 +335,8 @@
             <div class="t61-intro">인물을 미리 만들어 두고 의석 · 당직 · 내각 자리에 배정합니다. 이름 · 사진을 여기서 고치면 배정된 모든 자리에 반영되고, 선거 · 당적 변경 · 궐석으로 자리가 사라져도 인물은 남아요.</div>
             <div class="t61-bar">
                 <button type="button" class="t61-btn t61-primary" data-act="add">＋ 사람 추가</button>
-                <button type="button" class="t61-btn" data-act="import" title="의원 · 당수 · 원내대표 · 내각 자리에 적힌 이름으로 인물을 만들고 연결 (같은 이름은 한 사람)">의원 · 내각에서 가져오기</button>
-                <input type="search" class="t61-search" data-ui="q" placeholder="이름 검색" value="${esc(ui.q)}">
+                <button type="button" class="t61-btn" data-act="import" title="의원 · 당수 · 원내대표 · 파벌 대표 · 의장단 · 대통령(국왕) · 내각 · 지방 단체장 등 이름이 적힌 모든 자리에서 인물을 만들고 연결 (같은 이름은 한 사람)">모든 자리에서 가져오기</button>
+                <input type="text" class="t61-search" data-ui="q" placeholder="이름 검색" value="${esc(ui.q)}">
             </div>
             ${popSummaryHtml()}
             <div class="system-radio-group t61-filter">${[['all', '전체'], ['seated', '자리 있음'], ['none', '자리 없음'], ['cand', '지역구 후보']].map(([k, t]) => `<button type="button" class="system-radio-btn ${ui.filter === k ? 'active' : ''}" data-filter="${k}">${t} <span class="t61-n">${counts[k]}</span></button>`).join('')}</div>
@@ -326,7 +344,7 @@
                 ${le.elected.length ? `<div>✔ 당선 · 배정: ${le.elected.map(x => `${esc((personById(x.personId) || {}).name || '?')} <span class="t61-dim">(${esc(x.place)})</span>`).join(', ')}</div>` : ''}
                 ${le.lost.length ? `<div>✘ 낙선: ${le.lost.map(x => `${esc((personById(x.personId) || {}).name || '?')} <span class="t61-dim">(${esc(x.place)})</span>`).join(', ')} — 사람 탭에 남아 다음 선거에 다시 나갈 수 있어요</div>` : ''}
                 <button type="button" class="t61-x" data-act="clearres" title="닫기">✕</button></div>` : ''}
-            <div id="t61List" class="t61-list">${list.length ? list.map(p => card(p, posMap.get(p.id) || [])).join('') : `<div class="t61-empty">${S.people.length ? '조건에 맞는 사람이 없습니다.' : '아직 사람이 없습니다. "＋ 사람 추가"로 만들거나, "의원 · 내각에서 가져오기"로 지금 자리에 적힌 이름을 인물로 옮겨 보세요.'}</div>`}</div>`;
+            <div id="t61List" class="t61-list">${list.length ? list.map(p => card(p, posMap.get(p.id) || [])).join('') : `<div class="t61-empty">${S.people.length ? '조건에 맞는 사람이 없습니다.' : '아직 사람이 없습니다. "＋ 사람 추가"로 만들거나, "모든 자리에서 가져오기"로 지금 자리에 적힌 이름을 인물로 옮겨 보세요.'}</div>`}</div>`;
         bind(box);
         box.querySelector('[data-act="migrants"]')?.addEventListener('click', () => { switchSubTab('vote', 'elecSettings'); setTimeout(() => document.getElementById('t61MigrantCard')?.scrollIntoView({ block: 'center' }), 50); });
     }
@@ -667,7 +685,8 @@
         .t61-btn:hover { border-color: var(--tno-neon); color: var(--tno-neon); }
         .t61-primary { border-color: var(--tno-neon); color: var(--tno-neon); }
         .t61-danger { color: var(--tno-alert, #e74c3c); border-color: currentColor; }
-        .t61-filter { margin-bottom: 8px; }
+        .t61-filter { margin-bottom: 8px; flex-wrap: wrap; }
+        .t61-filter .system-radio-btn { flex: 1 1 auto; white-space: nowrap; }
         .t61-n { opacity: .6; font-size: .85em; }
         .t61-result { position: relative; font-size: .8rem; line-height: 1.6; border: 1px solid #2a2a2a; border-left: 3px solid var(--tno-gold); padding: 6px 28px 6px 8px; margin-bottom: 8px; }
         .t61-result .t61-x { position: absolute; top: 4px; right: 4px; }
