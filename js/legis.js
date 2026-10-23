@@ -678,6 +678,39 @@ function renderArchiveBodyList(container, sc, query, activeTag) {
         </div>`).join('');
 }
 
+// ── 내각 › 서명 — 의회를 통과해 거부권 주체(내각 › 내각 설정)의 서명을 기다리는 법안: 서명하면 가결, 거부권을 행사하면 최종 부결 ──
+function renderSignList() {
+    const box = document.getElementById('signList');
+    if (!box || typeof bills === 'undefined') return;
+    const holder = vetoHolderLabel();
+    const waiting = bills.filter(b => getBillOverallStatus(b) === 'awaiting_veto');
+    const done = bills.filter(b => b.vetoStatus === 'signed' || b.vetoStatus === 'vetoed').filter(b => ['passed', 'vetoed'].includes(getBillOverallStatus(b))).slice(-5).reverse();
+    const head = holder
+        ? `<div class="cm-note">의회를 통과한 법안에 <b>${legisEsc(holder)}</b>이(가) 서명하면 가결되고, 거부권을 행사하면 최종 부결됩니다. 거부권 주체는 내각 › 내각 설정에서 정해요.</div>`
+        : `<div class="cm-note">거부권 주체가 없어 의회를 통과한 법안은 바로 가결됩니다. 서명 단계를 쓰려면 내각 › 내각 설정에서 거부권 주체를 정하세요.</div>`;
+    const card = b => `
+        <div class="bill-card" style="border-left-color:var(--tno-gold);">
+            <div class="bill-card-title">${legisEsc(b.title)}${(b.version || 1) > 1 ? ` <span class="bill-version-badge">제${b.version}판</span>` : ''}</div>
+            ${billBodyHtml(b, 3)}
+            <div style="margin-top:4px;">${buildTagHtml(b)}</div>
+            <div class="bill-card-footer">
+                ${buildBillBadges(b)}
+                <span class="bill-history-toggle" onclick="event.stopPropagation(); toggleBillHistory('${b.id}')">▾ 세부 기록</span>
+                <div style="margin-left:auto; display:flex; gap:5px;">
+                    <button class="bill-amend-btn" onclick="signBill('${b.id}')">✍ ${legisEsc(holder)} 서명</button>
+                    <button class="bill-remove-btn" onclick="vetoBill('${b.id}')">🛑 거부권 행사</button>
+                </div>
+            </div>
+            ${buildBillHistoryHtml(b)}
+        </div>`;
+    const recent = done.length ? `<div class="lb-section-title">최근 결정</div>` + done.map(b => `
+        <div class="sign-done ${b.vetoStatus === 'vetoed' ? 'n' : 'y'}">${b.vetoStatus === 'vetoed' ? '🛑 거부' : '✍ 서명'} · ${legisEsc(b.title)}</div>`).join('') : '';
+    box.innerHTML = `${head}
+        <div class="lb-section-title">서명 대기 <span class="lb-count">${waiting.length}</span></div>
+        ${waiting.length ? waiting.map(card).join('') : '<div style="color:#444; text-align:center; padding:16px; border:1px dashed #222;">서명을 기다리는 법안이 없습니다</div>'}
+        ${recent}`;
+}
+
 // ── 입법 단계 막대 (입법 메뉴 맨 위) — 제출 → 위원회 → 본회의 → 서명 → 법령, 단계마다 법안 수 · 누르면 그 탭으로 ──
 function renderLawPipeline() {
     const box = document.getElementById('lawPipeline');
@@ -693,10 +726,11 @@ function renderLawPipeline() {
         ['bill', '제출', null],
         ['committee', '위원회', inCommittee],
         ['table', '본회의', plenary],
-        ['archive', '서명 · 기록', awaiting || null],
+        ['sign', '서명', awaiting || null, 'cabinet'],
+        ['archive', '기록', null],
         ['lawbook', '법령', laws],
     ];
-    box.innerHTML = steps.map(([tab, label, n], i) => `${i ? '<span class="lp-arrow">›</span>' : ''}<button type="button" class="lp-step${cur === tab ? ' active' : ''}" onclick="switchSubTab('law','${tab}')">${label}${n != null ? ` <b>${n}</b>` : ''}</button>`).join('');
+    box.innerHTML = steps.map(([tab, label, n, main], i) => `${i ? '<span class="lp-arrow">›</span>' : ''}<button type="button" class="lp-step${cur === tab ? ' active' : ''}" onclick="switchSubTab('${main || 'law'}','${tab}')"${main ? ` title="${main === 'cabinet' ? '내각 › 서명' : ''}"` : ''}>${label}${n != null ? ` <b>${n}</b>` : ''}</button>`).join('');
 }
 
 // ── 저장 · 불러오기 (main.js의 getAppState/setAppState가 부름) ──

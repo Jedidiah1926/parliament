@@ -7,14 +7,13 @@
     const KEY = 'hemicycleDevMode';
     const CODE_HASH = '22zsze7nlqm';
     const TEASERS = [
-        { id: '62', file: 'teaser62.html', title: 'Teaser 1.6.2', note: '쿠데타 · 군정 · 군부 설정 (+1.6.1)' },
-        { id: '63', file: 'teaser63.html', title: 'Teaser 1.6.3', note: '혁명 · 당-국가 체제 · 선거인단 (+1.6.1 · 1.6.2)' },
-        { id: '64', file: 'teaser64.html', title: 'Teaser 1.6.4', note: '국회공성전 — 봉쇄 돌파 · 의장석 점거 (+1.6.1 ~ 1.6.3)' },
-        { id: '65', file: 'teaser65.html', title: 'Teaser 1.6.5', note: '세력 변화 타임라인 · 위키 틀 · 냉전 국가 순위 (+1.6.1 ~ 1.6.4)' },
-        { id: '66', file: 'teaser66.html', title: 'Teaser 1.6.6', note: '왕정복고 · 전제군주정 · 왕위 계승 · 친위 쿠데타 · 공화 혁명 (+1.6.1 ~ 1.6.5)' },
-        { id: '67', file: 'teaser67.html', title: 'Teaser 1.6.7', note: '미수복 지역 · 영토 통일 (+1.6.1 ~ 1.6.6)' },
-        { id: '68', file: 'teaser68.html', title: 'Teaser 1.6.8', note: '종속국 · 종속국 의회 · 합병 · 해방 (+1.6.1 ~ 1.6.7)' },
-        { id: '69', file: 'teaser69.html', title: 'Teaser 1.6.9', note: '경제 시스템 — 통화 · 재정 · 지역구 경제 · 예산안 · 경제 그래프 (+1.6.1 ~ 1.6.8)' },
+        { id: '63', file: 'teaser63.html', title: 'Teaser 1.6.3', note: '혁명 · 당-국가 체제 · 선거인단' },
+        { id: '64', file: 'teaser64.html', title: 'Teaser 1.6.4', note: '국회공성전 — 봉쇄 돌파 · 의장석 점거 (+1.6.3)' },
+        { id: '65', file: 'teaser65.html', title: 'Teaser 1.6.5', note: '세력 변화 타임라인 · 위키 틀 · 냉전 국가 순위 (+1.6.3 ~ 1.6.4)' },
+        { id: '66', file: 'teaser66.html', title: 'Teaser 1.6.6', note: '왕정복고 · 전제군주정 · 왕위 계승 · 친위 쿠데타 · 공화 혁명 (+1.6.3 ~ 1.6.5)' },
+        { id: '67', file: 'teaser67.html', title: 'Teaser 1.6.7', note: '미수복 지역 · 영토 통일 (+1.6.3 ~ 1.6.6)' },
+        { id: '68', file: 'teaser68.html', title: 'Teaser 1.6.8', note: '종속국 · 종속국 의회 · 합병 · 해방 (+1.6.3 ~ 1.6.7)' },
+        { id: '69', file: 'teaser69.html', title: 'Teaser 1.6.9', note: '경제 시스템 — 통화 · 재정 · 지역구 경제 · 예산안 · 경제 그래프 (+1.6.3 ~ 1.6.8)' },
     ];
 
     // cyrb53 — 짧은 53비트 문자열 해시

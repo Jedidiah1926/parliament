@@ -1,6 +1,5 @@
-// ===== Hemicycle 티저 1.6.2 (teaser62 ~ 67) — "주사위는 던져졌다" 미리보기 =====
-// teaser62.html은 main.html을 그대로 복사한 화면에 이 파일 하나를 더 불러 미리보기 기능을 얹는다.
-// (저장 공간은 본 게임 · 다른 티저와 따로 — main.js의 LS_PREFIX 'hemicycleTeaserV2-62:')
+// ===== 1.6.2 — 주사위는 던져졌다 "Alea iacta est" (군부 · 쿠데타 · 군정) =====
+// 1.6.2 미리보기(예전 teaser62)에서 본 게임으로 옮겨 왔다 — 본 게임 · 모든 미리보기 화면에서 돈다 (로고 제작 화면만 빼고).
 //
 //   - 내각 › 군부: 군 지휘부(국방부 장관 · 합동참모의장 · 육해공군 참모총장 · 장성 등)를 정해 둔다.
 //     사람마다 정부에 대한 충성도(0~100)와 가까운 정당 — 쿠데타 성공 확률 · 주도 · 진압에 쓰인다
@@ -19,7 +18,7 @@
     'use strict';
     const root = document.documentElement;
     // 1.6.3 티저(teaser63)도 1.6.2 기능을 그대로 쓴다 — 그쪽(js/teaser63.js)은 아래 window.T61로 군정 등을 다룬다
-    if (root.getAttribute('data-app-mode') !== 'teaser' || !['62', '63', '64', '65', '66', '67', '68', '69'].includes(root.getAttribute('data-teaser'))) return;
+    if (root.getAttribute('data-app-mode') === 'logo') return;
 
     const esc = s => (typeof escapeHtmlText === 'function' ? escapeHtmlText(String(s ?? '')) : String(s ?? ''));
     const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -30,7 +29,7 @@
     ];
     const TYPE_LABEL = { military: '군부 쿠데타', party: '정당 쿠데타', self: '친위 쿠데타' };
 
-    // ---- 상태 (세이브의 teaser62 칸) ----
+    // ---- 상태 (세이브의 coup 칸 — 1.6.2 미리보기 세이브는 teaser62 칸) ----
     //   military: [{ id, role, name, photo, partyId, loyalty }]
     //   junta: null | { chairId, chairName, chairRole, since, prevPresident, prevPm, prevRuling:{pid:bool}, banned:[pid] }
     //   coupBanned: [pid] — 쿠데타 성공으로 활동 금지된 정당 (민정 이양 · 복권 대상)
@@ -42,13 +41,13 @@
     const origGet = window.getAppState;
     window.getAppState = function () {
         const st = origGet.apply(this, arguments);
-        if (st && typeof st === 'object') st.teaser62 = JSON.parse(JSON.stringify(T));
+        if (st && typeof st === 'object') st.coup = JSON.parse(JSON.stringify(T));
         return st;
     };
     const origSet = window.setAppState;
     window.setAppState = function (state) {
         const r = origSet.apply(this, arguments);
-        const src = state && state.teaser62;
+        const src = state && (state.coup || state.teaser62);
         T = { ...fresh(), ...(src && typeof src === 'object' ? JSON.parse(JSON.stringify(src)) : {}) };
         if (!Array.isArray(T.military)) T.military = [];
         if (!Array.isArray(T.log)) T.log = [];
@@ -337,7 +336,9 @@
             ${T.military.length ? '' : '<button class="add-btn" data-act="seed">[+] 기본 군 지휘부 만들기 (국방부 장관 · 합참의장 · 육해공군 참모총장)</button>'}`;
         box.querySelector('[data-act="add"]').onclick = () => { T.military.push({ id: uid(), role: '장성', name: '', photo: '', partyId: '', loyalty: 60 }); renderMilitary(); };
         const seed = box.querySelector('[data-act="seed"]');
-        if (seed) seed.onclick = () => { DEFAULT_ROSTER.forEach(([role, loyalty]) => T.military.push({ id: uid(), role, name: '', photo: '', partyId: '', loyalty })); renderMilitary(); };
+        // 기본 직책 이름은 화면 언어로 (세이브에 든 이름은 번역하지 않으므로 만들 때 바꿔 둔다)
+        const tr = k => (window.DnoLang && typeof DnoLang.t === 'function' ? DnoLang.t(k) : k);
+        if (seed) seed.onclick = () => { DEFAULT_ROSTER.forEach(([role, loyalty]) => T.military.push({ id: uid(), role: tr(role), name: '', photo: '', partyId: '', loyalty })); renderMilitary(); };
         box.querySelectorAll('.t62-officer').forEach(card => {
             const m = T.military.find(x => x.id === card.dataset.id);
             card.querySelector('[data-act="del"]').onclick = () => { T.military = T.military.filter(x => x !== m); renderMilitary(); };

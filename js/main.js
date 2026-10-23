@@ -2673,7 +2673,7 @@
             const bill = bills.find(b => b.id === id);
             if(!bill) return;
             bill.vetoStatus = 'signed';
-            renderArchiveList();
+            renderArchiveList(); renderSignList(); renderLawPipeline();
         }
 
         function vetoBill(id) {
@@ -2681,7 +2681,7 @@
             if(!bill) return;
             showCustomConfirm(`${vetoHolderLabel()}의 거부권을 행사해 이 법안을 최종 부결시킵니다. 계속하시겠습니까?`, () => {
                 bill.vetoStatus = 'vetoed';
-                renderArchiveList();
+                renderArchiveList(); renderSignList(); renderLawPipeline();
             });
         }
 
@@ -3017,7 +3017,7 @@
                         <span style="color:#555; font-size:0.75rem; margin-left:4px;">[${thLabel}]</span>
                         <span class="bill-history-toggle" onclick="event.stopPropagation(); toggleBillHistory('${bill.id}')">▾ 세부 기록</span>
                         <div style="display:flex; gap:5px;">
-                            ${overall === 'awaiting_veto' ? `<button class="bill-amend-btn" onclick="signBill('${bill.id}')">✍ ${vetoHolderLabel()} 서명</button><button class="bill-remove-btn" onclick="vetoBill('${bill.id}')">🛑 거부권 행사</button>` : ''}
+                            ${overall === 'awaiting_veto' ? `<button class="bill-amend-btn" onclick="switchSubTab('cabinet','sign')" title="서명 · 거부권 행사는 내각 › 서명에서">✍ 서명하러 →</button>` : ''}
                             ${overall === 'passed' ? (bill.kind === 'constitution'
                                 ? `<button class="bill-amend-btn" onclick="switchSubTab('law','constitution')">📜 헌법 보기</button>`
                                 : `<button class="bill-amend-btn" onclick="startAmendment('${bill.id}')">📝 개정안 발의</button>`) : ''}
@@ -6534,6 +6534,7 @@
             if(sub === 'pm') { renderPmSection(); renderDeputyPmsList(); renderEmergencyPowers(); }
             if(sub === 'cabinetmembers') { renderCabinetMembersList(); renderChairSection(); renderEmergencyPowers(); }
             if(sub === 'councilArchive') renderArchiveList('council');
+            if(sub === 'sign') renderSignList();
             if(sub === 'council') { syncCouncilBillSelect(); renderCouncilActiveBillDisplay(); renderCouncilThresholdUI(); renderCabinetDisplay(); }
             if(sub === 'coalition') { renderCoalitions(); }
             if(sub === 'list') { listMemberInnerTab = 'house'; switchListMemberInnerTab('house'); }
@@ -12925,11 +12926,22 @@
         function elecSwitchSub(sub) {
             if(sub === 'district') { switchSubTab('nation', 'territory'); return; }
             if(sub === 'region') { switchSubTab('nation', 'regions'); return; }
-            if(!['tendency','prob'].includes(sub)) sub = 'tendency';
-            ['tendency','prob'].forEach(s => {
-                document.getElementById(`elecSubTab${s.charAt(0).toUpperCase()+s.slice(1)}`)?.classList.toggle('active', s===sub);
-                document.getElementById(`elecSub${s.charAt(0).toUpperCase()+s.slice(1)}`)?.classList.toggle('active', s===sub);
-            });
+            // 종합 · 지역구 - 시민(tendency) · 지지율 - 시민(prob) · 지역구 - 이민자(mtendency) · 지지율 - 이민자(mprob)
+            // 이민자 탭은 시민 탭과 같은 화면을 쓰고, 그 화면이 이민자 성향을 고치도록 js/people.js가 데이터를 바꿔 끼운다 (HemiOpinionLayer)
+            const OPINION_SUBS = ['overview','tendency','prob','mtendency','mprob'];
+            if(!OPINION_SUBS.includes(sub)) sub = 'overview';
+            const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+            const view = sub === 'mtendency' ? 'tendency' : sub === 'mprob' ? 'prob' : sub;
+            if(typeof window.HemiOpinionLayer === 'function') window.HemiOpinionLayer(sub === 'mtendency' || sub === 'mprob' ? 'migrant' : 'citizen', sub);
+            OPINION_SUBS.forEach(s => document.getElementById(`elecSubTab${cap(s)}`)?.classList.toggle('active', s===sub));
+            ['overview','tendency','prob'].forEach(s => document.getElementById(`elecSub${cap(s)}`)?.classList.toggle('active', s===view));
+            sub = view;
+            if(sub === 'overview') {
+                if(typeof window.HemiOpinionOverview === 'function') window.HemiOpinionOverview();
+                const activeDispTab = document.querySelector('.disp-tab-btn.active')?.dataset.tab;
+                if(activeDispTab === 'district' || activeDispTab === 'tendency' || activeDispTab === 'region') switchDispTab('house');
+            }
+            if(sub === 'prob') elecRenderList();
             if(sub === 'tendency') {
                 document.getElementById('dispTabTendency').style.display = '';
                 switchDispTab('tendency');
@@ -12944,7 +12956,7 @@
         // 여론 탭을 열 때 지금 고른 하위 탭(처음엔 성향)의 화면을 그린다
         function elecActiveSub() {
             const btn = document.querySelector('#mainContentElection > .sub-tab-container .sub-tab-btn.active');
-            return btn ? btn.id.replace(/^elecSubTab/, '').toLowerCase() : 'tendency';
+            return btn ? btn.id.replace(/^elecSubTab/, '').toLowerCase() : 'overview';
         }
         // 국가 › 지역: 오른쪽에 지역구 지도, 왼쪽에 지역구 편집 (성향 탭에서 골라 둔 지역구가 있으면 그 편집 칸을 이어서 보여 준다)
         function showTerritoryTab() {

@@ -1,5 +1,5 @@
 // ===== Hemicycle 티저 1.6.6 (teaser66 ~ 67) — "왕은 죽었다, 국왕 만세!" 미리보기 =====
-// teaser66.html = main.html(1.6.1 포함) + js/teaser62.js ~ js/teaser65.js(1.6.2 ~ 1.6.5) + 이 파일. 저장 공간은 따로 ('hemicycleTeaserV2-66:')
+// teaser66.html = main.html(1.6.1 · 1.6.2 포함) + js/teaser63.js ~ js/teaser65.js(1.6.3 ~ 1.6.5) + 이 파일. 저장 공간은 따로 ('hemicycleTeaserV2-66:')
 //
 //   - 내각 › 왕실: 왕가와 왕위 주장자를 정해 둔다
 //       왕가마다 이름 · 색 · 계승 규칙(남계만 · 남자 우선 · 성별 무관), 주장자마다 이름 · 칭호 · 성별 · 사진 · 지지 정당
@@ -604,6 +604,11 @@
         render();
         try { window.renderCabinetDisplay && window.renderCabinetDisplay(); } catch (e) { /* 화면 준비 전 */ }
     }
+    // 국가 › 사람(js/people.js)에 왕가 사람(주장자)도 자리로 — 인물을 배정하거나 "모든 자리에서 가져오기"로 인물을 만든다
+    (window.HemiPeopleSeats = window.HemiPeopleSeats || []).push({
+        seats: () => allClaimants().map(({ c, d }) => ({ key: `rc:${c.id}`, group: '왕실', label: `${d.name || '왕가'} · ${c.title || '왕족'}`, obj: c })),
+        refresh,
+    });
 
     const style = document.createElement('style');
     style.textContent = `

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- 자동 생성 파일: main.html을 고친 뒤 `npm run build:logo`로 다시 만드세요 (tools/build-logo.js) — teaser64.html = main.html + 미리보기(js/teaser62.js + js/teaser63.js + js/teaser64.js, 1.6.4 국회공성전 — 봉쇄 돌파 · 의장석 점거 (+1.6.1 ~ 1.6.3)) -->
+<!-- 자동 생성 파일: main.html을 고친 뒤 `npm run build:logo`로 다시 만드세요 (tools/build-logo.js) — teaser64.html = main.html + 미리보기(js/teaser63.js + js/teaser64.js, 1.6.4 국회공성전 — 봉쇄 돌파 · 의장석 점거 (+1.6.3)) -->
 <html lang="ko" data-app-mode="teaser" data-teaser="64">
 <head>
     <meta charset="UTF-8">
@@ -1208,12 +1208,20 @@
             <!-- ===== 여론 그룹 ===== -->
             <div id="mainContentElection" class="main-tab-content">
                 <div class="sub-tab-container" style="margin-top:10px;">
-                    <button class="sub-tab-btn active" id="elecSubTabTendency" onclick="elecSwitchSub('tendency')">성향</button>
-                    <button class="sub-tab-btn" id="elecSubTabProb" onclick="elecSwitchSub('prob')">지지율</button>
+                    <button class="sub-tab-btn active" id="elecSubTabOverview" onclick="elecSwitchSub('overview')">종합</button>
+                    <button class="sub-tab-btn" id="elecSubTabTendency" onclick="elecSwitchSub('tendency')">지역구 - 시민</button>
+                    <button class="sub-tab-btn" id="elecSubTabProb" onclick="elecSwitchSub('prob')">지지율 - 시민</button>
+                    <button class="sub-tab-btn" id="elecSubTabMtendency" onclick="elecSwitchSub('mtendency')">지역구 - 이민자</button>
+                    <button class="sub-tab-btn" id="elecSubTabMprob" onclick="elecSwitchSub('mprob')">지지율 - 이민자</button>
                 </div>
 
+                <!-- 종합: 시민 / 이민자 성향 따로 정하기 · 시민 · 이민자 수 · 정당별 지지율 비교 (js/people.js) -->
+                <div id="elecSubOverview" class="sub-tab-content active"></div>
+                <!-- 이민자 탭에서 위에 뜨는 안내 (js/people.js) -->
+                <div id="elecLayerBanner" class="opinion-layer-banner" style="display:none;"></div>
+
                 <!-- 성향 서브탭 - 강도 설정만 (맵은 우측) -->
-                <div id="elecSubTendency" class="sub-tab-content active">
+                <div id="elecSubTendency" class="sub-tab-content">
                     <!-- 지도(뉴 지역구) 방식일 때만 표시 — 원별로 성향 데이터가 다르므로 편집할 원을 먼저 선택 -->
                     <div class="sub-tab-container-3" id="tendencySvgChamberTabs" style="display:none;">
                         <button class="sub-tab-btn-3 active" id="tendencySvgChamberHouseBtn" onclick="tendencySetSvgChamber('house')">하원</button>
@@ -1265,6 +1273,7 @@
                     <button class="sub-tab-btn" onclick="switchSubTab('cabinet','president')" id="subTabPresident">대통령</button>
                     <button class="sub-tab-btn" onclick="switchSubTab('cabinet','pm')" id="subTabPm">총리</button>
                     <button class="sub-tab-btn" onclick="switchSubTab('cabinet','cabinetmembers')" id="subTabCabinetmembers">내각 구성원</button>
+                    <button class="sub-tab-btn" onclick="switchSubTab('cabinet','sign')" id="subTabSign">서명</button>
                     <button class="sub-tab-btn" onclick="switchSubTab('cabinet','council')" id="subTabCouncil">국무회의</button>
                     <button class="sub-tab-btn" onclick="switchSubTab('cabinet','councilArchive')" id="subTabCouncilArchive">국무회의 기록</button>
                 </div>
@@ -1611,6 +1620,11 @@
                     </div>
                 </div><!-- end contentCouncil -->
 
+                <!-- 서명 탭: 의회를 통과해 거부권 주체의 서명을 기다리는 법안 — 서명 · 거부권 행사 (js/legis.js) -->
+                <div id="contentSign" class="sub-tab-content">
+                    <div id="signList"></div>
+                </div>
+
                 <!-- 기록 탭: 국무회의가 의결한 법안 (의회가 의결한 법안은 입법 > 기록) -->
                 <div id="contentCouncilArchive" class="sub-tab-content">
                     <div class="bill-search-bar" style="margin-bottom:8px;">
@@ -1915,7 +1929,7 @@
     <script src="js/popvote.js"></script>
     <script src="js/podium.js"></script>
     <script src="js/people.js"></script>
-    <script src="js/teaser62.js"></script>
+    <script src="js/coup.js"></script>
     <script src="js/teaser63.js"></script>
     <script src="js/teaser64.js"></script>
     <script src="js/sidenav.js"></script>

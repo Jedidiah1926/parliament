@@ -1,5 +1,5 @@
 // ===== Hemicycle 티저 1.6.5 (teaser65 ~ 67) — "How the mighty have fallen" 미리보기 =====
-// teaser65.html = main.html(1.6.1 포함) + js/teaser62.js ~ js/teaser64.js(1.6.2 ~ 1.6.4) + 이 파일. 저장 공간은 따로 ('hemicycleTeaserV2-65:')
+// teaser65.html = main.html(1.6.1 · 1.6.2 포함) + js/teaser63.js ~ js/teaser64.js(1.6.3 ~ 1.6.4) + 이 파일. 저장 공간은 따로 ('hemicycleTeaserV2-65:')
 //
 //   - 의회 › 세력 변화: 정당 의석을 시점마다 기록하고, 오른쪽 시각 화면 "세력 변화" 탭에 정당 역사 도표로 그린다
 //     의석 변화(기록마다 의석 띠 · 점유율/의석 수 · ▲▼, 정당별 흐름 띠)와 당 변화(창당 · 당명 변경 · 승계 · 소멸 계보도) — 아래로 스크롤.
