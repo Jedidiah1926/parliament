@@ -373,7 +373,7 @@
                     <label>소속 정당<select data-f="partyId"><option value="">— 정당 없음 —</option>${parties.filter(x => x.ideologyId !== IND).map(x => `<option value="${esc(x.id)}" ${sameId(x.id, p.partyId) ? 'selected' : ''}>${esc(x.name)}</option>`).join('')}</select></label>
                     <label>파벌<select data-f="factionId" ${facs.length ? '' : 'disabled'}><option value="">— 파벌 없음 —</option>${facs.map(f => `<option value="${esc(f.id)}" ${sameId(f.id, p.factionId) ? 'selected' : ''}>${esc(f.name)}</option>`).join('')}</select></label>
                 </div>
-                <div class="t61-row"><select data-act="assign" class="t61-grow">${seatOptions(p)}</select><select data-act="cand" class="t61-grow">${candOptions()}</select></div>
+                <div class="t61-stack"><select data-act="assign">${seatOptions(p)}</select><select data-act="cand">${candOptions()}</select></div>
                 <textarea data-f="bio" rows="2" placeholder="메모 · 약력">${esc(p.bio || '')}</textarea>
                 <div class="t61-row t61-end"><button type="button" class="t61-btn t61-danger" data-act="del">사람 지우기</button></div>
             </div>` : ''}
@@ -713,7 +713,11 @@
         .t61-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 6px; }
         .t61-grid label { display: flex; flex-direction: column; gap: 2px; font-size: .72rem; color: #8a94a3; }
         .t61-row { display: flex; gap: 6px; flex-wrap: wrap; } .t61-grow { flex: 1; min-width: 150px; } .t61-end { justify-content: flex-end; }
-        .t61-body textarea { width: 100%; box-sizing: border-box; resize: vertical; font-family: inherit; }
+        .t61-stack { display: flex; flex-direction: column; gap: 6px; } .t61-stack select { width: 100%; }
+        .t61-body textarea { width: 100%; box-sizing: border-box; resize: vertical; font-family: inherit; font-size: .9rem; background: #000; border: 1px solid var(--tno-border, #333); color: var(--tno-text, #ddd); padding: 6px 10px; border-radius: 0; }
+        .t61-body textarea:focus { outline: none; border-color: var(--tno-neon); }
+        html[data-theme-family="modern"] .t61-body textarea { background: var(--m-surface); border: 1px solid var(--m-border-strong); color: var(--m-text); border-radius: 8px; }
+        html[data-theme-family="modern"] .t61-body textarea:focus { border-color: var(--m-accent, #2563eb); }
         html[data-theme-family="modern"] .t61-card { border-color: var(--m-border); border-left-color: var(--pc); background: var(--m-surface); border-radius: 8px; }
         html[data-theme-family="modern"] .t61-btn, html[data-theme-family="modern"] .t61-more, html[data-theme-family="modern"] .t61-x { border-color: var(--m-border-strong); color: var(--m-text); border-radius: 8px; }
         html[data-theme-family="modern"] .t61-primary { background: var(--m-accent, #2563eb); border-color: transparent; color: #fefefe; }
