@@ -1,5 +1,5 @@
 // ===== Hemicycle 티저 1.6.4 (teaser64 ~ 67) — "De l'audace!" 국회공성전 미리보기 =====
-// teaser64.html = main.html(1.6.1 · 1.6.2 포함) + js/teaser63.js(1.6.3) + 이 파일. 저장 공간은 따로 ('hemicycleTeaserV2-64:')
+// teaser64.html = main.html(1.6.1 ~ 1.6.3 포함) + 이 파일. 저장 공간은 따로 ('hemicycleTeaserV2-64:')
 //
 //   입법 › 공성전
 //   - 계엄 중 봉쇄 돌파: 계엄군 · 경찰이 국회를 막은 상태에서 의원들이 본회의장에 들어가야 계엄 해제 결의안을 표결할 수 있다.

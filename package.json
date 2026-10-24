@@ -1,7 +1,7 @@
 {
   "name": "hemicycle",
   "productName": "Hemicycle",
-  "version": "1.6.2",
+  "version": "1.6.3",
   "description": "Hemicycle — desktop build",
   "private": true,
   "main": "electron/main.js",

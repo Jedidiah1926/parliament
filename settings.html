@@ -143,6 +143,15 @@
                             <button type="button" class="lang-select-btn" onclick="turnOffDevMode()" style="width:100%;margin-top:10px;">개발자 모드 끄기</button>
                         </div>
                     </div>
+                    <div class="settings-group" id="debugModeGroup">
+                        <div class="settings-label">DEBUG MODE / 디버그 모드</div>
+                        <div class="settings-hint" style="margin-top:0;margin-bottom:8px;">숨겨진 정부 형태</div>
+                        <div class="lang-select-group">
+                            <button type="button" class="lang-select-btn" id="debugHiddenGovShowBtn" onclick="selectDebugHiddenGov(true)">보이기</button>
+                            <button type="button" class="lang-select-btn" id="debugHiddenGovHideBtn" onclick="selectDebugHiddenGov(false)">숨기기</button>
+                        </div>
+                        <div class="settings-hint">보이기를 고르면 내각 › 내각 설정의 정부 형태 아래에 쿠데타 · 혁명 · 왕정복고로만 들어가던 숨겨진 정부 형태(1.6.2 군정 · 1.6.3 당-국가 체제 · 1.6.6 전제군주정)가 나와 바로 바꿀 수 있습니다. 전제군주정은 그 기능이 들어간 미리보기(티저) 화면에서만 보입니다.</div>
+                    </div>
                 </section>
             </main>
         </div>
@@ -220,7 +229,7 @@
 
         // Steam 데모 빌드에는 개발자 모드가 없음
         if(window.HEMI_BUILD && window.HEMI_BUILD.demo) document.getElementById('devModeGroup').hidden = true;
-        // ===== 개발자 모드 — 코드를 넣으면 티저(teaser63 ~ teaser69) 화면을 열 수 있다 (js/devmode.js) =====
+        // ===== 개발자 모드 — 코드를 넣으면 티저(teaser64 ~ teaser69) 화면을 열 수 있다 (js/devmode.js) =====
         function renderDevMode(msg) {
             const on = HemiDev.isOn();
             document.getElementById('devCodeForm').hidden = on;
@@ -247,6 +256,18 @@
             renderDevMode('개발자 모드를 껐습니다.');
         }
         renderDevMode();
+
+        // ===== 디버그 모드 — 숨겨진 정부 형태 보이기/숨기기 (js/devmode.js) =====
+        function selectDebugHiddenGov(on) {
+            HemiDev.debug.setHiddenGov(on);
+            renderDebugMode();
+        }
+        function renderDebugMode() {
+            const on = HemiDev.debug.hiddenGov();
+            document.getElementById('debugHiddenGovShowBtn').classList.toggle('active', on);
+            document.getElementById('debugHiddenGovHideBtn').classList.toggle('active', !on);
+        }
+        renderDebugMode();
 
         function selectUiMode(mode) {
             setUiMode(mode);
