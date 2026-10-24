@@ -25,17 +25,39 @@
     const uid = () => 'm' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
     const partyById = id => parties.find(p => String(p.id) === String(id)) || null;
     const DEFAULT_ROSTER = [
-        ['국방부 장관', 55], ['합동참모의장', 60], ['육군참모총장', 60], ['해군참모총장', 65], ['공군참모총장', 65],
+        ['국방부 장관', 55, 'mnd'], ['합동참모의장', 60, 'jcs'], ['육군참모총장', 60, 'army'], ['해군참모총장', 65, 'navy'], ['공군참모총장', 65, 'air'],
     ];
+    // 군 소속(육군 · 해군 · 공군 …) 기본값 — 이름 · 색은 내각 › 군부에서 바꾸고 더할 수 있다. keys는 직책 이름으로 소속을 짐작할 때 쓴다
+    const DEFAULT_BRANCHES = [
+        { id: 'mnd', name: '국방부', color: '#5b6b7a', keys: ['국방'] },
+        { id: 'jcs', name: '합동참모본부', color: '#8a6a1f', keys: ['합동참모', '합참'] },
+        { id: 'army', name: '육군', color: '#6b7d4a', keys: ['육군'] },
+        { id: 'navy', name: '해군', color: '#1f4e8c', keys: ['해군'] },
+        { id: 'air', name: '공군', color: '#4a90c8', keys: ['공군'] },
+        { id: 'marine', name: '해병대', color: '#b02a2a', keys: ['해병'] },
+        { id: 'special', name: '특수부대', color: '#7a4a8a', keys: ['특수', '특전'] },
+    ];
+    const OFFICER_COLOR = '#6b7d4a'; // 소속이 없는 지휘관 카드 색
     const TYPE_LABEL = { military: '군부 쿠데타', party: '정당 쿠데타', self: '친위 쿠데타' };
 
     // ---- 상태 (세이브의 coup 칸 — 1.6.2 미리보기 세이브는 teaser62 칸) ----
-    //   military: [{ id, role, name, photo, partyId, loyalty }]
+    //   military: [{ id, role, name, photo, partyId, loyalty, branchId }]
+    //   branches: [{ id, name, color }] — 군 소속 (예전 세이브에 없으면 기본값으로 채우고, 지휘관 소속은 직책 이름으로 짐작)
     //   junta: null | { chairId, chairName, chairRole, since, prevPresident, prevPm, prevRuling:{pid:bool}, banned:[pid] }
     //   coupBanned: [pid] — 쿠데타 성공으로 활동 금지된 정당 (민정 이양 · 복권 대상)
     //   log: [{ at, date, type, leader, target, chance, success, effects }]
     let T = fresh();
-    function fresh() { return { military: [], junta: null, coupBanned: [], log: [] }; }
+    function fresh() { return { military: [], branches: defaultBranches(), junta: null, coupBanned: [], log: [] }; }
+    function defaultBranches() {
+        const tr = k => (window.DnoLang && typeof DnoLang.t === 'function' ? DnoLang.t(k) : k);
+        return DEFAULT_BRANCHES.map(b => ({ id: b.id, name: tr(b.name), color: b.color }));
+    }
+    function guessBranch(role) {
+        const d = DEFAULT_BRANCHES.find(b => b.keys.some(k => String(role || '').includes(k)));
+        return d && T.branches.some(b => b.id === d.id) ? d.id : '';
+    }
+    const branchById = id => T.branches.find(b => b.id === id) || null;
+    const officerColor = m => (branchById(m.branchId) || {}).color || OFFICER_COLOR;
     let ui = { type: 'military', leaderId: '', partyId: '', lastId: null };
 
     const origGet = window.getAppState;
@@ -50,6 +72,8 @@
         const src = state && (state.coup || state.teaser62);
         T = { ...fresh(), ...(src && typeof src === 'object' ? JSON.parse(JSON.stringify(src)) : {}) };
         if (!Array.isArray(T.military)) T.military = [];
+        if (!Array.isArray(T.branches)) T.branches = defaultBranches();
+        T.military.forEach(m => { if (m.branchId === undefined) m.branchId = guessBranch(m.role); });
         if (!Array.isArray(T.log)) T.log = [];
         if (!Array.isArray(T.coupBanned)) T.coupBanned = [];
         refresh();
@@ -346,30 +370,70 @@
         const avg = T.military.length ? Math.round(T.military.reduce((a, m) => a + (Number(m.loyalty) || 0), 0) / T.military.length) : null;
         const partyOpts = sel => `<option value="">— 가까운 정당 없음 —</option>` + parties.filter(p => p.status !== 'dissolved')
             .map(p => `<option value="${esc(p.id)}" ${String(p.id) === String(sel) ? 'selected' : ''}>${esc(p.name)}</option>`).join('');
+        const branchOpts = sel => `<option value="">— 소속 없음 —</option>` + T.branches
+            .map(b => `<option value="${esc(b.id)}" ${b.id === sel ? 'selected' : ''}>${esc(b.name || '(이름 없음)')}</option>`).join('');
         box.innerHTML = `
             <div class="t62-intro">군 지휘부를 정해 둡니다. 충성도는 지금 정부에 대한 충성(0~100)으로, 낮을수록 군부 쿠데타가 잘 되고 높을수록 친위 쿠데타를 돕습니다. 가까운 정당은 그 정당이 쿠데타를 일으킬 때 힘을 보탭니다.</div>
             <div class="t62-row t62-summary"><span>군 지휘부 ${T.military.length}명${avg != null ? ` · 평균 충성도 <b>${avg}</b>` : ''}</span>
                 ${T.junta ? `<span class="t62-tag">군정 — 의장 ${esc(T.junta.chairName)}</span>` : ''}</div>
+            <details class="t62-branches" ${ui.branchesOpen ? 'open' : ''}>
+                <summary>군 소속 · 색 (${T.branches.length})</summary>
+                <div class="t62-dim t62-small">지휘관마다 소속을 고르면 카드가 그 색으로 표시됩니다. 이름 · 색을 바꾸거나 소속을 더할 수 있어요.</div>
+                ${T.branches.map(b => `
+                    <div class="t62-row t62-branch-row" data-bid="${esc(b.id)}">
+                        <input type="color" data-bf="color" value="${esc(b.color || OFFICER_COLOR)}" title="색">
+                        <input type="text" data-bf="name" value="${esc(b.name)}" placeholder="소속 이름 (예: 해병대)">
+                        <span class="t62-dim t62-small">${T.military.filter(m => m.branchId === b.id).length}명</span>
+                        <button type="button" class="t62-x" data-bact="del" title="빼기">✕</button>
+                    </div>`).join('')}
+                <div class="t62-row">
+                    <button class="add-btn" data-bact="add" style="flex:1;">[+] 소속 추가</button>
+                    <button class="add-btn" data-bact="reset" style="flex:1;">기본 소속으로</button>
+                </div>
+            </details>
             ${T.military.map(m => `
-                <div class="card-item t62-officer ${T.junta && T.junta.chairId === m.id ? 't62-chair' : ''}" data-id="${esc(m.id)}">
-                    <label class="leader-photo-box t62-photo" title="사진">${m.photo ? `<img src="${m.photo}" alt="">` : '<div class="photo-ph">🎖</div>'}<input type="file" accept="image/*" data-f="photo"></label>
+                <div class="card-item t62-officer ${T.junta && T.junta.chairId === m.id ? 't62-chair' : ''}" data-id="${esc(m.id)}" style="--t62-branch:${esc(officerColor(m))}">
+                    <div class="t62-photo-col">
+                        <label class="leader-photo-box t62-photo" title="사진">${m.photo ? `<img src="${m.photo}" alt="">` : '<div class="photo-ph">🎖</div>'}<input type="file" accept="image/*" data-f="photo"></label>
+                        ${branchById(m.branchId) ? `<span class="t62-branch-tag">${esc(branchById(m.branchId).name)}</span>` : ''}
+                    </div>
                     <div class="t62-officer-main">
                         <div class="t62-row">
                             <input type="text" data-f="role" value="${esc(m.role)}" placeholder="직책 (예: 육군참모총장)" class="t62-role">
                             <button type="button" class="t62-x" data-act="del" title="빼기">✕</button>
                         </div>
                         <input type="text" data-f="name" value="${esc(m.name)}" placeholder="이름">
-                        <select data-f="partyId">${partyOpts(m.partyId)}</select>
+                        <div class="t62-row t62-field"><span>소속</span><select data-f="branchId">${branchOpts(m.branchId)}</select></div>
+                        <div class="t62-row t62-field"><span>정당</span><select data-f="partyId">${partyOpts(m.partyId)}</select></div>
                         <div class="t62-row t62-loyal"><span>충성도</span><input type="range" min="0" max="100" step="5" data-f="loyalty" value="${Number(m.loyalty) || 0}"><b>${Number(m.loyalty) || 0}</b></div>
                     </div>
                 </div>`).join('')}
             <button class="add-btn" data-act="add">[+] 군 지휘관 추가</button>
             ${T.military.length ? '' : '<button class="add-btn" data-act="seed">[+] 기본 군 지휘부 만들기 (국방부 장관 · 합참의장 · 육해공군 참모총장)</button>'}`;
-        box.querySelector('[data-act="add"]').onclick = () => { T.military.push({ id: uid(), role: '장성', name: '', photo: '', partyId: '', loyalty: 60 }); renderMilitary(); };
+        box.querySelector('[data-act="add"]').onclick = () => { T.military.push({ id: uid(), role: '장성', name: '', photo: '', partyId: '', loyalty: 60, branchId: '' }); renderMilitary(); };
+        // 군 소속 · 색
+        const det = box.querySelector('.t62-branches');
+        det.ontoggle = () => { ui.branchesOpen = det.open; };
+        det.querySelectorAll('.t62-branch-row').forEach(row => {
+            const b = branchById(row.dataset.bid);
+            row.querySelector('[data-bf="color"]').oninput = e => { b.color = e.target.value; box.querySelectorAll('.t62-officer').forEach(c => { const m = T.military.find(x => x.id === c.dataset.id); if (m) c.style.setProperty('--t62-branch', officerColor(m)); }); };
+            row.querySelector('[data-bf="name"]').onchange = e => { b.name = e.target.value.trim(); renderMilitary(); };
+            row.querySelector('[data-bact="del"]').onclick = () => {
+                T.branches = T.branches.filter(x => x !== b);
+                T.military.forEach(m => { if (m.branchId === b.id) m.branchId = ''; });
+                renderMilitary();
+            };
+        });
+        det.querySelector('[data-bact="add"]').onclick = () => { T.branches.push({ id: uid(), name: '', color: '#888888' }); renderMilitary(); };
+        det.querySelector('[data-bact="reset"]').onclick = () => showCustomConfirm('군 소속을 기본값(국방부 · 합동참모본부 · 육군 · 해군 · 공군 · 해병대 · 특수부대)으로 되돌립니다. 직접 더한 소속은 빠지고, 지휘관 소속은 직책 이름으로 다시 짐작합니다. 계속하시겠습니까?', () => {
+            T.branches = defaultBranches();
+            T.military.forEach(m => { m.branchId = guessBranch(m.role); });
+            renderMilitary();
+        });
         const seed = box.querySelector('[data-act="seed"]');
         // 기본 직책 이름은 화면 언어로 (세이브에 든 이름은 번역하지 않으므로 만들 때 바꿔 둔다)
         const tr = k => (window.DnoLang && typeof DnoLang.t === 'function' ? DnoLang.t(k) : k);
-        if (seed) seed.onclick = () => { DEFAULT_ROSTER.forEach(([role, loyalty]) => T.military.push({ id: uid(), role: tr(role), name: '', photo: '', partyId: '', loyalty })); renderMilitary(); };
+        if (seed) seed.onclick = () => { DEFAULT_ROSTER.forEach(([role, loyalty, branchId]) => T.military.push({ id: uid(), role: tr(role), name: '', photo: '', partyId: '', loyalty, branchId: branchById(branchId) ? branchId : '' })); renderMilitary(); };
         box.querySelectorAll('.t62-officer').forEach(card => {
             const m = T.military.find(x => x.id === card.dataset.id);
             card.querySelector('[data-act="del"]').onclick = () => { T.military = T.military.filter(x => x !== m); renderMilitary(); };
@@ -428,7 +492,7 @@
             <div class="t62-pick">
                 ${type === 'military' || type === 'counter' ? (officers.length ? `
                     <label class="t62-dim">주도할 군 지휘관</label>
-                    <select data-pick="leader">${officers.map(m => `<option value="${esc(m.id)}" ${m.id === ui.leaderId ? 'selected' : ''}>${esc(m.role)} ${esc(m.name || '(이름 없음)')} · 충성도 ${m.loyalty}</option>`).join('')}</select>`
+                    <select data-pick="leader">${officers.map(m => `<option value="${esc(m.id)}" ${m.id === ui.leaderId ? 'selected' : ''}>${branchById(m.branchId) ? `[${esc(branchById(m.branchId).name)}] ` : ''}${esc(m.role)} ${esc(m.name || '(이름 없음)')} · 충성도 ${m.loyalty}</option>`).join('')}</select>`
                     : '<div class="t62-dim">군 지휘부가 없습니다 — 내각 › 군부에서 먼저 정하세요.</div>') : ''}
                 ${type === 'party' ? `
                     <label class="t62-dim">주도할 정당</label>
@@ -487,7 +551,18 @@
         .t62-wrap { flex-wrap: wrap; }
         .t62-summary { justify-content: space-between; color: #aaa; font-size: .85rem; margin-bottom: 8px; }
         .t62-tag { font-size: .72rem; color: var(--tno-alert); border: 1px solid var(--tno-alert); padding: 1px 6px; }
-        .t62-officer { display: flex; gap: 10px; align-items: flex-start; border-left-color: #6b7d4a !important; }
+        .t62-officer { display: flex; gap: 10px; align-items: flex-start; border-left-color: var(--t62-branch, #6b7d4a) !important; }
+        .t62-officer .photo-ph { color: var(--t62-branch, #6b7d4a); }
+        .t62-photo-col { display: flex; flex-direction: column; align-items: stretch; gap: 4px; flex-shrink: 0; width: 52px; }
+        .t62-branch-tag { font-size: .68rem; text-align: center; padding: 1px 2px; color: #fff; background: var(--t62-branch, #6b7d4a); word-break: keep-all; overflow-wrap: anywhere; line-height: 1.3; }
+        .t62-field span { color: #777; font-size: .78rem; flex-shrink: 0; width: 2.6em; }
+        .t62-field select { flex: 1; min-width: 0; }
+        .t62-branches { border: 1px solid #2a2a2a; padding: 6px 10px; margin: 0 0 10px; }
+        .t62-branches summary { cursor: pointer; color: #aaa; font-size: .85rem; }
+        .t62-branches .add-btn { margin-top: 6px; }
+        .t62-branch-row { margin: 5px 0; }
+        .t62-branch-row input[type=color] { width: 34px; height: 28px; padding: 0; border: 1px solid #333; background: transparent; flex-shrink: 0; cursor: pointer; }
+        .t62-branch-row input[type=text] { flex: 1; min-width: 0; }
         .t62-officer.t62-chair { border-left-color: var(--tno-alert) !important; box-shadow: 0 0 8px color-mix(in srgb, var(--tno-alert) 35%, transparent); }
         .t62-photo { width: 52px; height: 64px; flex-shrink: 0; }
         .t62-photo img { width: 100%; height: 100%; object-fit: cover; }
@@ -523,6 +598,8 @@
         .t62-btn { cursor: pointer; font-family: inherit; font-size: .85rem; padding: 6px 12px; background: transparent; border: 1px solid #555; color: #ccc; }
         .t62-btn:disabled { opacity: .4; cursor: default; }
         .t62-banner { margin: 0 0 10px; padding: 8px 12px; border: 1px solid var(--tno-alert); color: var(--tno-alert); font-size: .9rem; background: rgba(60,0,0,.3); letter-spacing: 1px; }
+        html[data-theme-family="modern"] .t62-branches { border-color: var(--m-border); border-radius: 10px; }
+        html[data-theme-family="modern"] .t62-branch-tag { border-radius: 4px; }
         html[data-theme-family="modern"] .t62-intro, html[data-theme-family="modern"] .t62-dim { color: var(--m-text-3); }
         html[data-theme-family="modern"] .t62-summary { color: var(--m-text-2); }
         html[data-theme-family="modern"] .t62-chance { border: 1px solid var(--m-border); border-radius: 12px; background: var(--m-surface-2); }
