@@ -263,6 +263,24 @@
         T.coupBanned = [];
     }
 
+    // ---- 디버그 모드: 쿠데타 없이 바로 군정 (설정 › 기타 설정 › 숨겨진 정부 형태 보이기, js/devmode.js) ----
+    function debugJunta() {
+        if (T.junta) { showCustomAlert('이미 군정입니다 — 내각 › 쿠데타의 "민정 이양"으로 벗어날 수 있어요.'); return; }
+        const m = T.military.find(x => x.id === ui.leaderId) || T.military[0];
+        if (!m) { showCustomAlert('군사평의회 의장이 될 군 지휘관이 없습니다 — 내각 › 군부에서 군 지휘부를 먼저 정하세요.'); return; }
+        const leaderName = `${m.role} ${m.name || ''}`.trim();
+        showCustomConfirm(`디버그 — 쿠데타 없이 바로 군정으로 바꿉니다 (의장: ${leaderName}). 계속하시겠습니까?`, () => {
+            ui.leaderId = m.id;
+            const effects = ['디버그 모드로 바로 바꿈', ...applySuccess('military')];
+            const entry = { id: uid(), at: Date.now(), date: formatNationDate(), type: 'military', leader: leaderName, target: '정부', chance: null, success: true, effects };
+            T.log.unshift(entry);
+            ui.lastId = entry.id;
+            rerenderGov();
+            refresh();
+        });
+    }
+    if (window.HemiDev && HemiDev.hiddenGov) HemiDev.hiddenGov.register({ id: 'junta', label: '군정', version: '1.6.2', isActive: () => !!T.junta, enter: debugJunta });
+
     // ---- 군정: 직책 이름 · 선거 중단 ----
     const origRole = window.effRoleLabel;
     window.effRoleLabel = function (key) {
@@ -445,6 +463,7 @@
     function refresh() {
         renderMilitary();
         renderCoup();
+        if (window.HemiDev && HemiDev.hiddenGov) HemiDev.hiddenGov.render();
         try { window.renderCabinetDisplay && window.renderCabinetDisplay(); } catch (e) { /* 화면 준비 전 */ }
     }
 

@@ -289,6 +289,24 @@
             logIt('restoreCoup', claimantLabel(x), chance, success, fx); done();
         });
     }
+    // 디버그 모드: 왕정복고 · 친위 쿠데타 없이 바로 전제군주정 (설정 › 기타 설정 › 숨겨진 정부 형태 보이기, js/devmode.js)
+    function debugAbsolute() {
+        if (S.monarchy && S.monarchy.kind === 'absolute') { showCustomAlert('이미 전제군주정입니다 — 내각 › 왕실의 입헌 개혁 · 공화 혁명으로 벗어날 수 있어요.'); return; }
+        if (window.T63 && window.T63.partyState) { showCustomAlert('당-국가 체제에서는 먼저 민주 혁명으로 체제를 무너뜨려야 합니다.'); return; }
+        const x = S.monarchy ? monarchX() : (findClaimant(ui.claimantId) || allClaimants()[0] || null);
+        if (!x) { showCustomAlert('왕위에 올릴 주장자가 없습니다 — 내각 › 왕실의 "왕가와 왕위 주장자"에서 먼저 만드세요.'); return; }
+        showCustomConfirm(`디버그 — 바로 전제군주정으로 바꿉니다 (${S.monarchy ? `${S.monarchy.title} ${x.c.name}` : claimantLabel(x)}). 계속하시겠습니까?`, () => {
+            const fx = ['디버그 모드로 바로 바꿈'];
+            const kind = S.monarchy ? 'selfCoup' : 'restoreCoup';
+            if (S.monarchy) makeAbsolute(); else fx.push(...startMonarchy(x, 'absolute'));
+            declareMartialLaw();
+            setConstitution(monarchyConstitution(x, 'absolute'));
+            fx.push(`숨겨진 정부 형태: 전제군주정, ${S.monarchy.title} ${x.c.name}`, '왕이 총리 임명 · 거부권 · 비상 권한', '계엄령 선포 · 왕국 기본법');
+            logIt(kind, claimantLabel(x), null, true, fx); done();
+        });
+    }
+    if (window.HemiDev && HemiDev.hiddenGov) HemiDev.hiddenGov.register({ id: 'absolute', label: '전제군주정', version: '1.6.6', isActive: () => !!S.monarchy && S.monarchy.kind === 'absolute', enter: debugAbsolute });
+
     function selfCoup() {
         const x = monarchX();
         if (!S.monarchy || S.monarchy.kind !== 'constitutional' || !x) return;
@@ -602,6 +620,7 @@
     window.T66 = { get monarchy() { return S.monarchy; }, get dispute() { return S.dispute; }, get log() { return S.log; }, get dynasties() { return S.dynasties; } };
     function refresh() {
         render();
+        if (window.HemiDev && HemiDev.hiddenGov) HemiDev.hiddenGov.render();
         try { window.renderCabinetDisplay && window.renderCabinetDisplay(); } catch (e) { /* 화면 준비 전 */ }
     }
     // 국가 › 사람(js/people.js)에 왕가 사람(주장자)도 자리로 — 인물을 배정하거나 "모든 자리에서 가져오기"로 인물을 만든다

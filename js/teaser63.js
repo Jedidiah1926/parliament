@@ -292,6 +292,26 @@
         refresh();
     }
 
+    // 디버그 모드: 혁명 없이 바로 당-국가 체제 (설정 › 기타 설정 › 숨겨진 정부 형태 보이기, js/devmode.js)
+    function debugPartyState() {
+        if (S.partyState) { showCustomAlert('이미 당-국가 체제입니다 — 내각 › 혁명의 민주 혁명으로 벗어날 수 있어요.'); return; }
+        const cands = parties.filter(activeParty);
+        const p = cands.find(x => String(x.id) === String(ui.partyId)) || cands.slice().sort((a, b) => support(b.id) - support(a.id))[0];
+        if (!p) { showCustomAlert('집권할 정당이 없습니다 — 정당을 먼저 만드세요.'); return; }
+        showCustomConfirm(`디버그 — 혁명 없이 바로 당-국가 체제로 바꿉니다 (집권 정당: ${p.name}, 혁명 정당은 내각 › 혁명에서 고른 정당). 계속하시겠습니까?`, () => {
+            ui.partyId = p.id;
+            const effects = ['디버그 모드로 바로 바꿈', ...communistWin(p)];
+            const entry = { id: uid(), at: Date.now(), date: formatNationDate(), kind: 'communist', party: p.name, chance: null, success: true, effects };
+            S.log.unshift(entry);
+            ui.lastId = entry.id;
+            ui.newName = ''; ui.newFlag = '';
+            try { simulate(); refreshUI(); } catch (e) { /* 화면 준비 전 */ }
+            if (T62()) T62().refresh();
+            refresh();
+        });
+    }
+    if (window.HemiDev && HemiDev.hiddenGov) HemiDev.hiddenGov.register({ id: 'partyState', label: '당-국가 체제', version: '1.6.3', isActive: () => !!S.partyState, enter: debugPartyState });
+
     // 당-국가 체제: 직책 이름 · 선거
     const origRole = window.effRoleLabel;
     window.effRoleLabel = function (key) {
@@ -598,6 +618,7 @@
     function refresh() {
         renderRevolution();
         renderEcPanel();
+        if (window.HemiDev && HemiDev.hiddenGov) HemiDev.hiddenGov.render();
         try { window.renderCabinetDisplay && window.renderCabinetDisplay(); } catch (e) { /* 화면 준비 전 */ }
     }
 
