@@ -763,7 +763,6 @@ window.DnoLangPacks.en = {
   ["Give me liberty, or give me death! : 주사위는 던져졌다", "Give me liberty, or give me death! : The die is cast"],
   ["- 1.6.2 미리보기(Teaser 1.6.2)를 본 게임에 통합하고 미리보기 화면은 삭제 — 예전 1.6.2 미리보기 세이브는 시작 화면에서 본 게임 세이브로 옮겨짐 (군부 · 쿠데타 · 군정)", "- Merged the 1.6.2 preview (Teaser 1.6.2) into the main game and removed the preview page — old 1.6.2 preview saves move into the main game's saves on the start screen (military · coup · junta)"],
   ["- 버전 표시 v1.6.2", "- Version label v1.6.2"],
-  ["Give me liberty, or give me death! : 혁명 만세", "Give me liberty, or give me death! : Long live the Revolution"],
   ["- 1.6.3 미리보기(Teaser 1.6.3)를 본 게임에 통합하고 미리보기 화면은 삭제 — 예전 1.6.3 미리보기 세이브는 시작 화면에서 본 게임 세이브로 옮겨짐 (혁명 · 당-국가 체제 · 선거인단)", "- Merged the 1.6.3 preview (Teaser 1.6.3) into the main game and removed the preview page — old 1.6.3 preview saves move into the main game's saves on the start screen (revolution · party-state · electoral college)"],
   ["- 버전 표시 v1.6.3", "- Version label v1.6.3"],
   ["- 설정 › 기타 설정 › 디버그 모드 — 숨겨진 정부 형태 보이기 · 숨기기: 보이면 내각 › 내각 설정의 정부 형태 아래에 군정 · 당-국가 체제 · 전제군주정(1.6.6 미리보기) 버튼이 나와 쿠데타 · 혁명 없이 바로 바꿈", "- Settings › Other › Debug mode — show/hide hidden government forms: when shown, Cabinet › Settings lists junta · party-state · absolute monarchy (1.6.6 preview) under the government form, switching to them directly without a coup or revolution"],
