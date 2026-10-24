@@ -1,5 +1,6 @@
-// ===== Hemicycle 티저 1.6.3 (teaser63 ~ 67) — "Vive la Révolution!" 미리보기 =====
-// teaser63.html = main.html(1.6.1 · 1.6.2 포함) + 이 파일. 저장 공간은 따로 ('hemicycleTeaserV2-63:')
+// ===== 1.6.3 — Vive la Révolution! "Vive la France!" (혁명 · 당-국가 체제 · 선거인단) =====
+// 1.6.3 미리보기(예전 teaser63)에서 본 게임으로 옮겨 왔다 — 본 게임 · 모든 미리보기 화면에서 돈다 (로고 제작 화면만 빼고).
+// main.html은 js/coup.js 다음에 이 파일을 읽는다 (군정은 window.T62로 다룬다).
 //
 //   - 내각 › 혁명: 민중이 주체 — 주도 이념(민주 · 공산주의)과 혁명 정당을 고르면 성공 확률을 요인별로 보여 준다
 //     (정부 불신 · 군정/당-국가/계엄 · 활동 금지 정당 · 혁명 정당 지지율 · 그 정당이 앞서는 지역의 인구 · 군의 충성)
@@ -18,7 +19,7 @@
 (function () {
     'use strict';
     const root = document.documentElement;
-    if (root.getAttribute('data-app-mode') !== 'teaser' || !['63', '64', '65', '66', '67', '68', '69'].includes(root.getAttribute('data-teaser'))) return;
+    if (root.getAttribute('data-app-mode') === 'logo') return;
 
     const esc = s => (typeof escapeHtmlText === 'function' ? escapeHtmlText(String(s ?? '')) : String(s ?? ''));
     const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -31,7 +32,7 @@
     const isGovParty = p => !!p && (p.isRuling || coalitions.some(c => c.isRuling && (c.members || []).some(id => String(id) === String(p.id))));
     const DEFAULT_POP = 100000;
 
-    // ---- 상태 (세이브의 teaser63 칸) ----
+    // ---- 상태 (세이브의 revolution 칸 — 1.6.3 미리보기 세이브는 teaser63 칸) ----
     //   partyState: null | { partyId, allies:[pid], banned:[pid], prevNames:{house,senate,third}, since }
     //   revBanned: [pid] — 혁명 뒤 활동 금지된 정당 (민주 혁명 때 복권)
     //   log: [{ id, at, date, kind, party, chance, success, effects }]
@@ -46,13 +47,13 @@
     const origGet = window.getAppState;
     window.getAppState = function () {
         const st = origGet.apply(this, arguments);
-        if (st && typeof st === 'object') st.teaser63 = JSON.parse(JSON.stringify(S));
+        if (st && typeof st === 'object') st.revolution = JSON.parse(JSON.stringify(S));
         return st;
     };
     const origSet = window.setAppState;
     window.setAppState = function (state) {
         const r = origSet.apply(this, arguments);
-        const src = state && state.teaser63;
+        const src = state && (state.revolution || state.teaser63);
         const base = fresh();
         S = { ...base, ...(src && typeof src === 'object' ? JSON.parse(JSON.stringify(src)) : {}) };
         S.ec = { ...base.ec, ...(S.ec || {}) };

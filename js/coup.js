@@ -17,7 +17,7 @@
 (function () {
     'use strict';
     const root = document.documentElement;
-    // 1.6.3 티저(teaser63)도 1.6.2 기능을 그대로 쓴다 — 그쪽(js/teaser63.js)은 아래 window.T61로 군정 등을 다룬다
+    // 1.6.3 혁명(js/revolution.js)은 아래 window.T62로 군정 등을 다룬다
     if (root.getAttribute('data-app-mode') === 'logo') return;
 
     const esc = s => (typeof escapeHtmlText === 'function' ? escapeHtmlText(String(s ?? '')) : String(s ?? ''));
@@ -463,9 +463,7 @@
                 <div class="t62-row t62-wrap">
                     <button type="button" class="t62-btn" data-act="transfer">민정 이양</button>
                     <button type="button" class="t62-btn" data-act="counter">역쿠데타 준비</button>
-                    ${['63', '64', '65', '66', '67', '68', '69'].includes(root.getAttribute('data-teaser'))
-                        ? `<button type="button" class="t62-btn" onclick="switchSubTab('cabinet','revolution')">혁명 →</button>`
-                        : '<button type="button" class="t62-btn" disabled title="1.6.3에서">혁명 (1.6.3)</button>'}
+                    <button type="button" class="t62-btn" onclick="switchSubTab('cabinet','revolution')">혁명 →</button>
                 </div>
             </div>` : '';
         if (T.junta && ui.type !== 'counter') ui.type = 'counter';
