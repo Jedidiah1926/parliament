@@ -287,6 +287,19 @@
         if (T.junta && (key === 'president' || key === 'pm')) return '군사평의회 의장';
         return origRole.apply(this, arguments);
     };
+    // 다수당 방식 총리 자동 반영을 끈다 — 군정에서는 의장이 총리를 겸하므로 다수당 대표 · 당적이 끼어들면 안 됨
+    const origPmAuto = window.pmAutoSource;
+    if (typeof origPmAuto === 'function') window.pmAutoSource = function () {
+        if (T.junta && !pm.linkedSeat) return null;
+        return origPmAuto.apply(this, arguments);
+    };
+    const origPmSection = window.renderPmSection;
+    if (typeof origPmSection === 'function') window.renderPmSection = function () {
+        const r = origPmSection.apply(this, arguments);
+        const lock = document.getElementById('pmMajorityLockSection');
+        if (lock && T.junta) lock.style.display = 'none'; // 군정에는 다수당이 없으니 "현재 총리로 고정"도 숨김
+        return r;
+    };
     const blockIfJunta = fn => function () {
         if (T.junta) { showCustomAlert('군정 중에는 선거가 중단됩니다 — 내각 › 쿠데타의 "민정 이양" 뒤에 치를 수 있어요.'); return; }
         return fn.apply(this, arguments);
