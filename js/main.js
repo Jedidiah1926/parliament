@@ -8458,6 +8458,7 @@
             const p = parties.find(x => x.id === partyId); if(!p) return;
             p.factionElection = mode === 'split' ? 'split' : 'merge';
             renderPartyInfoList();
+            try { elecRenderList(); } catch(e) { /* 지지율 탭 준비 전 */ }
         }
         function toggleFactionHome(partyId, factionId, key, on) {
             const p = parties.find(x => x.id === partyId); if(!p?.factions) return;
@@ -8488,12 +8489,10 @@
             const pop = Number(districtPopulation[ch]?.[key] || districtPopulation.house?.[key]) || 1;
             return t * pop;
         }
-        // 나눠서 반영: 새 의석 newTotal을 파벌들과 정당 본체(파벌 밖)에 나눠 { 파벌 id: 의석 } 반환 (정당 본체 몫은 나머지)
-        function factionSplitSeats(p, ch, newTotal, prevTotal, prevF) {
+        // 나눠서 반영할 때 파벌들과 정당 본체(id null)가 가져가는 몫(0~1, 합 1) — [{ id, exact }]
+        function factionSplitShares(p, ch, prevTotal, prevF) {
             const fs = p.factions || [];
-            const out = {};
-            fs.forEach(f => { out[f.id] = 0; });
-            if(!fs.length || newTotal <= 0) return out;
+            const newTotal = 1;
             const all = Object.keys(districtGrid[ch] || {});
             const allVotes = all.reduce((sum, k) => sum + factionDistrictVotes(k, ch, p.id), 0);
             // 1) 지역 기반 파벌: 그 지역구 득표 몫만큼
@@ -8514,12 +8513,32 @@
             const sumW = others.reduce((a, o) => a + o.w, 0) + coreW;
             others.forEach(o => items.push({ id: o.id, exact: sumW > 0 ? rest * o.w / sumW : 0 }));
             items.push({ id: null, exact: sumW > 0 ? rest * coreW / sumW : rest }); // 정당 본체
+            return items;
+        }
+        // 나눠서 반영: 새 의석 newTotal을 파벌들과 정당 본체(파벌 밖)에 나눠 { 파벌 id: 의석 } 반환 (정당 본체 몫은 나머지)
+        function factionSplitSeats(p, ch, newTotal, prevTotal, prevF) {
+            const fs = p.factions || [];
+            const out = {};
+            fs.forEach(f => { out[f.id] = 0; });
+            if(!fs.length || newTotal <= 0) return out;
+            const items = factionSplitShares(p, ch, prevTotal, prevF).map(it => ({ id: it.id, exact: it.exact * newTotal }));
             // 3) 정수로 — 최대 잉여
             let given = 0;
             items.forEach(it => { it.n = Math.floor(it.exact + 1e-9); given += it.n; });
             items.slice().sort((a, b) => (b.exact - b.n) - (a.exact - a.n)).forEach(it => { if(given < newTotal) { it.n++; given++; } });
             items.forEach(it => { if(it.id != null) out[it.id] = it.n; });
             return out;
+        }
+        // "파벌 나눠서" 정당의 지지율을 파벌별로 — 총선에서 의석을 나누는 규칙과 같다 (지금 의석이 "선거 전 몫")
+        // [{ id, name, color, share }] (정당 본체는 id null), 나눠서가 아니거나 파벌이 없으면 null
+        function factionSupportShares(p, ch) {
+            if(!p || p.factionElection !== 'split' || !(p.factions || []).length) return null;
+            const seatKey = seatKeyFor(ch);
+            const prevF = p.factions.map(f => f[seatKey] || 0);
+            return factionSplitShares(p, ch, p[seatKey] || 0, prevF).map(it => {
+                const f = it.id != null ? p.factions.find(x => x.id === it.id) : null;
+                return { id: it.id, name: f ? f.name : `${p.name} (본체)`, color: f ? (f.usePartyColor ? p.color : f.color) : p.color, share: it.exact };
+            }).filter(x => x.share > 0);
         }
 
         const factionListKey = pid => String(pid).replace(/[^\w-]/g, '_');
@@ -13100,6 +13119,7 @@
         // (지지율 탭의 설정용 바 + 선거 탭의 읽기전용 바가 동시에 DOM에 있을 수 있음)
         function elecUpdateAllBars() {
             chamberList().forEach(c => updateProbBar(c));
+            elecRenderFactionSplits(elecProbChamber);
         }
 
         // 특정 원(chamber)의 지지율 바 세그먼트/오차/레이블을 갱신한다.
@@ -13125,13 +13145,24 @@
             });
 
             document.querySelectorAll(`.elec-prob-bar[data-chamber="${chamber}"]`).forEach(barEl => {
+                barEl.querySelectorAll('.elec-legend-split').forEach(lg => {
+                    const seg = segs.find(x => String(x.id) === lg.dataset.id);
+                    const fs = seg && factionSupportShares(parties.find(p => p.id === seg.id), chamber);
+                    lg.textContent = fs ? '(' + fs.map(f => `${f.name} ${(seg.prob * f.share).toFixed(1)}%`).join(' · ') + ')' : '';
+                });
                 segs.forEach(seg => {
                     const errRaw = Math.max(0, store[seg.id]?.err||0);
                     const errPct = errRaw / total * 100;
 
                     // 세그먼트 바
                     const el = barEl.querySelector(`.elec-seg[data-id="${seg.id}"]`);
-                    if(el) { el.style.left = seg.pos + '%'; el.style.width = seg.pct + '%'; }
+                    if(el) {
+                        el.style.left = seg.pos + '%'; el.style.width = seg.pct + '%';
+                        // 파벌 나눠서: 정당 칸 안을 파벌 몫대로 나눠 칠한다
+                        const fs = seg.id !== '__swing__' ? factionSupportShares(parties.find(p => p.id === seg.id), chamber) : null;
+                        el.style.display = fs ? 'flex' : '';
+                        el.innerHTML = fs ? fs.map((f, i) => `<span title="${escapeHtmlText(f.name)} ${(seg.prob * f.share).toFixed(1)}%" style="height:100%;width:${f.share * 100}%;background:${f.color};${i ? 'border-left:1px dashed rgba(0,0,0,0.55);' : ''}box-sizing:border-box;"></span>`).join('') : '';
+                    }
 
                     // 레이블 색상: 어두운 색이면 흰색, 밝으면 검정
                     const lbl = barEl.querySelector(`.elec-seg-lbl[data-id="${seg.id}"]`);
@@ -13178,6 +13209,17 @@
             });
         }
 
+        // 지지율 입력 목록의 "파벌 나눠서" 정당 아래 줄 — 파벌별 지지율
+        function elecRenderFactionSplits(ch) {
+            document.querySelectorAll('.elec-faction-split').forEach(el => {
+                const p = parties.find(x => String(x.id) === el.dataset.id);
+                const fs = factionSupportShares(p, ch);
+                if(!fs) { el.innerHTML = ''; return; }
+                const prob = p.status === 'banned' ? 0 : Math.max(0, elecStore[ch]?.[p.id]?.prob || 0);
+                el.innerHTML = '<span>↳ 파벌 나눠서</span>' + fs.map(f => `<span style="display:inline-flex;align-items:center;gap:4px;"><span style="width:7px;height:7px;border-radius:50%;background:${f.color};"></span>${escapeHtmlText(f.name)} <b style="color:#aaa;">${(prob * f.share).toFixed(1)}%</b></span>`).join('');
+            });
+        }
+
         // 특정 원의 "지지율 분포" 바 HTML — 지지율 탭의 설정용 바와 선거 탭의 읽기전용 바가 함께 사용
         function buildProbBarHtml(chamber, opts = {}) {
             const inKey = inKeyFor(chamber);
@@ -13208,8 +13250,14 @@
                 <div class="elec-seg-err-r" data-id="__swing__" style="position:absolute;top:0;bottom:0;background:${swHatch};pointer-events:none;z-index:2;"></div>`;
             segHtml += `<div class="elec-seg" data-id="__swing__" style="position:absolute;top:0;bottom:0;background:repeating-linear-gradient(45deg,#333,#333 3px,#444 3px,#444 6px);border-right:1px solid #101218;z-index:1;"></div>`;
 
-            const legend = chamberParties.map(p=>`<span style="display:inline-flex;align-items:center;gap:3px;font-size:0.75rem;color:#aaa;">
-                        <span style="width:8px;height:8px;background:${p.color};display:inline-block;flex-shrink:0;"></span>${p.name}</span>`).join('')
+            const store = elecStore[chamber] || {};
+            const elecFactionSplitText = (fs, prob) => fs.map(f => `${escapeHtmlText(f.name)} ${(prob * f.share).toFixed(1)}%`).join(' · ');
+            const legend = chamberParties.map(p=>{
+                    const fs = factionSupportShares(p, chamber);
+                    const prob = p.status === 'banned' ? 0 : Math.max(0, store[p.id]?.prob || 0);
+                    return `<span style="display:inline-flex;align-items:center;gap:3px;font-size:0.75rem;color:#aaa;">
+                        <span style="width:8px;height:8px;background:${p.color};display:inline-block;flex-shrink:0;"></span>${p.name}${fs ? ` <span class="elec-legend-split" data-id="${p.id}" style="color:#777;">(${elecFactionSplitText(fs, prob)})</span>` : ''}</span>`;
+                }).join('')
                 + `<span style="display:inline-flex;align-items:center;gap:3px;font-size:0.75rem;color:#aaa;">
                         <span style="width:8px;height:8px;background:repeating-linear-gradient(45deg,#333,#333 2px,#444 2px,#444 4px);display:inline-block;flex-shrink:0;"></span>무당파</span>`;
 
@@ -13418,7 +13466,16 @@
                         oninput="elecSetErr('${ch}','${p.id}', parseFloat(this.value)||0)">
                 `;
                 container.appendChild(row);
+                // 파벌 나눠서: 정당 지지율이 파벌별로 어떻게 나뉘는지 (정당 지지율을 바꾸면 함께 바뀜)
+                if(factionSupportShares(p, ch)) {
+                    const sub = document.createElement('div');
+                    sub.className = 'elec-faction-split';
+                    sub.dataset.id = p.id;
+                    sub.style.cssText = `margin:-3px 0 8px 16px;font-size:0.74rem;color:#777;display:flex;flex-wrap:wrap;gap:2px 10px;${dim}`;
+                    container.appendChild(sub);
+                }
             });
+            elecRenderFactionSplits(ch);
 
             // ── 구분선 (무소속 위) + 무소속 행 (색상 고정 회색) ──
             if(indPartyForElec) {
