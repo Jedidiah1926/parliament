@@ -41,7 +41,8 @@
     const TYPE_LABEL = { military: '군부 쿠데타', party: '정당 쿠데타', self: '친위 쿠데타' };
 
     // ---- 상태 (세이브의 coup 칸 — 1.6.2 미리보기 세이브는 teaser62 칸) ----
-    //   military: [{ id, role, name, photo, partyId, loyalty, branchId }]
+    //   military: [{ id, role, name, photo, partyId, loyalty, branchId, cabinetId }]
+    //     cabinetId: 내각 › 내각 구성원(main.js cabinetMembers)의 id — 연결하면 직책 · 이름 · 사진 · 당적을 그 자리에서 가져온다
     //   branches: [{ id, name, color }] — 군 소속 (예전 세이브에 없으면 기본값으로 채우고, 지휘관 소속은 직책 이름으로 짐작)
     //   junta: null | { chairId, chairName, chairRole, since, prevPresident, prevPm, prevRuling:{pid:bool}, banned:[pid] }
     //   coupBanned: [pid] — 쿠데타 성공으로 활동 금지된 정당 (민정 이양 · 복권 대상)
@@ -58,6 +59,28 @@
     }
     const branchById = id => T.branches.find(b => b.id === id) || null;
     const officerColor = m => (branchById(m.branchId) || {}).color || OFFICER_COLOR;
+
+    // ---- 내각 연결 (예: 군부의 국방부 장관 ↔ 내각 › 내각 구성원의 국방부 장관) ----
+    const cabinetList = () => (typeof cabinetMembers !== 'undefined' && Array.isArray(cabinetMembers) ? cabinetMembers : []);
+    const cabinetById = id => (id ? cabinetList().find(c => c.id === id) || null : null);
+    // 내각 자리의 실제 값 — 그 자리가 의원과 연결돼 있으면 의원 값 (main.js 내각 구성원 목록과 같은 규칙)
+    function cabinetEffective(c) {
+        const r = c.linkedSeat && typeof resolveLinkedSeat === 'function' ? resolveLinkedSeat(c.linkedSeat) : null;
+        return { name: (r ? r.name : c.name) || '', photo: (r ? r.photo : c.photo) || '', partyId: r ? r.partyId : c.partyId, position: c.position || '' };
+    }
+    // 연결된 지휘관에 내각 자리 값을 옮겨 둔다 (쿠데타 계산 · 군정 의장 등은 지휘관 값을 그대로 쓰므로)
+    function syncCabinetLinks() {
+        T.military.forEach(m => {
+            if (!m.cabinetId) return;
+            const c = cabinetById(m.cabinetId);
+            if (!c) { m.cabinetId = ''; return; } // 내각에서 그 자리를 지웠으면 연결만 풀고 값은 남김
+            const e = cabinetEffective(c);
+            if (e.position) m.role = e.position;
+            m.name = e.name; m.photo = e.photo;
+            m.partyId = e.partyId == null ? '' : String(e.partyId);
+        });
+    }
+    const cabinetLinkLabel = c => `${c.position || '(직책 없음)'}${cabinetEffective(c).name ? ` · ${cabinetEffective(c).name}` : ''}`;
     let ui = { type: 'military', leaderId: '', partyId: '', lastId: null };
 
     const origGet = window.getAppState;
@@ -99,6 +122,7 @@
 
     // 성공 확률 — 요인마다 몇 %p인지 함께 돌려준다 (화면에 그대로 보여 줌)
     function coupChance(type, opts) {
+        syncCabinetLinks();
         const f = [];
         const add = (label, v) => { f.push({ label, v: Math.round(v) }); };
         const martial = emergencyPowers?.martialLaw?.active;
@@ -168,6 +192,7 @@
     }
 
     function attempt() {
+        syncCabinetLinks();
         const type = ui.type;
         if (T.junta && type !== 'counter') { showCustomAlert('군정 중입니다 — 아래 "군정에서 벗어나기"의 역쿠데타를 쓰세요.'); return; }
         let leaderName = '', target = '';
@@ -289,6 +314,7 @@
 
     // ---- 디버그 모드: 쿠데타 없이 바로 군정 (설정 › 기타 설정 › 숨겨진 정부 형태 보이기, js/devmode.js) ----
     function debugJunta() {
+        syncCabinetLinks();
         if (T.junta) { showCustomAlert('이미 군정입니다 — 내각 › 쿠데타의 "민정 이양"으로 벗어날 수 있어요.'); return; }
         const m = T.military.find(x => x.id === ui.leaderId) || T.military[0];
         if (!m) { showCustomAlert('군사평의회 의장이 될 군 지휘관이 없습니다 — 내각 › 군부에서 군 지휘부를 먼저 정하세요.'); return; }
@@ -367,9 +393,12 @@
     function renderMilitary() {
         const box = document.getElementById('contentMilitary');
         if (!box) return;
+        syncCabinetLinks();
         const avg = T.military.length ? Math.round(T.military.reduce((a, m) => a + (Number(m.loyalty) || 0), 0) / T.military.length) : null;
         const partyOpts = sel => `<option value="">— 가까운 정당 없음 —</option>` + parties.filter(p => p.status !== 'dissolved')
             .map(p => `<option value="${esc(p.id)}" ${String(p.id) === String(sel) ? 'selected' : ''}>${esc(p.name)}</option>`).join('');
+        const cabinetOpts = () => `<option value="">— 연결 안 함 —</option>` + cabinetList()
+            .map(c => `<option value="${esc(c.id)}">${esc(cabinetLinkLabel(c))}</option>`).join('');
         const branchOpts = sel => `<option value="">— 소속 없음 —</option>` + T.branches
             .map(b => `<option value="${esc(b.id)}" ${b.id === sel ? 'selected' : ''}>${esc(b.name || '(이름 없음)')}</option>`).join('');
         box.innerHTML = `
@@ -394,17 +423,21 @@
             ${T.military.map(m => `
                 <div class="card-item t62-officer ${T.junta && T.junta.chairId === m.id ? 't62-chair' : ''}" data-id="${esc(m.id)}" style="--t62-branch:${esc(officerColor(m))}">
                     <div class="t62-photo-col">
-                        <label class="leader-photo-box t62-photo" title="사진">${m.photo ? `<img src="${m.photo}" alt="">` : '<div class="photo-ph">🎖</div>'}<input type="file" accept="image/*" data-f="photo"></label>
+                        <label class="leader-photo-box t62-photo" title="사진">${m.photo ? `<img src="${m.photo}" alt="">` : '<div class="photo-ph">🎖</div>'}<input type="file" accept="image/*" data-f="photo" ${m.cabinetId ? 'disabled' : ''}></label>
                         ${branchById(m.branchId) ? `<span class="t62-branch-tag">${esc(branchById(m.branchId).name)}</span>` : ''}
                     </div>
                     <div class="t62-officer-main">
                         <div class="t62-row">
-                            <input type="text" data-f="role" value="${esc(m.role)}" placeholder="직책 (예: 육군참모총장)" class="t62-role">
+                            <input type="text" data-f="role" value="${esc(m.role)}" placeholder="직책 (예: 육군참모총장)" class="t62-role" ${m.cabinetId ? 'disabled' : ''}>
                             <button type="button" class="t62-x" data-act="del" title="빼기">✕</button>
                         </div>
-                        <input type="text" data-f="name" value="${esc(m.name)}" placeholder="이름">
+                        <input type="text" data-f="name" value="${esc(m.name)}" placeholder="이름" ${m.cabinetId ? 'disabled' : ''}>
                         <div class="t62-row t62-field"><span>소속</span><select data-f="branchId">${branchOpts(m.branchId)}</select></div>
-                        <div class="t62-row t62-field"><span>정당</span><select data-f="partyId">${partyOpts(m.partyId)}</select></div>
+                        <div class="t62-row t62-field"><span>정당</span><select data-f="partyId" ${m.cabinetId ? 'disabled' : ''}>${partyOpts(m.partyId)}</select></div>
+                        ${m.cabinetId && cabinetById(m.cabinetId) ? `
+                        <div class="t62-row t62-linked">🔗 내각(${esc(cabinetById(m.cabinetId).position || '직책 없음')})과 연결됨 — 직책 · 이름 · 사진 · 당적 자동 반영
+                            <button type="button" class="t62-x" data-act="unlinkCab">연결 해제</button></div>`
+                        : `<div class="t62-row t62-field"><span>내각</span><select data-f="cabinetId">${cabinetOpts()}</select></div>`}
                         <div class="t62-row t62-loyal"><span>충성도</span><input type="range" min="0" max="100" step="5" data-f="loyalty" value="${Number(m.loyalty) || 0}"><b>${Number(m.loyalty) || 0}</b></div>
                     </div>
                 </div>`).join('')}
@@ -433,10 +466,18 @@
         const seed = box.querySelector('[data-act="seed"]');
         // 기본 직책 이름은 화면 언어로 (세이브에 든 이름은 번역하지 않으므로 만들 때 바꿔 둔다)
         const tr = k => (window.DnoLang && typeof DnoLang.t === 'function' ? DnoLang.t(k) : k);
-        if (seed) seed.onclick = () => { DEFAULT_ROSTER.forEach(([role, loyalty, branchId]) => T.military.push({ id: uid(), role: tr(role), name: '', photo: '', partyId: '', loyalty, branchId: branchById(branchId) ? branchId : '' })); renderMilitary(); };
+        if (seed) seed.onclick = () => {
+            // 내각에 국방 장관 자리가 있으면 기본 지휘부의 국방부 장관을 그 자리와 바로 연결
+            const defense = cabinetList().find(c => /국방/.test(c.position || ''));
+            DEFAULT_ROSTER.forEach(([role, loyalty, branchId]) => T.military.push({ id: uid(), role: tr(role), name: '', photo: '', partyId: '', loyalty, branchId: branchById(branchId) ? branchId : '',
+                cabinetId: branchId === 'mnd' && defense ? defense.id : '' }));
+            renderMilitary();
+        };
         box.querySelectorAll('.t62-officer').forEach(card => {
             const m = T.military.find(x => x.id === card.dataset.id);
             card.querySelector('[data-act="del"]').onclick = () => { T.military = T.military.filter(x => x !== m); renderMilitary(); };
+            const unlink = card.querySelector('[data-act="unlinkCab"]');
+            if (unlink) unlink.onclick = () => { m.cabinetId = ''; renderMilitary(); }; // 값은 남기고 연결만 푼다
             card.querySelectorAll('[data-f]').forEach(inp => {
                 const f = inp.dataset.f;
                 if (f === 'photo') {
@@ -555,6 +596,8 @@
         .t62-branch-tag { font-size: .68rem; text-align: center; padding: 1px 2px; color: #fff; background: var(--t62-branch, #6b7d4a); word-break: keep-all; overflow-wrap: anywhere; line-height: 1.3; }
         .t62-field span { color: #777; font-size: .78rem; flex-shrink: 0; width: 2.6em; }
         .t62-field select { flex: 1; min-width: 0; }
+        .t62-linked { color: #6cf; font-size: .72rem; flex-wrap: wrap; }
+        .t62-linked .t62-x { font-size: .7rem; padding: 1px 6px; }
         .t62-branches { border: 1px solid #2a2a2a; padding: 6px 10px; margin: 0 0 10px; }
         .t62-branches summary { cursor: pointer; color: #aaa; font-size: .85rem; }
         .t62-branches .add-btn { margin-top: 6px; }
