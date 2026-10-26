@@ -120,6 +120,14 @@
                         <select id="resolutionSelect" class="dev-code-input" style="width:100%;" onchange="selectResolution(this.value)"></select>
                         <div class="settings-hint" id="resolutionHint"></div>
                     </div>
+                    <div class="settings-group">
+                        <div class="settings-label">EXECUTE / 실행 버튼</div>
+                        <div class="lang-select-group">
+                            <button class="lang-select-btn" id="execBtnOff" onclick="selectExecButton(false)">숨기기</button>
+                            <button class="lang-select-btn" id="execBtnOn" onclick="selectExecButton(true)">표시</button>
+                        </div>
+                        <div class="settings-hint">편집 패널 아래의 "PROTOCOL EXECUTE"(실행) 버튼입니다. 설정을 바꾸면 의석 화면이 알아서 다시 그려져서 기본으로 숨겨 둡니다. 숨겨도 입력 칸 밖에서 Enter를 누르면 다시 그려요.</div>
+                    </div>
                 </section>
 
                 <!-- 기타 설정 -->
@@ -307,6 +315,14 @@
             document.getElementById('uiModeBtnMobile').classList.toggle('active', cur === 'mobile');
         }
         renderUiModeButtons();
+
+        function selectExecButton(on) { setExecButton(on); renderExecButtons(); }
+        function renderExecButtons() {
+            const on = getExecButton();
+            document.getElementById('execBtnOn').classList.toggle('active', on);
+            document.getElementById('execBtnOff').classList.toggle('active', !on);
+        }
+        renderExecButtons();
 
         // ===== 창 표시 방식 — 앱에서는 창 모드 · 전체 화면 · 테두리 없는 전체 화면,
         // 웹에서는 창 모드 · 전체 화면만 (웹의 전체 화면은 다른 페이지로 옮기면 풀림) =====

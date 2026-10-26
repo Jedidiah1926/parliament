@@ -715,6 +715,14 @@ window.DnoLangPacks.en = {
   }
  ],
  "dict": [
+  ["EXECUTE / 실행 버튼", "EXECUTE / Execute button"],
+  ["숨기기", "Hide"],
+  ["표시", "Show"],
+  ["편집 패널 아래의 \"PROTOCOL EXECUTE\"(실행) 버튼입니다. 설정을 바꾸면 의석 화면이 알아서 다시 그려져서 기본으로 숨겨 둡니다. 숨겨도 입력 칸 밖에서 Enter를 누르면 다시 그려요.", "The \"PROTOCOL EXECUTE\" button under the edit panel. The seat view redraws by itself when you change settings, so it is hidden by default. Even when hidden, press Enter outside an input to redraw."],
+  ["의석 화면이 바로 바뀌어요", "The seat view updates right away"],
+  ["의석 수 같은 설정을 바꾸면 의석 화면이 바로 새로 그려져요 — 새 정당의 자리도 생겼을 거예요. 화면이 맞지 않아 보이면 입력 칸 밖에서 Enter 키로 다시 그릴 수 있고, 설정 › 화면에서 실행 버튼을 켤 수도 있어요.", "Changing settings like seat counts redraws the seat view right away — the new party's seats should be there. If the view looks off, press Enter outside an input to redraw, or turn on the execute button in Settings › Display."],
+  ["설정을 바꾸면 시각 화면이 알아서 새로 그려집니다. \"PROTOCOL EXECUTE\"(실행) 버튼은 기본으로 숨겨져 있고 설정 › 화면에서 켤 수 있어요 — 숨겨도 Enter로 다시 그릴 수 있습니다.", "The view redraws by itself when you change settings. The \"PROTOCOL EXECUTE\" button is hidden by default and can be turned on in Settings › Display — even hidden, Enter redraws."],
+  ["- 실행(PROTOCOL EXECUTE) 버튼을 기본으로 숨김 — 설정 › 화면 › 실행 버튼에서 표시/숨기기 (대부분의 편집이 의석 화면을 알아서 다시 그리고, 숨겨도 Enter로 다시 그림)", "- The PROTOCOL EXECUTE button is hidden by default — show or hide it in Settings › Display › Execute button (most edits redraw the seat view by themselves, and Enter still redraws)"],
   ["군 지휘부를 정해 둡니다. 충성도는 지금 정부에 대한 충성(0~100)으로, 낮을수록 군부 쿠데타가 잘 되고 높을수록 친위 쿠데타를 돕습니다. 가까운 정당은 그 정당이 쿠데타를 일으킬 때 힘을 보탭니다.", "Set up the military command. Loyalty is loyalty to the current government (0–100): the lower it is, the likelier a military coup succeeds; the higher, the more it helps a self-coup. An allied party gets their help when it stages a coup."],
   ["— 가까운 정당 없음 —", "— No allied party —"],
   ["충성도", "Loyalty"],

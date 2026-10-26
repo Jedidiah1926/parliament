@@ -331,3 +331,5 @@ html[data-ui-mode="mobile"] body.has-side-nav .main-tab-content > .sub-tab-conta
 html[data-ui-mode="mobile"] body.has-side-nav .tno-header-strip { padding-top: 6px; padding-bottom: 6px; font-size: .95rem; }
 /* 모바일: 알림 토스트가 아래 탭 바·실행 버튼에 가리지 않게 */
 html[data-ui-mode="mobile"] body.has-side-nav .kbd-toast { bottom: calc(var(--mnav-h) + var(--safe-b) + 76px); }
+/* 실행 버튼을 숨기면(기본, js/uimode.js) 그 자리만큼 띄우던 아래 여백을 줄인다 */
+html[data-ui-mode="mobile"][data-exec-btn="off"] body.has-side-nav { padding-bottom: calc(var(--mnav-h) + var(--safe-b) + 16px); }

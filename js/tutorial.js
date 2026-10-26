@@ -21,6 +21,7 @@
     const navTarget = () => isMobileLayout()
         ? (hasEl('mobileNav') ? '#mobileNav' : '.main-tab-container')
         : (hasEl('sideNav') ? '#sideNav' : '.main-tab-container');
+    const execOn = () => document.documentElement.getAttribute('data-exec-btn') === 'on';
     const execTarget = () => (isMobileLayout() && hasEl('mobileExecFab')) ? '#mobileExecFab' : '.simulate-btn';
     const call = (name, ...args) => () => { if (typeof window[name] === 'function') window[name](...args); };
     const go = (main, sub) => call('switchSubTab', main, sub);
@@ -242,13 +243,16 @@
                 {
                     before: [showPanel('controls')],
                     enter: () => { T.execClicked = false; },
-                    target: execTarget,
-                    allow: () => [execTarget()],
-                    title: '다시 계산하기',
-                    text: () => isMobileLayout()
-                        ? '설정을 바꾼 뒤에는 실행 버튼을 눌러 의석 화면을 새로 그립니다. 지금 눌러보세요. 아래 탭 바의 "의석"에서 새 정당의 자리를 확인할 수 있어요.'
-                        : '설정을 바꾼 뒤에는 이 버튼을 눌러 의석 화면을 새로 그립니다. 지금 눌러보세요. (입력 칸 밖에서 Enter 키를 눌러도 같아요)',
-                    task: () => T.execClicked,
+                    // 실행 버튼은 설정 › 화면에서 켤 때만 보인다 (기본 숨김) — 숨겨져 있으면 자동으로 다시 그려진다는 안내만
+                    target: () => (execOn() ? execTarget() : (isMobileLayout() ? navTarget() : '#houseCanvas')),
+                    allow: () => (execOn() ? [execTarget()] : []),
+                    title: () => (execOn() ? '다시 계산하기' : '의석 화면이 바로 바뀌어요'),
+                    text: () => !execOn()
+                        ? '의석 수 같은 설정을 바꾸면 의석 화면이 바로 새로 그려져요 — 새 정당의 자리도 생겼을 거예요. 화면이 맞지 않아 보이면 입력 칸 밖에서 Enter 키로 다시 그릴 수 있고, 설정 › 화면에서 실행 버튼을 켤 수도 있어요.'
+                        : isMobileLayout()
+                            ? '설정을 바꾼 뒤에는 실행 버튼을 눌러 의석 화면을 새로 그립니다. 지금 눌러보세요. 아래 탭 바의 "의석"에서 새 정당의 자리를 확인할 수 있어요.'
+                            : '설정을 바꾼 뒤에는 이 버튼을 눌러 의석 화면을 새로 그립니다. 지금 눌러보세요. (입력 칸 밖에서 Enter 키를 눌러도 같아요)',
+                    task: () => !execOn() || T.execClicked,
                     done: '의석 화면이 새로 그려졌어요. 새 정당의 자리도 생겼을 거예요.',
                 },
             ],

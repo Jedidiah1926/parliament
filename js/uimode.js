@@ -25,6 +25,19 @@
 
     document.documentElement.setAttribute('data-ui-mode', getUiMode());
 
+    // ===== 실행(PROTOCOL EXECUTE) 버튼 표시 — 설정 › 화면 (기본: 숨김) =====
+    // 대부분의 편집이 의석 화면을 알아서 다시 그리므로 버튼은 기본으로 숨기고, 켜면 편집 패널 아래 버튼과 모바일 떠 있는 버튼이 보인다.
+    // 숨겨도 입력 칸 밖에서 Enter를 누르면 다시 그린다. <html data-exec-btn="on|off"> — css/main.css가 숨긴다
+    const EXEC_BTN_KEY = 'dnoExecButton';
+    const getExecButton = () => safeGet(EXEC_BTN_KEY) === 'on';
+    function setExecButton(on) {
+        safeSet(EXEC_BTN_KEY, on ? 'on' : 'off');
+        document.documentElement.setAttribute('data-exec-btn', on ? 'on' : 'off');
+    }
+    window.getExecButton = getExecButton;
+    window.setExecButton = setExecButton;
+    document.documentElement.setAttribute('data-exec-btn', getExecButton() ? 'on' : 'off');
+
     // ===== 모바일 모드 전용 — 좌측(컨트롤)/우측(디스플레이) 패널 전환 =====
     // 세션 동안만 유지되는 UI 상태이며(새로고침 시 컨트롤 패널로 초기화), 페이지 로드 시점에
     // 유효한 값이 있어야 CSS 규칙이 즉시 적용되므로 기본값을 미리 지정해 둔다.
