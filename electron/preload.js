@@ -18,6 +18,9 @@ contextBridge.exposeInMainWorld('hemicycleDesktop', {
     openModsFolder: () => ipcRenderer.invoke('mods:open-folder'),
     getDisplayMode: () => ipcRenderer.invoke('display-mode:get'),
     setDisplayMode: mode => ipcRenderer.invoke('display-mode:set', mode),
+    // 해상도 (창 모드 크기) — { mode, maximized, scale, monitor, current, chosen, options:[{width,height,fits}] }
+    getResolution: () => ipcRenderer.invoke('resolution:get'),
+    setResolution: (w, h) => ipcRenderer.invoke('resolution:set', w, h),
     onDisplayModeChange: callback => {
         if (typeof callback !== 'function') return;
         ipcRenderer.on('display-mode:changed', (event, mode) => callback(mode));

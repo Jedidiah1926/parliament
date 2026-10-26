@@ -68,6 +68,7 @@ function notifyDisplayMode(win) {
 
 function createWindow(url) {
     const borderless = saved.displayMode === 'borderless';
+    if (!borderless) delete saved.pendingResolution; // 테두리 없는 창 → 창 모드: 고른 해상도는 이미 saved 크기에 들어가 있음
     const bounds = {
         width: Math.max(MIN_SIZE.width, saved.width || DEFAULT_BOUNDS.width),
         height: Math.max(MIN_SIZE.height, saved.height || DEFAULT_BOUNDS.height),
@@ -131,6 +132,11 @@ function createWindow(url) {
     win.on('leave-full-screen', () => {
         if (win !== mainWin || saved.displayMode === 'borderless') return;
         saved.displayMode = 'windowed';
+        // 전체 화면 동안 고른 해상도가 있으면 창 모드로 돌아오면서 적용
+        if (saved.pendingResolution && saved.resolution) {
+            delete saved.pendingResolution;
+            setTimeout(() => { if (!win.isDestroyed()) setResolution(saved.resolution.width, saved.resolution.height); }, 50);
+        }
         notifyDisplayMode(win);
     });
 
@@ -172,7 +178,9 @@ function createWindow(url) {
     // 창 모드일 때의 크기·위치만 기억한다 (최대화 · 전체 화면 · 테두리 없는 창의 크기는 저장하지 않음)
     const trackNormal = () => {
         if (win !== mainWin || saved.displayMode !== 'windowed' || win.isMaximized() || win.isFullScreen()) return;
-        Object.assign(saved, win.getBounds());
+        const b = win.getBounds(), cb = win.getContentBounds();
+        Object.assign(saved, b);
+        saved.frame = { w: b.width - cb.width, h: b.height - cb.height }; // 창 틀 크기 — 해상도를 나중에 적용할 때 씀
     };
     win.on('resize', trackNormal);
     win.on('move', trackNormal);
@@ -238,6 +246,58 @@ function setDisplayMode(mode) {
 }
 
 ipcMain.handle('display-mode:get', () => saved.displayMode);
+
+// ===== 해상도 (창 모드의 화면 크기) =====
+// 게임처럼 실제 픽셀(예: 1920×1080)로 고르고, 모니터 배율(Windows 125% · 150% …)로 나눠 창 안쪽(내용) 크기를 맞춘다.
+// 지금 모니터 작업 영역에 들어가는 크기만 고를 수 있고, 전체 화면 · 테두리 없는 전체 화면은 모니터 해상도를 그대로 쓴다
+// (그때 고른 해상도는 기억해 두었다가 창 모드로 돌아갈 때 적용).
+const RESOLUTIONS = [[1280, 720], [1366, 768], [1440, 900], [1600, 900], [1680, 1050], [1920, 1080], [1920, 1200], [2560, 1080], [2560, 1440], [3440, 1440], [3840, 2160]];
+function resolutionInfo() {
+    const win = mainWin;
+    if (!win || win.isDestroyed()) return null;
+    const d = screen.getDisplayMatching(win.getBounds());
+    const sf = d.scaleFactor || 1;
+    const frame = { w: win.getBounds().width - win.getContentBounds().width, h: win.getBounds().height - win.getContentBounds().height };
+    const cb = win.getContentBounds();
+    const fits = (w, h) => {
+        const cw = Math.round(w / sf), ch = Math.round(h / sf);
+        return cw + frame.w <= d.workArea.width && ch + frame.h <= d.workArea.height && cw + frame.w >= MIN_SIZE.width && ch + frame.h >= MIN_SIZE.height;
+    };
+    return {
+        mode: saved.displayMode,
+        maximized: win.isMaximized(),
+        scale: sf,
+        monitor: { width: Math.round(d.size.width * sf), height: Math.round(d.size.height * sf) },
+        current: { width: Math.round(cb.width * sf), height: Math.round(cb.height * sf) },
+        chosen: saved.resolution || null,
+        options: RESOLUTIONS.map(([w, h]) => ({ width: w, height: h, fits: fits(w, h) })),
+    };
+}
+function setResolution(width, height) {
+    const win = mainWin;
+    const w = Math.round(Number(width)), h = Math.round(Number(height));
+    if (!win || win.isDestroyed() || !(w > 0 && h > 0)) return resolutionInfo();
+    saved.resolution = { width: w, height: h };
+    if (saved.displayMode === 'windowed' && !win.isFullScreen()) {
+        const sf = screen.getDisplayMatching(win.getBounds()).scaleFactor || 1;
+        if (win.isMaximized()) win.unmaximize();
+        saved.maximized = false;
+        win.setContentSize(Math.round(w / sf), Math.round(h / sf));
+        win.center();
+        Object.assign(saved, win.getBounds());
+    } else {
+        // 전체 화면 · 테두리 없는 전체 화면: 창 모드로 돌아갈 때의 크기로 기억 (창 틀은 마지막 창 모드 때 잰 크기)
+        const sf = screen.getDisplayMatching(win.getBounds()).scaleFactor || 1;
+        const fr = saved.frame || { w: 16, h: 39 };
+        Object.assign(saved, { width: Math.round(w / sf) + fr.w, height: Math.round(h / sf) + fr.h, maximized: false });
+        delete saved.x; delete saved.y; // 가운데에 다시 띄움
+        saved.pendingResolution = true;
+    }
+    saveWindowState(saved);
+    return resolutionInfo();
+}
+ipcMain.handle('resolution:get', () => resolutionInfo());
+ipcMain.handle('resolution:set', (event, w, h) => setResolution(w, h));
 // ===== 세이브 폴더 (electron/saves.js) — 페이지의 세이브 목록을 폴더의 .hemi 파일과 맞춘다 =====
 // 읽기 · 쓰기는 동기 — 저장 직후 앱이 꺼져도(업데이트 설치 등) 파일에 남아 있게
 ipcMain.on('saves:read', (event, ns) => {
