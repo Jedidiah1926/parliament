@@ -32,6 +32,23 @@ html:not([data-ui-mode="mobile"]) body.has-side-nav.side-nav-collapsed .side-nav
 .mn-brand-title,
 .mn-brand-sub { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .mn-collapse { flex: 0 0 auto; width: 32px; height: 32px; padding: 0; display: grid; place-items: center; cursor: pointer; }
+/* 기능 검색 (js/sidenav.js setupSearch) */
+.mn-search { position: relative; flex: 0 0 auto; margin: 6px 6px 8px; }
+.mn-search-icon { position: absolute; left: 8px; top: 50%; transform: translateY(-50%); opacity: .6; pointer-events: none; }
+.mn-search input { width: 100%; box-sizing: border-box; padding: 6px 8px 6px 28px; font: inherit; font-size: .82rem; background: #000; color: var(--tno-neon); border: 1px solid var(--tno-border); outline: none; }
+.mn-search input:focus { border-color: var(--tno-neon); box-shadow: 0 0 6px color-mix(in srgb, var(--tno-neon) 40%, transparent); }
+.mn-search input::-webkit-search-cancel-button { cursor: pointer; }
+.mn-search-results { position: absolute; left: 0; right: 0; top: calc(100% + 4px); z-index: 50; display: flex; flex-direction: column; background: #05070a; border: 1px solid var(--tno-neon); max-height: 60vh; overflow-y: auto; }
+.mn-search-results[hidden] { display: none; }
+.mn-search-item { display: flex; flex-direction: column; gap: 1px; text-align: left; padding: 6px 9px; background: none; border: none; border-bottom: 1px solid #1c2129; color: var(--tno-text, #ddd); font: inherit; cursor: pointer; }
+.mn-search-item:last-child { border-bottom: none; }
+.mn-search-item.sel, .mn-search-item:hover { background: color-mix(in srgb, var(--tno-neon) 14%, transparent); }
+.mn-search-item.locked { opacity: .6; }
+.mn-search-path { font-size: .82rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mn-search-match { font-size: .7rem; opacity: .65; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mn-search-empty { padding: 8px 10px; font-size: .78rem; opacity: .7; }
+.mn-search-flash { outline: 2px solid var(--tno-neon) !important; outline-offset: 3px; transition: outline-color .3s; }
+body.side-nav-collapsed .mn-search { display: none; }
 .mn-groups { flex: 1; overflow-y: auto; overflow-x: hidden; display: flex; flex-direction: column; }
 .mn-group-head { width: 100%; display: flex; align-items: center; gap: 8px; cursor: pointer; }
 .mn-icon { flex: 0 0 18px; text-align: center; line-height: 1; }
