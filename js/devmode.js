@@ -9,6 +9,9 @@
     'use strict';
     const KEY = 'hemicycleDevMode';
     const CODE_HASH = '22zsze7nlqm';
+    // 경제 미리보기 코드 — 개발자 모드 전체가 아니라 Teaser 1.6.9(경제)만 연다. 1.6.9가 본 게임에 들어가면 쓸 일이 없어짐
+    const ECON_HASH = 'wbfoh8bs26';
+    const ECON_TEASERS = ['69'];
     const TEASERS = [
         { id: '66', file: 'teaser66.html', title: 'Teaser 1.6.6', note: '왕정복고 · 전제군주정 · 왕위 계승 · 친위 쿠데타 · 공화 혁명' },
         { id: '67', file: 'teaser67.html', title: 'Teaser 1.6.7', note: '미수복 지역 · 영토 통일 (+1.6.6)' },
@@ -35,10 +38,17 @@
     // Steam 데모 빌드(tools/build-demo.js가 window.HEMI_BUILD.demo를 켬)에는 미리보기 화면이 없으므로 개발자 모드도 없음
     const DEMO = !!(window.HEMI_BUILD && window.HEMI_BUILD.demo);
     const isOn = () => !DEMO && safeGet(KEY) === CODE_HASH;
+    // 'full'(개발자 모드) · 'economy'(경제 미리보기 코드) · null
+    const access = () => (DEMO ? null : safeGet(KEY) === CODE_HASH ? 'full' : safeGet(KEY) === ECON_HASH ? 'economy' : null);
+    const anyOn = () => !!access();
+    const canOpen = id => access() === 'full' || (access() === 'economy' && ECON_TEASERS.includes(String(id)));
     // 코드가 맞으면 켜고 true — 대소문자 · 앞뒤 공백은 따지지 않는다 (휴대폰 자동 대문자 대비)
     function unlock(code) {
-        if (DEMO || hash(String(code || '').trim().toLowerCase()) !== CODE_HASH) return false;
-        return safeSet(KEY, CODE_HASH);
+        if (DEMO) return false;
+        const h = hash(String(code || '').trim().toLowerCase());
+        if (h === CODE_HASH) return safeSet(KEY, CODE_HASH);
+        if (h === ECON_HASH && access() !== 'full') return safeSet(KEY, ECON_HASH); // 이미 개발자 모드면 좁히지 않음
+        return false;
     }
     function lock() { safeDel(KEY); }
 
@@ -87,11 +97,13 @@
         render: renderHiddenGov,
     };
 
-    window.HemiDev = { isOn, unlock, lock, demo: DEMO, teasers: DEMO ? [] : TEASERS.slice(), debug, hiddenGov };
+    window.HemiDev = { isOn, anyOn, access, canOpen, unlock, lock, demo: DEMO, debug, hiddenGov,
+        // 열 수 있는 티저만 (개발자 모드는 전부, 경제 미리보기 코드는 1.6.9만)
+        get teasers() { return DEMO ? [] : TEASERS.filter(t => canOpen(t.id)); } };
 
     // 티저 페이지 잠금 — 개발자 모드가 아니면 설정 › 기타 설정으로
     const root = document.documentElement;
-    if (root.getAttribute('data-app-mode') === 'teaser' && !isOn()) {
+    if (root.getAttribute('data-app-mode') === 'teaser' && !canOpen(root.getAttribute('data-teaser') || '67')) {
         const id = root.getAttribute('data-teaser') || '67';
         root.style.visibility = 'hidden';
         location.replace('settings.html?locked=' + encodeURIComponent(id) + '#etc');

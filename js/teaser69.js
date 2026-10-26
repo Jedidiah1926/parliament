@@ -71,9 +71,11 @@
         { id: 'property', name: '재산세', rate0: 1.5, base: 2.5, L: 20, max: 10, weight: 'wealth', side: { moodHigh: -1.5 } },
     ];
     // 효과를 줄 수 있는 대상 (화이트리스트 — 이 밖의 대상은 무시하고 경고). 자산 id는 자동으로 더해진다
-    // 인플레 안전 범위는 성장률에 따라 넓어진다 — 빨리 크는 경제는 물가가 더 올라도 버틴다.
-    // 성장률 2%를 넘는 1%p마다 안전 상한이 0.75%p 올라감 (성장률 10%에서 +6%p, 그 이상은 그대로). 마이너스 · 저성장은 기본 범위
-    function inflSafeExtra(growth) { return 0.75 * Math.max(0, Math.min(8, (Number(growth) || 0) - 2)); }
+    // 인플레 안전 범위는 성장률에 따라 넓어진다 — 빨리 크는 경제는 물가가 더 올라도 버틴다 (예: 고도성장기 한국, 성장 10% · 물가 10%+).
+    // 기준은 이번 칸 성장률이 아니라 최근 약 3년의 성장 흐름(nat.gTrend) — 한 분기 반짝 성장으로 범위가 출렁이지 않게.
+    // 성장 흐름 2%를 넘는 1%p마다 안전 상한 +1.25%p (최대 +12%p — 성장 흐름 11.6%), 마이너스 · 저성장은 기본 범위
+    function inflSafeExtra(growth) { return 1.25 * Math.max(0, Math.min(9.6, (Number(growth) || 0) - 2)); }
+    const growthTrend = N => (Number.isFinite(N.gTrend) ? N.gTrend : N.growth);
     const EFFECT_TARGETS = { growth: '잠재성장', unemp: '자연실업률', infl: '인플레', mood: '민심', conf: '신뢰도' };
     const DT = { month: 1 / 12, quarter: 1 / 4, year: 1 };
     const UNIT_NAME = { month: '1개월', quarter: '1분기', year: '1년' };
@@ -506,6 +508,8 @@
         const [p0, p1] = buf, Lthen = p0.y >= yAgo - 1e-9 || p1.y === p0.y ? p0.L : p0.L + (p1.L - p0.L) * (yAgo - p0.y) / (p1.y - p0.y);
         N.growth = p0.y > yAgo + 1e-9 ? (Lnow - p0.L) / (S2.clock - p0.y) : Lnow - Lthen;
         N.gap = clamp(N.gap * Math.exp(-1.2 * dt) + (dlnNat - pot * dt), -15, 15);
+        // 성장 흐름 — 최근 약 3년 성장률의 지수 평균 (인플레 안전 범위 · 변동성의 기준)
+        N.gTrend = Number.isFinite(N.gTrend) ? N.gTrend + (N.growth - N.gTrend) * (1 - Math.exp(-dt / 3)) : N.growth;
         const N2 = nationalFromDist(S2, keys);
         N.unemp = N2.unemp; N.gdp = after;
         // 3. 인플레 — 기대(신뢰도가 높으면 목표 2%에 고정) + 과열 + 과잉 통화 + 수입물가
@@ -513,13 +517,16 @@
         // 신뢰가 무너지면 지난 인플레를 따라가되, 통화 증가가 멈추면 기대도 꺾인다 (하이퍼인플레가 끝날 수 있게)
         const inflE = w * 2 + (1 - w) * (0.6 * N.infl + 0.4 * Math.max(-2, m - pot));
         const dCur = N.cur - (S2.prevCur ?? N.cur);
-        const pGap = 0.35 * N.gap, pMoney = 0.45 * (m - pot - 2), pImport = clamp(-0.3 * dCur / dt * 0.25, -10, 30);
+        // 수요 견인(총수요) — 산출 갭(경기 과열)이 클수록 더 가파르게: 과열 쪽은 볼록 (총수요가 공급 능력을 넘으면 물가가 급히 오름)
+        const pGap = 0.35 * N.gap + 0.06 * Math.max(0, N.gap) ** 2, pMoney = 0.45 * (m - pot - 2), pImport = clamp(-0.3 * dCur / dt * 0.25, -10, 30);
         const pTax = sum(taxDefs().map(t => ((taxes[t.id] ?? t.rate0) - t.rate0) * ((t.side || {}).infl || 0))) + assetEffect(S2, 'infl');
         let target = inflE + pGap + pMoney + pImport + pTax + ev.i;
         if (m > 40) target *= 1 + (m - 40) / 40;
         const k = 1 - Math.exp(-2.5 * dt);
         const inflPrev = N.infl;
         N.infl = clamp(N.infl + (target - N.infl) * k, -15, 5000);
+        // 인플레 변동 — 고성장 · 과열일수록 물가가 크게 출렁인다 (저성장 안정기에는 거의 없음). 흔들림 없는 예측(r 없음)에는 안 들어감
+        if (r) N.infl = clamp(N.infl + gauss(r) * (0.3 + 0.35 * Math.max(0, growthTrend(N) - 3) + 0.15 * Math.max(0, N.gap)) * Math.sqrt(dt), -15, 5000);
         N.inflE = inflE;
         // 4. 통화가치
         S2.prevCur = N.cur;
@@ -548,7 +555,7 @@
             S2.assets[a.id] = clamp(A * (1 - a.decay * dt) + (items.length ? gain : a.decay * 50) * dt + cross * dt, 0, 200);
         });
         // 7. 신뢰도 · 국채금리
-        const safeX = inflSafeExtra(N.growth); // 인플레 안전 범위의 성장률 가산
+        const safeX = inflSafeExtra(growthTrend(N)); // 인플레 안전 범위의 성장 흐름 가산
         const Cstar = 77 - 0.25 * Math.max(0, N.debt - 60) - 1.2 * Math.max(0, N.infl - 4 - safeX) - 1.5 * Math.max(0, -balance - 3) + 0.12 * (N.mood - 50) - 0.6 * Math.max(0, m - 10) + (S2.settings.indep ? 5 : 0) + assetEffect(S2, 'conf') - (shutdown ? 10 : 0) + ev.cs;
         N.conf = clamp(N.conf + (Cstar - N.conf) * (1 - Math.exp(-1.4 * dt)), 0, 100);
         N.yield = Math.max(0, rate + Math.max(0, (65 - N.conf) / 6) + Math.max(0, (N.debt - 90) / 20) + premAdj);
@@ -597,7 +604,7 @@
         switch (key) {
             case 'infl': {
                 // 안전(good) 상한 5% · 경고 상한 15%가 성장률에 따라 늘어난다 (inflSafeExtra) — 하이퍼인플레 기준은 그대로
-                const x = inflSafeExtra(E.nat.growth);
+                const x = inflSafeExtra(growthTrend(E.nat));
                 const good = Math.min(5 + x, t.hyper), warn = Math.min(Math.max(15 + 2 * x, good), t.hyper);
                 return [{ from: -5, to: 0, status: 'warning' }, { from: 0, to: good, status: 'good' }, { from: good, to: warn, status: 'warning' }, { from: warn, to: t.hyper, status: 'serious' }, { from: t.hyper, to: 1e9, status: 'critical' }];
             }
@@ -1703,10 +1710,7 @@
                 title: `누르면 왼쪽 ${({ monetary: '통화', fiscal: '재정', region: '지역' })[go]} 탭 · Shift + 클릭하면 ${l} 세부 정보`,
                 onClick: e => { if (e && e.shiftKey) showMetric(k); else switchSubTab('economy', go); } });
         });
-        // 이대로면 다음 칸 — 왼쪽 개요의 미리보기를 크게 (지금 · 흔들림 없는 다음 칸 예측)
         box.appendChild(el('<div class="t69-dim t69-small">계기를 누르면 왼쪽 탭으로 · <b>Shift + 클릭</b>하면 그 지표의 세부 정보(예측 · 관련 경고 · 패키지 정책)</div>'));
-        const pv = el('<div class="t69-preview t69-preview-big t69-card"></div>');
-        box.appendChild(pv); renderPreview(pv);
         // 셋째 줄: 금액 — 비율(GDP 대비)만으로는 실제 규모를 알 수 없으니 화폐 단위로 (세입 · 세출 · 이자는 연간)
         const bq = budgetOf(E, N, distList()), prevN = last ? last.n : null;
         const chg = (now, before) => (before == null || !Number.isFinite(before) ? '' : `<em class="${now >= before ? 'up' : 'down'}">${now >= before ? '▲' : '▼'} ${Math.round(Math.abs(now - before)).toLocaleString()}</em>`);
@@ -1721,6 +1725,9 @@
             ['국채 이자 (연간)', money(bq.mand.interest), `국채금리 ${pct(N.yield)}`, ''],
         ];
         box.appendChild(el(`<div class="t69-fin" aria-label="재정 금액">${fin.map(([l, v, sub, d, st]) => `<div class="t69-fin-i ${st ? 't69-fin-' + st : ''}"><span>${l}</span><b>${esc(v)}</b><small>${esc(sub)} ${d}</small></div>`).join('')}</div>`));
+        // 이대로면 다음 칸 — 재정 금액 줄 다음에, 왼쪽 개요의 미리보기를 크게 (지금 · 흔들림 없는 다음 칸 예측)
+        const pv = el('<div class="t69-preview t69-preview-big t69-card"></div>');
+        box.appendChild(pv); renderPreview(pv);
         // 큰 그래프 — 같은 단위(%)인 지표만 겹쳐 봄 (두 눈금 겹치지 않게)
         const body = section(box, '추이', '— 칩을 눌러 겹쳐 볼 지표를 고르세요 (같은 % 눈금) · 점선은 예측');
         const chips = el(`<div class="t69-chips">${CHIP_VARS.map(k => `<button type="button" data-chip="${k}" class="t69-chip ${E.ui.chips.includes(k) ? 'on' : ''}" aria-pressed="${E.ui.chips.includes(k)}"><i style="background:${VAR[k].color}"></i>${VAR[k].label}</button>`).join('')}</div>`);
@@ -1752,7 +1759,7 @@
     // 그 지표에 듣는 패키지 정책(1년 뒤 예상과 함께 바로 쓰기)
     const METRICS = {
         infl: { label: '인플레', min: -5, max: 60, go: 'monetary', goLabel: '통화', signals: ['hyper', 'printing', 'collapse'], pkgs: ['qt', 'qe', 'devalue'],
-            note: g => `안전 범위는 성장률에 따라 넓어집니다 — 지금 성장률 ${pct(g)}면 안전 상한 ${pct(Math.min(5 + inflSafeExtra(g), E.thresholds.hyper))}` },
+            note: () => { const g = growthTrend(E.nat); return `안전 범위는 성장 흐름(최근 약 3년)에 따라 넓어지고, 고성장 · 과열일수록 물가가 크게 출렁입니다 — 지금 성장 흐름 ${pct(g)}면 안전 상한 ${pct(Math.min(5 + inflSafeExtra(g), E.thresholds.hyper))}`; } },
         growth: { label: '성장률', min: -10, max: 10, go: 'fiscal', goLabel: '재정', signals: ['negative', 'collapse', 'financial'], pkgs: ['qe', 'taxcut', 'devalue'] },
         unemp: { label: '실업률', min: 0, max: 40, go: 'region', goLabel: '지역', signals: ['depression', 'negative', 'collapse'], pkgs: ['qe', 'taxcut'] },
         debt: { label: '부채비율', min: 0, max: 250, go: 'fiscal', goLabel: '재정', signals: ['default', 'deficit', 'ceiling', 'reserves', 'financial'], pkgs: ['taxhike', 'qt'] },
@@ -1790,7 +1797,7 @@
             ${card(`이대로면 다음 1${UNIT_WORD[E.unit]}`, fmt(next), `${arrow(next - v)} ${dtxt(next - v)}${dunit} · 50% 범위 ${fmt(nextLo)} ~ ${fmt(nextHi)}`, stN)}
             ${yr > 1 ? card(`이대로면 ${spanLabel(yr)} 뒤`, fmt(yv), `${arrow(yv - v)} ${dtxt(yv - v)}${dunit} · 지금보다 ${flat(yv - v) ? '그대로' : yv > v ? '높음' : '낮음'}`, stY) : ''}
         </div>`));
-        if (M.note) box.appendChild(el(`<div class="t69-dim t69-small">${esc(M.note(E.nat.growth))}</div>`));
+        if (M.note) box.appendChild(el(`<div class="t69-dim t69-small">${esc(M.note())}</div>`));
         // 추이 + 예측
         const body = section(box, `${M.label} 추이`, '— 점선은 지금 정책을 유지할 때의 예측 (진한 띠 50% · 옅은 띠 90%)');
         const chart = document.createElement('div'); body.appendChild(chart);
@@ -1892,7 +1899,7 @@
                 const b = section(box, '인플레 분해', '— 기대 + 과열 + 통화 + 수입물가 + 세금 · 기타 + 조정 지연 = 실제 인플레');
                 const g = k => padF(H.map(hh => (hh.dec ? hh.dec.p[k] : null)));
                 C.stackBars(b, { x: xs, t: ts, range: [range[0], range[1]], unit: '%p', net: { label: '인플레', values: padF(col(hh => hh.n.infl)) }, parts: [
-                    { id: 'exp', label: '기대 인플레', color: 'var(--s1)', values: g('exp') }, { id: 'gap', label: '경기 과열', color: 'var(--s2)', values: g('gap') },
+                    { id: 'exp', label: '기대 인플레', color: 'var(--s1)', values: g('exp') }, { id: 'gap', label: '수요 견인 (총수요)', color: 'var(--s2)', values: g('gap') },
                     { id: 'money', label: '과잉 통화', color: 'var(--s3)', values: g('money') }, { id: 'imp', label: '수입물가 (통화가치)', color: 'var(--s4)', values: g('imp') },
                     { id: 'other', label: '세금 · 기타', color: 'var(--s5)', values: g('other') }, { id: 'adj', label: '조정 지연', color: 'var(--s7)', values: g('adj') },
                 ] });

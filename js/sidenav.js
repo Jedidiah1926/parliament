@@ -46,8 +46,8 @@
     function lockedInfo(label, ver) {
         const page = { '1.6.6': '66', '1.6.7': '67', '1.6.8': '68', '1.6.9': '69' }[ver];
         const msg = `🔒 "${label}"은(는) ${ver} 업데이트에서 열리는 기능입니다.`;
-        const dev = window.HemiDev && window.HemiDev.isOn && window.HemiDev.isOn();
-        if (dev && page) {
+        const dev = window.HemiDev && page && (window.HemiDev.canOpen ? window.HemiDev.canOpen(page) : window.HemiDev.isOn());
+        if (dev) {
             const go = () => { location.href = `teaser${page}.html`; };
             const q = `${msg}\n\nTeaser ${ver} 미리보기 화면으로 갈까요? (미리보기 화면의 저장 공간은 따로입니다)`;
             if (window.DnoUI && window.DnoUI.confirm) window.DnoUI.confirm(q).then(ok => { if (ok) go(); });
