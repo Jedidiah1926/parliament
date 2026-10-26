@@ -71,6 +71,9 @@
         { id: 'property', name: '재산세', rate0: 1.5, base: 2.5, L: 20, max: 10, weight: 'wealth', side: { moodHigh: -1.5 } },
     ];
     // 효과를 줄 수 있는 대상 (화이트리스트 — 이 밖의 대상은 무시하고 경고). 자산 id는 자동으로 더해진다
+    // 인플레 안전 범위는 성장률에 따라 넓어진다 — 빨리 크는 경제는 물가가 더 올라도 버틴다.
+    // 성장률 2%를 넘는 1%p마다 안전 상한이 0.75%p 올라감 (성장률 10%에서 +6%p, 그 이상은 그대로). 마이너스 · 저성장은 기본 범위
+    function inflSafeExtra(growth) { return 0.75 * Math.max(0, Math.min(8, (Number(growth) || 0) - 2)); }
     const EFFECT_TARGETS = { growth: '잠재성장', unemp: '자연실업률', infl: '인플레', mood: '민심', conf: '신뢰도' };
     const DT = { month: 1 / 12, quarter: 1 / 4, year: 1 };
     const UNIT_NAME = { month: '1개월', quarter: '1분기', year: '1년' };
@@ -545,7 +548,8 @@
             S2.assets[a.id] = clamp(A * (1 - a.decay * dt) + (items.length ? gain : a.decay * 50) * dt + cross * dt, 0, 200);
         });
         // 7. 신뢰도 · 국채금리
-        const Cstar = 77 - 0.25 * Math.max(0, N.debt - 60) - 1.2 * Math.max(0, N.infl - 4) - 1.5 * Math.max(0, -balance - 3) + 0.12 * (N.mood - 50) - 0.6 * Math.max(0, m - 10) + (S2.settings.indep ? 5 : 0) + assetEffect(S2, 'conf') - (shutdown ? 10 : 0) + ev.cs;
+        const safeX = inflSafeExtra(N.growth); // 인플레 안전 범위의 성장률 가산
+        const Cstar = 77 - 0.25 * Math.max(0, N.debt - 60) - 1.2 * Math.max(0, N.infl - 4 - safeX) - 1.5 * Math.max(0, -balance - 3) + 0.12 * (N.mood - 50) - 0.6 * Math.max(0, m - 10) + (S2.settings.indep ? 5 : 0) + assetEffect(S2, 'conf') - (shutdown ? 10 : 0) + ev.cs;
         N.conf = clamp(N.conf + (Cstar - N.conf) * (1 - Math.exp(-1.4 * dt)), 0, 100);
         N.yield = Math.max(0, rate + Math.max(0, (65 - N.conf) / 6) + Math.max(0, (N.debt - 90) / 20) + premAdj);
         // 8. 지역구 민심 · 소득등급
@@ -563,7 +567,7 @@
                 if (s.moodHigh) tax += dlt * s.moodHigh * Math.max(0, (d.income - 2.5) / 2);
                 if (s.moodLow) tax += dlt * s.moodLow * Math.max(0, (3.5 - d.income) / 2);
             });
-            const Mstar = 55 - 1.5 * (d.unemp - 5) - 0.8 * Math.max(0, N.infl - 3) - 0.1 * Math.max(0, N.infl - 15) + 0.8 * clamp(gA, -10, 10)
+            const Mstar = 55 - 1.5 * (d.unemp - 5) - 0.8 * Math.max(0, N.infl - 3 - safeX) - 0.1 * Math.max(0, N.infl - 15 - 2 * safeX) + 0.8 * clamp(gA, -10, 10)
                 + moodItems + moodWelfare * incW + assetMood + tax - (shutdown ? 5 : 0);
             d.mood = clamp(d.mood + (clamp(Mstar, 0, 100) - d.mood) * (1 - Math.exp(-1.6 * dt)), 0, 100);
             d.income = clamp(d.income + (0.03 * (gA - 1.5) - 0.02 * Math.max(0, d.unemp - 7) + (welfareGap > 0 ? 0.01 * welfareGap : 0)) * dt, 1, 5);
@@ -591,7 +595,12 @@
     function bandsOf(key) {
         const t = E.thresholds;
         switch (key) {
-            case 'infl': return [{ from: -5, to: 0, status: 'warning' }, { from: 0, to: 5, status: 'good' }, { from: 5, to: 15, status: 'warning' }, { from: 15, to: t.hyper, status: 'serious' }, { from: t.hyper, to: 1e9, status: 'critical' }];
+            case 'infl': {
+                // 안전(good) 상한 5% · 경고 상한 15%가 성장률에 따라 늘어난다 (inflSafeExtra) — 하이퍼인플레 기준은 그대로
+                const x = inflSafeExtra(E.nat.growth);
+                const good = Math.min(5 + x, t.hyper), warn = Math.min(Math.max(15 + 2 * x, good), t.hyper);
+                return [{ from: -5, to: 0, status: 'warning' }, { from: 0, to: good, status: 'good' }, { from: good, to: warn, status: 'warning' }, { from: warn, to: t.hyper, status: 'serious' }, { from: t.hyper, to: 1e9, status: 'critical' }];
+            }
             case 'growth': return [{ from: -1e9, to: -3, status: 'critical' }, { from: -3, to: -1, status: 'serious' }, { from: -1, to: 0.5, status: 'warning' }, { from: 0.5, to: 6, status: 'good' }, { from: 6, to: 1e9, status: 'warning' }];
             case 'unemp': return [{ from: 0, to: 6, status: 'good' }, { from: 6, to: 10, status: 'warning' }, { from: 10, to: t.depression, status: 'serious' }, { from: t.depression, to: 1e9, status: 'critical' }];
             case 'debt': return [{ from: 0, to: 60, status: 'good' }, { from: 60, to: 90, status: 'warning' }, { from: 90, to: t.default, status: 'serious' }, { from: t.default, to: 1e9, status: 'critical' }];
