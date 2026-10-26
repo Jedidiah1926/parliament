@@ -12615,13 +12615,17 @@
         }
 
         // 여러 정당이 최고 %로 동률(경합)일 때 겹쳐 표시할 빗금 패턴의 고유 id
-        function tendencySvgTiePatternId(colors) {
-            return 'tendTie_' + colors.map(c => c.replace('#','')).join('_');
+        // scope: 지도 한 장마다 다른 값 — 하원 · 상원 지도가 한 화면(숨긴 탭 포함)에 같이 있을 때 id가 겹치면
+        // fill="url(#..)"이 먼저 나온(숨겨진) 지도의 패턴을 가리켜 경합 지역구가 색칠되지 않던 문제 방지
+        var tieScopeSeq = 0; // var: 스크립트를 읽는 도중 지도가 먼저 그려져도 쓸 수 있게
+        function newTieScope() { return 's' + (++tieScopeSeq); }
+        function tendencySvgTiePatternId(colors, scope) {
+            return 'tendTie_' + (scope ? scope + '_' : '') + colors.map(c => c.replace('#','')).join('_');
         }
 
         // 동률(경합) 빗금 <pattern>을 patternDefs Map에 등록(이미 있으면 재사용)하고 fill="url(#..)" 값을 반환
-        function tendencyRegisterTiePattern(patternDefs, colors) {
-            const id = tendencySvgTiePatternId(colors);
+        function tendencyRegisterTiePattern(patternDefs, colors, scope) {
+            const id = tendencySvgTiePatternId(colors, scope);
             if(!patternDefs.has(id)) {
                 // patternUnits를 도형 자신의 경계상자 기준(objectBoundingBox)으로 잡아, 지도의 좌표 규모가
                 // 크든 작든(예: viewBox "0 0 2000 1600") 줄무늬가 항상 도형 크기에 비례해 또렷하게 보이도록 함
@@ -12639,6 +12643,7 @@
         // 그 정당들의 색을 겹친 빗금 패턴(<pattern>, defs로 등록)으로 표시
         function tendencySvgBuildOverallFill() {
             const patternDefs = new Map();
+            const tieScope = newTieScope();
             const fillMap = {};
             const titleMap = {};
             (districtSvgMapFor(tendencySvgChamber)?.shapes || []).forEach(s => {
@@ -12664,7 +12669,7 @@
                 if(tied.length === 0 || bestVal <= 0) { fillMap[key] = 'rgba(255,255,255,0.05)'; titleMap[key] = `${nm}: 성향 미지정`; return; }
                 if(tied.length === 1) { fillMap[key] = tendencyColorForPct(tied[0].color, bestVal); titleMap[key] = `${nm}${fromRegion}: ${breakdown}`; return; }
                 const colors = tied.map(p => tendencyColorForPct(p.color, bestVal));
-                fillMap[key] = tendencyRegisterTiePattern(patternDefs, colors);
+                fillMap[key] = tendencyRegisterTiePattern(patternDefs, colors, tieScope);
                 titleMap[key] = `${nm} (경합)${fromRegion}: ${breakdown}`;
             });
             return {
@@ -14524,6 +14529,7 @@
         // getBadges(key)로 지역구별 정당당 획득 의석 수 배지 정보도 함께 반환.
         function elecSvgBuildResultFill(breakdown, chamber) {
             const patternDefs = new Map();
+            const tieScope = newTieScope();
             const fillMap = {};
             const titleMap = {};
             const badgeMap = {};
@@ -14555,7 +14561,7 @@
                     // 50%로 섞으면 정당 원색이 옅을 때 검은 배경과 대비가 거의 없어 안 보이는 것처럼
                     // 보일 수 있어(예: #3498DB, #E74C3C), 경합 빗금은 확실히 알아볼 수 있도록 진하게 표시
                     const colors = top.map(e => tendencyColorForPct(e.party.color, 85));
-                    fillMap[key] = tendencyRegisterTiePattern(patternDefs, colors);
+                    fillMap[key] = tendencyRegisterTiePattern(patternDefs, colors, tieScope);
                     titleMap[key] = `${nm} (경합): ${breakdownText}`;
                 }
             });
