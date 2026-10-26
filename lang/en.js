@@ -767,6 +767,7 @@ window.DnoLangPacks.en = {
   ["- 버전 표시 v1.6.3", "- Version label v1.6.3"],
   ["- 게임 화면 위쪽 탭 바의 저장 버튼 오른쪽에 설정 버튼 — 게임을 떠나지 않고 설정(테마 · 화면 · 기타 설정)을 창으로 열어 바꿈", "- Settings button right of Save in the game's top tab bar — open settings (theme · display · other) in a pop-up without leaving the game"],
   ["설정", "Settings"],
+  ["- 설정 › 기타 설정 › 디버그 모드에 진행 방식 — 턴제 / 실시간(현재 잠김)", "- Settings › Other › Debug mode: game pace — turn-based / real-time (locked for now)"],
   ["- 지방자치 현황 화면(지도 아래)에서 단체장 카드의 사진을 눌러 올리고 이름을 바로 적음 — 현직 단체장 칸을 일일이 열지 않아도 됨", "- Local government overview (under the map): upload a head's photo and type their name right on the card — no need to open each incumbent entry"],
   ["- 하원 · 상원 지역구가 둘 다 경합일 때 반원 / 지역구 보기에서 한 원의 지역구가 색칠되지 않던 문제 수정", "- Fixed districts in one chamber not being colored in the hemicycle / district view when both chambers had tied (tossup) districts"],
   ["- 군부 지휘관을 내각 자리와 연결 — 군부의 국방부 장관 등을 내각 › 내각 구성원의 자리와 연결하면 직책 · 이름 · 사진 · 당적을 그 자리에서 가져옴 (기본 군 지휘부를 만들 때 내각에 국방 장관 자리가 있으면 바로 연결)", "- Link officers to cabinet posts — link the military's defense minister etc. to a post in Cabinet › Members to take its title · name · photo · party from there (creating the default command links it to an existing defense minister post)"],
