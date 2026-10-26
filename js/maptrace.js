@@ -366,6 +366,46 @@
                 }
                 comps.push({ id, area, color: [sr / area, sg / area, sb / area], edge, perim: 0, keep: true });
             }
+            // 평균 색으로 다시 묶기 — 위 탐색은 화소 하나하나를 시작 화소 색과 견주므로, 허용 오차가 작으면(3 ~ 10)
+            // 압축 잡음 · 번진 가장자리만으로 한 지역이 수백 조각으로 쪼개지고, 그 조각들이 "너무 작음"으로 버려져
+            // 이웃에게 넘어가면서 지역이 사라지거나 이웃과 합쳐졌다. 맞닿은 조각의 평균 색(잡음이 고르게 빠진 색)이
+            // 허용 오차 안이면 하나로 묶어, 허용 오차가 화소 잡음이 아니라 실제 지역 색의 차이를 가르게 한다.
+            // (가까운 쌍부터, 합칠 때마다 합친 평균 색으로 다시 견줘서 비슷한 색이 줄줄이 번지지 않게)
+            if (comps.length > 1) {
+                const nC = comps.length;
+                const par = new Int32Array(nC).map((_, i) => i);
+                const find = a => { while (par[a] !== a) { par[a] = par[par[a]]; a = par[a]; } return a; };
+                const dist = (A, B) => (A[0] - B[0]) ** 2 + (A[1] - B[1]) ** 2 + (A[2] - B[2]) ** 2;
+                const pairs = new Map();
+                for (let i = 0; i < N; i++) {
+                    const a = lab[i]; if (a < 0) continue;
+                    const x = i % W;
+                    for (const j of [x < W - 1 ? i + 1 : -1, i < N - W ? i + W : -1]) {
+                        if (j < 0) continue;
+                        const b2 = lab[j];
+                        if (b2 < 0 || b2 === a) continue;
+                        const key = a < b2 ? a * nC + b2 : b2 * nC + a;
+                        if (!pairs.has(key)) { const d = dist(comps[a].color, comps[b2].color); if (d <= tol2) pairs.set(key, d); }
+                    }
+                }
+                const col = comps.map(c => c.color.slice()), ar = comps.map(c => c.area), ed = comps.map(c => c.edge);
+                let joined = 0;
+                [...pairs.entries()].sort((p1, p2) => p1[1] - p2[1]).forEach(([key]) => {
+                    const ra = find(Math.floor(key / nC)), rb = find(key % nC);
+                    if (ra === rb || dist(col[ra], col[rb]) > tol2) return;
+                    const t = ar[ra] + ar[rb];
+                    col[ra] = col[ra].map((v, k) => (v * ar[ra] + col[rb][k] * ar[rb]) / t);
+                    ar[ra] = t; ed[ra] += ed[rb]; par[rb] = ra; joined++;
+                });
+                if (joined) {
+                    // 번호를 다시 매겨(0부터 빈틈없이) 아래 단계들이 그대로 쓰게
+                    const newId = new Int32Array(nC).fill(-1);
+                    const merged = [];
+                    for (let c = 0; c < nC; c++) { const r = find(c); if (newId[r] < 0) { newId[r] = merged.length; merged.push({ id: merged.length, area: ar[r], color: col[r], edge: ed[r], perim: 0, keep: true }); } }
+                    for (let i = 0; i < N; i++) if (lab[i] >= 0) lab[i] = newId[find(lab[i])];
+                    comps.length = 0; merged.forEach(c => comps.push(c));
+                }
+            }
             // 둘레(이웃이 다른 화소인 변의 수) — 얇은 선 덩어리를 가려내는 데 씀
             for (let i = 0; i < N; i++) {
                 const c = lab[i]; if (c < 0) continue;
@@ -384,7 +424,9 @@
             comps.forEach(c => {
                 if (c.area < minPx) { c.keep = false; c.why = 'small'; }               // 너무 작은 덩어리 (글자 조각 · 점)
                 else if (!c.core) { c.keep = false; c.why = 'nocore'; }                // 속이 없음 = 번진 가장자리 · 가는 선
-                else if (c.area / c.perim < 0.9) { c.keep = false; c.why = 'thin'; }   // 얇은 선 (흰 경계선 등)
+                // 얇은 선 (흰 경계선 등) — 평균 폭(2 × 넓이 / 둘레)이 원본 2.5화소 미만인 띠. 예전엔 0.9(키운 화소 기준)라
+                // 원본 2화소짜리 흰 경계선이 지역 하나로 남는 일이 있었다
+                else if (2 * c.area / c.perim < Math.max(1.8, 2.5 * sc)) { c.keep = false; c.why = 'thin'; }
                 else if (c.area / c.perim < 0.9 * sc) c.band = true;                 // 원본 2화소 폭 미만의 띠 — 압축으로 생긴 가장자리 띠일 수 있음 (합치기에서 조금 더 너그럽게)
             });
             // 바탕: 그림 가장자리를 가장 많이 두른 큰 덩어리 (바다 · 흰 바탕) — 둘레의 30% 넘게 가장자리에 닿으면 뺀다
@@ -398,7 +440,8 @@
                     comps.forEach(c => {
                         if (!c.keep) return;
                         const dr = c.color[0] - bg.color[0], dg = c.color[1] - bg.color[1], db = c.color[2] - bg.color[2];
-                        if (dr * dr + dg * dg + db * db <= Math.max(tol2 * 2.56, 35 * 35)) { c.keep = false; c.bgLike = true; }
+                        // 평균 색끼리 견주므로 압축 잡음은 거의 빠져 있다 — 고정 하한을 35 → 20으로 낮춰, 바다와 비슷한 하늘색 지역이 호수로 지워지지 않게
+                        if (dr * dr + dg * dg + db * db <= Math.max(tol2 * 2.56, 20 * 20)) { c.keep = false; c.bgLike = true; }
                     });
                 }
             }
@@ -442,7 +485,9 @@
                 const nC = comps.length;
                 const par = new Int32Array(nC).map((_, i) => i);
                 const find = a => { while (par[a] !== a) { par[a] = par[par[a]]; a = par[a]; } return a; };
-                const lim = Math.max(14, o.tolerance * 0.8) ** 2; // 같은 나라 조각은 평균 색이 거의 똑같다 (압축 잡음 정도) — 비슷한 색의 다른 나라는 합치지 않게 좁게
+                // 같은 나라 조각은 평균 색이 거의 똑같다 (압축 잡음 정도) — 비슷한 색의 다른 나라는 합치지 않게 좁게.
+                // 하한 14는 허용 오차를 아주 낮췄을 때(3 ~ 6)는 같이 줄여, 낮은 허용 오차 = 더 잘게 가르기가 되게
+                const lim = Math.max(Math.min(14, o.tolerance * 2), o.tolerance * 0.8) ** 2;
                 const dist = (A, B) => (A[0] - B[0]) ** 2 + (A[1] - B[1]) ** 2 + (A[2] - B[2]) ** 2;
                 const bandK = 2.5; // 가장자리 띠는 색 차이를 이만큼(제곱 거리 배수) 더 봐줌
                 const pairs = new Map();
