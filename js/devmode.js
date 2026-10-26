@@ -1,4 +1,4 @@
-// 개발자 모드 — 설정 › 기타 설정에서 개발자 코드를 넣으면 켜지고, 켜져 있어야 티저(teaser64 ~ teaser69) 화면을 열 수 있다.
+// 개발자 모드 — 설정 › 기타 설정에서 개발자 코드를 넣으면 켜지고, 켜져 있어야 티저(teaser65 ~ teaser69) 화면을 열 수 있다.
 // 코드는 원문 대신 해시로만 비교한다. 정적 페이지라 진짜 보안은 아니고, 미리보기를 일반 사용자에게 숨기는 용도.
 // main.html(과 그 복사본인 티저 페이지)은 <head>에서 이 파일을 먼저 읽는다 — 티저 페이지(<html data-app-mode="teaser">)는 개발자 모드가 아니면 설정 화면으로 돌려보내고,
 // 본 게임은 튜토리얼의 "미리보기" 과정(1.6.2 ~ 1.6.4) 잠금을 푸는 데 HemiDev.isOn()을 쓴다.
@@ -10,12 +10,11 @@
     const KEY = 'hemicycleDevMode';
     const CODE_HASH = '22zsze7nlqm';
     const TEASERS = [
-        { id: '64', file: 'teaser64.html', title: 'Teaser 1.6.4', note: '국회공성전 — 봉쇄 돌파 · 의장석 점거' },
-        { id: '65', file: 'teaser65.html', title: 'Teaser 1.6.5', note: '세력 변화 타임라인 · 위키 틀 · 냉전 국가 순위 (+1.6.4)' },
-        { id: '66', file: 'teaser66.html', title: 'Teaser 1.6.6', note: '왕정복고 · 전제군주정 · 왕위 계승 · 친위 쿠데타 · 공화 혁명 (+1.6.4 ~ 1.6.5)' },
-        { id: '67', file: 'teaser67.html', title: 'Teaser 1.6.7', note: '미수복 지역 · 영토 통일 (+1.6.4 ~ 1.6.6)' },
-        { id: '68', file: 'teaser68.html', title: 'Teaser 1.6.8', note: '종속국 · 종속국 의회 · 합병 · 해방 (+1.6.4 ~ 1.6.7)' },
-        { id: '69', file: 'teaser69.html', title: 'Teaser 1.6.9', note: '경제 시스템 — 통화 · 재정 · 지역구 경제 · 예산안 · 경제 그래프 (+1.6.4 ~ 1.6.8)' },
+        { id: '65', file: 'teaser65.html', title: 'Teaser 1.6.5', note: '세력 변화 타임라인 · 위키 틀 · 냉전 국가 순위' },
+        { id: '66', file: 'teaser66.html', title: 'Teaser 1.6.6', note: '왕정복고 · 전제군주정 · 왕위 계승 · 친위 쿠데타 · 공화 혁명 (+1.6.5)' },
+        { id: '67', file: 'teaser67.html', title: 'Teaser 1.6.7', note: '미수복 지역 · 영토 통일 (+1.6.5 ~ 1.6.6)' },
+        { id: '68', file: 'teaser68.html', title: 'Teaser 1.6.8', note: '종속국 · 종속국 의회 · 합병 · 해방 (+1.6.5 ~ 1.6.7)' },
+        { id: '69', file: 'teaser69.html', title: 'Teaser 1.6.9', note: '경제 시스템 — 통화 · 재정 · 지역구 경제 · 예산안 · 경제 그래프 (+1.6.5 ~ 1.6.8)' },
     ];
 
     // cyrb53 — 짧은 53비트 문자열 해시

@@ -35,7 +35,7 @@
                 <span class="alert-text">ENCRYPTION ACTIVE</span>
             </div>
             <h1 class="home-title">Hemicycle</h1>
-            <div class="home-subtitle">Give me liberty, or give me death! : Vive la Révolution!</div>
+            <div class="home-subtitle">Give me liberty, or give me death! : 대담하라!</div>
             <div class="home-stage" title="지금은 공개 베타 테스트 기간이에요 — 기능과 세이브 형식이 바뀔 수 있어요">OPEN BETA TEST · OBT</div>
             <script>
                 // Steam 데모 빌드 (tools/build-demo.js)
@@ -107,8 +107,8 @@
         </nav>
 
         <div class="home-meta">
-            <div id="homeVersion">VERSION: v1.6.3 (OBT)</div>
-            <script>if(window.HEMI_BUILD && window.HEMI_BUILD.demo) document.getElementById('homeVersion').textContent = 'VERSION: v1.6.3 (DEMO)';</script>
+            <div id="homeVersion">VERSION: v1.6.4 (OBT)</div>
+            <script>if(window.HEMI_BUILD && window.HEMI_BUILD.demo) document.getElementById('homeVersion').textContent = 'VERSION: v1.6.4 (DEMO)';</script>
             <div>BUILD: 2026-10-05</div>
             <div>&copy; 2025-2026 Pilcrow1926</div>
         </div>
@@ -271,9 +271,9 @@
         // 개발자 모드가 켜져 있으면(티저 화면을 열 수 있을 때) 일반 세이브와 같은 카드로 섞어 보여 주고, 고르면 그 티저 화면에서 이어 한다.
         const TEASER_PREFIX = id => `hemicycleTeaserV2-${id}:`;
         const teaserOf = id => (window.HemiDev && HemiDev.isOn() ? HemiDev.teasers.find(t => t.id === id) : null);
-        // 본 게임에 들어가 화면을 없앤 미리보기(1.6.1 teaser61 · 1.6.2 teaser62 · 1.6.3 teaser63) — 그 저장 공간에 남은 세이브를 본 게임 세이브 목록으로 옮긴다
-        // (세이브 형식은 그대로 열림: js/people.js · js/coup.js · js/revolution.js가 예전 teaser61 · teaser62 · teaser63 칸도 읽음). 저장 공간이 모자라 못 옮기면 다음에 다시.
-        const MERGED_TEASERS = ['61', '62', '63'];
+        // 본 게임에 들어가 화면을 없앤 미리보기(1.6.1 teaser61 · 1.6.2 teaser62 · 1.6.3 teaser63 · 1.6.4 teaser64) — 그 저장 공간에 남은 세이브를 본 게임 세이브 목록으로 옮긴다
+        // (세이브 형식은 그대로 열림: js/people.js · js/coup.js · js/revolution.js · js/siege.js가 예전 teaser61 ~ teaser64 칸도 읽음). 저장 공간이 모자라 못 옮기면 다음에 다시.
+        const MERGED_TEASERS = ['61', '62', '63', '64'];
         function migrateMergedTeaserSaves() {
             MERGED_TEASERS.forEach(tid => {
                 const key = TEASER_PREFIX(tid) + SAVE_SLOTS_KEY;

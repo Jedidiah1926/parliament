@@ -1,5 +1,6 @@
-// ===== Hemicycle 티저 1.6.4 (teaser64 ~ 67) — "De l'audace!" 국회공성전 미리보기 =====
-// teaser64.html = main.html(1.6.1 ~ 1.6.3 포함) + 이 파일. 저장 공간은 따로 ('hemicycleTeaserV2-64:')
+// ===== 1.6.4 — 대담하라! "De l'audace!" (국회공성전) =====
+// 1.6.4 미리보기(예전 teaser64)에서 본 게임으로 옮겨 왔다 — 본 게임 · 모든 미리보기 화면에서 돈다 (로고 제작 화면만 빼고).
+// main.html은 js/revolution.js 다음에 이 파일을 읽는다.
 //
 //   입법 › 공성전
 //   - 계엄 중 봉쇄 돌파: 계엄군 · 경찰이 국회를 막은 상태에서 의원들이 본회의장에 들어가야 계엄 해제 결의안을 표결할 수 있다.
@@ -22,7 +23,7 @@
 (function () {
     'use strict';
     const root = document.documentElement;
-    if (root.getAttribute('data-app-mode') !== 'teaser' || !['64', '65', '66', '67', '68', '69'].includes(root.getAttribute('data-teaser'))) return;
+    if (root.getAttribute('data-app-mode') === 'logo') return;
 
     const esc = s => (typeof escapeHtmlText === 'function' ? escapeHtmlText(String(s ?? '')) : String(s ?? ''));
     const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -35,7 +36,7 @@
     const houseName = () => { try { return chamberDisplayName('house'); } catch (e) { return '하원'; } };
     const speakerName = () => (typeof chamberLeaders !== 'undefined' && chamberLeaders?.house?.speaker?.name) || '';
 
-    // ---- 상태 (세이브의 teaser64 칸) ----
+    // ---- 상태 (세이브의 siege 칸 — 1.6.4 미리보기 세이브는 teaser64 칸) ----
     //   advancedAct: 국회선진화법 · cohesion: { pid: 0~100 } 정당 결속도 (기본 70)
     //   injured: [{ id, ch, key, name, party, left }] — 다음 표결 left번 결석 (key = 좌석 배정 키라 의석 순서가 바뀌어도 같은 의원)
     //   log: [{ id, date, kind, title, chance, success, effects }]
@@ -46,13 +47,13 @@
     const origGet = window.getAppState;
     window.getAppState = function () {
         const st = origGet.apply(this, arguments);
-        if (st && typeof st === 'object') st.teaser64 = JSON.parse(JSON.stringify(S));
+        if (st && typeof st === 'object') st.siege = JSON.parse(JSON.stringify(S));
         return st;
     };
     const origSet = window.setAppState;
     window.setAppState = function (state) {
         const r = origSet.apply(this, arguments);
-        const src = state && state.teaser64;
+        const src = state && (state.siege || state.teaser64);
         S = { ...fresh(), ...(src && typeof src === 'object' ? JSON.parse(JSON.stringify(src)) : {}) };
         ['injured', 'log'].forEach(k => { if (!Array.isArray(S[k])) S[k] = []; });
         if (!S.cohesion || typeof S.cohesion !== 'object') S.cohesion = {};
