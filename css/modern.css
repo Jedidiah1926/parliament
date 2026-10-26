@@ -2183,6 +2183,9 @@ html[data-theme-family="modern"] .save-tab-save {
     font-family: var(--m-font); font-size: 13px; font-weight: 600;
 }
 html[data-theme-family="modern"] .save-tab-save:hover { color: var(--m-text); background: var(--m-surface-3); }
+html[data-theme-family="modern"] .settings-frame-box { background: var(--m-bg, var(--m-surface)); border: 1px solid var(--m-border); border-radius: 14px; overflow: visible; }
+html[data-theme-family="modern"] .settings-frame { border-radius: 14px; }
+html[data-theme-family="modern"] .settings-frame-close { background: var(--m-surface); color: var(--m-text); border-color: var(--m-border-strong); }
 html[data-theme-family="modern"] .save-tab-save.active { color: var(--m-text); background: var(--m-surface-3); box-shadow: none; }
 html[data-theme-family="modern"] .save-panel-overlay { background: rgba(0,0,0,.18); }
 html[data-theme-family="modern"] .save-panel {
