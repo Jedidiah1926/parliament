@@ -763,7 +763,7 @@
                     before: [go('economy', 'monetary'), showPanel('controls')],
                     target: () => document.querySelector('#contentEcoMonetary .t69-card') || '#contentEcoMonetary',
                     title: '통화',
-                    text: '기준금리 · 화폐발행률 · 양적완화 같은 통화정책은 중앙은행 몫이라 바로 반영돼요. 금리를 올리면 인플레가 잡히지만 실업이 늘고, 돈을 찍으면 당장은 좋아도 물가와 통화가치가 무너집니다. 아래 막대가 "이대로면 다음 분기"예요.',
+                    text: '기준금리 · 화폐발행률 · 양적완화 같은 통화정책은 중앙은행 몫이라 바로 반영돼요. 금리를 올리면 인플레가 잡히지만 실업이 늘고, 화폐를 많이 발행하면 당장은 좋아도 물가와 통화가치가 무너집니다. 아래 막대가 "이대로면 다음 분기"예요.',
                 },
                 {
                     before: [go('economy', 'fiscal'), showPanel('controls')],

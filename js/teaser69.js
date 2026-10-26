@@ -631,7 +631,7 @@
         add('collapse', '경제 붕괴', 'critical', N.growth < -10 || crises >= 2);
         return out;
     }
-    const PRINT_BANDS = [[-99, '돈줄 죄기'], [0, '금본위'], [0.5, '정상'], [3, '윤전기 가동'], [10, '돈을 찍어라'], [30, '종이 쪼가리']];
+    const PRINT_BANDS = [[-99, '통화 회수'], [0, '발행 거의 없음'], [0.5, '보통'], [3, '많음'], [10, '매우 많음'], [30, '통화 붕괴 위험']];
     const printBand = p => PRINT_BANDS.filter(b => p >= b[0]).pop()[1];
 
     // ================= 기록 =================
@@ -1222,7 +1222,7 @@
         const N = E.nat, lr = lockOf('nat.rate'), lp = lockOf('nat.print');
         const used = E.pkgUsed || 0, lim = E.settings.pkgLimit;
         box.innerHTML = `
-            <div class="t69-intro">통화정책은 중앙은행 몫이라 법안 없이 바로 반영됩니다. 금리를 올리면 인플레가 잡히지만 투자 · 고용이 줄고, 돈을 찍으면 당장은 경기가 살지만 물가와 통화가치가 무너집니다.</div>
+            <div class="t69-intro">통화정책은 중앙은행 몫이라 법안 없이 바로 반영됩니다. 금리를 올리면 인플레가 잡히지만 투자 · 고용이 줄고, 화폐를 많이 발행하면 당장은 경기가 살지만 물가와 통화가치가 무너집니다.</div>
             <div class="t69-card">
                 <div class="t69-card-h">기준금리 <b data-out="nat.rate">${r2(N.rate)}%</b></div>
                 <input type="range" min="0" max="40" step="0.25" value="${N.rate}" data-path="nat.rate" ${lr ? 'disabled' : ''} aria-label="기준금리">
@@ -1239,8 +1239,8 @@
             </div>
             <div class="t69-card"><div class="t69-card-h">패키지 정책 <span class="t69-dim">이번 ${UNIT_WORD[E.unit]} ${used}/${lim}</span></div>
                 <div class="t69-pkgs">
-                    <button type="button" class="t69-pkg" data-pkg="qe" ${used >= lim ? 'disabled' : ''}><b>양적완화</b><span>윤전기를 돌려라 — ${spanLabel(4)} 동안 발행 +3%p, 금리 · 국채금리 ↓</span></button>
-                    <button type="button" class="t69-pkg" data-pkg="qt" ${used >= lim ? 'disabled' : ''}><b>양적긴축</b><span>돈줄을 막아라 — ${spanLabel(4)} 동안 발행 −2%p, 금리 ↑</span></button>
+                    <button type="button" class="t69-pkg" data-pkg="qe" ${used >= lim ? 'disabled' : ''}><b>양적완화</b><span>${spanLabel(4)} 동안 발행 +3%p, 금리 · 국채금리 ↓</span></button>
+                    <button type="button" class="t69-pkg" data-pkg="qt" ${used >= lim ? 'disabled' : ''}><b>양적긴축</b><span>${spanLabel(4)} 동안 발행 −2%p, 금리 ↑</span></button>
                     <button type="button" class="t69-pkg" data-pkg="devalue" ${used >= lim ? 'disabled' : ''}><b>평가절하</b><span>통화가치 −12%, 수출(제조업 지역) ↑ · 수입물가 ↑ · 신뢰도 ↓</span></button>
                 </div>
                 ${(E.temps || []).length ? `<div class="t69-dim t69-small">진행 중: ${E.temps.map(tp => `${TEMP_NAME[tp.type]} (${spanLabel(tp.left)} 남음)`).join(' · ')}</div>` : ''}
