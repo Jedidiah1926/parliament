@@ -1,5 +1,5 @@
 // ===== Hemicycle 티저 1.6.6 (teaser66 ~ 67) — "왕은 죽었다, 국왕 만세!" 미리보기 =====
-// teaser66.html = main.html(1.6.1 ~ 1.6.3 포함) + js/teaser64.js ~ js/teaser65.js(1.6.4 ~ 1.6.5) + 이 파일. 저장 공간은 따로 ('hemicycleTeaserV2-66:')
+// teaser66.html = main.html(1.6.1 ~ 1.6.4 포함) + js/teaser65.js(1.6.5) + 이 파일. 저장 공간은 따로 ('hemicycleTeaserV2-66:')
 //
 //   - 내각 › 왕실: 왕가와 왕위 주장자를 정해 둔다
 //       왕가마다 이름 · 색 · 계승 규칙(남계만 · 남자 우선 · 성별 무관), 주장자마다 이름 · 칭호 · 성별 · 사진 · 지지 정당

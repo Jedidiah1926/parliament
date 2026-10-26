@@ -3,15 +3,15 @@
 //   always — 반원 화면에 늘 그리고, 애니메이션(봉쇄 돌파 · 의장석 점거)에도 그림
 //   anim   — 애니메이션에서만 (기본)
 //   occupy — 의장석 점거 애니메이션에서만
-// 저장은 세이브의 podium 칸 (예전 미리보기 세이브는 teaserPodium 칸). 애니메이션이 없는 화면(1.6.4 미리보기 전)에서는 "항상 표시 / 표시 안 함"만.
-// 위치는 반원 가운데 표시(의석 수 · 로고) 바로 위 — teaser64의 애니메이션도 TeaserPodium.geom()으로 같은 자리에 그린다.
+// 저장은 세이브의 podium 칸 (예전 미리보기 세이브는 teaserPodium 칸).
+// 위치는 반원 가운데 표시(의석 수 · 로고) 바로 위 — 국회공성전(js/siege.js)의 애니메이션도 TeaserPodium.geom()으로 같은 자리에 그린다.
 /* global getAppState, setAppState, chamberCenterMode, chamberLogos, isModernTheme, redrawAll */
 (function () {
     'use strict';
     const root = document.documentElement;
     if (root.getAttribute('data-app-mode') === 'logo') return;
-    // 봉쇄 돌파 · 의장석 점거 애니메이션은 1.6.4 미리보기부터 (js/teaser64.js)
-    const hasAnim = () => Number(root.getAttribute('data-teaser')) >= 64;
+    // 봉쇄 돌파 · 의장석 점거 애니메이션 (1.6.4 국회공성전 — js/siege.js, 본 게임에 들어감)
+    const hasAnim = () => true;
 
     const MODES = [['always', '항상 표시'], ['anim', '애니메이션에서만'], ['occupy', '의장석 점거 때만']];
     let mode = 'anim';
