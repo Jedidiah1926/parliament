@@ -6016,8 +6016,49 @@
                     <svg viewBox="0 0 20 20" width="15" height="15" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M3.5 4.5a1 1 0 0 1 1-1h9l3 3v9a1 1 0 0 1-1 1h-11a1 1 0 0 1-1-1z"/><path d="M6.5 3.5v4h6v-4M6 16.5v-5h8v5"/></svg>
                     <span>저장</span>
                 </button>
+                <button type="button" class="save-tab-save" id="saveTabSettingsBtn" onclick="event.stopPropagation();openSettingsPanel()" title="설정 (테마 · 화면 · 기타 설정)" aria-haspopup="dialog">
+                    <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+                    <span>설정</span>
+                </button>
             `;
         }
+
+        // ===== 설정 창 (탭 바 오른쪽 "설정" 버튼) — 게임 화면을 떠나지 않고 settings.html을 창(iframe)으로 띄운다 =====
+        // 테마 · 테마 색은 js/thememode.js · js/theme.js가 storage 이벤트로 바로 따라오고,
+        // 화면 모드(데스크톱/모바일) · 디버그 모드 같은 나머지는 창을 닫을 때 다시 반영한다
+        function openSettingsPanel() {
+            let ov = document.getElementById('settingsPanelLayer');
+            if(!ov) {
+                ov = document.createElement('div');
+                ov.id = 'settingsPanelLayer';
+                ov.className = 'settings-frame-overlay';
+                ov.innerHTML = `<div class="settings-frame-box" role="dialog" aria-label="설정">
+                    <button type="button" class="settings-frame-close" title="닫기 (Esc)" aria-label="닫기" onclick="closeSettingsPanel()">×</button>
+                    <iframe class="settings-frame" title="설정"></iframe>
+                </div>`;
+                ov.addEventListener('mousedown', e => { if(e.target === ov) closeSettingsPanel(); });
+                document.body.appendChild(ov);
+            }
+            if(typeof closeSavePanel === 'function') closeSavePanel();
+            if(typeof closeDatePanel === 'function') closeDatePanel();
+            hideSaveTabAllPopups();
+            ov.querySelector('iframe').src = 'settings.html?embed=1#theme';
+            ov.style.display = '';
+            document.getElementById('saveTabSettingsBtn')?.classList.add('active');
+        }
+        function closeSettingsPanel() {
+            const ov = document.getElementById('settingsPanelLayer');
+            if(!ov || ov.style.display === 'none') return;
+            ov.style.display = 'none';
+            ov.querySelector('iframe').src = 'about:blank';
+            document.getElementById('saveTabSettingsBtn')?.classList.remove('active');
+            if(typeof getUiMode === 'function') document.documentElement.setAttribute('data-ui-mode', getUiMode());
+            if(window.HemiDev && HemiDev.hiddenGov) HemiDev.hiddenGov.render();
+            try { refreshUI(); } catch(e) { /* 화면 준비 전 */ }
+        }
+        document.addEventListener('keydown', e => {
+            if(e.key === 'Escape' && document.getElementById('settingsPanelLayer')?.style.display === '') closeSettingsPanel();
+        });
 
         // ===== 저장 창 (탭 바 오른쪽 "저장" 버튼) — 구 국가 > 저장을 떠 있는 창으로 =====
         function openSavePanel() {
