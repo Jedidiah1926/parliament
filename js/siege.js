@@ -19,7 +19,7 @@
    renderEmergencyPowers, applyMartialLawEffects, showCustomAlert, showCustomConfirm, escapeHtmlText, formatNationDate, bills,
    dotCache, voteState, seatAssignments, seatMemberInfo, requiredSeatsFor, getBillOverallStatus, hasSenateChamber, hasThirdChamber,
    renderBillList, renderArchiveList, syncBillSelect, selectBillForVote, updateVoteResults, updateConfirmButtons, redrawAll,
-   chamberLeaders, simulate, refreshUI, switchDispTab, chamberSetView */
+   chamberLeaders, simulate, refreshUI, switchDispTab, chamberSetView, effRoleLabel */
 (function () {
     'use strict';
     const root = document.documentElement;
@@ -737,11 +737,30 @@
     const gauge = (label, chance, sub) => `<div class="t64-gauge"><div class="t64-gauge-head"><span>${label}</span><b class="${chance >= 50 ? 'hi' : chance >= 25 ? 'mid' : 'lo'}">${chance}%</b></div>
         <div class="t64-bar"><span style="width:${chance}%"></span></div>${sub ? `<div class="t64-dim t64-small">${sub}</div>` : ''}</div>`;
 
+    // 계엄령은 권한 주체(대통령 · 총리 · 내각)의 탭에서 선포한다 — 그 탭으로 데려가고, 주체가 없으면 내각 설정의 계엄령 권한 주체로
+    const MARTIAL_TAB = { president: ['president', 'presidentEmergencyPowers'], pm: ['pm', 'pmEmergencyPowers'], cabinet: ['cabinetmembers', 'cabinetEmergencyPowers'] };
+    function martialTabLabel() {
+        const h = emergencyPowers.martialLaw.holder;
+        return h === 'cabinet' ? '내각 구성원' : MARTIAL_TAB[h] ? effRoleLabel(h) : '내각 설정';
+    }
+    function goDeclareMartialLaw() {
+        const t = MARTIAL_TAB[emergencyPowers.martialLaw.holder];
+        switchSubTab('cabinet', t ? t[0] : 'system');
+        const target = document.getElementById(t ? t[1] : 'emergencyHolderNoneMartialLaw');
+        const block = t ? target : target && target.closest('div[style*="margin-top"]');
+        if (block) {
+            block.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            block.classList.add('t64-flash');
+            setTimeout(() => block.classList.remove('t64-flash'), 1600);
+        }
+        if (!t) showCustomAlert('계엄령 권한 주체가 없습니다 — 여기서 계엄령 권한 주체(대통령 · 총리)를 정하면 그 탭의 비상 권한에 계엄령 선포 버튼이 생깁니다.');
+    }
+
     function renderBreakPanel(seats, last) {
         const res = last && last.kind === 'breakthrough' ? resultCard(last) : '';
         const ml = emergencyPowers.martialLaw;
         if (!ml.active) return res + emptyState('🚧', '계엄령이 선포돼 있지 않습니다.<br>대통령 · 총리 탭의 비상 권한으로 계엄령을 선포하면 열립니다.',
-            '<button type="button" class="t64-btn" data-act="martial">계엄령 선포 (의회 정지, 시험용)</button>');
+            `<button type="button" class="t64-btn" data-act="martial">${esc(martialTabLabel())} 탭에서 계엄령 선포하기 →</button>`);
         if (T62() && T62().junta) return res + emptyState('🎖', '군정에서는 의회가 해산돼 있습니다.<br>내각 › 쿠데타 · 혁명으로 군정을 끝내세요.');
         const o = breakthroughOdds();
         const total = Math.max(1, o.seats.length);
@@ -883,13 +902,7 @@
         on('[data-heal]', 'click', n => { S.injured = S.injured.filter(x => x.id !== n.dataset.heal); renderSiege(); });
         on('[data-act="break"]', 'click', breakthrough);
         on('[data-act="obstruct"]', 'click', obstruct);
-        on('[data-act="martial"]', 'click', () => {
-            emergencyPowers.martialLaw.holder = emergencyPowers.martialLaw.holder === 'none' ? 'president' : emergencyPowers.martialLaw.holder;
-            emergencyPowers.martialLaw.suspendParliament = true;
-            emergencyPowers.martialLaw.active = true;
-            try { renderEmergencyPowers(); applyMartialLawEffects(); } catch (e) { /* 화면 준비 전 */ }
-            renderSiege();
-        });
+        on('[data-act="martial"]', 'click', goDeclareMartialLaw);
         on('[data-act="tovote"]', 'click', () => { try { selectBillForVote(ui.lastBillId); } catch (e) { /* 법안 없음 */ } switchSubTab('law', 'vote'); });
     }
 
@@ -897,6 +910,7 @@
 
     const style = document.createElement('style');
     style.textContent = `
+        .t64-flash { outline: 2px solid #f0a030; outline-offset: 4px; transition: outline-color .4s; }
         #contentSiege { --t64-acc: #f0a030; --t64-alert: #e05555; --t64-ok: #3fbf7f; --t64-line: #333; --t64-soft: rgba(255,255,255,.03); --t64-dim: #888; --t64-text: #ddd; }
         html[data-theme-family="modern"] #contentSiege { --t64-acc: #d97706; --t64-alert: var(--m-danger, #dc2626); --t64-ok: var(--m-success, #16a34a); --t64-line: var(--m-border); --t64-soft: var(--m-surface-2); --t64-dim: var(--m-text-3); --t64-text: var(--m-text); }
         .t64-head { margin: 6px 0 10px; }

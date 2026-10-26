@@ -113,6 +113,8 @@
     const showEco = view => () => { const t = t69(); if (t) { t.ensureInit(); t.showDisp(view); } };
     const firstVassalCard = () => document.querySelector('#contentVassals .t68-card');
     const rankSig = () => { const t = t64(); return t && t.ranking ? t.ranking.rows.map(r => `${r.id}:${r.score}`).join(',') : ''; };
+    // 계엄령 권한 주체의 탭과 그 탭의 비상 권한 칸 (공성전 과정)
+    const martialTab = () => ({ pm: ['pm', 'pmEmergencyPowers'], cabinet: ['cabinetmembers', 'cabinetEmergencyPowers'] })[typeof emergencyPowers !== 'undefined' && emergencyPowers.martialLaw.holder] || ['president', 'presidentEmergencyPowers'];
     const logLen = k => { const o = window[k]; return o && Array.isArray(o.log) ? o.log.length : 0; };
     const byId = (id, up) => () => { const el = document.getElementById(id); return el ? ((up && el.closest(up)) || el) : null; };
     const helpTarget = () => isMobileLayout() ? navTarget() : (document.querySelector('#sideNav .mn-group[data-tone="muted"]') ? '#sideNav .mn-group[data-tone="muted"]' : navTarget());
@@ -1309,13 +1311,18 @@
                     text: '입법 › 공성전에는 두 가지가 있어요 — 계엄군의 봉쇄를 뚫고 본회의장에 들어가 계엄을 해제하는 "봉쇄 돌파"와, 반대 법안의 표결을 막으려 의장석을 점거하는 "의장석 점거"입니다.',
                 },
                 {
-                    before: [go('law', 'siege'), () => window.T64 && window.T64.setMode('break'), showPanel('controls')],
-                    target: () => document.querySelector('#contentSiege .t64-panel') || '#contentSiege',
-                    allow: ['#contentSiege'],
+                    // 계엄령은 권한 주체의 탭(비상 권한)에서 선포한다 — 권한 주체가 없으면 대통령으로 정해 두고, 의회 정지도 켜 둔다
+                    before: [() => {
+                        if (typeof emergencyPowers === 'undefined' || emergencyPowers.martialLaw.active) return;
+                        if (emergencyPowers.martialLaw.holder === 'none') call('setEmergencyHolder', 'martialLaw', 'president')();
+                        call('setMartialLawSuspendParliament', true)();
+                    }, () => go('cabinet', martialTab()[0])(), showPanel('controls')],
+                    target: () => document.getElementById(martialTab()[1]) || '#mainContentCabinet',
+                    allow: () => ['#' + martialTab()[1]],
                     title: '계엄령 선포',
                     text: () => (typeof emergencyPowers !== 'undefined' && emergencyPowers.martialLaw.active)
                         ? '봉쇄 돌파는 계엄 중에만 할 수 있어요. 지금은 이미 계엄령이 선포돼 있으니 바로 다음으로 넘어가세요.'
-                        : '봉쇄 돌파는 계엄 중에만 할 수 있어요. "계엄령 선포 (의회 정지, 시험용)"을 눌러보세요.',
+                        : '봉쇄 돌파는 계엄 중에만 할 수 있어요. 계엄령은 권한 주체의 탭 아래 "비상 권한"에서 선포합니다 — "! 계엄령 선포 !"를 눌러보세요.',
                     task: () => typeof emergencyPowers !== 'undefined' && !!emergencyPowers.martialLaw.active,
                     done: '계엄령이 선포된 상태예요.',
                 },
