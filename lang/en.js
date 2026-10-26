@@ -22,6 +22,7 @@ window.DnoLangPacks.en = {
  ],
  "ordinal": "en",
  "patterns": [
+  {"re": "^최고 ([\\d.]+)%$", "to": "Max $1%"},
   {"re": "^군 지휘부 (\\d+)명 · 평균 충성도 $", "to": "Military command: $1 · average loyalty "},
   {"re": "^([✔✘🕊]) (성공|실패|민정 이양) — (군부 쿠데타|정당 쿠데타|친위 쿠데타|역쿠데타|민정 이양) $", "to": "$1 {{map:$2|성공=Success;실패=Failure;민정 이양=Handover}} — {{map:$3|군부 쿠데타=military coup;정당 쿠데타=party coup;친위 쿠데타=self-coup;역쿠데타=counter-coup;민정 이양=handover to civilians}} "},
   {"re": "^\\(확률 (\\d+)%\\)$", "to": "(chance $1%)"},

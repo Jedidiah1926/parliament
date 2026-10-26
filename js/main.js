@@ -12332,8 +12332,10 @@
         let tendencyStrength = 50;
 
         // 성향 %에 따라 정당 색을 흰색↔원래 색 사이로 보간 — 100%면 원래 색 그대로, 낮을수록 점점 연해짐(밝아짐)
+        // 성향(%) → 당색을 흰색과 섞은 색. 0%에 가까워도 당색이 알아볼 만큼 남도록 35%부터 시작한다
+        // (예전엔 %를 그대로 섞어 지지율이 낮은 정당 지도는 거의 흰색이었다)
         function tendencyColorForPct(baseColor, pct) {
-            const ratio = Math.max(0, Math.min(100, pct)) / 100;
+            const ratio = 0.35 + 0.65 * Math.max(0, Math.min(100, pct)) / 100;
             const hex = baseColor.replace('#', '');
             const r = parseInt(hex.substr(0,2), 16) || 0;
             const g = parseInt(hex.substr(2,2), 16) || 0;
@@ -12724,19 +12726,23 @@
         function tendencySvgBuildPartyFill(p) {
             const fillMap = {};
             const titleMap = {};
-            (districtSvgMapFor(tendencySvgChamber)?.shapes || []).forEach(s => {
+            // 정당별 지도는 그 정당이 가장 강한 지역구를 가장 진하게 — 지지율이 낮은 정당도 강세 · 약세 지역이 보이게
+            const shapes = districtSvgMapFor(tendencySvgChamber)?.shapes || [];
+            const maxVal = Math.max(0, ...shapes.map(s => (districtSeatCounts[s.key]?.[tendencySvgChamber] || 0) > 0 ? (Number(districtTendencyFor(s.key, tendencySvgChamber).values[p.id]) || 0) : 0));
+            shapes.forEach(s => {
                 const key = s.key;
                 const nm = districtNames.house[key] || key;
                 const seats = districtSeatCounts[key]?.[tendencySvgChamber] || 0;
                 if(seats <= 0) { fillMap[key] = '#141414'; titleMap[key] = `${nm} (이 원에 의석 없음)`; return; }
                 const eff = districtTendencyFor(key, tendencySvgChamber);
                 const val = Number(eff.values[p.id]) || 0;
-                fillMap[key] = val > 0 ? tendencyColorForPct(p.color, val) : 'rgba(255,255,255,0.05)';
+                fillMap[key] = val > 0 ? tendencyColorForPct(p.color, maxVal > 0 ? val / maxVal * 100 : 0) : 'rgba(255,255,255,0.05)';
                 titleMap[key] = `${nm}: ${p.name} ${val}%${eff.source === 'region' ? ` (권역 성향: ${eff.region.name})` : ''}`;
             });
             return {
                 getFill: key => fillMap[key] || 'rgba(255,255,255,0.05)',
                 getTitle: key => titleMap[key] || (districtNames.house[key] || key),
+                maxVal,
             };
         }
 
@@ -12839,6 +12845,7 @@
                 pWrap.innerHTML = `<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
                     <span style="width:10px;height:10px;background:${p.color};border-radius:50%;flex-shrink:0;"></span>
                     <span style="color:#aaa;font-size:0.8rem;">${p.name}</span>
+                    ${pf.maxVal > 0 ? `<span style="color:#666;font-size:0.72rem;margin-left:auto;">최고 ${Math.round(pf.maxVal * 10) / 10}%</span>` : ''}
                 </div>`;
                 const pMapDiv = document.createElement('div');
                 pWrap.appendChild(pMapDiv);
