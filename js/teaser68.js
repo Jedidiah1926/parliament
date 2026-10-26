@@ -218,7 +218,7 @@
         refreshUI();
     }
 
-    // ---- 이 지역구가 속한 종속국 고르기 (국가 › 지역의 편집 칸, 국가 › 종속국의 선택 칸 공용) ----
+    // ---- 이 지역구가 속한 종속국 고르기 (국가 › 지역구 지도의 편집 칸, 국가 › 종속국의 선택 칸 공용) ----
     function vassalSelectHtml(key) {
         const cur = isVassal(key) ? vassalOf[key] : '';
         return `<select class="t68-select">

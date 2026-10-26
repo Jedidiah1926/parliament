@@ -3,7 +3,7 @@
 // (저장 공간은 본 게임과 따로 — main.js의 LS_PREFIX 'hemicycleTeaserV2-67:')
 //
 // 1.6.7 "즉시, 지체 없이" 미리보기 — 미수복 지역 · 영토 통일
-//   - 국가 › 미수복 탭을 새로 둔다 (국가 › 지역 · 권역은 1.6.0부터 본 화면, 1.5.9 화면이면 지역구 편집을 국가 › 지역으로 옮김)
+//   - 국가 › 미수복 탭을 새로 둔다 (국가 › 지역구 지도 · 권역은 1.6.0부터 본 화면, 1.5.9 화면이면 지역구 편집을 국가 › 지역구 지도로 옮김)
 //   - 미수복 지역 종류를 여러 개 만들고(종류마다 이름 · 빗금 색 — 예: 오스트리아 · 동방영토 · 북방영토), "칠하기"로 지도에서
 //     지역구를 차례로 눌러 칠하거나 지역구 편집 칸에서 종류를 고른다. 미수복 지역은 모든 지도에서 영토 색 빗금으로 따로 보이고,
 //     지역구 선거 · 지방선거 · 국민투표에서 빠진다 (그 지역구 의석은 지역구 의석 수에서 빠짐)
@@ -175,7 +175,7 @@
         refreshUI();
     }
 
-    // ---- 이 지역구가 속한 미수복 지역 종류 고르기 (국가 › 지역의 편집 칸, 국가 › 미수복의 선택 칸 공용) ----
+    // ---- 이 지역구가 속한 미수복 지역 종류 고르기 (국가 › 지역구 지도의 편집 칸, 국가 › 미수복의 선택 칸 공용) ----
     function kindSelectHtml(key) {
         const cur = isUnrec(key) ? unrecovered[key] : '';
         return `<select class="teaser-unrec-select">
@@ -242,7 +242,7 @@
         });
     }
 
-    // ---- 국가 › 미수복 탭 신설 (국가 › 지역 · 권역은 1.6.0부터 본 화면에 있음) ----
+    // ---- 국가 › 미수복 탭 신설 (국가 › 지역구 지도 · 권역은 1.6.0부터 본 화면에 있음) ----
     // (사이드바 · 모바일 탭 바는 js/sidenav.js가 페이지가 다 읽힌 뒤 탭 버튼을 보고 만드므로, 그 전에 버튼 · 내용을 넣어 둔다)
     function el(html) { const d = document.createElement('div'); d.innerHTML = html.trim(); return d.firstChild; }
     (function addUnrecTab() {
@@ -252,7 +252,7 @@
         if (!nationBar || !districtContent) return;
         const settingsBtn = document.getElementById('subTabNationSettings');
         const settings = document.getElementById('contentNationSettings');
-        // 예전 화면(여론 › 지역구가 있던 1.5.9)이면 지역구 편집을 국가 › 지역으로 옮겨 둔다
+        // 예전 화면(여론 › 지역구가 있던 1.5.9)이면 지역구 편집을 국가 › 지역구 지도로 옮겨 둔다
         if (!document.getElementById('subTabTerritory')) {
             const namePanel = document.getElementById('districtNamePanel');
             nationBar.insertBefore(el(`<button class="sub-tab-btn" onclick="switchSubTab('nation','territory')" id="subTabTerritory">지역</button>`), settingsBtn);
@@ -273,7 +273,7 @@
     var legacyTabs; // 예전 화면에서 지역구 편집을 옮겼는지
     const onTab = sub => typeof currentMainTab !== 'undefined' && currentMainTab === 'nation' && typeof currentSubTab !== 'undefined' && currentSubTab.nation === sub;
     function onUnrecTab() { return onTab('unrecovered'); }
-    // 오른쪽 화면에 지역구 지도를 띄운다 (국가 › 지역을 열 때와 같은 준비)
+    // 오른쪽 화면에 지역구 지도를 띄운다 (국가 › 지역구 지도를 열 때와 같은 준비)
     function showDistrictMap() {
         if (typeof showTerritoryTab === 'function') { showTerritoryTab(); return; }
         const t = document.getElementById('dispTabDistrict');
@@ -299,7 +299,7 @@
         if (main !== 'nation' && brush) { brush = null; refreshUI(); }
         return r;
     };
-    // 예전 화면: 여론 › 지역구 바로가기는 국가 › 지역으로 (1.6.0부터는 본 화면이 직접 처리)
+    // 예전 화면: 여론 › 지역구 바로가기는 국가 › 지역구 지도로 (1.6.0부터는 본 화면이 직접 처리)
     if (legacyTabs) {
         const origElecSub = window.elecSwitchSub;
         window.elecSwitchSub = function (sub) {
@@ -308,7 +308,7 @@
         };
     }
 
-    // ---- 국가 › 지역 위쪽: 미수복 요약 한 줄 ----
+    // ---- 국가 › 지역구 지도 위쪽: 미수복 요약 한 줄 ----
     function renderUnrecLink() {
         const box = document.getElementById('teaserUnrecLink');
         if (!box) return;

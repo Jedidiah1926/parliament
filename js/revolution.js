@@ -8,7 +8,7 @@
 //         총서기 겸 국가주석 · 총리, 의회는 최고인민회의(의석은 혁명 정당 85% · 우당이 나머지 → 거의 만장일치), 선거는 단일 후보 찬반 투표
 //       민주 혁명 성공 → 군정 · 당-국가 체제 · 계엄 붕괴, 막혔던 정당 복권, 새 헌법(법령 › 헌법), 새 총선 안내
 //       둘 다: 혁명 뒤 국호 · 국기를 바꿀 수 있다 / 실패: 혁명 정당 활동 금지 · 지지율 절반, 정부가 계엄령 선포
-//   - 선거인단 시스템 (선거 › 방식에서 선거인단제를 고르면): 선거인 단위(권역 · 지역구), 선거인 수(인구 비례 · 의석 수 + 가산 · 직접 입력),
+//   - 선거인단 시스템 (선거 › 선거 제도에서 선거인단제를 고르면): 선거인 단위(권역 · 지역구), 선거인 수(인구 비례 · 의석 수 + 가산 · 직접 입력),
 //     승자독식 · 비례 배분, 과반 기준과 과반 미달 시(의회 결정 · 최다 득표), 신의 없는 선거인(%), 결과 지도
 /* global getAppState, setAppState, switchSubTab, parties, coalitions, president, pm, elecStore, emergencyPowers, seatKeyFor,
    chamberList, chamberDisplayName, renderEmergencyPowers, applyMartialLawEffects, simulate, refreshUI, showCustomAlert,
@@ -474,7 +474,7 @@
     if (origPm) window.renderPmElecResultPanel = function () { const r = origPm.apply(this, arguments); appendEcDetails('pmElecResultPanel', safeGet(() => pmElectionLastResult)); return r; };
     function safeGet(fn) { try { return fn(); } catch (e) { return null; } }
 
-    // 선거인단 설정 칸 — 선거 › 방식의 선거 방식 버튼 아래 (선거인단제일 때만)
+    // 선거인단 설정 칸 — 선거 › 선거 제도의 선거 방식 버튼 아래 (선거인단제일 때만)
     function renderEcPanel() {
         let box = document.getElementById('t63EcPanel');
         const hint = document.getElementById('presElecModeHint');

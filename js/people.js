@@ -6,8 +6,8 @@
 //  - 지역구 후보: 선거 전에 인물을 지역구 후보로 내세우면, 총선 · 보궐선거 결과를 반영할 때 그 지역구에서 인물의 정당이
 //    이긴 의석에 바로 배정한다 (후보가 없으면 같은 정당의 현역이 다시 그 자리에). 낙선해도 인물은 남는다.
 //  - 선거 · 당적 변경 · 궐석으로 의석이 사라져도 인물은 사람 탭에 그대로 남는다 (예전엔 자리와 함께 이름 · 사진이 사라졌다).
-//  - 시민 · 이민자: 지역구 인구를 시민권자와 이민자로 나눈다 (국가 › 지역에서 "시민 / 인구"). 시민은 모든 선거에서 투표하고,
-//    이민자는 선거마다(대선 · 총리 직선 / 총선 / 지방선거 / 국민투표) 투표권을 줄지 정한다 (선거 › 방식).
+//  - 시민 · 이민자: 지역구 인구를 시민권자와 이민자로 나눈다 (국가 › 지역구 지도에서 "시민 / 인구"). 시민은 모든 선거에서 투표하고,
+//    이민자는 선거마다(대선 · 총리 직선 / 총선 / 지방선거 / 국민투표) 투표권을 줄지 정한다 (선거 › 선거 제도).
 //    이민자 성향을 따로 정하면 이민자가 투표하는 선거에서 지역구 · 전국 득표가 그만큼 섞이고, 지방선거 · 국민투표는 유권자 수도 바뀐다.
 /* global parties, ideologies, chamberList, chamberDisplayName, districtMembers, districtMemberKeys, districtMemberKeysOf,
    districtMemberLabel, districtBaseKey, districtSortedKeys, districtNames, listMembers, independents, president, pm,
@@ -599,7 +599,7 @@
         };
     });
 
-    // ---- 지역구별 시민 수 입력 (국가 › 지역의 지역구 목록 · 편집 칸) — 칸에는 "시민 / 인구" ----
+    // ---- 지역구별 시민 수 입력 (국가 › 지역구 지도의 지역구 목록 · 편집 칸) — 칸에는 "시민 / 인구" ----
     function setCitizens(ch, key, value) {
         const raw = String(value).replace(/,/g, '').trim();
         const n = Math.max(0, Math.floor(Number(raw)));
@@ -671,17 +671,17 @@
         const on = VOTE_KINDS.filter(([k]) => migrantsVote(k)).map(([, n]) => n);
         return `<div class="t61-pop">
                 <div><b>시민 ${fmtN(t.cit)}</b> / 인구 ${fmtN(t.pop)} · 이민자 ${fmtN(t.mig)} <span class="t61-dim">(${t.pop ? (t.mig / t.pop * 100).toFixed(1) : 0}%)</span></div>
-                <div class="t61-dim">이민자 투표권: ${on.length ? on.join(' · ') : '없음'} — 지역구별 시민 수는 국가 › 지역</div>
-                <button type="button" class="t61-btn" data-act="migrants">선거 › 방식에서 설정</button>
+                <div class="t61-dim">이민자 투표권: ${on.length ? on.join(' · ') : '없음'} — 지역구별 시민 수는 국가 › 지역구 지도</div>
+                <button type="button" class="t61-btn" data-act="migrants">선거 › 선거 제도에서 설정</button>
             </div>`;
     }
 
     // =====================================================================
-    // ---- 여론: 시민 / 이민자 성향 (여론 › 종합 · 지역구 - 이민자 · 지지율 - 이민자) ----
+    // ---- 여론: 시민 / 이민자 성향 (여론 › 종합 · 이민자 성향 · 이민자 지지율) ----
     // 이민자 성향은 시민 성향과 같은 모양의 데이터로 따로 둔다 (S.opinion.migrant). 이민자 탭을 열면 그 데이터를 본 게임 변수
     // (districtSvgTendency · regionTendency · tendencyData · elecStore[원])와 바꿔 끼워 시민 탭과 똑같은 화면으로 고치고,
     // 다른 탭 · 메뉴로 가거나 저장할 때 되돌린다. "따로 정하기"를 끄면 이민자 탭은 시민 데이터를 그대로 고치고(동기화),
-    // 개표에서도 이민자가 시민과 같은 성향으로 투표한다 — 시민 · 인구 수는 따로 (국가 › 지역).
+    // 개표에서도 이민자가 시민과 같은 성향으로 투표한다 — 시민 · 인구 수는 따로 (국가 › 지역구 지도).
     // =====================================================================
     const clone = o => JSON.parse(JSON.stringify(o == null ? {} : o));
     function normMig(m) {
@@ -717,7 +717,7 @@
         b.style.display = '';
         b.className = 'opinion-layer-banner' + (S.opinion.split ? '' : ' synced');
         b.innerHTML = S.opinion.split
-            ? '<b>이민자 성향</b> — 여기서 바꾼 값은 이민자에게만 적용됩니다 (시민은 지역구 - 시민 · 지지율 - 시민).'
+            ? '<b>이민자 성향</b> — 여기서 바꾼 값은 이민자에게만 적용됩니다 (시민은 시민 성향 · 시민 지지율).'
             : '<b>시민과 동기화됨</b> — 여기서 바꾸면 시민 성향도 함께 바뀝니다. 따로 정하려면 여론 › 종합에서 "시민 / 이민자 성향 따로 정하기"를 켜세요.';
     };
     // 여론 밖으로 나가면 시민 성향으로 되돌린다 (선거 · 지도 등 다른 화면은 늘 시민 성향을 본다)
@@ -746,7 +746,7 @@
             const { cit, mig } = totals(ch);
             const cs = elecStore[ch] || {}, ms = split && M ? (M.prob[ch] || {}) : cs;
             const list = parties.filter(p => p.status !== 'banned' && (Number(cs[p.id]?.prob) > 0 || Number(ms[p.id]?.prob) > 0));
-            if (!list.length) return `<div class="op-ch">${esc(chName(ch))}</div><div class="t61-dim t61-small">지지율이 없습니다 — 지지율 - 시민에서 정하세요.</div>`;
+            if (!list.length) return `<div class="op-ch">${esc(chName(ch))}</div><div class="t61-dim t61-small">지지율이 없습니다 — 시민 지지율에서 정하세요.</div>`;
             const rows = list.map(p => {
                 const c = Number(cs[p.id]?.prob) || 0, m = Number(ms[p.id]?.prob) || 0;
                 const all = cit + mig > 0 ? (cit * c + mig * m) / (cit + mig) : c;
@@ -759,13 +759,13 @@
             <div class="op-card">
                 <label class="op-toggle"><input type="checkbox" data-op="split" ${split ? 'checked' : ''}> 시민 / 이민자 성향 따로 정하기</label>
                 <div class="t61-dim t61-small">${split
-                    ? '지역구 - 이민자 · 지지율 - 이민자에서 이민자 성향을 따로 정합니다. 이민자가 투표하는 선거에서는 지역구마다 시민 · 이민자 수만큼 섞어 개표해요 (총선 비례 · 대선은 전국 수로).'
-                    : '꺼져 있으면 지역구 - 이민자는 지역구 - 시민과, 지지율 - 이민자는 지지율 - 시민과 같은 값으로 묶이고 이민자도 시민과 같은 성향으로 투표합니다. 시민 · 인구 수는 따로예요.'}</div>
+                    ? '이민자 성향 · 이민자 지지율에서 이민자 성향을 따로 정합니다. 이민자가 투표하는 선거에서는 지역구마다 시민 · 이민자 수만큼 섞어 개표해요 (총선 비례 · 대선은 전국 수로).'
+                    : '꺼져 있으면 이민자 성향은 시민 성향과, 이민자 지지율은 시민 지지율과 같은 값으로 묶이고 이민자도 시민과 같은 성향으로 투표합니다. 시민 · 인구 수는 따로예요.'}</div>
             </div>
             <div class="op-card">
-                <div>${t.pop ? `<b>시민 ${fmtN(t.cit)}</b> / 인구 ${fmtN(t.pop)} · 이민자 ${fmtN(t.mig)} <span class="t61-dim">(${t.pop ? (t.mig / t.pop * 100).toFixed(1) : 0}%)</span>` : '지역구 인구가 없습니다 — 국가 › 지역에서 지역구마다 "시민 / 인구"를 적으세요.'}</div>
+                <div>${t.pop ? `<b>시민 ${fmtN(t.cit)}</b> / 인구 ${fmtN(t.pop)} · 이민자 ${fmtN(t.mig)} <span class="t61-dim">(${t.pop ? (t.mig / t.pop * 100).toFixed(1) : 0}%)</span>` : '지역구 인구가 없습니다 — 국가 › 지역구 지도에서 지역구마다 "시민 / 인구"를 적으세요.'}</div>
                 <div class="t61-dim">이민자 투표권: ${on.length ? on.join(' · ') : '없음'}</div>
-                <div class="t61-row"><button type="button" class="t61-btn" data-op="territory">국가 › 지역에서 시민 수</button><button type="button" class="t61-btn" data-op="method">선거 › 방식에서 투표권</button></div>
+                <div class="t61-row"><button type="button" class="t61-btn" data-op="territory">국가 › 지역구 지도에서 시민 수</button><button type="button" class="t61-btn" data-op="method">선거 › 선거 제도에서 투표권</button></div>
             </div>
             <div class="op-card"><div class="op-title">정당별 지지율</div>${tables}</div>`;
         box.querySelector('[data-op="split"]').onchange = e => setSplit(e.target.checked);
@@ -775,7 +775,7 @@
     }
     window.HemiOpinionOverview = renderOverview;
 
-    // ---- 선거 › 방식: 이민자 투표권 카드 ----
+    // ---- 선거 › 선거 제도: 이민자 투표권 카드 ----
     function renderMigrantCard() {
         const host = document.getElementById('contentElecSettings');
         if (!host) return;
@@ -784,9 +784,9 @@
         const t = totals('house');
         box.innerHTML = `
             <label class="t61-mig-title">이민자 투표권 <span class="t61-dim">— 시민권자는 모든 선거에서 투표합니다</span></label>
-            <div class="t61-dim t61-small">${t.pop ? `시민 ${fmtN(t.cit)} / 인구 ${fmtN(t.pop)} · 이민자 ${fmtN(t.mig)}명` : '지역구 인구가 없습니다 — 국가 › 지역에서 지역구마다 "시민 / 인구"를 적으세요.'}${t.pop && !t.mig ? ' — 아직 이민자가 없습니다 (국가 › 지역에서 시민 수를 인구보다 적게 적으세요)' : ''}</div>
+            <div class="t61-dim t61-small">${t.pop ? `시민 ${fmtN(t.cit)} / 인구 ${fmtN(t.pop)} · 이민자 ${fmtN(t.mig)}명` : '지역구 인구가 없습니다 — 국가 › 지역구 지도에서 지역구마다 "시민 / 인구"를 적으세요.'}${t.pop && !t.mig ? ' — 아직 이민자가 없습니다 (국가 › 지역구 지도에서 시민 수를 인구보다 적게 적으세요)' : ''}</div>
             <div class="t61-mig-kinds">${VOTE_KINDS.map(([k, n]) => `<label class="t61-mig-kind"><input type="checkbox" data-kind="${k}" ${migrantsVote(k) ? 'checked' : ''}> ${n}</label>`).join('')}</div>
-            <div class="t61-dim t61-small">이민자 성향은 여론 › 종합 · 지역구 - 이민자 · 지지율 - 이민자에서 정합니다.</div>
+            <div class="t61-dim t61-small">이민자 성향은 여론 › 종합 · 이민자 성향 · 이민자 지지율에서 정합니다.</div>
             <button type="button" class="t61-btn" data-act="opinion">여론 › 종합으로</button>`;
         box.querySelectorAll('[data-kind]').forEach(c => c.addEventListener('change', () => { S.migrantVote[c.dataset.kind] = c.checked; renderMigrantCard(); render(); }));
         box.querySelector('[data-act="opinion"]').addEventListener('click', () => { switchMainTab('election'); elecSwitchSub('overview'); });

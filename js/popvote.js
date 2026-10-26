@@ -1,5 +1,5 @@
 // ===== Hemicycle 1.5.9 "Pops" — 지방선거 · 국민투표 =====
-// 두 선거 모두 지역구 인구(국가 › 지역의 "인구")로 실제 득표수를 계산한다:
+// 두 선거 모두 지역구 인구(국가 › 지역구 지도의 "인구")로 실제 득표수를 계산한다:
 //   유권자 = 인구, 투표자 = 인구 × 투표율(지역마다 조금씩 흔들림), 득표 = 투표자 × 득표율
 //   - 지방선거: 단위(권역 또는 지역구)마다 단체장 1명 — 최다 득표 정당이 당선. 정당 득표율은 지역구 성향(%)
 //     (없으면 지지율 탭의 전국 지지율) + 노이즈, 후보 단일화("총선 지역구" 적용)도 반영
@@ -130,7 +130,7 @@
         const want = LEVELS.filter(lv => (lv === 'region' ? L.doRegion : L.doDistrict));
         if (!want.length) { showCustomAlert('권역 단체장 · 지역구 단체장 중 하나 이상을 골라 주세요.'); return; }
         if (!districtKeys(ch).length) {
-            showCustomAlert('지방선거를 치를 지역이 없습니다.\n국가 › 지역에서 지도를 올리고 지역구를 만든 뒤(권역 단위면 국가 › 권역에서 권역도) 다시 시도하세요.');
+            showCustomAlert('지방선거를 치를 지역이 없습니다.\n국가 › 지역구 지도에서 지도를 올리고 지역구를 만든 뒤(권역 단위면 국가 › 권역에서 권역도) 다시 시도하세요.');
             return;
         }
         const levels = want.map(lv => runLevel(ch, lv, L)).filter(lv => lv.results.length);
@@ -529,7 +529,7 @@
         const btn = ge('dispTabPopVote');
         const box = ge('pvDisplay');
         if (!btn || !box || !rec) return;
-        btn.querySelector('.disp-tab-label').textContent = kind === 'local' ? '지선 결과' : '국민투표 결과';
+        btn.querySelector('.disp-tab-label').textContent = kind === 'local' ? '지방선거 결과' : '국민투표 결과';
         btn.dataset.view = kind;
         btn.style.display = '';
         if (kind === 'local') renderLocalResult(rec, box, true); else renderRefResult(rec, box, true);
@@ -650,7 +650,7 @@
 
     function popStatus(ch, unit) {
         const keys = districtKeys(ch);
-        if (!keys.length) return '지역구가 없습니다 — 국가 › 지역에서 지도를 올려 주세요.';
+        if (!keys.length) return '지역구가 없습니다 — 국가 › 지역구 지도에서 지도를 올려 주세요.';
         const withPop = keys.filter(k => popOf(ch, k) != null);
         const total = withPop.reduce((a, k) => a + popOf(ch, k), 0);
         const regionCount = (regions[ch] || []).length;

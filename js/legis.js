@@ -678,7 +678,7 @@ function renderArchiveBodyList(container, sc, query, activeTag) {
         </div>`).join('');
 }
 
-// ── 내각 › 서명 — 의회를 통과해 거부권 주체(내각 › 내각 설정)의 서명을 기다리는 법안: 서명하면 가결, 거부권을 행사하면 최종 부결 ──
+// ── 내각 › 서명 — 의회를 통과해 거부권 주체(내각 › 정부 형태 · 권한)의 서명을 기다리는 법안: 서명하면 가결, 거부권을 행사하면 최종 부결 ──
 function renderSignList() {
     const box = document.getElementById('signList');
     if (!box || typeof bills === 'undefined') return;
@@ -686,8 +686,8 @@ function renderSignList() {
     const waiting = bills.filter(b => getBillOverallStatus(b) === 'awaiting_veto');
     const done = bills.filter(b => b.vetoStatus === 'signed' || b.vetoStatus === 'vetoed').filter(b => ['passed', 'vetoed'].includes(getBillOverallStatus(b))).slice(-5).reverse();
     const head = holder
-        ? `<div class="cm-note">의회를 통과한 법안에 <b>${legisEsc(holder)}</b>이(가) 서명하면 가결되고, 거부권을 행사하면 최종 부결됩니다. 거부권 주체는 내각 › 내각 설정에서 정해요.</div>`
-        : `<div class="cm-note">거부권 주체가 없어 의회를 통과한 법안은 바로 가결됩니다. 서명 단계를 쓰려면 내각 › 내각 설정에서 거부권 주체를 정하세요.</div>`;
+        ? `<div class="cm-note">의회를 통과한 법안에 <b>${legisEsc(holder)}</b>이(가) 서명하면 가결되고, 거부권을 행사하면 최종 부결됩니다. 거부권 주체는 내각 › 정부 형태 · 권한에서 정해요.</div>`
+        : `<div class="cm-note">거부권 주체가 없어 의회를 통과한 법안은 바로 가결됩니다. 서명 단계를 쓰려면 내각 › 정부 형태 · 권한에서 거부권 주체를 정하세요.</div>`;
     const card = b => `
         <div class="bill-card" style="border-left-color:var(--tno-gold);">
             <div class="bill-card-title">${legisEsc(b.title)}${(b.version || 1) > 1 ? ` <span class="bill-version-badge">제${b.version}판</span>` : ''}</div>

@@ -6560,6 +6560,7 @@
             if(sub === 'elecPresidential') onElectionSubTabShown('presidential');
             if(sub === 'elecGeneral') onElectionSubTabShown('general');
             if(sub === 'elecSettings') onElectionSubTabShown('settings');
+            if(sub === 'elecCandidates') onElectionSubTabShown('candidates');
             if(sub === 'elecRecord') elecRenderRecords();
             if(sub === 'fraud') { renderFraudTab(); }
             if(sub === 'elecLocal' && window.PopVote) PopVote.renderLocal();
@@ -7068,7 +7069,7 @@
             if(!on) {
                 const held = chamberList().reduce((a, ch) => a + (p[seatKeyFor(ch)] || 0), 0);
                 if(held > 0) {
-                    showCustomAlert(`무소속 의석이 ${held}석 남아 있어 끌 수 없습니다.\n의회 › 의회 구성에서 무소속 의석을 0으로 만든 뒤 다시 시도하세요.`);
+                    showCustomAlert(`무소속 의석이 ${held}석 남아 있어 끌 수 없습니다.\n의회 › 의석 · 원 구성에서 무소속 의석을 0으로 만든 뒤 다시 시도하세요.`);
                     renderIdeologyList();
                     return;
                 }
@@ -8768,6 +8769,65 @@
         }
 
         // 국가 > 부정선거 탭 — 정당별 카드로 부정선거 시도를 한눈에 모아 설정 (정당 정보 탭에는 노출하지 않음)
+        // ===== ⚠ 탭 잠금 — 처음엔 이름 없이 ⚠. 누르면 몇 번 말리다가, 계속 들어가려 하면 화면이 점점 붉어지며 잠금이 풀리고
+        // 그 뒤로는 "부정선거"로 보인다 (이 기기에 기억). 튜토리얼 · 도움말이 switchSubTab으로 바로 여는 건 막지 않는다
+        const FRAUD_UNLOCK_KEY = 'hemicycleFraudUnlocked';
+        function fraudUnlocked() { try { return localStorage.getItem(FRAUD_UNLOCK_KEY) === '1'; } catch(e) { return false; } }
+        function applyFraudTabLabel() {
+            const b = document.getElementById('subTabFraud');
+            if(b) { b.textContent = fraudUnlocked() ? '부정선거' : '⚠'; b.title = fraudUnlocked() ? '부정선거' : ''; }
+        }
+        applyFraudTabLabel();
+        let fraudUnlocking = false;
+        const FRAUD_STEPS = [
+            { msg: '이 탭은 열지 않는 편이 좋습니다.\n그래도 들어가시겠습니까?', ok: '들어간다', cancel: '그만둔다', red: 0.14, beat: 1.6 },
+            { msg: '정말입니까?\n여기서 하는 일은 선거의 결과를 바꿉니다.', ok: '정말이다', cancel: '돌아간다', red: 0.28, beat: 1.2 },
+            { msg: '되돌릴 수 없습니다.\n표 한 장 한 장이 누군가의 목소리였어요.', ok: '그래도 간다', cancel: '돌아간다', red: 0.44, beat: 0.85 },
+            { msg: '마지막으로 묻습니다.\n정말로, 들어가시겠습니까?', ok: '들어간다', cancel: '돌아간다', red: 0.6, beat: 0.55 },
+        ];
+        function fraudVeil() {
+            let v = document.getElementById('fraudVeil');
+            if(!v) {
+                v = document.createElement('div');
+                v.id = 'fraudVeil';
+                v.innerHTML = '<div class="fraud-veil-pulse"></div><div class="fraud-veil-text">잠금 해제</div>';
+                document.body.appendChild(v);
+            }
+            return v;
+        }
+        const wait = ms => new Promise(r => setTimeout(r, ms));
+        async function fraudTabClick() {
+            if(fraudUnlocked()) { switchSubTab('vote', 'fraud'); return; }
+            if(fraudUnlocking) return;
+            fraudUnlocking = true;
+            const v = fraudVeil();
+            v.className = 'on';
+            try {
+                for(const st of FRAUD_STEPS) {
+                    v.style.setProperty('--red', st.red);
+                    v.style.setProperty('--beat', st.beat + 's');
+                    const ok = window.DnoUI ? await DnoUI.confirm(st.msg, { title: '⚠', okText: st.ok, cancelText: st.cancel, tone: 'danger' }) : confirm(st.msg);
+                    if(!ok) { v.style.setProperty('--red', 0); await wait(700); v.className = ''; return; }
+                }
+                // 끝까지 들어가면 화면이 붉게 차오르고 잠금 해제
+                v.style.setProperty('--red', 0.88);
+                v.style.setProperty('--beat', '0.35s');
+                v.classList.add('final');
+                document.body.classList.add('fraud-shake');
+                await wait(1500);
+                try { localStorage.setItem(FRAUD_UNLOCK_KEY, '1'); } catch(e) { /* 저장 못 해도 이번엔 연다 */ }
+                applyFraudTabLabel();
+                switchSubTab('vote', 'fraud');
+                document.body.classList.remove('fraud-shake');
+                v.style.setProperty('--red', 0);
+                v.classList.add('fade');
+                await wait(1200);
+                v.className = '';
+            } finally {
+                fraudUnlocking = false;
+            }
+        }
+
         function renderFraudTab() {
             const container = document.getElementById('fraudPartyList');
             if(!container) return;
@@ -9721,7 +9781,7 @@
         // ═══════════════════════════════════════
         // 선거 > 대선 (대통령 선거)
         // ═══════════════════════════════════════
-        let electionInnerTab = 'general'; // 'presidential' | 'general' | 'settings'
+        let electionInnerTab = 'general'; // 'presidential' | 'general' | 'settings' | 'candidates'
         let electionKind = 'member'; // 총선 탭 내부 — 'member'(의원 선거) | 'pm'(총리 선거, 총리직선제 활성화 시에만 선택 가능)
         let presElectionMode = 'plurality'; // 'plurality'(단순 다수 대표제) | 'runoff'(결선투표제) | 'electoral'(선거인단제) — 대선/총리선거 공용
         let presElectionChamberBasis = 'house'; // 지지율(선거인단제는 지역구) 데이터를 가져올 원 — 대선/총리선거 공용
@@ -9745,7 +9805,9 @@
                 if(!pmDirectElectionEnabled && electionKind === 'pm') electionKind = 'member';
                 setElectionKind(electionKind);
             }
-            if(inner === 'settings') { applyPresElectionChamberRestrictions(); renderCandidateUnions(); }
+            if(inner === 'settings') applyPresElectionChamberRestrictions();
+            // 후보 (1.6.5에 선거 › 선거 제도에서 나눔) — 후보 단일화 · 대선/총리 선거 후보 설정
+            if(inner === 'candidates') { renderCandidateUnions(); renderElectionCandidatesConfig(); }
         }
 
         // 총선 탭 내부에서 "의원 선거"(기존 총선)와 "총리 선거"(총리직선제 활성화 시) 중 선택
@@ -10083,7 +10145,7 @@
         function runPresidentialElection() {
             const candidates = presElectionCandidates();
             if(candidates.length === 0) {
-                showCustomAlert('기준 원에 참여 중인 정당이 없습니다. 정당 탭 또는 선거 > 방식 탭에서 기준 원을 확인하세요.');
+                showCustomAlert('기준 원에 참여 중인 정당이 없습니다. 정당 탭 또는 선거 › 선거 제도 탭에서 기준 원을 확인하세요.');
                 return;
             }
             const { round1, round2, winnerPartyId } = computeElectionRounds(presElectionMode, presElectionChamberBasis, candidates);
@@ -10098,7 +10160,7 @@
         function runPmElection() {
             const candidates = presElectionCandidates();
             if(candidates.length === 0) {
-                showCustomAlert('기준 원에 참여 중인 정당이 없습니다. 정당 탭 또는 선거 > 방식 탭에서 기준 원을 확인하세요.');
+                showCustomAlert('기준 원에 참여 중인 정당이 없습니다. 정당 탭 또는 선거 › 선거 제도 탭에서 기준 원을 확인하세요.');
                 return;
             }
             const { round1, round2, winnerPartyId } = computeElectionRounds(presElectionMode, presElectionChamberBasis, candidates);
@@ -11569,7 +11631,7 @@
 
 
         // 예전 그리드(육각형) 세이브 → 지도 방식 데이터로 변환: 칸 하나가 1석짜리 지역구, 이름 · 인구 · 당선자 · 순서는 그대로,
-        // 칸별 성향(정당 → 강도)은 지역구가 있는 원마다 복사. 지도 파일이 없으니 국가 › 지역에서 지도를 올리면 새 지도로 대체된다
+        // 칸별 성향(정당 → 강도)은 지역구가 있는 원마다 복사. 지도 파일이 없으니 국가 › 지역구 지도에서 지도를 올리면 새 지도로 대체된다
         function migrateHexDistrictsToMap(hexTendency) {
             const chs = ['house','senate','third'];
             const keys = new Set();
@@ -11830,7 +11892,7 @@
         }
 
         // ── 당선 정당 직접 지정 — 선거를 돌리지 않고 이 지역구의 의석을 정당에 바로 배정 ──
-        // 의석 칸마다 정당을 고르면 정당 의석 수(의회 구성)도 바뀐 만큼 함께 늘거나 줄고, 지역구 의원 · 지도 색 · 숫자 박스에 반영된다
+        // 의석 칸마다 정당을 고르면 정당 의석 수(의석 · 원 구성)도 바뀐 만큼 함께 늘거나 줄고, 지역구 의원 · 지도 색 · 숫자 박스에 반영된다
         function districtSeatList(ch, key) {
             return districtSeatListFrom(districtEffectiveBreakdown(ch)[key] || {});
         }
@@ -12994,11 +13056,11 @@
         // ─────────────────────────────────────────
         // 선거 하위탭 전환
         // ─────────────────────────────────────────
-        // 여론 하위 탭 (성향 · 지지율). 지역구 · 권역은 1.6.0부터 국가 › 지역 · 국가 › 권역 — 예전 호출은 그쪽으로 보낸다
+        // 여론 하위 탭 (성향 · 지지율). 지역구 · 권역은 1.6.0부터 국가 › 지역구 지도 · 국가 › 권역 — 예전 호출은 그쪽으로 보낸다
         function elecSwitchSub(sub) {
             if(sub === 'district') { switchSubTab('nation', 'territory'); return; }
             if(sub === 'region') { switchSubTab('nation', 'regions'); return; }
-            // 종합 · 지역구 - 시민(tendency) · 지지율 - 시민(prob) · 지역구 - 이민자(mtendency) · 지지율 - 이민자(mprob)
+            // 종합 · 시민 성향(tendency) · 시민 지지율(prob) · 이민자 성향(mtendency) · 이민자 지지율(mprob)
             // 이민자 탭은 시민 탭과 같은 화면을 쓰고, 그 화면이 이민자 성향을 고치도록 js/people.js가 데이터를 바꿔 끼운다 (HemiOpinionLayer)
             const OPINION_SUBS = ['overview','tendency','prob','mtendency','mprob'];
             if(!OPINION_SUBS.includes(sub)) sub = 'overview';
@@ -13030,7 +13092,7 @@
             const btn = document.querySelector('#mainContentElection > .sub-tab-container .sub-tab-btn.active');
             return btn ? btn.id.replace(/^elecSubTab/, '').toLowerCase() : 'overview';
         }
-        // 국가 › 지역: 오른쪽에 지역구 지도, 왼쪽에 지역구 편집 (성향 탭에서 골라 둔 지역구가 있으면 그 편집 칸을 이어서 보여 준다)
+        // 국가 › 지역구 지도: 오른쪽에 지역구 지도, 왼쪽에 지역구 편집 (성향 탭에서 골라 둔 지역구가 있으면 그 편집 칸을 이어서 보여 준다)
         function showTerritoryTab() {
             document.getElementById('dispTabDistrict').style.display = '';
             switchDispTab('district');
@@ -14859,7 +14921,7 @@
             const chamber = targets[0]; // 'house' | 'senate' | 'third'
             const chamberName = chamber==='senate'?sName:chamber==='third'?tName:hName;
             const totalSeats = parseInt(document.getElementById(chamber==='senate'?'senateTotal':chamber==='third'?'thirdTotal':'houseTotal').value)||0;
-            if(totalSeats<=0) { showCustomAlert('의석 수가 0입니다. 의회 설정에서 의석 수를 확인하세요.'); return; }
+            if(totalSeats<=0) { showCustomAlert('의석 수가 0입니다. 의회 › 의석 · 원 구성에서 의석 수를 확인하세요.'); return; }
 
             // 보궐선거: 궐석 처리된 지역구만 대상으로 재선거
             if(isByElection) {
