@@ -1673,6 +1673,7 @@
         try {
             if (E.ui.view === 'analysis') renderAnalysisDisp(box);
             else if (E.ui.view === 'region') renderRegionDisp(box);
+            else if (E.ui.view === 'metric' && METRICS[E.ui.metric]) renderMetricDisp(box);
             else renderOverviewDisp(box);
         } catch (e) { console.error(e); box.textContent = '그래프를 그리지 못했습니다: ' + e.message; }
     }
@@ -1697,7 +1698,7 @@
         [['infl', '인플레', -5, 60, 'monetary'], ['growth', '성장률', -10, 10, 'fiscal'], ['unemp', '실업률', 0, 40, 'region'], ['debt', '부채비율', 0, 250, 'fiscal'], ['mood', '민심', 0, 100, 'region'], ['conf', '신뢰도', 0, 100, 'monetary']].forEach(([k, l, mn, mx, go]) => {
             const g = document.createElement('div'); gs.appendChild(g);
             const v = VAR[k].get(E);
-            C.gauge(g, { label: l, value: v, unit: VAR[k].unit === '%' ? '%' : '', min: mn, max: mx, maxPlus: k === 'infl' || k === 'debt', bands: bandsOf(k), status: statusOf(k, v), spark: spark(k), delta: last ? v - last.n[k] : null, decimals: 1, onClick: () => switchSubTab('economy', go) });
+            C.gauge(g, { label: l, value: v, unit: VAR[k].unit === '%' ? '%' : '', min: mn, max: mx, maxPlus: k === 'infl' || k === 'debt', bands: bandsOf(k), status: statusOf(k, v), spark: spark(k), delta: last ? v - last.n[k] : null, decimals: 1, onClick: () => showMetric(k) });
         });
         // 셋째 줄: 금액 — 비율(GDP 대비)만으로는 실제 규모를 알 수 없으니 화폐 단위로 (세입 · 세출 · 이자는 연간)
         const bq = budgetOf(E, N, distList()), prevN = last ? last.n : null;
@@ -1738,6 +1739,87 @@
         const sw = el(`<div class="t69-dim t69-small" style="margin-top:4px"><button type="button" class="t69-btn t69-sm" data-act="bview">${E.settings.budgetView === 'bars' ? '예산 반원으로 보기' : '가로 막대로 보기'}</button></div>`);
         bb.appendChild(sw);
         sw.querySelector('button').onclick = () => { E.settings.budgetView = E.settings.budgetView === 'bars' ? 'hemi' : 'bars'; renderDisp(); };
+    }
+    // ===== 지표 하나 보기 — 개요의 계기를 누르면 시각 화면이 그 지표 중심으로 바뀐다 =====
+    // 이대로면 다음 칸 · 1년 뒤(예측 중앙값과 50% 범위) · 지금과 비교, 그 지표와 관련된 경고 신호만, 무엇이 움직이는지(정책 민감도),
+    // 그 지표에 듣는 패키지 정책(1년 뒤 예상과 함께 바로 쓰기)
+    const METRICS = {
+        infl: { label: '인플레', min: -5, max: 60, go: 'monetary', goLabel: '통화', signals: ['hyper', 'printing', 'collapse'], pkgs: ['qt', 'qe', 'devalue'],
+            note: g => `안전 범위는 성장률에 따라 넓어집니다 — 지금 성장률 ${pct(g)}면 안전 상한 ${pct(Math.min(5 + inflSafeExtra(g), E.thresholds.hyper))}` },
+        growth: { label: '성장률', min: -10, max: 10, go: 'fiscal', goLabel: '재정', signals: ['negative', 'collapse', 'financial'], pkgs: ['qe', 'taxcut', 'devalue'] },
+        unemp: { label: '실업률', min: 0, max: 40, go: 'region', goLabel: '지역', signals: ['depression', 'negative', 'collapse'], pkgs: ['qe', 'taxcut'] },
+        debt: { label: '부채비율', min: 0, max: 250, go: 'fiscal', goLabel: '재정', signals: ['default', 'deficit', 'ceiling', 'reserves', 'financial'], pkgs: ['taxhike', 'qt'] },
+        mood: { label: '민심', min: 0, max: 100, go: 'region', goLabel: '지역', signals: ['negative', 'depression', 'hyper', 'collapse'], pkgs: ['taxcut', 'qe'] },
+        conf: { label: '신뢰도', min: 0, max: 100, go: 'monetary', goLabel: '통화', signals: ['flight', 'financial', 'default', 'printing'], pkgs: ['qt', 'taxhike'] },
+    };
+    const PKG_INFO = {
+        qe: { name: '양적완화', mut: s => { s.temps.push({ type: 'qe', left: 4 }); } },
+        qt: { name: '양적긴축', mut: s => { s.temps.push({ type: 'qt', left: 4 }); } },
+        devalue: { name: '평가절하', mut: s => { s.nat.cur *= 0.88; s.nat.conf = Math.max(0, s.nat.conf - 5); } },
+        taxcut: { name: '한시적 감세', mut: s => { s.temps.push({ type: 'taxcut', left: 4 }); } },
+        taxhike: { name: '한시적 증세', mut: s => { s.temps.push({ type: 'taxhike', left: 4 }); } },
+    };
+    function showMetric(k) { E.ui.metric = k; showDisp('metric'); }
+    function renderMetricDisp(box) {
+        const k = E.ui.metric, M = METRICS[k], v = VAR[k].get(E), unit = VAR[k].unit === '%' ? '%' : '';
+        const fmt = x => (Number.isFinite(x) ? x.toFixed(1) : '—') + unit;
+        const dunit = unit === '%' ? '%p' : ''; // 변화량은 %p
+        const yr = Math.max(1, Math.round(1 / DT[E.unit]));
+        const fc = forecast([k], yr, 32);
+        const next = fc[k].mean[0], nextLo = fc[k].lo50[0], nextHi = fc[k].hi50[0], yv = fc[k].mean[yr - 1];
+        const st = statusOf(k, v), stN = statusOf(k, next), stY = statusOf(k, yv);
+        const flat = d => Math.abs(d) < 0.05; // 0.05 미만은 변화 없음으로
+        const arrow = d => (flat(d) ? '→' : d > 0 ? '▲' : '▼');
+        const dtxt = d => (flat(d) ? '0.0' : sgn(d));
+        // 머리: 지표 바꾸기 · 개요로
+        box.appendChild(el(`<div class="t69-mhead">
+            <button type="button" class="t69-btn t69-sm" data-act="back">← 개요</button>
+            <span class="t69-chips">${Object.keys(METRICS).map(m => `<button type="button" class="t69-chip ${m === k ? 'on' : ''}" data-metric="${m}"><i style="background:${VAR[m].color}"></i>${METRICS[m].label}</button>`).join('')}</span>
+        </div>`));
+        // 지금 · 다음 칸 · 1년 뒤
+        const card = (title, val, sub, s) => `<div class="t69-mcard t69-mcard-${s}"><span>${title}</span><b>${esc(val)}</b><small>${sub}</small><em class="t69-st-${s}">${STATUS_WORD[s]}</em></div>`;
+        box.appendChild(el(`<div class="t69-mcards">
+            ${card(`지금 ${esc(M.label)}`, fmt(v), esc(turnLabel(E, E.turn)), st)}
+            ${card(`이대로면 다음 1${UNIT_WORD[E.unit]}`, fmt(next), `${arrow(next - v)} ${dtxt(next - v)}${dunit} · 50% 범위 ${fmt(nextLo)} ~ ${fmt(nextHi)}`, stN)}
+            ${yr > 1 ? card(`이대로면 ${spanLabel(yr)} 뒤`, fmt(yv), `${arrow(yv - v)} ${dtxt(yv - v)}${dunit} · 지금보다 ${flat(yv - v) ? '그대로' : yv > v ? '높음' : '낮음'}`, stY) : ''}
+        </div>`));
+        if (M.note) box.appendChild(el(`<div class="t69-dim t69-small">${esc(M.note(E.nat.growth))}</div>`));
+        // 추이 + 예측
+        const body = section(box, `${M.label} 추이`, '— 점선은 지금 정책을 유지할 때의 예측 (진한 띠 50% · 옅은 띠 90%)');
+        const chart = document.createElement('div'); body.appendChild(chart);
+        const { H, n, x, t, col } = series(), h = Math.max(4, yr);
+        const fc2 = h === yr ? fc : forecast([k], h, 32);
+        const xs = withForecast(x, h), ts = withForecastT(t, h);
+        const [i0] = rangeIdx(n);
+        C.lines(chart, { x: xs, t: ts, unit, height: 200, zero: k === 'growth' || k === 'infl', markers: markersOf(H), shade: recessions(H), range: [i0, xs.length - 1],
+            fan: [fanFor(k, n, h, fc2[k])],
+            series: [{ id: k, label: M.label, color: VAR[k].color, values: col(hh => hh.n[k]).concat(Array(h).fill(null)) },
+                { id: k + '_f', label: `${M.label} 예측`, color: VAR[k].color, dash: true, width: 1.5, values: Array(n - 1).fill(null).concat([v], fc2[k].mean) }] });
+        // 관련 경고 신호
+        const sig = signals(E).filter(s => M.signals.includes(s.id));
+        const sb = section(box, `${M.label} 관련 경고 신호`);
+        sb.appendChild(el(sig.length ? `<div class="t69-warn-list">${sig.map(s => `<span class="t69-warn ${s.on ? 'on t69-warn-' + s.status : ''}" title="${s.on ? STATUS_WORD[s.status] : '꺼짐'}">${s.on ? `<i class="t69-wi t69-st-${s.status}">${C.STATUS[s.status].icon}</i>` : '○'} ${esc(s.label)}</span>`).join('')}</div>`
+            : '<div class="t69-dim t69-small">관련 경고 신호가 없습니다.</div>'));
+        // 무엇이 움직이나 — 정책을 하나씩 바꿨을 때 1년 뒤 이 지표의 변화 (큰 순서)
+        const lev = sensitivity(k, yr).sort((a, b) => Math.abs(b.value) - Math.abs(a.value)).slice(0, 6);
+        const lb = section(box, '무엇이 움직이나', `— 하나씩 바꿨을 때 ${spanLabel(yr)} 뒤 ${M.label}의 변화`);
+        const mx = Math.max(1e-6, ...lev.map(r => Math.abs(r.value)));
+        lb.appendChild(el(lev.length ? `<div class="t69-levers">${lev.map(r => `<div class="t69-lever"><span>${esc(r.label)}${r.sub ? ` <em class="t69-dim">${esc(r.sub)}</em>` : ''}</span>
+            <i class="t69-lever-bar"><b class="${r.value >= 0 ? 'pos' : 'neg'}" style="width:${(Math.abs(r.value) / mx * 50).toFixed(1)}%;${r.value >= 0 ? 'left:50%' : `right:50%`}"></b></i><em>${sgn(r.value, 2)}${dunit}</em></div>`).join('')}</div>`
+            : '<div class="t69-dim t69-small">눈에 띄게 움직이는 정책이 없습니다.</div>'));
+        // 패키지 정책 — 이 지표에 듣는 것만, 1년 뒤 예상과 함께
+        const used = E.pkgUsed || 0, lim = E.settings.pkgLimit;
+        const base = VAR[k].get(project(null, yr));
+        const pb = section(box, '패키지 정책', `— 이번 ${UNIT_WORD[E.unit]} ${used}/${lim} · 숫자는 ${spanLabel(yr)} 뒤 ${M.label} (안 쓰면 ${fmt(base)})`);
+        pb.appendChild(el(`<div class="t69-pkgs">${M.pkgs.map(id => {
+            const after = VAR[k].get(project(PKG_INFO[id].mut, yr)), d = after - base;
+            return `<button type="button" class="t69-pkg" data-pkg="${id}" ${used >= lim ? 'disabled' : ''}><b>${PKG_INFO[id].name}</b><span>${spanLabel(yr)} 뒤 ${esc(M.label)} ${fmt(after)} <em class="${d >= 0 ? 'up' : 'down'}">(${sgn(d, 2)}${dunit})</em> · ${STATUS_WORD[statusOf(k, after)]}</span></button>`;
+        }).join('')}</div>`));
+        pb.appendChild(el(`<div class="t69-actions"><button type="button" class="t69-btn t69-sm" data-act="go">${esc(M.goLabel)} 탭에서 직접 조정 →</button></div>`));
+        box.querySelector('[data-act="back"]').onclick = () => showDisp('overview');
+        box.querySelectorAll('[data-metric]').forEach(b => { b.onclick = () => showMetric(b.dataset.metric); });
+        box.querySelectorAll('[data-pkg]').forEach(b => { b.onclick = () => usePackage(b.dataset.pkg); });
+        box.querySelector('[data-act="go"]').onclick = () => { switchSubTab('economy', M.go); showMetric(k); };
     }
     // 예산 구성 — 세출은 묶음 + 의무지출, 세입은 세목 (큰 순서 5개 + 기타로 접음 — 색 8개 안에서)
     const SLOT = i => `var(--s${(i % 8) + 1})`;
@@ -2114,6 +2196,19 @@
         .t69-lock { font-size: .72rem; color: var(--warning); margin-top: 4px; }
         .t69-bands { display: flex; justify-content: space-between; gap: 4px; font-size: .62rem; color: var(--t69-dim2); flex-wrap: wrap; }
         .t69-pkgs { display: grid; gap: 6px; }
+        .t69-mhead { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+        .t69-mcards { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 8px; margin-bottom: 6px; }
+        .t69-mcard { display: flex; flex-direction: column; gap: 2px; border: 1px solid var(--t69-line); border-left: 4px solid var(--good); padding: 8px 10px; background: var(--t69-soft); }
+        .t69-mcard-warning { border-left-color: var(--warning); } .t69-mcard-serious { border-left-color: var(--serious); } .t69-mcard-critical { border-left-color: var(--critical); }
+        .t69-mcard span { font-size: .75rem; color: var(--t69-dim2); } .t69-mcard b { font-size: 1.4rem; color: var(--t69-text); } .t69-mcard small { font-size: .72rem; color: var(--t69-dim2); } .t69-mcard em { font-style: normal; font-size: .72rem; }
+        html[data-theme-family="modern"] .t69-mcard { border-radius: 0 10px 10px 0; }
+        .t69-levers { display: flex; flex-direction: column; gap: 4px; }
+        .t69-lever { display: grid; grid-template-columns: minmax(0, 1.4fr) 1fr 4.5em; gap: 8px; align-items: center; font-size: .8rem; color: var(--t69-text); }
+        .t69-lever > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .t69-lever > em { font-style: normal; text-align: right; }
+        .t69-lever-bar { position: relative; height: 10px; background: var(--t69-soft); border-left: 1px solid transparent; }
+        .t69-lever-bar::after { content: ''; position: absolute; left: 50%; top: -2px; bottom: -2px; width: 1px; background: var(--t69-line); }
+        .t69-lever-bar b { position: absolute; top: 0; bottom: 0; } .t69-lever-bar b.pos { background: var(--pos); } .t69-lever-bar b.neg { background: var(--neg); }
+        .t69-pkg em.up { color: var(--pos); font-style: normal; } .t69-pkg em.down { color: var(--neg); font-style: normal; }
         .t69-pkg { display: flex; flex-direction: column; gap: 2px; text-align: left; cursor: pointer; font-family: inherit; padding: 8px 10px; border: 1px solid var(--t69-line); background: transparent; color: var(--t69-text); }
         html[data-theme-family="modern"] .t69-pkg { border-radius: 10px; }
         .t69-pkg:hover:not(:disabled) { border-color: var(--t69-acc); } .t69-pkg:disabled { opacity: .4; cursor: default; }
