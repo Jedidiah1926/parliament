@@ -1,5 +1,6 @@
-// ===== Hemicycle 티저 1.6.5 (teaser65 ~ 67) — "How the mighty have fallen" 미리보기 =====
-// teaser65.html = main.html(1.6.1 ~ 1.6.4 포함) + 이 파일. 저장 공간은 따로 ('hemicycleTeaserV2-65:')
+// ===== 1.6.5 — 영광이 산 위에서 꺾였도다 "How the mighty have fallen" (세력 변화 · 위키 틀 · 세계) =====
+// 1.6.5 미리보기(예전 teaser65)에서 본 게임으로 옮겨 왔다 — 본 게임 · 모든 미리보기 화면에서 돈다 (로고 제작 화면만 빼고).
+// main.html은 js/siege.js 다음에 이 파일을 읽는다.
 //
 //   - 의회 › 세력 변화: 정당 의석을 시점마다 기록하고, 오른쪽 시각 화면 "세력 변화" 탭에 정당 역사 도표로 그린다
 //     의석 변화(기록마다 의석 띠 · 점유율/의석 수 · ▲▼, 정당별 흐름 띠)와 당 변화(창당 · 당명 변경 · 승계 · 소멸 계보도) — 아래로 스크롤.
@@ -15,7 +16,7 @@
 (function () {
     'use strict';
     const root = document.documentElement;
-    if (root.getAttribute('data-app-mode') !== 'teaser' || !['65', '66', '67', '68', '69'].includes(root.getAttribute('data-teaser'))) return;
+    if (root.getAttribute('data-app-mode') === 'logo') return;
 
     const esc = s => (typeof escapeHtmlText === 'function' ? escapeHtmlText(String(s ?? '')) : String(s ?? ''));
     const uid = () => 'w' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
@@ -26,7 +27,7 @@
     const isGovParty = p => !!p && (p.isRuling || coalitions.some(c => c.isRuling && (c.members || []).some(id => String(id) === String(p.id) || String(id).startsWith(p.id + '__'))));
     const seatsOf = (p, ch) => Number(p[seatKeyFor(ch)]) || 0;
 
-    // ---- 상태 (세이브의 teaser65 칸) ----
+    // ---- 상태 (세이브의 history 칸 — 1.6.5 미리보기 세이브는 teaser65 칸) ----
     //   timeline: [{ id, at, date, label, source, chamber, total, parties:[{id,name,color,seats}], ruling:[id] }]
     //   succession: [{ id, from, to }] — 정당 승계 관계
     //   wiki: { termStart, termEnd, frame } — 원내 구성 틀
@@ -39,13 +40,13 @@
     const origGet = window.getAppState;
     window.getAppState = function () {
         const st = origGet.apply(this, arguments);
-        if (st && typeof st === 'object') st.teaser65 = JSON.parse(JSON.stringify(S));
+        if (st && typeof st === 'object') st.history = JSON.parse(JSON.stringify(S));
         return st;
     };
     const origSet = window.setAppState;
     window.setAppState = function (state) {
         const r = origSet.apply(this, arguments);
-        const src = state && state.teaser65;
+        const src = state && (state.history || state.teaser65);
         const base = fresh();
         S = { ...base, ...(src && typeof src === 'object' ? JSON.parse(JSON.stringify(src)) : {}) };
         if (!Array.isArray(S.timeline)) S.timeline = [];

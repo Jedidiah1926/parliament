@@ -95,7 +95,7 @@
     const devOn = () => !!(window.HemiDev && window.HemiDev.isOn());
     const DEMO_BUILD = () => !!(window.HEMI_BUILD && window.HEMI_BUILD.demo); // Steam 데모 빌드 (맵 메이커 대신 맵 프리셋)
     // 미리보기 화면마다 담긴 기능 버전 (teaser6N은 1.6.1 ~ 1.6.N)
-    const PAGE_HAS = { '65': ['1.6.1', '1.6.2', '1.6.3', '1.6.4', '1.6.5'], '66': ['1.6.1', '1.6.2', '1.6.3', '1.6.4', '1.6.5', '1.6.6'], '67': ['1.6.1', '1.6.2', '1.6.3', '1.6.4', '1.6.5', '1.6.6', '1.6.7'], '68': ['1.6.1', '1.6.2', '1.6.3', '1.6.4', '1.6.5', '1.6.6', '1.6.7', '1.6.8'], '69': ['1.6.1', '1.6.2', '1.6.3', '1.6.4', '1.6.5', '1.6.6', '1.6.7', '1.6.8', '1.6.9'] };
+    const PAGE_HAS = { '66': ['1.6.1', '1.6.2', '1.6.3', '1.6.4', '1.6.5', '1.6.6'], '67': ['1.6.1', '1.6.2', '1.6.3', '1.6.4', '1.6.5', '1.6.6', '1.6.7'], '68': ['1.6.1', '1.6.2', '1.6.3', '1.6.4', '1.6.5', '1.6.6', '1.6.7', '1.6.8'], '69': ['1.6.1', '1.6.2', '1.6.3', '1.6.4', '1.6.5', '1.6.6', '1.6.7', '1.6.8', '1.6.9'] };
     const PREVIEW_PAGES = Object.keys(PAGE_HAS);
     const previewPageFor = l => (l && /^1\.6\.[1-9]$/.test(l.locked) ? '6' + l.locked.slice(-1) : '69'); // 그 기능이 처음 들어간 버전의 Teaser 화면
     const curPage = () => document.documentElement.getAttribute('data-teaser');
@@ -113,6 +113,8 @@
     const showEco = view => () => { const t = t69(); if (t) { t.ensureInit(); t.showDisp(view); } };
     const firstVassalCard = () => document.querySelector('#contentVassals .t68-card');
     const rankSig = () => { const t = t64(); return t && t.ranking ? t.ranking.rows.map(r => `${r.id}:${r.score}`).join(',') : ''; };
+    // 계엄령 권한 주체의 탭과 그 탭의 비상 권한 칸 (공성전 과정)
+    const martialTab = () => ({ pm: ['pm', 'pmEmergencyPowers'], cabinet: ['cabinetmembers', 'cabinetEmergencyPowers'] })[typeof emergencyPowers !== 'undefined' && emergencyPowers.martialLaw.holder] || ['president', 'presidentEmergencyPowers'];
     const logLen = k => { const o = window[k]; return o && Array.isArray(o.log) ? o.log.length : 0; };
     const byId = (id, up) => () => { const el = document.getElementById(id); return el ? ((up && el.closest(up)) || el) : null; };
     const helpTarget = () => isMobileLayout() ? navTarget() : (document.querySelector('#sideNav .mn-group[data-tone="muted"]') ? '#sideNav .mn-group[data-tone="muted"]' : navTarget());
@@ -534,7 +536,7 @@
             ],
         },
         {
-            id: 'history', group: 'detail', locked: '1.6.5',
+            id: 'history', group: 'detail',
             title: '세력 변화',
             summary: '의석 기록 · 의석 변화 도표 · 당 변화 · 정당 승계',
             steps: [
@@ -575,7 +577,7 @@
             ],
         },
         {
-            id: 'wiki', group: 'detail', locked: '1.6.5',
+            id: 'wiki', group: 'detail',
             title: '위키 틀',
             summary: '원내 구성 틀 · 양원 의석 · 내각 · 교섭단체 · 위키 문법 복사',
             steps: [
@@ -915,7 +917,7 @@
             ],
         },
         {
-            id: 'world', group: 'detail', locked: '1.6.5',
+            id: 'world', group: 'detail',
             title: '세계',
             summary: '국가 순위 · 순위표 · 점수 · 국기 · 진영과 하위 이념',
             steps: [
@@ -1309,13 +1311,18 @@
                     text: '입법 › 공성전에는 두 가지가 있어요 — 계엄군의 봉쇄를 뚫고 본회의장에 들어가 계엄을 해제하는 "봉쇄 돌파"와, 반대 법안의 표결을 막으려 의장석을 점거하는 "의장석 점거"입니다.',
                 },
                 {
-                    before: [go('law', 'siege'), () => window.T64 && window.T64.setMode('break'), showPanel('controls')],
-                    target: () => document.querySelector('#contentSiege .t64-panel') || '#contentSiege',
-                    allow: ['#contentSiege'],
+                    // 계엄령은 권한 주체의 탭(비상 권한)에서 선포한다 — 권한 주체가 없으면 대통령으로 정해 두고, 의회 정지도 켜 둔다
+                    before: [() => {
+                        if (typeof emergencyPowers === 'undefined' || emergencyPowers.martialLaw.active) return;
+                        if (emergencyPowers.martialLaw.holder === 'none') call('setEmergencyHolder', 'martialLaw', 'president')();
+                        call('setMartialLawSuspendParliament', true)();
+                    }, () => go('cabinet', martialTab()[0])(), showPanel('controls')],
+                    target: () => document.getElementById(martialTab()[1]) || '#mainContentCabinet',
+                    allow: () => ['#' + martialTab()[1]],
                     title: '계엄령 선포',
                     text: () => (typeof emergencyPowers !== 'undefined' && emergencyPowers.martialLaw.active)
                         ? '봉쇄 돌파는 계엄 중에만 할 수 있어요. 지금은 이미 계엄령이 선포돼 있으니 바로 다음으로 넘어가세요.'
-                        : '봉쇄 돌파는 계엄 중에만 할 수 있어요. "계엄령 선포 (의회 정지, 시험용)"을 눌러보세요.',
+                        : '봉쇄 돌파는 계엄 중에만 할 수 있어요. 계엄령은 권한 주체의 탭 아래 "비상 권한"에서 선포합니다 — "! 계엄령 선포 !"를 눌러보세요.',
                     task: () => typeof emergencyPowers !== 'undefined' && !!emergencyPowers.martialLaw.active,
                     done: '계엄령이 선포된 상태예요.',
                 },
