@@ -1698,9 +1698,13 @@
         [['infl', '인플레', -5, 60, 'monetary'], ['growth', '성장률', -10, 10, 'fiscal'], ['unemp', '실업률', 0, 40, 'region'], ['debt', '부채비율', 0, 250, 'fiscal'], ['mood', '민심', 0, 100, 'region'], ['conf', '신뢰도', 0, 100, 'monetary']].forEach(([k, l, mn, mx, go]) => {
             const g = document.createElement('div'); gs.appendChild(g);
             const v = VAR[k].get(E);
-            C.gauge(g, { label: l, value: v, unit: VAR[k].unit === '%' ? '%' : '', min: mn, max: mx, maxPlus: k === 'infl' || k === 'debt', bands: bandsOf(k), status: statusOf(k, v), spark: spark(k), delta: last ? v - last.n[k] : null, decimals: 1, onClick: () => { switchSubTab('economy', go); showMetric(k); } }); // 예전처럼 왼쪽 탭도 바꾸고, 오른쪽은 그 지표 화면
+            C.gauge(g, { label: l, value: v, unit: VAR[k].unit === '%' ? '%' : '', min: mn, max: mx, maxPlus: k === 'infl' || k === 'debt', bands: bandsOf(k), status: statusOf(k, v), spark: spark(k), delta: last ? v - last.n[k] : null, decimals: 1,
+                // 누르면 예전처럼 왼쪽 탭만, Shift + 클릭(Shift + Enter)이면 오른쪽에 그 지표의 세부 정보
+                title: `누르면 왼쪽 ${({ monetary: '통화', fiscal: '재정', region: '지역' })[go]} 탭 · Shift + 클릭하면 ${l} 세부 정보`,
+                onClick: e => { if (e && e.shiftKey) showMetric(k); else switchSubTab('economy', go); } });
         });
         // 이대로면 다음 칸 — 왼쪽 개요의 미리보기를 크게 (지금 · 흔들림 없는 다음 칸 예측)
+        box.appendChild(el('<div class="t69-dim t69-small">계기를 누르면 왼쪽 탭으로 · <b>Shift + 클릭</b>하면 그 지표의 세부 정보(예측 · 관련 경고 · 패키지 정책)</div>'));
         const pv = el('<div class="t69-preview t69-preview-big t69-card"></div>');
         box.appendChild(pv); renderPreview(pv);
         // 셋째 줄: 금액 — 비율(GDP 대비)만으로는 실제 규모를 알 수 없으니 화폐 단위로 (세입 · 세출 · 이자는 연간)

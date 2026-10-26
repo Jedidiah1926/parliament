@@ -80,7 +80,7 @@
     const widthOf = (c, fallback = 560) => Math.max(240, Math.floor(c.clientWidth || fallback));
 
     // ================= 반원 계기 =================
-    // opt: { label, value, unit, min, max, bands: [{ from, to, status }], decimals, spark: [], delta, status, onClick, sub }
+    // opt: { label, value, unit, min, max, bands: [{ from, to, status }], decimals, spark: [], delta, status, onClick(event), sub, title }
     function gauge(container, opt) {
         container.textContent = '';
         container.classList.add('t69-gauge');
@@ -124,7 +124,9 @@
         }
         container.appendChild(body);
         if (opt.sub) { const s = document.createElement('div'); s.className = 't69-gauge-sub'; s.textContent = opt.sub; container.appendChild(s); }
-        if (opt.onClick) { container.tabIndex = 0; container.setAttribute('role', 'button'); container.onclick = opt.onClick; container.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); opt.onClick(); } }; }
+        // onClick(event) — 키보드(Enter · Space)도 같은 이벤트를 넘겨 Shift를 함께 볼 수 있게
+        if (opt.onClick) { container.tabIndex = 0; container.setAttribute('role', 'button'); container.onclick = opt.onClick; container.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); opt.onClick(e); } }; }
+        if (opt.title) container.title = opt.title;
     }
 
     // ================= 시계열 선 그래프 (한 칸) =================
