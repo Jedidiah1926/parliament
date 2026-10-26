@@ -109,6 +109,11 @@
                     <svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true"><rect x="2.5" y="3.5" width="15" height="13" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.5"/><line x1="7.5" y1="3.5" x2="7.5" y2="16.5" stroke="currentColor" stroke-width="1.5"/></svg>
                 </button>
             </div>
+            <div class="mn-search" role="search">
+                <svg class="mn-search-icon" viewBox="0 0 20 20" width="14" height="14" aria-hidden="true"><circle cx="8.5" cy="8.5" r="5.5" fill="none" stroke="currentColor" stroke-width="1.7"/><line x1="12.6" y1="12.6" x2="17" y2="17" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+                <input type="search" id="mnSearchInput" placeholder="기능 검색 (예: 선거인단)" autocomplete="off" spellcheck="false" aria-label="기능 검색" aria-controls="mnSearchResults">
+                <div class="mn-search-results" id="mnSearchResults" role="listbox" hidden></div>
+            </div>
             <div class="mn-groups" id="mnGroups"></div>`;
         document.body.insertBefore(nav, controls);
 
@@ -201,6 +206,8 @@
             const real = grp.items.find(x => x.src.id === fi.after);
             placeAfter(itemsEl, it, real ? real.el : itemsEl.querySelector(`[data-locked-id="${fi.after}"]`));
         });
+
+        setupSearch(nav, groups);
 
         const nationSrc = document.getElementById('nationNameDisp');
         const nationDst = nav.querySelector('#mnNationName');
@@ -336,6 +343,163 @@
 
         document.body.classList.add('has-side-nav');
         sync();
+    }
+
+    // ===== 기능 검색 — 사이드바 맨 위. 메뉴 이름 · 각 탭 안의 글자(제목 · 이름표 · 버튼) · 아래 동의어로 찾고, 고르면 그 탭을 열어 찾은 곳을 잠깐 표시 =====
+    // 예: "선거인단" → 선거 › 선거 제도 (그 탭의 "선거인단제" 버튼). 잠긴(다음 업데이트) 기능은 🔒와 열리는 버전으로
+    // 화면에 글자로 없는 기능 · 다른 이름으로 부르는 것 — 탭 버튼 id: [찾을 말 …]
+    const SEARCH_ALIASES = {
+        subTabAssembly: ['의회 설정', '의장석', '의장', '부의장', '의장단', '반원 중앙', '집권 세력 강조'], subTabIdeology: ['이념', '서브 이념', '정치 성향'],
+        subTabParty: ['파벌', '합당', '분당', '신당', '당수', '창당', '해산', '활동 금지', '정당 로고', '원내대표'],
+        subTabSettings: ['의회 구성', '원 구성', '의석 수', '반원', '좌석', '양원제', '삼원제', '단원제', '하원', '상원', '의회 이름'],
+        subTabCoalition: ['연정', '여당', '야당', '집권', '각외협력', '공동교섭단체'], subTabMembers: ['지역구 의원', '당선자', '의원 이름'], subTabList: ['비례대표 명단', '비례 명단'],
+        subTabTimeline: ['세력 변화', '타임라인', '정당 역사', '계보도', '당명 변경'], subTabWikibox: ['위키 틀', '나무위키', '원내 구성'],
+        subTabBill: ['법안', '발의', '조항', '개정안'], subTabCommittee: ['상임위원회', '위원회 심사', '위원장'], subTabTable: ['상정', '직권상정', '안건'],
+        subTabVote: ['표결', '본회의', '찬성', '반대', '기권'], subTabSiege: ['공성전', '봉쇄 돌파', '의장석 점거', '몸싸움', '국회선진화법', '경호권'],
+        subTabArchive: ['표결 기록'], subTabLawbook: ['법령', '법률', '법령집'], subTabConstitution: ['헌법', '개헌', '헌법 개정'],
+        elecSubTabOverview: ['여론 종합', '시민 이민자'], elecSubTabTendency: ['지역구 - 시민', '성향', '지역구 성향', '권역 성향'], elecSubTabProb: ['지지율 - 시민', '지지율', '봉쇄조항', '연동형', '병립형', '무당파', '오차', '비례대표 방식'],
+        elecSubTabMtendency: ['이민자 성향'], elecSubTabMprob: ['이민자 지지율'],
+        subTabElecPresidential: ['대선', '대통령 선거', '결선투표', '총리 직선'], subTabElecGeneral: ['총선', '개표', '보궐선거', '의회 반영'],
+        subTabElecLocal: ['지선', '지방선거', '단체장', '시장', '도지사', '현직 단체장', '지방자치'], subTabReferendum: ['국민투표', '찬반 투표'],
+        subTabElecSettings: ['선거인단', '선거 제도', '선거 방식', '방식', '결선투표', '이민자 투표권', '총리 직선', '기준 원'],
+        subTabElecCandidates: ['후보', '후보 단일화', '단일화', '후보 설정', '대선 후보', '총리 후보'],
+        subTabElecRecord: ['선거 기록', '지난 선거'], subTabFraud: ['부정선거', '선거 조작', '조작'],
+        subTabSystem: ['내각 설정', '정부 형태', '대통령제', '의원내각제', '이원집정부제', '입헌군주제', '집단지도체제', '거부권 주체', '비상 권한 주체', '계엄령 권한', '숨겨진 정부 형태', '직책 이름'],
+        subTabPresident: ['대통령', '국가원수', '계엄령 선포', '비상사태 선포', '의회 해산'], subTabPm: ['총리', '불신임', '부총리', '총리 임명'],
+        subTabCabinetmembers: ['장관', '국무위원', '내각 구성원'], subTabSign: ['서명', '거부권 행사'], subTabCouncil: ['국무회의', '국무회의 의결'], subTabCouncilArchive: ['국무회의 기록'],
+        subTabMilitary: ['군부', '군 지휘부', '장성', '참모총장', '국방부 장관', '군 소속', '육군', '해군', '공군', '해병대', '충성도'],
+        subTabCoup: ['쿠데타', '군정', '민정 이양', '역쿠데타', '친위 쿠데타', '계엄'], subTabRevolution: ['혁명', '당-국가 체제', '공산주의 혁명', '민주 혁명', '국호 교체', '선거인단 설정'],
+        subTabRoyal: ['왕실', '왕정복고', '전제군주정', '왕위 계승', '왕가', '공화 혁명'],
+        subTabSymbol: ['국기', '국호', '국가 이름', '상징', '나라 이름'], subTabTerritory: ['지역', '지역구', '지도', '인구', '시민 수', '이민자 수', '맵 프리셋', '지도 올리기'],
+        subTabRegions: ['권역', '권역 지도'], subTabNationSettings: ['날짜', '연호', '회기', '다음 회기', '지역구 이름 표시'], subTabPeople: ['사람', '인물', '후보', '지역구 후보'],
+        subTabUnrecovered: ['미수복', '영토 통일'], subTabVassals: ['종속국', '합병', '해방'], subTabRanking: ['국가 순위', '냉전'], subTabBlocs: ['진영'],
+    };
+    // 탭이 아닌 곳 (위쪽 탭 바의 저장 · 설정 창)
+    const SEARCH_ACTIONS = [
+        { label: '저장', path: '저장 창', keys: ['저장', '세이브', '불러오기', '자동저장', '파일로 저장', '내보내기'], run: () => window.openSavePanel && window.openSavePanel() },
+        { label: '설정', path: '설정 창', keys: ['설정', '테마', '다크 모드', '네온', '해상도', '전체 화면', '창 모드', '디버그 모드', '개발자 모드', '언어', '업데이트', '저장 위치'], run: () => window.openSettingsPanel && window.openSettingsPanel() },
+    ];
+    const norm = s => String(s || '').toLowerCase().replace(/[\s·\-–—_/()[\]{}:,.!?'"「」『』…]+/g, '');
+    function contentOf(btn) {
+        const m = /^(?:subTab|elecSubTab)(.+)$/.exec(btn.id || ''); if (!m) return null;
+        const x = m[1];
+        return document.getElementById('content' + x) || document.getElementById('elecSub' + x) || document.getElementById('elecSub' + x.replace(/^M(?=[A-Z])/, ''));
+    }
+    // 탭 안의 짧은 글자 (제목 · 이름표 · 버튼 · 표 머리 · 접는 칸 제목) — 검색할 때마다 새로 모은다 (내용이 바뀌는 탭이 있어서)
+    const TEXT_SEL = 'label, legend, summary, h2, h3, h4, h5, th, button, .settings-label, [class*="card-h"], [class*="-title"], [class*="section-title"]';
+    function buildIndex(groups) {
+        const out = [];
+        groups.forEach(grp => {
+            const gLabel = splitIcon(grp.mainBtn.textContent).label;
+            if (isHidden(grp.mainBtn)) return;
+            // 하위 항목이 없는 메뉴(예: 잠긴 경제)는 메뉴 자체로
+            if (!grp.items.some(({ src }) => !isHidden(src))) out.push({ kind: 'menu', text: gLabel, path: gLabel, go: () => grp.mainBtn.click(), w: 3 });
+            const help = grp.key === 'help'; // 도움말 글은 실제 기능 탭보다 뒤로
+            const seenPanel = new Set();
+            grp.items.forEach(({ src }) => {
+                if (isHidden(src)) return;
+                const label = src.textContent.replace(/\s+/g, ' ').trim(); // ⚠(잠긴 부정선거)는 그대로 — 이름은 잠금을 풀어야 보임
+                const path = `${gLabel} › ${label}`;
+                const go = () => { if (!grp.mainBtn.classList.contains('active')) grp.mainBtn.click(); src.click(); };
+                const panel = contentOf(src);
+                out.push({ kind: 'menu', text: label, path, go, panel, w: help ? 1 : 3 });
+                out.push({ kind: 'menu', text: gLabel, path, go, panel, w: 0.5 });
+                (SEARCH_ALIASES[src.id] || []).forEach(k => out.push({ kind: 'alias', text: k, path, go, panel, w: 2 }));
+                if (!panel || seenPanel.has(panel)) return;
+                seenPanel.add(panel);
+                const seen = new Set();
+                panel.querySelectorAll(TEXT_SEL).forEach(el => {
+                    if (el.closest('.sub-tab-container')) return;
+                    const t = (el.textContent || '').replace(/\s+/g, ' ').trim();
+                    if (t.length < 2 || t.length > 40 || seen.has(t)) return;
+                    seen.add(t);
+                    out.push({ kind: 'text', text: t, path, go, el, panel, w: help ? 0.2 : 1 });
+                });
+            });
+        });
+        // 다음 업데이트에서 열리는 기능 (잠긴 메뉴)
+        document.querySelectorAll('#sideNav .mn-locked, #sideNav .mn-group-locked > .mn-group-head').forEach(l => {
+            const label = (l.querySelector('.mn-locked-label, .mn-label') || l).textContent.trim();
+            const ver = (l.querySelector('.mn-lock-ver') || {}).textContent || '';
+            const id = l.dataset.lockedId;
+            const path = `🔒 ${label} — ${ver}에서 열림`;
+            const go = () => l.click();
+            out.push({ kind: 'menu', text: label, path, go, w: 2, locked: true });
+            (SEARCH_ALIASES[id] || []).forEach(k => out.push({ kind: 'alias', text: k, path, go, w: 1.5, locked: true }));
+        });
+        SEARCH_ACTIONS.forEach(a => a.keys.forEach(k => out.push({ kind: 'alias', text: k, path: a.path, go: a.run, w: 1.5 })));
+        return out;
+    }
+    function searchIndex(index, q) {
+        const nq = norm(q); if (!nq) return [];
+        const best = new Map(); // 같은 곳(경로)은 가장 잘 맞는 것 하나만
+        index.forEach(e => {
+            const nt = norm(e.text); if (!nt) return;
+            let s = 0;
+            if (nt === nq) s = 100; else if (nt.startsWith(nq)) s = 70; else if (nt.includes(nq)) s = 45; else if (nq.length >= 2 && nq.includes(nt) && nt.length >= 2) s = 25;
+            if (!s) return;
+            s += e.w * 6 - Math.min(10, Math.max(0, nt.length - nq.length) * 0.3) - (e.locked ? 8 : 0);
+            const prev = best.get(e.path);
+            if (!prev || s > prev.s) best.set(e.path, { ...e, s });
+        });
+        return [...best.values()].sort((a, b) => b.s - a.s).slice(0, 8);
+    }
+    function flash(el) {
+        if (!el || !el.isConnected) return;
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        el.classList.add('mn-search-flash');
+        setTimeout(() => el.classList.remove('mn-search-flash'), 1800);
+    }
+    function setupSearch(nav, groups) {
+        const input = nav.querySelector('#mnSearchInput');
+        const box = nav.querySelector('#mnSearchResults');
+        let index = null, results = [], sel = 0;
+        const close = () => { box.hidden = true; box.innerHTML = ''; results = []; };
+        const pick = r => {
+            if (!r) return;
+            const q = norm(input.value);
+            input.value = ''; close(); input.blur();
+            r.go();
+            // 찾은 곳 표시 — 글자로 찾았으면 그 요소, 메뉴 · 동의어로 찾았으면 그 탭 안에서 찾는 말이 든 첫 요소 (없으면 표시 안 함)
+            setTimeout(() => {
+                let el = r.kind === 'text' ? r.el : null;
+                if (!el && r.panel && q) el = [...r.panel.querySelectorAll(TEXT_SEL)].find(x => !x.closest('.sub-tab-container') && norm(x.textContent).includes(q) && norm(x.textContent).length <= q.length + 30);
+                flash(el);
+            }, 150);
+        };
+        const render = () => {
+            if (!results.length) { box.innerHTML = input.value.trim() ? '<div class="mn-search-empty">찾는 기능이 없습니다</div>' : ''; box.hidden = !input.value.trim(); return; }
+            box.hidden = false;
+            box.innerHTML = '';
+            results.forEach((r, i) => {
+                const b = document.createElement('button');
+                b.type = 'button';
+                b.className = 'mn-search-item' + (i === sel ? ' sel' : '') + (r.locked ? ' locked' : '');
+                b.setAttribute('role', 'option');
+                const p = document.createElement('span'); p.className = 'mn-search-path'; p.textContent = r.path;
+                b.appendChild(p);
+                if (norm(r.text) !== norm(r.path.split(' › ').pop())) { const m = document.createElement('span'); m.className = 'mn-search-match'; m.textContent = r.text; b.appendChild(m); }
+                b.addEventListener('mousedown', e => { e.preventDefault(); pick(r); });
+                box.appendChild(b);
+            });
+        };
+        input.addEventListener('focus', () => { index = buildIndex(groups); if (input.value.trim()) { results = searchIndex(index, input.value); sel = 0; render(); } });
+        input.addEventListener('input', () => { if (!index) index = buildIndex(groups); results = searchIndex(index, input.value); sel = 0; render(); });
+        input.addEventListener('keydown', e => {
+            if (e.key === 'ArrowDown') { e.preventDefault(); if (results.length) { sel = (sel + 1) % results.length; render(); } }
+            else if (e.key === 'ArrowUp') { e.preventDefault(); if (results.length) { sel = (sel - 1 + results.length) % results.length; render(); } }
+            else if (e.key === 'Enter') { e.preventDefault(); pick(results[sel]); }
+            else if (e.key === 'Escape') { input.value = ''; close(); input.blur(); }
+        });
+        input.addEventListener('blur', () => setTimeout(close, 150));
+        // Ctrl/⌘ + K — 어디서든 검색창으로 (사이드바를 접어 두었으면 펼침)
+        document.addEventListener('keydown', e => {
+            if ((e.ctrlKey || e.metaKey) && !e.altKey && e.key.toLowerCase() === 'k' && document.body.classList.contains('has-side-nav')) {
+                e.preventDefault();
+                if (document.body.classList.contains('side-nav-collapsed')) nav.querySelector('#mnCollapseBtn').click();
+                input.focus(); input.select();
+            }
+        });
     }
 
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', build);

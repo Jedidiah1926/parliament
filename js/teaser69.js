@@ -1353,14 +1353,14 @@
         box.innerHTML = `
             <div class="t69-intro">지역구마다 산업구조 · 연령구조 · 소득등급이 달라 같은 정책도 다르게 작용합니다 (금리 인상은 제조업, 복지 삭감은 저소득, 평가절하는 수출 제조업 지역에 크게). 미수복 지역 · 종속국 땅은 전국 집계에서 빠집니다.</div>
             <label class="t69-row">지도 색칠 <select data-path="ui.mapBy">${Object.entries(MAP_BY).map(([k, v]) => `<option value="${k}" ${E.ui.mapBy === k ? 'selected' : ''}>${v}</option>`).join('')}</select></label>
-            ${keys[0] === '__nation' ? '<div class="t69-dim">지역구가 없어 전국 하나로 계산합니다 — 국가 › 지역에서 지도를 올리면 지역구마다 계산해요.</div>' : ''}
+            ${keys[0] === '__nation' ? '<div class="t69-dim">지역구가 없어 전국 하나로 계산합니다 — 국가 › 지역구 지도에서 지도를 올리면 지역구마다 계산해요.</div>' : ''}
             <div class="t69-dlist">${keys.map(k => { const d = E.dist[k], pc = d.gdp / G / (d.pop / P) * 100; return `<details class="t69-dist" data-key="${esc(k)}">
                 <summary><span class="t69-dname">${esc(nameOf(k))}</span><span>1인당 ${pc.toFixed(0)} · 실업 ${d.unemp.toFixed(1)}% · 민심 ${d.mood.toFixed(0)} · 소득 ${d.income.toFixed(1)}</span></summary>
                 <div class="t69-dgrid">
                     <label>농업 <input type="number" step="0.01" min="0" max="1" value="${d.ind[0]}" data-ind="0"></label><label>제조업 <input type="number" step="0.01" min="0" max="1" value="${d.ind[1]}" data-ind="1"></label><label>서비스업 <input type="number" step="0.01" min="0" max="1" value="${d.ind[2]}" data-ind="2"></label>
                     <label>청소년 <input type="number" step="0.01" min="0" max="1" value="${d.age[0]}" data-age="0"></label><label>생산가능 <input type="number" step="0.01" min="0" max="1" value="${d.age[1]}" data-age="1"></label><label>노인 <input type="number" step="0.01" min="0" max="1" value="${d.age[2]}" data-age="2"></label>
                     <label>소득등급 <input type="number" step="0.1" min="1" max="5" value="${r1(d.income)}" data-path="dist.${esc(k)}.income"></label><label>실업률 % <input type="number" step="0.1" min="0" max="60" value="${r1(d.unemp)}" data-path="dist.${esc(k)}.unemp"></label><label>민심 <input type="number" step="1" min="0" max="100" value="${Math.round(d.mood)}" data-path="dist.${esc(k)}.mood"></label>
-                </div><div class="t69-dim t69-small">산업 · 연령 비율은 합이 1이 되게 저절로 맞춥니다 · 인구는 국가 › 지역의 "시민 / 인구"</div></details>`; }).join('')}</div>`;
+                </div><div class="t69-dim t69-small">산업 · 연령 비율은 합이 1이 되게 저절로 맞춥니다 · 인구는 국가 › 지역구 지도의 "시민 / 인구"</div></details>`; }).join('')}</div>`;
         bindInputs(box);
         box.querySelectorAll('.t69-dist').forEach(det => {
             const k = det.dataset.key, d = E.dist[k];
@@ -2011,7 +2011,7 @@
     }
     function renderMapTo(body) {
         const wrap = document.createElement('div'); wrap.className = 't69-map'; wrap.id = 't69MapWrap'; body.appendChild(wrap);
-        if (distList()[0] === '__nation' || typeof renderDistrictSvgInto !== 'function') { wrap.textContent = '지역구 지도가 없습니다 — 국가 › 지역에서 지도를 올리세요.'; return; }
+        if (distList()[0] === '__nation' || typeof renderDistrictSvgInto !== 'function') { wrap.textContent = '지역구 지도가 없습니다 — 국가 › 지역구 지도에서 지도를 올리세요.'; return; }
         const fmt = k => { const v = regionMetric(k); return E.ui.mapBy === 'industry' ? ['농업', '제조업', '서비스업'][v] : E.ui.mapBy === 'gdppc' ? `1인당 GDP ${v.toFixed(0)} (전국 100)` : E.ui.mapBy === 'income' ? `소득등급 ${v.toFixed(1)}` : `${MAP_BY[E.ui.mapBy]} ${v.toFixed(1)}`; };
         renderDistrictSvgInto(wrap, { chamber: 'house', getFill: k => (E.dist[k] && !excludedKey(k) ? regionFill(k) : null), title: k => (E.dist[k] && !excludedKey(k) ? `${nameOf(k)} — ${fmt(k)}` : nameOf(k)), clickable: false, noZoom: true });
         const lg = E.ui.mapBy === 'industry' ? [['농업', 'var(--s6)'], ['제조업', 'var(--s1)'], ['서비스업', 'var(--s2)']] : E.ui.mapBy === 'mood' ? [['나쁨', DIV[0]], ['보통', DIV[3]], ['좋음', DIV[6]]] : [['낮음', RAMP[0]], ['', RAMP[3]], ['높음', RAMP[6]]];

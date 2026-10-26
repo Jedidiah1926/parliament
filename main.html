@@ -340,10 +340,10 @@
             <!-- ===== 의회 그룹 (정당 그룹이 여기로 통합됨) ===== -->
             <div id="mainContentSetup" class="main-tab-content">
                 <div class="sub-tab-container">
-                    <button class="sub-tab-btn" onclick="switchSubTab('setup','assembly')" id="subTabAssembly">의회 설정</button>
+                    <button class="sub-tab-btn" onclick="switchSubTab('setup','assembly')" id="subTabAssembly">의장 · 표시</button>
                     <button class="sub-tab-btn" onclick="switchSubTab('setup','ideology')" id="subTabIdeology">이념</button>
                     <button class="sub-tab-btn active" onclick="switchSubTab('setup','party')" id="subTabParty">정당</button>
-                    <button class="sub-tab-btn" onclick="switchSubTab('setup','settings')" id="subTabSettings">의회 구성</button>
+                    <button class="sub-tab-btn" onclick="switchSubTab('setup','settings')" id="subTabSettings">의석 · 원 구성</button>
                     <button class="sub-tab-btn" onclick="switchSubTab('setup','coalition')" id="subTabCoalition">집권과 연정</button>
                     <button class="sub-tab-btn" onclick="switchSubTab('setup','members')" id="subTabMembers">지역구 의원</button>
                     <button class="sub-tab-btn" onclick="switchSubTab('setup','list')" id="subTabList">비례대표</button>
@@ -381,6 +381,16 @@
 
                 <!-- 설정 탭 (내부 탭: 하원/상원/삼원) -->
                 <div id="contentSettings" class="sub-tab-content">
+                    <!-- 원 구성 (단원제 · 양원제 · 삼원제) — 1.6.5부터 의장 · 표시가 아니라 여기 (원 이름 · 의석 수와 함께) -->
+                    <div style="margin:6px 0 16px;">
+                        <label style="color:#888;font-size:0.8rem;margin-bottom:6px;display:block;">원 구성</label>
+                        <div class="system-radio-group">
+                            <label class="system-radio-btn"><input type="radio" name="systemType" value="unicameral" onchange="toggleSystem()"> 단원제</label>
+                            <label class="system-radio-btn"><input type="radio" name="systemType" value="bicameral" checked onchange="toggleSystem()"> 양원제</label>
+                            <label class="system-radio-btn"><input type="radio" name="systemType" value="tricameral" onchange="toggleSystem()"> 삼원제</label>
+                        </div>
+                    </div>
+
                     <div class="sub-tab-container-3">
                         <button class="sub-tab-btn-3 active" onclick="switchSetupInnerTab('house')" id="innerTabSetupHouse">하원</button>
                         <button class="sub-tab-btn-3" onclick="switchSetupInnerTab('senate')" id="innerTabSetupSenate">상원</button>
@@ -489,14 +499,6 @@
                         <label class="gov-hl-glow"><input type="checkbox" id="chkGovHlGlow" checked onchange="setGovHighlightGlow(this.checked)"> 네온 빛번짐</label>
                     </div>
 
-                    <div style="margin-bottom:16px;">
-                        <label style="color:#888;font-size:0.8rem;margin-bottom:6px;display:block;">원 구성</label>
-                        <div class="system-radio-group">
-                            <label class="system-radio-btn"><input type="radio" name="systemType" value="unicameral" onchange="toggleSystem()"> 단원제</label>
-                            <label class="system-radio-btn"><input type="radio" name="systemType" value="bicameral" checked onchange="toggleSystem()"> 양원제</label>
-                            <label class="system-radio-btn"><input type="radio" name="systemType" value="tricameral" onchange="toggleSystem()"> 삼원제</label>
-                        </div>
-                    </div>
 
                     <div style="margin-bottom:16px;">
                         <label style="color:#888;font-size:0.8rem;margin-bottom:6px;display:block;">의장단</label>
@@ -790,7 +792,7 @@
             <div id="mainContentNation" class="main-tab-content active">
                 <div class="sub-tab-container">
                     <button class="sub-tab-btn active" onclick="switchSubTab('nation','symbol')" id="subTabSymbol">상징</button>
-                    <button class="sub-tab-btn" onclick="switchSubTab('nation','territory')" id="subTabTerritory">지역</button>
+                    <button class="sub-tab-btn" onclick="switchSubTab('nation','territory')" id="subTabTerritory">지역구 지도</button>
                     <button class="sub-tab-btn" onclick="switchSubTab('nation','regions')" id="subTabRegions">권역</button>
                     <button class="sub-tab-btn" onclick="switchSubTab('nation','nationSettings')" id="subTabNationSettings">국가 설정</button>
                 </div>
@@ -975,11 +977,12 @@
                 <div class="sub-tab-container">
                     <button class="sub-tab-btn" onclick="switchSubTab('vote','elecPresidential')" id="subTabElecPresidential">대선</button>
                     <button class="sub-tab-btn active" onclick="switchSubTab('vote','elecGeneral')" id="subTabElecGeneral">총선</button>
-                    <button class="sub-tab-btn" onclick="switchSubTab('vote','elecLocal')" id="subTabElecLocal">지선</button>
+                    <button class="sub-tab-btn" onclick="switchSubTab('vote','elecLocal')" id="subTabElecLocal">지방선거</button>
                     <button class="sub-tab-btn" onclick="switchSubTab('vote','referendum')" id="subTabReferendum">국민투표</button>
-                    <button class="sub-tab-btn" onclick="switchSubTab('vote','elecSettings')" id="subTabElecSettings">방식</button>
+                    <button class="sub-tab-btn" onclick="switchSubTab('vote','elecSettings')" id="subTabElecSettings">선거 제도</button>
+                    <button class="sub-tab-btn" onclick="switchSubTab('vote','elecCandidates')" id="subTabElecCandidates">후보</button>
                     <button class="sub-tab-btn" onclick="switchSubTab('vote','elecRecord')" id="subTabElecRecord">선거 기록</button>
-                    <button class="sub-tab-btn sub-tab-btn-danger" onclick="switchSubTab('vote','fraud')" id="subTabFraud">⚠</button>
+                    <button class="sub-tab-btn sub-tab-btn-danger" onclick="fraudTabClick()" id="subTabFraud">⚠</button>
                 </div>
 
 
@@ -1175,7 +1178,10 @@
                             <button type="button" class="system-radio-btn" id="presElecChamberThirdBtn" onclick="setPresElectionChamberBasis('third')" style="display:none;">삼원</button>
                         </div>
                     </div>
-                    <div style="margin-top:20px;padding-top:14px;border-top:1px solid #222;">
+                </div>
+                <!-- 후보 (1.6.5에 선거 › 방식에서 나눔): 후보 단일화 · 대선/총리 선거 후보 설정 -->
+                <div id="contentElecCandidates" class="sub-tab-content">
+                    <div style="margin-top:6px;">
                         <label style="color:#888;font-size:0.8rem;margin-bottom:6px;display:block;">후보 단일화 <span style="color:#555;font-weight:normal;">— 여러 정당이 후보를 한 명으로 합쳐 출마합니다. 지지가 가장 높은 정당이 후보를 내고 참여 정당의 지지를 합쳐 받습니다 (비례 투표는 따로)</span></label>
                         <div id="candidateUnionList"></div>
                         <button class="add-btn" onclick="addCandidateUnion()" style="width:100%;margin-top:0;">+ 단일화 추가</button>
@@ -1208,10 +1214,10 @@
             <div id="mainContentElection" class="main-tab-content">
                 <div class="sub-tab-container" style="margin-top:10px;">
                     <button class="sub-tab-btn active" id="elecSubTabOverview" onclick="elecSwitchSub('overview')">종합</button>
-                    <button class="sub-tab-btn" id="elecSubTabTendency" onclick="elecSwitchSub('tendency')">지역구 - 시민</button>
-                    <button class="sub-tab-btn" id="elecSubTabProb" onclick="elecSwitchSub('prob')">지지율 - 시민</button>
-                    <button class="sub-tab-btn" id="elecSubTabMtendency" onclick="elecSwitchSub('mtendency')">지역구 - 이민자</button>
-                    <button class="sub-tab-btn" id="elecSubTabMprob" onclick="elecSwitchSub('mprob')">지지율 - 이민자</button>
+                    <button class="sub-tab-btn" id="elecSubTabTendency" onclick="elecSwitchSub('tendency')">시민 성향</button>
+                    <button class="sub-tab-btn" id="elecSubTabProb" onclick="elecSwitchSub('prob')">시민 지지율</button>
+                    <button class="sub-tab-btn" id="elecSubTabMtendency" onclick="elecSwitchSub('mtendency')">이민자 성향</button>
+                    <button class="sub-tab-btn" id="elecSubTabMprob" onclick="elecSwitchSub('mprob')">이민자 지지율</button>
                 </div>
 
                 <!-- 종합: 시민 / 이민자 성향 따로 정하기 · 시민 · 이민자 수 · 정당별 지지율 비교 (js/people.js) -->
@@ -1268,7 +1274,7 @@
             <!-- ===== 내각 그룹 ===== -->
             <div id="mainContentCabinet" class="main-tab-content">
                 <div class="sub-tab-container">
-                    <button class="sub-tab-btn active" onclick="switchSubTab('cabinet','system')" id="subTabSystem">내각 설정</button>
+                    <button class="sub-tab-btn active" onclick="switchSubTab('cabinet','system')" id="subTabSystem">정부 형태 · 권한</button>
                     <button class="sub-tab-btn" onclick="switchSubTab('cabinet','president')" id="subTabPresident">대통령</button>
                     <button class="sub-tab-btn" onclick="switchSubTab('cabinet','pm')" id="subTabPm">총리</button>
                     <button class="sub-tab-btn" onclick="switchSubTab('cabinet','cabinetmembers')" id="subTabCabinetmembers">내각 구성원</button>
@@ -1687,7 +1693,7 @@
             <button class="disp-tab-btn"         id="dispTabElecResultHouse" data-tab="elecResultHouse" onclick="switchDispTab('elecResultHouse')" style="display:none;"><span class="disp-tab-label">하원 선거결과</span><span class="disp-tab-close" onclick="event.stopPropagation();closeDispTab('elecResultHouse')">×</span></button>
             <button class="disp-tab-btn"         id="dispTabElecResultSenate" data-tab="elecResultSenate" onclick="switchDispTab('elecResultSenate')" style="display:none;"><span class="disp-tab-label">상원 선거결과</span><span class="disp-tab-close" onclick="event.stopPropagation();closeDispTab('elecResultSenate')">×</span></button>
             <button class="disp-tab-btn"         id="dispTabElecResultThird" data-tab="elecResultThird" onclick="switchDispTab('elecResultThird')" style="display:none;"><span class="disp-tab-label">삼원 선거결과</span><span class="disp-tab-close" onclick="event.stopPropagation();closeDispTab('elecResultThird')">×</span></button>
-            <button class="disp-tab-btn"         id="dispTabPopVote" data-tab="popVote" onclick="switchDispTab('popVote')" style="display:none;"><span class="disp-tab-label">지선 결과</span><span class="disp-tab-close" onclick="event.stopPropagation();closeDispTab('popVote')">×</span></button>
+            <button class="disp-tab-btn"         id="dispTabPopVote" data-tab="popVote" onclick="switchDispTab('popVote')" style="display:none;"><span class="disp-tab-label">지방선거 결과</span><span class="disp-tab-close" onclick="event.stopPropagation();closeDispTab('popVote')">×</span></button>
             <!-- 날짜 · 회기 줄: 1줄 = 날짜 + 진행(▶ +1일 · ▶▶ +7일 · ▶▶▶ +1개월) + 설정, 2줄 = 회기 + 다음 회기 종류 토글 + 다음 회기
                  진행 버튼은 연 · 월 · 일 날짜, 다음 회기 버튼들은 개별형 회기일 때만 보임 -->
             <div class="disp-info-bar" id="dispInfoBar">

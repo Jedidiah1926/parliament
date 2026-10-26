@@ -737,11 +737,11 @@
     const gauge = (label, chance, sub) => `<div class="t64-gauge"><div class="t64-gauge-head"><span>${label}</span><b class="${chance >= 50 ? 'hi' : chance >= 25 ? 'mid' : 'lo'}">${chance}%</b></div>
         <div class="t64-bar"><span style="width:${chance}%"></span></div>${sub ? `<div class="t64-dim t64-small">${sub}</div>` : ''}</div>`;
 
-    // 계엄령은 권한 주체(대통령 · 총리 · 내각)의 탭에서 선포한다 — 그 탭으로 데려가고, 주체가 없으면 내각 설정의 계엄령 권한 주체로
+    // 계엄령은 권한 주체(대통령 · 총리 · 내각)의 탭에서 선포한다 — 그 탭으로 데려가고, 주체가 없으면 정부 형태 · 권한의 계엄령 권한 주체로
     const MARTIAL_TAB = { president: ['president', 'presidentEmergencyPowers'], pm: ['pm', 'pmEmergencyPowers'], cabinet: ['cabinetmembers', 'cabinetEmergencyPowers'] };
     function martialTabLabel() {
         const h = emergencyPowers.martialLaw.holder;
-        return h === 'cabinet' ? '내각 구성원' : MARTIAL_TAB[h] ? effRoleLabel(h) : '내각 설정';
+        return h === 'cabinet' ? '내각 구성원' : MARTIAL_TAB[h] ? effRoleLabel(h) : '정부 형태 · 권한';
     }
     function goDeclareMartialLaw() {
         const t = MARTIAL_TAB[emergencyPowers.martialLaw.holder];
