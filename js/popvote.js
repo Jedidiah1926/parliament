@@ -269,6 +269,29 @@
         reader.onload = e => setHolder(key, 'photo', e.target.result);
         reader.readAsDataURL(file);
     }
+    // 오른쪽 현황 화면에서 바로 이름 · 사진 넣기 — 현황 화면은 다시 그리지 않고(다음 칸으로 넘어가는 클릭 · 포커스가 끊기지 않게)
+    // 그 카드만 고치고, 왼쪽 현직 단체장 목록만 다시 그린다
+    function setHolderQuick(key, field, value) {
+        const H = S.local.holders;
+        const lv = String(key).split(':')[0];
+        const h = H[key] || (H[key] = { partyId: '', name: '', photo: '', office: officeOf(lv), since: '' });
+        h[field] = value;
+        if (!h.partyId && !h.name && !h.photo) delete H[key];
+        renderHolders();
+        const card = ge('pvDisplay')?.querySelector(`.pv-hcard[data-key="${CSS.escape(key)}"]`);
+        if (card && field === 'photo') {
+            const ph = card.querySelector('.pv-holder-photo');
+            const input = ph && ph.querySelector('input');
+            if (ph) { ph.innerHTML = value ? `<img src="${value}" alt="">` : '👤'; if (input) ph.appendChild(input); }
+        }
+    }
+    function uploadHolderPhotoQuick(input, key) {
+        const file = input.files && input.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = e => { setHolderQuick(key, 'photo', e.target.result); input.value = ''; };
+        reader.readAsDataURL(file);
+    }
     // 권역 → 그 권역의 지역구 묶음 (권역에 안 든 지역구는 맨 끝 "권역 없음")
     function holderTree(ch) {
         const H = S.local.holders;
@@ -327,13 +350,18 @@
             </details>`;
     }
     // 오른쪽 시각 화면: 내각 화면처럼 권역장 카드 아래에 그 권역의 지역구장 카드
-    function holderCard(name, h, office, big) {
+    // key가 있으면 사진을 눌러 올리고 이름을 바로 적을 수 있는 카드 (현직 단체장 칸을 일일이 열지 않아도 되게)
+    function holderCard(name, h, office, big, key) {
         const p = h ? partyById(h.partyId) : null;
-        return `<div class="pv-hcard${big ? ' pv-hcard-big' : ''}" style="border-left-color:${p ? p.color : '#555'}">
-            <span class="pv-holder-photo${big ? '' : ' pv-holder-photo-sm'}">${h && h.photo ? `<img src="${h.photo}" alt="">` : '👤'}</span>
+        const k = key ? esc(key) : '';
+        return `<div class="pv-hcard${big ? ' pv-hcard-big' : ''}" style="border-left-color:${p ? p.color : '#555'}"${key ? ` data-key="${k}"` : ''}>
+            ${key ? `<label class="pv-holder-photo pv-hcard-photo${big ? '' : ' pv-holder-photo-sm'}" title="사진 올리기">${h && h.photo ? `<img src="${h.photo}" alt="">` : '👤'}<input type="file" accept="image/*" data-key="${k}" onchange="PopVote.uploadHolderPhotoQuick(this, this.dataset.key)"></label>`
+                : `<span class="pv-holder-photo${big ? '' : ' pv-holder-photo-sm'}">${h && h.photo ? `<img src="${h.photo}" alt="">` : '👤'}</span>`}
             <span class="pv-hcard-main">
                 <span class="pv-hcard-office">${esc(name)} ${esc(office)}</span>
-                <b class="pv-hcard-name">${esc(h && h.name ? h.name : (filledH(h) ? '이름 미입력' : '공석'))}</b>
+                ${key ? `<input type="text" class="pv-hcard-name pv-hcard-name-input" value="${esc(h && h.name ? h.name : '')}" placeholder="${filledH(h) ? '이름 입력' : '공석 — 이름 입력'}" data-key="${k}"
+                    onchange="PopVote.setHolderQuick(this.dataset.key,'name',this.value.trim())" onkeydown="if(event.key==='Enter')this.blur()">`
+                : `<b class="pv-hcard-name">${esc(h && h.name ? h.name : (filledH(h) ? '이름 미입력' : '공석'))}</b>`}
                 ${p ? `<span class="pv-hcard-party"><span class="pv-dot" style="background:${p.color}"></span>${esc(p.name)}</span>` : ''}
             </span>
         </div>`;
@@ -356,6 +384,7 @@
         box.innerHTML = `
             <div class="pv-result">
                 <div class="pv-result-title">지방자치 현황</div>
+                <div class="pv-dim pv-small">카드의 사진을 눌러 올리고, 이름 칸에 바로 적을 수 있어요.</div>
                 ${heads.length ? `<div class="pv-level-head">${esc(officeOf('region'))} ${heads.length}명</div><div class="pv-holder-counts">${chips(counts(heads))}</div>` : ''}
                 ${dists.length ? `<div class="pv-level-head">${esc(officeOf('district'))} ${dists.length}명</div><div class="pv-holder-counts">${chips(counts(dists))}</div>` : ''}
                 ${heads.some(filledH) && dists.some(filledH) ? `<div class="pv-view-toggle pv-holders-view" role="group">${[['region', '권역별'], ['district', '지역구별']].map(([v, t]) =>
@@ -363,8 +392,8 @@
                 <div class="pv-map" data-map="holders"></div>
                 ${groups.map(g => `
                 <div class="pv-hgroup">
-                    ${g.region ? holderCard(g.region.name, g.head, holderOffice('region', ch, g.region.id, g.head), true) : '<div class="pv-holder-nogroup">권역 없음</div>'}
-                    <div class="pv-hgrid">${g.districts.map(d => holderCard(d.name, d.h, holderOffice('district', ch, d.id, d.h), false)).join('')}</div>
+                    ${g.region ? holderCard(g.region.name, g.head, holderOffice('region', ch, g.region.id, g.head), true, g.rKey) : '<div class="pv-holder-nogroup">권역 없음</div>'}
+                    <div class="pv-hgrid">${g.districts.map(d => holderCard(d.name, d.h, holderOffice('district', ch, d.id, d.h), false, d.key)).join('')}</div>
                 </div>`).join('')}
             </div>`;
         // 지도: 권역별(권역장 정당 색 · 권역 안쪽 경계 없이 바깥 둘레만) / 지역구별(지역구장 정당 색 · 지역구 경계 그대로)
@@ -772,6 +801,6 @@
 
     window.PopVote = {
         runLocal, runRef, renderLocal, renderRef, refresh, show, remove, getState, setState, records, peopleSeats,
-        applyLocal, setHolder, setOffice, uploadHolderPhoto, setUnitsView, showHolders: () => showHoldersOnDisplay(true),
+        applyLocal, setHolder, setOffice, uploadHolderPhoto, setHolderQuick, uploadHolderPhotoQuick, setUnitsView, showHolders: () => showHoldersOnDisplay(true),
     };
 })();

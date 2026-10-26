@@ -114,12 +114,18 @@ html[data-theme-family="modern"] .pv-count-chip { border: none; border-radius: 9
 .pv-hcard { display: flex; gap: 10px; align-items: center; border-left: 3px solid #555; padding: 6px 10px; background: rgba(255,255,255,.02); min-width: 0; }
 .pv-hcard-big { padding: 10px 12px; margin-bottom: 8px; }
 .pv-hcard-big .pv-holder-photo { flex-basis: 56px; width: 56px; height: 70px; font-size: 1.4rem; }
-.pv-hcard-main { display: flex; flex-direction: column; min-width: 0; gap: 1px; }
+.pv-hcard-main { flex: 1; display: flex; flex-direction: column; min-width: 0; gap: 1px; }
 .pv-hcard-main > * { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pv-hcard-office { font-size: .75rem; color: #888; }
 .pv-hcard-name { font-size: .95rem; color: #e0e0e0; font-weight: normal; }
 .pv-hcard-big .pv-hcard-name { font-size: 1.15rem; color: var(--tno-neon); }
 .pv-hcard-party { font-size: .78rem; color: #aaa; }
+.pv-hcard-photo { cursor: pointer; }
+.pv-hcard-photo:hover { border-color: var(--tno-neon); }
+.pv-hcard-name-input { width: 100%; min-width: 0; box-sizing: border-box; background: transparent; border: 1px solid transparent; font-family: inherit; padding: 1px 4px; margin-left: -5px; }
+.pv-hcard-name-input:hover { border-color: #333; }
+.pv-hcard-name-input:focus { outline: none; border-color: var(--tno-neon); background: #000; }
+.pv-hcard-name-input::placeholder { color: #666; }
 .pv-hgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 6px; margin-left: 16px; }
 @media (max-width: 520px) { .pv-hgrid { margin-left: 0; } }
 
@@ -130,6 +136,8 @@ html[data-theme-family="modern"] .pv-holder-sub summary, html[data-theme-family=
 html[data-theme-family="modern"] .pv-hcard { background: var(--m-surface-2); border-radius: 0 10px 10px 0; }
 html[data-theme-family="modern"] .pv-hcard-office, html[data-theme-family="modern"] .pv-hcard-party { color: var(--m-text-3); font-size: 12px; }
 html[data-theme-family="modern"] .pv-hcard-name { color: var(--m-text); font-weight: 600; font-size: 14px; }
+html[data-theme-family="modern"] .pv-hcard-name-input:hover { border-color: var(--m-border); }
+html[data-theme-family="modern"] .pv-hcard-name-input:focus { border-color: var(--m-accent, var(--m-border-strong)); background: var(--m-surface); border-radius: 6px; }
 html[data-theme-family="modern"] .pv-hcard-big .pv-hcard-name { color: var(--m-text); font-size: 17px; font-weight: 700; }
 /* 권역 · 지역구마다 따로 정하는 직책 칸 (비우면 기본 직책이 흐리게 보임) */
 .pv-holder-unit { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
