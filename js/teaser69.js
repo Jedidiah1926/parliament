@@ -76,6 +76,7 @@
     // 성장 흐름 2%를 넘는 1%p마다 안전 상한 +1.25%p (최대 +12%p — 성장 흐름 11.6%), 마이너스 · 저성장은 기본 범위
     function inflSafeExtra(growth) { return 1.25 * Math.max(0, Math.min(9.6, (Number(growth) || 0) - 2)); }
     const growthTrend = N => (Number.isFinite(N.gTrend) ? N.gTrend : N.growth);
+    let keepDisp = false; // 다음 경제 탭 전환 한 번은 오른쪽 시각 화면을 바꾸지 않음 (개요 계기 클릭)
     const EFFECT_TARGETS = { growth: '잠재성장', unemp: '자연실업률', infl: '인플레', mood: '민심', conf: '신뢰도' };
     const DT = { month: 1 / 12, quarter: 1 / 4, year: 1 };
     const UNIT_NAME = { month: '1개월', quarter: '1분기', year: '1년' };
@@ -1064,7 +1065,9 @@
             const r = origSwitchSub.call(this, main, SUB_ID[sub].charAt(0).toLowerCase() + SUB_ID[sub].slice(1), ...[].slice.call(arguments, 2));
             try { currentSubTab.economy = sub; } catch (e) { /* 없음 */ }
             renderTab(sub);
-            if (sub === 'region') showDisp('region'); else if (sub === 'analysis') showDisp('analysis'); else showDisp(null);
+            // keepDisp: 개요 계기를 눌러 왼쪽 탭만 바꿀 때는 오른쪽 시각 화면(개요)을 그대로 둔다 — 실업률 · 민심이 지역 지도로 넘어가지 않게
+            if (keepDisp) { keepDisp = false; renderDisp(); }
+            else if (sub === 'region') showDisp('region'); else if (sub === 'analysis') showDisp('analysis'); else showDisp(null);
             return r;
         }
         return origSwitchSub.apply(this, arguments);
@@ -1708,7 +1711,7 @@
             C.gauge(g, { label: l, value: v, unit: VAR[k].unit === '%' ? '%' : '', min: mn, max: mx, maxPlus: k === 'infl' || k === 'debt', bands: bandsOf(k), status: statusOf(k, v), spark: spark(k), delta: last ? v - last.n[k] : null, decimals: 1,
                 // 누르면 예전처럼 왼쪽 탭만, Shift + 클릭(Shift + Enter)이면 오른쪽에 그 지표의 세부 정보
                 title: `누르면 왼쪽 ${({ monetary: '통화', fiscal: '재정', region: '지역' })[go]} 탭 · Shift + 클릭하면 ${l} 세부 정보`,
-                onClick: e => { if (e && e.shiftKey) showMetric(k); else switchSubTab('economy', go); } });
+                onClick: e => { if (e && e.shiftKey) showMetric(k); else { keepDisp = true; switchSubTab('economy', go); } } });
         });
         box.appendChild(el('<div class="t69-dim t69-small">계기를 누르면 왼쪽 탭으로 · <b>Shift + 클릭</b>하면 그 지표의 세부 정보(예측 · 관련 경고 · 패키지 정책)</div>'));
         // 셋째 줄: 금액 — 비율(GDP 대비)만으로는 실제 규모를 알 수 없으니 화폐 단위로 (세입 · 세출 · 이자는 연간)
