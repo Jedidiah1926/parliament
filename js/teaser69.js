@@ -1703,10 +1703,7 @@
                 title: `누르면 왼쪽 ${({ monetary: '통화', fiscal: '재정', region: '지역' })[go]} 탭 · Shift + 클릭하면 ${l} 세부 정보`,
                 onClick: e => { if (e && e.shiftKey) showMetric(k); else switchSubTab('economy', go); } });
         });
-        // 이대로면 다음 칸 — 왼쪽 개요의 미리보기를 크게 (지금 · 흔들림 없는 다음 칸 예측)
         box.appendChild(el('<div class="t69-dim t69-small">계기를 누르면 왼쪽 탭으로 · <b>Shift + 클릭</b>하면 그 지표의 세부 정보(예측 · 관련 경고 · 패키지 정책)</div>'));
-        const pv = el('<div class="t69-preview t69-preview-big t69-card"></div>');
-        box.appendChild(pv); renderPreview(pv);
         // 셋째 줄: 금액 — 비율(GDP 대비)만으로는 실제 규모를 알 수 없으니 화폐 단위로 (세입 · 세출 · 이자는 연간)
         const bq = budgetOf(E, N, distList()), prevN = last ? last.n : null;
         const chg = (now, before) => (before == null || !Number.isFinite(before) ? '' : `<em class="${now >= before ? 'up' : 'down'}">${now >= before ? '▲' : '▼'} ${Math.round(Math.abs(now - before)).toLocaleString()}</em>`);
@@ -1721,6 +1718,9 @@
             ['국채 이자 (연간)', money(bq.mand.interest), `국채금리 ${pct(N.yield)}`, ''],
         ];
         box.appendChild(el(`<div class="t69-fin" aria-label="재정 금액">${fin.map(([l, v, sub, d, st]) => `<div class="t69-fin-i ${st ? 't69-fin-' + st : ''}"><span>${l}</span><b>${esc(v)}</b><small>${esc(sub)} ${d}</small></div>`).join('')}</div>`));
+        // 이대로면 다음 칸 — 재정 금액 줄 다음에, 왼쪽 개요의 미리보기를 크게 (지금 · 흔들림 없는 다음 칸 예측)
+        const pv = el('<div class="t69-preview t69-preview-big t69-card"></div>');
+        box.appendChild(pv); renderPreview(pv);
         // 큰 그래프 — 같은 단위(%)인 지표만 겹쳐 봄 (두 눈금 겹치지 않게)
         const body = section(box, '추이', '— 칩을 눌러 겹쳐 볼 지표를 고르세요 (같은 % 눈금) · 점선은 예측');
         const chips = el(`<div class="t69-chips">${CHIP_VARS.map(k => `<button type="button" data-chip="${k}" class="t69-chip ${E.ui.chips.includes(k) ? 'on' : ''}" aria-pressed="${E.ui.chips.includes(k)}"><i style="background:${VAR[k].color}"></i>${VAR[k].label}</button>`).join('')}</div>`);
