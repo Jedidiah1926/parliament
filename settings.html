@@ -159,7 +159,7 @@
                         <div class="settings-hint" id="devCodeMsg">개발자 코드를 넣으면 다음 업데이트 미리보기(티저) 화면을 열 수 있습니다.</div>
                         <div id="devOnBox" hidden>
                             <div class="dev-teaser-list" id="devTeaserList"></div>
-                            <button type="button" class="lang-select-btn" onclick="turnOffDevMode()" style="width:100%;margin-top:10px;">개발자 모드 끄기</button>
+                            <button type="button" class="lang-select-btn" onclick="turnOffDevMode()" style="width:100%;margin-top:10px;">끄기</button>
                         </div>
                     </div>
                     <div class="settings-group" id="debugModeGroup">
@@ -256,16 +256,19 @@
         if(window.HEMI_BUILD && window.HEMI_BUILD.demo) document.getElementById('devModeGroup').hidden = true;
         // ===== 개발자 모드 — 코드를 넣으면 티저(teaser66 ~ teaser69) 화면을 열 수 있다 (js/devmode.js) =====
         function renderDevMode(msg) {
-            const on = HemiDev.isOn();
-            document.getElementById('devCodeForm').hidden = on;
+            // 개발자 모드(전부) · 경제 미리보기 코드(Teaser 1.6.9만) — 경제 코드일 때도 개발자 코드를 넣을 수 있게 입력칸은 남긴다
+            const on = HemiDev.anyOn(), full = HemiDev.isOn();
+            document.getElementById('devCodeForm').hidden = full;
             document.getElementById('devOnBox').hidden = !on;
-            document.getElementById('devCodeMsg').textContent = msg || (on ? '개발자 모드가 켜져 있습니다.' : '개발자 코드를 넣으면 다음 업데이트 미리보기(티저) 화면을 열 수 있습니다.');
+            document.getElementById('devCodeMsg').textContent = msg || (full ? '개발자 모드가 켜져 있습니다.'
+                : on ? '경제 미리보기 코드가 켜져 있습니다 — Teaser 1.6.9(경제)만 열 수 있어요. 개발자 코드를 넣으면 전부 열립니다.'
+                : '개발자 코드를 넣으면 다음 업데이트 미리보기(티저) 화면을 열 수 있습니다.');
             document.getElementById('devCodeMsg').classList.toggle('dev-code-err', msg === DEV_WRONG);
             document.getElementById('devTeaserList').innerHTML = on ? HemiDev.teasers.map(t =>
                 `<a class="lang-select-btn dev-teaser-link" href="${t.file}" target="_top"><b>${t.title}</b><span>${t.note}</span></a>`).join('') : '';
             const note = document.getElementById('devLockedNote');
             const locked = new URLSearchParams(location.search).get('locked');
-            note.hidden = on || !locked;
+            note.hidden = !locked || HemiDev.canOpen(locked);
             if (locked) note.textContent = `Teaser ${String(locked).replace(/[^\w]/g, '')} 화면은 개발자 모드에서만 열 수 있습니다.`;
         }
         const DEV_WRONG = '코드가 맞지 않습니다.';
@@ -274,11 +277,11 @@
             const input = document.getElementById('devCodeInput');
             const ok = HemiDev.unlock(input.value);
             input.value = '';
-            renderDevMode(ok ? '개발자 모드가 켜졌습니다.' : DEV_WRONG);
+            renderDevMode(!ok ? DEV_WRONG : HemiDev.isOn() ? '개발자 모드가 켜졌습니다.' : '경제 미리보기 코드가 켜졌습니다 — Teaser 1.6.9(경제)를 열 수 있어요.');
         }
         function turnOffDevMode() {
             HemiDev.lock();
-            renderDevMode('개발자 모드를 껐습니다.');
+            renderDevMode('껐습니다.');
         }
         renderDevMode();
 
