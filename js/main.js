@@ -6034,7 +6034,7 @@
                 ov.className = 'settings-frame-overlay';
                 ov.innerHTML = `<div class="settings-frame-box" role="dialog" aria-label="설정">
                     <button type="button" class="settings-frame-close" title="닫기 (Esc)" aria-label="닫기" onclick="closeSettingsPanel()">×</button>
-                    <iframe class="settings-frame" title="설정"></iframe>
+                    <iframe class="settings-frame" title="설정" allow="fullscreen"></iframe>
                 </div>`;
                 ov.addEventListener('mousedown', e => { if(e.target === ov) closeSettingsPanel(); });
                 document.body.appendChild(ov);

@@ -310,15 +310,18 @@
                 if(btn) btn.classList.toggle('active', displayMode === m);
             });
         }
+        // 웹: 게임 화면의 설정 창(iframe)으로 열렸으면 창 안이 아니라 게임 화면 전체를 전체 화면으로
+        const fsDoc = (() => { try { if(window.parent !== window && window.parent.document) return window.parent.document; } catch(e) { /* 다른 출처 */ } return document; })();
         async function selectDisplayMode(mode) {
             if(desktopApi) {
                 displayMode = await desktopApi.setDisplayMode(mode);
             } else {
+                if(mode === 'borderless') return; // 웹에서는 데스크톱 앱 전용
                 try {
-                    if(mode === 'fullscreen' && !document.fullscreenElement) await document.documentElement.requestFullscreen();
-                    else if(mode === 'windowed' && document.fullscreenElement) await document.exitFullscreen();
+                    if(mode === 'fullscreen' && !fsDoc.fullscreenElement) await fsDoc.documentElement.requestFullscreen();
+                    else if(mode === 'windowed' && fsDoc.fullscreenElement) await fsDoc.exitFullscreen();
                 } catch(e) { /* 전체 화면을 허용하지 않는 환경 */ }
-                displayMode = document.fullscreenElement ? 'fullscreen' : 'windowed';
+                displayMode = fsDoc.fullscreenElement ? 'fullscreen' : 'windowed';
             }
             renderDisplayModeButtons();
         }
@@ -327,15 +330,21 @@
                 desktopApi.onDisplayModeChange(mode => { displayMode = mode; renderDisplayModeButtons(); });
                 desktopApi.getDisplayMode().then(mode => { displayMode = mode; renderDisplayModeButtons(); });
             } else {
-                const group = document.getElementById('displayModeGroup');
-                if(!document.fullscreenEnabled) { group.style.display = 'none'; return; }
-                document.getElementById('displayModeBtnBorderless').style.display = 'none';
-                document.getElementById('displayModeHint').textContent = '전체 화면은 다른 화면으로 옮기면 창 모드로 돌아갑니다';
-                document.addEventListener('fullscreenchange', () => {
-                    displayMode = document.fullscreenElement ? 'fullscreen' : 'windowed';
+                // 웹: 테두리 없는 전체 화면은 데스크톱 앱에서만 — 숨기지 않고 잠가 둔다 (세 가지가 다 보이게)
+                const bl = document.getElementById('displayModeBtnBorderless');
+                bl.disabled = true;
+                bl.title = '데스크톱 앱에서만 쓸 수 있습니다';
+                bl.textContent = '🔒 테두리 없는 전체 화면 (앱 전용)';
+                const hint = document.getElementById('displayModeHint');
+                if(!fsDoc.fullscreenEnabled) {
+                    document.getElementById('displayModeBtnFullscreen').disabled = true;
+                    hint.textContent = '이 브라우저(또는 화면)에서는 전체 화면을 쓸 수 없습니다 — F11 키를 눌러 보세요';
+                } else hint.textContent = 'F11 키로도 전체 화면과 창 모드를 오갈 수 있습니다 · 테두리 없는 전체 화면은 데스크톱 앱에서만';
+                fsDoc.addEventListener('fullscreenchange', () => {
+                    displayMode = fsDoc.fullscreenElement ? 'fullscreen' : 'windowed';
                     renderDisplayModeButtons();
                 });
-                displayMode = document.fullscreenElement ? 'fullscreen' : 'windowed';
+                displayMode = fsDoc.fullscreenElement ? 'fullscreen' : 'windowed';
             }
             renderDisplayModeButtons();
         })();
