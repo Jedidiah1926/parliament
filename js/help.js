@@ -29,7 +29,7 @@
             tabs: [
                 {
                     btn: 'subTabAssembly', open: go('setup', 'assembly'),
-                    desc: '단원제 · 양원제 · 삼원제, 의장단(의장 · 부의장), 원별 반원 가운데 표시(의석 수 · 의회 로고), 집권 세력 강조.',
+                    desc: '의장단(의장 · 부의장), 원별 반원 가운데 표시(의석 수 · 의회 로고 · 의장석), 집권 세력 강조. 단원제 · 양원제 · 삼원제는 의석 · 원 구성에서 골라요.',
                 },
                 {
                     btn: 'subTabIdeology', open: go('setup', 'ideology'),
@@ -42,13 +42,13 @@
                     inner: [
                         ['정보', '정당 추가 · 복제 · 삭제, 이름 · 약칭 · 색 · 이념 · 상태, 소속 의회, 파벌, 합당(흡수합당 · 신설합당).'],
                         ['당수', '정당 대표와 파벌 대표의 이름 · 사진. 의원내각제에선 다수당 당수가 자동으로 총리가 됩니다.'],
-                        ['로고', '정당 · 파벌 로고를 올리고 지웁니다 (정사각형 권장). 의회 구성 카드의 로고는 보기만 하고, 누르면 여기로 와요. 통계 카드에 로고를 쓸지는 정보 탭의 "통계 표시"에서 고릅니다.'],
+                        ['로고', '정당 · 파벌 로고를 올리고 지웁니다 (정사각형 권장). 의석 · 원 구성 카드의 로고는 보기만 하고, 누르면 여기로 와요. 통계 카드에 로고를 쓸지는 정보 탭의 "통계 표시"에서 고릅니다.'],
                     ],
                 },
                 {
                     btn: 'subTabSettings', open: go('setup', 'settings'),
-                    desc: '의회별 이름과 총 의석 수, 정당마다 몇 석인지 정합니다. "배정 합계"는 총 의석 수를 넘을 수 없어요.',
-                    inner: [['하원 · 상원 · 삼원', '원마다 따로 정합니다. 상원 · 삼원은 의회 › 의회 설정에서 양원제 · 삼원제를 골랐을 때 나타나요.']],
+                    desc: '원 구성(단원제 · 양원제 · 삼원제)과 의회별 이름 · 총 의석 수, 정당마다 몇 석인지 정합니다. "배정 합계"는 총 의석 수를 넘을 수 없어요.',
+                    inner: [['하원 · 상원 · 삼원', '원마다 따로 정합니다. 상원 · 삼원은 이 탭 위쪽 원 구성에서 양원제 · 삼원제를 골랐을 때 나타나요.']],
                 },
                 {
                     btn: 'subTabCoalition', open: go('setup', 'coalition'),
@@ -146,7 +146,11 @@
                 },
                 {
                     btn: 'subTabElecSettings', open: go('vote', 'elecSettings'),
-                    desc: '대선 방식(단순 다수 · 결선투표 · 선거인단), 지지율을 가져올 기준 원, 후보.',
+                    desc: '대선 · 총리 선거 방식(단순 다수 · 결선투표 · 선거인단)과 지지율을 가져올 기준 원, 이민자 투표권. 선거인단제를 고르면 선거인단 설정이 나와요.',
+                },
+                {
+                    btn: 'subTabElecCandidates', open: go('vote', 'elecCandidates'),
+                    desc: '후보 단일화(여러 정당이 후보 한 명으로)와 대선 · 총리 선거 후보(기본은 당수 — 의원 연결이나 직접 입력으로 바꿈).',
                 },
                 {
                     btn: 'subTabElecRecord', open: go('vote', 'elecRecord'),
@@ -171,11 +175,11 @@
                 },
                 {
                     btn: 'elecSubTabMtendency', open: goElec('mtendency'),
-                    desc: '지역구 - 이민자 — 지역구 - 시민과 같은 화면으로 이민자의 지역구 · 권역 성향을 정합니다. 이민자가 투표하는 선거에서 지역구마다 시민 · 이민자 수만큼 섞어 개표해요 (지역구 성향이 없으면 권역 성향 → 이민자 지지율).',
+                    desc: '이민자 성향 — 시민 성향과 같은 화면으로 이민자의 지역구 · 권역 성향을 정합니다. 이민자가 투표하는 선거에서 지역구마다 시민 · 이민자 수만큼 섞어 개표해요 (지역구 성향이 없으면 권역 성향 → 이민자 지지율).',
                 },
                 {
                     btn: 'elecSubTabMprob', open: goElec('mprob'),
-                    desc: '지지율 - 이민자 — 지지율 - 시민과 같은 화면으로 이민자의 정당별 지지율을 정합니다. 이민자가 투표하는 총선 비례 · 대선은 전국 시민 · 이민자 수만큼 섞어 개표해요.',
+                    desc: '이민자 지지율 — 시민 지지율과 같은 화면으로 이민자의 정당별 지지율을 정합니다. 이민자가 투표하는 총선 비례 · 대선은 전국 시민 · 이민자 수만큼 섞어 개표해요.',
                 },
                 {
                     btn: 'elecSubTabProb', open: goElec('prob'),
@@ -212,7 +216,7 @@
                 },
                 {
                     btn: 'subTabSign', open: go('cabinet', 'sign'),
-                    desc: '서명 — 의회를 통과해 거부권 주체(대통령 · 총리 · 내각)의 서명을 기다리는 법안입니다. 서명하면 가결되고, 거부권을 행사하면 최종 부결돼요. 거부권 주체가 없으면(내각 설정) 이 단계 없이 바로 가결됩니다.',
+                    desc: '서명 — 의회를 통과해 거부권 주체(대통령 · 총리 · 내각)의 서명을 기다리는 법안입니다. 서명하면 가결되고, 거부권을 행사하면 최종 부결돼요. 거부권 주체가 없으면(정부 형태 · 권한) 이 단계 없이 바로 가결됩니다.',
                 },
                 {
                     btn: 'subTabCouncil', open: go('cabinet', 'council'),
@@ -307,7 +311,7 @@
                 },
                 {
                     btn: 'dispTabDistrict', open: () => { go('nation', 'territory')(); showPanel('display'); }, openWhenHidden: true,
-                    desc: '지역구 지도. 국가 › 지역을 열면 나타나고, 지역구를 눌러 편집할 수 있어요. 탭의 ×로 닫습니다.',
+                    desc: '지역구 지도. 국가 › 지역구 지도를 열면 나타나고, 지역구를 눌러 편집할 수 있어요. 탭의 ×로 닫습니다.',
                 },
                 {
                     btn: 'dispTabTendency', open: () => { goElec('tendency')(); showPanel('display'); }, openWhenHidden: true,
@@ -362,7 +366,8 @@
                 <p class="help-desc"></p>`;
             card.querySelector('.help-card-path').textContent = (tab.path || page.path || groupLabel(key).replace(/^\S+\s+/, '')) + ' ›';
             const srcLabel = src ? (src.querySelector('.disp-tab-label') || src).textContent.trim() : '';
-            card.querySelector('.help-card-title').textContent = (tab.title || srcLabel || tab.btn) + (tab.suffix || '');
+            // suffix는 이름이 기호뿐일 때만 (⚠ → "⚠ (부정선거)", 잠금을 풀어 "부정선거"가 되면 붙이지 않음)
+            card.querySelector('.help-card-title').textContent = (tab.title || srcLabel || tab.btn) + (tab.suffix && !/[\p{L}]/u.test(srcLabel || '') ? tab.suffix : '');
             card.querySelector('.help-desc').textContent = tab.desc + (hidden && !tab.openWhenHidden ? ` (${tab.hiddenNote || '지금 설정에선 숨겨져 있어요'})` : '');
             const openBtn = card.querySelector('.help-open');
             if (!tab.open) openBtn.style.display = 'none';

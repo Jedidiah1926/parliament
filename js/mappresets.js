@@ -1,4 +1,4 @@
-// ===== 맵 프리셋 — 국가 › 지역에서 지역구 지도를 고르는 창 (presets/maps.js, tools/build-map-presets.js가 만듦) =====
+// ===== 맵 프리셋 — 국가 › 지역구 지도에서 지역구 지도를 고르는 창 (presets/maps.js, tools/build-map-presets.js가 만듦) =====
 // 맵 메이커 없이 나라 지도 하나를 골라 바로 지역구 지도로 쓴다 (Steam 데모에서는 지도 올리기 대신 이것만).
 // 지도 자료는 창을 처음 열 때 불러오고, 카드마다 지도 모양을 작게 그린다. 고르면 기존 지역구를 바꿀지 묻고(js/main.js
 // districtConfirmReplaceMap) 지역구 이름 · 약칭을 함께 넣는다 (화면 언어가 영어면 영어 이름).

@@ -346,30 +346,31 @@
     }
 
     // ===== 기능 검색 — 사이드바 맨 위. 메뉴 이름 · 각 탭 안의 글자(제목 · 이름표 · 버튼) · 아래 동의어로 찾고, 고르면 그 탭을 열어 찾은 곳을 잠깐 표시 =====
-    // 예: "선거인단" → 선거 › 방식 (그 탭의 "선거인단제" 버튼). 잠긴(다음 업데이트) 기능은 🔒와 열리는 버전으로
+    // 예: "선거인단" → 선거 › 선거 제도 (그 탭의 "선거인단제" 버튼). 잠긴(다음 업데이트) 기능은 🔒와 열리는 버전으로
     // 화면에 글자로 없는 기능 · 다른 이름으로 부르는 것 — 탭 버튼 id: [찾을 말 …]
     const SEARCH_ALIASES = {
-        subTabAssembly: ['의장석', '의장', '부의장', '반원 중앙', '회기'], subTabIdeology: ['이념', '서브 이념', '정치 성향'],
+        subTabAssembly: ['의회 설정', '의장석', '의장', '부의장', '의장단', '반원 중앙', '집권 세력 강조'], subTabIdeology: ['이념', '서브 이념', '정치 성향'],
         subTabParty: ['파벌', '합당', '분당', '신당', '당수', '창당', '해산', '활동 금지', '정당 로고', '원내대표'],
-        subTabSettings: ['의석 수', '반원', '좌석', '양원제', '삼원제', '단원제', '하원', '상원', '의회 이름'],
+        subTabSettings: ['의회 구성', '원 구성', '의석 수', '반원', '좌석', '양원제', '삼원제', '단원제', '하원', '상원', '의회 이름'],
         subTabCoalition: ['연정', '여당', '야당', '집권', '각외협력', '공동교섭단체'], subTabMembers: ['지역구 의원', '당선자', '의원 이름'], subTabList: ['비례대표 명단', '비례 명단'],
         subTabTimeline: ['세력 변화', '타임라인', '정당 역사', '계보도', '당명 변경'], subTabWikibox: ['위키 틀', '나무위키', '원내 구성'],
         subTabBill: ['법안', '발의', '조항', '개정안'], subTabCommittee: ['상임위원회', '위원회 심사', '위원장'], subTabTable: ['상정', '직권상정', '안건'],
         subTabVote: ['표결', '본회의', '찬성', '반대', '기권'], subTabSiege: ['공성전', '봉쇄 돌파', '의장석 점거', '몸싸움', '국회선진화법', '경호권'],
         subTabArchive: ['표결 기록'], subTabLawbook: ['법령', '법률', '법령집'], subTabConstitution: ['헌법', '개헌', '헌법 개정'],
-        elecSubTabOverview: ['여론 종합', '시민 이민자'], elecSubTabTendency: ['성향', '지역구 성향', '권역 성향'], elecSubTabProb: ['지지율', '봉쇄조항', '연동형', '병립형', '무당파', '오차', '비례대표 방식'],
+        elecSubTabOverview: ['여론 종합', '시민 이민자'], elecSubTabTendency: ['지역구 - 시민', '성향', '지역구 성향', '권역 성향'], elecSubTabProb: ['지지율 - 시민', '지지율', '봉쇄조항', '연동형', '병립형', '무당파', '오차', '비례대표 방식'],
         elecSubTabMtendency: ['이민자 성향'], elecSubTabMprob: ['이민자 지지율'],
         subTabElecPresidential: ['대선', '대통령 선거', '결선투표', '총리 직선'], subTabElecGeneral: ['총선', '개표', '보궐선거', '의회 반영'],
         subTabElecLocal: ['지선', '지방선거', '단체장', '시장', '도지사', '현직 단체장', '지방자치'], subTabReferendum: ['국민투표', '찬반 투표'],
-        subTabElecSettings: ['선거인단', '선거 제도', '선거 방식', '결선투표', '이민자 투표권', '후보 단일화', '단일화', '총리 직선'],
+        subTabElecSettings: ['선거인단', '선거 제도', '선거 방식', '방식', '결선투표', '이민자 투표권', '총리 직선', '기준 원'],
+        subTabElecCandidates: ['후보', '후보 단일화', '단일화', '후보 설정', '대선 후보', '총리 후보'],
         subTabElecRecord: ['선거 기록', '지난 선거'], subTabFraud: ['부정선거', '선거 조작', '조작'],
-        subTabSystem: ['정부 형태', '대통령제', '의원내각제', '이원집정부제', '입헌군주제', '집단지도체제', '거부권 주체', '비상 권한 주체', '계엄령 권한', '숨겨진 정부 형태', '직책 이름'],
+        subTabSystem: ['내각 설정', '정부 형태', '대통령제', '의원내각제', '이원집정부제', '입헌군주제', '집단지도체제', '거부권 주체', '비상 권한 주체', '계엄령 권한', '숨겨진 정부 형태', '직책 이름'],
         subTabPresident: ['대통령', '국가원수', '계엄령 선포', '비상사태 선포', '의회 해산'], subTabPm: ['총리', '불신임', '부총리', '총리 임명'],
         subTabCabinetmembers: ['장관', '국무위원', '내각 구성원'], subTabSign: ['서명', '거부권 행사'], subTabCouncil: ['국무회의', '국무회의 의결'], subTabCouncilArchive: ['국무회의 기록'],
         subTabMilitary: ['군부', '군 지휘부', '장성', '참모총장', '국방부 장관', '군 소속', '육군', '해군', '공군', '해병대', '충성도'],
         subTabCoup: ['쿠데타', '군정', '민정 이양', '역쿠데타', '친위 쿠데타', '계엄'], subTabRevolution: ['혁명', '당-국가 체제', '공산주의 혁명', '민주 혁명', '국호 교체', '선거인단 설정'],
         subTabRoyal: ['왕실', '왕정복고', '전제군주정', '왕위 계승', '왕가', '공화 혁명'],
-        subTabSymbol: ['국기', '국호', '국가 이름', '상징', '나라 이름'], subTabTerritory: ['지역구', '지도', '인구', '시민 수', '이민자 수', '맵 프리셋', '지도 올리기'],
+        subTabSymbol: ['국기', '국호', '국가 이름', '상징', '나라 이름'], subTabTerritory: ['지역', '지역구', '지도', '인구', '시민 수', '이민자 수', '맵 프리셋', '지도 올리기'],
         subTabRegions: ['권역', '권역 지도'], subTabNationSettings: ['날짜', '연호', '회기', '다음 회기', '지역구 이름 표시'], subTabPeople: ['사람', '인물', '후보', '지역구 후보'],
         subTabUnrecovered: ['미수복', '영토 통일'], subTabVassals: ['종속국', '합병', '해방'], subTabRanking: ['국가 순위', '냉전'], subTabBlocs: ['진영'],
     };
@@ -397,7 +398,7 @@
             const seenPanel = new Set();
             grp.items.forEach(({ src }) => {
                 if (isHidden(src)) return;
-                const label = src.textContent.replace(/\s+/g, ' ').trim().replace(/^⚠\uFE0F?$/, '부정선거');
+                const label = src.textContent.replace(/\s+/g, ' ').trim(); // ⚠(잠긴 부정선거)는 그대로 — 이름은 잠금을 풀어야 보임
                 const path = `${gLabel} › ${label}`;
                 const go = () => { if (!grp.mainBtn.classList.contains('active')) grp.mainBtn.click(); src.click(); };
                 const panel = contentOf(src);

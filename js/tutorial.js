@@ -122,7 +122,7 @@
     // ---- 후보 단일화 · 부정선거 과정용 도우미 ----
     /* global candidateUnions */
     const unionList = () => (typeof candidateUnions !== 'undefined' && Array.isArray(candidateUnions)) ? candidateUnions : [];
-    const unionSection = () => { const el = document.getElementById('candidateUnionList'); return el ? el.parentElement : '#contentElecSettings'; };
+    const unionSection = () => { const el = document.getElementById('candidateUnionList'); return el ? el.parentElement : '#contentElecCandidates'; };
     const lastUnionCard = () => { const cards = document.querySelectorAll('#candidateUnionList .cand-union'); return cards.length ? cards[cards.length - 1] : null; };
     const fraudCheckbox = () => document.querySelector('#fraudPartyList input[onchange^="toggleFraudAttempt"]');
     const fraudBlock = () => { const on = document.querySelector('#fraudPartyList input[onchange^="toggleFraudAttempt"]:checked'); return on ? on.closest('div[style*="border:1px solid"]') || on.closest('label') : null; };
@@ -220,7 +220,7 @@
                     allow: ['#houseTotal', '#partyListHouse'],
                     title: '빈자리 만들기',
                     enter: () => { if (T.totalBase == null) T.totalBase = houseTotal(); },
-                    text: () => `의회 › 의회 구성의 "배정 합계"는 정당 의석을 모두 더한 값이고, 총 의석 수를 넘을 수 없습니다. 기존 정당들이 이미 ${T.totalBase}석을 다 차지하고 있으면 새 정당이 앉을 자리가 없어요. 총 의석 수를 늘리거나(예: ${T.totalBase + 20}) 다른 정당 의석을 줄여 빈자리를 만들어 보세요.`,
+                    text: () => `의회 › 의석 · 원 구성의 "배정 합계"는 정당 의석을 모두 더한 값이고, 총 의석 수를 넘을 수 없습니다. 기존 정당들이 이미 ${T.totalBase}석을 다 차지하고 있으면 새 정당이 앉을 자리가 없어요. 총 의석 수를 늘리거나(예: ${T.totalBase + 20}) 다른 정당 의석을 줄여 빈자리를 만들어 보세요.`,
                     task: () => !tutParty() || freeHouseSeats() > 0 || (tutParty().seatsHouse || 0) > 0,
                     done: () => `${freeHouseSeats()}석이 비었어요.`,
                 },
@@ -317,7 +317,7 @@
                     target: '#elecInputList',
                     allow: ['#elecInputList'],
                     title: '지지율 정하기',
-                    text: '여론 › 지지율에서 정당마다 예상 지지율(%)을 정합니다. 선거는 이 숫자를 바탕으로 치러져요. 한 정당 이상에 지지율을 입력해 보세요 (예: 40).',
+                    text: '여론 › 시민 지지율에서 정당마다 예상 지지율(%)을 정합니다. 선거는 이 숫자를 바탕으로 치러져요. 한 정당 이상에 지지율을 입력해 보세요 (예: 40).',
                     task: () => {
                         const vals = probInputs().map(el => el.value);
                         return vals.some((v, i) => v !== (T.probBase || [])[i]) && vals.some(v => parseFloat(v) > 0);
@@ -365,7 +365,7 @@
                     before: [go('cabinet', 'pm'), showPanel('controls')],
                     target: () => pmBlock(),
                     title: '총리는 누가 될까?',
-                    text: '내각 › 내각 설정에서 대통령제 · 이원집정부제 · 의원내각제 등 정부 형태를 고릅니다. 서독은 의원내각제라, 의석이 가장 많은 정당의 대표(당수)가 자동으로 총리가 돼요 (👑 표시). 서독에서는 이 자리를 "연방총리"라고 불러요 — 직책 이름은 나라마다 정할 수 있습니다.',
+                    text: '내각 › 정부 형태 · 권한에서 대통령제 · 이원집정부제 · 의원내각제 등 정부 형태를 고릅니다. 서독은 의원내각제라, 의석이 가장 많은 정당의 대표(당수)가 자동으로 총리가 돼요 (👑 표시). 서독에서는 이 자리를 "연방총리"라고 불러요 — 직책 이름은 나라마다 정할 수 있습니다.',
                 },
                 {
                     before: [go('setup', 'party'), call('switchPartyGroupInnerTab', 'leader'), showPanel('controls')],
@@ -500,14 +500,14 @@
         },
         {
             id: 'assembly', group: 'detail',
-            title: '의회 설정과 연정',
+            title: '원 구성과 연정',
             summary: '단원제 · 양원제 · 삼원제 · 의장단 · 반원 가운데 · 연립정부',
             steps: [
                 {
-                    before: [closePanels, go('setup', 'assembly'), showPanel('controls')],
-                    target: () => { const r = document.querySelector('input[name="systemType"]'); return r ? r.closest('div') : '#contentAssembly'; },
+                    before: [closePanels, go('setup', 'settings'), showPanel('controls')],
+                    target: () => { const r = document.querySelector('input[name="systemType"]'); return r ? r.closest('div') : '#contentSettings'; },
                     title: '원 구성',
-                    text: '의회 › 의회 설정에서 단원제 · 양원제 · 삼원제를 고릅니다. 원이 늘어나면 의회 구성 · 표결 · 선거 · 시각 화면에 그 원이 함께 나타나요. 원 이름(예: 국회 · 원로원)은 의회 › 의회 구성에서 바꿉니다.',
+                    text: '의회 › 의석 · 원 구성에서 단원제 · 양원제 · 삼원제를 고릅니다. 원이 늘어나면 의석 · 원 구성 · 표결 · 선거 · 시각 화면에 그 원이 함께 나타나요. 원 이름(예: 국회 · 원로원)은 의회 › 의석 · 원 구성에서 바꿉니다.',
                 },
                 {
                     before: [go('setup', 'assembly'), showPanel('controls')],
@@ -525,7 +525,7 @@
                     before: [go('setup', 'coalition'), showPanel('controls')],
                     target: '#contentCoalition',
                     title: '집권과 연정',
-                    text: '의회 › 집권과 연정에서 정당들을 묶어 연립정부를 만듭니다. 집권 연정(★)과 대표당, 연정 밖에서 지지하는 각외협력 정당을 정하고, 단독 집권이나 무집권으로 둘 수도 있어요. 집권 세력은 반원에서 금색 테두리로 표시됩니다(의회 설정의 "집권 세력 강조").',
+                    text: '의회 › 집권과 연정에서 정당들을 묶어 연립정부를 만듭니다. 집권 연정(★)과 대표당, 연정 밖에서 지지하는 각외협력 정당을 정하고, 단독 집권이나 무집권으로 둘 수도 있어요. 집권 세력은 반원에서 금색 테두리로 표시됩니다(의회 › 의장 · 표시의 "집권 세력 강조").',
                 },
                 {
                     before: [go('setup', 'members'), showPanel('controls')],
@@ -620,13 +620,13 @@
                 {
                     before: [closePanels, showPanel('controls')],
                     title: () => (DEMO_BUILD() ? '맵 프리셋으로 지도 고르기' : '맵 메이커로 지도 만들기'),
-                    text: () => (DEMO_BUILD() ? '지역구는 실제 지도 모양으로 만듭니다. 체험판에서는 국가 › 지역의 "맵 프리셋에서 고르기"로 대한민국 · 일본 · 미국 · 독일 · 프랑스 · 영국 · 이탈리아 · 스페인 · 캐나다 · 브라질 중 한 나라의 행정구역 지도를 골라 바로 지역구로 씁니다. (직접 그린 지도를 쓰는 맵 메이커는 정식판에서)' : '지역구는 실제 지도 모양으로 만듭니다. 메인 화면 › 맵 메이커에서 SVG 지도 파일을 열면 도형이 선 · 면 · 사각형 · 원으로 나뉘어 보이고, 지역구로 쓸 도형(보통 "면")을 골라 이름을 붙인 뒤 지역구 지도 파일(.jsx)로 내보냅니다. 미리보기는 스크롤로 확대 · 축소, 휠 클릭 드래그로 이동해요.'),
+                    text: () => (DEMO_BUILD() ? '지역구는 실제 지도 모양으로 만듭니다. 체험판에서는 국가 › 지역구 지도의 "맵 프리셋에서 고르기"로 대한민국 · 일본 · 미국 · 독일 · 프랑스 · 영국 · 이탈리아 · 스페인 · 캐나다 · 브라질 중 한 나라의 행정구역 지도를 골라 바로 지역구로 씁니다. (직접 그린 지도를 쓰는 맵 메이커는 정식판에서)' : '지역구는 실제 지도 모양으로 만듭니다. 메인 화면 › 맵 메이커에서 SVG 지도 파일을 열면 도형이 선 · 면 · 사각형 · 원으로 나뉘어 보이고, 지역구로 쓸 도형(보통 "면")을 골라 이름을 붙인 뒤 지역구 지도 파일(.jsx)로 내보냅니다. 미리보기는 스크롤로 확대 · 축소, 휠 클릭 드래그로 이동해요.'),
                 },
                 {
                     before: [go('nation', 'territory'), showPanel('controls')],
                     target: '#districtSvgEditUI',
                     title: () => (DEMO_BUILD() ? '맵 프리셋 고르기' : '지역구 지도 올리기'),
-                    text: () => (DEMO_BUILD() ? '국가 › 지역의 "🗺 맵 프리셋에서 고르기"를 누르면 나라 지도 카드가 나와요. 고르면 행정구역 하나하나가 지역구가 되고(이름 · 약칭도 함께), 기본으로는 하원 · 상원 · 삼원이 같은 지도를 함께 씁니다. (새 지도를 고르면 기존 지역구 정보는 새 지도로 바뀌어요)' : '국가 › 지역에서 맵 메이커로 만든 .jsx 파일을 올리거나, "🗺 맵 프리셋에서 고르기"로 나라 지도(대한민국 · 일본 · 미국 · 독일 등 10개)를 바로 고릅니다. 올리면 도형 하나하나가 지역구가 되고, 기본으로는 하원 · 상원 · 삼원이 같은 지도를 함께 씁니다. (새 지도를 올리면 기존 지역구 정보는 새 지도로 바뀌어요)'),
+                    text: () => (DEMO_BUILD() ? '국가 › 지역구 지도의 "🗺 맵 프리셋에서 고르기"를 누르면 나라 지도 카드가 나와요. 고르면 행정구역 하나하나가 지역구가 되고(이름 · 약칭도 함께), 기본으로는 하원 · 상원 · 삼원이 같은 지도를 함께 씁니다. (새 지도를 고르면 기존 지역구 정보는 새 지도로 바뀌어요)' : '국가 › 지역구 지도에서 맵 메이커로 만든 .jsx 파일을 올리거나, "🗺 맵 프리셋에서 고르기"로 나라 지도(대한민국 · 일본 · 미국 · 독일 등 10개)를 바로 고릅니다. 올리면 도형 하나하나가 지역구가 되고, 기본으로는 하원 · 상원 · 삼원이 같은 지도를 함께 씁니다. (새 지도를 올리면 기존 지역구 정보는 새 지도로 바뀌어요)'),
                 },
                 {
                     before: [go('nation', 'territory'), showPanel('controls')],
@@ -716,7 +716,7 @@
                     before: [go('nation', 'territory'), showPanel('controls')],
                     target: () => document.getElementById('contentTerritory') || '#mainContentNation',
                     title: '통일 뒤에는',
-                    text: '되찾은 지역구는 다음 총선부터 의석을 뽑아요 (서독이면 연방의회 지역구가 259석에서 331석으로 늘어요). 의회 › 의회 구성에서 총 의석도 맞춰 늘리고, 여론 › 성향에서 새 지역의 정당 성향을 정해 보세요.',
+                    text: '되찾은 지역구는 다음 총선부터 의석을 뽑아요 (서독이면 연방의회 지역구가 259석에서 331석으로 늘어요). 의회 › 의석 · 원 구성에서 총 의석도 맞춰 늘리고, 여론 › 성향에서 새 지역의 정당 성향을 정해 보세요.',
                 },
             ],
         },
@@ -886,7 +886,7 @@
                     before: [closePanels, go('nation', 'territory'), showPanel('controls')],
                     target: () => firstCitCard() || '#districtListPanel',
                     title: '시민과 이민자',
-                    text: '국가 › 지역의 지역구 목록에는 인구 칸 앞에 "시민" 칸이 있어요 — "시민 / 인구"로 적으면 나머지가 이민자입니다. 비워 두면 그 지역구 인구 전체가 시민이에요.',
+                    text: '국가 › 지역구 지도의 지역구 목록에는 인구 칸 앞에 "시민" 칸이 있어요 — "시민 / 인구"로 적으면 나머지가 이민자입니다. 비워 두면 그 지역구 인구 전체가 시민이에요.',
                 },
                 {
                     before: [go('nation', 'territory'), showPanel('controls')],
@@ -904,7 +904,7 @@
                     target: () => document.getElementById('t61MigrantCard') || '#contentElecSettings',
                     allow: ['#t61MigrantCard'],
                     title: '이민자 투표권',
-                    text: '시민은 모든 선거에서 투표해요. 이민자는 선거마다 — 대선 · 총리 직선 / 총선 / 지방선거 / 국민투표 — 투표권을 줄지 선거 › 방식 아래쪽에서 정합니다. 하나를 켜 보세요.',
+                    text: '시민은 모든 선거에서 투표해요. 이민자는 선거마다 — 대선 · 총리 직선 / 총선 / 지방선거 / 국민투표 — 투표권을 줄지 선거 › 선거 제도 아래쪽에서 정합니다. 하나를 켜 보세요.',
                     task: () => migSig() !== T.migBase,
                     done: '바뀌었어요. 켠 선거에서는 시민과 이민자가 함께 투표해요.',
                 },
@@ -912,7 +912,7 @@
                     before: [call('switchMainTab', 'election'), call('elecSwitchSub', 'overview'), showPanel('controls')],
                     target: () => document.querySelector('#elecSubOverview .op-card') || '#elecSubOverview',
                     title: '이민자 성향',
-                    text: '여론 › 종합의 "시민 / 이민자 성향 따로 정하기"(기본 켬)를 켜 두면 지역구 - 이민자 · 지지율 - 이민자 탭에서 이민자 성향을 시민과 같은 화면으로 따로 정해요. 이민자가 투표하는 선거에서는 지역구마다 시민 · 이민자 수만큼 섞어 개표하고(총선 비례 · 대선은 전국 수로), 지방선거 · 국민투표는 유권자 수도 바뀝니다. 끄면 이민자 탭이 시민 탭과 묶여 이민자도 시민과 같은 성향으로 투표해요.',
+                    text: '여론 › 종합의 "시민 / 이민자 성향 따로 정하기"(기본 켬)를 켜 두면 이민자 성향 · 이민자 지지율 탭에서 이민자 성향을 시민과 같은 화면으로 따로 정해요. 이민자가 투표하는 선거에서는 지역구마다 시민 · 이민자 수만큼 섞어 개표하고(총선 비례 · 대선은 전국 수로), 지방선거 · 국민투표는 유권자 수도 바뀝니다. 끄면 이민자 탭이 시민 탭과 묶여 이민자도 시민과 같은 성향으로 투표해요.',
                 },
             ],
         },
@@ -984,13 +984,13 @@
                     before: [call('switchMainTab', 'election'), call('elecSwitchSub', 'prob'), showPanel('controls')],
                     target: '#elecSystemSettings',
                     title: '비례 배분 방식',
-                    text: '여론 › 지지율에서 원마다 비례대표를 어떻게 나눌지 정합니다. 전국 단위(전국형)로 나눌지, 권역마다 나눌지(권역형)를 고르고, 지지율마다 오차 범위를 줄 수 있어요.',
+                    text: '여론 › 시민 지지율에서 원마다 비례대표를 어떻게 나눌지 정합니다. 전국 단위(전국형)로 나눌지, 권역마다 나눌지(권역형)를 고르고, 지지율마다 오차 범위를 줄 수 있어요.',
                 },
                 {
                     before: [go('vote', 'elecPresidential'), showPanel('controls')],
                     target: '#contentElecPresidential',
                     title: '대선',
-                    text: '선거 › 대선에서 대통령(총리직선제면 총리) 선거를 개표합니다. 방식(단순 다수 · 결선투표 · 선거인단)과 후보는 선거 › 방식에서 정해요.',
+                    text: '선거 › 대선에서 대통령(총리직선제면 총리) 선거를 개표합니다. 방식(단순 다수 · 결선투표 · 선거인단)은 선거 › 선거 제도, 후보는 선거 › 후보에서 정해요.',
                 },
                 {
                     before: [go('vote', 'elecRecord'), showPanel('controls')],
@@ -1010,7 +1010,7 @@
                     target: '#presElecModeElectoralBtn',
                     allow: ['#presElecModeElectoralBtn'],
                     title: '선거인단제 고르기',
-                    text: '대선을 국민 득표가 아니라 선거인단으로 치를 수 있어요. 선거 › 방식의 대선 방식에서 "선거인단제"를 눌러보세요.',
+                    text: '대선을 국민 득표가 아니라 선거인단으로 치를 수 있어요. 선거 › 선거 제도의 대선 방식에서 "선거인단제"를 눌러보세요.',
                     task: () => typeof presElectionMode !== 'undefined' && presElectionMode === 'electoral',
                     done: '선거인단제가 됐어요. 바로 아래에 선거인단 설정이 나타납니다.',
                 },
@@ -1049,23 +1049,23 @@
             summary: '여러 정당이 후보 한 명으로 · 대선과 지역구에 따로 적용',
             steps: [
                 {
-                    before: [closePanels, go('vote', 'elecSettings'), showPanel('controls')],
+                    before: [closePanels, go('vote', 'elecCandidates'), showPanel('controls')],
                     enter: () => { T.unionBase = unionList().length; },
                     target: unionSection,
                     title: '후보 단일화란?',
                     text: '선거 전에 여러 정당이 후보를 한 명으로 합치는 기능입니다. 참여 정당 중 지지가 가장 높은 정당이 후보를 내고, 나머지 정당의 지지를 모두 합쳐 받아요. 비례대표 투표는 단일화와 상관없이 각 정당이 따로 받습니다.',
                 },
                 {
-                    before: [go('vote', 'elecSettings'), showPanel('controls')],
-                    target: () => document.querySelector('#contentElecSettings button[onclick^="addCandidateUnion"]'),
-                    allow: ['#contentElecSettings button[onclick^="addCandidateUnion"]'],
+                    before: [go('vote', 'elecCandidates'), showPanel('controls')],
+                    target: () => document.querySelector('#contentElecCandidates button[onclick^="addCandidateUnion"]'),
+                    allow: ['#contentElecCandidates button[onclick^="addCandidateUnion"]'],
                     title: '단일화 만들기',
                     text: '"+ 단일화 추가"를 눌러 보세요.',
                     task: () => unionList().length > (T.unionBase || 0),
                     done: '빈 단일화가 생겼어요.',
                 },
                 {
-                    before: [go('vote', 'elecSettings'), showPanel('controls')],
+                    before: [go('vote', 'elecCandidates'), showPanel('controls')],
                     target: () => lastUnionCard() || unionSection(),
                     allow: () => [lastUnionCard() || '#candidateUnionList'],
                     title: '참여 정당 고르기',
@@ -1074,7 +1074,7 @@
                     done: '단일화가 적용됐어요.',
                 },
                 {
-                    before: [go('vote', 'elecSettings'), showPanel('controls')],
+                    before: [go('vote', 'elecCandidates'), showPanel('controls')],
                     target: () => lastUnionCard() || unionSection(),
                     title: '어디에 적용할까',
                     text: '"대선 · 총리 선거"를 켜면 기준 원 지지율이 가장 높은 정당이 단일 후보로 나서고, 결과에 "(A당 · B당 단일 후보)"로 표시돼요. "총선 지역구"를 켜면 지역구마다 성향이 가장 높은 참여 정당이 후보를 냅니다. 필요 없어지면 "단일화 해제"를 누르세요.',
@@ -1091,7 +1091,7 @@
                     before: [closePanels, go('vote', 'fraud'), showPanel('controls')],
                     target: '#contentFraud',
                     title: '부정선거 (⚠)',
-                    text: '선거 › ⚠에서는 정당별로 부정선거를 꾸밀 수 있습니다. 시도는 다음 총선 개표 한 번에만 적용되고, 들키면 큰 대가를 치러요.',
+                    text: '선거 › ⚠에서는 정당별로 부정선거를 꾸밀 수 있습니다 (메뉴에서 ⚠를 직접 누르면 몇 번 말리다가, 끝까지 들어가면 잠금이 풀려 "부정선거"로 이름이 드러나요). 시도는 다음 총선 개표 한 번에만 적용되고, 들키면 큰 대가를 치러요.',
                 },
                 {
                     before: [go('vote', 'fraud'), showPanel('controls')],
@@ -1140,7 +1140,7 @@
                     before: [go('cabinet', 'system'), showPanel('controls')],
                     target: byId('vetoHolderPresidentBtn', 'div'),
                     title: '거부권',
-                    text: '내각 › 내각 설정에서 법안 거부권을 누가 가질지(대통령 · 총리 · 내각 · 없음) 정합니다. 거부권이 있으면 입법 › 표결에서 통과된 법안을 거부할 수 있어요.',
+                    text: '내각 › 정부 형태 · 권한에서 법안 거부권을 누가 가질지(대통령 · 총리 · 내각 · 없음) 정합니다. 거부권이 있으면 입법 › 표결에서 통과된 법안을 거부할 수 있어요.',
                 },
                 {
                     before: [go('cabinet', 'council'), showPanel('controls')],

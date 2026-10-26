@@ -72,6 +72,21 @@
         }
         .save-tab-save:hover, .save-tab-save.active { color: var(--tno-neon); background: rgba(255,255,255,0.03); }
         .save-tab-save.active { box-shadow: inset 0 -2px 0 var(--tno-neon); }
+        /* ⚠ 탭 잠금 해제 연출 (js/main.js fraudTabClick) — 화면 위를 붉게 덮는 막. 확인창(z 100001)보다 아래, 클릭은 통과 */
+        #fraudVeil { --red: 0; --beat: 1.6s; position: fixed; inset: 0; z-index: 100000; pointer-events: none; display: none;
+            background: radial-gradient(ellipse at center, rgba(120,0,0,calc(var(--red) * .55)) 0%, rgba(160,0,0,var(--red)) 75%, rgba(90,0,0,calc(var(--red) + .1)) 100%);
+            transition: background .9s ease; }
+        #fraudVeil.on { display: block; }
+        #fraudVeil .fraud-veil-pulse { position: absolute; inset: 0; background: rgba(200,0,0,calc(var(--red) * .45)); animation: fraudBeat var(--beat) ease-in-out infinite; }
+        #fraudVeil .fraud-veil-text { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%) scale(.9); opacity: 0; color: #fff;
+            font-size: clamp(2rem, 7vw, 4.5rem); font-weight: 800; letter-spacing: .3em; text-shadow: 0 0 18px #f00, 0 0 40px #900; white-space: nowrap; }
+        #fraudVeil.final .fraud-veil-text { animation: fraudText 1.4s ease-out forwards; }
+        #fraudVeil.fade { transition: background 1.1s ease, opacity 1.1s ease; opacity: 0; }
+        @keyframes fraudBeat { 0%, 100% { opacity: .15; } 18% { opacity: 1; } 32% { opacity: .35; } 46% { opacity: .9; } }
+        @keyframes fraudText { 0% { opacity: 0; transform: translate(-50%, -50%) scale(1.4); } 25% { opacity: 1; transform: translate(-50%, -50%) scale(1); } 40% { opacity: .2; } 55% { opacity: 1; } 100% { opacity: 1; } }
+        body.fraud-shake { animation: fraudShake .45s linear 3; }
+        @keyframes fraudShake { 0%, 100% { transform: translate(0, 0); } 20% { transform: translate(-6px, 2px); } 40% { transform: translate(5px, -3px); } 60% { transform: translate(-4px, -2px); } 80% { transform: translate(4px, 3px); } }
+        @media (prefers-reduced-motion: reduce) { #fraudVeil .fraud-veil-pulse, body.fraud-shake, #fraudVeil.final .fraud-veil-text { animation: none; } #fraudVeil.final .fraud-veil-text { opacity: 1; } }
         /* 설정 창 (탭 바 "설정" 버튼 — settings.html을 iframe으로) */
         .settings-frame-overlay { position: fixed; inset: 0; z-index: 9000; background: rgba(0,0,0,.6); display: flex; align-items: center; justify-content: center; padding: 24px; box-sizing: border-box; }
         .settings-frame-box { position: relative; width: min(1100px, 100%); height: min(820px, 100%); background: #000; border: 1px solid var(--tno-border); box-shadow: 0 0 24px rgba(0,0,0,.6); }
