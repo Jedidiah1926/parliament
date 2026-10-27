@@ -1665,10 +1665,9 @@
             <div class="t69-card"><div class="t69-card-h">자산</div>
                 ${assets.map(a => defRowHtml('asset', a, `${(E.assets[a.id] ?? 50).toFixed(0)}점 · 감가 ${Math.round(a.decay * 100)}%/년 · ${Object.entries(a.effects || {}).map(([k, v]) => `${esc(EFFECT_TARGETS[k] || assets.find(x => x.id === k)?.name || k)} ${sgn(v, 2)}`).join(' · ') || '효과 없음'}`, assets, targets)).join('')}
                 ${hiddenDefsHtml('asset')}</div>
-            <details class="t69-card"><summary>정당 태그 선호 <span class="t69-dim">— 예상 표결에 쓰임 (비우면 이념에서 자동)</span></summary>
-                <div class="t69-tablewrap2"><table class="t69-mini"><thead><tr><th>정당</th>${TAGS.map(t => `<th>${t}</th>`).join('')}</tr></thead><tbody>
-                ${plist.map(p => { const pr = partyPrefs(p), own = E.tagPrefs[p.id] || {}; return `<tr data-pid="${esc(p.id)}"><td><i class="t69-pdot" style="background:${esc(p.color)}"></i>${esc(p.name)}</td>${TAGS.map(t => `<td><input type="number" step="0.1" min="-2" max="2" data-tag="${t}" value="${own[t] != null ? own[t] : ''}" placeholder="${pr[t].toFixed(1)}" class="t69-tagin"></td>`).join('')}</tr>`; }).join('')}
-                </tbody></table></div></details>`;
+            <div class="t69-card"><div class="t69-card-h">정당 태그 선호</div>
+                <div class="t69-dim">정당마다 태그(${TAGS.join(' · ')})를 얼마나 좋아하는지 — 예산안 예상 표결에 쓰입니다. 표가 넓어서 오른쪽 시각 화면의 "태그 선호" 탭에서 고칩니다.</div>
+                <button type="button" class="t69-btn t69-primary" data-act="open-tagprefs" style="margin-top:6px;">태그 선호 화면 열기 →</button></div>`;
         const nd = box.querySelector('.t69-newdef');
         nd.querySelector('[data-n="asset"]').onchange = e => { box.querySelector('.t69-newasset').hidden = e.target.value !== '__new'; };
         box.querySelector('[data-act="add-item"]').onclick = () => {
@@ -1717,13 +1716,7 @@
             bindEffDel();
         });
         box.querySelectorAll('[data-def-restore]').forEach(b => { b.onclick = () => { const [kind, ...rest] = b.dataset.defRestore.split(':'); restoreDef(kind, rest.join(':'), false); }; });
-        box.querySelectorAll('tr[data-pid] .t69-tagin').forEach(inp => inp.addEventListener('change', () => {
-            const pid = inp.closest('tr').dataset.pid, t = inp.dataset.tag, raw = inp.value.trim();
-            const key = (parties.find(p => String(p.id) === pid) || {}).id ?? pid;
-            E.tagPrefs[key] = E.tagPrefs[key] || {};
-            if (raw === '') delete E.tagPrefs[key][t]; else E.tagPrefs[key][t] = num(raw, 0, -2, 2);
-            renderTab('fiscal');
-        }));
+        box.querySelector('[data-act="open-tagprefs"]').onclick = showTagPrefs;
     }
 
     // ================= 오른쪽 시각 화면 "경제" =================
@@ -1736,6 +1729,50 @@
         ref.parentElement.insertBefore(el(`<div class="disp-panel" id="dispPanelEconomy"><div class="chamber-box t69-dispbox t69-viz">
             <div class="t69-toolbar" id="t69Toolbar"></div><div id="t69Disp"></div></div></div>`), ref.nextSibling);
     })();
+    // ---- 오른쪽 시각 화면 "태그 선호" — 정당 × 태그 표 (가로로 넓어서 왼쪽 항목 탭 대신 여기서 고친다) ----
+    (function addTagPrefsDisp() {
+        const after = document.getElementById('dispTabEconomy');
+        const ref = document.getElementById('dispPanelEconomy');
+        if (!after || !ref) return;
+        after.parentElement.insertBefore(el(`<button class="disp-tab-btn" id="dispTabTagprefs" data-tab="tagprefs" onclick="switchDispTab('tagprefs')" style="display:none;"><span class="disp-tab-label">태그 선호</span><span class="disp-tab-close" onclick="event.stopPropagation();closeDispTab('tagprefs')">×</span></button>`), after.nextSibling);
+        ref.parentElement.insertBefore(el(`<div class="disp-panel" id="dispPanelTagprefs"><div class="chamber-box t69-dispbox t69-viz"><div id="t69TagPrefs"></div></div></div>`), ref.nextSibling);
+    })();
+    function showTagPrefs() {
+        const btn = document.getElementById('dispTabTagprefs');
+        if (btn) btn.style.display = '';
+        try { switchDispTab('tagprefs'); } catch (e) { /* 시각 화면 없음 */ }
+        renderTagPrefs();
+    }
+    const prefColor = v => (v > 0 ? `color-mix(in srgb, var(--success, #2ecc71) ${Math.round(Math.min(1, v / 2) * 55)}%, transparent)` : v < 0 ? `color-mix(in srgb, var(--critical, #e74c3c) ${Math.round(Math.min(1, -v / 2) * 55)}%, transparent)` : 'transparent');
+    function renderTagPrefs(focus) {
+        const box = document.getElementById('t69TagPrefs');
+        if (!box) return;
+        const plist = (parties || []).filter(p => p.status !== 'banned' && p.ideologyId !== 9999);
+        box.innerHTML = `
+            <div class="t69-tp-head"><b>정당 태그 선호</b><span class="t69-dim">−2 싫어함 · 0 무관 · +2 좋아함 — 비운 칸은 이념에서 자동(흐린 숫자). 의원은 지출 항목의 태그로 예산안 찬반을 정합니다.</span></div>
+            <div class="t69-tp-wrap"><table class="t69-tp"><thead><tr><th>정당</th>${TAGS.map(t => `<th>${esc(t)}</th>`).join('')}<th></th></tr></thead><tbody>
+            ${plist.map(p => { const pr = partyPrefs(p), own = E.tagPrefs[p.id] || {}; return `<tr data-pid="${esc(p.id)}"><td class="t69-tp-name"><i class="t69-pdot" style="background:${esc(p.color)}"></i>${esc(p.name)}</td>${TAGS.map(t => {
+                const v = pr[t], set = own[t] != null;
+                return `<td style="background:${prefColor(v)}"><input type="number" step="0.1" min="-2" max="2" data-tag="${esc(t)}" value="${set ? own[t] : ''}" placeholder="${v.toFixed(1)}" class="t69-tagin${set ? ' set' : ''}"></td>`;
+            }).join('')}<td>${Object.keys(own).length ? '<button type="button" class="t69-x" data-tp-reset title="이 정당을 이념 자동으로">↺</button>' : ''}</td></tr>`; }).join('')}
+            </tbody></table></div>`;
+        box.querySelectorAll('tr[data-pid] .t69-tagin').forEach(inp => inp.addEventListener('change', () => {
+            const pid = inp.closest('tr').dataset.pid, t = inp.dataset.tag, raw = inp.value.trim();
+            const key = (parties.find(p => String(p.id) === pid) || {}).id ?? pid;
+            E.tagPrefs[key] = E.tagPrefs[key] || {};
+            if (raw === '') delete E.tagPrefs[key][t]; else E.tagPrefs[key][t] = num(raw, 0, -2, 2);
+            if (!Object.keys(E.tagPrefs[key]).length) delete E.tagPrefs[key];
+            renderTagPrefs(`${pid}|${t}`); renderTab('fiscal');
+        }));
+        box.querySelectorAll('[data-tp-reset]').forEach(b => { b.onclick = () => { const pid = b.closest('tr').dataset.pid; const key = (parties.find(p => String(p.id) === pid) || {}).id ?? pid; delete E.tagPrefs[key]; renderTagPrefs(); renderTab('fiscal'); }; });
+        // 값을 바꾼 뒤 Tab으로 다음 칸에 갈 수 있게 다음 칸에 포커스
+        if (focus) {
+            const [pid, t] = focus.split('|');
+            const inputs = [...box.querySelectorAll('.t69-tagin')];
+            const i = inputs.findIndex(x => x.closest('tr').dataset.pid === pid && x.dataset.tag === t);
+            if (i >= 0 && document.activeElement === document.body && inputs[i + 1]) inputs[i + 1].focus();
+        }
+    }
     const dispActive = () => !!document.getElementById('dispPanelEconomy')?.classList.contains('active');
     function showDisp(view) {
         if (view) E.ui.view = view;
@@ -1748,6 +1785,7 @@
     window.switchDispTab = function (tab) {
         const r = origDisp.apply(this, arguments);
         if (tab === 'economy') setTimeout(renderDisp, 20);
+        if (tab === 'tagprefs') setTimeout(() => renderTagPrefs(), 20);
         return r;
     };
     function toggleFull(on) {
@@ -2426,6 +2464,16 @@
         .t69-effs { margin-top: 8px; display: flex; flex-direction: column; gap: 4px; font-size: .72rem; }
         .t69-effrow { display: flex; gap: 6px; align-items: center; } .t69-effrow select { flex: 1; min-width: 0; } .t69-effrow input { width: 80px; } .t69-effrow .t69-x { margin-left: 0; }
         .t69-effs > .t69-btn { align-self: flex-start; }
+        .t69-tp-head { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; font-size: .85rem; color: var(--t69-text); }
+        .t69-tp-head .t69-dim { font-size: .72rem; line-height: 1.5; }
+        .t69-tp-wrap { overflow-x: auto; }
+        .t69-tp { width: 100%; border-collapse: collapse; font-size: .78rem; }
+        .t69-tp th { font-weight: normal; color: var(--t69-dim2); padding: 4px; text-align: center; white-space: nowrap; }
+        .t69-tp td { padding: 3px; border-top: 1px solid var(--t69-line); text-align: center; }
+        .t69-tp .t69-tp-name { text-align: left; white-space: nowrap; color: var(--t69-text); padding-right: 8px; }
+        .t69-tp .t69-tagin { width: 100%; min-width: 46px; max-width: 64px; box-sizing: border-box; text-align: center; background: transparent; border: 1px solid var(--t69-line); color: var(--t69-text); font-family: inherit; padding: 4px 2px; }
+        .t69-tp .t69-tagin.set { font-weight: bold; border-color: var(--t69-acc); }
+        .t69-tp .t69-tagin::placeholder { color: var(--t69-dim2); opacity: .8; }
         .t69-hidden-defs { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 8px; font-size: .72rem; }
         .t69-tablewrap2 { overflow-x: auto; } .t69-tagin { width: 48px; }
         /* 오른쪽 시각 화면 */
