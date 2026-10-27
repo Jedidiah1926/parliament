@@ -774,6 +774,11 @@ window.DnoLangPacks.en = {
   }
  ],
  "dict": [
+    ["득표율 부풀리기", "Vote-share inflation"],
+    ["거래 체결됨", "Deal struck"],
+    ["거래 시작", "Open a deal"],
+    ["다음 총선 개표 1회에 적용", "Applies to the next election count only"],
+    ["> BLACK BALLOT // 의뢰 접수", "> BLACK BALLOT // contract intake"],
     ["검은 투표함 — 표 중개 · 개표 조정 · 흔적 정리", "Black Ballot — vote brokering · count adjustment · trace cleanup"],
     ["이 페이지는 존재하지 않습니다. 당신은 아무것도 보지 않았습니다.", "This page does not exist. You saw nothing."],
     ["🔒 3홉 회로 · 추적 불가", "🔒 3-hop circuit · untraceable"],

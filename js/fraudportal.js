@@ -122,11 +122,52 @@
     if (typeof origFraud === 'function') window.renderFraudTab = function () { const r = origFraud.apply(this, arguments); render(); return r; };
     const origDisp = window.switchDispTab;
     if (typeof origDisp === 'function') window.switchDispTab = function (tab) { const r = origDisp.apply(this, arguments); if (tab === 'fraud') render(); return r; };
+    // 지역구 선택은 왼쪽 목록을 다시 그리지 않으므로 포털만 따로 갱신
+    const origRig = window.updateFraudRiggedDistricts;
+    if (typeof origRig === 'function') window.updateFraudRiggedDistricts = function () { const r = origRig.apply(this, arguments); render(); return r; };
     window.HemiFraudPortal = { render, get ledger() { return ledger; } };
 
     const style = document.createElement('style');
     style.textContent = `
         #dispPanelFraud.active { background: #050706; }
+        /* 왼쪽 부정선거 탭 — 오른쪽 포털과 같은 음지 화면 (모든 테마) */
+        #contentFraud { --fp-bg: #050706; --fp-ink: #8dffb0; --fp-dim: #3e6b4c; --fp-line: #12301c; --fp-red: #ff2e4d; --fp-amber: #ffb02e;
+            background: var(--fp-bg); color: var(--fp-ink); border: 1px solid var(--fp-line); padding: 10px; position: relative; box-shadow: inset 0 0 40px rgba(0,0,0,.9); }
+        #contentFraud.active { display: block; }
+        #contentFraud::before { content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 2; background: repeating-linear-gradient(0deg, rgba(0,0,0,.3) 0 1px, transparent 1px 3px); }
+        #contentFraud, #contentFraud * { font-family: 'NeoDunggeunmo', 'VT323', Consolas, monospace !important; }
+        #contentFraud .fl-intro { color: var(--fp-dim); font-size: .74rem; line-height: 1.55; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px dashed var(--fp-line); }
+        #contentFraud .fl-intro-h { color: #d8ffe3; font-size: .86rem; letter-spacing: 2px; margin-bottom: 4px; text-shadow: 0 0 6px rgba(141,255,176,.45); }
+        #contentFraud .fl-cursor { animation: fp-blink 1s infinite steps(1); }
+        #contentFraud .fl-card { border: 1px solid var(--fp-line); border-left: 3px solid var(--fp-dim); background: rgba(10,20,13,.8); padding: 8px; margin-bottom: 8px; }
+        #contentFraud .fl-card:has(.fl-deal.on) { border-left-color: var(--fp-red); }
+        #contentFraud .fl-head { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+        #contentFraud .fl-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--pc); box-shadow: 0 0 6px var(--pc); flex-shrink: 0; }
+        #contentFraud .fl-name { color: #d8ffe3; font-size: .88rem; }
+        #contentFraud .fl-deal { padding: 6px 8px; border: 1px dashed var(--fp-line); background: #070b08; }
+        #contentFraud .fl-deal.on { border: 1px solid rgba(255,46,77,.4); background: rgba(255,46,77,.04); }
+        #contentFraud .fl-toggle { display: flex; align-items: center; gap: 8px; cursor: pointer; color: var(--fp-ink); font-size: .82rem; }
+        #contentFraud .fl-deal.on .fl-toggle { color: var(--fp-red); margin-bottom: 8px; }
+        #contentFraud .fl-toggle small { display: block; font-size: .64rem; color: var(--fp-dim); }
+        #contentFraud .fl-fields { display: flex; flex-direction: column; gap: 6px; }
+        #contentFraud .fl-row { display: flex; align-items: center; gap: 6px; }
+        #contentFraud .fl-k { color: var(--fp-dim); font-size: .72rem; width: 100px; flex-shrink: 0; }
+        #contentFraud div > .fl-k { width: auto; display: block; }
+        #contentFraud .fl-u { color: var(--fp-dim); font-size: .72rem; flex-shrink: 0; }
+        #contentFraud .fl-in { flex: 1; min-width: 0; background: #020302 !important; color: var(--fp-ink) !important; border: 1px solid var(--fp-line) !important; border-radius: 0 !important; box-shadow: none !important; }
+        #contentFraud .fl-in:focus { border-color: var(--fp-ink) !important; outline: none; }
+        #contentFraud .fl-in:disabled { opacity: .45; }
+        #contentFraud .fl-in option { background: #020302; color: var(--fp-ink); }
+        #contentFraud .fl-in option:checked { background: var(--fp-red); color: #fff; }
+        #contentFraud .fl-multi { width: 100%; box-sizing: border-box; height: 96px; margin-top: 4px; }
+        #contentFraud .fl-manual { display: flex; align-items: center; gap: 3px; color: var(--fp-dim); font-size: .68rem; flex-shrink: 0; cursor: pointer; white-space: nowrap; }
+        #contentFraud .fl-note { color: var(--fp-dim); font-size: .66rem; margin-left: 106px; }
+        #contentFraud .fl-fine { color: #7a3a44; font-size: .66rem; line-height: 1.5; border-top: 1px dashed var(--fp-line); padding-top: 6px; }
+        #contentFraud .fl-empty { color: var(--fp-dim); font-size: .76rem; }
+        #contentFraud input[type=checkbox] { accent-color: var(--fp-red); }
+        #contentFraud input[type=checkbox]:not(:checked) { background-color: #020302 !important; border-color: var(--fp-dim) !important; }
+        /* 부정선거 탭에서는 국기를 내린다 — 음지에서 국가의 얼굴은 보이지 않게 */
+        .controls:has(#mainContentVote.active #contentFraud.active) #nationFlagBanner { display: none !important; }
         #dispPanelFraud { --fp-bg: #050706; --fp-ink: #8dffb0; --fp-dim: #3e6b4c; --fp-line: #12301c; --fp-red: #ff2e4d; --fp-amber: #ffb02e; }
         .fp, .fp * { font-family: 'NeoDunggeunmo', 'VT323', Consolas, monospace !important; }
         .fp { background: var(--fp-bg); color: var(--fp-ink); padding: 0 0 14px; min-height: 100%; position: relative; overflow: hidden;
