@@ -138,11 +138,13 @@
         .fp-url { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #6fbf86; }
         .fp-sec { white-space: nowrap; }
         .fp-hero { text-align: center; padding: 18px 12px 10px; border-bottom: 1px dashed var(--fp-line); }
-        .fp-logo { position: relative; display: inline-block; font-size: 1.9rem; letter-spacing: 6px; color: #d8ffe3; text-shadow: 0 0 8px rgba(141,255,176,.55); }
-        .fp-logo::before, .fp-logo::after { content: attr(data-text); position: absolute; left: 0; top: 0; width: 100%; overflow: hidden; }
-        .fp-logo::before { color: var(--fp-red); transform: translate(2px, 0); clip-path: inset(0 0 62% 0); animation: fp-glitch 3.2s infinite steps(1); opacity: .8; }
-        .fp-logo::after { color: #39f; transform: translate(-2px, 0); clip-path: inset(58% 0 0 0); animation: fp-glitch 2.7s infinite steps(1) reverse; opacity: .7; }
-        @keyframes fp-glitch { 0%, 88%, 100% { transform: translate(0, 0); } 90% { transform: translate(3px, -1px); } 93% { transform: translate(-3px, 1px); } 96% { transform: translate(2px, 0); } }
+        .fp-logo { position: relative; z-index: 0; display: inline-block; font-size: 1.9rem; letter-spacing: 6px; color: #d8ffe3; text-shadow: 0 0 8px rgba(141,255,176,.55); }
+        /* 색수차 — 빨강은 왼쪽 위, 파랑은 오른쪽 아래로 글자 전체를 비껴서 글자 뒤에 깐다. 가끔 가로로 찢어지는 글리치 */
+        .fp-logo::before, .fp-logo::after { content: attr(data-text); position: absolute; left: 0; top: 0; width: 100%; z-index: -1; text-shadow: none; mix-blend-mode: screen; }
+        .fp-logo::before { color: var(--fp-red); transform: translate(-2px, -2px); animation: fp-glitch-r 3.2s infinite steps(1); }
+        .fp-logo::after { color: #39f; transform: translate(2px, 2px); animation: fp-glitch-b 2.7s infinite steps(1); }
+        @keyframes fp-glitch-r { 0%, 88%, 100% { transform: translate(-2px, -2px); clip-path: none; } 90% { transform: translate(-6px, -2px); clip-path: inset(15% 0 55% 0); } 93% { transform: translate(-1px, -3px); clip-path: inset(60% 0 8% 0); } 96% { transform: translate(-4px, -1px); clip-path: none; } }
+        @keyframes fp-glitch-b { 0%, 86%, 100% { transform: translate(2px, 2px); clip-path: none; } 89% { transform: translate(6px, 2px); clip-path: inset(50% 0 20% 0); } 92% { transform: translate(1px, 3px); clip-path: inset(5% 0 65% 0); } 95% { transform: translate(4px, 1px); clip-path: none; } }
         @media (prefers-reduced-motion: reduce) { .fp-logo::before, .fp-logo::after, .fp-cursor { animation: none; } }
         .fp-sub { font-size: .78rem; color: #6fbf86; margin-top: 6px; letter-spacing: 1px; }
         .fp-warn { display: inline-block; margin-top: 10px; font-size: .7rem; color: var(--fp-red); border: 1px solid rgba(255,46,77,.45); padding: 3px 8px; background: rgba(255,46,77,.06); }
