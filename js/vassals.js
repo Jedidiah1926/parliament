@@ -1,8 +1,7 @@
-// ===== Hemicycle 티저 1.6.8 (teaser68) — 다음 업데이트 기능 미리 써 보기 =====
-// teaser68.html은 main.html을 그대로 복사한 화면에 이 파일 하나를 더 불러 미리보기 기능을 얹는다.
-// (저장 공간은 본 게임과 따로 — main.js의 LS_PREFIX 'hemicycleTeaserV2-68:')
+// ===== 1.6.8 — 갈라질 수도 없고 분리될 수도 없다 "Indivisibiliter ac inseparabiliter" (종속국 · 종속국 의회 · 합병 · 해방 · 지방선거 연대) =====
+// 1.6.8 미리보기(예전 teaser68)에서 본 게임으로 옮겨 왔다 — 본 게임 · 모든 미리보기 화면에서 돈다 (로고 제작 화면만 빼고).
+// main.html은 js/unrecovered.js 다음에 이 파일을 읽는다.
 //
-// 1.6.8 "갈라질 수도 없고 분리될 수도 없다" 미리보기 — 종속국 · 종속국 의회 · 합병 · 해방
 //   - 국가 › 종속국 탭을 새로 둔다. 종속국을 여러 개 만들고(이름 · 색 · 형태 — 보호국 · 괴뢰국 · 자치령 …),
 //     종속 형태는 기본 목록(보호국 · 보호령 · 동군연합 …)에 더해 직접 추가 · 이름 바꾸기 · 지우기가 된다. "칠하기"로 지도에서 지역구를 차례로 눌러 그 종속국 땅으로 정한다. 종속국 땅은 모든 지도에서 그 나라 색 점무늬로 따로 보이고
 //     (미수복 지역의 빗금과 다르게), 본국의 지역구 선거 · 지방선거 · 국민투표에서 빠진다 (그 지역구 의석은 지역구 의석 수에서 빠짐)
@@ -18,7 +17,7 @@
    switchSubTab, switchMainTab, switchDispTab, districtUpdateModeUI, districtInitCanvas, currentMainTab, currentSubTab, districtOrderSync */
 (function () {
     'use strict';
-    if (document.documentElement.getAttribute('data-app-mode') !== 'teaser' || !['68', '69'].includes(document.documentElement.getAttribute('data-teaser') || '68')) return;
+    if (document.documentElement.getAttribute('data-app-mode') === 'logo') return;
 
     // vassals = [{ id, name, color, kind, parliament: { name, seats, threshold, parties:[{ id, name, color, support, seats }], elections, shares } }]
     // vassalOf = { 지역구 키: 종속국 id }
@@ -72,13 +71,15 @@
         while (list.some(v => v.id === prefix + n)) n++;
         return prefix + n;
     }
+    // 세이브에 든 이름은 번역하지 않으므로, 영어 화면이면 새로 만드는 기본 이름도 영어로
+    const enUI = () => typeof window.getLang === 'function' && window.getLang() === 'en';
     function freshParliament() {
-        return { name: '의회', seats: 60, threshold: 5, parties: [], elections: 0, shares: {} };
+        return { name: enUI() ? 'Parliament' : '의회', seats: 60, threshold: 5, parties: [], elections: 0, shares: {} };
     }
     function addVassal(name) {
         const id = newId('v', vassals.concat(liberated));
         const n = Number(id.slice(1));
-        const v = { id, name: name || `종속국 ${n}`, color: PALETTE[(n - 1) % PALETTE.length], kind: defaultKind(), parliament: freshParliament() };
+        const v = { id, name: name || (enUI() ? `Dependency ${n}` : `종속국 ${n}`), color: PALETTE[(n - 1) % PALETTE.length], kind: defaultKind(), parliament: freshParliament() };
         vassals.push(v);
         return v;
     }
@@ -112,12 +113,12 @@
         brush = null;
     }
 
-    // ---- 저장 · 불러오기: 세이브에 teaser68 칸으로 ----
+    // ---- 저장 · 불러오기: 세이브의 vassals 칸 (1.6.8 미리보기 세이브는 teaser68 칸) ----
     const origGet = window.getAppState;
     window.getAppState = function () {
         const st = origGet.apply(this, arguments);
         if (st && typeof st === 'object') {
-            st.teaser68 = {
+            st.vassals = {
                 vassals: vassals.map(v => ({ ...v, parliament: { ...v.parliament, parties: v.parliament.parties.map(p => ({ ...p })), shares: { ...v.parliament.shares } } })),
                 kinds: kinds.slice(), vassalOf: { ...vassalOf }, liberated: liberated.map(v => ({ ...v })), liberatedOf: { ...liberatedOf },
             };
@@ -127,7 +128,7 @@
     const origSet = window.setAppState;
     window.setAppState = function (state) {
         const r = origSet.apply(this, arguments);
-        loadTeaserState(state && state.teaser68);
+        loadTeaserState(state && (state.vassals || state.teaser68));
         refreshUI();
         return r;
     };
@@ -542,7 +543,7 @@
             act('annex', () => annexVassal(id));
             act('liberate', () => liberateVassal(id));
             act('del', () => removeVassal(id));
-            act('addparty', () => { P.parties.push(cleanParty({ id: newId('p', P.parties), name: `정당 ${P.parties.length + 1}`, support: 10 }, P.parties.length)); renderVassalTab(); });
+            act('addparty', () => { P.parties.push(cleanParty({ id: newId('p', P.parties), name: enUI() ? `Party ${P.parties.length + 1}` : `정당 ${P.parties.length + 1}`, support: 10 }, P.parties.length)); renderVassalTab(); });
             act('import', () => importHomeParties(v));
             act('elect', () => runElection(v));
             card.querySelector('.t68-name').addEventListener('change', e => { v.name = e.target.value.trim() || v.name; refreshUI(); });
@@ -687,7 +688,7 @@
     window.addEventListener('load', () => setTimeout(refreshUI, 0));
 })();
 
-// ===== 1.6.8 미리보기 — 지방선거 연대 · 단일후보 · 예비선거 =====
+// ===== 1.6.8 — 지방선거 연대 · 단일후보 · 예비선거 =====
 // 선거 › 지방선거에서 여러 정당이 연대해 권역 · 지역구마다 단일후보를 낸다 (총선 지역구 단일화와 따로 정함).
 //   단일후보 정하기: "예비선거" — 그 단위의 연대 정당 지지(지역 지지)와 일반 유권자 여론조사(유동층 — 정당의 전국 지지율 × 친화도)를
 //     정한 비율로 섞어 경선 득표율을 내고 1위가 후보 / "지지율 최고" — 그 단위에서 연대 안 지지율이 가장 높은 정당
@@ -697,7 +698,7 @@
 /* global parties, elecStore, getAppState, setAppState, escapeHtmlText, showCustomConfirm */
 (function () {
     'use strict';
-    if (document.documentElement.getAttribute('data-app-mode') !== 'teaser' || !['68', '69'].includes(document.documentElement.getAttribute('data-teaser') || '68')) return;
+    if (document.documentElement.getAttribute('data-app-mode') === 'logo') return;
 
     const esc = s => (typeof escapeHtmlText === 'function' ? escapeHtmlText(String(s ?? '')) : String(s ?? ''));
     const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -773,7 +774,7 @@
         const swingPct = num(elecStore?.[hostCh]?.__swing__?.prob, 0);
         host.innerHTML = `
             <div class="la-box">
-                <div class="la-head"><span>🤝 지방선거 연대 · 단일후보</span> <span class="la-badge">1.6.8 미리보기</span></div>
+                <div class="la-head"><span>🤝 지방선거 연대 · 단일후보</span></div>
                 <div class="pv-dim pv-small">연대한 정당은 권역 · 지역구마다 한 명만 내보냅니다. 연대를 하나라도 정하면 지방선거에는 총선 지역구 단일화(선거 › 후보) 대신 이 연대가 쓰여요.</div>
                 ${alliances.map(a => `
                 <div class="la-card" data-id="${esc(a.id)}">
