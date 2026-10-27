@@ -1,5 +1,5 @@
 // ===== Hemicycle 티저 1.6.9 (teaser69) — 보이지 않는 손 "Invisible hand" — 경제 시스템 =====
-// teaser69.html은 main.html에 1.6.1 ~ 1.6.8 미리보기와 이 파일(+ 그래프 js/teaser69charts.js)을 얹는다.
+// teaser69.html은 main.html에 1.6.7 ~ 1.6.8 미리보기와 이 파일(+ 그래프 js/teaser69charts.js)을 얹는다.
 // (저장 공간은 본 게임과 따로 — main.js의 LS_PREFIX 'hemicycleTeaserV2-69:')
 //
 // 샌드박스 원칙 — 경제는 결과를 강제하지 않고 계산 · 표시 · 제안한다. 모든 수치는 직접 고칠 수 있고, 계산은 날짜가 넘어갈 때만 돈다.
@@ -1878,7 +1878,8 @@
     const CHIP_VARS = ['growth', 'infl', 'unemp', 'rate', 'yield'];
     function renderToolbar() {
         const tb = document.getElementById('t69Toolbar'); if (!tb) return;
-        tb.innerHTML = `<span class="t69-seg">${[['overview', '개요'], ['analysis', '분석'], ['region', '지역']].map(([k, l]) => `<button type="button" data-view="${k}" class="${E.ui.view === k ? 'on' : ''}">${l}</button>`).join('')}</span>
+        // 경제권(1.7.1) 자리 — 아직 없는 화면이라 잠긴 버튼으로만
+        tb.innerHTML = `<span class="t69-seg">${[['overview', '개요'], ['analysis', '분석'], ['region', '지역']].map(([k, l]) => `<button type="button" data-view="${k}" class="${E.ui.view === k ? 'on' : ''}">${l}</button>`).join('')}<button type="button" class="t69-locked" data-locked-view aria-disabled="true" title="경제권 — 1.7.1에서 열림">🔒 경제권</button></span>
             ${E.ui.view === 'analysis' ? `<span class="t69-dim">${esc(E.ui.preset === 'custom' ? '직접 고른 배치' : PRESET_MODS[E.ui.preset]?.name || '')}</span>` : ''}
             <span class="t69-seg">${RANGES.map(([k, l]) => `<button type="button" data-range="${k}" class="${String(E.ui.range) === k && !E.ui.zoom ? 'on' : ''}">${l}</button>`).join('')}</span>
             ${E.ui.zoom ? '<button type="button" class="t69-btn t69-sm" data-act="unzoom">확대 해제</button>' : ''}
@@ -1886,6 +1887,7 @@
             <button type="button" class="t69-btn t69-sm" data-act="csv" title="모든 시점 · 지표 표를 CSV로">CSV</button>
             <button type="button" class="t69-btn t69-sm" data-act="full" title="크게 보기 (Esc로 복귀)">${E.ui.full ? '⤡ 작게' : '⛶ 크게'}</button>`;
         tb.querySelectorAll('[data-view]').forEach(b => { b.onclick = () => { E.ui.view = b.dataset.view; renderDisp(); }; });
+        tb.querySelector('[data-locked-view]').onclick = () => showCustomAlert('🔒 "경제권"은(는) 1.7.1 업데이트에서 열리는 기능입니다. 여러 나라를 묶어 경제권(관세 동맹 · 공동시장 · 통화 동맹 …)을 정하고 경제에 반영해요.');
         tb.querySelectorAll('[data-range]').forEach(b => { b.onclick = () => { E.ui.range = b.dataset.range; E.ui.zoom = null; renderDisp(); if (curSub() === 'analysis') renderTab('analysis'); }; });
         tb.querySelector('[data-act="unzoom"]')?.addEventListener('click', () => { E.ui.zoom = null; renderDisp(); });
         tb.querySelector('[data-act="csv"]').onclick = () => C.csv(tableSpec());
@@ -2481,6 +2483,7 @@
         html[data-theme-family="modern"] .t69-seg { border-radius: 8px; overflow: hidden; }
         .t69-seg button { cursor: pointer; font-family: inherit; font-size: .74rem; padding: 4px 10px; background: transparent; border: none; color: var(--t69-dim2, var(--t69-muted)); }
         .t69-seg button.on { background: var(--t69-acc, var(--s1)); color: var(--t69-acc-ink, #fff); }
+        .t69-seg button.t69-locked { opacity: .45; cursor: not-allowed; border-left: 1px dashed var(--t69-line, var(--t69-axis)); }
         .t69-dlist { display: flex; flex-direction: column; gap: 4px; }
         .t69-dist { border: 1px solid var(--t69-line); padding: 6px 8px; }
         html[data-theme-family="modern"] .t69-dist { border-radius: 8px; }

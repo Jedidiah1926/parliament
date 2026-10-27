@@ -25,7 +25,7 @@
     const FULL_MENU = {
         groups: [
             { key: 'economy', icon: '💹', label: '경제', ver: '1.6.9', after: 'nation' },
-            { key: 'world', icon: '🌐', label: '세계', ver: '1.6.5', after: 'economy', items: [['subTabRanking', '국가 순위'], ['subTabBlocs', '진영']] },
+            { key: 'world', icon: '🌐', label: '세계', ver: '1.6.5', after: 'economy', items: [['subTabRanking', '국가 순위'], ['subTabBlocs', '진영'], ['subTabEconblocs', '경제권']] },
         ],
         items: [
             { main: 'setup', id: 'subTabTimeline', label: '세력 변화', ver: '1.6.5', after: 'subTabList' },
@@ -37,6 +37,7 @@
             { main: 'cabinet', id: 'subTabRoyal', label: '왕실', ver: '1.6.6', after: 'subTabRevolution' },
             { main: 'nation', id: 'subTabPeople', label: '사람', ver: '1.6.1', after: 'subTabRegions' },
             { main: 'nation', id: 'subTabUnrecovered', label: '미수복', ver: '1.6.7', after: 'subTabPeople' },
+            { main: 'world', id: 'subTabEconblocs', label: '경제권', ver: '1.7.1', after: 'subTabBlocs' },
             { main: 'nation', id: 'subTabVassals', label: '종속국', ver: '1.6.8', after: 'subTabUnrecovered' },
         ],
     };
@@ -44,7 +45,7 @@
         + '<path d="M5.2 7V5a2.8 2.8 0 0 1 5.6 0v2" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>';
     // 잠긴 기능을 누르면 — 개발자 모드면 그 기능이 있는 Teaser 화면으로 갈지 묻고, 아니면 언제 열리는지 알려 준다
     function lockedInfo(label, ver) {
-        const page = { '1.6.6': '66', '1.6.7': '67', '1.6.8': '68', '1.6.9': '69' }[ver];
+        const page = { '1.6.7': '67', '1.6.8': '68', '1.6.9': '69' }[ver];
         const msg = `🔒 "${label}"은(는) ${ver} 업데이트에서 열리는 기능입니다.`;
         const dev = window.HemiDev && page && (window.HemiDev.canOpen ? window.HemiDev.canOpen(page) : window.HemiDev.isOn());
         if (dev) {
