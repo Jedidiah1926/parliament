@@ -88,7 +88,7 @@
             <div class="fp-ledger">${led}</div>
             <div class="fp-foot">세션 ${codeOf(onion()).slice(1)} · 로그는 접속을 끊으면 지워집니다 · 발각되면 그 정당은 활동 금지</div>
         </div>`;
-        // 표적 지역구 지도 — 의뢰가 걸린 원마다 (지도 방식 지역구일 때). 조작 지역구는 의뢰한 정당 색 빗금,
+        // 표적 지역구 지도 — 의뢰가 걸린 원마다 (지도 방식 지역구일 때). 조작 지역구는 의뢰한 정당 색으로 채우고,
         // 지역구를 누르면 고른 정당의 조작 지역구로 넣고 · 다시 누르면 뺀다 (왼쪽 목록과 같은 값)
         const maps = box.querySelector('#fpMaps');
         const chs = [...new Set(ops.map(p => p.fraudAttempt.chamber))];
@@ -99,13 +99,11 @@
             if (!opsCh.some(p => p.id === activeBy[ch])) activeBy[ch] = opsCh[0].id;
             const rig = {};
             opsCh.forEach(p => (p.fraudAttempt.riggedDistricts || []).forEach(k => { rig[k] = p; }));
-            const defs = new Map(), scope = typeof newTieScope === 'function' ? newTieScope() : 'fp';
-            const hatch = p => (typeof tendencyRegisterTiePattern === 'function' ? tendencyRegisterTiePattern(defs, [p.color, '#0b0f0c'], 'fp' + scope) : p.color);
-            const inCh = k => !!(typeof districtGrid !== 'undefined' && districtGrid[ch]?.[k]);
+            const inCh = k => canRig(ch, k);
             const nameOf = k => (districtNames[ch]?.[k] || districtNames.house?.[k] || k);
             const active = opsCh.find(p => p.id === activeBy[ch]);
             const fills = {};
-            (districtSvgMapFor(ch).shapes || []).forEach(sh => { fills[sh.key] = rig[sh.key] ? hatch(rig[sh.key]) : inCh(sh.key) ? '#0b0f0c' : '#050605'; });
+            (districtSvgMapFor(ch).shapes || []).forEach(sh => { fills[sh.key] = rig[sh.key] ? rig[sh.key].color : inCh(sh.key) ? '#0b0f0c' : '#050605'; });
             const wrap = document.createElement('div');
             wrap.className = 'fp-map';
             wrap.innerHTML = `<div class="fp-sec-h"><i class="fp-br">[ </i>표적 지역구 — ${esc(chName(ch))}<i class="fp-br"> ]</i></div>
@@ -121,9 +119,8 @@
             inner.addEventListener('mouseleave', () => tip()?.classList.remove('fp-tip'));
             renderDistrictSvgInto(inner, {
                 chamber: ch, zoomKey: 'fraud:' + ch, hideAbbr: true, clickable: true,
-                defs: [...defs.values()].join(''),
                 getFill: k => fills[k] || '#050605',
-                title: k => !inCh(k) ? `${nameOf(k)} — 이 원에 없는 지역구` : rig[k] ? `⚠ ${nameOf(k)} — ${rig[k].name} 조작` : `${nameOf(k)} — 눌러서 조작`,
+                title: k => !inCh(k) ? `${nameOf(k)} — 조작 불가` : rig[k] ? `⚠ ${nameOf(k)} — ${rig[k].name} 조작` : `${nameOf(k)} — 눌러서 조작`,
                 onClickKey: k => toggleRig(ch, k),
             });
         });
@@ -131,8 +128,10 @@
 
     // 지도에서 지역구를 눌렀을 때 — 고른 정당의 표적으로 넣기 · 빼기 (다른 정당이 이미 조작 중이면 넘겨받는다)
     const activeBy = {};
+    // 조작할 수 있는 지역구 — 의석 없는 곳 · 미수복 지역 · 종속국 땅은 빼고 (왼쪽 목록과 같은 기준, js/main.js)
+    const canRig = (ch, k) => (typeof fraudCanRigDistrict === 'function' ? fraudCanRigDistrict(ch, k) : false);
     function toggleRig(ch, key) {
-        if (typeof districtGrid === 'undefined' || !districtGrid[ch]?.[key]) return;
+        if (!canRig(ch, key)) return;
         const opsCh = parties.filter(p => p.fraudAttempt && p.fraudAttempt.chamber === ch);
         const me = opsCh.find(p => p.id === activeBy[ch]) || opsCh[0];
         if (!me) return;
@@ -213,6 +212,17 @@
         #contentFraud .fl-empty { color: var(--fp-dim); font-size: .76rem; }
         #contentFraud input[type=checkbox] { accent-color: var(--fp-red); }
         #contentFraud input[type=checkbox]:not(:checked) { background-color: #020302 !important; border-color: var(--fp-dim) !important; }
+        /* 스크롤바도 음지 화면에 맞춰 — TNO는 초록 터미널, 라이트 · 다크는 어두운 회색 */
+        #contentFraud ::-webkit-scrollbar, #dispPanelFraud::-webkit-scrollbar, #dispPanelFraud ::-webkit-scrollbar { width: 8px; height: 8px; background: #020302 !important; }
+        #contentFraud ::-webkit-scrollbar-track, #dispPanelFraud::-webkit-scrollbar-track, #dispPanelFraud ::-webkit-scrollbar-track,
+        #contentFraud ::-webkit-scrollbar-corner, #dispPanelFraud ::-webkit-scrollbar-corner { background: #020302 !important; border: none !important; }
+        #contentFraud ::-webkit-scrollbar-thumb, #dispPanelFraud::-webkit-scrollbar-thumb, #dispPanelFraud ::-webkit-scrollbar-thumb { background: #12301c !important; border: 1px solid #2fd56b !important; border-radius: 0 !important; box-shadow: none !important; }
+        #contentFraud ::-webkit-scrollbar-thumb:hover, #dispPanelFraud::-webkit-scrollbar-thumb:hover, #dispPanelFraud ::-webkit-scrollbar-thumb:hover { background: #2fd56b !important; }
+        html[data-theme-family="modern"] #contentFraud ::-webkit-scrollbar, html[data-theme-family="modern"] #dispPanelFraud::-webkit-scrollbar, html[data-theme-family="modern"] #dispPanelFraud ::-webkit-scrollbar,
+        html[data-theme-family="modern"] #contentFraud ::-webkit-scrollbar-track, html[data-theme-family="modern"] #dispPanelFraud::-webkit-scrollbar-track, html[data-theme-family="modern"] #dispPanelFraud ::-webkit-scrollbar-track,
+        html[data-theme-family="modern"] #contentFraud ::-webkit-scrollbar-corner, html[data-theme-family="modern"] #dispPanelFraud ::-webkit-scrollbar-corner { background: transparent !important; }
+        html[data-theme-family="modern"] #contentFraud ::-webkit-scrollbar-thumb, html[data-theme-family="modern"] #dispPanelFraud::-webkit-scrollbar-thumb, html[data-theme-family="modern"] #dispPanelFraud ::-webkit-scrollbar-thumb { background: #3f3f46 !important; border: 2px solid transparent !important; background-clip: padding-box !important; border-radius: 999px !important; }
+        html[data-theme-family="modern"] #contentFraud ::-webkit-scrollbar-thumb:hover, html[data-theme-family="modern"] #dispPanelFraud::-webkit-scrollbar-thumb:hover, html[data-theme-family="modern"] #dispPanelFraud ::-webkit-scrollbar-thumb:hover { background: #52525b !important; background-clip: padding-box !important; }
         /* 부정선거 탭에서는 국기를 내린다 — 음지에서 국가의 얼굴은 보이지 않게 */
         .controls:has(#mainContentVote.active #contentFraud.active) #nationFlagBanner { display: none !important; }
         #dispPanelFraud { --fp-bg: #050706; --fp-ink: #8dffb0; --fp-dim: #3e6b4c; --fp-line: #12301c; --fp-red: #ff2e4d; --fp-amber: #ffb02e; }
@@ -267,7 +277,7 @@
         .fp-pick button.on { border-color: var(--fp-red); color: #fff; background: rgba(255,46,77,.1); }
         .fp-map-legend { display: flex; align-items: center; gap: 6px; font-size: .66rem; color: var(--fp-dim); margin-top: 6px; }
         .fp-map-legend b { color: var(--fp-ink); font-weight: inherit; }
-        .fp-sw { width: 14px; height: 10px; flex-shrink: 0; background: repeating-linear-gradient(-45deg, var(--pc) 0 3px, #0b0f0c 3px 6px); border: 1px solid var(--fp-line); }
+        .fp-sw { width: 14px; height: 10px; flex-shrink: 0; background: var(--pc); border: 1px solid var(--fp-line); }
         #tooltipBox.fp-tip { background: #050706 !important; border: 1px solid #2fd56b !important; color: #8dffb0 !important; box-shadow: 0 0 10px rgba(47,213,107,.25) !important; font-family: 'NeoDunggeunmo', 'VT323', Consolas, monospace !important; text-shadow: none !important; }
         html[data-theme-family="modern"] #tooltipBox.fp-tip { background: #19191c !important; border: 1px solid #2a2a2f !important; color: #ececee !important; border-radius: 8px !important; box-shadow: 0 6px 20px rgba(0,0,0,.45) !important; font-family: var(--m-font, 'Pretendard Variable', system-ui, sans-serif) !important; }
         html[data-theme-family="modern"] .fp-pick button { border-radius: 999px; background: var(--fp-card); font-weight: 600; }

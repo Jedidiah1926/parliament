@@ -8737,16 +8737,24 @@
             if(!p.fraudAttempt.manualCatch) p.fraudAttempt.catchChance = computeAutoFraudCatchChance(p.fraudAttempt);
             renderFraudTab();
         }
+        // 조작할 수 있는 지역구 — 이 원의 지역구이면서 의석이 있고, 미수복 지역(1.6.7 · js/teaser67.js) · 종속국 땅(1.6.8)이 아니어야
+        // (그런 곳은 선거에서 빠져 조작할 표가 없다). 오른쪽 포털 지도(js/fraudportal.js)도 같은 기준
+        function fraudCanRigDistrict(chamber, key) {
+            if(!districtGrid[chamber]?.[key] || (districtSeatCounts[key]?.[chamber] || 0) <= 0) return false;
+            if(typeof window.isDistrictUnrecovered === 'function' && window.isDistrictUnrecovered(key)) return false;
+            if(typeof window.isDistrictVassal === 'function' && window.isDistrictVassal(key)) return false;
+            return true;
+        }
         function fraudDistrictOptionsHtml(chamber, selected) {
             const sel = new Set(selected || []);
             if(districtMapMode === 'svg') {
                 const map = districtSvgMapFor(chamber);
                 if(!map) return '';
-                return map.shapes.filter(s => districtGrid[chamber]?.[s.key]).map(s =>
+                return map.shapes.filter(s => fraudCanRigDistrict(chamber, s.key)).map(s =>
                     `<option value="${s.key}" ${sel.has(s.key)?'selected':''}>${districtNames.house[s.key]||s.key}</option>`
                 ).join('');
             }
-            return districtSortedKeys(chamber).map(key =>
+            return districtSortedKeys(chamber).filter(key => fraudCanRigDistrict(chamber, key)).map(key =>
                 `<option value="${key}" ${sel.has(key)?'selected':''}>${districtNames[chamber][key]||key}</option>`
             ).join('');
         }

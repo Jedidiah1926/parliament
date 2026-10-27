@@ -22,7 +22,7 @@ window.DnoLangPacks.en = {
  ],
  "ordinal": "en",
  "patterns": [
-    {"re": "^(.+) — 이 원에 없는 지역구$", "to": "$1 — not in this chamber"},
+    {"re": "^(.+) — 조작 불가$", "to": "$1 — can't be rigged"},
     {"re": "^⚠ (.+) — (.+) 조작$", "to": "⚠ $1 — rigged by $2"},
     {"re": "^(.+) — 눌러서 조작$", "to": "$1 — click to rig"},
     {"re": "^(\\d+)곳 선택$", "to": "$1 selected"},
