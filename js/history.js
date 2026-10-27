@@ -1624,7 +1624,6 @@
         .t65-wk-form .t65-field > span:first-child { min-width: 5.2em; }
         .t65-wk-form .t65-field input[type=text] { flex: 1; min-width: 0; }
         .t65-wk-form .t65-field input[type=checkbox] { flex: none; width: 16px; height: 16px; margin: 0; }
-        #sideNav .mn-group[data-main="economy"] .mn-group-head { opacity: .55; }
         @media (max-width: 520px) { .nbx2 .nb-pname { font-size: 15px; } .nbx2 .nb-party.k1 .nb-pname, .nbx2 .nb-party.k2 .nb-pname { font-size: 17px; } .nbx2 .nb-title { font-size: 20px; } }
         /* 냉전 국가 순위 */
         .t65-rk { border: 1px solid var(--t65-line); background: var(--t65-soft); padding: 12px; }
