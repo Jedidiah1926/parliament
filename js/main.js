@@ -8706,6 +8706,9 @@
             const p = parties.find(x => x.id === pid);
             if(!p || !p.fraudAttempt) return;
             p.fraudAttempt.riggedDistricts = Array.from(selectEl.selectedOptions).map(o => o.value);
+            const n = p.fraudAttempt.riggedDistricts.length;
+            const cnt = document.getElementById('fraudRigCount_'+pid);
+            if(cnt) { cnt.textContent = n ? `${n}곳 선택` : '선택 안 함'; const clr = cnt.parentElement.querySelector('.fl-clear'); if(clr) clr.disabled = !n; }
             // 선택 도중 목록 전체를 다시 그리면 <select multiple>의 선택 상태가 끊기므로,
             // 자동 발각 확률만 계산해 표시 요소를 직접 갱신한다 (전체 재렌더 없음)
             if(!p.fraudAttempt.manualCatch) {
@@ -8715,6 +8718,24 @@
                 const note = document.getElementById('fraudCatchNote_'+pid);
                 if(note) note.textContent = `자동 계산: 부풀리기·지역구 조작 규모에 비례 (현재 ${p.fraudAttempt.catchChance}%)`;
             }
+        }
+        // 조작 지역구 목록 — Ctrl 없이 누를 때마다 선택 · 해제가 뒤바뀌게 (기본 동작은 누른 것 하나만 남기고 나머지를 지워서 해제가 어려웠다)
+        function fraudRigOptionToggle(e) {
+            const opt = e.target;
+            if(!opt || opt.tagName !== 'OPTION') return;
+            e.preventDefault();
+            const sel = opt.parentElement, top = sel.scrollTop;
+            opt.selected = !opt.selected;
+            sel.focus({ preventScroll: true });
+            sel.scrollTop = top;
+            sel.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+        function clearFraudRiggedDistricts(pid) {
+            const p = parties.find(x => x.id === pid);
+            if(!p || !p.fraudAttempt) return;
+            p.fraudAttempt.riggedDistricts = [];
+            if(!p.fraudAttempt.manualCatch) p.fraudAttempt.catchChance = computeAutoFraudCatchChance(p.fraudAttempt);
+            renderFraudTab();
         }
         function fraudDistrictOptionsHtml(chamber, selected) {
             const sel = new Set(selected || []);
@@ -8759,7 +8780,8 @@
                         ${!fa.manualCatch ? `<div id="fraudCatchNote_${p.id}" class="fl-note">자동 계산: 부풀리기·지역구 조작 규모에 비례 (현재 ${fa.catchChance}%)</div>` : ''}
                         <div>
                             <span class="fl-k">지역구 개표 조작 (선택한 지역구는 실제 결과와 무관하게 이 정당이 승리)</span>
-                            <select multiple class="input-alert fl-in fl-multi" onchange="updateFraudRiggedDistricts(${p.id},this)">
+                            <div class="fl-rig-bar"><span id="fraudRigCount_${p.id}" class="fl-rig-count">${(fa.riggedDistricts || []).length ? `${fa.riggedDistricts.length}곳 선택` : '선택 안 함'}</span><span class="fl-rig-hint">눌러서 선택 · 다시 누르면 해제</span><button type="button" class="fl-clear" onclick="clearFraudRiggedDistricts(${p.id})" ${(fa.riggedDistricts || []).length ? '' : 'disabled'}>선택 해제</button></div>
+                            <select multiple class="input-alert fl-in fl-multi" onmousedown="fraudRigOptionToggle(event)" onchange="updateFraudRiggedDistricts(${p.id},this)">
                                 ${fraudDistrictOptionsHtml(fa.chamber, fa.riggedDistricts)}
                             </select>
                         </div>

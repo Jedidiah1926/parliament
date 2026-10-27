@@ -22,6 +22,10 @@ window.DnoLangPacks.en = {
  ],
  "ordinal": "en",
  "patterns": [
+    {"re": "^(.+) — 이 원에 없는 지역구$", "to": "$1 — not in this chamber"},
+    {"re": "^⚠ (.+) — (.+) 조작$", "to": "⚠ $1 — rigged by $2"},
+    {"re": "^(.+) — 눌러서 조작$", "to": "$1 — click to rig"},
+    {"re": "^(\\d+)곳 선택$", "to": "$1 selected"},
     {"re": "^진행 중인 의뢰 $", "to": "Active contracts "},
     {"re": "^표적 지역구 — (.+)$", "to": "Target districts — $1"},
     {"re": "^\\[ 진행 중인 의뢰 $", "to": "[ Active contracts "},
@@ -776,6 +780,11 @@ window.DnoLangPacks.en = {
   }
  ],
  "dict": [
+    ["조작 지역구 · 지역구를 누르면 ", "Rigged district · click a district to make it "],
+    ["의 표적으로 · 다시 누르면 해제", "'s target · click again to clear"],
+    ["선택 안 함", "None selected"],
+    ["눌러서 선택 · 다시 누르면 해제", "Click to select · click again to clear"],
+    ["선택 해제", "Clear"],
     ["전체", "All"],
     ["표 매수", "Vote buying"],
     ["개표 조정", "Count tuning"],

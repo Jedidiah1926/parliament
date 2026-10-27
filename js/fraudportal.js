@@ -88,22 +88,60 @@
             <div class="fp-ledger">${led}</div>
             <div class="fp-foot">세션 ${codeOf(onion()).slice(1)} · 로그는 접속을 끊으면 지워집니다 · 발각되면 그 정당은 활동 금지</div>
         </div>`;
-        // 조작 지역구 지도 — 원마다 (지도 방식 지역구일 때)
+        // 표적 지역구 지도 — 의뢰가 걸린 원마다 (지도 방식 지역구일 때). 조작 지역구는 의뢰한 정당 색 빗금,
+        // 지역구를 누르면 고른 정당의 조작 지역구로 넣고 · 다시 누르면 뺀다 (왼쪽 목록과 같은 값)
         const maps = box.querySelector('#fpMaps');
-        const byCh = {};
-        ops.forEach(p => (p.fraudAttempt.riggedDistricts || []).forEach(k => { (byCh[p.fraudAttempt.chamber] = byCh[p.fraudAttempt.chamber] || {})[k] = p; }));
-        Object.entries(byCh).forEach(([ch, rig]) => {
+        const chs = [...new Set(ops.map(p => p.fraudAttempt.chamber))];
+        chs.forEach(ch => {
+            if (typeof districtMapMode !== 'undefined' && districtMapMode !== 'svg') return;
             if (typeof districtSvgMapFor !== 'function' || !districtSvgMapFor(ch) || typeof renderDistrictSvgInto !== 'function') return;
+            const opsCh = ops.filter(p => p.fraudAttempt.chamber === ch);
+            if (!opsCh.some(p => p.id === activeBy[ch])) activeBy[ch] = opsCh[0].id;
+            const rig = {};
+            opsCh.forEach(p => (p.fraudAttempt.riggedDistricts || []).forEach(k => { rig[k] = p; }));
+            const defs = new Map(), scope = typeof newTieScope === 'function' ? newTieScope() : 'fp';
+            const hatch = p => (typeof tendencyRegisterTiePattern === 'function' ? tendencyRegisterTiePattern(defs, [p.color, '#0b0f0c'], 'fp' + scope) : p.color);
+            const inCh = k => !!(typeof districtGrid !== 'undefined' && districtGrid[ch]?.[k]);
+            const nameOf = k => (districtNames[ch]?.[k] || districtNames.house?.[k] || k);
+            const active = opsCh.find(p => p.id === activeBy[ch]);
+            const fills = {};
+            (districtSvgMapFor(ch).shapes || []).forEach(sh => { fills[sh.key] = rig[sh.key] ? hatch(rig[sh.key]) : inCh(sh.key) ? '#0b0f0c' : '#050605'; });
             const wrap = document.createElement('div');
             wrap.className = 'fp-map';
-            wrap.innerHTML = `<div class="fp-sec-h"><i class="fp-br">[ </i>표적 지역구 — ${esc(chName(ch))}<i class="fp-br"> ]</i></div><div class="fp-map-in"></div>`;
+            wrap.innerHTML = `<div class="fp-sec-h"><i class="fp-br">[ </i>표적 지역구 — ${esc(chName(ch))}<i class="fp-br"> ]</i></div>
+                ${opsCh.length > 1 ? `<div class="fp-pick">${opsCh.map(p => `<button type="button" class="${p.id === active.id ? 'on' : ''}" data-pid="${p.id}"><i class="fp-dot" style="--pc:${esc(p.color)}"></i>${esc(p.name)}</button>`).join('')}</div>` : ''}
+                <div class="fp-map-in"></div>
+                <div class="fp-map-legend"><span class="fp-sw" style="--pc:${esc(active.color)}"></span>조작 지역구 · 지역구를 누르면 <b>${esc(active.name)}</b>의 표적으로 · 다시 누르면 해제</div>`;
             maps.appendChild(wrap);
-            renderDistrictSvgInto(wrap.querySelector('.fp-map-in'), {
-                chamber: ch, zoomKey: 'fraud:' + ch, hideAbbr: true,
-                getFill: k => (rig[k] ? rig[k].color : '#0b0f0c'),
-                title: k => `${(districtNames[ch]?.[k] || districtNames.house?.[k] || k)}${rig[k] ? ` — ${rig[k].name}` : ''}`,
+            wrap.querySelectorAll('.fp-pick button').forEach(btn => btn.addEventListener('click', () => { activeBy[ch] = Number(btn.dataset.pid); render(); }));
+            const inner = wrap.querySelector('.fp-map-in');
+            // 지도 위 툴팁은 부정선거 화면에서만 포털 모양으로
+            const tip = () => document.getElementById('tooltipBox');
+            inner.addEventListener('mouseenter', () => tip()?.classList.add('fp-tip'));
+            inner.addEventListener('mouseleave', () => tip()?.classList.remove('fp-tip'));
+            renderDistrictSvgInto(inner, {
+                chamber: ch, zoomKey: 'fraud:' + ch, hideAbbr: true, clickable: true,
+                defs: [...defs.values()].join(''),
+                getFill: k => fills[k] || '#050605',
+                title: k => !inCh(k) ? `${nameOf(k)} — 이 원에 없는 지역구` : rig[k] ? `⚠ ${nameOf(k)} — ${rig[k].name} 조작` : `${nameOf(k)} — 눌러서 조작`,
+                onClickKey: k => toggleRig(ch, k),
             });
         });
+    }
+
+    // 지도에서 지역구를 눌렀을 때 — 고른 정당의 표적으로 넣기 · 빼기 (다른 정당이 이미 조작 중이면 넘겨받는다)
+    const activeBy = {};
+    function toggleRig(ch, key) {
+        if (typeof districtGrid === 'undefined' || !districtGrid[ch]?.[key]) return;
+        const opsCh = parties.filter(p => p.fraudAttempt && p.fraudAttempt.chamber === ch);
+        const me = opsCh.find(p => p.id === activeBy[ch]) || opsCh[0];
+        if (!me) return;
+        const owner = opsCh.find(p => (p.fraudAttempt.riggedDistricts || []).includes(key));
+        if (owner) owner.fraudAttempt.riggedDistricts = owner.fraudAttempt.riggedDistricts.filter(k => k !== key);
+        if (owner !== me) me.fraudAttempt.riggedDistricts = [...(me.fraudAttempt.riggedDistricts || []), key];
+        [owner, me].forEach(p => { if (p && !p.fraudAttempt.manualCatch && typeof computeAutoFraudCatchChance === 'function') p.fraudAttempt.catchChance = computeAutoFraudCatchChance(p.fraudAttempt); });
+        document.getElementById('tooltipBox')?.classList.remove('fp-tip');
+        if (typeof window.renderFraudTab === 'function') window.renderFraudTab(); else render();
     }
 
     // 부정선거 탭을 열면 포털을 띄운다
@@ -160,7 +198,14 @@
         #contentFraud .fl-in:focus { border-color: var(--fp-ink) !important; outline: none; }
         #contentFraud .fl-in:disabled { opacity: .45; }
         #contentFraud .fl-in option { background: #020302; color: var(--fp-ink); }
-        #contentFraud .fl-in option:checked { background: var(--fp-red); color: #fff; }
+        #contentFraud .fl-in option:checked, #contentFraud .fl-in:focus option:checked { background: linear-gradient(var(--fp-red), var(--fp-red)) !important; color: #fff !important; }
+        #contentFraud .fl-rig-bar { display: flex; align-items: center; gap: 6px; margin-top: 4px; font-size: .66rem; }
+        #contentFraud .fl-rig-count { color: var(--fp-ink); }
+        #contentFraud .fl-rig-hint { color: var(--fp-dim); flex: 1; min-width: 0; }
+        #contentFraud .fl-clear { background: transparent; border: 1px solid var(--fp-red); color: var(--fp-red); font-size: .66rem; padding: 2px 8px; cursor: pointer; }
+        #contentFraud .fl-clear:disabled { border-color: var(--fp-line); color: var(--fp-dim); cursor: default; opacity: .6; }
+        html[data-theme-family="modern"] #contentFraud .fl-clear { border-radius: 6px; font-weight: 600; }
+        html[data-theme-family="modern"] #contentFraud .fl-rig-count { font-weight: 700; }
         #contentFraud .fl-multi { width: 100%; box-sizing: border-box; height: 96px; margin-top: 4px; }
         #contentFraud .fl-manual { display: flex; align-items: center; gap: 3px; color: var(--fp-dim); font-size: .68rem; flex-shrink: 0; cursor: pointer; white-space: nowrap; }
         #contentFraud .fl-note { color: var(--fp-dim); font-size: .66rem; margin-left: 106px; }
@@ -217,6 +262,19 @@
         .fp-map-in svg path { stroke: #12301c !important; }
         .fp-map-in [class*="zoom"] { background: #0a0d0b !important; border-color: var(--fp-line) !important; color: var(--fp-ink) !important; box-shadow: none !important; }
         .fp-map-in [class*="zoom"] button { background: transparent !important; color: var(--fp-ink) !important; }
+        .fp-pick { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 6px; }
+        .fp-pick button { display: inline-flex; align-items: center; gap: 5px; background: transparent; border: 1px solid var(--fp-line); color: var(--fp-dim); font-size: .72rem; padding: 3px 9px; cursor: pointer; }
+        .fp-pick button.on { border-color: var(--fp-red); color: #fff; background: rgba(255,46,77,.1); }
+        .fp-map-legend { display: flex; align-items: center; gap: 6px; font-size: .66rem; color: var(--fp-dim); margin-top: 6px; }
+        .fp-map-legend b { color: var(--fp-ink); font-weight: inherit; }
+        .fp-sw { width: 14px; height: 10px; flex-shrink: 0; background: repeating-linear-gradient(-45deg, var(--pc) 0 3px, #0b0f0c 3px 6px); border: 1px solid var(--fp-line); }
+        #tooltipBox.fp-tip { background: #050706 !important; border: 1px solid #2fd56b !important; color: #8dffb0 !important; box-shadow: 0 0 10px rgba(47,213,107,.25) !important; font-family: 'NeoDunggeunmo', 'VT323', Consolas, monospace !important; text-shadow: none !important; }
+        html[data-theme-family="modern"] #tooltipBox.fp-tip { background: #19191c !important; border: 1px solid #2a2a2f !important; color: #ececee !important; border-radius: 8px !important; box-shadow: 0 6px 20px rgba(0,0,0,.45) !important; font-family: var(--m-font, 'Pretendard Variable', system-ui, sans-serif) !important; }
+        html[data-theme-family="modern"] .fp-pick button { border-radius: 999px; background: var(--fp-card); font-weight: 600; }
+        html[data-theme-family="modern"] .fp-pick button.on { border-color: var(--fp-red); background: rgba(239,68,68,.14); }
+        html[data-theme-family="modern"] .fp-map-legend { font-size: .72rem; }
+        html[data-theme-family="modern"] .fp-map-legend b { font-weight: 700; color: #fff; }
+        html[data-theme-family="modern"] .fp-sw { border-radius: 3px; }
         .fp-ledger { margin: 0 12px; display: flex; flex-direction: column; gap: 4px; }
         .fp-led { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; font-size: .72rem; padding: 4px 6px; border-left: 2px solid #2fd56b; background: rgba(10,20,13,.6); }
         .fp-led.bad { border-left-color: var(--fp-red); }
@@ -294,7 +352,6 @@
         html[data-theme-family="modern"] #contentFraud .fl-in { background: #0c0c0e !important; color: var(--fp-ink) !important; border-color: var(--fp-line) !important; border-radius: 8px !important; }
         html[data-theme-family="modern"] #contentFraud .fl-in:focus { border-color: var(--fp-amber) !important; }
         html[data-theme-family="modern"] #contentFraud .fl-in option { background: #0c0c0e; color: var(--fp-ink); }
-        html[data-theme-family="modern"] #contentFraud .fl-in option:checked { background: var(--fp-red); }
         html[data-theme-family="modern"] #contentFraud .fl-fine { color: #a1a1aa; border-top: 1px solid var(--fp-line); }
         html[data-theme-family="modern"] #contentFraud input[type=checkbox]:not(:checked) { background-color: #0c0c0e !important; border-color: #3f3f46 !important; }
     `;
