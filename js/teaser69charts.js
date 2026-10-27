@@ -772,6 +772,7 @@
         .t69-legend2-r span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .t69-legend2-r b { font-weight: 500; font-variant-numeric: tabular-nums; color: var(--t69-ink); }
         .t69-tip { position: fixed; z-index: 100000; display: none; pointer-events: none; background: var(--t69-surface); color: var(--t69-ink); border: 1px solid var(--t69-axis); border-radius: 8px; padding: 7px 9px; font-size: 12px; line-height: 1.45; box-shadow: 0 6px 18px rgba(0,0,0,.25); max-width: 300px; }
+        html[data-theme-mode="tno"] .t69-tip { border-radius: 0; box-shadow: none; } /* 네온은 각진 상자 */
         .t69-tip-h { color: var(--t69-muted); font-size: 11px; margin-bottom: 3px; }
         .t69-tip-r { display: flex; align-items: center; gap: 6px; white-space: nowrap; }
         .t69-tip-r i { width: 12px; height: 2px; flex: none; } .t69-tip-r i.dash { height: 0; border-top: 2px dashed currentColor; background: none !important; }

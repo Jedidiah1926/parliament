@@ -2621,6 +2621,9 @@
         .t69-tablewrap2 { overflow-x: auto; } .t69-tagin { width: 48px; }
         /* 오른쪽 시각 화면 */
         #dispPanelEconomy .t69-dispbox { display: flex; flex-direction: column; overflow: hidden; min-height: 0; }
+        /* 네온(TNO): 시각 화면 바탕을 그래프와 같은 짙은 회색 하나로 (테두리만 남기고) · 모서리는 각지게 */
+        html[data-theme-mode="tno"] .t69-dispbox { background: var(--t69-surface) !important; }
+        html[data-theme-mode="tno"] .t69-dispbox *:not(svg):not(svg *) { border-radius: 0 !important; }
         #t69Disp { flex: 1 1 auto; min-height: 0; overflow: auto; padding-right: 4px; }
         .t69-toolbar { flex: none; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 10px; padding: 4px 0 8px; border-bottom: 1px solid var(--t69-grid); }
         .t69-toolbar .t69-btn { color: var(--t69-ink2); border-color: var(--t69-axis); }
