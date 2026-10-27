@@ -5455,11 +5455,11 @@
             } catch(e) { return false; }
         }
 
-        // logo.html(로고 제작 모드) · teaser67/61.html(다음 업데이트 미리보기)은 본 게임 세이브와 섞이지 않도록 저장 키에 따로 접두어를 붙인다
+        // logo.html(로고 제작 모드) · teaser68 ~ 69.html(다음 업데이트 미리보기)은 본 게임 세이브와 섞이지 않도록 저장 키에 따로 접두어를 붙인다
         const IS_TEASER_MODE = document.documentElement.getAttribute('data-app-mode') === 'teaser';
         // 티저는 번호(data-teaser)마다 따로 — 버전 번호를 다시 매긴 뒤(사람 = 1.6.1)로는 예전 티저 저장 공간과 섞이지 않게 새 이름(V2)을 쓴다
         const TEASER_ID = document.documentElement.getAttribute('data-teaser') || '';
-        const LS_PREFIX = IS_LOGO_MODE ? 'hemicycleLogo:' : IS_TEASER_MODE ? `hemicycleTeaserV2-${TEASER_ID || '67'}:` : '';
+        const LS_PREFIX = IS_LOGO_MODE ? 'hemicycleLogo:' : IS_TEASER_MODE ? `hemicycleTeaserV2-${TEASER_ID || '68'}:` : '';
         function safeLsGet(key) {
             try { return localStorage.getItem(LS_PREFIX + key); } catch(e) { return null; }
         }
@@ -8737,7 +8737,7 @@
             if(!p.fraudAttempt.manualCatch) p.fraudAttempt.catchChance = computeAutoFraudCatchChance(p.fraudAttempt);
             renderFraudTab();
         }
-        // 조작할 수 있는 지역구 — 이 원의 지역구이면서 의석이 있고, 미수복 지역(1.6.7 · js/teaser67.js) · 종속국 땅(1.6.8)이 아니어야
+        // 조작할 수 있는 지역구 — 이 원의 지역구이면서 의석이 있고, 미수복 지역(1.6.7 · js/unrecovered.js) · 종속국 땅(1.6.8)이 아니어야
         // (그런 곳은 선거에서 빠져 조작할 표가 없다). 오른쪽 포털 지도(js/fraudportal.js)도 같은 기준
         function fraudCanRigDistrict(chamber, key) {
             if(!districtGrid[chamber]?.[key] || (districtSeatCounts[key]?.[chamber] || 0) <= 0) return false;

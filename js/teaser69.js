@@ -1,5 +1,5 @@
 // ===== Hemicycle 티저 1.6.9 (teaser69) — 보이지 않는 손 "Invisible hand" — 경제 시스템 =====
-// teaser69.html은 main.html에 1.6.7 ~ 1.6.8 미리보기와 이 파일(+ 그래프 js/teaser69charts.js)을 얹는다.
+// teaser69.html은 main.html에 1.6.8 미리보기와 이 파일(+ 그래프 js/teaser69charts.js)을 얹는다.
 // (저장 공간은 본 게임과 따로 — main.js의 LS_PREFIX 'hemicycleTeaserV2-69:')
 //
 // 샌드박스 원칙 — 경제는 결과를 강제하지 않고 계산 · 표시 · 제안한다. 모든 수치는 직접 고칠 수 있고, 계산은 날짜가 넘어갈 때만 돈다.

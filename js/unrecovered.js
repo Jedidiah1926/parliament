@@ -1,8 +1,7 @@
-// ===== Hemicycle 티저 1.6.7 (teaser67) — 다음 업데이트 기능 미리 써 보기 =====
-// teaser67.html은 main.html을 그대로 복사한 화면에 이 파일 하나를 더 불러 미리보기 기능을 얹는다.
-// (저장 공간은 본 게임과 따로 — main.js의 LS_PREFIX 'hemicycleTeaserV2-67:')
+// ===== 1.6.7 — 즉시, 지체 없이 "Sofort, unverzüglich." (미수복 지역 · 영토 통일) =====
+// 1.6.7 미리보기(예전 teaser67)에서 본 게임으로 옮겨 왔다 — 본 게임 · 모든 미리보기 화면에서 돈다 (로고 제작 화면만 빼고).
+// main.html은 js/royal.js 다음에 이 파일을 읽는다.
 //
-// 1.6.7 "즉시, 지체 없이" 미리보기 — 미수복 지역 · 영토 통일
 //   - 국가 › 미수복 탭을 새로 둔다 (국가 › 지역구 지도 · 권역은 1.6.0부터 본 화면, 1.5.9 화면이면 지역구 편집을 국가 › 지역구 지도로 옮김)
 //   - 미수복 지역 종류를 여러 개 만들고(종류마다 이름 · 빗금 색 — 예: 오스트리아 · 동방영토 · 북방영토), "칠하기"로 지도에서
 //     지역구를 차례로 눌러 칠하거나 지역구 편집 칸에서 종류를 고른다. 미수복 지역은 모든 지도에서 영토 색 빗금으로 따로 보이고,
@@ -16,7 +15,7 @@
    districtSvgMapFor, districtOrderSync */
 (function () {
     'use strict';
-    if (document.documentElement.getAttribute('data-app-mode') !== 'teaser' || !['67', '68', '69'].includes(document.documentElement.getAttribute('data-teaser') || '67')) return;
+    if (document.documentElement.getAttribute('data-app-mode') === 'logo') return;
 
     // 미수복 영토는 여러 개 — 영토마다 이름 · 색(빗금 색)이 있고, 지역구는 그중 하나에 속한다
     //   territories = [{ id, name, color }], unrecovered = { 지역구 키: 영토 id }
@@ -36,7 +35,9 @@
     function addTerritory(name) {
         let n = 1;
         while (territories.some(t => t.id === 't' + n)) n++;
-        const t = { id: 't' + n, name: name || `미수복 지역 ${n}`, color: PALETTE[(n - 1) % PALETTE.length] };
+        // 세이브에 든 이름은 번역하지 않으므로, 영어 화면이면 기본 이름도 영어로 만든다
+        const en = typeof window.getLang === 'function' && window.getLang() === 'en';
+        const t = { id: 't' + n, name: name || (en ? `Unrecovered territory ${n}` : `미수복 지역 ${n}`), color: PALETTE[(n - 1) % PALETTE.length] };
         territories.push(t);
         return t;
     }
@@ -74,17 +75,17 @@
         });
     }
 
-    // ---- 저장 · 불러오기: 세이브에 teaser 칸으로 ----
+    // ---- 저장 · 불러오기: 세이브의 unrecovered 칸 (1.6.7 미리보기 세이브 · 서독 프리셋은 teaser 칸) ----
     const origGet = window.getAppState;
     window.getAppState = function () {
         const st = origGet.apply(this, arguments);
-        if (st && typeof st === 'object') st.teaser = { unrecovered: { ...unrecovered }, territories: territories.map(t => ({ ...t })), labelColor };
+        if (st && typeof st === 'object') st.unrecovered = { unrecovered: { ...unrecovered }, territories: territories.map(t => ({ ...t })), labelColor };
         return st;
     };
     const origSet = window.setAppState;
     window.setAppState = function (state) {
         const r = origSet.apply(this, arguments);
-        loadTeaserState(state && state.teaser);
+        loadTeaserState(state && (state.unrecovered || state.teaser));
         refreshUI();
         return r;
     };
