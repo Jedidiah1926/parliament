@@ -64,6 +64,7 @@
                     <div><span class="fp-k">조작 지역구</span><span class="fp-v">${names.length}곳</span></div>
                     <div class="fp-risk ${risk[1]}"><span class="fp-k">발각 위험</span><span class="fp-v">${fa.catchChance ?? 0}% · ${risk[0]}</span><span class="fp-meter"><span style="width:${Math.min(100, fa.catchChance ?? 0)}%"></span></span></div>
                 </div>
+                <div class="fp-m fp-escrow"><span>🔐 에스크로 예치됨</span><span>판매자 ghost_ballot · ★ 4.9</span></div>
                 ${names.length ? `<div class="fp-dist">${names.slice(0, 12).map(n => `<span>${esc(n)}</span>`).join('')}${names.length > 12 ? `<span>외 ${names.length - 12}곳</span>` : ''}</div>` : ''}
             </div>`;
         }).join('') : '<div class="fp-empty">&gt; 진행 중인 의뢰 없음. 왼쪽에서 정당을 골라 거래를 시작하세요<span class="fp-cursor">_</span></div>';
@@ -75,14 +76,15 @@
         box.innerHTML = `<div class="fp">
             <div class="fp-bar"><span class="fp-onion">🧅</span><span class="fp-url">http://${esc(onion())}</span><span class="fp-sec">🔒 3홉 회로 · 추적 불가</span></div>
             <div class="fp-hero">
-                <div class="fp-logo" data-text="BLACK BALLOT">BLACK BALLOT</div>
+                <div class="fp-logo" data-text="BLACK BALLOT">BLACK <em>BALLOT</em></div>
                 <div class="fp-sub">검은 투표함 — 표 중개 · 개표 조정 · 흔적 정리</div>
                 <div class="fp-warn">이 페이지는 존재하지 않습니다. 당신은 아무것도 보지 않았습니다.</div>
+                <div class="fp-m fp-cats"><span class="on">전체</span><span>표 매수</span><span>개표 조정</span><span>흔적 정리</span><span>증인 관리</span></div>
             </div>
-            <div class="fp-sec-h">[ 진행 중인 의뢰 <b>${ops.length}</b> ]</div>
+            <div class="fp-sec-h"><i class="fp-br">[ </i>진행 중인 의뢰 <b>${ops.length}</b><i class="fp-br"> ]</i></div>
             ${opsHtml}
             <div id="fpMaps"></div>
-            <div class="fp-sec-h">[ 거래 기록 ]</div>
+            <div class="fp-sec-h"><i class="fp-br">[ </i>거래 기록<i class="fp-br"> ]</i></div>
             <div class="fp-ledger">${led}</div>
             <div class="fp-foot">세션 ${codeOf(onion()).slice(1)} · 로그는 접속을 끊으면 지워집니다 · 발각되면 그 정당은 활동 금지</div>
         </div>`;
@@ -94,7 +96,7 @@
             if (typeof districtSvgMapFor !== 'function' || !districtSvgMapFor(ch) || typeof renderDistrictSvgInto !== 'function') return;
             const wrap = document.createElement('div');
             wrap.className = 'fp-map';
-            wrap.innerHTML = `<div class="fp-sec-h">[ 표적 지역구 — ${esc(chName(ch))} ]</div><div class="fp-map-in"></div>`;
+            wrap.innerHTML = `<div class="fp-sec-h"><i class="fp-br">[ </i>표적 지역구 — ${esc(chName(ch))}<i class="fp-br"> ]</i></div><div class="fp-map-in"></div>`;
             maps.appendChild(wrap);
             renderDistrictSvgInto(wrap.querySelector('.fp-map-in'), {
                 chamber: ch, zoomKey: 'fraud:' + ch, hideAbbr: true,
@@ -221,6 +223,80 @@
         .fp-led-st { min-width: 4.5em; color: #2fd56b; } .fp-led.bad .fp-led-st { color: var(--fp-red); }
         .fp-led-name { color: #d8ffe3; } .fp-led-meta { color: var(--fp-dim); font-size: .66rem; }
         .fp-foot { margin: 14px 12px 0; font-size: .62rem; color: #2a4a35; text-align: center; letter-spacing: 1px; }
+
+        /* ===== 라이트 · 다크(모던) 테마 — CRT 효과 없이 깔끔한 블랙마켓 장터 ===== */
+        .fp-m { display: none; }
+        .fp-logo em { font-style: normal; }
+        html[data-theme-family="modern"] #dispPanelFraud,
+        html[data-theme-family="modern"] #contentFraud { --fp-bg: #111113; --fp-card: #19191c; --fp-ink: #ececee; --fp-dim: #8b8b93; --fp-line: #2a2a2f; --fp-red: #ef4444; --fp-amber: #f5a524; }
+        html[data-theme-family="modern"] #dispPanelFraud.active { background: var(--fp-bg); }
+        html[data-theme-family="modern"] .fp, html[data-theme-family="modern"] .fp *,
+        html[data-theme-family="modern"] #contentFraud, html[data-theme-family="modern"] #contentFraud * { font-family: var(--m-font, 'Pretendard Variable', system-ui, sans-serif) !important; }
+        html[data-theme-family="modern"] .fp { border: none; box-shadow: none; padding-bottom: 20px; }
+        html[data-theme-family="modern"] .fp::before, html[data-theme-family="modern"] #contentFraud::before { display: none; }
+        html[data-theme-family="modern"] .fp-m { display: flex; }
+        html[data-theme-family="modern"] .fp-br { display: none; }
+        html[data-theme-family="modern"] .fp-bar { background: #0b0b0d; color: var(--fp-dim); font-size: .74rem; padding: 8px 14px; }
+        html[data-theme-family="modern"] .fp-url { color: #b5b5bc; background: #1c1c20; border-radius: 999px; padding: 3px 12px; }
+        html[data-theme-family="modern"] .fp-hero { text-align: left; padding: 22px 16px 14px; border-bottom: 1px solid var(--fp-line); }
+        html[data-theme-family="modern"] .fp-logo { font-size: 1.7rem; font-weight: 900; letter-spacing: -1px; color: #fff; text-shadow: none; }
+        html[data-theme-family="modern"] .fp-logo em { color: var(--fp-red); }
+        html[data-theme-family="modern"] .fp-logo::before, html[data-theme-family="modern"] .fp-logo::after { display: none; }
+        html[data-theme-family="modern"] .fp-sub { color: var(--fp-dim); letter-spacing: 0; font-size: .8rem; margin-top: 4px; }
+        html[data-theme-family="modern"] .fp-warn { border: none; border-radius: 6px; background: rgba(239,68,68,.12); color: #fca5a5; font-size: .72rem; padding: 4px 10px; }
+        html[data-theme-family="modern"] .fp-cats { gap: 6px; margin-top: 14px; flex-wrap: wrap; }
+        html[data-theme-family="modern"] .fp-cats span { font-size: .74rem; color: var(--fp-dim); background: var(--fp-card); border: 1px solid var(--fp-line); border-radius: 999px; padding: 4px 11px; font-weight: 600; }
+        html[data-theme-family="modern"] .fp-cats span.on { color: #111; background: var(--fp-amber); border-color: var(--fp-amber); }
+        html[data-theme-family="modern"] .fp-sec-h { color: var(--fp-ink); font-weight: 800; font-size: .9rem; letter-spacing: -.2px; padding: 18px 16px 8px; }
+        html[data-theme-family="modern"] .fp-sec-h b { color: var(--fp-amber); }
+        html[data-theme-family="modern"] .fp-op { margin: 0 16px 10px; border: 1px solid var(--fp-line); border-left: 1px solid var(--fp-line); border-radius: 12px; background: var(--fp-card); padding: 12px 14px; }
+        html[data-theme-family="modern"] .fp-op-head { font-size: .9rem; font-weight: 700; }
+        html[data-theme-family="modern"] .fp-code { color: var(--fp-dim); font-weight: 600; }
+        html[data-theme-family="modern"] .fp-dot { box-shadow: none; }
+        html[data-theme-family="modern"] .fp-tag { border: none; border-radius: 6px; background: #26262b; color: #c4c4cc; padding: 1px 7px; font-weight: 600; }
+        html[data-theme-family="modern"] .fp-status { animation: none; color: var(--fp-amber); background: rgba(245,165,36,.12); border-radius: 999px; padding: 2px 9px; font-weight: 600; }
+        html[data-theme-family="modern"] .fp-op-body { margin-top: 12px; gap: 10px; }
+        html[data-theme-family="modern"] .fp-op-body > div { background: #141417; border-radius: 8px; padding: 8px 10px; }
+        html[data-theme-family="modern"] .fp-k { font-size: .68rem; font-weight: 600; }
+        html[data-theme-family="modern"] .fp-v { font-size: 1.05rem; font-weight: 800; color: #fff; }
+        html[data-theme-family="modern"] .fp-meter { height: 5px; border-radius: 3px; background: #26262b; margin-top: 6px; overflow: hidden; }
+        html[data-theme-family="modern"] .fp-meter span { border-radius: 3px; background: linear-gradient(90deg, #22c55e, var(--fp-amber) 55%, var(--fp-red)); }
+        html[data-theme-family="modern"] .fp-escrow { justify-content: space-between; gap: 8px; flex-wrap: wrap; margin-top: 10px; font-size: .7rem; color: var(--fp-dim); }
+        html[data-theme-family="modern"] .fp-escrow span:first-child { color: #86efac; font-weight: 600; }
+        html[data-theme-family="modern"] .fp-dist span { border: none; border-radius: 6px; background: #26262b; color: #c4c4cc; padding: 2px 8px; }
+        html[data-theme-family="modern"] .fp-empty { margin: 0 16px 8px; color: var(--fp-dim); font-size: .8rem; }
+        html[data-theme-family="modern"] .fp-cursor { display: none; }
+        html[data-theme-family="modern"] .fp-map { margin: 0 16px; }
+        html[data-theme-family="modern"] .fp-map-in { border-radius: 12px; overflow: hidden; background: #0c0c0e; border-color: var(--fp-line); filter: none; }
+        html[data-theme-family="modern"] .fp-map-in svg path { stroke: #2a2a2f !important; }
+        html[data-theme-family="modern"] .fp-ledger { margin: 0 16px; gap: 6px; }
+        html[data-theme-family="modern"] .fp-led { border-left: none; border-radius: 10px; background: var(--fp-card); border: 1px solid var(--fp-line); padding: 8px 12px; font-size: .78rem; }
+        html[data-theme-family="modern"] .fp-led-st { min-width: auto; border-radius: 999px; padding: 1px 8px; font-weight: 700; font-size: .68rem; color: #86efac; background: rgba(34,197,94,.12); }
+        html[data-theme-family="modern"] .fp-led.bad .fp-led-st { color: #fca5a5; background: rgba(239,68,68,.14); }
+        html[data-theme-family="modern"] .fp-led-name { font-weight: 700; color: #fff; }
+        html[data-theme-family="modern"] .fp-foot { color: #55555c; letter-spacing: 0; margin-top: 18px; }
+        /* 왼쪽 탭 */
+        html[data-theme-family="modern"] #contentFraud { background: var(--fp-bg); color: var(--fp-ink); border: none; border-radius: 12px; box-shadow: none; padding: 14px; }
+        html[data-theme-family="modern"] #contentFraud .fl-intro { color: var(--fp-dim); border-bottom: 1px solid var(--fp-line); font-size: .76rem; }
+        html[data-theme-family="modern"] #contentFraud .fl-intro-h { color: #fff; font-weight: 900; letter-spacing: -.3px; text-shadow: none; font-size: .95rem; }
+        html[data-theme-family="modern"] #contentFraud .fl-cursor { display: none; }
+        html[data-theme-family="modern"] #contentFraud .fl-card { background: var(--fp-card); border: 1px solid var(--fp-line); border-radius: 12px; padding: 10px 12px; }
+        html[data-theme-family="modern"] #contentFraud .fl-card:has(.fl-deal.on) { border-color: rgba(239,68,68,.55); }
+        html[data-theme-family="modern"] #contentFraud .fl-dot { box-shadow: none; }
+        html[data-theme-family="modern"] #contentFraud .fl-name { color: #fff; font-weight: 700; }
+        html[data-theme-family="modern"] #contentFraud .fl-deal { border: none; border-radius: 8px; background: #141417; }
+        html[data-theme-family="modern"] #contentFraud .fl-deal.on { border: none; background: rgba(239,68,68,.07); }
+        html[data-theme-family="modern"] #contentFraud .fl-toggle, html[data-theme-family="modern"] #contentFraud .fl-toggle span { color: var(--fp-ink) !important; font-weight: 600; }
+        html[data-theme-family="modern"] #contentFraud .fl-deal.on .fl-toggle, html[data-theme-family="modern"] #contentFraud .fl-deal.on .fl-toggle span { color: #fca5a5 !important; }
+        html[data-theme-family="modern"] #contentFraud .fl-toggle small { color: var(--fp-dim) !important; font-weight: 500; }
+        html[data-theme-family="modern"] #contentFraud .fl-manual { color: var(--fp-dim) !important; }
+        html[data-theme-family="modern"] #contentFraud .fl-k { font-weight: 600; }
+        html[data-theme-family="modern"] #contentFraud .fl-in { background: #0c0c0e !important; color: var(--fp-ink) !important; border-color: var(--fp-line) !important; border-radius: 8px !important; }
+        html[data-theme-family="modern"] #contentFraud .fl-in:focus { border-color: var(--fp-amber) !important; }
+        html[data-theme-family="modern"] #contentFraud .fl-in option { background: #0c0c0e; color: var(--fp-ink); }
+        html[data-theme-family="modern"] #contentFraud .fl-in option:checked { background: var(--fp-red); }
+        html[data-theme-family="modern"] #contentFraud .fl-fine { color: #a1a1aa; border-top: 1px solid var(--fp-line); }
+        html[data-theme-family="modern"] #contentFraud input[type=checkbox]:not(:checked) { background-color: #0c0c0e !important; border-color: #3f3f46 !important; }
     `;
     document.head.appendChild(style);
 })();

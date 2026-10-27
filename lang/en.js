@@ -22,6 +22,8 @@ window.DnoLangPacks.en = {
  ],
  "ordinal": "en",
  "patterns": [
+    {"re": "^진행 중인 의뢰 $", "to": "Active contracts "},
+    {"re": "^표적 지역구 — (.+)$", "to": "Target districts — $1"},
     {"re": "^\\[ 진행 중인 의뢰 $", "to": "[ Active contracts "},
     {"re": "^\\[ 표적 지역구 — (.+) \\]$", "to": "[ Target districts — $1 ]"},
     {"re": "^세션 (\\S+) · 로그는 접속을 끊으면 지워집니다 · 발각되면 그 정당은 활동 금지$", "to": "Session $1 · logs vanish on disconnect · an exposed party is banned"},
@@ -774,6 +776,14 @@ window.DnoLangPacks.en = {
   }
  ],
  "dict": [
+    ["전체", "All"],
+    ["표 매수", "Vote buying"],
+    ["개표 조정", "Count tuning"],
+    ["흔적 정리", "Cleanup"],
+    ["증인 관리", "Witness handling"],
+    ["🔐 에스크로 예치됨", "🔐 Funds in escrow"],
+    ["판매자 ghost_ballot · ★ 4.9", "Vendor ghost_ballot · ★ 4.9"],
+    ["거래 기록", "Transaction log"],
     ["득표율 부풀리기", "Vote-share inflation"],
     ["거래 체결됨", "Deal struck"],
     ["거래 시작", "Open a deal"],
