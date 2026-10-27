@@ -64,6 +64,7 @@
                     <div><span class="fp-k">조작 지역구</span><span class="fp-v">${names.length}곳</span></div>
                     <div class="fp-risk ${risk[1]}"><span class="fp-k">발각 위험</span><span class="fp-v">${fa.catchChance ?? 0}% · ${risk[0]}</span><span class="fp-meter"><span style="width:${Math.min(100, fa.catchChance ?? 0)}%"></span></span></div>
                 </div>
+                <div class="fp-m fp-escrow"><span>🔐 에스크로 예치됨</span><span>판매자 ghost_ballot · ★ 4.9</span></div>
                 ${names.length ? `<div class="fp-dist">${names.slice(0, 12).map(n => `<span>${esc(n)}</span>`).join('')}${names.length > 12 ? `<span>외 ${names.length - 12}곳</span>` : ''}</div>` : ''}
             </div>`;
         }).join('') : '<div class="fp-empty">&gt; 진행 중인 의뢰 없음. 왼쪽에서 정당을 골라 거래를 시작하세요<span class="fp-cursor">_</span></div>';
@@ -75,33 +76,72 @@
         box.innerHTML = `<div class="fp">
             <div class="fp-bar"><span class="fp-onion">🧅</span><span class="fp-url">http://${esc(onion())}</span><span class="fp-sec">🔒 3홉 회로 · 추적 불가</span></div>
             <div class="fp-hero">
-                <div class="fp-logo" data-text="BLACK BALLOT">BLACK BALLOT</div>
+                <div class="fp-logo" data-text="BLACK BALLOT">BLACK <em>BALLOT</em></div>
                 <div class="fp-sub">검은 투표함 — 표 중개 · 개표 조정 · 흔적 정리</div>
                 <div class="fp-warn">이 페이지는 존재하지 않습니다. 당신은 아무것도 보지 않았습니다.</div>
+                <div class="fp-m fp-cats"><span class="on">전체</span><span>표 매수</span><span>개표 조정</span><span>흔적 정리</span><span>증인 관리</span></div>
             </div>
-            <div class="fp-sec-h">[ 진행 중인 의뢰 <b>${ops.length}</b> ]</div>
+            <div class="fp-sec-h"><i class="fp-br">[ </i>진행 중인 의뢰 <b>${ops.length}</b><i class="fp-br"> ]</i></div>
             ${opsHtml}
             <div id="fpMaps"></div>
-            <div class="fp-sec-h">[ 거래 기록 ]</div>
+            <div class="fp-sec-h"><i class="fp-br">[ </i>거래 기록<i class="fp-br"> ]</i></div>
             <div class="fp-ledger">${led}</div>
             <div class="fp-foot">세션 ${codeOf(onion()).slice(1)} · 로그는 접속을 끊으면 지워집니다 · 발각되면 그 정당은 활동 금지</div>
         </div>`;
-        // 조작 지역구 지도 — 원마다 (지도 방식 지역구일 때)
+        // 표적 지역구 지도 — 의뢰가 걸린 원마다 (지도 방식 지역구일 때). 조작 지역구는 의뢰한 정당 색 빗금,
+        // 지역구를 누르면 고른 정당의 조작 지역구로 넣고 · 다시 누르면 뺀다 (왼쪽 목록과 같은 값)
         const maps = box.querySelector('#fpMaps');
-        const byCh = {};
-        ops.forEach(p => (p.fraudAttempt.riggedDistricts || []).forEach(k => { (byCh[p.fraudAttempt.chamber] = byCh[p.fraudAttempt.chamber] || {})[k] = p; }));
-        Object.entries(byCh).forEach(([ch, rig]) => {
+        const chs = [...new Set(ops.map(p => p.fraudAttempt.chamber))];
+        chs.forEach(ch => {
+            if (typeof districtMapMode !== 'undefined' && districtMapMode !== 'svg') return;
             if (typeof districtSvgMapFor !== 'function' || !districtSvgMapFor(ch) || typeof renderDistrictSvgInto !== 'function') return;
+            const opsCh = ops.filter(p => p.fraudAttempt.chamber === ch);
+            if (!opsCh.some(p => p.id === activeBy[ch])) activeBy[ch] = opsCh[0].id;
+            const rig = {};
+            opsCh.forEach(p => (p.fraudAttempt.riggedDistricts || []).forEach(k => { rig[k] = p; }));
+            const defs = new Map(), scope = typeof newTieScope === 'function' ? newTieScope() : 'fp';
+            const hatch = p => (typeof tendencyRegisterTiePattern === 'function' ? tendencyRegisterTiePattern(defs, [p.color, '#0b0f0c'], 'fp' + scope) : p.color);
+            const inCh = k => !!(typeof districtGrid !== 'undefined' && districtGrid[ch]?.[k]);
+            const nameOf = k => (districtNames[ch]?.[k] || districtNames.house?.[k] || k);
+            const active = opsCh.find(p => p.id === activeBy[ch]);
+            const fills = {};
+            (districtSvgMapFor(ch).shapes || []).forEach(sh => { fills[sh.key] = rig[sh.key] ? hatch(rig[sh.key]) : inCh(sh.key) ? '#0b0f0c' : '#050605'; });
             const wrap = document.createElement('div');
             wrap.className = 'fp-map';
-            wrap.innerHTML = `<div class="fp-sec-h">[ 표적 지역구 — ${esc(chName(ch))} ]</div><div class="fp-map-in"></div>`;
+            wrap.innerHTML = `<div class="fp-sec-h"><i class="fp-br">[ </i>표적 지역구 — ${esc(chName(ch))}<i class="fp-br"> ]</i></div>
+                ${opsCh.length > 1 ? `<div class="fp-pick">${opsCh.map(p => `<button type="button" class="${p.id === active.id ? 'on' : ''}" data-pid="${p.id}"><i class="fp-dot" style="--pc:${esc(p.color)}"></i>${esc(p.name)}</button>`).join('')}</div>` : ''}
+                <div class="fp-map-in"></div>
+                <div class="fp-map-legend"><span class="fp-sw" style="--pc:${esc(active.color)}"></span>조작 지역구 · 지역구를 누르면 <b>${esc(active.name)}</b>의 표적으로 · 다시 누르면 해제</div>`;
             maps.appendChild(wrap);
-            renderDistrictSvgInto(wrap.querySelector('.fp-map-in'), {
-                chamber: ch, zoomKey: 'fraud:' + ch, hideAbbr: true,
-                getFill: k => (rig[k] ? rig[k].color : '#0b0f0c'),
-                title: k => `${(districtNames[ch]?.[k] || districtNames.house?.[k] || k)}${rig[k] ? ` — ${rig[k].name}` : ''}`,
+            wrap.querySelectorAll('.fp-pick button').forEach(btn => btn.addEventListener('click', () => { activeBy[ch] = Number(btn.dataset.pid); render(); }));
+            const inner = wrap.querySelector('.fp-map-in');
+            // 지도 위 툴팁은 부정선거 화면에서만 포털 모양으로
+            const tip = () => document.getElementById('tooltipBox');
+            inner.addEventListener('mouseenter', () => tip()?.classList.add('fp-tip'));
+            inner.addEventListener('mouseleave', () => tip()?.classList.remove('fp-tip'));
+            renderDistrictSvgInto(inner, {
+                chamber: ch, zoomKey: 'fraud:' + ch, hideAbbr: true, clickable: true,
+                defs: [...defs.values()].join(''),
+                getFill: k => fills[k] || '#050605',
+                title: k => !inCh(k) ? `${nameOf(k)} — 이 원에 없는 지역구` : rig[k] ? `⚠ ${nameOf(k)} — ${rig[k].name} 조작` : `${nameOf(k)} — 눌러서 조작`,
+                onClickKey: k => toggleRig(ch, k),
             });
         });
+    }
+
+    // 지도에서 지역구를 눌렀을 때 — 고른 정당의 표적으로 넣기 · 빼기 (다른 정당이 이미 조작 중이면 넘겨받는다)
+    const activeBy = {};
+    function toggleRig(ch, key) {
+        if (typeof districtGrid === 'undefined' || !districtGrid[ch]?.[key]) return;
+        const opsCh = parties.filter(p => p.fraudAttempt && p.fraudAttempt.chamber === ch);
+        const me = opsCh.find(p => p.id === activeBy[ch]) || opsCh[0];
+        if (!me) return;
+        const owner = opsCh.find(p => (p.fraudAttempt.riggedDistricts || []).includes(key));
+        if (owner) owner.fraudAttempt.riggedDistricts = owner.fraudAttempt.riggedDistricts.filter(k => k !== key);
+        if (owner !== me) me.fraudAttempt.riggedDistricts = [...(me.fraudAttempt.riggedDistricts || []), key];
+        [owner, me].forEach(p => { if (p && !p.fraudAttempt.manualCatch && typeof computeAutoFraudCatchChance === 'function') p.fraudAttempt.catchChance = computeAutoFraudCatchChance(p.fraudAttempt); });
+        document.getElementById('tooltipBox')?.classList.remove('fp-tip');
+        if (typeof window.renderFraudTab === 'function') window.renderFraudTab(); else render();
     }
 
     // 부정선거 탭을 열면 포털을 띄운다
@@ -158,7 +198,14 @@
         #contentFraud .fl-in:focus { border-color: var(--fp-ink) !important; outline: none; }
         #contentFraud .fl-in:disabled { opacity: .45; }
         #contentFraud .fl-in option { background: #020302; color: var(--fp-ink); }
-        #contentFraud .fl-in option:checked { background: var(--fp-red); color: #fff; }
+        #contentFraud .fl-in option:checked, #contentFraud .fl-in:focus option:checked { background: linear-gradient(var(--fp-red), var(--fp-red)) !important; color: #fff !important; }
+        #contentFraud .fl-rig-bar { display: flex; align-items: center; gap: 6px; margin-top: 4px; font-size: .66rem; }
+        #contentFraud .fl-rig-count { color: var(--fp-ink); }
+        #contentFraud .fl-rig-hint { color: var(--fp-dim); flex: 1; min-width: 0; }
+        #contentFraud .fl-clear { background: transparent; border: 1px solid var(--fp-red); color: var(--fp-red); font-size: .66rem; padding: 2px 8px; cursor: pointer; }
+        #contentFraud .fl-clear:disabled { border-color: var(--fp-line); color: var(--fp-dim); cursor: default; opacity: .6; }
+        html[data-theme-family="modern"] #contentFraud .fl-clear { border-radius: 6px; font-weight: 600; }
+        html[data-theme-family="modern"] #contentFraud .fl-rig-count { font-weight: 700; }
         #contentFraud .fl-multi { width: 100%; box-sizing: border-box; height: 96px; margin-top: 4px; }
         #contentFraud .fl-manual { display: flex; align-items: center; gap: 3px; color: var(--fp-dim); font-size: .68rem; flex-shrink: 0; cursor: pointer; white-space: nowrap; }
         #contentFraud .fl-note { color: var(--fp-dim); font-size: .66rem; margin-left: 106px; }
@@ -215,12 +262,98 @@
         .fp-map-in svg path { stroke: #12301c !important; }
         .fp-map-in [class*="zoom"] { background: #0a0d0b !important; border-color: var(--fp-line) !important; color: var(--fp-ink) !important; box-shadow: none !important; }
         .fp-map-in [class*="zoom"] button { background: transparent !important; color: var(--fp-ink) !important; }
+        .fp-pick { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 6px; }
+        .fp-pick button { display: inline-flex; align-items: center; gap: 5px; background: transparent; border: 1px solid var(--fp-line); color: var(--fp-dim); font-size: .72rem; padding: 3px 9px; cursor: pointer; }
+        .fp-pick button.on { border-color: var(--fp-red); color: #fff; background: rgba(255,46,77,.1); }
+        .fp-map-legend { display: flex; align-items: center; gap: 6px; font-size: .66rem; color: var(--fp-dim); margin-top: 6px; }
+        .fp-map-legend b { color: var(--fp-ink); font-weight: inherit; }
+        .fp-sw { width: 14px; height: 10px; flex-shrink: 0; background: repeating-linear-gradient(-45deg, var(--pc) 0 3px, #0b0f0c 3px 6px); border: 1px solid var(--fp-line); }
+        #tooltipBox.fp-tip { background: #050706 !important; border: 1px solid #2fd56b !important; color: #8dffb0 !important; box-shadow: 0 0 10px rgba(47,213,107,.25) !important; font-family: 'NeoDunggeunmo', 'VT323', Consolas, monospace !important; text-shadow: none !important; }
+        html[data-theme-family="modern"] #tooltipBox.fp-tip { background: #19191c !important; border: 1px solid #2a2a2f !important; color: #ececee !important; border-radius: 8px !important; box-shadow: 0 6px 20px rgba(0,0,0,.45) !important; font-family: var(--m-font, 'Pretendard Variable', system-ui, sans-serif) !important; }
+        html[data-theme-family="modern"] .fp-pick button { border-radius: 999px; background: var(--fp-card); font-weight: 600; }
+        html[data-theme-family="modern"] .fp-pick button.on { border-color: var(--fp-red); background: rgba(239,68,68,.14); }
+        html[data-theme-family="modern"] .fp-map-legend { font-size: .72rem; }
+        html[data-theme-family="modern"] .fp-map-legend b { font-weight: 700; color: #fff; }
+        html[data-theme-family="modern"] .fp-sw { border-radius: 3px; }
         .fp-ledger { margin: 0 12px; display: flex; flex-direction: column; gap: 4px; }
         .fp-led { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; font-size: .72rem; padding: 4px 6px; border-left: 2px solid #2fd56b; background: rgba(10,20,13,.6); }
         .fp-led.bad { border-left-color: var(--fp-red); }
         .fp-led-st { min-width: 4.5em; color: #2fd56b; } .fp-led.bad .fp-led-st { color: var(--fp-red); }
         .fp-led-name { color: #d8ffe3; } .fp-led-meta { color: var(--fp-dim); font-size: .66rem; }
         .fp-foot { margin: 14px 12px 0; font-size: .62rem; color: #2a4a35; text-align: center; letter-spacing: 1px; }
+
+        /* ===== 라이트 · 다크(모던) 테마 — CRT 효과 없이 깔끔한 블랙마켓 장터 ===== */
+        .fp-m { display: none; }
+        .fp-logo em { font-style: normal; }
+        html[data-theme-family="modern"] #dispPanelFraud,
+        html[data-theme-family="modern"] #contentFraud { --fp-bg: #111113; --fp-card: #19191c; --fp-ink: #ececee; --fp-dim: #8b8b93; --fp-line: #2a2a2f; --fp-red: #ef4444; --fp-amber: #f5a524; }
+        html[data-theme-family="modern"] #dispPanelFraud.active { background: var(--fp-bg); }
+        html[data-theme-family="modern"] .fp, html[data-theme-family="modern"] .fp *,
+        html[data-theme-family="modern"] #contentFraud, html[data-theme-family="modern"] #contentFraud * { font-family: var(--m-font, 'Pretendard Variable', system-ui, sans-serif) !important; }
+        html[data-theme-family="modern"] .fp { border: none; box-shadow: none; padding-bottom: 20px; }
+        html[data-theme-family="modern"] .fp::before, html[data-theme-family="modern"] #contentFraud::before { display: none; }
+        html[data-theme-family="modern"] .fp-m { display: flex; }
+        html[data-theme-family="modern"] .fp-br { display: none; }
+        html[data-theme-family="modern"] .fp-bar { background: #0b0b0d; color: var(--fp-dim); font-size: .74rem; padding: 8px 14px; }
+        html[data-theme-family="modern"] .fp-url { color: #b5b5bc; background: #1c1c20; border-radius: 999px; padding: 3px 12px; }
+        html[data-theme-family="modern"] .fp-hero { text-align: left; padding: 22px 16px 14px; border-bottom: 1px solid var(--fp-line); }
+        html[data-theme-family="modern"] .fp-logo { font-size: 1.7rem; font-weight: 900; letter-spacing: -1px; color: #fff; text-shadow: none; }
+        html[data-theme-family="modern"] .fp-logo em { color: var(--fp-red); }
+        html[data-theme-family="modern"] .fp-logo::before, html[data-theme-family="modern"] .fp-logo::after { display: none; }
+        html[data-theme-family="modern"] .fp-sub { color: var(--fp-dim); letter-spacing: 0; font-size: .8rem; margin-top: 4px; }
+        html[data-theme-family="modern"] .fp-warn { border: none; border-radius: 6px; background: rgba(239,68,68,.12); color: #fca5a5; font-size: .72rem; padding: 4px 10px; }
+        html[data-theme-family="modern"] .fp-cats { gap: 6px; margin-top: 14px; flex-wrap: wrap; }
+        html[data-theme-family="modern"] .fp-cats span { font-size: .74rem; color: var(--fp-dim); background: var(--fp-card); border: 1px solid var(--fp-line); border-radius: 999px; padding: 4px 11px; font-weight: 600; }
+        html[data-theme-family="modern"] .fp-cats span.on { color: #111; background: var(--fp-amber); border-color: var(--fp-amber); }
+        html[data-theme-family="modern"] .fp-sec-h { color: var(--fp-ink); font-weight: 800; font-size: .9rem; letter-spacing: -.2px; padding: 18px 16px 8px; }
+        html[data-theme-family="modern"] .fp-sec-h b { color: var(--fp-amber); }
+        html[data-theme-family="modern"] .fp-op { margin: 0 16px 10px; border: 1px solid var(--fp-line); border-left: 1px solid var(--fp-line); border-radius: 12px; background: var(--fp-card); padding: 12px 14px; }
+        html[data-theme-family="modern"] .fp-op-head { font-size: .9rem; font-weight: 700; }
+        html[data-theme-family="modern"] .fp-code { color: var(--fp-dim); font-weight: 600; }
+        html[data-theme-family="modern"] .fp-dot { box-shadow: none; }
+        html[data-theme-family="modern"] .fp-tag { border: none; border-radius: 6px; background: #26262b; color: #c4c4cc; padding: 1px 7px; font-weight: 600; }
+        html[data-theme-family="modern"] .fp-status { animation: none; color: var(--fp-amber); background: rgba(245,165,36,.12); border-radius: 999px; padding: 2px 9px; font-weight: 600; }
+        html[data-theme-family="modern"] .fp-op-body { margin-top: 12px; gap: 10px; }
+        html[data-theme-family="modern"] .fp-op-body > div { background: #141417; border-radius: 8px; padding: 8px 10px; }
+        html[data-theme-family="modern"] .fp-k { font-size: .68rem; font-weight: 600; }
+        html[data-theme-family="modern"] .fp-v { font-size: 1.05rem; font-weight: 800; color: #fff; }
+        html[data-theme-family="modern"] .fp-meter { height: 5px; border-radius: 3px; background: #26262b; margin-top: 6px; overflow: hidden; }
+        html[data-theme-family="modern"] .fp-meter span { border-radius: 3px; background: linear-gradient(90deg, #22c55e, var(--fp-amber) 55%, var(--fp-red)); }
+        html[data-theme-family="modern"] .fp-escrow { justify-content: space-between; gap: 8px; flex-wrap: wrap; margin-top: 10px; font-size: .7rem; color: var(--fp-dim); }
+        html[data-theme-family="modern"] .fp-escrow span:first-child { color: #86efac; font-weight: 600; }
+        html[data-theme-family="modern"] .fp-dist span { border: none; border-radius: 6px; background: #26262b; color: #c4c4cc; padding: 2px 8px; }
+        html[data-theme-family="modern"] .fp-empty { margin: 0 16px 8px; color: var(--fp-dim); font-size: .8rem; }
+        html[data-theme-family="modern"] .fp-cursor { display: none; }
+        html[data-theme-family="modern"] .fp-map { margin: 0 16px; }
+        html[data-theme-family="modern"] .fp-map-in { border-radius: 12px; overflow: hidden; background: #0c0c0e; border-color: var(--fp-line); filter: none; }
+        html[data-theme-family="modern"] .fp-map-in svg path { stroke: #2a2a2f !important; }
+        html[data-theme-family="modern"] .fp-ledger { margin: 0 16px; gap: 6px; }
+        html[data-theme-family="modern"] .fp-led { border-left: none; border-radius: 10px; background: var(--fp-card); border: 1px solid var(--fp-line); padding: 8px 12px; font-size: .78rem; }
+        html[data-theme-family="modern"] .fp-led-st { min-width: auto; border-radius: 999px; padding: 1px 8px; font-weight: 700; font-size: .68rem; color: #86efac; background: rgba(34,197,94,.12); }
+        html[data-theme-family="modern"] .fp-led.bad .fp-led-st { color: #fca5a5; background: rgba(239,68,68,.14); }
+        html[data-theme-family="modern"] .fp-led-name { font-weight: 700; color: #fff; }
+        html[data-theme-family="modern"] .fp-foot { color: #55555c; letter-spacing: 0; margin-top: 18px; }
+        /* 왼쪽 탭 */
+        html[data-theme-family="modern"] #contentFraud { background: var(--fp-bg); color: var(--fp-ink); border: none; border-radius: 12px; box-shadow: none; padding: 14px; }
+        html[data-theme-family="modern"] #contentFraud .fl-intro { color: var(--fp-dim); border-bottom: 1px solid var(--fp-line); font-size: .76rem; }
+        html[data-theme-family="modern"] #contentFraud .fl-intro-h { color: #fff; font-weight: 900; letter-spacing: -.3px; text-shadow: none; font-size: .95rem; }
+        html[data-theme-family="modern"] #contentFraud .fl-cursor { display: none; }
+        html[data-theme-family="modern"] #contentFraud .fl-card { background: var(--fp-card); border: 1px solid var(--fp-line); border-radius: 12px; padding: 10px 12px; }
+        html[data-theme-family="modern"] #contentFraud .fl-card:has(.fl-deal.on) { border-color: rgba(239,68,68,.55); }
+        html[data-theme-family="modern"] #contentFraud .fl-dot { box-shadow: none; }
+        html[data-theme-family="modern"] #contentFraud .fl-name { color: #fff; font-weight: 700; }
+        html[data-theme-family="modern"] #contentFraud .fl-deal { border: none; border-radius: 8px; background: #141417; }
+        html[data-theme-family="modern"] #contentFraud .fl-deal.on { border: none; background: rgba(239,68,68,.07); }
+        html[data-theme-family="modern"] #contentFraud .fl-toggle, html[data-theme-family="modern"] #contentFraud .fl-toggle span { color: var(--fp-ink) !important; font-weight: 600; }
+        html[data-theme-family="modern"] #contentFraud .fl-deal.on .fl-toggle, html[data-theme-family="modern"] #contentFraud .fl-deal.on .fl-toggle span { color: #fca5a5 !important; }
+        html[data-theme-family="modern"] #contentFraud .fl-toggle small { color: var(--fp-dim) !important; font-weight: 500; }
+        html[data-theme-family="modern"] #contentFraud .fl-manual { color: var(--fp-dim) !important; }
+        html[data-theme-family="modern"] #contentFraud .fl-k { font-weight: 600; }
+        html[data-theme-family="modern"] #contentFraud .fl-in { background: #0c0c0e !important; color: var(--fp-ink) !important; border-color: var(--fp-line) !important; border-radius: 8px !important; }
+        html[data-theme-family="modern"] #contentFraud .fl-in:focus { border-color: var(--fp-amber) !important; }
+        html[data-theme-family="modern"] #contentFraud .fl-in option { background: #0c0c0e; color: var(--fp-ink); }
+        html[data-theme-family="modern"] #contentFraud .fl-fine { color: #a1a1aa; border-top: 1px solid var(--fp-line); }
+        html[data-theme-family="modern"] #contentFraud input[type=checkbox]:not(:checked) { background-color: #0c0c0e !important; border-color: #3f3f46 !important; }
     `;
     document.head.appendChild(style);
 })();
