@@ -20,11 +20,11 @@
     const root = document.documentElement;
     const mode = root.getAttribute('data-app-mode');
     const spaces = [];
-    if (mode === 'teaser') spaces.push(`hemicycleTeaserV2-${root.getAttribute('data-teaser') || '67'}:`);
+    if (mode === 'teaser') spaces.push(`hemicycleTeaserV2-${root.getAttribute('data-teaser') || '68'}:`);
     else if (mode === 'logo') spaces.push('hemicycleLogo:');
     else {
         spaces.push('');
-        ['61', '62', '63', '64', '65', '66'].forEach(id => spaces.push(`hemicycleTeaserV2-${id}:`)); // 없앤 1.6.1 ~ 1.6.6 미리보기의 세이브 — 시작 화면이 본 게임 세이브로 옮긴다 (index.html)
+        ['61', '62', '63', '64', '65', '66', '67'].forEach(id => spaces.push(`hemicycleTeaserV2-${id}:`)); // 없앤 1.6.1 ~ 1.6.7 미리보기의 세이브 — 시작 화면이 본 게임 세이브로 옮긴다 (index.html)
         if (window.HemiDev && window.HemiDev.anyOn()) window.HemiDev.teasers.forEach(t => spaces.push(`hemicycleTeaserV2-${t.id}:`));
     }
 
