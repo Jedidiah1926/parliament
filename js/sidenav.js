@@ -37,6 +37,7 @@
             { main: 'cabinet', id: 'subTabRoyal', label: '왕실', ver: '1.6.6', after: 'subTabRevolution' },
             { main: 'nation', id: 'subTabPeople', label: '사람', ver: '1.6.1', after: 'subTabRegions' },
             { main: 'nation', id: 'subTabUnrecovered', label: '미수복', ver: '1.6.7', after: 'subTabPeople' },
+            { main: 'election', id: 'elecSubTabArticles', label: '기사', ver: '1.7.0', after: 'elecSubTabMprob' },
             { main: 'world', id: 'subTabEconblocs', label: '경제권', ver: '1.7.1', after: 'subTabBlocs' },
             { main: 'nation', id: 'subTabVassals', label: '종속국', ver: '1.6.8', after: 'subTabUnrecovered' },
         ],
@@ -374,6 +375,7 @@
         subTabSymbol: ['국기', '국호', '국가 이름', '상징', '나라 이름'], subTabTerritory: ['지역', '지역구', '지도', '인구', '시민 수', '이민자 수', '맵 프리셋', '지도 올리기'],
         subTabRegions: ['권역', '권역 지도'], subTabNationSettings: ['날짜', '연호', '회기', '다음 회기', '지역구 이름 표시'], subTabPeople: ['사람', '인물', '후보', '지역구 후보'],
         subTabUnrecovered: ['미수복', '영토 통일'], subTabVassals: ['종속국', '합병', '해방'], subTabRanking: ['국가 순위', '냉전'], subTabBlocs: ['진영'],
+        elecSubTabArticles: ['기사', '신문', '언론', '보도', '뉴스'],
     };
     // 탭이 아닌 곳 (위쪽 탭 바의 저장 · 설정 창)
     const SEARCH_ACTIONS = [

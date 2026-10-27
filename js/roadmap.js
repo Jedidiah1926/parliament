@@ -833,7 +833,9 @@
           {
             status: 'future',
             title: '1.7.0 - The Fund Rises',
-            desc: `202X.XX.XX`
+            summary: ['여론 › 기사'],
+            desc: `202X.XX.XX
+              <br>- 여론 › 기사 탭 신설 — 신문 · 방송 기사를 직접 작성 (언론사 · 제목 · 부제 · 날짜 · 본문 · 사진), 날짜순으로 쌓이는 기사 목록`
           },
           {
             status: 'future',

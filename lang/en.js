@@ -780,6 +780,11 @@ window.DnoLangPacks.en = {
   }
  ],
  "dict": [
+    ["기사 (🔒 1.7.0)", "Articles (🔒 1.7.0)"],
+    ["신문 · 방송 기사를 직접 작성하는 기능(언론사 · 제목 · 부제 · 날짜 · 본문 · 사진, 날짜순 기사 목록) — 1.7.0에서 열립니다.", "Write your own newspaper and broadcast articles (outlet · headline · subhead · date · body · photo, listed by date) — opens in 1.7.0."],
+    ["여론 › 기사", "Opinion › Articles"],
+    ["- 여론 › 기사 탭 신설 — 신문 · 방송 기사를 직접 작성 (언론사 · 제목 · 부제 · 날짜 · 본문 · 사진), 날짜순으로 쌓이는 기사 목록", "- New Opinion › Articles tab — write newspaper and broadcast articles (outlet · headline · subhead · date · body · photo), listed by date"],
+    ["기사", "Articles"],
     ["조작 지역구 · 지역구를 누르면 ", "Rigged district · click a district to make it "],
     ["의 표적으로 · 다시 누르면 해제", "'s target · click again to clear"],
     ["선택 안 함", "None selected"],
