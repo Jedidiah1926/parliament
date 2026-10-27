@@ -9,7 +9,7 @@
 //   - 금액은 비율(GDP 대비 %)로 계산하고 화면에만 화폐 단위로 보여 준다
 //   - 예산 · 세율 바꾸기는 기본으로 예산안(법안)을 거친다 (설정에서 끄면 바로 반영), 통화정책은 중앙은행 몫이라 바로
 //   - 경제 성과가 지지율 · 지역구 성향을 조금씩 움직인다 (설정)
-// 계산식은 TODO.md "1.6.9 경제 시스템 설계"의 턴 계산 순서를 따른다 (계수는 연 단위, 턴 길이만큼 나눠 씀)
+// 계산식은 아래 턴 계산의 단계 순서(1. … 6. 자산 …)를 따른다 (계수는 연 단위, 턴 길이만큼 나눠 씀)
 /* global parties, coalitions, elecStore, districtGrid, districtPopulation, districtNames, districtSvgTendency, districtSortedKeys,
    bills, getBillOverallStatus, renderBillList, syncBillSelect, selectBillForVote, applyPartyVote, ideologies,
    showCustomAlert, showCustomConfirm, escapeHtmlText, switchSubTab, switchMainTab, switchDispTab, renderDistrictSvgInto,

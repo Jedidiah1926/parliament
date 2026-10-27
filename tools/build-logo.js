@@ -43,10 +43,3 @@ TEASERS.forEach(t => {
     fs.writeFileSync(path.join(root, t.file), teaser);
     console.log(t.file + ' 생성 완료');
 });
-// 예전 주소(teaser.html)로 들어오면 1.6.9 티저로 보낸다
-fs.writeFileSync(path.join(root, 'teaser.html'), `<!DOCTYPE html>
-<!-- 자동 생성 파일 (tools/build-logo.js) — 예전 teaser.html 주소는 teaser69.html(1.6.9 미리보기)로 옮겨졌다 -->
-<html lang="ko"><head><meta charset="UTF-8"><meta http-equiv="refresh" content="0; url=teaser69.html"><title>Hemicycle — Teaser</title></head>
-<body><a href="teaser69.html">teaser69.html로 이동</a> · <a href="teaser66.html">teaser66.html</a> · <a href="teaser67.html">teaser67.html</a> · <a href="teaser68.html">teaser68.html</a></body></html>
-`);
-console.log('teaser.html(→ teaser69.html) 생성 완료');
