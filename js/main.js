@@ -5009,6 +5009,7 @@
                     pmDirectElectionEnabled: pmDirectElectionEnabled,
                     pmMajorityLocked: pmMajorityLocked,
                     splitDissolutionHolders: splitDissolutionHolders,
+                    fraudUnlocked: fraudUnlockedFlag,
                     constructiveNoConfidence: constructiveNoConfidence,
                     pmNominee: pmNominee,
                     pmNomineeBillId: pmNomineeBillId,
@@ -5291,6 +5292,8 @@
             pmDirectElectionEnabled = !!cfg.pmDirectElectionEnabled;
             pmMajorityLocked = !!cfg.pmMajorityLocked;
             splitDissolutionHolders = !!cfg.splitDissolutionHolders;
+            fraudUnlockedFlag = !!cfg.fraudUnlocked; // 부정선거 탭 ⚠ 잠금 해제 — 세이브마다
+            applyFraudTabLabel();
             constructiveNoConfidence = !!cfg.constructiveNoConfidence;
             pmNominee = { name: '', photo: '', partyId: null, linkedSeat: null, ...(cfg.pmNominee || {}) };
             pmNomineeBillId = cfg.pmNomineeBillId ?? null;
@@ -8770,9 +8773,11 @@
 
         // 국가 > 부정선거 탭 — 정당별 카드로 부정선거 시도를 한눈에 모아 설정 (정당 정보 탭에는 노출하지 않음)
         // ===== ⚠ 탭 잠금 — 처음엔 이름 없이 ⚠. 누르면 몇 번 말리다가, 계속 들어가려 하면 화면이 점점 붉어지며 잠금이 풀리고
-        // 그 뒤로는 "부정선거"로 보인다 (이 기기에 기억). 튜토리얼 · 도움말이 switchSubTab으로 바로 여는 건 막지 않는다
-        const FRAUD_UNLOCK_KEY = 'hemicycleFraudUnlocked';
-        function fraudUnlocked() { try { return localStorage.getItem(FRAUD_UNLOCK_KEY) === '1'; } catch(e) { return false; } }
+        // 그 뒤로는 "부정선거"로 보인다 (세이브마다 따로 — config.fraudUnlocked). 튜토리얼 · 도움말이 switchSubTab으로 바로 여는 건 막지 않는다
+        // (예전엔 이 기기에 한 번만 기억해서, 한 세이브에서 풀면 모든 세이브에서 풀리고 연출도 처음 한 번만 나왔다)
+        let fraudUnlockedFlag = false;
+        try { localStorage.removeItem('hemicycleFraudUnlocked'); } catch(e) { /* 저장 공간 없음 */ }
+        function fraudUnlocked() { return fraudUnlockedFlag; }
         function applyFraudTabLabel() {
             const b = document.getElementById('subTabFraud');
             if(b) { b.textContent = fraudUnlocked() ? '부정선거' : '⚠'; b.title = fraudUnlocked() ? '부정선거' : ''; }
@@ -8815,7 +8820,7 @@
                 v.classList.add('final');
                 document.body.classList.add('fraud-shake');
                 await wait(1500);
-                try { localStorage.setItem(FRAUD_UNLOCK_KEY, '1'); } catch(e) { /* 저장 못 해도 이번엔 연다 */ }
+                fraudUnlockedFlag = true;
                 applyFraudTabLabel();
                 switchSubTab('vote', 'fraud');
                 document.body.classList.remove('fraud-shake');

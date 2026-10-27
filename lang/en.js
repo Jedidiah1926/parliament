@@ -716,6 +716,7 @@ window.DnoLangPacks.en = {
   }
  ],
  "dict": [
+  ["- 부정선거 탭 ⚠ 잠금 해제를 세이브마다 따로 — 한 세이브에서 풀면 모든 세이브에서 풀리고 잠금 해제 연출도 처음 한 번만 나오던 문제 수정", "- The ⚠ unlock of the election fraud tab is now per save — fixed unlocking it in one save unlocking every save, and the unlock sequence only ever playing once"],
   ["정당 태그 선호", "Party tag preferences"],
   ["태그 선호", "Tag preferences"],
   ["태그 선호 화면 열기 →", "Open tag preferences →"],
