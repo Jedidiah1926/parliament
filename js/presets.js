@@ -43,6 +43,15 @@
             script: 'presets/usa.js',
             langs: { en: { script: 'presets/usa.en.js', title: 'United States of America', description: 'By ttorri' } },
         },
+        {
+            id: 'builtin:germany',
+            title: '독일연방공화국',
+            description: '제작자: ttorri',
+            date: '',
+            author: 'ttorri',
+            script: 'presets/germany.js',
+            langs: { en: { title: 'Federal Republic of Germany', description: 'By ttorri' } }, // 영어 데이터 파일은 아직 없음 — 한국어 데이터로 열림
+        },
     ];
     const INDEX_URL = 'presets/index.json';
     let listCache = null;
