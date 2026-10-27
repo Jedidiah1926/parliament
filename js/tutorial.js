@@ -733,7 +733,7 @@
                     before: [closePanels, go('economy', 'overview'), showPanel('controls')],
                     target: () => document.querySelector('#contentEcoOverview .t69-top') || '#contentEcoOverview',
                     title: '보이지 않는 손',
-                    text: '메뉴 › 경제에서는 나라 경제를 움직여요. 서독 튜토리얼은 1983년 서독 경제(성장 1.6% · 인플레 3.3% · 실업 약 9%)로 시작합니다. 왼쪽 위 배지는 신용등급(AAA ~ D)이에요.',
+                    text: '메뉴 › 경제에서는 나라 경제를 움직여요. 서독 튜토리얼은 1983년 서독 경제(성장 1.6% · 인플레이션 3.3% · 실업 약 9%)로 시작합니다. 왼쪽 위 배지는 신용등급(AAA ~ D)이에요.',
                 },
                 {
                     before: [go('economy', 'overview'), showPanel('controls')],
@@ -767,7 +767,7 @@
                     before: [go('economy', 'monetary'), showPanel('controls')],
                     target: () => document.querySelector('#contentEcoMonetary .t69-card') || '#contentEcoMonetary',
                     title: '통화',
-                    text: '기준금리 · 화폐발행률 · 양적완화 같은 통화정책은 중앙은행 몫이라 바로 반영돼요. 금리를 올리면 인플레가 잡히지만 실업이 늘고, 화폐를 많이 발행하면 당장은 좋아도 물가와 통화가치가 무너집니다. 아래 막대가 "이대로면 다음 분기"예요.',
+                    text: '기준금리 · 화폐발행률 · 양적완화 같은 통화정책은 중앙은행 몫이라 바로 반영돼요. 금리를 올리면 인플레이션가 잡히지만 실업이 늘고, 화폐를 많이 발행하면 당장은 좋아도 물가와 통화가치가 무너집니다. 아래 막대가 "이대로면 다음 분기"예요.',
                 },
                 {
                     before: [go('economy', 'fiscal'), showPanel('controls')],
@@ -783,13 +783,13 @@
                     title: '이벤트',
                     text: '경제 › 이벤트에서는 정한 날짜에 대공황 · 금융 위기 · 오일 쇼크 · 하이퍼인플레이션 · 국가 부도 · 경제 붕괴 · 재해 · 호황을 일으켜요 ("직접 설정"으로 이름 · 효과를 정한 사건도). 종류를 고르고 시작 연 · 월, 기간(개월), 세기를 정해 "+ 이벤트 추가"를 눌러 보세요.',
                     task: () => !!t69() && (t69().state.sched || []).length > (T.evBase || 0),
-                    done: '이벤트가 예약됐어요! 날짜가 그 달에 닿으면 신뢰도 · 통화가치가 한 번 꺾이고, 기간 동안 성장 · 인플레 · 실업이 움직여요. 일어나기 전에는 아래 목록에서 날짜 · 기간 · 세기를 고치거나 지울 수 있어요.',
+                    done: '이벤트가 예약됐어요! 날짜가 그 달에 닿으면 신뢰도 · 통화가치가 한 번 꺾이고, 기간 동안 성장 · 인플레이션 · 실업이 움직여요. 일어나기 전에는 아래 목록에서 날짜 · 기간 · 세기를 고치거나 지울 수 있어요.',
                 },
                 {
                     before: [go('economy', 'analysis'), showEco('analysis'), showPanel('controls')],
                     target: () => document.querySelector('#contentEcoAnalysis .t69-presets') || '#contentEcoAnalysis',
                     title: '전문가 분석',
-                    text: '깊게 보고 싶으면 분석에서 경기 순환 · 인플레 · 재정 건전성 · 지역 격차 · 정책 실험을 골라요. 오른쪽에 같은 십자선을 쓰는 연동 패널, 성장 기여도 분해(이벤트 몫 포함), 부채 동학(r − g), 예산 흐름도, 정책 민감도가 그려집니다. "크게 보기"로 화면 전체에 펼칠 수 있어요.',
+                    text: '깊게 보고 싶으면 분석에서 경기 순환 · 인플레이션 · 재정 건전성 · 지역 격차 · 정책 실험을 골라요. 오른쪽에 같은 십자선을 쓰는 연동 패널, 성장 기여도 분해(이벤트 몫 포함), 부채 동학(r − g), 예산 흐름도, 정책 민감도가 그려집니다. "크게 보기"로 화면 전체에 펼칠 수 있어요.',
                 },
                 {
                     before: [go('economy', 'region'), showPanel('controls')],

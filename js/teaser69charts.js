@@ -617,7 +617,7 @@
         svg.dataset.exportKind = 't69chart';
     }
 
-    // ================= 경제 궤적 (실업 × 인플레) =================
+    // ================= 경제 궤적 (실업 × 인플레이션) =================
     // opt: { points: [{ x, y, label }], xLabel, yLabel, unit, range }
     function trajectory(container, opt) { mount(container, () => drawTraj(container, opt)); }
     function drawTraj(container, opt) {
@@ -626,13 +626,13 @@
         const all = opt.points, i0 = opt.range ? opt.range[0] : 0, i1 = opt.range ? opt.range[1] : all.length - 1;
         const pts = all.slice(i0, i1 + 1).filter(p => finite(p.x) && finite(p.y));
         const W = widthOf(container), H = opt.height || 300, padL = 48, padR = 16, padT = 12, padB = 38, pw = W - padL - padR, ph = H - padT - padB;
-        const svg = S('svg', { viewBox: `0 0 ${W} ${H}`, width: W, height: H, class: 't69-svg', role: 'img', 'aria-label': '경제 궤적 — 실업률과 인플레' }, container);
+        const svg = S('svg', { viewBox: `0 0 ${W} ${H}`, width: W, height: H, class: 't69-svg', role: 'img', 'aria-label': '경제 궤적 — 실업률과 인플레이션' }, container);
         S('rect', { x: 0, y: 0, width: W, height: H, class: 't69-surface' }, svg);
         const [x0, x1] = extent([pts.map(p => p.x)], 0.15, true), [y0, y1] = extent([pts.map(p => p.y)], 0.15, true);
         const X = v => padL + (v - x0) / (x1 - x0) * pw, Y = v => padT + ph - (v - y0) / (y1 - y0) * ph;
         ticks(y0, y1, 5).forEach(v => { S('line', { x1: padL, x2: W - padR, y1: Y(v), y2: Y(v), class: Math.abs(v) < 1e-9 ? 't69-axis' : 't69-grid' }, svg); T(svg, padL - 6, Y(v) + 3.5, fmtNum(v, v % 1 ? 1 : 0) + '%', { class: 't69-tick', 'text-anchor': 'end' }); });
         ticks(x0, x1, 5).forEach(v => { S('line', { x1: X(v), x2: X(v), y1: padT, y2: padT + ph, class: 't69-grid' }, svg); T(svg, X(v), padT + ph + 14, fmtNum(v, v % 1 ? 1 : 0) + '%', { class: 't69-tick', 'text-anchor': 'middle' }); });
-        // 사분면 이름 (기준: 실업 6% · 인플레 4%)
+        // 사분면 이름 (기준: 실업 6% · 인플레이션 4%)
         const qx = X(clamp(6, x0, x1)), qy = Y(clamp(4, y0, y1));
         S('line', { x1: qx, x2: qx, y1: padT, y2: padT + ph, class: 't69-quad' }, svg); S('line', { x1: padL, x2: W - padR, y1: qy, y2: qy, class: 't69-quad' }, svg);
         T(svg, W - padR - 4, padT + 12, '스태그플레이션', { class: 't69-quadlabel', 'text-anchor': 'end' });
