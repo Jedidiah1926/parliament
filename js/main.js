@@ -5009,6 +5009,7 @@
                     pmDirectElectionEnabled: pmDirectElectionEnabled,
                     pmMajorityLocked: pmMajorityLocked,
                     splitDissolutionHolders: splitDissolutionHolders,
+                    fraudUnlocked: fraudUnlockedFlag,
                     constructiveNoConfidence: constructiveNoConfidence,
                     pmNominee: pmNominee,
                     pmNomineeBillId: pmNomineeBillId,
@@ -5291,6 +5292,8 @@
             pmDirectElectionEnabled = !!cfg.pmDirectElectionEnabled;
             pmMajorityLocked = !!cfg.pmMajorityLocked;
             splitDissolutionHolders = !!cfg.splitDissolutionHolders;
+            fraudUnlockedFlag = !!cfg.fraudUnlocked; // 부정선거 탭 ⚠ 잠금 해제 — 세이브마다
+            applyFraudTabLabel();
             constructiveNoConfidence = !!cfg.constructiveNoConfidence;
             pmNominee = { name: '', photo: '', partyId: null, linkedSeat: null, ...(cfg.pmNominee || {}) };
             pmNomineeBillId = cfg.pmNomineeBillId ?? null;
@@ -8770,9 +8773,11 @@
 
         // 국가 > 부정선거 탭 — 정당별 카드로 부정선거 시도를 한눈에 모아 설정 (정당 정보 탭에는 노출하지 않음)
         // ===== ⚠ 탭 잠금 — 처음엔 이름 없이 ⚠. 누르면 몇 번 말리다가, 계속 들어가려 하면 화면이 점점 붉어지며 잠금이 풀리고
-        // 그 뒤로는 "부정선거"로 보인다 (이 기기에 기억). 튜토리얼 · 도움말이 switchSubTab으로 바로 여는 건 막지 않는다
-        const FRAUD_UNLOCK_KEY = 'hemicycleFraudUnlocked';
-        function fraudUnlocked() { try { return localStorage.getItem(FRAUD_UNLOCK_KEY) === '1'; } catch(e) { return false; } }
+        // 그 뒤로는 "부정선거"로 보인다 (세이브마다 따로 — config.fraudUnlocked). 튜토리얼 · 도움말이 switchSubTab으로 바로 여는 건 막지 않는다
+        // (예전엔 이 기기에 한 번만 기억해서, 한 세이브에서 풀면 모든 세이브에서 풀리고 연출도 처음 한 번만 나왔다)
+        let fraudUnlockedFlag = false;
+        try { localStorage.removeItem('hemicycleFraudUnlocked'); } catch(e) { /* 저장 공간 없음 */ }
+        function fraudUnlocked() { return fraudUnlockedFlag; }
         function applyFraudTabLabel() {
             const b = document.getElementById('subTabFraud');
             if(b) { b.textContent = fraudUnlocked() ? '부정선거' : '⚠'; b.title = fraudUnlocked() ? '부정선거' : ''; }
@@ -8815,7 +8820,7 @@
                 v.classList.add('final');
                 document.body.classList.add('fraud-shake');
                 await wait(1500);
-                try { localStorage.setItem(FRAUD_UNLOCK_KEY, '1'); } catch(e) { /* 저장 못 해도 이번엔 연다 */ }
+                fraudUnlockedFlag = true;
                 applyFraudTabLabel();
                 switchSubTab('vote', 'fraud');
                 document.body.classList.remove('fraud-shake');
@@ -12394,8 +12399,10 @@
         let tendencyStrength = 50;
 
         // 성향 %에 따라 정당 색을 흰색↔원래 색 사이로 보간 — 100%면 원래 색 그대로, 낮을수록 점점 연해짐(밝아짐)
+        // 성향(%) → 당색을 흰색과 섞은 색. 0%에 가까워도 당색이 알아볼 만큼 남도록 35%부터 시작한다
+        // (예전엔 %를 그대로 섞어 지지율이 낮은 정당 지도는 거의 흰색이었다)
         function tendencyColorForPct(baseColor, pct) {
-            const ratio = Math.max(0, Math.min(100, pct)) / 100;
+            const ratio = 0.35 + 0.65 * Math.max(0, Math.min(100, pct)) / 100;
             const hex = baseColor.replace('#', '');
             const r = parseInt(hex.substr(0,2), 16) || 0;
             const g = parseInt(hex.substr(2,2), 16) || 0;
@@ -12786,19 +12793,23 @@
         function tendencySvgBuildPartyFill(p) {
             const fillMap = {};
             const titleMap = {};
-            (districtSvgMapFor(tendencySvgChamber)?.shapes || []).forEach(s => {
+            // 정당별 지도는 그 정당이 가장 강한 지역구를 가장 진하게 — 지지율이 낮은 정당도 강세 · 약세 지역이 보이게
+            const shapes = districtSvgMapFor(tendencySvgChamber)?.shapes || [];
+            const maxVal = Math.max(0, ...shapes.map(s => (districtSeatCounts[s.key]?.[tendencySvgChamber] || 0) > 0 ? (Number(districtTendencyFor(s.key, tendencySvgChamber).values[p.id]) || 0) : 0));
+            shapes.forEach(s => {
                 const key = s.key;
                 const nm = districtNames.house[key] || key;
                 const seats = districtSeatCounts[key]?.[tendencySvgChamber] || 0;
                 if(seats <= 0) { fillMap[key] = '#141414'; titleMap[key] = `${nm} (이 원에 의석 없음)`; return; }
                 const eff = districtTendencyFor(key, tendencySvgChamber);
                 const val = Number(eff.values[p.id]) || 0;
-                fillMap[key] = val > 0 ? tendencyColorForPct(p.color, val) : 'rgba(255,255,255,0.05)';
+                fillMap[key] = val > 0 ? tendencyColorForPct(p.color, maxVal > 0 ? val / maxVal * 100 : 0) : 'rgba(255,255,255,0.05)';
                 titleMap[key] = `${nm}: ${p.name} ${val}%${eff.source === 'region' ? ` (권역 성향: ${eff.region.name})` : ''}`;
             });
             return {
                 getFill: key => fillMap[key] || 'rgba(255,255,255,0.05)',
                 getTitle: key => titleMap[key] || (districtNames.house[key] || key),
+                maxVal,
             };
         }
 
@@ -12901,6 +12912,7 @@
                 pWrap.innerHTML = `<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
                     <span style="width:10px;height:10px;background:${p.color};border-radius:50%;flex-shrink:0;"></span>
                     <span style="color:#aaa;font-size:0.8rem;">${p.name}</span>
+                    ${pf.maxVal > 0 ? `<span style="color:#666;font-size:0.72rem;margin-left:auto;">최고 ${Math.round(pf.maxVal * 10) / 10}%</span>` : ''}
                 </div>`;
                 const pMapDiv = document.createElement('div');
                 pWrap.appendChild(pMapDiv);

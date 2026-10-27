@@ -128,20 +128,30 @@
     function validateDefs() {
         warnings = [];
         const assets = assetDefs(), ids = new Set(assets.map(a => a.id));
+        // 기본 항목을 고친 칸(override)은 적힌 값만 검사한다 — 없는 값을 기본 숫자로 채우면 그 값이 기본 항목을 덮어써 버린다
+        const has = (x, k) => !x.override || x[k] != null;
         E.defs.items.forEach(d => {
-            d.s0 = num(d.s0, 1, 0, 50); d.max = num(d.max, 10, 0.1, 60); d.eff = num(d.eff, 0.6, 0.2, 1);
-            d.jobs = num(d.jobs, 0, -2, 2); d.mood = num(d.mood, 0, -3, 3);
-            d.tags = (Array.isArray(d.tags) ? d.tags : []).map(String).slice(0, 6);
+            if (has(d, 's0')) d.s0 = num(d.s0, 1, 0, 50);
+            if (has(d, 'max')) d.max = num(d.max, 10, 0.1, 60);
+            if (has(d, 'eff')) d.eff = num(d.eff, 0.6, 0.2, 1);
+            if (has(d, 'jobs')) d.jobs = num(d.jobs, 0, -2, 2);
+            if (has(d, 'mood')) d.mood = num(d.mood, 0, -3, 3);
+            if (has(d, 'tags')) d.tags = (Array.isArray(d.tags) ? d.tags : []).map(String).slice(0, 6);
             if (d.asset && !ids.has(d.asset)) { warnings.push(`지출 "${d.name}": 없는 자산(${d.asset})이라 자산 축적을 껐습니다`); d.asset = null; }
         });
         E.defs.taxes.forEach(t => {
-            t.rate0 = num(t.rate0, 5, 0, 100); t.base = num(t.base, 0.1, 0, 5); t.L = num(t.L, 100, 5, 300); t.max = num(t.max, 50, 1, 100);
-            if (!['income', 'industry', 'flat', 'wealth', 'imports', 'manufacturing'].includes(t.weight)) t.weight = 'flat';
+            if (has(t, 'rate0')) t.rate0 = num(t.rate0, 5, 0, 100);
+            if (has(t, 'base')) t.base = num(t.base, 0.1, 0, 5);
+            if (has(t, 'L')) t.L = num(t.L, 100, 5, 300);
+            if (has(t, 'max')) t.max = num(t.max, 50, 1, 100);
+            if (has(t, 'weight') && !['income', 'industry', 'flat', 'wealth', 'imports', 'manufacturing'].includes(t.weight)) t.weight = 'flat';
+            if (!has(t, 'side')) return;
             const side = t.side || {}; t.side = {};
             Object.keys(side).forEach(k => { if (['growth', 'infl', 'moodLow', 'moodHigh', 'conf'].includes(k)) t.side[k] = num(side[k], 0, -3, 3); else warnings.push(`세목 "${t.name}": 모르는 부작용(${k})은 무시했습니다`); });
         });
         E.defs.assets.forEach(a => {
-            a.decay = num(a.decay, 0.05, 0, 0.5);
+            if (has(a, 'decay')) a.decay = num(a.decay, 0.05, 0, 0.5);
+            if (!has(a, 'effects')) return;
             const eff = a.effects || {}; a.effects = {};
             Object.keys(eff).forEach(k => { if (EFFECT_TARGETS[k] || ids.has(k)) a.effects[k] = num(eff[k], 0, -1, 1); else warnings.push(`자산 "${a.name}": 모르는 효과 대상(${k})은 무시했습니다`); });
         });
@@ -1496,6 +1506,119 @@
     }
 
     // ---- 항목 (사용자 정의) ----
+    // 기본 항목 · 직접 만든 항목 모두 고치고(✎) 지울(×) 수 있다. 기본 항목을 고치면 E.defs의 override 칸에 바뀐 값만 두고,
+    // 지우면 override { disabled: true }로 숨긴다 — "숨긴 기본 항목"에서 되살리고, "기본값으로"로 고친 값을 되돌린다.
+    let editingDef = null; // { kind: 'item' | 'tax' | 'asset', id }
+    const DEF_LIST = { item: () => E.defs.items, tax: () => E.defs.taxes, asset: () => E.defs.assets };
+    const DEF_BUILTIN = { item: BUILTIN_ITEMS, tax: BUILTIN_TAXES, asset: BUILTIN_ASSETS };
+    const DEF_WORD = { item: '지출 항목', tax: '세목', asset: '자산' };
+    const isBuiltinDef = (kind, id) => DEF_BUILTIN[kind].some(b => b.id === id);
+    const overrideOf = (kind, id) => DEF_LIST[kind]().find(x => x.id === id && x.override) || null;
+    function saveDef(kind, id, fields) {
+        const list = DEF_LIST[kind]();
+        if (isBuiltinDef(kind, id)) {
+            let o = overrideOf(kind, id);
+            if (!o) { o = { id, override: true }; list.push(o); }
+            Object.assign(o, fields);
+        } else {
+            const o = list.find(x => x.id === id && !x.override);
+            if (o) Object.assign(o, fields);
+        }
+        editingDef = null;
+        validateDefs(); recomputeBudget(E); refreshAll();
+    }
+    function forgetValues(kind, id) {
+        if (kind === 'item') { delete E.spend[id]; if (E.draft) delete E.draft.spend[id]; }
+        if (kind === 'tax') { delete E.taxes[id]; if (E.draft) delete E.draft.taxes[id]; }
+        if (kind === 'asset') { delete E.assets[id]; E.defs.items.forEach(d => { if (d.asset === id) d.asset = null; }); }
+    }
+    function removeDef(kind, id, name) {
+        showCustomConfirm(`${DEF_WORD[kind]} "${name}"을(를) 지울까요?${isBuiltinDef(kind, id) ? ' 기본 항목은 숨겨지고, 아래 "숨긴 기본 항목"에서 되살릴 수 있어요.' : ''}`, () => {
+            const list = DEF_LIST[kind]();
+            if (isBuiltinDef(kind, id)) {
+                let o = overrideOf(kind, id);
+                if (!o) { o = { id, override: true }; list.push(o); }
+                o.disabled = true;
+            } else {
+                const i = list.findIndex(x => x.id === id && !x.override);
+                if (i >= 0) list.splice(i, 1);
+            }
+            forgetValues(kind, id);
+            if (editingDef && editingDef.id === id) editingDef = null;
+            validateDefs(); recomputeBudget(E); refreshAll();
+        });
+    }
+    // 숨긴 기본 항목 되살리기 / 고친 기본 항목을 기본값으로
+    function restoreDef(kind, id, reset) {
+        const list = DEF_LIST[kind](), o = overrideOf(kind, id);
+        if (o) {
+            if (reset) list.splice(list.indexOf(o), 1);
+            else { delete o.disabled; if (Object.keys(o).every(k => k === 'id' || k === 'override')) list.splice(list.indexOf(o), 1); }
+        }
+        const b = DEF_BUILTIN[kind].find(x => x.id === id), cur = { ...b, ...(overrideOf(kind, id) || {}) };
+        if (kind === 'item' && E.spend[id] == null) { E.spend[id] = cur.s0; if (E.draft) E.draft.spend[id] = cur.s0; }
+        if (kind === 'tax' && E.taxes[id] == null) { E.taxes[id] = cur.rate0; if (E.draft) E.draft.taxes[id] = cur.rate0; }
+        if (kind === 'asset' && E.assets[id] == null) E.assets[id] = 50;
+        editingDef = null;
+        validateDefs(); recomputeBudget(E); refreshAll();
+    }
+    const TAX_WEIGHTS = [['manufacturing', '제조업 지역'], ['industry', '산업 지역'], ['income', '소득 높은 지역'], ['wealth', '부유층'], ['flat', '전 지역 균등'], ['imports', '수입']];
+    const opt = (v, cur, label) => `<option value="${esc(v)}" ${String(v) === String(cur ?? '') ? 'selected' : ''}>${esc(label)}</option>`;
+    function defEditForm(kind, d, assets, targets) {
+        const f = (k, label, v, extra = '') => `<label>${label} <input ${extra} data-e="${k}" value="${esc(v ?? '')}"></label>`;
+        let body = '';
+        if (kind === 'item') body = `<div class="t69-dgrid">
+            ${f('name', '이름', d.name, 'type="text" maxlength="20"')}${f('group', '묶음', d.group, 'type="text" maxlength="12" list="t69Groups"')}${f('tags', '태그', (d.tags || []).join(', '), 'type="text"')}
+            ${f('s0', '기준 지출 %', d.s0, 'type="number" step="0.1" min="0"')}${f('max', '상한 %', d.max, 'type="number" step="0.5" min="0.1"')}${f('jobs', '실업률 효과', d.jobs, 'type="number" step="0.05"')}
+            ${f('mood', '민심 효과', d.mood, 'type="number" step="0.1"')}${f('eff', '수확체감', d.eff, 'type="number" step="0.05" min="0.2" max="1"')}
+            <label>쌓는 자산 <select data-e="asset">${opt('', d.asset, '없음')}${assets.map(a => opt(a.id, d.asset, a.name)).join('')}</select></label></div>`;
+        if (kind === 'tax') body = `<div class="t69-dgrid">
+            ${f('name', '이름', d.name, 'type="text" maxlength="20"')}${f('rate0', '기본 세율 %', d.rate0, 'type="number" step="0.5" min="0"')}${f('base', '과세 기반 (GDP 비율)', d.base, 'type="number" step="0.01" min="0"')}
+            <label>지역 부담 <select data-e="weight">${TAX_WEIGHTS.map(([k, l]) => opt(k, d.weight, l)).join('')}</select></label>
+            ${f('growth', '성장 부작용 /%p', d.side?.growth ?? 0, 'type="number" step="0.01"')}${f('infl', '인플레 /%p', d.side?.infl ?? 0, 'type="number" step="0.01"')}</div>`;
+        if (kind === 'asset') {
+            const eff = Object.entries(d.effects || {});
+            const row = ([k, v]) => `<div class="t69-effrow"><select data-eff="k">${targets.filter(([tk]) => tk !== d.id).map(([tk, tl]) => opt(tk, k, tl)).join('')}</select><input type="number" data-eff="v" value="${esc(v)}" step="0.01" min="-1" max="1"><button type="button" class="t69-x" data-eff-del title="효과 지우기">×</button></div>`;
+            body = `<div class="t69-dgrid">${f('name', '이름', d.name, 'type="text" maxlength="16"')}${f('decay', '감가상각 /년', d.decay, 'type="number" step="0.01" min="0" max="0.5"')}</div>
+                <div class="t69-effs"><div class="t69-dim">효과 (자산이 기준 50보다 1점 높을 때)</div>${eff.map(row).join('')}<template>${row([targets[0] ? targets[0][0] : '', 0.02])}</template>
+                <button type="button" class="t69-btn" data-eff-add>+ 효과</button></div>`;
+        }
+        const reset = isBuiltinDef(kind, d.id) && overrideOf(kind, d.id) ? '<button type="button" class="t69-btn" data-def-reset>기본값으로</button>' : '';
+        return `<div class="t69-defedit">${body}<div class="t69-row t69-defedit-btns"><button type="button" class="t69-btn t69-primary" data-def-save>저장</button><button type="button" class="t69-btn" data-def-cancel>취소</button>${reset}</div></div>`;
+    }
+    function readDefEdit(kind, form) {
+        const g = k => form.querySelector(`[data-e="${k}"]`)?.value ?? '';
+        const n = (k, lo, hi) => num(g(k), 0, lo, hi);
+        if (kind === 'item') {
+            const name = g('name').trim();
+            if (!name) return null;
+            return { name, group: g('group').trim() || '민간', tags: g('tags').split(',').map(x => x.trim()).filter(Boolean), s0: n('s0', 0, 100), max: n('max', 0.1, 100), jobs: n('jobs', -5, 5), mood: n('mood', -5, 5), eff: n('eff', 0.2, 1), asset: g('asset') || null };
+        }
+        if (kind === 'tax') {
+            const name = g('name').trim();
+            if (!name) return null;
+            return { name, rate0: n('rate0', 0, 100), base: n('base', 0, 5), weight: g('weight'), side: { growth: n('growth', -3, 3), infl: n('infl', -3, 3) } };
+        }
+        const name = g('name').trim();
+        if (!name) return null;
+        const effects = {};
+        form.querySelectorAll('.t69-effs > .t69-effrow').forEach(r => { const k = r.querySelector('[data-eff="k"]').value; if (k) effects[k] = num(r.querySelector('[data-eff="v"]').value, 0, -1, 1); });
+        return { name, decay: n('decay', 0, 0.5), effects };
+    }
+    function defRowHtml(kind, d, desc, assets, targets) {
+        const editing = editingDef && editingDef.kind === kind && editingDef.id === d.id;
+        const edited = isBuiltinDef(kind, d.id) && overrideOf(kind, d.id) ? '<span class="t69-dim t69-edited">고침</span>' : '';
+        return `<div class="t69-def ${d.builtin ? 'builtin' : ''}" data-def-kind="${kind}" data-def-id="${esc(d.id)}" data-def-name="${esc(d.name)}">
+            <div class="t69-def-h"><b>${esc(d.name)}</b>${edited}<span class="t69-dim">${desc}</span>
+                <span class="t69-def-acts"><button type="button" class="t69-x" data-def-edit title="고치기">✎</button><button type="button" class="t69-x" data-def-del title="지우기">×</button></span></div>
+            ${editing ? defEditForm(kind, d, assets, targets) : ''}</div>`;
+    }
+    function hiddenDefsHtml(kind) {
+        const hidden = DEF_BUILTIN[kind].filter(b => overrideOf(kind, b.id)?.disabled);
+        if (!hidden.length) return '';
+        return `<div class="t69-hidden-defs"><span class="t69-dim">숨긴 기본 항목</span>${hidden.map(b => `<button type="button" class="t69-btn" data-def-restore="${kind}:${esc(b.id)}" title="되살리기">${esc(overrideOf(kind, b.id)?.name || b.name)} ↺</button>`).join('')}</div>`;
+    }
+
     function renderItems() {
         const box = contentOf('items'); if (!box) return;
         validateDefs();
@@ -1506,9 +1629,8 @@
             <div class="t69-intro">지출 항목 · 세목 · 자산을 직접 만들 수 있습니다. 기본 항목과 같은 규칙으로 계산되고(수확체감 · 감가상각), 정의는 세이브에 함께 저장돼요. 의원은 항목 이름이 아니라 <b>태그</b>로 반응합니다.</div>
             ${warnings.length ? `<div class="t69-alert">${warnings.map(w => `<div>⚠ ${esc(w)}</div>`).join('')}</div>` : ''}
             <div class="t69-card"><div class="t69-card-h">지출 항목</div>
-                ${itemDefs().concat(BUILTIN_ITEMS.filter(b => E.defs.items.some(x => x.id === b.id && x.override && x.disabled))).map(d => `<div class="t69-def ${d.builtin ? 'builtin' : ''}" data-item="${esc(d.id)}">
-                    <div class="t69-def-h"><b>${esc(d.name)}</b><span class="t69-dim">${esc(d.group || '')} · ${(d.tags || []).map(esc).join(' · ') || '태그 없음'} · 기준 ${d.s0}%${d.asset ? ` → ${esc(assets.find(a => a.id === d.asset)?.name || d.asset)}` : ''}</span>
-                    ${d.builtin ? '' : '<button type="button" class="t69-x" data-del-item title="지우기">×</button>'}</div></div>`).join('')}
+                ${itemDefs().map(d => defRowHtml('item', d, `${esc(d.group || '')} · ${(d.tags || []).map(esc).join(' · ') || '태그 없음'} · 기준 ${d.s0}%${d.asset ? ` → ${esc(assets.find(a => a.id === d.asset)?.name || d.asset)}` : ''}`, assets, targets)).join('')}
+                ${hiddenDefsHtml('item')}
                 <details class="t69-newdef"><summary>+ 새 지출 항목</summary>
                     <div class="t69-dgrid">
                         <label>이름 <input type="text" data-n="name" maxlength="20" placeholder="우주개발"></label>
@@ -1530,7 +1652,8 @@
                     <datalist id="t69Groups">${[...new Set(itemDefs().map(d => d.group))].map(g => `<option value="${esc(g)}">`).join('')}</datalist>
                     <button type="button" class="t69-btn t69-primary" data-act="add-item">항목 추가</button></details></div>
             <div class="t69-card"><div class="t69-card-h">세목</div>
-                ${taxDefs().map(t => `<div class="t69-def ${t.builtin ? 'builtin' : ''}" data-tax="${esc(t.id)}"><div class="t69-def-h"><b>${esc(t.name)}</b><span class="t69-dim">기본 ${t.rate0}% · 기반 GDP의 ${Math.round(t.base * 100)}% · ${{ income: '소득 높은 지역', industry: '산업 지역', flat: '전 지역 균등', wealth: '부유층', imports: '수입', manufacturing: '제조업' }[t.weight]}</span>${t.builtin ? '' : '<button type="button" class="t69-x" data-del-tax>×</button>'}</div></div>`).join('')}
+                ${taxDefs().map(t => defRowHtml('tax', t, `기본 ${t.rate0}% · 기반 GDP의 ${Math.round(t.base * 100)}% · ${{ income: '소득 높은 지역', industry: '산업 지역', flat: '전 지역 균등', wealth: '부유층', imports: '수입', manufacturing: '제조업' }[t.weight] || ''}`, assets, targets)).join('')}
+                ${hiddenDefsHtml('tax')}
                 <details class="t69-newdef"><summary>+ 새 세목</summary><div class="t69-dgrid">
                     <label>이름 <input type="text" data-t="name" maxlength="20" placeholder="탄소세"></label>
                     <label>기본 세율 % <input type="number" data-t="rate0" value="5" step="0.5" min="0"></label>
@@ -1540,11 +1663,11 @@
                     <label>인플레 /%p <input type="number" data-t="infl" value="0.01" step="0.01"></label>
                 </div><button type="button" class="t69-btn t69-primary" data-act="add-tax">세목 추가</button></details></div>
             <div class="t69-card"><div class="t69-card-h">자산</div>
-                ${assets.map(a => `<div class="t69-def ${a.builtin ? 'builtin' : ''}" data-asset="${esc(a.id)}"><div class="t69-def-h"><b>${esc(a.name)} ${(E.assets[a.id] ?? 50).toFixed(0)}</b><span class="t69-dim">감가 ${Math.round(a.decay * 100)}%/년 · ${Object.entries(a.effects || {}).map(([k, v]) => `${esc(EFFECT_TARGETS[k] || assets.find(x => x.id === k)?.name || k)} ${sgn(v, 2)}`).join(' · ') || '효과 없음'}</span>${a.builtin ? '' : '<button type="button" class="t69-x" data-del-asset>×</button>'}</div></div>`).join('')}</div>
-            <details class="t69-card"><summary>정당 태그 선호 <span class="t69-dim">— 예상 표결에 쓰임 (비우면 이념에서 자동)</span></summary>
-                <div class="t69-tablewrap2"><table class="t69-mini"><thead><tr><th>정당</th>${TAGS.map(t => `<th>${t}</th>`).join('')}</tr></thead><tbody>
-                ${plist.map(p => { const pr = partyPrefs(p), own = E.tagPrefs[p.id] || {}; return `<tr data-pid="${esc(p.id)}"><td><i class="t69-pdot" style="background:${esc(p.color)}"></i>${esc(p.name)}</td>${TAGS.map(t => `<td><input type="number" step="0.1" min="-2" max="2" data-tag="${t}" value="${own[t] != null ? own[t] : ''}" placeholder="${pr[t].toFixed(1)}" class="t69-tagin"></td>`).join('')}</tr>`; }).join('')}
-                </tbody></table></div></details>`;
+                ${assets.map(a => defRowHtml('asset', a, `${(E.assets[a.id] ?? 50).toFixed(0)}점 · 감가 ${Math.round(a.decay * 100)}%/년 · ${Object.entries(a.effects || {}).map(([k, v]) => `${esc(EFFECT_TARGETS[k] || assets.find(x => x.id === k)?.name || k)} ${sgn(v, 2)}`).join(' · ') || '효과 없음'}`, assets, targets)).join('')}
+                ${hiddenDefsHtml('asset')}</div>
+            <div class="t69-card"><div class="t69-card-h">정당 태그 선호</div>
+                <div class="t69-dim">정당마다 태그(${TAGS.join(' · ')})를 얼마나 좋아하는지 — 예산안 예상 표결에 쓰입니다. 표가 넓어서 오른쪽 시각 화면의 "태그 선호" 탭에서 고칩니다.</div>
+                <button type="button" class="t69-btn t69-primary" data-act="open-tagprefs" style="margin-top:6px;">태그 선호 화면 열기 →</button></div>`;
         const nd = box.querySelector('.t69-newdef');
         nd.querySelector('[data-n="asset"]').onchange = e => { box.querySelector('.t69-newasset').hidden = e.target.value !== '__new'; };
         box.querySelector('[data-act="add-item"]').onclick = () => {
@@ -1573,16 +1696,27 @@
             E.taxes[id] = E.defs.taxes[E.defs.taxes.length - 1].rate0; if (E.draft) E.draft.taxes[id] = E.taxes[id];
             recomputeBudget(E); refreshAll();
         };
-        box.querySelectorAll('[data-del-item]').forEach(b => { b.onclick = () => { const id = b.closest('[data-item]').dataset.item; E.defs.items = E.defs.items.filter(x => x.id !== id); delete E.spend[id]; if (E.draft) delete E.draft.spend[id]; recomputeBudget(E); refreshAll(); }; });
-        box.querySelectorAll('[data-del-tax]').forEach(b => { b.onclick = () => { const id = b.closest('[data-tax]').dataset.tax; E.defs.taxes = E.defs.taxes.filter(x => x.id !== id); delete E.taxes[id]; if (E.draft) delete E.draft.taxes[id]; recomputeBudget(E); refreshAll(); }; });
-        box.querySelectorAll('[data-del-asset]').forEach(b => { b.onclick = () => { const id = b.closest('[data-asset]').dataset.asset; E.defs.assets = E.defs.assets.filter(x => x.id !== id); E.defs.items.forEach(d => { if (d.asset === id) d.asset = null; }); delete E.assets[id]; refreshAll(); }; });
-        box.querySelectorAll('tr[data-pid] .t69-tagin').forEach(inp => inp.addEventListener('change', () => {
-            const pid = inp.closest('tr').dataset.pid, t = inp.dataset.tag, raw = inp.value.trim();
-            const key = (parties.find(p => String(p.id) === pid) || {}).id ?? pid;
-            E.tagPrefs[key] = E.tagPrefs[key] || {};
-            if (raw === '') delete E.tagPrefs[key][t]; else E.tagPrefs[key][t] = num(raw, 0, -2, 2);
-            renderTab('fiscal');
-        }));
+        box.querySelectorAll('.t69-def[data-def-kind]').forEach(row => {
+            const kind = row.dataset.defKind, id = row.dataset.defId, name = row.dataset.defName;
+            row.querySelector('[data-def-edit]').onclick = () => { editingDef = editingDef && editingDef.kind === kind && editingDef.id === id ? null : { kind, id }; renderItems(); };
+            row.querySelector('[data-def-del]').onclick = () => removeDef(kind, id, name);
+            const form = row.querySelector('.t69-defedit');
+            if (!form) return;
+            form.querySelector('[data-def-save]').onclick = () => {
+                const fields = readDefEdit(kind, form);
+                if (!fields) { showCustomAlert('이름을 적어 주세요.'); return; }
+                saveDef(kind, id, fields);
+            };
+            form.querySelector('[data-def-cancel]').onclick = () => { editingDef = null; renderItems(); };
+            const rs = form.querySelector('[data-def-reset]');
+            if (rs) rs.onclick = () => restoreDef(kind, id, true);
+            const add = form.querySelector('[data-eff-add]');
+            if (add) add.onclick = () => { const t = form.querySelector('.t69-effs > template'); add.before(t.content.cloneNode(true)); bindEffDel(); };
+            const bindEffDel = () => form.querySelectorAll('[data-eff-del]').forEach(b => { b.onclick = () => b.closest('.t69-effrow').remove(); });
+            bindEffDel();
+        });
+        box.querySelectorAll('[data-def-restore]').forEach(b => { b.onclick = () => { const [kind, ...rest] = b.dataset.defRestore.split(':'); restoreDef(kind, rest.join(':'), false); }; });
+        box.querySelector('[data-act="open-tagprefs"]').onclick = showTagPrefs;
     }
 
     // ================= 오른쪽 시각 화면 "경제" =================
@@ -1595,6 +1729,50 @@
         ref.parentElement.insertBefore(el(`<div class="disp-panel" id="dispPanelEconomy"><div class="chamber-box t69-dispbox t69-viz">
             <div class="t69-toolbar" id="t69Toolbar"></div><div id="t69Disp"></div></div></div>`), ref.nextSibling);
     })();
+    // ---- 오른쪽 시각 화면 "태그 선호" — 정당 × 태그 표 (가로로 넓어서 왼쪽 항목 탭 대신 여기서 고친다) ----
+    (function addTagPrefsDisp() {
+        const after = document.getElementById('dispTabEconomy');
+        const ref = document.getElementById('dispPanelEconomy');
+        if (!after || !ref) return;
+        after.parentElement.insertBefore(el(`<button class="disp-tab-btn" id="dispTabTagprefs" data-tab="tagprefs" onclick="switchDispTab('tagprefs')" style="display:none;"><span class="disp-tab-label">태그 선호</span><span class="disp-tab-close" onclick="event.stopPropagation();closeDispTab('tagprefs')">×</span></button>`), after.nextSibling);
+        ref.parentElement.insertBefore(el(`<div class="disp-panel" id="dispPanelTagprefs"><div class="chamber-box t69-dispbox t69-viz"><div id="t69TagPrefs"></div></div></div>`), ref.nextSibling);
+    })();
+    function showTagPrefs() {
+        const btn = document.getElementById('dispTabTagprefs');
+        if (btn) btn.style.display = '';
+        try { switchDispTab('tagprefs'); } catch (e) { /* 시각 화면 없음 */ }
+        renderTagPrefs();
+    }
+    const prefColor = v => (v > 0 ? `color-mix(in srgb, var(--success, #2ecc71) ${Math.round(Math.min(1, v / 2) * 55)}%, transparent)` : v < 0 ? `color-mix(in srgb, var(--critical, #e74c3c) ${Math.round(Math.min(1, -v / 2) * 55)}%, transparent)` : 'transparent');
+    function renderTagPrefs(focus) {
+        const box = document.getElementById('t69TagPrefs');
+        if (!box) return;
+        const plist = (parties || []).filter(p => p.status !== 'banned' && p.ideologyId !== 9999);
+        box.innerHTML = `
+            <div class="t69-tp-head"><b>정당 태그 선호</b><span class="t69-dim">−2 싫어함 · 0 무관 · +2 좋아함 — 비운 칸은 이념에서 자동(흐린 숫자). 의원은 지출 항목의 태그로 예산안 찬반을 정합니다.</span></div>
+            <div class="t69-tp-wrap"><table class="t69-tp"><thead><tr><th>정당</th>${TAGS.map(t => `<th>${esc(t)}</th>`).join('')}<th></th></tr></thead><tbody>
+            ${plist.map(p => { const pr = partyPrefs(p), own = E.tagPrefs[p.id] || {}; return `<tr data-pid="${esc(p.id)}"><td class="t69-tp-name"><i class="t69-pdot" style="background:${esc(p.color)}"></i>${esc(p.name)}</td>${TAGS.map(t => {
+                const v = pr[t], set = own[t] != null;
+                return `<td style="background:${prefColor(v)}"><input type="number" step="0.1" min="-2" max="2" data-tag="${esc(t)}" value="${set ? own[t] : ''}" placeholder="${v.toFixed(1)}" class="t69-tagin${set ? ' set' : ''}"></td>`;
+            }).join('')}<td>${Object.keys(own).length ? '<button type="button" class="t69-x" data-tp-reset title="이 정당을 이념 자동으로">↺</button>' : ''}</td></tr>`; }).join('')}
+            </tbody></table></div>`;
+        box.querySelectorAll('tr[data-pid] .t69-tagin').forEach(inp => inp.addEventListener('change', () => {
+            const pid = inp.closest('tr').dataset.pid, t = inp.dataset.tag, raw = inp.value.trim();
+            const key = (parties.find(p => String(p.id) === pid) || {}).id ?? pid;
+            E.tagPrefs[key] = E.tagPrefs[key] || {};
+            if (raw === '') delete E.tagPrefs[key][t]; else E.tagPrefs[key][t] = num(raw, 0, -2, 2);
+            if (!Object.keys(E.tagPrefs[key]).length) delete E.tagPrefs[key];
+            renderTagPrefs(`${pid}|${t}`); renderTab('fiscal');
+        }));
+        box.querySelectorAll('[data-tp-reset]').forEach(b => { b.onclick = () => { const pid = b.closest('tr').dataset.pid; const key = (parties.find(p => String(p.id) === pid) || {}).id ?? pid; delete E.tagPrefs[key]; renderTagPrefs(); renderTab('fiscal'); }; });
+        // 값을 바꾼 뒤 Tab으로 다음 칸에 갈 수 있게 다음 칸에 포커스
+        if (focus) {
+            const [pid, t] = focus.split('|');
+            const inputs = [...box.querySelectorAll('.t69-tagin')];
+            const i = inputs.findIndex(x => x.closest('tr').dataset.pid === pid && x.dataset.tag === t);
+            if (i >= 0 && document.activeElement === document.body && inputs[i + 1]) inputs[i + 1].focus();
+        }
+    }
     const dispActive = () => !!document.getElementById('dispPanelEconomy')?.classList.contains('active');
     function showDisp(view) {
         if (view) E.ui.view = view;
@@ -1607,6 +1785,7 @@
     window.switchDispTab = function (tab) {
         const r = origDisp.apply(this, arguments);
         if (tab === 'economy') setTimeout(renderDisp, 20);
+        if (tab === 'tagprefs') setTimeout(() => renderTagPrefs(), 20);
         return r;
     };
     function toggleFull(on) {
@@ -2278,6 +2457,24 @@
         .t69-def { padding: 6px 0; border-bottom: 1px solid var(--t69-line); } .t69-def-h { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 10px; font-size: .8rem; color: var(--t69-text); }
         .t69-def-h span { font-size: .7rem; } .t69-def.builtin b::after { content: ' 기본'; font-size: .62rem; color: var(--t69-dim2); font-weight: normal; }
         .t69-newdef { margin-top: 8px; } .t69-newdef .t69-btn { margin-top: 8px; }
+        .t69-def-acts { margin-left: auto; display: inline-flex; gap: 2px; } .t69-def-acts .t69-x { margin-left: 0; }
+        .t69-edited { font-size: .62rem; border: 1px solid var(--t69-line); padding: 0 4px; }
+        .t69-defedit { margin: 6px 0 4px; padding: 8px; border: 1px dashed var(--t69-line); }
+        .t69-defedit .t69-dgrid { margin-top: 0; } .t69-defedit-btns { margin-top: 8px; gap: 6px; }
+        .t69-effs { margin-top: 8px; display: flex; flex-direction: column; gap: 4px; font-size: .72rem; }
+        .t69-effrow { display: flex; gap: 6px; align-items: center; } .t69-effrow select { flex: 1; min-width: 0; } .t69-effrow input { width: 80px; } .t69-effrow .t69-x { margin-left: 0; }
+        .t69-effs > .t69-btn { align-self: flex-start; }
+        .t69-tp-head { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; font-size: .85rem; color: var(--t69-text); }
+        .t69-tp-head .t69-dim { font-size: .72rem; line-height: 1.5; }
+        .t69-tp-wrap { overflow-x: auto; }
+        .t69-tp { width: 100%; border-collapse: collapse; font-size: .78rem; }
+        .t69-tp th { font-weight: normal; color: var(--t69-dim2); padding: 4px; text-align: center; white-space: nowrap; }
+        .t69-tp td { padding: 3px; border-top: 1px solid var(--t69-line); text-align: center; }
+        .t69-tp .t69-tp-name { text-align: left; white-space: nowrap; color: var(--t69-text); padding-right: 8px; }
+        .t69-tp .t69-tagin { width: 100%; min-width: 46px; max-width: 64px; box-sizing: border-box; text-align: center; background: transparent; border: 1px solid var(--t69-line); color: var(--t69-text); font-family: inherit; padding: 4px 2px; }
+        .t69-tp .t69-tagin.set { font-weight: bold; border-color: var(--t69-acc); }
+        .t69-tp .t69-tagin::placeholder { color: var(--t69-dim2); opacity: .8; }
+        .t69-hidden-defs { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 8px; font-size: .72rem; }
         .t69-tablewrap2 { overflow-x: auto; } .t69-tagin { width: 48px; }
         /* 오른쪽 시각 화면 */
         #dispPanelEconomy .t69-dispbox { display: flex; flex-direction: column; overflow: hidden; min-height: 0; }
