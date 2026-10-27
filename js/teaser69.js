@@ -1884,6 +1884,7 @@
             <span class="t69-seg">${RANGES.map(([k, l]) => `<button type="button" data-range="${k}" class="${String(E.ui.range) === k && !E.ui.zoom ? 'on' : ''}">${l}</button>`).join('')}</span>
             ${E.ui.zoom ? '<button type="button" class="t69-btn t69-sm" data-act="unzoom">확대 해제</button>' : ''}
             <span class="t69-grow"></span>
+            <button type="button" class="t69-btn t69-sm" data-act="photo" title="지금 보이는 경제 시각 화면 전체를 사진(PNG · JPG)으로">📷 사진</button>
             <button type="button" class="t69-btn t69-sm" data-act="csv" title="모든 시점 · 지표 표를 CSV로">CSV</button>
             <button type="button" class="t69-btn t69-sm" data-act="full" title="크게 보기 (Esc로 복귀)">${E.ui.full ? '⤡ 작게' : '⛶ 크게'}</button>`;
         tb.querySelectorAll('[data-view]').forEach(b => { b.onclick = () => { E.ui.view = b.dataset.view; renderDisp(); }; });
@@ -1891,6 +1892,7 @@
         tb.querySelectorAll('[data-range]').forEach(b => { b.onclick = () => { E.ui.range = b.dataset.range; E.ui.zoom = null; renderDisp(); if (curSub() === 'analysis') renderTab('analysis'); }; });
         tb.querySelector('[data-act="unzoom"]')?.addEventListener('click', () => { E.ui.zoom = null; renderDisp(); });
         tb.querySelector('[data-act="csv"]').onclick = () => C.csv(tableSpec());
+        tb.querySelector('[data-act="photo"]').onclick = () => exportDispPhoto();
         tb.querySelector('[data-act="full"]').onclick = () => toggleFull();
     }
     function renderDisp() {
@@ -1968,7 +1970,7 @@
         const [i0] = rangeIdx(n);
         C.lines(chart, { x: xs, t: ts, series: ser, unit: '%', height: 260, zero: true, markers: markersOf(H), shade: recessions(H), fan: sel.length ? [fanFor(sel[0], n, h, fc[sel[0]])] : [], range: [i0, xs.length - 1] });
         // 예산
-        const bb = section(box, `예산 (연간 · ${E.settings.scale}${CUR()})`, E.settings.budgetView === 'hemi' ? '— 위 세출 · 아래 세입, 넓이 = 금액' : '— 같은 축의 세출 · 세입');
+        const bb = section(box, `예산 (연간 · ${E.settings.scale}${CUR()})`, E.settings.budgetView === 'hemi' ? '— 위 세출 · 아래 세입, 두께 = 세출 · 세입 차이' : '— 같은 축의 세출 · 세입');
         const sp = budgetPies();
         const opt = { spend: sp.spend, rev: sp.rev, unit: '', center: [`${N.balance < 0 ? '적자' : '흑자'} ${Math.abs(N.balance).toFixed(1)}%`, 'GDP 대비'] };
         if (E.settings.budgetView === 'bars') C.budgetBars(bb, opt); else C.budgetHemi(bb, opt);
@@ -2296,8 +2298,108 @@
             return origExportAt.apply(this, arguments);
         };
     }
+    // ---- 경제 시각 화면 전체를 사진으로 — 본 화면의 내보내기 창(형식 · 해상도)을 그대로 쓴다 ----
+    function exportDispPhoto() {
+        const box = document.getElementById('t69Disp'); if (!box) return;
+        box.dataset.exportKind = 't69disp';
+        try { canvasExportTarget = box; } catch (e) { return; } // eslint-disable-line no-undef
+        if (typeof window.openExportDialog === 'function') window.openExportDialog(); else t69Export(box, 'png');
+    }
+    // 화면에 이미 배치된 그대로(위치 · 글꼴 · 색)를 캔버스에 옮겨 그린다 — 배경 · 테두리 · 글자 · 그래프(SVG) · 그림.
+    // HTML을 <foreignObject>로 담으면 Chromium이 캔버스를 오염시켜 PNG로 못 뽑으므로 직접 그린다
+    async function snapshotEl(root, scale) {
+        const r0 = root.getBoundingClientRect();
+        const W = Math.ceil(root.scrollWidth), H = Math.ceil(root.scrollHeight);
+        const ox = r0.left - root.scrollLeft, oy = r0.top - root.scrollTop;
+        const c = document.createElement('canvas'); c.width = Math.round(W * scale); c.height = Math.round(H * scale);
+        const ctx = c.getContext('2d'); ctx.scale(scale, scale);
+        const alpha = col => { const m = /rgba?\(([^)]+)\)/.exec(col || ''); if (!m) return col && col !== 'transparent' ? 1 : 0; const p = m[1].split(/[,\s/]+/).filter(Boolean); return p.length > 3 ? parseFloat(p[3]) : 1; };
+        // 바탕 — 시각 화면의 바탕색 (투명하면 위로 올라가며 찾는다)
+        let bg = '#ffffff';
+        for (let el = root; el; el = el.parentElement) { const b = getComputedStyle(el).backgroundColor; if (alpha(b) > 0.5) { bg = b; break; } }
+        ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
+        const jobs = []; // 그래프는 그림으로 바꾸는 데 시간이 걸려 순서를 지키려고 모아 두었다가 차례로 그린다
+        const rel = r => ({ x: r.left - ox, y: r.top - oy, w: r.width, h: r.height });
+        const visible = (el, cs) => cs.display !== 'none' && cs.visibility !== 'hidden' && parseFloat(cs.opacity) > 0.02;
+        const walk = el => {
+            const cs = getComputedStyle(el);
+            if (!visible(el, cs)) return;
+            const rr = el.getBoundingClientRect();
+            if (rr.width < 0.5 || rr.height < 0.5) { if (cs.display !== 'contents') return; }
+            const b = rel(rr), op = parseFloat(cs.opacity) || 1;
+            if (el.tagName.toLowerCase() === 'svg') { jobs.push({ kind: 'svg', el, b, op }); return; }
+            if (el.tagName === 'IMG' || el.tagName === 'CANVAS') { jobs.push({ kind: 'img', el, b, op }); return; }
+            const radius = parseFloat(cs.borderTopLeftRadius) || 0;
+            if (alpha(cs.backgroundColor) > 0) jobs.push({ kind: 'rect', b, fill: cs.backgroundColor, radius, op });
+            ['Top', 'Right', 'Bottom', 'Left'].forEach(side => {
+                const w = parseFloat(cs[`border${side}Width`]) || 0, col = cs[`border${side}Color`];
+                if (w > 0 && cs[`border${side}Style`] !== 'none' && alpha(col) > 0) jobs.push({ kind: 'border', b, side, w, col, op });
+            });
+            el.childNodes.forEach(n => {
+                if (n.nodeType === 1) walk(n);
+                else if (n.nodeType === 3 && n.nodeValue.trim()) jobs.push({ kind: 'text', node: n, cs, op });
+            });
+        };
+        walk(root);
+        const drawText = (node, cs, op) => {
+            // 줄마다 나눠 그린다 — 글자마다 위치를 재서 같은 줄(같은 높이)끼리 묶는다
+            const range = document.createRange(), txt = node.nodeValue;
+            ctx.save(); ctx.globalAlpha = op;
+            ctx.font = `${cs.fontStyle} ${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
+            ctx.fillStyle = cs.color; ctx.textBaseline = 'middle';
+            if ('letterSpacing' in ctx && cs.letterSpacing !== 'normal') ctx.letterSpacing = cs.letterSpacing;
+            let line = '', lx = 0, ly = null, lh = 0;
+            const flush = () => { if (line.trim() && ly != null) ctx.fillText(line, lx, ly + lh / 2); line = ''; ly = null; };
+            for (let i = 0; i < txt.length; i++) {
+                range.setStart(node, i); range.setEnd(node, i + 1);
+                const rs = range.getClientRects(); if (!rs.length) continue;
+                const r = rs[0], y = r.top - oy;
+                if (ly == null || Math.abs(y - ly) > r.height / 2) { flush(); lx = r.left - ox; ly = y; lh = r.height; }
+                line += txt[i];
+            }
+            flush(); ctx.restore();
+        };
+        for (const j of jobs) {
+            if (j.kind === 'rect') {
+                ctx.save(); ctx.globalAlpha = j.op; ctx.fillStyle = j.fill; ctx.beginPath();
+                if (ctx.roundRect && j.radius) ctx.roundRect(j.b.x, j.b.y, j.b.w, j.b.h, Math.min(j.radius, j.b.h / 2, j.b.w / 2)); else ctx.rect(j.b.x, j.b.y, j.b.w, j.b.h);
+                ctx.fill(); ctx.restore();
+            } else if (j.kind === 'border') {
+                const { x, y, w, h } = j.b; ctx.save(); ctx.globalAlpha = j.op; ctx.fillStyle = j.col;
+                if (j.side === 'Top') ctx.fillRect(x, y, w, j.w); else if (j.side === 'Bottom') ctx.fillRect(x, y + h - j.w, w, j.w);
+                else if (j.side === 'Left') ctx.fillRect(x, y, j.w, h); else ctx.fillRect(x + w - j.w, y, j.w, h);
+                ctx.restore();
+            } else if (j.kind === 'text') drawText(j.node, j.cs, j.op);
+            else if (j.kind === 'svg') {
+                try {
+                    // 계산된 색 · 굵기를 속성으로 박아 넣고(그림으로 구우면 페이지 CSS가 안 먹음), 크기를 화면 크기로
+                    const doc = new DOMParser().parseFromString(C.exportSvgString(j.el), 'image/svg+xml'), rootSvg = doc.documentElement;
+                    rootSvg.setAttribute('width', j.b.w); rootSvg.setAttribute('height', j.b.h);
+                    const text = new XMLSerializer().serializeToString(rootSvg);
+                    const img = new Image(); img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(text);
+                    await img.decode();
+                    ctx.save(); ctx.globalAlpha = j.op; ctx.drawImage(img, j.b.x, j.b.y, j.b.w, j.b.h); ctx.restore();
+                } catch (e) { /* 그리지 못한 그래프는 건너뜀 */ }
+            } else if (j.kind === 'img') {
+                try { ctx.save(); ctx.globalAlpha = j.op; ctx.drawImage(j.el, j.b.x, j.b.y, j.b.w, j.b.h); ctx.restore(); } catch (e) { /* 다른 출처 그림 */ }
+            }
+        }
+        return c;
+    }
     function dl(href, name) { const a = document.createElement('a'); a.href = href; a.download = name; document.body.appendChild(a); a.click(); a.remove(); }
     async function t69Export(svg, format) {
+        if (svg.dataset.exportKind === 't69disp') {
+            const stamp = Date.now().toString(36);
+            let sc = 2; try { if ([1, 2, 3].includes(exportScale)) sc = exportScale; } catch (e) { /* 기본 2배 */ } // eslint-disable-line no-undef
+            const c = await snapshotEl(svg, sc);
+            if (format === 'svg') {
+                // SVG를 고르면 사진을 그대로 담은 SVG로 (HTML 화면이라 도형으로는 못 옮김)
+                const w = c.width / sc, h = c.height / sc;
+                const text = `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}"><image width="${w}" height="${h}" href="${c.toDataURL('image/png')}"/></svg>`;
+                dl(URL.createObjectURL(new Blob([text], { type: 'image/svg+xml' })), `economy_view_${stamp}.svg`); return;
+            }
+            dl(c.toDataURL(format === 'jpg' ? 'image/jpeg' : 'image/png', 0.95), `economy_view_${stamp}.${format}`); return;
+        }
         const text = C.exportSvgString(svg), stamp = Date.now().toString(36);
         if (format === 'svg') { dl(URL.createObjectURL(new Blob([text], { type: 'image/svg+xml' })), `economy_${stamp}.svg`); return; }
         const vb = (svg.getAttribute('viewBox') || '0 0 600 300').split(/\s+/).map(Number), sc = 2;
