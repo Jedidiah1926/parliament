@@ -1696,6 +1696,7 @@
             <button class="disp-tab-btn"         id="dispTabElecResultHouse" data-tab="elecResultHouse" onclick="switchDispTab('elecResultHouse')" style="display:none;"><span class="disp-tab-label">하원 선거결과</span><span class="disp-tab-close" onclick="event.stopPropagation();closeDispTab('elecResultHouse')">×</span></button>
             <button class="disp-tab-btn"         id="dispTabElecResultSenate" data-tab="elecResultSenate" onclick="switchDispTab('elecResultSenate')" style="display:none;"><span class="disp-tab-label">상원 선거결과</span><span class="disp-tab-close" onclick="event.stopPropagation();closeDispTab('elecResultSenate')">×</span></button>
             <button class="disp-tab-btn"         id="dispTabElecResultThird" data-tab="elecResultThird" onclick="switchDispTab('elecResultThird')" style="display:none;"><span class="disp-tab-label">삼원 선거결과</span><span class="disp-tab-close" onclick="event.stopPropagation();closeDispTab('elecResultThird')">×</span></button>
+            <button class="disp-tab-btn"         id="dispTabFraud" data-tab="fraud" onclick="switchDispTab('fraud')" style="display:none;"><span class="disp-tab-label">부정선거</span><span class="disp-tab-close" onclick="event.stopPropagation();closeDispTab('fraud')">×</span></button>
             <button class="disp-tab-btn"         id="dispTabPopVote" data-tab="popVote" onclick="switchDispTab('popVote')" style="display:none;"><span class="disp-tab-label">지방선거 결과</span><span class="disp-tab-close" onclick="event.stopPropagation();closeDispTab('popVote')">×</span></button>
             <!-- 날짜 · 회기 줄: 1줄 = 날짜 + 진행(▶ +1일 · ▶▶ +7일 · ▶▶▶ +1개월) + 설정, 2줄 = 회기 + 다음 회기 종류 토글 + 다음 회기
                  진행 버튼은 연 · 월 · 일 날짜, 다음 회기 버튼들은 개별형 회기일 때만 보임 -->
@@ -1831,6 +1832,8 @@
         </div>
 
         <!-- 성향 맵 패널 -->
+        <!-- 부정선거 시각 탭 — 뒷세계 포털 (js/fraudportal.js) -->
+        <div class="disp-panel" id="dispPanelFraud"><div id="fraudPortal"></div></div>
         <div class="disp-panel" id="dispPanelTendency">
             <div class="chamber-box">
                 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
@@ -1935,6 +1938,7 @@
     <script src="js/main.js"></script>
     <script src="js/legis.js"></script>
     <script src="js/popvote.js"></script>
+    <script src="js/fraudportal.js"></script>
     <script src="js/podium.js"></script>
     <script src="js/people.js"></script>
     <script src="js/coup.js"></script>

@@ -15298,6 +15298,13 @@
             // 기록 저장
             elecSaveRecord(elecTitle, elecYear, chamber, seatMap, weighted, districtResults);
             if(chamber === 'house' && !isByElection && !isRerun) autoAdvanceTermOnElection();
+            // 부정선거 시도의 결과를 뒷세계 포털(js/fraudportal.js)의 거래 기록으로
+            if(fraudAttempts.length && typeof window.HemiFraudOutcome === 'function') {
+                try {
+                    window.HemiFraudOutcome({ title: elecTitle, year: elecYear, chamber, chamberName, date: typeof formatNationDate === 'function' ? formatNationDate() : '',
+                        ops: fraudAttempts.map(({ p, fa, caught }) => ({ partyId: p.id, name: p.name, color: p.color, boostPct: fa.boostPct || 0, rigged: (fa.riggedDistricts || []).length, catchChance: fa.catchChance ?? 0, caught })) });
+                } catch(e) { /* 기록 실패는 무시 */ }
+            }
 
             elecRunning=false;
             runBtn.style.background='var(--tno-neon)'; runBtn.style.color='#000'; runBtn.textContent='>> 개표 시작 <<'; runBtn.dataset.modernLabel='개표 시작';
