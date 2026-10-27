@@ -1717,4 +1717,5 @@ html[data-theme-family="modern"] .ab-summary { color: var(--m-text-3, #71717a); 
 html[data-theme-family="modern"] .sign-done { color: var(--m-text-2, #52525b); }
 /* 실행(PROTOCOL EXECUTE) 버튼 — 설정 › 화면에서 켤 때만 (js/uimode.js data-exec-btn) */
 html[data-exec-btn="off"] .simulate-btn,
+html[data-exec-btn="off"] .exec-bar,
 html[data-exec-btn="off"] .mobile-exec-fab { display: none !important; }

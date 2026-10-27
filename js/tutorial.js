@@ -660,7 +660,7 @@
                     before: [call('switchMainTab', 'election'), call('elecSwitchSub', 'tendency'), showPanel('controls')],
                     target: '#elecSubTendency',
                     title: '성향',
-                    text: '여론 › 성향에서 지역구마다 정당별 성향(%)을 정합니다. 지역구 선거에서 누가 이길지가 여기서 갈려요. 시각 화면에는 종합 지도와 정당별 지도가 함께 보입니다.',
+                    text: '여론 › 시민 성향에서 지역구마다 정당별 성향(%)을 정합니다. 지역구 선거에서 누가 이길지가 여기서 갈려요. 시각 화면에는 종합 지도와 정당별 지도가 함께 보입니다.',
                 },
                 {
                     before: [go('nation', 'regions'), showPanel('controls')],
@@ -720,7 +720,7 @@
                     before: [go('nation', 'territory'), showPanel('controls')],
                     target: () => document.getElementById('contentTerritory') || '#mainContentNation',
                     title: '통일 뒤에는',
-                    text: '되찾은 지역구는 다음 총선부터 의석을 뽑아요 (서독이면 연방의회 지역구가 259석에서 331석으로 늘어요). 의회 › 의석 · 원 구성에서 총 의석도 맞춰 늘리고, 여론 › 성향에서 새 지역의 정당 성향을 정해 보세요.',
+                    text: '되찾은 지역구는 다음 총선부터 의석을 뽑아요 (서독이면 연방의회 지역구가 259석에서 331석으로 늘어요). 의회 › 의석 · 원 구성에서 총 의석도 맞춰 늘리고, 여론 › 시민 성향에서 새 지역의 정당 성향을 정해 보세요.',
                 },
             ],
         },
@@ -970,7 +970,7 @@
                     before: [closePanels, go('vote', 'elecGeneral'), showPanel('controls')],
                     target: byId('elecModeProportional', 'div'),
                     title: '총선 방식',
-                    text: '선거 › 총선에서 뽑을 원과 방식을 고릅니다. 비례만 · 지역구만 · 둘 다(혼합)를 고를 수 있고, 지역구는 여론 › 성향, 비례는 여론 › 지지율을 바탕으로 정해져요.',
+                    text: '선거 › 총선에서 뽑을 원과 방식을 고릅니다. 비례만 · 지역구만 · 둘 다(혼합)를 고를 수 있고, 지역구는 여론 › 시민 성향, 비례는 여론 › 시민 지지율을 바탕으로 정해져요.',
                 },
                 {
                     before: [go('vote', 'elecGeneral'), showPanel('controls')],
