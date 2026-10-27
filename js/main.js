@@ -8730,42 +8730,40 @@
             ).join('');
         }
         function renderFraudAttemptSection(p) {
+            // 모양은 js/fraudportal.js의 뒷세계 포털 스타일(.fl-*)
             const fa = p.fraudAttempt;
             return `
-                <div style="margin-bottom:6px;padding:8px;background:#0a0c10;border:1px solid #663333;">
-                    <label style="display:flex;align-items:center;gap:6px;cursor:pointer;color:var(--tno-alert);font-size:0.85rem;${fa?'margin-bottom:8px;':''}">
-                        <input type="checkbox" class="chk-alert" ${fa?'checked':''} onchange="toggleFraudAttempt(${p.id},this.checked)"> ⚠ 부정선거 시도<br>(다음 총선 개표 1회에 적용)
+                <div class="fl-deal${fa ? ' on' : ''}">
+                    <label class="fl-toggle">
+                        <input type="checkbox" class="chk-alert" ${fa?'checked':''} onchange="toggleFraudAttempt(${p.id},this.checked)"> <span>${fa ? '거래 체결됨' : '거래 시작'}<small>다음 총선 개표 1회에 적용</small></span>
                     </label>
                     ${!fa ? '' : `
-                    <div style="display:flex;flex-direction:column;gap:6px;">
-                        <div style="display:flex;align-items:center;gap:6px;">
-                            <span style="color:#888;font-size:0.78rem;width:100px;flex-shrink:0;">대상 의원실</span>
-                            <select class="input-alert" onchange="updateFraudAttempt(${p.id},'chamber',this.value)" style="flex:1;min-width:0;">
+                    <div class="fl-fields">
+                        <div class="fl-row">
+                            <span class="fl-k">대상 의원실</span>
+                            <select class="input-alert fl-in" onchange="updateFraudAttempt(${p.id},'chamber',this.value)">
                                 ${chamberList().map(ch => `<option value="${ch}" ${fa.chamber===ch?'selected':''}>${chamberDisplayName(ch)}</option>`).join('')}
                             </select>
                         </div>
-                        <div style="display:flex;align-items:center;gap:6px;">
-                            <span style="color:#888;font-size:0.78rem;width:100px;flex-shrink:0;">득표율 부풀리기</span>
-                            <input type="number" class="input-alert" min="0" max="100" value="${fa.boostPct}" style="flex:1;min-width:0;" onchange="updateFraudAttempt(${p.id},'boostPct',parseFloat(this.value)||0)">
-                            <span style="color:#666;font-size:0.78rem;flex-shrink:0;">%p</span>
+                        <div class="fl-row">
+                            <span class="fl-k">득표율 부풀리기</span>
+                            <input type="number" class="input-alert fl-in" min="0" max="100" value="${fa.boostPct}" onchange="updateFraudAttempt(${p.id},'boostPct',parseFloat(this.value)||0)">
+                            <span class="fl-u">%p</span>
                         </div>
-                        <div style="display:flex;align-items:center;gap:6px;">
-                            <span style="color:#888;font-size:0.78rem;width:100px;flex-shrink:0;">발각 확률</span>
-                            <input type="number" class="input-alert" id="fraudCatchInput_${p.id}" min="0" max="100" value="${fa.catchChance}" ${fa.manualCatch?'':'disabled'}
-                                style="flex:1;min-width:0;${fa.manualCatch?'':'opacity:0.5;'}" onchange="updateFraudAttempt(${p.id},'catchChance',parseFloat(this.value)||0)">
-                            <span style="color:#666;font-size:0.78rem;flex-shrink:0;">%</span>
-                            <label style="display:flex;align-items:center;gap:3px;color:#888;font-size:0.7rem;flex-shrink:0;cursor:pointer;white-space:nowrap;">
-                                <input type="checkbox" class="chk-alert" ${fa.manualCatch?'checked':''} onchange="toggleFraudManualCatch(${p.id},this.checked)"> 수동
-                            </label>
+                        <div class="fl-row">
+                            <span class="fl-k">발각 확률</span>
+                            <input type="number" class="input-alert fl-in" id="fraudCatchInput_${p.id}" min="0" max="100" value="${fa.catchChance}" ${fa.manualCatch?'':'disabled'} onchange="updateFraudAttempt(${p.id},'catchChance',parseFloat(this.value)||0)">
+                            <span class="fl-u">%</span>
+                            <label class="fl-manual"><input type="checkbox" class="chk-alert" ${fa.manualCatch?'checked':''} onchange="toggleFraudManualCatch(${p.id},this.checked)"> 수동</label>
                         </div>
-                        ${!fa.manualCatch ? `<div id="fraudCatchNote_${p.id}" style="color:#555;font-size:0.7rem;margin-left:106px;">자동 계산: 부풀리기·지역구 조작 규모에 비례 (현재 ${fa.catchChance}%)</div>` : ''}
+                        ${!fa.manualCatch ? `<div id="fraudCatchNote_${p.id}" class="fl-note">자동 계산: 부풀리기·지역구 조작 규모에 비례 (현재 ${fa.catchChance}%)</div>` : ''}
                         <div>
-                            <span style="color:#888;font-size:0.78rem;">지역구 개표 조작 (선택한 지역구는 실제 결과와 무관하게 이 정당이 승리)</span>
-                            <select multiple class="input-alert" onchange="updateFraudRiggedDistricts(${p.id},this)" style="width:100%;box-sizing:border-box;height:84px;margin-top:4px;">
+                            <span class="fl-k">지역구 개표 조작 (선택한 지역구는 실제 결과와 무관하게 이 정당이 승리)</span>
+                            <select multiple class="input-alert fl-in fl-multi" onchange="updateFraudRiggedDistricts(${p.id},this)">
                                 ${fraudDistrictOptionsHtml(fa.chamber, fa.riggedDistricts)}
                             </select>
                         </div>
-                        <div style="color:#664444;font-size:0.72rem;line-height:1.5;">발각은 개표 도중 무작위 시점에 드러납니다 — 그 순간 개표가 멈추고, 조작된 표를 무효로 해 처음부터 다시 개표하며 활동 금지 처분을 받습니다. 발각되지 않으면 효과가 그대로 반영됩니다. 결과와 무관하게 시도는 개표 1회로 소진됩니다.</div>
+                        <div class="fl-fine">발각은 개표 도중 무작위 시점에 드러납니다 — 그 순간 개표가 멈추고, 조작된 표를 무효로 해 처음부터 다시 개표하며 활동 금지 처분을 받습니다. 발각되지 않으면 효과가 그대로 반영됩니다. 결과와 무관하게 시도는 개표 1회로 소진됩니다.</div>
                     </div>`}
                 </div>
             `;
@@ -8837,12 +8835,12 @@
             const container = document.getElementById('fraudPartyList');
             if(!container) return;
             const list = parties.filter(p => p.ideologyId !== IND_IDEOLOGY_ID);
-            if(list.length === 0) { container.innerHTML = '<div style="color:#555;font-size:0.78rem;">정당이 없습니다.</div>'; return; }
+            if(list.length === 0) { container.innerHTML = '<div class="fl-empty">&gt; 정당이 없습니다.</div>'; return; }
             container.innerHTML = list.map(p => `
-                <div style="border-left:3px solid ${p.color};padding:8px;margin-bottom:10px;background:#0a0c10;">
-                    <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
-                        <span style="width:9px;height:9px;background:${p.color};border-radius:50%;flex-shrink:0;"></span>
-                        <span style="color:#ccc;font-size:0.9rem;">${p.name}</span>
+                <div class="fl-card" style="--pc:${p.color};">
+                    <div class="fl-head">
+                        <i class="fl-dot"></i>
+                        <span class="fl-name">${p.name}</span>
                         ${p.status==='banned' ? '<span class="party-status-badge status-banned">활동 금지</span>' : ''}
                     </div>
                     ${renderFraudAttemptSection(p)}
