@@ -398,7 +398,7 @@
         container.appendChild(lg);
     }
 
-    // ================= 예산 반원 — 위 세출 · 아래 세입(뒤집음), 넓이 = 금액 =================
+    // ================= 예산 반원 — 위 세출 · 아래 세입(뒤집음), 두께 = 세출 · 세입 차이 =================
     // opt: { spend: [{ label, value, color }], rev: [...], unit, center }
     function budgetHemi(container, opt) { mount(container, () => drawHemi(container, opt)); }
     function drawHemi(container, opt) {
@@ -408,13 +408,16 @@
         const W = Math.min(widthOf(container), 400), H = Math.round(W * 0.82);
         const cx = W / 2, cy = H / 2, sum = a => a.reduce((t, x) => t + Math.max(0, x.value), 0);
         const ts = sum(opt.spend), tr = sum(opt.rev), big = Math.max(ts, tr) || 1;
-        const R = Math.min(W / 2 - 8, H / 2 - 18), inner = 0.42;
-        // 넓이가 금액에 비례하도록 바깥 반지름을 √비율로 (안쪽 구멍은 같은 비율)
-        const rOf = t => Math.sqrt(t / big) * R;
+        // 안쪽 구멍은 위아래 같게 두고, 지금 두께를 100%로 — 세출 · 세입이 차이 나는 만큼 많은 쪽은 두껍게 · 적은 쪽은 얇게
+        // (최대 110% · 90%, 차이가 예산의 4%면 끝까지). 적자 · 흑자가 작아도 한눈에 보이게 2.5배로 키운다
+        const Rmax = Math.min(W / 2 - 8, H / 2 - 18), inner = 0.42, MAXD = 0.1;
+        const R = Rmax / (inner + (1 - inner) * (1 + MAXD)), ri0 = R * inner, th = R - ri0;
+        const d = Math.max(-MAXD, Math.min(MAXD, (ts - tr) / big * 2.5));
+        const outS = ri0 + th * (1 + d), outR = ri0 + th * (1 - d);
         const svg = S('svg', { viewBox: `0 0 ${W} ${H}`, width: W, height: H, class: 't69-svg', role: 'img', 'aria-label': `세출 ${fmtNum(ts)} · 세입 ${fmtNum(tr)}` }, container);
         S('rect', { x: 0, y: 0, width: W, height: H, class: 't69-surface' }, svg);
         const half = (items, total, up) => {
-            const ro2 = rOf(total), ri = ro2 * inner; let acc = 0;
+            const ro2 = up ? outS : outR, ri = ri0; let acc = 0;
             items.forEach(it => {
                 if (!(it.value > 0)) return;
                 const a0 = Math.PI * (acc / total), a1 = Math.PI * ((acc + it.value) / total); acc += it.value;
@@ -437,8 +440,8 @@
         };
         half(opt.spend, ts, true); half(opt.rev, tr, false);
         S('line', { x1: 6, x2: W - 6, y1: cy, y2: cy, class: 't69-axis' }, svg);
-        T(svg, cx, cy - rOf(ts) - 6, `세출 ${fmtNum(ts)}${opt.unit || ''}`, { class: 't69-title', 'text-anchor': 'middle' });
-        T(svg, cx, cy + rOf(tr) + 15, `세입 ${fmtNum(tr)}${opt.unit || ''}`, { class: 't69-title', 'text-anchor': 'middle' });
+        T(svg, cx, cy - outS - 6, `세출 ${fmtNum(ts)}${opt.unit || ''}`, { class: 't69-title', 'text-anchor': 'middle' });
+        T(svg, cx, cy + outR + 15, `세입 ${fmtNum(tr)}${opt.unit || ''}`, { class: 't69-title', 'text-anchor': 'middle' });
         if (opt.center) { T(svg, cx, cy - 6, opt.center[0], { class: 't69-hero-sm', 'text-anchor': 'middle' }); T(svg, cx, cy + 14, opt.center[1], { class: 't69-tick', 'text-anchor': 'middle' }); }
         svg.dataset.exportKind = 't69chart';
         twoLegends(container, opt);
