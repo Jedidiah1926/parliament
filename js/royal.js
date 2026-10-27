@@ -1,5 +1,6 @@
-// ===== Hemicycle 티저 1.6.6 (teaser66 ~ 67) — "왕은 죽었다, 국왕 만세!" 미리보기 =====
-// teaser66.html = main.html(1.6.1 ~ 1.6.5 포함) + 이 파일. 저장 공간은 따로 ('hemicycleTeaserV2-66:')
+// ===== 1.6.6 — 왕은 죽었다, 국왕 만세! "Le roi est mort, vive le roi!" (왕실 · 왕정복고 · 전제군주정) =====
+// 1.6.6 미리보기(예전 teaser66)에서 본 게임으로 옮겨 왔다 — 본 게임 · 모든 미리보기 화면에서 돈다 (로고 제작 화면만 빼고).
+// main.html은 js/history.js 다음에 이 파일을 읽는다.
 //
 //   - 내각 › 왕실: 왕가와 왕위 주장자를 정해 둔다
 //       왕가마다 이름 · 색 · 계승 규칙(남계만 · 남자 우선 · 성별 무관), 주장자마다 이름 · 칭호 · 성별 · 사진 · 지지 정당
@@ -22,7 +23,7 @@
 (function () {
     'use strict';
     const root = document.documentElement;
-    if (root.getAttribute('data-app-mode') !== 'teaser' || !['66', '67', '68', '69'].includes(root.getAttribute('data-teaser'))) return;
+    if (root.getAttribute('data-app-mode') === 'logo') return;
 
     const esc = s => (typeof escapeHtmlText === 'function' ? escapeHtmlText(String(s ?? '')) : String(s ?? ''));
     const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -43,7 +44,7 @@
     const PALETTE = ['#7a1f2b', '#1f3a7a', '#5b3a8a', '#2e6b4f', '#8a6a1f', '#444444'];
     const GOV_NAME = { parliamentary: '의원내각제', presidential: '대통령제', semi: '이원집정부제', collective: '집단지도체제', monarchy: '입헌군주제' };
 
-    // ---- 상태 (세이브의 teaser66 칸) ----
+    // ---- 상태 (세이브의 royal 칸 — 1.6.6 미리보기 세이브는 teaser66 칸) ----
     //   dynasties: [{ id, name, color, rule, claimants: [{ id, name, title, gender:'m'|'f', photo, partyIds:[pid] }] }]
     //   monarchy: null | { kind:'constitutional'|'absolute', claimantId, dynastyId, title, since,
     //                      prevGovType, prevPresident, prevVeto, prevHolders:{key:holder}, banned:[pid] }
@@ -56,13 +57,13 @@
     const origGet = window.getAppState;
     window.getAppState = function () {
         const st = origGet.apply(this, arguments);
-        if (st && typeof st === 'object') st.teaser66 = JSON.parse(JSON.stringify(S));
+        if (st && typeof st === 'object') st.royal = JSON.parse(JSON.stringify(S));
         return st;
     };
     const origSet = window.setAppState;
     window.setAppState = function (state) {
         const r = origSet.apply(this, arguments);
-        const src = state && state.teaser66;
+        const src = state && (state.royal || state.teaser66);
         S = { ...fresh(), ...(src && typeof src === 'object' ? JSON.parse(JSON.stringify(src)) : {}) };
         if (!Array.isArray(S.dynasties)) S.dynasties = [];
         if (!Array.isArray(S.log)) S.log = [];
@@ -607,6 +608,19 @@
     function seed() {
         const de = /독일|Germany/.test(nationName());
         const mk = (name, color, rule, list) => ({ id: uid(), name, color, rule, claimants: list.map(([n, t, g]) => ({ id: uid(), name: n, title: t, gender: g || 'm', photo: '', partyIds: [] })) });
+        // 세이브에 든 이름은 번역하지 않으므로, 영어 화면이면 예시도 영어 이름으로 만든다
+        const en = typeof window.getLang === 'function' && window.getLang() === 'en';
+        if (en) {
+            S.dynasties = de ? [
+                mk('House of Hohenzollern', '#3a3a3a', 'salic', [['Louis Ferdinand', 'Prince of Prussia · head of house'], ['Christian-Sigismund', 'Prince of Prussia'], ['Georg Friedrich', 'Prince of Prussia']]),
+                mk('House of Wittelsbach', '#1f6fb3', 'salic', [['Albrecht', 'Duke of Bavaria · head of house'], ['Franz', 'Duke of Bavaria'], ['Max', 'Duke of Bavaria']]),
+            ] : [
+                mk('Royal House 1', PALETTE[0], 'male', [['Claimant', 'Crown Prince'], ['Second child', 'Prince'], ['Third child', 'Princess', 'f']]),
+                mk('Royal House 2', PALETTE[1], 'equal', [['Rival claimant', 'Grand Duke']]),
+            ];
+            render();
+            return;
+        }
         S.dynasties = de ? [
             mk('호엔촐레른가', '#3a3a3a', 'salic', [['루이 페르디난트', '프로이센 왕자 · 가주'], ['크리스티안지기스문트', '프로이센 왕자'], ['게오르크 프리드리히', '프로이센 왕자']]),
             mk('비텔스바흐가', '#1f6fb3', 'salic', [['알브레히트', '바이에른 공작 · 가주'], ['프란츠', '바이에른 공작'], ['막스', '바이에른 공작']]),
