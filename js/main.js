@@ -15197,15 +15197,18 @@
             parties.forEach(p => {
                 const fa = p.fraudAttempt;
                 if(!fa || fa.chamber !== chamber) return;
-                fraudAttempts.push({ p, fa, caught: Math.random()*100 < (fa.catchChance ?? 0) });
+                // 정권 상태에 따른 발각 확률 보정(1.6.9 미리보기 — js/teaser69pol.js의 HemiFraudRegime)
+                const chance = window.HemiFraudRegime ? window.HemiFraudRegime.catchChance(p, fa.catchChance ?? 0) : (fa.catchChance ?? 0);
+                fraudAttempts.push({ p, fa, chance, caught: Math.random()*100 < chance });
                 p.fraudAttempt = null;
             });
             let effChamberStore, fraudRiggedByKey; // fraudRiggedByKey: { districtKey: partyId }
             const applyFraud = () => {
                 effChamberStore = JSON.parse(JSON.stringify(chamberStore));
                 fraudRiggedByKey = {};
-                fraudAttempts.forEach(({ p, fa }) => {
-                    if(p.status === 'banned') return; // 발각되어 활동 금지된 정당의 조작은 무효
+                fraudAttempts.forEach(x => {
+                    const { p, fa } = x;
+                    if(x.voided || p.status === 'banned') return; // 발각된 조작은 무효 (활동 금지되지 않은 정당도)
                     if(!effChamberStore[p.id]) effChamberStore[p.id] = { prob: 0, err: 0 };
                     effChamberStore[p.id].prob = (effChamberStore[p.id].prob || 0) + (fa.boostPct || 0);
                     (fa.riggedDistricts || []).forEach(key => { fraudRiggedByKey[key] = p.id; });
@@ -15464,10 +15467,17 @@
                 // 즉시 완료 등으로 발각 시점을 지나쳐 끝까지 개표했더라도, 결과 확정 전에 발각된다
                 const pct = (Math.min(fraudHit ? fraudDetectAt : countTotal, totalSeats)/totalSeats*100).toFixed(0);
                 document.getElementById('elecResultTitle'+suf).innerText = `> ${elecTitle} (${elecYear}) — ${chamberName} 개표 중단: 부정선거 발각! (개표율 ${pct}%)`;
-                caughtFraud.forEach(({ p }) => { p.status = 'banned'; });
+                // 발각된 정당은 활동 금지 — 정권 상태에 따라 다른 조치(1.6.9 미리보기 — HemiFraudRegime.punish)
+                const fates = caughtFraud.map(x => {
+                    x.voided = true;
+                    const r = window.HemiFraudRegime ? window.HemiFraudRegime.punish(x.p) : null;
+                    if(!r || r.ban) x.p.status = 'banned';
+                    return { p: x.p, text: r ? r.text : '' };
+                });
                 renderPartyInfoList();
                 const names = caughtFraud.map(({ p }) => p.name).join(', ');
-                await (window.DnoUI ? DnoUI.alert(`⚠ 개표 도중 ${names}의 부정선거가 발각되었습니다! (개표율 ${pct}%)\n조작된 표를 모두 무효 처리하고 처음부터 다시 개표합니다.\n발각된 정당(${names})은 활동이 금지됩니다.`) : Promise.resolve(alert(`⚠ 개표 도중 ${names}의 부정선거가 발각되었습니다!`)));
+                const fateTxt = window.HemiFraudRegime ? fates.map(f => `${f.p.name}: ${f.text}`).join('\n') : `발각된 정당(${names})은 활동이 금지됩니다.`;
+                await (window.DnoUI ? DnoUI.alert(`⚠ 개표 도중 ${names}의 부정선거가 발각되었습니다! (개표율 ${pct}%)\n조작된 표를 모두 무효 처리하고 처음부터 다시 개표합니다.\n${fateTxt}`) : Promise.resolve(alert(`⚠ 개표 도중 ${names}의 부정선거가 발각되었습니다!`)));
                 applyFraud();
                 ({ weighted, wTotal, districtResults, listSeatMap, seatMap, pool, thresholdOut } = computeOutcome());
                 saveLastResult();
@@ -15503,7 +15513,7 @@
             if(fraudAttempts.length && typeof window.HemiFraudOutcome === 'function') {
                 try {
                     window.HemiFraudOutcome({ title: elecTitle, year: elecYear, chamber, chamberName, date: typeof formatNationDate === 'function' ? formatNationDate() : '',
-                        ops: fraudAttempts.map(({ p, fa, caught }) => ({ partyId: p.id, name: p.name, color: p.color, boostPct: fa.boostPct || 0, rigged: (fa.riggedDistricts || []).length, catchChance: fa.catchChance ?? 0, caught })) });
+                        ops: fraudAttempts.map(({ p, fa, chance, caught }) => ({ partyId: p.id, name: p.name, color: p.color, boostPct: fa.boostPct || 0, rigged: (fa.riggedDistricts || []).length, catchChance: chance ?? fa.catchChance ?? 0, caught })) });
                 } catch(e) { /* 기록 실패는 무시 */ }
             }
 

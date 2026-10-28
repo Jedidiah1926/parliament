@@ -197,3 +197,149 @@
     document.head.appendChild(style);
     window.addEventListener('load', () => setTimeout(render, 0));
 })();
+
+// ===== 1.6.9 미리보기 — 정권 상태에 따른 부정선거 =====
+// 발각 확률과 발각 뒤 조치가 정권 상태에 따라 달라진다 (js/main.js의 개표가 window.HemiFraudRegime을 부름):
+//   일반(민주 · 입헌군주제) — 그대로 (발각되면 활동 금지)
+//   계엄령 — 정부 · 여당 쪽 ×0.5, 발각돼도 금지 대신 지지율 20% 하락 / 야당 ×1.5, 발각되면 금지 + 지지율 절반
+//   전제군주정 — 왕당파(군주를 지지하는 정당) ×0.3, 발각돼도 금지 대신 "왕실 스캔들"(왕당파 지지율 25% 하락 → 혁명 확률 상승) / 야당 ×1.5, 금지 + 지지율 절반
+//   군정 — 선거는 원래 중단, "관제 선거"를 허용하면 치를 수 있음: 군부 쪽 정당 ×0.2, 발각돼도 금지 대신 지지율 15% 하락 / 야당 ×1.5, 강제 해산(금지) + 지지율 절반
+/* global parties, coalitions, elecStore, emergencyPowers, chamberList, getAppState, setAppState, escapeHtmlText */
+(function () {
+    'use strict';
+    const root = document.documentElement;
+    if (root.getAttribute('data-app-mode') !== 'teaser' || !['69'].includes(root.getAttribute('data-teaser') || '69')) return;
+    const esc = s => (typeof escapeHtmlText === 'function' ? escapeHtmlText(String(s ?? '')) : String(s ?? ''));
+    let managed = false; // 군정 관제 선거 허용
+    const isGov = p => !!p && (p.isRuling || (typeof coalitions !== 'undefined' && coalitions.some(c => c.isRuling && (c.members || []).some(id => String(id) === String(p.id)))));
+    function regime() {
+        if (window.T62 && window.T62.junta) return 'junta';
+        const m = window.T66 && window.T66.monarchy;
+        if (m && m.kind === 'absolute') return 'absolute';
+        if (typeof emergencyPowers !== 'undefined' && emergencyPowers?.martialLaw?.active) return 'martial';
+        return 'normal';
+    }
+    // 정권 쪽 정당인가
+    function onSide(p, r) {
+        if (!p) return false;
+        if (r === 'absolute') {
+            const m = window.T66.monarchy;
+            const c = (window.T66.dynasties || []).flatMap(d => d.claimants || []).find(x => String(x.id) === String(m.claimantId));
+            return (c && (c.partyIds || []).some(id => String(id) === String(p.id))) || isGov(p);
+        }
+        if (r === 'junta') return (window.T62.military || []).some(m => String(m.partyId) === String(p.id)) || isGov(p);
+        if (r === 'martial') return isGov(p);
+        return false;
+    }
+    const RULES = {
+        normal: null,
+        martial: { name: '계엄령', side: 0.5, opp: 1.5, sideCut: 0.8, sideText: '활동 금지 대신 부정선거 규탄 여론 — 지지율 20% 하락', sideLabel: '정부 · 여당' },
+        absolute: { name: '전제군주정', side: 0.3, opp: 1.5, sideCut: 0.75, sideText: '활동 금지 대신 왕실 스캔들 — 지지율 25% 하락 (혁명 확률 상승)', sideLabel: '왕당파' },
+        junta: { name: '군정 (관제 선거)', side: 0.2, opp: 1.5, sideCut: 0.85, sideText: '활동 금지 대신 관제 선거 의혹 — 지지율 15% 하락', sideLabel: '군부 쪽 정당' },
+    };
+    const OPP_TEXT = { martial: '활동 금지 + 지지율 절반 (계엄 당국의 처벌)', absolute: '활동 금지 + 지지율 절반 (왕실의 처벌)', junta: '강제 해산(활동 금지) + 지지율 절반' };
+    function cutSupport(pid, factor) {
+        (typeof chamberList === 'function' ? chamberList() : ['house']).forEach(ch => {
+            const st = elecStore?.[ch]?.[pid];
+            if (st) st.prob = Math.round(Math.min(100, (Number(st.prob) || 0) * factor) * 10) / 10;
+        });
+    }
+    window.HemiFraudRegime = {
+        regime,
+        catchChance(p, base) {
+            const r = regime(), R = RULES[r];
+            if (!R) return base;
+            return Math.max(0, Math.min(100, Math.round(base * (onSide(p, r) ? R.side : R.opp))));
+        },
+        punish(p) {
+            const r = regime(), R = RULES[r];
+            if (!R) return { ban: true, text: '활동 금지' };
+            if (onSide(p, r)) { cutSupport(p.id, R.sideCut); return { ban: false, text: R.sideText }; }
+            cutSupport(p.id, 0.5);
+            return { ban: true, text: OPP_TEXT[r] };
+        },
+        managedElections: () => managed && !!(window.T62 && window.T62.junta),
+        get managed() { return managed; },
+    };
+
+    const origGet = window.getAppState;
+    window.getAppState = function () {
+        const st = origGet.apply(this, arguments);
+        if (st && typeof st === 'object') st.fraudRegime = { managed };
+        return st;
+    };
+    const origSet = window.setAppState;
+    window.setAppState = function (state) {
+        const r = origSet.apply(this, arguments);
+        managed = !!(state && state.fraudRegime && state.fraudRegime.managed);
+        return r;
+    };
+
+    function el(html) { const d = document.createElement('div'); d.innerHTML = html.trim(); return d.firstChild; }
+    // 선거 › ⚠ — 지금 정권 상태와 정당마다 실제 발각 확률
+    function renderBanner() {
+        const host = document.getElementById('contentFraud');
+        if (!host) return;
+        let box = document.getElementById('t69FraudRegime');
+        if (!box) { box = el('<div id="t69FraudRegime" class="fr-box"></div>'); host.insertBefore(box, document.getElementById('fraudPartyList')); }
+        const r = regime(), R = RULES[r];
+        const tries = parties.filter(p => p.fraudAttempt);
+        box.innerHTML = !R
+            ? `<div class="fr-head">정권 상태: 일반 <span class="fr-badge">1.6.9 미리보기</span></div><div class="fr-dim">발각 확률은 그대로, 발각되면 활동 금지. 계엄령 · 전제군주정 · 군정(관제 선거)에서는 정권 쪽 정당은 덜 발각되고 처벌도 가벼워요.</div>`
+            : `<div class="fr-head">정권 상태: ${esc(R.name)} <span class="fr-badge">1.6.9 미리보기</span></div>
+               <div class="fr-dim">${esc(R.sideLabel)} 발각 확률 ×${R.side} · 발각 시 ${esc(R.sideText)}<br>야당 발각 확률 ×${R.opp} · 발각 시 ${esc(OPP_TEXT[r])}</div>
+               ${tries.length ? `<div class="fr-list">${tries.map(p => { const base = p.fraudAttempt.catchChance ?? 0, eff = window.HemiFraudRegime.catchChance(p, base); return `<div>${esc(p.name)} <span class="fr-dim">${onSide(p, r) ? esc(R.sideLabel) : '야당'}</span> — 실제 발각 확률 <b>${eff}%</b> <span class="fr-dim">(기본 ${base}%)</span></div>`; }).join('')}</div>` : ''}`;
+    }
+    const origRF = window.renderFraudTab;
+    if (typeof origRF === 'function') window.renderFraudTab = function () { const res = origRF.apply(this, arguments); try { renderBanner(); } catch (e) { /* 화면 준비 전 */ } return res; };
+    // 내각 › 쿠데타 — 군정이면 관제 선거 허용 스위치
+    function renderJuntaToggle() {
+        const host = document.getElementById('contentCoup');
+        if (!host) return;
+        let box = document.getElementById('t69Managed');
+        if (!(window.T62 && window.T62.junta)) { if (box) box.remove(); return; }
+        if (!box) { box = el('<div id="t69Managed" class="fr-box"></div>'); host.insertBefore(box, host.firstChild); }
+        box.innerHTML = `<label class="fr-row"><input type="checkbox" ${managed ? 'checked' : ''}> 관제 선거 허용 <span class="fr-badge">1.6.9 미리보기</span></label>
+            <div class="fr-dim">켜면 군정 중에도 총선 · 대선 · 지방선거를 치릅니다. 군부 쪽 정당의 부정선거는 거의 들키지 않고(×0.2) 들켜도 지지율만 떨어지지만, 야당이 들키면 강제 해산돼요.</div>`;
+        box.querySelector('input').onchange = e => { managed = e.target.checked; };
+    }
+    const origSwitch = window.switchSubTab;
+    window.switchSubTab = function (main, sub) {
+        const res = origSwitch.apply(this, arguments);
+        if (main === 'cabinet' && sub === 'coup') renderJuntaToggle();
+        return res;
+    };
+    // 쿠데타 화면이 다시 그려질 때(군정 시작 · 민정 이양 등)도
+    const hookT62 = () => {
+        if (!window.T62 || window.T62.__t69) return;
+        const orig = window.T62.refresh;
+        if (typeof orig === 'function') { window.T62.refresh = function () { const res = orig.apply(this, arguments); renderJuntaToggle(); return res; }; window.T62.__t69 = true; }
+    };
+    hookT62();
+    // 쿠데타 화면은 coup.js 안에서 통째로 다시 그려지므로, 스위치가 사라지면 다시 넣는다
+    const watchCoup = () => {
+        const host = document.getElementById('contentCoup');
+        if (!host || host.__t69obs) return;
+        host.__t69obs = new MutationObserver(() => {
+            const has = !!document.getElementById('t69Managed');
+            if (has !== !!(window.T62 && window.T62.junta)) renderJuntaToggle();
+        });
+        host.__t69obs.observe(host, { childList: true });
+    };
+    watchCoup();
+    window.addEventListener('load', () => { hookT62(); watchCoup(); setTimeout(renderJuntaToggle, 0); });
+
+    const style = document.createElement('style');
+    style.textContent = `
+        .fr-box { border: 1px dashed #553; padding: 8px 10px; margin: 8px 0 10px; }
+        .fr-head { font-size: .88rem; color: #e0b030; display: flex; align-items: center; gap: 8px; }
+        .fr-badge { font-size: .62rem; padding: 1px 6px; border: 1px solid currentColor; opacity: .7; color: #aaa; }
+        .fr-dim { color: #888; font-size: .76rem; line-height: 1.55; margin-top: 3px; }
+        .fr-list { margin-top: 6px; font-size: .8rem; color: #ccc; }
+        .fr-row { display: flex; align-items: center; gap: 6px; font-size: .86rem; cursor: pointer; }
+        html[data-theme-family="modern"] .fr-box { border-color: var(--m-border-strong); border-radius: 10px; background: var(--m-surface-2); }
+        html[data-theme-family="modern"] .fr-dim { color: var(--m-text-3); }
+        html[data-theme-family="modern"] .fr-list, html[data-theme-family="modern"] .fr-row { color: var(--m-text); }
+    `;
+    document.head.appendChild(style);
+})();
