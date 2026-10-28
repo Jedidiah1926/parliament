@@ -247,7 +247,9 @@
                     gov ? '집권 세력' : '']) }/>`;
                 const dTxt = d ? ` ${d > 0 ? '▲' : '▼'}${Math.abs(d)}` : '';
                 const opts = [`${p.name} ${n}${dTxt}`, `${p.name} ${n}`, `${n}${dTxt}`, String(n)];
-                const txt = opts.find(t => t.length * 6.6 + 8 < w) || '';
+                // 글자 폭(11px 글꼴): 한글 · 한자는 한 칸, 나머지는 약 0.6칸 — 한글을 0.6칸으로 재면 이름이 옆 막대로 넘쳤다
+                const segW = t => [...t].reduce((a, c) => a + (/[\u1100-\uffff]/.test(c) ? 11 : 6.6), 0);
+                const txt = opts.find(t => segW(t) + 8 < w) || '';
                 if (txt) bars += `<text x="${x0 + w / 2}" y="${y + BAR / 2 + 4}" class="t65-h-seg" text-anchor="middle">${esc(txt)}</text>`;
             });
             const govNames = sn.parties.filter(p => ruling.has(String(p.id))).map(p => p.name);
@@ -1182,11 +1184,21 @@
     // 위키 틀 · 국가 순위는 HTML이라 <foreignObject>로 담으면 Chromium이 캔버스를 오염시켜 PNG로 못 뽑으므로,
     // 같은 모양을 SVG 도형으로 다시 그린다 (국기 · 로고는 data: 그림이라 SVG 안에서도 그려짐)
     const X = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-    const FONT_MODERN = "Pretendard, 'Noto Sans KR', 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif";
+    // 화면과 같은 글꼴 — 모던 테마는 Pretendard Variable(css/modern.css의 이름), 네온 테마는 둥근모
+    const FONT_MODERN = "'Pretendard Variable', Pretendard, 'Noto Sans KR', 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif";
     const FONT_NEON = "NeoDunggeunmo, 'Noto Sans KR', 'Malgun Gothic', monospace";
     let FONT = FONT_MODERN;
-    // 둥근모는 SVG 파일에서만 — PNG · JPG는 그림으로 굽는 동안 웹 글꼴을 못 써서 글자 폭이 어긋나므로 기본 고딕
-    const pickFont = format => { FONT = (format === 'svg' && typeof isModernTheme === 'function' && !isModernTheme()) ? FONT_NEON : FONT_MODERN; };
+    // PNG · JPG도 화면 글꼴로 — SVG를 그림으로 구우면 웹 글꼴을 못 쓰므로, 글자만 빼고 구운 뒤 캔버스에 글자를 따로 쓴다 (rasterize 아래)
+    const pickFont = () => { FONT = (typeof isModernTheme === 'function' && !isModernTheme()) ? FONT_NEON : FONT_MODERN; };
+    // 글자 폭을 재기 전에 글꼴을 받아 둔다 (안 받아진 채로 재면 기본 글꼴 폭이 됨)
+    async function loadExportFont() {
+        try {
+            await Promise.race([
+                Promise.all(['400', '700', '800'].map(w => document.fonts.load(`${w} 16px ${FONT}`, '가나다ABC123'))),
+                new Promise(ok => setTimeout(ok, 3000)),
+            ]);
+        } catch (e) { /* 못 받으면 기본 글꼴로 */ }
+    }
     const measureCtx = document.createElement('canvas').getContext('2d');
     const textW = (t, size, weight = 400) => { measureCtx.font = `${weight} ${size}px ${FONT}`; return measureCtx.measureText(String(t)).width; };
     // 글자를 폭에 맞춰 여러 줄로 (한글은 글자 단위로 끊어도 자연스러움)
@@ -1415,7 +1427,61 @@
         return null;
     }
     function dl(href, filename) { const a = document.createElement('a'); a.href = href; a.download = filename; document.body.appendChild(a); a.click(); a.remove(); }
+    // SVG를 PNG · JPG로 — 글자(<text>)를 빼고 도형 · 그림만 구운 뒤, 같은 자리에 캔버스로 글자를 쓴다.
+    // (SVG를 <img>로 구우면 그 안에서는 페이지의 웹 글꼴을 쓸 수 없어 기본 글꼴이 되지만, 캔버스는 페이지 글꼴을 쓴다)
+    async function rasterize(svgMarkup, scale, jpg) {
+        const holder = document.createElement('div');
+        holder.style.cssText = 'position:fixed;left:-100000px;top:0;pointer-events:none;'; // 화면 밖 — 글자 자리 · 계산된 스타일만 읽는다
+        holder.innerHTML = svgMarkup;
+        document.body.appendChild(holder);
+        const root = holder.querySelector('svg');
+        const W = Number(root.getAttribute('width')) || root.getBoundingClientRect().width;
+        const H = Number(root.getAttribute('height')) || root.getBoundingClientRect().height;
+        const rr = root.getBoundingClientRect();
+        const kx = W / (rr.width || W), ky = H / (rr.height || H);
+        const texts = [...root.querySelectorAll('text')].map(t => {
+            const cs = getComputedStyle(t);
+            const m = t.getScreenCTM();
+            const p = root.createSVGPoint();
+            p.x = parseFloat(t.getAttribute('x')) || 0; p.y = parseFloat(t.getAttribute('y')) || 0;
+            const q = m ? p.matrixTransform(m) : p;
+            const k = m ? Math.hypot(m.a, m.b) : 1;
+            let opacity = 1;
+            for (let e = t; e && e !== holder; e = e.parentElement) opacity *= parseFloat(getComputedStyle(e).opacity);
+            return cs.visibility === 'hidden' || cs.display === 'none' ? null : {
+                x: (q.x - rr.left) * kx, y: (q.y - rr.top) * ky, text: t.textContent, size: (parseFloat(cs.fontSize) || 16) * k, weight: cs.fontWeight || '400',
+                fill: cs.fill, fillOpacity: Number(cs.fillOpacity || 1) * opacity, anchor: cs.textAnchor, spacing: parseFloat(cs.letterSpacing) || 0,
+                stroke: cs.stroke, strokeWidth: parseFloat(cs.strokeWidth) || 0, strokeOpacity: Number(cs.strokeOpacity || 1) * opacity, strokeFirst: /^stroke/.test(cs.paintOrder || ''),
+            };
+        }).filter(Boolean);
+        root.querySelectorAll('text').forEach(t => t.remove());
+        const bare = new XMLSerializer().serializeToString(root);
+        holder.remove();
+        const img = new Image();
+        await new Promise((ok, bad) => { img.onload = ok; img.onerror = () => bad(new Error('그림을 만들지 못했습니다')); img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(bare); });
+        const c = document.createElement('canvas');
+        c.width = Math.round(W * scale); c.height = Math.round(H * scale);
+        const ctx = c.getContext('2d');
+        if (jpg) { ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height); }
+        ctx.drawImage(img, 0, 0, c.width, c.height);
+        ctx.scale(scale, scale);
+        ctx.textBaseline = 'alphabetic';
+        texts.forEach(t => {
+            if (!t.text) return;
+            ctx.font = `${t.weight} ${t.size}px ${FONT}`;
+            ctx.textAlign = t.anchor === 'middle' ? 'center' : t.anchor === 'end' ? 'right' : 'left';
+            try { ctx.letterSpacing = t.spacing ? `${t.spacing}px` : '0px'; } catch (e) { /* 지원 안 함 */ }
+            const paintStroke = () => { if (t.stroke && t.stroke !== 'none' && t.strokeWidth > 0) { ctx.globalAlpha = t.strokeOpacity; ctx.strokeStyle = t.stroke; ctx.lineWidth = t.strokeWidth; ctx.lineJoin = 'round'; ctx.strokeText(t.text, t.x, t.y); } };
+            if (t.strokeFirst) paintStroke();
+            if (t.fill && t.fill !== 'none') { ctx.globalAlpha = t.fillOpacity; ctx.fillStyle = t.fill; ctx.fillText(t.text, t.x, t.y); }
+            if (!t.strokeFirst) paintStroke();
+            ctx.globalAlpha = 1;
+        });
+        return c;
+    }
     async function t65Export(el, format) {
+        pickFont(format);
+        await loadExportFont();
         const m = t65ExportMarkup(el, format); if (!m) return;
         const stamp = (typeof formatKstTimestampCompact === 'function') ? formatKstTimestampCompact() : Date.now();
         const base = `${m.name}_${stamp}`;
@@ -1425,13 +1491,7 @@
             return;
         }
         const scale = (typeof exportScale !== 'undefined' && [1, 2, 3].includes(exportScale)) ? exportScale : 2;
-        const img = new Image();
-        await new Promise((ok, bad) => { img.onload = ok; img.onerror = () => bad(new Error('그림을 만들지 못했습니다')); img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(m.svg); });
-        const c = document.createElement('canvas');
-        c.width = Math.round(img.width * scale); c.height = Math.round(img.height * scale);
-        const ctx = c.getContext('2d');
-        if (format === 'jpg') { ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height); }
-        ctx.drawImage(img, 0, 0, c.width, c.height);
+        const c = await rasterize(m.svg, scale, format === 'jpg');
         dl(c.toDataURL(format === 'jpg' ? 'image/jpeg' : 'image/png', 0.95), `${base}.${format}`);
     }
     // 우클릭: 이 세 화면이면 본 화면의 "내보내기..." 메뉴를 띄우되 대상을 우리 것으로 (본 화면의 svg 우클릭 처리보다 먼저)
