@@ -110,7 +110,9 @@
         let missingPop = 0;
         // 지방선거 연대(1.6.8 — js/vassals.js)가 있으면 단위(권역 · 지역구)마다 연대의 단일후보를 정한다
         const LA = window.HemiLocalAlliance && window.HemiLocalAlliance.active(ch) ? window.HemiLocalAlliance : null;
-        const results = unitsOf(ch, level).map(u => {
+        const units = unitsOf(ch, level);
+        if (LA && LA.prepare) LA.prepare(ch, level, units); // 나눠 맡는 방식은 단위들을 미리 정해 둔다
+        const results = units.map(u => {
             let votes = {};
             let voters = 0, electorate = 0;
             u.keys.forEach(k => {
@@ -200,7 +202,7 @@
                         return `<div class="pv-unit" style="border-left-color:${p ? p.color : '#888'}">
                             <div><b>${esc(r.name)}</b>${r.office && r.office !== lv.office ? ` <span class="pv-dim">${esc(r.office)}</span>` : ''} — ${esc(p ? p.name : '당선자 없음')}</div>
                             <div class="pv-dim pv-small">${top.map(([pid, v]) => `${esc(partyById(pid)?.name || '?')} ${fmt(v)}표(${pct(v, all).toFixed(1)}%)`).join(' · ')} · 투표율 ${pct(r.voters, r.electorate).toFixed(1)}%</div>
-                            ${(r.alliances || []).map(a => `<div class="pv-dim pv-small">🤝 ${esc(a.name)} 단일후보: <b>${esc(partyById(a.nominee)?.name || '?')}</b> — ${a.method === 'primary' ? `예비선거 ${Object.entries(a.scores).sort((x, y) => y[1] - x[1]).map(([pid, v]) => `${esc(partyById(pid)?.name || '?')} ${v}%`).join(' · ')}` : '연대 안 지지율 1위'} · 결집 ${a.transfer}%</div>`).join('')}
+                            ${(r.alliances || []).map(a => `<div class="pv-dim pv-small">🤝 ${esc(a.name)} 단일후보: <b>${esc(partyById(a.nominee)?.name || '?')}</b> — ${a.method === 'primary' ? `예비선거 ${Object.entries(a.scores).sort((x, y) => y[1] - x[1]).map(([pid, v]) => `${esc(partyById(pid)?.name || '?')} ${v}%`).join(' · ')}` : a.method === 'top' || !a.methodLabel ? '연대 안 지지율 1위' : esc(a.methodLabel)} · 결집 ${a.transfer}%</div>`).join('')}
                         </div>`;
                     }).join('')}</div>
                     ${canToggle ? '<div class="pv-map" data-map="local-units"></div>' : ''}
