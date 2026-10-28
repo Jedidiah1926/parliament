@@ -526,7 +526,7 @@
             if(pmSelectionMethod() === 'majority' && !pmMajorityLocked) {
                 const ch = presElectionChamberBasis;
                 const seatKey = seatKeyFor(ch);
-                const eligible = parties.filter(p => p[inKeyFor(ch)] && p.status !== 'banned' && p.ideologyId !== IND_IDEOLOGY_ID);
+                const eligible = parties.filter(p => p[inKeyFor(ch)] && p.status !== 'banned' && p.status !== 'dissolved' && p.ideologyId !== IND_IDEOLOGY_ID);
                 if(eligible.length > 0) {
                     const top = eligible.reduce((a,b) => (b[seatKey]||0) > (a[seatKey]||0) ? b : a);
                     return { name: top.leaderName||'', photo: top.leaderPhoto||'', partyId: top.id, badgeText: `👑 다수당(${top.name}) 대표 자동 반영` };
@@ -10014,7 +10014,7 @@
             const u = candidateUnions.find(x => x.id === id);
             if(!u) return;
             const ch = presElectionChamberBasis;
-            const members = candidateUnionMembers(u).filter(p => p.status !== 'banned');
+            const members = candidateUnionMembers(u).filter(p => p.status !== 'banned' && p.status !== 'dissolved');
             if(members.length < 2) return;
             const sup = members.map(p => unionNationalSupport(p.id, ch));
             const total = sup.reduce((a, b) => a + b, 0);
@@ -10175,7 +10175,7 @@
 
         function presElectionEligible() {
             const ch = presElectionChamberBasis;
-            return parties.filter(p => p[inKeyFor(ch)] && p.status !== 'banned');
+            return parties.filter(p => p[inKeyFor(ch)] && p.status !== 'banned' && p.status !== 'dissolved');
         }
         // 후보 단일화로 후보를 내지 않는 정당은 빼고, 단일화 후보는 참여 정당 중 기준 원 지지율이 가장 높은 정당의 후보
         function presElectionCandidates() {
@@ -14748,8 +14748,9 @@
         // 지역구 선거 시뮬레이션
         // ─────────────────────────────────────────
         // 지역구 선거에 후보를 내는 정당 — 그 원에 참여하고 활동 금지가 아닌 정당 (끈 무소속 · 다른 원 전용 정당은 지역구도 가져가지 않음)
+        // 해산한 정당은 활동 금지 정당처럼 선거에 나오지 않는다 (예전엔 "*해산됨*"이 지지율대로 의석을 얻어 의회에 다시 들어왔다)
         function partyRunsInChamber(p, chamber) {
-            return !!p && !!p[inKeyFor(chamber)] && p.status !== 'banned';
+            return !!p && !!p[inKeyFor(chamber)] && p.status !== 'banned' && p.status !== 'dissolved';
         }
         function elecSimulateDistricts(chamber) {
             unionShareCache = {}; // 단일화 지지율 비례 분배는 이번 개표 동안 한 번만 계산
