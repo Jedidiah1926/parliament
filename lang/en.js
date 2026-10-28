@@ -8753,6 +8753,8 @@ window.DnoLangPacks.en = {
   ["- 서독 튜토리얼은 1983년 서독 경제 · 주별 산업구조로 시작, 미수복 지역을 통일하면 동독 주가 편입되고 통일 비용이 듦 · 종속국 땅은 집계에서 빠지고 공납 세입", "- The West German tutorial starts with the 1983 West German economy and state industry mixes; reunifying the unrecovered territory brings in the East German states at a reunification cost · dependency land is left out of national totals and pays tribute"],
   ["- 1.6.5 국가 순위 · 세력 변화, 1.6.2 쿠데타 · 1.6.3 혁명(민심 붕괴 경고), 1.6.6 왕실 예산과 연동", "- Linked with the 1.6.5 ranking and power shifts, 1.6.2 coups and 1.6.3 revolutions (collapse-of-mood warnings), and 1.6.6 royal budgets"],
   ["궐석", "Vacant"],
+  ["● 창당 · 당명 변경 / 곡선으로 합쳐짐 = 승계 / ✕ 소멸 · 줄 · 이름을 누르면 자세히", "● founded · renamed / curve = succession / ✕ dissolved · click a line or name for details"],
+  ["- 의회 › 세력 변화의 당 변화(정당 계보도) 개편 — 정당이 많으면 이름표가 겹치던 문제 고침: 줄 폭을 이름에 맞추고(많으면 가로 스크롤), 긴 이름은 \"…\"로 줄이고 전체 이름은 위 범례 · 마우스 올리기 · 누르기로", "- Reworked the party lineage chart in Parliament › Power shifts — fixed name labels overlapping when there are many parties: lanes fit the names (scrolling sideways when there are many), long names are shortened with \"…\", and full names show in the legend above, on hover and on click"],
   ["지지율 1위", "Top support"],
   ["지지율 비례 분배", "Split by support"],
   ["예비선거", "Primary"],
