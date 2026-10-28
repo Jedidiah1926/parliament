@@ -303,10 +303,24 @@
             if (lane < 0) { lane = lanes.findIndex((_, l) => free(l, first, last)); if (lane < 0) { lanes.push([]); lane = lanes.length - 1; } }
             lanes[lane].push([first, last]); laneOf[id] = lane;
         });
+        // 줄 폭 — 이름표(창당 · 당명 변경 자리의 이름)가 다음 줄을 침범하지 않게 가장 긴 이름에 맞춘다 (최대 200px).
+        // 정당이 많아 화면보다 넓어지면 가로로 스크롤하고, 그래도 긴 이름은 줄 폭에 맞춰 "…"로 줄인다 (전체 이름은 마우스를 올리거나 눌러서)
+        const textW = (t, px) => [...String(t)].reduce((w, c) => w + (/[\u1100-\uffff]/.test(c) ? px : px * 0.6), 0);
+        const labelNames = id => { const out = []; let prev = null; points.forEach(pt => { const p = pt.alive.get(id); if (p && (!prev || prev.name !== p.name)) out.push(p.name); if (p) prev = p; }); return out; };
+        const longest = Math.max(60, ...ids.map(id => Math.max(0, ...labelNames(id).map(n => textW(n, 12)))));
         const W0 = Math.max(320, Math.round(width || 600));
         const LW = Math.min(120, Math.round(W0 * 0.22)), X0 = LW + 14;
-        const laneW = Math.max(74, Math.min(130, (W0 - X0 - 10) / Math.max(1, lanes.length)));
+        // 화면에 다 들어가면 그 폭(최대 260px), 아니면 이름 폭(최대 200px)까지 줄이되 124px 밑으로는 줄이지 않고 가로 스크롤
+        const fitLane = (W0 - X0 - 10) / Math.max(1, lanes.length), wantLane = Math.min(200, longest + 30);
+        const laneW = fitLane >= wantLane ? Math.min(260, fitLane) : Math.max(124, fitLane);
         const W = Math.max(W0, X0 + laneW * lanes.length + 10);
+        const fit = (t, px, room) => {
+            if (textW(t, px) <= room) return t;
+            const cs = [...String(t)];
+            while (cs.length > 1 && textW(cs.join('') + '…', px) > room) cs.pop();
+            return cs.join('') + '…';
+        };
+        const nameRoom = laneW - 18;
         const ROW = 70, TOP = 26, BW = 10;
         const xOf = id => X0 + laneOf[id] * laneW + 14;
         const yOf = k => TOP + k * ROW;
@@ -336,9 +350,11 @@
                 const prev = k > first ? points[k - 1].alive.get(id) : null;
                 const isStart = k === first, renamed = prev && prev.name !== p.name;
                 if (!isStart && !renamed) continue;
-                nodes += `<circle cx="${x}" cy="${yOf(k)}" r="${isStart ? 7 : 6}" fill="${esc(p.color)}" class="t65-l-node"/>`;
                 const sub = isStart ? ((S.succession || []).some(l => sameId(l.to, id) && linkK(l) + 1 === k) ? '승계' : '창당') : `← ${prev.name}`;
-                nodes += `<text x="${x + 11}" y="${yOf(k) - 2}" class="t65-l-name">${esc(p.name)}</text><text x="${x + 11}" y="${yOf(k) + 11}" class="t65-h-sub">${esc(sub)}${p.seats ? ` · ${p.seats}석` : ''}</text>`;
+                const subTxt = `${sub}${p.seats ? ` · ${p.seats}석` : ''}`;
+                nodes += `<g class="t65-h-hit"${infoTag(p.name, [`${esc(sub)} · ${esc(points[k].label || points[k].date || `#${k + 1}`)}`, p.seats ? `의석: ${p.seats}석` : '', renamed ? `당명 변경: ${esc(prev.name)} → ${esc(p.name)}` : ''])}><title>${esc(p.name)}</title>`
+                    + `<circle cx="${x}" cy="${yOf(k)}" r="${isStart ? 7 : 6}" fill="${esc(p.color)}" class="t65-l-node"/>`
+                    + `<text x="${x + 11}" y="${yOf(k) - 2}" class="t65-l-name">${esc(fit(p.name, 12, nameRoom))}</text><text x="${x + 11}" y="${yOf(k) + 11}" class="t65-h-sub">${esc(fit(subTxt, 10, nameRoom))}</text></g>`;
             }
             // 끝: 승계로 합쳐지거나, 마지막 기록 전에 사라졌으면 소멸
             const outs = (S.succession || []).filter(l => sameId(l.from, id) && life[String(l.to)]);
@@ -360,7 +376,9 @@
                 nodes += `<text x="${x}" y="${yOf(last) + 18}" class="t65-l-end" text-anchor="middle">✕</text><text x="${x + 11}" y="${yOf(last) + 24}" class="t65-h-sub">소멸</text>`;
             }
         });
-        return `<div class="t65-legend t65-h-legend"><span class="t65-dim">● 창당 · 당명 변경 / 곡선으로 합쳐짐 = 승계 / ✕ 소멸 · 줄을 누르면 자세히</span></div>
+        // 범례 — 정당마다 마지막 이름 · 색 (도표의 이름표가 줄어들어도 여기서 전체 이름을 본다)
+        const legend = ids.map(id => { let p = null; points.forEach(pt => { p = pt.alive.get(id) || p; }); return p ? `<span>${dotHtml(p.color)}${esc(p.name)}</span>` : ''; }).join('');
+        return `<div class="t65-legend t65-h-legend">${legend}<span class="t65-dim">● 창당 · 당명 변경 / 곡선으로 합쳐짐 = 승계 / ✕ 소멸 · 줄 · 이름을 누르면 자세히</span></div>
             <div class="t65-l-scroll"><svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" class="t65-hist" role="img" aria-label="당 변화"><defs>${defs.join('')}</defs>${rows}${links}${lines}${nodes}</svg></div>`;
     }
 
