@@ -5189,7 +5189,7 @@
             pmElectionLastResult = elec.pmElectionLastResult ?? null;
             presElectionCandidateOverrides = (elec.presElectionCandidateOverrides && typeof elec.presElectionCandidateOverrides === 'object') ? elec.presElectionCandidateOverrides : {};
             candidateUnions = Array.isArray(elec.candidateUnions) ? elec.candidateUnions.filter(u => u && Array.isArray(u.partyIds))
-                .map(u => ({ id: String(u.id || ('u' + Math.random().toString(36).slice(2, 8))), name: String(u.name || ''), partyIds: u.partyIds, pres: u.pres !== false, district: u.district !== false })) : [];
+                .map(u => cleanCandidateUnion(u)) : [];
             electionKind = elec.electionKind === 'pm' ? 'pm' : 'member';
             if(window.PopVote) window.PopVote.setState(elec.popVote);
             if(ge('presElecTitle')) ge('presElecTitle').value = elec.presElecTitle || '';
@@ -9907,11 +9907,101 @@
         // "무소속" 항목을 추가해두었다면 다른 정당과 동일하게 후보로 출마 가능)
 
         // ===== 후보 단일화 — 선거 전에 여러 정당의 후보를 한 명으로 합쳐 출마 =====
-        // candidateUnions = [{ id, name, partyIds:[...], pres: 대선·총리 선거에 적용, district: 총선 지역구에 적용 }]
+        // candidateUnions = [{ id, name, partyIds:[...], pres: 대선·총리 선거에 적용, district: 총선 지역구에 적용,
+        //                      method, mix, transfer, nominee, primaryResult }]
         // 한 정당은 단일화 하나에만 들어갈 수 있고, 두 정당 이상 모여야 효력이 있다.
-        //   대선·총리 선거: 기준 원 지지율이 가장 높은 정당의 후보가 나서고, 참여 정당의 지지율을 모두 합쳐 받는다
-        //   총선 지역구: 지역구마다 성향이 가장 높은 참여 정당이 후보를 내고, 참여 정당의 성향을 합쳐 받는다 (비례 투표는 따로)
+        // 단일후보 정하기(method, 1.6.8):
+        //   'top' 지지율 1위(기본) — 대선·총리 선거는 기준 원 지지율, 총선 지역구는 그 지역구 성향이 가장 높은 참여 정당
+        //   'share' 지지율 비례 분배 — 총선 지역구를 참여 정당의 전체 지지율 비율대로 나눠 맡음(각자 상대적으로 강한 지역구부터),
+        //           대선·총리 선거는 지지율 비례 추첨
+        //   'primary' 예비선거 — 경선 득표 = 참여 정당 지지(지역구 성향 · 대선은 기준 원 지지율) (100−mix)% + 일반 유권자 여론조사
+        //           (유동층 — 전국 지지율 × 친화도 0.5~1.5) mix% + 흔들림. 총선 지역구는 선거마다 지역구별로, 대선·총리 선거는
+        //           "치르기"로 한 번 정해 둔다(u.nominee — 정하기 전에는 지지율 1위)
+        // 결집률(transfer, %): 후보를 내지 않는 참여 정당의 표가 단일후보에게 가는 비율 (경선을 치르면 승복 효과로 +5%p).
+        //   총선 지역구에서 결집하지 않은 표는 단일화 밖 정당에게 득표 비율대로 흩어진다 (비례 투표는 따로)
         let candidateUnions = [];
+        const UNION_METHODS = ['top', 'share', 'primary'];
+        function cleanCandidateUnion(u) {
+            const num = (v, d) => Number.isFinite(Number(v)) ? Math.max(0, Math.min(100, Number(v))) : d;
+            return { id: String(u.id || ('u' + Math.random().toString(36).slice(2, 8))), name: String(u.name || ''), partyIds: u.partyIds, pres: u.pres !== false, district: u.district !== false,
+                method: UNION_METHODS.includes(u.method) ? u.method : 'top', mix: num(u.mix, 50), transfer: num(u.transfer, 100),
+                nominee: u.nominee ?? null, primaryResult: u.primaryResult && typeof u.primaryResult === 'object' ? u.primaryResult : null };
+        }
+        const unionTransfer = u => Math.min(100, (u.transfer ?? 100) + (u.method === 'primary' ? 5 : 0)) / 100;
+        const unionNationalSupport = (pid, chamber) => Math.max(0, Number(elecStore[chamber || 'house']?.[pid]?.prob) || 0);
+        // 예비선거 득표율 { partyId: % } — localShare(p): 참여 정당 지지 안에서의 몫(0~1)
+        function unionPrimaryScores(members, localShare, chamber, mix) {
+            const m = Math.max(0, Math.min(100, Number(mix ?? 50))) / 100;
+            const appeal = members.map(p => Math.max(0.1, unionNationalSupport(p.id, chamber)) * (0.5 + Math.random()));
+            const as = appeal.reduce((a, b) => a + b, 0) || 1;
+            const raw = members.map((p, i) => Math.max(0, ((1 - m) * localShare(p) + m * appeal[i] / as) * 100 + (Math.random() * 6 - 3)));
+            const rs = raw.reduce((a, b) => a + b, 0) || 1;
+            return Object.fromEntries(members.map((p, i) => [p.id, Math.round(raw[i] / rs * 1000) / 10]));
+        }
+        // 지지율 비례 분배 — 지역구 키 → 후보를 내는 참여 정당 id
+        let unionShareCache = null; // 한 번의 지역구 개표(elecSimulateDistricts) 동안만 — 지역구마다 다시 계산하지 않게
+        function unionShareMapFor(u, chamber) {
+            const ck = u.id + '|' + chamber;
+            if(unionShareCache && unionShareCache[ck]) return unionShareCache[ck];
+            const members = candidateUnionMembers(u);
+            const keys = Object.keys(districtGrid[chamber] || {}).filter(k => districtGrid[chamber][k] && (districtMapMode !== 'svg' || (districtSeatCounts[k]?.[chamber] || 0) > 0));
+            const tend = (k, pid) => districtMapMode === 'svg' ? districtTendencyValue(k, chamber, pid) : (Number(tendencyData[pid]?.[k]) || 0);
+            // 몫: 그 원의 전국 지지율 비율 (지지율이 없으면 지역구 성향 합)
+            let w = members.map(p => unionNationalSupport(p.id, chamber));
+            if(!w.some(x => x > 0)) w = members.map(p => keys.reduce((a, k) => a + tend(k, p.id), 0));
+            const ws = w.reduce((a, b) => a + b, 0);
+            const quota = members.map((p, i) => ws > 0 ? Math.floor(w[i] / ws * keys.length) : 0);
+            const rems = members.map((p, i) => [ws > 0 ? w[i] / ws * keys.length - quota[i] : 1, i]).sort((a, b) => b[0] - a[0]);
+            for(let left = keys.length - quota.reduce((a, b) => a + b, 0), j = 0; left > 0; left--, j++) quota[rems[j % rems.length][1]]++;
+            // 지역구마다 참여 정당 안에서의 상대 강도 — 강한 짝부터 몫이 남은 정당에게
+            const pairs = [];
+            keys.forEach(k => {
+                const vals = members.map(p => tend(k, p.id));
+                const sum = vals.reduce((a, b) => a + b, 0);
+                members.forEach((p, i) => pairs.push([sum > 0 ? vals[i] / sum : 1 / members.length, k, i]));
+            });
+            pairs.sort((a, b) => b[0] - a[0]);
+            const map = {};
+            pairs.forEach(([, k, i]) => { if(map[k] != null || quota[i] <= 0) return; map[k] = members[i].id; quota[i]--; });
+            if(unionShareCache) unionShareCache[ck] = map;
+            return map;
+        }
+        function unionLeadFor(u, members, out, scope, ctx) {
+            const top = () => members.reduce((best, p) => (out[p.id] || 0) > (out[best.id] || 0) ? p : best, members[0]);
+            const byId = id => members.find(p => String(p.id) === String(id)) || null;
+            if(u.method === 'share' || u.method === 'primary') {
+                if(scope === 'pres') return byId(u.nominee) || top();
+                const ch = ctx?.chamber || 'house';
+                if(u.method === 'share') return (ctx?.key != null && byId(unionShareMapFor(u, ch)[ctx.key])) || top();
+                const total = members.reduce((a, p) => a + (out[p.id] || 0), 0);
+                if(total <= 0) return top();
+                const sc = unionPrimaryScores(members, p => (out[p.id] || 0) / total, ch, u.mix);
+                return members.reduce((best, p) => sc[p.id] > sc[best.id] ? p : best, members[0]);
+            }
+            return top();
+        }
+        // 대선 · 총리 선거의 단일후보를 정해 둔다 — 지지율 비례 추첨 또는 예비선거 (기준 원 지지율)
+        function runCandidateUnionNominee(id) {
+            const u = candidateUnions.find(x => x.id === id);
+            if(!u) return;
+            const ch = presElectionChamberBasis;
+            const members = candidateUnionMembers(u).filter(p => p.status !== 'banned');
+            if(members.length < 2) return;
+            const sup = members.map(p => unionNationalSupport(p.id, ch));
+            const total = sup.reduce((a, b) => a + b, 0);
+            let scores, winner;
+            if(u.method === 'share') {
+                scores = Object.fromEntries(members.map((p, i) => [p.id, total > 0 ? Math.round(sup[i] / total * 1000) / 10 : Math.round(1000 / members.length) / 10]));
+                let r = Math.random() * (total > 0 ? total : members.length);
+                winner = members.find((p, i) => (r -= (total > 0 ? sup[i] : 1)) < 0) || members[members.length - 1];
+            } else {
+                scores = unionPrimaryScores(members, p => total > 0 ? unionNationalSupport(p.id, ch) / total : 1 / members.length, ch, u.mix);
+                winner = members.reduce((best, p) => scores[p.id] > scores[best.id] ? p : best, members[0]);
+            }
+            u.nominee = winner.id;
+            u.primaryResult = { method: u.method, scores, date: typeof formatNationDate === 'function' ? formatNationDate() : '' };
+            renderCandidateUnions();
+        }
         function candidateUnionMembers(u) {
             return (u?.partyIds || []).map(id => parties.find(p => String(p.id) === String(id))).filter(Boolean);
         }
@@ -9924,23 +10014,32 @@
         function candidateUnionLabel(u) {
             return u.name?.trim() || candidateUnionMembers(u).map(p => p.name).join(' · ');
         }
-        // 정당별 점수 표 { partyId: 값 }에 단일화를 적용 — 참여 정당 중 가장 높은 정당에게 합계를 몰아주고 나머지는 0
+        // 정당별 점수 표 { partyId: 값 }에 단일화를 적용 — 단일후보(정하는 방식은 위)에게 나머지 참여 정당의 점수를 결집률만큼 몰아주고 나머지는 0
+        // ctx: { chamber, key } — 총선 지역구의 지지율 비례 분배 · 예비선거가 어느 원 · 지역구인지 안다
         // 반환: { scores, withdrawn:Set(후보를 내지 않은 정당 id) }
-        function applyCandidateUnions(scores, scope) {
+        function applyCandidateUnions(scores, scope, ctx) {
             const out = { ...scores };
             const withdrawn = new Set();
             activeCandidateUnions(scope).forEach(u => {
                 const members = candidateUnionMembers(u).filter(p => p.id in out);
                 if(members.length < 2) return;
-                const lead = members.reduce((best, p) => (out[p.id] || 0) > (out[best.id] || 0) ? p : best, members[0]);
-                const total = members.reduce((sum, p) => sum + (out[p.id] || 0), 0);
+                const lead = unionLeadFor(u, members, out, scope, ctx);
+                const others = members.reduce((sum, p) => sum + (p !== lead ? (out[p.id] || 0) : 0), 0);
+                const t = unionTransfer(u);
                 members.forEach(p => { if(p !== lead) { out[p.id] = 0; withdrawn.add(String(p.id)); } });
-                out[lead.id] = total;
+                out[lead.id] = (out[lead.id] || 0) + others * t;
+                // 결집하지 않은 표는 단일화 밖 정당에게 득표 비율대로 (지역구 — 대선 · 총리 선거는 그만큼 줄어든다)
+                if(t < 1 && scope === 'district') {
+                    const memberIds = new Set(members.map(p => String(p.id)));
+                    const rest = Object.keys(out).filter(id => !memberIds.has(String(id)));
+                    const rs = rest.reduce((a, id) => a + (out[id] || 0), 0);
+                    if(rs > 0) rest.forEach(id => { out[id] += others * (1 - t) * (out[id] || 0) / rs; });
+                }
             });
             return { scores: out, withdrawn };
         }
         function addCandidateUnion() {
-            candidateUnions.push({ id: 'u' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), name: '', partyIds: [], pres: true, district: true });
+            candidateUnions.push(cleanCandidateUnion({ id: 'u' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), name: '', partyIds: [], pres: true, district: true }));
             renderCandidateUnions();
         }
         function removeCandidateUnion(id) {
@@ -9951,6 +10050,7 @@
             const u = candidateUnions.find(x => x.id === id);
             if(!u) return;
             u[field] = value;
+            if(field === 'method') { u.nominee = null; u.primaryResult = null; } // 방식을 바꾸면 정해 둔 대선 단일후보는 다시
             if(field !== 'name') renderCandidateUnions();
         }
         function toggleCandidateUnionParty(id, partyId, on) {
@@ -9999,11 +10099,42 @@
                             <label style="display:flex;align-items:center;gap:4px;cursor:pointer;"><input type="checkbox" ${u.pres ? 'checked' : ''} onchange="updateCandidateUnion('${u.id}','pres',this.checked)"> 대선 · 총리 선거</label>
                             <label style="display:flex;align-items:center;gap:4px;cursor:pointer;"><input type="checkbox" ${u.district ? 'checked' : ''} onchange="updateCandidateUnion('${u.id}','district',this.checked)"> 총선 지역구</label>
                         </div>
+                        ${candidateUnionMethodHtml(u, members)}
                         ${members.length < 2 ? '<div style="color:#886644;font-size:0.72rem;margin-top:4px;">두 정당 이상 골라야 단일화가 적용됩니다</div>' : ''}
                     </div>`;
                 }).join('');
             }
             renderElectionCandidatesConfig();
+        }
+
+        // 단일후보 정하는 방식 · 경선 비율 · 결집률, 대선 · 총리 선거 단일후보 (1.6.8)
+        function candidateUnionMethodHtml(u, members) {
+            const m = u.method || 'top';
+            const btn = (k, label) => `<button type="button" class="system-radio-btn ${m === k ? 'active' : ''}" onclick="updateCandidateUnion('${u.id}','method','${k}')">${label}</button>`;
+            const numIn = (field, val) => `<input type="number" min="0" max="100" value="${val}" style="width:4.5em;box-sizing:border-box;background:#000;border:1px solid #333;color:var(--tno-text);font-family:inherit;font-size:0.8rem;padding:3px 4px;"
+                onchange="updateCandidateUnion('${u.id}','${field}',Math.max(0,Math.min(100,parseFloat(this.value)||0)))">`;
+            const hint = m === 'share'
+                ? '총선 지역구는 참여 정당의 전체 지지율 비율대로 나눠 맡습니다 (각자 상대적으로 강한 지역구부터). 대선 · 총리 선거는 지지율 비례 추첨으로 후보를 정해요.'
+                : m === 'primary'
+                    ? `지역구마다 경선 — 그 지역구의 참여 정당 지지 ${100 - u.mix}% + 일반 유권자 여론조사(유동층 — 전국 지지율 × 친화도) ${u.mix}%. 대선 · 총리 선거는 아래에서 경선을 치러 후보를 정해요. 경선을 치르면 승복 효과로 결집률 +5%p.`
+                    : '지역구마다 · 대선에서 참여 정당 중 지지율이 가장 높은 정당이 후보를 냅니다.';
+            const nom = members.find(p => String(p.id) === String(u.nominee));
+            const res = u.primaryResult && nom ? Object.entries(u.primaryResult.scores || {}).sort((a, b) => b[1] - a[1])
+                .map(([pid, v]) => `${escapeHtmlText(parties.find(p => String(p.id) === String(pid))?.name || '?')} ${v}%`).join(' · ') : '';
+            const presBox = u.pres && m !== 'top' && members.length >= 2 ? `
+                <div style="display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:6px;font-size:0.78rem;color:#888;">
+                    <span>대선 · 총리 단일후보: ${nom ? `<b style="color:var(--tno-text);">${escapeHtmlText(nom.name)}</b>${res ? ` (${m === 'primary' ? '경선' : '추첨 확률'} ${res})` : ''}` : '아직 정하지 않음 — 정하기 전에는 지지율 1위 정당'}</span>
+                    <button type="button" onclick="runCandidateUnionNominee('${u.id}')" style="background:transparent;border:1px solid #444;color:var(--tno-text);font-family:inherit;font-size:0.75rem;padding:3px 8px;cursor:pointer;">${m === 'primary' ? (nom ? '예비선거 다시 치르기' : '예비선거 치르기') : (nom ? '다시 추첨' : '추첨하기')}</button>
+                </div>` : '';
+            return `
+                <div style="margin-top:8px;font-size:0.78rem;color:#888;">단일후보 정하기</div>
+                <div class="system-radio-group" style="margin:4px 0;">${btn('top', '지지율 1위')}${btn('share', '지지율 비례 분배')}${btn('primary', '예비선거')}</div>
+                <div style="display:flex;flex-wrap:wrap;gap:4px 14px;align-items:center;font-size:0.78rem;color:#888;">
+                    ${m === 'primary' ? `<label style="display:flex;align-items:center;gap:4px;">유동층(여론조사) 반영 ${numIn('mix', u.mix)}%</label>` : ''}
+                    <label style="display:flex;align-items:center;gap:4px;">결집률 ${numIn('transfer', u.transfer)}%</label>
+                </div>
+                <div style="color:#666;font-size:0.72rem;margin-top:4px;line-height:1.5;">${hint} 결집률은 후보를 내지 않는 참여 정당의 표가 단일후보에게 가는 비율이에요.</div>
+                ${presBox}`;
         }
 
         function presElectionEligible() {
@@ -10023,7 +10154,9 @@
             const u = candidateUnionOf(party.id, 'pres');
             if(!u) return store[party.id]?.prob || 0;
             const eligibleIds = new Set(presElectionEligible().map(p => String(p.id)));
-            return candidateUnionMembers(u).filter(p => eligibleIds.has(String(p.id))).reduce((sum, p) => sum + (store[p.id]?.prob || 0), 0);
+            const own = store[party.id]?.prob || 0;
+            const others = candidateUnionMembers(u).filter(p => eligibleIds.has(String(p.id)) && String(p.id) !== String(party.id)).reduce((sum, p) => sum + (store[p.id]?.prob || 0), 0);
+            return own + others * unionTransfer(u);
         }
         // 결과 표시용 — 단일화 후보면 "(A당 · B당 단일화)"처럼 참여 정당을 함께 보여 준다
         function presUnionPartyLabel(party) {
@@ -14583,6 +14716,10 @@
             return !!p && !!p[inKeyFor(chamber)] && p.status !== 'banned';
         }
         function elecSimulateDistricts(chamber) {
+            unionShareCache = {}; // 단일화 지지율 비례 분배는 이번 개표 동안 한 번만 계산
+            try { return elecSimulateDistrictsRun(chamber); } finally { unionShareCache = null; }
+        }
+        function elecSimulateDistrictsRun(chamber) {
             if(districtMapMode === 'svg') return elecSimulateDistrictsSvg(chamber);
             // 각 지역구마다 1위 결정 (성향 + 노이즈)
             // 반환: [{ key, partyId }] — 셔플 가능한 형태
@@ -14591,7 +14728,7 @@
             districtKeys.forEach(key => {
                 let bestParty = null, bestScore = -1;
                 const { scores: unionSupport, withdrawn } = applyCandidateUnions(
-                    Object.fromEntries(parties.map(p => [p.id, tendencyData[p.id]?.[key] || 0])), 'district');
+                    Object.fromEntries(parties.map(p => [p.id, tendencyData[p.id]?.[key] || 0])), 'district', { chamber, key });
                 // 이 지역구에 성향을 정한 정당이 있으면, 성향이 0인 정당(예: 무소속)은 노이즈만으로 당선되지 않는다
                 const anySupport = parties.some(p => !withdrawn.has(String(p.id)) && partyRunsInChamber(p, chamber) && (unionSupport[p.id] || 0) > 0);
                 parties.forEach(p => {
@@ -14625,7 +14762,7 @@
                 if(seatCount <= 0) return;
                 // 후보 단일화: 이 지역구에서 성향이 가장 높은 참여 정당이 후보를 내고, 참여 정당의 성향을 합쳐 받는다
                 const { scores: support, withdrawn } = applyCandidateUnions(
-                    Object.fromEntries(parties.map(p => [p.id, districtTendencyValue(key, chamber, p.id)])), 'district');
+                    Object.fromEntries(parties.map(p => [p.id, districtTendencyValue(key, chamber, p.id)])), 'district', { chamber, key });
                 // 이 지역구에 성향을 정한 정당이 있으면, 성향이 0인 정당은 노이즈(±15)만으로 표를 얻지 않는다 —
                 // 예전엔 성향 0인 무소속도 노이즈로 표가 생겨, 의석이 여럿인 지역구에서 매번 무소속이 당선됐다
                 const anySupport = parties.some(p => !withdrawn.has(String(p.id)) && partyRunsInChamber(p, chamber) && (support[p.id] || 0) > 0);

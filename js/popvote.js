@@ -60,7 +60,7 @@
             const base = hasTend ? (tend[p.id] || 0) : (store[p.id]?.prob || 0);
             raw[p.id] = base;
         });
-        const { scores, withdrawn } = !noUnions && typeof applyCandidateUnions === 'function' ? applyCandidateUnions(raw, 'district') : { scores: raw, withdrawn: new Set() };
+        const { scores, withdrawn } = !noUnions && typeof applyCandidateUnions === 'function' ? applyCandidateUnions(raw, 'district', { chamber: ch, key }) : { scores: raw, withdrawn: new Set() };
         const out = {};
         let total = 0;
         list.forEach(p => {
