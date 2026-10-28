@@ -9920,15 +9920,59 @@
         // 결집률(transfer, %): 후보를 내지 않는 참여 정당의 표가 단일후보에게 가는 비율 (경선을 치르면 승복 효과로 +5%p).
         //   총선 지역구에서 결집하지 않은 표는 단일화 밖 정당에게 득표 비율대로 흩어진다 (비례 투표는 따로)
         let candidateUnions = [];
-        const UNION_METHODS = ['top', 'share', 'primary'];
+        const unionNationalSupport = (pid, chamber) => Math.max(0, Number(elecStore[chamber || 'house']?.[pid]?.prob) || 0);
+        // 단일후보 정하는 방식 목록 — 후보 단일화와 지방선거 연대(js/vassals.js)가 함께 쓴다. 1.6.9 미리보기(js/teaser69pol.js)가 add로 방식을 더한다
+        //   kind 'top' — 지지율 1위
+        //   kind 'split' — 단위(지역구)들을 몫(weights(members, chamber))대로 나눠 맡음(각자 상대적으로 강한 단위부터), 대선 · 총리 선거는 몫 비례 추첨
+        //   kind 'pick' — 단위마다 고름: pick(members, scoreOf, ctx) → 정당 | null, 대선 · 총리 선거는 pickPres(members, chamber)
+        //   kind 'primary' — 예비선거
+        const CAND_METHODS = [
+            { id: 'top', label: '지지율 1위', kind: 'top', hint: '지역구마다 · 대선에서 참여 정당 중 지지율이 가장 높은 정당이 후보를 냅니다.' },
+            { id: 'share', label: '지지율 비례 분배', kind: 'split', weights: (members, ch) => members.map(p => unionNationalSupport(p.id, ch)),
+                hint: '총선 지역구는 참여 정당의 전체 지지율 비율대로 나눠 맡습니다 (각자 상대적으로 강한 지역구부터). 대선 · 총리 선거는 지지율 비례 추첨으로 후보를 정해요.',
+                localHint: '권역 · 지역구를 참여 정당의 전체 지지율 비율대로 나눠 맡아요 (각자 상대적으로 강한 곳부터).' },
+            { id: 'primary', label: '예비선거', kind: 'primary',
+                hint: u => `지역구마다 경선 — 그 지역구의 참여 정당 지지 ${100 - u.mix}% + 일반 유권자 여론조사(유동층 — 전국 지지율 × 친화도) ${u.mix}%. 대선 · 총리 선거는 아래에서 경선을 치러 후보를 정해요. 경선을 치르면 승복 효과로 결집률 +5%p.` },
+        ];
+        // 몫대로 나눠 맡기 — units: 단위 id 목록, weights: 정당마다 몫, tendOf(unit, partyId): 그 단위에서의 지지
+        // 반환 { 단위 id: 정당 id } — 몫(최대 잔여)만큼, 참여 정당 안에서 상대적으로 강한 단위부터
+        function candSplitAssign(members, units, weights, tendOf) {
+            let w = weights.map(x => Math.max(0, Number(x) || 0));
+            if(!w.some(x => x > 0)) w = members.map(p => units.reduce((a, k) => a + (tendOf(k, p.id) || 0), 0));
+            if(!w.some(x => x > 0)) w = members.map(() => 1);
+            const ws = w.reduce((a, b) => a + b, 0);
+            const quota = w.map(x => Math.floor(x / ws * units.length));
+            const rems = w.map((x, i) => [x / ws * units.length - quota[i], i]).sort((a, b) => b[0] - a[0]);
+            for(let left = units.length - quota.reduce((a, b) => a + b, 0), j = 0; left > 0; left--, j++) quota[rems[j % rems.length][1]]++;
+            const pairs = [];
+            units.forEach(k => {
+                const vals = members.map(p => tendOf(k, p.id) || 0);
+                const sum = vals.reduce((a, b) => a + b, 0);
+                members.forEach((p, i) => pairs.push([sum > 0 ? vals[i] / sum : 1 / members.length, k, i]));
+            });
+            pairs.sort((a, b) => b[0] - a[0]);
+            const map = {};
+            pairs.forEach(([, k, i]) => { if(map[k] != null || quota[i] <= 0) return; map[k] = members[i].id; quota[i]--; });
+            return map;
+        }
+        const candMethod = id => CAND_METHODS.find(m => m.id === id) || null;
+        window.HemiCandMethods = {
+            list: CAND_METHODS,
+            find: id => candMethod(id) || CAND_METHODS[0],
+            has: id => !!candMethod(id),
+            add(m) { if(m && m.id && !candMethod(m.id)) CAND_METHODS.splice(CAND_METHODS.findIndex(x => x.kind === 'primary'), 0, m); },
+            hint: (m, u) => (typeof m.hint === 'function' ? m.hint(u) : m.hint || ''),
+            splitAssign: candSplitAssign,
+            primaryScores: (members, localShare, chamber, mix) => unionPrimaryScores(members, localShare, chamber, mix),
+            nationalSupport: unionNationalSupport,
+        };
         function cleanCandidateUnion(u) {
             const num = (v, d) => Number.isFinite(Number(v)) ? Math.max(0, Math.min(100, Number(v))) : d;
             return { id: String(u.id || ('u' + Math.random().toString(36).slice(2, 8))), name: String(u.name || ''), partyIds: u.partyIds, pres: u.pres !== false, district: u.district !== false,
-                method: UNION_METHODS.includes(u.method) ? u.method : 'top', mix: num(u.mix, 50), transfer: num(u.transfer, 100),
+                method: candMethod(u.method) ? u.method : 'top', mix: num(u.mix, 50), transfer: num(u.transfer, 100),
                 nominee: u.nominee ?? null, primaryResult: u.primaryResult && typeof u.primaryResult === 'object' ? u.primaryResult : null };
         }
-        const unionTransfer = u => Math.min(100, (u.transfer ?? 100) + (u.method === 'primary' ? 5 : 0)) / 100;
-        const unionNationalSupport = (pid, chamber) => Math.max(0, Number(elecStore[chamber || 'house']?.[pid]?.prob) || 0);
+        const unionTransfer = u => Math.min(100, (u.transfer ?? 100) + (window.HemiCandMethods.find(u.method).kind === 'primary' ? 5 : 0)) / 100;
         // 예비선거 득표율 { partyId: % } — localShare(p): 참여 정당 지지 안에서의 몫(0~1)
         function unionPrimaryScores(members, localShare, chamber, mix) {
             const m = Math.max(0, Math.min(100, Number(mix ?? 50))) / 100;
@@ -9938,47 +9982,32 @@
             const rs = raw.reduce((a, b) => a + b, 0) || 1;
             return Object.fromEntries(members.map((p, i) => [p.id, Math.round(raw[i] / rs * 1000) / 10]));
         }
-        // 지지율 비례 분배 — 지역구 키 → 후보를 내는 참여 정당 id
+        // 나눠 맡기(split) — 지역구 키 → 후보를 내는 참여 정당 id
         let unionShareCache = null; // 한 번의 지역구 개표(elecSimulateDistricts) 동안만 — 지역구마다 다시 계산하지 않게
         function unionShareMapFor(u, chamber) {
-            const ck = u.id + '|' + chamber;
+            const M = window.HemiCandMethods.find(u.method);
+            const ck = u.id + '|' + u.method + '|' + chamber;
             if(unionShareCache && unionShareCache[ck]) return unionShareCache[ck];
             const members = candidateUnionMembers(u);
             const keys = Object.keys(districtGrid[chamber] || {}).filter(k => districtGrid[chamber][k] && (districtMapMode !== 'svg' || (districtSeatCounts[k]?.[chamber] || 0) > 0));
             const tend = (k, pid) => districtMapMode === 'svg' ? districtTendencyValue(k, chamber, pid) : (Number(tendencyData[pid]?.[k]) || 0);
-            // 몫: 그 원의 전국 지지율 비율 (지지율이 없으면 지역구 성향 합)
-            let w = members.map(p => unionNationalSupport(p.id, chamber));
-            if(!w.some(x => x > 0)) w = members.map(p => keys.reduce((a, k) => a + tend(k, p.id), 0));
-            const ws = w.reduce((a, b) => a + b, 0);
-            const quota = members.map((p, i) => ws > 0 ? Math.floor(w[i] / ws * keys.length) : 0);
-            const rems = members.map((p, i) => [ws > 0 ? w[i] / ws * keys.length - quota[i] : 1, i]).sort((a, b) => b[0] - a[0]);
-            for(let left = keys.length - quota.reduce((a, b) => a + b, 0), j = 0; left > 0; left--, j++) quota[rems[j % rems.length][1]]++;
-            // 지역구마다 참여 정당 안에서의 상대 강도 — 강한 짝부터 몫이 남은 정당에게
-            const pairs = [];
-            keys.forEach(k => {
-                const vals = members.map(p => tend(k, p.id));
-                const sum = vals.reduce((a, b) => a + b, 0);
-                members.forEach((p, i) => pairs.push([sum > 0 ? vals[i] / sum : 1 / members.length, k, i]));
-            });
-            pairs.sort((a, b) => b[0] - a[0]);
-            const map = {};
-            pairs.forEach(([, k, i]) => { if(map[k] != null || quota[i] <= 0) return; map[k] = members[i].id; quota[i]--; });
+            const map = candSplitAssign(members, keys, M.weights ? M.weights(members, chamber) : members.map(() => 1), tend);
             if(unionShareCache) unionShareCache[ck] = map;
             return map;
         }
         function unionLeadFor(u, members, out, scope, ctx) {
             const top = () => members.reduce((best, p) => (out[p.id] || 0) > (out[best.id] || 0) ? p : best, members[0]);
             const byId = id => members.find(p => String(p.id) === String(id)) || null;
-            if(u.method === 'share' || u.method === 'primary') {
-                if(scope === 'pres') return byId(u.nominee) || top();
-                const ch = ctx?.chamber || 'house';
-                if(u.method === 'share') return (ctx?.key != null && byId(unionShareMapFor(u, ch)[ctx.key])) || top();
-                const total = members.reduce((a, p) => a + (out[p.id] || 0), 0);
-                if(total <= 0) return top();
-                const sc = unionPrimaryScores(members, p => (out[p.id] || 0) / total, ch, u.mix);
-                return members.reduce((best, p) => sc[p.id] > sc[best.id] ? p : best, members[0]);
-            }
-            return top();
+            const M = window.HemiCandMethods.find(u.method);
+            if(M.kind === 'top') return top();
+            if(scope === 'pres') return byId(u.nominee) || top();
+            const ch = ctx?.chamber || 'house';
+            if(M.kind === 'split') return (ctx?.key != null && byId(unionShareMapFor(u, ch)[ctx.key])) || top();
+            if(M.kind === 'pick') return (M.pick && M.pick(members, p => out[p.id] || 0, { ...ctx, chamber: ch })) || top();
+            const total = members.reduce((a, p) => a + (out[p.id] || 0), 0);
+            if(total <= 0) return top();
+            const sc = unionPrimaryScores(members, p => (out[p.id] || 0) / total, ch, u.mix);
+            return members.reduce((best, p) => sc[p.id] > sc[best.id] ? p : best, members[0]);
         }
         // 대선 · 총리 선거의 단일후보를 정해 둔다 — 지지율 비례 추첨 또는 예비선거 (기준 원 지지율)
         function runCandidateUnionNominee(id) {
@@ -9989,17 +10018,26 @@
             if(members.length < 2) return;
             const sup = members.map(p => unionNationalSupport(p.id, ch));
             const total = sup.reduce((a, b) => a + b, 0);
+            const M = window.HemiCandMethods.find(u.method);
             let scores, winner;
-            if(u.method === 'share') {
-                scores = Object.fromEntries(members.map((p, i) => [p.id, total > 0 ? Math.round(sup[i] / total * 1000) / 10 : Math.round(1000 / members.length) / 10]));
-                let r = Math.random() * (total > 0 ? total : members.length);
-                winner = members.find((p, i) => (r -= (total > 0 ? sup[i] : 1)) < 0) || members[members.length - 1];
+            if(M.kind === 'split') {
+                // 몫 비례 추첨
+                let w = (M.weights ? M.weights(members, ch) : members.map(() => 1)).map(x => Math.max(0, Number(x) || 0));
+                if(!w.some(x => x > 0)) w = members.map(() => 1);
+                const ws = w.reduce((a, b) => a + b, 0);
+                scores = Object.fromEntries(members.map((p, i) => [p.id, Math.round(w[i] / ws * 1000) / 10]));
+                let r = Math.random() * ws;
+                winner = members.find((p, i) => (r -= w[i]) < 0) || members[members.length - 1];
+            } else if(M.kind === 'pick') {
+                winner = (M.pickPres && M.pickPres(members, ch)) || members[Math.floor(Math.random() * members.length)];
+                scores = null;
             } else {
                 scores = unionPrimaryScores(members, p => total > 0 ? unionNationalSupport(p.id, ch) / total : 1 / members.length, ch, u.mix);
                 winner = members.reduce((best, p) => scores[p.id] > scores[best.id] ? p : best, members[0]);
             }
             u.nominee = winner.id;
             u.primaryResult = { method: u.method, scores, date: typeof formatNationDate === 'function' ? formatNationDate() : '' };
+            if(!scores) u.primaryResult.scores = {};
             renderCandidateUnions();
         }
         function candidateUnionMembers(u) {
@@ -10109,31 +10147,29 @@
 
         // 단일후보 정하는 방식 · 경선 비율 · 결집률, 대선 · 총리 선거 단일후보 (1.6.8)
         function candidateUnionMethodHtml(u, members) {
-            const m = u.method || 'top';
-            const btn = (k, label) => `<button type="button" class="system-radio-btn ${m === k ? 'active' : ''}" onclick="updateCandidateUnion('${u.id}','method','${k}')">${label}</button>`;
+            const H = window.HemiCandMethods;
+            const M = H.find(u.method);
+            const m = M.id;
+            const btn = x => `<button type="button" class="system-radio-btn ${m === x.id ? 'active' : ''}" onclick="updateCandidateUnion('${u.id}','method','${x.id}')">${x.label}</button>`;
             const numIn = (field, val) => `<input type="number" min="0" max="100" value="${val}" style="width:4.5em;box-sizing:border-box;background:#000;border:1px solid #333;color:var(--tno-text);font-family:inherit;font-size:0.8rem;padding:3px 4px;"
                 onchange="updateCandidateUnion('${u.id}','${field}',Math.max(0,Math.min(100,parseFloat(this.value)||0)))">`;
-            const hint = m === 'share'
-                ? '총선 지역구는 참여 정당의 전체 지지율 비율대로 나눠 맡습니다 (각자 상대적으로 강한 지역구부터). 대선 · 총리 선거는 지지율 비례 추첨으로 후보를 정해요.'
-                : m === 'primary'
-                    ? `지역구마다 경선 — 그 지역구의 참여 정당 지지 ${100 - u.mix}% + 일반 유권자 여론조사(유동층 — 전국 지지율 × 친화도) ${u.mix}%. 대선 · 총리 선거는 아래에서 경선을 치러 후보를 정해요. 경선을 치르면 승복 효과로 결집률 +5%p.`
-                    : '지역구마다 · 대선에서 참여 정당 중 지지율이 가장 높은 정당이 후보를 냅니다.';
             const nom = members.find(p => String(p.id) === String(u.nominee));
             const res = u.primaryResult && nom ? Object.entries(u.primaryResult.scores || {}).sort((a, b) => b[1] - a[1])
                 .map(([pid, v]) => `${escapeHtmlText(parties.find(p => String(p.id) === String(pid))?.name || '?')} ${v}%`).join(' · ') : '';
-            const presBox = u.pres && m !== 'top' && members.length >= 2 ? `
+            const action = M.kind === 'primary' ? (nom ? '예비선거 다시 치르기' : '예비선거 치르기') : M.kind === 'split' ? (nom ? '다시 추첨' : '추첨하기') : (nom ? '다시 정하기' : '정하기');
+            const presBox = u.pres && M.kind !== 'top' && members.length >= 2 ? `
                 <div style="display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:6px;font-size:0.78rem;color:#888;">
-                    <span>대선 · 총리 단일후보: ${nom ? `<b style="color:var(--tno-text);">${escapeHtmlText(nom.name)}</b>${res ? ` (${m === 'primary' ? '경선' : '추첨 확률'} ${res})` : ''}` : '아직 정하지 않음 — 정하기 전에는 지지율 1위 정당'}</span>
-                    <button type="button" onclick="runCandidateUnionNominee('${u.id}')" style="background:transparent;border:1px solid #444;color:var(--tno-text);font-family:inherit;font-size:0.75rem;padding:3px 8px;cursor:pointer;">${m === 'primary' ? (nom ? '예비선거 다시 치르기' : '예비선거 치르기') : (nom ? '다시 추첨' : '추첨하기')}</button>
+                    <span>대선 · 총리 단일후보: ${nom ? `<b style="color:var(--tno-text);">${escapeHtmlText(nom.name)}</b>${res ? ` (${M.kind === 'primary' ? '경선' : '추첨 확률'} ${res})` : ''}` : '아직 정하지 않음 — 정하기 전에는 지지율 1위 정당'}</span>
+                    <button type="button" onclick="runCandidateUnionNominee('${u.id}')" style="background:transparent;border:1px solid #444;color:var(--tno-text);font-family:inherit;font-size:0.75rem;padding:3px 8px;cursor:pointer;">${action}</button>
                 </div>` : '';
             return `
                 <div style="margin-top:8px;font-size:0.78rem;color:#888;">단일후보 정하기</div>
-                <div class="system-radio-group" style="margin:4px 0;">${btn('top', '지지율 1위')}${btn('share', '지지율 비례 분배')}${btn('primary', '예비선거')}</div>
+                <div class="system-radio-group" style="margin:4px 0;flex-wrap:wrap;">${H.list.map(btn).join('')}</div>
                 <div style="display:flex;flex-wrap:wrap;gap:4px 14px;align-items:center;font-size:0.78rem;color:#888;">
-                    ${m === 'primary' ? `<label style="display:flex;align-items:center;gap:4px;">유동층(여론조사) 반영 ${numIn('mix', u.mix)}%</label>` : ''}
+                    ${M.kind === 'primary' ? `<label style="display:flex;align-items:center;gap:4px;">유동층(여론조사) 반영 ${numIn('mix', u.mix)}%</label>` : ''}
                     <label style="display:flex;align-items:center;gap:4px;">결집률 ${numIn('transfer', u.transfer)}%</label>
                 </div>
-                <div style="color:#666;font-size:0.72rem;margin-top:4px;line-height:1.5;">${hint} 결집률은 후보를 내지 않는 참여 정당의 표가 단일후보에게 가는 비율이에요.</div>
+                <div style="color:#666;font-size:0.72rem;margin-top:4px;line-height:1.5;">${H.hint(M, u)} 결집률은 후보를 내지 않는 참여 정당의 표가 단일후보에게 가는 비율이에요.</div>
                 ${presBox}`;
         }
 
@@ -15161,15 +15197,18 @@
             parties.forEach(p => {
                 const fa = p.fraudAttempt;
                 if(!fa || fa.chamber !== chamber) return;
-                fraudAttempts.push({ p, fa, caught: Math.random()*100 < (fa.catchChance ?? 0) });
+                // 정권 상태에 따른 발각 확률 보정(1.6.9 미리보기 — js/teaser69pol.js의 HemiFraudRegime)
+                const chance = window.HemiFraudRegime ? window.HemiFraudRegime.catchChance(p, fa.catchChance ?? 0) : (fa.catchChance ?? 0);
+                fraudAttempts.push({ p, fa, chance, caught: Math.random()*100 < chance });
                 p.fraudAttempt = null;
             });
             let effChamberStore, fraudRiggedByKey; // fraudRiggedByKey: { districtKey: partyId }
             const applyFraud = () => {
                 effChamberStore = JSON.parse(JSON.stringify(chamberStore));
                 fraudRiggedByKey = {};
-                fraudAttempts.forEach(({ p, fa }) => {
-                    if(p.status === 'banned') return; // 발각되어 활동 금지된 정당의 조작은 무효
+                fraudAttempts.forEach(x => {
+                    const { p, fa } = x;
+                    if(x.voided || p.status === 'banned') return; // 발각된 조작은 무효 (활동 금지되지 않은 정당도)
                     if(!effChamberStore[p.id]) effChamberStore[p.id] = { prob: 0, err: 0 };
                     effChamberStore[p.id].prob = (effChamberStore[p.id].prob || 0) + (fa.boostPct || 0);
                     (fa.riggedDistricts || []).forEach(key => { fraudRiggedByKey[key] = p.id; });
@@ -15428,10 +15467,17 @@
                 // 즉시 완료 등으로 발각 시점을 지나쳐 끝까지 개표했더라도, 결과 확정 전에 발각된다
                 const pct = (Math.min(fraudHit ? fraudDetectAt : countTotal, totalSeats)/totalSeats*100).toFixed(0);
                 document.getElementById('elecResultTitle'+suf).innerText = `> ${elecTitle} (${elecYear}) — ${chamberName} 개표 중단: 부정선거 발각! (개표율 ${pct}%)`;
-                caughtFraud.forEach(({ p }) => { p.status = 'banned'; });
+                // 발각된 정당은 활동 금지 — 정권 상태에 따라 다른 조치(1.6.9 미리보기 — HemiFraudRegime.punish)
+                const fates = caughtFraud.map(x => {
+                    x.voided = true;
+                    const r = window.HemiFraudRegime ? window.HemiFraudRegime.punish(x.p) : null;
+                    if(!r || r.ban) x.p.status = 'banned';
+                    return { p: x.p, text: r ? r.text : '' };
+                });
                 renderPartyInfoList();
                 const names = caughtFraud.map(({ p }) => p.name).join(', ');
-                await (window.DnoUI ? DnoUI.alert(`⚠ 개표 도중 ${names}의 부정선거가 발각되었습니다! (개표율 ${pct}%)\n조작된 표를 모두 무효 처리하고 처음부터 다시 개표합니다.\n발각된 정당(${names})은 활동이 금지됩니다.`) : Promise.resolve(alert(`⚠ 개표 도중 ${names}의 부정선거가 발각되었습니다!`)));
+                const fateTxt = window.HemiFraudRegime ? fates.map(f => `${f.p.name}: ${f.text}`).join('\n') : `발각된 정당(${names})은 활동이 금지됩니다.`;
+                await (window.DnoUI ? DnoUI.alert(`⚠ 개표 도중 ${names}의 부정선거가 발각되었습니다! (개표율 ${pct}%)\n조작된 표를 모두 무효 처리하고 처음부터 다시 개표합니다.\n${fateTxt}`) : Promise.resolve(alert(`⚠ 개표 도중 ${names}의 부정선거가 발각되었습니다!`)));
                 applyFraud();
                 ({ weighted, wTotal, districtResults, listSeatMap, seatMap, pool, thresholdOut } = computeOutcome());
                 saveLastResult();
@@ -15467,7 +15513,7 @@
             if(fraudAttempts.length && typeof window.HemiFraudOutcome === 'function') {
                 try {
                     window.HemiFraudOutcome({ title: elecTitle, year: elecYear, chamber, chamberName, date: typeof formatNationDate === 'function' ? formatNationDate() : '',
-                        ops: fraudAttempts.map(({ p, fa, caught }) => ({ partyId: p.id, name: p.name, color: p.color, boostPct: fa.boostPct || 0, rigged: (fa.riggedDistricts || []).length, catchChance: fa.catchChance ?? 0, caught })) });
+                        ops: fraudAttempts.map(({ p, fa, chance, caught }) => ({ partyId: p.id, name: p.name, color: p.color, boostPct: fa.boostPct || 0, rigged: (fa.riggedDistricts || []).length, catchChance: chance ?? fa.catchChance ?? 0, caught })) });
                 } catch(e) { /* 기록 실패는 무시 */ }
             }
 

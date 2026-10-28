@@ -351,7 +351,9 @@
         return r;
     };
     const blockIfJunta = fn => function () {
-        if (T.junta) { showCustomAlert('군정 중에는 선거가 중단됩니다 — 내각 › 쿠데타의 "민정 이양" 뒤에 치를 수 있어요.'); return; }
+        // 관제 선거를 허용했으면(1.6.9 미리보기 — js/teaser69pol.js) 군정에서도 선거를 치른다
+        const managed = window.HemiFraudRegime && window.HemiFraudRegime.managedElections && window.HemiFraudRegime.managedElections();
+        if (T.junta && !managed) { showCustomAlert('군정 중에는 선거가 중단됩니다 — 내각 › 쿠데타의 "민정 이양" 뒤에 치를 수 있어요.'); return; }
         return fn.apply(this, arguments);
     };
     ['elecRun', 'elecRunByElection', 'runPresidentialElection'].forEach(n => { if (typeof window[n] === 'function') window[n] = blockIfJunta(window[n]); });

@@ -712,7 +712,7 @@
     function clean(list) {
         return (Array.isArray(list) ? list : []).filter(a => a && a.id).map(a => ({
             id: String(a.id), name: String(a.name || '').slice(0, 40), partyIds: (Array.isArray(a.partyIds) ? a.partyIds : []).map(String),
-            method: a.method === 'top' ? 'top' : 'primary', mix: clamp(num(a.mix, 50), 0, 100), transfer: clamp(num(a.transfer, 90), 0, 100),
+            method: H().has(a.method) ? a.method : 'primary', mix: clamp(num(a.mix, 50), 0, 100), transfer: clamp(num(a.transfer, 90), 0, 100),
         }));
     }
     const members = a => a.partyIds.map(partyById).filter(p => p && p.status !== 'banned' && p.status !== 'dissolved');
@@ -733,6 +733,23 @@
     };
 
     // 한 단위(권역 · 지역구)의 표에 연대를 적용 — votes: { partyId: 표 }
+    // 단일후보 정하는 방식은 후보 단일화와 같은 목록 (js/main.js의 HemiCandMethods — 1.6.9 미리보기가 방식을 더함)
+    const H = () => window.HemiCandMethods;
+    // 나눠 맡기(split) 방식 — 개표 전에 단위(권역 · 지역구)들을 몫대로 정해 둔다 (js/popvote.js가 단계마다 부름)
+    let splitMaps = {};
+    function prepare(ch, level, units) {
+        splitMaps = {};
+        const tendOf = (uid, pid) => {
+            const u = units.find(x => String(x.id) === String(uid));
+            return (u ? u.keys : []).reduce((s, k) => s + (typeof districtTendencyFor === 'function' ? (Number(districtTendencyFor(k, ch).values?.[pid]) || 0) : 0), 0);
+        };
+        alliances.forEach(a => {
+            const M = H().find(a.method);
+            const ms = members(a);
+            if (M.kind !== 'split' || ms.length < 2) return;
+            splitMaps[a.id] = H().splitAssign(ms, units.map(u => u.id), M.weights ? M.weights(ms, ch) : ms.map(() => 1), tendOf);
+        });
+    }
     function resolve(ch, level, unit, votes) {
         const out = { ...votes };
         const notes = [];
@@ -741,9 +758,17 @@
             const ms = members(a).map(p => String(p.id)).filter(pid => (out[pid] || 0) > 0);
             if (ms.length < 2) return;
             const total = ms.reduce((s, pid) => s + out[pid], 0);
+            const M = H().find(a.method);
             let scores = {};
-            if (a.method === 'top') ms.forEach(pid => { scores[pid] = out[pid] / total * 100; });
-            else {
+            let pick = null;
+            if (M.kind !== 'primary') {
+                ms.forEach(pid => { scores[pid] = out[pid] / total * 100; });
+                if (M.kind === 'split') pick = splitMaps[a.id]?.[unit.id];
+                else if (M.kind === 'pick' && M.pick) {
+                    const p = M.pick(ms.map(partyById), p => out[p.id] || 0, { chamber: ch, key: level === 'district' ? unit.id : null, keys: unit.keys, level });
+                    pick = p ? p.id : null;
+                }
+            } else {
                 const mix = a.mix / 100;
                 const appeal = ms.map(pid => Math.max(0.1, swingOf(pid)) * (0.5 + Math.random())); // 여론조사 — 지지율 × 친화도(0.5 ~ 1.5)
                 const asum = appeal.reduce((s, v) => s + v, 0) || 1;
@@ -751,8 +776,8 @@
                 const ssum = Object.values(scores).reduce((s, v) => s + v, 0) || 1;
                 Object.keys(scores).forEach(pid => { scores[pid] = scores[pid] / ssum * 100; });
             }
-            const nominee = ms.slice().sort((x, y) => scores[y] - scores[x])[0];
-            const transfer = clamp(a.transfer + (a.method === 'primary' ? 5 : 0), 0, 100) / 100;
+            const nominee = pick != null && ms.includes(String(pick)) ? String(pick) : ms.slice().sort((x, y) => scores[y] - scores[x])[0];
+            const transfer = clamp(a.transfer + (M.kind === 'primary' ? 5 : 0), 0, 100) / 100;
             const moving = ms.filter(pid => pid !== nominee).reduce((s, pid) => s + out[pid], 0);
             ms.forEach(pid => { if (pid !== nominee) delete out[pid]; });
             out[nominee] += moving * transfer;
@@ -761,7 +786,7 @@
             const restSum = rest.reduce((s, pid) => s + (out[pid] || 0), 0);
             if (restSum > 0) rest.forEach(pid => { out[pid] += moving * (1 - transfer) * out[pid] / restSum; });
             Object.keys(scores).forEach(pid => { scores[pid] = Math.round(scores[pid] * 10) / 10; });
-            notes.push({ name: label(a), nominee, method: a.method, scores, transfer: Math.round(transfer * 100) });
+            notes.push({ name: label(a), nominee, method: M.kind === 'primary' ? 'primary' : a.method, methodLabel: M.label, scores, transfer: Math.round(transfer * 100) });
         });
         return { votes: out, notes };
     }
@@ -783,18 +808,17 @@
                     <div class="la-parties">${list.map(p => `<label class="la-party${used(a, p.id) ? ' la-off' : ''}"><input type="checkbox" data-p="${esc(p.id)}" ${a.partyIds.includes(String(p.id)) ? 'checked' : ''} ${used(a, p.id) ? 'disabled' : ''}><span class="la-dot" style="background:${esc(p.color)}"></span>${esc(p.name)}</label>`).join('')}</div>
                     <div class="la-row la-method">
                         <span class="pv-dim pv-small">단일후보 정하기</span>
-                        <div class="system-radio-group">
-                            <button type="button" class="system-radio-btn ${a.method !== 'top' ? 'active' : ''}" data-m="primary">예비선거 (경선)</button>
-                            <button type="button" class="system-radio-btn ${a.method === 'top' ? 'active' : ''}" data-m="top">지지율 최고</button>
+                        <div class="system-radio-group la-methods">
+                            ${H().list.map(x => `<button type="button" class="system-radio-btn ${H().find(a.method).id === x.id ? 'active' : ''}" data-m="${esc(x.id)}">${esc(x.id === 'primary' ? '예비선거 (경선)' : x.id === 'top' ? '지지율 최고' : x.label)}</button>`).join('')}
                         </div>
                     </div>
                     <div class="pv-grid2">
-                        ${a.method !== 'top' ? `<div><label class="pv-label">유동층(여론조사) 반영 (%)</label><input type="number" data-f="mix" min="0" max="100" value="${a.mix}"></div>` : '<div></div>'}
+                        ${H().find(a.method).kind === 'primary' ? `<div><label class="pv-label">유동층(여론조사) 반영 (%)</label><input type="number" data-f="mix" min="0" max="100" value="${a.mix}"></div>` : '<div></div>'}
                         <div><label class="pv-label">결집률 (%)</label><input type="number" data-f="transfer" min="0" max="100" value="${a.transfer}"></div>
                     </div>
-                    <div class="pv-dim pv-small">${a.method !== 'top'
+                    <div class="pv-dim pv-small">${(() => { const M = H().find(a.method); return M.kind === 'primary'
                         ? `경선 득표 = 그 지역의 연대 정당 지지 ${100 - a.mix}% + 일반 유권자 여론조사(유동층 — 전국 지지율 × 친화도) ${a.mix}%. 지금 무당파 ${swingPct}%. 경선을 치르면 승복 효과로 결집률 +5%p.`
-                        : '권역 · 지역구마다 연대 안에서 지지율이 가장 높은 정당이 후보가 돼요.'} 결집하지 않은 표는 다른 정당으로 흩어져요.${members(a).length < 2 ? ' <b>정당을 두 곳 이상 고르세요.</b>' : ''}</div>
+                        : M.kind === 'top' ? '권역 · 지역구마다 연대 안에서 지지율이 가장 높은 정당이 후보가 돼요.' : (M.localHint || H().hint(M, a)); })()} 결집하지 않은 표는 다른 정당으로 흩어져요.${members(a).length < 2 ? ' <b>정당을 두 곳 이상 고르세요.</b>' : ''}</div>
                 </div>`).join('')}
                 <button type="button" class="la-add" data-act="add">+ 연대 추가</button>
             </div>`;
@@ -816,7 +840,7 @@
 
     window.HemiLocalAlliance = {
         active: () => alliances.some(a => members(a).length >= 2),
-        resolve, render,
+        resolve, render, prepare,
         get alliances() { return alliances; },
     };
 
@@ -829,6 +853,7 @@
         .la-row { display: flex; align-items: center; gap: 6px; margin: 4px 0; }
         .la-row input[type=text] { flex: 1; min-width: 0; }
         .la-method { flex-direction: column; align-items: stretch; }
+        .la-methods { flex-wrap: wrap; }
         .la-parties { display: flex; flex-wrap: wrap; gap: 4px 10px; margin: 6px 0; font-size: .82rem; }
         .la-party { display: inline-flex; align-items: center; gap: 4px; cursor: pointer; }
         .la-party.la-off { opacity: .4; cursor: not-allowed; }

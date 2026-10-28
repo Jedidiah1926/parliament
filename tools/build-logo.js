@@ -27,7 +27,7 @@ const TEASERS = [
     // 1.6.7(미수복 지역 · 영토 통일 — js/unrecovered.js) ·
     // 1.6.8(종속국 · 지방선거 연대 — js/vassals.js)은 본 게임에 들어가 main.html이 읽는다
     // (teaser61 ~ teaser68.html은 없앰 — 예전 세이브는 시작 화면이 본 게임으로 옮김).
-    { id: '69', file: 'teaser69.html', script: ['js/teaser69charts.js', 'js/teaser69.js'], title: 'Teaser 1.6.9', note: '1.6.9 경제 시스템 — 통화 · 재정 · 지역구 경제 · 예산안 · 경제 그래프 ' },
+    { id: '69', file: 'teaser69.html', script: ['js/teaser69charts.js', 'js/teaser69.js', 'js/teaser69pol.js'], title: 'Teaser 1.6.9', note: '1.6.9 경제 시스템 — 통화 · 재정 · 지역구 경제 · 예산안 · 경제 그래프 · 후보 선출 방법 · 공동교섭단체' },
 ];
 if (!/<script src="js\/devmode\.js"><\/script>/.test(fs.readFileSync(path.join(root, 'main.html'), 'utf8'))) throw new Error('main.html: js/devmode.js 스크립트를 찾지 못했습니다 (티저 잠금)');
 if (!/<script src="js\/vassals\.js"><\/script>/.test(fs.readFileSync(path.join(root, 'main.html'), 'utf8'))) throw new Error('main.html: js/vassals.js 스크립트를 찾지 못했습니다');

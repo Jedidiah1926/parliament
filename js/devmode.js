@@ -13,7 +13,7 @@
     const ECON_HASH = 'wbfoh8bs26';
     const ECON_TEASERS = ['69'];
     const TEASERS = [
-        { id: '69', file: 'teaser69.html', title: 'Teaser 1.6.9', note: '경제 시스템 — 통화 · 재정 · 지역구 경제 · 예산안 · 경제 그래프' },
+        { id: '69', file: 'teaser69.html', title: 'Teaser 1.6.9', note: '경제 시스템 — 통화 · 재정 · 지역구 경제 · 예산안 · 경제 그래프 · 후보 선출 방법 · 공동교섭단체' },
     ];
 
     // cyrb53 — 짧은 53비트 문자열 해시

@@ -562,7 +562,9 @@
             .sort((a, b) => (seatsOf(b, main) - seatsOf(a, main)) || (tot(b) - tot(a)));
         const ind = ps.filter(p => p.ideologyId === IND_ID);
         const min = Math.max(0, Number(S.wiki.groupMin) || 0);
-        const minor = ps.filter(p => p.ideologyId !== IND_ID && min > 0 && seatsOf(p, main) < min);
+        // 공동교섭단체(1.6.9 미리보기 — js/teaser69pol.js)를 이뤄 기준을 넘긴 정당은 비교섭단체가 아니다
+        const jointOf = pid => (window.HemiJointGroups ? window.HemiJointGroups.groupOf(pid, main) : null);
+        const minor = ps.filter(p => p.ideologyId !== IND_ID && min > 0 && seatsOf(p, main) < min && !jointOf(p.id));
         const named = ps.filter(p => p.ideologyId !== IND_ID && !minor.includes(p));
         const quotaOf = ch => { const el = document.getElementById(ch === 'senate' ? 'senateTotal' : ch === 'third' ? 'thirdTotal' : 'houseTotal'); return el ? (parseInt(el.value, 10) || 0) : 0; };
         const pmn = pmName();
@@ -607,6 +609,14 @@
             const list = fs.map(x => `${x.f.name}(${seatTxt(x.s)})`);
             notes.push(`${list.slice(0, -1).join(', ')}과 ${list[list.length - 1]}은 ${where}에서 ${p.name}${raneun(p.name)} 공동교섭단체로 활동함.`);
             mark.set(p.id, notes.length);
+        });
+        // 공동교섭단체(1.6.9 미리보기) — 여러 정당이 함께 교섭단체를 이룸
+        (window.HemiJointGroups ? window.HemiJointGroups.validGroups(d.main) : []).forEach(g => {
+            const ms = g.parties.filter(p => [...d.gov, ...d.opp].includes(p));
+            if (ms.length < 2) return;
+            const list = ms.map(p => `${p.name}(${seatTxt(d.seats(p))})`);
+            notes.push(`${list.slice(0, -1).join(', ')}과 ${list[list.length - 1]}은 ${where}에서 ${g.name}${raneun(g.name)} 공동교섭단체로 활동함.`);
+            ms.forEach(p => { if (!mark.has(p.id)) mark.set(p.id, notes.length); });
         });
         const small = [...d.minor, ...d.ind];
         let smallMark = 0;
@@ -1527,7 +1537,7 @@
         };
     }
 
-    window.T65 = { get timeline() { return S.timeline; }, get ranking() { return S.ranking; }, record: (label) => { const n = record(label || '', 'manual', false); renderTimeline(); return n; } };
+    window.T65 = { get timeline() { return S.timeline; }, get ranking() { return S.ranking; }, get wiki() { return S.wiki; }, record: (label) => { const n = record(label || '', 'manual', false); renderTimeline(); return n; } };
 
     const style = document.createElement('style');
     style.textContent = `
