@@ -32,7 +32,7 @@
     const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
     const partyById = id => parties.find(p => String(p.id) === String(id)) || null;
     const chamberOk = ch => chamberList().includes(ch) ? ch : 'house';
-    const runningParties = () => parties.filter(p => p.status !== 'banned');
+    const runningParties = () => parties.filter(p => p.status !== 'banned' && p.status !== 'dissolved');
 
     // ---- 지역구 · 인구 ----
     // 미수복 지역(1.6.7 — js/unrecovered.js) · 종속국 땅(1.6.8 — js/vassals.js)은 선거에서 뺀다

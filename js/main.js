@@ -526,7 +526,7 @@
             if(pmSelectionMethod() === 'majority' && !pmMajorityLocked) {
                 const ch = presElectionChamberBasis;
                 const seatKey = seatKeyFor(ch);
-                const eligible = parties.filter(p => p[inKeyFor(ch)] && p.status !== 'banned' && p.ideologyId !== IND_IDEOLOGY_ID);
+                const eligible = parties.filter(p => p[inKeyFor(ch)] && p.status !== 'banned' && p.status !== 'dissolved' && p.ideologyId !== IND_IDEOLOGY_ID);
                 if(eligible.length > 0) {
                     const top = eligible.reduce((a,b) => (b[seatKey]||0) > (a[seatKey]||0) ? b : a);
                     return { name: top.leaderName||'', photo: top.leaderPhoto||'', partyId: top.id, badgeText: `👑 다수당(${top.name}) 대표 자동 반영` };
@@ -5042,6 +5042,7 @@
                 },
                 election: {
                     elecStore:      JSON.parse(JSON.stringify(elecStore)),
+                    elecListVote:   JSON.parse(JSON.stringify(elecListVote)),
                     elecRecords:    JSON.parse(JSON.stringify(elecRecords)),
                     elecLastResult: elecLastResult ? JSON.parse(JSON.stringify(elecLastResult)) : null,
                     elecLastResults: JSON.parse(JSON.stringify(elecLastResults)),
@@ -5167,6 +5168,7 @@
             const elec = state.election || {};
             // 지지율 저장소 복원 (v13: 의원실별 분리 { house:{}, senate:{}, third:{} } / v12 이하: 단일 목록 → 모든 의원실에 동일 적용)
             ['house','senate','third'].forEach(c => { elecStore[c] = {}; });
+            ['house','senate','third'].forEach(c => { const v = elec.elecListVote?.[c]; elecListVote[c] = v && typeof v === 'object' ? { ...v } : null; });
             if(elec.elecStore && typeof elec.elecStore === 'object') {
                 const loaded = elec.elecStore;
                 const isPerChamber = ['house','senate','third'].some(c => loaded[c] && typeof loaded[c] === 'object');
@@ -5455,7 +5457,7 @@
             } catch(e) { return false; }
         }
 
-        // logo.html(로고 제작 모드) · teaser69.html(다음 업데이트 미리보기)은 본 게임 세이브와 섞이지 않도록 저장 키에 따로 접두어를 붙인다
+        // logo.html(로고 제작 모드) · teaserNN.html(다음 업데이트 미리보기)은 본 게임 세이브와 섞이지 않도록 저장 키에 따로 접두어를 붙인다
         const IS_TEASER_MODE = document.documentElement.getAttribute('data-app-mode') === 'teaser';
         // 티저는 번호(data-teaser)마다 따로 — 버전 번호를 다시 매긴 뒤(사람 = 1.6.1)로는 예전 티저 저장 공간과 섞이지 않게 새 이름(V2)을 쓴다
         const TEASER_ID = document.documentElement.getAttribute('data-teaser') || '';
@@ -9803,6 +9805,9 @@
         // 선거 시뮬레이션
         // ═══════════════════════════════════════
         const elecStore = { house:{}, senate:{}, third:{} };   // { chamber: { partyId: { prob, err } } } — 의원실별 독립 지지율 (정당 구성이 다를 수 있으므로)
+        // 비례 득표율을 지지율과 따로 정한 원 — { chamber: { partyId: % } }, 끄면 null.
+        // 위성정당처럼 지역구 · 대선 · 여론의 지지율과 비례 표가 갈라질 때: 켜면 그 원의 비례 의석 · 봉쇄조항(전국형)만 이 값으로 나눈다
+        const elecListVote = { house: null, senate: null, third: null };
         let elecProbChamber = 'house';  // 지지율 입력 탭에서 현재 편집 중인 의원실
         let elecRunning  = false;
         let elecPaused   = false;
@@ -9921,7 +9926,7 @@
         //   총선 지역구에서 결집하지 않은 표는 단일화 밖 정당에게 득표 비율대로 흩어진다 (비례 투표는 따로)
         let candidateUnions = [];
         const unionNationalSupport = (pid, chamber) => Math.max(0, Number(elecStore[chamber || 'house']?.[pid]?.prob) || 0);
-        // 단일후보 정하는 방식 목록 — 후보 단일화와 지방선거 연대(js/vassals.js)가 함께 쓴다. 1.6.9 미리보기(js/teaser69pol.js)가 add로 방식을 더한다
+        // 단일후보 정하는 방식 목록 — 후보 단일화와 지방선거 연대(js/vassals.js)가 함께 쓴다. 1.6.9 정치(js/politics.js)가 add로 방식을 더한다
         //   kind 'top' — 지지율 1위
         //   kind 'split' — 단위(지역구)들을 몫(weights(members, chamber))대로 나눠 맡음(각자 상대적으로 강한 단위부터), 대선 · 총리 선거는 몫 비례 추첨
         //   kind 'pick' — 단위마다 고름: pick(members, scoreOf, ctx) → 정당 | null, 대선 · 총리 선거는 pickPres(members, chamber)
@@ -10014,7 +10019,7 @@
             const u = candidateUnions.find(x => x.id === id);
             if(!u) return;
             const ch = presElectionChamberBasis;
-            const members = candidateUnionMembers(u).filter(p => p.status !== 'banned');
+            const members = candidateUnionMembers(u).filter(p => p.status !== 'banned' && p.status !== 'dissolved');
             if(members.length < 2) return;
             const sup = members.map(p => unionNationalSupport(p.id, ch));
             const total = sup.reduce((a, b) => a + b, 0);
@@ -10175,7 +10180,7 @@
 
         function presElectionEligible() {
             const ch = presElectionChamberBasis;
-            return parties.filter(p => p[inKeyFor(ch)] && p.status !== 'banned');
+            return parties.filter(p => p[inKeyFor(ch)] && p.status !== 'banned' && p.status !== 'dissolved');
         }
         // 후보 단일화로 후보를 내지 않는 정당은 빼고, 단일화 후보는 참여 정당 중 기준 원 지지율이 가장 높은 정당의 후보
         function presElectionCandidates() {
@@ -13627,6 +13632,18 @@
             elecUpdateAllBars();
         }
 
+        // 비례 득표율 따로 정하기 — 켤 때는 지금 지지율을 복사해 두고 시작
+        function elecToggleListVote(chamber, on) {
+            if(on) {
+                const st = elecStore[chamber] || {};
+                elecListVote[chamber] = Object.fromEntries(parties.filter(p => p.ideologyId !== IND_IDEOLOGY_ID).map(p => [p.id, Number(st[p.id]?.prob) || 0]));
+            } else elecListVote[chamber] = null;
+            elecRenderList();
+        }
+        function elecSetListVote(chamber, partyId, val) {
+            if(!elecListVote[chamber]) return;
+            elecListVote[chamber][partyId] = Math.max(0, Math.min(100, Number(val) || 0));
+        }
         function elecSetErr(chamber, partyId, val) {
             const store = elecStore[chamber] || (elecStore[chamber] = {});
             if(!store[partyId]) store[partyId] = { prob:0, err:0 };
@@ -13751,10 +13768,22 @@
             container.insertAdjacentHTML('beforeend', buildProbBarHtml(elecProbChamber, { title: '지지율 분포' }));
             elecRenderProbBars(); // 선거 탭의 읽기전용 바 묶음도 함께 최신화
 
+            // ── 비례 득표율 따로 정하기 (위성정당 등) ──
+            const listOn = !!elecListVote[elecProbChamber];
+            const listBox = document.createElement('div');
+            listBox.style.cssText = 'margin:2px 0 8px;font-size:0.78rem;color:#888;';
+            listBox.innerHTML = `<label style="display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="checkbox" ${listOn ? 'checked' : ''} onchange="elecToggleListVote('${elecProbChamber}', this.checked)"> 비례 득표율 따로 정하기</label>
+                ${listOn ? `<div style="color:#666;font-size:0.72rem;margin-top:3px;line-height:1.5;">이 원의 비례 의석 · 봉쇄조항은 "비례(%)" 값으로 나눕니다 (권역형 비례는 권역 득표). 지역구(성향)와 대선 · 지방선거 · 여론은 지지율을 그대로 써요. 위성정당 예: 모정당 비례 0%, 위성정당 지지율 0% · 비례 N%.</div>` : ''}`;
+            container.appendChild(listBox);
+            const COLS = listOn ? '1fr 60px 60px 50px' : '1fr 75px 60px';
+            const listCell = id => `<input type="number" class="elec-list" data-id="${id}" value="${elecListVote[elecProbChamber][id] ?? 0}" min="0" max="100" placeholder="0" title="비례 득표율(%)"
+                style="background:#000;border:1px solid #6a5acd;color:#b9a8ff;font-family:inherit;font-size:0.9rem;padding:4px;text-align:center;width:100%;box-sizing:border-box;"
+                oninput="elecSetListVote('${elecProbChamber}','${id}', parseFloat(this.value)||0)">`;
+
             // ── 헤더 (정당명/지지율/오차) — 지지율 분포 바로 아래, 입력 행 바로 위 ──
             const headerRow = document.createElement('div');
-            headerRow.style.cssText = 'display:grid;grid-template-columns:1fr 75px 60px;gap:6px;padding:0 2px;margin-bottom:4px;color:#555;font-size:0.8rem;';
-            headerRow.innerHTML = `<span>정당명</span><span style="text-align:center;">지지율(%)</span><span style="text-align:center;">오차(±%)</span>`;
+            headerRow.style.cssText = `display:grid;grid-template-columns:${COLS};gap:6px;padding:0 2px;margin-bottom:4px;color:#555;font-size:0.8rem;`;
+            headerRow.innerHTML = `<span>정당명</span><span style="text-align:center;">지지율(%)</span>${listOn ? '<span style="text-align:center;">비례(%)</span>' : ''}<span style="text-align:center;">오차(±%)</span>`;
             container.appendChild(headerRow);
 
             // ── 정당 행 (무소속 제외, 현재 탭 의원실에 참여하는 정당만) ──────────────
@@ -13766,7 +13795,7 @@
                 const banned = p.status === 'banned';
                 const dim = banned ? 'opacity:0.45;' : '';
                 const row = document.createElement('div');
-                row.style.cssText = `display:grid;grid-template-columns:1fr 75px 60px;gap:6px;margin-bottom:7px;align-items:center;`;
+                row.style.cssText = `display:grid;grid-template-columns:${COLS};gap:6px;margin-bottom:7px;align-items:center;`;
                 row.innerHTML = `
                     <div style="display:flex;align-items:center;gap:6px;min-width:0;">
                         <span style="width:10px;height:10px;background:${p.color};border-radius:50%;flex-shrink:0;border:1px solid #444;${dim}"></span>
@@ -13777,6 +13806,7 @@
                         min="0" max="100" placeholder="0" ${banned?'disabled title="활동 금지된 정당은 지지율이 반영되지 않습니다"':''}
                         style="background:#000;border:1px solid var(--tno-border);color:var(--tno-neon);font-family:inherit;font-size:0.9rem;padding:4px;text-align:center;width:100%;box-sizing:border-box;${dim}"
                         oninput="elecSetProb('${ch}','${p.id}', parseFloat(this.value)||0)">
+                    ${listOn ? listCell(p.id) : ''}
                     <input type="number" class="elec-err" data-id="${p.id}" value="${st.err}"
                         min="0" max="50" placeholder="0" ${banned?'disabled':''}
                         style="background:#000;border:1px solid #444;color:#888;font-family:inherit;font-size:0.9rem;padding:4px;text-align:center;width:100%;box-sizing:border-box;${dim}"
@@ -13799,7 +13829,7 @@
                 const p = indPartyForElec;
                 const st = store[p.id]||{prob:0,err:0};
                 const row = document.createElement('div');
-                row.style.cssText = 'display:grid;grid-template-columns:1fr 75px 60px;gap:6px;margin-bottom:7px;align-items:center;border-top:1px dashed #333;padding-top:8px;margin-top:4px;';
+                row.style.cssText = `display:grid;grid-template-columns:${COLS};gap:6px;margin-bottom:7px;align-items:center;border-top:1px dashed #333;padding-top:8px;margin-top:4px;`;
                 row.innerHTML = `
                     <div style="display:flex;align-items:center;gap:6px;">
                         <span style="width:10px;height:10px;background:#888;border-radius:50%;flex-shrink:0;border:1px solid #444;"></span>
@@ -13809,6 +13839,7 @@
                         min="0" max="100" placeholder="0"
                         style="background:#000;border:1px solid var(--tno-border);color:var(--tno-neon);font-family:inherit;font-size:0.9rem;padding:4px;text-align:center;width:100%;box-sizing:border-box;"
                         oninput="elecSetProb('${ch}','${p.id}', parseFloat(this.value)||0)">
+                    ${listOn ? listCell(p.id) : ''}
                     <input type="number" class="elec-err" data-id="${p.id}" value="${st.err}"
                         min="0" max="50" placeholder="0"
                         style="background:#000;border:1px solid #444;color:#888;font-family:inherit;font-size:0.9rem;padding:4px;text-align:center;width:100%;box-sizing:border-box;"
@@ -13820,7 +13851,7 @@
             // ── 무당파 행 (구분선 없이 무소속 바로 아래) ──
             const sw = store['__swing__'];
             const swRow = document.createElement('div');
-            swRow.style.cssText = 'display:grid;grid-template-columns:1fr 75px 60px;gap:6px;margin-bottom:7px;align-items:center;';
+            swRow.style.cssText = `display:grid;grid-template-columns:${COLS};gap:6px;margin-bottom:7px;align-items:center;`;
             swRow.innerHTML = `
                 <div style="display:flex;align-items:center;gap:6px;">
                     <span style="width:10px;height:10px;background:repeating-linear-gradient(45deg,#555,#555 2px,#333 2px,#333 4px);border-radius:50%;flex-shrink:0;border:1px solid #666;"></span>
@@ -13830,6 +13861,7 @@
                     min="0" max="100" placeholder="0"
                     style="background:#000;border:1px solid #555;color:#aaa;font-family:inherit;font-size:0.9rem;padding:4px;text-align:center;width:100%;box-sizing:border-box;"
                     oninput="elecSetProb('${ch}','__swing__', parseFloat(this.value)||0)">
+                ${listOn ? '<span></span>' : ''}
                 <input type="number" class="elec-err" data-id="__swing__" value="${sw.err}"
                     min="0" max="50" placeholder="0"
                     style="background:#000;border:1px solid #444;color:#555;font-family:inherit;font-size:0.9rem;padding:4px;text-align:center;width:100%;box-sizing:border-box;"
@@ -14748,8 +14780,9 @@
         // 지역구 선거 시뮬레이션
         // ─────────────────────────────────────────
         // 지역구 선거에 후보를 내는 정당 — 그 원에 참여하고 활동 금지가 아닌 정당 (끈 무소속 · 다른 원 전용 정당은 지역구도 가져가지 않음)
+        // 해산한 정당은 활동 금지 정당처럼 선거에 나오지 않는다 (예전엔 "*해산됨*"이 지지율대로 의석을 얻어 의회에 다시 들어왔다)
         function partyRunsInChamber(p, chamber) {
-            return !!p && !!p[inKeyFor(chamber)] && p.status !== 'banned';
+            return !!p && !!p[inKeyFor(chamber)] && p.status !== 'banned' && p.status !== 'dissolved';
         }
         function elecSimulateDistricts(chamber) {
             unionShareCache = {}; // 단일화 지지율 비례 분배는 이번 개표 동안 한 번만 계산
@@ -15161,9 +15194,11 @@
             const chamberStore = elecStore[chamber] || {};
             // 그 원에 참여하지 않는 정당(정당 카드에서 그 원 체크를 끈 원외 정당)은 지지율 입력 목록에 없으므로 개표에서도 빠진다 — 지역구 후보와 같은 기준
             const runsHere = p => partyRunsInChamber(p, chamber);
-            const partyProb = parties.reduce((s,p)=>s+(runsHere(p)?(chamberStore[p.id]?.prob||0):0),0);
+            // 비례 득표율을 따로 정했으면 비례 의석 · 봉쇄조항은 그 값으로 (지역구는 성향)
+            const listVote = elecListVote[chamber];
+            const partyProb = parties.reduce((s,p)=>s+(runsHere(p)?(listVote ? (Number(listVote[p.id])||0) : (chamberStore[p.id]?.prob||0)):0),0);
             if(propSeats > 0 && !isRegionalList && partyProb<=0) {
-                showCustomAlert('지지율을 입력해 주세요.\n각 정당의 지지율(%) 칸에 숫자를 입력하세요.');
+                showCustomAlert(listVote ? '비례 득표율을 입력해 주세요.\n각 정당의 비례(%) 칸에 숫자를 입력하세요.' : '지지율을 입력해 주세요.\n각 정당의 지지율(%) 칸에 숫자를 입력하세요.');
                 return;
             }
             if(propSeats > 0 && isRegionalList && !regionScopeHasVoteData(chamber)) {
@@ -15197,7 +15232,7 @@
             parties.forEach(p => {
                 const fa = p.fraudAttempt;
                 if(!fa || fa.chamber !== chamber) return;
-                // 정권 상태에 따른 발각 확률 보정(1.6.9 미리보기 — js/teaser69pol.js의 HemiFraudRegime)
+                // 정권 상태에 따른 발각 확률 보정(1.6.9 — js/politics.js의 HemiFraudRegime)
                 const chance = window.HemiFraudRegime ? window.HemiFraudRegime.catchChance(p, fa.catchChance ?? 0) : (fa.catchChance ?? 0);
                 fraudAttempts.push({ p, fa, chance, caught: Math.random()*100 < chance });
                 p.fraudAttempt = null;
@@ -15221,8 +15256,10 @@
                 // ── 오차 적용 후 각 당 지지율 계산 (활동 금지된 정당은 저장된 지지율과 무관하게 가중치 0) ──
                 const partyWeighted = parties.map(p => {
                     const st = effChamberStore[p.id]||{prob:0,err:0};
-                    const w  = !runsHere(p) ? 0 : Math.max(0, st.prob + (Math.random()*2-1)*(st.err||0));
-                    return { id:p.id, w, origProb: st.prob };
+                    // 비례 득표율을 따로 정했으면 그 값에 부정선거 득표 부풀리기만 더한다
+                    const prob = listVote ? (Number(listVote[p.id])||0) + ((st.prob||0) - (chamberStore[p.id]?.prob||0)) : st.prob;
+                    const w  = !runsHere(p) ? 0 : Math.max(0, prob + (Math.random()*2-1)*(st.err||0));
+                    return { id:p.id, w, origProb: prob };
                 });
 
                 // ── 무당파 계산 ───────────────────────
@@ -15467,7 +15504,7 @@
                 // 즉시 완료 등으로 발각 시점을 지나쳐 끝까지 개표했더라도, 결과 확정 전에 발각된다
                 const pct = (Math.min(fraudHit ? fraudDetectAt : countTotal, totalSeats)/totalSeats*100).toFixed(0);
                 document.getElementById('elecResultTitle'+suf).innerText = `> ${elecTitle} (${elecYear}) — ${chamberName} 개표 중단: 부정선거 발각! (개표율 ${pct}%)`;
-                // 발각된 정당은 활동 금지 — 정권 상태에 따라 다른 조치(1.6.9 미리보기 — HemiFraudRegime.punish)
+                // 발각된 정당은 활동 금지 — 정권 상태에 따라 다른 조치(1.6.9 — js/politics.js의 HemiFraudRegime.punish)
                 const fates = caughtFraud.map(x => {
                     x.voided = true;
                     const r = window.HemiFraudRegime ? window.HemiFraudRegime.punish(x.p) : null;

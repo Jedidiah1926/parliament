@@ -1,6 +1,6 @@
-// ===== Hemicycle 티저 1.6.9 (teaser69) — 정치 미리보기: 후보 선출 방법 · 공동교섭단체 =====
-// teaser69.html은 main.html에 이 파일과 경제 미리보기(js/teaser69charts.js · js/teaser69.js)를 얹는다.
-// (저장 공간은 본 게임과 따로 — main.js의 LS_PREFIX 'hemicycleTeaserV2-69:')
+// ===== 1.6.9 — 정치: 후보 선출 방법 · 공동교섭단체 · 정권 상태에 따른 부정선거 =====
+// 1.6.9 미리보기(예전 teaser69pol)에서 본 게임으로 옮겨 왔다 — 로고 제작 화면만 빼고 돈다.
+// main.html은 경제(js/economycharts.js · js/economy.js) 다음에 이 파일을 읽는다.
 //
 //   - 후보 선출 방법 더하기 — 후보 단일화(선거 › 후보)와 지방선거 연대(선거 › 지방선거)가 함께 쓰는 방식 목록(js/main.js의 HemiCandMethods)에:
 //       동일 후보수 분배(참여 정당이 같은 수씩 나눠 맡음) · 의석수 비례 분배(지금 의석 비율대로) · 현직 우선(그 지역구를 가진 정당이 다시) · 추첨
@@ -12,7 +12,7 @@
 (function () {
     'use strict';
     const root = document.documentElement;
-    if (root.getAttribute('data-app-mode') !== 'teaser' || !['69'].includes(root.getAttribute('data-teaser') || '69')) return;
+    if (root.getAttribute('data-app-mode') === 'logo') return;
     const H = window.HemiCandMethods;
     const esc = s => (typeof escapeHtmlText === 'function' ? escapeHtmlText(String(s ?? '')) : String(s ?? ''));
     const partyById = id => parties.find(p => String(p.id) === String(id)) || null;
@@ -109,7 +109,7 @@
         const minor = min > 0 ? live.filter(p => seatsIn(p, ch0) < min && !inValid.has(String(p.id))) : [];
         const dot = c => `<span class="jg-dot" style="background:${esc(c)}"></span>`;
         box.innerHTML = `
-            <div class="jg-head"><span>🤝 공동교섭단체</span> <span class="jg-badge">1.6.9 미리보기</span></div>
+            <div class="jg-head"><span>🤝 공동교섭단체</span></div>
             <div class="jg-dim">교섭단체 기준에 못 미치는 정당들이 함께 교섭단체를 이룹니다. 합쳐서 기준을 넘기면 성립하고, 위키 틀에서 비교섭단체 대신 그 정당들로 보이며 각주가 붙어요.</div>
             <div class="jg-row"><span class="jg-dim">교섭단체 기준</span><input type="number" min="0" class="jg-num" data-act="min" value="${min}"><span class="jg-dim">석 ${min ? '' : '— 0이면 기준 없음 (위키 틀과 같은 값)'}</span>
                 ${min ? '' : `<button type="button" class="jg-btn" data-act="min20">${DEFAULT_MIN}석으로</button>`}</div>
@@ -198,7 +198,7 @@
     window.addEventListener('load', () => setTimeout(render, 0));
 })();
 
-// ===== 1.6.9 미리보기 — 정권 상태에 따른 부정선거 =====
+// ===== 1.6.9 — 정권 상태에 따른 부정선거 =====
 // 발각 확률과 발각 뒤 조치가 정권 상태에 따라 달라진다 (js/main.js의 개표가 window.HemiFraudRegime을 부름):
 //   일반(민주 · 입헌군주제) — 그대로 (발각되면 활동 금지)
 //   계엄령 — 정부 · 여당 쪽 ×0.5, 발각돼도 금지 대신 지지율 20% 하락 / 야당 ×1.5, 발각되면 금지 + 지지율 절반
@@ -208,7 +208,7 @@
 (function () {
     'use strict';
     const root = document.documentElement;
-    if (root.getAttribute('data-app-mode') !== 'teaser' || !['69'].includes(root.getAttribute('data-teaser') || '69')) return;
+    if (root.getAttribute('data-app-mode') === 'logo') return;
     const esc = s => (typeof escapeHtmlText === 'function' ? escapeHtmlText(String(s ?? '')) : String(s ?? ''));
     let managed = false; // 군정 관제 선거 허용
     const isGov = p => !!p && (p.isRuling || (typeof coalitions !== 'undefined' && coalitions.some(c => c.isRuling && (c.members || []).some(id => String(id) === String(p.id)))));
@@ -285,8 +285,8 @@
         const r = regime(), R = RULES[r];
         const tries = parties.filter(p => p.fraudAttempt);
         box.innerHTML = !R
-            ? `<div class="fr-head">정권 상태: 일반 <span class="fr-badge">1.6.9 미리보기</span></div><div class="fr-dim">발각 확률은 그대로, 발각되면 활동 금지. 계엄령 · 전제군주정 · 군정(관제 선거)에서는 정권 쪽 정당은 덜 발각되고 처벌도 가벼워요.</div>`
-            : `<div class="fr-head">정권 상태: ${esc(R.name)} <span class="fr-badge">1.6.9 미리보기</span></div>
+            ? `<div class="fr-head">정권 상태: 일반</div><div class="fr-dim">발각 확률은 그대로, 발각되면 활동 금지. 계엄령 · 전제군주정 · 군정(관제 선거)에서는 정권 쪽 정당은 덜 발각되고 처벌도 가벼워요.</div>`
+            : `<div class="fr-head">정권 상태: ${esc(R.name)}</div>
                <div class="fr-dim">${esc(R.sideLabel)} 발각 확률 ×${R.side} · 발각 시 ${esc(R.sideText)}<br>야당 발각 확률 ×${R.opp} · 발각 시 ${esc(OPP_TEXT[r])}</div>
                ${tries.length ? `<div class="fr-list">${tries.map(p => { const base = p.fraudAttempt.catchChance ?? 0, eff = window.HemiFraudRegime.catchChance(p, base); return `<div>${esc(p.name)} <span class="fr-dim">${onSide(p, r) ? esc(R.sideLabel) : '야당'}</span> — 실제 발각 확률 <b>${eff}%</b> <span class="fr-dim">(기본 ${base}%)</span></div>`; }).join('')}</div>` : ''}`;
     }
@@ -299,7 +299,7 @@
         let box = document.getElementById('t69Managed');
         if (!(window.T62 && window.T62.junta)) { if (box) box.remove(); return; }
         if (!box) { box = el('<div id="t69Managed" class="fr-box"></div>'); host.insertBefore(box, host.firstChild); }
-        box.innerHTML = `<label class="fr-row"><input type="checkbox" ${managed ? 'checked' : ''}> 관제 선거 허용 <span class="fr-badge">1.6.9 미리보기</span></label>
+        box.innerHTML = `<label class="fr-row"><input type="checkbox" ${managed ? 'checked' : ''}> 관제 선거 허용</label>
             <div class="fr-dim">켜면 군정 중에도 총선 · 대선 · 지방선거를 치릅니다. 군부 쪽 정당의 부정선거는 거의 들키지 않고(×0.2) 들켜도 지지율만 떨어지지만, 야당이 들키면 강제 해산돼요.</div>`;
         box.querySelector('input').onchange = e => { managed = e.target.checked; };
     }
