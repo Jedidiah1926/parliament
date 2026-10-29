@@ -1537,6 +1537,8 @@
         };
     }
 
+    // 다른 화면(경제 — js/economy.js)도 같은 방식으로 PNG · JPG를 굽게 — 화면 글꼴로 글자를 따로 씀
+    window.HemiExportKit = { rasterize, async prepareFont() { pickFont(); await loadExportFont(); }, get font() { return FONT; } };
     window.T65 = { get timeline() { return S.timeline; }, get ranking() { return S.ranking; }, get wiki() { return S.wiki; }, record: (label) => { const n = record(label || '', 'manual', false); renderTimeline(); return n; } };
 
     const style = document.createElement('style');

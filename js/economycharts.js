@@ -687,7 +687,7 @@
         const drop = [];
         src.forEach((el, k) => {
             const cs = getComputedStyle(el), d = dst[k];
-            ['fill', 'stroke', 'opacity', 'stroke-width', 'stroke-dasharray', 'font-size', 'font-family', 'font-weight'].forEach(p => {
+            ['fill', 'stroke', 'opacity', 'stroke-width', 'stroke-dasharray', 'stroke-linejoin', 'paint-order', 'font-size', 'font-family', 'font-weight'].forEach(p => {
                 const v = cs.getPropertyValue(p);
                 if (v && v !== 'normal' && !(p === 'stroke-dasharray' && v === 'none')) d.setAttribute(p, v);
             });
