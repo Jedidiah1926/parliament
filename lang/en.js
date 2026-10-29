@@ -8769,6 +8769,7 @@ window.DnoLangPacks.en = {
   ["- 서독 튜토리얼은 1983년 서독 경제 · 주별 산업구조로 시작, 미수복 지역을 통일하면 동독 주가 편입되고 통일 비용이 듦 · 종속국 땅은 집계에서 빠지고 공납 세입", "- The West German tutorial starts with the 1983 West German economy and state industry mixes; reunifying the unrecovered territory brings in the East German states at a reunification cost · dependency land is left out of national totals and pays tribute"],
   ["- 1.6.5 국가 순위 · 세력 변화, 1.6.2 쿠데타 · 1.6.3 혁명(민심 붕괴 경고), 1.6.6 왕실 예산과 연동", "- Linked with the 1.6.5 ranking and power shifts, 1.6.2 coups and 1.6.3 revolutions (collapse-of-mood warnings), and 1.6.6 royal budgets"],
   ["궐석", "Vacant"],
+  ["- 경제 시각 탭 전체 내보내기 — 그래프 밖에서 우클릭하면 지금 보이는 경제 화면 전체(계기 · 신용등급 · 경고 신호 · 금액 카드 · 그래프 · 표)를 PNG · JPG · SVG 한 장으로, 그래프 위에서는 그 그래프만 (글자는 화면 글꼴 그대로)", "- Export the whole economy visual tab — right-click outside a chart to export everything on the economy screen (gauges · credit rating · warning signals · amount cards · charts · tables) as one PNG · JPG · SVG; right-click a chart to export just that chart (text keeps the screen font)"],
   ["비례 득표율 따로 정하기", "Set list vote separately"],
   ["이 원의 비례 의석 · 봉쇄조항은 \"비례(%)\" 값으로 나눕니다 (권역형 비례는 권역 득표). 지역구(성향)와 대선 · 지방선거 · 여론은 지지율을 그대로 써요. 위성정당 예: 모정당 비례 0%, 위성정당 지지율 0% · 비례 N%.", "This chamber's list seats and threshold are allocated by the \"List(%)\" values (regional lists use regional votes). Districts (tendency), presidential and local elections and opinion keep using support. Satellite party example: parent party list 0%, satellite support 0% · list N%."],
   ["비례(%)", "List(%)"],

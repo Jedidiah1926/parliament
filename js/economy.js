@@ -2269,13 +2269,16 @@
         };
     }
 
-    // ================= 우클릭 내보내기 (경제 그래프) =================
+    // ================= 우클릭 내보내기 (경제 그래프 · 경제 시각 탭 전체) =================
+    // 그래프 위에서 우클릭하면 그 그래프만, 그 밖(계기 · 금액 카드 · 경고 신호 · 빈 곳)에서 우클릭하면 지금 보이는 경제 화면 전체
     document.addEventListener('contextmenu', e => {
-        const svg = e.target.closest && e.target.closest('#t69Disp svg.t69-svg');
-        if (!svg) return;
+        const disp = e.target.closest && e.target.closest('#t69Disp');
+        if (!disp) return;
+        const svg = e.target.closest('svg.t69-svg');
+        const target = svg || disp;
         e.preventDefault(); e.stopPropagation();
-        svg.dataset.exportKind = 't69chart';
-        try { canvasExportTarget = svg; } catch (err) { return; } // eslint-disable-line no-undef
+        target.dataset.exportKind = svg ? 't69chart' : 't69panel';
+        try { canvasExportTarget = target; } catch (err) { return; } // eslint-disable-line no-undef
         const menu = document.getElementById('canvasExportMenu');
         if (!menu) return;
         menu.style.display = 'block';
@@ -2297,19 +2300,144 @@
         };
     }
     function dl(href, name) { const a = document.createElement('a'); a.href = href; a.download = name; document.body.appendChild(a); a.click(); a.remove(); }
-    async function t69Export(svg, format) {
-        const text = C.exportSvgString(svg), stamp = Date.now().toString(36);
-        if (format === 'svg') { dl(URL.createObjectURL(new Blob([text], { type: 'image/svg+xml' })), `economy_${stamp}.svg`); return; }
-        const vb = (svg.getAttribute('viewBox') || '0 0 600 300').split(/\s+/).map(Number), sc = 2;
-        const img = new Image();
-        img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(text);
-        await img.decode();
-        const c = document.createElement('canvas'); c.width = vb[2] * sc; c.height = vb[3] * sc;
-        const ctx = c.getContext('2d');
-        ctx.fillStyle = getComputedStyle(svg.closest('.t69-viz') || document.body).getPropertyValue('--t69-surface') || '#fff';
-        ctx.fillRect(0, 0, c.width, c.height);
-        ctx.drawImage(img, 0, 0, c.width, c.height);
-        dl(c.toDataURL(format === 'jpg' ? 'image/jpeg' : 'image/png', 0.95), `economy_${stamp}.${format}`);
+    const surfaceOf = el => {
+        for (let e = el; e && e.nodeType === 1; e = e.parentElement) { const bg = getComputedStyle(e).backgroundColor; if (bg && !isClear(bg)) return bg; }
+        return getComputedStyle(el.closest('.t69-viz') || document.body).getPropertyValue('--t69-surface').trim() || '#fff';
+    };
+    const isClear = c => !c || c === 'transparent' || /^rgba\(.*,\s*0\)$/.test(c);
+    const attr = v => String(v).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+    // 그래프 하나를 자리(x · y · 폭 · 높이)에 맞춘 <svg>로 — 색은 실제 값으로 (C.exportSvgString)
+    function placedSvg(svg, x, y, w, h, op) {
+        const node = new DOMParser().parseFromString(C.exportSvgString(svg), 'image/svg+xml').documentElement;
+        if (!node.getAttribute('viewBox')) node.setAttribute('viewBox', `0 0 ${svg.clientWidth || w} ${svg.clientHeight || h}`);
+        node.setAttribute('x', x); node.setAttribute('y', y); node.setAttribute('width', w); node.setAttribute('height', h);
+        if (op < 1) node.setAttribute('opacity', op);
+        node.removeAttribute('style');
+        return new XMLSerializer().serializeToString(node);
+    }
+    // 경제 시각 탭 전체를 SVG 한 장으로 — 계기 · 카드 · 막대처럼 HTML로 그린 부분은 상자(배경 · 테두리)와 글자로 옮기고, 그래프는 그대로 끼워 넣는다.
+    // 스크롤로 가려진 아래쪽까지 전부 담는다 (안쪽 스크롤 칸 — 표 등 — 은 보이는 만큼만)
+    function panelSvg(root) {
+        const R = root.getBoundingClientRect();
+        const ox = R.left - root.scrollLeft, oy = R.top - root.scrollTop;
+        const W = Math.ceil(root.scrollWidth), H = Math.ceil(root.scrollHeight);
+        const out = [`<rect x="0" y="0" width="${W}" height="${H}" fill="${attr(surfaceOf(root))}"/>`];
+        const range = document.createRange();
+        // 안쪽 스크롤 칸 밖으로 밀려 안 보이는 것은 뺀다
+        const clipOf = el => { for (let e = el.parentElement; e && e !== root; e = e.parentElement) { const cs = getComputedStyle(e); if (cs.overflowX !== 'visible' || cs.overflowY !== 'visible') return e.getBoundingClientRect(); } return null; };
+        const inside = (r, c) => !c || (r.right > c.left && r.left < c.right && r.bottom > c.top && r.top < c.bottom);
+        const box = (r, cs, op) => {
+            const x = r.left - ox, y = r.top - oy, rx = Math.min(parseFloat(cs.borderTopLeftRadius) || 0, r.width / 2, r.height / 2);
+            const sides = ['Top', 'Right', 'Bottom', 'Left'].map(s => ({ w: parseFloat(cs[`border${s}Width`]) || 0, c: cs[`border${s}Color`], st: cs[`border${s}Style`] }))
+                .map(b => (b.w > 0 && b.st !== 'none' && b.st !== 'hidden' && !isClear(b.c) ? b : null));
+            const uniform = sides.every(b => b && b.w === sides[0].w && b.c === sides[0].c);
+            const bg = cs.backgroundColor, fill = isClear(bg) ? 'none' : bg;
+            const dash = b => (b && b.st === 'dashed' ? ` stroke-dasharray="${b.w * 3} ${b.w * 2}"` : b && b.st === 'dotted' ? ` stroke-dasharray="${b.w} ${b.w * 1.5}"` : '');
+            const o = op < 1 ? ` opacity="${op}"` : '';
+            if (fill !== 'none' || uniform) {
+                const b = uniform ? sides[0] : null, inset = b ? b.w / 2 : 0;
+                out.push(`<rect x="${x + inset}" y="${y + inset}" width="${Math.max(0, r.width - inset * 2)}" height="${Math.max(0, r.height - inset * 2)}" rx="${rx}" fill="${attr(fill)}"${b ? ` stroke="${attr(b.c)}" stroke-width="${b.w}"${dash(b)}` : ''}${o}/>`);
+            }
+            if (!uniform) {
+                const [t, rt, bt, lt] = sides, line = (b, x1, y1, x2, y2) => b && out.push(`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${attr(b.c)}" stroke-width="${b.w}"${dash(b)}${o}/>`);
+                line(t, x, y + (t?.w || 0) / 2, x + r.width, y + (t?.w || 0) / 2);
+                line(bt, x, y + r.height - (bt?.w || 0) / 2, x + r.width, y + r.height - (bt?.w || 0) / 2);
+                line(lt, x + (lt?.w || 0) / 2, y, x + (lt?.w || 0) / 2, y + r.height);
+                line(rt, x + r.width - (rt?.w || 0) / 2, y, x + r.width - (rt?.w || 0) / 2, y + r.height);
+            }
+        };
+        const text = (n, cs, op, clip, first) => {
+            const raw = n.nodeValue;
+            // ::first-letter 색(계기 아래 "● 안전"의 점처럼) — 첫 글자만 따로 그 색으로
+            if (first) {
+                const i = raw.search(/\S/);
+                range.setStart(n, i); range.setEnd(n, i + 1);
+                const fr = range.getClientRects()[0];
+                if (fr && inside(fr, clip)) out.push(`<text x="${fr.left - ox}" y="${fr.top + fr.height / 2 + (parseFloat(cs.fontSize) || 12) * 0.36 - oy}" font-size="${parseFloat(cs.fontSize) || 12}" font-weight="${attr(cs.fontWeight)}" fill="${attr(first)}"${op < 1 ? ` fill-opacity="${op}"` : ''}>${attr(raw[i])}</text>`);
+                const rest = raw.slice(i + 1);
+                if (!rest.trim()) return;
+                range.setStart(n, i + 1); range.setEnd(n, raw.length);
+                const rr = [...range.getClientRects()].filter(r => r.width > 0);
+                if (rr.length === 1) { const r = rr[0], size = parseFloat(cs.fontSize) || 12; if (inside(r, clip)) out.push(`<text x="${r.left - ox + (rest.length - rest.trimStart().length ? size * 0.28 : 0)}" y="${r.top + r.height / 2 + size * 0.36 - oy}" font-size="${size}" font-weight="${attr(cs.fontWeight)}" fill="${attr(cs.color)}"${op < 1 ? ` fill-opacity="${op}"` : ''}>${attr(rest.trim())}</text>`); return; }
+            }
+            range.selectNodeContents(n);
+            const rects = [...range.getClientRects()].filter(r => r.width > 0);
+            if (!rects.length) return;
+            // 한 줄이면 통째로, 여러 줄로 감겼으면 글자마다 자리를 재서 줄별로 나눈다
+            let lines;
+            if (rects.length === 1) {
+                // 앞쪽 공백은 빼고 첫 글자 자리에서 시작 (공백 폭만큼 왼쪽으로 붙지 않게)
+                const i = raw.search(/\S/);
+                range.setStart(n, i); range.setEnd(n, raw.length);
+                const fr = [...range.getClientRects()].filter(r => r.width > 0)[0] || rects[0];
+                lines = [{ r: fr, t: raw.replace(/\s+/g, ' ').trim() }];
+            }
+            else {
+                lines = [];
+                for (let i = 0; i < raw.length; i++) {
+                    range.setStart(n, i); range.setEnd(n, i + 1);
+                    const cr = range.getClientRects()[0];
+                    if (!cr) continue;
+                    const last = lines[lines.length - 1];
+                    if (last && Math.abs(cr.top - last.r.top) < 2) last.t += raw[i];
+                    else lines.push({ r: cr, t: raw[i] });
+                }
+                lines.forEach(l => { l.t = l.t.replace(/\s+/g, ' ').trim(); });
+            }
+            const size = parseFloat(cs.fontSize) || 12;
+            lines.forEach(l => {
+                if (!l.t || !inside(l.r, clip)) return;
+                const y = l.r.top + l.r.height / 2 + size * 0.36 - oy;
+                out.push(`<text x="${l.r.left - ox}" y="${y}" font-size="${size}" font-weight="${attr(cs.fontWeight)}" fill="${attr(cs.color)}"${op < 1 ? ` fill-opacity="${op}"` : ''}${parseFloat(cs.letterSpacing) ? ` letter-spacing="${parseFloat(cs.letterSpacing)}"` : ''}>${attr(l.t)}</text>`);
+            });
+        };
+        const walk = (el, opIn) => {
+            const cs = getComputedStyle(el);
+            if (cs.display === 'none' || cs.visibility === 'hidden') return;
+            const op = opIn * (parseFloat(cs.opacity) || (cs.opacity === '0' ? 0 : 1));
+            if (op <= 0) return;
+            const r = el.getBoundingClientRect(), clip = clipOf(el);
+            if (!inside(r, clip) && r.width > 0) return;
+            if (el.tagName.toLowerCase() === 'svg') { if (r.width > 0 && r.height > 0) out.push(placedSvg(el, r.left - ox, r.top - oy, r.width, r.height, op)); return; }
+            if (el !== root && r.width > 0 && r.height > 0) box(r, cs, op);
+            const fl = getComputedStyle(el, '::first-letter').color;
+            let firstColor = fl && fl !== cs.color ? fl : null;
+            el.childNodes.forEach(n => {
+                if (n.nodeType === 3 && n.nodeValue.trim()) { text(n, cs, op, clip, firstColor); firstColor = null; }
+                else if (n.nodeType === 1) walk(n, op);
+            });
+        };
+        walk(root, 1);
+        const P = 16, bg = out.shift(); // 가장자리에 여백
+        return `<svg xmlns="http://www.w3.org/2000/svg" width="${W + P * 2}" height="${H + P * 2}" viewBox="0 0 ${W + P * 2} ${H + P * 2}" font-family="${attr((window.HemiExportKit && HemiExportKit.font) || 'sans-serif')}">`
+            + `${bg.replace(`width="${W}" height="${H}"`, `width="${W + P * 2}" height="${H + P * 2}"`)}<g transform="translate(${P},${P})">${out.join('')}</g></svg>`;
+    }
+    async function t69Export(target, format) {
+        const kit = window.HemiExportKit;
+        if (kit) await kit.prepareFont();
+        const panel = target.dataset.exportKind === 't69panel';
+        let text;
+        if (panel) text = panelSvg(target);
+        else {
+            // 그래프 하나 — 바탕색을 깔아 그 자리 크기 그대로
+            const r = target.getBoundingClientRect(), w = Math.ceil(r.width) || 600, h = Math.ceil(r.height) || 300;
+            text = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" font-family="${attr((kit && kit.font) || 'sans-serif')}"><rect width="${w}" height="${h}" fill="${attr(surfaceOf(target))}"/>${placedSvg(target, 0, 0, w, h, 1)}</svg>`;
+        }
+        const stamp = (typeof formatKstTimestampCompact === 'function') ? formatKstTimestampCompact() : Date.now().toString(36); // eslint-disable-line no-undef
+        const name = panel ? `economy_${E.ui.view || 'overview'}_${stamp}` : `economy_chart_${stamp}`;
+        if (format === 'svg') { const url = URL.createObjectURL(new Blob([text], { type: 'image/svg+xml;charset=utf-8' })); dl(url, `${name}.svg`); setTimeout(() => URL.revokeObjectURL(url), 2000); return; }
+        const scale = (typeof exportScale !== 'undefined' && [1, 2, 3].includes(exportScale)) ? exportScale : 2; // eslint-disable-line no-undef
+        let c;
+        if (kit) c = await kit.rasterize(text, scale, format === 'jpg');
+        else {
+            const img = new Image();
+            img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(text);
+            await img.decode();
+            const doc = new DOMParser().parseFromString(text, 'image/svg+xml').documentElement;
+            c = document.createElement('canvas'); c.width = Number(doc.getAttribute('width')) * scale; c.height = Number(doc.getAttribute('height')) * scale;
+            c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+        }
+        dl(c.toDataURL(format === 'jpg' ? 'image/jpeg' : 'image/png', 0.95), `${name}.${format}`);
     }
 
     // ================= 총선 표시 (그래프 깃발) =================
