@@ -1,6 +1,6 @@
-// ===== Hemicycle 티저 1.6.9 (teaser69) — 보이지 않는 손 "Invisible hand" — 경제 시스템 =====
-// teaser69.html은 main.html에 이 파일(+ 그래프 js/teaser69charts.js)을 얹는다.
-// (저장 공간은 본 게임과 따로 — main.js의 LS_PREFIX 'hemicycleTeaserV2-69:')
+// ===== 1.6.9 — 보이지 않는 손 "Invisible hand" — 경제 시스템 =====
+// 1.6.9 미리보기(예전 teaser69)에서 본 게임으로 옮겨 왔다 — 로고 제작 화면만 빼고 돈다.
+// main.html은 js/vassals.js 다음에 그래프(js/economycharts.js)와 이 파일을 읽는다. 세이브 칸은 economy (1.6.9 미리보기 세이브는 teaser69 칸)
 //
 // 샌드박스 원칙 — 경제는 결과를 강제하지 않고 계산 · 표시 · 제안한다. 모든 수치는 직접 고칠 수 있고, 계산은 날짜가 넘어갈 때만 돈다.
 //   - 메뉴 › 경제: 개요 · 분석 · 통화 · 재정 · 지역 · 시나리오 · 이벤트 · 항목, 오른쪽 시각 탭 "경제"(개요: 반원 계기 + 큰 그래프 / 분석: 전문가 그래프)
@@ -17,7 +17,7 @@
 (function () {
     'use strict';
     const root = document.documentElement;
-    if (root.getAttribute('data-app-mode') !== 'teaser' || !['69'].includes(root.getAttribute('data-teaser') || '69')) return;
+    if (root.getAttribute('data-app-mode') === 'logo') return;
     const C = window.T69C;
     if (!C) return;
 
@@ -2355,14 +2355,14 @@
             // 기록 숫자는 소수 셋째 자리까지 (세이브가 너무 커지지 않게)
             const c = JSON.parse(JSON.stringify({ ...E, _pendingEv: undefined, _cyc: undefined }, (k, v) => (typeof v === 'number' && !Number.isInteger(v) ? Math.round(v * 1000) / 1000 : v)));
             c.ui = { ...E.ui, full: false, zoom: null };
-            st.teaser69 = c;
+            st.economy = c;
         }
         return st;
     };
     const origSet = window.setAppState;
     window.setAppState = function (state) {
         const r = origSet.apply(this, arguments);
-        loadState(state && state.teaser69);
+        loadState(state && (state.economy || state.teaser69));
         document.body.classList.remove('t69-full');
         try { if (typeof currentMainTab !== 'undefined' && currentMainTab === 'economy') renderTab(curSub()); } catch (e) { /* 없음 */ } // eslint-disable-line no-undef
         renderDisp();

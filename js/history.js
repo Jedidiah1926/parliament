@@ -562,7 +562,7 @@
             .sort((a, b) => (seatsOf(b, main) - seatsOf(a, main)) || (tot(b) - tot(a)));
         const ind = ps.filter(p => p.ideologyId === IND_ID);
         const min = Math.max(0, Number(S.wiki.groupMin) || 0);
-        // 공동교섭단체(1.6.9 미리보기 — js/teaser69pol.js)를 이뤄 기준을 넘긴 정당은 비교섭단체가 아니다
+        // 공동교섭단체(1.6.9 — js/politics.js)를 이뤄 기준을 넘긴 정당은 비교섭단체가 아니다
         const jointOf = pid => (window.HemiJointGroups ? window.HemiJointGroups.groupOf(pid, main) : null);
         const minor = ps.filter(p => p.ideologyId !== IND_ID && min > 0 && seatsOf(p, main) < min && !jointOf(p.id));
         const named = ps.filter(p => p.ideologyId !== IND_ID && !minor.includes(p));
@@ -610,7 +610,7 @@
             notes.push(`${list.slice(0, -1).join(', ')}과 ${list[list.length - 1]}은 ${where}에서 ${p.name}${raneun(p.name)} 공동교섭단체로 활동함.`);
             mark.set(p.id, notes.length);
         });
-        // 공동교섭단체(1.6.9 미리보기) — 여러 정당이 함께 교섭단체를 이룸
+        // 공동교섭단체(1.6.9 — js/politics.js) — 여러 정당이 함께 교섭단체를 이룸
         (window.HemiJointGroups ? window.HemiJointGroups.validGroups(d.main) : []).forEach(g => {
             const ms = g.parties.filter(p => [...d.gov, ...d.opp].includes(p));
             if (ms.length < 2) return;

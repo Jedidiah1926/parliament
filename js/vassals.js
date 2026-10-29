@@ -733,7 +733,7 @@
     };
 
     // 한 단위(권역 · 지역구)의 표에 연대를 적용 — votes: { partyId: 표 }
-    // 단일후보 정하는 방식은 후보 단일화와 같은 목록 (js/main.js의 HemiCandMethods — 1.6.9 미리보기가 방식을 더함)
+    // 단일후보 정하는 방식은 후보 단일화와 같은 목록 (js/main.js의 HemiCandMethods — js/politics.js가 방식을 더함)
     const H = () => window.HemiCandMethods;
     // 나눠 맡기(split) 방식 — 개표 전에 단위(권역 · 지역구)들을 몫대로 정해 둔다 (js/popvote.js가 단계마다 부름)
     let splitMaps = {};

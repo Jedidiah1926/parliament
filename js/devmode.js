@@ -1,4 +1,4 @@
-// 개발자 모드 — 설정 › 기타 설정에서 개발자 코드를 넣으면 켜지고, 켜져 있어야 티저(teaser69) 화면을 열 수 있다.
+// 개발자 모드 — 설정 › 기타 설정에서 개발자 코드를 넣으면 켜지고, 켜져 있어야 티저(teaserNN) 화면을 열 수 있다 (지금은 미리보기 화면이 없음 — 1.6.9까지 본 게임에 들어감).
 // 코드는 원문 대신 해시로만 비교한다. 정적 페이지라 진짜 보안은 아니고, 미리보기를 일반 사용자에게 숨기는 용도.
 // main.html(과 그 복사본인 티저 페이지)은 <head>에서 이 파일을 먼저 읽는다 — 티저 페이지(<html data-app-mode="teaser">)는 개발자 모드가 아니면 설정 화면으로 돌려보내고,
 // 본 게임은 튜토리얼의 "미리보기" 과정(1.6.2 ~ 1.6.4) 잠금을 푸는 데 HemiDev.isOn()을 쓴다.
@@ -9,12 +9,8 @@
     'use strict';
     const KEY = 'hemicycleDevMode';
     const CODE_HASH = '22zsze7nlqm';
-    // 경제 미리보기 코드 — 개발자 모드 전체가 아니라 Teaser 1.6.9(경제)만 연다. 1.6.9가 본 게임에 들어가면 쓸 일이 없어짐
-    const ECON_HASH = 'wbfoh8bs26';
-    const ECON_TEASERS = ['69'];
-    const TEASERS = [
-        { id: '69', file: 'teaser69.html', title: 'Teaser 1.6.9', note: '경제 시스템 — 통화 · 재정 · 지역구 경제 · 예산안 · 경제 그래프 · 후보 선출 방법 · 공동교섭단체' },
-    ];
+    // 열 수 있는 티저 — { id, file, title, note } (1.6.9 경제 미리보기와 그 전용 코드는 1.6.9가 본 게임에 들어가며 없앰)
+    const TEASERS = [];
 
     // cyrb53 — 짧은 53비트 문자열 해시
     function hash(str, seed = 1926) {
@@ -35,16 +31,15 @@
     // Steam 데모 빌드(tools/build-demo.js가 window.HEMI_BUILD.demo를 켬)에는 미리보기 화면이 없으므로 개발자 모드도 없음
     const DEMO = !!(window.HEMI_BUILD && window.HEMI_BUILD.demo);
     const isOn = () => !DEMO && safeGet(KEY) === CODE_HASH;
-    // 'full'(개발자 모드) · 'economy'(경제 미리보기 코드) · null
-    const access = () => (DEMO ? null : safeGet(KEY) === CODE_HASH ? 'full' : safeGet(KEY) === ECON_HASH ? 'economy' : null);
+    // 'full'(개발자 모드) · null
+    const access = () => (isOn() ? 'full' : null);
     const anyOn = () => !!access();
-    const canOpen = id => access() === 'full' || (access() === 'economy' && ECON_TEASERS.includes(String(id)));
+    const canOpen = () => access() === 'full';
     // 코드가 맞으면 켜고 true — 대소문자 · 앞뒤 공백은 따지지 않는다 (휴대폰 자동 대문자 대비)
     function unlock(code) {
         if (DEMO) return false;
         const h = hash(String(code || '').trim().toLowerCase());
         if (h === CODE_HASH) return safeSet(KEY, CODE_HASH);
-        if (h === ECON_HASH && access() !== 'full') return safeSet(KEY, ECON_HASH); // 이미 개발자 모드면 좁히지 않음
         return false;
     }
     function lock() { safeDel(KEY); }
@@ -95,13 +90,13 @@
     };
 
     window.HemiDev = { isOn, anyOn, access, canOpen, unlock, lock, demo: DEMO, debug, hiddenGov,
-        // 열 수 있는 티저만 (개발자 모드는 전부, 경제 미리보기 코드는 1.6.9만)
+        // 열 수 있는 티저 (개발자 모드면 전부)
         get teasers() { return DEMO ? [] : TEASERS.filter(t => canOpen(t.id)); } };
 
     // 티저 페이지 잠금 — 개발자 모드가 아니면 설정 › 기타 설정으로
     const root = document.documentElement;
-    if (root.getAttribute('data-app-mode') === 'teaser' && !canOpen(root.getAttribute('data-teaser') || '69')) {
-        const id = root.getAttribute('data-teaser') || '69';
+    if (root.getAttribute('data-app-mode') === 'teaser' && !canOpen(root.getAttribute('data-teaser') || '')) {
+        const id = root.getAttribute('data-teaser') || '';
         root.style.visibility = 'hidden';
         location.replace('settings.html?locked=' + encodeURIComponent(id) + '#etc');
     }
