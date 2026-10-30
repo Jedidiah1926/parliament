@@ -36,7 +36,7 @@
     function relaxFileInputs(root) {
         if (!isMobile()) return;
         (root || document).querySelectorAll('input[type=file][accept]').forEach(inp => {
-            if (/\.(hemi|jsx)\b/i.test(inp.getAttribute('accept'))) inp.removeAttribute('accept');
+            if (/\.(hemi|hemimap|jsx)\b/i.test(inp.getAttribute('accept'))) inp.removeAttribute('accept');
         });
     }
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => relaxFileInputs());

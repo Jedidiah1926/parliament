@@ -5127,6 +5127,72 @@
             }
         }
 
+        // ===== 지역구 프리셋 (.hemimap) — 시나리오(.hemi)에서 땅 정보만 =====
+        // 지역구 지도(따로 쓰는 원의 지도 포함) · 이름 · 약칭 · 원별 의석 수 · 인구 · 순서 · 권역과 권역 배정만 담는다.
+        // 정당에 따라 달라지는 것(성향 · 선거 결과 · 당선자 · 권역 득표)과 시나리오 쪽 내용(미수복 · 종속국 · 경제 · 시민)은 뺀다.
+        // 불러오기는 국가 › 지역구 지도의 업로드 칸에서 (.jsx와 같은 칸) — 정당 · 내각은 그대로 두고 지역구만 바꾼다
+        const DISTRICT_FILE_EXT = '.hemimap';
+        const DISTRICT_FILE_FORMAT = 'hemicycle-districts';
+        function districtPresetHasData() {
+            return (districtMapMode === 'svg' && !!districtSvgMap?.shapes?.length)
+                || ['house','senate','third'].some(c => Object.keys(districtGrid[c] || {}).length > 0);
+        }
+        function districtPresetData() {
+            const st = getAppState();
+            const d = st.election.district, rs = st.election.regionSystem;
+            const nation = document.getElementById('nationNameInput')?.value || '';
+            return {
+                format: DISTRICT_FILE_FORMAT, version: 1,
+                meta: { name: nation, exportedAt: new Date().toISOString(), dataLang: st.meta?.dataLang || null },
+                district: {
+                    mapMode: d.mapMode, view: d.view, grid: d.grid, names: d.names, abbr: d.abbr, population: d.population,
+                    order: d.order, seatCounts: d.seatCounts, svgMap: d.svgMap, svgSplit: d.svgSplit, svgMaps: d.svgMaps,
+                },
+                regions: { regions: rs.regions, districtRegionMap: rs.districtRegionMap },
+            };
+        }
+        async function exportDistrictPreset() {
+            if(!districtPresetHasData()) { showCustomAlert('내보낼 지역구가 없습니다.\n국가 › 지역구 지도에서 지도를 올리거나 맵 프리셋을 고른 뒤 다시 시도하세요.'); return; }
+            const data = districtPresetData();
+            const filename = saveFileName().replace(/^hemicycle-/, 'hemicycle-districts-').replace(new RegExp(SAVE_FILE_EXT.replace('.', '\\.') + '$'), DISTRICT_FILE_EXT);
+            if(!window.HemiFile) { downloadBlob(filename, new Blob([JSON.stringify(data)], { type: 'application/octet-stream' })); return; }
+            try { downloadBlob(filename, await window.HemiFile.encode(data)); }
+            catch(e) { downloadBlob(filename, new Blob([JSON.stringify(data)], { type: 'application/octet-stream' })); }
+        }
+        const isDistrictPreset = obj => !!obj && typeof obj === 'object' && obj.format === DISTRICT_FILE_FORMAT && obj.district && typeof obj.district === 'object';
+        // 지역구 프리셋을 지금 세이브에 — 지금 상태에서 지역구 · 권역 칸만 바꿔 다시 불러온다 (실패하면 원래대로)
+        function applyDistrictPreset(obj) {
+            const d = obj.district;
+            const hasMap = d.mapMode === 'svg' ? Array.isArray(d.svgMap?.shapes) && d.svgMap.shapes.length > 0
+                : ['house','senate','third'].some(c => Object.keys(d.grid?.[c] || {}).length > 0);
+            if(!hasMap) { showCustomAlert('지역구 프리셋에 지역구가 없습니다.'); return false; }
+            const three = (v, empty) => ({ house: empty(), senate: empty(), third: empty(), ...(v && typeof v === 'object' ? v : {}) });
+            const prev = getAppState();
+            const next = JSON.parse(JSON.stringify(prev));
+            next.election.district = {
+                ...next.election.district,
+                mapMode: d.mapMode === 'svg' ? 'svg' : (d.mapMode || next.election.district.mapMode),
+                view: d.view || next.election.district.view,
+                grid: three(d.grid, () => ({})), names: three(d.names, () => ({})), population: three(d.population, () => ({})),
+                order: three(d.order, () => []), abbr: d.abbr || {}, seatCounts: d.seatCounts || {},
+                svgMap: d.svgMap || null, svgSplit: { senate: !!d.svgSplit?.senate, third: !!d.svgSplit?.third },
+                svgMaps: { senate: d.svgMaps?.senate || null, third: d.svgMaps?.third || null },
+                // 정당에 따라 달라지는 지역구 정보는 비운다
+                svgTendency: {}, members: three(null, () => ({})), seatResults: three(null, () => ({})),
+            };
+            const rs = next.election.regionSystem || (next.election.regionSystem = {});
+            rs.regions = three(obj.regions?.regions, () => []);
+            rs.districtRegionMap = three(obj.regions?.districtRegionMap, () => ({}));
+            rs.regionVoteStore = three(null, () => ({}));
+            rs.regionTendency = three(null, () => ({}));
+            try { setAppState(next); }
+            catch(e) { try { setAppState(prev); } catch(e2) { /* 되돌리기 실패 */ } showCustomAlert('지역구 프리셋을 불러오지 못했습니다: 파일이 깨졌거나 형식이 다릅니다.'); return false; }
+            simulate(); refreshUI();
+            const n = d.mapMode === 'svg' ? d.svgMap.shapes.length : Object.keys(d.grid?.house || {}).length;
+            if(typeof showKbdToast === 'function') showKbdToast(`지역구 프리셋 불러옴${obj.meta?.name ? ` · ${obj.meta.name}` : ''} · ${n}개 지역구`);
+            return true;
+        }
+
         function setAppState(state) {
             if(!state || typeof state !== "object") throw new Error("Invalid state");
 
@@ -5405,6 +5471,7 @@
             if(window.HEMI_BUILD && window.HEMI_BUILD.demo) { showCustomAlert('체험판에서는 저장 파일을 불러올 수 없어요. (정식판에서 열립니다)'); return; }
             const text = window.HemiFile ? await window.HemiFile.readText(file) : await file.text();
             const obj = JSON.parse(text);
+            if(isDistrictPreset(obj)) { showCustomAlert('지역구 프리셋(.hemimap) 파일입니다.\n국가 › 지역구 지도의 "지역구 지도 업로드"로 올리면 지금 세이브의 지역구만 바뀝니다.'); return; }
             const parl = obj && (obj.parliament || obj.data);
             if(!parl || !Array.isArray(parl.parties)) throw new Error('not a save file');
             if(localStorageAvailable && loadSaveSlots().filter(s => !s.isAutosave).length >= MAX_SAVE_SLOTS) {
@@ -5676,7 +5743,7 @@
             if(storageFull) { renderSaveCurrentCard(); return; }
             storageFull = true;
             renderSaveCurrentCard();
-            showCustomAlert(`브라우저 저장 공간이 가득 차서 "${name}"을(를) 저장하지 못했습니다.\n안 쓰는 세이브를 지우거나, "파일로 저장"으로 따로 보관한 뒤 지워 주세요.`);
+            showCustomAlert(`브라우저 저장 공간이 가득 차서 "${name}"을(를) 저장하지 못했습니다.\n안 쓰는 세이브를 지우거나, "시나리오 내보내기"로 파일에 따로 보관한 뒤 지워 주세요.`);
         }
         function saveStorageUsageText() {
             // 실제로 저장소에 쓰인 크기 (js/slotstore.js가 세이브를 압축해 둠)
@@ -5833,7 +5900,7 @@
         function renderSaveCurrentCard() {
             const card = document.getElementById('saveCurrentCard');
             if(!card) return;
-            if(!localStorageAvailable) { card.innerHTML = '<div style="color:#666;font-size:0.8rem;">이 환경에서는 브라우저 저장을 사용할 수 없습니다. 아래 "파일로 저장"을 쓰세요.</div>'; return; }
+            if(!localStorageAvailable) { card.innerHTML = '<div style="color:#666;font-size:0.8rem;">이 환경에서는 브라우저 저장을 사용할 수 없습니다. 아래 "시나리오 내보내기"로 파일에 저장하세요.</div>'; return; }
             const all = loadSaveSlots();
             const named = activeSlotId ? all.find(s => s.id === activeSlotId && !s.isAutosave) : null;
             if(!named) { card.innerHTML = '<div style="color:#666;font-size:0.8rem;">열려 있는 세이브가 없습니다. 위 탭 바의 "+"로 새로 만들거나 아래 목록에서 여세요.</div>'; return; }
@@ -11699,21 +11766,35 @@
                 : '기존 지역구 데이터가 모두 새 지도로 대체됩니다.\n(이름·의석 수·성향·당선자 정보 포함) 계속하시겠습니까?',
                 proceed, cancel);
         }
-        function districtSvgUpload(input) {
+        // 지역구 지도 업로드 — 맵 메이커의 .jsx(지도 모양만) 또는 지역구 프리셋 .hemimap(지도 · 이름 · 의석 · 인구 · 권역)
+        async function districtSvgUpload(input) {
             const file = input.files?.[0]; if(!file) return;
-            districtConfirmReplaceMap(() => districtSvgUploadProceed(input, file), () => { input.value = ''; });
+            let text;
+            try { text = window.HemiFile ? await window.HemiFile.readText(file) : await file.text(); }
+            catch(e) { input.value = ''; showCustomAlert('파일을 읽지 못했습니다.'); return; }
+            let obj = null;
+            if(/^\s*[{\[]/.test(text)) { try { obj = JSON.parse(text); } catch(e) { obj = null; } }
+            if(obj) {
+                input.value = '';
+                if(isDistrictPreset(obj)) {
+                    const go = () => { if(applyDistrictPreset(obj)) document.getElementById('districtSvgFileName').textContent = file.name; };
+                    const has = districtPresetHasData();
+                    if(!has) { go(); return; }
+                    showCustomConfirm('지금 지역구가 모두 이 지역구 프리셋으로 바뀝니다 — 지도 · 이름 · 의석 수 · 인구 · 권역 (모든 원).\n정당 · 내각은 그대로이고, 지역구 성향 · 당선자 · 선거 결과는 비워집니다. 계속하시겠습니까?', go, () => {});
+                    return;
+                }
+                if(obj.parliament || obj.data) { showCustomAlert('시나리오 세이브(.hemi) 파일입니다.\n저장 창의 "시나리오 불러오기"로 여세요. 여기서는 지역구 프리셋(.hemimap)과 맵 메이커 지도(.jsx)를 올립니다.'); return; }
+                showCustomAlert('지역구 프리셋(.hemimap)이나 맵 메이커 지도(.jsx)가 아닙니다.');
+                return;
+            }
+            districtConfirmReplaceMap(() => districtSvgUploadProceed(input, file, text), () => { input.value = ''; });
         }
 
-        function districtSvgUploadProceed(input, file) {
-            const reader = new FileReader();
-            reader.onload = e => {
-                const text = e.target.result;
-                const parsed = parseDistrictJsx(text);
-                if(parsed.shapes.length === 0) { showCustomAlert('맵 메이커에서 내보낸 .jsx 파일에서 지역구로 쓸 도형을 찾을 수 없습니다.'); return; }
-                districtApplyMapData(parsed);
-                input.value = '';
-            };
-            reader.readAsText(file);
+        function districtSvgUploadProceed(input, file, text) {
+            const parsed = parseDistrictJsx(text);
+            input.value = '';
+            if(parsed.shapes.length === 0) { showCustomAlert('맵 메이커에서 내보낸 .jsx 파일에서 지역구로 쓸 도형을 찾을 수 없습니다.'); return; }
+            districtApplyMapData(parsed);
         }
 
         // 지도({ viewBox, shapes })를 지금 원의 지역구 지도로 — 업로드 · 맵 프리셋(js/mappresets.js)이 함께 씀
