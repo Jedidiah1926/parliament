@@ -5127,9 +5127,9 @@
             }
         }
 
-        // ===== 지역구 프리셋 (.hemimap) — 시나리오(.hemi)에서 땅 정보만 =====
+        // ===== 지역구 프리셋 (.hemimap) — 종합 프리셋(.hemi)에서 땅 정보만 =====
         // 지역구 지도(따로 쓰는 원의 지도 포함) · 이름 · 약칭 · 원별 의석 수 · 인구 · 순서 · 권역과 권역 배정만 담는다.
-        // 정당에 따라 달라지는 것(성향 · 선거 결과 · 당선자 · 권역 득표)과 시나리오 쪽 내용(미수복 · 종속국 · 경제 · 시민)은 뺀다.
+        // 정당에 따라 달라지는 것(성향 · 선거 결과 · 당선자 · 권역 득표)과 종합 프리셋에만 드는 내용(미수복 · 종속국 · 경제 · 시민)은 뺀다.
         // 불러오기는 국가 › 지역구 지도의 업로드 칸에서 (.jsx와 같은 칸) — 정당 · 내각은 그대로 두고 지역구만 바꾼다
         const DISTRICT_FILE_EXT = '.hemimap';
         const DISTRICT_FILE_FORMAT = 'hemicycle-districts';
@@ -5743,7 +5743,7 @@
             if(storageFull) { renderSaveCurrentCard(); return; }
             storageFull = true;
             renderSaveCurrentCard();
-            showCustomAlert(`브라우저 저장 공간이 가득 차서 "${name}"을(를) 저장하지 못했습니다.\n안 쓰는 세이브를 지우거나, "시나리오 내보내기"로 파일에 따로 보관한 뒤 지워 주세요.`);
+            showCustomAlert(`브라우저 저장 공간이 가득 차서 "${name}"을(를) 저장하지 못했습니다.\n안 쓰는 세이브를 지우거나, "종합 프리셋 내보내기"로 파일에 따로 보관한 뒤 지워 주세요.`);
         }
         function saveStorageUsageText() {
             // 실제로 저장소에 쓰인 크기 (js/slotstore.js가 세이브를 압축해 둠)
@@ -5900,7 +5900,7 @@
         function renderSaveCurrentCard() {
             const card = document.getElementById('saveCurrentCard');
             if(!card) return;
-            if(!localStorageAvailable) { card.innerHTML = '<div style="color:#666;font-size:0.8rem;">이 환경에서는 브라우저 저장을 사용할 수 없습니다. 아래 "시나리오 내보내기"로 파일에 저장하세요.</div>'; return; }
+            if(!localStorageAvailable) { card.innerHTML = '<div style="color:#666;font-size:0.8rem;">이 환경에서는 브라우저 저장을 사용할 수 없습니다. 아래 "종합 프리셋 내보내기"로 파일에 저장하세요.</div>'; return; }
             const all = loadSaveSlots();
             const named = activeSlotId ? all.find(s => s.id === activeSlotId && !s.isAutosave) : null;
             if(!named) { card.innerHTML = '<div style="color:#666;font-size:0.8rem;">열려 있는 세이브가 없습니다. 위 탭 바의 "+"로 새로 만들거나 아래 목록에서 여세요.</div>'; return; }
@@ -11783,7 +11783,7 @@
                     showCustomConfirm('지금 지역구가 모두 이 지역구 프리셋으로 바뀝니다 — 지도 · 이름 · 의석 수 · 인구 · 권역 (모든 원).\n정당 · 내각은 그대로이고, 지역구 성향 · 당선자 · 선거 결과는 비워집니다. 계속하시겠습니까?', go, () => {});
                     return;
                 }
-                if(obj.parliament || obj.data) { showCustomAlert('시나리오 세이브(.hemi) 파일입니다.\n저장 창의 "시나리오 불러오기"로 여세요. 여기서는 지역구 프리셋(.hemimap)과 맵 메이커 지도(.jsx)를 올립니다.'); return; }
+                if(obj.parliament || obj.data) { showCustomAlert('종합 프리셋(.hemi) 파일입니다.\n저장 창의 "종합 프리셋 불러오기"로 여세요. 여기서는 지역구 프리셋(.hemimap)과 맵 메이커 지도(.jsx)를 올립니다.'); return; }
                 showCustomAlert('지역구 프리셋(.hemimap)이나 맵 메이커 지도(.jsx)가 아닙니다.');
                 return;
             }

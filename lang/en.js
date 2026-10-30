@@ -1416,8 +1416,8 @@ window.DnoLangPacks.en = {
    "No saves yet"
   ],
   [
-   "이 환경에서는 브라우저 저장을 사용할 수 없습니다. 아래 \"시나리오 내보내기\"로 파일에 저장하세요.",
-   "Browser storage is not available here. Use \"Export scenario\" below to save to a file."
+   "이 환경에서는 브라우저 저장을 사용할 수 없습니다. 아래 \"종합 프리셋 내보내기\"로 파일에 저장하세요.",
+   "Browser storage is not available here. Use \"Export full preset\" below to save to a file."
   ],
   [
    "국무회의에서 가결 · 부결된 법안 보관함입니다 (상태별로 걸러 보기). 의회가 의결한 법안은 입법 › 표결 기록에 있어요.",
@@ -8365,7 +8365,7 @@ window.DnoLangPacks.en = {
   ["지금 세이브에 저장하고 옮길까요?", "Save them to this save and switch?"],
   ["저장하고 탭을 닫을까요?", "Save and close the tab?"],
   ["저장하고 메인 화면으로 갈까요?", "Save and go to the main screen?"],
-  ["안 쓰는 세이브를 지우거나, \"시나리오 내보내기\"로 파일에 따로 보관한 뒤 지워 주세요.", "Delete saves you no longer use, or keep them with \"Export scenario\" and then delete them."],
+  ["안 쓰는 세이브를 지우거나, \"종합 프리셋 내보내기\"로 파일에 따로 보관한 뒤 지워 주세요.", "Delete saves you no longer use, or keep them with \"Export full preset\" and then delete them."],
   ["불러온 세이브", "Imported save"],
   ["지금 시점을 따로 남겨 두고 싶을 때 쓰세요.", "Use it when you want to keep this moment separately."],
   ["탭 바 오른쪽 끝 \"저장\" 버튼으로 여는 창. 지금 저장(Ctrl+S), 자동저장과 주기, 세이브 목록(즐겨찾기 · 이름 바꾸기 · 삭제), 다른 이름으로 저장(사본), 파일(.hemi)로 저장 · 불러오기(새 탭으로 열림). 자동저장을 끄면 저장하지 않은 변경사항을 ↺로 되돌릴 수 있어요.", "Opened with the \"Save\" button at the right end of the tab bar. Save now (Ctrl+S), autosave and interval, the save list (favorites · rename · delete), save as (a copy), save to / load from file (.hemi — loading opens a new tab). With autosave off, ↺ discards unsaved changes."],
@@ -8774,10 +8774,10 @@ window.DnoLangPacks.en = {
   ["궐석", "Vacant"],
   ["지역구 프리셋(.hemimap) 파일입니다. 세이브를 연 뒤 국가 › 지역구 지도의 \"지역구 지도 업로드\"로 올리면 그 세이브의 지역구만 바뀝니다.", "This is a district preset (.hemimap). Open a save, then upload it with \"Upload district map\" in Country › District map to replace only that save's districts."],
   ["지역구 프리셋(.hemimap) 파일입니다.\n국가 › 지역구 지도의 \"지역구 지도 업로드\"로 올리면 지금 세이브의 지역구만 바뀝니다.", "This is a district preset (.hemimap).\nUpload it with \"Upload district map\" in Country › District map to replace only this save's districts."],
-  ["시나리오 (.hemi)", "Scenario (.hemi)"],
-  ["지금 세이브 전체(정당 · 의회 · 지역구 · 내각 · 경제 …)를 파일 하나로. 시나리오 프리셋으로 나눠 줄 때도 이 파일을 씁니다.", "The whole save (parties · parliament · districts · cabinet · economy …) as one file. Use it to share scenario presets too."],
-  ["시나리오 내보내기", "Export scenario"],
-  ["시나리오 불러오기", "Load scenario"],
+  ["종합 프리셋 (.hemi)", "Full preset (.hemi)"],
+  ["지금 세이브 전체(정당 · 의회 · 지역구 · 내각 · 경제 …)를 파일 하나로. 종합 프리셋으로 나눠 줄 때도 이 파일을 씁니다.", "The whole save (parties · parliament · districts · cabinet · economy …) as one file. Use it to share full presets too."],
+  ["종합 프리셋 내보내기", "Export full preset"],
+  ["종합 프리셋 불러오기", "Load full preset"],
   ["지역구 프리셋 (.hemimap)", "District preset (.hemimap)"],
   ["지역구만 — 지도 · 이름 · 약칭 · 원별 의석 수 · 인구 · 권역. 정당 · 성향 · 선거 결과는 담지 않아요. 불러오기는 국가 › 지역구 지도의 업로드 칸에서.", "Districts only — map · names · abbreviations · seats per chamber · population · regions. Parties, tendencies and election results aren't included. Load it from the upload field in Country › District map."],
   ["지역구만 내보내기", "Export districts only"],
@@ -8788,10 +8788,10 @@ window.DnoLangPacks.en = {
   ["지역구 프리셋을 불러오지 못했습니다: 파일이 깨졌거나 형식이 다릅니다.", "Couldn't load the district preset: the file is damaged or in a different format."],
   ["파일을 읽지 못했습니다.", "Couldn't read the file."],
   ["지금 지역구가 모두 이 지역구 프리셋으로 바뀝니다 — 지도 · 이름 · 의석 수 · 인구 · 권역 (모든 원).\n정당 · 내각은 그대로이고, 지역구 성향 · 당선자 · 선거 결과는 비워집니다. 계속하시겠습니까?", "All current districts will be replaced by this district preset — map · names · seats · population · regions (all chambers).\nParties and cabinet stay; district tendencies, winners and election results are cleared. Continue?"],
-  ["시나리오 세이브(.hemi) 파일입니다.\n저장 창의 \"시나리오 불러오기\"로 여세요. 여기서는 지역구 프리셋(.hemimap)과 맵 메이커 지도(.jsx)를 올립니다.", "This is a scenario save (.hemi).\nOpen it with \"Load scenario\" in the save window. This field takes district presets (.hemimap) and map maker maps (.jsx)."],
+  ["종합 프리셋(.hemi) 파일입니다.\n저장 창의 \"종합 프리셋 불러오기\"로 여세요. 여기서는 지역구 프리셋(.hemimap)과 맵 메이커 지도(.jsx)를 올립니다.", "This is a full preset (.hemi).\nOpen it with \"Load full preset\" in the save window. This field takes district presets (.hemimap) and map maker maps (.jsx)."],
   ["지역구 프리셋(.hemimap)이나 맵 메이커 지도(.jsx)가 아닙니다.", "This isn't a district preset (.hemimap) or a map maker map (.jsx)."],
   ["지역구를 만들고 원별 의석 수 · 인구를 정합니다. 맵 메이커에서 만든 지도(.jsx)를 올리면 실제 지도 모양의 지역구를 쓸 수 있고, 지역구 프리셋(.hemimap)을 올리면 지도 · 이름 · 의석 수 · 인구 · 권역이 한 번에 들어와요 (정당 · 내각은 그대로). (1.5.9까지는 여론 › 지역구)", "Create districts and set seats and population per chamber. Upload a map made in the map maker (.jsx) to use real map shapes, or a district preset (.hemimap) to bring in the map, names, seats, population and regions at once (parties and cabinet stay). (Up to 1.5.9 this was Opinion › Districts)"],
-  ["- 시나리오 · 지역구 프리셋 나누기 — 저장 창의 파일 칸이 \"시나리오 (.hemi)\"(세이브 전체 내보내기 · 불러오기)와 \"지역구 프리셋 (.hemimap)\"으로 나뉨. \"지역구만 내보내기\"는 지역구 지도(따로 쓰는 원의 지도 포함) · 이름 · 약칭 · 원별 의석 수 · 인구 · 권역만 담고(정당 · 성향 · 선거 결과는 빼고), 국가 › 지역구 지도의 업로드 칸(.jsx와 같은 칸)에 올리면 정당 · 내각은 그대로 둔 채 지역구만 바뀜", "- Scenario and district presets are separate — the save window's file section splits into \"Scenario (.hemi)\" (export/load the whole save) and \"District preset (.hemimap)\". \"Export districts only\" saves just the district map (including separate chamber maps), names, abbreviations, seats per chamber, population and regions (no parties, tendencies or results); uploading it in Country › District map (same field as .jsx) replaces only the districts and keeps parties and cabinet"],
+  ["- 종합 프리셋 · 지역구 프리셋 나누기 — 저장 창의 파일 칸이 \"종합 프리셋 (.hemi)\"(세이브 전체 내보내기 · 불러오기)와 \"지역구 프리셋 (.hemimap)\"으로 나뉨. \"지역구만 내보내기\"는 지역구 지도(따로 쓰는 원의 지도 포함) · 이름 · 약칭 · 원별 의석 수 · 인구 · 권역만 담고(정당 · 성향 · 선거 결과는 빼고), 국가 › 지역구 지도의 업로드 칸(.jsx와 같은 칸)에 올리면 정당 · 내각은 그대로 둔 채 지역구만 바뀜", "- Full presets and district presets are separate — the save window's file section splits into \"Full preset (.hemi)\" (export/load the whole save) and \"District preset (.hemimap)\". \"Export districts only\" saves just the district map (including separate chamber maps), names, abbreviations, seats per chamber, population and regions (no parties, tendencies or results); uploading it in Country › District map (same field as .jsx) replaces only the districts and keeps parties and cabinet"],
   ["- 경제 시각 탭 전체 내보내기 — 그래프 밖에서 우클릭하면 지금 보이는 경제 화면 전체(계기 · 신용등급 · 경고 신호 · 금액 카드 · 그래프 · 표)를 PNG · JPG · SVG 한 장으로, 그래프 위에서는 그 그래프만 (글자는 화면 글꼴 그대로)", "- Export the whole economy visual tab — right-click outside a chart to export everything on the economy screen (gauges · credit rating · warning signals · amount cards · charts · tables) as one PNG · JPG · SVG; right-click a chart to export just that chart (text keeps the screen font)"],
   ["비례 득표율 따로 정하기", "Set list vote separately"],
   ["이 원의 비례 의석 · 봉쇄조항은 \"비례(%)\" 값으로 나눕니다 (권역형 비례는 권역 득표). 지역구(성향)와 대선 · 지방선거 · 여론은 지지율을 그대로 써요. 위성정당 예: 모정당 비례 0%, 위성정당 지지율 0% · 비례 N%.", "This chamber's list seats and threshold are allocated by the \"List(%)\" values (regional lists use regional votes). Districts (tendency), presidential and local elections and opinion keep using support. Satellite party example: parent party list 0%, satellite support 0% · list N%."],
