@@ -1,8 +1,7 @@
-// ===== Hemicycle 티저 1.6.8 (teaser68) — 다음 업데이트 기능 미리 써 보기 =====
-// teaser68.html은 main.html을 그대로 복사한 화면에 1.6.7 미리보기 파일과 이 파일을 더 불러 기능을 얹는다.
-// (저장 공간은 본 게임과 따로 — main.js의 LS_PREFIX 'hemicycleTeaserV2-68:')
+// ===== 1.6.8 — 갈라질 수도 없고 분리될 수도 없다 "Indivisibiliter ac inseparabiliter" (종속국 · 종속국 의회 · 합병 · 해방 · 지방선거 연대) =====
+// 1.6.8 미리보기(예전 teaser68)에서 본 게임으로 옮겨 왔다 — 본 게임 · 모든 미리보기 화면에서 돈다 (로고 제작 화면만 빼고).
+// main.html은 js/unrecovered.js 다음에 이 파일을 읽는다.
 //
-// 1.6.8 "갈라질 수도 없고 분리될 수도 없다" 미리보기 — 종속국 · 종속국 의회 · 합병 · 해방
 //   - 국가 › 종속국 탭을 새로 둔다. 종속국을 여러 개 만들고(이름 · 색 · 형태 — 보호국 · 괴뢰국 · 자치령 …),
 //     종속 형태는 기본 목록(보호국 · 보호령 · 동군연합 …)에 더해 직접 추가 · 이름 바꾸기 · 지우기가 된다. "칠하기"로 지도에서 지역구를 차례로 눌러 그 종속국 땅으로 정한다. 종속국 땅은 모든 지도에서 그 나라 색 점무늬로 따로 보이고
 //     (미수복 지역의 빗금과 다르게), 본국의 지역구 선거 · 지방선거 · 국민투표에서 빠진다 (그 지역구 의석은 지역구 의석 수에서 빠짐)
@@ -18,7 +17,7 @@
    switchSubTab, switchMainTab, switchDispTab, districtUpdateModeUI, districtInitCanvas, currentMainTab, currentSubTab, districtOrderSync */
 (function () {
     'use strict';
-    if (document.documentElement.getAttribute('data-app-mode') !== 'teaser' || !['68', '69'].includes(document.documentElement.getAttribute('data-teaser') || '68')) return;
+    if (document.documentElement.getAttribute('data-app-mode') === 'logo') return;
 
     // vassals = [{ id, name, color, kind, parliament: { name, seats, threshold, parties:[{ id, name, color, support, seats }], elections, shares } }]
     // vassalOf = { 지역구 키: 종속국 id }
@@ -72,13 +71,15 @@
         while (list.some(v => v.id === prefix + n)) n++;
         return prefix + n;
     }
+    // 세이브에 든 이름은 번역하지 않으므로, 영어 화면이면 새로 만드는 기본 이름도 영어로
+    const enUI = () => typeof window.getLang === 'function' && window.getLang() === 'en';
     function freshParliament() {
-        return { name: '의회', seats: 60, threshold: 5, parties: [], elections: 0, shares: {} };
+        return { name: enUI() ? 'Parliament' : '의회', seats: 60, threshold: 5, parties: [], elections: 0, shares: {} };
     }
     function addVassal(name) {
         const id = newId('v', vassals.concat(liberated));
         const n = Number(id.slice(1));
-        const v = { id, name: name || `종속국 ${n}`, color: PALETTE[(n - 1) % PALETTE.length], kind: defaultKind(), parliament: freshParliament() };
+        const v = { id, name: name || (enUI() ? `Dependency ${n}` : `종속국 ${n}`), color: PALETTE[(n - 1) % PALETTE.length], kind: defaultKind(), parliament: freshParliament() };
         vassals.push(v);
         return v;
     }
@@ -112,12 +113,12 @@
         brush = null;
     }
 
-    // ---- 저장 · 불러오기: 세이브에 teaser68 칸으로 ----
+    // ---- 저장 · 불러오기: 세이브의 vassals 칸 (1.6.8 미리보기 세이브는 teaser68 칸) ----
     const origGet = window.getAppState;
     window.getAppState = function () {
         const st = origGet.apply(this, arguments);
         if (st && typeof st === 'object') {
-            st.teaser68 = {
+            st.vassals = {
                 vassals: vassals.map(v => ({ ...v, parliament: { ...v.parliament, parties: v.parliament.parties.map(p => ({ ...p })), shares: { ...v.parliament.shares } } })),
                 kinds: kinds.slice(), vassalOf: { ...vassalOf }, liberated: liberated.map(v => ({ ...v })), liberatedOf: { ...liberatedOf },
             };
@@ -127,7 +128,7 @@
     const origSet = window.setAppState;
     window.setAppState = function (state) {
         const r = origSet.apply(this, arguments);
-        loadTeaserState(state && state.teaser68);
+        loadTeaserState(state && (state.vassals || state.teaser68));
         refreshUI();
         return r;
     };
@@ -542,7 +543,7 @@
             act('annex', () => annexVassal(id));
             act('liberate', () => liberateVassal(id));
             act('del', () => removeVassal(id));
-            act('addparty', () => { P.parties.push(cleanParty({ id: newId('p', P.parties), name: `정당 ${P.parties.length + 1}`, support: 10 }, P.parties.length)); renderVassalTab(); });
+            act('addparty', () => { P.parties.push(cleanParty({ id: newId('p', P.parties), name: enUI() ? `Party ${P.parties.length + 1}` : `정당 ${P.parties.length + 1}`, support: 10 }, P.parties.length)); renderVassalTab(); });
             act('import', () => importHomeParties(v));
             act('elect', () => runElection(v));
             card.querySelector('.t68-name').addEventListener('change', e => { v.name = e.target.value.trim() || v.name; refreshUI(); });
@@ -685,4 +686,184 @@
     `;
     document.head.appendChild(style);
     window.addEventListener('load', () => setTimeout(refreshUI, 0));
+})();
+
+// ===== 1.6.8 — 지방선거 연대 · 단일후보 · 예비선거 =====
+// 선거 › 지방선거에서 여러 정당이 연대해 권역 · 지역구마다 단일후보를 낸다 (총선 지역구 단일화와 따로 정함).
+//   단일후보 정하기: "예비선거" — 그 단위의 연대 정당 지지(지역 지지)와 일반 유권자 여론조사(유동층 — 정당의 전국 지지율 × 친화도)를
+//     정한 비율로 섞어 경선 득표율을 내고 1위가 후보 / "지지율 최고" — 그 단위에서 연대 안 지지율이 가장 높은 정당
+//   나머지 연대 정당의 표는 결집률만큼 단일후보에게 가고(예비선거를 치르면 승복 효과로 +5%p), 나머지는 다른 정당으로 흩어진다
+// 개표는 js/popvote.js가 하고, 단위마다 window.HemiLocalAlliance.resolve를 불러 표를 고친다. 연대를 하나라도 정하면
+// 지방선거에는 총선 지역구 단일화(선거 › 후보) 대신 이 연대가 쓰인다.
+/* global parties, elecStore, getAppState, setAppState, escapeHtmlText, showCustomConfirm */
+(function () {
+    'use strict';
+    if (document.documentElement.getAttribute('data-app-mode') === 'logo') return;
+
+    const esc = s => (typeof escapeHtmlText === 'function' ? escapeHtmlText(String(s ?? '')) : String(s ?? ''));
+    const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+    const num = (v, d) => (Number.isFinite(Number(v)) ? Number(v) : d);
+    const partyById = id => parties.find(p => String(p.id) === String(id)) || null;
+    const running = () => parties.filter(p => p.status !== 'banned' && p.status !== 'dissolved');
+    // alliances = [{ id, name, partyIds:[pid], method:'primary'|'top', mix: 유동층(여론조사) 반영 %, transfer: 결집률 % }]
+    let alliances = [];
+    let host = null, hostCh = 'house';
+    const fresh = () => ({ id: 'la' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), name: '', partyIds: [], method: 'primary', mix: 50, transfer: 90 });
+    function clean(list) {
+        return (Array.isArray(list) ? list : []).filter(a => a && a.id).map(a => ({
+            id: String(a.id), name: String(a.name || '').slice(0, 40), partyIds: (Array.isArray(a.partyIds) ? a.partyIds : []).map(String),
+            method: H().has(a.method) ? a.method : 'primary', mix: clamp(num(a.mix, 50), 0, 100), transfer: clamp(num(a.transfer, 90), 0, 100),
+        }));
+    }
+    const members = a => a.partyIds.map(partyById).filter(p => p && p.status !== 'banned' && p.status !== 'dissolved');
+    const label = a => a.name.trim() || members(a).map(p => p.name).join(' · ') || '연대';
+
+    const origGet = window.getAppState;
+    window.getAppState = function () {
+        const st = origGet.apply(this, arguments);
+        if (st && typeof st === 'object') st.localAlliance = { alliances: alliances.map(a => ({ ...a, partyIds: a.partyIds.slice() })) };
+        return st;
+    };
+    const origSet = window.setAppState;
+    window.setAppState = function (state) {
+        const r = origSet.apply(this, arguments);
+        alliances = clean(state && state.localAlliance && state.localAlliance.alliances);
+        render();
+        return r;
+    };
+
+    // 한 단위(권역 · 지역구)의 표에 연대를 적용 — votes: { partyId: 표 }
+    // 단일후보 정하는 방식은 후보 단일화와 같은 목록 (js/main.js의 HemiCandMethods — js/politics.js가 방식을 더함)
+    const H = () => window.HemiCandMethods;
+    // 나눠 맡기(split) 방식 — 개표 전에 단위(권역 · 지역구)들을 몫대로 정해 둔다 (js/popvote.js가 단계마다 부름)
+    let splitMaps = {};
+    function prepare(ch, level, units) {
+        splitMaps = {};
+        const tendOf = (uid, pid) => {
+            const u = units.find(x => String(x.id) === String(uid));
+            return (u ? u.keys : []).reduce((s, k) => s + (typeof districtTendencyFor === 'function' ? (Number(districtTendencyFor(k, ch).values?.[pid]) || 0) : 0), 0);
+        };
+        alliances.forEach(a => {
+            const M = H().find(a.method);
+            const ms = members(a);
+            if (M.kind !== 'split' || ms.length < 2) return;
+            splitMaps[a.id] = H().splitAssign(ms, units.map(u => u.id), M.weights ? M.weights(ms, ch) : ms.map(() => 1), tendOf);
+        });
+    }
+    function resolve(ch, level, unit, votes) {
+        const out = { ...votes };
+        const notes = [];
+        const swingOf = pid => Math.max(0, num(elecStore?.[ch]?.[pid]?.prob, 0)); // 유동층 호감 — 전국 지지율
+        alliances.forEach(a => {
+            const ms = members(a).map(p => String(p.id)).filter(pid => (out[pid] || 0) > 0);
+            if (ms.length < 2) return;
+            const total = ms.reduce((s, pid) => s + out[pid], 0);
+            const M = H().find(a.method);
+            let scores = {};
+            let pick = null;
+            if (M.kind !== 'primary') {
+                ms.forEach(pid => { scores[pid] = out[pid] / total * 100; });
+                if (M.kind === 'split') pick = splitMaps[a.id]?.[unit.id];
+                else if (M.kind === 'pick' && M.pick) {
+                    const p = M.pick(ms.map(partyById), p => out[p.id] || 0, { chamber: ch, key: level === 'district' ? unit.id : null, keys: unit.keys, level });
+                    pick = p ? p.id : null;
+                }
+            } else {
+                const mix = a.mix / 100;
+                const appeal = ms.map(pid => Math.max(0.1, swingOf(pid)) * (0.5 + Math.random())); // 여론조사 — 지지율 × 친화도(0.5 ~ 1.5)
+                const asum = appeal.reduce((s, v) => s + v, 0) || 1;
+                ms.forEach((pid, i) => { scores[pid] = Math.max(0, ((1 - mix) * out[pid] / total + mix * appeal[i] / asum) * 100 + (Math.random() * 6 - 3)); });
+                const ssum = Object.values(scores).reduce((s, v) => s + v, 0) || 1;
+                Object.keys(scores).forEach(pid => { scores[pid] = scores[pid] / ssum * 100; });
+            }
+            const nominee = pick != null && ms.includes(String(pick)) ? String(pick) : ms.slice().sort((x, y) => scores[y] - scores[x])[0];
+            const transfer = clamp(a.transfer + (M.kind === 'primary' ? 5 : 0), 0, 100) / 100;
+            const moving = ms.filter(pid => pid !== nominee).reduce((s, pid) => s + out[pid], 0);
+            ms.forEach(pid => { if (pid !== nominee) delete out[pid]; });
+            out[nominee] += moving * transfer;
+            // 결집하지 않은 표는 연대 밖 정당에게 득표 비율대로
+            const rest = Object.keys(out).filter(pid => !ms.includes(pid));
+            const restSum = rest.reduce((s, pid) => s + (out[pid] || 0), 0);
+            if (restSum > 0) rest.forEach(pid => { out[pid] += moving * (1 - transfer) * out[pid] / restSum; });
+            Object.keys(scores).forEach(pid => { scores[pid] = Math.round(scores[pid] * 10) / 10; });
+            notes.push({ name: label(a), nominee, method: M.kind === 'primary' ? 'primary' : a.method, methodLabel: M.label, scores, transfer: Math.round(transfer * 100) });
+        });
+        return { votes: out, notes };
+    }
+
+    function render(box, ch) {
+        if (box) { host = box; hostCh = ch || hostCh; }
+        if (!host || !host.isConnected) return;
+        const list = running().filter(p => p.ideologyId !== 9999);
+        const used = (a, pid) => alliances.some(x => x !== a && x.partyIds.includes(String(pid)));
+        const swingPct = num(elecStore?.[hostCh]?.__swing__?.prob, 0);
+        host.innerHTML = `
+            <div class="la-box">
+                <div class="la-head"><span>🤝 지방선거 연대 · 단일후보</span></div>
+                <div class="pv-dim pv-small">연대한 정당은 권역 · 지역구마다 한 명만 내보냅니다. 연대를 하나라도 정하면 지방선거에는 총선 지역구 단일화(선거 › 후보) 대신 이 연대가 쓰여요.</div>
+                ${alliances.map(a => `
+                <div class="la-card" data-id="${esc(a.id)}">
+                    <div class="la-row"><input type="text" data-f="name" value="${esc(a.name)}" maxlength="40" placeholder="연대 이름 (비우면 정당 이름을 이어서)">
+                        <button type="button" class="la-del" data-act="del" title="연대 지우기">✕</button></div>
+                    <div class="la-parties">${list.map(p => `<label class="la-party${used(a, p.id) ? ' la-off' : ''}"><input type="checkbox" data-p="${esc(p.id)}" ${a.partyIds.includes(String(p.id)) ? 'checked' : ''} ${used(a, p.id) ? 'disabled' : ''}><span class="la-dot" style="background:${esc(p.color)}"></span>${esc(p.name)}</label>`).join('')}</div>
+                    <div class="la-row la-method">
+                        <span class="pv-dim pv-small">단일후보 정하기</span>
+                        <div class="system-radio-group la-methods">
+                            ${H().list.map(x => `<button type="button" class="system-radio-btn ${H().find(a.method).id === x.id ? 'active' : ''}" data-m="${esc(x.id)}">${esc(x.id === 'primary' ? '예비선거 (경선)' : x.id === 'top' ? '지지율 최고' : x.label)}</button>`).join('')}
+                        </div>
+                    </div>
+                    <div class="pv-grid2">
+                        ${H().find(a.method).kind === 'primary' ? `<div><label class="pv-label">유동층(여론조사) 반영 (%)</label><input type="number" data-f="mix" min="0" max="100" value="${a.mix}"></div>` : '<div></div>'}
+                        <div><label class="pv-label">결집률 (%)</label><input type="number" data-f="transfer" min="0" max="100" value="${a.transfer}"></div>
+                    </div>
+                    <div class="pv-dim pv-small">${(() => { const M = H().find(a.method); return M.kind === 'primary'
+                        ? `경선 득표 = 그 지역의 연대 정당 지지 ${100 - a.mix}% + 일반 유권자 여론조사(유동층 — 전국 지지율 × 친화도) ${a.mix}%. 지금 무당파 ${swingPct}%. 경선을 치르면 승복 효과로 결집률 +5%p.`
+                        : M.kind === 'top' ? '권역 · 지역구마다 연대 안에서 지지율이 가장 높은 정당이 후보가 돼요.' : (M.localHint || H().hint(M, a)); })()} 결집하지 않은 표는 다른 정당으로 흩어져요.${members(a).length < 2 ? ' <b>정당을 두 곳 이상 고르세요.</b>' : ''}</div>
+                </div>`).join('')}
+                <button type="button" class="la-add" data-act="add">+ 연대 추가</button>
+            </div>`;
+        host.querySelector('[data-act="add"]').onclick = () => { alliances.push(fresh()); render(); };
+        host.querySelectorAll('.la-card').forEach(card => {
+            const a = alliances.find(x => x.id === card.dataset.id);
+            if (!a) return;
+            card.querySelector('[data-act="del"]').onclick = () => { alliances = alliances.filter(x => x !== a); render(); };
+            card.querySelector('[data-f="name"]').oninput = e => { a.name = e.target.value; };
+            card.querySelectorAll('[data-p]').forEach(c => { c.onchange = () => {
+                const pid = String(c.dataset.p);
+                a.partyIds = c.checked ? [...new Set([...a.partyIds, pid])] : a.partyIds.filter(x => x !== pid);
+                render();
+            }; });
+            card.querySelectorAll('[data-m]').forEach(b => { b.onclick = () => { a.method = b.dataset.m; render(); }; });
+            ['mix', 'transfer'].forEach(f => { const inp = card.querySelector(`[data-f="${f}"]`); if (inp) inp.onchange = () => { a[f] = clamp(num(inp.value, a[f]), 0, 100); render(); }; });
+        });
+    }
+
+    window.HemiLocalAlliance = {
+        active: () => alliances.some(a => members(a).length >= 2),
+        resolve, render, prepare,
+        get alliances() { return alliances; },
+    };
+
+    const style = document.createElement('style');
+    style.textContent = `
+        .la-box { border: 1px dashed #444; padding: 10px; margin: 10px 0; }
+        .la-head { display: flex; align-items: center; gap: 8px; color: var(--tno-neon); font-size: .9rem; margin-bottom: 4px; }
+        .la-badge { font-size: .65rem; padding: 1px 6px; border: 1px solid currentColor; opacity: .7; }
+        .la-card { border: 1px solid #333; padding: 8px; margin: 8px 0; }
+        .la-row { display: flex; align-items: center; gap: 6px; margin: 4px 0; }
+        .la-row input[type=text] { flex: 1; min-width: 0; }
+        .la-method { flex-direction: column; align-items: stretch; }
+        .la-methods { flex-wrap: wrap; }
+        .la-parties { display: flex; flex-wrap: wrap; gap: 4px 10px; margin: 6px 0; font-size: .82rem; }
+        .la-party { display: inline-flex; align-items: center; gap: 4px; cursor: pointer; }
+        .la-party.la-off { opacity: .4; cursor: not-allowed; }
+        .la-dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+        .la-del, .la-add { cursor: pointer; font-family: inherit; background: transparent; border: 1px solid #555; color: #ccc; padding: 4px 10px; font-size: .8rem; }
+        .la-add { width: 100%; margin-top: 4px; }
+        html[data-theme-family="modern"] .la-box { border: 1px dashed var(--m-border-strong); border-radius: 12px; }
+        html[data-theme-family="modern"] .la-head { color: var(--m-text); font-weight: 600; }
+        html[data-theme-family="modern"] .la-card { border: 1px solid var(--m-border); border-radius: 10px; background: var(--m-surface-2); }
+        html[data-theme-family="modern"] .la-del, html[data-theme-family="modern"] .la-add { border: 1px solid var(--m-border-strong); border-radius: 8px; color: var(--m-text); }
+    `;
+    document.head.appendChild(style);
 })();

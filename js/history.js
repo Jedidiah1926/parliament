@@ -247,7 +247,9 @@
                     gov ? '집권 세력' : '']) }/>`;
                 const dTxt = d ? ` ${d > 0 ? '▲' : '▼'}${Math.abs(d)}` : '';
                 const opts = [`${p.name} ${n}${dTxt}`, `${p.name} ${n}`, `${n}${dTxt}`, String(n)];
-                const txt = opts.find(t => t.length * 6.6 + 8 < w) || '';
+                // 글자 폭(11px 글꼴): 한글 · 한자는 한 칸, 나머지는 약 0.6칸 — 한글을 0.6칸으로 재면 이름이 옆 막대로 넘쳤다
+                const segW = t => [...t].reduce((a, c) => a + (/[\u1100-\uffff]/.test(c) ? 11 : 6.6), 0);
+                const txt = opts.find(t => segW(t) + 8 < w) || '';
                 if (txt) bars += `<text x="${x0 + w / 2}" y="${y + BAR / 2 + 4}" class="t65-h-seg" text-anchor="middle">${esc(txt)}</text>`;
             });
             const govNames = sn.parties.filter(p => ruling.has(String(p.id))).map(p => p.name);
@@ -303,10 +305,24 @@
             if (lane < 0) { lane = lanes.findIndex((_, l) => free(l, first, last)); if (lane < 0) { lanes.push([]); lane = lanes.length - 1; } }
             lanes[lane].push([first, last]); laneOf[id] = lane;
         });
+        // 줄 폭 — 이름표(창당 · 당명 변경 자리의 이름)가 다음 줄을 침범하지 않게 가장 긴 이름에 맞춘다 (최대 200px).
+        // 정당이 많아 화면보다 넓어지면 가로로 스크롤하고, 그래도 긴 이름은 줄 폭에 맞춰 "…"로 줄인다 (전체 이름은 마우스를 올리거나 눌러서)
+        const textW = (t, px) => [...String(t)].reduce((w, c) => w + (/[\u1100-\uffff]/.test(c) ? px : px * 0.6), 0);
+        const labelNames = id => { const out = []; let prev = null; points.forEach(pt => { const p = pt.alive.get(id); if (p && (!prev || prev.name !== p.name)) out.push(p.name); if (p) prev = p; }); return out; };
+        const longest = Math.max(60, ...ids.map(id => Math.max(0, ...labelNames(id).map(n => textW(n, 12)))));
         const W0 = Math.max(320, Math.round(width || 600));
         const LW = Math.min(120, Math.round(W0 * 0.22)), X0 = LW + 14;
-        const laneW = Math.max(74, Math.min(130, (W0 - X0 - 10) / Math.max(1, lanes.length)));
+        // 화면에 다 들어가면 그 폭(최대 260px), 아니면 이름 폭(최대 200px)까지 줄이되 124px 밑으로는 줄이지 않고 가로 스크롤
+        const fitLane = (W0 - X0 - 10) / Math.max(1, lanes.length), wantLane = Math.min(200, longest + 30);
+        const laneW = fitLane >= wantLane ? Math.min(260, fitLane) : Math.max(124, fitLane);
         const W = Math.max(W0, X0 + laneW * lanes.length + 10);
+        const fit = (t, px, room) => {
+            if (textW(t, px) <= room) return t;
+            const cs = [...String(t)];
+            while (cs.length > 1 && textW(cs.join('') + '…', px) > room) cs.pop();
+            return cs.join('') + '…';
+        };
+        const nameRoom = laneW - 18;
         const ROW = 70, TOP = 26, BW = 10;
         const xOf = id => X0 + laneOf[id] * laneW + 14;
         const yOf = k => TOP + k * ROW;
@@ -336,9 +352,11 @@
                 const prev = k > first ? points[k - 1].alive.get(id) : null;
                 const isStart = k === first, renamed = prev && prev.name !== p.name;
                 if (!isStart && !renamed) continue;
-                nodes += `<circle cx="${x}" cy="${yOf(k)}" r="${isStart ? 7 : 6}" fill="${esc(p.color)}" class="t65-l-node"/>`;
                 const sub = isStart ? ((S.succession || []).some(l => sameId(l.to, id) && linkK(l) + 1 === k) ? '승계' : '창당') : `← ${prev.name}`;
-                nodes += `<text x="${x + 11}" y="${yOf(k) - 2}" class="t65-l-name">${esc(p.name)}</text><text x="${x + 11}" y="${yOf(k) + 11}" class="t65-h-sub">${esc(sub)}${p.seats ? ` · ${p.seats}석` : ''}</text>`;
+                const subTxt = `${sub}${p.seats ? ` · ${p.seats}석` : ''}`;
+                nodes += `<g class="t65-h-hit"${infoTag(p.name, [`${esc(sub)} · ${esc(points[k].label || points[k].date || `#${k + 1}`)}`, p.seats ? `의석: ${p.seats}석` : '', renamed ? `당명 변경: ${esc(prev.name)} → ${esc(p.name)}` : ''])}><title>${esc(p.name)}</title>`
+                    + `<circle cx="${x}" cy="${yOf(k)}" r="${isStart ? 7 : 6}" fill="${esc(p.color)}" class="t65-l-node"/>`
+                    + `<text x="${x + 11}" y="${yOf(k) - 2}" class="t65-l-name">${esc(fit(p.name, 12, nameRoom))}</text><text x="${x + 11}" y="${yOf(k) + 11}" class="t65-h-sub">${esc(fit(subTxt, 10, nameRoom))}</text></g>`;
             }
             // 끝: 승계로 합쳐지거나, 마지막 기록 전에 사라졌으면 소멸
             const outs = (S.succession || []).filter(l => sameId(l.from, id) && life[String(l.to)]);
@@ -360,7 +378,9 @@
                 nodes += `<text x="${x}" y="${yOf(last) + 18}" class="t65-l-end" text-anchor="middle">✕</text><text x="${x + 11}" y="${yOf(last) + 24}" class="t65-h-sub">소멸</text>`;
             }
         });
-        return `<div class="t65-legend t65-h-legend"><span class="t65-dim">● 창당 · 당명 변경 / 곡선으로 합쳐짐 = 승계 / ✕ 소멸 · 줄을 누르면 자세히</span></div>
+        // 범례 — 정당마다 마지막 이름 · 색 (도표의 이름표가 줄어들어도 여기서 전체 이름을 본다)
+        const legend = ids.map(id => { let p = null; points.forEach(pt => { p = pt.alive.get(id) || p; }); return p ? `<span>${dotHtml(p.color)}${esc(p.name)}</span>` : ''; }).join('');
+        return `<div class="t65-legend t65-h-legend">${legend}<span class="t65-dim">● 창당 · 당명 변경 / 곡선으로 합쳐짐 = 승계 / ✕ 소멸 · 줄 · 이름을 누르면 자세히</span></div>
             <div class="t65-l-scroll"><svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" class="t65-hist" role="img" aria-label="당 변화"><defs>${defs.join('')}</defs>${rows}${links}${lines}${nodes}</svg></div>`;
     }
 
@@ -542,7 +562,9 @@
             .sort((a, b) => (seatsOf(b, main) - seatsOf(a, main)) || (tot(b) - tot(a)));
         const ind = ps.filter(p => p.ideologyId === IND_ID);
         const min = Math.max(0, Number(S.wiki.groupMin) || 0);
-        const minor = ps.filter(p => p.ideologyId !== IND_ID && min > 0 && seatsOf(p, main) < min);
+        // 공동교섭단체(1.6.9 — js/politics.js)를 이뤄 기준을 넘긴 정당은 비교섭단체가 아니다
+        const jointOf = pid => (window.HemiJointGroups ? window.HemiJointGroups.groupOf(pid, main) : null);
+        const minor = ps.filter(p => p.ideologyId !== IND_ID && min > 0 && seatsOf(p, main) < min && !jointOf(p.id));
         const named = ps.filter(p => p.ideologyId !== IND_ID && !minor.includes(p));
         const quotaOf = ch => { const el = document.getElementById(ch === 'senate' ? 'senateTotal' : ch === 'third' ? 'thirdTotal' : 'houseTotal'); return el ? (parseInt(el.value, 10) || 0) : 0; };
         const pmn = pmName();
@@ -587,6 +609,14 @@
             const list = fs.map(x => `${x.f.name}(${seatTxt(x.s)})`);
             notes.push(`${list.slice(0, -1).join(', ')}과 ${list[list.length - 1]}은 ${where}에서 ${p.name}${raneun(p.name)} 공동교섭단체로 활동함.`);
             mark.set(p.id, notes.length);
+        });
+        // 공동교섭단체(1.6.9 — js/politics.js) — 여러 정당이 함께 교섭단체를 이룸
+        (window.HemiJointGroups ? window.HemiJointGroups.validGroups(d.main) : []).forEach(g => {
+            const ms = g.parties.filter(p => [...d.gov, ...d.opp].includes(p));
+            if (ms.length < 2) return;
+            const list = ms.map(p => `${p.name}(${seatTxt(d.seats(p))})`);
+            notes.push(`${list.slice(0, -1).join(', ')}과 ${list[list.length - 1]}은 ${where}에서 ${g.name}${raneun(g.name)} 공동교섭단체로 활동함.`);
+            ms.forEach(p => { if (!mark.has(p.id)) mark.set(p.id, notes.length); });
         });
         const small = [...d.minor, ...d.ind];
         let smallMark = 0;
@@ -1164,11 +1194,21 @@
     // 위키 틀 · 국가 순위는 HTML이라 <foreignObject>로 담으면 Chromium이 캔버스를 오염시켜 PNG로 못 뽑으므로,
     // 같은 모양을 SVG 도형으로 다시 그린다 (국기 · 로고는 data: 그림이라 SVG 안에서도 그려짐)
     const X = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-    const FONT_MODERN = "Pretendard, 'Noto Sans KR', 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif";
+    // 화면과 같은 글꼴 — 모던 테마는 Pretendard Variable(css/modern.css의 이름), 네온 테마는 둥근모
+    const FONT_MODERN = "'Pretendard Variable', Pretendard, 'Noto Sans KR', 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif";
     const FONT_NEON = "NeoDunggeunmo, 'Noto Sans KR', 'Malgun Gothic', monospace";
     let FONT = FONT_MODERN;
-    // 둥근모는 SVG 파일에서만 — PNG · JPG는 그림으로 굽는 동안 웹 글꼴을 못 써서 글자 폭이 어긋나므로 기본 고딕
-    const pickFont = format => { FONT = (format === 'svg' && typeof isModernTheme === 'function' && !isModernTheme()) ? FONT_NEON : FONT_MODERN; };
+    // PNG · JPG도 화면 글꼴로 — SVG를 그림으로 구우면 웹 글꼴을 못 쓰므로, 글자만 빼고 구운 뒤 캔버스에 글자를 따로 쓴다 (rasterize 아래)
+    const pickFont = () => { FONT = (typeof isModernTheme === 'function' && !isModernTheme()) ? FONT_NEON : FONT_MODERN; };
+    // 글자 폭을 재기 전에 글꼴을 받아 둔다 (안 받아진 채로 재면 기본 글꼴 폭이 됨)
+    async function loadExportFont() {
+        try {
+            await Promise.race([
+                Promise.all(['400', '700', '800'].map(w => document.fonts.load(`${w} 16px ${FONT}`, '가나다ABC123'))),
+                new Promise(ok => setTimeout(ok, 3000)),
+            ]);
+        } catch (e) { /* 못 받으면 기본 글꼴로 */ }
+    }
     const measureCtx = document.createElement('canvas').getContext('2d');
     const textW = (t, size, weight = 400) => { measureCtx.font = `${weight} ${size}px ${FONT}`; return measureCtx.measureText(String(t)).width; };
     // 글자를 폭에 맞춰 여러 줄로 (한글은 글자 단위로 끊어도 자연스러움)
@@ -1397,7 +1437,61 @@
         return null;
     }
     function dl(href, filename) { const a = document.createElement('a'); a.href = href; a.download = filename; document.body.appendChild(a); a.click(); a.remove(); }
+    // SVG를 PNG · JPG로 — 글자(<text>)를 빼고 도형 · 그림만 구운 뒤, 같은 자리에 캔버스로 글자를 쓴다.
+    // (SVG를 <img>로 구우면 그 안에서는 페이지의 웹 글꼴을 쓸 수 없어 기본 글꼴이 되지만, 캔버스는 페이지 글꼴을 쓴다)
+    async function rasterize(svgMarkup, scale, jpg) {
+        const holder = document.createElement('div');
+        holder.style.cssText = 'position:fixed;left:-100000px;top:0;pointer-events:none;'; // 화면 밖 — 글자 자리 · 계산된 스타일만 읽는다
+        holder.innerHTML = svgMarkup;
+        document.body.appendChild(holder);
+        const root = holder.querySelector('svg');
+        const W = Number(root.getAttribute('width')) || root.getBoundingClientRect().width;
+        const H = Number(root.getAttribute('height')) || root.getBoundingClientRect().height;
+        const rr = root.getBoundingClientRect();
+        const kx = W / (rr.width || W), ky = H / (rr.height || H);
+        const texts = [...root.querySelectorAll('text')].map(t => {
+            const cs = getComputedStyle(t);
+            const m = t.getScreenCTM();
+            const p = root.createSVGPoint();
+            p.x = parseFloat(t.getAttribute('x')) || 0; p.y = parseFloat(t.getAttribute('y')) || 0;
+            const q = m ? p.matrixTransform(m) : p;
+            const k = m ? Math.hypot(m.a, m.b) : 1;
+            let opacity = 1;
+            for (let e = t; e && e !== holder; e = e.parentElement) opacity *= parseFloat(getComputedStyle(e).opacity);
+            return cs.visibility === 'hidden' || cs.display === 'none' ? null : {
+                x: (q.x - rr.left) * kx, y: (q.y - rr.top) * ky, text: t.textContent, size: (parseFloat(cs.fontSize) || 16) * k, weight: cs.fontWeight || '400',
+                fill: cs.fill, fillOpacity: Number(cs.fillOpacity || 1) * opacity, anchor: cs.textAnchor, spacing: parseFloat(cs.letterSpacing) || 0,
+                stroke: cs.stroke, strokeWidth: parseFloat(cs.strokeWidth) || 0, strokeOpacity: Number(cs.strokeOpacity || 1) * opacity, strokeFirst: /^stroke/.test(cs.paintOrder || ''),
+            };
+        }).filter(Boolean);
+        root.querySelectorAll('text').forEach(t => t.remove());
+        const bare = new XMLSerializer().serializeToString(root);
+        holder.remove();
+        const img = new Image();
+        await new Promise((ok, bad) => { img.onload = ok; img.onerror = () => bad(new Error('그림을 만들지 못했습니다')); img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(bare); });
+        const c = document.createElement('canvas');
+        c.width = Math.round(W * scale); c.height = Math.round(H * scale);
+        const ctx = c.getContext('2d');
+        if (jpg) { ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height); }
+        ctx.drawImage(img, 0, 0, c.width, c.height);
+        ctx.scale(scale, scale);
+        ctx.textBaseline = 'alphabetic';
+        texts.forEach(t => {
+            if (!t.text) return;
+            ctx.font = `${t.weight} ${t.size}px ${FONT}`;
+            ctx.textAlign = t.anchor === 'middle' ? 'center' : t.anchor === 'end' ? 'right' : 'left';
+            try { ctx.letterSpacing = t.spacing ? `${t.spacing}px` : '0px'; } catch (e) { /* 지원 안 함 */ }
+            const paintStroke = () => { if (t.stroke && t.stroke !== 'none' && t.strokeWidth > 0) { ctx.globalAlpha = t.strokeOpacity; ctx.strokeStyle = t.stroke; ctx.lineWidth = t.strokeWidth; ctx.lineJoin = 'round'; ctx.strokeText(t.text, t.x, t.y); } };
+            if (t.strokeFirst) paintStroke();
+            if (t.fill && t.fill !== 'none') { ctx.globalAlpha = t.fillOpacity; ctx.fillStyle = t.fill; ctx.fillText(t.text, t.x, t.y); }
+            if (!t.strokeFirst) paintStroke();
+            ctx.globalAlpha = 1;
+        });
+        return c;
+    }
     async function t65Export(el, format) {
+        pickFont(format);
+        await loadExportFont();
         const m = t65ExportMarkup(el, format); if (!m) return;
         const stamp = (typeof formatKstTimestampCompact === 'function') ? formatKstTimestampCompact() : Date.now();
         const base = `${m.name}_${stamp}`;
@@ -1407,13 +1501,7 @@
             return;
         }
         const scale = (typeof exportScale !== 'undefined' && [1, 2, 3].includes(exportScale)) ? exportScale : 2;
-        const img = new Image();
-        await new Promise((ok, bad) => { img.onload = ok; img.onerror = () => bad(new Error('그림을 만들지 못했습니다')); img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(m.svg); });
-        const c = document.createElement('canvas');
-        c.width = Math.round(img.width * scale); c.height = Math.round(img.height * scale);
-        const ctx = c.getContext('2d');
-        if (format === 'jpg') { ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height); }
-        ctx.drawImage(img, 0, 0, c.width, c.height);
+        const c = await rasterize(m.svg, scale, format === 'jpg');
         dl(c.toDataURL(format === 'jpg' ? 'image/jpeg' : 'image/png', 0.95), `${base}.${format}`);
     }
     // 우클릭: 이 세 화면이면 본 화면의 "내보내기..." 메뉴를 띄우되 대상을 우리 것으로 (본 화면의 svg 우클릭 처리보다 먼저)
@@ -1449,7 +1537,9 @@
         };
     }
 
-    window.T65 = { get timeline() { return S.timeline; }, get ranking() { return S.ranking; }, record: (label) => { const n = record(label || '', 'manual', false); renderTimeline(); return n; } };
+    // 다른 화면(경제 — js/economy.js)도 같은 방식으로 PNG · JPG를 굽게 — 화면 글꼴로 글자를 따로 씀
+    window.HemiExportKit = { rasterize, async prepareFont() { pickFont(); await loadExportFont(); }, get font() { return FONT; } };
+    window.T65 = { get timeline() { return S.timeline; }, get ranking() { return S.ranking; }, get wiki() { return S.wiki; }, record: (label) => { const n = record(label || '', 'manual', false); renderTimeline(); return n; } };
 
     const style = document.createElement('style');
     style.textContent = `

@@ -1,11 +1,11 @@
-// ===== Hemicycle 티저 1.6.9 — 경제 그래프 (js/teaser69.js가 씀) =====
+// ===== 1.6.9 — 경제 그래프 (js/economy.js가 씀) =====
 // SVG로 그리는 작은 그래프 묶음. 색은 .t69-viz의 CSS 변수(라이트 · 다크 각각 고른 색)로만 칠하고,
 // 내보낼 때는 변수를 실제 색으로 바꿔 담는다. 규칙: 축은 하나(두 눈금 겹치지 않음), 색은 지표마다 고정,
 // 상태(안전 · 경고 · 위험 · 위기)는 상태색 + 글자, 마우스를 올리면 십자선 · 값, 표로도 볼 수 있게.
 //   T69C.gauge · lines · panels · stackBars · budgetHemi · budgetBars · sankey · scatter · tornado · trajectory · table
 (function () {
     'use strict';
-    if (document.documentElement.getAttribute('data-app-mode') !== 'teaser' || !['69'].includes(document.documentElement.getAttribute('data-teaser') || '69')) return;
+    if (document.documentElement.getAttribute('data-app-mode') === 'logo') return;
 
     const NS = 'http://www.w3.org/2000/svg';
     const S = (tag, attrs, parent) => {
@@ -690,7 +690,7 @@
         const drop = [];
         src.forEach((el, k) => {
             const cs = getComputedStyle(el), d = dst[k];
-            ['fill', 'stroke', 'opacity', 'stroke-width', 'stroke-dasharray', 'font-size', 'font-family', 'font-weight'].forEach(p => {
+            ['fill', 'stroke', 'opacity', 'stroke-width', 'stroke-dasharray', 'stroke-linejoin', 'paint-order', 'font-size', 'font-family', 'font-weight'].forEach(p => {
                 const v = cs.getPropertyValue(p);
                 if (v && v !== 'normal' && !(p === 'stroke-dasharray' && v === 'none')) d.setAttribute(p, v);
             });

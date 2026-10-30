@@ -96,7 +96,7 @@
     const devOn = () => !!(window.HemiDev && window.HemiDev.isOn());
     const DEMO_BUILD = () => !!(window.HEMI_BUILD && window.HEMI_BUILD.demo); // Steam 데모 빌드 (맵 메이커 대신 맵 프리셋)
     // 미리보기 화면마다 담긴 기능 버전 (teaser6N은 1.6.1 ~ 1.6.N)
-    const PAGE_HAS = { '67': ['1.6.1', '1.6.2', '1.6.3', '1.6.4', '1.6.5', '1.6.6', '1.6.7'], '68': ['1.6.1', '1.6.2', '1.6.3', '1.6.4', '1.6.5', '1.6.6', '1.6.7', '1.6.8'], '69': ['1.6.1', '1.6.2', '1.6.3', '1.6.4', '1.6.5', '1.6.6', '1.6.7', '1.6.8', '1.6.9'] };
+    const PAGE_HAS = {}; // 지금은 미리보기 화면이 없다 (1.6.9까지 본 게임에 들어감)
     const PREVIEW_PAGES = Object.keys(PAGE_HAS);
     const previewPageFor = l => (l && /^1\.6\.[1-9]$/.test(l.locked) ? '6' + l.locked.slice(-1) : '69'); // 그 기능이 처음 들어간 버전의 Teaser 화면
     const curPage = () => document.documentElement.getAttribute('data-teaser');
@@ -683,7 +683,7 @@
             ],
         },
         {
-            id: 'unrecovered', group: 'detail', locked: '1.6.7',
+            id: 'unrecovered', group: 'detail',
             title: '미수복 지역과 영토 통일',
             summary: '미수복 지역 종류 · 칠하기 · 선거에서 빠짐 · 종류별 통합 · 영토 통일',
             steps: [
@@ -725,7 +725,7 @@
             ],
         },
         {
-            id: 'economy', group: 'detail', locked: '1.6.9',
+            id: 'economy', group: 'detail',
             title: '경제',
             summary: '날짜를 따라 도는 경제 · 신용등급과 경고 신호 · 계기판과 금액 · 추이 · 통화 · 재정과 예산안 · 이벤트 · 전문가 분석 · 지역 · 시나리오',
             steps: [
@@ -800,7 +800,7 @@
             ],
         },
         {
-            id: 'vassals', group: 'detail', locked: '1.6.8',
+            id: 'vassals', group: 'detail',
             title: '종속국',
             summary: '종속국 만들기 · 칠하기 · 종속국 의회와 선거 · 합병 · 해방',
             steps: [

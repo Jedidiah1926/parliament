@@ -7,6 +7,8 @@
 //       공산주의 혁명 성공 → 숨겨진 정부 형태 "당-국가 체제": 혁명 정당 일당 집권, 다른 정당은 활동 금지 또는 우당(통일전선),
 //         총서기 겸 국가주석 · 총리, 의회는 최고인민회의(의석은 혁명 정당 85% · 우당이 나머지 → 거의 만장일치), 선거는 단일 후보 찬반 투표
 //       민주 혁명 성공 → 군정 · 당-국가 체제 · 계엄 붕괴, 막혔던 정당 복권, 새 헌법(법령 › 헌법), 새 총선 안내
+//       혁명 연합(1.6.7): 여러 정당이 함께 일으키면 연합 정당의 지지율 · 지역도 성공 확률에 더한다. 공산주의 혁명이 성공하면
+//         "당-국가 체제"(연합 정당은 우당) 또는 "평의회 체제"(연합 정당끼리 경쟁 선거로 정권이 바뀜, 연합 밖 정당은 활동 금지)를 고른다
 //       둘 다: 혁명 뒤 국호 · 국기를 바꿀 수 있다 / 실패: 혁명 정당 활동 금지 · 지지율 절반, 정부가 계엄령 선포
 //   - 선거인단 시스템 (선거 › 선거 제도에서 선거인단제를 고르면): 선거인 단위(권역 · 지역구), 선거인 수(인구 비례 · 의석 수 + 가산 · 직접 입력),
 //     승자독식 · 비례 배분, 과반 기준과 과반 미달 시(의회 결정 · 최다 득표), 신의 없는 선거인(%), 결과 지도
@@ -28,12 +30,26 @@
     const T62 = () => window.T62 || null;
     const isInd = p => p && p.ideologyId === 9999;
     const activeParty = p => p && p.status !== 'banned' && p.status !== 'dissolved' && !isInd(p);
+    // 혁명은 활동 금지 · 해산된 정당도 일으킬 수 있다 (지하에서) — 성공하면 복권 · 재건
+    const canRevolt = p => p && !isInd(p);
+    const underground = p => p && (p.status === 'banned' || p.status === 'dissolved');
+    const pname = p => (p ? (p.status === 'dissolved' ? (p._nameBeforeDissolution || p.name) : p.name) : '');
+    const stateTag = p => (p.status === 'dissolved' ? ' (해산)' : p.status === 'banned' ? ' (활동 금지)' : '');
+    // 활동 금지 · 해산된 혁명 정당을 되살린다 (해산이면 원래 이름 · 약칭도 — main.js updatePartyStatus)
+    function revive(p) {
+        if (!underground(p)) return false;
+        const i = parties.indexOf(p);
+        if (typeof updatePartyStatus === 'function' && i >= 0) updatePartyStatus(i, 'active'); else p.status = 'active';
+        S.revBanned = (S.revBanned || []).filter(id => String(id) !== String(p.id));
+        return true;
+    }
     const support = pid => Math.max(0, Number(elecStore?.house?.[pid]?.prob) || 0);
     const isGovParty = p => !!p && (p.isRuling || coalitions.some(c => c.isRuling && (c.members || []).some(id => String(id) === String(p.id))));
     const DEFAULT_POP = 100000;
 
     // ---- 상태 (세이브의 revolution 칸 — 1.6.3 미리보기 세이브는 teaser63 칸) ----
-    //   partyState: null | { partyId, allies:[pid], banned:[pid], prevNames:{house,senate,third}, since }
+    //   partyState: null | { partyId, mode:'vanguard'|'council', allies:[pid], bloc:[pid], banned:[pid], prevNames:{house,senate,third}, since }
+    //     mode 'vanguard' = 당-국가 체제(일당 + 우당), 'council' = 평의회 체제(혁명 연합 bloc이 경쟁 선거) — 예전 세이브엔 mode가 없음(= vanguard)
     //   revBanned: [pid] — 혁명 뒤 활동 금지된 정당 (민주 혁명 때 복권)
     //   log: [{ id, at, date, kind, party, chance, success, effects }]
     //   ec: 선거인단 설정
@@ -42,7 +58,13 @@
         return { partyState: null, revBanned: [], log: [],
             ec: { unit: 'region', electors: 'pop', total: 538, bonus: 2, manual: {}, alloc: 'wta', noMajority: 'parliament', faithless: 0 } };
     }
-    let ui = { kind: 'democratic', partyId: '', allies: {}, newName: '', newFlag: '', lastId: null };
+    let ui = { kind: 'democratic', partyId: '', allies: {}, coalition: {}, regime: 'vanguard', newName: '', newFlag: '', lastId: null };
+    const isCouncil = () => !!(S.partyState && S.partyState.mode === 'council');
+    // 혁명 연합 — 주도 정당과 함께 일으키는 정당 (고른 것 중 아직 활동 중인 정당만)
+    function coalitionOf(leadId) {
+        return Object.keys(ui.coalition).filter(id => ui.coalition[id] && String(id) !== String(leadId) && canRevolt(partyById(id))).map(partyById);
+    }
+    const namesOf = list => list.map(pname).join(' · ');
 
     const origGet = window.getAppState;
     window.getAppState = function () {
@@ -66,8 +88,8 @@
     // ================= 혁명 =================
     function houseKeys() { return Object.keys(districtGrid.house || {}).filter(k => districtGrid.house[k]); }
     const popOf = k => Number(districtPopulation?.house?.[k]) || DEFAULT_POP;
-    // 혁명 정당(없으면 정부 · 여당이 아닌 정당 전체)이 성향 1위인 지역의 인구 비율 — "여론 · 인구와 연계"
-    function popShareLed(partyId) {
+    // 혁명 정당 · 연합(없으면 정부 · 여당이 아닌 정당 전체)이 성향 1위인 지역의 인구 비율 — "여론 · 인구와 연계"
+    function popShareLed(partyIds) {
         const keys = houseKeys();
         if (!keys.length || typeof districtTendencyFor !== 'function') return null;
         let led = 0, all = 0;
@@ -77,11 +99,12 @@
             const ranked = parties.filter(activeParty).map(p => [p, Number(v[p.id]) || 0]).sort((a, b) => b[1] - a[1]);
             if (!ranked.length || ranked[0][1] <= 0) return;
             const top = ranked[0][0];
-            if (partyId ? String(top.id) === String(partyId) : !isGovParty(top)) led += pop;
+            if (partyIds ? partyIds.some(id => String(top.id) === String(id)) : !isGovParty(top)) led += pop;
         });
         return all ? led / all : null;
     }
-    function revChance(kind, partyId) {
+    function revChance(kind, partyId, partners) {
+        partners = partners || [];
         const f = [];
         const add = (label, v) => f.push({ label, v: Math.round(v) });
         const t61 = T62();
@@ -89,7 +112,7 @@
         const martial = emergencyPowers?.martialLaw?.active;
         add('기본', 10);
         if (junta) add('군정에 대한 반감', 20);
-        else if (S.partyState && kind === 'democratic') add('당-국가 체제에 대한 반감', 15);
+        else if (S.partyState && kind === 'democratic') add(isCouncil() ? '평의회 체제에 대한 반감' : '당-국가 체제에 대한 반감', 15);
         else {
             const gov = Math.min(100, parties.filter(isGovParty).reduce((a, p) => a + support(p.id), 0));
             add(`정부 불신 (정부 · 여당 지지율 ${Math.round(gov)}%)`, (100 - gov) * 0.3);
@@ -98,10 +121,17 @@
         const bannedN = parties.filter(p => p.status === 'banned').length;
         if (bannedN) add(`활동 금지된 정당 ${bannedN}곳`, Math.min(20, bannedN * 4));
         const p = partyById(partyId);
-        if (p) add(`${p.name} 지지율 (${support(p.id)}%)`, support(p.id) * 0.4);
+        if (p) add(`${pname(p)} 지지율 (${support(p.id)}%)`, support(p.id) * 0.4);
         else if (kind === 'communist') add('혁명 정당 없음', -30);
-        const share = popShareLed(p ? p.id : null);
-        if (share != null) add(`${p ? p.name + '이(가)' : '반정부 세력이'} 앞서는 지역의 인구 (${Math.round(share * 100)}%)`, share * 20);
+        // 혁명 연합 — 함께 일으키는 정당의 지지율은 주도 정당보다 조금 덜 친다
+        if (partners.length) {
+            const s = partners.reduce((a, x) => a + support(x.id), 0);
+            add(`혁명 연합 ${namesOf(partners)} (지지율 ${Math.round(s * 10) / 10}%)`, s * 0.3);
+        }
+        const bloc = [p, ...partners].filter(Boolean);
+        const share = popShareLed(bloc.length ? bloc.map(x => x.id) : null);
+        const who = bloc.length > 1 ? '혁명 연합이' : p ? pname(p) + '이(가)' : bloc.length ? pname(bloc[0]) + '이(가)' : '반정부 세력이';
+        if (share != null) add(`${who} 앞서는 지역의 인구 (${Math.round(share * 100)}%)`, share * 20);
         if (t61 && t61.military && t61.military.length) {
             const loyal = t61.military.reduce((a, m) => a + (Number(m.loyalty) || 0), 0) / t61.military.length;
             add(`군의 충성 (평균 ${Math.round(loyal)})`, -(loyal - 50) * 0.4);
@@ -163,6 +193,32 @@
                 { title: '선거', text: '최고인민회의 대의원은 통일전선이 추천한 단일 후보에 대한 찬반 투표로 선출한다.' },
             ] };
     }
+    function councilConstitution(p, partners) {
+        const nm = nationName();
+        const names = namesOf([p, ...partners]);
+        return { title: `${nm ? nm + ' ' : ''}평의회 헌법`,
+            preamble: `${nm || '우리 나라'}는 ${names}의 혁명 연합이 함께 세운 노동자 · 인민의 평의회 국가이다. 인민은 혁명의 길을 두고 자유롭게 토론하고 겨루며 사회주의를 건설하기 위하여 이 헌법을 채택한다.`,
+            articles: [
+                { title: '국가의 성격', text: `${nm || '국가'}는 노동자 · 농민 · 근로 인민의 평의회가 다스리는 사회주의 국가이다.` },
+                { title: '혁명 연합', text: `혁명에 참여한 정당(${names})은 사회주의 건설의 길을 두고 자유롭게 경쟁한다.` },
+                { title: '최고평의회', text: '최고평의회는 국가의 최고권력기관이며, 대의원은 혁명 연합 정당이 겨루는 선거로 뽑는다.' },
+                { title: '평의회 의장', text: '평의회 의장은 국가의 수반이며, 최고평의회의 다수가 지지하는 정당에서 나온다.' },
+                { title: '반혁명의 금지', text: '혁명 연합 밖의 정당과 단체는 활동할 수 없다.' },
+            ] };
+    }
+    // 평의회 체제의 의석: 혁명 연합 정당끼리 지지율 비율로 나눔 (원마다 총 의석은 그대로)
+    function councilSeats(bloc) {
+        const list = bloc.map(partyById).filter(Boolean);
+        if (!list.length) return;
+        chamberList().forEach(ch => {
+            const key = seatKeyFor(ch);
+            const total = parties.reduce((a, x) => a + (x[key] || 0), 0);
+            if (!total) return;
+            parties.forEach(x => { x[key] = 0; });
+            const n = largestRemainder(list.map(x => Math.max(1, support(x.id))), total);
+            list.forEach((x, i) => { x[key] = n[i]; (x.factions || []).forEach(f => { f[key] = 0; }); });
+        });
+    }
     // 당-국가 체제의 의석: 혁명 정당 85% · 우당이 지지율 비율로 나머지 (원마다 총 의석은 그대로)
     function partyStateSeats(p, allies) {
         chamberList().forEach(ch => {
@@ -194,31 +250,42 @@
     function revolt() {
         const kind = ui.kind;
         const p = partyById(ui.partyId);
-        if (kind === 'communist' && !activeParty(p)) { showCustomAlert('공산주의 혁명은 혁명 정당을 골라야 합니다.'); return; }
-        if (kind === 'communist' && S.partyState) { showCustomAlert('이미 당-국가 체제입니다.'); return; }
-        const { chance } = revChance(kind, ui.partyId);
+        const partners = coalitionOf(ui.partyId);
+        if (kind === 'communist' && !canRevolt(p)) { showCustomAlert('공산주의 혁명은 혁명 정당을 골라야 합니다.'); return; }
+        if (kind === 'communist' && S.partyState) { showCustomAlert(isCouncil() ? '이미 평의회 체제입니다.' : '이미 당-국가 체제입니다.'); return; }
+        const { chance } = revChance(kind, ui.partyId, partners);
         const label = kind === 'communist' ? '공산주의 혁명' : '민주 혁명';
-        showCustomConfirm(`${label}을 일으킵니다${p ? ` — 혁명 정당: ${p.name}` : ''}, 성공 확률 ${chance}%. 계속하시겠습니까?`, () => {
+        const who = [p ? `혁명 정당: ${pname(p)}` : '', partners.length ? `혁명 연합: ${namesOf(partners)}` : ''].filter(Boolean).join(' · ');
+        showCustomConfirm(`${label}을 일으킵니다${who ? ` — ${who}` : ''}, 성공 확률 ${chance}%. 계속하시겠습니까?`, () => {
             const success = Math.random() * 100 < chance;
-            const effects = success ? (kind === 'communist' ? communistWin(p) : democraticWin(p)) : revFail(p);
-            const entry = { id: uid(), at: Date.now(), date: formatNationDate(), kind, party: p ? p.name : '', chance, success, effects };
+            const effects = success ? (kind === 'communist' ? communistWin(p, partners) : democraticWin(p, partners)) : revFail(p, partners);
+            const entry = { id: uid(), at: Date.now(), date: formatNationDate(), kind, party: namesOf([p, ...partners].filter(Boolean)), chance, success, effects };
             S.log.unshift(entry);
             ui.lastId = entry.id;
-            ui.newName = ''; ui.newFlag = '';
+            ui.newName = ''; ui.newFlag = ''; ui.coalition = {};
             try { simulate(); refreshUI(); } catch (e) { /* 화면 준비 전 */ }
             if (T62()) T62().refresh();
             refresh();
         });
     }
-    function communistWin(p) {
+    function communistWin(p, partners) {
+        partners = partners || [];
         const fx = [];
         const t61 = T62();
         if (t61 && t61.junta) { t61.endJunta('revolution'); fx.push('군정 붕괴'); }
         liftMartialLaw();
-        const allies = Object.keys(ui.allies).filter(id => ui.allies[id] && String(id) !== String(p.id) && activeParty(partyById(id)));
+        const revived = [p, ...partners].filter(revive);
+        if (revived.length) fx.push(`지하에서 활동하던 ${namesOf(revived)} 복권`);
+        // 평의회 체제는 혁명 연합이 있어야 — 연합 정당은 bloc으로 남아 경쟁, 당-국가 체제면 연합 정당은 우당이 된다
+        const council = ui.regime === 'council' && partners.length > 0;
+        const bloc = council ? [String(p.id), ...partners.map(x => String(x.id))] : [];
+        const allies = council ? [] : [...new Set([
+            ...Object.keys(ui.allies).filter(id => ui.allies[id] && String(id) !== String(p.id) && activeParty(partyById(id))),
+            ...partners.map(x => String(x.id)),
+        ])];
         const banned = [];
         parties.forEach(x => {
-            if (x === p || allies.includes(String(x.id)) || isInd(x) || x.status === 'banned' || x.status === 'dissolved') return;
+            if (x === p || allies.includes(String(x.id)) || bloc.includes(String(x.id)) || isInd(x) || x.status === 'banned' || x.status === 'dissolved') return;
             x.status = 'banned'; banned.push(x.id);
         });
         S.revBanned = [...new Set([...(S.revBanned || []), ...banned])];
@@ -226,13 +293,27 @@
         coalitions.forEach(c => { c.isRuling = false; });
         const prevNames = {};
         chamberList().forEach(ch => { prevNames[ch] = chamberNameInput(ch)?.value ?? null; });
-        S.partyState = { partyId: p.id, allies, banned, prevNames, since: formatNationDate() };
+        S.partyState = { partyId: p.id, mode: council ? 'council' : 'vanguard', allies, bloc, banned, prevNames, since: formatNationDate() };
         applyNationIdentity();
+        if (council) {
+            setChamberName('house', '최고평의회');
+            councilSeats(bloc);
+            const leader = p.leaderName || `${p.name} 대표`;
+            Object.assign(president, { name: leader, photo: p.leaderPhoto || '', partyId: p.id, linkedSeat: null });
+            setConstitution(councilConstitution(p, partners));
+            fx.push(`숨겨진 정부 형태: 평의회 체제 — 혁명 연합 ${namesOf([p, ...partners])} 공동 집권`, `평의회 의장: ${leader} (${p.name})`,
+                `연합 밖 정당 ${banned.length}곳 활동 금지`, '의회 → 최고평의회 (혁명 연합 정당이 지지율대로 나눔)',
+                '평의회 헌법 채택 · 선거는 혁명 연합 정당끼리 경쟁 — 결과에 따라 정권이 바뀜');
+            if (ui.newName.trim()) fx.push(`국호: ${ui.newName.trim()}`);
+            if (ui.newFlag) fx.push('국기 교체');
+            return fx;
+        }
         setChamberName('house', '최고인민회의');
         partyStateSeats(p, allies);
         const leader = p.leaderName || `${p.name} 총서기`;
         Object.assign(president, { name: leader, photo: p.leaderPhoto || '', partyId: p.id, linkedSeat: null });
         setConstitution(partyStateConstitution(p));
+        if (partners.length) fx.push(`혁명 연합 ${namesOf(partners)} → 우당(통일전선)`);
         fx.push(`숨겨진 정부 형태: 당-국가 체제 — ${p.name} 일당 집권`, `총서기 겸 국가주석: ${leader}`,
             allies.length ? `우당(통일전선) ${allies.length}곳 · 활동 금지 ${banned.length}곳` : `다른 정당 ${banned.length}곳 활동 금지`,
             '의회 → 최고인민회의 (혁명 정당 85% · 우당이 나머지)', '사회주의 헌법 채택 · 선거는 단일 후보 찬반 투표');
@@ -240,11 +321,14 @@
         if (ui.newFlag) fx.push('국기 교체');
         return fx;
     }
-    function democraticWin(p) {
+    function democraticWin(p, partners) {
+        partners = partners || [];
         const fx = [];
+        const revived = [p, ...partners].filter(revive);
+        if (revived.length) fx.push(`지하에서 활동하던 ${namesOf(revived)} 복권`);
         const t61 = T62();
         if (t61 && t61.junta) { t61.endJunta('revolution'); fx.push('군정 붕괴'); }
-        if (S.partyState) { endPartyState(); fx.push('당-국가 체제 붕괴 · 의회 이름 되돌림'); }
+        if (S.partyState) { const was = isCouncil() ? '평의회 체제' : '당-국가 체제'; endPartyState(); fx.push(`${was} 붕괴 · 의회 이름 되돌림`); }
         if (emergencyPowers?.martialLaw?.active) { liftMartialLaw(); fx.push('계엄령 해제'); }
         const bannedBefore = parties.filter(x => x.status === 'banned').length;
         restoreRevBanned();
@@ -259,6 +343,7 @@
         setConstitution(democraticConstitution());
         fx.push('일반 정부 형태로 복귀 · 대통령 · 총리 공석', '새 헌법 제정 (입법 › 법령)', '새 총선을 치르세요 (선거 › 총선)');
         if (p) fx.push(`혁명을 이끈 ${p.name}의 지지율 상승`), cutSupport(p.id, 1.2);
+        if (partners.length) { fx.push(`혁명 연합 ${namesOf(partners)}의 지지율 상승`); partners.forEach(x => cutSupport(x.id, 1.1)); }
         if (ui.newName.trim()) fx.push(`국호: ${ui.newName.trim()}`);
         if (ui.newFlag) fx.push('국기 교체');
         return fx;
@@ -266,9 +351,20 @@
     function cutSupport(pid, factor) {
         chamberList().forEach(ch => { const st = elecStore?.[ch]?.[pid]; if (st) st.prob = Math.round(Math.min(100, (Number(st.prob) || 0) * factor) * 10) / 10; });
     }
-    function revFail(p) {
+    function revFail(p, partners) {
+        partners = partners || [];
         const fx = [];
-        if (p) { p.status = 'banned'; cutSupport(p.id, 0.5); fx.push(`${p.name} 활동 금지 · 지지율 절반으로`); }
+        // 해산된 정당은 해산된 채로 (활동 금지로 바꾸면 "*해산됨*" 이름이 남는다)
+        if (p) {
+            const was = p.status;
+            if (was !== 'dissolved') p.status = 'banned';
+            cutSupport(p.id, 0.5);
+            fx.push(was === 'dissolved' ? `${pname(p)} 해산된 채로 · 지지율 절반으로` : `${pname(p)} 활동 금지 · 지지율 절반으로`);
+        }
+        if (partners.length) {
+            partners.forEach(x => { if (x.status !== 'dissolved') x.status = 'banned'; cutSupport(x.id, 0.7); });
+            fx.push(`혁명 연합 ${namesOf(partners)} 활동 금지 · 지지율 30% 하락`);
+        }
         if (!(T62() && T62().junta) && !S.partyState && !emergencyPowers?.martialLaw?.active) {
             emergencyPowers.martialLaw.holder = 'president';
             emergencyPowers.martialLaw.suspendParliament = false;
@@ -281,7 +377,7 @@
     }
     // 당-국가 체제의 선거: 단일 후보 찬반 투표 (의석은 그대로 다시 나눔)
     function yesNoElection() {
-        if (!S.partyState) return;
+        if (!S.partyState || isCouncil()) return;
         const p = partyById(S.partyState.partyId);
         const turnout = 99 + Math.random() * 0.9;
         const yes = 97 + Math.random() * 2.9;
@@ -301,7 +397,9 @@
         if (!p) { showCustomAlert('집권할 정당이 없습니다 — 정당을 먼저 만드세요.'); return; }
         showCustomConfirm(`디버그 — 혁명 없이 바로 당-국가 체제로 바꿉니다 (집권 정당: ${p.name}, 혁명 정당은 내각 › 혁명에서 고른 정당). 계속하시겠습니까?`, () => {
             ui.partyId = p.id;
-            const effects = ['디버그 모드로 바로 바꿈', ...communistWin(p)];
+            const regime = ui.regime; ui.regime = 'vanguard';
+            const effects = ['디버그 모드로 바로 바꿈', ...communistWin(p, [])];
+            ui.regime = regime;
             const entry = { id: uid(), at: Date.now(), date: formatNationDate(), kind: 'communist', party: p.name, chance: null, success: true, effects };
             S.log.unshift(entry);
             ui.lastId = entry.id;
@@ -316,11 +414,12 @@
     // 당-국가 체제: 직책 이름 · 선거
     const origRole = window.effRoleLabel;
     window.effRoleLabel = function (key) {
-        if (S.partyState && key === 'president') return '국가주석';
+        if (S.partyState && key === 'president') return isCouncil() ? '평의회 의장' : '국가주석';
         return origRole.apply(this, arguments);
     };
     const blockIfPartyState = fn => function () {
-        if (S.partyState) { showCustomAlert('당-국가 체제에서는 경쟁 선거가 없습니다 — 내각 › 혁명의 "찬반 선거 치르기"로 최고인민회의 대의원을 뽑습니다.'); return; }
+        // 평의회 체제는 혁명 연합 정당끼리 경쟁 선거 (연합 밖 정당은 활동 금지라 선거에서 빠진다)
+        if (S.partyState && !isCouncil()) { showCustomAlert('당-국가 체제에서는 경쟁 선거가 없습니다 — 내각 › 혁명의 "찬반 선거 치르기"로 최고인민회의 대의원을 뽑습니다.'); return; }
         return fn.apply(this, arguments);
     };
     ['elecRun', 'elecRunByElection'].forEach(n => { if (typeof window[n] === 'function') window[n] = blockIfPartyState(window[n]); });
@@ -542,7 +641,9 @@
             const p = S.partyState && partyById(S.partyState.partyId);
             if (p) {
                 if (!b) { b = el('<div id="t63PartyStateBanner" class="t63-banner"></div>'); grid.parentElement.insertBefore(b, grid); }
-                b.innerHTML = `★ 당-국가 체제 — ${esc(p.name)} 일당 집권 · 총서기 겸 국가주석 <b>${esc(president.name || '')}</b>${S.partyState.since ? ` · ${esc(S.partyState.since)}부터` : ''}`;
+                b.innerHTML = isCouncil()
+                    ? `★ 평의회 체제 — 혁명 연합 ${esc(namesOf((S.partyState.bloc || []).map(partyById).filter(Boolean)))} · 평의회 의장 <b>${esc(president.name || '')}</b>${S.partyState.since ? ` · ${esc(S.partyState.since)}부터` : ''}`
+                    : `★ 당-국가 체제 — ${esc(p.name)} 일당 집권 · 총서기 겸 국가주석 <b>${esc(president.name || '')}</b>${S.partyState.since ? ` · ${esc(S.partyState.since)}부터` : ''}`;
             } else if (b) b.remove();
         }
         return r;
@@ -557,20 +658,28 @@
         const ps = S.partyState && partyById(S.partyState.partyId);
         if (ps && ui.kind === 'communist') ui.kind = 'democratic'; // 당-국가 체제는 민주 혁명으로만 무너뜨린다
         const kind = ui.kind;
-        const cands = parties.filter(activeParty).filter(p => !(ps && p === ps));
+        const cands = parties.filter(canRevolt).filter(p => !(ps && p === ps));
         if (ui.partyId && !cands.some(p => String(p.id) === String(ui.partyId))) ui.partyId = '';
         if (kind === 'communist' && !ui.partyId) {
             const left = cands.filter(p => /사회|공산|혁명|노동/.test((typeof ideologyName === 'function' ? ideologyName(p.ideologyId) : '') + p.name));
             ui.partyId = (left[0] || cands.slice().sort((a, b) => support(b.id) - support(a.id))[0] || {}).id || '';
         }
         const p = partyById(ui.partyId);
-        const { factors, chance } = revChance(kind, ui.partyId);
+        const partners = coalitionOf(ui.partyId);
+        const { factors, chance } = revChance(kind, ui.partyId, partners);
         const last = S.log.find(x => x.id === ui.lastId);
-        const status = junta ? `⚔ 군정 (의장 ${esc(junta.chairName)})` : ps ? `★ 당-국가 체제 (${esc(ps.name)})` : emergencyPowers?.martialLaw?.active ? '계엄령 선포 중' : '일반 정부';
+        const council = isCouncil();
+        const blocList = council ? (S.partyState.bloc || []).map(partyById).filter(Boolean) : [];
+        const status = junta ? `⚔ 군정 (의장 ${esc(junta.chairName)})` : ps ? (council ? `★ 평의회 체제 (${esc(namesOf(blocList))})` : `★ 당-국가 체제 (${esc(ps.name)})`) : emergencyPowers?.martialLaw?.active ? '계엄령 선포 중' : '일반 정부';
+        const partnerPick = cands.filter(x => x !== p);
         box.innerHTML = `
-            <div class="t63-intro">민중이 일으키는 혁명입니다. 주도 이념에 따라 결과 체제가 달라져요 — 공산주의 혁명은 당-국가 체제, 민주 혁명은 독재 · 군정을 무너뜨리고 새 헌법을 세웁니다.</div>
+            <div class="t63-intro">민중이 일으키는 혁명입니다. 주도 이념에 따라 결과 체제가 달라져요 — 공산주의 혁명은 당-국가 체제나 평의회 체제, 민주 혁명은 독재 · 군정을 무너뜨리고 새 헌법을 세웁니다. 여러 정당이 혁명 연합으로 함께 일으킬 수도 있어요.</div>
             <div class="t63-status">지금 체제: <b>${status}</b></div>
-            ${ps ? `<div class="t63-ps">
+            ${ps && council ? `<div class="t63-ps">
+                <div class="t63-ps-title">★ 평의회 체제</div>
+                <div class="t63-dim">혁명 연합 ${esc(namesOf(blocList))} · 평의회 의장 ${esc(president.name || '')} · 의회: 최고평의회</div>
+                <div class="t63-dim t63-small">혁명 연합 정당끼리 경쟁 선거를 치릅니다 (선거 › 총선). 결과에 따라 의회 › 집권과 연정에서 정권을 바꾸세요 — 연합 밖 정당은 활동 금지라 선거에 나오지 못해요. 벗어나려면 아래에서 민주 혁명을 일으키세요.</div>
+            </div>` : ps ? `<div class="t63-ps">
                 <div class="t63-ps-title">★ 당-국가 체제</div>
                 <div class="t63-dim">${esc(ps.name)} 일당 집권 · 총서기 겸 국가주석 ${esc(president.name || '')} · 의회: 최고인민회의${(S.partyState.allies || []).length ? ` · 우당 ${S.partyState.allies.map(id => esc(partyById(id)?.name || '?')).join(' · ')}` : ''}</div>
                 <button type="button" class="t63-btn" data-act="yesno">🗳 찬반 선거 치르기 (최고인민회의 대의원)</button>
@@ -584,11 +693,21 @@
             <label class="t63-dim">혁명 정당 ${kind === 'democratic' ? '(없어도 됨 — 시민 혁명)' : ''}</label>
             <select data-pick="party">
                 ${kind === 'democratic' ? '<option value="">— 시민 혁명 (정당 없음) —</option>' : ''}
-                ${cands.map(x => `<option value="${esc(x.id)}" ${String(x.id) === String(ui.partyId) ? 'selected' : ''}>${esc(x.name)} · ${esc(typeof ideologyName === 'function' ? (ideologyName(x.ideologyId) || '') : '')} · 지지율 ${support(x.id)}%${isGovParty(x) ? ' · 여당' : ''}</option>`).join('')}
+                ${cands.map(x => `<option value="${esc(x.id)}" ${String(x.id) === String(ui.partyId) ? 'selected' : ''}>${esc(pname(x) + stateTag(x))} · ${esc(typeof ideologyName === 'function' ? (ideologyName(x.ideologyId) || '') : '')} · 지지율 ${support(x.id)}%${isGovParty(x) ? ' · 여당' : ''}</option>`).join('')}
             </select>
-            ${kind === 'communist' && p ? `<details class="t63-allies" open><summary class="t63-dim">우당(통일전선)으로 남길 정당 — 고르지 않은 정당은 활동 금지</summary>
-                ${cands.filter(x => x !== p).map(x => `<label class="t63-row"><input type="checkbox" data-ally="${esc(x.id)}" ${ui.allies[x.id] ? 'checked' : ''}> ${esc(x.name)}</label>`).join('') || '<div class="t63-dim">다른 정당 없음</div>'}
+            ${partnerPick.length ? `<details class="t63-allies t63-coalition" ${partners.length ? 'open' : ''}><summary class="t63-dim">혁명 연합 — 함께 일으킬 정당 (선택${partners.length ? ` · ${partners.length}곳` : ''})</summary>
+                ${partnerPick.map(x => `<label class="t63-row"><input type="checkbox" data-coal="${esc(x.id)}" ${ui.coalition[x.id] ? 'checked' : ''}> ${esc(pname(x) + stateTag(x))} <span class="t63-dim t63-small">지지율 ${support(x.id)}%</span></label>`).join('')}
+                <div class="t63-dim t63-small">연합 정당의 지지율과 앞서는 지역도 성공 확률에 더해요. 실패하면 연합 정당도 함께 활동 금지돼요.</div>
             </details>` : ''}
+            ${kind === 'communist' && p ? `<label class="t63-dim">혁명 뒤 체제</label>
+            <div class="system-radio-group">
+                <button type="button" class="system-radio-btn ${ui.regime !== 'council' ? 'active' : ''}" data-regime="vanguard">당-국가 체제 (일당 + 우당)</button>
+                <button type="button" class="system-radio-btn ${ui.regime === 'council' ? 'active' : ''}" data-regime="council" ${partners.length ? '' : 'disabled'}>평의회 체제 (연합 공동 집권)</button>
+            </div>
+            <div class="t63-dim t63-small">${ui.regime === 'council' && partners.length ? '혁명 연합 정당이 모두 남아 경쟁 선거로 정권을 주고받아요 (생디칼리슴식). 연합 밖 정당은 활동 금지.' : partners.length ? '혁명 정당이 일당 집권하고 혁명 연합 정당은 우당(통일전선)으로 남아요.' : '평의회 체제는 혁명 연합에 정당을 넣어야 고를 수 있어요.'}</div>
+            ${ui.regime !== 'council' || !partners.length ? `<details class="t63-allies" open><summary class="t63-dim">우당(통일전선)으로 남길 정당 — 고르지 않은 정당은 활동 금지${partners.length ? ' (혁명 연합 정당은 자동으로 우당)' : ''}</summary>
+                ${partnerPick.filter(x => !partners.includes(x) && activeParty(x)).map(x => `<label class="t63-row"><input type="checkbox" data-ally="${esc(x.id)}" ${ui.allies[x.id] ? 'checked' : ''}> ${esc(x.name)}</label>`).join('') || '<div class="t63-dim">다른 정당 없음</div>'}
+            </details>` : ''}` : ''}
             <details class="t63-identity"><summary class="t63-dim">혁명 뒤 국호 · 국기 바꾸기 (선택)</summary>
                 <div class="t63-row"><input type="text" data-id="name" placeholder="새 국호 (비우면 그대로)" value="${esc(ui.newName)}"></div>
                 <div class="t63-row"><label class="leader-photo-box t63-flag" title="새 국기">${ui.newFlag ? `<img src="${ui.newFlag}" alt="">` : '<span class="photo-ph">🏳️</span>'}<input type="file" accept="image/*" data-id="flag"></label>
@@ -609,6 +728,8 @@
         box.querySelectorAll('[data-kind]').forEach(b => { b.onclick = () => { ui.kind = b.dataset.kind; ui.partyId = ''; ui.lastId = null; renderRevolution(); }; });
         const sel = box.querySelector('[data-pick="party"]'); if (sel) sel.onchange = () => { ui.partyId = sel.value; renderRevolution(); };
         box.querySelectorAll('[data-ally]').forEach(c => { c.onchange = () => { ui.allies[c.dataset.ally] = c.checked; }; });
+        box.querySelectorAll('[data-coal]').forEach(c => { c.onchange = () => { ui.coalition[c.dataset.coal] = c.checked; renderRevolution(); }; });
+        box.querySelectorAll('[data-regime]').forEach(b => { b.onclick = () => { ui.regime = b.dataset.regime; renderRevolution(); }; });
         const nm = box.querySelector('[data-id="name"]'); if (nm) nm.oninput = () => { ui.newName = nm.value; };
         const fl = box.querySelector('[data-id="flag"]'); if (fl) fl.onchange = () => { const f = fl.files && fl.files[0]; if (!f) return; const rd = new FileReader(); rd.onload = ev => { ui.newFlag = ev.target.result; renderRevolution(); box.querySelector('.t63-identity').open = true; }; rd.readAsDataURL(f); };
         const nf = box.querySelector('[data-act="noflag"]'); if (nf) nf.onclick = () => { ui.newFlag = ''; renderRevolution(); };

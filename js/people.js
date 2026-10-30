@@ -489,7 +489,7 @@
         });
         return { pop, cit, mig };
     }
-    const votingParties = () => parties.filter(p => p.status !== 'banned');
+    const votingParties = () => parties.filter(p => p.status !== 'banned' && p.status !== 'dissolved');
     // 정당별 값 → 몫(합 1), 투표할 수 있는 정당만. 비어 있으면 null
     function sharesOf(vals) {
         if (!vals) return null;
@@ -745,7 +745,7 @@
         const tables = chs().map(ch => {
             const { cit, mig } = totals(ch);
             const cs = elecStore[ch] || {}, ms = split && M ? (M.prob[ch] || {}) : cs;
-            const list = parties.filter(p => p.status !== 'banned' && (Number(cs[p.id]?.prob) > 0 || Number(ms[p.id]?.prob) > 0));
+            const list = parties.filter(p => p.status !== 'banned' && p.status !== 'dissolved' && (Number(cs[p.id]?.prob) > 0 || Number(ms[p.id]?.prob) > 0));
             if (!list.length) return `<div class="op-ch">${esc(chName(ch))}</div><div class="t61-dim t61-small">지지율이 없습니다 — 시민 지지율에서 정하세요.</div>`;
             const rows = list.map(p => {
                 const c = Number(cs[p.id]?.prob) || 0, m = Number(ms[p.id]?.prob) || 0;

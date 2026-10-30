@@ -32,10 +32,10 @@
     const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
     const partyById = id => parties.find(p => String(p.id) === String(id)) || null;
     const chamberOk = ch => chamberList().includes(ch) ? ch : 'house';
-    const runningParties = () => parties.filter(p => p.status !== 'banned');
+    const runningParties = () => parties.filter(p => p.status !== 'banned' && p.status !== 'dissolved');
 
     // ---- 지역구 · 인구 ----
-    // 미수복 지역(1.6.7 티저 미리보기 — js/teaser67.js) · 종속국 땅(1.6.8 — js/teaser68.js)은 선거에서 뺀다
+    // 미수복 지역(1.6.7 — js/unrecovered.js) · 종속국 땅(1.6.8 — js/vassals.js)은 선거에서 뺀다
     const excluded = k => (typeof window.isDistrictUnrecovered === 'function' && window.isDistrictUnrecovered(k))
         || (typeof window.isDistrictVassal === 'function' && window.isDistrictVassal(k));
     function districtKeys(ch) { return Object.keys(districtGrid[ch] || {}).filter(k => !excluded(k)); }
@@ -49,7 +49,8 @@
     const voterShares = (ch, key, kind, shares) => (window.HemiVoters ? window.HemiVoters.shares(ch, key, kind, shares) : shares);
 
     // 지역구 하나의 정당별 득표율(합 100) — 성향이 있으면 성향, 없으면 전국 지지율
-    function partySharesFor(ch, key, noise) {
+    // noUnions: 지방선거 연대(1.6.8 — window.HemiLocalAlliance)가 단위마다 단일후보를 정할 때는 총선 지역구 단일화를 쓰지 않는다
+    function partySharesFor(ch, key, noise, noUnions) {
         const list = runningParties();
         const tend = typeof districtTendencyFor === 'function' ? districtTendencyFor(key, ch).values : (districtSvgTendency[key]?.[ch] || {}); // 지역구 성향 → 없으면 권역 성향
         const hasTend = list.some(p => (tend[p.id] || 0) > 0);
@@ -59,7 +60,7 @@
             const base = hasTend ? (tend[p.id] || 0) : (store[p.id]?.prob || 0);
             raw[p.id] = base;
         });
-        const { scores, withdrawn } = typeof applyCandidateUnions === 'function' ? applyCandidateUnions(raw, 'district') : { scores: raw, withdrawn: new Set() };
+        const { scores, withdrawn } = !noUnions && typeof applyCandidateUnions === 'function' ? applyCandidateUnions(raw, 'district', { chamber: ch, key }) : { scores: raw, withdrawn: new Set() };
         const out = {};
         let total = 0;
         list.forEach(p => {
@@ -95,30 +96,36 @@
     const holderOffice = (unit, ch, id, h) => customOffice(unit, ch, id) || (h && h.office) || officeOf(unit);
 
     // 지역구 하나의 개표 — 표는 권역 · 지역구 두 선거에 같이 쓰지 않고 선거마다 따로 흔든다
-    function countDistrict(ch, k, L) {
+    function countDistrict(ch, k, L, noUnions) {
         let pop = popOf(ch, k); let missing = false;
         if (pop == null) { pop = DEFAULT_POP; missing = true; }
         pop = voterPop(ch, k, 'local', pop);
         const turnout = clamp(L.turnout + rand(5), 5, 100) / 100;
         const cast = Math.round(pop * turnout);
         const votes = {};
-        Object.entries(voterShares(ch, k, 'local', partySharesFor(ch, k, L.noise))).forEach(([pid, s]) => { votes[pid] = cast * s; });
+        Object.entries(voterShares(ch, k, 'local', partySharesFor(ch, k, L.noise, noUnions))).forEach(([pid, s]) => { votes[pid] = cast * s; });
         return { pop, cast, votes, missing };
     }
     function runLevel(ch, level, L) {
         let missingPop = 0;
-        const results = unitsOf(ch, level).map(u => {
-            const votes = {};
+        // 지방선거 연대(1.6.8 — js/vassals.js)가 있으면 단위(권역 · 지역구)마다 연대의 단일후보를 정한다
+        const LA = window.HemiLocalAlliance && window.HemiLocalAlliance.active(ch) ? window.HemiLocalAlliance : null;
+        const units = unitsOf(ch, level);
+        if (LA && LA.prepare) LA.prepare(ch, level, units); // 나눠 맡는 방식은 단위들을 미리 정해 둔다
+        const results = units.map(u => {
+            let votes = {};
             let voters = 0, electorate = 0;
             u.keys.forEach(k => {
-                const c = countDistrict(ch, k, L);
+                const c = countDistrict(ch, k, L, !!LA);
                 if (c.missing) missingPop++;
                 electorate += c.pop; voters += c.cast;
                 Object.entries(c.votes).forEach(([pid, v]) => { votes[pid] = (votes[pid] || 0) + v; });
             });
-            Object.keys(votes).forEach(pid => { votes[pid] = Math.round(votes[pid]); });
+            let alliances = null;
+            if (LA) { const r = LA.resolve(ch, level, u, votes, voters); votes = r.votes; alliances = r.notes.length ? r.notes : null; }
+            Object.keys(votes).forEach(pid => { votes[pid] = Math.round(votes[pid]); if (votes[pid] <= 0) delete votes[pid]; });
             const ranked = Object.entries(votes).sort((a, b) => b[1] - a[1]);
-            return { id: u.id, name: u.name, office: officeFor(level, ch, u.id), keys: u.keys, electorate, voters, votes, winner: ranked[0] ? ranked[0][0] : null };
+            return { id: u.id, name: u.name, office: officeFor(level, ch, u.id), keys: u.keys, electorate, voters, votes, winner: ranked[0] ? ranked[0][0] : null, ...(alliances ? { alliances } : {}) };
         });
         return { unit: level, office: officeOf(level), results, missingPop };
     }
@@ -195,6 +202,7 @@
                         return `<div class="pv-unit" style="border-left-color:${p ? p.color : '#888'}">
                             <div><b>${esc(r.name)}</b>${r.office && r.office !== lv.office ? ` <span class="pv-dim">${esc(r.office)}</span>` : ''} — ${esc(p ? p.name : '당선자 없음')}</div>
                             <div class="pv-dim pv-small">${top.map(([pid, v]) => `${esc(partyById(pid)?.name || '?')} ${fmt(v)}표(${pct(v, all).toFixed(1)}%)`).join(' · ')} · 투표율 ${pct(r.voters, r.electorate).toFixed(1)}%</div>
+                            ${(r.alliances || []).map(a => `<div class="pv-dim pv-small">🤝 ${esc(a.name)} 단일후보: <b>${esc(partyById(a.nominee)?.name || '?')}</b> — ${a.method === 'primary' ? `예비선거 ${Object.entries(a.scores).sort((x, y) => y[1] - x[1]).map(([pid, v]) => `${esc(partyById(pid)?.name || '?')} ${v}%`).join(' · ')}` : a.method === 'top' || !a.methodLabel ? '연대 안 지지율 1위' : esc(a.methodLabel)} · 결집 ${a.transfer}%</div>`).join('')}
                         </div>`;
                     }).join('')}</div>
                     ${canToggle ? '<div class="pv-map" data-map="local-units"></div>' : ''}
@@ -682,12 +690,14 @@
                 <div><label class="pv-label">노이즈 (±%)</label><input type="number" id="pvLocalNoise" min="0" max="50" value="${L.noise}"></div>
             </div>
             <div class="pv-note">${esc(popStatus(L.chamber, 'region'))}<br>득표율은 지역구 성향(없으면 전국 지지율)에 노이즈를 더해 정하고, 득표수는 인구 × 투표율로 계산합니다.</div>
+            <div id="pvLocalAlliances"></div>
             <button type="button" class="pv-run" onclick="PopVote.runLocal()" data-modern-label="개표 시작">&gt;&gt; 개표 시작 &lt;&lt;</button>
             <div id="pvLocalResult"></div>
             <div id="pvHolders"></div>
 `;
         renderLocalResult(L.last, ge('pvLocalResult'));
         renderHolders();
+        if (window.HemiLocalAlliance) window.HemiLocalAlliance.render(ge('pvLocalAlliances'), L.chamber);
     }
 
     function renderRef() {
