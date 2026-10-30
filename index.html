@@ -501,6 +501,8 @@
             try {
                 text = window.HemiFile ? await window.HemiFile.readText(file) : await file.text();
                 const obj = JSON.parse(text);
+                // 지역구 프리셋(.hemimap)은 세이브가 아니다 — 게임 안 국가 › 지역구 지도에서 올림
+                if(obj && obj.format === 'hemicycle-districts') { input.value = ''; DnoUI.alert('지역구 프리셋(.hemimap) 파일입니다. 세이브를 연 뒤 국가 › 지역구 지도의 "지역구 지도 업로드"로 올리면 그 세이브의 지역구만 바뀝니다.'); return; }
                 const parl = obj.parliament || obj.data;
                 if(!parl || !Array.isArray(parl.parties)) throw new Error('형식이 올바르지 않음');
             } catch(e) {
