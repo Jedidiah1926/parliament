@@ -1884,6 +1884,7 @@
             <span class="t69-seg">${RANGES.map(([k, l]) => `<button type="button" data-range="${k}" class="${String(E.ui.range) === k && !E.ui.zoom ? 'on' : ''}">${l}</button>`).join('')}</span>
             ${E.ui.zoom ? '<button type="button" class="t69-btn t69-sm" data-act="unzoom">확대 해제</button>' : ''}
             <span class="t69-grow"></span>
+            <button type="button" class="t69-btn t69-sm" data-act="photo" title="지금 보이는 경제 시각 화면 전체를 사진(PNG · JPG · SVG)으로 — 화면에서 우클릭해도 됨">📷 사진</button>
             <button type="button" class="t69-btn t69-sm" data-act="csv" title="모든 시점 · 지표 표를 CSV로">CSV</button>
             <button type="button" class="t69-btn t69-sm" data-act="full" title="크게 보기 (Esc로 복귀)">${E.ui.full ? '⤡ 작게' : '⛶ 크게'}</button>`;
         tb.querySelectorAll('[data-view]').forEach(b => { b.onclick = () => { E.ui.view = b.dataset.view; renderDisp(); }; });
@@ -1891,6 +1892,7 @@
         tb.querySelectorAll('[data-range]').forEach(b => { b.onclick = () => { E.ui.range = b.dataset.range; E.ui.zoom = null; renderDisp(); if (curSub() === 'analysis') renderTab('analysis'); }; });
         tb.querySelector('[data-act="unzoom"]')?.addEventListener('click', () => { E.ui.zoom = null; renderDisp(); });
         tb.querySelector('[data-act="csv"]').onclick = () => C.csv(tableSpec());
+        tb.querySelector('[data-act="photo"]').onclick = () => exportDispPhoto();
         tb.querySelector('[data-act="full"]').onclick = () => toggleFull();
     }
     function renderDisp() {
@@ -1968,7 +1970,7 @@
         const [i0] = rangeIdx(n);
         C.lines(chart, { x: xs, t: ts, series: ser, unit: '%', height: 260, zero: true, markers: markersOf(H), shade: recessions(H), fan: sel.length ? [fanFor(sel[0], n, h, fc[sel[0]])] : [], range: [i0, xs.length - 1] });
         // 예산
-        const bb = section(box, `예산 (연간 · ${E.settings.scale}${CUR()})`, E.settings.budgetView === 'hemi' ? '— 위 세출 · 아래 세입, 넓이 = 금액' : '— 같은 축의 세출 · 세입');
+        const bb = section(box, `예산 (연간 · ${E.settings.scale}${CUR()})`, E.settings.budgetView === 'hemi' ? '— 위 세출 · 아래 세입, 두께 = 세출 · 세입 차이' : '— 같은 축의 세출 · 세입');
         const sp = budgetPies();
         const opt = { spend: sp.spend, rev: sp.rev, unit: '', center: [`${N.balance < 0 ? '적자' : '흑자'} ${Math.abs(N.balance).toFixed(1)}%`, 'GDP 대비'] };
         if (E.settings.budgetView === 'bars') C.budgetBars(bb, opt); else C.budgetHemi(bb, opt);
@@ -2284,6 +2286,13 @@
         menu.style.display = 'block';
         try { positionFloatingBox(menu, e.clientX, e.clientY); } catch (err) { menu.style.left = e.clientX + 'px'; menu.style.top = e.clientY + 'px'; } // eslint-disable-line no-undef
     }, true);
+    // 툴바 "📷 사진" — 빈 곳 우클릭과 같은 경제 시각 화면 전체 내보내기를 바로 연다
+    function exportDispPhoto() {
+        const disp = document.getElementById('t69Disp'); if (!disp) return;
+        disp.dataset.exportKind = 't69panel';
+        try { canvasExportTarget = disp; } catch (e) { return; } // eslint-disable-line no-undef
+        if (typeof window.openExportDialog === 'function') window.openExportDialog();
+    }
     const origOpenExport = window.openExportDialog;
     if (typeof origOpenExport === 'function') {
         window.openExportDialog = function () {
@@ -2647,6 +2656,9 @@
         .t69-tablewrap2 { overflow-x: auto; } .t69-tagin { width: 48px; }
         /* 오른쪽 시각 화면 */
         #dispPanelEconomy .t69-dispbox { display: flex; flex-direction: column; overflow: hidden; min-height: 0; }
+        /* 네온(TNO): 시각 화면 바탕을 그래프와 같은 짙은 회색 하나로 (테두리만 남기고) · 모서리는 각지게 */
+        html[data-theme-mode="tno"] .t69-dispbox { background: var(--t69-surface) !important; }
+        html[data-theme-mode="tno"] .t69-dispbox *:not(svg):not(svg *) { border-radius: 0 !important; }
         #t69Disp { flex: 1 1 auto; min-height: 0; overflow: auto; padding-right: 4px; }
         .t69-toolbar { flex: none; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 10px; padding: 4px 0 8px; border-bottom: 1px solid var(--t69-grid); }
         .t69-toolbar .t69-btn { color: var(--t69-ink2); border-color: var(--t69-axis); }

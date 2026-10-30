@@ -830,6 +830,9 @@ window.DnoLangPacks.en = {
   }
  ],
  "dict": [
+    ["지금 보이는 경제 시각 화면 전체를 사진(PNG · JPG · SVG)으로 — 화면에서 우클릭해도 됨", "Save the whole economy view as a picture (PNG · JPG · SVG) — or right-click the view"],
+    ["— 위 세출 · 아래 세입, 두께 = 세출 · 세입 차이", "— spending on top · revenue below, thickness = spending vs revenue gap"],
+    ["📷 사진", "📷 Photo"],
     ["기사 (🔒 1.7.0)", "Articles (🔒 1.7.0)"],
     ["신문 · 방송 기사를 직접 작성하는 기능(언론사 · 제목 · 부제 · 날짜 · 본문 · 사진, 날짜순 기사 목록) — 1.7.0에서 열립니다.", "Write your own newspaper and broadcast articles (outlet · headline · subhead · date · body · photo, listed by date) — opens in 1.7.0."],
     ["여론 › 기사", "Opinion › Articles"],
