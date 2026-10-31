@@ -834,6 +834,7 @@ window.DnoLangPacks.en = {
   }
  ],
  "dict": [
+    ["- 맵 프리셋 5개 추가 — 오스트레일리아(6개 주 + 2개 준주) · 멕시코(31개 주 + 멕시코시티) · 인도(28개 주 + 8개 연방 직할지) · 폴란드(16개 주) · 스위스(26개 칸톤), 모두 15개", "- 5 more map presets — Australia (6 states + 2 territories), Mexico (31 states + Mexico City), India (28 states + 8 union territories), Poland (16 voivodeships), Switzerland (26 cantons), 15 in all"],
     ["지역구 정보 칸", "District info fields"],
     ["의석", "Seats"],
     ["인구", "Population"],
