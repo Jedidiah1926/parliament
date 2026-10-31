@@ -56,7 +56,11 @@
     const isVassal = key => !!vassalOfKey(key);
     const isLib = key => !!libOfKey(key);
     const isOut = key => isVassal(key) || isLib(key);
-    window.isDistrictVassal = isOut; // 지방선거 · 국민투표(js/popvote.js)가 이걸 보고 뺀다
+    // 본국 선거에서 빠지는 땅 — 독립국과 종속국 땅. 다만 "본국 총선에도 참여"를 켠 종속국(스코틀랜드 · 카탈루냐 같은 자치 지역)은
+    // 따로 의회를 두면서도 그 땅의 지역구가 본국 총선 · 지방선거 · 국민투표에 들어가고 지역구 의석에도 셈한다
+    const isOutOfHome = key => isLib(key) || (isVassal(key) && !vassalOfKey(key).homeVote);
+    window.isDistrictVassal = isOutOfHome; // 지방선거 · 국민투표(js/popvote.js) · 시민 수(js/people.js) · 부정선거가 이걸 보고 뺀다
+    window.isDistrictVassalLand = isOut;   // 선거와 상관없이 종속국 · 독립국 땅인지 (경제 집계 · 공납 — js/economy.js)
     const unrecPrev = key => typeof window.isDistrictUnrecovered === 'function' && window.isDistrictUnrecovered(key);
     const esc = s => (typeof escapeHtmlText === 'function' ? escapeHtmlText(String(s)) : String(s));
     const nameOf = key => districtNames.house?.[key] || key;
@@ -103,7 +107,7 @@
         kindEditFor = null;
         const list = (a, withParl) => (Array.isArray(a) ? a.filter(v => v && v.id).map((v, i) => ({
             id: String(v.id), name: String(v.name || v.id), color: hex(v.color) || PALETTE[i % PALETTE.length],
-            kind: cleanKind(v.kind) || defaultKind(), ...(withParl ? { parliament: cleanParliament(v.parliament) } : {}),
+            kind: cleanKind(v.kind) || defaultKind(), ...(withParl ? { parliament: cleanParliament(v.parliament), homeVote: !!v.homeVote } : {}),
         })) : []);
         vassals = list(s?.vassals, true);
         liberated = list(s?.liberated, false);
@@ -136,13 +140,13 @@
     // ---- 선거: 종속국 · 독립국 지역구는 본국 선거에서 개표하지 않고, 지역구 의석 수에서도 뺀다 ----
     const origSim = window.elecSimulateDistrictsSvg;
     window.elecSimulateDistrictsSvg = function () {
-        return (origSim.apply(this, arguments) || []).filter(r => !isOut(r.key));
+        return (origSim.apply(this, arguments) || []).filter(r => !isOutOfHome(r.key));
     };
     const origCount = window.districtActiveSeatCount;
     window.districtActiveSeatCount = function (chamber) {
         const total = origCount.apply(this, arguments);
         // 미수복 지역(1.6.7)으로도 칠한 곳은 거기서 이미 뺐으므로 두 번 빼지 않는다
-        const lost = Object.keys(districtGrid[chamber] || {}).filter(k => isOut(k) && !unrecPrev(k))
+        const lost = Object.keys(districtGrid[chamber] || {}).filter(k => isOutOfHome(k) && !unrecPrev(k))
             .reduce((sum, key) => sum + (districtMapMode !== 'svg' ? 1 : (districtSeatCounts[key]?.[chamber] || 0)), 0);
         return Math.max(0, total - lost);
     };
@@ -180,7 +184,7 @@
             o.getFill = key => (isVassal(key) ? `url(#${prefix}${vassalOf[key]})` : isLib(key) ? libFill(libOfKey(key).color) : (g ? g(key) : null));
             o.title = key => (isVassal(key) ? `${nameOf(key)} (종속국: ${vassalOfKey(key).name})`
                 : isLib(key) ? `${nameOf(key)} (독립국: ${libOfKey(key).name})` : (t ? t(key) : nameOf(key)));
-            if (b) o.seatBadges = key => (isOut(key) ? null : b(key));
+            if (b) o.seatBadges = key => (isOutOfHome(key) ? null : b(key));
         }
         if (!brush && onVassalTab() && wrapEl && wrapEl.id === 'districtSvgWrap' && o.clickable) {
             // 국가 › 종속국 탭에서는 지역구를 누르면 그 탭 안에서 종속국을 고르는 칸이 열린다
@@ -476,6 +480,7 @@
                     <button type="button" class="t68-btn" data-act="liberate">해방</button>
                     <button type="button" class="t68-btn" data-act="del">삭제</button>
                 </div>
+                <label class="t68-toggle t68-homevote" title="스코틀랜드 · 카탈루냐처럼 — 자기 의회는 따로 두되, 그 땅의 지역구도 본국 총선 · 지방선거 · 국민투표에 들어가고 본국 지역구 의석에 셈"><input type="checkbox" data-homevote ${v.homeVote ? 'checked' : ''}> 본국 총선에도 참여 <span class="t68-dim">(자치 지역 — 스코틀랜드 · 카탈루냐처럼)</span></label>
                 ${keys.length ? `<div class="t68-chips">${keys.slice(0, LIMIT).map(k => `<span class="t68-chip" data-key="${esc(k)}">${esc(nameOf(k))}<button type="button" title="이 지역구 빼기">×</button></span>`).join('')}${keys.length > LIMIT ? `<span class="t68-dim t68-small">외 ${keys.length - LIMIT}곳</span>` : ''}</div>` : '<div class="t68-dim t68-small">아직 칠한 땅이 없습니다</div>'}
                 ${open ? parliamentHtml(v) : ''}
             </div>`;
@@ -489,7 +494,7 @@
         host.innerHTML = `
             <div class="t68-summary">
                 <div class="t68-row t68-between"><span class="t68-count">종속국 ${vassals.length}곳 · 땅 ${total}곳${liberated.length ? ` · 독립국 ${liberated.length}곳` : ''}</span></div>
-                <div class="t68-dim t68-small">본국에 딸린 나라 — 지도에 그 나라 색 점무늬로 따로 보이고, 본국 선거 · 의석에서 빠집니다. 종속국마다 따로 의회(의석 · 정당 · 선거)가 있고, 본국에 합병하거나 해방(독립)시킬 수 있습니다.</div>
+                <div class="t68-dim t68-small">본국에 딸린 나라 — 지도에 그 나라 색 점무늬로 따로 보이고, 본국 선거 · 의석에서 빠집니다 ("본국 총선에도 참여"를 켜면 자치 지역처럼 본국 선거에도 들어감). 종속국마다 따로 의회(의석 · 정당 · 선거)가 있고, 본국에 합병하거나 해방(독립)시킬 수 있습니다.</div>
                 <details class="t68-kinds" ${kindsOpen ? 'open' : ''}>
                     <summary>종속 형태 ${kinds.length}가지 <span class="t68-dim">— 직접 추가 · 이름 바꾸기 · 지우기</span></summary>
                     <div class="t68-chips">${kinds.map((k, i) => `<span class="t68-chip t68-kind-chip" data-i="${i}"><input type="text" value="${esc(k)}" maxlength="30" title="눌러서 이름 바꾸기" style="width:${kindChipWidth(k)}"><span class="t68-dim">${vassals.concat(liberated).filter(v => v.kind === k).length || ''}</span><button type="button" title="이 형태 지우기 (이 형태인 나라는 그대로)">×</button></span>`).join('')}</div>
@@ -547,6 +552,11 @@
             act('import', () => importHomeParties(v));
             act('elect', () => runElection(v));
             card.querySelector('.t68-name').addEventListener('change', e => { v.name = e.target.value.trim() || v.name; refreshUI(); });
+            card.querySelector('[data-homevote]').addEventListener('change', e => {
+                v.homeVote = e.target.checked;
+                refreshUI();
+                try { if (typeof simulate === 'function') simulate(); } catch (err) { /* 개표 다시 하지 못함 */ }
+            });
             card.querySelector('.t68-color').addEventListener('change', e => { v.color = e.target.value; refreshUI(); });
             const kindSel = card.querySelector('select.t68-kind');
             if (kindSel) kindSel.addEventListener('change', e => {

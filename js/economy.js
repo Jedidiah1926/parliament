@@ -170,7 +170,7 @@
 
     // ================= 지역구 =================
     const excludedKey = k => (typeof window.isDistrictUnrecovered === 'function' && window.isDistrictUnrecovered(k))
-        || (typeof window.isDistrictVassal === 'function' && window.isDistrictVassal(k));
+        || (typeof window.isDistrictVassalLand === 'function' ? window.isDistrictVassalLand(k) : (typeof window.isDistrictVassal === 'function' && window.isDistrictVassal(k)));
     function activeKeys() {
         let keys = [];
         try { keys = Object.keys(districtGrid.house || {}).filter(k => districtGrid.house[k] && !excludedKey(k)); } catch (e) { keys = []; }
@@ -1041,7 +1041,8 @@
     }
 
     // ================= 화면 — 메뉴 › 경제 =================
-    const CUR = () => E.settings.currency || '';
+    // 예전 버그로 화폐 단위가 숫자(NaN)로 저장된 세이브는 빈 칸으로
+    const CUR = () => (typeof E.settings.currency === 'string' ? E.settings.currency : '');
     const money = pctGdp => { const v = pctGdp * E.nat.gdp / 100; return `${Math.round(v).toLocaleString()}${E.settings.scale || ''} ${CUR()}`.trim(); };
     const gdpText = () => `${Math.round(E.nat.gdp).toLocaleString()}${E.settings.scale || ''} ${CUR()}`.trim();
     const STATUS_WORD = { good: '안전', warning: '경고', serious: '위험', critical: '위기' };
@@ -1097,7 +1098,8 @@
         box.querySelectorAll('[data-path]').forEach(inp => {
             const ev = inp.type === 'range' ? 'input' : 'change';
             inp.addEventListener(ev, () => {
-                const v = inp.type === 'checkbox' ? inp.checked : inp.tagName === 'SELECT' ? inp.value : Number(inp.value);
+                // 글자 칸(화폐 단위 등)은 글자 그대로 — 숫자로 바꾸면 NaN이 되었다
+                const v = inp.type === 'checkbox' ? inp.checked : (inp.tagName === 'SELECT' || inp.type === 'text') ? inp.value : Number(inp.value);
                 setValue(inp.dataset.path, v, inp.type === 'range');
             });
             if (inp.type === 'range') inp.addEventListener('change', () => refreshAll());
@@ -1408,7 +1410,7 @@
             <div class="t69-card"><div class="t69-card-h">위기 임계값</div>
                 ${[['hyper', '하이퍼인플레이션 (인플레이션 %/년 초과)'], ['default', '국가부도 위기 (부채 % 초과)'], ['depression', '대공황 (실업률 % 초과)'], ['flight', '자본 도피 (신뢰도 미만)'], ['collapse', '통화 붕괴 (발행률 %/분기 초과)'], ['revolt', '쿠데타 · 혁명 위험 (민심 미만)']].map(([k2, l]) => `<label class="t69-row">${l} <input type="number" class="t69-num" value="${E.thresholds[k2]}" data-th="${k2}"></label>`).join('')}</div>
             <div class="t69-card"><div class="t69-card-h">화면 표시</div>
-                <label class="t69-row">화폐 단위 <input type="text" value="${esc(E.settings.currency)}" data-path="settings.currency" maxlength="8" class="t69-num"></label>
+                <label class="t69-row">화폐 단위 <input type="text" value="${esc(CUR())}" data-path="settings.currency" maxlength="8" class="t69-num"></label>
                 <label class="t69-row">규모 <select data-path="settings.scale">${['', '만', '억', '조'].map(s => `<option value="${s}" ${E.settings.scale === s ? 'selected' : ''}>${s || '(없음)'}</option>`).join('')}</select></label>
                 <label class="t69-row">GDP <input type="number" value="${Math.round(E.nat.gdp)}" data-act="gdp" class="t69-num"> <span class="t69-dim">바꾸면 지역구 GDP도 같은 비율로</span></label></div>
             <div class="t69-actions"><button type="button" class="t69-btn" data-act="reset">경제 처음부터 (기록 지움)</button></div>`;

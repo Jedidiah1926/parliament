@@ -9016,6 +9016,11 @@
                     </div>
                     <!-- 이 아래부터 접기 대상 -->
                     <div id="${bodyId}" style="display:${collapsed?'none':'block'};">
+                    <!-- 창당일 — 의회 › 세력 변화의 당 변화(계보도)가 이 날짜에서 시작 (js/history.js) -->
+                    <label style="display:flex;align-items:center;gap:6px;margin-bottom:6px;color:#888;font-size:0.8rem;" title="세력 변화의 당 변화(계보도)에 이 날짜로 창당이 표시됩니다 — 기록에 처음 나온 날보다 이르면 그 날짜에 창당 시점이 생겨요">
+                        <span style="flex-shrink:0;">창당일</span>
+                        <input type="date" value="${p.founded||''}" onchange="updateParty(${idx},'founded',this.value)" style="flex:1;min-width:0;font-size:0.85rem;">
+                    </label>
                     <!-- 소속 의원실 (세로 리스트, 이름이 길어도 안 깨짐) — 단원제면 선택할 게 없으므로 전체 숨김 -->
                     ${isBi?`<div style="display:flex;flex-direction:column;gap:4px;margin-bottom:6px;">
                         <label style="display:flex;align-items:center;gap:6px;cursor:pointer;color:#aaa;font-size:0.85rem;padding:4px 6px;background:#0a0c10;border:1px solid #222;">
