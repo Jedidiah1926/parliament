@@ -264,6 +264,46 @@
             <svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" class="t65-hist" role="img" aria-label="의석 변화"><defs>${defs.join('')}</defs>${flows}${half}${bars}${notes}${labels}</svg>`;
     }
 
+    // ---- 창당일 (의회 › 정당 카드의 "창당일", p.founded = 'YYYY-MM-DD') ----
+    // 기록에 처음 나온 날보다 창당일이 이르면, 그 날짜에 "창당" 시점을 끼워 넣어 계보도가 창당일에서 시작하게 한다.
+    // 기록의 날짜(게임 속 날짜 "1983년 3월 29일" · 선거 기록의 연도)를 읽어 그 사이에 넣고, 날짜를 못 읽으면 처음 나온 기록 바로 앞에.
+    // 아직 의석을 얻은 적 없는 정당도 창당일이 있으면 창당 시점부터 마지막 기록까지 점선으로 이어진다
+    const dateKey = v => {
+        const t = String(v == null ? '' : v);
+        let m = /(\d{1,4})\s*년\s*(\d{1,2})\s*월(?:\s*(\d{1,2})\s*일)?/.exec(t);
+        if (m) return +m[1] * 10000 + +m[2] * 100 + (+m[3] || 0);
+        m = /^\s*(\d{1,4})-(\d{1,2})-(\d{1,2})/.exec(t);
+        if (m) return +m[1] * 10000 + +m[2] * 100 + +m[3];
+        m = /^\s*(\d{3,4})\s*년?\s*$/.exec(t);
+        return m ? +m[1] * 10000 : null;
+    };
+    const foundedOf = p => (/^\d{1,4}-\d{2}-\d{2}$/.test(String(p && p.founded || '')) ? p.founded : null);
+    const foundedLabel = f => { const [y, m, d] = f.split('-').map(Number); return `${y}년 ${m}월 ${d}일`; };
+    function addFoundingPoints(points) {
+        const list = (typeof parties !== 'undefined' ? parties : []).filter(foundedOf).slice().sort((a, b) => dateKey(foundedOf(a)) - dateKey(foundedOf(b)));
+        list.forEach(p => {
+            const id = String(p.id), key = dateKey(foundedOf(p));
+            const firstK = points.findIndex(pt => pt.alive.has(id));
+            const keyAt = pt => (pt.founding ? pt.key : (dateKey(pt.date) ?? dateKey(pt.label)));
+            if (firstK >= 0) { const k0 = keyAt(points[firstK]); if (k0 != null && k0 <= key) return; } // 이미 창당일 무렵부터 기록에 있음
+            const same = points.find(pt => pt.founding && pt.key === key);
+            const info = { id: p.id, name: p.name, color: p.color, seats: 0 };
+            if (same) { same.alive.set(id, info); return; }
+            let at = points.findIndex(pt => { const k = keyAt(pt); return k != null && k > key; });
+            if (at < 0) at = points.length;
+            if (firstK >= 0) at = Math.min(at, firstK);
+            const prev = points[at - 1], next = points[at];
+            // 앞뒤 기록에 모두 있는 정당은 이 시점에도 이어 둔다 (줄이 끊기지 않게)
+            const alive = new Map();
+            if (prev && next) prev.alive.forEach((v, pid) => { if (next.alive.has(pid)) alive.set(pid, { ...v }); });
+            alive.set(id, info);
+            points.splice(at, 0, { at: prev ? prev.at : (next ? next.at - 1 : 0), label: '창당', date: foundedLabel(foundedOf(p)), founding: true, key, alive, snaps: [] });
+            // 기록에 한 번도 나온 적 없는 지금 정당은 마지막 기록까지 이어 둔다
+            const dissolved = p.status === 'dissolved';
+            if (firstK < 0 && !dissolved && points.length - 1 > at) points[points.length - 1].alive.set(id, { ...info });
+        });
+    }
+
     // 당 변화 — 정당 계보도
     function lineageChart(width) {
         // 시점: 모든 원의 기록을 시간순으로, 같은 순간(3초 안)에 남긴 기록은 하나로
@@ -274,7 +314,6 @@
             if (last && sn.at - last.at < 3000) { last.snaps.push(sn); if (!last.label && sn.label) last.label = sn.label; }
             else points.push({ at: sn.at, label: sn.label, date: sn.date, snaps: [sn] });
         });
-        if (!points.length) return '';
         // 시점마다 살아 있는 정당 (어느 원에든 의석이 있으면) · 그때 이름 · 색 · 의석(하원 우선)
         points.forEach(pt => {
             pt.alive = new Map();
@@ -282,6 +321,8 @@
             const h = pt.snaps.find(sn => sn.chamber === 'house');
             if (h) h.parties.forEach(p => { const e = pt.alive.get(String(p.id)); if (e) e.seats = p.seats; });
         });
+        addFoundingPoints(points);
+        if (!points.length) return '';
         const ids = [];
         points.forEach(pt => pt.alive.forEach((_, id) => { if (!ids.includes(id)) ids.push(id); }));
         const life = {};
@@ -1539,6 +1580,13 @@
 
     // 다른 화면(경제 — js/economy.js)도 같은 방식으로 PNG · JPG를 굽게 — 화면 글꼴로 글자를 따로 씀
     window.HemiExportKit = { rasterize, async prepareFont() { pickFont(); await loadExportFont(); }, get font() { return FONT; } };
+    // 정당 카드에서 창당일을 바꾸면 계보도를 바로 다시 그림
+    const origUpdateParty = window.updateParty;
+    if (typeof origUpdateParty === 'function') window.updateParty = function (i, k) {
+        const r = origUpdateParty.apply(this, arguments);
+        if (k === 'founded' && document.getElementById('dispPanelTimeline')?.classList.contains('active')) renderHistory();
+        return r;
+    };
     window.T65 = { get timeline() { return S.timeline; }, get ranking() { return S.ranking; }, get wiki() { return S.wiki; }, record: (label) => { const n = record(label || '', 'manual', false); renderTimeline(); return n; } };
 
     const style = document.createElement('style');

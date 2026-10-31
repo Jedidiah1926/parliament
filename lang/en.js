@@ -834,6 +834,15 @@ window.DnoLangPacks.en = {
   }
  ],
  "dict": [
+    ["스코틀랜드 · 카탈루냐 같은 자치 지역 — 켜면 그 종속국은 자기 의회를 따로 두면서도 그 땅의 지역구가 본국 총선 · 지방선거 · 국민투표에 들어가고 본국 지역구 의석에 셉니다 (경제 집계 · 공납은 종속국 그대로).", "Autonomous regions like Scotland or Catalonia — when on, the dependency keeps its own parliament but its districts also vote in national, local elections and referendums and count toward national district seats (economy and tribute stay as a dependency)."],
+    ["창당일", "Founded"],
+    ["본국 총선에도 참여", "Also votes in national elections"],
+    ["(자치 지역 — 스코틀랜드 · 카탈루냐처럼)", "(autonomous region — like Scotland or Catalonia)"],
+    ["세력 변화의 당 변화(계보도)에 이 날짜로 창당이 표시됩니다 — 기록에 처음 나온 날보다 이르면 그 날짜에 창당 시점이 생겨요", "The party lineage in Seat history starts at this date — if it's earlier than the party's first record, a founding point is added at that date"],
+    ["스코틀랜드 · 카탈루냐처럼 — 자기 의회는 따로 두되, 그 땅의 지역구도 본국 총선 · 지방선거 · 국민투표에 들어가고 본국 지역구 의석에 셈", "Like Scotland or Catalonia — keeps its own parliament, but its districts also vote in national, local elections and referendums and count toward national district seats"],
+    ["- 정당 창당일 — 의회 › 정당 카드에 \"창당일\"을 정하면 세력 변화의 당 변화(계보도)가 그 날짜에서 시작 (기록 날짜 사이에 창당 시점을 끼워 넣음, 아직 의석이 없는 정당도 표시)", "- Party founding date — set \"Founded\" on a party card and the party lineage in Seat history starts there (a founding point is inserted between record dates; parties without seats yet are shown too)"],
+    ["- 종속국 \"본국 총선에도 참여\" — 스코틀랜드 · 카탈루냐 같은 자치 지역처럼 자기 의회는 따로 두면서 그 땅의 지역구가 본국 총선 · 지방선거 · 국민투표에 들어가고 지역구 의석에도 셈 (경제 집계 · 공납은 종속국 그대로)", "- Dependencies \"Also votes in national elections\" — like autonomous regions such as Scotland or Catalonia, they keep their own parliament while their districts vote in national, local elections and referendums and count toward district seats (economy and tribute unchanged)"],
+    ["- 고친 점: 경제 › 시나리오의 화면 표시에서 화폐 단위를 바꾸면 \"NaN\"이 되던 문제", "- Fixed: changing the currency unit under Economy › Scenario display turned it into \"NaN\""],
     ["- 맵 프리셋 5개 추가 — 오스트레일리아(6개 주 + 2개 준주) · 멕시코(31개 주 + 멕시코시티) · 인도(28개 주 + 8개 연방 직할지) · 폴란드(16개 주) · 스위스(26개 칸톤), 모두 15개", "- 5 more map presets — Australia (6 states + 2 territories), Mexico (31 states + Mexico City), India (28 states + 8 union territories), Poland (16 voivodeships), Switzerland (26 cantons), 15 in all"],
     ["지역구 정보 칸", "District info fields"],
     ["의석", "Seats"],
