@@ -1557,6 +1557,13 @@ html[data-ui-mode="mobile"] .save-panel { max-height: calc(100vh - 56px - var(--
 .cm-fields select { width: auto !important; }
 .cm-fields .cm-tags { flex: 1 1 100%; }
 .cm-fields .cm-tags input { flex: 1; min-width: 0; }
+.cm-manual { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 4px 10px; margin: 0 0 8px; }
+.cm-manual label { display: flex; align-items: center; gap: 5px; color: #999; font-size: 0.78rem; min-width: 0; }
+.cm-manual label span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cm-manual label i { display: inline-block; width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.cm-manual input[type="number"] { width: 56px !important; flex-shrink: 0; }
+.cm-manual .cm-note { grid-column: 1 / -1; }
+.cm-total { color: var(--tno-neon); }
 .cm-bar { display: flex; height: 10px; border: 1px solid #222; overflow: hidden; }
 .cm-bar span { display: block; height: 100%; }
 .cm-legend { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 6px; font-size: 0.75rem; color: #999; }

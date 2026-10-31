@@ -162,14 +162,23 @@ function committeeChamberOk(c) {
     const list = typeof chamberList === 'function' ? chamberList() : ['house'];
     return list.includes(c.chamber) ? c.chamber : list[0];
 }
-// 위원 배정 — 그 원의 정당 의석에 비례해 위원 수를 나눈다 (동트 방식). 활동 금지 정당 · 의석 없는 정당은 제외
-function committeeComposition(c) {
+// 위원을 받을 수 있는 정당 — 그 원에 의석이 있고 활동 금지 · 해산되지 않은 정당
+function committeePool(c) {
     const ch = committeeChamberOk(c);
     const seatKey = seatKeyFor(ch), inKey = inKeyFor(ch);
-    const pool = parties.filter(p => p[inKey] && p.status !== 'banned' && (p[seatKey] || 0) > 0)
+    return parties.filter(p => p[inKey] && p.status !== 'banned' && p.status !== 'dissolved' && (p[seatKey] || 0) > 0)
         .map(p => ({ id: p.id, name: p.name, color: p.color, seats: p[seatKey] || 0, n: 0 }));
-    const size = Math.max(1, parseInt(c.size) || COMMITTEE_DEFAULT_SIZE);
+}
+// 위원 배정 — 기본은 그 원의 정당 의석에 비례해 위원 수를 나눈다 (동트 방식).
+// 위원 구성을 직접 정했으면(c.manual = { 정당 id: 위원 수 }) 그 수 그대로 — 위원 수는 그 합
+function committeeComposition(c) {
+    const pool = committeePool(c);
     if (!pool.length) return [];
+    if (c.manual && typeof c.manual === 'object') {
+        pool.forEach(p => { p.n = Math.max(0, parseInt(c.manual[p.id]) || 0); });
+        return pool.filter(p => p.n > 0).sort((a, b) => b.n - a.n || b.seats - a.seats);
+    }
+    const size = Math.max(1, parseInt(c.size) || COMMITTEE_DEFAULT_SIZE);
     for (let k = 0; k < size; k++) {
         let best = null, bestQ = -1;
         pool.forEach(p => { const q = p.seats / (p.n + 1); if (q > bestQ) { bestQ = q; best = p; } });
@@ -374,6 +383,24 @@ function updateCommittee(id, field, value) {
     else c[field] = value || null;
     renderCommitteeTab(); renderBillList();
 }
+// 위원 구성 직접 정하기 — 켤 때는 지금 자동 배정을 그대로 옮겨 놓고 시작
+function setCommitteeManual(id, on) {
+    const c = committeeById(id);
+    if (!c) return;
+    if (on) c.manual = Object.fromEntries(committeeComposition({ ...c, manual: null }).map(p => [p.id, p.n]));
+    else {
+        const total = committeeComposition(c).reduce((a, p) => a + p.n, 0);
+        if (total > 0) c.size = total; // 자동으로 돌아가도 위원 수는 직접 정한 합계 그대로
+        c.manual = null;
+    }
+    renderCommitteeTab(); renderBillList();
+}
+function setCommitteeMembers(id, pid, value) {
+    const c = committeeById(id);
+    if (!c || !c.manual) return;
+    c.manual[pid] = Math.max(0, Math.min(999, parseInt(value) || 0));
+    renderCommitteeTab(); renderBillList();
+}
 function removeCommittee(id) {
     const c = committeeById(id);
     if (!c) return;
@@ -448,6 +475,15 @@ function renderBillTagPicker(id) {
 }
 BILL_TAG_INPUTS.forEach(initBillTagPicker);
 
+// 직접 정하기 — 정당마다 위원 수 칸 (그 원에 의석이 있는 정당)
+function committeeManualHtml(c) {
+    const pool = committeePool(c);
+    if (!pool.length) return '';
+    return `<div class="cm-manual">${pool.map(p => `
+        <label title="${legisEsc(p.name)} — 의석 ${p.seats}"><i style="background:${p.color}"></i><span>${legisEsc(p.name)}</span>
+            <input type="number" min="0" max="999" value="${Math.max(0, parseInt(c.manual[p.id]) || 0)}" onchange="setCommitteeMembers('${c.id}','${p.id}',this.value)"></label>`).join('')}
+        <div class="cm-note">정당마다 위원 수를 정합니다 (위원 수 = 합계). 의석이 바뀌어도 그대로이고, "자동 (의석 비례)"로 돌리면 이 합계로 다시 나눠요.</div></div>`;
+}
 function renderCommitteeTab() {
     refreshBillTagPickers(); // 위원회 소관 태그가 바뀌면 법안 태그 고르기 목록도
     const box = document.getElementById('committeeList');
@@ -488,10 +524,12 @@ function renderCommitteeTab() {
             </div>
             <div class="cm-fields">
                 ${chambers.length > 1 ? `<label>원 <select onchange="updateCommittee('${c.id}','chamber',this.value)">${chambers.map(x => `<option value="${x}" ${x === ch ? 'selected' : ''}>${legisEsc(chamberDisplayName(x))}</option>`).join('')}</select></label>` : ''}
-                <label>위원 수 <input type="number" min="1" max="999" value="${c.size || COMMITTEE_DEFAULT_SIZE}" onchange="updateCommittee('${c.id}','size',this.value)"></label>
+                <label>위원 구성 <select onchange="setCommitteeManual('${c.id}', this.value === 'manual')"><option value="auto" ${c.manual ? '' : 'selected'}>자동 (의석 비례)</option><option value="manual" ${c.manual ? 'selected' : ''}>직접 정하기</option></select></label>
+                ${c.manual ? `<label>위원 수 <b class="cm-total">${total}</b></label>` : `<label>위원 수 <input type="number" min="1" max="999" value="${c.size || COMMITTEE_DEFAULT_SIZE}" onchange="updateCommittee('${c.id}','size',this.value)"></label>`}
                 <label>위원장 <select onchange="updateCommittee('${c.id}','chairPartyId',this.value)">${comp.map(p => `<option value="${p.id}" ${chair && String(chair.id) === String(p.id) ? 'selected' : ''}>${legisEsc(p.name)}</option>`).join('') || '<option value="">-</option>'}</select></label>
                 <label class="cm-tags">소관 태그 <input type="text" value="${legisEsc((c.tags || []).join(', '))}" placeholder="예: 경제, 예산" onchange="updateCommittee('${c.id}','tags',this.value)"></label>
             </div>
+            ${c.manual ? committeeManualHtml(c) : ''}
             ${compBar}
             <div class="cm-sub">심사 중 ${reviewing.length}건 · 심사 끝 ${done}건</div>
             ${reviewHtml}
