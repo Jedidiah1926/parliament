@@ -1,4 +1,4 @@
-// ===== 맵 프리셋 만들기 — Natural Earth(공개 도메인) 행정구역으로 지역구 지도 10개 =====
+// ===== 맵 프리셋 만들기 — Natural Earth(공개 도메인) 행정구역으로 지역구 지도 15개 =====
 // 쓰는 법: node tools/build-map-presets.js <ne_10m_admin_1_states_provinces.geojson>
 //   (https://github.com/nvkelso/natural-earth-vector — geojson/ne_10m_admin_1_states_provinces.geojson)
 // 결과: presets/maps.js — window.HemiMapPresets = [{ id, name, count, viewBox, districts: [{ key, ko, en, abbr, d }] }]
@@ -40,9 +40,12 @@ const KR_EN = { '강원도': 'Gangwon State', '전라북도': 'Jeonbuk State' };
 const plain = (p, abbr) => (p.adm0_a3 === 'USA' && p.postal === 'DC'
     ? { group: 'US-DC', ko: '워싱턴 D.C.', en: 'Washington, D.C.', abbr: 'DC' }
     : { group: p.iso_3166_2 || p.name_en || p.name, ko: p.name_ko || p.name, en: p.name_en || p.name, abbr: abbr || p.postal || (p.name_en || p.name).slice(0, 3).toUpperCase() });
+// 묶음 이름 · 약칭을 ISO 3166-2 코드로 (postal은 나라에 따라 비었거나 겹침 — 스위스 BS · NW, 인도 구자라트)
+const isoAbbr = p => String(p.iso_3166_2 || '').replace(/^[A-Z]{2}-/, '').replace(/~$/, '') || (p.postal || (p.name_en || p.name).slice(0, 3).toUpperCase());
+const AU_KO = { 'AU-NT': '노던 준주', 'AU-ACT': '오스트레일리아 수도 준주' };
 const byDict = (dict, k) => { const v = dict[k]; if (!v) throw new Error('이름 사전에 없음: ' + k); return { group: k, ko: v[0], en: v[1], abbr: v[2] }; };
 
-// ---- 지도 10개 ----
+// ---- 지도 15개 ----
 // pick: 이 나라의 행정구역 → { group(묶는 이름), ko, en, abbr } 또는 null(뺌) · proj: 앨버스 매개변수
 // dropPoly(p, [lon, lat]): 빼는 섬 · insets: [{ match(p, [lon,lat]), proj?, scale, at(본토 bbox, 상자 bbox) → [dx, dy] }]
 const MAPS = [
@@ -70,6 +73,25 @@ const MAPS = [
     { id: 'ca', name: { ko: '캐나다', en: 'Canada' }, desc: { ko: '10개 주 + 3개 준주', en: '10 provinces + 3 territories' }, iso: 'CAN', proj: [50, 70, -96, 60], pick: p => plain(p) },
     { id: 'br', name: { ko: '브라질', en: 'Brazil' }, desc: { ko: '26개 주 + 연방구', en: '26 states + Federal District' }, iso: 'BRA', proj: [-2, -22, -54, -12], pick: p => plain(p),
         dropPoly: (p, [lon]) => lon > -33 },
+    // 저비스베이 준주는 수도 준주에 묶고(선거구도 같음), 멀리 떨어진 맥쿼리섬은 뺌 · 로드하우섬은 뉴사우스웨일스에 속함
+    { id: 'au', name: { ko: '오스트레일리아', en: 'Australia' }, desc: { ko: '6개 주 + 2개 준주', en: '6 states + 2 territories' }, iso: 'AUS', proj: [-18, -36, 134, -27],
+        pick: p => (p.iso_3166_2 === 'AU-X03~' ? null
+            : p.iso_3166_2 === 'AU-X02~' ? { group: 'AU-ACT', ko: AU_KO['AU-ACT'], en: 'Australian Capital Territory', abbr: 'ACT' }
+            : { group: p.iso_3166_2, ko: AU_KO[p.iso_3166_2] || p.name_ko, en: p.name_en, abbr: isoAbbr(p) }),
+        dropPoly: (p, [lon]) => lon > 155 }, // 로드하우섬 (본토 동쪽 바다)
+    // 이름 없는 조각(MX-X01~)은 뺌, 멀리 떨어진 섬(레비야히헤도 · 과달루페)은 뺌
+    { id: 'mx', name: { ko: '멕시코', en: 'Mexico' }, desc: { ko: '31개 주 + 멕시코시티', en: '31 states + Mexico City' }, iso: 'MEX', proj: [17, 29, -102, 23],
+        pick: p => (!p.name ? null
+            : p.iso_3166_2 === 'MX-DIF' ? { group: 'MX-CMX', ko: '멕시코시티', en: 'Mexico City', abbr: 'CDMX' }
+            : p.iso_3166_2 === 'MX-MEX' ? { group: 'MX-MEX', ko: '멕시코주', en: 'State of Mexico', abbr: 'MEX' }
+            : { group: p.iso_3166_2, ko: p.name_ko, en: p.name_en || p.name, abbr: isoAbbr(p) }),
+        dropPoly: (p, [lon]) => lon < -117.5 || (p.name === 'Colima' && lon < -105) },
+    { id: 'in', name: { ko: '인도', en: 'India' }, desc: { ko: '28개 주 + 8개 연방 직할지', en: '28 states + 8 union territories' }, iso: 'IND', proj: [12, 28, 80, 22],
+        pick: p => ({ group: p.iso_3166_2, ko: p.name_ko, en: p.name_en || p.name, abbr: isoAbbr(p) }) },
+    { id: 'pl', name: { ko: '폴란드', en: 'Poland' }, desc: { ko: '16개 주(보이보드십)', en: '16 voivodeships' }, iso: 'POL', proj: [49.5, 54.5, 19.4, 52],
+        pick: p => ({ group: p.iso_3166_2, ko: p.name_ko, en: (p.name_en || p.name).replace(/ Voivodeship$/, ''), abbr: isoAbbr(p) }) },
+    { id: 'ch', name: { ko: '스위스', en: 'Switzerland' }, desc: { ko: '26개 칸톤', en: '26 cantons' }, iso: 'CHE', proj: [45.9, 47.7, 8.2, 46.8],
+        pick: p => ({ group: p.iso_3166_2, ko: p.name_ko, en: p.name_en || p.name, abbr: isoAbbr(p) }) },
 ];
 
 function build(cfg) {
