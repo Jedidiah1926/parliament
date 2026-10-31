@@ -60,7 +60,12 @@
             const base = hasTend ? (tend[p.id] || 0) : (store[p.id]?.prob || 0);
             raw[p.id] = base;
         });
-        const { scores, withdrawn } = !noUnions && typeof applyCandidateUnions === 'function' ? applyCandidateUnions(raw, 'district', { chamber: ch, key }) : { scores: raw, withdrawn: new Set() };
+        const united = !noUnions && typeof applyCandidateUnions === 'function' ? applyCandidateUnions(raw, 'district', { chamber: ch, key }) : { scores: raw, withdrawn: new Set() };
+        const withdrawn = united.withdrawn;
+        // 지역구 · 권역 무당층(여론 › 시민 성향) — 성향을 쓸 때만, 후보를 낸 정당들에 나눈다 (js/main.js)
+        const scores = hasTend && typeof districtSpreadUndecided === 'function' && typeof districtUndecidedFor === 'function'
+            ? districtSpreadUndecided(united.scores, list.filter(p => !withdrawn.has(String(p.id))).map(p => p.id), districtUndecidedFor(key, ch))
+            : united.scores;
         const out = {};
         let total = 0;
         list.forEach(p => {

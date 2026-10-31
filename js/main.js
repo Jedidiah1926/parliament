@@ -5074,6 +5074,7 @@
                         svgMaps: JSON.parse(JSON.stringify(districtSvgMaps)),
                         seatCounts: JSON.parse(JSON.stringify(districtSeatCounts)),
                         svgTendency: JSON.parse(JSON.stringify(districtSvgTendency)),
+                        undecided: JSON.parse(JSON.stringify(districtUndecided)),
                         abbr: JSON.parse(JSON.stringify(districtAbbr)),
                         seatResults: JSON.parse(JSON.stringify(districtSeatResults))
                     },
@@ -5087,7 +5088,8 @@
                         districtRegionMap: JSON.parse(JSON.stringify(districtRegionMap)),
                         regionVoteMode: JSON.parse(JSON.stringify(regionVoteMode)),
                         regionVoteStore: JSON.parse(JSON.stringify(regionVoteStore)),
-                        regionTendency: JSON.parse(JSON.stringify(regionTendency))
+                        regionTendency: JSON.parse(JSON.stringify(regionTendency)),
+                        regionUndecided: JSON.parse(JSON.stringify(regionUndecided))
                     }
                 }
             };
@@ -5125,6 +5127,73 @@
             } catch(e) {
                 downloadJSON(filename, state); // 압축에 실패하면 압축 없이라도 저장
             }
+        }
+
+        // ===== 지역구 프리셋 (.hemimap) — 종합 프리셋(.hemi)에서 땅 정보만 =====
+        // 지역구 지도(따로 쓰는 원의 지도 포함) · 이름 · 약칭 · 원별 의석 수 · 인구 · 순서 · 권역과 권역 배정만 담는다.
+        // 정당에 따라 달라지는 것(성향 · 선거 결과 · 당선자 · 권역 득표)과 종합 프리셋에만 드는 내용(미수복 · 종속국 · 경제 · 시민)은 뺀다.
+        // 불러오기는 국가 › 지역구 지도의 업로드 칸에서 (.jsx와 같은 칸) — 정당 · 내각은 그대로 두고 지역구만 바꾼다
+        const DISTRICT_FILE_EXT = '.hemimap';
+        const DISTRICT_FILE_FORMAT = 'hemicycle-districts';
+        function districtPresetHasData() {
+            return (districtMapMode === 'svg' && !!districtSvgMap?.shapes?.length)
+                || ['house','senate','third'].some(c => Object.keys(districtGrid[c] || {}).length > 0);
+        }
+        function districtPresetData() {
+            const st = getAppState();
+            const d = st.election.district, rs = st.election.regionSystem;
+            const nation = document.getElementById('nationNameInput')?.value || '';
+            return {
+                format: DISTRICT_FILE_FORMAT, version: 1,
+                meta: { name: nation, exportedAt: new Date().toISOString(), dataLang: st.meta?.dataLang || null },
+                district: {
+                    mapMode: d.mapMode, view: d.view, grid: d.grid, names: d.names, abbr: d.abbr, population: d.population,
+                    order: d.order, seatCounts: d.seatCounts, svgMap: d.svgMap, svgSplit: d.svgSplit, svgMaps: d.svgMaps,
+                },
+                regions: { regions: rs.regions, districtRegionMap: rs.districtRegionMap },
+            };
+        }
+        async function exportDistrictPreset() {
+            if(!districtPresetHasData()) { showCustomAlert('내보낼 지역구가 없습니다.\n국가 › 지역구 지도에서 지도를 올리거나 맵 프리셋을 고른 뒤 다시 시도하세요.'); return; }
+            const data = districtPresetData();
+            const filename = saveFileName().replace(/^hemicycle-/, 'hemicycle-districts-').replace(new RegExp(SAVE_FILE_EXT.replace('.', '\\.') + '$'), DISTRICT_FILE_EXT);
+            if(!window.HemiFile) { downloadBlob(filename, new Blob([JSON.stringify(data)], { type: 'application/octet-stream' })); return; }
+            try { downloadBlob(filename, await window.HemiFile.encode(data)); }
+            catch(e) { downloadBlob(filename, new Blob([JSON.stringify(data)], { type: 'application/octet-stream' })); }
+        }
+        const isDistrictPreset = obj => !!obj && typeof obj === 'object' && obj.format === DISTRICT_FILE_FORMAT && obj.district && typeof obj.district === 'object';
+        // 지역구 프리셋을 지금 세이브에 — 지금 상태에서 지역구 · 권역 칸만 바꿔 다시 불러온다 (실패하면 원래대로)
+        function applyDistrictPreset(obj) {
+            const d = obj.district;
+            const hasMap = d.mapMode === 'svg' ? Array.isArray(d.svgMap?.shapes) && d.svgMap.shapes.length > 0
+                : ['house','senate','third'].some(c => Object.keys(d.grid?.[c] || {}).length > 0);
+            if(!hasMap) { showCustomAlert('지역구 프리셋에 지역구가 없습니다.'); return false; }
+            const three = (v, empty) => ({ house: empty(), senate: empty(), third: empty(), ...(v && typeof v === 'object' ? v : {}) });
+            const prev = getAppState();
+            const next = JSON.parse(JSON.stringify(prev));
+            next.election.district = {
+                ...next.election.district,
+                mapMode: d.mapMode === 'svg' ? 'svg' : (d.mapMode || next.election.district.mapMode),
+                view: d.view || next.election.district.view,
+                grid: three(d.grid, () => ({})), names: three(d.names, () => ({})), population: three(d.population, () => ({})),
+                order: three(d.order, () => []), abbr: d.abbr || {}, seatCounts: d.seatCounts || {},
+                svgMap: d.svgMap || null, svgSplit: { senate: !!d.svgSplit?.senate, third: !!d.svgSplit?.third },
+                svgMaps: { senate: d.svgMaps?.senate || null, third: d.svgMaps?.third || null },
+                // 정당에 따라 달라지는 지역구 정보는 비운다
+                svgTendency: {}, undecided: {}, members: three(null, () => ({})), seatResults: three(null, () => ({})),
+            };
+            const rs = next.election.regionSystem || (next.election.regionSystem = {});
+            rs.regions = three(obj.regions?.regions, () => []);
+            rs.districtRegionMap = three(obj.regions?.districtRegionMap, () => ({}));
+            rs.regionVoteStore = three(null, () => ({}));
+            rs.regionTendency = three(null, () => ({}));
+            rs.regionUndecided = three(null, () => ({}));
+            try { setAppState(next); }
+            catch(e) { try { setAppState(prev); } catch(e2) { /* 되돌리기 실패 */ } showCustomAlert('지역구 프리셋을 불러오지 못했습니다: 파일이 깨졌거나 형식이 다릅니다.'); return false; }
+            simulate(); refreshUI();
+            const n = d.mapMode === 'svg' ? d.svgMap.shapes.length : Object.keys(d.grid?.house || {}).length;
+            if(typeof showKbdToast === 'function') showKbdToast(`지역구 프리셋 불러옴${obj.meta?.name ? ` · ${obj.meta.name}` : ''} · ${n}개 지역구`);
+            return true;
         }
 
         function setAppState(state) {
@@ -5215,6 +5284,7 @@
             districtSvgMaps = { senate: elec.district?.svgMaps?.senate || null, third: elec.district?.svgMaps?.third || null };
             districtSeatCounts = elec.district?.seatCounts || {};
             districtSvgTendency = elec.district?.svgTendency || {};
+            districtUndecided = elec.district?.undecided && typeof elec.district.undecided === 'object' ? elec.district.undecided : {};
             districtAbbr = elec.district?.abbr || {};
             districtSeatResults = { house: null, senate: null, third: null, ...(elec.district?.seatResults || {}) };
             if(elec.district?.mapMode !== 'svg') migrateHexDistrictsToMap(elec.tendency?.data);
@@ -5237,6 +5307,7 @@
             regionVoteMode = { house: 'auto', senate: 'auto', third: 'auto', ...(rs.regionVoteMode || {}) };
             regionVoteStore = { house: {}, senate: {}, third: {}, ...(rs.regionVoteStore || {}) };
             regionTendency = { house: {}, senate: {}, third: {}, ...(rs.regionTendency || {}) };
+            regionUndecided = { house: {}, senate: {}, third: {}, ...(rs.regionUndecided || {}) };
             regionActiveId = null;
 
             // ── UI 설정 복원 ──
@@ -5405,6 +5476,7 @@
             if(window.HEMI_BUILD && window.HEMI_BUILD.demo) { showCustomAlert('체험판에서는 저장 파일을 불러올 수 없어요. (정식판에서 열립니다)'); return; }
             const text = window.HemiFile ? await window.HemiFile.readText(file) : await file.text();
             const obj = JSON.parse(text);
+            if(isDistrictPreset(obj)) { showCustomAlert('지역구 프리셋(.hemimap) 파일입니다.\n국가 › 지역구 지도의 "지역구 지도 업로드"로 올리면 지금 세이브의 지역구만 바뀝니다.'); return; }
             const parl = obj && (obj.parliament || obj.data);
             if(!parl || !Array.isArray(parl.parties)) throw new Error('not a save file');
             if(localStorageAvailable && loadSaveSlots().filter(s => !s.isAutosave).length >= MAX_SAVE_SLOTS) {
@@ -5676,7 +5748,7 @@
             if(storageFull) { renderSaveCurrentCard(); return; }
             storageFull = true;
             renderSaveCurrentCard();
-            showCustomAlert(`브라우저 저장 공간이 가득 차서 "${name}"을(를) 저장하지 못했습니다.\n안 쓰는 세이브를 지우거나, "파일로 저장"으로 따로 보관한 뒤 지워 주세요.`);
+            showCustomAlert(`브라우저 저장 공간이 가득 차서 "${name}"을(를) 저장하지 못했습니다.\n안 쓰는 세이브를 지우거나, "종합 프리셋 내보내기"로 파일에 따로 보관한 뒤 지워 주세요.`);
         }
         function saveStorageUsageText() {
             // 실제로 저장소에 쓰인 크기 (js/slotstore.js가 세이브를 압축해 둠)
@@ -5833,7 +5905,7 @@
         function renderSaveCurrentCard() {
             const card = document.getElementById('saveCurrentCard');
             if(!card) return;
-            if(!localStorageAvailable) { card.innerHTML = '<div style="color:#666;font-size:0.8rem;">이 환경에서는 브라우저 저장을 사용할 수 없습니다. 아래 "파일로 저장"을 쓰세요.</div>'; return; }
+            if(!localStorageAvailable) { card.innerHTML = '<div style="color:#666;font-size:0.8rem;">이 환경에서는 브라우저 저장을 사용할 수 없습니다. 아래 "종합 프리셋 내보내기"로 파일에 저장하세요.</div>'; return; }
             const all = loadSaveSlots();
             const named = activeSlotId ? all.find(s => s.id === activeSlotId && !s.isAutosave) : null;
             if(!named) { card.innerHTML = '<div style="color:#666;font-size:0.8rem;">열려 있는 세이브가 없습니다. 위 탭 바의 "+"로 새로 만들거나 아래 목록에서 여세요.</div>'; return; }
@@ -10835,6 +10907,10 @@
         });
         // districtSvgTendency[key] = { house:{partyId:pct}, senate:{...}, third:{...} } — 지역구·원별 정당 지지도(%)
         let districtSvgTendency = {};
+        // 지역구 · 권역 무당층(%) — 성향에 넣지 않은 표의 몫. 개표 때마다 그 지역구에 나온 정당들에 나뉜다 (여론 › 지지율의 무당파와 같은 방식)
+        // districtUndecided[key] = { house, senate, third } · regionUndecided[원][권역 id] = %
+        let districtUndecided = {};
+        let regionUndecided = { house: {}, senate: {}, third: {} };
         // districtAbbr[key] = "약칭" — 설정하면 지도에서 그 지역구 도형 가운데에 표시됨
         let districtAbbr = {};
         // 지도 위 약칭/의석 배지 크기 배율(1=100%) — 슬라이더로 조정, 지역구 자체 크기와 무관하게 지도 전체에 균일 적용
@@ -11699,21 +11775,35 @@
                 : '기존 지역구 데이터가 모두 새 지도로 대체됩니다.\n(이름·의석 수·성향·당선자 정보 포함) 계속하시겠습니까?',
                 proceed, cancel);
         }
-        function districtSvgUpload(input) {
+        // 지역구 지도 업로드 — 맵 메이커의 .jsx(지도 모양만) 또는 지역구 프리셋 .hemimap(지도 · 이름 · 의석 · 인구 · 권역)
+        async function districtSvgUpload(input) {
             const file = input.files?.[0]; if(!file) return;
-            districtConfirmReplaceMap(() => districtSvgUploadProceed(input, file), () => { input.value = ''; });
+            let text;
+            try { text = window.HemiFile ? await window.HemiFile.readText(file) : await file.text(); }
+            catch(e) { input.value = ''; showCustomAlert('파일을 읽지 못했습니다.'); return; }
+            let obj = null;
+            if(/^\s*[{\[]/.test(text)) { try { obj = JSON.parse(text); } catch(e) { obj = null; } }
+            if(obj) {
+                input.value = '';
+                if(isDistrictPreset(obj)) {
+                    const go = () => { if(applyDistrictPreset(obj)) document.getElementById('districtSvgFileName').textContent = file.name; };
+                    const has = districtPresetHasData();
+                    if(!has) { go(); return; }
+                    showCustomConfirm('지금 지역구가 모두 이 지역구 프리셋으로 바뀝니다 — 지도 · 이름 · 의석 수 · 인구 · 권역 (모든 원).\n정당 · 내각은 그대로이고, 지역구 성향 · 당선자 · 선거 결과는 비워집니다. 계속하시겠습니까?', go, () => {});
+                    return;
+                }
+                if(obj.parliament || obj.data) { showCustomAlert('종합 프리셋(.hemi) 파일입니다.\n저장 창의 "종합 프리셋 불러오기"로 여세요. 여기서는 지역구 프리셋(.hemimap)과 맵 메이커 지도(.jsx)를 올립니다.'); return; }
+                showCustomAlert('지역구 프리셋(.hemimap)이나 맵 메이커 지도(.jsx)가 아닙니다.');
+                return;
+            }
+            districtConfirmReplaceMap(() => districtSvgUploadProceed(input, file, text), () => { input.value = ''; });
         }
 
-        function districtSvgUploadProceed(input, file) {
-            const reader = new FileReader();
-            reader.onload = e => {
-                const text = e.target.result;
-                const parsed = parseDistrictJsx(text);
-                if(parsed.shapes.length === 0) { showCustomAlert('맵 메이커에서 내보낸 .jsx 파일에서 지역구로 쓸 도형을 찾을 수 없습니다.'); return; }
-                districtApplyMapData(parsed);
-                input.value = '';
-            };
-            reader.readAsText(file);
+        function districtSvgUploadProceed(input, file, text) {
+            const parsed = parseDistrictJsx(text);
+            input.value = '';
+            if(parsed.shapes.length === 0) { showCustomAlert('맵 메이커에서 내보낸 .jsx 파일에서 지역구로 쓸 도형을 찾을 수 없습니다.'); return; }
+            districtApplyMapData(parsed);
         }
 
         // 지도({ viewBox, shapes })를 지금 원의 지역구 지도로 — 업로드 · 맵 프리셋(js/mappresets.js)이 함께 씀
@@ -11917,6 +12007,40 @@
             return { values: {}, source: null, region };
         }
         const districtTendencyValue = (key, chamber, partyId) => Number(districtTendencyFor(key, chamber).values[partyId]) || 0;
+        // 지역구 하나의 무당층(%) — 지역구에 따로 정한 값이 있으면 그 값, 없으면 권역 성향을 쓸 때 권역 값
+        function districtUndecidedFor(key, chamber) {
+            const own = districtUndecided[key]?.[chamber];
+            if(own != null && own !== '') return Math.max(0, Number(own) || 0);
+            const eff = districtTendencyFor(key, chamber);
+            if(eff.source === 'region' && eff.region) return Math.max(0, Number(regionUndecided[chamber]?.[eff.region.id]) || 0);
+            return 0;
+        }
+        function districtSetUndecided(key, chamber, value) {
+            const v = Math.max(0, Math.min(100, parseFloat(value) || 0));
+            districtUndecided[key] = districtUndecided[key] || {};
+            districtUndecided[key][chamber] = v;
+            if(tendencySvgSyncAll) chamberList().forEach(c => { districtUndecided[key][c] = v; });
+        }
+        function regionSetUndecided(chamber, regionId, value) {
+            regionUndecided[chamber] = regionUndecided[chamber] || {};
+            regionUndecided[chamber][regionId] = Math.max(0, Math.min(100, parseFloat(value) || 0));
+        }
+        // 무당층 S를 정당들(ids)에 나눠 scores에 더한다 — 여론 › 지지율의 무당파와 같은 식:
+        //   r = 0~1 난수 · 무작위 몫 S·r는 정당마다 난수 u로, 지지 몫 S·(1−r)는 성향 × 친화도(0.5~1.5 난수) 비율로
+        // 성향이 0인 정당은 받지 않는다 (무당층만으로 당선되지 않게) — 성향을 정한 정당이 하나도 없으면 모두 받음
+        function districtSpreadUndecided(scores, ids, S) {
+            if(!(S > 0) || !ids.length) return scores;
+            const anyPos = ids.some(id => (scores[id] || 0) > 0);
+            const pool = anyPos ? ids.filter(id => (scores[id] || 0) > 0) : ids;
+            const r = Math.random();
+            const u = pool.map(() => Math.random()), uSum = u.reduce((a, b) => a + b, 0) || 1;
+            const wa = pool.map(id => Math.max(0, scores[id] || 0) * (0.5 + Math.random())), waSum = wa.reduce((a, b) => a + b, 0);
+            const out = { ...scores };
+            pool.forEach((id, i) => {
+                out[id] = (out[id] || 0) + S * r * u[i] / uSum + (waSum > 0 ? S * (1 - r) * wa[i] / waSum : S * (1 - r) / pool.length);
+            });
+            return out;
+        }
         function regionSetTendency(chamber, regionId, partyId, value) {
             const v = Math.max(0, Math.min(100, parseFloat(value) || 0));
             regionTendency[chamber] = regionTendency[chamber] || {};
@@ -11961,6 +12085,7 @@
                 map.shapes = map.shapes.filter(s => s.key !== key);
                 delete districtSeatCounts[key];
                 delete districtSvgTendency[key];
+                delete districtUndecided[key];
                 delete districtAbbr[key];
                 ['house','senate','third'].forEach(ch => {
                     delete districtGrid[ch][key];
@@ -12979,10 +13104,12 @@
                     .map(e => `${e.p.name} ${e.val}%`)
                     .join(' · ');
                 if(tied.length === 0 || bestVal <= 0) { fillMap[key] = 'rgba(255,255,255,0.05)'; titleMap[key] = `${nm}: 성향 미지정`; return; }
-                if(tied.length === 1) { fillMap[key] = tendencyColorForPct(tied[0].color, bestVal); titleMap[key] = `${nm}${fromRegion}: ${breakdown}`; return; }
+                const undT = districtUndecidedFor(key, tendencySvgChamber);
+                const breakdownU = undT > 0 ? `${breakdown} · 무당층 ${undT}%` : breakdown;
+                if(tied.length === 1) { fillMap[key] = tendencyColorForPct(tied[0].color, bestVal); titleMap[key] = `${nm}${fromRegion}: ${breakdownU}`; return; }
                 const colors = tied.map(p => tendencyColorForPct(p.color, bestVal));
                 fillMap[key] = tendencyRegisterTiePattern(patternDefs, colors, tieScope);
-                titleMap[key] = `${nm} (경합)${fromRegion}: ${breakdown}`;
+                titleMap[key] = `${nm} (경합)${fromRegion}: ${breakdownU}`;
             });
             return {
                 getFill: key => fillMap[key] || 'rgba(255,255,255,0.05)',
@@ -13057,9 +13184,27 @@
                             style="width:100%;box-sizing:border-box;background:#000;border:1px solid #333;color:var(--tno-neon);font-family:inherit;font-size:0.9rem;padding:6px 4px;text-align:center;"
                             onchange="regionSetTendency('${ch}','${r.id}','${p.id}',this.value); tendencyRenderMaps();">
                     </div>`).join('')}
-                <div style="color:${total > 0 && Math.abs(total - 100) > 0.01 ? '#a07a3a' : '#555'};font-size:0.74rem;margin:2px 0 8px;">합계 ${Math.round(total * 10) / 10}%</div>
+                ${undecidedRowHtml({ value: Number(regionUndecided[ch]?.[r.id]) || 0, onchange: `regionSetUndecided('${ch}','${r.id}',this.value); tendencyRenderMaps();` })}
+                <div style="color:${total + (Number(regionUndecided[ch]?.[r.id]) || 0) > 0 && Math.abs(total + (Number(regionUndecided[ch]?.[r.id]) || 0) - 100) > 0.01 ? '#a07a3a' : '#555'};font-size:0.74rem;margin:2px 0 8px;">합계 ${Math.round((total + (Number(regionUndecided[ch]?.[r.id]) || 0)) * 10) / 10}%</div>
                 ${own.length ? `<button onclick="regionClearDistrictTendencies('${ch}','${r.id}')" style="width:100%;background:transparent;border:1px solid #333;color:#888;padding:5px;font-family:inherit;font-size:0.78rem;cursor:pointer;">지역구 ${own.length}곳의 따로 정한 성향 지우고 권역 성향 따르기</button>` : ''}
                 <div style="color:#555;font-size:0.72rem;margin-top:8px;line-height:1.5;">지역구 성향을 하나도 정하지 않은(모두 0인) 지역구는 이 권역 성향으로 총선 지역구 · 지방선거 · 국민투표를 치릅니다. 지도에서 지역구를 누르면 그 권역으로 바뀌어요.</div>`;
+        }
+
+        // 성향 입력 칸 아래 무당층 줄 — opts: { value, placeholder?, onchange }, partyTotal을 주면 합계(정당 + 무당층)도 보여 줌
+        function undecidedRowHtml(opts, partyTotal) {
+            const und = opts.value === '' ? Number(opts.placeholder) || 0 : Number(opts.value) || 0;
+            const sum = partyTotal != null ? partyTotal + und : null;
+            return `
+                <div style="display:grid;grid-template-columns:1fr 75px;gap:6px;margin-bottom:4px;align-items:center;border-top:1px dashed #333;padding-top:8px;margin-top:4px;">
+                    <div style="display:flex;align-items:center;gap:6px;min-width:0;">
+                        <span style="width:10px;height:10px;border:1px dashed #888;border-radius:50%;flex-shrink:0;box-sizing:border-box;"></span>
+                        <span style="font-size:0.85rem;color:#aaa;">무당층</span>
+                    </div>
+                    <input type="number" min="0" max="100" value="${opts.value}" ${opts.value === '' ? `placeholder="${und}" data-region-fallback="1"` : ''}
+                        style="width:100%;box-sizing:border-box;background:#000;border:1px dashed #555;color:#ccc;font-family:inherit;font-size:0.9rem;padding:6px 4px;text-align:center;"
+                        onchange="${opts.onchange}">
+                </div>
+                <div style="color:#555;font-size:0.72rem;margin-bottom:6px;line-height:1.5;">개표 때마다 무당층 표가 이 지역 정당들에 나뉩니다 (일부는 무작위, 나머지는 성향 비율대로 · 성향 0인 정당은 받지 않음)${sum != null && sum > 0 ? ` · 합계 ${Math.round(sum * 10) / 10}%` : ''}</div>`;
         }
 
         function tendencySvgRenderMaps() {
@@ -13184,6 +13329,10 @@
                             onchange="districtSvgSetTendency('${key}','${tendencySvgChamber}','${p.id}',this.value); tendencyRenderMaps();">
                     </div>
                 `).join('')}
+                ${undecidedRowHtml(districtUndecided[key]?.[tendencySvgChamber] == null && effT.source === 'region'
+                    ? { value: '', placeholder: Number(regionUndecided[tendencySvgChamber]?.[effT.region.id]) || 0, onchange: `districtSetUndecided('${key}','${tendencySvgChamber}',this.value); tendencyRenderMaps();` }
+                    : { value: Number(districtUndecided[key]?.[tendencySvgChamber]) || 0, onchange: `districtSetUndecided('${key}','${tendencySvgChamber}',this.value); tendencyRenderMaps();` },
+                    parties.reduce((a, p) => a + (Number(effT.values[p.id]) || 0), 0))}
             `;
         }
 
@@ -14830,8 +14979,11 @@
                 const seatCount = districtSeatCounts[key]?.[chamber] || 0;
                 if(seatCount <= 0) return;
                 // 후보 단일화: 이 지역구에서 성향이 가장 높은 참여 정당이 후보를 내고, 참여 정당의 성향을 합쳐 받는다
-                const { scores: support, withdrawn } = applyCandidateUnions(
+                const { scores: unionScores, withdrawn } = applyCandidateUnions(
                     Object.fromEntries(parties.map(p => [p.id, districtTendencyValue(key, chamber, p.id)])), 'district', { chamber, key });
+                // 무당층 — 이번 개표에서 후보를 낸 정당들에 나눠 더한다
+                const support = districtSpreadUndecided(unionScores,
+                    parties.filter(p => !withdrawn.has(String(p.id)) && partyRunsInChamber(p, chamber)).map(p => p.id), districtUndecidedFor(key, chamber));
                 // 이 지역구에 성향을 정한 정당이 있으면, 성향이 0인 정당은 노이즈(±15)만으로 표를 얻지 않는다 —
                 // 예전엔 성향 0인 무소속도 노이즈로 표가 생겨, 의석이 여럿인 지역구에서 매번 무소속이 당선됐다
                 const anySupport = parties.some(p => !withdrawn.has(String(p.id)) && partyRunsInChamber(p, chamber) && (support[p.id] || 0) > 0);

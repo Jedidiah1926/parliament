@@ -170,13 +170,18 @@
 
                     <div style="height:1px;background:#222;margin:18px 0;"></div>
 
-                    <span style="color:var(--tno-neon);font-size:0.95rem;display:block;margin-bottom:6px;">파일 (.hemi)</span>
+                    <span style="color:var(--tno-neon);font-size:0.95rem;display:block;margin-bottom:6px;">종합 프리셋 (.hemi)</span>
+                    <div style="color:#666;font-size:0.75rem;margin-bottom:6px;">지금 세이브 전체(정당 · 의회 · 지역구 · 내각 · 경제 …)를 파일 하나로. 종합 프리셋으로 나눠 줄 때도 이 파일을 씁니다.</div>
                     <div style="display:flex;gap:8px;">
-                        <button class="add-btn" onclick="saveJSON()" style="flex:1;margin-top:0;">파일로 저장</button>
-                        <button class="add-btn" onclick="document.getElementById('fileLoadJsonTab').click()" style="flex:1;margin-top:0;">불러오기</button>
+                        <button class="add-btn" onclick="saveJSON()" style="flex:1;margin-top:0;">종합 프리셋 내보내기</button>
+                        <button class="add-btn" onclick="document.getElementById('fileLoadJsonTab').click()" style="flex:1;margin-top:0;">종합 프리셋 불러오기</button>
                     </div>
                     <input id="fileLoadJsonTab" type="file" accept=".hemi,.json,application/json" style="display:none;">
                     <a href="convert.html" target="_blank" rel="noopener" style="display:inline-block;margin-top:8px;color:#888;font-size:0.8rem;">🔄 .hemi ↔ .json 변환</a>
+
+                    <span style="color:var(--tno-neon);font-size:0.95rem;display:block;margin:14px 0 6px;">지역구 프리셋 (.hemimap)</span>
+                    <div style="color:#666;font-size:0.75rem;margin-bottom:6px;">지역구만 — 지도 · 이름 · 약칭 · 원별 의석 수 · 인구 · 권역. 정당 · 성향 · 선거 결과는 담지 않아요. 불러오기는 국가 › 지역구 지도의 업로드 칸에서.</div>
+                    <button class="add-btn" onclick="exportDistrictPreset()" style="width:100%;margin-top:0;">지역구만 내보내기</button>
 
             </div>
         </div>
@@ -876,15 +881,15 @@
                                 </div>
                             </div>
                             <div style="padding:8px;background:#0a0c10;border:1px solid #222;font-size:0.78rem;color:#666;margin-bottom:10px;line-height:1.5;">
-                                <span class="hemi-full-only"><a href="map.html" target="_blank" style="color:var(--tno-neon);">맵 메이커</a>에서 내보낸 .jsx 파일을 업로드하거나, </span><b style="color:#aaa;">맵 프리셋</b>에서 나라 지도를 고르면 그리드 대신 실제 지도 모양으로 지역구를 만들 수 있습니다.<br>
+                                <span class="hemi-full-only"><a href="map.html" target="_blank" style="color:var(--tno-neon);">맵 메이커</a>에서 내보낸 .jsx 파일이나 지역구 프리셋(.hemimap — 지도 · 이름 · 의석 · 인구 · 권역)을 업로드하거나, </span><b style="color:#aaa;">맵 프리셋</b>에서 나라 지도를 고르면 그리드 대신 실제 지도 모양으로 지역구를 만들 수 있습니다.<br>
                                 기본은 하원 지도를 상원·삼원이 함께 쓰며, 원을 골라 <b style="color:#aaa;">따로 쓰기</b>를 누르면 그 원만의 지도를 올릴 수 있습니다. 지역구를 클릭하면 원별 의석 수와 정당별 성향(%)을 지정할 수 있습니다.<br>
                                 업로드하면 <b style="color:#cc8888;">기존 지역구 데이터가 새 지도로 대체</b>됩니다.
                             </div>
 
                             <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
                                 <button type="button" class="add-btn" style="margin:0;display:inline-block;cursor:pointer;" onclick="HemiMapPresetPicker.open()">🗺 맵 프리셋에서 고르기</button>
-                                <input type="file" id="districtSvgFileInput" accept=".jsx,.js,text/javascript" style="position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;" onchange="districtSvgUpload(this)">
-                                <label for="districtSvgFileInput" class="add-btn hemi-full-only" style="margin:0;display:inline-block;cursor:pointer;">⬆ 지역구 지도 업로드 (.jsx)</label>
+                                <input type="file" id="districtSvgFileInput" accept=".jsx,.js,.hemimap,text/javascript" style="position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;" onchange="districtSvgUpload(this)">
+                                <label for="districtSvgFileInput" class="add-btn hemi-full-only" style="margin:0;display:inline-block;cursor:pointer;">⬆ 지역구 지도 업로드 (.jsx · .hemimap)</label>
                                 <span id="districtSvgFileName" class="hemi-full-only" style="color:#555;font-size:0.8rem;">파일 없음</span>
                             </div>
 

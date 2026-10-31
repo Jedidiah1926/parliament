@@ -379,7 +379,7 @@
     };
     // 탭이 아닌 곳 (위쪽 탭 바의 저장 · 설정 창)
     const SEARCH_ACTIONS = [
-        { label: '저장', path: '저장 창', keys: ['저장', '세이브', '불러오기', '자동저장', '파일로 저장', '내보내기'], run: () => window.openSavePanel && window.openSavePanel() },
+        { label: '저장', path: '저장 창', keys: ['저장', '세이브', '불러오기', '자동저장', '파일로 저장', '내보내기', '종합 프리셋', '지역구 프리셋', 'hemimap'], run: () => window.openSavePanel && window.openSavePanel() },
         { label: '설정', path: '설정 창', keys: ['설정', '테마', '다크 모드', '네온', '해상도', '전체 화면', '창 모드', '디버그 모드', '개발자 모드', '언어', '업데이트', '저장 위치'], run: () => window.openSettingsPanel && window.openSettingsPanel() },
     ];
     const norm = s => String(s || '').toLowerCase().replace(/[\s·\-–—_/()[\]{}:,.!?'"「」『』…]+/g, '');
