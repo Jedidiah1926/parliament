@@ -52,6 +52,15 @@
             script: 'presets/germany.js',
             langs: { en: { title: 'Federal Republic of Germany', description: 'By ttorri' } }, // 영어 데이터 파일은 아직 없음 — 한국어 데이터로 열림
         },
+        {
+            id: 'builtin:korea',
+            title: '대한민국',
+            description: '제작자: 왕조명',
+            date: '2026년 10월 31일',
+            author: '왕조명',
+            script: 'presets/korea.js',
+            langs: { en: { title: 'Republic of Korea', description: 'By 왕조명' } }, // 영어 데이터 파일은 아직 없음 — 한국어 데이터로 열림
+        },
     ];
     const INDEX_URL = 'presets/index.json';
     let listCache = null;
