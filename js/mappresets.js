@@ -1,4 +1,5 @@
-// ===== 맵 프리셋 — 국가 › 지역구 지도에서 지역구 지도를 고르는 창 (presets/maps.js, tools/build-map-presets.js가 만듦) =====
+// ===== 맵 프리셋 — 국가 › 지역구 지도에서 지역구 지도를 고르는 창 (presets/maps.js — tools/build-map-presets.js,
+//       커뮤니티 지도 presets/maps-community.js — tools/import-map-preset.js) =====
 // 맵 메이커 없이 나라 지도 하나를 골라 바로 지역구 지도로 쓴다 (Steam 데모에서는 지도 올리기 대신 이것만).
 // 지도 자료는 창을 처음 열 때 불러오고, 카드마다 지도 모양을 작게 그린다. 고르면 기존 지역구를 바꿀지 묻고(js/main.js
 // districtConfirmReplaceMap) 지역구 이름 · 약칭을 함께 넣는다 (화면 언어가 영어면 영어 이름).
@@ -9,15 +10,22 @@
     const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
     let loading = null, overlay = null;
 
-    function load() {
-        if (window.HemiMapPresets) return Promise.resolve(window.HemiMapPresets);
-        if (!loading) loading = new Promise((resolve, reject) => {
+    // 내장 지도(presets/maps.js) 뒤에 커뮤니티 지도(presets/maps-community.js, 제작자 표시)를 붙인다
+    function loadScript(src, key) {
+        if (window[key]) return Promise.resolve(window[key]);
+        return new Promise((resolve, reject) => {
             const s = document.createElement('script');
-            s.src = 'presets/maps.js';
-            s.onload = () => (window.HemiMapPresets ? resolve(window.HemiMapPresets) : reject(new Error('maps.js')));
-            s.onerror = () => { loading = null; reject(new Error('maps.js')); };
+            s.src = src;
+            s.onload = () => (window[key] ? resolve(window[key]) : reject(new Error(src)));
+            s.onerror = () => reject(new Error(src));
             document.head.appendChild(s);
         });
+    }
+    function load() {
+        if (!loading) loading = Promise.all([
+            loadScript('presets/maps.js', 'HemiMapPresets'),
+            loadScript('presets/maps-community.js', 'HemiMapPresetsCommunity').catch(() => []), // 커뮤니티 지도가 없어도 내장 지도는 보이게
+        ]).then(([base, extra]) => base.concat(extra || [])).catch(e => { loading = null; throw e; });
         return loading;
     }
 
@@ -35,6 +43,7 @@
 .hemi-mp-thumb path { fill: color-mix(in srgb, var(--c) 22%, transparent); stroke: var(--c); stroke-width: .8; vector-effect: non-scaling-stroke; }
 .hemi-mp-name { font-size: .95rem; color: #eee; }
 .hemi-mp-desc { font-size: .72rem; color: #888; line-height: 1.4; }
+.hemi-mp-author { font-size: .7rem; color: var(--c); line-height: 1.4; }
 .hemi-mp-foot { padding: 0 18px 14px; font-size: .7rem; color: #666; }
 .hemi-mp-msg { padding: 30px 18px; color: #888; }
 html[data-theme-family="modern"] .hemi-mp { --c: var(--m-accent, #2563eb); background: var(--m-surface, #fff); color: var(--m-text, #18181b); border: 1px solid var(--m-border, #e4e4e7); border-radius: 16px; box-shadow: 0 20px 50px rgba(0,0,0,.25); font-family: var(--m-font, inherit); }
@@ -66,7 +75,7 @@ html[data-theme-family="modern"] .hemi-mp-name { color: var(--m-text, #18181b); 
                 <div class="hemi-mp-sub">${esc(t('나라를 고르면 그 나라의 행정구역이 지역구 지도가 됩니다. 고른 뒤 지역구를 눌러 의석 수 · 인구 · 성향을 정하세요.'))}</div></div>
                 <button type="button" class="hemi-mp-x" aria-label="${esc(t('닫기'))}">×</button></div>
             <div class="hemi-mp-grid"><div class="hemi-mp-msg">${esc(t('지도를 불러오는 중…'))}</div></div>
-            <div class="hemi-mp-foot">${esc(t('지도 자료: Natural Earth (공개 도메인)'))}</div></div>`;
+            <div class="hemi-mp-foot">${esc(t('지도 자료: Natural Earth (공개 도메인) · 제작자가 적힌 지도는 커뮤니티 제작'))}</div></div>`;
         overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
         overlay.querySelector('.hemi-mp-x').onclick = close;
         document.addEventListener('keydown', onKey, true);
@@ -80,7 +89,8 @@ html[data-theme-family="modern"] .hemi-mp-name { color: var(--m-text, #18181b); 
         grid.innerHTML = maps.map((m, i) => `<button type="button" class="hemi-mp-card" data-i="${i}">
             <svg class="hemi-mp-thumb" viewBox="${esc(m.viewBox)}" preserveAspectRatio="xMidYMid meet" aria-hidden="true">${m.districts.map(d => `<path d="${d.d}"/>`).join('')}</svg>
             <span class="hemi-mp-name">${esc(en ? m.name.en : m.name.ko)}</span>
-            <span class="hemi-mp-desc">${esc(en ? m.desc.en : m.desc.ko)} · ${m.count}${en ? '' : '개 지역구'}</span></button>`).join('');
+            <span class="hemi-mp-desc">${esc(en ? m.desc.en : m.desc.ko)} · ${m.count}${en ? '' : '개 지역구'}</span>${m.author ? `
+            <span class="hemi-mp-author">${esc(t('제작자'))}: ${esc(m.author)}</span>` : ''}</button>`).join('');
         grid.querySelectorAll('.hemi-mp-card').forEach(b => { b.onclick = () => choose(maps[+b.dataset.i]); });
         const first = grid.querySelector('.hemi-mp-card'); if (first) first.focus();
     }

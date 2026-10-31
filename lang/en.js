@@ -22,6 +22,7 @@ window.DnoLangPacks.en = {
  ],
  "ordinal": "en",
  "patterns": [
+    {"re": "^지역구 (\\d+)$", "to": "District $1"},
   {"re": "^지하에서 활동하던 (.+) 복권$", "to": "$1, active underground, reinstated"},
   {"re": "^(.+) 해산된 채로 · 지지율 절반으로$", "to": "$1 stays dissolved · support halved"},
   {"re": "^정권 상태: 일반$", "to": "Regime: normal"},
@@ -830,6 +831,15 @@ window.DnoLangPacks.en = {
   }
  ],
  "dict": [
+    ["지역구 정보 칸", "District info fields"],
+    ["의석", "Seats"],
+    ["인구", "Population"],
+    ["- 맵 메이커에서 지역구 프리셋(.hemimap) 만들기 — 목록의 지역구마다 약칭 · 의석 수 · 인구를 정해 .hemimap으로 내보냄 (게임의 지역구 지도 업로드 칸에 올리면 한 번에), .hemimap을 열어 고칠 수도 있음 (상원 · 삼원 의석 · 권역은 그대로 이어 담김)", "- Map maker makes district presets (.hemimap) — set each district's abbreviation, seats and population in the list and export a .hemimap (upload it in the game's district map field to load it all at once); you can also open a .hemimap to edit it (upper/third-chamber seats and regions carry over)"],
+    ["- 내장 프리셋 \"대한민국\" 추가 (제작자: 왕조명)", "- New built-in preset \"Republic of Korea\" (by 왕조명)"],
+    ["제작자: 왕조명", "By 왕조명"],
+    ["제작자", "Author"],
+    ["지도 자료: Natural Earth (공개 도메인) · 제작자가 적힌 지도는 커뮤니티 제작", "Map data: Natural Earth (public domain) · maps with an author are community-made"],
+    ["- 맵 프리셋 \"2024 대한민국 총선\" 추가 — 제22대 국회의원 선거 지역구 254개 (제작자: 델리델리델리만쥬), 맵 프리셋 창에 커뮤니티 지도 · 제작자 표시", "- New map preset \"2024 South Korean legislative election\" — the 254 constituencies of the 22nd National Assembly election (by 델리델리델리만쥬), community maps and authors shown in the map preset window"],
     ["지금 보이는 경제 시각 화면 전체를 사진(PNG · JPG · SVG)으로 — 화면에서 우클릭해도 됨", "Save the whole economy view as a picture (PNG · JPG · SVG) — or right-click the view"],
     ["— 위 세출 · 아래 세입, 두께 = 세출 · 세입 차이", "— spending on top · revenue below, thickness = spending vs revenue gap"],
     ["📷 사진", "📷 Photo"],
