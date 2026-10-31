@@ -831,6 +831,10 @@ window.DnoLangPacks.en = {
   }
  ],
  "dict": [
+    ["지역구 정보 칸", "District info fields"],
+    ["의석", "Seats"],
+    ["인구", "Population"],
+    ["- 맵 메이커에서 지역구 프리셋(.hemimap) 만들기 — 목록의 지역구마다 약칭 · 의석 수 · 인구를 정해 .hemimap으로 내보냄 (게임의 지역구 지도 업로드 칸에 올리면 한 번에), .hemimap을 열어 고칠 수도 있음 (상원 · 삼원 의석 · 권역은 그대로 이어 담김)", "- Map maker makes district presets (.hemimap) — set each district's abbreviation, seats and population in the list and export a .hemimap (upload it in the game's district map field to load it all at once); you can also open a .hemimap to edit it (upper/third-chamber seats and regions carry over)"],
     ["- 내장 프리셋 \"대한민국\" 추가 (제작자: 왕조명)", "- New built-in preset \"Republic of Korea\" (by 왕조명)"],
     ["제작자: 왕조명", "By 왕조명"],
     ["제작자", "Author"],
