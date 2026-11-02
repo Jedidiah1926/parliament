@@ -1,0 +1,9 @@
+{
+  "type": "script",
+  "file": "script.json",
+  "title": "예제: 정국 흐름",
+  "description": "날짜를 넘기면 정국 안정도가 바뀌고, 여당이 과반을 잃으면 연정 위기 이벤트가 일어나는 예제 모드입니다.",
+  "tags": [
+    "Script"
+  ]
+}

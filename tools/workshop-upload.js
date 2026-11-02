@@ -1,4 +1,4 @@
-// Steam 창작마당에 모드(언어 팩 · 테마 · 프리셋) 올리기 (Steam 출시 후에 쓰는 도구 — 미리 준비해 둔 것)
+// Steam 창작마당에 모드(언어 팩 · 테마 · 프리셋 · 스크립트 모드) 올리기 (Steam 출시 후에 쓰는 도구 — 미리 준비해 둔 것)
 //
 // 준비:
 //   1) electron/steam.json의 appId에 Steamworks App ID를 넣는다 (또는 HEMICYCLE_STEAM_APP_ID 환경 변수)
@@ -17,8 +17,9 @@ const zlib = require('zlib');
 
 const LANG_FORMAT = 'dno-lang-pack@1';
 const THEME_FORMAT = 'hemicycle-theme@1';
+const SCRIPT_FORMAT = 'hemicycle-script@1';
 const ITEM_MANIFEST = 'hemicycle-item.json';
-const TYPE_TAG = { language: 'Language', theme: 'Theme', preset: 'Preset', 'preset-language': 'Preset' };
+const TYPE_TAG = { language: 'Language', theme: 'Theme', preset: 'Preset', 'preset-language': 'Preset', script: 'Script' };
 
 function fail(msg) { console.error('✖ ' + msg); process.exit(1); }
 
@@ -53,10 +54,10 @@ let content = null;
 for (const f of files) {
     let obj;
     try { obj = readJson(path.join(folder, f)); } catch (e) { continue; }
-    const t = obj && obj.format === LANG_FORMAT ? 'language' : obj && obj.format === THEME_FORMAT ? 'theme' : isSave(obj) ? 'preset' : '';
+    const t = obj && obj.format === LANG_FORMAT ? 'language' : obj && obj.format === THEME_FORMAT ? 'theme' : obj && obj.format === SCRIPT_FORMAT ? 'script' : isSave(obj) ? 'preset' : '';
     if (t && (!type || type === t || (type === 'preset-language' && t === 'preset'))) { type = type || t; content = obj; break; }
 }
-if (!content) fail('폴더에 올릴 내용이 없습니다 (언어 팩 · 테마 · 프리셋 세이브 파일).');
+if (!content) fail('폴더에 올릴 내용이 없습니다 (언어 팩 · 테마 · 스크립트 모드 · 프리셋 세이브 파일).');
 
 let defTitle, defDesc;
 if (type === 'language') {
@@ -67,6 +68,10 @@ if (type === 'language') {
     if (!content.id || !content.name) fail('테마의 id · name을 채우세요.');
     defTitle = `${content.name} — Hemicycle theme`;
     defDesc = `${content.name} theme for Hemicycle.${content.author ? ` By ${content.author}.` : ''}`;
+} else if (type === 'script') {
+    if (!content.id || !content.name) fail('스크립트 모드의 id · name을 채우세요.');
+    defTitle = `${content.name} — Hemicycle mod`;
+    defDesc = `${content.description || content.name} (events ${(content.events || []).length} · decisions ${(content.decisions || []).length})${content.author ? ` By ${content.author}.` : ''}`;
 } else {
     defTitle = `${path.basename(folder)} — Hemicycle preset`;
     defDesc = 'Scenario preset for Hemicycle.';

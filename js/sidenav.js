@@ -376,6 +376,7 @@
         subTabRegions: ['권역', '권역 지도'], subTabNationSettings: ['날짜', '연호', '회기', '다음 회기', '지역구 이름 표시'], subTabPeople: ['사람', '인물', '후보', '지역구 후보'],
         subTabUnrecovered: ['미수복', '영토 통일'], subTabVassals: ['종속국', '합병', '해방'], subTabRanking: ['국가 순위', '냉전'], subTabBlocs: ['진영'],
         elecSubTabArticles: ['기사', '신문', '언론', '보도', '뉴스'],
+        subTabDecisions: ['결정', '이벤트', '모드', '스크립트 모드', '창작마당', '모딩', 'mod'],
     };
     // 탭이 아닌 곳 (위쪽 탭 바의 저장 · 설정 창)
     const SEARCH_ACTIONS = [
