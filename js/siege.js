@@ -30,7 +30,7 @@
     const uid = () => 's' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
     const partyById = id => parties.find(p => String(p.id) === String(id)) || null;
     const partyByName = n => parties.find(p => p.name === n) || null;
-    const T62 = () => window.T62 || null;
+    const HemiCoup = () => window.HemiCoup || null;
     const isGovParty = p => !!p && (p.isRuling || coalitions.some(c => c.isRuling && (c.members || []).some(id => String(id) === String(p.id))));
     const nowDate = () => { try { return formatNationDate(); } catch (e) { return ''; } };
     const houseName = () => { try { return chamberDisplayName('house'); } catch (e) { return '하원'; } };
@@ -110,7 +110,7 @@
 
     // ================= 계엄 중 봉쇄 돌파 =================
     function defaultBlockade() {
-        const mil = T62() && T62().military;
+        const mil = HemiCoup() && HemiCoup().military;
         if (mil && mil.length) return Math.round(mil.reduce((a, o) => a + (Number(o.loyalty) || 0), 0) / mil.length);
         return 60;
     }
@@ -156,7 +156,7 @@
 
     function breakthrough() {
         if (!emergencyPowers.martialLaw.active) { showCustomAlert('계엄령이 선포된 상태에서만 할 수 있습니다.'); return; }
-        if (T62() && T62().junta) { showCustomAlert('군정에서는 의회가 해산돼 있습니다 — 내각 › 쿠데타 · 혁명으로 군정을 끝내세요.'); return; }
+        if (HemiCoup() && HemiCoup().junta) { showCustomAlert('군정에서는 의회가 해산돼 있습니다 — 내각 › 쿠데타 · 혁명으로 군정을 끝내세요.'); return; }
         const odds = breakthroughOdds();
         showCustomConfirm(`계엄군 봉쇄를 뚫고 ${houseName()} 본회의장에 들어가 계엄 해제 결의안을 표결합니다.${odds.wall.n ? `\n${blockerParties().map(p => p.name).join(' · ')} 의원 ${odds.wall.n}명이 입구를 막고 있습니다.` : ''}\n가결 기준: 재적 ${odds.seats.length}명의 과반 ${odds.need}명 · 예상 성공 확률 ${odds.chance}%\n계속하시겠습니까?`, () => {
             const hurt = injuredKeys('house');
@@ -269,12 +269,12 @@
     function animScene(cvs) {
         const wrap = cvs.parentElement;
         wrap.style.position = 'relative';
-        document.getElementById('t64Anim')?.remove();
+        document.getElementById('siegeAnim')?.remove();
         const W = cvs.clientWidth, H = cvs.clientHeight;
         const dpr = window.devicePixelRatio || 1;
         const ov = document.createElement('canvas');
-        ov.id = 't64Anim';
-        ov.className = 't64-anim';
+        ov.id = 'siegeAnim';
+        ov.className = 'siege-anim';
         ov.width = W * dpr; ov.height = H * dpr;
         ov.style.cssText = `position:absolute;left:${cvs.offsetLeft}px;top:${cvs.offsetTop}px;width:${W}px;height:${H}px;z-index:60;cursor:pointer;`;
         ov.title = '눌러서 건너뛰기';
@@ -696,7 +696,7 @@
         try { key = (seatAssignments(chamber).bySeat || [])[hit]; } catch (e) { /* 배정 전 */ }
         const x = key && S.injured.find(y => y.ch === chamber && y.key === key);
         const body = document.getElementById('seatInfoCardBody');
-        if (x && body) body.insertAdjacentHTML('beforeend', `<div class="t64-hurt-row">🩹 부상 결석 — 다음 표결 ${x.left}번 불참</div>`);
+        if (x && body) body.insertAdjacentHTML('beforeend', `<div class="siege-hurt-row">🩹 부상 결석 — 다음 표결 ${x.left}번 불참</div>`);
         return r;
     };
 
@@ -718,24 +718,24 @@
         return r;
     };
 
-    const factorRow = x => `<div class="t64-factor"><span>${esc(x.label)}</span><span class="${x.v >= 0 ? 't64-plus' : 't64-minus'}">${x.v >= 0 ? '+' : ''}${x.v}%p</span></div>`;
-    const resultCard = e => e ? `<div class="t64-result ${e.success ? 'ok' : 'fail'}">
-            <div class="t64-result-head"><span class="t64-badge ${e.success ? 'ok' : 'fail'}">${e.success ? '✔ 성공' : '✘ 실패'}</span><span>${esc(e.title)}</span></div>
-            <div class="t64-dim t64-small">${esc(e.date)} · 성공 확률 ${e.chance}%</div>
+    const factorRow = x => `<div class="siege-factor"><span>${esc(x.label)}</span><span class="${x.v >= 0 ? 'siege-plus' : 'siege-minus'}">${x.v >= 0 ? '+' : ''}${x.v}%p</span></div>`;
+    const resultCard = e => e ? `<div class="siege-result ${e.success ? 'ok' : 'fail'}">
+            <div class="siege-result-head"><span class="siege-badge ${e.success ? 'ok' : 'fail'}">${e.success ? '✔ 성공' : '✘ 실패'}</span><span>${esc(e.title)}</span></div>
+            <div class="siege-dim siege-small">${esc(e.date)} · 성공 확률 ${e.chance}%</div>
             <ul>${e.effects.map(x => `<li>${esc(x)}</li>`).join('')}</ul>
-            ${e.kind === 'obstruct' && !e.success && ui.lastBillId ? '<button type="button" class="t64-btn" data-act="tovote">입법 › 표결로 가기 →</button>' : ''}
+            ${e.kind === 'obstruct' && !e.success && ui.lastBillId ? '<button type="button" class="siege-btn" data-act="tovote">입법 › 표결로 가기 →</button>' : ''}
         </div>` : '';
-    const chip = (text, cls) => `<span class="t64-stat ${cls || ''}">${text}</span>`;
-    const dot = c => `<i class="t64-dot" style="background:${esc(c)}"></i>`;
-    const animControls = () => `<div class="t64-animrow">
-            <label class="t64-toggle"><input type="checkbox" data-in="anim" ${ui.anim ? 'checked' : ''}><span>옆 반원 화면에 애니메이션 보기</span></label>
-            <div class="t64-speed ${ui.anim ? '' : 't64-off'}"><span class="t64-dim">속도</span>${ANIM_SPEEDS.map(v => `<button type="button" class="${(ui.animSpeed || 1) === v ? 'on' : ''}" data-speed="${v}">${v}×</button>`).join('')}</div>
+    const chip = (text, cls) => `<span class="siege-stat ${cls || ''}">${text}</span>`;
+    const dot = c => `<i class="siege-dot" style="background:${esc(c)}"></i>`;
+    const animControls = () => `<div class="siege-animrow">
+            <label class="siege-toggle"><input type="checkbox" data-in="anim" ${ui.anim ? 'checked' : ''}><span>옆 반원 화면에 애니메이션 보기</span></label>
+            <div class="siege-speed ${ui.anim ? '' : 'siege-off'}"><span class="siege-dim">속도</span>${ANIM_SPEEDS.map(v => `<button type="button" class="${(ui.animSpeed || 1) === v ? 'on' : ''}" data-speed="${v}">${v}×</button>`).join('')}</div>
         </div>`;
     const blockadeWord = v => (v >= 80 ? '철통' : v >= 60 ? '강함' : v >= 35 ? '보통' : '느슨함');
-    const emptyState = (icon, text, extra) => `<div class="t64-empty"><div class="t64-empty-icon">${icon}</div><div>${text}</div>${extra || ''}</div>`;
+    const emptyState = (icon, text, extra) => `<div class="siege-empty"><div class="siege-empty-icon">${icon}</div><div>${text}</div>${extra || ''}</div>`;
     // 확률 게이지 — 큰 숫자 + 막대
-    const gauge = (label, chance, sub) => `<div class="t64-gauge"><div class="t64-gauge-head"><span>${label}</span><b class="${chance >= 50 ? 'hi' : chance >= 25 ? 'mid' : 'lo'}">${chance}%</b></div>
-        <div class="t64-bar"><span style="width:${chance}%"></span></div>${sub ? `<div class="t64-dim t64-small">${sub}</div>` : ''}</div>`;
+    const gauge = (label, chance, sub) => `<div class="siege-gauge"><div class="siege-gauge-head"><span>${label}</span><b class="${chance >= 50 ? 'hi' : chance >= 25 ? 'mid' : 'lo'}">${chance}%</b></div>
+        <div class="siege-bar"><span style="width:${chance}%"></span></div>${sub ? `<div class="siege-dim siege-small">${sub}</div>` : ''}</div>`;
 
     // 계엄령은 권한 주체(대통령 · 총리 · 내각)의 탭에서 선포한다 — 그 탭으로 데려가고, 주체가 없으면 정부 형태 · 권한의 계엄령 권한 주체로
     const MARTIAL_TAB = { president: ['president', 'presidentEmergencyPowers'], pm: ['pm', 'pmEmergencyPowers'], cabinet: ['cabinetmembers', 'cabinetEmergencyPowers'] };
@@ -750,8 +750,8 @@
         const block = t ? target : target && target.closest('div[style*="margin-top"]');
         if (block) {
             block.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            block.classList.add('t64-flash');
-            setTimeout(() => block.classList.remove('t64-flash'), 1600);
+            block.classList.add('siege-flash');
+            setTimeout(() => block.classList.remove('siege-flash'), 1600);
         }
         if (!t) showCustomAlert('계엄령 권한 주체가 없습니다 — 여기서 계엄령 권한 주체(대통령 · 총리)를 정하면 그 탭의 비상 권한에 계엄령 선포 버튼이 생깁니다.');
     }
@@ -760,39 +760,39 @@
         const res = last && last.kind === 'breakthrough' ? resultCard(last) : '';
         const ml = emergencyPowers.martialLaw;
         if (!ml.active) return res + emptyState('🚧', '계엄령이 선포돼 있지 않습니다.<br>대통령 · 총리 탭의 비상 권한으로 계엄령을 선포하면 열립니다.',
-            `<button type="button" class="t64-btn" data-act="martial">${esc(martialTabLabel())} 탭에서 계엄령 선포하기 →</button>`);
-        if (T62() && T62().junta) return res + emptyState('🎖', '군정에서는 의회가 해산돼 있습니다.<br>내각 › 쿠데타 · 혁명으로 군정을 끝내세요.');
+            `<button type="button" class="siege-btn" data-act="martial">${esc(martialTabLabel())} 탭에서 계엄령 선포하기 →</button>`);
+        if (HemiCoup() && HemiCoup().junta) return res + emptyState('🎖', '군정에서는 의회가 해산돼 있습니다.<br>내각 › 쿠데타 · 혁명으로 군정을 끝내세요.');
         const o = breakthroughOdds();
         const total = Math.max(1, o.seats.length);
         const needPct = o.need / total * 100;
         const segs = o.groups.map(g => ({ g, v: g.try * g.prob })).filter(x => x.v > 0.5);
-        let html = `<div class="t64-meter-box">
-                <div class="t64-meter-head"><span>예상 입장 <b>${Math.round(o.expected)}</b>명</span><span class="t64-dim">재적 ${o.seats.length} · 과반 ${o.need}</span></div>
-                <div class="t64-meter">${segs.map(x => `<span style="width:${x.v / total * 100}%;background:${esc(x.g.p.color)}" title="${esc(x.g.p.name)} 약 ${Math.round(x.v)}명"></span>`).join('')}
+        let html = `<div class="siege-meter-box">
+                <div class="siege-meter-head"><span>예상 입장 <b>${Math.round(o.expected)}</b>명</span><span class="siege-dim">재적 ${o.seats.length} · 과반 ${o.need}</span></div>
+                <div class="siege-meter">${segs.map(x => `<span style="width:${x.v / total * 100}%;background:${esc(x.g.p.color)}" title="${esc(x.g.p.name)} 약 ${Math.round(x.v)}명"></span>`).join('')}
                     <em style="left:${needPct}%"></em></div>
-                <div class="t64-meter-legend">${segs.map(x => `<span>${dot(x.g.p.color)}${esc(x.g.p.name)} ${Math.round(x.v)}</span>`).join('')}<span class="t64-need">┃ 과반 ${o.need}</span></div>
+                <div class="siege-meter-legend">${segs.map(x => `<span>${dot(x.g.p.color)}${esc(x.g.p.name)} ${Math.round(x.v)}</span>`).join('')}<span class="siege-need">┃ 과반 ${o.need}</span></div>
             </div>
             ${gauge('계엄 해제 성공 확률', o.chance, '들어간 의원만 표결 — 가결 기준은 들어간 인원이 아니라 재적 과반')}
-            <div class="t64-group"><div class="t64-group-title">봉쇄</div>
-                <div class="t64-row"><span class="t64-lbl">봉쇄 강도</span><input type="range" min="0" max="100" value="${blockade()}" data-in="blockade" data-live="blockadeVal"><b id="blockadeVal">${blockade()} · ${blockadeWord(blockade())}</b></div>
-                <div class="t64-dim t64-small">기본값은 군 지휘부의 평균 충성도 (내각 › 군부)</div>
-                <label class="t64-toggle"><input type="checkbox" data-in="citizens" ${ui.citizens ? 'checked' : ''}><span>시민들이 국회 앞에 모여 길을 엶 <em>입장 확률 +10%p</em></span></label>
+            <div class="siege-group"><div class="siege-group-title">봉쇄</div>
+                <div class="siege-row"><span class="siege-lbl">봉쇄 강도</span><input type="range" min="0" max="100" value="${blockade()}" data-in="blockade" data-live="blockadeVal"><b id="blockadeVal">${blockade()} · ${blockadeWord(blockade())}</b></div>
+                <div class="siege-dim siege-small">기본값은 군 지휘부의 평균 충성도 (내각 › 군부)</div>
+                <label class="siege-toggle"><input type="checkbox" data-in="citizens" ${ui.citizens ? 'checked' : ''}><span>시민들이 국회 앞에 모여 길을 엶 <em>입장 확률 +10%p</em></span></label>
             </div>
-            <div class="t64-group"><div class="t64-group-title">입구 저지</div>
-                <div class="t64-dim t64-small" style="margin-bottom:6px">표결을 막으려는 정당이 본회의장 입구를 몸으로 막습니다 — 봉쇄선을 뚫은 의원도 여기서 막힐 수 있어요. 막은 정당은 지지율이 떨어지고, 그 의원들은 들어가지 않습니다.</div>
-                <div class="t64-chips">${seatParties(o.seats).map(p => `<label class="t64-chip ${ui.blockers[p.id] ? 'on' : ''}"><input type="checkbox" data-blk="${esc(p.id)}" ${ui.blockers[p.id] ? 'checked' : ''}>${dot(p.color)}${esc(p.name)}</label>`).join('')}</div>
-                ${o.wall.pool.length ? `<div class="t64-row"><span class="t64-lbl">저지 인원</span><input type="range" min="5" max="100" step="5" value="${ui.blockShare}" data-in="blockShare" data-live="blockShareVal"><b id="blockShareVal">${ui.blockShare}%</b></div>
-                <div class="t64-dim t64-small">입구에 ${o.wall.n}명 — 봉쇄선을 뚫은 의원이 입구에서 막힐 확률 ${Math.round(o.wall.stop * 100)}%</div>` : ''}
+            <div class="siege-group"><div class="siege-group-title">입구 저지</div>
+                <div class="siege-dim siege-small" style="margin-bottom:6px">표결을 막으려는 정당이 본회의장 입구를 몸으로 막습니다 — 봉쇄선을 뚫은 의원도 여기서 막힐 수 있어요. 막은 정당은 지지율이 떨어지고, 그 의원들은 들어가지 않습니다.</div>
+                <div class="siege-chips">${seatParties(o.seats).map(p => `<label class="siege-chip ${ui.blockers[p.id] ? 'on' : ''}"><input type="checkbox" data-blk="${esc(p.id)}" ${ui.blockers[p.id] ? 'checked' : ''}>${dot(p.color)}${esc(p.name)}</label>`).join('')}</div>
+                ${o.wall.pool.length ? `<div class="siege-row"><span class="siege-lbl">저지 인원</span><input type="range" min="5" max="100" step="5" value="${ui.blockShare}" data-in="blockShare" data-live="blockShareVal"><b id="blockShareVal">${ui.blockShare}%</b></div>
+                <div class="siege-dim siege-small">입구에 ${o.wall.n}명 — 봉쇄선을 뚫은 의원이 입구에서 막힐 확률 ${Math.round(o.wall.stop * 100)}%</div>` : ''}
             </div>
-            <div class="t64-group"><div class="t64-group-title">정당별 참여</div>
-                ${o.groups.map(g => `<div class="t64-prow${g.blocker ? ' t64-off' : ''}">
-                    <div class="t64-prow-head">${dot(g.p.color)}<b>${esc(g.p.name)}</b>${isGovParty(g.p) ? '<span class="t64-tag">여당</span>' : ''}<span class="t64-dim">${g.n}석</span>
-                        <span class="t64-prow-exp">${g.blocker ? '입구 저지 중' : `입장 ${Math.round(g.prob * 100)}% · 예상 <b>${Math.round(g.try * g.prob)}</b>`}</span></div>
-                    ${g.blocker ? '' : `<div class="t64-row"><span class="t64-lbl">참여율</span><input type="range" min="0" max="100" step="5" value="${rateOf(g.p)}" data-rate="${esc(g.p.id)}" data-live="rate_${esc(g.p.id)}"><b id="rate_${esc(g.p.id)}">${rateOf(g.p)}%</b></div>`}
+            <div class="siege-group"><div class="siege-group-title">정당별 참여</div>
+                ${o.groups.map(g => `<div class="siege-prow${g.blocker ? ' siege-off' : ''}">
+                    <div class="siege-prow-head">${dot(g.p.color)}<b>${esc(g.p.name)}</b>${isGovParty(g.p) ? '<span class="siege-tag">여당</span>' : ''}<span class="siege-dim">${g.n}석</span>
+                        <span class="siege-prow-exp">${g.blocker ? '입구 저지 중' : `입장 ${Math.round(g.prob * 100)}% · 예상 <b>${Math.round(g.try * g.prob)}</b>`}</span></div>
+                    ${g.blocker ? '' : `<div class="siege-row"><span class="siege-lbl">참여율</span><input type="range" min="0" max="100" step="5" value="${rateOf(g.p)}" data-rate="${esc(g.p.id)}" data-live="rate_${esc(g.p.id)}"><b id="rate_${esc(g.p.id)}">${rateOf(g.p)}%</b></div>`}
                 </div>`).join('')}
             </div>
             ${animControls()}
-            <button type="button" class="t64-go" data-act="break">🚪 봉쇄 돌파 · 계엄 해제 표결</button>`;
+            <button type="button" class="siege-go" data-act="break">🚪 봉쇄 돌파 · 계엄 해제 표결</button>`;
         return html + res;
     }
 
@@ -810,27 +810,27 @@
         const total = Math.max(1, o.seats.length);
         const others = o.seats.filter(s => !obs.includes(s.party));
         const otherParties = seatParties(others);
-        let html = `<div class="t64-group"><div class="t64-group-title">막을 법안</div>
+        let html = `<div class="siege-group"><div class="siege-group-title">막을 법안</div>
                 <select data-in="bill">${pb.map(b => `<option value="${esc(b.id)}" ${b.id === ui.billId ? 'selected' : ''}>${esc(b.title)}${b.committeeStatus === 'pending' ? ' (상임위 심사 중)' : ''}${b.t64Obstructed ? ` · 무산 ${b.t64Obstructed}번` : ''}</option>`).join('')}</select>
             </div>
-            <div class="t64-group"><div class="t64-group-title">점거하는 정당</div>
-                <div class="t64-chips">${ps.map(p => `<label class="t64-chip ${ui.obstructors[p.id] ? 'on' : ''}"><input type="checkbox" data-obs="${esc(p.id)}" ${ui.obstructors[p.id] ? 'checked' : ''}>${dot(p.color)}${esc(p.name)}</label>`).join('')}</div>
-                <div class="t64-row"><span class="t64-lbl">참여 의원</span><input type="range" min="5" max="100" step="5" value="${ui.share}" data-in="share" data-live="shareVal"><b id="shareVal">${ui.share}%</b></div>
+            <div class="siege-group"><div class="siege-group-title">점거하는 정당</div>
+                <div class="siege-chips">${ps.map(p => `<label class="siege-chip ${ui.obstructors[p.id] ? 'on' : ''}"><input type="checkbox" data-obs="${esc(p.id)}" ${ui.obstructors[p.id] ? 'checked' : ''}>${dot(p.color)}${esc(p.name)}</label>`).join('')}</div>
+                <div class="siege-row"><span class="siege-lbl">참여 의원</span><input type="range" min="5" max="100" step="5" value="${ui.share}" data-in="share" data-live="shareVal"><b id="shareVal">${ui.share}%</b></div>
             </div>
-            <div class="t64-vs">
-                <div class="t64-vs-head"><span>점거 <b>${o.n}</b>명</span><span>상대 진영 <b>${others.length}</b>명</span></div>
-                <div class="t64-vs-bar">${obs.map(p => { const n = Math.round(o.obsSeats.filter(s => s.party === p).length * ui.share / 100); return n ? `<span style="width:${n / total * 100}%;background:${esc(p.color)}"></span>` : ''; }).join('')}
-                    <span class="t64-vs-gap" style="flex:1"></span>
-                    ${otherParties.map(p => `<span class="t64-vs-opp" style="width:${others.filter(s => s.party === p).length / total * 100}%;background:${esc(p.color)}"></span>`).join('')}</div>
+            <div class="siege-vs">
+                <div class="siege-vs-head"><span>점거 <b>${o.n}</b>명</span><span>상대 진영 <b>${others.length}</b>명</span></div>
+                <div class="siege-vs-bar">${obs.map(p => { const n = Math.round(o.obsSeats.filter(s => s.party === p).length * ui.share / 100); return n ? `<span style="width:${n / total * 100}%;background:${esc(p.color)}"></span>` : ''; }).join('')}
+                    <span class="siege-vs-gap" style="flex:1"></span>
+                    ${otherParties.map(p => `<span class="siege-vs-opp" style="width:${others.filter(s => s.party === p).length / total * 100}%;background:${esc(p.color)}"></span>`).join('')}</div>
             </div>
-            <div class="t64-group"><div class="t64-group-title">의장 쪽 대응</div>
-                <label class="t64-toggle"><input type="checkbox" data-in="guard" ${ui.guard ? 'checked' : ''}><span>의장${speakerName() ? ' ' + esc(speakerName()) : ''} 경호권 발동 <em>경위 · 경찰 투입, 몸싸움 · 부상 늘어남</em></span></label>
-                <label class="t64-toggle ${S.advancedAct ? 't64-off' : ''}"><input type="checkbox" data-in="direct" ${ui.direct && !S.advancedAct ? 'checked' : ''} ${S.advancedAct ? 'disabled' : ''}><span>직권상정 <em>${S.advancedAct ? '국회선진화법으로 막힘' : '의장이 바로 본회의에 올림'}</em></span></label>
+            <div class="siege-group"><div class="siege-group-title">의장 쪽 대응</div>
+                <label class="siege-toggle"><input type="checkbox" data-in="guard" ${ui.guard ? 'checked' : ''}><span>의장${speakerName() ? ' ' + esc(speakerName()) : ''} 경호권 발동 <em>경위 · 경찰 투입, 몸싸움 · 부상 늘어남</em></span></label>
+                <label class="siege-toggle ${S.advancedAct ? 'siege-off' : ''}"><input type="checkbox" data-in="direct" ${ui.direct && !S.advancedAct ? 'checked' : ''} ${S.advancedAct ? 'disabled' : ''}><span>직권상정 <em>${S.advancedAct ? '국회선진화법으로 막힘' : '의장이 바로 본회의에 올림'}</em></span></label>
             </div>
             ${gauge('점거 성공 확률', o.chance, '')}
-            <details class="t64-factors"><summary class="t64-dim">확률 계산 보기</summary>${o.f.map(factorRow).join('')}<div class="t64-dim t64-small">합계는 5~90% 사이로 맞춥니다.</div></details>
+            <details class="siege-factors"><summary class="siege-dim">확률 계산 보기</summary>${o.f.map(factorRow).join('')}<div class="siege-dim siege-small">합계는 5~90% 사이로 맞춥니다.</div></details>
             ${animControls()}
-            <button type="button" class="t64-go" data-act="obstruct">✊ 의장석 점거</button>`;
+            <button type="button" class="siege-go" data-act="obstruct">✊ 의장석 점거</button>`;
         if (last && last.kind === 'obstruct') html += resultCard(last);
         return html;
     }
@@ -844,9 +844,9 @@
         const last = S.log.find(x => x.id === ui.last);
         if (!ui.mode) ui.mode = ml.active ? 'break' : 'obstruct';
         const pbN = pendingBills().length;
-        let html = `<div class="t64-head">
-                <div class="t64-intro">계엄군의 봉쇄를 뚫고 본회의장에 들어가 계엄을 해제하거나, 의장석을 점거해 반대 법안의 표결을 막습니다. 폭력에는 지지율 페널티와 부상이 따릅니다.</div>
-                <div class="t64-stats">
+        let html = `<div class="siege-head">
+                <div class="siege-intro">계엄군의 봉쇄를 뚫고 본회의장에 들어가 계엄을 해제하거나, 의장석을 점거해 반대 법안의 표결을 막습니다. 폭력에는 지지율 페널티와 부상이 따릅니다.</div>
+                <div class="siege-stats">
                     ${ml.active ? chip(`⚠ 계엄 선포 중${ml.suspendParliament ? ' · 의회 정지' : ''}`, 'alert') : chip('계엄 없음')}
                     ${chip(`국회선진화법 ${S.advancedAct ? '켜짐' : '꺼짐'}`, S.advancedAct ? 'on' : '')}
                     ${chip(`🩹 부상 결석 ${S.injured.length}`, S.injured.length ? 'warn' : '')}
@@ -854,24 +854,24 @@
                 </div>
             </div>`;
         if (!seats.length) html += emptyState('🏛', '의석이 없습니다 — 먼저 의회를 구성하세요.');
-        html += `<div class="t64-modes">
-                <button type="button" class="t64-mode ${ui.mode === 'break' ? 'active' : ''}" data-mode="break"><b>🚧 봉쇄 돌파</b><span>계엄 해제 표결</span>${ml.active ? '<i class="t64-live"></i>' : ''}</button>
-                <button type="button" class="t64-mode ${ui.mode === 'obstruct' ? 'active' : ''}" data-mode="obstruct"><b>🪑 의장석 점거</b><span>표결 막기</span></button>
+        html += `<div class="siege-modes">
+                <button type="button" class="siege-mode ${ui.mode === 'break' ? 'active' : ''}" data-mode="break"><b>🚧 봉쇄 돌파</b><span>계엄 해제 표결</span>${ml.active ? '<i class="siege-live"></i>' : ''}</button>
+                <button type="button" class="siege-mode ${ui.mode === 'obstruct' ? 'active' : ''}" data-mode="obstruct"><b>🪑 의장석 점거</b><span>표결 막기</span></button>
             </div>
-            <div class="t64-panel">${ui.mode === 'break' ? renderBreakPanel(seats, last) : renderObstructPanel(seats, ps, last)}</div>`;
+            <div class="siege-panel">${ui.mode === 'break' ? renderBreakPanel(seats, last) : renderObstructPanel(seats, ps, last)}</div>`;
 
         // --- 설정 · 부상 · 기록 (접어 둠) ---
-        html += `<details class="t64-fold" ${ui.openSet ? 'open' : ''} data-fold="openSet"><summary>⚖ 설정 · 정당 결속도</summary>
-                <label class="t64-toggle"><input type="checkbox" data-in="act" ${S.advancedAct ? 'checked' : ''}><span>국회선진화법 <em>직권상정 제한, 폭력 페널티 두 배 (국회회의방해죄)</em></span></label>
-                <div class="t64-dim t64-small" style="margin:8px 0 2px">정당 결속도 — 봉쇄 돌파 입장 확률 · 점거 성공 확률에 반영</div>
-                ${ps.map(p => `<div class="t64-row"><span class="t64-lbl">${dot(p.color)}${esc(p.name)}</span><input type="range" min="0" max="100" step="5" value="${cohesionOf(p)}" data-coh="${esc(p.id)}" data-live="coh_${esc(p.id)}"><b id="coh_${esc(p.id)}">${cohesionOf(p)}</b></div>`).join('') || '<div class="t64-dim">정당 없음</div>'}
+        html += `<details class="siege-fold" ${ui.openSet ? 'open' : ''} data-fold="openSet"><summary>⚖ 설정 · 정당 결속도</summary>
+                <label class="siege-toggle"><input type="checkbox" data-in="act" ${S.advancedAct ? 'checked' : ''}><span>국회선진화법 <em>직권상정 제한, 폭력 페널티 두 배 (국회회의방해죄)</em></span></label>
+                <div class="siege-dim siege-small" style="margin:8px 0 2px">정당 결속도 — 봉쇄 돌파 입장 확률 · 점거 성공 확률에 반영</div>
+                ${ps.map(p => `<div class="siege-row"><span class="siege-lbl">${dot(p.color)}${esc(p.name)}</span><input type="range" min="0" max="100" step="5" value="${cohesionOf(p)}" data-coh="${esc(p.id)}" data-live="coh_${esc(p.id)}"><b id="coh_${esc(p.id)}">${cohesionOf(p)}</b></div>`).join('') || '<div class="siege-dim">정당 없음</div>'}
             </details>
-            <details class="t64-fold" ${ui.openHurt ? 'open' : ''} data-fold="openHurt"><summary>🩹 부상 결석 (${S.injured.length})</summary>
-                ${S.injured.length ? S.injured.map(x => `<div class="t64-hurt"><span>${esc(x.name)} <span class="t64-dim">${esc(x.party)}</span></span><span class="t64-dim">다음 표결 ${x.left}번 불참</span><button type="button" class="t64-btn t64-mini" data-heal="${esc(x.id)}">회복</button></div>`).join('')
-                    : '<div class="t64-dim">다친 의원이 없습니다. 다친 의원은 표결에서 빠지고, 표결을 확정할 때마다 하나씩 회복합니다.</div>'}
+            <details class="siege-fold" ${ui.openHurt ? 'open' : ''} data-fold="openHurt"><summary>🩹 부상 결석 (${S.injured.length})</summary>
+                ${S.injured.length ? S.injured.map(x => `<div class="siege-hurt"><span>${esc(x.name)} <span class="siege-dim">${esc(x.party)}</span></span><span class="siege-dim">다음 표결 ${x.left}번 불참</span><button type="button" class="siege-btn siege-mini" data-heal="${esc(x.id)}">회복</button></div>`).join('')
+                    : '<div class="siege-dim">다친 의원이 없습니다. 다친 의원은 표결에서 빠지고, 표결을 확정할 때마다 하나씩 회복합니다.</div>'}
             </details>
-            <details class="t64-fold" ${ui.openLog ? 'open' : ''} data-fold="openLog"><summary>📋 공성전 기록 (${S.log.length})</summary>
-                ${S.log.length ? S.log.map(e => `<div class="t64-log-row"><span class="${e.success ? 't64-plus' : 't64-minus'}">${e.success ? '✔' : '✘'}</span><span class="t64-dim">${esc(e.date)}</span><span>${esc(e.title)}</span><span class="t64-dim">${e.chance}%</span></div>`).join('') : '<div class="t64-dim">아직 기록이 없습니다.</div>'}
+            <details class="siege-fold" ${ui.openLog ? 'open' : ''} data-fold="openLog"><summary>📋 공성전 기록 (${S.log.length})</summary>
+                ${S.log.length ? S.log.map(e => `<div class="siege-log-row"><span class="${e.success ? 'siege-plus' : 'siege-minus'}">${e.success ? '✔' : '✘'}</span><span class="siege-dim">${esc(e.date)}</span><span>${esc(e.title)}</span><span class="siege-dim">${e.chance}%</span></div>`).join('') : '<div class="siege-dim">아직 기록이 없습니다.</div>'}
             </details>`;
         box.innerHTML = html;
 
@@ -910,115 +910,115 @@
 
     const style = document.createElement('style');
     style.textContent = `
-        .t64-flash { outline: 2px solid #f0a030; outline-offset: 4px; transition: outline-color .4s; }
-        #contentSiege { --t64-acc: #f0a030; --t64-alert: #e05555; --t64-ok: #3fbf7f; --t64-line: #333; --t64-soft: rgba(255,255,255,.03); --t64-dim: #888; --t64-text: #ddd; }
-        html[data-theme-family="modern"] #contentSiege { --t64-acc: #d97706; --t64-alert: var(--m-danger, #dc2626); --t64-ok: var(--m-success, #16a34a); --t64-line: var(--m-border); --t64-soft: var(--m-surface-2); --t64-dim: var(--m-text-3); --t64-text: var(--m-text); }
-        .t64-head { margin: 6px 0 10px; }
-        .t64-intro { color: var(--t64-dim); font-size: .78rem; line-height: 1.6; margin-bottom: 8px; }
-        .t64-stats { display: flex; flex-wrap: wrap; gap: 6px; }
-        .t64-stat { font-size: .74rem; padding: 3px 8px; border: 1px solid var(--t64-line); color: var(--t64-dim); white-space: nowrap; }
-        .t64-stat.alert { color: var(--t64-alert); border-color: var(--t64-alert); }
-        .t64-stat.warn { color: var(--t64-acc); border-color: var(--t64-acc); }
-        .t64-stat.on { color: var(--t64-text); border-color: var(--t64-text); }
-        .t64-modes { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 10px; }
-        .t64-mode { position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: 2px; padding: 10px 12px; cursor: pointer; font-family: inherit; text-align: left; background: transparent; border: 1px solid var(--t64-line); color: var(--t64-dim); }
-        .t64-mode b { font-size: .95rem; font-weight: normal; color: var(--t64-text); }
-        .t64-mode span { font-size: .72rem; }
-        .t64-mode.active { border-color: var(--t64-acc); box-shadow: inset 0 -3px 0 var(--t64-acc); }
-        .t64-mode.active b { color: var(--t64-acc); }
-        .t64-live { position: absolute; top: 9px; right: 10px; width: 8px; height: 8px; border-radius: 50%; background: var(--t64-alert); animation: t64pulse 1.2s infinite; }
-        @keyframes t64pulse { 0%, 100% { opacity: 1; } 50% { opacity: .25; } }
-        .t64-panel { border: 1px solid var(--t64-line); padding: 12px; margin-bottom: 10px; background: var(--t64-soft); }
-        .t64-group { margin: 0 0 12px; }
-        .t64-group-title { font-size: .72rem; color: var(--t64-dim); letter-spacing: 1px; margin-bottom: 6px; text-transform: uppercase; }
-        .t64-panel select { width: 100%; box-sizing: border-box; }
-        .t64-row { display: flex; align-items: center; gap: 8px; margin: 4px 0; font-size: .85rem; }
-        .t64-row input[type=range] { flex: 1; min-width: 0; accent-color: var(--t64-acc); }
-        .t64-row b { min-width: 3.2em; text-align: right; font-weight: normal; color: var(--t64-text); white-space: nowrap; }
-        .t64-lbl { min-width: 5.5em; color: var(--t64-dim); font-size: .78rem; display: flex; align-items: center; gap: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .t64-dim { color: var(--t64-dim); font-size: .8rem; } .t64-small { font-size: .72rem; }
-        .t64-off { opacity: .5; }
-        .t64-dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; margin-right: 4px; vertical-align: middle; }
-        .t64-toggle { display: flex; align-items: flex-start; gap: 8px; padding: 7px 0; font-size: .85rem; color: var(--t64-text); cursor: pointer; }
-        .t64-toggle input { margin-top: 3px; accent-color: var(--t64-acc); }
-        .t64-toggle em { display: block; font-style: normal; font-size: .72rem; color: var(--t64-dim); }
-        .t64-meter-box { margin-bottom: 10px; }
-        .t64-meter-head { display: flex; justify-content: space-between; align-items: baseline; font-size: .85rem; color: var(--t64-text); margin-bottom: 6px; }
-        .t64-meter-head b { font-size: 1.3rem; font-weight: normal; color: var(--t64-acc); }
-        .t64-meter { position: relative; display: flex; height: 16px; background: rgba(127,127,127,.15); overflow: visible; }
-        .t64-meter span { display: block; height: 100%; }
-        .t64-meter em { position: absolute; top: -4px; bottom: -4px; width: 2px; margin-left: -1px; background: var(--t64-text); }
-        .t64-meter-legend { display: flex; flex-wrap: wrap; gap: 4px 10px; font-size: .72rem; color: var(--t64-dim); margin-top: 6px; }
-        .t64-need { color: var(--t64-text); }
-        .t64-gauge { border: 1px solid var(--t64-line); padding: 10px; margin: 0 0 12px; }
-        .t64-gauge-head { display: flex; justify-content: space-between; align-items: baseline; font-size: .85rem; color: var(--t64-text); }
-        .t64-gauge-head b { font-size: 1.7rem; font-weight: normal; }
-        .t64-gauge-head b.hi { color: var(--t64-ok); } .t64-gauge-head b.mid { color: var(--t64-acc); } .t64-gauge-head b.lo { color: var(--t64-alert); }
-        .t64-bar { height: 8px; background: rgba(127,127,127,.2); margin: 6px 0; }
-        .t64-bar span { display: block; height: 100%; background: var(--t64-acc); }
-        .t64-prow { padding: 8px 0; border-bottom: 1px solid var(--t64-line); }
-        .t64-prow:last-child { border-bottom: none; }
-        .t64-prow-head { display: flex; align-items: center; gap: 6px; font-size: .85rem; flex-wrap: wrap; }
-        .t64-prow-head b { font-weight: normal; color: var(--t64-text); }
-        .t64-prow-exp { margin-left: auto; font-size: .74rem; color: var(--t64-dim); }
-        .t64-prow-exp b { color: var(--t64-acc); }
-        .t64-tag { font-size: .66rem; padding: 0 5px; border: 1px solid var(--t64-acc); color: var(--t64-acc); }
-        .t64-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px; }
-        .t64-chip { display: inline-flex; align-items: center; gap: 2px; font-size: .82rem; border: 1px solid var(--t64-line); padding: 5px 10px; cursor: pointer; color: var(--t64-dim); }
-        .t64-chip input { display: none; }
-        .t64-chip.on { border-color: var(--t64-acc); color: var(--t64-text); background: color-mix(in srgb, var(--t64-acc) 12%, transparent); }
-        .t64-vs { margin: 0 0 12px; }
-        .t64-vs-head { display: flex; justify-content: space-between; font-size: .8rem; color: var(--t64-dim); margin-bottom: 5px; }
-        .t64-vs-head b { color: var(--t64-text); font-weight: normal; font-size: 1rem; }
-        .t64-vs-bar { display: flex; height: 14px; gap: 1px; background: rgba(127,127,127,.12); }
-        .t64-vs-bar span { display: block; height: 100%; }
-        .t64-vs-opp { opacity: .45; }
-        .t64-factors { margin: -6px 0 12px; font-size: .8rem; } .t64-factors summary { cursor: pointer; }
-        .t64-factor { display: flex; justify-content: space-between; gap: 8px; font-size: .78rem; color: var(--t64-dim); padding: 2px 0; }
-        .t64-plus { color: var(--t64-ok); } .t64-minus { color: var(--t64-alert); }
-        .t64-go { width: 100%; cursor: pointer; font-family: inherit; font-size: 1rem; padding: 12px; background: transparent; border: 2px solid var(--t64-acc); color: var(--t64-acc); letter-spacing: 1px; margin-top: 4px; }
-        .t64-go:hover { background: color-mix(in srgb, var(--t64-acc) 14%, transparent); }
-        .t64-btn { cursor: pointer; font-family: inherit; font-size: .85rem; padding: 6px 12px; background: transparent; border: 1px solid var(--t64-line); color: var(--t64-text); margin-top: 8px; }
-        .t64-mini { margin: 0; padding: 2px 8px; font-size: .75rem; }
-        .t64-animrow { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
-        .t64-speed { display: inline-flex; align-items: center; gap: 4px; }
-        .t64-speed button { cursor: pointer; font-family: inherit; font-size: .75rem; padding: 3px 8px; background: transparent; border: 1px solid var(--t64-line); color: var(--t64-dim); }
-        .t64-speed button.on { border-color: var(--t64-acc); color: var(--t64-acc); }
-        html[data-theme-family="modern"] .t64-speed button { border-radius: 999px; }
-        .t64-empty { text-align: center; padding: 22px 10px; color: var(--t64-dim); font-size: .85rem; line-height: 1.7; }
-        .t64-empty-icon { font-size: 1.8rem; margin-bottom: 4px; }
-        .t64-panel > .t64-result:first-child { margin: 0 0 4px; }
-        .t64-result { margin-top: 12px; padding: 10px 12px; border: 1px solid var(--t64-line); border-left: 4px solid var(--t64-dim); }
-        .t64-result.ok { border-left-color: var(--t64-ok); } .t64-result.fail { border-left-color: var(--t64-alert); }
-        .t64-result-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: .92rem; color: var(--t64-text); margin-bottom: 2px; }
-        .t64-badge { font-size: .74rem; padding: 1px 7px; border: 1px solid currentColor; }
-        .t64-badge.ok { color: var(--t64-ok); } .t64-badge.fail { color: var(--t64-alert); }
-        .t64-result ul { margin: 6px 0 0 18px; padding: 0; font-size: .8rem; color: var(--t64-dim); line-height: 1.6; }
-        .t64-fold { border: 1px solid var(--t64-line); padding: 0 12px; margin-bottom: 8px; }
-        .t64-fold > summary { cursor: pointer; padding: 9px 0; font-size: .85rem; color: var(--t64-text); }
-        .t64-fold[open] { padding-bottom: 10px; }
-        .t64-hurt { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 5px 0; border-bottom: 1px solid var(--t64-line); font-size: .82rem; color: var(--t64-text); }
-        .t64-hurt-row { color: #f0a030; }
-        .t64-log-row { display: grid; grid-template-columns: 1.2em auto 1fr auto; gap: 8px; padding: 4px 0; font-size: .8rem; color: var(--t64-text); border-bottom: 1px solid var(--t64-line); }
-        html[data-theme-family="modern"] .t64-stat { border-radius: 999px; background: var(--m-surface); }
-        html[data-theme-family="modern"] .t64-mode { border-radius: 12px; background: var(--m-surface); }
-        html[data-theme-family="modern"] .t64-mode b { font-weight: 600; }
-        html[data-theme-family="modern"] .t64-mode.active { box-shadow: inset 0 0 0 1px var(--t64-acc); background: color-mix(in srgb, var(--t64-acc) 7%, var(--m-surface)); }
-        html[data-theme-family="modern"] .t64-panel, html[data-theme-family="modern"] .t64-fold { border-radius: 14px; }
-        html[data-theme-family="modern"] .t64-fold { background: var(--m-surface); }
-        html[data-theme-family="modern"] .t64-gauge, html[data-theme-family="modern"] .t64-result { border-radius: 12px; background: var(--m-surface); }
-        html[data-theme-family="modern"] .t64-result { border-left-width: 4px; }
-        html[data-theme-family="modern"] .t64-meter, html[data-theme-family="modern"] .t64-vs-bar, html[data-theme-family="modern"] .t64-bar { border-radius: 6px; overflow: hidden; }
-        html[data-theme-family="modern"] .t64-meter { overflow: visible; }
-        html[data-theme-family="modern"] .t64-meter span:first-child { border-radius: 6px 0 0 6px; }
-        html[data-theme-family="modern"] .t64-chip, html[data-theme-family="modern"] .t64-tag, html[data-theme-family="modern"] .t64-badge { border-radius: 999px; }
-        html[data-theme-family="modern"] .t64-go { border-radius: 12px; font-weight: 600; letter-spacing: 0; border: none; background: var(--t64-acc); color: #fff; }
-        html[data-theme-family="modern"] .t64-go:hover { filter: brightness(1.08); }
-        html[data-theme-family="modern"] .t64-btn { border-radius: 8px; border-color: var(--m-border-strong); }
-        html[data-theme-family="modern"] .t64-group-title { text-transform: none; letter-spacing: 0; font-weight: 600; }
+        .siege-flash { outline: 2px solid #f0a030; outline-offset: 4px; transition: outline-color .4s; }
+        #contentSiege { --siege-acc: #f0a030; --siege-alert: #e05555; --siege-ok: #3fbf7f; --siege-line: #333; --siege-soft: rgba(255,255,255,.03); --siege-dim: #888; --siege-text: #ddd; }
+        html[data-theme-family="modern"] #contentSiege { --siege-acc: #d97706; --siege-alert: var(--m-danger, #dc2626); --siege-ok: var(--m-success, #16a34a); --siege-line: var(--m-border); --siege-soft: var(--m-surface-2); --siege-dim: var(--m-text-3); --siege-text: var(--m-text); }
+        .siege-head { margin: 6px 0 10px; }
+        .siege-intro { color: var(--siege-dim); font-size: .78rem; line-height: 1.6; margin-bottom: 8px; }
+        .siege-stats { display: flex; flex-wrap: wrap; gap: 6px; }
+        .siege-stat { font-size: .74rem; padding: 3px 8px; border: 1px solid var(--siege-line); color: var(--siege-dim); white-space: nowrap; }
+        .siege-stat.alert { color: var(--siege-alert); border-color: var(--siege-alert); }
+        .siege-stat.warn { color: var(--siege-acc); border-color: var(--siege-acc); }
+        .siege-stat.on { color: var(--siege-text); border-color: var(--siege-text); }
+        .siege-modes { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 10px; }
+        .siege-mode { position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: 2px; padding: 10px 12px; cursor: pointer; font-family: inherit; text-align: left; background: transparent; border: 1px solid var(--siege-line); color: var(--siege-dim); }
+        .siege-mode b { font-size: .95rem; font-weight: normal; color: var(--siege-text); }
+        .siege-mode span { font-size: .72rem; }
+        .siege-mode.active { border-color: var(--siege-acc); box-shadow: inset 0 -3px 0 var(--siege-acc); }
+        .siege-mode.active b { color: var(--siege-acc); }
+        .siege-live { position: absolute; top: 9px; right: 10px; width: 8px; height: 8px; border-radius: 50%; background: var(--siege-alert); animation: siegepulse 1.2s infinite; }
+        @keyframes siegepulse { 0%, 100% { opacity: 1; } 50% { opacity: .25; } }
+        .siege-panel { border: 1px solid var(--siege-line); padding: 12px; margin-bottom: 10px; background: var(--siege-soft); }
+        .siege-group { margin: 0 0 12px; }
+        .siege-group-title { font-size: .72rem; color: var(--siege-dim); letter-spacing: 1px; margin-bottom: 6px; text-transform: uppercase; }
+        .siege-panel select { width: 100%; box-sizing: border-box; }
+        .siege-row { display: flex; align-items: center; gap: 8px; margin: 4px 0; font-size: .85rem; }
+        .siege-row input[type=range] { flex: 1; min-width: 0; accent-color: var(--siege-acc); }
+        .siege-row b { min-width: 3.2em; text-align: right; font-weight: normal; color: var(--siege-text); white-space: nowrap; }
+        .siege-lbl { min-width: 5.5em; color: var(--siege-dim); font-size: .78rem; display: flex; align-items: center; gap: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .siege-dim { color: var(--siege-dim); font-size: .8rem; } .siege-small { font-size: .72rem; }
+        .siege-off { opacity: .5; }
+        .siege-dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; margin-right: 4px; vertical-align: middle; }
+        .siege-toggle { display: flex; align-items: flex-start; gap: 8px; padding: 7px 0; font-size: .85rem; color: var(--siege-text); cursor: pointer; }
+        .siege-toggle input { margin-top: 3px; accent-color: var(--siege-acc); }
+        .siege-toggle em { display: block; font-style: normal; font-size: .72rem; color: var(--siege-dim); }
+        .siege-meter-box { margin-bottom: 10px; }
+        .siege-meter-head { display: flex; justify-content: space-between; align-items: baseline; font-size: .85rem; color: var(--siege-text); margin-bottom: 6px; }
+        .siege-meter-head b { font-size: 1.3rem; font-weight: normal; color: var(--siege-acc); }
+        .siege-meter { position: relative; display: flex; height: 16px; background: rgba(127,127,127,.15); overflow: visible; }
+        .siege-meter span { display: block; height: 100%; }
+        .siege-meter em { position: absolute; top: -4px; bottom: -4px; width: 2px; margin-left: -1px; background: var(--siege-text); }
+        .siege-meter-legend { display: flex; flex-wrap: wrap; gap: 4px 10px; font-size: .72rem; color: var(--siege-dim); margin-top: 6px; }
+        .siege-need { color: var(--siege-text); }
+        .siege-gauge { border: 1px solid var(--siege-line); padding: 10px; margin: 0 0 12px; }
+        .siege-gauge-head { display: flex; justify-content: space-between; align-items: baseline; font-size: .85rem; color: var(--siege-text); }
+        .siege-gauge-head b { font-size: 1.7rem; font-weight: normal; }
+        .siege-gauge-head b.hi { color: var(--siege-ok); } .siege-gauge-head b.mid { color: var(--siege-acc); } .siege-gauge-head b.lo { color: var(--siege-alert); }
+        .siege-bar { height: 8px; background: rgba(127,127,127,.2); margin: 6px 0; }
+        .siege-bar span { display: block; height: 100%; background: var(--siege-acc); }
+        .siege-prow { padding: 8px 0; border-bottom: 1px solid var(--siege-line); }
+        .siege-prow:last-child { border-bottom: none; }
+        .siege-prow-head { display: flex; align-items: center; gap: 6px; font-size: .85rem; flex-wrap: wrap; }
+        .siege-prow-head b { font-weight: normal; color: var(--siege-text); }
+        .siege-prow-exp { margin-left: auto; font-size: .74rem; color: var(--siege-dim); }
+        .siege-prow-exp b { color: var(--siege-acc); }
+        .siege-tag { font-size: .66rem; padding: 0 5px; border: 1px solid var(--siege-acc); color: var(--siege-acc); }
+        .siege-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px; }
+        .siege-chip { display: inline-flex; align-items: center; gap: 2px; font-size: .82rem; border: 1px solid var(--siege-line); padding: 5px 10px; cursor: pointer; color: var(--siege-dim); }
+        .siege-chip input { display: none; }
+        .siege-chip.on { border-color: var(--siege-acc); color: var(--siege-text); background: color-mix(in srgb, var(--siege-acc) 12%, transparent); }
+        .siege-vs { margin: 0 0 12px; }
+        .siege-vs-head { display: flex; justify-content: space-between; font-size: .8rem; color: var(--siege-dim); margin-bottom: 5px; }
+        .siege-vs-head b { color: var(--siege-text); font-weight: normal; font-size: 1rem; }
+        .siege-vs-bar { display: flex; height: 14px; gap: 1px; background: rgba(127,127,127,.12); }
+        .siege-vs-bar span { display: block; height: 100%; }
+        .siege-vs-opp { opacity: .45; }
+        .siege-factors { margin: -6px 0 12px; font-size: .8rem; } .siege-factors summary { cursor: pointer; }
+        .siege-factor { display: flex; justify-content: space-between; gap: 8px; font-size: .78rem; color: var(--siege-dim); padding: 2px 0; }
+        .siege-plus { color: var(--siege-ok); } .siege-minus { color: var(--siege-alert); }
+        .siege-go { width: 100%; cursor: pointer; font-family: inherit; font-size: 1rem; padding: 12px; background: transparent; border: 2px solid var(--siege-acc); color: var(--siege-acc); letter-spacing: 1px; margin-top: 4px; }
+        .siege-go:hover { background: color-mix(in srgb, var(--siege-acc) 14%, transparent); }
+        .siege-btn { cursor: pointer; font-family: inherit; font-size: .85rem; padding: 6px 12px; background: transparent; border: 1px solid var(--siege-line); color: var(--siege-text); margin-top: 8px; }
+        .siege-mini { margin: 0; padding: 2px 8px; font-size: .75rem; }
+        .siege-animrow { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
+        .siege-speed { display: inline-flex; align-items: center; gap: 4px; }
+        .siege-speed button { cursor: pointer; font-family: inherit; font-size: .75rem; padding: 3px 8px; background: transparent; border: 1px solid var(--siege-line); color: var(--siege-dim); }
+        .siege-speed button.on { border-color: var(--siege-acc); color: var(--siege-acc); }
+        html[data-theme-family="modern"] .siege-speed button { border-radius: 999px; }
+        .siege-empty { text-align: center; padding: 22px 10px; color: var(--siege-dim); font-size: .85rem; line-height: 1.7; }
+        .siege-empty-icon { font-size: 1.8rem; margin-bottom: 4px; }
+        .siege-panel > .siege-result:first-child { margin: 0 0 4px; }
+        .siege-result { margin-top: 12px; padding: 10px 12px; border: 1px solid var(--siege-line); border-left: 4px solid var(--siege-dim); }
+        .siege-result.ok { border-left-color: var(--siege-ok); } .siege-result.fail { border-left-color: var(--siege-alert); }
+        .siege-result-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: .92rem; color: var(--siege-text); margin-bottom: 2px; }
+        .siege-badge { font-size: .74rem; padding: 1px 7px; border: 1px solid currentColor; }
+        .siege-badge.ok { color: var(--siege-ok); } .siege-badge.fail { color: var(--siege-alert); }
+        .siege-result ul { margin: 6px 0 0 18px; padding: 0; font-size: .8rem; color: var(--siege-dim); line-height: 1.6; }
+        .siege-fold { border: 1px solid var(--siege-line); padding: 0 12px; margin-bottom: 8px; }
+        .siege-fold > summary { cursor: pointer; padding: 9px 0; font-size: .85rem; color: var(--siege-text); }
+        .siege-fold[open] { padding-bottom: 10px; }
+        .siege-hurt { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 5px 0; border-bottom: 1px solid var(--siege-line); font-size: .82rem; color: var(--siege-text); }
+        .siege-hurt-row { color: #f0a030; }
+        .siege-log-row { display: grid; grid-template-columns: 1.2em auto 1fr auto; gap: 8px; padding: 4px 0; font-size: .8rem; color: var(--siege-text); border-bottom: 1px solid var(--siege-line); }
+        html[data-theme-family="modern"] .siege-stat { border-radius: 999px; background: var(--m-surface); }
+        html[data-theme-family="modern"] .siege-mode { border-radius: 12px; background: var(--m-surface); }
+        html[data-theme-family="modern"] .siege-mode b { font-weight: 600; }
+        html[data-theme-family="modern"] .siege-mode.active { box-shadow: inset 0 0 0 1px var(--siege-acc); background: color-mix(in srgb, var(--siege-acc) 7%, var(--m-surface)); }
+        html[data-theme-family="modern"] .siege-panel, html[data-theme-family="modern"] .siege-fold { border-radius: 14px; }
+        html[data-theme-family="modern"] .siege-fold { background: var(--m-surface); }
+        html[data-theme-family="modern"] .siege-gauge, html[data-theme-family="modern"] .siege-result { border-radius: 12px; background: var(--m-surface); }
+        html[data-theme-family="modern"] .siege-result { border-left-width: 4px; }
+        html[data-theme-family="modern"] .siege-meter, html[data-theme-family="modern"] .siege-vs-bar, html[data-theme-family="modern"] .siege-bar { border-radius: 6px; overflow: hidden; }
+        html[data-theme-family="modern"] .siege-meter { overflow: visible; }
+        html[data-theme-family="modern"] .siege-meter span:first-child { border-radius: 6px 0 0 6px; }
+        html[data-theme-family="modern"] .siege-chip, html[data-theme-family="modern"] .siege-tag, html[data-theme-family="modern"] .siege-badge { border-radius: 999px; }
+        html[data-theme-family="modern"] .siege-go { border-radius: 12px; font-weight: 600; letter-spacing: 0; border: none; background: var(--siege-acc); color: #fff; }
+        html[data-theme-family="modern"] .siege-go:hover { filter: brightness(1.08); }
+        html[data-theme-family="modern"] .siege-btn { border-radius: 8px; border-color: var(--m-border-strong); }
+        html[data-theme-family="modern"] .siege-group-title { text-transform: none; letter-spacing: 0; font-weight: 600; }
     `;
     document.head.appendChild(style);
     // 튜토리얼(미리보기 과정)이 진행 상황을 읽고 모드를 바꾸는 창구
-    window.T64 = { get log() { return S.log; }, setMode(m) { ui.mode = m; renderSiege(); } };
+    window.HemiSiege = { get log() { return S.log; }, setMode(m) { ui.mode = m; renderSiege(); } };
     window.addEventListener('load', () => setTimeout(refresh, 0));
 })();

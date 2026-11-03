@@ -171,8 +171,8 @@
     let gradSeq = 0;
     // 도표 조각을 누르면 뜨는 정보 카드 내용 (의석 클릭 카드처럼) — 렌더할 때마다 새로 모은다
     let histInfo = [];
-    const infoTag = (title, rows) => { histInfo.push({ title, rows: rows.filter(Boolean) }); return ` data-t65i="${histInfo.length - 1}"`; };
-    const gradient = (c1, c2, defs) => { const id = `t65g${++gradSeq}`; defs.push(`<linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${esc(c1)}"/><stop offset="1" stop-color="${esc(c2)}"/></linearGradient>`); return `url(#${id})`; };
+    const infoTag = (title, rows) => { histInfo.push({ title, rows: rows.filter(Boolean) }); return ` data-histi="${histInfo.length - 1}"`; };
+    const gradient = (c1, c2, defs) => { const id = `histg${++gradSeq}`; defs.push(`<linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${esc(c1)}"/><stop offset="1" stop-color="${esc(c2)}"/></linearGradient>`); return `url(#${id})`; };
 
     function seatsChart(snaps, width) {
         const W = Math.max(320, Math.round(width || 600));
@@ -197,7 +197,7 @@
         let flows = '', notes = '', bars = '', labels = '';
         for (let i = 0; i < snaps.length - 1; i++) {
             const yb = yOf(i) + BAR, yt = yOf(i + 1), ym = (yb + yt) / 2;
-            const ribbon = (a0, a1, c0, c1, fill, title, rows) => { flows += `<path d="M${a0},${yb} L${a1},${yb} C${a1},${ym} ${c1},${ym} ${c1},${yt} L${c0},${yt} C${c0},${ym} ${a0},${ym} ${a0},${yb} Z" fill="${fill}" fill-opacity=".45" class="t65-h-hit"${infoTag(title, rows)}/>`; };
+            const ribbon = (a0, a1, c0, c1, fill, title, rows) => { flows += `<path d="M${a0},${yb} L${a1},${yb} C${a1},${ym} ${c1},${ym} ${c1},${yt} L${c0},${yt} C${c0},${ym} ${a0},${ym} ${a0},${yb} Z" fill="${fill}" fill-opacity=".45" class="hist-h-hit"${infoTag(title, rows)}/>`; };
             const when = sn => sn.label || sn.date || '';
             ids.forEach(id => {
                 const [a0, a1] = spans[i][id], [c0, c1] = spans[i + 1][id];
@@ -212,7 +212,7 @@
                     pa && pc && pa.name !== pc.name ? `당명 변경: ${esc(pa.name)} → ${esc(pc.name)}` : '',
                     !pa ? '새로 의석을 얻음' : !pc ? '의석을 모두 잃음' : '']);
                 // 같은 정당이 당명을 바꿈 → 흐름 가운데에 새 이름
-                if (pa && pc && pa.name !== pc.name) notes += `<text x="${(a0 + a1 + c0 + c1) / 4}" y="${ym + 4}" class="t65-h-note" text-anchor="middle">→ ${esc(pc.name)}</text>`;
+                if (pa && pc && pa.name !== pc.name) notes += `<text x="${(a0 + a1 + c0 + c1) / 4}" y="${ym + 4}" class="hist-h-note" text-anchor="middle">→ ${esc(pc.name)}</text>`;
             });
             // 승계: 잇기를 누른 다음 기록에서 앞 정당 띠가 뒤 정당 띠로 합쳐짐
             (S.succession || []).forEach(l => {
@@ -222,7 +222,7 @@
                 const [a0, a1] = spans[i][l.from] || [0, 0], [c0, c1] = spans[i + 1][l.to] || [0, 0];
                 const pf = info(l.from), pt = info(l.to);
                 ribbon(a0, a1, c0, c1, gradient(pf.color, pt.color, defs), '승계', [`${esc(pf.name)} → ${esc(pt.name)}`, `기간: ${esc(when(snaps[i]))} → ${esc(when(snaps[i + 1]))}`, `의석: ${fa}석 → ${tb}석`]);
-                notes += `<text x="${(a0 + a1 + c0 + c1) / 4}" y="${ym + 4}" class="t65-h-note" text-anchor="middle">→ ${esc(pt.name)}</text>`;
+                notes += `<text x="${(a0 + a1 + c0 + c1) / 4}" y="${ym + 4}" class="hist-h-note" text-anchor="middle">→ ${esc(pt.name)}</text>`;
             });
         }
         snaps.forEach((sn, i) => {
@@ -239,7 +239,7 @@
                 const base = prev == null ? null : prev + preds.reduce((a2, pid) => a2 + seat(snaps[i - 1], pid), 0);
                 const d = base == null || (base === 0 && !preds.length) ? null : n - base;
                 const share = Math.round(n / (sn.total || 1) * 1000) / 10;
-                bars += `<rect x="${x0}" y="${y}" width="${w}" height="${BAR}" fill="${esc(p.color)}" class="t65-h-hit${gov ? ' t65-h-gov' : ''}"${infoTag(`${gov ? '★ ' : ''}${p.name}`, [
+                bars += `<rect x="${x0}" y="${y}" width="${w}" height="${BAR}" fill="${esc(p.color)}" class="hist-h-hit${gov ? ' hist-h-gov' : ''}"${infoTag(`${gov ? '★ ' : ''}${p.name}`, [
                     `기록: ${esc(sn.label || sn.date || `#${i + 1}`)}${sn.label && sn.date ? ` (${esc(sn.date)})` : ''}`,
                     `의석: <b>${n}석</b> / ${sn.total}석 (${share}%)`,
                     d ? `앞 기록 대비: <b style="color:${d > 0 ? '#2ecc71' : '#e74c3c'}">${d > 0 ? '▲' : '▼'}${Math.abs(d)}</b>${preds.length ? ` (승계: ${preds.map(pid => esc(info(pid).name)).join(', ')})` : ''}` : (i && base === 0 && !preds.length ? '앞 기록 대비: 새로 진입' : ''),
@@ -250,18 +250,18 @@
                 // 글자 폭(11px 글꼴): 한글 · 한자는 한 칸, 나머지는 약 0.6칸 — 한글을 0.6칸으로 재면 이름이 옆 막대로 넘쳤다
                 const segW = t => [...t].reduce((a, c) => a + (/[\u1100-\uffff]/.test(c) ? 11 : 6.6), 0);
                 const txt = opts.find(t => segW(t) + 8 < w) || '';
-                if (txt) bars += `<text x="${x0 + w / 2}" y="${y + BAR / 2 + 4}" class="t65-h-seg" text-anchor="middle">${esc(txt)}</text>`;
+                if (txt) bars += `<text x="${x0 + w / 2}" y="${y + BAR / 2 + 4}" class="hist-h-seg" text-anchor="middle">${esc(txt)}</text>`;
             });
             const govNames = sn.parties.filter(p => ruling.has(String(p.id))).map(p => p.name);
             const dTot = i ? sn.total - snaps[i - 1].total : 0;
-            labels += `<text x="${LW}" y="${y + 11}" class="t65-h-lab" text-anchor="end">${esc((sn.label || sn.date || `#${i + 1}`).slice(0, 16))}</text>`;
-            labels += `<text x="${LW}" y="${y + 24}" class="t65-h-sub" text-anchor="end">${esc([sn.label ? sn.date : '', `${sn.total}석${dTot ? ` (${dTot > 0 ? '+' : ''}${dTot})` : ''}`].filter(Boolean).join(' · ').slice(0, 24))}</text>`;
-            if (govNames.length) labels += `<text x="${LW}" y="${y + BAR + 11}" class="t65-h-gov-lab" text-anchor="end">★ ${esc(govNames.join('·').slice(0, 18))}</text>`;
+            labels += `<text x="${LW}" y="${y + 11}" class="hist-h-lab" text-anchor="end">${esc((sn.label || sn.date || `#${i + 1}`).slice(0, 16))}</text>`;
+            labels += `<text x="${LW}" y="${y + 24}" class="hist-h-sub" text-anchor="end">${esc([sn.label ? sn.date : '', `${sn.total}석${dTot ? ` (${dTot > 0 ? '+' : ''}${dTot})` : ''}`].filter(Boolean).join(' · ').slice(0, 24))}</text>`;
+            if (govNames.length) labels += `<text x="${LW}" y="${y + BAR + 11}" class="hist-h-gov-lab" text-anchor="end">★ ${esc(govNames.join('·').slice(0, 18))}</text>`;
         });
-        const half = count ? `<line x1="${X0 + CW / 2}" x2="${X0 + CW / 2}" y1="0" y2="${H}" class="t65-h-half"/>` : `<line x1="${X0 + CW / 2}" x2="${X0 + CW / 2}" y1="0" y2="${H}" class="t65-h-half"/>`;
+        const half = count ? `<line x1="${X0 + CW / 2}" x2="${X0 + CW / 2}" y1="0" y2="${H}" class="hist-h-half"/>` : `<line x1="${X0 + CW / 2}" x2="${X0 + CW / 2}" y1="0" y2="${H}" class="hist-h-half"/>`;
         const legend = ids.map(id => { const p = info(id); return `<span>${dotHtml(p.color)}${esc(p.name)}</span>`; }).join('');
-        return `<div class="t65-legend t65-h-legend">${legend}<span class="t65-dim">막대 · 흐름을 누르면 자세히 · ★ 집권 · ┆ ${count ? `최대 의석(${maxTotal})의 절반` : '과반'} · ▲▼ 앞 기록 대비</span></div>
-            <svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" class="t65-hist" role="img" aria-label="의석 변화"><defs>${defs.join('')}</defs>${flows}${half}${bars}${notes}${labels}</svg>`;
+        return `<div class="hist-legend hist-h-legend">${legend}<span class="hist-dim">막대 · 흐름을 누르면 자세히 · ★ 집권 · ┆ ${count ? `최대 의석(${maxTotal})의 절반` : '과반'} · ▲▼ 앞 기록 대비</span></div>
+            <svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" class="hist-hist" role="img" aria-label="의석 변화"><defs>${defs.join('')}</defs>${flows}${half}${bars}${notes}${labels}</svg>`;
     }
 
     // ---- 창당일 (의회 › 정당 카드의 "창당일", p.founded = 'YYYY-MM-DD') ----
@@ -372,9 +372,9 @@
         const defs = [];
         let rows = '', lines = '', links = '', nodes = '';
         points.forEach((pt, k) => {
-            rows += `<line x1="${LW + 4}" x2="${W - 6}" y1="${yOf(k)}" y2="${yOf(k)}" class="t65-l-row"/>`;
-            rows += `<text x="${LW}" y="${yOf(k) + 4}" class="t65-h-lab" text-anchor="end">${esc((pt.label || pt.date || `#${k + 1}`).slice(0, 14))}</text>`;
-            if (pt.label && pt.date) rows += `<text x="${LW}" y="${yOf(k) + 17}" class="t65-h-sub" text-anchor="end">${esc(String(pt.date).slice(0, 16))}</text>`;
+            rows += `<line x1="${LW + 4}" x2="${W - 6}" y1="${yOf(k)}" y2="${yOf(k)}" class="hist-l-row"/>`;
+            rows += `<text x="${LW}" y="${yOf(k) + 4}" class="hist-h-lab" text-anchor="end">${esc((pt.label || pt.date || `#${k + 1}`).slice(0, 14))}</text>`;
+            if (pt.label && pt.date) rows += `<text x="${LW}" y="${yOf(k) + 17}" class="hist-h-sub" text-anchor="end">${esc(String(pt.date).slice(0, 16))}</text>`;
         });
         ids.forEach(id => {
             const { first, last } = life[id], x = xOf(id);
@@ -382,7 +382,7 @@
                 const a = points[k].alive.get(id), b = points[k + 1].alive.get(id);
                 if (!a || !b) { lines += `<line x1="${x}" x2="${x}" y1="${yOf(k)}" y2="${yOf(k + 1)}" stroke="${esc((a || b || {}).color || '#888')}" stroke-width="2" stroke-dasharray="3 4"/>`; continue; }
                 const fill = a.color !== b.color ? gradient(a.color, b.color, defs) : esc(b.color);
-                lines += `<rect x="${x - BW / 2}" y="${yOf(k)}" width="${BW}" height="${ROW}" fill="${fill}" class="t65-h-hit"${infoTag(b.name, [
+                lines += `<rect x="${x - BW / 2}" y="${yOf(k)}" width="${BW}" height="${ROW}" fill="${fill}" class="hist-h-hit"${infoTag(b.name, [
                     `기간: ${esc(points[k].label || points[k].date || '')} → ${esc(points[k + 1].label || points[k + 1].date || '')}`,
                     `의석: ${a.seats || 0}석 → ${b.seats || 0}석`,
                     a.name !== b.name ? `당명 변경: ${esc(a.name)} → ${esc(b.name)}` : ''])}/>`;
@@ -395,9 +395,9 @@
                 if (!isStart && !renamed) continue;
                 const sub = isStart ? ((S.succession || []).some(l => sameId(l.to, id) && linkK(l) + 1 === k) ? '승계' : '창당') : `← ${prev.name}`;
                 const subTxt = `${sub}${p.seats ? ` · ${p.seats}석` : ''}`;
-                nodes += `<g class="t65-h-hit"${infoTag(p.name, [`${esc(sub)} · ${esc(points[k].label || points[k].date || `#${k + 1}`)}`, p.seats ? `의석: ${p.seats}석` : '', renamed ? `당명 변경: ${esc(prev.name)} → ${esc(p.name)}` : ''])}><title>${esc(p.name)}</title>`
-                    + `<circle cx="${x}" cy="${yOf(k)}" r="${isStart ? 7 : 6}" fill="${esc(p.color)}" class="t65-l-node"/>`
-                    + `<text x="${x + 11}" y="${yOf(k) - 2}" class="t65-l-name">${esc(fit(p.name, 12, nameRoom))}</text><text x="${x + 11}" y="${yOf(k) + 11}" class="t65-h-sub">${esc(fit(subTxt, 10, nameRoom))}</text></g>`;
+                nodes += `<g class="hist-h-hit"${infoTag(p.name, [`${esc(sub)} · ${esc(points[k].label || points[k].date || `#${k + 1}`)}`, p.seats ? `의석: ${p.seats}석` : '', renamed ? `당명 변경: ${esc(prev.name)} → ${esc(p.name)}` : ''])}><title>${esc(p.name)}</title>`
+                    + `<circle cx="${x}" cy="${yOf(k)}" r="${isStart ? 7 : 6}" fill="${esc(p.color)}" class="hist-l-node"/>`
+                    + `<text x="${x + 11}" y="${yOf(k) - 2}" class="hist-l-name">${esc(fit(p.name, 12, nameRoom))}</text><text x="${x + 11}" y="${yOf(k) + 11}" class="hist-h-sub">${esc(fit(subTxt, 10, nameRoom))}</text></g>`;
             }
             // 끝: 승계로 합쳐지거나, 마지막 기록 전에 사라졌으면 소멸
             const outs = (S.succession || []).filter(l => sameId(l.from, id) && life[String(l.to)]);
@@ -407,40 +407,40 @@
                 if (k1 >= points.length) {
                     // 아직 다음 기록이 없음 — 다음 기록에서 합쳐질 예정
                     links += `<path d="M${x},${y1} C${x},${y1 + ROW * 0.45} ${x2},${y1 + ROW * 0.35} ${x2},${y1 + ROW * 0.8}" fill="none" stroke="${esc(pf ? pf.color : '#888')}" stroke-width="3" stroke-dasharray="5 4" opacity=".7"/>`;
-                    nodes += `<text x="${(x + x2) / 2}" y="${y1 + ROW * 0.62}" class="t65-h-sub" text-anchor="middle">다음 기록에서 합쳐짐</text>`;
+                    nodes += `<text x="${(x + x2) / 2}" y="${y1 + ROW * 0.62}" class="hist-h-sub" text-anchor="middle">다음 기록에서 합쳐짐</text>`;
                     return;
                 }
                 const pt2 = points[k1].alive.get(t), y2 = yOf(k1);
-                const gid = `t65lg${++gradSeq}`;
+                const gid = `histlg${++gradSeq}`;
                 defs.push(`<linearGradient id="${gid}" gradientUnits="userSpaceOnUse" x1="${x}" y1="${y1}" x2="${x2}" y2="${y2}"><stop offset="0" stop-color="${esc(pf ? pf.color : '#888')}"/><stop offset="1" stop-color="${esc(pt2 ? pt2.color : (pf ? pf.color : '#888'))}"/></linearGradient>`);
-                links += `<path d="M${x},${y1} C${x},${y1 + ROW * 0.55} ${x2},${y2 - ROW * 0.55} ${x2},${y2}" fill="none" stroke="url(#${gid})" stroke-width="${BW}" class="t65-h-hit"${infoTag('승계', [`${esc(pf ? pf.name : '')} → ${esc(pt2 ? pt2.name : '')}`, `시점: ${esc(points[k1].label || points[k1].date || '')}`])}/>`;
+                links += `<path d="M${x},${y1} C${x},${y1 + ROW * 0.55} ${x2},${y2 - ROW * 0.55} ${x2},${y2}" fill="none" stroke="url(#${gid})" stroke-width="${BW}" class="hist-h-hit"${infoTag('승계', [`${esc(pf ? pf.name : '')} → ${esc(pt2 ? pt2.name : '')}`, `시점: ${esc(points[k1].label || points[k1].date || '')}`])}/>`;
             });
             if (!outs.some(l => linkK(l) >= last) && last < points.length - 1) {
-                nodes += `<text x="${x}" y="${yOf(last) + 18}" class="t65-l-end" text-anchor="middle">✕</text><text x="${x + 11}" y="${yOf(last) + 24}" class="t65-h-sub">소멸</text>`;
+                nodes += `<text x="${x}" y="${yOf(last) + 18}" class="hist-l-end" text-anchor="middle">✕</text><text x="${x + 11}" y="${yOf(last) + 24}" class="hist-h-sub">소멸</text>`;
             }
         });
         // 범례 — 정당마다 마지막 이름 · 색 (도표의 이름표가 줄어들어도 여기서 전체 이름을 본다)
         const legend = ids.map(id => { let p = null; points.forEach(pt => { p = pt.alive.get(id) || p; }); return p ? `<span>${dotHtml(p.color)}${esc(p.name)}</span>` : ''; }).join('');
-        return `<div class="t65-legend t65-h-legend">${legend}<span class="t65-dim">● 창당 · 당명 변경 / 곡선으로 합쳐짐 = 승계 / ✕ 소멸 · 줄 · 이름을 누르면 자세히</span></div>
-            <div class="t65-l-scroll"><svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" class="t65-hist" role="img" aria-label="당 변화"><defs>${defs.join('')}</defs>${rows}${links}${lines}${nodes}</svg></div>`;
+        return `<div class="hist-legend hist-h-legend">${legend}<span class="hist-dim">● 창당 · 당명 변경 / 곡선으로 합쳐짐 = 승계 / ✕ 소멸 · 줄 · 이름을 누르면 자세히</span></div>
+            <div class="hist-l-scroll"><svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" class="hist-hist" role="img" aria-label="당 변화"><defs>${defs.join('')}</defs>${rows}${links}${lines}${nodes}</svg></div>`;
     }
 
     function renderHistory() {
-        const wrap = document.getElementById('t65HistWrap');
+        const wrap = document.getElementById('histHistWrap');
         if (!wrap) return;
         const chs = chambers();
         if (!chs.includes(ui.tlChamber)) ui.tlChamber = chs[0];
         const snaps = S.timeline.filter(x => x.chamber === ui.tlChamber).sort((a, b) => a.at - b.at);
         const lineage = ui.histView === 'lineage';
-        const title = document.getElementById('t65HistTitle');
+        const title = document.getElementById('histHistTitle');
         if (title) title.textContent = lineage ? '당 변화' : `${chName(ui.tlChamber)} 의석 변화`;
         const panel = document.getElementById('dispPanelTimeline');
         const width = (wrap.clientWidth || (panel && panel.clientWidth) || 600) - 4;
-        const seg = (items, cur, attr) => `<div class="t65-seg">${items.map(([k, t]) => `<button type="button" class="${cur === k ? 'on' : ''}" data-${attr}="${k}">${esc(t)}</button>`).join('')}</div>`;
-        const controls = `<div class="t65-h-controls">${seg([['seats', '의석 변화'], ['lineage', '당 변화']], ui.histView, 'hview')}
+        const seg = (items, cur, attr) => `<div class="hist-seg">${items.map(([k, t]) => `<button type="button" class="${cur === k ? 'on' : ''}" data-${attr}="${k}">${esc(t)}</button>`).join('')}</div>`;
+        const controls = `<div class="hist-h-controls">${seg([['seats', '의석 변화'], ['lineage', '당 변화']], ui.histView, 'hview')}
             ${lineage ? '' : seg([['share', '점유율'], ['count', '의석 수']], ui.seatMode, 'hmode')}
             ${!lineage && chs.length > 1 ? seg(chs.map(c => [c, chName(c)]), ui.tlChamber, 'hch') : ''}</div>`;
-        const empty = '<div class="t65-empty"><div class="t65-empty-icon">📈</div>아직 기록이 없습니다.<br>왼쪽 의회 › 세력 변화에서 "지금 의석 기록하기"를 누르거나, 총선을 치러 의회에 반영하면 여기에 아래로 쌓여요.</div>';
+        const empty = '<div class="hist-empty"><div class="hist-empty-icon">📈</div>아직 기록이 없습니다.<br>왼쪽 의회 › 세력 변화에서 "지금 의석 기록하기"를 누르거나, 총선을 치러 의회에 반영하면 여기에 아래로 쌓여요.</div>';
         histInfo = [];
         if (typeof closeSeatInfoCard === 'function') closeSeatInfoCard();
         wrap.innerHTML = controls + (lineage ? (S.timeline.length ? lineageChart(width) : empty) : (snaps.length ? seatsChart(snaps, width) : empty));
@@ -449,19 +449,19 @@
         wrap.querySelectorAll('[data-hmode]').forEach(b => { b.onclick = () => { ui.seatMode = b.dataset.hmode; renderHistory(); }; });
         // 막대 · 흐름을 누르면 의석 정보 카드(좌석 클릭과 같은 카드)에 자세히 — 같은 조각을 다시 누르면 닫힘
         wrap.onclick = e => {
-            const t = e.target.closest && e.target.closest('[data-t65i]');
+            const t = e.target.closest && e.target.closest('[data-histi]');
             const card = document.getElementById('seatInfoCard'), body = document.getElementById('seatInfoCardBody'), title = document.getElementById('seatInfoCardTitle');
-            wrap.querySelectorAll('.t65-h-sel').forEach(x => x.classList.remove('t65-h-sel'));
+            wrap.querySelectorAll('.hist-h-sel').forEach(x => x.classList.remove('hist-h-sel'));
             if (!t || !card || !body) { if (!t && typeof closeSeatInfoCard === 'function') closeSeatInfoCard(); return; }
-            const info = histInfo[+t.dataset.t65i];
+            const info = histInfo[+t.dataset.histi];
             if (!info) return;
-            if (card.style.display === 'block' && card.dataset.t65i === t.dataset.t65i) { closeSeatInfoCard(); return; }
+            if (card.style.display === 'block' && card.dataset.histi === t.dataset.histi) { closeSeatInfoCard(); return; }
             if (typeof closeSeatInfoCard === 'function') closeSeatInfoCard();
             if (title) title.textContent = info.title;
             body.innerHTML = info.rows.map(r => `<div>${r}</div>`).join('');
-            card.dataset.t65i = t.dataset.t65i;
+            card.dataset.histi = t.dataset.histi;
             card.style.display = 'block';
-            t.classList.add('t65-h-sel');
+            t.classList.add('hist-h-sel');
             if (typeof positionFloatingBox === 'function') positionFloatingBox(card, e.clientX, e.clientY);
         };
     }
@@ -471,7 +471,7 @@
         try { switchDispTab('timeline'); } catch (e) { /* 시각 화면 없음 */ }
         setTimeout(renderHistory, 60);
     }
-    const dotHtml = c => `<i class="t65-dot" style="background:${esc(c)}"></i>`;
+    const dotHtml = c => `<i class="hist-dot" style="background:${esc(c)}"></i>`;
     function changeTable(snaps) {
         const show = snaps.slice(-8);
         const ids = [];
@@ -479,13 +479,13 @@
         const seat = (sn, id) => (sn.parties.find(x => sameId(x.id, id)) || {}).seats || 0;
         const info = id => { for (let i = show.length - 1; i >= 0; i--) { const p = show[i].parties.find(x => sameId(x.id, id)); if (p) return p; } return { name: '?', color: '#888' }; };
         ids.sort((a, b) => seat(show[show.length - 1], b) - seat(show[show.length - 1], a));
-        return `<div class="t65-tablewrap"><table class="t65-table"><thead><tr><th>정당</th>${show.map(sn => `<th title="${esc(sn.date)}">${esc((sn.label || sn.date || '').slice(0, 10))}</th>`).join('')}</tr></thead>
+        return `<div class="hist-tablewrap"><table class="hist-table"><thead><tr><th>정당</th>${show.map(sn => `<th title="${esc(sn.date)}">${esc((sn.label || sn.date || '').slice(0, 10))}</th>`).join('')}</tr></thead>
             <tbody>${ids.map(id => { const p = info(id); return `<tr><td>${dotHtml(p.color)}${esc(p.name)}</td>${show.map((sn, i) => {
                 const v = seat(sn, id), prev = i ? seat(show[i - 1], id) : null, d = prev == null ? 0 : v - prev;
                 const gov = (sn.ruling || []).some(x => sameId(x, id));
-                return `<td class="${gov ? 't65-gov' : ''}">${v || '—'}${d ? `<small class="${d > 0 ? 't65-up' : 't65-down'}">${d > 0 ? '▲' : '▼'}${Math.abs(d)}</small>` : ''}</td>`;
+                return `<td class="${gov ? 'hist-gov' : ''}">${v || '—'}${d ? `<small class="${d > 0 ? 'hist-up' : 'hist-down'}">${d > 0 ? '▲' : '▼'}${Math.abs(d)}</small>` : ''}</td>`;
             }).join('')}</tr>`; }).join('')}</tbody></table></div>
-            <div class="t65-dim t65-small">굵은 칸은 그 시점의 집권 세력 · ▲▼는 바로 앞 기록과의 차이 (최근 8개)</div>`;
+            <div class="hist-dim hist-small">굵은 칸은 그 시점의 집권 세력 · ▲▼는 바로 앞 기록과의 차이 (최근 8개)</div>`;
     }
 
     function successionPanel() {
@@ -495,19 +495,19 @@
         const colorOf = id => (known.find(k => sameId(k.id, id)) || { color: '#888' }).color;
         if (ui.rbPid == null || !cur.some(p => sameId(p.id, ui.rbPid))) ui.rbPid = cur[0] ? cur[0].id : null;
         const rbParty = cur.find(p => sameId(p.id, ui.rbPid));
-        return `<details class="t65-fold" ${ui.openSucc ? 'open' : ''} data-fold="openSucc"><summary>🔁 정당 승계</summary>
-            <div class="t65-sub-title">당명 · 색 바꾸기 (승계)</div>
-            <div class="t65-dim t65-small" style="margin:0 0 6px">한나라당 → 새누리당처럼 같은 정당이 이름 · 색을 바꿉니다. 의석 · 의원 · 연정은 그대로 이어지고, 그 시점이 기록돼 "당 변화"에 표시돼요.</div>
-            <div class="t65-field"><span>정당</span><select data-rb="pid">${cur.map(p => `<option value="${esc(p.id)}" ${sameId(p.id, ui.rbPid) ? 'selected' : ''}>${esc(p.name)}</option>`).join('')}</select></div>
-            <div class="t65-field"><span>새 이름</span><input type="text" data-rb="name" placeholder="${esc(rbParty ? rbParty.name : '')}"></div>
-            <div class="t65-field"><span>새 색</span><input type="color" data-rb="color" value="${esc(rbParty && /^#[0-9a-f]{6}$/i.test(rbParty.color) ? rbParty.color : '#888888')}"></div>
-            <button type="button" class="t65-btn primary" data-act="rebrand">승계</button>
-            <div class="t65-sub-title" style="margin-top:14px">승계 관계 잇기</div>
-            <div class="t65-dim t65-small" style="margin:0 0 6px">서로 다른 정당을 앞 정당 → 뒤 정당으로 잇습니다 (해산 뒤 후신 · 합당 · 분당). 지금까지의 기록 바로 다음 기록에서 앞 정당 줄이 뒤 정당 줄로 합쳐져요 — 합당이면 앞 정당은 해산하거나 의석을 0으로 두세요.</div>
-            <div class="t65-succ-row"><select data-sl="from">${known.map(k => `<option value="${esc(k.id)}">${esc(k.name)}</option>`).join('')}</select><span>→</span>
+        return `<details class="hist-fold" ${ui.openSucc ? 'open' : ''} data-fold="openSucc"><summary>🔁 정당 승계</summary>
+            <div class="hist-sub-title">당명 · 색 바꾸기 (승계)</div>
+            <div class="hist-dim hist-small" style="margin:0 0 6px">한나라당 → 새누리당처럼 같은 정당이 이름 · 색을 바꿉니다. 의석 · 의원 · 연정은 그대로 이어지고, 그 시점이 기록돼 "당 변화"에 표시돼요.</div>
+            <div class="hist-field"><span>정당</span><select data-rb="pid">${cur.map(p => `<option value="${esc(p.id)}" ${sameId(p.id, ui.rbPid) ? 'selected' : ''}>${esc(p.name)}</option>`).join('')}</select></div>
+            <div class="hist-field"><span>새 이름</span><input type="text" data-rb="name" placeholder="${esc(rbParty ? rbParty.name : '')}"></div>
+            <div class="hist-field"><span>새 색</span><input type="color" data-rb="color" value="${esc(rbParty && /^#[0-9a-f]{6}$/i.test(rbParty.color) ? rbParty.color : '#888888')}"></div>
+            <button type="button" class="hist-btn primary" data-act="rebrand">승계</button>
+            <div class="hist-sub-title" style="margin-top:14px">승계 관계 잇기</div>
+            <div class="hist-dim hist-small" style="margin:0 0 6px">서로 다른 정당을 앞 정당 → 뒤 정당으로 잇습니다 (해산 뒤 후신 · 합당 · 분당). 지금까지의 기록 바로 다음 기록에서 앞 정당 줄이 뒤 정당 줄로 합쳐져요 — 합당이면 앞 정당은 해산하거나 의석을 0으로 두세요.</div>
+            <div class="hist-succ-row"><select data-sl="from">${known.map(k => `<option value="${esc(k.id)}">${esc(k.name)}</option>`).join('')}</select><span>→</span>
                 <select data-sl="to">${known.map((k, i) => `<option value="${esc(k.id)}" ${i === 1 ? 'selected' : ''}>${esc(k.name)}</option>`).join('')}</select>
-                <button type="button" class="t65-btn" data-act="link">잇기</button></div>
-            ${(S.succession || []).map(l => `<div class="t65-snap">${dotHtml(colorOf(l.from))}<span>${esc(nameOf(l.from))}</span><span class="t65-dim">→</span>${dotHtml(colorOf(l.to))}<span style="flex:1">${esc(nameOf(l.to))}</span><button type="button" class="t65-x" data-unlink="${l.id}" title="끊기">×</button></div>`).join('')}
+                <button type="button" class="hist-btn" data-act="link">잇기</button></div>
+            ${(S.succession || []).map(l => `<div class="hist-snap">${dotHtml(colorOf(l.from))}<span>${esc(nameOf(l.from))}</span><span class="hist-dim">→</span>${dotHtml(colorOf(l.to))}<span style="flex:1">${esc(nameOf(l.to))}</span><button type="button" class="hist-x" data-unlink="${l.id}" title="끊기">×</button></div>`).join('')}
         </details>`;
     }
 
@@ -518,18 +518,18 @@
         if (!chs.includes(ui.tlChamber)) ui.tlChamber = chs[0];
         const snaps = S.timeline.filter(x => x.chamber === ui.tlChamber).sort((a, b) => a.at - b.at);
         const recCount = (typeof elecRecords !== 'undefined' ? elecRecords : []).filter(r => r && r.chamberType && !S.timeline.some(x => x.source === 'rec:' + r.id)).length;
-        box.innerHTML = `<div class="t65-intro">정당 의석을 시점마다 기록해 세력이 어떻게 오르내렸는지(의석 변화), 정당이 어떻게 생기고 바뀌고 이어졌는지(당 변화) 봅니다. 총선 결과를 의회에 반영하면 자동으로 기록돼요.</div>
-            ${chs.length > 1 ? `<div class="system-radio-group t65-tabs">${chs.map(c => `<button type="button" class="system-radio-btn ${ui.tlChamber === c ? 'active' : ''}" data-tlch="${c}">${esc(chName(c))}</button>`).join('')}</div>` : ''}
-            <div class="t65-actions">
-                <button type="button" class="t65-btn primary" data-act="snap">📸 지금 의석 기록하기</button>
-                <button type="button" class="t65-btn" data-act="import" ${recCount ? '' : 'disabled'}>선거 기록에서 가져오기${recCount ? ` (${recCount})` : ''}</button>
+        box.innerHTML = `<div class="hist-intro">정당 의석을 시점마다 기록해 세력이 어떻게 오르내렸는지(의석 변화), 정당이 어떻게 생기고 바뀌고 이어졌는지(당 변화) 봅니다. 총선 결과를 의회에 반영하면 자동으로 기록돼요.</div>
+            ${chs.length > 1 ? `<div class="system-radio-group hist-tabs">${chs.map(c => `<button type="button" class="system-radio-btn ${ui.tlChamber === c ? 'active' : ''}" data-tlch="${c}">${esc(chName(c))}</button>`).join('')}</div>` : ''}
+            <div class="hist-actions">
+                <button type="button" class="hist-btn primary" data-act="snap">📸 지금 의석 기록하기</button>
+                <button type="button" class="hist-btn" data-act="import" ${recCount ? '' : 'disabled'}>선거 기록에서 가져오기${recCount ? ` (${recCount})` : ''}</button>
             </div>
-            <div class="t65-card t65-histnote"><span>📊 오른쪽 시각 화면 "세력 변화" 탭에서 의석 변화 · 당 변화 도표를 아래로 스크롤하며 봐요.</span><button type="button" class="t65-btn" data-act="showhist">오른쪽에서 보기</button></div>
-            ${snaps.length ? `<div class="t65-card">${changeTable(snaps)}</div>` : ''}
+            <div class="hist-card hist-histnote"><span>📊 오른쪽 시각 화면 "세력 변화" 탭에서 의석 변화 · 당 변화 도표를 아래로 스크롤하며 봐요.</span><button type="button" class="hist-btn" data-act="showhist">오른쪽에서 보기</button></div>
+            ${snaps.length ? `<div class="hist-card">${changeTable(snaps)}</div>` : ''}
             ${successionPanel()}
-            ${snaps.length ? `<details class="t65-fold"><summary>기록 ${snaps.length}개 — 이름 바꾸기 · 지우기</summary>
-                ${snaps.slice().reverse().map(sn => `<div class="t65-snap"><input type="text" value="${esc(sn.label)}" placeholder="${esc(sn.date || '이름 없음')}" data-label="${sn.id}"><span class="t65-dim">${esc(sn.date)} · ${sn.total}석${sn.source === 'election' ? ' · 선거' : sn.source === 'succession' ? ' · 승계' : String(sn.source).startsWith('rec:') ? ' · 선거 기록' : ''}</span><button type="button" class="t65-x" data-del="${sn.id}" title="지우기">×</button></div>`).join('')}
-            </details>` : `<div class="t65-empty"><div class="t65-empty-icon">📈</div>아직 기록이 없습니다.<br>"지금 의석 기록하기"를 누르거나, 총선을 치러 의회에 반영하면 쌓여요.</div>`}`;
+            ${snaps.length ? `<details class="hist-fold"><summary>기록 ${snaps.length}개 — 이름 바꾸기 · 지우기</summary>
+                ${snaps.slice().reverse().map(sn => `<div class="hist-snap"><input type="text" value="${esc(sn.label)}" placeholder="${esc(sn.date || '이름 없음')}" data-label="${sn.id}"><span class="hist-dim">${esc(sn.date)} · ${sn.total}석${sn.source === 'election' ? ' · 선거' : sn.source === 'succession' ? ' · 승계' : String(sn.source).startsWith('rec:') ? ' · 선거 기록' : ''}</span><button type="button" class="hist-x" data-del="${sn.id}" title="지우기">×</button></div>`).join('')}
+            </details>` : `<div class="hist-empty"><div class="hist-empty-icon">📈</div>아직 기록이 없습니다.<br>"지금 의석 기록하기"를 누르거나, 총선을 치러 의회에 반영하면 쌓여요.</div>`}`;
         box.querySelectorAll('[data-tlch]').forEach(b => { b.onclick = () => { ui.tlChamber = b.dataset.tlch; renderTimeline(); }; });
         box.querySelector('[data-act="showhist"]').onclick = showHistoryTab;
         box.querySelector('[data-act="snap"]').onclick = () => {
@@ -804,11 +804,11 @@
     }
     // 오른쪽 시각 화면 "위키 틀" 탭 — 틀 미리보기
     function renderWikiPreview() {
-        const wrap = document.getElementById('t65WikiWrap');
+        const wrap = document.getElementById('histWikiWrap');
         if (!wrap) return;
         if (!wikiModes().includes(ui.wikiChamber)) ui.wikiChamber = wikiModes()[0];
         const d = wikiData(ui.wikiChamber);
-        wrap.innerHTML = `<div class="t65-wikiwrap">${ui.wikiView === 'out' ? namuOutBox(d) : namuBox(d)}</div>`;
+        wrap.innerHTML = `<div class="hist-wikiwrap">${ui.wikiView === 'out' ? namuOutBox(d) : namuBox(d)}</div>`;
         wrap.querySelectorAll('[data-wview]').forEach(b => { b.onclick = () => { ui.wikiView = b.dataset.wview; renderWikibox(); }; });
     }
     const wikiMarkupNow = () => { const d = wikiData(ui.wikiChamber); return ui.wikiView === 'out' ? namuOutMarkup(d) : namuMarkup(d); };
@@ -827,29 +827,29 @@
         if (!modes.includes(ui.wikiChamber)) ui.wikiChamber = modes[0];
         const d = wikiData(ui.wikiChamber);
         const auto = (() => { const pmn = pmName(); return pmn ? `${pmn} 내각` : '예: 콜 내각'; })();
-        box.innerHTML = `<div class="t65-intro">위키 문서의 "원내 구성" 틀을 만듭니다. 정당 · 연정(집권) · 의석에서 자동으로 채워지고, 미리보기는 오른쪽 시각 화면 "위키 틀" 탭에 바로 보여요.</div>
-            ${modes.length > 1 ? `<div class="system-radio-group t65-tabs">${modes.map(c => `<button type="button" class="system-radio-btn ${ui.wikiChamber === c ? 'active' : ''}" data-wch="${c}">${esc(c === 'both' ? '양원' : chName(c))}</button>`).join('')}</div>` : ''}
-            <div class="system-radio-group t65-tabs">${[['in', '원내 구성'], ['out', '원외정당']].map(([k, t]) => `<button type="button" class="system-radio-btn ${ui.wikiView === k ? 'active' : ''}" data-wv="${k}">${t}</button>`).join('')}</div>
-            ${ui.wikiChamber === 'both' ? `<div class="t65-dim t65-small" style="margin:-4px 0 8px">정당마다 [${esc(chName('senate'))} | ${esc(chName('house'))}] 의석을 나란히 적어요.</div>` : ''}
-            <div class="t65-actions">
-                <button type="button" class="t65-btn primary" data-act="copy">📋 위키 문법 복사</button>
-                <button type="button" class="t65-btn" data-act="showwiki">오른쪽에서 보기</button>
-                <button type="button" class="t65-btn" data-act="img">🖼 반원 그림 저장</button>
+        box.innerHTML = `<div class="hist-intro">위키 문서의 "원내 구성" 틀을 만듭니다. 정당 · 연정(집권) · 의석에서 자동으로 채워지고, 미리보기는 오른쪽 시각 화면 "위키 틀" 탭에 바로 보여요.</div>
+            ${modes.length > 1 ? `<div class="system-radio-group hist-tabs">${modes.map(c => `<button type="button" class="system-radio-btn ${ui.wikiChamber === c ? 'active' : ''}" data-wch="${c}">${esc(c === 'both' ? '양원' : chName(c))}</button>`).join('')}</div>` : ''}
+            <div class="system-radio-group hist-tabs">${[['in', '원내 구성'], ['out', '원외정당']].map(([k, t]) => `<button type="button" class="system-radio-btn ${ui.wikiView === k ? 'active' : ''}" data-wv="${k}">${t}</button>`).join('')}</div>
+            ${ui.wikiChamber === 'both' ? `<div class="hist-dim hist-small" style="margin:-4px 0 8px">정당마다 [${esc(chName('senate'))} | ${esc(chName('house'))}] 의석을 나란히 적어요.</div>` : ''}
+            <div class="hist-actions">
+                <button type="button" class="hist-btn primary" data-act="copy">📋 위키 문법 복사</button>
+                <button type="button" class="hist-btn" data-act="showwiki">오른쪽에서 보기</button>
+                <button type="button" class="hist-btn" data-act="img">🖼 반원 그림 저장</button>
             </div>
-            <div class="t65-card t65-wk-form">
-                <div class="t65-card-head"><b>틀 머리</b></div>
-                <div class="t65-field"><span>제목</span><input type="text" data-w="title" value="${esc(S.wiki.title || '')}" placeholder="${esc(d.title)}"></div>
-                <div class="t65-field"><span>머리 색</span><input type="color" data-w="frame" value="${esc(S.wiki.frame || '#2b3a67')}"><button type="button" class="t65-btn" data-frame="#ffffff">흰색</button><button type="button" class="t65-btn" data-frame="#2b3a67">남색</button></div>
-                <div class="t65-card-head" style="margin-top:10px"><b>내각</b></div>
-                <div class="t65-field"><span>이름</span><input type="text" data-w="govName" value="${esc(S.wiki.govName || '')}" placeholder="${esc(auto)}"></div>
-                <div class="t65-field"><span>기간</span><input type="text" data-w="termStart" value="${esc(S.wiki.termStart || '')}" placeholder="시작 예: 1982.10.01"><span>~</span><input type="text" data-w="termEnd" value="${esc(S.wiki.termEnd || '')}" placeholder="비우면 현재"></div>
-                <div class="t65-card-head" style="margin-top:10px"><b>정당 구분</b></div>
-                <div class="t65-field"><span>교섭단체 기준</span><input type="number" min="0" data-w="groupMin" value="${Number(S.wiki.groupMin) || 0}" style="width:5em"><span class="t65-dim">석 미만은 비교섭단체 (0이면 무소속만)</span></div>
-                <div class="t65-field"><span>각주</span><input type="text" data-w="note" value="${esc(S.wiki.note || '')}" placeholder="직접 쓰는 설명 (※로 붙음)"></div>
-                <label class="t65-field" style="cursor:pointer"><input type="checkbox" data-w="footer" ${S.wiki.footer === false ? '' : 'checked'}><span>맨 아래 "정당 구분 (원내 · 원외)" 줄</span></label>
-                <div class="t65-dim t65-small">엠블럼은 의회 › 의장 · 표시의 로고(없으면 국기), 정당 로고는 의회 › 정당 › 로고에서 정해요. 파벌이 둘 이상인 정당은 각주에 공동교섭단체로 적혀요.</div>
+            <div class="hist-card hist-wk-form">
+                <div class="hist-card-head"><b>틀 머리</b></div>
+                <div class="hist-field"><span>제목</span><input type="text" data-w="title" value="${esc(S.wiki.title || '')}" placeholder="${esc(d.title)}"></div>
+                <div class="hist-field"><span>머리 색</span><input type="color" data-w="frame" value="${esc(S.wiki.frame || '#2b3a67')}"><button type="button" class="hist-btn" data-frame="#ffffff">흰색</button><button type="button" class="hist-btn" data-frame="#2b3a67">남색</button></div>
+                <div class="hist-card-head" style="margin-top:10px"><b>내각</b></div>
+                <div class="hist-field"><span>이름</span><input type="text" data-w="govName" value="${esc(S.wiki.govName || '')}" placeholder="${esc(auto)}"></div>
+                <div class="hist-field"><span>기간</span><input type="text" data-w="termStart" value="${esc(S.wiki.termStart || '')}" placeholder="시작 예: 1982.10.01"><span>~</span><input type="text" data-w="termEnd" value="${esc(S.wiki.termEnd || '')}" placeholder="비우면 현재"></div>
+                <div class="hist-card-head" style="margin-top:10px"><b>정당 구분</b></div>
+                <div class="hist-field"><span>교섭단체 기준</span><input type="number" min="0" data-w="groupMin" value="${Number(S.wiki.groupMin) || 0}" style="width:5em"><span class="hist-dim">석 미만은 비교섭단체 (0이면 무소속만)</span></div>
+                <div class="hist-field"><span>각주</span><input type="text" data-w="note" value="${esc(S.wiki.note || '')}" placeholder="직접 쓰는 설명 (※로 붙음)"></div>
+                <label class="hist-field" style="cursor:pointer"><input type="checkbox" data-w="footer" ${S.wiki.footer === false ? '' : 'checked'}><span>맨 아래 "정당 구분 (원내 · 원외)" 줄</span></label>
+                <div class="hist-dim hist-small">엠블럼은 의회 › 의장 · 표시의 로고(없으면 국기), 정당 로고는 의회 › 정당 › 로고에서 정해요. 파벌이 둘 이상인 정당은 각주에 공동교섭단체로 적혀요.</div>
             </div>
-            <details class="t65-fold"><summary>위키 문법 보기</summary><textarea class="t65-markup" readonly>${esc(wikiMarkupNow())}</textarea><div class="t65-dim t65-small">로고가 있는 정당은 [[파일:정당 이름 로고.png]]로 들어가요 — 위키에 그 이름으로 로고 그림을 올리면 그대로 보여요.</div></details>`;
+            <details class="hist-fold"><summary>위키 문법 보기</summary><textarea class="hist-markup" readonly>${esc(wikiMarkupNow())}</textarea><div class="hist-dim hist-small">로고가 있는 정당은 [[파일:정당 이름 로고.png]]로 들어가요 — 위키에 그 이름으로 로고 그림을 올리면 그대로 보여요.</div></details>`;
         box.querySelectorAll('[data-wch]').forEach(b => { b.onclick = () => { ui.wikiChamber = b.dataset.wch; renderWikibox(); showWikiTab(); }; });
         box.querySelectorAll('[data-wv]').forEach(b => { b.onclick = () => { ui.wikiView = b.dataset.wv; renderWikibox(); showWikiTab(); }; });
         box.querySelectorAll('[data-w]').forEach(i => {
@@ -863,7 +863,7 @@
         box.querySelector('[data-act="copy"]').onclick = async () => {
             const text = wikiMarkupNow();
             try { await navigator.clipboard.writeText(text); showCustomAlert('위키 문법을 복사했습니다.'); }
-            catch (e) { const ta = box.querySelector('.t65-markup'); if (ta) { ta.closest('details').open = true; ta.select(); } showCustomAlert('복사하지 못했습니다 — "위키 문법 보기"에서 직접 복사하세요.'); }
+            catch (e) { const ta = box.querySelector('.hist-markup'); if (ta) { ta.closest('details').open = true; ta.select(); } showCustomAlert('복사하지 못했습니다 — "위키 문법 보기"에서 직접 복사하세요.'); }
         };
         box.querySelector('[data-act="img"]').onclick = () => {
             const url = hemicycleImage(d.main, 600);
@@ -894,28 +894,28 @@
         const total = Math.max(1, rows.length);
         const members = b => rows.filter(r => r.bloc === b.id);
         const unassigned = rows.filter(r => !S.blocs.some(b => b.id === r.bloc));
-        box.innerHTML = `<div class="t65-intro">진영을 만들고 색 · 설명 · 하위 이념을 정합니다. 세계 › 국가 순위에서 나라마다 진영과 하위 이념을 고를 수 있어요. (꾸밈용 — 게임 기능에는 영향 없음)</div>
-            <div class="t65-card">
-                <div class="t65-card-head"><b>진영 구도</b><span class="t65-dim">국가 ${rows.length}개</span></div>
-                <div class="t65-bloc-bar">${S.blocs.map(b => { const n = members(b).length; return n ? `<span style="width:${n / total * 100}%;background:${esc(b.color)}" title="${esc(b.name)} ${n}개국"></span>` : ''; }).join('')}${unassigned.length ? `<span style="width:${unassigned.length / total * 100}%;background:#777" title="미분류 ${unassigned.length}개국"></span>` : ''}</div>
-                <div class="t65-legend">${S.blocs.map(b => `<span>${dotHtml(b.color)}${esc(b.name)} ${members(b).length}</span>`).join('')}${unassigned.length ? `<span>${dotHtml('#777')}미분류 ${unassigned.length}</span>` : ''}</div>
+        box.innerHTML = `<div class="hist-intro">진영을 만들고 색 · 설명 · 하위 이념을 정합니다. 세계 › 국가 순위에서 나라마다 진영과 하위 이념을 고를 수 있어요. (꾸밈용 — 게임 기능에는 영향 없음)</div>
+            <div class="hist-card">
+                <div class="hist-card-head"><b>진영 구도</b><span class="hist-dim">국가 ${rows.length}개</span></div>
+                <div class="hist-bloc-bar">${S.blocs.map(b => { const n = members(b).length; return n ? `<span style="width:${n / total * 100}%;background:${esc(b.color)}" title="${esc(b.name)} ${n}개국"></span>` : ''; }).join('')}${unassigned.length ? `<span style="width:${unassigned.length / total * 100}%;background:#777" title="미분류 ${unassigned.length}개국"></span>` : ''}</div>
+                <div class="hist-legend">${S.blocs.map(b => `<span>${dotHtml(b.color)}${esc(b.name)} ${members(b).length}</span>`).join('')}${unassigned.length ? `<span>${dotHtml('#777')}미분류 ${unassigned.length}</span>` : ''}</div>
             </div>
             ${S.blocs.map(b => {
                 const ms = members(b).slice().sort((x, y) => (Number(y.score) || 0) - (Number(x.score) || 0));
-                return `<div class="t65-bloc" style="--bloc:${esc(b.color)}">
-                    <div class="t65-bloc-head">
+                return `<div class="hist-bloc" style="--bloc:${esc(b.color)}">
+                    <div class="hist-bloc-head">
                         <input type="color" value="${esc(/^#[0-9a-f]{6}$/i.test(b.color) ? b.color : '#888888')}" data-bc="${esc(b.id)}" title="진영 색">
-                        <input type="text" class="t65-bloc-name" value="${esc(b.name)}" data-bn="${esc(b.id)}" placeholder="진영 이름">
-                        <button type="button" class="t65-x" data-bdel="${esc(b.id)}" title="진영 지우기">×</button>
+                        <input type="text" class="hist-bloc-name" value="${esc(b.name)}" data-bn="${esc(b.id)}" placeholder="진영 이름">
+                        <button type="button" class="hist-x" data-bdel="${esc(b.id)}" title="진영 지우기">×</button>
                     </div>
-                    <input type="text" class="t65-bloc-desc" value="${esc(b.desc || '')}" data-bd="${esc(b.id)}" placeholder="설명 (예: 계획 경제 · 일당 체제)">
-                    <div class="t65-sub-title">하위 이념</div>
-                    <div class="t65-chips">${(b.ideologies || []).map(x => `<span class="t65-ichip">${esc(x.name)} <small>${rows.filter(r => r.bloc === b.id && r.ideo === x.id).length || ''}</small><button type="button" data-idel="${esc(b.id)}|${esc(x.id)}" title="지우기">×</button></span>`).join('') || '<span class="t65-dim">없음</span>'}</div>
-                    <div class="t65-succ-row"><input type="text" placeholder="하위 이념 추가" data-iadd="${esc(b.id)}"><button type="button" class="t65-btn" data-iaddbtn="${esc(b.id)}">추가</button></div>
-                    <div class="t65-dim t65-small">소속 국가: ${ms.length ? ms.map(r => esc(rowName(r))).join(', ') : '없음'}</div>
+                    <input type="text" class="hist-bloc-desc" value="${esc(b.desc || '')}" data-bd="${esc(b.id)}" placeholder="설명 (예: 계획 경제 · 일당 체제)">
+                    <div class="hist-sub-title">하위 이념</div>
+                    <div class="hist-chips">${(b.ideologies || []).map(x => `<span class="hist-ichip">${esc(x.name)} <small>${rows.filter(r => r.bloc === b.id && r.ideo === x.id).length || ''}</small><button type="button" data-idel="${esc(b.id)}|${esc(x.id)}" title="지우기">×</button></span>`).join('') || '<span class="hist-dim">없음</span>'}</div>
+                    <div class="hist-succ-row"><input type="text" placeholder="하위 이념 추가" data-iadd="${esc(b.id)}"><button type="button" class="hist-btn" data-iaddbtn="${esc(b.id)}">추가</button></div>
+                    <div class="hist-dim hist-small">소속 국가: ${ms.length ? ms.map(r => esc(rowName(r))).join(', ') : '없음'}</div>
                 </div>`;
             }).join('')}
-            <div class="t65-actions"><button type="button" class="t65-btn primary" data-act="addbloc">+ 진영 추가</button><button type="button" class="t65-btn" data-act="resetblocs">처음 진영으로</button></div>`;
+            <div class="hist-actions"><button type="button" class="hist-btn primary" data-act="addbloc">+ 진영 추가</button><button type="button" class="hist-btn" data-act="resetblocs">처음 진영으로</button></div>`;
         const B = id => S.blocs.find(b => b.id === id);
         box.querySelectorAll('[data-bc]').forEach(i => { i.onchange = () => { const b = B(i.dataset.bc); if (b) { b.color = i.value; renderBlocs(); renderRanking(); } }; });
         box.querySelectorAll('[data-bn]').forEach(i => { i.onchange = () => { const b = B(i.dataset.bn); if (b) { b.name = i.value.trim() || b.name; renderBlocs(); renderRanking(); } }; });
@@ -1005,8 +1005,8 @@
     }
     function flagHtml(r) {
         const src = flagSrc(r);
-        if (src) return `<img class="t65-rk-flagimg" src="${esc(src)}" alt="">`;
-        return `<span class="t65-rk-flag">${esc(r.flag || '🏳')}</span>`;
+        if (src) return `<img class="hist-rk-flagimg" src="${esc(src)}" alt="">`;
+        return `<span class="hist-rk-flag">${esc(r.flag || '🏳')}</span>`;
     }
     // 올린 그림은 90×60 안으로 줄여 저장 (세이브가 커지지 않게)
     function shrinkImage(file, done) {
@@ -1027,28 +1027,28 @@
     }
     // 오른쪽 시각 화면 "국가 순위" 탭 — 보는 화면 (꾸밈용 순위표)
     function renderRankBoard() {
-        const wrap = document.getElementById('t65RankWrap');
+        const wrap = document.getElementById('histRankWrap');
         if (!wrap) return;
         const list = ranked();
         const counts = S.blocs.map(b => [b, S.ranking.rows.filter(r => r.bloc === b.id).length]);
-        const title = document.getElementById('t65RankTitle');
+        const title = document.getElementById('histRankTitle');
         if (title) title.textContent = S.ranking.title || '냉전 국가 순위';
-        wrap.innerHTML = list.length ? `<div class="t65-rk">
-                <div class="t65-rk-title">${esc(S.ranking.title || '냉전 국가 순위')}</div>
-                <div class="t65-rk-blocs">${counts.map(([b, n]) => (n ? `<span><i style="background:${esc(b.color)}"></i>${esc(b.name)} ${n}</span>` : '')).join('')}</div>
+        wrap.innerHTML = list.length ? `<div class="hist-rk">
+                <div class="hist-rk-title">${esc(S.ranking.title || '냉전 국가 순위')}</div>
+                <div class="hist-rk-blocs">${counts.map(([b, n]) => (n ? `<span><i style="background:${esc(b.color)}"></i>${esc(b.name)} ${n}</span>` : '')).join('')}</div>
                 ${list.map((r, i) => {
                     const rank = i + 1, b = blocOf(r.bloc);
                     const mv = r.prevRank ? r.prevRank - rank : 0;
                     const ideo = ideoOf(b, r.ideo);
-                    return `<div class="t65-rk-row${r.self ? ' self' : ''}" style="--bloc:${esc(b.color)}" title="${esc(b.name)}${ideo ? ' · ' + esc(ideo.name) : ''}">
-                        <span class="t65-rk-no">${rank}</span>${flagHtml(r)}
-                        <span class="t65-rk-name">${esc(rowName(r))}${ideo ? `<small class="t65-rk-ideo">${esc(ideo.name)}</small>` : ''}</span>
-                        <span class="t65-rk-bar"><span style="width:${Math.max(2, Math.min(100, Number(r.score) || 0))}%"></span></span>
-                        <span class="t65-rk-score">${Number(r.score) || 0}</span>
-                        <span class="t65-rk-mv ${mv > 0 ? 'up' : mv < 0 ? 'down' : ''}">${mv > 0 ? '▲' + mv : mv < 0 ? '▼' + (-mv) : r.prevRank ? '–' : ''}</span>
+                    return `<div class="hist-rk-row${r.self ? ' self' : ''}" style="--bloc:${esc(b.color)}" title="${esc(b.name)}${ideo ? ' · ' + esc(ideo.name) : ''}">
+                        <span class="hist-rk-no">${rank}</span>${flagHtml(r)}
+                        <span class="hist-rk-name">${esc(rowName(r))}${ideo ? `<small class="hist-rk-ideo">${esc(ideo.name)}</small>` : ''}</span>
+                        <span class="hist-rk-bar"><span style="width:${Math.max(2, Math.min(100, Number(r.score) || 0))}%"></span></span>
+                        <span class="hist-rk-score">${Number(r.score) || 0}</span>
+                        <span class="hist-rk-mv ${mv > 0 ? 'up' : mv < 0 ? 'down' : ''}">${mv > 0 ? '▲' + mv : mv < 0 ? '▼' + (-mv) : r.prevRank ? '–' : ''}</span>
                     </div>`;
                 }).join('')}
-            </div>` : '<div class="t65-empty"><div class="t65-empty-icon">🌐</div>순위에 나라가 없습니다.<br>왼쪽 세계 › 국가 순위에서 "+ 국가 추가"를 눌러 보세요.</div>';
+            </div>` : '<div class="hist-empty"><div class="hist-empty-icon">🌐</div>순위에 나라가 없습니다.<br>왼쪽 세계 › 국가 순위에서 "+ 국가 추가"를 눌러 보세요.</div>';
     }
     function showRankTab() {
         const btn = document.getElementById('dispTabRanking');
@@ -1067,27 +1067,27 @@
         const list = ranked();
         const blocOpts = r => `${S.blocs.map(b => `<option value="${esc(b.id)}" ${r.bloc === b.id ? 'selected' : ''}>${esc(b.name)}</option>`).join('')}<option value="" ${S.blocs.some(b => b.id === r.bloc) ? '' : 'selected'}>미분류</option>`;
         const ideoOpts = r => `<option value="">하위 이념 —</option>${blocOf(r.bloc).ideologies.map(x => `<option value="${esc(x.id)}" ${r.ideo === x.id ? 'selected' : ''}>${esc(x.name)}</option>`).join('')}`;
-        box.innerHTML = `<div class="t65-intro">꾸밈용 화면입니다 — 게임 기능에는 영향이 없어요. 고친 내용은 오른쪽 시각 화면 "국가 순위" 탭에 바로 보여요.</div>
-            <div class="t65-card t65-re-head">
-                <div class="t65-field"><span>제목</span><input type="text" data-rt="title" value="${esc(S.ranking.title)}" placeholder="냉전 국가 순위"></div>
-                <div class="t65-actions">
-                    <button type="button" class="t65-btn primary" data-act="addrow">+ 국가 추가</button>
-                    <button type="button" class="t65-btn" data-act="mark" title="지금 순위를 기준으로 저장 — 점수를 바꾸면 순위표에 ▲▼로 변동이 보여요">순위 기준 저장</button>
-                    <button type="button" class="t65-btn" data-act="showrank">오른쪽에서 보기</button>
-                    <button type="button" class="t65-btn" data-act="reset">처음 목록으로</button>
+        box.innerHTML = `<div class="hist-intro">꾸밈용 화면입니다 — 게임 기능에는 영향이 없어요. 고친 내용은 오른쪽 시각 화면 "국가 순위" 탭에 바로 보여요.</div>
+            <div class="hist-card hist-re-head">
+                <div class="hist-field"><span>제목</span><input type="text" data-rt="title" value="${esc(S.ranking.title)}" placeholder="냉전 국가 순위"></div>
+                <div class="hist-actions">
+                    <button type="button" class="hist-btn primary" data-act="addrow">+ 국가 추가</button>
+                    <button type="button" class="hist-btn" data-act="mark" title="지금 순위를 기준으로 저장 — 점수를 바꾸면 순위표에 ▲▼로 변동이 보여요">순위 기준 저장</button>
+                    <button type="button" class="hist-btn" data-act="showrank">오른쪽에서 보기</button>
+                    <button type="button" class="hist-btn" data-act="reset">처음 목록으로</button>
                 </div>
             </div>
-            <div class="t65-re-hint">국기 칸을 누르면 그림을 올려요 · 점수는 ± 또는 직접 입력 · 진영을 바꾸면 하위 이념이 비워져요</div>
-            <div class="t65-re-list">
+            <div class="hist-re-hint">국기 칸을 누르면 그림을 올려요 · 점수는 ± 또는 직접 입력 · 진영을 바꾸면 하위 이념이 비워져요</div>
+            <div class="hist-re-list">
             ${list.map((r, i) => {
                 const b = blocOf(r.bloc);
-                return `<div class="t65-re-row${r.self ? ' self' : ''}" style="--bloc:${esc(b.color)}" data-row="${r.id}">
-                    <span class="t65-re-no">${i + 1}</span>
-                    ${r.self ? `<span class="t65-re-flag self" title="국가 › 상징의 국기">${flagHtml(r)}</span>` : `<label class="t65-re-flag" title="눌러서 국기 그림 고르기">${flagHtml(r)}<input type="file" accept="image/*" data-rflag="${r.id}" hidden>${r.flagImg ? `<button type="button" class="t65-re-unflag" data-unflag="${r.id}" title="올린 국기 빼기">×</button>` : ''}</label>`}
-                    <input type="text" class="t65-re-name" data-rf="name" data-id="${r.id}" value="${esc(r.self ? rowName(r) : r.name)}" ${r.self ? 'disabled title="국가 › 상징의 국가명 — 우리나라"' : 'placeholder="국가 이름"'}>
-                    <span class="t65-re-score"><button type="button" data-step="-1" data-id="${r.id}" title="1점 내리기">−</button><input type="number" data-rf="score" data-id="${r.id}" value="${Number(r.score) || 0}" min="0" max="999"><button type="button" data-step="1" data-id="${r.id}" title="1점 올리기">+</button></span>
-                    ${r.self ? '<span class="t65-re-me" title="우리나라 — 이름 · 국기는 국가 › 상징에서 바꿔요">★</span>' : `<button type="button" class="t65-x" data-rdel="${r.id}" title="지우기">×</button>`}
-                    <span class="t65-re-meta">
+                return `<div class="hist-re-row${r.self ? ' self' : ''}" style="--bloc:${esc(b.color)}" data-row="${r.id}">
+                    <span class="hist-re-no">${i + 1}</span>
+                    ${r.self ? `<span class="hist-re-flag self" title="국가 › 상징의 국기">${flagHtml(r)}</span>` : `<label class="hist-re-flag" title="눌러서 국기 그림 고르기">${flagHtml(r)}<input type="file" accept="image/*" data-rflag="${r.id}" hidden>${r.flagImg ? `<button type="button" class="hist-re-unflag" data-unflag="${r.id}" title="올린 국기 빼기">×</button>` : ''}</label>`}
+                    <input type="text" class="hist-re-name" data-rf="name" data-id="${r.id}" value="${esc(r.self ? rowName(r) : r.name)}" ${r.self ? 'disabled title="국가 › 상징의 국가명 — 우리나라"' : 'placeholder="국가 이름"'}>
+                    <span class="hist-re-score"><button type="button" data-step="-1" data-id="${r.id}" title="1점 내리기">−</button><input type="number" data-rf="score" data-id="${r.id}" value="${Number(r.score) || 0}" min="0" max="999"><button type="button" data-step="1" data-id="${r.id}" title="1점 올리기">+</button></span>
+                    ${r.self ? '<span class="hist-re-me" title="우리나라 — 이름 · 국기는 국가 › 상징에서 바꿔요">★</span>' : `<button type="button" class="hist-x" data-rdel="${r.id}" title="지우기">×</button>`}
+                    <span class="hist-re-meta">
                         <select data-rf="bloc" data-id="${r.id}" title="진영">${blocOpts(r)}</select>
                         <select data-rf="ideo" data-id="${r.id}" title="하위 이념" ${b.ideologies.length ? '' : 'disabled'}>${ideoOpts(r)}</select>
                     </span>
@@ -1167,9 +1167,9 @@
         after.parentElement.insertBefore(btn, after.nextSibling);
         const ref = document.getElementById('dispPanelRegion') || document.getElementById('dispPanelCabinet');
         if (!ref) return;
-        ref.parentElement.insertBefore(el(`<div class="disp-panel" id="dispPanelTimeline"><div class="chamber-box t65-hist-box">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;"><h3 style="margin:0;border:none;padding:0;"><span class="tno-prompt">&gt; </span><span id="t65HistTitle">세력 변화</span></h3></div>
-            <div id="t65HistWrap"></div></div></div>`), ref.nextSibling);
+        ref.parentElement.insertBefore(el(`<div class="disp-panel" id="dispPanelTimeline"><div class="chamber-box hist-hist-box">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;"><h3 style="margin:0;border:none;padding:0;"><span class="tno-prompt">&gt; </span><span id="histHistTitle">세력 변화</span></h3></div>
+            <div id="histHistWrap"></div></div></div>`), ref.nextSibling);
     })();
     // 오른쪽 시각 화면 탭 "국가 순위" — 세계 › 국가 순위에서 고친 순위표를 크게 본다
     (function addRankDispTab() {
@@ -1178,9 +1178,9 @@
         after.parentElement.insertBefore(el(`<button class="disp-tab-btn" id="dispTabRanking" data-tab="ranking" onclick="switchDispTab('ranking')" style="display:none;"><span class="disp-tab-label">국가 순위</span><span class="disp-tab-close" onclick="event.stopPropagation();closeDispTab('ranking')">×</span></button>`), after.nextSibling);
         const ref = document.getElementById('dispPanelTimeline') || document.getElementById('dispPanelCabinet');
         if (!ref) return;
-        ref.parentElement.insertBefore(el(`<div class="disp-panel" id="dispPanelRanking"><div class="chamber-box t65-rank-box">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;"><h3 style="margin:0;border:none;padding:0;"><span class="tno-prompt">&gt; </span><span id="t65RankTitle">국가 순위</span></h3></div>
-            <div id="t65RankWrap"></div></div></div>`), ref.nextSibling);
+        ref.parentElement.insertBefore(el(`<div class="disp-panel" id="dispPanelRanking"><div class="chamber-box hist-rank-box">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;"><h3 style="margin:0;border:none;padding:0;"><span class="tno-prompt">&gt; </span><span id="histRankTitle">국가 순위</span></h3></div>
+            <div id="histRankWrap"></div></div></div>`), ref.nextSibling);
     })();
     // 오른쪽 시각 화면 탭 "위키 틀" — 원내 구성 틀 미리보기
     (function addWikiDispTab() {
@@ -1191,7 +1191,7 @@
         if (!ref) return;
         ref.parentElement.insertBefore(el(`<div class="disp-panel" id="dispPanelWiki"><div class="chamber-box">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;"><h3 style="margin:0;border:none;padding:0;"><span class="tno-prompt">&gt; </span>위키 틀</h3></div>
-            <div id="t65WikiWrap"></div></div></div>`), ref.nextSibling);
+            <div id="histWikiWrap"></div></div></div>`), ref.nextSibling);
     })();
     addTab('mainContentSetup', 'subTabTimeline', 'setup', 'wikibox', 'Wikibox', '위키 틀');
     // 세계 (1.6.5) — 국가 아래 새 메인 메뉴: 국가 순위 · 진영
@@ -1199,7 +1199,7 @@
         const nationBtn = document.getElementById('mainTabNation'), nationContent = document.getElementById('mainContentNation');
         if (!nationBtn || !nationContent) return;
         // 경제 — 자리 · 색만 잡아 둔 잠긴 메뉴 (국가 다음, 세계 앞). 누르면 안내만 뜬다
-        const eco = el(`<button class="main-tab-btn" onclick="t65EconomyLocked()" id="mainTabEconomy" title="경제 — 1.6.9 업데이트에서 열립니다">💹 경제 🔒</button>`);
+        const eco = el(`<button class="main-tab-btn" onclick="histEconomyLocked()" id="mainTabEconomy" title="경제 — 1.6.9 업데이트에서 열립니다">💹 경제 🔒</button>`);
         nationBtn.parentElement.insertBefore(eco, nationBtn.nextSibling);
         nationBtn.parentElement.insertBefore(el(`<button class="main-tab-btn" onclick="switchMainTab('world')" id="mainTabWorld">🌐 세계</button>`), eco.nextSibling);
         nationContent.parentElement.insertBefore(el(`<div id="mainContentWorld" class="main-tab-content"><div class="sub-tab-container"></div></div>`), nationContent.nextSibling);
@@ -1207,7 +1207,7 @@
     })();
     const origSetLogoBg = window.setLogoBg;
     if (typeof origSetLogoBg === 'function') window.setLogoBg = function () { const r = origSetLogoBg.apply(this, arguments); try { renderWikiPreview(); } catch (e) { /* 아직 없음 */ } return r; };
-    window.t65EconomyLocked = () => { try { showCustomAlert('🔒 경제 메뉴는 아직 잠겨 있어요 — 1.6.9 "보이지 않는 손" 업데이트에서 경제 시스템과 함께 열립니다.'); } catch (e) { /* 알림 없음 */ } };
+    window.histEconomyLocked = () => { try { showCustomAlert('🔒 경제 메뉴는 아직 잠겨 있어요 — 1.6.9 "보이지 않는 손" 업데이트에서 경제 시스템과 함께 열립니다.'); } catch (e) { /* 알림 없음 */ } };
     addTab('mainContentWorld', null, 'world', 'ranking', 'Ranking', '국가 순위');
     addTab('mainContentWorld', 'subTabRanking', 'world', 'blocs', 'Blocs', '진영');
     const origSwitch = window.switchSubTab;
@@ -1408,7 +1408,7 @@
     function rankSvg() {
         const panel = document.getElementById('dispPanelRanking') || document.body;
         const bg = cssVar(panel, '--m-surface', '') || (isModernTheme() ? '#fff' : '#0a0c10');
-        const text = cssVar(panel, '--t65-text', '#ddd'), dim = cssVar(panel, '--t65-dim', '#888'), line = cssVar(panel, '--t65-line', '#333'), acc = cssVar(panel, '--t65-acc', '#00ffff');
+        const text = cssVar(panel, '--hist-text', '#ddd'), dim = cssVar(panel, '--hist-dim', '#888'), line = cssVar(panel, '--hist-line', '#333'), acc = cssVar(panel, '--hist-acc', '#00ffff');
         const list = ranked();
         const W = 720, padX = 24, rowH = 46;
         const counts = S.blocs.map(b => [b, S.ranking.rows.filter(r => r.bloc === b.id).length]).filter(([, n]) => n);
@@ -1450,7 +1450,7 @@
     function histSvg(svgEl) {
         const panel = document.getElementById('dispPanelTimeline') || document.body;
         const bg = cssVar(panel, '--m-surface', '') || (isModernTheme() ? '#fff' : '#0a0c10');
-        const text = cssVar(panel, '--t65-text', '#ddd');
+        const text = cssVar(panel, '--hist-text', '#ddd');
         const clone = svgEl.cloneNode(true);
         const PROPS = ['fill', 'fill-opacity', 'stroke', 'stroke-width', 'stroke-dasharray', 'stroke-opacity', 'opacity', 'font-size', 'font-weight', 'paint-order', 'text-anchor', 'dominant-baseline', 'letter-spacing'];
         const src = [svgEl, ...svgEl.querySelectorAll('*')], dst = [clone, ...clone.querySelectorAll('*')];
@@ -1462,19 +1462,19 @@
             t.removeAttribute('class');
         });
         const w = Number(svgEl.getAttribute('width')) || svgEl.getBoundingClientRect().width, h = Number(svgEl.getAttribute('height')) || svgEl.getBoundingClientRect().height;
-        const title = document.getElementById('t65HistTitle')?.textContent || '세력 변화';
+        const title = document.getElementById('histHistTitle')?.textContent || '세력 변화';
         const head = 44;
         clone.setAttribute('x', 0); clone.setAttribute('y', head); clone.setAttribute('width', w); clone.setAttribute('height', h);
         return `<svg xmlns="http://www.w3.org/2000/svg" width="${w + 24}" height="${h + head + 16}" viewBox="-12 0 ${w + 24} ${h + head + 16}" font-family="${X(FONT)}"><rect x="-12" width="${w + 24}" height="${h + head + 16}" fill="${X(bg)}"/>`
             + `<text x="0" y="28" font-size="18" font-weight="800" fill="${X(text)}">${X([nationName(), title].filter(Boolean).join(' · '))}</text>${new XMLSerializer().serializeToString(clone)}</svg>`;
     }
 
-    function t65ExportMarkup(el, format) {
+    function histExportMarkup(el, format) {
         const kind = el && el.dataset.exportKind;
         pickFont(format);
-        if (kind === 't65wiki') return ui.wikiView === 'out' ? { svg: wikiOutSvg(wikiData(ui.wikiChamber)), name: 'wikibox_out' } : { svg: wikiSvg(wikiData(ui.wikiChamber)), name: 'wikibox' };
-        if (kind === 't65rank') return { svg: rankSvg(), name: 'ranking' };
-        if (kind === 't65hist') return { svg: histSvg(el), name: ui.histView === 'lineage' ? 'party_lineage' : 'seat_history' };
+        if (kind === 'histwiki') return ui.wikiView === 'out' ? { svg: wikiOutSvg(wikiData(ui.wikiChamber)), name: 'wikibox_out' } : { svg: wikiSvg(wikiData(ui.wikiChamber)), name: 'wikibox' };
+        if (kind === 'histrank') return { svg: rankSvg(), name: 'ranking' };
+        if (kind === 'histchart') return { svg: histSvg(el), name: ui.histView === 'lineage' ? 'party_lineage' : 'seat_history' };
         return null;
     }
     function dl(href, filename) { const a = document.createElement('a'); a.href = href; a.download = filename; document.body.appendChild(a); a.click(); a.remove(); }
@@ -1530,10 +1530,10 @@
         });
         return c;
     }
-    async function t65Export(el, format) {
+    async function histExport(el, format) {
         pickFont(format);
         await loadExportFont();
-        const m = t65ExportMarkup(el, format); if (!m) return;
+        const m = histExportMarkup(el, format); if (!m) return;
         const stamp = (typeof formatKstTimestampCompact === 'function') ? formatKstTimestampCompact() : Date.now();
         const base = `${m.name}_${stamp}`;
         if (format === 'svg') {
@@ -1549,9 +1549,9 @@
     document.addEventListener('contextmenu', e => {
         const t = e.target;
         let el = null, kind = '';
-        if (t.closest && t.closest('#t65WikiWrap .nbx2')) { el = t.closest('#t65WikiWrap .nbx2'); kind = 't65wiki'; }
-        else if (t.closest && t.closest('#t65RankWrap .t65-rk')) { el = t.closest('#t65RankWrap .t65-rk'); kind = 't65rank'; }
-        else if (t.closest && t.closest('#t65HistWrap')) { el = document.querySelector('#t65HistWrap svg.t65-hist'); kind = 't65hist'; }
+        if (t.closest && t.closest('#histWikiWrap .nbx2')) { el = t.closest('#histWikiWrap .nbx2'); kind = 'histwiki'; }
+        else if (t.closest && t.closest('#histRankWrap .hist-rk')) { el = t.closest('#histRankWrap .hist-rk'); kind = 'histrank'; }
+        else if (t.closest && t.closest('#histHistWrap')) { el = document.querySelector('#histHistWrap svg.hist-hist'); kind = 'histchart'; }
         if (!el) return;
         e.preventDefault(); e.stopPropagation();
         el.dataset.exportKind = kind;
@@ -1566,14 +1566,14 @@
     if (typeof origOpenExport === 'function') {
         window.openExportDialog = function () {
             const r = origOpenExport.apply(this, arguments);
-            try { if (String(canvasExportTarget?.dataset?.exportKind || '').startsWith('t65')) { const sec = document.getElementById('exportHeaderStatsSection'); if (sec) sec.style.display = 'none'; } } catch (e) { /* 없음 */ }
+            try { if (String(canvasExportTarget?.dataset?.exportKind || '').startsWith('hist')) { const sec = document.getElementById('exportHeaderStatsSection'); if (sec) sec.style.display = 'none'; } } catch (e) { /* 없음 */ }
             return r;
         };
     }
     const origExportAt = window.exportVisualElementAt;
     if (typeof origExportAt === 'function') {
         window.exportVisualElementAt = function (target, includeStats, format) {
-            if (String(target?.dataset?.exportKind || '').startsWith('t65')) return t65Export(target, format);
+            if (String(target?.dataset?.exportKind || '').startsWith('hist')) return histExport(target, format);
             return origExportAt.apply(this, arguments);
         };
     }
@@ -1587,121 +1587,121 @@
         if (k === 'founded' && document.getElementById('dispPanelTimeline')?.classList.contains('active')) renderHistory();
         return r;
     };
-    window.T65 = { get timeline() { return S.timeline; }, get ranking() { return S.ranking; }, get wiki() { return S.wiki; }, record: (label) => { const n = record(label || '', 'manual', false); renderTimeline(); return n; } };
+    window.HemiHistory = { get timeline() { return S.timeline; }, get ranking() { return S.ranking; }, get wiki() { return S.wiki; }, record: (label) => { const n = record(label || '', 'manual', false); renderTimeline(); return n; } };
 
     const style = document.createElement('style');
     style.textContent = `
-        #contentTimeline, #contentWikibox, #contentRanking, #contentBlocs { --t65-line: #333; --t65-soft: rgba(255,255,255,.03); --t65-dim: #888; --t65-text: #ddd; --t65-acc: var(--tno-neon); }
-        html[data-theme-family="modern"] #contentTimeline, html[data-theme-family="modern"] #contentWikibox, html[data-theme-family="modern"] #contentRanking, html[data-theme-family="modern"] #contentBlocs { --t65-line: var(--m-border); --t65-soft: var(--m-surface-2); --t65-dim: var(--m-text-3); --t65-text: var(--m-text); --t65-acc: var(--m-accent); }
-        .t65-intro { color: var(--t65-dim); font-size: .78rem; line-height: 1.6; margin: 8px 0 10px; }
-        .t65-dim { color: var(--t65-dim); font-size: .8rem; } .t65-small { font-size: .72rem; margin-top: 6px; }
-        .t65-tabs { margin-bottom: 10px; }
-        .t65-actions { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0; }
-        .t65-btn { cursor: pointer; font-family: inherit; font-size: .85rem; padding: 8px 12px; background: transparent; border: 1px solid var(--t65-line); color: var(--t65-text); }
-        .t65-btn.primary { border-color: var(--t65-acc); color: var(--t65-acc); }
-        .t65-btn:disabled { opacity: .4; cursor: default; }
-        .t65-card { border: 1px solid var(--t65-line); padding: 10px; margin-bottom: 10px; background: var(--t65-soft); }
-        .t65-card-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; color: var(--t65-text); font-size: .9rem; }
-        .t65-card-head b { font-weight: normal; }
-        .t65-seg { display: inline-flex; border: 1px solid var(--t65-line); }
-        .t65-seg button { cursor: pointer; font-family: inherit; font-size: .75rem; padding: 3px 10px; background: transparent; border: none; color: var(--t65-dim); }
-        .t65-seg button.on { background: var(--t65-acc); color: #000; }
-        .t65-chart { width: 100%; height: auto; display: block; }
-        .t65-ax { font-size: 10px; fill: var(--t65-dim); } .t65-ax-dim { opacity: .7; }
-        .t65-half { stroke: var(--t65-text); stroke-dasharray: 3 3; opacity: .5; }
-        .t65-histnote { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; font-size: .82rem; color: var(--t65-text); }
-        #dispPanelTimeline, #dispPanelRanking { --t65-line: #333; --t65-soft: rgba(255,255,255,.03); --t65-dim: #888; --t65-text: #ddd; --t65-acc: var(--tno-neon); }
-        html[data-theme-family="modern"] #dispPanelTimeline, html[data-theme-family="modern"] #dispPanelRanking { --t65-line: var(--m-border); --t65-soft: var(--m-surface-2); --t65-dim: var(--m-text-3); --t65-text: var(--m-text); --t65-acc: var(--m-accent); }
+        #contentTimeline, #contentWikibox, #contentRanking, #contentBlocs { --hist-line: #333; --hist-soft: rgba(255,255,255,.03); --hist-dim: #888; --hist-text: #ddd; --hist-acc: var(--tno-neon); }
+        html[data-theme-family="modern"] #contentTimeline, html[data-theme-family="modern"] #contentWikibox, html[data-theme-family="modern"] #contentRanking, html[data-theme-family="modern"] #contentBlocs { --hist-line: var(--m-border); --hist-soft: var(--m-surface-2); --hist-dim: var(--m-text-3); --hist-text: var(--m-text); --hist-acc: var(--m-accent); }
+        .hist-intro { color: var(--hist-dim); font-size: .78rem; line-height: 1.6; margin: 8px 0 10px; }
+        .hist-dim { color: var(--hist-dim); font-size: .8rem; } .hist-small { font-size: .72rem; margin-top: 6px; }
+        .hist-tabs { margin-bottom: 10px; }
+        .hist-actions { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0; }
+        .hist-btn { cursor: pointer; font-family: inherit; font-size: .85rem; padding: 8px 12px; background: transparent; border: 1px solid var(--hist-line); color: var(--hist-text); }
+        .hist-btn.primary { border-color: var(--hist-acc); color: var(--hist-acc); }
+        .hist-btn:disabled { opacity: .4; cursor: default; }
+        .hist-card { border: 1px solid var(--hist-line); padding: 10px; margin-bottom: 10px; background: var(--hist-soft); }
+        .hist-card-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; color: var(--hist-text); font-size: .9rem; }
+        .hist-card-head b { font-weight: normal; }
+        .hist-seg { display: inline-flex; border: 1px solid var(--hist-line); }
+        .hist-seg button { cursor: pointer; font-family: inherit; font-size: .75rem; padding: 3px 10px; background: transparent; border: none; color: var(--hist-dim); }
+        .hist-seg button.on { background: var(--hist-acc); color: #000; }
+        .hist-chart { width: 100%; height: auto; display: block; }
+        .hist-ax { font-size: 10px; fill: var(--hist-dim); } .hist-ax-dim { opacity: .7; }
+        .hist-half { stroke: var(--hist-text); stroke-dasharray: 3 3; opacity: .5; }
+        .hist-histnote { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; font-size: .82rem; color: var(--hist-text); }
+        #dispPanelTimeline, #dispPanelRanking { --hist-line: #333; --hist-soft: rgba(255,255,255,.03); --hist-dim: #888; --hist-text: #ddd; --hist-acc: var(--tno-neon); }
+        html[data-theme-family="modern"] #dispPanelTimeline, html[data-theme-family="modern"] #dispPanelRanking { --hist-line: var(--m-border); --hist-soft: var(--m-surface-2); --hist-dim: var(--m-text-3); --hist-text: var(--m-text); --hist-acc: var(--m-accent); }
         /* 오른쪽 순위표 — 넓은 화면에 맞춰 크게 */
-        #dispPanelRanking .t65-rk { padding: 18px 20px; }
-        #dispPanelRanking .t65-rk-title { font-size: 1.5rem; margin-bottom: 8px; }
-        #dispPanelRanking .t65-rk-blocs { font-size: .85rem; margin-bottom: 14px; }
-        #dispPanelRanking .t65-rk-row { grid-template-columns: 2.2em 2.4em minmax(0, 1fr) minmax(60px, 34%) 3em 2.8em; gap: 12px; padding: 10px 8px 10px 12px; font-size: 1.05rem; border-left-width: 5px; }
-        #dispPanelRanking .t65-rk-no { font-size: 1.2rem; }
-        #dispPanelRanking .t65-rk-flagimg { width: 2.2em; height: 1.47em; }
-        #dispPanelRanking .t65-rk-flag { font-size: 1.5rem; }
-        #dispPanelRanking .t65-rk-bar { height: 9px; }
-        #dispPanelRanking .t65-rk-ideo { font-size: .75rem; }
-        #dispPanelRanking .t65-rk-mv { font-size: .8rem; }
+        #dispPanelRanking .hist-rk { padding: 18px 20px; }
+        #dispPanelRanking .hist-rk-title { font-size: 1.5rem; margin-bottom: 8px; }
+        #dispPanelRanking .hist-rk-blocs { font-size: .85rem; margin-bottom: 14px; }
+        #dispPanelRanking .hist-rk-row { grid-template-columns: 2.2em 2.4em minmax(0, 1fr) minmax(60px, 34%) 3em 2.8em; gap: 12px; padding: 10px 8px 10px 12px; font-size: 1.05rem; border-left-width: 5px; }
+        #dispPanelRanking .hist-rk-no { font-size: 1.2rem; }
+        #dispPanelRanking .hist-rk-flagimg { width: 2.2em; height: 1.47em; }
+        #dispPanelRanking .hist-rk-flag { font-size: 1.5rem; }
+        #dispPanelRanking .hist-rk-bar { height: 9px; }
+        #dispPanelRanking .hist-rk-ideo { font-size: .75rem; }
+        #dispPanelRanking .hist-rk-mv { font-size: .8rem; }
         /* 왼쪽 국가 순위 편집 */
-        .t65-re-head .t65-actions { margin: 8px 0 0; }
-        .t65-re-hint { font-size: .72rem; color: var(--t65-dim); margin: 0 0 6px; }
-        .t65-re-list { border-top: 1px solid var(--t65-line); }
-        .t65-re-row { display: grid; grid-template-columns: 1.6em 2.8em minmax(0, 1fr) auto 1.9em; grid-template-areas: "no flag name score del" "no flag meta meta meta"; gap: 5px 6px; align-items: center; padding: 7px 4px 7px 6px; border-left: 4px solid var(--bloc); border-bottom: 1px solid var(--t65-line); }
-        .t65-re-row.self { background: color-mix(in srgb, var(--t65-acc) 8%, transparent); }
-        .t65-re-row:hover { background: color-mix(in srgb, var(--bloc) 7%, transparent); }
-        .t65-re-no { grid-area: no; align-self: start; padding-top: 6px; text-align: center; font-size: .85rem; color: var(--t65-dim); }
-        .t65-re-row:nth-child(-n+5) .t65-re-no { color: #e0b030; }
-        .t65-re-flag { grid-area: flag; position: relative; display: flex; align-items: center; justify-content: center; align-self: stretch; min-height: 30px; border: 1px dashed var(--t65-line); cursor: pointer; }
-        .t65-re-flag:hover { border-color: var(--t65-acc); }
-        .t65-re-flag.self { cursor: default; border-style: solid; opacity: .75; }
-        .t65-re-flag .t65-rk-flagimg { width: 30px; height: 20px; }
-        .t65-re-unflag { position: absolute; top: -6px; right: -6px; width: 16px; height: 16px; line-height: 14px; padding: 0; font-size: 11px; border-radius: 50%; border: 1px solid var(--t65-line); background: var(--t65-soft, #111); color: var(--t65-text); cursor: pointer; }
-        .t65-re-name { grid-area: name; min-width: 0; box-sizing: border-box; }
-        .t65-re-score { grid-area: score; display: inline-flex; align-items: stretch; border: 1px solid var(--t65-line); }
-        .t65-re-score button { cursor: pointer; width: 22px; padding: 0; background: transparent; border: none; color: var(--t65-dim); font-family: inherit; font-size: .9rem; }
-        .t65-re-score button:hover { color: var(--t65-acc); }
-        .t65-re-score input { width: 3.2em; min-width: 0; text-align: center; border: none !important; border-left: 1px solid var(--t65-line) !important; border-right: 1px solid var(--t65-line) !important; -moz-appearance: textfield; }
-        .t65-re-score input::-webkit-inner-spin-button, .t65-re-score input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
-        .t65-re-row > .t65-x { grid-area: del; justify-self: end; }
-        .t65-re-me { grid-area: del; justify-self: center; font-size: .9rem; color: var(--t65-acc); cursor: help; }
-        .t65-re-meta { grid-area: meta; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 6px; }
-        .t65-re-meta select { min-width: 0; box-sizing: border-box; font-size: .8rem; }
-        html[data-theme-family="modern"] .t65-re-score { border-radius: 8px; overflow: hidden; }
-        html[data-theme-family="modern"] .t65-re-flag { border-radius: 6px; }
-        .t65-hist { display: block; }
-        .t65-h-hit { cursor: pointer; }
-        .t65-h-hit:hover { filter: brightness(1.15); }
-        .t65-h-sel:not([fill="none"]) { stroke: #fff; stroke-width: 2px; paint-order: stroke; }
-        .t65-h-sel[fill="none"] { opacity: .8; }
-        path.t65-h-sel { fill-opacity: .75; }
-        .t65-h-controls { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
-        .t65-h-note { font-size: 10.5px; fill: var(--t65-text); paint-order: stroke; stroke: var(--t65-bg, rgba(0,0,0,.55)); stroke-width: 3px; font-weight: bold; }
-        html[data-theme-family="modern"] .t65-h-note { stroke: rgba(255,255,255,.85); }
-        .t65-l-scroll { overflow-x: auto; }
-        .t65-l-row { stroke: var(--t65-line); stroke-dasharray: 2 4; }
-        .t65-l-name { font-size: 12px; fill: var(--t65-text); font-weight: bold; paint-order: stroke; stroke: rgba(0,0,0,.4); stroke-width: 2px; }
-        html[data-theme-family="modern"] .t65-l-name { stroke: rgba(255,255,255,.9); stroke-width: 3px; }
-        .t65-l-node { stroke: #fff; stroke-width: 2; }
-        .t65-l-end { font-size: 14px; fill: #e05555; font-weight: bold; }
-        .t65-sub-title { font-size: .8rem; color: var(--t65-text); margin: 6px 0 4px; }
-        .t65-succ-row { display: flex; align-items: center; gap: 6px; margin: 4px 0 8px; }
-        .t65-succ-row select { flex: 1; min-width: 0; }
-        .t65-succ-row input[type="text"] { flex: 1; min-width: 0; }
-        .t65-succ-row .t65-btn { flex: none; white-space: nowrap; }
-        .t65-field select { flex: 1; min-width: 0; }
-        .t65-h-legend { margin: 0 0 10px; position: sticky; top: 0; background: inherit; z-index: 1; padding: 4px 0; }
-        .t65-h-chs { margin-bottom: 8px; }
-        .t65-h-seg { font-size: 11px; fill: #fff; paint-order: stroke; stroke: rgba(0,0,0,.45); stroke-width: 2px; pointer-events: none; }
-        .t65-h-lab { font-size: 11.5px; fill: var(--t65-text); }
-        .t65-h-sub { font-size: 10px; fill: var(--t65-dim); }
-        .t65-h-gov-lab { font-size: 9.5px; fill: #e0b030; }
-        .t65-h-gov { stroke: #e0b030; stroke-width: 2; }
-        .t65-h-half { stroke: var(--t65-text); stroke-dasharray: 3 4; opacity: .45; }
-        .t65-legend { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: .75rem; color: var(--t65-dim); margin-top: 4px; }
-        .t65-dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 4px; vertical-align: middle; }
-        .t65-tablewrap { overflow-x: auto; }
-        .t65-table { border-collapse: collapse; width: 100%; font-size: .78rem; color: var(--t65-text); }
-        .t65-table th, .t65-table td { padding: 4px 6px; border-bottom: 1px solid var(--t65-line); text-align: right; white-space: nowrap; }
-        .t65-table th:first-child, .t65-table td:first-child { text-align: left; }
-        .t65-table th { color: var(--t65-dim); font-weight: normal; }
-        .t65-table td.t65-gov { font-weight: bold; }
-        .t65-table small { margin-left: 3px; font-size: .68rem; } .t65-up { color: #3fbf7f; } .t65-down { color: #e05555; }
-        .t65-fold { border: 1px solid var(--t65-line); padding: 0 10px; margin-bottom: 8px; }
-        .t65-fold > summary { cursor: pointer; padding: 8px 0; font-size: .85rem; color: var(--t65-text); }
-        .t65-fold[open] { padding-bottom: 10px; }
-        .t65-snap { display: flex; align-items: center; gap: 6px; padding: 4px 0; border-bottom: 1px solid var(--t65-line); }
-        .t65-snap input { flex: 1; min-width: 0; }
-        .t65-snap .t65-dim { font-size: .72rem; white-space: nowrap; }
-        .t65-x { cursor: pointer; background: transparent; border: 1px solid var(--t65-line); color: var(--t65-dim); font-family: inherit; padding: 1px 7px; }
-        .t65-x-ph { width: 26px; }
-        .t65-empty { text-align: center; padding: 26px 10px; color: var(--t65-dim); font-size: .85rem; line-height: 1.7; border: 1px dashed var(--t65-line); }
-        .t65-empty-icon { font-size: 1.8rem; }
-        .t65-field { display: flex; align-items: center; gap: 8px; margin: 6px 0; font-size: .82rem; color: var(--t65-dim); }
-        .t65-field span { min-width: 5em; } .t65-field input { flex: 1; min-width: 0; }
-        .t65-markup { width: 100%; box-sizing: border-box; min-height: 180px; font-family: monospace; font-size: .75rem; }
+        .hist-re-head .hist-actions { margin: 8px 0 0; }
+        .hist-re-hint { font-size: .72rem; color: var(--hist-dim); margin: 0 0 6px; }
+        .hist-re-list { border-top: 1px solid var(--hist-line); }
+        .hist-re-row { display: grid; grid-template-columns: 1.6em 2.8em minmax(0, 1fr) auto 1.9em; grid-template-areas: "no flag name score del" "no flag meta meta meta"; gap: 5px 6px; align-items: center; padding: 7px 4px 7px 6px; border-left: 4px solid var(--bloc); border-bottom: 1px solid var(--hist-line); }
+        .hist-re-row.self { background: color-mix(in srgb, var(--hist-acc) 8%, transparent); }
+        .hist-re-row:hover { background: color-mix(in srgb, var(--bloc) 7%, transparent); }
+        .hist-re-no { grid-area: no; align-self: start; padding-top: 6px; text-align: center; font-size: .85rem; color: var(--hist-dim); }
+        .hist-re-row:nth-child(-n+5) .hist-re-no { color: #e0b030; }
+        .hist-re-flag { grid-area: flag; position: relative; display: flex; align-items: center; justify-content: center; align-self: stretch; min-height: 30px; border: 1px dashed var(--hist-line); cursor: pointer; }
+        .hist-re-flag:hover { border-color: var(--hist-acc); }
+        .hist-re-flag.self { cursor: default; border-style: solid; opacity: .75; }
+        .hist-re-flag .hist-rk-flagimg { width: 30px; height: 20px; }
+        .hist-re-unflag { position: absolute; top: -6px; right: -6px; width: 16px; height: 16px; line-height: 14px; padding: 0; font-size: 11px; border-radius: 50%; border: 1px solid var(--hist-line); background: var(--hist-soft, #111); color: var(--hist-text); cursor: pointer; }
+        .hist-re-name { grid-area: name; min-width: 0; box-sizing: border-box; }
+        .hist-re-score { grid-area: score; display: inline-flex; align-items: stretch; border: 1px solid var(--hist-line); }
+        .hist-re-score button { cursor: pointer; width: 22px; padding: 0; background: transparent; border: none; color: var(--hist-dim); font-family: inherit; font-size: .9rem; }
+        .hist-re-score button:hover { color: var(--hist-acc); }
+        .hist-re-score input { width: 3.2em; min-width: 0; text-align: center; border: none !important; border-left: 1px solid var(--hist-line) !important; border-right: 1px solid var(--hist-line) !important; -moz-appearance: textfield; }
+        .hist-re-score input::-webkit-inner-spin-button, .hist-re-score input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        .hist-re-row > .hist-x { grid-area: del; justify-self: end; }
+        .hist-re-me { grid-area: del; justify-self: center; font-size: .9rem; color: var(--hist-acc); cursor: help; }
+        .hist-re-meta { grid-area: meta; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 6px; }
+        .hist-re-meta select { min-width: 0; box-sizing: border-box; font-size: .8rem; }
+        html[data-theme-family="modern"] .hist-re-score { border-radius: 8px; overflow: hidden; }
+        html[data-theme-family="modern"] .hist-re-flag { border-radius: 6px; }
+        .hist-hist { display: block; }
+        .hist-h-hit { cursor: pointer; }
+        .hist-h-hit:hover { filter: brightness(1.15); }
+        .hist-h-sel:not([fill="none"]) { stroke: #fff; stroke-width: 2px; paint-order: stroke; }
+        .hist-h-sel[fill="none"] { opacity: .8; }
+        path.hist-h-sel { fill-opacity: .75; }
+        .hist-h-controls { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+        .hist-h-note { font-size: 10.5px; fill: var(--hist-text); paint-order: stroke; stroke: var(--hist-bg, rgba(0,0,0,.55)); stroke-width: 3px; font-weight: bold; }
+        html[data-theme-family="modern"] .hist-h-note { stroke: rgba(255,255,255,.85); }
+        .hist-l-scroll { overflow-x: auto; }
+        .hist-l-row { stroke: var(--hist-line); stroke-dasharray: 2 4; }
+        .hist-l-name { font-size: 12px; fill: var(--hist-text); font-weight: bold; paint-order: stroke; stroke: rgba(0,0,0,.4); stroke-width: 2px; }
+        html[data-theme-family="modern"] .hist-l-name { stroke: rgba(255,255,255,.9); stroke-width: 3px; }
+        .hist-l-node { stroke: #fff; stroke-width: 2; }
+        .hist-l-end { font-size: 14px; fill: #e05555; font-weight: bold; }
+        .hist-sub-title { font-size: .8rem; color: var(--hist-text); margin: 6px 0 4px; }
+        .hist-succ-row { display: flex; align-items: center; gap: 6px; margin: 4px 0 8px; }
+        .hist-succ-row select { flex: 1; min-width: 0; }
+        .hist-succ-row input[type="text"] { flex: 1; min-width: 0; }
+        .hist-succ-row .hist-btn { flex: none; white-space: nowrap; }
+        .hist-field select { flex: 1; min-width: 0; }
+        .hist-h-legend { margin: 0 0 10px; position: sticky; top: 0; background: inherit; z-index: 1; padding: 4px 0; }
+        .hist-h-chs { margin-bottom: 8px; }
+        .hist-h-seg { font-size: 11px; fill: #fff; paint-order: stroke; stroke: rgba(0,0,0,.45); stroke-width: 2px; pointer-events: none; }
+        .hist-h-lab { font-size: 11.5px; fill: var(--hist-text); }
+        .hist-h-sub { font-size: 10px; fill: var(--hist-dim); }
+        .hist-h-gov-lab { font-size: 9.5px; fill: #e0b030; }
+        .hist-h-gov { stroke: #e0b030; stroke-width: 2; }
+        .hist-h-half { stroke: var(--hist-text); stroke-dasharray: 3 4; opacity: .45; }
+        .hist-legend { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: .75rem; color: var(--hist-dim); margin-top: 4px; }
+        .hist-dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 4px; vertical-align: middle; }
+        .hist-tablewrap { overflow-x: auto; }
+        .hist-table { border-collapse: collapse; width: 100%; font-size: .78rem; color: var(--hist-text); }
+        .hist-table th, .hist-table td { padding: 4px 6px; border-bottom: 1px solid var(--hist-line); text-align: right; white-space: nowrap; }
+        .hist-table th:first-child, .hist-table td:first-child { text-align: left; }
+        .hist-table th { color: var(--hist-dim); font-weight: normal; }
+        .hist-table td.hist-gov { font-weight: bold; }
+        .hist-table small { margin-left: 3px; font-size: .68rem; } .hist-up { color: #3fbf7f; } .hist-down { color: #e05555; }
+        .hist-fold { border: 1px solid var(--hist-line); padding: 0 10px; margin-bottom: 8px; }
+        .hist-fold > summary { cursor: pointer; padding: 8px 0; font-size: .85rem; color: var(--hist-text); }
+        .hist-fold[open] { padding-bottom: 10px; }
+        .hist-snap { display: flex; align-items: center; gap: 6px; padding: 4px 0; border-bottom: 1px solid var(--hist-line); }
+        .hist-snap input { flex: 1; min-width: 0; }
+        .hist-snap .hist-dim { font-size: .72rem; white-space: nowrap; }
+        .hist-x { cursor: pointer; background: transparent; border: 1px solid var(--hist-line); color: var(--hist-dim); font-family: inherit; padding: 1px 7px; }
+        .hist-x-ph { width: 26px; }
+        .hist-empty { text-align: center; padding: 26px 10px; color: var(--hist-dim); font-size: .85rem; line-height: 1.7; border: 1px dashed var(--hist-line); }
+        .hist-empty-icon { font-size: 1.8rem; }
+        .hist-field { display: flex; align-items: center; gap: 8px; margin: 6px 0; font-size: .82rem; color: var(--hist-dim); }
+        .hist-field span { min-width: 5em; } .hist-field input { flex: 1; min-width: 0; }
+        .hist-markup { width: 100%; box-sizing: border-box; min-height: 180px; font-family: monospace; font-size: .75rem; }
         /* 원내 구성 틀 — 위키 문서 모양을 따라 늘 밝은 바탕 */
-        .t65-wikiwrap { display: flex; justify-content: center; }
+        .hist-wikiwrap { display: flex; justify-content: center; }
         .nbx2 { width: 100%; max-width: 640px; background: #fff; border: 3px solid color-mix(in srgb, var(--nb-frame) 100%, #bbb); color: #222; font-family: 'Pretendard', 'Noto Sans KR', 'Malgun Gothic', sans-serif; box-sizing: border-box; text-align: center; }
         /* 네온 테마에서는 틀 안쪽 글자도 둥근모로 (라이트 · 다크는 Pretendard) */
         html:not([data-theme-family="modern"]) .nbx2 { font-family: 'NeoDunggeunmo', 'VT323', monospace; }
@@ -1758,57 +1758,57 @@
         .nbx-out .nb-oabbr { font-size: 16px; font-weight: 800; }
         .nbx-out .nb-oempty-all { background: #fff; padding: 22px 12px; color: #555; font-size: 14px; line-height: 1.7; border-top: 1px solid #e3e3e3; }
         .nbx-out .nb-oempty-all small { color: #888; }
-        #dispPanelWiki .t65-wikiwrap { padding: 4px 0 10px; }
-        .t65-wk-form .t65-field > span:first-child { min-width: 5.2em; }
-        .t65-wk-form .t65-field input[type=text] { flex: 1; min-width: 0; }
-        .t65-wk-form .t65-field input[type=checkbox] { flex: none; width: 16px; height: 16px; margin: 0; }
+        #dispPanelWiki .hist-wikiwrap { padding: 4px 0 10px; }
+        .hist-wk-form .hist-field > span:first-child { min-width: 5.2em; }
+        .hist-wk-form .hist-field input[type=text] { flex: 1; min-width: 0; }
+        .hist-wk-form .hist-field input[type=checkbox] { flex: none; width: 16px; height: 16px; margin: 0; }
         @media (max-width: 520px) { .nbx2 .nb-pname { font-size: 15px; } .nbx2 .nb-party.k1 .nb-pname, .nbx2 .nb-party.k2 .nb-pname { font-size: 17px; } .nbx2 .nb-title { font-size: 20px; } }
         /* 냉전 국가 순위 */
-        .t65-rk { border: 1px solid var(--t65-line); background: var(--t65-soft); padding: 12px; }
-        .t65-rk-title { font-size: 1.15rem; text-align: center; color: var(--t65-text); letter-spacing: 2px; margin-bottom: 6px; }
-        .t65-rk-blocs { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 12px; font-size: .74rem; color: var(--t65-dim); margin-bottom: 10px; }
-        .t65-rk-blocs i { display: inline-block; width: 10px; height: 10px; margin-right: 4px; vertical-align: middle; }
-        .t65-rk-row { display: grid; grid-template-columns: 1.8em 1.7em minmax(0, 1fr) minmax(36px, 70px) 2.4em 2.4em; align-items: center; gap: 6px; padding: 6px 4px 6px 8px; border-left: 4px solid var(--bloc); border-bottom: 1px solid var(--t65-line); font-size: .85rem; color: var(--t65-text); }
-        .t65-rk-row.self { background: color-mix(in srgb, var(--t65-acc) 10%, transparent); }
-        .t65-rk-no { font-size: 1rem; color: var(--t65-dim); text-align: center; }
-        .t65-rk-row:nth-child(-n+5) .t65-rk-no { color: #e0b030; }
-        .t65-rk-flag { font-size: 1.1rem; text-align: center; } .t65-rk-flagimg { width: 1.6em; height: 1.07em; object-fit: cover; display: block; box-shadow: 0 0 0 1px rgba(127,127,127,.35); }
-        .t65-rk-e-flag { position: relative; display: flex; align-items: center; justify-content: center; height: 30px; border: 1px dashed var(--t65-line); cursor: pointer; }
-        .t65-rk-e-flag.self { cursor: default; border-style: solid; opacity: .7; }
-        .t65-rk-e-flag .t65-rk-flagimg { width: 30px; height: 20px; }
-        .t65-rk-e-unflag { position: absolute; top: -6px; right: -6px; width: 16px; height: 16px; line-height: 14px; padding: 0; font-size: 11px; border-radius: 50%; border: 1px solid var(--t65-line); background: var(--t65-soft, #111); color: var(--t65-text); cursor: pointer; }
-        .t65-rk-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .t65-rk-name em { font-style: normal; font-size: .68rem; color: var(--t65-acc); border: 1px solid var(--t65-acc); padding: 0 4px; margin-left: 4px; }
-        .t65-rk-bloc { font-size: .7rem; color: var(--t65-dim); }
-        .t65-rk-bar { height: 6px; background: rgba(127,127,127,.2); } .t65-rk-bar span { display: block; height: 100%; background: var(--bloc); }
-        .t65-rk-score { text-align: right; }
-        .t65-rk-mv { font-size: .72rem; text-align: right; color: var(--t65-dim); } .t65-rk-mv.up { color: #3fbf7f; } .t65-rk-mv.down { color: #e05555; }
-        .t65-rk-ideo { display: block; font-size: .66rem; color: var(--t65-dim); overflow: hidden; text-overflow: ellipsis; }
-        .t65-bloc-bar { display: flex; height: 14px; gap: 1px; margin: 6px 0; background: rgba(127,127,127,.15); }
-        .t65-bloc-bar span { display: block; height: 100%; }
-        .t65-bloc { border: 1px solid var(--t65-line); border-left: 5px solid var(--bloc); padding: 10px; margin-bottom: 10px; background: var(--t65-soft); }
-        .t65-bloc-head { display: flex; align-items: center; gap: 6px; }
-        .t65-bloc-head input[type=color] { width: 34px; height: 30px; padding: 0; border: none; background: none; cursor: pointer; flex-shrink: 0; }
-        .t65-bloc-name { flex: 1; min-width: 0; font-size: .95rem; }
-        .t65-bloc-desc { width: 100%; box-sizing: border-box; margin: 6px 0 2px; font-size: .8rem; }
-        .t65-ichip { display: inline-flex; align-items: center; gap: 4px; font-size: .78rem; padding: 3px 4px 3px 9px; border: 1px solid var(--bloc); color: var(--t65-text); }
-        .t65-ichip small { color: var(--t65-dim); }
-        .t65-ichip button { cursor: pointer; border: none; background: transparent; color: var(--t65-dim); font-family: inherit; padding: 0 3px; }
-        html[data-theme-family="modern"] .t65-bloc { border-radius: 12px; }
-        html[data-theme-family="modern"] .t65-ichip { border-radius: 999px; }
-        .t65-rk-edit { display: grid; grid-template-columns: 3em minmax(0, 1fr) minmax(0, 1fr) 3.8em; grid-template-areas: "flag name name del" "flag bloc ideo score"; gap: 5px 6px; align-items: center; padding: 6px 0; border-bottom: 1px dashed var(--t65-line); }
-        .t65-rk-edit > .t65-rk-e-flag { grid-area: flag; height: 100%; min-height: 30px; }
-        .t65-rk-edit > .t65-rk-e-name { grid-area: name; }
-        .t65-rk-edit > .t65-rk-e-bloc { grid-area: bloc; }
-        .t65-rk-edit > .t65-rk-e-ideo { grid-area: ideo; }
-        .t65-rk-edit > .t65-rk-e-score { grid-area: score; }
-        .t65-rk-edit > .t65-x, .t65-rk-edit > .t65-x-ph { grid-area: del; justify-self: end; }
-        .t65-rk-edit input, .t65-rk-edit select { min-width: 0; box-sizing: border-box; }
-        html[data-theme-family="modern"] .t65-btn, html[data-theme-family="modern"] .t65-x { border-radius: 8px; }
-        html[data-theme-family="modern"] .t65-btn.primary { background: var(--m-accent); color: var(--m-on-accent); border-color: var(--m-accent); }
-        html[data-theme-family="modern"] .t65-card, html[data-theme-family="modern"] .t65-fold, html[data-theme-family="modern"] .t65-rk, html[data-theme-family="modern"] .t65-empty { border-radius: 12px; }
-        html[data-theme-family="modern"] .t65-seg { border-radius: 999px; overflow: hidden; }
-        html[data-theme-family="modern"] .t65-seg button.on { color: var(--m-on-accent); }
-        html[data-theme-family="modern"] .t65-rk-name em { border-radius: 999px; }
+        .hist-rk { border: 1px solid var(--hist-line); background: var(--hist-soft); padding: 12px; }
+        .hist-rk-title { font-size: 1.15rem; text-align: center; color: var(--hist-text); letter-spacing: 2px; margin-bottom: 6px; }
+        .hist-rk-blocs { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 12px; font-size: .74rem; color: var(--hist-dim); margin-bottom: 10px; }
+        .hist-rk-blocs i { display: inline-block; width: 10px; height: 10px; margin-right: 4px; vertical-align: middle; }
+        .hist-rk-row { display: grid; grid-template-columns: 1.8em 1.7em minmax(0, 1fr) minmax(36px, 70px) 2.4em 2.4em; align-items: center; gap: 6px; padding: 6px 4px 6px 8px; border-left: 4px solid var(--bloc); border-bottom: 1px solid var(--hist-line); font-size: .85rem; color: var(--hist-text); }
+        .hist-rk-row.self { background: color-mix(in srgb, var(--hist-acc) 10%, transparent); }
+        .hist-rk-no { font-size: 1rem; color: var(--hist-dim); text-align: center; }
+        .hist-rk-row:nth-child(-n+5) .hist-rk-no { color: #e0b030; }
+        .hist-rk-flag { font-size: 1.1rem; text-align: center; } .hist-rk-flagimg { width: 1.6em; height: 1.07em; object-fit: cover; display: block; box-shadow: 0 0 0 1px rgba(127,127,127,.35); }
+        .hist-rk-e-flag { position: relative; display: flex; align-items: center; justify-content: center; height: 30px; border: 1px dashed var(--hist-line); cursor: pointer; }
+        .hist-rk-e-flag.self { cursor: default; border-style: solid; opacity: .7; }
+        .hist-rk-e-flag .hist-rk-flagimg { width: 30px; height: 20px; }
+        .hist-rk-e-unflag { position: absolute; top: -6px; right: -6px; width: 16px; height: 16px; line-height: 14px; padding: 0; font-size: 11px; border-radius: 50%; border: 1px solid var(--hist-line); background: var(--hist-soft, #111); color: var(--hist-text); cursor: pointer; }
+        .hist-rk-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .hist-rk-name em { font-style: normal; font-size: .68rem; color: var(--hist-acc); border: 1px solid var(--hist-acc); padding: 0 4px; margin-left: 4px; }
+        .hist-rk-bloc { font-size: .7rem; color: var(--hist-dim); }
+        .hist-rk-bar { height: 6px; background: rgba(127,127,127,.2); } .hist-rk-bar span { display: block; height: 100%; background: var(--bloc); }
+        .hist-rk-score { text-align: right; }
+        .hist-rk-mv { font-size: .72rem; text-align: right; color: var(--hist-dim); } .hist-rk-mv.up { color: #3fbf7f; } .hist-rk-mv.down { color: #e05555; }
+        .hist-rk-ideo { display: block; font-size: .66rem; color: var(--hist-dim); overflow: hidden; text-overflow: ellipsis; }
+        .hist-bloc-bar { display: flex; height: 14px; gap: 1px; margin: 6px 0; background: rgba(127,127,127,.15); }
+        .hist-bloc-bar span { display: block; height: 100%; }
+        .hist-bloc { border: 1px solid var(--hist-line); border-left: 5px solid var(--bloc); padding: 10px; margin-bottom: 10px; background: var(--hist-soft); }
+        .hist-bloc-head { display: flex; align-items: center; gap: 6px; }
+        .hist-bloc-head input[type=color] { width: 34px; height: 30px; padding: 0; border: none; background: none; cursor: pointer; flex-shrink: 0; }
+        .hist-bloc-name { flex: 1; min-width: 0; font-size: .95rem; }
+        .hist-bloc-desc { width: 100%; box-sizing: border-box; margin: 6px 0 2px; font-size: .8rem; }
+        .hist-ichip { display: inline-flex; align-items: center; gap: 4px; font-size: .78rem; padding: 3px 4px 3px 9px; border: 1px solid var(--bloc); color: var(--hist-text); }
+        .hist-ichip small { color: var(--hist-dim); }
+        .hist-ichip button { cursor: pointer; border: none; background: transparent; color: var(--hist-dim); font-family: inherit; padding: 0 3px; }
+        html[data-theme-family="modern"] .hist-bloc { border-radius: 12px; }
+        html[data-theme-family="modern"] .hist-ichip { border-radius: 999px; }
+        .hist-rk-edit { display: grid; grid-template-columns: 3em minmax(0, 1fr) minmax(0, 1fr) 3.8em; grid-template-areas: "flag name name del" "flag bloc ideo score"; gap: 5px 6px; align-items: center; padding: 6px 0; border-bottom: 1px dashed var(--hist-line); }
+        .hist-rk-edit > .hist-rk-e-flag { grid-area: flag; height: 100%; min-height: 30px; }
+        .hist-rk-edit > .hist-rk-e-name { grid-area: name; }
+        .hist-rk-edit > .hist-rk-e-bloc { grid-area: bloc; }
+        .hist-rk-edit > .hist-rk-e-ideo { grid-area: ideo; }
+        .hist-rk-edit > .hist-rk-e-score { grid-area: score; }
+        .hist-rk-edit > .hist-x, .hist-rk-edit > .hist-x-ph { grid-area: del; justify-self: end; }
+        .hist-rk-edit input, .hist-rk-edit select { min-width: 0; box-sizing: border-box; }
+        html[data-theme-family="modern"] .hist-btn, html[data-theme-family="modern"] .hist-x { border-radius: 8px; }
+        html[data-theme-family="modern"] .hist-btn.primary { background: var(--m-accent); color: var(--m-on-accent); border-color: var(--m-accent); }
+        html[data-theme-family="modern"] .hist-card, html[data-theme-family="modern"] .hist-fold, html[data-theme-family="modern"] .hist-rk, html[data-theme-family="modern"] .hist-empty { border-radius: 12px; }
+        html[data-theme-family="modern"] .hist-seg { border-radius: 999px; overflow: hidden; }
+        html[data-theme-family="modern"] .hist-seg button.on { color: var(--m-on-accent); }
+        html[data-theme-family="modern"] .hist-rk-name em { border-radius: 999px; }
     `;
     document.head.appendChild(style);
     window.addEventListener('load', () => setTimeout(refresh, 0));

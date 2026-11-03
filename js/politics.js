@@ -53,10 +53,10 @@
     }
 
     // ================= 공동교섭단체 =================
-    // groups = [{ id, name, partyIds:[pid], chamber }] — 교섭단체 기준은 위키 틀의 "교섭단체 기준"(window.T65.wiki.groupMin)과 같은 값
+    // groups = [{ id, name, partyIds:[pid], chamber }] — 교섭단체 기준은 위키 틀의 "교섭단체 기준"(window.HemiHistory.wiki.groupMin)과 같은 값
     let groups = [];
     const DEFAULT_MIN = 20;
-    const minSeats = () => Math.max(0, Number(window.T65?.wiki?.groupMin) || 0);
+    const minSeats = () => Math.max(0, Number(window.HemiHistory?.wiki?.groupMin) || 0);
     const isInd = p => p && typeof IND_IDEOLOGY_ID !== 'undefined' && p.ideologyId === IND_IDEOLOGY_ID;
     const clean = list => (Array.isArray(list) ? list : []).filter(g => g && g.id).map(g => ({
         id: String(g.id), name: String(g.name || '').slice(0, 40), partyIds: (Array.isArray(g.partyIds) ? g.partyIds : []).map(String),
@@ -89,9 +89,9 @@
 
     function el(html) { const d = document.createElement('div'); d.innerHTML = html.trim(); return d.firstChild; }
     function host() {
-        let box = document.getElementById('t69JointGroups');
+        let box = document.getElementById('econJointGroups');
         const parent = document.getElementById('contentCoalition');
-        if (!box && parent) { box = el('<div id="t69JointGroups" class="jg-box"></div>'); parent.appendChild(box); }
+        if (!box && parent) { box = el('<div id="econJointGroups" class="jg-box"></div>'); parent.appendChild(box); }
         return box;
     }
     function render() {
@@ -134,7 +134,7 @@
                 ${minor.length ? `<div class="jg-line jg-dim">비교섭단체: ${minor.map(p => `${esc(p.name)} ${seatsIn(p, ch0)}석`).join(', ')}</div>` : ''}
             </div>`;
         const minIn = box.querySelector('[data-act="min"]');
-        const setMin = v => { if (window.T65 && window.T65.wiki) window.T65.wiki.groupMin = Math.max(0, Number(v) || 0); render(); };
+        const setMin = v => { if (window.HemiHistory && window.HemiHistory.wiki) window.HemiHistory.wiki.groupMin = Math.max(0, Number(v) || 0); render(); };
         minIn.onchange = () => setMin(minIn.value);
         box.querySelector('[data-act="min20"]')?.addEventListener('click', () => setMin(DEFAULT_MIN));
         box.querySelector('[data-act="add"]').onclick = () => {
@@ -213,8 +213,8 @@
     let managed = false; // 군정 관제 선거 허용
     const isGov = p => !!p && (p.isRuling || (typeof coalitions !== 'undefined' && coalitions.some(c => c.isRuling && (c.members || []).some(id => String(id) === String(p.id)))));
     function regime() {
-        if (window.T62 && window.T62.junta) return 'junta';
-        const m = window.T66 && window.T66.monarchy;
+        if (window.HemiCoup && window.HemiCoup.junta) return 'junta';
+        const m = window.HemiRoyal && window.HemiRoyal.monarchy;
         if (m && m.kind === 'absolute') return 'absolute';
         if (typeof emergencyPowers !== 'undefined' && emergencyPowers?.martialLaw?.active) return 'martial';
         return 'normal';
@@ -223,11 +223,11 @@
     function onSide(p, r) {
         if (!p) return false;
         if (r === 'absolute') {
-            const m = window.T66.monarchy;
-            const c = (window.T66.dynasties || []).flatMap(d => d.claimants || []).find(x => String(x.id) === String(m.claimantId));
+            const m = window.HemiRoyal.monarchy;
+            const c = (window.HemiRoyal.dynasties || []).flatMap(d => d.claimants || []).find(x => String(x.id) === String(m.claimantId));
             return (c && (c.partyIds || []).some(id => String(id) === String(p.id))) || isGov(p);
         }
-        if (r === 'junta') return (window.T62.military || []).some(m => String(m.partyId) === String(p.id)) || isGov(p);
+        if (r === 'junta') return (window.HemiCoup.military || []).some(m => String(m.partyId) === String(p.id)) || isGov(p);
         if (r === 'martial') return isGov(p);
         return false;
     }
@@ -258,7 +258,7 @@
             cutSupport(p.id, 0.5);
             return { ban: true, text: OPP_TEXT[r] };
         },
-        managedElections: () => managed && !!(window.T62 && window.T62.junta),
+        managedElections: () => managed && !!(window.HemiCoup && window.HemiCoup.junta),
         get managed() { return managed; },
     };
 
@@ -280,8 +280,8 @@
     function renderBanner() {
         const host = document.getElementById('contentFraud');
         if (!host) return;
-        let box = document.getElementById('t69FraudRegime');
-        if (!box) { box = el('<div id="t69FraudRegime" class="fr-box"></div>'); host.insertBefore(box, document.getElementById('fraudPartyList')); }
+        let box = document.getElementById('econFraudRegime');
+        if (!box) { box = el('<div id="econFraudRegime" class="fr-box"></div>'); host.insertBefore(box, document.getElementById('fraudPartyList')); }
         const r = regime(), R = RULES[r];
         const tries = parties.filter(p => p.fraudAttempt);
         box.innerHTML = !R
@@ -296,9 +296,9 @@
     function renderJuntaToggle() {
         const host = document.getElementById('contentCoup');
         if (!host) return;
-        let box = document.getElementById('t69Managed');
-        if (!(window.T62 && window.T62.junta)) { if (box) box.remove(); return; }
-        if (!box) { box = el('<div id="t69Managed" class="fr-box"></div>'); host.insertBefore(box, host.firstChild); }
+        let box = document.getElementById('econManaged');
+        if (!(window.HemiCoup && window.HemiCoup.junta)) { if (box) box.remove(); return; }
+        if (!box) { box = el('<div id="econManaged" class="fr-box"></div>'); host.insertBefore(box, host.firstChild); }
         box.innerHTML = `<label class="fr-row"><input type="checkbox" ${managed ? 'checked' : ''}> 관제 선거 허용</label>
             <div class="fr-dim">켜면 군정 중에도 총선 · 대선 · 지방선거를 치릅니다. 군부 쪽 정당의 부정선거는 거의 들키지 않고(×0.2) 들켜도 지지율만 떨어지지만, 야당이 들키면 강제 해산돼요.</div>`;
         box.querySelector('input').onchange = e => { managed = e.target.checked; };
@@ -310,24 +310,24 @@
         return res;
     };
     // 쿠데타 화면이 다시 그려질 때(군정 시작 · 민정 이양 등)도
-    const hookT62 = () => {
-        if (!window.T62 || window.T62.__t69) return;
-        const orig = window.T62.refresh;
-        if (typeof orig === 'function') { window.T62.refresh = function () { const res = orig.apply(this, arguments); renderJuntaToggle(); return res; }; window.T62.__t69 = true; }
+    const hookCoup = () => {
+        if (!window.HemiCoup || window.HemiCoup.__econ) return;
+        const orig = window.HemiCoup.refresh;
+        if (typeof orig === 'function') { window.HemiCoup.refresh = function () { const res = orig.apply(this, arguments); renderJuntaToggle(); return res; }; window.HemiCoup.__econ = true; }
     };
-    hookT62();
+    hookCoup();
     // 쿠데타 화면은 coup.js 안에서 통째로 다시 그려지므로, 스위치가 사라지면 다시 넣는다
     const watchCoup = () => {
         const host = document.getElementById('contentCoup');
-        if (!host || host.__t69obs) return;
-        host.__t69obs = new MutationObserver(() => {
-            const has = !!document.getElementById('t69Managed');
-            if (has !== !!(window.T62 && window.T62.junta)) renderJuntaToggle();
+        if (!host || host.__econobs) return;
+        host.__econobs = new MutationObserver(() => {
+            const has = !!document.getElementById('econManaged');
+            if (has !== !!(window.HemiCoup && window.HemiCoup.junta)) renderJuntaToggle();
         });
-        host.__t69obs.observe(host, { childList: true });
+        host.__econobs.observe(host, { childList: true });
     };
     watchCoup();
-    window.addEventListener('load', () => { hookT62(); watchCoup(); setTimeout(renderJuntaToggle, 0); });
+    window.addEventListener('load', () => { hookCoup(); watchCoup(); setTimeout(renderJuntaToggle, 0); });
 
     const style = document.createElement('style');
     style.textContent = `
