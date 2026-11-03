@@ -60,14 +60,14 @@
             author: '왕조명 & ttorri',
             // 함께 만든 프리셋 — 목록에서 이름에 밑줄, 마우스를 올리면 그 사람이 만든 부분
             credits: [
-                { name: '왕조명', work: ['국가 · 정당 · 이념 설정', '지역구 지도와 원별 의석 배치', '대통령 · 국무총리 · 내각 · 의장단', '지방자치단체장', '경제 · 국기 · 의회 로고'] },
-                { name: 'ttorri', work: ['원외정당 (노동당 · 정의당 · 자유와혁신)', '지역구 · 비례 · 무소속 의원 이름', '정치인 명단 (인물 탭)과 지역구 후보', '군부 지휘부', '지역구별 정당 지지율 · 무당층'] },
+                { name: '왕조명', work: ['국가 · 정당 설정', '지역구 지도와 원별 의석 배치', '대통령 · 국무총리 · 내각 · 의장단', '지방자치단체장', '경제 · 국기 · 의회 로고'] },
+                { name: 'ttorri', work: ['이념 체계 (하위 이념 포함)', '원외정당 (노동당 · 정의당 · 자유와혁신)', '지역구 · 비례 · 무소속 의원 이름', '정치인 명단 (인물 탭)과 지역구 후보', '군부 지휘부', '지역구별 정당 지지율 · 무당층'] },
             ],
             script: 'presets/korea.js',
             langs: { en: { title: 'Republic of Korea', description: 'By 왕조명 & ttorri',
                 credits: [
-                    { name: '왕조명', work: ['Country, party and ideology setup', 'District map and seat layout', 'President, prime minister, cabinet and speakers', 'Local government heads', 'Economy, flag and parliament logos'] },
-                    { name: 'ttorri', work: ['Extra-parliamentary parties (Labor Party, Justice Party, Freedom and Innovation)', 'Names of district, list and independent members', 'Politician roster (People tab) and district candidates', 'Military leadership', 'Party support and undecided voters by district'] },
+                    { name: '왕조명', work: ['Country and party setup', 'District map and seat layout', 'President, prime minister, cabinet and speakers', 'Local government heads', 'Economy, flag and parliament logos'] },
+                    { name: 'ttorri', work: ['Ideology system (with sub-ideologies)', 'Extra-parliamentary parties (Labor Party, Justice Party, Freedom and Innovation)', 'Names of district, list and independent members', 'Politician roster (People tab) and district candidates', 'Military leadership', 'Party support and undecided voters by district'] },
                 ] } }, // 영어 데이터 파일은 아직 없음 — 한국어 데이터로 열림
         },
         {
