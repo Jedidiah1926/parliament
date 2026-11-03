@@ -858,7 +858,7 @@ window.DnoLangPacks.en = {
     ["켜 둔 모드가 없습니다. 결정 · 이벤트는 스크립트 모드가 넣습니다.", "No mods are on. Decisions and events come from script mods."],
     ["모드 보기 · 불러오기", "View · load mods"],
     ["지금 고를 수 있는 결정이 없습니다. 조건이 맞으면 여기에 나타납니다.", "No decisions available right now. They appear here when their conditions are met."],
-    ["스크립트 모드는 이벤트 · 결정 · 국가 변수를 더합니다 (HOI4 모딩처럼 코드 없이 JSON으로). 켜고 끄기는 이 기기의 모든 세이브에 적용되고, 변수 · 일어난 이벤트는 세이브마다 따로 저장됩니다. 만드는 법은", "Script mods add events, decisions and national variables (like HOI4 modding — JSON, no code). Turning mods on/off applies to every save on this device; variables and fired events are saved per save. How to make one:"],
+    ["스크립트 모드는 이벤트 · 결정 · 국가 변수를 더합니다 (코드 없이 JSON으로). 켜고 끄기는 이 기기의 모든 세이브에 적용되고, 변수 · 일어난 이벤트는 세이브마다 따로 저장됩니다. 만드는 법은", "Script mods add events, decisions and national variables (JSON, no code). Turning mods on/off applies to every save on this device; variables and fired events are saved per save. How to make one:"],
     ["모드 파일 불러오기 (.json)", "Load mod file (.json)"],
     ["예제 모드 넣기", "Add example mod"],
     ["모드 폴더 열기", "Open mods folder"],
@@ -874,8 +874,8 @@ window.DnoLangPacks.en = {
     ["조건 맞음", "Conditions met"],
     ["조건 안 맞음", "Conditions not met"],
     ["이벤트 없음", "No events"],
-    ["- 스크립트 모드 — HOI4 모딩처럼 코드 없이 JSON으로 이벤트 · 결정 · 국가 변수 · 플래그를 더함 (국가 › 결정 탭: 결정 실행 · 모드 켜고 끄기 · 모드 파일 불러오기 · 예제 모드 · 모더 도구), 날짜를 넘길 때 · 총선 결과 반영 때 이벤트 검사, 데스크톱 앱은 모드 폴더 · 창작마당에서 읽음 (docs/MODDING.md)", "- Script mods — like HOI4 modding, add events, decisions, national variables and flags with JSON, no code (Nation › Decisions: take decisions, turn mods on/off, load mod files, example mod, modder tools); events are checked when the date advances and when election results are applied; the desktop app reads the mods folder and the Workshop (docs/MODDING.md)"],
-    ["결정 · 모드 — 스크립트 모드(HOI4 모딩처럼 코드 없이 JSON으로 만든 이벤트 · 결정 · 국가 변수)를 켜고 끄고, 모드가 넣은 결정을 실행합니다. 이벤트는 날짜를 넘길 때(또는 총선 결과를 반영할 때) 조건이 맞으면 창으로 뜹니다.", "Decisions · mods — turn script mods (events, decisions and national variables made in JSON, like HOI4 modding) on or off and take the decisions they add. Events pop up when the date advances (or election results are applied) and their conditions are met."],
+    ["- 스크립트 모드 — 코드 없이 JSON으로 이벤트 · 결정 · 국가 변수 · 플래그를 더함 (국가 › 결정 탭: 결정 실행 · 모드 켜고 끄기 · 모드 파일 불러오기 · 예제 모드 · 모더 도구), 날짜를 넘길 때 · 총선 결과 반영 때 이벤트 검사, 데스크톱 앱은 모드 폴더 · 창작마당에서 읽음 (docs/MODDING.md)", "- Script mods — add events, decisions, national variables and flags with JSON, no code (Nation › Decisions: take decisions, turn mods on/off, load mod files, example mod, modder tools); events are checked when the date advances and when election results are applied; the desktop app reads the mods folder and the Workshop (docs/MODDING.md)"],
+    ["결정 · 모드 — 스크립트 모드(코드 없이 JSON으로 만든 이벤트 · 결정 · 국가 변수)를 켜고 끄고, 모드가 넣은 결정을 실행합니다. 이벤트는 날짜를 넘길 때(또는 총선 결과를 반영할 때) 조건이 맞으면 창으로 뜹니다.", "Decisions · mods — turn script mods (events, decisions and national variables made in JSON, no code) on or off and take the decisions they add. Events pop up when the date advances (or election results are applied) and their conditions are met."],
     ["모드가 넣은 버튼 — 조건이 맞아야 실행할 수 있고, 한 번만 쓰거나 정한 날 수가 지나야 다시 쓸 수 있어요.", "Buttons added by mods — they work only when their conditions are met, and are single-use or have a cooldown in days."],
     ["모드 파일 불러오기(.json) · 예제 모드 · 켜고 끄기(이 기기의 모든 세이브), 모더 도구(변수 · 플래그 · 이벤트 바로 띄우기). 데스크톱 앱은 모드 폴더 · 창작마당 모드도 읽어요. 만드는 법은 docs/MODDING.md.", "Load mod files (.json) · example mod · on/off (all saves on this device), modder tools (variables, flags, fire events). The desktop app also reads the mods folder and Workshop mods. How to make one: docs/MODDING.md."],
     ["스코틀랜드 · 카탈루냐 같은 자치 지역 — 켜면 그 종속국은 자기 의회를 따로 두면서도 그 땅의 지역구가 본국 총선 · 지방선거 · 국민투표에 들어가고 본국 지역구 의석에 셉니다 (경제 집계 · 공납은 종속국 그대로).", "Autonomous regions like Scotland or Catalonia — when on, the dependency keeps its own parliament but its districts also vote in national, local elections and referendums and count toward national district seats (economy and tribute stay as a dependency)."],
@@ -3155,8 +3155,8 @@ window.DnoLangPacks.en = {
    "0.1.0 - Election Development"
   ],
   [
-   "0.0.2 - TNO 테마",
-   "0.0.2 - TNO Theme"
+   "0.0.2 - 네온 테마",
+   "0.0.2 - Neon Theme"
   ],
   [
    "0.0.1 - 일반 테마",
@@ -3371,8 +3371,8 @@ window.DnoLangPacks.en = {
    "- Bug Fixes"
   ],
   [
-   "- TNO 테마 추가",
-   "- Added TNO theme"
+   "- 네온 테마 추가",
+   "- Added neon theme"
   ],
   [
    "- 일반 테마 삭제",
@@ -4251,8 +4251,8 @@ window.DnoLangPacks.en = {
    "- Updated the save file version to v1.3"
   ],
   [
-   "- 테마 모드 3종(라이트/다크/네온) 추가 — 기존 TNO 스타일은 \"네온\"으로 이름 변경",
-   "- Added three theme modes (Light / Dark / Neon) — the original TNO style is now called \"Neon\""
+   "- 테마 모드 3종(라이트/다크/네온) 추가 — 기존 레트로 스타일은 \"네온\"으로 이름 변경",
+   "- Added three theme modes (Light / Dark / Neon) — the original retro style is now called \"Neon\""
   ],
   [
    "- 라이트/다크 모드 UI 대대적 개편: 전용 스타일시트(css/modern.css) 분리, 테두리 없는 모노톤 버튼 등 현대적인 디자인",
@@ -4944,16 +4944,16 @@ window.DnoLangPacks.en = {
   ["- 총선 지역구 개표 변동을 세이브마다 정하기 — 여론 › 시민 성향 아래 \"개표 변동 ±N%p\"(기본 15, 예전과 같음). 지역구는 성향(무당층 포함)에 정당마다 이만큼 무작위로 더해 개표하므로 성향 차이가 작으면 선거마다 결과가 바뀜 — 0으로 두면 늘 성향대로 같은 결과", "- Set general-election district count variation per save — \"Count variation ±N%p\" under Opinion › Citizen lean (default 15, as before). Districts are counted from their leanings (incl. undecided) plus this much random variation per party, so close districts can flip between elections — set 0 for the same result every time"],
   ["중점 디자인", "Focus design"],
   ["사용자 템플릿", "Custom template"],
-  ["기본 (HOI4 중점)", "Default (HOI4 focus)"],
+  ["기본 (큰 아이콘 + 이름판)", "Default (big icon + name plate)"],
   ["예제 템플릿 넣기", "Insert example template"],
-  ["HOI4 기본으로", "Reset to HOI4 default"],
+  ["기본 모양으로", "Reset to default"],
   ["미리 보기", "Preview"],
   ["가로", "Width"],
   ["세로", "Height"],
   ["간격", "Spacing"],
   ["템플릿 (HTML — 비우면 기본)", "Template (HTML — empty for default)"],
   ["CSS (방향성 트리 안에만 걸림)", "CSS (applies only inside the direction tree)"],
-  ["- 방향성 상자는 HOI4 중점처럼(위에 큰 아이콘 · 아래 이름판, 상태별 빛 · 회색 · ✔ · ✕), 모딩으로 상자 모양을 통째로 — 중점 디자인(크기 · 간격 · HTML 템플릿 · CSS, 트리 안에만 걸리고 스크립트 · 바깥 주소는 막힘)", "- Direction boxes look like HOI4 focuses (big icon on top, name plate below, glow · gray · ✔ · ✕ by state); mods can redesign the box completely — focus design (size, spacing, HTML template, CSS; scoped to the tree, scripts and external URLs blocked)"],
+  ["- 방향성 상자 새 모양(위에 큰 아이콘 · 아래 이름판, 상태별 빛 · 회색 · ✔ · ✕), 모딩으로 상자 모양을 통째로 — 중점 디자인(크기 · 간격 · HTML 템플릿 · CSS, 트리 안에만 걸리고 스크립트 · 바깥 주소는 막힘)", "- New direction box look (big icon on top, name plate below, glow · gray · ✔ · ✕ by state); mods can redesign the box completely — focus design (size, spacing, HTML template, CSS; scoped to the tree, scripts and external URLs blocked)"],
   ["칸으로", "Form"],
   ["JSON으로", "JSON"],
   ["아이콘 (이모지 또는 그림)", "Icon (emoji or image)"],
@@ -5010,7 +5010,7 @@ window.DnoLangPacks.en = {
   ["오른쪽 방향성 트리에서 상자를 눌러 자세히 보고 고를 수도 있습니다.", "You can also click a box in the direction tree on the right to see details and choose it."],
   ["0.3.0 - 캠페인 · 시나리오 테스트", "0.3.0 - Campaign · scenario test"],
   ["캠페인 (세계관 · 시작 나라 · 결말)", "Campaigns (lore · starting countries · endings)"],
-  ["방향성 트리 (HOI4 중점처럼)", "Direction trees (like HOI4 focuses)"],
+  ["방향성 트리", "Direction trees"],
   ["시나리오 = 위기 (게이지 · 기한 임무 · 결말)", "Scenario = crisis (gauges · timed missions · outcomes)"],
   ["슈퍼 이벤트", "Super events"],
   ["챌린지 (목표형)", "Challenges (goal-based)"],
@@ -7542,8 +7542,8 @@ window.DnoLangPacks.en = {
    "General theme"
   ],
   [
-   "TNO 테마",
-   "TNO theme"
+   "네온 테마",
+   "Neon theme"
   ],
   [
    "네온 빛번짐",
@@ -7566,8 +7566,8 @@ window.DnoLangPacks.en = {
    "- New roadmap design — top tabs are major versions (0 · 1 · 2), one horizontally scrolling row (scroll down to move right), section titles stick to the left as you scroll · cards show a summary and open the full notes in a popup · undecided versions are shown as faded placeholder cards"
   ],
   [
-   "- 로드맵 0.0.1 · 0.0.2의 \"일반 테마\" · \"TNO 테마\"를 누르면 그 시절 화면(old.html · old2.html)으로",
-   "- Roadmap 0.0.1 · 0.0.2: \"General theme\" and \"TNO theme\" link to those old screens (old.html · old2.html)"
+   "- 로드맵 0.0.1 · 0.0.2의 \"일반 테마\" · \"네온 테마\"를 누르면 그 시절 화면(old.html · old2.html)으로",
+   "- Roadmap 0.0.1 · 0.0.2: \"General theme\" and \"Neon theme\" link to those old screens (old.html · old2.html)"
   ],
   [
    "- 라이트/다크: 붙어 있는 버튼 묶음(0 · 1 · 2, 정보 · 당수, 정부 형태, 설정 목록 등)의 선택 표시가 미끄러지듯 이동",
@@ -7630,8 +7630,8 @@ window.DnoLangPacks.en = {
    "- Added a page to try the pre-overhaul UI (saves are kept separately)"
   ],
   [
-   "- 로드맵 0.0.1 · 0.0.2의 \"일반 테마\" · \"TNO 테마\"를 누르면 그 시절 화면으로",
-   "- Roadmap 0.0.1 · 0.0.2: \"General theme\" and \"TNO theme\" link to those old screens"
+   "- 로드맵 0.0.1 · 0.0.2의 \"일반 테마\" · \"네온 테마\"를 누르면 그 시절 화면으로",
+   "- Roadmap 0.0.1 · 0.0.2: \"General theme\" and \"Neon theme\" link to those old screens"
   ],
   [
    "- 로고 제작 화면 — 의회 메뉴만 남기고, 집권 정당 강조 색을 HEX 코드로 바꾸고 네온 빛번짐을 켜고 끌 수 있음 · 본 게임 세이브와 따로 저장",

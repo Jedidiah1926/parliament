@@ -273,7 +273,7 @@ npx electron-builder --config electron-builder.demo.js --win dir   # → dist-de
 
 `hemicycle-item.json`이 없으면 폴더 안 파일을 보고 종류를 알아서 정합니다 — `"format": "dno-lang-pack@1"`은 언어 팩, `"format": "hemicycle-theme@1"`은 테마, `"format": "hemicycle-script@1"`은 스크립트 모드, `.hemi` 파일이나 세이브 형식 `.json`은 프리셋(제목은 폴더 이름).
 
-**스크립트 모드** (`hemicycle-script@1`, `js/scriptmods.js`) — HOI4 모딩처럼 코드 없이 JSON으로 이벤트 · 결정 · 국가 변수 · 플래그를 더합니다 (국가 › 결정 탭, 날짜를 넘길 때 · 총선 결과를 반영할 때 이벤트 검사). 형식 · 조건 · 효과 목록은 [`docs/MODDING.md`](docs/MODDING.md), 예제는 `docs/example-script-mod/`. 브라우저에서는 국가 › 결정 › 모드 › "모드 파일 불러오기"로 시험할 수 있습니다.
+**스크립트 모드** (`hemicycle-script@1`, `js/scriptmods.js`) — 코드 없이 JSON으로 이벤트 · 결정 · 국가 변수 · 플래그를 더합니다 (국가 › 결정 탭, 날짜를 넘길 때 · 총선 결과를 반영할 때 이벤트 검사). 형식 · 조건 · 효과 목록은 [`docs/MODDING.md`](docs/MODDING.md), 예제는 `docs/example-script-mod/`. 브라우저에서는 국가 › 결정 › 모드 › "모드 파일 불러오기"로 시험할 수 있습니다.
 
 **테마** (`hemicycle-theme@1`) — 바탕 테마(라이트 · 다크 · 네온)의 화면 규칙을 그대로 쓰고 색 변수만 바꿉니다.
 

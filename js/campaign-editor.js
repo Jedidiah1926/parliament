@@ -1,6 +1,6 @@
 // ===== 캠페인 · 시나리오 편집기 (scenario.html · 0.3.0 · 테스트) =====
-// 캠페인(hemicycle-campaign@1) = 세계관 + 시작 나라들(종합 프리셋) + 방향성 트리(HOI4 중점처럼) + 시나리오(위기)들 + 결말
-//   시나리오(위기) = TNO의 위기처럼: 시작 조건 · 날짜, 게이지(변수), 기한 있는 임무, 위기 전용 결정 · 이벤트(슈퍼 이벤트), 결말
+// 캠페인(hemicycle-campaign@1) = 세계관 + 시작 나라들(종합 프리셋) + 방향성 트리 + 시나리오(위기)들 + 결말
+//   시나리오(위기) = 시작 조건 · 날짜, 게이지(변수), 기한 있는 임무, 위기 전용 결정 · 이벤트(슈퍼 이벤트), 결말
 // 조건 · 효과는 스크립트 모드 형식(docs/MODDING.md)을 그대로 쓴다 — 칸 옆 "도우미"로 자주 쓰는 모양을 넣을 수 있다.
 // 내 캠페인은 IndexedDB(hemicycleCampaigns)에 자동 저장, .hemicmp(gzip JSON)로 내보내기 · 불러오기, 시험 플레이는 js/campaign.js가 받음.
 /* global DnoPresets, DnoUI */
@@ -111,7 +111,7 @@
             <div class="scn-h">캠페인 만드는 순서</div>
             <ol class="cpe-steps">
                 <li><b>시작 나라</b> — 내장 프리셋이나 게임에서 만든 종합 프리셋(.hemi). 여러 나라를 두면 시작할 때 고릅니다.</li>
-                <li><b>방향성 트리</b> — HOI4 중점처럼 며칠씩 걸리는 선택. 끝내면 효과가 들어가고 플래그 <code>focus_방향성id</code>가 켜집니다.</li>
+                <li><b>방향성 트리</b> — 며칠씩 걸려 끝나는 선택. 끝내면 효과가 들어가고 플래그 <code>focus_방향성id</code>가 켜집니다.</li>
                 <li><b>시나리오(위기)</b> — 날짜 · 조건(예: 어떤 방향성을 끝냄)으로 시작. 게이지는 변수라 효과 <code>add_var</code>로 움직이고, 결말 조건에서 <code>var</code>로 봅니다. 결말이 나면 플래그 <code>crisis_위기id_결말id</code>.</li>
                 <li><b>결말</b> — 조건이 맞으면 캠페인이 끝났다고 엔딩 화면이 뜹니다 (그 뒤에도 계속 플레이 가능).</li>
                 <li>▶ <b>시험 플레이</b> — 게임에서 바로. 맨 위 "캠페인" 탭(개요 · 방향성 · 위기)과 오른쪽 "캠페인" 화면(방향성 트리 · 위기).</li>
@@ -155,12 +155,12 @@
         const others = list.filter(x => f && x.id !== f.id);
         const chips = (key) => others.map(o => `<button type="button" class="cpe-chip ${(f[key] || []).includes(o.id) ? 'on' : ''}" data-chip="${key}" data-id="${esc(o.id)}">${esc(o.title || o.id)}</button>`).join('') || '<span class="scn-dim">다른 방향성 없음</span>';
         const fs = S.focusStyle || {};
-        const design = `<details class="scn-card cpe-design" ${fs.template || fs.css ? 'open' : ''}><summary class="scn-h">중점 디자인 ${fs.template || fs.css ? '<span class="scn-n">사용자 템플릿</span>' : '<span class="scn-n">기본 (HOI4 중점)</span>'}</summary>
-            <div class="scn-dim scn-small">비워 두면 HOI4 중점처럼(위에 큰 아이콘, 아래 이름판). 템플릿 · CSS로 상자 모양을 통째로 바꿀 수 있습니다 — 자리표시 <code>{{icon}}</code> <code>{{iconUrl}}</code> <code>{{title}}</code> <code>{{daysText}}</code> <code>{{days}}</code> <code>{{status}}</code> <code>{{statusText}}</code> <code>{{progress}}</code> <code>{{desc}}</code> <code>{{id}}</code>, 상자에는 늘 <code>.hf-node.hf-상태</code>(available · current · done · locked · blocked). 스크립트 · 바깥 주소는 막힙니다 (그림은 data:).</div>
+        const design = `<details class="scn-card cpe-design" ${fs.template || fs.css ? 'open' : ''}><summary class="scn-h">중점 디자인 ${fs.template || fs.css ? '<span class="scn-n">사용자 템플릿</span>' : '<span class="scn-n">기본 (큰 아이콘 + 이름판)</span>'}</summary>
+            <div class="scn-dim scn-small">비워 두면 기본 모양(위에 큰 아이콘, 아래 이름판). 템플릿 · CSS로 상자 모양을 통째로 바꿀 수 있습니다 — 자리표시 <code>{{icon}}</code> <code>{{iconUrl}}</code> <code>{{title}}</code> <code>{{daysText}}</code> <code>{{days}}</code> <code>{{status}}</code> <code>{{statusText}}</code> <code>{{progress}}</code> <code>{{desc}}</code> <code>{{id}}</code>, 상자에는 늘 <code>.hf-node.hf-상태</code>(available · current · done · locked · blocked). 스크립트 · 바깥 주소는 막힙니다 (그림은 data:).</div>
             <div class="scn-row"><span class="scn-dim">가로</span><input class="scn-in scn-num" type="number" data-fs="width" value="${esc(fs.width ?? '')}" placeholder="124"><span class="scn-dim">세로</span><input class="scn-in scn-num" type="number" data-fs="height" value="${esc(fs.height ?? '')}" placeholder="116"><span class="scn-dim">간격</span><input class="scn-in scn-num" type="number" data-fs="gapX" value="${esc(fs.gapX ?? '')}" placeholder="22"><input class="scn-in scn-num" type="number" data-fs="gapY" value="${esc(fs.gapY ?? '')}" placeholder="30"></div>
             <label class="scn-lab">템플릿 (HTML — 비우면 기본)</label><textarea class="scn-in scn-code" rows="3" spellcheck="false" data-fs="template" placeholder='<div class="medal">{{icon}}</div><div class="ribbon">{{title}}</div>'>${esc(fs.template || '')}</textarea>
             <label class="scn-lab">CSS (방향성 트리 안에만 걸림)</label><textarea class="scn-in scn-code" rows="6" spellcheck="false" data-fs="css" placeholder=".hf-node .medal { ... }  .hf-done .medal { ... }">${esc(fs.css || '')}</textarea>
-            <div class="scn-row"><button type="button" class="scn-btn" data-fs-example>예제 템플릿 넣기</button><button type="button" class="scn-btn" data-fs-reset>HOI4 기본으로</button><button type="button" class="scn-btn" data-fs-apply>미리 보기</button></div></details>`;
+            <div class="scn-row"><button type="button" class="scn-btn" data-fs-example>예제 템플릿 넣기</button><button type="button" class="scn-btn" data-fs-reset>기본 모양으로</button><button type="button" class="scn-btn" data-fs-apply>미리 보기</button></div></details>`;
         return `<div class="cpe-focus"><div class="cpe-focus-left">
             <div class="scn-card cpe-tree-card"><div class="scn-row"><div class="scn-h">방향성 트리</div><span class="scn-grow"></span><button type="button" class="scn-btn" data-add-focus>+ 방향성</button></div>
                 <div class="scn-dim scn-small">상자를 끌어 옮기고(칸에 맞춰짐), 눌러서 고치세요. 실선: 먼저 끝내야 함 · 점선: 이 중 하나 · 빨간 선: 함께 못 고름</div>
@@ -192,7 +192,7 @@
             <div class="scn-card cpe-list"><div class="scn-h">시나리오(위기)</div>
                 ${S.crises.map(x => `<button type="button" class="cpe-item ${x === c ? 'on' : ''}" data-crisis="${esc(x.id)}" style="--c:${esc(x.color || '#e5484d')}">${esc(x.title || x.id)}</button>`).join('') || '<div class="scn-dim">위기가 없습니다.</div>'}
                 <div class="scn-row"><button type="button" class="scn-btn" data-add-crisis>+ 위기</button></div>
-                <div class="scn-dim scn-small">TNO의 위기처럼 — 조건 · 날짜로 시작해 게이지 · 임무 · 위기 결정이 돌다가 결말 하나로 끝납니다.</div></div>
+                <div class="scn-dim scn-small">조건 · 날짜로 시작해 게이지 · 임무 · 위기 결정이 돌다가 결말 하나로 끝납니다.</div></div>
             ${c && detailMode === 'json' ? `<div class="cpe-crisis-main"><div class="scn-card"><div class="scn-row"><div class="scn-h">위기 — JSON</div><span class="scn-grow"></span>${modeSeg()}<button type="button" class="scn-btn scn-danger" data-del-crisis>이 위기 지우기</button></div>
                 <div class="scn-dim scn-small">이 위기 전체 — id · title · color · desc · image · date · trigger · intro · onStart · meters · missions · outcomes · events · decisions (docs/CAMPAIGN.md)</div>${objJson(`crises.${ci}`, 40)}</div></div>` : ''}
             ${c && detailMode !== 'json' ? `<div class="cpe-crisis-main">
