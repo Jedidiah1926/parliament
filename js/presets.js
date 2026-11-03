@@ -74,6 +74,16 @@
                 ] } }, // 영어 데이터 파일은 아직 없음 — 한국어 데이터로 열림
         },
         {
+            id: 'builtin:korea2024',
+            badge: 'new', // 목록의 노란 표시 — 'new' 신규! · 'updated' 업데이트!
+            title: '대한민국 (제22대 총선)',
+            description: '제작자: 스노든',
+            date: '2024년 4월 10일',
+            author: '스노든',
+            script: 'presets/korea2024.js',
+            langs: { en: { title: 'Republic of Korea (22nd General Election)', description: 'By 스노든' } }, // 영어 데이터 파일은 아직 없음 — 한국어 데이터로 열림
+        },
+        {
             id: 'builtin:uk',
             badge: 'new', // 목록의 노란 표시 — 'new' 신규! · 'updated' 업데이트!
             title: '그레이트브리튼 북아일랜드 연합왕국',
