@@ -724,6 +724,9 @@ body.home-page { display: block; height: 100vh; overflow: hidden; text-transform
 
 /* 프리셋 카드: 게임 속 시작 날짜 · 준비 중 */
 .preset-card-date { margin-left: auto; flex: 0 0 auto; color: #888; font-size: 0.78rem; letter-spacing: 1px; }
+/* 프리셋 카드: 날짜는 아랫줄 오른쪽 (윗줄은 제목 · 표시만 — 긴 제목이 잘리지 않게) */
+.preset-card-bottom { display: flex; align-items: baseline; gap: 10px; width: 100%; min-width: 0; }
+.preset-card-bottom .preset-card-desc { flex: 1 1 auto; min-width: 0; }
 .preset-card-soon { opacity: .5; cursor: default; }
 .preset-card-soon:hover { border-color: var(--tno-border) !important; background: transparent !important; }
 .preset-badge-soon { border-color: #666; color: #999; text-shadow: none; }
