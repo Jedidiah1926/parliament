@@ -5106,7 +5106,10 @@
                 if(autosaveEnabled) startAutosaveTimer();
                 renderSaveTabUI();
             } catch(e) { /* 자동저장 UI 갱신 실패는 앱 동작에 영향 없음 */ }
-            if(preset && preset.tutorial && window.DnoTutorial) window.DnoTutorial.start();
+            // 튜토리얼은 시작 화면의 "튜토리얼" 탭에서 과정을 고른 경우에만 연다 (프리셋 목록의 서독은 프리셋으로만)
+            let tutLesson = null;
+            try { tutLesson = sessionStorage.getItem('dnoTutorialStartLesson'); } catch(e) {}
+            if(preset && preset.tutorial && tutLesson && window.DnoTutorial) window.DnoTutorial.start();
         }
 
         // ===== SAVE / LOAD (v5) =====
@@ -6447,7 +6450,7 @@
             markSavedBaseline();
             hideSaveTabNewInput();
             renderSaveTabUI();
-            if(presetMeta && presetMeta.tutorial && window.DnoTutorial) window.DnoTutorial.start();
+            // 새 탭의 프리셋 목록에서 고른 서독도 프리셋으로만 (튜토리얼은 시작 화면의 튜토리얼 탭에서)
         }
 
         function deleteSaveTab(id) {
