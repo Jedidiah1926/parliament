@@ -19,11 +19,12 @@
         {
             id: 'builtin:tutorial',
             title: '서독',
-            description: '처음이라면 여기서 시작하세요.',
+            description: '제작자: Pilcrow1926',
+            author: 'Pilcrow1926',
             date: '1983년 3월 29일',
             tutorial: true,
             script: 'presets/tutorial.js',
-            langs: { en: { script: 'presets/tutorial.en.js', title: 'West Germany', description: "Start here if you're new." } },
+            langs: { en: { script: 'presets/tutorial.en.js', title: 'West Germany', description: 'By Pilcrow1926' } },
         },
         {
             id: 'builtin:japan',
