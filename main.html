@@ -1267,6 +1267,11 @@
 
                     <!-- 지도(SVG) 방식: 우측 지도에서 지역구를 클릭해 선택하면, 그 지역구의 정당별 성향(%)을 목록으로 편집 -->
                     <div id="tendencySvgDistrictPanel" style="display:none;"></div>
+                    <!-- 총선 지역구 개표 변동 — 성향 + 정당마다 ±N%p 무작위. 0이면 매번 같은 결과 -->
+                    <div class="district-noise-row" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:10px;padding:6px 8px;border:1px solid #222;font-size:0.8rem;color:#999;">
+                        <span>개표 변동 ±</span><input type="number" id="districtNoiseInput" min="0" max="50" step="1" value="15" onchange="setDistrictNoise(this.value)" style="width:56px;"><span>%p</span>
+                        <span style="color:#666;font-size:0.74rem;">총선 지역구는 성향(무당층 포함)에 정당마다 이만큼 무작위로 더해 개표 — 0이면 매번 성향대로 같은 결과</span>
+                    </div>
                 </div>
 
                 <!-- 지지율 서브탭 -->
@@ -1969,7 +1974,9 @@
     <script src="js/politics.js"></script>
     <script src="js/scriptmods.js"></script>
     <script src="js/news.js"></script>
-    <script src="js/scenario.js"></script>
+    <script src="js/challenge.js"></script>
+    <script src="js/focusview.js"></script>
+    <script src="js/campaign.js"></script>
     <script src="js/sidenav.js"></script>
     <script src="js/segmented.js"></script>
     <script src="js/lang.js"></script>

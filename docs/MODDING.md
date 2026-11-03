@@ -62,6 +62,7 @@ my-mod/
 | `hidden` | `true`면 창 없이 첫 선택지 효과만 바로 |
 | `immediate` | 창이 뜰 때 바로 일어나는 효과 |
 | `options` | 선택지 `[{ "text", "trigger"(이 선택지가 보일 조건), "effects" }]` |
+| `super` | `true`면 슈퍼 이벤트 — 화면 가운데 큰 창. 함께: `image`(그림 주소 · data:) · `quote` · `quote_author` · `kicker`(제목 위 작은 글) |
 
 ### 결정
 

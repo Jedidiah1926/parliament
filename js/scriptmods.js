@@ -57,7 +57,7 @@
         const desk = window.hemicycleDesktop && Array.isArray(window.hemicycleDesktop.modScripts) ? window.hemicycleDesktop.modScripts : [];
         desk.forEach(m => add(m.data, m.source === 'workshop' ? 'workshop' : 'local', { title: m.title, folder: m.folder }));
         lsGet(LS_IMPORTED, []).forEach(m => add(m && m.data, 'imported'));
-        // 세이브에 딸린 모드 — 시나리오(js/scenario.js)가 그 세이브에서만 켬 (끄기 목록과 상관없이 늘 켜짐)
+        // 세이브에 딸린 모드 — 캠페인(js/campaign.js) · 챌린지(js/challenge.js)가 그 세이브에서만 켬 (끄기 목록과 상관없이 늘 켜짐)
         saveMods.forEach(d => add(d, 'scenario'));
         mods = out;
         loadErrors = errors;
@@ -314,9 +314,15 @@
         const opts = ev.options.map((o, i) => ({ o, i })).filter(({ o }) => test(o.trigger, mod));
         const ov = document.createElement('div');
         ov.className = 'sm-overlay';
-        ov.innerHTML = `<div class="sm-event" role="dialog" aria-modal="true" aria-labelledby="smEvTitle">
-            <div class="sm-ev-mod">${esc(mod.name)}</div>
+        // 슈퍼 이벤트(super: true) — 화면 가운데 크게, 그림(image) · 인용구(quote · quote_author)와 함께 (캠페인의 큰 순간)
+        const sup = !!ev.super;
+        const img = typeof ev.image === 'string' && /^(data:image\/|https?:\/\/|[\w./-]+\.(png|jpe?g|webp|gif|svg)$)/i.test(ev.image) ? ev.image : '';
+        if (sup) ov.classList.add('sm-super-ov');
+        ov.innerHTML = `<div class="sm-event ${sup ? 'sm-super' : ''}" role="dialog" aria-modal="true" aria-labelledby="smEvTitle">
+            ${img ? `<img class="sm-ev-img" src="${esc(img)}" alt="">` : ''}
+            <div class="sm-ev-mod">${esc(sup ? (ev.kicker || mod.name) : mod.name)}</div>
             <div class="sm-ev-title" id="smEvTitle">${esc(fill(ev.title || ev.id, mod))}</div>
+            ${sup && ev.quote ? `<blockquote class="sm-ev-quote">${esc(fill(ev.quote, mod)).replace(/\n/g, '<br>')}${ev.quote_author ? `<cite>— ${esc(ev.quote_author)}</cite>` : ''}</blockquote>` : ''}
             <div class="sm-ev-desc">${esc(fill(ev.desc || ev.description || '', mod)).replace(/\n/g, '<br>')}</div>
             <div class="sm-ev-opts">${(opts.length ? opts : [{ o: { text: '확인' }, i: -1 }]).map(({ o, i }) => `<button type="button" class="sm-ev-opt" data-i="${i}">${esc(fill(o.text || '확인', mod))}</button>`).join('')}</div></div>`;
         document.body.appendChild(ov);
@@ -393,7 +399,7 @@
     const onTab = () => typeof currentMainTab !== 'undefined' && currentMainTab === 'nation' && typeof currentSubTab !== 'undefined' && currentSubTab.nation === 'decisions';
     function refresh() { if (onTab()) render(); }
 
-    const SRC_LABEL = { workshop: '창작마당', local: '모드 폴더', imported: '불러온 파일', scenario: '시나리오' };
+    const SRC_LABEL = { workshop: '창작마당', local: '모드 폴더', imported: '불러온 파일', scenario: '캠페인 · 챌린지' };
     function render() {
         const host = document.getElementById('contentDecisions');
         if (!host) return;
@@ -518,7 +524,13 @@
         get mods() { return mods; }, get state() { return S; },
         reload: () => { loadMods(); initVars(); refresh(); }, importMod, checkEvents,
         // 세이브에 딸린 모드 바꾸기 (시나리오) — 데이터 배열, 빈 배열이면 없앰
-        setSaveMods(list) { saveMods = Array.isArray(list) ? list.filter(Boolean) : []; loadMods(); initVars(); refresh(); }, test: (cond, id) => test(cond, mods.find(m => m.id === id)),
+        setSaveMods(list) { saveMods = Array.isArray(list) ? list.filter(Boolean) : []; loadMods(); initVars(); refresh(); },
+        // 캠페인(js/campaign.js)이 쓰는 것 — 이벤트 띄우기 · 변수 · 플래그 · 결정 목록과 실행
+        fire(id, evId) { const m = mods.find(x => x.id === id); if (m) { queueEvent(m, evId, true); showNextEvent(); } },
+        vars: id => (S.vars[id] || {}), flags: id => (S.flags[id] || {}),
+        decisions(id, filter) { const m = mods.find(x => x.id === id); if (!m) return []; return m.decisions.filter(d => (!filter || filter(d)) && test(d.visible, m)).map(d => ({ id: d.id, title: fill(d.title || d.id, m), desc: fill(d.desc || d.description || '', m), block: decisionBlock(m, d), category: d.category || '' })); },
+        take(id, did) { const m = mods.find(x => x.id === id), d = m && m.decisions.find(x => x.id === did); if (d) takeDecision(m, d); },
+        fill: (text, id) => fill(text, mods.find(m => m.id === id)), test: (cond, id) => test(cond, mods.find(m => m.id === id)),
         run: (eff, id) => { run(eff, mods.find(m => m.id === id)); afterEffects(); }, example: () => JSON.parse(JSON.stringify(EXAMPLE)),
     };
 
@@ -562,6 +574,13 @@
         .sm-ev-opts { display: flex; flex-direction: column; gap: 6px; }
         .sm-ev-opt { cursor: pointer; font: inherit; text-align: left; padding: 9px 12px; background: rgba(255,215,0,.05); border: 1px solid #554a1a; color: #eee; }
         .sm-ev-opt:hover, .sm-ev-opt:focus-visible { border-color: var(--tno-gold, #ffd700); outline: none; }
+        .sm-super-ov { background: rgba(0,0,0,.82); }
+        .sm-event.sm-super { width: 640px; text-align: center; padding: 22px 26px; border-width: 2px; box-shadow: 0 0 40px rgba(255,215,0,.25); }
+        .sm-super .sm-ev-title { font-size: 1.7rem; letter-spacing: 1px; margin: 6px 0 12px; }
+        .sm-super .sm-ev-desc { text-align: left; }
+        .sm-ev-img { display: block; width: 100%; max-height: 300px; object-fit: cover; margin-bottom: 12px; border: 1px solid #333; }
+        .sm-ev-quote { margin: 0 auto 14px; max-width: 480px; font-style: italic; color: #cfc6a0; line-height: 1.6; }
+        .sm-ev-quote cite { display: block; margin-top: 4px; font-style: normal; font-size: .8rem; color: #888; }
         html[data-theme-family="modern"] .sm-seg button { border-color: var(--m-border); color: var(--m-text-3); border-radius: 8px; }
         html[data-theme-family="modern"] .sm-seg button.on { border-color: var(--m-accent); color: var(--m-accent); }
         html[data-theme-family="modern"] .sm-btn { border-color: var(--m-border); color: var(--m-text); border-radius: 8px; }
@@ -573,6 +592,9 @@
         html[data-theme-family="modern"] .sm-ev-title { color: var(--m-text); font-weight: 800; }
         html[data-theme-family="modern"] .sm-ev-opt { background: var(--m-surface-2); border: 1px solid var(--m-border); color: var(--m-text); border-radius: 10px; }
         html[data-theme-family="modern"] .sm-ev-opt:hover, html[data-theme-family="modern"] .sm-ev-opt:focus-visible { border-color: var(--m-accent); }
+        html[data-theme-family="modern"] .sm-event.sm-super { border: 1px solid var(--m-border); box-shadow: 0 30px 80px rgba(0,0,0,.4); }
+        html[data-theme-family="modern"] .sm-ev-img { border: none; border-radius: 12px; }
+        html[data-theme-family="modern"] .sm-ev-quote { color: var(--m-text-2); }
         html[data-theme-family="modern"] .sm-intro code, html[data-theme-family="modern"] .sm-tools code { background: var(--m-surface-2); border-radius: 4px; }
     `;
     document.head.appendChild(style);
