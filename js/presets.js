@@ -19,14 +19,16 @@
         {
             id: 'builtin:tutorial',
             title: '서독',
-            description: '처음이라면 여기서 시작하세요.',
+            description: '제작자: Pilcrow1926',
+            author: 'Pilcrow1926',
             date: '1983년 3월 29일',
             tutorial: true,
             script: 'presets/tutorial.js',
-            langs: { en: { script: 'presets/tutorial.en.js', title: 'West Germany', description: "Start here if you're new." } },
+            langs: { en: { script: 'presets/tutorial.en.js', title: 'West Germany', description: 'By Pilcrow1926' } },
         },
         {
             id: 'builtin:japan',
+            badge: 'updated', // 목록의 노란 표시 — 'new' 신규! · 'updated' 업데이트!
             title: '일본국',
             description: '제작자: sushdjr0106',
             date: '2026년 2월 9일',
@@ -54,6 +56,7 @@
         },
         {
             id: 'builtin:korea',
+            badge: 'updated', // 목록의 노란 표시 — 'new' 신규! · 'updated' 업데이트!
             title: '대한민국',
             description: '제작자: 왕조명 & ttorri',
             date: '2026년 10월 31일',
@@ -72,6 +75,7 @@
         },
         {
             id: 'builtin:uk',
+            badge: 'new', // 목록의 노란 표시 — 'new' 신규! · 'updated' 업데이트!
             title: '그레이트브리튼 북아일랜드 연합왕국',
             description: '제작자: ttorri',
             date: '2026년 10월 26일',

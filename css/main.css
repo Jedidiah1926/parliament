@@ -1527,6 +1527,8 @@ html[data-ui-mode="mobile"] .save-panel { max-height: calc(100vh - 56px - var(--
         html[data-app-mode="logo"][data-ui-mode="mobile"] .mobile-panel-switch { top: 0; }
         .gov-hl-color > label.gov-hl-glow { display: flex; align-items: center; gap: 6px; margin: 8px 0 0; color: #aaa; cursor: pointer; }
         .save-tab-preset-date { color: #777; font-size: 0.75rem; margin-left: 6px; }
+        .save-tab-preset-badge { margin-left: 6px; padding: 0 5px; border: 1px solid var(--tno-gold, #ffd700); color: var(--tno-gold, #ffd700); font-size: 0.68rem; text-shadow: 0 0 4px var(--tno-gold, #ffd700); }
+        .save-tab-preset-badge.updated { border-color: var(--vote-yea, #00ff88); color: var(--vote-yea, #00ff88); text-shadow: 0 0 4px var(--vote-yea, #00ff88); }
         .save-tab-preset-soon { opacity: .5; cursor: default; }
         .save-tab-preset-soon:hover { color: inherit !important; background: transparent !important; }
 
