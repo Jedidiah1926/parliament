@@ -95,6 +95,7 @@ my-mod/
 | `party_support` | `{ "party": "largest", "gt": 30 }` | 지지율(%) |
 | `ruling_seats` | `{ "share": true, "lt": 50 }` | 집권 세력 의석 합 (share면 %) |
 | `economy` | `{ "indicator": "infl", "gt": 10 }` | 경제 지표 (경제가 시작된 세이브만) |
+| `approval` | `{ "of": "cabinet", "lt": 30 }` | 국정 지지율(%) — `of`: `cabinet` 내각 · `president` 대통령 · `pm` 총리 · `chair` 집단지도체제 의장 (여론 › 국정 지지율) |
 
 비교: `gt`(초과) · `gte`(이상) · `lt`(미만) · `lte`(이하) · `eq`(같음) · `ne`(다름) — 여러 개 적으면 모두.
 원(`chamber`): `house` · `senate` · `third` (안 적으면 `house`).
@@ -115,6 +116,8 @@ my-mod/
 | `rename_party` | `{ "party": "...", "name": "새 이름", "abbr": "약칭" }` | 당명 바꾸기 |
 | `party_color` | `{ "party": "...", "color": "#ff0000" }` | 정당 색 |
 | `economy` | `{ "indicator": "mood", "add": -5 }` | 경제 지표 더하기 · 바꾸기 |
+| `approval` | `{ "of": "cabinet", "add": -5 }` · `{ "of": "president", "set": 40 }` | 국정 지지율 더하기 · 바꾸기 |
+| `article` | `{ "title": "...", "body": "...", "outlet": "헤미일보", "type": "politics", "effects": [{ "party": "ruling", "add": -2 }, { "approval": "cabinet", "add": -3 }] }` | 기사를 바로 발행 (여론 › 기사에 남고, 효과가 들어감). `type`: `politics` · `economy` · `society` · `world` · `editorial` · `breaking` |
 | `nation_name` | `"새 국호"` | 국가명 |
 | `message` | `{ "title": "...", "text": "..." }` | 알림 창 |
 | `toast` | `"..."` | 화면 아래 짧은 알림 |
@@ -124,7 +127,7 @@ my-mod/
 
 ### 글자 바꾸기
 
-제목 · 본문 · 선택지 · 알림 글에서:
+제목 · 본문 · 선택지 · 알림 글 · 기사(`article`)의 제목 · 부제 · 본문에서:
 `{var:stability}` 변수 값 · `{party:ruling}` 정당 이름 · `{date}` 게임 속 날짜.
 
 ## 앞으로
