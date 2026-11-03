@@ -27,6 +27,7 @@
         },
         {
             id: 'builtin:japan',
+            badge: 'updated', // 목록의 노란 표시 — 'new' 신규! · 'updated' 업데이트!
             title: '일본국',
             description: '제작자: sushdjr0106',
             date: '2026년 2월 9일',
@@ -54,6 +55,7 @@
         },
         {
             id: 'builtin:korea',
+            badge: 'updated', // 목록의 노란 표시 — 'new' 신규! · 'updated' 업데이트!
             title: '대한민국',
             description: '제작자: 왕조명 & ttorri',
             date: '2026년 10월 31일',
@@ -72,6 +74,7 @@
         },
         {
             id: 'builtin:uk',
+            badge: 'new', // 목록의 노란 표시 — 'new' 신규! · 'updated' 업데이트!
             title: '그레이트브리튼 북아일랜드 연합왕국',
             description: '제작자: ttorri',
             date: '2026년 10월 26일',

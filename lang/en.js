@@ -4939,6 +4939,8 @@ window.DnoLangPacks.en = {
    "Outline color for district abbreviations"
   ],
   ["직접 지정", "Custom"],
+  ["업데이트!", "Updated!"],
+  ["신규!", "New!"],
   ["- 여론 › 기사 탭 — 기사 작성 · 수정 · 삭제 · 발행 (제목 · 부제 · 본문 · 작성일 · 언론사 · 기자 · 대표 사진, 유형: 정치 · 경제 · 사회 · 국제 · 사설 · 속보), 발행 · 초안 · 유형 걸러 보기와 찾기, 읽기 창", "- Opinion › Articles tab — write, edit, delete and publish articles (headline, subtitle, body, date, outlet, reporter, main photo; types: Politics · Economy · Society · World · Editorial · Breaking), filter by published/draft/type and search, reading view"],
   ["- 기사 연결 — 정당 · 정치인(사람 탭 인물) · 정부 · 법안을 기사에 연결", "- Article links — link parties, politicians (People tab), the government and bills to an article"],
   ["- 기사 효과 — 발행할 때 정당 지지율 · 국정 지지율을 정한 만큼 움직임, 영향 범위는 전국(모든 원의 지지율) · 권역 · 개별 지역구(그곳의 시민 성향). 발행을 취소하거나 지우면 들어간 만큼 정확히 되돌리고, 발행된 기사를 고치면 효과를 다시 계산", "- Article effects — publishing moves party support and government approval by the amounts you set; reach is nationwide (support in every chamber), regions or single districts (citizen leanings there). Unpublishing or deleting reverses exactly what was applied, and editing a published article recalculates its effects"],
