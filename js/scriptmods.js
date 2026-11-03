@@ -57,12 +57,15 @@
         const desk = window.hemicycleDesktop && Array.isArray(window.hemicycleDesktop.modScripts) ? window.hemicycleDesktop.modScripts : [];
         desk.forEach(m => add(m.data, m.source === 'workshop' ? 'workshop' : 'local', { title: m.title, folder: m.folder }));
         lsGet(LS_IMPORTED, []).forEach(m => add(m && m.data, 'imported'));
+        // 세이브에 딸린 모드 — 시나리오(js/scenario.js)가 그 세이브에서만 켬 (끄기 목록과 상관없이 늘 켜짐)
+        saveMods.forEach(d => add(d, 'scenario'));
         mods = out;
         loadErrors = errors;
     }
     let loadErrors = [];
+    let saveMods = [];
     const offSet = () => new Set(lsGet(LS_OFF, []));
-    const isOn = mod => !offSet().has(mod.id);
+    const isOn = mod => mod.source === 'scenario' || !offSet().has(mod.id);
     const activeMods = () => mods.filter(isOn);
 
     // ---------------------------------------------------------------
@@ -390,7 +393,7 @@
     const onTab = () => typeof currentMainTab !== 'undefined' && currentMainTab === 'nation' && typeof currentSubTab !== 'undefined' && currentSubTab.nation === 'decisions';
     function refresh() { if (onTab()) render(); }
 
-    const SRC_LABEL = { workshop: '창작마당', local: '모드 폴더', imported: '불러온 파일' };
+    const SRC_LABEL = { workshop: '창작마당', local: '모드 폴더', imported: '불러온 파일', scenario: '시나리오' };
     function render() {
         const host = document.getElementById('contentDecisions');
         if (!host) return;
@@ -425,8 +428,8 @@
         const cards = mods.map(mod => {
             const open = ui.openMod === mod.id;
             const vars = S.vars[mod.id] || {}, flags = Object.keys(S.flags[mod.id] || {}), fired = S.fired[mod.id] || {};
-            return `<div class="sm-mod ${off.has(mod.id) ? 'off' : ''}" data-mod="${esc(mod.id)}">
-                <div class="sm-mod-head"><label class="sm-switch"><input type="checkbox" data-toggle ${off.has(mod.id) ? '' : 'checked'}> <b>${esc(mod.name)}</b></label>
+            return `<div class="sm-mod ${mod.source !== 'scenario' && off.has(mod.id) ? 'off' : ''}" data-mod="${esc(mod.id)}">
+                <div class="sm-mod-head"><label class="sm-switch"><input type="checkbox" data-toggle ${mod.source === 'scenario' || !off.has(mod.id) ? 'checked' : ''} ${mod.source === 'scenario' ? 'disabled title="시나리오 모드는 이 세이브에서 늘 켜짐"' : ''}> <b>${esc(mod.name)}</b></label>
                     <span class="sm-tag">${esc(SRC_LABEL[mod.source] || mod.source)}</span>${mod.version ? `<span class="sm-dim">v${esc(mod.version)}</span>` : ''}</div>
                 <div class="sm-dim">${mod.author ? `제작자: ${esc(mod.author)} · ` : ''}이벤트 ${mod.events.length} · 결정 ${mod.decisions.length}${Object.keys(mod.variables).length ? ` · 변수 ${Object.keys(mod.variables).length}` : ''}</div>
                 ${mod.desc ? `<div class="sm-mod-desc">${esc(mod.desc)}</div>` : ''}
@@ -513,7 +516,9 @@
     // 다른 파일 · 시험용
     window.HemiScriptMods = {
         get mods() { return mods; }, get state() { return S; },
-        reload: () => { loadMods(); initVars(); refresh(); }, importMod, checkEvents, test: (cond, id) => test(cond, mods.find(m => m.id === id)),
+        reload: () => { loadMods(); initVars(); refresh(); }, importMod, checkEvents,
+        // 세이브에 딸린 모드 바꾸기 (시나리오) — 데이터 배열, 빈 배열이면 없앰
+        setSaveMods(list) { saveMods = Array.isArray(list) ? list.filter(Boolean) : []; loadMods(); initVars(); refresh(); }, test: (cond, id) => test(cond, mods.find(m => m.id === id)),
         run: (eff, id) => { run(eff, mods.find(m => m.id === id)); afterEffects(); }, example: () => JSON.parse(JSON.stringify(EXAMPLE)),
     };
 
