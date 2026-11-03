@@ -1,4 +1,4 @@
-// ===== 스크립트 모드 — HOI4 모딩처럼 이벤트 · 결정 · 국가 변수 · 플래그를 JSON으로 =====
+// ===== 스크립트 모드 — 이벤트 · 결정 · 국가 변수 · 플래그를 JSON으로 =====
 // 모드는 코드를 넣지 않고 게임이 정한 형식(hemicycle-script@1)으로 "조건 → 효과"를 적는다 — 창작마당에 올려도 안전하고,
 // 비개발자도 만들 수 있다. 형식 · 조건 · 효과 목록은 docs/MODDING.md.
 //
@@ -448,7 +448,7 @@
             </div>`;
         }).join('');
         const desk = !!window.hemicycleDesktop;
-        return `<div class="sm-intro">스크립트 모드는 이벤트 · 결정 · 국가 변수를 더합니다 (HOI4 모딩처럼 코드 없이 JSON으로). 켜고 끄기는 이 기기의 모든 세이브에 적용되고, 변수 · 일어난 이벤트는 세이브마다 따로 저장됩니다. 만드는 법은 <code>docs/MODDING.md</code>.</div>
+        return `<div class="sm-intro">스크립트 모드는 이벤트 · 결정 · 국가 변수를 더합니다 (코드 없이 JSON으로). 켜고 끄기는 이 기기의 모든 세이브에 적용되고, 변수 · 일어난 이벤트는 세이브마다 따로 저장됩니다. 만드는 법은 <code>docs/MODDING.md</code>.</div>
             ${loadErrors.length ? `<div class="sm-warn">불러오지 못한 모드:<br>${loadErrors.map(esc).join('<br>')}</div>` : ''}
             <div class="sm-row"><button type="button" class="sm-btn sm-primary" data-import>모드 파일 불러오기 (.json)</button><button type="button" class="sm-btn" data-example>예제 모드 넣기</button>${desk && window.hemicycleDesktop.openModsFolder ? '<button type="button" class="sm-btn" data-folder>모드 폴더 열기</button>' : ''}
                 <input type="file" accept=".json,application/json" data-file hidden></div>

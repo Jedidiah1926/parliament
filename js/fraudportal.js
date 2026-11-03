@@ -212,7 +212,7 @@
         #contentFraud .fl-empty { color: var(--fp-dim); font-size: .76rem; }
         #contentFraud input[type=checkbox] { accent-color: var(--fp-red); }
         #contentFraud input[type=checkbox]:not(:checked) { background-color: #020302 !important; border-color: var(--fp-dim) !important; }
-        /* 스크롤바도 음지 화면에 맞춰 — TNO는 초록 터미널, 라이트 · 다크는 어두운 회색 */
+        /* 스크롤바도 음지 화면에 맞춰 — 네온은 초록 터미널, 라이트 · 다크는 어두운 회색 */
         #contentFraud ::-webkit-scrollbar, #dispPanelFraud::-webkit-scrollbar, #dispPanelFraud ::-webkit-scrollbar { width: 8px; height: 8px; background: #020302 !important; }
         #contentFraud ::-webkit-scrollbar-track, #dispPanelFraud::-webkit-scrollbar-track, #dispPanelFraud ::-webkit-scrollbar-track,
         #contentFraud ::-webkit-scrollbar-corner, #dispPanelFraud ::-webkit-scrollbar-corner { background: #020302 !important; border: none !important; }

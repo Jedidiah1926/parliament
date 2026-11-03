@@ -2658,7 +2658,7 @@
         .econ-tablewrap2 { overflow-x: auto; } .econ-tagin { width: 48px; }
         /* 오른쪽 시각 화면 */
         #dispPanelEconomy .econ-dispbox { display: flex; flex-direction: column; overflow: hidden; min-height: 0; }
-        /* 네온(TNO): 시각 화면 바탕을 그래프와 같은 짙은 회색 하나로 (테두리만 남기고) · 모서리는 각지게 */
+        /* 네온: 시각 화면 바탕을 그래프와 같은 짙은 회색 하나로 (테두리만 남기고) · 모서리는 각지게 */
         html[data-theme-mode="tno"] .econ-dispbox { background: var(--econ-surface) !important; }
         html[data-theme-mode="tno"] .econ-dispbox *:not(svg):not(svg *) { border-radius: 0 !important; }
         #econDisp { flex: 1 1 auto; min-height: 0; overflow: auto; padding-right: 4px; }

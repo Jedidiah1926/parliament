@@ -1,6 +1,6 @@
-// ===== Hemicycle — 테마 색 모듈 (TNO 모드 전용 커스텀 강조색) =====
+// ===== Hemicycle — 테마 색 모듈 (네온 모드 전용 커스텀 강조색) =====
 // 사용자가 settings.html에서 고른 테마 색(네온 강조색)을 localStorage에 저장하고,
-// --tno-neon / --tno-neon-dim 커스텀 프로퍼티로 반영한다. 단, 이 커스텀 색은 TNO
+// --tno-neon / --tno-neon-dim 커스텀 프로퍼티로 반영한다. 단, 이 커스텀 색은 네온
 // 모드에서만 의미가 있다 — 라이트/다크 모드는 CRT 감성이 아니라 깔끔한 UI를 지향하므로
 // 각 모드 고유의 고정 강조색(css의 [data-theme-mode] 규칙)을 그대로 쓰고, 이 모듈은
 // 인라인 오버라이드를 걸지 않는다(thememode.js보다 나중에 로드되어야 함).
@@ -60,7 +60,7 @@
     window.resetThemeColor = resetThemeColor;
     window.getDefaultThemeColor = function () { return DEFAULT_COLOR; };
     window.isValidHexColor = isValidHex;
-    // 테마 모드가 바뀔 때(thememode.js) 다시 호출되어 TNO 여부에 따라 인라인 오버라이드를 켜고 끔
+    // 테마 모드가 바뀔 때(thememode.js) 다시 호출되어 네온 여부에 따라 인라인 오버라이드를 켜고 끔
     window.applyThemeColorForMode = function () { applyThemeColor(getThemeColor()); };
 
     applyThemeColor(getThemeColor());

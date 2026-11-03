@@ -1,5 +1,5 @@
 // ===== 방향성(중점) 상자 그리기 — 게임(js/campaign.js)과 캠페인 편집기(js/campaign-editor.js)가 함께 씀 =====
-// 기본 모양은 HOI4 중점처럼: 위에 큰 아이콘(그림 · 이모지), 아래에 이름판, 그 밑에 남은 날 · 진행 막대.
+// 기본 모양: 위에 큰 아이콘(그림 · 이모지), 아래에 이름판, 그 밑에 남은 날 · 진행 막대.
 // 캠페인(모드)이 focusStyle로 모양을 통째로 바꿀 수 있다 (중점 템플릿 디자인):
 //   focusStyle = { width, height, gapX, gapY, template: "HTML", css: "CSS" }
 //   template의 자리표시: {{icon}}(그림/이모지 HTML) {{iconUrl}} {{title}} {{days}} {{daysText}} {{status}} {{statusText}} {{progress}} {{desc}} {{id}}
@@ -101,7 +101,7 @@
     // 트리 안에 넣을 <style> — 캠페인이 정한 css를 그 트리 안으로만
     function styleTag(st, scope) { return st && st.css ? `<style>${scopeCss(st.css, scope)}</style>` : ''; }
 
-    // ---- 기본(HOI4 중점) 모양 ----
+    // ---- 기본 모양 ----
     const css = document.createElement('style');
     css.textContent = `
         .hf-node { box-sizing: border-box; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 3px; padding: 2px 0 0; background: none; border: none; color: #ddd; font: inherit; text-align: center; }
