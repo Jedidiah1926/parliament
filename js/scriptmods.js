@@ -178,6 +178,8 @@
             case 'party_support': { const p = partyRef(v.party); return !!p && cmp(supportOf(p, v.chamber), v); }
             case 'ruling_seats': { const ch = v.chamber || 'house', n = realParties().filter(isGov).reduce((t2, p) => t2 + seatsOf(p, ch), 0); return cmp(v.share ? n / (chamberTotal(ch) || 1) * 100 : n, v); }
             case 'economy': { const e = econ(); return !!e && ECON_KEYS.includes(v.indicator) && cmp(Number(e[v.indicator]) || 0, v); }
+            // 국정 지지율 (여론 › 국정 지지율, js/news.js) — { "of": "cabinet" | "president" | "pm" | "chair", "lt": 30 }
+            case 'approval': { const a = window.HemiNews && window.HemiNews.approval(v.of || 'cabinet'); return a != null && cmp(a, v); }
             default:
                 warn(mod, `모르는 조건 "${k}"`);
                 return false;
@@ -228,6 +230,21 @@
             case 'nation_name': { const el = document.getElementById('nationNameInput'); if (el) { el.value = String(v).slice(0, 80); if (typeof window.updateNationIdBar === 'function') window.updateNationIdBar(); } return; }
             case 'message': showCustomAlert(fill(typeof v === 'object' ? [v.title, v.text].filter(Boolean).join('\n\n') : v, mod)); return;
             case 'toast': toast(fill(v, mod)); return;
+            // 국정 지지율 더하기 · 바꾸기 — { "of": "cabinet", "add": -5 } · { "of": "president", "set": 40 }
+            case 'approval': {
+                if (!window.HemiNews) return warn(mod, 'approval: 여론 기능이 없음');
+                const k = v.of || 'cabinet';
+                if (window.HemiNews.approval(k) == null) return warn(mod, `approval: 모르는 자리 "${k}"`);
+                if ('set' in v) window.HemiNews.setApproval(k, v.set); else window.HemiNews.addApproval(k, v.add);
+                return;
+            }
+            // 기사 발행 — { "title", "subtitle", "body", "outlet", "reporter", "type", "effects": [{ "party": "ruling", "add": -2 }, { "approval": "cabinet", "add": -3 }] }
+            case 'article': {
+                if (!window.HemiNews) return warn(mod, 'article: 여론 기능이 없음');
+                const o = { ...v, title: fill(v.title || '', mod), subtitle: fill(v.subtitle || '', mod), body: fill(v.body || '', mod) };
+                window.HemiNews.publishNew(o, partyRef);
+                return;
+            }
             case 'fire_event': queueEvent(mod, typeof v === 'object' ? v.id : v, true); return;
             case 'if': { if (test(v.condition ?? v.if, mod)) run(v.then, mod); else run(v.else, mod); return; }
             case 'random_list': {
