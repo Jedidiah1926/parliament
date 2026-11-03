@@ -1,6 +1,6 @@
 // ===== 1.6.3 — Vive la Révolution! "Vive la France!" (혁명 · 당-국가 체제 · 선거인단) =====
 // 1.6.3 미리보기(예전 teaser63)에서 본 게임으로 옮겨 왔다 — 본 게임 · 모든 미리보기 화면에서 돈다 (로고 제작 화면만 빼고).
-// main.html은 js/coup.js 다음에 이 파일을 읽는다 (군정은 window.T62로 다룬다).
+// main.html은 js/coup.js 다음에 이 파일을 읽는다 (군정은 window.HemiCoup로 다룬다).
 //
 //   - 내각 › 혁명: 민중이 주체 — 주도 이념(민주 · 공산주의)과 혁명 정당을 고르면 성공 확률을 요인별로 보여 준다
 //     (정부 불신 · 군정/당-국가/계엄 · 활동 금지 정당 · 혁명 정당 지지율 · 그 정당이 앞서는 지역의 인구 · 군의 충성)
@@ -27,7 +27,7 @@
     const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
     const uid = () => 'r' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
     const partyById = id => parties.find(p => String(p.id) === String(id)) || null;
-    const T62 = () => window.T62 || null;
+    const HemiCoup = () => window.HemiCoup || null;
     const isInd = p => p && p.ideologyId === 9999;
     const activeParty = p => p && p.status !== 'banned' && p.status !== 'dissolved' && !isInd(p);
     // 혁명은 활동 금지 · 해산된 정당도 일으킬 수 있다 (지하에서) — 성공하면 복권 · 재건
@@ -107,8 +107,8 @@
         partners = partners || [];
         const f = [];
         const add = (label, v) => f.push({ label, v: Math.round(v) });
-        const t61 = T62();
-        const junta = t61 && t61.junta;
+        const coupApi = HemiCoup();
+        const junta = coupApi && coupApi.junta;
         const martial = emergencyPowers?.martialLaw?.active;
         add('기본', 10);
         if (junta) add('군정에 대한 반감', 20);
@@ -132,8 +132,8 @@
         const share = popShareLed(bloc.length ? bloc.map(x => x.id) : null);
         const who = bloc.length > 1 ? '혁명 연합이' : p ? pname(p) + '이(가)' : bloc.length ? pname(bloc[0]) + '이(가)' : '반정부 세력이';
         if (share != null) add(`${who} 앞서는 지역의 인구 (${Math.round(share * 100)}%)`, share * 20);
-        if (t61 && t61.military && t61.military.length) {
-            const loyal = t61.military.reduce((a, m) => a + (Number(m.loyalty) || 0), 0) / t61.military.length;
+        if (coupApi && coupApi.military && coupApi.military.length) {
+            const loyal = coupApi.military.reduce((a, m) => a + (Number(m.loyalty) || 0), 0) / coupApi.military.length;
             add(`군의 충성 (평균 ${Math.round(loyal)})`, -(loyal - 50) * 0.4);
         }
         return { factors: f, chance: clamp(Math.round(f.reduce((a, x) => a + x.v, 0)), 5, 90) };
@@ -264,15 +264,15 @@
             ui.lastId = entry.id;
             ui.newName = ''; ui.newFlag = ''; ui.coalition = {};
             try { simulate(); refreshUI(); } catch (e) { /* 화면 준비 전 */ }
-            if (T62()) T62().refresh();
+            if (HemiCoup()) HemiCoup().refresh();
             refresh();
         });
     }
     function communistWin(p, partners) {
         partners = partners || [];
         const fx = [];
-        const t61 = T62();
-        if (t61 && t61.junta) { t61.endJunta('revolution'); fx.push('군정 붕괴'); }
+        const coupApi = HemiCoup();
+        if (coupApi && coupApi.junta) { coupApi.endJunta('revolution'); fx.push('군정 붕괴'); }
         liftMartialLaw();
         const revived = [p, ...partners].filter(revive);
         if (revived.length) fx.push(`지하에서 활동하던 ${namesOf(revived)} 복권`);
@@ -326,13 +326,13 @@
         const fx = [];
         const revived = [p, ...partners].filter(revive);
         if (revived.length) fx.push(`지하에서 활동하던 ${namesOf(revived)} 복권`);
-        const t61 = T62();
-        if (t61 && t61.junta) { t61.endJunta('revolution'); fx.push('군정 붕괴'); }
+        const coupApi = HemiCoup();
+        if (coupApi && coupApi.junta) { coupApi.endJunta('revolution'); fx.push('군정 붕괴'); }
         if (S.partyState) { const was = isCouncil() ? '평의회 체제' : '당-국가 체제'; endPartyState(); fx.push(`${was} 붕괴 · 의회 이름 되돌림`); }
         if (emergencyPowers?.martialLaw?.active) { liftMartialLaw(); fx.push('계엄령 해제'); }
         const bannedBefore = parties.filter(x => x.status === 'banned').length;
         restoreRevBanned();
-        if (t61) t61.restoreBanned();
+        if (coupApi) coupApi.restoreBanned();
         const restored = bannedBefore - parties.filter(x => x.status === 'banned').length;
         if (restored > 0) fx.push(`활동 금지됐던 정당 ${restored}곳 복권`);
         Object.assign(president, { name: '', photo: '', partyId: null, linkedSeat: null });
@@ -365,7 +365,7 @@
             partners.forEach(x => { if (x.status !== 'dissolved') x.status = 'banned'; cutSupport(x.id, 0.7); });
             fx.push(`혁명 연합 ${namesOf(partners)} 활동 금지 · 지지율 30% 하락`);
         }
-        if (!(T62() && T62().junta) && !S.partyState && !emergencyPowers?.martialLaw?.active) {
+        if (!(HemiCoup() && HemiCoup().junta) && !S.partyState && !emergencyPowers?.martialLaw?.active) {
             emergencyPowers.martialLaw.holder = 'president';
             emergencyPowers.martialLaw.suspendParliament = false;
             emergencyPowers.martialLaw.active = true;
@@ -405,7 +405,7 @@
             ui.lastId = entry.id;
             ui.newName = ''; ui.newFlag = '';
             try { simulate(); refreshUI(); } catch (e) { /* 화면 준비 전 */ }
-            if (T62()) T62().refresh();
+            if (HemiCoup()) HemiCoup().refresh();
             refresh();
         });
     }
@@ -533,17 +533,17 @@
         const winner = r.round1.find(x => x.partyId === r.winnerPartyId);
         const faithless = r.units.reduce((a, u) => a + u.faithless, 0);
         return `
-            <div class="t63-ec">
-                <div class="t63-ec-head">선거인단 ${r.totalE}명 · 과반 ${r.need}명 · ${S.ec.alloc === 'prop' ? '비례 배분' : '승자독식'}${faithless ? ` · 신의 없는 선거인 ${faithless}명` : ''}</div>
-                <div class="t63-ec-bar">${r.round1.filter(x => x.electors > 0).map(x => `<span style="width:${x.pct}%;background:${color(x.partyId)}" title="${esc(name(x.partyId))} ${x.electors}명"></span>`).join('')}<i style="left:${r.need / r.totalE * 100}%"></i></div>
-                ${r.round1.map(x => `<div class="t63-ec-row"><span><span class="t63-dot" style="background:${color(x.partyId)}"></span>${esc(name(x.partyId))}</span><span>선거인 <b>${x.electors}</b> · 득표 ${x.popPct.toFixed(1)}%</span></div>`).join('')}
-                ${r.contingent ? `<div class="t63-ec-note">과반(${r.need}명) 미달 — ${r.contingent.how === 'parliament'
+            <div class="rev-ec">
+                <div class="rev-ec-head">선거인단 ${r.totalE}명 · 과반 ${r.need}명 · ${S.ec.alloc === 'prop' ? '비례 배분' : '승자독식'}${faithless ? ` · 신의 없는 선거인 ${faithless}명` : ''}</div>
+                <div class="rev-ec-bar">${r.round1.filter(x => x.electors > 0).map(x => `<span style="width:${x.pct}%;background:${color(x.partyId)}" title="${esc(name(x.partyId))} ${x.electors}명"></span>`).join('')}<i style="left:${r.need / r.totalE * 100}%"></i></div>
+                ${r.round1.map(x => `<div class="rev-ec-row"><span><span class="rev-dot" style="background:${color(x.partyId)}"></span>${esc(name(x.partyId))}</span><span>선거인 <b>${x.electors}</b> · 득표 ${x.popPct.toFixed(1)}%</span></div>`).join('')}
+                ${r.contingent ? `<div class="rev-ec-note">과반(${r.need}명) 미달 — ${r.contingent.how === 'parliament'
                     ? `의회가 상위 ${r.contingent.top3.length}명 중에서 정함 (${esc(chamberDisplayName(r.chamber))} 의석: ${r.contingent.top3.map(x => `${esc(name(x.partyId))} ${x.seats}석`).join(' · ')}) → <b>${esc(name(r.winnerPartyId))}</b>`
-                    : `최다 선거인 확보 후보 <b>${esc(name(r.winnerPartyId))}</b> 당선`}</div>` : (winner ? `<div class="t63-ec-note">${esc(name(winner.partyId))} 과반 확보 (${winner.electors}명)</div>` : '')}
-                <div class="t63-ec-map" data-ec-map></div>
-                <details class="t63-ec-units"><summary>${r.unitMode === 'region' ? '권역' : '지역구'}별 선거인 (${r.units.length})</summary>
-                    ${r.units.map(u => `<div class="t63-ec-unit" style="border-left-color:${color(u.winner)}"><b>${esc(u.name)}</b> <span class="t63-dim">선거인 ${u.electors}명</span>
-                        <div class="t63-dim">${Object.entries(u.alloc).filter(([, n]) => n > 0).map(([id, n]) => `${esc(name(id))} ${n}`).join(' · ')}${u.faithless ? ` · 이탈 ${u.faithless}` : ''}</div></div>`).join('')}
+                    : `최다 선거인 확보 후보 <b>${esc(name(r.winnerPartyId))}</b> 당선`}</div>` : (winner ? `<div class="rev-ec-note">${esc(name(winner.partyId))} 과반 확보 (${winner.electors}명)</div>` : '')}
+                <div class="rev-ec-map" data-ec-map></div>
+                <details class="rev-ec-units"><summary>${r.unitMode === 'region' ? '권역' : '지역구'}별 선거인 (${r.units.length})</summary>
+                    ${r.units.map(u => `<div class="rev-ec-unit" style="border-left-color:${color(u.winner)}"><b>${esc(u.name)}</b> <span class="rev-dim">선거인 ${u.electors}명</span>
+                        <div class="rev-dim">${Object.entries(u.alloc).filter(([, n]) => n > 0).map(([id, n]) => `${esc(name(id))} ${n}`).join(' · ')}${u.faithless ? ` · 이탈 ${u.faithless}` : ''}</div></div>`).join('')}
                 </details>
             </div>`;
     }
@@ -560,7 +560,7 @@
             lastEC.units.forEach(u => u.keys.forEach(k => { byKey[k] = u; }));
             mapEl.style.aspectRatio = '3 / 2';
             renderDistrictSvgInto(mapEl, {
-                chamber: lastEC.chamber, zoomKey: 't62:ec:' + panelId,
+                chamber: lastEC.chamber, zoomKey: 'coup:ec:' + panelId,
                 getFill: k => { const u = byKey[k]; const p = u && partyById(u.winner); return p ? tendencyColorForPct(p.color, 45 + Math.min(55, u.share * 0.55)) : 'transparent'; },
                 title: k => { const u = byKey[k]; return u ? `${u.name}: 선거인 ${u.electors}명 · ${Object.entries(u.alloc).filter(([, n]) => n > 0).map(([id, n]) => `${partyById(id)?.name || '?'} ${n}`).join(' · ')}` : k; },
                 groupOf: lastEC.unitMode === 'region' ? k => byKey[k]?.id ?? null : undefined,
@@ -575,10 +575,10 @@
 
     // 선거인단 설정 칸 — 선거 › 선거 제도의 선거 방식 버튼 아래 (선거인단제일 때만)
     function renderEcPanel() {
-        let box = document.getElementById('t63EcPanel');
+        let box = document.getElementById('revEcPanel');
         const hint = document.getElementById('presElecModeHint');
         if (!hint) return;
-        if (!box) { box = document.createElement('div'); box.id = 't63EcPanel'; hint.parentElement.insertBefore(box, hint.nextSibling); }
+        if (!box) { box = document.createElement('div'); box.id = 'revEcPanel'; hint.parentElement.insertBefore(box, hint.nextSibling); }
         const mode = safeGet(() => presElectionMode);
         box.style.display = mode === 'electoral' ? '' : 'none';
         if (mode !== 'electoral') return;
@@ -589,21 +589,21 @@
         const totalE = counts.reduce((a, b) => a + b, 0);
         const radio = (field, v, t) => `<button type="button" class="system-radio-btn ${e[field] === v ? 'active' : ''}" data-f="${field}" data-v="${v}">${t}</button>`;
         box.innerHTML = `
-            <div class="t63-ecset">
-                <div class="t63-ecset-title">선거인단 설정 <span class="t63-dim">— ${units.length}개 단위 · 선거인 ${totalE}명 · 과반 ${Math.floor(totalE / 2) + 1}명</span></div>
-                <label class="t63-dim">선거인 단위</label>
+            <div class="rev-ecset">
+                <div class="rev-ecset-title">선거인단 설정 <span class="rev-dim">— ${units.length}개 단위 · 선거인 ${totalE}명 · 과반 ${Math.floor(totalE / 2) + 1}명</span></div>
+                <label class="rev-dim">선거인 단위</label>
                 <div class="system-radio-group">${radio('unit', 'region', '권역마다')}${radio('unit', 'district', '지역구마다')}</div>
-                ${e.unit === 'region' && !(regions[ch] || []).length ? '<div class="t63-dim t63-small">이 원에 권역이 없어 지역구마다로 셉니다 (국가 › 권역에서 만들 수 있어요)</div>' : ''}
-                <label class="t63-dim">선거인 수</label>
+                ${e.unit === 'region' && !(regions[ch] || []).length ? '<div class="rev-dim rev-small">이 원에 권역이 없어 지역구마다로 셉니다 (국가 › 권역에서 만들 수 있어요)</div>' : ''}
+                <label class="rev-dim">선거인 수</label>
                 <div class="system-radio-group">${radio('electors', 'pop', '인구 비례')}${radio('electors', 'seats', '의석 수 + 가산')}${radio('electors', 'manual', '직접 입력')}</div>
-                ${e.electors === 'pop' ? `<div class="t63-row"><span class="t63-dim">총 선거인 수</span><input type="number" min="1" data-n="total" value="${e.total}"></div><div class="t63-dim t63-small">인구에 비례해 나누되 단위마다 최소 1명 (인구 미입력 지역구는 ${DEFAULT_POP.toLocaleString()}명으로)</div>` : ''}
-                ${e.electors === 'seats' ? `<div class="t63-row"><span class="t63-dim">단위마다 가산</span><input type="number" min="0" data-n="bonus" value="${e.bonus}"></div><div class="t63-dim t63-small">그 단위의 ${esc(chamberDisplayName(ch))} 지역구 의석 수 + 가산 (미국식: 하원 의석 + 상원 2)</div>` : ''}
-                ${e.electors === 'manual' ? `<details class="t63-manual" open><summary class="t63-dim">단위별 선거인 수</summary>${units.map((u, i) => `<div class="t63-row"><span>${esc(u.name)}</span><input type="number" min="0" data-u="${esc(u.id)}" value="${counts[i]}"></div>`).join('')}</details>` : ''}
-                <label class="t63-dim">배분 방식</label>
+                ${e.electors === 'pop' ? `<div class="rev-row"><span class="rev-dim">총 선거인 수</span><input type="number" min="1" data-n="total" value="${e.total}"></div><div class="rev-dim rev-small">인구에 비례해 나누되 단위마다 최소 1명 (인구 미입력 지역구는 ${DEFAULT_POP.toLocaleString()}명으로)</div>` : ''}
+                ${e.electors === 'seats' ? `<div class="rev-row"><span class="rev-dim">단위마다 가산</span><input type="number" min="0" data-n="bonus" value="${e.bonus}"></div><div class="rev-dim rev-small">그 단위의 ${esc(chamberDisplayName(ch))} 지역구 의석 수 + 가산 (미국식: 하원 의석 + 상원 2)</div>` : ''}
+                ${e.electors === 'manual' ? `<details class="rev-manual" open><summary class="rev-dim">단위별 선거인 수</summary>${units.map((u, i) => `<div class="rev-row"><span>${esc(u.name)}</span><input type="number" min="0" data-u="${esc(u.id)}" value="${counts[i]}"></div>`).join('')}</details>` : ''}
+                <label class="rev-dim">배분 방식</label>
                 <div class="system-radio-group">${radio('alloc', 'wta', '승자독식')}${radio('alloc', 'prop', '비례 배분')}</div>
-                <label class="t63-dim">과반 미달이면</label>
+                <label class="rev-dim">과반 미달이면</label>
                 <div class="system-radio-group">${radio('noMajority', 'parliament', '의회가 결정 (상위 3명)')}${radio('noMajority', 'plurality', '최다 선거인 당선')}</div>
-                <div class="t63-row"><span class="t63-dim">신의 없는 선거인</span><input type="number" min="0" max="100" step="0.5" data-n="faithless" value="${e.faithless}"><span class="t63-dim">%</span></div>
+                <div class="rev-row"><span class="rev-dim">신의 없는 선거인</span><input type="number" min="0" max="100" step="0.5" data-n="faithless" value="${e.faithless}"><span class="rev-dim">%</span></div>
             </div>`;
         box.querySelectorAll('[data-f]').forEach(b => { b.onclick = () => { S.ec[b.dataset.f] = b.dataset.v; renderEcPanel(); }; });
         box.querySelectorAll('[data-n]').forEach(i => { i.onchange = () => { S.ec[i.dataset.n] = Number(i.value) || 0; renderEcPanel(); }; });
@@ -637,10 +637,10 @@
         const r = origCab.apply(this, arguments);
         const grid = document.getElementById('cabinetDisplayGrid');
         if (grid) {
-            let b = document.getElementById('t63PartyStateBanner');
+            let b = document.getElementById('revPartyStateBanner');
             const p = S.partyState && partyById(S.partyState.partyId);
             if (p) {
-                if (!b) { b = el('<div id="t63PartyStateBanner" class="t63-banner"></div>'); grid.parentElement.insertBefore(b, grid); }
+                if (!b) { b = el('<div id="revPartyStateBanner" class="rev-banner"></div>'); grid.parentElement.insertBefore(b, grid); }
                 b.innerHTML = isCouncil()
                     ? `★ 평의회 체제 — 혁명 연합 ${esc(namesOf((S.partyState.bloc || []).map(partyById).filter(Boolean)))} · 평의회 의장 <b>${esc(president.name || '')}</b>${S.partyState.since ? ` · ${esc(S.partyState.since)}부터` : ''}`
                     : `★ 당-국가 체제 — ${esc(p.name)} 일당 집권 · 총서기 겸 국가주석 <b>${esc(president.name || '')}</b>${S.partyState.since ? ` · ${esc(S.partyState.since)}부터` : ''}`;
@@ -653,8 +653,8 @@
     function renderRevolution() {
         const box = document.getElementById('contentRevolution');
         if (!box) return;
-        const t61 = T62();
-        const junta = t61 && t61.junta;
+        const coupApi = HemiCoup();
+        const junta = coupApi && coupApi.junta;
         const ps = S.partyState && partyById(S.partyState.partyId);
         if (ps && ui.kind === 'communist') ui.kind = 'democratic'; // 당-국가 체제는 민주 혁명으로만 무너뜨린다
         const kind = ui.kind;
@@ -673,65 +673,65 @@
         const status = junta ? `⚔ 군정 (의장 ${esc(junta.chairName)})` : ps ? (council ? `★ 평의회 체제 (${esc(namesOf(blocList))})` : `★ 당-국가 체제 (${esc(ps.name)})`) : emergencyPowers?.martialLaw?.active ? '계엄령 선포 중' : '일반 정부';
         const partnerPick = cands.filter(x => x !== p);
         box.innerHTML = `
-            <div class="t63-intro">민중이 일으키는 혁명입니다. 주도 이념에 따라 결과 체제가 달라져요 — 공산주의 혁명은 당-국가 체제나 평의회 체제, 민주 혁명은 독재 · 군정을 무너뜨리고 새 헌법을 세웁니다. 여러 정당이 혁명 연합으로 함께 일으킬 수도 있어요.</div>
-            <div class="t63-status">지금 체제: <b>${status}</b></div>
-            ${ps && council ? `<div class="t63-ps">
-                <div class="t63-ps-title">★ 평의회 체제</div>
-                <div class="t63-dim">혁명 연합 ${esc(namesOf(blocList))} · 평의회 의장 ${esc(president.name || '')} · 의회: 최고평의회</div>
-                <div class="t63-dim t63-small">혁명 연합 정당끼리 경쟁 선거를 치릅니다 (선거 › 총선). 결과에 따라 의회 › 집권과 연정에서 정권을 바꾸세요 — 연합 밖 정당은 활동 금지라 선거에 나오지 못해요. 벗어나려면 아래에서 민주 혁명을 일으키세요.</div>
-            </div>` : ps ? `<div class="t63-ps">
-                <div class="t63-ps-title">★ 당-국가 체제</div>
-                <div class="t63-dim">${esc(ps.name)} 일당 집권 · 총서기 겸 국가주석 ${esc(president.name || '')} · 의회: 최고인민회의${(S.partyState.allies || []).length ? ` · 우당 ${S.partyState.allies.map(id => esc(partyById(id)?.name || '?')).join(' · ')}` : ''}</div>
-                <button type="button" class="t63-btn" data-act="yesno">🗳 찬반 선거 치르기 (최고인민회의 대의원)</button>
-                <div class="t63-dim t63-small">벗어나려면 아래에서 민주 혁명을 일으키세요.</div>
+            <div class="rev-intro">민중이 일으키는 혁명입니다. 주도 이념에 따라 결과 체제가 달라져요 — 공산주의 혁명은 당-국가 체제나 평의회 체제, 민주 혁명은 독재 · 군정을 무너뜨리고 새 헌법을 세웁니다. 여러 정당이 혁명 연합으로 함께 일으킬 수도 있어요.</div>
+            <div class="rev-status">지금 체제: <b>${status}</b></div>
+            ${ps && council ? `<div class="rev-ps">
+                <div class="rev-ps-title">★ 평의회 체제</div>
+                <div class="rev-dim">혁명 연합 ${esc(namesOf(blocList))} · 평의회 의장 ${esc(president.name || '')} · 의회: 최고평의회</div>
+                <div class="rev-dim rev-small">혁명 연합 정당끼리 경쟁 선거를 치릅니다 (선거 › 총선). 결과에 따라 의회 › 집권과 연정에서 정권을 바꾸세요 — 연합 밖 정당은 활동 금지라 선거에 나오지 못해요. 벗어나려면 아래에서 민주 혁명을 일으키세요.</div>
+            </div>` : ps ? `<div class="rev-ps">
+                <div class="rev-ps-title">★ 당-국가 체제</div>
+                <div class="rev-dim">${esc(ps.name)} 일당 집권 · 총서기 겸 국가주석 ${esc(president.name || '')} · 의회: 최고인민회의${(S.partyState.allies || []).length ? ` · 우당 ${S.partyState.allies.map(id => esc(partyById(id)?.name || '?')).join(' · ')}` : ''}</div>
+                <button type="button" class="rev-btn" data-act="yesno">🗳 찬반 선거 치르기 (최고인민회의 대의원)</button>
+                <div class="rev-dim rev-small">벗어나려면 아래에서 민주 혁명을 일으키세요.</div>
             </div>` : ''}
-            <label class="t63-dim">주도 이념</label>
+            <label class="rev-dim">주도 이념</label>
             <div class="system-radio-group">
                 <button type="button" class="system-radio-btn ${kind === 'democratic' ? 'active' : ''}" data-kind="democratic">민주 혁명</button>
                 <button type="button" class="system-radio-btn ${kind === 'communist' ? 'active' : ''}" data-kind="communist" ${ps ? 'disabled' : ''}>공산주의 혁명</button>
             </div>
-            <label class="t63-dim">혁명 정당 ${kind === 'democratic' ? '(없어도 됨 — 시민 혁명)' : ''}</label>
+            <label class="rev-dim">혁명 정당 ${kind === 'democratic' ? '(없어도 됨 — 시민 혁명)' : ''}</label>
             <select data-pick="party">
                 ${kind === 'democratic' ? '<option value="">— 시민 혁명 (정당 없음) —</option>' : ''}
                 ${cands.map(x => `<option value="${esc(x.id)}" ${String(x.id) === String(ui.partyId) ? 'selected' : ''}>${esc(pname(x) + stateTag(x))} · ${esc(typeof ideologyName === 'function' ? (ideologyName(x.ideologyId) || '') : '')} · 지지율 ${support(x.id)}%${isGovParty(x) ? ' · 여당' : ''}</option>`).join('')}
             </select>
-            ${partnerPick.length ? `<details class="t63-allies t63-coalition" ${partners.length ? 'open' : ''}><summary class="t63-dim">혁명 연합 — 함께 일으킬 정당 (선택${partners.length ? ` · ${partners.length}곳` : ''})</summary>
-                ${partnerPick.map(x => `<label class="t63-row"><input type="checkbox" data-coal="${esc(x.id)}" ${ui.coalition[x.id] ? 'checked' : ''}> ${esc(pname(x) + stateTag(x))} <span class="t63-dim t63-small">지지율 ${support(x.id)}%</span></label>`).join('')}
-                <div class="t63-dim t63-small">연합 정당의 지지율과 앞서는 지역도 성공 확률에 더해요. 실패하면 연합 정당도 함께 활동 금지돼요.</div>
+            ${partnerPick.length ? `<details class="rev-allies rev-coalition" ${partners.length ? 'open' : ''}><summary class="rev-dim">혁명 연합 — 함께 일으킬 정당 (선택${partners.length ? ` · ${partners.length}곳` : ''})</summary>
+                ${partnerPick.map(x => `<label class="rev-row"><input type="checkbox" data-coal="${esc(x.id)}" ${ui.coalition[x.id] ? 'checked' : ''}> ${esc(pname(x) + stateTag(x))} <span class="rev-dim rev-small">지지율 ${support(x.id)}%</span></label>`).join('')}
+                <div class="rev-dim rev-small">연합 정당의 지지율과 앞서는 지역도 성공 확률에 더해요. 실패하면 연합 정당도 함께 활동 금지돼요.</div>
             </details>` : ''}
-            ${kind === 'communist' && p ? `<label class="t63-dim">혁명 뒤 체제</label>
+            ${kind === 'communist' && p ? `<label class="rev-dim">혁명 뒤 체제</label>
             <div class="system-radio-group">
                 <button type="button" class="system-radio-btn ${ui.regime !== 'council' ? 'active' : ''}" data-regime="vanguard">당-국가 체제 (일당 + 우당)</button>
                 <button type="button" class="system-radio-btn ${ui.regime === 'council' ? 'active' : ''}" data-regime="council" ${partners.length ? '' : 'disabled'}>평의회 체제 (연합 공동 집권)</button>
             </div>
-            <div class="t63-dim t63-small">${ui.regime === 'council' && partners.length ? '혁명 연합 정당이 모두 남아 경쟁 선거로 정권을 주고받아요 (생디칼리슴식). 연합 밖 정당은 활동 금지.' : partners.length ? '혁명 정당이 일당 집권하고 혁명 연합 정당은 우당(통일전선)으로 남아요.' : '평의회 체제는 혁명 연합에 정당을 넣어야 고를 수 있어요.'}</div>
-            ${ui.regime !== 'council' || !partners.length ? `<details class="t63-allies" open><summary class="t63-dim">우당(통일전선)으로 남길 정당 — 고르지 않은 정당은 활동 금지${partners.length ? ' (혁명 연합 정당은 자동으로 우당)' : ''}</summary>
-                ${partnerPick.filter(x => !partners.includes(x) && activeParty(x)).map(x => `<label class="t63-row"><input type="checkbox" data-ally="${esc(x.id)}" ${ui.allies[x.id] ? 'checked' : ''}> ${esc(x.name)}</label>`).join('') || '<div class="t63-dim">다른 정당 없음</div>'}
+            <div class="rev-dim rev-small">${ui.regime === 'council' && partners.length ? '혁명 연합 정당이 모두 남아 경쟁 선거로 정권을 주고받아요 (생디칼리슴식). 연합 밖 정당은 활동 금지.' : partners.length ? '혁명 정당이 일당 집권하고 혁명 연합 정당은 우당(통일전선)으로 남아요.' : '평의회 체제는 혁명 연합에 정당을 넣어야 고를 수 있어요.'}</div>
+            ${ui.regime !== 'council' || !partners.length ? `<details class="rev-allies" open><summary class="rev-dim">우당(통일전선)으로 남길 정당 — 고르지 않은 정당은 활동 금지${partners.length ? ' (혁명 연합 정당은 자동으로 우당)' : ''}</summary>
+                ${partnerPick.filter(x => !partners.includes(x) && activeParty(x)).map(x => `<label class="rev-row"><input type="checkbox" data-ally="${esc(x.id)}" ${ui.allies[x.id] ? 'checked' : ''}> ${esc(x.name)}</label>`).join('') || '<div class="rev-dim">다른 정당 없음</div>'}
             </details>` : ''}` : ''}
-            <details class="t63-identity"><summary class="t63-dim">혁명 뒤 국호 · 국기 바꾸기 (선택)</summary>
-                <div class="t63-row"><input type="text" data-id="name" placeholder="새 국호 (비우면 그대로)" value="${esc(ui.newName)}"></div>
-                <div class="t63-row"><label class="leader-photo-box t63-flag" title="새 국기">${ui.newFlag ? `<img src="${ui.newFlag}" alt="">` : '<span class="photo-ph">🏳️</span>'}<input type="file" accept="image/*" data-id="flag"></label>
-                    ${ui.newFlag ? '<button type="button" class="t63-btn" data-act="noflag">✕ 국기 빼기</button>' : '<span class="t63-dim t63-small">눌러서 새 국기 고르기</span>'}</div>
+            <details class="rev-identity"><summary class="rev-dim">혁명 뒤 국호 · 국기 바꾸기 (선택)</summary>
+                <div class="rev-row"><input type="text" data-id="name" placeholder="새 국호 (비우면 그대로)" value="${esc(ui.newName)}"></div>
+                <div class="rev-row"><label class="leader-photo-box rev-flag" title="새 국기">${ui.newFlag ? `<img src="${ui.newFlag}" alt="">` : '<span class="photo-ph">🏳️</span>'}<input type="file" accept="image/*" data-id="flag"></label>
+                    ${ui.newFlag ? '<button type="button" class="rev-btn" data-act="noflag">✕ 국기 빼기</button>' : '<span class="rev-dim rev-small">눌러서 새 국기 고르기</span>'}</div>
             </details>
-            <div class="t63-chance">
-                <div class="t63-chance-head"><span>성공 확률</span><b>${chance}%</b></div>
-                <div class="t63-bar"><span style="width:${chance}%"></span></div>
-                ${factors.map(x => `<div class="t63-factor"><span>${esc(x.label)}</span><span class="${x.v >= 0 ? 't63-plus' : 't63-minus'}">${x.v >= 0 ? '+' : ''}${x.v}%p</span></div>`).join('')}
-                <div class="t63-dim t63-small">합계는 5~90% 사이로 맞춥니다.</div>
+            <div class="rev-chance">
+                <div class="rev-chance-head"><span>성공 확률</span><b>${chance}%</b></div>
+                <div class="rev-bar"><span style="width:${chance}%"></span></div>
+                ${factors.map(x => `<div class="rev-factor"><span>${esc(x.label)}</span><span class="${x.v >= 0 ? 'rev-plus' : 'rev-minus'}">${x.v >= 0 ? '+' : ''}${x.v}%p</span></div>`).join('')}
+                <div class="rev-dim rev-small">합계는 5~90% 사이로 맞춥니다.</div>
             </div>
-            <button type="button" class="t63-go" data-act="go">✊ ${kind === 'communist' ? '공산주의 혁명' : '민주 혁명'} 일으키기</button>
-            ${last ? `<div class="t63-result ${last.success ? 'ok' : 'fail'}">
-                <div class="t63-result-head">${last.kind === 'yesno' ? '🗳 찬반 선거' : last.success ? '✔ 성공' : '✘ 실패'} — ${esc(kindName(last.kind))}${last.chance != null ? ` <span class="t63-dim">(확률 ${last.chance}%)</span>` : ''}</div>
-                <div class="t63-dim">${last.party ? `혁명 정당: ${esc(last.party)} · ` : ''}${esc(last.date || '')}</div>
+            <button type="button" class="rev-go" data-act="go">✊ ${kind === 'communist' ? '공산주의 혁명' : '민주 혁명'} 일으키기</button>
+            ${last ? `<div class="rev-result ${last.success ? 'ok' : 'fail'}">
+                <div class="rev-result-head">${last.kind === 'yesno' ? '🗳 찬반 선거' : last.success ? '✔ 성공' : '✘ 실패'} — ${esc(kindName(last.kind))}${last.chance != null ? ` <span class="rev-dim">(확률 ${last.chance}%)</span>` : ''}</div>
+                <div class="rev-dim">${last.party ? `혁명 정당: ${esc(last.party)} · ` : ''}${esc(last.date || '')}</div>
                 <ul>${(last.effects || []).map(e => `<li>${esc(e)}</li>`).join('')}</ul></div>` : ''}
-            ${S.log.length ? `<details class="t63-log"><summary>혁명 기록 (${S.log.length})</summary>${S.log.map(x => `<div class="t63-log-row"><span class="${x.kind === 'yesno' ? '' : x.success ? 't63-plus' : 't63-minus'}">${x.kind === 'yesno' ? '🗳' : x.success ? '✔' : '✘'}</span><span>${esc(kindName(x.kind))}${x.party ? ` · ${esc(x.party)}` : ''}${x.date ? ` · ${esc(x.date)}` : ''}${x.chance != null ? ` · ${x.chance}%` : ''}</span></div>`).join('')}</details>` : ''}`;
+            ${S.log.length ? `<details class="rev-log"><summary>혁명 기록 (${S.log.length})</summary>${S.log.map(x => `<div class="rev-log-row"><span class="${x.kind === 'yesno' ? '' : x.success ? 'rev-plus' : 'rev-minus'}">${x.kind === 'yesno' ? '🗳' : x.success ? '✔' : '✘'}</span><span>${esc(kindName(x.kind))}${x.party ? ` · ${esc(x.party)}` : ''}${x.date ? ` · ${esc(x.date)}` : ''}${x.chance != null ? ` · ${x.chance}%` : ''}</span></div>`).join('')}</details>` : ''}`;
         box.querySelectorAll('[data-kind]').forEach(b => { b.onclick = () => { ui.kind = b.dataset.kind; ui.partyId = ''; ui.lastId = null; renderRevolution(); }; });
         const sel = box.querySelector('[data-pick="party"]'); if (sel) sel.onchange = () => { ui.partyId = sel.value; renderRevolution(); };
         box.querySelectorAll('[data-ally]').forEach(c => { c.onchange = () => { ui.allies[c.dataset.ally] = c.checked; }; });
         box.querySelectorAll('[data-coal]').forEach(c => { c.onchange = () => { ui.coalition[c.dataset.coal] = c.checked; renderRevolution(); }; });
         box.querySelectorAll('[data-regime]').forEach(b => { b.onclick = () => { ui.regime = b.dataset.regime; renderRevolution(); }; });
         const nm = box.querySelector('[data-id="name"]'); if (nm) nm.oninput = () => { ui.newName = nm.value; };
-        const fl = box.querySelector('[data-id="flag"]'); if (fl) fl.onchange = () => { const f = fl.files && fl.files[0]; if (!f) return; const rd = new FileReader(); rd.onload = ev => { ui.newFlag = ev.target.result; renderRevolution(); box.querySelector('.t63-identity').open = true; }; rd.readAsDataURL(f); };
+        const fl = box.querySelector('[data-id="flag"]'); if (fl) fl.onchange = () => { const f = fl.files && fl.files[0]; if (!f) return; const rd = new FileReader(); rd.onload = ev => { ui.newFlag = ev.target.result; renderRevolution(); box.querySelector('.rev-identity').open = true; }; rd.readAsDataURL(f); };
         const nf = box.querySelector('[data-act="noflag"]'); if (nf) nf.onclick = () => { ui.newFlag = ''; renderRevolution(); };
         box.querySelector('[data-act="go"]').onclick = revolt;
         const yn = box.querySelector('[data-act="yesno"]'); if (yn) yn.onclick = yesNoElection;
@@ -746,65 +746,65 @@
 
     const style = document.createElement('style');
     style.textContent = `
-        .t63-intro { color: #777; font-size: .78rem; line-height: 1.6; margin: 8px 0 10px; }
-        .t63-status { font-size: .85rem; color: #aaa; margin-bottom: 10px; }
-        .t63-row { display: flex; align-items: center; gap: 6px; margin: 4px 0; }
-        .t63-row input[type=text] { flex: 1; min-width: 0; }
-        .t63-row input[type=number] { width: 6em; }
-        .t63-dim { color: #777; font-size: .8rem; }
-        .t63-small { font-size: .72rem; }
-        #contentRevolution > label.t63-dim { display: block; margin: 10px 0 4px; }
+        .rev-intro { color: #777; font-size: .78rem; line-height: 1.6; margin: 8px 0 10px; }
+        .rev-status { font-size: .85rem; color: #aaa; margin-bottom: 10px; }
+        .rev-row { display: flex; align-items: center; gap: 6px; margin: 4px 0; }
+        .rev-row input[type=text] { flex: 1; min-width: 0; }
+        .rev-row input[type=number] { width: 6em; }
+        .rev-dim { color: #777; font-size: .8rem; }
+        .rev-small { font-size: .72rem; }
+        #contentRevolution > label.rev-dim { display: block; margin: 10px 0 4px; }
         #contentRevolution select { width: 100%; box-sizing: border-box; }
-        .t63-allies, .t63-identity, .t63-manual { margin: 8px 0; font-size: .85rem; }
-        .t63-allies summary, .t63-identity summary, .t63-manual summary { cursor: pointer; }
-        .t63-flag { width: 72px; height: 48px; flex-shrink: 0; }
-        .t63-flag img { width: 100%; height: 100%; object-fit: cover; }
-        .t63-chance { border: 1px solid #333; padding: 10px; margin: 10px 0; background: rgba(255,255,255,.02); }
-        .t63-chance-head { display: flex; justify-content: space-between; align-items: baseline; color: #aaa; }
-        .t63-chance-head b { font-size: 1.6rem; color: #ff6b3d; }
-        .t63-bar { height: 8px; background: #222; margin: 6px 0 8px; }
-        .t63-bar span { display: block; height: 100%; background: #ff6b3d; }
-        .t63-factor { display: flex; justify-content: space-between; gap: 8px; font-size: .78rem; color: #999; padding: 2px 0; }
-        .t63-plus { color: #5fbf7f; } .t63-minus { color: #e06060; }
-        .t63-go { width: 100%; cursor: pointer; font-family: inherit; font-size: 1rem; padding: 10px; background: transparent; border: 2px solid #ff6b3d; color: #ff6b3d; letter-spacing: 1px; }
-        .t63-btn { cursor: pointer; font-family: inherit; font-size: .85rem; padding: 6px 12px; background: transparent; border: 1px solid #555; color: #ccc; margin-top: 6px; }
-        .t63-result { margin-top: 12px; padding: 10px; border: 1px solid #333; border-left: 4px solid #888; }
-        .t63-result.ok { border-left-color: #5fbf7f; } .t63-result.fail { border-left-color: #e06060; }
-        .t63-result-head { font-size: 1rem; margin-bottom: 4px; }
-        .t63-result ul { margin: 6px 0 0 18px; padding: 0; font-size: .82rem; color: #bbb; }
-        .t63-log { margin-top: 12px; font-size: .82rem; } .t63-log summary { cursor: pointer; color: #999; }
-        .t63-log-row { display: flex; gap: 6px; padding: 3px 0; color: #aaa; border-bottom: 1px solid #1c1c1c; }
-        .t63-ps { border: 1px solid #c0392b; padding: 10px; margin: 0 0 12px; background: rgba(80,0,0,.2); }
-        .t63-ps-title { color: #e74c3c; font-size: 1rem; margin-bottom: 4px; letter-spacing: 1px; }
-        .t63-banner { margin: 0 0 10px; padding: 8px 12px; border: 1px solid #c0392b; color: #e74c3c; font-size: .9rem; background: rgba(80,0,0,.3); letter-spacing: 1px; }
-        .t63-ecset { margin-top: 10px; padding: 10px; border: 1px dashed #444; }
-        .t63-ecset > label.t63-dim { display: block; margin: 8px 0 4px; }
-        .t63-ecset-title { color: var(--tno-neon); font-size: .9rem; }
-        .t63-ec { margin: 10px 0; padding: 10px; border: 1px solid #333; }
-        .t63-ec-head { color: #aaa; font-size: .82rem; margin-bottom: 6px; }
-        .t63-ec-bar { position: relative; display: flex; height: 14px; background: #222; margin-bottom: 6px; }
-        .t63-ec-bar span { height: 100%; }
-        .t63-ec-bar i { position: absolute; top: -3px; bottom: -3px; width: 2px; background: #fff; }
-        .t63-ec-row { display: flex; justify-content: space-between; font-size: .82rem; color: #bbb; padding: 2px 0; }
-        .t63-dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; }
-        .t63-ec-note { margin: 6px 0; font-size: .82rem; color: #ddd; }
-        .t63-ec-map { width: 100%; margin: 8px 0; }
-        .t63-ec-units summary { cursor: pointer; color: #999; font-size: .82rem; }
-        .t63-ec-unit { border-left: 3px solid #888; padding: 3px 8px; margin: 4px 0; font-size: .82rem; color: #ccc; }
-        html[data-theme-family="modern"] .t63-intro, html[data-theme-family="modern"] .t63-dim { color: var(--m-text-3); }
-        html[data-theme-family="modern"] .t63-status, html[data-theme-family="modern"] .t63-chance-head, html[data-theme-family="modern"] .t63-factor { color: var(--m-text-2); }
-        html[data-theme-family="modern"] .t63-chance, html[data-theme-family="modern"] .t63-ec, html[data-theme-family="modern"] .t63-ecset { border: 1px solid var(--m-border); border-radius: 12px; background: var(--m-surface-2); }
-        html[data-theme-family="modern"] .t63-bar, html[data-theme-family="modern"] .t63-ec-bar { background: var(--m-border); border-radius: 4px; overflow: hidden; }
-        html[data-theme-family="modern"] .t63-go { border-radius: 12px; font-weight: 600; letter-spacing: 0; }
-        html[data-theme-family="modern"] .t63-btn { border: 1px solid var(--m-border-strong); border-radius: 8px; color: var(--m-text); }
-        html[data-theme-family="modern"] .t63-result { border: 1px solid var(--m-border); border-left-width: 4px; border-radius: 10px; background: var(--m-surface); }
-        html[data-theme-family="modern"] .t63-result ul, html[data-theme-family="modern"] .t63-ec-row, html[data-theme-family="modern"] .t63-ec-unit, html[data-theme-family="modern"] .t63-ec-note { color: var(--m-text-2); }
-        html[data-theme-family="modern"] .t63-ps, html[data-theme-family="modern"] .t63-banner { border-radius: 12px; background: color-mix(in srgb, #c0392b 8%, var(--m-surface)); }
-        html[data-theme-family="modern"] .t63-ecset-title { color: var(--m-text); font-weight: 600; }
-        html[data-theme-family="modern"] .t63-log-row { color: var(--m-text-2); border-bottom-color: var(--m-border); }
+        .rev-allies, .rev-identity, .rev-manual { margin: 8px 0; font-size: .85rem; }
+        .rev-allies summary, .rev-identity summary, .rev-manual summary { cursor: pointer; }
+        .rev-flag { width: 72px; height: 48px; flex-shrink: 0; }
+        .rev-flag img { width: 100%; height: 100%; object-fit: cover; }
+        .rev-chance { border: 1px solid #333; padding: 10px; margin: 10px 0; background: rgba(255,255,255,.02); }
+        .rev-chance-head { display: flex; justify-content: space-between; align-items: baseline; color: #aaa; }
+        .rev-chance-head b { font-size: 1.6rem; color: #ff6b3d; }
+        .rev-bar { height: 8px; background: #222; margin: 6px 0 8px; }
+        .rev-bar span { display: block; height: 100%; background: #ff6b3d; }
+        .rev-factor { display: flex; justify-content: space-between; gap: 8px; font-size: .78rem; color: #999; padding: 2px 0; }
+        .rev-plus { color: #5fbf7f; } .rev-minus { color: #e06060; }
+        .rev-go { width: 100%; cursor: pointer; font-family: inherit; font-size: 1rem; padding: 10px; background: transparent; border: 2px solid #ff6b3d; color: #ff6b3d; letter-spacing: 1px; }
+        .rev-btn { cursor: pointer; font-family: inherit; font-size: .85rem; padding: 6px 12px; background: transparent; border: 1px solid #555; color: #ccc; margin-top: 6px; }
+        .rev-result { margin-top: 12px; padding: 10px; border: 1px solid #333; border-left: 4px solid #888; }
+        .rev-result.ok { border-left-color: #5fbf7f; } .rev-result.fail { border-left-color: #e06060; }
+        .rev-result-head { font-size: 1rem; margin-bottom: 4px; }
+        .rev-result ul { margin: 6px 0 0 18px; padding: 0; font-size: .82rem; color: #bbb; }
+        .rev-log { margin-top: 12px; font-size: .82rem; } .rev-log summary { cursor: pointer; color: #999; }
+        .rev-log-row { display: flex; gap: 6px; padding: 3px 0; color: #aaa; border-bottom: 1px solid #1c1c1c; }
+        .rev-ps { border: 1px solid #c0392b; padding: 10px; margin: 0 0 12px; background: rgba(80,0,0,.2); }
+        .rev-ps-title { color: #e74c3c; font-size: 1rem; margin-bottom: 4px; letter-spacing: 1px; }
+        .rev-banner { margin: 0 0 10px; padding: 8px 12px; border: 1px solid #c0392b; color: #e74c3c; font-size: .9rem; background: rgba(80,0,0,.3); letter-spacing: 1px; }
+        .rev-ecset { margin-top: 10px; padding: 10px; border: 1px dashed #444; }
+        .rev-ecset > label.rev-dim { display: block; margin: 8px 0 4px; }
+        .rev-ecset-title { color: var(--tno-neon); font-size: .9rem; }
+        .rev-ec { margin: 10px 0; padding: 10px; border: 1px solid #333; }
+        .rev-ec-head { color: #aaa; font-size: .82rem; margin-bottom: 6px; }
+        .rev-ec-bar { position: relative; display: flex; height: 14px; background: #222; margin-bottom: 6px; }
+        .rev-ec-bar span { height: 100%; }
+        .rev-ec-bar i { position: absolute; top: -3px; bottom: -3px; width: 2px; background: #fff; }
+        .rev-ec-row { display: flex; justify-content: space-between; font-size: .82rem; color: #bbb; padding: 2px 0; }
+        .rev-dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; }
+        .rev-ec-note { margin: 6px 0; font-size: .82rem; color: #ddd; }
+        .rev-ec-map { width: 100%; margin: 8px 0; }
+        .rev-ec-units summary { cursor: pointer; color: #999; font-size: .82rem; }
+        .rev-ec-unit { border-left: 3px solid #888; padding: 3px 8px; margin: 4px 0; font-size: .82rem; color: #ccc; }
+        html[data-theme-family="modern"] .rev-intro, html[data-theme-family="modern"] .rev-dim { color: var(--m-text-3); }
+        html[data-theme-family="modern"] .rev-status, html[data-theme-family="modern"] .rev-chance-head, html[data-theme-family="modern"] .rev-factor { color: var(--m-text-2); }
+        html[data-theme-family="modern"] .rev-chance, html[data-theme-family="modern"] .rev-ec, html[data-theme-family="modern"] .rev-ecset { border: 1px solid var(--m-border); border-radius: 12px; background: var(--m-surface-2); }
+        html[data-theme-family="modern"] .rev-bar, html[data-theme-family="modern"] .rev-ec-bar { background: var(--m-border); border-radius: 4px; overflow: hidden; }
+        html[data-theme-family="modern"] .rev-go { border-radius: 12px; font-weight: 600; letter-spacing: 0; }
+        html[data-theme-family="modern"] .rev-btn { border: 1px solid var(--m-border-strong); border-radius: 8px; color: var(--m-text); }
+        html[data-theme-family="modern"] .rev-result { border: 1px solid var(--m-border); border-left-width: 4px; border-radius: 10px; background: var(--m-surface); }
+        html[data-theme-family="modern"] .rev-result ul, html[data-theme-family="modern"] .rev-ec-row, html[data-theme-family="modern"] .rev-ec-unit, html[data-theme-family="modern"] .rev-ec-note { color: var(--m-text-2); }
+        html[data-theme-family="modern"] .rev-ps, html[data-theme-family="modern"] .rev-banner { border-radius: 12px; background: color-mix(in srgb, #c0392b 8%, var(--m-surface)); }
+        html[data-theme-family="modern"] .rev-ecset-title { color: var(--m-text); font-weight: 600; }
+        html[data-theme-family="modern"] .rev-log-row { color: var(--m-text-2); border-bottom-color: var(--m-border); }
     `;
     document.head.appendChild(style);
     // 튜토리얼(미리보기 과정)이 진행 상황을 읽는 창구
-    window.T63 = { get log() { return S.log; }, get partyState() { return S.partyState; } };
+    window.HemiRevolution = { get log() { return S.log; }, get partyState() { return S.partyState; } };
     window.addEventListener('load', () => setTimeout(refresh, 0));
 })();

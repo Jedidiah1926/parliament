@@ -126,7 +126,7 @@
     }
     const chamberTotal = ch => realParties().reduce((t, p) => t + seatsOf(p, ch), 0) + (typeof parties !== 'undefined' ? parties : []).filter(p => !realParties().includes(p)).reduce((t, p) => t + seatsOf(p, ch), 0);
     const supportOf = (p, ch) => Number(elecStore?.[ch || 'house']?.[p.id]?.prob) || 0;
-    const econ = () => (window.T69 && window.T69.state && window.T69.state.nat) || null;
+    const econ = () => (window.HemiEconomy && window.HemiEconomy.state && window.HemiEconomy.state.nat) || null;
     const ECON_KEYS = ['growth', 'infl', 'unemp', 'rate', 'yield', 'debt', 'balance', 'mood', 'conf', 'cur'];
 
     // 비교 — { gt, gte, lt, lte, eq, ne } 중 적힌 것 모두 만족
@@ -222,7 +222,7 @@
                 const e = econ(); if (!e) return warn(mod, 'economy: 경제가 아직 시작되지 않음');
                 if (!ECON_KEYS.includes(v.indicator)) return warn(mod, `economy: 모르는 지표 "${v.indicator}"`);
                 e[v.indicator] = 'set' in v ? Number(v.set) || 0 : (Number(e[v.indicator]) || 0) + (Number(v.add) || 0);
-                try { window.T69.refresh(); } catch (err) { /* 경제 화면 없음 */ }
+                try { window.HemiEconomy.refresh(); } catch (err) { /* 경제 화면 없음 */ }
                 return;
             }
             case 'nation_name': { const el = document.getElementById('nationNameInput'); if (el) { el.value = String(v).slice(0, 80); if (typeof window.updateNationIdBar === 'function') window.updateNationIdBar(); } return; }

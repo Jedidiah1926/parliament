@@ -13,12 +13,12 @@
 /* global parties, coalitions, elecStore, districtGrid, districtPopulation, districtNames, districtSvgTendency, districtSortedKeys,
    bills, getBillOverallStatus, renderBillList, syncBillSelect, selectBillForVote, applyPartyVote, ideologies,
    showCustomAlert, showCustomConfirm, escapeHtmlText, switchSubTab, switchMainTab, switchDispTab, renderDistrictSvgInto,
-   currentSubTab, advanceNationDate, chamberList, chamberDisplayName, formatNationDate, findIdeology, T69C */
+   currentSubTab, advanceNationDate, chamberList, chamberDisplayName, formatNationDate, findIdeology, HemiEconCharts */
 (function () {
     'use strict';
     const root = document.documentElement;
     if (root.getAttribute('data-app-mode') === 'logo') return;
-    const C = window.T69C;
+    const C = window.HemiEconCharts;
     if (!C) return;
 
     // ================= 도우미 =================
@@ -111,7 +111,7 @@
     function itemDefs() {
         const out = BUILTIN_ITEMS.map(b => ({ ...b, builtin: true, ...(E.defs.items.find(x => x.id === b.id && x.override) || {}), id: b.id, builtin: true }));
         E.defs.items.filter(x => !x.override).forEach(x => out.push(x));
-        const monarchy = !!(window.T66 && window.T66.monarchy);
+        const monarchy = !!(window.HemiRoyal && window.HemiRoyal.monarchy);
         return out.filter(d => !d.disabled && (!d.cond || (d.cond === 'monarchy' && monarchy)));
     }
     function assetDefs() {
@@ -373,8 +373,8 @@
         const rev = {};
         defs.forEach(t => { rev[t.id] = taxRevenue(t, taxes[t.id] ?? t.rate0); });
         rev._other = 1.0;
-        if (window.T68 && (window.T68.vassals || []).length) {
-            const vp = sum(Object.keys(window.T68.vassalOf || {}).map(k => popOf(k) || 0));
+        if (window.HemiVassals && (window.HemiVassals.vassals || []).length) {
+            const vp = sum(Object.keys(window.HemiVassals.vassalOf || {}).map(k => popOf(k) || 0));
             const hp = sum(keys.map(k => S2.dist[k]?.pop || 0)) || 1;
             rev._tribute = Math.min(5, (S2.tribute || 0) / 100 * (vp / hp) * 30);
         }
@@ -755,14 +755,14 @@
         checkBudgetBill();
         // 1.6.5 국가 순위 — 우리나라 점수가 GDP를 따라감
         try {
-            const rows = window.T65 && window.T65.ranking && window.T65.ranking.rows;
+            const rows = window.HemiHistory && window.HemiHistory.ranking && window.HemiHistory.ranking.rows;
             const self = rows && rows.find(r => r.self);
             if (self && E.settings.rankFollow) {
                 if (!E.rankBase) E.rankBase = { score: Number(self.score) || 50, gdp: E.hist[0]?.n.gdp || E.nat.gdp };
                 self.score = Math.round(clamp(E.rankBase.score * Math.sqrt(E.nat.gdp / E.rankBase.gdp), 1, 100));
             }
             // 위기 · 신용등급 변화는 세력 변화(1.6.5) 기록에도
-            if (window.T65 && typeof window.T65.record === 'function') evs.filter(e => e.kind === 'crisis' || e.kind === 'unify').forEach(e => window.T65.record(`[경제] ${e.label}`));
+            if (window.HemiHistory && typeof window.HemiHistory.record === 'function') evs.filter(e => e.kind === 'crisis' || e.kind === 'unify').forEach(e => window.HemiHistory.record(`[경제] ${e.label}`));
         } catch (e) { /* 1.6.5 없음 */ }
         refreshAll();
         const big = evs.filter(e => e.kind === 'crisis' || e.kind === 'revolt' || e.kind === 'unify' || e.kind === 'shutdown');
@@ -896,7 +896,7 @@
     }
 
     // ================= 예산안 · 세법 (의회 연동) =================
-    const regimeBypass = () => !!(window.T62 && window.T62.junta) || !!(window.T63 && window.T63.partyState);
+    const regimeBypass = () => !!(window.HemiCoup && window.HemiCoup.junta) || !!(window.HemiRevolution && window.HemiRevolution.partyState);
     const billsOn = () => E.settings.bills && !regimeBypass();
     // 지출 · 세율을 고칠 곳 — 법안 방식이면 "예산안 초안", 아니면 바로
     function fiscalTarget() {
@@ -947,7 +947,7 @@
             bb.status = 'passed'; E.budgetNo++;
             E.draft = null;
             addEvent('budget', `${bb.title} 가결 — 새 예산 집행`);
-            try { if (window.T65 && typeof window.T65.record === 'function') window.T65.record(`[경제] ${bb.title} 가결`); } catch (e) { /* 없음 */ }
+            try { if (window.HemiHistory && typeof window.HemiHistory.record === 'function') window.HemiHistory.record(`[경제] ${bb.title} 가결`); } catch (e) { /* 없음 */ }
             refreshAll();
         } else if (st === 'failed' || st === 'vetoed') {
             bb.status = 'failed';
@@ -1046,7 +1046,7 @@
     const money = pctGdp => { const v = pctGdp * E.nat.gdp / 100; return `${Math.round(v).toLocaleString()}${E.settings.scale || ''} ${CUR()}`.trim(); };
     const gdpText = () => `${Math.round(E.nat.gdp).toLocaleString()}${E.settings.scale || ''} ${CUR()}`.trim();
     const STATUS_WORD = { good: '안전', warning: '경고', serious: '위험', critical: '위기' };
-    const stDot = st => `<span class="t69-st t69-st-${st}" title="${STATUS_WORD[st]}">${C.STATUS[st].icon}<em>${STATUS_WORD[st]}</em></span>`;
+    const stDot = st => `<span class="econ-st econ-st-${st}" title="${STATUS_WORD[st]}">${C.STATUS[st].icon}<em>${STATUS_WORD[st]}</em></span>`;
     (function addEconomyMenu() {
         let btn = document.getElementById('mainTabEconomy');
         const nationBtn = document.getElementById('mainTabNation'), nationContent = document.getElementById('mainContentNation');
@@ -1061,7 +1061,7 @@
         const bar = host.querySelector('.sub-tab-container');
         [['overview', 'EcoOverview', '개요'], ['analysis', 'EcoAnalysis', '분석'], ['monetary', 'EcoMonetary', '통화'], ['fiscal', 'EcoFiscal', '재정'], ['region', 'EcoRegion', '지역'], ['scenario', 'EcoScenario', '시나리오'], ['events', 'EcoEvents', '이벤트'], ['items', 'EcoItems', '항목']].forEach(([sub, id, label], i) => {
             bar.appendChild(el(`<button class="sub-tab-btn${i ? '' : ' active'}" onclick="switchSubTab('economy','${sub}')" id="subTab${id.charAt(0).toUpperCase() + id.slice(1)}">${label}</button>`));
-            host.appendChild(el(`<div id="content${id.charAt(0).toUpperCase() + id.slice(1)}" class="sub-tab-content t69-content${i ? '' : ' active'}"></div>`));
+            host.appendChild(el(`<div id="content${id.charAt(0).toUpperCase() + id.slice(1)}" class="sub-tab-content econ-content${i ? '' : ' active'}"></div>`));
         });
         try { if (!currentSubTab.economy) currentSubTab.economy = 'overview'; } catch (e) { /* main.js 없음 */ }
     })();
@@ -1123,7 +1123,7 @@
     function liveUpdate(path) {
         document.querySelectorAll(`[data-out="${path}"]`).forEach(o => { o.textContent = outText(path); });
         recomputeBudget(E);
-        document.querySelectorAll('.t69-preview').forEach(p => renderPreview(p));
+        document.querySelectorAll('.econ-preview').forEach(p => renderPreview(p));
     }
     function outText(path) {
         const [a, b] = path.split('.');
@@ -1140,11 +1140,11 @@
         const useDraft = box.dataset.draft === '1';
         const nx = project(null, 1, useDraft);
         const rows = [['growth', '성장률', '%'], ['infl', '인플레이션', '%'], ['unemp', '실업률', '%'], ['balance', '재정수지', '%'], ['mood', '민심', '']];
-        box.innerHTML = `<div class="t69-pv-h">이대로면 다음 ${UNIT_NAME[E.unit]}</div>` + rows.map(([k, l, u]) => {
+        box.innerHTML = `<div class="econ-pv-h">이대로면 다음 ${UNIT_NAME[E.unit]}</div>` + rows.map(([k, l, u]) => {
             const a = VAR[k].get(E), b = VAR[k].get(nx), m = Math.max(Math.abs(a), Math.abs(b), k === 'mood' ? 100 : 1);
             const w = v => `${clamp(Math.abs(v) / m * 100, 1, 100).toFixed(0)}%`;
-            return `<div class="t69-pv-r"><span>${l}</span><div class="t69-pv-bars"><i style="width:${w(a)}" class="${a < 0 ? 'neg' : ''}" title="지금"></i><i style="width:${w(b)}" class="nx ${b < 0 ? 'neg' : ''}" title="다음"></i></div><b>${a.toFixed(1)}${u} → ${b.toFixed(1)}${u}</b></div>`;
-        }).join('') + `<div class="t69-pv-legend"><i></i>지금 <i class="nx"></i>다음 ${UNIT_WORD[E.unit]} 예측 (흔들림 없이)</div>`;
+            return `<div class="econ-pv-r"><span>${l}</span><div class="econ-pv-bars"><i style="width:${w(a)}" class="${a < 0 ? 'neg' : ''}" title="지금"></i><i style="width:${w(b)}" class="nx ${b < 0 ? 'neg' : ''}" title="다음"></i></div><b>${a.toFixed(1)}${u} → ${b.toFixed(1)}${u}</b></div>`;
+        }).join('') + `<div class="econ-pv-legend"><i></i>지금 <i class="nx"></i>다음 ${UNIT_WORD[E.unit]} 예측 (흔들림 없이)</div>`;
     }
 
     // ---- 개요 ----
@@ -1156,35 +1156,35 @@
         const revolt = N.mood < E.thresholds.revolt;
         const nx = project(null, 1);
         box.innerHTML = `
-            <div class="t69-intro">보이지 않는 손 — 통화 · 재정 정책이 지역구마다 다르게 작용하고, 그 결과가 민심과 의회로 돌아옵니다. 수치는 모두 직접 고칠 수 있고, 계산은 날짜(국가 › 날짜)가 다음 ${UNIT_WORD[E.unit]}로 넘어갈 때만 돕니다.</div>
-            <div class="t69-top">
-                <div class="t69-rating t69-grade-${rt[0].replace(/[^A-Z]/g, '').length > 2 ? 'top' : rt[0].startsWith('A') ? 'a' : rt[0].startsWith('B') ? 'b' : 'c'}" title="신용등급 — 신뢰도와 국가부채로 정해짐"><b>${rt[0]}</b><span>${rt[1]}</span></div>
-                <div class="t69-turninfo"><div class="t69-turn-now">${esc(turnLabel(E, E.turn))}</div><div class="t69-dim">${readDate() ? `${E.turn ? `${esc(E.hist[0].label)}부터 기록` : '시작'} · 날짜를 따라 계산` : `${spanLabel(E.turn)} 진행 · 날짜를 정하면 날짜를 따라 계산`} · GDP ${esc(gdpText())}</div>
-                    <label class="t69-dim">계산 단위 <select data-act="unit">${Object.entries(UNIT_NAME).map(([k, v]) => `<option value="${k}" ${E.unit === k ? 'selected' : ''}>${v}</option>`).join('')}</select></label></div>
-                <button type="button" class="t69-btn t69-primary t69-next" data-act="next">▶ 다음 ${UNIT_NAME[E.unit]}</button>
+            <div class="econ-intro">보이지 않는 손 — 통화 · 재정 정책이 지역구마다 다르게 작용하고, 그 결과가 민심과 의회로 돌아옵니다. 수치는 모두 직접 고칠 수 있고, 계산은 날짜(국가 › 날짜)가 다음 ${UNIT_WORD[E.unit]}로 넘어갈 때만 돕니다.</div>
+            <div class="econ-top">
+                <div class="econ-rating econ-grade-${rt[0].replace(/[^A-Z]/g, '').length > 2 ? 'top' : rt[0].startsWith('A') ? 'a' : rt[0].startsWith('B') ? 'b' : 'c'}" title="신용등급 — 신뢰도와 국가부채로 정해짐"><b>${rt[0]}</b><span>${rt[1]}</span></div>
+                <div class="econ-turninfo"><div class="econ-turn-now">${esc(turnLabel(E, E.turn))}</div><div class="econ-dim">${readDate() ? `${E.turn ? `${esc(E.hist[0].label)}부터 기록` : '시작'} · 날짜를 따라 계산` : `${spanLabel(E.turn)} 진행 · 날짜를 정하면 날짜를 따라 계산`} · GDP ${esc(gdpText())}</div>
+                    <label class="econ-dim">계산 단위 <select data-act="unit">${Object.entries(UNIT_NAME).map(([k, v]) => `<option value="${k}" ${E.unit === k ? 'selected' : ''}>${v}</option>`).join('')}</select></label></div>
+                <button type="button" class="econ-btn econ-primary econ-next" data-act="next">▶ 다음 ${UNIT_NAME[E.unit]}</button>
             </div>
-            <div class="t69-sys"><span>계획</span><input type="range" min="0" max="1" step="0.05" value="${E.sys}" data-path="sys" aria-label="경제 체제"><span>시장</span><b data-out="sys">${sysText()}</b></div>
-            <div class="t69-dim t69-small">경제 체제 — 계획 쪽은 실업이 낮고 성장 · 효율이 낮으며, 시장 쪽은 성장이 높고 경기 변동이 큽니다 (집권당 이념에서 기본값).</div>
-            ${revolt ? `<div class="t69-alert"><b>${C.STATUS.critical.icon} 민심 붕괴 (${N.mood.toFixed(0)})</b> — 쿠데타 · 혁명이 일어날 수 있습니다.
-                ${document.getElementById('subTabCoup') ? '<button type="button" class="t69-btn" data-act="go-coup">쿠데타 탭</button>' : ''}${document.getElementById('subTabRevolution') ? '<button type="button" class="t69-btn" data-act="go-rev">혁명 탭</button>' : ''}</div>` : ''}
-            <div class="t69-kpis">${kp.map(([k, l, v, u, go]) => {
+            <div class="econ-sys"><span>계획</span><input type="range" min="0" max="1" step="0.05" value="${E.sys}" data-path="sys" aria-label="경제 체제"><span>시장</span><b data-out="sys">${sysText()}</b></div>
+            <div class="econ-dim econ-small">경제 체제 — 계획 쪽은 실업이 낮고 성장 · 효율이 낮으며, 시장 쪽은 성장이 높고 경기 변동이 큽니다 (집권당 이념에서 기본값).</div>
+            ${revolt ? `<div class="econ-alert"><b>${C.STATUS.critical.icon} 민심 붕괴 (${N.mood.toFixed(0)})</b> — 쿠데타 · 혁명이 일어날 수 있습니다.
+                ${document.getElementById('subTabCoup') ? '<button type="button" class="econ-btn" data-act="go-coup">쿠데타 탭</button>' : ''}${document.getElementById('subTabRevolution') ? '<button type="button" class="econ-btn" data-act="go-rev">혁명 탭</button>' : ''}</div>` : ''}
+            <div class="econ-kpis">${kp.map(([k, l, v, u, go]) => {
                 const st = statusOf(k, v), prev = last ? last.n[k] : null, dv = prev != null ? v - prev : null;
-                return `<button type="button" class="t69-kpi" data-go="${go}"><span class="t69-kpi-l">${l}</span><b>${v.toFixed(1)}${u}</b><span class="t69-kpi-d">${dv == null ? '' : (dv > 0 ? '▲' : dv < 0 ? '▼' : '–') + Math.abs(dv).toFixed(1)}</span>${stDot(st)}</button>`;
+                return `<button type="button" class="econ-kpi" data-go="${go}"><span class="econ-kpi-l">${l}</span><b>${v.toFixed(1)}${u}</b><span class="econ-kpi-d">${dv == null ? '' : (dv > 0 ? '▲' : dv < 0 ? '▼' : '–') + Math.abs(dv).toFixed(1)}</span>${stDot(st)}</button>`;
             }).join('')}</div>
-            <div class="t69-signals">${sig.length ? sig.map(s => `<span class="t69-signal">${stDot(s.status)} ${esc(s.label)}</span>`).join('') : '<span class="t69-dim">경고 신호 없음</span>'}</div>
-            <div class="t69-card"><div class="t69-card-h">다음 ${UNIT_NAME[E.unit]} 예측 <span class="t69-dim">(흔들림 없이)</span></div>
-                <div class="t69-fc">${[['growth', '성장률'], ['infl', '인플레이션'], ['unemp', '실업률'], ['debt', '부채'], ['mood', '민심']].map(([k, l]) => `<span>${l} <b>${VAR[k].get(E).toFixed(1)} → ${VAR[k].get(nx).toFixed(1)}</b></span>`).join('')}</div></div>
-            <div class="t69-card"><div class="t69-card-h">예산 <span class="t69-dim">${billsOn() ? '— 예산안(법안)으로 반영' : '— 바로 반영'}</span></div>
-                <div class="t69-dim">${budgetStatusText()}</div></div>
-            <details class="t69-card t69-settings"><summary>설정</summary>
-                <label class="t69-check"><input type="checkbox" data-path="settings.bills" ${E.settings.bills ? 'checked' : ''}> 예산 · 세율 바꾸기는 예산안(법안)으로 ${regimeBypass() ? '<span class="t69-dim">— 지금은 군정 · 당-국가 체제라 바로 반영</span>' : ''}</label>
-                <label class="t69-check"><input type="checkbox" data-path="settings.opinion" ${E.settings.opinion ? 'checked' : ''}> 경제 성과를 지지율 · 지역구 성향에 반영</label>
-                <label class="t69-check"><input type="checkbox" data-path="settings.autoEvents" ${E.settings.autoEvents ? 'checked' : ''}> 민심이 무너지면 쿠데타 · 혁명 탭을 바로 열기</label>
-                <label class="t69-check"><input type="checkbox" data-path="settings.rankFollow" ${E.settings.rankFollow ? 'checked' : ''}> 세계 › 국가 순위의 우리나라 점수가 GDP를 따라감</label>
-                <label class="t69-row">${UNIT_NAME[E.unit]}당 패키지 정책 <input type="number" min="1" max="9" value="${E.settings.pkgLimit}" data-path="settings.pkgLimit" class="t69-num">개</label>
-                <label class="t69-row">예산 모양 <select data-path="settings.budgetView"><option value="hemi" ${E.settings.budgetView === 'hemi' ? 'selected' : ''}>예산 반원</option><option value="bars" ${E.settings.budgetView === 'bars' ? 'selected' : ''}>가로 막대 두 줄</option></select></label>
+            <div class="econ-signals">${sig.length ? sig.map(s => `<span class="econ-signal">${stDot(s.status)} ${esc(s.label)}</span>`).join('') : '<span class="econ-dim">경고 신호 없음</span>'}</div>
+            <div class="econ-card"><div class="econ-card-h">다음 ${UNIT_NAME[E.unit]} 예측 <span class="econ-dim">(흔들림 없이)</span></div>
+                <div class="econ-fc">${[['growth', '성장률'], ['infl', '인플레이션'], ['unemp', '실업률'], ['debt', '부채'], ['mood', '민심']].map(([k, l]) => `<span>${l} <b>${VAR[k].get(E).toFixed(1)} → ${VAR[k].get(nx).toFixed(1)}</b></span>`).join('')}</div></div>
+            <div class="econ-card"><div class="econ-card-h">예산 <span class="econ-dim">${billsOn() ? '— 예산안(법안)으로 반영' : '— 바로 반영'}</span></div>
+                <div class="econ-dim">${budgetStatusText()}</div></div>
+            <details class="econ-card econ-settings"><summary>설정</summary>
+                <label class="econ-check"><input type="checkbox" data-path="settings.bills" ${E.settings.bills ? 'checked' : ''}> 예산 · 세율 바꾸기는 예산안(법안)으로 ${regimeBypass() ? '<span class="econ-dim">— 지금은 군정 · 당-국가 체제라 바로 반영</span>' : ''}</label>
+                <label class="econ-check"><input type="checkbox" data-path="settings.opinion" ${E.settings.opinion ? 'checked' : ''}> 경제 성과를 지지율 · 지역구 성향에 반영</label>
+                <label class="econ-check"><input type="checkbox" data-path="settings.autoEvents" ${E.settings.autoEvents ? 'checked' : ''}> 민심이 무너지면 쿠데타 · 혁명 탭을 바로 열기</label>
+                <label class="econ-check"><input type="checkbox" data-path="settings.rankFollow" ${E.settings.rankFollow ? 'checked' : ''}> 세계 › 국가 순위의 우리나라 점수가 GDP를 따라감</label>
+                <label class="econ-row">${UNIT_NAME[E.unit]}당 패키지 정책 <input type="number" min="1" max="9" value="${E.settings.pkgLimit}" data-path="settings.pkgLimit" class="econ-num">개</label>
+                <label class="econ-row">예산 모양 <select data-path="settings.budgetView"><option value="hemi" ${E.settings.budgetView === 'hemi' ? 'selected' : ''}>예산 반원</option><option value="bars" ${E.settings.budgetView === 'bars' ? 'selected' : ''}>가로 막대 두 줄</option></select></label>
             </details>
-            <div class="t69-actions"><button type="button" class="t69-btn" data-act="disp">📈 경제 화면 크게 보기</button><button type="button" class="t69-btn" data-act="analysis">분석 열기</button></div>`;
+            <div class="econ-actions"><button type="button" class="econ-btn" data-act="disp">📈 경제 화면 크게 보기</button><button type="button" class="econ-btn" data-act="analysis">분석 열기</button></div>`;
         bindInputs(box);
         box.querySelector('[data-act="next"]').onclick = () => nextTurn();
         box.querySelector('[data-act="unit"]').onchange = e => { E.unit = e.target.value; E.dateBase = null; ensureDateBase(); refreshAll(); };
@@ -1218,18 +1218,18 @@
         const box = contentOf('analysis'); if (!box) return;
         const mods = currentMods();
         box.innerHTML = `
-            <div class="t69-intro">전문가 분석 — 오른쪽 시각 화면에 크게 그립니다. 모든 그래프는 같은 기간 · 같은 십자선을 쓰고, 마우스를 올리면 그 시점 값이, 미니맵을 끌면 기간 확대가 됩니다. 우클릭으로 그림 내보내기.</div>
-            <div class="t69-presets">${Object.entries(PRESET_MODS).map(([id, p]) => `<button type="button" class="t69-preset ${E.ui.preset === id ? 'on' : ''}" data-preset="${id}"><b>${p.name}</b><span>${p.mods.map(m => MODULES[m].split(' (')[0]).join(' · ')}</span></button>`).join('')}
-                <button type="button" class="t69-preset ${E.ui.preset === 'custom' ? 'on' : ''}" data-preset="custom"><b>직접 고르기</b><span>아래에서 그래프를 골라 배치</span></button></div>
-            ${E.ui.preset === 'custom' ? `<div class="t69-card"><div class="t69-card-h">그래프 고르기</div>${Object.entries(MODULES).map(([id, l]) => `<label class="t69-check"><input type="checkbox" data-mod="${id}" ${mods.includes(id) ? 'checked' : ''}> ${l}</label>`).join('')}</div>` : ''}
-            <div class="t69-card">
-                <div class="t69-row">기간 <span class="t69-seg">${RANGES.map(([k, l]) => `<button type="button" data-range="${k}" class="${String(E.ui.range) === k ? 'on' : ''}">${l}</button>`).join('')}</span></div>
-                <label class="t69-check"><input type="checkbox" data-path="ui.log" ${E.ui.log ? 'checked' : ''}> 인플레이션 · 통화 증가 로그 눈금 (하이퍼인플레이션용)</label>
-                <label class="t69-row">민감도 · 예측 지표 <select data-path="ui.target">${Object.entries(VAR).map(([k, v]) => `<option value="${k}" ${E.ui.target === k ? 'selected' : ''}>${v.label}</option>`).join('')}</select></label>
-                <label class="t69-row">민감도 기간 <select data-path="ui.horizon">${[1, 4, 8].map(n => [n, spanLabel(n)]).map(([k, l]) => `<option value="${k}" ${Number(E.ui.horizon) === k ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
+            <div class="econ-intro">전문가 분석 — 오른쪽 시각 화면에 크게 그립니다. 모든 그래프는 같은 기간 · 같은 십자선을 쓰고, 마우스를 올리면 그 시점 값이, 미니맵을 끌면 기간 확대가 됩니다. 우클릭으로 그림 내보내기.</div>
+            <div class="econ-presets">${Object.entries(PRESET_MODS).map(([id, p]) => `<button type="button" class="econ-preset ${E.ui.preset === id ? 'on' : ''}" data-preset="${id}"><b>${p.name}</b><span>${p.mods.map(m => MODULES[m].split(' (')[0]).join(' · ')}</span></button>`).join('')}
+                <button type="button" class="econ-preset ${E.ui.preset === 'custom' ? 'on' : ''}" data-preset="custom"><b>직접 고르기</b><span>아래에서 그래프를 골라 배치</span></button></div>
+            ${E.ui.preset === 'custom' ? `<div class="econ-card"><div class="econ-card-h">그래프 고르기</div>${Object.entries(MODULES).map(([id, l]) => `<label class="econ-check"><input type="checkbox" data-mod="${id}" ${mods.includes(id) ? 'checked' : ''}> ${l}</label>`).join('')}</div>` : ''}
+            <div class="econ-card">
+                <div class="econ-row">기간 <span class="econ-seg">${RANGES.map(([k, l]) => `<button type="button" data-range="${k}" class="${String(E.ui.range) === k ? 'on' : ''}">${l}</button>`).join('')}</span></div>
+                <label class="econ-check"><input type="checkbox" data-path="ui.log" ${E.ui.log ? 'checked' : ''}> 인플레이션 · 통화 증가 로그 눈금 (하이퍼인플레이션용)</label>
+                <label class="econ-row">민감도 · 예측 지표 <select data-path="ui.target">${Object.entries(VAR).map(([k, v]) => `<option value="${k}" ${E.ui.target === k ? 'selected' : ''}>${v.label}</option>`).join('')}</select></label>
+                <label class="econ-row">민감도 기간 <select data-path="ui.horizon">${[1, 4, 8].map(n => [n, spanLabel(n)]).map(([k, l]) => `<option value="${k}" ${Number(E.ui.horizon) === k ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
             </div>
-            <div class="t69-actions"><button type="button" class="t69-btn t69-primary" data-act="full">⛶ 크게 보기</button><button type="button" class="t69-btn" data-act="csv">CSV 내보내기</button></div>
-            <div class="t69-dim t69-small">용어 — r − g: 국채금리 − 명목성장률(양수면 부채가 저절로 불어남) · 위험 프리미엄: 국채금리 − 기준금리 · 기초재정수지: 이자를 뺀 재정수지 · 실질금리: 기준금리 − 기대 인플레이션</div>`;
+            <div class="econ-actions"><button type="button" class="econ-btn econ-primary" data-act="full">⛶ 크게 보기</button><button type="button" class="econ-btn" data-act="csv">CSV 내보내기</button></div>
+            <div class="econ-dim econ-small">용어 — r − g: 국채금리 − 명목성장률(양수면 부채가 저절로 불어남) · 위험 프리미엄: 국채금리 − 기준금리 · 기초재정수지: 이자를 뺀 재정수지 · 실질금리: 기준금리 − 기대 인플레이션</div>`;
         box.querySelectorAll('[data-preset]').forEach(b => { b.onclick = () => { E.ui.preset = b.dataset.preset; if (E.ui.preset === 'custom' && !E.ui.layout) E.ui.layout = ['cycleP', 'debt']; refreshAll(); }; });
         box.querySelectorAll('[data-mod]').forEach(c => { c.onchange = () => { const s = new Set(E.ui.layout || []); if (c.checked) s.add(c.dataset.mod); else s.delete(c.dataset.mod); E.ui.layout = Object.keys(MODULES).filter(m => s.has(m)); refreshAll(); }; });
         box.querySelectorAll('[data-range]').forEach(b => { b.onclick = () => { E.ui.range = b.dataset.range; E.ui.zoom = null; refreshAll(); }; });
@@ -1244,33 +1244,33 @@
         const N = E.nat, lr = lockOf('nat.rate'), lp = lockOf('nat.print');
         const used = E.pkgUsed || 0, lim = E.settings.pkgLimit;
         box.innerHTML = `
-            <div class="t69-intro">통화정책은 중앙은행 몫이라 법안 없이 바로 반영됩니다. 금리를 올리면 인플레이션가 잡히지만 투자 · 고용이 줄고, 화폐를 많이 발행하면 당장은 경기가 살지만 물가와 통화가치가 무너집니다.</div>
-            <div class="t69-card">
-                <div class="t69-card-h">기준금리 <b data-out="nat.rate">${r2(N.rate)}%</b></div>
+            <div class="econ-intro">통화정책은 중앙은행 몫이라 법안 없이 바로 반영됩니다. 금리를 올리면 인플레이션가 잡히지만 투자 · 고용이 줄고, 화폐를 많이 발행하면 당장은 경기가 살지만 물가와 통화가치가 무너집니다.</div>
+            <div class="econ-card">
+                <div class="econ-card-h">기준금리 <b data-out="nat.rate">${r2(N.rate)}%</b></div>
                 <input type="range" min="0" max="40" step="0.25" value="${N.rate}" data-path="nat.rate" ${lr ? 'disabled' : ''} aria-label="기준금리">
-                ${lr ? `<div class="t69-lock">🔒 ${esc(lr)}</div>` : ''}
-                <div class="t69-dim t69-small">실질금리 ${(N.rate - N.inflE).toFixed(1)}% (기대 인플레이션 ${N.inflE.toFixed(1)}%) · 국채금리 ${N.yield.toFixed(1)}%</div>
-                <label class="t69-check"><input type="checkbox" data-path="settings.indep" ${E.settings.indep ? 'checked' : ''}> 중앙은행 독립 — 금리를 테일러 준칙(2 + 인플레이션 + ½(인플레이션 − 2) + ½ 산출갭)으로 자동 결정, 신뢰도 ↑</label>
+                ${lr ? `<div class="econ-lock">🔒 ${esc(lr)}</div>` : ''}
+                <div class="econ-dim econ-small">실질금리 ${(N.rate - N.inflE).toFixed(1)}% (기대 인플레이션 ${N.inflE.toFixed(1)}%) · 국채금리 ${N.yield.toFixed(1)}%</div>
+                <label class="econ-check"><input type="checkbox" data-path="settings.indep" ${E.settings.indep ? 'checked' : ''}> 중앙은행 독립 — 금리를 테일러 준칙(2 + 인플레이션 + ½(인플레이션 − 2) + ½ 산출갭)으로 자동 결정, 신뢰도 ↑</label>
             </div>
-            <div class="t69-card">
-                <div class="t69-card-h">화폐발행률 <b data-out="nat.print">${r2(N.print)}%/분기 · ${printBand(N.print)}</b></div>
-                <input type="range" min="-5" max="50" step="0.5" value="${N.print}" data-path="nat.print" ${lp ? 'disabled' : ''} aria-label="화폐발행률" class="t69-print">
-                <div class="t69-bands">${PRINT_BANDS.slice(1).map(b => `<span>${b[0]}~ ${b[1]}</span>`).join('')}</div>
-                ${lp ? `<div class="t69-lock">🔒 ${esc(lp)}</div>` : ''}
-                <div class="t69-dim t69-small">연간 통화 증가 ${(N.print * 4).toFixed(0)}% · 30%/분기를 넘기면 통화 붕괴 위기</div>
+            <div class="econ-card">
+                <div class="econ-card-h">화폐발행률 <b data-out="nat.print">${r2(N.print)}%/분기 · ${printBand(N.print)}</b></div>
+                <input type="range" min="-5" max="50" step="0.5" value="${N.print}" data-path="nat.print" ${lp ? 'disabled' : ''} aria-label="화폐발행률" class="econ-print">
+                <div class="econ-bands">${PRINT_BANDS.slice(1).map(b => `<span>${b[0]}~ ${b[1]}</span>`).join('')}</div>
+                ${lp ? `<div class="econ-lock">🔒 ${esc(lp)}</div>` : ''}
+                <div class="econ-dim econ-small">연간 통화 증가 ${(N.print * 4).toFixed(0)}% · 30%/분기를 넘기면 통화 붕괴 위기</div>
             </div>
-            <div class="t69-card"><div class="t69-card-h">패키지 정책 <span class="t69-dim">이번 ${UNIT_WORD[E.unit]} ${used}/${lim}</span></div>
-                <div class="t69-pkgs">
-                    <button type="button" class="t69-pkg" data-pkg="qe" ${used >= lim ? 'disabled' : ''}><b>양적완화</b><span>${spanLabel(4)} 동안 발행 +3%p, 금리 · 국채금리 ↓</span></button>
-                    <button type="button" class="t69-pkg" data-pkg="qt" ${used >= lim ? 'disabled' : ''}><b>양적긴축</b><span>${spanLabel(4)} 동안 발행 −2%p, 금리 ↑</span></button>
-                    <button type="button" class="t69-pkg" data-pkg="devalue" ${used >= lim ? 'disabled' : ''}><b>평가절하</b><span>통화가치 −12%, 수출(제조업 지역) ↑ · 수입물가 ↑ · 신뢰도 ↓</span></button>
+            <div class="econ-card"><div class="econ-card-h">패키지 정책 <span class="econ-dim">이번 ${UNIT_WORD[E.unit]} ${used}/${lim}</span></div>
+                <div class="econ-pkgs">
+                    <button type="button" class="econ-pkg" data-pkg="qe" ${used >= lim ? 'disabled' : ''}><b>양적완화</b><span>${spanLabel(4)} 동안 발행 +3%p, 금리 · 국채금리 ↓</span></button>
+                    <button type="button" class="econ-pkg" data-pkg="qt" ${used >= lim ? 'disabled' : ''}><b>양적긴축</b><span>${spanLabel(4)} 동안 발행 −2%p, 금리 ↑</span></button>
+                    <button type="button" class="econ-pkg" data-pkg="devalue" ${used >= lim ? 'disabled' : ''}><b>평가절하</b><span>통화가치 −12%, 수출(제조업 지역) ↑ · 수입물가 ↑ · 신뢰도 ↓</span></button>
                 </div>
-                ${(E.temps || []).length ? `<div class="t69-dim t69-small">진행 중: ${E.temps.map(tp => `${TEMP_NAME[tp.type]} (${spanLabel(tp.left)} 남음)`).join(' · ')}</div>` : ''}
+                ${(E.temps || []).length ? `<div class="econ-dim econ-small">진행 중: ${E.temps.map(tp => `${TEMP_NAME[tp.type]} (${spanLabel(tp.left)} 남음)`).join(' · ')}</div>` : ''}
             </div>
-            <div class="t69-preview t69-card" data-draft="0"></div>`;
+            <div class="econ-preview econ-card" data-draft="0"></div>`;
         bindInputs(box);
         box.querySelectorAll('[data-pkg]').forEach(b => { b.onclick = () => usePackage(b.dataset.pkg); });
-        box.querySelectorAll('.t69-preview').forEach(renderPreview);
+        box.querySelectorAll('.econ-preview').forEach(renderPreview);
     }
     function usePackage(type) {
         if ((E.pkgUsed || 0) >= E.settings.pkgLimit) { showCustomAlert(`이번 ${UNIT_WORD[E.unit]}에는 패키지 정책을 ${E.settings.pkgLimit}개까지 쓸 수 있습니다.`); return; }
@@ -1295,50 +1295,50 @@
         const preds = (E.draft && changes.length) || pending ? predictVotes(pending ? bb.draft : E.draft) : [];
         const yea = sum(preds.filter(x => x.vote === 'yea').map(x => x.p.seatsHouse || 0)), nay = sum(preds.filter(x => x.vote === 'nay').map(x => x.p.seatsHouse || 0));
         box.innerHTML = `
-            <div class="t69-intro">지출은 GDP 대비 %로 정합니다. ${billsOn() ? '고친 값은 <b>예산안 초안</b>에 모였다가, 예산안이 의회에서 가결되면 반영됩니다 (그 전까지는 지난 예산).' : '고친 값은 바로 반영됩니다 (설정에서 예산안 방식으로 바꿀 수 있음).'}</div>
-            <div class="t69-card t69-budgetbox">
-                <div class="t69-deficit ${E.nat.balance < 0 ? 'neg' : 'pos'}"><span>${E.nat.balance < 0 ? '재정 적자' : '재정 흑자'}</span><b>${pct(Math.abs(E.nat.balance))}</b><span class="t69-dim">GDP 대비 · ${money(Math.abs(E.nat.balance))}</span></div>
-                <div class="t69-dim t69-small">세입 ${pct(b.totalRev)} · 세출 ${pct(b.totalSpend)} (의무지출 ${pct(sum(Object.values(b.mand)))})${E.draft && changes.length ? ` · 초안대로면 수지 ${sgn(bv.totalRev - bv.totalSpend)}%` : ''}</div>
-                <div class="t69-dim t69-small">${budgetStatusText()}</div>
-                ${billsOn() ? `<div class="t69-actions">
-                    <button type="button" class="t69-btn t69-primary" data-act="submit" ${pending || !changes.length ? 'disabled' : ''}>예산안 제출${changes.length ? ` (${changes.length}건)` : ''}</button>
-                    ${E.draft ? '<button type="button" class="t69-btn" data-act="discard">초안 버리기</button>' : ''}
-                    ${pending ? '<button type="button" class="t69-btn" data-act="fill">입법 › 표결에 예상대로 넣기</button>' : ''}</div>` : ''}
-                ${preds.length ? `<details class="t69-pred" open><summary>예상 표결 <span class="t69-dim">— 하원 찬성 약 ${yea}석 · 반대 약 ${nay}석</span></summary>
-                    <table class="t69-mini"><thead><tr><th>정당</th><th>예상</th><th>점수</th><th>이탈 예상</th></tr></thead><tbody>
-                    ${preds.map(x => `<tr><td><i class="t69-pdot" style="background:${esc(x.p.color)}"></i>${esc(x.p.name)}</td><td class="t69-v-${x.vote}">${{ yea: '찬성', nay: '반대', abs: '기권' }[x.vote]}</td><td title="집권 ${sgn(x.gov)} · 지출 선호 ${sgn(x.tag, 2)} · 세 부담 ${sgn(x.tax, 2)}">${sgn(x.score, 2)}</td><td>${x.members ? `${x.defect}/${x.members}명` : '—'}</td></tr>`).join('')}
-                    </tbody></table><div class="t69-dim t69-small">점수 = 집권 여부(여당 +1 · 각외협력 +0.6 · 야당 −0.5) + 지출 태그 선호 + 세 부담. 지역구 의원은 지역 이해관계(산업 · 소득)로 당론에서 이탈할 수 있어요. 선호는 항목 탭에서 고침.</div></details>` : ''}
+            <div class="econ-intro">지출은 GDP 대비 %로 정합니다. ${billsOn() ? '고친 값은 <b>예산안 초안</b>에 모였다가, 예산안이 의회에서 가결되면 반영됩니다 (그 전까지는 지난 예산).' : '고친 값은 바로 반영됩니다 (설정에서 예산안 방식으로 바꿀 수 있음).'}</div>
+            <div class="econ-card econ-budgetbox">
+                <div class="econ-deficit ${E.nat.balance < 0 ? 'neg' : 'pos'}"><span>${E.nat.balance < 0 ? '재정 적자' : '재정 흑자'}</span><b>${pct(Math.abs(E.nat.balance))}</b><span class="econ-dim">GDP 대비 · ${money(Math.abs(E.nat.balance))}</span></div>
+                <div class="econ-dim econ-small">세입 ${pct(b.totalRev)} · 세출 ${pct(b.totalSpend)} (의무지출 ${pct(sum(Object.values(b.mand)))})${E.draft && changes.length ? ` · 초안대로면 수지 ${sgn(bv.totalRev - bv.totalSpend)}%` : ''}</div>
+                <div class="econ-dim econ-small">${budgetStatusText()}</div>
+                ${billsOn() ? `<div class="econ-actions">
+                    <button type="button" class="econ-btn econ-primary" data-act="submit" ${pending || !changes.length ? 'disabled' : ''}>예산안 제출${changes.length ? ` (${changes.length}건)` : ''}</button>
+                    ${E.draft ? '<button type="button" class="econ-btn" data-act="discard">초안 버리기</button>' : ''}
+                    ${pending ? '<button type="button" class="econ-btn" data-act="fill">입법 › 표결에 예상대로 넣기</button>' : ''}</div>` : ''}
+                ${preds.length ? `<details class="econ-pred" open><summary>예상 표결 <span class="econ-dim">— 하원 찬성 약 ${yea}석 · 반대 약 ${nay}석</span></summary>
+                    <table class="econ-mini"><thead><tr><th>정당</th><th>예상</th><th>점수</th><th>이탈 예상</th></tr></thead><tbody>
+                    ${preds.map(x => `<tr><td><i class="econ-pdot" style="background:${esc(x.p.color)}"></i>${esc(x.p.name)}</td><td class="econ-v-${x.vote}">${{ yea: '찬성', nay: '반대', abs: '기권' }[x.vote]}</td><td title="집권 ${sgn(x.gov)} · 지출 선호 ${sgn(x.tag, 2)} · 세 부담 ${sgn(x.tax, 2)}">${sgn(x.score, 2)}</td><td>${x.members ? `${x.defect}/${x.members}명` : '—'}</td></tr>`).join('')}
+                    </tbody></table><div class="econ-dim econ-small">점수 = 집권 여부(여당 +1 · 각외협력 +0.6 · 야당 −0.5) + 지출 태그 선호 + 세 부담. 지역구 의원은 지역 이해관계(산업 · 소득)로 당론에서 이탈할 수 있어요. 선호는 항목 탭에서 고침.</div></details>` : ''}
             </div>
             ${groupsSeen.map(g => {
                 const items = defs.filter(d => (d.group || '기타') === g), gs = sum(items.map(d => V.spend[d.id] ?? d.s0));
-                return `<div class="t69-card"><div class="t69-card-h">${esc(g)} <b>${pct(gs)}</b><span class="t69-dim">${money(gs)}</span>
-                    <button type="button" class="t69-btn t69-sm" data-austerity="${esc(g)}" title="이 묶음 지출을 15% 줄임">긴축 −15%</button></div>
-                    ${items.map(d => { const lk = lockOf('spend.' + d.id); const v = V.spend[d.id] ?? d.s0; return `<div class="t69-slider">
-                        <div class="t69-slider-h"><span>${esc(d.name)}${d.asset ? ` <em class="t69-dim">→ ${esc(assetDefs().find(a => a.id === d.asset)?.name || '')} ${(E.assets[d.asset] ?? 50).toFixed(0)}</em>` : ''}</span><b data-out="spend.${d.id}">${r2(v)}% · ${money(v)}</b></div>
+                return `<div class="econ-card"><div class="econ-card-h">${esc(g)} <b>${pct(gs)}</b><span class="econ-dim">${money(gs)}</span>
+                    <button type="button" class="econ-btn econ-sm" data-austerity="${esc(g)}" title="이 묶음 지출을 15% 줄임">긴축 −15%</button></div>
+                    ${items.map(d => { const lk = lockOf('spend.' + d.id); const v = V.spend[d.id] ?? d.s0; return `<div class="econ-slider">
+                        <div class="econ-slider-h"><span>${esc(d.name)}${d.asset ? ` <em class="econ-dim">→ ${esc(assetDefs().find(a => a.id === d.asset)?.name || '')} ${(E.assets[d.asset] ?? 50).toFixed(0)}</em>` : ''}</span><b data-out="spend.${d.id}">${r2(v)}% · ${money(v)}</b></div>
                         <input type="range" min="0" max="${d.max}" step="0.05" value="${v}" data-path="spend.${d.id}" ${lk ? 'disabled' : ''} aria-label="${esc(d.name)}">
-                        ${Math.abs(v - (E.spend[d.id] ?? d.s0)) > 1e-6 ? `<div class="t69-dim t69-small">집행 중 ${r2(E.spend[d.id] ?? d.s0)}% → 초안 ${r2(v)}%</div>` : ''}${lk ? `<div class="t69-lock">🔒 ${esc(lk)}</div>` : ''}</div>`; }).join('')}</div>`;
+                        ${Math.abs(v - (E.spend[d.id] ?? d.s0)) > 1e-6 ? `<div class="econ-dim econ-small">집행 중 ${r2(E.spend[d.id] ?? d.s0)}% → 초안 ${r2(v)}%</div>` : ''}${lk ? `<div class="econ-lock">🔒 ${esc(lk)}</div>` : ''}</div>`; }).join('')}</div>`;
             }).join('')}
-            <div class="t69-card"><div class="t69-card-h">의무지출 <span class="t69-dim">자동 계산 · 법으로만 기준 변경</span></div>
-                <div class="t69-kv"><span>국채 이자 (부채 × 국채금리)</span><b>${pct(b.mand.interest)} · ${money(b.mand.interest)}</b></div>
-                <div class="t69-kv"><span>연금 (노인 인구)</span><b>${pct(b.mand.pension)} · ${money(b.mand.pension)}</b></div>
-                <div class="t69-kv"><span>실업급여 (실업자)</span><b>${pct(b.mand.unemp)} · ${money(b.mand.unemp)}</b></div></div>
-            <div class="t69-card"><div class="t69-card-h">세율 <span class="t69-dim">너무 높으면 세수가 오히려 줄어듦 (래퍼 곡선)</span></div>
-                ${taxDefs().map(t => { const lk = lockOf('taxes.' + t.id); const v = V.taxes[t.id] ?? t.rate0; return `<div class="t69-slider">
-                    <div class="t69-slider-h"><span>${esc(t.name)} <em class="t69-dim">세수 ${pct(taxRevenue(t, v))} · ${money(taxRevenue(t, v))}</em></span><b data-out="taxes.${t.id}">${r2(v)}%</b></div>
-                    <input type="range" min="0" max="${t.max}" step="0.5" value="${v}" data-path="taxes.${t.id}" ${lk ? 'disabled' : ''} aria-label="${esc(t.name)}">${lk ? `<div class="t69-lock">🔒 ${esc(lk)}</div>` : ''}</div>`; }).join('')}
-                <div class="t69-actions"><button type="button" class="t69-btn" data-pkg="taxcut">한시적 감세 (${spanLabel(4)})</button><button type="button" class="t69-btn" data-pkg="taxhike">한시적 증세 (${spanLabel(4)})</button></div>
-                ${window.T68 && (window.T68.vassals || []).length ? `<label class="t69-row">종속국 공납 <input type="number" class="t69-num" min="0" max="50" step="1" value="${E.tribute}" data-path="root.tribute">% <span class="t69-dim">세입 ${pct(b.rev._tribute || 0, 2)}</span></label>` : ''}
+            <div class="econ-card"><div class="econ-card-h">의무지출 <span class="econ-dim">자동 계산 · 법으로만 기준 변경</span></div>
+                <div class="econ-kv"><span>국채 이자 (부채 × 국채금리)</span><b>${pct(b.mand.interest)} · ${money(b.mand.interest)}</b></div>
+                <div class="econ-kv"><span>연금 (노인 인구)</span><b>${pct(b.mand.pension)} · ${money(b.mand.pension)}</b></div>
+                <div class="econ-kv"><span>실업급여 (실업자)</span><b>${pct(b.mand.unemp)} · ${money(b.mand.unemp)}</b></div></div>
+            <div class="econ-card"><div class="econ-card-h">세율 <span class="econ-dim">너무 높으면 세수가 오히려 줄어듦 (래퍼 곡선)</span></div>
+                ${taxDefs().map(t => { const lk = lockOf('taxes.' + t.id); const v = V.taxes[t.id] ?? t.rate0; return `<div class="econ-slider">
+                    <div class="econ-slider-h"><span>${esc(t.name)} <em class="econ-dim">세수 ${pct(taxRevenue(t, v))} · ${money(taxRevenue(t, v))}</em></span><b data-out="taxes.${t.id}">${r2(v)}%</b></div>
+                    <input type="range" min="0" max="${t.max}" step="0.5" value="${v}" data-path="taxes.${t.id}" ${lk ? 'disabled' : ''} aria-label="${esc(t.name)}">${lk ? `<div class="econ-lock">🔒 ${esc(lk)}</div>` : ''}</div>`; }).join('')}
+                <div class="econ-actions"><button type="button" class="econ-btn" data-pkg="taxcut">한시적 감세 (${spanLabel(4)})</button><button type="button" class="econ-btn" data-pkg="taxhike">한시적 증세 (${spanLabel(4)})</button></div>
+                ${window.HemiVassals && (window.HemiVassals.vassals || []).length ? `<label class="econ-row">종속국 공납 <input type="number" class="econ-num" min="0" max="50" step="1" value="${E.tribute}" data-path="root.tribute">% <span class="econ-dim">세입 ${pct(b.rev._tribute || 0, 2)}</span></label>` : ''}
             </div>
-            <div class="t69-card"><div class="t69-card-h">국고 · 부채</div>
-                <div class="t69-kv"><span>국고 (예비비)</span><b>${money(E.nat.reserves)} · GDP의 ${pct(E.nat.reserves)}</b></div>
-                <div class="t69-kv"><span>국가부채</span><b>${money(E.nat.debt)} · GDP의 ${pct(E.nat.debt)}</b></div>
-                <div class="t69-kv"><span>재정수지 (연간)</span><b>${E.nat.balance < 0 ? '적자 ' : '흑자 '}${money(Math.abs(E.nat.balance))} · GDP의 ${pct(Math.abs(E.nat.balance))}</b></div>
-                <div class="t69-actions"><button type="button" class="t69-btn" data-act="repay" ${E.nat.reserves > 0 ? '' : 'disabled'}>부채 상환</button><button type="button" class="t69-btn" data-act="invest" ${E.nat.reserves > 0 ? '' : 'disabled'}>인프라에 투자</button>
-                    <label class="t69-check"><input type="checkbox" data-path="root.autoRepay" ${E.autoRepay ? 'checked' : ''}> 흑자는 자동 상환</label></div>
-                <div class="t69-kv"><span>국가부채</span><b>${pct(E.nat.debt)} · ${money(E.nat.debt)}</b></div>
-                <label class="t69-row">부채 한도 <input type="number" class="t69-num" min="0" max="500" step="5" value="${E.ceiling ?? ''}" placeholder="없음" data-act="ceiling">% <span class="t69-dim">넘으면 국채 발행이 막혀 강제 긴축 · 셧다운</span></label>
+            <div class="econ-card"><div class="econ-card-h">국고 · 부채</div>
+                <div class="econ-kv"><span>국고 (예비비)</span><b>${money(E.nat.reserves)} · GDP의 ${pct(E.nat.reserves)}</b></div>
+                <div class="econ-kv"><span>국가부채</span><b>${money(E.nat.debt)} · GDP의 ${pct(E.nat.debt)}</b></div>
+                <div class="econ-kv"><span>재정수지 (연간)</span><b>${E.nat.balance < 0 ? '적자 ' : '흑자 '}${money(Math.abs(E.nat.balance))} · GDP의 ${pct(Math.abs(E.nat.balance))}</b></div>
+                <div class="econ-actions"><button type="button" class="econ-btn" data-act="repay" ${E.nat.reserves > 0 ? '' : 'disabled'}>부채 상환</button><button type="button" class="econ-btn" data-act="invest" ${E.nat.reserves > 0 ? '' : 'disabled'}>인프라에 투자</button>
+                    <label class="econ-check"><input type="checkbox" data-path="root.autoRepay" ${E.autoRepay ? 'checked' : ''}> 흑자는 자동 상환</label></div>
+                <div class="econ-kv"><span>국가부채</span><b>${pct(E.nat.debt)} · ${money(E.nat.debt)}</b></div>
+                <label class="econ-row">부채 한도 <input type="number" class="econ-num" min="0" max="500" step="5" value="${E.ceiling ?? ''}" placeholder="없음" data-act="ceiling">% <span class="econ-dim">넘으면 국채 발행이 막혀 강제 긴축 · 셧다운</span></label>
             </div>
-            <div class="t69-preview t69-card" data-draft="1"></div>`;
+            <div class="econ-preview econ-card" data-draft="1"></div>`;
         bindInputs(box);
         box.querySelectorAll('[data-pkg]').forEach(bt => { bt.onclick = () => usePackage(bt.dataset.pkg); });
         box.querySelectorAll('[data-austerity]').forEach(bt => { bt.onclick = () => {
@@ -1353,7 +1353,7 @@
         box.querySelector('[data-act="repay"]')?.addEventListener('click', () => { const x = Math.min(E.nat.reserves, E.nat.debt); E.nat.debt -= x; E.nat.reserves -= x; addEvent('policy', `국고로 부채 ${x.toFixed(1)}%p 상환`); recomputeBudget(E); refreshAll(); });
         box.querySelector('[data-act="invest"]')?.addEventListener('click', () => { const x = E.nat.reserves; E.assets.infra = (E.assets.infra ?? 50) + x * 2; E.nat.reserves = 0; addEvent('policy', `국고 ${x.toFixed(1)}%p를 인프라에 투자`); refreshAll(); });
         box.querySelector('[data-act="ceiling"]')?.addEventListener('change', e => { const v = e.target.value.trim(); E.ceiling = v === '' ? null : num(v, null, 0, 500); refreshAll(); });
-        box.querySelectorAll('.t69-preview').forEach(renderPreview);
+        box.querySelectorAll('.econ-preview').forEach(renderPreview);
     }
 
     // ---- 지역 ----
@@ -1363,25 +1363,25 @@
         const keys = distList();
         const P = sum(keys.map(k => E.dist[k].pop)) || 1, G = E.nat.gdp;
         box.innerHTML = `
-            <div class="t69-intro">지역구마다 산업구조 · 연령구조 · 소득등급이 달라 같은 정책도 다르게 작용합니다 (금리 인상은 제조업, 복지 삭감은 저소득, 평가절하는 수출 제조업 지역에 크게). 미수복 지역 · 종속국 땅은 전국 집계에서 빠집니다.</div>
-            <label class="t69-row">지도 색칠 <select data-path="ui.mapBy">${Object.entries(MAP_BY).map(([k, v]) => `<option value="${k}" ${E.ui.mapBy === k ? 'selected' : ''}>${v}</option>`).join('')}</select></label>
-            ${keys[0] === '__nation' ? '<div class="t69-dim">지역구가 없어 전국 하나로 계산합니다 — 국가 › 지역구 지도에서 지도를 올리면 지역구마다 계산해요.</div>' : ''}
-            <div class="t69-dlist">${keys.map(k => { const d = E.dist[k], pc = d.gdp / G / (d.pop / P) * 100; return `<details class="t69-dist" data-key="${esc(k)}">
-                <summary><span class="t69-dname">${esc(nameOf(k))}</span><span>1인당 ${pc.toFixed(0)} · 실업 ${d.unemp.toFixed(1)}% · 민심 ${d.mood.toFixed(0)} · 소득 ${d.income.toFixed(1)}</span></summary>
-                <div class="t69-dgrid">
+            <div class="econ-intro">지역구마다 산업구조 · 연령구조 · 소득등급이 달라 같은 정책도 다르게 작용합니다 (금리 인상은 제조업, 복지 삭감은 저소득, 평가절하는 수출 제조업 지역에 크게). 미수복 지역 · 종속국 땅은 전국 집계에서 빠집니다.</div>
+            <label class="econ-row">지도 색칠 <select data-path="ui.mapBy">${Object.entries(MAP_BY).map(([k, v]) => `<option value="${k}" ${E.ui.mapBy === k ? 'selected' : ''}>${v}</option>`).join('')}</select></label>
+            ${keys[0] === '__nation' ? '<div class="econ-dim">지역구가 없어 전국 하나로 계산합니다 — 국가 › 지역구 지도에서 지도를 올리면 지역구마다 계산해요.</div>' : ''}
+            <div class="econ-dlist">${keys.map(k => { const d = E.dist[k], pc = d.gdp / G / (d.pop / P) * 100; return `<details class="econ-dist" data-key="${esc(k)}">
+                <summary><span class="econ-dname">${esc(nameOf(k))}</span><span>1인당 ${pc.toFixed(0)} · 실업 ${d.unemp.toFixed(1)}% · 민심 ${d.mood.toFixed(0)} · 소득 ${d.income.toFixed(1)}</span></summary>
+                <div class="econ-dgrid">
                     <label>농업 <input type="number" step="0.01" min="0" max="1" value="${d.ind[0]}" data-ind="0"></label><label>제조업 <input type="number" step="0.01" min="0" max="1" value="${d.ind[1]}" data-ind="1"></label><label>서비스업 <input type="number" step="0.01" min="0" max="1" value="${d.ind[2]}" data-ind="2"></label>
                     <label>청소년 <input type="number" step="0.01" min="0" max="1" value="${d.age[0]}" data-age="0"></label><label>생산가능 <input type="number" step="0.01" min="0" max="1" value="${d.age[1]}" data-age="1"></label><label>노인 <input type="number" step="0.01" min="0" max="1" value="${d.age[2]}" data-age="2"></label>
                     <label>소득등급 <input type="number" step="0.1" min="1" max="5" value="${r1(d.income)}" data-path="dist.${esc(k)}.income"></label><label>실업률 % <input type="number" step="0.1" min="0" max="60" value="${r1(d.unemp)}" data-path="dist.${esc(k)}.unemp"></label><label>민심 <input type="number" step="1" min="0" max="100" value="${Math.round(d.mood)}" data-path="dist.${esc(k)}.mood"></label>
-                </div><div class="t69-dim t69-small">산업 · 연령 비율은 합이 1이 되게 저절로 맞춥니다 · 인구는 국가 › 지역구 지도의 "시민 / 인구"</div></details>`; }).join('')}</div>`;
+                </div><div class="econ-dim econ-small">산업 · 연령 비율은 합이 1이 되게 저절로 맞춥니다 · 인구는 국가 › 지역구 지도의 "시민 / 인구"</div></details>`; }).join('')}</div>`;
         bindInputs(box);
-        box.querySelectorAll('.t69-dist').forEach(det => {
+        box.querySelectorAll('.econ-dist').forEach(det => {
             const k = det.dataset.key, d = E.dist[k];
             const norm = (arr, i, v) => { const out = arr.slice(); out[i] = clamp(v, 0, 1); const rest = sum(out) - out[i]; const others = out.map((x, j) => j); others.forEach(j => { if (j !== i) out[j] = rest > 0 ? out[j] / rest * (1 - out[i]) : (1 - out[i]) / 2; }); return out.map(r2); };
             det.querySelectorAll('[data-ind]').forEach(inp => inp.addEventListener('change', () => { d.ind = norm(d.ind, +inp.dataset.ind, +inp.value); refreshAll(); }));
             det.querySelectorAll('[data-age]').forEach(inp => inp.addEventListener('change', () => { d.age = norm(d.age, +inp.dataset.age, +inp.value); refreshAll(); }));
         });
-        const openKey = E.ui.openDist; if (openKey) box.querySelector(`.t69-dist[data-key="${CSS.escape(openKey)}"]`)?.setAttribute('open', '');
-        box.querySelectorAll('.t69-dist').forEach(det => det.addEventListener('toggle', () => { if (det.open) E.ui.openDist = det.dataset.key; }));
+        const openKey = E.ui.openDist; if (openKey) box.querySelector(`.econ-dist[data-key="${CSS.escape(openKey)}"]`)?.setAttribute('open', '');
+        box.querySelectorAll('.econ-dist').forEach(det => det.addEventListener('toggle', () => { if (det.open) E.ui.openDist = det.dataset.key; }));
     }
 
     // ---- 시나리오 ----
@@ -1391,32 +1391,32 @@
         const box = contentOf('scenario'); if (!box) return;
         const k = ruleK(E) + 1;
         box.innerHTML = `
-            <div class="t69-intro">시작 값만이 아니라 "값 + 기간"을 정해 시나리오를 만듭니다 — 고정(locked)은 기간 동안 그 값, 전환(transition)은 A → B로 서서히, 구간(schedule)은 ${UNIT_WORD[E.unit]}마다 다른 값. 기간이 끝나면 다시 계산값으로 돌아갑니다. 고정된 값과 관련된 정책은 잠겨요.</div>
-            <div class="t69-card"><div class="t69-card-h">프리셋 <span class="t69-dim">고르면 경제를 처음부터 다시 시작</span></div>
-                <div class="t69-presets">${Object.entries(PRESETS).map(([id, p]) => `<button type="button" class="t69-preset ${E.preset === id ? 'on' : ''}" data-ps="${id}"><b>${esc(p.name)}</b><span>${esc(p.desc.replace(/(\d+)턴/g, (m, n) => spanLabel(+n)))}</span></button>`).join('')}
-                <button type="button" class="t69-preset" data-ps=""><b>기본값</b><span>규칙 없이 기본 경제로</span></button></div></div>
-            <div class="t69-card"><div class="t69-card-h">규칙 <span class="t69-dim">지금 규칙 기준 ${k}${UNIT_WORD[E.unit]}째</span></div>
-                ${Object.entries(E.rules).map(([path, rule]) => `<div class="t69-rule" data-rpath="${esc(path)}">
+            <div class="econ-intro">시작 값만이 아니라 "값 + 기간"을 정해 시나리오를 만듭니다 — 고정(locked)은 기간 동안 그 값, 전환(transition)은 A → B로 서서히, 구간(schedule)은 ${UNIT_WORD[E.unit]}마다 다른 값. 기간이 끝나면 다시 계산값으로 돌아갑니다. 고정된 값과 관련된 정책은 잠겨요.</div>
+            <div class="econ-card"><div class="econ-card-h">프리셋 <span class="econ-dim">고르면 경제를 처음부터 다시 시작</span></div>
+                <div class="econ-presets">${Object.entries(PRESETS).map(([id, p]) => `<button type="button" class="econ-preset ${E.preset === id ? 'on' : ''}" data-ps="${id}"><b>${esc(p.name)}</b><span>${esc(p.desc.replace(/(\d+)턴/g, (m, n) => spanLabel(+n)))}</span></button>`).join('')}
+                <button type="button" class="econ-preset" data-ps=""><b>기본값</b><span>규칙 없이 기본 경제로</span></button></div></div>
+            <div class="econ-card"><div class="econ-card-h">규칙 <span class="econ-dim">지금 규칙 기준 ${k}${UNIT_WORD[E.unit]}째</span></div>
+                ${Object.entries(E.rules).map(([path, rule]) => `<div class="econ-rule" data-rpath="${esc(path)}">
                     <b>${esc((RULE_VARS().find(v => v[0] === path) || [path, path])[1])}</b>
                     <select data-rf="mode">${['locked', 'transition', 'schedule', 'fixed'].map(m => `<option value="${m}" ${rule.mode === m ? 'selected' : ''}>${{ locked: '고정', transition: '전환', schedule: '구간', fixed: '시작값만' }[m]}</option>`).join('')}</select>
-                    ${rule.mode === 'transition' ? `<input type="number" data-rf="from" value="${rule.from ?? 0}" class="t69-num" title="시작">→<input type="number" data-rf="to" value="${rule.to ?? 0}" class="t69-num" title="끝">`
-                        : rule.mode === 'schedule' ? `<input type="text" data-rf="segs" value="${esc((rule.segs || []).map(s => `${s.from}-${s.to}:${s.value}`).join(', '))}" placeholder="1-4:25, 5-8:30" title="${UNIT_WORD[E.unit]} 구간:값, 쉼표로" class="t69-segs">`
-                        : `<input type="number" data-rf="value" value="${rule.value ?? 0}" class="t69-num">`}
-                    ${rule.mode !== 'fixed' && rule.mode !== 'schedule' ? `<input type="number" data-rf="period" value="${rule.period ?? 4}" min="1" class="t69-num" title="기간(${UNIT_WORD[E.unit]})">${UNIT_WORD[E.unit]}` : ''}
-                    <span class="t69-dim">${ruleLeft(rule, k) ? `${spanLabel(ruleLeft(rule, k))} 남음` : '끝남'}</span>
-                    <button type="button" class="t69-x" data-rdel title="규칙 지우기">×</button></div>`).join('') || '<div class="t69-dim">규칙이 없습니다.</div>'}
-                <div class="t69-row"><select data-act="rvar">${RULE_VARS().map(([p, l]) => `<option value="${p}">${esc(l)}</option>`).join('')}</select><button type="button" class="t69-btn" data-act="radd">+ 규칙 추가</button>
-                    <button type="button" class="t69-btn" data-act="rrestart" title="규칙의 기간을 지금부터 다시 셈">지금부터 다시 세기</button></div></div>
-            <div class="t69-card"><div class="t69-card-h">위기 임계값</div>
-                ${[['hyper', '하이퍼인플레이션 (인플레이션 %/년 초과)'], ['default', '국가부도 위기 (부채 % 초과)'], ['depression', '대공황 (실업률 % 초과)'], ['flight', '자본 도피 (신뢰도 미만)'], ['collapse', '통화 붕괴 (발행률 %/분기 초과)'], ['revolt', '쿠데타 · 혁명 위험 (민심 미만)']].map(([k2, l]) => `<label class="t69-row">${l} <input type="number" class="t69-num" value="${E.thresholds[k2]}" data-th="${k2}"></label>`).join('')}</div>
-            <div class="t69-card"><div class="t69-card-h">화면 표시</div>
-                <label class="t69-row">화폐 단위 <input type="text" value="${esc(CUR())}" data-path="settings.currency" maxlength="8" class="t69-num"></label>
-                <label class="t69-row">규모 <select data-path="settings.scale">${['', '만', '억', '조'].map(s => `<option value="${s}" ${E.settings.scale === s ? 'selected' : ''}>${s || '(없음)'}</option>`).join('')}</select></label>
-                <label class="t69-row">GDP <input type="number" value="${Math.round(E.nat.gdp)}" data-act="gdp" class="t69-num"> <span class="t69-dim">바꾸면 지역구 GDP도 같은 비율로</span></label></div>
-            <div class="t69-actions"><button type="button" class="t69-btn" data-act="reset">경제 처음부터 (기록 지움)</button></div>`;
+                    ${rule.mode === 'transition' ? `<input type="number" data-rf="from" value="${rule.from ?? 0}" class="econ-num" title="시작">→<input type="number" data-rf="to" value="${rule.to ?? 0}" class="econ-num" title="끝">`
+                        : rule.mode === 'schedule' ? `<input type="text" data-rf="segs" value="${esc((rule.segs || []).map(s => `${s.from}-${s.to}:${s.value}`).join(', '))}" placeholder="1-4:25, 5-8:30" title="${UNIT_WORD[E.unit]} 구간:값, 쉼표로" class="econ-segs">`
+                        : `<input type="number" data-rf="value" value="${rule.value ?? 0}" class="econ-num">`}
+                    ${rule.mode !== 'fixed' && rule.mode !== 'schedule' ? `<input type="number" data-rf="period" value="${rule.period ?? 4}" min="1" class="econ-num" title="기간(${UNIT_WORD[E.unit]})">${UNIT_WORD[E.unit]}` : ''}
+                    <span class="econ-dim">${ruleLeft(rule, k) ? `${spanLabel(ruleLeft(rule, k))} 남음` : '끝남'}</span>
+                    <button type="button" class="econ-x" data-rdel title="규칙 지우기">×</button></div>`).join('') || '<div class="econ-dim">규칙이 없습니다.</div>'}
+                <div class="econ-row"><select data-act="rvar">${RULE_VARS().map(([p, l]) => `<option value="${p}">${esc(l)}</option>`).join('')}</select><button type="button" class="econ-btn" data-act="radd">+ 규칙 추가</button>
+                    <button type="button" class="econ-btn" data-act="rrestart" title="규칙의 기간을 지금부터 다시 셈">지금부터 다시 세기</button></div></div>
+            <div class="econ-card"><div class="econ-card-h">위기 임계값</div>
+                ${[['hyper', '하이퍼인플레이션 (인플레이션 %/년 초과)'], ['default', '국가부도 위기 (부채 % 초과)'], ['depression', '대공황 (실업률 % 초과)'], ['flight', '자본 도피 (신뢰도 미만)'], ['collapse', '통화 붕괴 (발행률 %/분기 초과)'], ['revolt', '쿠데타 · 혁명 위험 (민심 미만)']].map(([k2, l]) => `<label class="econ-row">${l} <input type="number" class="econ-num" value="${E.thresholds[k2]}" data-th="${k2}"></label>`).join('')}</div>
+            <div class="econ-card"><div class="econ-card-h">화면 표시</div>
+                <label class="econ-row">화폐 단위 <input type="text" value="${esc(CUR())}" data-path="settings.currency" maxlength="8" class="econ-num"></label>
+                <label class="econ-row">규모 <select data-path="settings.scale">${['', '만', '억', '조'].map(s => `<option value="${s}" ${E.settings.scale === s ? 'selected' : ''}>${s || '(없음)'}</option>`).join('')}</select></label>
+                <label class="econ-row">GDP <input type="number" value="${Math.round(E.nat.gdp)}" data-act="gdp" class="econ-num"> <span class="econ-dim">바꾸면 지역구 GDP도 같은 비율로</span></label></div>
+            <div class="econ-actions"><button type="button" class="econ-btn" data-act="reset">경제 처음부터 (기록 지움)</button></div>`;
         bindInputs(box);
         box.querySelectorAll('[data-ps]').forEach(b => { b.onclick = () => showCustomConfirm(`경제를 "${b.querySelector('b').textContent}"로 처음부터 다시 시작합니다. 경제 기록이 지워집니다. 계속하시겠습니까?`, () => { newEconomy(b.dataset.ps || 'none'); if (!b.dataset.ps) E.preset = ''; refreshAll(); }); });
-        box.querySelectorAll('.t69-rule').forEach(row => {
+        box.querySelectorAll('.econ-rule').forEach(row => {
             const path = row.dataset.rpath, rule = E.rules[path];
             row.querySelectorAll('[data-rf]').forEach(inp => inp.addEventListener('change', () => {
                 const f = inp.dataset.rf;
@@ -1453,32 +1453,32 @@
         const cf = f.fx || (f.fx = { g: -3, i: 0, u: 1, conf: -10, cur: 0 });
         const list = E.sched.slice().sort((a, b) => (a.y * 12 + a.m) - (b.y * 12 + b.m));
         box.innerHTML = `
-            <div class="t69-intro">정한 날짜가 되면 경제 위기나 호황이 일어납니다 — 날짜(국가 › 날짜)가 그 달을 지날 때 계산에 들어가고, 정한 기간 동안 이어집니다. 시작할 때 신뢰도 · 통화가치가 한 번 꺾이고, 기간 동안 성장 · 인플레이션 · 실업을 밀어냅니다. (위기 임계값을 넘어 저절로 오는 위기와는 따로)</div>
-            ${d ? '' : '<div class="t69-alert">국가 › 날짜를 먼저 정해 주세요 — 이벤트는 날짜를 기준으로 일어납니다.</div>'}
-            <div class="t69-card"><div class="t69-card-h">새 이벤트</div>
-                <div class="t69-evtypes">${Object.entries(EVENT_TYPES).map(([k, t]) => `<button type="button" class="t69-evtype ${f.type === k ? 'on' : ''}" data-evt="${k}" aria-pressed="${f.type === k}"><b>${t.icon} ${t.name}</b><span>${k === 'custom' ? '이름과 효과를 직접' : esc(fxText(t.fx))}</span></button>`).join('')}</div>
-                ${f.type === 'custom' ? `<div class="t69-evcustom">
-                    <label class="t69-row">이름 <input type="text" data-cn value="${esc(f.name || '')}" placeholder="예: 대기근" maxlength="24"></label>
-                    ${[['g', '성장 (%/년, 기간 동안)'], ['i', '인플레이션 (%p, 기간 동안)'], ['u', '실업 (%p, 기간 동안)'], ['conf', '신뢰도 (시작할 때)'], ['cur', '통화가치 (%, 시작할 때)']].map(([k, l]) => `<label class="t69-row">${l} <input type="number" step="0.5" data-cf="${k}" value="${cf[k] ?? 0}" class="t69-num"></label>`).join('')}</div>` : ''}
-                <div class="t69-evwhen">
-                    <span class="t69-evf">시작 <input type="number" data-ef="y" value="${next.y}" class="t69-num t69-yr" aria-label="시작 연도">년 <input type="number" data-ef="m" min="1" max="12" value="${next.m}" class="t69-num t69-mo" aria-label="시작 월">월</span>
-                    <span class="t69-evf">기간 <input type="number" data-ef="dur" min="1" max="240" value="${T.dur}" class="t69-num t69-mo" aria-label="기간(개월)">개월</span>
-                    <span class="t69-evf">세기 <select data-ef="power" aria-label="세기">${EV_POWERS.map(([v, l]) => `<option value="${v}" ${v === 1 ? 'selected' : ''}>${l}</option>`).join('')}</select></span></div>
-                <div class="t69-actions"><button type="button" class="t69-btn t69-primary" data-act="evadd" ${d ? '' : 'disabled'}>+ 이벤트 추가</button>
-                    <button type="button" class="t69-btn" data-act="evnow" ${pm ? '' : 'disabled'} title="날짜와 상관없이 다음 ${UNIT_WORD[E.unit]} 계산에서 바로 시작">다음 ${UNIT_WORD[E.unit]}에 바로</button></div>
+            <div class="econ-intro">정한 날짜가 되면 경제 위기나 호황이 일어납니다 — 날짜(국가 › 날짜)가 그 달을 지날 때 계산에 들어가고, 정한 기간 동안 이어집니다. 시작할 때 신뢰도 · 통화가치가 한 번 꺾이고, 기간 동안 성장 · 인플레이션 · 실업을 밀어냅니다. (위기 임계값을 넘어 저절로 오는 위기와는 따로)</div>
+            ${d ? '' : '<div class="econ-alert">국가 › 날짜를 먼저 정해 주세요 — 이벤트는 날짜를 기준으로 일어납니다.</div>'}
+            <div class="econ-card"><div class="econ-card-h">새 이벤트</div>
+                <div class="econ-evtypes">${Object.entries(EVENT_TYPES).map(([k, t]) => `<button type="button" class="econ-evtype ${f.type === k ? 'on' : ''}" data-evt="${k}" aria-pressed="${f.type === k}"><b>${t.icon} ${t.name}</b><span>${k === 'custom' ? '이름과 효과를 직접' : esc(fxText(t.fx))}</span></button>`).join('')}</div>
+                ${f.type === 'custom' ? `<div class="econ-evcustom">
+                    <label class="econ-row">이름 <input type="text" data-cn value="${esc(f.name || '')}" placeholder="예: 대기근" maxlength="24"></label>
+                    ${[['g', '성장 (%/년, 기간 동안)'], ['i', '인플레이션 (%p, 기간 동안)'], ['u', '실업 (%p, 기간 동안)'], ['conf', '신뢰도 (시작할 때)'], ['cur', '통화가치 (%, 시작할 때)']].map(([k, l]) => `<label class="econ-row">${l} <input type="number" step="0.5" data-cf="${k}" value="${cf[k] ?? 0}" class="econ-num"></label>`).join('')}</div>` : ''}
+                <div class="econ-evwhen">
+                    <span class="econ-evf">시작 <input type="number" data-ef="y" value="${next.y}" class="econ-num econ-yr" aria-label="시작 연도">년 <input type="number" data-ef="m" min="1" max="12" value="${next.m}" class="econ-num econ-mo" aria-label="시작 월">월</span>
+                    <span class="econ-evf">기간 <input type="number" data-ef="dur" min="1" max="240" value="${T.dur}" class="econ-num econ-mo" aria-label="기간(개월)">개월</span>
+                    <span class="econ-evf">세기 <select data-ef="power" aria-label="세기">${EV_POWERS.map(([v, l]) => `<option value="${v}" ${v === 1 ? 'selected' : ''}>${l}</option>`).join('')}</select></span></div>
+                <div class="econ-actions"><button type="button" class="econ-btn econ-primary" data-act="evadd" ${d ? '' : 'disabled'}>+ 이벤트 추가</button>
+                    <button type="button" class="econ-btn" data-act="evnow" ${pm ? '' : 'disabled'} title="날짜와 상관없이 다음 ${UNIT_WORD[E.unit]} 계산에서 바로 시작">다음 ${UNIT_WORD[E.unit]}에 바로</button></div>
             </div>
-            <div class="t69-card"><div class="t69-card-h">이벤트 목록 <span class="t69-dim">날짜 순 · 일어나기 전에는 날짜 · 기간 · 세기를 고칠 수 있음</span></div>
+            <div class="econ-card"><div class="econ-card-h">이벤트 목록 <span class="econ-dim">날짜 순 · 일어나기 전에는 날짜 · 기간 · 세기를 고칠 수 있음</span></div>
                 ${list.map(e => {
                     const [st, stl] = evStatus(e, nowM), ms = e.y * 12 + e.m - 1, edit = e.fired == null && !e.missed;
-                    return `<div class="t69-evrow t69-ev-${st}" data-eid="${esc(e.id)}">
-                        <span class="t69-evst">${stl}</span>
+                    return `<div class="econ-evrow econ-ev-${st}" data-eid="${esc(e.id)}">
+                        <span class="econ-evst">${stl}</span>
                         <b>${(EVENT_TYPES[e.type] || EVENT_TYPES.custom).icon} ${esc(evName(e))}</b>
-                        ${edit ? `<span class="t69-evedit"><input type="number" data-er="y" value="${e.y}" class="t69-num t69-yr" aria-label="시작 연도">.<input type="number" data-er="m" min="1" max="12" value="${e.m}" class="t69-num t69-mo" aria-label="시작 월"> · <input type="number" data-er="dur" min="1" max="240" value="${e.dur}" class="t69-num t69-mo" aria-label="기간(개월)">개월
+                        ${edit ? `<span class="econ-evedit"><input type="number" data-er="y" value="${e.y}" class="econ-num econ-yr" aria-label="시작 연도">.<input type="number" data-er="m" min="1" max="12" value="${e.m}" class="econ-num econ-mo" aria-label="시작 월"> · <input type="number" data-er="dur" min="1" max="240" value="${e.dur}" class="econ-num econ-mo" aria-label="기간(개월)">개월
                             <select data-er="power" aria-label="세기">${EV_POWERS.map(([v, l]) => `<option value="${v}" ${v === (e.power ?? 1) ? 'selected' : ''}>${l}</option>`).join('')}</select></span>`
-                            : `<span class="t69-dim">${ymText(ms)} ~ ${ymText(ms + e.dur - 1)} · ${(EV_POWERS.find(p => p[0] === (e.power ?? 1)) || [0, '보통'])[1]}</span>`}
-                        <span class="t69-dim t69-small t69-evfx">${esc(fxText(evFx(e), e.power ?? 1))}</span>
-                        <button type="button" class="t69-x" data-evdel title="${st === 'on' ? '지우기 — 진행 중이면 여기서 멈춤' : '지우기'}">×</button></div>`;
-                }).join('') || '<div class="t69-dim">아직 이벤트가 없습니다.</div>'}
+                            : `<span class="econ-dim">${ymText(ms)} ~ ${ymText(ms + e.dur - 1)} · ${(EV_POWERS.find(p => p[0] === (e.power ?? 1)) || [0, '보통'])[1]}</span>`}
+                        <span class="econ-dim econ-small econ-evfx">${esc(fxText(evFx(e), e.power ?? 1))}</span>
+                        <button type="button" class="econ-x" data-evdel title="${st === 'on' ? '지우기 — 진행 중이면 여기서 멈춤' : '지우기'}">×</button></div>`;
+                }).join('') || '<div class="econ-dim">아직 이벤트가 없습니다.</div>'}
             </div>`;
         box.querySelectorAll('[data-evt]').forEach(b => { b.onclick = () => { f.type = b.dataset.evt; renderEvents(); }; });
         box.querySelector('[data-cn]')?.addEventListener('input', e => { f.name = e.target.value; });
@@ -1493,7 +1493,7 @@
         };
         box.querySelector('[data-act="evadd"]').onclick = () => add(val('y'), val('m'));
         box.querySelector('[data-act="evnow"]').onclick = () => add(next.y, next.m);
-        box.querySelectorAll('.t69-evrow').forEach(row => {
+        box.querySelectorAll('.econ-evrow').forEach(row => {
             const e = E.sched.find(x => x.id === row.dataset.eid); if (!e) return;
             row.querySelectorAll('[data-er]').forEach(inp => inp.addEventListener('change', () => {
                 const k = inp.dataset.er;
@@ -1569,24 +1569,24 @@
     function defEditForm(kind, d, assets, targets) {
         const f = (k, label, v, extra = '') => `<label>${label} <input ${extra} data-e="${k}" value="${esc(v ?? '')}"></label>`;
         let body = '';
-        if (kind === 'item') body = `<div class="t69-dgrid">
-            ${f('name', '이름', d.name, 'type="text" maxlength="20"')}${f('group', '묶음', d.group, 'type="text" maxlength="12" list="t69Groups"')}${f('tags', '태그', (d.tags || []).join(', '), 'type="text"')}
+        if (kind === 'item') body = `<div class="econ-dgrid">
+            ${f('name', '이름', d.name, 'type="text" maxlength="20"')}${f('group', '묶음', d.group, 'type="text" maxlength="12" list="econGroups"')}${f('tags', '태그', (d.tags || []).join(', '), 'type="text"')}
             ${f('s0', '기준 지출 %', d.s0, 'type="number" step="0.1" min="0"')}${f('max', '상한 %', d.max, 'type="number" step="0.5" min="0.1"')}${f('jobs', '실업률 효과', d.jobs, 'type="number" step="0.05"')}
             ${f('mood', '민심 효과', d.mood, 'type="number" step="0.1"')}${f('eff', '수확체감', d.eff, 'type="number" step="0.05" min="0.2" max="1"')}
             <label>쌓는 자산 <select data-e="asset">${opt('', d.asset, '없음')}${assets.map(a => opt(a.id, d.asset, a.name)).join('')}</select></label></div>`;
-        if (kind === 'tax') body = `<div class="t69-dgrid">
+        if (kind === 'tax') body = `<div class="econ-dgrid">
             ${f('name', '이름', d.name, 'type="text" maxlength="20"')}${f('rate0', '기본 세율 %', d.rate0, 'type="number" step="0.5" min="0"')}${f('base', '과세 기반 (GDP 비율)', d.base, 'type="number" step="0.01" min="0"')}
             <label>지역 부담 <select data-e="weight">${TAX_WEIGHTS.map(([k, l]) => opt(k, d.weight, l)).join('')}</select></label>
             ${f('growth', '성장 부작용 /%p', d.side?.growth ?? 0, 'type="number" step="0.01"')}${f('infl', '인플레이션 /%p', d.side?.infl ?? 0, 'type="number" step="0.01"')}</div>`;
         if (kind === 'asset') {
             const eff = Object.entries(d.effects || {});
-            const row = ([k, v]) => `<div class="t69-effrow"><select data-eff="k">${targets.filter(([tk]) => tk !== d.id).map(([tk, tl]) => opt(tk, k, tl)).join('')}</select><input type="number" data-eff="v" value="${esc(v)}" step="0.01" min="-1" max="1"><button type="button" class="t69-x" data-eff-del title="효과 지우기">×</button></div>`;
-            body = `<div class="t69-dgrid">${f('name', '이름', d.name, 'type="text" maxlength="16"')}${f('decay', '감가상각 /년', d.decay, 'type="number" step="0.01" min="0" max="0.5"')}</div>
-                <div class="t69-effs"><div class="t69-dim">효과 (자산이 기준 50보다 1점 높을 때)</div>${eff.map(row).join('')}<template>${row([targets[0] ? targets[0][0] : '', 0.02])}</template>
-                <button type="button" class="t69-btn" data-eff-add>+ 효과</button></div>`;
+            const row = ([k, v]) => `<div class="econ-effrow"><select data-eff="k">${targets.filter(([tk]) => tk !== d.id).map(([tk, tl]) => opt(tk, k, tl)).join('')}</select><input type="number" data-eff="v" value="${esc(v)}" step="0.01" min="-1" max="1"><button type="button" class="econ-x" data-eff-del title="효과 지우기">×</button></div>`;
+            body = `<div class="econ-dgrid">${f('name', '이름', d.name, 'type="text" maxlength="16"')}${f('decay', '감가상각 /년', d.decay, 'type="number" step="0.01" min="0" max="0.5"')}</div>
+                <div class="econ-effs"><div class="econ-dim">효과 (자산이 기준 50보다 1점 높을 때)</div>${eff.map(row).join('')}<template>${row([targets[0] ? targets[0][0] : '', 0.02])}</template>
+                <button type="button" class="econ-btn" data-eff-add>+ 효과</button></div>`;
         }
-        const reset = isBuiltinDef(kind, d.id) && overrideOf(kind, d.id) ? '<button type="button" class="t69-btn" data-def-reset>기본값으로</button>' : '';
-        return `<div class="t69-defedit">${body}<div class="t69-row t69-defedit-btns"><button type="button" class="t69-btn t69-primary" data-def-save>저장</button><button type="button" class="t69-btn" data-def-cancel>취소</button>${reset}</div></div>`;
+        const reset = isBuiltinDef(kind, d.id) && overrideOf(kind, d.id) ? '<button type="button" class="econ-btn" data-def-reset>기본값으로</button>' : '';
+        return `<div class="econ-defedit">${body}<div class="econ-row econ-defedit-btns"><button type="button" class="econ-btn econ-primary" data-def-save>저장</button><button type="button" class="econ-btn" data-def-cancel>취소</button>${reset}</div></div>`;
     }
     function readDefEdit(kind, form) {
         const g = k => form.querySelector(`[data-e="${k}"]`)?.value ?? '';
@@ -1604,21 +1604,21 @@
         const name = g('name').trim();
         if (!name) return null;
         const effects = {};
-        form.querySelectorAll('.t69-effs > .t69-effrow').forEach(r => { const k = r.querySelector('[data-eff="k"]').value; if (k) effects[k] = num(r.querySelector('[data-eff="v"]').value, 0, -1, 1); });
+        form.querySelectorAll('.econ-effs > .econ-effrow').forEach(r => { const k = r.querySelector('[data-eff="k"]').value; if (k) effects[k] = num(r.querySelector('[data-eff="v"]').value, 0, -1, 1); });
         return { name, decay: n('decay', 0, 0.5), effects };
     }
     function defRowHtml(kind, d, desc, assets, targets) {
         const editing = editingDef && editingDef.kind === kind && editingDef.id === d.id;
-        const edited = isBuiltinDef(kind, d.id) && overrideOf(kind, d.id) ? '<span class="t69-dim t69-edited">고침</span>' : '';
-        return `<div class="t69-def ${d.builtin ? 'builtin' : ''}" data-def-kind="${kind}" data-def-id="${esc(d.id)}" data-def-name="${esc(d.name)}">
-            <div class="t69-def-h"><b>${esc(d.name)}</b>${edited}<span class="t69-dim">${desc}</span>
-                <span class="t69-def-acts"><button type="button" class="t69-x" data-def-edit title="고치기">✎</button><button type="button" class="t69-x" data-def-del title="지우기">×</button></span></div>
+        const edited = isBuiltinDef(kind, d.id) && overrideOf(kind, d.id) ? '<span class="econ-dim econ-edited">고침</span>' : '';
+        return `<div class="econ-def ${d.builtin ? 'builtin' : ''}" data-def-kind="${kind}" data-def-id="${esc(d.id)}" data-def-name="${esc(d.name)}">
+            <div class="econ-def-h"><b>${esc(d.name)}</b>${edited}<span class="econ-dim">${desc}</span>
+                <span class="econ-def-acts"><button type="button" class="econ-x" data-def-edit title="고치기">✎</button><button type="button" class="econ-x" data-def-del title="지우기">×</button></span></div>
             ${editing ? defEditForm(kind, d, assets, targets) : ''}</div>`;
     }
     function hiddenDefsHtml(kind) {
         const hidden = DEF_BUILTIN[kind].filter(b => overrideOf(kind, b.id)?.disabled);
         if (!hidden.length) return '';
-        return `<div class="t69-hidden-defs"><span class="t69-dim">숨긴 기본 항목</span>${hidden.map(b => `<button type="button" class="t69-btn" data-def-restore="${kind}:${esc(b.id)}" title="되살리기">${esc(overrideOf(kind, b.id)?.name || b.name)} ↺</button>`).join('')}</div>`;
+        return `<div class="econ-hidden-defs"><span class="econ-dim">숨긴 기본 항목</span>${hidden.map(b => `<button type="button" class="econ-btn" data-def-restore="${kind}:${esc(b.id)}" title="되살리기">${esc(overrideOf(kind, b.id)?.name || b.name)} ↺</button>`).join('')}</div>`;
     }
 
     function renderItems() {
@@ -1628,15 +1628,15 @@
         const targets = Object.entries(EFFECT_TARGETS).concat(assets.map(a => [a.id, a.name]));
         const plist = (parties || []).filter(p => p.status !== 'banned');
         box.innerHTML = `
-            <div class="t69-intro">지출 항목 · 세목 · 자산을 직접 만들 수 있습니다. 기본 항목과 같은 규칙으로 계산되고(수확체감 · 감가상각), 정의는 세이브에 함께 저장돼요. 의원은 항목 이름이 아니라 <b>태그</b>로 반응합니다.</div>
-            ${warnings.length ? `<div class="t69-alert">${warnings.map(w => `<div>⚠ ${esc(w)}</div>`).join('')}</div>` : ''}
-            <div class="t69-card"><div class="t69-card-h">지출 항목</div>
+            <div class="econ-intro">지출 항목 · 세목 · 자산을 직접 만들 수 있습니다. 기본 항목과 같은 규칙으로 계산되고(수확체감 · 감가상각), 정의는 세이브에 함께 저장돼요. 의원은 항목 이름이 아니라 <b>태그</b>로 반응합니다.</div>
+            ${warnings.length ? `<div class="econ-alert">${warnings.map(w => `<div>⚠ ${esc(w)}</div>`).join('')}</div>` : ''}
+            <div class="econ-card"><div class="econ-card-h">지출 항목</div>
                 ${itemDefs().map(d => defRowHtml('item', d, `${esc(d.group || '')} · ${(d.tags || []).map(esc).join(' · ') || '태그 없음'} · 기준 ${d.s0}%${d.asset ? ` → ${esc(assets.find(a => a.id === d.asset)?.name || d.asset)}` : ''}`, assets, targets)).join('')}
                 ${hiddenDefsHtml('item')}
-                <details class="t69-newdef"><summary>+ 새 지출 항목</summary>
-                    <div class="t69-dgrid">
+                <details class="econ-newdef"><summary>+ 새 지출 항목</summary>
+                    <div class="econ-dgrid">
                         <label>이름 <input type="text" data-n="name" maxlength="20" placeholder="우주개발"></label>
-                        <label>묶음 <input type="text" data-n="group" maxlength="12" placeholder="민간" list="t69Groups"></label>
+                        <label>묶음 <input type="text" data-n="group" maxlength="12" placeholder="민간" list="econGroups"></label>
                         <label>태그 <input type="text" data-n="tags" placeholder="과학, 국가위신" title="쉼표로 — 기본 태그: ${TAGS.join(', ')}"></label>
                         <label>기준 지출 % <input type="number" data-n="s0" value="0.5" step="0.1" min="0"></label>
                         <label>상한 % <input type="number" data-n="max" value="5" step="0.5" min="0.1"></label>
@@ -1645,44 +1645,44 @@
                         <label>수확체감 <input type="number" data-n="eff" value="0.6" step="0.05" min="0.2" max="1"></label>
                         <label>쌓는 자산 <select data-n="asset"><option value="">없음</option>${assets.map(a => `<option value="${esc(a.id)}">${esc(a.name)}</option>`).join('')}<option value="__new">+ 새 자산</option></select></label>
                     </div>
-                    <div class="t69-dgrid t69-newasset" hidden>
+                    <div class="econ-dgrid econ-newasset" hidden>
                         <label>새 자산 이름 <input type="text" data-n="aname" maxlength="16" placeholder="우주기술"></label>
                         <label>감가상각 /년 <input type="number" data-n="adecay" value="0.03" step="0.01" min="0" max="0.5"></label>
                         <label>효과 대상 <select data-n="atarget">${targets.map(([k, l]) => `<option value="${esc(k)}">${esc(l)}</option>`).join('')}</select></label>
                         <label>효과 계수 <input type="number" data-n="acoef" value="0.02" step="0.01" min="-1" max="1" title="자산이 기준(50)보다 1점 높을 때"></label>
                     </div>
-                    <datalist id="t69Groups">${[...new Set(itemDefs().map(d => d.group))].map(g => `<option value="${esc(g)}">`).join('')}</datalist>
-                    <button type="button" class="t69-btn t69-primary" data-act="add-item">항목 추가</button></details></div>
-            <div class="t69-card"><div class="t69-card-h">세목</div>
+                    <datalist id="econGroups">${[...new Set(itemDefs().map(d => d.group))].map(g => `<option value="${esc(g)}">`).join('')}</datalist>
+                    <button type="button" class="econ-btn econ-primary" data-act="add-item">항목 추가</button></details></div>
+            <div class="econ-card"><div class="econ-card-h">세목</div>
                 ${taxDefs().map(t => defRowHtml('tax', t, `기본 ${t.rate0}% · 기반 GDP의 ${Math.round(t.base * 100)}% · ${{ income: '소득 높은 지역', industry: '산업 지역', flat: '전 지역 균등', wealth: '부유층', imports: '수입', manufacturing: '제조업' }[t.weight] || ''}`, assets, targets)).join('')}
                 ${hiddenDefsHtml('tax')}
-                <details class="t69-newdef"><summary>+ 새 세목</summary><div class="t69-dgrid">
+                <details class="econ-newdef"><summary>+ 새 세목</summary><div class="econ-dgrid">
                     <label>이름 <input type="text" data-t="name" maxlength="20" placeholder="탄소세"></label>
                     <label>기본 세율 % <input type="number" data-t="rate0" value="5" step="0.5" min="0"></label>
                     <label>과세 기반 (GDP 비율) <input type="number" data-t="base" value="0.1" step="0.01" min="0"></label>
                     <label>지역 부담 <select data-t="weight"><option value="manufacturing">제조업 지역</option><option value="industry">산업 지역</option><option value="income">소득 높은 지역</option><option value="wealth">부유층</option><option value="flat">전 지역 균등</option><option value="imports">수입</option></select></label>
                     <label>성장 부작용 /%p <input type="number" data-t="growth" value="-0.02" step="0.01"></label>
                     <label>인플레이션 /%p <input type="number" data-t="infl" value="0.01" step="0.01"></label>
-                </div><button type="button" class="t69-btn t69-primary" data-act="add-tax">세목 추가</button></details></div>
-            <div class="t69-card"><div class="t69-card-h">자산</div>
+                </div><button type="button" class="econ-btn econ-primary" data-act="add-tax">세목 추가</button></details></div>
+            <div class="econ-card"><div class="econ-card-h">자산</div>
                 ${assets.map(a => defRowHtml('asset', a, `${(E.assets[a.id] ?? 50).toFixed(0)}점 · 감가 ${Math.round(a.decay * 100)}%/년 · ${Object.entries(a.effects || {}).map(([k, v]) => `${esc(EFFECT_TARGETS[k] || assets.find(x => x.id === k)?.name || k)} ${sgn(v, 2)}`).join(' · ') || '효과 없음'}`, assets, targets)).join('')}
                 ${hiddenDefsHtml('asset')}
-                <details class="t69-newdef t69-newasset-def"><summary>+ 새 자산</summary>
-                    <div class="t69-dgrid">
+                <details class="econ-newdef econ-newasset-def"><summary>+ 새 자산</summary>
+                    <div class="econ-dgrid">
                         <label>이름 <input type="text" data-a="name" maxlength="16" placeholder="우주기술"></label>
                         <label>감가상각 /년 <input type="number" data-a="decay" value="0.03" step="0.01" min="0" max="0.5"></label>
                         <label>시작 값 <input type="number" data-a="start" value="50" step="1" min="0" max="100" title="기준은 50 — 높을수록 효과가 큼"></label>
                         <label>쌓는 지출 항목 <select data-a="item"><option value="">없음</option>${itemDefs().map(d => `<option value="${esc(d.id)}">${esc(d.name)}${d.asset ? ` (지금: ${esc(assets.find(a => a.id === d.asset)?.name || d.asset)})` : ''}</option>`).join('')}</select></label>
                     </div>
-                    <div class="t69-effs"><div class="t69-dim">효과 (자산이 기준 50보다 1점 높을 때)</div>
-                        <template><div class="t69-effrow"><select data-eff="k">${targets.map(([tk, tl]) => `<option value="${esc(tk)}">${esc(tl)}</option>`).join('')}</select><input type="number" data-eff="v" value="0.02" step="0.01" min="-1" max="1"><button type="button" class="t69-x" data-eff-del title="효과 지우기">×</button></div></template>
-                        <button type="button" class="t69-btn" data-eff-add>+ 효과</button></div>
-                    <button type="button" class="t69-btn t69-primary" data-act="add-asset">자산 추가</button></details></div>
-            <div class="t69-card"><div class="t69-card-h">정당 태그 선호</div>
-                <div class="t69-dim">정당마다 태그(${TAGS.join(' · ')})를 얼마나 좋아하는지 — 예산안 예상 표결에 쓰입니다. 표가 넓어서 오른쪽 시각 화면의 "태그 선호" 탭에서 고칩니다.</div>
-                <button type="button" class="t69-btn t69-primary" data-act="open-tagprefs" style="margin-top:6px;">태그 선호 화면 열기 →</button></div>`;
-        const nd = box.querySelector('.t69-newdef');
-        nd.querySelector('[data-n="asset"]').onchange = e => { box.querySelector('.t69-newasset').hidden = e.target.value !== '__new'; };
+                    <div class="econ-effs"><div class="econ-dim">효과 (자산이 기준 50보다 1점 높을 때)</div>
+                        <template><div class="econ-effrow"><select data-eff="k">${targets.map(([tk, tl]) => `<option value="${esc(tk)}">${esc(tl)}</option>`).join('')}</select><input type="number" data-eff="v" value="0.02" step="0.01" min="-1" max="1"><button type="button" class="econ-x" data-eff-del title="효과 지우기">×</button></div></template>
+                        <button type="button" class="econ-btn" data-eff-add>+ 효과</button></div>
+                    <button type="button" class="econ-btn econ-primary" data-act="add-asset">자산 추가</button></details></div>
+            <div class="econ-card"><div class="econ-card-h">정당 태그 선호</div>
+                <div class="econ-dim">정당마다 태그(${TAGS.join(' · ')})를 얼마나 좋아하는지 — 예산안 예상 표결에 쓰입니다. 표가 넓어서 오른쪽 시각 화면의 "태그 선호" 탭에서 고칩니다.</div>
+                <button type="button" class="econ-btn econ-primary" data-act="open-tagprefs" style="margin-top:6px;">태그 선호 화면 열기 →</button></div>`;
+        const nd = box.querySelector('.econ-newdef');
+        nd.querySelector('[data-n="asset"]').onchange = e => { box.querySelector('.econ-newasset').hidden = e.target.value !== '__new'; };
         box.querySelector('[data-act="add-item"]').onclick = () => {
             const g = k => nd.querySelector(`[data-n="${k}"]`).value;
             const name = g('name').trim(); if (!name) { showCustomAlert('항목 이름을 적어 주세요.'); return; }
@@ -1701,16 +1701,16 @@
             recomputeBudget(E); refreshAll();
         };
         // 새 자산 — 효과 줄 · 쌓을 지출 항목(기본 항목이면 override로 연결)
-        const na = box.querySelector('.t69-newasset-def');
+        const na = box.querySelector('.econ-newasset-def');
         const naEffAdd = na.querySelector('[data-eff-add]');
-        const naBindDel = () => na.querySelectorAll('[data-eff-del]').forEach(b => { b.onclick = () => b.closest('.t69-effrow').remove(); });
-        naEffAdd.onclick = () => { naEffAdd.before(na.querySelector('.t69-effs > template').content.cloneNode(true)); naBindDel(); };
+        const naBindDel = () => na.querySelectorAll('[data-eff-del]').forEach(b => { b.onclick = () => b.closest('.econ-effrow').remove(); });
+        naEffAdd.onclick = () => { naEffAdd.before(na.querySelector('.econ-effs > template').content.cloneNode(true)); naBindDel(); };
         naEffAdd.click(); // 효과 한 줄로 시작
         box.querySelector('[data-act="add-asset"]').onclick = () => {
             const g = k => na.querySelector(`[data-a="${k}"]`).value;
             const name = g('name').trim(); if (!name) { showCustomAlert('자산 이름을 적어 주세요.'); return; }
             const effects = {};
-            na.querySelectorAll('.t69-effs > .t69-effrow').forEach(r => { const k = r.querySelector('[data-eff="k"]').value; if (k) effects[k] = num(r.querySelector('[data-eff="v"]').value, 0, -1, 1); });
+            na.querySelectorAll('.econ-effs > .econ-effrow').forEach(r => { const k = r.querySelector('[data-eff="k"]').value; if (k) effects[k] = num(r.querySelector('[data-eff="v"]').value, 0, -1, 1); });
             const id = 'a' + Date.now().toString(36);
             E.defs.assets.push({ id, name, decay: num(g('decay'), 0.03, 0, 0.5), effects });
             E.assets[id] = num(g('start'), 50, 0, 100);
@@ -1728,7 +1728,7 @@
             validateDefs(); recomputeBudget(E); refreshAll();
         };
         box.querySelector('[data-act="add-tax"]').onclick = () => {
-            const tn = box.querySelectorAll('.t69-newdef')[1], g = k => tn.querySelector(`[data-t="${k}"]`).value;
+            const tn = box.querySelectorAll('.econ-newdef')[1], g = k => tn.querySelector(`[data-t="${k}"]`).value;
             const name = g('name').trim(); if (!name) { showCustomAlert('세목 이름을 적어 주세요.'); return; }
             const id = 't' + Date.now().toString(36);
             E.defs.taxes.push({ id, name, rate0: Number(g('rate0')), base: Number(g('base')), L: 100, max: 60, weight: g('weight'), side: { growth: Number(g('growth')), infl: Number(g('infl')) } });
@@ -1736,11 +1736,11 @@
             E.taxes[id] = E.defs.taxes[E.defs.taxes.length - 1].rate0; if (E.draft) E.draft.taxes[id] = E.taxes[id];
             recomputeBudget(E); refreshAll();
         };
-        box.querySelectorAll('.t69-def[data-def-kind]').forEach(row => {
+        box.querySelectorAll('.econ-def[data-def-kind]').forEach(row => {
             const kind = row.dataset.defKind, id = row.dataset.defId, name = row.dataset.defName;
             row.querySelector('[data-def-edit]').onclick = () => { editingDef = editingDef && editingDef.kind === kind && editingDef.id === id ? null : { kind, id }; renderItems(); };
             row.querySelector('[data-def-del]').onclick = () => removeDef(kind, id, name);
-            const form = row.querySelector('.t69-defedit');
+            const form = row.querySelector('.econ-defedit');
             if (!form) return;
             form.querySelector('[data-def-save]').onclick = () => {
                 const fields = readDefEdit(kind, form);
@@ -1751,8 +1751,8 @@
             const rs = form.querySelector('[data-def-reset]');
             if (rs) rs.onclick = () => restoreDef(kind, id, true);
             const add = form.querySelector('[data-eff-add]');
-            if (add) add.onclick = () => { const t = form.querySelector('.t69-effs > template'); add.before(t.content.cloneNode(true)); bindEffDel(); };
-            const bindEffDel = () => form.querySelectorAll('[data-eff-del]').forEach(b => { b.onclick = () => b.closest('.t69-effrow').remove(); });
+            if (add) add.onclick = () => { const t = form.querySelector('.econ-effs > template'); add.before(t.content.cloneNode(true)); bindEffDel(); };
+            const bindEffDel = () => form.querySelectorAll('[data-eff-del]').forEach(b => { b.onclick = () => b.closest('.econ-effrow').remove(); });
             bindEffDel();
         });
         box.querySelectorAll('[data-def-restore]').forEach(b => { b.onclick = () => { const [kind, ...rest] = b.dataset.defRestore.split(':'); restoreDef(kind, rest.join(':'), false); }; });
@@ -1766,8 +1766,8 @@
         after.parentElement.insertBefore(el(`<button class="disp-tab-btn" id="dispTabEconomy" data-tab="economy" onclick="switchDispTab('economy')" style="display:none;"><span class="disp-tab-label">경제</span><span class="disp-tab-close" onclick="event.stopPropagation();closeDispTab('economy')">×</span></button>`), after.nextSibling);
         const ref = document.getElementById('dispPanelRanking') || document.getElementById('dispPanelTimeline') || document.getElementById('dispPanelCabinet');
         if (!ref) return;
-        ref.parentElement.insertBefore(el(`<div class="disp-panel" id="dispPanelEconomy"><div class="chamber-box t69-dispbox t69-viz">
-            <div class="t69-toolbar" id="t69Toolbar"></div><div id="t69Disp"></div></div></div>`), ref.nextSibling);
+        ref.parentElement.insertBefore(el(`<div class="disp-panel" id="dispPanelEconomy"><div class="chamber-box econ-dispbox econ-viz">
+            <div class="econ-toolbar" id="econToolbar"></div><div id="econDisp"></div></div></div>`), ref.nextSibling);
     })();
     // ---- 오른쪽 시각 화면 "태그 선호" — 정당 × 태그 표 (가로로 넓어서 왼쪽 항목 탭 대신 여기서 고친다) ----
     (function addTagPrefsDisp() {
@@ -1775,7 +1775,7 @@
         const ref = document.getElementById('dispPanelEconomy');
         if (!after || !ref) return;
         after.parentElement.insertBefore(el(`<button class="disp-tab-btn" id="dispTabTagprefs" data-tab="tagprefs" onclick="switchDispTab('tagprefs')" style="display:none;"><span class="disp-tab-label">태그 선호</span><span class="disp-tab-close" onclick="event.stopPropagation();closeDispTab('tagprefs')">×</span></button>`), after.nextSibling);
-        ref.parentElement.insertBefore(el(`<div class="disp-panel" id="dispPanelTagprefs"><div class="chamber-box t69-dispbox t69-viz"><div id="t69TagPrefs"></div></div></div>`), ref.nextSibling);
+        ref.parentElement.insertBefore(el(`<div class="disp-panel" id="dispPanelTagprefs"><div class="chamber-box econ-dispbox econ-viz"><div id="econTagPrefs"></div></div></div>`), ref.nextSibling);
     })();
     function showTagPrefs() {
         const btn = document.getElementById('dispTabTagprefs');
@@ -1785,18 +1785,18 @@
     }
     const prefColor = v => (v > 0 ? `color-mix(in srgb, var(--success, #2ecc71) ${Math.round(Math.min(1, v / 2) * 55)}%, transparent)` : v < 0 ? `color-mix(in srgb, var(--critical, #e74c3c) ${Math.round(Math.min(1, -v / 2) * 55)}%, transparent)` : 'transparent');
     function renderTagPrefs(focus) {
-        const box = document.getElementById('t69TagPrefs');
+        const box = document.getElementById('econTagPrefs');
         if (!box) return;
         const plist = (parties || []).filter(p => p.status !== 'banned' && p.ideologyId !== 9999);
         box.innerHTML = `
-            <div class="t69-tp-head"><b>정당 태그 선호</b><span class="t69-dim">−2 싫어함 · 0 무관 · +2 좋아함 — 비운 칸은 이념에서 자동(흐린 숫자). 의원은 지출 항목의 태그로 예산안 찬반을 정합니다.</span></div>
-            <div class="t69-tp-wrap"><table class="t69-tp"><thead><tr><th>정당</th>${TAGS.map(t => `<th>${esc(t)}</th>`).join('')}<th></th></tr></thead><tbody>
-            ${plist.map(p => { const pr = partyPrefs(p), own = E.tagPrefs[p.id] || {}; return `<tr data-pid="${esc(p.id)}"><td class="t69-tp-name"><i class="t69-pdot" style="background:${esc(p.color)}"></i>${esc(p.name)}</td>${TAGS.map(t => {
+            <div class="econ-tp-head"><b>정당 태그 선호</b><span class="econ-dim">−2 싫어함 · 0 무관 · +2 좋아함 — 비운 칸은 이념에서 자동(흐린 숫자). 의원은 지출 항목의 태그로 예산안 찬반을 정합니다.</span></div>
+            <div class="econ-tp-wrap"><table class="econ-tp"><thead><tr><th>정당</th>${TAGS.map(t => `<th>${esc(t)}</th>`).join('')}<th></th></tr></thead><tbody>
+            ${plist.map(p => { const pr = partyPrefs(p), own = E.tagPrefs[p.id] || {}; return `<tr data-pid="${esc(p.id)}"><td class="econ-tp-name"><i class="econ-pdot" style="background:${esc(p.color)}"></i>${esc(p.name)}</td>${TAGS.map(t => {
                 const v = pr[t], set = own[t] != null;
-                return `<td style="background:${prefColor(v)}"><input type="number" step="0.1" min="-2" max="2" data-tag="${esc(t)}" value="${set ? own[t] : ''}" placeholder="${v.toFixed(1)}" class="t69-tagin${set ? ' set' : ''}"></td>`;
-            }).join('')}<td>${Object.keys(own).length ? '<button type="button" class="t69-x" data-tp-reset title="이 정당을 이념 자동으로">↺</button>' : ''}</td></tr>`; }).join('')}
+                return `<td style="background:${prefColor(v)}"><input type="number" step="0.1" min="-2" max="2" data-tag="${esc(t)}" value="${set ? own[t] : ''}" placeholder="${v.toFixed(1)}" class="econ-tagin${set ? ' set' : ''}"></td>`;
+            }).join('')}<td>${Object.keys(own).length ? '<button type="button" class="econ-x" data-tp-reset title="이 정당을 이념 자동으로">↺</button>' : ''}</td></tr>`; }).join('')}
             </tbody></table></div>`;
-        box.querySelectorAll('tr[data-pid] .t69-tagin').forEach(inp => inp.addEventListener('change', () => {
+        box.querySelectorAll('tr[data-pid] .econ-tagin').forEach(inp => inp.addEventListener('change', () => {
             const pid = inp.closest('tr').dataset.pid, t = inp.dataset.tag, raw = inp.value.trim();
             const key = (parties.find(p => String(p.id) === pid) || {}).id ?? pid;
             E.tagPrefs[key] = E.tagPrefs[key] || {};
@@ -1808,7 +1808,7 @@
         // 값을 바꾼 뒤 Tab으로 다음 칸에 갈 수 있게 다음 칸에 포커스
         if (focus) {
             const [pid, t] = focus.split('|');
-            const inputs = [...box.querySelectorAll('.t69-tagin')];
+            const inputs = [...box.querySelectorAll('.econ-tagin')];
             const i = inputs.findIndex(x => x.closest('tr').dataset.pid === pid && x.dataset.tag === t);
             if (i >= 0 && document.activeElement === document.body && inputs[i + 1]) inputs[i + 1].focus();
         }
@@ -1830,7 +1830,7 @@
     };
     function toggleFull(on) {
         E.ui.full = on == null ? !E.ui.full : on;
-        document.body.classList.toggle('t69-full', !!E.ui.full);
+        document.body.classList.toggle('econ-full', !!E.ui.full);
         setTimeout(renderDisp, 60);
     }
     document.addEventListener('keydown', e => { if (e.key === 'Escape' && E.ui.full) toggleFull(false); });
@@ -1879,16 +1879,16 @@
     }
     const CHIP_VARS = ['growth', 'infl', 'unemp', 'rate', 'yield'];
     function renderToolbar() {
-        const tb = document.getElementById('t69Toolbar'); if (!tb) return;
+        const tb = document.getElementById('econToolbar'); if (!tb) return;
         // 경제권(1.7.1) 자리 — 아직 없는 화면이라 잠긴 버튼으로만
-        tb.innerHTML = `<span class="t69-seg">${[['overview', '개요'], ['analysis', '분석'], ['region', '지역']].map(([k, l]) => `<button type="button" data-view="${k}" class="${E.ui.view === k ? 'on' : ''}">${l}</button>`).join('')}<button type="button" class="t69-locked" data-locked-view aria-disabled="true" title="경제권 — 1.7.1에서 열림">🔒 경제권</button></span>
-            ${E.ui.view === 'analysis' ? `<span class="t69-dim">${esc(E.ui.preset === 'custom' ? '직접 고른 배치' : PRESET_MODS[E.ui.preset]?.name || '')}</span>` : ''}
-            <span class="t69-seg">${RANGES.map(([k, l]) => `<button type="button" data-range="${k}" class="${String(E.ui.range) === k && !E.ui.zoom ? 'on' : ''}">${l}</button>`).join('')}</span>
-            ${E.ui.zoom ? '<button type="button" class="t69-btn t69-sm" data-act="unzoom">확대 해제</button>' : ''}
-            <span class="t69-grow"></span>
-            <button type="button" class="t69-btn t69-sm" data-act="photo" title="지금 보이는 경제 시각 화면 전체를 사진(PNG · JPG · SVG)으로 — 화면에서 우클릭해도 됨">📷 사진</button>
-            <button type="button" class="t69-btn t69-sm" data-act="csv" title="모든 시점 · 지표 표를 CSV로">CSV</button>
-            <button type="button" class="t69-btn t69-sm" data-act="full" title="크게 보기 (Esc로 복귀)">${E.ui.full ? '⤡ 작게' : '⛶ 크게'}</button>`;
+        tb.innerHTML = `<span class="econ-seg">${[['overview', '개요'], ['analysis', '분석'], ['region', '지역']].map(([k, l]) => `<button type="button" data-view="${k}" class="${E.ui.view === k ? 'on' : ''}">${l}</button>`).join('')}<button type="button" class="econ-locked" data-locked-view aria-disabled="true" title="경제권 — 1.7.1에서 열림">🔒 경제권</button></span>
+            ${E.ui.view === 'analysis' ? `<span class="econ-dim">${esc(E.ui.preset === 'custom' ? '직접 고른 배치' : PRESET_MODS[E.ui.preset]?.name || '')}</span>` : ''}
+            <span class="econ-seg">${RANGES.map(([k, l]) => `<button type="button" data-range="${k}" class="${String(E.ui.range) === k && !E.ui.zoom ? 'on' : ''}">${l}</button>`).join('')}</span>
+            ${E.ui.zoom ? '<button type="button" class="econ-btn econ-sm" data-act="unzoom">확대 해제</button>' : ''}
+            <span class="econ-grow"></span>
+            <button type="button" class="econ-btn econ-sm" data-act="photo" title="지금 보이는 경제 시각 화면 전체를 사진(PNG · JPG · SVG)으로 — 화면에서 우클릭해도 됨">📷 사진</button>
+            <button type="button" class="econ-btn econ-sm" data-act="csv" title="모든 시점 · 지표 표를 CSV로">CSV</button>
+            <button type="button" class="econ-btn econ-sm" data-act="full" title="크게 보기 (Esc로 복귀)">${E.ui.full ? '⤡ 작게' : '⛶ 크게'}</button>`;
         tb.querySelectorAll('[data-view]').forEach(b => { b.onclick = () => { E.ui.view = b.dataset.view; renderDisp(); }; });
         tb.querySelector('[data-locked-view]').onclick = () => showCustomAlert('🔒 "경제권"은(는) 1.7.1 업데이트에서 열리는 기능입니다. 여러 나라를 묶어 경제권(관세 동맹 · 공동시장 · 통화 동맹 …)을 정하고 경제에 반영해요.');
         tb.querySelectorAll('[data-range]').forEach(b => { b.onclick = () => { E.ui.range = b.dataset.range; E.ui.zoom = null; renderDisp(); if (curSub() === 'analysis') renderTab('analysis'); }; });
@@ -1901,7 +1901,7 @@
         if (!dispActive()) return;
         ensureInit();
         renderToolbar();
-        const box = document.getElementById('t69Disp'); if (!box) return;
+        const box = document.getElementById('econDisp'); if (!box) return;
         box.textContent = '';
         try {
             if (E.ui.view === 'analysis') renderAnalysisDisp(box);
@@ -1911,8 +1911,8 @@
         } catch (e) { console.error(e); box.textContent = '그래프를 그리지 못했습니다: ' + e.message; }
     }
     const section = (box, title, sub) => {
-        const s = document.createElement('section'); s.className = 't69-sec';
-        if (title) { const h = document.createElement('h4'); h.textContent = title; if (sub) { const sp = document.createElement('span'); sp.className = 't69-dim'; sp.textContent = ' ' + sub; h.appendChild(sp); } s.appendChild(h); }
+        const s = document.createElement('section'); s.className = 'econ-sec';
+        if (title) { const h = document.createElement('h4'); h.textContent = title; if (sub) { const sp = document.createElement('span'); sp.className = 'econ-dim'; sp.textContent = ' ' + sub; h.appendChild(sp); } s.appendChild(h); }
         const body = document.createElement('div'); s.appendChild(body); box.appendChild(s);
         return body;
     };
@@ -1922,12 +1922,12 @@
         // 첫 줄: 신용등급 + 경제 경고 신호 (켜진 신호는 상태색 · 꺼진 신호는 흐리게) / 둘째 줄: 계기 6개
         const rt = E.rating || ratingOf(E);
         const sigAll = signals(E);
-        const top = el(`<div class="t69-toprow">
-            <div class="t69-rating t69-rating-row t69-grade-${rt[0].startsWith('A') ? 'a' : rt[0].startsWith('B') ? 'b' : 'c'}" title="신용등급 — 신뢰도와 국가부채로 정해짐"><b>${rt[0]}</b><div><span>${rt[1]}</span><em>${esc(turnLabel(E, E.turn))} · GDP ${esc(gdpText())}</em></div></div>
-            <div class="t69-warnsigns"><div class="t69-warn-h">경제 경고 신호</div><div class="t69-warn-list">${sigAll.map(s => `<span class="t69-warn ${s.on ? 'on t69-warn-' + s.status : ''}" title="${s.on ? STATUS_WORD[s.status] : '꺼짐'}">${s.on ? `<i class="t69-wi t69-st-${s.status}">${C.STATUS[s.status].icon}</i>` : '○'} ${esc(s.label)}</span>`).join('')}</div></div>
+        const top = el(`<div class="econ-toprow">
+            <div class="econ-rating econ-rating-row econ-grade-${rt[0].startsWith('A') ? 'a' : rt[0].startsWith('B') ? 'b' : 'c'}" title="신용등급 — 신뢰도와 국가부채로 정해짐"><b>${rt[0]}</b><div><span>${rt[1]}</span><em>${esc(turnLabel(E, E.turn))} · GDP ${esc(gdpText())}</em></div></div>
+            <div class="econ-warnsigns"><div class="econ-warn-h">경제 경고 신호</div><div class="econ-warn-list">${sigAll.map(s => `<span class="econ-warn ${s.on ? 'on econ-warn-' + s.status : ''}" title="${s.on ? STATUS_WORD[s.status] : '꺼짐'}">${s.on ? `<i class="econ-wi econ-st-${s.status}">${C.STATUS[s.status].icon}</i>` : '○'} ${esc(s.label)}</span>`).join('')}</div></div>
         </div>`);
         box.appendChild(top);
-        const gs = document.createElement('div'); gs.className = 't69-gauges'; box.appendChild(gs);
+        const gs = document.createElement('div'); gs.className = 'econ-gauges'; box.appendChild(gs);
         [['infl', '인플레이션', -5, 60, 'monetary'], ['growth', '성장률', -10, 10, 'fiscal'], ['unemp', '실업률', 0, 40, 'region'], ['debt', '부채비율', 0, 250, 'fiscal'], ['mood', '민심', 0, 100, 'region'], ['conf', '신뢰도', 0, 100, 'monetary']].forEach(([k, l, mn, mx, go]) => {
             const g = document.createElement('div'); gs.appendChild(g);
             const v = VAR[k].get(E);
@@ -1936,7 +1936,7 @@
                 title: `누르면 왼쪽 ${({ monetary: '통화', fiscal: '재정', region: '지역' })[go]} 탭 · Shift + 클릭하면 ${l} 세부 정보`,
                 onClick: e => { if (e && e.shiftKey) showMetric(k); else { keepDisp = true; switchSubTab('economy', go); } } });
         });
-        box.appendChild(el('<div class="t69-dim t69-small">계기를 누르면 왼쪽 탭으로 · <b>Shift + 클릭</b>하면 그 지표의 세부 정보(예측 · 관련 경고 · 패키지 정책)</div>'));
+        box.appendChild(el('<div class="econ-dim econ-small">계기를 누르면 왼쪽 탭으로 · <b>Shift + 클릭</b>하면 그 지표의 세부 정보(예측 · 관련 경고 · 패키지 정책)</div>'));
         // 셋째 줄: 금액 — 비율(GDP 대비)만으로는 실제 규모를 알 수 없으니 화폐 단위로 (세입 · 세출 · 이자는 연간)
         const bq = budgetOf(E, N, distList()), prevN = last ? last.n : null;
         const chg = (now, before) => (before == null || !Number.isFinite(before) ? '' : `<em class="${now >= before ? 'up' : 'down'}">${now >= before ? '▲' : '▼'} ${Math.round(Math.abs(now - before)).toLocaleString()}</em>`);
@@ -1950,13 +1950,13 @@
             [N.balance < 0 ? '재정 적자 (연간)' : '재정 흑자 (연간)', money(Math.abs(N.balance)), `GDP의 ${pct(Math.abs(N.balance))}`, '', N.balance < -6 ? 'serious' : ''],
             ['국채 이자 (연간)', money(bq.mand.interest), `국채금리 ${pct(N.yield)}`, ''],
         ];
-        box.appendChild(el(`<div class="t69-fin" aria-label="재정 금액">${fin.map(([l, v, sub, d, st]) => `<div class="t69-fin-i ${st ? 't69-fin-' + st : ''}"><span>${l}</span><b>${esc(v)}</b><small>${esc(sub)} ${d}</small></div>`).join('')}</div>`));
+        box.appendChild(el(`<div class="econ-fin" aria-label="재정 금액">${fin.map(([l, v, sub, d, st]) => `<div class="econ-fin-i ${st ? 'econ-fin-' + st : ''}"><span>${l}</span><b>${esc(v)}</b><small>${esc(sub)} ${d}</small></div>`).join('')}</div>`));
         // 이대로면 다음 칸 — 재정 금액 줄 다음에, 왼쪽 개요의 미리보기를 크게 (지금 · 흔들림 없는 다음 칸 예측)
-        const pv = el('<div class="t69-preview t69-preview-big t69-card"></div>');
+        const pv = el('<div class="econ-preview econ-preview-big econ-card"></div>');
         box.appendChild(pv); renderPreview(pv);
         // 큰 그래프 — 같은 단위(%)인 지표만 겹쳐 봄 (두 눈금 겹치지 않게)
         const body = section(box, '추이', '— 칩을 눌러 겹쳐 볼 지표를 고르세요 (같은 % 눈금) · 점선은 예측');
-        const chips = el(`<div class="t69-chips">${CHIP_VARS.map(k => `<button type="button" data-chip="${k}" class="t69-chip ${E.ui.chips.includes(k) ? 'on' : ''}" aria-pressed="${E.ui.chips.includes(k)}"><i style="background:${VAR[k].color}"></i>${VAR[k].label}</button>`).join('')}</div>`);
+        const chips = el(`<div class="econ-chips">${CHIP_VARS.map(k => `<button type="button" data-chip="${k}" class="econ-chip ${E.ui.chips.includes(k) ? 'on' : ''}" aria-pressed="${E.ui.chips.includes(k)}"><i style="background:${VAR[k].color}"></i>${VAR[k].label}</button>`).join('')}</div>`);
         body.appendChild(chips);
         chips.querySelectorAll('[data-chip]').forEach(b => { b.onclick = () => { const s = new Set(E.ui.chips); if (s.has(b.dataset.chip)) { if (s.size > 1) s.delete(b.dataset.chip); } else s.add(b.dataset.chip); E.ui.chips = CHIP_VARS.filter(k => s.has(k)); renderDisp(); }; });
         const chart = document.createElement('div'); body.appendChild(chart);
@@ -1976,7 +1976,7 @@
         const sp = budgetPies();
         const opt = { spend: sp.spend, rev: sp.rev, unit: '', center: [`${N.balance < 0 ? '적자' : '흑자'} ${Math.abs(N.balance).toFixed(1)}%`, 'GDP 대비'] };
         if (E.settings.budgetView === 'bars') C.budgetBars(bb, opt); else C.budgetHemi(bb, opt);
-        const sw = el(`<div class="t69-dim t69-small" style="margin-top:4px"><button type="button" class="t69-btn t69-sm" data-act="bview">${E.settings.budgetView === 'bars' ? '예산 반원으로 보기' : '가로 막대로 보기'}</button></div>`);
+        const sw = el(`<div class="econ-dim econ-small" style="margin-top:4px"><button type="button" class="econ-btn econ-sm" data-act="bview">${E.settings.budgetView === 'bars' ? '예산 반원으로 보기' : '가로 막대로 보기'}</button></div>`);
         bb.appendChild(sw);
         sw.querySelector('button').onclick = () => { E.settings.budgetView = E.settings.budgetView === 'bars' ? 'hemi' : 'bars'; renderDisp(); };
     }
@@ -2012,18 +2012,18 @@
         const arrow = d => (flat(d) ? '→' : d > 0 ? '▲' : '▼');
         const dtxt = d => (flat(d) ? '0.0' : sgn(d));
         // 머리: 지표 바꾸기 · 개요로
-        box.appendChild(el(`<div class="t69-mhead">
-            <button type="button" class="t69-btn t69-sm" data-act="back">← 개요</button>
-            <span class="t69-chips">${Object.keys(METRICS).map(m => `<button type="button" class="t69-chip ${m === k ? 'on' : ''}" data-metric="${m}"><i style="background:${VAR[m].color}"></i>${METRICS[m].label}</button>`).join('')}</span>
+        box.appendChild(el(`<div class="econ-mhead">
+            <button type="button" class="econ-btn econ-sm" data-act="back">← 개요</button>
+            <span class="econ-chips">${Object.keys(METRICS).map(m => `<button type="button" class="econ-chip ${m === k ? 'on' : ''}" data-metric="${m}"><i style="background:${VAR[m].color}"></i>${METRICS[m].label}</button>`).join('')}</span>
         </div>`));
         // 지금 · 다음 칸 · 1년 뒤
-        const card = (title, val, sub, s) => `<div class="t69-mcard t69-mcard-${s}"><span>${title}</span><b>${esc(val)}</b><small>${sub}</small><em class="t69-st-${s}">${STATUS_WORD[s]}</em></div>`;
-        box.appendChild(el(`<div class="t69-mcards">
+        const card = (title, val, sub, s) => `<div class="econ-mcard econ-mcard-${s}"><span>${title}</span><b>${esc(val)}</b><small>${sub}</small><em class="econ-st-${s}">${STATUS_WORD[s]}</em></div>`;
+        box.appendChild(el(`<div class="econ-mcards">
             ${card(`지금 ${esc(M.label)}`, fmt(v), esc(turnLabel(E, E.turn)), st)}
             ${card(`이대로면 다음 1${UNIT_WORD[E.unit]}`, fmt(next), `${arrow(next - v)} ${dtxt(next - v)}${dunit} · 50% 범위 ${fmt(nextLo)} ~ ${fmt(nextHi)}`, stN)}
             ${yr > 1 ? card(`이대로면 ${spanLabel(yr)} 뒤`, fmt(yv), `${arrow(yv - v)} ${dtxt(yv - v)}${dunit} · 지금보다 ${flat(yv - v) ? '그대로' : yv > v ? '높음' : '낮음'}`, stY) : ''}
         </div>`));
-        if (M.note) box.appendChild(el(`<div class="t69-dim t69-small">${esc(M.note())}</div>`));
+        if (M.note) box.appendChild(el(`<div class="econ-dim econ-small">${esc(M.note())}</div>`));
         // 추이 + 예측
         const body = section(box, `${M.label} 추이`, '— 점선은 지금 정책을 유지할 때의 예측 (진한 띠 50% · 옅은 띠 90%)');
         const chart = document.createElement('div'); body.appendChild(chart);
@@ -2038,24 +2038,24 @@
         // 관련 경고 신호
         const sig = signals(E).filter(s => M.signals.includes(s.id));
         const sb = section(box, `${M.label} 관련 경고 신호`);
-        sb.appendChild(el(sig.length ? `<div class="t69-warn-list">${sig.map(s => `<span class="t69-warn ${s.on ? 'on t69-warn-' + s.status : ''}" title="${s.on ? STATUS_WORD[s.status] : '꺼짐'}">${s.on ? `<i class="t69-wi t69-st-${s.status}">${C.STATUS[s.status].icon}</i>` : '○'} ${esc(s.label)}</span>`).join('')}</div>`
-            : '<div class="t69-dim t69-small">관련 경고 신호가 없습니다.</div>'));
+        sb.appendChild(el(sig.length ? `<div class="econ-warn-list">${sig.map(s => `<span class="econ-warn ${s.on ? 'on econ-warn-' + s.status : ''}" title="${s.on ? STATUS_WORD[s.status] : '꺼짐'}">${s.on ? `<i class="econ-wi econ-st-${s.status}">${C.STATUS[s.status].icon}</i>` : '○'} ${esc(s.label)}</span>`).join('')}</div>`
+            : '<div class="econ-dim econ-small">관련 경고 신호가 없습니다.</div>'));
         // 무엇이 움직이나 — 정책을 하나씩 바꿨을 때 1년 뒤 이 지표의 변화 (큰 순서)
         const lev = sensitivity(k, yr).sort((a, b) => Math.abs(b.value) - Math.abs(a.value)).slice(0, 6);
         const lb = section(box, '무엇이 움직이나', `— 하나씩 바꿨을 때 ${spanLabel(yr)} 뒤 ${M.label}의 변화`);
         const mx = Math.max(1e-6, ...lev.map(r => Math.abs(r.value)));
-        lb.appendChild(el(lev.length ? `<div class="t69-levers">${lev.map(r => `<div class="t69-lever"><span>${esc(r.label)}${r.sub ? ` <em class="t69-dim">${esc(r.sub)}</em>` : ''}</span>
-            <i class="t69-lever-bar"><b class="${r.value >= 0 ? 'pos' : 'neg'}" style="width:${(Math.abs(r.value) / mx * 50).toFixed(1)}%;${r.value >= 0 ? 'left:50%' : `right:50%`}"></b></i><em>${sgn(r.value, 2)}${dunit}</em></div>`).join('')}</div>`
-            : '<div class="t69-dim t69-small">눈에 띄게 움직이는 정책이 없습니다.</div>'));
+        lb.appendChild(el(lev.length ? `<div class="econ-levers">${lev.map(r => `<div class="econ-lever"><span>${esc(r.label)}${r.sub ? ` <em class="econ-dim">${esc(r.sub)}</em>` : ''}</span>
+            <i class="econ-lever-bar"><b class="${r.value >= 0 ? 'pos' : 'neg'}" style="width:${(Math.abs(r.value) / mx * 50).toFixed(1)}%;${r.value >= 0 ? 'left:50%' : `right:50%`}"></b></i><em>${sgn(r.value, 2)}${dunit}</em></div>`).join('')}</div>`
+            : '<div class="econ-dim econ-small">눈에 띄게 움직이는 정책이 없습니다.</div>'));
         // 패키지 정책 — 이 지표에 듣는 것만, 1년 뒤 예상과 함께
         const used = E.pkgUsed || 0, lim = E.settings.pkgLimit;
         const base = VAR[k].get(project(null, yr));
         const pb = section(box, '패키지 정책', `— 이번 ${UNIT_WORD[E.unit]} ${used}/${lim} · 숫자는 ${spanLabel(yr)} 뒤 ${M.label} (안 쓰면 ${fmt(base)})`);
-        pb.appendChild(el(`<div class="t69-pkgs">${M.pkgs.map(id => {
+        pb.appendChild(el(`<div class="econ-pkgs">${M.pkgs.map(id => {
             const after = VAR[k].get(project(PKG_INFO[id].mut, yr)), d = after - base;
-            return `<button type="button" class="t69-pkg" data-pkg="${id}" ${used >= lim ? 'disabled' : ''}><b>${PKG_INFO[id].name}</b><span>${spanLabel(yr)} 뒤 ${esc(M.label)} ${fmt(after)} <em class="${d >= 0 ? 'up' : 'down'}">(${sgn(d, 2)}${dunit})</em> · ${STATUS_WORD[statusOf(k, after)]}</span></button>`;
+            return `<button type="button" class="econ-pkg" data-pkg="${id}" ${used >= lim ? 'disabled' : ''}><b>${PKG_INFO[id].name}</b><span>${spanLabel(yr)} 뒤 ${esc(M.label)} ${fmt(after)} <em class="${d >= 0 ? 'up' : 'down'}">(${sgn(d, 2)}${dunit})</em> · ${STATUS_WORD[statusOf(k, after)]}</span></button>`;
         }).join('')}</div>`));
-        pb.appendChild(el(`<div class="t69-actions"><button type="button" class="t69-btn t69-sm" data-act="go">${esc(M.goLabel)} 탭에서 직접 조정 →</button></div>`));
+        pb.appendChild(el(`<div class="econ-actions"><button type="button" class="econ-btn econ-sm" data-act="go">${esc(M.goLabel)} 탭에서 직접 조정 →</button></div>`));
         box.querySelector('[data-act="back"]').onclick = () => showDisp('overview');
         box.querySelectorAll('[data-metric]').forEach(b => { b.onclick = () => showMetric(b.dataset.metric); });
         box.querySelectorAll('[data-pkg]').forEach(b => { b.onclick = () => usePackage(b.dataset.pkg); });
@@ -2183,7 +2183,7 @@
                 C.table(b, spec);
             }
         });
-        if (!mods.length) box.appendChild(el('<div class="t69-dim">왼쪽 경제 › 분석에서 볼 그래프를 고르세요.</div>'));
+        if (!mods.length) box.appendChild(el('<div class="econ-dim">왼쪽 경제 › 분석에서 볼 그래프를 고르세요.</div>'));
     }
     function sankeySpec() {
         const { b } = budgetPies(), G = E.nat.gdp / 100;
@@ -2192,7 +2192,7 @@
         const deficit = Math.max(0, -E.nat.balance) * G, surplus = Math.max(0, E.nat.balance) * G;
         if (deficit > 0) col0.push({ id: 'r_debt', label: '국채 발행', value: deficit, color: 'var(--critical)' });
         const total = sum(col0.map(n => n.value));
-        const col1 = [{ id: 'treasury', label: '국고', value: total, color: 'var(--t69-ink2)' }];
+        const col1 = [{ id: 'treasury', label: '국고', value: total, color: 'var(--econ-ink2)' }];
         const groups = {};
         itemDefs().forEach(d => { const g = d.group || '기타'; (groups[g] = groups[g] || []).push(d); });
         const gEntries = Object.entries(groups);
@@ -2233,7 +2233,7 @@
         return rampAt(hi > lo ? (v - lo) / (hi - lo) : 0.5, RAMP);
     }
     function renderMapTo(body) {
-        const wrap = document.createElement('div'); wrap.className = 't69-map'; wrap.id = 't69MapWrap'; body.appendChild(wrap);
+        const wrap = document.createElement('div'); wrap.className = 'econ-map'; wrap.id = 'econMapWrap'; body.appendChild(wrap);
         if (distList()[0] === '__nation' || typeof renderDistrictSvgInto !== 'function') { wrap.textContent = '지역구 지도가 없습니다 — 국가 › 지역구 지도에서 지도를 올리세요.'; return; }
         const fmt = k => { const v = regionMetric(k); return E.ui.mapBy === 'industry' ? ['농업', '제조업', '서비스업'][v] : E.ui.mapBy === 'gdppc' ? `1인당 GDP ${v.toFixed(0)} (전국 100)` : E.ui.mapBy === 'income' ? `소득등급 ${v.toFixed(1)}` : `${MAP_BY[E.ui.mapBy]} ${v.toFixed(1)}`; };
         renderDistrictSvgInto(wrap, { chamber: 'house', getFill: k => (E.dist[k] && !excludedKey(k) ? regionFill(k) : null), title: k => (E.dist[k] && !excludedKey(k) ? `${nameOf(k)} — ${fmt(k)}` : nameOf(k)), clickable: false, noZoom: true });
@@ -2276,12 +2276,12 @@
     // ================= 우클릭 내보내기 (경제 그래프 · 경제 시각 탭 전체) =================
     // 그래프 위에서 우클릭하면 그 그래프만, 그 밖(계기 · 금액 카드 · 경고 신호 · 빈 곳)에서 우클릭하면 지금 보이는 경제 화면 전체
     document.addEventListener('contextmenu', e => {
-        const disp = e.target.closest && e.target.closest('#t69Disp');
+        const disp = e.target.closest && e.target.closest('#econDisp');
         if (!disp) return;
-        const svg = e.target.closest('svg.t69-svg');
+        const svg = e.target.closest('svg.econ-svg');
         const target = svg || disp;
         e.preventDefault(); e.stopPropagation();
-        target.dataset.exportKind = svg ? 't69chart' : 't69panel';
+        target.dataset.exportKind = svg ? 'econchart' : 'econpanel';
         try { canvasExportTarget = target; } catch (err) { return; } // eslint-disable-line no-undef
         const menu = document.getElementById('canvasExportMenu');
         if (!menu) return;
@@ -2290,8 +2290,8 @@
     }, true);
     // 툴바 "📷 사진" — 빈 곳 우클릭과 같은 경제 시각 화면 전체 내보내기를 바로 연다
     function exportDispPhoto() {
-        const disp = document.getElementById('t69Disp'); if (!disp) return;
-        disp.dataset.exportKind = 't69panel';
+        const disp = document.getElementById('econDisp'); if (!disp) return;
+        disp.dataset.exportKind = 'econpanel';
         try { canvasExportTarget = disp; } catch (e) { return; } // eslint-disable-line no-undef
         if (typeof window.openExportDialog === 'function') window.openExportDialog();
     }
@@ -2299,21 +2299,21 @@
     if (typeof origOpenExport === 'function') {
         window.openExportDialog = function () {
             const r = origOpenExport.apply(this, arguments);
-            try { if (String(canvasExportTarget?.dataset?.exportKind || '').startsWith('t69')) { const sec = document.getElementById('exportHeaderStatsSection'); if (sec) sec.style.display = 'none'; } } catch (e) { /* 없음 */ } // eslint-disable-line no-undef
+            try { if (String(canvasExportTarget?.dataset?.exportKind || '').startsWith('econ')) { const sec = document.getElementById('exportHeaderStatsSection'); if (sec) sec.style.display = 'none'; } } catch (e) { /* 없음 */ } // eslint-disable-line no-undef
             return r;
         };
     }
     const origExportAt = window.exportVisualElementAt;
     if (typeof origExportAt === 'function') {
         window.exportVisualElementAt = function (target, includeStats, format) {
-            if (String(target?.dataset?.exportKind || '').startsWith('t69')) return t69Export(target, format);
+            if (String(target?.dataset?.exportKind || '').startsWith('econ')) return econExport(target, format);
             return origExportAt.apply(this, arguments);
         };
     }
     function dl(href, name) { const a = document.createElement('a'); a.href = href; a.download = name; document.body.appendChild(a); a.click(); a.remove(); }
     const surfaceOf = el => {
         for (let e = el; e && e.nodeType === 1; e = e.parentElement) { const bg = getComputedStyle(e).backgroundColor; if (bg && !isClear(bg)) return bg; }
-        return getComputedStyle(el.closest('.t69-viz') || document.body).getPropertyValue('--t69-surface').trim() || '#fff';
+        return getComputedStyle(el.closest('.econ-viz') || document.body).getPropertyValue('--econ-surface').trim() || '#fff';
     };
     const isClear = c => !c || c === 'transparent' || /^rgba\(.*,\s*0\)$/.test(c);
     const attr = v => String(v).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -2423,10 +2423,10 @@
         return `<svg xmlns="http://www.w3.org/2000/svg" width="${W + P * 2}" height="${H + P * 2}" viewBox="0 0 ${W + P * 2} ${H + P * 2}" font-family="${attr((window.HemiExportKit && HemiExportKit.font) || 'sans-serif')}">`
             + `${bg.replace(`width="${W}" height="${H}"`, `width="${W + P * 2}" height="${H + P * 2}"`)}<g transform="translate(${P},${P})">${out.join('')}</g></svg>`;
     }
-    async function t69Export(target, format) {
+    async function econExport(target, format) {
         const kit = window.HemiExportKit;
         if (kit) await kit.prepareFont();
-        const panel = target.dataset.exportKind === 't69panel';
+        const panel = target.dataset.exportKind === 'econpanel';
         let text;
         if (panel) text = panelSvg(target);
         else {
@@ -2502,13 +2502,13 @@
     window.setAppState = function (state) {
         const r = origSet.apply(this, arguments);
         loadState(state && (state.economy || state.teaser69));
-        document.body.classList.remove('t69-full');
+        document.body.classList.remove('econ-full');
         try { if (typeof currentMainTab !== 'undefined' && currentMainTab === 'economy') renderTab(curSub()); } catch (e) { /* 없음 */ } // eslint-disable-line no-undef
         renderDisp();
         return r;
     };
 
-    window.T69 = {
+    window.HemiEconomy = {
         get state() { return E; }, ensureInit, runTurns, nextTurn, step, forecast, sensitivity, predictVotes, submitBudget, checkBudgetBill, fillPredicted,
         newEconomy: id => { newEconomy(id); inited = true; refreshAll(); }, usePackage, ratingOf: () => ratingOf(E), statusOf, signals: () => signals(E), budget: () => budgetOf(E, E.nat, distList()),
         setValue, showDisp, toggleFull, refresh: refreshAll,
@@ -2517,202 +2517,202 @@
     // ================= 모양 =================
     const style = document.createElement('style');
     style.textContent = `
-        .t69-content { --t69-line: #333; --t69-soft: rgba(255,255,255,.03); --t69-dim2: #888; --t69-text: #ddd; --t69-acc: var(--tno-neon); --t69-acc-ink: #000;
+        .econ-content { --econ-line: #333; --econ-soft: rgba(255,255,255,.03); --econ-dim2: #888; --econ-text: #ddd; --econ-acc: var(--tno-neon); --econ-acc-ink: #000;
             --good: #0ca30c; --warning: #fab219; --serious: #ec835a; --critical: #d03b3b; --pos: #3987e5; --neg: #e66767; }
-        html[data-theme-family="modern"] .t69-content { --t69-line: var(--m-border); --t69-soft: var(--m-surface-2); --t69-dim2: var(--m-text-3); --t69-text: var(--m-text); --t69-acc: var(--m-accent); --t69-acc-ink: var(--m-on-accent, #fff); }
-        .t69-intro { color: var(--t69-dim2); font-size: .78rem; line-height: 1.6; margin: 6px 0 10px; }
-        .t69-dim { color: var(--t69-dim2); } .t69-small { font-size: .72rem; line-height: 1.5; margin-top: 4px; }
-        .t69-card { border: 1px solid var(--t69-line); background: var(--t69-soft); padding: 10px; margin-bottom: 10px; }
-        html[data-theme-family="modern"] .t69-card { border-radius: 12px; }
-        .t69-card-h { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 10px; color: var(--t69-text); font-size: .88rem; margin-bottom: 8px; }
-        .t69-card-h b { margin-left: auto; font-variant-numeric: tabular-nums; }
-        .t69-btn { cursor: pointer; font-family: inherit; font-size: .82rem; padding: 7px 11px; background: transparent; border: 1px solid var(--t69-line); color: var(--t69-text); }
-        html[data-theme-family="modern"] .t69-btn { border-radius: 8px; }
-        .t69-btn:hover:not(:disabled) { border-color: var(--t69-acc); color: var(--t69-acc); }
-        .t69-btn.t69-primary { border-color: var(--t69-acc); color: var(--t69-acc); }
-        html[data-theme-family="modern"] .t69-btn.t69-primary { background: var(--t69-acc); color: var(--t69-acc-ink); }
-        .t69-btn:disabled { opacity: .4; cursor: default; }
-        .t69-btn.t69-sm { font-size: .72rem; padding: 3px 8px; }
-        .t69-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; align-items: center; }
-        .t69-row { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; font-size: .8rem; color: var(--t69-text); margin: 6px 0; }
-        .t69-check { display: flex; align-items: flex-start; gap: 6px; font-size: .8rem; color: var(--t69-text); margin: 6px 0; line-height: 1.45; cursor: pointer; }
-        .t69-check input { margin-top: 3px; }
-        .t69-num { width: 72px; } .t69-segs { width: 150px; }
-        .t69-content input[type="range"] { width: 100%; }
-        .t69-top { display: grid; grid-template-columns: auto minmax(0,1fr) auto; gap: 10px; align-items: center; margin-bottom: 10px; }
-        .t69-rating { display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 64px; padding: 6px 8px; border: 2px solid currentColor; color: var(--good); }
-        html[data-theme-family="modern"] .t69-rating { border-radius: 12px; }
-        .t69-rating b { font-size: 1.35rem; letter-spacing: 1px; line-height: 1.1; } .t69-rating span { font-size: .62rem; opacity: .9; white-space: nowrap; }
-        .t69-rating em { font-style: normal; font-size: .62rem; opacity: .75; margin-top: 2px; }
-        .t69-grade-b { color: var(--warning); } .t69-grade-c { color: var(--critical); }
-        .t69-turn-now { font-size: 1rem; color: var(--t69-text); font-weight: 600; }
-        .t69-turninfo .t69-dim { font-size: .74rem; } #contentEcoOverview .t69-turninfo select { font-size: .74rem; width: auto; min-width: 0; padding: 2px 6px; height: auto; display: inline-block; }
-        .t69-next { white-space: nowrap; font-size: .9rem; padding: 10px 12px; }
-        .t69-sys { display: grid; grid-template-columns: auto minmax(0,1fr) auto; gap: 6px 8px; align-items: center; font-size: .78rem; color: var(--t69-dim2); }
-        .t69-sys b { grid-column: 1 / -1; text-align: center; color: var(--t69-text); font-weight: 600; font-size: .82rem; }
-        .t69-kpis { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin: 10px 0; }
-        .t69-kpi { display: grid; grid-template-columns: minmax(0,1fr) auto; grid-template-rows: auto auto; gap: 0 6px; text-align: left; cursor: pointer; font-family: inherit; padding: 8px 9px; border: 1px solid var(--t69-line); background: var(--t69-soft); color: var(--t69-text); }
-        html[data-theme-family="modern"] .t69-kpi { border-radius: 10px; }
-        .t69-kpi:hover { border-color: var(--t69-acc); }
-        .t69-kpi-l { font-size: .7rem; color: var(--t69-dim2); grid-column: 1 / -1; }
-        .t69-kpi b { font-size: 1.05rem; font-variant-numeric: tabular-nums; } .t69-kpi-d { font-size: .68rem; color: var(--t69-dim2); align-self: center; }
-        .t69-kpi .t69-st { grid-column: 1 / -1; }
-        .t69-st { font-size: .66rem; display: inline-flex; align-items: center; gap: 3px; color: var(--t69-dim2); font-style: normal; } .t69-st em { font-style: normal; }
-        .t69-st-good { color: var(--good); } .t69-st-warning { color: var(--warning); } .t69-st-serious { color: var(--serious); } .t69-st-critical { color: var(--critical); }
-        .t69-st em { color: var(--t69-dim2); }
-        .t69-signals, .t69-sigrow { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 10px; font-size: .76rem; }
-        .t69-signal { display: inline-flex; align-items: center; gap: 5px; padding: 3px 8px; border: 1px solid var(--t69-line, var(--t69-grid)); color: var(--t69-text, var(--t69-ink)); }
-        html[data-theme-family="modern"] .t69-signal { border-radius: 999px; }
-        .t69-alert { border: 1px solid var(--critical); background: color-mix(in srgb, var(--critical) 10%, transparent); color: var(--t69-text); padding: 8px 10px; margin: 8px 0; font-size: .8rem; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; line-height: 1.5; }
-        html[data-theme-family="modern"] .t69-alert { border-radius: 10px; }
-        .t69-alert > div { flex-basis: 100%; }
-        .t69-fc { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: .78rem; color: var(--t69-dim2); } .t69-fc b { color: var(--t69-text); font-variant-numeric: tabular-nums; }
-        .t69-settings summary, .t69-content details > summary { cursor: pointer; color: var(--t69-text); font-size: .85rem; }
-        .t69-lock { font-size: .72rem; color: var(--warning); margin-top: 4px; }
-        .t69-bands { display: flex; justify-content: space-between; gap: 4px; font-size: .62rem; color: var(--t69-dim2); flex-wrap: wrap; }
-        .t69-pkgs { display: grid; gap: 6px; }
-        .t69-mhead { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
-        .t69-mcards { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 8px; margin-bottom: 6px; }
-        .t69-mcard { display: flex; flex-direction: column; gap: 2px; border: 1px solid var(--t69-line); border-left: 4px solid var(--good); padding: 8px 10px; background: var(--t69-soft); }
-        .t69-mcard-warning { border-left-color: var(--warning); } .t69-mcard-serious { border-left-color: var(--serious); } .t69-mcard-critical { border-left-color: var(--critical); }
-        .t69-mcard span { font-size: .75rem; color: var(--t69-dim2); } .t69-mcard b { font-size: 1.4rem; color: var(--t69-text); } .t69-mcard small { font-size: .72rem; color: var(--t69-dim2); } .t69-mcard em { font-style: normal; font-size: .72rem; }
-        html[data-theme-family="modern"] .t69-mcard { border-radius: 0 10px 10px 0; }
-        .t69-levers { display: flex; flex-direction: column; gap: 4px; }
-        .t69-lever { display: grid; grid-template-columns: minmax(0, 1.4fr) 1fr 4.5em; gap: 8px; align-items: center; font-size: .8rem; color: var(--t69-text); }
-        .t69-lever > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .t69-lever > em { font-style: normal; text-align: right; }
-        .t69-lever-bar { position: relative; height: 10px; background: var(--t69-soft); border-left: 1px solid transparent; }
-        .t69-lever-bar::after { content: ''; position: absolute; left: 50%; top: -2px; bottom: -2px; width: 1px; background: var(--t69-line); }
-        .t69-lever-bar b { position: absolute; top: 0; bottom: 0; } .t69-lever-bar b.pos { background: var(--pos); } .t69-lever-bar b.neg { background: var(--neg); }
-        .t69-pkg em.up { color: var(--pos); font-style: normal; } .t69-pkg em.down { color: var(--neg); font-style: normal; }
-        .t69-pkg { display: flex; flex-direction: column; gap: 2px; text-align: left; cursor: pointer; font-family: inherit; padding: 8px 10px; border: 1px solid var(--t69-line); background: transparent; color: var(--t69-text); }
-        html[data-theme-family="modern"] .t69-pkg { border-radius: 10px; }
-        .t69-pkg:hover:not(:disabled) { border-color: var(--t69-acc); } .t69-pkg:disabled { opacity: .4; cursor: default; }
-        .t69-pkg span { font-size: .72rem; color: var(--t69-dim2); }
-        .t69-slider { margin: 8px 0; } .t69-slider-h { display: flex; justify-content: space-between; gap: 6px; font-size: .78rem; color: var(--t69-text); }
-        .t69-slider-h b { font-weight: 500; font-variant-numeric: tabular-nums; white-space: nowrap; } .t69-slider-h em { font-style: normal; font-size: .7rem; }
-        .t69-kv { display: flex; justify-content: space-between; gap: 8px; font-size: .8rem; color: var(--t69-text); padding: 3px 0; } .t69-kv b { font-weight: 500; font-variant-numeric: tabular-nums; }
-        .t69-deficit { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; color: var(--t69-text); }
-        .t69-deficit b { font-size: 1.5rem; } .t69-deficit.neg b { color: var(--critical); } .t69-deficit.pos b { color: var(--good); }
-        .t69-pred summary { margin-top: 8px; }
-        .t69-mini { width: 100%; border-collapse: collapse; font-size: .74rem; margin-top: 6px; font-variant-numeric: tabular-nums; }
-        .t69-mini th, .t69-mini td { padding: 4px 5px; border-bottom: 1px solid var(--t69-line); text-align: left; color: var(--t69-text); white-space: nowrap; }
-        .t69-mini th { color: var(--t69-dim2); font-weight: 500; }
-        .t69-pdot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 5px; }
-        .t69-v-yea { color: var(--good); } .t69-v-nay { color: var(--critical); } .t69-v-abs { color: var(--t69-dim2); }
-        .t69-preview { font-size: .76rem; }
-        .t69-pv-h { color: var(--t69-text); margin-bottom: 6px; }
-        .t69-pv-r { display: grid; grid-template-columns: 4.5em minmax(0,1fr) auto; gap: 8px; align-items: center; margin: 4px 0; color: var(--t69-dim2); }
-        .t69-pv-r b { color: var(--t69-text); font-weight: 500; font-variant-numeric: tabular-nums; white-space: nowrap; }
-        .t69-pv-bars { display: flex; flex-direction: column; gap: 2px; }
-        .t69-pv-bars i, .t69-pv-legend i { display: block; height: 5px; background: var(--t69-dim2); border-radius: 3px; min-width: 2px; }
-        .t69-pv-bars i.nx, .t69-pv-legend i.nx { background: var(--pos); } .t69-pv-bars i.neg { background: var(--neg); opacity: .7; } .t69-pv-bars i.nx.neg { opacity: 1; }
-        .t69-preview-big { margin: 10px 0; padding: 12px 14px; }
-        .t69-preview-big .t69-pv-h { font-size: 1.05rem; margin-bottom: 10px; }
-        .t69-preview-big .t69-pv-r { grid-template-columns: 6em minmax(0,1fr) auto; margin: 8px 0; font-size: .95rem; }
-        .t69-preview-big .t69-pv-r b { font-size: 1.05rem; }
-        .t69-preview-big .t69-pv-bars { gap: 3px; } .t69-preview-big .t69-pv-bars i { height: 9px; border-radius: 5px; }
-        .t69-preview-big .t69-pv-legend { font-size: .78rem; } .t69-preview-big .t69-pv-legend i { height: 7px; }
-        .t69-pv-legend { display: flex; align-items: center; gap: 6px; color: var(--t69-dim2); font-size: .68rem; margin-top: 6px; } .t69-pv-legend i { width: 14px; display: inline-block; }
-        .t69-presets { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px; margin-bottom: 10px; }
-        .t69-preset { display: flex; flex-direction: column; gap: 3px; text-align: left; cursor: pointer; font-family: inherit; padding: 8px 10px; border: 1px solid var(--t69-line); background: var(--t69-soft); color: var(--t69-text); }
-        html[data-theme-family="modern"] .t69-preset { border-radius: 10px; }
-        .t69-preset span { font-size: .68rem; color: var(--t69-dim2); line-height: 1.4; }
-        .t69-preset.on { border-color: var(--t69-acc); box-shadow: inset 0 0 0 1px var(--t69-acc); }
-        .t69-seg { display: inline-flex; border: 1px solid var(--t69-line, var(--t69-axis)); }
-        html[data-theme-family="modern"] .t69-seg { border-radius: 8px; overflow: hidden; }
-        .t69-seg button { cursor: pointer; font-family: inherit; font-size: .74rem; padding: 4px 10px; background: transparent; border: none; color: var(--t69-dim2, var(--t69-muted)); }
-        .t69-seg button.on { background: var(--t69-acc, var(--s1)); color: var(--t69-acc-ink, #fff); }
-        .t69-seg button.t69-locked { opacity: .45; cursor: not-allowed; border-left: 1px dashed var(--t69-line, var(--t69-axis)); }
-        .t69-dlist { display: flex; flex-direction: column; gap: 4px; }
-        .t69-dist { border: 1px solid var(--t69-line); padding: 6px 8px; }
-        html[data-theme-family="modern"] .t69-dist { border-radius: 8px; }
-        .t69-dist summary { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 2px 10px; font-size: .78rem; color: var(--t69-dim2); }
-        .t69-dname { color: var(--t69-text); font-weight: 600; }
-        .t69-dgrid { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 6px; margin-top: 8px; }
-        .t69-dgrid label { display: flex; flex-direction: column; gap: 2px; font-size: .7rem; color: var(--t69-dim2); }
-        .t69-dgrid input, .t69-dgrid select { width: 100%; box-sizing: border-box; min-width: 0; }
-        .t69-rule { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; font-size: .78rem; color: var(--t69-text); padding: 6px 0; border-bottom: 1px solid var(--t69-line); }
-        .t69-x { cursor: pointer; background: transparent; border: none; color: var(--t69-dim2); font-size: 1rem; margin-left: auto; }
-        .t69-x:hover { color: var(--critical); }
-        .t69-def { padding: 6px 0; border-bottom: 1px solid var(--t69-line); } .t69-def-h { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 10px; font-size: .8rem; color: var(--t69-text); }
-        .t69-def-h span { font-size: .7rem; } .t69-def.builtin b::after { content: ' 기본'; font-size: .62rem; color: var(--t69-dim2); font-weight: normal; }
-        .t69-newdef { margin-top: 8px; } .t69-newdef .t69-btn { margin-top: 8px; }
-        .t69-def-acts { margin-left: auto; display: inline-flex; gap: 2px; } .t69-def-acts .t69-x { margin-left: 0; }
-        .t69-edited { font-size: .62rem; border: 1px solid var(--t69-line); padding: 0 4px; }
-        .t69-defedit { margin: 6px 0 4px; padding: 8px; border: 1px dashed var(--t69-line); }
-        .t69-defedit .t69-dgrid { margin-top: 0; } .t69-defedit-btns { margin-top: 8px; gap: 6px; }
-        .t69-effs { margin-top: 8px; display: flex; flex-direction: column; gap: 4px; font-size: .72rem; }
-        .t69-effrow { display: flex; gap: 6px; align-items: center; } .t69-effrow select { flex: 1; min-width: 0; } .t69-effrow input { width: 80px; } .t69-effrow .t69-x { margin-left: 0; }
-        .t69-effs > .t69-btn { align-self: flex-start; }
-        .t69-tp-head { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; font-size: .85rem; color: var(--t69-text); }
-        .t69-tp-head .t69-dim { font-size: .72rem; line-height: 1.5; }
-        .t69-tp-wrap { overflow-x: auto; }
-        .t69-tp { width: 100%; border-collapse: collapse; font-size: .78rem; }
-        .t69-tp th { font-weight: normal; color: var(--t69-dim2); padding: 4px; text-align: center; white-space: nowrap; }
-        .t69-tp td { padding: 3px; border-top: 1px solid var(--t69-line); text-align: center; }
-        .t69-tp .t69-tp-name { text-align: left; white-space: nowrap; color: var(--t69-text); padding-right: 8px; }
-        .t69-tp .t69-tagin { width: 100%; min-width: 46px; max-width: 64px; box-sizing: border-box; text-align: center; background: transparent; border: 1px solid var(--t69-line); color: var(--t69-text); font-family: inherit; padding: 4px 2px; }
-        .t69-tp .t69-tagin.set { font-weight: bold; border-color: var(--t69-acc); }
-        .t69-tp .t69-tagin::placeholder { color: var(--t69-dim2); opacity: .8; }
-        .t69-hidden-defs { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 8px; font-size: .72rem; }
-        .t69-tablewrap2 { overflow-x: auto; } .t69-tagin { width: 48px; }
+        html[data-theme-family="modern"] .econ-content { --econ-line: var(--m-border); --econ-soft: var(--m-surface-2); --econ-dim2: var(--m-text-3); --econ-text: var(--m-text); --econ-acc: var(--m-accent); --econ-acc-ink: var(--m-on-accent, #fff); }
+        .econ-intro { color: var(--econ-dim2); font-size: .78rem; line-height: 1.6; margin: 6px 0 10px; }
+        .econ-dim { color: var(--econ-dim2); } .econ-small { font-size: .72rem; line-height: 1.5; margin-top: 4px; }
+        .econ-card { border: 1px solid var(--econ-line); background: var(--econ-soft); padding: 10px; margin-bottom: 10px; }
+        html[data-theme-family="modern"] .econ-card { border-radius: 12px; }
+        .econ-card-h { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 10px; color: var(--econ-text); font-size: .88rem; margin-bottom: 8px; }
+        .econ-card-h b { margin-left: auto; font-variant-numeric: tabular-nums; }
+        .econ-btn { cursor: pointer; font-family: inherit; font-size: .82rem; padding: 7px 11px; background: transparent; border: 1px solid var(--econ-line); color: var(--econ-text); }
+        html[data-theme-family="modern"] .econ-btn { border-radius: 8px; }
+        .econ-btn:hover:not(:disabled) { border-color: var(--econ-acc); color: var(--econ-acc); }
+        .econ-btn.econ-primary { border-color: var(--econ-acc); color: var(--econ-acc); }
+        html[data-theme-family="modern"] .econ-btn.econ-primary { background: var(--econ-acc); color: var(--econ-acc-ink); }
+        .econ-btn:disabled { opacity: .4; cursor: default; }
+        .econ-btn.econ-sm { font-size: .72rem; padding: 3px 8px; }
+        .econ-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; align-items: center; }
+        .econ-row { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; font-size: .8rem; color: var(--econ-text); margin: 6px 0; }
+        .econ-check { display: flex; align-items: flex-start; gap: 6px; font-size: .8rem; color: var(--econ-text); margin: 6px 0; line-height: 1.45; cursor: pointer; }
+        .econ-check input { margin-top: 3px; }
+        .econ-num { width: 72px; } .econ-segs { width: 150px; }
+        .econ-content input[type="range"] { width: 100%; }
+        .econ-top { display: grid; grid-template-columns: auto minmax(0,1fr) auto; gap: 10px; align-items: center; margin-bottom: 10px; }
+        .econ-rating { display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 64px; padding: 6px 8px; border: 2px solid currentColor; color: var(--good); }
+        html[data-theme-family="modern"] .econ-rating { border-radius: 12px; }
+        .econ-rating b { font-size: 1.35rem; letter-spacing: 1px; line-height: 1.1; } .econ-rating span { font-size: .62rem; opacity: .9; white-space: nowrap; }
+        .econ-rating em { font-style: normal; font-size: .62rem; opacity: .75; margin-top: 2px; }
+        .econ-grade-b { color: var(--warning); } .econ-grade-c { color: var(--critical); }
+        .econ-turn-now { font-size: 1rem; color: var(--econ-text); font-weight: 600; }
+        .econ-turninfo .econ-dim { font-size: .74rem; } #contentEcoOverview .econ-turninfo select { font-size: .74rem; width: auto; min-width: 0; padding: 2px 6px; height: auto; display: inline-block; }
+        .econ-next { white-space: nowrap; font-size: .9rem; padding: 10px 12px; }
+        .econ-sys { display: grid; grid-template-columns: auto minmax(0,1fr) auto; gap: 6px 8px; align-items: center; font-size: .78rem; color: var(--econ-dim2); }
+        .econ-sys b { grid-column: 1 / -1; text-align: center; color: var(--econ-text); font-weight: 600; font-size: .82rem; }
+        .econ-kpis { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin: 10px 0; }
+        .econ-kpi { display: grid; grid-template-columns: minmax(0,1fr) auto; grid-template-rows: auto auto; gap: 0 6px; text-align: left; cursor: pointer; font-family: inherit; padding: 8px 9px; border: 1px solid var(--econ-line); background: var(--econ-soft); color: var(--econ-text); }
+        html[data-theme-family="modern"] .econ-kpi { border-radius: 10px; }
+        .econ-kpi:hover { border-color: var(--econ-acc); }
+        .econ-kpi-l { font-size: .7rem; color: var(--econ-dim2); grid-column: 1 / -1; }
+        .econ-kpi b { font-size: 1.05rem; font-variant-numeric: tabular-nums; } .econ-kpi-d { font-size: .68rem; color: var(--econ-dim2); align-self: center; }
+        .econ-kpi .econ-st { grid-column: 1 / -1; }
+        .econ-st { font-size: .66rem; display: inline-flex; align-items: center; gap: 3px; color: var(--econ-dim2); font-style: normal; } .econ-st em { font-style: normal; }
+        .econ-st-good { color: var(--good); } .econ-st-warning { color: var(--warning); } .econ-st-serious { color: var(--serious); } .econ-st-critical { color: var(--critical); }
+        .econ-st em { color: var(--econ-dim2); }
+        .econ-signals, .econ-sigrow { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 10px; font-size: .76rem; }
+        .econ-signal { display: inline-flex; align-items: center; gap: 5px; padding: 3px 8px; border: 1px solid var(--econ-line, var(--econ-grid)); color: var(--econ-text, var(--econ-ink)); }
+        html[data-theme-family="modern"] .econ-signal { border-radius: 999px; }
+        .econ-alert { border: 1px solid var(--critical); background: color-mix(in srgb, var(--critical) 10%, transparent); color: var(--econ-text); padding: 8px 10px; margin: 8px 0; font-size: .8rem; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; line-height: 1.5; }
+        html[data-theme-family="modern"] .econ-alert { border-radius: 10px; }
+        .econ-alert > div { flex-basis: 100%; }
+        .econ-fc { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: .78rem; color: var(--econ-dim2); } .econ-fc b { color: var(--econ-text); font-variant-numeric: tabular-nums; }
+        .econ-settings summary, .econ-content details > summary { cursor: pointer; color: var(--econ-text); font-size: .85rem; }
+        .econ-lock { font-size: .72rem; color: var(--warning); margin-top: 4px; }
+        .econ-bands { display: flex; justify-content: space-between; gap: 4px; font-size: .62rem; color: var(--econ-dim2); flex-wrap: wrap; }
+        .econ-pkgs { display: grid; gap: 6px; }
+        .econ-mhead { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+        .econ-mcards { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 8px; margin-bottom: 6px; }
+        .econ-mcard { display: flex; flex-direction: column; gap: 2px; border: 1px solid var(--econ-line); border-left: 4px solid var(--good); padding: 8px 10px; background: var(--econ-soft); }
+        .econ-mcard-warning { border-left-color: var(--warning); } .econ-mcard-serious { border-left-color: var(--serious); } .econ-mcard-critical { border-left-color: var(--critical); }
+        .econ-mcard span { font-size: .75rem; color: var(--econ-dim2); } .econ-mcard b { font-size: 1.4rem; color: var(--econ-text); } .econ-mcard small { font-size: .72rem; color: var(--econ-dim2); } .econ-mcard em { font-style: normal; font-size: .72rem; }
+        html[data-theme-family="modern"] .econ-mcard { border-radius: 0 10px 10px 0; }
+        .econ-levers { display: flex; flex-direction: column; gap: 4px; }
+        .econ-lever { display: grid; grid-template-columns: minmax(0, 1.4fr) 1fr 4.5em; gap: 8px; align-items: center; font-size: .8rem; color: var(--econ-text); }
+        .econ-lever > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .econ-lever > em { font-style: normal; text-align: right; }
+        .econ-lever-bar { position: relative; height: 10px; background: var(--econ-soft); border-left: 1px solid transparent; }
+        .econ-lever-bar::after { content: ''; position: absolute; left: 50%; top: -2px; bottom: -2px; width: 1px; background: var(--econ-line); }
+        .econ-lever-bar b { position: absolute; top: 0; bottom: 0; } .econ-lever-bar b.pos { background: var(--pos); } .econ-lever-bar b.neg { background: var(--neg); }
+        .econ-pkg em.up { color: var(--pos); font-style: normal; } .econ-pkg em.down { color: var(--neg); font-style: normal; }
+        .econ-pkg { display: flex; flex-direction: column; gap: 2px; text-align: left; cursor: pointer; font-family: inherit; padding: 8px 10px; border: 1px solid var(--econ-line); background: transparent; color: var(--econ-text); }
+        html[data-theme-family="modern"] .econ-pkg { border-radius: 10px; }
+        .econ-pkg:hover:not(:disabled) { border-color: var(--econ-acc); } .econ-pkg:disabled { opacity: .4; cursor: default; }
+        .econ-pkg span { font-size: .72rem; color: var(--econ-dim2); }
+        .econ-slider { margin: 8px 0; } .econ-slider-h { display: flex; justify-content: space-between; gap: 6px; font-size: .78rem; color: var(--econ-text); }
+        .econ-slider-h b { font-weight: 500; font-variant-numeric: tabular-nums; white-space: nowrap; } .econ-slider-h em { font-style: normal; font-size: .7rem; }
+        .econ-kv { display: flex; justify-content: space-between; gap: 8px; font-size: .8rem; color: var(--econ-text); padding: 3px 0; } .econ-kv b { font-weight: 500; font-variant-numeric: tabular-nums; }
+        .econ-deficit { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; color: var(--econ-text); }
+        .econ-deficit b { font-size: 1.5rem; } .econ-deficit.neg b { color: var(--critical); } .econ-deficit.pos b { color: var(--good); }
+        .econ-pred summary { margin-top: 8px; }
+        .econ-mini { width: 100%; border-collapse: collapse; font-size: .74rem; margin-top: 6px; font-variant-numeric: tabular-nums; }
+        .econ-mini th, .econ-mini td { padding: 4px 5px; border-bottom: 1px solid var(--econ-line); text-align: left; color: var(--econ-text); white-space: nowrap; }
+        .econ-mini th { color: var(--econ-dim2); font-weight: 500; }
+        .econ-pdot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 5px; }
+        .econ-v-yea { color: var(--good); } .econ-v-nay { color: var(--critical); } .econ-v-abs { color: var(--econ-dim2); }
+        .econ-preview { font-size: .76rem; }
+        .econ-pv-h { color: var(--econ-text); margin-bottom: 6px; }
+        .econ-pv-r { display: grid; grid-template-columns: 4.5em minmax(0,1fr) auto; gap: 8px; align-items: center; margin: 4px 0; color: var(--econ-dim2); }
+        .econ-pv-r b { color: var(--econ-text); font-weight: 500; font-variant-numeric: tabular-nums; white-space: nowrap; }
+        .econ-pv-bars { display: flex; flex-direction: column; gap: 2px; }
+        .econ-pv-bars i, .econ-pv-legend i { display: block; height: 5px; background: var(--econ-dim2); border-radius: 3px; min-width: 2px; }
+        .econ-pv-bars i.nx, .econ-pv-legend i.nx { background: var(--pos); } .econ-pv-bars i.neg { background: var(--neg); opacity: .7; } .econ-pv-bars i.nx.neg { opacity: 1; }
+        .econ-preview-big { margin: 10px 0; padding: 12px 14px; }
+        .econ-preview-big .econ-pv-h { font-size: 1.05rem; margin-bottom: 10px; }
+        .econ-preview-big .econ-pv-r { grid-template-columns: 6em minmax(0,1fr) auto; margin: 8px 0; font-size: .95rem; }
+        .econ-preview-big .econ-pv-r b { font-size: 1.05rem; }
+        .econ-preview-big .econ-pv-bars { gap: 3px; } .econ-preview-big .econ-pv-bars i { height: 9px; border-radius: 5px; }
+        .econ-preview-big .econ-pv-legend { font-size: .78rem; } .econ-preview-big .econ-pv-legend i { height: 7px; }
+        .econ-pv-legend { display: flex; align-items: center; gap: 6px; color: var(--econ-dim2); font-size: .68rem; margin-top: 6px; } .econ-pv-legend i { width: 14px; display: inline-block; }
+        .econ-presets { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px; margin-bottom: 10px; }
+        .econ-preset { display: flex; flex-direction: column; gap: 3px; text-align: left; cursor: pointer; font-family: inherit; padding: 8px 10px; border: 1px solid var(--econ-line); background: var(--econ-soft); color: var(--econ-text); }
+        html[data-theme-family="modern"] .econ-preset { border-radius: 10px; }
+        .econ-preset span { font-size: .68rem; color: var(--econ-dim2); line-height: 1.4; }
+        .econ-preset.on { border-color: var(--econ-acc); box-shadow: inset 0 0 0 1px var(--econ-acc); }
+        .econ-seg { display: inline-flex; border: 1px solid var(--econ-line, var(--econ-axis)); }
+        html[data-theme-family="modern"] .econ-seg { border-radius: 8px; overflow: hidden; }
+        .econ-seg button { cursor: pointer; font-family: inherit; font-size: .74rem; padding: 4px 10px; background: transparent; border: none; color: var(--econ-dim2, var(--econ-muted)); }
+        .econ-seg button.on { background: var(--econ-acc, var(--s1)); color: var(--econ-acc-ink, #fff); }
+        .econ-seg button.econ-locked { opacity: .45; cursor: not-allowed; border-left: 1px dashed var(--econ-line, var(--econ-axis)); }
+        .econ-dlist { display: flex; flex-direction: column; gap: 4px; }
+        .econ-dist { border: 1px solid var(--econ-line); padding: 6px 8px; }
+        html[data-theme-family="modern"] .econ-dist { border-radius: 8px; }
+        .econ-dist summary { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 2px 10px; font-size: .78rem; color: var(--econ-dim2); }
+        .econ-dname { color: var(--econ-text); font-weight: 600; }
+        .econ-dgrid { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 6px; margin-top: 8px; }
+        .econ-dgrid label { display: flex; flex-direction: column; gap: 2px; font-size: .7rem; color: var(--econ-dim2); }
+        .econ-dgrid input, .econ-dgrid select { width: 100%; box-sizing: border-box; min-width: 0; }
+        .econ-rule { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; font-size: .78rem; color: var(--econ-text); padding: 6px 0; border-bottom: 1px solid var(--econ-line); }
+        .econ-x { cursor: pointer; background: transparent; border: none; color: var(--econ-dim2); font-size: 1rem; margin-left: auto; }
+        .econ-x:hover { color: var(--critical); }
+        .econ-def { padding: 6px 0; border-bottom: 1px solid var(--econ-line); } .econ-def-h { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 10px; font-size: .8rem; color: var(--econ-text); }
+        .econ-def-h span { font-size: .7rem; } .econ-def.builtin b::after { content: ' 기본'; font-size: .62rem; color: var(--econ-dim2); font-weight: normal; }
+        .econ-newdef { margin-top: 8px; } .econ-newdef .econ-btn { margin-top: 8px; }
+        .econ-def-acts { margin-left: auto; display: inline-flex; gap: 2px; } .econ-def-acts .econ-x { margin-left: 0; }
+        .econ-edited { font-size: .62rem; border: 1px solid var(--econ-line); padding: 0 4px; }
+        .econ-defedit { margin: 6px 0 4px; padding: 8px; border: 1px dashed var(--econ-line); }
+        .econ-defedit .econ-dgrid { margin-top: 0; } .econ-defedit-btns { margin-top: 8px; gap: 6px; }
+        .econ-effs { margin-top: 8px; display: flex; flex-direction: column; gap: 4px; font-size: .72rem; }
+        .econ-effrow { display: flex; gap: 6px; align-items: center; } .econ-effrow select { flex: 1; min-width: 0; } .econ-effrow input { width: 80px; } .econ-effrow .econ-x { margin-left: 0; }
+        .econ-effs > .econ-btn { align-self: flex-start; }
+        .econ-tp-head { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; font-size: .85rem; color: var(--econ-text); }
+        .econ-tp-head .econ-dim { font-size: .72rem; line-height: 1.5; }
+        .econ-tp-wrap { overflow-x: auto; }
+        .econ-tp { width: 100%; border-collapse: collapse; font-size: .78rem; }
+        .econ-tp th { font-weight: normal; color: var(--econ-dim2); padding: 4px; text-align: center; white-space: nowrap; }
+        .econ-tp td { padding: 3px; border-top: 1px solid var(--econ-line); text-align: center; }
+        .econ-tp .econ-tp-name { text-align: left; white-space: nowrap; color: var(--econ-text); padding-right: 8px; }
+        .econ-tp .econ-tagin { width: 100%; min-width: 46px; max-width: 64px; box-sizing: border-box; text-align: center; background: transparent; border: 1px solid var(--econ-line); color: var(--econ-text); font-family: inherit; padding: 4px 2px; }
+        .econ-tp .econ-tagin.set { font-weight: bold; border-color: var(--econ-acc); }
+        .econ-tp .econ-tagin::placeholder { color: var(--econ-dim2); opacity: .8; }
+        .econ-hidden-defs { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 8px; font-size: .72rem; }
+        .econ-tablewrap2 { overflow-x: auto; } .econ-tagin { width: 48px; }
         /* 오른쪽 시각 화면 */
-        #dispPanelEconomy .t69-dispbox { display: flex; flex-direction: column; overflow: hidden; min-height: 0; }
+        #dispPanelEconomy .econ-dispbox { display: flex; flex-direction: column; overflow: hidden; min-height: 0; }
         /* 네온(TNO): 시각 화면 바탕을 그래프와 같은 짙은 회색 하나로 (테두리만 남기고) · 모서리는 각지게 */
-        html[data-theme-mode="tno"] .t69-dispbox { background: var(--t69-surface) !important; }
-        html[data-theme-mode="tno"] .t69-dispbox *:not(svg):not(svg *) { border-radius: 0 !important; }
-        #t69Disp { flex: 1 1 auto; min-height: 0; overflow: auto; padding-right: 4px; }
-        .t69-toolbar { flex: none; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 10px; padding: 4px 0 8px; border-bottom: 1px solid var(--t69-grid); }
-        .t69-toolbar .t69-btn { color: var(--t69-ink2); border-color: var(--t69-axis); }
-        .t69-toolbar .t69-seg button.on { background: var(--s1); color: #fff; }
-        .t69-grow { flex: 1; }
-        #t69Disp { --t69-line: var(--t69-grid); --t69-text: var(--t69-ink); --t69-dim2: var(--t69-muted); }
-        .t69-toprow { display: flex; flex-wrap: wrap; gap: 10px; align-items: stretch; margin-bottom: 8px; }
-        .t69-rating-row { flex-direction: row; gap: 10px; justify-content: flex-start; border-radius: 12px; padding: 6px 14px; }
-        .t69-rating-row b { font-size: 1.8rem; } .t69-rating-row > div { display: flex; flex-direction: column; }
-        .t69-rating-row span { font-size: .8rem; } .t69-rating-row em { font-size: .7rem; color: var(--t69-muted); opacity: 1; }
-        .t69-warnsigns { flex: 1 1 260px; min-width: 0; border: 1px solid var(--t69-grid); border-radius: 12px; padding: 6px 10px; }
-        .t69-warn-h { font-size: .72rem; color: var(--t69-muted); margin-bottom: 4px; }
-        .t69-warn-list { display: flex; flex-wrap: wrap; gap: 4px 6px; }
-        .t69-warn { font-size: .74rem; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--t69-grid); color: var(--t69-muted); opacity: .6; }
-        .t69-warn.on { opacity: 1; color: var(--t69-ink); font-weight: 600; }
-        .t69-warn-warning { border-color: var(--warning); } .t69-warn-serious { border-color: var(--serious); } .t69-warn-critical { border-color: var(--critical); background: color-mix(in srgb, var(--critical) 14%, transparent); }
-        .t69-evtypes { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px; margin-bottom: 8px; }
-        .t69-evtype { text-align: left; border: 1px solid var(--t69-line); border-radius: 10px; padding: 6px 8px; background: transparent; color: inherit; cursor: pointer; font: inherit; }
-        .t69-evtype b { display: block; font-size: .82rem; } .t69-evtype span { display: block; font-size: .68rem; color: var(--t69-dim2); margin-top: 2px; }
-        .t69-evtype.on { border-color: var(--t69-acc); box-shadow: inset 0 0 0 1px var(--t69-acc); }
-        .t69-evcustom { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 2px 12px; margin-bottom: 6px; }
-        .t69-evwhen { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; margin: 4px 0 8px; }
-        .t69-evf { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
-        .t69-evf select { width: auto; }
-        .t69-content input.t69-yr { width: 76px; } .t69-content input.t69-mo { width: 54px; }
-        .t69-evrow { display: grid; grid-template-columns: 64px minmax(110px, auto) 1fr auto; align-items: center; gap: 4px 10px; padding: 6px 0; border-top: 1px solid var(--t69-line); }
-        .t69-evrow .t69-evfx { grid-column: 2 / 4; }
-        .t69-evedit { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 2px 4px; } .t69-evedit select { width: auto; }
-        .t69-evst { font-size: .7rem; text-align: center; border-radius: 999px; padding: 1px 6px; border: 1px solid var(--t69-line); color: var(--t69-dim2); }
-        .t69-ev-on .t69-evst { border-color: var(--t69-acc); color: var(--t69-text); font-weight: 600; }
-        .t69-ev-done, .t69-ev-missed { opacity: .6; }
-        .t69-fin { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 6px; margin: 2px 0 10px; }
-        .t69-fin-i { border: 1px solid var(--t69-grid); border-radius: 10px; padding: 6px 10px; min-width: 0; }
-        .t69-fin-i span { display: block; font-size: .72rem; color: var(--t69-muted); }
-        .t69-fin-i b { display: block; font-size: 1rem; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .t69-fin-i small { display: block; font-size: .7rem; color: var(--t69-muted); }
-        .t69-fin-i small em { font-style: normal; margin-left: 4px; color: var(--t69-ink2); }
-        .t69-fin-serious { border-color: var(--serious); } .t69-fin-critical { border-color: var(--critical); background: color-mix(in srgb, var(--critical) 12%, transparent); }
-        .t69-gauges { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 4px; align-items: start; margin-bottom: 6px; }
-        @media (max-width: 760px) { .t69-gauges { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
-        .t69-sec { margin-top: 14px; }
-        .t69-sec > h4 { margin: 0 0 6px; font-size: .9rem; color: var(--t69-ink); font-weight: 600; }
-        .t69-sec > h4 .t69-dim { font-weight: normal; font-size: .74rem; }
-        .t69-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px; }
-        .t69-chip { cursor: pointer; font-family: inherit; font-size: .74rem; padding: 3px 10px; border: 1px solid var(--t69-axis); background: transparent; color: var(--t69-muted); border-radius: 999px; display: inline-flex; align-items: center; gap: 5px; }
-        .t69-chip i { width: 12px; height: 2px; display: inline-block; opacity: .4; }
-        .t69-chip.on { color: var(--t69-ink); border-color: var(--t69-ink2); } .t69-chip.on i { opacity: 1; }
-        .t69-map { width: 100%; height: 360px; } .t69-map svg { max-height: 360px; }
+        html[data-theme-mode="tno"] .econ-dispbox { background: var(--econ-surface) !important; }
+        html[data-theme-mode="tno"] .econ-dispbox *:not(svg):not(svg *) { border-radius: 0 !important; }
+        #econDisp { flex: 1 1 auto; min-height: 0; overflow: auto; padding-right: 4px; }
+        .econ-toolbar { flex: none; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 10px; padding: 4px 0 8px; border-bottom: 1px solid var(--econ-grid); }
+        .econ-toolbar .econ-btn { color: var(--econ-ink2); border-color: var(--econ-axis); }
+        .econ-toolbar .econ-seg button.on { background: var(--s1); color: #fff; }
+        .econ-grow { flex: 1; }
+        #econDisp { --econ-line: var(--econ-grid); --econ-text: var(--econ-ink); --econ-dim2: var(--econ-muted); }
+        .econ-toprow { display: flex; flex-wrap: wrap; gap: 10px; align-items: stretch; margin-bottom: 8px; }
+        .econ-rating-row { flex-direction: row; gap: 10px; justify-content: flex-start; border-radius: 12px; padding: 6px 14px; }
+        .econ-rating-row b { font-size: 1.8rem; } .econ-rating-row > div { display: flex; flex-direction: column; }
+        .econ-rating-row span { font-size: .8rem; } .econ-rating-row em { font-size: .7rem; color: var(--econ-muted); opacity: 1; }
+        .econ-warnsigns { flex: 1 1 260px; min-width: 0; border: 1px solid var(--econ-grid); border-radius: 12px; padding: 6px 10px; }
+        .econ-warn-h { font-size: .72rem; color: var(--econ-muted); margin-bottom: 4px; }
+        .econ-warn-list { display: flex; flex-wrap: wrap; gap: 4px 6px; }
+        .econ-warn { font-size: .74rem; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--econ-grid); color: var(--econ-muted); opacity: .6; }
+        .econ-warn.on { opacity: 1; color: var(--econ-ink); font-weight: 600; }
+        .econ-warn-warning { border-color: var(--warning); } .econ-warn-serious { border-color: var(--serious); } .econ-warn-critical { border-color: var(--critical); background: color-mix(in srgb, var(--critical) 14%, transparent); }
+        .econ-evtypes { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px; margin-bottom: 8px; }
+        .econ-evtype { text-align: left; border: 1px solid var(--econ-line); border-radius: 10px; padding: 6px 8px; background: transparent; color: inherit; cursor: pointer; font: inherit; }
+        .econ-evtype b { display: block; font-size: .82rem; } .econ-evtype span { display: block; font-size: .68rem; color: var(--econ-dim2); margin-top: 2px; }
+        .econ-evtype.on { border-color: var(--econ-acc); box-shadow: inset 0 0 0 1px var(--econ-acc); }
+        .econ-evcustom { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 2px 12px; margin-bottom: 6px; }
+        .econ-evwhen { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; margin: 4px 0 8px; }
+        .econ-evf { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
+        .econ-evf select { width: auto; }
+        .econ-content input.econ-yr { width: 76px; } .econ-content input.econ-mo { width: 54px; }
+        .econ-evrow { display: grid; grid-template-columns: 64px minmax(110px, auto) 1fr auto; align-items: center; gap: 4px 10px; padding: 6px 0; border-top: 1px solid var(--econ-line); }
+        .econ-evrow .econ-evfx { grid-column: 2 / 4; }
+        .econ-evedit { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 2px 4px; } .econ-evedit select { width: auto; }
+        .econ-evst { font-size: .7rem; text-align: center; border-radius: 999px; padding: 1px 6px; border: 1px solid var(--econ-line); color: var(--econ-dim2); }
+        .econ-ev-on .econ-evst { border-color: var(--econ-acc); color: var(--econ-text); font-weight: 600; }
+        .econ-ev-done, .econ-ev-missed { opacity: .6; }
+        .econ-fin { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 6px; margin: 2px 0 10px; }
+        .econ-fin-i { border: 1px solid var(--econ-grid); border-radius: 10px; padding: 6px 10px; min-width: 0; }
+        .econ-fin-i span { display: block; font-size: .72rem; color: var(--econ-muted); }
+        .econ-fin-i b { display: block; font-size: 1rem; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .econ-fin-i small { display: block; font-size: .7rem; color: var(--econ-muted); }
+        .econ-fin-i small em { font-style: normal; margin-left: 4px; color: var(--econ-ink2); }
+        .econ-fin-serious { border-color: var(--serious); } .econ-fin-critical { border-color: var(--critical); background: color-mix(in srgb, var(--critical) 12%, transparent); }
+        .econ-gauges { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 4px; align-items: start; margin-bottom: 6px; }
+        @media (max-width: 760px) { .econ-gauges { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+        .econ-sec { margin-top: 14px; }
+        .econ-sec > h4 { margin: 0 0 6px; font-size: .9rem; color: var(--econ-ink); font-weight: 600; }
+        .econ-sec > h4 .econ-dim { font-weight: normal; font-size: .74rem; }
+        .econ-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px; }
+        .econ-chip { cursor: pointer; font-family: inherit; font-size: .74rem; padding: 3px 10px; border: 1px solid var(--econ-axis); background: transparent; color: var(--econ-muted); border-radius: 999px; display: inline-flex; align-items: center; gap: 5px; }
+        .econ-chip i { width: 12px; height: 2px; display: inline-block; opacity: .4; }
+        .econ-chip.on { color: var(--econ-ink); border-color: var(--econ-ink2); } .econ-chip.on i { opacity: 1; }
+        .econ-map { width: 100%; height: 360px; } .econ-map svg { max-height: 360px; }
         /* 크게 보기 */
-        body.t69-full #sideNav, body.t69-full > .controls { display: none !important; }
-        body.t69-full .display-area { flex: 1 1 100%; max-width: 100%; }
-        @media (max-width: 760px) { .t69-dgrid { grid-template-columns: repeat(2, minmax(0,1fr)); } .t69-top { grid-template-columns: auto minmax(0,1fr); } .t69-next { grid-column: 1 / -1; } }
+        body.econ-full #sideNav, body.econ-full > .controls { display: none !important; }
+        body.econ-full .display-area { flex: 1 1 100%; max-width: 100%; }
+        @media (max-width: 760px) { .econ-dgrid { grid-template-columns: repeat(2, minmax(0,1fr)); } .econ-top { grid-template-columns: auto minmax(0,1fr); } .econ-next { grid-column: 1 / -1; } }
     `;
     document.head.appendChild(style);
     window.addEventListener('load', () => setTimeout(() => { try { if (typeof currentMainTab !== 'undefined' && currentMainTab === 'economy') renderTab(curSub()); } catch (e) { /* 없음 */ } }, 0)); // eslint-disable-line no-undef

@@ -104,16 +104,16 @@
     const onPreviewPage = l => PREVIEW_PAGES.includes(curPage()) && (!l || !l.locked || (PAGE_HAS[curPage()] || []).includes(l.locked));
     const previewName = l => `Teaser 1.6.${previewPageFor(l).slice(-1)}`;
     const unrecLeft = () => { try { return typeof window.isDistrictUnrecovered === 'function' && Object.keys(districtGrid.house || {}).some(k => window.isDistrictUnrecovered(k)); } catch (e) { return false; } };
-    const t64 = () => window.T65 || null;
-    const t68 = () => window.T68 || null;
-    const t69 = () => window.T69 || null;
-    const citCount = () => { const c = window.T61 && window.T61.citizens; return c ? Object.values(c).reduce((n, o) => n + Object.keys(o || {}).length, 0) : 0; };
-    const migSig = () => (window.T61 ? JSON.stringify(window.T61.migrantVote) : '');
-    const firstCitCard = () => { const c = document.querySelector('#districtListPanel .t61-cit'); return c ? (c.closest('.drag-card-district') || c) : null; };
-    const ecoTurn = () => { const t = t69(); return t ? t.state.turn : 0; };
-    const showEco = view => () => { const t = t69(); if (t) { t.ensureInit(); t.showDisp(view); } };
-    const firstVassalCard = () => document.querySelector('#contentVassals .t68-card');
-    const rankSig = () => { const t = t64(); return t && t.ranking ? t.ranking.rows.map(r => `${r.id}:${r.score}`).join(',') : ''; };
+    const histApi = () => window.HemiHistory || null;
+    const vassalApi = () => window.HemiVassals || null;
+    const econApi = () => window.HemiEconomy || null;
+    const citCount = () => { const c = window.HemiPeople && window.HemiPeople.citizens; return c ? Object.values(c).reduce((n, o) => n + Object.keys(o || {}).length, 0) : 0; };
+    const migSig = () => (window.HemiPeople ? JSON.stringify(window.HemiPeople.migrantVote) : '');
+    const firstCitCard = () => { const c = document.querySelector('#districtListPanel .people-cit'); return c ? (c.closest('.drag-card-district') || c) : null; };
+    const ecoTurn = () => { const t = econApi(); return t ? t.state.turn : 0; };
+    const showEco = view => () => { const t = econApi(); if (t) { t.ensureInit(); t.showDisp(view); } };
+    const firstVassalCard = () => document.querySelector('#contentVassals .vassal-card');
+    const rankSig = () => { const t = histApi(); return t && t.ranking ? t.ranking.rows.map(r => `${r.id}:${r.score}`).join(',') : ''; };
     // 계엄령 권한 주체의 탭과 그 탭의 비상 권한 칸 (공성전 과정)
     const martialTab = () => ({ pm: ['pm', 'pmEmergencyPowers'], cabinet: ['cabinetmembers', 'cabinetEmergencyPowers'] })[typeof emergencyPowers !== 'undefined' && emergencyPowers.martialLaw.holder] || ['president', 'presidentEmergencyPowers'];
     const logLen = k => { const o = window[k]; return o && Array.isArray(o.log) ? o.log.length : 0; };
@@ -546,12 +546,12 @@
             steps: [
                 {
                     before: [closePanels, go('setup', 'timeline'), showPanel('controls')],
-                    enter: () => { T.histBase = t64() ? t64().timeline.length : 0; },
-                    target: () => document.querySelector('#contentTimeline .t65-actions') || '#contentTimeline',
+                    enter: () => { T.histBase = histApi() ? histApi().timeline.length : 0; },
+                    target: () => document.querySelector('#contentTimeline .hist-actions') || '#contentTimeline',
                     allow: ['#contentTimeline'],
                     title: '의석 기록하기',
                     text: '의회 › 세력 변화는 시점마다 정당 의석을 기록해 두는 곳이에요. 총선 결과를 의회에 반영하면 저절로 기록되고, "📸 지금 의석 기록하기"로 언제든 남길 수 있어요. 지금 눌러보세요.',
-                    task: () => !t64() || t64().timeline.length > (T.histBase || 0),
+                    task: () => !histApi() || histApi().timeline.length > (T.histBase || 0),
                     done: '지금 의석이 기록됐어요.',
                 },
                 {
@@ -574,7 +574,7 @@
                 },
                 {
                     before: [go('setup', 'timeline'), () => { const b = document.querySelector('#dispPanelTimeline [data-hview="seats"]'); if (b) b.click(); }, showPanel('controls')],
-                    target: () => document.querySelector('#contentTimeline .t65-table') || '#contentTimeline',
+                    target: () => document.querySelector('#contentTimeline .hist-table') || '#contentTimeline',
                     title: '기록 표',
                     text: '표에서는 기록끼리 정당 의석을 나란히 비교해요. 아래 "기록 N개"에서 기록 이름을 바꾸거나 지우고, 선거 › 선거 기록이 있으면 "선거 기록에서 가져오기"로 한꺼번에 들여옵니다.',
                 },
@@ -593,8 +593,8 @@
                 },
                 {
                     before: [go('setup', 'wikibox'), showPanel('controls')],
-                    target: () => document.querySelector('#contentWikibox .t65-tabs') || '#contentWikibox',
-                    allow: ['#contentWikibox .t65-tabs'],
+                    target: () => document.querySelector('#contentWikibox .hist-tabs') || '#contentWikibox',
+                    allow: ['#contentWikibox .hist-tabs'],
                     title: '양원 함께 적기',
                     text: () => document.querySelector('#contentWikibox [data-wch="both"]')
                         ? '틀에 담을 원을 고릅니다. "양원"을 고르면 정당마다 [상원 | 하원] 의석을 한 칸에 나란히 적어요. 지금 "양원"을 눌러보세요.'
@@ -604,7 +604,7 @@
                 },
                 {
                     before: [go('setup', 'wikibox'), showPanel('controls')],
-                    target: () => document.querySelector('#contentWikibox .t65-wk-form') || '#contentWikibox',
+                    target: () => document.querySelector('#contentWikibox .hist-wk-form') || '#contentWikibox',
                     title: '틀 꾸미기',
                     text: '틀 머리(제목 · 색), 내각 이름과 기간(비우면 "현재"), 교섭단체 기준(이보다 의석이 적은 정당은 비교섭단체로 묶임), 직접 쓰는 각주를 정해요. 파벌이 둘 이상인 정당(예: 기민·기사연합)은 각주에 공동교섭단체로 적혀요.',
                 },
@@ -731,14 +731,14 @@
             steps: [
                 {
                     before: [closePanels, go('economy', 'overview'), showPanel('controls')],
-                    target: () => document.querySelector('#contentEcoOverview .t69-top') || '#contentEcoOverview',
+                    target: () => document.querySelector('#contentEcoOverview .econ-top') || '#contentEcoOverview',
                     title: '보이지 않는 손',
                     text: '메뉴 › 경제에서는 나라 경제를 움직여요. 서독 튜토리얼은 1983년 서독 경제(성장 1.6% · 인플레이션 3.3% · 실업 약 9%)로 시작합니다. 왼쪽 위 배지는 신용등급(AAA ~ D)이에요.',
                 },
                 {
                     before: [go('economy', 'overview'), showPanel('controls')],
                     enter: () => { T.ecoTurn0 = ecoTurn(); },
-                    target: () => document.querySelector('#contentEcoOverview .t69-next') || '#contentEcoOverview',
+                    target: () => document.querySelector('#contentEcoOverview .econ-next') || '#contentEcoOverview',
                     allow: ['#contentEcoOverview'],
                     title: '날짜를 따라 계산',
                     text: '경제는 게임 날짜를 따라 계산돼요 — 날짜가 다음 분기로 넘어가면 지난 분기만큼 돌아갑니다 (계산 단위는 1개월 · 1분기 · 1년 중에 고름). 오른쪽 위 날짜 ▶로 넘기든 국가 › 날짜 칸을 직접 고치든 똑같고, 날짜를 되돌리면 경제는 그대로 두고 그 날짜부터 이어서 계산해요. "▶ 다음 1분기"를 눌러 보세요 — 날짜가 3개월 넘어갑니다.',
@@ -747,53 +747,53 @@
                 },
                 {
                     before: [go('economy', 'overview'), showEco('overview'), showPanel('display')],
-                    target: () => document.querySelector('#dispPanelEconomy .t69-toprow') || '#dispPanelEconomy',
+                    target: () => document.querySelector('#dispPanelEconomy .econ-toprow') || '#dispPanelEconomy',
                     title: '신용등급과 경고 신호',
                     text: '오른쪽 경제 화면 첫 줄에는 신용등급과 경제 경고 신호가 있어요 — 실질 마이너스 성장 · 과도한 적자 · 금융 위기부터 국가 부도 · 하이퍼인플레이션 · 대공황 · 자본 도피 · 경제 붕괴까지. 위기 기준(경제 › 시나리오에서 정함)에 가까워지면 ◆ 위험, 넘으면 ✖ 위기로 켜지고, 꺼진 신호는 흐리게 보여요.',
                 },
                 {
                     before: [go('economy', 'overview'), showEco('overview'), showPanel('display')],
-                    target: () => document.querySelector('#dispPanelEconomy .t69-gauges') || '#dispPanelEconomy',
+                    target: () => document.querySelector('#dispPanelEconomy .econ-gauges') || '#dispPanelEconomy',
                     title: '계기판과 금액',
                     text: '둘째 줄 반원 계기는 지표마다 안전 · 경고 · 위험 · 위기 구간을 보여 주고, 아래 작은 선은 최근 8기간의 흐름 · ▲▼는 지난 기간보다 오르내린 만큼이에요 (날짜를 넘겨야 생겨요). 계기를 누르면 그 지표를 움직이는 탭으로 가요. 셋째 줄에는 GDP · 국가부채 · 국고 · 세입 · 세출 · 재정수지 · 국채 이자가 화폐 단위로 나오고, 성장률은 통계처럼 전년 대비예요.',
                 },
                 {
                     before: [go('economy', 'overview'), showEco('overview'), showPanel('display')],
-                    target: () => { const c = document.querySelector('#dispPanelEconomy .t69-chips'); return (c && c.parentElement) || '#dispPanelEconomy'; },
+                    target: () => { const c = document.querySelector('#dispPanelEconomy .econ-chips'); return (c && c.parentElement) || '#dispPanelEconomy'; },
                     title: '추이 그래프',
                     text: '큰 그래프는 칩을 눌러 지표를 겹쳐 보고, 점선은 앞으로의 예측이에요. 칸 너비는 실제 시간 길이대로라 1개월 · 1분기 · 1년 칸이 섞여도 시간축이 맞고, 위쪽 10년 · 5년 · 2년으로 기간을 좁혀요. 깃발은 위기 · 총선 · 예산안 · 이벤트, 회색 띠는 경기 침체예요. 오른쪽 클릭으로 그림을 내보낼 수 있어요.',
                 },
                 {
                     before: [go('economy', 'monetary'), showPanel('controls')],
-                    target: () => document.querySelector('#contentEcoMonetary .t69-card') || '#contentEcoMonetary',
+                    target: () => document.querySelector('#contentEcoMonetary .econ-card') || '#contentEcoMonetary',
                     title: '통화',
                     text: '기준금리 · 화폐발행률 · 양적완화 같은 통화정책은 중앙은행 몫이라 바로 반영돼요. 금리를 올리면 인플레이션가 잡히지만 실업이 늘고, 화폐를 많이 발행하면 당장은 좋아도 물가와 통화가치가 무너집니다. 아래 막대가 "이대로면 다음 분기"예요.',
                 },
                 {
                     before: [go('economy', 'fiscal'), showPanel('controls')],
-                    target: () => document.querySelector('#contentEcoFiscal .t69-budgetbox') || '#contentEcoFiscal',
+                    target: () => document.querySelector('#contentEcoFiscal .econ-budgetbox') || '#contentEcoFiscal',
                     title: '재정과 예산안',
                     text: '지출(GDP 대비 %)과 세율을 고치면 예산안 초안에 모였다가, "예산안 제출"로 입법 › 제출에 올라가요. 의회에서 가결돼야 반영되고, 그 전까지는 지난 예산(준예산)대로 집행돼요. 정당별 예상 표결을 보고 한 번에 넣을 수도 있어요. 지출 · 세수 · 의무지출 · 국고 · 국가부채는 비율 옆에 금액도 함께 나와요.',
                 },
                 {
                     before: [go('economy', 'events'), showPanel('controls')],
-                    enter: () => { T.evBase = (t69() && (t69().state.sched || []).length) || 0; },
-                    target: () => document.querySelector('#contentEcoEvents .t69-card') || '#contentEcoEvents',
+                    enter: () => { T.evBase = (econApi() && (econApi().state.sched || []).length) || 0; },
+                    target: () => document.querySelector('#contentEcoEvents .econ-card') || '#contentEcoEvents',
                     allow: ['#contentEcoEvents'],
                     title: '이벤트',
                     text: '경제 › 이벤트에서는 정한 날짜에 대공황 · 금융 위기 · 오일 쇼크 · 하이퍼인플레이션 · 국가 부도 · 경제 붕괴 · 재해 · 호황을 일으켜요 ("직접 설정"으로 이름 · 효과를 정한 사건도). 종류를 고르고 시작 연 · 월, 기간(개월), 세기를 정해 "+ 이벤트 추가"를 눌러 보세요.',
-                    task: () => !!t69() && (t69().state.sched || []).length > (T.evBase || 0),
+                    task: () => !!econApi() && (econApi().state.sched || []).length > (T.evBase || 0),
                     done: '이벤트가 예약됐어요! 날짜가 그 달에 닿으면 신뢰도 · 통화가치가 한 번 꺾이고, 기간 동안 성장 · 인플레이션 · 실업이 움직여요. 일어나기 전에는 아래 목록에서 날짜 · 기간 · 세기를 고치거나 지울 수 있어요.',
                 },
                 {
                     before: [go('economy', 'analysis'), showEco('analysis'), showPanel('controls')],
-                    target: () => document.querySelector('#contentEcoAnalysis .t69-presets') || '#contentEcoAnalysis',
+                    target: () => document.querySelector('#contentEcoAnalysis .econ-presets') || '#contentEcoAnalysis',
                     title: '전문가 분석',
                     text: '깊게 보고 싶으면 분석에서 경기 순환 · 인플레이션 · 재정 건전성 · 지역 격차 · 정책 실험을 골라요. 오른쪽에 같은 십자선을 쓰는 연동 패널, 성장 기여도 분해(이벤트 몫 포함), 부채 동학(r − g), 예산 흐름도, 정책 민감도가 그려집니다. "크게 보기"로 화면 전체에 펼칠 수 있어요.',
                 },
                 {
                     before: [go('economy', 'region'), showPanel('controls')],
-                    target: () => document.querySelector('#contentEcoRegion .t69-dlist') || '#contentEcoRegion',
+                    target: () => document.querySelector('#contentEcoRegion .econ-dlist') || '#contentEcoRegion',
                     title: '지역 · 시나리오 · 항목',
                     text: '지역에서 주마다 산업구조 · 연령구조 · 소득등급을 정하면 같은 정책도 지역마다 다르게 작용해요 (금리 인상은 제조업, 복지 삭감은 저소득 지역에 크게). 시나리오에서는 "값 + 기간" 규칙과 프리셋 · 위기 기준을, 항목에서는 나만의 지출 항목 · 세목 · 자산을 만들 수 있어요.',
                 },
@@ -806,7 +806,7 @@
             steps: [
                 {
                     before: [closePanels, go('nation', 'vassals'), showPanel('controls')],
-                    target: () => document.querySelector('#contentVassals .t68-summary') || '#contentVassals',
+                    target: () => document.querySelector('#contentVassals .vassal-summary') || '#contentVassals',
                     title: '종속국',
                     text: '국가 › 종속국에서는 본국에 딸린 나라(보호국 · 괴뢰국 · 자치령 …)를 정해요. 종속국 땅은 본국 영토처럼 지도에 있지만, 본국 선거 · 의석에서는 빠지고 따로 의회를 둡니다.',
                 },
@@ -815,10 +815,10 @@
                     target: () => firstVassalCard() || document.querySelector('#contentVassals [data-act="add"]') || '#contentVassals',
                     allow: ['#contentVassals'],
                     title: '종속국 만들기',
-                    text: () => (t68() && t68().vassals.length
+                    text: () => (vassalApi() && vassalApi().vassals.length
                         ? '종속국이 있어요. 카드에서 이름 · 점무늬 색 · 종속 형태(보호국 · 보호령 · 동군연합 …)를 고칠 수 있어요. 형태는 "＋ 새 형태…"나 위쪽 "종속 형태" 목록에서 원하는 대로 추가해요.'
                         : '이름을 적고 "+ 종속국 추가"를 눌러 종속국을 하나 만들어 보세요 (예: 서베를린).'),
-                    task: () => !!(t68() && t68().vassals.length),
+                    task: () => !!(vassalApi() && vassalApi().vassals.length),
                     done: '종속국이 생겼어요!',
                 },
                 {
@@ -828,19 +828,19 @@
                     text: '"칠하기"를 켠 채 국가 › 종속국 오른쪽 지도에서 지역구를 차례로 눌러 그 나라 땅으로 정해요. 종속국 땅은 모든 지도에서 그 나라 색 점무늬로 보이고(미수복 지역의 빗금과 달라요), 본국 총선 · 지방선거 · 국민투표에서 빠집니다.',
                 },
                 {
-                    before: [go('nation', 'vassals'), call('chamberSetView', 'house', 'arc'), () => { if (t68()) t68().openParliament(); }, showPanel('controls')],
-                    target: () => document.querySelector('#contentVassals .t68-parl') || firstVassalCard() || '#contentVassals',
+                    before: [go('nation', 'vassals'), call('chamberSetView', 'house', 'arc'), () => { if (vassalApi()) vassalApi().openParliament(); }, showPanel('controls')],
+                    target: () => document.querySelector('#contentVassals .vassal-parl') || firstVassalCard() || '#contentVassals',
                     allow: ['#contentVassals'],
                     title: '종속국 의회',
-                    text: () => (t68() && t68().vassals.some(v => v.parliament.elections)
+                    text: () => (vassalApi() && vassalApi().vassals.some(v => v.parliament.elections)
                         ? '종속국마다 따로 의회가 있어요 — 의회 이름 · 의석 수 · 봉쇄조항 · 정당(지지율 · 의석)을 정하고 "선거 실시"로 의석을 다시 나눕니다.'
                         : '종속국마다 따로 의회가 있어요 — 의회 이름 · 의석 수 · 봉쇄조항 · 정당(지지율 · 의석)을 정해요. "본국 정당 가져오기"나 "+ 정당"으로 정당을 넣고 "선거 실시"를 눌러 보세요.'),
-                    task: () => !!(t68() && t68().vassals.some(v => v.parliament.elections)),
+                    task: () => !!(vassalApi() && vassalApi().vassals.some(v => v.parliament.elections)),
                     done: '선거를 치렀어요! 반원형 그림이 새 의석이에요.',
                 },
                 {
                     before: [go('nation', 'vassals'), showPanel('controls')],
-                    target: () => document.querySelector('#contentVassals .t68-actions') || '#contentVassals',
+                    target: () => document.querySelector('#contentVassals .vassal-actions') || '#contentVassals',
                     title: '합병과 해방',
                     text: '"합병"은 종속국을 본국에 합쳐 그 땅을 일반 지역구로 돌려요 (본국 선거 · 의석에 들어가고, 종속국 의회는 해산). "해방"은 종속국을 독립시켜 본국에서 떼어 내요 — 독립국으로 지도에 따로 보이고 선거에서 계속 빠지며, 세계 › 국가 순위에도 올라갑니다.',
                 },
@@ -859,12 +859,12 @@
                 },
                 {
                     before: [go('nation', 'people'), showPanel('controls')],
-                    enter: () => { T.peopleBase = (window.T61 && T61.people.length) || 0; },
+                    enter: () => { T.peopleBase = (window.HemiPeople && HemiPeople.people.length) || 0; },
                     target: () => document.querySelector('#contentPeople [data-act="import"]') || '#contentPeople',
                     allow: ['#contentPeople'],
                     title: '인물 만들기',
                     text: '"모든 자리에서 가져오기"를 누르면 의원 · 당수 · 파벌 대표 · 의장단 · 대통령(국왕) · 내각 · 지방 단체장처럼 이름이 적힌 모든 자리에서 인물을 만들고 연결합니다 (같은 이름은 한 사람). "＋ 사람 추가"로 직접 만들어도 돼요.',
-                    task: () => !!window.T61 && T61.people.length > (T.peopleBase || 0),
+                    task: () => !!window.HemiPeople && HemiPeople.people.length > (T.peopleBase || 0),
                     done: '인물이 생겼어요. 카드의 ▾를 누르면 이념 · 정당 · 파벌을 고치고 자리를 배정할 수 있습니다.',
                 },
                 {
@@ -905,8 +905,8 @@
                 {
                     before: [go('vote', 'elecSettings'), showPanel('controls')],
                     enter: () => { T.migBase = migSig(); },
-                    target: () => document.getElementById('t61MigrantCard') || '#contentElecSettings',
-                    allow: ['#t61MigrantCard'],
+                    target: () => document.getElementById('peopleMigrantCard') || '#contentElecSettings',
+                    allow: ['#peopleMigrantCard'],
                     title: '이민자 투표권',
                     text: '시민은 모든 선거에서 투표해요. 이민자는 선거마다 — 대선 · 총리 직선 / 총선 / 지방선거 / 국민투표 — 투표권을 줄지 선거 › 선거 제도 아래쪽에서 정합니다. 하나를 켜 보세요.',
                     task: () => migSig() !== T.migBase,
@@ -929,27 +929,27 @@
                     before: [closePanels, go('world', 'ranking'), showPanel('controls')],
                     target: () => (!isMobileLayout() && document.querySelector('#sideNav .mn-group[data-main="world"]')) || navTarget(),
                     title: '세계 메뉴',
-                    text: () => `국가 아래 🌐 세계 메뉴에는 국가 순위와 진영이 있어요 (꾸밈용 — 게임 기능에는 영향 없음). 바로 위 💹 경제는 ${t69() ? '1.6.9 경제 시스템이에요 (튜토리얼 "경제" 과정).' : '1.6.9 업데이트(경제 시스템)에서 열리는 잠긴 메뉴예요.'}`,
+                    text: () => `국가 아래 🌐 세계 메뉴에는 국가 순위와 진영이 있어요 (꾸밈용 — 게임 기능에는 영향 없음). 바로 위 💹 경제는 ${econApi() ? '1.6.9 경제 시스템이에요 (튜토리얼 "경제" 과정).' : '1.6.9 업데이트(경제 시스템)에서 열리는 잠긴 메뉴예요.'}`,
                 },
                 {
                     before: [go('world', 'ranking'), showPanel('display')],
-                    target: () => document.querySelector('#dispPanelRanking .t65-rk') || '#dispPanelRanking',
+                    target: () => document.querySelector('#dispPanelRanking .hist-rk') || '#dispPanelRanking',
                     title: '순위표',
                     text: '오른쪽 시각 화면 "국가 순위" 탭에 순위표가 크게 보여요. 진영 색 띠 · 국기 · 점수 막대로 나라를 줄 세우고, 우리나라 줄은 밝게 강조돼요 — 이름 · 국기는 국가 › 상징의 것을 그대로 써요.',
                 },
                 {
                     before: [go('world', 'ranking'), showPanel('controls')],
                     enter: () => { T.rankBase = rankSig(); },
-                    target: () => document.querySelector('#contentRanking .t65-re-list') || '#contentRanking',
+                    target: () => document.querySelector('#contentRanking .hist-re-list') || '#contentRanking',
                     allow: ['#contentRanking'],
                     title: '점수 바꾸기',
                     text: '왼쪽 목록에서 아무 나라의 점수를 ± 버튼이나 직접 입력으로 바꿔보세요. 오른쪽 순위표가 바로 바뀌고, 손을 떼면 왼쪽 목록도 순위대로 다시 줄 서요.',
-                    task: () => !t64() || rankSig() !== T.rankBase,
+                    task: () => !histApi() || rankSig() !== T.rankBase,
                     done: '순위표가 바뀌었어요.',
                 },
                 {
                     before: [go('world', 'ranking'), showPanel('controls')],
-                    target: () => document.querySelector('#contentRanking .t65-re-row') || '#contentRanking',
+                    target: () => document.querySelector('#contentRanking .hist-re-row') || '#contentRanking',
                     title: '국기 · 진영 · 하위 이념',
                     text: '국기 칸을 누르면 그림을 올려요(주요 나라는 기본 국기가 들어 있어요). 아래 두 칸에서 진영과 하위 이념을 고르고, "순위 기준 저장"을 누른 뒤 점수를 바꾸면 순위표에 ▲▼ 변동이 보여요.',
                 },
@@ -1020,13 +1020,13 @@
                 },
                 {
                     before: [go('vote', 'elecSettings'), showPanel('controls')],
-                    target: () => document.getElementById('t63EcPanel') || '#contentElecSettings',
+                    target: () => document.getElementById('revEcPanel') || '#contentElecSettings',
                     title: '선거인단 설정',
                     text: '선거인을 권역마다 또는 지역구마다 뽑습니다. 선거인 수는 인구 비례 · 의석 수 + 가산(미국식은 하원 의석 + 2) · 직접 입력 중에 고르고, 그 단위에서 1위가 선거인을 모두 가져가는 승자독식이나 득표대로 나누는 비례 배분을 고릅니다. 신의 없는 선거인 비율도 정할 수 있어요.',
                 },
                 {
                     before: [go('vote', 'elecSettings'), showPanel('controls')],
-                    target: () => document.getElementById('t63EcPanel') || '#contentElecSettings',
+                    target: () => document.getElementById('revEcPanel') || '#contentElecSettings',
                     title: '과반과 의회 결정',
                     text: '선거인 과반을 얻어야 당선입니다. 아무도 과반이 안 되면 의회가 상위 3명 중에서 고르거나(미국식) 선거인을 가장 많이 얻은 후보가 당선되게 할 수 있어요. 서독은 북독일 · 서독일 · 남독일 세 권역으로 나뉘어 있어, 권역마다 선거인을 뽑습니다.',
                 },
@@ -1036,12 +1036,12 @@
                     allow: ['#presElecRunBtn', '#presElecResultPanel'],
                     title: '선거인단으로 대선 치르기',
                     text: '선거 › 대선에서 선거를 치러보세요. 권역마다 성향대로 표가 나오고, 그 권역의 선거인이 정해집니다.',
-                    task: () => !!document.querySelector('#presElecResultPanel .t63-ec'),
+                    task: () => !!document.querySelector('#presElecResultPanel .rev-ec'),
                     done: '개표가 끝났어요.',
                 },
                 {
                     before: [go('vote', 'elecPresidential'), showPanel('controls')],
-                    target: () => document.querySelector('#presElecResultPanel .t63-ec') || '#contentElecPresidential',
+                    target: () => document.querySelector('#presElecResultPanel .rev-ec') || '#contentElecPresidential',
                     title: '득표와 선거인',
                     text: '후보마다 선거인 수와 득표율이 함께 나오고, 이긴 후보 색으로 칠한 지도와 권역별 선거인 목록이 붙어요. 승자독식에서는 득표율이 높아도 이긴 권역이 없으면 선거인이 0명일 수 있어요 — 득표에서 지고도 선거인으로 이기는 일도 생깁니다.',
                 },
@@ -1202,7 +1202,7 @@
                     allow: ['#contentMilitary'],
                     title: '군 지휘부 만들기',
                     text: '"기본 군 지휘부 만들기"를 눌러 지휘부를 채워 보세요. (이미 있으면 그대로 넘어가요)',
-                    task: () => !!(window.T62 && window.T62.military && window.T62.military.length),
+                    task: () => !!(window.HemiCoup && window.HemiCoup.military && window.HemiCoup.military.length),
                     done: '군 지휘부가 생겼어요. 이름 · 직책 · 충성도는 언제든 고칠 수 있어요.',
                 },
                 {
@@ -1213,12 +1213,12 @@
                 },
                 {
                     before: [go('cabinet', 'coup'), showPanel('controls')],
-                    enter: () => { T.coupBase = logLen('T62'); },
+                    enter: () => { T.coupBase = logLen('HemiCoup'); },
                     target: () => document.querySelector('#contentCoup [data-act="go"]') || '#contentCoup',
                     allow: ['#contentCoup'],
                     title: '쿠데타 일으키기',
                     text: '쿠데타를 일으켜 보세요. 성공하든 실패하든 괜찮아요 — 이 나라는 복사본입니다.',
-                    task: () => logLen('T62') > (T.coupBase || 0),
+                    task: () => logLen('HemiCoup') > (T.coupBase || 0),
                     done: '결과가 나왔어요. 성공하면 계엄 · 의회 정지 · 반대 정당 활동 금지가, 실패하면 주도 세력 처벌과 지지율 하락이 따릅니다.',
                 },
                 {
@@ -1248,12 +1248,12 @@
                 },
                 {
                     before: [go('cabinet', 'revolution'), showPanel('controls')],
-                    enter: () => { T.revBase = logLen('T63'); },
+                    enter: () => { T.revBase = logLen('HemiRevolution'); },
                     target: () => document.querySelector('#contentRevolution [data-act="go"]') || '#contentRevolution',
                     allow: ['#contentRevolution'],
                     title: '혁명 일으키기',
                     text: '이념과 혁명 정당을 고르고 혁명을 일으켜 보세요. 혁명 뒤 새 국호 · 국기도 미리 정해 둘 수 있어요.',
-                    task: () => logLen('T63') > (T.revBase || 0),
+                    task: () => logLen('HemiRevolution') > (T.revBase || 0),
                     done: '결과가 나왔어요. 실패하면 혁명 정당이 활동 금지되고 정부가 계엄령을 선포합니다.',
                 },
                 {
@@ -1277,22 +1277,22 @@
                 },
                 {
                     before: [go('cabinet', 'royal'), showPanel('controls')],
-                    enter: () => { T.royalDyn = (window.T66 && T66.dynasties.length) || 0; },
-                    target: () => document.querySelector('#contentRoyal [data-act="seed"]') || document.querySelector('#contentRoyal .t66-dyn') || '#contentRoyal',
+                    enter: () => { T.royalDyn = (window.HemiRoyal && HemiRoyal.dynasties.length) || 0; },
+                    target: () => document.querySelector('#contentRoyal [data-act="seed"]') || document.querySelector('#contentRoyal .royal-dyn') || '#contentRoyal',
                     allow: ['#contentRoyal'],
                     title: '왕가와 왕위 주장자',
                     text: '왕가마다 계승 규칙(남계만 · 남자 우선 · 성별 무관)과 왕위 주장자를 정합니다. 주장자 순서(⋮⋮ 끌기)가 출생 순이고, 정당마다 지지하는 주장자를 고를 수 있어요. "예시 왕가 만들기"를 누르거나 왕가를 직접 추가해 보세요.',
-                    task: () => !!window.T66 && T66.dynasties.length > 0,
+                    task: () => !!window.HemiRoyal && HemiRoyal.dynasties.length > 0,
                     done: '서독이라면 호엔촐레른가 · 비텔스바흐가가 만들어져요. 지지 정당이 많은 주장자일수록 왕정복고 · 계승 분쟁에 유리합니다.',
                 },
                 {
                     before: [go('cabinet', 'royal'), showPanel('controls')],
-                    enter: () => { T.royalBase = logLen('T66'); },
+                    enter: () => { T.royalBase = logLen('HemiRoyal'); },
                     target: () => document.querySelector('#contentRoyal [data-act="restore"]') || '#contentRoyal',
                     allow: ['#contentRoyal'],
                     title: '왕정복고',
                     text: '주장자를 지지하는 정당이 하원 과반이면 의회 결의로 입헌군주제를 세우고, 아니면 왕당파 쿠데타로 — 쿠데타는 입헌군주제나 전제군주정을 고를 수 있어요. 성공하면 국호가 "○○ 왕국"으로 바뀌고 새 헌법이 생깁니다.',
-                    task: () => logLen('T66') > (T.royalBase || 0),
+                    task: () => logLen('HemiRoyal') > (T.royalBase || 0),
                     done: '결과가 나왔어요. 쿠데타가 실패하면 왕당파 정당이 활동 금지되고 주장자는 망명합니다.',
                 },
                 {
@@ -1310,7 +1310,7 @@
             steps: [
                 {
                     before: [closePanels, go('law', 'siege'), showPanel('controls')],
-                    target: () => document.querySelector('#contentSiege .t64-modes') || '#contentSiege',
+                    target: () => document.querySelector('#contentSiege .siege-modes') || '#contentSiege',
                     title: '국회공성전',
                     text: '입법 › 공성전에는 두 가지가 있어요 — 계엄군의 봉쇄를 뚫고 본회의장에 들어가 계엄을 해제하는 "봉쇄 돌파"와, 반대 법안의 표결을 막으려 의장석을 점거하는 "의장석 점거"입니다.',
                 },
@@ -1331,30 +1331,30 @@
                     done: '계엄령이 선포된 상태예요.',
                 },
                 {
-                    before: [go('law', 'siege'), () => window.T64 && window.T64.setMode('break'), showPanel('controls')],
-                    target: () => document.querySelector('#contentSiege .t64-meter-box') || '#contentSiege',
+                    before: [go('law', 'siege'), () => window.HemiSiege && window.HemiSiege.setMode('break'), showPanel('controls')],
+                    target: () => document.querySelector('#contentSiege .siege-meter-box') || '#contentSiege',
                     title: '누가 들어갈까?',
                     text: '정당마다 참여율을 정하면 의원 한 명씩 봉쇄를 뚫는지 정해집니다. 봉쇄 강도(군 지휘부 충성도) · 시민 지원 · 정당 결속도가 입장 확률을 바꿔요. 들어간 의원만 표결하지만 가결 기준은 재적 과반이라, 야당만으로 모자라면 여당 의원도 들어와야 합니다. 표결을 막으려는 정당은 "입구 저지"로 본회의장 입구를 몸으로 막을 수도 있어요.',
                 },
                 {
-                    before: [go('law', 'siege'), () => window.T64 && window.T64.setMode('break'), showPanel('controls')],
-                    enter: () => { T.siegeBase = logLen('T64'); },
+                    before: [go('law', 'siege'), () => window.HemiSiege && window.HemiSiege.setMode('break'), showPanel('controls')],
+                    enter: () => { T.siegeBase = logLen('HemiSiege'); },
                     target: () => document.querySelector('#contentSiege [data-act="break"]') || '#contentSiege',
                     allow: ['#contentSiege', '#dispPanelHouse'],
                     title: '봉쇄 돌파',
                     text: '"봉쇄 돌파 · 계엄 해제 표결"을 눌러보세요. 옆 반원 화면에서 의원들이 봉쇄선 → 입구 → 통로를 따라 자리로 들어가요. 과반에 못 미치면 계엄군이 다시 끌어냅니다 (누르면 건너뜀, 속도는 0.5× ~ 4×).',
-                    task: () => logLen('T64') > (T.siegeBase || 0),
+                    task: () => logLen('HemiSiege') > (T.siegeBase || 0),
                     done: '표결이 끝났어요. 과반이 들어갔으면 계엄이 해제됩니다.',
                 },
                 {
-                    before: [go('law', 'siege'), () => window.T64 && window.T64.setMode('obstruct'), showPanel('controls')],
-                    target: () => document.querySelector('#contentSiege .t64-panel') || '#contentSiege',
+                    before: [go('law', 'siege'), () => window.HemiSiege && window.HemiSiege.setMode('obstruct'), showPanel('controls')],
+                    target: () => document.querySelector('#contentSiege .siege-panel') || '#contentSiege',
                     title: '의장석 점거',
                     text: '계엄과 상관없이, 표결을 기다리는 법안을 골라 의장석을 점거할 수 있어요. 참여 의원 수 · 상대 진영 · 결속도 · 의장 경호권 · 직권상정이 성공 확률을 정하고, 성공하면 표결이 무산됩니다. 옆 반원 화면에서는 점거 의원들이 의장석으로 몰려가고, 경호권을 쓰면 경위들이 들어와 맞붙어요.',
                 },
                 {
                     before: [go('law', 'siege'), showPanel('controls')],
-                    target: () => document.querySelector('#contentSiege .t64-fold') || '#contentSiege',
+                    target: () => document.querySelector('#contentSiege .siege-fold') || '#contentSiege',
                     title: '폭력의 대가',
                     text: '점거한 정당은 지지율이 떨어지고, 다친 의원은 다음 표결 몇 번을 결석합니다(표결에서 빠지고 좌석 정보에 표시). "국회선진화법"을 켜면 직권상정이 막히고 페널티가 두 배가 돼요.',
                 },
@@ -1411,7 +1411,7 @@
                     before: [call('switchDispTab', 'house'), showPanel('display')],
                     target: '#houseCanvas',
                     title: '이미지로 내보내기',
-                    text: () => `반원 · 지도 · 선거 결과 · 내각 화면에서 오른쪽 클릭(모바일은 길게 누르기) → "내보내기..."를 고르면 PNG · JPG · SVG 이미지로 저장합니다. 정당 통계와 국기 · 국가명 · 날짜 머리를 함께 넣을 수 있어요.${onPreviewPage() ? ` 미리보기 화면의 위키 틀 · 국가 순위 · 세력 변화${t69() ? ' · 경제 그래프' : ''}도 같은 방법으로 내보내요.` : ''}`,
+                    text: () => `반원 · 지도 · 선거 결과 · 내각 화면에서 오른쪽 클릭(모바일은 길게 누르기) → "내보내기..."를 고르면 PNG · JPG · SVG 이미지로 저장합니다. 정당 통계와 국기 · 국가명 · 날짜 머리를 함께 넣을 수 있어요.${onPreviewPage() ? ` 미리보기 화면의 위키 틀 · 국가 순위 · 세력 변화${econApi() ? ' · 경제 그래프' : ''}도 같은 방법으로 내보내요.` : ''}`,
                 },
                 {
                     before: [showPanel('controls')],
@@ -1876,11 +1876,11 @@
         window.addEventListener('keydown', onKey, true);
         GUARDED.forEach(t => window.addEventListener(t, guard, true));
         tickId = setInterval(tick, 250);
-        // 본 게임에서 잠긴(미리보기) 과정을 골라 Teaser 1.6.4으로 넘어온 경우 — 그 과정을 바로 연다
+        // 시작 화면의 튜토리얼 탭에서 과정을 골랐거나, 잠긴(미리보기) 과정을 골라 Teaser 화면으로 넘어온 경우 — 그 과정을 바로 연다
         let pending = null;
         try { pending = sessionStorage.getItem(PENDING_KEY); sessionStorage.removeItem(PENDING_KEY); } catch (e) { /* 없음 */ }
         const pendingIdx = pending ? LESSONS.findIndex(l => l.id === pending) : -1;
-        if (typeof lesson !== 'number' && pendingIdx >= 0 && isAvail(pendingIdx) && onPreviewPage(LESSONS[pendingIdx])) lesson = pendingIdx;
+        if (typeof lesson !== 'number' && pendingIdx >= 0 && isAvail(pendingIdx) && (!LESSONS[pendingIdx].locked || onPreviewPage(LESSONS[pendingIdx]))) lesson = pendingIdx;
         if (typeof lesson === 'number') startLesson(lesson);
         else if (doneSet().size > 0) showMenu();
         else startLesson(0);
@@ -1902,6 +1902,8 @@
         start, stop, next, showMenu,
         // goto(과정, 단계) — 튜토리얼이 켜져 있을 때 특정 단계로 바로 이동 (0부터)
         goto: (li, si = 0) => { if (!active || !LESSONS[li]) return; lessonIdx = li; showStep(Math.max(0, Math.min(si, LESSONS[li].steps.length - 1))); },
+        // 시작 화면(index.html) 튜토리얼 탭용 목록 — 번호 · 제목 · 요약 · 마침 여부 · 열 수 있는지
+        catalog: () => { const done = doneIds(); return LESSONS.map((l, i) => ({ id: l.id, group: l.group, no: noOf(i), title: typeof l.title === 'function' ? l.title() : l.title, summary: typeof l.summary === 'function' ? l.summary() : (l.summary || ''), locked: !!l.locked, avail: isAvail(i), done: done.has(l.id) })); },
         lessonGroups: () => LESSONS.map(l => ({ id: l.id, group: l.group, title: l.title, steps: l.steps.length, targets: l.steps.map(st => !!st.target) })),
         isActive: () => active,
         lessons: LESSONS.map(l => ({ title: l.title, steps: l.steps.length })),

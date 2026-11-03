@@ -928,6 +928,13 @@ function presetShape(s, key) {
   if (chain.length) attrs.transform = chain.join(' ') + (attrs.transform ? ' ' + attrs.transform : '');
   return { key, tag: s.tag, attrs };
 }
+// 게임의 네온 테두리 방식(테마 색 비례 · 1.6.9)을 불러온 .hemimap에서 그대로 이어 줌
+function strokeModeFields(m) {
+  const out = {};
+  if (m && m.strokeMode === 'theme' && m.strokeRel) { out.strokeMode = 'theme'; out.strokeRel = m.strokeRel; }
+  if (m && m.abbrStrokeMode === 'theme' && m.abbrStrokeRel) { out.abbrStrokeMode = 'theme'; out.abbrStrokeRel = m.abbrStrokeRel; }
+  return out;
+}
 function buildPresetData() {
   const rootSvg = svgDoc ? svgDoc.querySelector('svg') : null;
   const viewBox = rootSvg ? (rootSvg.getAttribute('viewBox') || `0 0 ${rootSvg.getAttribute('width') || 100} ${rootSvg.getAttribute('height') || 100}`) : '0 0 100 100';
@@ -981,7 +988,7 @@ function buildPresetData() {
     meta: { name: (loadedPreset && loadedPreset.meta && loadedPreset.meta.name) || exportBaseName(), exportedAt: new Date().toISOString(), dataLang: (loadedPreset && loadedPreset.meta && loadedPreset.meta.dataLang) || null, madeWith: 'map-maker' },
     district: {
       mapMode: 'svg', view: { zoom: 1, panX: 0, panY: 0 }, grid, names, abbr, population, order, seatCounts,
-      svgMap: { viewBox, strokeColor: (prev && prev.svgMap && prev.svgMap.strokeColor) || '#00ffff', abbrStrokeColor: (prev && prev.svgMap && prev.svgMap.abbrStrokeColor) || null, shapes: list.map(({ s, key }) => presetShape(s, key)) },
+      svgMap: { viewBox, strokeColor: (prev && prev.svgMap && prev.svgMap.strokeColor) || '#00ffff', abbrStrokeColor: (prev && prev.svgMap && prev.svgMap.abbrStrokeColor) || null, ...strokeModeFields(prev && prev.svgMap), shapes: list.map(({ s, key }) => presetShape(s, key)) },
       svgSplit: { senate: !!(prev && prev.svgSplit && prev.svgSplit.senate), third: !!(prev && prev.svgSplit && prev.svgSplit.third) },
       svgMaps: { senate: (prev && prev.svgMaps && prev.svgMaps.senate) || null, third: (prev && prev.svgMaps && prev.svgMaps.third) || null },
     },

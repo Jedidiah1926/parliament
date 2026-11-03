@@ -18,6 +18,7 @@
     <link rel="stylesheet" href="css/index.css">
     <link rel="stylesheet" href="css/modern.css">
     <script src="js/presets.js"></script>
+    <script src="js/tutorial.js"></script>
 
     <script src="js/lang.js"></script>
     <script src="js/devmode.js"></script>
@@ -181,31 +182,64 @@
                 <span>SAVE SELECT</span>
                 <button class="save-select-close" onclick="closeSaveSelectModal()">X</button>
             </div>
-            <div class="save-select-columns">
-                <!-- 왼쪽: 새로 시작 (빈 세이브 / 프리셋 복제) -->
-                <section class="save-select-col save-select-col-presets">
-                    <div class="save-select-col-title">새로 시작</div>
-                    <div class="settings-label">빈 세이브</div>
-                    <div class="save-select-new-row">
-                        <input type="text" id="newSaveNameInput" placeholder="예: 2차 총선 직후" maxlength="40" onkeydown="if(event.key==='Enter'){event.preventDefault();startNewSave();}">
-                        <button class="menu-btn save-select-start-btn" onclick="startNewSave()">생성 후 시작</button>
-                    </div>
-                    <div class="settings-label" style="margin-top:22px;">프리셋 — 고르면 복사본이 새 세이브로 만들어집니다</div>
-                    <div class="save-select-list" id="presetSelectList"></div>
-                </section>
-                <!-- 오른쪽: 저장 파일 (검색·즐겨찾기) -->
-                <section class="save-select-col save-select-col-saves">
-                    <div class="save-select-col-title">이어하기</div>
-                    <div class="save-select-search">
-                        <input type="search" id="saveSearchInput" placeholder="세이브 검색" maxlength="40" oninput="renderSaveSelectList()">
-                    </div>
-                    <div class="save-select-list" id="saveSelectList"></div>
+            <!-- 탭: 새로 시작(프리셋 | 빈 세이브) · 이어하기(즐겨찾기 | 세이브) · 튜토리얼(기본 | 심화) -->
+            <div class="save-select-tabs" role="tablist">
+                <button class="save-select-tab" role="tab" data-ss-tab="new" onclick="switchSaveSelectTab('new')">새로 시작</button>
+                <button class="save-select-tab" role="tab" data-ss-tab="continue" onclick="switchSaveSelectTab('continue')">이어하기</button>
+                <button class="save-select-tab" role="tab" data-ss-tab="tutorial" onclick="switchSaveSelectTab('tutorial')">튜토리얼</button>
+            </div>
+            <div class="save-select-panel" data-ss-panel="new">
+                <div class="save-select-columns">
+                    <section class="save-select-col">
+                        <div class="save-select-col-title">프리셋</div>
+                        <div class="settings-label">고르면 복사본이 새 세이브로 만들어집니다</div>
+                        <div class="save-select-list" id="presetSelectList"></div>
+                    </section>
+                    <section class="save-select-col">
+                        <div class="save-select-col-title">빈 세이브</div>
+                        <div class="settings-label">아무것도 없는 나라에서 직접 만들어 갑니다</div>
+                        <div class="save-select-new-row">
+                            <input type="text" id="newSaveNameInput" placeholder="예: 2차 총선 직후" maxlength="40" onkeydown="if(event.key==='Enter'){event.preventDefault();startNewSave();}">
+                            <button class="menu-btn save-select-start-btn" onclick="startNewSave()">생성 후 시작</button>
+                        </div>
+                    </section>
+                </div>
+            </div>
+            <div class="save-select-panel" data-ss-panel="continue">
+                <div class="save-select-search save-select-panel-top">
+                    <input type="search" id="saveSearchInput" placeholder="세이브 검색" maxlength="40" oninput="renderSaveSelectList()">
+                </div>
+                <div class="save-select-columns">
+                    <section class="save-select-col">
+                        <div class="save-select-col-title">★ 즐겨찾기</div>
+                        <div class="save-select-list" id="saveFavList"></div>
+                    </section>
+                    <section class="save-select-col">
+                        <div class="save-select-col-title">일반 세이브</div>
+                        <div class="save-select-list" id="saveSelectList"></div>
+                    </section>
+                </div>
+                <div class="save-select-panel-foot">
                     <input type="file" id="saveFileInput" accept=".hemi,.json,application/json" style="position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;" onchange="importSaveFile(this)">
                     <button class="save-select-item save-select-import-btn" onclick="document.getElementById('saveFileInput').click()">
                         <span class="save-select-item-name">📁 저장 파일(.hemi) 불러오기</span>
                     </button>
                     <a class="save-select-convert-link" href="convert.html">🔄 .hemi ↔ .json 변환 (휴대폰에서 .hemi가 안 열릴 때)</a>
-                </section>
+                </div>
+            </div>
+            <div class="save-select-panel" data-ss-panel="tutorial">
+                <div class="save-select-columns">
+                    <section class="save-select-col">
+                        <div class="save-select-col-title">기본 과정</div>
+                        <div class="settings-label">처음이라면 #1부터 순서대로</div>
+                        <div class="save-select-list" id="tutBasicList"></div>
+                    </section>
+                    <section class="save-select-col">
+                        <div class="save-select-col-title">심화 과정</div>
+                        <div class="settings-label">필요한 기능만 골라서</div>
+                        <div class="save-select-list" id="tutDetailList"></div>
+                    </section>
+                </div>
             </div>
         </div>
     </div>
@@ -318,30 +352,22 @@
         }
 
         function renderSaveSelectList() {
+            const favBox = document.getElementById('saveFavList');
             const container = document.getElementById('saveSelectList');
             const all = loadSaveSlotsForMenu().concat(loadTeaserSlotsForMenu());
             const fav = loadFavorites();
             const query = (document.getElementById('saveSearchInput')?.value || '').trim().toLowerCase();
             const byTime = (a, b) => new Date(b.savedAt||0) - new Date(a.savedAt||0);
-            const named = all.slice().sort(byTime);
-            // 즐겨찾기한 세이브가 맨 위, 나머지는 최근 저장 순
-            const ordered = [...named.filter(n => fav.has(n.id)), ...named.filter(n => !fav.has(n.id))];
             const matches = s => !query || String(s.name || '').toLowerCase().includes(query);
-            const shown = ordered.filter(matches);
-            if(all.length === 0) {
-                container.innerHTML = '<div class="save-select-empty">저장된 세이브가 없습니다. 왼쪽에서 새로 시작하세요.</div>';
-                return;
-            }
-            if(shown.length === 0) {
-                container.innerHTML = '<div class="save-select-empty">검색 결과가 없습니다.</div>';
-                return;
-            }
-            // 카드 한 장 = 세이브 하나: 이름 · 게임 속 날짜 / 설명란에 마지막으로 저장한 실제 시각
-            container.innerHTML = shown.map(s => {
+            const named = all.slice().sort(byTime);
+            // 왼쪽 단: 즐겨찾기한 세이브, 오른쪽 단: 나머지 (둘 다 최근 저장 순)
+            const favs = named.filter(n => fav.has(n.id)), rest = named.filter(n => !fav.has(n.id));
+            const card = s => {
                 const isFav = fav.has(s.id);
                 const ingame = saveIngameDate(s.state);
                 const tz = s.teaserId ? `, '${s.teaserId}'` : '';
                 const where = s.teaserId ? ` · ${escapeSaveName((teaserOf(s.teaserId) || {}).title || 'Teaser')}` : '';
+                // 카드 한 장 = 세이브 하나: 이름 · 게임 속 날짜 / 설명란에 마지막으로 저장한 실제 시각
                 return `
                 <div class="save-select-row">
                     <button class="save-fav-btn${isFav ? ' on' : ''}" onclick="toggleFavorite('${s.id}')" title="${isFav ? '즐겨찾기 해제' : '즐겨찾기'}" aria-pressed="${isFav}">${isFav ? '★' : '☆'}</button>
@@ -356,7 +382,15 @@
                     </div>
                     <button class="save-del-btn" onclick="deleteSaveFromMenu(event, '${s.id}'${tz})" title="삭제 (Shift+클릭: 확인 없이 바로 삭제)" aria-label="삭제">${TRASH_ICON}</button>
                 </div>`;
-            }).join('');
+            };
+            const fill = (box, list, emptyAll, emptyQuery) => {
+                if(!box) return;
+                const shown = list.filter(matches);
+                box.innerHTML = shown.length ? shown.map(card).join('')
+                    : `<div class="save-select-empty">${list.length ? emptyQuery : emptyAll}</div>`;
+            };
+            fill(favBox, favs, '☆를 눌러 자주 여는 세이브를 여기에 모아 두세요.', '검색 결과가 없습니다.');
+            fill(container, rest, all.length ? (favs.length ? '나머지 세이브가 없습니다.' : '저장된 세이브가 없습니다.') : '저장된 세이브가 없습니다. "새로 시작"에서 시작하세요.', '검색 결과가 없습니다.');
         }
 
         // 세이브 안의 게임 속 날짜 (연호 · 연 · 월 · 일) — 날짜를 정하지 않은 세이브는 빈칸
@@ -432,10 +466,50 @@
                         ${p.source ? `<span class="preset-badge preset-badge-soon">${p.source === 'workshop' ? '창작마당' : '모드 폴더'}</span>` : ''}
                         ${p.date ? `<span class="preset-card-date">${escapeSaveName(p.date)}</span>` : ''}
                     </span>
-                    ${p.description ? `<span class="preset-card-desc">${escapeSaveName(p.description)}</span>` : ''}
+                    ${p.description ? `<span class="preset-card-desc">${presetDescHtml(p)}</span>` : ''}
                 </button>`).join('');
             container.dataset.count = String(list.length);
         }
+
+        // 함께 만든 프리셋(credits): 설명 속 제작자 이름에 밑줄을 긋고, 마우스를 올리면(또는 키보드 초점) 그 사람이 만든 부분을 띄움
+        function presetDescHtml(p) {
+            let html = escapeSaveName(p.description);
+            (Array.isArray(p.credits) ? p.credits : []).forEach((c, ci) => {
+                if(!c || !c.name) return;
+                const name = escapeSaveName(c.name);
+                const idx = html.indexOf(name);
+                if(idx < 0) return;
+                const tag = `<span class="preset-credit" tabindex="0" data-preset-credit="${ci}">${name}</span>`;
+                html = html.slice(0, idx) + tag + html.slice(idx + name.length);
+            });
+            return html;
+        }
+        (function setupPresetCreditTips() {
+            let tip = null;
+            const hide = () => { if(tip) { tip.remove(); tip = null; } };
+            const show = async el => {
+                hide();
+                const card = el.closest('.preset-card');
+                const list = window.DnoPresets ? await DnoPresets.list() : [];
+                const cards = [...document.querySelectorAll('#presetSelectList .preset-card')];
+                const p = list[cards.indexOf(card)];
+                const c = p && Array.isArray(p.credits) ? p.credits[+el.dataset.presetCredit] : null;
+                if(!c || !document.body.contains(el)) return;
+                tip = document.createElement('div');
+                tip.className = 'preset-credit-tip';
+                tip.innerHTML = `<div class="preset-credit-tip-name">${escapeSaveName(c.name)}</div><ul>${(c.work || []).map(w => `<li>${escapeSaveName(w)}</li>`).join('')}</ul>`;
+                document.body.appendChild(tip);
+                const r = el.getBoundingClientRect(), tr = tip.getBoundingClientRect();
+                const left = Math.max(8, Math.min(window.innerWidth - tr.width - 8, r.left + r.width / 2 - tr.width / 2));
+                const top = r.bottom + 6 + tr.height > window.innerHeight - 8 ? r.top - tr.height - 6 : r.bottom + 6;
+                tip.style.left = left + 'px'; tip.style.top = Math.max(8, top) + 'px';
+            };
+            document.addEventListener('mouseover', e => { const el = e.target.closest && e.target.closest('.preset-credit'); if(el) show(el); });
+            document.addEventListener('mouseout', e => { const el = e.target.closest && e.target.closest('.preset-credit'); if(el && !el.contains(e.relatedTarget)) hide(); });
+            document.addEventListener('focusin', e => { if(e.target.classList && e.target.classList.contains('preset-credit')) show(e.target); });
+            document.addEventListener('focusout', e => { if(e.target.classList && e.target.classList.contains('preset-credit')) hide(); });
+            document.addEventListener('scroll', hide, true);
+        })();
 
         function escapeSaveName(name) {
             const div = document.createElement('div');
@@ -443,12 +517,64 @@
             return div.innerHTML;
         }
 
-        function openSaveSelectModal() {
+        function openSaveSelectModal(tab) {
             document.getElementById('newSaveNameInput').value = '';
             document.getElementById('saveSearchInput').value = '';
             renderSaveSelectList();
             renderPresetSelectList();
+            renderTutorialSelectList();
+            // 처음 열 때: 세이브가 있으면 이어하기, 없으면 새로 시작 (지난번에 고른 탭이 있으면 그 탭)
+            let last = null;
+            try { last = localStorage.getItem('dnoSaveSelectTab'); } catch(e) {}
+            const hasSaves = loadSaveSlotsForMenu().concat(loadTeaserSlotsForMenu()).length > 0;
+            switchSaveSelectTab(tab || (last === 'continue' && !hasSaves ? 'new' : last) || (hasSaves ? 'continue' : 'new'), true);
             document.getElementById('saveSelectOverlay').style.display = 'flex';
+        }
+
+        function switchSaveSelectTab(tab, silent) {
+            if(!['new', 'continue', 'tutorial'].includes(tab)) tab = 'new';
+            document.querySelectorAll('#saveSelectOverlay [data-ss-tab]').forEach(b => {
+                const on = b.dataset.ssTab === tab;
+                b.classList.toggle('active', on);
+                b.setAttribute('aria-selected', String(on));
+            });
+            document.querySelectorAll('#saveSelectOverlay [data-ss-panel]').forEach(p => { p.style.display = p.dataset.ssPanel === tab ? '' : 'none'; });
+            if(!silent) { try { localStorage.setItem('dnoSaveSelectTab', tab); } catch(e) {} }
+        }
+
+        // 튜토리얼 탭 — 서독 튜토리얼 프리셋으로 새 세이브를 만들고 고른 과정을 바로 연다 (과정 목록은 js/tutorial.js)
+        function renderTutorialSelectList() {
+            const lessons = window.DnoTutorial && DnoTutorial.catalog ? DnoTutorial.catalog() : [];
+            const item = l => `
+                <button class="save-select-item preset-card tut-card${l.done ? ' tut-card-done' : ''}" ${l.avail ? `onclick="startTutorialLesson('${l.id}')"` : 'disabled'}>
+                    <span class="preset-card-top">
+                        <span class="tut-card-no">${l.avail ? '#' + l.no : '🔒'}</span>
+                        <span class="save-select-item-name">${escapeSaveName(l.title)}</span>
+                        ${l.done ? '<span class="tut-card-check" title="마친 과정">✓</span>' : ''}
+                    </span>
+                    ${l.summary ? `<span class="preset-card-desc">${escapeSaveName(l.summary)}</span>` : ''}
+                </button>`;
+            const fill = (id, group) => {
+                const box = document.getElementById(id);
+                if(!box) return;
+                const list = lessons.filter(l => l.group === group);
+                box.innerHTML = list.length ? list.map(item).join('') : '<div class="save-select-empty">튜토리얼을 불러오지 못했습니다.</div>';
+            };
+            fill('tutBasicList', 'basic');
+            fill('tutDetailList', 'detail');
+        }
+
+        async function startTutorialLesson(lessonId) {
+            const list = window.DnoPresets ? await DnoPresets.list() : [];
+            const preset = list.find(p => p.tutorial && !p.comingSoon);
+            if(!preset) return;
+            if(namedSlotCount() >= MAX_SAVE_SLOTS) { alert(`저장 슬롯은 최대 ${MAX_SAVE_SLOTS}개까지 만들 수 있습니다. 기존 세이브를 삭제한 뒤 다시 시도하세요.`); return; }
+            try {
+                sessionStorage.setItem('dnoBootPresetId', preset.id);
+                sessionStorage.setItem('dnoBootNewSaveName', window.DnoLang ? DnoLang.t(preset.title) : preset.title);
+                sessionStorage.setItem('dnoTutorialStartLesson', lessonId); // main.html의 튜토리얼이 이 과정부터 연다
+            } catch(e) {}
+            location.href = 'main.html';
         }
 
         function closeSaveSelectModal() {

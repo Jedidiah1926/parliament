@@ -19,11 +19,11 @@
         {
             id: 'builtin:tutorial',
             title: '서독',
-            description: '처음이라면 여기서 시작하세요. 1983년 서독(독일연방공화국)에서 기본 튜토리얼 6개로 화면과 조작을 직접 해보며 익히고, 선거 · 지도 · 단일화 · 부정선거 같은 기능은 세부 튜토리얼에서 골라 배울 수 있어요.',
+            description: '처음이라면 여기서 시작하세요.',
             date: '1983년 3월 29일',
             tutorial: true,
             script: 'presets/tutorial.js',
-            langs: { en: { script: 'presets/tutorial.en.js', title: 'West Germany', description: "Start here if you're new. In West Germany (the Federal Republic of Germany) in 1983, six basic lessons walk you through the screens and controls hands-on, and detailed lessons cover features like elections, maps, candidate unification and election fraud whenever you need them." } },
+            langs: { en: { script: 'presets/tutorial.en.js', title: 'West Germany', description: "Start here if you're new." } },
         },
         {
             id: 'builtin:japan',
@@ -55,11 +55,29 @@
         {
             id: 'builtin:korea',
             title: '대한민국',
-            description: '제작자: 왕조명',
+            description: '제작자: 왕조명 & ttorri',
             date: '2026년 10월 31일',
-            author: '왕조명',
+            author: '왕조명 & ttorri',
+            // 함께 만든 프리셋 — 목록에서 이름에 밑줄, 마우스를 올리면 그 사람이 만든 부분
+            credits: [
+                { name: '왕조명', work: ['국가 · 정당 설정', '지역구 지도와 원별 의석 배치', '대통령 · 국무총리 · 내각 · 의장단', '지방자치단체장', '경제 · 국기 · 의회 로고'] },
+                { name: 'ttorri', work: ['이념 체계 (하위 이념 포함)', '원외정당 (노동당 · 정의당 · 자유와혁신)', '지역구 · 비례 · 무소속 의원 이름', '정치인 명단 (인물 탭)과 지역구 후보', '군부 지휘부', '지역구별 정당 지지율 · 무당층'] },
+            ],
             script: 'presets/korea.js',
-            langs: { en: { title: 'Republic of Korea', description: 'By 왕조명' } }, // 영어 데이터 파일은 아직 없음 — 한국어 데이터로 열림
+            langs: { en: { title: 'Republic of Korea', description: 'By 왕조명 & ttorri',
+                credits: [
+                    { name: '왕조명', work: ['Country and party setup', 'District map and seat layout', 'President, prime minister, cabinet and speakers', 'Local government heads', 'Economy, flag and parliament logos'] },
+                    { name: 'ttorri', work: ['Ideology system (with sub-ideologies)', 'Extra-parliamentary parties (Labor Party, Justice Party, Freedom and Innovation)', 'Names of district, list and independent members', 'Politician roster (People tab) and district candidates', 'Military leadership', 'Party support and undecided voters by district'] },
+                ] } }, // 영어 데이터 파일은 아직 없음 — 한국어 데이터로 열림
+        },
+        {
+            id: 'builtin:uk',
+            title: '그레이트브리튼 북아일랜드 연합왕국',
+            description: '제작자: ttorri',
+            date: '2026년 10월 26일',
+            author: 'ttorri',
+            script: 'presets/uk.js',
+            langs: { en: { title: 'United Kingdom of Great Britain and Northern Ireland', description: 'By ttorri' } }, // 영어 데이터 파일은 아직 없음 — 한국어 데이터로 열림
         },
     ];
     const INDEX_URL = 'presets/index.json';
@@ -120,6 +138,7 @@
                 const v = p.langs && p.langs[lang];
                 if (v && v.title) p.title = String(v.title);
                 if (v && v.description) p.description = String(v.description);
+                if (v && Array.isArray(v.credits)) p.credits = v.credits;
             });
             // Steam 데모: 튜토리얼 프리셋만 고를 수 있고 나머지(일본국 · 미합중국 · 모드 프리셋)는 "정식판"으로 잠김
             if (window.HEMI_BUILD && window.HEMI_BUILD.demo) all.forEach(p => { if (!p.tutorial) { p.comingSoon = true; p.demoLocked = true; } });

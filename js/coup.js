@@ -17,7 +17,7 @@
 (function () {
     'use strict';
     const root = document.documentElement;
-    // 1.6.3 혁명(js/revolution.js)은 아래 window.T62로 군정 등을 다룬다
+    // 1.6.3 혁명(js/revolution.js)은 아래 window.HemiCoup로 군정 등을 다룬다
     if (root.getAttribute('data-app-mode') === 'logo') return;
 
     const esc = s => (typeof escapeHtmlText === 'function' ? escapeHtmlText(String(s ?? '')) : String(s ?? ''));
@@ -382,9 +382,9 @@
         const r = origCab.apply(this, arguments);
         const grid = document.getElementById('cabinetDisplayGrid');
         if (grid) {
-            let b = document.getElementById('t62JuntaBanner');
+            let b = document.getElementById('coupJuntaBanner');
             if (T.junta) {
-                if (!b) { b = el('<div id="t62JuntaBanner" class="t62-banner"></div>'); grid.parentElement.insertBefore(b, grid); }
+                if (!b) { b = el('<div id="coupJuntaBanner" class="coup-banner"></div>'); grid.parentElement.insertBefore(b, grid); }
                 b.innerHTML = `⚔ 군정 — 군사평의회 집권 중 · 의장 <b>${esc(T.junta.chairRole || '')} ${esc(T.junta.chairName)}</b>${T.junta.since ? ` · ${esc(T.junta.since)}부터` : ''}`;
             } else if (b) b.remove();
         }
@@ -404,54 +404,54 @@
         const branchOpts = sel => `<option value="">— 소속 없음 —</option>` + T.branches
             .map(b => `<option value="${esc(b.id)}" ${b.id === sel ? 'selected' : ''}>${esc(b.name || '(이름 없음)')}</option>`).join('');
         box.innerHTML = `
-            <div class="t62-intro">군 지휘부를 정해 둡니다. 충성도는 지금 정부에 대한 충성(0~100)으로, 낮을수록 군부 쿠데타가 잘 되고 높을수록 친위 쿠데타를 돕습니다. 가까운 정당은 그 정당이 쿠데타를 일으킬 때 힘을 보탭니다.</div>
-            <div class="t62-row t62-summary"><span>군 지휘부 ${T.military.length}명${avg != null ? ` · 평균 충성도 <b>${avg}</b>` : ''}</span>
-                ${T.junta ? `<span class="t62-tag">군정 — 의장 ${esc(T.junta.chairName)}</span>` : ''}</div>
-            <details class="t62-branches" ${ui.branchesOpen ? 'open' : ''}>
+            <div class="coup-intro">군 지휘부를 정해 둡니다. 충성도는 지금 정부에 대한 충성(0~100)으로, 낮을수록 군부 쿠데타가 잘 되고 높을수록 친위 쿠데타를 돕습니다. 가까운 정당은 그 정당이 쿠데타를 일으킬 때 힘을 보탭니다.</div>
+            <div class="coup-row coup-summary"><span>군 지휘부 ${T.military.length}명${avg != null ? ` · 평균 충성도 <b>${avg}</b>` : ''}</span>
+                ${T.junta ? `<span class="coup-tag">군정 — 의장 ${esc(T.junta.chairName)}</span>` : ''}</div>
+            <details class="coup-branches" ${ui.branchesOpen ? 'open' : ''}>
                 <summary>군 소속 · 색 (${T.branches.length})</summary>
-                <div class="t62-dim t62-small">지휘관마다 소속을 고르면 카드가 그 색으로 표시됩니다. 이름 · 색을 바꾸거나 소속을 더할 수 있어요.</div>
+                <div class="coup-dim coup-small">지휘관마다 소속을 고르면 카드가 그 색으로 표시됩니다. 이름 · 색을 바꾸거나 소속을 더할 수 있어요.</div>
                 ${T.branches.map(b => `
-                    <div class="t62-row t62-branch-row" data-bid="${esc(b.id)}">
+                    <div class="coup-row coup-branch-row" data-bid="${esc(b.id)}">
                         <input type="color" data-bf="color" value="${esc(b.color || OFFICER_COLOR)}" title="색">
                         <input type="text" data-bf="name" value="${esc(b.name)}" placeholder="소속 이름 (예: 해병대)">
-                        <span class="t62-dim t62-small">${T.military.filter(m => m.branchId === b.id).length}명</span>
-                        <button type="button" class="t62-x" data-bact="del" title="빼기">✕</button>
+                        <span class="coup-dim coup-small">${T.military.filter(m => m.branchId === b.id).length}명</span>
+                        <button type="button" class="coup-x" data-bact="del" title="빼기">✕</button>
                     </div>`).join('')}
-                <div class="t62-row">
+                <div class="coup-row">
                     <button class="add-btn" data-bact="add" style="flex:1;">[+] 소속 추가</button>
                     <button class="add-btn" data-bact="reset" style="flex:1;">기본 소속으로</button>
                 </div>
             </details>
             ${T.military.map(m => `
-                <div class="card-item t62-officer ${T.junta && T.junta.chairId === m.id ? 't62-chair' : ''}" data-id="${esc(m.id)}" style="--t62-branch:${esc(officerColor(m))}">
-                    <div class="t62-photo-col">
-                        <label class="leader-photo-box t62-photo" title="사진">${m.photo ? `<img src="${m.photo}" alt="">` : '<div class="photo-ph">🎖</div>'}<input type="file" accept="image/*" data-f="photo" ${m.cabinetId ? 'disabled' : ''}></label>
-                        ${branchById(m.branchId) ? `<span class="t62-branch-tag">${esc(branchById(m.branchId).name)}</span>` : ''}
+                <div class="card-item coup-officer ${T.junta && T.junta.chairId === m.id ? 'coup-chair' : ''}" data-id="${esc(m.id)}" style="--coup-branch:${esc(officerColor(m))}">
+                    <div class="coup-photo-col">
+                        <label class="leader-photo-box coup-photo" title="사진">${m.photo ? `<img src="${m.photo}" alt="">` : '<div class="photo-ph">🎖</div>'}<input type="file" accept="image/*" data-f="photo" ${m.cabinetId ? 'disabled' : ''}></label>
+                        ${branchById(m.branchId) ? `<span class="coup-branch-tag">${esc(branchById(m.branchId).name)}</span>` : ''}
                     </div>
-                    <div class="t62-officer-main">
-                        <div class="t62-row">
-                            <input type="text" data-f="role" value="${esc(m.role)}" placeholder="직책 (예: 육군참모총장)" class="t62-role" ${m.cabinetId ? 'disabled' : ''}>
-                            <button type="button" class="t62-x" data-act="del" title="빼기">✕</button>
+                    <div class="coup-officer-main">
+                        <div class="coup-row">
+                            <input type="text" data-f="role" value="${esc(m.role)}" placeholder="직책 (예: 육군참모총장)" class="coup-role" ${m.cabinetId ? 'disabled' : ''}>
+                            <button type="button" class="coup-x" data-act="del" title="빼기">✕</button>
                         </div>
                         <input type="text" data-f="name" value="${esc(m.name)}" placeholder="이름" ${m.cabinetId ? 'disabled' : ''}>
-                        <div class="t62-row t62-field"><span>소속</span><select data-f="branchId">${branchOpts(m.branchId)}</select></div>
-                        <div class="t62-row t62-field"><span>정당</span><select data-f="partyId" ${m.cabinetId ? 'disabled' : ''}>${partyOpts(m.partyId)}</select></div>
+                        <div class="coup-row coup-field"><span>소속</span><select data-f="branchId">${branchOpts(m.branchId)}</select></div>
+                        <div class="coup-row coup-field"><span>정당</span><select data-f="partyId" ${m.cabinetId ? 'disabled' : ''}>${partyOpts(m.partyId)}</select></div>
                         ${m.cabinetId && cabinetById(m.cabinetId) ? `
-                        <div class="t62-row t62-linked">🔗 내각(${esc(cabinetById(m.cabinetId).position || '직책 없음')})과 연결됨 — 직책 · 이름 · 사진 · 당적 자동 반영
-                            <button type="button" class="t62-x" data-act="unlinkCab">연결 해제</button></div>`
-                        : `<div class="t62-row t62-field"><span>내각</span><select data-f="cabinetId">${cabinetOpts()}</select></div>`}
-                        <div class="t62-row t62-loyal"><span>충성도</span><input type="range" min="0" max="100" step="5" data-f="loyalty" value="${Number(m.loyalty) || 0}"><b>${Number(m.loyalty) || 0}</b></div>
+                        <div class="coup-row coup-linked">🔗 내각(${esc(cabinetById(m.cabinetId).position || '직책 없음')})과 연결됨 — 직책 · 이름 · 사진 · 당적 자동 반영
+                            <button type="button" class="coup-x" data-act="unlinkCab">연결 해제</button></div>`
+                        : `<div class="coup-row coup-field"><span>내각</span><select data-f="cabinetId">${cabinetOpts()}</select></div>`}
+                        <div class="coup-row coup-loyal"><span>충성도</span><input type="range" min="0" max="100" step="5" data-f="loyalty" value="${Number(m.loyalty) || 0}"><b>${Number(m.loyalty) || 0}</b></div>
                     </div>
                 </div>`).join('')}
             <button class="add-btn" data-act="add">[+] 군 지휘관 추가</button>
             ${T.military.length ? '' : '<button class="add-btn" data-act="seed">[+] 기본 군 지휘부 만들기 (국방부 장관 · 합참의장 · 육해공군 참모총장)</button>'}`;
         box.querySelector('[data-act="add"]').onclick = () => { T.military.push({ id: uid(), role: '장성', name: '', photo: '', partyId: '', loyalty: 60, branchId: '' }); renderMilitary(); };
         // 군 소속 · 색
-        const det = box.querySelector('.t62-branches');
+        const det = box.querySelector('.coup-branches');
         det.ontoggle = () => { ui.branchesOpen = det.open; };
-        det.querySelectorAll('.t62-branch-row').forEach(row => {
+        det.querySelectorAll('.coup-branch-row').forEach(row => {
             const b = branchById(row.dataset.bid);
-            row.querySelector('[data-bf="color"]').oninput = e => { b.color = e.target.value; box.querySelectorAll('.t62-officer').forEach(c => { const m = T.military.find(x => x.id === c.dataset.id); if (m) c.style.setProperty('--t62-branch', officerColor(m)); }); };
+            row.querySelector('[data-bf="color"]').oninput = e => { b.color = e.target.value; box.querySelectorAll('.coup-officer').forEach(c => { const m = T.military.find(x => x.id === c.dataset.id); if (m) c.style.setProperty('--coup-branch', officerColor(m)); }); };
             row.querySelector('[data-bf="name"]').onchange = e => { b.name = e.target.value.trim(); renderMilitary(); };
             row.querySelector('[data-bact="del"]').onclick = () => {
                 T.branches = T.branches.filter(x => x !== b);
@@ -475,7 +475,7 @@
                 cabinetId: branchId === 'mnd' && defense ? defense.id : '' }));
             renderMilitary();
         };
-        box.querySelectorAll('.t62-officer').forEach(card => {
+        box.querySelectorAll('.coup-officer').forEach(card => {
             const m = T.military.find(x => x.id === card.dataset.id);
             card.querySelector('[data-act="del"]').onclick = () => { T.military = T.military.filter(x => x !== m); renderMilitary(); };
             const unlink = card.querySelector('[data-act="unlinkCab"]');
@@ -499,14 +499,14 @@
         const box = document.getElementById('contentCoup');
         if (!box) return;
         const juntaHtml = T.junta ? `
-            <div class="t62-junta">
-                <div class="t62-junta-title">⚔ 군정 — 군사평의회 집권 중</div>
-                <div class="t62-dim">의장 ${esc(T.junta.chairRole || '')} <b>${esc(T.junta.chairName)}</b>${T.junta.since ? ` · ${esc(T.junta.since)}부터` : ''} · 대통령 · 총리 겸임, 비상 권한 독점, 의회 정지 · 선거 중단</div>
-                <div class="t62-sub">군정에서 벗어나기</div>
-                <div class="t62-row t62-wrap">
-                    <button type="button" class="t62-btn" data-act="transfer">민정 이양</button>
-                    <button type="button" class="t62-btn" data-act="counter">역쿠데타 준비</button>
-                    <button type="button" class="t62-btn" onclick="switchSubTab('cabinet','revolution')">혁명 →</button>
+            <div class="coup-junta">
+                <div class="coup-junta-title">⚔ 군정 — 군사평의회 집권 중</div>
+                <div class="coup-dim">의장 ${esc(T.junta.chairRole || '')} <b>${esc(T.junta.chairName)}</b>${T.junta.since ? ` · ${esc(T.junta.since)}부터` : ''} · 대통령 · 총리 겸임, 비상 권한 독점, 의회 정지 · 선거 중단</div>
+                <div class="coup-sub">군정에서 벗어나기</div>
+                <div class="coup-row coup-wrap">
+                    <button type="button" class="coup-btn" data-act="transfer">민정 이양</button>
+                    <button type="button" class="coup-btn" data-act="counter">역쿠데타 준비</button>
+                    <button type="button" class="coup-btn" onclick="switchSubTab('cabinet','revolution')">혁명 →</button>
                 </div>
             </div>` : '';
         if (T.junta && ui.type !== 'counter') ui.type = 'counter';
@@ -527,28 +527,28 @@
         const typeBtn = (k, t) => `<button type="button" class="system-radio-btn ${type === k ? 'active' : ''}" data-type="${k}">${t}</button>`;
         box.innerHTML = `
             ${juntaHtml}
-            ${T.junta ? '<div class="t62-sub">역쿠데타</div>' : `
-            <div class="t62-intro">주도 세력을 고르면 성공 확률을 요인별로 보여 줍니다. 성공하면 계엄령이 선포되고 의회가 멈추며, 실패하면 주도 세력이 처벌받습니다.</div>
+            ${T.junta ? '<div class="coup-sub">역쿠데타</div>' : `
+            <div class="coup-intro">주도 세력을 고르면 성공 확률을 요인별로 보여 줍니다. 성공하면 계엄령이 선포되고 의회가 멈추며, 실패하면 주도 세력이 처벌받습니다.</div>
             <div class="system-radio-group">${typeBtn('military', '군부')}${typeBtn('party', '정당')}${typeBtn('self', `${effRoleLabel('president')} (친위)`)}</div>`}
-            <div class="t62-pick">
+            <div class="coup-pick">
                 ${type === 'military' || type === 'counter' ? (officers.length ? `
-                    <label class="t62-dim">주도할 군 지휘관</label>
+                    <label class="coup-dim">주도할 군 지휘관</label>
                     <select data-pick="leader">${officers.map(m => `<option value="${esc(m.id)}" ${m.id === ui.leaderId ? 'selected' : ''}>${branchById(m.branchId) ? `[${esc(branchById(m.branchId).name)}] ` : ''}${esc(m.role)} ${esc(m.name || '(이름 없음)')} · 충성도 ${m.loyalty}</option>`).join('')}</select>`
-                    : '<div class="t62-dim">군 지휘부가 없습니다 — 내각 › 군부에서 먼저 정하세요.</div>') : ''}
+                    : '<div class="coup-dim">군 지휘부가 없습니다 — 내각 › 군부에서 먼저 정하세요.</div>') : ''}
                 ${type === 'party' ? `
-                    <label class="t62-dim">주도할 정당</label>
+                    <label class="coup-dim">주도할 정당</label>
                     <select data-pick="party">${activeParties.map(p => `<option value="${esc(p.id)}" ${String(p.id) === String(ui.partyId) ? 'selected' : ''}>${esc(p.name)} · 지지율 ${support(p.id)}%${isGovParty(p) ? ' · 여당' : ''}</option>`).join('')}</select>` : ''}
-                ${type === 'self' ? `<div class="t62-dim">주도: ${esc(effRoleLabel('president'))} ${esc(president.name || '(공석)')}${partyById(president.partyId) ? ` · ${esc(partyById(president.partyId).name)}` : ''} — 의회를 멈추고 반대 정당을 막습니다</div>` : ''}
+                ${type === 'self' ? `<div class="coup-dim">주도: ${esc(effRoleLabel('president'))} ${esc(president.name || '(공석)')}${partyById(president.partyId) ? ` · ${esc(partyById(president.partyId).name)}` : ''} — 의회를 멈추고 반대 정당을 막습니다</div>` : ''}
             </div>
-            <div class="t62-chance">
-                <div class="t62-chance-head"><span>성공 확률</span><b>${chance}%</b></div>
-                <div class="t62-bar"><span style="width:${chance}%"></span></div>
-                ${factors.map(x => `<div class="t62-factor"><span>${esc(x.label)}</span><span class="${x.v >= 0 ? 't62-plus' : 't62-minus'}">${x.v >= 0 ? '+' : ''}${x.v}%p</span></div>`).join('')}
-                <div class="t62-dim t62-small">합계는 5~95% 사이로 맞춥니다.</div>
+            <div class="coup-chance">
+                <div class="coup-chance-head"><span>성공 확률</span><b>${chance}%</b></div>
+                <div class="coup-bar"><span style="width:${chance}%"></span></div>
+                ${factors.map(x => `<div class="coup-factor"><span>${esc(x.label)}</span><span class="${x.v >= 0 ? 'coup-plus' : 'coup-minus'}">${x.v >= 0 ? '+' : ''}${x.v}%p</span></div>`).join('')}
+                <div class="coup-dim coup-small">합계는 5~95% 사이로 맞춥니다.</div>
             </div>
-            <button type="button" class="t62-go" data-act="go">⚔ ${T.junta ? '역쿠데타' : TYPE_LABEL[type]} 일으키기</button>
+            <button type="button" class="coup-go" data-act="go">⚔ ${T.junta ? '역쿠데타' : TYPE_LABEL[type]} 일으키기</button>
             ${last ? resultCard(last) : ''}
-            ${T.log.length ? `<details class="t62-log"><summary>쿠데타 기록 (${T.log.length})</summary>${T.log.map(logRow).join('')}</details>` : ''}`;
+            ${T.log.length ? `<details class="coup-log"><summary>쿠데타 기록 (${T.log.length})</summary>${T.log.map(logRow).join('')}</details>` : ''}`;
         box.querySelectorAll('[data-type]').forEach(b => { b.onclick = () => { ui.type = b.dataset.type; ui.lastId = null; renderCoup(); }; });
         const ls = box.querySelector('[data-pick="leader"]'); if (ls) ls.onchange = () => { ui.leaderId = ls.value; renderCoup(); };
         const ps = box.querySelector('[data-pick="party"]'); if (ps) ps.onchange = () => { ui.partyId = ps.value; renderCoup(); };
@@ -558,19 +558,19 @@
     }
     const typeName = t => ({ military: '군부 쿠데타', party: '정당 쿠데타', self: '친위 쿠데타', counter: '역쿠데타', transfer: '민정 이양' }[t] || t);
     function resultCard(x) {
-        return `<div class="t62-result ${x.success ? 'ok' : 'fail'}">
-            <div class="t62-result-head">${x.type === 'transfer' ? '🕊 민정 이양' : x.success ? '✔ 성공' : '✘ 실패'} — ${esc(typeName(x.type))}${x.chance != null ? ` <span class="t62-dim">(확률 ${x.chance}%)</span>` : ''}</div>
-            <div class="t62-dim">주도: ${esc(x.leader)}${x.date ? ` · ${esc(x.date)}` : ''}</div>
+        return `<div class="coup-result ${x.success ? 'ok' : 'fail'}">
+            <div class="coup-result-head">${x.type === 'transfer' ? '🕊 민정 이양' : x.success ? '✔ 성공' : '✘ 실패'} — ${esc(typeName(x.type))}${x.chance != null ? ` <span class="coup-dim">(확률 ${x.chance}%)</span>` : ''}</div>
+            <div class="coup-dim">주도: ${esc(x.leader)}${x.date ? ` · ${esc(x.date)}` : ''}</div>
             <ul>${(x.effects || []).map(e => `<li>${esc(e)}</li>`).join('')}</ul>
         </div>`;
     }
     function logRow(x) {
-        return `<div class="t62-log-row"><span class="${x.type === 'transfer' ? '' : x.success ? 't62-plus' : 't62-minus'}">${x.type === 'transfer' ? '🕊' : x.success ? '✔' : '✘'}</span>
+        return `<div class="coup-log-row"><span class="${x.type === 'transfer' ? '' : x.success ? 'coup-plus' : 'coup-minus'}">${x.type === 'transfer' ? '🕊' : x.success ? '✔' : '✘'}</span>
             <span>${esc(typeName(x.type))} · ${esc(x.leader)}${x.date ? ` · ${esc(x.date)}` : ''}${x.chance != null ? ` · ${x.chance}%` : ''}</span></div>`;
     }
 
     // 1.6.3 티저가 쓰는 창구
-    window.T62 = {
+    window.HemiCoup = {
         get junta() { return T.junta; },
         get military() { return T.military; },
         get log() { return T.log; },
@@ -587,74 +587,74 @@
 
     const style = document.createElement('style');
     style.textContent = `
-        .t62-intro { color: #777; font-size: .78rem; line-height: 1.6; margin: 8px 0 10px; }
-        .t62-row { display: flex; align-items: center; gap: 6px; }
-        .t62-wrap { flex-wrap: wrap; }
-        .t62-summary { justify-content: space-between; color: #aaa; font-size: .85rem; margin-bottom: 8px; }
-        .t62-tag { font-size: .72rem; color: var(--tno-alert); border: 1px solid var(--tno-alert); padding: 1px 6px; }
-        .t62-officer { display: flex; gap: 10px; align-items: flex-start; border-left-color: var(--t62-branch, #6b7d4a) !important; }
-        .t62-officer .photo-ph { color: var(--t62-branch, #6b7d4a); }
-        .t62-photo-col { display: flex; flex-direction: column; align-items: stretch; gap: 4px; flex-shrink: 0; width: 52px; }
-        .t62-branch-tag { font-size: .68rem; text-align: center; padding: 1px 2px; color: #fff; background: var(--t62-branch, #6b7d4a); word-break: keep-all; overflow-wrap: anywhere; line-height: 1.3; }
-        .t62-field span { color: #777; font-size: .78rem; flex-shrink: 0; width: 2.6em; }
-        .t62-field select { flex: 1; min-width: 0; }
-        .t62-linked { color: #6cf; font-size: .72rem; flex-wrap: wrap; }
-        .t62-linked .t62-x { font-size: .7rem; padding: 1px 6px; }
-        .t62-branches { border: 1px solid #2a2a2a; padding: 6px 10px; margin: 0 0 10px; }
-        .t62-branches summary { cursor: pointer; color: #aaa; font-size: .85rem; }
-        .t62-branches .add-btn { margin-top: 6px; }
-        .t62-branch-row { margin: 5px 0; }
-        .t62-branch-row input[type=color] { width: 34px; height: 28px; padding: 0; border: 1px solid #333; background: transparent; flex-shrink: 0; cursor: pointer; }
-        .t62-branch-row input[type=text] { flex: 1; min-width: 0; }
-        .t62-officer.t62-chair { border-left-color: var(--tno-alert) !important; box-shadow: 0 0 8px color-mix(in srgb, var(--tno-alert) 35%, transparent); }
-        .t62-photo { width: 52px; height: 64px; flex-shrink: 0; }
-        .t62-photo img { width: 100%; height: 100%; object-fit: cover; }
-        .t62-officer-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 5px; }
-        .t62-officer-main input[type=text], .t62-officer-main select { width: 100%; box-sizing: border-box; }
-        .t62-role { flex: 1; min-width: 0; font-weight: bold; }
-        .t62-x { cursor: pointer; background: transparent; border: 1px solid #333; color: #777; font-family: inherit; padding: 2px 8px; }
-        .t62-loyal span { color: #777; font-size: .78rem; flex-shrink: 0; }
-        .t62-loyal input { flex: 1; }
-        .t62-loyal b { width: 2.2em; text-align: right; font-size: .85rem; }
-        .t62-pick { margin: 10px 0; display: flex; flex-direction: column; gap: 5px; }
-        .t62-pick select { width: 100%; box-sizing: border-box; }
-        .t62-dim { color: #777; font-size: .8rem; }
-        .t62-small { font-size: .72rem; margin-top: 4px; }
-        .t62-chance { border: 1px solid #333; padding: 10px; margin: 10px 0; background: rgba(255,255,255,.02); }
-        .t62-chance-head { display: flex; justify-content: space-between; align-items: baseline; color: #aaa; }
-        .t62-chance-head b { font-size: 1.6rem; color: var(--tno-alert); }
-        .t62-bar { height: 8px; background: #222; margin: 6px 0 8px; }
-        .t62-bar span { display: block; height: 100%; background: var(--tno-alert); }
-        .t62-factor { display: flex; justify-content: space-between; gap: 8px; font-size: .78rem; color: #999; padding: 2px 0; }
-        .t62-plus { color: #5fbf7f; } .t62-minus { color: #e06060; }
-        .t62-go { width: 100%; cursor: pointer; font-family: inherit; font-size: 1rem; padding: 10px; background: transparent; border: 2px solid var(--tno-alert); color: var(--tno-alert); letter-spacing: 1px; }
-        .t62-go:hover { background: color-mix(in srgb, var(--tno-alert) 15%, transparent); }
-        .t62-result { margin-top: 12px; padding: 10px; border: 1px solid #333; border-left: 4px solid #888; }
-        .t62-result.ok { border-left-color: #5fbf7f; } .t62-result.fail { border-left-color: #e06060; }
-        .t62-result-head { font-size: 1rem; margin-bottom: 4px; }
-        .t62-result ul { margin: 6px 0 0 18px; padding: 0; font-size: .82rem; color: #bbb; }
-        .t62-log { margin-top: 12px; font-size: .82rem; } .t62-log summary { cursor: pointer; color: #999; }
-        .t62-log-row { display: flex; gap: 6px; padding: 3px 0; color: #aaa; border-bottom: 1px solid #1c1c1c; }
-        .t62-junta { border: 1px solid var(--tno-alert); padding: 10px; margin: 8px 0 12px; background: rgba(60,0,0,.25); }
-        .t62-junta-title { color: var(--tno-alert); font-size: 1rem; margin-bottom: 4px; letter-spacing: 1px; }
-        .t62-sub { color: #888; font-size: .78rem; margin: 10px 0 6px; letter-spacing: 1px; }
-        .t62-btn { cursor: pointer; font-family: inherit; font-size: .85rem; padding: 6px 12px; background: transparent; border: 1px solid #555; color: #ccc; }
-        .t62-btn:disabled { opacity: .4; cursor: default; }
-        .t62-banner { margin: 0 0 10px; padding: 8px 12px; border: 1px solid var(--tno-alert); color: var(--tno-alert); font-size: .9rem; background: rgba(60,0,0,.3); letter-spacing: 1px; }
-        html[data-theme-family="modern"] .t62-branches { border-color: var(--m-border); border-radius: 10px; }
-        html[data-theme-family="modern"] .t62-branch-tag { border-radius: 4px; }
-        html[data-theme-family="modern"] .t62-intro, html[data-theme-family="modern"] .t62-dim { color: var(--m-text-3); }
-        html[data-theme-family="modern"] .t62-summary { color: var(--m-text-2); }
-        html[data-theme-family="modern"] .t62-chance { border: 1px solid var(--m-border); border-radius: 12px; background: var(--m-surface-2); }
-        html[data-theme-family="modern"] .t62-chance-head { color: var(--m-text-2); }
-        html[data-theme-family="modern"] .t62-bar { background: var(--m-border); border-radius: 4px; overflow: hidden; }
-        html[data-theme-family="modern"] .t62-factor { color: var(--m-text-2); }
-        html[data-theme-family="modern"] .t62-go { border-radius: 12px; font-weight: 600; letter-spacing: 0; }
-        html[data-theme-family="modern"] .t62-result { border: 1px solid var(--m-border); border-left-width: 4px; border-radius: 10px; background: var(--m-surface); }
-        html[data-theme-family="modern"] .t62-result ul { color: var(--m-text-2); }
-        html[data-theme-family="modern"] .t62-junta, html[data-theme-family="modern"] .t62-banner { border-radius: 12px; background: color-mix(in srgb, var(--tno-alert) 8%, var(--m-surface)); }
-        html[data-theme-family="modern"] .t62-btn, html[data-theme-family="modern"] .t62-x { border: 1px solid var(--m-border-strong); border-radius: 8px; color: var(--m-text); }
-        html[data-theme-family="modern"] .t62-log-row { color: var(--m-text-2); border-bottom-color: var(--m-border); }
+        .coup-intro { color: #777; font-size: .78rem; line-height: 1.6; margin: 8px 0 10px; }
+        .coup-row { display: flex; align-items: center; gap: 6px; }
+        .coup-wrap { flex-wrap: wrap; }
+        .coup-summary { justify-content: space-between; color: #aaa; font-size: .85rem; margin-bottom: 8px; }
+        .coup-tag { font-size: .72rem; color: var(--tno-alert); border: 1px solid var(--tno-alert); padding: 1px 6px; }
+        .coup-officer { display: flex; gap: 10px; align-items: flex-start; border-left-color: var(--coup-branch, #6b7d4a) !important; }
+        .coup-officer .photo-ph { color: var(--coup-branch, #6b7d4a); }
+        .coup-photo-col { display: flex; flex-direction: column; align-items: stretch; gap: 4px; flex-shrink: 0; width: 52px; }
+        .coup-branch-tag { font-size: .68rem; text-align: center; padding: 1px 2px; color: #fff; background: var(--coup-branch, #6b7d4a); word-break: keep-all; overflow-wrap: anywhere; line-height: 1.3; }
+        .coup-field span { color: #777; font-size: .78rem; flex-shrink: 0; width: 2.6em; }
+        .coup-field select { flex: 1; min-width: 0; }
+        .coup-linked { color: #6cf; font-size: .72rem; flex-wrap: wrap; }
+        .coup-linked .coup-x { font-size: .7rem; padding: 1px 6px; }
+        .coup-branches { border: 1px solid #2a2a2a; padding: 6px 10px; margin: 0 0 10px; }
+        .coup-branches summary { cursor: pointer; color: #aaa; font-size: .85rem; }
+        .coup-branches .add-btn { margin-top: 6px; }
+        .coup-branch-row { margin: 5px 0; }
+        .coup-branch-row input[type=color] { width: 34px; height: 28px; padding: 0; border: 1px solid #333; background: transparent; flex-shrink: 0; cursor: pointer; }
+        .coup-branch-row input[type=text] { flex: 1; min-width: 0; }
+        .coup-officer.coup-chair { border-left-color: var(--tno-alert) !important; box-shadow: 0 0 8px color-mix(in srgb, var(--tno-alert) 35%, transparent); }
+        .coup-photo { width: 52px; height: 64px; flex-shrink: 0; }
+        .coup-photo img { width: 100%; height: 100%; object-fit: cover; }
+        .coup-officer-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 5px; }
+        .coup-officer-main input[type=text], .coup-officer-main select { width: 100%; box-sizing: border-box; }
+        .coup-role { flex: 1; min-width: 0; font-weight: bold; }
+        .coup-x { cursor: pointer; background: transparent; border: 1px solid #333; color: #777; font-family: inherit; padding: 2px 8px; }
+        .coup-loyal span { color: #777; font-size: .78rem; flex-shrink: 0; }
+        .coup-loyal input { flex: 1; }
+        .coup-loyal b { width: 2.2em; text-align: right; font-size: .85rem; }
+        .coup-pick { margin: 10px 0; display: flex; flex-direction: column; gap: 5px; }
+        .coup-pick select { width: 100%; box-sizing: border-box; }
+        .coup-dim { color: #777; font-size: .8rem; }
+        .coup-small { font-size: .72rem; margin-top: 4px; }
+        .coup-chance { border: 1px solid #333; padding: 10px; margin: 10px 0; background: rgba(255,255,255,.02); }
+        .coup-chance-head { display: flex; justify-content: space-between; align-items: baseline; color: #aaa; }
+        .coup-chance-head b { font-size: 1.6rem; color: var(--tno-alert); }
+        .coup-bar { height: 8px; background: #222; margin: 6px 0 8px; }
+        .coup-bar span { display: block; height: 100%; background: var(--tno-alert); }
+        .coup-factor { display: flex; justify-content: space-between; gap: 8px; font-size: .78rem; color: #999; padding: 2px 0; }
+        .coup-plus { color: #5fbf7f; } .coup-minus { color: #e06060; }
+        .coup-go { width: 100%; cursor: pointer; font-family: inherit; font-size: 1rem; padding: 10px; background: transparent; border: 2px solid var(--tno-alert); color: var(--tno-alert); letter-spacing: 1px; }
+        .coup-go:hover { background: color-mix(in srgb, var(--tno-alert) 15%, transparent); }
+        .coup-result { margin-top: 12px; padding: 10px; border: 1px solid #333; border-left: 4px solid #888; }
+        .coup-result.ok { border-left-color: #5fbf7f; } .coup-result.fail { border-left-color: #e06060; }
+        .coup-result-head { font-size: 1rem; margin-bottom: 4px; }
+        .coup-result ul { margin: 6px 0 0 18px; padding: 0; font-size: .82rem; color: #bbb; }
+        .coup-log { margin-top: 12px; font-size: .82rem; } .coup-log summary { cursor: pointer; color: #999; }
+        .coup-log-row { display: flex; gap: 6px; padding: 3px 0; color: #aaa; border-bottom: 1px solid #1c1c1c; }
+        .coup-junta { border: 1px solid var(--tno-alert); padding: 10px; margin: 8px 0 12px; background: rgba(60,0,0,.25); }
+        .coup-junta-title { color: var(--tno-alert); font-size: 1rem; margin-bottom: 4px; letter-spacing: 1px; }
+        .coup-sub { color: #888; font-size: .78rem; margin: 10px 0 6px; letter-spacing: 1px; }
+        .coup-btn { cursor: pointer; font-family: inherit; font-size: .85rem; padding: 6px 12px; background: transparent; border: 1px solid #555; color: #ccc; }
+        .coup-btn:disabled { opacity: .4; cursor: default; }
+        .coup-banner { margin: 0 0 10px; padding: 8px 12px; border: 1px solid var(--tno-alert); color: var(--tno-alert); font-size: .9rem; background: rgba(60,0,0,.3); letter-spacing: 1px; }
+        html[data-theme-family="modern"] .coup-branches { border-color: var(--m-border); border-radius: 10px; }
+        html[data-theme-family="modern"] .coup-branch-tag { border-radius: 4px; }
+        html[data-theme-family="modern"] .coup-intro, html[data-theme-family="modern"] .coup-dim { color: var(--m-text-3); }
+        html[data-theme-family="modern"] .coup-summary { color: var(--m-text-2); }
+        html[data-theme-family="modern"] .coup-chance { border: 1px solid var(--m-border); border-radius: 12px; background: var(--m-surface-2); }
+        html[data-theme-family="modern"] .coup-chance-head { color: var(--m-text-2); }
+        html[data-theme-family="modern"] .coup-bar { background: var(--m-border); border-radius: 4px; overflow: hidden; }
+        html[data-theme-family="modern"] .coup-factor { color: var(--m-text-2); }
+        html[data-theme-family="modern"] .coup-go { border-radius: 12px; font-weight: 600; letter-spacing: 0; }
+        html[data-theme-family="modern"] .coup-result { border: 1px solid var(--m-border); border-left-width: 4px; border-radius: 10px; background: var(--m-surface); }
+        html[data-theme-family="modern"] .coup-result ul { color: var(--m-text-2); }
+        html[data-theme-family="modern"] .coup-junta, html[data-theme-family="modern"] .coup-banner { border-radius: 12px; background: color-mix(in srgb, var(--tno-alert) 8%, var(--m-surface)); }
+        html[data-theme-family="modern"] .coup-btn, html[data-theme-family="modern"] .coup-x { border: 1px solid var(--m-border-strong); border-radius: 8px; color: var(--m-text); }
+        html[data-theme-family="modern"] .coup-log-row { color: var(--m-text-2); border-bottom-color: var(--m-border); }
     `;
     document.head.appendChild(style);
     window.addEventListener('load', () => setTimeout(refresh, 0));

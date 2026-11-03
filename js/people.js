@@ -353,21 +353,21 @@
         counts.cand = S.people.filter(p => candidaciesOf(p.id).length).length;
         const le = S.lastElection;
         box.innerHTML = `
-            <div class="t61-intro">인물을 미리 만들어 두고 의석 · 당직 · 내각 자리에 배정합니다. 이름 · 사진을 여기서 고치면 배정된 모든 자리에 반영되고, 선거 · 당적 변경 · 궐석으로 자리가 사라져도 인물은 남아요.</div>
-            <div class="t61-bar">
-                <button type="button" class="t61-btn t61-primary" data-act="add">＋ 사람 추가</button>
-                <button type="button" class="t61-btn" data-act="import" title="의원 · 당수 · 원내대표 · 파벌 대표 · 의장단 · 대통령(국왕) · 내각 · 지방 단체장 등 이름이 적힌 모든 자리에서 인물을 만들고 연결 (같은 이름은 한 사람)">모든 자리에서 가져오기</button>
-                <input type="text" class="t61-search" data-ui="q" placeholder="이름 검색" value="${esc(ui.q)}">
+            <div class="people-intro">인물을 미리 만들어 두고 의석 · 당직 · 내각 자리에 배정합니다. 이름 · 사진을 여기서 고치면 배정된 모든 자리에 반영되고, 선거 · 당적 변경 · 궐석으로 자리가 사라져도 인물은 남아요.</div>
+            <div class="people-bar">
+                <button type="button" class="people-btn people-primary" data-act="add">＋ 사람 추가</button>
+                <button type="button" class="people-btn" data-act="import" title="의원 · 당수 · 원내대표 · 파벌 대표 · 의장단 · 대통령(국왕) · 내각 · 지방 단체장 등 이름이 적힌 모든 자리에서 인물을 만들고 연결 (같은 이름은 한 사람)">모든 자리에서 가져오기</button>
+                <input type="text" class="people-search" data-ui="q" placeholder="이름 검색" value="${esc(ui.q)}">
             </div>
             ${popSummaryHtml()}
-            <div class="system-radio-group t61-filter">${[['all', '전체'], ['seated', '자리 있음'], ['none', '자리 없음'], ['cand', '지역구 후보']].map(([k, t]) => `<button type="button" class="system-radio-btn ${ui.filter === k ? 'active' : ''}" data-filter="${k}">${t} <span class="t61-n">${counts[k]}</span></button>`).join('')}</div>
-            ${le ? `<div class="t61-result"><b>지난 선거 (${esc(le.chamber)}${le.date ? ` · ${esc(le.date)}` : ''})</b>
-                ${le.elected.length ? `<div>✔ 당선 · 배정: ${le.elected.map(x => `${esc((personById(x.personId) || {}).name || '?')} <span class="t61-dim">(${esc(x.place)})</span>`).join(', ')}</div>` : ''}
-                ${le.lost.length ? `<div>✘ 낙선: ${le.lost.map(x => `${esc((personById(x.personId) || {}).name || '?')} <span class="t61-dim">(${esc(x.place)})</span>`).join(', ')} — 사람 탭에 남아 다음 선거에 다시 나갈 수 있어요</div>` : ''}
-                <button type="button" class="t61-x" data-act="clearres" title="닫기">✕</button></div>` : ''}
-            <div id="t61List" class="t61-list">${list.length ? list.map(p => card(p, posMap.get(p.id) || [])).join('') : `<div class="t61-empty">${S.people.length ? '조건에 맞는 사람이 없습니다.' : '아직 사람이 없습니다. "＋ 사람 추가"로 만들거나, "모든 자리에서 가져오기"로 지금 자리에 적힌 이름을 인물로 옮겨 보세요.'}</div>`}</div>`;
+            <div class="system-radio-group people-filter">${[['all', '전체'], ['seated', '자리 있음'], ['none', '자리 없음'], ['cand', '지역구 후보']].map(([k, t]) => `<button type="button" class="system-radio-btn ${ui.filter === k ? 'active' : ''}" data-filter="${k}">${t} <span class="people-n">${counts[k]}</span></button>`).join('')}</div>
+            ${le ? `<div class="people-result"><b>지난 선거 (${esc(le.chamber)}${le.date ? ` · ${esc(le.date)}` : ''})</b>
+                ${le.elected.length ? `<div>✔ 당선 · 배정: ${le.elected.map(x => `${esc((personById(x.personId) || {}).name || '?')} <span class="people-dim">(${esc(x.place)})</span>`).join(', ')}</div>` : ''}
+                ${le.lost.length ? `<div>✘ 낙선: ${le.lost.map(x => `${esc((personById(x.personId) || {}).name || '?')} <span class="people-dim">(${esc(x.place)})</span>`).join(', ')} — 사람 탭에 남아 다음 선거에 다시 나갈 수 있어요</div>` : ''}
+                <button type="button" class="people-x" data-act="clearres" title="닫기">✕</button></div>` : ''}
+            <div id="peopleList" class="people-list">${list.length ? list.map(p => card(p, posMap.get(p.id) || [])).join('') : `<div class="people-empty">${S.people.length ? '조건에 맞는 사람이 없습니다.' : '아직 사람이 없습니다. "＋ 사람 추가"로 만들거나, "모든 자리에서 가져오기"로 지금 자리에 적힌 이름을 인물로 옮겨 보세요.'}</div>`}</div>`;
         bind(box);
-        box.querySelector('[data-act="migrants"]')?.addEventListener('click', () => { switchSubTab('vote', 'elecSettings'); setTimeout(() => document.getElementById('t61MigrantCard')?.scrollIntoView({ block: 'center' }), 50); });
+        box.querySelector('[data-act="migrants"]')?.addEventListener('click', () => { switchSubTab('vote', 'elecSettings'); setTimeout(() => document.getElementById('peopleMigrantCard')?.scrollIntoView({ block: 'center' }), 50); });
     }
     function card(p, pos) {
         const party = partyById(p.partyId);
@@ -375,40 +375,40 @@
         const facs = party ? (party.factions || []) : [];
         const cands = candidaciesOf(p.id);
         const open = ui.openId === p.id;
-        return `<div class="t61-card ${open ? 'open' : ''}" data-id="${esc(p.id)}" style="--pc:${esc(color)}">
-            <div class="t61-head">
-                <span class="drag-handle t61-handle" title="끌어서 순서 바꾸기">⋮⋮</span>
-                <label class="leader-photo-box t61-photo" title="사진">${p.photo ? `<img src="${p.photo}" alt="">` : '<div class="photo-ph">👤</div>'}<input type="file" accept="image/*" data-f="photo"></label>
-                <div class="t61-main">
-                    <input type="text" class="t61-name" data-f="name" value="${esc(p.name)}" placeholder="이름">
-                    <div class="t61-sub"><i class="t61-dot"></i>${esc(party ? party.name : '무소속 · 정당 없음')}${p.ideologyId != null && ideologyName(+p.ideologyId) ? ` · ${esc(ideologyName(+p.ideologyId))}` : ''}</div>
-                    <div class="t61-chips">${pos.map(s => `<span class="t61-chip">${KIND_ICON[s.kind] || '•'} ${esc(s.kind === 'district' || s.kind === 'list' || s.kind === 'independent' ? `${s.group} · ${s.label}` : s.label)}<button type="button" data-unassign="${esc(s.key)}" title="자리에서 빼기 (인물은 남음)">×</button></span>`).join('')}
-                        ${cands.map(c => `<span class="t61-chip t61-cand">🎯 ${esc(placeName(c.ch, c.key))} 후보<button type="button" data-uncand="${esc(c.ch)}|${esc(c.key)}" title="후보 취소">×</button></span>`).join('')}
-                        ${!pos.length && !cands.length ? '<span class="t61-none">자리 없음</span>' : ''}</div>
+        return `<div class="people-card ${open ? 'open' : ''}" data-id="${esc(p.id)}" style="--pc:${esc(color)}">
+            <div class="people-head">
+                <span class="drag-handle people-handle" title="끌어서 순서 바꾸기">⋮⋮</span>
+                <label class="leader-photo-box people-photo" title="사진">${p.photo ? `<img src="${p.photo}" alt="">` : '<div class="photo-ph">👤</div>'}<input type="file" accept="image/*" data-f="photo"></label>
+                <div class="people-main">
+                    <input type="text" class="people-name" data-f="name" value="${esc(p.name)}" placeholder="이름">
+                    <div class="people-sub"><i class="people-dot"></i>${esc(party ? party.name : '무소속 · 정당 없음')}${p.ideologyId != null && ideologyName(+p.ideologyId) ? ` · ${esc(ideologyName(+p.ideologyId))}` : ''}</div>
+                    <div class="people-chips">${pos.map(s => `<span class="people-chip">${KIND_ICON[s.kind] || '•'} ${esc(s.kind === 'district' || s.kind === 'list' || s.kind === 'independent' ? `${s.group} · ${s.label}` : s.label)}<button type="button" data-unassign="${esc(s.key)}" title="자리에서 빼기 (인물은 남음)">×</button></span>`).join('')}
+                        ${cands.map(c => `<span class="people-chip people-cand">🎯 ${esc(placeName(c.ch, c.key))} 후보<button type="button" data-uncand="${esc(c.ch)}|${esc(c.key)}" title="후보 취소">×</button></span>`).join('')}
+                        ${!pos.length && !cands.length ? '<span class="people-none">자리 없음</span>' : ''}</div>
                 </div>
-                <button type="button" class="t61-more" data-act="toggle" title="자세히">${open ? '▴' : '▾'}</button>
+                <button type="button" class="people-more" data-act="toggle" title="자세히">${open ? '▴' : '▾'}</button>
             </div>
-            ${open ? `<div class="t61-body">
-                <div class="t61-grid">
+            ${open ? `<div class="people-body">
+                <div class="people-grid">
                     <label>이념<select data-f="ideologyId">${ideologyOptions(p.ideologyId)}</select></label>
                     <label>소속 정당<select data-f="partyId"><option value="">— 정당 없음 —</option>${parties.filter(x => x.ideologyId !== IND).map(x => `<option value="${esc(x.id)}" ${sameId(x.id, p.partyId) ? 'selected' : ''}>${esc(x.name)}</option>`).join('')}</select></label>
                     <label>파벌<select data-f="factionId" ${facs.length ? '' : 'disabled'}><option value="">— 파벌 없음 —</option>${facs.map(f => `<option value="${esc(f.id)}" ${sameId(f.id, p.factionId) ? 'selected' : ''}>${esc(f.name)}</option>`).join('')}</select></label>
                 </div>
-                <div class="t61-stack"><select data-act="assign">${seatOptions(p)}</select><select data-act="cand">${candOptions()}</select></div>
+                <div class="people-stack"><select data-act="assign">${seatOptions(p)}</select><select data-act="cand">${candOptions()}</select></div>
                 <textarea data-f="bio" rows="2" placeholder="메모 · 약력">${esc(p.bio || '')}</textarea>
-                <div class="t61-row t61-end"><button type="button" class="t61-btn t61-danger" data-act="del">사람 지우기</button></div>
+                <div class="people-row people-end"><button type="button" class="people-btn people-danger" data-act="del">사람 지우기</button></div>
             </div>` : ''}
         </div>`;
     }
     function bind(box) {
         const on = (sel, fn) => box.querySelectorAll(sel).forEach(b => { b.onclick = e => fn(b, e); });
-        on('[data-act="add"]', () => { const p = { id: uid(), name: '', photo: '', ideologyId: null, partyId: null, factionId: null, bio: '' }; S.people.unshift(p); ui.openId = p.id; ui.filter = 'all'; ui.q = ''; render(); const n = box.querySelector(`.t61-card[data-id="${p.id}"] .t61-name`); if (n) n.focus(); });
+        on('[data-act="add"]', () => { const p = { id: uid(), name: '', photo: '', ideologyId: null, partyId: null, factionId: null, bio: '' }; S.people.unshift(p); ui.openId = p.id; ui.filter = 'all'; ui.q = ''; render(); const n = box.querySelector(`.people-card[data-id="${p.id}"] .people-name`); if (n) n.focus(); });
         on('[data-act="import"]', importFromSeats);
         on('[data-act="clearres"]', () => { S.lastElection = null; render(); });
         on('[data-filter]', b => { ui.filter = b.dataset.filter; render(); });
         const q = box.querySelector('[data-ui="q"]');
         if (q) q.oninput = () => { ui.q = q.value; const pos = q.selectionStart; render(); const q2 = box.querySelector('[data-ui="q"]'); if (q2) { q2.focus(); q2.setSelectionRange(pos, pos); } };
-        box.querySelectorAll('.t61-card').forEach(c => {
+        box.querySelectorAll('.people-card').forEach(c => {
             const p = personById(c.dataset.id); if (!p) return;
             const q1 = s => c.querySelector(s);
             q1('[data-act="toggle"]').onclick = () => { ui.openId = ui.openId === p.id ? null : p.id; render(); };
@@ -451,8 +451,8 @@
                 S.people = S.people.filter(x => x !== p);
                 rerender(); render();
             });
-            const h = q1('.t61-handle');
-            if (h && typeof startDragReorder === 'function' && !ui.q && ui.filter === 'all') startDragReorder(h, 't61List', '.t61-card', S.people, render);
+            const h = q1('.people-handle');
+            if (h && typeof startDragReorder === 'function' && !ui.q && ui.filter === 'all') startDragReorder(h, 'peopleList', '.people-card', S.people, render);
         });
     }
     function refresh() { render(); }
@@ -612,7 +612,7 @@
         if (key === selectedDistrictKey) try { districtRenderNamePanel(); } catch (e) { /* 화면 전 */ }
         renderMigrantCard();
     }
-    window.t61SetCitizens = setCitizens;
+    window.peopleSetCitizens = setCitizens;
     const jsArg = v => JSON.stringify(String(v)).replace(/"/g, '&quot;');
     const citTitle = (ch, k) => {
         const pop = popRaw(ch, k);
@@ -624,25 +624,25 @@
             const r = origList.apply(this, arguments);
             const panel = document.getElementById('districtListPanel');
             if (!panel) return r;
-            panel.querySelectorAll('.drag-card-district input[type="number"]:not(.t61-cit)').forEach(inp => {
+            panel.querySelectorAll('.drag-card-district input[type="number"]:not(.people-cit)').forEach(inp => {
                 const m = /districtSetPopulation\('([^']*)','([^']*)'/.exec(inp.getAttribute('onchange') || '');
-                if (!m || inp.previousElementSibling?.classList.contains('t61-cit-sep')) return;
+                if (!m || inp.previousElementSibling?.classList.contains('people-cit-sep')) return;
                 const [, ch, key] = m;
                 inp.placeholder = '인구';
                 const c = document.createElement('input');
-                c.type = 'number'; c.min = '0'; c.step = '1'; c.className = 't61-cit'; c.placeholder = '시민';
+                c.type = 'number'; c.min = '0'; c.step = '1'; c.className = 'people-cit'; c.placeholder = '시민';
                 c.value = citRaw(ch, key) ?? '';
                 c.title = citTitle(ch, key);
                 c.style.cssText = inp.style.cssText.replace(/width:\s*\d+px/, 'width:74px');
                 inp.style.width = '84px'; inp.style.padding = c.style.padding = '4px 3px'; // 이름 칸이 너무 좁아지지 않게 두 숫자 칸을 줄인다
                 c.addEventListener('change', () => setCitizens(ch, key, c.value));
                 const sep = document.createElement('span');
-                sep.className = 't61-cit-sep'; sep.textContent = '/';
+                sep.className = 'people-cit-sep'; sep.textContent = '/';
                 inp.before(c, sep);
             });
             // 합계 줄: 총 인구 → 시민 · 이민자
             const sum = panel.firstElementChild;
-            const ch = (panel.querySelector('.drag-card-district input[type="number"]:not(.t61-cit)')?.getAttribute('onchange') || '').match(/districtSetPopulation\('([^']*)'/)?.[1];
+            const ch = (panel.querySelector('.drag-card-district input[type="number"]:not(.people-cit)')?.getAttribute('onchange') || '').match(/districtSetPopulation\('([^']*)'/)?.[1];
             if (sum && ch && /^총 인구/.test(sum.textContent)) {
                 const t = totals(ch);
                 sum.textContent = `시민 ${fmtN(t.cit)} / 인구 ${fmtN(t.pop)} · 이민자 ${fmtN(t.mig)}`;
@@ -655,11 +655,11 @@
         window.districtPopulationInputHtml = function (ch, key, extraStyle) {
             const html = origPopHtml.apply(this, arguments);
             const pop = popRaw(ch, key);
-            return html + `<div class="t61-cit-row" style="${extraStyle || ''}">
+            return html + `<div class="people-cit-row" style="${extraStyle || ''}">
                     <span>시민</span>
                     <input type="number" min="0" step="1" placeholder="${pop == null ? '인구를 먼저 적으세요' : `비우면 인구 전체 (${fmtN(pop)})`}" value="${citRaw(ch, key) ?? ''}"
-                        onchange="t61SetCitizens(${jsArg(ch)},${jsArg(key)},this.value)">
-                    <span class="t61-dim">${pop == null ? '' : `이민자 ${fmtN(migrantsOf(ch, key))}명`}</span>
+                        onchange="peopleSetCitizens(${jsArg(ch)},${jsArg(key)},this.value)">
+                    <span class="people-dim">${pop == null ? '' : `이민자 ${fmtN(migrantsOf(ch, key))}명`}</span>
                 </div>`;
         };
     }
@@ -669,10 +669,10 @@
         const t = totals('house');
         if (!t.pop) return '';
         const on = VOTE_KINDS.filter(([k]) => migrantsVote(k)).map(([, n]) => n);
-        return `<div class="t61-pop">
-                <div><b>시민 ${fmtN(t.cit)}</b> / 인구 ${fmtN(t.pop)} · 이민자 ${fmtN(t.mig)} <span class="t61-dim">(${t.pop ? (t.mig / t.pop * 100).toFixed(1) : 0}%)</span></div>
-                <div class="t61-dim">이민자 투표권: ${on.length ? on.join(' · ') : '없음'} — 지역구별 시민 수는 국가 › 지역구 지도</div>
-                <button type="button" class="t61-btn" data-act="migrants">선거 › 선거 제도에서 설정</button>
+        return `<div class="people-pop">
+                <div><b>시민 ${fmtN(t.cit)}</b> / 인구 ${fmtN(t.pop)} · 이민자 ${fmtN(t.mig)} <span class="people-dim">(${t.pop ? (t.mig / t.pop * 100).toFixed(1) : 0}%)</span></div>
+                <div class="people-dim">이민자 투표권: ${on.length ? on.join(' · ') : '없음'} — 지역구별 시민 수는 국가 › 지역구 지도</div>
+                <button type="button" class="people-btn" data-act="migrants">선거 › 선거 제도에서 설정</button>
             </div>`;
     }
 
@@ -746,11 +746,11 @@
             const { cit, mig } = totals(ch);
             const cs = elecStore[ch] || {}, ms = split && M ? (M.prob[ch] || {}) : cs;
             const list = parties.filter(p => p.status !== 'banned' && p.status !== 'dissolved' && (Number(cs[p.id]?.prob) > 0 || Number(ms[p.id]?.prob) > 0));
-            if (!list.length) return `<div class="op-ch">${esc(chName(ch))}</div><div class="t61-dim t61-small">지지율이 없습니다 — 시민 지지율에서 정하세요.</div>`;
+            if (!list.length) return `<div class="op-ch">${esc(chName(ch))}</div><div class="people-dim people-small">지지율이 없습니다 — 시민 지지율에서 정하세요.</div>`;
             const rows = list.map(p => {
                 const c = Number(cs[p.id]?.prob) || 0, m = Number(ms[p.id]?.prob) || 0;
                 const all = cit + mig > 0 ? (cit * c + mig * m) / (cit + mig) : c;
-                return `<tr><td><span class="t61-dot" style="--pc:${esc(p.color)}"></span>${esc(p.name)}</td><td>${fmtP(c)}%</td><td class="${split && m !== c ? 'op-diff' : 'op-same'}">${fmtP(m)}%</td><td>${fmtP(all)}%</td></tr>`;
+                return `<tr><td><span class="people-dot" style="--pc:${esc(p.color)}"></span>${esc(p.name)}</td><td>${fmtP(c)}%</td><td class="${split && m !== c ? 'op-diff' : 'op-same'}">${fmtP(m)}%</td><td>${fmtP(all)}%</td></tr>`;
             }).join('');
             return `<div class="op-ch">${esc(chName(ch))}</div>
                 <table class="op-table"><thead><tr><th>정당</th><th>시민</th><th>이민자</th><th>합산</th></tr></thead><tbody>${rows}</tbody></table>`;
@@ -758,14 +758,14 @@
         box.innerHTML = `
             <div class="op-card">
                 <label class="op-toggle"><input type="checkbox" data-op="split" ${split ? 'checked' : ''}> 시민 / 이민자 성향 따로 정하기</label>
-                <div class="t61-dim t61-small">${split
+                <div class="people-dim people-small">${split
                     ? '이민자 성향 · 이민자 지지율에서 이민자 성향을 따로 정합니다. 이민자가 투표하는 선거에서는 지역구마다 시민 · 이민자 수만큼 섞어 개표해요 (총선 비례 · 대선은 전국 수로).'
                     : '꺼져 있으면 이민자 성향은 시민 성향과, 이민자 지지율은 시민 지지율과 같은 값으로 묶이고 이민자도 시민과 같은 성향으로 투표합니다. 시민 · 인구 수는 따로예요.'}</div>
             </div>
             <div class="op-card">
-                <div>${t.pop ? `<b>시민 ${fmtN(t.cit)}</b> / 인구 ${fmtN(t.pop)} · 이민자 ${fmtN(t.mig)} <span class="t61-dim">(${t.pop ? (t.mig / t.pop * 100).toFixed(1) : 0}%)</span>` : '지역구 인구가 없습니다 — 국가 › 지역구 지도에서 지역구마다 "시민 / 인구"를 적으세요.'}</div>
-                <div class="t61-dim">이민자 투표권: ${on.length ? on.join(' · ') : '없음'}</div>
-                <div class="t61-row"><button type="button" class="t61-btn" data-op="territory">국가 › 지역구 지도에서 시민 수</button><button type="button" class="t61-btn" data-op="method">선거 › 선거 제도에서 투표권</button></div>
+                <div>${t.pop ? `<b>시민 ${fmtN(t.cit)}</b> / 인구 ${fmtN(t.pop)} · 이민자 ${fmtN(t.mig)} <span class="people-dim">(${t.pop ? (t.mig / t.pop * 100).toFixed(1) : 0}%)</span>` : '지역구 인구가 없습니다 — 국가 › 지역구 지도에서 지역구마다 "시민 / 인구"를 적으세요.'}</div>
+                <div class="people-dim">이민자 투표권: ${on.length ? on.join(' · ') : '없음'}</div>
+                <div class="people-row"><button type="button" class="people-btn" data-op="territory">국가 › 지역구 지도에서 시민 수</button><button type="button" class="people-btn" data-op="method">선거 › 선거 제도에서 투표권</button></div>
             </div>
             <div class="op-card"><div class="op-title">정당별 지지율</div>${tables}</div>`;
         box.querySelector('[data-op="split"]').onchange = e => setSplit(e.target.checked);
@@ -779,15 +779,15 @@
     function renderMigrantCard() {
         const host = document.getElementById('contentElecSettings');
         if (!host) return;
-        let box = document.getElementById('t61MigrantCard');
-        if (!box) { box = document.createElement('div'); box.id = 't61MigrantCard'; box.className = 't61-mig'; host.appendChild(box); }
+        let box = document.getElementById('peopleMigrantCard');
+        if (!box) { box = document.createElement('div'); box.id = 'peopleMigrantCard'; box.className = 'people-mig'; host.appendChild(box); }
         const t = totals('house');
         box.innerHTML = `
-            <label class="t61-mig-title">이민자 투표권 <span class="t61-dim">— 시민권자는 모든 선거에서 투표합니다</span></label>
-            <div class="t61-dim t61-small">${t.pop ? `시민 ${fmtN(t.cit)} / 인구 ${fmtN(t.pop)} · 이민자 ${fmtN(t.mig)}명` : '지역구 인구가 없습니다 — 국가 › 지역구 지도에서 지역구마다 "시민 / 인구"를 적으세요.'}${t.pop && !t.mig ? ' — 아직 이민자가 없습니다 (국가 › 지역구 지도에서 시민 수를 인구보다 적게 적으세요)' : ''}</div>
-            <div class="t61-mig-kinds">${VOTE_KINDS.map(([k, n]) => `<label class="t61-mig-kind"><input type="checkbox" data-kind="${k}" ${migrantsVote(k) ? 'checked' : ''}> ${n}</label>`).join('')}</div>
-            <div class="t61-dim t61-small">이민자 성향은 여론 › 종합 · 이민자 성향 · 이민자 지지율에서 정합니다.</div>
-            <button type="button" class="t61-btn" data-act="opinion">여론 › 종합으로</button>`;
+            <label class="people-mig-title">이민자 투표권 <span class="people-dim">— 시민권자는 모든 선거에서 투표합니다</span></label>
+            <div class="people-dim people-small">${t.pop ? `시민 ${fmtN(t.cit)} / 인구 ${fmtN(t.pop)} · 이민자 ${fmtN(t.mig)}명` : '지역구 인구가 없습니다 — 국가 › 지역구 지도에서 지역구마다 "시민 / 인구"를 적으세요.'}${t.pop && !t.mig ? ' — 아직 이민자가 없습니다 (국가 › 지역구 지도에서 시민 수를 인구보다 적게 적으세요)' : ''}</div>
+            <div class="people-mig-kinds">${VOTE_KINDS.map(([k, n]) => `<label class="people-mig-kind"><input type="checkbox" data-kind="${k}" ${migrantsVote(k) ? 'checked' : ''}> ${n}</label>`).join('')}</div>
+            <div class="people-dim people-small">이민자 성향은 여론 › 종합 · 이민자 성향 · 이민자 지지율에서 정합니다.</div>
+            <button type="button" class="people-btn" data-act="opinion">여론 › 종합으로</button>`;
         box.querySelectorAll('[data-kind]').forEach(c => c.addEventListener('change', () => { S.migrantVote[c.dataset.kind] = c.checked; renderMigrantCard(); render(); }));
         box.querySelector('[data-act="opinion"]').addEventListener('click', () => { switchMainTab('election'); elecSwitchSub('overview'); });
     }
@@ -799,66 +799,66 @@
     };
     window.addEventListener('load', () => setTimeout(renderMigrantCard, 0));
 
-    window.T61 = { get people() { return S.people; }, get candidates() { return S.candidates; }, get lastElection() { return S.lastElection; }, seats, assign, unassign, importFromSeats, positionsOf,
+    window.HemiPeople = { get people() { return S.people; }, get candidates() { return S.candidates; }, get lastElection() { return S.lastElection; }, seats, assign, unassign, importFromSeats, positionsOf,
         get citizens() { return S.citizens; }, get migrantVote() { return S.migrantVote; }, get opinion() { return S.opinion; }, setCitizens, totals, setSplit, swapOut };
 
     const css = document.createElement('style');
     css.textContent = `
-        .t61-intro { font-size: .8rem; color: #8a94a3; margin-bottom: 8px; line-height: 1.5; }
-        .t61-bar { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
-        .t61-search { flex: 1; min-width: 120px; }
-        .t61-btn { cursor: pointer; background: transparent; border: 1px solid #333; color: #aaa; font-family: inherit; padding: 5px 10px; }
-        .t61-btn:hover { border-color: var(--tno-neon); color: var(--tno-neon); }
-        .t61-primary { border-color: var(--tno-neon); color: var(--tno-neon); }
-        .t61-danger { color: var(--tno-alert, #e74c3c); border-color: currentColor; }
-        .t61-filter { margin-bottom: 8px; flex-wrap: wrap; }
-        .t61-filter .system-radio-btn { flex: 1 1 auto; white-space: nowrap; }
-        .t61-n { opacity: .6; font-size: .85em; }
-        .t61-result { position: relative; font-size: .8rem; line-height: 1.6; border: 1px solid #2a2a2a; border-left: 3px solid var(--tno-gold); padding: 6px 28px 6px 8px; margin-bottom: 8px; }
-        .t61-result .t61-x { position: absolute; top: 4px; right: 4px; }
-        .t61-x { cursor: pointer; background: transparent; border: 1px solid #333; color: #777; font-family: inherit; padding: 0 6px; }
-        .t61-dim { color: #777; }
-        .t61-list { display: flex; flex-direction: column; gap: 6px; }
-        .t61-empty { color: #666; font-size: .82rem; text-align: center; padding: 20px 8px; }
-        .t61-card { border: 1px solid #2a2a2a; border-left: 3px solid var(--pc); background: rgba(0,0,0,.2); }
-        .t61-head { display: flex; gap: 8px; align-items: flex-start; padding: 6px; }
-        .t61-handle { align-self: center; }
-        .t61-photo { width: 44px; height: 56px; flex-shrink: 0; } .t61-photo img { width: 100%; height: 100%; object-fit: cover; }
-        .t61-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
-        .t61-name { width: 100%; box-sizing: border-box; }
-        .t61-sub { font-size: .74rem; color: #8a94a3; display: flex; align-items: center; gap: 5px; }
-        .t61-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--pc); display: inline-block; flex: none; }
-        .t61-chips { display: flex; flex-wrap: wrap; gap: 4px; }
-        .t61-chip { display: inline-flex; align-items: center; gap: 3px; font-size: .72rem; border: 1px solid #333; padding: 1px 2px 1px 6px; color: #bbb; }
-        .t61-chip button { cursor: pointer; background: transparent; border: 0; color: #777; font-family: inherit; padding: 0 3px; }
-        .t61-chip button:hover { color: var(--tno-alert, #e74c3c); }
-        .t61-cand { border-style: dashed; color: var(--tno-gold); }
-        .t61-none { font-size: .72rem; color: #666; border: 1px dashed #333; padding: 1px 6px; }
-        .t61-more { cursor: pointer; background: transparent; border: 1px solid #333; color: #888; font-family: inherit; padding: 2px 8px; align-self: flex-start; }
-        .t61-body { padding: 0 8px 8px; display: flex; flex-direction: column; gap: 6px; }
-        .t61-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 6px; }
-        .t61-grid label { display: flex; flex-direction: column; gap: 2px; font-size: .72rem; color: #8a94a3; }
-        .t61-row { display: flex; gap: 6px; flex-wrap: wrap; } .t61-grow { flex: 1; min-width: 150px; } .t61-end { justify-content: flex-end; }
-        .t61-stack { display: flex; flex-direction: column; gap: 6px; } .t61-stack select { width: 100%; }
-        .t61-body textarea { width: 100%; box-sizing: border-box; resize: vertical; font-family: inherit; font-size: .9rem; background: #000; border: 1px solid var(--tno-border, #333); color: var(--tno-text, #ddd); padding: 6px 10px; border-radius: 0; }
-        .t61-body textarea:focus { outline: none; border-color: var(--tno-neon); }
-        html[data-theme-family="modern"] .t61-body textarea { background: var(--m-surface); border: 1px solid var(--m-border-strong); color: var(--m-text); border-radius: 8px; }
-        html[data-theme-family="modern"] .t61-body textarea:focus { border-color: var(--m-accent, #2563eb); }
-        html[data-theme-family="modern"] .t61-card { border-color: var(--m-border); border-left-color: var(--pc); background: var(--m-surface); border-radius: 8px; }
-        html[data-theme-family="modern"] .t61-btn, html[data-theme-family="modern"] .t61-more, html[data-theme-family="modern"] .t61-x { border-color: var(--m-border-strong); color: var(--m-text); border-radius: 8px; }
-        html[data-theme-family="modern"] .t61-primary { background: var(--m-accent, #2563eb); border-color: transparent; color: #fefefe; }
-        html[data-theme-family="modern"] .t61-chip { border-color: var(--m-border); color: var(--m-text); border-radius: 999px; }
-        .t61-small { font-size: .74rem; line-height: 1.5; margin-top: 3px; }
-        .t61-pop { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 10px; font-size: .78rem; border: 1px dashed #333; padding: 6px 8px; margin-bottom: 8px; }
-        .t61-pop > div { flex: 1 1 100%; } .t61-pop .t61-btn { padding: 2px 8px; font-size: .74rem; margin-top: 3px; }
-        .t61-cit-sep { color: #555; flex-shrink: 0; font-size: .8rem; }
-        .t61-cit-row { display: flex; align-items: center; gap: 6px; font-size: .75rem; color: #666; }
-        .t61-cit-row input { flex: 1; min-width: 0; box-sizing: border-box; background: #000; border: 1px solid #333; color: var(--tno-text); font-family: inherit; font-size: .85rem; padding: 6px; }
-        .t61-cit-row .t61-dim { flex-shrink: 0; }
-        .t61-mig { margin-top: 14px; padding-top: 10px; border-top: 1px solid #222; font-size: .82rem; }
-        .t61-mig-title { color: #888; font-size: .8rem; display: block; }
-        .t61-mig-kinds { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 8px 0 6px; }
-        .t61-mig-kind { display: inline-flex; align-items: center; gap: 5px; cursor: pointer; color: #bbb; }
+        .people-intro { font-size: .8rem; color: #8a94a3; margin-bottom: 8px; line-height: 1.5; }
+        .people-bar { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+        .people-search { flex: 1; min-width: 120px; }
+        .people-btn { cursor: pointer; background: transparent; border: 1px solid #333; color: #aaa; font-family: inherit; padding: 5px 10px; }
+        .people-btn:hover { border-color: var(--tno-neon); color: var(--tno-neon); }
+        .people-primary { border-color: var(--tno-neon); color: var(--tno-neon); }
+        .people-danger { color: var(--tno-alert, #e74c3c); border-color: currentColor; }
+        .people-filter { margin-bottom: 8px; flex-wrap: wrap; }
+        .people-filter .system-radio-btn { flex: 1 1 auto; white-space: nowrap; }
+        .people-n { opacity: .6; font-size: .85em; }
+        .people-result { position: relative; font-size: .8rem; line-height: 1.6; border: 1px solid #2a2a2a; border-left: 3px solid var(--tno-gold); padding: 6px 28px 6px 8px; margin-bottom: 8px; }
+        .people-result .people-x { position: absolute; top: 4px; right: 4px; }
+        .people-x { cursor: pointer; background: transparent; border: 1px solid #333; color: #777; font-family: inherit; padding: 0 6px; }
+        .people-dim { color: #777; }
+        .people-list { display: flex; flex-direction: column; gap: 6px; }
+        .people-empty { color: #666; font-size: .82rem; text-align: center; padding: 20px 8px; }
+        .people-card { border: 1px solid #2a2a2a; border-left: 3px solid var(--pc); background: rgba(0,0,0,.2); }
+        .people-head { display: flex; gap: 8px; align-items: flex-start; padding: 6px; }
+        .people-handle { align-self: center; }
+        .people-photo { width: 44px; height: 56px; flex-shrink: 0; } .people-photo img { width: 100%; height: 100%; object-fit: cover; }
+        .people-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+        .people-name { width: 100%; box-sizing: border-box; }
+        .people-sub { font-size: .74rem; color: #8a94a3; display: flex; align-items: center; gap: 5px; }
+        .people-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--pc); display: inline-block; flex: none; }
+        .people-chips { display: flex; flex-wrap: wrap; gap: 4px; }
+        .people-chip { display: inline-flex; align-items: center; gap: 3px; font-size: .72rem; border: 1px solid #333; padding: 1px 2px 1px 6px; color: #bbb; }
+        .people-chip button { cursor: pointer; background: transparent; border: 0; color: #777; font-family: inherit; padding: 0 3px; }
+        .people-chip button:hover { color: var(--tno-alert, #e74c3c); }
+        .people-cand { border-style: dashed; color: var(--tno-gold); }
+        .people-none { font-size: .72rem; color: #666; border: 1px dashed #333; padding: 1px 6px; }
+        .people-more { cursor: pointer; background: transparent; border: 1px solid #333; color: #888; font-family: inherit; padding: 2px 8px; align-self: flex-start; }
+        .people-body { padding: 0 8px 8px; display: flex; flex-direction: column; gap: 6px; }
+        .people-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 6px; }
+        .people-grid label { display: flex; flex-direction: column; gap: 2px; font-size: .72rem; color: #8a94a3; }
+        .people-row { display: flex; gap: 6px; flex-wrap: wrap; } .people-grow { flex: 1; min-width: 150px; } .people-end { justify-content: flex-end; }
+        .people-stack { display: flex; flex-direction: column; gap: 6px; } .people-stack select { width: 100%; }
+        .people-body textarea { width: 100%; box-sizing: border-box; resize: vertical; font-family: inherit; font-size: .9rem; background: #000; border: 1px solid var(--tno-border, #333); color: var(--tno-text, #ddd); padding: 6px 10px; border-radius: 0; }
+        .people-body textarea:focus { outline: none; border-color: var(--tno-neon); }
+        html[data-theme-family="modern"] .people-body textarea { background: var(--m-surface); border: 1px solid var(--m-border-strong); color: var(--m-text); border-radius: 8px; }
+        html[data-theme-family="modern"] .people-body textarea:focus { border-color: var(--m-accent, #2563eb); }
+        html[data-theme-family="modern"] .people-card { border-color: var(--m-border); border-left-color: var(--pc); background: var(--m-surface); border-radius: 8px; }
+        html[data-theme-family="modern"] .people-btn, html[data-theme-family="modern"] .people-more, html[data-theme-family="modern"] .people-x { border-color: var(--m-border-strong); color: var(--m-text); border-radius: 8px; }
+        html[data-theme-family="modern"] .people-primary { background: var(--m-accent, #2563eb); border-color: transparent; color: #fefefe; }
+        html[data-theme-family="modern"] .people-chip { border-color: var(--m-border); color: var(--m-text); border-radius: 999px; }
+        .people-small { font-size: .74rem; line-height: 1.5; margin-top: 3px; }
+        .people-pop { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 10px; font-size: .78rem; border: 1px dashed #333; padding: 6px 8px; margin-bottom: 8px; }
+        .people-pop > div { flex: 1 1 100%; } .people-pop .people-btn { padding: 2px 8px; font-size: .74rem; margin-top: 3px; }
+        .people-cit-sep { color: #555; flex-shrink: 0; font-size: .8rem; }
+        .people-cit-row { display: flex; align-items: center; gap: 6px; font-size: .75rem; color: #666; }
+        .people-cit-row input { flex: 1; min-width: 0; box-sizing: border-box; background: #000; border: 1px solid #333; color: var(--tno-text); font-family: inherit; font-size: .85rem; padding: 6px; }
+        .people-cit-row .people-dim { flex-shrink: 0; }
+        .people-mig { margin-top: 14px; padding-top: 10px; border-top: 1px solid #222; font-size: .82rem; }
+        .people-mig-title { color: #888; font-size: .8rem; display: block; }
+        .people-mig-kinds { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 8px 0 6px; }
+        .people-mig-kind { display: inline-flex; align-items: center; gap: 5px; cursor: pointer; color: #bbb; }
         .opinion-layer-banner { font-size: .78rem; line-height: 1.5; padding: 6px 10px; margin: 8px 0; border: 1px solid var(--tno-gold); color: var(--tno-gold); background: color-mix(in srgb, var(--tno-gold) 8%, transparent); }
         .opinion-layer-banner.synced { border: 1px dashed #555; color: #aaa; background: transparent; }
         .op-card { border: 1px dashed #333; padding: 8px 10px; margin: 8px 0; font-size: .8rem; display: flex; flex-direction: column; gap: 4px; }
@@ -878,11 +878,11 @@
         html[data-theme-family="modern"] .op-table th { color: var(--m-text-3, #71717a); }
         html[data-theme-family="modern"] .op-table td { border-top-color: var(--m-border); color: var(--m-text); }
         html[data-theme-family="modern"] .op-table .op-diff { color: #b45309; }
-        html[data-theme-family="modern"] .t61-pop { border-color: var(--m-border-strong); border-radius: 10px; background: var(--m-surface-2); }
-        html[data-theme-family="modern"] .t61-mig { border-top-color: var(--m-border); }
-        html[data-theme-family="modern"] .t61-mig-title { color: var(--m-text-2); font-weight: 600; }
-        html[data-theme-family="modern"] .t61-mig-kind { color: var(--m-text); }
-        html[data-theme-family="modern"] .t61-cit-row input { background: var(--m-surface); border: 1px solid var(--m-border-strong); border-radius: 8px; color: var(--m-text); }
-        html[data-theme-family="modern"] .t61-result { border-color: var(--m-border); border-left-color: #b07d10; border-radius: 8px; }`;
+        html[data-theme-family="modern"] .people-pop { border-color: var(--m-border-strong); border-radius: 10px; background: var(--m-surface-2); }
+        html[data-theme-family="modern"] .people-mig { border-top-color: var(--m-border); }
+        html[data-theme-family="modern"] .people-mig-title { color: var(--m-text-2); font-weight: 600; }
+        html[data-theme-family="modern"] .people-mig-kind { color: var(--m-text); }
+        html[data-theme-family="modern"] .people-cit-row input { background: var(--m-surface); border: 1px solid var(--m-border-strong); border-radius: 8px; color: var(--m-text); }
+        html[data-theme-family="modern"] .people-result { border-color: var(--m-border); border-left-color: #b07d10; border-radius: 8px; }`;
     document.head.appendChild(css);
 })();

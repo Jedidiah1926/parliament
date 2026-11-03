@@ -29,7 +29,7 @@
     const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
     const uid = () => 'k' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
     const partyById = id => parties.find(p => String(p.id) === String(id)) || null;
-    const T62 = () => window.T62 || null;
+    const HemiCoup = () => window.HemiCoup || null;
     const isInd = p => p && p.ideologyId === 9999;
     const activeParty = p => p && p.status !== 'banned' && p.status !== 'dissolved' && !isInd(p);
     const support = pid => Math.max(0, Number(elecStore?.house?.[pid]?.prob) || 0);
@@ -89,7 +89,7 @@
     const backingSupport = c => backers(c).reduce((a, p) => a + support(p.id), 0);
     const strength = c => backingSeats(c) * 100 + backingSupport(c) * 0.5;
     const monarchX = () => S.monarchy ? findClaimant(S.monarchy.claimantId) : null;
-    const militaryLoyalty = () => { const m = T62() && T62().military; return m && m.length ? m.reduce((a, x) => a + (Number(x.loyalty) || 0), 0) / m.length : null; };
+    const militaryLoyalty = () => { const m = HemiCoup() && HemiCoup().military; return m && m.length ? m.reduce((a, x) => a + (Number(x.loyalty) || 0), 0) / m.length : null; };
 
     // ---- 정부 형태 바꾸기 ----
     function rerenderGov() {
@@ -105,7 +105,7 @@
     }
     function setHolders(holder) { Object.keys(emergencyPowers).forEach(k => { try { setEmergencyHolder(k, holder); } catch (e) { emergencyPowers[k].holder = holder; } }); }
     function declareMartialLaw() {
-        if (T62()) { T62().declareMartialLaw(); return; }
+        if (HemiCoup()) { HemiCoup().declareMartialLaw(); return; }
         emergencyPowers.martialLaw.holder = 'president'; emergencyPowers.martialLaw.suspendParliament = true; emergencyPowers.martialLaw.active = true;
         try { renderEmergencyPowers(); applyMartialLawEffects(); } catch (e) { /* 화면 준비 전 */ }
     }
@@ -126,9 +126,9 @@
         try { setVetoHolder('none'); } catch (e) { /* 없음 */ }
     }
     function startMonarchy(x, kind) {
-        const t61 = T62();
+        const coupApi = HemiCoup();
         const fx = [];
-        if (t61 && t61.junta) { t61.endJunta('revolution'); fx.push('군정 붕괴'); }
+        if (coupApi && coupApi.junta) { coupApi.endJunta('revolution'); fx.push('군정 붕괴'); }
         S.monarchy = { kind, title: x.c.gender === 'f' ? '여왕' : '국왕', since: formatNationDate(), prevGovType: govType,
             prevPresident: { name: president.name || '', photo: president.photo || '', partyId: president.partyId ?? null },
             prevVeto: typeof vetoHolder !== 'undefined' ? vetoHolder : 'none',
@@ -203,7 +203,7 @@
             ] };
     }
     function cutSupport(pid, factor) {
-        if (T62()) { T62().cutSupport(pid, factor); return; }
+        if (HemiCoup()) { HemiCoup().cutSupport(pid, factor); return; }
         chamberList().forEach(ch => { const st = elecStore?.[ch]?.[pid]; if (st) st.prob = Math.round((Number(st.prob) || 0) * factor * 10) / 10; });
     }
 
@@ -215,13 +215,13 @@
         const bs = backers(x.c);
         add(`지지 정당 지지율 (${Math.round(backingSupport(x.c))}%)`, backingSupport(x.c) * 0.4);
         add(`지지 정당 의석 (${Math.round(backingSeats(x.c) * 100)}%)`, backingSeats(x.c) * 25);
-        const t61 = T62();
-        if (t61 && t61.military && t61.military.length) {
-            const aligned = t61.military.filter(m => bs.some(p => String(p.id) === String(m.partyId)));
+        const coupApi = HemiCoup();
+        if (coupApi && coupApi.military && coupApi.military.length) {
+            const aligned = coupApi.military.filter(m => bs.some(p => String(p.id) === String(m.partyId)));
             if (aligned.length) add(`가까운 장성 ${aligned.length}명`, Math.min(25, 8 * aligned.length));
-            add('군 지휘부의 불만', 20 * t61.militaryDisloyalty());
+            add('군 지휘부의 불만', 20 * coupApi.militaryDisloyalty());
         }
-        if (t61 && t61.junta) add('군정에 대한 반감', 10);
+        if (coupApi && coupApi.junta) add('군정에 대한 반감', 10);
         add('정부 · 여당의 의석', -20 * seatShare(p => isGovParty(p) && !bs.includes(p)));
         return { factors: f, chance: clamp(Math.round(f.reduce((a, y) => a + y.v, 0)), 5, 90) };
     }
@@ -255,11 +255,11 @@
         const e = { id: uid(), at: Date.now(), date: formatNationDate(), kind, who, chance, success, effects };
         S.log.unshift(e); ui.lastId = e.id;
     }
-    function done() { rerenderGov(); if (T62()) T62().refresh(); refresh(); }
+    function done() { rerenderGov(); if (HemiCoup()) HemiCoup().refresh(); refresh(); }
     function restore() {
         const x = findClaimant(ui.claimantId);
         if (!x) { showCustomAlert('왕위에 올릴 주장자를 고르세요 (위 "왕가와 왕위 주장자"에서 먼저 만듭니다).'); return; }
-        if (window.T63 && window.T63.partyState) { showCustomAlert('당-국가 체제에서는 먼저 민주 혁명으로 체제를 무너뜨려야 합니다.'); return; }
+        if (window.HemiRevolution && window.HemiRevolution.partyState) { showCustomAlert('당-국가 체제에서는 먼저 민주 혁명으로 체제를 무너뜨려야 합니다.'); return; }
         if (ui.method === 'parliament') {
             const share = backingSeats(x.c);
             if (share <= 0.5) { showCustomAlert(`의회 결의로 왕정을 되살리려면 ${x.c.name || '주장자'}을(를) 지지하는 정당이 하원 과반이어야 합니다 (지금 ${Math.round(share * 100)}%). 쿠데타로 해 보세요.`); return; }
@@ -293,7 +293,7 @@
     // 디버그 모드: 왕정복고 · 친위 쿠데타 없이 바로 전제군주정 (설정 › 기타 설정 › 숨겨진 정부 형태 보이기, js/devmode.js)
     function debugAbsolute() {
         if (S.monarchy && S.monarchy.kind === 'absolute') { showCustomAlert('이미 전제군주정입니다 — 내각 › 왕실의 입헌 개혁 · 공화 혁명으로 벗어날 수 있어요.'); return; }
-        if (window.T63 && window.T63.partyState) { showCustomAlert('당-국가 체제에서는 먼저 민주 혁명으로 체제를 무너뜨려야 합니다.'); return; }
+        if (window.HemiRevolution && window.HemiRevolution.partyState) { showCustomAlert('당-국가 체제에서는 먼저 민주 혁명으로 체제를 무너뜨려야 합니다.'); return; }
         const x = S.monarchy ? monarchX() : (findClaimant(ui.claimantId) || allClaimants()[0] || null);
         if (!x) { showCustomAlert('왕위에 올릴 주장자가 없습니다 — 내각 › 왕실의 "왕가와 왕위 주장자"에서 먼저 만드세요.'); return; }
         showCustomConfirm(`디버그 — 바로 전제군주정으로 바꿉니다 (${S.monarchy ? `${S.monarchy.title} ${x.c.name}` : claimantLabel(x)}). 계속하시겠습니까?`, () => {
@@ -401,9 +401,9 @@
         if (how === 'parliament') rivalWins = backingSeats(r.c) > backingSeats(x.c);
         else {
             let w = sr / Math.max(1, sx + sr);
-            const t61 = T62();
-            if (t61 && t61.military && t61.military.length) {
-                const al = side => t61.military.filter(m => backers(side).some(p => String(p.id) === String(m.partyId))).length;
+            const coupApi = HemiCoup();
+            if (coupApi && coupApi.military && coupApi.military.length) {
+                const al = side => coupApi.military.filter(m => backers(side).some(p => String(p.id) === String(m.partyId))).length;
                 w = clamp(w + (al(r.c) - al(x.c)) * 0.08, 0.05, 0.95);
             }
             chance = Math.round(w * 100);
@@ -457,12 +457,12 @@
         const r = origCab.apply(this, arguments);
         const grid = document.getElementById('cabinetDisplayGrid');
         if (grid) {
-            let b = document.getElementById('t66Banner');
+            let b = document.getElementById('royalBanner');
             const x = monarchX();
             if (S.monarchy) {
-                if (!b) { b = el('<div id="t66Banner" class="t66-banner"></div>'); grid.parentElement.insertBefore(b, grid); }
+                if (!b) { b = el('<div id="royalBanner" class="royal-banner"></div>'); grid.parentElement.insertBefore(b, grid); }
                 b.innerHTML = `👑 ${S.monarchy.kind === 'absolute' ? '전제군주정' : '입헌군주제'} — ${esc(S.monarchy.title)} <b>${esc(x ? x.c.name : '(공석)')}</b>${x ? ` · ${esc(x.d.name)}` : ''}${S.monarchy.since ? ` · ${esc(S.monarchy.since)}부터` : ''}${S.dispute ? ' · ⚔ 계승 분쟁 중' : ''}`;
-                b.style.setProperty('--t66-c', (x && x.d.color) || '#7a1f2b');
+                b.style.setProperty('--royal-c', (x && x.d.color) || '#7a1f2b');
             } else if (b) b.remove();
         }
         return r;
@@ -470,9 +470,9 @@
 
     // ---- 화면 ----
     function chanceBox({ factors, chance }) {
-        return `<div class="t66-chance"><div class="t66-chance-head"><span>성공 확률</span><b>${chance}%</b></div>
-            <div class="t66-bar"><span style="width:${chance}%"></span></div>
-            ${factors.map(f => `<div class="t66-factor"><span>${esc(f.label)}</span><span class="${f.v >= 0 ? 't66-plus' : 't66-minus'}">${f.v >= 0 ? '+' : ''}${f.v}%p</span></div>`).join('')}</div>`;
+        return `<div class="royal-chance"><div class="royal-chance-head"><span>성공 확률</span><b>${chance}%</b></div>
+            <div class="royal-bar"><span style="width:${chance}%"></span></div>
+            ${factors.map(f => `<div class="royal-factor"><span>${esc(f.label)}</span><span class="${f.v >= 0 ? 'royal-plus' : 'royal-minus'}">${f.v >= 0 ? '+' : ''}${f.v}%p</span></div>`).join('')}</div>`;
     }
     const KIND_NAME = { restore: '왕정복고 (의회 결의)', restoreCoup: '왕정복고 (쿠데타)', selfCoup: '친위 쿠데타', reform: '입헌 개혁', republic: '공화 혁명', succession: '계승', dispute: '계승 분쟁', disputeVote: '분쟁 — 의회 표결', disputeWar: '분쟁 — 내전' };
     function dynastiesHtml() {
@@ -480,35 +480,35 @@
         return S.dynasties.map(d => {
             const line = lineOf(d, mx && mx.c.id);
             const rank = id => { const i = line.findIndex(c => c.id === id); return i < 0 ? null : i + 1; };
-            return `<div class="t66-dyn" style="--t66-c:${esc(d.color)}" data-dyn="${esc(d.id)}">
-                <div class="t66-row">
+            return `<div class="royal-dyn" style="--royal-c:${esc(d.color)}" data-dyn="${esc(d.id)}">
+                <div class="royal-row">
                     <input type="color" value="${esc(d.color)}" data-df="color" title="왕가 색">
-                    <input type="text" value="${esc(d.name)}" data-df="name" placeholder="왕가 이름 (예: 호엔촐레른가)" class="t66-grow">
-                    <button type="button" class="t66-x" data-dact="del" title="왕가 지우기">✕</button>
+                    <input type="text" value="${esc(d.name)}" data-df="name" placeholder="왕가 이름 (예: 호엔촐레른가)" class="royal-grow">
+                    <button type="button" class="royal-x" data-dact="del" title="왕가 지우기">✕</button>
                 </div>
-                <div class="t66-row"><span class="t66-dim">계승 규칙</span><select data-df="rule" class="t66-grow">${Object.entries(RULES).map(([k, t]) => `<option value="${k}" ${d.rule === k ? 'selected' : ''}>${t}</option>`).join('')}</select></div>
-                <div id="t66Cl_${esc(d.id)}" class="t66-claimants">
+                <div class="royal-row"><span class="royal-dim">계승 규칙</span><select data-df="rule" class="royal-grow">${Object.entries(RULES).map(([k, t]) => `<option value="${k}" ${d.rule === k ? 'selected' : ''}>${t}</option>`).join('')}</select></div>
+                <div id="royalCl_${esc(d.id)}" class="royal-claimants">
                 ${d.claimants.map(c => {
                     const isKing = mx && mx.c.id === c.id, r = rank(c.id);
-                    return `<div class="t66-cl ${isKing ? 'king' : ''}" data-cl="${esc(c.id)}">
-                        <span class="drag-handle t66-handle" title="끌어서 순서(출생 순) 바꾸기">⋮⋮</span>
-                        <label class="leader-photo-box t66-photo" title="사진">${c.photo ? `<img src="${c.photo}" alt="">` : '<div class="photo-ph">👤</div>'}<input type="file" accept="image/*" data-cf="photo"></label>
-                        <div class="t66-cl-main">
-                            <div class="t66-row">
-                                <span class="t66-rank">${isKing ? '👑' : r ? `${r}위` : '—'}</span>
-                                <input type="text" value="${esc(c.name)}" data-cf="name" placeholder="이름" class="t66-grow">
+                    return `<div class="royal-cl ${isKing ? 'king' : ''}" data-cl="${esc(c.id)}">
+                        <span class="drag-handle royal-handle" title="끌어서 순서(출생 순) 바꾸기">⋮⋮</span>
+                        <label class="leader-photo-box royal-photo" title="사진">${c.photo ? `<img src="${c.photo}" alt="">` : '<div class="photo-ph">👤</div>'}<input type="file" accept="image/*" data-cf="photo"></label>
+                        <div class="royal-cl-main">
+                            <div class="royal-row">
+                                <span class="royal-rank">${isKing ? '👑' : r ? `${r}위` : '—'}</span>
+                                <input type="text" value="${esc(c.name)}" data-cf="name" placeholder="이름" class="royal-grow">
                                 <select data-cf="gender" title="성별"><option value="m" ${c.gender !== 'f' ? 'selected' : ''}>남</option><option value="f" ${c.gender === 'f' ? 'selected' : ''}>여</option></select>
-                                <button type="button" class="t66-x" data-cact="del" title="빼기">✕</button>
+                                <button type="button" class="royal-x" data-cact="del" title="빼기">✕</button>
                             </div>
                             <input type="text" value="${esc(c.title)}" data-cf="title" placeholder="칭호 (예: 프로이센 왕자)">
-                            <div class="t66-chips">${(c.partyIds || []).map(pid => { const p = partyById(pid); return p ? `<span class="t66-chip" style="--pc:${esc(p.color)}">${esc(p.abbr || p.name)}<button type="button" data-unback="${esc(pid)}" title="지지 철회">×</button></span>` : ''; }).join('')}
-                                <select data-cf="back" class="t66-back"><option value="">+ 지지 정당</option>${parties.filter(p => !isInd(p) && !(c.partyIds || []).map(String).includes(String(p.id))).map(p => `<option value="${esc(p.id)}">${esc(p.name)}</option>`).join('')}</select>
+                            <div class="royal-chips">${(c.partyIds || []).map(pid => { const p = partyById(pid); return p ? `<span class="royal-chip" style="--pc:${esc(p.color)}">${esc(p.abbr || p.name)}<button type="button" data-unback="${esc(pid)}" title="지지 철회">×</button></span>` : ''; }).join('')}
+                                <select data-cf="back" class="royal-back"><option value="">+ 지지 정당</option>${parties.filter(p => !isInd(p) && !(c.partyIds || []).map(String).includes(String(p.id))).map(p => `<option value="${esc(p.id)}">${esc(p.name)}</option>`).join('')}</select>
                             </div>
                         </div>
                     </div>`;
                 }).join('')}
                 </div>
-                <button type="button" class="t66-add" data-dact="addcl">[+] 주장자 추가</button>
+                <button type="button" class="royal-add" data-dact="addcl">[+] 주장자 추가</button>
             </div>`;
         }).join('');
     }
@@ -521,14 +521,14 @@
         let action = '';
         if (!S.monarchy) {
             const x = findClaimant(ui.claimantId);
-            action = `<div class="t66-card">
-                <div class="t66-head">👑 왕정복고</div>
-                <div class="t66-dim">공화정에서 군주제를 되살립니다. 주장자를 지지하는 정당이 하원 과반이면 의회 결의로, 아니면 왕당파 쿠데타로.</div>
-                ${allClaimants().length ? `<select data-ui="claimantId">${claimOpts(ui.claimantId)}</select>` : '<div class="t66-dim">먼저 아래에서 왕가와 주장자를 만드세요.</div>'}
+            action = `<div class="royal-card">
+                <div class="royal-head">👑 왕정복고</div>
+                <div class="royal-dim">공화정에서 군주제를 되살립니다. 주장자를 지지하는 정당이 하원 과반이면 의회 결의로, 아니면 왕당파 쿠데타로.</div>
+                ${allClaimants().length ? `<select data-ui="claimantId">${claimOpts(ui.claimantId)}</select>` : '<div class="royal-dim">먼저 아래에서 왕가와 주장자를 만드세요.</div>'}
                 <div class="system-radio-group"><button type="button" class="system-radio-btn ${ui.method === 'parliament' ? 'active' : ''}" data-method="parliament">의회 결의</button><button type="button" class="system-radio-btn ${ui.method === 'coup' ? 'active' : ''}" data-method="coup">쿠데타</button></div>
-                ${ui.method === 'parliament' ? `<div class="t66-dim">지지 정당 의석: <b>${x ? Math.round(backingSeats(x.c) * 100) : 0}%</b> — 50%를 넘으면 주사위 없이 입헌군주제로</div>`
+                ${ui.method === 'parliament' ? `<div class="royal-dim">지지 정당 의석: <b>${x ? Math.round(backingSeats(x.c) * 100) : 0}%</b> — 50%를 넘으면 주사위 없이 입헌군주제로</div>`
                     : `<div class="system-radio-group"><button type="button" class="system-radio-btn ${ui.kind === 'constitutional' ? 'active' : ''}" data-kind="constitutional">입헌군주제</button><button type="button" class="system-radio-btn ${ui.kind === 'absolute' ? 'active' : ''}" data-kind="absolute">전제군주정</button></div>${chanceBox(restorationChance(x))}`}
-                <button type="button" class="t66-go" data-act="restore" ${allClaimants().length ? '' : 'disabled'}>👑 왕정복고</button>
+                <button type="button" class="royal-go" data-act="restore" ${allClaimants().length ? '' : 'disabled'}>👑 왕정복고</button>
             </div>`;
         } else {
             const abs = S.monarchy.kind === 'absolute';
@@ -536,36 +536,36 @@
             const rivals = allClaimants().filter(y => !mx || y.c.id !== mx.c.id);
             if (!rivals.some(y => y.c.id === ui.rivalId)) ui.rivalId = (rivals[0] || { c: {} }).c.id || '';
             const repParties = parties.filter(activeParty);
-            action = `<div class="t66-card t66-reign" style="--t66-c:${esc((mx && mx.d.color) || '#7a1f2b')}">
-                <div class="t66-head">👑 ${abs ? '전제군주정' : '입헌군주제'}</div>
-                <div class="t66-row"><span class="t66-dim">칭호</span><select data-ui="title">${[...new Set([S.monarchy.title, ...TITLES])].map(t => `<option ${t === S.monarchy.title ? 'selected' : ''}>${esc(t)}</option>`).join('')}</select>
-                    <b class="t66-grow">${esc(mx ? mx.c.name : '(공석)')}</b><span class="t66-dim">${esc(mx ? mx.d.name : '')}${S.monarchy.since ? ` · ${esc(S.monarchy.since)}부터` : ''}</span></div>
-                <div class="t66-dim">${abs ? '왕이 총리를 임명하고(내각 › 총리) 거부권 · 비상 권한을 모두 쥡니다. 의회는 협찬 기관입니다.' : '국왕은 상징적 국가원수이고 실권은 총리에게 있습니다 (의원내각제처럼).'}</div>
-                <div class="t66-sub">계승</div>
-                <div class="t66-dim">다음 계승자: <b>${(() => { const n = mx ? lineOf(mx.d, mx.c.id)[0] : null; return n ? esc(n.name || '(이름 없음)') : '없음 — 다른 왕가에서'; })()}</b> (${esc(mx ? RULES[mx.d.rule] || '' : '')})</div>
-                <button type="button" class="t66-btn" data-act="demise">⚱ 서거 · 퇴위 → 다음 계승자 즉위</button>
-                <div class="t66-sub">계승 분쟁</div>
-                ${rival ? `<div class="t66-vs"><span>👑 ${esc(mx ? mx.c.name : '')}<small>지지 의석 ${mx ? Math.round(backingSeats(mx.c) * 100) : 0}%</small></span><b>vs</b><span>⚔ ${esc(rival.c.name)}<small>지지 의석 ${Math.round(backingSeats(rival.c) * 100)}%</small></span></div>
-                    <div class="t66-row"><button type="button" class="t66-btn" data-act="vote">의회 표결로 결판</button><button type="button" class="t66-btn" data-act="war">내전으로 결판 (주사위)</button></div>`
-                    : rivals.length ? `<div class="t66-row"><select data-ui="rivalId" class="t66-grow">${rivals.map(({ c, d }) => `<option value="${esc(c.id)}" ${c.id === ui.rivalId ? 'selected' : ''}>${esc(c.name || '(이름 없음)')} · ${esc(d.name)}</option>`).join('')}</select><button type="button" class="t66-btn" data-act="dispute">정통 왕위 주장</button></div>`
-                    : '<div class="t66-dim">왕위를 다툴 다른 주장자가 없습니다.</div>'}
-                <div class="t66-sub">${abs ? '입헌 개혁 · 공화 혁명' : '친위 쿠데타 · 공화 혁명'}</div>
-                ${abs ? '<button type="button" class="t66-btn" data-act="reform">⚖ 입헌 개혁 (입헌군주제로)</button>'
-                    : `${chanceBox(selfCoupChance())}<button type="button" class="t66-btn" data-act="selfcoup">⚔ 친위 쿠데타 (전제군주정으로)</button>`}
-                <div class="t66-row"><select data-ui="repParty" class="t66-grow"><option value="">— 시민 혁명 (정당 없음) —</option>${repParties.map(p => `<option value="${esc(p.id)}" ${String(p.id) === String(ui.repParty) ? 'selected' : ''}>${esc(p.name)} · 지지율 ${support(p.id)}%</option>`).join('')}</select>
+            action = `<div class="royal-card royal-reign" style="--royal-c:${esc((mx && mx.d.color) || '#7a1f2b')}">
+                <div class="royal-head">👑 ${abs ? '전제군주정' : '입헌군주제'}</div>
+                <div class="royal-row"><span class="royal-dim">칭호</span><select data-ui="title">${[...new Set([S.monarchy.title, ...TITLES])].map(t => `<option ${t === S.monarchy.title ? 'selected' : ''}>${esc(t)}</option>`).join('')}</select>
+                    <b class="royal-grow">${esc(mx ? mx.c.name : '(공석)')}</b><span class="royal-dim">${esc(mx ? mx.d.name : '')}${S.monarchy.since ? ` · ${esc(S.monarchy.since)}부터` : ''}</span></div>
+                <div class="royal-dim">${abs ? '왕이 총리를 임명하고(내각 › 총리) 거부권 · 비상 권한을 모두 쥡니다. 의회는 협찬 기관입니다.' : '국왕은 상징적 국가원수이고 실권은 총리에게 있습니다 (의원내각제처럼).'}</div>
+                <div class="royal-sub">계승</div>
+                <div class="royal-dim">다음 계승자: <b>${(() => { const n = mx ? lineOf(mx.d, mx.c.id)[0] : null; return n ? esc(n.name || '(이름 없음)') : '없음 — 다른 왕가에서'; })()}</b> (${esc(mx ? RULES[mx.d.rule] || '' : '')})</div>
+                <button type="button" class="royal-btn" data-act="demise">⚱ 서거 · 퇴위 → 다음 계승자 즉위</button>
+                <div class="royal-sub">계승 분쟁</div>
+                ${rival ? `<div class="royal-vs"><span>👑 ${esc(mx ? mx.c.name : '')}<small>지지 의석 ${mx ? Math.round(backingSeats(mx.c) * 100) : 0}%</small></span><b>vs</b><span>⚔ ${esc(rival.c.name)}<small>지지 의석 ${Math.round(backingSeats(rival.c) * 100)}%</small></span></div>
+                    <div class="royal-row"><button type="button" class="royal-btn" data-act="vote">의회 표결로 결판</button><button type="button" class="royal-btn" data-act="war">내전으로 결판 (주사위)</button></div>`
+                    : rivals.length ? `<div class="royal-row"><select data-ui="rivalId" class="royal-grow">${rivals.map(({ c, d }) => `<option value="${esc(c.id)}" ${c.id === ui.rivalId ? 'selected' : ''}>${esc(c.name || '(이름 없음)')} · ${esc(d.name)}</option>`).join('')}</select><button type="button" class="royal-btn" data-act="dispute">정통 왕위 주장</button></div>`
+                    : '<div class="royal-dim">왕위를 다툴 다른 주장자가 없습니다.</div>'}
+                <div class="royal-sub">${abs ? '입헌 개혁 · 공화 혁명' : '친위 쿠데타 · 공화 혁명'}</div>
+                ${abs ? '<button type="button" class="royal-btn" data-act="reform">⚖ 입헌 개혁 (입헌군주제로)</button>'
+                    : `${chanceBox(selfCoupChance())}<button type="button" class="royal-btn" data-act="selfcoup">⚔ 친위 쿠데타 (전제군주정으로)</button>`}
+                <div class="royal-row"><select data-ui="repParty" class="royal-grow"><option value="">— 시민 혁명 (정당 없음) —</option>${repParties.map(p => `<option value="${esc(p.id)}" ${String(p.id) === String(ui.repParty) ? 'selected' : ''}>${esc(p.name)} · 지지율 ${support(p.id)}%</option>`).join('')}</select>
                     <select data-ui="repGov">${['parliamentary', 'presidential', 'semi'].map(g => `<option value="${g}" ${ui.repGov === g ? 'selected' : ''}>${GOV_NAME[g]}</option>`).join('')}</select></div>
                 ${chanceBox(republicChance(ui.repParty))}
-                <button type="button" class="t66-go" data-act="republic">✊ 공화 혁명</button>
+                <button type="button" class="royal-go" data-act="republic">✊ 공화 혁명</button>
             </div>`;
         }
         const last = S.log.find(x => x.id === ui.lastId);
-        box.innerHTML = `<div class="t66-intro">왕가와 왕위 주장자를 정하고, 왕정복고 · 계승 · 계승 분쟁 · 친위 쿠데타 · 공화 혁명을 다룹니다. 주장자 순서(⋮⋮ 끌기)가 출생 순이고, 계승 규칙에 따라 계승 순위가 정해져요.</div>
+        box.innerHTML = `<div class="royal-intro">왕가와 왕위 주장자를 정하고, 왕정복고 · 계승 · 계승 분쟁 · 친위 쿠데타 · 공화 혁명을 다룹니다. 주장자 순서(⋮⋮ 끌기)가 출생 순이고, 계승 규칙에 따라 계승 순위가 정해져요.</div>
             ${action}
-            ${last ? `<div class="t66-result ${last.success ? 'ok' : 'fail'}"><div class="t66-head">${last.success ? '✔' : '✘'} ${esc(KIND_NAME[last.kind] || last.kind)}${last.chance != null ? ` <span class="t66-dim">(확률 ${last.chance}%)</span>` : ''}</div><ul>${(last.effects || []).map(e => `<li>${esc(e)}</li>`).join('')}</ul></div>` : ''}
-            <div class="t66-sub">왕가와 왕위 주장자</div>
+            ${last ? `<div class="royal-result ${last.success ? 'ok' : 'fail'}"><div class="royal-head">${last.success ? '✔' : '✘'} ${esc(KIND_NAME[last.kind] || last.kind)}${last.chance != null ? ` <span class="royal-dim">(확률 ${last.chance}%)</span>` : ''}</div><ul>${(last.effects || []).map(e => `<li>${esc(e)}</li>`).join('')}</ul></div>` : ''}
+            <div class="royal-sub">왕가와 왕위 주장자</div>
             ${dynastiesHtml()}
-            <div class="t66-row"><button type="button" class="t66-add" data-act="adddyn">[+] 왕가 추가</button>${S.dynasties.length ? '' : '<button type="button" class="t66-add" data-act="seed">[+] 예시 왕가 만들기</button>'}</div>
-            ${S.log.length ? `<details class="t66-log"><summary>왕실 기록 (${S.log.length})</summary>${S.log.map(x => `<div class="t66-log-row"><span class="${x.success ? 't66-plus' : 't66-minus'}">${x.success ? '✔' : '✘'}</span><span>${esc(KIND_NAME[x.kind] || x.kind)} · ${esc(x.who || '')}${x.date ? ` · ${esc(x.date)}` : ''}${x.chance != null ? ` · ${x.chance}%` : ''}</span></div>`).join('')}</details>` : ''}`;
+            <div class="royal-row"><button type="button" class="royal-add" data-act="adddyn">[+] 왕가 추가</button>${S.dynasties.length ? '' : '<button type="button" class="royal-add" data-act="seed">[+] 예시 왕가 만들기</button>'}</div>
+            ${S.log.length ? `<details class="royal-log"><summary>왕실 기록 (${S.log.length})</summary>${S.log.map(x => `<div class="royal-log-row"><span class="${x.success ? 'royal-plus' : 'royal-minus'}">${x.success ? '✔' : '✘'}</span><span>${esc(KIND_NAME[x.kind] || x.kind)} · ${esc(x.who || '')}${x.date ? ` · ${esc(x.date)}` : ''}${x.chance != null ? ` · ${x.chance}%` : ''}</span></div>`).join('')}</details>` : ''}`;
         bind(box);
     }
     function bind(box) {
@@ -578,7 +578,7 @@
         on('[data-act="demise"]', demise); on('[data-act="dispute"]', claimDispute); on('[data-act="vote"]', () => resolveDispute('parliament')); on('[data-act="war"]', () => resolveDispute('war'));
         on('[data-act="adddyn"]', () => { S.dynasties.push({ id: uid(), name: '새 왕가', color: PALETTE[S.dynasties.length % PALETTE.length], rule: 'male', claimants: [] }); render(); });
         on('[data-act="seed"]', seed);
-        box.querySelectorAll('.t66-dyn').forEach(card => {
+        box.querySelectorAll('.royal-dyn').forEach(card => {
             const d = S.dynasties.find(x => x.id === card.dataset.dyn); if (!d) return;
             card.querySelectorAll('[data-df]').forEach(i => { i.onchange = () => { d[i.dataset.df] = i.value; render(); rerenderGov(); }; });
             card.querySelector('[data-dact="del"]').onclick = () => {
@@ -586,7 +586,7 @@
                 showCustomConfirm(`"${d.name}" 왕가를 지울까요? 주장자 ${d.claimants.length}명도 함께 지워집니다.`, () => { S.dynasties = S.dynasties.filter(x => x !== d); render(); });
             };
             card.querySelector('[data-dact="addcl"]').onclick = () => { d.claimants.push({ id: uid(), name: '', title: '', gender: 'm', photo: '', partyIds: [] }); render(); };
-            card.querySelectorAll('.t66-cl').forEach(row => {
+            card.querySelectorAll('.royal-cl').forEach(row => {
                 const c = d.claimants.find(x => x.id === row.dataset.cl); if (!c) return;
                 row.querySelectorAll('[data-cf]').forEach(i => {
                     const f = i.dataset.cf;
@@ -599,8 +599,8 @@
                     if (monarchX() && monarchX().c === c) { showCustomAlert('지금 왕위에 있는 사람은 뺄 수 없습니다 — "서거 · 퇴위"를 쓰세요.'); return; }
                     d.claimants = d.claimants.filter(x => x !== c); render();
                 };
-                const h = row.querySelector('.t66-handle');
-                if (h && typeof startDragReorder === 'function') startDragReorder(h, `t66Cl_${d.id}`, '.t66-cl', d.claimants, render);
+                const h = row.querySelector('.royal-handle');
+                if (h && typeof startDragReorder === 'function') startDragReorder(h, `royalCl_${d.id}`, '.royal-cl', d.claimants, render);
             });
         });
     }
@@ -631,7 +631,7 @@
         render();
     }
 
-    window.T66 = { get monarchy() { return S.monarchy; }, get dispute() { return S.dispute; }, get log() { return S.log; }, get dynasties() { return S.dynasties; } };
+    window.HemiRoyal = { get monarchy() { return S.monarchy; }, get dispute() { return S.dispute; }, get log() { return S.log; }, get dynasties() { return S.dynasties; } };
     function refresh() {
         render();
         if (window.HemiDev && HemiDev.hiddenGov) HemiDev.hiddenGov.render();
@@ -645,67 +645,67 @@
 
     const style = document.createElement('style');
     style.textContent = `
-        .t66-intro { color: #777; font-size: .78rem; line-height: 1.6; margin: 8px 0 10px; }
-        .t66-row { display: flex; align-items: center; gap: 6px; margin: 4px 0; flex-wrap: wrap; }
-        .t66-grow { flex: 1; min-width: 0; }
-        .t66-dim { color: #777; font-size: .8rem; }
-        .t66-sub { color: #888; font-size: .78rem; margin: 12px 0 6px; letter-spacing: 1px; }
-        .t66-card { border: 1px solid #333; padding: 10px; margin: 6px 0 12px; background: rgba(255,255,255,.02); display: flex; flex-direction: column; gap: 6px; }
-        .t66-card select { width: 100%; box-sizing: border-box; }
-        .t66-reign { border-color: var(--t66-c); box-shadow: inset 4px 0 0 var(--t66-c); }
-        .t66-head { font-size: 1rem; color: #e0b030; letter-spacing: 1px; }
-        .t66-chance { border: 1px solid #333; padding: 8px; background: rgba(255,255,255,.02); }
-        .t66-chance-head { display: flex; justify-content: space-between; align-items: baseline; color: #aaa; }
-        .t66-chance-head b { font-size: 1.4rem; color: #e0b030; }
-        .t66-bar { height: 7px; background: #222; margin: 5px 0 6px; } .t66-bar span { display: block; height: 100%; background: #e0b030; }
-        .t66-factor { display: flex; justify-content: space-between; gap: 8px; font-size: .76rem; color: #999; padding: 1px 0; }
-        .t66-plus { color: #5fbf7f; } .t66-minus { color: #e06060; }
-        .t66-go { width: 100%; cursor: pointer; font-family: inherit; font-size: 1rem; padding: 9px; background: transparent; border: 2px solid #e0b030; color: #e0b030; letter-spacing: 1px; }
-        .t66-go:disabled { opacity: .4; cursor: default; }
-        .t66-btn, .t66-add { cursor: pointer; font-family: inherit; font-size: .82rem; padding: 5px 10px; background: transparent; border: 1px solid #555; color: #ccc; }
-        .t66-add { border-style: dashed; color: #888; }
-        .t66-x { cursor: pointer; background: transparent; border: 1px solid #333; color: #777; font-family: inherit; padding: 2px 8px; }
-        .t66-vs { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 8px; border: 1px dashed #555; }
-        .t66-vs span { display: flex; flex-direction: column; } .t66-vs small { color: #888; font-size: .72rem; } .t66-vs b { color: #e06060; }
-        .t66-dyn { border: 1px solid #333; border-left: 5px solid var(--t66-c); padding: 8px; margin-bottom: 10px; background: rgba(255,255,255,.02); }
-        .t66-dyn input[type=color] { width: 34px; height: 28px; padding: 0; border: 1px solid #333; background: none; }
-        .t66-claimants { display: flex; flex-direction: column; gap: 6px; margin: 6px 0; }
-        .t66-cl { display: flex; gap: 8px; align-items: flex-start; padding: 6px; border: 1px solid #2a2a2a; background: rgba(0,0,0,.2); }
-        .t66-cl.king { border-color: #e0b030; box-shadow: 0 0 8px rgba(224,176,48,.25); }
-        .t66-handle { align-self: center; }
-        .t66-photo { width: 44px; height: 56px; flex-shrink: 0; } .t66-photo img { width: 100%; height: 100%; object-fit: cover; }
-        .t66-cl-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
-        .t66-cl-main input[type=text] { min-width: 0; box-sizing: border-box; }
-        .t66-cl-main > input[type=text] { width: 100%; }
-        .t66-cl-main .t66-row { flex-wrap: nowrap; margin: 0; }
-        .t66-cl-main .t66-row select { width: auto; flex: 0 0 auto; min-width: 0; padding-left: 4px; padding-right: 4px; }
-        .t66-cl-main .t66-row .t66-x { flex: 0 0 auto; }
-        .t66-chips select.t66-back { width: auto; }
-        .t66-rank { min-width: 2.2em; font-size: .78rem; color: #e0b030; text-align: center; }
-        .t66-chips { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
-        .t66-chip { display: inline-flex; align-items: center; gap: 3px; font-size: .72rem; padding: 1px 4px 1px 6px; border: 1px solid var(--pc); color: #ddd; border-left-width: 4px; }
-        .t66-chip button { cursor: pointer; background: none; border: none; color: #888; padding: 0 2px; font-family: inherit; }
-        .t66-back { font-size: .74rem; max-width: 9.5em; }
-        .t66-result { margin: 4px 0 10px; padding: 8px 10px; border: 1px solid #333; border-left: 4px solid #888; }
-        .t66-result.ok { border-left-color: #5fbf7f; } .t66-result.fail { border-left-color: #e06060; }
-        .t66-result ul { margin: 6px 0 0 18px; padding: 0; font-size: .8rem; color: #bbb; }
-        .t66-log { margin-top: 12px; font-size: .82rem; } .t66-log summary { cursor: pointer; color: #999; }
-        .t66-log-row { display: flex; gap: 6px; padding: 3px 0; color: #aaa; border-bottom: 1px solid #1c1c1c; }
-        .t66-banner { margin: 0 0 10px; padding: 8px 12px; border: 1px solid var(--t66-c, #7a1f2b); border-left-width: 5px; color: #e0b030; font-size: .9rem; background: color-mix(in srgb, var(--t66-c, #7a1f2b) 18%, transparent); letter-spacing: 1px; }
-        html[data-theme-family="modern"] .t66-intro, html[data-theme-family="modern"] .t66-dim { color: var(--m-text-3); }
-        html[data-theme-family="modern"] .t66-card, html[data-theme-family="modern"] .t66-dyn, html[data-theme-family="modern"] .t66-chance { border-color: var(--m-border); border-radius: 12px; background: var(--m-surface-2); }
-        html[data-theme-family="modern"] .t66-reign { border-color: var(--t66-c); }
-        html[data-theme-family="modern"] .t66-dyn { border-left: 5px solid var(--t66-c); }
-        html[data-theme-family="modern"] .t66-cl { border-color: var(--m-border); background: var(--m-surface); border-radius: 8px; }
-        html[data-theme-family="modern"] .t66-head, html[data-theme-family="modern"] .t66-chance-head b, html[data-theme-family="modern"] .t66-rank { color: #b07d10; }
-        html[data-theme-family="modern"] .t66-bar { background: var(--m-border); border-radius: 4px; overflow: hidden; } html[data-theme-family="modern"] .t66-bar span { background: #c9971a; }
-        html[data-theme-family="modern"] .t66-factor, html[data-theme-family="modern"] .t66-chance-head { color: var(--m-text-2); }
-        html[data-theme-family="modern"] .t66-go { border-color: #c9971a; color: #b07d10; border-radius: 12px; font-weight: 600; letter-spacing: 0; }
-        html[data-theme-family="modern"] .t66-btn, html[data-theme-family="modern"] .t66-add, html[data-theme-family="modern"] .t66-x { border-color: var(--m-border-strong); color: var(--m-text); border-radius: 8px; }
-        html[data-theme-family="modern"] .t66-chip { color: var(--m-text); border-radius: 6px; }
-        html[data-theme-family="modern"] .t66-result { border-color: var(--m-border); border-radius: 10px; background: var(--m-surface); } html[data-theme-family="modern"] .t66-result ul { color: var(--m-text-2); }
-        html[data-theme-family="modern"] .t66-log-row { color: var(--m-text-2); border-bottom-color: var(--m-border); }
-        html[data-theme-family="modern"] .t66-banner { border-radius: 12px; color: #8a6200; background: color-mix(in srgb, var(--t66-c, #7a1f2b) 10%, var(--m-surface)); }
+        .royal-intro { color: #777; font-size: .78rem; line-height: 1.6; margin: 8px 0 10px; }
+        .royal-row { display: flex; align-items: center; gap: 6px; margin: 4px 0; flex-wrap: wrap; }
+        .royal-grow { flex: 1; min-width: 0; }
+        .royal-dim { color: #777; font-size: .8rem; }
+        .royal-sub { color: #888; font-size: .78rem; margin: 12px 0 6px; letter-spacing: 1px; }
+        .royal-card { border: 1px solid #333; padding: 10px; margin: 6px 0 12px; background: rgba(255,255,255,.02); display: flex; flex-direction: column; gap: 6px; }
+        .royal-card select { width: 100%; box-sizing: border-box; }
+        .royal-reign { border-color: var(--royal-c); box-shadow: inset 4px 0 0 var(--royal-c); }
+        .royal-head { font-size: 1rem; color: #e0b030; letter-spacing: 1px; }
+        .royal-chance { border: 1px solid #333; padding: 8px; background: rgba(255,255,255,.02); }
+        .royal-chance-head { display: flex; justify-content: space-between; align-items: baseline; color: #aaa; }
+        .royal-chance-head b { font-size: 1.4rem; color: #e0b030; }
+        .royal-bar { height: 7px; background: #222; margin: 5px 0 6px; } .royal-bar span { display: block; height: 100%; background: #e0b030; }
+        .royal-factor { display: flex; justify-content: space-between; gap: 8px; font-size: .76rem; color: #999; padding: 1px 0; }
+        .royal-plus { color: #5fbf7f; } .royal-minus { color: #e06060; }
+        .royal-go { width: 100%; cursor: pointer; font-family: inherit; font-size: 1rem; padding: 9px; background: transparent; border: 2px solid #e0b030; color: #e0b030; letter-spacing: 1px; }
+        .royal-go:disabled { opacity: .4; cursor: default; }
+        .royal-btn, .royal-add { cursor: pointer; font-family: inherit; font-size: .82rem; padding: 5px 10px; background: transparent; border: 1px solid #555; color: #ccc; }
+        .royal-add { border-style: dashed; color: #888; }
+        .royal-x { cursor: pointer; background: transparent; border: 1px solid #333; color: #777; font-family: inherit; padding: 2px 8px; }
+        .royal-vs { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 8px; border: 1px dashed #555; }
+        .royal-vs span { display: flex; flex-direction: column; } .royal-vs small { color: #888; font-size: .72rem; } .royal-vs b { color: #e06060; }
+        .royal-dyn { border: 1px solid #333; border-left: 5px solid var(--royal-c); padding: 8px; margin-bottom: 10px; background: rgba(255,255,255,.02); }
+        .royal-dyn input[type=color] { width: 34px; height: 28px; padding: 0; border: 1px solid #333; background: none; }
+        .royal-claimants { display: flex; flex-direction: column; gap: 6px; margin: 6px 0; }
+        .royal-cl { display: flex; gap: 8px; align-items: flex-start; padding: 6px; border: 1px solid #2a2a2a; background: rgba(0,0,0,.2); }
+        .royal-cl.king { border-color: #e0b030; box-shadow: 0 0 8px rgba(224,176,48,.25); }
+        .royal-handle { align-self: center; }
+        .royal-photo { width: 44px; height: 56px; flex-shrink: 0; } .royal-photo img { width: 100%; height: 100%; object-fit: cover; }
+        .royal-cl-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+        .royal-cl-main input[type=text] { min-width: 0; box-sizing: border-box; }
+        .royal-cl-main > input[type=text] { width: 100%; }
+        .royal-cl-main .royal-row { flex-wrap: nowrap; margin: 0; }
+        .royal-cl-main .royal-row select { width: auto; flex: 0 0 auto; min-width: 0; padding-left: 4px; padding-right: 4px; }
+        .royal-cl-main .royal-row .royal-x { flex: 0 0 auto; }
+        .royal-chips select.royal-back { width: auto; }
+        .royal-rank { min-width: 2.2em; font-size: .78rem; color: #e0b030; text-align: center; }
+        .royal-chips { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+        .royal-chip { display: inline-flex; align-items: center; gap: 3px; font-size: .72rem; padding: 1px 4px 1px 6px; border: 1px solid var(--pc); color: #ddd; border-left-width: 4px; }
+        .royal-chip button { cursor: pointer; background: none; border: none; color: #888; padding: 0 2px; font-family: inherit; }
+        .royal-back { font-size: .74rem; max-width: 9.5em; }
+        .royal-result { margin: 4px 0 10px; padding: 8px 10px; border: 1px solid #333; border-left: 4px solid #888; }
+        .royal-result.ok { border-left-color: #5fbf7f; } .royal-result.fail { border-left-color: #e06060; }
+        .royal-result ul { margin: 6px 0 0 18px; padding: 0; font-size: .8rem; color: #bbb; }
+        .royal-log { margin-top: 12px; font-size: .82rem; } .royal-log summary { cursor: pointer; color: #999; }
+        .royal-log-row { display: flex; gap: 6px; padding: 3px 0; color: #aaa; border-bottom: 1px solid #1c1c1c; }
+        .royal-banner { margin: 0 0 10px; padding: 8px 12px; border: 1px solid var(--royal-c, #7a1f2b); border-left-width: 5px; color: #e0b030; font-size: .9rem; background: color-mix(in srgb, var(--royal-c, #7a1f2b) 18%, transparent); letter-spacing: 1px; }
+        html[data-theme-family="modern"] .royal-intro, html[data-theme-family="modern"] .royal-dim { color: var(--m-text-3); }
+        html[data-theme-family="modern"] .royal-card, html[data-theme-family="modern"] .royal-dyn, html[data-theme-family="modern"] .royal-chance { border-color: var(--m-border); border-radius: 12px; background: var(--m-surface-2); }
+        html[data-theme-family="modern"] .royal-reign { border-color: var(--royal-c); }
+        html[data-theme-family="modern"] .royal-dyn { border-left: 5px solid var(--royal-c); }
+        html[data-theme-family="modern"] .royal-cl { border-color: var(--m-border); background: var(--m-surface); border-radius: 8px; }
+        html[data-theme-family="modern"] .royal-head, html[data-theme-family="modern"] .royal-chance-head b, html[data-theme-family="modern"] .royal-rank { color: #b07d10; }
+        html[data-theme-family="modern"] .royal-bar { background: var(--m-border); border-radius: 4px; overflow: hidden; } html[data-theme-family="modern"] .royal-bar span { background: #c9971a; }
+        html[data-theme-family="modern"] .royal-factor, html[data-theme-family="modern"] .royal-chance-head { color: var(--m-text-2); }
+        html[data-theme-family="modern"] .royal-go { border-color: #c9971a; color: #b07d10; border-radius: 12px; font-weight: 600; letter-spacing: 0; }
+        html[data-theme-family="modern"] .royal-btn, html[data-theme-family="modern"] .royal-add, html[data-theme-family="modern"] .royal-x { border-color: var(--m-border-strong); color: var(--m-text); border-radius: 8px; }
+        html[data-theme-family="modern"] .royal-chip { color: var(--m-text); border-radius: 6px; }
+        html[data-theme-family="modern"] .royal-result { border-color: var(--m-border); border-radius: 10px; background: var(--m-surface); } html[data-theme-family="modern"] .royal-result ul { color: var(--m-text-2); }
+        html[data-theme-family="modern"] .royal-log-row { color: var(--m-text-2); border-bottom-color: var(--m-border); }
+        html[data-theme-family="modern"] .royal-banner { border-radius: 12px; color: #8a6200; background: color-mix(in srgb, var(--royal-c, #7a1f2b) 10%, var(--m-surface)); }
     `;
     document.head.appendChild(style);
     window.addEventListener('load', () => setTimeout(refresh, 0));
