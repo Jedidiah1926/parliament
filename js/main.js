@@ -4314,6 +4314,39 @@
             downloadDataUrl(cvs.toDataURL(mime, 0.95), `${filenameBase}.${format}`);
         }
 
+        // 좌석 강조 — 원래보다 20%쯤 크게, 같은 색으로 떠오르게(그림자) + 맞붙은 테두리. 카드를 연 좌석은 테두리를 굵게
+        function drawSeatFocus(ctx, x, y, r, fill, strong) {
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(x, y, r * 1.02, 0, Math.PI*2);
+            ctx.fillStyle = fill;
+            ctx.shadowColor = 'rgba(0,0,0,0.45)';
+            ctx.shadowBlur = 8;
+            ctx.fill();
+            ctx.shadowBlur = 0;
+            ctx.lineWidth = strong ? 2.5 : 1.5;
+            ctx.strokeStyle = tc('#fff', '--m-text');
+            ctx.stroke();
+            ctx.restore();
+        }
+        const seatIsSelected = (chamber, i) => !!seatInfoCardTarget && seatInfoCardTarget.chamber === chamber && seatInfoCardTarget.hit === i;
+        // 마우스를 올린 좌석의 짧은 미리보기 — #번호 · 의원 · 정당 (자세한 정보는 눌러서 카드로)
+        function seatHoverText(chamber, i) {
+            const d = dotCache[chamber]?.[i];
+            if(!d) return '';
+            const seated = seatMemberInfo(chamber, i);
+            const who = d.partyName === '무소속' ? (d.independentName || '무소속') : (seated?.name || '');
+            return [`#${i+1}`, who, d.partyName === '무소속' ? '무소속' : d.partyName].filter(Boolean).join(' · ');
+        }
+        // 정보 카드는 바깥을 누르거나 Esc로 닫힘 (× 없이도) — 좌석을 누르는 건 캔버스 클릭이 처리 (다른 좌석이면 바꿔 열기, 같은 좌석이면 닫기)
+        document.addEventListener('pointerdown', e => {
+            const card = document.getElementById('seatInfoCard');
+            if(!card || card.style.display !== 'block') return;
+            if(card.contains(e.target)) return;
+            if(e.target.closest && e.target.closest('#houseCanvas, #senateCanvas, #thirdCanvas')) return;
+            closeSeatInfoCard();
+        }, true);
+
         // 본원(하원/상원/삼원) 좌석 캔버스는 더 이상 호버 툴팁을 띄우지 않는다 —
         // 클릭 시 좌석 정보 카드(showSeatInfoCard)로 대체되었으므로, 호버는 커서 힌트 + 흰색 고리(토성 고리처럼 좌석과 떨어진)로 표시한다.
         function handleCanvasMouseMove(e, chamber) {
@@ -4331,6 +4364,12 @@
                 if(Math.hypot(mx - d.x, my - d.y) <= d.r * 1.5) hit = i;
             });
             cvs.style.cursor = hit !== -1 ? 'pointer' : 'default';
+            const tip = document.getElementById('tooltipBox');
+            if(tip) {
+                if(hit !== -1 && !seatIsSelected(chamber, hit)) positionTooltip(tip, seatHoverText(chamber, hit), e.clientX, e.clientY);
+                else if(tip.dataset.seatTip || hit === -1) tip.style.display = 'none';
+                tip.dataset.seatTip = hit !== -1 ? '1' : '';
+            }
 
             if(hoveredSeat[chamber] !== hit) {
                 hoveredSeat[chamber] = hit;
@@ -4340,6 +4379,8 @@
 
         function handleCanvasMouseLeave(e, chamber) {
             if(e?.target) e.target.style.cursor = 'default';
+            const tip = document.getElementById('tooltipBox');
+            if(tip && tip.dataset.seatTip) { tip.style.display = 'none'; tip.dataset.seatTip = ''; }
             if(hoveredSeat[chamber] !== -1) {
                 hoveredSeat[chamber] = -1;
                 redrawChamber(e.target.id, chamber);
@@ -4387,9 +4428,17 @@
             body.innerHTML = rows.map(r => `<div>${r}</div>`).join('') + seatCabinetHtml(chamber, hit);
 
             lastSeatCardPos = { x: clientX, y: clientY };
+            const prevTarget = seatInfoCardTarget;
             seatInfoCardTarget = { chamber, hit };
             card.style.display = 'block';
             positionFloatingBox(card, clientX, clientY);
+            const tip = document.getElementById('tooltipBox'); if(tip) tip.style.display = 'none';
+            redrawSeatChambers(prevTarget ? [prevTarget.chamber, chamber] : [chamber]);
+        }
+
+        // 카드를 열고 닫을 때 그 원의 반원을 다시 그려 고른 좌석 강조를 맞춘다
+        function redrawSeatChambers(chs) {
+            [...new Set(chs)].forEach(ch => { const id = ch === 'senate' ? 'senateCanvas' : ch === 'third' ? 'thirdCanvas' : 'houseCanvas'; try { if(document.getElementById(id)) redrawChamber(id, ch); } catch(e) { /* 아직 안 그려짐 */ } });
         }
 
         // 좌석 정보 카드 아래 — 이 의원이 맡은 내각 자리 (끊기 ×) · "내각에 임명" 고르기
@@ -4407,9 +4456,11 @@
         }
 
         function closeSeatInfoCard() {
+            const prev = seatInfoCardTarget;
             seatInfoCardTarget = null;
             const card = document.getElementById('seatInfoCard');
             if(card) card.style.display = 'none';
+            if(prev) redrawSeatChambers([prev.chamber]);
         }
 
         // ===== VOTE RESULT UPDATER =====
@@ -4812,17 +4863,8 @@
                     ctx.stroke();
                 }
 
-                // 호버 중인 좌석: 토성 고리처럼 좌석과 떨어진 흰색 고리
-                if(hoveredSeat[chamber] === i) {
-                    ctx.beginPath();
-                    ctx.arc(d.x, d.y, d.r * 1.14, 0, Math.PI*2);
-                    ctx.strokeStyle = tc('#fff', '--m-text');
-                    ctx.lineWidth = 1.5;
-                    ctx.shadowColor = 'rgba(255,255,255,0.6)';
-                    ctx.shadowBlur = 6;
-                    ctx.stroke();
-                    ctx.shadowBlur = 0;
-                }
+                // 마우스를 올린 좌석 · 정보 카드를 연 좌석: 살짝 커지며 떠오름 (예전의 떨어진 흰 고리 대신)
+                if(hoveredSeat[chamber] === i || seatIsSelected(chamber, i)) drawSeatFocus(ctx, d.x, d.y, d.r, voteColor || d.color, seatIsSelected(chamber, i));
             });
 
             // Center text
@@ -16218,17 +16260,8 @@
                     ctx.stroke();
                 }
 
-                // 호버 중인 좌석: 토성 고리처럼 좌석과 떨어진 흰색 고리
-                if(hoveredSeat[chamber] === i) {
-                    ctx.beginPath();
-                    ctx.arc(pt.x, pt.y, dotR * 1.14, 0, Math.PI*2);
-                    ctx.strokeStyle = tc('#fff', '--m-text');
-                    ctx.lineWidth = 1.5;
-                    ctx.shadowColor = 'rgba(255,255,255,0.6)';
-                    ctx.shadowBlur = 6;
-                    ctx.stroke();
-                    ctx.shadowBlur = 0;
-                }
+                // 마우스를 올린 좌석 · 정보 카드를 연 좌석: 살짝 커지며 떠오름
+                if(hoveredSeat[chamber] === i || seatIsSelected(chamber, i)) drawSeatFocus(ctx, pt.x, pt.y, dotR, (typeof voteColor !== 'undefined' && voteColor) || d.color, seatIsSelected(chamber, i));
             });
 
             // Center label

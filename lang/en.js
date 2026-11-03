@@ -842,6 +842,7 @@ window.DnoLangPacks.en = {
   }
  ],
  "dict": [
+    ["- 좌석 정보 UX 개편 — 마우스를 올리면 좌석이 살짝 커지며 떠오르고 #번호 · 의원 · 정당 미리보기(예전의 떨어진 흰 고리 대신), 누르면 정보 카드가 열리고 그 좌석이 강조됨, 다른 좌석을 누르면 바로 바뀌고 바깥을 누르거나 Esc로 닫힘(× 없이도)", "- Seat info UX refresh — hovering lifts the seat slightly and previews #number · member · party (instead of the old detached white ring); clicking opens the info card and highlights the seat, clicking another seat switches right away, and clicking outside or Esc closes it (no × needed)"],
     ["- 내장 프리셋 \"그레이트브리튼 북아일랜드 연합왕국\" 추가 (제작자: ttorri)", "- New built-in preset \"United Kingdom of Great Britain and Northern Ireland\" (by ttorri)"],
     ["- 의석 ↔ 내각 양방향 연동 — 좌석 정보 카드에서 그 의원이 맡은 내각 자리를 보고 바로 임명 · 연결 끊기, 의원과 연결된 각료 카드에서 이름 · 사진을 고치면 의원에게도 반영 (당적은 의원을 따름)", "- Two-way seat ↔ cabinet link — the seat info card shows the member's cabinet posts and lets you appoint or unlink them; editing the name or photo on a linked cabinet card updates the member too (party follows the member)"],
     ["제작자: ttorri", "By ttorri"],
