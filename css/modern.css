@@ -2670,6 +2670,21 @@ html[data-theme-family="modern"] .rd-card.placeholder {
 }
 html[data-theme-family="modern"] .rd-card.placeholder .rd-title { color: var(--m-text-3) !important; }
 html[data-theme-family="modern"] .rd-more { color: var(--m-text-3); font-weight: 600; opacity: 1; }
+html[data-theme-family="modern"] .rd-card.current { background: var(--m-surface) !important; box-shadow: 0 0 0 1px color-mix(in srgb, var(--card-color) 45%, transparent), var(--m-shadow) !important; }
+html[data-theme-family="modern"] .rd-card.current::before { animation: none; }
+html[data-theme-family="modern"] .rd-card.has-detail:hover { box-shadow: var(--m-shadow) !important; }
+html[data-theme-family="modern"] .rd-status { border: none; border-radius: 999px; padding: 2px 9px; font-weight: 600; font-size: 11.5px; background: color-mix(in srgb, var(--card-color) 14%, transparent); color: color-mix(in srgb, var(--card-color) 80%, var(--m-text)); }
+html[data-theme-family="modern"] .rd-status-current { background: var(--card-color); color: #fff; }
+html[data-theme-family="modern"] .rd-date, html[data-theme-family="modern"] .rd-count, html[data-theme-family="modern"] .rd-detail-n { color: var(--m-text-3); }
+html[data-theme-family="modern"] .rd-points li::before { border-radius: 50%; }
+html[data-theme-family="modern"] .rd-foot { border-top: 1px solid var(--m-border); }
+html[data-theme-family="modern"] .rd-detail-search { background: var(--m-surface-2); border: 1px solid var(--m-border); border-radius: 10px; color: var(--m-text); }
+html[data-theme-family="modern"] .rd-detail-search:focus { border-color: var(--m-text-3); box-shadow: var(--m-ring); }
+html[data-theme-family="modern"] .rd-detail-body { border-top-color: var(--m-border); }
+html[data-theme-family="modern"] .rd-detail-sub { color: var(--m-text) !important; font-weight: 700; letter-spacing: 0; }
+html[data-theme-family="modern"] .rd-detail-group.planned li::before { border-color: var(--m-text-3); }
+html[data-theme-family="modern"] .rd-tag { border-radius: 6px; border-color: var(--m-danger); color: var(--m-danger); }
+html[data-theme-family="modern"] .rd-detail-empty { color: var(--m-text-3); }
 html[data-theme-family="modern"] .rd-card.has-detail:hover .rd-more { color: var(--m-text); }
 html[data-theme-family="modern"] .rd-detail-layer { background: rgba(0, 0, 0, .35); backdrop-filter: blur(2px); }
 html[data-theme-family="modern"] .rd-detail.rd-card { border-radius: 18px; box-shadow: var(--m-shadow) !important; }

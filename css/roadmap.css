@@ -501,3 +501,60 @@
       color: var(--tno-text);
       text-shadow: none;
     }
+
+    /* ── 1.7.0 카드 개편: 상태 칩 · 날짜 · 요약 목록 · 항목 수, 카드 높이는 내용만큼 ── */
+    .rd-section-cards { align-items: flex-start; }
+    .rd-card { height: auto; max-height: 100%; padding: 26px 14px 14px; gap: 0; }
+    .rd-card.current {
+      background: color-mix(in srgb, var(--tno-gold) 5%, #0d0f14);
+      border-color: color-mix(in srgb, var(--tno-gold) 45%, #333);
+      box-shadow: 0 0 14px color-mix(in srgb, var(--tno-gold) 18%, transparent);
+    }
+    .rd-card.current::before { background: var(--tno-gold); animation: rdPulse 2.4s ease-in-out infinite; }
+    @keyframes rdPulse { 50% { box-shadow: 0 0 16px var(--tno-gold); } }
+    .rd-card.placeholder { min-height: 110px; }
+    .rd-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; font-size: .78rem; }
+    .rd-status {
+      padding: 1px 7px; border: 1px solid var(--card-color, var(--tno-neon)); color: var(--card-color, var(--tno-neon));
+      letter-spacing: .5px; line-height: 1.5; text-transform: none;
+    }
+    .rd-status-current { background: var(--tno-gold); color: #000; }
+    .rd-date { color: #7d8a90; }
+    .rd-title { margin-bottom: 10px; }
+    .rd-card .rd-desc { flex: 1 1 auto; overflow: hidden; }
+    .rd-card:not(.has-detail) .rd-desc { overflow-y: auto; }
+    .rd-points { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 5px; }
+    .rd-points li { position: relative; padding-left: 13px; line-height: 1.5; }
+    .rd-points li::before {
+      content: ''; position: absolute; left: 0; top: .62em; width: 5px; height: 5px;
+      background: var(--card-color, var(--tno-neon)); opacity: .8;
+    }
+    .rd-foot {
+      flex: 0 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 8px;
+      margin-top: 12px; padding-top: 9px; border-top: 1px dashed #2a3138; font-size: .8rem;
+    }
+    .rd-count { color: #7d8a90; }
+    .rd-foot .rd-more { margin-top: 0; }
+    .rd-card.has-detail:hover { transform: translateY(-2px); }
+    .rd-card { transition: border-color .15s ease, box-shadow .15s ease, background .15s ease, transform .15s ease; }
+
+    /* 자세히 보기 창 */
+    .rd-detail.rd-card { width: min(720px, 100%); max-height: min(84vh, 820px); padding: 18px 20px 14px; transform: none !important; }
+    .rd-detail-head { align-items: flex-start; margin-bottom: 4px; }
+    .rd-detail-headtext { flex: 1 1 auto; min-width: 0; }
+    .rd-detail-headtext .rd-title { border-bottom: none; margin-bottom: 6px; padding-bottom: 0; }
+    .rd-detail-search {
+      width: 100%; margin: 4px 0 12px; padding: 7px 10px; background: #050608; border: 1px solid #333;
+      color: var(--tno-text); font-family: inherit; font-size: .9rem;
+    }
+    .rd-detail-search:focus { outline: none; border-color: var(--card-color, var(--tno-neon)); }
+    .rd-detail-body { border-top: 1px solid #333; padding-top: 12px; }
+    .rd-detail-group + .rd-detail-group { margin-top: 16px; }
+    .rd-detail-sub { margin: 0 0 8px; color: var(--card-color, var(--tno-neon)); font-size: .95rem; font-weight: normal; letter-spacing: 1px; }
+    .rd-detail-group.planned { opacity: .8; }
+    .rd-detail-group.planned .rd-detail-sub { color: var(--tno-neon); }
+    .rd-detail-group.planned li::before { background: transparent; border: 1px solid var(--tno-neon); }
+    .rd-detail-n { color: #7d8a90; font-size: .8em; }
+    .rd-detail-list { gap: 7px; }
+    .rd-tag { display: inline-block; margin-right: 6px; padding: 0 5px; border: 1px solid #ff8a65; color: #ff8a65; font-size: .75em; line-height: 1.5; vertical-align: 1px; }
+    .rd-detail-empty { color: #7d8a90; margin: 8px 0 0; }

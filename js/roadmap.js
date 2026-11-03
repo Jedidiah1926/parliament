@@ -868,6 +868,7 @@
               <br>- 의석 ↔ 내각 양방향 연동 — 좌석 정보 카드에서 그 의원이 맡은 내각 자리를 보고 바로 임명 · 연결 끊기, 의원과 연결된 각료 카드에서 이름 · 사진을 고치면 의원에게도 반영 (당적은 의원을 따름)
               <br>- 좌석 정보 UX 개편 — 마우스를 올리면 좌석이 살짝 커지며 떠오르고 #번호 · 의원 · 정당 미리보기(예전의 떨어진 흰 고리 대신), 누르면 정보 카드가 열리고 그 좌석이 강조됨, 다른 좌석을 누르면 바로 바뀌고 바깥을 누르거나 Esc로 닫힘(× 없이도)
               <br>- 세이브 선택 화면을 탭으로 — 새로 시작(왼쪽 프리셋 · 오른쪽 빈 세이브) · 이어하기(왼쪽 즐겨찾기 · 오른쪽 일반 세이브, 검색 · 파일 불러오기) · 튜토리얼(왼쪽 기본 과정 · 오른쪽 심화 과정, 고르면 서독 튜토리얼 새 세이브에서 그 과정부터, 마친 과정 ✓), 서독 프리셋 설명은 "처음이라면 여기서 시작하세요."만, 프리셋 목록(시작 화면 · 새 탭)에서 서독을 고르면 튜토리얼 없이 프리셋으로만 시작
+              <br>- 로드맵 카드 개편 — 카드마다 상태 칩(완료 · 진행 중 · 예정) · 날짜 · 요약 목록 · 항목 수(진행 중 카드는 "완료 n · 예정 m"), 카드 높이는 내용만큼, 진행 중 카드 강조. 자세히 보기 창은 항목을 목록으로 · "앞으로 (예정)" 같은 소제목으로 나누고 "고친 점"에 고침 표시, 항목이 많으면 찾기 칸
               <br>- 지역구 지도 테두리 · 글씨 테두리 색 방식 고르기(네온) — "직접 지정"은 고른 색 그대로, "테마 색 비례"는 지금 테마 색에서 색상을 얼마나 돌리고 채도 · 밝기를 몇 배로 했는지를 기억해 설정에서 테마 색을 바꾸면 같은 비율로 따라 바뀜 (옆에 "밝기 ×0.50"처럼 표시, 테마 색과 동기화를 누르면 테마 색 그대로 따라감)
               <br>- 내장 프리셋 "그레이트브리튼 북아일랜드 연합왕국" 추가 (제작자: ttorri)
               <br>- 내장 프리셋 "일본국" 갱신 (제작자: sushdjr0106)
@@ -1114,16 +1115,50 @@
       return Object.keys(roadmapData).filter(key => majorOf(key) === major);
     }
 
-    // 카드에는 날짜 + 요약(summary)만. 요약이 없으면 원래 설명(짧은 카드)을 그대로 쓴다.
+    // 카드에는 날짜 + 요약(summary)만. 요약이 없으면 설명의 항목을 그대로 쓴다.
     function cardDate(item) {
       return String(item.desc || '').split('<br>')[0].trim();
     }
 
+    const tr = s => (window.DnoLang && window.DnoLang.t) ? window.DnoLang.t(s) : s;
+    // 설명 줄 하나("- 항목")를 번역: 사전에는 "- 항목" 통째로 들어 있으므로 붙여서 찾고 앞의 "- "는 뗀다
+    function trItem(raw) {
+      const t = tr('- ' + raw);
+      return t !== '- ' + raw ? String(t).replace(/^-\s*/, '') : raw;
+    }
+
+    // 설명(desc)을 구조로: 첫 줄은 날짜, "- "로 시작하면 항목, 그 밖의 글자 줄은 소제목(예: "앞으로 (예정)")
+    function parseDesc(item) {
+      const lines = String(item.desc || '').split('<br>').map(l => l.trim());
+      const date = lines.shift() || '';
+      const groups = [{ heading: '', items: [] }];
+      lines.forEach(l => {
+        if (!l) return;
+        if (/^-\s/.test(l)) groups[groups.length - 1].items.push(l.replace(/^-\s*/, ''));
+        else groups.push({ heading: l, items: [] });
+      });
+      return { date, groups: groups.filter(g => g.heading || g.items.length) };
+    }
+
+    const STATUS_LABEL = { done: '완료', current: '진행 중', future: '예정' };
+    function statusChip(item) {
+      const st = item.status || 'future';
+      return `<span class="rd-status rd-status-${st}">${escapeHTML(tr(STATUS_LABEL[st] || STATUS_LABEL.future))}</span>`;
+    }
+
+    // 항목 수: 진행 중 카드는 "완료 n · 예정 m"(소제목 "앞으로" 아래는 예정), 나머지는 "n개 항목"
+    function countText(item) {
+      const { groups } = parseDesc(item);
+      const planned = groups.filter(g => /앞으로|예정/.test(g.heading)).reduce((n, g) => n + g.items.length, 0);
+      const total = groups.reduce((n, g) => n + g.items.length, 0);
+      if (planned && total - planned) return `${tr('완료')} ${total - planned} · ${tr('예정')} ${planned}`;
+      return total ? `${total}${tr('개 항목')}` : '';
+    }
+
     function cardBodyHTML(item) {
-      if (!item.summary) return item.desc;
-      return [escapeHTML(cardDate(item))]
-        .concat(item.summary.map(line => '- ' + escapeHTML(line)))
-        .join('<br>');
+      const list = item.summary || parseDesc(item).groups.flatMap(g => g.items);
+      const lis = list.map(line => `<li>${item.summary ? escapeHTML(tr(line)) : trItem(line)}</li>`).join('');
+      return lis ? `<ul class="rd-points">${lis}</ul>` : '';
     }
 
     // 카드 제목 배치: 윗줄에 작은 버전 번호, 아랫줄에 제목, 끝의 "..."는 흐린 부제목
@@ -1188,10 +1223,13 @@
               if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openDetail(item); }
             });
           }
+          const date = cardDate(item);
+          const count = item.summary ? countText(item) : '';
           article.innerHTML = `
+            <div class="rd-meta">${statusChip(item)}${date ? `<span class="rd-date">${escapeHTML(date)}</span>` : ''}</div>
             <h2 class="rd-title">${cardTitleHTML(trTitle(item.title), trTitle(item.title) === item.title ? item.cardName : null)}</h2>
-            <p class="rd-desc">${cardBodyHTML(item)}</p>
-            ${item.summary ? '<span class="rd-more">자세히 보기 ›</span>' : ''}
+            <div class="rd-desc">${cardBodyHTML(item)}</div>
+            ${item.summary ? `<div class="rd-foot"><span class="rd-count">${escapeHTML(count)}</span><span class="rd-more">${escapeHTML(tr('자세히 보기 ›'))}</span></div>` : ''}
           `;
           row.appendChild(article);
         });
@@ -1261,26 +1299,52 @@
       }, { passive: false });
     }
 
-    // 자세한 설명: 카드를 누르면 화면 위에 떠 있는 창으로 원래 설명 전체를 보여준다
+    // 자세한 설명: 카드를 누르면 화면 위에 떠 있는 창으로 항목 전체를 보여준다 (항목이 많으면 찾기 칸)
     function openDetail(item) {
       closeDetail();
+      const { date, groups } = parseDesc(item);
+      const total = groups.reduce((n, g) => n + g.items.length, 0);
+      const body = groups.map(g => `
+          <section class="rd-detail-group${/앞으로|예정/.test(g.heading) ? ' planned' : ''}">
+            ${g.heading ? `<h3 class="rd-detail-sub">${escapeHTML(tr(g.heading))} <span class="rd-detail-n">${g.items.length}</span></h3>` : ''}
+            <ul class="rd-points rd-detail-list">${g.items.map(raw => {
+              const fix = /^고친 점:\s*/.test(raw);
+              const text = trItem(raw);
+              return `<li${fix ? ' class="fix"' : ''}>${fix ? `<span class="rd-tag">${escapeHTML(tr('고침'))}</span>` : ''}${fix ? text.replace(/^(고친 점|Fixed):\s*/, '') : text}</li>`;
+            }).join('')}</ul>
+          </section>`).join('');
       const layer = document.createElement('div');
       layer.className = 'rd-detail-layer';
       layer.id = 'rdDetailLayer';
       layer.innerHTML = `
         <div class="rd-detail rd-card ${item.status || 'future'}" role="dialog" aria-modal="true">
           <div class="rd-detail-head">
-            <h2 class="rd-title">${cardTitleHTML(trTitle(item.title), trTitle(item.title) === item.title ? item.cardName : null)}</h2>
+            <div class="rd-detail-headtext">
+              <div class="rd-meta">${statusChip(item)}${date ? `<span class="rd-date">${escapeHTML(date)}</span>` : ''}${total ? `<span class="rd-count">${escapeHTML(countText(item))}</span>` : ''}</div>
+              <h2 class="rd-title">${cardTitleHTML(trTitle(item.title), trTitle(item.title) === item.title ? item.cardName : null)}</h2>
+            </div>
             <button class="rd-detail-close" type="button" aria-label="닫기">×</button>
           </div>
-          <p class="rd-desc">${item.desc}</p>
+          ${total > 10 ? `<input class="rd-detail-search" type="search" placeholder="${escapeHTML(tr('항목 찾기'))}" aria-label="${escapeHTML(tr('항목 찾기'))}">` : ''}
+          <div class="rd-desc rd-detail-body">${body}<p class="rd-detail-empty" hidden>${escapeHTML(tr('찾는 항목이 없습니다.'))}</p></div>
         </div>
       `;
       layer.addEventListener('click', e => { if (e.target === layer) closeDetail(); });
       layer.querySelector('.rd-detail-close').addEventListener('click', closeDetail);
+      const search = layer.querySelector('.rd-detail-search');
+      if (search) search.addEventListener('input', () => {
+        const q = search.value.trim().toLowerCase();
+        let shown = 0;
+        layer.querySelectorAll('.rd-detail-group').forEach(g => {
+          let n = 0;
+          g.querySelectorAll('li').forEach(li => { const on = !q || li.textContent.toLowerCase().includes(q); li.hidden = !on; if (on) n++; });
+          g.hidden = n === 0; shown += n;
+        });
+        layer.querySelector('.rd-detail-empty').hidden = shown > 0;
+      });
       document.body.appendChild(layer);
       if (window.DnoLang && window.DnoLang.translateSubtree) window.DnoLang.translateSubtree(layer);
-      layer.querySelector('.rd-detail-close').focus();
+      (search || layer.querySelector('.rd-detail-close')).focus();
     }
 
     function closeDetail() {
