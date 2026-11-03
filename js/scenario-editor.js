@@ -1,0 +1,394 @@
+// ===== 시나리오 편집기 (scenario.html · 0.3.0 · 시나리오 테스트) =====
+// 시나리오(hemicycle-scenario@1) = 시작(내장 프리셋 또는 세이브 파일) + 브리핑 · 승리 · 패배 글 + 목표 · 실패 조건 · 마감일
+//                                  + 이벤트 · 결정 · 변수(스크립트 모드 형식 — docs/MODDING.md)
+// - 내 시나리오는 이 브라우저 · 앱의 IndexedDB에 저장 (세이브 파일을 시작으로 쓰면 그 세이브도 함께)
+// - 내보내기: .hemiscn (gzip으로 압축한 JSON — 세이브 .hemi와 같은 방식), 불러오기: .hemiscn · .json
+// - 시험 플레이: 시나리오를 sessionStorage(크면 IndexedDB)에 맡기고 시작 프리셋/세이브로 main.html을 연다 (js/scenario.js가 받음)
+/* global DnoPresets, DnoUI */
+(function () {
+    'use strict';
+    const FORMAT = 'hemicycle-scenario@1';
+    const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    const $ = id => document.getElementById(id);
+    const alertBox = (m, t) => (window.DnoUI && DnoUI.alert ? DnoUI.alert(m, t ? { title: t } : undefined) : Promise.resolve(alert(m)));
+    const confirmBox = m => (window.DnoUI && DnoUI.confirm ? DnoUI.confirm(m) : Promise.resolve(confirm(m)));
+    const uid = p => p + '_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+
+    // ---------------------------------------------------------------
+    // 내 시나리오 (IndexedDB)
+    // ---------------------------------------------------------------
+    const DB = 'hemicycleScenarios', STORE = 'items';
+    function db() {
+        return new Promise((res, rej) => {
+            const r = indexedDB.open(DB, 1);
+            r.onupgradeneeded = () => { if (!r.result.objectStoreNames.contains(STORE)) r.result.createObjectStore(STORE, { keyPath: 'id' }); };
+            r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
+        });
+    }
+    async function dbAll() { const d = await db(); return new Promise((res, rej) => { const q = d.transaction(STORE).objectStore(STORE).getAll(); q.onsuccess = () => res(q.result || []); q.onerror = () => rej(q.error); }); }
+    async function dbPut(item) { const d = await db(); return new Promise((res, rej) => { const t = d.transaction(STORE, 'readwrite'); t.objectStore(STORE).put(item); t.oncomplete = () => res(); t.onerror = () => rej(t.error); }); }
+    async function dbDel(id) { const d = await db(); return new Promise((res, rej) => { const t = d.transaction(STORE, 'readwrite'); t.objectStore(STORE).delete(id); t.oncomplete = () => res(); t.onerror = () => rej(t.error); }); }
+
+    // ---------------------------------------------------------------
+    // 시나리오 데이터
+    // ---------------------------------------------------------------
+    function blank() {
+        return {
+            format: FORMAT, id: uid('scn'), title: '새 시나리오', author: '', version: '1.0', description: '',
+            briefing: '', winText: '', loseText: '',
+            start: { kind: 'preset', preset: 'builtin:tutorial' }, // { kind: 'preset', preset } | { kind: 'save', name, state }
+            deadline: '', surviveToDeadline: false,
+            goals: [], failures: [],
+            variables: {}, events: [], decisions: [],
+        };
+    }
+    let S = blank();
+    let startInfo = null; // 시작 상태 요약 { nation, date, parties: [이름] }
+    const LAST = 'hemicycleScenarioLast';
+
+    // 조건 고르기 — 화면의 칸(kind · p) → 스크립트 모드 조건(JSON)
+    const OPS = [['gte', '이상'], ['lte', '이하'], ['gt', '초과'], ['lt', '미만'], ['eq', '같음']];
+    const ECON = [['growth', '성장률'], ['infl', '인플레이션'], ['unemp', '실업률'], ['rate', '기준금리'], ['debt', '부채비율'], ['balance', '재정수지'], ['mood', '민심']];
+    const APPR = [['cabinet', '내각'], ['president', '대통령'], ['pm', '총리'], ['chair', '의장(집단지도체제)']];
+    const KINDS = [
+        ['ruling', '정당이 집권'], ['not_ruling', '정당이 집권하지 않음'], ['party_seats', '정당 의석'], ['party_support', '정당 지지율'],
+        ['ruling_seats', '집권 세력 의석'], ['approval', '국정 지지율'], ['economy', '경제 지표'], ['date_after', '날짜가 되면'],
+        ['party_status', '정당 상태'], ['flag', '플래그(이벤트 · 결정이 켬)'], ['var', '시나리오 변수'], ['custom', '직접 쓰기 (JSON)'],
+    ];
+    const KIND_LABEL = Object.fromEntries(KINDS);
+    const partyLabel = v => ({ ruling: '집권 세력 최대 정당', largest: '하원 최대 정당', opposition: '야당 최대 정당' }[v] || v || '?');
+    const opLabel = o => (OPS.find(x => x[0] === o) || ['', ''])[1];
+    function toCond(kind, p) {
+        p = p || {};
+        const n = Number(p.n) || 0, op = p.op || 'gte';
+        switch (kind) {
+            case 'ruling': return { ruling: p.party || 'ruling' };
+            case 'not_ruling': return { not: { ruling: p.party || '' } };
+            case 'party_seats': return { party_seats: { party: p.party || 'ruling', chamber: p.chamber || 'house', ...(p.share ? { share: true } : {}), [op]: n } };
+            case 'party_support': return { party_support: { party: p.party || 'ruling', [op]: n } };
+            case 'ruling_seats': return { ruling_seats: { ...(p.share !== false ? { share: true } : {}), [op]: n } };
+            case 'approval': return { approval: { of: p.of || 'cabinet', [op]: n } };
+            case 'economy': return { economy: { indicator: p.indicator || 'growth', [op]: n } };
+            case 'date_after': return { date_after: p.date || '' };
+            case 'party_status': return { party_status: { party: p.party || '', is: p.is || 'banned' } };
+            case 'flag': return { flag: p.flag || '' };
+            case 'var': return { var: { name: p.name || '', [op]: n } };
+            default: { try { return JSON.parse(p.json || '{}'); } catch (e) { return null; } }
+        }
+    }
+    function autoText(kind, p) {
+        p = p || {};
+        const unit = p.share || kind === 'ruling_seats' && p.share !== false ? '%' : '석';
+        switch (kind) {
+            case 'ruling': return `${partyLabel(p.party)} 집권`;
+            case 'not_ruling': return `${partyLabel(p.party)}이(가) 집권하지 않음`;
+            case 'party_seats': return `${partyLabel(p.party)} ${p.chamber && p.chamber !== 'house' ? (p.chamber === 'senate' ? '상원 ' : '삼원 ') : ''}의석 ${p.n || 0}${unit} ${opLabel(p.op || 'gte')}`;
+            case 'party_support': return `${partyLabel(p.party)} 지지율 ${p.n || 0}% ${opLabel(p.op || 'gte')}`;
+            case 'ruling_seats': return `집권 세력 의석 ${p.n || 0}${p.share !== false ? '%' : '석'} ${opLabel(p.op || 'gte')}`;
+            case 'approval': return `${(APPR.find(a => a[0] === (p.of || 'cabinet')) || ['', '내각'])[1]} 국정 지지율 ${p.n || 0}% ${opLabel(p.op || 'gte')}`;
+            case 'economy': return `${(ECON.find(e => e[0] === (p.indicator || 'growth')) || ['', '?'])[1]} ${p.n || 0} ${opLabel(p.op || 'gte')}`;
+            case 'date_after': return `${p.date || '?'}이 되면`;
+            case 'party_status': return `${partyLabel(p.party)} ${{ banned: '활동 금지', dissolved: '해산', active: '활동 중' }[p.is || 'banned']}`;
+            case 'flag': return `플래그 "${p.flag || '?'}"`;
+            case 'var': return `변수 ${p.name || '?'} ${p.n || 0} ${opLabel(p.op || 'gte')}`;
+            default: return '사용자 조건';
+        }
+    }
+
+    // ---------------------------------------------------------------
+    // 화면
+    // ---------------------------------------------------------------
+    let presets = [];
+    function render() {
+        const body = $('scnBody');
+        const st = S.start || {};
+        const parties = (startInfo && startInfo.parties) || [];
+        body.innerHTML = `
+        <section class="scn-col">
+            <div class="scn-card">
+                <div class="scn-h">기본 정보</div>
+                <label class="scn-lab">제목</label><input class="scn-in scn-title" data-f="title" maxlength="80" value="${esc(S.title)}">
+                <div class="scn-grid2">
+                    <div><label class="scn-lab">제작자</label><input class="scn-in" data-f="author" maxlength="60" value="${esc(S.author)}"></div>
+                    <div><label class="scn-lab">버전</label><input class="scn-in" data-f="version" maxlength="20" value="${esc(S.version)}"></div>
+                </div>
+                <label class="scn-lab">한 줄 설명</label><input class="scn-in" data-f="description" maxlength="200" value="${esc(S.description)}" placeholder="목록에 보일 짧은 설명">
+                <label class="scn-lab">브리핑 (시작할 때 보이는 글)</label><textarea class="scn-in" data-f="briefing" rows="6" placeholder="상황 설명, 플레이어가 할 일">${esc(S.briefing)}</textarea>
+                <div class="scn-grid2">
+                    <div><label class="scn-lab">승리했을 때 글</label><textarea class="scn-in" data-f="winText" rows="3">${esc(S.winText)}</textarea></div>
+                    <div><label class="scn-lab">패배했을 때 글</label><textarea class="scn-in" data-f="loseText" rows="3">${esc(S.loseText)}</textarea></div>
+                </div>
+            </div>
+            <div class="scn-card">
+                <div class="scn-h">시작</div>
+                <div class="scn-seg"><button type="button" data-start="preset" class="${st.kind !== 'save' ? 'on' : ''}">내장 프리셋</button><button type="button" data-start="save" class="${st.kind === 'save' ? 'on' : ''}">세이브 파일 (.hemi)</button></div>
+                ${st.kind === 'save'
+                    ? `<div class="scn-row"><button type="button" class="scn-btn" id="scnSaveBtn">${st.state ? '다른 세이브 고르기' : '세이브 파일 고르기'}</button><span class="scn-dim">${st.state ? esc(st.name || '세이브') : '게임에서 시작 상황을 만들고 저장 › 파일로 저장(.hemi)한 파일'}</span>
+                       <input type="file" id="scnSaveFile" accept=".hemi,.json,application/json" hidden></div>`
+                    : `<select class="scn-in" id="scnPreset">${presets.filter(p => !p.comingSoon).map(p => `<option value="${esc(p.id)}" ${p.id === st.preset ? 'selected' : ''}>${esc(p.title)}${p.date ? ` — ${esc(p.date)}` : ''}</option>`).join('')}</select>`}
+                <div class="scn-start-info">${startInfo ? `🏛 ${esc(startInfo.nation || '(국가명 없음)')} · ${esc(startInfo.date || '날짜 없음')} · 정당 ${parties.length}개` : '<span class="scn-dim">시작 상태를 읽는 중…</span>'}</div>
+                <div class="scn-grid2">
+                    <div><label class="scn-lab">마감일 (선택)</label><input class="scn-in" data-f="deadline" placeholder="YYYY-MM-DD" value="${esc(S.deadline)}"></div>
+                    <div class="scn-check-wrap"><label class="scn-check"><input type="checkbox" data-fb="surviveToDeadline" ${S.surviveToDeadline ? 'checked' : ''}> 마감일까지 목표를 지키면 승리 (아니면 목표를 다 이루는 순간 승리)</label></div>
+                </div>
+            </div>
+            <div class="scn-card">
+                <div class="scn-h">고급 — 이벤트 · 결정 · 변수 <span class="scn-dim">(스크립트 모드 형식 · docs/MODDING.md)</span></div>
+                <div class="scn-dim scn-small">조건 · 효과에서 쓰는 변수 · 플래그는 이 시나리오 것만 따로 셉니다. 목표의 "플래그" · "시나리오 변수"와 같은 이름을 쓰면 이어집니다.</div>
+                ${['variables', 'events', 'decisions'].map(k => `<label class="scn-lab">${{ variables: '변수 (처음 값) — { "이름": 숫자 }', events: '이벤트 — [ { id, title, desc, trigger, options } ]', decisions: '결정 — [ { id, title, desc, available, effects } ]' }[k]}</label>
+                    <textarea class="scn-in scn-code" data-json="${k}" rows="${k === 'variables' ? 3 : 7}" spellcheck="false">${esc(JSON.stringify(S[k], null, 2))}</textarea><div class="scn-err" data-err="${k}"></div>`).join('')}
+                <div class="scn-row"><button type="button" class="scn-btn" id="scnExample">예제 이벤트 · 결정 넣기</button></div>
+            </div>
+        </section>
+        <section class="scn-col">
+            ${condListHtml('goals', '목표', '이루면 승리 — "선택" 목표는 승리에 필요 없음, "끝까지 유지"는 다시 깨질 수 있음', parties)}
+            ${condListHtml('failures', '실패 조건', '하나라도 맞으면 패배', parties)}
+            <div class="scn-card scn-note">
+                <div class="scn-h">시험 플레이 · 공유</div>
+                <div class="scn-dim scn-small">▶ 시험 플레이를 누르면 시작 상태로 새 세이브를 만들고 시나리오를 붙여 게임이 열립니다. 오른쪽 아래 🎯 카드에서 목표를 보고, 날짜를 넘기거나 총선 결과를 반영할 때마다 검사합니다.<br>
+                내보내기(.hemiscn)한 파일을 다른 사람이 여기서 불러오면 같은 시나리오를 할 수 있습니다. 시나리오는 이 기기에 자동 저장됩니다.</div>
+                <div class="scn-row"><button type="button" class="scn-btn scn-danger" id="scnDelete">이 시나리오 지우기</button></div>
+            </div>
+        </section>
+        <datalist id="scnParties"><option value="ruling">집권 세력 최대 정당</option><option value="largest">하원 최대 정당</option><option value="opposition">야당 최대 정당</option>${parties.map(n => `<option value="${esc(n)}">`).join('')}</datalist>`;
+        bind();
+    }
+
+    function condListHtml(key, title, hint, parties) {
+        const list = S[key] || [];
+        return `<div class="scn-card">
+            <div class="scn-h">${title} <span class="scn-n">${list.length}</span></div>
+            <div class="scn-dim scn-small">${hint}</div>
+            ${list.map((g, i) => condRow(key, g, i)).join('') || `<div class="scn-empty">${key === 'goals' ? '목표가 없으면 자유 플레이입니다.' : '실패 조건 없음'}</div>`}
+            <div class="scn-row"><button type="button" class="scn-btn" data-add="${key}">+ ${key === 'goals' ? '목표' : '실패 조건'} 추가</button></div>
+        </div>`;
+    }
+    function condRow(key, g, i) {
+        const p = g.p || {}, k = g.kind || 'custom';
+        const party = `<input class="scn-in" list="scnParties" data-p="party" value="${esc(p.party || '')}" placeholder="정당 이름" style="width:150px">`;
+        const opn = `<select class="scn-in" data-p="op">${OPS.map(([v, l]) => `<option value="${v}" ${(p.op || 'gte') === v ? 'selected' : ''}>${l}</option>`).join('')}</select>`;
+        const num = `<input class="scn-in scn-num" type="number" step="any" data-p="n" value="${esc(p.n ?? '')}">`;
+        let fields = '';
+        switch (k) {
+            case 'ruling': case 'not_ruling': fields = party; break;
+            case 'party_seats': fields = `${party}<select class="scn-in" data-p="chamber">${[['house', '하원'], ['senate', '상원'], ['third', '삼원']].map(([v, l]) => `<option value="${v}" ${(p.chamber || 'house') === v ? 'selected' : ''}>${l}</option>`).join('')}</select>${num}<label class="scn-check"><input type="checkbox" data-pb="share" ${p.share ? 'checked' : ''}> %</label>${opn}`; break;
+            case 'party_support': fields = `${party}${num}<span class="scn-dim">%</span>${opn}`; break;
+            case 'ruling_seats': fields = `${num}<label class="scn-check"><input type="checkbox" data-pb="share" ${p.share !== false ? 'checked' : ''}> %</label>${opn}`; break;
+            case 'approval': fields = `<select class="scn-in" data-p="of">${APPR.map(([v, l]) => `<option value="${v}" ${(p.of || 'cabinet') === v ? 'selected' : ''}>${l}</option>`).join('')}</select>${num}<span class="scn-dim">%</span>${opn}`; break;
+            case 'economy': fields = `<select class="scn-in" data-p="indicator">${ECON.map(([v, l]) => `<option value="${v}" ${(p.indicator || 'growth') === v ? 'selected' : ''}>${l}</option>`).join('')}</select>${num}${opn}`; break;
+            case 'date_after': fields = `<input class="scn-in" data-p="date" placeholder="YYYY-MM-DD" value="${esc(p.date || '')}" style="width:130px">`; break;
+            case 'party_status': fields = `${party}<select class="scn-in" data-p="is">${[['banned', '활동 금지'], ['dissolved', '해산'], ['active', '활동 중']].map(([v, l]) => `<option value="${v}" ${(p.is || 'banned') === v ? 'selected' : ''}>${l}</option>`).join('')}</select>`; break;
+            case 'flag': fields = `<input class="scn-in" data-p="flag" placeholder="플래그 이름" value="${esc(p.flag || '')}" style="width:150px">`; break;
+            case 'var': fields = `<input class="scn-in" data-p="name" placeholder="변수 이름" value="${esc(p.name || '')}" style="width:120px">${num}${opn}`; break;
+            default: fields = `<textarea class="scn-in scn-code" data-p="json" rows="3" spellcheck="false" placeholder='{ "party_seats": { "party": "ruling", "share": true, "gte": 50 } }'>${esc(p.json || JSON.stringify(g.condition || {}, null, 1))}</textarea>`;
+        }
+        return `<div class="scn-cond" data-list="${key}" data-i="${i}">
+            <div class="scn-row"><select class="scn-in" data-kind>${KINDS.map(([v, l]) => `<option value="${v}" ${k === v ? 'selected' : ''}>${l}</option>`).join('')}</select>
+                <span class="scn-grow"></span><button type="button" class="scn-x" data-up title="위로">↑</button><button type="button" class="scn-x" data-del title="빼기">×</button></div>
+            <div class="scn-row scn-fields">${fields}</div>
+            <div class="scn-row"><input class="scn-in scn-grow" data-text value="${esc(g.text || '')}" placeholder="${esc(autoText(k, p))}">
+                ${key === 'goals' ? `<label class="scn-check"><input type="checkbox" data-opt ${g.required === false ? 'checked' : ''}> 선택</label><label class="scn-check"><input type="checkbox" data-hold ${g.hold ? 'checked' : ''}> 끝까지 유지</label>` : ''}</div>
+            ${g.condition == null ? '<div class="scn-err">조건 JSON을 읽지 못했습니다</div>' : ''}
+        </div>`;
+    }
+
+    function sync(g) {
+        g.condition = toCond(g.kind, g.p);
+        if (!g.text) g.autoText = autoText(g.kind, g.p);
+    }
+    function bind() {
+        const body = $('scnBody');
+        body.querySelectorAll('[data-f]').forEach(inp => { inp.oninput = () => { S[inp.dataset.f] = inp.value; touch(); }; });
+        body.querySelectorAll('[data-fb]').forEach(inp => { inp.onchange = () => { S[inp.dataset.fb] = inp.checked; touch(); }; });
+        body.querySelectorAll('[data-start]').forEach(b => { b.onclick = () => {
+            if (b.dataset.start === 'save') S.start = { kind: 'save', name: S.start.kind === 'save' ? S.start.name : '', state: S.start.kind === 'save' ? S.start.state : null };
+            else S.start = { kind: 'preset', preset: (presets.find(p => !p.comingSoon) || {}).id || 'builtin:tutorial' };
+            startInfo = null; render(); loadStartInfo(); touch();
+        }; });
+        $('scnPreset')?.addEventListener('change', e => { S.start = { kind: 'preset', preset: e.target.value }; startInfo = null; render(); loadStartInfo(); touch(); });
+        $('scnSaveBtn')?.addEventListener('click', () => $('scnSaveFile').click());
+        $('scnSaveFile')?.addEventListener('change', async e => {
+            const f = e.target.files && e.target.files[0]; e.target.value = '';
+            if (!f) return;
+            try {
+                const obj = JSON.parse(window.HemiFile ? await window.HemiFile.readText(f) : await f.text());
+                if (!obj || !(obj.parliament || obj.data) || !Array.isArray((obj.parliament || obj.data).parties)) throw new Error('not a save');
+                S.start = { kind: 'save', name: f.name.replace(/\.(hemi|json)$/i, ''), state: obj };
+                startInfo = summarize(obj); render(); touch();
+            } catch (err) { alertBox('Hemicycle 세이브 파일(.hemi)이 아닙니다.'); }
+        });
+        body.querySelectorAll('[data-json]').forEach(ta => { ta.oninput = () => {
+            const k = ta.dataset.json, err = body.querySelector(`[data-err="${k}"]`);
+            try { const v = JSON.parse(ta.value || (k === 'variables' ? '{}' : '[]')); if (k === 'variables' ? (typeof v !== 'object' || Array.isArray(v)) : !Array.isArray(v)) throw new Error(k === 'variables' ? '{ } 객체여야 합니다' : '[ ] 배열이어야 합니다'); S[k] = v; err.textContent = ''; touch(); }
+            catch (e2) { err.textContent = 'JSON 오류: ' + e2.message; }
+        }; });
+        $('scnExample').onclick = () => {
+            S.variables = { ...S.variables, crisis: 0 };
+            S.events = [...S.events, { id: 'scandal', title: '정치 스캔들', desc: '{party:ruling}의 핵심 인사가 스캔들에 휘말렸습니다.', trigger: { chance: 20 }, once: true,
+                options: [{ text: '사과하고 경질한다', effects: [{ support: { party: 'ruling', add: -1 } }, { approval: { of: 'cabinet', add: -2 } }] }, { text: '모르쇠로 버틴다', effects: [{ support: { party: 'ruling', add: -3 } }, { add_var: { name: 'crisis', value: 1 } }] }] }];
+            S.decisions = [...S.decisions, { id: 'rally', category: '시나리오', title: '지지층 결집 집회', desc: '여당 지지율 +2 · 국정 지지율 -1 (180일마다)', cooldown_days: 180, effects: [{ support: { party: 'ruling', add: 2 } }, { approval: { of: 'cabinet', add: -1 } }] }];
+            render(); touch();
+        };
+        body.querySelectorAll('[data-add]').forEach(b => { b.onclick = () => {
+            const key = b.dataset.add;
+            const g = { id: uid(key === 'goals' ? 'g' : 'f'), kind: key === 'goals' ? 'ruling' : 'ruling_seats', p: key === 'goals' ? { party: 'ruling' } : { n: 30, op: 'lt', share: true }, text: '' };
+            sync(g); S[key].push(g); render(); touch();
+        }; });
+        body.querySelectorAll('.scn-cond').forEach(row => {
+            const key = row.dataset.list, i = +row.dataset.i, g = S[key][i];
+            row.querySelector('[data-kind]').onchange = e => { g.kind = e.target.value; if (g.kind === 'custom') g.p = { json: JSON.stringify(g.condition || {}, null, 1) }; sync(g); render(); touch(); };
+            row.querySelectorAll('[data-p]').forEach(inp => {
+                const upd = () => { g.p = g.p || {}; g.p[inp.dataset.p] = inp.type === 'number' ? (inp.value === '' ? '' : Number(inp.value)) : inp.value; sync(g); const t = row.querySelector('[data-text]'); if (t) t.placeholder = autoText(g.kind, g.p); touch(); };
+                inp.oninput = upd; inp.onchange = upd;
+            });
+            row.querySelectorAll('[data-pb]').forEach(inp => { inp.onchange = () => { g.p = g.p || {}; g.p[inp.dataset.pb] = inp.checked; sync(g); const t = row.querySelector('[data-text]'); if (t) t.placeholder = autoText(g.kind, g.p); touch(); }; });
+            row.querySelector('[data-text]').oninput = e => { g.text = e.target.value; touch(); };
+            row.querySelector('[data-opt]')?.addEventListener('change', e => { g.required = e.target.checked ? false : undefined; touch(); });
+            row.querySelector('[data-hold]')?.addEventListener('change', e => { g.hold = e.target.checked || undefined; touch(); });
+            row.querySelector('[data-del]').onclick = () => { S[key].splice(i, 1); render(); touch(); };
+            row.querySelector('[data-up]').onclick = () => { if (i > 0) { [S[key][i - 1], S[key][i]] = [S[key][i], S[key][i - 1]]; render(); touch(); } };
+        });
+        $('scnDelete').onclick = async () => {
+            if (!(await confirmBox(`"${S.title}" 시나리오를 이 기기에서 지울까요? (내보낸 파일은 그대로)`))) return;
+            await dbDel(S.id).catch(() => {});
+            const all = await dbAll().catch(() => []);
+            if (all.length) await openItem(all.sort((a, b) => b.updatedAt - a.updatedAt)[0]); else { S = blank(); startInfo = null; render(); loadStartInfo(); await saveNow(); }
+            refreshLibrary();
+        };
+    }
+
+    // 시작 상태 요약 (국가 · 날짜 · 정당) — 목표의 정당 이름 고르기에 씀
+    function summarize(state) {
+        const c = state.config || {};
+        const parl = state.parliament || state.data || {};
+        const parties = (parl.parties || []).filter(p => p && p.ideologyId !== 9999 && p.status !== 'dissolved').map(p => String(p.name || '').trim()).filter(Boolean);
+        return { nation: c.nationName || '', date: c.nationDateYear ? `${c.nationDateEra ? c.nationDateEra + ' ' : ''}${c.nationDateYear}년 ${c.nationDateMonth || 1}월 ${c.nationDateDay || 1}일` : '', parties };
+    }
+    let loadToken = 0;
+    async function loadStartInfo() {
+        const st = S.start || {};
+        const tok = ++loadToken;
+        try {
+            if (st.kind === 'save') { startInfo = st.state ? summarize(st.state) : { nation: '(세이브를 고르세요)', date: '', parties: [] }; }
+            else {
+                const p = await DnoPresets.find(st.preset);
+                const state = p ? await DnoPresets.loadState(p) : null;
+                if (tok !== loadToken) return;
+                startInfo = state ? summarize(state) : { nation: '(프리셋을 읽지 못함)', date: '', parties: [] };
+            }
+        } catch (e) { startInfo = { nation: '(시작 상태를 읽지 못함)', date: '', parties: [] }; }
+        if (tok === loadToken) render();
+    }
+
+    // ---------------------------------------------------------------
+    // 저장 · 목록 · 파일
+    // ---------------------------------------------------------------
+    let saveTimer = 0;
+    function touch() { clearTimeout(saveTimer); saveTimer = setTimeout(saveNow, 500); }
+    async function saveNow() {
+        clearTimeout(saveTimer);
+        try { await dbPut({ id: S.id, title: S.title || '(제목 없음)', updatedAt: Date.now(), data: JSON.parse(JSON.stringify(S)) }); localStorage.setItem(LAST, S.id); } catch (e) { /* 저장 실패 — 내보내기로 */ }
+        refreshLibrary();
+    }
+    async function refreshLibrary() {
+        const sel = $('scnLibrary');
+        const all = (await dbAll().catch(() => [])).sort((a, b) => b.updatedAt - a.updatedAt);
+        sel.innerHTML = `<option value="" disabled>내 시나리오 (${all.length})</option>` + all.map(it => `<option value="${esc(it.id)}" ${it.id === S.id ? 'selected' : ''}>${esc(it.title)}</option>`).join('');
+    }
+    async function openItem(it) {
+        S = normalize(it.data) || blank();
+        startInfo = null; render(); loadStartInfo();
+        try { localStorage.setItem(LAST, S.id); } catch (e) { /* 무시 */ }
+    }
+    function normalize(d) {
+        if (!d || d.format !== FORMAT) return null;
+        const b = blank();
+        const out = { ...b, ...d };
+        ['goals', 'failures', 'events', 'decisions'].forEach(k => { if (!Array.isArray(out[k])) out[k] = []; });
+        if (!out.variables || typeof out.variables !== 'object' || Array.isArray(out.variables)) out.variables = {};
+        if (!out.start || (out.start.kind !== 'save' && out.start.kind !== 'preset')) out.start = b.start;
+        ['goals', 'failures'].forEach(k => out[k].forEach(g => { if (!g.id) g.id = uid('g'); if (!g.kind) { g.kind = 'custom'; g.p = { json: JSON.stringify(g.condition || {}, null, 1) }; } }));
+        return out;
+    }
+    // 플레이 · 내보내기용 — 목표 글이 비었으면 자동 글로
+    function finalData() {
+        const d = JSON.parse(JSON.stringify(S));
+        ['goals', 'failures'].forEach(k => d[k].forEach(g => { g.condition = toCond(g.kind, g.p); if (!g.text) g.text = autoText(g.kind, g.p); delete g.autoText; }));
+        return d;
+    }
+    async function exportFile() {
+        await saveNow();
+        const d = finalData();
+        const blob = window.HemiFile ? await window.HemiFile.encode(d) : new Blob([JSON.stringify(d)], { type: 'application/json' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `${(S.title || 'scenario').replace(/[\\/:*?"<>|]/g, '_')}.hemiscn`;
+        document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(() => URL.revokeObjectURL(a.href), 3000);
+    }
+    async function importFile(f) {
+        try {
+            const d = normalize(JSON.parse(window.HemiFile ? await window.HemiFile.readText(f) : await f.text()));
+            if (!d) throw new Error('format');
+            const all = await dbAll().catch(() => []);
+            if (all.some(it => it.id === d.id) && !(await confirmBox(`같은 시나리오("${d.title}")가 이미 있습니다. 불러온 것으로 덮어쓸까요? (취소하면 복사본으로)`))) d.id = uid('scn');
+            S = d; startInfo = null; render(); loadStartInfo(); await saveNow();
+        } catch (e) { alertBox('Hemicycle 시나리오 파일(.hemiscn)이 아닙니다.'); }
+    }
+
+    // ---------------------------------------------------------------
+    // 시험 플레이
+    // ---------------------------------------------------------------
+    async function play() {
+        await saveNow();
+        const d = finalData();
+        const st = d.start || {};
+        if (st.kind === 'save' && !st.state) { alertBox('시작할 세이브 파일을 고르세요.'); return; }
+        const bad = [...d.goals, ...d.failures].find(g => g.condition == null);
+        if (bad) { alertBox(`조건을 읽지 못한 항목이 있습니다: ${bad.text || bad.id}`); return; }
+        const scn = { ...d, start: { kind: st.kind, preset: st.preset, name: st.name } }; // 시작 세이브는 따로 넘김
+        const name = d.title || '시나리오';
+        try {
+            sessionStorage.removeItem('hemiBootScenario'); sessionStorage.removeItem('hemiBootScenarioPending');
+            const text = JSON.stringify(scn);
+            try { sessionStorage.setItem('hemiBootScenario', text); }
+            catch (e) { await window.HemiFile.stash('bootScenario', { text }); sessionStorage.setItem('hemiBootScenarioPending', '1'); }
+            if (st.kind === 'save') {
+                const stateText = JSON.stringify(st.state);
+                try { sessionStorage.setItem('dnoBootImportedStateJSON', stateText); sessionStorage.setItem('dnoBootImportedName', name); }
+                catch (e) {
+                    sessionStorage.removeItem('dnoBootImportedStateJSON');
+                    await window.HemiFile.stash('bootImport', { name, text: stateText });
+                    sessionStorage.setItem('dnoBootImportPending', '1');
+                }
+            } else {
+                sessionStorage.setItem('dnoBootPresetId', st.preset || 'builtin:tutorial');
+                sessionStorage.setItem('dnoBootNewSaveName', name);
+            }
+        } catch (e) { alertBox('시나리오를 넘기지 못했습니다. (저장 공간 부족)'); return; }
+        location.href = 'main.html';
+    }
+
+    // ---------------------------------------------------------------
+    // 시작
+    // ---------------------------------------------------------------
+    $('scnNew').onclick = async () => { await saveNow(); S = blank(); startInfo = null; render(); loadStartInfo(); await saveNow(); };
+    $('scnOpen').onclick = () => $('scnFile').click();
+    $('scnFile').onchange = e => { const f = e.target.files && e.target.files[0]; e.target.value = ''; if (f) importFile(f); };
+    $('scnExport').onclick = exportFile;
+    $('scnPlay').onclick = play;
+    $('scnLibrary').onchange = async e => { await saveNow(); const all = await dbAll().catch(() => []); const it = all.find(x => x.id === e.target.value); if (it) openItem(it); };
+    window.addEventListener('beforeunload', () => { if (saveTimer) saveNow(); });
+
+    (async function init() {
+        try { presets = window.DnoPresets ? await DnoPresets.list() : []; } catch (e) { presets = []; }
+        const all = (await dbAll().catch(() => [])).sort((a, b) => b.updatedAt - a.updatedAt);
+        let last = null; try { last = localStorage.getItem(LAST); } catch (e) { /* 무시 */ }
+        const it = all.find(x => x.id === last) || all[0];
+        if (it) S = normalize(it.data) || blank();
+        render(); loadStartInfo(); refreshLibrary();
+        if (!it) saveNow();
+    })();
+
+    window.HemiScenarioEditor = { get data() { return S; }, finalData, play, importFile, toCond, autoText };
+})();

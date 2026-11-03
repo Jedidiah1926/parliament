@@ -750,3 +750,7 @@ body.home-page { display: block; height: 100vh; overflow: hidden; text-transform
 html[data-build="demo"] .hemi-full-only { display: none !important; }
 .home-menu-item.home-menu-locked { opacity: .55; cursor: not-allowed; }
 .home-menu-item.home-menu-locked:hover { border-color: inherit; background: none; color: inherit; }
+
+/* 홈 메뉴의 "테스트" 표시 (시나리오) */
+.home-menu-test { font-size: .62em; padding: 0 5px; border: 1px solid var(--tno-gold); color: var(--tno-gold); vertical-align: 2px; letter-spacing: 0; }
+html[data-theme-family="modern"] .home-menu-test { border: none; border-radius: 999px; padding: 1px 7px; background: color-mix(in srgb, var(--m-gold) 18%, transparent); color: var(--m-gold); font-weight: 700; }
