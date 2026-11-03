@@ -4939,6 +4939,9 @@ window.DnoLangPacks.en = {
    "Outline color for district abbreviations"
   ],
   ["직접 지정", "Custom"],
+  ["개표 변동 ±", "Count variation ±"],
+  ["총선 지역구는 성향(무당층 포함)에 정당마다 이만큼 무작위로 더해 개표 — 0이면 매번 성향대로 같은 결과", "General-election districts are counted from their leanings (incl. undecided) plus this much random variation per party — 0 gives the same result every time"],
+  ["- 총선 지역구 개표 변동을 세이브마다 정하기 — 여론 › 시민 성향 아래 \"개표 변동 ±N%p\"(기본 15, 예전과 같음). 지역구는 성향(무당층 포함)에 정당마다 이만큼 무작위로 더해 개표하므로 성향 차이가 작으면 선거마다 결과가 바뀜 — 0으로 두면 늘 성향대로 같은 결과", "- Set general-election district count variation per save — \"Count variation ±N%p\" under Opinion › Citizen lean (default 15, as before). Districts are counted from their leanings (incl. undecided) plus this much random variation per party, so close districts can flip between elections — set 0 for the same result every time"],
   ["중점 디자인", "Focus design"],
   ["사용자 템플릿", "Custom template"],
   ["기본 (HOI4 중점)", "Default (HOI4 focus)"],

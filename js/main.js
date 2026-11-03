@@ -5221,7 +5221,8 @@
                         svgTendency: JSON.parse(JSON.stringify(districtSvgTendency)),
                         undecided: JSON.parse(JSON.stringify(districtUndecided)),
                         abbr: JSON.parse(JSON.stringify(districtAbbr)),
-                        seatResults: JSON.parse(JSON.stringify(districtSeatResults))
+                        seatResults: JSON.parse(JSON.stringify(districtSeatResults)),
+                        noise: districtNoise
                     },
                     tendency: {
                         data:     JSON.parse(JSON.stringify(tendencyData)),
@@ -5432,6 +5433,8 @@
             districtUndecided = elec.district?.undecided && typeof elec.district.undecided === 'object' ? elec.district.undecided : {};
             districtAbbr = elec.district?.abbr || {};
             districtSeatResults = { house: null, senate: null, third: null, ...(elec.district?.seatResults || {}) };
+            districtNoise = Number.isFinite(Number(elec.district?.noise)) && elec.district?.noise !== null && elec.district?.noise !== '' ? Math.max(0, Math.min(50, Number(elec.district.noise))) : 15;
+            { const ni = document.getElementById('districtNoiseInput'); if(ni) ni.value = districtNoise; }
             if(elec.district?.mapMode !== 'svg') migrateHexDistrictsToMap(elec.tendency?.data);
             ['house','senate','third'].forEach(ch => districtOrderSync(ch)); // 구버전 파일은 순서 배열이 없으므로 좌표 등장순으로 자동 생성
             ['house','senate','third'].forEach(ch => districtBackfillMembers(ch)); // 예전 중대선거구 세이브의 빠진 당선자 복구
@@ -11057,6 +11060,9 @@
         });
         // districtSvgTendency[key] = { house:{partyId:pct}, senate:{...}, third:{...} } — 지역구·원별 정당 지지도(%)
         let districtSvgTendency = {};
+        // 총선 지역구 개표 때 정당마다 더하는 무작위 변동(±%p) — 0이면 성향(무당층 포함)대로 늘 같은 결과. 예전부터 ±15
+        let districtNoise = 15;
+        const districtNoiseRoll = () => (districtNoise > 0 ? (Math.random() * 2 - 1) * districtNoise : 0);
         // 지역구 · 권역 무당층(%) — 성향에 넣지 않은 표의 몫. 개표 때마다 그 지역구에 나온 정당들에 나뉜다 (여론 › 지지율의 무당파와 같은 방식)
         // districtUndecided[key] = { house, senate, third } · regionUndecided[원][권역 id] = %
         let districtUndecided = {};
@@ -12248,6 +12254,11 @@
         // 지역구 하나의 실제로 쓰이는 성향 — 지역구에 따로 정한 값(하나라도 0보다 크면)이 우선, 없으면 속한 권역의 성향
         // 반환 { values: {partyId: pct}, source: 'district' | 'region' | null, region }
         const tendencyHasAny = obj => !!obj && Object.values(obj).some(v => (Number(v) || 0) > 0);
+        function setDistrictNoise(v) {
+            const n = Number(v);
+            districtNoise = Number.isFinite(n) ? Math.max(0, Math.min(50, Math.round(n * 10) / 10)) : 15;
+            const ni = document.getElementById('districtNoiseInput'); if(ni) ni.value = districtNoise;
+        }
         function districtTendencyFor(key, chamber) {
             const own = districtSvgTendency[key]?.[chamber];
             if(tendencyHasAny(own)) return { values: own, source: 'district', region: null };
@@ -15205,7 +15216,7 @@
                     const support = unionSupport[p.id] || 0;
                     if(anySupport && support <= 0) return;
                     // 노이즈: ±15% 정도 랜덤
-                    const noise = (Math.random() * 30 - 15);
+                    const noise = districtNoiseRoll(); // 성향 + 변동(±districtNoise)
                     const score = support + noise;
                     if(score > bestScore) { bestScore = score; bestParty = p; }
                 });
@@ -15242,7 +15253,7 @@
                     if(withdrawn.has(String(p.id)) || !partyRunsInChamber(p, chamber)) return { id: p.id, score: 0 };
                     const base = support[p.id] || 0;
                     if(anySupport && base <= 0) return { id: p.id, score: 0 };
-                    const noise = (Math.random() * 30 - 15);
+                    const noise = districtNoiseRoll(); // 성향 + 변동(±districtNoise)
                     return { id: p.id, score: Math.max(0, base + noise) };
                 });
                 const total = scored.reduce((s,p) => s + p.score, 0);
