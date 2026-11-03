@@ -90,6 +90,8 @@
     // ---------------------------------------------------------------
     // 방향성 트리
     // ---------------------------------------------------------------
+    // 방향성 아이콘 — 그림(iconImage) 또는 이모지(icon)
+    const iconOf = (f, cls) => (f.iconImage ? `<img class="${cls}-img" src="${esc(f.iconImage)}" alt="">` : f.icon ? `<span class="${cls}-ico">${esc(f.icon)}</span>` : '');
     const focusList = () => (R && Array.isArray(R.data.focus) ? R.data.focus : []);
     const focusById = id => focusList().find(f => f.id === id);
     function focusState(f) {
@@ -391,7 +393,7 @@
         const cur = R.focus.cur, f = cur && focusById(cur.id), nd = nowDay() ?? 0;
         const left = cur ? Math.max(0, cur.days - (nd - (cur.started ?? nd))) : 0;
         const by = st => focusList().filter(x => focusState(x) === st);
-        const item = (x, btn) => `<div class="cp-dec"><div class="cp-grow"><b>${esc((x.icon ? x.icon + ' ' : '') + (x.title || x.id))}</b><div class="cp-dim">${Number(x.days) || 0}일${x.desc ? ' · ' + esc(fillT(x.desc)).slice(0, 80) : ''}</div></div>${btn || ''}</div>`;
+        const item = (x, btn) => `<div class="cp-dec">${iconOf(x, 'cp-li')}<div class="cp-grow"><b>${esc(x.title || x.id)}</b><div class="cp-dim">${Number(x.days) || 0}일${x.desc ? ' · ' + esc(fillT(x.desc)).slice(0, 80) : ''}</div></div>${btn || ''}</div>`;
         host.innerHTML = `<div class="cp-wrap">
             <div class="cp-card"><div class="cp-h">진행 중</div>
                 ${cur ? `<div class="cp-focus-cur"><b>${esc(f ? f.title : cur.id)}</b><span class="cp-grow"></span><span class="cp-days">${left}일 남음</span></div><div class="cp-bar"><i style="width:${cur.days ? clamp((cur.days - left) / cur.days * 100, 0, 100) : 100}%"></i></div>` : '<div class="cp-dim">진행 중인 방향성이 없습니다.</div>'}</div>
@@ -450,10 +452,10 @@
             ${list.map(f => { const p = pos(f), s = focusState(f), cur = R.focus.cur && R.focus.cur.id === f.id;
                 const nd = nowDay() ?? 0, pct = cur && R.focus.cur.days ? clamp((nd - (R.focus.cur.started ?? nd)) / R.focus.cur.days * 100, 0, 100) : 0;
                 return `<button type="button" class="cp-node ${s} ${ui.sel === f.id ? 'sel' : ''}" data-node="${esc(f.id)}" style="left:${p.x}px;top:${p.y}px;width:${W}px;height:${H}px">
-                    ${f.icon ? `<span class="cp-node-ico">${esc(f.icon)}</span>` : ''}<span class="cp-node-t">${esc(f.title || f.id)}</span><span class="cp-node-d">${s === 'done' ? '✔ 완료' : cur ? `${Math.max(0, R.focus.cur.days - (nd - (R.focus.cur.started ?? nd)))}일 남음` : `${Number(f.days) || 0}일`}</span>
+                    ${iconOf(f, 'cp-node')}<span class="cp-node-t">${esc(f.title || f.id)}</span><span class="cp-node-d">${s === 'done' ? '✔ 완료' : cur ? `${Math.max(0, R.focus.cur.days - (nd - (R.focus.cur.started ?? nd)))}일 남음` : `${Number(f.days) || 0}일`}</span>
                     ${cur ? `<span class="cp-node-bar"><i style="width:${pct}%"></i></span>` : ''}</button>`; }).join('')}
         </div></div>
-        ${sel ? `<div class="cp-node-detail"><div class="cp-row"><b>${esc(sel.icon ? sel.icon + ' ' : '')}${esc(sel.title || sel.id)}</b><span class="cp-grow"></span><span class="cp-dim">${Number(sel.days) || 0}일 · ${{ done: '완료', current: '진행 중', available: '고를 수 있음', locked: '아직 못 고름', blocked: '다른 길을 골라 막힘' }[focusState(sel)]}</span></div>
+        ${sel ? `<div class="cp-node-detail"><div class="cp-row">${iconOf(sel, 'cp-li')}<b>${esc(sel.title || sel.id)}</b><span class="cp-grow"></span><span class="cp-dim">${Number(sel.days) || 0}일 · ${{ done: '완료', current: '진행 중', available: '고를 수 있음', locked: '아직 못 고름', blocked: '다른 길을 골라 막힘' }[focusState(sel)]}</span></div>
             ${sel.desc ? `<div class="cp-crisis-desc">${paras(fillT(sel.desc))}</div>` : ''}
             ${(sel.prereq || []).length ? `<div class="cp-dim">먼저: ${sel.prereq.map(id => esc((focusById(id) || {}).title || id)).join(', ')}</div>` : ''}
             ${(sel.any || []).length ? `<div class="cp-dim">이 중 하나 먼저: ${sel.any.map(id => esc((focusById(id) || {}).title || id)).join(', ')}</div>` : ''}
@@ -552,7 +554,7 @@
         .cp-link { fill: none; stroke: #3a4450; stroke-width: 2; } .cp-link.on { stroke: #3ecf8e; }
         .cp-excl { stroke: #ef6461; stroke-width: 2; stroke-dasharray: 3 3; } .cp-excl-t { fill: #ef6461; font-size: 13px; }
         .cp-node { position: absolute; cursor: pointer; font: inherit; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding: 6px; background: #12161c; border: 1px solid #3a4450; color: #aaa; text-align: center; }
-        .cp-node-ico { font-size: 1.1rem; line-height: 1; } .cp-node-t { font-size: .8rem; line-height: 1.25; word-break: keep-all; } .cp-node-d { font-size: .66rem; color: #7d8a90; }
+        .cp-node-ico { font-size: 1.1rem; line-height: 1; } .cp-node-img { width: 30px; height: 30px; object-fit: contain; } .cp-li-img { width: 28px; height: 28px; object-fit: contain; flex: 0 0 auto; } .cp-li-ico { font-size: 1.2rem; flex: 0 0 auto; } .cp-node-t { font-size: .8rem; line-height: 1.25; word-break: keep-all; } .cp-node-d { font-size: .66rem; color: #7d8a90; }
         .cp-node.available { border-color: var(--tno-neon); color: #eee; box-shadow: 0 0 8px var(--tno-neon-dim, rgba(0,255,255,.25)); }
         .cp-node.current { border-color: var(--tno-gold, #ffd700); color: #fff; box-shadow: 0 0 10px rgba(255,215,0,.35); }
         .cp-node.done { border-color: #3ecf8e; color: #cfe; background: #0f1d17; }

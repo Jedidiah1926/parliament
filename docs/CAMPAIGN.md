@@ -22,8 +22,11 @@
 
 조건 · 효과는 [스크립트 모드](MODDING.md)와 같은 JSON입니다. 칸 옆 **+ 도우미**로 자주 쓰는 모양을 넣고 값만 고치세요.
 
+방향성 · 위기의 세부 정보는 **칸으로**(칸 채우기) 또는 **JSON으로**(그 항목 전체를 직접) 고칠 수 있습니다 — 오른쪽 위 전환. 고급 탭의 **캠페인 전체 JSON**으로 모든 것을 한 번에 고칠 수도 있습니다 (그림 · 시작 세이브 데이터는 짧은 자리표시로 보이고 그대로 이어 붙음).
+
 ## 방향성 트리
 
+- **아이콘**: 이모지 또는 그림(올리면 128px로 줄여 `iconImage`에 담김)
 - **먼저 끝내야 함**(모두) · **이 중 하나 먼저** · **함께 못 고름**(배타, 양쪽으로) · **고를 수 있는 조건** · **끝나면 효과** · 끝나면 띄울 이벤트
 - 게임에서는 한 번에 하나씩 고르고, 정한 날이 지나면 끝나 효과가 들어갑니다. 끝낸 방향성은 플래그 `focus_<id>`.
 
@@ -54,7 +57,7 @@ gzip으로 압축한 JSON(세이브 .hemi와 같은 방식). 세이브 파일로
   "format": "hemicycle-campaign@1",
   "id": "...", "title": "...", "author": "...", "version": "1.0", "description": "...", "lore": "...",
   "starts": [{ "id": "s1", "name": "...", "desc": "...", "kind": "preset", "preset": "builtin:tutorial" }],
-  "focus": [{ "id": "f1", "title": "...", "icon": "🏛", "days": 35, "x": 1, "y": 0, "prereq": [], "any": [], "exclusive": [], "available": null, "effects": [], "event": "" }],
+  "focus": [{ "id": "f1", "title": "...", "icon": "🏛", "iconImage": "data:image/… (선택)", "days": 35, "x": 1, "y": 0, "prereq": [], "any": [], "exclusive": [], "available": null, "effects": [], "event": "" }],
   "crises": [{ "id": "c1", "title": "...", "color": "#e5484d", "desc": "...", "image": "", "date": "", "trigger": {}, "intro": "", "onStart": [],
     "meters": [{ "id": "tension", "name": "긴장", "start": 30, "min": 0, "max": 100, "perMonth": 5 }],
     "missions": [{ "id": "m1", "title": "...", "days": 90, "condition": {}, "success": [], "fail": [], "later": false, "start": null }],

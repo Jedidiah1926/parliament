@@ -44,6 +44,17 @@
     }
     let S = blank();
     let tab = 'info', selFocus = null, selCrisis = null, presets = [];
+    // 세부 정보 고치는 방식 — 'form'(칸 채우기) · 'json'(그 항목 전체를 JSON으로 직접)
+    let detailMode = 'form';
+    try { detailMode = localStorage.getItem('hemicycleCampaignDetailMode') === 'json' ? 'json' : 'form'; } catch (e) { /* 무시 */ }
+    const modeSeg = () => `<div class="scn-seg cpe-mode" title="세부 정보를 칸으로 채우거나, 그 항목 전체를 JSON으로 직접 고칩니다"><button type="button" data-mode="form" class="${detailMode === 'form' ? 'on' : ''}">칸으로</button><button type="button" data-mode="json" class="${detailMode === 'json' ? 'on' : ''}">JSON으로</button></div>`;
+    // 항목 하나(방향성 · 위기)를 통째로 JSON으로 — 저장할 때 큰 데이터(그림)는 그대로 보여 준다
+    // 그림(data:image…)은 JSON 칸에서 짧은 자리표시로 — 고쳐도 그대로 다시 붙는다
+    const imgStash = new Map();
+    const hideImgs = v => JSON.parse(JSON.stringify(v), (k, x) => { if (typeof x === 'string' && x.startsWith('data:image/')) { const key = `(그림 데이터 #${imgStash.size + 1} — 그대로 둠)`; imgStash.set(key, x); return key; } return x; });
+    const showImgs = v => JSON.parse(JSON.stringify(v), (k, x) => (typeof x === 'string' && imgStash.has(x) ? imgStash.get(x) : x));
+    const objJson = (path, rows) => `<textarea class="scn-in scn-code cpe-objjson" rows="${rows || 24}" spellcheck="false" data-objjson="${esc(path)}">${esc(JSON.stringify(hideImgs(getP(path)), null, 2))}</textarea><div class="scn-err" data-objerr="${esc(path)}"></div>`;
+    const iconHtml = (f, cls) => (f.iconImage ? `<img class="${cls}-img" src="${esc(f.iconImage)}" alt="">` : f.icon ? `<span class="${cls}-ico">${esc(f.icon)}</span>` : '');
 
     // 경로로 읽고 쓰기 — "crises.0.trigger" 같은
     const getP = p => p.split('.').reduce((o, k) => (o == null ? o : o[k]), S);
@@ -144,11 +155,12 @@
                 <div class="scn-dim scn-small">상자를 끌어 옮기고(칸에 맞춰짐), 눌러서 고치세요. 실선: 먼저 끝내야 함 · 점선: 이 중 하나 · 빨간 선: 함께 못 고름</div>
                 <div class="cpe-tree-wrap"><div class="cpe-tree" id="cpeTree" style="width:${W}px;height:${H}px">
                     <svg width="${W}" height="${H}" class="cpe-tree-svg">${lines}</svg>
-                    ${list.map(x => { const p = fpos(x); return `<div class="cpe-node ${x.id === selFocus ? 'sel' : ''}" data-node="${esc(x.id)}" style="left:${p.x}px;top:${p.y}px;width:${FW}px;height:${FH}px">${x.icon ? `<span class="cpe-node-ico">${esc(x.icon)}</span>` : ''}<span>${esc(x.title || x.id)}</span><span class="scn-dim">${Number(x.days) || 0}일</span></div>`; }).join('')}
+                    ${list.map(x => { const p = fpos(x); return `<div class="cpe-node ${x.id === selFocus ? 'sel' : ''}" data-node="${esc(x.id)}" style="left:${p.x}px;top:${p.y}px;width:${FW}px;height:${FH}px">${iconHtml(x, 'cpe-node')}<span>${esc(x.title || x.id)}</span><span class="scn-dim">${Number(x.days) || 0}일</span></div>`; }).join('')}
                 </div></div></div>
             <div class="scn-card cpe-side">${f ? `
-                <div class="scn-row"><div class="scn-h">방향성</div><span class="scn-grow"></span><button type="button" class="scn-btn scn-danger" data-del-focus>지우기</button></div>
-                <div class="scn-grid2"><div><label class="scn-lab">id (조건에서 focus_id)</label><input class="scn-in" data-ff="id" value="${esc(f.id)}"></div><div><label class="scn-lab">아이콘 (이모지)</label><input class="scn-in" data-ff="icon" maxlength="4" value="${esc(f.icon || '')}"></div></div>
+                <div class="scn-row"><div class="scn-h">방향성</div><span class="scn-grow"></span>${modeSeg()}<button type="button" class="scn-btn scn-danger" data-del-focus>지우기</button></div>
+                ${detailMode === 'json' ? `<div class="scn-dim scn-small">이 방향성 전체 — id · title · icon · iconImage · days · x · y · desc · prereq · any · exclusive · available · effects · event</div>${objJson(`focus.${list.indexOf(f)}`, 26)}` : `
+                <div class="scn-grid2"><div><label class="scn-lab">id (조건에서 focus_id)</label><input class="scn-in" data-ff="id" value="${esc(f.id)}"></div><div><label class="scn-lab">아이콘 (이모지 또는 그림)</label><div class="scn-row"><input class="scn-in" data-ff="icon" maxlength="4" value="${esc(f.icon || '')}" placeholder="🏛" style="width:60px" ${f.iconImage ? 'disabled title="그림을 쓰는 중"' : ''}>${f.iconImage ? `<img class="cpe-icon-prev" src="${esc(f.iconImage)}" alt=""><button type="button" class="scn-x" data-icon-del title="그림 빼기">×</button>` : '<button type="button" class="scn-btn" data-icon-img>그림</button>'}<input type="file" accept="image/*" data-icon-file hidden></div></div></div>
                 <label class="scn-lab">제목</label><input class="scn-in" data-ff="title" value="${esc(f.title)}">
                 <div class="scn-grid2"><div><label class="scn-lab">걸리는 날</label><input class="scn-in" type="number" min="0" data-ff="days" value="${esc(f.days)}"></div><div><label class="scn-lab">끝나면 띄울 이벤트 id (선택)</label><input class="scn-in" data-ff="event" value="${esc(f.event || '')}"></div></div>
                 <label class="scn-lab">설명</label><textarea class="scn-in" data-ff="desc" rows="3">${esc(f.desc)}</textarea>
@@ -156,7 +168,7 @@
                 <label class="scn-lab">이 중 하나 먼저</label><div class="cpe-chips">${chips('any')}</div>
                 <label class="scn-lab">함께 못 고름 (배타)</label><div class="cpe-chips">${chips('exclusive')}</div>
                 ${jsonField(`focus.${list.indexOf(f)}.available`, '고를 수 있는 조건', 'cond', 2)}
-                ${jsonField(`focus.${list.indexOf(f)}.effects`, '끝나면 효과', 'eff', 4)}`
+                ${jsonField(`focus.${list.indexOf(f)}.effects`, '끝나면 효과', 'eff', 4)}`}`
             : '<div class="scn-dim">왼쪽에서 방향성을 고르세요.</div>'}</div>
         </div>`;
     }
@@ -170,8 +182,10 @@
                 ${S.crises.map(x => `<button type="button" class="cpe-item ${x === c ? 'on' : ''}" data-crisis="${esc(x.id)}" style="--c:${esc(x.color || '#e5484d')}">${esc(x.title || x.id)}</button>`).join('') || '<div class="scn-dim">위기가 없습니다.</div>'}
                 <div class="scn-row"><button type="button" class="scn-btn" data-add-crisis>+ 위기</button></div>
                 <div class="scn-dim scn-small">TNO의 위기처럼 — 조건 · 날짜로 시작해 게이지 · 임무 · 위기 결정이 돌다가 결말 하나로 끝납니다.</div></div>
-            ${c ? `<div class="cpe-crisis-main">
-                <div class="scn-card"><div class="scn-row"><div class="scn-h">위기</div><span class="scn-grow"></span><button type="button" class="scn-btn scn-danger" data-del-crisis>이 위기 지우기</button></div>
+            ${c && detailMode === 'json' ? `<div class="cpe-crisis-main"><div class="scn-card"><div class="scn-row"><div class="scn-h">위기 — JSON</div><span class="scn-grow"></span>${modeSeg()}<button type="button" class="scn-btn scn-danger" data-del-crisis>이 위기 지우기</button></div>
+                <div class="scn-dim scn-small">이 위기 전체 — id · title · color · desc · image · date · trigger · intro · onStart · meters · missions · outcomes · events · decisions (docs/CAMPAIGN.md)</div>${objJson(`crises.${ci}`, 40)}</div></div>` : ''}
+            ${c && detailMode !== 'json' ? `<div class="cpe-crisis-main">
+                <div class="scn-card"><div class="scn-row"><div class="scn-h">위기</div><span class="scn-grow"></span>${modeSeg()}<button type="button" class="scn-btn scn-danger" data-del-crisis>이 위기 지우기</button></div>
                     <div class="scn-grid2"><div><label class="scn-lab">id (플래그 crisis_id)</label><input class="scn-in" data-cf="id" value="${esc(c.id)}"></div><div><label class="scn-lab">색</label><input class="scn-in" type="color" data-cf="color" value="${esc(c.color || '#e5484d')}"></div></div>
                     <label class="scn-lab">제목</label><input class="scn-in" data-cf="title" value="${esc(c.title)}">
                     <label class="scn-lab">설명 (시작할 때 크게 뜸)</label><textarea class="scn-in" data-cf="desc" rows="4">${esc(c.desc)}</textarea>
@@ -218,13 +232,52 @@
             <div class="scn-dim scn-small">위기와 상관없이 캠페인 내내 도는 것 (스크립트 모드 형식). 결정은 국가 › 결정 탭에 나옵니다.</div>
             ${jsonField('variables', '변수 (처음 값) — { "이름": 숫자 }', 'obj', 3)}
             ${jsonField('events', '이벤트', 'list', 8)}
-            ${jsonField('decisions', '결정', 'list', 6)}</div>`;
+            ${jsonField('decisions', '결정', 'list', 6)}</div>
+            <div class="scn-card"><div class="scn-h">캠페인 전체 JSON</div>
+                <div class="scn-dim scn-small">모든 칸을 JSON 하나로 직접 고칩니다. 시작 나라의 세이브 데이터는 너무 커서 여기선 빼고 보여 주며, 그대로 이어 붙습니다 (시작 나라 id가 같으면).</div>
+                <textarea class="scn-in scn-code cpe-objjson" rows="30" spellcheck="false" data-wholejson>${esc(JSON.stringify(wholeView(), null, 2))}</textarea><div class="scn-err" data-wholeerr></div>
+                <div class="scn-row"><button type="button" class="scn-btn scn-primary" data-whole-apply>적용</button><span class="scn-dim">JSON이 맞으면 "적용"으로 바뀝니다</span></div></div>`;
     }
+    // 전체 JSON 보기 — 시작 세이브(state)는 빼고 표시만
+    function wholeView() { const d = JSON.parse(JSON.stringify(S)); (d.starts || []).forEach(st => { if (st.state) st.state = '(세이브 데이터 — 그대로 둠)'; }); return hideImgs(d); }
 
     // ---------------------------------------------------------------
     // 묶기
     // ---------------------------------------------------------------
     function bindCommon(body) {
+        body.querySelectorAll('[data-mode]').forEach(b => { b.onclick = () => { detailMode = b.dataset.mode; try { localStorage.setItem('hemicycleCampaignDetailMode', detailMode); } catch (e) { /* 무시 */ } render(); }; });
+        body.querySelectorAll('[data-objjson]').forEach(ta => {
+            const p = ta.dataset.objjson, err = body.querySelector(`[data-objerr="${CSS.escape(p)}"]`);
+            ta.oninput = () => {
+                try {
+                    const v = showImgs(JSON.parse(ta.value));
+                    if (!v || typeof v !== 'object' || Array.isArray(v)) throw new Error('{ } 객체여야 합니다');
+                    const nid = String(v.id || '').trim();
+                    if (!nid) throw new Error('"id"가 있어야 합니다');
+                    const [kind, idx] = p.split('.');
+                    const list = S[kind], old = list[+idx];
+                    if (list.some((z, i) => i !== +idx && z.id === nid)) throw new Error(`id "${nid}"가 이미 있습니다`);
+                    if (kind === 'focus' && old && old.id !== nid) S.focus.forEach(z => ['prereq', 'any', 'exclusive'].forEach(k => { z[k] = (z[k] || []).map(id => (id === old.id ? nid : id)); }));
+                    list[+idx] = v;
+                    if (kind === 'focus') selFocus = nid; else selCrisis = nid;
+                    if (err) err.textContent = ''; touch();
+                } catch (e) { if (err) err.textContent = 'JSON 오류: ' + e.message; }
+            };
+            ta.onchange = () => { if (!err || !err.textContent) setTimeout(render, 0); }; // blur 중에 다시 그리면 안 되므로 한 박자 뒤
+        });
+        const whole = body.querySelector('[data-wholejson]');
+        if (whole) {
+            const err = body.querySelector('[data-wholeerr]');
+            let parsed = null;
+            whole.oninput = () => { try { const v = showImgs(JSON.parse(whole.value)); if (!v || v.format !== FORMAT) throw new Error(`"format": "${FORMAT}"이어야 합니다`); parsed = v; err.textContent = ''; } catch (e) { parsed = null; err.textContent = 'JSON 오류: ' + e.message; } };
+            body.querySelector('[data-whole-apply]').onclick = () => {
+                if (!parsed) { whole.oninput(); if (!parsed) return; }
+                const states = new Map((S.starts || []).filter(st => st.state).map(st => [st.id, st.state]));
+                const n = normalize(parsed); if (!n) return;
+                n.starts.forEach(st => { if (typeof st.state === 'string') { if (states.has(st.id)) st.state = states.get(st.id); else delete st.state; } });
+                S = n; selFocus = null; selCrisis = null; touch(); render();
+            };
+        }
         body.querySelectorAll('[data-f]').forEach(inp => { inp.oninput = () => { S[inp.dataset.f] = inp.value; touch(); }; });
         body.querySelectorAll('[data-json]').forEach(ta => { ta.oninput = () => {
             const p = ta.dataset.json, kind = ta.dataset.kind, err = body.querySelector(`[data-err="${CSS.escape(p)}"]`);
@@ -279,7 +332,7 @@
                 const k = inp.dataset.ff;
                 if (k === 'id') { const nv = inp.value.trim().replace(/[^a-z0-9_.-]/gi, '_'); if (!nv || S.focus.some(z => z !== f && z.id === nv)) return; S.focus.forEach(z => ['prereq', 'any', 'exclusive'].forEach(key => { z[key] = (z[key] || []).map(id => (id === f.id ? nv : id)); })); f.id = nv; selFocus = nv; }
                 else f[k] = inp.type === 'number' ? Number(inp.value) || 0 : inp.value;
-                touch(); if (inp.type !== 'text' && inp.tagName !== 'TEXTAREA') render(); else if (k === 'title' || k === 'icon') redrawTreeLater();
+                touch(); if (inp.type !== 'text' && inp.tagName !== 'TEXTAREA') setTimeout(render, 0); else if (k === 'title' || k === 'icon') redrawTreeLater();
             }; });
             body.querySelectorAll('[data-chip]').forEach(b => { b.onclick = () => {
                 const key = b.dataset.chip, id = b.dataset.id; const arr = f[key] || (f[key] = []);
@@ -287,6 +340,10 @@
                 if (key === 'exclusive') { const o = S.focus.find(z => z.id === id); if (o) { o.exclusive = o.exclusive || []; if (f.exclusive.includes(id) && !o.exclusive.includes(f.id)) o.exclusive.push(f.id); if (!f.exclusive.includes(id)) o.exclusive = o.exclusive.filter(x => x !== f.id); } }
                 render(); touch();
             }; });
+            const iconIn = body.querySelector('[data-icon-file]');
+            body.querySelector('[data-icon-img]')?.addEventListener('click', () => iconIn.click());
+            iconIn?.addEventListener('change', () => { const file = iconIn.files && iconIn.files[0]; iconIn.value = ''; if (file) shrink(file, 128, url => { f.iconImage = url; render(); touch(); }); });
+            body.querySelector('[data-icon-del]')?.addEventListener('click', () => { delete f.iconImage; render(); touch(); });
             body.querySelector('[data-del-focus]').onclick = () => { S.focus = S.focus.filter(z => z !== f); S.focus.forEach(z => ['prereq', 'any', 'exclusive'].forEach(key => { z[key] = (z[key] || []).filter(id => id !== f.id); })); selFocus = null; render(); touch(); };
         }
         // 끌어서 옮기기 (칸에 맞춤) — 조금만 움직이면 고르기
@@ -320,8 +377,9 @@
             if (k === 'id') { const nv = inp.value.trim().replace(/[^a-z0-9_.-]/gi, '_'); if (!nv || S.crises.some(z => z !== c && z.id === nv)) return; c.id = nv; selCrisis = nv; }
             else c[k] = inp.value;
             touch();
-        }; inp.onchange = () => { if (inp.dataset.cf === 'title' || inp.dataset.cf === 'color') render(); }; });
+        }; inp.onchange = () => { if (inp.dataset.cf === 'title' || inp.dataset.cf === 'color') setTimeout(render, 0); }; });
         body.querySelector('[data-del-crisis]').onclick = async () => { if (!(await confirmBox(`"${c.title}" 위기를 지울까요?`))) return; S.crises = S.crises.filter(z => z !== c); selCrisis = null; render(); touch(); };
+        if (detailMode === 'json') return; // JSON으로 고치는 중 — 칸이 없음
         const imgIn = body.querySelector('[data-img-file]');
         body.querySelector('[data-img]').onclick = () => imgIn.click();
         imgIn.onchange = () => { const f = imgIn.files && imgIn.files[0]; imgIn.value = ''; if (f) shrink(f, 900, url => { c.image = url; render(); touch(); }); };

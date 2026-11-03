@@ -118,3 +118,8 @@ html[data-theme-family="modern"] .cpe-chip { border-color: var(--m-border); colo
 html[data-theme-family="modern"] .cpe-item { border-color: var(--m-border); border-left-color: var(--c); color: var(--m-text-2); border-radius: 8px; } html[data-theme-family="modern"] .cpe-item.on { color: var(--m-text); }
 html[data-theme-family="modern"] .cpe-thumb { border-radius: 8px; border-color: var(--m-border); }
 html[data-theme-family="modern"] .cpe-pick-item { border-color: var(--m-border); color: var(--m-text); border-radius: 10px; }
+.cpe-node-img { width: 28px; height: 28px; object-fit: contain; }
+.cpe-icon-prev { width: 30px; height: 30px; object-fit: contain; border: 1px solid #333; }
+.cpe-mode button { font-size: .76rem; padding: 4px 9px; }
+.cpe-objjson { width: 100%; min-height: 200px; }
+html[data-theme-family="modern"] .cpe-icon-prev { border-color: var(--m-border); border-radius: 6px; }
