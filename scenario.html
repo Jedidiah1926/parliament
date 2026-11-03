@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <link rel="icon" type="image/png" href="icons/favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Hemicycle — Campaign</title>
+  <script src="js/thememode.js"></script>
+  <script src="js/dialogs.js"></script>
+  <script src="js/theme.js"></script>
+  <script src="js/savefile.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="fonts/neodgm/style.css">
+  <link rel="stylesheet" href="css/editor.css">
+  <link rel="stylesheet" href="css/modern.css">
+</head>
+
+<body>
+  <!-- 캠페인 · 시나리오 편집기 (0.3.0 · 테스트)
+       캠페인 = 세계관 + 시작 나라(종합 프리셋) + 방향성 트리 + 시나리오(위기)들 + 결말 — 게임에서는 js/campaign.js가 돌린다.
+       목표 · 실패 조건만 있는 짧은 도전은 challenge.html(챌린지). -->
+  <div class="scn-frame">
+    <header class="scn-head">
+      <a class="scn-back" href="index.html">← 메인으로</a>
+      <div class="scn-head-title">CAMPAIGN · SCENARIO <span class="scn-test">TEST</span></div>
+      <span class="scn-grow"></span>
+      <select id="cpLibrary" class="scn-in" title="내 캠페인"></select>
+      <button type="button" class="scn-btn" id="cpNew">새 캠페인</button>
+      <button type="button" class="scn-btn" id="cpOpen">불러오기</button>
+      <button type="button" class="scn-btn" id="cpExport">내보내기 (.hemicmp)</button>
+      <button type="button" class="scn-btn scn-primary" id="cpPlay">▶ 시험 플레이</button>
+      <a class="scn-btn" href="challenge.html" title="목표 · 실패 조건만 있는 짧은 도전">챌린지</a>
+      <input type="file" id="cpFile" accept=".hemicmp,.json,application/json" hidden>
+    </header>
+    <nav class="cpe-tabs" id="cpTabs"></nav>
+    <main class="cpe-body" id="cpBody"></main>
+  </div>
+
+  <script src="js/presets.js"></script>
+  <script src="js/campaign-editor.js"></script>
+  <script src="js/lang.js"></script>
+</body>
+</html>

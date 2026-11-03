@@ -6,7 +6,7 @@
 // - 세이브의 campaign 칸에 저장. 이벤트 · 결정 · 변수(게이지)는 js/scriptmods.js의 세이브 모드 하나("campaign.<id>")로 돈다:
 //   위기 이벤트 · 결정은 그 위기가 진행 중일 때만(플래그 crisis_<위기 id>), 끝낸 방향성은 플래그 focus_<id>,
 //   위기 결말은 플래그 crisis_<위기 id>_<결말 id>와 crisis_<위기 id>_done — 조건에서 그대로 쓸 수 있다.
-/* global getAppState, setAppState, switchSubTab, switchDispTab, showCustomAlert, showCustomConfirm, showKbdToast, currentMainTab, currentSubTab */
+/* global getAppState, setAppState, switchSubTab, switchMainTab, switchDispTab, showCustomAlert, showCustomConfirm, showKbdToast, currentMainTab, currentSubTab */
 (function () {
     'use strict';
     const root = document.documentElement;
@@ -234,7 +234,7 @@
         if (!R) return;
         const d = R.data, s = (d.starts || []).find(x => x.id === R.startId);
         superModal({ kicker: `캠페인${d.author ? ` · 제작자: ${d.author}` : ''}`, title: d.title || '캠페인', text: [d.lore || d.description || '', s && s.desc ? `▶ ${s.name || ''}\n${s.desc}` : ''].filter(Boolean).join('\n\n'), image: d.image },
-            [{ text: '방향성 트리 보기', on: () => { ui.view = 'focus'; showDisp(); } }, { text: '시작하기', primary: true, on: openTab }]);
+            [{ text: '방향성 트리 보기', on: () => openTab('campfocus') }, { text: '시작하기', primary: true, on: () => openTab('campaign') }]);
     }
     function showEnding(e) {
         superModal({ kicker: `${R.data.title || '캠페인'} — 결말`, title: e.title || e.id, text: e.text, image: e.image, extra: `<div class="cp-dim">${esc(labelOf(R.ending && R.ending.at))}</div>` },
@@ -244,22 +244,37 @@
     // ---------------------------------------------------------------
     // 국가 › 캠페인 탭 (왼쪽) · 오른쪽 시각 화면 "캠페인"
     // ---------------------------------------------------------------
-    (function addTab() {
-        const nation = document.getElementById('mainContentNation');
-        const bar = nation && nation.querySelector(':scope > .sub-tab-container');
-        if (!bar) return;
-        const first = bar.querySelector('.sub-tab-btn');
-        bar.insertBefore(el(`<button class="sub-tab-btn" onclick="switchSubTab('nation','campaign')" id="subTabCampaign" style="display:none;">캠페인</button>`), first);
-        nation.insertBefore(el(`<div id="contentCampaign" class="sub-tab-content"></div>`), document.getElementById('contentNationSettings'));
+    // 캠페인 세이브에서는 맨 위에 "캠페인" 상위 탭 (개요 · 방향성 · 위기) — 사이드 메뉴는 js/sidenav.js가 이 버튼들로 묶음을 만든다
+    (function addMainTab() {
+        const bar = document.querySelector('.main-tab-container');
+        const ref = document.getElementById('mainContentSetup');
+        if (!bar || !ref) return;
+        bar.insertBefore(el(`<button class="main-tab-btn" onclick="switchMainTab('campaign')" id="mainTabCampaign" style="display:none;">🎯 캠페인</button>`), bar.firstChild);
+        ref.parentElement.insertBefore(el(`<div id="mainContentCampaign" class="main-tab-content">
+            <div class="sub-tab-container" style="margin-top:10px;">
+                <button class="sub-tab-btn active" id="subTabCampaign" onclick="switchSubTab('campaign','campaign')">개요</button>
+                <button class="sub-tab-btn" id="subTabCampfocus" onclick="switchSubTab('campaign','campfocus')">방향성</button>
+                <button class="sub-tab-btn" id="subTabCampcrisis" onclick="switchSubTab('campaign','campcrisis')">위기</button>
+            </div>
+            <div id="contentCampaign" class="sub-tab-content active"></div>
+            <div id="contentCampfocus" class="sub-tab-content"></div>
+            <div id="contentCampcrisis" class="sub-tab-content"></div>
+        </div>`), ref);
+        try { if (typeof currentSubTab !== 'undefined' && !currentSubTab.campaign) currentSubTab.campaign = 'campaign'; } catch (e) { /* 없음 */ }
     })();
     const origSwitchSub = window.switchSubTab;
     window.switchSubTab = function (main, sub) {
         const r = origSwitchSub.apply(this, arguments);
-        if (main === 'nation' && sub === 'campaign') { renderLeft(); showDisp(); }
+        if (main === 'campaign') {
+            if (sub === 'campfocus') ui.view = 'focus';
+            if (sub === 'campcrisis') ui.view = 'crisis';
+            renderLeft(); showDisp();
+        }
         return r;
     };
-    const onTab = () => typeof currentMainTab !== 'undefined' && currentMainTab === 'nation' && typeof currentSubTab !== 'undefined' && currentSubTab.nation === 'campaign';
-    function openTab() { try { switchSubTab('nation', 'campaign'); } catch (e) { /* 화면 없음 */ } }
+    const curCampSub = () => (typeof currentMainTab !== 'undefined' && currentMainTab === 'campaign' && typeof currentSubTab !== 'undefined' ? currentSubTab.campaign || 'campaign' : null);
+    const onTab = () => !!curCampSub();
+    function openTab(sub) { try { switchSubTab('campaign', sub || 'campaign'); } catch (e) { /* 화면 없음 */ } }
 
     (function addDisp() {
         const after = document.getElementById('dispTabNews') || document.getElementById('dispTabEconomy') || document.getElementById('dispTabCabinet');
@@ -282,9 +297,12 @@
     };
 
     function refresh() {
-        const btn = document.getElementById('subTabCampaign');
+        const btn = document.getElementById('mainTabCampaign');
         if (btn) btn.style.display = R ? '' : 'none';
-        if (!R) { const db = document.getElementById('dispTabCampaign'); if (db) db.style.display = 'none'; }
+        if (!R) {
+            const db = document.getElementById('dispTabCampaign'); if (db) db.style.display = 'none';
+            if (onTab()) { try { switchMainTab('nation'); } catch (e) { /* 화면 없음 */ } }
+        }
         if (onTab()) renderLeft();
         if (dispActive()) renderDisp();
     }
@@ -329,6 +347,9 @@
     }
 
     function renderLeft() {
+        const sub = curCampSub();
+        if (sub === 'campfocus') { renderFocusLeft(); return; }
+        if (sub === 'campcrisis') { renderCrisisLeft(); return; }
         const host = document.getElementById('contentCampaign');
         if (!host) return;
         if (!R) { host.innerHTML = '<div class="cp-empty">이 세이브에는 캠페인이 없습니다. 메인 화면 › 캠페인 · 시나리오에서 캠페인을 만들고 "시험 플레이"하세요.</div>'; return; }
@@ -354,12 +375,46 @@
             <div class="cp-row"><button type="button" class="cp-btn" data-check>지금 확인</button><button type="button" class="cp-btn cp-x" data-quit>캠페인 끝내기</button></div>
         </div>`;
         host.querySelector('[data-intro]').onclick = showIntro;
-        host.querySelector('[data-tree]').onclick = () => { ui.view = 'focus'; showDisp(); };
-        host.querySelector('[data-crisis-view]').onclick = () => { ui.view = 'crisis'; showDisp(); };
+        host.querySelector('[data-tree]').onclick = () => openTab('campfocus');
+        host.querySelector('[data-crisis-view]').onclick = () => openTab('campcrisis');
         host.querySelector('[data-ending]')?.addEventListener('click', () => showEnding(ending));
         host.querySelectorAll('[data-focus]').forEach(b => { b.onclick = () => startFocus(b.dataset.focus); });
         host.querySelector('[data-check]').onclick = () => { tick(); toast('캠페인을 확인했습니다'); };
         host.querySelector('[data-quit]').onclick = () => showCustomConfirm('이 세이브에서 캠페인을 뗄까요? 나라는 그대로 두고 방향성 · 위기 · 캠페인 이벤트 · 결정만 없어집니다.', () => { R = null; bindMod(); refresh(); });
+        bindDecisions(host);
+    }
+
+    // 캠페인 › 방향성 — 지금 진행 · 고를 수 있는 것 · 끝낸 것 (트리는 오른쪽)
+    function renderFocusLeft() {
+        const host = document.getElementById('contentCampfocus');
+        if (!host || !R) return;
+        const cur = R.focus.cur, f = cur && focusById(cur.id), nd = nowDay() ?? 0;
+        const left = cur ? Math.max(0, cur.days - (nd - (cur.started ?? nd))) : 0;
+        const by = st => focusList().filter(x => focusState(x) === st);
+        const item = (x, btn) => `<div class="cp-dec"><div class="cp-grow"><b>${esc((x.icon ? x.icon + ' ' : '') + (x.title || x.id))}</b><div class="cp-dim">${Number(x.days) || 0}일${x.desc ? ' · ' + esc(fillT(x.desc)).slice(0, 80) : ''}</div></div>${btn || ''}</div>`;
+        host.innerHTML = `<div class="cp-wrap">
+            <div class="cp-card"><div class="cp-h">진행 중</div>
+                ${cur ? `<div class="cp-focus-cur"><b>${esc(f ? f.title : cur.id)}</b><span class="cp-grow"></span><span class="cp-days">${left}일 남음</span></div><div class="cp-bar"><i style="width:${cur.days ? clamp((cur.days - left) / cur.days * 100, 0, 100) : 100}%"></i></div>` : '<div class="cp-dim">진행 중인 방향성이 없습니다.</div>'}</div>
+            <div class="cp-h2">고를 수 있음 ${by('available').length}</div>
+            ${by('available').map(x => item(x, `<button type="button" class="cp-btn cp-primary" data-focus="${esc(x.id)}">시작</button>`)).join('') || '<div class="cp-dim">지금 고를 수 있는 방향성이 없습니다.</div>'}
+            ${by('done').length ? `<div class="cp-h2">끝냄 ${by('done').length}</div>${by('done').map(x => item(x, `<span class="cp-dim">${esc(labelOf(R.focus.done[x.id] > 1 ? R.focus.done[x.id] : null))}</span>`)).join('')}` : ''}
+            <div class="cp-dim">오른쪽 방향성 트리에서 상자를 눌러 자세히 보고 고를 수도 있습니다.</div>
+        </div>`;
+        host.querySelectorAll('[data-focus]').forEach(b => { b.onclick = () => startFocus(b.dataset.focus); });
+    }
+    // 캠페인 › 위기 — 진행 중인 위기는 크게, 지나간 위기는 결말과 함께
+    function renderCrisisLeft() {
+        const host = document.getElementById('contentCampcrisis');
+        if (!host || !R) return;
+        const active = crisisList().filter(c => R.crises[c.id]?.status === 'active');
+        const ended = crisisList().filter(c => R.crises[c.id]?.status === 'ended');
+        const idle = crisisList().filter(c => R.crises[c.id]?.status === 'idle');
+        host.innerHTML = `<div class="cp-wrap">
+            <div class="cp-h2">진행 중 ${active.length}</div>
+            ${active.map(c => crisisCard(c, false)).join('') || '<div class="cp-dim">진행 중인 위기가 없습니다.</div>'}
+            ${ended.length ? `<div class="cp-h2">지나감 ${ended.length}</div>${ended.map(c => crisisCard(c, false)).join('')}` : ''}
+            ${idle.length ? `<div class="cp-dim">아직 시작하지 않은 위기 ${idle.length}개 — 날짜 · 조건이 맞으면 시작됩니다.</div>` : ''}
+        </div>`;
         bindDecisions(host);
     }
 
@@ -438,7 +493,8 @@
         R = normalize({ data, startId: startId || null, focus: { cur: null, done: {} }, crises: {}, ending: null, startedAt: today() });
         bindMod();
         tick();
-        openTab();
+        refresh();
+        openTab('campaign');
         showIntro();
         try { if (typeof window.saveActiveNow === 'function') window.saveActiveNow(true); } catch (e) { /* 자동저장에 맡김 */ }
     }
