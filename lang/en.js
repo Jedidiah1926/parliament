@@ -4939,6 +4939,10 @@ window.DnoLangPacks.en = {
    "Outline color for district abbreviations"
   ],
   ["직접 지정", "Custom"],
+  ["스크립트 모드 (모딩)", "Script mods (modding)"],
+  ["의석 ↔ 내각 연동", "Seat ↔ cabinet link"],
+  ["세이브 선택 화면 탭", "Tabbed save select screen"],
+  ["앞으로 (예정)", "Coming next (planned)"],
   ["- 세이브 선택 화면을 탭으로 — 새로 시작(왼쪽 프리셋 · 오른쪽 빈 세이브) · 이어하기(왼쪽 즐겨찾기 · 오른쪽 일반 세이브, 검색 · 파일 불러오기) · 튜토리얼(왼쪽 기본 과정 · 오른쪽 심화 과정, 고르면 서독 튜토리얼 새 세이브에서 그 과정부터, 마친 과정 ✓), 서독 프리셋 설명은 \"처음이라면 여기서 시작하세요.\"만, 프리셋 목록(시작 화면 · 새 탭)에서 서독을 고르면 튜토리얼 없이 프리셋으로만 시작", "- Save select screen now uses tabs — New game (presets on the left, blank save on the right) · Continue (favorites on the left, other saves on the right, with search and file import) · Tutorial (basic lessons on the left, advanced on the right; picking one starts a new West Germany tutorial save at that lesson, completed lessons get a ✓); the West Germany preset description is now just \"Start here if you're new.\", and picking West Germany from a preset list (start screen or new tab) opens it as a plain preset without the tutorial"],
   ["처음이라면 여기서 시작하세요.", "Start here if you're new."],
   ["고르면 복사본이 새 세이브로 만들어집니다", "Picking one makes a copy as a new save"],
