@@ -1323,6 +1323,14 @@
             z-index: 5001;
             box-shadow: 0 0 10px color-mix(in srgb, var(--tno-neon) 15%, transparent);
         }
+        /* 좌석 정보 카드 — 이 의원의 내각 자리 · 내각에 임명 (의석 ↔ 내각 양방향 연동) */
+        .seat-cab { margin-top: 8px; padding-top: 6px; border-top: 1px dashed rgba(255,255,255,.12); display: flex; flex-direction: column; gap: 5px; }
+        .seat-cab-held { line-height: 1.7; }
+        .seat-cab-chip { display: inline-flex; align-items: center; gap: 3px; padding: 0 2px 0 6px; border: 1px solid var(--tno-gold, #ffd700); color: var(--tno-gold, #ffd700); font-size: .78rem; }
+        .seat-cab-chip button { background: none; border: none; color: inherit; cursor: pointer; font: inherit; padding: 0 3px; }
+        .seat-cab select { width: 100%; font-size: .8rem; }
+        html[data-theme-family="modern"] .seat-cab { border-top-color: var(--m-border); }
+        html[data-theme-family="modern"] .seat-cab-chip { border-color: var(--m-accent); color: var(--m-accent); border-radius: 999px; }
         .seat-info-card-header {
             display: flex;
             justify-content: space-between;

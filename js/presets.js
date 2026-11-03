@@ -61,6 +61,15 @@
             script: 'presets/korea.js',
             langs: { en: { title: 'Republic of Korea', description: 'By 왕조명' } }, // 영어 데이터 파일은 아직 없음 — 한국어 데이터로 열림
         },
+        {
+            id: 'builtin:uk',
+            title: '그레이트브리튼 북아일랜드 연합왕국',
+            description: '제작자: ttorri',
+            date: '2026년 10월 26일',
+            author: 'ttorri',
+            script: 'presets/uk.js',
+            langs: { en: { title: 'United Kingdom of Great Britain and Northern Ireland', description: 'By ttorri' } }, // 영어 데이터 파일은 아직 없음 — 한국어 데이터로 열림
+        },
     ];
     const INDEX_URL = 'presets/index.json';
     let listCache = null;

@@ -22,6 +22,10 @@ window.DnoLangPacks.en = {
  ],
  "ordinal": "en",
  "patterns": [
+    {"re": "^\\+ 새 (.+)$", "to": "+ New $1"},
+    {"re": "^내각: $", "to": "Cabinet: "},
+    {"re": "^ \\(지금: (.+)\\)$", "to": " (now: $1)"},
+    {"re": "^ \\(공석\\)$", "to": " (vacant)"},
     {"re": "^이벤트 (\\d+) · 결정 (\\d+)$", "to": "Events $1 · Decisions $2"},
     {"re": "^(\\d+)번 일어남$", "to": "Fired $1×"},
     {"re": "^(\\d+)일 뒤 다시$", "to": "Again in $1 days"},
@@ -838,6 +842,12 @@ window.DnoLangPacks.en = {
   }
  ],
  "dict": [
+    ["- 내장 프리셋 \"그레이트브리튼 북아일랜드 연합왕국\" 추가 (제작자: ttorri)", "- New built-in preset \"United Kingdom of Great Britain and Northern Ireland\" (by ttorri)"],
+    ["- 의석 ↔ 내각 양방향 연동 — 좌석 정보 카드에서 그 의원이 맡은 내각 자리를 보고 바로 임명 · 연결 끊기, 의원과 연결된 각료 카드에서 이름 · 사진을 고치면 의원에게도 반영 (당적은 의원을 따름)", "- Two-way seat ↔ cabinet link — the seat info card shows the member's cabinet posts and lets you appoint or unlink them; editing the name or photo on a linked cabinet card updates the member too (party follows the member)"],
+    ["제작자: ttorri", "By ttorri"],
+    ["🔗 의원과 연결됨 — 당적은 의원을 따르고, 이름·사진은 어느 쪽에서 고쳐도 함께 바뀜", "🔗 Linked to a member — party follows the member; name and photo stay in sync whichever side you edit"],
+    ["내각에 임명…", "Appoint to cabinet…"],
+    ["이 자리와 연결 끊기", "Unlink from this post"],
     ["결정", "Decisions"],
     ["모드", "Mods"],
     ["결정하기", "Take decision"],
