@@ -40,6 +40,8 @@
             root.removeProperty('--tno-neon');
             root.removeProperty('--tno-neon-dim');
         }
+        // 테마 색을 따라가는 화면(지역구 지도 테두리의 "테마 색 비례" 등)이 다시 그리도록 알림
+        try { window.dispatchEvent(new CustomEvent('hemi-theme-color', { detail: { color: hex } })); } catch (e) {}
     }
 
     function setThemeColor(hex) {

@@ -4938,6 +4938,15 @@ window.DnoLangPacks.en = {
    "지역구 약칭 글씨의 테두리 색입니다",
    "Outline color for district abbreviations"
   ],
+  ["직접 지정", "Custom"],
+  ["- 지역구 지도 테두리 · 글씨 테두리 색 방식 고르기(네온) — \"직접 지정\"은 고른 색 그대로, \"테마 색 비례\"는 지금 테마 색에서 색상을 얼마나 돌리고 채도 · 밝기를 몇 배로 했는지를 기억해 설정에서 테마 색을 바꾸면 같은 비율로 따라 바뀜 (옆에 \"밝기 ×0.50\"처럼 표시, 테마 색과 동기화를 누르면 테마 색 그대로 따라감)", "- Choose how district map borders and label outlines are colored (neon): \"Custom\" uses exactly the color you pick, \"Relative to theme\" remembers how far the hue is turned and how much saturation and brightness are scaled from the theme color, and follows in the same proportion when you change the theme color in settings (shown beside it, e.g. \"Brightness ×0.50\"; Sync with theme color follows it exactly)"],
+  ["- 내장 프리셋 \"일본국\" 갱신 (제작자: sushdjr0106)", "- Updated built-in preset \"Japan\" (by sushdjr0106)"],
+  ["테마 색 비례", "Relative to theme"],
+  ["직접 지정: 고른 색 그대로 · 테마 색 비례: 테마 색이 바뀌면 같은 비율로 따라 바뀜", "Custom: exactly the color you pick · Relative to theme: follows the theme color in the same proportion when it changes"],
+  ["테마 색 그대로", "Same as theme color"],
+  ["색상", "Hue"],
+  ["채도", "Saturation"],
+  ["밝기", "Brightness"],
   [
    "지도 안 지역구 수:",
    "Districts on map:"

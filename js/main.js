@@ -11709,9 +11709,18 @@
                 if(strokeHexInput) { strokeHexInput.value = color.toUpperCase(); strokeHexInput.disabled = locked; }
                 const syncBtn = document.getElementById('districtSvgStrokeSyncBtn');
                 if(syncBtn) syncBtn.style.display = locked ? 'none' : '';
-                const abbrColor = districtSvgMap.abbrStrokeColor || color;
-                if(abbrStrokeInput) abbrStrokeInput.value = abbrColor;
+                const abbrColor = districtSvgEffectiveAbbrStroke(districtSvgMap);
+                if(abbrStrokeInput) abbrStrokeInput.value = abbrColor.toLowerCase();
                 if(abbrStrokeHexInput) abbrStrokeHexInput.value = abbrColor.toUpperCase();
+                // 직접 지정 / 테마 색 비례 — 비례면 지금 비율을 옆에 보여 줌
+                [['stroke', districtSvgMap.strokeMode, districtSvgMap.strokeRel], ['abbr', districtSvgMap.abbrStrokeMode, districtSvgMap.abbrStrokeRel]].forEach(([which, mode, rel]) => {
+                    const id = which === 'abbr' ? 'districtSvgAbbrStroke' : 'districtSvgStroke';
+                    const sel = document.getElementById(id + 'ModeSel');
+                    const relEl = document.getElementById(id + 'RelText');
+                    const isTheme = mode === 'theme' && !!rel;
+                    if(sel) sel.value = isTheme ? 'theme' : 'custom';
+                    if(relEl) { relEl.textContent = isTheme ? districtStrokeRelText(rel) : ''; relEl.style.display = isTheme ? '' : 'none'; }
+                });
             }
         }
 
@@ -11857,8 +11866,7 @@
             if(districtRegionMap[ch]) districtRegionMap[ch] = {};
             districtSvgMaps[ch] = {
                 viewBox: parsed.viewBox,
-                strokeColor: old?.strokeColor || districtSvgMap?.strokeColor || '#00ffff',
-                abbrStrokeColor: old?.abbrStrokeColor || districtSvgMap?.abbrStrokeColor || null,
+                ...districtSvgStrokeFields(old?.strokeColor ? old : districtSvgMap),
                 shapes: parsed.shapes.map(sh => ({ ...sh, key: prefix + sh.key }))
             };
             districtSvgMaps[ch].shapes.forEach(sh => {
@@ -11974,9 +11982,7 @@
                 // 하원(공용) 지도: 따로 쓰는 원의 지도와 지역구 데이터는 그대로 둔다
                 const keptSplit = districtSplitSnapshot();
 
-                const strokeColor = districtSvgMap?.strokeColor || '#00ffff';
-                const abbrStrokeColor = districtSvgMap?.abbrStrokeColor || null;
-                districtSvgMap = { viewBox, strokeColor, abbrStrokeColor, shapes };
+                districtSvgMap = { viewBox, ...districtSvgStrokeFields(districtSvgMap), shapes };
                 districtMapMode = 'svg';
                 districtSeatCounts = {};
                 districtSvgTendency = {};
@@ -12015,20 +12021,116 @@
             const mode = document.documentElement.getAttribute('data-theme-mode');
             if(mode === 'light') return DISTRICT_ABBR_STROKE_LIGHT;
             if(mode === 'dark') return DISTRICT_ABBR_STROKE_DARK;
+            if(map && map.abbrStrokeMode === 'theme' && map.abbrStrokeRel) return districtStrokeFromRel(map.abbrStrokeRel);
             return (map && map.abbrStrokeColor) || districtSvgEffectiveStroke(map);
         }
         function districtSvgEffectiveStroke(map) {
             const mode = document.documentElement.getAttribute('data-theme-mode');
             if(mode === 'light') return DISTRICT_STROKE_LIGHT;
             if(mode === 'dark') return DISTRICT_STROKE_DARK;
+            if(map && map.strokeMode === 'theme' && map.strokeRel) return districtStrokeFromRel(map.strokeRel);
             return (map && map.strokeColor) || '#00ffff';
         }
+
+        // 네온 테두리 · 글씨 테두리 색의 두 방식 (1.6.9)
+        //   직접 지정(기본) — 고른 색 그대로.
+        //   테마 색 비례 — 고른 색을 "지금 테마 색에서 색상을 얼마나 돌리고, 채도 · 밝기를 몇 배로 했는지"로 기억해 두었다가
+        //                  테마 색이 바뀌면 같은 비율로 새 색을 만든다 (테마 색과 같게 고르면 늘 테마 색을 그대로 따라감)
+        function districtThemeBaseColor() {
+            let v = '';
+            try { v = getComputedStyle(document.documentElement).getPropertyValue('--tno-neon').trim(); } catch(e) {}
+            if(/^#[0-9a-f]{6}$/i.test(v)) return v.toLowerCase();
+            if(/^#[0-9a-f]{3}$/i.test(v)) return ('#' + v.slice(1).split('').map(c => c + c).join('')).toLowerCase();
+            const m = v.match(/^rgba?\(\s*(\d+)[,\s]+(\d+)[,\s]+(\d+)/i);
+            if(m) return '#' + [m[1], m[2], m[3]].map(n => Math.max(0, Math.min(255, +n)).toString(16).padStart(2, '0')).join('');
+            return (typeof getThemeColor === 'function' ? getThemeColor() : '#00ffff').toLowerCase();
+        }
+        function districtHexToHsl(hex) {
+            const n = parseInt(String(hex).replace('#', ''), 16);
+            const r = ((n >> 16) & 255) / 255, g = ((n >> 8) & 255) / 255, b = (n & 255) / 255;
+            const max = Math.max(r, g, b), min = Math.min(r, g, b), l = (max + min) / 2;
+            let h = 0, sat = 0;
+            if(max !== min) {
+                const d = max - min;
+                sat = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+                h = max === r ? (g - b) / d + (g < b ? 6 : 0) : max === g ? (b - r) / d + 2 : (r - g) / d + 4;
+                h *= 60;
+            }
+            return { h, s: sat, l };
+        }
+        function districtHslToHex(h, sat, l) {
+            h = ((h % 360) + 360) % 360; sat = Math.max(0, Math.min(1, sat)); l = Math.max(0, Math.min(1, l));
+            const k = n => (n + h / 30) % 12, a = sat * Math.min(l, 1 - l);
+            const f = n => l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
+            return '#' + [f(0), f(8), f(4)].map(x => Math.round(x * 255).toString(16).padStart(2, '0')).join('');
+        }
+        // 색 → 지금 테마 색 기준의 비율 { h: 색상 차(도), s · l: 채도 · 밝기 배율 (테마 색이 무채색 · 검정이면 절대값 sa · la) }
+        function districtStrokeRelFrom(color) {
+            const b = districtHexToHsl(districtThemeBaseColor()), c = districtHexToHsl(color);
+            return {
+                h: Math.round(((c.h - b.h) % 360 + 360) % 360 * 10) / 10,
+                s: b.s > 0.02 ? Math.round(c.s / b.s * 1000) / 1000 : null, sa: Math.round(c.s * 1000) / 1000,
+                l: b.l > 0.02 ? Math.round(c.l / b.l * 1000) / 1000 : null, la: Math.round(c.l * 1000) / 1000
+            };
+        }
+        function districtStrokeFromRel(rel) {
+            const b = districtHexToHsl(districtThemeBaseColor());
+            const sat = rel.s != null && b.s > 0.02 ? b.s * rel.s : (rel.sa ?? b.s);
+            const l = rel.l != null && b.l > 0.02 ? b.l * rel.l : (rel.la ?? b.l);
+            return districtHslToHex(b.h + (+rel.h || 0), sat, l);
+        }
+        // 비율을 사람이 읽는 글로: "색상 +20° · 채도 ×0.80 · 밝기 ×1.10" (테마 색 그대로면 "테마 색 그대로")
+        function districtStrokeRelText(rel) {
+            if(!rel) return '';
+            const parts = [];
+            const h = ((+rel.h || 0) + 180) % 360 - 180;
+            if(Math.abs(h) >= 0.5) parts.push('색상' + ' ' + (h > 0 ? '+' : '') + Math.round(h) + '°');
+            if(rel.s == null) parts.push('채도' + ' ' + Math.round((rel.sa || 0) * 100) + '%');
+            else if(Math.abs(rel.s - 1) >= 0.005) parts.push('채도' + ' ×' + rel.s.toFixed(2));
+            if(rel.l == null) parts.push('밝기' + ' ' + Math.round((rel.la || 0) * 100) + '%');
+            else if(Math.abs(rel.l - 1) >= 0.005) parts.push('밝기' + ' ×' + rel.l.toFixed(2));
+            return parts.length ? parts.join(' · ') : '테마 색 그대로';
+        }
+        // 지도를 새로 올리거나 바꿀 때 이어 쓸 테두리 설정 (색 · 방식 · 비율)
+        function districtSvgStrokeFields(src) {
+            return {
+                strokeColor: src?.strokeColor || '#00ffff',
+                abbrStrokeColor: src?.abbrStrokeColor || null,
+                ...(src?.strokeMode === 'theme' && src.strokeRel ? { strokeMode: 'theme', strokeRel: { ...src.strokeRel } } : {}),
+                ...(src?.abbrStrokeMode === 'theme' && src.abbrStrokeRel ? { abbrStrokeMode: 'theme', abbrStrokeRel: { ...src.abbrStrokeRel } } : {})
+            };
+        }
+        // 방식 고르기 — which: 'stroke'(지도 테두리) · 'abbr'(약칭 글씨 테두리), mode: 'custom' · 'theme'
+        function districtSvgSetStrokeMode(which, mode) {
+            if(districtStrokeLocked()) { districtUpdateModeUI(); return; }
+            const map = districtSvgMapFor(districtChamber);
+            if(!map) return;
+            const modeKey = which === 'abbr' ? 'abbrStrokeMode' : 'strokeMode', relKey = which === 'abbr' ? 'abbrStrokeRel' : 'strokeRel';
+            const colorKey = which === 'abbr' ? 'abbrStrokeColor' : 'strokeColor';
+            const cur = which === 'abbr' ? districtSvgEffectiveAbbrStroke(map) : districtSvgEffectiveStroke(map);
+            if(mode === 'theme') {
+                map[modeKey] = 'theme';
+                map[relKey] = districtStrokeRelFrom(cur); // 지금 보이는 색에서 시작 → 바꿔도 당장은 같은 색
+            } else {
+                delete map[modeKey]; delete map[relKey];
+                map[colorKey] = cur; // 지금 테마로 계산된 색을 그대로 고정
+            }
+            districtUpdateModeUI();
+            districtRenderMap();
+        }
+        // 테마 색이 바뀌면(설정 · 다른 탭 · 테마 모드 전환) 비례 방식인 지도를 다시 그림
+        window.addEventListener('hemi-theme-color', () => {
+            const maps = [districtSvgMap, districtSvgMaps?.senate, districtSvgMaps?.third];
+            if(!maps.some(m => m && (m.strokeMode === 'theme' || m.abbrStrokeMode === 'theme'))) return;
+            try { districtUpdateModeUI(); districtRenderMap(); } catch(e) {}
+        });
 
         function districtSvgSetStrokeColor(color) {
             if(districtStrokeLocked()) { districtUpdateModeUI(); return; }
             const map = districtSvgMapFor(districtChamber);
             if(!map) return;
             map.strokeColor = color;
+            if(map.strokeMode === 'theme') map.strokeRel = districtStrokeRelFrom(color);
             districtUpdateModeUI();
             districtRenderMap();
         }
@@ -12044,9 +12146,8 @@
 
         // 지역구 테두리 색을 현재 사이트 테마 색(설정에서 고른 색)과 동일하게 맞춤
         function districtSvgSyncStrokeColorWithTheme() {
-            if(typeof getThemeColor !== 'function') return;
             if(districtStrokeLocked()) return;
-            districtSvgSetStrokeColor(getThemeColor());
+            districtSvgSetStrokeColor(districtThemeBaseColor());
         }
 
         function districtSvgSetAbbrStrokeColor(color) {
@@ -12054,6 +12155,7 @@
             const map = districtSvgMapFor(districtChamber);
             if(!map) return;
             map.abbrStrokeColor = color;
+            if(map.abbrStrokeMode === 'theme') map.abbrStrokeRel = districtStrokeRelFrom(color);
             districtUpdateModeUI();
             districtRenderMap();
         }
@@ -12069,8 +12171,7 @@
 
         // 글씨 테두리 색을 현재 사이트 테마 색(설정에서 고른 색)과 동일하게 맞춤
         function districtSvgSyncAbbrStrokeColorWithTheme() {
-            if(typeof getThemeColor !== 'function') return;
-            districtSvgSetAbbrStrokeColor(getThemeColor());
+            districtSvgSetAbbrStrokeColor(districtThemeBaseColor());
         }
 
 
