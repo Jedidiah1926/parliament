@@ -527,6 +527,12 @@
         .preset-card { flex-direction: column; align-items: flex-start; gap: 5px; text-transform: none; }
         .preset-card-top { display: flex; align-items: center; gap: 8px; width: 100%; min-width: 0; }
         .preset-card-desc { color: #888; font-size: 0.8rem; line-height: 1.45; white-space: normal; }
+        /* 함께 만든 프리셋 — 제작자 이름에 밑줄, 올리면 만든 부분 */
+        .preset-credit { text-decoration: underline; text-decoration-style: dotted; text-underline-offset: 3px; cursor: help; color: inherit; }
+        .preset-credit:hover, .preset-credit:focus-visible { color: var(--tno-neon); outline: none; }
+        .preset-credit-tip { position: fixed; z-index: 100000; max-width: 300px; padding: 8px 12px; background: #050607; border: 1px solid var(--tno-neon); color: #ccc; font-size: 0.78rem; line-height: 1.5; box-shadow: 0 0 12px var(--tno-neon-dim, rgba(0,255,255,.3)); pointer-events: none; }
+        .preset-credit-tip-name { color: var(--tno-neon); font-weight: bold; margin-bottom: 4px; }
+        .preset-credit-tip ul { margin: 0; padding-left: 16px; }
         .preset-badge {
             flex: 0 0 auto;
             border: 1px solid var(--tno-gold);

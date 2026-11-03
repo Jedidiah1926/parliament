@@ -432,10 +432,50 @@
                         ${p.source ? `<span class="preset-badge preset-badge-soon">${p.source === 'workshop' ? '창작마당' : '모드 폴더'}</span>` : ''}
                         ${p.date ? `<span class="preset-card-date">${escapeSaveName(p.date)}</span>` : ''}
                     </span>
-                    ${p.description ? `<span class="preset-card-desc">${escapeSaveName(p.description)}</span>` : ''}
+                    ${p.description ? `<span class="preset-card-desc">${presetDescHtml(p)}</span>` : ''}
                 </button>`).join('');
             container.dataset.count = String(list.length);
         }
+
+        // 함께 만든 프리셋(credits): 설명 속 제작자 이름에 밑줄을 긋고, 마우스를 올리면(또는 키보드 초점) 그 사람이 만든 부분을 띄움
+        function presetDescHtml(p) {
+            let html = escapeSaveName(p.description);
+            (Array.isArray(p.credits) ? p.credits : []).forEach((c, ci) => {
+                if(!c || !c.name) return;
+                const name = escapeSaveName(c.name);
+                const idx = html.indexOf(name);
+                if(idx < 0) return;
+                const tag = `<span class="preset-credit" tabindex="0" data-preset-credit="${ci}">${name}</span>`;
+                html = html.slice(0, idx) + tag + html.slice(idx + name.length);
+            });
+            return html;
+        }
+        (function setupPresetCreditTips() {
+            let tip = null;
+            const hide = () => { if(tip) { tip.remove(); tip = null; } };
+            const show = async el => {
+                hide();
+                const card = el.closest('.preset-card');
+                const list = window.DnoPresets ? await DnoPresets.list() : [];
+                const cards = [...document.querySelectorAll('#presetSelectList .preset-card')];
+                const p = list[cards.indexOf(card)];
+                const c = p && Array.isArray(p.credits) ? p.credits[+el.dataset.presetCredit] : null;
+                if(!c || !document.body.contains(el)) return;
+                tip = document.createElement('div');
+                tip.className = 'preset-credit-tip';
+                tip.innerHTML = `<div class="preset-credit-tip-name">${escapeSaveName(c.name)}</div><ul>${(c.work || []).map(w => `<li>${escapeSaveName(w)}</li>`).join('')}</ul>`;
+                document.body.appendChild(tip);
+                const r = el.getBoundingClientRect(), tr = tip.getBoundingClientRect();
+                const left = Math.max(8, Math.min(window.innerWidth - tr.width - 8, r.left + r.width / 2 - tr.width / 2));
+                const top = r.bottom + 6 + tr.height > window.innerHeight - 8 ? r.top - tr.height - 6 : r.bottom + 6;
+                tip.style.left = left + 'px'; tip.style.top = Math.max(8, top) + 'px';
+            };
+            document.addEventListener('mouseover', e => { const el = e.target.closest && e.target.closest('.preset-credit'); if(el) show(el); });
+            document.addEventListener('mouseout', e => { const el = e.target.closest && e.target.closest('.preset-credit'); if(el && !el.contains(e.relatedTarget)) hide(); });
+            document.addEventListener('focusin', e => { if(e.target.classList && e.target.classList.contains('preset-credit')) show(e.target); });
+            document.addEventListener('focusout', e => { if(e.target.classList && e.target.classList.contains('preset-credit')) hide(); });
+            document.addEventListener('scroll', hide, true);
+        })();
 
         function escapeSaveName(name) {
             const div = document.createElement('div');

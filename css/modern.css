@@ -2887,6 +2887,9 @@ html[data-theme-family="modern"] .save-select-new-row input:focus { border-color
 html[data-theme-family="modern"] .save-select-start-btn { background: var(--m-accent) !important; color: var(--m-on-accent) !important; font-size: 14px; }
 html[data-theme-family="modern"] .save-select-start-btn:hover { background: var(--m-accent) !important; color: var(--m-on-accent) !important; opacity: .86; }
 html[data-theme-family="modern"] .preset-card-desc { color: var(--m-text-3) !important; font-size: 12.5px; }
+html[data-theme-family="modern"] .preset-credit:hover, html[data-theme-family="modern"] .preset-credit:focus-visible { color: var(--m-text); }
+html[data-theme-family="modern"] .preset-credit-tip { background: var(--m-surface, #fff); border: 1px solid var(--m-border, #ddd); color: var(--m-text-2, #333); border-radius: 8px; box-shadow: var(--m-shadow-lg); font-size: 12.5px; }
+html[data-theme-family="modern"] .preset-credit-tip-name { color: var(--m-text); }
 html[data-theme-family="modern"] .preset-badge {
     border: none !important;
     border-radius: 999px;
