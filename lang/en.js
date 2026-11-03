@@ -4939,6 +4939,8 @@ window.DnoLangPacks.en = {
    "Outline color for district abbreviations"
   ],
   ["직접 지정", "Custom"],
+  ["- 프리셋 목록 정리 — 서독은 튜토리얼 태그 · 노란 테두리 없이 제작자 표시(Pilcrow1926), 새로 들어오거나 바뀐 프리셋에 신규!(노랑) · 업데이트!(녹색) 표시와 같은 색 테두리, 날짜는 카드 아랫줄 오른쪽으로", "- Preset list cleanup — West Germany shows its creator (Pilcrow1926) without the tutorial tag or gold border, new and updated presets get New! (yellow) · Updated! (green) tags with matching borders, and dates move to the bottom right of each card"],
+  ["- 버전 표시 v1.7.0", "- Version shown as v1.7.0"],
   ["업데이트!", "Updated!"],
   ["신규!", "New!"],
   ["- 여론 › 기사 탭 — 기사 작성 · 수정 · 삭제 · 발행 (제목 · 부제 · 본문 · 작성일 · 언론사 · 기자 · 대표 사진, 유형: 정치 · 경제 · 사회 · 국제 · 사설 · 속보), 발행 · 초안 · 유형 걸러 보기와 찾기, 읽기 창", "- Opinion › Articles tab — write, edit, delete and publish articles (headline, subtitle, body, date, outlet, reporter, main photo; types: Politics · Economy · Society · World · Editorial · Breaking), filter by published/draft/type and search, reading view"],
