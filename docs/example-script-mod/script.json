@@ -1,0 +1,156 @@
+{
+  "format": "hemicycle-script@1",
+  "id": "example.coalition",
+  "name": "예제: 정국 흐름",
+  "author": "Hemicycle",
+  "version": "1.0",
+  "description": "날짜를 넘기면 정국 안정도가 바뀌고, 여당이 과반을 잃으면 연정 위기 이벤트가 일어나는 예제 모드입니다.",
+  "variables": {
+    "stability": 50
+  },
+  "events": [
+    {
+      "id": "minority_crisis",
+      "title": "여소야대",
+      "desc": "{party:ruling}이(가) 하원 과반을 잃었습니다. 정국 안정도 {var:stability}.",
+      "trigger": {
+        "not": {
+          "ruling_seats": {
+            "share": true,
+            "gte": 50
+          }
+        },
+        "not_flag": "crisis_done"
+      },
+      "options": [
+        {
+          "text": "대연정을 제안한다",
+          "effects": [
+            {
+              "add_var": {
+                "name": "stability",
+                "value": 10
+              }
+            },
+            {
+              "support": {
+                "party": "ruling",
+                "add": -2
+              }
+            },
+            {
+              "set_flag": "crisis_done"
+            }
+          ]
+        },
+        {
+          "text": "소수 정부로 버틴다",
+          "effects": [
+            {
+              "add_var": {
+                "name": "stability",
+                "value": -15
+              }
+            },
+            {
+              "set_flag": "crisis_done"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "unrest",
+      "title": "거리의 시위",
+      "desc": "정국이 불안해 시위가 번집니다.",
+      "once": false,
+      "chance": 30,
+      "trigger": {
+        "var": {
+          "name": "stability",
+          "lt": 30
+        }
+      },
+      "options": [
+        {
+          "text": "대화로 푼다",
+          "effects": [
+            {
+              "add_var": {
+                "name": "stability",
+                "value": 8
+              }
+            }
+          ]
+        },
+        {
+          "text": "강경 대응",
+          "effects": [
+            {
+              "add_var": {
+                "name": "stability",
+                "value": 3
+              }
+            },
+            {
+              "support": {
+                "party": "ruling",
+                "add": -3
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "decisions": [
+    {
+      "id": "reform",
+      "category": "정국 운영",
+      "title": "정치 개혁안 발표",
+      "desc": "정국 안정도 +15 · 여당 지지율 +1 (안정도 40 이상, 한 번만)",
+      "available": {
+        "var": {
+          "name": "stability",
+          "gte": 40
+        }
+      },
+      "requirement_text": "안정도 40 이상 필요",
+      "effects": [
+        {
+          "add_var": {
+            "name": "stability",
+            "value": 15
+          }
+        },
+        {
+          "support": {
+            "party": "ruling",
+            "add": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "rally",
+      "category": "정국 운영",
+      "title": "지지층 결집 집회",
+      "desc": "여당 지지율 +2, 안정도 -5 (180일마다)",
+      "cooldown_days": 180,
+      "effects": [
+        {
+          "support": {
+            "party": "ruling",
+            "add": 2
+          }
+        },
+        {
+          "add_var": {
+            "name": "stability",
+            "value": -5
+          }
+        }
+      ]
+    }
+  ]
+}

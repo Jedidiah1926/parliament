@@ -1,12 +1,13 @@
-// ===== 모드(창작마당) 불러오기 — 언어 팩 · 테마 · 프리셋 =====
+// ===== 모드(창작마당) 불러오기 — 언어 팩 · 테마 · 프리셋 · 스크립트 모드 =====
 // 모드 하나 = 폴더 하나 (Steam 창작마당 아이템 하나와 같은 구조):
 //   <폴더>/
-//     hemicycle-item.json   (선택) { "type": "language" | "theme" | "preset" | "preset-language", "file": "...", "title", "description", "tags", ... }
+//     hemicycle-item.json   (선택) { "type": "language" | "theme" | "preset" | "preset-language" | "script", "file": "...", "title", "description", "tags", ... }
 //     <내용 파일>            언어 팩(.json) · 테마(.json) · 프리셋(세이브 파일 .hemi 또는 .json)
 //     preview.png           (선택) 창작마당 미리보기 그림 — 올릴 때만 쓰임
 // hemicycle-item.json이 없으면 폴더 안 파일을 보고 알아서 판단한다:
 //   - "format": "dno-lang-pack@1"      → 언어 팩
 //   - "format": "hemicycle-theme@1"    → 테마
+//   - "format": "hemicycle-script@1"   → 스크립트 모드 (이벤트 · 결정 · 변수 — js/scriptmods.js, docs/MODDING.md)
 //   - .hemi 파일, 또는 세이브 형식(.json) → 프리셋 (제목은 폴더 이름)
 //
 // 언어별 프리셋 파일 (1.6.0) — 프리셋은 언어마다 따로 만든 파일을 쓴다 (그 언어 파일이 없으면 기본 파일 그대로)
@@ -27,6 +28,7 @@ const zlib = require('zlib');
 const ITEM_MANIFEST = 'hemicycle-item.json';
 const LANG_FORMAT = 'dno-lang-pack@1';
 const THEME_FORMAT = 'hemicycle-theme@1';
+const SCRIPT_FORMAT = 'hemicycle-script@1';
 const MAX_JSON_BYTES = 3000000;      // 언어 팩 · 테마
 const MAX_PRESET_BYTES = 30000000;   // 프리셋(세이브) — 사진이 들어가면 커질 수 있음
 const LANG_FILE_RE = /^(.+)\.([a-z]{2,3}(?:-[a-z0-9]+)?)\.(hemi|json)$/i; // 이름.언어코드.hemi
@@ -100,13 +102,13 @@ const presetFiles = new Map(); // key → 파일 경로
 
 // ---- 폴더 하나 읽기 → { languages, themes, presets } ----
 function readItemFolder(folder, source, itemId) {
-    const out = { languages: [], themes: [], presets: [], presetLangs: [] };
+    const out = { languages: [], themes: [], presets: [], presetLangs: [], scripts: [] };
     const base = { source, itemId: itemId || null, folder: path.basename(folder) };
     let manifest = null;
     try { manifest = readJson(path.join(folder, ITEM_MANIFEST)); } catch (e) { manifest = null; }
     manifest = manifest && typeof manifest === 'object' ? manifest : {};
     const type = manifest.type ? String(manifest.type) : '';
-    if (type && !['language', 'theme', 'preset', 'preset-language'].includes(type)) return out; // 모르는 종류(나중에 생길 다른 모드)
+    if (type && !['language', 'theme', 'preset', 'preset-language', 'script'].includes(type)) return out; // 모르는 종류(나중에 생길 다른 모드)
     // 다른 프리셋에 더하는 언어 파일
     const addPresetLang = (target, lang, f, title, description) => {
         const file = path.join(folder, String(f || ''));
@@ -144,6 +146,8 @@ function readItemFolder(folder, source, itemId) {
                     return;
                 }
                 if (obj && obj.format === THEME_FORMAT && (!type || type === 'theme')) { out.themes.push({ ...base, theme: obj }); return; }
+                // 스크립트 모드 — JSON 데이터만 (코드는 담지 않으므로 그대로 페이지에 넘긴다)
+                if (obj && obj.format === SCRIPT_FORMAT && (!type || type === 'script')) { out.scripts.push({ ...base, title: String(manifest.title || obj.name || base.folder).slice(0, 80), data: obj }); return; }
                 if (type) return;
                 if (!isSaveState(obj)) return;
             }
@@ -221,9 +225,9 @@ function listMods() {
     const folders = dirs.concat(steamItemFolders().map(({ itemId, folder }) => ({ source: 'workshop', itemId, folder })));
     const sig = folderSignature(folders);
     if (cache && cache.sig === sig) return cache.result;
-    const all = { languages: [], themes: [], presets: [], presetLangs: [] };
+    const all = { languages: [], themes: [], presets: [], presetLangs: [], scripts: [] };
     presetFiles.clear();
-    const add = r => { all.languages.push(...r.languages); all.themes.push(...r.themes); all.presets.push(...r.presets); all.presetLangs.push(...(r.presetLangs || [])); };
+    const add = r => { all.languages.push(...r.languages); all.themes.push(...r.themes); all.presets.push(...r.presets); all.presetLangs.push(...(r.presetLangs || [])); all.scripts.push(...(r.scripts || [])); };
     folders.forEach(({ source, itemId, folder }) => add(readItemFolder(folder, source, itemId)));
     cache = { sig, result: all };
     return all;
@@ -237,4 +241,4 @@ function loadPreset(key) {
     return obj;
 }
 
-module.exports = { modsDir, listMods, loadPreset, steam, ITEM_MANIFEST, LANG_FORMAT, THEME_FORMAT };
+module.exports = { modsDir, listMods, loadPreset, steam, ITEM_MANIFEST, LANG_FORMAT, THEME_FORMAT, SCRIPT_FORMAT };
