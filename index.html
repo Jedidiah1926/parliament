@@ -458,10 +458,10 @@
                 return;
             }
             container.innerHTML = list.map((p, i) => `
-                <button class="save-select-item preset-card${p.tutorial ? ' preset-card-tutorial' : ''}${p.comingSoon ? ' preset-card-soon' : ''}" ${p.comingSoon ? 'disabled' : `onclick="startFromPreset(${i})"`}>
+                <button class="save-select-item preset-card${p.badge === 'new' ? ' preset-card-new' : p.badge === 'updated' ? ' preset-card-updated' : ''}${p.comingSoon ? ' preset-card-soon' : ''}" ${p.comingSoon ? 'disabled' : `onclick="startFromPreset(${i})"`}>
                     <span class="preset-card-top">
                         <span class="save-select-item-name">${escapeSaveName(p.title)}</span>
-                        ${p.badge === 'new' || p.badge === 'updated' ? `<span class="preset-badge">${p.badge === 'new' ? '신규!' : '업데이트!'}</span>` : ''}
+                        ${p.badge === 'new' || p.badge === 'updated' ? `<span class="preset-badge preset-badge-${p.badge}">${p.badge === 'new' ? '신규!' : '업데이트!'}</span>` : ''}
                         ${p.comingSoon ? `<span class="preset-badge preset-badge-soon">${p.demoLocked ? '🔒 정식판' : '준비 중'}</span>` : ''}
                         ${p.source ? `<span class="preset-badge preset-badge-soon">${p.source === 'workshop' ? '창작마당' : '모드 폴더'}</span>` : ''}
                         ${p.date ? `<span class="preset-card-date">${escapeSaveName(p.date)}</span>` : ''}

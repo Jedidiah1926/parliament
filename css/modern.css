@@ -2922,7 +2922,9 @@ html[data-theme-family="modern"] .preset-badge {
     font-weight: 700;
     padding: 2px 8px;
 }
-html[data-theme-family="modern"] .preset-card-tutorial { box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--m-gold) 45%, transparent) !important; }
+html[data-theme-family="modern"] .preset-card-new { box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--m-gold) 45%, transparent) !important; }
+html[data-theme-family="modern"] .preset-card-updated { box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--m-success) 45%, transparent) !important; }
+html[data-theme-family="modern"] .preset-badge-updated { background: color-mix(in srgb, var(--m-success) 16%, transparent); color: var(--m-success) !important; }
 html[data-theme-family="modern"] .save-fav-btn {
     background: var(--m-surface-2) !important;
     border: none !important;
@@ -3112,6 +3114,7 @@ html[data-theme-family="modern"] .preset-card-soon:hover { background: transpare
 html[data-theme-family="modern"] .preset-badge-soon { background: var(--m-surface-2) !important; color: var(--m-text-3) !important; }
 html[data-theme-family="modern"] .save-tab-preset-date { color: var(--m-text-3); }
 html[data-theme-family="modern"] .save-tab-preset-badge { border: none; border-radius: 999px; padding: 1px 7px; background: color-mix(in srgb, var(--m-gold) 18%, transparent); color: color-mix(in srgb, var(--m-gold) 75%, var(--m-text)); font-weight: 600; text-shadow: none; }
+html[data-theme-family="modern"] .save-tab-preset-badge.updated { background: color-mix(in srgb, var(--m-success) 16%, transparent); color: var(--m-success); }
 html[data-theme-family="modern"] .save-card { padding: 0 !important; }
 html[data-theme-family="modern"] .save-card:hover { background: var(--m-surface-2) !important; }
 html[data-theme-family="modern"] .save-card-main:hover, html[data-theme-family="modern"] .save-card-auto:hover { background: var(--m-surface-3); border-radius: 10px; }

@@ -560,7 +560,10 @@
             padding: 1px 6px;
             text-shadow: 0 0 4px var(--tno-gold);
         }
-        .preset-card-tutorial { border-color: color-mix(in srgb, var(--tno-gold) 55%, var(--tno-border)); }
+        /* 신규! 프리셋은 노랑, 업데이트! 프리셋은 녹색 — 카드 테두리와 표시를 같은 색으로 */
+        .preset-card-new { border-color: color-mix(in srgb, var(--tno-gold) 55%, var(--tno-border)); }
+        .preset-card-updated { border-color: color-mix(in srgb, var(--vote-yea, #00ff88) 55%, var(--tno-border)); }
+        .preset-badge-updated { border-color: var(--vote-yea, #00ff88); color: var(--vote-yea, #00ff88); text-shadow: 0 0 4px var(--vote-yea, #00ff88); }
 
         .save-select-search input {
             width: 100%;
