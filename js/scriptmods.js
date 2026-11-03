@@ -57,7 +57,7 @@
         const desk = window.hemicycleDesktop && Array.isArray(window.hemicycleDesktop.modScripts) ? window.hemicycleDesktop.modScripts : [];
         desk.forEach(m => add(m.data, m.source === 'workshop' ? 'workshop' : 'local', { title: m.title, folder: m.folder }));
         lsGet(LS_IMPORTED, []).forEach(m => add(m && m.data, 'imported'));
-        // 세이브에 딸린 모드 — 시나리오(js/scenario.js)가 그 세이브에서만 켬 (끄기 목록과 상관없이 늘 켜짐)
+        // 세이브에 딸린 모드 — 캠페인(js/campaign.js) · 챌린지(js/challenge.js)가 그 세이브에서만 켬 (끄기 목록과 상관없이 늘 켜짐)
         saveMods.forEach(d => add(d, 'scenario'));
         mods = out;
         loadErrors = errors;
@@ -393,7 +393,7 @@
     const onTab = () => typeof currentMainTab !== 'undefined' && currentMainTab === 'nation' && typeof currentSubTab !== 'undefined' && currentSubTab.nation === 'decisions';
     function refresh() { if (onTab()) render(); }
 
-    const SRC_LABEL = { workshop: '창작마당', local: '모드 폴더', imported: '불러온 파일', scenario: '시나리오' };
+    const SRC_LABEL = { workshop: '창작마당', local: '모드 폴더', imported: '불러온 파일', scenario: '캠페인 · 챌린지' };
     function render() {
         const host = document.getElementById('contentDecisions');
         if (!host) return;

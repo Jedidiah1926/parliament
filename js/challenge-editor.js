@@ -1,13 +1,14 @@
-// ===== 시나리오 편집기 (scenario.html · 0.3.0 · 시나리오 테스트) =====
-// 시나리오(hemicycle-scenario@1) = 시작(내장 프리셋 또는 세이브 파일) + 브리핑 · 승리 · 패배 글 + 목표 · 실패 조건 · 마감일
+// ===== 챌린지 편집기 (challenge.html · 0.3.0) — 목표 · 실패 조건이 있는 짧은 도전 (캠페인 · 시나리오는 scenario.html) =====
+// 챌린지(hemicycle-challenge@1, 예전 hemicycle-scenario@1도 읽음) = 시작(내장 프리셋 또는 세이브 파일) + 브리핑 · 승리 · 패배 글 + 목표 · 실패 조건 · 마감일
 //                                  + 이벤트 · 결정 · 변수(스크립트 모드 형식 — docs/MODDING.md)
-// - 내 시나리오는 이 브라우저 · 앱의 IndexedDB에 저장 (세이브 파일을 시작으로 쓰면 그 세이브도 함께)
+// - 내 챌린지는 이 브라우저 · 앱의 IndexedDB에 저장 (세이브 파일을 시작으로 쓰면 그 세이브도 함께)
 // - 내보내기: .hemiscn (gzip으로 압축한 JSON — 세이브 .hemi와 같은 방식), 불러오기: .hemiscn · .json
-// - 시험 플레이: 시나리오를 sessionStorage(크면 IndexedDB)에 맡기고 시작 프리셋/세이브로 main.html을 연다 (js/scenario.js가 받음)
+// - 시험 플레이: 챌린지를 sessionStorage(크면 IndexedDB)에 맡기고 시작 프리셋/세이브로 main.html을 연다 (js/challenge.js가 받음)
 /* global DnoPresets, DnoUI */
 (function () {
     'use strict';
-    const FORMAT = 'hemicycle-scenario@1';
+    const FORMAT = 'hemicycle-challenge@1';
+    const OLD_FORMAT = 'hemicycle-scenario@1'; // 0.3.0 처음 판의 이름
     const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
     const $ = id => document.getElementById(id);
     const alertBox = (m, t) => (window.DnoUI && DnoUI.alert ? DnoUI.alert(m, t ? { title: t } : undefined) : Promise.resolve(alert(m)));
@@ -15,7 +16,7 @@
     const uid = p => p + '_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 
     // ---------------------------------------------------------------
-    // 내 시나리오 (IndexedDB)
+    // 내 챌린지 (IndexedDB — 저장소 이름은 0.3.0 처음 판 그대로)
     // ---------------------------------------------------------------
     const DB = 'hemicycleScenarios', STORE = 'items';
     function db() {
@@ -30,11 +31,11 @@
     async function dbDel(id) { const d = await db(); return new Promise((res, rej) => { const t = d.transaction(STORE, 'readwrite'); t.objectStore(STORE).delete(id); t.oncomplete = () => res(); t.onerror = () => rej(t.error); }); }
 
     // ---------------------------------------------------------------
-    // 시나리오 데이터
+    // 챌린지 데이터
     // ---------------------------------------------------------------
     function blank() {
         return {
-            format: FORMAT, id: uid('scn'), title: '새 시나리오', author: '', version: '1.0', description: '',
+            format: FORMAT, id: uid('scn'), title: '새 챌린지', author: '', version: '1.0', description: '',
             briefing: '', winText: '', loseText: '',
             start: { kind: 'preset', preset: 'builtin:tutorial' }, // { kind: 'preset', preset } | { kind: 'save', name, state }
             deadline: '', surviveToDeadline: false,
@@ -44,7 +45,7 @@
     }
     let S = blank();
     let startInfo = null; // 시작 상태 요약 { nation, date, parties: [이름] }
-    const LAST = 'hemicycleScenarioLast';
+    const LAST = 'hemicycleScenarioLast'; // 저장소 이름은 처음 판 그대로 (만든 챌린지가 그대로 보이게)
 
     // 조건 고르기 — 화면의 칸(kind · p) → 스크립트 모드 조건(JSON)
     const OPS = [['gte', '이상'], ['lte', '이하'], ['gt', '초과'], ['lt', '미만'], ['eq', '같음']];
@@ -53,7 +54,7 @@
     const KINDS = [
         ['ruling', '정당이 집권'], ['not_ruling', '정당이 집권하지 않음'], ['party_seats', '정당 의석'], ['party_support', '정당 지지율'],
         ['ruling_seats', '집권 세력 의석'], ['approval', '국정 지지율'], ['economy', '경제 지표'], ['date_after', '날짜가 되면'],
-        ['party_status', '정당 상태'], ['flag', '플래그(이벤트 · 결정이 켬)'], ['var', '시나리오 변수'], ['custom', '직접 쓰기 (JSON)'],
+        ['party_status', '정당 상태'], ['flag', '플래그(이벤트 · 결정이 켬)'], ['var', '챌린지 변수'], ['custom', '직접 쓰기 (JSON)'],
     ];
     const KIND_LABEL = Object.fromEntries(KINDS);
     const partyLabel = v => ({ ruling: '집권 세력 최대 정당', largest: '하원 최대 정당', opposition: '야당 최대 정당' }[v] || v || '?');
@@ -134,7 +135,7 @@
             </div>
             <div class="scn-card">
                 <div class="scn-h">고급 — 이벤트 · 결정 · 변수 <span class="scn-dim">(스크립트 모드 형식 · docs/MODDING.md)</span></div>
-                <div class="scn-dim scn-small">조건 · 효과에서 쓰는 변수 · 플래그는 이 시나리오 것만 따로 셉니다. 목표의 "플래그" · "시나리오 변수"와 같은 이름을 쓰면 이어집니다.</div>
+                <div class="scn-dim scn-small">조건 · 효과에서 쓰는 변수 · 플래그는 이 챌린지 것만 따로 셉니다. 목표의 "플래그" · "챌린지 변수"와 같은 이름을 쓰면 이어집니다.</div>
                 ${['variables', 'events', 'decisions'].map(k => `<label class="scn-lab">${{ variables: '변수 (처음 값) — { "이름": 숫자 }', events: '이벤트 — [ { id, title, desc, trigger, options } ]', decisions: '결정 — [ { id, title, desc, available, effects } ]' }[k]}</label>
                     <textarea class="scn-in scn-code" data-json="${k}" rows="${k === 'variables' ? 3 : 7}" spellcheck="false">${esc(JSON.stringify(S[k], null, 2))}</textarea><div class="scn-err" data-err="${k}"></div>`).join('')}
                 <div class="scn-row"><button type="button" class="scn-btn" id="scnExample">예제 이벤트 · 결정 넣기</button></div>
@@ -145,9 +146,9 @@
             ${condListHtml('failures', '실패 조건', '하나라도 맞으면 패배', parties)}
             <div class="scn-card scn-note">
                 <div class="scn-h">시험 플레이 · 공유</div>
-                <div class="scn-dim scn-small">▶ 시험 플레이를 누르면 시작 상태로 새 세이브를 만들고 시나리오를 붙여 게임이 열립니다. 오른쪽 아래 🎯 카드에서 목표를 보고, 날짜를 넘기거나 총선 결과를 반영할 때마다 검사합니다.<br>
-                내보내기(.hemiscn)한 파일을 다른 사람이 여기서 불러오면 같은 시나리오를 할 수 있습니다. 시나리오는 이 기기에 자동 저장됩니다.</div>
-                <div class="scn-row"><button type="button" class="scn-btn scn-danger" id="scnDelete">이 시나리오 지우기</button></div>
+                <div class="scn-dim scn-small">▶ 시험 플레이를 누르면 시작 상태로 새 세이브를 만들고 챌린지를 붙여 게임이 열립니다. 오른쪽 아래 🎯 카드에서 목표를 보고, 날짜를 넘기거나 총선 결과를 반영할 때마다 검사합니다.<br>
+                내보내기(.hemichl)한 파일을 다른 사람이 여기서 불러오면 같은 챌린지를 할 수 있습니다. 챌린지는 이 기기에 자동 저장됩니다.</div>
+                <div class="scn-row"><button type="button" class="scn-btn scn-danger" id="scnDelete">이 챌린지 지우기</button></div>
             </div>
         </section>
         <datalist id="scnParties"><option value="ruling">집권 세력 최대 정당</option><option value="largest">하원 최대 정당</option><option value="opposition">야당 최대 정당</option>${parties.map(n => `<option value="${esc(n)}">`).join('')}</datalist>`;
@@ -226,7 +227,7 @@
             S.variables = { ...S.variables, crisis: 0 };
             S.events = [...S.events, { id: 'scandal', title: '정치 스캔들', desc: '{party:ruling}의 핵심 인사가 스캔들에 휘말렸습니다.', trigger: { chance: 20 }, once: true,
                 options: [{ text: '사과하고 경질한다', effects: [{ support: { party: 'ruling', add: -1 } }, { approval: { of: 'cabinet', add: -2 } }] }, { text: '모르쇠로 버틴다', effects: [{ support: { party: 'ruling', add: -3 } }, { add_var: { name: 'crisis', value: 1 } }] }] }];
-            S.decisions = [...S.decisions, { id: 'rally', category: '시나리오', title: '지지층 결집 집회', desc: '여당 지지율 +2 · 국정 지지율 -1 (180일마다)', cooldown_days: 180, effects: [{ support: { party: 'ruling', add: 2 } }, { approval: { of: 'cabinet', add: -1 } }] }];
+            S.decisions = [...S.decisions, { id: 'rally', category: '챌린지', title: '지지층 결집 집회', desc: '여당 지지율 +2 · 국정 지지율 -1 (180일마다)', cooldown_days: 180, effects: [{ support: { party: 'ruling', add: 2 } }, { approval: { of: 'cabinet', add: -1 } }] }];
             render(); touch();
         };
         body.querySelectorAll('[data-add]').forEach(b => { b.onclick = () => {
@@ -249,7 +250,7 @@
             row.querySelector('[data-up]').onclick = () => { if (i > 0) { [S[key][i - 1], S[key][i]] = [S[key][i], S[key][i - 1]]; render(); touch(); } };
         });
         $('scnDelete').onclick = async () => {
-            if (!(await confirmBox(`"${S.title}" 시나리오를 이 기기에서 지울까요? (내보낸 파일은 그대로)`))) return;
+            if (!(await confirmBox(`"${S.title}" 챌린지를 이 기기에서 지울까요? (내보낸 파일은 그대로)`))) return;
             await dbDel(S.id).catch(() => {});
             const all = await dbAll().catch(() => []);
             if (all.length) await openItem(all.sort((a, b) => b.updatedAt - a.updatedAt)[0]); else { S = blank(); startInfo = null; render(); loadStartInfo(); await saveNow(); }
@@ -293,7 +294,7 @@
     async function refreshLibrary() {
         const sel = $('scnLibrary');
         const all = (await dbAll().catch(() => [])).sort((a, b) => b.updatedAt - a.updatedAt);
-        sel.innerHTML = `<option value="" disabled>내 시나리오 (${all.length})</option>` + all.map(it => `<option value="${esc(it.id)}" ${it.id === S.id ? 'selected' : ''}>${esc(it.title)}</option>`).join('');
+        sel.innerHTML = `<option value="" disabled>내 챌린지 (${all.length})</option>` + all.map(it => `<option value="${esc(it.id)}" ${it.id === S.id ? 'selected' : ''}>${esc(it.title)}</option>`).join('');
     }
     async function openItem(it) {
         S = normalize(it.data) || blank();
@@ -301,7 +302,8 @@
         try { localStorage.setItem(LAST, S.id); } catch (e) { /* 무시 */ }
     }
     function normalize(d) {
-        if (!d || d.format !== FORMAT) return null;
+        if (!d || (d.format !== FORMAT && d.format !== OLD_FORMAT)) return null;
+        d = { ...d, format: FORMAT };
         const b = blank();
         const out = { ...b, ...d };
         ['goals', 'failures', 'events', 'decisions'].forEach(k => { if (!Array.isArray(out[k])) out[k] = []; });
@@ -322,7 +324,7 @@
         const blob = window.HemiFile ? await window.HemiFile.encode(d) : new Blob([JSON.stringify(d)], { type: 'application/json' });
         const a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
-        a.download = `${(S.title || 'scenario').replace(/[\\/:*?"<>|]/g, '_')}.hemiscn`;
+        a.download = `${(S.title || 'challenge').replace(/[\\/:*?"<>|]/g, '_')}.hemichl`;
         document.body.appendChild(a); a.click(); a.remove();
         setTimeout(() => URL.revokeObjectURL(a.href), 3000);
     }
@@ -331,9 +333,9 @@
             const d = normalize(JSON.parse(window.HemiFile ? await window.HemiFile.readText(f) : await f.text()));
             if (!d) throw new Error('format');
             const all = await dbAll().catch(() => []);
-            if (all.some(it => it.id === d.id) && !(await confirmBox(`같은 시나리오("${d.title}")가 이미 있습니다. 불러온 것으로 덮어쓸까요? (취소하면 복사본으로)`))) d.id = uid('scn');
+            if (all.some(it => it.id === d.id) && !(await confirmBox(`같은 챌린지("${d.title}")가 이미 있습니다. 불러온 것으로 덮어쓸까요? (취소하면 복사본으로)`))) d.id = uid('scn');
             S = d; startInfo = null; render(); loadStartInfo(); await saveNow();
-        } catch (e) { alertBox('Hemicycle 시나리오 파일(.hemiscn)이 아닙니다.'); }
+        } catch (e) { alertBox('Hemicycle 챌린지 파일(.hemichl)이 아닙니다.'); }
     }
 
     // ---------------------------------------------------------------
@@ -347,12 +349,12 @@
         const bad = [...d.goals, ...d.failures].find(g => g.condition == null);
         if (bad) { alertBox(`조건을 읽지 못한 항목이 있습니다: ${bad.text || bad.id}`); return; }
         const scn = { ...d, start: { kind: st.kind, preset: st.preset, name: st.name } }; // 시작 세이브는 따로 넘김
-        const name = d.title || '시나리오';
+        const name = d.title || '챌린지';
         try {
-            sessionStorage.removeItem('hemiBootScenario'); sessionStorage.removeItem('hemiBootScenarioPending');
+            sessionStorage.removeItem('hemiBootChallenge'); sessionStorage.removeItem('hemiBootChallengePending');
             const text = JSON.stringify(scn);
-            try { sessionStorage.setItem('hemiBootScenario', text); }
-            catch (e) { await window.HemiFile.stash('bootScenario', { text }); sessionStorage.setItem('hemiBootScenarioPending', '1'); }
+            try { sessionStorage.setItem('hemiBootChallenge', text); }
+            catch (e) { await window.HemiFile.stash('bootChallenge', { text }); sessionStorage.setItem('hemiBootChallengePending', '1'); }
             if (st.kind === 'save') {
                 const stateText = JSON.stringify(st.state);
                 try { sessionStorage.setItem('dnoBootImportedStateJSON', stateText); sessionStorage.setItem('dnoBootImportedName', name); }
@@ -365,7 +367,7 @@
                 sessionStorage.setItem('dnoBootPresetId', st.preset || 'builtin:tutorial');
                 sessionStorage.setItem('dnoBootNewSaveName', name);
             }
-        } catch (e) { alertBox('시나리오를 넘기지 못했습니다. (저장 공간 부족)'); return; }
+        } catch (e) { alertBox('챌린지를 넘기지 못했습니다. (저장 공간 부족)'); return; }
         location.href = 'main.html';
     }
 
@@ -390,5 +392,5 @@
         if (!it) saveNow();
     })();
 
-    window.HemiScenarioEditor = { get data() { return S; }, finalData, play, importFile, toCond, autoText };
+    window.HemiChallengeEditor = { get data() { return S; }, finalData, play, importFile, toCond, autoText };
 })();

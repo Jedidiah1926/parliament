@@ -1,4 +1,4 @@
-/* ===== 시나리오 편집기 (scenario.html) — 네온 기본, 라이트/다크는 아래 html[data-theme-family="modern"] ===== */
+/* ===== 편집기 공용 (scenario.html 캠페인 · challenge.html 챌린지) — 네온 기본, 라이트/다크는 아래 html[data-theme-family="modern"] ===== */
 :root {
   --tno-bg: #101218; --tno-panel: #1a1d26; --tno-neon: #00ffff; --tno-neon-dim: color-mix(in srgb, var(--tno-neon) 30%, transparent);
   --tno-text: #e0e0e0; --tno-border: #4a5a6a; --tno-gold: #ffd700;

@@ -1,8 +1,8 @@
-// ===== 시나리오 플레이 (0.3.0 · 시나리오 테스트) =====
-// scenario.html에서 만든 시나리오(hemicycle-scenario@1)를 게임에서 플레이한다.
-//   시나리오 = 시작(프리셋 또는 세이브) + 브리핑 + 목표 · 실패 조건 · 마감일 + 이벤트 · 결정 · 변수(스크립트 모드 형식)
-// - 시작: scenario.html의 "시험 플레이"가 sessionStorage(hemiBootScenario, 크면 IndexedDB)에 시나리오를 맡기고
-//   시작 프리셋/세이브로 main.html을 연다 → 새 세이브가 만들어지면 여기서 시나리오를 그 세이브에 붙인다.
+// ===== 챌린지 플레이 (0.3.0) — 목표 · 실패 조건이 있는 짧은 도전 (challenge.html에서 만듦) =====
+// challenge.html에서 만든 챌린지(hemicycle-challenge@1)를 게임에서 플레이한다. (캠페인 · 시나리오는 js/campaign.js)
+//   챌린지 = 시작(프리셋 또는 세이브) + 브리핑 + 목표 · 실패 조건 · 마감일 + 이벤트 · 결정 · 변수(스크립트 모드 형식)
+// - 시작: challenge.html의 "시험 플레이"가 sessionStorage(hemiBootChallenge, 크면 IndexedDB)에 챌린지를 맡기고
+//   시작 프리셋/세이브로 main.html을 연다 → 새 세이브가 만들어지면 여기서 챌린지를 그 세이브에 붙인다.
 // - 세이브의 scenario 칸에 저장 (그 세이브에서만). 이벤트 · 결정은 js/scriptmods.js의 세이브 모드로 돈다.
 // - 날짜를 넘길 때 · 총선 결과를 반영할 때 목표 · 실패 조건을 검사하고, 다 이루면 승리 · 실패 조건이나 마감일이면 패배.
 /* global getAppState, setAppState, showCustomAlert, showCustomConfirm, showKbdToast */
@@ -11,18 +11,19 @@
     const root = document.documentElement;
     if (root.getAttribute('data-app-mode') === 'logo') return;
 
-    const FORMAT = 'hemicycle-scenario@1';
+    const FORMAT = 'hemicycle-challenge@1';
+    const OLD_FORMAT = 'hemicycle-scenario@1';
     const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
     const toast = t => { if (typeof showKbdToast === 'function') showKbdToast(t); };
     const el = html => { const d = document.createElement('div'); d.innerHTML = html.trim(); return d.firstChild; };
 
-    // 세이브에 붙은 시나리오 — { data(시작 상태는 뺀 시나리오), status: 'playing'|'won'|'lost', done: { 목표 id: 날짜 }, result }
+    // 세이브에 붙은 챌린지 — { data(시작 상태는 뺀 챌린지), status: 'playing'|'won'|'lost', done: { 목표 id: 날짜 }, result }
     let SC = null;
     let open = false;
 
-    const modId = d => 'scenario.' + String(d.id || 'untitled').replace(/[^a-z0-9_.-]/gi, '_').slice(0, 50);
+    const modId = d => 'challenge.' + String(d.id || 'untitled').replace(/[^a-z0-9_.-]/gi, '_').slice(0, 50);
     function toMod(d) {
-        return { format: 'hemicycle-script@1', id: modId(d), name: d.title || '시나리오', author: d.author || '', version: d.version || '',
+        return { format: 'hemicycle-script@1', id: modId(d), name: d.title || '챌린지', author: d.author || '', version: d.version || '',
             description: d.description || '', variables: d.variables || {}, events: d.events || [], decisions: d.decisions || [] };
     }
     function bindMod() { if (window.HemiScriptMods && window.HemiScriptMods.setSaveMods) window.HemiScriptMods.setSaveMods(SC ? [toMod(SC.data)] : []); }
@@ -30,13 +31,13 @@
     const origGet = window.getAppState;
     window.getAppState = function () {
         const st = origGet.apply(this, arguments);
-        if (st && typeof st === 'object' && SC) st.scenario = JSON.parse(JSON.stringify(SC));
+        if (st && typeof st === 'object' && SC) st.challenge = JSON.parse(JSON.stringify(SC));
         return st;
     };
     const origSet = window.setAppState;
     window.setAppState = function (state) {
         const r = origSet.apply(this, arguments);
-        const src = state && state.scenario;
+        const src = state && (state.challenge || state.scenario); // scenario: 0.3.0 처음 판 세이브
         SC = src && typeof src === 'object' && src.data ? JSON.parse(JSON.stringify(src)) : null;
         if (SC) { SC.done = SC.done || {}; SC.status = SC.status || 'playing'; }
         bindMod();
@@ -116,9 +117,9 @@
         box.style.display = '';
         box.className = `sc-tracker ${st} ${open ? 'open' : ''}`;
         box.innerHTML = `
-            <button type="button" class="sc-pill" data-toggle title="시나리오 목표">
+            <button type="button" class="sc-pill" data-toggle title="챌린지 목표">
                 <span class="sc-ico">${st === 'won' ? '🏆' : st === 'lost' ? '✖' : '🎯'}</span>
-                <span class="sc-pill-t">${esc(d.title || '시나리오')}</span>
+                <span class="sc-pill-t">${esc(d.title || '챌린지')}</span>
                 <span class="sc-pill-n">${st === 'playing' ? `${n}/${req.length}` : st === 'won' ? '승리' : '패배'}</span>
             </button>
             ${open ? `<div class="sc-panel">
@@ -131,15 +132,15 @@
                 <div class="sc-row">
                     <button type="button" class="sc-btn" data-brief>브리핑</button>
                     ${st === 'playing' ? '<button type="button" class="sc-btn" data-check>지금 확인</button>' : '<button type="button" class="sc-btn" data-result>결과 보기</button>'}
-                    <a class="sc-btn" href="scenario.html">편집기</a>
-                    <button type="button" class="sc-btn sc-x" data-quit title="이 세이브에서 시나리오 떼기">시나리오 끝내기</button>
+                    <a class="sc-btn" href="challenge.html">편집기</a>
+                    <button type="button" class="sc-btn sc-x" data-quit title="이 세이브에서 챌린지 떼기">챌린지 끝내기</button>
                 </div>
             </div>` : ''}`;
         box.querySelector('[data-toggle]').onclick = () => { open = !open; if (open && SC.status === 'playing') check(true); else render(); };
         box.querySelector('[data-brief]')?.addEventListener('click', showBrief);
         box.querySelector('[data-check]')?.addEventListener('click', () => { check(false); toast('목표를 확인했습니다'); });
         box.querySelector('[data-result]')?.addEventListener('click', showResult);
-        box.querySelector('[data-quit]')?.addEventListener('click', () => showCustomConfirm('이 세이브에서 시나리오를 뗄까요? 나라는 그대로 두고 목표 카드 · 시나리오 이벤트 · 결정만 없어집니다.', () => { SC = null; bindMod(); render(); }));
+        box.querySelector('[data-quit]')?.addEventListener('click', () => showCustomConfirm('이 세이브에서 챌린지를 뗄까요? 나라는 그대로 두고 목표 카드 · 챌린지 이벤트 · 결정만 없어집니다.', () => { SC = null; bindMod(); render(); }));
     }
 
     function modal(html, buttons) {
@@ -155,7 +156,7 @@
     function showBrief() {
         if (!SC) return;
         const d = SC.data, dl = keyOf(d.deadline);
-        modal(`<div class="sc-kicker">시나리오${d.author ? ` · 제작자: ${esc(d.author)}` : ''}</div><h2 class="sc-title">${esc(d.title || '시나리오')}</h2>
+        modal(`<div class="sc-kicker">챌린지${d.author ? ` · 제작자: ${esc(d.author)}` : ''}</div><h2 class="sc-title">${esc(d.title || '챌린지')}</h2>
             <div class="sc-body">${paras(d.briefing || d.description || '')}</div>
             <div class="sc-h">목표</div><ul class="sc-list">${(d.goals || []).filter(g => g && g.id).map(g => `<li><span class="sc-chk">○</span><span>${esc(g.text || g.id)}${g.required === false ? ' <span class="sc-dim">(선택)</span>' : ''}</span></li>`).join('') || '<li class="sc-dim">목표 없음 — 자유 플레이</li>'}</ul>
             ${dl != null ? `<div class="sc-dim">마감일: ${esc(labelOf(dl))}</div>` : ''}`, [{ text: '시작하기', primary: true }]);
@@ -164,28 +165,28 @@
         if (!SC || SC.status === 'playing') return;
         const d = SC.data, won = SC.status === 'won';
         const goals = (d.goals || []).filter(g => g && g.id);
-        modal(`<div class="sc-kicker">${esc(d.title || '시나리오')}</div><h2 class="sc-title ${won ? 'won' : 'lost'}">${won ? '🏆 승리' : '✖ 패배'}</h2>
+        modal(`<div class="sc-kicker">${esc(d.title || '챌린지')}</div><h2 class="sc-title ${won ? 'won' : 'lost'}">${won ? '🏆 승리' : '✖ 패배'}</h2>
             <div class="sc-body">${paras(won ? (d.winText || '모든 목표를 이루었습니다.') : (d.loseText || ''))}${!won && SC.result && SC.result.reason ? `<p class="sc-dim">${esc(SC.result.reason)}</p>` : ''}</div>
             <ul class="sc-list">${goals.map(g => `<li class="${SC.done[g.id] ? 'done' : ''}"><span class="sc-chk">${SC.done[g.id] ? '✔' : '○'}</span><span>${esc(g.text || g.id)}${SC.done[g.id] && SC.done[g.id] > 1 ? ` <span class="sc-dim">${esc(labelOf(SC.done[g.id]))}</span>` : ''}</span></li>`).join('')}</ul>
             ${SC.result && SC.result.at ? `<div class="sc-dim">${esc(labelOf(SC.result.at))}</div>` : ''}`,
-        [{ text: '편집기로', on: () => { location.href = 'scenario.html'; } }, { text: '계속 플레이', primary: true }]);
+        [{ text: '편집기로', on: () => { location.href = 'challenge.html'; } }, { text: '계속 플레이', primary: true }]);
     }
 
     // ---------------------------------------------------------------
-    // 시작: scenario.html이 맡긴 시나리오를 새 세이브에 붙이기
+    // 시작: challenge.html이 맡긴 챌린지를 새 세이브에 붙이기
     // ---------------------------------------------------------------
-    // 화면을 열 때(main.js의 부팅보다 먼저) 맡겨 둔 시나리오가 있는지 본다 — 시작 세이브가 만들어지는 순간(createNamedSlotFromCurrentState)에 붙임
+    // 화면을 열 때(main.js의 부팅보다 먼저) 맡겨 둔 챌린지가 있는지 본다 — 시작 세이브가 만들어지는 순간(createNamedSlotFromCurrentState)에 붙임
     let pendingRaw = null, pendingStash = false;
     try {
-        pendingRaw = sessionStorage.getItem('hemiBootScenario'); sessionStorage.removeItem('hemiBootScenario');
-        pendingStash = !!sessionStorage.getItem('hemiBootScenarioPending'); sessionStorage.removeItem('hemiBootScenarioPending');
+        pendingRaw = sessionStorage.getItem('hemiBootChallenge'); sessionStorage.removeItem('hemiBootChallenge');
+        pendingStash = !!sessionStorage.getItem('hemiBootChallengePending'); sessionStorage.removeItem('hemiBootChallengePending');
     } catch (e) { /* sessionStorage 없음 */ }
     async function takePending() {
         let raw = pendingRaw;
         pendingRaw = null;
-        if (!raw && pendingStash) { pendingStash = false; try { const v = await window.HemiFile.take('bootScenario'); raw = v && v.text; } catch (e) { raw = null; } }
+        if (!raw && pendingStash) { pendingStash = false; try { const v = await window.HemiFile.take('bootChallenge'); raw = v && v.text; } catch (e) { raw = null; } }
         if (!raw) return null;
-        try { const d = JSON.parse(raw); return d && d.format === FORMAT ? d : null; } catch (e) { return null; }
+        try { const d = JSON.parse(raw); return d && (d.format === FORMAT || d.format === OLD_FORMAT) ? d : null; } catch (e) { return null; }
     }
     function attach(d) {
         const data = JSON.parse(JSON.stringify(d));
@@ -208,7 +209,7 @@
         };
     }
 
-    window.HemiScenario = { get state() { return SC; }, check: () => check(false), attach, showBrief, showResult, FORMAT };
+    window.HemiChallenge = { get state() { return SC; }, check: () => check(false), attach, showBrief, showResult, FORMAT };
 
     const css = document.createElement('style');
     css.textContent = `

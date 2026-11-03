@@ -4,36 +4,37 @@
   <meta charset="utf-8">
   <link rel="icon" type="image/png" href="icons/favicon.png">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Hemicycle — Scenario</title>
+  <title>Hemicycle — Challenge</title>
   <script src="js/thememode.js"></script>
   <script src="js/dialogs.js"></script>
   <script src="js/theme.js"></script>
   <script src="js/savefile.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="fonts/neodgm/style.css">
-  <link rel="stylesheet" href="css/scenario.css">
+  <link rel="stylesheet" href="css/editor.css">
   <link rel="stylesheet" href="css/modern.css">
 </head>
 
 <body>
-  <!-- 시나리오 제작 · 공유 (0.3.0 · 시나리오 테스트) — 만든 시나리오는 "시험 플레이"로 게임(main.html)에서 바로 해 볼 수 있다 (js/scenario.js) -->
+  <!-- 챌린지 제작 · 공유 — 목표 · 실패 조건이 있는 짧은 도전. "시험 플레이"로 게임(main.html)에서 바로 해 볼 수 있다 (js/challenge.js) -->
   <div class="scn-frame">
     <header class="scn-head">
       <a class="scn-back" href="index.html">← 메인으로</a>
-      <div class="scn-head-title">SCENARIO EDITOR <span class="scn-test">TEST</span></div>
+      <a class="scn-back" href="scenario.html">캠페인 · 시나리오</a>
+      <div class="scn-head-title">CHALLENGE EDITOR <span class="scn-test">TEST</span></div>
       <span class="scn-grow"></span>
-      <select id="scnLibrary" class="scn-in" title="내 시나리오"></select>
-      <button type="button" class="scn-btn" id="scnNew">새 시나리오</button>
+      <select id="scnLibrary" class="scn-in" title="내 챌린지"></select>
+      <button type="button" class="scn-btn" id="scnNew">새 챌린지</button>
       <button type="button" class="scn-btn" id="scnOpen">불러오기</button>
-      <button type="button" class="scn-btn" id="scnExport">내보내기 (.hemiscn)</button>
+      <button type="button" class="scn-btn" id="scnExport">내보내기 (.hemichl)</button>
       <button type="button" class="scn-btn scn-primary" id="scnPlay">▶ 시험 플레이</button>
-      <input type="file" id="scnFile" accept=".hemiscn,.json,application/json" hidden>
+      <input type="file" id="scnFile" accept=".hemichl,.hemiscn,.json,application/json" hidden>
     </header>
     <main class="scn-body" id="scnBody"></main>
   </div>
 
   <script src="js/presets.js"></script>
-  <script src="js/scenario-editor.js"></script>
+  <script src="js/challenge-editor.js"></script>
   <script src="js/lang.js"></script>
 </body>
 </html>
