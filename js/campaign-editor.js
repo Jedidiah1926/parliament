@@ -133,9 +133,13 @@
     }
 
     // 방향성 트리 — 왼쪽 그림(끌어서 옮김, 칸에 맞춤), 오른쪽 고른 방향성 칸
-    const FW = 150, FH = 70, FGX = 26, FGY = 40, FP = 16;
+    // 상자 크기 · 간격은 캠페인의 중점 디자인(focusStyle)을 따른다 (js/focusview.js)
+    let FW = 124, FH = 116, FGX = 22, FGY = 30;
+    const FP = 16;
+    const fstyle = () => { const st = window.HemiFocusView ? HemiFocusView.style(S) : { width: 150, height: 70, gapX: 26, gapY: 40 }; FW = st.width; FH = st.height; FGX = st.gapX; FGY = st.gapY; return st; };
     const fpos = f => ({ x: FP + (Number(f.x) || 0) * (FW + FGX), y: FP + (Number(f.y) || 0) * (FH + FGY) });
     function focusHtml() {
+        const st = fstyle();
         const list = S.focus;
         const cols = Math.max(4, ...list.map(f => (Number(f.x) || 0) + 2)), rows = Math.max(3, ...list.map(f => (Number(f.y) || 0) + 2));
         const W = FP * 2 + cols * (FW + FGX), H = FP * 2 + rows * (FH + FGY);
@@ -150,13 +154,20 @@
         const f = list.find(x => x.id === selFocus);
         const others = list.filter(x => f && x.id !== f.id);
         const chips = (key) => others.map(o => `<button type="button" class="cpe-chip ${(f[key] || []).includes(o.id) ? 'on' : ''}" data-chip="${key}" data-id="${esc(o.id)}">${esc(o.title || o.id)}</button>`).join('') || '<span class="scn-dim">다른 방향성 없음</span>';
-        return `<div class="cpe-focus">
+        const fs = S.focusStyle || {};
+        const design = `<details class="scn-card cpe-design" ${fs.template || fs.css ? 'open' : ''}><summary class="scn-h">중점 디자인 ${fs.template || fs.css ? '<span class="scn-n">사용자 템플릿</span>' : '<span class="scn-n">기본 (HOI4 중점)</span>'}</summary>
+            <div class="scn-dim scn-small">비워 두면 HOI4 중점처럼(위에 큰 아이콘, 아래 이름판). 템플릿 · CSS로 상자 모양을 통째로 바꿀 수 있습니다 — 자리표시 <code>{{icon}}</code> <code>{{iconUrl}}</code> <code>{{title}}</code> <code>{{daysText}}</code> <code>{{days}}</code> <code>{{status}}</code> <code>{{statusText}}</code> <code>{{progress}}</code> <code>{{desc}}</code> <code>{{id}}</code>, 상자에는 늘 <code>.hf-node.hf-상태</code>(available · current · done · locked · blocked). 스크립트 · 바깥 주소는 막힙니다 (그림은 data:).</div>
+            <div class="scn-row"><span class="scn-dim">가로</span><input class="scn-in scn-num" type="number" data-fs="width" value="${esc(fs.width ?? '')}" placeholder="124"><span class="scn-dim">세로</span><input class="scn-in scn-num" type="number" data-fs="height" value="${esc(fs.height ?? '')}" placeholder="116"><span class="scn-dim">간격</span><input class="scn-in scn-num" type="number" data-fs="gapX" value="${esc(fs.gapX ?? '')}" placeholder="22"><input class="scn-in scn-num" type="number" data-fs="gapY" value="${esc(fs.gapY ?? '')}" placeholder="30"></div>
+            <label class="scn-lab">템플릿 (HTML — 비우면 기본)</label><textarea class="scn-in scn-code" rows="3" spellcheck="false" data-fs="template" placeholder='<div class="medal">{{icon}}</div><div class="ribbon">{{title}}</div>'>${esc(fs.template || '')}</textarea>
+            <label class="scn-lab">CSS (방향성 트리 안에만 걸림)</label><textarea class="scn-in scn-code" rows="6" spellcheck="false" data-fs="css" placeholder=".hf-node .medal { ... }  .hf-done .medal { ... }">${esc(fs.css || '')}</textarea>
+            <div class="scn-row"><button type="button" class="scn-btn" data-fs-example>예제 템플릿 넣기</button><button type="button" class="scn-btn" data-fs-reset>HOI4 기본으로</button><button type="button" class="scn-btn" data-fs-apply>미리 보기</button></div></details>`;
+        return `<div class="cpe-focus"><div class="cpe-focus-left">
             <div class="scn-card cpe-tree-card"><div class="scn-row"><div class="scn-h">방향성 트리</div><span class="scn-grow"></span><button type="button" class="scn-btn" data-add-focus>+ 방향성</button></div>
                 <div class="scn-dim scn-small">상자를 끌어 옮기고(칸에 맞춰짐), 눌러서 고치세요. 실선: 먼저 끝내야 함 · 점선: 이 중 하나 · 빨간 선: 함께 못 고름</div>
-                <div class="cpe-tree-wrap"><div class="cpe-tree" id="cpeTree" style="width:${W}px;height:${H}px">
+                <div class="cpe-tree-wrap"><div class="cpe-tree" id="cpeTree" style="width:${W}px;height:${H}px;background-size:${FW + FGX}px ${FH + FGY}px">${window.HemiFocusView ? HemiFocusView.styleTag(st, '#cpeTree') : ''}
                     <svg width="${W}" height="${H}" class="cpe-tree-svg">${lines}</svg>
-                    ${list.map(x => { const p = fpos(x); return `<div class="cpe-node ${x.id === selFocus ? 'sel' : ''}" data-node="${esc(x.id)}" style="left:${p.x}px;top:${p.y}px;width:${FW}px;height:${FH}px">${iconHtml(x, 'cpe-node')}<span>${esc(x.title || x.id)}</span><span class="scn-dim">${Number(x.days) || 0}일</span></div>`; }).join('')}
-                </div></div></div>
+                    ${list.map(x => { const p = fpos(x); return `<div class="cpe-node hf-node ${x.id === selFocus ? 'hf-current sel' : 'hf-available'}" data-node="${esc(x.id)}" style="left:${p.x}px;top:${p.y}px;width:${FW}px;height:${FH}px">${window.HemiFocusView ? HemiFocusView.inner(x, { status: x.id === selFocus ? 'current' : 'available', daysText: `${Number(x.days) || 0}일` }, st) : esc(x.title || x.id)}</div>`; }).join('')}
+                </div></div></div>${design}</div>
             <div class="scn-card cpe-side">${f ? `
                 <div class="scn-row"><div class="scn-h">방향성</div><span class="scn-grow"></span>${modeSeg()}<button type="button" class="scn-btn scn-danger" data-del-focus>지우기</button></div>
                 ${detailMode === 'json' ? `<div class="scn-dim scn-small">이 방향성 전체 — id · title · icon · iconImage · days · x · y · desc · prereq · any · exclusive · available · effects · event</div>${objJson(`focus.${list.indexOf(f)}`, 26)}` : `
@@ -319,6 +330,15 @@
         body.querySelector('[data-add-start]').onclick = () => { S.starts.push({ id: uid('s'), name: '', desc: '', kind: 'preset', preset: 'builtin:tutorial' }); render(); touch(); };
     }
     function bindFocus(body) {
+        body.querySelectorAll('[data-fs]').forEach(inp => { inp.oninput = () => {
+            const fs = S.focusStyle || (S.focusStyle = {}), k = inp.dataset.fs;
+            if (inp.type === 'number') { if (inp.value === '') delete fs[k]; else fs[k] = Number(inp.value); } else { if (inp.value.trim()) fs[k] = inp.value; else delete fs[k]; }
+            if (!Object.keys(fs).length) delete S.focusStyle;
+            touch();
+        }; inp.onchange = () => { if (inp.type === 'number') setTimeout(render, 0); }; });
+        body.querySelector('[data-fs-apply]').onclick = () => render();
+        body.querySelector('[data-fs-example]').onclick = () => { S.focusStyle = JSON.parse(JSON.stringify(HemiFocusView.EXAMPLE)); touch(); render(); };
+        body.querySelector('[data-fs-reset]').onclick = () => { delete S.focusStyle; touch(); render(); };
         body.querySelector('[data-add-focus]').onclick = () => {
             const used = new Set(S.focus.map(f => `${f.x},${f.y}`));
             let x = 0, y = 0; while (used.has(`${x},${y}`)) { x++; if (x > 6) { x = 0; y++; } }
@@ -342,7 +362,7 @@
             }; });
             const iconIn = body.querySelector('[data-icon-file]');
             body.querySelector('[data-icon-img]')?.addEventListener('click', () => iconIn.click());
-            iconIn?.addEventListener('change', () => { const file = iconIn.files && iconIn.files[0]; iconIn.value = ''; if (file) shrink(file, 128, url => { f.iconImage = url; render(); touch(); }); });
+            iconIn?.addEventListener('change', () => { const file = iconIn.files && iconIn.files[0]; iconIn.value = ''; if (file) shrink(file, 160, url => { f.iconImage = url; render(); touch(); }); });
             body.querySelector('[data-icon-del]')?.addEventListener('click', () => { delete f.iconImage; render(); touch(); });
             body.querySelector('[data-del-focus]').onclick = () => { S.focus = S.focus.filter(z => z !== f); S.focus.forEach(z => ['prereq', 'any', 'exclusive'].forEach(key => { z[key] = (z[key] || []).filter(id => id !== f.id); })); selFocus = null; render(); touch(); };
         }

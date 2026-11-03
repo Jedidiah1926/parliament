@@ -433,7 +433,8 @@
     function renderTree(box) {
         const list = focusList();
         if (!list.length) { box.innerHTML = '<div class="cp-empty">이 캠페인에는 방향성 트리가 없습니다.</div>'; return; }
-        const W = 150, H = 74, GX = 30, GY = 46, P = 20;
+        const FV = window.HemiFocusView, st = FV ? FV.style(R.data) : { width: 150, height: 74, gapX: 30, gapY: 46 };
+        const W = st.width, H = st.height, GX = st.gapX, GY = st.gapY, P = 20;
         const pos = f => ({ x: P + (Number(f.x) || 0) * (W + GX), y: P + (Number(f.y) || 0) * (H + GY) });
         const maxX = Math.max(...list.map(f => pos(f).x)) + W + P, maxY = Math.max(...list.map(f => pos(f).y)) + H + P;
         let lines = '';
@@ -447,13 +448,13 @@
                 if (Math.abs(p.y - b.y) < 1) { const x1 = Math.min(p.x, b.x) + W, x2 = Math.max(p.x, b.x); lines += `<line x1="${x1}" y1="${y}" x2="${x2}" y2="${y}" class="cp-excl"/><text x="${(x1 + x2) / 2}" y="${y + 5}" text-anchor="middle" class="cp-excl-t">✕</text>`; } });
         });
         const sel = ui.sel && focusById(ui.sel);
-        box.innerHTML = `<div class="cp-tree-wrap"><div class="cp-tree" style="width:${maxX}px;height:${maxY}px">
+        box.innerHTML = `<div class="cp-tree-wrap"><div class="cp-tree hf-scope" id="cpFocusTree" style="width:${maxX}px;height:${maxY}px">${FV ? FV.styleTag(st, '#cpFocusTree') : ''}
             <svg class="cp-tree-svg" width="${maxX}" height="${maxY}">${lines}</svg>
             ${list.map(f => { const p = pos(f), s = focusState(f), cur = R.focus.cur && R.focus.cur.id === f.id;
                 const nd = nowDay() ?? 0, pct = cur && R.focus.cur.days ? clamp((nd - (R.focus.cur.started ?? nd)) / R.focus.cur.days * 100, 0, 100) : 0;
-                return `<button type="button" class="cp-node ${s} ${ui.sel === f.id ? 'sel' : ''}" data-node="${esc(f.id)}" style="left:${p.x}px;top:${p.y}px;width:${W}px;height:${H}px">
-                    ${iconOf(f, 'cp-node')}<span class="cp-node-t">${esc(f.title || f.id)}</span><span class="cp-node-d">${s === 'done' ? '✔ 완료' : cur ? `${Math.max(0, R.focus.cur.days - (nd - (R.focus.cur.started ?? nd)))}일 남음` : `${Number(f.days) || 0}일`}</span>
-                    ${cur ? `<span class="cp-node-bar"><i style="width:${pct}%"></i></span>` : ''}</button>`; }).join('')}
+                const daysText = s === 'done' ? '완료' : cur ? `${Math.max(0, R.focus.cur.days - (nd - (R.focus.cur.started ?? nd)))}일 남음` : `${Number(f.days) || 0}일`;
+                return `<button type="button" class="cp-node hf-node hf-${s} ${ui.sel === f.id ? 'sel' : ''}" data-node="${esc(f.id)}" style="left:${p.x}px;top:${p.y}px;width:${W}px;height:${H}px" title="${esc(f.title || f.id)}">
+                    ${FV ? FV.inner(f, { status: s, daysText, progress: pct, current: cur }, st) : esc(f.title || f.id)}</button>`; }).join('')}
         </div></div>
         ${sel ? `<div class="cp-node-detail"><div class="cp-row">${iconOf(sel, 'cp-li')}<b>${esc(sel.title || sel.id)}</b><span class="cp-grow"></span><span class="cp-dim">${Number(sel.days) || 0}일 · ${{ done: '완료', current: '진행 중', available: '고를 수 있음', locked: '아직 못 고름', blocked: '다른 길을 골라 막힘' }[focusState(sel)]}</span></div>
             ${sel.desc ? `<div class="cp-crisis-desc">${paras(fillT(sel.desc))}</div>` : ''}
@@ -542,6 +543,7 @@
         .cp-mission-h { display: flex; align-items: center; gap: 6px; } .cp-mission.done { border-color: #2f6f4f; } .cp-mission.failed { border-color: #6f2f2f; opacity: .8; }
         .cp-dec { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border: 1px solid #2a2f36; } .cp-dec.off { opacity: .65; }
         .cp-outcome { color: #ddd; } .cp-outcome b { color: var(--cp-c); }
+        html[data-theme-family="modern"] .cp-node.sel { outline-color: var(--m-accent); }
         .cp-ending { border: 1px solid var(--tno-gold, #ffd700); padding: 8px 10px; color: var(--tno-gold, #ffd700); display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
         .cp-empty { color: #777; padding: 20px 6px; text-align: center; line-height: 1.7; }
         .cp-disp { display: flex; flex-direction: column; gap: 10px; }
@@ -553,14 +555,9 @@
         .cp-tree-svg { position: absolute; left: 0; top: 0; pointer-events: none; }
         .cp-link { fill: none; stroke: #3a4450; stroke-width: 2; } .cp-link.on { stroke: #3ecf8e; }
         .cp-excl { stroke: #ef6461; stroke-width: 2; stroke-dasharray: 3 3; } .cp-excl-t { fill: #ef6461; font-size: 13px; }
-        .cp-node { position: absolute; cursor: pointer; font: inherit; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding: 6px; background: #12161c; border: 1px solid #3a4450; color: #aaa; text-align: center; }
-        .cp-node-ico { font-size: 1.1rem; line-height: 1; } .cp-node-img { width: 30px; height: 30px; object-fit: contain; } .cp-li-img { width: 28px; height: 28px; object-fit: contain; flex: 0 0 auto; } .cp-li-ico { font-size: 1.2rem; flex: 0 0 auto; } .cp-node-t { font-size: .8rem; line-height: 1.25; word-break: keep-all; } .cp-node-d { font-size: .66rem; color: #7d8a90; }
-        .cp-node.available { border-color: var(--tno-neon); color: #eee; box-shadow: 0 0 8px var(--tno-neon-dim, rgba(0,255,255,.25)); }
-        .cp-node.current { border-color: var(--tno-gold, #ffd700); color: #fff; box-shadow: 0 0 10px rgba(255,215,0,.35); }
-        .cp-node.done { border-color: #3ecf8e; color: #cfe; background: #0f1d17; }
-        .cp-node.locked { opacity: .55; } .cp-node.blocked { opacity: .35; text-decoration: line-through; }
-        .cp-node.sel { outline: 2px solid #fff; outline-offset: 2px; }
-        .cp-node-bar { position: absolute; left: 0; right: 0; bottom: 0; height: 4px; background: #1a1f26; } .cp-node-bar i { display: block; height: 100%; background: var(--tno-gold, #ffd700); }
+        .cp-node { position: absolute; cursor: pointer; }
+        .cp-node.sel { outline: 2px dashed var(--tno-neon); outline-offset: 3px; }
+        .cp-li-img { width: 28px; height: 28px; object-fit: contain; flex: 0 0 auto; } .cp-li-ico { font-size: 1.2rem; flex: 0 0 auto; }
         .cp-node-detail { border: 1px solid #2a2f36; padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; }
         .cp-hint { padding: 4px 2px; }
         .cp-overlay { position: fixed; inset: 0; z-index: 100003; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(0,0,0,.82); }
@@ -585,11 +582,6 @@
         html[data-theme-family="modern"] .cp-chip { border-color: var(--m-border); color: var(--m-text-2); border-radius: 999px; } html[data-theme-family="modern"] .cp-chip.on { border-color: var(--m-text); color: var(--m-text); }
         html[data-theme-family="modern"] .cp-tree-wrap { background: var(--m-surface-2); border-color: var(--m-border); border-radius: 12px; }
         html[data-theme-family="modern"] .cp-link { stroke: var(--m-border-strong); } html[data-theme-family="modern"] .cp-link.on { stroke: var(--m-success); }
-        html[data-theme-family="modern"] .cp-node { background: var(--m-surface); border-color: var(--m-border); color: var(--m-text-2); border-radius: 10px; }
-        html[data-theme-family="modern"] .cp-node.available { border-color: var(--m-accent); color: var(--m-text); box-shadow: 0 0 0 2px color-mix(in srgb, var(--m-accent) 20%, transparent); }
-        html[data-theme-family="modern"] .cp-node.current { border-color: var(--m-gold); color: var(--m-text); box-shadow: 0 0 0 2px color-mix(in srgb, var(--m-gold) 25%, transparent); }
-        html[data-theme-family="modern"] .cp-node.done { border-color: var(--m-success); background: color-mix(in srgb, var(--m-success) 8%, var(--m-surface)); color: var(--m-text); }
-        html[data-theme-family="modern"] .cp-node.sel { outline-color: var(--m-text); }
         html[data-theme-family="modern"] .cp-ending { border-radius: 12px; border-color: var(--m-gold); color: var(--m-text); }
         html[data-theme-family="modern"] .cp-super { background: var(--m-surface); color: var(--m-text); border: 1px solid var(--m-border); border-top: 4px solid var(--cp-c); border-radius: 16px; box-shadow: 0 30px 80px rgba(0,0,0,.4); }
         html[data-theme-family="modern"] .cp-super-title { font-weight: 800; }

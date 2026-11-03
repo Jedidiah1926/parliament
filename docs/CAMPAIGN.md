@@ -26,9 +26,18 @@
 
 ## 방향성 트리
 
-- **아이콘**: 이모지 또는 그림(올리면 128px로 줄여 `iconImage`에 담김)
+- **아이콘**: 이모지 또는 그림(올리면 160px로 줄여 `iconImage`에 담김) — HOI4 중점 아이콘처럼 크게 보임
 - **먼저 끝내야 함**(모두) · **이 중 하나 먼저** · **함께 못 고름**(배타, 양쪽으로) · **고를 수 있는 조건** · **끝나면 효과** · 끝나면 띄울 이벤트
 - 게임에서는 한 번에 하나씩 고르고, 정한 날이 지나면 끝나 효과가 들어갑니다. 끝낸 방향성은 플래그 `focus_<id>`.
+
+## 중점 디자인 (상자 모양)
+
+기본은 HOI4 중점처럼 위에 큰 아이콘(그림 · 이모지), 아래 이름판입니다. 방향성 트리 탭의 **중점 디자인**에서 상자를 통째로 다시 디자인할 수 있습니다 (캠페인의 `focusStyle`).
+
+- `width` · `height` · `gapX` · `gapY` — 상자 크기와 간격
+- `template` — 상자 속 HTML. 자리표시: `{{icon}}`(그림/이모지) `{{iconUrl}}` `{{title}}` `{{daysText}}` `{{days}}` `{{status}}` `{{statusText}}` `{{progress}}` `{{desc}}` `{{id}}`
+- `css` — 방향성 트리 안에만 걸리는 CSS. 상자에는 늘 `.hf-node.hf-<상태>` (`available` · `current` · `done` · `locked` · `blocked`)
+- 쓸 수 있는 태그: div · span · b · i · strong · em · small · br · p · img · u · s · sup · sub (속성은 class · style · alt · title · data-*, img는 data: 그림만). 스크립트 · 바깥 주소(url) · @import는 막힘
 
 ## 시나리오(위기)
 
