@@ -499,7 +499,7 @@
         }
 
         /* ── 넓은 2단 온보딩: 왼쪽 새로 시작(빈 세이브·프리셋), 오른쪽 저장 파일(검색·즐겨찾기) ── */
-        .save-select-modal.save-select-wide { width: 980px; max-height: 88vh; min-height: min(620px, 88vh); }
+        .save-select-modal.save-select-wide { width: 980px; max-height: 88vh; min-height: min(620px, 88vh); height: min(720px, 88vh); } /* 탭을 바꿔도 창 크기가 그대로 */
         .save-select-columns {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -523,6 +523,25 @@
             margin-bottom: 16px;
         }
         .save-select-empty { color: #555; font-size: 0.85rem; padding: 8px 0; }
+
+        /* 탭: 새로 시작 · 이어하기 · 튜토리얼 — 탭마다 두 단 */
+        .save-select-tabs { display: flex; gap: 0; border-bottom: 1px solid var(--tno-border); padding: 0 18px; flex: 0 0 auto; }
+        .save-select-tab {
+            background: none; border: none; border-bottom: 2px solid transparent; margin-bottom: -1px;
+            color: #777; font-family: inherit; font-size: 0.95rem; letter-spacing: 1px; padding: 12px 18px; cursor: pointer;
+        }
+        .save-select-tab:hover { color: var(--tno-text); }
+        .save-select-tab.active { color: var(--tno-neon); border-bottom-color: var(--tno-neon); text-shadow: 0 0 6px var(--tno-neon-dim); }
+        .save-select-panel { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+        .save-select-panel-top { padding: 16px 22px 0; }
+        .save-select-panel-top input { margin-bottom: 0; }
+        .save-select-panel-foot { padding: 12px 22px 16px; border-top: 1px solid var(--tno-border); flex: 0 0 auto; }
+        .save-select-panel-foot .save-select-import-btn { width: 100%; margin: 0; }
+        .save-select-col .settings-label { margin-bottom: 10px; }
+        .tut-card-no { flex: 0 0 auto; color: var(--tno-neon); font-size: 0.8rem; min-width: 26px; }
+        .tut-card-check { margin-left: auto; color: #4ade80; font-size: 0.9rem; }
+        .tut-card-done .save-select-item-name { color: #9aa; }
+        .tut-card[disabled] { opacity: .45; cursor: not-allowed; }
 
         .preset-card { flex-direction: column; align-items: flex-start; gap: 5px; text-transform: none; }
         .preset-card-top { display: flex; align-items: center; gap: 8px; width: 100%; min-width: 0; }

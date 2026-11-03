@@ -1876,11 +1876,11 @@
         window.addEventListener('keydown', onKey, true);
         GUARDED.forEach(t => window.addEventListener(t, guard, true));
         tickId = setInterval(tick, 250);
-        // 본 게임에서 잠긴(미리보기) 과정을 골라 Teaser 1.6.4으로 넘어온 경우 — 그 과정을 바로 연다
+        // 시작 화면의 튜토리얼 탭에서 과정을 골랐거나, 잠긴(미리보기) 과정을 골라 Teaser 화면으로 넘어온 경우 — 그 과정을 바로 연다
         let pending = null;
         try { pending = sessionStorage.getItem(PENDING_KEY); sessionStorage.removeItem(PENDING_KEY); } catch (e) { /* 없음 */ }
         const pendingIdx = pending ? LESSONS.findIndex(l => l.id === pending) : -1;
-        if (typeof lesson !== 'number' && pendingIdx >= 0 && isAvail(pendingIdx) && onPreviewPage(LESSONS[pendingIdx])) lesson = pendingIdx;
+        if (typeof lesson !== 'number' && pendingIdx >= 0 && isAvail(pendingIdx) && (!LESSONS[pendingIdx].locked || onPreviewPage(LESSONS[pendingIdx]))) lesson = pendingIdx;
         if (typeof lesson === 'number') startLesson(lesson);
         else if (doneSet().size > 0) showMenu();
         else startLesson(0);
@@ -1902,6 +1902,8 @@
         start, stop, next, showMenu,
         // goto(과정, 단계) — 튜토리얼이 켜져 있을 때 특정 단계로 바로 이동 (0부터)
         goto: (li, si = 0) => { if (!active || !LESSONS[li]) return; lessonIdx = li; showStep(Math.max(0, Math.min(si, LESSONS[li].steps.length - 1))); },
+        // 시작 화면(index.html) 튜토리얼 탭용 목록 — 번호 · 제목 · 요약 · 마침 여부 · 열 수 있는지
+        catalog: () => { const done = doneIds(); return LESSONS.map((l, i) => ({ id: l.id, group: l.group, no: noOf(i), title: typeof l.title === 'function' ? l.title() : l.title, summary: typeof l.summary === 'function' ? l.summary() : (l.summary || ''), locked: !!l.locked, avail: isAvail(i), done: done.has(l.id) })); },
         lessonGroups: () => LESSONS.map(l => ({ id: l.id, group: l.group, title: l.title, steps: l.steps.length, targets: l.steps.map(st => !!st.target) })),
         isActive: () => active,
         lessons: LESSONS.map(l => ({ title: l.title, steps: l.steps.length })),

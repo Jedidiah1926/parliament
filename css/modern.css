@@ -2875,6 +2875,14 @@ html[data-theme-family="modern"] .save-select-overlay { background: rgba(9, 9, 1
 html[data-theme-family="modern"] .save-select-col + .save-select-col { border-left-color: var(--m-border) !important; border-top-color: var(--m-border) !important; }
 html[data-theme-family="modern"] .save-select-col-title { color: var(--m-text) !important; font-size: 16px; font-weight: 700; }
 html[data-theme-family="modern"] .save-select-empty { color: var(--m-text-3) !important; }
+html[data-theme-family="modern"] .save-select-tabs { border-bottom-color: var(--m-border); }
+html[data-theme-family="modern"] .save-select-tab { border-radius: 0 !important; background: none !important; color: var(--m-text-3); font-size: 14px; font-weight: 600; letter-spacing: 0; text-shadow: none; }
+html[data-theme-family="modern"] .save-select-tab:hover { color: var(--m-text-2); }
+html[data-theme-family="modern"] .save-select-tab.active { color: var(--m-text); border-bottom-color: var(--m-text); text-shadow: none; }
+html[data-theme-family="modern"] .save-select-panel-foot { border-top-color: var(--m-border); }
+html[data-theme-family="modern"] .tut-card-no { color: var(--m-text-3); }
+html[data-theme-family="modern"] .tut-card-check { color: var(--m-success); }
+html[data-theme-family="modern"] .tut-card-done .save-select-item-name { color: var(--m-text-2); }
 html[data-theme-family="modern"] .save-select-search input,
 html[data-theme-family="modern"] .save-select-new-row input {
     background: var(--m-surface) !important;

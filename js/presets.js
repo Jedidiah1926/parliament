@@ -19,11 +19,11 @@
         {
             id: 'builtin:tutorial',
             title: '서독',
-            description: '처음이라면 여기서 시작하세요. 1983년 서독(독일연방공화국)에서 기본 튜토리얼 6개로 화면과 조작을 직접 해보며 익히고, 선거 · 지도 · 단일화 · 부정선거 같은 기능은 세부 튜토리얼에서 골라 배울 수 있어요.',
+            description: '처음이라면 여기서 시작하세요.',
             date: '1983년 3월 29일',
             tutorial: true,
             script: 'presets/tutorial.js',
-            langs: { en: { script: 'presets/tutorial.en.js', title: 'West Germany', description: "Start here if you're new. In West Germany (the Federal Republic of Germany) in 1983, six basic lessons walk you through the screens and controls hands-on, and detailed lessons cover features like elections, maps, candidate unification and election fraud whenever you need them." } },
+            langs: { en: { script: 'presets/tutorial.en.js', title: 'West Germany', description: "Start here if you're new." } },
         },
         {
             id: 'builtin:japan',
