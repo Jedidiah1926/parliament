@@ -57,7 +57,7 @@
         {
             id: 'builtin:korea',
             badge: 'updated', // 목록의 노란 표시 — 'new' 신규! · 'updated' 업데이트!
-            title: '대한민국',
+            title: '대한민국 2026',
             description: '제작자: 왕조명 & ttorri',
             date: '2026년 10월 31일',
             author: '왕조명 & ttorri',
@@ -67,11 +67,21 @@
                 { name: 'ttorri', work: ['이념 체계 (하위 이념 포함)', '원외정당 (노동당 · 정의당 · 자유와혁신)', '지역구 · 비례 · 무소속 의원 이름', '정치인 명단 (인물 탭)과 지역구 후보', '군부 지휘부', '지역구별 정당 지지율 · 무당층'] },
             ],
             script: 'presets/korea.js',
-            langs: { en: { title: 'Republic of Korea', description: 'By 왕조명 & ttorri',
+            langs: { en: { title: 'Republic of Korea 2026', description: 'By 왕조명 & ttorri',
                 credits: [
                     { name: '왕조명', work: ['Country and party setup', 'District map and seat layout', 'President, prime minister, cabinet and speakers', 'Local government heads', 'Economy, flag and parliament logos'] },
                     { name: 'ttorri', work: ['Ideology system (with sub-ideologies)', 'Extra-parliamentary parties (Labor Party, Justice Party, Freedom and Innovation)', 'Names of district, list and independent members', 'Politician roster (People tab) and district candidates', 'Military leadership', 'Party support and undecided voters by district'] },
                 ] } }, // 영어 데이터 파일은 아직 없음 — 한국어 데이터로 열림
+        },
+        {
+            id: 'builtin:korea2024',
+            badge: 'new', // 목록의 노란 표시 — 'new' 신규! · 'updated' 업데이트!
+            title: '대한민국 2024',
+            description: '제작자: 스노든',
+            date: '2024년 4월 10일',
+            author: '스노든',
+            script: 'presets/korea2024.js',
+            langs: { en: { title: 'Republic of Korea 2024', description: 'By 스노든' } }, // 영어 데이터 파일은 아직 없음 — 한국어 데이터로 열림
         },
         {
             id: 'builtin:uk',
