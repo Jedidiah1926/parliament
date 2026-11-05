@@ -10,7 +10,7 @@
     const Tools = window.HemiCampaignTools;
     const rawPending = new Set();
     let zoom = 1, linkTool = '', search = '', saveStatus = '자동 저장 준비', past = [], future = [], baseline = '';
-    let viewScroll = { left: 0, top: 0 };
+    let viewScroll = { left: 0, top: 0 }, treeViewport = null;
     const resetHistory = () => { past = []; future = []; baseline = JSON.stringify(S); rawPending.clear(); };
     const blockedDraft = () => { if (!rawPending.size) return false; $('cpSaveStatus').textContent = 'JSON을 적용하거나 변경 취소 후 이동하세요.'; return true; };
     const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -143,6 +143,7 @@
         clearTimeout(redrawT);
         const oldWrap = document.querySelector('.cpe-tree-wrap');
         if (oldWrap) viewScroll = {left:oldWrap.scrollLeft,top:oldWrap.scrollTop};
+        treeViewport?.destroy(); treeViewport=null;
         studioBar();
         $('cpTabs').innerHTML = TABS.map(([k, l]) => `<button type="button" class="cpe-tab ${tab === k ? 'on' : ''}" data-tab="${k}">${l}${k === 'focus' ? ` <span class="scn-n">${S.focus.length}</span>` : k === 'crises' ? ` <span class="scn-n">${S.crises.length}</span>` : k === 'articles' ? ` <span class="scn-n">${S.articles.length}</span>` : k === 'endings' ? ` <span class="scn-n">${S.endings.length}</span>` : ''}</button>`).join('');
         $('cpTabs').querySelectorAll('[data-tab]').forEach(b => { b.onclick = () => { tab = b.dataset.tab; render(); }; });
@@ -225,11 +226,11 @@
             <div class="scn-card cpe-tree-card"><div class="cpe-eyebrow">DIRECTION TREE / DESIGN CANVAS</div><div class="scn-row"><div class="scn-h">선택이 역사가 되는 곳</div><span class="scn-grow"></span><button type="button" class="scn-btn scn-primary" data-add-focus>+ 방향성</button><button type="button" class="scn-btn" data-branch ${f ? '' : 'disabled'}>⑂ 양갈래 분기</button><button type="button" class="scn-btn" data-layout>자동 정렬</button></div>
             <div class="cpe-canvas-tools"><input class="scn-in" id="cpFocusSearch" type="search" placeholder="방향성 검색…" aria-label="방향성 검색" value="${esc(search)}"><select class="scn-in" id="cpLinkTool" aria-label="트리 연결 도구"><option value="">선택 · 이동</option>${[['prereq','필수 선행 연결'],['any','선택 선행 연결'],['exclusive','상호 배타 연결']].map(([k,t])=>`<option value="${k}" ${linkTool===k?'selected':''}>${t}</option>`).join('')}</select><span class="scn-grow"></span><button type="button" class="scn-btn" data-zoom="out" aria-label="축소">−</button><output id="cpZoomLabel">${Math.round(zoom*100)}%</output><button type="button" class="scn-btn" data-zoom="in" aria-label="확대">+</button><button type="button" class="scn-btn" data-fit>전체 보기</button></div>
             ${linkTool ? `<p class="cpe-connect-hint">${f ? `“${esc(f.title)}”에서 연결할 방향성을 클릭하세요. 같은 연결을 다시 누르면 해제합니다.` : '출발 방향성을 먼저 클릭하세요.'}</p>` : ''}
-                <div class="scn-dim scn-small">상자를 끌어 옮기고(칸에 맞춰짐), 눌러서 고치세요. 실선: 먼저 끝내야 함 · 점선: 이 중 하나 · 빨간 선: 함께 못 고름</div>
+                <div class="scn-dim scn-small">상자: 드래그로 이동 · 휠: 확대/축소 · 휠 버튼 드래그: 화면 이동 · 실선: 필수 선행 · 점선: 선택 선행 · 빨간 선: 배타</div>
                 <div class="cpe-tree-wrap" tabindex="0" aria-label="방향성 설계 캔버스"><div class="cpe-tree-scale" style="width:${W*zoom}px;height:${H*zoom}px"><div class="cpe-tree" id="cpeTree" style="width:${W}px;height:${H}px;transform:scale(${zoom});transform-origin:top left;background-size:${FW + FGX}px ${FH + FGY}px">${window.HemiFocusView ? HemiFocusView.styleTag(st, '#cpeTree') : ''}
                     <svg width="${W}" height="${H}" class="cpe-tree-svg">${lines}</svg>
                     ${list.map(x => { const p = fpos(x); return `<button type="button" aria-label="${esc(x.title || x.id)}" aria-pressed="${x.id===selFocus}" title="${esc(x.desc || x.title || x.id)}" class="cpe-node hf-node ${x.id === selFocus ? 'hf-current sel' : 'hf-available'}" data-node="${esc(x.id)}" style="left:${p.x}px;top:${p.y}px;width:${FW}px;height:${FH}px">${window.HemiFocusView ? HemiFocusView.inner(x, { status: x.id === selFocus ? 'current' : 'available', daysText: `${Number(x.days) || 0}일` }, st) : esc(x.title || x.id)}</button>`; }).join('')}
-                </div></div></div><div class="cpe-canvas-foot"><span>── 모두 완료</span><span>┄ 하나 이상 완료</span><span class="cpe-red">┄ 배타 선택</span><span class="scn-grow"></span>${list.length}개 방향성 · 드래그로 이동 / 빈 곳을 끌어 화면 이동</div></div>${design}</div>
+                </div></div></div><div class="cpe-canvas-foot"><span>── 모두 완료</span><span>┄ 하나 이상 완료</span><span class="cpe-red">┄ 배타 선택</span><span class="scn-grow"></span>${list.length}개 방향성 · 휠 확대/축소 / 휠 버튼 드래그로 화면 이동</div></div>${design}</div>
             <div class="scn-card cpe-side">${f ? `
                 <div class="scn-row"><div class="scn-h">${esc(f.title || '방향성')}</div><span class="scn-grow"></span>${modeSeg()}<button type="button" class="scn-btn" data-duplicate>복제</button><button type="button" class="scn-btn scn-danger" data-del-focus>지우기</button></div>
                 ${detailMode === 'json' ? `<div class="scn-dim scn-small">이 방향성 전체 — id · title · icon · iconImage · art · days · x · y · desc · prereq · any · exclusive · available · effects · event · article</div>${objJson(`focus.${list.indexOf(f)}`, 26)}<button type="button" class="scn-btn scn-primary" data-objapply="focus.${list.indexOf(f)}">방향성 JSON 적용</button>` : `
@@ -481,21 +482,17 @@
             const b={...Tools.clone(a),id:uid('f'),title:'질서의 길',icon:'🛡',...free((p.x||0)+1,(p.y||0)+1),exclusive:[a.id]};a.exclusive=[b.id];S.focus.push(b);selFocus=a.id;touch();render();
         };
         const tree=$('cpeTree'),wrap=body.querySelector('.cpe-tree-wrap');
-        wrap.scrollLeft=viewScroll.left;wrap.scrollTop=viewScroll.top;
-        const changeZoom=v=>{zoom=Math.max(.35,Math.min(1.75,v));render();};
-        body.querySelectorAll('[data-zoom]').forEach(b=>b.onclick=()=>changeZoom(zoom+(b.dataset.zoom==='in'?.15:-.15)));
-        body.querySelector('[data-fit]').onclick=()=>{zoom=Math.max(.35,Math.min(1,(wrap.clientWidth-24)/parseFloat(tree.style.width),(wrap.clientHeight-24)/parseFloat(tree.style.height)));viewScroll={left:0,top:0};wrap.scrollLeft=0;wrap.scrollTop=0;render();};
+        treeViewport=HemiTreeViewport.mount(wrap,tree,{
+            zoom,left:viewScroll.left,top:viewScroll.top,
+            onChange:view=>{zoom=view.zoom;viewScroll={left:view.left,top:view.top};$('cpZoomLabel').textContent=Math.round(zoom*100)+'%';}
+        });
+        body.querySelectorAll('[data-zoom]').forEach(b=>b.onclick=()=>treeViewport.zoomBy(b.dataset.zoom==='in'?.15:-.15));
+        body.querySelector('[data-fit]').onclick=()=>treeViewport.fit();
         $('cpLinkTool').onchange=e=>{linkTool=e.target.value;render();};
         const applySearch=()=>tree.querySelectorAll('[data-node]').forEach(n=>{const f=S.focus.find(f=>f.id===n.dataset.node);n.classList.toggle('cpe-search-dim',!!search&&!`${f.title} ${f.id}`.toLowerCase().includes(search.toLowerCase()));});
         $('cpFocusSearch').oninput=e=>{search=e.target.value;applySearch();};
         $('cpFocusSearch').onkeydown=e=>{if(e.key==='Enter'){const n=tree.querySelector('[data-node]:not(.cpe-search-dim)');if(n){selFocus=n.dataset.node;n.scrollIntoView({block:'nearest',inline:'center'});render();}}};applySearch();
-        wrap.onpointerdown=e=>{
-            if(e.target.closest('[data-node]')||e.button!==0)return;
-            const sx=e.clientX,sy=e.clientY,left=wrap.scrollLeft,top=wrap.scrollTop;
-            wrap.setPointerCapture(e.pointerId);wrap.classList.add('panning');
-            wrap.onpointermove=ev=>{wrap.scrollLeft=left-(ev.clientX-sx);wrap.scrollTop=top-(ev.clientY-sy);};
-            wrap.onpointerup=wrap.onpointercancel=()=>{wrap.onpointermove=null;wrap.classList.remove('panning');};
-        };
+
     }
 
     function bindFocus(body) {

@@ -492,6 +492,7 @@
     function renderDisp() {
         const bar = document.getElementById('cpDispBar'), box = document.getElementById('cpDisp');
         if (!bar || !box) return;
+        if(!R||ui.view!=='focus'){box._treeViewport?.destroy();box._treeViewport=null;}
         if (!R) { bar.innerHTML = ''; box.innerHTML = '<div class="cp-empty">캠페인이 없습니다.</div>'; return; }
         bar.innerHTML = `<div class="cp-seg"><button type="button" data-view="focus" class="${ui.view === 'focus' ? 'on' : ''}">방향성 트리</button><button type="button" data-view="crisis" class="${ui.view === 'crisis' ? 'on' : ''}">위기</button><button type="button" data-view="articles" class="${ui.view === 'articles' ? 'on' : ''}">기사</button></div><span class="cp-grow"></span><b class="cp-disp-title">${esc(R.data.title || '')}</b>`;
         bar.querySelectorAll('[data-view]').forEach(b => { b.onclick = () => { ui.view = b.dataset.view; renderDisp(); }; });
@@ -501,6 +502,7 @@
     // 방향성 트리 — 칸(x, y)에 놓인 상자들, 앞선 방향성(prereq: 실선, any: 점선)과 배타(exclusive: 빨간 ✕)
     function renderTree(box) {
         const oldWrap=box.querySelector('.cp-tree-wrap'), scroll=oldWrap?{x:oldWrap.scrollLeft,y:oldWrap.scrollTop}:{x:0,y:0};
+        box._treeViewport?.destroy();box._treeViewport=null;
         const list = focusList();
         if (!list.length) { box.innerHTML = '<div class="cp-empty">이 캠페인에는 방향성 트리가 없습니다.</div>'; return; }
         const FV = window.HemiFocusView, st = FV ? FV.style(R.data) : { width: 150, height: 74, gapX: 30, gapY: 46 };
@@ -518,7 +520,7 @@
                 if (Math.abs(p.y - b.y) < 1) { const x1 = Math.min(p.x, b.x) + W, x2 = Math.max(p.x, b.x); lines += `<line x1="${x1}" y1="${y}" x2="${x2}" y2="${y}" class="cp-excl"/><text x="${(x1 + x2) / 2}" y="${y + 5}" text-anchor="middle" class="cp-excl-t">✕</text>`; } });
         });
         const sel = ui.sel && focusById(ui.sel);
-        box.innerHTML = `<div class="cp-row cp-tree-tools"><span class="cp-dim">방향성 ${Object.keys(R.focus.done).length} / ${list.length} 완료</span><span class="cp-grow"></span><button type="button" class="cp-btn" data-tree-zoom="out" aria-label="트리 축소">−</button><span class="cp-dim">${Math.round(ui.treeZoom*100)}%</span><button type="button" class="cp-btn" data-tree-zoom="in" aria-label="트리 확대">+</button><button type="button" class="cp-btn" data-tree-fit>전체 보기</button></div><div class="cp-tree-wrap"><div style="width:${maxX*ui.treeZoom}px;height:${maxY*ui.treeZoom}px"><div class="cp-tree hf-scope" id="cpFocusTree" style="width:${maxX}px;height:${maxY}px;transform:scale(${ui.treeZoom});transform-origin:top left">${FV ? FV.styleTag(st, '#cpFocusTree') : ''}
+        box.innerHTML = `<div class="cp-row cp-tree-tools"><span class="cp-dim">방향성 ${Object.keys(R.focus.done).length} / ${list.length} 완료</span><span class="cp-grow"></span><button type="button" class="cp-btn" data-tree-zoom="out" aria-label="트리 축소">−</button><span class="cp-dim" data-tree-zoom-label>${Math.round(ui.treeZoom*100)}%</span><button type="button" class="cp-btn" data-tree-zoom="in" aria-label="트리 확대">+</button><button type="button" class="cp-btn" data-tree-fit>전체 보기</button></div><div class="cp-tree-wrap"><div style="width:${maxX*ui.treeZoom}px;height:${maxY*ui.treeZoom}px"><div class="cp-tree hf-scope" id="cpFocusTree" style="width:${maxX}px;height:${maxY}px;transform:scale(${ui.treeZoom});transform-origin:top left">${FV ? FV.styleTag(st, '#cpFocusTree') : ''}
             <svg class="cp-tree-svg" width="${maxX}" height="${maxY}">${lines}</svg>
             ${list.map(f => { const p = pos(f), s = focusState(f), cur = R.focus.cur && R.focus.cur.id === f.id;
                 const nd = nowDay() ?? 0, pct = cur && R.focus.cur.days ? clamp((nd - (R.focus.cur.started ?? nd)) / R.focus.cur.days * 100, 0, 100) : 0;
@@ -531,10 +533,14 @@
             ${(sel.prereq || []).length ? `<div class="cp-dim">먼저: ${sel.prereq.map(id => esc((focusById(id) || {}).title || id)).join(', ')}</div>` : ''}
             ${(sel.any || []).length ? `<div class="cp-dim">이 중 하나 먼저: ${sel.any.map(id => esc((focusById(id) || {}).title || id)).join(', ')}</div>` : ''}
             ${(sel.exclusive || []).length ? `<div class="cp-dim">함께 못 고름: ${sel.exclusive.map(id => esc((focusById(id) || {}).title || id)).join(', ')}</div>` : ''}
-            ${focusState(sel) === 'available' ? `<div class="cp-row"><button type="button" class="cp-btn cp-primary" data-start-focus="${esc(sel.id)}">이 방향으로 (${Number(sel.days) || 0}일)</button></div>` : ''}</div>` : '<div class="cp-dim cp-hint">상자를 누르면 자세히 보고 고를 수 있습니다. 한 번에 하나씩, 정한 날이 지나면 끝나고 효과가 들어갑니다.</div>'}`;
-        const wrap=box.querySelector('.cp-tree-wrap');wrap.scrollLeft=scroll.x;wrap.scrollTop=scroll.y;
-        box.querySelectorAll('[data-tree-zoom]').forEach(b=>b.onclick=()=>{ui.treeZoom=clamp(ui.treeZoom+(b.dataset.treeZoom==='in'?.15:-.15),.3,1.75);renderTree(box);});
-        box.querySelector('[data-tree-fit]').onclick=()=>{ui.treeZoom=clamp((wrap.clientWidth-24)/maxX,.3,1);wrap.scrollLeft=0;wrap.scrollTop=0;renderTree(box);};
+            ${focusState(sel) === 'available' ? `<div class="cp-row"><button type="button" class="cp-btn cp-primary" data-start-focus="${esc(sel.id)}">이 방향으로 (${Number(sel.days) || 0}일)</button></div>` : ''}</div>` : '<div class="cp-dim cp-hint">휠로 확대/축소하고 휠 버튼을 누른 채 끌어 이동합니다. 상자를 눌러 방향성을 고르세요. 한 번에 하나씩 진행합니다.</div>'}`;
+        const wrap=box.querySelector('.cp-tree-wrap');
+        box._treeViewport=HemiTreeViewport.mount(wrap,box.querySelector('#cpFocusTree'),{
+            zoom:ui.treeZoom,left:scroll.x,top:scroll.y,
+            onChange:view=>{ui.treeZoom=view.zoom;box.querySelector('[data-tree-zoom-label]').textContent=Math.round(view.zoom*100)+'%';}
+        });
+        box.querySelectorAll('[data-tree-zoom]').forEach(b=>b.onclick=()=>box._treeViewport.zoomBy(b.dataset.treeZoom==='in'?.15:-.15));
+        box.querySelector('[data-tree-fit]').onclick=()=>box._treeViewport.fit();
         box.querySelectorAll('[data-node]').forEach(b => { b.onclick = () => { ui.sel = b.dataset.node; renderTree(box); }; b.ondblclick = () => startFocus(b.dataset.node); });
         box.querySelector('[data-start-focus]')?.addEventListener('click', e => startFocus(e.target.dataset.startFocus));
     }
@@ -624,7 +630,7 @@
         .cp-disp-bar { display: flex; align-items: center; gap: 8px; } .cp-disp-title { color: var(--tno-gold, #ffd700); font-weight: normal; }
         .cp-seg { display: inline-flex; border: 1px solid #333; } .cp-seg button { cursor: pointer; font: inherit; font-size: .82rem; padding: 5px 12px; background: transparent; border: none; color: #999; } .cp-seg button.on { background: var(--tno-neon); color: #000; }
         .cp-chip { cursor: pointer; font: inherit; font-size: .78rem; padding: 3px 10px; background: transparent; border: 1px solid #3a3f46; color: #aaa; } .cp-chip.on { border-color: var(--tno-neon); color: #fff; } .cp-chip.ended { opacity: .7; }
-        .cp-tree-wrap { overflow: auto; max-height: 62vh; border: 1px solid #2a3138; background: #090b0f; }
+        .cp-tree-wrap { overflow: auto; height: 62vh; min-height: 260px; max-height: 62vh; border: 1px solid #2a3138; background: #090b0f; }
         .cp-tree { position: relative; }
         .cp-tree-svg { position: absolute; left: 0; top: 0; pointer-events: none; }
         .cp-link { fill: none; stroke: #3a4450; stroke-width: 2; } .cp-link.on { stroke: #3ecf8e; }

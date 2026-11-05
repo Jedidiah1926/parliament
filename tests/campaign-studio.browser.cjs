@@ -55,7 +55,8 @@ const base=process.env.STUDIO_TEST_URL||'http://127.0.0.1:8000';
  // Drag with zoom applied, then undo restores the original cell.
  const prior=await page.evaluate(()=>({...HemiCampaignEditor.data.focus[0]}));
  await page.locator('[data-zoom="in"]').click();
- const bounds=await page.locator('[data-node="intro"]').boundingBox();const zoom=await page.locator('#cpZoomLabel').textContent().then(x=>parseInt(x)/100);
+ await page.locator('[data-node="intro"]').scrollIntoViewIfNeeded();
+ const bounds=await page.locator('[data-node="intro"]').boundingBox();const zoom=await page.locator('#cpeTree').evaluate(el=>new DOMMatrix(getComputedStyle(el).transform).a);
  await page.mouse.move(bounds.x+bounds.width/2,bounds.y+20);await page.mouse.down();await page.mouse.move(bounds.x+bounds.width/2+188*zoom,bounds.y+20,{steps:8});await page.mouse.up();
  assert.notEqual(await page.evaluate(()=>HemiCampaignEditor.data.focus[0].x),prior.x);
  await page.locator('[data-history="undo"]').click();assert.equal(await page.evaluate(()=>HemiCampaignEditor.data.focus[0].x),prior.x);
