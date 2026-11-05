@@ -675,7 +675,7 @@
         let last = null; try { last = localStorage.getItem(LAST); } catch (e) { /* 무시 */ }
         const params=new URLSearchParams(location.search), requested=params.get('item');
         const it = params.has('new') ? null : requested ? all.find(x=>x.id===requested) : all.find(x => x.id === last) || all[0];
-        if(requested&&!it)alertBox('이 제작물을 찾을 수 없습니다. 메이커 허브에서 다시 선택해 주세요.');
+        if(requested&&!it)alertBox('이 제작물을 찾을 수 없습니다. 제작물 목록에서 다시 선택해 주세요.');
         if (it) S = normalize(it.data) || blank();
         resetHistory(); render(); refreshLibrary();
         if (!it) saveNow();

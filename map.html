@@ -190,7 +190,7 @@
   <!-- 맵 메이커: 화면 크기에 맞춘 앱 레이아웃 (위: 앱 바 · 가운데: 미리보기 · 오른쪽: 요소 목록) — 페이지 스크롤 없음 -->
   <div class="mm-app">
     <header class="mm-appbar">
-      <a href="maker.html" class="btn secondary mm-back" id="mapMakerBack" title="메이커 허브로">← 메이커 허브</a>
+      <a href="maker.html" class="btn secondary mm-back" id="mapMakerBack" title="제작물 목록으로">← 제작물 목록</a>
       <div class="mm-titles">
         <h1>맵 메이커</h1>
         <div class="small">SVG · 그림(webp · png · jpg · bmp, 자동 추적) · .jsx · .hemimap 지도를 지역구 지도(.jsx — 모양만) 또는 지역구 프리셋(.hemimap — 모양 · 이름 · 약칭 · 의석 수 · 인구)으로 — 만든 파일은 국가 › 지역구 지도에서 불러옵니다</div>
@@ -198,12 +198,12 @@
       <div class="mm-actions">
         <input id="fileInput" type="file" accept=".svg,image/svg+xml,.jsx,.js,text/javascript,.hemimap,.webp,.png,.jpg,.jpeg,.gif,.bmp,.dib,image/bmp,image/x-ms-bmp,image/*" />
         <label for="fileInput" class="btn file-label" title="SVG · 그림(webp · png · jpg · bmp) · 맵 메이커가 만든 .jsx · 지역구 프리셋 .hemimap">⬆ 지도 열기</label>
-        <button id="btnSaveProject" class="btn secondary">허브에 저장</button>
+        <button id="btnSaveProject" class="btn secondary">프로젝트 저장</button>
         <button id="btnClear" class="btn secondary" title="연 지도와 목록을 모두 비웁니다">초기화</button>
       </div>
     </header>
 
-    <div class="mm-projectbar"><label>프로젝트 이름 <input type="text" id="mapProjectTitle" value="새 지도" maxlength="100"></label><span id="mapSaveStatus" role="status" aria-live="polite">지도를 열면 허브에 자동 저장됩니다.</span></div>
+    <div class="mm-projectbar"><label>프로젝트 이름 <input type="text" id="mapProjectTitle" value="새 지도" maxlength="100"></label><span id="mapSaveStatus" role="status" aria-live="polite">지도를 열면 자동 저장됩니다.</span></div>
     <div class="mm-body">
       <main class="panel mm-main">
         <div class="mm-toolbar">

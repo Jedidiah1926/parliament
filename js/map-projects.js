@@ -28,7 +28,7 @@
         clearTimeout(timer); timer = 0;
         if (restoring) return queue;
         const data = snapshot();
-        if (!data) { status('저장할 지도를 먼저 여세요. 기존 프로젝트는 허브에 남아 있습니다.'); return queue; }
+        if (!data) { status('저장할 지도를 먼저 여세요. 기존 프로젝트는 제작물 목록에 남아 있습니다.'); return queue; }
         projectId ||= uid();
         const item = { id: projectId, title: $('mapProjectTitle').value.trim() || '이름 없는 지도', updatedAt: Date.now(), data };
         dirty = false; status('저장 중…');
@@ -36,8 +36,8 @@
         queue = queue.catch(() => {}).then(async () => {
             await store.put('map', item); localStorage.setItem(store.types.map.last, item.id);
             if(projectId===item.id)history.replaceState(null,'','map.html?item='+encodeURIComponent(item.id));
-            if (!dirty) status('✓ 메이커 허브에 저장됨');
-        }).catch(e => { dirty = true; status('저장 실패 · 허브에 저장을 다시 누르거나 파일로 내보내세요.'); throw e; });
+            if (!dirty) status('✓ 프로젝트 저장됨');
+        }).catch(e => { dirty = true; status('저장 실패 · 프로젝트 저장을 다시 누르거나 파일로 내보내세요.'); throw e; });
         return queue;
     }
     function changed() {
@@ -62,24 +62,24 @@
         $('wrapSvg').checked = data.wrapSvg !== false; $('toggleIds').checked = data.useIds !== false;
         renderList(); attachHoverHandlers();
         shapes.forEach((s, i) => setSelected(s, !!data.shapes[i].selected));
-        projectId = item.id; status('✓ 메이커 허브에서 불러옴');
+        projectId = item.id; status('✓ 프로젝트 불러옴');
     }
     $('btnSaveProject').onclick = () => { saveNow().catch(() => {}); };
     $('mapMakerBack').addEventListener('click', async e => {
         if (e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
         e.preventDefault();
         try { if (dirty || timer) await saveNow(); else await queue; location.href = 'maker.html'; }
-        catch (err) { await DnoUI.alert('저장하지 못했습니다. 허브에 저장을 다시 누르거나 파일로 내보내세요.'); }
+        catch (err) { await DnoUI.alert('저장하지 못했습니다. 프로젝트 저장을 다시 누르거나 파일로 내보내세요.'); }
     });
     document.addEventListener('input', changed); document.addEventListener('change', changed);
     window.addEventListener('mapmakerchange', changed);
-    window.addEventListener('mapmakerreset', () => { clearTimeout(timer); timer = 0; projectId = null; dirty = false; $('mapProjectTitle').value = '새 지도'; status('새 지도 · 기존 프로젝트는 허브에 남아 있습니다.'); });
+    window.addEventListener('mapmakerreset', () => { clearTimeout(timer); timer = 0; projectId = null; dirty = false; $('mapProjectTitle').value = '새 지도'; status('새 지도 · 기존 프로젝트는 제작물 목록에 남아 있습니다.'); });
     window.addEventListener('beforeunload', e => { if (dirty) { saveNow().catch(() => {}); e.preventDefault(); e.returnValue = ''; } });
     (async () => {
         try {
             const params = new URLSearchParams(location.search), id = params.get('item') || (!params.has('new') && localStorage.getItem(store.types.map.last));
-            if (id) { const item = await store.get('map', id); if (item) restore(item); else status('삭제되었거나 없는 지도입니다. 메이커 허브에서 다시 선택하세요.'); }
-        } catch (e) { status('프로젝트를 불러오지 못했습니다. 허브에서 다시 선택하거나 파일을 여세요.'); }
+            if (id) { const item = await store.get('map', id); if (item) restore(item); else status('삭제되었거나 없는 지도입니다. 제작물 목록에서 다시 선택하세요.'); }
+        } catch (e) { status('프로젝트를 불러오지 못했습니다. 제작물 목록에서 다시 선택하거나 파일을 여세요.'); }
         finally { restoring = false; }
     })();
     window.HemiMapProjects = { save: saveNow, get id() { return projectId; } };

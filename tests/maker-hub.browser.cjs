@@ -8,7 +8,7 @@ const base=process.env.STUDIO_TEST_URL||'http://127.0.0.1:8000';
  const context=await browser.newContext({viewport:{width:1400,height:1000}}),page=await context.newPage(),errors=[];
  page.setDefaultTimeout(15000);page.on('pageerror',e=>errors.push(e.message));
  await context.route('https://fonts.googleapis.com/**',r=>r.abort());
- await page.goto(base+'/index.html');assert.equal(await page.locator('#homeMakerHub').getAttribute('href'),'maker.html');assert.match(await page.locator('.home-menu-primary').innerText(),/세이브 허브/);
+ await page.goto(base+'/index.html');assert.equal(await page.locator('#homeMakerHub').getAttribute('href'),'maker.html');assert.match(await page.locator('.home-menu-primary').innerText(),/시작하기/);
  await page.locator('#homeMakerHub').click();await page.waitForSelector('.maker-empty');
  assert.equal(await page.locator('[data-new]').count(),3);assert.match(await page.locator('#makerStatus').innerText(),/0개/);
  console.log('PASS: home has separate save and maker hubs, with all three maker entry points');
@@ -52,7 +52,7 @@ const base=process.env.STUDIO_TEST_URL||'http://127.0.0.1:8000';
  await page.evaluate(()=>{DnoUI.confirm=async()=>true;localStorage.setItem('dnoParliamentSaveSlots',JSON.stringify([{id:'existing-play',name:'Existing game',state:{}}]));});await page.locator('[data-kind="map"] [data-delete]').click();await page.waitForFunction(()=>!document.querySelector('[data-kind="map"]'));
  await page.reload();await page.waitForSelector('[data-kind="campaign"]');assert.equal(await page.locator('[data-kind="map"]').count(),0);assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('dnoParliamentSaveSlots'))[0].id),'existing-play');
  console.log('PASS: all themes/mobile, delete cancellation and persistent deletion without touching play saves');
- await page.goto(base+'/index.html#saves');await page.waitForSelector('#saveSelectOverlay:visible');assert.match(await page.locator('.save-select-head').innerText(),/SAVE HUB/);await page.locator('[data-ss-tab="stories"]').click();await page.waitForSelector('#campaignSelectList [data-play]');assert.equal(await page.locator('#challengeSelectList [data-play]').count(),1);
+ await page.goto(base+'/index.html#saves');await page.waitForSelector('#saveSelectOverlay:visible');assert.match(await page.locator('.save-select-head').innerText(),/SAVE SELECT/);await page.locator('[data-ss-tab="stories"]').click();await page.waitForSelector('#campaignSelectList [data-play]');assert.equal(await page.locator('#challengeSelectList [data-play]').count(),1);
  // Demo keeps access to the hub while disabling only map creation/editing.
  await page.addInitScript(()=>{window.HEMI_BUILD={demo:true};});await page.goto(base+'/maker.html');await page.waitForSelector('[data-new="map"][aria-disabled="true"]');assert.equal(await page.locator('[data-new="map"]').getAttribute('href'),null);assert.equal(await page.locator('[data-new="campaign"]').getAttribute('href'),'scenario.html?new=1');
  assert.deepEqual(errors,[]);console.log('PASS: save hub still lists playable stories; demo restriction preserved; no browser errors');
