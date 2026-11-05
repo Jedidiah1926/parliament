@@ -59,16 +59,22 @@
     };
     const origSet = window.setAppState;
     window.setAppState = function (state) {
+        resetArticleWindow();
         const r = origSet.apply(this, arguments);
         const src = state && state.campaign;
         R = src && typeof src === 'object' && src.data ? normalize(JSON.parse(JSON.stringify(src))) : null;
         bindMod();
-        refresh();
+        refresh(); scheduleArticles();
         return r;
     };
     function normalize(r) {
         r.focus = r.focus || { cur: null, done: {} };
         r.focus.done = r.focus.done || {};
+        r.articles = r.articles && typeof r.articles === 'object' ? r.articles : {};
+        r.articles.published = r.articles.published && typeof r.articles.published === 'object' ? r.articles.published : {};
+        const valid = new Set((r.data.articles || []).map(a=>a.id));
+        r.articles.queue = (Array.isArray(r.articles.queue) ? r.articles.queue : []).filter(id=>valid.has(id)&&r.articles.published[id]&&!r.articles.published[id].read);
+        Object.entries(r.articles.published).forEach(([id,record])=>{if(valid.has(id)&&!record.read&&!r.articles.queue.includes(id))r.articles.queue.push(id);});
         r.crises = r.crises || {};
         (r.data.crises || []).forEach(c => { if (!r.crises[c.id]) r.crises[c.id] = { status: 'idle', missions: {} }; r.crises[c.id].missions = r.crises[c.id].missions || {}; });
         return r;
@@ -119,7 +125,8 @@
         R.focus.cur = null;
         R.focus.done[cur.id] = today() || 1;
         run([{ set_flag: 'focus_' + safeId(cur.id) }]);
-        if (f) { run(f.effects); if (f.event) SM()?.fire(modId(), f.event); toast(`✔ 방향성 완료: ${f.title || f.id}`); }
+        if (f) { run(f.effects); if (f.event) SM()?.fire(modId(), f.event); if(f.article)publishArticle(f.article); toast(`✔ 방향성 완료: ${f.title || f.id}`); }
+        checkArticles();
     }
 
     // ---------------------------------------------------------------
@@ -192,6 +199,7 @@
             st.lastDay = nd;
             tickCrisis(c, months);
         });
+        checkArticles();
         // 결말 (엔딩)
         const e = (R.data.endings || []).find(x => x && x.condition && test(x.condition));
         if (e) { R.ending = { id: e.id, at: today() }; setTimeout(() => showEnding(e), 400); }
@@ -243,6 +251,63 @@
             [{ text: '편집기로', on: () => { location.href = 'scenario.html'; } }, { text: '계속 플레이', primary: true }]);
     }
 
+    // Campaign news is a one-time narrative reader and archive, independent of HemiNews.
+    let articleWindow = null, articlePump = 0, articleCheck = 0;
+    const articleList = () => Array.isArray(R?.data.articles) ? R.data.articles : [];
+    function saveArticles() { try { window.saveActiveNow?.(true); } catch (e) { /* normal save still captures the queue */ } }
+    function resetArticleWindow() {
+        clearTimeout(articlePump); articlePump = 0; clearTimeout(articleCheck); articleCheck = 0;
+        articleWindow?.close(false); articleWindow = null;
+    }
+    function scheduleArticles() {
+        clearTimeout(articlePump);
+        articlePump = setTimeout(() => {
+            articlePump = 0;
+            if (!R || articleWindow || !R.articles.queue.length || SM()?.state?.queue?.length || document.querySelector('.cp-overlay,.sm-overlay,.ca-overlay,.dno-dialog-overlay')) return;
+            const id = R.articles.queue[0], article = articleList().find(a=>a.id===id);
+            if (!article) { R.articles.queue.shift(); scheduleArticles(); return; }
+            readArticle(id);
+        }, 0);
+    }
+    window.addEventListener('hemi-script-effects-applied',()=>{if(!R)return;clearTimeout(articleCheck);articleCheck=setTimeout(()=>{articleCheck=0;checkArticles();},0);});
+    function publishArticle(id) {
+        if (!R) return false;
+        const article = articleList().find(a=>a.id===id);
+        if (!HemiCampaignArticles.publish(R, article, today())) return false;
+        R.articles.published[id].content = Object.fromEntries(['title','subtitle','body','source'].map(k=>[k,fillT(article[k]||'')]));
+        saveArticles(); scheduleArticles(); return true;
+    }
+    function checkArticles() {
+        if (!R) return;
+        HemiCampaignArticles.due(R.data, R, test, today()).forEach(a=>publishArticle(a.id));
+        scheduleArticles();
+    }
+    function readArticle(id) {
+        const article = articleList().find(a=>a.id===id), record = R?.articles.published[id];
+        if (!article || !record || articleWindow) return;
+        const state = R;
+        articleWindow = HemiCampaignArticles.show({...article,...record.content}, {
+            date: labelOf(record.at), fill: record.content ? undefined : fillT,
+            onClose() {
+                articleWindow = null;
+                if (R !== state) return;
+                record.read = true; R.articles.queue = R.articles.queue.filter(x=>x!==id);
+                saveArticles(); refresh(); scheduleArticles();
+            }
+        });
+    }
+    function renderArticles(host) {
+        const published = Object.entries(R.articles.published).reverse();
+        host.innerHTML = `<div class="cp-wrap"><div class="cp-h">캠페인 기사 <span class="cp-dim">${published.length}건</span></div><p class="cp-dim">진행 중 전달된 소식입니다. 기사를 눌러 다시 읽을 수 있습니다.</p>${published.map(([id,record])=>{
+            const a=articleList().find(a=>a.id===id);if(!a)return '';
+            return `<button type="button" class="cp-btn" data-read-article="${esc(id)}"><b>${esc(record.content?.title||a.title||id)}</b><span class="cp-grow"></span><span class="cp-dim">${esc(labelOf(record.at))}${record.read?'':' · 새 기사'}</span></button>`;
+        }).join('')||'<div class="cp-empty">아직 발행된 캠페인 기사가 없습니다.</div>'}</div>`;
+        host.querySelectorAll('[data-read-article]').forEach(b=>b.onclick=()=>readArticle(b.dataset.readArticle));
+    }
+    // Modals are direct body children. Wait for introductions/events/crises to close
+    // before presenting the next article, rather than stacking newspaper windows.
+    new MutationObserver(() => { if (R?.articles?.queue.length && !articleWindow) scheduleArticles(); }).observe(document.body,{childList:true});
+
     // ---------------------------------------------------------------
     // 국가 › 캠페인 탭 (왼쪽) · 오른쪽 시각 화면 "캠페인"
     // ---------------------------------------------------------------
@@ -257,10 +322,11 @@
                 <button class="sub-tab-btn active" id="subTabCampaign" onclick="switchSubTab('campaign','campaign')">개요</button>
                 <button class="sub-tab-btn" id="subTabCampfocus" onclick="switchSubTab('campaign','campfocus')">방향성</button>
                 <button class="sub-tab-btn" id="subTabCampcrisis" onclick="switchSubTab('campaign','campcrisis')">위기</button>
+                <button class="sub-tab-btn" id="subTabCamparticles" onclick="switchSubTab('campaign','camparticles')">기사</button>
             </div>
             <div id="contentCampaign" class="sub-tab-content active"></div>
             <div id="contentCampfocus" class="sub-tab-content"></div>
-            <div id="contentCampcrisis" class="sub-tab-content"></div>
+            <div id="contentCampcrisis" class="sub-tab-content"></div><div id="contentCamparticles" class="sub-tab-content"></div>
         </div>`), ref);
         try { if (typeof currentSubTab !== 'undefined' && !currentSubTab.campaign) currentSubTab.campaign = 'campaign'; } catch (e) { /* 없음 */ }
     })();
@@ -270,6 +336,7 @@
         if (main === 'campaign') {
             if (sub === 'campfocus') ui.view = 'focus';
             if (sub === 'campcrisis') ui.view = 'crisis';
+            if (sub === 'camparticles') ui.view = 'articles';
             renderLeft(); showDisp();
         }
         return r;
@@ -352,6 +419,7 @@
         const sub = curCampSub();
         if (sub === 'campfocus') { renderFocusLeft(); return; }
         if (sub === 'campcrisis') { renderCrisisLeft(); return; }
+        if (sub === 'camparticles') { const host=document.getElementById('contentCamparticles');if(host&&R)renderArticles(host);return; }
         const host = document.getElementById('contentCampaign');
         if (!host) return;
         if (!R) { host.innerHTML = '<div class="cp-empty">이 세이브에는 캠페인이 없습니다. 메인 화면 › 캠페인 · 시나리오에서 캠페인을 만들고 "시험 플레이"하세요.</div>'; return; }
@@ -363,7 +431,7 @@
         const ending = R.ending && (d.endings || []).find(e => e.id === R.ending.id);
         host.innerHTML = `<div class="cp-wrap">
             <div class="cp-head"><div class="cp-kicker">캠페인 · 테스트</div><div class="cp-title">${esc(d.title || '캠페인')}</div>${d.author ? `<div class="cp-dim">제작자: ${esc(d.author)}</div>` : ''}
-                <div class="cp-row"><button type="button" class="cp-btn" data-intro>세계관</button><button type="button" class="cp-btn" data-tree>방향성 트리</button><button type="button" class="cp-btn" data-crisis-view>위기 화면</button><a class="cp-btn" href="scenario.html">편집기</a></div></div>
+                <div class="cp-row"><button type="button" class="cp-btn" data-intro>세계관</button><button type="button" class="cp-btn" data-tree>방향성 트리</button><button type="button" class="cp-btn" data-crisis-view>위기 화면</button><button type="button" class="cp-btn" data-articles>기사</button><a class="cp-btn" href="scenario.html">편집기</a></div></div>
             ${ending ? `<div class="cp-ending">🏁 결말: <b>${esc(ending.title || ending.id)}</b> <button type="button" class="cp-btn" data-ending>다시 보기</button></div>` : ''}
             <div class="cp-card"><div class="cp-h">방향성</div>
                 ${cur ? `<div class="cp-focus-cur"><b>${esc(f ? f.title : cur.id)}</b><span class="cp-grow"></span><span class="cp-days">${left}일 남음</span></div>
@@ -379,10 +447,11 @@
         host.querySelector('[data-intro]').onclick = showIntro;
         host.querySelector('[data-tree]').onclick = () => openTab('campfocus');
         host.querySelector('[data-crisis-view]').onclick = () => openTab('campcrisis');
+        host.querySelector('[data-articles]').onclick=()=>openTab('camparticles');
         host.querySelector('[data-ending]')?.addEventListener('click', () => showEnding(ending));
         host.querySelectorAll('[data-focus]').forEach(b => { b.onclick = () => startFocus(b.dataset.focus); });
         host.querySelector('[data-check]').onclick = () => { tick(); toast('캠페인을 확인했습니다'); };
-        host.querySelector('[data-quit]').onclick = () => showCustomConfirm('이 세이브에서 캠페인을 뗄까요? 나라는 그대로 두고 방향성 · 위기 · 캠페인 이벤트 · 결정만 없어집니다.', () => { R = null; bindMod(); refresh(); });
+        host.querySelector('[data-quit]').onclick = () => showCustomConfirm('이 세이브에서 캠페인을 뗄까요? 나라는 그대로 두고 방향성 · 위기 · 캠페인 이벤트 · 결정만 없어집니다.', () => { resetArticleWindow();R = null; bindMod(); refresh(); });
         bindDecisions(host);
     }
 
@@ -424,9 +493,9 @@
         const bar = document.getElementById('cpDispBar'), box = document.getElementById('cpDisp');
         if (!bar || !box) return;
         if (!R) { bar.innerHTML = ''; box.innerHTML = '<div class="cp-empty">캠페인이 없습니다.</div>'; return; }
-        bar.innerHTML = `<div class="cp-seg"><button type="button" data-view="focus" class="${ui.view === 'focus' ? 'on' : ''}">방향성 트리</button><button type="button" data-view="crisis" class="${ui.view === 'crisis' ? 'on' : ''}">위기</button></div><span class="cp-grow"></span><b class="cp-disp-title">${esc(R.data.title || '')}</b>`;
+        bar.innerHTML = `<div class="cp-seg"><button type="button" data-view="focus" class="${ui.view === 'focus' ? 'on' : ''}">방향성 트리</button><button type="button" data-view="crisis" class="${ui.view === 'crisis' ? 'on' : ''}">위기</button><button type="button" data-view="articles" class="${ui.view === 'articles' ? 'on' : ''}">기사</button></div><span class="cp-grow"></span><b class="cp-disp-title">${esc(R.data.title || '')}</b>`;
         bar.querySelectorAll('[data-view]').forEach(b => { b.onclick = () => { ui.view = b.dataset.view; renderDisp(); }; });
-        if (ui.view === 'crisis') renderCrisisView(box); else renderTree(box);
+        if (ui.view === 'crisis') renderCrisisView(box); else if(ui.view === 'articles')renderArticles(box); else renderTree(box);
     }
 
     // 방향성 트리 — 칸(x, y)에 놓인 상자들, 앞선 방향성(prereq: 실선, any: 점선)과 배타(exclusive: 빨간 ✕)
@@ -435,7 +504,7 @@
         const list = focusList();
         if (!list.length) { box.innerHTML = '<div class="cp-empty">이 캠페인에는 방향성 트리가 없습니다.</div>'; return; }
         const FV = window.HemiFocusView, st = FV ? FV.style(R.data) : { width: 150, height: 74, gapX: 30, gapY: 46 };
-        const W = st.width, H = st.height, GX = st.gapX, GY = st.gapY, P = 20;
+        const W = st.width, H = st.height, GX = st.gapX, GY = st.gapY, P = FV ? FV.padding(R.data,st) : 20;
         const pos = f => ({ x: P + (Number(f.x) || 0) * (W + GX), y: P + (Number(f.y) || 0) * (H + GY) });
         const maxX = Math.max(...list.map(f => pos(f).x)) + W + P, maxY = Math.max(...list.map(f => pos(f).y)) + H + P;
         let lines = '';
@@ -494,6 +563,7 @@
         try { const d = JSON.parse(raw); return d && d.format === FORMAT ? d : null; } catch (e) { return null; }
     }
     function attach(d, startId) {
+        resetArticleWindow();
         const data = JSON.parse(JSON.stringify(d));
         (data.starts || []).forEach(s => { delete s.state; }); // 시작 세이브는 세이브에 다시 넣지 않는다
         delete data._startId;
@@ -515,7 +585,7 @@
         };
     }
 
-    window.HemiCampaign = { get state() { return R; }, tick, startFocus, attach, showIntro, showDisp, FORMAT, toMod };
+    window.HemiCampaign = { get state() { return R; }, tick, startFocus, publishArticle, attach, showIntro, showDisp, FORMAT, toMod };
 
     const css = document.createElement('style');
     css.textContent = `

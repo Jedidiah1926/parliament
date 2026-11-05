@@ -21,17 +21,17 @@ const base=process.env.STUDIO_TEST_URL||'http://127.0.0.1:8000';
  await page.locator('.mm-abbr').first().fill('갑');await page.locator('.mm-seats').first().fill('3');await page.locator('.mm-pop').first().fill('240000');
  await page.locator('#mapMakerBack').click();await page.waitForSelector('.maker-project[data-kind="map"]');
  assert.match(await page.locator('.maker-project').innerText(),/서울 지역구/);
- await page.locator('.maker-project [data-edit]').click();await page.waitForFunction(()=>document.querySelector('#mapSaveStatus').textContent.includes('불러옴'));
+ await page.locator('.maker-project [data-edit]').click();await page.waitForFunction(()=>document.querySelector('#mapSaveStatus')?.textContent.includes('불러옴'));
  assert.equal(await page.locator('#elementsList .item>input[type="text"]').first().inputValue(),'지역 갑');assert.equal(await page.locator('.mm-abbr').first().inputValue(),'갑');assert.equal(await page.locator('.mm-seats').first().inputValue(),'3');assert.equal(await page.locator('.mm-pop').first().inputValue(),'240000');
  assert.equal(await page.locator('#svgContainer g').getAttribute('transform'),'translate(1 2)');
  await page.locator('.mm-cut').first().click();assert.equal(await page.locator('#elementsList .item').count(),3);
- await page.locator('#btnSaveProject').click();await page.waitForFunction(()=>document.querySelector('#mapSaveStatus').textContent.includes('저장됨'));
- const mapId=await page.evaluate(()=>HemiMapProjects.id);await page.reload();await page.waitForFunction(()=>document.querySelector('#mapSaveStatus').textContent.includes('불러옴'));
+ await page.locator('#btnSaveProject').click();await page.waitForFunction(()=>document.querySelector('#mapSaveStatus')?.textContent.includes('저장됨'));
+ const mapId=await page.evaluate(()=>HemiMapProjects.id);await page.reload();await page.waitForFunction(()=>document.querySelector('#mapSaveStatus')?.textContent.includes('불러옴'));
  assert.equal(await page.locator('#elementsList .item').count(),3);assert.equal(await page.locator('.mm-seats').first().inputValue(),'3');
  console.log('PASS: immediate hub return saves map names/metadata/transform; split geometry survives reload');
  // Ensure the project stores the extras from an imported .hemimap, not just SVG shapes.
  await page.evaluate(()=>{loadedPreset={format:'hemicycle-districts',district:{seatCounts:{a:{house:3,senate:2,third:1}},svgSplit:{senate:true},svgMaps:{senate:{custom:true}}},regions:{regions:{house:[{id:'r',name:'수도권'}],senate:[],third:[]},districtRegionMap:{house:{a:'r'},senate:{},third:{}}}};});
- await page.locator('#btnSaveProject').click();await page.waitForFunction(()=>document.querySelector('#mapSaveStatus').textContent.includes('저장됨'));await page.reload();await page.waitForFunction(()=>document.querySelector('#mapSaveStatus').textContent.includes('불러옴'));
+ await page.locator('#btnSaveProject').click();await page.waitForFunction(()=>document.querySelector('#mapSaveStatus')?.textContent.includes('저장됨'));await page.reload();await page.waitForFunction(()=>document.querySelector('#mapSaveStatus')?.textContent.includes('불러옴'));
  assert.equal(await page.evaluate(()=>loadedPreset.district.seatCounts.a.senate),2);assert.equal(await page.evaluate(()=>loadedPreset.regions.regions.house[0].name),'수도권');
  // A reset starts another draft, retaining the saved project in the hub.
  await page.locator('#btnClear').click();await page.locator('#mapMakerBack').click();await page.waitForSelector('[data-kind="map"]');

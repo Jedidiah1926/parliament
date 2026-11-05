@@ -3,7 +3,7 @@
     'use strict';
     const clone = x => JSON.parse(JSON.stringify(x));
     const object = x => !!x && typeof x === 'object' && !Array.isArray(x);
-    const arrayKeys = ['starts', 'focus', 'crises', 'endings', 'events', 'decisions'];
+    const arrayKeys = ['starts', 'focus', 'crises', 'endings', 'events', 'decisions', 'articles'];
     const idOK = id => typeof id === 'string' && /^[a-zA-Z0-9_.-]+$/.test(id);
     function validate(d) {
         const issues = [];
@@ -36,6 +36,7 @@
         idsOf(list('starts'), 'starts'); idsOf(list('crises'), 'crises'); idsOf(list('endings'), 'endings');
         if (!list('starts').length) add('starts', '시작 나라가 하나 이상 필요합니다.');
         list('starts').forEach((s, i) => { if (s.kind === 'save' && (!object(s.state) || !Array.isArray((s.state.parliament || s.state.data || {}).parties))) add(`starts.${i}`, '시작 세이브를 선택하세요.'); else if (s.kind !== 'save' && !s.preset) add(`starts.${i}.preset`, '시작 프리셋을 선택하세요.'); });
+        const articleIds=idsOf(list('articles'),'articles');
         const cells = new Set();
         focus.forEach((f, i) => {
             const p = `focus.${i}`;
@@ -48,6 +49,8 @@
             if (f.title != null && typeof f.title !== 'string') add(p + '.title', '제목은 문자열이어야 합니다.');
             const cell = `${f.x || 0},${f.y || 0}`;
             if (cells.has(cell)) add(p, '다른 방향성과 위치가 겹칩니다. 자동 정렬로 해결할 수 있습니다.', 'warning');
+            if(f.art!=null && (!object(f.art)||['scale','x','y'].some(k=>f.art[k]!=null&&!Number.isFinite(f.art[k]))))add(p+'.art','그림 배치는 숫자 scale · x · y로 입력하세요.');
+            if(f.article&&!articleIds.has(f.article))add(p+'.article','없는 캠페인 기사: '+f.article);
             cells.add(cell); cond(f.available, p + '.available'); effects(f.effects, p + '.effects');
         });
         if (!issues.some(x => x.level === 'error' && x.path.startsWith('focus'))) {
@@ -74,6 +77,17 @@
         });
         list('endings').forEach((e, i) => { cond(e.condition, `endings.${i}.condition`); if (!e.condition || !Object.keys(e.condition).length) add(`endings.${i}`, '조건이 비어 있어 캠페인이 즉시 끝날 수 있습니다.', 'warning'); });
         script(list('events'), 'events', true); script(list('decisions'), 'decisions', false);
+        list('articles').forEach((a,i)=>{
+            const p='articles.'+i;
+            if(!['start','focus','date','condition','manual'].includes(a.when))add(p+'.when','발행 계기는 start · focus · date · condition · manual 중 하나입니다.');
+            for(const k of ['title','body','subtitle','source','image'])if(a[k]!=null&&typeof a[k]!=='string')add(p+'.'+k,'문자열이어야 합니다.');
+            if(a.when==='focus'&&!ids.has(a.focus))add(p+'.focus','완료를 기다릴 방향성을 선택하세요.');
+            if(a.when==='date'&&!/^(-?\d{1,5})-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/.test(a.date||''))add(p+'.date','날짜는 YYYY-MM-DD로 입력하세요.');
+            cond(a.trigger,p+'.trigger');
+            if(a.when==='condition'&&(a.trigger==null||object(a.trigger)&&!Object.keys(a.trigger).length))add(p+'.trigger','자동 발행 조건을 입력하세요.');
+            for(const k of ['effects','options','meters','missions','outcomes'])if(a[k]!=null)add(p+'.'+k,'캠페인 기사는 정보 전달용입니다. 효과·선택지·위기 항목은 이벤트나 위기에 작성하세요.');
+            if(!a.body)add(p+'.body','기사 본문이 비어 있습니다.','warning');
+        });
         if (d.variables != null && (!object(d.variables) || Object.values(d.variables).some(x => !Number.isFinite(x)))) add('variables', '변수는 { "이름": 숫자 } 형식이어야 합니다.');
         if (d.focusStyle != null && !object(d.focusStyle)) add('focusStyle', '트리 디자인은 객체여야 합니다.');
         const events = new Set([...list('events'), ...list('crises').flatMap(c => Array.isArray(c.events) ? c.events : [])].map(e => e.id));
@@ -98,6 +112,7 @@
     function renameFocus(d, oldId, newId) {
         if (!idOK(newId) || d.focus.some(f => f.id === newId && f.id !== oldId)) return false;
         d.focus.forEach(f => { if (f.id === oldId) f.id = newId; ['prereq', 'any', 'exclusive'].forEach(k => { f[k] = (f[k] || []).map(id => id === oldId ? newId : id); }); });
+        (d.articles||[]).forEach(a=>{if(a.focus===oldId)a.focus=newId;});
         const walk = o => { if (!o || typeof o !== 'object') return; Object.entries(o).forEach(([k, v]) => { if (['flag', 'not_flag', 'has_flag', 'set_flag', 'clear_flag'].includes(k) && v === 'focus_' + oldId) o[k] = 'focus_' + newId; else walk(v); }); };
         walk(d); return true;
     }
@@ -114,6 +129,7 @@
                 f('reform', '새로운 사회계약', '📜', 0, 2, ['dialogue'], { effects: [{ add_var: { name: 'tension', value: -10 } }] }),
                 f('authority', '행정 권한 강화', '⚖', 4, 2, ['order'], { effects: [{ add_var: { name: 'tension', value: -10 } }] }),
                 f('future', '내일의 공화국', '🌅', 2, 3, [], { any: ['reform', 'authority'], event: 'new_dawn' })],
+            articles: [{id:'republic_news',title:'공화국, 새로운 진로를 모색하다',subtitle:'오늘의 선택이 내일의 역사가 된다',source:'공화국 통신',body:'정부는 국가의 미래를 위한 논의를 시작했다고 발표했습니다.\n\n광장과 의회는 서로 다른 해법을 제시하고 있습니다. 앞으로의 선택은 어떤 내일을 만들게 될까요?',when:'focus',focus:'opening'}],
             events: [{ id: 'new_dawn', title: '새벽을 맞이하며', desc: '우리가 고른 길은 역사가 될 것이다.', trigger_only: true, super: true, quote: '미래는 아직 쓰이지 않았다.', quote_author: '공화국 연설', options: [{ text: '새 시대를 향해', effects: [] }] }], decisions: [],
             crises: [{ id: 'unrest', title: '광장의 목소리', color: '#d96f56', desc: '긴장 수치를 낮추고 새 시대를 준비하세요.', trigger: { flag: 'focus_opening' }, onStart: [],
                 meters: [{ id: 'tension', name: '사회 긴장', start: 35, min: 0, max: 100, perMonth: 3 }],

@@ -1,0 +1,19 @@
+/* Campaign narrative article reader. The game news editor and news state are independent. */
+.ca-overlay {position:fixed;inset:0;z-index:100004;background:rgba(0,0,0,.82);display:grid;place-items:center;padding:20px;}
+.ca-paper {width:min(720px,100%);max-height:calc(100dvh - 40px);overflow:auto;box-sizing:border-box;background:var(--tno-panel,#1a1d26);color:var(--tno-text,#e0e0e0);border:2px solid var(--tno-border,#4a5a6a);padding:24px 30px;box-shadow:0 0 24px var(--tno-neon-dim);font-family:inherit;}
+.ca-masthead {display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:3px double var(--tno-neon,#00ffff);padding-bottom:14px;color:var(--tno-neon,#00ffff);font-size:1.25rem;letter-spacing:2px;}
+.ca-meta {display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;font-size:.75rem;color:#8a94a3;margin:12px 0 22px;}
+.ca-paper h1 {font:inherit;font-size:clamp(1.4rem,4vw,2.15rem);line-height:1.4;margin:0 0 12px;color:inherit;overflow-wrap:anywhere;}
+.ca-subtitle {margin:0 0 18px;font-size:1rem;line-height:1.6;color:#8a94a3;}
+.ca-image {display:block;width:100%;max-height:340px;object-fit:contain;margin:18px 0;}
+.ca-body {line-height:1.9;font-size:.95rem;overflow-wrap:anywhere;}
+.ca-body p {margin:0 0 18px;}
+.ca-paper footer {border-top:1px solid var(--tno-border,#4a5a6a);padding-top:16px;text-align:right;}
+.ca-paper button {cursor:pointer;font:inherit;background:transparent;color:var(--tno-neon,#00ffff);border:1px solid var(--tno-neon,#00ffff);padding:7px 18px;}
+.ca-paper .ca-close {padding:0;width:30px;height:30px;flex-shrink:0;}
+.ca-paper button:focus-visible {outline:2px solid var(--tno-gold,#ffd700);outline-offset:3px;}
+html[data-theme-family="modern"] .ca-paper {background:var(--m-surface);color:var(--m-text);border:1px solid var(--m-border);border-radius:14px;box-shadow:var(--m-shadow-lg);}
+html[data-theme-family="modern"] .ca-masthead {color:var(--m-text);border-color:var(--m-border-strong);}
+html[data-theme-family="modern"] .ca-meta,html[data-theme-family="modern"] .ca-subtitle {color:var(--m-text-3);}
+html[data-theme-family="modern"] .ca-paper button {border-color:var(--m-border-strong);color:var(--m-text);border-radius:7px;}
+@media(max-width:520px){.ca-overlay{padding:10px;}.ca-paper{padding:18px;max-height:calc(100dvh - 20px);}.ca-masthead{font-size:1rem;letter-spacing:1px;}}

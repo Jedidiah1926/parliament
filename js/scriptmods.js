@@ -273,6 +273,7 @@
         if (dirty) { dirty = false; try { simulate(); } catch (e) { /* 다시 계산 실패 */ } }
         try { refreshUI(); } catch (e) { /* 화면 갱신 실패 */ }
         refresh();
+        window.dispatchEvent(new CustomEvent('hemi-script-effects-applied'));
     }
 
     // ---------------------------------------------------------------

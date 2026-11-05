@@ -37,7 +37,7 @@
             starts: [{ id: 's1', name: '기본 시작', desc: '', kind: 'preset', preset: 'builtin:tutorial' }],
             variables: {}, events: [], decisions: [],
             focus: [{ id: 'f1', title: '첫걸음', icon: '🏛', days: 35, x: 1, y: 0, desc: '', prereq: [], any: [], exclusive: [], effects: [] }],
-            crises: [], endings: [],
+            crises: [], endings: [], articles: [],
         };
     }
     function blankCrisis() {
@@ -49,7 +49,7 @@
             events: [], decisions: [] };
     }
     let S = blank();
-    let tab = 'info', selFocus = null, selCrisis = null, presets = [];
+    let tab = 'info', selFocus = null, selCrisis = null, selArticle = null, presets = [];
     // 세부 정보 고치는 방식 — 'form'(칸 채우기) · 'json'(그 항목 전체를 JSON으로 직접)
     let detailMode = 'form';
     try { detailMode = localStorage.getItem('hemicycleCampaignDetailMode') === 'json' ? 'json' : 'form'; } catch (e) { /* 무시 */ }
@@ -78,7 +78,7 @@
     const EFF_SNIP = [
         ['정당 지지율 더하기', { support: { party: 'ruling', add: -2 } }], ['국정 지지율 더하기', { approval: { of: 'cabinet', add: -3 } }],
         ['변수(게이지) 더하기', { add_var: { name: 'tension', value: 10 } }], ['변수 바꾸기', { set_var: { name: 'tension', value: 0 } }],
-        ['플래그 켜기', { set_flag: '이름' }], ['이벤트 띄우기', { fire_event: '이벤트id' }], ['기사 발행', { article: { title: '헤드라인', body: '본문', outlet: '헤미일보', type: 'politics' } }],
+        ['플래그 켜기', { set_flag: '이름' }], ['이벤트 띄우기', { fire_event: '이벤트id' }], ['게임 여론 기사 발행', { article: { title: '헤드라인', body: '본문', outlet: '헤미일보', type: 'politics' } }],
         ['알림 창', { message: { title: '제목', text: '내용' } }], ['경제 지표 더하기', { economy: { indicator: 'mood', add: -5 } }], ['정당 상태', { party_status: { party: '정당 이름', to: 'banned' } }],
     ];
     function jsonField(path, label, kind, rows) {
@@ -120,7 +120,7 @@
     // ---------------------------------------------------------------
     // 화면
     // ---------------------------------------------------------------
-    const TABS = [['info', '기본 · 세계관'], ['starts', '시작 나라'], ['focus', '방향성 트리'], ['crises', '시나리오(위기)'], ['endings', '결말'], ['adv', '고급']];
+    const TABS = [['info', '기본 · 세계관'], ['starts', '시작 나라'], ['focus', '방향성 트리'], ['articles', '기사'], ['crises', '시나리오(위기)'], ['endings', '결말'], ['adv', '고급']];
     function studioBar() {
         $('cpStudioBar').innerHTML = `<div><span class="cpe-eyebrow">AUTHORING WORKSPACE</span><b>${esc(S.title || '이름 없는 캠페인')}</b></div><span class="scn-grow"></span><span id="cpSaveStatus" role="status">${esc(saveStatus)}</span><button type="button" class="scn-btn" data-history="undo" ${past.length ? '' : 'disabled'} title="실행 취소">↶</button><button type="button" class="scn-btn" data-history="redo" ${future.length ? '' : 'disabled'} title="다시 실행">↷</button><button type="button" class="scn-btn" id="cpValidate">✓ 검사</button>${modeSeg()}<button type="button" class="scn-btn" id="cpDiscardDraft" ${rawPending.size ? '' : 'hidden'}>JSON 변경 취소</button>`;
         $('cpStudioBar').querySelectorAll('[data-mode]').forEach(b => b.onclick = () => { detailMode = b.dataset.mode; localStorage.setItem('hemicycleCampaignDetailMode',detailMode); render(); });
@@ -144,16 +144,16 @@
         const oldWrap = document.querySelector('.cpe-tree-wrap');
         if (oldWrap) viewScroll = {left:oldWrap.scrollLeft,top:oldWrap.scrollTop};
         studioBar();
-        $('cpTabs').innerHTML = TABS.map(([k, l]) => `<button type="button" class="cpe-tab ${tab === k ? 'on' : ''}" data-tab="${k}">${l}${k === 'focus' ? ` <span class="scn-n">${S.focus.length}</span>` : k === 'crises' ? ` <span class="scn-n">${S.crises.length}</span>` : k === 'endings' ? ` <span class="scn-n">${S.endings.length}</span>` : ''}</button>`).join('');
+        $('cpTabs').innerHTML = TABS.map(([k, l]) => `<button type="button" class="cpe-tab ${tab === k ? 'on' : ''}" data-tab="${k}">${l}${k === 'focus' ? ` <span class="scn-n">${S.focus.length}</span>` : k === 'crises' ? ` <span class="scn-n">${S.crises.length}</span>` : k === 'articles' ? ` <span class="scn-n">${S.articles.length}</span>` : k === 'endings' ? ` <span class="scn-n">${S.endings.length}</span>` : ''}</button>`).join('');
         $('cpTabs').querySelectorAll('[data-tab]').forEach(b => { b.onclick = () => { tab = b.dataset.tab; render(); }; });
         const body = $('cpBody');
-        body.innerHTML = { info: infoHtml, starts: startsHtml, focus: focusHtml, crises: crisesHtml, endings: endingsHtml, adv: advHtml }[tab]();
+        body.innerHTML = { info: infoHtml, starts: startsHtml, focus: focusHtml, articles: articlesHtml, crises: crisesHtml, endings: endingsHtml, adv: advHtml }[tab]();
         bindCommon(body);
         bindScriptForms(body);
         HemiCampaignGuide.bind(body, {get:getP,set:setP,touch,render});
         body.querySelectorAll('[data-go]').forEach(b => b.onclick = () => {tab=b.dataset.go;render();});
         body.querySelectorAll('[data-starter]').forEach(b => b.onclick = async () => {await saveNow(); S=Tools.starter(uid('cmp')); tab='focus';selFocus='opening';resetHistory();touch();render();});
-        ({ info: () => {}, starts: bindStarts, focus: bindFocus, crises: bindCrises, endings: bindEndings, adv: () => {} })[tab](body);
+        ({ info: () => {}, starts: bindStarts, focus: bindFocus, articles: bindArticles, crises: bindCrises, endings: bindEndings, adv: () => {} })[tab](body);
     }
     function infoHtml() {
         return `<div class="cpe-cols"><div class="scn-card">
@@ -195,8 +195,8 @@
     // 방향성 트리 — 왼쪽 그림(끌어서 옮김, 칸에 맞춤), 오른쪽 고른 방향성 칸
     // 상자 크기 · 간격은 캠페인의 중점 디자인(focusStyle)을 따른다 (js/focusview.js)
     let FW = 124, FH = 116, FGX = 22, FGY = 30;
-    const FP = 16;
-    const fstyle = () => { const st = window.HemiFocusView ? HemiFocusView.style(S) : { width: 150, height: 70, gapX: 26, gapY: 40 }; FW = st.width; FH = st.height; FGX = st.gapX; FGY = st.gapY; return st; };
+    let FP = 16;
+    const fstyle = () => { const st = window.HemiFocusView ? HemiFocusView.style(S) : { width: 150, height: 70, gapX: 26, gapY: 40 }; FW = st.width; FH = st.height; FGX = st.gapX; FGY = st.gapY; FP=HemiFocusView.padding(S,st); return st; };
     const fpos = f => ({ x: FP + (Number(f.x) || 0) * (FW + FGX), y: FP + (Number(f.y) || 0) * (FH + FGY) });
     function focusHtml() {
         const st = fstyle();
@@ -215,7 +215,7 @@
         const others = list.filter(x => f && x.id !== f.id);
         const chips = (key) => others.map(o => `<button type="button" class="cpe-chip ${(f[key] || []).includes(o.id) ? 'on' : ''}" data-chip="${key}" data-id="${esc(o.id)}">${esc(o.title || o.id)}</button>`).join('') || '<span class="scn-dim">다른 방향성 없음</span>';
         const fs = S.focusStyle || {};
-        const design = `<div class="scn-card"><div class="scn-h">트리 아트 디렉션</div><p class="scn-dim">편집기와 실제 플레이에 같은 디자인을 적용합니다.</p><div class="cpe-style-choices">${[['default','클래식','큰 아이콘과 이름판'],['dossier','기밀 문서','청록색 프레임 · 정보 패널'],['medal','전시 훈장','금색 메달 · 붉은 리본']].map(([k,t,d])=>`<button type="button" data-style-preset="${k}"><b>${t}</b><small>${d}</small></button>`).join('')}</div></div>${detailMode === 'json' ? `<details class="scn-card cpe-design" ${fs.template || fs.css ? 'open' : ''}><summary class="scn-h">중점 디자인 ${fs.template || fs.css ? '<span class="scn-n">사용자 템플릿</span>' : '<span class="scn-n">기본 (큰 아이콘 + 이름판)</span>'}</summary>
+        const design = `<div class="scn-card"><div class="scn-h">트리 아트 디렉션</div><p class="scn-dim">편집기와 실제 플레이에 같은 디자인을 적용합니다.</p><div class="cpe-style-choices">${[['illustration','일러스트','넓은 합성 이미지 · 겹치는 명판'],['default','클래식','작은 아이콘과 이름판'],['dossier','기밀 문서','청록색 프레임 · 정보 패널'],['medal','전시 훈장','금색 메달 · 붉은 리본']].map(([k,t,d])=>`<button type="button" data-style-preset="${k}"><b>${t}</b><small>${d}</small></button>`).join('')}</div></div>${detailMode === 'json' ? `<details class="scn-card cpe-design" ${fs.template || fs.css ? 'open' : ''}><summary class="scn-h">중점 디자인 ${fs.template || fs.css ? '<span class="scn-n">사용자 템플릿</span>' : '<span class="scn-n">기본 (큰 아이콘 + 이름판)</span>'}</summary>
             <div class="scn-dim scn-small">비워 두면 기본 모양(위에 큰 아이콘, 아래 이름판). 템플릿 · CSS로 상자 모양을 통째로 바꿀 수 있습니다 — 자리표시 <code>{{icon}}</code> <code>{{iconUrl}}</code> <code>{{title}}</code> <code>{{daysText}}</code> <code>{{days}}</code> <code>{{status}}</code> <code>{{statusText}}</code> <code>{{progress}}</code> <code>{{desc}}</code> <code>{{id}}</code>, 상자에는 늘 <code>.hf-node.hf-상태</code>(available · current · done · locked · blocked). 스크립트 · 바깥 주소는 막힙니다 (그림은 data:).</div>
             <div class="scn-row"><span class="scn-dim">가로</span><input class="scn-in scn-num" type="number" data-fs="width" value="${esc(fs.width ?? '')}" placeholder="124"><span class="scn-dim">세로</span><input class="scn-in scn-num" type="number" data-fs="height" value="${esc(fs.height ?? '')}" placeholder="116"><span class="scn-dim">간격</span><input class="scn-in scn-num" type="number" data-fs="gapX" value="${esc(fs.gapX ?? '')}" placeholder="22"><input class="scn-in scn-num" type="number" data-fs="gapY" value="${esc(fs.gapY ?? '')}" placeholder="30"></div>
             <label class="scn-lab">템플릿 (HTML — 비우면 기본)</label><textarea class="scn-in scn-code" rows="3" spellcheck="false" data-fs="template" placeholder='<div class="medal">{{icon}}</div><div class="ribbon">{{title}}</div>'>${esc(fs.template || '')}</textarea>
@@ -232,10 +232,13 @@
                 </div></div></div><div class="cpe-canvas-foot"><span>── 모두 완료</span><span>┄ 하나 이상 완료</span><span class="cpe-red">┄ 배타 선택</span><span class="scn-grow"></span>${list.length}개 방향성 · 드래그로 이동 / 빈 곳을 끌어 화면 이동</div></div>${design}</div>
             <div class="scn-card cpe-side">${f ? `
                 <div class="scn-row"><div class="scn-h">${esc(f.title || '방향성')}</div><span class="scn-grow"></span>${modeSeg()}<button type="button" class="scn-btn" data-duplicate>복제</button><button type="button" class="scn-btn scn-danger" data-del-focus>지우기</button></div>
-                ${detailMode === 'json' ? `<div class="scn-dim scn-small">이 방향성 전체 — id · title · icon · iconImage · days · x · y · desc · prereq · any · exclusive · available · effects · event</div>${objJson(`focus.${list.indexOf(f)}`, 26)}<button type="button" class="scn-btn scn-primary" data-objapply="focus.${list.indexOf(f)}">방향성 JSON 적용</button>` : `
-                <div class="scn-grid2"><div><label class="scn-lab">id (조건에서 focus_id)</label><input class="scn-in" data-ff="id" value="${esc(f.id)}"></div><div><label class="scn-lab">아이콘 (이모지 또는 그림)</label><div class="scn-row"><input class="scn-in" data-ff="icon" maxlength="4" value="${esc(f.icon || '')}" placeholder="🏛" style="width:60px" ${f.iconImage ? 'disabled title="그림을 쓰는 중"' : ''}>${f.iconImage ? `<img class="cpe-icon-prev" src="${esc(f.iconImage)}" alt=""><button type="button" class="scn-x" data-icon-del title="그림 빼기">×</button>` : '<button type="button" class="scn-btn" data-icon-img>그림</button>'}<input type="file" accept="image/*" data-icon-file hidden></div></div></div>
+                ${detailMode === 'json' ? `<div class="scn-dim scn-small">이 방향성 전체 — id · title · icon · iconImage · art · days · x · y · desc · prereq · any · exclusive · available · effects · event · article</div>${objJson(`focus.${list.indexOf(f)}`, 26)}<button type="button" class="scn-btn scn-primary" data-objapply="focus.${list.indexOf(f)}">방향성 JSON 적용</button>` : `
+                <div class="scn-grid2"><div><label class="scn-lab">id (조건에서 focus_id)</label><input class="scn-in" data-ff="id" value="${esc(f.id)}"></div><div><label class="scn-lab">아이콘 (이모지 또는 그림)</label><div class="scn-row"><input class="scn-in" data-ff="icon" maxlength="4" value="${esc(f.icon || '')}" placeholder="🏛" style="width:60px" ${f.iconImage ? 'disabled title="그림을 쓰는 중"' : ''}>${f.iconImage ? `<img class="cpe-icon-prev" src="${esc(f.iconImage)}" alt=""><button type="button" class="scn-x" data-icon-del title="그림 빼기">×</button>` : ''}<button type="button" class="scn-btn" data-icon-img>${f.iconImage ? '그림 바꾸기' : '그림'}</button><input type="file" accept="image/*" data-icon-file hidden></div></div></div>
+                <p class="scn-dim">${st.template || st.layout==='classic' ? '큰 그림 배치는 트리 디자인에서 일러스트를 선택하면 적용됩니다. ' : ''}투명 배경 PNG · WebP 일러스트를 권장합니다. 큰 그림이 명판 위로 펼쳐집니다. 그림은 긴 변 최대 1024px로 저장됩니다.</p>
+                <div class="scn-grid2"><label class="cpg-field">그림 크기 (%)<input class="scn-in" type="number" min="50" max="200" data-art="scale" value="${esc(f.art?.scale ?? 100)}"></label><label class="cpg-field">가로 이동 (px)<input class="scn-in" type="number" min="-120" max="120" data-art="x" value="${esc(f.art?.x ?? 0)}"></label><label class="cpg-field">세로 이동 (px)<input class="scn-in" type="number" min="-120" max="120" data-art="y" value="${esc(f.art?.y ?? 0)}"></label><button type="button" class="scn-btn" data-art-reset>그림 배치 초기화</button></div>
                 <label class="scn-lab">제목</label><input class="scn-in" data-ff="title" value="${esc(f.title)}">
                 <div class="scn-grid2"><div><label class="scn-lab">걸리는 날</label><input class="scn-in" type="number" min="0" data-ff="days" value="${esc(f.days)}"></div><div><label class="scn-lab">끝나면 띄울 이벤트 id (선택)</label><input class="scn-in" data-ff="event" value="${esc(f.event || '')}"></div></div>
+                <label class="cpg-field">끝나면 발행할 기사<select class="scn-in" data-ff="article"><option value="">없음</option>${S.articles.map(a=>`<option value="${esc(a.id)}" ${f.article===a.id?'selected':''}>${esc(a.title||a.id)}</option>`).join('')}</select></label>
                 <label class="scn-lab">설명</label><textarea class="scn-in" data-ff="desc" rows="3">${esc(f.desc)}</textarea>
                 <label class="scn-lab">먼저 끝내야 함 (모두)</label><div class="cpe-chips">${chips('prereq')}</div>
                 <label class="scn-lab">이 중 하나 먼저</label><div class="cpe-chips">${chips('any')}</div>
@@ -245,6 +248,53 @@
             : '<div class="cpe-inspector-empty"><span>⌖</span><h3>이야기의 한 조각을 고르세요</h3><p>방향성을 클릭하면 제목, 기간, 보상과 연결 관계를 편집할 수 있습니다.</p><p>먼저 하나를 선택한 뒤 양갈래 분기로 서로 다른 노선을 만드세요.</p></div>'}</div>
         </div>`;
     }
+    function articlesHtml() {
+        const list = S.articles;
+        const a = list.find(x => x.id === selArticle) || list[0];
+        if (a) selArticle = a.id;
+        const i = list.indexOf(a);
+        const field = (key,label,rows) => `<label class="cpg-field">${label}${rows ? `<textarea class="scn-in" rows="${rows}" data-af="${key}">${esc(a[key] || '')}</textarea>` : `<input class="scn-in" data-af="${key}" value="${esc(a[key] || '')}">`}</label>`;
+        return `<div class="cpe-crisis"><section class="scn-card cpe-list"><div class="scn-h">캠페인 기사</div><p class="scn-dim">이야기 속 소식을 자동으로 전달합니다. 게임의 여론 기사·위기와 별도로 저장됩니다.</p>${list.map(a => `<button type="button" class="cpe-item ${a.id === selArticle ? 'on' : ''}" style="--c:var(--tno-neon)" data-article="${esc(a.id)}">${esc(a.title || a.id)}</button>`).join('') || '<p class="scn-dim">아직 작성한 기사가 없습니다.</p>'}<button type="button" class="scn-btn" data-add-article>+ 기사</button></section>
+        ${a ? `<section class="scn-card cpe-crisis-main"><div class="scn-row"><div class="scn-h">${esc(a.title || '새 기사')}</div><span class="scn-grow"></span>${modeSeg()}<button type="button" class="scn-btn" data-article-preview>미리 보기</button><button type="button" class="scn-btn scn-danger" data-del-article>삭제</button></div>
+        ${detailMode === 'json' ? `${objJson(`articles.${i}`,24)}<button type="button" class="scn-btn scn-primary" data-objapply="articles.${i}">기사 JSON 적용</button>` : `
+        <div class="scn-grid2">${field('title','제목')}${field('id','기사 ID')}</div>
+        ${field('subtitle','부제 (선택)')}${field('source','신문 · 통신사 이름')}
+        ${field('body','본문',10)}
+        <div class="scn-row"><button type="button" class="scn-btn" data-article-img>${a.image ? '그림 바꾸기' : '그림 넣기'}</button>${a.image ? `<img class="cpe-thumb" src="${esc(a.image)}" alt=""><button type="button" class="scn-btn" data-article-img-del>그림 빼기</button>` : ''}<input type="file" accept="image/*" data-article-img-file hidden></div>
+        <label class="cpg-field">발행 계기<select class="scn-in" data-article-when>${[['start','캠페인 시작 시'],['focus','방향성 완료 시'],['date','지정 날짜부터'],['condition','조건 충족 시'],['manual','방향성의 기사 연결로 발행']].map(([k,t])=>`<option value="${k}" ${a.when===k?'selected':''}>${t}</option>`).join('')}</select></label>
+        ${a.when === 'focus' ? `<label class="cpg-field">완료할 방향성<select class="scn-in" data-article-focus><option value="">방향성을 선택하세요</option>${S.focus.map(f=>`<option value="${esc(f.id)}" ${a.focus===f.id?'selected':''}>${esc(f.title||f.id)}</option>`).join('')}</select></label>` : ''}
+        ${a.when === 'date' ? field('date','발행 날짜 (YYYY-MM-DD)') : ''}
+        ${a.when !== 'manual' ? jsonField(`articles.${i}.trigger`,a.when==='condition'?'자동 발행 조건':'추가 조건 (선택)','cond') : '<p class="scn-dim">방향성 편집기의 “끝나면 발행할 기사”에서 이 기사를 연결하세요.</p>'}
+        <p class="scn-dim">기사는 한 번만 발행됩니다. 확인 버튼으로 읽고 닫으며, 여론 수치·게이지·임무·선택 효과는 없습니다. 실제 게임의 캠페인 › 기사에서 발행된 기사를 다시 읽을 수 있습니다.</p>`}</section>` : '<section class="scn-card"><div class="scn-h">소식이 이야기의 흐름을 만듭니다</div><p class="scn-dim">+ 기사로 제목과 본문을 작성하고, 발행 계기를 지정하세요. 위기나 별도의 게임 기사 작성 없이 자동으로 표시됩니다.</p></section>'}</div>`;
+    }
+    function bindArticles(body) {
+        body.querySelector('[data-add-article]').onclick = () => {
+            const a = {id:uid('news'),title:'새 기사',subtitle:'',source:'특별 보도',body:'',image:'',when:'manual'};
+            S.articles.push(a);selArticle=a.id;touch();render();
+        };
+        body.querySelectorAll('[data-article]').forEach(b=>b.onclick=()=>{selArticle=b.dataset.article;render();});
+        const a = S.articles.find(a=>a.id===selArticle);if(!a)return;
+        body.querySelector('[data-del-article]').onclick=async()=>{
+            if(!await confirmBox('이 기사를 삭제할까요? 연결한 방향성의 기사 설정도 해제됩니다.'))return;
+            S.articles=S.articles.filter(x=>x!==a);S.focus.forEach(f=>{if(f.article===a.id)delete f.article;});selArticle=null;touch();render();
+        };
+        body.querySelector('[data-article-preview]').onclick=()=>HemiCampaignArticles.show(a,{preview:true,date:a.date||'발행 날짜'});
+        body.querySelectorAll('[data-af]').forEach(inp=>{
+            const key=inp.dataset.af;
+            const update=()=>{if(key==='id'){
+                const id=inp.value.trim();if(!Tools.idOK(id)||S.articles.some(x=>x!==a&&x.id===id)){inp.value=a.id;return;}
+                S.focus.forEach(f=>{if(f.article===a.id)f.article=id;});a.id=id;selArticle=id;
+            }else a[key]=inp.value;touch();};
+            if(key==='id')inp.onchange=update;else inp.oninput=update;
+        });
+        body.querySelector('[data-article-when]')?.addEventListener('change',e=>{a.when=e.target.value;touch();render();});
+        body.querySelector('[data-article-focus]')?.addEventListener('change',e=>{a.focus=e.target.value;touch();});
+        const fi=body.querySelector('[data-article-img-file]');
+        body.querySelector('[data-article-img]')?.addEventListener('click',()=>fi.click());
+        fi?.addEventListener('change',()=>{const file=fi.files?.[0];fi.value='';if(file)shrink(file,1200,url=>{a.image=url;touch();render();});});
+        body.querySelector('[data-article-img-del]')?.addEventListener('click',()=>{delete a.image;touch();render();});
+    }
+
     function crisesHtml() {
         const c = S.crises.find(x => x.id === selCrisis) || S.crises[0];
         if (c) selCrisis = c.id;
@@ -302,7 +352,7 @@
     }
     function advHtml() {
         return `<div class="scn-card"><div class="scn-h">캠페인 전체 변수 · 이벤트 · 결정</div>
-            <div class="scn-dim scn-small">위기와 상관없이 캠페인 내내 도는 것 (스크립트 모드 형식). 결정은 국가 › 결정 탭에 나옵니다.</div>
+            <div class="scn-dim scn-small">위기와 상관없이 캠페인 내내 도는 것 (스크립트 모드 형식). 결정은 국가 › 결정 탭에 나옵니다. 이야기 전달용 기사는 기사 탭에서 작성하세요. 스크립트의 article 효과는 기본 게임의 여론 기사를 발행합니다.</div>
             ${jsonField('variables', '변수 (처음 값) — { "이름": 숫자 }', 'obj', 3)}
             ${jsonField('events', '이벤트', 'list', 8)}
             ${jsonField('decisions', '결정', 'list', 6)}</div>
@@ -328,9 +378,10 @@
                     const draft=Tools.clone(S), [kind,idx]=p.split('.'), old=draft[kind][+idx];
                     if (!v || typeof v!=='object' || Array.isArray(v)) throw Error('객체여야 합니다.');
                     if(kind==='focus' && old.id!==v.id) { if(!Tools.renameFocus(draft,old.id,v.id)) throw Error('사용할 수 없는 ID입니다.'); ['prereq','any','exclusive'].forEach(k=>{v[k]=(v[k]||[]).map(id=>id===old.id?v.id:id);}); }
+                    if(kind==='articles'&&old.id!==v.id)draft.focus.forEach(f=>{if(f.article===old.id)f.article=v.id;});
                     draft[kind][+idx]=v;
                     const errors=Tools.validate(draft).filter(i=>i.level==='error'); if(errors.length)throw Error(errors.map(i=>i.path+': '+i.message).join(' / '));
-                    S=draft; if(kind==='focus')selFocus=v.id;else selCrisis=v.id;
+                    S=draft; if(kind==='focus')selFocus=v.id;else if(kind==='articles')selArticle=v.id;else selCrisis=v.id;
                     rawPending.delete(p);touch();render();
                 }catch(e){err.textContent='적용하지 못했습니다: '+e.message;}
             };
@@ -408,7 +459,8 @@
         const selected=()=>S.focus.find(f=>f.id===selFocus);
         body.querySelectorAll('[data-style-preset]').forEach(b=>b.onclick=()=>{
             const key=b.dataset.stylePreset;
-            if(key==='default')delete S.focusStyle;
+            if(key==='illustration')delete S.focusStyle;
+            else if(key==='default')S.focusStyle=Tools.clone(HemiFocusView.CLASSIC);
             else if(key==='medal')S.focusStyle=Tools.clone(HemiFocusView.EXAMPLE);
             else S.focusStyle={width:150,height:128,gapX:38,gapY:44,
                 template:'<div class="dossier-icon">{{icon}}</div><div class="dossier-title">{{title}}</div><small>{{daysText}} · {{statusText}}</small>',
@@ -466,6 +518,8 @@
         };
         const f = S.focus.find(x => x.id === selFocus);
         if (f) {
+            body.querySelectorAll('[data-art]').forEach(inp=>inp.onchange=()=>{const k=inp.dataset.art;f.art={...(f.art||{}),[k]:Math.max(k==='scale'?50:-120,Math.min(k==='scale'?200:120,Number(inp.value)||0))};touch();render();});
+            body.querySelector('[data-art-reset]')?.addEventListener('click',()=>{delete f.art;touch();render();});
             body.querySelectorAll('[data-ff]').forEach(inp => { inp.onchange = inp.oninput = () => {
                 const k = inp.dataset.ff;
                 if (k === 'id') { const nv = inp.value.trim().replace(/[^a-z0-9_.-]/gi, '_'); if (!nv || S.focus.some(z => z !== f && z.id === nv)) return; Tools.renameFocus(S,f.id,nv); selFocus = nv; }
@@ -481,7 +535,7 @@
             }; });
             const iconIn = body.querySelector('[data-icon-file]');
             body.querySelector('[data-icon-img]')?.addEventListener('click', () => iconIn.click());
-            iconIn?.addEventListener('change', () => { const file = iconIn.files && iconIn.files[0]; iconIn.value = ''; if (file) shrink(file, 160, url => { f.iconImage = url; render(); touch(); }); });
+            iconIn?.addEventListener('change', () => { const file = iconIn.files && iconIn.files[0]; iconIn.value = ''; if (file) shrink(file, 1024, url => { f.iconImage = url; render(); touch(); }); });
             body.querySelector('[data-icon-del]')?.addEventListener('click', () => { delete f.iconImage; render(); touch(); });
             body.querySelector('[data-del-focus]').onclick = async () => { if(!(await confirmBox('방향성과 연결을 삭제할까요? 실행 취소로 복구할 수 있습니다.')))return; S.focus = S.focus.filter(z => z !== f); S.focus.forEach(z => ['prereq', 'any', 'exclusive'].forEach(key => { z[key] = (z[key] || []).filter(id => id !== f.id); })); selFocus = null; render(); touch(); };
         }
@@ -558,7 +612,7 @@
     }
     function shrink(file, max, done) {
         const fr = new FileReader();
-        fr.onload = ev => { const img = new Image(); img.onload = () => { const s = Math.min(1, max / Math.max(img.width, img.height)); const cv = document.createElement('canvas'); cv.width = Math.round(img.width * s); cv.height = Math.round(img.height * s); cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height); let u = ''; try { u = cv.toDataURL('image/webp', 0.82); } catch (e) { /* 지원 안 함 */ } if (!u.startsWith('data:image/webp')) u = cv.toDataURL('image/jpeg', 0.85); done(u); }; img.src = ev.target.result; };
+        fr.onload = ev => { const img = new Image(); img.onload = () => { const s = Math.min(1, max / Math.max(img.width, img.height)); const cv = document.createElement('canvas'); cv.width = Math.round(img.width * s); cv.height = Math.round(img.height * s); cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height); let u = ''; try { u = cv.toDataURL('image/webp', 0.82); } catch (e) { /* 지원 안 함 */ } if (!u.startsWith('data:image/webp')) u = cv.toDataURL('image/png'); done(u); }; img.src = ev.target.result; };
         fr.readAsDataURL(file);
     }
 
@@ -589,7 +643,7 @@
     function normalize(d) {
         if (!d || d.format !== FORMAT) return null;
         const out = { ...blank(), ...d };
-        ['starts', 'events', 'decisions', 'focus', 'crises', 'endings'].forEach(k => { if (!Array.isArray(out[k])) out[k] = []; });
+        ['starts', 'events', 'decisions', 'focus', 'crises', 'endings', 'articles'].forEach(k => { if (!Array.isArray(out[k])) out[k] = []; });
         if (!out.starts.length) out.starts = blank().starts;
         if (!out.variables || typeof out.variables !== 'object' || Array.isArray(out.variables)) out.variables = {};
         return out;
