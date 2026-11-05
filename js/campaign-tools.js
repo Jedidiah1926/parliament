@@ -1,6 +1,7 @@
 // Shared, data-only authoring tools. Keep campaign@1 and unknown extension fields intact.
 (function (root) {
     'use strict';
+    const Clock = typeof module !== 'undefined' && module.exports ? require('./campaign-clock.js') : root.HemiCampaignClock;
     const clone = x => JSON.parse(JSON.stringify(x));
     const object = x => !!x && typeof x === 'object' && !Array.isArray(x);
     const arrayKeys = ['starts', 'focus', 'crises', 'endings', 'events', 'decisions', 'articles'];
@@ -9,9 +10,18 @@
         const issues = [];
         const add = (path, message, level = 'error') => issues.push({ path, message, level });
         if (!object(d) || d.format !== 'hemicycle-campaign@1') return [{ path: 'format', message: 'hemicycle-campaign@1 형식이어야 합니다.', level: 'error' }];
-        if (!idOK(d.id)) add('id', '캠페인 ID는 영문·숫자·밑줄·점·하이픈으로 입력하세요.');
+        if (!idOK(d.id)) add('id', '시나리오 ID는 영문·숫자·밑줄·점·하이픈으로 입력하세요.');
         for (const key of arrayKeys) if (d[key] != null && (!Array.isArray(d[key]) || d[key].some(x => !object(x)))) add(key, '객체 목록 [ { … } ]이어야 합니다.');
         if (issues.length) return issues;
+        if(d.time!=null){
+            if(!object(d.time))add('time','시간 설정은 객체여야 합니다.');
+            else {
+                if(!['turn','realtime'].includes(d.time.mode))add('time.mode','턴제(turn) 또는 실시간(realtime)을 선택하세요.');
+                if(d.time.startDate!=null&&(typeof d.time.startDate!=='string'||d.time.startDate!==''&&Clock.dayFromDate(d.time.startDate)==null))add('time.startDate','실제 존재하는 날짜 YYYY-MM-DD를 입력하세요 (1~9999년).');
+                if(d.time.startHour!=null&&(!Number.isInteger(d.time.startHour)||d.time.startHour<0||d.time.startHour>23))add('time.startHour','시작 시각은 0~23 사이 정수입니다.');
+                if(d.time.defaultSpeed!=null&&(!Number.isInteger(d.time.defaultSpeed)||!Object.hasOwn(Clock.SPEED_MS,d.time.defaultSpeed)))add('time.defaultSpeed','시작 속도는 1~5 사이 정수입니다.');
+            }
+        }
         const list = k => d[k] || [];
         const idsOf = (items, p) => {
             const ids = new Set();
@@ -26,6 +36,10 @@
                 const q = `${p}.${i}`;
                 cond(e.trigger, q + '.trigger'); cond(e.available, q + '.available'); cond(e.visible, q + '.visible');
                 effects(e.effects, q + '.effects'); effects(e.immediate, q + '.immediate');
+                if(isEvent){
+                    if(e.presentation!=null&&!['narrative','standard'].includes(e.presentation))add(q+'.presentation','서사(narrative) 또는 일반(standard) 화면을 선택하세요.');
+                    for(const k of ['title','desc','image'])if(e[k]!=null&&typeof e[k]!=='string')add(q+'.'+k,'문자열이어야 합니다.');
+                }
                 if (isEvent && e.options != null) {
                     if (!Array.isArray(e.options) || e.options.some(o => !object(o))) add(q + '.options', '선택지는 객체 배열이어야 합니다.');
                     else e.options.forEach((o, j) => { effects(o.effects, `${q}.options.${j}.effects`); cond(o.trigger, `${q}.options.${j}.trigger`); });
@@ -50,7 +64,7 @@
             const cell = `${f.x || 0},${f.y || 0}`;
             if (cells.has(cell)) add(p, '다른 방향성과 위치가 겹칩니다. 자동 정렬로 해결할 수 있습니다.', 'warning');
             if(f.art!=null && (!object(f.art)||['scale','x','y'].some(k=>f.art[k]!=null&&!Number.isFinite(f.art[k]))))add(p+'.art','그림 배치는 숫자 scale · x · y로 입력하세요.');
-            if(f.article&&!articleIds.has(f.article))add(p+'.article','없는 캠페인 기사: '+f.article);
+            if(f.article&&!articleIds.has(f.article))add(p+'.article','없는 시나리오 기사: '+f.article);
             cells.add(cell); cond(f.available, p + '.available'); effects(f.effects, p + '.effects');
         });
         if (!issues.some(x => x.level === 'error' && x.path.startsWith('focus'))) {
@@ -72,10 +86,10 @@
             if (issues.some(x => x.level === 'error' && x.path.startsWith(p))) return;
             for (const k of ['meters', 'missions', 'outcomes']) idsOf(c[k] || [], `${p}.${k}`);
             (c.missions || []).forEach((m, j) => { cond(m.condition, `${p}.missions.${j}.condition`); effects(m.success, `${p}.missions.${j}.success`); effects(m.fail, `${p}.missions.${j}.fail`); });
-            (c.outcomes || []).forEach((o, j) => { cond(o.condition, `${p}.outcomes.${j}.condition`); effects(o.effects, `${p}.outcomes.${j}.effects`); if (!o.condition || !Object.keys(o.condition).length) add(`${p}.outcomes.${j}`, '조건이 비어 있어 위기가 즉시 끝날 수 있습니다.', 'warning'); });
+            (c.outcomes || []).forEach((o, j) => { cond(o.condition, `${p}.outcomes.${j}.condition`); effects(o.effects, `${p}.outcomes.${j}.effects`); if (!o.condition || !Object.keys(o.condition).length) add(`${p}.outcomes.${j}`, '조건이 비어 있어 격변이 즉시 끝날 수 있습니다.', 'warning'); });
             script(c.events || [], p + '.events', true); script(c.decisions || [], p + '.decisions', false);
         });
-        list('endings').forEach((e, i) => { cond(e.condition, `endings.${i}.condition`); if (!e.condition || !Object.keys(e.condition).length) add(`endings.${i}`, '조건이 비어 있어 캠페인이 즉시 끝날 수 있습니다.', 'warning'); });
+        list('endings').forEach((e, i) => { cond(e.condition, `endings.${i}.condition`); if (!e.condition || !Object.keys(e.condition).length) add(`endings.${i}`, '조건이 비어 있어 시나리오가 즉시 끝날 수 있습니다.', 'warning'); });
         script(list('events'), 'events', true); script(list('decisions'), 'decisions', false);
         list('articles').forEach((a,i)=>{
             const p='articles.'+i;
@@ -85,7 +99,7 @@
             if(a.when==='date'&&!/^(-?\d{1,5})-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/.test(a.date||''))add(p+'.date','날짜는 YYYY-MM-DD로 입력하세요.');
             cond(a.trigger,p+'.trigger');
             if(a.when==='condition'&&(a.trigger==null||object(a.trigger)&&!Object.keys(a.trigger).length))add(p+'.trigger','자동 발행 조건을 입력하세요.');
-            for(const k of ['effects','options','meters','missions','outcomes'])if(a[k]!=null)add(p+'.'+k,'캠페인 기사는 정보 전달용입니다. 효과·선택지·위기 항목은 이벤트나 위기에 작성하세요.');
+            for(const k of ['effects','options','meters','missions','outcomes'])if(a[k]!=null)add(p+'.'+k,'시나리오 기사는 정보 전달용입니다. 효과·선택지·격변 항목은 이벤트나 격변에 작성하세요.');
             if(!a.body)add(p+'.body','기사 본문이 비어 있습니다.','warning');
         });
         if (d.variables != null && (!object(d.variables) || Object.values(d.variables).some(x => !Number.isFinite(x)))) add('variables', '변수는 { "이름": 숫자 } 형식이어야 합니다.');
@@ -120,10 +134,11 @@
         const f = (id, title, icon, x, y, prereq = [], extra = {}) => ({ id, title, icon, x, y, days: 35, desc: '', prereq, any: [], exclusive: [], effects: [], ...extra });
         return {
             format: 'hemicycle-campaign@1', id, title: '갈림길의 공화국', author: '', version: '1.0', description: '대화와 강경 대응 사이, 당신의 선택이 공화국의 미래를 결정합니다.',
-            lore: '불신이 의회를 뒤덮고 있습니다.\n\n개혁으로 연합을 복원할 것인가, 강력한 지도력으로 질서를 되찾을 것인가. 같은 위기에도 다른 답이 있습니다.',
+            lore: '불신이 의회를 뒤덮고 있습니다.\n\n개혁으로 연합을 복원할 것인가, 강력한 지도력으로 질서를 되찾을 것인가. 같은 격변에도 다른 답이 있습니다.',
             starts: [{ id: 's1', name: '공화국의 새 아침', kind: 'preset', preset: 'builtin:tutorial', desc: '내장 나라에서 시작하는 제작용 예제입니다. 시작 나라는 자유롭게 바꿀 수 있습니다.' }],
+            time:{mode:'turn',startDate:'',startHour:0,defaultSpeed:1},
             variables: { tension: 35 },
-            focus: [f('opening', '국가의 기로', '🏛', 2, 0, [], { desc: '위기를 마주하고 공화국의 진로를 결정합니다.', days: 7 }),
+            focus: [f('opening', '국가의 기로', '🏛', 2, 0, [], { desc: '격변을 마주하고 공화국의 진로를 결정합니다.', days: 7 }),
                 f('dialogue', '원탁회의 소집', '🕊', 0, 1, ['opening'], { exclusive: ['order'], effects: [{ add_var: { name: 'tension', value: -15 } }] }),
                 f('order', '질서의 이름으로', '🛡', 4, 1, ['opening'], { exclusive: ['dialogue'], effects: [{ add_var: { name: 'tension', value: 15 } }] }),
                 f('reform', '새로운 사회계약', '📜', 0, 2, ['dialogue'], { effects: [{ add_var: { name: 'tension', value: -10 } }] }),
@@ -135,7 +150,7 @@
                 meters: [{ id: 'tension', name: '사회 긴장', start: 35, min: 0, max: 100, perMonth: 3 }],
                 missions: [{ id: 'talks', title: '정국 안정화', days: 120, condition: { var: { name: 'tension', lte: 30 } }, success: [{ add_var: { name: 'tension', value: -5 } }], fail: [{ add_var: { name: 'tension', value: 10 } }] }],
                 outcomes: [{ id: 'calm', title: '광장의 평온', text: '대화가 일상을 되찾았습니다.', condition: { var: { name: 'tension', lte: 10 } }, effects: [] }, { id: 'resolved', title: '새로운 균형', text: '공화국은 다른 미래를 향합니다.', condition: { flag: 'focus_future' }, effects: [] }], events: [], decisions: [] }],
-            endings: [{ id: 'dawn', title: '우리가 만든 내일', text: '위기를 넘어 새 장을 열었습니다. 공화국의 이야기는 계속됩니다.', condition: { flag: 'focus_future' } }]
+            endings: [{ id: 'dawn', title: '우리가 만든 내일', text: '격변을 넘어 새 장을 열었습니다. 공화국의 이야기는 계속됩니다.', condition: { flag: 'focus_future' } }]
         };
     }
     const api = { validate, layout, renameFocus, starter, clone, idOK };

@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <link rel="icon" type="image/png" href="icons/favicon.png">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Hemicycle — Campaign Studio</title>
+  <title>Hemicycle — Scenario Studio</title>
   <script src="js/thememode.js"></script>
   <script src="js/dialogs.js"></script>
   <script src="js/theme.js"></script>
@@ -15,24 +15,25 @@
   <link rel="stylesheet" href="css/modern.css">
   <link rel="stylesheet" href="css/campaign-articles.css">
   <link rel="stylesheet" href="css/tree-viewport.css">
+  <link rel="stylesheet" href="css/campaign-time.css">
+  <link rel="stylesheet" href="css/campaign-events.css">
   <link rel="stylesheet" href="css/campaign-studio.css">
 </head>
 
 <body class="campaign-studio">
-  <!-- 캠페인 · 시나리오 편집기 (0.3.0 · 테스트)
-       캠페인 = 세계관 + 시작 나라(종합 프리셋) + 방향성 트리 + 시나리오(위기)들 + 결말 — 게임에서는 js/campaign.js가 돌린다.
+  <!-- 시나리오 · 격변 편집기 (0.3.0 · 테스트)
+       시나리오 = 세계관 + 시작 나라(종합 프리셋) + 방향성 트리 + 격변들 + 결말 — 게임에서는 js/campaign.js가 돌린다.
        목표 · 실패 조건만 있는 짧은 도전은 challenge.html(챌린지). -->
   <div class="scn-frame">
     <header class="scn-head">
       <a class="scn-back" href="maker.html">← 제작물 목록</a>
-      <div class="scn-head-title">CAMPAIGN STUDIO <span class="scn-test">MAKER</span></div>
+      <div class="scn-head-title">SCENARIO STUDIO <span class="scn-test">MAKER</span></div>
       <span class="scn-grow"></span>
-      <select id="cpLibrary" class="scn-in" title="내 캠페인"></select>
-      <button type="button" class="scn-btn" id="cpNew">새 캠페인</button>
+      <select id="cpLibrary" class="scn-in" title="내 시나리오"></select>
+      <button type="button" class="scn-btn" id="cpNew">새 시나리오</button>
       <button type="button" class="scn-btn" id="cpOpen">불러오기</button>
       <button type="button" class="scn-btn" id="cpExport">내보내기 (.hemicmp)</button>
       <button type="button" class="scn-btn scn-primary" id="cpPlay">▶ 시험 플레이</button>
-      <a class="scn-btn" href="challenge.html" title="목표 · 실패 조건만 있는 짧은 도전">챌린지</a>
       <input type="file" id="cpFile" accept=".hemicmp,.json,application/json" hidden>
     </header>
     <div class="cpe-studio-bar" id="cpStudioBar"></div>
@@ -42,11 +43,13 @@
   </div>
 
   <script src="js/presets.js"></script>
+  <script src="js/campaign-clock.js"></script>
   <script src="js/campaign-articles.js"></script>
   <script src="js/focusview.js"></script>
   <script src="js/tree-viewport.js"></script>
   <script src="js/campaign-tools.js"></script>
   <script src="js/campaign-guide.js"></script>
+  <script src="js/campaign-events.js"></script>
   <script src="js/campaign-editor.js"></script>
   <script src="js/lang.js"></script>
 </body>

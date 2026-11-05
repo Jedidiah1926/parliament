@@ -1,8 +1,8 @@
-// ===== 캠페인 · 시나리오 편집기 (scenario.html · 0.3.0 · 테스트) =====
-// 캠페인(hemicycle-campaign@1) = 세계관 + 시작 나라들(종합 프리셋) + 방향성 트리 + 시나리오(위기)들 + 결말
-//   시나리오(위기) = 시작 조건 · 날짜, 게이지(변수), 기한 있는 임무, 위기 전용 결정 · 이벤트(슈퍼 이벤트), 결말
+// ===== 시나리오 · 격변 편집기 (scenario.html · 0.3.0 · 테스트) =====
+// 시나리오(hemicycle-campaign@1) = 세계관 + 시작 나라들(종합 프리셋) + 방향성 트리 + 격변들 + 결말
+//   격변 = 시작 조건 · 날짜, 게이지(변수), 기한 있는 임무, 격변 전용 결정 · 이벤트(슈퍼 이벤트), 결말
 // 조건 · 효과는 스크립트 모드 형식(docs/MODDING.md)을 그대로 쓴다 — 칸 옆 "도우미"로 자주 쓰는 모양을 넣을 수 있다.
-// 내 캠페인은 IndexedDB(hemicycleCampaigns)에 자동 저장, .hemicmp(gzip JSON)로 내보내기 · 불러오기, 시험 플레이는 js/campaign.js가 받음.
+// 내 시나리오는 IndexedDB(hemicycleCampaigns)에 자동 저장, .hemicmp(gzip JSON)로 내보내기 · 불러오기, 시험 플레이는 js/campaign.js가 받음.
 /* global DnoPresets, DnoUI */
 (function () {
     'use strict';
@@ -33,18 +33,19 @@
     // ---------------------------------------------------------------
     function blank() {
         return {
-            format: FORMAT, id: uid('cmp'), title: '새 캠페인', author: '', version: '1.0', description: '', lore: '',
+            format: FORMAT, id: uid('cmp'), title: '새 시나리오', author: '', version: '1.0', description: '', lore: '',
             starts: [{ id: 's1', name: '기본 시작', desc: '', kind: 'preset', preset: 'builtin:tutorial' }],
+            time:{mode:'turn',startDate:'',startHour:0,defaultSpeed:1},
             variables: {}, events: [], decisions: [],
             focus: [{ id: 'f1', title: '첫걸음', icon: '🏛', days: 35, x: 1, y: 0, desc: '', prereq: [], any: [], exclusive: [], effects: [] }],
             crises: [], endings: [], articles: [],
         };
     }
     function blankCrisis() {
-        return { id: uid('c'), title: '새 위기', color: '#e5484d', desc: '', image: '', date: '', trigger: { flag: 'focus_f1' }, intro: '',
+        return { id: uid('c'), title: '새 격변', color: '#e5484d', desc: '', image: '', date: '', trigger: { flag: 'focus_f1' }, intro: '',
             meters: [{ id: 'tension', name: '긴장', start: 30, min: 0, max: 100, perMonth: 5, color: '' }],
             missions: [], outcomes: [
-                { id: 'win', title: '위기 극복', text: '', condition: { var: { name: 'tension', lte: 0 } }, effects: [] },
+                { id: 'win', title: '격변 극복', text: '', condition: { var: { name: 'tension', lte: 0 } }, effects: [] },
                 { id: 'lose', title: '파국', text: '', condition: { var: { name: 'tension', gte: 100 } }, effects: [] }],
             events: [], decisions: [] };
     }
@@ -54,7 +55,7 @@
     let detailMode = 'form';
     try { detailMode = localStorage.getItem('hemicycleCampaignDetailMode') === 'json' ? 'json' : 'form'; } catch (e) { /* 무시 */ }
     const modeSeg = () => `<div class="scn-seg cpe-mode" title="세부 정보를 칸으로 채우거나, 그 항목 전체를 JSON으로 직접 고칩니다"><button type="button" data-mode="form" class="${detailMode === 'form' ? 'on' : ''}">가이드</button><button type="button" data-mode="json" class="${detailMode === 'json' ? 'on' : ''}">프로 · JSON</button></div>`;
-    // 항목 하나(방향성 · 위기)를 통째로 JSON으로 — 저장할 때 큰 데이터(그림)는 그대로 보여 준다
+    // 항목 하나(방향성 · 격변)를 통째로 JSON으로 — 저장할 때 큰 데이터(그림)는 그대로 보여 준다
     // 그림(data:image…)은 JSON 칸에서 짧은 자리표시로 — 고쳐도 그대로 다시 붙는다
     const imgStash = new Map();
     const hideImgs = v => JSON.parse(JSON.stringify(v), (k, x) => { if (typeof x === 'string' && x.startsWith('data:image/')) { const key = `(그림 데이터 #${imgStash.size + 1} — 그대로 둠)`; imgStash.set(key, x); return key; } return x; });
@@ -71,7 +72,7 @@
         ['정당 집권', { ruling: '정당 이름' }], ['정당 하원 의석 % 이상', { party_seats: { party: 'ruling', share: true, gte: 50 } }],
         ['정당 지지율 이상', { party_support: { party: '정당 이름', gte: 30 } }], ['집권 세력 의석 % 미만', { ruling_seats: { share: true, lt: 50 } }],
         ['내각 국정 지지율 미만', { approval: { of: 'cabinet', lt: 30 } }], ['날짜 이후', { date_after: '1990-01-01' }],
-        ['방향성 끝냄', { flag: 'focus_방향성id' }], ['위기 결말', { flag: 'crisis_위기id_결말id' }], ['위기 끝남', { flag: 'crisis_위기id_done' }],
+        ['방향성 끝냄', { flag: 'focus_방향성id' }], ['격변 결말', { flag: 'crisis_격변id_결말id' }], ['격변 끝남', { flag: 'crisis_격변id_done' }],
         ['플래그', { flag: '이름' }], ['변수(게이지) 이상', { var: { name: 'tension', gte: 100 } }], ['경제 지표', { economy: { indicator: 'unemp', gt: 10 } }],
         ['모두 (그리고)', { all: [{}, {}] }], ['하나라도 (또는)', { any: [{}, {}] }], ['확률 %', { chance: 25 }],
     ];
@@ -97,18 +98,22 @@
     }
 
     function variableForm() {
-        return `<section class="scn-card"><div class="scn-h">캠페인 변수</div><p class="scn-dim">이야기에서 사용할 수치입니다. 같은 이름을 조건·효과에서 선택하세요.</p>${Object.entries(S.variables).map(([k,v])=>`<div class="scn-row" data-variable="${esc(k)}"><input class="scn-in" data-vname value="${esc(k)}" aria-label="변수 이름"><input class="scn-in scn-num" type="number" data-vvalue value="${esc(v)}" aria-label="변수 시작 값"><button type="button" class="scn-x" data-vdel aria-label="변수 삭제">×</button></div>`).join('')}<button type="button" class="scn-btn" data-vadd>+ 변수</button></section>`;
+        return `<section class="scn-card"><div class="scn-h">시나리오 변수</div><p class="scn-dim">이야기에서 사용할 수치입니다. 같은 이름을 조건·효과에서 선택하세요.</p>${Object.entries(S.variables).map(([k,v])=>`<div class="scn-row" data-variable="${esc(k)}"><input class="scn-in" data-vname value="${esc(k)}" aria-label="변수 이름"><input class="scn-in scn-num" type="number" data-vvalue value="${esc(v)}" aria-label="변수 시작 값"><button type="button" class="scn-x" data-vdel aria-label="변수 삭제">×</button></div>`).join('')}<button type="button" class="scn-btn" data-vadd>+ 변수</button></section>`;
     }
     function scriptForm(path,label) {
         const events=path.endsWith('events'), items=getP(path)||[];
-        return `<section class="scn-card"><div class="scn-h">${esc(label)}</div><p class="scn-dim">${events?'제목과 본문을 채우고, 발생 조건 또는 방향성의 “이벤트 ID”로 연결하세요.':'반복 행동과 선택을 만드세요. 조건이 맞으면 게임의 결정 목록에서 실행할 수 있습니다.'}</p>${items.map((e,i)=>`<details class="cpg-script" open><summary>${esc(e.title||e.id)}</summary><div class="scn-grid2"><label class="cpg-field">제목<input class="scn-in" data-script-field="${path}.${i}.title" value="${esc(e.title)}"></label><label class="cpg-field">ID<input class="scn-in" data-script-field="${path}.${i}.id" value="${esc(e.id)}"></label></div><label class="cpg-field">본문<textarea class="scn-in" rows="3" data-script-field="${path}.${i}.desc">${esc(e.desc)}</textarea></label>${events?`<label class="scn-check"><input type="checkbox" data-script-bool="${path}.${i}.super" ${e.super?'checked':''}>슈퍼 이벤트로 표시</label><label class="scn-check"><input type="checkbox" data-script-bool="${path}.${i}.trigger_only" ${e.trigger_only?'checked':''}>방향성 / 다른 이벤트에서만 실행</label>${jsonField(`${path}.${i}.trigger`,'발생 조건','cond')}${(e.options||[]).map((o,j)=>`<div class="scn-cond"><label class="cpg-field">선택지 ${j+1}<input class="scn-in" data-script-field="${path}.${i}.options.${j}.text" value="${esc(o.text)}"></label>${jsonField(`${path}.${i}.options.${j}.effects`,'선택 효과','eff')}<button type="button" class="scn-btn" data-list-remove="${path}.${i}.options" data-index="${j}">선택지 삭제</button></div>`).join('')}<button type="button" class="scn-btn" data-option-add="${path}.${i}.options">+ 선택지</button>`:`${jsonField(`${path}.${i}.available`,'실행 조건','cond')}${jsonField(`${path}.${i}.effects`,'실행 효과','eff')}<label class="cpg-field">다시 실행까지 (일)<input class="scn-in" type="number" min="0" data-script-field="${path}.${i}.cooldown_days" value="${esc(e.cooldown_days||0)}"></label>`}<button type="button" class="scn-btn scn-danger" data-list-remove="${path}" data-index="${i}">${events?'이벤트':'결정'} 삭제</button></details>`).join('')}<button type="button" class="scn-btn" data-script-add="${path}">+ ${events?'이벤트':'결정'}</button></section>`;
+        return `<section class="scn-card"><div class="scn-h">${esc(label)}</div><p class="scn-dim">${events?'제목과 본문을 채우고, 발생 조건 또는 방향성의 “이벤트 ID”로 연결하세요.':'반복 행동과 선택을 만드세요. 조건이 맞으면 게임의 결정 목록에서 실행할 수 있습니다.'}</p>${items.map((e,i)=>`<details class="cpg-script" open><summary>${esc(e.title||e.id)}</summary><div class="scn-grid2"><label class="cpg-field">제목<input class="scn-in" data-script-field="${path}.${i}.title" value="${esc(e.title)}"></label><label class="cpg-field">ID<input class="scn-in" data-script-field="${path}.${i}.id" value="${esc(e.id)}"></label></div><label class="cpg-field">본문<textarea class="scn-in" rows="3" data-script-field="${path}.${i}.desc">${esc(e.desc)}</textarea></label>${events?`<label class="cpg-field">화면<select class="scn-in" data-script-field="${path}.${i}.presentation"><option value="narrative" ${e.presentation!=='standard'?'selected':''}>서사 · 본문 / 하단 이미지와 선택지</option><option value="standard" ${e.presentation==='standard'?'selected':''}>일반 이벤트</option></select></label><label class="cpg-field">그림 주소 (선택)<input class="scn-in" data-script-field="${path}.${i}.image" value="${esc(e.image||'')}"></label><div class="scn-row"><label class="scn-btn">그림 파일<input type="file" accept="image/*" data-event-image="${path}.${i}.image" hidden></label><button type="button" class="scn-btn" data-event-preview="${path}.${i}">미리 보기</button>${e.image?`<img class="cpe-thumb" src="${esc(e.image)}" alt=""><button type="button" class="scn-btn" data-event-clear-image="${path}.${i}.image">그림 빼기</button>`:''}</div><label class="scn-check"><input type="checkbox" data-script-bool="${path}.${i}.super" ${e.super?'checked':''}>슈퍼 이벤트로 표시</label><label class="scn-check"><input type="checkbox" data-script-bool="${path}.${i}.trigger_only" ${e.trigger_only?'checked':''}>방향성 / 다른 이벤트에서만 실행</label>${jsonField(`${path}.${i}.trigger`,'발생 조건','cond')}${(e.options||[]).map((o,j)=>`<div class="scn-cond"><label class="cpg-field">선택지 ${j+1}<input class="scn-in" data-script-field="${path}.${i}.options.${j}.text" value="${esc(o.text)}"></label>${jsonField(`${path}.${i}.options.${j}.trigger`,'선택지 표시 조건 (비우면 항상 표시)','cond')}${jsonField(`${path}.${i}.options.${j}.effects`,'선택 효과','eff')}<button type="button" class="scn-btn" data-list-remove="${path}.${i}.options" data-index="${j}">선택지 삭제</button></div>`).join('')}<button type="button" class="scn-btn" data-option-add="${path}.${i}.options">+ 선택지</button>`:`${jsonField(`${path}.${i}.available`,'실행 조건','cond')}${jsonField(`${path}.${i}.effects`,'실행 효과','eff')}<label class="cpg-field">다시 실행까지 (${timeUnit()})<input class="scn-in" type="number" min="0" data-script-field="${path}.${i}.cooldown_days" value="${esc(e.cooldown_days||0)}"></label>`}<button type="button" class="scn-btn scn-danger" data-list-remove="${path}" data-index="${i}">${events?'이벤트':'결정'} 삭제</button></details>`).join('')}<button type="button" class="scn-btn" data-script-add="${path}">+ ${events?'이벤트':'결정'}</button></section>`;
     }
     function bindScriptForms(body) {
+        body.querySelectorAll('[data-event-preview]').forEach(b=>b.onclick=()=>{const ev=getP(b.dataset.eventPreview);HemiCampaignEvents.show({...ev,presentation:ev.presentation||'narrative'},{preview:true,modName:S.title});});
+        body.querySelectorAll('[data-event-image]').forEach(el=>el.onchange=()=>{if(el.files[0])shrink(el.files[0],1024,url=>{setP(el.dataset.eventImage,url);touch();render();});});
+        body.querySelectorAll('[data-event-clear-image]').forEach(b=>b.onclick=()=>{setP(b.dataset.eventClearImage,'');touch();render();});
+
         body.querySelectorAll('[data-script-field]').forEach(el=>el.oninput=()=>{setP(el.dataset.scriptField,el.type==='number'?Math.max(0,Number(el.value)||0):el.value);touch();});
         body.querySelectorAll('[data-script-bool]').forEach(el=>el.onchange=()=>{setP(el.dataset.scriptBool,el.checked);touch();});
         body.querySelectorAll('[data-list-remove]').forEach(b=>b.onclick=()=>{getP(b.dataset.listRemove).splice(+b.dataset.index,1);touch();render();});
         body.querySelectorAll('[data-option-add]').forEach(b=>b.onclick=()=>{const p=b.dataset.optionAdd;setP(p,[...(getP(p)||[]),{text:'새 선택',effects:[]}]);touch();render();});
-        body.querySelectorAll('[data-script-add]').forEach(b=>b.onclick=()=>{const p=b.dataset.scriptAdd, event=p.endsWith('events');setP(p,[...(getP(p)||[]),event?{id:uid('ev'),title:'새 이벤트',desc:'',trigger_only:true,options:[{text:'계속',effects:[]}]}:{id:uid('dc'),title:'새 결정',desc:'',cooldown_days:30,effects:[]}]);touch();render();});
+        body.querySelectorAll('[data-script-add]').forEach(b=>b.onclick=()=>{const p=b.dataset.scriptAdd, event=p.endsWith('events');setP(p,[...(getP(p)||[]),event?{id:uid('ev'),title:'새 이벤트',desc:'',presentation:'narrative',trigger_only:true,options:[{text:'계속',effects:[]}]}:{id:uid('dc'),title:'새 결정',desc:'',cooldown_days:30,effects:[]}]);touch();render();});
         body.querySelectorAll('[data-variable]').forEach(row=>{
             const k=row.dataset.variable;
             row.querySelector('[data-vvalue]').oninput=e=>{if(Number.isFinite(+e.target.value)){S.variables[k]=+e.target.value;touch();}};
@@ -120,9 +125,9 @@
     // ---------------------------------------------------------------
     // 화면
     // ---------------------------------------------------------------
-    const TABS = [['info', '기본 · 세계관'], ['starts', '시작 나라'], ['focus', '방향성 트리'], ['articles', '기사'], ['crises', '시나리오(위기)'], ['endings', '결말'], ['adv', '고급']];
+    const TABS = [['info', '기본 · 세계관'], ['starts', '시작 나라'], ['focus', '방향성 트리'], ['articles', '기사'], ['events', '이벤트'], ['crises', '격변'], ['endings', '결말'], ['adv', '고급']];
     function studioBar() {
-        $('cpStudioBar').innerHTML = `<div><span class="cpe-eyebrow">AUTHORING WORKSPACE</span><b>${esc(S.title || '이름 없는 캠페인')}</b></div><span class="scn-grow"></span><span id="cpSaveStatus" role="status">${esc(saveStatus)}</span><button type="button" class="scn-btn" data-history="undo" ${past.length ? '' : 'disabled'} title="실행 취소">↶</button><button type="button" class="scn-btn" data-history="redo" ${future.length ? '' : 'disabled'} title="다시 실행">↷</button><button type="button" class="scn-btn" id="cpValidate">✓ 검사</button>${modeSeg()}<button type="button" class="scn-btn" id="cpDiscardDraft" ${rawPending.size ? '' : 'hidden'}>JSON 변경 취소</button>`;
+        $('cpStudioBar').innerHTML = `<div><span class="cpe-eyebrow">AUTHORING WORKSPACE</span><b>${esc(S.title || '이름 없는 시나리오')}</b></div><span class="scn-grow"></span><span id="cpSaveStatus" role="status">${esc(saveStatus)}</span><button type="button" class="scn-btn" data-history="undo" ${past.length ? '' : 'disabled'} title="실행 취소">↶</button><button type="button" class="scn-btn" data-history="redo" ${future.length ? '' : 'disabled'} title="다시 실행">↷</button><button type="button" class="scn-btn" id="cpValidate">✓ 검사</button>${modeSeg()}<button type="button" class="scn-btn" id="cpDiscardDraft" ${rawPending.size ? '' : 'hidden'}>JSON 변경 취소</button>`;
         $('cpStudioBar').querySelectorAll('[data-mode]').forEach(b => b.onclick = () => { detailMode = b.dataset.mode; localStorage.setItem('hemicycleCampaignDetailMode',detailMode); render(); });
         $('cpStudioBar').querySelectorAll('[data-history]').forEach(b => b.onclick = () => historyMove(b.dataset.history));
         $('cpValidate').onclick = showIssues;
@@ -136,7 +141,7 @@
     }
     function showIssues() {
         const issues = Tools.validate(S);
-        $('cpIssues').innerHTML = `<div class="cpe-issues"><div class="scn-row"><b>${issues.length ? '캠페인 점검 · ' + issues.length + '건' : '✓ 구조 검사 통과'}</b><span class="scn-grow"></span><button type="button" class="scn-x" data-close-issues aria-label="검사 결과 닫기">×</button></div>${issues.map(i=>`<p class="${i.level === 'error' ? 'scn-err' : 'scn-dim'}"><code>${esc(i.path)}</code> · ${esc(i.message)}</p>`).join('') || '<p class="scn-dim">이제 시험 플레이로 이야기와 보상이 의도대로 작동하는지 확인하세요.</p>'}</div>`;
+        $('cpIssues').innerHTML = `<div class="cpe-issues"><div class="scn-row"><b>${issues.length ? '시나리오 점검 · ' + issues.length + '건' : '✓ 구조 검사 통과'}</b><span class="scn-grow"></span><button type="button" class="scn-x" data-close-issues aria-label="검사 결과 닫기">×</button></div>${issues.map(i=>`<p class="${i.level === 'error' ? 'scn-err' : 'scn-dim'}"><code>${esc(i.path)}</code> · ${esc(i.message)}</p>`).join('') || '<p class="scn-dim">이제 시험 플레이로 이야기와 보상이 의도대로 작동하는지 확인하세요.</p>'}</div>`;
         $('cpIssues').querySelector('[data-close-issues]').onclick = () => $('cpIssues').replaceChildren();
     }
     function render() {
@@ -148,34 +153,41 @@
         $('cpTabs').innerHTML = TABS.map(([k, l]) => `<button type="button" class="cpe-tab ${tab === k ? 'on' : ''}" data-tab="${k}">${l}${k === 'focus' ? ` <span class="scn-n">${S.focus.length}</span>` : k === 'crises' ? ` <span class="scn-n">${S.crises.length}</span>` : k === 'articles' ? ` <span class="scn-n">${S.articles.length}</span>` : k === 'endings' ? ` <span class="scn-n">${S.endings.length}</span>` : ''}</button>`).join('');
         $('cpTabs').querySelectorAll('[data-tab]').forEach(b => { b.onclick = () => { tab = b.dataset.tab; render(); }; });
         const body = $('cpBody');
-        body.innerHTML = { info: infoHtml, starts: startsHtml, focus: focusHtml, articles: articlesHtml, crises: crisesHtml, endings: endingsHtml, adv: advHtml }[tab]();
+        body.innerHTML = { info: infoHtml, starts: startsHtml, focus: focusHtml, articles: articlesHtml, events:()=>jsonField('events','선택형 이벤트','list',10), crises: crisesHtml, endings: endingsHtml, adv: advHtml }[tab]();
         bindCommon(body);
         bindScriptForms(body);
         HemiCampaignGuide.bind(body, {get:getP,set:setP,touch,render});
         body.querySelectorAll('[data-go]').forEach(b => b.onclick = () => {tab=b.dataset.go;render();});
         body.querySelectorAll('[data-starter]').forEach(b => b.onclick = async () => {await saveNow(); S=Tools.starter(uid('cmp')); tab='focus';selFocus='opening';resetHistory();touch();render();});
-        ({ info: () => {}, starts: bindStarts, focus: bindFocus, articles: bindArticles, crises: bindCrises, endings: bindEndings, adv: () => {} })[tab](body);
+        ({ info: () => {}, starts: bindStarts, focus: bindFocus, articles: bindArticles, events:()=>{}, crises: bindCrises, endings: bindEndings, adv: () => {} })[tab](body);
     }
+    const timeUnit=()=>S.time?.mode==='realtime'?'일':'턴';
     function infoHtml() {
+        const time=HemiCampaignClock.config(S);
         return `<div class="cpe-cols"><div class="scn-card">
             <div class="scn-h">기본 정보</div>
             <label class="scn-lab">제목</label><input class="scn-in scn-title" data-f="title" maxlength="80" value="${esc(S.title)}">
             <div class="scn-grid2"><div><label class="scn-lab">제작자</label><input class="scn-in" data-f="author" maxlength="60" value="${esc(S.author)}"></div>
                 <div><label class="scn-lab">버전</label><input class="scn-in" data-f="version" maxlength="20" value="${esc(S.version)}"></div></div>
             <label class="scn-lab">한 줄 설명</label><input class="scn-in" data-f="description" maxlength="200" value="${esc(S.description)}">
-            <label class="scn-lab">세계관 (캠페인을 시작할 때 크게 뜨는 글 — 빈 줄로 문단)</label><textarea class="scn-in" data-f="lore" rows="12">${esc(S.lore)}</textarea>
+            <label class="scn-lab">세계관 (시나리오를 시작할 때 크게 뜨는 글 — 빈 줄로 문단)</label><textarea class="scn-in" data-f="lore" rows="12">${esc(S.lore)}</textarea>
+        <section class="cpe-time-settings"><div class="scn-h">시나리오 시간</div>
+        <label class="cpg-field">진행 방식<select class="scn-in" data-time="mode"><option value="turn" ${time.mode==='turn'?'selected':''}>턴제 · 다음 턴으로 한 번씩</option><option value="realtime" ${time.mode==='realtime'?'selected':''}>실시간 · 속도 조절 / 일시정지</option></select></label>
+        <label class="cpg-field">시작 날짜 (비워두면 시작 나라의 날짜)<input class="scn-in" type="date" min="0001-01-01" max="9999-12-31" data-time="startDate" value="${esc(time.startDate)}"></label>
+        ${time.mode==='realtime'?`<div class="scn-grid2"><label class="cpg-field">시작 시각 (0~23시)<input class="scn-in" type="number" min="0" max="23" step="1" data-time="startHour" value="${time.startHour}"></label><label class="cpg-field">시작 속도<select class="scn-in" data-time="defaultSpeed">${[1,2,3,4,5].map(n=>`<option value="${n}" ${time.defaultSpeed===n?'selected':''}>${n}</option>`).join('')}</select></label></div>`:''}
+        <p class="scn-dim">${time.mode==='turn'?'1턴 = 1일. 다음 턴만 제공하며 여러 턴 건너뛰기는 없습니다.':'1시간씩 진행합니다. 1~5단계 속도와 Space로 진행/일시정지를 전환합니다.'} 시나리오 시간을 따로 저장하며, 이벤트·기사 확인 중에는 멈춥니다. 불러온 게임은 일시정지 상태입니다.</p></section>
         </div><div class="scn-card cpe-help">
-            <div class="cpe-eyebrow">FROM IDEA TO PLAYABLE STORY</div><h2>첫 캠페인, 빈 화면에서<br>시작하지 않아도 됩니다.</h2>
-            <p class="scn-dim">서로 다른 두 노선, 합류 중점, 위기와 슈퍼 이벤트까지. 작동하는 예제를 복사해 제목과 이야기를 바꿔 보세요.</p>
-            <button type="button" class="scn-btn scn-primary" data-starter>갈림길 캠페인으로 새로 만들기 ↗</button>
-            <div class="cpe-launch-grid">${[['starts','01','시작 나라'],['focus','02','방향성 설계'],['crises','03','위기와 임무'],['endings','04','이야기의 결말']].map(([key,n,title])=>`<button type="button" data-go="${key}"><small>${n}</small><b>${title}</b><span>편집 열기 →</span></button>`).join('')}</div>
-            <div class="scn-h">캠페인 만드는 순서</div>
+            <div class="cpe-eyebrow">FROM IDEA TO PLAYABLE STORY</div><h2>첫 시나리오, 빈 화면에서<br>시작하지 않아도 됩니다.</h2>
+            <p class="scn-dim">서로 다른 두 노선, 합류 중점, 격변과 슈퍼 이벤트까지. 작동하는 예제를 복사해 제목과 이야기를 바꿔 보세요.</p>
+            <button type="button" class="scn-btn scn-primary" data-starter>갈림길 시나리오으로 새로 만들기 ↗</button>
+            <div class="cpe-launch-grid">${[['starts','01','시작 나라'],['focus','02','방향성 설계'],['crises','03','격변과 임무'],['endings','04','이야기의 결말']].map(([key,n,title])=>`<button type="button" data-go="${key}"><small>${n}</small><b>${title}</b><span>편집 열기 →</span></button>`).join('')}</div>
+            <div class="scn-h">시나리오 만드는 순서</div>
             <ol class="cpe-steps">
                 <li><b>시작 나라</b> — 내장 프리셋이나 게임에서 만든 종합 프리셋(.hemi). 여러 나라를 두면 시작할 때 고릅니다.</li>
                 <li><b>방향성 트리</b> — 며칠씩 걸려 끝나는 선택. 끝내면 효과가 들어가고 플래그 <code>focus_방향성id</code>가 켜집니다.</li>
-                <li><b>시나리오(위기)</b> — 날짜 · 조건(예: 어떤 방향성을 끝냄)으로 시작. 게이지는 변수라 효과 <code>add_var</code>로 움직이고, 결말 조건에서 <code>var</code>로 봅니다. 결말이 나면 플래그 <code>crisis_위기id_결말id</code>.</li>
-                <li><b>결말</b> — 조건이 맞으면 캠페인이 끝났다고 엔딩 화면이 뜹니다 (그 뒤에도 계속 플레이 가능).</li>
-                <li>▶ <b>시험 플레이</b> — 게임에서 바로. 맨 위 "캠페인" 탭(개요 · 방향성 · 위기)과 오른쪽 "캠페인" 화면(방향성 트리 · 위기).</li>
+                <li><b>격변</b> — 날짜 · 조건(예: 어떤 방향성을 끝냄)으로 시작. 게이지는 변수라 효과 <code>add_var</code>로 움직이고, 결말 조건에서 <code>var</code>로 봅니다. 결말이 나면 플래그 <code>crisis_격변id_결말id</code>.</li>
+                <li><b>결말</b> — 조건이 맞으면 시나리오가 끝났다고 엔딩 화면이 뜹니다 (그 뒤에도 계속 플레이 가능).</li>
+                <li>▶ <b>시험 플레이</b> — 게임에서 바로. 맨 위 "시나리오" 탭(개요 · 방향성 · 격변)과 오른쪽 "시나리오" 화면(방향성 트리 · 격변).</li>
             </ol>
             <div class="scn-dim scn-small">가이드 모드에서는 조건과 효과를 입력 칸으로 만듭니다. 프로 모드로 전환하면 같은 데이터를 JSON으로 직접 편집할 수 있습니다. 사용자 정의 규칙도 그대로 보존됩니다.</div>
         </div></div>`;
@@ -194,7 +206,7 @@
     }
 
     // 방향성 트리 — 왼쪽 그림(끌어서 옮김, 칸에 맞춤), 오른쪽 고른 방향성 칸
-    // 상자 크기 · 간격은 캠페인의 중점 디자인(focusStyle)을 따른다 (js/focusview.js)
+    // 상자 크기 · 간격은 시나리오의 중점 디자인(focusStyle)을 따른다 (js/focusview.js)
     let FW = 124, FH = 116, FGX = 22, FGY = 30;
     let FP = 16;
     const fstyle = () => { const st = window.HemiFocusView ? HemiFocusView.style(S) : { width: 150, height: 70, gapX: 26, gapY: 40 }; FW = st.width; FH = st.height; FGX = st.gapX; FGY = st.gapY; FP=HemiFocusView.padding(S,st); return st; };
@@ -238,7 +250,7 @@
                 <p class="scn-dim">${st.template || st.layout==='classic' ? '큰 그림 배치는 트리 디자인에서 일러스트를 선택하면 적용됩니다. ' : ''}투명 배경 PNG · WebP 일러스트를 권장합니다. 큰 그림이 명판 위로 펼쳐집니다. 그림은 긴 변 최대 1024px로 저장됩니다.</p>
                 <div class="scn-grid2"><label class="cpg-field">그림 크기 (%)<input class="scn-in" type="number" min="50" max="200" data-art="scale" value="${esc(f.art?.scale ?? 100)}"></label><label class="cpg-field">가로 이동 (px)<input class="scn-in" type="number" min="-120" max="120" data-art="x" value="${esc(f.art?.x ?? 0)}"></label><label class="cpg-field">세로 이동 (px)<input class="scn-in" type="number" min="-120" max="120" data-art="y" value="${esc(f.art?.y ?? 0)}"></label><button type="button" class="scn-btn" data-art-reset>그림 배치 초기화</button></div>
                 <label class="scn-lab">제목</label><input class="scn-in" data-ff="title" value="${esc(f.title)}">
-                <div class="scn-grid2"><div><label class="scn-lab">걸리는 날</label><input class="scn-in" type="number" min="0" data-ff="days" value="${esc(f.days)}"></div><div><label class="scn-lab">끝나면 띄울 이벤트 id (선택)</label><input class="scn-in" data-ff="event" value="${esc(f.event || '')}"></div></div>
+                <div class="scn-grid2"><div><label class="scn-lab">걸리는 ${timeUnit()}</label><input class="scn-in" type="number" min="0" data-ff="days" value="${esc(f.days)}"></div><div><label class="scn-lab">끝나면 띄울 이벤트 id (선택)</label><input class="scn-in" data-ff="event" value="${esc(f.event || '')}"></div></div>
                 <label class="cpg-field">끝나면 발행할 기사<select class="scn-in" data-ff="article"><option value="">없음</option>${S.articles.map(a=>`<option value="${esc(a.id)}" ${f.article===a.id?'selected':''}>${esc(a.title||a.id)}</option>`).join('')}</select></label>
                 <label class="scn-lab">설명</label><textarea class="scn-in" data-ff="desc" rows="3">${esc(f.desc)}</textarea>
                 <label class="scn-lab">먼저 끝내야 함 (모두)</label><div class="cpe-chips">${chips('prereq')}</div>
@@ -255,18 +267,18 @@
         if (a) selArticle = a.id;
         const i = list.indexOf(a);
         const field = (key,label,rows) => `<label class="cpg-field">${label}${rows ? `<textarea class="scn-in" rows="${rows}" data-af="${key}">${esc(a[key] || '')}</textarea>` : `<input class="scn-in" data-af="${key}" value="${esc(a[key] || '')}">`}</label>`;
-        return `<div class="cpe-crisis"><section class="scn-card cpe-list"><div class="scn-h">캠페인 기사</div><p class="scn-dim">이야기 속 소식을 자동으로 전달합니다. 게임의 여론 기사·위기와 별도로 저장됩니다.</p>${list.map(a => `<button type="button" class="cpe-item ${a.id === selArticle ? 'on' : ''}" style="--c:var(--tno-neon)" data-article="${esc(a.id)}">${esc(a.title || a.id)}</button>`).join('') || '<p class="scn-dim">아직 작성한 기사가 없습니다.</p>'}<button type="button" class="scn-btn" data-add-article>+ 기사</button></section>
+        return `<div class="cpe-crisis"><section class="scn-card cpe-list"><div class="scn-h">시나리오 기사</div><p class="scn-dim">이야기 속 소식을 자동으로 전달합니다. 게임의 여론 기사·격변과 별도로 저장됩니다.</p>${list.map(a => `<button type="button" class="cpe-item ${a.id === selArticle ? 'on' : ''}" style="--c:var(--tno-neon)" data-article="${esc(a.id)}">${esc(a.title || a.id)}</button>`).join('') || '<p class="scn-dim">아직 작성한 기사가 없습니다.</p>'}<button type="button" class="scn-btn" data-add-article>+ 기사</button></section>
         ${a ? `<section class="scn-card cpe-crisis-main"><div class="scn-row"><div class="scn-h">${esc(a.title || '새 기사')}</div><span class="scn-grow"></span>${modeSeg()}<button type="button" class="scn-btn" data-article-preview>미리 보기</button><button type="button" class="scn-btn scn-danger" data-del-article>삭제</button></div>
         ${detailMode === 'json' ? `${objJson(`articles.${i}`,24)}<button type="button" class="scn-btn scn-primary" data-objapply="articles.${i}">기사 JSON 적용</button>` : `
         <div class="scn-grid2">${field('title','제목')}${field('id','기사 ID')}</div>
         ${field('subtitle','부제 (선택)')}${field('source','신문 · 통신사 이름')}
         ${field('body','본문',10)}
         <div class="scn-row"><button type="button" class="scn-btn" data-article-img>${a.image ? '그림 바꾸기' : '그림 넣기'}</button>${a.image ? `<img class="cpe-thumb" src="${esc(a.image)}" alt=""><button type="button" class="scn-btn" data-article-img-del>그림 빼기</button>` : ''}<input type="file" accept="image/*" data-article-img-file hidden></div>
-        <label class="cpg-field">발행 계기<select class="scn-in" data-article-when>${[['start','캠페인 시작 시'],['focus','방향성 완료 시'],['date','지정 날짜부터'],['condition','조건 충족 시'],['manual','방향성의 기사 연결로 발행']].map(([k,t])=>`<option value="${k}" ${a.when===k?'selected':''}>${t}</option>`).join('')}</select></label>
+        <label class="cpg-field">발행 계기<select class="scn-in" data-article-when>${[['start','시나리오 시작 시'],['focus','방향성 완료 시'],['date','지정 날짜부터'],['condition','조건 충족 시'],['manual','방향성의 기사 연결로 발행']].map(([k,t])=>`<option value="${k}" ${a.when===k?'selected':''}>${t}</option>`).join('')}</select></label>
         ${a.when === 'focus' ? `<label class="cpg-field">완료할 방향성<select class="scn-in" data-article-focus><option value="">방향성을 선택하세요</option>${S.focus.map(f=>`<option value="${esc(f.id)}" ${a.focus===f.id?'selected':''}>${esc(f.title||f.id)}</option>`).join('')}</select></label>` : ''}
         ${a.when === 'date' ? field('date','발행 날짜 (YYYY-MM-DD)') : ''}
         ${a.when !== 'manual' ? jsonField(`articles.${i}.trigger`,a.when==='condition'?'자동 발행 조건':'추가 조건 (선택)','cond') : '<p class="scn-dim">방향성 편집기의 “끝나면 발행할 기사”에서 이 기사를 연결하세요.</p>'}
-        <p class="scn-dim">기사는 한 번만 발행됩니다. 확인 버튼으로 읽고 닫으며, 여론 수치·게이지·임무·선택 효과는 없습니다. 실제 게임의 캠페인 › 기사에서 발행된 기사를 다시 읽을 수 있습니다.</p>`}</section>` : '<section class="scn-card"><div class="scn-h">소식이 이야기의 흐름을 만듭니다</div><p class="scn-dim">+ 기사로 제목과 본문을 작성하고, 발행 계기를 지정하세요. 위기나 별도의 게임 기사 작성 없이 자동으로 표시됩니다.</p></section>'}</div>`;
+        <p class="scn-dim">기사는 한 번만 발행됩니다. 확인 버튼으로 읽고 닫으며, 여론 수치·게이지·임무·선택 효과는 없습니다. 실제 게임의 시나리오 › 기사에서 발행된 기사를 다시 읽을 수 있습니다.</p>`}</section>` : '<section class="scn-card"><div class="scn-h">소식이 이야기의 흐름을 만듭니다</div><p class="scn-dim">+ 기사로 제목과 본문을 작성하고, 발행 계기를 지정하세요. 격변나 별도의 게임 기사 작성 없이 자동으로 표시됩니다.</p></section>'}</div>`;
     }
     function bindArticles(body) {
         body.querySelector('[data-add-article]').onclick = () => {
@@ -302,14 +314,14 @@
         const ci = S.crises.indexOf(c);
         const rowsOf = (key, cols) => (c[key] || []).map((r, i) => `<div class="scn-cond" data-row="${key}" data-i="${i}">${cols(r, i)}</div>`).join('');
         return `<div class="cpe-crisis">
-            <div class="scn-card cpe-list"><div class="scn-h">시나리오(위기)</div>
-                ${S.crises.map(x => `<button type="button" class="cpe-item ${x === c ? 'on' : ''}" data-crisis="${esc(x.id)}" style="--c:${esc(x.color || '#e5484d')}">${esc(x.title || x.id)}</button>`).join('') || '<div class="scn-dim">위기가 없습니다.</div>'}
-                <div class="scn-row"><button type="button" class="scn-btn" data-add-crisis>+ 위기</button></div>
-                <div class="scn-dim scn-small">조건 · 날짜로 시작해 게이지 · 임무 · 위기 결정이 돌다가 결말 하나로 끝납니다.</div></div>
-            ${c && detailMode === 'json' ? `<div class="cpe-crisis-main"><div class="scn-card"><div class="scn-row"><div class="scn-h">위기 — JSON</div><span class="scn-grow"></span>${modeSeg()}<button type="button" class="scn-btn scn-danger" data-del-crisis>이 위기 지우기</button></div>
-                <div class="scn-dim scn-small">이 위기 전체 — id · title · color · desc · image · date · trigger · intro · onStart · meters · missions · outcomes · events · decisions (docs/CAMPAIGN.md)</div>${objJson(`crises.${ci}`, 40)}<button type="button" class="scn-btn scn-primary" data-objapply="crises.${ci}">위기 JSON 적용</button></div></div>` : ''}
+            <div class="scn-card cpe-list"><div class="scn-h">격변</div>
+                ${S.crises.map(x => `<button type="button" class="cpe-item ${x === c ? 'on' : ''}" data-crisis="${esc(x.id)}" style="--c:${esc(x.color || '#e5484d')}">${esc(x.title || x.id)}</button>`).join('') || '<div class="scn-dim">격변이 없습니다.</div>'}
+                <div class="scn-row"><button type="button" class="scn-btn" data-add-crisis>+ 격변</button></div>
+                <div class="scn-dim scn-small">조건 · 날짜로 시작해 게이지 · 임무 · 격변 결정이 돌다가 결말 하나로 끝납니다.</div></div>
+            ${c && detailMode === 'json' ? `<div class="cpe-crisis-main"><div class="scn-card"><div class="scn-row"><div class="scn-h">격변 — JSON</div><span class="scn-grow"></span>${modeSeg()}<button type="button" class="scn-btn scn-danger" data-del-crisis>이 격변 지우기</button></div>
+                <div class="scn-dim scn-small">이 격변 전체 — id · title · color · desc · image · date · trigger · intro · onStart · meters · missions · outcomes · events · decisions (docs/CAMPAIGN.md)</div>${objJson(`crises.${ci}`, 40)}<button type="button" class="scn-btn scn-primary" data-objapply="crises.${ci}">격변 JSON 적용</button></div></div>` : ''}
             ${c && detailMode !== 'json' ? `<div class="cpe-crisis-main">
-                <div class="scn-card"><div class="scn-row"><div class="scn-h">위기</div><span class="scn-grow"></span>${modeSeg()}<button type="button" class="scn-btn scn-danger" data-del-crisis>이 위기 지우기</button></div>
+                <div class="scn-card"><div class="scn-row"><div class="scn-h">격변</div><span class="scn-grow"></span>${modeSeg()}<button type="button" class="scn-btn scn-danger" data-del-crisis>이 격변 지우기</button></div>
                     <div class="scn-grid2"><div><label class="scn-lab">id (플래그 crisis_id)</label><input class="scn-in" data-cf="id" value="${esc(c.id)}"></div><div><label class="scn-lab">색</label><input class="scn-in" type="color" data-cf="color" value="${esc(c.color || '#e5484d')}"></div></div>
                     <label class="scn-lab">제목</label><input class="scn-in" data-cf="title" value="${esc(c.title)}">
                     <label class="scn-lab">설명 (시작할 때 크게 뜸)</label><textarea class="scn-in" data-cf="desc" rows="4">${esc(c.desc)}</textarea>
@@ -318,26 +330,26 @@
                     ${jsonField(`crises.${ci}.trigger`, '시작 조건 (날짜와 함께면 둘 다)', 'cond', 2)}
                     ${jsonField(`crises.${ci}.onStart`, '시작할 때 효과', 'eff', 2)}</div>
                 <div class="scn-card"><div class="scn-h">게이지 <span class="scn-n">${(c.meters || []).length}</span></div>
-                    <div class="scn-dim scn-small">게이지 = 시나리오 변수. 효과 <code>{ "add_var": { "name": "id", "value": 10 } }</code>로 움직이고, 조건 <code>{ "var": { "name": "id", "gte": 100 } }</code>로 봅니다.</div>
+                    <div class="scn-dim scn-small">게이지 = 격변 변수. 효과 <code>{ "add_var": { "name": "id", "value": 10 } }</code>로 움직이고, 조건 <code>{ "var": { "name": "id", "gte": 100 } }</code>로 봅니다.</div>
                     ${rowsOf('meters', r => `<div class="scn-row"><input class="scn-in" data-rf="id" value="${esc(r.id)}" placeholder="id" style="width:110px"><input class="scn-in scn-grow" data-rf="name" value="${esc(r.name)}" placeholder="이름"><input class="scn-in" type="color" data-rf="color" value="${esc(r.color || '#e5484d')}"><button type="button" class="scn-x" data-del-row>×</button></div>
                         <div class="scn-row"><span class="scn-dim">처음</span><input class="scn-in scn-num" type="number" data-rf="start" value="${esc(r.start)}"><span class="scn-dim">최소</span><input class="scn-in scn-num" type="number" data-rf="min" value="${esc(r.min ?? 0)}"><span class="scn-dim">최대</span><input class="scn-in scn-num" type="number" data-rf="max" value="${esc(r.max ?? 100)}"><span class="scn-dim">한 달마다</span><input class="scn-in scn-num" type="number" step="any" data-rf="perMonth" value="${esc(r.perMonth || 0)}"></div>`)}
                     <div class="scn-row"><button type="button" class="scn-btn" data-add-row="meters">+ 게이지</button></div></div>
                 <div class="scn-card"><div class="scn-h">기한 있는 임무 <span class="scn-n">${(c.missions || []).length}</span></div>
-                    <div class="scn-dim scn-small">위기가 시작되면(또는 "나중에 시작" 조건이 맞으면) 날을 세기 시작 — 기한 안에 조건이 맞으면 성공 효과, 못 하면 실패 효과.</div>
-                    ${rowsOf('missions', (r, i) => `<div class="scn-row"><input class="scn-in scn-grow" data-rf="title" value="${esc(r.title)}" placeholder="임무 (예: 90일 안에 예산안 통과)"><span class="scn-dim">기한</span><input class="scn-in scn-num" type="number" data-rf="days" value="${esc(r.days)}"><span class="scn-dim">일</span><button type="button" class="scn-x" data-del-row>×</button></div>
+                    <div class="scn-dim scn-small">격변이 시작되면(또는 "나중에 시작" 조건이 맞으면) 날을 세기 시작 — 기한 안에 조건이 맞으면 성공 효과, 못 하면 실패 효과.</div>
+                    ${rowsOf('missions', (r, i) => `<div class="scn-row"><input class="scn-in scn-grow" data-rf="title" value="${esc(r.title)}" placeholder="임무 (예: 90일 안에 예산안 통과)"><span class="scn-dim">기한</span><input class="scn-in scn-num" type="number" data-rf="days" value="${esc(r.days)}"><span class="scn-dim">${timeUnit()}</span><button type="button" class="scn-x" data-del-row>×</button></div>
                         <input class="scn-in" data-rf="desc" value="${esc(r.desc || '')}" placeholder="설명 (선택)">
                         ${jsonField(`crises.${ci}.missions.${i}.condition`, '성공 조건', 'cond', 2)}
                         <div class="scn-grid2">${jsonField(`crises.${ci}.missions.${i}.success`, '성공 효과', 'eff', 2)}${jsonField(`crises.${ci}.missions.${i}.fail`, '실패 효과', 'eff', 2)}</div>
                         <label class="scn-check"><input type="checkbox" data-rb="later" ${r.later ? 'checked' : ''}> 나중에 시작 (아래 조건이 맞을 때부터)</label>${r.later ? jsonField(`crises.${ci}.missions.${i}.start`, '시작 조건', 'cond', 2) : ''}`)}
                     <div class="scn-row"><button type="button" class="scn-btn" data-add-row="missions">+ 임무</button></div></div>
                 <div class="scn-card"><div class="scn-h">결말 <span class="scn-n">${(c.outcomes || []).length}</span></div>
-                    <div class="scn-dim scn-small">위에서부터 조건이 처음 맞는 결말로 위기가 끝납니다. 결말 창(슈퍼 이벤트처럼)이 뜨고 플래그 <code>crisis_${esc(c.id)}_결말id</code>가 켜집니다.</div>
+                    <div class="scn-dim scn-small">위에서부터 조건이 처음 맞는 결말로 격변이 끝납니다. 결말 창(슈퍼 이벤트처럼)이 뜨고 플래그 <code>crisis_${esc(c.id)}_결말id</code>가 켜집니다.</div>
                     ${rowsOf('outcomes', (r, i) => `<div class="scn-row"><input class="scn-in" data-rf="id" value="${esc(r.id)}" placeholder="id" style="width:110px"><input class="scn-in scn-grow" data-rf="title" value="${esc(r.title)}" placeholder="결말 제목"><button type="button" class="scn-x" data-del-row>×</button></div>
                         <textarea class="scn-in" data-rf="text" rows="2" placeholder="결말 글">${esc(r.text || '')}</textarea>
                         <div class="scn-grid2">${jsonField(`crises.${ci}.outcomes.${i}.condition`, '조건', 'cond', 2)}${jsonField(`crises.${ci}.outcomes.${i}.effects`, '효과', 'eff', 2)}</div>`)}
                     <div class="scn-row"><button type="button" class="scn-btn" data-add-row="outcomes">+ 결말</button></div></div>
-                <div class="scn-card"><div class="scn-h">위기 전용 이벤트 · 결정</div>
-                    <div class="scn-dim scn-small">이 위기가 진행 중일 때만 돕니다. 이벤트에 <code>"super": true</code>를 넣으면 슈퍼 이벤트(가운데 큰 창, <code>image</code> · <code>quote</code> · <code>quote_author</code>).</div>
+                <div class="scn-card"><div class="scn-h">격변 전용 이벤트 · 결정</div>
+                    <div class="scn-dim scn-small">이 격변이 진행 중일 때만 돕니다. 이벤트에 <code>"super": true</code>를 넣으면 슈퍼 이벤트(가운데 큰 창, <code>image</code> · <code>quote</code> · <code>quote_author</code>).</div>
                     ${jsonField(`crises.${ci}.events`, '이벤트 — [ { id, title, desc, trigger, options: [ { text, effects } ] } ]', 'list', 8)}
                     ${jsonField(`crises.${ci}.decisions`, '결정 — [ { id, title, desc, available, effects, cooldown_days } ]', 'list', 6)}
                     <div class="scn-row"><button type="button" class="scn-btn" data-crisis-example>예제 넣기</button></div></div>
@@ -346,18 +358,18 @@
     }
     function endingsHtml() {
         return `<div class="scn-card"><div class="scn-h">결말 (엔딩) <span class="scn-n">${S.endings.length}</span></div>
-            <div class="scn-dim scn-small">날짜를 넘길 때마다 위에서부터 조건을 보고, 처음 맞는 결말로 캠페인이 끝납니다 (그 뒤에도 계속 플레이 가능). 예: 위기 결말 플래그 · 방향성 플래그 · 날짜.</div>
+            <div class="scn-dim scn-small">날짜를 넘길 때마다 위에서부터 조건을 보고, 처음 맞는 결말로 시나리오가 끝납니다 (그 뒤에도 계속 플레이 가능). 예: 격변 결말 플래그 · 방향성 플래그 · 날짜.</div>
             ${S.endings.map((e, i) => `<div class="scn-cond" data-ending="${i}"><div class="scn-row"><input class="scn-in" data-ef="id" value="${esc(e.id)}" style="width:110px"><input class="scn-in scn-grow" data-ef="title" value="${esc(e.title)}" placeholder="결말 제목"><button type="button" class="scn-x" data-del>×</button></div>
                 <textarea class="scn-in" data-ef="text" rows="3" placeholder="결말 글">${esc(e.text || '')}</textarea>${jsonField(`endings.${i}.condition`, '조건', 'cond', 2)}</div>`).join('')}
             <div class="scn-row"><button type="button" class="scn-btn" data-add-ending>+ 결말</button></div></div>`;
     }
     function advHtml() {
-        return `<div class="scn-card"><div class="scn-h">캠페인 전체 변수 · 이벤트 · 결정</div>
-            <div class="scn-dim scn-small">위기와 상관없이 캠페인 내내 도는 것 (스크립트 모드 형식). 결정은 국가 › 결정 탭에 나옵니다. 이야기 전달용 기사는 기사 탭에서 작성하세요. 스크립트의 article 효과는 기본 게임의 여론 기사를 발행합니다.</div>
+        return `<div class="scn-card"><div class="scn-h">시나리오 전체 변수 · 이벤트 · 결정</div>
+            <div class="scn-dim scn-small">격변과 상관없이 시나리오 내내 도는 것 (스크립트 모드 형식). 결정은 국가 › 결정 탭에 나옵니다. 이야기 전달용 기사는 기사 탭에서 작성하세요. 스크립트의 article 효과는 기본 게임의 여론 기사를 발행합니다.</div>
             ${jsonField('variables', '변수 (처음 값) — { "이름": 숫자 }', 'obj', 3)}
-            ${jsonField('events', '이벤트', 'list', 8)}
+            <button type="button" class="scn-btn" data-go="events">선택형 이벤트 편집 →</button>
             ${jsonField('decisions', '결정', 'list', 6)}</div>
-            ${detailMode === 'json' ? `<div class="scn-card"><div class="scn-h">캠페인 전체 JSON</div>
+            ${detailMode === 'json' ? `<div class="scn-card"><div class="scn-h">시나리오 전체 JSON</div>
                 <div class="scn-dim scn-small">모든 칸을 JSON 하나로 직접 고칩니다. 시작 나라의 세이브 데이터는 너무 커서 여기선 빼고 보여 주며, 그대로 이어 붙습니다 (시작 나라 id가 같으면).</div>
                 <textarea class="scn-in scn-code cpe-objjson" rows="30" spellcheck="false" data-wholejson>${esc(JSON.stringify(wholeView(), null, 2))}</textarea><div class="scn-err" data-wholeerr></div>
                 <div class="scn-row"><button type="button" class="scn-btn scn-primary" data-whole-apply>적용</button><span class="scn-dim">JSON을 수정한 뒤 적용하세요. 오류가 있으면 원본을 유지합니다.</span></div></div>` : ''}`;
@@ -402,6 +414,9 @@
                 S = normalize(n); rawPending.delete('whole'); selFocus = null; selCrisis = null; touch(); render();
             };
         }
+        body.querySelectorAll('[data-time]').forEach(el=>el.onchange=()=>{
+            const key=el.dataset.time;S.time={...HemiCampaignClock.config(S),[key]:['startHour','defaultSpeed'].includes(key)?Number(el.value):el.value};touch();if(key==='mode')render();
+        });
         body.querySelectorAll('[data-f]').forEach(inp => { inp.oninput = () => { S[inp.dataset.f] = inp.value; touch(); }; });
         body.querySelectorAll('[data-json]').forEach(ta => { ta.oninput = () => {
             const p = ta.dataset.json, kind = ta.dataset.kind, err = body.querySelector(`[data-err="${CSS.escape(p)}"]`);
@@ -572,7 +587,7 @@
             else c[k] = inp.value;
             touch();
         }; inp.onchange = () => { if (inp.dataset.cf === 'title' || inp.dataset.cf === 'color') setTimeout(render, 0); }; });
-        body.querySelector('[data-del-crisis]').onclick = async () => { if (!(await confirmBox(`"${c.title}" 위기를 지울까요?`))) return; S.crises = S.crises.filter(z => z !== c); selCrisis = null; render(); touch(); };
+        body.querySelector('[data-del-crisis]').onclick = async () => { if (!(await confirmBox(`"${c.title}" 격변을 지울까요?`))) return; S.crises = S.crises.filter(z => z !== c); selCrisis = null; render(); touch(); };
         if (detailMode === 'json') return; // JSON으로 고치는 중 — 칸이 없음
         const imgIn = body.querySelector('[data-img-file]');
         body.querySelector('[data-img]').onclick = () => imgIn.click();
@@ -635,7 +650,7 @@
     }
     async function refreshLibrary() {
         const all = (await dbAll().catch(() => [])).sort((a, b) => b.updatedAt - a.updatedAt);
-        $('cpLibrary').innerHTML = `<option value="" disabled>내 캠페인 (${all.length})</option>` + all.map(it => `<option value="${esc(it.id)}" ${it.id === S.id ? 'selected' : ''}>${esc(it.title)}</option>`).join('');
+        $('cpLibrary').innerHTML = `<option value="" disabled>내 시나리오 (${all.length})</option>` + all.map(it => `<option value="${esc(it.id)}" ${it.id === S.id ? 'selected' : ''}>${esc(it.title)}</option>`).join('');
     }
     function normalize(d) {
         if (!d || d.format !== FORMAT) return null;
@@ -659,9 +674,9 @@
             const d = normalize(raw);
             if (!d) throw new Error('format');
             const all = await dbAll().catch(() => []);
-            if (all.some(it => it.id === d.id) && !(await confirmBox(`같은 캠페인("${d.title}")이 이미 있습니다. 불러온 것으로 덮어쓸까요? (취소하면 복사본으로)`))) d.id = uid('cmp');
+            if (all.some(it => it.id === d.id) && !(await confirmBox(`같은 시나리오("${d.title}")이 이미 있습니다. 불러온 것으로 덮어쓸까요? (취소하면 복사본으로)`))) d.id = uid('cmp');
             S = d; resetHistory(); selFocus = null; selCrisis = null; render(); await saveNow();
-        } catch (e) { alertBox('캠페인을 불러오지 못했습니다: '+e.message); }
+        } catch (e) { alertBox('시나리오를 불러오지 못했습니다: '+e.message); }
     }
     function check() {
         return Tools.validate(S).filter(i=>i.level==='error').map(i=>i.path+': '+i.message);
@@ -677,7 +692,7 @@
         const d = JSON.parse(JSON.stringify(S));
         d.starts.forEach(s => { delete s.state; });
         d._startId = start.id;
-        const name = `${S.title || '캠페인'}${S.starts.length > 1 && start.name ? ` — ${start.name}` : ''}`;
+        const name = `${S.title || '시나리오'}${S.starts.length > 1 && start.name ? ` — ${start.name}` : ''}`;
         try {
             ['hemiBootCampaign','hemiBootCampaignPending','hemiBootChallenge','hemiBootChallengePending','dnoBootPresetId','dnoBootNewSaveName','dnoBootImportedStateJSON','dnoBootImportedName','dnoBootImportPending'].forEach(k=>sessionStorage.removeItem(k));
             const text = JSON.stringify(d);
@@ -687,7 +702,7 @@
                 try { sessionStorage.setItem('dnoBootImportedStateJSON', st); sessionStorage.setItem('dnoBootImportedName', name); }
                 catch (e) { sessionStorage.removeItem('dnoBootImportedStateJSON'); await window.HemiFile.stash('bootImport', { name, text: st }); sessionStorage.setItem('dnoBootImportPending', '1'); }
             } else { sessionStorage.setItem('dnoBootPresetId', start.preset || 'builtin:tutorial'); sessionStorage.setItem('dnoBootNewSaveName', name); }
-        } catch (e) { alertBox('캠페인을 넘기지 못했습니다. (저장 공간 부족)'); return; }
+        } catch (e) { alertBox('시나리오를 넘기지 못했습니다. (저장 공간 부족)'); return; }
         location.href = 'main.html';
     }
     function pickStart() {

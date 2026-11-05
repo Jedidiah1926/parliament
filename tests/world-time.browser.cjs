@@ -1,0 +1,30 @@
+const {chromium}=require('playwright'),assert=require('node:assert/strict');
+const base=process.env.STUDIO_TEST_URL||'http://127.0.0.1:8000';
+(async()=>{const b=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||'/usr/bin/chromium',headless:true});try{
+ const ctx=await b.newContext({viewport:{width:1440,height:1000}}),p=await ctx.newPage(),errors=[];p.on('pageerror',e=>errors.push(e.message));await ctx.route('https://fonts.googleapis.com/**',r=>r.abort());p.setDefaultTimeout(15000);
+ await p.goto(base+'/main.html');await p.waitForFunction(()=>!!window.HemiWorldTime);
+ await p.evaluate(()=>{createNamedSlotFromCurrentState('날짜 입력');HemiTimeMode.set('realtime');openDatePanel();});
+ await p.locator('#nationDateYear').fill('2026');await p.locator('#nationDateYear').blur();assert.equal(await p.evaluate(()=>HemiWorldTime.state),null);
+ await p.locator('#nationDateMonth').fill('1');await p.locator('#nationDateMonth').blur();assert.equal(await p.evaluate(()=>HemiWorldTime.state),null);
+ await p.locator('#nationDateDay').fill('31');await p.locator('#nationDateDay').blur();assert.equal(await p.evaluate(()=>HemiCampaignClock.dateKey(HemiWorldTime.state.day)),20260131);
+ await p.evaluate(()=>{closeDatePanel();HemiTimeMode.set('turn');});
+ await p.evaluate(()=>{const s=getAppState();delete s.campaign;s.config.nationDateYear='2026';s.config.nationDateMonth='1';s.config.nationDateDay='31';setAppState(s);createNamedSlotFromCurrentState('실시간 시험');});
+ assert.equal(await p.evaluate(()=>HemiWorldTime.state),null);
+ await p.evaluate(()=>openSettingsPanel());const frame=p.frameLocator('#settingsPanelLayer iframe');await frame.locator('[data-section="etc"].settings-nav-item').click();
+ assert.equal(await frame.locator('#timeModeRealtimeBtn').isDisabled(),false);await frame.locator('#timeModeRealtimeBtn').click();
+ await p.waitForFunction(()=>!!HemiWorldTime.state);assert.equal(await frame.locator('#timeModeRealtimeBtn').getAttribute('aria-pressed'),'true');assert.equal(await p.evaluate(()=>HemiWorldTime.state.paused),true);
+ await p.locator('.settings-frame-close').click();await p.clock.install();await p.clock.pauseAt(new Date());
+ await p.locator('#worldTimeBar [data-campaign-speed]').selectOption('5');await p.locator('#worldTimeBar [data-campaign-toggle]').click();await p.clock.runFor(2300);assert.equal(await p.evaluate(()=>HemiWorldTime.state.hour),23);assert.equal(await p.locator('#nationDateDay').inputValue(),'31');
+ await p.clock.runFor(100);assert.equal(await p.evaluate(()=>HemiWorldTime.state.hour),0);assert.equal(await p.locator('#nationDateMonth').inputValue(),'2');assert.equal(await p.locator('#nationDateDay').inputValue(),'1');
+ await p.evaluate(()=>HemiWorldTime.pause());const saved=await p.evaluate(()=>getAppState());assert.equal(saved.worldClock.speed,5);assert.equal(saved.worldClock.hour,0);assert.equal(+saved.config.nationDateMonth,2);
+ await p.evaluate(()=>{HemiWorldTime.play();setAppState(getAppState());});await p.clock.runFor(5000);assert.equal(await p.evaluate(()=>HemiWorldTime.state.paused),true);assert.equal(await p.evaluate(()=>HemiWorldTime.state.hour),0);
+ console.log('PASS: settings iframe unlock/persistence, speed selection, automatic midnight/month rollover and paused save/load');
+ await p.evaluate(()=>HemiWorldTime.play());await p.evaluate(()=>openSettingsPanel());assert.equal(await p.evaluate(()=>HemiWorldTime.state.paused),true);await p.clock.runFor(500);assert.equal(await p.evaluate(()=>HemiWorldTime.state.hour),0);await p.locator('.settings-frame-close').click();
+ await p.evaluate(()=>HemiTimeMode.set('turn'));assert.equal(await p.locator('#nationDateYear').isDisabled(),false);assert.equal(await p.locator('#worldTimeBar').isVisible(),false);await p.evaluate(()=>advanceNationDate(7,'day'));assert.equal(await p.locator('#nationDateDay').inputValue(),'8');
+ // The setting cannot change the mode a scenario author selected.
+ await p.evaluate(()=>{HemiTimeMode.set('realtime');HemiCampaign.attach({format:'hemicycle-campaign@1',id:'authored',title:'턴제 시나리오',time:{mode:'turn',startDate:'2000-01-01'},starts:[],focus:[],crises:[],articles:[],events:[],endings:[]});});
+ await p.locator('.cp-overlay .cp-primary').click();assert.equal(await p.evaluate(()=>HemiWorldTime.state),null);assert.equal(await p.evaluate(()=>HemiCampaign.state.clock.mode),'turn');const day=await p.evaluate(()=>HemiCampaign.state.clock.day);await p.clock.runFor(5000);assert.equal(await p.evaluate(()=>HemiCampaign.state.clock.day),day);assert.equal(await p.locator('#worldTimeBar').isVisible(),false);assert.equal(await p.locator('#campaignTimeBar').isVisible(),true);
+ await p.evaluate(()=>HemiCampaign.nextTurn());assert.equal(await p.evaluate(()=>HemiCampaign.state.clock.day),day+1);
+ await p.evaluate(()=>{const s=getAppState();delete s.campaign;setAppState(s);});assert.equal(await p.evaluate(()=>HemiWorldTime.state.paused),true);assert.equal(await p.evaluate(()=>HemiCampaignClock.dateKey(HemiWorldTime.state.day)),20000102);
+ assert.deepEqual(errors,[]);console.log('PASS: settings pause, return to ordinary turn mode, scenario author precedence and separate clocks; no browser errors');
+}finally{await b.close();}})().catch(e=>{console.error(e);process.exitCode=1;});

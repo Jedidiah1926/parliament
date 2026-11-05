@@ -1,4 +1,4 @@
-// ===== 챌린지 편집기 (challenge.html · 0.3.0) — 목표 · 실패 조건이 있는 짧은 도전 (캠페인 · 시나리오는 scenario.html) =====
+// ===== 챌린지 편집기 (challenge.html · 0.3.0) — 목표 · 실패 조건이 있는 짧은 도전 (시나리오 · 격변은 scenario.html) =====
 // 챌린지(hemicycle-challenge@1, 예전 hemicycle-scenario@1도 읽음) = 시작(내장 프리셋 또는 세이브 파일) + 브리핑 · 승리 · 패배 글 + 목표 · 실패 조건 · 마감일
 //                                  + 이벤트 · 결정 · 변수(스크립트 모드 형식 — docs/MODDING.md)
 // - 내 챌린지는 이 브라우저 · 앱의 IndexedDB에 저장 (세이브 파일을 시작으로 쓰면 그 세이브도 함께)

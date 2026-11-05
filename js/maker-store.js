@@ -3,7 +3,7 @@
     'use strict';
     const types = {
         map: { db: 'hemicycleMaps', last: 'hemicycleMapLast', editor: 'map.html', name: '맵', list: 'mapSelectList' },
-        campaign: { db: 'hemicycleCampaigns', last: 'hemicycleCampaignLast', editor: 'scenario.html', name: '캠페인', list: 'campaignSelectList' },
+        campaign: { db: 'hemicycleCampaigns', last: 'hemicycleCampaignLast', editor: 'scenario.html', name: '시나리오', list: 'campaignSelectList' },
         challenge: { db: 'hemicycleScenarios', last: 'hemicycleScenarioLast', editor: 'challenge.html', name: '챌린지', list: 'challengeSelectList' },
     };
     async function transaction(kind, mode, run) {

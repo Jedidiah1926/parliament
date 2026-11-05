@@ -1,6 +1,6 @@
-// ===== 방향성(중점) 상자 그리기 — 게임(js/campaign.js)과 캠페인 편집기(js/campaign-editor.js)가 함께 씀 =====
+// ===== 방향성(중점) 상자 그리기 — 게임(js/campaign.js)과 시나리오 편집기(js/campaign-editor.js)가 함께 씀 =====
 // 기본 모양: 위에 큰 아이콘(그림 · 이모지), 아래에 이름판, 그 밑에 남은 날 · 진행 막대.
-// 캠페인(모드)이 focusStyle로 모양을 통째로 바꿀 수 있다 (중점 템플릿 디자인):
+// 시나리오(모드)이 focusStyle로 모양을 통째로 바꿀 수 있다 (중점 템플릿 디자인):
 //   focusStyle = { width, height, gapX, gapY, template: "HTML", css: "CSS" }
 //   template의 자리표시: {{icon}}(그림/이모지 HTML) {{iconUrl}} {{title}} {{days}} {{daysText}} {{status}} {{statusText}} {{progress}} {{desc}} {{id}}
 //   상자 바깥 요소에는 늘 class="hf-node hf-<상태>"(available · current · done · locked · blocked)가 붙으므로 CSS에서 상태별로 꾸밀 수 있다.
@@ -112,7 +112,7 @@
                 st.height * Math.max(0, scale - .7) + Math.abs(num(art.y, 0, -120, 120)) + 20);
         })));
     }
-    // 트리 안에 넣을 <style> — 캠페인이 정한 css를 그 트리 안으로만
+    // 트리 안에 넣을 <style> — 시나리오가 정한 css를 그 트리 안으로만
     function styleTag(st, scope) { return st && st.css ? `<style>${scopeCss(st.css, scope)}</style>` : ''; }
 
     // ---- 기본 모양 ----

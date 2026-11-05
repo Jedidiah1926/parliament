@@ -23,6 +23,7 @@
     <script src="js/lang.js"></script>
     <script src="js/devmode.js"></script>
     <script src="js/challenge-data.js"></script>
+    <script src="js/campaign-clock.js"></script>
     <script src="js/campaign-tools.js"></script>
     <script src="js/maker-store.js"></script>
     <script src="js/story-library.js" defer></script>
@@ -78,7 +79,7 @@
             </a>
             <a href="maker.html" class="home-menu-item" id="homeMakerHub">
                 <span class="home-menu-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z"/></svg></span>
-                <span class="home-menu-text"><span class="home-menu-label">만들기</span><span class="home-menu-desc">맵 · 캠페인 · 챌린지 제작물 만들기와 관리</span></span>
+                <span class="home-menu-text"><span class="home-menu-label">만들기</span><span class="home-menu-desc">맵 · 시나리오 · 챌린지 제작물 만들기와 관리</span></span>
                 <span class="home-menu-chev" aria-hidden="true">›</span>
             </a>
             <a href="roadmap.html" class="home-menu-item">
@@ -103,8 +104,8 @@
         </nav>
 
         <div class="home-meta">
-            <div id="homeVersion">VERSION: v1.7.0 (OBT)</div>
-            <script>if(window.HEMI_BUILD && window.HEMI_BUILD.demo) document.getElementById('homeVersion').textContent = 'VERSION: v1.7.0 (DEMO)';</script>
+            <div id="homeVersion">VERSION: v1.7.0 · v0.3.1 (OBT)</div>
+            <script>if(window.HEMI_BUILD && window.HEMI_BUILD.demo) document.getElementById('homeVersion').textContent = 'VERSION: v1.7.0 · v0.3.1 (DEMO)';</script>
             <div>BUILD: 2026-11-05</div>
             <div>&copy; 2025-2026 Pilcrow1926</div>
         </div>
@@ -182,12 +183,12 @@
                 <button class="save-select-tab" role="tab" data-ss-tab="new" onclick="switchSaveSelectTab('new')">새로 시작</button>
                 <button class="save-select-tab" role="tab" data-ss-tab="continue" onclick="switchSaveSelectTab('continue')">이어하기</button>
                 <button class="save-select-tab" role="tab" data-ss-tab="tutorial" onclick="switchSaveSelectTab('tutorial')">튜토리얼</button>
-                <button class="save-select-tab" role="tab" data-ss-tab="stories" onclick="switchSaveSelectTab('stories')">캠페인 · 챌린지</button>
+                <button class="save-select-tab" role="tab" data-ss-tab="stories" onclick="switchSaveSelectTab('stories')">시나리오 · 챌린지</button>
             </div>
             <div class="save-select-panel" data-ss-panel="stories">
-                <div class="save-select-search save-select-panel-top"><input id="storySearch" type="search" placeholder="캠페인 · 챌린지 검색" aria-label="캠페인 · 챌린지 검색"></div>
+                <div class="save-select-search save-select-panel-top"><input id="storySearch" type="search" placeholder="시나리오 · 챌린지 검색" aria-label="시나리오 · 챌린지 검색"></div>
                 <p class="settings-label">새 플레이는 복사본 세이브로 시작합니다. 제작물을 삭제해도 이미 진행 중인 세이브는 남습니다.</p>
-                <div class="save-select-columns"><section class="save-select-col"><div class="save-select-col-title">캠페인 <a href="maker.html?type=campaign">제작물 목록 ↗</a></div><div id="campaignSelectList" class="save-select-list"></div></section><section class="save-select-col"><div class="save-select-col-title">챌린지 <a href="maker.html?type=challenge">제작물 목록 ↗</a></div><div id="challengeSelectList" class="save-select-list"></div></section></div>
+                <div class="save-select-columns"><section class="save-select-col"><div class="save-select-col-title">시나리오 <a href="maker.html?type=campaign">제작물 목록 ↗</a></div><div id="campaignSelectList" class="save-select-list"></div></section><section class="save-select-col"><div class="save-select-col-title">챌린지 <a href="maker.html?type=challenge">제작물 목록 ↗</a></div><div id="challengeSelectList" class="save-select-list"></div></section></div>
             </div>
             <div class="save-select-panel" data-ss-panel="new">
                 <div class="save-select-columns">

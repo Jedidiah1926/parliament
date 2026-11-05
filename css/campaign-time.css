@@ -1,0 +1,24 @@
+/* Campaign-owned playback, using the existing neon and modern theme tokens. */
+.cp-time-bar {display:flex;align-items:center;gap:10px;flex-wrap:wrap;border:1px solid var(--tno-border);padding:10px 12px;margin-bottom:10px;color:var(--tno-text);background:var(--tno-panel);font:inherit;}
+.cp-time-bar[hidden] {display:none;}
+#campaignTimeBar {grid-column:1 / -1;grid-row:3;margin:4px 0 0;}
+.cp-time-label {font-size:.75rem;color:var(--tno-gold);}
+.cp-time-date {font-size:.9rem;font-weight:normal;}
+.cp-time-controls {display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-left:auto;}
+.cp-time-button,.cp-time-controls select {font:inherit;font-size:.8rem;color:var(--tno-neon);background:#000;border:1px solid var(--tno-border);padding:6px 10px;cursor:pointer;}
+.cp-time-button:disabled {opacity:.45;cursor:default;}
+.cp-time-button:focus-visible,.cp-time-controls select:focus-visible {outline:2px solid var(--tno-neon);outline-offset:2px;}
+.cp-time-note {font-size:.72rem;color:#8a94a3;}
+.cp-time-speed-label {display:flex;gap:5px;align-items:center;margin:0;font-size:.75rem;color:inherit;}
+html[data-campaign-clock] #dispDateControls,html[data-campaign-clock] [data-native-date-note] {display:none!important;}
+#campaignDateNotice {display:none;margin-top:8px;font-size:.8rem;color:var(--tno-gold);}
+html[data-campaign-clock] #campaignDateNotice {display:block;}
+.cpe-time-settings {margin-top:14px;border-top:1px solid var(--tno-border);padding-top:14px;display:grid;gap:10px;}
+html:not([data-theme-family="modern"]) .cpe-time-settings input[type="date"] {color-scheme:dark;}
+html[data-theme-family="modern"] .cp-time-bar {background:var(--m-surface);border-color:var(--m-border);border-radius:10px;}
+html[data-theme-family="modern"] .cp-time-label {color:var(--m-gold);}
+html[data-theme-family="modern"] .cp-time-button,html[data-theme-family="modern"] .cp-time-controls select {background:var(--m-surface);color:var(--m-text);border-color:var(--m-border-strong);border-radius:7px;}
+html[data-theme-family="modern"] .cp-time-note {color:var(--m-text-3);}
+@media(max-width:520px){.cp-time-controls{margin-left:0;width:100%;}.cp-time-date{font-size:.8rem;}.cp-time-bar{gap:6px;}}
+#worldTimeBar {grid-column:1 / -1;grid-row:3;margin:4px 0 0;}
+html[data-world-clock] #dispDateControls,html[data-world-clock] [data-native-date-note] {display:none!important;}
