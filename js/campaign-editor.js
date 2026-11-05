@@ -577,7 +577,7 @@
     async function saveNow() {
         clearTimeout(saveT); saveT=0;
         const snapshot=Tools.clone(S);
-        try { await dbPut({id:snapshot.id,title:snapshot.title||'(제목 없음)',updatedAt:Date.now(),data:snapshot}); localStorage.setItem(LAST,snapshot.id); saveStatus='✓ 자동 저장됨'; }
+        try { await dbPut({id:snapshot.id,title:snapshot.title||'(제목 없음)',updatedAt:Date.now(),data:snapshot}); localStorage.setItem(LAST,snapshot.id); if(S.id===snapshot.id)history.replaceState(null,'','scenario.html?item='+encodeURIComponent(snapshot.id)); saveStatus='✓ 자동 저장됨'; }
         catch(e){saveStatus='저장 실패 · 내보내기로 보관하세요';}
         if($('cpSaveStatus'))$('cpSaveStatus').textContent=rawPending.size?'JSON 미적용 · 저장된 원본 유지':saveStatus;
         await refreshLibrary();
@@ -663,13 +663,19 @@
     $('cpExport').onclick = exportFile;
     $('cpPlay').onclick = play;
     $('cpLibrary').onchange = async e => { if(blockedDraft()){e.target.value=S.id;return;} const selected=e.target.value; await saveNow(); const all = await dbAll().catch(() => []); const it = all.find(x => x.id === selected); if (it) open(it); };
+    document.querySelector('a.scn-back[href="maker.html"]')?.addEventListener('click',async e=>{
+        if(e.ctrlKey||e.metaKey||e.shiftKey||e.altKey)return;
+        e.preventDefault();await saveNow();location.href='maker.html';
+    });
     window.addEventListener('beforeunload', () => { if (saveT) saveNow(); });
 
     (async function init() {
         try { presets = window.DnoPresets ? await DnoPresets.list() : []; } catch (e) { presets = []; }
         const all = (await dbAll().catch(() => [])).sort((a, b) => b.updatedAt - a.updatedAt);
         let last = null; try { last = localStorage.getItem(LAST); } catch (e) { /* 무시 */ }
-        const it = all.find(x => x.id === last) || all[0];
+        const params=new URLSearchParams(location.search), requested=params.get('item');
+        const it = params.has('new') ? null : requested ? all.find(x=>x.id===requested) : all.find(x => x.id === last) || all[0];
+        if(requested&&!it)alertBox('이 제작물을 찾을 수 없습니다. 메이커 허브에서 다시 선택해 주세요.');
         if (it) S = normalize(it.data) || blank();
         resetHistory(); render(); refreshLibrary();
         if (!it) saveNow();

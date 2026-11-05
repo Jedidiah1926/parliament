@@ -1,18 +1,11 @@
 // SAVE SELECT reads the makers' existing IndexedDB stores; running saves stay independent.
 (function () {
     'use strict';
-    const stores = {campaign:{db:'hemicycleCampaigns',last:'hemicycleCampaignLast',editor:'scenario.html',list:'campaignSelectList',name:'캠페인'},challenge:{db:'hemicycleScenarios',last:'hemicycleScenarioLast',editor:'challenge.html',list:'challengeSelectList',name:'챌린지'}};
+    const storage = window.HemiMakerStore;
+    const stores = {campaign:storage.types.campaign,challenge:storage.types.challenge};
     const esc = x => String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
     const alertBox = msg => window.DnoUI?.alert ? DnoUI.alert(msg) : Promise.resolve(alert(msg));
-    async function transaction(kind, mode, run) {
-        const d = await new Promise((resolve,reject)=>{const r=indexedDB.open(stores[kind].db,1);r.onupgradeneeded=()=>{if(!r.result.objectStoreNames.contains('items'))r.result.createObjectStore('items',{keyPath:'id'});};r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});
-        try {return await new Promise((resolve,reject)=>{const tx=d.transaction('items',mode);const q=run(tx.objectStore('items'));tx.oncomplete=()=>resolve(q.result);tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error||Error('저장 작업이 취소되었습니다.'));});}finally{d.close();}
-    }
-    const list = kind => transaction(kind,'readonly',s=>s.getAll());
-    async function remove(kind,id) {
-        await transaction(kind,'readwrite',s=>s.delete(id));
-        if(localStorage.getItem(stores[kind].last)===id)localStorage.removeItem(stores[kind].last);
-    }
+    const list = storage.list, remove = storage.remove;
     async function handoff(kind,data,start) {
         const d=JSON.parse(JSON.stringify(data));
         if(kind==='campaign'){d.starts.forEach(s=>delete s.state);d._startId=start.id;}else d.start={kind:start.kind,preset:start.preset,name:start.name};
@@ -60,7 +53,7 @@
                 const rows=all.filter(it=>`${it.title} ${it.data?.description||''}`.toLowerCase().includes(query));
                 container.innerHTML=rows.length?rows.map((it,i)=>`<article class="story-library-card"><div><b>${esc(it.title||'(제목 없음)')}</b><p>${esc(it.data?.description||'설명이 없습니다.')}</p><small>${esc(it.data?.author||'제작자 미지정')} · ${meta.name}</small></div><div class="story-actions"><button type="button" data-play="${i}">▶ 새 플레이</button><button type="button" data-edit="${i}">편집</button><button type="button" data-delete="${i}" aria-label="${esc(it.title)} 삭제">삭제</button></div></article>`).join(''):`<div class="save-select-empty">${all.length?'검색 결과가 없습니다.':`저장된 ${meta.name}${kind==='campaign'?'이':'가'} 없습니다. 메이커에서 만들거나 파일을 불러오세요.`}</div>`;
                 container.querySelectorAll('[data-play]').forEach(b=>b.onclick=async()=>{b.disabled=true;try{await launch(kind,rows[+b.dataset.play]);}catch(e){await alertBox(e.message);}finally{b.disabled=false;}});
-                container.querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>{localStorage.setItem(meta.last,rows[+b.dataset.edit].id);location.href=meta.editor;});
+                container.querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>{localStorage.setItem(meta.last,rows[+b.dataset.edit].id);location.href=storage.url(kind,rows[+b.dataset.edit].id);});
                 container.querySelectorAll('[data-delete]').forEach(b=>b.onclick=async()=>{
                     const it=rows[+b.dataset.delete],message=`“${it.title}” ${meta.name} 제작물을 삭제할까요? 이 작업은 되돌릴 수 없습니다. 진행 중인 플레이 세이브는 유지됩니다.`;
                     const ok=window.DnoUI?.confirm?await DnoUI.confirm(message):confirm(message);if(!ok)return;
@@ -71,4 +64,5 @@
     }
     document.getElementById('storySearch')?.addEventListener('input',render);
     window.HemiStoryLibrary={list,remove,launch,render};
+    if(document.querySelector('[data-ss-tab="stories"]')?.getAttribute('aria-selected')==='true')render();
 })();

@@ -24,6 +24,7 @@
     <script src="js/devmode.js"></script>
     <script src="js/challenge-data.js"></script>
     <script src="js/campaign-tools.js"></script>
+    <script src="js/maker-store.js"></script>
     <script src="js/story-library.js" defer></script>
     <script src="js/slotstore.js"></script>
     <script src="js/desktopsaves.js"></script>
@@ -72,26 +73,12 @@
         <nav class="home-menu" aria-label="메인 메뉴">
             <a href="#" class="home-menu-item home-menu-primary" onclick="openSaveSelectModal(); return false;">
                 <span class="home-menu-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor"/></svg></span>
-                <span class="home-menu-text"><span class="home-menu-label">시작하기</span><span class="home-menu-desc">새로 만들거나 이어서 하기</span></span>
+                <span class="home-menu-text"><span class="home-menu-label">세이브 허브</span><span class="home-menu-desc">새로 시작 · 이어하기 · 캠페인 · 챌린지 플레이</span></span>
                 <span class="home-menu-chev" aria-hidden="true">›</span>
             </a>
-            <a href="map.html" class="home-menu-item" id="homeMapMaker">
-                <span class="home-menu-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4 3.5 6v14L9 18l6 2 5.5-2V4L15 6z"/><path d="M9 4v14M15 6v14"/></svg></span>
-                <span class="home-menu-text"><span class="home-menu-label">맵 메이커</span><span class="home-menu-desc">SVG 지도로 지역구 지도 만들기</span></span>
-                <span class="home-menu-chev" aria-hidden="true">›</span>
-            </a>
-            <script>
-                // Steam 데모: 맵 메이커는 정식판에서 (지역구 지도는 국가 › 지역구 지도의 맵 프리셋으로)
-                if(window.HEMI_BUILD && window.HEMI_BUILD.demo) {
-                    const mm = document.getElementById('homeMapMaker');
-                    mm.removeAttribute('href'); mm.classList.add('home-menu-locked'); mm.setAttribute('aria-disabled', 'true');
-                    mm.querySelector('.home-menu-desc').textContent = '🔒 정식판에서 — 체험판은 국가 › 지역구 지도의 맵 프리셋으로';
-                    mm.addEventListener('click', e => { e.preventDefault(); DnoUI.alert('맵 메이커는 정식판에서 쓸 수 있어요.\n체험판에서는 국가 › 지역구 지도의 "맵 프리셋에서 고르기"로 나라 지도를 골라 지역구를 만들 수 있습니다.', { title: '체험판' }); });
-                }
-            </script>
-            <a href="scenario.html" class="home-menu-item" id="homeScenario">
-                <span class="home-menu-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1" fill="currentColor"/></svg></span>
-                <span class="home-menu-text"><span class="home-menu-label">캠페인 · 시나리오 <span class="home-menu-test">테스트</span></span><span class="home-menu-desc">세계관 · 방향성 트리 · 위기가 있는 캠페인 만들기</span></span>
+            <a href="maker.html" class="home-menu-item" id="homeMakerHub">
+                <span class="home-menu-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z"/></svg></span>
+                <span class="home-menu-text"><span class="home-menu-label">메이커 허브</span><span class="home-menu-desc">맵 · 캠페인 · 챌린지 제작물 만들기와 관리</span></span>
                 <span class="home-menu-chev" aria-hidden="true">›</span>
             </a>
             <a href="roadmap.html" class="home-menu-item">
@@ -187,7 +174,7 @@
             <div class="corner top-left"></div>
             <div class="corner bottom-right"></div>
             <div class="save-select-head">
-                <span>SAVE SELECT</span>
+                <span>SAVE HUB · 세이브 허브</span>
                 <button class="save-select-close" onclick="closeSaveSelectModal()">X</button>
             </div>
             <!-- 탭: 새로 시작(프리셋 | 빈 세이브) · 이어하기(즐겨찾기 | 세이브) · 튜토리얼(기본 | 심화) -->
@@ -200,7 +187,7 @@
             <div class="save-select-panel" data-ss-panel="stories">
                 <div class="save-select-search save-select-panel-top"><input id="storySearch" type="search" placeholder="캠페인 · 챌린지 검색" aria-label="캠페인 · 챌린지 검색"></div>
                 <p class="settings-label">새 플레이는 복사본 세이브로 시작합니다. 제작물을 삭제해도 이미 진행 중인 세이브는 남습니다.</p>
-                <div class="save-select-columns"><section class="save-select-col"><div class="save-select-col-title">캠페인 <a href="scenario.html">＋ 만들기</a></div><div id="campaignSelectList" class="save-select-list"></div></section><section class="save-select-col"><div class="save-select-col-title">챌린지 <a href="challenge.html">＋ 만들기</a></div><div id="challengeSelectList" class="save-select-list"></div></section></div>
+                <div class="save-select-columns"><section class="save-select-col"><div class="save-select-col-title">캠페인 <a href="maker.html?type=campaign">메이커 허브 ↗</a></div><div id="campaignSelectList" class="save-select-list"></div></section><section class="save-select-col"><div class="save-select-col-title">챌린지 <a href="maker.html?type=challenge">메이커 허브 ↗</a></div><div id="challengeSelectList" class="save-select-list"></div></section></div>
             </div>
             <div class="save-select-panel" data-ss-panel="new">
                 <div class="save-select-columns">
@@ -765,6 +752,7 @@
         });
         document.addEventListener('keydown', e => { if(e.key === 'Escape') { const m = document.getElementById('homeLangMenu'); if(m) m.style.display = 'none'; } });
         renderHomeLangMenu();
+        if(location.hash==='#saves')openSaveSelectModal();
     </script>
 </body>
 </html>
