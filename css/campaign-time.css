@@ -1,7 +1,6 @@
 /* Campaign-owned playback, using the existing neon and modern theme tokens. */
 .cp-time-bar {display:flex;align-items:center;gap:10px;flex-wrap:wrap;border:1px solid var(--tno-border);padding:10px 12px;margin-bottom:10px;color:var(--tno-text);background:var(--tno-panel);font:inherit;}
 .cp-time-bar[hidden] {display:none;}
-#campaignTimeBar {grid-column:1 / -1;grid-row:3;margin:4px 0 0;}
 .cp-time-label {font-size:.75rem;color:var(--tno-gold);}
 .cp-time-date {font-size:.9rem;font-weight:normal;}
 .cp-time-controls {display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-left:auto;}
@@ -20,5 +19,10 @@ html[data-theme-family="modern"] .cp-time-label {color:var(--m-gold);}
 html[data-theme-family="modern"] .cp-time-button,html[data-theme-family="modern"] .cp-time-controls select {background:var(--m-surface);color:var(--m-text);border-color:var(--m-border-strong);border-radius:7px;}
 html[data-theme-family="modern"] .cp-time-note {color:var(--m-text-3);}
 @media(max-width:520px){.cp-time-controls{margin-left:0;width:100%;}.cp-time-date{font-size:.8rem;}.cp-time-bar{gap:6px;}}
-#worldTimeBar {grid-column:1 / -1;grid-row:3;margin:4px 0 0;}
+#campaignTimeBar,#worldTimeBar {grid-column:2;grid-row:1;margin:0;padding:0;border:0;border-radius:0;background:transparent;gap:0;flex-wrap:nowrap;}
+#dispInfoBar .cp-time-label,#dispInfoBar .cp-time-date,#dispInfoBar .cp-time-note {display:none;}
+#dispInfoBar .cp-time-controls {margin:0;width:auto;gap:4px;flex-wrap:nowrap;}
+#dispInfoBar .cp-time-button,#dispInfoBar .cp-time-controls select {padding:4px 6px;font-size:.8rem;line-height:1;}
+#dispInfoBar .cp-time-speed-label {white-space:nowrap;}
+#dispInfoBar .cp-time-controls select {width:auto;}
 html[data-world-clock] #dispDateControls,html[data-world-clock] [data-native-date-note] {display:none!important;}

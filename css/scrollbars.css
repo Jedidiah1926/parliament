@@ -1,0 +1,50 @@
+/* Shared page, panel and form scrollbars. More specific hidden/compact rules stay in force. */
+html {
+    --scroll-track: #000;
+    --scroll-thumb: var(--tno-border, #4a5a6a);
+    --scroll-hover: var(--tno-neon, var(--accent-color, #00ffff));
+    --scroll-border: 1px solid var(--tno-neon, var(--accent-color, #00ffff));
+    --scroll-radius: 0;
+    --scroll-clip: border-box;
+}
+html[data-theme-family="modern"] {
+    --scroll-track: transparent;
+    --scroll-thumb: var(--m-border-strong, #d4d4d8);
+    --scroll-hover: var(--m-text-4, #8b8b94);
+    --scroll-border: 2px solid transparent;
+    --scroll-radius: 999px;
+    --scroll-clip: padding-box;
+}
+html[data-theme-mode="dark"][data-theme-family="modern"] {
+    --scroll-thumb: var(--m-border-strong, #3f3f46);
+}
+::-webkit-scrollbar { width: 10px; height: 10px; background: var(--scroll-track); }
+::-webkit-scrollbar-track, ::-webkit-scrollbar-corner { background: var(--scroll-track); }
+::-webkit-scrollbar-thumb {
+    background: var(--scroll-thumb);
+    background-clip: var(--scroll-clip);
+    border: var(--scroll-border);
+    border-radius: var(--scroll-radius);
+}
+::-webkit-scrollbar-thumb:hover { background: var(--scroll-hover); background-clip: var(--scroll-clip); }
+::-webkit-scrollbar-button { display: none; }
+/* Keep the generic modern surface rules from repainting scrollbars as panels.
+   Include the root pseudo-elements too: descendant selectors omit the page scrollbar. */
+:root[data-theme-family="modern"]::-webkit-scrollbar,
+:root[data-theme-family="modern"] ::-webkit-scrollbar,
+:root[data-theme-family="modern"]::-webkit-scrollbar-track,
+:root[data-theme-family="modern"] ::-webkit-scrollbar-track,
+:root[data-theme-family="modern"]::-webkit-scrollbar-corner,
+:root[data-theme-family="modern"] ::-webkit-scrollbar-corner { background: transparent !important; }
+:root[data-theme-family="modern"]::-webkit-scrollbar-thumb,
+:root[data-theme-family="modern"] ::-webkit-scrollbar-thumb {
+    background: var(--scroll-thumb) !important;
+    background-clip: padding-box !important;
+    border: 2px solid transparent !important;
+}
+:root[data-theme-family="modern"]::-webkit-scrollbar-thumb:hover,
+:root[data-theme-family="modern"] ::-webkit-scrollbar-thumb:hover { background: var(--scroll-hover) !important; }
+/* Firefox uses the standard properties; Chromium keeps the original outlined thumb. */
+@supports not selector(::-webkit-scrollbar) {
+    * { scrollbar-width: thin; scrollbar-color: var(--scroll-thumb) var(--scroll-track); }
+}
