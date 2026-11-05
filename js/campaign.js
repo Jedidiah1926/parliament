@@ -20,7 +20,7 @@
     const paras = t => esc(t || '').split(/\n{2,}/).map(p => `<p>${p.replace(/\n/g, '<br>')}</p>`).join('');
 
     let R = null; // 세이브에 붙은 캠페인 상태
-    let ui = { view: 'focus', sel: null };
+    let ui = { view: 'focus', sel: null, treeZoom: 1 };
 
     // ---------------------------------------------------------------
     // 캠페인 → 스크립트 모드 하나
@@ -431,6 +431,7 @@
 
     // 방향성 트리 — 칸(x, y)에 놓인 상자들, 앞선 방향성(prereq: 실선, any: 점선)과 배타(exclusive: 빨간 ✕)
     function renderTree(box) {
+        const oldWrap=box.querySelector('.cp-tree-wrap'), scroll=oldWrap?{x:oldWrap.scrollLeft,y:oldWrap.scrollTop}:{x:0,y:0};
         const list = focusList();
         if (!list.length) { box.innerHTML = '<div class="cp-empty">이 캠페인에는 방향성 트리가 없습니다.</div>'; return; }
         const FV = window.HemiFocusView, st = FV ? FV.style(R.data) : { width: 150, height: 74, gapX: 30, gapY: 46 };
@@ -448,20 +449,23 @@
                 if (Math.abs(p.y - b.y) < 1) { const x1 = Math.min(p.x, b.x) + W, x2 = Math.max(p.x, b.x); lines += `<line x1="${x1}" y1="${y}" x2="${x2}" y2="${y}" class="cp-excl"/><text x="${(x1 + x2) / 2}" y="${y + 5}" text-anchor="middle" class="cp-excl-t">✕</text>`; } });
         });
         const sel = ui.sel && focusById(ui.sel);
-        box.innerHTML = `<div class="cp-tree-wrap"><div class="cp-tree hf-scope" id="cpFocusTree" style="width:${maxX}px;height:${maxY}px">${FV ? FV.styleTag(st, '#cpFocusTree') : ''}
+        box.innerHTML = `<div class="cp-row cp-tree-tools"><span class="cp-dim">방향성 ${Object.keys(R.focus.done).length} / ${list.length} 완료</span><span class="cp-grow"></span><button type="button" class="cp-btn" data-tree-zoom="out" aria-label="트리 축소">−</button><span class="cp-dim">${Math.round(ui.treeZoom*100)}%</span><button type="button" class="cp-btn" data-tree-zoom="in" aria-label="트리 확대">+</button><button type="button" class="cp-btn" data-tree-fit>전체 보기</button></div><div class="cp-tree-wrap"><div style="width:${maxX*ui.treeZoom}px;height:${maxY*ui.treeZoom}px"><div class="cp-tree hf-scope" id="cpFocusTree" style="width:${maxX}px;height:${maxY}px;transform:scale(${ui.treeZoom});transform-origin:top left">${FV ? FV.styleTag(st, '#cpFocusTree') : ''}
             <svg class="cp-tree-svg" width="${maxX}" height="${maxY}">${lines}</svg>
             ${list.map(f => { const p = pos(f), s = focusState(f), cur = R.focus.cur && R.focus.cur.id === f.id;
                 const nd = nowDay() ?? 0, pct = cur && R.focus.cur.days ? clamp((nd - (R.focus.cur.started ?? nd)) / R.focus.cur.days * 100, 0, 100) : 0;
                 const daysText = s === 'done' ? '완료' : cur ? `${Math.max(0, R.focus.cur.days - (nd - (R.focus.cur.started ?? nd)))}일 남음` : `${Number(f.days) || 0}일`;
                 return `<button type="button" class="cp-node hf-node hf-${s} ${ui.sel === f.id ? 'sel' : ''}" data-node="${esc(f.id)}" style="left:${p.x}px;top:${p.y}px;width:${W}px;height:${H}px" title="${esc(f.title || f.id)}">
                     ${FV ? FV.inner(f, { status: s, daysText, progress: pct, current: cur }, st) : esc(f.title || f.id)}</button>`; }).join('')}
-        </div></div>
+        </div></div></div>
         ${sel ? `<div class="cp-node-detail"><div class="cp-row">${iconOf(sel, 'cp-li')}<b>${esc(sel.title || sel.id)}</b><span class="cp-grow"></span><span class="cp-dim">${Number(sel.days) || 0}일 · ${{ done: '완료', current: '진행 중', available: '고를 수 있음', locked: '아직 못 고름', blocked: '다른 길을 골라 막힘' }[focusState(sel)]}</span></div>
             ${sel.desc ? `<div class="cp-crisis-desc">${paras(fillT(sel.desc))}</div>` : ''}
             ${(sel.prereq || []).length ? `<div class="cp-dim">먼저: ${sel.prereq.map(id => esc((focusById(id) || {}).title || id)).join(', ')}</div>` : ''}
             ${(sel.any || []).length ? `<div class="cp-dim">이 중 하나 먼저: ${sel.any.map(id => esc((focusById(id) || {}).title || id)).join(', ')}</div>` : ''}
             ${(sel.exclusive || []).length ? `<div class="cp-dim">함께 못 고름: ${sel.exclusive.map(id => esc((focusById(id) || {}).title || id)).join(', ')}</div>` : ''}
             ${focusState(sel) === 'available' ? `<div class="cp-row"><button type="button" class="cp-btn cp-primary" data-start-focus="${esc(sel.id)}">이 방향으로 (${Number(sel.days) || 0}일)</button></div>` : ''}</div>` : '<div class="cp-dim cp-hint">상자를 누르면 자세히 보고 고를 수 있습니다. 한 번에 하나씩, 정한 날이 지나면 끝나고 효과가 들어갑니다.</div>'}`;
+        const wrap=box.querySelector('.cp-tree-wrap');wrap.scrollLeft=scroll.x;wrap.scrollTop=scroll.y;
+        box.querySelectorAll('[data-tree-zoom]').forEach(b=>b.onclick=()=>{ui.treeZoom=clamp(ui.treeZoom+(b.dataset.treeZoom==='in'?.15:-.15),.3,1.75);renderTree(box);});
+        box.querySelector('[data-tree-fit]').onclick=()=>{ui.treeZoom=clamp((wrap.clientWidth-24)/maxX,.3,1);wrap.scrollLeft=0;wrap.scrollTop=0;renderTree(box);};
         box.querySelectorAll('[data-node]').forEach(b => { b.onclick = () => { ui.sel = b.dataset.node; renderTree(box); }; b.ondblclick = () => startFocus(b.dataset.node); });
         box.querySelector('[data-start-focus]')?.addEventListener('click', e => startFocus(e.target.dataset.startFocus));
     }

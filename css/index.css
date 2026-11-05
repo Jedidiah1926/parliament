@@ -754,3 +754,22 @@ html[data-build="demo"] .hemi-full-only { display: none !important; }
 /* 홈 메뉴의 "테스트" 표시 (시나리오) */
 .home-menu-test { font-size: .62em; padding: 0 5px; border: 1px solid var(--tno-gold); color: var(--tno-gold); vertical-align: 2px; letter-spacing: 0; }
 html[data-theme-family="modern"] .home-menu-test { border: none; border-radius: 999px; padding: 1px 7px; background: color-mix(in srgb, var(--m-gold) 18%, transparent); color: var(--m-gold); font-weight: 700; }
+
+/* Campaign/challenge maker library in SAVE SELECT */
+.story-library-card { border:1px solid var(--tno-border,#44505e);padding:14px;display:flex;flex-direction:column;gap:12px;background:rgba(120,140,160,.06); }
+.story-library-card b {font-size:15px;overflow-wrap:anywhere;}
+.story-library-card p {margin:6px 0;font-size:12px;opacity:.75;white-space:pre-wrap;overflow-wrap:anywhere;}
+.story-library-card small {font-size:11px;opacity:.6;}
+.story-actions {display:flex;gap:6px;flex-wrap:wrap;}
+.story-actions button,.story-start-dialog button {font:inherit;cursor:pointer;color:inherit;background:transparent;border:1px solid currentColor;padding:7px 10px;}
+.story-actions [data-play] {color:var(--tno-neon,#68c9b2);}
+.story-actions [data-delete] {margin-left:auto;color:#e67d79;}
+.save-select-col-title a {font-size:12px;float:right;color:inherit;}
+.story-start-overlay {position:fixed;inset:0;background:#000b;z-index:20000;display:grid;place-items:center;padding:20px;}
+.story-start-dialog {width:min(460px,100%);max-height:85vh;overflow:auto;padding:24px;background:var(--m-surface,#151b23);color:var(--m-text,#eee);display:grid;gap:12px;border:1px solid #62777a;}
+.story-start-dialog h2 {font-size:18px;}
+.story-start-dialog button {text-align:left;display:grid;gap:5px;}
+.story-start-dialog span {font-size:12px;opacity:.7;}
+html[data-theme-family="modern"] .story-library-card {border-color:var(--m-border);border-radius:12px;}
+html[data-theme-family="modern"] .story-actions button {border-radius:7px;}
+html[data-theme-family="modern"] .story-actions [data-play] {color:var(--m-accent);}

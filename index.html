@@ -22,6 +22,9 @@
 
     <script src="js/lang.js"></script>
     <script src="js/devmode.js"></script>
+    <script src="js/challenge-data.js"></script>
+    <script src="js/campaign-tools.js"></script>
+    <script src="js/story-library.js" defer></script>
     <script src="js/slotstore.js"></script>
     <script src="js/desktopsaves.js"></script>
 </head>
@@ -192,6 +195,12 @@
                 <button class="save-select-tab" role="tab" data-ss-tab="new" onclick="switchSaveSelectTab('new')">새로 시작</button>
                 <button class="save-select-tab" role="tab" data-ss-tab="continue" onclick="switchSaveSelectTab('continue')">이어하기</button>
                 <button class="save-select-tab" role="tab" data-ss-tab="tutorial" onclick="switchSaveSelectTab('tutorial')">튜토리얼</button>
+                <button class="save-select-tab" role="tab" data-ss-tab="stories" onclick="switchSaveSelectTab('stories')">캠페인 · 챌린지</button>
+            </div>
+            <div class="save-select-panel" data-ss-panel="stories">
+                <div class="save-select-search save-select-panel-top"><input id="storySearch" type="search" placeholder="캠페인 · 챌린지 검색" aria-label="캠페인 · 챌린지 검색"></div>
+                <p class="settings-label">새 플레이는 복사본 세이브로 시작합니다. 제작물을 삭제해도 이미 진행 중인 세이브는 남습니다.</p>
+                <div class="save-select-columns"><section class="save-select-col"><div class="save-select-col-title">캠페인 <a href="scenario.html">＋ 만들기</a></div><div id="campaignSelectList" class="save-select-list"></div></section><section class="save-select-col"><div class="save-select-col-title">챌린지 <a href="challenge.html">＋ 만들기</a></div><div id="challengeSelectList" class="save-select-list"></div></section></div>
             </div>
             <div class="save-select-panel" data-ss-panel="new">
                 <div class="save-select-columns">
@@ -539,7 +548,8 @@
         }
 
         function switchSaveSelectTab(tab, silent) {
-            if(!['new', 'continue', 'tutorial'].includes(tab)) tab = 'new';
+            if(tab==='stories' && window.HemiStoryLibrary) HemiStoryLibrary.render();
+            if(!['new', 'continue', 'tutorial', 'stories'].includes(tab)) tab = 'new';
             document.querySelectorAll('#saveSelectOverlay [data-ss-tab]').forEach(b => {
                 const on = b.dataset.ssTab === tab;
                 b.classList.toggle('active', on);
