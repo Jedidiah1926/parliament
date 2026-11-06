@@ -86,7 +86,7 @@
         document.addEventListener('visibilitychange',()=>{if(document.hidden&&clock())pause('다른 화면으로 이동해 일시정지');else render();});
         document.addEventListener('keydown',e=>{
             if(e.repeat&&e.target.closest?.('[data-campaign-next-turn]')){e.preventDefault();return;}
-            if(e.code!=='Space'||e.repeat||e.ctrlKey||e.metaKey||e.altKey||!clock()||clock().mode!=='realtime'||/^(INPUT|TEXTAREA|SELECT|BUTTON)$/.test(e.target.tagName)||blocked())return;
+            if(e.code!=='Space'||e.repeat||e.ctrlKey||e.metaKey||e.altKey||!clock()||clock().mode!=='realtime'||/^(INPUT|TEXTAREA|SELECT|BUTTON)$/.test(e.target.tagName)||e.target.closest?.('[role="button"],[contenteditable="true"]')||blocked())return;
             e.preventDefault();e.stopPropagation();clock().paused?play():pause();
         },true);
         window.addEventListener('beforeunload',()=>{stopTimer();if(clock()){clock().paused=true;save();}});
