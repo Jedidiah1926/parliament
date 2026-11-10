@@ -663,8 +663,15 @@
         injuredIndexes(ch).forEach(i => { if (voteState[ch][i]) { delete voteState[ch][i]; n++; } });
         return n;
     }
-    const origConfirm = window.confirmChamberVote;
+    // 표결 버튼(confirmChamberVote)은 투표 연출을 돌린 뒤 finalizeChamberVote로 결과를 기록한다 —
+    // 부상자 표는 연출 전에 빼고, 회복은 결과가 실제로 기록될 때 한 번
+    const origStart = window.confirmChamberVote;
     window.confirmChamberVote = function (chamber) {
+        clearInjuredVotes(chamber);
+        return origStart.apply(this, arguments);
+    };
+    const origConfirm = window.finalizeChamberVote || origStart;
+    window[window.finalizeChamberVote ? 'finalizeChamberVote' : 'confirmChamberVote'] = function (chamber) {
         clearInjuredVotes(chamber);
         const before = (typeof bills !== 'undefined' && bills.find(b => b.id === activeBillIdSafe())) || null;
         const hist = before ? (before.voteHistory || []).length : 0;

@@ -2534,6 +2534,8 @@
         function selectBillForVote(id) {
             const blocked = id ? legisPlenaryBlock(bills.find(b => b.id === id)) : null;
             if(blocked) { showCustomAlert(blocked); syncBillSelect(); return; }
+            if(anyVoteAnimRunning()) { syncBillSelect(); return; }
+            clearVoteSortView();
             activeBillId = id;
             voteState = { house: {}, senate: {}, third: {} };
             renderBillList();
@@ -3115,8 +3117,175 @@
             });
         }
 
-        // ===== CONFIRM CHAMBER VOTE =====
-        function confirmChamberVote(chamber) {
+        // ===== 표결 연출 =====
+        // 좌석 · 당론으로 찍는 찬성 · 반대 · 기권은 "예정"(voteState)이다. 표결 버튼을 누르면 의원들이 무작위 타이밍으로
+        // 한 명씩 투표하고(voteCast — 집계도 0부터 올라감), 다 끝나면 찬성 · 반대 · 기권 순으로 자리를 다시 모은 뒤
+        // 결과를 확정한다(finalizeChamberVote). 버튼을 한 번 더 누르면 건너뛴다.
+        const voteCast = { house: null, senate: null, third: null };      // 투표 중일 때만 Set(이미 투표한 좌석)
+        const voteAnim = { house: null, senate: null, third: null };      // 진행 중인 연출 { skip }
+        const voteSortView = { house: null, senate: null, third: null };  // 정렬된 결과 화면 { entries, t }
+        function voteCanvasId(ch) { return ch === 'senate' ? 'senateCanvas' : ch === 'third' ? 'thirdCanvas' : 'houseCanvas'; }
+        function onVoteSubTab() { return currentMainTab === 'law' && currentSubTab.law === 'vote'; }
+        function anyVoteAnimRunning() { return !!(voteAnim.house || voteAnim.senate || voteAnim.third); }
+        // 좌석 하나의 표결 모습 — fill: 칠할 표결 색, ring: 안쪽 링 색(없으면 정당 색)
+        // 예정 표는 예전처럼 표결 색 + 정당 색 링, 투표 연출 중 · 결과 화면은 정당과 상관없이 표결 색 + 조금 진한 같은 계열 링
+        // 투표 중 아직 표를 안 던진 좌석은 공석과 같은 색(blank)
+        const VOTE_BLANK_FILL = '#222', VOTE_BLANK_STROKE = '#333';
+        function seatVoteLook(chamber, i, d) {
+            const planned = d && d.partyStatus === 'banned' ? 'none' : ((voteState[chamber] || {})[i] || 'none');
+            const cast = voteCast[chamber];
+            if(cast) return cast.has(i) ? { fill: getVoteColor(planned), ring: voteRingColor(planned) } : { fill: VOTE_BLANK_FILL, ring: null, blank: true };
+            return { fill: getVoteColor(planned), ring: null };
+        }
+        // 표결 연출 — 'new': 예정 표 · 무작위 타이밍 투표(개편), 'classic': 좌석에 바로 표를 찍고 확정(기존). 설정 › 화면, 이 브라우저(앱)에 저장
+        function voteStyleNew() { try { return localStorage.getItem('dnoVoteStyle') !== 'classic'; } catch(e) { return true; } }
+        // 표결 화면 글자를 지금 방식에 맞춤
+        function applyVoteStyleLabels() {
+            const isNew = voteStyleNew();
+            const set = (sel, txt) => { const el = document.querySelector(sel); if(el) el.innerHTML = txt; };
+            set('#voteModePanel .vote-panel-title', `<span class="tno-prompt">&gt; </span>${isNew ? '예정 표 찍기' : '투표 입력 모드'}`);
+            set('#voteModeHint', isNew
+                ? '고른 뒤 반원의 좌석을 누르면 그 의원의 예정 표가 정해집니다. 아래 "표결 시작"을 누르면 의원들이 하나씩 투표해요'
+                : '모드 선택 후 캔버스 의원 원 클릭 (정보 보기 모드는 투표를 바꾸지 않음)');
+            set('#partyBulkPanel .vote-panel-title', `<span class="tno-prompt">&gt; </span>${isNew ? '당론 (PARTY LINE)' : '정당 일괄 투표 (PARTY BULK)'}`);
+            const bh = document.getElementById('partyBulkHint');
+            if(bh) bh.style.display = isNew ? '' : 'none';
+            try { setVoteMode(currentVoteMode); updateConfirmButtons(); updateVoteResults(); } catch(e) { /* 화면 준비 전 */ }
+        }
+        document.addEventListener('DOMContentLoaded', applyVoteStyleLabels);
+        function voteRingColor(v) {
+            if(v === 'yea') return '#00b863';
+            if(v === 'nay') return '#c8102e';
+            if(v === 'abs') return '#5c5c5c';
+            return null;
+        }
+        function clearVoteSortView(chamber) {
+            const chs = chamber ? [chamber] : ['house', 'senate', 'third'];
+            let had = false;
+            chs.forEach(ch => { if(voteSortView[ch]) { voteSortView[ch] = null; had = true; } });
+            if(had) redrawAll();
+        }
+        // 투표를 마친 뒤: 찬성 → 반대 → 기권 → 불참 순으로 자리를 다시 모은다 (좌석은 왼쪽부터 각도순)
+        function buildVoteSortEntries(chamber) {
+            const dots = dotCache[chamber] || [];
+            const rank = { yea: 0, nay: 1, abs: 2, none: 3 };
+            const list = dots.map((d, i) => {
+                const v = (d.partyName === 'Vacant' || d.partyStatus === 'banned') ? 'none' : ((voteState[chamber] || {})[i] || 'none');
+                return { from: i, vote: rank[v] != null ? v : 'none', color: d.color };
+            });
+            const sorted = list.slice().sort((a, b) => rank[a.vote] - rank[b.vote] || a.from - b.from);
+            sorted.forEach((en, j) => { en.to = j; });
+            return list;
+        }
+        function drawVoteSortView(cvsId, chamber) {
+            const sv = voteSortView[chamber];
+            const dots = dotCache[chamber];
+            const cvs = document.getElementById(cvsId);
+            if(!sv || !dots?.length || !cvs) return;
+            const dpr = renderDpr();
+            const ctx = cvs.getContext('2d');
+            const W = cvs.width / dpr, H = cvs.height / dpr;
+            ctx.clearRect(0, 0, W, H);
+            const t = Math.max(0, Math.min(1, sv.t));
+            const e = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+            sv.entries.forEach(en => {
+                const a = dots[en.from], b = dots[en.to];
+                if(!a || !b) return;
+                const x = a.x + (b.x - a.x) * e, y = a.y + (b.y - a.y) * e;
+                const r = a.r * 0.85;
+                const vc = getVoteColor(en.vote);
+                ctx.beginPath();
+                ctx.arc(x, y, r, 0, Math.PI * 2);
+                ctx.fillStyle = vc || VOTE_BLANK_FILL;
+                ctx.fill();
+                if(vc) { ctx.strokeStyle = voteRingColor(en.vote); ctx.lineWidth = 2.5; }
+                else { ctx.strokeStyle = VOTE_BLANK_STROKE; ctx.lineWidth = 1; }
+                ctx.stroke();
+            });
+            drawChamberCenter(ctx, dots[0].cx ?? W / 2, dots[0].cy ?? H - 40, dots.length, chamber, cvsId, W);
+        }
+        function voteAnimDuration(n) { return Math.max(1800, Math.min(5200, 1400 + n * 9)); }
+        const voteWait = ms => new Promise(r => setTimeout(r, ms));
+        function animateFrames(ms, anim, onFrame) {
+            return new Promise(resolve => {
+                const start = performance.now();
+                const tick = now => {
+                    const el = anim.skip ? ms : Math.min(ms, now - start);
+                    onFrame(el);
+                    if(el >= ms) resolve(); else requestAnimationFrame(tick);
+                };
+                requestAnimationFrame(tick);
+            });
+        }
+
+        // 표결 확정 버튼 — 투표 연출을 돌린 뒤 결과를 확정한다 (연출 중에 다시 누르면 건너뛰기)
+        async function confirmChamberVote(chamber) {
+            if(voteAnim[chamber]) { voteAnim[chamber].skip = true; return; }
+            if(!voteStyleNew()) { finalizeChamberVote(chamber); return; } // 기존 방식: 바로 확정
+            if(!chamberVotePrecheck(chamber)) return;
+            clearVoteSortView(chamber);
+            const cvsId = voteCanvasId(chamber);
+            const dots = dotCache[chamber] || [];
+            const voters = [];
+            dots.forEach((d, i) => {
+                if(d.partyName === 'Vacant' || d.partyStatus === 'banned') return;
+                const v = voteState[chamber][i];
+                if(v === 'yea' || v === 'nay' || v === 'abs') voters.push(i);
+            });
+            const anim = voteAnim[chamber] = { skip: false };
+            voteCast[chamber] = new Set();
+            updateConfirmButtons();
+            try {
+                // 1) 무작위 타이밍으로 한 명씩 투표 — 초반에 몰렸다가 끝으로 갈수록 드문드문
+                const total = voteAnimDuration(voters.length);
+                const times = voters.map(i => ({ i, t: Math.pow(Math.random(), 1.35) * total })).sort((a, b) => a.t - b.t);
+                let k = 0;
+                await animateFrames(total, anim, el => {
+                    let changed = false;
+                    while(k < times.length && times[k].t <= el) { voteCast[chamber].add(times[k++].i); changed = true; }
+                    if(changed || el >= total) { redrawChamber(cvsId, chamber); updateVoteResults(); }
+                });
+                voteCast[chamber] = null;
+                if(!anim.skip) await voteWait(450);
+                // 2) 찬성 · 반대 · 기권 순으로 자리 모으기
+                voteSortView[chamber] = { entries: buildVoteSortEntries(chamber), t: 0 };
+                await animateFrames(750, anim, el => { voteSortView[chamber].t = el / 750; redrawChamber(cvsId, chamber); });
+            } finally {
+                voteCast[chamber] = null;
+                voteAnim[chamber] = null;
+            }
+            // 3) 결과 확정 — 모은 자리는 예정을 바꾸거나 법안을 바꿀 때까지 그대로
+            const bill = bills.find(b => b.id === activeBillId);
+            finalizeChamberVote(chamber);
+            const status = bill ? bill[chamber + 'Status'] : null;
+            if(status !== 'pass' && status !== 'fail') clearVoteSortView(chamber);
+            updateConfirmButtons();
+        }
+
+        // 표결을 시작할 수 있는지 (법안 선택 · 원 순서) — 안 되면 알림을 띄우고 false
+        function chamberVotePrecheck(chamber) {
+            if(!activeBillId) { showCustomAlert('심의할 법안을 먼저 선택하세요.'); return false; }
+            const bill = bills.find(b=>b.id===activeBillId);
+            if(!bill) return false;
+            const isBi  = hasSenateChamber();
+            const hName = document.getElementById('houseNameInput')?.value || '하원';
+            const sName = document.getElementById('senateNameInput')?.value || '상원';
+            if(chamber === 'senate') {
+                if(bill.houseStatus === 'pending') { showCustomAlert(`${hName} 표결을 먼저 확정하세요.`); return false; }
+                if(bill.houseStatus === 'fail') { showCustomAlert(`${hName}에서 부결된 법안은 ${sName}에 상정되지 않습니다.`); return false; }
+            }
+            if(chamber === 'third') {
+                const prevStatus = isBi ? bill.senateStatus : bill.houseStatus;
+                const prevName = isBi ? sName : hName;
+                if(prevStatus === 'pending') { showCustomAlert(`${prevName} 표결을 먼저 확정하세요.`); return false; }
+                if(prevStatus === 'fail') { showCustomAlert(`${prevName}에서 부결된 법안은 삼원에 상정되지 않습니다.`); return false; }
+            }
+            if(bill[chamber + 'Status'] && bill[chamber + 'Status'] !== 'pending') return false;
+            return true;
+        }
+
+        // ===== CONFIRM CHAMBER VOTE (결과 기록) =====
+        function finalizeChamberVote(chamber) {
             if(!activeBillId) { showCustomAlert('심의할 법안을 먼저 선택하세요.'); return; }
             const bill = bills.find(b=>b.id===activeBillId);
             if(!bill) return;
@@ -3209,7 +3378,7 @@
             hBtn.style.cursor = hDone ? 'not-allowed' : 'pointer';
             hBtn.textContent = hDone
                 ? (bill.houseStatus === 'pass' ? `✔ ${hName} 가결 확정됨` : `✘ ${hName} 부결 확정됨`)
-                : `▶ ${hName} 표결 확정`;
+                : `▶ ${hName} ${voteStyleNew() ? '표결 시작' : '표결 확정'}`;
 
             if(isBi) {
                 const hPassed = bill && bill.houseStatus === 'pass';
@@ -3223,7 +3392,7 @@
                 if(sSkip)         sBtn.textContent = `✘ ${hName} 부결 — ${sName} 미상정`;
                 else if(sDone)    sBtn.textContent = bill.senateStatus === 'pass' ? `✔ ${sName} 가결 확정됨` : `✘ ${sName} 부결 확정됨`;
                 else if(!hPassed) sBtn.textContent = `[##] ${hName} 가결 후 열림`;
-                else              sBtn.textContent = `▶ ${sName} 표결 확정`;
+                else              sBtn.textContent = `▶ ${sName} ${voteStyleNew() ? '표결 시작' : '표결 확정'}`;
             }
 
             if(isTri && tBtn) {
@@ -3240,14 +3409,22 @@
                 if(tSkip)         tBtn.textContent = `✘ ${prevName} 부결 — ${tName} 미상정`;
                 else if(tDone)    tBtn.textContent = bill.thirdStatus === 'pass' ? `✔ ${tName} 가결 확정됨` : `✘ ${tName} 부결 확정됨`;
                 else if(!prevPassed) tBtn.textContent = `[##] ${prevName} 가결 후 열림`;
-                else              tBtn.textContent = `▶ ${tName} 표결 확정`;
+                else              tBtn.textContent = `▶ ${tName} ${voteStyleNew() ? '표결 시작' : '표결 확정'}`;
             }
+            // 투표 연출 중: 버튼은 건너뛰기
+            [['house', hBtn], ['senate', sBtn], ['third', tBtn]].forEach(([ch, btn]) => {
+                if(!btn || !voteAnim[ch]) return;
+                btn.disabled = false; btn.style.opacity = '1'; btn.style.cursor = 'pointer';
+                btn.textContent = '⏩ 투표 중… (누르면 건너뛰기)';
+            });
         }
 
         function setVoteMode(mode) {
             currentVoteMode = mode;
             closeSeatInfoCard();
-            const labels = { yea: '▲ 찬성 (초록)', nay: '▼ 반대 (빨강)', abs: '— 기권 (회색)', none: '✕ 제거', info: '🔍 정보 보기' };
+            const labels = voteStyleNew()
+                ? { yea: '▲ 찬성 예정 (초록)', nay: '▼ 반대 예정 (빨강)', abs: '— 기권 예정 (회색)', none: '✕ 예정 지우기', info: '🔍 정보 보기' }
+                : { yea: '▲ 찬성 (초록)', nay: '▼ 반대 (빨강)', abs: '— 기권 (회색)', none: '✕ 제거', info: '🔍 정보 보기' };
             const colors  = { yea: '#00ff88', nay: '#ff2244', abs: '#888888', none: '#888', info: 'var(--tno-neon)' };
             const el = document.getElementById('currentModeLabel');
             el.textContent = labels[mode] || '없음';
@@ -3255,6 +3432,8 @@
         }
 
         function clearAllVotes() {
+            if(anyVoteAnimRunning()) return;
+            clearVoteSortView();
             voteState = { house: {}, senate: {}, third: {} };
             redrawAll();
             updateVoteResults();
@@ -3291,6 +3470,8 @@
         }
 
         function applyPartyVote(partyName, vote) {
+            if(anyVoteAnimRunning()) return;
+            clearVoteSortView();
             if(vote !== 'none' && isParliamentSuspended()) return;
             // 활동 금지된 정당은 표결에 참여할 수 없음
             if(vote !== 'none' && parties.find(p=>p.name===partyName)?.status==='banned') return;
@@ -3431,6 +3612,8 @@
         }
 
         function applyFactionVote(partyName, factionId, vote) {
+            if(anyVoteAnimRunning()) return;
+            clearVoteSortView();
             if(vote !== 'none' && isParliamentSuspended()) return;
             // 활동 금지된 정당은 표결에 참여할 수 없음
             if(vote !== 'none' && parties.find(p=>p.name===partyName)?.status==='banned') return;
@@ -3508,6 +3691,8 @@
             }
 
             if(currentVoteMode !== 'none' && isParliamentSuspended()) return;
+            if(voteAnim[chamber]) return; // 투표 중에는 예정을 바꿀 수 없음
+            clearVoteSortView();
 
             const prev = voteState[chamber][hit] || 'none';
             if(currentVoteMode === 'none') {
@@ -4491,8 +4676,10 @@
             } else {
                 yea=0; nay=0; abs=0;
                 const dots = dotCache[chamber];
+                const cast = voteCast[chamber];
                 dots.forEach((d, i) => {
                     if(d.partyName === 'Vacant' || d.partyStatus==='banned') return;
+                    if(cast && !cast.has(i)) return; // 투표 중: 이미 투표한 표만 셈
                     const v = voteState[chamber][i] || 'none';
                     if(v==='yea') yea++;
                     else if(v==='nay') nay++;
@@ -4547,13 +4734,15 @@
 
             // 부가 정보 (찬성수/기준, 기준명, 부족석)
             const infoEl = document.getElementById(prefix+'VoteInfo');
+            const isPlan = !isConfirmed && !voteCast[chamber] && voteStyleNew();
+            const planTag = isPlan && (yea + nay + abs) > 0 ? '예정 · ' : (voteCast[chamber] ? '투표 중 · ' : '');
             if(infoEl) {
                 if(yea + nay + abs === 0) {
                     infoEl.textContent = `기준: ${thLabel}, ${required}석 필요`;
                 } else if(yea >= required) {
-                    infoEl.textContent = `${yea} / ${required} (${thLabel})`;
+                    infoEl.textContent = `${planTag}${yea} / ${required} (${thLabel})`;
                 } else {
-                    infoEl.textContent = `${yea} / ${required} (${thLabel}, ${required - yea}석 부족)`;
+                    infoEl.textContent = `${planTag}${yea} / ${required} (${thLabel}, ${required - yea}석 부족)`;
                 }
             }
 
@@ -4564,11 +4753,14 @@
             if(yea + nay + abs === 0) {
                 vEl.textContent = '-- 표결 대기 중 --';
                 vEl.classList.add('verdict-pending');
+            } else if(voteCast[chamber]) {
+                vEl.textContent = `투표 진행 중… (${yea + nay + abs}명 투표)`;
+                vEl.classList.add('verdict-pending');
             } else if(yea >= required) {
-                vEl.textContent = `✔ 가결 (${billTitle})`;
+                vEl.textContent = isPlan ? `가결 예상 (${billTitle})` : `✔ 가결 (${billTitle})`;
                 vEl.classList.add('verdict-pass');
             } else {
-                vEl.textContent = `✘ 부결 (${billTitle})`;
+                vEl.textContent = isPlan ? `부결 예상 (${billTitle})` : `✘ 부결 (${billTitle})`;
                 vEl.classList.add('verdict-fail');
             }
         }
@@ -4806,6 +4998,8 @@
         function redrawChamber(cvsId, chamber) {
             const dots = dotCache[chamber];
             if(!dots || dots.length === 0) return;
+            // 투표를 마친 결과 화면(찬성 · 반대 · 기권 순으로 모음)은 표결 탭에서만
+            if(voteSortView[chamber] && (onVoteSubTab() || voteAnim[chamber])) { drawVoteSortView(cvsId, chamber); return; }
             const cvs = document.getElementById(cvsId);
             const dpr = renderDpr();
             const ctx = cvs.getContext('2d');
@@ -4817,8 +5011,8 @@
             const highlightGov = document.getElementById('chkGovHighlight').checked;
 
             dots.forEach((d, i) => {
-                const vote = voteState[chamber][i] || 'none';
-                const voteColor = getVoteColor(vote);
+                const look = seatVoteLook(chamber, i, d);
+                const voteColor = look.fill;
 
                 ctx.beginPath();
                 ctx.arc(d.x, d.y, d.r * 0.85, 0, Math.PI*2);
@@ -4831,8 +5025,12 @@
                 }
                 ctx.fill();
 
-                // Stroke: always party/coalition/gov color
-                if(d.partyStatus === 'banned') {
+                // Stroke: always party/coalition/gov color (투표 중 미투표 좌석은 공석처럼)
+                if(look.blank || look.ring) { // 투표 연출 중에는 정당 · 여당 테두리 없이
+                    ctx.strokeStyle = look.ring || VOTE_BLANK_STROKE;
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+                } else if(d.partyStatus === 'banned') {
                     ctx.shadowColor = "rgba(255, 0, 85, 0.8)";
                     ctx.shadowBlur = 10;
                     ctx.strokeStyle = "#ff0055";
@@ -4854,11 +5052,11 @@
                     if(d.strokeDashed) ctx.setLineDash([]);
                 }
 
-                // If voted, draw inner border using party color so border stays visible
-                if(voteColor) {
+                // If voted, draw inner border using party color so border stays visible (투표 연출 중에는 표결 색 계열)
+                if(voteColor && !look.blank) {
                     ctx.beginPath();
                     ctx.arc(d.x, d.y, d.r * 0.85, 0, Math.PI*2);
-                    ctx.strokeStyle = d.color;
+                    ctx.strokeStyle = look.ring || d.color;
                     ctx.lineWidth = 2.5;
                     ctx.stroke();
                 }
@@ -14698,6 +14896,20 @@
 
         // 지역구 개표 방식 — 'auto': 기존처럼 순서를 섞어 자동으로 하나씩 애니메이션, 'manual': 지도(SVG)에서 사용자가 직접 지역구를 클릭해 개표
         let elecCountMode = 'auto';
+
+        // 개표 연출(반원 의석 채우기) — 'seq': 정당 순서대로 왼쪽부터 채움(예전 방식), 'random': 최종 자리 배치에서
+        // 무작위 순서로 의석이 켜지며 개표율 표시. 화면 취향이라 세이브가 아니라 이 브라우저(앱)에 저장
+        let elecSeatFill = (() => { try { return localStorage.getItem('dnoElecSeatFill') === 'random' ? 'random' : 'seq'; } catch(e) { return 'seq'; } })();
+        function setElecSeatFill(mode) {
+            elecSeatFill = mode === 'random' ? 'random' : 'seq';
+            try { localStorage.setItem('dnoElecSeatFill', elecSeatFill); } catch(e) { /* 저장 불가 환경 */ }
+            syncElecSeatFillUI();
+        }
+        function syncElecSeatFillUI() {
+            document.getElementById('elecSeatFillSeqBtn')?.classList.toggle('active', elecSeatFill === 'seq');
+            document.getElementById('elecSeatFillRandomBtn')?.classList.toggle('active', elecSeatFill === 'random');
+        }
+        document.addEventListener('DOMContentLoaded', syncElecSeatFillUI);
         function setElecCountMode(mode) {
             if(mode !== 'auto' && mode !== 'manual') return;
             elecCountMode = mode;
@@ -15872,6 +16084,27 @@
 
                 // ── 2단계: 비례 개표 애니메이션 ─────
                 const drawEvery = Math.max(1, Math.floor(propSeats/100));
+                // 무작위 자리 채우기: 최종 결과의 자리 배치를 먼저 정해 두고, 개표한 만큼 무작위 순서로 켠다
+                let revealRank = null, finalSeatMap = null;
+                if(elecSeatFill === 'random') {
+                    const finalCounts = { ...counts };
+                    pool.forEach(id => { finalCounts[id] = (finalCounts[id] || 0) + 1; });
+                    finalSeatMap = buildElecMap(chamber, totalSeats, finalCounts);
+                    const order = Array.from({ length: totalSeats }, (_, k) => k);
+                    for(let k = order.length - 1; k > 0; k--) { const j = Math.floor(Math.random() * (k + 1)); [order[k], order[j]] = [order[j], order[k]]; }
+                    revealRank = new Array(totalSeats);
+                    order.forEach((seat, r) => { revealRank[seat] = r; });
+                }
+                // 아직 개표 안 된 자리 — 빈 의석보다 흐리게 (라이트 · 다크 테마는 테두리 색)
+                const unrevealed = { color: tc('#1a1f27', '--m-border'), partyName:'Vacant', factionName:null, ideology:'-', strokeColor: tc('#262c36', '--m-border'), isRuling:false, externalSupport:false };
+                const seatFillMap = (map, counted) => revealRank ? finalSeatMap.map((m, k) => revealRank[k] < counted ? m : unrevealed) : map;
+                const countedTitle = counted => revealRank
+                    ? `> ${elecTitle} (${elecYear}) — ${chamberName} 개표 중... 개표율 ${(Math.min(counted, totalSeats) / totalSeats * 100).toFixed(1)}%`
+                    : null;
+                if(revealRank && propSeats > 0 && !elecSkipToEnd) {
+                    drawChamber('elecCanvas'+suf, seatFillMap(null, districtResults.length), totalSeats, '_elec');
+                    document.getElementById('elecResultTitle'+suf).innerText = countedTitle(districtResults.length);
+                }
 
                 for(let i=0; i<pool.length; i++) {
                     if(elecSkipToEnd) {
@@ -15900,8 +16133,9 @@
                     const stop = hit(districtResults.length + i + 1);
                     if(i%drawEvery===0 || i===pool.length-1 || stop) {
                         const map = buildElecMap(chamber, totalSeats, counts);
-                        drawChamber('elecCanvas'+suf, map, totalSeats, '_elec');
+                        drawChamber('elecCanvas'+suf, seatFillMap(map, districtResults.length + i + 1), totalSeats, '_elec');
                         updateStats('elecResultStats'+suf, map, totalSeats);
+                        if(revealRank) document.getElementById('elecResultTitle'+suf).innerText = countedTitle(districtResults.length + i + 1);
                     }
                     if(stop) return true; // 부정선거 발각 — 개표 중단
 
@@ -16334,8 +16568,8 @@
                 if(i >= map.length) return;
                 const d = map[i];
                 // 활동 금지된 정당은 표결에 참여할 수 없으므로 표결 색을 반영하지 않음
-                const vote = d.partyStatus === 'banned' ? 'none' : (chamberVoteState[i] || 'none');
-                const voteColor = getVoteColor(vote);
+                const look = seatVoteLook(chamber, i, d);
+                const voteColor = look.fill;
                 const radius = Math.max(0.5, dotR * 0.85);
 
                 ctx.beginPath();
@@ -16343,8 +16577,12 @@
                 ctx.fillStyle = voteColor || d.color;
                 ctx.fill();
 
-                // Stroke: party/coalition/gov
-                if(d.partyStatus === 'banned') {
+                // Stroke: party/coalition/gov (투표 중 미투표 좌석은 공석처럼)
+                if(look.blank || look.ring) { // 투표 연출 중에는 정당 · 여당 테두리 없이
+                    ctx.strokeStyle = look.ring || VOTE_BLANK_STROKE;
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+                } else if(d.partyStatus === 'banned') {
                     ctx.shadowColor = "rgba(255, 0, 85, 0.8)";
                     ctx.shadowBlur = 10;
                     ctx.strokeStyle = "#ff0055";
@@ -16366,11 +16604,11 @@
                     if(d.strokeDashed) ctx.setLineDash([]);
                 }
 
-                // If voted, overlay party color as border so color stays visible
-                if(voteColor) {
+                // If voted, overlay party color as border so color stays visible (투표 연출 중에는 표결 색 계열)
+                if(voteColor && !look.blank) {
                     ctx.beginPath();
                     ctx.arc(pt.x, pt.y, radius, 0, Math.PI*2);
-                    ctx.strokeStyle = d.color;
+                    ctx.strokeStyle = look.ring || d.color;
                     ctx.lineWidth = 2.5;
                     ctx.stroke();
                 }
@@ -16381,6 +16619,8 @@
 
             // Center label
             drawChamberCenter(ctx, CX, CY, total, chamber, cvsId, width);
+            // 표결 결과 화면(모은 자리)이 떠 있으면 그것으로 다시 그림
+            if(voteSortView[chamber]) redrawChamber(cvsId, chamber);
         }
 
         // 통계 컨테이너 id로부터 의원실 추정 (houseStats/senateStats/thirdStats/elecResultStatsHouse 등)

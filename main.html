@@ -677,18 +677,18 @@
 
                 <!-- 투표 입력 모드 -->
                 <div class="vote-panel" id="voteModePanel">
-                    <div class="vote-panel-title"><span class="tno-prompt">&gt; </span>투표 입력 모드</div>
+                    <div class="vote-panel-title"><span class="tno-prompt">&gt; </span>예정 표 찍기</div>
                     <div class="vote-btn-row">
-                        <button class="vote-ctrl-btn yea" onclick="setVoteMode('yea')">▲ 찬성</button>
-                        <button class="vote-ctrl-btn nay" onclick="setVoteMode('nay')">▼ 반대</button>
-                        <button class="vote-ctrl-btn abs" onclick="setVoteMode('abs')">— 기권</button>
-                        <button class="vote-ctrl-btn clr" onclick="setVoteMode('none')">✕ 제거</button>
+                        <button class="vote-ctrl-btn yea" onclick="setVoteMode('yea')" title="찬성 예정">▲ 찬성</button>
+                        <button class="vote-ctrl-btn nay" onclick="setVoteMode('nay')" title="반대 예정">▼ 반대</button>
+                        <button class="vote-ctrl-btn abs" onclick="setVoteMode('abs')" title="기권 예정">— 기권</button>
+                        <button class="vote-ctrl-btn clr" onclick="setVoteMode('none')">✕ 지우기</button>
                     </div>
                     <div class="vote-btn-row" style="margin-top:6px;">
                         <button class="vote-ctrl-btn info" onclick="setVoteMode('info')">🔍 정보 보기</button>
                     </div>
                     <div class="vote-hint">
-                        모드 선택 후 캔버스 의원 원 클릭 (정보 보기 모드는 투표를 바꾸지 않음) &nbsp;|&nbsp;
+                        <span id="voteModeHint">고른 뒤 반원의 좌석을 누르면 그 의원의 예정 표가 정해집니다. 아래 "표결 시작"을 누르면 의원들이 하나씩 투표해요</span> &nbsp;|&nbsp;
                         현재: <span id="currentModeLabel" style="color:#888;">없음</span>
                     </div>
                     <div class="vote-btn-row" style="margin-top:8px;">
@@ -698,7 +698,8 @@
 
                 <!-- 정당 일괄 투표 -->
                 <div class="vote-panel" id="partyBulkPanel">
-                    <div class="vote-panel-title"><span class="tno-prompt">&gt; </span>정당 일괄 투표 (PARTY BULK)</div>
+                    <div class="vote-panel-title"><span class="tno-prompt">&gt; </span>당론 (PARTY LINE)</div>
+                    <div class="vote-hint" id="partyBulkHint" style="margin:-2px 0 8px;">정당마다 당론을 정하면 소속 의원 모두의 예정 표가 그렇게 바뀝니다. 그 뒤 좌석을 눌러 이탈표를 따로 정할 수 있어요</div>
                     <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:8px;" id="bulkChamberSelectGroup">
                         <label style="display:flex;align-items:center;gap:6px;cursor:pointer;color:#aaa;font-size:0.85rem;padding:4px 6px;background:#0a0c10;border:1px solid #222;" id="bulkHouseWrap">
                             <input type="checkbox" name="bulkChamber" value="house" checked onchange="onBulkChamberChange()"> <span id="bulkHouseLabel">하원</span>
@@ -733,7 +734,7 @@
                     </div>
                     <div style="font-size:0.85rem; color:#aaa; text-align:right; margin-bottom:2px; min-height:1.2em;" id="hVoteInfo"></div>
                     <div class="vote-verdict verdict-pending" id="hVerdict">-- 표결 대기 중 --</div>
-                    <button class="vote-ctrl-btn yea" id="hConfirmBtn" style="width:100%;margin-top:8px;padding:9px;" onclick="confirmChamberVote('house')">▶ 하원 표결 확정</button>
+                    <button class="vote-ctrl-btn yea" id="hConfirmBtn" style="width:100%;margin-top:8px;padding:9px;" onclick="confirmChamberVote('house')">▶ 하원 표결 시작</button>
                 </div>
 
                 <!-- 상원 표결 확정 -->
@@ -753,7 +754,7 @@
                     </div>
                     <div style="font-size:0.85rem; color:#aaa; text-align:right; margin-bottom:2px; min-height:1.2em;" id="sVoteInfo"></div>
                     <div class="vote-verdict verdict-pending" id="sVerdict">-- 표결 대기 중 --</div>
-                    <button class="vote-ctrl-btn yea" id="sConfirmBtn" style="width:100%;margin-top:8px;padding:9px;" onclick="confirmChamberVote('senate')">▶ 상원 표결 확정</button>
+                    <button class="vote-ctrl-btn yea" id="sConfirmBtn" style="width:100%;margin-top:8px;padding:9px;" onclick="confirmChamberVote('senate')">▶ 상원 표결 시작</button>
                 </div>
 
                 <!-- 삼원 표결 확정 -->
@@ -773,7 +774,7 @@
                     </div>
                     <div style="font-size:0.85rem; color:#aaa; text-align:right; margin-bottom:2px; min-height:1.2em;" id="tVoteInfo"></div>
                     <div class="vote-verdict verdict-pending" id="tVerdict">-- 표결 대기 중 --</div>
-                    <button class="vote-ctrl-btn yea" id="tConfirmBtn" style="width:100%;margin-top:8px;padding:9px;" onclick="confirmChamberVote('third')">▶ 삼원 표결 확정</button>
+                    <button class="vote-ctrl-btn yea" id="tConfirmBtn" style="width:100%;margin-top:8px;padding:9px;" onclick="confirmChamberVote('third')">▶ 삼원 표결 시작</button>
                 </div>
             </div><!-- end contentVote -->
 
@@ -1182,6 +1183,13 @@
 
                 <!-- 설정 -->
                 <div id="contentElecSettings" class="sub-tab-content">
+                    <div style="margin-top:6px;margin-bottom:16px;">
+                        <label style="color:#888;font-size:0.8rem;margin-bottom:6px;display:block;">개표 연출 <span style="color:#555;font-weight:normal;">— 개표하는 동안 반원의 의석을 어떻게 채울지 — 순차: 정당 순서대로 왼쪽부터 · 무작위: 최종 자리 배치에서 무작위 순서로 켜지며 개표율 표시</span></label>
+                        <div class="system-radio-group">
+                            <button type="button" class="system-radio-btn active" id="elecSeatFillSeqBtn" onclick="setElecSeatFill('seq')">순차적으로 채우기</button>
+                            <button type="button" class="system-radio-btn" id="elecSeatFillRandomBtn" onclick="setElecSeatFill('random')">무작위 자리 채우기</button>
+                        </div>
+                    </div>
                     <div style="margin-top:6px;">
                         <label style="color:#888;font-size:0.8rem;margin-bottom:6px;display:block;">대선·총리 선거 방식 <span style="color:#555;font-weight:normal;">— 총리직선제일 때 총리 선거에도 그대로 적용됩니다</span></label>
                         <div class="system-radio-group">
