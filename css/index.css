@@ -707,6 +707,8 @@ body.home-page { display: block; height: 100vh; overflow: hidden; text-transform
     padding: 10px 12px; text-decoration: none; color: var(--tno-text);
     border: 1px solid transparent; transition: .12s;
 }
+/* 숨긴 소식(Steam 상점 — 정식 출시 전) — display:flex가 hidden 속성을 덮지 않게 */
+.home-news-item[hidden] { display: none !important; }
 .home-news-item:hover { border-color: var(--tno-neon); background: color-mix(in srgb, var(--tno-neon) 8%, transparent); color: var(--tno-neon); }
 .home-news-icon { width: 36px; height: 36px; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; }
 .home-news-yt { color: #ff0033; }
