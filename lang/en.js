@@ -5121,6 +5121,8 @@ window.DnoLangPacks.en = {
   ["조건을 읽지 못한 항목이 있습니다:", "Some conditions couldn't be read:"],
   ["시나리오를 넘기지 못했습니다. (저장 공간 부족)", "Couldn't hand over the scenario (out of storage)."],
   ["예정 표 찍기", "Planned votes"],
+  ["1.7.0 - 민중의 소리는 신의 소리 \"Vox populi, vox Dei\"", "1.7.0 - The voice of the people is the voice of God \"Vox populi, vox Dei\""],
+  ["민중의 소리는 신의 소리 \"Vox populi, vox Dei\"", "The voice of the people is the voice of God \"Vox populi, vox Dei\""],
   ["Hemicycle 트레일러", "Hemicycle Trailer"],
   ["새 영상 · 공식 트레일러", "New video · Official trailer"],
   ["투표 중…", "Voting…"],
