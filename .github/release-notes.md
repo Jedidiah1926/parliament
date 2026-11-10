@@ -80,3 +80,4 @@ Windows 64비트용 데스크톱 앱입니다. 지난 릴리스 **v1.7.0-obt.3 �
 - 공개 베타 테스트 기간이라 기능과 세이브 형식이 바뀔 수 있습니다.
 
 업데이트 소식: https://www.youtube.com/@Hemicycles
+공식 트레일러: https://youtu.be/aKRCh-_S4WU (한국어) · https://youtu.be/HPzNE1gdbyE (English)
