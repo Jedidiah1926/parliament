@@ -440,14 +440,14 @@
                     comps.forEach(c => {
                         if (!c.keep) return;
                         const dr = c.color[0] - bg.color[0], dg = c.color[1] - bg.color[1], db = c.color[2] - bg.color[2];
-                        // 평균 색끼리 견주므로 압축 잡음은 거의 빠져 있다 — 고정 하한을 35 → 20으로 낮춰, 바다와 비슷한 하늘색 지역이 호수로 지워지지 않게
-                        if (dr * dr + dg * dg + db * db <= Math.max(tol2 * 2.56, 20 * 20)) { c.keep = false; c.bgLike = true; }
+                        // 바탕 제거에는 좁은 색 오차만 사용한다. 지역 구분 슬라이더를 올려도 실제 땅이 바다색으로 판정되어 사라지면 안 된다.
+                        if (dr * dr + dg * dg + db * db <= Math.min(tol2, 12 * 12 * 3)) { c.keep = false; c.bgLike = true; }
                     });
                 }
             }
             // 버린 작은 조각 중 바탕색에 가까운 것(압축으로 얼룩진 바다 가장자리)은 바다로 — 땅이 바다로 번지지 않게
             if (bg) {
-                const sea = Math.max((o.tolerance * 2.5) ** 2 * 3, 50 * 50);
+                const sea = Math.min(o.tolerance * 1.5, 18) ** 2 * 3;
                 comps.forEach(c => {
                     if (c.keep || c === bg) return;
                     const dr = c.color[0] - bg.color[0], dg = c.color[1] - bg.color[1], db = c.color[2] - bg.color[2];

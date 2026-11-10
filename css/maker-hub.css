@@ -1,0 +1,26 @@
+/* Layout only. The shared editor stylesheet supplies the neon/modern skin. */
+.maker-body { padding: 14px; display: grid; gap: 14px; }
+.maker-create { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.maker-new { text-decoration: none; color: inherit; }
+.maker-new:hover { border-color: var(--tno-neon); }
+.maker-new-action { color: var(--tno-neon); font-size: .85rem; margin-top: 10px; }
+.maker-new[aria-disabled="true"] { opacity: .5; }
+.maker-library h1 { margin: 0; }
+.maker-library p { margin: 4px 0; }
+.maker-search { display: flex; gap: 8px; align-items: center; font-size: .8rem; }
+.maker-projects { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.maker-project { min-width: 0; }
+.maker-project h2 { margin: 0; font: inherit; color: var(--tno-text); overflow-wrap: anywhere; }
+.maker-project p { white-space: pre-wrap; overflow-wrap: anywhere; }
+.maker-project-meta { display: flex; gap: 6px; flex-wrap: wrap; font-size: .75rem; color: #8a94a3; }
+.maker-kind { color: var(--tno-gold); }
+.maker-project-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: auto; padding-top: 12px; }
+.maker-project-actions [data-delete] { margin-left: auto; }
+.maker-empty { grid-column: 1 / -1; padding: 30px 10px; text-align: center; }
+.maker-empty h2 { font: inherit; color: var(--tno-gold); }
+.maker-error { color: #ef6461; }
+.maker-hub :is(a, button, input):focus-visible { outline: 2px solid var(--tno-neon); outline-offset: 3px; }
+html[data-theme-family="modern"] .maker-project-meta { color: var(--m-text-3); }
+html[data-theme-family="modern"] .maker-kind, html[data-theme-family="modern"] .maker-empty h2 { color: var(--m-gold); }
+@media(max-width: 900px) { .maker-projects { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media(max-width: 600px) { .maker-create, .maker-projects { grid-template-columns: 1fr; } .maker-search { width: 100%; } .maker-search input { flex: 1; min-width: 0; } }

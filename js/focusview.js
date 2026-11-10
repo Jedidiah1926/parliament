@@ -1,6 +1,6 @@
-// ===== 방향성(중점) 상자 그리기 — 게임(js/campaign.js)과 캠페인 편집기(js/campaign-editor.js)가 함께 씀 =====
+// ===== 방향성(중점) 상자 그리기 — 게임(js/campaign.js)과 시나리오 편집기(js/campaign-editor.js)가 함께 씀 =====
 // 기본 모양: 위에 큰 아이콘(그림 · 이모지), 아래에 이름판, 그 밑에 남은 날 · 진행 막대.
-// 캠페인(모드)이 focusStyle로 모양을 통째로 바꿀 수 있다 (중점 템플릿 디자인):
+// 시나리오(모드)이 focusStyle로 모양을 통째로 바꿀 수 있다 (중점 템플릿 디자인):
 //   focusStyle = { width, height, gapX, gapY, template: "HTML", css: "CSS" }
 //   template의 자리표시: {{icon}}(그림/이모지 HTML) {{iconUrl}} {{title}} {{days}} {{daysText}} {{status}} {{statusText}} {{progress}} {{desc}} {{id}}
 //   상자 바깥 요소에는 늘 class="hf-node hf-<상태>"(available · current · done · locked · blocked)가 붙으므로 CSS에서 상태별로 꾸밀 수 있다.
@@ -8,14 +8,17 @@
 (function () {
     'use strict';
     const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-    const DEFAULT = { width: 124, height: 116, gapX: 22, gapY: 30 };
+    const DEFAULT = { width: 200, height: 200, gapX: 72, gapY: 64 };
+    const CLASSIC = { width: 124, height: 116, gapX: 22, gapY: 30, layout: 'classic' };
     const num = (v, d, a, b) => { const n = Number(v); return Number.isFinite(n) ? Math.max(a, Math.min(b, n)) : d; };
 
     function style(data) {
         const fs = (data && data.focusStyle) || {};
+        const base = fs.layout === 'classic' ? CLASSIC : DEFAULT;
         return {
-            width: num(fs.width, DEFAULT.width, 40, 400), height: num(fs.height, DEFAULT.height, 30, 400),
-            gapX: num(fs.gapX, DEFAULT.gapX, 0, 200), gapY: num(fs.gapY, DEFAULT.gapY, 0, 200),
+            layout: fs.layout === 'classic' ? 'classic' : 'illustration',
+            width: num(fs.width, base.width, 40, 400), height: num(fs.height, base.height, 30, 400),
+            gapX: num(fs.gapX, base.gapX, 0, 200), gapY: num(fs.gapY, base.gapY, 0, 200),
             template: typeof fs.template === 'string' ? fs.template.slice(0, 8000) : '',
             css: typeof fs.css === 'string' ? fs.css.slice(0, 20000) : '',
         };
@@ -81,7 +84,7 @@
     // ---- 상자 속 ----
     const STATUS_TEXT = { done: '완료', current: '진행 중', available: '고를 수 있음', locked: '아직 못 고름', blocked: '막힘' };
     function iconHtml(f) {
-        if (f.iconImage) return `<img class="hf-icon-img" src="${esc(f.iconImage)}" alt="">`;
+        if (f.iconImage) return `<img class="hf-icon-img" draggable="false" src="${esc(f.iconImage)}" alt="">`;
         if (f.icon) return `<span class="hf-icon-emoji">${esc(f.icon)}</span>`;
         return '<span class="hf-icon-blank"></span>';
     }
@@ -93,22 +96,41 @@
                 status: esc(status), statusText: esc(STATUS_TEXT[status] || ''), progress: esc(Math.round(ctx.progress || 0)), desc: esc(f.desc || ''), id: esc(f.id) };
             return cleanTemplate(st.template).replace(/\{\{(\w+)\}\}/g, (m, k) => (k in vals ? vals[k] : ''));
         }
-        return `<span class="hf-icon">${iconHtml(f)}${status === 'done' ? '<span class="hf-check">✔</span>' : ''}${status === 'blocked' ? '<span class="hf-x">✕</span>' : ''}</span>
+        const illustration = !st || st.layout !== 'classic';
+        const art = f.art || {};
+        const vars = `--hf-art-scale:${num(art.scale, 100, 50, 200) / 100};--hf-art-x:${num(art.x, 0, -120, 120)}px;--hf-art-y:${num(art.y, 0, -120, 120)}px`;
+        return `${illustration ? `<span class="hf-artwork" style="${vars}">` : ''}<span class="hf-icon">${iconHtml(f)}${status === 'done' ? '<span class="hf-check">✔</span>' : ''}${status === 'blocked' ? '<span class="hf-x">✕</span>' : ''}</span>${illustration ? '</span>' : ''}
             <span class="hf-plate"><span class="hf-title">${esc(f.title || f.id)}</span></span>
             <span class="hf-days">${esc(ctx.daysText || '')}</span>
             ${ctx.current ? `<span class="hf-bar"><i style="width:${Math.max(0, Math.min(100, ctx.progress || 0))}%"></i></span>` : ''}`;
     }
-    // 트리 안에 넣을 <style> — 캠페인이 정한 css를 그 트리 안으로만
+    function padding(data, st) {
+        if (st.template || st.layout === 'classic') return 20;
+        return Math.ceil(Math.max(64, ...(data.focus || []).map(f => {
+            const art = f.art || {}, scale = num(art.scale, 100, 50, 200) / 100;
+            return Math.max(st.width * (1.4 * scale - 1) / 2 + Math.abs(num(art.x, 0, -120, 120)) + 20,
+                st.height * Math.max(0, scale - .7) + Math.abs(num(art.y, 0, -120, 120)) + 20);
+        })));
+    }
+    // 트리 안에 넣을 <style> — 시나리오가 정한 css를 그 트리 안으로만
     function styleTag(st, scope) { return st && st.css ? `<style>${scopeCss(st.css, scope)}</style>` : ''; }
 
     // ---- 기본 모양 ----
     const css = document.createElement('style');
     css.textContent = `
-        .hf-node { box-sizing: border-box; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 3px; padding: 2px 0 0; background: none; border: none; color: #ddd; font: inherit; text-align: center; }
+        .hf-node { overflow: visible; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 3px; padding: 2px 0 0; background: none; border: none; color: #ddd; font: inherit; text-align: center; }
         .hf-icon { position: relative; flex: 0 0 auto; width: 64px; height: 64px; display: flex; align-items: center; justify-content: center; }
         .hf-icon-img { width: 64px; height: 64px; object-fit: contain; filter: drop-shadow(0 2px 3px rgba(0,0,0,.6)); }
         .hf-icon-emoji { font-size: 40px; line-height: 1; filter: drop-shadow(0 2px 2px rgba(0,0,0,.6)); }
         .hf-icon-blank { width: 52px; height: 52px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #5a6470, #1e242b); border: 2px solid #7b8692; }
+        /* Illustration composition: generous transparent art, anchored behind the nameplate. */
+        .hf-artwork { position: relative; flex: 1 1 auto; min-height: 0; width: 100%; margin-bottom: -18px; pointer-events: none; }
+        .hf-artwork .hf-icon { pointer-events: auto; position: absolute; left: 50%; bottom: 0; width: 140%; height: 112%; transform: translate(calc(-50% + var(--hf-art-x, 0px)), var(--hf-art-y, 0px)) scale(var(--hf-art-scale, 1)); transform-origin: 50% 100%; }
+        .hf-artwork .hf-icon-img { width: 100%; height: 100%; object-fit: contain; object-position: center bottom; pointer-events: none; }
+        .hf-artwork .hf-icon-emoji { font-size: 96px; line-height: 1; }
+        .hf-artwork .hf-icon-blank { width: 100px; height: 116px; border-radius: 0; clip-path: polygon(50% 0, 100% 16%, 90% 77%, 50% 100%, 10% 77%, 0 16%); }
+        .hf-artwork + .hf-plate { flex: 0 0 auto; z-index: 1; min-height: 28px; display: grid; align-items: center; border-width: 2px; }
+        .hf-artwork + .hf-plate .hf-title { font-size: .85rem; }
         .hf-plate { position: relative; width: 100%; padding: 3px 6px; background: linear-gradient(#2a2f36, #15191e); border: 1px solid #5d5640; box-shadow: inset 0 1px 0 rgba(255,255,255,.08); }
         .hf-title { display: block; font-size: .74rem; line-height: 1.2; color: #e8e1c8; word-break: keep-all; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
         .hf-days { font-size: .64rem; color: #8a94a3; line-height: 1; }
@@ -141,5 +163,5 @@
         css: '.hf-node .medal { width: 70px; height: 70px; border-radius: 50%; background: #1d2633; border: 3px solid #8a6d1f; display: flex; align-items: center; justify-content: center; overflow: hidden; }\n.hf-node .medal img { width: 56px; height: 56px; object-fit: contain; }\n.hf-node .ribbon { margin-top: 4px; padding: 2px 8px; background: #6b1f1f; color: #fff; font-size: 12px; clip-path: polygon(0 0, 100% 0, 92% 50%, 100% 100%, 0 100%, 8% 50%); }\n.hf-node .when { font-size: 10px; opacity: .7; }\n.hf-done .medal { border-color: #2f9e44; }\n.hf-available .medal { box-shadow: 0 0 10px #ffd700; }\n.hf-locked { filter: grayscale(1); opacity: .6; }',
     };
 
-    window.HemiFocusView = { DEFAULT, style, inner, styleTag, scopeCss, cleanTemplate, iconHtml, EXAMPLE, STATUS_TEXT };
+    window.HemiFocusView = { DEFAULT, CLASSIC, padding, style, inner, styleTag, scopeCss, cleanTemplate, iconHtml, EXAMPLE, STATUS_TEXT };
 })();

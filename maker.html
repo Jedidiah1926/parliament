@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" type="image/png" href="icons/favicon.png">
+  <title>Hemicycle — 만들기</title>
+  <script src="js/thememode.js"></script>
+  <script src="js/dialogs.js"></script>
+  <script src="js/theme.js"></script>
+  <script src="js/maker-store.js"></script>
+  <link rel="stylesheet" href="fonts/neodgm/style.css">
+  <link rel="stylesheet" href="css/editor.css">
+  <link rel="stylesheet" href="css/maker-hub.css">
+  <link rel="stylesheet" href="css/scrollbars.css">
+  <link rel="stylesheet" href="css/modern.css">
+</head>
+<body>
+  <div class="scn-frame maker-hub">
+    <header class="scn-head">
+      <a class="scn-back" href="index.html">← 메인으로</a>
+      <div class="scn-head-title">MAKER SELECT</div>
+      <span class="scn-grow"></span>
+      <a class="scn-btn" href="index.html#saves">시작하기 ↗</a>
+    </header>
+    <main class="maker-body">
+      <section aria-label="새 제작물" class="maker-create">
+        <a class="scn-card maker-new" href="map.html?new=1" data-new="map"><span class="scn-h">맵 메이커</span><span class="scn-dim">SVG · 그림으로 지역구 지도 만들기</span><span class="maker-new-action">+ 새 맵</span></a>
+        <a class="scn-card maker-new" href="scenario.html?new=1" data-new="campaign"><span class="scn-h">시나리오 메이커</span><span class="scn-dim">세계관 · 방향성 트리 · 격변과 결말</span><span class="maker-new-action">+ 새 시나리오</span></a>
+        <a class="scn-card maker-new" href="challenge.html?new=1" data-new="challenge"><span class="scn-h">챌린지 메이커</span><span class="scn-dim">목표 · 실패 조건이 있는 짧은 도전</span><span class="maker-new-action">+ 새 챌린지</span></a>
+      </section>
+      <section class="scn-card maker-library" aria-label="내 제작물">
+        <div class="scn-row"><h1 class="scn-h">내 제작물</h1><span class="scn-grow"></span><label class="maker-search">검색 <input class="scn-in" id="makerSearch" type="search" placeholder="제목 · 설명 · 제작자"></label><button type="button" class="scn-btn" id="makerRefresh">새로고침</button></div>
+        <p class="scn-dim">편집하던 제작물을 이어서 만드세요. 실제 게임을 시작하거나 이어하려면 시작하기에서 선택하세요.</p>
+        <nav class="cpe-tabs" id="makerTabs" aria-label="제작물 종류"></nav>
+        <p class="scn-dim" id="makerStatus" role="status" aria-live="polite">제작물을 불러오는 중…</p>
+        <div class="maker-projects" id="makerProjects"></div>
+      </section>
+    </main>
+  </div>
+  <script src="js/maker-hub.js"></script>
+  <script src="js/lang.js"></script>
+</body>
+</html>

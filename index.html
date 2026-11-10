@@ -16,12 +16,18 @@
     <link rel="stylesheet" href="fonts/neodgm/style.css">
 
     <link rel="stylesheet" href="css/index.css">
+    <link rel="stylesheet" href="css/scrollbars.css">
     <link rel="stylesheet" href="css/modern.css">
     <script src="js/presets.js"></script>
     <script src="js/tutorial.js"></script>
 
     <script src="js/lang.js"></script>
     <script src="js/devmode.js"></script>
+    <script src="js/challenge-data.js"></script>
+    <script src="js/campaign-clock.js"></script>
+    <script src="js/campaign-tools.js"></script>
+    <script src="js/maker-store.js"></script>
+    <script src="js/story-library.js" defer></script>
     <script src="js/slotstore.js"></script>
     <script src="js/desktopsaves.js"></script>
 </head>
@@ -72,23 +78,9 @@
                 <span class="home-menu-text"><span class="home-menu-label">시작하기</span><span class="home-menu-desc">새로 만들거나 이어서 하기</span></span>
                 <span class="home-menu-chev" aria-hidden="true">›</span>
             </a>
-            <a href="map.html" class="home-menu-item" id="homeMapMaker">
-                <span class="home-menu-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4 3.5 6v14L9 18l6 2 5.5-2V4L15 6z"/><path d="M9 4v14M15 6v14"/></svg></span>
-                <span class="home-menu-text"><span class="home-menu-label">맵 메이커</span><span class="home-menu-desc">SVG 지도로 지역구 지도 만들기</span></span>
-                <span class="home-menu-chev" aria-hidden="true">›</span>
-            </a>
-            <script>
-                // Steam 데모: 맵 메이커는 정식판에서 (지역구 지도는 국가 › 지역구 지도의 맵 프리셋으로)
-                if(window.HEMI_BUILD && window.HEMI_BUILD.demo) {
-                    const mm = document.getElementById('homeMapMaker');
-                    mm.removeAttribute('href'); mm.classList.add('home-menu-locked'); mm.setAttribute('aria-disabled', 'true');
-                    mm.querySelector('.home-menu-desc').textContent = '🔒 정식판에서 — 체험판은 국가 › 지역구 지도의 맵 프리셋으로';
-                    mm.addEventListener('click', e => { e.preventDefault(); DnoUI.alert('맵 메이커는 정식판에서 쓸 수 있어요.\n체험판에서는 국가 › 지역구 지도의 "맵 프리셋에서 고르기"로 나라 지도를 골라 지역구를 만들 수 있습니다.', { title: '체험판' }); });
-                }
-            </script>
-            <a href="scenario.html" class="home-menu-item" id="homeScenario">
-                <span class="home-menu-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1" fill="currentColor"/></svg></span>
-                <span class="home-menu-text"><span class="home-menu-label">캠페인 · 시나리오 <span class="home-menu-test">테스트</span></span><span class="home-menu-desc">세계관 · 방향성 트리 · 위기가 있는 캠페인 만들기</span></span>
+            <a href="maker.html" class="home-menu-item" id="homeMakerHub">
+                <span class="home-menu-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z"/></svg></span>
+                <span class="home-menu-text"><span class="home-menu-label">만들기</span><span class="home-menu-desc">맵 · 시나리오 · 챌린지 제작물 만들기와 관리</span></span>
                 <span class="home-menu-chev" aria-hidden="true">›</span>
             </a>
             <a href="roadmap.html" class="home-menu-item">
@@ -113,9 +105,9 @@
         </nav>
 
         <div class="home-meta">
-            <div id="homeVersion">VERSION: v1.7.0 (OBT)</div>
-            <script>if(window.HEMI_BUILD && window.HEMI_BUILD.demo) document.getElementById('homeVersion').textContent = 'VERSION: v1.7.0 (DEMO)';</script>
-            <div>BUILD: 2026-10-05</div>
+            <div id="homeVersion">VERSION: v1.7.0 · v0.3.1 (OBT)</div>
+            <script>if(window.HEMI_BUILD && window.HEMI_BUILD.demo) document.getElementById('homeVersion').textContent = 'VERSION: v1.7.0 · v0.3.1 (DEMO)';</script>
+            <div>BUILD: 2026-11-06</div>
             <div>&copy; 2025-2026 Pilcrow1926</div>
         </div>
 
@@ -192,6 +184,12 @@
                 <button class="save-select-tab" role="tab" data-ss-tab="new" onclick="switchSaveSelectTab('new')">새로 시작</button>
                 <button class="save-select-tab" role="tab" data-ss-tab="continue" onclick="switchSaveSelectTab('continue')">이어하기</button>
                 <button class="save-select-tab" role="tab" data-ss-tab="tutorial" onclick="switchSaveSelectTab('tutorial')">튜토리얼</button>
+                <button class="save-select-tab" role="tab" data-ss-tab="stories" onclick="switchSaveSelectTab('stories')">시나리오 · 챌린지</button>
+            </div>
+            <div class="save-select-panel" data-ss-panel="stories">
+                <div class="save-select-search save-select-panel-top"><input id="storySearch" type="search" placeholder="시나리오 · 챌린지 검색" aria-label="시나리오 · 챌린지 검색"></div>
+                <p class="settings-label">새 플레이는 복사본 세이브로 시작합니다. 제작물을 삭제해도 이미 진행 중인 세이브는 남습니다.</p>
+                <div class="save-select-columns"><section class="save-select-col"><div class="save-select-col-title">시나리오 <a href="maker.html?type=campaign">제작물 목록 ↗</a></div><div id="campaignSelectList" class="save-select-list"></div></section><section class="save-select-col"><div class="save-select-col-title">챌린지 <a href="maker.html?type=challenge">제작물 목록 ↗</a></div><div id="challengeSelectList" class="save-select-list"></div></section></div>
             </div>
             <div class="save-select-panel" data-ss-panel="new">
                 <div class="save-select-columns">
@@ -539,7 +537,8 @@
         }
 
         function switchSaveSelectTab(tab, silent) {
-            if(!['new', 'continue', 'tutorial'].includes(tab)) tab = 'new';
+            if(tab==='stories' && window.HemiStoryLibrary) HemiStoryLibrary.render();
+            if(!['new', 'continue', 'tutorial', 'stories'].includes(tab)) tab = 'new';
             document.querySelectorAll('#saveSelectOverlay [data-ss-tab]').forEach(b => {
                 const on = b.dataset.ssTab === tab;
                 b.classList.toggle('active', on);
@@ -755,6 +754,7 @@
         });
         document.addEventListener('keydown', e => { if(e.key === 'Escape') { const m = document.getElementById('homeLangMenu'); if(m) m.style.display = 'none'; } });
         renderHomeLangMenu();
+        if(location.hash==='#saves')openSaveSelectModal();
     </script>
 </body>
 </html>

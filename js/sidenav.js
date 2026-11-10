@@ -25,7 +25,7 @@
     const FULL_MENU = {
         groups: [
             { key: 'economy', icon: '💹', label: '경제', ver: '1.6.9', after: 'nation' },
-            { key: 'world', icon: '🌐', label: '세계', ver: '1.6.5', after: 'economy', items: [['subTabRanking', '국가 순위'], ['subTabBlocs', '진영'], ['subTabEconblocs', '경제권']] },
+            { key: 'world', icon: '🌐', label: '세계', ver: '1.6.5', after: 'economy', items: [['subTabWorldmap', '지도'], ['subTabRanking', '국가 순위'], ['subTabBlocs', '진영'], ['subTabEconblocs', '경제권']] },
         ],
         items: [
             { main: 'setup', id: 'subTabTimeline', label: '세력 변화', ver: '1.6.5', after: 'subTabList' },

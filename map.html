@@ -10,7 +10,9 @@
     <script src="js/dialogs.js"></script>
 <script src="js/theme.js"></script>
 <script src="js/maptrace.js"></script>
+<script src="js/world-map-data.js"></script>
 <script src="js/savefile.js"></script>
+<script src="js/maker-store.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="fonts/neodgm/style.css">
 <style>
@@ -177,15 +179,20 @@
   .mm-tracebar label { display:inline-flex; align-items:center; gap:6px; }
   .mm-tracebar input[type=range] { width: 110px; }
   .mm-tracebar b { color: var(--tno-neon); min-width: 2.4em; font-weight: normal; }
+  .mm-projectbar {flex-shrink:0;display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding:8px 14px;border-bottom:1px solid var(--tno-border);font-size:12px;}
+  .mm-projectbar label {display:flex;gap:8px;align-items:center;}
+  .mm-projectbar input[type="text"] {width:min(240px,55vw);}
+  #mapSaveStatus {color:#8a94a3;}
   .mm-trace-title { color: var(--tno-gold); }
 </style>
+<link rel="stylesheet" href="css/scrollbars.css">
 <link rel="stylesheet" href="css/modern.css">
 </head>
 <body>
   <!-- 맵 메이커: 화면 크기에 맞춘 앱 레이아웃 (위: 앱 바 · 가운데: 미리보기 · 오른쪽: 요소 목록) — 페이지 스크롤 없음 -->
   <div class="mm-app">
     <header class="mm-appbar">
-      <a href="index.html" class="btn secondary mm-back" title="메인 화면으로">← 메인으로</a>
+      <a href="maker.html" class="btn secondary mm-back" id="mapMakerBack" title="제작물 목록으로">← 제작물 목록</a>
       <div class="mm-titles">
         <h1>맵 메이커</h1>
         <div class="small">SVG · 그림(webp · png · jpg · bmp, 자동 추적) · .jsx · .hemimap 지도를 지역구 지도(.jsx — 모양만) 또는 지역구 프리셋(.hemimap — 모양 · 이름 · 약칭 · 의석 수 · 인구)으로 — 만든 파일은 국가 › 지역구 지도에서 불러옵니다</div>
@@ -193,10 +200,12 @@
       <div class="mm-actions">
         <input id="fileInput" type="file" accept=".svg,image/svg+xml,.jsx,.js,text/javascript,.hemimap,.webp,.png,.jpg,.jpeg,.gif,.bmp,.dib,image/bmp,image/x-ms-bmp,image/*" />
         <label for="fileInput" class="btn file-label" title="SVG · 그림(webp · png · jpg · bmp) · 맵 메이커가 만든 .jsx · 지역구 프리셋 .hemimap">⬆ 지도 열기</label>
+        <button id="btnSaveProject" class="btn secondary">프로젝트 저장</button>
         <button id="btnClear" class="btn secondary" title="연 지도와 목록을 모두 비웁니다">초기화</button>
       </div>
     </header>
 
+    <div class="mm-projectbar"><label>프로젝트 이름 <input type="text" id="mapProjectTitle" value="새 지도" maxlength="100"></label><span id="mapSaveStatus" role="status" aria-live="polite">지도를 열면 자동 저장됩니다.</span></div>
     <div class="mm-body">
       <main class="panel mm-main">
         <div class="mm-toolbar">
@@ -210,7 +219,7 @@
           <span class="mm-trace-title">그림 자동 추적</span>
           <label title="화소마다 색을 정확히 칠한 작은 지도(프로빈스 맵 등) — 색이 정확히 같은 화소끼리 한 지역으로, 키우거나 작은 조각을 지우거나 경계를 다듬지 않고 화소 경계 그대로 땀. 그림을 열면 알아서 켜짐"><input id="tracePixel" type="checkbox" /> 픽셀 지도</label>
           <label class="mm-pixel-only" title="픽셀 지도에서 같은 색 화소는 떨어져 있어도(섬 · 월경지) 한 지역으로 — 색마다 지역 하나인 프로빈스 맵이면 켜세요. 끄면 이어진 덩어리마다 따로"><input id="traceJoin" type="checkbox" checked /> 같은 색은 떨어져도 한 지역</label>
-          <label class="mm-smooth-only" title="색이 이만큼 달라도 같은 지역으로 묶음 — 지역이 잘게 쪼개지면 올리고, 이웃 지역이 합쳐지면 내리세요">색 허용 오차 <input id="traceTol" type="range" min="3" max="80" value="12" /><b id="traceTolVal">12</b></label>
+          <label class="mm-smooth-only" title="색이 이만큼 달라도 같은 지역으로 묶습니다. 움직임을 멈추면 자동으로 다시 추적합니다 — 잘게 쪼개지면 올리고, 이웃이 합쳐지면 내리세요">색 허용 오차 <input id="traceTol" type="range" min="3" max="80" value="12" /><b id="traceTolVal">12</b></label>
           <label class="mm-smooth-only" title="이보다 작은 덩어리(글자 · 번진 가장자리)는 이웃 지역에 붙임 — 그림 넓이 대비 천분율">최소 크기 <input id="traceMin" type="range" min="0" max="2" step="0.01" value="0.03" /><b id="traceMinVal">0.03‰</b></label>
           <label title="그림 가장자리를 두른 큰 덩어리(바다 · 바탕)를 도형에서 뺌"><input id="traceBg" type="checkbox" checked /> 바탕 빼기</label>
           <label class="mm-smooth-only" title="검은 선 없이 같은 색으로 맞닿은 조각(압축 얼룩 · 색이 살짝 다른 옅은 선으로 갈라진 조각)을 하나로 — 검은 선으로 나뉜 곳은 합치지 않음. 끄면 조각대로 둠"><input id="traceMerge" type="checkbox" checked /> 같은 색 이웃 합치기</label>
@@ -294,7 +303,18 @@ const fileKind = f => {
   if (/^image\//.test(f.type) || /\.(webp|png|jpe?g|gif|bmp|dib|avif)$/.test(n)) return 'image';
   return 'svg';
 };
-let traceFile = null;
+let traceFile = null, traceRevision = 0, traceTimer = 0, fileRevision = 0, tracedFile = null;
+function traceBusy(on) {
+  document.getElementById('traceBar').setAttribute('aria-busy', String(on));
+  for(const id of ['btnExportPreset','btnExportAll','btnExportSelected','btnDownloadSVG','btnSaveProject'])document.getElementById(id).disabled=on;
+}
+function cancelTrace() { clearTimeout(traceTimer);traceTimer=0;traceRevision++;traceBusy(false); }
+function queueTrace() {
+  if(!traceFile)return;
+  clearTimeout(traceTimer);traceRevision++;traceBusy(true);
+  document.getElementById('traceInfo').textContent='설정 적용 대기…';
+  traceTimer=setTimeout(()=>runTrace(),240);
+}
 const traceBar = document.getElementById('traceBar');
 const traceOpts = () => ({ tolerance: +document.getElementById('traceTol').value, minArea: +document.getElementById('traceMin').value, dropBackground: document.getElementById('traceBg').checked, mergeSame: document.getElementById('traceMerge').checked,
   pixel: document.getElementById('tracePixel').checked, joinSameColor: document.getElementById('traceJoin').checked });
@@ -302,25 +322,30 @@ const traceOpts = () => ({ tolerance: +document.getElementById('traceTol').value
 const syncTraceMode = () => { traceBar.classList.toggle('pixel', document.getElementById('tracePixel').checked); };
 document.getElementById('tracePixel').onchange = () => { syncTraceMode(); if (traceFile) runTrace(); };
 document.getElementById('traceJoin').onchange = () => { if (traceFile) runTrace(); };
-document.getElementById('traceTol').oninput = e => { document.getElementById('traceTolVal').textContent = e.target.value; };
-document.getElementById('traceMin').oninput = e => { document.getElementById('traceMinVal').textContent = e.target.value + '‰'; };
+document.getElementById('traceTol').oninput = e => { document.getElementById('traceTolVal').textContent = e.target.value; queueTrace(); };
+document.getElementById('traceMin').oninput = e => { document.getElementById('traceMinVal').textContent = e.target.value + '‰'; queueTrace(); };
+for(const id of ['traceTol','traceMin','traceBg','traceMerge'])document.getElementById(id).onchange=queueTrace;
 document.getElementById('btnRetrace').onclick = () => { if (traceFile) runTrace(); };
 async function runTrace() {
-  const info = document.getElementById('traceInfo');
-  info.textContent = '추적 중…';
-  svgContainer.innerHTML = '<div class="mm-empty"><div class="mm-empty-title">그림에서 지역을 찾는 중…</div></div>';
-  await new Promise(r => setTimeout(r, 30));
+  clearTimeout(traceTimer);traceTimer=0;
+  if(!traceFile)return;
+  const token=++traceRevision,file=traceFile,options=traceOpts();
+  const info=document.getElementById('traceInfo');
+  info.textContent='추적 중…';traceBusy(true);
+  await new Promise(r=>setTimeout(r,30));
+  if(token!==traceRevision||file!==traceFile)return;
   try {
-    const t = await MapTrace.traceImage(traceFile, traceOpts());
-    loadSvgText(t.svgText);
-    info.textContent = t.pixel
-      ? `${t.width}×${t.height} · 지역 ${t.count}곳 (픽셀 지도 — 색이 정확히 같은 화소끼리${t.stats.lines ? ` · 검은 경계선 ${t.stats.lines}개는 이웃이 나눠 가짐` : ''})`
-      : `${t.width}×${t.height} · 지역 ${t.count}곳 — 잘게 쪼개지면 허용 오차를 올리고, 이웃이 합쳐지면 내리세요`;
-  } catch (e) {
-    info.textContent = '';
-    svgContainer.innerHTML = '<div class="mm-empty"><div class="mm-empty-title">연 지도가 여기 표시됩니다</div></div>';
-    alert(e.message || String(e));
-  }
+    const t=await MapTrace.traceImage(file,options);
+    if(token!==traceRevision||file!==traceFile)return;
+    const previous=tracedFile===file&&view&&view.svg.isConnected?{...view.cur}:null;
+    loadedPreset=null;tracedFile=file;loadSvgText(t.svgText);
+    if(previous){view.cur=previous;applyView();}
+    info.textContent=t.pixel
+      ? `${t.width}×${t.height} · 지역 ${t.count}곳 (픽셀 지도 — 정확히 같은 색끼리${t.stats.lines?` · 검은 경계선 ${t.stats.lines}개는 이웃이 나눠 가짐`:''})`
+      : `${t.width}×${t.height} · 지역 ${t.count}곳 · 허용 오차 ${options.tolerance} — 설정을 바꾸면 자동으로 다시 추적합니다`;
+  } catch(e) {
+    if(token===traceRevision&&file===traceFile)info.textContent='추적 실패: '+(e.message||String(e))+' · 이전 지도는 유지됩니다';
+  } finally { if(token===traceRevision)traceBusy(false); }
 }
 
 function readFileAsText(file) {
@@ -338,22 +363,24 @@ function sanitizeId(s, fallback) {
 }
 
 async function parseUploaded() {
-  elementsList.innerHTML = '';
-  shapes = [];
+  const request=++fileRevision;cancelTrace();
   if (!fileInput.files || fileInput.files.length === 0) return alert('지도 파일을 선택하세요.');
   const f = fileInput.files[0], kind = fileKind(f);
   traceBar.hidden = kind !== 'image';
   if (kind === 'image') {
-    traceFile = f;
+    traceFile=f;
+    document.getElementById('traceInfo').textContent='그림 형식 확인 중…';traceBusy(true);
     // 새 그림을 열 때마다 픽셀 지도인지 알아봐서 맞는 방식으로 추적
-    try { document.getElementById('tracePixel').checked = await MapTrace.detectPixelMap(f); } catch (e) { /* 그대로 */ }
+    try { const pixel=await MapTrace.detectPixelMap(f);if(request!==fileRevision)return;document.getElementById('tracePixel').checked=pixel; } catch (e) { /* 그대로 */ }
+    if(request!==fileRevision)return;
     syncTraceMode();
     return runTrace();
   }
   traceFile = null;
   loadedPreset = null;
-  if (kind === 'hemimap') return openPresetFile(f);
+  if (kind === 'hemimap') return openPresetFile(f,request);
   let text = await readFileAsText(f);
+  if(request!==fileRevision)return;
   if (kind === 'jsx') {
     const r = MapTrace.jsxToSvg(text);
     if (!r.count) return alert('이 .jsx에서 지도 도형을 찾지 못했습니다 — 맵 메이커로 만든 파일인지 확인하세요.');
@@ -554,6 +581,7 @@ function renderList() {
   });
   countEl.textContent = shapes.length;
   updateSelCount();
+  window.dispatchEvent(new Event('mapmakerchange'));
 }
 
 // 지도에서 도형에 마우스를 올리면 목록의 그 줄을 강조하고 보이게 스크롤, 클릭하면 선택/해제
@@ -887,11 +915,12 @@ function generateComponentText(items, includeSvgWrapper = true) {
 // 권역을 그대로 이어 담는다 (지도에서 사라진 지역구는 뺌). 정당 · 성향 · 선거 결과는 원래부터 담지 않는다
 let loadedPreset = null;
 const PRESET_FORMAT = 'hemicycle-districts';
-const SHAPE_ATTRS = ['d', 'points', 'cx', 'cy', 'r', 'x', 'y', 'width', 'height', 'rx', 'ry', 'transform'];
+const SHAPE_ATTRS = ['d', 'points', 'cx', 'cy', 'r', 'x', 'y', 'width', 'height', 'rx', 'ry', 'transform', 'fill-rule'];
 const svgEsc = v => String(v).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
-async function openPresetFile(f) {
+async function openPresetFile(f,request) {
   let obj;
   try { obj = JSON.parse(window.HemiFile ? await window.HemiFile.readText(f) : await readFileAsText(f)); } catch (e) { obj = null; }
+  if(request!=null&&request!==fileRevision)return;
   const map = obj && obj.format === PRESET_FORMAT && obj.district && obj.district.svgMap;
   if (!map || !Array.isArray(map.shapes) || !map.shapes.length) return alert('지도 모양이 든 지역구 프리셋(.hemimap)이 아닙니다 — 그리드(칸) 방식 지역구는 맵 메이커에서 열 수 없어요.');
   const d = obj.district;
@@ -985,6 +1014,7 @@ function buildPresetData() {
   });
   return {
     format: PRESET_FORMAT, version: 1,
+    ...(loadedPreset?.worldMap?{worldMap:HemiWorldMapData.extension(loadedPreset.worldMap,keys)}:{}),
     meta: { name: (loadedPreset && loadedPreset.meta && loadedPreset.meta.name) || exportBaseName(), exportedAt: new Date().toISOString(), dataLang: (loadedPreset && loadedPreset.meta && loadedPreset.meta.dataLang) || null, madeWith: 'map-maker' },
     district: {
       mapMode: 'svg', view: { zoom: 1, panX: 0, panY: 0 }, grid, names, abbr, population, order, seatCounts,
@@ -1053,6 +1083,7 @@ btnDownloadSVG.addEventListener('click', ()=> {
   download(exportBaseName() + '.svg', new XMLSerializer().serializeToString(out));
 });
 btnClear.addEventListener('click', ()=> {
+  fileRevision++;cancelTrace();
   fileInput.value = '';
   fileNameDisplay.textContent = '파일 없음';
   traceFile = null; traceBar.hidden = true;
@@ -1064,8 +1095,10 @@ btnClear.addEventListener('click', ()=> {
   lastSVGText = '';
   loadedPreset = null;
   countEl.textContent = '0'; updateSelCount();
+  window.dispatchEvent(new Event('mapmakerreset'));
 });
 
 </script>
+<script src="js/map-projects.js"></script>
 </body>
 </html>

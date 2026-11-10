@@ -2351,6 +2351,7 @@ html[data-theme-family="modern"] textarea {
 html[data-theme-family="modern"] input[type="text"]:focus,
 html[data-theme-family="modern"] input[type="number"]:focus,
 html[data-theme-family="modern"] input[type="search"]:focus,
+html[data-theme-family="modern"] input[type="date"]:focus,
 html[data-theme-family="modern"] input:not([type]):focus,
 html[data-theme-family="modern"] select:focus,
 html[data-theme-family="modern"] textarea:focus {

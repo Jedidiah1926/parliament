@@ -500,7 +500,7 @@
             font-family: 'NeoDunggeunmo', 'VT323', monospace;
         }
         
-        input[type="text"], input[type="number"], select {
+        input[type="text"], input[type="number"], input[type="date"], select {
             background: #000;
             border: 1px solid var(--tno-border);
             color: var(--tno-neon);
@@ -510,6 +510,9 @@
             box-sizing: border-box;
             border-radius: 0;
         }
+        /* Date fields use the same neon surface; keep the native picker legible. */
+        html:not([data-theme-family="modern"]) input[type="date"] { color-scheme: dark; }
+
         input:focus, select:focus {
             outline: none;
             border-color: var(--tno-neon);

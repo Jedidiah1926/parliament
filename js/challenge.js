@@ -1,5 +1,5 @@
 // ===== 챌린지 플레이 (0.3.0) — 목표 · 실패 조건이 있는 짧은 도전 (challenge.html에서 만듦) =====
-// challenge.html에서 만든 챌린지(hemicycle-challenge@1)를 게임에서 플레이한다. (캠페인 · 시나리오는 js/campaign.js)
+// challenge.html에서 만든 챌린지(hemicycle-challenge@1)를 게임에서 플레이한다. (시나리오 · 격변은 js/campaign.js)
 //   챌린지 = 시작(프리셋 또는 세이브) + 브리핑 + 목표 · 실패 조건 · 마감일 + 이벤트 · 결정 · 변수(스크립트 모드 형식)
 // - 시작: challenge.html의 "시험 플레이"가 sessionStorage(hemiBootChallenge, 크면 IndexedDB)에 챌린지를 맡기고
 //   시작 프리셋/세이브로 main.html을 연다 → 새 세이브가 만들어지면 여기서 챌린지를 그 세이브에 붙인다.
