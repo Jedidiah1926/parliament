@@ -524,6 +524,8 @@
     .rd-card .rd-desc { flex: 1 1 auto; overflow: hidden; }
     .rd-card:not(.has-detail) .rd-desc { overflow-y: auto; }
     .rd-points { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 5px; }
+    .rd-points li.rd-points-more { opacity: .6; font-size: .85em; }
+    .rd-points li.rd-points-more::before { display: none; }
     .rd-points li { position: relative; padding-left: 13px; line-height: 1.5; }
     .rd-points li::before {
       content: ''; position: absolute; left: 0; top: .62em; width: 5px; height: 5px;

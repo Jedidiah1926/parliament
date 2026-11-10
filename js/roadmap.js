@@ -1360,6 +1360,29 @@
         : 200;
       const naturalCardWidth = (viewportWidth - gap * (visibleCards - 1)) / visibleCards;
       track.style.setProperty('--rd-card-w', Math.max(minCardWidth, naturalCardWidth) + 'px');
+      requestAnimationFrame(fitCardPoints);
+    }
+
+    // 카드 요약이 카드 높이를 넘으면 잘리지 않게 들어가는 만큼만 보여 주고 나머지는 "외 N개"로 (전체는 자세히 보기 창에)
+    function fitCardPoints() {
+      const ko = !(typeof window.getLang === 'function') || window.getLang() === 'kr';
+      const moreLabel = n => (ko ? `외 ${n}개` : `+${n} more`);
+      document.querySelectorAll('#roadmapTrack .rd-card .rd-desc').forEach(desc => {
+        const ul = desc.querySelector('.rd-points');
+        if (!ul) return;
+        if (!ul._all) ul._all = Array.from(ul.children).filter(li => !li.classList.contains('rd-points-more')).map(li => li.outerHTML);
+        const all = ul._all;
+        ul.innerHTML = all.join('');
+        if (desc.scrollHeight <= desc.clientHeight + 1 || all.length < 2) return;
+        const more = document.createElement('li');
+        more.className = 'rd-points-more';
+        for (let keep = all.length - 1; keep >= 1; keep--) {
+          ul.innerHTML = all.slice(0, keep).join('');
+          more.textContent = moreLabel(all.length - keep);
+          ul.appendChild(more);
+          if (desc.scrollHeight <= desc.clientHeight + 1) break;
+        }
+      });
     }
 
     // 세로 휠을 가로 이동으로: 아래로 굴리면 오른쪽, 위로 굴리면 왼쪽
