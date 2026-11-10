@@ -3129,12 +3129,30 @@
         function anyVoteAnimRunning() { return !!(voteAnim.house || voteAnim.senate || voteAnim.third); }
         // 좌석 하나의 표결 모습 — fill: 칠할 표결 색, ring: 안쪽 링 색(없으면 정당 색)
         // 예정 표는 예전처럼 표결 색 + 정당 색 링, 투표 연출 중 · 결과 화면은 정당과 상관없이 표결 색 + 조금 진한 같은 계열 링
+        // 투표 중 아직 표를 안 던진 좌석은 공석과 같은 색(blank)
+        const VOTE_BLANK_FILL = '#222', VOTE_BLANK_STROKE = '#333';
         function seatVoteLook(chamber, i, d) {
             const planned = d && d.partyStatus === 'banned' ? 'none' : ((voteState[chamber] || {})[i] || 'none');
             const cast = voteCast[chamber];
-            if(cast) return cast.has(i) ? { fill: getVoteColor(planned), ring: voteRingColor(planned) } : { fill: null, ring: null };
+            if(cast) return cast.has(i) ? { fill: getVoteColor(planned), ring: voteRingColor(planned) } : { fill: VOTE_BLANK_FILL, ring: null, blank: true };
             return { fill: getVoteColor(planned), ring: null };
         }
+        // 표결 연출 — 'new': 예정 표 · 무작위 타이밍 투표(개편), 'classic': 좌석에 바로 표를 찍고 확정(기존). 설정 › 화면, 이 브라우저(앱)에 저장
+        function voteStyleNew() { try { return localStorage.getItem('dnoVoteStyle') !== 'classic'; } catch(e) { return true; } }
+        // 표결 화면 글자를 지금 방식에 맞춤
+        function applyVoteStyleLabels() {
+            const isNew = voteStyleNew();
+            const set = (sel, txt) => { const el = document.querySelector(sel); if(el) el.innerHTML = txt; };
+            set('#voteModePanel .vote-panel-title', `<span class="tno-prompt">&gt; </span>${isNew ? '예정 표 찍기' : '투표 입력 모드'}`);
+            set('#voteModeHint', isNew
+                ? '고른 뒤 반원의 좌석을 누르면 그 의원의 예정 표가 정해집니다. 아래 "표결 시작"을 누르면 의원들이 하나씩 투표해요'
+                : '모드 선택 후 캔버스 의원 원 클릭 (정보 보기 모드는 투표를 바꾸지 않음)');
+            set('#partyBulkPanel .vote-panel-title', `<span class="tno-prompt">&gt; </span>${isNew ? '당론 (PARTY LINE)' : '정당 일괄 투표 (PARTY BULK)'}`);
+            const bh = document.getElementById('partyBulkHint');
+            if(bh) bh.style.display = isNew ? '' : 'none';
+            try { setVoteMode(currentVoteMode); updateConfirmButtons(); updateVoteResults(); } catch(e) { /* 화면 준비 전 */ }
+        }
+        document.addEventListener('DOMContentLoaded', applyVoteStyleLabels);
         function voteRingColor(v) {
             if(v === 'yea') return '#00b863';
             if(v === 'nay') return '#c8102e';
@@ -3176,13 +3194,13 @@
                 const x = a.x + (b.x - a.x) * e, y = a.y + (b.y - a.y) * e;
                 const r = a.r * 0.85;
                 const vc = getVoteColor(en.vote);
-                ctx.globalAlpha = vc ? 1 : 0.3;
                 ctx.beginPath();
                 ctx.arc(x, y, r, 0, Math.PI * 2);
-                ctx.fillStyle = vc || en.color;
+                ctx.fillStyle = vc || VOTE_BLANK_FILL;
                 ctx.fill();
-                if(vc) { ctx.strokeStyle = voteRingColor(en.vote); ctx.lineWidth = 2.5; ctx.stroke(); }
-                ctx.globalAlpha = 1;
+                if(vc) { ctx.strokeStyle = voteRingColor(en.vote); ctx.lineWidth = 2.5; }
+                else { ctx.strokeStyle = VOTE_BLANK_STROKE; ctx.lineWidth = 1; }
+                ctx.stroke();
             });
             drawChamberCenter(ctx, dots[0].cx ?? W / 2, dots[0].cy ?? H - 40, dots.length, chamber, cvsId, W);
         }
@@ -3203,6 +3221,7 @@
         // 표결 확정 버튼 — 투표 연출을 돌린 뒤 결과를 확정한다 (연출 중에 다시 누르면 건너뛰기)
         async function confirmChamberVote(chamber) {
             if(voteAnim[chamber]) { voteAnim[chamber].skip = true; return; }
+            if(!voteStyleNew()) { finalizeChamberVote(chamber); return; } // 기존 방식: 바로 확정
             if(!chamberVotePrecheck(chamber)) return;
             clearVoteSortView(chamber);
             const cvsId = voteCanvasId(chamber);
@@ -3359,7 +3378,7 @@
             hBtn.style.cursor = hDone ? 'not-allowed' : 'pointer';
             hBtn.textContent = hDone
                 ? (bill.houseStatus === 'pass' ? `✔ ${hName} 가결 확정됨` : `✘ ${hName} 부결 확정됨`)
-                : `▶ ${hName} 표결 시작`;
+                : `▶ ${hName} ${voteStyleNew() ? '표결 시작' : '표결 확정'}`;
 
             if(isBi) {
                 const hPassed = bill && bill.houseStatus === 'pass';
@@ -3373,7 +3392,7 @@
                 if(sSkip)         sBtn.textContent = `✘ ${hName} 부결 — ${sName} 미상정`;
                 else if(sDone)    sBtn.textContent = bill.senateStatus === 'pass' ? `✔ ${sName} 가결 확정됨` : `✘ ${sName} 부결 확정됨`;
                 else if(!hPassed) sBtn.textContent = `[##] ${hName} 가결 후 열림`;
-                else              sBtn.textContent = `▶ ${sName} 표결 시작`;
+                else              sBtn.textContent = `▶ ${sName} ${voteStyleNew() ? '표결 시작' : '표결 확정'}`;
             }
 
             if(isTri && tBtn) {
@@ -3390,7 +3409,7 @@
                 if(tSkip)         tBtn.textContent = `✘ ${prevName} 부결 — ${tName} 미상정`;
                 else if(tDone)    tBtn.textContent = bill.thirdStatus === 'pass' ? `✔ ${tName} 가결 확정됨` : `✘ ${tName} 부결 확정됨`;
                 else if(!prevPassed) tBtn.textContent = `[##] ${prevName} 가결 후 열림`;
-                else              tBtn.textContent = `▶ ${tName} 표결 시작`;
+                else              tBtn.textContent = `▶ ${tName} ${voteStyleNew() ? '표결 시작' : '표결 확정'}`;
             }
             // 투표 연출 중: 버튼은 건너뛰기
             [['house', hBtn], ['senate', sBtn], ['third', tBtn]].forEach(([ch, btn]) => {
@@ -3403,7 +3422,9 @@
         function setVoteMode(mode) {
             currentVoteMode = mode;
             closeSeatInfoCard();
-            const labels = { yea: '▲ 찬성 예정 (초록)', nay: '▼ 반대 예정 (빨강)', abs: '— 기권 예정 (회색)', none: '✕ 예정 지우기', info: '🔍 정보 보기' };
+            const labels = voteStyleNew()
+                ? { yea: '▲ 찬성 예정 (초록)', nay: '▼ 반대 예정 (빨강)', abs: '— 기권 예정 (회색)', none: '✕ 예정 지우기', info: '🔍 정보 보기' }
+                : { yea: '▲ 찬성 (초록)', nay: '▼ 반대 (빨강)', abs: '— 기권 (회색)', none: '✕ 제거', info: '🔍 정보 보기' };
             const colors  = { yea: '#00ff88', nay: '#ff2244', abs: '#888888', none: '#888', info: 'var(--tno-neon)' };
             const el = document.getElementById('currentModeLabel');
             el.textContent = labels[mode] || '없음';
@@ -4713,7 +4734,7 @@
 
             // 부가 정보 (찬성수/기준, 기준명, 부족석)
             const infoEl = document.getElementById(prefix+'VoteInfo');
-            const isPlan = !isConfirmed && !voteCast[chamber];
+            const isPlan = !isConfirmed && !voteCast[chamber] && voteStyleNew();
             const planTag = isPlan && (yea + nay + abs) > 0 ? '예정 · ' : (voteCast[chamber] ? '투표 중 · ' : '');
             if(infoEl) {
                 if(yea + nay + abs === 0) {
@@ -5004,8 +5025,12 @@
                 }
                 ctx.fill();
 
-                // Stroke: always party/coalition/gov color
-                if(d.partyStatus === 'banned') {
+                // Stroke: always party/coalition/gov color (투표 중 미투표 좌석은 공석처럼)
+                if(look.blank || look.ring) { // 투표 연출 중에는 정당 · 여당 테두리 없이
+                    ctx.strokeStyle = look.ring || VOTE_BLANK_STROKE;
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+                } else if(d.partyStatus === 'banned') {
                     ctx.shadowColor = "rgba(255, 0, 85, 0.8)";
                     ctx.shadowBlur = 10;
                     ctx.strokeStyle = "#ff0055";
@@ -5028,7 +5053,7 @@
                 }
 
                 // If voted, draw inner border using party color so border stays visible (투표 연출 중에는 표결 색 계열)
-                if(voteColor) {
+                if(voteColor && !look.blank) {
                     ctx.beginPath();
                     ctx.arc(d.x, d.y, d.r * 0.85, 0, Math.PI*2);
                     ctx.strokeStyle = look.ring || d.color;
@@ -16552,8 +16577,12 @@
                 ctx.fillStyle = voteColor || d.color;
                 ctx.fill();
 
-                // Stroke: party/coalition/gov
-                if(d.partyStatus === 'banned') {
+                // Stroke: party/coalition/gov (투표 중 미투표 좌석은 공석처럼)
+                if(look.blank || look.ring) { // 투표 연출 중에는 정당 · 여당 테두리 없이
+                    ctx.strokeStyle = look.ring || VOTE_BLANK_STROKE;
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+                } else if(d.partyStatus === 'banned') {
                     ctx.shadowColor = "rgba(255, 0, 85, 0.8)";
                     ctx.shadowBlur = 10;
                     ctx.strokeStyle = "#ff0055";
@@ -16576,7 +16605,7 @@
                 }
 
                 // If voted, overlay party color as border so color stays visible (투표 연출 중에는 표결 색 계열)
-                if(voteColor) {
+                if(voteColor && !look.blank) {
                     ctx.beginPath();
                     ctx.arc(pt.x, pt.y, radius, 0, Math.PI*2);
                     ctx.strokeStyle = look.ring || d.color;

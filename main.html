@@ -682,7 +682,7 @@
                         <button class="vote-ctrl-btn info" onclick="setVoteMode('info')">🔍 정보 보기</button>
                     </div>
                     <div class="vote-hint">
-                        고른 뒤 반원의 좌석을 누르면 그 의원의 예정 표가 정해집니다. 아래 "표결 시작"을 누르면 의원들이 하나씩 투표해요 &nbsp;|&nbsp;
+                        <span id="voteModeHint">고른 뒤 반원의 좌석을 누르면 그 의원의 예정 표가 정해집니다. 아래 "표결 시작"을 누르면 의원들이 하나씩 투표해요</span> &nbsp;|&nbsp;
                         현재: <span id="currentModeLabel" style="color:#888;">없음</span>
                     </div>
                     <div class="vote-btn-row" style="margin-top:8px;">
@@ -693,7 +693,7 @@
                 <!-- 정당 일괄 투표 -->
                 <div class="vote-panel" id="partyBulkPanel">
                     <div class="vote-panel-title"><span class="tno-prompt">&gt; </span>당론 (PARTY LINE)</div>
-                    <div class="vote-hint" style="margin:-2px 0 8px;">정당마다 당론을 정하면 소속 의원 모두의 예정 표가 그렇게 바뀝니다. 그 뒤 좌석을 눌러 이탈표를 따로 정할 수 있어요</div>
+                    <div class="vote-hint" id="partyBulkHint" style="margin:-2px 0 8px;">정당마다 당론을 정하면 소속 의원 모두의 예정 표가 그렇게 바뀝니다. 그 뒤 좌석을 눌러 이탈표를 따로 정할 수 있어요</div>
                     <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:8px;" id="bulkChamberSelectGroup">
                         <label style="display:flex;align-items:center;gap:6px;cursor:pointer;color:#aaa;font-size:0.85rem;padding:4px 6px;background:#0a0c10;border:1px solid #222;" id="bulkHouseWrap">
                             <input type="checkbox" name="bulkChamber" value="house" checked onchange="onBulkChamberChange()"> <span id="bulkHouseLabel">하원</span>
