@@ -915,11 +915,11 @@
       },
       '1.7': {
         slots: 10,
-        title: '1.7: The Will of the People',
+        title: '1.7: We the People',
         cards: [
           {
             status: 'current',
-            title: '1.7.0 - The Voice of the People',
+            title: '1.7.0 - 민중의 소리는 신의 소리 "Vox populi, vox Dei"',
             summary: ['시나리오 메이커 개편', '제작물 선택 · 관리', '여론 › 기사', '국정 지지율 · 여론 추이', '자동 여론 변동', '스크립트 모드 (모딩)', '표결 연출 · 당론', '개표 연출', '표결일 · 선거일 자동', '의석 ↔ 내각 연동', '세이브 선택 화면 탭'],
             desc: `2026.11.10
               <br>2026.11.10 — 표결 · 개표 연출 (업데이트 4 · 5)

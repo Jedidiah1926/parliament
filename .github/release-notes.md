@@ -1,4 +1,4 @@
-## Hemicycle v1.7.0-obt.5 · 시나리오 0.3.1 (OBT) — The Voice of the People
+## Hemicycle v1.7.0-obt.5 · 시나리오 0.3.1 (OBT) — We the People · 민중의 소리는 신의 소리 "Vox populi, vox Dei"
 
 Windows 64비트용 데스크톱 앱입니다. 지난 릴리스 **v1.7.0-obt.4 이후**의 변경 사항입니다. 기존 OBT 설치판은 앱에서 이 버전으로 자동 업데이트됩니다.
 
