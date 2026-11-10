@@ -53,6 +53,23 @@
         <!-- 소식: 공식 채널(공지 · 업데이트 영상) — 게임 런처의 공지 칸처럼 오른쪽 위에 -->
         <aside class="home-news" aria-label="소식">
             <div class="home-news-head">소식</div>
+            <!-- 새 영상: 공식 트레일러 — 언어마다 영상이 달라서 한국어면 한국어판, 그 밖의 언어는 영어판 (아래 스크립트가 주소를 고름) -->
+            <a class="home-news-item" id="homeTrailerLink" href="https://youtu.be/aKRCh-_S4WU" data-href-kr="https://youtu.be/aKRCh-_S4WU" data-href-en="https://youtu.be/HPzNE1gdbyE" target="_blank" rel="noopener noreferrer">
+                <span class="home-news-icon home-news-yt" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22"><path d="M21.6 7.2a2.5 2.5 0 0 0-1.8-1.8C18.2 5 12 5 12 5s-6.2 0-7.8.4A2.5 2.5 0 0 0 2.4 7.2 26 26 0 0 0 2 12a26 26 0 0 0 .4 4.8 2.5 2.5 0 0 0 1.8 1.8C5.8 19 12 19 12 19s6.2 0 7.8-.4a2.5 2.5 0 0 0 1.8-1.8A26 26 0 0 0 22 12a26 26 0 0 0-.4-4.8z" fill="currentColor"/><path d="M10 15.2 15.2 12 10 8.8z" fill="#fff"/></svg></span>
+                <span class="home-news-text">
+                    <span class="home-news-label">Hemicycle 트레일러</span>
+                    <span class="home-news-desc">새 영상 · 공식 트레일러</span>
+                </span>
+                <span class="home-news-ext" aria-hidden="true">↗</span>
+            </a>
+            <script>
+                document.addEventListener('DOMContentLoaded', function () {
+                    var a = document.getElementById('homeTrailerLink');
+                    if (!a) return;
+                    var lang = typeof window.getLang === 'function' ? window.getLang() : 'kr';
+                    a.href = lang === 'kr' ? a.dataset.hrefKr : a.dataset.hrefEn;
+                });
+            </script>
             <a class="home-news-item" href="https://www.youtube.com/@Hemicycles" target="_blank" rel="noopener noreferrer">
                 <span class="home-news-icon home-news-yt" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22"><path d="M21.6 7.2a2.5 2.5 0 0 0-1.8-1.8C18.2 5 12 5 12 5s-6.2 0-7.8.4A2.5 2.5 0 0 0 2.4 7.2 26 26 0 0 0 2 12a26 26 0 0 0 .4 4.8 2.5 2.5 0 0 0 1.8 1.8C5.8 19 12 19 12 19s6.2 0 7.8-.4a2.5 2.5 0 0 0 1.8-1.8A26 26 0 0 0 22 12a26 26 0 0 0-.4-4.8z" fill="currentColor"/><path d="M10 15.2 15.2 12 10 8.8z" fill="#fff"/></svg></span>
                 <span class="home-news-text">

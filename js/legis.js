@@ -334,7 +334,83 @@ function committeeVoteBind(billId) {
     svg.addEventListener('pointerup', end);
     svg.addEventListener('pointercancel', end);
 }
+// 위원회 표결 연출 (설정 › 화면 › 표결 연출이 "개편"일 때) — 본회의 표결처럼 모든 위원석이 공석 색이 된 뒤
+// 무작위 타이밍으로 한 명씩 찬성 · 반대 · 기권 색으로 바뀌고, 다 끝나면 찬성 · 반대 · 기권 순으로 자리를 모아 확정한다.
+// 연출 중에 확정 버튼을 다시 누르면 건너뛴다. "기존"이면 예전처럼 바로 확정
+const cmAnim = {};
 function confirmCommitteeVote(billId) {
+    if (cmAnim[billId]) { cmAnim[billId].skip = true; return; }
+    const isNew = typeof voteStyleNew !== 'function' || voteStyleNew();
+    const bill = bills.find(b => b.id === billId);
+    const c = bill && committeeById(bill.committeeId);
+    const box = document.getElementById('cmVote-' + billId);
+    const svg = box && box.querySelector('.cm-hemi');
+    if (!isNew || !bill || !c || !svg || !committeeComposition(c).length || typeof animateFrames !== 'function') { finalizeCommitteeVote(billId); return; }
+    runCommitteeVoteAnim(billId, bill, c, box, svg).then(() => finalizeCommitteeVote(billId));
+}
+async function runCommitteeVoteAnim(billId, bill, c, box, svg) {
+    const anim = cmAnim[billId] = { skip: false };
+    const wait = ms => new Promise(r => setTimeout(r, ms));
+    const btn = box.nextElementSibling && box.nextElementSibling.classList.contains('cm-confirm') ? box.nextElementSibling : null;
+    if (btn) btn.textContent = legisUiText('⏩ 투표 중… (누르면 건너뛰기)');
+    box.classList.add('cm-voting');
+    try {
+        const seats = committeeSeats(bill, c);
+        const circles = Array.from(svg.querySelectorAll('.cm-seat'));
+        const vColor = v => (typeof getVoteColor === 'function' && getVoteColor(v)) || CM_VOTE_COLOR[v];
+        const vRing = v => (typeof voteRingColor === 'function' && voteRingColor(v)) || CM_VOTE_COLOR[v];
+        // 모든 위원석을 공석 색으로 (정당 색 · 예정 표 테두리 없이)
+        circles.forEach(el => {
+            const full = (+el.getAttribute('r') || 6) + (+el.getAttribute('stroke-width') || 0) / 2;
+            el.setAttribute('r', (full - 0.75).toFixed(1));
+            el.setAttribute('fill', '#222'); el.setAttribute('stroke', '#333'); el.setAttribute('stroke-width', '1.5');
+        });
+        const num = svg.querySelector('.cm-hemi-num'), sub = svg.querySelector('.cm-hemi-sub'), tally = box.querySelector('.cm-tally');
+        const t = { yea: 0, nay: 0, abs: 0 };
+        const show = () => {
+            if (num) num.textContent = `${t.yea} : ${t.nay}`;
+            if (tally) tally.innerHTML = `<span class="y">${legisUiText('찬성')} ${t.yea}</span><span class="n">${legisUiText('반대')} ${t.nay}</span><span class="a">${legisUiText('기권')} ${t.abs}</span>`;
+        };
+        if (sub) { sub.setAttribute('class', 'cm-hemi-sub'); sub.textContent = legisUiText('투표 중…'); }
+        show();
+        // 1) 무작위 타이밍으로 한 명씩
+        const total = Math.max(1500, Math.min(3600, 1100 + seats.length * 70));
+        const times = seats.map((x, i) => ({ i, t: Math.pow(Math.random(), 1.35) * total })).sort((a, b) => a.t - b.t);
+        let k = 0;
+        await animateFrames(total, anim, el => {
+            while (k < times.length && times[k].t <= el) {
+                const i = times[k++].i, v = seats[i].v, dot = circles[i];
+                if (dot) { dot.setAttribute('fill', vColor(v)); dot.setAttribute('stroke', vRing(v)); }
+                t[v] = (t[v] || 0) + 1;
+            }
+            show();
+        });
+        if (!anim.skip) await wait(350);
+        // 2) 찬성 · 반대 · 기권 순으로 자리 모으기 (위원장 자리는 그대로)
+        const pos = circles.map(el => ({ x: +el.getAttribute('cx'), y: +el.getAttribute('cy') }));
+        const rank = { yea: 0, nay: 1, abs: 2 };
+        const movable = seats.map((x, i) => i).filter(i => seats[i].side !== 'C');
+        const sorted = movable.slice().sort((a, b) => (rank[seats[a].v] - rank[seats[b].v]) || a - b);
+        const target = seats.map((x, i) => i);
+        sorted.forEach((si, j) => { target[si] = movable[j]; });
+        await animateFrames(650, anim, el => {
+            const q = el / 650, e = q < 0.5 ? 2 * q * q : 1 - Math.pow(-2 * q + 2, 2) / 2;
+            circles.forEach((dot, i) => {
+                const a = pos[i], b = pos[target[i]];
+                if (!a || !b) return;
+                dot.setAttribute('cx', (a.x + (b.x - a.x) * e).toFixed(1));
+                dot.setAttribute('cy', (a.y + (b.y - a.y) * e).toFixed(1));
+            });
+        });
+        const required = requiredSeatsFor(seats.length, 0.5), pass = t.yea >= required;
+        if (sub) { sub.setAttribute('class', 'cm-hemi-sub ' + (pass ? 'pass' : 'fail')); sub.textContent = `${legisUiText(pass ? '통과' : '부결')} · ${legisUiText('과반')} ${required}`; }
+        if (!anim.skip) await wait(900);
+    } finally {
+        delete cmAnim[billId];
+        box.classList.remove('cm-voting');
+    }
+}
+function finalizeCommitteeVote(billId) {
     const bill = bills.find(b => b.id === billId);
     const c = bill && committeeById(bill.committeeId);
     if (!bill || !c) return;
@@ -355,6 +431,7 @@ function confirmCommitteeVote(billId) {
     bill.committeeStatus = result;
     bill.committeeVote = { yea, nay, abs, total, required, stances, seats: seats.map(x => x.v) };
     delete bill.committeeSeatVotes;
+    if (typeof stampBillVoteDate === 'function') stampBillVoteDate(bill); // 표결일을 적지 않았으면 지금 게임 날짜
     if (!bill.voteHistory) bill.voteHistory = [];
     bill.voteHistory.push({ chamber: 'committee', committeeId: c.id, committeeName: c.name, result, date: bill.voteDate || '', yea, nay, abs, total, required, threshold: 0.5, at: new Date().toISOString() });
     renderCommitteeTab(); renderBillList(); renderArchiveList(); syncBillSelect();
