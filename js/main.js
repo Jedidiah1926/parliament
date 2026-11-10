@@ -3120,55 +3120,34 @@
         // ===== 표결 연출 =====
         // 좌석 · 당론으로 찍는 찬성 · 반대 · 기권은 "예정"(voteState)이다. 표결 버튼을 누르면 의원들이 무작위 타이밍으로
         // 한 명씩 투표하고(voteCast — 집계도 0부터 올라감), 다 끝나면 찬성 · 반대 · 기권 순으로 자리를 다시 모은 뒤
-        // 가결 · 부결 도장을 찍으며 결과를 확정한다(finalizeChamberVote). 버튼을 한 번 더 누르면 건너뛴다.
+        // 결과를 확정한다(finalizeChamberVote). 버튼을 한 번 더 누르면 건너뛴다.
         const voteCast = { house: null, senate: null, third: null };      // 투표 중일 때만 Set(이미 투표한 좌석)
         const voteAnim = { house: null, senate: null, third: null };      // 진행 중인 연출 { skip }
         const voteSortView = { house: null, senate: null, third: null };  // 정렬된 결과 화면 { entries, t }
         function voteCanvasId(ch) { return ch === 'senate' ? 'senateCanvas' : ch === 'third' ? 'thirdCanvas' : 'houseCanvas'; }
         function onVoteSubTab() { return currentMainTab === 'law' && currentSubTab.law === 'vote'; }
         function anyVoteAnimRunning() { return !!(voteAnim.house || voteAnim.senate || voteAnim.third); }
-        // 좌석 하나의 표결 모습 — fill: 칠할 표결 색(투표를 마친 좌석), plan: 예정 표시 색(작은 가운데 점)
+        // 좌석 하나의 표결 모습 — fill: 칠할 표결 색(투표를 마친 좌석), plan: 예정 표시 색(테두리)
         function seatVoteLook(chamber, i, d) {
             const planned = d && d.partyStatus === 'banned' ? 'none' : ((voteState[chamber] || {})[i] || 'none');
             const cast = voteCast[chamber];
             if(cast) return { fill: cast.has(i) ? getVoteColor(planned) : null, plan: null };
             return { fill: null, plan: getVoteColor(planned) };
         }
+        // 예정 표 — 좌석 테두리를 예정 색으로 (안쪽으로 그려 이웃 좌석과 겹치지 않게)
         function drawPlanMark(ctx, x, y, r, color) {
+            const lw = Math.max(1.5, r * 0.32);
             ctx.beginPath();
-            ctx.arc(x, y, Math.max(1.2, r * 0.36), 0, Math.PI * 2);
-            ctx.fillStyle = color;
-            ctx.fill();
-            ctx.lineWidth = Math.max(0.8, r * 0.12);
-            ctx.strokeStyle = 'rgba(0,0,0,0.55)';
+            ctx.arc(x, y, Math.max(0.5, r - lw / 2), 0, Math.PI * 2);
+            ctx.lineWidth = lw;
+            ctx.strokeStyle = color;
             ctx.stroke();
-        }
-        function removeVoteStamp(chamber) {
-            const cvs = document.getElementById(voteCanvasId(chamber));
-            cvs?.parentElement?.querySelectorAll(`.vote-stamp[data-ch="${chamber}"]`).forEach(el => el.remove());
         }
         function clearVoteSortView(chamber) {
             const chs = chamber ? [chamber] : ['house', 'senate', 'third'];
             let had = false;
-            chs.forEach(ch => { if(voteSortView[ch]) { voteSortView[ch] = null; had = true; } removeVoteStamp(ch); });
+            chs.forEach(ch => { if(voteSortView[ch]) { voteSortView[ch] = null; had = true; } });
             if(had) redrawAll();
-        }
-        function showVoteStamp(chamber, pass) {
-            removeVoteStamp(chamber);
-            const cvs = document.getElementById(voteCanvasId(chamber));
-            const parent = cvs?.parentElement;
-            const d0 = dotCache[chamber]?.[0];
-            if(!parent || !d0) return;
-            if(getComputedStyle(parent).position === 'static') parent.style.position = 'relative';
-            const el = document.createElement('div');
-            el.className = 'vote-stamp ' + (pass ? 'pass' : 'fail');
-            el.dataset.ch = chamber;
-            el.textContent = pass ? '가결' : '부결';
-            const outerR = (d0.cx || 0) - 10;
-            el.style.top = (cvs.offsetTop + d0.cy - outerR * 0.42) + 'px';
-            el.style.left = (cvs.offsetLeft + d0.cx) + 'px';
-            el.style.fontSize = Math.max(26, Math.min(84, outerR * 0.3)) + 'px';
-            parent.appendChild(el);
         }
         // 투표를 마친 뒤: 찬성 → 반대 → 기권 → 불참 순으로 자리를 다시 모은다 (좌석은 왼쪽부터 각도순)
         function buildVoteSortEntries(chamber) {
@@ -3258,12 +3237,11 @@
                 voteCast[chamber] = null;
                 voteAnim[chamber] = null;
             }
-            // 3) 결과 확정 + 도장
+            // 3) 결과 확정 — 모은 자리는 예정을 바꾸거나 법안을 바꿀 때까지 그대로
             const bill = bills.find(b => b.id === activeBillId);
             finalizeChamberVote(chamber);
             const status = bill ? bill[chamber + 'Status'] : null;
-            if(status === 'pass' || status === 'fail') showVoteStamp(chamber, status === 'pass');
-            else clearVoteSortView(chamber);
+            if(status !== 'pass' && status !== 'fail') clearVoteSortView(chamber);
             updateConfirmButtons();
         }
 
@@ -5003,7 +4981,6 @@
             if(!dots || dots.length === 0) return;
             // 투표를 마친 결과 화면(찬성 · 반대 · 기권 순으로 모음)은 표결 탭에서만
             if(voteSortView[chamber] && (onVoteSubTab() || voteAnim[chamber])) { drawVoteSortView(cvsId, chamber); return; }
-            removeVoteStamp(chamber);
             const cvs = document.getElementById(cvsId);
             const dpr = renderDpr();
             const ctx = cvs.getContext('2d');
@@ -5060,7 +5037,7 @@
                     ctx.lineWidth = 2.5;
                     ctx.stroke();
                 }
-                // 투표 전: 예정 표는 가운데 작은 점으로
+                // 투표 전: 예정 표는 테두리로
                 if(look.plan) drawPlanMark(ctx, d.x, d.y, d.r * 0.85, look.plan);
 
                 // 마우스를 올린 좌석 · 정보 카드를 연 좌석: 살짝 커지며 떠오름 (예전의 떨어진 흰 고리 대신)
@@ -16610,7 +16587,7 @@
                     ctx.lineWidth = 2.5;
                     ctx.stroke();
                 }
-                // 투표 전: 예정 표는 가운데 작은 점으로
+                // 투표 전: 예정 표는 테두리로
                 if(look.plan) drawPlanMark(ctx, pt.x, pt.y, radius, look.plan);
 
                 // 마우스를 올린 좌석 · 정보 카드를 연 좌석: 살짝 커지며 떠오름
@@ -16619,9 +16596,8 @@
 
             // Center label
             drawChamberCenter(ctx, CX, CY, total, chamber, cvsId, width);
-            // 표결 결과 화면(모은 자리)이 떠 있으면 그것으로 다시 그림 · 아니면 도장 치우기
+            // 표결 결과 화면(모은 자리)이 떠 있으면 그것으로 다시 그림
             if(voteSortView[chamber]) redrawChamber(cvsId, chamber);
-            else if(chamber in voteSortView) removeVoteStamp(chamber);
         }
 
         // 통계 컨테이너 id로부터 의원실 추정 (houseStats/senateStats/thirdStats/elecResultStatsHouse 등)
