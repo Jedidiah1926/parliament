@@ -209,6 +209,8 @@ window.DnoLangPacks.en = {
   {"re": "^(.+) — ([\\d.]+)에서 열림$", "to": "$1 — opens in $2"},
   {"re": "^⚠ 개표 도중 (.+)의 부정선거가 발각되었습니다! \\(개표율 (\\d+)%\\)\\n조작된 표를 모두 무효 처리하고 처음부터 다시 개표합니다\\.\\n발각된 정당\\((.+)\\)은 활동이 금지됩니다\\.$", "to": "⚠ Election fraud by $1 was uncovered during the count! ($2% counted)\nThe rigged votes are voided and the count starts over.\n$3 is banned."},
   {"re": "봉쇄조항 ([\\d.]+)% 미달: ", "to": "below the $1% threshold: "},
+  {"re": "^비우면 자동: (.+)$", "to": "Auto if empty: $1"},
+  {"re": "^자동: (.+)$", "to": "Auto: $1"},
   {"re": "개표 중단: 부정선거 발각! \\(개표율 (\\d+)%\\)", "to": "Count halted: election fraud uncovered! ($1% counted)"},
   {"re": "개표 중\\.\\.\\. 개표율 ([\\d.]+)%$", "to": "counting... $1% counted"},
   {"re": "^Teaser (\\w+) 화면은 개발자 모드에서만 열 수 있습니다\\.$", "to": "The Teaser $1 screen can only be opened in developer mode."},

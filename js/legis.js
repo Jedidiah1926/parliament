@@ -355,6 +355,7 @@ function confirmCommitteeVote(billId) {
     bill.committeeStatus = result;
     bill.committeeVote = { yea, nay, abs, total, required, stances, seats: seats.map(x => x.v) };
     delete bill.committeeSeatVotes;
+    if (typeof stampBillVoteDate === 'function') stampBillVoteDate(bill); // 표결일을 적지 않았으면 지금 게임 날짜
     if (!bill.voteHistory) bill.voteHistory = [];
     bill.voteHistory.push({ chamber: 'committee', committeeId: c.id, committeeName: c.name, result, date: bill.voteDate || '', yea, nay, abs, total, required, threshold: 0.5, at: new Date().toISOString() });
     renderCommitteeTab(); renderBillList(); renderArchiveList(); syncBillSelect();

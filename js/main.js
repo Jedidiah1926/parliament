@@ -1824,6 +1824,7 @@
                 bill.houseStatus = result;
                 if(hasSenateChamber()) bill.senateStatus = result;
                 if(hasThirdChamber()) bill.thirdStatus = result;
+                stampBillVoteDate(bill);
                 if(!bill.voteHistory) bill.voteHistory = [];
                 bill.voteHistory.push({ chamber: 'cabinetCouncil', result, yea, nay, abs, total: totalParticipants, required, threshold, numer: councilVoteNumer, denom: councilVoteDenom, date: bill.voteDate || '', at: new Date().toISOString() });
                 cabinetCouncilVote = {};
@@ -1984,6 +1985,34 @@
             return `${era ? era + ' ' : ''}${y||'?'}년 ${m||'?'}월 ${d||'?'}일`;
         }
 
+        // ── 표결일 · 선거일 자동 지정 ──
+        // 직접 적지 않았으면 지금 게임 날짜(오른쪽 위 날짜 줄)를 쓴다. 표결일은 직접 적으면 그대로, 비우면 다시 자동
+        function nationYearAuto() { return String(document.getElementById('nationDateYear')?.value || '').trim(); }
+        function stampBillVoteDate(bill) {
+            if(!bill) return '';
+            if(!bill.voteDate || bill.voteDateAuto) {
+                const nd = formatNationDate();
+                if(nd) { bill.voteDate = nd; bill.voteDateAuto = true; }
+            }
+            return bill.voteDate || '';
+        }
+        function billVoteDateInputValue(bill) { return bill && !bill.voteDateAuto ? (bill.voteDate || '') : ''; }
+        // 비워 둔 날짜 · 연도 칸에 "자동: 지금 날짜"를 보여 줌 (날짜를 넘길 때마다 갱신)
+        function refreshAutoDatePlaceholders() {
+            const nd = formatNationDate();
+            ['voteDateInput', 'councilVoteDateInput'].forEach(id => {
+                const el = document.getElementById(id);
+                if(el) el.placeholder = nd ? `비우면 자동: ${nd}` : '예: 1952년 3월 5일';
+            });
+            const y = nationYearAuto();
+            ['elecYear', 'presElecYear', 'pmElecYear', 'pvLocalYear', 'pvRefYear'].forEach(id => {
+                const el = document.getElementById(id);
+                if(!el) return;
+                if(!el.dataset.basePh) el.dataset.basePh = el.placeholder || '';
+                el.placeholder = y ? `자동: ${y}` : el.dataset.basePh;
+            });
+        }
+
         function formatNationSession() {
             const term = document.getElementById('nationSessionTerm')?.value;
             const orgName = document.getElementById('nationSessionOrgName')?.value?.trim() || '국회';
@@ -1998,6 +2027,7 @@
             const sessEl = document.getElementById('dispInfoSession');
             if(dateEl) dateEl.textContent = formatNationDate() || '날짜 미설정';
             if(sessEl) sessEl.textContent = formatNationSession() || '회기 미설정';
+            refreshAutoDatePlaceholders();
             // 진행 버튼은 수동 진행형 날짜, 다음 회기 · … 는 개별형 회기일 때만 (단순형은 글자를 직접 쓰는 방식이라 진행할 값이 없음)
             const dateCtl = document.getElementById('dispDateControls');
             const sessCtl = document.getElementById('dispSessionControls');
@@ -2548,14 +2578,15 @@
             const dateInput = document.getElementById('voteDateInput');
             if(dateInput) {
                 const bill = bills.find(b=>b.id===id);
-                dateInput.value = bill?.voteDate || '';
+                dateInput.value = billVoteDateInputValue(bill);
+                refreshAutoDatePlaceholders();
             }
         }
 
         function updateVoteDate(val) {
             if(!activeBillId) return;
             const bill = bills.find(b=>b.id===activeBillId);
-            if(bill) { bill.voteDate = val.trim(); renderBillList(); renderArchiveList(); }
+            if(bill) { bill.voteDate = val.trim(); bill.voteDateAuto = !bill.voteDate; renderBillList(); renderArchiveList(); }
         }
 
         function renderActiveBillDisplay() {
@@ -2584,14 +2615,15 @@
             const dateInput = document.getElementById('councilVoteDateInput');
             if(dateInput) {
                 const bill = bills.find(b=>b.id===id);
-                dateInput.value = bill?.voteDate || '';
+                dateInput.value = billVoteDateInputValue(bill);
+                refreshAutoDatePlaceholders();
             }
         }
 
         function updateCouncilVoteDate(val) {
             if(!activeCouncilBillId) return;
             const bill = bills.find(b=>b.id===activeCouncilBillId);
-            if(bill) { bill.voteDate = val.trim(); renderBillList(); renderArchiveList(); }
+            if(bill) { bill.voteDate = val.trim(); bill.voteDateAuto = !bill.voteDate; renderBillList(); renderArchiveList(); }
         }
 
         function renderCouncilActiveBillDisplay() {
@@ -3322,6 +3354,7 @@
             const required = requiredSeatsFor(validSeats, threshold);
             const result = yea >= required ? 'pass' : 'fail';
 
+            stampBillVoteDate(bill); // 표결일을 적지 않았으면 지금 게임 날짜
             if(!bill.voteHistory) bill.voteHistory = [];
             const nowISO = new Date().toISOString();
             const logVote = (ch, res) => bill.voteHistory.push({ chamber: ch, result: res, date: bill.voteDate || '', yea, nay, abs, total: validSeats, required, threshold, numer: thNumer, denom: thDenom, at: nowISO });
@@ -10782,7 +10815,8 @@
             presElectionLastResult = {
                 mode: presElectionMode, chamber: presElectionChamberBasis, round1, round2, winnerPartyId,
                 title: document.getElementById('presElecTitle')?.value || '',
-                year: document.getElementById('presElecYear')?.value || '',
+                year: document.getElementById('presElecYear')?.value || nationYearAuto(),
+                gameDate: formatNationDate(),
             };
             renderPresElecResultPanel();
         }
@@ -10797,7 +10831,8 @@
             pmElectionLastResult = {
                 mode: presElectionMode, chamber: presElectionChamberBasis, round1, round2, winnerPartyId,
                 title: document.getElementById('pmElecTitle')?.value || '',
-                year: document.getElementById('pmElecYear')?.value || '',
+                year: document.getElementById('pmElecYear')?.value || nationYearAuto(),
+                gameDate: formatNationDate(),
             };
             renderPmElecResultPanel();
         }
@@ -10854,7 +10889,7 @@
             renderCabinetDisplay();
             presElectionRecords.push({
                 id: 'pe_'+Date.now(), office: 'president',
-                title: r.title, year: r.year, mode: r.mode, chamber: r.chamber,
+                title: r.title, year: r.year, gameDate: r.gameDate || '', mode: r.mode, chamber: r.chamber,
                 winnerPartyId: r.winnerPartyId, winnerName: president.name,
                 date: new Date().toISOString(),
             });
@@ -10876,7 +10911,7 @@
             renderCabinetDisplay();
             presElectionRecords.push({
                 id: 'pe_'+Date.now(), office: 'pm',
-                title: r.title, year: r.year, mode: r.mode, chamber: r.chamber,
+                title: r.title, year: r.year, gameDate: r.gameDate || '', mode: r.mode, chamber: r.chamber,
                 winnerPartyId: r.winnerPartyId, winnerName: pm.name,
                 date: new Date().toISOString(),
             });
@@ -14642,6 +14677,7 @@
                 id: 'er'+Date.now(),
                 title: title || '무제 선거',
                 year:  year  || '?',
+                gameDate: formatNationDate(), // 선거일 — 그때의 게임 날짜
                 chamber: chamberDisplayName,
                 chamberType: chamber,
                 isSenate: chamber==='senate',
@@ -14683,7 +14719,7 @@
             const t = v => (v ? new Date(v).getTime() || 0 : 0);
             const list = [];
             elecRecords.forEach(r => list.push({ kind: 'general', id: r.id, at: t(r.savedAt) || Number(String(r.id).replace(/\D/g, '')) || 0, r,
-                search: [r.title, r.year, r.chamber, ...r.parties.filter(p => p.seats > 0).map(p => p.name)].join(' ') }));
+                search: [r.title, r.year, r.gameDate, r.chamber, ...r.parties.filter(p => p.seats > 0).map(p => p.name)].join(' ') }));
             presElectionRecords.forEach(r => {
                 const p = parties.find(x => String(x.id) === String(r.winnerPartyId));
                 list.push({ kind: r.office === 'pm' ? 'pm' : 'president', id: r.id, at: t(r.date), r, party: p,
@@ -14711,7 +14747,7 @@
                     .sort((a,b)=>b.seats-a.seats)
                     .map(p=>`<div class="bill-history-entry">${escapeHtmlText(p.name)} — 의석 ${p.seats}석 · 득표율 ${(p.prob*100).toFixed(1)}%</div>`)
                     .join('') || '<div style="color:#444;">정당별 세부 데이터 없음</div>';
-                return wrap(`${head(r.title, `${r.year} · ${r.chamber}`)}
+                return wrap(`${head(r.title, `${r.gameDate || r.year} · ${r.chamber}`)}
                     <div style="margin-bottom:4px;">${partySummary}</div>
                     <div style="margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;">
                         <span class="elec-record-toggle" onclick="toggleElecRecordDetail('${r.id}')">▾ 세부 기록 (총 ${r.totalSeats}석)</span>
@@ -14726,7 +14762,7 @@
             if(x.kind === 'president' || x.kind === 'pm') {
                 const r = x.r, p = x.party;
                 const modeLabel = { plurality:'단순 다수 대표제', runoff:'결선투표제', electoral:'선거인단제' }[r.mode] || '';
-                return wrap(`${head(r.title, [r.year, modeLabel].filter(Boolean).join(' · '))}
+                return wrap(`${head(r.title, [r.gameDate || r.year, modeLabel].filter(Boolean).join(' · '))}
                     <div style="margin-bottom:8px;font-size:0.85rem;color:#aaa;"><span style="margin-right:4px;">당선:</span>${p ? recChip(p.color, p.name, '', '') : ''}${escapeHtmlText(r.winnerName || '')}</div>
                     <div style="display:flex;gap:6px;justify-content:flex-end;">${recBtn(`elecDeletePresRecord('${r.id}')`, '삭제', false)}</div>`);
             }
@@ -15758,7 +15794,7 @@
             const sName = document.getElementById('senateNameInput')?.value||'상원';
             const tName = document.getElementById('thirdNameInput')?.value||'삼원';
             const elecTitle = document.getElementById('elecTitle')?.value.trim() || '무제 선거';
-            const elecYear  = document.getElementById('elecYear')?.value.trim()  || '?';
+            const elecYear  = document.getElementById('elecYear')?.value.trim() || nationYearAuto() || '?'; // 비우면 지금 게임 연도
             const elecMode  = getElecMode(); // 'proportional' | 'district'(지역구만) | 'mixed'(지역구+비례)
             const isByElection = document.getElementById('elecModeByElection')?.checked ?? false;
 

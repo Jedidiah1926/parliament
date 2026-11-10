@@ -30,6 +30,9 @@
     const pct = (a, b) => (b > 0 ? (a / b * 100) : 0);
     const rand = (a) => (Math.random() * 2 - 1) * a;
     const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+    // 선거일 자동 — 연도를 비우면 지금 게임 연도, 기록에는 그때의 게임 날짜 (js/main.js)
+    const autoYear = () => (typeof nationYearAuto === 'function' ? nationYearAuto() : '');
+    const gameDate = () => (typeof formatNationDate === 'function' ? formatNationDate() : '');
     const partyById = id => parties.find(p => String(p.id) === String(id)) || null;
     const chamberOk = ch => chamberList().includes(ch) ? ch : 'house';
     const runningParties = () => parties.filter(p => p.status !== 'banned' && p.status !== 'dissolved');
@@ -147,10 +150,11 @@
         }
         const levels = want.map(lv => runLevel(ch, lv, L)).filter(lv => lv.results.length);
         if (!levels.length) { showCustomAlert('권역이 없습니다 — 국가 › 권역에서 권역을 만들고 지역구를 배정하세요.'); return; }
+        const year = L.year || autoYear(); // 비우면 지금 게임 연도
         const rec = {
             id: 'loc' + Date.now().toString(36),
-            title: L.title || `${L.year ? L.year + '년 ' : ''}지방선거`,
-            year: L.year, chamber: ch, levels, at: Date.now(),
+            title: L.title || `${year ? year + '년 ' : ''}지방선거`,
+            year, gameDate: gameDate(), chamber: ch, levels, at: Date.now(),
         };
         L.last = rec;
         L.records.unshift(rec);
@@ -485,7 +489,7 @@
         const passed = !quorumFail && yes > no;
         const rec = {
             id: 'ref' + Date.now().toString(36),
-            question: q, year: R.year, chamber: ch, quorumOn: R.quorumOn, quorum: R.quorum,
+            question: q, year: R.year || autoYear(), gameDate: gameDate(), chamber: ch, quorumOn: R.quorumOn, quorum: R.quorum,
             stances: { ...R.stances }, parts, electorate, voters, yes, no, passed, quorumFail, missingPop, at: Date.now(),
         };
         R.last = rec;
@@ -679,7 +683,7 @@
         box.innerHTML = `
             <div class="pv-grid2">
                 <div><label class="pv-label">선거 제목</label><input type="text" id="pvLocalTitle" value="${esc(L.title)}" placeholder="예: 제1회 전국동시지방선거"></div>
-                <div><label class="pv-label">연도</label><input type="number" id="pvLocalYear" value="${esc(L.year)}" placeholder="1995"></div>
+                <div><label class="pv-label">연도</label><input type="number" id="pvLocalYear" value="${esc(L.year)}" placeholder="${autoYear() ? `자동: ${esc(autoYear())}` : '1995'}"></div>
             </div>
             <label class="pv-label pv-label-block">뽑는 자리</label>
             <div class="pv-offices">
@@ -714,7 +718,7 @@
         box.innerHTML = `
             <div class="pv-grid2">
                 <div><label class="pv-label">안건 (질문)</label><input type="text" id="pvRefQuestion" value="${esc(R.question)}" placeholder="예: 헌법 개정안에 찬성하십니까?"></div>
-                <div><label class="pv-label">연도</label><input type="number" id="pvRefYear" value="${esc(R.year)}" placeholder="1987"></div>
+                <div><label class="pv-label">연도</label><input type="number" id="pvRefYear" value="${esc(R.year)}" placeholder="${autoYear() ? `자동: ${esc(autoYear())}` : '1987'}"></div>
             </div>
             <div class="pv-grid3">
                 <div><label class="pv-label">지도 · 인구 기준 원</label><select id="pvRefChamber" onchange="PopVote.refresh()">${chamberOptions(R.chamber)}</select></div>
@@ -742,11 +746,11 @@
                 office: lv.office || '', count: lv.results.length,
                 chips: levelSummary(lv).rows.filter(x => x.won > 0).map(x => { const p = partyById(x.pid); return { color: p ? p.color : '#888', name: p ? p.name : '?', n: x.won }; }),
             }));
-            return { at: r.at || 0, title: r.title || '지방선거', year: r.year || '', chamber, lines,
+            return { at: r.at || 0, title: r.title || '지방선거', year: r.gameDate || r.year || '', chamber, lines,
                 search: [r.title, r.year, chamber, ...lines.map(l => l.office), ...lines.flatMap(l => l.chips.map(c => c.name))].join(' ') };
         }
         const verdict = r.quorumFail ? '투표율 미달 · 부결' : r.passed ? '가결' : '부결';
-        return { at: r.at || 0, title: r.question || '국민투표', year: r.year || '', chamber, passed: !!r.passed,
+        return { at: r.at || 0, title: r.question || '국민투표', year: r.gameDate || r.year || '', chamber, passed: !!r.passed,
             verdict, yesPct: pct(r.yes, r.voters), turnoutPct: pct(r.voters, r.electorate),
             search: [r.question, r.year, chamber, verdict].join(' ') };
     }
