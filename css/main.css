@@ -1736,3 +1736,24 @@ html[data-theme-family="modern"] .sign-done { color: var(--m-text-2, #52525b); }
 html[data-exec-btn="off"] .simulate-btn,
 html[data-exec-btn="off"] .exec-bar,
 html[data-exec-btn="off"] .mobile-exec-fab { display: none !important; }
+
+        /* ── 표결 도장 (가결 · 부결) — 투표 연출이 끝나면 반원 위에 찍힘 ── */
+        .vote-stamp {
+            position: absolute; z-index: 5; pointer-events: none;
+            transform: translate(-50%, -50%) rotate(-9deg);
+            padding: 0.08em 0.42em; line-height: 1.15; letter-spacing: 0.06em;
+            font-family: 'NeoDunggeunmo', 'VT323', monospace; font-weight: bold;
+            border: 0.09em solid currentColor;
+            background: rgba(0, 0, 0, 0.55);
+            animation: voteStampIn 0.42s cubic-bezier(.2, 1.6, .4, 1) both;
+            white-space: nowrap;
+        }
+        .vote-stamp.pass { color: #ffd23f; text-shadow: 0 0 10px rgba(255, 210, 63, 0.75); box-shadow: 0 0 14px rgba(255, 210, 63, 0.45), inset 0 0 10px rgba(255, 210, 63, 0.25); }
+        .vote-stamp.fail { color: #ff3b5c; text-shadow: 0 0 10px rgba(255, 59, 92, 0.75); box-shadow: 0 0 14px rgba(255, 59, 92, 0.45), inset 0 0 10px rgba(255, 59, 92, 0.25); }
+        html[data-theme-family="modern"] .vote-stamp { background: color-mix(in srgb, var(--m-surface, #fff) 82%, transparent); text-shadow: none; }
+        html[data-theme-family="modern"] .vote-stamp.pass { color: #c58a00; box-shadow: none; }
+        html[data-theme-family="modern"] .vote-stamp.fail { color: #d6213f; box-shadow: none; }
+        @keyframes voteStampIn {
+            0%   { opacity: 0; transform: translate(-50%, -50%) rotate(-9deg) scale(2.4); }
+            100% { opacity: 1; transform: translate(-50%, -50%) rotate(-9deg) scale(1); }
+        }
