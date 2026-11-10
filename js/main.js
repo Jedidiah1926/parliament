@@ -3127,21 +3127,19 @@
         function voteCanvasId(ch) { return ch === 'senate' ? 'senateCanvas' : ch === 'third' ? 'thirdCanvas' : 'houseCanvas'; }
         function onVoteSubTab() { return currentMainTab === 'law' && currentSubTab.law === 'vote'; }
         function anyVoteAnimRunning() { return !!(voteAnim.house || voteAnim.senate || voteAnim.third); }
-        // 좌석 하나의 표결 모습 — fill: 칠할 표결 색(투표를 마친 좌석), plan: 예정 표시 색(테두리)
+        // 좌석 하나의 표결 모습 — fill: 칠할 표결 색, ring: 안쪽 링 색(없으면 정당 색)
+        // 예정 표는 예전처럼 표결 색 + 정당 색 링, 투표 연출 중 · 결과 화면은 정당과 상관없이 표결 색 + 조금 진한 같은 계열 링
         function seatVoteLook(chamber, i, d) {
             const planned = d && d.partyStatus === 'banned' ? 'none' : ((voteState[chamber] || {})[i] || 'none');
             const cast = voteCast[chamber];
-            if(cast) return { fill: cast.has(i) ? getVoteColor(planned) : null, plan: null };
-            return { fill: null, plan: getVoteColor(planned) };
+            if(cast) return cast.has(i) ? { fill: getVoteColor(planned), ring: voteRingColor(planned) } : { fill: null, ring: null };
+            return { fill: getVoteColor(planned), ring: null };
         }
-        // 예정 표 — 좌석 테두리를 예정 색으로 (안쪽으로 그려 이웃 좌석과 겹치지 않게)
-        function drawPlanMark(ctx, x, y, r, color) {
-            const lw = Math.max(1.5, r * 0.32);
-            ctx.beginPath();
-            ctx.arc(x, y, Math.max(0.5, r - lw / 2), 0, Math.PI * 2);
-            ctx.lineWidth = lw;
-            ctx.strokeStyle = color;
-            ctx.stroke();
+        function voteRingColor(v) {
+            if(v === 'yea') return '#00b863';
+            if(v === 'nay') return '#c8102e';
+            if(v === 'abs') return '#5c5c5c';
+            return null;
         }
         function clearVoteSortView(chamber) {
             const chs = chamber ? [chamber] : ['house', 'senate', 'third'];
@@ -3183,7 +3181,7 @@
                 ctx.arc(x, y, r, 0, Math.PI * 2);
                 ctx.fillStyle = vc || en.color;
                 ctx.fill();
-                if(vc) { ctx.strokeStyle = en.color; ctx.lineWidth = 2.5; ctx.stroke(); }
+                if(vc) { ctx.strokeStyle = voteRingColor(en.vote); ctx.lineWidth = 2.5; ctx.stroke(); }
                 ctx.globalAlpha = 1;
             });
             drawChamberCenter(ctx, dots[0].cx ?? W / 2, dots[0].cy ?? H - 40, dots.length, chamber, cvsId, W);
@@ -5029,16 +5027,14 @@
                     if(d.strokeDashed) ctx.setLineDash([]);
                 }
 
-                // If voted, draw inner border using party color so border stays visible
+                // If voted, draw inner border using party color so border stays visible (투표 연출 중에는 표결 색 계열)
                 if(voteColor) {
                     ctx.beginPath();
                     ctx.arc(d.x, d.y, d.r * 0.85, 0, Math.PI*2);
-                    ctx.strokeStyle = d.color;
+                    ctx.strokeStyle = look.ring || d.color;
                     ctx.lineWidth = 2.5;
                     ctx.stroke();
                 }
-                // 투표 전: 예정 표는 테두리로
-                if(look.plan) drawPlanMark(ctx, d.x, d.y, d.r * 0.85, look.plan);
 
                 // 마우스를 올린 좌석 · 정보 카드를 연 좌석: 살짝 커지며 떠오름 (예전의 떨어진 흰 고리 대신)
                 if(hoveredSeat[chamber] === i || seatIsSelected(chamber, i)) drawSeatFocus(ctx, d.x, d.y, d.r, voteColor || d.color, seatIsSelected(chamber, i));
@@ -16579,16 +16575,14 @@
                     if(d.strokeDashed) ctx.setLineDash([]);
                 }
 
-                // If voted, overlay party color as border so color stays visible
+                // If voted, overlay party color as border so color stays visible (투표 연출 중에는 표결 색 계열)
                 if(voteColor) {
                     ctx.beginPath();
                     ctx.arc(pt.x, pt.y, radius, 0, Math.PI*2);
-                    ctx.strokeStyle = d.color;
+                    ctx.strokeStyle = look.ring || d.color;
                     ctx.lineWidth = 2.5;
                     ctx.stroke();
                 }
-                // 투표 전: 예정 표는 테두리로
-                if(look.plan) drawPlanMark(ctx, pt.x, pt.y, radius, look.plan);
 
                 // 마우스를 올린 좌석 · 정보 카드를 연 좌석: 살짝 커지며 떠오름
                 if(hoveredSeat[chamber] === i || seatIsSelected(chamber, i)) drawSeatFocus(ctx, pt.x, pt.y, dotR, (typeof voteColor !== 'undefined' && voteColor) || d.color, seatIsSelected(chamber, i));

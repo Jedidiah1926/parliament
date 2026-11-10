@@ -5099,7 +5099,7 @@ window.DnoLangPacks.en = {
   ["▼ 반대 예정 (빨강)", "▼ Plan Nay (red)"],
   ["— 기권 예정 (회색)", "— Plan Abstain (gray)"],
   ["✕ 예정 지우기", "✕ Clear plan"],
-  ["고른 뒤 반원의 좌석을 누르면 그 의원의 예정 표가 정해집니다 (좌석 테두리 색). 아래 \"표결 시작\"을 누르면 의원들이 하나씩 투표해요", "Pick one, then click a seat to set that member's planned vote (seat outline color). Press \"Start Vote\" below and members vote one by one"],
+  ["고른 뒤 반원의 좌석을 누르면 그 의원의 예정 표가 정해집니다. 아래 \"표결 시작\"을 누르면 의원들이 하나씩 투표해요", "Pick one, then click a seat to set that member's planned vote. Press \"Start Vote\" below and members vote one by one"],
   ["당론 (PARTY LINE)", "Party Line (PARTY LINE)"],
   ["정당마다 당론을 정하면 소속 의원 모두의 예정 표가 그렇게 바뀝니다. 그 뒤 좌석을 눌러 이탈표를 따로 정할 수 있어요", "Setting a party line changes the planned vote of every member of that party. Click seats afterwards to set individual defectors"],
   ["▶ 하원 표결 시작", "▶ Start House Vote"],
