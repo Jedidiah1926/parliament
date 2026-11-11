@@ -120,8 +120,6 @@
       flex: 0 0 auto;
       overflow-x: auto;
       overflow-y: hidden;
-      scrollbar-width: thin;
-      scrollbar-color: var(--tno-neon) #000;
     }
 
     /* 메인 화면으로 돌아가는 버튼 (헤더 맨 앞) */
@@ -203,8 +201,6 @@
       width: 100%;
       overflow-x: auto;
       overflow-y: hidden;
-      scrollbar-color: var(--tno-neon) #000;
-      scrollbar-width: thin;
       padding-bottom: 14px;
       position: relative;
     }
@@ -358,8 +354,6 @@
       word-break: keep-all;
       overflow-y: auto;
       overflow-x: hidden;
-      scrollbar-width: thin;
-      scrollbar-color: var(--card-color, var(--tno-neon)) rgba(0, 0, 0, .4);
     }
 
     /* 카드 상태(--card-color)에 맞춰 스크롤바 색이 함께 바뀐다 */
@@ -560,3 +554,10 @@
     .rd-detail-list { gap: 7px; }
     .rd-tag { display: inline-block; margin-right: 6px; padding: 0 5px; border: 1px solid #ff8a65; color: #ff8a65; font-size: .75em; line-height: 1.5; vertical-align: 1px; }
     .rd-detail-empty { color: #7d8a90; margin: 8px 0 0; }
+
+/* 표준 스크롤바 속성(scrollbar-color · scrollbar-width)은 ::-webkit-scrollbar가 없는 브라우저(Firefox)에서만.
+   Chromium(데스크톱 앱)에서 이 속성을 쓰면 기본 스크롤바로 바뀌어 위의 네온 스크롤바와 네온 커서(js/cursor.js)가 무시된다 */
+@supports not selector(::-webkit-scrollbar) {
+    .rd-header, .rd-track-viewport { scrollbar-width: thin; scrollbar-color: var(--tno-neon) #000; }
+    .rd-desc { scrollbar-width: thin; scrollbar-color: var(--card-color, var(--tno-neon)) rgba(0, 0, 0, .4); }
+}
