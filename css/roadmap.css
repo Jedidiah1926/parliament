@@ -363,11 +363,15 @@
     .rd-desc::-webkit-scrollbar-track {
       background: rgba(0, 0, 0, .4);
     }
+    /* 카드 상태 색(--card-color)은 다른 스크롤바처럼 테두리에만 — 안쪽은 공통 스크롤바 색, 올리면 카드 색으로 */
     .rd-desc::-webkit-scrollbar-thumb {
-      background: var(--card-color, var(--tno-neon));
+      background: var(--scroll-thumb, var(--tno-border));
+      background-clip: border-box;
+      border: 1px solid var(--card-color, var(--tno-neon));
       box-shadow: 0 0 4px color-mix(in srgb, var(--card-color, var(--tno-neon)) 60%, transparent);
     }
     .rd-desc::-webkit-scrollbar-thumb:hover {
+      background: var(--card-color, var(--tno-neon));
       box-shadow: 0 0 8px var(--card-color, var(--tno-neon));
     }
 
