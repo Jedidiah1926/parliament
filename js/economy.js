@@ -1890,7 +1890,7 @@
             <button type="button" class="econ-btn econ-sm" data-act="csv" title="모든 시점 · 지표 표를 CSV로">CSV</button>
             <button type="button" class="econ-btn econ-sm" data-act="full" title="크게 보기 (Esc로 복귀)">${E.ui.full ? '⤡ 작게' : '⛶ 크게'}</button>`;
         tb.querySelectorAll('[data-view]').forEach(b => { b.onclick = () => { E.ui.view = b.dataset.view; renderDisp(); }; });
-        tb.querySelector('[data-locked-view]').onclick = () => showCustomAlert('🔒 "경제권"은(는) 1.7.1 업데이트에서 열리는 기능입니다. 여러 나라를 묶어 경제권(관세 동맹 · 공동시장 · 통화 동맹 …)을 정하고 경제에 반영해요.');
+        tb.querySelector('[data-locked-view]').onclick = () => showCustomAlert('🔒 "경제권"은(는) 1.7.1 업데이트에서 추가할 예정입니다. 지도 구역을 묶어 공업권 · 무역권 · 수도권 같은 경제 지역을 만들고, 국가 영토와 별도로 표시하고 관리합니다.');
         tb.querySelectorAll('[data-range]').forEach(b => { b.onclick = () => { E.ui.range = b.dataset.range; E.ui.zoom = null; renderDisp(); if (curSub() === 'analysis') renderTab('analysis'); }; });
         tb.querySelector('[data-act="unzoom"]')?.addEventListener('click', () => { E.ui.zoom = null; renderDisp(); });
         tb.querySelector('[data-act="csv"]').onclick = () => C.csv(tableSpec());

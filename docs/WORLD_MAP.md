@@ -37,3 +37,7 @@
 - 높은 색 허용 오차가 바탕 제거 기준까지 넓혀 실제 땅을 바다로 삭제하던 계산을 수정했습니다.
 
 검증: `node tests/world-map-data.test.cjs`, 로컬 서버에서 `node tests/world-map.browser.cjs`, `node tests/map-trace.browser.cjs`.
+
+## 시나리오와의 다음 연결 단계
+
+[시나리오·세계지도 연동 설계 초안](design/SCENARIO_WORLD_INTEGRATION.md)에 방향성·이벤트에 따른 영토 변경, 소유권 조건, 국가 연결, 제작 화면과 검증 기준을 정리했습니다. **구현 전 제안**이며 이 문서의 현재 사용법과 구분합니다.
