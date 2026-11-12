@@ -318,6 +318,35 @@
         const walk = o => { if (!o || typeof o !== 'object') return; Object.entries(o).forEach(([k, v]) => { if (['flag', 'not_flag', 'has_flag', 'set_flag', 'clear_flag'].includes(k) && v === 'focus_' + oldId) o[k] = 'focus_' + newId; else walk(v); }); };
         walk(d); return true;
     }
+    // 나라 열쇠 바꾸기 — 나라 목록 · 시작 나라마다의 연결 · 조건/효과 속 참조를 함께 (이름과 이야기 글은 건드리지 않는다)
+    function renameCountry(d, oldKey, newKey) {
+        const list = d.world && Array.isArray(d.world.countries) ? d.world.countries : [];
+        if (!idOK(newKey) || oldKey === newKey || !list.some(c => c.key === oldKey) || list.some(c => c.key === newKey)) return false;
+        list.forEach(c => { if (c.key === oldKey) c.key = newKey; });
+        (d.starts || []).forEach(s => { if (object(s.worldBindings) && Object.hasOwn(s.worldBindings, oldKey)) { s.worldBindings = Object.fromEntries(Object.entries(s.worldBindings).map(([k, v]) => [k === oldKey ? newKey : k, v])); } });
+        const walk = (o, skip) => { if (!o || typeof o !== 'object') return; Object.entries(o).forEach(([k, v]) => {
+            if (k === 'state' && skip) return; // 시작 세이브 속은 보지 않는다
+            if ((k === 'owns_regions' && object(v) && object(v.country) && v.country.key === oldKey)) v.country.key = newKey;
+            if ((k === 'transfer_regions' && object(v) && object(v.to) && v.to.key === oldKey)) v.to.key = newKey;
+            walk(v, false); }); };
+        Object.entries(d).forEach(([k, v]) => { if (k === 'starts') (v || []).forEach(s => walk(s, true)); else if (k !== 'world') walk(v, false); });
+        return true;
+    }
+    // 시작 세이브의 세계지도에서 고를 수 있는 구역 · 국가 · 경제권 (가이드 입력용) — 지도가 든 첫 시작 나라 기준, 나머지 시작 나라와의 차이는 검사가 알려 준다
+    function worldCatalog(d) {
+        const out = { regions: [], zones: [], starts: [] };
+        (Array.isArray(d.starts) ? d.starts : []).forEach((s, i) => {
+            const st = s && s.kind === 'save' && object(s.state) ? s.state : null;
+            const shapes = st && st.worldMap && st.worldMap.preset && st.worldMap.preset.district && st.worldMap.preset.district.svgMap && st.worldMap.preset.district.svgMap.shapes;
+            const names = (st && st.worldMap && st.worldMap.preset && st.worldMap.preset.district && st.worldMap.preset.district.names && st.worldMap.preset.district.names.house) || {};
+            const regions = Array.isArray(shapes) ? shapes.filter(sh => sh && typeof sh.key === 'string').map(sh => ({ key: sh.key, name: typeof names[sh.key] === 'string' && names[sh.key] ? names[sh.key] : sh.key })) : [];
+            const rows = st && st.history && st.history.ranking && Array.isArray(st.history.ranking.rows) ? st.history.ranking.rows.filter(object).map(r => ({ id: String(r.id), name: r.self ? ((st.config && st.config.nationName) || r.name || '우리나라') : (r.name || '이름 없는 국가') })) : [];
+            const zones = st && object(st.economicRegions) && Array.isArray(st.economicRegions.zones) ? st.economicRegions.zones.filter(z => object(z) && typeof z.id === 'string').map(z => ({ id: z.id, name: z.name || z.id })) : [];
+            out.starts.push({ index: i, hasState: !!st, hasMap: regions.length > 0, regions, rows, zones });
+            if (!out.regions.length && regions.length) { out.regions = regions; out.zones = zones; }
+        });
+        return out;
+    }
     function starter(id) {
         const f = (id, title, icon, x, y, prereq = [], extra = {}) => ({ id, title, icon, x, y, days: 35, desc: '', prereq, any: [], exclusive: [], effects: [], ...extra });
         return {
@@ -341,7 +370,7 @@
             endings: [{ id: 'dawn', title: '우리가 만든 내일', text: '격변을 넘어 새 장을 열었습니다. 공화국의 이야기는 계속됩니다.', condition: { flag: 'focus_future' } }]
         };
     }
-    const api = { validate, describe, layout, renameFocus, starter, clone, idOK };
+    const api = { validate, describe, layout, renameFocus, renameCountry, worldCatalog, starter, clone, idOK };
     if (typeof module !== 'undefined' && module.exports) module.exports = api;
     else root.HemiCampaignTools = api;
 })(typeof window === 'undefined' ? globalThis : window);

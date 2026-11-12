@@ -102,7 +102,7 @@
     }
     function scriptForm(path,label) {
         const events=path.endsWith('events'), items=getP(path)||[];
-        return `<section class="scn-card"><div class="scn-h">${esc(label)}</div><p class="scn-dim">${events?'제목과 본문을 채우고, 발생 조건 또는 방향성의 “이벤트 ID”로 연결하세요.':'반복 행동과 선택을 만드세요. 조건이 맞으면 게임의 결정 목록에서 실행할 수 있습니다.'}</p>${items.map((e,i)=>`<details class="cpg-script" open><summary>${esc(e.title||e.id)}</summary><div class="scn-grid2"><label class="cpg-field">제목<input class="scn-in" data-script-field="${path}.${i}.title" value="${esc(e.title)}"></label><label class="cpg-field">ID<input class="scn-in" data-script-field="${path}.${i}.id" value="${esc(e.id)}"></label></div><label class="cpg-field">본문<textarea class="scn-in" rows="3" data-script-field="${path}.${i}.desc">${esc(e.desc)}</textarea></label>${events?`<label class="cpg-field">화면<select class="scn-in" data-script-field="${path}.${i}.presentation"><option value="narrative" ${e.presentation!=='standard'?'selected':''}>서사 · 본문 / 하단 이미지와 선택지</option><option value="standard" ${e.presentation==='standard'?'selected':''}>일반 이벤트</option></select></label><label class="cpg-field">그림 주소 (선택)<input class="scn-in" data-script-field="${path}.${i}.image" value="${esc(e.image||'')}"></label><div class="scn-row"><label class="scn-btn">그림 파일<input type="file" accept="image/*" data-event-image="${path}.${i}.image" hidden></label><button type="button" class="scn-btn" data-event-preview="${path}.${i}">미리 보기</button>${e.image?`<img class="cpe-thumb" src="${esc(e.image)}" alt=""><button type="button" class="scn-btn" data-event-clear-image="${path}.${i}.image">그림 빼기</button>`:''}</div><label class="scn-check"><input type="checkbox" data-script-bool="${path}.${i}.super" ${e.super?'checked':''}>슈퍼 이벤트로 표시</label><label class="scn-check"><input type="checkbox" data-script-bool="${path}.${i}.trigger_only" ${e.trigger_only?'checked':''}>방향성 / 다른 이벤트에서만 실행</label>${jsonField(`${path}.${i}.trigger`,'발생 조건','cond')}${(e.options||[]).map((o,j)=>`<div class="scn-cond"><label class="cpg-field">선택지 ${j+1}<input class="scn-in" data-script-field="${path}.${i}.options.${j}.text" value="${esc(o.text)}"></label>${jsonField(`${path}.${i}.options.${j}.trigger`,'선택지 표시 조건 (비우면 항상 표시)','cond')}${jsonField(`${path}.${i}.options.${j}.effects`,'선택 효과','eff')}<button type="button" class="scn-btn" data-list-remove="${path}.${i}.options" data-index="${j}">선택지 삭제</button></div>`).join('')}<button type="button" class="scn-btn" data-option-add="${path}.${i}.options">+ 선택지</button>`:`${jsonField(`${path}.${i}.available`,'실행 조건','cond')}${jsonField(`${path}.${i}.effects`,'실행 효과','eff')}<label class="cpg-field">다시 실행까지 (${timeUnit()})<input class="scn-in" type="number" min="0" data-script-field="${path}.${i}.cooldown_days" value="${esc(e.cooldown_days||0)}"></label>`}<button type="button" class="scn-btn scn-danger" data-list-remove="${path}" data-index="${i}">${events?'이벤트':'결정'} 삭제</button></details>`).join('')}<button type="button" class="scn-btn" data-script-add="${path}">+ ${events?'이벤트':'결정'}</button></section>`;
+        return `<section class="scn-card"><div class="scn-h">${esc(label)}</div><p class="scn-dim">${events?'제목과 본문을 채우고, 발생 조건 또는 방향성의 “이벤트 ID”로 연결하세요.':'반복 행동과 선택을 만드세요. 조건이 맞으면 게임의 결정 목록에서 실행할 수 있습니다.'}</p>${items.map((e,i)=>`<details class="cpg-script" open><summary>${esc(e.title||e.id)}</summary><div class="scn-grid2"><label class="cpg-field">제목<input class="scn-in" data-script-field="${path}.${i}.title" value="${esc(e.title)}"></label><label class="cpg-field">ID<input class="scn-in" data-script-field="${path}.${i}.id" value="${esc(e.id)}"></label></div><label class="cpg-field">본문<textarea class="scn-in" rows="3" data-script-field="${path}.${i}.desc">${esc(e.desc)}</textarea></label>${events?`<label class="cpg-field">화면<select class="scn-in" data-script-field="${path}.${i}.presentation"><option value="narrative" ${e.presentation!=='standard'?'selected':''}>서사 · 본문 / 하단 이미지와 선택지</option><option value="standard" ${e.presentation==='standard'?'selected':''}>일반 이벤트</option></select></label><label class="cpg-field">그림 주소 (선택)<input class="scn-in" data-script-field="${path}.${i}.image" value="${esc(e.image||'')}"></label><div class="scn-row"><label class="scn-btn">그림 파일<input type="file" accept="image/*" data-event-image="${path}.${i}.image" hidden></label><button type="button" class="scn-btn" data-event-preview="${path}.${i}">미리 보기</button>${e.image?`<img class="cpe-thumb" src="${esc(e.image)}" alt=""><button type="button" class="scn-btn" data-event-clear-image="${path}.${i}.image">그림 빼기</button>`:''}</div><label class="scn-check"><input type="checkbox" data-script-bool="${path}.${i}.super" ${e.super?'checked':''}>슈퍼 이벤트로 표시</label><label class="scn-check"><input type="checkbox" data-script-bool="${path}.${i}.trigger_only" ${e.trigger_only?'checked':''}>방향성 / 다른 이벤트에서만 실행</label><label class="cpg-field">발생 조건을 검사하는 때<select class="scn-in" data-script-field="${path}.${i}.check">${[['date','날짜가 바뀔 때'],['election','총선 결과를 반영할 때'],['world','지도 변경 시'],['any','모든 시점']].map(([v,t])=>`<option value="${v}" ${(e.check||'date')===v?'selected':''}>${t}</option>`).join('')}</select></label>${jsonField(`${path}.${i}.trigger`,'발생 조건','cond')}${(e.options||[]).map((o,j)=>`<div class="scn-cond"><label class="cpg-field">선택지 ${j+1}<input class="scn-in" data-script-field="${path}.${i}.options.${j}.text" value="${esc(o.text)}"></label>${jsonField(`${path}.${i}.options.${j}.trigger`,'선택지 표시 조건 (비우면 항상 표시)','cond')}${jsonField(`${path}.${i}.options.${j}.effects`,'선택 효과','eff')}<button type="button" class="scn-btn" data-list-remove="${path}.${i}.options" data-index="${j}">선택지 삭제</button></div>`).join('')}<button type="button" class="scn-btn" data-option-add="${path}.${i}.options">+ 선택지</button>`:`${jsonField(`${path}.${i}.available`,'실행 조건','cond')}${jsonField(`${path}.${i}.effects`,'실행 효과','eff')}<label class="cpg-field">다시 실행까지 (${timeUnit()})<input class="scn-in" type="number" min="0" data-script-field="${path}.${i}.cooldown_days" value="${esc(e.cooldown_days||0)}"></label>`}<button type="button" class="scn-btn scn-danger" data-list-remove="${path}" data-index="${i}">${events?'이벤트':'결정'} 삭제</button></details>`).join('')}<button type="button" class="scn-btn" data-script-add="${path}">+ ${events?'이벤트':'결정'}</button></section>`;
     }
     function bindScriptForms(body) {
         body.querySelectorAll('[data-event-preview]').forEach(b=>b.onclick=()=>{const ev=getP(b.dataset.eventPreview);HemiCampaignEvents.show({...ev,presentation:ev.presentation||'narrative'},{preview:true,modName:S.title});});
@@ -141,8 +141,33 @@
     }
     function showIssues() {
         const issues = Tools.validate(S);
-        $('cpIssues').innerHTML = `<div class="cpe-issues"><div class="scn-row"><b>${issues.length ? '시나리오 점검 · ' + issues.length + '건' : '✓ 구조 검사 통과'}</b><span class="scn-grow"></span><button type="button" class="scn-x" data-close-issues aria-label="검사 결과 닫기">×</button></div>${issues.map(i=>`<p class="${i.level === 'error' ? 'scn-err' : 'scn-dim'}"><code>${esc(i.path)}</code> · ${esc(i.message)}</p>`).join('') || '<p class="scn-dim">이제 시험 플레이로 이야기와 보상이 의도대로 작동하는지 확인하세요.</p>'}</div>`;
+        // 오류(시험 플레이 전에 고쳐야 함) · 경고 · 확인 필요(정적 검사로는 단정할 수 없음 — 시험 플레이에서 확인)로 나눠, 누르면 그 항목으로 간다
+        const LEVELS = [['error', '오류'], ['warning', '경고'], ['check', '확인 필요']], count = l => issues.filter(i => i.level === l).length;
+        const order = l => LEVELS.findIndex(([k]) => k === l);
+        const sorted = issues.map((it, n) => [it, n]).sort((a, b) => order(a[0].level) - order(b[0].level) || a[1] - b[1]).map(([it]) => it);
+        const head = !issues.length ? '✓ 구조 검사 통과' : !count('error') ? `✓ 구조 검사 통과 · ${LEVELS.filter(([l]) => count(l)).map(([l, t]) => `${t} ${count(l)}건`).join(' · ')}` : `시나리오 점검 · ${LEVELS.filter(([l]) => count(l)).map(([l, t]) => `${t} ${count(l)}건`).join(' · ')}`;
+        $('cpIssues').innerHTML = `<div class="cpe-issues"><div class="scn-row"><b>${head}</b><span class="scn-grow"></span><button type="button" class="scn-x" data-close-issues aria-label="검사 결과 닫기">×</button></div>${sorted.map((i, n)=>{ const where = Tools.describe(S, i.path); return `<button type="button" class="cpe-issue cpe-issue-${i.level}" data-issue="${n}"><span class="cpe-issue-level">${LEVELS.find(([l]) => l === i.level)?.[1] || '경고'}</span><span class="cpe-issue-text">${where ? `<b>${esc(where)}</b>: ` : ''}${esc(i.message)}</span><code>${esc(i.path)}</code></button>`; }).join('') || '<p class="scn-dim">이제 시험 플레이로 이야기와 보상이 의도대로 작동하는지 확인하세요.</p>'}${issues.length && !count('error') ? '<p class="scn-dim">오류는 없습니다. 경고 · 확인 필요 항목은 시험 플레이를 막지 않습니다.</p>' : ''}</div>`;
         $('cpIssues').querySelector('[data-close-issues]').onclick = () => $('cpIssues').replaceChildren();
+        $('cpIssues').querySelectorAll('[data-issue]').forEach(b => { b.onclick = () => goToIssue(sorted[+b.dataset.issue].path); });
+    }
+    // 검사 결과의 위치로 — 그 탭을 열고(방향성 · 격변 · 기사는 그 항목을 고르고) 해당 입력 칸이나 카드로 스크롤한다. 입력 중인 내용은 그대로 둔다
+    function goToIssue(path) {
+        const parts = String(path).split('.'), root = parts[0], index = Number(parts[1]);
+        const nextTab = { starts: 'starts', world: 'starts', focus: 'focus', articles: 'articles', events: 'events', decisions: 'adv', crises: 'crises', endings: 'endings', variables: 'adv', time: 'info', focusStyle: 'focus' }[root] || 'info';
+        if (root === 'focus' && S.focus[index]) selFocus = S.focus[index].id;
+        if (root === 'crises' && S.crises[index]) selCrisis = S.crises[index].id;
+        if (root === 'articles' && S.articles[index]) selArticle = S.articles[index].id;
+        tab = nextTab; render();
+        const body = $('cpBody'), tries = [];
+        for (let n = parts.length; n >= 2; n--) tries.push(parts.slice(0, n).join('.'));
+        let target = null;
+        for (const p of tries) { target = body.querySelector(`[data-script-field^="${CSS.escape(p)}"],[data-guide="${CSS.escape(p)}"],[data-json="${CSS.escape(p)}"],[data-guide^="${CSS.escape(p + '.')}"],[data-json^="${CSS.escape(p + '.')}"]`); if (target) break; }
+        if (!target && root === 'starts') target = parts[2] === 'worldBindings' ? body.querySelector(`[data-wb="${index}"]`) : body.querySelector(`[data-start="${index}"]`);
+        if (!target && root === 'world') target = body.querySelector('[data-world-card]');
+        if (!target) return;
+        const card = target.closest('.cpg-rules, .cpe-json, .scn-cond, details, .scn-card') || target;
+        card.scrollIntoView({ block: 'center' }); card.classList.add('cpe-issue-target'); setTimeout(() => card.classList.remove('cpe-issue-target'), 1600);
+        if (target.matches('input,textarea,select')) target.focus({ preventScroll: true });
     }
     function render() {
         clearTimeout(redrawT);
@@ -156,7 +181,7 @@
         body.innerHTML = { info: infoHtml, starts: startsHtml, focus: focusHtml, articles: articlesHtml, events:()=>jsonField('events','선택형 이벤트','list',10), crises: crisesHtml, endings: endingsHtml, adv: advHtml }[tab]();
         bindCommon(body);
         bindScriptForms(body);
-        HemiCampaignGuide.bind(body, {get:getP,set:setP,touch,render});
+        HemiCampaignGuide.bind(body, {get:getP,set:setP,touch,render,data:()=>S});
         body.querySelectorAll('[data-go]').forEach(b => b.onclick = () => {tab=b.dataset.go;render();});
         body.querySelectorAll('[data-starter]').forEach(b => b.onclick = async () => {await saveNow(); S=Tools.starter(uid('cmp')); tab='focus';selFocus='opening';resetHistory();touch();render();});
         ({ info: () => {}, starts: bindStarts, focus: bindFocus, articles: bindArticles, events:()=>{}, crises: bindCrises, endings: bindEndings, adv: () => {} })[tab](body);
@@ -202,7 +227,30 @@
                     ${s.kind === 'save' ? `<button type="button" class="scn-btn" data-pick>${s.state ? '다른 세이브' : '세이브 고르기'}</button><span class="scn-dim">${s.state ? `🏛 ${esc(s.state.config?.nationName || s.saveName || '세이브')}` : ''}</span><input type="file" accept=".hemi,.json,application/json" data-file hidden>`
                     : `<select class="scn-in" data-preset>${presets.filter(p => !p.comingSoon).map(p => `<option value="${esc(p.id)}" ${p.id === s.preset ? 'selected' : ''}>${esc(p.title)}${p.date ? ` — ${esc(p.date)}` : ''}</option>`).join('')}</select>`}</div>
             </div>`).join('')}
-            <div class="scn-row"><button type="button" class="scn-btn" data-add-start>+ 시작 나라</button></div></div>`;
+            <div class="scn-row"><button type="button" class="scn-btn" data-add-start>+ 시작 나라</button></div></div>${worldCardHtml()}`;
+    }
+    // 세계지도 연결 — 영토 조건 · 효과에서 쓸 나라(열쇠)를 정하고, 시작 나라마다 그 세이브의 실제 국가(세계 › 국가 순위)에 연결한다
+    const worldCountries = () => (S.world && Array.isArray(S.world.countries) ? S.world.countries : []);
+    function worldCardHtml() {
+        const list = worldCountries(), cat = Tools.worldCatalog(S);
+        return `<div class="scn-card" data-world-card><div class="scn-h">세계지도 연결 <span class="scn-n">${list.length}</span></div>
+            <div class="scn-dim scn-small">이벤트 · 방향성에서 <b>구역 소유</b> 조건과 <b>영토 변경</b> 효과를 쓰려면, 이야기에 나오는 나라를 여기에 적고 시작 나라마다 실제 국가에 연결하세요. 지도와 처음 영토는 시작 세이브의 세계 › 지도에서 가져옵니다. 쓰지 않는 시나리오는 비워 두면 됩니다.</div>
+            ${list.map((c, i) => `<div class="scn-row" data-wc="${i}"><input class="scn-in" data-wckey value="${esc(c.key)}" placeholder="열쇠 (예: republic)" aria-label="나라 열쇠"><input class="scn-in scn-grow" data-wcname value="${esc(c.name || '')}" placeholder="이름 (예: 공화국)" aria-label="나라 이름"><button type="button" class="scn-x" data-wcdel title="빼기" aria-label="나라 빼기">×</button></div>`).join('')}
+            <div class="scn-row"><button type="button" class="scn-btn" data-wcadd>+ 나라</button></div>
+            ${list.length ? S.starts.map((s, i) => { const info = cat.starts[i]; return `<div class="scn-cond" data-wb="${i}"><div class="scn-row"><b>${esc(s.name || '(이름 없는 시작 나라)')}</b><span class="scn-dim">${!info.hasState ? '내장 프리셋 · 세이브를 고르지 않음 — 세계지도가 없습니다' : info.hasMap ? `지도 구역 ${info.regions.length}개 · 국가 ${info.rows.length}개` : '이 세이브에는 세계지도가 없습니다 (세계 › 지도에서 .hemimap을 불러와 저장하세요)'}</span></div>
+                ${info.hasState ? `<div class="scn-grid2">${list.map(c => { const cur = (s.worldBindings && s.worldBindings[c.key]) || ''; return `<label class="cpg-field"><span>${esc(c.name || c.key)}</span><select class="scn-in" data-wbkey="${esc(c.key)}" aria-label="${esc(c.name || c.key)}에 연결할 국가"><option value="">연결 안 함</option>${info.rows.map(r => `<option value="${esc(r.id)}" ${r.id === cur ? 'selected' : ''}>${esc(r.name)}</option>`).join('')}${cur && !info.rows.some(r => r.id === cur) ? `<option value="${esc(cur)}" selected>⚠ ${esc(cur)} (국가 순위에 없음)</option>` : ''}</select></label>`; }).join('')}</div>` : ''}</div>`; }).join('') : ''}</div>`;
+    }
+    function bindWorldCard(body) {
+        const card = body.querySelector('[data-world-card]'); if (!card) return;
+        const list = () => { if (!S.world || typeof S.world !== 'object' || Array.isArray(S.world)) S.world = {}; if (!Array.isArray(S.world.countries)) S.world.countries = []; return S.world.countries; };
+        card.querySelector('[data-wcadd]').onclick = () => { const l = list(); let n = l.length + 1, key; do { key = 'country' + n++; } while (l.some(c => c.key === key)); l.push({ key, name: '' }); touch(); render(); };
+        card.querySelectorAll('[data-wc]').forEach(row => {
+            const i = +row.dataset.wc, c = list()[i];
+            row.querySelector('[data-wcname]').oninput = e => { c.name = e.target.value; touch(); };
+            row.querySelector('[data-wckey]').onchange = e => { const next = e.target.value.trim(); if (next === c.key) return; if (!Tools.renameCountry(S, c.key, next)) { e.target.value = c.key; alertBox('나라 열쇠는 영문·숫자·_ . -로, 다른 나라와 겹치지 않게 입력하세요.'); return; } touch(); render(); };
+            row.querySelector('[data-wcdel]').onclick = () => { list().splice(i, 1); S.starts.forEach(s => { if (s.worldBindings && typeof s.worldBindings === 'object') delete s.worldBindings[c.key]; }); touch(); render(); };
+        });
+        card.querySelectorAll('[data-wb]').forEach(box => { const s = S.starts[+box.dataset.wb]; box.querySelectorAll('[data-wbkey]').forEach(sel => { sel.onchange = () => { if (!s.worldBindings || typeof s.worldBindings !== 'object' || Array.isArray(s.worldBindings)) s.worldBindings = {}; if (sel.value) s.worldBindings[sel.dataset.wbkey] = sel.value; else delete s.worldBindings[sel.dataset.wbkey]; touch(); }; }); });
     }
 
     // 방향성 트리 — 왼쪽 그림(끌어서 옮김, 칸에 맞춤), 오른쪽 고른 방향성 칸
@@ -457,7 +505,7 @@
                 catch (e) { alertBox('Hemicycle 세이브 파일(.hemi)이 아닙니다.'); }
             });
         });
-        body.querySelector('[data-add-start]').onclick = () => { S.starts.push({ id: uid('s'), name: '', desc: '', kind: 'preset', preset: 'builtin:tutorial' }); render(); touch(); };
+        body.querySelector('[data-add-start]').onclick = () => { S.starts.push({ id: uid('s'), name: '', desc: '', kind: 'preset', preset: 'builtin:tutorial' }); render(); touch(); };        bindWorldCard(body);
     }
     function connectFocus(targetId) {
         if (!selFocus) {selFocus=targetId;render();return;}
