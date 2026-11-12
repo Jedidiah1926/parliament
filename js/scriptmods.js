@@ -151,18 +151,41 @@
     // 조건 (trigger · visible · available)
     // ---------------------------------------------------------------
     // 조건 객체 하나에 열쇠가 여럿이면 모두 만족해야(AND). 배열도 AND. 모르는 열쇠는 거짓 + 모드 기록에 경고
+    // 세계지도 조건(owns_regions · in_economic_region)이 든 조건식은 먼저 참조를 모두 검사한다 — 지도 · 나라 · 구역이 없으면
+    // 바깥의 all · any · not까지 식 전체가 "평가 실패"(거짓)다. not이 틀린 참조를 참으로 뒤집거나 any가 없는 구역을 건너뛰지 않게.
+    const Rules = window.HemiWorldRules;
+    const usesWorld = new WeakMap(); // 조건 · 효과 객체 → 세계지도 규칙을 쓰는지 (매번 훑지 않게)
+    const hasWorld = (v, kind) => { if (!Rules || !v || typeof v !== 'object') return false; let u = usesWorld.get(v); if (u == null) { u = Rules.uses(v, kind); usesWorld.set(v, u); } return u; };
+    // 지금 지도 · 나라 연결 — 시나리오의 스크립트에서만 (일반 스크립트 모드는 나라 열쇠가 없다)
+    const worldCtx = mod => { try { return (mod && window.HemiCampaign && window.HemiCampaign.worldContext && window.HemiCampaign.worldContext(mod.id)) || null; } catch (e) { return null; } };
+    const NOT_SCENARIO = '세계지도 조건 · 효과는 시나리오에서만 쓸 수 있습니다.';
+    function worldCondError(cond, mod) {
+        const ctx = worldCtx(mod);
+        if (!ctx) return NOT_SCENARIO;
+        let error = null;
+        Rules.walkCond(cond, (kind, k, v) => { if (error || (k !== 'owns_regions' && k !== 'in_economic_region')) return; const r = k === 'owns_regions' ? Rules.owns(v, ctx) : Rules.inZone(v, ctx); if (!r.ok) error = r.error; }, '');
+        return error;
+    }
     function test(cond, mod) {
+        if (hasWorld(cond, 'cond')) { const why = worldCondError(cond, mod); if (why) { warn(mod, `조건을 평가하지 못함: ${why}`); return false; } }
+        return evalCond(cond, mod);
+    }
+    function evalCond(cond, mod) {
         if (cond == null) return true;
-        if (Array.isArray(cond)) return cond.every(c => test(c, mod));
+        if (Array.isArray(cond)) return cond.every(c => evalCond(c, mod));
         if (typeof cond !== 'object') return !!cond;
         return Object.entries(cond).every(([k, v]) => testOne(k, v, mod));
     }
     function testOne(k, v, mod) {
         const t = today(mod);
         switch (k) {
-            case 'all': return (Array.isArray(v) ? v : [v]).every(c => test(c, mod));
-            case 'any': return (Array.isArray(v) ? v : [v]).some(c => test(c, mod));
-            case 'not': return !test(v, mod);
+            case 'all': return (Array.isArray(v) ? v : [v]).every(c => evalCond(c, mod));
+            case 'any': return (Array.isArray(v) ? v : [v]).some(c => evalCond(c, mod));
+            case 'not': return !evalCond(v, mod);
+            // 구역 소유 — { "country": { "key": "republic" } | { "unassigned": true }, "regions": ["riverbank"], "mode": "all" | "any" }
+            case 'owns_regions': { const ctx = worldCtx(mod), r = ctx && Rules ? Rules.owns(v, ctx) : null; if (!r || !r.ok) { warn(mod, `owns_regions: ${r ? r.error : NOT_SCENARIO}`); return false; } return r.value; }
+            // 경제권 소속 — { "zone": { "id": "north" } | { "unassigned": true }, "regions": ["riverbank"], "mode": "all" | "any" }
+            case 'in_economic_region': { const ctx = worldCtx(mod), r = ctx && Rules ? Rules.inZone(v, ctx) : null; if (!r || !r.ok) { warn(mod, `in_economic_region: ${r ? r.error : NOT_SCENARIO}`); return false; } return r.value; }
             case 'always': return !!v;
             case 'date_after': return !!t && t.key >= (dateKey(v) ?? Infinity);
             case 'date_before': return !!t && t.key < (dateKey(v) ?? -Infinity);
@@ -251,6 +274,16 @@
                 return;
             }
             case 'fire_event': queueEvent(mod, typeof v === 'object' ? v.id : v, true); return;
+            // 영토 변경 — { "regions": ["riverbank"], "to": { "key": "republic" } | { "unassigned": true } }. 구역을 모두 검사한 뒤 한 번에 (일부만 바뀌지 않는다)
+            // 경제권 배정 — { "regions": ["riverbank"], "to": { "id": "north" } | { "unassigned": true } }
+            case 'transfer_regions': case 'assign_economic_region': {
+                const ctx = worldCtx(mod), map = window.HemiWorldMap;
+                if (!ctx || !Rules || !map) return warn(mod, `${k}: ${NOT_SCENARIO}`);
+                const r = k === 'transfer_regions' ? Rules.planTransfer(v, ctx) : Rules.planAssign(v, ctx);
+                if (!r.ok) return warn(mod, `${k}: ${r.error}`);
+                if (r.changes.length) { if (k === 'transfer_regions') map.applyOwners(r.changes, 'script'); else if (map.applyZones) map.applyZones(r.changes, 'script'); }
+                return;
+            }
             case 'if': { if (test(v.condition ?? v.if, mod)) run(v.then, mod); else run(v.else, mod); return; }
             case 'random_list': {
                 const list = Array.isArray(v) ? v : [];
@@ -271,6 +304,13 @@
             return m;
         });
     }
+    // 효과 목록을 실행하기 전에 — 세계지도 참조(나라 연결 · 구역 · 경제권)가 지금 모두 유효한지. 문제없으면 null, 아니면 이유.
+    // 방향성 완료 · 결정 · 이벤트 선택은 이 검사에 걸리면 실행하지 않고 완료 · 사용 기록도 남기지 않는다 (조건부 분기는 실행하지 않고 참조만 본다)
+    function precheck(effects, mod) {
+        if (!hasWorld(effects, 'effects')) return null;
+        const ctx = worldCtx(mod);
+        return ctx ? Rules.precheck(effects, ctx) : NOT_SCENARIO;
+    }
     function afterEffects() {
         if (dirty) { dirty = false; try { simulate(); } catch (e) { /* 다시 계산 실패 */ } }
         try { refreshUI(); } catch (e) { /* 화면 갱신 실패 */ }
@@ -287,10 +327,32 @@
         if (!ev) { warn(mod, `fire_event: 이벤트 "${id}"가 없음`); return; }
         if (!force && S.queue.some(q => q.mod === mod.id && q.ev === ev.id)) return;
         // 숨은 이벤트는 창 없이 바로 효과만
-        if (ev.hidden) { ns('fired', mod)[ev.id] = (ns('fired', mod)[ev.id] || 0) + 1; run(ev.immediate, mod); run(ev.options[0].effects, mod); afterEffects(); return; }
+        if (ev.hidden) { if (worldChain) worldChainEvents.add(ev.id); ns('fired', mod)[ev.id] = (ns('fired', mod)[ev.id] || 0) + 1; run(ev.immediate, mod); run(ev.options[0].effects, mod); afterEffects(); return; }
         S.queue.push({ mod: mod.id, ev: ev.id });
     }
-    // when: 'date' (날짜를 넘길 때) · 'election' (총선 결과를 의회에 반영할 때)
+    // 지도가 바뀌면(시나리오 효과 · 수동 칠하기 · 지도 파일) 날짜를 넘기지 않고 "지도 변경 시"(check: "world") 이벤트를 다시 본다.
+    // 효과 목록이 끝난 뒤 한 번 — 알림을 받으면 바로 검사하지 않고 다음 차례로 모은다. 숨은 이벤트가 서로 영토를 바꾸며 끝없이 이어지면 32번에서 멈춘다
+    const WORLD_CHAIN_MAX = 32;
+    let worldCheckT = 0, worldChain = 0;
+    const worldChainEvents = new Set();
+    window.addEventListener('hemi-world-map-changed', e => {
+        if (!e.detail || e.detail.source !== 'script') { worldChain = 0; worldChainEvents.clear(); } // 사람이 바꾼 것은 새 행동
+        if (worldCheckT) return;
+        worldCheckT = setTimeout(runWorldCheck, 0);
+    });
+    function runWorldCheck() {
+        worldCheckT = 0;
+        if (++worldChain > WORLD_CHAIN_MAX) {
+            const ids = [...worldChainEvents].join(', ');
+            activeMods().forEach(mod => warn(mod, `지도 변경이 다시 지도를 바꾸는 일이 ${WORLD_CHAIN_MAX}번 넘게 이어져 멈춤${ids ? ` (이벤트: ${ids})` : ''}`));
+            toast(`지도 변경 연쇄를 ${WORLD_CHAIN_MAX}번에서 멈췄습니다${ids ? ` — 이벤트: ${ids}` : ''}`);
+            worldChain = 0; worldChainEvents.clear();
+            return;
+        }
+        checkEvents('world');
+        if (!worldCheckT) { worldChain = 0; worldChainEvents.clear(); } // 이 검사가 지도를 또 바꾸지 않았으면 연쇄 끝
+    }
+    // when: 'date' (날짜를 넘길 때) · 'election' (총선 결과를 의회에 반영할 때) · 'world' (지도가 바뀔 때). check: "any"는 셋 모두
     function checkEvents(when) {
         activeMods().forEach(mod => mod.events.forEach(ev => {
             const on = ev.check || 'date';
@@ -318,7 +380,7 @@
             run(ev.immediate,mod);
         }
         const opts=ev.options.map((o,i)=>({o,i})).filter(({o})=>test(o.trigger,mod));
-        HemiCampaignEvents.show(ev,{fill:t=>fill(t,mod),modName:mod.name,choices:opts,onChoose:i=>{
+        HemiCampaignEvents.show(ev,{fill:t=>fill(t,mod),modName:mod.name,choices:opts,canChoose:i=>(i>=0?precheck(ev.options[i].effects,mod):null),onChoose:i=>{
             if(i>=0)run(ev.options[i].effects,mod);
             S.queue.shift();showing=false;afterEffects();
             try{window.saveActiveNow?.(true);}catch(e){/* autosave retries */}
@@ -359,6 +421,8 @@
     }
     function takeDecision(mod, d) {
         if (decisionBlock(mod, d)) return;
+        const why = precheck(d.effects, mod);
+        if (why) { showCustomAlert(`결정 "${fill(d.title || d.id, mod)}"을(를) 실행할 수 없습니다.\n${why}`); return; } // 사용 기록을 남기지 않는다 — 고친 뒤 다시 할 수 있게
         const t = today(mod);
         ns('taken', mod)[d.id] = t ? t.key : 0;
         run(d.effects, mod);
@@ -521,7 +585,8 @@
         decisions(id, filter) { const m = mods.find(x => x.id === id); if (!m) return []; return m.decisions.filter(d => (!filter || filter(d)) && test(d.visible, m)).map(d => ({ id: d.id, title: fill(d.title || d.id, m), desc: fill(d.desc || d.description || '', m), block: decisionBlock(m, d), category: d.category || '' })); },
         take(id, did) { const m = mods.find(x => x.id === id), d = m && m.decisions.find(x => x.id === did); if (d) takeDecision(m, d); },
         fill: (text, id) => fill(text, mods.find(m => m.id === id)), test: (cond, id) => test(cond, mods.find(m => m.id === id)),
-        run: (eff, id) => { run(eff, mods.find(m => m.id === id)); afterEffects(); }, example: () => JSON.parse(JSON.stringify(EXAMPLE)),
+        run: (eff, id) => { run(eff, mods.find(m => m.id === id)); afterEffects(); },
+        precheck: (eff, id) => precheck(eff, mods.find(m => m.id === id)), example: () => JSON.parse(JSON.stringify(EXAMPLE)),
     };
 
     const style = document.createElement('style');

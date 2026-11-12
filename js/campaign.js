@@ -51,6 +51,22 @@
     const run = eff => { try { if (eff && (!Array.isArray(eff) || eff.length)) SM().run(eff, modId()); } catch (e) { /* 효과 실패 */ } };
     const varOf = name => Number(SM()?.vars(modId())[name]) || 0;
     const fillT = t => { try { return SM().fill(t || '', modId()); } catch (e) { return t || ''; } };
+    // 효과를 실행하기 전의 세계지도 참조 검사 (js/scriptmods.js precheck) — 문제없으면 null, 아니면 이유
+    const precheck = eff => { try { return SM().precheck ? SM().precheck(eff, modId()) : null; } catch (e) { return null; } };
+
+    // ---------------------------------------------------------------
+    // 세계지도 연결 — 시나리오의 나라 열쇠(world.countries[].key) ↔ 이 세이브의 실제 국가(세계 › 국가 순위의 행 id)
+    // ---------------------------------------------------------------
+    // 시작 나라마다 실제 id가 달라도 같은 열쇠가 같은 나라를 가리키게, 시작할 때 고른 시작 나라의 연결을 R.worldBindings에 확정해 세이브에 둔다.
+    const isObj = x => !!x && typeof x === 'object' && !Array.isArray(x);
+    const declaredBindings = r => { const s = (r.data.starts || []).find(x => x.id === r.startId) || (r.data.starts || [])[0]; return isObj(s && s.worldBindings) ? { ...s.worldBindings } : {}; };
+    const worldCountries = () => (R && isObj(R.data.world) && Array.isArray(R.data.world.countries) ? R.data.world.countries.filter(c => isObj(c) && typeof c.key === 'string') : []);
+    // 스크립트 판정에 쓰는 지금 상태 (js/world-rules.js의 ctx) — 이 시나리오의 스크립트가 아니면 null
+    function worldContext(id) {
+        if (!R || loadingCampaign || id !== modId() || !window.HemiWorldMap) return null;
+        const list = worldCountries(), names = new Map(list.map(c => [c.key, c.name || c.key]));
+        return { ...window.HemiWorldMap.context(), declared: new Set(list.map(c => c.key)), bindings: R.worldBindings || {}, countryName: key => names.get(key) };
+    }
 
     // ---------------------------------------------------------------
     // 세이브
@@ -83,6 +99,8 @@
         const valid = new Set((r.data.articles || []).map(a=>a.id));
         r.articles.queue = (Array.isArray(r.articles.queue) ? r.articles.queue : []).filter(id=>valid.has(id)&&r.articles.published[id]&&!r.articles.published[id].read);
         Object.entries(r.articles.published).forEach(([id,record])=>{if(valid.has(id)&&!record.read&&!r.articles.queue.includes(id))r.articles.queue.push(id);});
+        // 예전 세이브에는 나라 연결이 없다 — 고른 시작 나라의 선언에서 되살린다 (실제 지도 · 국가는 쓸 때마다 검사한다)
+        if (!isObj(r.worldBindings)) r.worldBindings = declaredBindings(r);
         r.crises = r.crises || {};
         (r.data.crises || []).forEach(c => { if (!r.crises[c.id]) r.crises[c.id] = { status: 'idle', missions: {} }; r.crises[c.id].missions = r.crises[c.id].missions || {}; });
         return r;
@@ -151,6 +169,12 @@
     function completeFocus() {
         const cur = R.focus.cur; if (!cur) return;
         const f = focusById(cur.id);
+        // 완료 효과의 세계지도 참조가 틀렸으면 완료로 기록하지 않는다 — 플래그 · 효과 · 이벤트 모두 그대로 두고, 고치면 다음 검사 때 완료된다
+        const why = f ? precheck(f.effects) : null;
+        if (why) {
+            if (cur.blocked !== why) { cur.blocked = why; if (R.clock && R.clock.mode === 'realtime') timeController.pause('방향성 효과 오류 · 일시정지'); showCustomAlert(`방향성 "${f.title || f.id}"을(를) 완료할 수 없습니다.\n${why}`); }
+            return;
+        }
         R.focus.cur = null;
         R.focus.done[cur.id] = today() || 1;
         run([{ set_flag: 'focus_' + safeId(cur.id) }]);
@@ -309,6 +333,9 @@
             readArticle(id);
         }, 0);
     }
+    // 지도가 바뀌면 날짜를 넘기지 않고 방향성 조건 · 격변 · 기사 · 결말을 다시 본다 (js/scriptmods.js의 "지도 변경 시" 이벤트 검사 뒤에)
+    let worldTick = 0;
+    window.addEventListener('hemi-world-map-changed', () => { if (!R || worldTick) return; worldTick = setTimeout(() => { worldTick = 0; if (R && !loadingCampaign) tick(); }, 0); });
     window.addEventListener('hemi-script-effects-applied',()=>{if(!R)return;clearTimeout(articleCheck);articleCheck=setTimeout(()=>{articleCheck=0;checkArticles();},0);});
     function publishArticle(id) {
         if (!R) return false;
@@ -615,6 +642,7 @@
         (data.starts || []).forEach(s => { delete s.state; }); // 시작 세이브는 세이브에 다시 넣지 않는다
         delete data._startId;
         R = normalize({ data, startId: startId || null, focus: { cur: null, done: {} }, crises: {}, ending: null, startedAt: today() },true);
+        R.worldBindings = declaredBindings(R);
         bindMod();timeController.reset();window.dispatchEvent(new Event('hemi-campaign-changed'));R.startedAt=today();
         tick();
         refresh();
@@ -632,7 +660,7 @@
         };
     }
 
-    window.HemiCampaign = { get state() { return R; }, tick, startFocus, publishArticle, attach, showIntro, showDisp, FORMAT, toMod,
+    window.HemiCampaign = { get state() { return R; }, tick, startFocus, publishArticle, attach, showIntro, showDisp, FORMAT, toMod, worldContext,
         nextTurn:timeController.nextTurn, play:timeController.play, pause:timeController.pause, setSpeed:timeController.speed,
         scriptDate:id=>!loadingCampaign&&R?.clock&&id===modId()?{...Clock.parts(R.clock.day),key:today()}:null,
         scriptDateLabel:id=>!loadingCampaign&&R?.clock&&id===modId()?Clock.label(R.clock):null };

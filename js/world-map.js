@@ -71,7 +71,30 @@
         if(S){for(const sh of S.preset.district.svgMap.shapes){const n=document.createElementNS(NS,sh.tag);for(const [k,v]of Object.entries(sh.attrs))n.setAttribute(k,v);n.setAttribute('fill-rule',sh.attrs['fill-rule']||'evenodd');n.setAttribute('vector-effect','non-scaling-stroke');n.dataset.wmKey=sh.key;n.setAttribute('tabindex','0');n.setAttribute('role','button');const title=document.createElementNS(NS,'title');n.appendChild(title);svg.appendChild(n);nodes.set(sh.key,n);styleRegion(sh.key);}fit();}
         updateControls();
     }
-    function remember(before){if(JSON.stringify(before)===JSON.stringify(S.owners))return;past.push(before);if(past.length>30)past.shift();future=[];updateControls();save();}
+    // 지도 소유권이 실제로 바뀐 뒤 한 번 알린다 — 스크립트(js/scriptmods.js)와 시나리오(js/campaign.js)가 "지도 변경 시" 조건을 다시 본다.
+    // source: 'manual'(붓질 · 실행 취소 · 모두 지우기) · 'import'(지도 파일) · 'script'(시나리오 효과). 세이브를 여는 것은 알리지 않는다
+    const notify=(source,keys)=>window.dispatchEvent(new CustomEvent('hemi-world-map-changed',{detail:{source,keys:keys||null}}));
+    const diffKeys=(a,b)=>[...new Set([...Object.keys(a),...Object.keys(b)])].filter(k=>(a[k]||'')!==(b[k]||''));
+    function remember(before){const keys=diffKeys(before,S.owners);if(!keys.length)return;past.push(before);if(past.length>30)past.shift();future=[];updateControls();save();notify('manual',keys);}
+    // 시나리오 효과가 소유권을 바꾸는 경계 — changes: [{ key, to }] ('' = 미배정). 부르는 쪽(js/world-rules.js planTransfer)이 구역 · 국가를 모두 검사한 뒤에만 부른다.
+    // 한 번에 적용하고, 하던 붓질을 정리하고, 수동 실행 취소 기록을 비운다 (실행 취소로 이벤트 결과만 되돌리고 완료 기록이 남는 일을 막는다). 보던 위치 · 확대는 그대로
+    function applyOwners(changes,source='script'){
+        if(!S||!Array.isArray(changes))return 0;
+        const known=new Set(S.preset.district.svgMap.shapes.map(sh=>sh.key));
+        if(changes.some(c=>!c||!known.has(c.key)||typeof c.to!=='string'))return 0;
+        const keys=[];
+        for(const c of changes){if(ownerOf(c.key)===c.to)continue;if(c.to)S.owners[c.key]=c.to;else delete S.owners[c.key];keys.push(c.key);}
+        if(!keys.length)return 0;
+        if(stroke){const id=stroke.id;stroke=null;if(svg.hasPointerCapture(id))svg.releasePointerCapture(id);}
+        past=[];future=[];keys.forEach(styleRegion);updateControls();save();notify(source,keys);
+        return keys.length;
+    }
+    // 스크립트 판정에 쓰는 지금 지도 상태 (지도가 없으면 keys: null)
+    function context(){
+        const rowIds=new Set(rows().map(r=>String(r.id)));
+        if(!S)return {keys:null,owners:{},rowIds,regionName:k=>k};
+        return {keys:new Set(S.preset.district.svgMap.shapes.map(sh=>sh.key)),owners:S.owners,rowIds,regionName};
+    }
     function paint(key){
         const previous=selected;selected=key;styleRegion(previous);
         if(tool!=='inspect'&&S&&(tool==='erase'||countryOf(country))){if(tool==='erase')delete S.owners[key];else S.owners[key]=country;}
@@ -96,8 +119,8 @@
     $('wmCountry').onchange=e=>{country=e.target.value;updateControls();};
     $('wmColor').oninput=e=>{if(S&&country&&D.color(e.target.value)){S.colors[country]=e.target.value;repaint();}};$('wmColor').onchange=save;
     controls.querySelectorAll('[data-wm-tool]').forEach(b=>b.onclick=()=>{tool=b.dataset.wmTool;updateControls();});
-    $('wmUndo').onclick=()=>{if(!S||!past.length)return;future.push(D.clone(S.owners));S.owners=Object.assign(Object.create(null),past.pop());repaint();save();};
-    $('wmRedo').onclick=()=>{if(!S||!future.length)return;past.push(D.clone(S.owners));S.owners=Object.assign(Object.create(null),future.pop());repaint();save();};
+    $('wmUndo').onclick=()=>{if(!S||!past.length)return;const was=D.clone(S.owners);future.push(was);S.owners=Object.assign(Object.create(null),past.pop());repaint();save();notify('manual',diffKeys(was,S.owners));};
+    $('wmRedo').onclick=()=>{if(!S||!future.length)return;const was=D.clone(S.owners);past.push(was);S.owners=Object.assign(Object.create(null),future.pop());repaint();save();notify('manual',diffKeys(was,S.owners));};
     $('wmClear').onclick=async()=>{if(!S)return;const token=revision;if(!await DnoUI.confirm('세계지도의 모든 영토 배정을 지울까요? 지도 모양과 국가는 유지됩니다.')||token!==revision)return;const before=D.clone(S.owners);S.owners=Object.create(null);remember(before);repaint();};
     $('wmRanking').onclick=()=>switchSubTab('world','ranking');
     $('wmAddCountry').onclick=()=>{const text=$('wmNewName').value.trim();if(!text){$('wmNewName').focus();return;}const row={id:'wm_'+Date.now().toString(36)+Math.random().toString(36).slice(2,7),name:text,flag:'🏳',bloc:'',ideo:'',score:0,prevRank:null,self:false};rows().push(row);country=row.id;$('wmNewName').value='';updateControls();save();};
@@ -115,7 +138,7 @@
         data.colors=Object.assign(Object.create(null),Object.fromEntries(Object.entries(data.colors).map(([id,c])=>[mapping.get(id)||id,c])));
         data.countries=snapshot();
     }
-    function importData(preset){const next=D.read(preset);loadRequest++;mergeCountries(next);S=next;revision++;past=[];future=[];draw();save();return true;}
+    function importData(preset){const next=D.read(preset);loadRequest++;mergeCountries(next);S=next;revision++;past=[];future=[];draw();save();notify('import');return true;}
     $('wmOpen').onclick=()=>$('wmFile').click();
     $('wmFile').onchange=async e=>{const file=e.target.files[0],token=revision,request=++loadRequest;e.target.value='';if(!file)return;try{const data=JSON.parse(await HemiFile.readText(file));D.read(data);if(token!==revision||request!==loadRequest)return;if(S&&!await DnoUI.confirm('세계지도와 영토 배정을 불러온 파일로 바꿀까요? 지역구 지도는 그대로 유지됩니다.'))return;if(token!==revision||request!==loadRequest)return;importData(data);show();}catch(err){if(token===revision&&request===loadRequest)DnoUI.alert('세계지도를 불러오지 못했습니다: '+err.message);}};
     $('wmExport').onclick=async()=>{if(!S)return;const out=D.write(S,snapshot());const blob=await HemiFile.encode(out),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=String(out.meta?.name||'world-map').replace(/[\\/:*?"<>|]/g,'_')+'.hemimap';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),5000);};
@@ -124,5 +147,5 @@
     const origDisp=window.switchDispTab;window.switchDispTab=function(id){const r=origDisp.apply(this,arguments);if(id==='worldmap')repaint();return r;};
     const origGet=window.getAppState;window.getAppState=function(){const state=origGet.apply(this,arguments);if(S)state.worldMap=D.clone({...S,countries:snapshot()});return state;};
     const origSet=window.setAppState;window.setAppState=function(state){const r=origSet.apply(this,arguments);revision++;loadRequest++;past=[];future=[];try{S=D.normalize(state?.worldMap);}catch(e){S=null;}draw();return r;};
-    window.HemiWorldMap={get state(){return S;},importData,show,fit};draw();
+    window.HemiWorldMap={get state(){return S;},importData,show,fit,applyOwners,context};draw();
 })();
