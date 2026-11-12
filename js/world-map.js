@@ -12,7 +12,8 @@
     const colorOf=id=>{const i=rows().findIndex(r=>String(r.id)===String(id));return i<0?'#35404b':S?.colors[id]||palette[i%palette.length];};
     const ownerOf=key=>S&&Object.hasOwn(S.owners,key)?S.owners[key]:'';
     const regionName=key=>S?.preset.district.names?.house?.[key]||key;
-    const save=()=>{try{window.saveActiveNow?.(true);}catch(e){/* autosave retains the same state */}};
+    // 칠할 때마다 세이브 전체를 그 자리에서 쓰면 큰 세이브에서 붓질이 끊긴다 — 잠깐 모았다가 한 번에 저장한다 (떠나거나 닫을 때는 js/main.js가 바로 마친다)
+    const save=()=>{try{if(window.saveActiveSoon)window.saveActiveSoon();else window.saveActiveNow?.(true);}catch(e){/* autosave retains the same state */}};
     const host=document.getElementById('mainContentWorld'),bar=host.querySelector('.sub-tab-container');
     const tab=document.createElement('button');tab.type='button';tab.className='sub-tab-btn';tab.id='subTabWorldmap';tab.textContent='지도';tab.onclick=()=>switchSubTab('world','worldmap');bar.insertBefore(tab,bar.firstChild);
     const controls=document.createElement('div');controls.id='contentWorldmap';controls.className='sub-tab-content';

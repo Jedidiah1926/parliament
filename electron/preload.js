@@ -41,6 +41,7 @@ contextBridge.exposeInMainWorld('hemicycleDesktop', {
     saves: {
         read: ns => ipcRenderer.sendSync('saves:read', String(ns || '')),
         write: (ns, text) => ipcRenderer.sendSync('saves:write', String(ns || ''), String(text || '[]')),
+        writeSlot: (ns, meta, state) => ipcRenderer.sendSync('saves:write-slot', String(ns || ''), String(meta || ''), String(state || '')),
         dir: () => ipcRenderer.sendSync('saves:dir-sync'),
         info: () => ipcRenderer.invoke('saves:info'),
         openDir: () => ipcRenderer.invoke('saves:open-dir'),

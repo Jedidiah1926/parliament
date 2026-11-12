@@ -243,7 +243,8 @@
         mirror:()=>{mirrorClockValues();window.updateDispInfoBar?.();},
         advanceWorldDay:()=>{mirrorPreviousDay();origAdvance?.(1,'day');},
         tick:options=>tick(options),
-        save:()=>{try{window.saveActiveNow?.(true);}catch(e){/* normal save captures the clock */}}
+        save:()=>{try{window.saveActiveNow?.(true);}catch(e){/* normal save captures the clock */}},
+        saveSoon:()=>{try{if(window.saveActiveSoon)window.saveActiveSoon();else window.saveActiveNow?.(true);}catch(e){/* normal save captures the clock */}}
     });
     function mirrorPreviousDay(){
         if(!R?.clock)return;const p=Clock.parts(R.clock.day-1);

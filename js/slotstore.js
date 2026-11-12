@@ -157,55 +157,92 @@
         lsym[258] = 28;
         return { code, len, dcode, lsym };
     })();
+    // 블록(32KB)마다 따로 본다: 사진(base64)처럼 줄지 않는 구간은 찾느라 시간을 쓰지 않고 그대로 담고(stored 블록),
+    // 글자 구간만 LZ77로 줄인다. 큰 세이브는 대부분이 사진이라 이쪽이 몇 배 빠르고 크기는 거의 같다 (v1.7.1 성능).
     function deflateSync(src) {
         let out = new Uint8Array(Math.max(1024, (src.length >> 1) + 64)), op = 0, acc = 0, n = 0;
+        const room = k => { if (op + k <= out.length) return; let m = out.length * 2; while (m < op + k) m *= 2; const o = new Uint8Array(m); o.set(out.subarray(0, op)); out = o; };
         const put = (v, k) => {
             acc |= v << n; n += k;
             while (n >= 8) {
-                if (op >= out.length) { const o = new Uint8Array(out.length * 2); o.set(out); out = o; }
+                if (op >= out.length) room(1);
                 out[op++] = acc & 0xff; acc >>>= 8; n -= 8;
             }
         };
         const lit = s2 => put(FIX.code[s2], FIX.len[s2]);
-        put(1, 1); put(1, 2); // 마지막 블록 · 고정 허프만
         const HB = 15, head = new Int32Array(1 << HB).fill(-1), prev = new Int32Array(32768);
         const hash = i => ((src[i] << 10) ^ (src[i + 1] << 5) ^ src[i + 2]) & ((1 << HB) - 1);
         const insert = i => { const h = hash(i); prev[i & 32767] = head[h]; head[h] = i; };
-        const L = src.length;
-        for (let i = 0; i < L;) {
-            let best = 0, bdist = 0;
-            if (i + 2 < L) {
-                const h = hash(i);
-                let c = head[h], chain = 48;
-                while (c >= 0 && i - c <= 32768 && chain-- > 0) {
-                    if (src[c + best] === src[i + best]) {
-                        let k = 0; const max = Math.min(258, L - i);
-                        while (k < max && src[c + k] === src[i + k]) k++;
-                        if (k > best) { best = k; bdist = i - c; if (k === max) break; }
-                    }
-                    c = prev[c & 32767];
-                }
-                prev[i & 32767] = head[h]; head[h] = i;
+        const L = src.length, BLOCK = 32768, CHAIN = 16;
+        // 이 구간이 줄어드는 자료인가 — 앞부분 표본에서 3바이트 되풀이가 얼마나 나오는지로 가늠
+        const seen = new Int32Array(1 << 12);
+        const compressible = (from, to) => {
+            const end = Math.min(to, from + 2048) - 2; if (end - from < 64) return true;
+            seen.fill(-1); let hits = 0;
+            for (let i = from; i < end; i++) { const h = ((src[i] << 8) ^ (src[i + 1] << 4) ^ src[i + 2]) & 4095, c = seen[h]; if (c >= 0 && src[c] === src[i] && src[c + 1] === src[i + 1] && src[c + 2] === src[i + 2]) hits++; seen[h] = i; }
+            return hits * 8 > end - from; // 여덟 자리에 하나꼴로도 되풀이가 없으면 그대로 담는다
+        };
+        if (!L) { put(1, 1); put(1, 2); lit(256); if (n > 0) put(0, 8 - n); return out.subarray(0, op); }
+        for (let start = 0; start < L; start += BLOCK) {
+            const end = Math.min(L, start + BLOCK), final = end >= L ? 1 : 0;
+            if (!compressible(start, end)) {
+                put(final, 1); put(0, 2); if (n > 0) put(0, 8 - n); // 바이트 경계에 맞춤
+                const len = end - start; room(len + 4);
+                out[op++] = len & 0xff; out[op++] = len >>> 8; out[op++] = ~len & 0xff; out[op++] = (~len >>> 8) & 0xff;
+                out.set(src.subarray(start, end), op); op += len;
+                continue;
             }
-            if (best >= 3) {
-                const li = FIX.lsym[best]; lit(257 + li);
-                if (LEXT[li]) put(best - LBASE[li], LEXT[li]);
-                let di = 29; while (DBASE[di] > bdist) di--;
-                put(FIX.dcode[di], 5);
-                if (DEXT[di]) put(bdist - DBASE[di], DEXT[di]);
-                for (let k = 1; k < best; k++) if (i + k + 2 < L) insert(i + k);
-                i += best;
-            } else { lit(src[i]); i++; }
+            put(final, 1); put(1, 2); // 고정 허프만
+            for (let i = start; i < end;) {
+                let best = 0, bdist = 0;
+                if (i + 2 < L) {
+                    const h = hash(i);
+                    let c = head[h], chain = CHAIN;
+                    const max = Math.min(258, end - i);
+                    while (c >= 0 && i - c <= 32768 && chain-- > 0) {
+                        if (src[c + best] === src[i + best]) {
+                            let k = 0;
+                            while (k < max && src[c + k] === src[i + k]) k++;
+                            if (k > best) { best = k; bdist = i - c; if (k === max) break; }
+                        }
+                        c = prev[c & 32767];
+                    }
+                    prev[i & 32767] = head[h]; head[h] = i;
+                }
+                if (best >= 3) {
+                    const li = FIX.lsym[best]; lit(257 + li);
+                    if (LEXT[li]) put(best - LBASE[li], LEXT[li]);
+                    let di = 29; while (DBASE[di] > bdist) di--;
+                    put(FIX.dcode[di], 5);
+                    if (DEXT[di]) put(bdist - DBASE[di], DEXT[di]);
+                    for (let k = 1; k < best; k++) if (i + k + 2 < L) insert(i + k);
+                    i += best;
+                } else { lit(src[i]); i++; }
+            }
+            lit(256);
         }
-        lit(256);
         if (n > 0) put(0, 8 - n);
         return out.subarray(0, op);
     }
     const utf8 = new TextDecoder('utf-8'), enc8 = new TextEncoder();
     const unzipText = packed => utf8.decode(inflate(unpack(packed)));
+    // 큰 글자는 조각내어 넣고 조각 사이마다 화면에 차례를 넘긴다 — 한꺼번에 넣으면 압축이 끝날 때까지(6MB 세이브에서 약 0.25초) 화면이 멈췄다 (v1.7.1)
+    const ZIP_STEP = 1 << 17; // 한 번에 넣는 글자 수
+    const breathe = () => new Promise(r => setTimeout(r, 0));
     async function zipText(text) {
-        const s = new Blob([text]).stream().pipeThrough(new CompressionStream('gzip'));
-        return pack(new Uint8Array(await new Response(s).arrayBuffer()));
+        const cs = new CompressionStream('gzip'), w = cs.writable.getWriter();
+        const out = new Response(cs.readable).arrayBuffer();
+        const fail = w.closed.catch(() => {}); // 쓰기 오류는 아래 write · close가 알린다
+        for (let i = 0; i < text.length;) {
+            let j = Math.min(text.length, i + ZIP_STEP);
+            const c = text.charCodeAt(j - 1);
+            if (j < text.length && c >= 0xd800 && c <= 0xdbff) j++; // 두 글자짜리 문자(대리 쌍)를 가르지 않는다
+            await w.write(enc8.encode(text.slice(i, j)));
+            i = j;
+            if (i < text.length) await breathe();
+        }
+        await w.close(); await fail;
+        return pack(new Uint8Array(await out));
     }
 
     // ---------- 세이브 목록 읽기 · 쓰기 ----------
@@ -249,15 +286,19 @@
     const gen = new Map(); // 키 → 쓰기 번호 (뒤에서 압축하는 동안 새로 쓴 게 있으면 그걸 덮지 않게)
     function writeSlots(key, value, now) {
         gen.set(key, (gen.get(key) || 0) + 1);
-        let slots = null;
-        try { slots = JSON.parse(value); } catch (e) { /* 목록이 아님 */ }
-        if (!Array.isArray(slots)) { origSet.call(ls, key, value); lastRaw.delete(key); return; }
-        const ns = nsOf(key), live = new Set();
+        // updateSlot이 방금 만든 목록이면 이미 세이브별로 나뉘어 있다 — 큰 목록을 다시 읽고 다시 쓰지 않는다
+        const split = hint && hint.key === key && hint.value === value ? hint.rows : null;
+        let slots = split;
+        if (!slots) { try { slots = JSON.parse(value); } catch (e) { /* 목록이 아님 */ } }
+        if (!Array.isArray(slots)) { origSet.call(ls, key, value); lastRaw.delete(key); tables.delete(key); return; }
+        const ns = nsOf(key), live = new Set(), rows = [];
         let pending = false;
         const stored = '[' + slots.map(s => {
-            if (!s || typeof s !== 'object' || !s.state || typeof s.state !== 'object') return JSON.stringify(s);
-            const { state, ...rest } = s;
-            const json = JSON.stringify(state), k = ns + '|' + rest.id;
+            if (split) { if (s.plain != null) { rows.push(s); return s.plain; } }
+            else if (!s || typeof s !== 'object' || !s.state || typeof s.state !== 'object') { const plain = JSON.stringify(s); rows.push({ plain, meta: s && typeof s === 'object' ? metaOf(s) : null }); return plain; }
+            const rest = split ? s.meta : (({ state, ...r }) => r)(s);
+            const json = split ? s.json : JSON.stringify(s.state), k = ns + '|' + rest.id;
+            rows.push({ meta: rest, json });
             live.add(k);
             let e = byId.get(k);
             if (!e || e.json !== json) { e = { json, packed: null }; byId.set(k, e); }
@@ -270,7 +311,60 @@
         [...byId.keys()].forEach(k => { if (k.startsWith(ns + '|') && !live.has(k)) byId.delete(k); });
         if (pending) schedule(key, value);
         origSet.call(ls, key, stored); // 저장 공간이 모자라면 여기서 오류 — 게임 코드가 받아서 안내 (뒤에서 압축해 다시 시도)
-        lastRaw.set(key, stored); lastOut.set(key, value);
+        lastRaw.set(key, stored); lastOut.set(key, value); tables.set(key, { raw: stored, rows });
+    }
+
+    // ---------- 세이브 하나만 바꾸기 · 목록 정보만 읽기 (v1.7.1 성능) ----------
+    // 게임은 저장할 때마다 목록 전체(모든 세이브의 상태)를 읽어 고치고 다시 썼다 — 세이브가 크거나 많으면 그 읽기 · 쓰기가 화면을 멈춘다.
+    // 여기서는 마지막으로 읽고 쓴 목록을 세이브별 글자(상태 JSON)로 나눠 기억해 두고, 바뀐 세이브의 글자만 갈아 끼운다.
+    // 저장소에는 여전히 Storage.setItem으로 쓰므로 그 뒤에 붙은 것(js/desktopsaves.js의 폴더 맞추기)은 그대로 돈다.
+    const tables = new Map(); // 키 → { raw: 저장소 글자, rows: [{ meta, json } | { plain, meta }] }
+    let hint = null;
+    const metaOf = s => { const { state, stateZ, ...rest } = s; return rest; };
+    function tableFor(key) {
+        let raw; try { raw = origGet.call(ls, key); } catch (e) { return null; }
+        const t = tables.get(key);
+        if (t && t.raw === raw) return t;
+        if (raw == null) { const empty = { raw, rows: [] }; tables.set(key, empty); return empty; }
+        let slots; try { slots = JSON.parse(readSlots(key, raw)); } catch (e) { return null; }
+        if (!Array.isArray(slots)) return null;
+        const rows = slots.map(sl => (!sl || typeof sl !== 'object' || !sl.state || typeof sl.state !== 'object')
+            ? { plain: JSON.stringify(sl), meta: sl && typeof sl === 'object' ? metaOf(sl) : null }
+            : { meta: metaOf(sl), json: JSON.stringify(sl.state) });
+        const made = { raw, rows };
+        tables.set(key, made);
+        return made;
+    }
+    // 세이브 목록의 정보만 (상태 빼고) — 목록 · 탭 바를 그릴 때. 못 읽으면 null (부르는 쪽이 예전 방식으로)
+    function metas(key) {
+        const t = tableFor(String(key));
+        return t ? t.rows.filter(r => r.meta).map(r => ({ ...r.meta })) : null;
+    }
+    // 세이브 하나의 상태 · 정보만 바꿔 저장. 'ok' · 'missing'(그 세이브가 목록에 없음) · null(이 방식으로 못 함 — 예전 방식으로)
+    // 저장 공간이 모자라면 예전처럼 오류를 던진다
+    function updateSlot(key, id, patch, stateJson) {
+        key = String(key);
+        const t = tableFor(key);
+        if (!t || typeof stateJson !== 'string') return null;
+        const i = t.rows.findIndex(r => r.meta && r.json != null && r.meta.id === id && !r.meta.isAutosave);
+        if (i < 0) return 'missing';
+        const rows = t.rows.slice();
+        rows[i] = { meta: { ...rows[i].meta, ...(patch || {}) }, json: stateJson };
+        const value = '[' + rows.map(r => (r.plain != null ? r.plain : joinSlot(r.meta, 'state', r.json))).join(',') + ']';
+        hint = { key, value, rows, row: rows[i] };
+        try { ls.setItem(key, value); } finally { hint = null; }
+        return 'ok';
+    }
+    // 지금 쓰는 중인 목록이 updateSlot의 "세이브 하나 바꾸기"면 그 세이브의 { meta, json } — js/desktopsaves.js가 그 파일 하나만 쓰게
+    const updating = (key, value) => (hint && hint.key === key && hint.value === value ? hint.row : null);
+    // 저장하기 전에 미리 압축해 두기 (브라우저 내장 압축 — 화면이 멈추지 않음). 바로 뒤 updateSlot이 이 압축본을 그대로 쓴다
+    async function prepack(key, id, json) {
+        if (!canZip || typeof json !== 'string' || json.length < MIN_CHARS) return false;
+        const k = nsOf(String(key)) + '|' + id, cur = byId.get(k);
+        if (cur && cur.json === json && cur.packed && !cur.weak) return true;
+        const packed = await zipText(json);
+        byId.set(k, { json, packed });
+        return true;
     }
 
     // 뒤에서 압축 — 끝나면 저장소가 그새 바뀌지 않았을 때만 압축본으로 다시 쓴다
@@ -299,14 +393,19 @@
         if (this !== ls || !KEY_RE.test(String(k))) return raw;
         return readSlots(String(k), raw);
     };
+    // 압축 전 그대로는 안 들어갔던 목록 — 다음부터는 안 될 쓰기를 먼저 해 보지 않고 바로 압축해 쓴다 (큰 세이브에서 저장마다 한 번씩 헛돌던 일)
+    const tight = new Set();
     Storage.prototype.setItem = function (k, v) {
         if (this !== ls || !KEY_RE.test(String(k))) return origSet.call(this, k, v);
-        try { writeSlots(String(k), String(v)); }
+        const key = String(k);
+        if (tight.has(key)) { writeSlots(key, String(v), true); return; }
+        try { writeSlots(key, String(v)); }
         catch (err) {
             // 공간이 모자라면 바뀐 세이브도 바로 압축해 다시 써 본다 — 그래도 안 들어가면 오류를 그대로 알려 저장 실패 안내가 뜨게
             const full = err && (err.name === 'QuotaExceededError' || err.code === 22 || err.code === 1014);
             if (!full) throw err;
-            writeSlots(String(k), String(v), true);
+            writeSlots(key, String(v), true);
+            tight.add(key);
         }
     };
 
@@ -325,6 +424,6 @@
     window.HemiSlotStore = {
         // 저장소에 실제로 쓰인 글자 수 (압축 뒤)
         storedLength: key => { try { const r = origGet.call(ls, key); return r ? r.length : 0; } catch (e) { return 0; } },
-        unzipText, zipText, inflate, deflateSync,
+        unzipText, zipText, inflate, deflateSync, metas, updateSlot, updating, prepack,
     };
 })();
