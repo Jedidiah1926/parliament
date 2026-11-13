@@ -92,6 +92,13 @@ const base = process.env.STUDIO_TEST_URL || 'http://127.0.0.1:8000';
             assert.match(await p.locator('#cpIssues').innerText(), /구조 검사 통과 · 경고 1건 · 확인 필요 1건/);
             assert.deepEqual(await p.evaluate(() => HemiCampaignEditor.check()), []);
             await p.evaluate(o => { const d2 = JSON.parse(o); d2.starts[0].state = HemiCampaignEditor.data.starts[0].state; HemiCampaignEditor.data = d2; }, original);
+            // 기본 탭의 플레이 규칙 — 잠금을 켜면 playRules.locks에, 모두 끄면 칸 자체를 없앤다 (쓰지 않는 파일은 예전과 같게)
+            await p.evaluate(() => HemiCampaignEditor.setTab('info'));
+            await p.locator('[data-lock="worldMap"]').check(); await p.locator('[data-lock="economicRegions"]').check();
+            assert.deepEqual((await data()).playRules, { locks: { worldMap: true, economicRegions: true } });
+            assert.deepEqual(await p.evaluate(() => HemiCampaignEditor.check()), []);
+            await p.locator('[data-lock="worldMap"]').uncheck(); await p.locator('[data-lock="economicRegions"]').uncheck();
+            assert.equal(JSON.stringify(await data()), original);
             // 프로(JSON) 모드로 바꿨다 돌아와도, 파일로 내보냈다 불러와도 같은 자료
             await p.evaluate(() => HemiCampaignEditor.setTab('events'));
             await p.locator('#cpStudioBar [data-mode="json"]').click();
@@ -276,6 +283,60 @@ const base = process.env.STUDIO_TEST_URL || 'http://127.0.0.1:8000';
         assert.equal(await p.evaluate(id => { const f = HemiScriptMods.state.fired[id]; return (f.ping || 0) + (f.pong || 0); }, modC), chain[0]); // 멈춘 뒤 더 돌지 않는다
         await p.context().close();
         console.log('PASS: manual painting rechecks map-change events once without advancing time; scripted changes clear manual undo; runaway hidden chains stop at 32');
+
+        // ---------- 플레이 규칙: 세계지도 · 경제권 직접 수정 잠금 ----------
+        p = await launch('turn', d => { d.playRules = { locks: { worldMap: true, economicRegions: true } }; });
+        assert.deepEqual(await p.evaluate(() => getAppState().campaign.playRules), { locks: { worldMap: true, economicRegions: true } }); // 적용한 정책을 세이브에 보관
+        await p.evaluate(() => switchSubTab('world', 'worldmap')); await settle(p);
+        assert.match(await p.locator('#wmLock').innerText(), /영토를 직접 수정할 수 없습니다[\s\S]*방향성 · 이벤트 · 결정/);
+        for (const id of ['wmOpen', 'wmUndo', 'wmRedo', 'wmClear', 'wmAddCountry', 'wmColor']) assert.equal(await p.locator('#' + id).isDisabled(), true, id);
+        assert.equal(await p.locator('[data-wm-tool="paint"]').isDisabled(), true); assert.equal(await p.locator('[data-wm-tool="inspect"]').isDisabled(), false);
+        assert.equal(await p.locator('#wmExport').isDisabled(), false); assert.equal(await p.locator('#wmZoomIn').isDisabled(), false); // 보기 · 내보내기는 그대로
+        // 누르기 · 끌기 · 키보드 · 꺼진 버튼을 스크립트로 눌러도 바뀌지 않는다 — 구역 확인은 된다
+        await p.locator('[data-wm-key="island"]').click();
+        const bb = async key => p.locator(`[data-wm-key="${key}"]`).boundingBox(), r1 = await bb('riverbank'), r2 = await bb('island');
+        await p.mouse.move(r1.x + 20, r1.y + 20); await p.mouse.down(); await p.mouse.move(r2.x + 20, r2.y + 20, { steps: 4 }); await p.mouse.up();
+        await p.locator('[data-wm-key="riverbank"]').focus(); await p.keyboard.press('Enter');
+        await p.evaluate(() => { for (const id of ['wmClear', 'wmUndo', 'wmRedo', 'wmAddCountry']) { const b2 = document.getElementById(id); b2.disabled = false; b2.click(); } const t = document.querySelector('[data-wm-tool="erase"]'); t.disabled = false; t.click(); document.querySelector('[data-wm-key="capital"]').dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 0 })); });
+        await settle(p);
+        assert.deepEqual(await owners(p), START);
+        assert.equal(await p.locator('.dno-dialog-overlay').count(), 0); // 지우기 확인 창도 뜨지 않는다
+        assert.match(await p.locator('#wmRegion').innerText(), /수도 · /);
+        const rowsBefore = await p.evaluate(() => HemiHistory.ranking.rows.length);
+        await p.locator('#wmFile').setInputFiles({ name: 'other.hemimap', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(F.map())) });
+        assert.match(await p.locator('.dno-dialog-msg').innerText(), /영토를 직접 수정할 수 없습니다/); await p.locator('.dno-dialog-btn:not(.cancel)').click();
+        assert.deepEqual(await owners(p), START); assert.equal(await p.evaluate(() => HemiHistory.ranking.rows.length), rowsBefore);
+        // 국가 순위에서 영토가 있는 국가를 지워 미배정으로 만드는 길도 막힌다
+        await p.evaluate(() => switchSubTab('world', 'ranking')); await settle(p);
+        await p.locator('[data-rdel="w_federation"]').click();
+        assert.match(await p.locator('.dno-dialog-msg').innerText(), /영토를 직접 수정할 수 없습니다[\s\S]*영토가 있습니다/); await p.locator('.dno-dialog-btn:not(.cancel)').click(); await settle(p);
+        assert.ok(await p.evaluate(() => HemiHistory.ranking.rows.some(r => r.id === 'w_federation')));
+        // 경제권도 같다
+        await p.evaluate(() => switchSubTab('world', 'econblocs')); await settle(p);
+        assert.match(await p.locator('#weLock').innerText(), /경제권을 직접 수정할 수 없습니다/);
+        assert.equal(await p.locator('#weAdd').isDisabled(), true);
+        await p.evaluate(() => { const i = document.getElementById('weNewName'); i.disabled = false; i.value = '몰래'; const b2 = document.getElementById('weAdd'); b2.disabled = false; b2.click(); });
+        assert.equal(await p.evaluate(() => HemiWorldMap.economic.zones.length), 0);
+        // 잠가도 시나리오의 효과로는 바뀐다 — 수락하면 강변이 넘어온다. 저장 → 복원 뒤에도 잠금 유지
+        await toTalks(p, 'turn'); await p.locator('.sm-ev-opt').nth(0).click();
+        assert.deepEqual(await owners(p), { ...START, riverbank: 'w_republic' });
+        await p.waitForFunction(() => document.querySelector('.sm-ev-title')?.textContent === '새로운 국경'); await p.locator('.sm-ev-opt').click();
+        await p.waitForSelector('.ca-overlay'); await p.locator('.ca-close').click(); await settle(p);
+        await p.evaluate(() => setAppState(JSON.parse(JSON.stringify(getAppState())))); await p.waitForTimeout(400);
+        await p.evaluate(() => switchSubTab('world', 'worldmap')); await settle(p);
+        assert.equal(await p.locator('#wmLock').isVisible(), true); await p.locator('[data-wm-key="island"]').click();
+        assert.deepEqual(await owners(p), { ...START, riverbank: 'w_republic' });
+        // 적용한 정책 칸이 빠진 진행 세이브는 시나리오의 선언에서 되살린다 (조용히 풀리지 않는다)
+        await p.evaluate(() => { const st = JSON.parse(JSON.stringify(getAppState())); delete st.campaign.playRules; setAppState(st); }); await p.waitForTimeout(400);
+        assert.match(await p.evaluate(() => HemiCampaign.lockReason('worldMap')), /직접 수정할 수 없습니다/);
+        // 시나리오가 없는 다른 세이브를 열면 잠금이 없다
+        await p.evaluate(() => { const st = JSON.parse(JSON.stringify(getAppState())); delete st.campaign; setAppState(st); }); await p.waitForTimeout(400);
+        await p.evaluate(() => switchSubTab('world', 'worldmap')); await settle(p);
+        assert.equal(await p.locator('#wmLock').isVisible(), false); assert.equal(await p.evaluate(() => HemiCampaign.lockReason('worldMap')), null);
+        await p.locator('#wmCountry').selectOption('w_federation'); await p.locator('[data-wm-tool="paint"]').click(); await p.locator('[data-wm-key="capital"]').click();
+        assert.equal((await owners(p)).capital, 'w_federation');
+        await p.context().close();
+        console.log('PASS: play rules — locked map/economic regions cannot be edited by click, drag, keyboard, forced buttons or file import; scenario effects still apply; lock survives save/restore');
 
         assert.deepEqual(errors, []);
         console.log('PASS: no uncaught browser errors');

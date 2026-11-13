@@ -61,6 +61,13 @@
     const isObj = x => !!x && typeof x === 'object' && !Array.isArray(x);
     const declaredBindings = r => { const s = (r.data.starts || []).find(x => x.id === r.startId) || (r.data.starts || [])[0]; return isObj(s && s.worldBindings) ? { ...s.worldBindings } : {}; };
     const worldCountries = () => (R && isObj(R.data.world) && Array.isArray(R.data.world.countries) ? R.data.world.countries.filter(c => isObj(c) && typeof c.key === 'string') : []);
+    // 플레이 규칙 — 제작자가 잠근 "직접 수정" (v1.7.1 첫 조각: 세계지도 영토 · 경제권). 시나리오의 playRules.locks를 시작할 때 세이브(campaign.playRules)에 보관한다.
+    // 잠가도 방향성 · 이벤트 · 결정의 효과로는 바뀐다. 화면(js/world-map.js · js/history.js)은 실제로 상태를 바꾸는 자리에서 lockReason을 묻는다.
+    const LOCK_REASON = {
+        worldMap: '이 시나리오에서는 영토를 직접 수정할 수 없습니다. 방향성 · 이벤트 · 결정을 통해 바뀝니다.',
+        economicRegions: '이 시나리오에서는 경제권을 직접 수정할 수 없습니다. 방향성 · 이벤트 · 결정을 통해 바뀝니다.',
+    };
+    const lockReason = name => (R && !loadingCampaign && isObj(R.playRules) && isObj(R.playRules.locks) && R.playRules.locks[name] === true && LOCK_REASON[name]) || null;
     // 스크립트 판정에 쓰는 지금 상태 (js/world-rules.js의 ctx) — 이 시나리오의 스크립트가 아니면 null
     function worldContext(id) {
         if (!R || loadingCampaign || id !== modId() || !window.HemiWorldMap) return null;
@@ -101,6 +108,8 @@
         Object.entries(r.articles.published).forEach(([id,record])=>{if(valid.has(id)&&!record.read&&!r.articles.queue.includes(id))r.articles.queue.push(id);});
         // 예전 세이브에는 나라 연결이 없다 — 고른 시작 나라의 선언에서 되살린다 (실제 지도 · 국가는 쓸 때마다 검사한다)
         if (!isObj(r.worldBindings)) r.worldBindings = declaredBindings(r);
+        // 적용한 플레이 규칙이 빠진 진행 세이브는 시나리오의 선언에서 되살린다 (조용히 전부 허용하지 않게). 설정이 없는 시나리오는 예전처럼 잠금 없음
+        if (!isObj(r.playRules)) r.playRules = isObj(r.data.playRules) ? JSON.parse(JSON.stringify(r.data.playRules)) : {};
         r.crises = r.crises || {};
         (r.data.crises || []).forEach(c => { if (!r.crises[c.id]) r.crises[c.id] = { status: 'idle', missions: {} }; r.crises[c.id].missions = r.crises[c.id].missions || {}; });
         return r;
@@ -643,6 +652,7 @@
         delete data._startId;
         R = normalize({ data, startId: startId || null, focus: { cur: null, done: {} }, crises: {}, ending: null, startedAt: today() },true);
         R.worldBindings = declaredBindings(R);
+        R.playRules = isObj(data.playRules) ? JSON.parse(JSON.stringify(data.playRules)) : {};
         bindMod();timeController.reset();window.dispatchEvent(new Event('hemi-campaign-changed'));R.startedAt=today();
         tick();
         refresh();
@@ -660,7 +670,7 @@
         };
     }
 
-    window.HemiCampaign = { get state() { return R; }, tick, startFocus, publishArticle, attach, showIntro, showDisp, FORMAT, toMod, worldContext,
+    window.HemiCampaign = { get state() { return R; }, tick, startFocus, publishArticle, attach, showIntro, showDisp, FORMAT, toMod, worldContext, lockReason,
         nextTurn:timeController.nextTurn, play:timeController.play, pause:timeController.pause, setSpeed:timeController.speed,
         scriptDate:id=>!loadingCampaign&&R?.clock&&id===modId()?{...Clock.parts(R.clock.day),key:today()}:null,
         scriptDateLabel:id=>!loadingCampaign&&R?.clock&&id===modId()?Clock.label(R.clock):null };

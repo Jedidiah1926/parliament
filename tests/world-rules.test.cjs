@@ -198,3 +198,14 @@ test('함께 싣는 예제 파일(docs/example-scenario)은 실제 세이브를 
     const map = JSON.parse(zlib.gunzipSync(fs.readFileSync(path.join(dir, 'border-map.hemimap'))));
     assert.deepEqual({ ...require('../js/world-map-data.js').read(map).owners }, F.worldMap().owners);
 });
+test('플레이 규칙 — 지원하는 잠금만 조용히 통과, 모르는 잠금은 경고(적용되지 않음), 형식 오류', () => {
+    let d = F.scenario(); d.playRules = { locks: { worldMap: true, economicRegions: false } };
+    assert.deepEqual(T.validate(d), []);
+    d.playRules.locks.parties = true;
+    assert.deepEqual(errs(d), []);
+    assert.ok(has(errs(d, 'warning'), 'playRules.locks.parties', /아직 지원하지 않습니다/));
+    d = F.scenario(); d.playRules = { locks: { worldMap: 'yes' } }; assert.ok(has(errs(d), 'playRules.locks.worldMap'));
+    d = F.scenario(); d.playRules = { locks: [] }; assert.ok(has(errs(d), 'playRules.locks'));
+    d = F.scenario(); d.playRules = 'strict'; assert.ok(has(errs(d), 'playRules'));
+    assert.deepEqual(T.LOCKS, ['worldMap', 'economicRegions']);
+});

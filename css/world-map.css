@@ -29,6 +29,9 @@
 #wmSvg.wm-panning {cursor:grabbing;}
 .wm-empty {text-align:center;color:#8a94a3;padding:50px 20px;font-size:.85rem;}
 /* 경제권 (세계 › 경제권) — 지도 화면의 조작 모양을 그대로 쓴다 */
+.wm-lock {margin:8px 0;padding:8px 10px;border:1px solid var(--tno-gold);color:var(--tno-gold);font-size:.8rem;line-height:1.6;}
+.wm-lock[hidden] {display:none;}
+html[data-theme-family="modern"] .wm-lock {border-color:var(--m-border);color:var(--m-text);background:var(--m-surface-2);border-radius:7px;}
 .wm-seg {display:inline-flex;gap:0;margin-left:10px;}
 .wm-seg .wm-btn {padding:3px 9px;font-size:.75rem;}
 .wm-seg .wm-btn + .wm-btn {border-left:0;}

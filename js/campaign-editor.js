@@ -182,6 +182,7 @@
         bindCommon(body);
         bindScriptForms(body);
         HemiCampaignGuide.bind(body, {get:getP,set:setP,touch,render,data:()=>S});
+        bindPlayRules(body);
         body.querySelectorAll('[data-go]').forEach(b => b.onclick = () => {tab=b.dataset.go;render();});
         body.querySelectorAll('[data-starter]').forEach(b => b.onclick = async () => {await saveNow(); S=Tools.starter(uid('cmp')); tab='focus';selFocus='opening';resetHistory();touch();render();});
         ({ info: () => {}, starts: bindStarts, focus: bindFocus, articles: bindArticles, events:()=>{}, crises: bindCrises, endings: bindEndings, adv: () => {} })[tab](body);
@@ -201,7 +202,7 @@
         <label class="cpg-field">시작 날짜 (비워두면 시작 나라의 날짜)<input class="scn-in" type="date" min="0001-01-01" max="9999-12-31" data-time="startDate" value="${esc(time.startDate)}"></label>
         ${time.mode==='realtime'?`<div class="scn-grid2"><label class="cpg-field">시작 시각 (0~23시)<input class="scn-in" type="number" min="0" max="23" step="1" data-time="startHour" value="${time.startHour}"></label><label class="cpg-field">시작 속도<select class="scn-in" data-time="defaultSpeed">${[1,2,3,4,5].map(n=>`<option value="${n}" ${time.defaultSpeed===n?'selected':''}>${n}</option>`).join('')}</select></label></div>`:''}
         <p class="scn-dim">${time.mode==='turn'?'1턴 = 1일. 다음 턴만 제공하며 여러 턴 건너뛰기는 없습니다.':'1시간씩 진행합니다. 1~5단계 속도와 Space로 진행/일시정지를 전환합니다.'} 시나리오 시간을 따로 저장하며, 이벤트·기사 확인 중에는 멈춥니다. 불러온 게임은 일시정지 상태입니다.</p></section>
-        </div><div class="scn-card cpe-help">
+        ${playRulesHtml()}</div><div class="scn-card cpe-help">
             <div class="cpe-eyebrow">FROM IDEA TO PLAYABLE STORY</div><h2>첫 시나리오, 빈 화면에서<br>시작하지 않아도 됩니다.</h2>
             <p class="scn-dim">서로 다른 두 노선, 합류 중점, 격변과 슈퍼 이벤트까지. 작동하는 예제를 복사해 제목과 이야기를 바꿔 보세요.</p>
             <button type="button" class="scn-btn scn-primary" data-starter>갈림길 시나리오으로 새로 만들기 ↗</button>
@@ -228,6 +229,24 @@
                     : `<select class="scn-in" data-preset>${presets.filter(p => !p.comingSoon).map(p => `<option value="${esc(p.id)}" ${p.id === s.preset ? 'selected' : ''}>${esc(p.title)}${p.date ? ` — ${esc(p.date)}` : ''}</option>`).join('')}</select>`}</div>
             </div>`).join('')}
             <div class="scn-row"><button type="button" class="scn-btn" data-add-start>+ 시작 나라</button></div></div>${worldCardHtml()}`;
+    }
+    // 플레이 규칙 — 플레이어가 화면에서 직접 고치지 못하게 잠글 항목 (지금은 세계지도 영토 · 경제권). 쓰지 않으면 파일에 칸을 만들지 않는다
+    const LOCK_LABEL = { worldMap: ['세계지도 영토', '칠하기 · 지우기 · 실행 취소 · 지도 바꾸기 · 국가 추가 · 영토가 있는 국가 삭제'], economicRegions: ['경제권', '경제권 만들기 · 고치기 · 삭제 · 구역 배정'] };
+    function playRulesHtml() {
+        const locks = (S.playRules && typeof S.playRules === 'object' && S.playRules.locks && typeof S.playRules.locks === 'object') ? S.playRules.locks : {};
+        return `<section class="cpe-time-settings" data-play-rules><div class="scn-h">플레이 규칙 · 직접 수정 잠금</div>
+        <p class="scn-dim">플레이어가 화면에서 직접 고치지 못하게 할 항목을 고르세요. 잠가도 방향성 · 이벤트 · 결정의 효과로는 바뀌고, 시험 플레이에도 그대로 적용됩니다. 정당 · 의석 · 선거제도 등 다른 항목의 잠금은 아직 없습니다.</p>
+        ${Tools.LOCKS.map(k => `<label class="scn-check"><input type="checkbox" data-lock="${k}" ${locks[k] === true ? 'checked' : ''}><span><b>${LOCK_LABEL[k][0]}</b> — ${LOCK_LABEL[k][1]}</span></label>`).join('')}</section>`;
+    }
+    function bindPlayRules(body) {
+        body.querySelectorAll('[data-play-rules] [data-lock]').forEach(cb => { cb.onchange = () => {
+            const rules = S.playRules && typeof S.playRules === 'object' && !Array.isArray(S.playRules) ? S.playRules : (S.playRules = {});
+            const locks = rules.locks && typeof rules.locks === 'object' && !Array.isArray(rules.locks) ? rules.locks : (rules.locks = {});
+            if (cb.checked) locks[cb.dataset.lock] = true; else delete locks[cb.dataset.lock];
+            if (!Object.keys(locks).length) delete rules.locks;
+            if (!Object.keys(rules).length) delete S.playRules;
+            touch();
+        }; });
     }
     // 세계지도 연결 — 영토 조건 · 효과에서 쓸 나라(열쇠)를 정하고, 시작 나라마다 그 세이브의 실제 국가(세계 › 국가 순위)에 연결한다
     const worldCountries = () => (S.world && Array.isArray(S.world.countries) ? S.world.countries : []);

@@ -7,6 +7,7 @@
     const object = x => !!x && typeof x === 'object' && !Array.isArray(x);
     const arrayKeys = ['starts', 'focus', 'crises', 'endings', 'events', 'decisions', 'articles'];
     const idOK = id => typeof id === 'string' && /^[a-zA-Z0-9_.-]+$/.test(id);
+    const LOCKS = ['worldMap', 'economicRegions']; // 게임이 실제로 적용하는 직접 수정 잠금 (js/campaign.js lockReason)
     function validate(d) {
         const issues = [];
         const add = (path, message, level = 'error') => issues.push({ path, message, level });
@@ -221,6 +222,17 @@
         flagsRead.forEach(([name, p]) => { if (!flagsSet.has(name) && !autoFlags.has(name)) add(p, name.startsWith('focus_') ? `방향성 완료 플래그 “${name}”에 해당하는 방향성이 없습니다.` : `플래그 “${name}”를 켜는 효과가 이 시나리오에 없습니다.`, name.startsWith('focus_') ? 'warning' : 'check'); });
         { const told = new Set(); varsRead.forEach(([name, p]) => { if (!varNames.has(name) && !told.has(name)) { told.add(name); add(p, `변수 “${name}”가 시나리오 변수에 없습니다 — 0에서 시작합니다.`, 'check'); } }); }
         worldChecks(d, add, worldRefs);
+        // 플레이 규칙 — 지금 게임이 적용하는 잠금만 조용히 통과시킨다 (모르는 항목을 잠긴 것처럼 믿게 두지 않는다)
+        if (d.playRules != null) {
+            if (!object(d.playRules)) add('playRules', '플레이 규칙은 객체여야 합니다.');
+            else if (d.playRules.locks != null) {
+                if (!object(d.playRules.locks)) add('playRules.locks', '잠금은 { "worldMap": true } 형식입니다.');
+                else Object.entries(d.playRules.locks).forEach(([k, v]) => {
+                    if (typeof v !== 'boolean') add(`playRules.locks.${k}`, '잠금 값은 true 또는 false입니다.');
+                    else if (!LOCKS.includes(k)) add(`playRules.locks.${k}`, `“${k}” 잠금은 아직 지원하지 않습니다 — 게임에서 적용되지 않습니다. (지원: ${LOCKS.join(' · ')})`, 'warning');
+                });
+            }
+        }
         return issues;
     }
     // ---- 세계지도 연결 · 영토 · 경제권 참조 — 고를 수 있는 모든 시작 나라에서 유효해야 한다 ----
@@ -370,7 +382,7 @@
             endings: [{ id: 'dawn', title: '우리가 만든 내일', text: '격변을 넘어 새 장을 열었습니다. 공화국의 이야기는 계속됩니다.', condition: { flag: 'focus_future' } }]
         };
     }
-    const api = { validate, describe, layout, renameFocus, renameCountry, worldCatalog, starter, clone, idOK };
+    const api = { validate, describe, layout, renameFocus, renameCountry, worldCatalog, starter, clone, idOK, LOCKS };
     if (typeof module !== 'undefined' && module.exports) module.exports = api;
     else root.HemiCampaignTools = api;
 })(typeof window === 'undefined' ? globalThis : window);
