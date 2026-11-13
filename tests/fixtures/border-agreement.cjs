@@ -1,5 +1,5 @@
 // 첫 예제 "국경 협정" (docs/design/SCENARIO_WORLD_INTEGRATION.md 10장) — 시험과 예제 파일(examples/)이 함께 쓰는 원본.
-//   node tests/fixtures/border-agreement.cjs  → examples/border-agreement.hemicmp 를 다시 만든다
+//   예제 파일(docs/example-scenario/)은 tests/fixtures/build-border-example.cjs 가 실제 게임 · 제작기를 거쳐 만든다
 const rect = (key, x) => ({ key, tag: 'rect', attrs: { x: String(x), y: '10', width: '80', height: '80' } });
 // 세 구역짜리 작은 지도 (.hemimap과 같은 형식)
 const map = () => ({ format: 'hemicycle-districts', version: 1, meta: { name: '국경 지대' },
@@ -10,7 +10,7 @@ const worldMap = () => ({ preset: map(), owners: { capital: 'w_republic', riverb
 const ranking = () => ({ title: '국가 순위', rows: countries().map((c, i) => ({ ...c, bloc: '', ideo: '', score: 100 - i * 10, prevRank: null })) });
 // 검사기용 최소 시작 세이브 (게임에서는 실제 세이브 상태에 worldMap · history.ranking을 넣어 쓴다)
 const startState = () => ({ parliament: { parties: [] }, worldMap: worldMap(), history: { ranking: ranking() } });
-const republic = { key: 'republic' };
+const rep = () => ({ key: 'republic' }); // 쓰는 곳마다 새 객체 — 한 곳을 고쳐도 다른 곳이 따라 바뀌지 않게
 function scenario(mode = 'turn') {
     const f = (id, title, icon, x, y, extra = {}) => ({ id, title, icon, x, y, days: 2, desc: '', prereq: [], any: [], exclusive: [], effects: [], ...extra });
     return {
@@ -24,20 +24,20 @@ function scenario(mode = 'turn') {
         focus: [
             f('open_talks', '국경 협상 개시', '🤝', 2, 0, { desc: '연방과 협상 자리를 엽니다. 이틀 뒤 협정안이 도착합니다.', event: 'border_talks' }),
             f('integrate_riverbank', '강변 통합', '🌉', 0, 1, { prereq: ['open_talks'], exclusive: ['fortify_border'], desc: '새로 얻은 강변을 공화국에 통합합니다.', days: 1,
-                available: { all: [{ flag: 'border_agreement_accepted' }, { owns_regions: { country: republic, regions: ['riverbank'] } }] } }),
+                available: { all: [{ flag: 'border_agreement_accepted' }, { owns_regions: { country: rep(), regions: ['riverbank'] } }] } }),
             f('fortify_border', '국경 요새화', '🛡', 4, 1, { prereq: ['open_talks'], exclusive: ['integrate_riverbank'], desc: '협정을 거절하고 옛 국경을 지킵니다.', days: 1, available: { flag: 'border_agreement_rejected' } }),
         ],
         articles: [{ id: 'new_border_news', title: '강변, 공화국 품으로', subtitle: '협정 발효 — 국경선이 다시 그려졌다', source: '공화국 통신', when: 'condition',
-            trigger: { all: [{ flag: 'border_agreement_accepted' }, { owns_regions: { country: republic, regions: ['riverbank'] } }] },
+            trigger: { all: [{ flag: 'border_agreement_accepted' }, { owns_regions: { country: rep(), regions: ['riverbank'] } }] },
             body: '협정에 따라 강변이 공화국의 영토가 되었습니다.\n\n수도와 섬의 경계는 그대로입니다.' }],
         events: [
             { id: 'border_talks', title: '국경 협상', desc: '연방 대표단이 협정안을 내밀었습니다. 강변을 넘기는 대신 오랜 분쟁을 끝내자는 제안입니다.', presentation: 'narrative', trigger_only: true,
                 options: [
-                    { text: '협정을 수락한다', effects: [{ transfer_regions: { regions: ['riverbank'], to: republic } }, { set_flag: 'border_agreement_accepted' }] },
+                    { text: '협정을 수락한다', effects: [{ transfer_regions: { regions: ['riverbank'], to: rep() } }, { set_flag: 'border_agreement_accepted' }] },
                     { text: '협정을 거절한다', effects: [{ set_flag: 'border_agreement_rejected' }] },
                 ] },
             { id: 'border_news_event', title: '새로운 국경', desc: '지도 위의 선이 바뀌었습니다. 강변에 공화국의 깃발이 올랐습니다.', presentation: 'narrative', check: 'world',
-                trigger: { owns_regions: { country: republic, regions: ['riverbank'] } }, options: [{ text: '변화를 지켜보자', effects: [] }] },
+                trigger: { owns_regions: { country: rep(), regions: ['riverbank'] } }, options: [{ text: '변화를 지켜보자', effects: [] }] },
         ],
         decisions: [], crises: [],
         endings: [
@@ -47,10 +47,3 @@ function scenario(mode = 'turn') {
     };
 }
 module.exports = { map, countries, worldMap, ranking, startState, scenario };
-if (require.main === module) {
-    const fs = require('node:fs'), path = require('node:path'), zlib = require('node:zlib');
-    const out = path.join(__dirname, '..', '..', 'examples', 'border-agreement.hemicmp');
-    fs.mkdirSync(path.dirname(out), { recursive: true });
-    fs.writeFileSync(out, JSON.stringify(scenario(), null, 2) + '\n');
-    console.log('wrote', out);
-}

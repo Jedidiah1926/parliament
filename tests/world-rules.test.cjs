@@ -186,3 +186,15 @@ test('경제권 참조 — 시작 세이브의 economicRegions와 대조, 나라
     assert.deepEqual(cat.starts[0].rows.map(r => r.id), ['w_republic', 'w_federation']);
     assert.deepEqual(T.worldCatalog(T.starter('none')), { regions: [], zones: [], starts: [{ index: 0, hasState: false, hasMap: false, regions: [], rows: [], zones: [] }] });
 });
+test('함께 싣는 예제 파일(docs/example-scenario)은 실제 세이브를 담고 검사를 통과한다', () => {
+    const fs = require('node:fs'), path = require('node:path'), zlib = require('node:zlib'), dir = path.join(__dirname, '..', 'docs', 'example-scenario');
+    const d = JSON.parse(zlib.gunzipSync(fs.readFileSync(path.join(dir, 'border-agreement.hemicmp'))));
+    assert.deepEqual(T.validate(d), []);
+    assert.ok(Array.isArray(d.starts[0].state.parliament.parties) && d.starts[0].state.parliament.parties.length > 3); // 실제로 플레이할 수 있는 시작 세이브
+    assert.deepEqual(d.starts[0].state.worldMap.owners, F.worldMap().owners);
+    const fixture = F.scenario();
+    for (const k of ['world', 'events', 'focus', 'articles', 'endings', 'time', 'decisions', 'crises']) assert.deepEqual(d[k], fixture[k], k); // 이야기 부분은 시험이 돌리는 원본과 같다 (제작기가 기본 칸만 더한다)
+    assert.deepEqual(d.starts[0].worldBindings, fixture.starts[0].worldBindings);
+    const map = JSON.parse(zlib.gunzipSync(fs.readFileSync(path.join(dir, 'border-map.hemimap'))));
+    assert.deepEqual({ ...require('../js/world-map-data.js').read(map).owners }, F.worldMap().owners);
+});

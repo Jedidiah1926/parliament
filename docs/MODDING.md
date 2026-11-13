@@ -126,6 +126,8 @@ my-mod/
 | `if` | `{ "condition": {...}, "then": [...], "else": [...] }` | 조건에 따라 |
 | `random_list` | `[ { "weight": 70, "effects": [...] }, { "weight": 30, "effects": [...] } ]` | 무게대로 하나를 골라 |
 
+**세계지도 조건 · 효과** (v1.7.1 개발 중): `owns_regions` · `in_economic_region` 조건과 `transfer_regions` · `assign_economic_region` 효과는 나라 연결이 있는 **시나리오 안에서만** 동작합니다([시나리오 › 세계지도 연동](CAMPAIGN.md#세계지도-연동-개발-중--v171--032)). 일반 스크립트 모드에서는 조건은 거짓, 효과는 건너뛰고 모드 기록에 이유가 남습니다. 이벤트의 `"check"`에는 `"date"`(기본) · `"election"` 말고도 `"world"`(지도가 바뀔 때)와 `"any"`(모든 때)를 쓸 수 있습니다.
+
 ### 글자 바꾸기
 
 제목 · 본문 · 선택지 · 알림 글 · 기사(`article`)의 제목 · 부제 · 본문에서:
