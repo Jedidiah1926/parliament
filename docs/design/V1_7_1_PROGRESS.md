@@ -105,6 +105,8 @@
 
 ### 날짜 진행 · 탭 전환 (추가 측정 · 수정)
 
+단계별(1.7.0 → 지금) 전체 비교는 [docs/perf/LATENCY_1.7.md](../perf/LATENCY_1.7.md).
+
 `node tests/perf/presets.cjs`로 내장 프리셋마다 잰 결과(웹 · 헤드리스 Chromium, `tests/perf/presets-now.json` → `presets-after.json`).
 
 **날짜 ▶가 대한민국 2024 · 2026에서 느렸던 이유**
