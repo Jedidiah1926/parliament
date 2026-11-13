@@ -7,7 +7,7 @@
     const object = x => !!x && typeof x === 'object' && !Array.isArray(x);
     const arrayKeys = ['starts', 'focus', 'crises', 'endings', 'events', 'decisions', 'articles'];
     const idOK = id => typeof id === 'string' && /^[a-zA-Z0-9_.-]+$/.test(id);
-    const LOCKS = ['worldMap', 'economicRegions']; // 게임이 실제로 적용하는 직접 수정 잠금 (js/campaign.js lockReason)
+    const LOCKS = ['parties', 'seats', 'elections', 'government', 'opinion', 'economy', 'worldMap', 'economicRegions']; // 게임이 실제로 적용하는 직접 수정 잠금 (js/campaign.js lockReason · js/play-locks.js)
     function validate(d) {
         const issues = [];
         const add = (path, message, level = 'error') => issues.push({ path, message, level });

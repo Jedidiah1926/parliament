@@ -231,14 +231,30 @@
             <div class="scn-row"><button type="button" class="scn-btn" data-add-start>+ 시작 나라</button></div></div>${worldCardHtml()}`;
     }
     // 플레이 규칙 — 플레이어가 화면에서 직접 고치지 못하게 잠글 항목 (지금은 세계지도 영토 · 경제권). 쓰지 않으면 파일에 칸을 만들지 않는다
-    const LOCK_LABEL = { worldMap: ['세계지도 영토', '칠하기 · 지우기 · 실행 취소 · 지도 바꾸기 · 국가 추가 · 영토가 있는 국가 삭제'], economicRegions: ['경제권', '경제권 만들기 · 고치기 · 삭제 · 구역 배정'] };
+    const LOCK_LABEL = {
+        parties: ['정당 · 이념', '정당 만들기 · 삭제 · 이름 · 색 · 이념 · 상태 · 합당 · 분당 · 파벌 · 대표, 이념 목록'],
+        seats: ['의석 · 의원', '정당별 의석 수 · 원 참여 · 지역구 · 비례대표 의원 · 원내대표 · 수동 의석 결과'],
+        elections: ['선거제도 · 지역구', '선거 제도 설정 · 원의 구성 · 지역구 지도 · 권역 · 개표 변동'],
+        government: ['정부 · 집권 · 내각', '정부 형태 · 거부권 · 비상 권한 · 집권/연정 · 대통령 · 총리 · 내각 구성원'],
+        opinion: ['지지율 · 여론', '정당 지지율 · 오차 · 시민 성향 · 국정 지지율 · 자동 여론 변동 설정'],
+        economy: ['경제 편집', '경제 › 시나리오 · 이벤트 · 항목 (통화 · 재정 정책은 그대로)'],
+        worldMap: ['세계지도 영토', '칠하기 · 지우기 · 실행 취소 · 지도 바꾸기 · 국가 추가 · 영토가 있는 국가 삭제'],
+        economicRegions: ['경제권', '경제권 만들기 · 고치기 · 삭제 · 구역 배정'],
+    };
+    const RULES_PRESET = ['parties', 'seats', 'elections', 'government', 'opinion', 'economy', 'worldMap', 'economicRegions']; // 규칙에 따라 플레이
     function playRulesHtml() {
         const locks = (S.playRules && typeof S.playRules === 'object' && S.playRules.locks && typeof S.playRules.locks === 'object') ? S.playRules.locks : {};
         return `<section class="cpe-time-settings" data-play-rules><div class="scn-h">플레이 규칙 · 직접 수정 잠금</div>
-        <p class="scn-dim">플레이어가 화면에서 직접 고치지 못하게 할 항목을 고르세요. 잠가도 방향성 · 이벤트 · 결정의 효과로는 바뀌고, 시험 플레이에도 그대로 적용됩니다. 정당 · 의석 · 선거제도 등 다른 항목의 잠금은 아직 없습니다.</p>
+        <p class="scn-dim">플레이어가 화면에서 직접 고치지 못하게 할 항목을 고르세요. 잠가도 방향성 · 이벤트 · 결정의 효과, 선거 실행 · 반영, 의회 표결 같은 게임 진행으로는 바뀌고, 시험 플레이에도 그대로 적용됩니다. 실행 취소로 잠긴 항목을 되돌릴 수도 없습니다.</p>
+        <div class="scn-row"><button type="button" class="scn-btn" data-lock-preset="rules">규칙에 따라 플레이 (모두 잠금)</button><button type="button" class="scn-btn" data-lock-preset="free">자유 편집 (모두 풀기)</button></div>
         ${Tools.LOCKS.map(k => `<label class="scn-check"><input type="checkbox" data-lock="${k}" ${locks[k] === true ? 'checked' : ''}><span><b>${LOCK_LABEL[k][0]}</b> — ${LOCK_LABEL[k][1]}</span></label>`).join('')}</section>`;
     }
     function bindPlayRules(body) {
+        body.querySelectorAll('[data-lock-preset]').forEach(b => { b.onclick = () => {
+            if (b.dataset.lockPreset === 'rules') S.playRules = { ...(S.playRules && typeof S.playRules === 'object' && !Array.isArray(S.playRules) ? S.playRules : {}), locks: Object.fromEntries(RULES_PRESET.map(k => [k, true])) };
+            else if (S.playRules && typeof S.playRules === 'object') { delete S.playRules.locks; if (!Object.keys(S.playRules).length) delete S.playRules; }
+            touch(); render();
+        }; });
         body.querySelectorAll('[data-play-rules] [data-lock]').forEach(cb => { cb.onchange = () => {
             const rules = S.playRules && typeof S.playRules === 'object' && !Array.isArray(S.playRules) ? S.playRules : (S.playRules = {});
             const locks = rules.locks && typeof rules.locks === 'object' && !Array.isArray(rules.locks) ? rules.locks : (rules.locks = {});

@@ -66,6 +66,12 @@
     const LOCK_REASON = {
         worldMap: '이 시나리오에서는 영토를 직접 수정할 수 없습니다. 방향성 · 이벤트 · 결정을 통해 바뀝니다.',
         economicRegions: '이 시나리오에서는 경제권을 직접 수정할 수 없습니다. 방향성 · 이벤트 · 결정을 통해 바뀝니다.',
+        parties: '이 시나리오에서는 정당 · 이념을 직접 수정할 수 없습니다. 이벤트 · 결정 · 방향성을 통해 바뀝니다.',
+        seats: '이 시나리오에서는 의석 · 의원을 직접 수정할 수 없습니다. 선거 또는 이벤트를 통해 바뀝니다.',
+        elections: '이 시나리오에서는 선거제도 · 지역구를 직접 수정할 수 없습니다. 선거는 정해진 제도대로 치릅니다.',
+        government: '이 시나리오에서는 정부 형태 · 집권 · 내각을 직접 수정할 수 없습니다. 선거 · 표결 · 이벤트를 통해 바뀝니다.',
+        opinion: '이 시나리오에서는 지지율 · 여론을 직접 수정할 수 없습니다. 이벤트 · 기사 · 자동 변화를 통해 바뀝니다.',
+        economy: '이 시나리오에서는 경제 지표 · 경제 사건 · 항목을 직접 수정할 수 없습니다. 정책(통화 · 재정)과 이벤트로 바뀝니다.',
     };
     const lockReason = name => (R && !loadingCampaign && isObj(R.playRules) && isObj(R.playRules.locks) && R.playRules.locks[name] === true && LOCK_REASON[name]) || null;
     // 스크립트 판정에 쓰는 지금 상태 (js/world-rules.js의 ctx) — 이 시나리오의 스크립트가 아니면 null
