@@ -39,7 +39,9 @@
     //   migrantLean: 예전(전국 % 하나) 이민자 성향 — 불러올 때 opinion.migrant의 지지율로 옮긴다
     let S = fresh();
     function fresh() { return { people: [], candidates: {}, lastElection: null, citizens: { house: {}, senate: {}, third: {} }, migrantVote: { presidential: false, general: false, local: false, referendum: false }, opinion: { split: true, migrant: null } }; }
-    const ui = { q: '', filter: 'all', openId: null };
+    const ui = { q: '', filter: 'all', openId: null, shown: 0, viewKey: '' };
+    // 사람이 수백 명이면 카드 요소가 만 개를 넘어 탭을 열 때마다 0.3~0.4초씩 멈췄다 — 처음엔 일부만 그리고 내려가면 더 그린다
+    const PEOPLE_PAGE = 60;
     // 여론의 이민자 탭을 보는 동안에는 본 게임 성향 · 지지율 변수에 이민자 성향이 들어가 있다 ('migrant')
     let layer = 'citizen';
     const CHS3 = ['house', 'senate', 'third'];
@@ -352,6 +354,11 @@
         counts.none = counts.all - counts.seated;
         counts.cand = S.people.filter(p => candidaciesOf(p.id).length).length;
         const le = S.lastElection;
+        const viewKey = ui.filter + '|' + q;
+        if (ui.viewKey !== viewKey || !ui.shown) { ui.viewKey = viewKey; ui.shown = PEOPLE_PAGE; }
+        const openAt = ui.openId ? list.findIndex(p => p.id === ui.openId) : -1;
+        if (openAt >= ui.shown) ui.shown = openAt + 1; // 펼친 카드는 늘 보이게
+        const shown = list.slice(0, ui.shown);
         box.innerHTML = `
             <div class="people-intro">인물을 미리 만들어 두고 의석 · 당직 · 내각 자리에 배정합니다. 이름 · 사진을 여기서 고치면 배정된 모든 자리에 반영되고, 선거 · 당적 변경 · 궐석으로 자리가 사라져도 인물은 남아요.</div>
             <div class="people-bar">
@@ -365,9 +372,35 @@
                 ${le.elected.length ? `<div>✔ 당선 · 배정: ${le.elected.map(x => `${esc((personById(x.personId) || {}).name || '?')} <span class="people-dim">(${esc(x.place)})</span>`).join(', ')}</div>` : ''}
                 ${le.lost.length ? `<div>✘ 낙선: ${le.lost.map(x => `${esc((personById(x.personId) || {}).name || '?')} <span class="people-dim">(${esc(x.place)})</span>`).join(', ')} — 사람 탭에 남아 다음 선거에 다시 나갈 수 있어요</div>` : ''}
                 <button type="button" class="people-x" data-act="clearres" title="닫기">✕</button></div>` : ''}
-            <div id="peopleList" class="people-list">${list.length ? list.map(p => card(p, posMap.get(p.id) || [])).join('') : `<div class="people-empty">${S.people.length ? '조건에 맞는 사람이 없습니다.' : '아직 사람이 없습니다. "＋ 사람 추가"로 만들거나, "모든 자리에서 가져오기"로 지금 자리에 적힌 이름을 인물로 옮겨 보세요.'}</div>`}</div>`;
+            <div id="peopleList" class="people-list">${list.length ? shown.map(p => card(p, posMap.get(p.id) || [])).join('') + moreBtn(shown.length, list.length) : `<div class="people-empty">${S.people.length ? '조건에 맞는 사람이 없습니다.' : '아직 사람이 없습니다. "＋ 사람 추가"로 만들거나, "모든 자리에서 가져오기"로 지금 자리에 적힌 이름을 인물로 옮겨 보세요.'}</div>`}</div>`;
         bind(box);
+        bindMore(box, list, posMap);
         box.querySelector('[data-act="migrants"]')?.addEventListener('click', () => { switchSubTab('vote', 'elecSettings'); setTimeout(() => document.getElementById('peopleMigrantCard')?.scrollIntoView({ block: 'center' }), 50); });
+    }
+    const moreBtn = (n, total) => n < total ? `<button type="button" class="member-list-more people-list-more">${n} / ${total}명 표시 중 — 더 보기</button>` : '';
+    // "더 보기" — 버튼을 누르거나 목록 끝이 보이면 다음 묶음을 덧붙인다 (이미 그린 카드는 그대로)
+    function bindMore(box, list, posMap) {
+        const btn = box.querySelector('.people-list-more');
+        if (!btn) return;
+        let io = null;
+        const more = () => {
+            if (!btn.isConnected) { if (io) io.disconnect(); return; }
+            const from = Math.min(ui.shown, list.length), to = Math.min(list.length, from + PEOPLE_PAGE);
+            if (to <= from) return;
+            const tmp = document.createElement('div');
+            tmp.innerHTML = list.slice(from, to).map(p => card(p, posMap.get(p.id) || [])).join('');
+            const added = Array.from(tmp.children);
+            added.forEach(c => btn.parentNode.insertBefore(c, btn));
+            added.forEach(bindCard);
+            ui.shown = to;
+            if (to >= list.length) { btn.remove(); if (io) io.disconnect(); }
+            else btn.textContent = `${to} / ${list.length}명 표시 중 — 더 보기`;
+        };
+        btn.onclick = more;
+        if (typeof IntersectionObserver === 'function') {
+            io = new IntersectionObserver(es => { if (es.some(e => e.isIntersecting)) more(); }, { rootMargin: '0px 0px 600px 0px' });
+            io.observe(btn);
+        }
     }
     function card(p, pos) {
         const party = partyById(p.partyId);
@@ -408,7 +441,10 @@
         on('[data-filter]', b => { ui.filter = b.dataset.filter; render(); });
         const q = box.querySelector('[data-ui="q"]');
         if (q) q.oninput = () => { ui.q = q.value; const pos = q.selectionStart; render(); const q2 = box.querySelector('[data-ui="q"]'); if (q2) { q2.focus(); q2.setSelectionRange(pos, pos); } };
-        box.querySelectorAll('.people-card').forEach(c => {
+        box.querySelectorAll('.people-card').forEach(bindCard);
+    }
+    function bindCard(c) {
+        {
             const p = personById(c.dataset.id); if (!p) return;
             const q1 = s => c.querySelector(s);
             q1('[data-act="toggle"]').onclick = () => { ui.openId = ui.openId === p.id ? null : p.id; render(); };
@@ -453,7 +489,7 @@
             });
             const h = q1('.people-handle');
             if (h && typeof startDragReorder === 'function' && !ui.q && ui.filter === 'all') startDragReorder(h, 'peopleList', '.people-card', S.people, render);
-        });
+        }
     }
     function refresh() { render(); }
 

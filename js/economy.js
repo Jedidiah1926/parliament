@@ -338,18 +338,17 @@
 
     // ================= 계산 =================
     const labor = d => d.pop * (d.age?.[1] ?? 0.66);
+    // 한 번 훑으며 모두 더한다 (예전엔 합마다 배열을 새로 만들어 10번 훑었다 — 더하는 순서는 같아 값도 같다)
     function nationalFromDist(S2, keys) {
-        const ds = keys.map(k => S2.dist[k]).filter(Boolean);
-        const L = sum(ds.map(labor)) || 1, P = sum(ds.map(d => d.pop)) || 1;
-        return {
-            gdp: sum(ds.map(d => d.gdp)),
-            unemp: sum(ds.map(d => d.unemp * labor(d))) / L,
-            mood: sum(ds.map(d => d.mood * d.pop)) / P,
-            old: sum(ds.map(d => (d.age?.[2] ?? 0.17) * d.pop)) / P,
-            manuf: sum(ds.map(d => d.ind[1] * d.gdp)) / (sum(ds.map(d => d.gdp)) || 1),
-            agri: sum(ds.map(d => d.ind[0] * d.gdp)) / (sum(ds.map(d => d.gdp)) || 1),
-            income: sum(ds.map(d => d.income * d.pop)) / P,
-        };
+        let L = 0, P = 0, gdp = 0, un = 0, mood = 0, old = 0, manuf = 0, agri = 0, income = 0;
+        for (const k of keys) {
+            const d = S2.dist[k]; if (!d) continue;
+            const lab = labor(d);
+            L += lab; P += d.pop; gdp += d.gdp; un += d.unemp * lab; mood += d.mood * d.pop;
+            old += (d.age?.[2] ?? 0.17) * d.pop; manuf += d.ind[1] * d.gdp; agri += d.ind[0] * d.gdp; income += d.income * d.pop;
+        }
+        L = L || 1; P = P || 1;
+        return { gdp, unemp: un / L, mood: mood / P, old: old / P, manuf: manuf / (gdp || 1), agri: agri / (gdp || 1), income: income / P };
     }
     // 세율 효과(래퍼 곡선): 세수 = 기반 × 세율 × (1 − (세율/L)²)
     const taxRevenue = (t, rate) => Math.max(0, t.base * rate * (1 - Math.pow(rate / t.L, 2)));
@@ -575,12 +574,13 @@
         const moodItems = sum(itemDefs().filter(d => !d.welfare).map(d => ((spend[d.id] ?? d.s0) - d.s0) * (d.mood || 0)));
         const moodWelfare = sum(itemDefs().filter(d => d.welfare).map(d => ((spend[d.id] ?? d.s0) - d.s0) * (d.mood || 0)));
         const assetMood = assetEffect(S2, 'mood');
+        const taxList = taxDefs(); // 지역구마다 새로 만들지 않게 (지역구가 수백 개)
         keys.forEach(kk => {
             const d = S2.dist[kk];
             const gA = dlnBy[kk] / dt;
             const incW = 1 + 0.25 * (3 - d.income);
             let tax = 0;
-            taxDefs().forEach(t => {
+            taxList.forEach(t => {
                 const dlt = (taxes[t.id] ?? t.rate0) - t.rate0, s = t.side || {};
                 if (s.moodHigh) tax += dlt * s.moodHigh * Math.max(0, (d.income - 2.5) / 2);
                 if (s.moodLow) tax += dlt * s.moodLow * Math.max(0, (3.5 - d.income) / 2);
@@ -847,7 +847,10 @@
 
     // ================= 예측 · 민감도 =================
     // 예측은 아직 안 일어난 이벤트를 모른다 (진행 중인 것만 이어감)
-    const simClone = () => { const c = deep({ ...E, hist: [], events: [], ui: null, sched: (E.sched || []).filter(e => e.fired != null && e.ended == null) }); c._cyc = E._cyc; return c; };
+    // 계산용 복사본 — 글자로 한 번 바꿔 두고(simBase) 여러 번 되살린다 (예측은 같은 상태를 32~48번 복사한다)
+    const simBase = () => JSON.stringify({ ...E, hist: [], events: [], ui: null, sched: (E.sched || []).filter(e => e.fired != null && e.ended == null) });
+    const simFrom = base => { const c = JSON.parse(base); c._cyc = E._cyc; return c; };
+    const simClone = () => simFrom(simBase());
     function withDraft(S2) { if (E.draft) { S2.spend = { ...E.draft.spend }; S2.taxes = { ...E.draft.taxes }; } return S2; }
     const VAR = {
         growth: { label: '성장률', unit: '%', get: s => s.nat.growth, color: 'var(--s1)' },
@@ -862,17 +865,24 @@
         cur: { label: '통화가치', unit: '', get: s => s.nat.cur, color: 'var(--s7)' },
     };
     // 예측 부채꼴 — 지금 정책을 유지할 때 H턴 앞까지, 흔들림을 바꿔 여러 번 돌린 분위수
+    // 같은 상태 · 같은 질문이면 지난 결과를 그대로 (탭을 오갈 때마다 수십 번 시뮬레이션을 다시 돌리지 않게). 결과는 읽기만 한다
+    const forecastMemo = new Map();
     function forecast(vars, H = 8, runs = 48, useDraft = false) {
-        const keys = distList();
+        const keys = distList(), base = simBase();
+        const memoKey = [base, vars.join(','), H, runs, useDraft ? JSON.stringify(E.draft || null) : '', keys.join(','), JSON.stringify(E._cyc || null), !!(window.HemiRoyal && window.HemiRoyal.monarchy)].join('\u0001');
+        const memo = forecastMemo.get(memoKey);
+        if (memo) { forecastMemo.delete(memoKey); forecastMemo.set(memoKey, memo); return memo; }
         const out = Object.fromEntries(vars.map(v => [v, Array.from({ length: H }, () => [])]));
         for (let r = 0; r < runs; r++) {
-            const S2 = simClone(); if (useDraft) withDraft(S2);
+            const S2 = simFrom(base); if (useDraft) withDraft(S2);
             const rr = rng(1000 + r * 7919);
             for (let h = 0; h < H; h++) { step(S2, rr, { keys }); S2.turn++; applyRules(S2, ruleK(S2)); vars.forEach(v => out[v][h].push(VAR[v].get(S2))); }
         }
         const q = (a, p) => { const s = a.slice().sort((x, y) => x - y); const i = (s.length - 1) * p, lo = Math.floor(i), hi = Math.ceil(i); return s[lo] + (s[hi] - s[lo]) * (i - lo); };
         const res = {};
         vars.forEach(v => { res[v] = { mean: out[v].map(a => q(a, 0.5)), lo50: out[v].map(a => q(a, 0.25)), hi50: out[v].map(a => q(a, 0.75)), lo90: out[v].map(a => q(a, 0.05)), hi90: out[v].map(a => q(a, 0.95)) }; });
+        forecastMemo.set(memoKey, res);
+        if (forecastMemo.size > 12) forecastMemo.delete(forecastMemo.keys().next().value);
         return res;
     }
     // 흔들림 없이 n턴 뒤 (바꾸기 전 · 후 비교용)

@@ -54,11 +54,25 @@ const TABS = [['setup', 'party'], ['setup', 'settings'], ['law', 'vote'], ['vote
             r.slowestTabs = Object.entries(perTab).map(([k, xs]) => [k, +Math.max(...xs).toFixed(0)]).sort((a, b) => b[1] - a[1]).slice(0, 3);
             r.advanceDay = stat(await timeIn(() => { advanceNationDate(1, 'day'); }, 10));
             r.advanceMonth = stat(await timeIn(() => { advanceNationDate(1, 'month'); }, 6));
+            // 사람이 ▶(하루)를 누를 때 — mousedown(실행 취소 기준점) + click + 다음 프레임. 누를 때마다 1초 쉰다 (실행 취소 묶음이 닫히도록)
+            r.clickDay = stat(await page.evaluate(async () => {
+                const btn = document.querySelector('.dib-play'); if (!btn) return [];
+                const frame = () => new Promise(r => requestAnimationFrame(() => setTimeout(r, 0)));
+                const xs = [];
+                for (let i = 0; i < 6; i++) {
+                    const t = performance.now();
+                    btn.dispatchEvent(new MouseEvent('mousedown', { bubbles: true })); btn.dispatchEvent(new MouseEvent('mouseup', { bubbles: true })); btn.click();
+                    await frame(); xs.push(performance.now() - t);
+                    if (typeof closeDatePanel === 'function') closeDatePanel(); // 날짜가 비어 있으면 ▶가 날짜 창을 연다
+                    await new Promise(r => setTimeout(r, 1000));
+                }
+                return xs;
+            }));
             const lt = await page.evaluate(() => window.__long.slice());
             r.longTasks = { count: lt.length, max: lt.length ? Math.max(...lt) : 0, total: lt.reduce((a, b) => a + b, 0) };
             r.errors = errors.slice(0, 3);
             out.presets[id] = r;
-            console.log(id.padEnd(20), JSON.stringify({ mb: r.mb, open: r.openMs, save: r.save && r.save.median, tab: r.tabSwitch && r.tabSwitch.median, tabP95: r.tabSwitch && r.tabSwitch.p95, refresh: r.refreshUI && r.refreshUI.median, sim: r.simulate && r.simulate.median, day: r.advanceDay && r.advanceDay.median, month: r.advanceMonth && r.advanceMonth.median }));
+            console.log(id.padEnd(20), JSON.stringify({ mb: r.mb, open: r.openMs, save: r.save && r.save.median, tab: r.tabSwitch && r.tabSwitch.median, tabP95: r.tabSwitch && r.tabSwitch.p95, refresh: r.refreshUI && r.refreshUI.median, sim: r.simulate && r.simulate.median, day: r.advanceDay && r.advanceDay.median, clickDay: r.clickDay && r.clickDay.median, month: r.advanceMonth && r.advanceMonth.median }));
             await ctx.close();
         }
     } finally { await browser.close(); }

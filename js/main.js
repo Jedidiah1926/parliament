@@ -320,6 +320,32 @@
             return opts.join('');
         }
 
+        // "의원에서 불러오기" 목록은 의원 수(수백 명) × 카드 수만큼 <option>이 생겨 탭을 열 때 1초 넘게 걸렸다.
+        // 처음엔 빈 줄 하나만 그려 두고, 목록을 실제로 열거나(마우스 · 키보드) 포커스할 때 채운다
+        function memberPickerLazyHtml(filterPartyId) {
+            return '<option value="">-- 의원에서 불러오기 --</option>';
+        }
+        function memberPickerLazyAttr(filterPartyId) {
+            return `data-member-picker="${filterPartyId === undefined ? '*' : filterPartyId}"`;
+        }
+        function setLazyMemberPicker(picker, filterPartyId) {
+            if(!picker) return;
+            picker.innerHTML = memberPickerLazyHtml();
+            picker.setAttribute('data-member-picker', filterPartyId === undefined ? '*' : String(filterPartyId));
+        }
+        function fillMemberPicker(sel) {
+            if(!sel || !sel.hasAttribute('data-member-picker')) return;
+            const f = sel.getAttribute('data-member-picker');
+            sel.removeAttribute('data-member-picker');
+            const keep = sel.value;
+            sel.innerHTML = memberPickerOptionsHtml(f === '*' ? undefined : (isNaN(+f) ? f : +f));
+            sel.value = keep;
+        }
+        ['mousedown', 'focusin', 'keydown', 'touchstart'].forEach(ev => document.addEventListener(ev, e => {
+            const sel = e.target && e.target.closest ? e.target.closest('select[data-member-picker]') : null;
+            if(sel) fillMemberPicker(sel);
+        }, { capture: true, passive: true }));
+
         function parseMemberPickerValue(val) {
             if(!val) return null;
             const parts = val.split(':');
@@ -472,7 +498,7 @@
             const dot = document.getElementById('presidentPartyDot');
             if(dot) dot.style.background = partyDotColor(effPartyId);
             const picker = document.getElementById('presidentMemberPicker');
-            if(picker) { picker.innerHTML = memberPickerOptionsHtml(); picker.value = ''; picker.style.display = resolved ? 'none' : ''; }
+            if(picker) { setLazyMemberPicker(picker); picker.value = ''; picker.style.display = resolved ? 'none' : ''; }
             const badge = document.getElementById('presidentLinkedBadge');
             if(badge) badge.style.display = resolved ? 'flex' : 'none';
         }
@@ -540,7 +566,7 @@
             const dot = document.getElementById('chairPartyDot');
             if(dot) dot.style.background = partyDotColor(effPartyId);
             const picker = document.getElementById('chairMemberPicker');
-            if(picker) { picker.innerHTML = memberPickerOptionsHtml(); picker.value = ''; picker.style.display = resolved ? 'none' : ''; }
+            if(picker) { setLazyMemberPicker(picker); picker.value = ''; picker.style.display = resolved ? 'none' : ''; }
             const badge = document.getElementById('chairLinkedBadge');
             if(badge) badge.style.display = resolved ? 'flex' : 'none';
         }
@@ -644,7 +670,7 @@
             const dot = document.getElementById('pmPartyDot');
             if(dot) dot.style.background = partyDotColor(effPartyId);
             const picker = document.getElementById('pmMemberPicker');
-            if(picker) { picker.innerHTML = memberPickerOptionsHtml(); picker.value = ''; picker.style.display = resolved ? 'none' : ''; }
+            if(picker) { setLazyMemberPicker(picker); picker.value = ''; picker.style.display = resolved ? 'none' : ''; }
             const badge = document.getElementById('pmLinkedBadge');
             if(badge) {
                 badge.style.display = resolved ? 'flex' : 'none';
@@ -779,9 +805,9 @@
                                 🔗 의원과 연결됨 — 당적은 의원을 따르고, 이름·사진은 어느 쪽에서 고쳐도 함께 바뀜
                                 <button onclick="unlinkDeputyPm('${d.id}')" style="background:transparent;border:1px solid #333;color:#888;font-family:inherit;font-size:0.7rem;padding:2px 6px;cursor:pointer;">연결 해제</button>
                             </div>` : `
-                            <select onchange="linkDeputyPmToSeat('${d.id}',this.value)"
+                            <select ${memberPickerLazyAttr()} onchange="linkDeputyPmToSeat('${d.id}',this.value)"
                                 style="width:100%;box-sizing:border-box;background:#000;border:1px solid #333;color:#888;font-family:inherit;font-size:0.75rem;padding:4px;">
-                                ${memberPickerOptionsHtml()}
+                                ${memberPickerLazyHtml()}
                             </select>`}
                             <div style="display:flex;justify-content:space-between;align-items:center;">
                                 ${effPhoto?`<button onclick="removeDeputyPmPhoto('${d.id}')" style="background:transparent;border:1px solid #333;color:#555;font-family:inherit;font-size:0.75rem;padding:2px 8px;cursor:pointer;">✕ 사진 제거</button>`:'<span></span>'}
@@ -946,7 +972,7 @@
             const dot = document.getElementById('pmNomineePartyDot');
             if(dot) dot.style.background = partyDotColor(effPartyId);
             const picker = document.getElementById('pmNomineeMemberPicker');
-            if(picker) { picker.innerHTML = memberPickerOptionsHtml(); picker.value = ''; picker.style.display = resolved ? 'none' : ''; }
+            if(picker) { setLazyMemberPicker(picker); picker.value = ''; picker.style.display = resolved ? 'none' : ''; }
             const badge = document.getElementById('pmNomineeLinkedBadge');
             if(badge) badge.style.display = resolved ? 'flex' : 'none';
         }
@@ -1135,9 +1161,9 @@
                                 🔗 의원과 연결됨 — 당적은 의원을 따르고, 이름·사진은 어느 쪽에서 고쳐도 함께 바뀜
                                 <button onclick="unlinkCabinetMember('${m.id}')" style="background:transparent;border:1px solid #333;color:#888;font-family:inherit;font-size:0.7rem;padding:2px 6px;cursor:pointer;">연결 해제</button>
                             </div>` : `
-                            <select onchange="linkCabinetMemberToSeat('${m.id}',this.value)"
+                            <select ${memberPickerLazyAttr()} onchange="linkCabinetMemberToSeat('${m.id}',this.value)"
                                 style="width:100%;box-sizing:border-box;background:#000;border:1px solid #333;color:#888;font-family:inherit;font-size:0.75rem;padding:4px;">
-                                ${memberPickerOptionsHtml()}
+                                ${memberPickerLazyHtml()}
                             </select>`}
                             <div style="display:flex;justify-content:space-between;align-items:center;">
                                 ${effPhoto?`<button onclick="removeCabinetMemberPhoto('${m.id}')" style="background:transparent;border:1px solid #333;color:#555;font-family:inherit;font-size:0.75rem;padding:2px 8px;cursor:pointer;">✕ 사진 제거</button>`:'<span></span>'}
@@ -5586,6 +5612,7 @@
         }
 
         function setAppState(state) {
+            noteStateTouched(); // 실행 취소 캐시 — 안 보이는 목록만 바뀌어 화면 변화가 없어도 "상태가 바뀌었을 수 있음"
             if(!state || typeof state !== "object") throw new Error("Invalid state");
 
             // ── 의회 설정 복원 (v5/v4/v3 공통, v2 하위호환) ──
@@ -6832,6 +6859,7 @@
         var undoBaseGen = -1;      // 그때의 화면 변경 번호
         var undoDomGen = 0;        // 화면(DOM)이 바뀌거나 입력이 있을 때마다 1씩
         var undoDomObserver = null;
+        var undoGesture = 0, undoGestureAt = 0, undoPendingGesture = -1, undoPointerDown = false;
         // 상태와 상관없이 늘 바뀌는 화면 조각 — 말풍선 · 커서 · 토스트 · 시계
         const UNDO_DOM_NOISE = '.dno-tip, #kbdToast, .kbd-toast, #hemi-cursor-style, [data-undo-ignore]';
         function undoNoiseNode(n) {
@@ -6841,6 +6869,11 @@
         function undoRealMutation(m) {
             if(undoNoiseNode(m.target) && m.target !== document.body) return false;
             // 이모지를 글자 모양으로 고정하는 보정(U+FE0E 덧붙이기)만 한 변경은 무시
+            // 모던 테마 클래스(hs숫자 — js/modern-style-index.js)만 붙거나 빠진 class 변경은 무시
+            if(m.type === 'attributes' && m.attributeName === 'class') {
+                const noHs = v => String(v || '').replace(/(^|\s)hs\d+(?=\s|$)/g, ' ').replace(/\s+/g, ' ').trim();
+                if(noHs(m.target.getAttribute('class')) === noHs(m.oldValue)) return false;
+            }
             // 마우스 모양(cursor)만 바뀐 style 변경도 무시 — 의석 그림 위를 지나가기만 해도 생긴다
             if(m.type === 'attributes' && m.attributeName === 'style') {
                 const noCursor = v => String(v || '').replace(/(^|;)\s*cursor\s*:[^;]*;?/g, '$1').replace(/\s+/g, '');
@@ -6862,6 +6895,11 @@
             undoBaseGen = undoDomGen;
         }
         function forgetUndoBase() { undoBaseJson = null; undoBaseGen = -1; }
+        // 상태를 바꾸는 중심 함수(setAppState · refreshUI · simulate)와 키 입력이 부른다 — 화면이 안 바뀌는 변경(숨은 탭의 목록 등)도 놓치지 않게
+        function noteStateTouched() {
+            undoDomGen = (undoDomGen || 0) + 1;
+            if(typeof scheduleUndoBaseRefresh === 'function') scheduleUndoBaseRefresh();
+        }
         function undoEditable(el) {
             return !!(el && el.nodeType === 1 && (el.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName)));
         }
@@ -6900,7 +6938,7 @@
 
         function captureUndoSnapshot() {
             if(isApplyingHistory) return;
-            if(pendingUndoSnapshot === null) pendingUndoSnapshot = currentStateJSON();
+            if(pendingUndoSnapshot === null) { pendingUndoSnapshot = currentStateJSON(); undoPendingGesture = undoGesture; }
             scheduleUndoCommit();
         }
         // 묶음 확정은 조작이 멎은 뒤 브라우저가 한가할 때 — 연속 클릭 사이에 끼어 멈추지 않게
@@ -6955,17 +6993,18 @@
         }
 
         function initUndoRedoTracking() {
-            document.addEventListener('mousedown', captureUndoSnapshot, true);
+            // 조작 번호 — 누르기 · 키 입력마다 1씩. 묶음이 어느 조작에서 시작됐는지 기억해, 같은 클릭 안의 포커스 이동(창 열기 등)은 묶음을 닫지 않는다
+            document.addEventListener('mousedown', () => { undoGesture++; undoGestureAt = performance.now(); undoPointerDown = true; captureUndoSnapshot(); }, true);
+            document.addEventListener('click', () => { undoGestureAt = performance.now(); }, true);
             document.addEventListener('focusin', captureUndoSnapshot, true);
-            // 입력 칸을 떠날 때만 묶음을 닫는다 — 버튼이 포커스를 잃는 건(창 열기 등) 같은 조작의 일부
+            // 포커스가 떠나면 묶음을 닫는다 — 단, 이번 클릭이 연 묶음에서 버튼이 포커스를 잃는 건(▶ → 날짜 창 같은 창 열기) 같은 조작이라 닫지 않는다.
             // 입력하다가 바로 버튼을 누르면 mousedown → (입력 묶음 닫힘) → click 순서라, 닫은 뒤 그 버튼 조작을 위해 새 묶음을 바로 연다 (방금 만든 글자를 쓰니 공짜)
-            let pointerDown = false;
-            document.addEventListener('mousedown', () => { pointerDown = true; }, true);
-            window.addEventListener('mouseup', () => { pointerDown = false; }, true);
+            window.addEventListener('mouseup', () => { undoPointerDown = false; }, true);
             document.addEventListener('focusout', e => {
-                if(!undoEditable(e.target)) return;
+                // 이번 클릭이 연 묶음에서, 클릭 바로 뒤(0.2초 안) 버튼이 포커스를 잃는 건(▶ → 날짜 창처럼 창 열기) 같은 조작
+                if(!undoEditable(e.target) && undoPendingGesture === undoGesture && performance.now() - undoGestureAt < 200) return;
                 commitUndoBatch();
-                if(pointerDown) captureUndoSnapshot();
+                if(undoPointerDown) captureUndoSnapshot();
             }, true);
             // 상태가 바뀌었을 수 있는 신호 — 화면 변경 · 값 입력 · 캠페인 시간 흐름. 이 뒤로는 캐시를 안 쓴다
             if(typeof MutationObserver === 'function') {
@@ -6975,6 +7014,7 @@
             const bump = () => { undoDomGen++; scheduleUndoBaseRefresh(); };
             document.addEventListener('input', bump, true);
             document.addEventListener('change', bump, true);
+            document.addEventListener('keydown', e => { undoGesture++; undoGestureAt = performance.now(); if(!['Control', 'Shift', 'Alt', 'Meta'].includes(e.key)) bump(); }, true);
             window.addEventListener('hemi-campaign-ticked', bump);
             window.addEventListener('keydown', (e) => {
                 const key = e.key.toLowerCase();
@@ -7575,6 +7615,7 @@
             LAZY_LISTS.forEach(([id, draw]) => { if(lazyListDirty.has(id) && lazyListShown(id)) { lazyListDirty.delete(id); draw(); } });
         }
         function refreshUI() {
+            noteStateTouched(); // 실행 취소 캐시 — 안 보이는 목록만 바뀌어 화면 변화가 없어도 "상태가 바뀌었을 수 있음"
             syncDataStrings();
             syncDistrictIndependentLinks();
             syncIndependents();
@@ -10910,9 +10951,9 @@
                             <input type="text" value="${inputVal}" placeholder="${p.leaderName ? p.leaderName+' ('+leaderLabel+')' : '후보 이름 (비우면 '+leaderLabel+')'}" ${resolved?'disabled':''}
                                 style="width:100%;box-sizing:border-box;background:#000;border:1px solid #2a2a2a;color:#e0e0e0;font-family:inherit;font-size:0.85rem;padding:4px 6px;"
                                 onchange="updateElectionCandidateOverride('${p.id}','name',this.value)">
-                            <select onchange="linkElectionCandidateToMember('${p.id}',this.value)"
+                            <select ${memberPickerLazyAttr(p.id)} onchange="linkElectionCandidateToMember('${p.id}',this.value)"
                                 style="width:100%;box-sizing:border-box;background:#000;border:1px solid #333;color:#888;font-family:inherit;font-size:0.75rem;padding:3px;">
-                                ${memberPickerOptionsHtml(p.id)}
+                                ${memberPickerLazyHtml(p.id)}
                             </select>
                             <div style="display:flex;gap:6px;">
                                 ${resolved?`<button onclick="unlinkElectionCandidate('${p.id}')" style="background:transparent;border:1px solid #333;color:#888;font-family:inherit;font-size:0.7rem;padding:2px 6px;cursor:pointer;">연결 해제</button>`:''}
@@ -16512,6 +16553,7 @@
 
         /* ===== SIMULATE & DRAW ===== */
         function simulate() {
+            noteStateTouched(); // 실행 취소 캐시 — 안 보이는 목록만 바뀌어 화면 변화가 없어도 "상태가 바뀌었을 수 있음"
             const isBicameral = hasSenateChamber();
             const highlightGov = document.getElementById('chkGovHighlight').checked;
             const sTotal = parseInt(document.getElementById('senateTotal').value) || 100;
