@@ -302,6 +302,48 @@ node tests/maker-hub.browser.cjs
 - 시작할 때 진행 세이브의 `campaign.playRules`에 보관해 저장 · 복원 뒤에도 유지됩니다. 설정이 없는 예전 시나리오는 예전처럼 잠금이 없습니다.
 - 시간(`time`)처럼 목록에 없는 열쇠는 적용되지 않으며 검사가 경고를 냅니다. 시나리오의 시간은 이미 시나리오 시계가 정합니다.
 
+## 국가 운영 — 자원 · 시설 · 기술 · 군사 · 무역 (개발 중 · 다음 1.7.1 업데이트)
+
+메이커의 **국가 운영** 탭에서 만들고, 게임의 **시나리오 › 운영** 탭에서 플레이합니다. 하나도 만들지 않으면 운영 탭은 나오지 않습니다. 예제: [`docs/example-scenario/industrialization.hemicmp`](example-scenario/)(산업화와 국경 위기).
+
+| 모듈 | 작성 자료 (시나리오 최상위) | 플레이 |
+|---|---|---|
+| 자원 | `resources: [{ id, name, icon, unit, start, max }]` | 재고 · 하루 변화(예상). 국고도 자원으로 만듭니다 — **기본 게임의 경제와는 따로 계산**합니다 |
+| 시설 · 생산 | `facilities: [{ id, name, icon, desc, cost, days, produce, consume, upkeep, requires, start, max, buildable, available }]`, `buildSlots` | 건설(비용은 시작 때 한 번, 기간이 차면 완료) · 하루마다 생산 |
+| 기술 트리 | `tech: [{ id, title, icon, x, y, desc, days, cost, prereq, any, exclusive, start, available, effects }]` | 방향성과 따로, 한 번에 하나 연구 · 완료 효과 · 시설/부대 해금 |
+| 군사 | `units: [{ id, name, icon, branch, cost, days, upkeep, strength, requires, start, max, recruitable, available }]`, `recruitSlots` | 편성 · 유지비 · 군사력(부대 수 × 전력) |
+| 무역 | `trades: [{ id, title, partner, desc, give, get, days, repeat, visible, available }]` | 계약 체결 · 하루마다 주고받기 · 중단 |
+
+`cost` · `produce` · `consume` · `upkeep` · `give` · `get`은 `{ "자원 ID": 양 }`입니다. 무역 상대(`partner`)는 시작 나라 탭 **세계지도 연결**의 나라 열쇠입니다.
+
+**하루 계산** (턴제 1턴 = 1일, 실시간은 날짜가 바뀔 때 한 번 — 배속 · 저장/불러오기로 두 번 계산하지 않습니다)
+1. 시설 — 목록 순서대로, (소비 + 유지비) × 수를 다 낼 수 있으면 내고 생산 × 수를 얻습니다. 못 내면 그 시설은 **그날 멈춥니다**.
+2. 부대 — 유지비 × 수를 못 내면 그날 **보급 부족**: 그 부대의 전력이 절반으로 계산됩니다.
+3. 무역 — 내줄 것을 다 낼 수 있을 때만 내주고 받을 것을 받습니다(한꺼번에). 못 내면 계약이 **이행 실패**로 끝납니다. 상대국의 재고는 계산하지 않습니다.
+4. 저장 한도를 넘는 몫은 버리고, 재고는 0 아래로 내려가지 않습니다.
+
+건설 · 연구 · 편성은 비용을 시작할 때 한 번에 내고, 못 내면 시작하지 않습니다. 취소하면 낸 비용과 진행은 돌아오지 않습니다. 전투 · 부대 이동 · 점령은 없습니다 — 군사력은 조건과 이벤트로 이야기에 쓰입니다.
+
+| 조건 | 예 |
+|---|---|
+| `resource` | `{ "resource": { "id": "steel", "gte": 10 } }` |
+| `facility_count` · `unit_count` | `{ "unit_count": { "id": "infantry", "gte": 3 } }` |
+| `military_strength` | `{ "military_strength": { "gte": 20 } }` |
+| `tech_done` · `trade_active` | `{ "tech_done": "rail" }` |
+
+| 효과 | 예 |
+|---|---|
+| `add_resource` · `set_resource` | `{ "add_resource": { "id": "money", "value": 40 } }` |
+| `add_facility` · `add_units` | `{ "add_units": { "id": "infantry", "count": 2 } }` (빼려면 음수) |
+| `grant_tech` | `"rail"` |
+| `start_trade` · `end_trade` | `"steel_export"` |
+
+**결정** 탭(새로 따로 나옴)에서 분류 · 보이는 조건 · 실행 조건 · 조건 안내 글 · **비용**(`cost` — 국가 운영 자원) · 한 번만/반복 · 다시 실행까지 기간을 정합니다. 비용을 낼 수 없으면 결정을 쓸 수 없고 사용 기록도 남지 않습니다.
+
+검사는 없는 자원 · 기술 · 시설 · 부대 · 계약, 음수 · 숫자 아닌 값, 순환하는 기술 선행, 나라 목록에 없는 무역 상대, 비용 없이 끝없이 지을 수 있는 시설을 짚습니다. 아직 없는 것: 기본 게임 경제(GDP · 재정)와의 연결, 상대국 재고 · 자동 운영 국가, 전투, 연구 일시정지/재개, 시설 · 부대의 지역(구역 · 경제권) 배치.
+
+검증: `node --test tests/ops-rules.test.cjs`, 로컬 서버에서 `node tests/ops-scenario.browser.cjs` · `node tests/ops-maker.browser.cjs`.
+
 ## 오류 검사 (v1.7.1 / 0.3.2)
 
 **검사**는 결과를 **오류 / 경고 / 확인 필요**로 나눠 개수·위치(“국경 협상 › 협정을 수락한다 › 영토 변경”)·이유·JSON 경로를 보여 주고, 누르면 그 항목으로 이동합니다. 시험 플레이는 오류가 있을 때만 막고, 저장·내보내기는 오류가 있어도 됩니다.

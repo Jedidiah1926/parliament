@@ -130,3 +130,9 @@ test('검사기 — 통합 예제는 통과, 운영 자료의 참조 · 숫자 �
     d = IND.scenario(); d.resources.push({ id: 'coal' }); d.buildSlots = 0;
     e = errs(d); assert.ok(has(e, 'resources.5.id', /중복/) && has(e, 'buildSlots'));
 });
+test('함께 싣는 예제 산업화와 국경 위기(.hemicmp)는 시험 원본과 같고 검사를 통과한다', () => {
+    const fs = require('node:fs'), path = require('node:path'), zlib = require('node:zlib');
+    const d = JSON.parse(zlib.gunzipSync(fs.readFileSync(path.join(__dirname, '..', 'docs', 'example-scenario', 'industrialization.hemicmp'))));
+    assert.deepEqual(d, IND.scenario());
+    assert.deepEqual(T.validate(d), []);
+});

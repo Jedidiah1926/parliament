@@ -176,3 +176,11 @@ html[data-theme-family="modern"] .campaign-studio {
     .cpe-canvas-tools input { width: 100%; flex-basis: 100%; }
     .cpe-canvas-foot { gap: 8px; }
 }
+/* 국가 운영 탭 (js/campaign-editor-ops.js) — 자원 양 · 기술 고르기 */
+.cpo-amount, .cpo-pick { display: flex; flex-direction: column; gap: 6px; margin: 10px 0; padding: 10px; background: var(--studio-control-bg); border-radius: var(--studio-radius-sm); }
+.cpo-amount > .scn-row { margin: 0; } .cpo-amount select { min-width: 140px; }
+.cpo-lab { font-size: .75rem; color: var(--studio-muted); }
+.cpo-small { align-self: flex-start; font-size: .75rem; }
+.cpo-pick { flex-direction: row; flex-wrap: wrap; align-items: center; gap: 6px 14px; } .cpo-pick > .cpo-lab { flex: 1 1 100%; }
+.cpo-seg { margin: 4px 0 12px; }
+.cpo-res { align-items: end; flex-wrap: wrap; padding: 8px 0; border-bottom: 1px solid var(--studio-border); } .cpo-res .cpg-field { min-width: 90px; }
