@@ -152,3 +152,37 @@ test('이벤트 — 조건 없는 반복, 서로 부르는 숨은 이벤트, 격
     d.crises[0].events.push({ id: 'new_dawn', title: '겹침', options: [{ text: 'x' }] });
     assert.ok(has(errs(d), 'crises.0.events.0.id', /겹칩니다/));
 });
+test('경제권 참조 — 시작 세이브의 economicRegions와 대조, 나라 열쇠 바꾸기 · 구역 목록', () => {
+    const withZones = () => { const d = F.scenario(); d.starts[0].state.economicRegions = { version: 1, zones: [{ id: 'north', name: '북부 공업권' }], regions: { capital: 'north' } }; return d; };
+    let d = withZones();
+    d.events[1].trigger = { in_economic_region: { zone: { id: 'north' }, regions: ['capital'] } };
+    d.events[0].options[1].effects.push({ assign_economic_region: { regions: ['riverbank'], to: { id: 'north' } } });
+    assert.deepEqual(T.validate(d), []);
+    d = withZones(); d.events[1].trigger = { in_economic_region: { zone: { id: 'south' }, regions: ['capital', 'moon'] } };
+    let e = errs(d);
+    assert.ok(has(e, 'events.1.trigger.in_economic_region.zone.id', /없는 경제권: south/) && has(e, 'events.1.trigger.in_economic_region.regions.1', /없는 구역: moon/));
+    d = withZones(); d.events[0].options[1].effects.push({ assign_economic_region: { regions: ['capital'], to: { id: 'north' } } }, { assign_economic_region: { regions: ['island'], to: { unassigned: true } } });
+    assert.deepEqual(errs(d), []);
+    assert.equal(errs(d, 'warning').filter(i => /변화가 없을 수 있습니다/.test(i.message)).length, 2); // 처음부터 그 경제권 · 처음부터 미배정
+    d = withZones(); d.events[0].options[1].effects.push({ assign_economic_region: { regions: [], to: { id: 'north', unassigned: true } } });
+    assert.ok(has(errs(d), 'events.0.options.1.effects.1.assign_economic_region'));
+    // 경제권만 쓰는 시나리오도 지도가 든 시작 세이브가 필요하다
+    d = T.starter('eco'); d.events[0].options[0].effects = [{ assign_economic_region: { regions: ['a'], to: { unassigned: true } } }];
+    assert.ok(has(errs(d), 'starts.0', /경제권 조건·효과/));
+    assert.equal(T.describe(withZones(), 'events.1.trigger.in_economic_region.zone.id'), '새로운 국경 › 발생 조건 › 경제권 소속');
+
+    // 나라 열쇠 바꾸기 — 목록 · 연결 · 조건/효과 속 참조. 시작 세이브 속과 이야기 글은 건드리지 않는다
+    d = F.scenario(); d.lore = 'republic의 이야기'; d.starts[0].state.note = { owns_regions: { country: { key: 'republic' } } };
+    assert.equal(T.renameCountry(d, 'republic', 'rep'), true);
+    assert.deepEqual([d.world.countries[0].key, d.starts[0].worldBindings.rep, d.starts[0].worldBindings.republic, d.events[0].options[0].effects[0].transfer_regions.to.key, d.events[1].trigger.owns_regions.country.key, d.focus[1].available.all[1].owns_regions.country.key, d.lore, d.starts[0].state.note.owns_regions.country.key],
+        ['rep', 'w_republic', undefined, 'rep', 'rep', 'rep', 'republic의 이야기', 'republic']);
+    assert.deepEqual(Object.keys(d.starts[0].worldBindings), ['rep', 'federation']); // 순서 유지
+    assert.deepEqual(T.validate(d), []);
+    for (const [from, to] of [['rep', 'federation'], ['rep', 'bad key'], ['nope', 'x'], ['rep', 'rep']]) assert.equal(T.renameCountry(d, from, to), false);
+    // 가이드 입력이 쓰는 목록 — 지도가 든 첫 시작 나라의 구역 · 국가 · 경제권
+    const cat = T.worldCatalog(withZones());
+    assert.deepEqual(cat.regions, [{ key: 'capital', name: '수도' }, { key: 'riverbank', name: '강변' }, { key: 'island', name: '섬' }]);
+    assert.deepEqual(cat.zones, [{ id: 'north', name: '북부 공업권' }]);
+    assert.deepEqual(cat.starts[0].rows.map(r => r.id), ['w_republic', 'w_federation']);
+    assert.deepEqual(T.worldCatalog(T.starter('none')), { regions: [], zones: [], starts: [{ index: 0, hasState: false, hasMap: false, regions: [], rows: [], zones: [] }] });
+});

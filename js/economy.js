@@ -1880,8 +1880,8 @@
     const CHIP_VARS = ['growth', 'infl', 'unemp', 'rate', 'yield'];
     function renderToolbar() {
         const tb = document.getElementById('econToolbar'); if (!tb) return;
-        // 경제권(1.7.1) 자리 — 아직 없는 화면이라 잠긴 버튼으로만
-        tb.innerHTML = `<span class="econ-seg">${[['overview', '개요'], ['analysis', '분석'], ['region', '지역']].map(([k, l]) => `<button type="button" data-view="${k}" class="${E.ui.view === k ? 'on' : ''}">${l}</button>`).join('')}<button type="button" class="econ-locked" data-locked-view aria-disabled="true" title="경제권 — 1.7.1에서 열림">🔒 경제권</button></span>
+        // 경제권은 세계 › 경제권(지도상의 경제 지역, js/world-map.js) — 여기서는 그 화면으로 가는 버튼
+        tb.innerHTML = `<span class="econ-seg">${[['overview', '개요'], ['analysis', '분석'], ['region', '지역']].map(([k, l]) => `<button type="button" data-view="${k}" class="${E.ui.view === k ? 'on' : ''}">${l}</button>`).join('')}<button type="button" class="econ-link" data-econ-zones title="세계 › 경제권 — 지도 구역을 묶은 경제 지역">경제권 ↗</button></span>
             ${E.ui.view === 'analysis' ? `<span class="econ-dim">${esc(E.ui.preset === 'custom' ? '직접 고른 배치' : PRESET_MODS[E.ui.preset]?.name || '')}</span>` : ''}
             <span class="econ-seg">${RANGES.map(([k, l]) => `<button type="button" data-range="${k}" class="${String(E.ui.range) === k && !E.ui.zoom ? 'on' : ''}">${l}</button>`).join('')}</span>
             ${E.ui.zoom ? '<button type="button" class="econ-btn econ-sm" data-act="unzoom">확대 해제</button>' : ''}
@@ -1890,7 +1890,7 @@
             <button type="button" class="econ-btn econ-sm" data-act="csv" title="모든 시점 · 지표 표를 CSV로">CSV</button>
             <button type="button" class="econ-btn econ-sm" data-act="full" title="크게 보기 (Esc로 복귀)">${E.ui.full ? '⤡ 작게' : '⛶ 크게'}</button>`;
         tb.querySelectorAll('[data-view]').forEach(b => { b.onclick = () => { E.ui.view = b.dataset.view; renderDisp(); }; });
-        tb.querySelector('[data-locked-view]').onclick = () => showCustomAlert('🔒 "경제권"은(는) 1.7.1 업데이트에서 추가할 예정입니다. 지도 구역을 묶어 공업권 · 무역권 · 수도권 같은 경제 지역을 만들고, 국가 영토와 별도로 표시하고 관리합니다.');
+        tb.querySelector('[data-econ-zones]').onclick = () => { try { switchSubTab('world', 'econblocs'); } catch (e) { /* 세계 탭 없음 */ } };
         tb.querySelectorAll('[data-range]').forEach(b => { b.onclick = () => { E.ui.range = b.dataset.range; E.ui.zoom = null; renderDisp(); if (curSub() === 'analysis') renderTab('analysis'); }; });
         tb.querySelector('[data-act="unzoom"]')?.addEventListener('click', () => { E.ui.zoom = null; renderDisp(); });
         tb.querySelector('[data-act="csv"]').onclick = () => C.csv(tableSpec());
@@ -2622,7 +2622,7 @@
         html[data-theme-family="modern"] .econ-seg { border-radius: 8px; overflow: hidden; }
         .econ-seg button { cursor: pointer; font-family: inherit; font-size: .74rem; padding: 4px 10px; background: transparent; border: none; color: var(--econ-dim2, var(--econ-muted)); }
         .econ-seg button.on { background: var(--econ-acc, var(--s1)); color: var(--econ-acc-ink, #fff); }
-        .econ-seg button.econ-locked { opacity: .45; cursor: not-allowed; border-left: 1px dashed var(--econ-line, var(--econ-axis)); }
+        .econ-seg button.econ-link { border-left: 1px dashed var(--econ-line, var(--econ-axis)); }
         .econ-dlist { display: flex; flex-direction: column; gap: 4px; }
         .econ-dist { border: 1px solid var(--econ-line); padding: 6px 8px; }
         html[data-theme-family="modern"] .econ-dist { border-radius: 8px; }
