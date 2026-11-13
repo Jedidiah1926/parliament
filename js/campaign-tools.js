@@ -3,9 +3,10 @@
     'use strict';
     const Clock = typeof module !== 'undefined' && module.exports ? require('./campaign-clock.js') : root.HemiCampaignClock;
     const World = typeof module !== 'undefined' && module.exports ? require('./world-rules.js') : root.HemiWorldRules;
+    const Ops = typeof module !== 'undefined' && module.exports ? require('./ops-rules.js') : root.HemiOps;
     const clone = x => JSON.parse(JSON.stringify(x));
     const object = x => !!x && typeof x === 'object' && !Array.isArray(x);
-    const arrayKeys = ['starts', 'focus', 'crises', 'endings', 'events', 'decisions', 'articles'];
+    const arrayKeys = ['starts', 'focus', 'crises', 'endings', 'events', 'decisions', 'articles', 'resources', 'facilities', 'tech', 'units', 'trades'];
     const idOK = id => typeof id === 'string' && /^[a-zA-Z0-9_.-]+$/.test(id);
     const LOCKS = ['parties', 'seats', 'elections', 'government', 'opinion', 'economy', 'worldMap', 'economicRegions']; // 게임이 실제로 적용하는 직접 수정 잠금 (js/campaign.js lockReason · js/play-locks.js)
     function validate(d) {
@@ -64,6 +65,22 @@
             for (const k of ['add', 'set']) if (k in v && (!Number.isFinite(Number(v[k])) || v[k] === '' || v[k] == null)) add(`${p}.${k}`, '숫자여야 합니다.');
         };
         const worldRefs = []; // [연산자, 값, 경로] — 시작 나라별 지도 · 연결과 대조는 아래에서 한꺼번에
+        // 국가 운영 (js/ops-rules.js) — 자원 · 시설 · 기술 · 부대 · 무역 ID
+        const opsIds = Object.fromEntries(['resources', 'facilities', 'tech', 'units', 'trades'].map(k => [k, new Set(list(k).map(x => x.id))]));
+        const OPS_LABEL = { resources: '자원', facilities: '시설', tech: '기술', units: '부대', trades: '무역 계약' };
+        const opsRule = (k, v, p, table) => {
+            const def = table[k];
+            if (!def.check(v)) { add(p, `${k}의 형식이 틀렸습니다 — ${OPS_HINT[k] || ''}`); return; }
+            if (def.kind) { const id = typeof v === 'string' ? v : v.id; if (!opsIds[def.kind].has(id)) add(p + (typeof v === 'string' ? '' : '.id'), `없는 ${OPS_LABEL[def.kind]}: ${id}`); }
+            if (typeof v === 'object') CMP.filter(c => c in v).forEach(c => { if (!Number.isFinite(Number(v[c])) || v[c] === '' || v[c] == null) add(`${p}.${c}`, '비교 값은 숫자여야 합니다.'); });
+        };
+        const OPS_HINT = { resource: '{ "id": "자원", "gte": 숫자 }', facility_count: '{ "id": "시설", "gte": 숫자 }', unit_count: '{ "id": "부대", "gte": 숫자 }', military_strength: '{ "gte": 숫자 }', tech_done: '"기술 ID"', trade_active: '"계약 ID"',
+            add_resource: '{ "id": "자원", "value": 숫자 }', set_resource: '{ "id": "자원", "value": 숫자 }', add_facility: '{ "id": "시설", "count": 정수 }', add_units: '{ "id": "부대", "count": 정수 }', grant_tech: '"기술 ID"', start_trade: '"계약 ID"', end_trade: '"계약 ID"' };
+        const opsCost = (m, p, what) => {
+            if (m == null) return;
+            if (!object(m)) { add(p, `${what}는 { "자원 ID": 숫자 } 형식입니다.`); return; }
+            Object.entries(m).forEach(([k, v]) => { if (!opsIds.resources.has(k)) add(`${p}.${k}`, `없는 자원: ${k}`); else if (!Number.isFinite(Number(v)) || typeof v === 'boolean' || v === '' || v == null) add(`${p}.${k}`, '숫자여야 합니다.'); else if (Number(v) < 0) add(`${p}.${k}`, '0 이상이어야 합니다.'); });
+        };
         const worldRule = (k, v, p) => {
             const shape = k === 'owns_regions' ? World.ownsShape(v) : k === 'transfer_regions' ? World.transferShape(v) : k === 'in_economic_region' ? World.inZoneShape(v) : World.assignShape(v);
             if (shape) add(p, shape); else worldRefs.push([k, v, p]);
@@ -86,6 +103,7 @@
                 case 'economy': if (need(object(v) && ECON.includes(v.indicator), p, `경제 지표(indicator)는 ${ECON.join(' · ')} 중 하나입니다.`)) compare(v, p); return;
                 case 'approval': if (need(object(v) && (v.of == null || SEATS.includes(v.of)), p, `지지율 대상(of)은 ${SEATS.join(' · ')} 중 하나입니다.`)) compare(v, p); return;
                 case 'owns_regions': case 'in_economic_region': worldRule(k, v, p); return;
+                case 'resource': case 'facility_count': case 'unit_count': case 'military_strength': case 'tech_done': case 'trade_active': opsRule(k, v, p, Ops.COND); return;
                 default: add(p, `알 수 없는 조건 “${k}” — 게임에서는 거짓으로 처리됩니다. 오타가 아니면 그대로 두어도 보존됩니다.`, 'warning');
             }
         }
@@ -113,6 +131,7 @@
                 case 'if': if (need(object(v) && ('condition' in v || 'if' in v), p, '{ "condition": 조건, "then": [효과], "else": [효과] } 형식입니다.')) { cond(v.condition ?? v.if, p + ('condition' in v ? '.condition' : '.if')); effects(v.then, p + '.then'); effects(v.else, p + '.else'); } return;
                 case 'random_list': if (need(Array.isArray(v) && v.every(object), p, '[{ "weight": 숫자, "effects": [효과] }] 형식입니다.')) v.forEach((o, i) => { need(Number.isFinite(Number(o.weight)) && Number(o.weight) >= 0, `${p}.${i}.weight`, '가중치(weight)는 0 이상의 숫자입니다.'); effects(o.effects, `${p}.${i}.effects`); }); return;
                 case 'transfer_regions': case 'assign_economic_region': worldRule(k, v, p); return;
+                case 'add_resource': case 'set_resource': case 'add_facility': case 'add_units': case 'grant_tech': case 'start_trade': case 'end_trade': opsRule(k, v, p, Ops.EFF); return;
                 default: add(p, `알 수 없는 효과 “${k}” — 게임에서는 건너뜁니다. 오타가 아니면 그대로 두어도 보존됩니다.`, 'warning');
             }
         }
@@ -126,6 +145,7 @@
             items.forEach((e, i) => {
                 const q = `${p}.${i}`;
                 cond(e.trigger, q + '.trigger'); cond(e.available, q + '.available'); cond(e.visible, q + '.visible');
+                if (!isEvent) { opsCost(e.cost, q + '.cost', '결정 비용'); if (e.cooldown_days != null && (!Number.isFinite(Number(e.cooldown_days)) || Number(e.cooldown_days) < 0)) add(q + '.cooldown_days', '다시 실행까지 기간은 0 이상의 숫자입니다.'); if (e.once != null && typeof e.once !== 'boolean') add(q + '.once', 'once는 true 또는 false입니다.'); }
                 effects(e.effects, q + '.effects'); effects(e.immediate, q + '.immediate');
                 if(isEvent){
                     if(e.check!=null&&!['date','election','world','any'].includes(e.check))add(q+'.check','검사 시점은 date(날짜) · election(총선 반영) · world(지도 변경) · any(모든 시점) 중 하나입니다.');
@@ -221,6 +241,31 @@
         // 플래그 · 변수 — 켜는 곳이 없는 플래그, 선언하지 않은 변수는 단정할 수 없어 "확인 필요"
         flagsRead.forEach(([name, p]) => { if (!flagsSet.has(name) && !autoFlags.has(name)) add(p, name.startsWith('focus_') ? `방향성 완료 플래그 “${name}”에 해당하는 방향성이 없습니다.` : `플래그 “${name}”를 켜는 효과가 이 시나리오에 없습니다.`, name.startsWith('focus_') ? 'warning' : 'check'); });
         { const told = new Set(); varsRead.forEach(([name, p]) => { if (!varNames.has(name) && !told.has(name)) { told.add(name); add(p, `변수 “${name}”가 시나리오 변수에 없습니다 — 0에서 시작합니다.`, 'check'); } }); }
+        opsChecks();
+        function opsChecks() {
+            ['resources', 'facilities', 'tech', 'units', 'trades'].forEach(k => idsOf(list(k), k));
+            const nonNeg = (v, p, what) => { if (v != null && (!Number.isFinite(Number(v)) || typeof v === 'boolean' || Number(v) < 0)) add(p, `${what}는 0 이상의 숫자여야 합니다.`); };
+            const intNonNeg = (v, p, what) => { if (v != null && (!Number.isInteger(Number(v)) || Number(v) < 0)) add(p, `${what}는 0 이상의 정수여야 합니다.`); };
+            const techRefs = (arr, p) => { if (arr == null) return; if (!Array.isArray(arr) || arr.some(x => typeof x !== 'string')) { add(p, '기술 ID 문자열 배열이어야 합니다.'); return; } arr.forEach((id, j) => { if (!opsIds.tech.has(id)) add(`${p}.${j}`, `없는 기술: ${id}`); }); };
+            list('resources').forEach((r, i) => { const p = 'resources.' + i; nonNeg(r.start, p + '.start', '시작 값'); nonNeg(r.max, p + '.max', '저장 한도'); if (r.max != null && r.start != null && Number(r.start) > Number(r.max)) add(p + '.start', '시작 값이 저장 한도보다 큽니다 — 한도까지만 들어갑니다.', 'warning'); });
+            list('facilities').forEach((f, i) => { const p = 'facilities.' + i; ['cost', 'produce', 'consume', 'upkeep'].forEach(k => opsCost(f[k], `${p}.${k}`, { cost: '건설 비용', produce: '생산', consume: '소비', upkeep: '유지비' }[k])); nonNeg(f.days, p + '.days', '건설 기간'); intNonNeg(f.start, p + '.start', '처음 수'); intNonNeg(f.max, p + '.max', '최대 수'); techRefs(f.requires, p + '.requires'); cond(f.available, p + '.available'); if (!Ops.amounts(f.produce).length && !Ops.amounts(f.upkeep).length && !Ops.amounts(f.consume).length) add(p, `시설 “${f.name || f.id}”에 생산 · 소비 · 유지비가 없습니다.`, 'warning');
+                if (f.buildable != null && typeof f.buildable !== 'boolean') add(p + '.buildable', 'buildable은 true 또는 false입니다.');
+                if (f.buildable !== false && !Ops.amounts(f.cost).length && !(Number(f.days) > 0) && f.max == null) add(p, `시설 “${f.name || f.id}”은 비용 · 기간 · 최대 수 없이 지을 수 있어 끝없이 늘릴 수 있습니다. 비용을 넣거나 “지을 수 없음”으로 하세요.`, 'warning'); });
+            list('units').forEach((u, i) => { const p = 'units.' + i; ['cost', 'upkeep'].forEach(k => opsCost(u[k], `${p}.${k}`, k === 'cost' ? '편성 비용' : '유지비')); nonNeg(u.days, p + '.days', '편성 기간'); nonNeg(u.strength, p + '.strength', '전력'); intNonNeg(u.start, p + '.start', '처음 수'); intNonNeg(u.max, p + '.max', '최대 수'); techRefs(u.requires, p + '.requires'); cond(u.available, p + '.available'); if (u.recruitable != null && typeof u.recruitable !== 'boolean') add(p + '.recruitable', 'recruitable은 true 또는 false입니다.'); });
+            const tech = list('tech');
+            tech.forEach((t, i) => { const p = 'tech.' + i; opsCost(t.cost, p + '.cost', '연구 비용'); nonNeg(t.days, p + '.days', '연구 기간'); ['prereq', 'any', 'exclusive'].forEach(k => { techRefs(t[k], `${p}.${k}`); (Array.isArray(t[k]) ? t[k] : []).forEach(id => { if (id === t.id) add(`${p}.${k}`, '자기 자신과 연결할 수 없습니다.'); }); }); effects(t.effects, p + '.effects'); cond(t.available, p + '.available'); for (const k of ['x', 'y']) if (t[k] != null && (!Number.isFinite(t[k]) || t[k] < 0 || t[k] > 200)) add(`${p}.${k}`, '좌표는 0~200 사이 숫자로 입력하세요.'); });
+            if (!issues.some(x => x.level === 'error' && x.path.startsWith('tech'))) {
+                const done = new Set(tech.filter(t => t.start === true).map(t => t.id)); let changed = true;
+                while (changed) { changed = false; tech.forEach(t => { if (!done.has(t.id) && (t.prereq || []).every(id => done.has(id)) && (!(t.any || []).length || t.any.some(id => done.has(id)))) { done.add(t.id); changed = true; } }); }
+                tech.forEach((t, i) => { if (!done.has(t.id)) add('tech.' + i, `기술 “${t.title || t.id}”에 도달할 수 없습니다. 선행 연결이 순환하는지 확인하세요.`); });
+            }
+            const countries = new Set(d.world && Array.isArray(d.world.countries) ? d.world.countries.filter(object).map(c => c.key) : []);
+            list('trades').forEach((t, i) => { const p = 'trades.' + i; opsCost(t.give, p + '.give', '내줄 것'); opsCost(t.get, p + '.get', '받을 것'); nonNeg(t.days, p + '.days', '계약 기간'); cond(t.available, p + '.available'); cond(t.visible, p + '.visible');
+                if (t.partner == null || t.partner === '') add(p + '.partner', '거래 상대(시나리오의 나라 열쇠)를 고르세요.'); else if (!countries.has(t.partner)) add(p + '.partner', `시나리오의 나라 목록에 없는 상대: ${t.partner} — 시작 나라 › 세계지도 연결에서 나라를 추가하세요.`);
+                if (!Ops.amounts(t.give).length && !Ops.amounts(t.get).length) add(p, '주고받는 것이 없는 계약입니다.', 'warning'); });
+            for (const k of ['buildSlots', 'recruitSlots']) if (d[k] != null && (!Number.isInteger(d[k]) || d[k] < 1)) add(k, '동시에 할 수 있는 수는 1 이상의 정수입니다.');
+            // 운영 조건 · 효과를 쓰는데 그 목록이 비어 있으면 — 위의 “없는 …” 오류가 이미 알려 준다
+        }
         worldChecks(d, add, worldRefs);
         // 플레이 규칙 — 지금 게임이 적용하는 잠금만 조용히 통과시킨다 (모르는 항목을 잠긴 것처럼 믿게 두지 않는다)
         if (d.playRules != null) {
@@ -294,8 +339,9 @@
     // 검사 결과의 경로 → 사람이 읽는 위치 (예: “국경 협상 › 수락 › 영토 변경”)
     const PLACE = { trigger: '발생 조건', available: '조건', visible: '보이는 조건', immediate: '즉시 효과', onStart: '시작 효과', success: '성공 효과', fail: '실패 효과', condition: '조건', start: '시작 조건',
         owns_regions: '구역 소유', transfer_regions: '영토 변경', in_economic_region: '경제권 소속', assign_economic_region: '경제권 배정', worldBindings: '세계지도 연결', world: '세계지도 연결', check: '검사 시점',
-        prereq: '필수 선행', any: '이 중 하나', exclusive: '배타', fire_event: '이벤트 실행', variables: '변수', time: '시간 설정', then: '맞으면', else: '아니면' };
-    const SECTION = { starts: '시작 나라', focus: '방향성', events: '이벤트', decisions: '결정', crises: '격변', endings: '결말', articles: '기사', missions: '임무', outcomes: '결말', meters: '게이지', options: '선택지', countries: '나라' };
+        prereq: '필수 선행', any: '이 중 하나', exclusive: '배타', fire_event: '이벤트 실행', cost: '비용', produce: '생산', consume: '소비', upkeep: '유지비', requires: '필요 기술', give: '내줄 것', get: '받을 것', partner: '거래 상대', variables: '변수', time: '시간 설정', then: '맞으면', else: '아니면' };
+    const SECTION = { starts: '시작 나라', focus: '방향성', events: '이벤트', decisions: '결정', crises: '격변', endings: '결말', articles: '기사', missions: '임무', outcomes: '결말', meters: '게이지', options: '선택지', countries: '나라',
+        resources: '자원', facilities: '시설', tech: '기술', units: '부대', trades: '무역' };
     function describe(d, path) {
         const parts = String(path || '').split('.'), out = [];
         let cur = d;
