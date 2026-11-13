@@ -113,6 +113,25 @@ html[data-theme-family="modern"] .campaign-studio {
 .cpe-inspector-empty h3 { font: inherit; color: var(--studio-text); }
 .cpe-issues { background: var(--studio-panel); border-bottom: 1px solid var(--studio-border); padding: 14px; max-height: 260px; overflow: auto; }
 .cpe-issues p { margin: 8px 0; }
+/* 검사 결과 — 오류 / 경고 / 확인 필요. 누르면 그 항목으로 이동 (v1.7.1) */
+.cpe-issue { display: grid; grid-template-columns: auto 1fr; gap: 3px 9px; align-items: baseline; width: 100%; margin: 6px 0; padding: 8px 10px; text-align: left; font: inherit; font-size: .8rem; line-height: 1.5; cursor: pointer; background: var(--studio-control-bg); color: var(--studio-text); border: 1px solid var(--studio-border); border-left-width: 3px; border-radius: var(--studio-radius-sm); }
+.cpe-issue:hover, .cpe-issue:focus-visible { border-color: var(--studio-accent); outline: none; }
+.cpe-issue-level { font-size: .7rem; font-weight: 700; letter-spacing: .04em; white-space: nowrap; }
+.cpe-issue code { grid-column: 2; font: .68rem ui-monospace, monospace; color: var(--studio-muted); word-break: break-all; }
+.cpe-issue-error { border-left-color: #e05d5d; } .cpe-issue-error .cpe-issue-level { color: #e05d5d; }
+.cpe-issue-warning { border-left-color: #d9a441; } .cpe-issue-warning .cpe-issue-level { color: #d9a441; }
+.cpe-issue-check { border-left-color: var(--studio-muted); } .cpe-issue-check .cpe-issue-level { color: var(--studio-muted); }
+.cpe-issue-target { outline: 2px solid var(--studio-accent); outline-offset: 3px; transition: outline-color .4s; }
+/* 세계지도 규칙의 구역 고르기 */
+.cpg-regions { flex: 1 1 100%; min-width: 0; font-size: .78rem; border: 1px solid var(--studio-border); border-radius: var(--studio-radius-sm); padding: 7px 9px; }
+.cpg-regions > summary { cursor: pointer; color: var(--studio-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cpg-regions > summary b { color: var(--studio-text); }
+.cpg-regions[open] > summary { margin-bottom: 7px; white-space: normal; }
+.cpg-region-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 4px 10px; max-height: 190px; overflow: auto; margin-top: 7px; }
+.cpg-region-list > label { min-width: 0; } .cpg-region-list > label[hidden] { display: none; }
+.cpg-region-list > label > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cpg-region-list code { font: .65rem ui-monospace, monospace; color: var(--studio-muted); }
+[data-world-card] [data-wckey] { max-width: 170px; }
 .cpg-rules {
     border: 1px solid var(--studio-border);
     border-radius: var(--studio-radius);

@@ -19,7 +19,7 @@
         owner:'world',state:active,
         mirror:()=>{mirror();window.updateDispInfoBar();},
         advanceWorldDay:()=>{advancing=true;try{writeDay(holder.clock.day-1);origAdvance(1,'day');}finally{advancing=false;}},
-        tick:()=>{},save:()=>{try{window.saveActiveNow?.(true);}catch(e){/* autosave retries */}}
+        tick:()=>{},save:()=>{try{window.saveActiveNow?.(true);}catch(e){/* autosave retries */}},saveSoon:()=>{try{if(window.saveActiveSoon)window.saveActiveSoon();else window.saveActiveNow?.(true);}catch(e){/* autosave retries */}}
     });
     function configure(saved){
         const day=worldDay();

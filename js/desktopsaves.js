@@ -56,7 +56,16 @@
     // 저장할 때: 저장소 → 폴더
     Storage.prototype.setItem = function (k, v) {
         origSet.call(this, k, v);
-        if (this === ls && KEY_RE.test(String(k))) push(String(k).slice(0, -SLOTS.length), String(v));
+        if (this !== ls || !KEY_RE.test(String(k))) return;
+        const ns = String(k).slice(0, -SLOTS.length);
+        // 세이브 하나의 상태만 바뀐 저장(js/slotstore.js updateSlot)이면 그 파일 하나만 쓰게 한다 — 안 되면(이름 바뀜 · 예전 앱 등) 아래 전체 쓰기로
+        const one = api.writeSlot && window.HemiSlotStore && window.HemiSlotStore.updating && window.HemiSlotStore.updating(String(k), v);
+        if (one && one.meta && typeof one.json === 'string') {
+            let r = null;
+            try { r = api.writeSlot(ns, JSON.stringify(one.meta), one.json); } catch (e) { r = null; }
+            if (r && r.ok) { lastError = null; return; }
+        }
+        push(ns, String(v));
     };
     Storage.prototype.removeItem = function (k) {
         origRemove.call(this, k);

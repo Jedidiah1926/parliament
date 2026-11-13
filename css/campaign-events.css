@@ -38,3 +38,6 @@ html[data-theme-family="modern"] .sm-ev-quote { color: var(--m-text-2); }
 .sm-event.sm-narrative .sm-ev-opt {background:linear-gradient(#353535,#101010 50%,#2a2a2a);color:#eee;border:3px ridge #b6b6b6;border-radius:0;text-align:center;box-shadow:0 1px 3px #444;line-height:1.5;}
 .sm-event.sm-narrative .sm-ev-opt:hover {background:linear-gradient(#505050,#222);}
 @media(max-width:520px){.sm-overlay .sm-event.sm-narrative{padding:24px 16px 12px;}.sm-event.sm-narrative .ce-has-image{grid-template-columns:1fr;}.ce-portrait{max-height:150px;width:auto;max-width:100%;}.sm-ev-desc{overflow-wrap:anywhere;}}
+
+/* 지금 고를 수 없는 선택의 이유 (js/campaign-events.js canChoose) — 창은 닫지 않는다 */
+.sm-ev-error { margin: 0 0 8px; padding: 8px 10px; border: 1px solid #a33; color: #ff9a9a; font-size: .82rem; line-height: 1.5; white-space: pre-wrap; }

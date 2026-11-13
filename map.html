@@ -1016,6 +1016,8 @@ function buildPresetData() {
   return {
     format: PRESET_FORMAT, version: 1,
     ...(loadedPreset?.worldMap?{worldMap:HemiWorldMapData.extension(loadedPreset.worldMap,keys)}:{}),
+    // 경제권(세계 › 경제권)도 지도 파일에 들어 있었으면 그대로 — 지금 지도에 남아 있는 구역의 배정만
+    ...(loadedPreset?.economicRegions&&HemiWorldMapData.economic(loadedPreset.economicRegions,keys).zones.length?{economicRegions:HemiWorldMapData.economic(loadedPreset.economicRegions,keys)}:{}),
     meta: { name: (loadedPreset && loadedPreset.meta && loadedPreset.meta.name) || exportBaseName(), exportedAt: new Date().toISOString(), dataLang: (loadedPreset && loadedPreset.meta && loadedPreset.meta.dataLang) || null, madeWith: 'map-maker' },
     district: {
       mapMode: 'svg', view: { zoom: 1, panX: 0, panY: 0 }, grid, names, abbr, population, order, seatCounts,

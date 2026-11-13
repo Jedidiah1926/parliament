@@ -29,7 +29,9 @@
                 e.preventDefault();buttons[(i+(e.shiftKey?-1:1)+buttons.length)%buttons.length].focus();
             }
         }
-        ov.querySelectorAll('.sm-ev-opt').forEach(b=>b.onclick=()=>{if(closed)return;const i=+b.dataset.i;close();if(!options.preview)options.onChoose?.(i);});
+        // canChoose(i)가 이유(글자)를 돌려주면 그 선택은 지금 실행할 수 없다 — 창과 선택지를 그대로 두고 이유를 보여 준다 (고친 뒤 다시 고를 수 있게)
+        function refuse(text){let n=ov.querySelector('.sm-ev-error');if(!n){n=document.createElement('p');n.className='sm-ev-error';n.setAttribute('role','alert');ov.querySelector('.sm-ev-opts').before(n);}n.textContent=text;}
+        ov.querySelectorAll('.sm-ev-opt').forEach(b=>b.onclick=()=>{if(closed)return;const i=+b.dataset.i;if(!options.preview&&options.canChoose){const why=options.canChoose(i);if(why){refuse(String(why));return;}}close();if(!options.preview)options.onChoose?.(i);});
         ov.querySelector('.ce-preview-close')?.addEventListener('click',close);
         document.body.appendChild(ov);document.addEventListener('keydown',onKey,true);
         ov.querySelector('.sm-ev-opt').focus({preventScroll:true});

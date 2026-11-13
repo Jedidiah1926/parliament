@@ -308,6 +308,11 @@ ipcMain.on('saves:write', (event, ns, text) => {
     try { event.returnValue = saves.write(String(ns || ''), String(text || '[]')); }
     catch (e) { console.error('saves write failed:', e); event.returnValue = { ok: false, error: String(e && e.message || e) }; }
 });
+// 세이브 하나의 상태만 바뀐 저장 — 그 파일 하나만 (안 되는 경우는 { fallback: true }로 답해 페이지가 saves:write로 다시 보낸다)
+ipcMain.on('saves:write-slot', (event, ns, meta, state) => {
+    try { event.returnValue = saves.writeSlot(String(ns || ''), String(meta || ''), String(state || '')); }
+    catch (e) { console.error('saves write-slot failed:', e); event.returnValue = { ok: false, fallback: true, error: String(e && e.message || e) }; }
+});
 ipcMain.on('saves:dir-sync', event => { event.returnValue = saves.getDir(); });
 const savesInfo = () => ({ dir: saves.getDir(), isDefault: saves.isDefault(), defaultDir: saves.defaultDir() });
 // 저장 위치를 바꾸면 세이브를 새 폴더로 옮기고, 열린 화면을 다시 불러와 새 폴더를 읽게 한다

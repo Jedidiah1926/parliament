@@ -1132,6 +1132,9 @@
         box.querySelectorAll('[data-rdel]').forEach(b => {
             b.onclick = () => {
                 const r = at(b.dataset.rdel); if (!r) return;
+                // 영토 직접 수정이 잠긴 시나리오에서는 국가를 지워 영토를 미배정으로 만드는 길도 막는다 (js/campaign.js lockReason)
+                const locked = window.HemiCampaign && window.HemiCampaign.lockReason && window.HemiCampaign.lockReason('worldMap');
+                if (locked && !r.self && window.HemiWorldMap && window.HemiWorldMap.state && Object.values(window.HemiWorldMap.state.owners).includes(String(r.id))) { showCustomAlert(locked + '\n(이 국가는 세계지도에 영토가 있습니다.)'); return; }
                 showCustomConfirm(`"${rowName(r)}"을(를) 순위에서 지울까요?`, () => { S.ranking.rows = S.ranking.rows.filter(x => x.id !== r.id); renderRanking(); renderBlocs(); });
             };
         });

@@ -2,10 +2,12 @@
 (function (root) {
     'use strict';
     const Clock = typeof module !== 'undefined' && module.exports ? require('./campaign-clock.js') : root.HemiCampaignClock;
+    const World = typeof module !== 'undefined' && module.exports ? require('./world-rules.js') : root.HemiWorldRules;
     const clone = x => JSON.parse(JSON.stringify(x));
     const object = x => !!x && typeof x === 'object' && !Array.isArray(x);
     const arrayKeys = ['starts', 'focus', 'crises', 'endings', 'events', 'decisions', 'articles'];
     const idOK = id => typeof id === 'string' && /^[a-zA-Z0-9_.-]+$/.test(id);
+    const LOCKS = ['worldMap', 'economicRegions']; // 게임이 실제로 적용하는 직접 수정 잠금 (js/campaign.js lockReason)
     function validate(d) {
         const issues = [];
         const add = (path, message, level = 'error') => issues.push({ path, message, level });
@@ -28,8 +30,97 @@
             items.forEach((x, i) => { if (!idOK(x.id)) add(`${p}.${i}.id`, '고유한 ID가 필요합니다. 영문·숫자·_ . -를 사용하세요.'); else if (ids.has(x.id)) add(`${p}.${i}.id`, `중복 ID: ${x.id}`); ids.add(x.id); });
             return ids;
         };
-        const cond = (v, p) => { if (v != null && !object(v) && !Array.isArray(v) && typeof v !== 'boolean') add(p, '조건은 객체 또는 조건 배열이어야 합니다.'); };
-        const effects = (v, p) => { if (v != null && (!Array.isArray(v) || v.some(e => !object(e)))) add(p, '효과는 객체 배열이어야 합니다.'); };
+        // ---- 조건 · 효과 안쪽까지 (v1.7.1) — 연산자마다 인수를 보고, all · any · not · if · random_list는 안으로 들어간다 ----
+        // 오류: 게임이 아는 연산자인데 인수가 틀렸거나, 없는 이벤트 · 결정 · 나라 · 구역 · 경제권을 가리킴
+        // 경고: 모르는 연산자(확장 기능일 수 있어 지우지 않는다) · 변화가 없을 수 있는 효과
+        // 확인 필요(check): 정적 검사로는 단정할 수 없는 것 — 시험 플레이에서 확인
+        const safe = v => String(v || '').replace(/[^a-z0-9_.-]/gi, '_').slice(0, 50);
+        const crisesOK = list('crises').filter(c => object(c));
+        const subs = (c, k) => (Array.isArray(c[k]) ? c[k].filter(object) : []);
+        const eventIds = new Set([...list('events'), ...crisesOK.flatMap(c => subs(c, 'events'))].map(e => String(e.id)));
+        const decisionIds = new Set([...list('decisions'), ...crisesOK.flatMap(c => subs(c, 'decisions'))].map(e => String(e.id)));
+        const varNames = new Set([...(object(d.variables) ? Object.keys(d.variables) : []), ...crisesOK.flatMap(c => subs(c, 'meters').map(m => m.id))]);
+        const autoFlags = new Set([...list('focus').map(f => 'focus_' + safe(f.id)), ...crisesOK.flatMap(c => ['crisis_' + safe(c.id), 'crisis_' + safe(c.id) + '_done', ...subs(c, 'outcomes').map(o => 'crisis_' + safe(c.id) + '_' + safe(o.id))])]);
+        const flagsSet = new Set(), flagsRead = []; // 켜는 플래그 / 읽는 곳 [이름, 경로]
+        const varsRead = [];
+        const CMP = ['gt', 'gte', 'lt', 'lte', 'eq', 'ne'], ECON = ['growth', 'infl', 'unemp', 'rate', 'yield', 'debt', 'balance', 'mood', 'conf', 'cur'], SEATS = ['cabinet', 'president', 'pm', 'chair'];
+        const text = v => typeof v === 'string';
+        const partyOK = v => (text(v) && v !== '') || Number.isFinite(v);
+        const dateOK = v => (text(v) || Number.isFinite(v)) && /^(-?\d{1,5})(?:-(\d{1,2}))?(?:-(\d{1,2}))?$/.test(String(v).trim());
+        const compare = (v, p) => {
+            const used = CMP.filter(k => k in v);
+            if (!used.length) add(p, '비교 기준(gte · lte · gt · lt · eq · ne)과 숫자가 필요합니다.');
+            used.forEach(k => { if (!Number.isFinite(Number(v[k])) || v[k] === '' || v[k] == null || typeof v[k] === 'boolean') add(`${p}.${k}`, '비교 값은 숫자여야 합니다.'); });
+        };
+        const need = (ok, p, message) => { if (!ok) add(p, message); return ok; };
+        const flagName = (v, p, read) => {
+            if (!need(text(v), p, '플래그 이름은 문자열이어야 합니다.')) return;
+            if (!v) { add(p, '플래그 이름이 비어 있습니다.', 'warning'); return; }
+            if (read) flagsRead.push([v, p]); else flagsSet.add(v);
+        };
+        const amount = (v, p) => {
+            const a = 'add' in v, b = 'set' in v;
+            if (!a && !b) add(p, '더할 값(add) 또는 바꿀 값(set)이 필요합니다.');
+            for (const k of ['add', 'set']) if (k in v && (!Number.isFinite(Number(v[k])) || v[k] === '' || v[k] == null)) add(`${p}.${k}`, '숫자여야 합니다.');
+        };
+        const worldRefs = []; // [연산자, 값, 경로] — 시작 나라별 지도 · 연결과 대조는 아래에서 한꺼번에
+        const worldRule = (k, v, p) => {
+            const shape = k === 'owns_regions' ? World.ownsShape(v) : k === 'transfer_regions' ? World.transferShape(v) : k === 'in_economic_region' ? World.inZoneShape(v) : World.assignShape(v);
+            if (shape) add(p, shape); else worldRefs.push([k, v, p]);
+        };
+        function condOne(k, v, p) {
+            switch (k) {
+                case 'all': case 'any': if (Array.isArray(v)) v.forEach((c, i) => cond(c, `${p}.${i}`)); else cond(v, p); return;
+                case 'not': cond(v, p); return;
+                case 'always': need(typeof v === 'boolean', p, 'always는 true 또는 false입니다.'); return;
+                case 'date_after': case 'date_before': need(dateOK(v), p, '날짜는 YYYY-MM-DD(또는 YYYY · YYYY-MM)로 입력하세요.'); return;
+                case 'flag': case 'has_flag': case 'not_flag': flagName(v, p, true); return;
+                case 'var': if (need(object(v) && text(v.name) && v.name !== '', p, '변수 비교는 { "name": "변수", "gte": 숫자 } 형식입니다.')) { compare(v, p); varsRead.push([v.name, p]); } return;
+                case 'chance': if (need(Number.isFinite(Number(v)) && v !== '' && v != null && typeof v !== 'boolean', p, '확률(chance)은 0 ~ 100 사이 숫자입니다.') && (Number(v) < 0 || Number(v) > 100)) add(p, '확률(chance)이 0 ~ 100을 벗어났습니다.', 'warning'); return;
+                case 'event_fired': if (need(text(v) && v !== '', p, '이벤트 ID 문자열이 필요합니다.') && !eventIds.has(v)) add(p, `없는 이벤트: ${v}`); return;
+                case 'decision_taken': if (need(text(v) && v !== '', p, '결정 ID 문자열이 필요합니다.') && !decisionIds.has(v)) add(p, `없는 결정: ${v}`); return;
+                case 'party_exists': case 'ruling': need(partyOK(v), p, '정당(번호 · 이름 · 약칭 · ruling · largest · opposition)이 필요합니다.'); return;
+                case 'party_status': need(object(v) && partyOK(v.party) && ['active', 'banned', 'dissolved'].includes(v.is), p, '{ "party": 정당, "is": "active" | "banned" | "dissolved" } 형식입니다.'); return;
+                case 'party_seats': case 'party_support': if (need(object(v) && partyOK(v.party), p, '{ "party": 정당, "gte": 숫자 } 형식입니다.')) compare(v, p); return;
+                case 'ruling_seats': if (need(object(v), p, '{ "share": true, "gte": 숫자 } 형식입니다.')) compare(v, p); return;
+                case 'economy': if (need(object(v) && ECON.includes(v.indicator), p, `경제 지표(indicator)는 ${ECON.join(' · ')} 중 하나입니다.`)) compare(v, p); return;
+                case 'approval': if (need(object(v) && (v.of == null || SEATS.includes(v.of)), p, `지지율 대상(of)은 ${SEATS.join(' · ')} 중 하나입니다.`)) compare(v, p); return;
+                case 'owns_regions': case 'in_economic_region': worldRule(k, v, p); return;
+                default: add(p, `알 수 없는 조건 “${k}” — 게임에서는 거짓으로 처리됩니다. 오타가 아니면 그대로 두어도 보존됩니다.`, 'warning');
+            }
+        }
+        function cond(v, p) {
+            if (v == null || typeof v === 'boolean') return;
+            if (Array.isArray(v)) { v.forEach((c, i) => cond(c, `${p}.${i}`)); return; }
+            if (!object(v)) { add(p, '조건은 객체 또는 조건 배열이어야 합니다.'); return; }
+            Object.entries(v).forEach(([k, x]) => condOne(k, x, `${p}.${k}`));
+        }
+        const fireEdges = []; // [효과가 든 곳의 경로, 부르는 이벤트 ID]
+        function effectOne(k, v, p) {
+            switch (k) {
+                case 'set_flag': case 'clear_flag': flagName(v, p, false); return;
+                case 'set_var': case 'add_var': if (need(object(v) && text(v.name) && v.name !== '', p, '{ "name": "변수", "value": 숫자 } 형식입니다.')) { need(Number.isFinite(Number(v.value)) && v.value !== '' && v.value != null, `${p}.value`, '변경 값은 숫자여야 합니다.'); varsRead.push([v.name, p]); } return;
+                case 'support': if (need(object(v) && partyOK(v.party), p, '{ "party": 정당, "add": 숫자 } 형식입니다.')) amount(v, p); return;
+                case 'party_status': need(object(v) && partyOK(v.party) && ['active', 'banned', 'dissolved'].includes(v.to), p, '{ "party": 정당, "to": "active" | "banned" | "dissolved" } 형식입니다.'); return;
+                case 'rename_party': need(object(v) && partyOK(v.party) && (text(v.name) || text(v.abbr)), p, '{ "party": 정당, "name": "새 이름" } 형식입니다.'); return;
+                case 'party_color': need(object(v) && partyOK(v.party) && /^#[0-9a-f]{6}$/i.test(v.color || ''), p, '{ "party": 정당, "color": "#rrggbb" } 형식입니다.'); return;
+                case 'economy': if (need(object(v) && ECON.includes(v.indicator), p, `경제 지표(indicator)는 ${ECON.join(' · ')} 중 하나입니다.`)) amount(v, p); return;
+                case 'nation_name': case 'toast': need(text(v), p, '문자열이어야 합니다.'); return;
+                case 'message': need(text(v) || (object(v) && (text(v.title) || text(v.text))), p, '문자열 또는 { "title", "text" } 형식입니다.'); return;
+                case 'approval': if (need(object(v) && (v.of == null || SEATS.includes(v.of)), p, `지지율 대상(of)은 ${SEATS.join(' · ')} 중 하나입니다.`)) amount(v, p); return;
+                case 'article': need(object(v) && text(v.title), p, '기사 효과는 { "title": "제목", … } 형식입니다.'); return;
+                case 'fire_event': { const id = object(v) ? v.id : v; if (need(text(id) && id !== '', p, '이벤트 ID가 필요합니다.')) { if (!eventIds.has(id)) add(p, `없는 이벤트: ${id}`); else fireEdges.push([p, id]); } return; }
+                case 'if': if (need(object(v) && ('condition' in v || 'if' in v), p, '{ "condition": 조건, "then": [효과], "else": [효과] } 형식입니다.')) { cond(v.condition ?? v.if, p + ('condition' in v ? '.condition' : '.if')); effects(v.then, p + '.then'); effects(v.else, p + '.else'); } return;
+                case 'random_list': if (need(Array.isArray(v) && v.every(object), p, '[{ "weight": 숫자, "effects": [효과] }] 형식입니다.')) v.forEach((o, i) => { need(Number.isFinite(Number(o.weight)) && Number(o.weight) >= 0, `${p}.${i}.weight`, '가중치(weight)는 0 이상의 숫자입니다.'); effects(o.effects, `${p}.${i}.effects`); }); return;
+                case 'transfer_regions': case 'assign_economic_region': worldRule(k, v, p); return;
+                default: add(p, `알 수 없는 효과 “${k}” — 게임에서는 건너뜁니다. 오타가 아니면 그대로 두어도 보존됩니다.`, 'warning');
+            }
+        }
+        function effects(v, p) {
+            if (v == null) return;
+            if (!Array.isArray(v) || v.some(e => !object(e))) { add(p, '효과는 객체 배열이어야 합니다.'); return; }
+            v.forEach((e, i) => Object.entries(e).forEach(([k, x]) => effectOne(k, x, `${p}.${i}.${k}`)));
+        }
         const script = (items, p, isEvent) => {
             idsOf(items, p);
             items.forEach((e, i) => {
@@ -37,6 +128,8 @@
                 cond(e.trigger, q + '.trigger'); cond(e.available, q + '.available'); cond(e.visible, q + '.visible');
                 effects(e.effects, q + '.effects'); effects(e.immediate, q + '.immediate');
                 if(isEvent){
+                    if(e.check!=null&&!['date','election','world','any'].includes(e.check))add(q+'.check','검사 시점은 date(날짜) · election(총선 반영) · world(지도 변경) · any(모든 시점) 중 하나입니다.');
+                    if(e.once===false&&!e.trigger_only&&e.chance==null&&(e.trigger==null||object(e.trigger)&&!Object.keys(e.trigger).length))add(q,'조건 없이 반복(once: false)하는 이벤트입니다 — 검사할 때마다 다시 일어납니다. 조건 · 확률을 넣거나 “직접 실행만”으로 바꾸세요.');
                     if(e.presentation!=null&&!['narrative','standard'].includes(e.presentation))add(q+'.presentation','서사(narrative) 또는 일반(standard) 화면을 선택하세요.');
                     for(const k of ['title','desc','image'])if(e[k]!=null&&typeof e[k]!=='string')add(q+'.'+k,'문자열이어야 합니다.');
                 }
@@ -106,7 +199,114 @@
         if (d.focusStyle != null && !object(d.focusStyle)) add('focusStyle', '트리 디자인은 객체여야 합니다.');
         const events = new Set([...list('events'), ...list('crises').flatMap(c => Array.isArray(c.events) ? c.events : [])].map(e => e.id));
         focus.forEach((f, i) => { if (f.event && !events.has(f.event)) add(`focus.${i}.event`, `없는 이벤트: ${f.event}`); });
+        crisesOK.forEach((c, i) => { const p = `crises.${i}`; if (c.intro && !events.has(c.intro)) add(p + '.intro', `없는 이벤트: ${c.intro}`); subs(c, 'outcomes').forEach((o, j) => { if (o.event && !events.has(o.event)) add(`${p}.outcomes.${j}.event`, `없는 이벤트: ${o.event}`); }); subs(c, 'missions').forEach((m, j) => cond(m.start, `${p}.missions.${j}.start`)); });
+        // 게임에서는 최상위와 격변 안의 이벤트 · 결정이 한 이름 공간을 쓴다 — 같은 ID면 한쪽이 가려진다
+        const clash = (key, label) => {
+            const seen = new Map(list(key).map((e, i) => [String(e.id), `${key}.${i}`]));
+            list('crises').forEach((c, i) => { if (object(c)) subs(c, key).forEach((e, j) => { const p = `crises.${i}.${key}.${j}.id`, id = String(e.id); if (seen.has(id)) add(p, `${label} ID “${id}”가 ${seen.get(id)}와 겹칩니다 — 게임에서는 같은 이름 공간을 씁니다.`); else seen.set(id, `crises.${i}.${key}.${j}`); }); });
+        };
+        clash('events', '이벤트'); clash('decisions', '결정');
+        // 창 없이 바로 실행되는 숨은 이벤트끼리 서로 부르면 끝나지 않는다
+        {
+            const all = [...list('events').map((e, i) => [e, `events.${i}`]), ...list('crises').flatMap((c, i) => (object(c) ? subs(c, 'events').map((e, j) => [e, `crises.${i}.events.${j}`]) : []))];
+            const byId = new Map(all.map(([e, p]) => [String(e.id), { e, p }]));
+            const calls = id => { const it = byId.get(id); return it ? fireEdges.filter(([p]) => p.startsWith(it.p + '.')).map(([, to]) => to) : []; };
+            const state = new Map(); // 1 = 보는 중, 2 = 끝
+            const visit = (id, trail) => {
+                if (state.get(id) === 2) return; if (state.get(id) === 1) { const loop = trail.slice(trail.indexOf(id)).concat(id); const hidden = loop.every(x => byId.get(x)?.e.hidden); add(byId.get(id).p, `이벤트가 서로를 다시 부릅니다: ${loop.join(' → ')}` + (hidden ? ' — 모두 숨은 이벤트라 끝나지 않습니다.' : ' — 선택에 따라 되풀이될 수 있습니다.'), hidden ? 'error' : 'check'); return; }
+                state.set(id, 1); calls(id).forEach(to => visit(to, [...trail, id])); state.set(id, 2);
+            };
+            byId.forEach((_, id) => visit(id, []));
+        }
+        // 플래그 · 변수 — 켜는 곳이 없는 플래그, 선언하지 않은 변수는 단정할 수 없어 "확인 필요"
+        flagsRead.forEach(([name, p]) => { if (!flagsSet.has(name) && !autoFlags.has(name)) add(p, name.startsWith('focus_') ? `방향성 완료 플래그 “${name}”에 해당하는 방향성이 없습니다.` : `플래그 “${name}”를 켜는 효과가 이 시나리오에 없습니다.`, name.startsWith('focus_') ? 'warning' : 'check'); });
+        { const told = new Set(); varsRead.forEach(([name, p]) => { if (!varNames.has(name) && !told.has(name)) { told.add(name); add(p, `변수 “${name}”가 시나리오 변수에 없습니다 — 0에서 시작합니다.`, 'check'); } }); }
+        worldChecks(d, add, worldRefs);
+        // 플레이 규칙 — 지금 게임이 적용하는 잠금만 조용히 통과시킨다 (모르는 항목을 잠긴 것처럼 믿게 두지 않는다)
+        if (d.playRules != null) {
+            if (!object(d.playRules)) add('playRules', '플레이 규칙은 객체여야 합니다.');
+            else if (d.playRules.locks != null) {
+                if (!object(d.playRules.locks)) add('playRules.locks', '잠금은 { "worldMap": true } 형식입니다.');
+                else Object.entries(d.playRules.locks).forEach(([k, v]) => {
+                    if (typeof v !== 'boolean') add(`playRules.locks.${k}`, '잠금 값은 true 또는 false입니다.');
+                    else if (!LOCKS.includes(k)) add(`playRules.locks.${k}`, `“${k}” 잠금은 아직 지원하지 않습니다 — 게임에서 적용되지 않습니다. (지원: ${LOCKS.join(' · ')})`, 'warning');
+                });
+            }
+        }
         return issues;
+    }
+    // ---- 세계지도 연결 · 영토 · 경제권 참조 — 고를 수 있는 모든 시작 나라에서 유효해야 한다 ----
+    function worldChecks(d, add, refs) {
+        const starts = Array.isArray(d.starts) ? d.starts : [];
+        const declared = new Map();
+        if (d.world != null) {
+            if (!object(d.world)) add('world', '세계지도 연결(world)은 객체여야 합니다.');
+            else if (d.world.countries != null && (!Array.isArray(d.world.countries) || d.world.countries.some(c => !object(c)))) add('world.countries', '나라 목록은 [{ "key", "name" }] 형식입니다.');
+            else (d.world.countries || []).forEach((c, i) => {
+                if (!idOK(c.key)) add(`world.countries.${i}.key`, '나라 열쇠(key)는 영문·숫자·_ . -로 입력하세요.');
+                else if (declared.has(c.key)) add(`world.countries.${i}.key`, `중복된 나라 열쇠: ${c.key}`);
+                else declared.set(c.key, c);
+                if (c.name != null && typeof c.name !== 'string') add(`world.countries.${i}.name`, '나라 이름은 문자열이어야 합니다.');
+            });
+        }
+        const usesTerritory = refs.some(([k]) => k === 'owns_regions' || k === 'transfer_regions'), usesZones = refs.some(([k]) => k === 'in_economic_region' || k === 'assign_economic_region');
+        const info = starts.map((s, i) => {
+            const st = s.kind === 'save' && object(s.state) ? s.state : null, label = s.name || s.id || `${i + 1}번`;
+            let keys = null, names = {};
+            try { const shapes = st && st.worldMap && st.worldMap.preset && st.worldMap.preset.district && st.worldMap.preset.district.svgMap && st.worldMap.preset.district.svgMap.shapes; if (Array.isArray(shapes) && shapes.length) { keys = new Set(shapes.map(sh => sh && sh.key).filter(k => typeof k === 'string')); names = (st.worldMap.preset.district.names && st.worldMap.preset.district.names.house) || {}; } } catch (e) { keys = null; }
+            const rows = st && st.history && st.history.ranking && Array.isArray(st.history.ranking.rows) ? st.history.ranking.rows.filter(object) : null;
+            const eco = st && object(st.economicRegions) ? st.economicRegions : null;
+            const p = `starts.${i}`, bindings = {};
+            if (s.worldBindings != null) {
+                if (!object(s.worldBindings)) add(p + '.worldBindings', '세계지도 연결은 { "나라 열쇠": "국가 id" } 형식입니다.');
+                else {
+                    const usedIds = new Map();
+                    Object.entries(s.worldBindings).forEach(([key, id]) => {
+                        const q = `${p}.worldBindings.${key}`;
+                        if (!declared.has(key)) { add(q, `시나리오의 나라 목록에 없는 열쇠: ${key}`); return; }
+                        if (typeof id !== 'string' || !id) { add(q, `“${declared.get(key).name || key}”에 연결할 국가를 선택하세요.`); return; }
+                        if (rows && !rows.some(r => String(r.id) === id)) { add(q, `“${declared.get(key).name || key}”에 연결한 국가가 시작 세이브 “${label}”의 국가 순위에 없습니다.`); return; }
+                        if (usedIds.has(id)) { add(q, `“${usedIds.get(id)}”와 같은 국가에 연결되어 있습니다. 나라마다 다른 국가를 연결하세요.`); return; }
+                        usedIds.set(id, declared.get(key).name || key); bindings[key] = id;
+                    });
+                }
+            }
+            return { i, p, label, keys, names, owners: (st && st.worldMap && object(st.worldMap.owners) && st.worldMap.owners) || {}, rowIds: new Set((rows || []).map(r => String(r.id))), bindings,
+                zones: new Set(eco && Array.isArray(eco.zones) ? eco.zones.filter(object).map(z => z.id) : []), zoneOf: (eco && object(eco.regions) && eco.regions) || {} };
+        });
+        if (usesTerritory || usesZones) info.forEach(s => { if (!s.keys) add(s.p, `이 시나리오는 ${usesTerritory ? '영토' : '경제권'} 조건·효과를 씁니다. “${s.label}”은(는) 세계지도가 든 세이브(세계 › 지도에서 .hemimap을 불러와 저장)여야 합니다.`); });
+        const told = new Set(), once = (key, fn) => { if (!told.has(key)) { told.add(key); fn(); } };
+        refs.forEach(([k, v, p]) => {
+            const territory = k === 'owns_regions' || k === 'transfer_regions', ref = k === 'owns_regions' ? v.country : k === 'in_economic_region' ? v.zone : v.to, refPath = `${p}.${k === 'owns_regions' ? 'country' : k === 'in_economic_region' ? 'zone' : 'to'}`;
+            if (territory && !ref.unassigned && !declared.has(ref.key)) { add(refPath + '.key', `시나리오의 나라 목록에 없는 나라: ${ref.key} — 시작 나라의 세계지도 연결에서 추가하세요.`); return; }
+            info.forEach(s => {
+                if (!s.keys) return;
+                v.regions.forEach((key, j) => { if (!s.keys.has(key)) add(`${p}.regions.${j}`, `시작 나라 “${s.label}”의 지도에 없는 구역: ${key}`); });
+                if (territory && !ref.unassigned && !s.bindings[ref.key]) once(`${s.i}|${ref.key}`, () => add(`${s.p}.worldBindings`, `“${declared.get(ref.key).name || ref.key}”(${ref.key})를 시작 나라 “${s.label}”의 국가에 연결하세요.`));
+                if (!territory && !ref.unassigned && !s.zones.has(ref.id)) add(refPath + '.id', `시작 나라 “${s.label}”의 지도에 없는 경제권: ${ref.id}`);
+                if (!v.regions.every(key => s.keys.has(key))) return;
+                // 시작할 때 이미 그 나라 · 경제권 것이면 변화가 없을 수 있다 (다른 효과가 먼저 바꿀 수도 있어 경고)
+                if (k === 'transfer_regions') { const to = ref.unassigned ? '' : s.bindings[ref.key]; if (to != null && v.regions.every(key => (s.rowIds.has(s.owners[key]) ? s.owners[key] : '') === to)) add(p, `시작 나라 “${s.label}”에서는 처음부터 ${ref.unassigned ? '미배정' : `“${declared.get(ref.key).name || ref.key}”의 영토`}입니다 — 변화가 없을 수 있습니다.`, 'warning'); }
+                if (k === 'assign_economic_region' && (ref.unassigned || s.zones.has(ref.id))) { const to = ref.unassigned ? '' : ref.id; if (v.regions.every(key => (s.zones.has(s.zoneOf[key]) ? s.zoneOf[key] : '') === to)) add(p, `시작 나라 “${s.label}”에서는 처음부터 ${to ? `경제권 “${to}”` : '미배정'}입니다 — 변화가 없을 수 있습니다.`, 'warning'); }
+            });
+        });
+    }
+    // 검사 결과의 경로 → 사람이 읽는 위치 (예: “국경 협상 › 수락 › 영토 변경”)
+    const PLACE = { trigger: '발생 조건', available: '조건', visible: '보이는 조건', immediate: '즉시 효과', onStart: '시작 효과', success: '성공 효과', fail: '실패 효과', condition: '조건', start: '시작 조건',
+        owns_regions: '구역 소유', transfer_regions: '영토 변경', in_economic_region: '경제권 소속', assign_economic_region: '경제권 배정', worldBindings: '세계지도 연결', world: '세계지도 연결', check: '검사 시점',
+        prereq: '필수 선행', any: '이 중 하나', exclusive: '배타', fire_event: '이벤트 실행', variables: '변수', time: '시간 설정', then: '맞으면', else: '아니면' };
+    const SECTION = { starts: '시작 나라', focus: '방향성', events: '이벤트', decisions: '결정', crises: '격변', endings: '결말', articles: '기사', missions: '임무', outcomes: '결말', meters: '게이지', options: '선택지', countries: '나라' };
+    function describe(d, path) {
+        const parts = String(path || '').split('.'), out = [];
+        let cur = d;
+        parts.forEach((k, n) => {
+            const next = cur != null && typeof cur === 'object' ? cur[k] : undefined;
+            if (Array.isArray(cur)) { if (object(next)) { const t = next.title || next.name || next.text || next.id || next.key; if (t) out.push(String(t)); } }
+            else if (SECTION[k]) { const item = Array.isArray(next) ? next[parts[n + 1]] : null; if (!(object(item) && (item.title || item.name || item.text || item.id || item.key))) out.push(SECTION[k]); }
+            else if (PLACE[k] && (!['any', 'start', 'check'].includes(k) || typeof next !== 'object' || parts[0] === 'focus' && n === 2 || k === 'start')) out.push(PLACE[k]);
+            cur = next;
+        });
+        return out.join(' › ');
     }
     function layout(focus) {
         const placed = new Map(); const pending = [...focus];
@@ -129,6 +329,35 @@
         (d.articles||[]).forEach(a=>{if(a.focus===oldId)a.focus=newId;});
         const walk = o => { if (!o || typeof o !== 'object') return; Object.entries(o).forEach(([k, v]) => { if (['flag', 'not_flag', 'has_flag', 'set_flag', 'clear_flag'].includes(k) && v === 'focus_' + oldId) o[k] = 'focus_' + newId; else walk(v); }); };
         walk(d); return true;
+    }
+    // 나라 열쇠 바꾸기 — 나라 목록 · 시작 나라마다의 연결 · 조건/효과 속 참조를 함께 (이름과 이야기 글은 건드리지 않는다)
+    function renameCountry(d, oldKey, newKey) {
+        const list = d.world && Array.isArray(d.world.countries) ? d.world.countries : [];
+        if (!idOK(newKey) || oldKey === newKey || !list.some(c => c.key === oldKey) || list.some(c => c.key === newKey)) return false;
+        list.forEach(c => { if (c.key === oldKey) c.key = newKey; });
+        (d.starts || []).forEach(s => { if (object(s.worldBindings) && Object.hasOwn(s.worldBindings, oldKey)) { s.worldBindings = Object.fromEntries(Object.entries(s.worldBindings).map(([k, v]) => [k === oldKey ? newKey : k, v])); } });
+        const walk = (o, skip) => { if (!o || typeof o !== 'object') return; Object.entries(o).forEach(([k, v]) => {
+            if (k === 'state' && skip) return; // 시작 세이브 속은 보지 않는다
+            if ((k === 'owns_regions' && object(v) && object(v.country) && v.country.key === oldKey)) v.country.key = newKey;
+            if ((k === 'transfer_regions' && object(v) && object(v.to) && v.to.key === oldKey)) v.to.key = newKey;
+            walk(v, false); }); };
+        Object.entries(d).forEach(([k, v]) => { if (k === 'starts') (v || []).forEach(s => walk(s, true)); else if (k !== 'world') walk(v, false); });
+        return true;
+    }
+    // 시작 세이브의 세계지도에서 고를 수 있는 구역 · 국가 · 경제권 (가이드 입력용) — 지도가 든 첫 시작 나라 기준, 나머지 시작 나라와의 차이는 검사가 알려 준다
+    function worldCatalog(d) {
+        const out = { regions: [], zones: [], starts: [] };
+        (Array.isArray(d.starts) ? d.starts : []).forEach((s, i) => {
+            const st = s && s.kind === 'save' && object(s.state) ? s.state : null;
+            const shapes = st && st.worldMap && st.worldMap.preset && st.worldMap.preset.district && st.worldMap.preset.district.svgMap && st.worldMap.preset.district.svgMap.shapes;
+            const names = (st && st.worldMap && st.worldMap.preset && st.worldMap.preset.district && st.worldMap.preset.district.names && st.worldMap.preset.district.names.house) || {};
+            const regions = Array.isArray(shapes) ? shapes.filter(sh => sh && typeof sh.key === 'string').map(sh => ({ key: sh.key, name: typeof names[sh.key] === 'string' && names[sh.key] ? names[sh.key] : sh.key })) : [];
+            const rows = st && st.history && st.history.ranking && Array.isArray(st.history.ranking.rows) ? st.history.ranking.rows.filter(object).map(r => ({ id: String(r.id), name: r.self ? ((st.config && st.config.nationName) || r.name || '우리나라') : (r.name || '이름 없는 국가') })) : [];
+            const zones = st && object(st.economicRegions) && Array.isArray(st.economicRegions.zones) ? st.economicRegions.zones.filter(z => object(z) && typeof z.id === 'string').map(z => ({ id: z.id, name: z.name || z.id })) : [];
+            out.starts.push({ index: i, hasState: !!st, hasMap: regions.length > 0, regions, rows, zones });
+            if (!out.regions.length && regions.length) { out.regions = regions; out.zones = zones; }
+        });
+        return out;
     }
     function starter(id) {
         const f = (id, title, icon, x, y, prereq = [], extra = {}) => ({ id, title, icon, x, y, days: 35, desc: '', prereq, any: [], exclusive: [], effects: [], ...extra });
@@ -153,7 +382,7 @@
             endings: [{ id: 'dawn', title: '우리가 만든 내일', text: '격변을 넘어 새 장을 열었습니다. 공화국의 이야기는 계속됩니다.', condition: { flag: 'focus_future' } }]
         };
     }
-    const api = { validate, layout, renameFocus, starter, clone, idOK };
+    const api = { validate, describe, layout, renameFocus, renameCountry, worldCatalog, starter, clone, idOK, LOCKS };
     if (typeof module !== 'undefined' && module.exports) module.exports = api;
     else root.HemiCampaignTools = api;
 })(typeof window === 'undefined' ? globalThis : window);

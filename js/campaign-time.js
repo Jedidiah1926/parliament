@@ -16,6 +16,8 @@
         }
         function stopTimer(){clearTimeout(timer);timer=0;generation++;}
         function save(){lastSave=performance.now();api.save();}
+        // 시간이 흐르며 하는 저장 — 화면을 멈추지 않게 모아서 (일시정지 · 속도 바꾸기 · 창 닫기는 위의 save로 바로)
+        function saveSoon(){lastSave=performance.now();(api.saveSoon||api.save)();}
         function pause(message='일시정지') {
             stopTimer();const c=clock();if(!c)return false;
             const changed=!c.paused;c.paused=true;reason=message;render();if(changed)save();return true;
@@ -38,7 +40,7 @@
                 api.mirror();api.tick({hourly:mode==='realtime'&&c.day===next.day});
                 if(state()!==s)return false;
                 const blockAfter=blocked();if(blockAfter&&mode==='realtime')pause(blockAfter);
-                if(mode==='turn'||c.day!==next.day||performance.now()-lastSave>=5000)save();
+                if(mode==='turn'||c.day!==next.day||performance.now()-lastSave>=5000)saveSoon();
                 reason=blockAfter||'';return true;
             }finally{busy=false;render();}
         }

@@ -28,6 +28,36 @@
 #wmSvg > [data-wm-key]:focus-visible {outline:none;stroke:var(--tno-gold);stroke-width:3;}
 #wmSvg.wm-panning {cursor:grabbing;}
 .wm-empty {text-align:center;color:#8a94a3;padding:50px 20px;font-size:.85rem;}
+/* 경제권 (세계 › 경제권) — 지도 화면의 조작 모양을 그대로 쓴다 */
+.wm-lock {margin:8px 0;padding:8px 10px;border:1px solid var(--tno-gold);color:var(--tno-gold);font-size:.8rem;line-height:1.6;}
+.wm-lock[hidden] {display:none;}
+html[data-theme-family="modern"] .wm-lock {border-color:var(--m-border);color:var(--m-text);background:var(--m-surface-2);border-radius:7px;}
+.wm-seg {display:inline-flex;gap:0;margin-left:10px;}
+.wm-seg .wm-btn {padding:3px 9px;font-size:.75rem;}
+.wm-seg .wm-btn + .wm-btn {border-left:0;}
+#weNewName,#weSearch,#weName {flex:1;min-width:120px;width:auto;}
+#weAbbr {width:84px;flex:none;}
+#weColor {width:42px;height:32px;padding:2px;cursor:pointer;border:1px solid var(--tno-border);background:transparent;flex:none;}
+#weDesc {width:100%;box-sizing:border-box;font:inherit;font-size:.8rem;resize:vertical;padding:7px 9px;background:#000;color:var(--tno-text);border:1px solid var(--tno-border);}
+#weDesc:focus {outline:none;border-color:var(--tno-neon);}
+#weDesc::placeholder {color:#666;}
+.we-edit {padding:10px 12px;border:1px solid var(--tno-border);margin:10px 0;}
+.we-id {display:flex;align-items:center;gap:6px;font-size:.75rem;color:#8a94a3;}
+.we-id input {width:140px;}
+.we-stats {font-size:.8rem;line-height:1.7;margin:6px 0;}
+.we-stats b {color:var(--tno-gold);font-weight:normal;margin-right:6px;}
+.we-check {display:inline-flex;align-items:center;gap:5px;font-size:.8rem;cursor:pointer;white-space:nowrap;}
+.we-danger {color:#ff8a8a;border-color:#6b2c2c;}
+.we-danger:hover {border-color:#ff5555;background:rgba(255,85,85,.12);}
+.we-found {display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:4px;max-height:220px;overflow:auto;}
+#weLegend {display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:4px;}
+#weLegend small {color:#8a94a3;}
+html[data-theme-family="modern"] .we-edit {border-color:var(--m-border);border-radius:8px;background:var(--m-surface);}
+html[data-theme-family="modern"] .we-stats b {color:var(--m-text-2,var(--m-text));font-weight:600;}
+html[data-theme-family="modern"] #weColor {border-color:var(--m-border);}
+html[data-theme-family="modern"] #weDesc {background:var(--m-surface);color:var(--m-text);border-color:var(--m-border);border-radius:7px;}
+html[data-theme-family="modern"] #weDesc:focus {border-color:var(--m-accent);}
+html[data-theme-family="modern"] .we-danger {color:#c0392b;border-color:#e3b3ad;}
 html[data-theme-family="modern"] .wm-controls {color:var(--m-text);}
 html[data-theme-family="modern"] .wm-controls h3,html[data-theme-family="modern"] .wm-controls h4 {color:var(--m-text);}
 html[data-theme-family="modern"] .wm-board {background:var(--m-surface-2);border-color:var(--m-border);border-radius:10px;}

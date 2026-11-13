@@ -16,7 +16,8 @@ const SAVE_EXT = '.hemi';
 let base = null;            // 지금 저장 폴더
 let defaultDir = () => '';  // 기본 저장 폴더 (init에서 받음)
 let trash = p => { try { fs.unlinkSync(p); } catch (e) { /* 없음 */ } };
-const cache = new Map();    // 저장 공간 → Map(세이브 id → { file, sig })
+const cache = new Map();    // 저장 공간 → Map(세이브 id → { file, sig, name })
+const BIG_SAVE_CHARS = 1024 * 1024;
 
 // 저장 공간 이름(js/main.js LS_PREFIX) → 하위 폴더. 정해진 모양만 받는다 (경로 조작 방지)
 function subdirOf(ns) {
@@ -52,7 +53,8 @@ function fileJson(slot) {
 }
 function writeAtomic(file, json) {
     const tmp = file + '.tmp';
-    fs.writeFileSync(tmp, zlib.gzipSync(Buffer.from(json, 'utf8'), { level: 9 })); // 무손실 — 가장 작게
+    // 무손실. 작은 세이브는 가장 작게, 큰 세이브(대부분 사진 — 더 줄지 않음)는 빠르게: 6.7MB 세이브에서 9단계 450ms → 1단계 134ms, 파일은 3.6% 커짐 (v1.7.1 측정)
+    fs.writeFileSync(tmp, zlib.gzipSync(Buffer.from(json, 'utf8'), { level: json.length > BIG_SAVE_CHARS ? 1 : 9 }));
     fs.renameSync(tmp, file);
 }
 function readText(file) {
@@ -86,7 +88,7 @@ function read(ns) {
         const slot = { ...meta, id, name, createdAt: meta.createdAt || mtime, savedAt: meta.savedAt || mtime, state };
         delete slot.isAutosave;
         slots.push(slot);
-        c.set(id, { file: f, sig: /\.hemi$/i.test(f) ? sha1(fileJson(slot)) : '' });
+        c.set(id, { file: f, sig: /\.hemi$/i.test(f) ? sha1(fileJson(slot)) : '', name });
     }
     slots.sort((a, b) => String(a.createdAt).localeCompare(String(b.createdAt)));
     return { initialized: true, slots, dir };
@@ -110,11 +112,11 @@ function write(ns, text) {
     let written = 0;
     for (const { slot, file } of plan) {
         const json = fileJson(slot), sig = sha1(json), prev = c.get(slot.id);
-        if (prev && prev.file === file && prev.sig === sig) continue;
+        if (prev && prev.file === file && prev.sig === sig) { prev.name = slot.name; continue; }
         writeAtomic(path.join(dir, file), json);
         written++;
         if (prev && prev.file !== file && !claimed.has(prev.file.toLowerCase())) trash(path.join(dir, prev.file));
-        c.set(slot.id, { file, sig });
+        c.set(slot.id, { file, sig, name: slot.name });
     }
     const keep = new Set(plan.map(p => p.slot.id));
     for (const [id, ent] of [...c]) {
@@ -123,6 +125,25 @@ function write(ns, text) {
         c.delete(id);
     }
     return { ok: true, written };
+}
+
+// 세이브 하나의 상태만 바뀌었을 때 — 그 파일 하나만 쓴다 (v1.7.1).
+// write()는 저장할 때마다 목록 전체를 읽고 모든 세이브를 다시 글자로 만들어 견줘서, 세이브가 크거나 많으면 저장마다 그만큼 멈췄다.
+// 여기서는 페이지가 준 글자(세이브 정보 JSON · 상태 JSON)를 그대로 이어 붙여 쓴다 — write()가 만드는 파일 내용과 글자까지 같다.
+// 이름이 바뀌었거나 처음 보는 세이브 · 폴더처럼 파일 이름을 새로 정해야 하는 경우는 하지 않고 { fallback: true } — 부르는 쪽이 write()로.
+function writeSlot(ns, metaJson, stateJson) {
+    const meta = JSON.parse(metaJson);
+    if (!meta || typeof meta !== 'object' || Array.isArray(meta) || !meta.id) return { ok: false, fallback: true };
+    if (typeof stateJson !== 'string' || stateJson.length < 3 || stateJson[0] !== '{' || stateJson[stateJson.length - 1] !== '}') return { ok: false, fallback: true };
+    if ('state' in meta || stateJson.includes('"__hemiSlot":')) return { ok: false, fallback: true };
+    const c = cache.get(ns), prev = c && c.get(meta.id);
+    if (!prev || prev.name !== meta.name || !prev.file.endsWith(SAVE_EXT)) return { ok: false, fallback: true };
+    const dir = nsDir(ns);
+    if (!fs.existsSync(path.join(dir, MARKER))) return { ok: false, fallback: true };
+    const json = `${stateJson.slice(0, -1)},"__hemiSlot":${JSON.stringify(meta)}}`;
+    writeAtomic(path.join(dir, prev.file), json);
+    c.set(meta.id, { file: prev.file, sig: sha1(json), name: meta.name });
+    return { ok: true, written: 1 };
 }
 
 // 저장 폴더를 쓸 수 있는지 (Program Files처럼 관리자 권한이 필요한 곳은 보통 안 됨)
@@ -172,4 +193,4 @@ function init(opts) {
 const getDir = () => base;
 const isDefault = () => path.resolve(base) === path.resolve(defaultDir());
 
-module.exports = { init, read, write, moveTo, getDir, isDefault, defaultDir: () => defaultDir(), subdirOf };
+module.exports = { init, read, write, writeSlot, moveTo, getDir, isDefault, defaultDir: () => defaultDir(), subdirOf };
