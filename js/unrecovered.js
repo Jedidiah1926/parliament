@@ -244,7 +244,7 @@
     }
 
     // ---- 국가 › 미수복 탭 신설 (국가 › 지역구 지도 · 권역은 1.6.0부터 본 화면에 있음) ----
-    // (사이드바 · 모바일 탭 바는 js/sidenav.js가 페이지가 다 읽힌 뒤 탭 버튼을 보고 만드므로, 그 전에 버튼 · 내용을 넣어 둔다)
+    // (사이드바는 js/sidenav.js가 페이지가 다 읽힌 뒤 탭 버튼을 보고 만드므로, 그 전에 버튼 · 내용을 넣어 둔다)
     function el(html) { const d = document.createElement('div'); d.innerHTML = html.trim(); return d.firstChild; }
     (function addUnrecTab() {
         const nation = document.getElementById('mainContentNation');

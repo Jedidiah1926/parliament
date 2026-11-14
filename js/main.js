@@ -2066,7 +2066,7 @@
                 nextBtn.classList.toggle('is-extra', extra);
             }
         }
-        // 날짜 줄의 설정 버튼 — 국가 › 날짜 탭을 연다 (모바일은 조작 화면으로 넘어감)
+        // 날짜 줄의 설정 버튼 — 국가 › 날짜 탭을 연다
         // 날짜 줄의 ⚙ — 날짜 · 회기 설정 창(구 국가 › 날짜)을 ⚙ 바로 아래에 띄운다 (다시 누르면 닫힘)
         function openNationDateSettings() { isDatePanelOpen() ? closeDatePanel() : openDatePanel(); }
         function openDatePanel() {
@@ -6595,7 +6595,7 @@
 
         // ===== 설정 창 (탭 바 오른쪽 "설정" 버튼) — 게임 화면을 떠나지 않고 settings.html을 창(iframe)으로 띄운다 =====
         // 테마 · 테마 색은 js/thememode.js · js/theme.js가 storage 이벤트로 바로 따라오고,
-        // 화면 모드(데스크톱/모바일) · 디버그 모드 같은 나머지는 창을 닫을 때 다시 반영한다
+        // 디버그 모드 같은 나머지는 창을 닫을 때 다시 반영한다
         function openSettingsPanel() {
             let ov = document.getElementById('settingsPanelLayer');
             if(!ov) {
@@ -6622,7 +6622,6 @@
             ov.style.display = 'none';
             ov.querySelector('iframe').src = 'about:blank';
             document.getElementById('saveTabSettingsBtn')?.classList.remove('active');
-            if(typeof getUiMode === 'function') document.documentElement.setAttribute('data-ui-mode', getUiMode());
             if(window.HemiDev && HemiDev.hiddenGov) HemiDev.hiddenGov.render();
             try { refreshUI(); } catch(e) { /* 화면 준비 전 */ }
         }
@@ -7598,7 +7597,7 @@
 
         // 화면 갱신 — 자료 맞추기는 늘 하고, 목록은 지금 보이는 것만 다시 그린다 (v1.7.1 성능).
         // 안 보이는 목록(다른 탭 · 접힌 패널)은 "다시 그려야 함"으로만 적어 두었다가 보이는 순간 그린다:
-        //   탭을 옮기면 switchSubTab이 다시 refreshUI를 부르고, 안쪽 탭 · 모바일 패널 전환처럼 그 밖의 길은 flushLazyLists가 맡는다.
+        //   탭을 옮기면 switchSubTab이 다시 refreshUI를 부르고, 안쪽 탭 전환처럼 그 밖의 길은 flushLazyLists가 맡는다.
         // 목록 내용은 정당 · 이념 등 자료에서 다시 만드는 것이라 건너뛰어도 저장 · 계산 결과는 같다 (tests/perf/measure.cjs로 전후 비교)
         const LAZY_LISTS = [
             ['ideologyList', () => renderIdeologyList()],
@@ -7626,7 +7625,7 @@
             renderListMemberList();
             renderMembersList();
         }
-        // 탭 전환 말고 다른 길로 목록이 보이게 될 때 (안쪽 탭 · 모바일 패널 · 창 크기) — 보이는 순간 밀린 목록을 그린다
+        // 탭 전환 말고 다른 길로 목록이 보이게 될 때 (안쪽 탭 · 창 크기) — 보이는 순간 밀린 목록을 그린다
         document.addEventListener('DOMContentLoaded', () => {
             if(typeof IntersectionObserver !== 'function') return;
             const io = new IntersectionObserver(entries => { if(entries.some(e => e.isIntersecting)) flushLazyLists(); });
@@ -11172,37 +11171,6 @@
         }
 
         // ── 탭 전환 ────────────────────────────
-        // 모바일(세로형)에서는 컨트롤 · 의석 현황이 따로 보이므로, 선거를 돌리거나 결과를 반영하면 의석 현황 쪽으로 바로 넘긴다
-        function showSeatsOnMobile() {
-            if(typeof getUiMode === 'function' && getUiMode() === 'mobile' && typeof setMobilePanel === 'function') setMobilePanel('display');
-        }
-        // 모바일: 컨트롤 쪽 개표 버튼(일시정지 · 즉시 완료 / 의회에 반영 · 재개표)이 보이는 동안 의석 현황 쪽에도 같은 버튼을 띄운다
-        function syncMobileElecBar() {
-            const bar = document.getElementById('mobileElecBar');
-            if(!bar) return;
-            const shown = id => { const el = document.getElementById(id); return !!el && el.style.display !== 'none' && el.style.display !== ''; };
-            const mid = shown('elecMidControls');
-            const post = shown('elecPostBtns');
-            bar.classList.toggle('show', mid || post);
-            ['mobileElecPauseBtn', 'mobileElecFinishBtn'].forEach(id => { const b = document.getElementById(id); if(b) b.style.display = mid ? '' : 'none'; });
-            // 이미 반영한 결과면 "의회에 반영"은 숨긴다 (재개표만 남김)
-            const pendingApply = Object.keys(elecLastResults || {}).length > 0 || !!(elecLastResult && !elecLastResult.applied);
-            const applyBtn = document.getElementById('mobileElecApplyBtn');
-            if(applyBtn) applyBtn.style.display = post && !mid && pendingApply ? '' : 'none';
-            const rerunBtn = document.getElementById('mobileElecRerunBtn');
-            if(rerunBtn) rerunBtn.style.display = post && !mid ? '' : 'none';
-            const src = document.getElementById('elecPauseBtn');
-            const dst = document.getElementById('mobileElecPauseBtn');
-            if(src && dst && dst.textContent !== src.textContent) dst.textContent = src.textContent;
-        }
-        window.addEventListener('load', () => {
-            const obs = new MutationObserver(syncMobileElecBar);
-            ['elecMidControls', 'elecPostBtns', 'elecPauseBtn'].forEach(id => {
-                const el = document.getElementById(id);
-                if(el) obs.observe(el, { attributes: true, attributeFilter: ['style'], childList: true, characterData: true, subtree: true });
-            });
-            syncMobileElecBar();
-        });
         function switchDispTab(tab) {
             document.querySelectorAll('.disp-tab-btn').forEach(b => b.classList.remove('active'));
             document.querySelectorAll('.disp-panel').forEach(p => p.classList.remove('active'));
@@ -14827,7 +14795,6 @@
                 districtSyncSeatResultFromMembers(chamber, base);
             });
             simulate(); refreshUI();
-            showSeatsOnMobile();
             switchDispTab(chamber);
             showCustomAlert(`보궐선거 결과 (${chamberName})\n\n${summary.join('\n')}\n\n의회>의원 탭에서 당선자 이름을 입력해 주세요.`);
         }
@@ -14895,8 +14862,7 @@
             if(releasedHouse) emergencyPowers.dissolutionHouse.active = false;
             if(wasDissolved || releasedSenate || releasedHouse) renderEmergencyPowers();
             simulate(); refreshUI();
-            if(lastCh) { showSeatsOnMobile(); switchDispTab(lastCh); }
-            syncMobileElecBar();
+            if(lastCh) switchDispTab(lastCh);
             if(hadFactions) {
                 showCustomAlert('선거 결과가 반영되었습니다.\n\n파벌을 "합쳐서" 반영하는 정당의 파벌별 의석은 선거 전 분포가 무효화되어 0으로 초기화되었습니다.\n정당 탭에서 파벌 의석을 다시 배분해 주세요.' + (hadSplit ? '\n("파벌 나눠서" 정당은 새 의석을 파벌 몫대로 나눴습니다.)' : ''));
             }
@@ -16277,7 +16243,6 @@
             const suf = chamber.charAt(0).toUpperCase() + chamber.slice(1);
             document.getElementById('dispTabElecResult'+suf).style.display='';
             document.getElementById('dispTabElecResult'+suf).querySelector('.disp-tab-label').textContent = `${chamberName} 선거결과`;
-            showSeatsOnMobile();
             switchDispTab('elecResult'+suf);
             document.getElementById('elecResultTitle'+suf).innerText = `> ${elecTitle} (${elecYear}) — ${chamberName} 개표 중...`;
             document.getElementById('elecResultBar'+suf).style.width='0%';

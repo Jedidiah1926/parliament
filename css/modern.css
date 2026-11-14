@@ -13,7 +13,6 @@
      4. 컴포넌트 (레이아웃·탭·입력·카드·버튼·대화상자)
      5. 기타 페이지 (메인/설정·로드맵·점검·맵 메이커)
      6. 세로 탭 사이드바 (js/sidenav.js)
-     7. 모바일 화면 모드 (아래 탭 바 · 실행 버튼 · 하위 탭 칩)
 
    인라인 style=""과 페이지 CSS를 덮어써야 하는 곳이 많아 !important를 의도적으로 쓴다.
    ===================================================================== */
@@ -185,8 +184,7 @@ html[data-theme-family="modern"] canvas:not(:where([style*="background"])),
 html[data-theme-family="modern"] input[type="checkbox"]:not(:where([style*="background"])),
 html[data-theme-family="modern"] input[type="number"]:not(:where([style*="background"])),
 html[data-theme-family="modern"] input[type="text"]:not(:where([style*="background"])),
-html[data-theme-family="modern"] select:not(:where([style*="background"])),
-html[data-theme-family="modern"][data-ui-mode="mobile"] .mobile-panel-switch:not(:where([style*="background"])) {
+html[data-theme-family="modern"] select:not(:where([style*="background"])) {
     background: var(--m-surface-2) !important;
 }
 html[data-theme-family="modern"] .bill-status-badge.house-fail:not(:where([style*="border-bottom"])),
@@ -223,7 +221,6 @@ html[data-theme-family="modern"] .log-tag.sys:not(:where([style*="border-bottom"
 html[data-theme-family="modern"] .maintenance-box:not(:where([style*="border-bottom"])),
 html[data-theme-family="modern"] .member-filter-btn:not(:where([style*="border-bottom"])),
 html[data-theme-family="modern"] .member-filter-popup:not(:where([style*="border-bottom"])),
-html[data-theme-family="modern"] .mobile-panel-btn:hover:not(:where([style*="border-bottom"])),
 html[data-theme-family="modern"] .nation-flag-banner:not(:where([style*="border-bottom"])),
 html[data-theme-family="modern"] .nation-id-bar:not(:where([style*="border-bottom"])),
 html[data-theme-family="modern"] .order-btn:not(:where([style*="border-bottom"])),
@@ -303,7 +300,6 @@ html[data-theme-family="modern"] .log-tag.sys:not(:where([style*="border-left"])
 html[data-theme-family="modern"] .maintenance-box:not(:where([style*="border-left"])),
 html[data-theme-family="modern"] .member-filter-btn:not(:where([style*="border-left"])),
 html[data-theme-family="modern"] .member-filter-popup:not(:where([style*="border-left"])),
-html[data-theme-family="modern"] .mobile-panel-btn:hover:not(:where([style*="border-left"])),
 html[data-theme-family="modern"] .nation-flag-banner:not(:where([style*="border-left"])),
 html[data-theme-family="modern"] .order-btn:not(:where([style*="border-left"])),
 html[data-theme-family="modern"] .rd-card:not(:where([style*="border-left"])),
@@ -375,7 +371,6 @@ html[data-theme-family="modern"] .log-tag.sys:not(:where([style*="border-right"]
 html[data-theme-family="modern"] .maintenance-box:not(:where([style*="border-right"])),
 html[data-theme-family="modern"] .member-filter-btn:not(:where([style*="border-right"])),
 html[data-theme-family="modern"] .member-filter-popup:not(:where([style*="border-right"])),
-html[data-theme-family="modern"] .mobile-panel-btn:hover:not(:where([style*="border-right"])),
 html[data-theme-family="modern"] .nation-flag-banner:not(:where([style*="border-right"])),
 html[data-theme-family="modern"] .order-btn:not(:where([style*="border-right"])),
 html[data-theme-family="modern"] .rd-card:not(:where([style*="border-right"])),
@@ -450,7 +445,6 @@ html[data-theme-family="modern"] .maintenance-box:not(:where([style*="border-top
 html[data-theme-family="modern"] .maintenance-eta:not(:where([style*="border-top"])),
 html[data-theme-family="modern"] .member-filter-btn:not(:where([style*="border-top"])),
 html[data-theme-family="modern"] .member-filter-popup:not(:where([style*="border-top"])),
-html[data-theme-family="modern"] .mobile-panel-btn:hover:not(:where([style*="border-top"])),
 html[data-theme-family="modern"] .nation-flag-banner:not(:where([style*="border-top"])),
 html[data-theme-family="modern"] .order-btn:not(:where([style*="border-top"])),
 html[data-theme-family="modern"] .rd-card:not(:where([style*="border-top"])),
@@ -539,8 +533,6 @@ html[data-theme-family="modern"] .display-tab-btn:hover:not(:where([style^="colo
 html[data-theme-family="modern"] .drag-handle:hover:not(:where([style^="color"],[style*=";color"],[style*="; color"],[style*=" color"])),
 html[data-theme-family="modern"] .log-tag.sys:not(:where([style^="color"],[style*=";color"],[style*="; color"],[style*=" color"])),
 html[data-theme-family="modern"] .member-filter-btn:not(:where([style^="color"],[style*=";color"],[style*="; color"],[style*=" color"])),
-html[data-theme-family="modern"] .mobile-panel-btn:hover:not(:where([style^="color"],[style*=";color"],[style*="; color"],[style*=" color"])),
-html[data-theme-family="modern"] .mobile-panel-btn:not(:where([style^="color"],[style*=";color"],[style*="; color"],[style*=" color"])),
 html[data-theme-family="modern"] .nation-name-disp:not(:where([style^="color"],[style*=";color"],[style*="; color"],[style*=" color"])),
 html[data-theme-family="modern"] .party-status-badge.status-dissolved:not(:where([style^="color"],[style*=";color"],[style*="; color"],[style*=" color"])),
 html[data-theme-family="modern"] .preset-card-desc:not(:where([style^="color"],[style*=";color"],[style*="; color"],[style*=" color"])),
@@ -2307,14 +2299,6 @@ html[data-theme-family="modern"] .display-tab-btn.active {
     color: var(--m-text) !important;
     box-shadow: var(--m-shadow-sm) !important;
 }
-html[data-theme-family="modern"] .mobile-panel-switch { gap: 4px; }
-html[data-theme-family="modern"] .mobile-panel-btn {
-    background: var(--m-surface-2) !important;
-    border: none !important;
-    border-radius: 9px !important;
-    color: var(--m-text-3) !important;
-}
-html[data-theme-family="modern"] .mobile-panel-btn.active { background: var(--m-accent) !important; color: var(--m-on-accent) !important; }
 
 /* ---- 입력 ---- */
 html[data-theme-family="modern"] label { color: var(--m-text-2) !important; font-size: 13px; font-weight: 500; }
@@ -2718,7 +2702,7 @@ html[data-theme-family="modern"] .mn-panel {
     border: none !important;
     box-shadow: none !important;
 }
-html[data-theme-family="modern"]:not([data-ui-mode="mobile"]) body.has-side-nav.side-nav-collapsed .side-nav { flex-basis: 52px; }
+html[data-theme-family="modern"] body.has-side-nav.side-nav-collapsed .side-nav { flex-basis: 52px; }
 html[data-theme-family="modern"] .mn-search { margin: 0 11px 12px; } /* 돋보기가 아이콘 열(26px)에 오게 */
 html[data-theme-family="modern"] .mn-search input { background: var(--m-surface); color: var(--m-text); border: 1px solid var(--m-border); border-radius: 8px; box-shadow: none; padding: 7px 10px 7px 30px; font-size: 13px; }
 html[data-theme-family="modern"] .mn-search input:focus { border-color: var(--m-border-strong); box-shadow: 0 0 0 3px color-mix(in srgb, var(--m-text) 8%, transparent); }
@@ -2735,7 +2719,7 @@ html[data-theme-family="modern"] .mn-head {
 }
 html[data-theme-family="modern"] .mn-brand { display: block; padding-top: 5px; align-self: flex-start; overflow: hidden; }
 /* 라이트/다크는 국가명을 사이드바 머리로 옮기므로 패널의 국가명 줄은 숨김 (네온은 원래 자리 유지) */
-html[data-theme-family="modern"]:not([data-ui-mode="mobile"]) body.has-side-nav .nation-id-bar { display: none !important; }
+html[data-theme-family="modern"] body.has-side-nav .nation-id-bar { display: none !important; }
 /* 라이트/다크: "Ministry of Interior"는 빼고 국가명을 사이드바 머리 제목으로 */
 html[data-theme-family="modern"] .mn-brand-title { display: none !important; }
 html[data-theme-family="modern"] .mn-brand-sub { margin-top: 0; font-size: 15px; font-weight: 700; color: var(--m-text) !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: normal; }
@@ -2802,8 +2786,8 @@ html[data-theme-family="modern"] .mn-item.mn-locked .mn-dot { background: transp
 html[data-theme-family="modern"] body.side-nav-collapsed .mn-group.active .mn-group-head { box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--tone) 70%, transparent) !important; }
 
 /* 편집 패널 머리: 라이트/다크에선 헤더 띠 대신 현재 위치(그룹 › 항목) */
-html[data-theme-family="modern"]:not([data-ui-mode="mobile"]) body.has-side-nav .tno-header-strip { display: none !important; }
-html[data-theme-family="modern"]:not([data-ui-mode="mobile"]) body.has-side-nav .mn-section-title {
+html[data-theme-family="modern"] body.has-side-nav .tno-header-strip { display: none !important; }
+html[data-theme-family="modern"] body.has-side-nav .mn-section-title {
     display: flex;
     align-items: baseline;
     gap: 8px;
@@ -2822,7 +2806,7 @@ html[data-theme-family="modern"] .mn-section-title {
 html[data-theme-family="modern"] .mn-crumb { color: var(--m-text-3) !important; font-weight: 600; font-size: 14px; }
 html[data-theme-family="modern"] .mn-crumb-sep { color: var(--m-text-4) !important; font-weight: 400; font-size: 14px; }
 /* 사이드바를 접었을 때만 경로 맨 앞에 국가명 (펼쳤을 땐 사이드바 머리에 있음) */
-html[data-theme-family="modern"]:not([data-ui-mode="mobile"]) body.side-nav-collapsed .mn-crumb-nation { display: inline; }
+html[data-theme-family="modern"] body.side-nav-collapsed .mn-crumb-nation { display: inline; }
 html[data-theme-family="modern"] .mn-crumb.mn-crumb-nation { color: var(--m-text) !important; font-weight: 700; max-width: 40%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* 상단 세이브 탭 바: 탭 높이를 바 높이에 정확히 맞춰 세로 스크롤바가 생기지 않게 */
@@ -2923,99 +2907,6 @@ html[data-theme-family="modern"] #saveSelectOverlay > .save-select-modal { paddi
 html[data-theme-family="modern"] .save-rename-input { padding: 3px 8px !important; font-size: 13px; border-radius: 7px !important; }
 html[data-theme-family="modern"] .lang-select-btn .lang-remove { color: currentColor; opacity: .55; }
 
-/* ===================== 7. 모바일 화면 모드 ===================== */
-/* 레이아웃은 css/sidenav.css 끝부분 — 여기선 라이트/다크 모양만 */
-/* 머리: 헤더 띠 대신 국가명을 제목처럼 (현재 위치는 아래 탭 바 + 칩 줄이 보여줌) */
-html[data-theme-family="modern"][data-ui-mode="mobile"] body.has-side-nav .tno-header-strip { display: none !important; }
-html[data-theme-family="modern"][data-ui-mode="mobile"] body.has-side-nav .nation-id-bar { padding: 16px 18px 12px; }
-html[data-theme-family="modern"][data-ui-mode="mobile"] body.has-side-nav .nation-name-disp { color: var(--m-text) !important; font-size: 17px; font-weight: 700; }
-
-html[data-theme-family="modern"] .mobile-nav {
-    background: color-mix(in srgb, var(--m-surface) 86%, transparent) !important;
-    -webkit-backdrop-filter: saturate(1.6) blur(18px);
-    backdrop-filter: saturate(1.6) blur(18px);
-    border-top: 1px solid var(--m-border) !important;
-    box-shadow: none !important;
-    font-family: inherit;
-}
-html[data-theme-family="modern"] .mobile-nav-btn[data-tone="info"] { --tone: var(--m-info); }
-html[data-theme-family="modern"] .mobile-nav-btn[data-tone="danger"] { --tone: var(--m-danger); }
-/* 여론: 라이트·다크에선 귤색 (라이트는 짙게, 다크는 밝게) */
-html[data-theme-mode="light"] .mobile-nav-btn[data-tone="gold"] { --tone: #ea580c; }
-html[data-theme-mode="dark"] .mobile-nav-btn[data-tone="gold"] { --tone: #fb923c; }
-html[data-theme-family="modern"] .mobile-nav-btn[data-tone="success"] { --tone: var(--m-success); }
-html[data-theme-family="modern"] .mobile-nav-btn[data-tone="seats"] { --tone: var(--m-text); }
-html[data-theme-family="modern"] .mobile-nav-btn[data-tone="muted"] { --tone: var(--m-text-3); }
-html[data-theme-family="modern"] .mobile-nav-btn[data-tone="purple"] { --tone: #8b5cf6; }
-html[data-theme-family="modern"] .mobile-nav-btn[data-tone="orange"] { --tone: var(--m-gold); } /* 국가: 라이트·다크에선 갈색빛 금색(예전 여론 색) */
-html[data-theme-mode="light"] .mobile-nav-btn[data-tone="pink"] { --tone: #db2777; }
-html[data-theme-mode="dark"] .mobile-nav-btn[data-tone="pink"] { --tone: #f472b6; }
-html[data-theme-mode="light"] .mobile-nav-btn[data-tone="lime"] { --tone: #0d9488; }
-html[data-theme-mode="dark"] .mobile-nav-btn[data-tone="lime"] { --tone: #2dd4bf; }
-html[data-theme-family="modern"] .mobile-nav-btn {
-    border: none !important;
-    margin-top: 0;
-    background: transparent !important;
-    color: var(--m-text-3) !important;
-    text-shadow: none !important;
-    gap: 4px;
-}
-html[data-theme-family="modern"] .mnb-icon {
-    width: 52px;
-    height: 28px;
-    border-radius: 14px;
-    font-size: 16px;
-    transition: background .15s;
-}
-html[data-theme-family="modern"] .mnb-label { font-size: 11.5px; font-weight: 600; }
-html[data-theme-family="modern"] .mobile-nav-btn.active { color: var(--m-text) !important; }
-html[data-theme-family="modern"] .mobile-nav-btn.active .mnb-icon {
-    background: color-mix(in srgb, var(--tone) 16%, transparent);
-    color: color-mix(in srgb, var(--tone) 80%, var(--m-text));
-}
-html[data-theme-family="modern"] .mobile-nav-btn.active .mnb-label { font-weight: 700; }
-
-html[data-theme-family="modern"] .mobile-exec-fab {
-    background: var(--m-accent) !important;
-    border: none !important;
-    border-radius: 14px;
-    color: var(--m-on-accent) !important;
-    font-family: inherit;
-    letter-spacing: 0;
-    box-shadow: var(--m-shadow-lg) !important;
-}
-html[data-theme-family="modern"] .mobile-exec-fab .fab-neon { display: none; }
-html[data-theme-family="modern"] .mobile-exec-fab .fab-icon,
-html[data-theme-family="modern"] .mobile-exec-fab .fab-label { display: inline; }
-html[data-theme-family="modern"] .mobile-exec-fab .fab-label { font-weight: 700; }
-html[data-theme-family="modern"] .mobile-exec-fab .fab-icon { font-size: 12px; }
-
-/* 하위 탭 칩 줄 */
-html[data-theme-family="modern"][data-ui-mode="mobile"] body.has-side-nav .main-tab-content > .sub-tab-container {
-    background: var(--m-surface) !important;
-    border-bottom: 1px solid var(--m-border) !important;
-    gap: 6px;
-    margin: 0 -18px 16px;
-    padding: 10px 18px;
-}
-html[data-theme-family="modern"][data-ui-mode="mobile"] body.has-side-nav .main-tab-content > .sub-tab-container > .sub-tab-btn {
-    border: none !important;
-    border-radius: 999px !important;
-    margin: 0;
-    min-height: 36px;
-    padding: 7px 15px;
-    background: var(--m-surface-2) !important;
-    color: var(--m-text-2) !important;
-    font-size: 14px;
-    font-weight: 600;
-}
-html[data-theme-family="modern"][data-ui-mode="mobile"] body.has-side-nav .main-tab-content > .sub-tab-container > .sub-tab-btn.active {
-    background: var(--m-accent) !important;
-    color: var(--m-on-accent) !important;
-}
-html[data-theme-family="modern"][data-ui-mode="mobile"] body.has-side-nav .main-tab-content > .sub-tab-container > .sub-tab-btn-danger { color: var(--m-danger) !important; }
-html[data-theme-family="modern"][data-ui-mode="mobile"] body.has-side-nav .main-tab-content > .sub-tab-container > .sub-tab-btn-danger.active { background: var(--m-danger) !important; color: #fff !important; }
-
 /* 의회 > 구성: 의석 배정 합계 */
 html[data-theme-family="modern"] .seat-sum-line {
     border: none;
@@ -3105,18 +2996,3 @@ html[data-theme-family="modern"] .save-card-main:hover .save-select-item-name { 
 html[data-theme-family="modern"] .save-card-sep { border-top: 1px solid var(--m-border); margin: 0 12px; }
 html[data-theme-family="modern"] .save-card-auto { color: var(--m-text-3); font-size: 12.5px; }
 html[data-theme-family="modern"] .save-card-auto:hover { color: var(--m-text); }
-
-/* 모바일 개표 버튼 줄 (의석 현황 쪽) */
-html[data-theme-family="modern"] .mobile-elec-btn {
-    background: var(--m-surface-2);
-    border: 1px solid var(--m-border);
-    color: var(--m-text);
-    border-radius: 10px;
-    font-weight: 600;
-}
-html[data-theme-family="modern"] .mobile-elec-btn-primary {
-    background: var(--m-accent);
-    border-color: var(--m-accent);
-    color: var(--m-on-accent);
-    letter-spacing: 0;
-}

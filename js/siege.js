@@ -227,7 +227,7 @@
     // ---- 봉쇄 돌파 애니메이션 — 옆 시각 화면(하원 반원) 위에 겹쳐 그린다 ----
     // 의원들이 아래에서 올라와 계엄군 봉쇄선을 지나, 본회의장 입구 → 통로 → 자기 줄을 따라 걸어 자리에 앉는다.
     // 봉쇄선이나 입구 저지 인원에게 막히면 물러나고, 과반에 못 미치면 들어간 의원들도 봉쇄선 밖으로 끌려 나간다.
-    // 하원 반원이 보이지 않거나(모바일 · 다른 탭) 움직임 줄이기 설정이면 건너뛰고 바로 결과. 화면을 누르면 끝으로 건너뜀.
+    // 하원 반원이 보이지 않거나(다른 탭) 움직임 줄이기 설정이면 건너뛰고 바로 결과. 화면을 누르면 끝으로 건너뜀.
     function houseCanvasReady() {
         const cvs = document.getElementById('houseCanvas');
         return cvs && cvs.offsetParent !== null && cvs.clientWidth > 50 && (dotCache.house || []).length ? cvs : null;

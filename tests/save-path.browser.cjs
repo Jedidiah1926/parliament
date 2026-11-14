@@ -29,7 +29,7 @@ const KEY = 'dnoParliamentSaveSlots';
                 const strip = (0, eval)('(' + stripSrc + ')'), key = LS_PREFIX + SAVE_SLOTS_KEY, out = {};
                 let writes = 0; const set = Storage.prototype.setItem;
                 Storage.prototype.setItem = function (k, v) { if (String(k) === key) writes++; return set.call(this, k, v); };
-                const inp = document.getElementById('nationNameInput'); inp.value += ' ✓';
+                const inp = document.getElementById('nationNameInput'); (inp.value += ' ✓', inp.dispatchEvent(new Event('input', { bubbles: true })));
                 out.saved = saveActiveNow(true); out.writes1 = writes;
                 const mine = JSON.parse(localStorage.getItem(key)).find(s => s.id === activeSlotId);
                 out.stateEqual = strip(mine.state) === strip(getAppState());
@@ -41,7 +41,7 @@ const KEY = 'dnoParliamentSaveSlots';
                 // 바뀐 게 없으면 자동저장은 저장소에 쓰지 않는다 (저장 시각만 다른 것은 "바뀐 것"이 아니다)
                 writes = 0; await new Promise(r => setTimeout(r, 30));
                 out.idleOk = saveActiveNow() && saveActiveNow(); out.idleWrites = writes;
-                inp.value += '!'; out.changedOk = saveActiveNow(); out.changedWrites = writes;
+                (inp.value += '!', inp.dispatchEvent(new Event('input', { bubbles: true }))); out.changedOk = saveActiveNow(); out.changedWrites = writes;
                 out.name = inp.value; out.dirty = saveDirty;
                 Storage.prototype.setItem = set;
                 return out;
@@ -66,23 +66,23 @@ const KEY = 'dnoParliamentSaveSlots';
                 const stored = () => JSON.parse(localStorage.getItem(key)).find(s => s.id === activeSlotId).state.config.nationName;
                 const wait = ms => new Promise(r => setTimeout(r, ms));
                 // 연달아 다섯 번 → 한 번만 쓴다
-                for (let i = 0; i < 5; i++) { inp.value = '묶음 ' + i; saveActiveSoon(); await wait(20); }
+                for (let i = 0; i < 5; i++) { (inp.value = '묶음 ' + i, inp.dispatchEvent(new Event('input', { bubbles: true }))); saveActiveSoon(); await wait(20); }
                 out.beforeDelay = [writes, saveSoonWaiting];
                 await wait(900);
                 out.afterDelay = [writes, saveSoonWaiting, stored()];
                 // 기다리는 중에 떠나기 → 그 자리에서 마친다
-                writes = 0; inp.value = '떠나기 전'; saveActiveSoon();
+                writes = 0; (inp.value = '떠나기 전', inp.dispatchEvent(new Event('input', { bubbles: true }))); saveActiveSoon();
                 let went = false; confirmSaveBeforeLeaving('?', () => { went = true; });
                 out.leave = [went, writes, saveSoonWaiting, stored()];
                 await wait(900); out.leaveNoExtra = writes;
                 // 기다리는 중에 바로 저장 → 묶음 저장은 취소되고 더 새 상태가 남는다
-                writes = 0; inp.value = '먼저'; saveActiveSoon(); inp.value = '나중'; saveActiveNow(true);
+                writes = 0; (inp.value = '먼저', inp.dispatchEvent(new Event('input', { bubbles: true }))); saveActiveSoon(); (inp.value = '나중', inp.dispatchEvent(new Event('input', { bubbles: true }))); saveActiveNow(true);
                 await wait(900); out.direct = [writes, stored()];
                 // 압축을 기다리는 사이 새 요청 → 옛 상태로 덮지 않는다
-                writes = 0; inp.value = '옛'; saveActiveSoon(0); await wait(1); inp.value = '새'; saveActiveSoon(0);
+                writes = 0; (inp.value = '옛', inp.dispatchEvent(new Event('input', { bubbles: true }))); saveActiveSoon(0); await wait(1); (inp.value = '새', inp.dispatchEvent(new Event('input', { bubbles: true }))); saveActiveSoon(0);
                 await wait(900); out.race = [stored(), saveSoonWaiting];
                 // 창을 가릴 때(pagehide) 기다리던 저장을 마친다
-                writes = 0; inp.value = '닫기 전'; saveActiveSoon(); window.dispatchEvent(new Event('pagehide'));
+                writes = 0; (inp.value = '닫기 전', inp.dispatchEvent(new Event('input', { bubbles: true }))); saveActiveSoon(); window.dispatchEvent(new Event('pagehide'));
                 out.hide = [writes, stored()];
                 Storage.prototype.setItem = set;
                 return out;
@@ -122,17 +122,17 @@ const KEY = 'dnoParliamentSaveSlots';
                 const key = LS_PREFIX + SAVE_SLOTS_KEY, calls = window.__desk.calls, out = {}, inp = document.getElementById('nationNameInput');
                 const compose = c => JSON.stringify({ ...JSON.parse(c.state), __hemiSlot: JSON.parse(c.meta) });
                 const fromList = () => { const { state, ...meta } = JSON.parse(localStorage.getItem(key)).find(s => s.id === activeSlotId); return JSON.stringify({ ...state, __hemiSlot: meta }); };
-                calls.length = 0; inp.value = '한 파일'; saveActiveNow(true);
+                calls.length = 0; (inp.value = '한 파일', inp.dispatchEvent(new Event('input', { bubbles: true }))); saveActiveNow(true);
                 out.one = calls.map(c => c.kind).join(','); out.oneSame = compose(calls[0]) === fromList(); out.oneRaw = calls[0].state.slice(0, -1) + ',"__hemiSlot":' + calls[0].meta + '}' === fromList();
                 // 앱이 못 한다고 답하면 목록 전체를 보낸다
-                window.__desk.setMode('fallback'); calls.length = 0; inp.value = '넘김'; saveActiveNow(true);
+                window.__desk.setMode('fallback'); calls.length = 0; (inp.value = '넘김', inp.dispatchEvent(new Event('input', { bubbles: true }))); saveActiveNow(true);
                 out.fallback = calls.map(c => c.kind).join(','); out.fallbackText = calls[1].text === localStorage.getItem(key);
-                window.__desk.setMode('throw'); calls.length = 0; inp.value = '오류'; saveActiveNow(true);
+                window.__desk.setMode('throw'); calls.length = 0; (inp.value = '오류', inp.dispatchEvent(new Event('input', { bubbles: true }))); saveActiveNow(true);
                 out.thrown = calls.map(c => c.kind).join(',');
                 // 이름 바꾸기 · 새 세이브처럼 목록이 바뀌는 저장은 처음부터 전체 쓰기
                 window.__desk.setMode('ok'); calls.length = 0; renameNamedSlot(activeSlotId, '새 이름');
                 out.rename = [...new Set(calls.map(c => c.kind))].join(','); out.renameText = calls[calls.length - 1].text === localStorage.getItem(key);
-                calls.length = 0; inp.value = '이름 바꾼 뒤'; saveActiveNow(true);
+                calls.length = 0; (inp.value = '이름 바꾼 뒤', inp.dispatchEvent(new Event('input', { bubbles: true }))); saveActiveNow(true);
                 out.afterRename = calls.map(c => c.kind + ':' + JSON.parse(c.meta || '{}').name).join(',');
                 out.error = HemiSaveFolder.lastError();
                 return out;

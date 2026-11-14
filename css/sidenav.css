@@ -1,22 +1,21 @@
 /* =====================================================================
    세로 탭 사이드바 (js/sidenav.js) — 공통 레이아웃 + 네온 모양
    ---------------------------------------------------------------------
-   데스크톱 화면 모드에서 모든 테마에 표시되고, 그때는 기존 가로 탭 줄(1·2단)을 숨긴다.
+   모든 테마에 표시되고, 기존 가로 탭 줄(1·2단)은 숨긴다.
    네온 모드는 패널 머리를 원래대로("MINISTRY OF INTERIOR" 띠 + 그 아래 짙은 회색 국가명 줄) 두고
    사이드바 머리엔 접기 버튼만 둔다. 라이트/다크에서만 국가명을 사이드바 머리로 옮기고
    패널 머리를 현재 위치(그룹 › 항목)로 바꾼다 (modern.css 6번 구역).
-   모바일 화면 모드에서는 숨기고 기존 가로 탭을 그대로 쓴다.
    라이트/다크 모양은 css/modern.css 6번 구역이 덮어쓴다.
    ===================================================================== */
 
 /* ---- 표시/숨김 ---- */
 .side-nav, .mn-section-title { display: none; }
-html:not([data-ui-mode="mobile"]) body.has-side-nav .main-tab-container,
-html:not([data-ui-mode="mobile"]) body.has-side-nav .main-tab-content > .sub-tab-container { display: none !important; }
+html body.has-side-nav .main-tab-container,
+html body.has-side-nav .main-tab-content > .sub-tab-container { display: none !important; }
 
 /* ---- 레이아웃 (공통) ---- */
 /* nav는 자리만 (끝 폭으로 한 번에 바뀜), 보이는 판 .mn-panel이 그 위에 — 접기 · 펴기 때 판의 폭만 움직인다 (js/sidenav.js applyCollapsed) */
-html:not([data-ui-mode="mobile"]) body.has-side-nav .side-nav {
+html body.has-side-nav .side-nav {
     display: block;
     position: relative;
     z-index: 2;
@@ -25,7 +24,7 @@ html:not([data-ui-mode="mobile"]) body.has-side-nav .side-nav {
     margin-right: 12px;
     box-sizing: border-box;
 }
-html:not([data-ui-mode="mobile"]) body.has-side-nav.side-nav-collapsed .side-nav { flex-basis: 58px; }
+html body.has-side-nav.side-nav-collapsed .side-nav { flex-basis: 58px; }
 .mn-panel { position: absolute; top: 0; bottom: 0; left: 0; width: 100%; display: flex; flex-direction: column; overflow: hidden; box-sizing: border-box; }
 
 .mn-head { display: flex; align-items: flex-start; gap: 6px; flex: 0 0 auto; }
@@ -216,155 +215,3 @@ body.side-nav-collapsed .mn-group.active .mn-group-head {
 .mn-brand { display: none; }
 .mn-head { justify-content: flex-end; }
 
-/* =====================================================================
-   모바일 화면 모드 — 아래 탭 바 + 떠 있는 실행 버튼 (js/sidenav.js)
-   ---------------------------------------------------------------------
-   사이드바 대신 화면 맨 아래에 묶음(의회·국가·여론·내각) + "의석" 탭을 두고,
-   위쪽 가로 메인 탭 줄 · 컨트롤/의석 전환 줄 · 패널 끝의 실행 막대를 숨긴다.
-   항목(하위 탭)은 세이브 탭 바 바로 아래에 붙어 따라오는 가로 스크롤 칩 줄이 된다.
-   ===================================================================== */
-.mobile-nav, .mobile-exec-fab { display: none; }
-
-html[data-ui-mode="mobile"] body.has-side-nav {
-    --mnav-h: 58px;
-    --safe-b: env(safe-area-inset-bottom, 0px);
-    padding-left: max(10px, env(safe-area-inset-left, 0px));
-    padding-right: max(10px, env(safe-area-inset-right, 0px));
-    /* 아래 탭 바 + 실행 버튼에 마지막 내용이 가리지 않도록 */
-    padding-bottom: calc(var(--mnav-h) + var(--safe-b) + 84px);
-}
-html[data-ui-mode="mobile"] body.has-side-nav .main-tab-container,
-html[data-ui-mode="mobile"] body.has-side-nav .mobile-panel-switch,
-html[data-ui-mode="mobile"] body.has-side-nav .controls > .theme-panel-box { display: none !important; }
-
-/* ---- 아래 탭 바 ---- */
-html[data-ui-mode="mobile"] body.has-side-nav .mobile-nav {
-    display: flex;
-    position: fixed;
-    left: 0; right: 0; bottom: 0;
-    z-index: 890;
-    height: calc(var(--mnav-h) + var(--safe-b));
-    padding: 0 max(4px, env(safe-area-inset-right, 0px)) var(--safe-b) max(4px, env(safe-area-inset-left, 0px));
-    box-sizing: border-box;
-}
-.mobile-nav-btn {
-    flex: 1 1 0;
-    min-width: 0;
-    min-height: 44px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 3px;
-    padding: 6px 2px;
-    background: transparent;
-    cursor: pointer;
-    -webkit-tap-highlight-color: transparent;
-    touch-action: manipulation;
-}
-.mnb-icon { font-size: 18px; line-height: 1; height: 20px; display: grid; place-items: center; }
-.mnb-label { font-size: 11.5px; line-height: 1.1; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-
-/* ---- 떠 있는 실행 버튼 — 편집 패널과 같은 폭으로 아래 탭 바 바로 위에 ---- */
-html[data-ui-mode="mobile"] body.has-side-nav .mobile-exec-fab {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    position: fixed;
-    left: max(10px, env(safe-area-inset-left, 0px));
-    right: max(10px, env(safe-area-inset-right, 0px));
-    bottom: calc(var(--mnav-h) + var(--safe-b) + 10px);
-    z-index: 889;
-    height: 54px;
-    padding: 0 16px;
-    box-sizing: border-box;
-    cursor: pointer;
-    -webkit-tap-highlight-color: transparent;
-    touch-action: manipulation;
-}
-.fab-neon { font-size: 1.3rem; letter-spacing: 2px; font-weight: bold; white-space: nowrap; }
-.fab-icon, .fab-label { display: none; }
-.fab-icon { font-size: 14px; line-height: 1; }
-.fab-label { font-size: 15px; line-height: 1; }
-.mobile-exec-fab:active { transform: scale(.985); }
-
-/* ---- 하위 탭 → 붙어 따라오는 가로 스크롤 칩 줄 ---- */
-html[data-ui-mode="mobile"] body.has-side-nav .main-tab-content > .sub-tab-container {
-    position: sticky;
-    top: 36px;
-    z-index: 40;
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    overflow-y: hidden;
-    scrollbar-width: none;
-    margin: 0 -15px 12px;
-    padding: 8px 15px 0;
-}
-html[data-ui-mode="mobile"] body.has-side-nav .main-tab-content > .sub-tab-container::-webkit-scrollbar { display: none; }
-html[data-ui-mode="mobile"] body.has-side-nav .main-tab-content > .sub-tab-container > .sub-tab-btn {
-    flex: 0 0 auto;
-    min-width: 64px;
-    min-height: 40px;
-    padding: 8px 14px;
-    white-space: nowrap;
-}
-
-/* ---- 손가락으로 누르기 좋은 크기 ---- */
-html[data-ui-mode="mobile"] .sub-tab-btn-3,
-html[data-ui-mode="mobile"] .system-radio-btn { min-height: 38px; }
-html[data-ui-mode="mobile"] .add-btn { min-height: 42px; }
-@media (pointer: coarse) {
-    /* iOS Safari가 입력칸을 누를 때 화면을 확대하지 않도록 16px 이상 */
-    html[data-ui-mode="mobile"] input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]),
-    html[data-ui-mode="mobile"] select,
-    html[data-ui-mode="mobile"] textarea { font-size: 16px; }
-}
-
-/* ---- 네온 모양 ---- */
-.mobile-nav {
-    background: #000;
-    border-top: 2px solid var(--tno-border);
-    box-shadow: 0 -4px 16px color-mix(in srgb, var(--tno-neon) 8%, transparent);
-    font-family: 'NeoDunggeunmo', 'VT323', monospace;
-}
-.mobile-nav-btn[data-tone="info"] { --tone: var(--tno-neon); }
-.mobile-nav-btn[data-tone="danger"] { --tone: var(--tno-alert); }
-.mobile-nav-btn[data-tone="gold"] { --tone: var(--tno-gold); }
-.mobile-nav-btn[data-tone="success"] { --tone: var(--vote-yea); }
-.mobile-nav-btn[data-tone="seats"] { --tone: var(--tno-neon); }
-.mobile-nav-btn[data-tone="muted"] { --tone: #8b929c; }
-.mobile-nav-btn[data-tone="purple"] { --tone: #b58cff; }
-.mobile-nav-btn[data-tone="orange"] { --tone: #ff9f43; }
-.mobile-nav-btn[data-tone="pink"] { --tone: #ff7ac8; }
-.mobile-nav-btn[data-tone="lime"] { --tone: #b8f03c; }
-.mobile-nav-btn {
-    border: none;
-    border-top: 2px solid transparent;
-    margin-top: -2px;
-    color: #666;
-    font-family: inherit;
-}
-.mobile-nav-btn.active {
-    color: var(--tone);
-    border-top-color: var(--tone);
-    background: linear-gradient(to bottom, color-mix(in srgb, var(--tone) 14%, transparent), transparent);
-    text-shadow: 0 0 5px color-mix(in srgb, var(--tone) 70%, transparent);
-}
-.mobile-exec-fab {
-    background: var(--tno-neon);
-    border: none;
-    color: #000;
-    font-family: 'NeoDunggeunmo', 'VT323', monospace;
-    box-shadow: 0 0 10px var(--tno-neon), 0 4px 14px rgba(0, 0, 0, .6);
-}
-.mobile-exec-fab:active { background: #fff; box-shadow: 0 0 20px var(--tno-neon); }
-html[data-ui-mode="mobile"] body.has-side-nav .main-tab-content > .sub-tab-container {
-    background: var(--tno-panel);
-}
-/* 네온 머리 띠는 모바일에서 조금 얇게 */
-html[data-ui-mode="mobile"] body.has-side-nav .tno-header-strip { padding-top: 6px; padding-bottom: 6px; font-size: .95rem; }
-/* 모바일: 알림 토스트가 아래 탭 바·실행 버튼에 가리지 않게 */
-html[data-ui-mode="mobile"] body.has-side-nav .kbd-toast { bottom: calc(var(--mnav-h) + var(--safe-b) + 76px); }
-/* 실행 버튼을 숨기면(기본, js/uimode.js) 그 자리만큼 띄우던 아래 여백을 줄인다 */
-html[data-ui-mode="mobile"][data-exec-btn="off"] body.has-side-nav { padding-bottom: calc(var(--mnav-h) + var(--safe-b) + 16px); }
