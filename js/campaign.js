@@ -9,8 +9,6 @@
 /* global getAppState, setAppState, switchSubTab, switchMainTab, switchDispTab, showCustomAlert, showCustomConfirm, showKbdToast, currentMainTab, currentSubTab */
 (function () {
     'use strict';
-    const root = document.documentElement;
-    if (root.getAttribute('data-app-mode') === 'logo') return;
 
     const FORMAT = 'hemicycle-campaign@1';
     const Clock = window.HemiCampaignClock;

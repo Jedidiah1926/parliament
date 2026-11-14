@@ -134,9 +134,6 @@
             return p ? p.color : '#666';
         }
 
-        // ── 로고 제작 모드 (logo.html) — 의회 메뉴만 남긴 화면 ──
-        const IS_LOGO_MODE = document.documentElement.getAttribute('data-app-mode') === 'logo';
-
         // ── 집권 정당 강조 색 — 비어 있으면 기본 금색(#ffd700 / 테마의 금색) ──
         let govHighlightColor = '';
         function normalizeHexColor(v) {
@@ -152,27 +149,6 @@
             if(!govHighlightColor) return fallback;
             const n = parseInt(govHighlightColor.slice(1), 16);
             return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, 0.8)`;
-        }
-        function setGovHighlightGlow(on) {
-            govHighlightGlow = !!on;
-            simulate();
-        }
-        function syncGovHighlightColorUI() {
-            const glowChk = document.getElementById('chkGovHlGlow');
-            if(glowChk) glowChk.checked = govHighlightGlow;
-            const hex = govHighlightColor || '#FFD700';
-            const picker = document.getElementById('govHlColorPicker');
-            const text = document.getElementById('govHlColorHex');
-            if(picker) picker.value = hex.toLowerCase();
-            if(text && document.activeElement !== text) text.value = govHighlightColor;
-        }
-        function setGovHighlightColor(value, fromText) {
-            const hex = value ? normalizeHexColor(value) : '';
-            if(value && !hex) return; // 입력 중인 불완전한 HEX는 무시
-            govHighlightColor = hex;
-            syncGovHighlightColorUI();
-            if(!fromText) { const t = document.getElementById('govHlColorHex'); if(t) t.value = hex; }
-            simulate();
         }
 
         // ── 대통령/총리/국무위원을 실제 의원(지역구·비례·무소속)과 연결 — 이름·사진·당적 자동 반영 ──────────────
@@ -5228,14 +5204,6 @@
         });
         let suppressAutosaveOnUnload = false;
 
-        // 로고 제작 모드: 의회 메뉴만 쓰므로 저장된 화면 위치와 상관없이 의회 탭에서 시작
-        if(IS_LOGO_MODE) {
-            window.addEventListener('load', () => setTimeout(() => {
-                if(currentMainTab !== 'setup') switchMainTab('setup');
-                syncGovHighlightColorUI();
-            }, 0));
-        }
-
         // ── 새로 시작할 때 쓰는 깨끗한 기본 상태 ──
         // setAppState는 저장 기록에 없는 값(지역구 격자·성향 등)을 건드리지 않고 그대로 두기 때문에, 화면에 떠 있던
         // 이전 세이브의 값이 섞여 들어갈 수 있다. 새 세이브·프리셋·구버전/외부 파일은 먼저 깨끗한 기본 상태로 되돌린 뒤 적용한다.
@@ -5325,9 +5293,8 @@
                 // 파일에서 불러온 세이브도 새 세이브로 (이름: 파일 이름 → 국가 이름 → "불러온 세이브")
                 else if(bootImported) createNamedSlotFromCurrentState(uniqueSaveName((bootImportName || '').trim() || document.getElementById('nationNameInput')?.value?.trim() || '불러온 세이브'));
                 else if(bootEmpty) {
-                    // 열 세이브가 하나도 없음 — 로고 제작 화면은 바로 쓸 수 있게 세이브를 하나 만들고, 본 게임 · 미리보기 화면은 빈 화면(탭 바의 "+"로 시작)
-                    if(IS_LOGO_MODE) createNamedSlotFromCurrentState('로고');
-                    else setNoOpenTab(true);
+                    // 열 세이브가 하나도 없음 — 빈 화면(탭 바의 "+"로 시작)
+                    setNoOpenTab(true);
                 }
                 if(activeSlotId && restored) markSavedBaseline();
                 if(autosaveEnabled) startAutosaveTimer();
@@ -5746,7 +5713,6 @@
             if(gd('chkGovHighlight')) gd('chkGovHighlight').checked = cfg.highlightGov ?? true;
             govHighlightColor = normalizeHexColor(cfg.govHighlightColor || '');
             govHighlightGlow = cfg.govHighlightGlow ?? true;
-            syncGovHighlightColorUI();
             if(gd('nationNameInput')) gd('nationNameInput').value = cfg.nationName ?? "";
             if(gd('nationDateEra'))   gd('nationDateEra').value   = cfg.nationDateEra ?? "";
             if(gd('nationDateYear'))  gd('nationDateYear').value  = cfg.nationDateYear ?? "";
@@ -5947,11 +5913,11 @@
             } catch(e) { return false; }
         }
 
-        // logo.html(로고 제작 모드) · teaserNN.html(다음 업데이트 미리보기)은 본 게임 세이브와 섞이지 않도록 저장 키에 따로 접두어를 붙인다
+        // teaserNN.html(다음 업데이트 미리보기)은 본 게임 세이브와 섞이지 않도록 저장 키에 따로 접두어를 붙인다
         const IS_TEASER_MODE = document.documentElement.getAttribute('data-app-mode') === 'teaser';
         // 티저는 번호(data-teaser)마다 따로 — 버전 번호를 다시 매긴 뒤(사람 = 1.6.1)로는 예전 티저 저장 공간과 섞이지 않게 새 이름(V2)을 쓴다
         const TEASER_ID = document.documentElement.getAttribute('data-teaser') || '';
-        const LS_PREFIX = IS_LOGO_MODE ? 'hemicycleLogo:' : IS_TEASER_MODE ? `hemicycleTeaserV2-${TEASER_ID || '69'}:` : '';
+        const LS_PREFIX = IS_TEASER_MODE ? `hemicycleTeaserV2-${TEASER_ID || '69'}:` : '';
         function safeLsGet(key) {
             try { return localStorage.getItem(LS_PREFIX + key); } catch(e) { return null; }
         }

@@ -4,7 +4,6 @@
 /* global switchSubTab, currentMainTab, currentSubTab, showKbdToast, showCustomAlert */
 (function () {
     'use strict';
-    if (document.documentElement.getAttribute('data-app-mode') === 'logo') return;
     const O = window.HemiOps;
     const host0 = document.getElementById('mainContentCampaign');
     if (!O || !host0) return;

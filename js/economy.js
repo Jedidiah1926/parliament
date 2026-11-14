@@ -1,5 +1,5 @@
 // ===== 1.6.9 — 보이지 않는 손 "Invisible hand" — 경제 시스템 =====
-// 1.6.9 미리보기(예전 teaser69)에서 본 게임으로 옮겨 왔다 — 로고 제작 화면만 빼고 돈다.
+// 1.6.9 미리보기(예전 teaser69)에서 본 게임으로 옮겨 왔다.
 // main.html은 js/vassals.js 다음에 그래프(js/economycharts.js)와 이 파일을 읽는다. 세이브 칸은 economy (1.6.9 미리보기 세이브는 teaser69 칸)
 //
 // 샌드박스 원칙 — 경제는 결과를 강제하지 않고 계산 · 표시 · 제안한다. 모든 수치는 직접 고칠 수 있고, 계산은 날짜가 넘어갈 때만 돈다.
@@ -17,7 +17,6 @@
 (function () {
     'use strict';
     const root = document.documentElement;
-    if (root.getAttribute('data-app-mode') === 'logo') return;
     const C = window.HemiEconCharts;
     if (!C) return;
 

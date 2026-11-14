@@ -13,7 +13,6 @@
 (function () {
     'use strict';
     const root = document.documentElement;
-    if (root.getAttribute('data-app-mode') === 'logo') return;
 
     // 속성 값(value="…")에도 쓰므로 따옴표까지 바꾼다 (main.js의 escapeHtmlText는 따옴표를 그대로 둠)
     const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));

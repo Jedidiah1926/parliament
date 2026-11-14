@@ -497,16 +497,6 @@
                         <input type="checkbox" id="chkGovHighlight" onchange="simulate()" checked>
                         <span style="color:var(--tno-gold); text-shadow:0 0 5px var(--tno-gold);">집권 세력 강조 (HIGHLIGHT GOV)</span>
                     </label>
-                    <!-- 로고 제작 모드(logo.html) 전용: 집권 정당 강조 색 -->
-                    <div class="gov-hl-color logo-only">
-                        <label for="govHlColorHex">집권 정당 강조 색</label>
-                        <div class="gov-hl-color-row">
-                            <input type="color" id="govHlColorPicker" value="#ffd700" oninput="setGovHighlightColor(this.value)">
-                            <input type="text" id="govHlColorHex" placeholder="#FFD700" maxlength="7" spellcheck="false" oninput="setGovHighlightColor(this.value, true)" onblur="syncGovHighlightColorUI(); this.value = govHighlightColor">
-                            <button type="button" class="gov-hl-color-reset" onclick="setGovHighlightColor('')">기본값</button>
-                        </div>
-                        <label class="gov-hl-glow"><input type="checkbox" id="chkGovHlGlow" checked onchange="setGovHighlightGlow(this.checked)"> 네온 빛번짐</label>
-                    </div>
 
 
                     <div style="margin-bottom:16px;">

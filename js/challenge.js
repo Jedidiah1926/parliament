@@ -8,8 +8,6 @@
 /* global getAppState, setAppState, showCustomAlert, showCustomConfirm, showKbdToast */
 (function () {
     'use strict';
-    const root = document.documentElement;
-    if (root.getAttribute('data-app-mode') === 'logo') return;
 
     const FORMAT = 'hemicycle-challenge@1';
     const OLD_FORMAT = 'hemicycle-scenario@1';

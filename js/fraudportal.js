@@ -6,8 +6,6 @@
 /* global parties, chamberDisplayName, districtSvgMapFor, renderDistrictSvgInto, districtNames, escapeHtmlText, getAppState, setAppState, switchSubTab, switchDispTab */
 (function () {
     'use strict';
-    const root = document.documentElement;
-    if (root.getAttribute('data-app-mode') === 'logo') return;
 
     const esc = s => (typeof escapeHtmlText === 'function' ? escapeHtmlText(String(s ?? '')) : String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])));
     const chName = ch => (typeof chamberDisplayName === 'function' ? chamberDisplayName(ch) : ch);

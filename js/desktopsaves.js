@@ -21,7 +21,6 @@
     const mode = root.getAttribute('data-app-mode');
     const spaces = [];
     if (mode === 'teaser') spaces.push(`hemicycleTeaserV2-${root.getAttribute('data-teaser') || '69'}:`);
-    else if (mode === 'logo') spaces.push('hemicycleLogo:');
     else {
         spaces.push('');
         ['61', '62', '63', '64', '65', '66', '67', '68', '69'].forEach(id => spaces.push(`hemicycleTeaserV2-${id}:`)); // 없앤 1.6.1 ~ 1.6.9 미리보기의 세이브 — 시작 화면이 본 게임 세이브로 옮긴다 (index.html)

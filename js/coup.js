@@ -1,5 +1,5 @@
 // ===== 1.6.2 — 주사위는 던져졌다 "Alea iacta est" (군부 · 쿠데타 · 군정) =====
-// 1.6.2 미리보기(예전 teaser62)에서 본 게임으로 옮겨 왔다 — 본 게임 · 모든 미리보기 화면에서 돈다 (로고 제작 화면만 빼고).
+// 1.6.2 미리보기(예전 teaser62)에서 본 게임으로 옮겨 왔다 — 본 게임 · 모든 미리보기 화면에서 돈다.
 //
 //   - 내각 › 군부: 군 지휘부(국방부 장관 · 합동참모의장 · 육해공군 참모총장 · 장성 등)를 정해 둔다.
 //     사람마다 정부에 대한 충성도(0~100)와 가까운 정당 — 쿠데타 성공 확률 · 주도 · 진압에 쓰인다
@@ -16,9 +16,7 @@
    effRoleLabel, elecRun, elecRunByElection, runPresidentialElection, currentMainTab, currentSubTab */
 (function () {
     'use strict';
-    const root = document.documentElement;
     // 1.6.3 혁명(js/revolution.js)은 아래 window.HemiCoup로 군정 등을 다룬다
-    if (root.getAttribute('data-app-mode') === 'logo') return;
 
     const esc = s => (typeof escapeHtmlText === 'function' ? escapeHtmlText(String(s ?? '')) : String(s ?? ''));
     const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
