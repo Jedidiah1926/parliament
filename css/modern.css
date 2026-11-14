@@ -2733,12 +2733,14 @@ html[data-theme-family="modern"] footer { color: var(--m-text-3) !important; }
 
 /* ===================== 6. 세로 탭 사이드바 (js/sidenav.js) ===================== */
 /* 레이아웃·표시 규칙과 네온 모양은 css/sidenav.css — 여기선 라이트/다크 모양만 덮어쓴다 */
-html[data-theme-family="modern"] .side-nav {
+html[data-theme-family="modern"] .side-nav,
+html[data-theme-family="modern"] .mn-panel {
     background: none !important;
     border: none !important;
+    box-shadow: none !important;
 }
 html[data-theme-family="modern"]:not([data-ui-mode="mobile"]) body.has-side-nav.side-nav-collapsed .side-nav { flex-basis: 52px; }
-html[data-theme-family="modern"] .mn-search { margin: 0 4px 12px; }
+html[data-theme-family="modern"] .mn-search { margin: 0 11px 12px; } /* 돋보기가 아이콘 열(26px)에 오게 */
 html[data-theme-family="modern"] .mn-search input { background: var(--m-surface); color: var(--m-text); border: 1px solid var(--m-border); border-radius: 8px; box-shadow: none; padding: 7px 10px 7px 30px; font-size: 13px; }
 html[data-theme-family="modern"] .mn-search input:focus { border-color: var(--m-border-strong); box-shadow: 0 0 0 3px color-mix(in srgb, var(--m-text) 8%, transparent); }
 html[data-theme-family="modern"] .mn-search-icon { color: var(--m-text-3); opacity: 1; }
@@ -2750,9 +2752,9 @@ html[data-theme-family="modern"] .mn-search-flash { outline-color: var(--m-text)
 html[data-theme-family="modern"] .mn-head {
     background: none !important;
     border-bottom: none !important;
-    padding: 4px 2px 16px 8px;
+    padding: 4px 9px 16px 8px; /* 접기 버튼이 접힌 폭(52px)에서 아이콘 열 가운데(26px)에 */
 }
-html[data-theme-family="modern"] .mn-brand { display: block; padding-top: 5px; align-self: flex-start; }
+html[data-theme-family="modern"] .mn-brand { display: block; padding-top: 5px; align-self: flex-start; overflow: hidden; }
 /* 라이트/다크는 국가명을 사이드바 머리로 옮기므로 패널의 국가명 줄은 숨김 (네온은 원래 자리 유지) */
 html[data-theme-family="modern"]:not([data-ui-mode="mobile"]) body.has-side-nav .nation-id-bar { display: none !important; }
 /* 라이트/다크: "Ministry of Interior"는 빼고 국가명을 사이드바 머리 제목으로 */
@@ -2767,7 +2769,7 @@ html[data-theme-family="modern"] .mn-collapse {
 }
 html[data-theme-family="modern"] .mn-collapse:hover { background: var(--m-surface-3) !important; color: var(--m-text) !important; }
 
-html[data-theme-family="modern"] .mn-groups { gap: 10px; padding: 0 2px 12px; }
+html[data-theme-family="modern"] .mn-groups { gap: 8px; padding: 0 4px 12px; --mn-dot-x: 1px; }
 html[data-theme-family="modern"] .mn-group[data-tone="info"] { --tone: var(--m-info); }
 html[data-theme-family="modern"] .mn-group[data-tone="danger"] { --tone: var(--m-danger); }
 /* 여론: 라이트·다크에선 귤색 (라이트는 짙게, 다크는 밝게) */
@@ -2782,7 +2784,7 @@ html[data-theme-mode="dark"] .mn-group[data-tone="pink"] { --tone: #f472b6; }
 html[data-theme-mode="light"] .mn-group[data-tone="lime"] { --tone: #0d9488; } /* 경제: 라이트 · 다크는 청록 (의회가 파랑이라 이미 다름) */
 html[data-theme-mode="dark"] .mn-group[data-tone="lime"] { --tone: #2dd4bf; }
 html[data-theme-family="modern"] .mn-group-head {
-    padding: 7px 10px;
+    padding: 8px 10px 8px 13px;
     background: color-mix(in srgb, var(--tone) 13%, transparent) !important;
     border: none !important;
     border-radius: 9px !important;
@@ -2801,7 +2803,7 @@ html[data-theme-family="modern"] .mn-item {
     background: transparent !important;
     border: none !important;
     border-radius: 8px !important;
-    padding: 7px 10px;
+    padding: 0 10px;
     font-size: 13.5px;
     color: var(--m-text-2) !important;
 }
@@ -2814,9 +2816,10 @@ html[data-theme-family="modern"] body.has-side-nav .mn-item.active {
 }
 html[data-theme-family="modern"] .mn-item.danger { color: var(--m-danger) !important; }
 
-html[data-theme-family="modern"] body.side-nav-collapsed .mn-head { padding: 4px 0 16px; }
-html[data-theme-family="modern"] body.side-nav-collapsed .mn-groups { gap: 6px; padding: 0 4px; }
-html[data-theme-family="modern"] body.side-nav-collapsed .mn-group-head { padding: 10px 0; }
+html[data-theme-family="modern"] .mn-dot { background: var(--m-text-4); }
+html[data-theme-family="modern"] body.has-side-nav.side-nav-collapsed .mn-item.active { background: transparent !important; box-shadow: none !important; }
+html[data-theme-family="modern"] body.side-nav-collapsed .mn-item.active .mn-dot { background: var(--tone, var(--m-accent)); }
+html[data-theme-family="modern"] .mn-item.mn-locked .mn-dot { background: transparent; border-color: var(--m-text-4); }
 html[data-theme-family="modern"] body.side-nav-collapsed .mn-group.active .mn-group-head { box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--tone) 70%, transparent) !important; }
 
 /* 편집 패널 머리: 라이트/다크에선 헤더 띠 대신 현재 위치(그룹 › 항목) */
