@@ -10,13 +10,10 @@
         if (typeof switchMainTab === 'function') switchMainTab('election');
         if (typeof elecSwitchSub === 'function') elecSwitchSub(sub);
     };
-    const isMobile = () => document.documentElement.getAttribute('data-ui-mode') === 'mobile';
-    const showPanel = which => { if (isMobile() && typeof setMobilePanel === 'function') setMobilePanel(which); };
-    // 시각(오른쪽 화면) 탭 열기 — 모바일에선 의석 화면으로 넘어간다
+    // 시각(오른쪽 화면) 탭 열기
     const disp = (tab, before) => () => {
         if (before) before();
         if (typeof switchDispTab === 'function') switchDispTab(tab);
-        showPanel('display');
     };
 
     // btn: 원래 탭 버튼 id (이름·숨김 여부를 여기서 읽음) — 없으면 title을 그대로 씀
@@ -171,7 +168,7 @@
                     ],
                 },
                 {
-                    btn: 'dispDateSettingsBtn', title: '날짜 · 회기 설정', open: () => { showPanel('display'); if(typeof openDatePanel === 'function') openDatePanel(); },
+                    btn: 'dispDateSettingsBtn', title: '날짜 · 회기 설정', open: () => { if(typeof openDatePanel === 'function') openDatePanel(); },
                     path: '시각',
                     desc: '날짜 줄의 ⚙로 여는 창. 연호(선택) · 연 · 월 · 일, 회기의 대수 · 이름 · 회기 번호 · 지금 회기 종류, 그리고 자동 진행(정기회 시작일이 지나면 정기회로 · 하원 총선 반영 시 대수 +1).',
                 },
@@ -421,16 +418,12 @@
                 },
                 {
                     path: '메인 화면', title: '테마 · 언어 · 튜토리얼',
-                    desc: '⌂로 메인 화면에 가면 설정(라이트 · 다크 · 네온 테마, 모바일 · 데스크톱 화면)과 🌐 언어(언어 팩 불러오기 포함)를 바꿀 수 있어요. 튜토리얼은 시작하기 › 프리셋의 "서독"으로 언제든 다시 할 수 있고, 기본 튜토리얼(핵심 흐름)과 세부 튜토리얼(기능별)로 나뉘어 있습니다.',
-                },
-                {
-                    path: '모바일', title: '모바일 화면 모드',
-                    desc: '메인 화면 › 설정의 화면(모바일 · 데스크톱)에서 모바일을 고르면 사이드바 대신 화면 아래 탭 바(묶음 + 의석)와 떠 있는 실행 버튼을 씁니다. 세부 항목은 위쪽 칩 줄에서 고르고, "의석"을 누르면 시각 화면으로 넘어가요.',
+                    desc: '⌂로 메인 화면에 가면 설정(라이트 · 다크 · 네온 테마)과 🌐 언어(언어 팩 불러오기 포함)를 바꿀 수 있어요. 튜토리얼은 시작하기 › 프리셋의 "서독"으로 언제든 다시 할 수 있고, 기본 튜토리얼(핵심 흐름)과 세부 튜토리얼(기능별)로 나뉘어 있습니다.',
                 },
             ],
         },
         visual: {
-            intro: '화면 오른쪽(모바일은 "의석")의 시각 탭 — 설정한 내용이 그림으로 보이는 곳입니다.',
+            intro: '화면 오른쪽의 시각 탭 — 설정한 내용이 그림으로 보이는 곳입니다.',
             path: '시각',
             tabs: [
                 {
@@ -450,27 +443,27 @@
                     desc: '대통령 · 총리 · 부총리 · 국무위원 등 정부 구성원을 카드로 한눈에 보여줍니다. 내각 묶음에서 정한 내용이 여기 반영돼요.',
                 },
                 {
-                    btn: 'dispTabDistrict', open: () => { go('nation', 'territory')(); showPanel('display'); }, openWhenHidden: true,
+                    btn: 'dispTabDistrict', open: go('nation', 'territory'), openWhenHidden: true,
                     desc: '지역구 지도. 국가 › 지역구 지도를 열면 나타나고, 지역구를 눌러 편집할 수 있어요. 탭의 ×로 닫습니다.',
                 },
                 {
-                    btn: 'dispTabTendency', open: () => { goElec('tendency')(); showPanel('display'); }, openWhenHidden: true,
+                    btn: 'dispTabTendency', open: goElec('tendency'), openWhenHidden: true,
                     desc: '정당별 성향 지도. 여론 › 시민 성향을 열면 나타나며, 지역구마다 어느 정당 쪽인지 색으로 보여요.',
                 },
                 {
-                    btn: 'dispTabRegion', open: () => { go('nation', 'regions')(); showPanel('display'); }, openWhenHidden: true,
+                    btn: 'dispTabRegion', open: go('nation', 'regions'), openWhenHidden: true,
                     desc: '권역 지도. 국가 › 권역을 열면 나타나고, 지역구를 칠해 권역으로 묶습니다.',
                 },
                 {
-                    btn: 'dispTabTimeline', open: () => { go('setup', 'timeline')(); showPanel('display'); },
+                    btn: 'dispTabTimeline', open: go('setup', 'timeline'),
                     desc: '세력 변화 — 의회 › 세력 변화의 기록을 정당 역사 도표로 (의석 변화 · 당 변화 계보도, 아래로 스크롤). 우클릭으로 PNG · SVG 내보내기.',
                 },
                 {
-                    btn: 'dispTabWiki', open: () => { go('setup', 'wikibox')(); showPanel('display'); },
+                    btn: 'dispTabWiki', open: go('setup', 'wikibox'),
                     desc: '위키 틀 — 원내 구성 틀 (정당 로고 · 의석 · 여야 구분). 우클릭으로 PNG · SVG 내보내기.',
                 },
                 {
-                    btn: 'dispTabRanking', open: () => { go('world', 'ranking')(); showPanel('display'); },
+                    btn: 'dispTabRanking', open: go('world', 'ranking'),
                     desc: '국가 순위 — 세계 › 국가 순위의 순위표 (국기 · 진영 · 점수 · 순위 변동).',
                 },
                 {
@@ -478,7 +471,7 @@
                     desc: '총선 개표 화면과 결과. 개표가 진행되는 모습, 정당별 득표와 직전 대비 의석 변동(▲/▼)을 보여주고, 결과를 확인한 뒤 선거 › 총선의 "✔ 의회에 반영"을 누르면 그 결과대로 의석이 바뀝니다.',
                 },
                 {
-                    title: '날짜 · 회기', open: () => { showPanel('display'); if(typeof openDatePanel === 'function') openDatePanel(); },
+                    title: '날짜 · 회기', open: () => { if(typeof openDatePanel === 'function') openDatePanel(); },
                     desc: '시각 화면 맨 위 줄의 현재 날짜와 회기. ▶ · ▶▶ · ▶▶▶로 하루 · 일주일 · 한 달씩 넘기고, "다음: 정기회 / 임시회"로 다음 회기 종류를 골라(지금 회기는 그대로) "다음 회기"로 넘깁니다. ⚙로 날짜 · 회기 설정 창을 엽니다.',
                 },
                 {
@@ -526,7 +519,6 @@
             openBtn.disabled = hidden && !tab.openWhenHidden;
             openBtn.addEventListener('click', () => {
                 if (!tab.open) return;
-                showPanel('controls'); // 편집 화면 쪽 탭이 기본 — 시각 탭은 open 안에서 의석 화면으로 넘어간다
                 tab.open();
                 window.scrollTo({ top: 0 });
             });

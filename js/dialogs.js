@@ -11,19 +11,36 @@
 
     const css = `
 .dno-tip {
+    --dno-tip-c: var(--tno-neon, #00ffff);
     position: fixed; z-index: 100000; pointer-events: none; max-width: min(320px, calc(100vw - 16px));
-    padding: 6px 10px; font-size: 0.8rem; line-height: 1.45; white-space: pre-line; word-break: keep-all;
-    opacity: 0; transform: translateY(2px); transition: opacity .12s, transform .12s;
-    background: #05070a; color: var(--dno-tip-c, var(--tno-neon, #00ffff));
-    border: 1px solid var(--dno-tip-c, var(--tno-neon, #00ffff));
-    box-shadow: 0 0 10px color-mix(in srgb, var(--dno-tip-c, var(--tno-neon, #00ffff)) 35%, transparent);
+    padding: 6px 11px; font-size: 0.8rem; line-height: 1.45; word-break: keep-all;
+    opacity: 0; transition: opacity .12s ease;
+    background: var(--tno-panel, #0a0c10); color: var(--dno-tip-c);
+    border: 1px solid var(--dno-tip-c); border-left-width: 3px;
+    box-shadow: 0 0 12px color-mix(in srgb, var(--dno-tip-c) 35%, transparent);
     font-family: 'NeoDunggeunmo', 'VT323', monospace;
 }
-.dno-tip.show { opacity: 1; transform: none; }
-html[data-theme-family="modern"] .dno-tip {
-    background: var(--m-text, #18181b); color: var(--m-surface, #fff); border: none; border-radius: 8px;
-    box-shadow: 0 4px 14px rgba(0, 0, 0, .18); font-family: var(--m-font, inherit); font-weight: 500;
+.dno-tip.show { opacity: 1; }
+/* 바로 옆 대상으로 옮길 때 — 사라졌다 다시 뜨지 않고 미끄러지듯 따라간다 (접힌 사이드바의 점 훑기도) */
+.dno-tip.moving { transition: opacity .12s ease, left .14s cubic-bezier(.2, .8, .2, 1), top .14s cubic-bezier(.2, .8, .2, 1); }
+.dno-tip-title { display: block; white-space: pre-line; }
+.dno-tip-sub { display: block; margin-top: 2px; font-size: .9em; color: #9aa4ad; white-space: pre-line; }
+/* 꼬리 — 가리키는 쪽으로. 위치를 화면 안으로 당겨도 대상의 가운데를 가리키도록 --dno-tip-ax/ay로 옮긴다 */
+.dno-tip::before {
+    content: ''; position: absolute; width: 8px; height: 8px; box-sizing: border-box;
+    background: inherit; border: inherit; border-width: 1px; transform: rotate(45deg);
 }
+.dno-tip[data-side="bottom"]::before { top: -5px; left: calc(var(--dno-tip-ax, 50%) - 4px); border-right: none; border-bottom: none; }
+.dno-tip[data-side="top"]::before { bottom: -5px; left: calc(var(--dno-tip-ax, 50%) - 4px); border-left: none; border-top: none; }
+.dno-tip[data-side="right"]::before { left: -6px; top: calc(var(--dno-tip-ay, 50%) - 4px); border-top: none; border-right: none; }
+.dno-tip[data-side="left"]::before { right: -5px; top: calc(var(--dno-tip-ay, 50%) - 4px); border-bottom: none; border-left: none; }
+html[data-theme-family="modern"] .dno-tip {
+    background: var(--m-text, #18181b); color: var(--m-surface, #fff); border: none; border-radius: 8px; padding: 6px 10px;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, .18); font-family: var(--m-font, inherit); font-weight: 500; font-size: 0.78rem;
+}
+html[data-theme-family="modern"] .dno-tip-sub { color: inherit; opacity: .72; font-weight: 400; }
+html[data-theme-family="modern"] .dno-tip::before { border: none; }
+@media (prefers-reduced-motion: reduce) { .dno-tip, .dno-tip.moving { transition: none; } }
 .dno-dialog-overlay {
     position: fixed; inset: 0; z-index: 100001; display: flex; align-items: center; justify-content: center;
     padding: 16px; background: rgba(0, 0, 0, .72);
@@ -95,58 +112,123 @@ html[data-theme-family="modern"] .dno-dialog-btn.cancel:hover, html[data-theme-f
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => adoptTree(document.documentElement));
     else adoptTree(document.documentElement);
 
-    let tipEl = null, tipTarget = null, tipTimer = null;
-    function hideTip() {
+    // 말풍선 — 처음엔 0.3초 뒤에 뜨고, 뜬 뒤(또는 사라진 지 0.6초 안에) 다른 대상으로 옮기면 기다리지 않고 미끄러지듯 따라간다.
+    // 두 줄: data-dno-tip-sub(흐린 둘째 줄) 또는 글자의 첫 줄 = 이름, 나머지 = 설명.
+    // 네온: 가리킨 대상의 색으로. 회색 대상은 기본은 네온색, 설정(dnoTipNeonGray = 'gray')이면 회색 그대로
+    const SHOW_DELAY = 300, WARM_MS = 600, FADE_DELAY = 70;
+    let tipEl = null, tipTarget = null, tipTimer = null, fadeTimer = null, lastShownAt = 0, visible = false;
+    function ensureTip() {
+        if (tipEl) return tipEl;
+        tipEl = document.createElement('div'); tipEl.className = 'dno-tip'; tipEl.setAttribute('role', 'tooltip'); tipEl.id = 'dnoTip';
+        tipEl.innerHTML = '<span class="dno-tip-title"></span><span class="dno-tip-sub"></span>';
+        document.body.appendChild(tipEl);
+        return tipEl;
+    }
+    function hideTip(now) {
         clearTimeout(tipTimer);
-        tipTarget = null;
-        if (tipEl) tipEl.classList.remove('show');
+        if (tipTarget) { tipTarget.removeAttribute('aria-describedby'); tipTarget = null; }
+        if (!tipEl || !visible) return;
+        clearTimeout(fadeTimer);
+        const fade = () => { tipEl.classList.remove('show', 'moving'); visible = false; lastShownAt = performance.now(); };
+        if (now) fade(); else fadeTimer = setTimeout(fade, FADE_DELAY); // 바로 옆으로 옮기는 중이면 꺼지기 전에 다음 대상이 잡는다
+    }
+    function sideOf(target) {
+        if (target.dataset.tipSide) return target.dataset.tipSide;
+        return target.closest('.side-nav') ? 'right' : 'bottom';
     }
     function placeTip(target) {
         const r = target.getBoundingClientRect();
         const tr = tipEl.getBoundingClientRect();
-        const vw = window.innerWidth, vh = window.innerHeight, gap = 8;
-        let x, y;
-        // 세로 사이드바의 아이콘은 오른쪽에, 나머지는 아래(자리가 없으면 위)에
-        if (target.closest('.side-nav') || target.dataset.tipSide === 'right') {
-            x = r.right + gap; y = r.top + r.height / 2 - tr.height / 2;
-            if (x + tr.width > vw - 8) x = r.left - gap - tr.width;
+        const vw = window.innerWidth, vh = window.innerHeight, gap = 9;
+        let side = sideOf(target), x, y;
+        if (side === 'right' || side === 'left') {
+            x = side === 'right' ? r.right + gap : r.left - gap - tr.width;
+            if (side === 'right' && x + tr.width > vw - 8) { side = 'left'; x = r.left - gap - tr.width; }
+            else if (side === 'left' && x < 8) { side = 'right'; x = r.right + gap; }
+            y = r.top + r.height / 2 - tr.height / 2;
         } else {
-            x = r.left + r.width / 2 - tr.width / 2; y = r.bottom + gap;
-            if (y + tr.height > vh - 8) y = r.top - gap - tr.height;
+            y = side === 'bottom' ? r.bottom + gap : r.top - gap - tr.height;
+            if (side === 'bottom' && y + tr.height > vh - 8) { side = 'top'; y = r.top - gap - tr.height; }
+            else if (side === 'top' && y < 8) { side = 'bottom'; y = r.bottom + gap; }
+            x = r.left + r.width / 2 - tr.width / 2;
         }
         x = Math.max(8, Math.min(x, vw - tr.width - 8));
         y = Math.max(8, Math.min(y, vh - tr.height - 8));
+        tipEl.dataset.side = side;
+        // 화면 끝에서 상자를 당겨도 꼬리는 대상의 가운데를
+        tipEl.style.setProperty('--dno-tip-ax', Math.max(10, Math.min(tr.width - 10, r.left + r.width / 2 - x)) + 'px');
+        tipEl.style.setProperty('--dno-tip-ay', Math.max(10, Math.min(tr.height - 10, r.top + r.height / 2 - y)) + 'px');
         tipEl.style.left = x + 'px';
         tipEl.style.top = y + 'px';
     }
+    function neonColorOf(target) {
+        const c = getComputedStyle(target).color;
+        const m = /rgba?\(([\d.]+),\s*([\d.]+),\s*([\d.]+)(?:,\s*([\d.]+))?/.exec(c || '');
+        if (!m || (m[4] !== undefined && +m[4] === 0)) return '';
+        const v = [+m[1], +m[2], +m[3]];
+        const gray = Math.max(...v) - Math.min(...v) < 40; // 채도가 거의 없는 색 = 회색 · 흰색 · 검정
+        if (gray) { let pref = null; try { pref = localStorage.getItem('dnoTipNeonGray'); } catch (e) { /* 저장 불가 */ } if (pref !== 'gray') return ''; }
+        return c;
+    }
+    function tipText(target) {
+        const raw = t(target.getAttribute('data-dno-tip') || '');
+        const sub = target.getAttribute('data-dno-tip-sub');
+        if (sub != null) return [raw, t(sub)];
+        const i = raw.indexOf('\n');
+        return i > 0 ? [raw.slice(0, i), raw.slice(i + 1).replace(/^\n+/, '')] : [raw, ''];
+    }
     function showTip(target) {
-        const text = target.getAttribute('data-dno-tip');
-        if (!text || !target.isConnected) return;
-        if (!tipEl) { tipEl = document.createElement('div'); tipEl.className = 'dno-tip'; tipEl.setAttribute('role', 'tooltip'); document.body.appendChild(tipEl); }
-        tipEl.textContent = t(text);
-        // 네온 테마: 가리킨 버튼의 색(입법=보라, 선거=금색 …)을 말풍선 테두리·글자색으로
-        if (!isModern()) {
-            const c = getComputedStyle(target).color;
-            tipEl.style.setProperty('--dno-tip-c', c && c !== 'rgba(0, 0, 0, 0)' ? c : '');
-        } else tipEl.style.removeProperty('--dno-tip-c');
-        tipEl.classList.remove('show');
-        tipEl.style.left = '-9999px'; tipEl.style.top = '0';
+        if (!target.isConnected || !target.getAttribute('data-dno-tip')) return;
+        if (target.dataset.tipWhen === 'collapsed' && !document.body.classList.contains('side-nav-collapsed')) return;
+        ensureTip();
+        clearTimeout(fadeTimer);
+        const [title, sub] = tipText(target);
+        tipEl.querySelector('.dno-tip-title').textContent = title;
+        const subEl = tipEl.querySelector('.dno-tip-sub');
+        subEl.textContent = sub; subEl.style.display = sub ? '' : 'none';
+        if (!isModern()) { const c = neonColorOf(target); if (c) tipEl.style.setProperty('--dno-tip-c', c); else tipEl.style.removeProperty('--dno-tip-c'); }
+        else tipEl.style.removeProperty('--dno-tip-c');
+        const follow = visible; // 이미 떠 있으면 그 자리에서 미끄러져 옮겨 감
+        tipEl.classList.toggle('moving', follow);
+        if (!follow) { tipEl.style.left = '-9999px'; tipEl.style.top = '0'; }
         placeTip(target);
         tipEl.classList.add('show');
+        visible = true;
+        target.setAttribute('aria-describedby', 'dnoTip');
+    }
+    function armTip(target, immediate) {
+        if (target === tipTarget) return;
+        clearTimeout(tipTimer);
+        if (tipTarget) tipTarget.removeAttribute('aria-describedby');
+        tipTarget = target;
+        const warm = visible || performance.now() - lastShownAt < WARM_MS;
+        if (immediate || warm) showTip(target);
+        else tipTimer = setTimeout(() => { if (tipTarget === target) showTip(target); }, SHOW_DELAY);
     }
     document.addEventListener('mouseover', e => {
         const target = e.target.closest ? e.target.closest('[data-dno-tip]') : null;
         if (target === tipTarget) return;
-        hideTip();
-        if (!target) return;
-        tipTarget = target;
-        tipTimer = setTimeout(() => { if (tipTarget === target) showTip(target); }, 350);
+        if (!target) { hideTip(); return; }
+        armTip(target);
     }, true);
     document.addEventListener('mouseout', e => {
-        if (tipTarget && (!e.relatedTarget || !tipTarget.contains(e.relatedTarget))) hideTip();
+        if (tipTarget && (!e.relatedTarget || !tipTarget.contains(e.relatedTarget))) {
+            const next = e.relatedTarget && e.relatedTarget.closest ? e.relatedTarget.closest('[data-dno-tip]') : null;
+            if (!next) hideTip();
+        }
     }, true);
-    ['mousedown', 'wheel', 'keydown', 'blur'].forEach(ev => window.addEventListener(ev, hideTip, true));
-    window.addEventListener('scroll', hideTip, true);
+    // 키보드로 옮겨 온 포커스에도 (마우스 클릭으로 생긴 포커스는 빼고)
+    document.addEventListener('focusin', e => {
+        const target = e.target.closest ? e.target.closest('[data-dno-tip]') : null;
+        if (!target) return;
+        let kb = false; try { kb = e.target.matches(':focus-visible'); } catch (err) { /* 미지원 */ }
+        if (kb) armTip(target, true);
+    }, true);
+    document.addEventListener('focusout', e => { if (tipTarget && e.target.closest && e.target.closest('[data-dno-tip]') === tipTarget) hideTip(true); }, true);
+    ['mousedown', 'wheel', 'blur'].forEach(ev => window.addEventListener(ev, () => hideTip(true), true));
+    window.addEventListener('keydown', e => { if (e.key !== 'Tab' && e.key !== 'Shift') hideTip(true); }, true);
+    window.addEventListener('scroll', () => hideTip(true), true);
+    window.DnoTip = { hide: () => hideTip(true), show: el => armTip(el, true) };
 
     // ===== 알림창 · 확인창 =====
     const queue = [];
@@ -155,7 +237,7 @@ html[data-theme-family="modern"] .dno-dialog-btn.cancel:hover, html[data-theme-f
         if (open || !queue.length) return;
         const job = queue.shift();
         injectStyle();
-        hideTip();
+        hideTip(true);
         const overlay = document.createElement('div');
         overlay.className = 'dno-dialog-overlay';
         const box = document.createElement('div');

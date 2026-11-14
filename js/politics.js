@@ -1,5 +1,5 @@
 // ===== 1.6.9 — 정치: 후보 선출 방법 · 공동교섭단체 · 정권 상태에 따른 부정선거 =====
-// 1.6.9 미리보기(예전 teaser69pol)에서 본 게임으로 옮겨 왔다 — 로고 제작 화면만 빼고 돈다.
+// 1.6.9 미리보기(예전 teaser69pol)에서 본 게임으로 옮겨 왔다.
 // main.html은 경제(js/economycharts.js · js/economy.js) 다음에 이 파일을 읽는다.
 //
 //   - 후보 선출 방법 더하기 — 후보 단일화(선거 › 후보)와 지방선거 연대(선거 › 지방선거)가 함께 쓰는 방식 목록(js/main.js의 HemiCandMethods)에:
@@ -12,7 +12,6 @@
 (function () {
     'use strict';
     const root = document.documentElement;
-    if (root.getAttribute('data-app-mode') === 'logo') return;
     const H = window.HemiCandMethods;
     const esc = s => (typeof escapeHtmlText === 'function' ? escapeHtmlText(String(s ?? '')) : String(s ?? ''));
     const partyById = id => parties.find(p => String(p.id) === String(id)) || null;
@@ -208,7 +207,6 @@
 (function () {
     'use strict';
     const root = document.documentElement;
-    if (root.getAttribute('data-app-mode') === 'logo') return;
     const esc = s => (typeof escapeHtmlText === 'function' ? escapeHtmlText(String(s ?? '')) : String(s ?? ''));
     let managed = false; // 군정 관제 선거 허용
     const isGov = p => !!p && (p.isRuling || (typeof coalitions !== 'undefined' && coalitions.some(c => c.isRuling && (c.members || []).some(id => String(id) === String(p.id)))));

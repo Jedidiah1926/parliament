@@ -1,5 +1,5 @@
 // ===== 1.6.3 — Vive la Révolution! "Vive la France!" (혁명 · 당-국가 체제 · 선거인단) =====
-// 1.6.3 미리보기(예전 teaser63)에서 본 게임으로 옮겨 왔다 — 본 게임 · 모든 미리보기 화면에서 돈다 (로고 제작 화면만 빼고).
+// 1.6.3 미리보기(예전 teaser63)에서 본 게임으로 옮겨 왔다 — 본 게임 · 모든 미리보기 화면에서 돈다.
 // main.html은 js/coup.js 다음에 이 파일을 읽는다 (군정은 window.HemiCoup로 다룬다).
 //
 //   - 내각 › 혁명: 민중이 주체 — 주도 이념(민주 · 공산주의)과 혁명 정당을 고르면 성공 확률을 요인별로 보여 준다
@@ -20,8 +20,6 @@
    presElectionMode, ideologyName, findIdeology */
 (function () {
     'use strict';
-    const root = document.documentElement;
-    if (root.getAttribute('data-app-mode') === 'logo') return;
 
     const esc = s => (typeof escapeHtmlText === 'function' ? escapeHtmlText(String(s ?? '')) : String(s ?? ''));
     const clamp = (v, a, b) => Math.max(a, Math.min(b, v));

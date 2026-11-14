@@ -1,7 +1,6 @@
 // Regular game playback reuses the scenario timer without sharing its saved clock.
 (function(){
     'use strict';
-    if(document.documentElement.getAttribute('data-app-mode')==='logo')return;
     const Clock=HemiCampaignClock;
     let holder=null,loading=false,advancing=false;
     const active=()=>!window.HemiCampaign?.state&&HemiTimeMode.get()==='realtime'?holder:null;

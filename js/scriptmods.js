@@ -14,8 +14,6 @@
    showCustomAlert, showCustomConfirm, showKbdToast, escapeHtmlText, currentMainTab, currentSubTab, updateDispInfoBar, IND_IDEOLOGY_ID */
 (function () {
     'use strict';
-    const root = document.documentElement;
-    if (root.getAttribute('data-app-mode') === 'logo') return;
 
     const FORMAT = 'hemicycle-script@1';
     const LS_IMPORTED = 'hemicycleScriptMods';     // [{ data, importedAt }] — 직접 불러온 모드

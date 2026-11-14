@@ -6,8 +6,6 @@
 /* global parties, chamberDisplayName, districtSvgMapFor, renderDistrictSvgInto, districtNames, escapeHtmlText, getAppState, setAppState, switchSubTab, switchDispTab */
 (function () {
     'use strict';
-    const root = document.documentElement;
-    if (root.getAttribute('data-app-mode') === 'logo') return;
 
     const esc = s => (typeof escapeHtmlText === 'function' ? escapeHtmlText(String(s ?? '')) : String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])));
     const chName = ch => (typeof chamberDisplayName === 'function' ? chamberDisplayName(ch) : ch);
@@ -212,17 +210,7 @@
         #contentFraud .fl-empty { color: var(--fp-dim); font-size: .76rem; }
         #contentFraud input[type=checkbox] { accent-color: var(--fp-red); }
         #contentFraud input[type=checkbox]:not(:checked) { background-color: #020302 !important; border-color: var(--fp-dim) !important; }
-        /* 스크롤바도 음지 화면에 맞춰 — 네온은 초록 터미널, 라이트 · 다크는 어두운 회색 */
-        #contentFraud ::-webkit-scrollbar, #dispPanelFraud::-webkit-scrollbar, #dispPanelFraud ::-webkit-scrollbar { width: 8px; height: 8px; background: #020302 !important; }
-        #contentFraud ::-webkit-scrollbar-track, #dispPanelFraud::-webkit-scrollbar-track, #dispPanelFraud ::-webkit-scrollbar-track,
-        #contentFraud ::-webkit-scrollbar-corner, #dispPanelFraud ::-webkit-scrollbar-corner { background: #020302 !important; border: none !important; }
-        #contentFraud ::-webkit-scrollbar-thumb, #dispPanelFraud::-webkit-scrollbar-thumb, #dispPanelFraud ::-webkit-scrollbar-thumb { background: #12301c !important; border: 1px solid #2fd56b !important; border-radius: 0 !important; box-shadow: none !important; }
-        #contentFraud ::-webkit-scrollbar-thumb:hover, #dispPanelFraud::-webkit-scrollbar-thumb:hover, #dispPanelFraud ::-webkit-scrollbar-thumb:hover { background: #2fd56b !important; }
-        html[data-theme-family="modern"] #contentFraud ::-webkit-scrollbar, html[data-theme-family="modern"] #dispPanelFraud::-webkit-scrollbar, html[data-theme-family="modern"] #dispPanelFraud ::-webkit-scrollbar,
-        html[data-theme-family="modern"] #contentFraud ::-webkit-scrollbar-track, html[data-theme-family="modern"] #dispPanelFraud::-webkit-scrollbar-track, html[data-theme-family="modern"] #dispPanelFraud ::-webkit-scrollbar-track,
-        html[data-theme-family="modern"] #contentFraud ::-webkit-scrollbar-corner, html[data-theme-family="modern"] #dispPanelFraud ::-webkit-scrollbar-corner { background: transparent !important; }
-        html[data-theme-family="modern"] #contentFraud ::-webkit-scrollbar-thumb, html[data-theme-family="modern"] #dispPanelFraud::-webkit-scrollbar-thumb, html[data-theme-family="modern"] #dispPanelFraud ::-webkit-scrollbar-thumb { background: #3f3f46 !important; border: 2px solid transparent !important; background-clip: padding-box !important; border-radius: 999px !important; }
-        html[data-theme-family="modern"] #contentFraud ::-webkit-scrollbar-thumb:hover, html[data-theme-family="modern"] #dispPanelFraud::-webkit-scrollbar-thumb:hover, html[data-theme-family="modern"] #dispPanelFraud ::-webkit-scrollbar-thumb:hover { background: #52525b !important; background-clip: padding-box !important; }
+        /* 스크롤바도 음지 화면에 맞춰 — css/scrollbars.css의 #contentFraud · #dispPanelFraud 변수 */
         /* 부정선거 탭에서는 국기를 내린다 — 음지에서 국가의 얼굴은 보이지 않게 */
         .controls:has(#mainContentVote.active #contentFraud.active) #nationFlagBanner { display: none !important; }
         #dispPanelFraud { --fp-bg: #050706; --fp-ink: #8dffb0; --fp-dim: #3e6b4c; --fp-line: #12301c; --fp-red: #ff2e4d; --fp-amber: #ffb02e; }

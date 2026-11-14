@@ -1,5 +1,5 @@
 // ===== 1.6.6 — 왕은 죽었다, 국왕 만세! "Le roi est mort, vive le roi!" (왕실 · 왕정복고 · 전제군주정) =====
-// 1.6.6 미리보기(예전 teaser66)에서 본 게임으로 옮겨 왔다 — 본 게임 · 모든 미리보기 화면에서 돈다 (로고 제작 화면만 빼고).
+// 1.6.6 미리보기(예전 teaser66)에서 본 게임으로 옮겨 왔다 — 본 게임 · 모든 미리보기 화면에서 돈다.
 // main.html은 js/history.js 다음에 이 파일을 읽는다.
 //
 //   - 내각 › 왕실: 왕가와 왕위 주장자를 정해 둔다
@@ -22,8 +22,6 @@
    legisSetState, startDragReorder, updatePresidentRoleLabels, updatePmRoleLabels, runPresidentialElection */
 (function () {
     'use strict';
-    const root = document.documentElement;
-    if (root.getAttribute('data-app-mode') === 'logo') return;
 
     const esc = s => (typeof escapeHtmlText === 'function' ? escapeHtmlText(String(s ?? '')) : String(s ?? ''));
     const clamp = (v, a, b) => Math.max(a, Math.min(b, v));

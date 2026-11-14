@@ -12,8 +12,6 @@
             --vote-abs: #888888;
         }
 
-
-
         body {
             font-family: 'NeoDunggeunmo', 'VT323', monospace;
             background-color: var(--tno-bg);
@@ -92,9 +90,6 @@
         .settings-frame-box { position: relative; width: min(1100px, 100%); height: min(820px, 100%); background: #000; border: 1px solid var(--tno-border); box-shadow: 0 0 24px rgba(0,0,0,.6); }
         .settings-frame { width: 100%; height: 100%; border: 0; display: block; }
         .settings-frame-close { position: absolute; top: -14px; right: -14px; z-index: 1; width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--tno-border); background: #000; color: var(--tno-neon); font-size: 1.2rem; line-height: 1; cursor: pointer; font-family: inherit; }
-        html[data-ui-mode="mobile"] .settings-frame-overlay { padding: 0; }
-        html[data-ui-mode="mobile"] .settings-frame-box { width: 100%; height: 100%; }
-        html[data-ui-mode="mobile"] .settings-frame-close { top: 8px; right: 8px; }
 
         /* 저장 창 — 탭 바 아래 오른쪽에 떠 있는 창 */
         .save-panel-overlay { position: fixed; inset: 0; z-index: 950; background: rgba(0,0,0,0.45); }
@@ -114,8 +109,6 @@
         .save-panel-close { background: none; border: none; color: #777; font-size: 1.3rem; line-height: 1; cursor: pointer; padding: 2px 6px; font-family: inherit; }
         .save-panel-close:hover { color: var(--tno-neon); }
         .save-panel-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 14px; }
-        .save-tab-list::-webkit-scrollbar { height: 4px; }
-        .save-tab-list::-webkit-scrollbar-thumb { background: var(--tno-border); }
         .save-tab {
             display: flex;
             align-items: center;
@@ -243,7 +236,6 @@
             background: var(--tno-neon);
             box-shadow: 0 0 6px var(--tno-neon);
         }
-        html[data-ui-mode="mobile"] .panel-resizer { display: none; }
 
         /* 키보드 단축키(Ctrl+S 등) 피드백용 — 확인 클릭이 필요 없는 가벼운 자동 소멸 알림 */
         .kbd-toast {
@@ -296,9 +288,7 @@
             pointer-events: none;
         }
 
-        ::-webkit-scrollbar { width: 10px; background: #000; }
-        ::-webkit-scrollbar-thumb { background: var(--tno-border); border: 1px solid var(--tno-neon); }
-        ::-webkit-scrollbar-thumb:hover { background: var(--tno-neon); }
+        /* 스크롤바는 css/scrollbars.css */
 
         .controls {
             flex: 0 0 400px;
@@ -1362,95 +1352,6 @@
                     #elecSpeed::-webkit-slider-runnable-track{height:4px;background:var(--tno-border);}
                     #elecSpeed::-webkit-slider-thumb{height:16px;width:10px;background:var(--tno-neon);-webkit-appearance:none;margin-top:-6px;box-shadow:0 0 5px var(--tno-neon);}
 
-        /* ===== 모바일(세로형) UI 모드 =====
-           설정 > UI 모드에서 선택하면 <html>에 data-ui-mode="mobile"이 붙는다 (uimode.js).
-           좌우 2단 레이아웃을 위→아래로 쌓는 것 외에는 기존 스타일을 그대로 재사용한다. */
-        html[data-ui-mode="mobile"] body {
-            flex-direction: column;
-            height: auto;
-            min-height: 100vh;
-            overflow: visible;
-            padding: 46px 10px 10px 10px;
-            gap: 10px;
-        }
-        html[data-ui-mode="mobile"] .controls {
-            flex: 0 0 auto;
-            width: 100%;
-        }
-        html[data-ui-mode="mobile"] .controls-content {
-            flex: 0 0 auto;
-            overflow-y: visible;
-        }
-        html[data-ui-mode="mobile"] .display-area {
-            flex: 0 0 auto;
-            width: 100%;
-            overflow: visible;
-            padding-right: 0;
-        }
-        html[data-ui-mode="mobile"] .disp-panel {
-            flex: 0 0 auto;
-            overflow-y: visible;
-        }
-        /* 모바일: 날짜/회기 줄은 데스크톱과 같이 탭 줄 위 (글씨만 조금 작게) */
-        html[data-ui-mode="mobile"] .disp-info-bar { padding: 0 8px 6px; }
-        html[data-ui-mode="mobile"] .main-tab-btn,
-        html[data-ui-mode="mobile"] .sub-tab-btn,
-        html[data-ui-mode="mobile"] .sub-tab-btn-3 {
-            font-size: 0.85rem;
-        }
-
-        /* 모바일 전용 좌/우 패널 전환 버튼 — 데스크톱에서는 항상 숨김 */
-        .mobile-panel-switch { display: none; }
-        html[data-ui-mode="mobile"] .mobile-panel-switch {
-            display: flex;
-            gap: 6px;
-            position: sticky;
-            top: 36px;
-            z-index: 899;
-            background: #000;
-            padding: 8px 10px;
-            margin: -10px -10px 10px;
-            border-bottom: 2px solid var(--tno-border);
-        }
-        .mobile-panel-btn {
-            flex: 1;
-            background: transparent;
-            border: 1px solid var(--tno-border);
-            color: #888;
-            font-family: inherit;
-            font-size: 0.85rem;
-            padding: 8px 4px;
-            cursor: pointer;
-            transition: 0.15s;
-        }
-        .mobile-panel-btn:hover { border-color: #3a4a54; color: #aaa; }
-        .mobile-panel-btn.active {
-            border-color: var(--tno-neon);
-            color: var(--tno-neon);
-            background: color-mix(in srgb, var(--tno-neon) 7%, transparent);
-            box-shadow: 0 0 6px var(--tno-neon-dim);
-            text-shadow: 0 0 4px var(--tno-neon);
-        }
-        /* 모바일 전용 개표 버튼 줄 (의석 현황 쪽) — 컨트롤 쪽 개표 버튼이 보일 때만 js가 .show를 붙인다 */
-        .mobile-elec-bar { display: none; }
-        html[data-ui-mode="mobile"] .mobile-elec-bar.show { display: flex; gap: 6px; margin-bottom: 10px; }
-        .mobile-elec-btn {
-            flex: 1;
-            background: transparent;
-            border: 1px solid #888;
-            color: #aaa;
-            font-family: inherit;
-            font-size: 0.9rem;
-            padding: 9px 6px;
-            cursor: pointer;
-        }
-        .mobile-elec-btn-gold { border-color: var(--tno-gold); color: var(--tno-gold); }
-        .mobile-elec-btn-primary { background: var(--tno-neon); border-color: var(--tno-neon); color: #000; letter-spacing: 1px; }
-        /* 선택된 패널만 보이도록 — 한쪽을 완전히 display:none 처리해 스크롤 길이도 줄인다 */
-        html[data-ui-mode="mobile"][data-mobile-panel="controls"] .display-area { display: none; }
-        html[data-ui-mode="mobile"][data-mobile-panel="display"] .controls { display: none; }
-                    
-
         /* 세이브 이름 바꾸기 입력칸 (탭 더블클릭 / 설정 > 저장 목록의 ✎) */
         .save-rename-input {
             width: 150px;
@@ -1497,8 +1398,6 @@
 /* 탭을 모두 닫은 상태 — 탭 바만 남기고 아래는 비운다 (진짜 프로그램처럼) */
 body.no-open-tab > *:not(.save-tab-bar):not(.save-panel-overlay):not(.settings-frame-overlay):not(.dno-dialog-overlay):not(.dno-tip):not(.kbd-toast):not(script):not(style) { display: none !important; }
 body.no-open-tab { overflow: hidden; }
-/* 모바일: 떠 있는 창(저장 · 날짜/회기)이 아래 탭 바를 덮지 않게 높이를 제한 */
-html[data-ui-mode="mobile"] .save-panel { max-height: calc(100vh - 56px - var(--mnav-h, 64px) - env(safe-area-inset-bottom, 0px) - 8px); }
 
         /* 가결 기준 "지정..." — 원별 분자/분모 */
         .thr-custom { margin-top: 6px; }
@@ -1510,25 +1409,6 @@ html[data-ui-mode="mobile"] .save-panel { max-height: calc(100vh - 56px - var(--
         .thr-slash { color: #666; font-size: 1.1rem; }
         .thr-preview { flex: 0 0 auto; min-width: 7.5em; color: var(--tno-gold); font-size: 0.8rem; white-space: nowrap; }
 
-        /* ---- 로고 제작 모드 (logo.html): 의회 메뉴만 ---- */
-        .logo-only { display: none !important; }
-        html[data-app-mode="logo"] .logo-only { display: block !important; }
-        html[data-app-mode="logo"] .main-tab-btn:not(#mainTabSetup),
-        html[data-app-mode="logo"] #saveTabBar,
-        html[data-app-mode="logo"] #dispInfoBar,
-        html[data-app-mode="logo"] #dispTabCabinet { display: none !important; }
-
-        .gov-hl-color { margin: -6px 0 16px; }
-        .gov-hl-color > label { color: #888; font-size: 0.8rem; margin-bottom: 6px; display: block; }
-        .gov-hl-color-row { display: flex; align-items: center; gap: 6px; }
-        .gov-hl-color-row input[type="color"] { flex: 0 0 38px; width: 38px; height: 30px; padding: 0; border: 1px solid #333; background: none; cursor: pointer; }
-        .gov-hl-color-row input[type="text"] { flex: 1 1 auto; min-width: 0; font-family: inherit; text-transform: uppercase; }
-        .gov-hl-color-reset { flex: 0 0 auto; background: #000; border: 1px solid #333; color: #aaa; font-family: inherit; padding: 5px 10px; cursor: pointer; }
-        .gov-hl-color-reset:hover { color: var(--tno-neon); border-color: var(--tno-neon); }
-        /* 로고 모드에는 위쪽 세이브 탭 바가 없으므로 그 자리만큼 비워둔 여백을 줄인다 */
-        html[data-app-mode="logo"] body { padding-top: 20px !important; }
-        html[data-app-mode="logo"][data-ui-mode="mobile"] .mobile-panel-switch { top: 0; }
-        .gov-hl-color > label.gov-hl-glow { display: flex; align-items: center; gap: 6px; margin: 8px 0 0; color: #aaa; cursor: pointer; }
         .save-tab-preset-date { color: #777; font-size: 0.75rem; margin-left: 6px; }
         .save-tab-preset-badge { margin-left: 6px; padding: 0 5px; border: 1px solid var(--tno-gold, #ffd700); color: var(--tno-gold, #ffd700); font-size: 0.68rem; text-shadow: 0 0 4px var(--tno-gold, #ffd700); }
         .save-tab-preset-badge.updated { border-color: var(--vote-yea, #00ff88); color: var(--vote-yea, #00ff88); text-shadow: 0 0 4px var(--vote-yea, #00ff88); }
@@ -1740,6 +1620,5 @@ html[data-theme-family="modern"] .ab-summary { color: var(--m-text-3, #71717a); 
 html[data-theme-family="modern"] .sign-done { color: var(--m-text-2, #52525b); }
 /* 실행(PROTOCOL EXECUTE) 버튼 — 설정 › 화면에서 켤 때만 (js/uimode.js data-exec-btn) */
 html[data-exec-btn="off"] .simulate-btn,
-html[data-exec-btn="off"] .exec-bar,
-html[data-exec-btn="off"] .mobile-exec-fab { display: none !important; }
+html[data-exec-btn="off"] .exec-bar { display: none !important; }
 

@@ -15,18 +15,13 @@
 
     const DONE_KEY = 'dnoTutorialDone';          // 예전 기록(과정 순서 번호)
     const DONE_IDS_KEY = 'dnoTutorialDoneIds';   // 지금 기록(과정 id)
-    const isMobileLayout = () => document.documentElement.getAttribute('data-ui-mode') === 'mobile';
     const hasEl = id => !!document.getElementById(id);
-    // 메뉴: 데스크톱은 세로 사이드바, 모바일은 아래 탭 바 (없으면 원래 가로 탭 줄)
-    const navTarget = () => isMobileLayout()
-        ? (hasEl('mobileNav') ? '#mobileNav' : '.main-tab-container')
-        : (hasEl('sideNav') ? '#sideNav' : '.main-tab-container');
+    // 메뉴: 세로 사이드바 (없으면 원래 가로 탭 줄)
+    const navTarget = () => (hasEl('sideNav') ? '#sideNav' : '.main-tab-container');
     const execOn = () => document.documentElement.getAttribute('data-exec-btn') === 'on';
-    const execTarget = () => (isMobileLayout() && hasEl('mobileExecFab')) ? '#mobileExecFab' : '.simulate-btn';
+    const execTarget = () => '.simulate-btn';
     const call = (name, ...args) => () => { if (typeof window[name] === 'function') window[name](...args); };
     const go = (main, sub) => call('switchSubTab', main, sub);
-    // 모바일 화면 모드에선 편집 패널/좌석 화면 중 하나만 보이므로 필요한 쪽으로 전환
-    const showPanel = which => () => { if (isMobileLayout() && typeof setMobilePanel === 'function') setMobilePanel(which); };
 
     // ---- 앱 상태 읽기 (main.js의 최상위 let 변수는 window 속성이 아니라 이름으로만 보인다) ----
     /* global parties, bills */
@@ -71,11 +66,11 @@
     const houseTotal = () => { const t = document.getElementById('houseTotal'); return t ? (parseInt(t.value, 10) || 0) : 0; };
     const freeHouseSeats = () => houseTotal() - partyList().reduce((sum, p) => sum + (p.inHouse ? (p.seatsHouse || 0) : 0), 0);
     const electionRunning = () => typeof elecRunning !== 'undefined' && elecRunning === true;
-    // 개표 화면: 보이는 선거결과 패널 (모바일은 좁으니 반원 부분만 비춰 말풍선이 결과를 덜 가리게)
+    // 개표 화면: 보이는 선거결과 패널
     const resultTarget = () => {
         const panel = ['House', 'Senate', 'Third'].map(c => document.getElementById('dispPanelElecResult' + c)).find(el => el && el.offsetParent !== null);
         if (!panel) return '.display-area';
-        return isMobileLayout() ? (panel.querySelector('[id^="elecViewArc"]') || panel) : (panel.querySelector('.chamber-box') || panel);
+        return panel.querySelector('.chamber-box') || panel;
     };
     const pmBlock = () => { const n = document.getElementById('pmNameInput'); return n ? n.parentElement.parentElement : null; };
     const seatCardOpen = () => { const c = document.getElementById('seatInfoCard'); return !!c && c.style.display === 'block'; };
@@ -118,7 +113,7 @@
     const martialTab = () => ({ pm: ['pm', 'pmEmergencyPowers'], cabinet: ['cabinetmembers', 'cabinetEmergencyPowers'] })[typeof emergencyPowers !== 'undefined' && emergencyPowers.martialLaw.holder] || ['president', 'presidentEmergencyPowers'];
     const logLen = k => { const o = window[k]; return o && Array.isArray(o.log) ? o.log.length : 0; };
     const byId = (id, up) => () => { const el = document.getElementById(id); return el ? ((up && el.closest(up)) || el) : null; };
-    const helpTarget = () => isMobileLayout() ? navTarget() : (document.querySelector('#sideNav .mn-group[data-tone="muted"]') ? '#sideNav .mn-group[data-tone="muted"]' : navTarget());
+    const helpTarget = () => (document.querySelector('#sideNav .mn-group[data-tone="muted"]') ? '#sideNav .mn-group[data-tone="muted"]' : navTarget());
 
     // ---- 후보 단일화 · 부정선거 과정용 도우미 ----
     /* global candidateUnions */
@@ -143,36 +138,30 @@
                 },
                 {
                     // 일부러 다른 화면(국가 › 상징)을 띄워 두고 메뉴로 돌아오게 한다
-                    before: [closePanels, go('nation', 'symbol'), showPanel('controls')],
+                    before: [closePanels, go('nation', 'symbol')],
                     target: navTarget,
-                    allow: () => isMobileLayout() ? ['#mobileNav', '.main-tab-content > .sub-tab-container'] : [navTarget()],
+                    allow: () => [navTarget()],
                     title: '메뉴 이동하기',
-                    text: () => isMobileLayout()
-                        ? '기능은 의회 · 입법 · 여론 · 선거 · 내각 · 국가 여섯 묶음으로 나뉘어 있고, 회색 "도움말"에는 모든 탭의 설명이 있어요. 화면 아래 탭 바에서 "의회"를 누르고, 위쪽 칩 줄에서 "정당"을 골라보세요.'
-                        : '기능은 의회 · 입법 · 여론 · 선거 · 내각 · 국가 여섯 묶음으로 나뉘어 있고, 맨 아래 회색 "도움말"에는 모든 탭의 설명이 있어요. 왼쪽 메뉴에서 의회 › 정당을 눌러보세요.',
+                    text: '기능은 의회 · 입법 · 여론 · 선거 · 내각 · 국가 여섯 묶음으로 나뉘어 있고, 맨 아래 회색 "도움말"에는 모든 탭의 설명이 있어요. 왼쪽 메뉴에서 의회 › 정당을 눌러보세요.',
                     task: () => isActive('mainTabSetup') && isActive('subTabParty'),
                     done: '정당 화면이 열렸어요.',
                 },
                 {
                     before: [call('switchDispTab', 'house'), call('closeSeatInfoCard')],
-                    target: () => (isMobileLayout() && document.documentElement.getAttribute('data-mobile-panel') !== 'display')
-                        ? '#mobileNav .mobile-nav-seats' : '#houseCanvas',
-                    allow: ['#mobileNav', '#houseCanvas', '#seatInfoCard'],
+                    target: '#houseCanvas',
+                    allow: ['#houseCanvas', '#seatInfoCard'],
                     title: '의석 살펴보기',
-                    text: () => isMobileLayout()
-                        ? '의석은 반원 모양으로 그려집니다. 아래 탭 바의 "의석"을 눌러 의석 화면으로 간 뒤, 좌석(점) 하나를 눌러보세요.'
-                        : '의석은 반원 모양으로 그려집니다. 좌석(점) 하나를 눌러보세요.',
+                    text: '의석은 반원 모양으로 그려집니다. 좌석(점) 하나를 눌러보세요.',
                     task: seatCardOpen,
                     done: '그 자리의 정당 · 의원 정보가 떴어요. 좌석을 오른쪽 클릭(길게 누르기)하면 이미지로 내보낼 수도 있어요.',
                 },
                 {
-                    before: [call('closeSeatInfoCard'), showPanel('display')],
+                    before: [call('closeSeatInfoCard')],
                     target: '#dispInfoBar',
                     title: '날짜와 회기',
                     text: '시각 화면 맨 위 줄에는 나라의 현재 날짜와 회기가 보입니다. ▶ · ▶▶ · ▶▶▶로 하루 · 일주일 · 한 달씩 넘기고, "다음 회기"로 회기를 올려요. ⚙를 누르면 날짜 · 회기 설정 창이 뜹니다. (자세한 건 세부 튜토리얼 "날짜와 회기")',
                 },
                 {
-                    before: [showPanel('controls')],
                     target: '#saveTabBar',
                     title: '세이브 탭',
                     text: '맨 위의 탭 하나하나가 세이브(나라 하나)입니다. 누르면 그 나라로 바로 바뀌고, 진행 상황은 그 세이브에 그대로 자동저장돼요. 이름 옆에 ●가 보이면 아직 저장하지 않은 변경사항이 있다는 뜻이에요. +는 새 탭(새로 만들기 · 프리셋 · 닫은 탭 다시 열기), 탭 이름을 더블클릭하면 이름 바꾸기, ×는 탭만 닫기(세이브는 남아요)입니다. 맨 왼쪽 ⌂는 저장하고 메인 화면으로 돌아갑니다.',
@@ -185,7 +174,7 @@
             summary: '정당 만들기 · 이름 짓기 · 의석 배정 · 다시 계산',
             steps: [
                 {
-                    before: [go('setup', 'party'), call('switchPartyGroupInnerTab', 'info'), showPanel('controls')],
+                    before: [go('setup', 'party'), call('switchPartyGroupInnerTab', 'info')],
                     enter: () => { if (!T.basePartyIds) T.basePartyIds = new Set(partyList().map(p => p.id)); },
                     target: '#innerContentPartyInfo > button.add-btn[onclick^="addParty"]',
                     allow: ['#innerContentPartyInfo > button.add-btn[onclick^="addParty"]'],
@@ -200,7 +189,7 @@
                     done: '새 정당 "신당"이 목록에 생겼어요.',
                 },
                 {
-                    before: [go('setup', 'party'), call('switchPartyGroupInnerTab', 'info'), showPanel('controls')],
+                    before: [go('setup', 'party'), call('switchPartyGroupInnerTab', 'info')],
                     target: () => nameInput(),
                     allow: () => { const el = nameInput(); return el ? [el.closest('.card-item')] : []; },
                     title: '정당 이름 짓기',
@@ -216,7 +205,7 @@
                     leave: () => { const el = nameInput(); if (el && document.activeElement === el) el.blur(); }, // onchange로 이름 확정
                 },
                 {
-                    before: [go('setup', 'settings'), call('switchSetupInnerTab', 'house'), showPanel('controls')],
+                    before: [go('setup', 'settings'), call('switchSetupInnerTab', 'house')],
                     target: () => { const t = document.getElementById('houseTotal'); return t ? t.closest('div[style*="grid"]') || t : null; },
                     allow: ['#houseTotal', '#partyListHouse'],
                     title: '빈자리 만들기',
@@ -226,7 +215,7 @@
                     done: () => `${freeHouseSeats()}석이 비었어요.`,
                 },
                 {
-                    before: [go('setup', 'settings'), call('switchSetupInnerTab', 'house'), showPanel('controls')],
+                    before: [go('setup', 'settings'), call('switchSetupInnerTab', 'house')],
                     target: () => seatInput(),
                     allow: () => { const el = seatInput(); return el ? [el.closest('.card-item'), '#houseTotal'] : ['#houseTotal']; },
                     title: '의석 나눠주기',
@@ -241,17 +230,14 @@
                     leave: () => { const el = seatInput(); if (el && document.activeElement === el) el.blur(); },
                 },
                 {
-                    before: [showPanel('controls')],
                     enter: () => { T.execClicked = false; },
                     // 실행 버튼은 설정 › 화면에서 켤 때만 보인다 (기본 숨김) — 숨겨져 있으면 자동으로 다시 그려진다는 안내만
-                    target: () => (execOn() ? execTarget() : (isMobileLayout() ? navTarget() : '#houseCanvas')),
+                    target: () => (execOn() ? execTarget() : '#houseCanvas'),
                     allow: () => (execOn() ? [execTarget()] : []),
                     title: () => (execOn() ? '다시 계산하기' : '의석 화면이 바로 바뀌어요'),
                     text: () => !execOn()
                         ? '의석 수 같은 설정을 바꾸면 의석 화면이 바로 새로 그려져요 — 새 정당의 자리도 생겼을 거예요. 화면이 맞지 않아 보이면 입력 칸 밖에서 Enter 키로 다시 그릴 수 있고, 설정 › 화면에서 실행 버튼을 켤 수도 있어요.'
-                        : isMobileLayout()
-                            ? '설정을 바꾼 뒤에는 실행 버튼을 눌러 의석 화면을 새로 그립니다. 지금 눌러보세요. 아래 탭 바의 "의석"에서 새 정당의 자리를 확인할 수 있어요.'
-                            : '설정을 바꾼 뒤에는 이 버튼을 눌러 의석 화면을 새로 그립니다. 지금 눌러보세요. (입력 칸 밖에서 Enter 키를 눌러도 같아요)',
+                        : '설정을 바꾼 뒤에는 이 버튼을 눌러 의석 화면을 새로 그립니다. 지금 눌러보세요. (입력 칸 밖에서 Enter 키를 눌러도 같아요)',
                     task: () => !execOn() || T.execClicked,
                     done: '의석 화면이 새로 그려졌어요. 새 정당의 자리도 생겼을 거예요.',
                 },
@@ -263,7 +249,7 @@
             summary: '법안 제출 · 위원회 · 상정 · 표결 · 표결 기록 · 법령',
             steps: [
                 {
-                    before: [go('law', 'bill'), showPanel('controls')],
+                    before: [go('law', 'bill')],
                     enter: () => { if (T.billBase == null) T.billBase = billList().length; },
                     target: () => billForm(),
                     allow: () => { const f = billForm(); return f ? [f] : []; },
@@ -273,37 +259,37 @@
                     done: '법안이 등록됐어요!',
                 },
                 {
-                    before: [go('law', 'committee'), showPanel('controls')],
+                    before: [go('law', 'committee')],
                     target: '#contentCommittee',
                     title: '상임위원회',
                     text: '입법 › 위원회에서 상임위원회를 만들면, 법안이 본회의 전에 소관 위원회 심사를 먼저 거칩니다. 위원은 정당 의석 비율대로 배정되고, 위원 과반이 찬성해야 본회의로 넘어가요. 위원회가 없으면 법안은 바로 본회의로 갑니다.',
                 },
                 {
-                    before: [go('law', 'table'), showPanel('controls')],
+                    before: [go('law', 'table')],
                     target: '#billList',
                     title: '상정하기',
                     text: '입법 › 상정에는 등록된 법안이 모입니다. 법안마다 의회에 올릴지 국무회의에 올릴지, 소관 위원회를 어디로 할지 고르고, "심의 선택"을 누르면 표결로 넘어가요. 검색과 태그로 찾을 수 있습니다.',
                 },
                 {
-                    before: [go('law', 'vote'), showPanel('controls')],
+                    before: [go('law', 'vote')],
                     target: '#contentVote',
                     title: '표결하기',
                     text: '입법 › 표결에서 심의할 법안을 고른 뒤, 정당마다 당론을 정하거나 좌석을 눌러 의원별 찬성 · 반대 · 기권 예정을 찍습니다. 원마다 "표결 시작"을 누르면 의원들이 하나씩 투표하고, 끝나면 찬성 · 반대 · 기권 순으로 자리가 모이며 가결 · 부결이 정해져요. 양원제면 하원을 통과한 뒤 상원 표결로 넘어갑니다.',
                 },
                 {
-                    before: [go('law', 'archive'), showPanel('controls')],
+                    before: [go('law', 'archive')],
                     target: '#contentArchive',
                     title: '표결 기록',
                     text: '입법 › 표결 기록에는 가결 · 부결 · 거부된 법안이 남습니다. 상태 · 태그로 걸러 보고, 가결된 법안에서 개정안을 낼 수 있어요. 위쪽 칩에서 원이나 위원회를 고르면 그곳의 표결 · 심사 기록만 하나씩 볼 수 있습니다.',
                 },
                 {
-                    before: [go('law', 'lawbook'), showPanel('controls')],
+                    before: [go('law', 'lawbook')],
                     target: '#contentLawbook',
                     title: '법령',
                     text: '입법 › 법령에는 가결된 법률이 조문 그대로 모입니다. 개정 계보마다 가장 최근 판이 보이고, 여기서 개정안을 낼 수 있어요.',
                 },
                 {
-                    before: [go('law', 'constitution'), showPanel('controls')],
+                    before: [go('law', 'constitution')],
                     target: '#contentConstitution',
                     title: '헌법',
                     text: '입법 › 헌법에서 헌법을 제정하고 고칩니다. 헌법 개정안(가결 기준 2/3)을 통과시키면 헌법이 바뀌고 개정 이력이 남아요.',
@@ -316,7 +302,7 @@
             summary: '지지율 입력 · 개표 · 의회에 반영',
             steps: [
                 {
-                    before: [call('switchMainTab', 'election'), call('elecSwitchSub', 'prob'), call('switchElecProbChamber', 'house'), showPanel('controls')],
+                    before: [call('switchMainTab', 'election'), call('elecSwitchSub', 'prob'), call('switchElecProbChamber', 'house')],
                     enter: () => { T.probBase = probInputs().map(el => el.value); },
                     target: '#elecInputList',
                     allow: ['#elecInputList'],
@@ -330,7 +316,7 @@
                     leave: () => { const el = document.activeElement; if (el && el.closest && el.closest('#elecInputList')) el.blur(); },
                 },
                 {
-                    before: [go('vote', 'elecGeneral'), showPanel('controls')],
+                    before: [go('vote', 'elecGeneral')],
                     target: '#elecRunBtn',
                     allow: ['#elecRunBtn', '#contentElecGeneral'],
                     title: '선거 치르기',
@@ -340,7 +326,6 @@
                     autoNext: true, // 개표가 시작되면 바로 결과 화면을 보여주는 다음 단계로
                 },
                 {
-                    before: [showPanel('display')],
                     target: () => resultTarget(),
                     noDim: true, // 개표가 진행되는 모습을 가리지 않게 어둡게 하지 않는다
                     title: '개표 지켜보기',
@@ -350,7 +335,7 @@
                         + '결과를 확인한 뒤 선거 › 총선의 "✔ 의회에 반영"을 누르면 그 결과대로 의석이 바뀌어요. 결과는 오른쪽 클릭(길게 누르기)으로 이미지로 내보낼 수 있고, 개표 속도는 선거 설정에서 조절합니다.',
                 },
                 {
-                    before: [go('vote', 'elecGeneral'), showPanel('controls')],
+                    before: [go('vote', 'elecGeneral')],
                     target: () => document.getElementById('elecPostBtns') && document.getElementById('elecPostBtns').offsetParent ? '#elecPostBtns' : '#elecRunBtn',
                     allow: ['#elecPostBtns', '#contentElecGeneral'],
                     title: '의회에 반영하기',
@@ -366,13 +351,13 @@
             summary: '총리와 당수 · 국무위원 · 내각 화면',
             steps: [
                 {
-                    before: [go('cabinet', 'pm'), showPanel('controls')],
+                    before: [go('cabinet', 'pm')],
                     target: () => pmBlock(),
                     title: '총리는 누가 될까?',
                     text: '내각 › 정부 형태 · 권한에서 대통령제 · 이원집정부제 · 의원내각제 등 정부 형태를 고릅니다. 서독은 의원내각제라, 의석이 가장 많은 정당의 대표(당수)가 자동으로 총리가 돼요 (👑 표시). 서독에서는 이 자리를 "연방총리"라고 불러요 — 직책 이름은 나라마다 정할 수 있습니다.',
                 },
                 {
-                    before: [go('setup', 'party'), call('switchPartyGroupInnerTab', 'leader'), showPanel('controls')],
+                    before: [go('setup', 'party'), call('switchPartyGroupInnerTab', 'leader')],
                     target: () => leaderInput(),
                     allow: () => { const el = leaderInput(); return el ? [el.closest('.card-item')] : []; },
                     title: '다수당 대표 정하기',
@@ -387,7 +372,7 @@
                     leave: () => { const el = leaderInput(); if (el && document.activeElement === el) el.blur(); }, // onchange로 확정
                 },
                 {
-                    before: [go('cabinet', 'cabinetmembers'), showPanel('controls')],
+                    before: [go('cabinet', 'cabinetmembers')],
                     enter: () => { if (T.cabinetBase == null) T.cabinetBase = cabinetList().length; },
                     target: '#addCabinetMemberBtn',
                     allow: ['#addCabinetMemberBtn'],
@@ -397,7 +382,7 @@
                     done: '국무위원 자리가 생겼어요. 이름 · 직책 · 소속 정당을 채울 수 있어요.',
                 },
                 {
-                    before: [call('switchDispTab', 'cabinet'), showPanel('display')],
+                    before: [call('switchDispTab', 'cabinet')],
                     target: '#dispPanelCabinet',
                     title: '내각 화면',
                     text: '의석 화면의 "내각" 탭에서 총리와 국무위원이 한눈에 보입니다. 오른쪽 클릭(길게 누르기)으로 이미지로 내보낼 수 있어요.',
@@ -410,7 +395,7 @@
             summary: '저장 창 · 탭 닫기와 다시 열기 · 도움말 · 메인 화면',
             steps: [
                 {
-                    before: [closePanels, call('switchDispTab', 'house'), showPanel('controls')],
+                    before: [closePanels, call('switchDispTab', 'house')],
                     target: '#saveTabSaveBtn',
                     allow: ['#saveTabSaveBtn', '#savePanelLayer'],
                     title: '저장 창 열기',
@@ -425,22 +410,20 @@
                     text: '맨 위는 지금 세이브와 "지금 저장"(Ctrl+S와 같음), 그 아래는 자동저장과 저장 주기입니다. 세이브 목록에서 ★로 즐겨찾기 · 이름 바꾸기 · 삭제를 하고, "다른 이름으로 저장"으로 지금 상태를 새 세이브로 복사해요. 파일(.hemi)로 저장해 두면 다른 기기에서도 불러올 수 있습니다.',
                 },
                 {
-                    before: [closePanels, showPanel('controls')],
+                    before: [closePanels],
                     target: () => document.getElementById('saveTabNewBtn') ? '#saveTabNewBtn' : '#saveTabBar',
                     title: '탭 닫기와 다시 열기',
                     text: '탭의 ×는 세이브를 지우지 않고 탭만 닫습니다. 탭을 모두 닫으면 아래 화면이 비어요. 닫은 탭은 + › "닫은 탭 다시 열기"로 다시 띄웁니다. 세이브를 정말 지우려면 저장 창의 세이브 목록이나 시작 화면의 🗑를 쓰세요.',
                 },
                 {
-                    before: [showPanel('controls')],
                     target: helpTarget,
                     title: '도움말',
                     text: '메뉴 맨 아래 회색 "도움말" 묶음에는 모든 탭이 무슨 일을 하는지 카드로 정리돼 있고, "열기 →"로 그 탭에 바로 갈 수 있어요. 헷갈릴 때 먼저 찾아보세요.',
                 },
                 {
-                    before: [showPanel('controls')],
                     target: '#saveTabBar .save-tab-home',
                     title: '메인 화면',
-                    text: '⌂를 누르면 저장한 뒤 메인 화면으로 갑니다. 메인 화면에서는 시작하기(세이브 고르기 · 프리셋 · 파일 불러오기), 맵 메이커, 로드맵, 설정(라이트 · 다크 · 네온 테마, 데스크톱 · 모바일 화면 모드)을 고르고, 🌐로 언어를 바꿉니다. 이 튜토리얼은 시작하기 › 프리셋의 "서독"으로 언제든 다시 할 수 있어요.',
+                    text: '⌂를 누르면 저장한 뒤 메인 화면으로 갑니다. 메인 화면에서는 시작하기(세이브 고르기 · 프리셋 · 파일 불러오기), 맵 메이커, 로드맵, 설정(라이트 · 다크 · 네온 테마)을 고르고, 🌐로 언어를 바꿉니다. 이 튜토리얼은 시작하기 › 프리셋의 "서독"으로 언제든 다시 할 수 있어요.',
                 },
             ],
         },
@@ -452,19 +435,19 @@
             summary: '이념 추가 · 하위 이념 · 좌석 순서',
             steps: [
                 {
-                    before: [closePanels, go('setup', 'ideology'), showPanel('controls')],
+                    before: [closePanels, go('setup', 'ideology')],
                     target: '#contentIdeology',
                     title: '이념 목록',
                     text: '의회 › 이념에서 정당이 속할 이념을 만듭니다. 위에서 아래 순서가 반원의 왼쪽 → 오른쪽 순서예요. 순서를 바꾸면 "자동 정렬"을 켠 정당들의 자리도 따라 바뀝니다.',
                 },
                 {
-                    before: [go('setup', 'ideology'), showPanel('controls')],
+                    before: [go('setup', 'ideology')],
                     target: () => document.querySelector('#contentIdeology button[onclick="addIdeology()"]') || '#contentIdeology',
                     title: '이념 · 서브 이념 추가',
                     text: '"이념 추가"로 새 이념을 만들고, 이념 옆의 하위 이념 버튼으로 서브 이념(예: 보수주의 › 온건 보수)을 만들 수 있어요. 정당의 이념 칸에서 서브 이념까지 골라 더 세밀하게 자리를 정합니다.',
                 },
                 {
-                    before: [go('setup', 'party'), call('switchPartyGroupInnerTab', 'info'), showPanel('controls')],
+                    before: [go('setup', 'party'), call('switchPartyGroupInnerTab', 'info')],
                     target: () => document.querySelector('#innerContentPartyInfo button[onclick="autoSortParties()"]') || '#innerContentPartyInfo',
                     title: '정당 자리 정렬',
                     text: '정당 목록의 순서가 반원의 자리 순서입니다. 자동 정렬을 누르면 이념 순서대로 정당을 다시 줄 세워요. 직접 끌거나 순서 버튼으로 옮길 수도 있습니다.',
@@ -477,25 +460,25 @@
             summary: '복제 · 상태 · 파벌 · 합당 · 당수와 원내대표',
             steps: [
                 {
-                    before: [closePanels, go('setup', 'party'), call('switchPartyGroupInnerTab', 'info'), showPanel('controls')],
+                    before: [closePanels, go('setup', 'party'), call('switchPartyGroupInnerTab', 'info')],
                     target: '#partyInfoList',
                     title: '정당 카드',
                     text: '정당 카드에서 이름 · 약칭 · 색 · 이념 · 로고를 정하고, 어느 원(하원 · 상원 · 삼원)에 속하는지 고릅니다. 상태를 "활동 금지"로 바꾸면 그 정당은 표결 · 선거에서 빠져요. 복제 버튼은 정당을 그대로 복사합니다.',
                 },
                 {
-                    before: [go('setup', 'party'), call('switchPartyGroupInnerTab', 'info'), showPanel('controls')],
+                    before: [go('setup', 'party'), call('switchPartyGroupInnerTab', 'info')],
                     target: () => { const b = document.querySelector('#partyInfoList button[onclick^="addFaction"]'); return b ? (b.closest('.card-item') || b) : '#partyInfoList'; },
                     title: '파벌',
                     text: '정당 안에 파벌(계파)을 만들 수 있어요. 파벌마다 이름 · 색 · 의석을 정하면 반원에서 한 정당 안의 파벌이 색으로 나뉘어 보이고, 표결 때 파벌별로 표를 던질 수 있습니다. 총선 결과를 반영할 때 파벌을 나눠서(선거 전 몫대로 · 지역 기반 파벌은 그 지역구 득표만큼) 반영할지, 정당 몫으로 합쳐서 반영할지도 고릅니다.',
                 },
                 {
-                    before: [go('setup', 'party'), call('switchPartyGroupInnerTab', 'info'), showPanel('controls')],
+                    before: [go('setup', 'party'), call('switchPartyGroupInnerTab', 'info')],
                     target: () => document.querySelector('button[onclick="openPartyMergeDialog()"]') || '#innerContentPartyInfo',
                     title: '합당',
                     text: '합당 창에서 여러 정당을 하나로 합칩니다. 흡수합당은 한 정당이 나머지를 흡수하고, 신설합당은 새 이름 · 이념의 정당을 만들어요. 합쳐지는 정당을 새 정당의 파벌로 남길 수도 있고, 정당의 파벌도 골라 합칠 수 있습니다.',
                 },
                 {
-                    before: [go('setup', 'party'), call('switchPartyGroupInnerTab', 'leader'), showPanel('controls')],
+                    before: [go('setup', 'party'), call('switchPartyGroupInnerTab', 'leader')],
                     target: '#innerContentPartyLeader',
                     title: '당수와 원내대표',
                     text: '정당 › 당수에서 정당 대표와 파벌 대표의 이름 · 사진을 정합니다. 원내대표도 따로 둘 수 있고, "의석 선택 → 붙여넣기"로 반원에서 고른 의원의 이름 · 사진을 그대로 가져올 수 있어요.',
@@ -508,31 +491,31 @@
             summary: '단원제 · 양원제 · 삼원제 · 의장단 · 반원 가운데 · 연립정부',
             steps: [
                 {
-                    before: [closePanels, go('setup', 'settings'), showPanel('controls')],
+                    before: [closePanels, go('setup', 'settings')],
                     target: () => { const r = document.querySelector('input[name="systemType"]'); return r ? r.closest('div') : '#contentSettings'; },
                     title: '원 구성',
                     text: '의회 › 의석 · 원 구성에서 단원제 · 양원제 · 삼원제를 고릅니다. 원이 늘어나면 의석 · 원 구성 · 표결 · 선거 · 시각 화면에 그 원이 함께 나타나요. 원 이름(예: 국회 · 원로원)은 의회 › 의석 · 원 구성에서 바꿉니다.',
                 },
                 {
-                    before: [go('setup', 'assembly'), showPanel('controls')],
+                    before: [go('setup', 'assembly')],
                     target: '#chamberLeadersList',
                     title: '의장단',
                     text: '원마다 의장과 부의장의 이름 · 사진을 정합니다. 부의장은 여러 명 둘 수 있고, 의장단은 시각 화면의 원 현황 아래에 표시돼요.',
                 },
                 {
-                    before: [go('setup', 'assembly'), showPanel('controls')],
+                    before: [go('setup', 'assembly')],
                     target: byId('chamberCenterLabelHouse', 'div'),
                     title: '반원 가운데 표시',
                     text: '반원 가운데에 총 의석 수를 보여줄지, 그 원의 로고 이미지를 보여줄지 원마다 고릅니다. 로고 칸을 눌러 이미지를 올린 뒤 "로고"를 고르세요.',
                 },
                 {
-                    before: [go('setup', 'coalition'), showPanel('controls')],
+                    before: [go('setup', 'coalition')],
                     target: '#contentCoalition',
                     title: '집권과 연정',
                     text: '의회 › 집권과 연정에서 정당들을 묶어 연립정부를 만듭니다. 집권 연정(★)과 대표당, 연정 밖에서 지지하는 각외협력 정당을 정하고, 단독 집권이나 무집권으로 둘 수도 있어요. 집권 세력은 반원에서 금색 테두리로 표시됩니다(의회 › 의장 · 표시의 "집권 세력 강조").',
                 },
                 {
-                    before: [go('setup', 'members'), showPanel('controls')],
+                    before: [go('setup', 'members')],
                     target: '#contentMembers',
                     title: '지역구 의원 · 비례대표',
                     text: '의회 › 지역구 의원과 비례대표에서 의원 한 명 한 명의 이름 · 사진을 채웁니다. 지역구 의원을 궐석(빈자리)으로 처리하면 선거 › 총선에서 보궐선거로 그 자리만 다시 뽑을 수 있어요.',
@@ -545,7 +528,7 @@
             summary: '의석 기록 · 의석 변화 도표 · 당 변화 · 정당 승계',
             steps: [
                 {
-                    before: [closePanels, go('setup', 'timeline'), showPanel('controls')],
+                    before: [closePanels, go('setup', 'timeline')],
                     enter: () => { T.histBase = histApi() ? histApi().timeline.length : 0; },
                     target: () => document.querySelector('#contentTimeline .hist-actions') || '#contentTimeline',
                     allow: ['#contentTimeline'],
@@ -555,25 +538,25 @@
                     done: '지금 의석이 기록됐어요.',
                 },
                 {
-                    before: [go('setup', 'timeline'), () => { const b = document.querySelector('#dispPanelTimeline [data-hview="seats"]'); if (b) b.click(); }, showPanel('display')],
+                    before: [go('setup', 'timeline'), () => { const b = document.querySelector('#dispPanelTimeline [data-hview="seats"]'); if (b) b.click(); }],
                     target: () => document.querySelector('#dispPanelTimeline .chamber-box') || '#dispPanelTimeline',
                     title: '의석 변화',
                     text: '오른쪽 시각 화면 "세력 변화" 탭에 기록이 아래로 쌓여요. "의석 변화"는 기록마다 정당 의석을 막대로 그리고(점유율 · 의석 수), ▲▼로 앞 기록과 비교해요. 집권 세력은 ★, 가운데 점선은 과반이에요.',
                 },
                 {
-                    before: [go('setup', 'timeline'), () => { const b = document.querySelector('#dispPanelTimeline [data-hview="lineage"]'); if (b) b.click(); }, showPanel('display')],
+                    before: [go('setup', 'timeline'), () => { const b = document.querySelector('#dispPanelTimeline [data-hview="lineage"]'); if (b) b.click(); }],
                     target: () => document.querySelector('#dispPanelTimeline .chamber-box') || '#dispPanelTimeline',
                     title: '당 변화',
                     text: '"당 변화"로 바꾸면 정당이 언제 생기고, 이름을 바꾸고, 사라졌는지 세로 선으로 이어 보여요. 다른 정당을 이어받은 정당은 곡선으로 합쳐지고, 없어진 정당은 ✕로 끝나요.',
                 },
                 {
-                    before: [go('setup', 'timeline'), () => { const d = document.querySelector('#contentTimeline [data-fold="openSucc"]'); if (d) d.open = true; }, showPanel('controls')],
+                    before: [go('setup', 'timeline'), () => { const d = document.querySelector('#contentTimeline [data-fold="openSucc"]'); if (d) d.open = true; }],
                     target: () => document.querySelector('#contentTimeline [data-fold="openSucc"]') || '#contentTimeline',
                     title: '정당 승계',
                     text: '🔁 정당 승계에서 당명 · 색을 바꾸면(예: 한나라당 → 새누리당) 같은 정당이 이어진 것으로 기록돼요. 서로 다른 두 정당은 "승계 관계 잇기"로 이어 합당 · 후신 관계를 그리고, 이은 관계는 다음 기록부터 도표에 합쳐져요.',
                 },
                 {
-                    before: [go('setup', 'timeline'), () => { const b = document.querySelector('#dispPanelTimeline [data-hview="seats"]'); if (b) b.click(); }, showPanel('controls')],
+                    before: [go('setup', 'timeline'), () => { const b = document.querySelector('#dispPanelTimeline [data-hview="seats"]'); if (b) b.click(); }],
                     target: () => document.querySelector('#contentTimeline .hist-table') || '#contentTimeline',
                     title: '기록 표',
                     text: '표에서는 기록끼리 정당 의석을 나란히 비교해요. 아래 "기록 N개"에서 기록 이름을 바꾸거나 지우고, 선거 › 선거 기록이 있으면 "선거 기록에서 가져오기"로 한꺼번에 들여옵니다.',
@@ -586,13 +569,13 @@
             summary: '원내 구성 틀 · 양원 의석 · 내각 · 교섭단체 · 위키 문법 복사',
             steps: [
                 {
-                    before: [closePanels, go('setup', 'wikibox'), showPanel('display')],
+                    before: [closePanels, go('setup', 'wikibox')],
                     target: () => document.querySelector('#dispPanelWiki .nbx2') || '#dispPanelWiki',
                     title: '원내 구성 틀',
                     text: '의회 › 위키 틀은 위키 문서의 "원내 구성" 틀처럼 여당 · 야당 정당과 의석을 한 장에 모아요. 정당 · 집권 연정 · 의석에서 저절로 채워지고, 정당 로고(의회 › 정당 › 로고)가 있으면 이름 위에 들어가요. 미리보기는 오른쪽 "위키 틀" 탭에 보여요.',
                 },
                 {
-                    before: [go('setup', 'wikibox'), showPanel('controls')],
+                    before: [go('setup', 'wikibox')],
                     target: () => document.querySelector('#contentWikibox .hist-tabs') || '#contentWikibox',
                     allow: ['#contentWikibox .hist-tabs'],
                     title: '양원 함께 적기',
@@ -603,13 +586,13 @@
                     done: '정당마다 두 원의 의석이 나란히 보여요.',
                 },
                 {
-                    before: [go('setup', 'wikibox'), showPanel('controls')],
+                    before: [go('setup', 'wikibox')],
                     target: () => document.querySelector('#contentWikibox .hist-wk-form') || '#contentWikibox',
                     title: '틀 꾸미기',
                     text: '틀 머리(제목 · 색), 내각 이름과 기간(비우면 "현재"), 교섭단체 기준(이보다 의석이 적은 정당은 비교섭단체로 묶임), 직접 쓰는 각주를 정해요. 파벌이 둘 이상인 정당(예: 기민·기사연합)은 각주에 공동교섭단체로 적혀요.',
                 },
                 {
-                    before: [go('setup', 'wikibox'), showPanel('controls')],
+                    before: [go('setup', 'wikibox')],
                     target: () => document.querySelector('#contentWikibox [data-act="copy"]') || '#contentWikibox',
                     title: '위키 문법 복사',
                     text: '"위키 문법 복사"를 누르면 나무위키 표 문법이 복사돼요. 로고가 있는 정당은 [[파일:정당 이름 로고.png]]로 들어가니, 위키에 그 이름으로 로고 그림을 올리면 그대로 보여요. "반원 그림 저장"으로 의석 반원 그림도 받을 수 있어요.',
@@ -622,60 +605,60 @@
             summary: '맵 메이커 · 지도 올리기 · 원별 지도 · 지역구 편집 · 당선 정당 지정 · 성향 · 권역',
             steps: [
                 {
-                    before: [closePanels, showPanel('controls')],
+                    before: [closePanels],
                     title: () => (DEMO_BUILD() ? '맵 프리셋으로 지도 고르기' : '맵 메이커로 지도 만들기'),
                     text: () => (DEMO_BUILD() ? '지역구는 실제 지도 모양으로 만듭니다. 체험판에서는 국가 › 지역구 지도의 "맵 프리셋에서 고르기"로 대한민국 · 일본 · 미국 · 독일 · 프랑스 · 영국 · 이탈리아 · 스페인 · 캐나다 · 브라질 중 한 나라의 행정구역 지도를 골라 바로 지역구로 씁니다. (직접 그린 지도를 쓰는 맵 메이커는 정식판에서)' : '지역구는 실제 지도 모양으로 만듭니다. 메인 화면 › 맵 메이커에서 SVG 지도 파일을 열면 도형이 선 · 면 · 사각형 · 원으로 나뉘어 보이고, 지역구로 쓸 도형(보통 "면")을 골라 이름을 붙인 뒤 지역구 지도 파일(.jsx)로 내보냅니다. 미리보기는 스크롤로 확대 · 축소, 휠 클릭 드래그로 이동해요.'),
                 },
                 {
-                    before: [go('nation', 'territory'), showPanel('controls')],
+                    before: [go('nation', 'territory')],
                     target: '#districtSvgEditUI',
                     title: () => (DEMO_BUILD() ? '맵 프리셋 고르기' : '지역구 지도 올리기'),
                     text: () => (DEMO_BUILD() ? '국가 › 지역구 지도의 "🗺 맵 프리셋에서 고르기"를 누르면 나라 지도 카드가 나와요. 고르면 행정구역 하나하나가 지역구가 되고(이름 · 약칭도 함께), 기본으로는 하원 · 상원 · 삼원이 같은 지도를 함께 씁니다. (새 지도를 고르면 기존 지역구 정보는 새 지도로 바뀌어요)' : '국가 › 지역구 지도에서 맵 메이커로 만든 .jsx 파일을 올리거나, "🗺 맵 프리셋에서 고르기"로 나라 지도(대한민국 · 일본 · 미국 · 독일 등 10개)를 바로 고릅니다. 올리면 도형 하나하나가 지역구가 되고, 기본으로는 하원 · 상원 · 삼원이 같은 지도를 함께 씁니다. (새 지도를 올리면 기존 지역구 정보는 새 지도로 바뀌어요)'),
                 },
                 {
-                    before: [go('nation', 'territory'), showPanel('controls')],
+                    before: [go('nation', 'territory')],
                     target: () => { const r = document.getElementById('districtChamberSelectRow'); return r && r.offsetParent ? r : '#districtSvgEditUI'; },
                     title: '원마다 다른 지도',
                     text: '원이 둘 이상이면 위쪽에서 원을 고를 수 있습니다. 상원 · 삼원을 고르면 "하원 지도 공유 / 따로 쓰기"가 나와요. 따로 쓰기를 누르면 지금 지도를 복사해 그대로 이어 쓰고(의석 · 당선자 · 성향 유지), 그 원만의 지도를 새로 올릴 수 있습니다. 다시 공유로 돌리면 하원 지도에 있는 지역구의 값만 되돌아와요.',
                 },
                 {
-                    before: [go('nation', 'territory'), showPanel('controls')],
+                    before: [go('nation', 'territory')],
                     target: '#districtListPanel',
                     title: '지역구 편집',
                     text: '지도나 목록에서 지역구를 누르면 편집 칸이 열립니다. 이름 · 약칭 · 인구, 그리고 원마다 몇 석을 뽑을지(0석이면 그 원엔 없는 지역구) 정해요. 지도는 휠 클릭 드래그로 이동, Shift+스크롤로 확대하고 ↺로 되돌립니다.',
                 },
                 {
-                    before: [go('nation', 'territory'), showPanel('controls')],
+                    before: [go('nation', 'territory')],
                     target: () => { const el = document.getElementById('districtNamePanel'); return el && el.offsetParent ? el : '#districtListPanel'; },
                     title: '당선 정당 직접 지정',
                     text: '선거를 돌리지 않고 지역구 결과를 정할 수도 있어요. 지역구 편집 칸의 "당선 정당 직접 지정"에서 의석마다 정당을 고르면, 정당 의석 수 · 지역구 의원 · 지도 색이 함께 바뀝니다. 나중에 선거를 돌리면 선거 결과로 덮어써져요.',
                 },
                 {
-                    before: [go('nation', 'nationSettings'), showPanel('controls')],
+                    before: [go('nation', 'nationSettings')],
                     target: byId('districtSeatBadgesChk', 'label'),
                     title: '의석 숫자 박스',
                     text: '여러 석을 뽑는 지역구를 여러 정당이 나눠 가지면, 지도 위에 정당별 의석 수 숫자 박스가 뜹니다(한 정당이 다 가져가면 색만 칠해요). 국가 › 국가 설정에서 박스를 켜고 끌 수 있어요.',
                 },
                 {
-                    before: [call('switchMainTab', 'election'), call('elecSwitchSub', 'tendency'), showPanel('controls')],
+                    before: [call('switchMainTab', 'election'), call('elecSwitchSub', 'tendency')],
                     target: '#elecSubTendency',
                     title: '성향',
                     text: '여론 › 시민 성향에서 지역구마다 정당별 성향(%)을 정합니다. 지역구 선거에서 누가 이길지가 여기서 갈려요. 시각 화면에는 종합 지도와 정당별 지도가 함께 보입니다.',
                 },
                 {
-                    before: [go('nation', 'regions'), showPanel('controls')],
+                    before: [go('nation', 'regions')],
                     target: '#elecSubRegion',
                     title: '권역',
                     text: '권역형 비례대표를 쓸 때는 국가 › 권역에서 지역구를 권역으로 묶습니다. 권역을 고른 뒤 지도에서 지역구를 눌러(끌어서 여러 개) 칠해요. 권역 득표율은 성향을 평균하는 자동 집계나 직접 입력 중에서 고릅니다.',
                 },
                 {
-                    before: [go('nation', 'regions'), showPanel('controls')],
+                    before: [go('nation', 'regions')],
                     target: () => { const el = document.getElementById('regionSeatPanel'); return el && el.offsetParent && el.children.length ? el : '#elecSubRegion'; },
                     title: '권역 의석 지정',
                     text: '권역 자체에 의석을 줄 수도 있어요(예: 여러 지역구를 묶어 한꺼번에 뽑는 선거구). 권역마다 의석 수와 정당별 당선 수를 정하면, 그 의석은 비례 의석에서 빠지고 선거를 돌려도 그대로 남습니다.',
                 },
                 {
-                    before: [go('nation', 'nationSettings'), showPanel('controls')],
+                    before: [go('nation', 'nationSettings')],
                     target: '#contentNationSettings',
                     title: '지도 글씨 크기',
                     text: '국가 › 국가 설정에서 지도 위 약칭 글씨와 의석 배지의 크기를 한꺼번에 조절합니다.',
@@ -688,25 +671,25 @@
             summary: '미수복 지역 종류 · 칠하기 · 선거에서 빠짐 · 종류별 통합 · 영토 통일',
             steps: [
                 {
-                    before: [closePanels, go('nation', 'unrecovered'), showPanel('controls')],
+                    before: [closePanels, go('nation', 'unrecovered')],
                     target: () => document.querySelector('#contentUnrecovered .teaser-unrec-summary') || '#contentUnrecovered',
                     title: '미수복 지역',
                     text: '국가 › 미수복에서는 나라가 영유권을 주장하지만 실제로 다스리지 못하는 땅(미수복 지역)을 정해요. 서독 튜토리얼에는 동독 주들이 "동독" 미수복 지역으로 들어 있어요.',
                 },
                 {
-                    before: [go('nation', 'unrecovered'), call('switchDispTab', 'house'), call('chamberSetView', 'house', 'district'), showPanel('display')],
+                    before: [go('nation', 'unrecovered'), call('switchDispTab', 'house'), call('chamberSetView', 'house', 'district')],
                     target: () => document.querySelector('#houseViewDistrictWrap') || '#dispPanelHouse',
                     title: '지도와 선거에서',
                     text: '미수복 지역은 모든 지도에서 종류 색 빗금으로 따로 보이고, 총선 지역구 · 지방선거 · 국민투표에서 빠져요. 그 지역구의 의석도 지역구 의석 수에서 빠집니다.',
                 },
                 {
-                    before: [go('nation', 'unrecovered'), call('chamberSetView', 'house', 'arc'), showPanel('controls')],
+                    before: [go('nation', 'unrecovered'), call('chamberSetView', 'house', 'arc')],
                     target: () => document.querySelector('#contentUnrecovered .teaser-terr') || document.querySelector('#contentUnrecovered .teaser-add-row') || '#contentUnrecovered',
                     title: '종류와 칠하기',
                     text: '미수복 지역 종류는 여러 개 둘 수 있어요(예: 오스트리아 · 동방영토 · 북방영토). 종류마다 이름 · 빗금 색을 정하고, "칠하기"를 켠 채 지도에서 지역구를 차례로 눌러 칠해요. 지우개로 다시 일반 지역구로 돌립니다.',
                 },
                 {
-                    before: [go('nation', 'unrecovered'), showPanel('controls')],
+                    before: [go('nation', 'unrecovered')],
                     target: () => document.querySelector('#contentUnrecovered .teaser-unify') || '#contentUnrecovered',
                     allow: ['#contentUnrecovered'],
                     title: '영토 통일',
@@ -717,7 +700,7 @@
                     done: '통일됐어요! 되찾은 지역구는 이제 일반 지역구예요.',
                 },
                 {
-                    before: [go('nation', 'territory'), showPanel('controls')],
+                    before: [go('nation', 'territory')],
                     target: () => document.getElementById('contentTerritory') || '#mainContentNation',
                     title: '통일 뒤에는',
                     text: '되찾은 지역구는 다음 총선부터 의석을 뽑아요 (서독이면 연방의회 지역구가 259석에서 331석으로 늘어요). 의회 › 의석 · 원 구성에서 총 의석도 맞춰 늘리고, 여론 › 시민 성향에서 새 지역의 정당 성향을 정해 보세요.',
@@ -730,13 +713,13 @@
             summary: '날짜를 따라 도는 경제 · 신용등급과 경고 신호 · 계기판과 금액 · 추이 · 통화 · 재정과 예산안 · 이벤트 · 전문가 분석 · 지역 · 시나리오',
             steps: [
                 {
-                    before: [closePanels, go('economy', 'overview'), showPanel('controls')],
+                    before: [closePanels, go('economy', 'overview')],
                     target: () => document.querySelector('#contentEcoOverview .econ-top') || '#contentEcoOverview',
                     title: '보이지 않는 손',
                     text: '메뉴 › 경제에서는 나라 경제를 움직여요. 서독 튜토리얼은 1983년 서독 경제(성장 1.6% · 인플레이션 3.3% · 실업 약 9%)로 시작합니다. 왼쪽 위 배지는 신용등급(AAA ~ D)이에요.',
                 },
                 {
-                    before: [go('economy', 'overview'), showPanel('controls')],
+                    before: [go('economy', 'overview')],
                     enter: () => { T.ecoTurn0 = ecoTurn(); },
                     target: () => document.querySelector('#contentEcoOverview .econ-next') || '#contentEcoOverview',
                     allow: ['#contentEcoOverview'],
@@ -746,37 +729,37 @@
                     done: '한 분기가 지났어요! 날짜도 함께 넘어갔어요.',
                 },
                 {
-                    before: [go('economy', 'overview'), showEco('overview'), showPanel('display')],
+                    before: [go('economy', 'overview'), showEco('overview')],
                     target: () => document.querySelector('#dispPanelEconomy .econ-toprow') || '#dispPanelEconomy',
                     title: '신용등급과 경고 신호',
                     text: '오른쪽 경제 화면 첫 줄에는 신용등급과 경제 경고 신호가 있어요 — 실질 마이너스 성장 · 과도한 적자 · 금융 위기부터 국가 부도 · 하이퍼인플레이션 · 대공황 · 자본 도피 · 경제 붕괴까지. 위기 기준(경제 › 시나리오에서 정함)에 가까워지면 ◆ 위험, 넘으면 ✖ 위기로 켜지고, 꺼진 신호는 흐리게 보여요.',
                 },
                 {
-                    before: [go('economy', 'overview'), showEco('overview'), showPanel('display')],
+                    before: [go('economy', 'overview'), showEco('overview')],
                     target: () => document.querySelector('#dispPanelEconomy .econ-gauges') || '#dispPanelEconomy',
                     title: '계기판과 금액',
                     text: '둘째 줄 반원 계기는 지표마다 안전 · 경고 · 위험 · 위기 구간을 보여 주고, 아래 작은 선은 최근 8기간의 흐름 · ▲▼는 지난 기간보다 오르내린 만큼이에요 (날짜를 넘겨야 생겨요). 계기를 누르면 그 지표를 움직이는 탭으로 가요. 셋째 줄에는 GDP · 국가부채 · 국고 · 세입 · 세출 · 재정수지 · 국채 이자가 화폐 단위로 나오고, 성장률은 통계처럼 전년 대비예요.',
                 },
                 {
-                    before: [go('economy', 'overview'), showEco('overview'), showPanel('display')],
+                    before: [go('economy', 'overview'), showEco('overview')],
                     target: () => { const c = document.querySelector('#dispPanelEconomy .econ-chips'); return (c && c.parentElement) || '#dispPanelEconomy'; },
                     title: '추이 그래프',
                     text: '큰 그래프는 칩을 눌러 지표를 겹쳐 보고, 점선은 앞으로의 예측이에요. 칸 너비는 실제 시간 길이대로라 1개월 · 1분기 · 1년 칸이 섞여도 시간축이 맞고, 위쪽 10년 · 5년 · 2년으로 기간을 좁혀요. 깃발은 위기 · 총선 · 예산안 · 이벤트, 회색 띠는 경기 침체예요. 오른쪽 클릭으로 그림을 내보낼 수 있어요.',
                 },
                 {
-                    before: [go('economy', 'monetary'), showPanel('controls')],
+                    before: [go('economy', 'monetary')],
                     target: () => document.querySelector('#contentEcoMonetary .econ-card') || '#contentEcoMonetary',
                     title: '통화',
                     text: '기준금리 · 화폐발행률 · 양적완화 같은 통화정책은 중앙은행 몫이라 바로 반영돼요. 금리를 올리면 인플레이션가 잡히지만 실업이 늘고, 화폐를 많이 발행하면 당장은 좋아도 물가와 통화가치가 무너집니다. 아래 막대가 "이대로면 다음 분기"예요.',
                 },
                 {
-                    before: [go('economy', 'fiscal'), showPanel('controls')],
+                    before: [go('economy', 'fiscal')],
                     target: () => document.querySelector('#contentEcoFiscal .econ-budgetbox') || '#contentEcoFiscal',
                     title: '재정과 예산안',
                     text: '지출(GDP 대비 %)과 세율을 고치면 예산안 초안에 모였다가, "예산안 제출"로 입법 › 제출에 올라가요. 의회에서 가결돼야 반영되고, 그 전까지는 지난 예산(준예산)대로 집행돼요. 정당별 예상 표결을 보고 한 번에 넣을 수도 있어요. 지출 · 세수 · 의무지출 · 국고 · 국가부채는 비율 옆에 금액도 함께 나와요.',
                 },
                 {
-                    before: [go('economy', 'events'), showPanel('controls')],
+                    before: [go('economy', 'events')],
                     enter: () => { T.evBase = (econApi() && (econApi().state.sched || []).length) || 0; },
                     target: () => document.querySelector('#contentEcoEvents .econ-card') || '#contentEcoEvents',
                     allow: ['#contentEcoEvents'],
@@ -786,13 +769,13 @@
                     done: '이벤트가 예약됐어요! 날짜가 그 달에 닿으면 신뢰도 · 통화가치가 한 번 꺾이고, 기간 동안 성장 · 인플레이션 · 실업이 움직여요. 일어나기 전에는 아래 목록에서 날짜 · 기간 · 세기를 고치거나 지울 수 있어요.',
                 },
                 {
-                    before: [go('economy', 'analysis'), showEco('analysis'), showPanel('controls')],
+                    before: [go('economy', 'analysis'), showEco('analysis')],
                     target: () => document.querySelector('#contentEcoAnalysis .econ-presets') || '#contentEcoAnalysis',
                     title: '전문가 분석',
                     text: '깊게 보고 싶으면 분석에서 경기 순환 · 인플레이션 · 재정 건전성 · 지역 격차 · 정책 실험을 골라요. 오른쪽에 같은 십자선을 쓰는 연동 패널, 성장 기여도 분해(이벤트 몫 포함), 부채 동학(r − g), 예산 흐름도, 정책 민감도가 그려집니다. "크게 보기"로 화면 전체에 펼칠 수 있어요.',
                 },
                 {
-                    before: [go('economy', 'region'), showPanel('controls')],
+                    before: [go('economy', 'region')],
                     target: () => document.querySelector('#contentEcoRegion .econ-dlist') || '#contentEcoRegion',
                     title: '지역 · 시나리오 · 항목',
                     text: '지역에서 주마다 산업구조 · 연령구조 · 소득등급을 정하면 같은 정책도 지역마다 다르게 작용해요 (금리 인상은 제조업, 복지 삭감은 저소득 지역에 크게). 시나리오에서는 "값 + 기간" 규칙과 프리셋 · 위기 기준을, 항목에서는 나만의 지출 항목 · 세목 · 자산을 만들 수 있어요.',
@@ -805,13 +788,13 @@
             summary: '종속국 만들기 · 칠하기 · 종속국 의회와 선거 · 합병 · 해방',
             steps: [
                 {
-                    before: [closePanels, go('nation', 'vassals'), showPanel('controls')],
+                    before: [closePanels, go('nation', 'vassals')],
                     target: () => document.querySelector('#contentVassals .vassal-summary') || '#contentVassals',
                     title: '종속국',
                     text: '국가 › 종속국에서는 본국에 딸린 나라(보호국 · 괴뢰국 · 자치령 …)를 정해요. 종속국 땅은 본국 영토처럼 지도에 있지만, 본국 선거 · 의석에서는 빠지고 따로 의회를 둡니다.',
                 },
                 {
-                    before: [go('nation', 'vassals'), showPanel('controls')],
+                    before: [go('nation', 'vassals')],
                     target: () => firstVassalCard() || document.querySelector('#contentVassals [data-act="add"]') || '#contentVassals',
                     allow: ['#contentVassals'],
                     title: '종속국 만들기',
@@ -822,13 +805,13 @@
                     done: '종속국이 생겼어요!',
                 },
                 {
-                    before: [go('nation', 'vassals'), call('switchDispTab', 'house'), call('chamberSetView', 'house', 'district'), showPanel('display')],
+                    before: [go('nation', 'vassals'), call('switchDispTab', 'house'), call('chamberSetView', 'house', 'district')],
                     target: () => document.querySelector('#houseViewDistrictWrap') || '#dispPanelHouse',
                     title: '칠하기와 지도',
                     text: '"칠하기"를 켠 채 국가 › 종속국 오른쪽 지도에서 지역구를 차례로 눌러 그 나라 땅으로 정해요. 종속국 땅은 모든 지도에서 그 나라 색 점무늬로 보이고(미수복 지역의 빗금과 달라요), 본국 총선 · 지방선거 · 국민투표에서 빠집니다.',
                 },
                 {
-                    before: [go('nation', 'vassals'), call('chamberSetView', 'house', 'arc'), () => { if (vassalApi()) vassalApi().openParliament(); }, showPanel('controls')],
+                    before: [go('nation', 'vassals'), call('chamberSetView', 'house', 'arc'), () => { if (vassalApi()) vassalApi().openParliament(); }],
                     target: () => document.querySelector('#contentVassals .vassal-parl') || firstVassalCard() || '#contentVassals',
                     allow: ['#contentVassals'],
                     title: '종속국 의회',
@@ -839,7 +822,7 @@
                     done: '선거를 치렀어요! 반원형 그림이 새 의석이에요.',
                 },
                 {
-                    before: [go('nation', 'vassals'), showPanel('controls')],
+                    before: [go('nation', 'vassals')],
                     target: () => document.querySelector('#contentVassals .vassal-actions') || '#contentVassals',
                     title: '합병과 해방',
                     text: '"합병"은 종속국을 본국에 합쳐 그 땅을 일반 지역구로 돌려요 (본국 선거 · 의석에 들어가고, 종속국 의회는 해산). "해방"은 종속국을 독립시켜 본국에서 떼어 내요 — 독립국으로 지도에 따로 보이고 선거에서 계속 빠지며, 세계 › 국가 순위에도 올라갑니다.',
@@ -852,13 +835,13 @@
             summary: '인물 만들기 · 의석 · 당직 · 내각 자리 배정 · 지역구 후보 · 자리가 사라져도 남는 인물',
             steps: [
                 {
-                    before: [closePanels, go('nation', 'people'), showPanel('controls')],
+                    before: [closePanels, go('nation', 'people')],
                     target: '#contentPeople',
                     title: '사람',
                     text: '국가 › 사람에서는 인물을 미리 만들어 둡니다 — 이름 · 사진 · 이념 · 소속 정당 · 파벌. 의석마다 이름 · 사진을 따로 적는 대신, 여기 인물을 자리에 배정해요.',
                 },
                 {
-                    before: [go('nation', 'people'), showPanel('controls')],
+                    before: [go('nation', 'people')],
                     enter: () => { T.peopleBase = (window.HemiPeople && HemiPeople.people.length) || 0; },
                     target: () => document.querySelector('#contentPeople [data-act="import"]') || '#contentPeople',
                     allow: ['#contentPeople'],
@@ -868,13 +851,13 @@
                     done: '인물이 생겼어요. 카드의 ▾를 누르면 이념 · 정당 · 파벌을 고치고 자리를 배정할 수 있습니다.',
                 },
                 {
-                    before: [go('nation', 'people'), showPanel('controls')],
+                    before: [go('nation', 'people')],
                     target: '#contentPeople',
                     title: '자리 배정 · 지역구 후보',
                     text: '"＋ 자리 배정"으로 지역구 · 비례 의석, 당수 · 원내대표, 대통령 · 총리 · 내각 자리에 앉힙니다 — 의원이 아닌 사람도 장관이 될 수 있어요. 이름 · 사진을 고치면 배정된 모든 자리에 반영됩니다. "＋ 지역구 후보로"로 내세우면 총선 · 보궐선거에서 그 정당이 이긴 의석에 바로 배정돼요.',
                 },
                 {
-                    before: [go('nation', 'people'), showPanel('controls')],
+                    before: [go('nation', 'people')],
                     target: '#contentPeople',
                     title: '자리가 사라져도',
                     text: '선거에서 지거나 당적 변경 · 궐석으로 의석이 사라져도 인물은 사람 탭에 남습니다 ("자리 없음"으로 걸러 보기). 다음 선거에 다시 후보로 내세우거나 다른 자리에 배정하세요.',
@@ -887,13 +870,13 @@
             summary: '지역구 시민 / 인구 · 선거마다 이민자 투표권 · 이민자 성향',
             steps: [
                 {
-                    before: [closePanels, go('nation', 'territory'), showPanel('controls')],
+                    before: [closePanels, go('nation', 'territory')],
                     target: () => firstCitCard() || '#districtListPanel',
                     title: '시민과 이민자',
                     text: '국가 › 지역구 지도의 지역구 목록에는 인구 칸 앞에 "시민" 칸이 있어요 — "시민 / 인구"로 적으면 나머지가 이민자입니다. 비워 두면 그 지역구 인구 전체가 시민이에요.',
                 },
                 {
-                    before: [go('nation', 'territory'), showPanel('controls')],
+                    before: [go('nation', 'territory')],
                     enter: () => { T.citBase = citCount(); },
                     target: () => firstCitCard() || '#districtListPanel',
                     allow: ['#districtListPanel'],
@@ -903,7 +886,7 @@
                     done: '그 지역구에 이민자가 생겼어요. 목록 위 합계 줄과 국가 › 사람 위쪽에 시민 · 인구 · 이민자 수가 나와요.',
                 },
                 {
-                    before: [go('vote', 'elecSettings'), showPanel('controls')],
+                    before: [go('vote', 'elecSettings')],
                     enter: () => { T.migBase = migSig(); },
                     target: () => document.getElementById('peopleMigrantCard') || '#contentElecSettings',
                     allow: ['#peopleMigrantCard'],
@@ -913,7 +896,7 @@
                     done: '바뀌었어요. 켠 선거에서는 시민과 이민자가 함께 투표해요.',
                 },
                 {
-                    before: [call('switchMainTab', 'election'), call('elecSwitchSub', 'overview'), showPanel('controls')],
+                    before: [call('switchMainTab', 'election'), call('elecSwitchSub', 'overview')],
                     target: () => document.querySelector('#elecSubOverview .op-card') || '#elecSubOverview',
                     title: '이민자 성향',
                     text: '여론 › 종합의 "시민 / 이민자 성향 따로 정하기"(기본 켬)를 켜 두면 이민자 성향 · 이민자 지지율 탭에서 이민자 성향을 시민과 같은 화면으로 따로 정해요. 이민자가 투표하는 선거에서는 지역구마다 시민 · 이민자 수만큼 섞어 개표하고(총선 비례 · 대선은 전국 수로), 지방선거 · 국민투표는 유권자 수도 바뀝니다. 끄면 이민자 탭이 시민 탭과 묶여 이민자도 시민과 같은 성향으로 투표해요.',
@@ -926,19 +909,19 @@
             summary: '국가 순위 · 순위표 · 점수 · 국기 · 진영과 하위 이념',
             steps: [
                 {
-                    before: [closePanels, go('world', 'ranking'), showPanel('controls')],
-                    target: () => (!isMobileLayout() && document.querySelector('#sideNav .mn-group[data-main="world"]')) || navTarget(),
+                    before: [closePanels, go('world', 'ranking')],
+                    target: () => document.querySelector('#sideNav .mn-group[data-main="world"]') || navTarget(),
                     title: '세계 메뉴',
                     text: () => `국가 아래 🌐 세계 메뉴에는 국가 순위와 진영이 있어요 (꾸밈용 — 게임 기능에는 영향 없음). 바로 위 💹 경제는 ${econApi() ? '1.6.9 경제 시스템이에요 (튜토리얼 "경제" 과정).' : '1.6.9 업데이트(경제 시스템)에서 열리는 잠긴 메뉴예요.'}`,
                 },
                 {
-                    before: [go('world', 'ranking'), showPanel('display')],
+                    before: [go('world', 'ranking')],
                     target: () => document.querySelector('#dispPanelRanking .hist-rk') || '#dispPanelRanking',
                     title: '순위표',
                     text: '오른쪽 시각 화면 "국가 순위" 탭에 순위표가 크게 보여요. 진영 색 띠 · 국기 · 점수 막대로 나라를 줄 세우고, 우리나라 줄은 밝게 강조돼요 — 이름 · 국기는 국가 › 상징의 것을 그대로 써요.',
                 },
                 {
-                    before: [go('world', 'ranking'), showPanel('controls')],
+                    before: [go('world', 'ranking')],
                     enter: () => { T.rankBase = rankSig(); },
                     target: () => document.querySelector('#contentRanking .hist-re-list') || '#contentRanking',
                     allow: ['#contentRanking'],
@@ -948,13 +931,13 @@
                     done: '순위표가 바뀌었어요.',
                 },
                 {
-                    before: [go('world', 'ranking'), showPanel('controls')],
+                    before: [go('world', 'ranking')],
                     target: () => document.querySelector('#contentRanking .hist-re-row') || '#contentRanking',
                     title: '국기 · 진영 · 하위 이념',
                     text: '국기 칸을 누르면 그림을 올려요(주요 나라는 기본 국기가 들어 있어요). 아래 두 칸에서 진영과 하위 이념을 고르고, "순위 기준 저장"을 누른 뒤 점수를 바꾸면 순위표에 ▲▼ 변동이 보여요.',
                 },
                 {
-                    before: [go('world', 'blocs'), showPanel('controls')],
+                    before: [go('world', 'blocs')],
                     target: '#contentBlocs',
                     title: '진영',
                     text: '세계 › 진영에서 진영을 추가 · 삭제하고 색 · 설명 · 하위 이념(예: 서방 진영 › 기독교 민주주의)을 정해요. 진영을 지우면 그 나라들은 미분류가 되고, 위쪽 막대로 진영 구도를 한눈에 봐요.',
@@ -967,37 +950,37 @@
             summary: '선거 방식 · 비례 배분 · 선택 개표 · 보궐선거 · 대선 · 선거 기록',
             steps: [
                 {
-                    before: [closePanels, go('vote', 'elecGeneral'), showPanel('controls')],
+                    before: [closePanels, go('vote', 'elecGeneral')],
                     target: byId('elecModeProportional', 'div'),
                     title: '총선 방식',
                     text: '선거 › 총선에서 뽑을 원과 방식을 고릅니다. 비례만 · 지역구만 · 둘 다(혼합)를 고를 수 있고, 지역구는 여론 › 시민 성향, 비례는 여론 › 시민 지지율을 바탕으로 정해져요.',
                 },
                 {
-                    before: [go('vote', 'elecGeneral'), showPanel('controls')],
+                    before: [go('vote', 'elecGeneral')],
                     target: () => { const r = document.getElementById('elecCountModeRow'); return r && r.offsetParent ? r : '#elecRunBtn'; },
                     title: '자동 개표와 선택 개표',
                     text: '지역구 지도가 있는 선거는 개표 방식을 고릅니다(지도를 올리면 나타나요). 자동 개표는 지역구가 무작위 순서로 하나씩 열리고, 선택 개표는 결과 지도에서 지역구를 직접 눌러 하나씩 엽니다. 아래 막대로 개표 속도도 바꿀 수 있어요.',
                 },
                 {
-                    before: [go('vote', 'elecGeneral'), showPanel('controls')],
+                    before: [go('vote', 'elecGeneral')],
                     target: byId('elecModeByElection', 'label'),
                     title: '보궐선거',
                     text: '"보궐"을 켜고 개표하면 궐석 처리된 지역구만 다시 뽑아 바로 반영합니다. 궐석은 의회 › 지역구 의원에서 처리해요.',
                 },
                 {
-                    before: [call('switchMainTab', 'election'), call('elecSwitchSub', 'prob'), showPanel('controls')],
+                    before: [call('switchMainTab', 'election'), call('elecSwitchSub', 'prob')],
                     target: '#elecSystemSettings',
                     title: '비례 배분 방식',
                     text: '여론 › 시민 지지율에서 원마다 비례대표를 어떻게 나눌지 정합니다. 전국 단위(전국형)로 나눌지, 권역마다 나눌지(권역형)를 고르고, 지지율마다 오차 범위를 줄 수 있어요.',
                 },
                 {
-                    before: [go('vote', 'elecPresidential'), showPanel('controls')],
+                    before: [go('vote', 'elecPresidential')],
                     target: '#contentElecPresidential',
                     title: '대선',
                     text: '선거 › 대선에서 대통령(총리직선제면 총리) 선거를 개표합니다. 방식(단순 다수 · 결선투표 · 선거인단)은 선거 › 선거 제도, 후보는 선거 › 후보에서 정해요.',
                 },
                 {
-                    before: [go('vote', 'elecRecord'), showPanel('controls')],
+                    before: [go('vote', 'elecRecord')],
                     target: '#contentElecRecord',
                     title: '선거 기록',
                     text: '치른 선거는 선거 › 선거 기록에 남고, 누르면 그때의 결과 화면을 다시 볼 수 있어요.',
@@ -1010,7 +993,7 @@
             summary: '선거인단제 · 선거인 수 · 승자독식과 비례 · 과반 미달',
             steps: [
                 {
-                    before: [closePanels, go('vote', 'elecSettings'), showPanel('controls')],
+                    before: [closePanels, go('vote', 'elecSettings')],
                     target: '#presElecModeElectoralBtn',
                     allow: ['#presElecModeElectoralBtn'],
                     title: '선거인단제 고르기',
@@ -1019,19 +1002,19 @@
                     done: '선거인단제가 됐어요. 바로 아래에 선거인단 설정이 나타납니다.',
                 },
                 {
-                    before: [go('vote', 'elecSettings'), showPanel('controls')],
+                    before: [go('vote', 'elecSettings')],
                     target: () => document.getElementById('revEcPanel') || '#contentElecSettings',
                     title: '선거인단 설정',
                     text: '선거인을 권역마다 또는 지역구마다 뽑습니다. 선거인 수는 인구 비례 · 의석 수 + 가산(미국식은 하원 의석 + 2) · 직접 입력 중에 고르고, 그 단위에서 1위가 선거인을 모두 가져가는 승자독식이나 득표대로 나누는 비례 배분을 고릅니다. 신의 없는 선거인 비율도 정할 수 있어요.',
                 },
                 {
-                    before: [go('vote', 'elecSettings'), showPanel('controls')],
+                    before: [go('vote', 'elecSettings')],
                     target: () => document.getElementById('revEcPanel') || '#contentElecSettings',
                     title: '과반과 의회 결정',
                     text: '선거인 과반을 얻어야 당선입니다. 아무도 과반이 안 되면 의회가 상위 3명 중에서 고르거나(미국식) 선거인을 가장 많이 얻은 후보가 당선되게 할 수 있어요. 서독은 북독일 · 서독일 · 남독일 세 권역으로 나뉘어 있어, 권역마다 선거인을 뽑습니다.',
                 },
                 {
-                    before: [go('vote', 'elecPresidential'), showPanel('controls')],
+                    before: [go('vote', 'elecPresidential')],
                     target: '#presElecRunBtn',
                     allow: ['#presElecRunBtn', '#presElecResultPanel'],
                     title: '선거인단으로 대선 치르기',
@@ -1040,7 +1023,7 @@
                     done: '개표가 끝났어요.',
                 },
                 {
-                    before: [go('vote', 'elecPresidential'), showPanel('controls')],
+                    before: [go('vote', 'elecPresidential')],
                     target: () => document.querySelector('#presElecResultPanel .rev-ec') || '#contentElecPresidential',
                     title: '득표와 선거인',
                     text: '후보마다 선거인 수와 득표율이 함께 나오고, 이긴 후보 색으로 칠한 지도와 권역별 선거인 목록이 붙어요. 승자독식에서는 득표율이 높아도 이긴 권역이 없으면 선거인이 0명일 수 있어요 — 득표에서 지고도 선거인으로 이기는 일도 생깁니다.',
@@ -1053,14 +1036,14 @@
             summary: '여러 정당이 후보 한 명으로 · 대선과 지역구에 따로 적용',
             steps: [
                 {
-                    before: [closePanels, go('vote', 'elecCandidates'), showPanel('controls')],
+                    before: [closePanels, go('vote', 'elecCandidates')],
                     enter: () => { T.unionBase = unionList().length; },
                     target: unionSection,
                     title: '후보 단일화란?',
                     text: '선거 전에 여러 정당이 후보를 한 명으로 합치는 기능입니다. 참여 정당 중 지지가 가장 높은 정당이 후보를 내고, 나머지 정당의 지지를 모두 합쳐 받아요. 비례대표 투표는 단일화와 상관없이 각 정당이 따로 받습니다.',
                 },
                 {
-                    before: [go('vote', 'elecCandidates'), showPanel('controls')],
+                    before: [go('vote', 'elecCandidates')],
                     target: () => document.querySelector('#contentElecCandidates button[onclick^="addCandidateUnion"]'),
                     allow: ['#contentElecCandidates button[onclick^="addCandidateUnion"]'],
                     title: '단일화 만들기',
@@ -1069,7 +1052,7 @@
                     done: '빈 단일화가 생겼어요.',
                 },
                 {
-                    before: [go('vote', 'elecCandidates'), showPanel('controls')],
+                    before: [go('vote', 'elecCandidates')],
                     target: () => lastUnionCard() || unionSection(),
                     allow: () => [lastUnionCard() || '#candidateUnionList'],
                     title: '참여 정당 고르기',
@@ -1078,7 +1061,7 @@
                     done: '단일화가 적용됐어요.',
                 },
                 {
-                    before: [go('vote', 'elecCandidates'), showPanel('controls')],
+                    before: [go('vote', 'elecCandidates')],
                     target: () => lastUnionCard() || unionSection(),
                     title: '어디에 적용할까',
                     text: '"대선 · 총리 선거"를 켜면 기준 원 지지율이 가장 높은 정당이 단일 후보로 나서고, 결과에 "(A당 · B당 단일 후보)"로 표시돼요. "총선 지역구"를 켜면 지역구마다 성향이 가장 높은 참여 정당이 후보를 냅니다. 필요 없어지면 "단일화 해제"를 누르세요.',
@@ -1092,13 +1075,13 @@
             summary: '시도 켜기 · 부풀리기와 지역구 조작 · 발각 확률 · 결과',
             steps: [
                 {
-                    before: [closePanels, go('vote', 'fraud'), showPanel('controls')],
+                    before: [closePanels, go('vote', 'fraud')],
                     target: '#contentFraud',
                     title: '부정선거 (⚠)',
                     text: '선거 › ⚠에서는 정당별로 부정선거를 꾸밀 수 있습니다 (메뉴에서 ⚠를 직접 누르면 몇 번 말리다가, 끝까지 들어가면 잠금이 풀려 "부정선거"로 이름이 드러나요). 시도는 다음 총선 개표 한 번에만 적용되고, 들키면 큰 대가를 치러요.',
                 },
                 {
-                    before: [go('vote', 'fraud'), showPanel('controls')],
+                    before: [go('vote', 'fraud')],
                     target: () => fraudCheckbox() ? fraudCheckbox().closest('label') : '#fraudPartyList',
                     allow: ['#fraudPartyList'],
                     title: '시도 켜기',
@@ -1107,14 +1090,14 @@
                     done: '부정선거 계획이 세워졌어요.',
                 },
                 {
-                    before: [go('vote', 'fraud'), showPanel('controls')],
+                    before: [go('vote', 'fraud')],
                     target: () => fraudBlock() || '#fraudPartyList',
                     allow: ['#fraudPartyList'],
                     title: '무엇을 조작할까',
                     text: '대상 의원실을 고르고, 비례 득표율을 몇 %p 부풀릴지 정합니다. 지역구 개표 조작에서 고른 지역구는 실제 결과와 상관없이 이 정당이 이겨요(지역구 지도가 있을 때). 발각 확률은 조작 규모에 따라 자동으로 계산되고, "수동"을 켜면 직접 정할 수 있습니다.',
                 },
                 {
-                    before: [go('vote', 'fraud'), showPanel('controls')],
+                    before: [go('vote', 'fraud')],
                     target: () => fraudBlock() || '#fraudPartyList',
                     allow: ['#fraudPartyList'],
                     title: '들키면 어떻게 될까',
@@ -1129,25 +1112,25 @@
             summary: '가결 기준 · 태그 · 개정안 · 거부권 · 국무회의',
             steps: [
                 {
-                    before: [closePanels, go('law', 'bill'), showPanel('controls')],
+                    before: [closePanels, go('law', 'bill')],
                     target: byId('newBillThreshold', 'div'),
                     title: '가결 기준',
                     text: '법안마다 가결 기준을 정합니다. 과반 · 3/5 · 2/3 같은 정해진 기준이나 직접 분수를 넣을 수 있어요. 태그를 달아 두면 상정 · 기록에서 걸러 보기 쉽습니다.',
                 },
                 {
-                    before: [go('law', 'archive'), showPanel('controls')],
+                    before: [go('law', 'archive')],
                     target: '#contentArchive',
                     title: '개정안',
                     text: '가결된 법안의 "개정안 발의"를 누르면 그 법안을 바탕으로 개정안(제2판 · 제3판 …)을 새로 제출합니다. 기록에는 몇 판째인지 함께 남아요.',
                 },
                 {
-                    before: [go('cabinet', 'system'), showPanel('controls')],
+                    before: [go('cabinet', 'system')],
                     target: byId('vetoHolderPresidentBtn', 'div'),
                     title: '거부권',
                     text: '내각 › 정부 형태 · 권한에서 법안 거부권을 누가 가질지(대통령 · 총리 · 내각 · 없음) 정합니다. 거부권이 있으면 입법 › 표결에서 통과된 법안을 거부할 수 있어요.',
                 },
                 {
-                    before: [go('cabinet', 'council'), showPanel('controls')],
+                    before: [go('cabinet', 'council')],
                     target: '#contentCouncil',
                     title: '국무회의',
                     text: '상정에서 "국무회의"로 올린 법안은 내각 › 국무회의에서 국무위원들이 표결합니다. 의결 정족수를 정할 수 있고, 계엄령으로 의회가 정지된 동안에는 여기서 법안을 통과시켜요. 결과는 내각 › 국무회의 기록에 남습니다.',
@@ -1160,25 +1143,25 @@
             summary: '정부 형태 · 직책 이름 · 비상 권한 · 의회 해산 · 불신임',
             steps: [
                 {
-                    before: [closePanels, go('cabinet', 'system'), showPanel('controls')],
+                    before: [closePanels, go('cabinet', 'system')],
                     target: byId('govTypePresidentialBtn', 'div'),
                     title: '정부 형태',
                     text: '대통령제 · 이원집정부제 · 의원내각제 · 입헌군주제 · 집단지도체제 중에서 고릅니다. 형태에 따라 대통령 · 총리 · 의장 탭이 나타나거나 숨고, 직책 이름(대통령 → 국왕 등)도 바꿀 수 있어요.',
                 },
                 {
-                    before: [go('cabinet', 'system'), showPanel('controls')],
+                    before: [go('cabinet', 'system')],
                     target: '#dissolutionHolderGroup',
                     title: '비상 권한과 의회 해산',
                     text: '비상사태 · 의회 해산 · 계엄령 권한을 누가 가질지 정하고, 가진 사람의 탭에서 선포합니다. 해산은 의회 전체나 한 원만 할 수 있고, 해산된 원은 다음 총선을 의회에 반영할 때 풀려요. 계엄령으로 의회를 정지하면 법안은 국무회의에서만 통과됩니다.',
                 },
                 {
-                    before: [go('cabinet', 'pm'), showPanel('controls')],
+                    before: [go('cabinet', 'pm')],
                     target: () => document.getElementById('noConfidenceSection') && document.getElementById('noConfidenceSection').offsetParent ? '#noConfidenceSection' : '#contentPm',
                     title: '총리와 불신임',
                     text: '내각 › 총리에서 총리 선출 방식(다수당 대표 자동 · 총리직선제)을 고르고, 지금 총리를 고정하거나 부총리를 둡니다. 내각 불신임안을 발의할 수 있고, 건설적 불신임제(독일 · 이스라엘식)를 켜면 불신임안에 후임 총리를 함께 지명해요.',
                 },
                 {
-                    before: [go('cabinet', 'president'), showPanel('controls')],
+                    before: [go('cabinet', 'president')],
                     target: '#contentPresident',
                     title: '대통령',
                     text: '내각 › 대통령에서 이름 · 사진 · 소속 정당을 정합니다. 반원의 의원에서 불러오면 그 의원 정보와 연결돼 함께 바뀌어요.',
@@ -1191,13 +1174,13 @@
             summary: '군 지휘부 · 충성도 · 쿠데타 · 군정 · 민정 이양',
             steps: [
                 {
-                    before: [closePanels, go('cabinet', 'military'), showPanel('controls')],
+                    before: [closePanels, go('cabinet', 'military')],
                     target: '#contentMilitary',
                     title: '군부',
                     text: '내각 › 군부에서 국방부 장관 · 합참의장 · 육해공군 참모총장 같은 군 지휘부를 정합니다. 지휘관마다 정부에 대한 충성도(0~100)가 있고, 충성도가 낮을수록 군부 쿠데타가 성공하기 쉬워요.',
                 },
                 {
-                    before: [go('cabinet', 'military'), showPanel('controls')],
+                    before: [go('cabinet', 'military')],
                     target: () => document.querySelector('#contentMilitary [data-act="seed"]') || '#contentMilitary',
                     allow: ['#contentMilitary'],
                     title: '군 지휘부 만들기',
@@ -1206,13 +1189,13 @@
                     done: '군 지휘부가 생겼어요. 이름 · 직책 · 충성도는 언제든 고칠 수 있어요.',
                 },
                 {
-                    before: [go('cabinet', 'coup'), showPanel('controls')],
+                    before: [go('cabinet', 'coup')],
                     target: '#contentCoup',
                     title: '쿠데타',
                     text: '내각 › 쿠데타에서 주도 세력을 고릅니다 — 군부(군 지휘관이 주도) · 정당(야당이 군과 손잡고) · 친위 쿠데타(대통령이 스스로 권력 강화). 성공 확률은 여당 의석 · 지지율 · 계엄 여부 · 군의 충성도로 정해지고 요인별로 보여요.',
                 },
                 {
-                    before: [go('cabinet', 'coup'), showPanel('controls')],
+                    before: [go('cabinet', 'coup')],
                     enter: () => { T.coupBase = logLen('HemiCoup'); },
                     target: () => document.querySelector('#contentCoup [data-act="go"]') || '#contentCoup',
                     allow: ['#contentCoup'],
@@ -1222,7 +1205,7 @@
                     done: '결과가 나왔어요. 성공하면 계엄 · 의회 정지 · 반대 정당 활동 금지가, 실패하면 주도 세력 처벌과 지지율 하락이 따릅니다.',
                 },
                 {
-                    before: [go('cabinet', 'coup'), showPanel('controls')],
+                    before: [go('cabinet', 'coup')],
                     target: '#contentCoup',
                     title: '군정과 그 뒤',
                     text: '군부 쿠데타가 성공하면 숨겨진 정부 형태 "군정"이 됩니다 — 군사평의회 의장이 대통령 · 총리를 겸하고 선거가 멈춰요. 군정은 민정 이양(선거 재개) · 역쿠데타 · 혁명으로 끝낼 수 있습니다.',
@@ -1235,19 +1218,19 @@
             summary: '민주 · 공산주의 혁명 · 당-국가 체제 · 새 헌법 · 국호 교체',
             steps: [
                 {
-                    before: [closePanels, go('cabinet', 'revolution'), showPanel('controls')],
+                    before: [closePanels, go('cabinet', 'revolution')],
                     target: '#contentRevolution',
                     title: '혁명',
                     text: '내각 › 혁명은 민중이 일으킵니다. 정부 불신 · 군정이나 계엄 · 활동 금지된 정당 · 혁명 정당의 지지율과 그 정당이 앞서는 지역의 인구가 성공 확률을 정해요.',
                 },
                 {
-                    before: [go('cabinet', 'revolution'), showPanel('controls')],
+                    before: [go('cabinet', 'revolution')],
                     target: () => { const b = document.querySelector('#contentRevolution [data-kind]'); return b ? b.parentElement : '#contentRevolution'; },
                     title: '주도 이념',
                     text: '민주 혁명이 성공하면 독재 · 군정이 무너지고 일반 정부 형태로 돌아가 새 헌법을 세웁니다. 공산주의 혁명이 성공하면 숨겨진 정부 형태 "당-국가 체제"가 돼요 — 혁명 정당이 혼자 집권하고, 의회는 최고인민회의, 선거는 단일 후보 찬반 투표가 됩니다.',
                 },
                 {
-                    before: [go('cabinet', 'revolution'), showPanel('controls')],
+                    before: [go('cabinet', 'revolution')],
                     enter: () => { T.revBase = logLen('HemiRevolution'); },
                     target: () => document.querySelector('#contentRevolution [data-act="go"]') || '#contentRevolution',
                     allow: ['#contentRevolution'],
@@ -1257,7 +1240,7 @@
                     done: '결과가 나왔어요. 실패하면 혁명 정당이 활동 금지되고 정부가 계엄령을 선포합니다.',
                 },
                 {
-                    before: [go('cabinet', 'revolution'), showPanel('controls')],
+                    before: [go('cabinet', 'revolution')],
                     target: '#contentRevolution',
                     title: '혁명 뒤',
                     text: '당-국가 체제에서는 "찬반 선거 치르기"로 최고인민회의 대의원을 뽑고, 다시 민주 혁명을 일으켜야 무너집니다. 혁명이 끝나면 새 총선을 치르세요.',
@@ -1270,13 +1253,13 @@
             summary: '왕가와 왕위 주장자 · 계승 규칙 · 왕정복고 · 전제군주정 · 계승 분쟁 · 친위 쿠데타 · 공화 혁명',
             steps: [
                 {
-                    before: [closePanels, go('cabinet', 'royal'), showPanel('controls')],
+                    before: [closePanels, go('cabinet', 'royal')],
                     target: '#contentRoyal',
                     title: '왕실',
                     text: '내각 › 왕실에서는 군주제를 다룹니다. 공화국에 왕을 되살리는 왕정복고, 왕이 실권을 쥐는 숨겨진 정부 형태 "전제군주정", 왕위 계승과 그 분쟁, 군주제를 없애는 공화 혁명까지요.',
                 },
                 {
-                    before: [go('cabinet', 'royal'), showPanel('controls')],
+                    before: [go('cabinet', 'royal')],
                     enter: () => { T.royalDyn = (window.HemiRoyal && HemiRoyal.dynasties.length) || 0; },
                     target: () => document.querySelector('#contentRoyal [data-act="seed"]') || document.querySelector('#contentRoyal .royal-dyn') || '#contentRoyal',
                     allow: ['#contentRoyal'],
@@ -1286,7 +1269,7 @@
                     done: '서독이라면 호엔촐레른가 · 비텔스바흐가가 만들어져요. 지지 정당이 많은 주장자일수록 왕정복고 · 계승 분쟁에 유리합니다.',
                 },
                 {
-                    before: [go('cabinet', 'royal'), showPanel('controls')],
+                    before: [go('cabinet', 'royal')],
                     enter: () => { T.royalBase = logLen('HemiRoyal'); },
                     target: () => document.querySelector('#contentRoyal [data-act="restore"]') || '#contentRoyal',
                     allow: ['#contentRoyal'],
@@ -1296,7 +1279,7 @@
                     done: '결과가 나왔어요. 쿠데타가 실패하면 왕당파 정당이 활동 금지되고 주장자는 망명합니다.',
                 },
                 {
-                    before: [go('cabinet', 'royal'), showPanel('controls')],
+                    before: [go('cabinet', 'royal')],
                     target: '#contentRoyal',
                     title: '왕정에서',
                     text: '전제군주정에서는 왕이 총리를 임명하고 거부권 · 비상 권한을 쥐며, 입헌 개혁으로 입헌군주제로 돌아갈 수 있어요. 입헌군주제에서는 친위 쿠데타로 전제군주정을 노릴 수 있습니다. 왕이 서거 · 퇴위하면 계승 규칙대로 다음 계승자가 즉위하고, 다른 주장자가 정통성을 내세우면 계승 분쟁(카를로스파처럼)이 벌어져요. 공화 혁명이 성공하면 군주제가 폐지됩니다.',
@@ -1309,7 +1292,7 @@
             summary: '계엄 중 봉쇄 돌파 · 의장석 점거 · 부상 결석 · 국회선진화법',
             steps: [
                 {
-                    before: [closePanels, go('law', 'siege'), showPanel('controls')],
+                    before: [closePanels, go('law', 'siege')],
                     target: () => document.querySelector('#contentSiege .siege-modes') || '#contentSiege',
                     title: '국회공성전',
                     text: '입법 › 공성전에는 두 가지가 있어요 — 계엄군의 봉쇄를 뚫고 본회의장에 들어가 계엄을 해제하는 "봉쇄 돌파"와, 반대 법안의 표결을 막으려 의장석을 점거하는 "의장석 점거"입니다.',
@@ -1320,7 +1303,7 @@
                         if (typeof emergencyPowers === 'undefined' || emergencyPowers.martialLaw.active) return;
                         if (emergencyPowers.martialLaw.holder === 'none') call('setEmergencyHolder', 'martialLaw', 'president')();
                         call('setMartialLawSuspendParliament', true)();
-                    }, () => go('cabinet', martialTab()[0])(), showPanel('controls')],
+                    }, () => go('cabinet', martialTab()[0])()],
                     target: () => document.getElementById(martialTab()[1]) || '#mainContentCabinet',
                     allow: () => ['#' + martialTab()[1]],
                     title: '계엄령 선포',
@@ -1331,13 +1314,13 @@
                     done: '계엄령이 선포된 상태예요.',
                 },
                 {
-                    before: [go('law', 'siege'), () => window.HemiSiege && window.HemiSiege.setMode('break'), showPanel('controls')],
+                    before: [go('law', 'siege'), () => window.HemiSiege && window.HemiSiege.setMode('break')],
                     target: () => document.querySelector('#contentSiege .siege-meter-box') || '#contentSiege',
                     title: '누가 들어갈까?',
                     text: '정당마다 참여율을 정하면 의원 한 명씩 봉쇄를 뚫는지 정해집니다. 봉쇄 강도(군 지휘부 충성도) · 시민 지원 · 정당 결속도가 입장 확률을 바꿔요. 들어간 의원만 표결하지만 가결 기준은 재적 과반이라, 야당만으로 모자라면 여당 의원도 들어와야 합니다. 표결을 막으려는 정당은 "입구 저지"로 본회의장 입구를 몸으로 막을 수도 있어요.',
                 },
                 {
-                    before: [go('law', 'siege'), () => window.HemiSiege && window.HemiSiege.setMode('break'), showPanel('controls')],
+                    before: [go('law', 'siege'), () => window.HemiSiege && window.HemiSiege.setMode('break')],
                     enter: () => { T.siegeBase = logLen('HemiSiege'); },
                     target: () => document.querySelector('#contentSiege [data-act="break"]') || '#contentSiege',
                     allow: ['#contentSiege', '#dispPanelHouse'],
@@ -1347,13 +1330,13 @@
                     done: '표결이 끝났어요. 과반이 들어갔으면 계엄이 해제됩니다.',
                 },
                 {
-                    before: [go('law', 'siege'), () => window.HemiSiege && window.HemiSiege.setMode('obstruct'), showPanel('controls')],
+                    before: [go('law', 'siege'), () => window.HemiSiege && window.HemiSiege.setMode('obstruct')],
                     target: () => document.querySelector('#contentSiege .siege-panel') || '#contentSiege',
                     title: '의장석 점거',
                     text: '계엄과 상관없이, 표결을 기다리는 법안을 골라 의장석을 점거할 수 있어요. 참여 의원 수 · 상대 진영 · 결속도 · 의장 경호권 · 직권상정이 성공 확률을 정하고, 성공하면 표결이 무산됩니다. 옆 반원 화면에서는 점거 의원들이 의장석으로 몰려가고, 경호권을 쓰면 경위들이 들어와 맞붙어요.',
                 },
                 {
-                    before: [go('law', 'siege'), showPanel('controls')],
+                    before: [go('law', 'siege')],
                     target: () => document.querySelector('#contentSiege .siege-fold') || '#contentSiege',
                     title: '폭력의 대가',
                     text: '점거한 정당은 지지율이 떨어지고, 다친 의원은 다음 표결 몇 번을 결석합니다(표결에서 빠지고 좌석 정보에 표시). "국회선진화법"을 켜면 직권상정이 막히고 페널티가 두 배가 돼요.',
@@ -1366,7 +1349,7 @@
             summary: '날짜 넘기기 · 다음 회기 · 설정 창 · 자동 진행',
             steps: [
                 {
-                    before: [closePanels, call('switchDispTab', 'house'), showPanel('display')],
+                    before: [closePanels, call('switchDispTab', 'house')],
                     target: '#dispInfoBar',
                     title: '날짜 넘기기',
                     text: '날짜 줄의 ▶는 하루, ▶▶는 일주일, ▶▶▶는 한 달을 넘깁니다. 월말 · 윤년도 달력대로 계산해요. 지금 한 번 눌러보세요.',
@@ -1376,19 +1359,19 @@
                     done: '날짜가 넘어갔어요.',
                 },
                 {
-                    before: [closePanels, showPanel('display')],
+                    before: [closePanels],
                     target: () => document.getElementById('dispNextSessionTypeBtn') ? '#dispNextSessionTypeBtn' : '#dispInfoBar',
                     title: '다음 회기',
                     text: '"다음: 정기회 / 다음: 임시회" 버튼으로 다음 회기를 어떤 종류로 열지 고르고(지금 회기는 그대로), "다음 회기"를 누르면 회기 번호가 1 올라가면서 고른 종류가 적용됩니다.',
                 },
                 {
-                    before: [showPanel('display'), call('openDatePanel')],
+                    before: [call('openDatePanel')],
                     target: '#datePanel',
                     title: '날짜 · 회기 설정 창',
                     text: '⚙를 누르면 이 창이 뜹니다. 날짜는 연 · 월 · 일로 정하고, 앞에 연호(예: 레이와 → "레이와 1년 4월 20일")를 붙일 수 있어요 — 비워 두면 연도만 보입니다. 회기는 대수 · 이름 · 회기 번호와 지금 회기 종류를 정합니다.',
                 },
                 {
-                    before: [showPanel('display'), call('openDatePanel')],
+                    before: [call('openDatePanel')],
                     target: () => { const el = document.getElementById('nationAutoRegularSession'); return el ? el.closest('div[style*="margin-top"]') || el : '#datePanel'; },
                     title: '자동 진행',
                     text: '"자동 진행"을 켜면 날짜를 넘기다 정기회 시작일(기본 9월 1일)을 지날 때 다음 회기가 정기회로 열리고, 하원 총선 결과를 의회에 반영하면 대수가 1 올라갑니다. 둘 다 켜고 끌 수 있어요.',
@@ -1402,27 +1385,23 @@
             summary: '시각 탭 · 이미지 내보내기 · 사이드바 · 폭 조절 · 단축키',
             steps: [
                 {
-                    before: [closePanels, call('switchDispTab', 'house'), showPanel('display')],
+                    before: [closePanels, call('switchDispTab', 'house')],
                     target: '.disp-tab-bar',
                     title: '시각 탭',
                     text: '시각 화면 위의 탭으로 하원 · 상원 · 내각을 오가고, 여론의 지역구 · 성향 · 권역을 열거나 총선을 개표하면 그 지도와 선거결과 탭이 생깁니다(× 로 닫기). 원 화면 오른쪽 위의 "반원 / 지역구"로 지역구 지도 보기로 바꿀 수 있어요.',
                 },
                 {
-                    before: [call('switchDispTab', 'house'), showPanel('display')],
+                    before: [call('switchDispTab', 'house')],
                     target: '#houseCanvas',
                     title: '이미지로 내보내기',
                     text: () => `반원 · 지도 · 선거 결과 · 내각 화면에서 오른쪽 클릭(모바일은 길게 누르기) → "내보내기..."를 고르면 PNG · JPG · SVG 이미지로 저장합니다. 정당 통계와 국기 · 국가명 · 날짜 머리를 함께 넣을 수 있어요.${onPreviewPage() ? ` 미리보기 화면의 위키 틀 · 국가 순위 · 세력 변화${econApi() ? ' · 경제 그래프' : ''}도 같은 방법으로 내보내요.` : ''}`,
                 },
                 {
-                    before: [showPanel('controls')],
-                    target: () => isMobileLayout() ? navTarget() : (document.getElementById('mnCollapseBtn') ? '#mnCollapseBtn' : navTarget()),
+                    target: () => (document.getElementById('mnCollapseBtn') ? '#mnCollapseBtn' : navTarget()),
                     title: '사이드바와 폭 조절',
-                    text: () => isMobileLayout()
-                        ? '모바일에서는 아래 탭 바로 묶음을 고르고, 위쪽 칩 줄에서 세부 항목을 고릅니다. 떠 있는 실행 버튼으로 다시 계산해요.'
-                        : '사이드바 머리의 접기 버튼으로 아이콘만 남겨 편집 화면을 넓게 쓸 수 있어요. 편집 패널과 시각 화면 사이 경계를 끌면 폭을 바꾸고, 더블클릭하면 원래 폭으로 돌아갑니다.',
+                    text: '사이드바 머리의 접기 버튼으로 아이콘만 남겨 편집 화면을 넓게 쓸 수 있어요. 편집 패널과 시각 화면 사이 경계를 끌면 폭을 바꾸고, 더블클릭하면 원래 폭으로 돌아갑니다.',
                 },
                 {
-                    before: [showPanel('controls')],
                     title: '단축키',
                     text: 'Enter(입력 칸 밖) — 다시 계산 · Ctrl+S — 바로 저장 · Ctrl+Z — 되돌리기 · Ctrl+Shift+Z — 다시 실행 · Esc — 열린 창 닫기. 튜토리얼에서는 ← · → 로 단계를 오가고 Esc로 그만둡니다.',
                 },
@@ -1589,14 +1568,6 @@
             const upper = clampY(12), lower = clampY(vh - bh - 12);
             top = overlap(upper) <= overlap(lower) ? upper : lower;
         }
-        const step = curStep();
-        if (step && step.noDim && isMobileLayout()) {
-            // 모바일에서 지켜보는 단계: 말풍선을 작게 줄여 아래 탭 바 바로 위에 붙인다 (보여줄 화면을 가리지 않게)
-            const nav = document.getElementById('mobileNav');
-            const floor = nav && getComputedStyle(nav).display !== 'none' ? nav.getBoundingClientRect().top : vh; // fixed 요소라 offsetParent로는 판별 불가
-            left = (vw - bw) / 2;
-            top = floor - bh - 8;
-        }
         bubble.style.left = Math.round(clampX(left)) + 'px';
         bubble.style.top = Math.round(clampY(top)) + 'px';
     }
@@ -1697,7 +1668,6 @@
         if (step.task) { try { taskDone = !!step.task(); } catch (e) { taskDone = false; } }
         layer.classList.toggle('tut-is-task', !!step.task);
         layer.classList.toggle('tut-nodim', !!step.noDim);
-        layer.classList.toggle('tut-compact', !!step.noDim && isMobileLayout());
         renderHead(`${i + 1} / ${steps.length}${step.task ? ' · 실습' : ''}`);
         setBody({ title: stepText(step, 'title'), text: stepText(step, 'text') });
         const prevBtn = q('.tut-prev');
@@ -1738,7 +1708,7 @@
 
     function showComplete() {
         leaveCurrent();
-        layer.classList.remove('tut-nodim', 'tut-compact');
+        layer.classList.remove('tut-nodim');
         markDone(lessonIdx);
         setMode('complete');
         layer.classList.remove('tut-is-task');
@@ -1770,7 +1740,7 @@
     let menuTab = null; // 'basic' | 'detail' — 목차를 다시 열어도 보던 탭 유지
     function showMenu() {
         leaveCurrent();
-        layer.classList.remove('tut-nodim', 'tut-compact');
+        layer.classList.remove('tut-nodim');
         setMode('menu');
         layer.classList.remove('tut-is-task');
         taskDone = false;

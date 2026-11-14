@@ -134,9 +134,6 @@
             return p ? p.color : '#666';
         }
 
-        // ── 로고 제작 모드 (logo.html) — 의회 메뉴만 남긴 화면 ──
-        const IS_LOGO_MODE = document.documentElement.getAttribute('data-app-mode') === 'logo';
-
         // ── 집권 정당 강조 색 — 비어 있으면 기본 금색(#ffd700 / 테마의 금색) ──
         let govHighlightColor = '';
         function normalizeHexColor(v) {
@@ -152,27 +149,6 @@
             if(!govHighlightColor) return fallback;
             const n = parseInt(govHighlightColor.slice(1), 16);
             return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, 0.8)`;
-        }
-        function setGovHighlightGlow(on) {
-            govHighlightGlow = !!on;
-            simulate();
-        }
-        function syncGovHighlightColorUI() {
-            const glowChk = document.getElementById('chkGovHlGlow');
-            if(glowChk) glowChk.checked = govHighlightGlow;
-            const hex = govHighlightColor || '#FFD700';
-            const picker = document.getElementById('govHlColorPicker');
-            const text = document.getElementById('govHlColorHex');
-            if(picker) picker.value = hex.toLowerCase();
-            if(text && document.activeElement !== text) text.value = govHighlightColor;
-        }
-        function setGovHighlightColor(value, fromText) {
-            const hex = value ? normalizeHexColor(value) : '';
-            if(value && !hex) return; // 입력 중인 불완전한 HEX는 무시
-            govHighlightColor = hex;
-            syncGovHighlightColorUI();
-            if(!fromText) { const t = document.getElementById('govHlColorHex'); if(t) t.value = hex; }
-            simulate();
         }
 
         // ── 대통령/총리/국무위원을 실제 의원(지역구·비례·무소속)과 연결 — 이름·사진·당적 자동 반영 ──────────────
@@ -2066,7 +2042,7 @@
                 nextBtn.classList.toggle('is-extra', extra);
             }
         }
-        // 날짜 줄의 설정 버튼 — 국가 › 날짜 탭을 연다 (모바일은 조작 화면으로 넘어감)
+        // 날짜 줄의 설정 버튼 — 국가 › 날짜 탭을 연다
         // 날짜 줄의 ⚙ — 날짜 · 회기 설정 창(구 국가 › 날짜)을 ⚙ 바로 아래에 띄운다 (다시 누르면 닫힘)
         function openNationDateSettings() { isDatePanelOpen() ? closeDatePanel() : openDatePanel(); }
         function openDatePanel() {
@@ -5228,14 +5204,6 @@
         });
         let suppressAutosaveOnUnload = false;
 
-        // 로고 제작 모드: 의회 메뉴만 쓰므로 저장된 화면 위치와 상관없이 의회 탭에서 시작
-        if(IS_LOGO_MODE) {
-            window.addEventListener('load', () => setTimeout(() => {
-                if(currentMainTab !== 'setup') switchMainTab('setup');
-                syncGovHighlightColorUI();
-            }, 0));
-        }
-
         // ── 새로 시작할 때 쓰는 깨끗한 기본 상태 ──
         // setAppState는 저장 기록에 없는 값(지역구 격자·성향 등)을 건드리지 않고 그대로 두기 때문에, 화면에 떠 있던
         // 이전 세이브의 값이 섞여 들어갈 수 있다. 새 세이브·프리셋·구버전/외부 파일은 먼저 깨끗한 기본 상태로 되돌린 뒤 적용한다.
@@ -5325,9 +5293,8 @@
                 // 파일에서 불러온 세이브도 새 세이브로 (이름: 파일 이름 → 국가 이름 → "불러온 세이브")
                 else if(bootImported) createNamedSlotFromCurrentState(uniqueSaveName((bootImportName || '').trim() || document.getElementById('nationNameInput')?.value?.trim() || '불러온 세이브'));
                 else if(bootEmpty) {
-                    // 열 세이브가 하나도 없음 — 로고 제작 화면은 바로 쓸 수 있게 세이브를 하나 만들고, 본 게임 · 미리보기 화면은 빈 화면(탭 바의 "+"로 시작)
-                    if(IS_LOGO_MODE) createNamedSlotFromCurrentState('로고');
-                    else setNoOpenTab(true);
+                    // 열 세이브가 하나도 없음 — 빈 화면(탭 바의 "+"로 시작)
+                    setNoOpenTab(true);
                 }
                 if(activeSlotId && restored) markSavedBaseline();
                 if(autosaveEnabled) startAutosaveTimer();
@@ -5746,7 +5713,6 @@
             if(gd('chkGovHighlight')) gd('chkGovHighlight').checked = cfg.highlightGov ?? true;
             govHighlightColor = normalizeHexColor(cfg.govHighlightColor || '');
             govHighlightGlow = cfg.govHighlightGlow ?? true;
-            syncGovHighlightColorUI();
             if(gd('nationNameInput')) gd('nationNameInput').value = cfg.nationName ?? "";
             if(gd('nationDateEra'))   gd('nationDateEra').value   = cfg.nationDateEra ?? "";
             if(gd('nationDateYear'))  gd('nationDateYear').value  = cfg.nationDateYear ?? "";
@@ -5947,11 +5913,11 @@
             } catch(e) { return false; }
         }
 
-        // logo.html(로고 제작 모드) · teaserNN.html(다음 업데이트 미리보기)은 본 게임 세이브와 섞이지 않도록 저장 키에 따로 접두어를 붙인다
+        // teaserNN.html(다음 업데이트 미리보기)은 본 게임 세이브와 섞이지 않도록 저장 키에 따로 접두어를 붙인다
         const IS_TEASER_MODE = document.documentElement.getAttribute('data-app-mode') === 'teaser';
         // 티저는 번호(data-teaser)마다 따로 — 버전 번호를 다시 매긴 뒤(사람 = 1.6.1)로는 예전 티저 저장 공간과 섞이지 않게 새 이름(V2)을 쓴다
         const TEASER_ID = document.documentElement.getAttribute('data-teaser') || '';
-        const LS_PREFIX = IS_LOGO_MODE ? 'hemicycleLogo:' : IS_TEASER_MODE ? `hemicycleTeaserV2-${TEASER_ID || '69'}:` : '';
+        const LS_PREFIX = IS_TEASER_MODE ? `hemicycleTeaserV2-${TEASER_ID || '69'}:` : '';
         function safeLsGet(key) {
             try { return localStorage.getItem(LS_PREFIX + key); } catch(e) { return null; }
         }
@@ -6595,7 +6561,7 @@
 
         // ===== 설정 창 (탭 바 오른쪽 "설정" 버튼) — 게임 화면을 떠나지 않고 settings.html을 창(iframe)으로 띄운다 =====
         // 테마 · 테마 색은 js/thememode.js · js/theme.js가 storage 이벤트로 바로 따라오고,
-        // 화면 모드(데스크톱/모바일) · 디버그 모드 같은 나머지는 창을 닫을 때 다시 반영한다
+        // 디버그 모드 같은 나머지는 창을 닫을 때 다시 반영한다
         function openSettingsPanel() {
             let ov = document.getElementById('settingsPanelLayer');
             if(!ov) {
@@ -6622,7 +6588,6 @@
             ov.style.display = 'none';
             ov.querySelector('iframe').src = 'about:blank';
             document.getElementById('saveTabSettingsBtn')?.classList.remove('active');
-            if(typeof getUiMode === 'function') document.documentElement.setAttribute('data-ui-mode', getUiMode());
             if(window.HemiDev && HemiDev.hiddenGov) HemiDev.hiddenGov.render();
             try { refreshUI(); } catch(e) { /* 화면 준비 전 */ }
         }
@@ -7001,8 +6966,9 @@
             // 입력하다가 바로 버튼을 누르면 mousedown → (입력 묶음 닫힘) → click 순서라, 닫은 뒤 그 버튼 조작을 위해 새 묶음을 바로 연다 (방금 만든 글자를 쓰니 공짜)
             window.addEventListener('mouseup', () => { undoPointerDown = false; }, true);
             document.addEventListener('focusout', e => {
-                // 이번 클릭이 연 묶음에서, 클릭 바로 뒤(0.2초 안) 버튼이 포커스를 잃는 건(▶ → 날짜 창처럼 창 열기) 같은 조작
-                if(!undoEditable(e.target) && undoPendingGesture === undoGesture && performance.now() - undoGestureAt < 200) return;
+                // 이번 클릭이 연 묶음에서 버튼의 포커스가 다른 요소로 옮겨 가는 것(▶ → 날짜 창처럼 창을 열며 그 안으로)은 같은 조작.
+                // 탭 전환 · 숨김으로 포커스가 그냥 풀린 경우(relatedTarget 없음)는 묶음을 닫는다
+                if(!undoEditable(e.target) && e.relatedTarget && undoPendingGesture === undoGesture && performance.now() - undoGestureAt < 400) return;
                 commitUndoBatch();
                 if(undoPointerDown) captureUndoSnapshot();
             }, true);
@@ -7597,7 +7563,7 @@
 
         // 화면 갱신 — 자료 맞추기는 늘 하고, 목록은 지금 보이는 것만 다시 그린다 (v1.7.1 성능).
         // 안 보이는 목록(다른 탭 · 접힌 패널)은 "다시 그려야 함"으로만 적어 두었다가 보이는 순간 그린다:
-        //   탭을 옮기면 switchSubTab이 다시 refreshUI를 부르고, 안쪽 탭 · 모바일 패널 전환처럼 그 밖의 길은 flushLazyLists가 맡는다.
+        //   탭을 옮기면 switchSubTab이 다시 refreshUI를 부르고, 안쪽 탭 전환처럼 그 밖의 길은 flushLazyLists가 맡는다.
         // 목록 내용은 정당 · 이념 등 자료에서 다시 만드는 것이라 건너뛰어도 저장 · 계산 결과는 같다 (tests/perf/measure.cjs로 전후 비교)
         const LAZY_LISTS = [
             ['ideologyList', () => renderIdeologyList()],
@@ -7625,7 +7591,7 @@
             renderListMemberList();
             renderMembersList();
         }
-        // 탭 전환 말고 다른 길로 목록이 보이게 될 때 (안쪽 탭 · 모바일 패널 · 창 크기) — 보이는 순간 밀린 목록을 그린다
+        // 탭 전환 말고 다른 길로 목록이 보이게 될 때 (안쪽 탭 · 창 크기) — 보이는 순간 밀린 목록을 그린다
         document.addEventListener('DOMContentLoaded', () => {
             if(typeof IntersectionObserver !== 'function') return;
             const io = new IntersectionObserver(entries => { if(entries.some(e => e.isIntersecting)) flushLazyLists(); });
@@ -11171,37 +11137,6 @@
         }
 
         // ── 탭 전환 ────────────────────────────
-        // 모바일(세로형)에서는 컨트롤 · 의석 현황이 따로 보이므로, 선거를 돌리거나 결과를 반영하면 의석 현황 쪽으로 바로 넘긴다
-        function showSeatsOnMobile() {
-            if(typeof getUiMode === 'function' && getUiMode() === 'mobile' && typeof setMobilePanel === 'function') setMobilePanel('display');
-        }
-        // 모바일: 컨트롤 쪽 개표 버튼(일시정지 · 즉시 완료 / 의회에 반영 · 재개표)이 보이는 동안 의석 현황 쪽에도 같은 버튼을 띄운다
-        function syncMobileElecBar() {
-            const bar = document.getElementById('mobileElecBar');
-            if(!bar) return;
-            const shown = id => { const el = document.getElementById(id); return !!el && el.style.display !== 'none' && el.style.display !== ''; };
-            const mid = shown('elecMidControls');
-            const post = shown('elecPostBtns');
-            bar.classList.toggle('show', mid || post);
-            ['mobileElecPauseBtn', 'mobileElecFinishBtn'].forEach(id => { const b = document.getElementById(id); if(b) b.style.display = mid ? '' : 'none'; });
-            // 이미 반영한 결과면 "의회에 반영"은 숨긴다 (재개표만 남김)
-            const pendingApply = Object.keys(elecLastResults || {}).length > 0 || !!(elecLastResult && !elecLastResult.applied);
-            const applyBtn = document.getElementById('mobileElecApplyBtn');
-            if(applyBtn) applyBtn.style.display = post && !mid && pendingApply ? '' : 'none';
-            const rerunBtn = document.getElementById('mobileElecRerunBtn');
-            if(rerunBtn) rerunBtn.style.display = post && !mid ? '' : 'none';
-            const src = document.getElementById('elecPauseBtn');
-            const dst = document.getElementById('mobileElecPauseBtn');
-            if(src && dst && dst.textContent !== src.textContent) dst.textContent = src.textContent;
-        }
-        window.addEventListener('load', () => {
-            const obs = new MutationObserver(syncMobileElecBar);
-            ['elecMidControls', 'elecPostBtns', 'elecPauseBtn'].forEach(id => {
-                const el = document.getElementById(id);
-                if(el) obs.observe(el, { attributes: true, attributeFilter: ['style'], childList: true, characterData: true, subtree: true });
-            });
-            syncMobileElecBar();
-        });
         function switchDispTab(tab) {
             document.querySelectorAll('.disp-tab-btn').forEach(b => b.classList.remove('active'));
             document.querySelectorAll('.disp-panel').forEach(p => p.classList.remove('active'));
@@ -14826,7 +14761,6 @@
                 districtSyncSeatResultFromMembers(chamber, base);
             });
             simulate(); refreshUI();
-            showSeatsOnMobile();
             switchDispTab(chamber);
             showCustomAlert(`보궐선거 결과 (${chamberName})\n\n${summary.join('\n')}\n\n의회>의원 탭에서 당선자 이름을 입력해 주세요.`);
         }
@@ -14894,8 +14828,7 @@
             if(releasedHouse) emergencyPowers.dissolutionHouse.active = false;
             if(wasDissolved || releasedSenate || releasedHouse) renderEmergencyPowers();
             simulate(); refreshUI();
-            if(lastCh) { showSeatsOnMobile(); switchDispTab(lastCh); }
-            syncMobileElecBar();
+            if(lastCh) switchDispTab(lastCh);
             if(hadFactions) {
                 showCustomAlert('선거 결과가 반영되었습니다.\n\n파벌을 "합쳐서" 반영하는 정당의 파벌별 의석은 선거 전 분포가 무효화되어 0으로 초기화되었습니다.\n정당 탭에서 파벌 의석을 다시 배분해 주세요.' + (hadSplit ? '\n("파벌 나눠서" 정당은 새 의석을 파벌 몫대로 나눴습니다.)' : ''));
             }
@@ -16276,7 +16209,6 @@
             const suf = chamber.charAt(0).toUpperCase() + chamber.slice(1);
             document.getElementById('dispTabElecResult'+suf).style.display='';
             document.getElementById('dispTabElecResult'+suf).querySelector('.disp-tab-label').textContent = `${chamberName} 선거결과`;
-            showSeatsOnMobile();
             switchDispTab('elecResult'+suf);
             document.getElementById('elecResultTitle'+suf).innerText = `> ${elecTitle} (${elecYear}) — ${chamberName} 개표 중...`;
             document.getElementById('elecResultBar'+suf).style.width='0%';

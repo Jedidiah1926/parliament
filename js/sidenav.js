@@ -1,11 +1,10 @@
 // ===== Hemicycle — 세로 탭 사이드바 =====
-// 데스크톱 화면에서 메인 탭(의회/국가/여론/내각)을 접을 수 있는 그룹으로, 그 아래 2단 탭을
+// 메인 탭(의회/국가/여론/내각)을 접을 수 있는 그룹으로, 그 아래 2단 탭을
 // 항목으로 보여주는 세로 사이드바를 .controls 왼쪽에 만든다 (모든 테마 공통).
 // 사이드바는 기존 탭 버튼을 그대로 복제·클릭하는 "리모컨"일 뿐이라 탭 전환 로직은 전혀 바꾸지 않으며,
 // MutationObserver로 원래 버튼의 활성/표시/라벨(언어 전환 포함) 변화를 따라간다.
 // 모양은 css/sidenav.css(네온 기본) + css/modern.css(라이트/다크).
-// 모바일 화면 모드에서는 사이드바 대신 같은 묶음을 화면 아래 탭 바(+ "의석" 화면 전환)로 보여주고,
-// 실행(PROTOCOL EXECUTE) 버튼을 엄지가 닿는 곳에 떠 있는 버튼으로 둔다.
+// (접힌 상태 · 묶음 열림은 localStorage에 기억한다)
 (function () {
     'use strict';
 
@@ -62,8 +61,10 @@
         const it = document.createElement('button');
         it.type = 'button';
         it.className = 'mn-item mn-locked';
-        it.title = `${label} — ${ver}에서 열림`;
-        it.innerHTML = `${LOCK_SVG}<span class="mn-locked-label"></span><span class="mn-lock-ver">${ver}</span>`;
+        it.title = label;
+        it.dataset.dnoTipSub = `🔒 ${ver}에서 열림`;
+        it.dataset.tipWhen = 'collapsed';
+        it.innerHTML = `<span class="mn-dot" aria-hidden="true"></span><span class="mn-text">${LOCK_SVG}<span class="mn-locked-label"></span><span class="mn-lock-ver">${ver}</span></span>`;
         it.querySelector('.mn-locked-label').textContent = label;
         it.addEventListener('click', () => lockedInfo(label, ver));
         return it;
@@ -71,6 +72,30 @@
 
     function safeGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
     function safeSet(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* 저장 불가 환경 — 무시 */ } }
+    // 묶음 열고 닫기 — 펼친 사이드바의 항목 목록과 접힌 사이드바의 점이 같은 상태를 쓴다. 높이를 부드럽게
+    function toggleGroup(g, key) {
+        const items = g.querySelector('.mn-items');
+        const closing = !g.classList.contains('closed');
+        const set = closedGroups();
+        if (closing) set.add(key); else set.delete(key);
+        safeSet(CLOSED_GROUPS_KEY, JSON.stringify(Array.from(set)));
+        const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if (!items || reduce || typeof items.animate !== 'function') { g.classList.toggle('closed', closing); return; }
+        if (items._anim) items._anim.cancel();
+        const opts = { duration: 200, easing: 'cubic-bezier(.2, .8, .2, 1)' };
+        if (closing) {
+            const h = items.getBoundingClientRect().height;
+            items.style.overflow = 'hidden';
+            items._anim = items.animate([{ height: h + 'px', opacity: 1 }, { height: '0px', opacity: 0 }], opts);
+            items._anim.onfinish = () => { g.classList.add('closed'); items.style.overflow = ''; items._anim = null; };
+        } else {
+            g.classList.remove('closed');
+            const h = items.getBoundingClientRect().height;
+            items.style.overflow = 'hidden';
+            items._anim = items.animate([{ height: '0px', opacity: 0 }, { height: h + 'px', opacity: 1 }], opts);
+            items._anim.onfinish = () => { items.style.overflow = ''; items._anim = null; };
+        }
+    }
     function closedGroups() {
         try { return new Set(JSON.parse(safeGet(CLOSED_GROUPS_KEY) || '[]')); } catch (e) { return new Set(); }
     }
@@ -101,7 +126,8 @@
         nav.className = 'side-nav';
         nav.id = 'sideNav';
         nav.setAttribute('aria-label', '메뉴');
-        nav.innerHTML = `
+        // 바깥 nav는 자리(끝 폭으로 한 번에)만 잡고, 보이는 판(.mn-panel)만 폭을 움직인다 — 접기 · 펴기 동안 본문을 매 프레임 다시 배치하지 않게
+        nav.innerHTML = `<div class="mn-panel">
             <div class="mn-head">
                 <div class="mn-brand">
                     <div class="mn-brand-title">Ministry of Interior</div>
@@ -116,7 +142,7 @@
                 <input type="search" id="mnSearchInput" placeholder="기능 검색 (예: 선거인단)" autocomplete="off" spellcheck="false" aria-label="기능 검색" aria-controls="mnSearchResults">
                 <div class="mn-search-results" id="mnSearchResults" role="listbox" hidden></div>
             </div>
-            <div class="mn-groups" id="mnGroups"></div>`;
+            <div class="mn-groups" id="mnGroups"></div></div>`;
         document.body.insertBefore(nav, controls);
 
         const title = document.createElement('div');
@@ -148,6 +174,8 @@
                 const it = document.createElement('button');
                 it.type = 'button';
                 it.className = 'mn-item';
+                it.dataset.tipWhen = 'collapsed'; // 접혀서 점일 때만 이름표
+                it.innerHTML = '<span class="mn-dot" aria-hidden="true"></span><span class="mn-text"></span>';
                 it.addEventListener('click', () => {
                     if (!mainBtn.classList.contains('active')) mainBtn.click();
                     subBtn.click();
@@ -155,16 +183,11 @@
                 itemsEl.appendChild(it);
                 return { el: it, src: subBtn };
             });
+            head.dataset.tipWhen = 'collapsed'; // 접혔을 때만 묶음 이름
             head.addEventListener('click', () => {
-                // 접힌 사이드바(아이콘만)에서는 그룹을 여닫지 않고 그 메뉴로 바로 이동
-                if (document.body.classList.contains('side-nav-collapsed') || !items.length) {
-                    mainBtn.click();
-                    return;
-                }
-                g.classList.toggle('closed');
-                const set = closedGroups();
-                if (g.classList.contains('closed')) set.add(key); else set.delete(key);
-                safeSet(CLOSED_GROUPS_KEY, JSON.stringify(Array.from(set)));
+                // 하위 항목이 없는 메뉴는 바로 이동. 나머지는 펼친 사이드바에선 목록을, 접힌 사이드바에선 점을 여닫는다 (같은 상태)
+                if (!items.length) { mainBtn.click(); return; }
+                toggleGroup(g, key);
             });
             groupsEl.appendChild(g);
             return { key, g, head, mainBtn, items };
@@ -187,12 +210,10 @@
             g.querySelector('.mn-icon').textContent = fg.icon;
             g.querySelector('.mn-label').textContent = fg.label;
             // 항목이 있는 잠긴 그룹(세계)은 다른 그룹처럼 머리를 눌러 접고 펴고, 🔒 버전 표시를 누르면 안내 — 항목이 없으면(경제) 머리를 누르면 안내
+            g.querySelector('.mn-group-head').dataset.tipWhen = 'collapsed';
             g.querySelector('.mn-group-head').addEventListener('click', e => {
-                if (!fg.items || e.target.closest('.mn-lock-badge') || document.body.classList.contains('side-nav-collapsed')) { lockedInfo(fg.label, fg.ver); return; }
-                g.classList.toggle('closed');
-                const set = closedGroups();
-                if (g.classList.contains('closed')) set.add(fg.key); else set.delete(fg.key);
-                safeSet(CLOSED_GROUPS_KEY, JSON.stringify(Array.from(set)));
+                if (!fg.items || e.target.closest('.mn-lock-badge')) { lockedInfo(fg.label, fg.ver); return; }
+                toggleGroup(g, fg.key);
             });
             (fg.items || []).forEach(([id, label]) => { const it = lockedItem(label, fg.ver); it.dataset.lockedId = id; g.querySelector('.mn-items').appendChild(it); });
             const ref = groupsEl.querySelector(`:scope > .mn-group[data-main="${fg.after}"]`);
@@ -214,52 +235,6 @@
         const nationSrc = document.getElementById('nationNameDisp');
         const nationDst = nav.querySelector('#mnNationName');
 
-        // ---- 모바일: 아래 탭 바(묶음 4개 + 의석 화면) + 떠 있는 실행 버튼 ----
-        const panelNow = () => document.documentElement.getAttribute('data-mobile-panel') || 'controls';
-        const setPanel = p => { if (typeof window.setMobilePanel === 'function') window.setMobilePanel(p); };
-        const mobileNav = document.createElement('nav');
-        mobileNav.className = 'mobile-nav';
-        mobileNav.id = 'mobileNav';
-        mobileNav.setAttribute('aria-label', '메뉴');
-        const mobileItems = groups.map(grp => {
-            const b = document.createElement('button');
-            b.type = 'button';
-            b.className = 'mobile-nav-btn';
-            b.dataset.tone = GROUP_TONES[grp.key] || 'info';
-            b.innerHTML = '<span class="mnb-icon"></span><span class="mnb-label"></span>';
-            b.addEventListener('click', () => {
-                const wasHere = panelNow() === 'controls' && grp.mainBtn.classList.contains('active');
-                setPanel('controls');
-                if (!grp.mainBtn.classList.contains('active')) grp.mainBtn.click();
-                if (!wasHere || window.scrollY > 0) window.scrollTo({ top: 0, behavior: wasHere ? 'smooth' : 'auto' });
-            });
-            mobileNav.appendChild(b);
-            return { b, grp };
-        });
-        const seatsBtn = document.createElement('button');
-        seatsBtn.type = 'button';
-        seatsBtn.className = 'mobile-nav-btn mobile-nav-seats';
-        seatsBtn.dataset.tone = 'seats';
-        // 의석 아이콘: 글꼴마다 기호 모양이 달라 반원형 의석 모양을 직접 그림
-        seatsBtn.innerHTML = '<span class="mnb-icon"><svg width="20" height="12" viewBox="0 0 20 12" aria-hidden="true" fill="currentColor">'
-            + '<circle cx="2" cy="10.5" r="1.6"/><circle cx="3.6" cy="5.6" r="1.6"/><circle cx="7.2" cy="2.3" r="1.6"/><circle cx="12.8" cy="2.3" r="1.6"/>'
-            + '<circle cx="16.4" cy="5.6" r="1.6"/><circle cx="18" cy="10.5" r="1.6"/><circle cx="6.8" cy="8" r="1.6"/><circle cx="13.2" cy="8" r="1.6"/><circle cx="10" cy="6" r="1.6"/>'
-            + '</svg></span><span class="mnb-label">의석</span>';
-        seatsBtn.addEventListener('click', () => { setPanel('display'); window.scrollTo({ top: 0 }); });
-        mobileNav.appendChild(seatsBtn);
-        document.body.appendChild(mobileNav);
-
-        const execSrc = document.querySelector('.simulate-btn');
-        const fab = document.createElement('button');
-        fab.type = 'button';
-        fab.className = 'mobile-exec-fab';
-        fab.id = 'mobileExecFab';
-        fab.title = '다시 계산 (PROTOCOL EXECUTE)';
-        // 네온은 원래 실행 막대 문구 그대로, 라이트/다크는 "▶ 실행" (CSS가 테마별로 하나만 보여줌)
-        fab.innerHTML = '<span class="fab-neon">&gt;&gt; PROTOCOL EXECUTE &lt;&lt;</span><span class="fab-icon">▶</span><span class="fab-label">실행</span>';
-        fab.addEventListener('click', () => { if (execSrc) execSrc.click(); });
-        if (execSrc) document.body.appendChild(fab);
-
         function sync() {
             let activeGroup = null, activeItem = null;
             groups.forEach(grp => {
@@ -274,10 +249,11 @@
                 grp.items.forEach(({ el, src }) => {
                     const text = src.textContent.replace(/\s+/g, ' ').trim();
                     // ⚠(부정선거)는 글꼴마다 기호 위치가 달라 위로 뜨므로, 글자 대신 가운데 맞춘 경고 아이콘을 그린다
+                    const tx = el.querySelector('.mn-text');
                     if (text.replace(/[\uFE0E\uFE0F]/g, '') === '⚠') {
-                        if (el.dataset.icon !== 'warn') { el.innerHTML = WARN_ICON; el.dataset.icon = 'warn'; }
+                        if (el.dataset.icon !== 'warn') { tx.innerHTML = WARN_ICON; el.dataset.icon = 'warn'; }
                     } else {
-                        el.textContent = text;
+                        if (tx.textContent !== text) tx.textContent = text;
                         delete el.dataset.icon;
                     }
                     el.title = text;
@@ -307,18 +283,6 @@
                 }
             }
             if (nationSrc) nationDst.textContent = nationSrc.textContent.trim();
-            const onDisplay = panelNow() === 'display';
-            mobileItems.forEach(({ b, grp }) => {
-                const { icon, label } = splitIcon(grp.mainBtn.textContent);
-                b.querySelector('.mnb-icon').textContent = icon;
-                b.querySelector('.mnb-label').textContent = label;
-                b.style.display = isHidden(grp.mainBtn) ? 'none' : '';
-                const on = !onDisplay && grp.mainBtn.classList.contains('active');
-                b.classList.toggle('active', on);
-                b.setAttribute('aria-current', on ? 'page' : 'false');
-            });
-            seatsBtn.classList.toggle('active', onDisplay);
-            seatsBtn.setAttribute('aria-current', onDisplay ? 'page' : 'false');
         }
 
         let scheduled = false;
@@ -332,16 +296,49 @@
         observer.observe(document.querySelector('.main-tab-container'), opts);
         groups.forEach(grp => grp.items[0] && observer.observe(grp.items[0].src.parentElement, opts));
         if (nationSrc) observer.observe(nationSrc, { childList: true, characterData: true, subtree: true });
-        new MutationObserver(scheduleSync).observe(document.documentElement, { attributes: true, attributeFilter: ['data-mobile-panel', 'data-ui-mode'] });
 
         const collapseBtn = nav.querySelector('#mnCollapseBtn');
-        function applyCollapsed(on) {
+        const panel = nav.querySelector('.mn-panel');
+        let navAnims = [];
+        // 접기 · 펴기 — 본문은 끝 자리로 한 번만 배치하고(캔버스도 한 번만 다시 그림), 판의 폭과 본문의 위치만 같은 곡선으로 움직인다.
+        // 접기: 글자가 먼저 사라지고(CSS) 폭이 줄어든다. 펴기: 폭이 먼저 늘고 글자가 나타난다(CSS)
+        function applyCollapsed(on, animate) {
+            const was = document.body.classList.contains('side-nav-collapsed');
+            const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            animate = animate && was !== on && !reduce && nav.offsetParent !== null && typeof panel.animate === 'function';
+            navAnims.forEach(a => a.cancel()); navAnims = [];
+            let fromW = 0, movers = [], fromX = [];
+            if (animate) {
+                const nr = nav.getBoundingClientRect();
+                fromW = panel.getBoundingClientRect().width;
+                movers = Array.from(document.body.children).filter(el => el !== nav && el.offsetParent !== null && !/^(fixed|absolute|sticky)$/.test(getComputedStyle(el).position) && el.getBoundingClientRect().left >= nr.right - 1);
+                fromX = movers.map(el => el.getBoundingClientRect().left);
+            }
+            // 움직이는 동안만: 펼칠 때 항목의 강조 상자 · 선도 글자와 함께(폭이 다 늘어난 뒤) 나타나게 (평소 마우스 반응은 늦추지 않음).
+            // 상태를 바꾸기 전에 붙여야 그 지연이 이번 전환에 쓰인다
+            if (animate) document.body.classList.add('side-nav-moving');
             document.body.classList.toggle('side-nav-collapsed', on);
-            // 폭이 바뀌면 캔버스들이 ResizeObserver로 다시 그려진다 — 여기선 상태만 저장
             safeSet(COLLAPSE_KEY, on ? '1' : '0');
+            if (!animate) return;
+            const toW = nav.getBoundingClientRect().width; // 끝 폭 — 여기서 한 번 배치
+            const timing = { duration: on ? 210 : 230, delay: on ? 60 : 0, easing: 'cubic-bezier(.2, .8, .2, 1)', fill: 'backwards' };
+            navAnims.push(panel.animate([{ width: fromW + 'px' }, { width: toW + 'px' }], timing));
+            movers.forEach((el, i) => {
+                const dx = fromX[i] - el.getBoundingClientRect().left;
+                if (Math.abs(dx) > 0.5) navAnims.push(el.animate([{ transform: `translateX(${dx}px)` }, { transform: 'translateX(0)' }], timing));
+            });
+            const mine = navAnims[0];
+            mine.finished.then(() => setTimeout(() => { if (navAnims[0] === mine) document.body.classList.remove('side-nav-moving'); }, 140)).catch(() => {});
         }
-        collapseBtn.addEventListener('click', () => applyCollapsed(!document.body.classList.contains('side-nav-collapsed')));
-        applyCollapsed(safeGet(COLLAPSE_KEY) === '1');
+        collapseBtn.addEventListener('click', () => applyCollapsed(!document.body.classList.contains('side-nav-collapsed'), true));
+        applyCollapsed(safeGet(COLLAPSE_KEY) === '1', false);
+        // 접힌 상태에서 검색 아이콘을 누르면 펼치고 검색
+        nav.querySelector('#mnSearchInput').addEventListener('mousedown', e => {
+            if (!document.body.classList.contains('side-nav-collapsed')) return;
+            e.preventDefault();
+            applyCollapsed(false, true);
+            setTimeout(() => nav.querySelector('#mnSearchInput').focus(), 240);
+        });
 
         document.body.classList.add('has-side-nav');
         sync();

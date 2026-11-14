@@ -8,8 +8,6 @@
 /* global getAppState, setAppState, showCustomAlert, showCustomConfirm, showKbdToast */
 (function () {
     'use strict';
-    const root = document.documentElement;
-    if (root.getAttribute('data-app-mode') === 'logo') return;
 
     const FORMAT = 'hemicycle-challenge@1';
     const OLD_FORMAT = 'hemicycle-scenario@1';
@@ -214,7 +212,6 @@
     const css = document.createElement('style');
     css.textContent = `
         .sc-tracker { position: fixed; right: 16px; bottom: 16px; z-index: 9000; max-width: min(360px, calc(100vw - 32px)); display: flex; flex-direction: column-reverse; align-items: flex-end; gap: 6px; font-size: .84rem; }
-        html[data-ui-mode="mobile"] .sc-tracker { bottom: 76px; }
         .sc-pill { cursor: pointer; font: inherit; display: inline-flex; align-items: center; gap: 8px; padding: 7px 12px; background: #0d0f14; color: #ddd; border: 1px solid var(--tno-gold, #ffd700); box-shadow: 0 0 12px rgba(255,215,0,.2); max-width: 100%; }
         .sc-pill-t { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
         .sc-pill-n { color: var(--tno-gold, #ffd700); flex: 0 0 auto; }

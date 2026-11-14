@@ -1,7 +1,7 @@
 // World > Map: territory painting is independent of the electoral district map.
 (function(){
     'use strict';
-    if(document.documentElement.getAttribute('data-app-mode')==='logo'||!document.getElementById('mainContentWorld'))return;
+    if(!document.getElementById('mainContentWorld'))return;
     const D=HemiWorldMapData,NS='http://www.w3.org/2000/svg',esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
     const palette=['#437fa2','#c34e4e','#8f72ac','#b49c47','#5b986d','#bf8052','#599e9d','#a76c8e'];
     let S=null,revision=0,loadRequest=0,selected='',country='',tool='paint',camera=null,baseBox=null,pan=null,stroke=null,past=[],future=[],nodes=new Map();

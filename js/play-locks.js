@@ -11,7 +11,6 @@
 /* global currentMainTab, currentSubTab, switchSubTab, refreshUI, showKbdToast, getAppState */
 (function () {
     'use strict';
-    if (document.documentElement.getAttribute('data-app-mode') === 'logo') return;
 
     const SEAT_FIELDS = new Set(['seatsHouse', 'seatsSenate', 'seatsThird', 'inHouse', 'inSenate', 'inThird']);
     // 잠금 항목 → 편집 함수 · 편집 화면(안내를 띄울 곳)

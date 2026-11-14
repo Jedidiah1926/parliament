@@ -5,7 +5,6 @@
 //   HemiEconCharts.gauge · lines · panels · stackBars · budgetHemi · budgetBars · sankey · scatter · tornado · trajectory · table
 (function () {
     'use strict';
-    if (document.documentElement.getAttribute('data-app-mode') === 'logo') return;
 
     const NS = 'http://www.w3.org/2000/svg';
     const S = (tag, attrs, parent) => {

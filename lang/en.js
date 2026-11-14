@@ -1318,14 +1318,6 @@ window.DnoLangPacks.en = {
    "Reset to default"
   ],
   [
-   "모바일 (세로형)",
-   "Mobile (portrait)"
-  ],
-  [
-   "데스크톱 (가로형)",
-   "Desktop (landscape)"
-  ],
-  [
    "네온 모드",
    "Neon mode"
   ],
@@ -1426,8 +1418,8 @@ window.DnoLangPacks.en = {
    "Unrecovered territories · unification"
   ],
   [
-   "기기에 맞는 화면 배치를 고릅니다.",
-   "Choose the layout that fits your device."
+   "창 표시와 화면 요소를 고릅니다.",
+   "Choose how the window and screen elements are shown."
   ],
   [
    "라이트/다크는 CRT 효과 없는 깔끔한 화면, 네온은 기존의 레트로 터미널 화면입니다.",
@@ -1528,10 +1520,6 @@ window.DnoLangPacks.en = {
   [
    "시각 화면 오른쪽 위에 보이는 현재 날짜와 회기. 국가 › 날짜에서 정합니다 (\"열기\"로 이동).",
    "The current date and session at the top right of the visuals. Set them in Nation › Date (\"Open\" takes you there)."
-  ],
-  [
-   "기능은 의회 · 입법 · 여론 · 선거 · 내각 · 국가 여섯 묶음으로 나뉘어 있고, 회색 \"도움말\"에는 모든 탭의 설명이 있어요. 화면 아래 탭 바에서 \"의회\"를 누르고, 위쪽 칩 줄에서 \"정당\"을 골라보세요.",
-   "Features are grouped into Parliament, Legislation, Opinion, Election, Cabinet and Nation, and the gray \"Help\" explains every tab. Tap \"Parliament\" in the bottom tab bar, then pick \"Parties\" in the chip row at the top."
   ],
   [
    "기능은 의회 · 입법 · 여론 · 선거 · 내각 · 국가 여섯 묶음으로 나뉘어 있고, 맨 아래 회색 \"도움말\"에는 모든 탭의 설명이 있어요. 왼쪽 메뉴에서 의회 › 정당을 눌러보세요.",
@@ -4402,14 +4390,6 @@ window.DnoLangPacks.en = {
    "📦 Create from preset"
   ],
   [
-   "◀ 컨트롤",
-   "◀ Controls"
-  ],
-  [
-   "의석 현황 ▶",
-   "Seats ▶"
-  ],
-  [
    "사이드바 접기/펼치기",
    "Collapse/expand sidebar"
   ],
@@ -5719,10 +5699,6 @@ window.DnoLangPacks.en = {
    "General ›"
   ],
   [
-   "모바일 ›",
-   "Mobile ›"
-  ],
-  [
    "⚠ (부정선거)",
    "⚠ (Election fraud)"
   ],
@@ -5995,16 +5971,8 @@ window.DnoLangPacks.en = {
    "Close open confirm, notice or export windows."
   ],
   [
-   "모바일 화면 모드",
-   "Mobile UI mode"
-  ],
-  [
-   "메인 메뉴 › 설정의 화면 모드(UI MODE)에서 모바일을 고르면 사이드바 대신 화면 아래 탭 바(묶음 + 의석)와 떠 있는 실행 버튼을 씁니다. 세부 항목은 위쪽 칩 줄에서 고르고, \"의석\"을 누르면 시각 화면으로 넘어가요.",
-   "Choose Mobile under UI MODE in Main menu › Settings to use a bottom tab bar (groups + Seats) and a floating execute button instead of the sidebar. Pick items from the chip row at the top; tap \"Seats\" for the visuals."
-  ],
-  [
-   "화면 오른쪽(모바일은 \"의석\")의 시각 탭 — 설정한 내용이 그림으로 보이는 곳입니다.",
-   "The visual tabs on the right (\"Seats\" on mobile) — where your settings are drawn."
+   "화면 오른쪽의 시각 탭 — 설정한 내용이 그림으로 보이는 곳입니다.",
+   "The visual tabs on the right — where your settings are drawn."
   ],
   [
    "하원(첫 번째 의회)의 의석을 반원으로 보여줍니다. 위쪽 \"반원 / 지역구\"로 지역구 지도 보기로 바꿀 수 있고, 아래에는 여당 · 야당별 정당 카드(의석 수 · 비율 · 파벌)와 원외정당, 의장단이 나와요.",
@@ -6103,10 +6071,6 @@ window.DnoLangPacks.en = {
    "Exploring the seats"
   ],
   [
-   "의석은 반원 모양으로 그려집니다. 아래 탭 바의 \"의석\"을 눌러 의석 화면으로 간 뒤, 좌석(점) 하나를 눌러보세요.",
-   "Seats are drawn as a hemicycle. Tap \"Seats\" in the bottom tab bar to go to the seat screen, then tap a seat (dot)."
-  ],
-  [
    "의석은 반원 모양으로 그려집니다. 좌석(점) 하나를 눌러보세요.",
    "Seats are drawn as a hemicycle. Click a seat (dot)."
   ],
@@ -6165,10 +6129,6 @@ window.DnoLangPacks.en = {
   [
    "다시 계산하기",
    "Recalculating"
-  ],
-  [
-   "설정을 바꾼 뒤에는 실행 버튼을 눌러 의석 화면을 새로 그립니다. 지금 눌러보세요. 아래 탭 바의 \"의석\"에서 새 정당의 자리를 확인할 수 있어요.",
-   "After changing settings, press the execute button to redraw the seat screen. Press it now. You can see the new party's seats under \"Seats\" in the bottom tab bar."
   ],
   [
    "설정을 바꾼 뒤에는 이 버튼을 눌러 의석 화면을 새로 그립니다. 지금 눌러보세요. (입력 칸 밖에서 Enter 키를 눌러도 같아요)",
@@ -6831,8 +6791,8 @@ window.DnoLangPacks.en = {
    "Main screen"
   ],
   [
-   "⌂를 누르면 저장한 뒤 메인 화면으로 갑니다. 메인 화면에서는 시작하기(세이브 고르기 · 프리셋 · 파일 불러오기), 맵 메이커, 로드맵, 설정(라이트 · 다크 · 네온 테마, 데스크톱 · 모바일 화면 모드)을 고르고, 🌐로 언어를 바꿉니다. 이 튜토리얼은 시작하기 › 프리셋의 \"서독\"으로 언제든 다시 할 수 있어요.",
-   "⌂ saves and takes you to the main screen. There you choose Start (pick a save · preset · load a file), Map Maker, Roadmap and Settings (light · dark · neon theme, desktop · mobile layout), and change the language with 🌐. You can replay this tutorial any time with the \"West Germany\" preset under Start."
+   "⌂를 누르면 저장한 뒤 메인 화면으로 갑니다. 메인 화면에서는 시작하기(세이브 고르기 · 프리셋 · 파일 불러오기), 맵 메이커, 로드맵, 설정(라이트 · 다크 · 네온 테마)을 고르고, 🌐로 언어를 바꿉니다. 이 튜토리얼은 시작하기 › 프리셋의 \"서독\"으로 언제든 다시 할 수 있어요.",
+   "⌂ saves and takes you to the main screen. There you choose Start (pick a save · preset · load a file), Map Maker, Roadmap and Settings (light · dark · neon theme), and change the language with 🌐. You can replay this tutorial any time with the \"West Germany\" preset under Start."
   ],
   [
    "이념과 서브 이념",
@@ -7159,10 +7119,6 @@ window.DnoLangPacks.en = {
    "Sidebar and resizing"
   ],
   [
-   "모바일에서는 아래 탭 바로 묶음을 고르고, 위쪽 칩 줄에서 세부 항목을 고릅니다. 떠 있는 실행 버튼으로 다시 계산해요.",
-   "On mobile, pick a group from the bottom tab bar and an item from the chip row at the top. The floating run button recalculates."
-  ],
-  [
    "사이드바 머리의 접기 버튼으로 아이콘만 남겨 편집 화면을 넓게 쓸 수 있어요. 편집 패널과 시각 화면 사이 경계를 끌면 폭을 바꾸고, 더블클릭하면 원래 폭으로 돌아갑니다.",
    "The collapse button in the sidebar header leaves only icons so the editing area gets wider. Drag the border between the editing panel and the visual screen to resize, and double-click it to restore the default width."
   ],
@@ -7251,12 +7207,8 @@ window.DnoLangPacks.en = {
    "Theme · language · tutorial"
   ],
   [
-   "⌂로 메인 화면에 가면 설정(라이트 · 다크 · 네온 테마, 모바일 · 데스크톱 화면)과 🌐 언어(언어 팩 불러오기 포함)를 바꿀 수 있어요. 튜토리얼은 시작하기 › 프리셋의 \"서독\"으로 언제든 다시 할 수 있고, 기본 튜토리얼(핵심 흐름)과 세부 튜토리얼(기능별)로 나뉘어 있습니다.",
-   "From the main screen (⌂) you can change Settings (light · dark · neon theme, mobile · desktop layout) and the 🌐 language (including loading language packs). Replay the tutorial any time with the \"West Germany\" preset under Start; it's split into the basic tutorial (core flow) and detailed tutorials (by feature)."
-  ],
-  [
-   "메인 화면 › 설정의 화면(모바일 · 데스크톱)에서 모바일을 고르면 사이드바 대신 화면 아래 탭 바(묶음 + 의석)와 떠 있는 실행 버튼을 씁니다. 세부 항목은 위쪽 칩 줄에서 고르고, \"의석\"을 누르면 시각 화면으로 넘어가요.",
-   "Choose mobile under Main screen › Settings › Display (mobile · desktop) to use a bottom tab bar (groups + seats) and a floating run button instead of the sidebar. Pick items from the chip row at the top, and \"Seats\" switches to the visual screen."
+   "⌂로 메인 화면에 가면 설정(라이트 · 다크 · 네온 테마)과 🌐 언어(언어 팩 불러오기 포함)를 바꿀 수 있어요. 튜토리얼은 시작하기 › 프리셋의 \"서독\"으로 언제든 다시 할 수 있고, 기본 튜토리얼(핵심 흐름)과 세부 튜토리얼(기능별)로 나뉘어 있습니다.",
+   "From the main screen (⌂) you can change Settings (light · dark · neon theme) and the 🌐 language (including loading language packs). Replay the tutorial any time with the \"West Germany\" preset under Start; it's split into the basic tutorial (core flow) and detailed tutorials (by feature)."
   ],
   [
    "시각 화면 맨 위 줄의 현재 날짜와 회기. ▶ · ▶▶ · ▶▶▶로 하루 · 일주일 · 한 달씩 넘기고, \"다음: 정기회 / 임시회\"로 다음 회기 종류를 골라(지금 회기는 그대로) \"다음 회기\"로 넘깁니다. ⚙로 날짜 · 회기 설정 창을 엽니다.",

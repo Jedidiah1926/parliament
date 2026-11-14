@@ -1,4 +1,4 @@
-// ===== 의장석 (1.6.1 — 본 게임 · 모든 미리보기 화면 공통, 로고 제작 화면만 빼고) =====
+// ===== 의장석 (1.6.1 — 본 게임 · 모든 미리보기 화면 공통) =====
 // 반원 가운데 빈 곳에 의장석(단상 + 의장)을 그릴지 정한다. 의회 › 의장 · 표시의 "반원 중앙 표시" 아래에 설정이 붙는다.
 //   always — 반원 화면에 늘 그리고, 애니메이션(봉쇄 돌파 · 의장석 점거)에도 그림
 //   anim   — 애니메이션에서만 (기본)
@@ -8,8 +8,6 @@
 /* global getAppState, setAppState, chamberCenterMode, chamberLogos, isModernTheme, redrawAll */
 (function () {
     'use strict';
-    const root = document.documentElement;
-    if (root.getAttribute('data-app-mode') === 'logo') return;
     // 봉쇄 돌파 · 의장석 점거 애니메이션 (1.6.4 국회공성전 — js/siege.js, 본 게임에 들어감)
     const hasAnim = () => true;
 

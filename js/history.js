@@ -1,5 +1,5 @@
 // ===== 1.6.5 — 영광이 산 위에서 꺾였도다 "How the mighty have fallen" (세력 변화 · 위키 틀 · 세계) =====
-// 1.6.5 미리보기(예전 teaser65)에서 본 게임으로 옮겨 왔다 — 본 게임 · 모든 미리보기 화면에서 돈다 (로고 제작 화면만 빼고).
+// 1.6.5 미리보기(예전 teaser65)에서 본 게임으로 옮겨 왔다 — 본 게임 · 모든 미리보기 화면에서 돈다.
 // main.html은 js/siege.js 다음에 이 파일을 읽는다.
 //
 //   - 의회 › 세력 변화: 정당 의석을 시점마다 기록하고, 오른쪽 시각 화면 "세력 변화" 탭에 정당 역사 도표로 그린다
@@ -16,7 +16,6 @@
 (function () {
     'use strict';
     const root = document.documentElement;
-    if (root.getAttribute('data-app-mode') === 'logo') return;
 
     const esc = s => (typeof escapeHtmlText === 'function' ? escapeHtmlText(String(s ?? '')) : String(s ?? ''));
     const uid = () => 'w' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);

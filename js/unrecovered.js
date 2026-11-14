@@ -1,5 +1,5 @@
 // ===== 1.6.7 — 즉시, 지체 없이 "Sofort, unverzüglich." (미수복 지역 · 영토 통일) =====
-// 1.6.7 미리보기(예전 teaser67)에서 본 게임으로 옮겨 왔다 — 본 게임 · 모든 미리보기 화면에서 돈다 (로고 제작 화면만 빼고).
+// 1.6.7 미리보기(예전 teaser67)에서 본 게임으로 옮겨 왔다 — 본 게임 · 모든 미리보기 화면에서 돈다.
 // main.html은 js/royal.js 다음에 이 파일을 읽는다.
 //
 //   - 국가 › 미수복 탭을 새로 둔다 (국가 › 지역구 지도 · 권역은 1.6.0부터 본 화면, 1.5.9 화면이면 지역구 편집을 국가 › 지역구 지도로 옮김)
@@ -15,7 +15,6 @@
    districtSvgMapFor, districtOrderSync */
 (function () {
     'use strict';
-    if (document.documentElement.getAttribute('data-app-mode') === 'logo') return;
 
     // 미수복 영토는 여러 개 — 영토마다 이름 · 색(빗금 색)이 있고, 지역구는 그중 하나에 속한다
     //   territories = [{ id, name, color }], unrecovered = { 지역구 키: 영토 id }
@@ -244,7 +243,7 @@
     }
 
     // ---- 국가 › 미수복 탭 신설 (국가 › 지역구 지도 · 권역은 1.6.0부터 본 화면에 있음) ----
-    // (사이드바 · 모바일 탭 바는 js/sidenav.js가 페이지가 다 읽힌 뒤 탭 버튼을 보고 만드므로, 그 전에 버튼 · 내용을 넣어 둔다)
+    // (사이드바는 js/sidenav.js가 페이지가 다 읽힌 뒤 탭 버튼을 보고 만드므로, 그 전에 버튼 · 내용을 넣어 둔다)
     function el(html) { const d = document.createElement('div'); d.innerHTML = html.trim(); return d.firstChild; }
     (function addUnrecTab() {
         const nation = document.getElementById('mainContentNation');

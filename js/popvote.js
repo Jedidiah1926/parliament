@@ -438,7 +438,6 @@
             return (view === 'region' ? [rl, dl] : [dl, rl]).filter(Boolean).join(' · ');
         }, view === 'region' ? key => regionOfKey[key]?.region.id ?? null : null);
         if (open) {
-            if (typeof showSeatsOnMobile === 'function') showSeatsOnMobile();
             if (typeof switchDispTab === 'function') switchDispTab('popVote');
         }
     }
@@ -551,8 +550,6 @@
         btn.style.display = '';
         if (kind === 'local') renderLocalResult(rec, box, true); else renderRefResult(rec, box, true);
         if (open) {
-            if (typeof window.showSeatsOnMobile === 'function') window.showSeatsOnMobile();
-            else if (typeof showSeatsOnMobile === 'function') showSeatsOnMobile();
             if (typeof switchDispTab === 'function') switchDispTab('popVote');
         }
     }

@@ -9,7 +9,6 @@
             --tno-gold: #ffd700;
         }
 
-
         body {
             font-family: 'NeoDunggeunmo', 'VT323', monospace;
             background-color: var(--tno-bg);
@@ -124,11 +123,6 @@
             .settings-nav-item { width: auto; flex-shrink: 0; padding: 8px 12px; font-size: 0.9rem; }
             .settings-panel { padding: 20px 16px; }
         }
-        html[data-ui-mode="mobile"] .settings-layout { flex-direction: column; }
-        html[data-ui-mode="mobile"] .settings-nav { width: auto; flex-direction: row; padding: 8px; border-right: none; border-bottom: 1px solid var(--tno-border); overflow-x: auto; }
-        html[data-ui-mode="mobile"] .settings-nav .status-line, html[data-ui-mode="mobile"] .settings-nav-spacer { display: none; }
-        html[data-ui-mode="mobile"] .settings-nav-item { width: auto; flex-shrink: 0; }
-        html[data-ui-mode="mobile"] .settings-panel { padding: 20px 16px; }
 
         .content {
             padding: 40px 30px;
@@ -246,10 +240,6 @@
             overflow-y: auto;
             padding-right: 6px;
         }
-
-        .changelog::-webkit-scrollbar { width: 8px; background: #000; }
-        .changelog::-webkit-scrollbar-thumb { background: var(--tno-border); border: 1px solid var(--tno-neon); }
-        .changelog::-webkit-scrollbar-thumb:hover { background: var(--tno-neon); }
 
         /* ── 로그 엔트리 레이아웃 ── */
         .log-entry {
@@ -447,8 +437,6 @@
             overflow-y: auto;
             padding-right: 4px;
         }
-        .save-select-list::-webkit-scrollbar { width: 8px; background: #000; }
-        .save-select-list::-webkit-scrollbar-thumb { background: var(--tno-border); border: 1px solid var(--tno-neon); }
 
         .save-select-item {
             display: flex;
@@ -603,9 +591,6 @@
             .save-select-col { overflow: visible; }
             .save-select-col + .save-select-col { border-left: none; border-top: 1px solid var(--tno-border); }
         }
-        html[data-ui-mode="mobile"] .save-select-columns { grid-template-columns: 1fr; overflow-y: auto; }
-        html[data-ui-mode="mobile"] .save-select-col { overflow: visible; }
-        html[data-ui-mode="mobile"] .save-select-col + .save-select-col { border-left: none; border-top: 1px solid var(--tno-border); }
 
         /* 언어 선택: 불러온 언어 팩이 늘어나면 줄바꿈, 팩 삭제(✕) 표시 */
         .lang-select-wrap { flex-wrap: wrap; }
