@@ -7001,8 +7001,9 @@
             // 입력하다가 바로 버튼을 누르면 mousedown → (입력 묶음 닫힘) → click 순서라, 닫은 뒤 그 버튼 조작을 위해 새 묶음을 바로 연다 (방금 만든 글자를 쓰니 공짜)
             window.addEventListener('mouseup', () => { undoPointerDown = false; }, true);
             document.addEventListener('focusout', e => {
-                // 이번 클릭이 연 묶음에서, 클릭 바로 뒤(0.2초 안) 버튼이 포커스를 잃는 건(▶ → 날짜 창처럼 창 열기) 같은 조작
-                if(!undoEditable(e.target) && undoPendingGesture === undoGesture && performance.now() - undoGestureAt < 200) return;
+                // 이번 클릭이 연 묶음에서 버튼의 포커스가 다른 요소로 옮겨 가는 것(▶ → 날짜 창처럼 창을 열며 그 안으로)은 같은 조작.
+                // 탭 전환 · 숨김으로 포커스가 그냥 풀린 경우(relatedTarget 없음)는 묶음을 닫는다
+                if(!undoEditable(e.target) && e.relatedTarget && undoPendingGesture === undoGesture && performance.now() - undoGestureAt < 400) return;
                 commitUndoBatch();
                 if(undoPointerDown) captureUndoSnapshot();
             }, true);
