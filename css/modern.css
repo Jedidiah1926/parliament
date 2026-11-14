@@ -110,16 +110,7 @@ html[data-theme-family="modern"] body {
 /* CRT 스캔라인 오버레이 제거 */
 html[data-theme-family="modern"] body::after { display: none !important; }
 html[data-theme-family="modern"] ::selection { background: color-mix(in srgb, var(--m-info) 25%, transparent); }
-html[data-theme-family="modern"] ::-webkit-scrollbar { width: 10px; height: 10px; background: transparent !important; }
-html[data-theme-family="modern"] ::-webkit-scrollbar-track,
-html[data-theme-family="modern"] ::-webkit-scrollbar-corner { background: transparent !important; border: none !important; }
-html[data-theme-family="modern"] ::-webkit-scrollbar-thumb {
-    background: var(--m-border-strong) !important;
-    border: 2px solid transparent !important;
-    background-clip: padding-box !important;
-    border-radius: 999px;
-}
-html[data-theme-family="modern"] ::-webkit-scrollbar-thumb:hover { background: var(--m-text-4) !important; background-clip: padding-box !important; }
+/* 스크롤바는 css/scrollbars.css 한 곳에서 */
 html[data-theme-family="modern"] a { color: var(--m-info); }
 
 /*@@GENERATED-REMAP-BEGIN@@*/
@@ -149,7 +140,6 @@ html[data-theme-family="modern"] .bill-history:not(:where([style*="background"])
 html[data-theme-family="modern"] .bill-search-bar input:not(:where([style*="background"])),
 html[data-theme-family="modern"] .canvas-export-menu:not(:where([style*="background"])),
 html[data-theme-family="modern"] .card-item:not(:where([style*="background"])),
-html[data-theme-family="modern"] .changelog:not(:where([style*="background"]))::-webkit-scrollbar,
 html[data-theme-family="modern"] .coalition-members:not(:where([style*="background"])),
 html[data-theme-family="modern"] .elec-record-detail:not(:where([style*="background"])),
 html[data-theme-family="modern"] .faction-card:not(:where([style*="background"])),
@@ -170,7 +160,6 @@ html[data-theme-family="modern"] .rd-version-btn:not(:where([style*="background"
 html[data-theme-family="modern"] .ruling-selector:not(:where([style*="background"])),
 html[data-theme-family="modern"] .save-rename-input:not(:where([style*="background"])),
 html[data-theme-family="modern"] .save-select-head:not(:where([style*="background"])),
-html[data-theme-family="modern"] .save-select-list:not(:where([style*="background"]))::-webkit-scrollbar,
 html[data-theme-family="modern"] .save-select-new-row input:not(:where([style*="background"])),
 html[data-theme-family="modern"] .save-select-search input:not(:where([style*="background"])),
 html[data-theme-family="modern"] .save-tab-bar:not(:where([style*="background"])),
@@ -192,10 +181,6 @@ html[data-theme-family="modern"] .vote-bar-outer:not(:where([style*="background"
 html[data-theme-family="modern"] .vote-bill-input:not(:where([style*="background"])),
 html[data-theme-family="modern"] .vote-panel:not(:where([style*="background"])),
 html[data-theme-family="modern"] .vote-result-wrap:not(:where([style*="background"])),
-html[data-theme-family="modern"] ::-webkit-scrollbar,
-html[data-theme-family="modern"] ::-webkit-scrollbar-corner,
-html[data-theme-family="modern"] ::-webkit-scrollbar-thumb,
-html[data-theme-family="modern"] ::-webkit-scrollbar-track,
 html[data-theme-family="modern"] canvas:not(:where([style*="background"])),
 html[data-theme-family="modern"] input[type="checkbox"]:not(:where([style*="background"])),
 html[data-theme-family="modern"] input[type="number"]:not(:where([style*="background"])),
@@ -485,7 +470,6 @@ html[data-theme-family="modern"] .vote-bar-outer:not(:where([style*="border-top"
 html[data-theme-family="modern"] .vote-panel:not(:where([style*="border-top"])),
 html[data-theme-family="modern"] .vote-result-wrap:not(:where([style*="border-top"])),
 html[data-theme-family="modern"] .vote-verdict:not(:where([style*="border-top"])),
-html[data-theme-family="modern"] ::-webkit-scrollbar-track,
 html[data-theme-family="modern"] canvas:not(:where([style*="border-top"])),
 html[data-theme-family="modern"] input[type="checkbox"]:checked:not(:where([style*="border-top"]))::after,
 html[data-theme-family="modern"] input[type="checkbox"]:not(:where([style*="border-top"])) {
@@ -2691,12 +2675,7 @@ html[data-theme-family="modern"] .rd-detail-layer { background: rgba(0, 0, 0, .3
 html[data-theme-family="modern"] .rd-detail.rd-card { border-radius: 18px; box-shadow: var(--m-shadow) !important; }
 html[data-theme-family="modern"] .rd-detail-close { border: none; border-radius: 9px; background: var(--m-surface-2); color: var(--m-text); }
 html[data-theme-family="modern"] .rd-detail-close:hover { background: var(--m-surface-3); color: var(--m-text); }
-/* 로드맵 스크롤바: 네온의 검은 트랙 · 카드색 막대 대신 배경 없는 가는 회색 막대 */
-html[data-theme-family="modern"] .rd-desc,
-html[data-theme-family="modern"] .rd-track-viewport,
-html[data-theme-family="modern"] .rd-header { scrollbar-width: thin; scrollbar-color: var(--m-border-strong) transparent !important; }
-html[data-theme-family="modern"] .rd-desc::-webkit-scrollbar-track { background: transparent !important; }
-html[data-theme-family="modern"] .rd-desc::-webkit-scrollbar-thumb { background: var(--m-border-strong) !important; box-shadow: none !important; border-radius: 999px; }
+/* 로드맵 스크롤바는 css/scrollbars.css (라이트 · 다크는 공통 회색 막대) */
 
 /* 맵 메이커 (map.html 인라인 스타일) */
 html[data-theme-family="modern"] h1 { color: var(--m-text) !important; font-weight: 800; }

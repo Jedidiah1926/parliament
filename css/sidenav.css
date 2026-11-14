@@ -50,9 +50,7 @@ html:not([data-ui-mode="mobile"]) body.has-side-nav.side-nav-collapsed .side-nav
 .mn-search-empty { padding: 8px 10px; font-size: .78rem; opacity: .7; }
 .mn-search-flash { outline: 2px solid var(--tno-neon) !important; outline-offset: 3px; transition: outline-color .3s; }
 .mn-groups { flex: 1; overflow-y: auto; overflow-x: hidden; display: flex; flex-direction: column; }
-/* 묶음 목록 스크롤바는 4px — 접힌 폭(52~58px)에서도 아이콘 열을 밀지 않게 (아이콘은 왼쪽 기준이라 오른쪽 4px는 영향 없음) */
-.mn-groups::-webkit-scrollbar { width: 4px !important; }
-.mn-groups::-webkit-scrollbar-thumb { border: none !important; }
+/* 묶음 목록 스크롤바는 4px (css/scrollbars.css) — 접힌 폭에서도 아이콘 열을 밀지 않게 */
 .mn-group-head { width: 100%; display: flex; align-items: center; gap: 8px; cursor: pointer; overflow: hidden; }
 .mn-icon { flex: 0 0 18px; text-align: center; line-height: 1; }
 .mn-label { flex: 1; min-width: 0; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

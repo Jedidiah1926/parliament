@@ -1,50 +1,86 @@
-/* Shared page, panel and form scrollbars. More specific hidden/compact rules stay in force. */
+/* =====================================================================
+   스크롤바 — 앱 전체에서 여기 한 곳만 (다른 CSS · JS에 ::-webkit-scrollbar 규칙을 두지 않는다)
+   ---------------------------------------------------------------------
+   평소에는 흐리게, 스크롤 영역에 마우스가 있으면 조금 진하게, 막대에 올리거나 끌면 진하고 굵게.
+   다르게 보여야 하는 곳은 아래 변수만 덮어쓴다 (예: 로드맵 카드 = 카드 색, 부정선거 = 초록 터미널, 사이드바 = 4px).
+   숨겨야 하는 곳은 .no-scrollbar.
+   ⚠ Chromium(데스크톱 앱)에서는 scrollbar-width · scrollbar-color를 쓰면 이 꾸밈이 무시되고 기본 스크롤바가 된다 —
+     표준 속성은 ::-webkit-scrollbar가 없는 브라우저(Firefox)에서만 맨 아래에서 쓴다.
+   ===================================================================== */
 html {
-    --scroll-track: #000;
-    --scroll-thumb: var(--tno-border, #4a5a6a);
-    --scroll-hover: var(--tno-neon, var(--accent-color, #00ffff));
-    --scroll-border: 1px solid var(--tno-neon, var(--accent-color, #00ffff));
-    --scroll-radius: 0;
-    --scroll-clip: border-box;
+    /* 네온 */
+    --sb-size: 8px;
+    --sb-track: #000;
+    --sb-thumb: color-mix(in srgb, var(--tno-neon, #00ffff) 22%, #000);      /* 평소 */
+    --sb-thumb-area: color-mix(in srgb, var(--tno-neon, #00ffff) 34%, #000); /* 영역에 마우스 */
+    --sb-thumb-bar: var(--tno-neon, #00ffff);                                /* 막대에 마우스 · 끄는 중 */
+    --sb-edge: color-mix(in srgb, var(--tno-neon, #00ffff) 60%, transparent);
+    --sb-edge-bar: var(--tno-neon, #00ffff);
+    --sb-border-w: 1px;
+    --sb-border-w-bar: 1px;
+    --sb-radius: 0;
+    --sb-glow-bar: 0 0 6px var(--tno-neon, #00ffff);
 }
 html[data-theme-family="modern"] {
-    --scroll-track: transparent;
-    --scroll-thumb: var(--m-border-strong, #d4d4d8);
-    --scroll-hover: var(--m-text-4, #8b8b94);
-    --scroll-border: 2px solid transparent;
-    --scroll-radius: 999px;
-    --scroll-clip: padding-box;
+    /* 라이트 · 다크: 평소 4px 알약(10px 칸에 3px 투명 테두리), 막대에 올리면 8px */
+    --sb-size: 10px;
+    --sb-track: transparent;
+    --sb-thumb: color-mix(in srgb, var(--m-text, #18181b) 14%, transparent);
+    --sb-thumb-area: color-mix(in srgb, var(--m-text, #18181b) 30%, transparent);
+    --sb-thumb-bar: color-mix(in srgb, var(--m-text, #18181b) 46%, transparent);
+    --sb-edge: transparent;
+    --sb-edge-bar: transparent;
+    --sb-border-w: 3px;
+    --sb-border-w-bar: 1px;
+    --sb-radius: 999px;
+    --sb-glow-bar: none;
 }
-html[data-theme-mode="dark"][data-theme-family="modern"] {
-    --scroll-thumb: var(--m-border-strong, #3f3f46);
-}
-::-webkit-scrollbar { width: 10px; height: 10px; background: var(--scroll-track); }
-::-webkit-scrollbar-track, ::-webkit-scrollbar-corner { background: var(--scroll-track); }
+
+::-webkit-scrollbar { width: var(--sb-size); height: var(--sb-size); background: var(--sb-track); }
+::-webkit-scrollbar-track, ::-webkit-scrollbar-corner { background: var(--sb-track); border: none; }
 ::-webkit-scrollbar-thumb {
-    background: var(--scroll-thumb);
-    background-clip: var(--scroll-clip);
-    border: var(--scroll-border);
-    border-radius: var(--scroll-radius);
+    background-color: var(--sb-thumb);
+    background-clip: padding-box;
+    border: var(--sb-border-w) solid var(--sb-edge);
+    border-radius: var(--sb-radius);
 }
-::-webkit-scrollbar-thumb:hover { background: var(--scroll-hover); background-clip: var(--scroll-clip); }
+/* 스크롤 영역(또는 그 안)에 마우스가 있을 때 */
+:hover::-webkit-scrollbar-thumb { background-color: var(--sb-thumb-area); }
+/* 막대에 올리거나 끄는 중 */
+::-webkit-scrollbar-thumb:hover, ::-webkit-scrollbar-thumb:active {
+    background-color: var(--sb-thumb-bar);
+    border-width: var(--sb-border-w-bar);
+    border-color: var(--sb-edge-bar);
+    box-shadow: var(--sb-glow-bar);
+}
 ::-webkit-scrollbar-button { display: none; }
-/* Keep the generic modern surface rules from repainting scrollbars as panels.
-   Include the root pseudo-elements too: descendant selectors omit the page scrollbar. */
-:root[data-theme-family="modern"]::-webkit-scrollbar,
-:root[data-theme-family="modern"] ::-webkit-scrollbar,
-:root[data-theme-family="modern"]::-webkit-scrollbar-track,
-:root[data-theme-family="modern"] ::-webkit-scrollbar-track,
-:root[data-theme-family="modern"]::-webkit-scrollbar-corner,
-:root[data-theme-family="modern"] ::-webkit-scrollbar-corner { background: transparent !important; }
-:root[data-theme-family="modern"]::-webkit-scrollbar-thumb,
-:root[data-theme-family="modern"] ::-webkit-scrollbar-thumb {
-    background: var(--scroll-thumb) !important;
-    background-clip: padding-box !important;
-    border: 2px solid transparent !important;
+
+/* ---- 자리마다 다른 것 (변수만) ---- */
+/* 세이브 탭 줄 · 사이드바 묶음 목록: 4px — 접힌 사이드바(52~58px)에서도 아이콘 열을 밀지 않게 */
+.save-tab-list, .mn-groups { --sb-size: 4px; --sb-border-w: 0px; --sb-border-w-bar: 0px; }
+/* 로드맵 카드 설명(네온): 막대 테두리 · 올렸을 때 색이 카드 상태 색 */
+html:not([data-theme-family="modern"]) .rd-desc {
+    --sb-size: 6px; --sb-track: rgba(0, 0, 0, .4);
+    --sb-edge: var(--card-color, var(--tno-neon)); --sb-edge-bar: var(--card-color, var(--tno-neon));
+    --sb-thumb-bar: var(--card-color, var(--tno-neon)); --sb-glow-bar: 0 0 8px var(--card-color, var(--tno-neon));
 }
-:root[data-theme-family="modern"]::-webkit-scrollbar-thumb:hover,
-:root[data-theme-family="modern"] ::-webkit-scrollbar-thumb:hover { background: var(--scroll-hover) !important; }
-/* Firefox uses the standard properties; Chromium keeps the original outlined thumb. */
+html[data-theme-family="modern"] .rd-desc { --sb-size: 8px; }
+/* 부정선거(음지) 화면: 네온은 초록 터미널, 라이트 · 다크는 어두운 회색 */
+#contentFraud, #dispPanelFraud {
+    --sb-track: #020302; --sb-thumb: #12301c; --sb-thumb-area: #1a4a2b; --sb-thumb-bar: #2fd56b;
+    --sb-edge: #2fd56b; --sb-edge-bar: #2fd56b; --sb-radius: 0; --sb-border-w: 1px; --sb-border-w-bar: 1px; --sb-glow-bar: 0 0 6px #2fd56b;
+}
+html[data-theme-family="modern"] #contentFraud, html[data-theme-family="modern"] #dispPanelFraud {
+    --sb-track: transparent; --sb-thumb: #3f3f46; --sb-thumb-area: #52525b; --sb-thumb-bar: #71717a;
+    --sb-edge: transparent; --sb-edge-bar: transparent; --sb-radius: 999px; --sb-border-w: 3px; --sb-border-w-bar: 1px; --sb-glow-bar: none;
+}
+
+/* ---- 숨김 ---- */
+.no-scrollbar { scrollbar-width: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; width: 0; height: 0; }
+
+/* ---- Firefox (::-webkit-scrollbar 없음) ---- */
 @supports not selector(::-webkit-scrollbar) {
-    * { scrollbar-width: thin; scrollbar-color: var(--scroll-thumb) var(--scroll-track); }
+    * { scrollbar-width: thin; scrollbar-color: var(--sb-thumb-area) transparent; }
+    .no-scrollbar { scrollbar-width: none; }
 }

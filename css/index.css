@@ -247,9 +247,6 @@
             padding-right: 6px;
         }
 
-        .changelog::-webkit-scrollbar { width: 8px; background: #000; }
-        .changelog::-webkit-scrollbar-thumb { background: var(--tno-border); border: 1px solid var(--tno-neon); }
-        .changelog::-webkit-scrollbar-thumb:hover { background: var(--tno-neon); }
 
         /* ── 로그 엔트리 레이아웃 ── */
         .log-entry {
@@ -447,8 +444,6 @@
             overflow-y: auto;
             padding-right: 4px;
         }
-        .save-select-list::-webkit-scrollbar { width: 8px; background: #000; }
-        .save-select-list::-webkit-scrollbar-thumb { background: var(--tno-border); border: 1px solid var(--tno-neon); }
 
         .save-select-item {
             display: flex;
