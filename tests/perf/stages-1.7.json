@@ -1,820 +1,337 @@
 {
- "at": "2026-11-13T13:31:19.595Z",
+ "at": "2026-11-14T03:12:41.657Z",
  "stages": [
   "S0",
   "S1",
   "S2",
   "S3",
   "S4",
-  "S5"
+  "S5",
+  "S6"
  ],
  "presets": {
   "builtin:tutorial": {
    "S0": {
-    "open": 534,
+    "open": 482,
     "mb": 0.23,
     "dateEmpty": false,
     "clickDay": {
      "n": 6,
-     "median": 7.1,
-     "p95": 19.6,
-     "max": 19.6
+     "median": 8.9,
+     "p95": 24.6,
+     "max": 24.6
     },
     "tab": {
      "n": 20,
-     "median": 93.4,
-     "p95": 198.6,
-     "max": 198.6
+     "median": 85.7,
+     "p95": 202.9,
+     "max": 202.9
     },
     "tabMax": {
-     "setup/party": 148,
+     "setup/party": 143,
      "setup/settings": 63,
-     "law/vote": 112,
-     "vote/elecGeneral": 167,
-     "cabinet/cabinetmembers": 93,
-     "nation/people": 112,
-     "economy/overview": 199,
-     "world/ranking": 109,
-     "nation/decisions": 86,
-     "setup/members": 79
+     "law/vote": 108,
+     "vote/elecGeneral": 203,
+     "cabinet/cabinetmembers": 109,
+     "nation/people": 64,
+     "economy/overview": 171,
+     "world/ranking": 95,
+     "nation/decisions": 62,
+     "setup/members": 75
     },
     "save": {
      "n": 4,
-     "median": 22,
-     "p95": 22.7,
-     "max": 22.7
+     "median": 24.2,
+     "p95": 26.6,
+     "max": 26.6
     },
     "autosaveChanged": {
      "n": 3,
-     "median": 12.4,
-     "p95": 14.4,
-     "max": 14.4
+     "median": 11.5,
+     "p95": 13.1,
+     "max": 13.1
     },
     "autosaveSame": {
      "n": 3,
-     "median": 15.8,
-     "p95": 17,
-     "max": 17
+     "median": 15.3,
+     "p95": 17.7,
+     "max": 17.7
     },
     "errors": []
    },
    "S1": {
-    "open": 420,
+    "open": 407,
     "mb": 0.23,
     "dateEmpty": false,
     "clickDay": {
      "n": 6,
-     "median": 8,
-     "p95": 14.3,
-     "max": 14.3
+     "median": 7.6,
+     "p95": 17,
+     "max": 17
     },
     "tab": {
      "n": 20,
-     "median": 49.2,
-     "p95": 157.5,
-     "max": 157.5
+     "median": 38.8,
+     "p95": 137.4,
+     "max": 137.4
     },
     "tabMax": {
-     "setup/party": 117,
-     "setup/settings": 49,
-     "law/vote": 55,
-     "vote/elecGeneral": 135,
-     "cabinet/cabinetmembers": 39,
-     "nation/people": 29,
-     "economy/overview": 158,
-     "world/ranking": 88,
-     "nation/decisions": 25,
-     "setup/members": 59
+     "setup/party": 94,
+     "setup/settings": 39,
+     "law/vote": 49,
+     "vote/elecGeneral": 102,
+     "cabinet/cabinetmembers": 41,
+     "nation/people": 28,
+     "economy/overview": 137,
+     "world/ranking": 53,
+     "nation/decisions": 28,
+     "setup/members": 38
     },
     "save": {
      "n": 4,
-     "median": 11.2,
-     "p95": 11.4,
-     "max": 11.4
+     "median": 9.9,
+     "p95": 10.1,
+     "max": 10.1
     },
     "autosaveChanged": {
      "n": 3,
-     "median": 7.6,
-     "p95": 9.6,
-     "max": 9.6
+     "median": 5.9,
+     "p95": 7.4,
+     "max": 7.4
     },
     "autosaveSame": {
      "n": 3,
-     "median": 3.1,
-     "p95": 4.9,
-     "max": 4.9
+     "median": 3.3,
+     "p95": 4.6,
+     "max": 4.6
     },
     "errors": []
    },
    "S2": {
-    "open": 546,
-    "mb": 0.23,
-    "dateEmpty": false,
-    "clickDay": {
-     "n": 6,
-     "median": 7.9,
-     "p95": 18.2,
-     "max": 18.2
-    },
-    "tab": {
-     "n": 20,
-     "median": 47.3,
-     "p95": 138,
-     "max": 138
-    },
-    "tabMax": {
-     "setup/party": 129,
-     "setup/settings": 41,
-     "law/vote": 41,
-     "vote/elecGeneral": 138,
-     "cabinet/cabinetmembers": 55,
-     "nation/people": 37,
-     "economy/overview": 132,
-     "world/ranking": 66,
-     "nation/decisions": 19,
-     "setup/members": 55
-    },
-    "save": {
-     "n": 4,
-     "median": 11.9,
-     "p95": 12.8,
-     "max": 12.8
-    },
-    "autosaveChanged": {
-     "n": 3,
-     "median": 6.8,
-     "p95": 15.7,
-     "max": 15.7
-    },
-    "autosaveSame": {
-     "n": 3,
-     "median": 4.1,
-     "p95": 4.2,
-     "max": 4.2
-    },
-    "errors": []
-   },
-   "S3": {
     "open": 414,
     "mb": 0.23,
     "dateEmpty": false,
     "clickDay": {
      "n": 6,
-     "median": 6.2,
-     "p95": 24.9,
-     "max": 24.9
+     "median": 6.4,
+     "p95": 17.9,
+     "max": 17.9
     },
     "tab": {
      "n": 20,
-     "median": 44.5,
-     "p95": 174.3,
-     "max": 174.3
+     "median": 39,
+     "p95": 172.2,
+     "max": 172.2
     },
     "tabMax": {
-     "setup/party": 92,
-     "setup/settings": 43,
-     "law/vote": 50,
-     "vote/elecGeneral": 106,
-     "cabinet/cabinetmembers": 46,
-     "nation/people": 34,
-     "economy/overview": 174,
-     "world/ranking": 50,
-     "nation/decisions": 21,
-     "setup/members": 45
+     "setup/party": 95,
+     "setup/settings": 45,
+     "law/vote": 44,
+     "vote/elecGeneral": 125,
+     "cabinet/cabinetmembers": 39,
+     "nation/people": 25,
+     "economy/overview": 172,
+     "world/ranking": 43,
+     "nation/decisions": 26,
+     "setup/members": 38
     },
     "save": {
      "n": 4,
-     "median": 11.7,
-     "p95": 13.8,
-     "max": 13.8
+     "median": 11.5,
+     "p95": 12.1,
+     "max": 12.1
     },
     "autosaveChanged": {
      "n": 3,
-     "median": 6.5,
-     "p95": 9.4,
-     "max": 9.4
+     "median": 5.7,
+     "p95": 10.2,
+     "max": 10.2
     },
     "autosaveSame": {
      "n": 3,
-     "median": 2.8,
-     "p95": 5.5,
-     "max": 5.5
+     "median": 3.7,
+     "p95": 4.1,
+     "max": 4.1
+    },
+    "errors": []
+   },
+   "S3": {
+    "open": 380,
+    "mb": 0.23,
+    "dateEmpty": false,
+    "clickDay": {
+     "n": 6,
+     "median": 6.7,
+     "p95": 21.8,
+     "max": 21.8
+    },
+    "tab": {
+     "n": 20,
+     "median": 51.6,
+     "p95": 156.3,
+     "max": 156.3
+    },
+    "tabMax": {
+     "setup/party": 77,
+     "setup/settings": 54,
+     "law/vote": 49,
+     "vote/elecGeneral": 156,
+     "cabinet/cabinetmembers": 62,
+     "nation/people": 24,
+     "economy/overview": 104,
+     "world/ranking": 40,
+     "nation/decisions": 21,
+     "setup/members": 52
+    },
+    "save": {
+     "n": 4,
+     "median": 12.7,
+     "p95": 13.5,
+     "max": 13.5
+    },
+    "autosaveChanged": {
+     "n": 3,
+     "median": 8.4,
+     "p95": 9,
+     "max": 9
+    },
+    "autosaveSame": {
+     "n": 3,
+     "median": 3.4,
+     "p95": 3.7,
+     "max": 3.7
     },
     "errors": []
    },
    "S4": {
-    "open": 422,
+    "open": 402,
     "mb": 0.23,
     "dateEmpty": false,
     "clickDay": {
      "n": 6,
-     "median": 4.1,
-     "p95": 17.5,
-     "max": 17.5
+     "median": 4.9,
+     "p95": 16.3,
+     "max": 16.3
     },
     "tab": {
      "n": 20,
-     "median": 44.1,
-     "p95": 133,
-     "max": 133
+     "median": 40,
+     "p95": 141.5,
+     "max": 141.5
     },
     "tabMax": {
-     "setup/party": 122,
-     "setup/settings": 50,
-     "law/vote": 49,
-     "vote/elecGeneral": 127,
-     "cabinet/cabinetmembers": 45,
-     "nation/people": 26,
-     "economy/overview": 133,
-     "world/ranking": 44,
-     "nation/decisions": 23,
-     "setup/members": 40
+     "setup/party": 82,
+     "setup/settings": 40,
+     "law/vote": 40,
+     "vote/elecGeneral": 137,
+     "cabinet/cabinetmembers": 42,
+     "nation/people": 25,
+     "economy/overview": 142,
+     "world/ranking": 52,
+     "nation/decisions": 20,
+     "setup/members": 54
     },
     "save": {
      "n": 4,
-     "median": 5.9,
-     "p95": 9.4,
-     "max": 9.4
+     "median": 7.3,
+     "p95": 12.6,
+     "max": 12.6
     },
     "autosaveChanged": {
      "n": 3,
-     "median": 0,
-     "p95": 0.8,
-     "max": 0.8
+     "median": 0.2,
+     "p95": 0.6,
+     "max": 0.6
     },
     "autosaveSame": {
      "n": 3,
-     "median": 0.4,
-     "p95": 1.5,
-     "max": 1.5
+     "median": 0.6,
+     "p95": 1.2,
+     "max": 1.2
     },
     "errors": []
    },
    "S5": {
-    "open": 381,
+    "open": 330,
     "mb": 0.23,
     "dateEmpty": false,
     "clickDay": {
      "n": 6,
-     "median": 5.4,
-     "p95": 11.7,
-     "max": 11.7
+     "median": 4.5,
+     "p95": 17.8,
+     "max": 17.8
     },
     "tab": {
      "n": 20,
-     "median": 36,
-     "p95": 100.4,
-     "max": 100.4
+     "median": 29.5,
+     "p95": 84.3,
+     "max": 84.3
     },
     "tabMax": {
-     "setup/party": 38,
-     "setup/settings": 34,
-     "law/vote": 36,
-     "vote/elecGeneral": 41,
-     "cabinet/cabinetmembers": 18,
-     "nation/people": 30,
-     "economy/overview": 100,
-     "world/ranking": 48,
-     "nation/decisions": 17,
-     "setup/members": 36
+     "setup/party": 33,
+     "setup/settings": 28,
+     "law/vote": 47,
+     "vote/elecGeneral": 51,
+     "cabinet/cabinetmembers": 16,
+     "nation/people": 19,
+     "economy/overview": 84,
+     "world/ranking": 42,
+     "nation/decisions": 23,
+     "setup/members": 30
     },
     "save": {
      "n": 4,
-     "median": 6.8,
-     "p95": 9.2,
-     "max": 9.2
+     "median": 7.8,
+     "p95": 11.5,
+     "max": 11.5
     },
     "autosaveChanged": {
      "n": 3,
-     "median": 0.1,
+     "median": 0,
      "p95": 0.1,
      "max": 0.1
     },
     "autosaveSame": {
      "n": 3,
      "median": 0.8,
-     "p95": 1.9,
-     "max": 1.9
-    },
-    "errors": []
-   }
-  },
-  "builtin:germany": {
-   "S0": {
-    "open": 1314,
-    "mb": 1.05,
-    "dateEmpty": true,
-    "clickDay": {
-     "n": 6,
-     "median": 27.6,
-     "p95": 29.7,
-     "max": 29.7
-    },
-    "tab": {
-     "n": 20,
-     "median": 222.3,
-     "p95": 813.1,
-     "max": 813.1
-    },
-    "tabMax": {
-     "setup/party": 516,
-     "setup/settings": 137,
-     "law/vote": 190,
-     "vote/elecGeneral": 287,
-     "cabinet/cabinetmembers": 813,
-     "nation/people": 222,
-     "economy/overview": 261,
-     "world/ranking": 153,
-     "nation/decisions": 144,
-     "setup/members": 656
-    },
-    "save": {
-     "n": 4,
-     "median": 65.7,
-     "p95": 77.8,
-     "max": 77.8
-    },
-    "autosaveChanged": {
-     "n": 3,
-     "median": 57,
-     "p95": 84,
-     "max": 84
-    },
-    "autosaveSame": {
-     "n": 3,
-     "median": 56,
-     "p95": 66,
-     "max": 66
+     "p95": 0.8,
+     "max": 0.8
     },
     "errors": []
    },
-   "S1": {
-    "open": 916,
-    "mb": 1.05,
-    "dateEmpty": true,
-    "clickDay": {
-     "n": 6,
-     "median": 30.1,
-     "p95": 30.3,
-     "max": 30.3
-    },
-    "tab": {
-     "n": 20,
-     "median": 134.4,
-     "p95": 1026.3,
-     "max": 1026.3
-    },
-    "tabMax": {
-     "setup/party": 395,
-     "setup/settings": 98,
-     "law/vote": 84,
-     "vote/elecGeneral": 217,
-     "cabinet/cabinetmembers": 843,
-     "nation/people": 136,
-     "economy/overview": 178,
-     "world/ranking": 104,
-     "nation/decisions": 50,
-     "setup/members": 1026
-    },
-    "save": {
-     "n": 4,
-     "median": 32.7,
-     "p95": 41,
-     "max": 41
-    },
-    "autosaveChanged": {
-     "n": 3,
-     "median": 30.8,
-     "p95": 35.6,
-     "max": 35.6
-    },
-    "autosaveSame": {
-     "n": 3,
-     "median": 16.8,
-     "p95": 17.6,
-     "max": 17.6
-    },
-    "errors": []
-   },
-   "S2": {
-    "open": 985,
-    "mb": 1.05,
-    "dateEmpty": true,
-    "clickDay": {
-     "n": 6,
-     "median": 24.6,
-     "p95": 41.7,
-     "max": 41.7
-    },
-    "tab": {
-     "n": 20,
-     "median": 132.8,
-     "p95": 762.5,
-     "max": 762.5
-    },
-    "tabMax": {
-     "setup/party": 465,
-     "setup/settings": 85,
-     "law/vote": 77,
-     "vote/elecGeneral": 188,
-     "cabinet/cabinetmembers": 763,
-     "nation/people": 133,
-     "economy/overview": 190,
-     "world/ranking": 85,
-     "nation/decisions": 41,
-     "setup/members": 714
-    },
-    "save": {
-     "n": 4,
-     "median": 37,
-     "p95": 39.1,
-     "max": 39.1
-    },
-    "autosaveChanged": {
-     "n": 3,
-     "median": 27.3,
-     "p95": 30.3,
-     "max": 30.3
-    },
-    "autosaveSame": {
-     "n": 3,
-     "median": 13.3,
-     "p95": 15.2,
-     "max": 15.2
-    },
-    "errors": []
-   },
-   "S3": {
-    "open": 927,
-    "mb": 1.05,
-    "dateEmpty": true,
-    "clickDay": {
-     "n": 6,
-     "median": 24.3,
-     "p95": 33,
-     "max": 33
-    },
-    "tab": {
-     "n": 20,
-     "median": 144.8,
-     "p95": 714.9,
-     "max": 714.9
-    },
-    "tabMax": {
-     "setup/party": 463,
-     "setup/settings": 87,
-     "law/vote": 81,
-     "vote/elecGeneral": 178,
-     "cabinet/cabinetmembers": 715,
-     "nation/people": 175,
-     "economy/overview": 223,
-     "world/ranking": 98,
-     "nation/decisions": 51,
-     "setup/members": 688
-    },
-    "save": {
-     "n": 4,
-     "median": 34.2,
-     "p95": 35.7,
-     "max": 35.7
-    },
-    "autosaveChanged": {
-     "n": 3,
-     "median": 26.5,
-     "p95": 29,
-     "max": 29
-    },
-    "autosaveSame": {
-     "n": 3,
-     "median": 14,
-     "p95": 21.3,
-     "max": 21.3
-    },
-    "errors": []
-   },
-   "S4": {
-    "open": 1042,
-    "mb": 1.05,
-    "dateEmpty": true,
-    "clickDay": {
-     "n": 6,
-     "median": 11.4,
-     "p95": 22.1,
-     "max": 22.1
-    },
-    "tab": {
-     "n": 20,
-     "median": 114.2,
-     "p95": 661.1,
-     "max": 661.1
-    },
-    "tabMax": {
-     "setup/party": 383,
-     "setup/settings": 66,
-     "law/vote": 64,
-     "vote/elecGeneral": 162,
-     "cabinet/cabinetmembers": 661,
-     "nation/people": 133,
-     "economy/overview": 184,
-     "world/ranking": 67,
-     "nation/decisions": 35,
-     "setup/members": 629
-    },
-    "save": {
-     "n": 4,
-     "median": 18.6,
-     "p95": 31.7,
-     "max": 31.7
-    },
-    "autosaveChanged": {
-     "n": 3,
-     "median": 0.1,
-     "p95": 3,
-     "max": 3
-    },
-    "autosaveSame": {
-     "n": 3,
-     "median": 2.9,
-     "p95": 7.6,
-     "max": 7.6
-    },
-    "errors": []
-   },
-   "S5": {
-    "open": 499,
-    "mb": 1.05,
-    "dateEmpty": true,
-    "clickDay": {
-     "n": 6,
-     "median": 6.5,
-     "p95": 12.8,
-     "max": 12.8
-    },
-    "tab": {
-     "n": 20,
-     "median": 53.5,
-     "p95": 180.3,
-     "max": 180.3
-    },
-    "tabMax": {
-     "setup/party": 124,
-     "setup/settings": 41,
-     "law/vote": 43,
-     "vote/elecGeneral": 45,
-     "cabinet/cabinetmembers": 107,
-     "nation/people": 71,
-     "economy/overview": 114,
-     "world/ranking": 54,
-     "nation/decisions": 28,
-     "setup/members": 180
-    },
-    "save": {
-     "n": 4,
-     "median": 17.8,
-     "p95": 27.7,
-     "max": 27.7
-    },
-    "autosaveChanged": {
-     "n": 3,
-     "median": 0.2,
-     "p95": 3,
-     "max": 3
-    },
-    "autosaveSame": {
-     "n": 3,
-     "median": 2.1,
-     "p95": 3,
-     "max": 3
-    },
-    "errors": []
-   }
-  },
-  "builtin:usa": {
-   "S0": {
-    "open": 1112,
-    "mb": 1.59,
+   "S6": {
+    "open": 278,
+    "mb": 0.23,
     "dateEmpty": false,
     "clickDay": {
      "n": 6,
-     "median": 25.6,
-     "p95": 28.9,
-     "max": 28.9
+     "median": 4.2,
+     "p95": 14.7,
+     "max": 14.7
     },
     "tab": {
      "n": 20,
-     "median": 204.2,
-     "p95": 1153.4,
-     "max": 1153.4
+     "median": 28.2,
+     "p95": 89.8,
+     "max": 89.8
     },
     "tabMax": {
-     "setup/party": 128,
-     "setup/settings": 92,
-     "law/vote": 154,
-     "vote/elecGeneral": 263,
-     "cabinet/cabinetmembers": 1153,
-     "nation/people": 270,
-     "economy/overview": 316,
-     "world/ranking": 204,
-     "nation/decisions": 145,
-     "setup/members": 619
+     "setup/party": 38,
+     "setup/settings": 28,
+     "law/vote": 41,
+     "vote/elecGeneral": 30,
+     "cabinet/cabinetmembers": 15,
+     "nation/people": 21,
+     "economy/overview": 90,
+     "world/ranking": 41,
+     "nation/decisions": 18,
+     "setup/members": 28
     },
     "save": {
      "n": 4,
-     "median": 116.8,
-     "p95": 122.7,
-     "max": 122.7
-    },
-    "autosaveChanged": {
-     "n": 3,
-     "median": 113,
-     "p95": 122.1,
-     "max": 122.1
-    },
-    "autosaveSame": {
-     "n": 3,
-     "median": 110,
-     "p95": 113,
-     "max": 113
-    },
-    "errors": []
-   },
-   "S1": {
-    "open": 1016,
-    "mb": 1.59,
-    "dateEmpty": false,
-    "clickDay": {
-     "n": 6,
-     "median": 25.8,
-     "p95": 31.6,
-     "max": 31.6
-    },
-    "tab": {
-     "n": 20,
-     "median": 114.6,
-     "p95": 1081.9,
-     "max": 1081.9
-    },
-    "tabMax": {
-     "setup/party": 81,
-     "setup/settings": 87,
-     "law/vote": 106,
-     "vote/elecGeneral": 187,
-     "cabinet/cabinetmembers": 1082,
-     "nation/people": 91,
-     "economy/overview": 232,
-     "world/ranking": 115,
-     "nation/decisions": 86,
-     "setup/members": 957
-    },
-    "save": {
-     "n": 4,
-     "median": 74.8,
-     "p95": 76,
-     "max": 76
-    },
-    "autosaveChanged": {
-     "n": 3,
-     "median": 48.2,
-     "p95": 51.3,
-     "max": 51.3
-    },
-    "autosaveSame": {
-     "n": 3,
-     "median": 26.6,
-     "p95": 37.5,
-     "max": 37.5
-    },
-    "errors": []
-   },
-   "S2": {
-    "open": 1059,
-    "mb": 1.59,
-    "dateEmpty": false,
-    "clickDay": {
-     "n": 6,
-     "median": 29.6,
-     "p95": 32.4,
-     "max": 32.4
-    },
-    "tab": {
-     "n": 20,
-     "median": 103.5,
-     "p95": 1022.6,
-     "max": 1022.6
-    },
-    "tabMax": {
-     "setup/party": 104,
-     "setup/settings": 73,
-     "law/vote": 99,
-     "vote/elecGeneral": 164,
-     "cabinet/cabinetmembers": 1023,
-     "nation/people": 103,
-     "economy/overview": 261,
-     "world/ranking": 107,
-     "nation/decisions": 84,
-     "setup/members": 759
-    },
-    "save": {
-     "n": 4,
-     "median": 56.4,
-     "p95": 70.8,
-     "max": 70.8
-    },
-    "autosaveChanged": {
-     "n": 3,
-     "median": 43.6,
-     "p95": 53.3,
-     "max": 53.3
-    },
-    "autosaveSame": {
-     "n": 3,
-     "median": 24.8,
-     "p95": 25.2,
-     "max": 25.2
-    },
-    "errors": []
-   },
-   "S3": {
-    "open": 1104,
-    "mb": 1.59,
-    "dateEmpty": false,
-    "clickDay": {
-     "n": 6,
-     "median": 27.4,
-     "p95": 31.9,
-     "max": 31.9
-    },
-    "tab": {
-     "n": 20,
-     "median": 127.6,
-     "p95": 973.9,
-     "max": 973.9
-    },
-    "tabMax": {
-     "setup/party": 107,
-     "setup/settings": 78,
-     "law/vote": 109,
-     "vote/elecGeneral": 204,
-     "cabinet/cabinetmembers": 974,
-     "nation/people": 186,
-     "economy/overview": 257,
-     "world/ranking": 128,
-     "nation/decisions": 96,
-     "setup/members": 757
-    },
-    "save": {
-     "n": 4,
-     "median": 71.4,
-     "p95": 77.1,
-     "max": 77.1
-    },
-    "autosaveChanged": {
-     "n": 3,
-     "median": 52,
-     "p95": 56,
-     "max": 56
-    },
-    "autosaveSame": {
-     "n": 3,
-     "median": 25.3,
-     "p95": 26.5,
-     "max": 26.5
-    },
-    "errors": []
-   },
-   "S4": {
-    "open": 934,
-    "mb": 1.59,
-    "dateEmpty": false,
-    "clickDay": {
-     "n": 6,
-     "median": 4,
-     "p95": 8.2,
-     "max": 8.2
-    },
-    "tab": {
-     "n": 20,
-     "median": 80.4,
-     "p95": 1072.6,
-     "max": 1072.6
-    },
-    "tabMax": {
-     "setup/party": 80,
-     "setup/settings": 51,
-     "law/vote": 69,
-     "vote/elecGeneral": 188,
-     "cabinet/cabinetmembers": 1073,
-     "nation/people": 96,
-     "economy/overview": 248,
-     "world/ranking": 73,
-     "nation/decisions": 75,
-     "setup/members": 739
-    },
-    "save": {
-     "n": 4,
-     "median": 19.7,
-     "p95": 21.1,
-     "max": 21.1
+     "median": 6.6,
+     "p95": 8.3,
+     "max": 8.3
     },
     "autosaveChanged": {
      "n": 3,
@@ -824,1217 +341,2037 @@
     },
     "autosaveSame": {
      "n": 3,
-     "median": 5,
-     "p95": 8,
-     "max": 8
+     "median": 1.7,
+     "p95": 2.3,
+     "max": 2.3
+    },
+    "errors": []
+   }
+  },
+  "builtin:germany": {
+   "S0": {
+    "open": 1086,
+    "mb": 1.05,
+    "dateEmpty": true,
+    "clickDay": {
+     "n": 6,
+     "median": 25.2,
+     "p95": 27.4,
+     "max": 27.4
+    },
+    "tab": {
+     "n": 20,
+     "median": 166.9,
+     "p95": 838.5,
+     "max": 838.5
+    },
+    "tabMax": {
+     "setup/party": 371,
+     "setup/settings": 93,
+     "law/vote": 155,
+     "vote/elecGeneral": 306,
+     "cabinet/cabinetmembers": 839,
+     "nation/people": 221,
+     "economy/overview": 234,
+     "world/ranking": 149,
+     "nation/decisions": 114,
+     "setup/members": 682
+    },
+    "save": {
+     "n": 4,
+     "median": 66.5,
+     "p95": 86.2,
+     "max": 86.2
+    },
+    "autosaveChanged": {
+     "n": 3,
+     "median": 56,
+     "p95": 63.1,
+     "max": 63.1
+    },
+    "autosaveSame": {
+     "n": 3,
+     "median": 55,
+     "p95": 71,
+     "max": 71
+    },
+    "errors": []
+   },
+   "S1": {
+    "open": 925,
+    "mb": 1.05,
+    "dateEmpty": true,
+    "clickDay": {
+     "n": 6,
+     "median": 20.7,
+     "p95": 46.7,
+     "max": 46.7
+    },
+    "tab": {
+     "n": 20,
+     "median": 115.5,
+     "p95": 682.2,
+     "max": 682.2
+    },
+    "tabMax": {
+     "setup/party": 496,
+     "setup/settings": 73,
+     "law/vote": 83,
+     "vote/elecGeneral": 180,
+     "cabinet/cabinetmembers": 682,
+     "nation/people": 142,
+     "economy/overview": 246,
+     "world/ranking": 116,
+     "nation/decisions": 46,
+     "setup/members": 658
+    },
+    "save": {
+     "n": 4,
+     "median": 46.5,
+     "p95": 92,
+     "max": 92
+    },
+    "autosaveChanged": {
+     "n": 3,
+     "median": 32.8,
+     "p95": 37.6,
+     "max": 37.6
+    },
+    "autosaveSame": {
+     "n": 3,
+     "median": 13.3,
+     "p95": 20.3,
+     "max": 20.3
+    },
+    "errors": []
+   },
+   "S2": {
+    "open": 872,
+    "mb": 1.05,
+    "dateEmpty": true,
+    "clickDay": {
+     "n": 6,
+     "median": 20.5,
+     "p95": 30.6,
+     "max": 30.6
+    },
+    "tab": {
+     "n": 20,
+     "median": 124.8,
+     "p95": 739.1,
+     "max": 739.1
+    },
+    "tabMax": {
+     "setup/party": 323,
+     "setup/settings": 113,
+     "law/vote": 74,
+     "vote/elecGeneral": 199,
+     "cabinet/cabinetmembers": 739,
+     "nation/people": 186,
+     "economy/overview": 142,
+     "world/ranking": 65,
+     "nation/decisions": 41,
+     "setup/members": 564
+    },
+    "save": {
+     "n": 4,
+     "median": 35.8,
+     "p95": 51.7,
+     "max": 51.7
+    },
+    "autosaveChanged": {
+     "n": 3,
+     "median": 30.3,
+     "p95": 33.7,
+     "max": 33.7
+    },
+    "autosaveSame": {
+     "n": 3,
+     "median": 16.5,
+     "p95": 19,
+     "max": 19
+    },
+    "errors": []
+   },
+   "S3": {
+    "open": 846,
+    "mb": 1.05,
+    "dateEmpty": true,
+    "clickDay": {
+     "n": 6,
+     "median": 21.8,
+     "p95": 38.6,
+     "max": 38.6
+    },
+    "tab": {
+     "n": 20,
+     "median": 128.6,
+     "p95": 770.2,
+     "max": 770.2
+    },
+    "tabMax": {
+     "setup/party": 321,
+     "setup/settings": 102,
+     "law/vote": 71,
+     "vote/elecGeneral": 182,
+     "cabinet/cabinetmembers": 770,
+     "nation/people": 155,
+     "economy/overview": 129,
+     "world/ranking": 67,
+     "nation/decisions": 50,
+     "setup/members": 630
+    },
+    "save": {
+     "n": 4,
+     "median": 37.4,
+     "p95": 41.3,
+     "max": 41.3
+    },
+    "autosaveChanged": {
+     "n": 3,
+     "median": 28.9,
+     "p95": 33.1,
+     "max": 33.1
+    },
+    "autosaveSame": {
+     "n": 3,
+     "median": 14.8,
+     "p95": 17.5,
+     "max": 17.5
+    },
+    "errors": []
+   },
+   "S4": {
+    "open": 879,
+    "mb": 1.05,
+    "dateEmpty": true,
+    "clickDay": {
+     "n": 6,
+     "median": 11.7,
+     "p95": 17.5,
+     "max": 17.5
+    },
+    "tab": {
+     "n": 20,
+     "median": 117.7,
+     "p95": 709.3,
+     "max": 709.3
+    },
+    "tabMax": {
+     "setup/party": 366,
+     "setup/settings": 66,
+     "law/vote": 69,
+     "vote/elecGeneral": 146,
+     "cabinet/cabinetmembers": 709,
+     "nation/people": 118,
+     "economy/overview": 144,
+     "world/ranking": 81,
+     "nation/decisions": 40,
+     "setup/members": 599
+    },
+    "save": {
+     "n": 4,
+     "median": 17.5,
+     "p95": 39.9,
+     "max": 39.9
+    },
+    "autosaveChanged": {
+     "n": 3,
+     "median": 0,
+     "p95": 2.8,
+     "max": 2.8
+    },
+    "autosaveSame": {
+     "n": 3,
+     "median": 4.1,
+     "p95": 5.9,
+     "max": 5.9
     },
     "errors": []
    },
    "S5": {
-    "open": 563,
+    "open": 468,
+    "mb": 1.05,
+    "dateEmpty": true,
+    "clickDay": {
+     "n": 6,
+     "median": 6.4,
+     "p95": 16.7,
+     "max": 16.7
+    },
+    "tab": {
+     "n": 20,
+     "median": 48.6,
+     "p95": 150.3,
+     "max": 150.3
+    },
+    "tabMax": {
+     "setup/party": 124,
+     "setup/settings": 49,
+     "law/vote": 38,
+     "vote/elecGeneral": 37,
+     "cabinet/cabinetmembers": 86,
+     "nation/people": 59,
+     "economy/overview": 124,
+     "world/ranking": 49,
+     "nation/decisions": 27,
+     "setup/members": 150
+    },
+    "save": {
+     "n": 4,
+     "median": 21.1,
+     "p95": 29.4,
+     "max": 29.4
+    },
+    "autosaveChanged": {
+     "n": 3,
+     "median": 0.1,
+     "p95": 3.2,
+     "max": 3.2
+    },
+    "autosaveSame": {
+     "n": 3,
+     "median": 1.8,
+     "p95": 3.3,
+     "max": 3.3
+    },
+    "errors": []
+   },
+   "S6": {
+    "open": 423,
+    "mb": 1.05,
+    "dateEmpty": true,
+    "clickDay": {
+     "n": 6,
+     "median": 6.5,
+     "p95": 14.1,
+     "max": 14.1
+    },
+    "tab": {
+     "n": 20,
+     "median": 44.6,
+     "p95": 139.6,
+     "max": 139.6
+    },
+    "tabMax": {
+     "setup/party": 108,
+     "setup/settings": 45,
+     "law/vote": 39,
+     "vote/elecGeneral": 44,
+     "cabinet/cabinetmembers": 58,
+     "nation/people": 47,
+     "economy/overview": 94,
+     "world/ranking": 39,
+     "nation/decisions": 26,
+     "setup/members": 140
+    },
+    "save": {
+     "n": 4,
+     "median": 22.5,
+     "p95": 26,
+     "max": 26
+    },
+    "autosaveChanged": {
+     "n": 3,
+     "median": 0,
+     "p95": 0,
+     "max": 0
+    },
+    "autosaveSame": {
+     "n": 3,
+     "median": 2.9,
+     "p95": 3.1,
+     "max": 3.1
+    },
+    "errors": []
+   }
+  },
+  "builtin:usa": {
+   "S0": {
+    "open": 1087,
+    "mb": 1.59,
+    "dateEmpty": false,
+    "clickDay": {
+     "n": 6,
+     "median": 22.7,
+     "p95": 26.2,
+     "max": 26.2
+    },
+    "tab": {
+     "n": 20,
+     "median": 182.6,
+     "p95": 905,
+     "max": 905
+    },
+    "tabMax": {
+     "setup/party": 158,
+     "setup/settings": 85,
+     "law/vote": 135,
+     "vote/elecGeneral": 271,
+     "cabinet/cabinetmembers": 905,
+     "nation/people": 242,
+     "economy/overview": 241,
+     "world/ranking": 162,
+     "nation/decisions": 143,
+     "setup/members": 529
+    },
+    "save": {
+     "n": 4,
+     "median": 93.4,
+     "p95": 123,
+     "max": 123
+    },
+    "autosaveChanged": {
+     "n": 3,
+     "median": 89.2,
+     "p95": 100,
+     "max": 100
+    },
+    "autosaveSame": {
+     "n": 3,
+     "median": 97,
+     "p95": 107,
+     "max": 107
+    },
+    "errors": []
+   },
+   "S1": {
+    "open": 898,
+    "mb": 1.59,
+    "dateEmpty": false,
+    "clickDay": {
+     "n": 6,
+     "median": 34.4,
+     "p95": 35.7,
+     "max": 35.7
+    },
+    "tab": {
+     "n": 20,
+     "median": 90.6,
+     "p95": 772.7,
+     "max": 772.7
+    },
+    "tabMax": {
+     "setup/party": 75,
+     "setup/settings": 51,
+     "law/vote": 80,
+     "vote/elecGeneral": 170,
+     "cabinet/cabinetmembers": 773,
+     "nation/people": 107,
+     "economy/overview": 252,
+     "world/ranking": 81,
+     "nation/decisions": 71,
+     "setup/members": 684
+    },
+    "save": {
+     "n": 4,
+     "median": 50.1,
+     "p95": 53.8,
+     "max": 53.8
+    },
+    "autosaveChanged": {
+     "n": 3,
+     "median": 40.4,
+     "p95": 48,
+     "max": 48
+    },
+    "autosaveSame": {
+     "n": 3,
+     "median": 21.2,
+     "p95": 28.3,
+     "max": 28.3
+    },
+    "errors": []
+   },
+   "S2": {
+    "open": 895,
+    "mb": 1.59,
+    "dateEmpty": false,
+    "clickDay": {
+     "n": 6,
+     "median": 22.7,
+     "p95": 29.8,
+     "max": 29.8
+    },
+    "tab": {
+     "n": 20,
+     "median": 100.7,
+     "p95": 804.1,
+     "max": 804.1
+    },
+    "tabMax": {
+     "setup/party": 78,
+     "setup/settings": 59,
+     "law/vote": 114,
+     "vote/elecGeneral": 214,
+     "cabinet/cabinetmembers": 804,
+     "nation/people": 101,
+     "economy/overview": 193,
+     "world/ranking": 88,
+     "nation/decisions": 77,
+     "setup/members": 800
+    },
+    "save": {
+     "n": 4,
+     "median": 46,
+     "p95": 48.1,
+     "max": 48.1
+    },
+    "autosaveChanged": {
+     "n": 3,
+     "median": 46.7,
+     "p95": 48,
+     "max": 48
+    },
+    "autosaveSame": {
+     "n": 3,
+     "median": 30.2,
+     "p95": 32.1,
+     "max": 32.1
+    },
+    "errors": []
+   },
+   "S3": {
+    "open": 829,
+    "mb": 1.59,
+    "dateEmpty": false,
+    "clickDay": {
+     "n": 6,
+     "median": 25.2,
+     "p95": 35.3,
+     "max": 35.3
+    },
+    "tab": {
+     "n": 20,
+     "median": 85.5,
+     "p95": 971.5,
+     "max": 971.5
+    },
+    "tabMax": {
+     "setup/party": 78,
+     "setup/settings": 74,
+     "law/vote": 92,
+     "vote/elecGeneral": 191,
+     "cabinet/cabinetmembers": 972,
+     "nation/people": 86,
+     "economy/overview": 265,
+     "world/ranking": 81,
+     "nation/decisions": 70,
+     "setup/members": 569
+    },
+    "save": {
+     "n": 4,
+     "median": 58.7,
+     "p95": 73.3,
+     "max": 73.3
+    },
+    "autosaveChanged": {
+     "n": 3,
+     "median": 41.4,
+     "p95": 45.6,
+     "max": 45.6
+    },
+    "autosaveSame": {
+     "n": 3,
+     "median": 20.3,
+     "p95": 23.4,
+     "max": 23.4
+    },
+    "errors": []
+   },
+   "S4": {
+    "open": 876,
+    "mb": 1.59,
+    "dateEmpty": false,
+    "clickDay": {
+     "n": 6,
+     "median": 3.3,
+     "p95": 5.7,
+     "max": 5.7
+    },
+    "tab": {
+     "n": 20,
+     "median": 75.2,
+     "p95": 786.7,
+     "max": 786.7
+    },
+    "tabMax": {
+     "setup/party": 58,
+     "setup/settings": 43,
+     "law/vote": 60,
+     "vote/elecGeneral": 154,
+     "cabinet/cabinetmembers": 787,
+     "nation/people": 93,
+     "economy/overview": 170,
+     "world/ranking": 75,
+     "nation/decisions": 47,
+     "setup/members": 604
+    },
+    "save": {
+     "n": 4,
+     "median": 25.6,
+     "p95": 34.6,
+     "max": 34.6
+    },
+    "autosaveChanged": {
+     "n": 3,
+     "median": 0,
+     "p95": 5.3,
+     "max": 5.3
+    },
+    "autosaveSame": {
+     "n": 3,
+     "median": 4.5,
+     "p95": 5.4,
+     "max": 5.4
+    },
+    "errors": []
+   },
+   "S5": {
+    "open": 520,
     "mb": 1.59,
     "dateEmpty": false,
     "clickDay": {
      "n": 6,
      "median": 3.7,
-     "p95": 9.1,
-     "max": 9.1
+     "p95": 5.8,
+     "max": 5.8
     },
     "tab": {
      "n": 20,
-     "median": 45.8,
-     "p95": 161.4,
-     "max": 161.4
+     "median": 38,
+     "p95": 123,
+     "max": 123
     },
     "tabMax": {
-     "setup/party": 40,
-     "setup/settings": 26,
+     "setup/party": 29,
+     "setup/settings": 23,
      "law/vote": 38,
-     "vote/elecGeneral": 41,
-     "cabinet/cabinetmembers": 96,
-     "nation/people": 61,
-     "economy/overview": 109,
-     "world/ranking": 62,
-     "nation/decisions": 46,
-     "setup/members": 161
+     "vote/elecGeneral": 32,
+     "cabinet/cabinetmembers": 78,
+     "nation/people": 48,
+     "economy/overview": 91,
+     "world/ranking": 59,
+     "nation/decisions": 58,
+     "setup/members": 123
     },
     "save": {
      "n": 4,
-     "median": 19.2,
-     "p95": 41.1,
-     "max": 41.1
+     "median": 16,
+     "p95": 36.9,
+     "max": 36.9
+    },
+    "autosaveChanged": {
+     "n": 3,
+     "median": 0,
+     "p95": 0,
+     "max": 0
+    },
+    "autosaveSame": {
+     "n": 3,
+     "median": 3.1,
+     "p95": 4.3,
+     "max": 4.3
+    },
+    "errors": []
+   },
+   "S6": {
+    "open": 503,
+    "mb": 1.59,
+    "dateEmpty": false,
+    "clickDay": {
+     "n": 6,
+     "median": 3.7,
+     "p95": 5.6,
+     "max": 5.6
+    },
+    "tab": {
+     "n": 20,
+     "median": 39.2,
+     "p95": 121.1,
+     "max": 121.1
+    },
+    "tabMax": {
+     "setup/party": 33,
+     "setup/settings": 22,
+     "law/vote": 41,
+     "vote/elecGeneral": 33,
+     "cabinet/cabinetmembers": 100,
+     "nation/people": 44,
+     "economy/overview": 100,
+     "world/ranking": 50,
+     "nation/decisions": 39,
+     "setup/members": 121
+    },
+    "save": {
+     "n": 4,
+     "median": 14.9,
+     "p95": 31.8,
+     "max": 31.8
     },
     "autosaveChanged": {
      "n": 3,
      "median": 0.1,
-     "p95": 5.9,
-     "max": 5.9
+     "p95": 0.1,
+     "max": 0.1
     },
     "autosaveSame": {
      "n": 3,
-     "median": 2.5,
-     "p95": 8.3,
-     "max": 8.3
+     "median": 2.6,
+     "p95": 4.5,
+     "max": 4.5
     },
     "errors": []
    }
   },
   "builtin:uk": {
    "S0": {
-    "open": 2064,
+    "open": 2016,
     "mb": 5.53,
     "dateEmpty": false,
     "clickDay": {
      "n": 6,
-     "median": 64.4,
-     "p95": 76.6,
-     "max": 76.6
+     "median": 57.1,
+     "p95": 71,
+     "max": 71
     },
     "tab": {
      "n": 20,
-     "median": 328.4,
-     "p95": 1541.1,
-     "max": 1541.1
+     "median": 278.1,
+     "p95": 978.3,
+     "max": 978.3
     },
     "tabMax": {
-     "setup/party": 513,
-     "setup/settings": 183,
-     "law/vote": 335,
-     "vote/elecGeneral": 451,
-     "cabinet/cabinetmembers": 1541,
-     "nation/people": 357,
-     "economy/overview": 1045,
-     "world/ranking": 299,
-     "nation/decisions": 389,
-     "setup/members": 255
+     "setup/party": 428,
+     "setup/settings": 210,
+     "law/vote": 261,
+     "vote/elecGeneral": 413,
+     "cabinet/cabinetmembers": 978,
+     "nation/people": 330,
+     "economy/overview": 327,
+     "world/ranking": 274,
+     "nation/decisions": 278,
+     "setup/members": 211
     },
     "save": {
      "n": 4,
-     "median": 723.7,
-     "p95": 762.4,
-     "max": 762.4
+     "median": 645.7,
+     "p95": 703.7,
+     "max": 703.7
     },
     "autosaveChanged": {
      "n": 3,
-     "median": 695,
-     "p95": 716,
-     "max": 716
+     "median": 685.2,
+     "p95": 717.4,
+     "max": 717.4
     },
     "autosaveSame": {
      "n": 3,
-     "median": 686,
-     "p95": 782,
-     "max": 782
+     "median": 636.1,
+     "p95": 689,
+     "max": 689
     },
     "errors": []
    },
    "S1": {
-    "open": 1240,
+    "open": 1200,
     "mb": 5.53,
     "dateEmpty": false,
     "clickDay": {
      "n": 6,
-     "median": 61.4,
-     "p95": 70.8,
-     "max": 70.8
+     "median": 54.8,
+     "p95": 62.8,
+     "max": 62.8
     },
     "tab": {
      "n": 20,
-     "median": 190.7,
-     "p95": 1031.2,
-     "max": 1031.2
+     "median": 162.3,
+     "p95": 913.3,
+     "max": 913.3
     },
     "tabMax": {
-     "setup/party": 267,
-     "setup/settings": 146,
-     "law/vote": 170,
-     "vote/elecGeneral": 343,
-     "cabinet/cabinetmembers": 1031,
-     "nation/people": 204,
-     "economy/overview": 251,
-     "world/ranking": 135,
-     "nation/decisions": 130,
-     "setup/members": 373
+     "setup/party": 276,
+     "setup/settings": 124,
+     "law/vote": 130,
+     "vote/elecGeneral": 309,
+     "cabinet/cabinetmembers": 913,
+     "nation/people": 162,
+     "economy/overview": 185,
+     "world/ranking": 108,
+     "nation/decisions": 152,
+     "setup/members": 191
     },
     "save": {
      "n": 4,
-     "median": 266.2,
-     "p95": 297.1,
-     "max": 297.1
+     "median": 206.1,
+     "p95": 215.7,
+     "max": 215.7
     },
     "autosaveChanged": {
      "n": 3,
-     "median": 240,
-     "p95": 275,
-     "max": 275
+     "median": 190,
+     "p95": 220,
+     "max": 220
     },
     "autosaveSame": {
      "n": 3,
-     "median": 87.5,
-     "p95": 88.4,
-     "max": 88.4
+     "median": 74,
+     "p95": 77,
+     "max": 77
     },
     "errors": []
    },
    "S2": {
-    "open": 1298,
+    "open": 1197,
     "mb": 5.53,
     "dateEmpty": false,
     "clickDay": {
      "n": 6,
-     "median": 67.6,
-     "p95": 78.3,
-     "max": 78.3
+     "median": 58.5,
+     "p95": 65.1,
+     "max": 65.1
     },
     "tab": {
      "n": 20,
-     "median": 184.6,
-     "p95": 895.2,
-     "max": 895.2
+     "median": 157.8,
+     "p95": 872.8,
+     "max": 872.8
     },
     "tabMax": {
-     "setup/party": 304,
-     "setup/settings": 142,
-     "law/vote": 155,
-     "vote/elecGeneral": 364,
-     "cabinet/cabinetmembers": 895,
-     "nation/people": 205,
-     "economy/overview": 216,
-     "world/ranking": 162,
-     "nation/decisions": 159,
-     "setup/members": 349
+     "setup/party": 228,
+     "setup/settings": 120,
+     "law/vote": 124,
+     "vote/elecGeneral": 314,
+     "cabinet/cabinetmembers": 873,
+     "nation/people": 188,
+     "economy/overview": 215,
+     "world/ranking": 126,
+     "nation/decisions": 116,
+     "setup/members": 154
     },
     "save": {
      "n": 4,
-     "median": 255.5,
-     "p95": 283.2,
-     "max": 283.2
+     "median": 222.8,
+     "p95": 232.3,
+     "max": 232.3
     },
     "autosaveChanged": {
      "n": 3,
-     "median": 249,
-     "p95": 266,
-     "max": 266
+     "median": 209,
+     "p95": 246,
+     "max": 246
     },
     "autosaveSame": {
      "n": 3,
-     "median": 74.3,
-     "p95": 84,
-     "max": 84
+     "median": 71.3,
+     "p95": 79.6,
+     "max": 79.6
     },
     "errors": []
    },
    "S3": {
-    "open": 1458,
+    "open": 1280,
     "mb": 5.53,
     "dateEmpty": false,
     "clickDay": {
      "n": 6,
-     "median": 66,
-     "p95": 68.3,
-     "max": 68.3
+     "median": 52.4,
+     "p95": 55.5,
+     "max": 55.5
     },
     "tab": {
      "n": 20,
-     "median": 162.2,
-     "p95": 855.5,
-     "max": 855.5
+     "median": 146.9,
+     "p95": 736.1,
+     "max": 736.1
     },
     "tabMax": {
-     "setup/party": 324,
-     "setup/settings": 134,
-     "law/vote": 148,
-     "vote/elecGeneral": 312,
-     "cabinet/cabinetmembers": 856,
-     "nation/people": 222,
-     "economy/overview": 199,
-     "world/ranking": 162,
-     "nation/decisions": 125,
-     "setup/members": 158
+     "setup/party": 289,
+     "setup/settings": 159,
+     "law/vote": 129,
+     "vote/elecGeneral": 308,
+     "cabinet/cabinetmembers": 736,
+     "nation/people": 180,
+     "economy/overview": 183,
+     "world/ranking": 109,
+     "nation/decisions": 112,
+     "setup/members": 120
     },
     "save": {
      "n": 4,
-     "median": 255.3,
-     "p95": 263.5,
-     "max": 263.5
+     "median": 219,
+     "p95": 269.3,
+     "max": 269.3
     },
     "autosaveChanged": {
      "n": 3,
-     "median": 213,
-     "p95": 232,
-     "max": 232
+     "median": 183,
+     "p95": 252,
+     "max": 252
     },
     "autosaveSame": {
      "n": 3,
-     "median": 81.5,
-     "p95": 103.2,
-     "max": 103.2
+     "median": 66.6,
+     "p95": 68.6,
+     "max": 68.6
     },
     "errors": []
    },
    "S4": {
-    "open": 1376,
-    "mb": 5.53,
-    "dateEmpty": false,
-    "clickDay": {
-     "n": 6,
-     "median": 4.3,
-     "p95": 8.4,
-     "max": 8.4
-    },
-    "tab": {
-     "n": 20,
-     "median": 102.6,
-     "p95": 905.9,
-     "max": 905.9
-    },
-    "tabMax": {
-     "setup/party": 220,
-     "setup/settings": 82,
-     "law/vote": 97,
-     "vote/elecGeneral": 309,
-     "cabinet/cabinetmembers": 906,
-     "nation/people": 103,
-     "economy/overview": 161,
-     "world/ranking": 118,
-     "nation/decisions": 73,
-     "setup/members": 79
-    },
-    "save": {
-     "n": 4,
-     "median": 73.1,
-     "p95": 195.8,
-     "max": 195.8
-    },
-    "autosaveChanged": {
-     "n": 3,
-     "median": 67,
-     "p95": 103,
-     "max": 103
-    },
-    "autosaveSame": {
-     "n": 3,
-     "median": 11,
-     "p95": 15.9,
-     "max": 15.9
-    },
-    "errors": []
-   },
-   "S5": {
-    "open": 1345,
+    "open": 1161,
     "mb": 5.53,
     "dateEmpty": false,
     "clickDay": {
      "n": 6,
      "median": 4,
+     "p95": 4.6,
+     "max": 4.6
+    },
+    "tab": {
+     "n": 20,
+     "median": 97.1,
+     "p95": 818.7,
+     "max": 818.7
+    },
+    "tabMax": {
+     "setup/party": 222,
+     "setup/settings": 109,
+     "law/vote": 75,
+     "vote/elecGeneral": 219,
+     "cabinet/cabinetmembers": 819,
+     "nation/people": 97,
+     "economy/overview": 128,
+     "world/ranking": 63,
+     "nation/decisions": 59,
+     "setup/members": 71
+    },
+    "save": {
+     "n": 4,
+     "median": 98.1,
+     "p95": 173.6,
+     "max": 173.6
+    },
+    "autosaveChanged": {
+     "n": 3,
+     "median": 63,
+     "p95": 89,
+     "max": 89
+    },
+    "autosaveSame": {
+     "n": 3,
+     "median": 15.4,
+     "p95": 17.9,
+     "max": 17.9
+    },
+    "errors": []
+   },
+   "S5": {
+    "open": 999,
+    "mb": 5.53,
+    "dateEmpty": false,
+    "clickDay": {
+     "n": 6,
+     "median": 4.2,
+     "p95": 5.5,
+     "max": 5.5
+    },
+    "tab": {
+     "n": 20,
+     "median": 56.9,
+     "p95": 145.1,
+     "max": 145.1
+    },
+    "tabMax": {
+     "setup/party": 108,
+     "setup/settings": 41,
+     "law/vote": 57,
+     "vote/elecGeneral": 54,
+     "cabinet/cabinetmembers": 145,
+     "nation/people": 85,
+     "economy/overview": 127,
+     "world/ranking": 73,
+     "nation/decisions": 52,
+     "setup/members": 38
+    },
+    "save": {
+     "n": 4,
+     "median": 58.9,
+     "p95": 192,
+     "max": 192
+    },
+    "autosaveChanged": {
+     "n": 3,
+     "median": 54,
+     "p95": 66,
+     "max": 66
+    },
+    "autosaveSame": {
+     "n": 3,
+     "median": 8.8,
+     "p95": 14.8,
+     "max": 14.8
+    },
+    "errors": []
+   },
+   "S6": {
+    "open": 953,
+    "mb": 5.53,
+    "dateEmpty": false,
+    "clickDay": {
+     "n": 6,
+     "median": 3.6,
      "p95": 5.8,
      "max": 5.8
     },
     "tab": {
      "n": 20,
-     "median": 58,
-     "p95": 95.7,
-     "max": 95.7
+     "median": 53.3,
+     "p95": 91.2,
+     "max": 91.2
     },
     "tabMax": {
-     "setup/party": 85,
-     "setup/settings": 43,
-     "law/vote": 45,
-     "vote/elecGeneral": 66,
-     "cabinet/cabinetmembers": 95,
-     "nation/people": 75,
-     "economy/overview": 96,
-     "world/ranking": 55,
-     "nation/decisions": 58,
-     "setup/members": 43
+     "setup/party": 80,
+     "setup/settings": 49,
+     "law/vote": 50,
+     "vote/elecGeneral": 48,
+     "cabinet/cabinetmembers": 91,
+     "nation/people": 68,
+     "economy/overview": 88,
+     "world/ranking": 59,
+     "nation/decisions": 57,
+     "setup/members": 42
     },
     "save": {
      "n": 4,
-     "median": 71.8,
-     "p95": 190.3,
-     "max": 190.3
+     "median": 65.4,
+     "p95": 177.4,
+     "max": 177.4
     },
     "autosaveChanged": {
      "n": 3,
-     "median": 67,
-     "p95": 68,
-     "max": 68
+     "median": 63,
+     "p95": 65,
+     "max": 65
     },
     "autosaveSame": {
      "n": 3,
-     "median": 9.6,
-     "p95": 16.2,
-     "max": 16.2
+     "median": 8.7,
+     "p95": 17.6,
+     "max": 17.6
     },
     "errors": []
    }
   },
   "builtin:korea": {
    "S0": {
-    "open": 1616,
+    "open": 1450,
     "mb": 6.2,
     "dateEmpty": true,
     "clickDay": {
      "n": 6,
-     "median": 74.9,
-     "p95": 82.9,
-     "max": 82.9
+     "median": 57.5,
+     "p95": 96,
+     "max": 96
     },
     "tab": {
      "n": 20,
-     "median": 267.1,
-     "p95": 742.5,
-     "max": 742.5
+     "median": 235.5,
+     "p95": 800.9,
+     "max": 800.9
     },
     "tabMax": {
-     "setup/party": 621,
-     "setup/settings": 149,
-     "law/vote": 190,
-     "vote/elecGeneral": 232,
-     "cabinet/cabinetmembers": 706,
-     "nation/people": 477,
-     "economy/overview": 276,
-     "world/ranking": 214,
-     "nation/decisions": 281,
-     "setup/members": 743
+     "setup/party": 570,
+     "setup/settings": 169,
+     "law/vote": 149,
+     "vote/elecGeneral": 198,
+     "cabinet/cabinetmembers": 625,
+     "nation/people": 404,
+     "economy/overview": 236,
+     "world/ranking": 179,
+     "nation/decisions": 801,
+     "setup/members": 665
     },
     "save": {
      "n": 4,
-     "median": 831.4,
-     "p95": 837.6,
-     "max": 837.6
+     "median": 754.3,
+     "p95": 769.8,
+     "max": 769.8
     },
     "autosaveChanged": {
      "n": 3,
-     "median": 735,
-     "p95": 771.1,
-     "max": 771.1
+     "median": 676,
+     "p95": 788,
+     "max": 788
     },
     "autosaveSame": {
      "n": 3,
-     "median": 826,
-     "p95": 855,
-     "max": 855
+     "median": 722.2,
+     "p95": 757,
+     "max": 757
     },
     "errors": []
    },
    "S1": {
-    "open": 1292,
+    "open": 992,
     "mb": 6.2,
     "dateEmpty": true,
     "clickDay": {
      "n": 6,
-     "median": 66.4,
-     "p95": 93.7,
-     "max": 93.7
+     "median": 63.6,
+     "p95": 71,
+     "max": 71
     },
     "tab": {
      "n": 20,
-     "median": 203.8,
-     "p95": 786.2,
-     "max": 786.2
+     "median": 174,
+     "p95": 837.6,
+     "max": 837.6
     },
     "tabMax": {
-     "setup/party": 524,
+     "setup/party": 495,
      "setup/settings": 129,
-     "law/vote": 113,
-     "vote/elecGeneral": 235,
-     "cabinet/cabinetmembers": 677,
-     "nation/people": 415,
-     "economy/overview": 187,
-     "world/ranking": 115,
-     "nation/decisions": 243,
-     "setup/members": 786
+     "law/vote": 101,
+     "vote/elecGeneral": 169,
+     "cabinet/cabinetmembers": 582,
+     "nation/people": 434,
+     "economy/overview": 174,
+     "world/ranking": 158,
+     "nation/decisions": 231,
+     "setup/members": 838
     },
     "save": {
      "n": 4,
-     "median": 280,
-     "p95": 297.1,
-     "max": 297.1
+     "median": 238.9,
+     "p95": 305.2,
+     "max": 305.2
     },
     "autosaveChanged": {
      "n": 3,
-     "median": 283,
-     "p95": 374,
-     "max": 374
+     "median": 236.1,
+     "p95": 238.2,
+     "max": 238.2
     },
     "autosaveSame": {
      "n": 3,
-     "median": 75.6,
-     "p95": 90,
-     "max": 90
+     "median": 68,
+     "p95": 70,
+     "max": 70
     },
     "errors": []
    },
    "S2": {
-    "open": 1196,
+    "open": 1105,
     "mb": 6.2,
     "dateEmpty": true,
     "clickDay": {
      "n": 6,
-     "median": 67.8,
-     "p95": 84.6,
-     "max": 84.6
+     "median": 63.7,
+     "p95": 81.8,
+     "max": 81.8
     },
     "tab": {
      "n": 20,
-     "median": 210,
-     "p95": 1001.2,
-     "max": 1001.2
+     "median": 193.9,
+     "p95": 771.6,
+     "max": 771.6
     },
     "tabMax": {
-     "setup/party": 570,
-     "setup/settings": 124,
-     "law/vote": 107,
-     "vote/elecGeneral": 214,
-     "cabinet/cabinetmembers": 628,
-     "nation/people": 427,
-     "economy/overview": 207,
-     "world/ranking": 118,
-     "nation/decisions": 242,
-     "setup/members": 1001
+     "setup/party": 499,
+     "setup/settings": 119,
+     "law/vote": 96,
+     "vote/elecGeneral": 185,
+     "cabinet/cabinetmembers": 607,
+     "nation/people": 421,
+     "economy/overview": 194,
+     "world/ranking": 137,
+     "nation/decisions": 244,
+     "setup/members": 772
     },
     "save": {
      "n": 4,
-     "median": 293,
-     "p95": 300.3,
-     "max": 300.3
+     "median": 265,
+     "p95": 287.1,
+     "max": 287.1
     },
     "autosaveChanged": {
      "n": 3,
-     "median": 258.1,
-     "p95": 288,
-     "max": 288
+     "median": 245.3,
+     "p95": 254,
+     "max": 254
     },
     "autosaveSame": {
      "n": 3,
-     "median": 76.4,
-     "p95": 80.2,
-     "max": 80.2
+     "median": 69.1,
+     "p95": 79,
+     "max": 79
     },
     "errors": []
    },
    "S3": {
-    "open": 1102,
+    "open": 1021,
     "mb": 6.2,
     "dateEmpty": true,
     "clickDay": {
      "n": 6,
-     "median": 75.7,
-     "p95": 82.3,
-     "max": 82.3
+     "median": 68,
+     "p95": 78.9,
+     "max": 78.9
     },
     "tab": {
      "n": 20,
-     "median": 216.1,
-     "p95": 756.7,
-     "max": 756.7
+     "median": 173.9,
+     "p95": 885.3,
+     "max": 885.3
     },
     "tabMax": {
-     "setup/party": 628,
-     "setup/settings": 151,
+     "setup/party": 497,
+     "setup/settings": 114,
      "law/vote": 109,
-     "vote/elecGeneral": 156,
-     "cabinet/cabinetmembers": 653,
-     "nation/people": 470,
-     "economy/overview": 270,
-     "world/ranking": 176,
-     "nation/decisions": 248,
-     "setup/members": 757
+     "vote/elecGeneral": 164,
+     "cabinet/cabinetmembers": 657,
+     "nation/people": 391,
+     "economy/overview": 183,
+     "world/ranking": 108,
+     "nation/decisions": 268,
+     "setup/members": 885
     },
     "save": {
      "n": 4,
-     "median": 240,
-     "p95": 380.7,
-     "max": 380.7
+     "median": 242.1,
+     "p95": 289.9,
+     "max": 289.9
     },
     "autosaveChanged": {
      "n": 3,
-     "median": 285.2,
-     "p95": 296,
-     "max": 296
+     "median": 246.3,
+     "p95": 267,
+     "max": 267
     },
     "autosaveSame": {
      "n": 3,
-     "median": 83,
-     "p95": 91.7,
-     "max": 91.7
+     "median": 68.4,
+     "p95": 72.4,
+     "max": 72.4
     },
     "errors": []
    },
    "S4": {
-    "open": 1061,
+    "open": 963,
     "mb": 6.2,
     "dateEmpty": true,
     "clickDay": {
      "n": 6,
-     "median": 13.3,
-     "p95": 17.6,
-     "max": 17.6
+     "median": 11,
+     "p95": 84.5,
+     "max": 84.5
     },
     "tab": {
      "n": 20,
-     "median": 159.7,
-     "p95": 632.7,
-     "max": 632.7
+     "median": 128.2,
+     "p95": 595.1,
+     "max": 595.1
     },
     "tabMax": {
-     "setup/party": 500,
-     "setup/settings": 59,
+     "setup/party": 456,
+     "setup/settings": 61,
      "law/vote": 50,
-     "vote/elecGeneral": 100,
-     "cabinet/cabinetmembers": 581,
-     "nation/people": 475,
-     "economy/overview": 160,
-     "world/ranking": 70,
-     "nation/decisions": 281,
-     "setup/members": 633
+     "vote/elecGeneral": 125,
+     "cabinet/cabinetmembers": 429,
+     "nation/people": 380,
+     "economy/overview": 128,
+     "world/ranking": 63,
+     "nation/decisions": 182,
+     "setup/members": 595
     },
     "save": {
      "n": 4,
-     "median": 53.3,
-     "p95": 107.5,
-     "max": 107.5
+     "median": 61.4,
+     "p95": 202.3,
+     "max": 202.3
     },
     "autosaveChanged": {
      "n": 3,
-     "median": 67,
-     "p95": 91,
-     "max": 91
+     "median": 78,
+     "p95": 92,
+     "max": 92
     },
     "autosaveSame": {
      "n": 3,
-     "median": 17.5,
-     "p95": 18.8,
-     "max": 18.8
+     "median": 18.7,
+     "p95": 20.8,
+     "max": 20.8
     },
     "errors": []
    },
    "S5": {
-    "open": 940,
+    "open": 889,
     "mb": 6.2,
     "dateEmpty": true,
     "clickDay": {
      "n": 6,
-     "median": 7.2,
-     "p95": 16.9,
-     "max": 16.9
+     "median": 7.4,
+     "p95": 24.8,
+     "max": 24.8
     },
     "tab": {
      "n": 20,
-     "median": 63.2,
-     "p95": 159.8,
-     "max": 159.8
+     "median": 58.8,
+     "p95": 180.4,
+     "max": 180.4
     },
     "tabMax": {
-     "setup/party": 160,
-     "setup/settings": 44,
-     "law/vote": 36,
-     "vote/elecGeneral": 50,
-     "cabinet/cabinetmembers": 76,
-     "nation/people": 128,
-     "economy/overview": 79,
-     "world/ranking": 56,
-     "nation/decisions": 87,
-     "setup/members": 139
+     "setup/party": 151,
+     "setup/settings": 32,
+     "law/vote": 40,
+     "vote/elecGeneral": 35,
+     "cabinet/cabinetmembers": 82,
+     "nation/people": 95,
+     "economy/overview": 83,
+     "world/ranking": 65,
+     "nation/decisions": 59,
+     "setup/members": 180
     },
     "save": {
      "n": 4,
-     "median": 74.5,
-     "p95": 203,
-     "max": 203
+     "median": 87.6,
+     "p95": 201.5,
+     "max": 201.5
     },
     "autosaveChanged": {
      "n": 3,
-     "median": 84,
-     "p95": 88,
-     "max": 88
+     "median": 83,
+     "p95": 84,
+     "max": 84
     },
     "autosaveSame": {
      "n": 3,
-     "median": 10.7,
-     "p95": 18.3,
-     "max": 18.3
+     "median": 9.3,
+     "p95": 14.6,
+     "max": 14.6
+    },
+    "errors": []
+   },
+   "S6": {
+    "open": 985,
+    "mb": 6.2,
+    "dateEmpty": true,
+    "clickDay": {
+     "n": 6,
+     "median": 8.3,
+     "p95": 16.4,
+     "max": 16.4
+    },
+    "tab": {
+     "n": 20,
+     "median": 64.5,
+     "p95": 160.1,
+     "max": 160.1
+    },
+    "tabMax": {
+     "setup/party": 113,
+     "setup/settings": 27,
+     "law/vote": 36,
+     "vote/elecGeneral": 40,
+     "cabinet/cabinetmembers": 98,
+     "nation/people": 156,
+     "economy/overview": 91,
+     "world/ranking": 49,
+     "nation/decisions": 69,
+     "setup/members": 160
+    },
+    "save": {
+     "n": 4,
+     "median": 73.9,
+     "p95": 224.7,
+     "max": 224.7
+    },
+    "autosaveChanged": {
+     "n": 3,
+     "median": 70,
+     "p95": 73,
+     "max": 73
+    },
+    "autosaveSame": {
+     "n": 3,
+     "median": 10.8,
+     "p95": 16.8,
+     "max": 16.8
     },
     "errors": []
    }
   },
   "builtin:korea2024": {
    "S0": {
-    "open": 2418,
+    "open": 2055,
     "mb": 6.36,
     "dateEmpty": false,
     "clickDay": {
      "n": 6,
-     "median": 66.6,
-     "p95": 88.9,
-     "max": 88.9
+     "median": 54.7,
+     "p95": 57.5,
+     "max": 57.5
     },
     "tab": {
      "n": 20,
-     "median": 289.7,
-     "p95": 803.2,
-     "max": 803.2
+     "median": 296.9,
+     "p95": 990,
+     "max": 990
     },
     "tabMax": {
-     "setup/party": 290,
-     "setup/settings": 165,
-     "law/vote": 254,
-     "vote/elecGeneral": 346,
-     "cabinet/cabinetmembers": 803,
-     "nation/people": 305,
-     "economy/overview": 550,
-     "world/ranking": 255,
-     "nation/decisions": 268,
-     "setup/members": 755
+     "setup/party": 286,
+     "setup/settings": 161,
+     "law/vote": 235,
+     "vote/elecGeneral": 334,
+     "cabinet/cabinetmembers": 837,
+     "nation/people": 302,
+     "economy/overview": 535,
+     "world/ranking": 990,
+     "nation/decisions": 241,
+     "setup/members": 723
     },
     "save": {
      "n": 4,
-     "median": 888.7,
-     "p95": 901.5,
-     "max": 901.5
+     "median": 866.1,
+     "p95": 886.8,
+     "max": 886.8
     },
     "autosaveChanged": {
      "n": 3,
-     "median": 843,
-     "p95": 858,
-     "max": 858
+     "median": 804.3,
+     "p95": 808,
+     "max": 808
     },
     "autosaveSame": {
      "n": 3,
-     "median": 782,
-     "p95": 838,
-     "max": 838
+     "median": 781,
+     "p95": 788,
+     "max": 788
     },
     "errors": []
    },
    "S1": {
-    "open": 1451,
+    "open": 1357,
     "mb": 6.36,
     "dateEmpty": false,
     "clickDay": {
      "n": 6,
-     "median": 64.5,
-     "p95": 76.3,
-     "max": 76.3
+     "median": 56.9,
+     "p95": 58.6,
+     "max": 58.6
     },
     "tab": {
      "n": 20,
-     "median": 213.4,
-     "p95": 758.5,
-     "max": 758.5
+     "median": 180.8,
+     "p95": 747.1,
+     "max": 747.1
     },
     "tabMax": {
-     "setup/party": 225,
-     "setup/settings": 141,
-     "law/vote": 127,
-     "vote/elecGeneral": 259,
-     "cabinet/cabinetmembers": 759,
-     "nation/people": 217,
-     "economy/overview": 535,
-     "world/ranking": 119,
-     "nation/decisions": 115,
-     "setup/members": 729
+     "setup/party": 217,
+     "setup/settings": 133,
+     "law/vote": 111,
+     "vote/elecGeneral": 229,
+     "cabinet/cabinetmembers": 591,
+     "nation/people": 412,
+     "economy/overview": 453,
+     "world/ranking": 117,
+     "nation/decisions": 116,
+     "setup/members": 747
     },
     "save": {
      "n": 4,
-     "median": 337,
-     "p95": 429.8,
-     "max": 429.8
+     "median": 312.6,
+     "p95": 328,
+     "max": 328
     },
     "autosaveChanged": {
      "n": 3,
-     "median": 325,
-     "p95": 417,
-     "max": 417
+     "median": 312,
+     "p95": 318,
+     "max": 318
     },
     "autosaveSame": {
      "n": 3,
-     "median": 78,
-     "p95": 79.7,
-     "max": 79.7
+     "median": 70,
+     "p95": 74,
+     "max": 74
     },
     "errors": []
    },
    "S2": {
-    "open": 1500,
+    "open": 1267,
     "mb": 6.36,
     "dateEmpty": false,
     "clickDay": {
      "n": 6,
-     "median": 55.9,
-     "p95": 62.3,
-     "max": 62.3
+     "median": 56.7,
+     "p95": 71.5,
+     "max": 71.5
     },
     "tab": {
      "n": 20,
-     "median": 189.3,
-     "p95": 934.3,
-     "max": 934.3
+     "median": 173.7,
+     "p95": 798.7,
+     "max": 798.7
     },
     "tabMax": {
-     "setup/party": 216,
-     "setup/settings": 143,
-     "law/vote": 142,
-     "vote/elecGeneral": 189,
-     "cabinet/cabinetmembers": 653,
-     "nation/people": 194,
-     "economy/overview": 480,
-     "world/ranking": 150,
-     "nation/decisions": 125,
-     "setup/members": 934
+     "setup/party": 174,
+     "setup/settings": 123,
+     "law/vote": 115,
+     "vote/elecGeneral": 232,
+     "cabinet/cabinetmembers": 631,
+     "nation/people": 484,
+     "economy/overview": 450,
+     "world/ranking": 119,
+     "nation/decisions": 130,
+     "setup/members": 799
     },
     "save": {
      "n": 4,
-     "median": 329.2,
-     "p95": 333.5,
-     "max": 333.5
+     "median": 332,
+     "p95": 362.1,
+     "max": 362.1
     },
     "autosaveChanged": {
      "n": 3,
-     "median": 318.3,
-     "p95": 346,
-     "max": 346
+     "median": 327.2,
+     "p95": 365,
+     "max": 365
     },
     "autosaveSame": {
      "n": 3,
-     "median": 71.7,
+     "median": 72,
+     "p95": 74,
+     "max": 74
+    },
+    "errors": []
+   },
+   "S3": {
+    "open": 1409,
+    "mb": 6.36,
+    "dateEmpty": false,
+    "clickDay": {
+     "n": 6,
+     "median": 59,
+     "p95": 71.3,
+     "max": 71.3
+    },
+    "tab": {
+     "n": 20,
+     "median": 234.3,
+     "p95": 756.9,
+     "max": 756.9
+    },
+    "tabMax": {
+     "setup/party": 271,
+     "setup/settings": 134,
+     "law/vote": 125,
+     "vote/elecGeneral": 279,
+     "cabinet/cabinetmembers": 710,
+     "nation/people": 236,
+     "economy/overview": 491,
+     "world/ranking": 172,
+     "nation/decisions": 129,
+     "setup/members": 757
+    },
+    "save": {
+     "n": 4,
+     "median": 325.6,
+     "p95": 417.5,
+     "max": 417.5
+    },
+    "autosaveChanged": {
+     "n": 3,
+     "median": 341,
+     "p95": 365,
+     "max": 365
+    },
+    "autosaveSame": {
+     "n": 3,
+     "median": 67.2,
      "p95": 85,
      "max": 85
     },
     "errors": []
    },
-   "S3": {
-    "open": 1465,
-    "mb": 6.36,
-    "dateEmpty": false,
-    "clickDay": {
-     "n": 6,
-     "median": 55.8,
-     "p95": 58.2,
-     "max": 58.2
-    },
-    "tab": {
-     "n": 20,
-     "median": 185,
-     "p95": 809.1,
-     "max": 809.1
-    },
-    "tabMax": {
-     "setup/party": 198,
-     "setup/settings": 172,
-     "law/vote": 124,
-     "vote/elecGeneral": 227,
-     "cabinet/cabinetmembers": 664,
-     "nation/people": 185,
-     "economy/overview": 511,
-     "world/ranking": 121,
-     "nation/decisions": 115,
-     "setup/members": 809
-    },
-    "save": {
-     "n": 4,
-     "median": 303.5,
-     "p95": 308.9,
-     "max": 308.9
-    },
-    "autosaveChanged": {
-     "n": 3,
-     "median": 324,
-     "p95": 347,
-     "max": 347
-    },
-    "autosaveSame": {
-     "n": 3,
-     "median": 70,
-     "p95": 72,
-     "max": 72
-    },
-    "errors": []
-   },
    "S4": {
-    "open": 1540,
+    "open": 1365,
     "mb": 6.36,
     "dateEmpty": false,
     "clickDay": {
      "n": 6,
-     "median": 3.9,
-     "p95": 4.3,
-     "max": 4.3
+     "median": 5.1,
+     "p95": 5.3,
+     "max": 5.3
     },
     "tab": {
      "n": 20,
-     "median": 148.9,
-     "p95": 613.8,
-     "max": 613.8
+     "median": 149.9,
+     "p95": 754.8,
+     "max": 754.8
     },
     "tabMax": {
-     "setup/party": 183,
-     "setup/settings": 90,
-     "law/vote": 74,
-     "vote/elecGeneral": 185,
-     "cabinet/cabinetmembers": 614,
-     "nation/people": 121,
-     "economy/overview": 425,
-     "world/ranking": 81,
-     "nation/decisions": 84,
-     "setup/members": 581
+     "setup/party": 179,
+     "setup/settings": 70,
+     "law/vote": 63,
+     "vote/elecGeneral": 207,
+     "cabinet/cabinetmembers": 755,
+     "nation/people": 208,
+     "economy/overview": 455,
+     "world/ranking": 71,
+     "nation/decisions": 78,
+     "setup/members": 585
     },
     "save": {
      "n": 4,
-     "median": 58.6,
-     "p95": 250.1,
-     "max": 250.1
+     "median": 68.8,
+     "p95": 241.5,
+     "max": 241.5
     },
     "autosaveChanged": {
      "n": 3,
-     "median": 71,
-     "p95": 81,
-     "max": 81
+     "median": 59,
+     "p95": 62,
+     "max": 62
     },
     "autosaveSame": {
      "n": 3,
-     "median": 19.4,
-     "p95": 20.3,
-     "max": 20.3
+     "median": 17.6,
+     "p95": 21,
+     "max": 21
     },
     "errors": []
    },
    "S5": {
-    "open": 1437,
+    "open": 1294,
     "mb": 6.36,
     "dateEmpty": false,
     "clickDay": {
      "n": 6,
-     "median": 5.2,
-     "p95": 8.7,
-     "max": 8.7
+     "median": 5.6,
+     "p95": 7.2,
+     "max": 7.2
     },
     "tab": {
      "n": 20,
-     "median": 78,
-     "p95": 202.3,
-     "max": 202.3
+     "median": 74.2,
+     "p95": 223.4,
+     "max": 223.4
     },
     "tabMax": {
-     "setup/party": 78,
-     "setup/settings": 45,
-     "law/vote": 59,
-     "vote/elecGeneral": 67,
-     "cabinet/cabinetmembers": 108,
-     "nation/people": 116,
-     "economy/overview": 188,
-     "world/ranking": 115,
-     "nation/decisions": 78,
-     "setup/members": 202
+     "setup/party": 115,
+     "setup/settings": 39,
+     "law/vote": 44,
+     "vote/elecGeneral": 57,
+     "cabinet/cabinetmembers": 97,
+     "nation/people": 120,
+     "economy/overview": 223,
+     "world/ranking": 92,
+     "nation/decisions": 85,
+     "setup/members": 154
     },
     "save": {
      "n": 4,
-     "median": 75.2,
-     "p95": 297.7,
-     "max": 297.7
+     "median": 77.1,
+     "p95": 230.8,
+     "max": 230.8
     },
     "autosaveChanged": {
      "n": 3,
-     "median": 64,
-     "p95": 67,
-     "max": 67
+     "median": 62,
+     "p95": 64,
+     "max": 64
     },
     "autosaveSame": {
      "n": 3,
-     "median": 7,
-     "p95": 18,
-     "max": 18
+     "median": 10,
+     "p95": 17.6,
+     "max": 17.6
+    },
+    "errors": []
+   },
+   "S6": {
+    "open": 1244,
+    "mb": 6.36,
+    "dateEmpty": false,
+    "clickDay": {
+     "n": 6,
+     "median": 5.1,
+     "p95": 7.3,
+     "max": 7.3
+    },
+    "tab": {
+     "n": 20,
+     "median": 70,
+     "p95": 192,
+     "max": 192
+    },
+    "tabMax": {
+     "setup/party": 90,
+     "setup/settings": 55,
+     "law/vote": 68,
+     "vote/elecGeneral": 84,
+     "cabinet/cabinetmembers": 111,
+     "nation/people": 108,
+     "economy/overview": 192,
+     "world/ranking": 67,
+     "nation/decisions": 69,
+     "setup/members": 172
+    },
+    "save": {
+     "n": 4,
+     "median": 76.9,
+     "p95": 288.4,
+     "max": 288.4
+    },
+    "autosaveChanged": {
+     "n": 3,
+     "median": 70,
+     "p95": 82,
+     "max": 82
+    },
+    "autosaveSame": {
+     "n": 3,
+     "median": 11.9,
+     "p95": 17.8,
+     "max": 17.8
     },
     "errors": []
    }
   },
   "builtin:japan": {
    "S0": {
-    "open": 2872,
+    "open": 2627,
     "mb": 9.93,
     "dateEmpty": false,
     "clickDay": {
      "n": 6,
-     "median": 108.2,
-     "p95": 131.1,
-     "max": 131.1
+     "median": 104,
+     "p95": 108.2,
+     "max": 108.2
     },
     "tab": {
      "n": 20,
-     "median": 431.1,
-     "p95": 1556.1,
-     "max": 1556.1
+     "median": 372.6,
+     "p95": 1668.5,
+     "max": 1668.5
     },
     "tabMax": {
-     "setup/party": 480,
-     "setup/settings": 223,
-     "law/vote": 345,
-     "vote/elecGeneral": 548,
-     "cabinet/cabinetmembers": 519,
-     "nation/people": 1556,
-     "economy/overview": 633,
-     "world/ranking": 298,
-     "nation/decisions": 305,
-     "setup/members": 836
+     "setup/party": 373,
+     "setup/settings": 205,
+     "law/vote": 297,
+     "vote/elecGeneral": 461,
+     "cabinet/cabinetmembers": 1669,
+     "nation/people": 307,
+     "economy/overview": 606,
+     "world/ranking": 378,
+     "nation/decisions": 326,
+     "setup/members": 763
     },
     "save": {
      "n": 4,
-     "median": 1293.2,
-     "p95": 1348.4,
-     "max": 1348.4
+     "median": 1331.1,
+     "p95": 1368,
+     "max": 1368
     },
     "autosaveChanged": {
      "n": 3,
-     "median": 1303.1,
-     "p95": 1362.2,
-     "max": 1362.2
+     "median": 1195,
+     "p95": 1321.3,
+     "max": 1321.3
     },
     "autosaveSame": {
      "n": 3,
-     "median": 1257,
-     "p95": 1365,
-     "max": 1365
+     "median": 1175,
+     "p95": 1193,
+     "max": 1193
     },
     "errors": []
    },
    "S1": {
-    "open": 1706,
+    "open": 1464,
     "mb": 9.93,
     "dateEmpty": false,
     "clickDay": {
      "n": 6,
-     "median": 107.8,
-     "p95": 118.7,
-     "max": 118.7
+     "median": 107.7,
+     "p95": 127.1,
+     "max": 127.1
     },
     "tab": {
      "n": 20,
-     "median": 263.5,
-     "p95": 658,
-     "max": 658
+     "median": 224.3,
+     "p95": 554.4,
+     "max": 554.4
     },
     "tabMax": {
-     "setup/party": 265,
-     "setup/settings": 205,
-     "law/vote": 185,
-     "vote/elecGeneral": 316,
-     "cabinet/cabinetmembers": 430,
-     "nation/people": 264,
-     "economy/overview": 479,
-     "world/ranking": 178,
-     "nation/decisions": 173,
-     "setup/members": 658
+     "setup/party": 292,
+     "setup/settings": 159,
+     "law/vote": 158,
+     "vote/elecGeneral": 320,
+     "cabinet/cabinetmembers": 327,
+     "nation/people": 227,
+     "economy/overview": 460,
+     "world/ranking": 150,
+     "nation/decisions": 183,
+     "setup/members": 554
     },
     "save": {
      "n": 4,
-     "median": 459.4,
-     "p95": 472.1,
-     "max": 472.1
+     "median": 420.6,
+     "p95": 485.6,
+     "max": 485.6
     },
     "autosaveChanged": {
      "n": 3,
-     "median": 442.1,
-     "p95": 459,
-     "max": 459
+     "median": 389.1,
+     "p95": 441,
+     "max": 441
     },
     "autosaveSame": {
      "n": 3,
-     "median": 139,
-     "p95": 145.4,
-     "max": 145.4
+     "median": 126,
+     "p95": 131.2,
+     "max": 131.2
     },
     "errors": []
    },
    "S2": {
-    "open": 1665,
+    "open": 1513,
     "mb": 9.93,
     "dateEmpty": false,
     "clickDay": {
      "n": 6,
-     "median": 104.1,
-     "p95": 131.1,
-     "max": 131.1
+     "median": 100.1,
+     "p95": 116.8,
+     "max": 116.8
     },
     "tab": {
      "n": 20,
-     "median": 258.5,
-     "p95": 699.7,
-     "max": 699.7
+     "median": 226.1,
+     "p95": 561,
+     "max": 561
     },
     "tabMax": {
-     "setup/party": 278,
-     "setup/settings": 151,
-     "law/vote": 192,
-     "vote/elecGeneral": 306,
-     "cabinet/cabinetmembers": 438,
-     "nation/people": 226,
-     "economy/overview": 440,
-     "world/ranking": 147,
-     "nation/decisions": 180,
-     "setup/members": 700
+     "setup/party": 226,
+     "setup/settings": 163,
+     "law/vote": 198,
+     "vote/elecGeneral": 317,
+     "cabinet/cabinetmembers": 394,
+     "nation/people": 299,
+     "economy/overview": 495,
+     "world/ranking": 163,
+     "nation/decisions": 166,
+     "setup/members": 561
     },
     "save": {
      "n": 4,
-     "median": 502.7,
-     "p95": 515.6,
-     "max": 515.6
+     "median": 387.1,
+     "p95": 544.1,
+     "max": 544.1
     },
     "autosaveChanged": {
      "n": 3,
-     "median": 505,
-     "p95": 514,
-     "max": 514
+     "median": 419.1,
+     "p95": 439.1,
+     "max": 439.1
     },
     "autosaveSame": {
      "n": 3,
-     "median": 149,
-     "p95": 155,
-     "max": 155
+     "median": 130.6,
+     "p95": 143.3,
+     "max": 143.3
     },
     "errors": []
    },
    "S3": {
-    "open": 1728,
+    "open": 1654,
     "mb": 9.93,
     "dateEmpty": false,
     "clickDay": {
      "n": 6,
-     "median": 104.5,
-     "p95": 131.5,
-     "max": 131.5
+     "median": 110.8,
+     "p95": 160.4,
+     "max": 160.4
     },
     "tab": {
      "n": 20,
-     "median": 234.5,
-     "p95": 714.4,
-     "max": 714.4
+     "median": 227.8,
+     "p95": 648.2,
+     "max": 648.2
     },
     "tabMax": {
-     "setup/party": 262,
-     "setup/settings": 175,
-     "law/vote": 162,
-     "vote/elecGeneral": 326,
-     "cabinet/cabinetmembers": 356,
-     "nation/people": 235,
-     "economy/overview": 437,
-     "world/ranking": 172,
-     "nation/decisions": 157,
-     "setup/members": 714
+     "setup/party": 273,
+     "setup/settings": 182,
+     "law/vote": 166,
+     "vote/elecGeneral": 309,
+     "cabinet/cabinetmembers": 380,
+     "nation/people": 222,
+     "economy/overview": 468,
+     "world/ranking": 151,
+     "nation/decisions": 150,
+     "setup/members": 648
     },
     "save": {
      "n": 4,
-     "median": 458,
-     "p95": 498.7,
-     "max": 498.7
+     "median": 404.2,
+     "p95": 404.3,
+     "max": 404.3
     },
     "autosaveChanged": {
      "n": 3,
-     "median": 454,
-     "p95": 463,
-     "max": 463
+     "median": 409,
+     "p95": 428,
+     "max": 428
     },
     "autosaveSame": {
      "n": 3,
-     "median": 124.1,
-     "p95": 148.3,
-     "max": 148.3
+     "median": 134,
+     "p95": 154.8,
+     "max": 154.8
     },
     "errors": []
    },
    "S4": {
-    "open": 1715,
+    "open": 1369,
     "mb": 9.93,
     "dateEmpty": false,
     "clickDay": {
      "n": 6,
      "median": 3.3,
-     "p95": 9.1,
-     "max": 9.1
+     "p95": 4.2,
+     "max": 4.2
     },
     "tab": {
      "n": 20,
-     "median": 153.9,
-     "p95": 615.2,
-     "max": 615.2
+     "median": 105.1,
+     "p95": 522.9,
+     "max": 522.9
     },
     "tabMax": {
-     "setup/party": 154,
-     "setup/settings": 78,
-     "law/vote": 73,
-     "vote/elecGeneral": 295,
-     "cabinet/cabinetmembers": 336,
-     "nation/people": 73,
-     "economy/overview": 381,
-     "world/ranking": 168,
-     "nation/decisions": 67,
-     "setup/members": 615
+     "setup/party": 173,
+     "setup/settings": 58,
+     "law/vote": 76,
+     "vote/elecGeneral": 222,
+     "cabinet/cabinetmembers": 318,
+     "nation/people": 67,
+     "economy/overview": 360,
+     "world/ranking": 64,
+     "nation/decisions": 62,
+     "setup/members": 523
     },
     "save": {
      "n": 4,
-     "median": 116.7,
-     "p95": 343.4,
-     "max": 343.4
+     "median": 131.1,
+     "p95": 265,
+     "max": 265
     },
     "autosaveChanged": {
      "n": 3,
-     "median": 127,
-     "p95": 130,
-     "max": 130
+     "median": 88,
+     "p95": 107,
+     "max": 107
     },
     "autosaveSame": {
      "n": 3,
-     "median": 33.4,
-     "p95": 39.5,
-     "max": 39.5
+     "median": 28.3,
+     "p95": 31.8,
+     "max": 31.8
     },
     "errors": []
    },
    "S5": {
-    "open": 1807,
+    "open": 1723,
     "mb": 9.93,
     "dateEmpty": false,
     "clickDay": {
      "n": 6,
-     "median": 3.4,
-     "p95": 4.3,
-     "max": 4.3
+     "median": 3.5,
+     "p95": 3.8,
+     "max": 3.8
     },
     "tab": {
      "n": 20,
-     "median": 69.7,
-     "p95": 159.9,
-     "max": 159.9
+     "median": 64.3,
+     "p95": 166.9,
+     "max": 166.9
     },
     "tabMax": {
-     "setup/party": 98,
-     "setup/settings": 38,
-     "law/vote": 60,
-     "vote/elecGeneral": 71,
-     "cabinet/cabinetmembers": 72,
-     "nation/people": 72,
-     "economy/overview": 157,
-     "world/ranking": 60,
-     "nation/decisions": 55,
-     "setup/members": 160
+     "setup/party": 70,
+     "setup/settings": 43,
+     "law/vote": 48,
+     "vote/elecGeneral": 52,
+     "cabinet/cabinetmembers": 83,
+     "nation/people": 69,
+     "economy/overview": 167,
+     "world/ranking": 50,
+     "nation/decisions": 68,
+     "setup/members": 132
     },
     "save": {
      "n": 4,
-     "median": 130.8,
-     "p95": 351.2,
-     "max": 351.2
+     "median": 106.2,
+     "p95": 324.2,
+     "max": 324.2
     },
     "autosaveChanged": {
      "n": 3,
-     "median": 102,
-     "p95": 114,
-     "max": 114
+     "median": 94,
+     "p95": 135,
+     "max": 135
     },
     "autosaveSame": {
      "n": 3,
-     "median": 27,
-     "p95": 29.5,
-     "max": 29.5
+     "median": 15.4,
+     "p95": 24.7,
+     "max": 24.7
+    },
+    "errors": []
+   },
+   "S6": {
+    "open": 1413,
+    "mb": 9.93,
+    "dateEmpty": false,
+    "clickDay": {
+     "n": 6,
+     "median": 3.2,
+     "p95": 4.2,
+     "max": 4.2
+    },
+    "tab": {
+     "n": 20,
+     "median": 59.6,
+     "p95": 134.4,
+     "max": 134.4
+    },
+    "tabMax": {
+     "setup/party": 99,
+     "setup/settings": 32,
+     "law/vote": 49,
+     "vote/elecGeneral": 54,
+     "cabinet/cabinetmembers": 80,
+     "nation/people": 87,
+     "economy/overview": 134,
+     "world/ranking": 81,
+     "nation/decisions": 55,
+     "setup/members": 132
+    },
+    "save": {
+     "n": 4,
+     "median": 113.9,
+     "p95": 370.3,
+     "max": 370.3
+    },
+    "autosaveChanged": {
+     "n": 3,
+     "median": 112,
+     "p95": 138,
+     "max": 138
+    },
+    "autosaveSame": {
+     "n": 3,
+     "median": 15,
+     "p95": 27.3,
+     "max": 27.3
     },
     "errors": []
    }

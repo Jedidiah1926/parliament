@@ -1,6 +1,6 @@
 {
  "label": "S2",
- "at": "2026-11-13T14:13:42.906Z",
+ "at": "2026-11-14T04:00:03.279Z",
  "env": {
   "ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.0.0 Safari/537.36",
   "viewport": "1440x900",
@@ -9,283 +9,283 @@
  "results": {
   "index.html load": {
    "n": 5,
-   "median": 200,
-   "p95": 215,
-   "max": 215
+   "median": 156,
+   "p95": 165,
+   "max": 165
   },
   "main.html load (SAVE SELECT)": {
    "n": 5,
-   "median": 300,
-   "p95": 372,
-   "max": 372
+   "median": 297,
+   "p95": 323,
+   "max": 323
   },
   "scenario.html load": {
    "n": 5,
-   "median": 178,
-   "p95": 204,
-   "max": 204
+   "median": 174,
+   "p95": 218,
+   "max": 218
   },
-  "game small (서독 튜토리얼) · open preset (ms, 1회)": 459,
+  "game small (서독 튜토리얼) · open preset (ms, 1회)": 418,
   "game small (서독 튜토리얼) · state size (MB)": 0.23,
   "game small (서독 튜토리얼) · getAppState()": {
+   "n": 10,
+   "median": 16.7,
+   "p95": 17,
+   "max": 17
+  },
+  "game small (서독 튜토리얼) · JSON.stringify(getAppState())": {
    "n": 10,
    "median": 16.7,
    "p95": 16.9,
    "max": 16.9
   },
-  "game small (서독 튜토리얼) · JSON.stringify(getAppState())": {
-   "n": 10,
-   "median": 16.7,
-   "p95": 20.2,
-   "max": 20.2
-  },
   "game small (서독 튜토리얼) · refreshUI()": {
    "n": 10,
-   "median": 85.2,
-   "p95": 87.8,
-   "max": 87.8
+   "median": 73,
+   "p95": 75.4,
+   "max": 75.4
   },
   "game small (서독 튜토리얼) · simulate()": {
    "n": 10,
-   "median": 28.3,
-   "p95": 40.4,
-   "max": 40.4
+   "median": 23.7,
+   "p95": 25,
+   "max": 25
   },
   "game small (서독 튜토리얼) · saveActiveNow(true)": {
    "n": 8,
-   "median": 16.8,
-   "p95": 17.6,
-   "max": 17.6
+   "median": 16.7,
+   "p95": 21.2,
+   "max": 21.2
   },
   "game small (서독 튜토리얼) · autosave, nothing changed (saveActiveNow())": {
    "n": 8,
-   "median": 16.6,
-   "p95": 19.2,
-   "max": 19.2
+   "median": 16.7,
+   "p95": 16.9,
+   "max": 16.9
   },
   "game small (서독 튜토리얼) · saveActiveSoon — longest frame gap": {
    "n": 5,
-   "median": 16.9,
-   "p95": 18,
-   "max": 18
+   "median": 17.7,
+   "p95": 18.3,
+   "max": 18.3
   },
   "game small (서독 튜토리얼) · tab switch (10 tabs)": {
    "n": 30,
-   "median": 29.9,
-   "p95": 117.9,
-   "max": 126.5
+   "median": 27.4,
+   "p95": 101.3,
+   "max": 107.4
   },
   "game small (서독 튜토리얼) · advance 1 day": {
    "n": 30,
    "median": 16.7,
-   "p95": 17.9,
-   "max": 19.3
+   "p95": 18.3,
+   "max": 18.8
   },
   "game small (서독 튜토리얼) · advance 1 month": {
    "n": 12,
-   "median": 16.6,
-   "p95": 18.3,
-   "max": 18.3
+   "median": 16.8,
+   "p95": 17.1,
+   "max": 17.1
   },
   "game small (서독 튜토리얼) · script effect (run + afterEffects)": {
    "n": 10,
    "median": 16.6,
-   "p95": 17,
-   "max": 17
+   "p95": 16.8,
+   "max": 16.8
   },
   "game small (서독 튜토리얼) · long tasks": {
    "count": 17,
    "over50": 17,
-   "max": 288,
-   "total": 1474
+   "max": 239,
+   "total": 1240
   },
-  "game large (대한민국 2024) · open preset (ms, 1회)": 1694,
+  "game large (대한민국 2024) · open preset (ms, 1회)": 1630,
   "game large (대한민국 2024) · state size (MB)": 6.36,
   "game large (대한민국 2024) · getAppState()": {
    "n": 10,
-   "median": 19.4,
-   "p95": 34.5,
-   "max": 34.5
+   "median": 18.7,
+   "p95": 35.8,
+   "max": 35.8
   },
   "game large (대한민국 2024) · JSON.stringify(getAppState())": {
    "n": 10,
-   "median": 55.6,
-   "p95": 71.5,
-   "max": 71.5
+   "median": 49.9,
+   "p95": 50.4,
+   "max": 50.4
   },
   "game large (대한민국 2024) · refreshUI()": {
    "n": 10,
-   "median": 34.5,
-   "p95": 50.9,
-   "max": 50.9
+   "median": 27.4,
+   "p95": 35.1,
+   "max": 35.1
   },
   "game large (대한민국 2024) · simulate()": {
    "n": 10,
-   "median": 49.1,
-   "p95": 52.3,
-   "max": 52.3
+   "median": 46,
+   "p95": 54.3,
+   "max": 54.3
   },
   "game large (대한민국 2024) · saveActiveNow(true)": {
    "n": 8,
-   "median": 374.7,
-   "p95": 397.2,
-   "max": 397.2
+   "median": 339,
+   "p95": 376.4,
+   "max": 376.4
   },
   "game large (대한민국 2024) · autosave, nothing changed (saveActiveNow())": {
    "n": 8,
-   "median": 64.3,
-   "p95": 66.1,
-   "max": 66.1
+   "median": 55.5,
+   "p95": 59.4,
+   "max": 59.4
   },
   "game large (대한민국 2024) · saveActiveSoon — longest frame gap": {
    "n": 5,
-   "median": 82.4,
-   "p95": 94.8,
-   "max": 94.8
+   "median": 76.6,
+   "p95": 97.4,
+   "max": 97.4
   },
   "game large (대한민국 2024) · tab switch (10 tabs)": {
    "n": 30,
-   "median": 81.9,
-   "p95": 645.4,
-   "max": 911.6
+   "median": 77.5,
+   "p95": 548.4,
+   "max": 605.3
   },
   "game large (대한민국 2024) · advance 1 day": {
    "n": 30,
    "median": 16.7,
-   "p95": 25.2,
-   "max": 136.9
+   "p95": 23.4,
+   "max": 24
   },
   "game large (대한민국 2024) · advance 1 month": {
    "n": 12,
-   "median": 16.6,
-   "p95": 34.4,
-   "max": 34.4
+   "median": 16.9,
+   "p95": 29.8,
+   "max": 29.8
   },
   "game large (대한민국 2024) · script effect (run + afterEffects)": {
    "n": 10,
-   "median": 32,
-   "p95": 53.2,
-   "max": 53.2
+   "median": 40.7,
+   "p95": 161.6,
+   "max": 161.6
   },
   "game large (대한민국 2024) · long tasks": {
-   "count": 67,
-   "over50": 67,
-   "max": 1502,
-   "total": 10625
+   "count": 56,
+   "over50": 56,
+   "max": 1431,
+   "total": 9282
   },
   "world map 500 regions · import + draw": {
    "n": 3,
-   "median": 32.2,
-   "p95": 37.3,
-   "max": 37.3
+   "median": 25.7,
+   "p95": 28.3,
+   "max": 28.3
   },
   "world map 500 regions · repaint (switchDispTab)": {
    "n": 8,
-   "median": 30.1,
-   "p95": 89.4,
-   "max": 89.4
+   "median": 17.6,
+   "p95": 19.3,
+   "max": 19.3
   },
   "world map 500 regions · color change": {
    "n": 8,
-   "median": 24.4,
-   "p95": 25.8,
-   "max": 25.8
+   "median": 20.4,
+   "p95": 65.3,
+   "max": 65.3
   },
   "world map 500 regions · paint one region (click)": {
    "n": 15,
-   "median": 33.9,
-   "p95": 41.6,
-   "max": 41.6
+   "median": 18.4,
+   "p95": 24.2,
+   "max": 24.2
   },
   "world map 500 regions · brush stroke 40 steps (wall, 입력 포함)": {
    "n": 5,
-   "median": 900,
-   "p95": 909,
-   "max": 909
+   "median": 854,
+   "p95": 874,
+   "max": 874
   },
   "world map 500 regions · getAppState()": {
    "n": 8,
-   "median": 19.4,
-   "p95": 74.8,
-   "max": 74.8
+   "median": 20.3,
+   "p95": 34,
+   "max": 34
   },
   "world map 500 regions · saveActiveNow(true)": {
    "n": 5,
-   "median": 350.8,
-   "p95": 369.1,
-   "max": 369.1
+   "median": 339.7,
+   "p95": 395.8,
+   "max": 395.8
   },
   "world map 500 regions · long tasks": {
-   "count": 19,
-   "over50": 19,
-   "max": 323,
-   "total": 2792
+   "count": 17,
+   "over50": 17,
+   "max": 370,
+   "total": 2593
   },
   "world map 5000 regions · import + draw": {
    "n": 3,
-   "median": 148.5,
-   "p95": 157.1,
-   "max": 157.1
+   "median": 164.7,
+   "p95": 174.2,
+   "max": 174.2
   },
   "world map 5000 regions · repaint (switchDispTab)": {
    "n": 8,
-   "median": 89.4,
-   "p95": 106.4,
-   "max": 106.4
+   "median": 64.4,
+   "p95": 67.8,
+   "max": 67.8
   },
   "world map 5000 regions · color change": {
    "n": 8,
-   "median": 104.3,
-   "p95": 406.5,
-   "max": 406.5
+   "median": 80.9,
+   "p95": 122.6,
+   "max": 122.6
   },
   "world map 5000 regions · paint one region (click)": {
    "n": 15,
-   "median": 53.7,
-   "p95": 103.5,
-   "max": 103.5
+   "median": 55.6,
+   "p95": 78,
+   "max": 78
   },
   "world map 5000 regions · brush stroke 40 steps (wall, 입력 포함)": {
    "n": 5,
-   "median": 1142,
-   "p95": 1234,
-   "max": 1234
+   "median": 1115,
+   "p95": 1507,
+   "max": 1507
   },
   "world map 5000 regions · getAppState()": {
    "n": 8,
-   "median": 51,
-   "p95": 144.8,
-   "max": 144.8
+   "median": 38.6,
+   "p95": 105.7,
+   "max": 105.7
   },
   "world map 5000 regions · saveActiveNow(true)": {
    "n": 5,
-   "median": 385.5,
-   "p95": 407.6,
-   "max": 407.6
+   "median": 368.1,
+   "p95": 374.4,
+   "max": 374.4
   },
   "world map 5000 regions · long tasks": {
-   "count": 38,
-   "over50": 38,
-   "max": 365,
-   "total": 4923
+   "count": 32,
+   "over50": 32,
+   "max": 330,
+   "total": 4312
   },
   "editor 6 focus / 1 events · validate": {
-   "n": 8,
-   "median": 16.7,
-   "p95": 18.7,
-   "max": 18.7
-  },
-  "editor 6 focus / 1 events · JSON.stringify(scenario)": {
    "n": 8,
    "median": 16.6,
    "p95": 16.8,
    "max": 16.8
   },
+  "editor 6 focus / 1 events · JSON.stringify(scenario)": {
+   "n": 8,
+   "median": 16.7,
+   "p95": 16.8,
+   "max": 16.8
+  },
   "editor 6 focus / 1 events · tab switch": {
    "n": 14,
-   "median": 15.4,
-   "p95": 29.4,
-   "max": 29.4
+   "median": 14.7,
+   "p95": 23.4,
+   "max": 23.4
   },
   "editor 6 focus / 1 events · select node (render)": {
    "n": 10,
@@ -295,15 +295,15 @@
   },
   "editor 6 focus / 1 events · typing (per key)": {
    "n": 25,
-   "median": 15,
-   "p95": 15.7,
-   "max": 20.1
+   "median": 15.4,
+   "p95": 15.9,
+   "max": 20
   },
   "editor 6 focus / 1 events · undo": {
    "n": 8,
-   "median": 16.4,
-   "p95": 27.4,
-   "max": 27.4
+   "median": 16.7,
+   "p95": 24.1,
+   "max": 24.1
   },
   "editor 6 focus / 1 events · long tasks": {
    "count": 0,
@@ -313,9 +313,9 @@
   },
   "editor 500 focus / 500 events · validate": {
    "n": 8,
-   "median": 16.4,
-   "p95": 23.8,
-   "max": 23.8
+   "median": 16.8,
+   "p95": 22,
+   "max": 22
   },
   "editor 500 focus / 500 events · JSON.stringify(scenario)": {
    "n": 8,
@@ -325,33 +325,33 @@
   },
   "editor 500 focus / 500 events · tab switch": {
    "n": 14,
-   "median": 112.4,
-   "p95": 7882.8,
-   "max": 7882.8
+   "median": 97.3,
+   "p95": 5708,
+   "max": 5708
   },
   "editor 500 focus / 500 events · select node (render)": {
    "n": 10,
-   "median": 16.7,
-   "p95": 28.9,
-   "max": 28.9
+   "median": 15.8,
+   "p95": 20.7,
+   "max": 20.7
   },
   "editor 500 focus / 500 events · typing (per key)": {
    "n": 25,
-   "median": 14.9,
-   "p95": 20.5,
-   "max": 449.6
+   "median": 12,
+   "p95": 15.9,
+   "max": 16
   },
   "editor 500 focus / 500 events · undo": {
    "n": 8,
-   "median": 118.7,
-   "p95": 135.9,
-   "max": 135.9
+   "median": 102.6,
+   "p95": 139.3,
+   "max": 139.3
   },
   "editor 500 focus / 500 events · long tasks": {
-   "count": 25,
-   "over50": 25,
-   "max": 5615,
-   "total": 16207
+   "count": 23,
+   "over50": 23,
+   "max": 3407,
+   "total": 12874
   }
  },
  "errors": []
