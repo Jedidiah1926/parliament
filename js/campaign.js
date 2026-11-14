@@ -66,6 +66,12 @@
     const LOCK_REASON = {
         worldMap: '이 시나리오에서는 영토를 직접 수정할 수 없습니다. 방향성 · 이벤트 · 결정을 통해 바뀝니다.',
         economicRegions: '이 시나리오에서는 경제권을 직접 수정할 수 없습니다. 방향성 · 이벤트 · 결정을 통해 바뀝니다.',
+        parties: '이 시나리오에서는 정당 · 이념을 직접 수정할 수 없습니다. 이벤트 · 결정 · 방향성을 통해 바뀝니다.',
+        seats: '이 시나리오에서는 의석 · 의원을 직접 수정할 수 없습니다. 선거 또는 이벤트를 통해 바뀝니다.',
+        elections: '이 시나리오에서는 선거제도 · 지역구를 직접 수정할 수 없습니다. 선거는 정해진 제도대로 치릅니다.',
+        government: '이 시나리오에서는 정부 형태 · 집권 · 내각을 직접 수정할 수 없습니다. 선거 · 표결 · 이벤트를 통해 바뀝니다.',
+        opinion: '이 시나리오에서는 지지율 · 여론을 직접 수정할 수 없습니다. 이벤트 · 기사 · 자동 변화를 통해 바뀝니다.',
+        economy: '이 시나리오에서는 경제 지표 · 경제 사건 · 항목을 직접 수정할 수 없습니다. 정책(통화 · 재정)과 이벤트로 바뀝니다.',
     };
     const lockReason = name => (R && !loadingCampaign && isObj(R.playRules) && isObj(R.playRules.locks) && R.playRules.locks[name] === true && LOCK_REASON[name]) || null;
     // 스크립트 판정에 쓰는 지금 상태 (js/world-rules.js의 ctx) — 이 시나리오의 스크립트가 아니면 null
@@ -110,6 +116,8 @@
         if (!isObj(r.worldBindings)) r.worldBindings = declaredBindings(r);
         // 적용한 플레이 규칙이 빠진 진행 세이브는 시나리오의 선언에서 되살린다 (조용히 전부 허용하지 않게). 설정이 없는 시나리오는 예전처럼 잠금 없음
         if (!isObj(r.playRules)) r.playRules = isObj(r.data.playRules) ? JSON.parse(JSON.stringify(r.data.playRules)) : {};
+        // 국가 운영(자원 · 시설 · 기술 · 군사 · 무역, js/ops-rules.js) — 쓰는 시나리오만
+        if (window.HemiOps && HemiOps.uses(r.data)) r.ops = HemiOps.normalize(r.ops, r.data, r.clock ? r.clock.day + (r.clock.hour || 0) / 24 : null); else delete r.ops;
         r.crises = r.crises || {};
         (r.data.crises || []).forEach(c => { if (!r.crises[c.id]) r.crises[c.id] = { status: 'idle', missions: {} }; r.crises[c.id].missions = r.crises[c.id].missions || {}; });
         return r;
@@ -245,7 +253,8 @@
     function tick(options={}) {
         if (!R || R.ending) { timeController.render(); return; }
         const nd = nowDay();
-        if(options.hourly&&(!R.focus.cur||nd-R.focus.cur.started+1e-8<R.focus.cur.days)){updateFocusProgress();timeController.render();return;}
+        const opsChanged = advanceOps(nd);
+        if(options.hourly&&!opsChanged&&(!R.focus.cur||nd-R.focus.cur.started+1e-8<R.focus.cur.days)){updateFocusProgress();timeController.render();window.dispatchEvent(new Event('hemi-campaign-ticked'));return;}
         // 방향성
         if (R.focus.cur && nd != null && nd - (R.focus.cur.started ?? nd) + 1e-8 >= R.focus.cur.days) completeFocus();
         // 격변
@@ -267,7 +276,46 @@
         const e = (R.data.endings || []).find(x => x && x.condition && test(x.condition));
         if (e) { R.ending = { id: e.id, at: today() };timeController.pause('시나리오 결말 · 일시정지'); setTimeout(() => showEnding(e), 400); }
         refresh();
+        window.dispatchEvent(new Event('hemi-campaign-ticked'));
     }
+    // ---------------------------------------------------------------
+    // 국가 운영 — 지난 날마다 생산 · 유지비 · 무역, 기간이 찬 건설 · 연구 · 모집 완료 (js/ops-rules.js)
+    // ---------------------------------------------------------------
+    function advanceOps(nd) {
+        if (!R || !R.ops || !window.HemiOps || nd == null) return false;
+        const r = HemiOps.advance(R.ops, R.data, nd);
+        r.researched.forEach(id => { const t = HemiOps.byId(R.data, 'tech', id); if (t) { run(t.effects); toast(`🔬 연구 완료: ${t.title || t.id}`); } });
+        r.built.forEach(id => { const f = HemiOps.byId(R.data, 'facilities', id); if (f) toast(`🏗 건설 완료: ${f.name || f.id}`); });
+        r.recruited.forEach(id => { const u = HemiOps.byId(R.data, 'units', id); if (u) toast(`🎖 편성 완료: ${u.name || u.id}`); });
+        return !!(r.days || r.researched.length || r.built.length || r.recruited.length);
+    }
+    // 플레이어의 운영 행동 — 건설 · 연구 · 모집 · 무역 체결 / 취소. 이유(글자) 또는 null
+    function opsAct(kind, id, act) {
+        if (!R || !R.ops || !window.HemiOps) return '이 시나리오에는 국가 운영이 없습니다';
+        if (act === 'cancel') { if (!HemiOps.cancel(kind, R.ops, R.data, id)) return '취소할 것이 없습니다'; }
+        else { const why = HemiOps.start(kind, R.ops, R.data, id, nowDay(), test); if (why) return why; }
+        advanceOps(nowDay()); // 기간 0인 것은 바로 끝난다
+        try { window.saveActiveNow?.(true); } catch (e) { /* 자동저장에 맡김 */ }
+        tick(); return null;
+    }
+    // 시나리오 스크립트의 운영 조건 · 효과 · 결정 비용
+    (function registerOps() {
+        const sm = window.HemiScriptMods; if (!sm || !sm.registerCondition || !window.HemiOps) return;
+        const mine = mod => !!R && !!R.ops && !loadingCampaign && mod && mod.id === modId();
+        Object.keys(HemiOps.COND).forEach(k => sm.registerCondition(k, (v, mod) => {
+            if (!mine(mod)) throw new Error('국가 운영 조건은 국가 운영을 쓰는 시나리오에서만 쓸 수 있습니다');
+            const res = HemiOps.testCond(k, v, R.ops, R.data); if (!res.ok) throw new Error(res.error); return res.value;
+        }));
+        Object.keys(HemiOps.EFF).forEach(k => sm.registerEffect(k, (v, mod) => {
+            if (!mine(mod)) throw new Error('국가 운영 효과는 국가 운영을 쓰는 시나리오에서만 쓸 수 있습니다');
+            const why = HemiOps.runEffect(k, v, R.ops, R.data, nowDay()); if (why) throw new Error(why);
+        }));
+        sm.setCostHandler({
+            check: (mod, cost) => (!mine(mod) ? '비용(자원)은 국가 운영을 쓰는 시나리오에서만 쓸 수 있습니다' : HemiOps.canPay(R.ops, cost) ? null : HemiOps.lacking(R.ops, cost, R.data).join(', ')),
+            pay: (mod, cost) => { if (mine(mod)) HemiOps.pay(R.ops, cost, R.data); },
+            label: (mod, cost) => HemiOps.amounts(cost).map(([k, v]) => { const r = R && HemiOps.byId(R.data, 'resources', k); return `${r ? `${r.icon ? r.icon + ' ' : ''}${r.name || k}` : k} ${v}`; }).join(' · '),
+        });
+    })();
     const keyOf = s => { const m = /^(-?\d{1,5})(?:-(\d{1,2}))?(?:-(\d{1,2}))?$/.exec(String(s ?? '').trim()); return m ? +m[1] * 10000 + (+m[2] || 1) * 100 + (+m[3] || 1) : null; };
 
     const origAdvance = window.advanceNationDate;
@@ -475,6 +523,7 @@
         const list = SM() ? SM().decisions(modId(), d => d._crisis === c.id) : [];
         if (!list.length) return '';
         return `<div class="cp-h">격변 결정</div>${list.map(d => `<div class="cp-dec ${d.block ? 'off' : ''}"><div class="cp-grow"><b>${esc(d.title)}</b>${d.desc ? `<div class="cp-dim">${esc(d.desc)}</div>` : ''}</div>
+            ${d.cost && window.HemiOps && R && R.ops ? `<div class="cp-dim">비용: ${esc(HemiOps.amounts(d.cost).map(([k, v]) => `${(HemiOps.byId(R.data, 'resources', k) || {}).name || k} ${v}`).join(' · '))}</div>` : ''}
             <button type="button" class="cp-btn ${d.block ? '' : 'cp-primary'}" data-take="${esc(d.id)}" ${d.block ? 'disabled' : ''}>${esc(d.block || '결정하기')}</button></div>`).join('')}`;
     }
     function crisisCard(c, big) {
@@ -670,7 +719,7 @@
         };
     }
 
-    window.HemiCampaign = { get state() { return R; }, tick, startFocus, publishArticle, attach, showIntro, showDisp, FORMAT, toMod, worldContext, lockReason,
+    window.HemiCampaign = { get state() { return R; }, tick, startFocus, publishArticle, attach, showIntro, showDisp, FORMAT, toMod, worldContext, lockReason, opsAct, nowDay: () => nowDay(), test,
         nextTurn:timeController.nextTurn, play:timeController.play, pause:timeController.pause, setSpeed:timeController.speed,
         scriptDate:id=>!loadingCampaign&&R?.clock&&id===modId()?{...Clock.parts(R.clock.day),key:today()}:null,
         scriptDateLabel:id=>!loadingCampaign&&R?.clock&&id===modId()?Clock.label(R.clock):null };

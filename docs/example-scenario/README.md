@@ -1,4 +1,11 @@
-# 예제 시나리오 — 국경 협정
+# 예제 시나리오
+
+| 파일 | 예제 |
+|---|---|
+| `border-agreement.hemicmp` · `border-map.hemimap` | 국경 협정 — 세계지도 · 시나리오 연동 (아래) |
+| `industrialization.hemicmp` | 산업화와 국경 위기 — 국가 운영(자원 · 시설 · 기술 · 군사 · 무역)과 결정 비용, 정당 · 의석 잠금. 방향성 “산업화 선언” → 베세머 공법 연구 → 탄광 · 철광산 · 제철소 → 산업 투자 결정 → 철강 수출 → 강선 포 · 포병 → 전력 20 → “국경 방위 계획” → 국경 위기(철도를 연구했으면 협상) → 결말 두 가지. 원본 `tests/fixtures/industrialization.cjs`, 시험 `tests/ops-scenario.browser.cjs` |
+
+## 국경 협정
 
 세계지도와 시나리오를 잇는 가장 작은 예제입니다 (v1.7.1 / 시나리오 0.3.2 — [사용법](../CAMPAIGN.md#세계지도-연동-v171--032) · [설계](../design/SCENARIO_WORLD_INTEGRATION.md)).
 

@@ -209,6 +209,7 @@
             // 국정 지지율 (여론 › 국정 지지율, js/news.js) — { "of": "cabinet" | "president" | "pm" | "chair", "lt": 30 }
             case 'approval': { const a = window.HemiNews && window.HemiNews.approval(v.of || 'cabinet'); return a != null && cmp(a, v); }
             default:
+                if (extCond[k]) { try { return !!extCond[k](v, mod); } catch (e) { warn(mod, `${k}: ${e.message}`); return false; } }
                 warn(mod, `모르는 조건 "${k}"`);
                 return false;
         }
@@ -292,9 +293,15 @@
                 for (const o of list) { r -= Math.max(0, Number(o.weight) || 0); if (r < 0) { run(o.effects, mod); break; } }
                 return;
             }
-            default: warn(mod, `모르는 효과 "${k}"`);
+            default:
+                if (extEff[k]) { try { extEff[k](v, mod); } catch (e) { warn(mod, `${k}: ${e.message}`); } return; }
+                warn(mod, `모르는 효과 "${k}"`);
         }
     }
+    // 다른 기능이 더하는 조건 · 효과 (시나리오 국가 운영 — js/campaign.js). fn(값, 모드) — 조건은 참/거짓, 효과는 실패 시 throw
+    const extCond = Object.create(null), extEff = Object.create(null);
+    // 결정 비용 (d.cost) — { check(mod, cost) → 이유 | null, pay(mod, cost) }. 정해지지 않으면 비용이 있는 결정은 쓸 수 없다
+    let costHandler = null;
     // 글자 속 {var:이름} · {party:ruling} · {date} 바꾸기
     function fill(text, mod) {
         return String(text ?? '').replace(/\{(var|party|date)(?::([^}]+))?\}/g, (m, kind, arg) => {
@@ -417,12 +424,14 @@
             if (t) { const left = Number(d.cooldown_days) - (dayNum(t.key) - dayNum(taken)); if (left > 0) return `${left}일 뒤 다시`; }
         }
         if (!test(d.available, mod)) return d.requirement_text ? fill(d.requirement_text, mod) : '조건 미충족';
+        if (d.cost && typeof d.cost === 'object' && Object.keys(d.cost).length) { const why = costHandler ? costHandler.check(mod, d.cost) : '이 결정의 비용을 낼 수 없습니다'; if (why) return why; }
         return null;
     }
     function takeDecision(mod, d) {
         if (decisionBlock(mod, d)) return;
         const why = precheck(d.effects, mod);
         if (why) { showCustomAlert(`결정 "${fill(d.title || d.id, mod)}"을(를) 실행할 수 없습니다.\n${why}`); return; } // 사용 기록을 남기지 않는다 — 고친 뒤 다시 할 수 있게
+        if (d.cost && costHandler) costHandler.pay(mod, d.cost); // 비용은 검사(decisionBlock)를 지난 뒤 한 번에
         const t = today(mod);
         ns('taken', mod)[d.id] = t ? t.key : 0;
         run(d.effects, mod);
@@ -479,7 +488,7 @@
         return [...groups].map(([cat, list]) => `<div class="sm-cat"><div class="sm-cat-h">${esc(cat)}</div>${list.map(({ mod, d }) => {
             const block = decisionBlock(mod, d);
             return `<div class="sm-dec ${block ? 'off' : ''}">
-                <div class="sm-dec-main"><div class="sm-dec-title">${esc(fill(d.title || d.id, mod))}</div>${d.desc || d.description ? `<div class="sm-dec-desc">${esc(fill(d.desc || d.description, mod)).replace(/\n/g, '<br>')}</div>` : ''}</div>
+                <div class="sm-dec-main"><div class="sm-dec-title">${esc(fill(d.title || d.id, mod))}</div>${d.desc || d.description ? `<div class="sm-dec-desc">${esc(fill(d.desc || d.description, mod)).replace(/\n/g, '<br>')}</div>` : ''}${d.cost && costHandler && costHandler.label ? `<div class="sm-dec-desc">비용: ${esc(costHandler.label(mod, d.cost))}</div>` : ''}</div>
                 <button type="button" class="sm-btn ${block ? '' : 'sm-primary'}" data-take="${esc(mod.id + '\n' + d.id)}" ${block ? 'disabled' : ''}>${esc(block || '결정하기')}</button></div>`;
         }).join('')}</div>`).join('');
     }
@@ -582,11 +591,13 @@
         // 시나리오(js/campaign.js)이 쓰는 것 — 이벤트 띄우기 · 변수 · 플래그 · 결정 목록과 실행
         fire(id, evId) { const m = mods.find(x => x.id === id); if (m) { queueEvent(m, evId, true); showNextEvent(); } },
         vars: id => (S.vars[id] || {}), flags: id => (S.flags[id] || {}),
-        decisions(id, filter) { const m = mods.find(x => x.id === id); if (!m) return []; return m.decisions.filter(d => (!filter || filter(d)) && test(d.visible, m)).map(d => ({ id: d.id, title: fill(d.title || d.id, m), desc: fill(d.desc || d.description || '', m), block: decisionBlock(m, d), category: d.category || '' })); },
+        decisions(id, filter) { const m = mods.find(x => x.id === id); if (!m) return []; return m.decisions.filter(d => (!filter || filter(d)) && test(d.visible, m)).map(d => ({ id: d.id, title: fill(d.title || d.id, m), desc: fill(d.desc || d.description || '', m), block: decisionBlock(m, d), category: d.category || '', cost: d.cost && typeof d.cost === 'object' ? { ...d.cost } : null })); },
         take(id, did) { const m = mods.find(x => x.id === id), d = m && m.decisions.find(x => x.id === did); if (d) takeDecision(m, d); },
         fill: (text, id) => fill(text, mods.find(m => m.id === id)), test: (cond, id) => test(cond, mods.find(m => m.id === id)),
         run: (eff, id) => { run(eff, mods.find(m => m.id === id)); afterEffects(); },
-        precheck: (eff, id) => precheck(eff, mods.find(m => m.id === id)), example: () => JSON.parse(JSON.stringify(EXAMPLE)),
+        precheck: (eff, id) => precheck(eff, mods.find(m => m.id === id)),
+        registerCondition(name, fn) { extCond[name] = fn; }, registerEffect(name, fn) { extEff[name] = fn; }, setCostHandler(h) { costHandler = h; },
+        decisionBlock: (id, did) => { const m = mods.find(x => x.id === id), d = m && m.decisions.find(x => x.id === did); return d ? decisionBlock(m, d) : '없는 결정'; }, example: () => JSON.parse(JSON.stringify(EXAMPLE)),
     };
 
     const style = document.createElement('style');

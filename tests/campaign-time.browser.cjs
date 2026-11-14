@@ -56,6 +56,6 @@ const base=process.env.STUDIO_TEST_URL||'http://127.0.0.1:8000';
  await p.evaluate(()=>{HemiCampaign.play();const s=getAppState();delete s.campaign;setAppState(s);});await p.clock.runFor(1000);assert.equal(await p.evaluate(()=>HemiCampaign.state),null);assert.equal(await p.locator('#nationDateYear').isDisabled(),false);
  const day=await p.locator('#nationDateDay').inputValue();await p.evaluate(()=>advanceNationDate(7,'day'));assert.equal(+await p.locator('#nationDateDay').inputValue(),+day+7);
  await p.goto(base+'/challenge.html');await p.waitForFunction(()=>!!window.HemiChallengeEditor);assert.equal(await p.locator('a[href="scenario.html"]').count(),0);
- await p.goto(base+'/index.html');assert.match(await p.locator('#homeVersion').innerText(),/v1\.7\.0 · v0\.3\.1/);
+ await p.goto(base+'/index.html');assert.match(await p.locator('#homeVersion').innerText(),new RegExp('v'+require('../package.json').version.replace(/\./g,'\\.')+' · v0\\.\\d+\\.\\d+'));
  assert.deepEqual(errors,[]);console.log('PASS: choice event pause, themes/mobile, normal save date controls and timer cleanup, removed maker links, paired version; no browser errors');
 }finally{await browser.close();}})().catch(e=>{console.error(e);process.exitCode=1;});

@@ -66,42 +66,54 @@ html[data-theme-family="modern"] .seg-anim > .system-radio-btn:has(input:checked
     return null;
   }
 
-  function place(group) {
+  // 자리 잡기는 세 단계 — (1) 빠진 선택 표시 다시 넣기(쓰기) (2) 모든 묶음의 크기 · 위치 읽기 (3) 한꺼번에 쓰기.
+  // 묶음마다 읽고 쓰기를 번갈아 하면 묶음 수만큼 레이아웃을 다시 계산해, 버튼 묶음이 많은 탭(시민 등)을 열 때 0.1~0.2초씩 멈췄다
+  function reattach(group) {
     const thumb = group._segThumb;
-    if (!thumb) return;
-    // 버튼 묶음을 통째로 다시 그리면(innerHTML) 선택 표시가 사라지므로 다시 넣는다
-    if (thumb.parentNode !== group) {
+    if (thumb && thumb.parentNode !== group) {
+      // 버튼 묶음을 통째로 다시 그리면(innerHTML) 선택 표시가 사라지므로 다시 넣는다
       group.insertBefore(thumb, group.firstChild);
       group._segReady = false;
     }
+  }
+  function measure(group) {
+    const thumb = group._segThumb;
+    if (!thumb) return null;
     const item = activeItem(group);
     // 묶음이 숨겨져 있으면(크기 0) 다음에 보일 때 애니메이션 없이 바로 자리 잡도록
-    if (!item || !group.offsetWidth || !item.offsetWidth) {
+    if (!item || !group.offsetWidth || !item.offsetWidth) return { group, thumb, hidden: true };
+    const x = item.offsetLeft, y = item.offsetTop, w = item.offsetWidth, h = item.offsetHeight;
+    return { group, thumb, x, y, w, h, radius: getComputedStyle(item).borderTopLeftRadius, key: `${x},${y},${w},${h}` };
+  }
+  function write(m) {
+    const { group, thumb } = m;
+    if (m.hidden) {
       if (thumb.style.opacity !== '0') thumb.style.opacity = '0';
       group._segReady = false;
-      return;
+      return false;
     }
-    const x = item.offsetLeft;
-    const y = item.offsetTop;
-    const w = item.offsetWidth;
-    const h = item.offsetHeight;
-    const radius = getComputedStyle(item).borderTopLeftRadius;
-    const key = `${x},${y},${w},${h}`;
-    if (group._segReady && group._segKey === key) return;
-
-    if (!group._segReady) thumb.classList.add('seg-thumb-instant');
-    thumb.style.width = w + 'px';
-    thumb.style.height = h + 'px';
-    thumb.style.transform = `translate(${x}px, ${y}px)`;
-    thumb.style.borderRadius = radius;
+    if (group._segReady && group._segKey === m.key) return false;
+    const instant = !group._segReady;
+    if (instant) thumb.classList.add('seg-thumb-instant');
+    thumb.style.width = m.w + 'px';
+    thumb.style.height = m.h + 'px';
+    thumb.style.transform = `translate(${m.x}px, ${m.y}px)`;
+    thumb.style.borderRadius = m.radius;
     thumb.style.opacity = '1';
-    if (!group._segReady) {
-      thumb.offsetWidth; // 즉시 적용한 뒤 다음 변화부터 애니메이션
-      thumb.classList.remove('seg-thumb-instant');
-    }
     group._segReady = true;
-    group._segKey = key;
+    group._segKey = m.key;
+    return instant;
   }
+  function placeAll(groups) {
+    groups.forEach(reattach);
+    const plans = groups.map(measure).filter(Boolean);
+    const instant = plans.filter(write);
+    if (instant.length) {
+      instant[0].thumb.offsetWidth; // 즉시 적용한 뒤 다음 변화부터 애니메이션 (한 번만)
+      instant.forEach(m => m.thumb.classList.remove('seg-thumb-instant'));
+    }
+  }
+  function place(group) { placeAll([group]); }
 
   function attach(group) {
     if (tracked.has(group)) return;
@@ -124,7 +136,7 @@ html[data-theme-family="modern"] .seg-anim > .system-radio-btn:has(input:checked
       resizeObserver.observe(group);
       Array.from(group.children).forEach(child => resizeObserver.observe(child));
     }
-    place(group);
+    schedule(); // 다음 프레임에 다른 묶음과 함께 (그 자리에서 재면 묶음마다 레이아웃을 다시 계산)
   }
 
   function scan(root) {
@@ -139,10 +151,9 @@ html[data-theme-family="modern"] .seg-anim > .system-radio-btn:has(input:checked
     pending = true;
     requestAnimationFrame(() => {
       pending = false;
-      tracked.forEach(group => {
-        if (!group.isConnected) { tracked.delete(group); return; }
-        if (isModern()) place(group);
-      });
+      const live = [];
+      tracked.forEach(group => { if (!group.isConnected) tracked.delete(group); else live.push(group); });
+      if (isModern()) placeAll(live);
     });
   }
 

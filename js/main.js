@@ -320,6 +320,32 @@
             return opts.join('');
         }
 
+        // "의원에서 불러오기" 목록은 의원 수(수백 명) × 카드 수만큼 <option>이 생겨 탭을 열 때 1초 넘게 걸렸다.
+        // 처음엔 빈 줄 하나만 그려 두고, 목록을 실제로 열거나(마우스 · 키보드) 포커스할 때 채운다
+        function memberPickerLazyHtml(filterPartyId) {
+            return '<option value="">-- 의원에서 불러오기 --</option>';
+        }
+        function memberPickerLazyAttr(filterPartyId) {
+            return `data-member-picker="${filterPartyId === undefined ? '*' : filterPartyId}"`;
+        }
+        function setLazyMemberPicker(picker, filterPartyId) {
+            if(!picker) return;
+            picker.innerHTML = memberPickerLazyHtml();
+            picker.setAttribute('data-member-picker', filterPartyId === undefined ? '*' : String(filterPartyId));
+        }
+        function fillMemberPicker(sel) {
+            if(!sel || !sel.hasAttribute('data-member-picker')) return;
+            const f = sel.getAttribute('data-member-picker');
+            sel.removeAttribute('data-member-picker');
+            const keep = sel.value;
+            sel.innerHTML = memberPickerOptionsHtml(f === '*' ? undefined : (isNaN(+f) ? f : +f));
+            sel.value = keep;
+        }
+        ['mousedown', 'focusin', 'keydown', 'touchstart'].forEach(ev => document.addEventListener(ev, e => {
+            const sel = e.target && e.target.closest ? e.target.closest('select[data-member-picker]') : null;
+            if(sel) fillMemberPicker(sel);
+        }, { capture: true, passive: true }));
+
         function parseMemberPickerValue(val) {
             if(!val) return null;
             const parts = val.split(':');
@@ -472,7 +498,7 @@
             const dot = document.getElementById('presidentPartyDot');
             if(dot) dot.style.background = partyDotColor(effPartyId);
             const picker = document.getElementById('presidentMemberPicker');
-            if(picker) { picker.innerHTML = memberPickerOptionsHtml(); picker.value = ''; picker.style.display = resolved ? 'none' : ''; }
+            if(picker) { setLazyMemberPicker(picker); picker.value = ''; picker.style.display = resolved ? 'none' : ''; }
             const badge = document.getElementById('presidentLinkedBadge');
             if(badge) badge.style.display = resolved ? 'flex' : 'none';
         }
@@ -540,7 +566,7 @@
             const dot = document.getElementById('chairPartyDot');
             if(dot) dot.style.background = partyDotColor(effPartyId);
             const picker = document.getElementById('chairMemberPicker');
-            if(picker) { picker.innerHTML = memberPickerOptionsHtml(); picker.value = ''; picker.style.display = resolved ? 'none' : ''; }
+            if(picker) { setLazyMemberPicker(picker); picker.value = ''; picker.style.display = resolved ? 'none' : ''; }
             const badge = document.getElementById('chairLinkedBadge');
             if(badge) badge.style.display = resolved ? 'flex' : 'none';
         }
@@ -644,7 +670,7 @@
             const dot = document.getElementById('pmPartyDot');
             if(dot) dot.style.background = partyDotColor(effPartyId);
             const picker = document.getElementById('pmMemberPicker');
-            if(picker) { picker.innerHTML = memberPickerOptionsHtml(); picker.value = ''; picker.style.display = resolved ? 'none' : ''; }
+            if(picker) { setLazyMemberPicker(picker); picker.value = ''; picker.style.display = resolved ? 'none' : ''; }
             const badge = document.getElementById('pmLinkedBadge');
             if(badge) {
                 badge.style.display = resolved ? 'flex' : 'none';
@@ -779,9 +805,9 @@
                                 🔗 의원과 연결됨 — 당적은 의원을 따르고, 이름·사진은 어느 쪽에서 고쳐도 함께 바뀜
                                 <button onclick="unlinkDeputyPm('${d.id}')" style="background:transparent;border:1px solid #333;color:#888;font-family:inherit;font-size:0.7rem;padding:2px 6px;cursor:pointer;">연결 해제</button>
                             </div>` : `
-                            <select onchange="linkDeputyPmToSeat('${d.id}',this.value)"
+                            <select ${memberPickerLazyAttr()} onchange="linkDeputyPmToSeat('${d.id}',this.value)"
                                 style="width:100%;box-sizing:border-box;background:#000;border:1px solid #333;color:#888;font-family:inherit;font-size:0.75rem;padding:4px;">
-                                ${memberPickerOptionsHtml()}
+                                ${memberPickerLazyHtml()}
                             </select>`}
                             <div style="display:flex;justify-content:space-between;align-items:center;">
                                 ${effPhoto?`<button onclick="removeDeputyPmPhoto('${d.id}')" style="background:transparent;border:1px solid #333;color:#555;font-family:inherit;font-size:0.75rem;padding:2px 8px;cursor:pointer;">✕ 사진 제거</button>`:'<span></span>'}
@@ -946,7 +972,7 @@
             const dot = document.getElementById('pmNomineePartyDot');
             if(dot) dot.style.background = partyDotColor(effPartyId);
             const picker = document.getElementById('pmNomineeMemberPicker');
-            if(picker) { picker.innerHTML = memberPickerOptionsHtml(); picker.value = ''; picker.style.display = resolved ? 'none' : ''; }
+            if(picker) { setLazyMemberPicker(picker); picker.value = ''; picker.style.display = resolved ? 'none' : ''; }
             const badge = document.getElementById('pmNomineeLinkedBadge');
             if(badge) badge.style.display = resolved ? 'flex' : 'none';
         }
@@ -1135,9 +1161,9 @@
                                 🔗 의원과 연결됨 — 당적은 의원을 따르고, 이름·사진은 어느 쪽에서 고쳐도 함께 바뀜
                                 <button onclick="unlinkCabinetMember('${m.id}')" style="background:transparent;border:1px solid #333;color:#888;font-family:inherit;font-size:0.7rem;padding:2px 6px;cursor:pointer;">연결 해제</button>
                             </div>` : `
-                            <select onchange="linkCabinetMemberToSeat('${m.id}',this.value)"
+                            <select ${memberPickerLazyAttr()} onchange="linkCabinetMemberToSeat('${m.id}',this.value)"
                                 style="width:100%;box-sizing:border-box;background:#000;border:1px solid #333;color:#888;font-family:inherit;font-size:0.75rem;padding:4px;">
-                                ${memberPickerOptionsHtml()}
+                                ${memberPickerLazyHtml()}
                             </select>`}
                             <div style="display:flex;justify-content:space-between;align-items:center;">
                                 ${effPhoto?`<button onclick="removeCabinetMemberPhoto('${m.id}')" style="background:transparent;border:1px solid #333;color:#555;font-family:inherit;font-size:0.75rem;padding:2px 8px;cursor:pointer;">✕ 사진 제거</button>`:'<span></span>'}
@@ -5351,6 +5377,15 @@
         // 읽는 순간 새 식별자로 고쳐 두어 다음 저장부터는 Hemicycle 형식으로 남는다
         const SAVE_APP_ID = 'HEMICYCLE';
         const LEGACY_SAVE_APP_IDS = ['DATANET_PARLIAMENT_SIM'];
+        // getAppState()는 돌려준 객체를 고쳐도 지금 상태가 안 바뀌도록 큰 값들을 깊은 복사한다.
+        // 곧바로 JSON 글자로 바꿀 때(실행 취소 · 저장 비교)는 그 복사가 필요 없어 appStateJSON()이 잠시 끈다 — 큰 프리셋에서 절반 가까이 빨라진다
+        let appStateCloneOff = false;
+        function snapClone(v) { return appStateCloneOff ? v : JSON.parse(JSON.stringify(v)); }
+        function appStateJSON() {
+            appStateCloneOff = true;
+            try { return JSON.stringify(getAppState()); }
+            finally { appStateCloneOff = false; }
+        }
         function getAppState() {
             const systemType = document.querySelector('input[name="systemType"]:checked')?.value || 'bicameral';
             return {
@@ -5381,9 +5416,9 @@
                     govType: govType,
                     president: president,
                     pm: pm,
-                    deputyPms: JSON.parse(JSON.stringify(deputyPms)),
+                    deputyPms: snapClone(deputyPms),
                     collectiveChair: collectiveChair,
-                    cabinetMembers: JSON.parse(JSON.stringify(cabinetMembers)),
+                    cabinetMembers: snapClone(cabinetMembers),
                     cabinetRoleLabels: { ...cabinetRoleLabels },
                     pmDirectElectionEnabled: pmDirectElectionEnabled,
                     pmMajorityLocked: pmMajorityLocked,
@@ -5393,9 +5428,9 @@
                     pmNominee: pmNominee,
                     pmNomineeBillId: pmNomineeBillId,
                     vetoHolder: vetoHolder,
-                    emergencyPowers: JSON.parse(JSON.stringify(emergencyPowers)),
-                    cabinetCouncilVote: JSON.parse(JSON.stringify(cabinetCouncilVote)),
-                    chamberLeaders: JSON.parse(JSON.stringify(chamberLeaders)),
+                    emergencyPowers: snapClone(emergencyPowers),
+                    cabinetCouncilVote: snapClone(cabinetCouncilVote),
+                    chamberLeaders: snapClone(chamberLeaders),
                     senateName:    document.getElementById('senateNameInput')?.value   ?? "상원",
                     houseName:     document.getElementById('houseNameInput')?.value    ?? "국회",
                     thirdName:     document.getElementById('thirdNameInput')?.value    ?? "삼원",
@@ -5405,7 +5440,7 @@
                     chamberLogos:  { ...chamberLogos },
                     chamberCenterMode: { ...chamberCenterMode }
                 },
-                parliament: { ideologies, parties, coalitions, manualSort, independents, listMembers: JSON.parse(JSON.stringify(listMembers)) },
+                parliament: { ideologies, parties, coalitions, manualSort, independents, listMembers: snapClone(listMembers) },
                 legislation: {
                     bills,
                     activeBillId,
@@ -5420,20 +5455,20 @@
                     ...legisGetState()
                 },
                 election: {
-                    elecStore:      JSON.parse(JSON.stringify(elecStore)),
-                    elecListVote:   JSON.parse(JSON.stringify(elecListVote)),
-                    elecRecords:    JSON.parse(JSON.stringify(elecRecords)),
-                    elecLastResult: elecLastResult ? JSON.parse(JSON.stringify(elecLastResult)) : null,
-                    elecLastResults: JSON.parse(JSON.stringify(elecLastResults)),
+                    elecStore:      snapClone(elecStore),
+                    elecListVote:   snapClone(elecListVote),
+                    elecRecords:    snapClone(elecRecords),
+                    elecLastResult: elecLastResult ? snapClone(elecLastResult) : null,
+                    elecLastResults: snapClone(elecLastResults),
                     elecTitle:      document.getElementById('elecTitle')?.value  || '',
                     elecYear:       document.getElementById('elecYear')?.value   || '',
                     presElectionMode: presElectionMode,
                     presElectionChamberBasis: presElectionChamberBasis,
-                    presElectionRecords: JSON.parse(JSON.stringify(presElectionRecords)),
-                    presElectionLastResult: presElectionLastResult ? JSON.parse(JSON.stringify(presElectionLastResult)) : null,
-                    pmElectionLastResult: pmElectionLastResult ? JSON.parse(JSON.stringify(pmElectionLastResult)) : null,
-                    presElectionCandidateOverrides: JSON.parse(JSON.stringify(presElectionCandidateOverrides)),
-                    candidateUnions: JSON.parse(JSON.stringify(candidateUnions)),
+                    presElectionRecords: snapClone(presElectionRecords),
+                    presElectionLastResult: presElectionLastResult ? snapClone(presElectionLastResult) : null,
+                    pmElectionLastResult: pmElectionLastResult ? snapClone(pmElectionLastResult) : null,
+                    presElectionCandidateOverrides: snapClone(presElectionCandidateOverrides),
+                    candidateUnions: snapClone(candidateUnions),
                     popVote: window.PopVote ? window.PopVote.getState() : null, // 지방선거 · 국민투표 (js/popvote.js)
                     electionKind: electionKind,
                     presElecTitle:  document.getElementById('presElecTitle')?.value || '',
@@ -5441,35 +5476,35 @@
                     pmElecTitle:    document.getElementById('pmElecTitle')?.value || '',
                     pmElecYear:     document.getElementById('pmElecYear')?.value  || '',
                     district: {
-                        grid: JSON.parse(JSON.stringify(districtGrid)),
+                        grid: snapClone(districtGrid),
                         view: { ...districtView },
-                        names: JSON.parse(JSON.stringify(districtNames)),
-                        population: JSON.parse(JSON.stringify(districtPopulation)),
-                        order: JSON.parse(JSON.stringify(districtOrder)),
-                        members: JSON.parse(JSON.stringify(districtMembers)),
+                        names: snapClone(districtNames),
+                        population: snapClone(districtPopulation),
+                        order: snapClone(districtOrder),
+                        members: snapClone(districtMembers),
                         mapMode: districtMapMode,
-                        svgMap: districtSvgMap ? JSON.parse(JSON.stringify(districtSvgMap)) : null,
+                        svgMap: districtSvgMap ? snapClone(districtSvgMap) : null,
                         svgSplit: { ...districtSvgSplit },
-                        svgMaps: JSON.parse(JSON.stringify(districtSvgMaps)),
-                        seatCounts: JSON.parse(JSON.stringify(districtSeatCounts)),
-                        svgTendency: JSON.parse(JSON.stringify(districtSvgTendency)),
-                        undecided: JSON.parse(JSON.stringify(districtUndecided)),
-                        abbr: JSON.parse(JSON.stringify(districtAbbr)),
-                        seatResults: JSON.parse(JSON.stringify(districtSeatResults)),
+                        svgMaps: snapClone(districtSvgMaps),
+                        seatCounts: snapClone(districtSeatCounts),
+                        svgTendency: snapClone(districtSvgTendency),
+                        undecided: snapClone(districtUndecided),
+                        abbr: snapClone(districtAbbr),
+                        seatResults: snapClone(districtSeatResults),
                         noise: districtNoise
                     },
                     tendency: {
-                        data:     JSON.parse(JSON.stringify(tendencyData)),
+                        data:     snapClone(tendencyData),
                         strength: tendencyStrength
                     },
                     regionSystem: {
-                        electionSystem: JSON.parse(JSON.stringify(electionSystem)),
-                        regions: JSON.parse(JSON.stringify(regions)),
-                        districtRegionMap: JSON.parse(JSON.stringify(districtRegionMap)),
-                        regionVoteMode: JSON.parse(JSON.stringify(regionVoteMode)),
-                        regionVoteStore: JSON.parse(JSON.stringify(regionVoteStore)),
-                        regionTendency: JSON.parse(JSON.stringify(regionTendency)),
-                        regionUndecided: JSON.parse(JSON.stringify(regionUndecided))
+                        electionSystem: snapClone(electionSystem),
+                        regions: snapClone(regions),
+                        districtRegionMap: snapClone(districtRegionMap),
+                        regionVoteMode: snapClone(regionVoteMode),
+                        regionVoteStore: snapClone(regionVoteStore),
+                        regionTendency: snapClone(regionTendency),
+                        regionUndecided: snapClone(regionUndecided)
                     }
                 }
             };
@@ -5577,6 +5612,7 @@
         }
 
         function setAppState(state) {
+            noteStateTouched(); // 실행 취소 캐시 — 안 보이는 목록만 바뀌어 화면 변화가 없어도 "상태가 바뀌었을 수 있음"
             if(!state || typeof state !== "object") throw new Error("Invalid state");
 
             // ── 의회 설정 복원 (v5/v4/v3 공통, v2 하위호환) ──
@@ -6113,7 +6149,7 @@
         }
         // 세이브를 열거나 새로 만든 직후 — 지금 상태를 "저장된 상태"로 기억
         function markSavedBaseline() {
-            try { lastSavedJSON = saveCompareText(JSON.stringify(getAppState())); } catch(e) { lastSavedJSON = null; }
+            try { lastSavedJSON = saveCompareText(currentStateJSON()); } catch(e) { lastSavedJSON = null; }
             setSaveDirty(false);
         }
         // 상태 JSON에서 저장 시각(meta.savedAt)만 뺀 글자 — "바뀐 게 없음" 비교용.
@@ -6128,10 +6164,10 @@
         function saveActiveNow(force) {
             if(!localStorageAvailable || noOpenTab || !activeSlotId) return false;
             cancelSaveSoon(); // 곧 하려던 저장은 이 저장이 대신한다
-            const state = getAppState();
-            const json = JSON.stringify(state);
-            if(!force && saveCompareText(json) === lastSavedJSON) { setSaveDirty(false); return true; } // 바뀐 게 없음
-            return commitSave(state, json);
+            // 화면이 그대로면 마지막에 만든 상태 글자를 다시 쓴다 (자동저장 주기마다 6~10MB를 새로 만들지 않게)
+            const json = currentStateJSON();
+            if(!force && saveCompareText(json) === lastSavedJSON) { keepUndoBaseThrough(json, () => setSaveDirty(false)); return true; } // 바뀐 게 없음
+            return keepUndoBaseThrough(json, () => commitSave(null, json));
         }
         function commitSave(state, json) {
             // 빠른 길 — 이 세이브의 상태 글자만 갈아 끼운다 (목록 전체를 다시 읽고 쓰지 않음). 못 쓰는 환경이면 아래 예전 방식으로
@@ -6145,7 +6181,7 @@
                 const slots = loadSaveSlots();
                 const slot = slots.find(s => s.id === activeSlotId && !s.isAutosave);
                 if(!slot) { setActiveSlotId(null); renderSaveTabUI(); return false; } // 세이브가 (다른 창에서) 삭제됨 — 빈 화면으로
-                slot.state = state;
+                slot.state = state || JSON.parse(json);
                 slot.savedAt = new Date().toISOString();
                 if(!persistSaveSlots(slots)) { warnStorageFull(slot.name); return false; }
             }
@@ -6174,13 +6210,13 @@
             const seq = ++saveSoonSeq, slotId = activeSlotId;
             if(!localStorageAvailable || noOpenTab || !slotId) { saveSoonWaiting = false; return; }
             const marks = saveDirtyMarks;
-            const state = getAppState(), json = JSON.stringify(state);
+            const json = currentStateJSON();
             try { if(window.HemiSlotStore && HemiSlotStore.prepack) await HemiSlotStore.prepack(LS_PREFIX + SAVE_SLOTS_KEY, slotId, json); }
             catch(e) { /* 압축을 미리 못 해도 저장은 한다 */ }
             if(seq !== saveSoonSeq || saveSoonTimer) return; // 그새 바로 저장했거나 새 요청이 왔다 — 그쪽이 더 새 상태를 저장한다
             saveSoonWaiting = false;
             if(slotId !== activeSlotId || noOpenTab) return;
-            commitSave(state, json);
+            keepUndoBaseThrough(json, () => commitSave(null, json));
             if(marks !== saveDirtyMarks) setSaveDirty(true); // 압축하는 사이 바뀐 것은 아직 저장 전
         }
         function flushSaveSoon() { if(saveSoonWaiting) saveActiveNow(true); }
@@ -6204,9 +6240,19 @@
             return `세이브 ${n}개 · 약 ${size} 사용`;
         }
 
+        // 자동저장 주기 — 바뀐 게 있을 때만, 그리고 미리 압축하는 뒤쪽 저장(saveActiveSoon)으로.
+        // 바로 저장(saveActiveNow)은 큰 프리셋(6~10MB)에서 압축 없이 통째로 써서 15초마다 화면이 0.3~0.5초 멈췄다
+        function autosaveTick() {
+            if(!autosaveEnabled || !localStorageAvailable || noOpenTab || !activeSlotId || saveSoonWaiting) return;
+            if(pendingUndoSnapshot !== null) return; // 조작 중 — 끝난 뒤 다음 주기에
+            let json;
+            try { json = currentStateJSON(); } catch(e) { return; }
+            if(saveCompareText(json) === lastSavedJSON) { keepUndoBaseThrough(json, () => setSaveDirty(false)); return; }
+            saveActiveSoon(0);
+        }
         function startAutosaveTimer() {
             stopAutosaveTimer();
-            autosaveTimer = setInterval(autosaveNow, autosaveIntervalSec * 1000);
+            autosaveTimer = setInterval(autosaveTick, autosaveIntervalSec * 1000);
         }
         function stopAutosaveTimer() {
             if(autosaveTimer) { clearInterval(autosaveTimer); autosaveTimer = null; }
@@ -6805,20 +6851,114 @@
         let undoBatchTimer = null;
         let isApplyingHistory = false;
 
+        // ── 실행 취소 기준점 캐시 ──
+        // 예전에는 클릭(mousedown)·포커스마다 전체 상태를 JSON으로 바꿨다 — 대한민국 같은 큰 프리셋은 6~10MB라 클릭마다 0.1초씩 멈췄다.
+        // 마지막으로 상태를 글자로 바꾼 뒤(묶음 확정 · 저장 · 세이브 열기) 화면이 하나도 안 바뀌었고 입력도 없었다면 상태도 그대로라서,
+        // 그때 만든 글자를 "이전 상태"로 그대로 쓴다. 화면이 바뀌었으면(=무언가 다시 그려졌으면) 예전처럼 새로 만든다.
+        var undoBaseJson = null;   // 마지막으로 만든 상태 글자
+        var undoBaseGen = -1;      // 그때의 화면 변경 번호
+        var undoDomGen = 0;        // 화면(DOM)이 바뀌거나 입력이 있을 때마다 1씩
+        var undoDomObserver = null;
+        var undoGesture = 0, undoGestureAt = 0, undoPendingGesture = -1, undoPointerDown = false;
+        // 상태와 상관없이 늘 바뀌는 화면 조각 — 말풍선 · 커서 · 토스트 · 시계
+        const UNDO_DOM_NOISE = '.dno-tip, #kbdToast, .kbd-toast, #hemi-cursor-style, [data-undo-ignore]';
+        function undoNoiseNode(n) {
+            const el = n && (n.nodeType === 1 ? n : n.parentElement);
+            return !!(el && el.closest && el.closest(UNDO_DOM_NOISE));
+        }
+        function undoRealMutation(m) {
+            if(undoNoiseNode(m.target) && m.target !== document.body) return false;
+            // 이모지를 글자 모양으로 고정하는 보정(U+FE0E 덧붙이기)만 한 변경은 무시
+            // 모던 테마 클래스(hs숫자 — js/modern-style-index.js)만 붙거나 빠진 class 변경은 무시
+            if(m.type === 'attributes' && m.attributeName === 'class') {
+                const noHs = v => String(v || '').replace(/(^|\s)hs\d+(?=\s|$)/g, ' ').replace(/\s+/g, ' ').trim();
+                if(noHs(m.target.getAttribute('class')) === noHs(m.oldValue)) return false;
+            }
+            // 마우스 모양(cursor)만 바뀐 style 변경도 무시 — 의석 그림 위를 지나가기만 해도 생긴다
+            if(m.type === 'attributes' && m.attributeName === 'style') {
+                const noCursor = v => String(v || '').replace(/(^|;)\s*cursor\s*:[^;]*;?/g, '$1').replace(/\s+/g, '');
+                if(noCursor(m.target.getAttribute('style')) === noCursor(m.oldValue)) return false;
+            }
+            if(m.type === 'characterData' && m.oldValue != null && String(m.target.data).replace(/\uFE0E/g, '') === String(m.oldValue).replace(/\uFE0E/g, '')) return false;
+            if(m.type === 'childList') {
+                const nodes = [...m.addedNodes, ...m.removedNodes];
+                if(nodes.length && nodes.every(n => n.nodeType === 1 ? undoNoiseNode(n) || n.matches?.(UNDO_DOM_NOISE) : !String(n.textContent || '').trim())) return false;
+            }
+            return true;
+        }
+        function undoFlushDomGen() {
+            if(undoDomObserver && undoDomObserver.takeRecords().some(undoRealMutation)) undoDomGen++;
+        }
+        function rememberUndoBase(json) {
+            undoFlushDomGen();
+            undoBaseJson = json;
+            undoBaseGen = undoDomGen;
+        }
+        function forgetUndoBase() { undoBaseJson = null; undoBaseGen = -1; }
+        // 상태를 바꾸는 중심 함수(setAppState · refreshUI · simulate)와 키 입력이 부른다 — 화면이 안 바뀌는 변경(숨은 탭의 목록 등)도 놓치지 않게
+        function noteStateTouched() {
+            undoDomGen = (undoDomGen || 0) + 1;
+            if(typeof scheduleUndoBaseRefresh === 'function') scheduleUndoBaseRefresh();
+        }
+        function undoEditable(el) {
+            return !!(el && el.nodeType === 1 && (el.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName)));
+        }
+        // 화면이 바뀐 뒤 1.2초 동안 조용하면, 한가한 틈에 상태 글자를 미리 만들어 둔다 — 다음 클릭이 기다리지 않게.
+        // 캠페인 실시간 진행처럼 화면이 계속 바뀌는 동안에는 조용해지지 않으니 만들지 않는다
+        var undoRefreshTimer = null;
+        function scheduleUndoBaseRefresh() {
+            clearTimeout(undoRefreshTimer);
+            undoRefreshTimer = setTimeout(() => {
+                undoRefreshTimer = null;
+                const run = () => {
+                    if(undoRefreshTimer || isApplyingHistory || pendingUndoSnapshot !== null || !activeSlotId) return;
+                    undoFlushDomGen();
+                    if(undoBaseJson != null && undoBaseGen === undoDomGen) return;
+                    try { currentStateJSON(); } catch(e) { /* 다음 클릭 때 만든다 */ }
+                };
+                if(typeof requestIdleCallback === 'function') requestIdleCallback(run, { timeout: 3000 }); else run();
+            }, 1200);
+        }
+        // 상태는 그대로 두고 화면 장식만 바꾸는 일(저장 표시 ● · 저장 카드) 뒤에도 캐시를 그대로 쓰게
+        function keepUndoBaseThrough(json, fn) {
+            undoFlushDomGen();
+            const fresh = undoBaseJson === json && undoBaseGen === undoDomGen;
+            const r = fn();
+            if(fresh) rememberUndoBase(json);
+            return r;
+        }
+        // 지금 상태 글자 — 캐시가 아직 맞으면 그대로, 아니면 새로 만들어 캐시에 넣는다
+        function currentStateJSON() {
+            undoFlushDomGen();
+            if(undoBaseJson != null && undoBaseGen === undoDomGen) return undoBaseJson;
+            const json = appStateJSON();
+            rememberUndoBase(json);
+            return json;
+        }
+
         function captureUndoSnapshot() {
             if(isApplyingHistory) return;
-            if(pendingUndoSnapshot === null) pendingUndoSnapshot = JSON.stringify(getAppState());
+            if(pendingUndoSnapshot === null) { pendingUndoSnapshot = currentStateJSON(); undoPendingGesture = undoGesture; }
+            scheduleUndoCommit();
+        }
+        // 묶음 확정은 조작이 멎은 뒤 브라우저가 한가할 때 — 연속 클릭 사이에 끼어 멈추지 않게
+        function scheduleUndoCommit() {
             clearTimeout(undoBatchTimer);
-            undoBatchTimer = setTimeout(commitUndoBatch, UNDO_BATCH_DEBOUNCE_MS);
+            undoBatchTimer = setTimeout(() => {
+                undoBatchTimer = null;
+                if(typeof requestIdleCallback === 'function') requestIdleCallback(() => { if(!undoBatchTimer) commitUndoBatch(); }, { timeout: 300 });
+                else commitUndoBatch();
+            }, UNDO_BATCH_DEBOUNCE_MS);
         }
 
         function commitUndoBatch() {
             clearTimeout(undoBatchTimer);
             undoBatchTimer = null;
             if(pendingUndoSnapshot === null) return;
-            const current = JSON.stringify(getAppState());
-            if(current !== pendingUndoSnapshot) {
-                setSaveDirty(true);
+            const current = currentStateJSON();
+            // savedAt(만든 시각)은 매번 달라서 빼고 비교 — 안 그러면 아무 데나 눌러도 "바뀜"이 되고 실행 취소 기록이 쌓였다
+            if(current !== pendingUndoSnapshot && saveCompareText(current) !== saveCompareText(pendingUndoSnapshot)) {
+                keepUndoBaseThrough(current, () => setSaveDirty(true));
                 undoStack.push(pendingUndoSnapshot);
                 if(undoStack.length > UNDO_HISTORY_LIMIT) undoStack.shift();
                 redoStack = [];
@@ -6828,16 +6968,17 @@
 
         function applyHistorySnapshot(json) {
             isApplyingHistory = true;
+            forgetUndoBase();
             try { setAppState(JSON.parse(json)); setSaveDirty(true); }
             catch(e) { /* 손상된 스냅샷 — 조용히 무시 */ }
-            finally { isApplyingHistory = false; }
+            finally { isApplyingHistory = false; forgetUndoBase(); }
         }
 
         function performUndo() {
             commitUndoBatch();
             if(undoStack.length === 0) return;
             const prev = undoStack.pop();
-            redoStack.push(JSON.stringify(getAppState()));
+            redoStack.push(currentStateJSON());
             if(redoStack.length > UNDO_HISTORY_LIMIT) redoStack.shift();
             applyHistorySnapshot(prev);
         }
@@ -6846,15 +6987,35 @@
             commitUndoBatch();
             if(redoStack.length === 0) return;
             const next = redoStack.pop();
-            undoStack.push(JSON.stringify(getAppState()));
+            undoStack.push(currentStateJSON());
             if(undoStack.length > UNDO_HISTORY_LIMIT) undoStack.shift();
             applyHistorySnapshot(next);
         }
 
         function initUndoRedoTracking() {
-            document.addEventListener('mousedown', captureUndoSnapshot, true);
+            // 조작 번호 — 누르기 · 키 입력마다 1씩. 묶음이 어느 조작에서 시작됐는지 기억해, 같은 클릭 안의 포커스 이동(창 열기 등)은 묶음을 닫지 않는다
+            document.addEventListener('mousedown', () => { undoGesture++; undoGestureAt = performance.now(); undoPointerDown = true; captureUndoSnapshot(); }, true);
+            document.addEventListener('click', () => { undoGestureAt = performance.now(); }, true);
             document.addEventListener('focusin', captureUndoSnapshot, true);
-            document.addEventListener('focusout', commitUndoBatch, true);
+            // 포커스가 떠나면 묶음을 닫는다 — 단, 이번 클릭이 연 묶음에서 버튼이 포커스를 잃는 건(▶ → 날짜 창 같은 창 열기) 같은 조작이라 닫지 않는다.
+            // 입력하다가 바로 버튼을 누르면 mousedown → (입력 묶음 닫힘) → click 순서라, 닫은 뒤 그 버튼 조작을 위해 새 묶음을 바로 연다 (방금 만든 글자를 쓰니 공짜)
+            window.addEventListener('mouseup', () => { undoPointerDown = false; }, true);
+            document.addEventListener('focusout', e => {
+                // 이번 클릭이 연 묶음에서, 클릭 바로 뒤(0.2초 안) 버튼이 포커스를 잃는 건(▶ → 날짜 창처럼 창 열기) 같은 조작
+                if(!undoEditable(e.target) && undoPendingGesture === undoGesture && performance.now() - undoGestureAt < 200) return;
+                commitUndoBatch();
+                if(undoPointerDown) captureUndoSnapshot();
+            }, true);
+            // 상태가 바뀌었을 수 있는 신호 — 화면 변경 · 값 입력 · 캠페인 시간 흐름. 이 뒤로는 캐시를 안 쓴다
+            if(typeof MutationObserver === 'function') {
+                undoDomObserver = new MutationObserver(records => { if(records.some(undoRealMutation)) { undoDomGen++; scheduleUndoBaseRefresh(); } });
+                undoDomObserver.observe(document.documentElement, { childList: true, subtree: true, characterData: true, characterDataOldValue: true, attributes: true, attributeOldValue: true, attributeFilter: ['value', 'checked', 'selected', 'class', 'style', 'hidden', 'disabled'] });
+            }
+            const bump = () => { undoDomGen++; scheduleUndoBaseRefresh(); };
+            document.addEventListener('input', bump, true);
+            document.addEventListener('change', bump, true);
+            document.addEventListener('keydown', e => { undoGesture++; undoGestureAt = performance.now(); if(!['Control', 'Shift', 'Alt', 'Meta'].includes(e.key)) bump(); }, true);
+            window.addEventListener('hemi-campaign-ticked', bump);
             window.addEventListener('keydown', (e) => {
                 const key = e.key.toLowerCase();
                 if(!(e.ctrlKey || e.metaKey) || key !== 'z') return;
@@ -7454,6 +7615,7 @@
             LAZY_LISTS.forEach(([id, draw]) => { if(lazyListDirty.has(id) && lazyListShown(id)) { lazyListDirty.delete(id); draw(); } });
         }
         function refreshUI() {
+            noteStateTouched(); // 실행 취소 캐시 — 안 보이는 목록만 바뀌어 화면 변화가 없어도 "상태가 바뀌었을 수 있음"
             syncDataStrings();
             syncDistrictIndependentLinks();
             syncIndependents();
@@ -10789,9 +10951,9 @@
                             <input type="text" value="${inputVal}" placeholder="${p.leaderName ? p.leaderName+' ('+leaderLabel+')' : '후보 이름 (비우면 '+leaderLabel+')'}" ${resolved?'disabled':''}
                                 style="width:100%;box-sizing:border-box;background:#000;border:1px solid #2a2a2a;color:#e0e0e0;font-family:inherit;font-size:0.85rem;padding:4px 6px;"
                                 onchange="updateElectionCandidateOverride('${p.id}','name',this.value)">
-                            <select onchange="linkElectionCandidateToMember('${p.id}',this.value)"
+                            <select ${memberPickerLazyAttr(p.id)} onchange="linkElectionCandidateToMember('${p.id}',this.value)"
                                 style="width:100%;box-sizing:border-box;background:#000;border:1px solid #333;color:#888;font-family:inherit;font-size:0.75rem;padding:3px;">
-                                ${memberPickerOptionsHtml(p.id)}
+                                ${memberPickerLazyHtml(p.id)}
                             </select>
                             <div style="display:flex;gap:6px;">
                                 ${resolved?`<button onclick="unlinkElectionCandidate('${p.id}')" style="background:transparent;border:1px solid #333;color:#888;font-family:inherit;font-size:0.7rem;padding:2px 6px;cursor:pointer;">연결 해제</button>`:''}
@@ -16391,6 +16553,7 @@
 
         /* ===== SIMULATE & DRAW ===== */
         function simulate() {
+            noteStateTouched(); // 실행 취소 캐시 — 안 보이는 목록만 바뀌어 화면 변화가 없어도 "상태가 바뀌었을 수 있음"
             const isBicameral = hasSenateChamber();
             const highlightGov = document.getElementById('chkGovHighlight').checked;
             const sTotal = parseInt(document.getElementById('senateTotal').value) || 100;

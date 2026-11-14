@@ -1,0 +1,585 @@
+{
+ "label": "now",
+ "at": "2026-11-13T05:45:24.925Z",
+ "env": {
+  "viewport": "1440x900",
+  "note": "headless Chromium (web)",
+  "ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.8010.12 Safari/537.36"
+ },
+ "presets": {
+  "builtin:tutorial": {
+   "title": "tutorial",
+   "openMs": 622,
+   "mb": 0.23,
+   "parties": 8,
+   "seats": 520,
+   "districts": 17,
+   "top": [
+    "election 0.13MB",
+    "parliament 0.10MB",
+    "legislation 0.00MB",
+    "history 0.00MB"
+   ],
+   "getAppState": {
+    "n": 8,
+    "median": 16.7,
+    "p95": 17,
+    "max": 17
+   },
+   "save": {
+    "n": 6,
+    "median": 16.6,
+    "p95": 16.9,
+    "max": 16.9
+   },
+   "autosaveIdle": {
+    "n": 6,
+    "median": 16.6,
+    "p95": 16.9,
+    "max": 16.9
+   },
+   "refreshUI": {
+    "n": 8,
+    "median": 85.5,
+    "p95": 96.7,
+    "max": 96.7
+   },
+   "simulate": {
+    "n": 8,
+    "median": 30.8,
+    "p95": 35.4,
+    "max": 35.4
+   },
+   "tabSwitch": {
+    "n": 20,
+    "median": 52.7,
+    "p95": 133.7,
+    "max": 133.7
+   },
+   "slowestTabs": [
+    [
+     "vote/elecGeneral",
+     134
+    ],
+    [
+     "economy/overview",
+     123
+    ],
+    [
+     "setup/party",
+     96
+    ]
+   ],
+   "advanceDay": {
+    "n": 10,
+    "median": 16.6,
+    "p95": 21.8,
+    "max": 21.8
+   },
+   "advanceMonth": {
+    "n": 6,
+    "median": 16.5,
+    "p95": 18.7,
+    "max": 18.7
+   },
+   "longTasks": {
+    "count": 16,
+    "max": 300,
+    "total": 1443
+   },
+   "errors": []
+  },
+  "builtin:japan": {
+   "title": "japan",
+   "openMs": 2566,
+   "mb": 9.93,
+   "parties": 13,
+   "seats": 465,
+   "districts": 334,
+   "top": [
+    "parliament 3.87MB",
+    "people 2.82MB",
+    "election 2.78MB",
+    "config 0.21MB"
+   ],
+   "getAppState": {
+    "n": 8,
+    "median": 94.9,
+    "p95": 112.7,
+    "max": 112.7
+   },
+   "save": {
+    "n": 6,
+    "median": 473.6,
+    "p95": 519.7,
+    "max": 519.7
+   },
+   "autosaveIdle": {
+    "n": 6,
+    "median": 128.1,
+    "p95": 132.2,
+    "max": 132.2
+   },
+   "refreshUI": {
+    "n": 8,
+    "median": 16.1,
+    "p95": 30.1,
+    "max": 30.1
+   },
+   "simulate": {
+    "n": 8,
+    "median": 34,
+    "p95": 38.3,
+    "max": 38.3
+   },
+   "tabSwitch": {
+    "n": 20,
+    "median": 122.9,
+    "p95": 548.4,
+    "max": 548.4
+   },
+   "slowestTabs": [
+    [
+     "setup/members",
+     548
+    ],
+    [
+     "economy/overview",
+     363
+    ],
+    [
+     "setup/party",
+     304
+    ]
+   ],
+   "advanceDay": {
+    "n": 10,
+    "median": 16.6,
+    "p95": 23.2,
+    "max": 23.2
+   },
+   "advanceMonth": {
+    "n": 6,
+    "median": 19.3,
+    "p95": 198.8,
+    "max": 198.8
+   },
+   "longTasks": {
+    "count": 44,
+    "max": 1592,
+    "total": 10106
+   },
+   "errors": []
+  },
+  "builtin:usa": {
+   "title": "usa",
+   "openMs": 1037,
+   "mb": 1.59,
+   "parties": 3,
+   "seats": 435,
+   "districts": 51,
+   "top": [
+    "config 0.97MB",
+    "election 0.58MB",
+    "parliament 0.03MB",
+    "history 0.00MB"
+   ],
+   "getAppState": {
+    "n": 8,
+    "median": 18.7,
+    "p95": 34.9,
+    "max": 34.9
+   },
+   "save": {
+    "n": 6,
+    "median": 68.2,
+    "p95": 68.9,
+    "max": 68.9
+   },
+   "autosaveIdle": {
+    "n": 6,
+    "median": 18,
+    "p95": 19.2,
+    "max": 19.2
+   },
+   "refreshUI": {
+    "n": 8,
+    "median": 16.6,
+    "p95": 16.9,
+    "max": 16.9
+   },
+   "simulate": {
+    "n": 8,
+    "median": 47.9,
+    "p95": 61,
+    "max": 61
+   },
+   "tabSwitch": {
+    "n": 20,
+    "median": 68.3,
+    "p95": 855.9,
+    "max": 855.9
+   },
+   "slowestTabs": [
+    [
+     "cabinet/cabinetmembers",
+     856
+    ],
+    [
+     "setup/members",
+     554
+    ],
+    [
+     "economy/overview",
+     173
+    ]
+   ],
+   "advanceDay": {
+    "n": 10,
+    "median": 16.7,
+    "p95": 21.6,
+    "max": 21.6
+   },
+   "advanceMonth": {
+    "n": 6,
+    "median": 16.8,
+    "p95": 23.5,
+    "max": 23.5
+   },
+   "longTasks": {
+    "count": 13,
+    "max": 832,
+    "total": 4152
+   },
+   "errors": []
+  },
+  "builtin:germany": {
+   "title": "germany",
+   "openMs": 1065,
+   "mb": 1.05,
+   "parties": 9,
+   "seats": 630,
+   "districts": 16,
+   "top": [
+    "config 0.54MB",
+    "parliament 0.36MB",
+    "election 0.14MB",
+    "legislation 0.01MB"
+   ],
+   "getAppState": {
+    "n": 8,
+    "median": 16.6,
+    "p95": 16.9,
+    "max": 16.9
+   },
+   "save": {
+    "n": 6,
+    "median": 40.4,
+    "p95": 41.9,
+    "max": 41.9
+   },
+   "autosaveIdle": {
+    "n": 6,
+    "median": 16.7,
+    "p95": 16.7,
+    "max": 16.7
+   },
+   "refreshUI": {
+    "n": 8,
+    "median": 16.7,
+    "p95": 16.9,
+    "max": 16.9
+   },
+   "simulate": {
+    "n": 8,
+    "median": 47,
+    "p95": 66,
+    "max": 66
+   },
+   "tabSwitch": {
+    "n": 20,
+    "median": 109.4,
+    "p95": 709.6,
+    "max": 709.6
+   },
+   "slowestTabs": [
+    [
+     "cabinet/cabinetmembers",
+     710
+    ],
+    [
+     "setup/members",
+     635
+    ],
+    [
+     "setup/party",
+     217
+    ]
+   ],
+   "advanceDay": {
+    "n": 10,
+    "median": 20.3,
+    "p95": 48,
+    "max": 48
+   },
+   "advanceMonth": {
+    "n": 6,
+    "median": 22.5,
+    "p95": 27,
+    "max": 27
+   },
+   "longTasks": {
+    "count": 16,
+    "max": 876,
+    "total": 4844
+   },
+   "errors": []
+  },
+  "builtin:korea": {
+   "title": "korea",
+   "openMs": 1218,
+   "mb": 6.2,
+   "parties": 11,
+   "seats": 300,
+   "districts": 16,
+   "top": [
+    "people 2.57MB",
+    "election 1.83MB",
+    "parliament 0.98MB",
+    "config 0.78MB"
+   ],
+   "getAppState": {
+    "n": 8,
+    "median": 49.7,
+    "p95": 50.2,
+    "max": 50.2
+   },
+   "save": {
+    "n": 6,
+    "median": 256.1,
+    "p95": 271.1,
+    "max": 271.1
+   },
+   "autosaveIdle": {
+    "n": 6,
+    "median": 59.9,
+    "p95": 63.4,
+    "max": 63.4
+   },
+   "refreshUI": {
+    "n": 8,
+    "median": 16.7,
+    "p95": 20.5,
+    "max": 20.5
+   },
+   "simulate": {
+    "n": 8,
+    "median": 41.4,
+    "p95": 46,
+    "max": 46
+   },
+   "tabSwitch": {
+    "n": 20,
+    "median": 138.3,
+    "p95": 590.7,
+    "max": 590.7
+   },
+   "slowestTabs": [
+    [
+     "setup/members",
+     591
+    ],
+    [
+     "cabinet/cabinetmembers",
+     577
+    ],
+    [
+     "nation/people",
+     386
+    ]
+   ],
+   "advanceDay": {
+    "n": 10,
+    "median": 203.2,
+    "p95": 258.9,
+    "max": 258.9
+   },
+   "advanceMonth": {
+    "n": 6,
+    "median": 106.9,
+    "p95": 202.5,
+    "max": 202.5
+   },
+   "longTasks": {
+    "count": 49,
+    "max": 893,
+    "total": 9121
+   },
+   "errors": []
+  },
+  "builtin:korea2024": {
+   "title": "korea2024",
+   "openMs": 1791,
+   "mb": 6.36,
+   "parties": 20,
+   "seats": 300,
+   "districts": 254,
+   "top": [
+    "people 1.96MB",
+    "election 1.76MB",
+    "parliament 1.65MB",
+    "config 0.96MB"
+   ],
+   "getAppState": {
+    "n": 8,
+    "median": 50.2,
+    "p95": 60.7,
+    "max": 60.7
+   },
+   "save": {
+    "n": 6,
+    "median": 343,
+    "p95": 345,
+    "max": 345
+   },
+   "autosaveIdle": {
+    "n": 6,
+    "median": 62.1,
+    "p95": 103.1,
+    "max": 103.1
+   },
+   "refreshUI": {
+    "n": 8,
+    "median": 34.2,
+    "p95": 52.5,
+    "max": 52.5
+   },
+   "simulate": {
+    "n": 8,
+    "median": 54.9,
+    "p95": 58,
+    "max": 58
+   },
+   "tabSwitch": {
+    "n": 20,
+    "median": 166.8,
+    "p95": 641.7,
+    "max": 641.7
+   },
+   "slowestTabs": [
+    [
+     "cabinet/cabinetmembers",
+     642
+    ],
+    [
+     "setup/members",
+     580
+    ],
+    [
+     "setup/party",
+     335
+    ]
+   ],
+   "advanceDay": {
+    "n": 10,
+    "median": 17.4,
+    "p95": 168.2,
+    "max": 168.2
+   },
+   "advanceMonth": {
+    "n": 6,
+    "median": 16.9,
+    "p95": 20.7,
+    "max": 20.7
+   },
+   "longTasks": {
+    "count": 40,
+    "max": 1279,
+    "total": 8626
+   },
+   "errors": []
+  },
+  "builtin:uk": {
+   "title": "uk",
+   "openMs": 1457,
+   "mb": 5.53,
+   "parties": 17,
+   "seats": 650,
+   "districts": 12,
+   "top": [
+    "parliament 2.09MB",
+    "people 2.09MB",
+    "config 0.73MB",
+    "coup 0.35MB"
+   ],
+   "getAppState": {
+    "n": 8,
+    "median": 50,
+    "p95": 50.9,
+    "max": 50.9
+   },
+   "save": {
+    "n": 6,
+    "median": 252.1,
+    "p95": 257.8,
+    "max": 257.8
+   },
+   "autosaveIdle": {
+    "n": 6,
+    "median": 55.6,
+    "p95": 59.9,
+    "max": 59.9
+   },
+   "refreshUI": {
+    "n": 8,
+    "median": 16.8,
+    "p95": 23.9,
+    "max": 23.9
+   },
+   "simulate": {
+    "n": 8,
+    "median": 57.1,
+    "p95": 62.9,
+    "max": 62.9
+   },
+   "tabSwitch": {
+    "n": 20,
+    "median": 97.4,
+    "p95": 824.2,
+    "max": 824.2
+   },
+   "slowestTabs": [
+    [
+     "cabinet/cabinetmembers",
+     824
+    ],
+    [
+     "vote/elecGeneral",
+     257
+    ],
+    [
+     "setup/party",
+     212
+    ]
+   ],
+   "advanceDay": {
+    "n": 10,
+    "median": 17,
+    "p95": 22.5,
+    "max": 22.5
+   },
+   "advanceMonth": {
+    "n": 6,
+    "median": 16.6,
+    "p95": 22.3,
+    "max": 22.3
+   },
+   "longTasks": {
+    "count": 35,
+    "max": 1129,
+    "total": 5862
+   },
+   "errors": []
+  }
+ }
+}

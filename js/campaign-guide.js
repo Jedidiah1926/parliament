@@ -6,6 +6,26 @@
     const input = (key, value, label, type = 'text') => `<label class="cpg-field"><span>${label}</span><input class="scn-in" data-gf="${key}" type="${type}" value="${esc(value)}"></label>`;
     const CONDITIONS = [['flag','플래그가 켜짐'],['not_flag','플래그가 꺼짐'],['date_after','날짜 이후'],['date_before','날짜 이전'],['var','변수 비교'],['approval','내각 지지율 비교'],['ruling_seats','집권 세력 의석 % 비교'],['owns_regions','구역 소유 (세계지도)'],['in_economic_region','경제권 소속 (세계지도)']];
     const EFFECTS = [['add_var','변수 더하기'],['set_var','변수 설정'],['approval','내각 지지율 더하기'],['support','정당 지지율 더하기'],['set_flag','플래그 켜기'],['clear_flag','플래그 끄기'],['fire_event','이벤트 실행'],['toast','짧은 알림'],['transfer_regions','영토 변경 (세계지도)'],['assign_economic_region','경제권 배정 (세계지도)']];
+    // 국가 운영 (js/ops-rules.js) — 어느 목록을 가리키는지, 값의 모양
+    const OPS_C = [['resource','자원 양 비교 (운영)'],['facility_count','시설 수 비교 (운영)'],['unit_count','부대 수 비교 (운영)'],['military_strength','군사력 비교 (운영)'],['tech_done','기술 연구 완료 (운영)'],['trade_active','무역 계약 진행 중 (운영)']];
+    const OPS_E = [['add_resource','자원 더하기 (운영)'],['set_resource','자원 정하기 (운영)'],['add_facility','시설 더하기 · 빼기 (운영)'],['add_units','부대 더하기 · 빼기 (운영)'],['grant_tech','기술 주기 (운영)'],['start_trade','무역 계약 시작 (운영)'],['end_trade','무역 계약 끝내기 (운영)']];
+    CONDITIONS.push(...OPS_C); EFFECTS.push(...OPS_E);
+    const OPS_REF = { resource: 'resources', facility_count: 'facilities', unit_count: 'units', tech_done: 'tech', trade_active: 'trades', add_resource: 'resources', set_resource: 'resources', add_facility: 'facilities', add_units: 'units', grant_tech: 'tech', start_trade: 'trades', end_trade: 'trades', military_strength: null };
+    const OPS_STR = new Set(['tech_done', 'trade_active', 'grant_tech', 'start_trade', 'end_trade']);
+    const OPS_NUMKEY = { add_resource: 'value', set_resource: 'value', add_facility: 'count', add_units: 'count' };
+    const opsList = (data, kind) => (Array.isArray(data && data[kind]) ? data[kind].filter(x => x && typeof x.id === 'string') : []);
+    function opsFields(key, v, kind, data) {
+        const ref = OPS_REF[key];
+        let out = '';
+        if (ref) {
+            const cur = OPS_STR.has(key) ? v : v && v.id, items = opsList(data, ref);
+            const opts = [...items.map(x => [x.id, `${x.icon ? x.icon + ' ' : ''}${x.name || x.title || x.id}`]), ...(cur && !items.some(x => x.id === cur) ? [[cur, `⚠ ${cur} (없음)`]] : [])];
+            out += `<label class="cpg-field"><span>${{ resources: '자원', facilities: '시설', units: '부대', tech: '기술', trades: '무역 계약' }[ref]}</span>${opts.length ? select('opsid', opts, cur ?? '') : '<span class="scn-dim">국가 운영 탭에서 먼저 만드세요</span>'}</label>`;
+        }
+        if (OPS_STR.has(key)) return out;
+        if (kind === 'cond') { const op = OPS.find(([k]) => k in v)?.[0] || 'gte'; return out + select('op', OPS, op) + input('number', v[op], '기준 값', 'number'); }
+        return out + input('number', v[OPS_NUMKEY[key]], key === 'add_facility' || key === 'add_units' ? '수 (빼려면 -)' : '양', 'number');
+    }
     // 세계지도 규칙 — 나라(열쇠) 또는 경제권(id)을 가리키는 칸의 이름과 id 칸
     const WORLD = { owns_regions: ['country','key'], transfer_regions: ['to','key'], in_economic_region: ['zone','id'], assign_economic_region: ['to','id'] };
     const NONE = '~none'; // 열쇠 · id에 쓸 수 없는 글자(~)로 시작 — 실제 나라 · 경제권과 겹치지 않는다
@@ -28,6 +48,7 @@
     }
     const OPS = [['gte','이상 ≥'],['lte','이하 ≤'],['gt','초과 >'],['lt','미만 <'],['eq','같음 ='],['ne','다름 ≠']];
     const defaults = (key, kind, data) => {
+        if (key in OPS_REF) { const ref = OPS_REF[key], first = ref ? opsList(data || {}, ref)[0]?.id || '' : ''; if (OPS_STR.has(key)) return first; if (kind === 'cond') return key === 'military_strength' ? { gte: 10 } : { id: first, gte: 1 }; return { id: first, [OPS_NUMKEY[key]]: 1 }; }
         if (WORLD[key]) { const [refField, idField] = WORLD[key], first = idField === 'key' ? countriesOf(data || {})[0]?.key : catalog(data || {}).zones[0]?.id; return { [refField]: first ? { [idField]: first } : { unassigned: true }, regions: [] }; }
         if (key === 'var') return { name: 'tension', gte: 50 };
         if (key === 'ruling_seats') return { share: true, gte: 50 };
@@ -41,6 +62,14 @@
         if (!rule || typeof rule !== 'object' || Array.isArray(rule) || Object.keys(rule).length !== 1) return false;
         const key = Object.keys(rule)[0], v = rule[key];
         if (!(kind === 'cond' ? CONDITIONS : EFFECTS).some(([k]) => k === key)) return false;
+        if (key in OPS_REF) {
+            if (OPS_STR.has(key)) return typeof v === 'string';
+            if (!v || typeof v !== 'object' || Array.isArray(v)) return false;
+            const allowed = kind === 'cond' ? [...(OPS_REF[key] ? ['id'] : []), ...OPS.map(x => x[0])] : ['id', OPS_NUMKEY[key]];
+            if (Object.keys(v).some(k => !allowed.includes(k))) return false;
+            if (kind === 'cond') return OPS.filter(([k]) => k in v).length === 1 && (!OPS_REF[key] || typeof v.id === 'string');
+            return typeof v.id === 'string' && Number.isFinite(Number(v[OPS_NUMKEY[key]]));
+        }
         if (WORLD[key]) {
             const [refField, idField] = WORLD[key];
             if (!v || typeof v !== 'object' || Array.isArray(v) || Object.keys(v).some(k => ![refField, 'regions', ...(kind === 'cond' ? ['mode'] : [])].includes(k))) return false;
@@ -77,6 +106,7 @@
             if (simpleRule(rule, kind)) {
                 fields = select('type', kind === 'cond' ? CONDITIONS : EFFECTS, key);
                 if (WORLD[key]) fields += worldFields(key, v, kind, data);
+                else if (key in OPS_REF) fields += opsFields(key, v, kind, data);
                 else if (typeof v === 'string') {
                     fields += input('text', v, key.startsWith('date_') ? '날짜 (YYYY-MM-DD)' : key === 'toast' ? '알림 내용' : key === 'fire_event' ? '이벤트 ID' : '플래그 이름');
                     if (kind === 'cond' && key === 'flag') fields += select('focus', [['','방향성 완료로 채우기'],...(data.focus || []).map(f => ['focus_' + f.id, f.title || f.id])], '');
@@ -114,6 +144,8 @@
                     el.addEventListener(el.tagName === 'SELECT' ? 'change' : 'input', () => {
                         const r = get(), rule = r.items[i], key = Object.keys(rule)[0], v = rule[key], field = el.dataset.gf;
                         if (field === 'type') { r.items[i] = {[el.value]:defaults(el.value,kind,api.data&&api.data())}; put(r.items,r.join,true); return; }
+                        if (field === 'opsid') { if (OPS_STR.has(key)) rule[key] = el.value; else v.id = el.value; put(r.items,r.join); return; }
+                        if (key in OPS_REF && field === 'number') { if (!el.value || !Number.isFinite(+el.value)) return; const k2 = kind === 'cond' ? OPS.find(([k])=>k in v)[0] : OPS_NUMKEY[key]; v[k2] = +el.value; put(r.items,r.join); return; }
                         if (field === 'ref') { const [refField, idField] = WORLD[key]; v[refField] = el.value === NONE ? { unassigned: true } : { [idField]: el.value }; put(r.items,r.join); return; }
                         if (field === 'mode') { if (el.value === 'any') v.mode = 'any'; else delete v.mode; put(r.items,r.join); return; }
                         if (field === 'focus') { if (el.value) { rule[key] = el.value; put(r.items,r.join,true); } return; }
