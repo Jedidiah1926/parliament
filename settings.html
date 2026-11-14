@@ -149,6 +149,14 @@
                         </div>
                         <div class="settings-hint">개표하는 동안 반원의 의석을 정당 순서대로 왼쪽부터 채울지, 최종 자리 배치에서 무작위 순서로 켤지 고릅니다 (선거 › 설정에서도 바꿀 수 있어요).</div>
                     </div>
+                    <div class="settings-group">
+                        <div class="settings-label">TOOLTIP / 네온 말풍선 색</div>
+                        <div class="lang-select-group">
+                            <button class="lang-select-btn" id="tipGrayNeon" onclick="selectTipGray('neon')">네온 기본색</button>
+                            <button class="lang-select-btn" id="tipGrayGray" onclick="selectTipGray('gray')">회색 그대로</button>
+                        </div>
+                        <div class="settings-hint">네온 테마에서 회색 버튼 · 글자에 마우스를 올렸을 때 뜨는 말풍선의 색입니다. 색이 있는 버튼(입법 · 선거 등)의 말풍선은 언제나 그 버튼 색을 따릅니다.</div>
+                    </div>
                 </section>
 
                 <!-- 기타 설정 -->
@@ -348,7 +356,11 @@
         function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* 저장 불가 환경 */ } }
         function selectVoteStyle(v) { lsSet('dnoVoteStyle', v === 'classic' ? 'classic' : 'new'); renderPlayStyleButtons(); }
         function selectSeatFill(v) { lsSet('dnoElecSeatFill', v === 'random' ? 'random' : 'seq'); renderPlayStyleButtons(); }
+        function selectTipGray(v) { lsSet('dnoTipNeonGray', v === 'gray' ? 'gray' : 'neon'); renderPlayStyleButtons(); }
         function renderPlayStyleButtons() {
+            const tipGray = lsGet('dnoTipNeonGray') === 'gray';
+            document.getElementById('tipGrayGray').classList.toggle('active', tipGray);
+            document.getElementById('tipGrayNeon').classList.toggle('active', !tipGray);
             const vNew = lsGet('dnoVoteStyle') !== 'classic';
             document.getElementById('voteStyleNew').classList.toggle('active', vNew);
             document.getElementById('voteStyleClassic').classList.toggle('active', !vNew);
