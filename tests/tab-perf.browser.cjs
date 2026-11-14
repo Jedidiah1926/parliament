@@ -49,7 +49,17 @@ async function styles(p) {
             await A.ctx.close(); await B.ctx.close();
         }
 
+        // 네온(TNO) 테마에서는 아무것도 하지 않다가, 모던으로 바꾸는 순간 시작한다 (페이지를 여는 비용 0)
+        {
+            const T = await open(browser, { theme: 'tno' });
+            assert.equal(await T.p.evaluate(() => HemiModernStyleIndex.ready), false);
+            await T.p.evaluate(() => document.documentElement.setAttribute('data-theme-family', 'modern'));
+            await T.p.waitForFunction(() => HemiModernStyleIndex.ready && HemiModernStyleIndex.rules > 300);
+            assert.deepEqual(T.errors, []); await T.ctx.close();
+        }
         const { ctx, p, errors } = await open(browser);
+        // 모던에서는 페이지를 다 연 뒤(로드 이후) 시작한다
+        assert.ok(await p.evaluate(() => HemiModernStyleIndex.ready), '프리셋을 여는 동안 이미 준비됨');
         // 나중에 style이 바뀐 요소도 따라간다
         const cls = await p.evaluate(async () => {
             const d = document.createElement('div'); d.setAttribute('style', 'color:#888;'); document.body.appendChild(d);
