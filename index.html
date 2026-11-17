@@ -395,7 +395,7 @@
                 // 카드 한 장 = 세이브 하나: 이름 · 게임 속 날짜 / 설명란에 마지막으로 저장한 실제 시각
                 return `
                 <div class="save-select-row">
-                    <button class="save-fav-btn${isFav ? ' on' : ''}" onclick="toggleFavorite('${s.id}')" title="${isFav ? i18n('saveSelect.fav.remove') : i18n('saveSelect.fav.add')}" aria-pressed="${isFav}">${isFav ? '★' : '☆'}</button>
+                    <button class="save-fav-btn${isFav ? ' on' : ''}" onclick="toggleFavorite('${s.id}')" title="${escapeSaveName(isFav ? i18n('saveSelect.fav.remove') : i18n('saveSelect.fav.add'))}" aria-pressed="${isFav}">${isFav ? '★' : '☆'}</button>
                     <div class="save-select-item preset-card save-card">
                         <button class="save-card-main" onclick="continueSave('${s.id}'${tz})">
                             <span class="preset-card-top">
@@ -405,7 +405,7 @@
                             <span class="preset-card-desc">${saveRealTime(s.savedAt)}${where}</span>
                         </button>
                     </div>
-                    <button class="save-del-btn" onclick="deleteSaveFromMenu(event, '${s.id}'${tz})" title="${i18n('saveSelect.deleteTip')}" aria-label="${i18n('common.delete')}">${TRASH_ICON}</button>
+                    <button class="save-del-btn" onclick="deleteSaveFromMenu(event, '${s.id}'${tz})" title="${escapeSaveName(i18n('saveSelect.deleteTip'))}" aria-label="${escapeSaveName(i18n('common.delete'))}">${TRASH_ICON}</button>
                 </div>`;
             };
             const fill = (box, list, emptyAll, emptyQuery) => {
@@ -581,7 +581,7 @@
                     <span class="preset-card-top">
                         <span class="tut-card-no">${l.avail ? '#' + l.no : '🔒'}</span>
                         <span class="save-select-item-name">${escapeSaveName(l.title)}</span>
-                        ${l.done ? `<span class="tut-card-check" title="${i18n('saveSelect.tut.doneTip')}">✓</span>` : ''}
+                        ${l.done ? `<span class="tut-card-check" title="${escapeSaveName(i18n('saveSelect.tut.doneTip'))}">✓</span>` : ''}
                     </span>
                     ${l.summary ? `<span class="preset-card-desc">${escapeSaveName(l.summary)}</span>` : ''}
                 </button>`;
@@ -713,7 +713,7 @@
             if(codeEl) codeEl.textContent = (cur === 'kr' ? 'KO' : cur.toUpperCase());
             menu.innerHTML = list.map(l => `
                 <button type="button" class="home-lang-item${l.code === cur ? ' active' : ''}" role="menuitemradio" aria-checked="${l.code === cur}" onclick="pickHomeLang('${l.code}')">
-                    <span>${l.name.replace(/[<>&]/g, '')}</span>${l.code === cur ? '<span class="home-lang-check">✓</span>' : ''}${l.installed ? `<span class="home-lang-remove" role="button" title="${i18n('home.lang.remove')}" onclick="removeHomeLangPack(event, '${l.code}')">✕</span>` : ''}${l.external ? `<span class="home-lang-src">${i18n(l.external === 'workshop' ? 'common.source.workshop' : 'common.source.mods')}</span>` : ''}
+                    <span>${l.name.replace(/[<>&]/g, '')}</span>${l.code === cur ? '<span class="home-lang-check">✓</span>' : ''}${l.installed ? `<span class="home-lang-remove" role="button" title="${escapeSaveName(i18n('home.lang.remove'))}" onclick="removeHomeLangPack(event, '${l.code}')">✕</span>` : ''}${l.external ? `<span class="home-lang-src">${i18n(l.external === 'workshop' ? 'common.source.workshop' : 'common.source.mods')}</span>` : ''}
                 </button>`).join('') + `
                 <div class="home-lang-tools">
                     <button type="button" class="home-lang-more" onclick="document.getElementById('langPackFileInput').click()">${i18n('home.lang.import')}</button>

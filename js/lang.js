@@ -124,15 +124,19 @@
 
     // keys: { "키": "글자" } — 글자 안의 {이름}은 변수 자리. 수에 따라 모양이 바뀌는 글자는
     // { "one": "{count} seat", "other": "{count} seats" }처럼 복수 범주(Intl.PluralRules)로 적고 count 변수로 고른다
-    function normalizeKeys(raw) {
+    // trusted: 기본 제공 팩(lang/*.js). 불러온 팩 · 모드 팩은 글자의 < >를 전각(＜ ＞)으로 바꾼다 —
+    // 화면이 키 글자를 innerHTML로 넣는 곳이 있어, 팩에 든 태그가 그대로 실행되지 않게
+    const safeText = s => String(s).replace(/</g, '＜').replace(/>/g, '＞');
+    function normalizeKeys(raw, trusted) {
         const out = {};
         if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return out;
+        const clean = trusted ? (s => s) : safeText;
         for (const [k, v] of Object.entries(raw)) {
             if (!KEY_NAME.test(k)) continue;
-            if (typeof v === 'string') { out[k] = v; continue; }
+            if (typeof v === 'string') { out[k] = clean(v); continue; }
             if (v && typeof v === 'object' && !Array.isArray(v) && typeof v.other === 'string') {
                 const forms = {};
-                PLURAL_CATS.forEach(c => { if (typeof v[c] === 'string') forms[c] = v[c]; });
+                PLURAL_CATS.forEach(c => { if (typeof v[c] === 'string') forms[c] = clean(v[c]); });
                 out[k] = forms;
             }
         }
@@ -193,7 +197,7 @@
     async function buildTemplate(base) {
         const en = await loadBuiltin('en');
         const ko = base === 'kr' || base === 'ko';
-        const krKeys = sourceKeys(), enKeys = normalizeKeys(en.keys);
+        const krKeys = sourceKeys(), enKeys = normalizeKeys(en.keys, true);
         const keys = {};
         Object.keys(krKeys).forEach(k => { keys[k] = ko ? krKeys[k] : (Object.prototype.hasOwnProperty.call(enKeys, k) ? enKeys[k] : krKeys[k]); });
         return JSON.stringify({
@@ -241,16 +245,17 @@
 
     function sourceKeys() {
         const pk = packRegistry()[SOURCE_LANG.code];
-        if (pk && !pk._keys) pk._keys = normalizeKeys(pk.keys);
+        if (pk && !pk._keys) pk._keys = normalizeKeys(pk.keys, true);
         return pk ? pk._keys : {};
     }
     let currentKeysCache = null;
     function currentKeys() {
         if (current === SOURCE_LANG.code) return sourceKeys();
         if (currentKeysCache) return currentKeysCache;
-        const raw = loadInstalled()[current] || externalPack(current) || packRegistry()[current];
+        const mine = loadInstalled()[current] || externalPack(current);
+        const raw = mine || packRegistry()[current];
         if (!raw) return null; // 기본 제공 팩을 아직 읽는 중
-        currentKeysCache = normalizeKeys(raw.keys);
+        currentKeysCache = normalizeKeys(raw.keys, !mine);
         return currentKeysCache;
     }
     const LOCALE = { kr: 'ko', jp: 'ja', cn: 'zh-CN', tw: 'zh-TW' };
@@ -295,6 +300,13 @@
         const out = formatText(r, vars);
         if (r.hit && current !== SOURCE_LANG.code) rememberKeyed(out);
         return out;
+    }
+    // ref(key, vars): 세이브에 남길 글자 — 글자 대신 { key, vars }를 저장해 두고, 보여 줄 때 그때 언어로 i18n(ref.key, ref.vars)
+    k.ref = (key, vars) => (vars ? { key: String(key), vars } : { key: String(key) });
+    // source(key, vars): 한국어 팩 글자 (세이브에 함께 남기는 한국어 글 — 예전 앱 · 기록 검색용)
+    function source(key, vars) {
+        const src = sourceKeys();
+        return hasOwn(src, key) ? formatText({ v: src[key], code: SOURCE_LANG.code }, vars) : String(key);
     }
     // month(n): 달 이름 (한국어 "3월", 영어 "March") — 고른 팩에 months가 없으면 숫자 그대로
     function month(n) {
@@ -353,11 +365,12 @@
     // 한국어일 땐 키(data-i18n)만 채우고, 팩이 준비되기 전에 불리면 준비된 뒤에 번역한다.
     // t(s): 문자열 하나를 사전 번역 (한국어이거나 팩이 아직 준비 전이면 그대로)
     // k(key, vars) = window.i18n: 키 번역 · apply(el): el 안의 data-i18n 채우기 · has(key): 한국어 팩에 있는 키인지
-    // month(n): 달 이름 · missing(): 이 페이지에서 쓰였는데 한국어 팩에도 없는 키 · lang: 지금 언어 코드
+    // month(n): 달 이름 · source(key, vars): 한국어 글자 · i18n.ref(key, vars): 세이브에 남길 { key, vars }
+    // missing(): 이 페이지에서 쓰였는데 한국어 팩에도 없는 키 · lang: 지금 언어 코드
     // setDataStrings(list): 세이브에 든 데이터(정당 · 지역구 · 의원 · 법안 이름 등) — 화면 번역에서 건드리지 않는다 (1.6.0, js/main.js가 알려 줌)
     // exact(s): 사전에 통째로 있는 글자면 그 번역, 아니면 null (예전 세이브의 기본 이름을 한 번 바꿀 때 사용) · ready: 팩이 준비됐는지
     window.DnoLang = { list: listLanguages, install: installPack, remove: removePack, template: buildTemplate, validate: normalizePack, format: PACK_FORMAT,
-        lang: current, k, month, apply: applyKeys, has: key => hasOwn(sourceKeys(), key), missing: () => [...missingKeys],
+        lang: current, k, month, source, apply: applyKeys, has: key => hasOwn(sourceKeys(), key), missing: () => [...missingKeys],
         translateSubtree: el => applyKeys(el), t: s => s, setDataStrings: () => {}, exact: () => null, ready: false };
     window.i18n = k;
 
