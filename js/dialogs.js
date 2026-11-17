@@ -7,6 +7,8 @@
 (function () {
     if (window.DnoUI) return;
     const t = s => (window.DnoLang && typeof DnoLang.t === 'function' ? DnoLang.t(String(s)) : String(s));
+    // 키 번역(js/lang.js) — 이 파일이 lang.js 없이 쓰이는 화면도 있어 없으면 한국어 그대로
+    const key = (k, fallback) => (typeof window.i18n === 'function' ? window.i18n(k) : fallback);
     const isModern = () => document.documentElement.getAttribute('data-theme-family') === 'modern';
 
     const css = `
@@ -259,14 +261,14 @@ html[data-theme-family="modern"] .dno-dialog-btn.cancel:hover, html[data-theme-f
         const ok = document.createElement('button');
         ok.type = 'button';
         ok.className = 'dno-dialog-btn ok';
-        ok.textContent = job.opts.okText ? t(job.opts.okText) : (typeof getLang === 'function' && getLang() !== 'kr' ? 'OK' : '확인');
+        ok.textContent = job.opts.okText ? t(job.opts.okText) : key('common.ok', '확인');
         actions.appendChild(ok);
         let cancel = null;
         if (job.confirm) {
             cancel = document.createElement('button');
             cancel.type = 'button';
             cancel.className = 'dno-dialog-btn cancel';
-            cancel.textContent = t(job.opts.cancelText || '취소');
+            cancel.textContent = job.opts.cancelText ? t(job.opts.cancelText) : key('common.cancel', '취소');
             actions.appendChild(cancel);
         }
         box.appendChild(actions);
