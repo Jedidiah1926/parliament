@@ -82,7 +82,7 @@
     }
 
     // ---- 상자 속 ----
-    const STATUS_TEXT = { done: '완료', current: '진행 중', available: '고를 수 있음', locked: '아직 못 고름', blocked: '막힘' };
+    const STATUS_TEXT = { done: i18n('sim.campaign.90'), current: i18n('sim.campaign.54'), available: i18n('sim.campaign.79'), locked: i18n('sim.campaign.94'), blocked: i18n('sim.focusview.1') };
     function iconHtml(f) {
         if (f.iconImage) return `<img class="hf-icon-img" draggable="false" src="${esc(f.iconImage)}" alt="">`;
         if (f.icon) return `<span class="hf-icon-emoji">${esc(f.icon)}</span>`;

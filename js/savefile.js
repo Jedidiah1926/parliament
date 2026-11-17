@@ -18,7 +18,7 @@
     async function readText(file) {
         const bytes = new Uint8Array(await file.arrayBuffer());
         if (bytes.length >= 2 && bytes[0] === 0x1f && bytes[1] === 0x8b) {
-            if (!canGzip) throw new Error('이 브라우저는 압축된 세이브 파일을 열 수 없습니다');
+            if (!canGzip) throw new Error(i18n('sim.savefile.1'));
             const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'));
             return await new Response(stream).text();
         }

@@ -8,17 +8,17 @@
         current?.close();
         const fill=options.fill||String, sup=!!ev.super, narrative=!sup&&ev.presentation==='narrative';
         const opts=options.choices||((ev.options||[]).map((o,i)=>({o,i})));
-        const choices=opts.length?opts:[{o:{text:'확인'},i:-1}];
+        const choices=opts.length?opts:[{o:{text:i18n('common.ok')},i:-1}];
         const img=typeof ev.image==='string'&&/^(data:image\/|https?:\/\/|[\w./-]+\.(png|jpe?g|webp|gif|svg)$)/i.test(ev.image)?ev.image:'';
         const ov=document.createElement('div');ov.className='sm-overlay'+(sup?' sm-super-ov':'')+(narrative?' sm-narrative-ov':'');
         ov.innerHTML=`<article class="sm-event ${sup?'sm-super':''} ${narrative?'sm-narrative':''}" role="dialog" aria-modal="true" aria-labelledby="smEvTitle">
-        ${options.preview?'<button type="button" class="ce-preview-close" aria-label="미리 보기 닫기">×</button><div class="ce-preview-note">미리 보기 · 선택 효과는 적용되지 않습니다</div>':''}
+        ${options.preview?`<button type="button" class="ce-preview-close" aria-label="${esc(i18n('sim.campaignEvents.1'))}">×</button><div class="ce-preview-note">${esc(i18n('sim.campaignEvents.2'))}</div>`:''}
         ${!narrative&&img?`<img class="sm-ev-img" src="${esc(img)}" alt="">`:''}
-        ${!narrative?`<div class="sm-ev-mod">${esc(ev.kicker||options.modName||'시나리오 이벤트')}</div>`:''}
-        <h1 class="sm-ev-title" id="smEvTitle">${esc(fill(ev.title||ev.id||'이벤트'))}</h1>
+        ${!narrative?`<div class="sm-ev-mod">${esc(ev.kicker||options.modName||i18n('sim.campaignEvents.3'))}</div>`:''}
+        <h1 class="sm-ev-title" id="smEvTitle">${esc(fill(ev.title||ev.id||i18n('sim.scriptmods.5')))}</h1>
         ${sup&&ev.quote?`<blockquote class="sm-ev-quote">${esc(fill(ev.quote))}${ev.quote_author?`<cite>— ${esc(ev.quote_author)}</cite>`:''}</blockquote>`:''}
         <div class="sm-ev-desc">${paragraphs(fill(ev.desc||ev.description||''))}</div>
-        <footer class="ce-event-footer ${img?'ce-has-image':''}">${narrative&&img?`<img class="ce-portrait" src="${esc(img)}" alt="">`:''}<div class="sm-ev-opts">${choices.map(({o,i})=>`<button type="button" class="sm-ev-opt" data-i="${i}">${esc(fill(o.text||'확인'))}</button>`).join('')}</div></footer></article>`;
+        <footer class="ce-event-footer ${img?'ce-has-image':''}">${narrative&&img?`<img class="ce-portrait" src="${esc(img)}" alt="">`:''}<div class="sm-ev-opts">${choices.map(({o,i})=>`<button type="button" class="sm-ev-opt" data-i="${i}">${esc(fill(o.text||i18n('common.ok')))}</button>`).join('')}</div></footer></article>`;
         const before=document.activeElement;let closed=false;
         function close(){if(closed)return;closed=true;ov.remove();document.removeEventListener('keydown',onKey,true);if(current?.element===ov)current=null;if(before?.isConnected)before.focus();}
         function onKey(e){

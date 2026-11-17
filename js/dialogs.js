@@ -98,7 +98,8 @@ html[data-theme-family="modern"] .hemi-dialog-btn.cancel:hover, html[data-theme-
         if (v === null || el instanceof SVGElement) return;
         el.removeAttribute('title');
         if (v.trim()) el.setAttribute('data-hemi-tip', v); else el.removeAttribute('data-hemi-tip');
-        if (!el.hasAttribute('aria-label') && !el.textContent.trim() && v.trim()) el.setAttribute('aria-label', v);
+        // 글자 없는 요소의 aria-label도 말풍선 글로 — 여기서 넣은 것(data-hemi-aria)은 title이 다시 바뀌면(언어 바꾸기 등) 따라 바꾼다
+        if (v.trim() && !el.textContent.trim() && (!el.hasAttribute('aria-label') || el.hasAttribute('data-hemi-aria'))) { el.setAttribute('aria-label', v); el.setAttribute('data-hemi-aria', ''); }
     }
     function adoptTree(root) {
         if (root.nodeType !== 1) return;

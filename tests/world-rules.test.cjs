@@ -1,5 +1,6 @@
 // 세계지도 · 시나리오 규칙(js/world-rules.js)과 검사기의 중첩 조건 · 효과 · 세계지도 참조 검사(js/campaign-tools.js).
 //   node --test tests/world-rules.test.cjs
+require('./fixtures/i18n-node.cjs'); // 모듈의 i18n() — 한국어 팩 글자
 const test = require('node:test'), assert = require('node:assert/strict');
 const W = require('../js/world-rules.js'), T = require('../js/campaign-tools.js'), F = require('./fixtures/border-agreement.cjs');
 const ctx = (over = {}) => ({ keys: new Set(['capital', 'riverbank', 'island']), owners: { capital: 'w_republic', riverbank: 'w_federation', island: 'w_federation' },
