@@ -21,7 +21,7 @@
 
     const modId = d => 'challenge.' + String(d.id || 'untitled').replace(/[^a-z0-9_.-]/gi, '_').slice(0, 50);
     function toMod(d) {
-        return { format: 'hemicycle-script@1', id: modId(d), name: d.title || '챌린지', author: d.author || '', version: d.version || '',
+        return { format: 'hemicycle-script@1', id: modId(d), name: d.title || i18n('sim.challenge.1'), author: d.author || '', version: d.version || '',
             description: d.description || '', variables: d.variables || {}, events: d.events || [], decisions: d.decisions || [] };
     }
     function bindMod() { if (window.HemiScriptMods && window.HemiScriptMods.setSaveMods) window.HemiScriptMods.setSaveMods(SC ? [toMod(SC.data)] : []); }
@@ -50,7 +50,7 @@
         return y * 10000 + m * 100 + d;
     }
     const keyOf = s => { const m = /^(-?\d{1,5})(?:-(\d{1,2}))?(?:-(\d{1,2}))?$/.exec(String(s ?? '').trim()); return m ? +m[1] * 10000 + (+m[2] || 1) * 100 + (+m[3] || 1) : null; };
-    const labelOf = k => (k == null ? '' : `${Math.floor(k / 10000)}년 ${Math.floor(k / 100) % 100}월 ${k % 100}일`);
+    const labelOf = k => (k == null ? '' : i18n('sim.challenge.2', { v: Math.floor(k / 10000), v2: Math.floor(k / 100) % 100, v3: k % 100 }));
     const test = cond => { try { return !!(window.HemiScriptMods && window.HemiScriptMods.test(cond, modId(SC.data))); } catch (e) { return false; } };
 
     // ---------------------------------------------------------------
@@ -63,18 +63,18 @@
         goals.forEach(g => {
             if (!g || !g.id) return;
             const ok = test(g.condition);
-            if (ok && !SC.done[g.id]) { SC.done[g.id] = t || 1; if (!quiet) toast(`🎯 목표 달성: ${g.text || g.id}`); }
+            if (ok && !SC.done[g.id]) { SC.done[g.id] = t || 1; if (!quiet) toast(i18n('sim.challenge.3', { text: g.text || g.id })); }
             else if (!ok && g.hold && SC.done[g.id]) delete SC.done[g.id]; // "끝까지 유지" 목표는 다시 깨질 수 있음
         });
         const fail = (Array.isArray(d.failures) ? d.failures : []).find(f => f && test(f.condition));
         const required = goals.filter(g => g && g.id && g.required !== false);
         const allDone = required.length > 0 && required.every(g => SC.done[g.id]);
         const dl = keyOf(d.deadline);
-        if (fail) finish('lost', fail.text || '실패 조건');
+        if (fail) finish('lost', fail.text || i18n('sim.challenge.4'));
         else if (allDone && !d.surviveToDeadline) finish('won');
         else if (dl != null && t != null && t >= dl) {
             if (allDone) finish('won');
-            else finish('lost', `마감일(${labelOf(dl)})까지 목표를 이루지 못함`);
+            else finish('lost', i18n('sim.challenge.5', { dl: labelOf(dl) }));
         }
         render();
     }
@@ -115,30 +115,30 @@
         box.style.display = '';
         box.className = `sc-tracker ${st} ${open ? 'open' : ''}`;
         box.innerHTML = `
-            <button type="button" class="sc-pill" data-toggle title="챌린지 목표">
+            <button type="button" class="sc-pill" data-toggle title="${esc(i18n('sim.challenge.6'))}">
                 <span class="sc-ico">${st === 'won' ? '🏆' : st === 'lost' ? '✖' : '🎯'}</span>
-                <span class="sc-pill-t">${esc(d.title || '챌린지')}</span>
-                <span class="sc-pill-n">${st === 'playing' ? `${n}/${req.length}` : st === 'won' ? '승리' : '패배'}</span>
+                <span class="sc-pill-t">${esc(d.title || esc(i18n('sim.challenge.1')))}</span>
+                <span class="sc-pill-n">${st === 'playing' ? `${n}/${req.length}` : st === 'won' ? esc(i18n('sim.challenge.7')) : esc(i18n('sim.challenge.8'))}</span>
             </button>
             ${open ? `<div class="sc-panel">
-                ${d.author ? `<div class="sc-dim">제작자: ${esc(d.author)}</div>` : ''}
-                ${dl != null ? `<div class="sc-dim">마감일 ${esc(labelOf(dl))}${d.surviveToDeadline ? ' — 이날까지 목표를 지키면 승리' : ''}</div>` : ''}
-                <div class="sc-h">목표</div>
-                <ul class="sc-list">${goals.map(g => `<li class="${SC.done[g.id] ? 'done' : ''}"><span class="sc-chk">${SC.done[g.id] ? '✔' : '○'}</span><span>${esc(g.text || g.id)}${g.required === false ? ' <span class="sc-dim">(선택)</span>' : ''}${g.hold ? ' <span class="sc-dim">(끝까지 유지)</span>' : ''}</span></li>`).join('') || '<li class="sc-dim">목표 없음</li>'}</ul>
-                ${(d.failures || []).length ? `<div class="sc-h">이러면 패배</div><ul class="sc-list fail">${d.failures.map(f => `<li><span class="sc-chk">!</span><span>${esc(f.text || '실패 조건')}</span></li>`).join('')}</ul>` : ''}
-                ${st !== 'playing' ? `<div class="sc-result ${st}">${st === 'won' ? '🏆 승리' : '✖ 패배'}${SC.result && SC.result.reason ? ` — ${esc(SC.result.reason)}` : ''}</div>` : ''}
+                ${d.author ? `<div class="sc-dim">${esc(i18n('sim.challenge.9'))} ${esc(d.author)}</div>` : ''}
+                ${dl != null ? `<div class="sc-dim">${esc(i18n('sim.challenge.10'))} ${esc(labelOf(dl))}${d.surviveToDeadline ? esc((" " + i18n('sim.challenge.11'))) : ''}</div>` : ''}
+                <div class="sc-h">${esc(i18n('sim.challenge.12'))}</div>
+                <ul class="sc-list">${goals.map(g => `<li class="${SC.done[g.id] ? 'done' : ''}"><span class="sc-chk">${SC.done[g.id] ? '✔' : '○'}</span><span>${esc(g.text || g.id)}${g.required === false ? ` <span class="sc-dim">${esc(i18n('sim.news.38'))}</span>` : ''}${g.hold ? ` <span class="sc-dim">${esc(i18n('sim.challenge.13'))}</span>` : ''}</span></li>`).join('') || `<li class="sc-dim">${esc(i18n('sim.challenge.14'))}</li>`}</ul>
+                ${(d.failures || []).length ? `<div class="sc-h">${esc(i18n('sim.challenge.15'))}</div><ul class="sc-list fail">${d.failures.map(f => `<li><span class="sc-chk">!</span><span>${esc(f.text || esc(i18n('sim.challenge.4')))}</span></li>`).join('')}</ul>` : ''}
+                ${st !== 'playing' ? `<div class="sc-result ${st}">${st === 'won' ? esc(i18n('sim.challenge.16')) : esc(i18n('sim.challenge.17'))}${SC.result && SC.result.reason ? ` — ${esc(SC.result.reason)}` : ''}</div>` : ''}
                 <div class="sc-row">
-                    <button type="button" class="sc-btn" data-brief>브리핑</button>
-                    ${st === 'playing' ? '<button type="button" class="sc-btn" data-check>지금 확인</button>' : '<button type="button" class="sc-btn" data-result>결과 보기</button>'}
-                    <a class="sc-btn" href="challenge.html">편집기</a>
-                    <button type="button" class="sc-btn sc-x" data-quit title="이 세이브에서 챌린지 떼기">챌린지 끝내기</button>
+                    <button type="button" class="sc-btn" data-brief>${esc(i18n('sim.challenge.18'))}</button>
+                    ${st === 'playing' ? `<button type="button" class="sc-btn" data-check>${esc(i18n('sim.challenge.19'))}</button>` : `<button type="button" class="sc-btn" data-result>${esc(i18n('sim.challenge.20'))}</button>`}
+                    <a class="sc-btn" href="challenge.html">${esc(i18n('sim.challenge.22'))}</a>
+                    <button type="button" class="sc-btn sc-x" data-quit title="${esc(i18n('sim.challenge.21'))}">${esc(i18n('sim.challenge.23'))}</button>
                 </div>
             </div>` : ''}`;
         box.querySelector('[data-toggle]').onclick = () => { open = !open; if (open && SC.status === 'playing') check(true); else render(); };
         box.querySelector('[data-brief]')?.addEventListener('click', showBrief);
-        box.querySelector('[data-check]')?.addEventListener('click', () => { check(false); toast('목표를 확인했습니다'); });
+        box.querySelector('[data-check]')?.addEventListener('click', () => { check(false); toast(i18n('sim.challenge.24')); });
         box.querySelector('[data-result]')?.addEventListener('click', showResult);
-        box.querySelector('[data-quit]')?.addEventListener('click', () => showCustomConfirm('이 세이브에서 챌린지를 뗄까요? 나라는 그대로 두고 목표 카드 · 챌린지 이벤트 · 결정만 없어집니다.', () => { SC = null; bindMod(); render(); }));
+        box.querySelector('[data-quit]')?.addEventListener('click', () => showCustomConfirm(i18n('sim.challenge.25'), () => { SC = null; bindMod(); render(); }));
     }
 
     function modal(html, buttons) {
@@ -154,20 +154,20 @@
     function showBrief() {
         if (!SC) return;
         const d = SC.data, dl = keyOf(d.deadline);
-        modal(`<div class="sc-kicker">챌린지${d.author ? ` · 제작자: ${esc(d.author)}` : ''}</div><h2 class="sc-title">${esc(d.title || '챌린지')}</h2>
+        modal(`<div class="sc-kicker">${esc(i18n('sim.challenge.1'))}${d.author ? esc((" " + i18n('sim.challenge.26', { author: (d.author) }))) : ''}</div><h2 class="sc-title">${esc(d.title || esc(i18n('sim.challenge.1')))}</h2>
             <div class="sc-body">${paras(d.briefing || d.description || '')}</div>
-            <div class="sc-h">목표</div><ul class="sc-list">${(d.goals || []).filter(g => g && g.id).map(g => `<li><span class="sc-chk">○</span><span>${esc(g.text || g.id)}${g.required === false ? ' <span class="sc-dim">(선택)</span>' : ''}</span></li>`).join('') || '<li class="sc-dim">목표 없음 — 자유 플레이</li>'}</ul>
-            ${dl != null ? `<div class="sc-dim">마감일: ${esc(labelOf(dl))}</div>` : ''}`, [{ text: '시작하기', primary: true }]);
+            <div class="sc-h">${esc(i18n('sim.challenge.12'))}</div><ul class="sc-list">${(d.goals || []).filter(g => g && g.id).map(g => `<li><span class="sc-chk">○</span><span>${esc(g.text || g.id)}${g.required === false ? ` <span class="sc-dim">${esc(i18n('sim.news.38'))}</span>` : ''}</span></li>`).join('') || `<li class="sc-dim">${esc(i18n('sim.challenge.27'))}</li>`}</ul>
+            ${dl != null ? `<div class="sc-dim">${esc(i18n('sim.challenge.28'))} ${esc(labelOf(dl))}</div>` : ''}`, [{ text: i18n('sim.challenge.29'), primary: true }]);
     }
     function showResult() {
         if (!SC || SC.status === 'playing') return;
         const d = SC.data, won = SC.status === 'won';
         const goals = (d.goals || []).filter(g => g && g.id);
-        modal(`<div class="sc-kicker">${esc(d.title || '챌린지')}</div><h2 class="sc-title ${won ? 'won' : 'lost'}">${won ? '🏆 승리' : '✖ 패배'}</h2>
-            <div class="sc-body">${paras(won ? (d.winText || '모든 목표를 이루었습니다.') : (d.loseText || ''))}${!won && SC.result && SC.result.reason ? `<p class="sc-dim">${esc(SC.result.reason)}</p>` : ''}</div>
+        modal(`<div class="sc-kicker">${esc(d.title || i18n('sim.challenge.1'))}</div><h2 class="sc-title ${won ? 'won' : 'lost'}">${won ? i18n('sim.challenge.16') : i18n('sim.challenge.17')}</h2>
+            <div class="sc-body">${paras(won ? (d.winText || i18n('sim.challenge.30')) : (d.loseText || ''))}${!won && SC.result && SC.result.reason ? `<p class="sc-dim">${esc(SC.result.reason)}</p>` : ''}</div>
             <ul class="sc-list">${goals.map(g => `<li class="${SC.done[g.id] ? 'done' : ''}"><span class="sc-chk">${SC.done[g.id] ? '✔' : '○'}</span><span>${esc(g.text || g.id)}${SC.done[g.id] && SC.done[g.id] > 1 ? ` <span class="sc-dim">${esc(labelOf(SC.done[g.id]))}</span>` : ''}</span></li>`).join('')}</ul>
             ${SC.result && SC.result.at ? `<div class="sc-dim">${esc(labelOf(SC.result.at))}</div>` : ''}`,
-        [{ text: '편집기로', on: () => { location.href = 'challenge.html'; } }, { text: '계속 플레이', primary: true }]);
+        [{ text: i18n('sim.challenge.31'), on: () => { location.href = 'challenge.html'; } }, { text: i18n('sim.challenge.32'), primary: true }]);
     }
 
     // ---------------------------------------------------------------

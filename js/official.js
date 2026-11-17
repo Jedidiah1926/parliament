@@ -31,7 +31,7 @@ window.HEMI_OFFICIAL = Object.freeze({
                 .sort((a, b) => new Date(b.savedAt || 0) - new Date(a.savedAt || 0));
         } catch (e) { return []; }
     }
-    const slotName = s => s.name || (s.isAutosave ? '자동저장' : (s.state.config && s.state.config.nationName) || '이름 없는 세이브');
+    const slotName = s => s.name || (s.isAutosave ? i18n('sim.contentSave.1') : (s.state.config && s.state.config.nationName) || i18n('sim.official.1'));
     function fileName(s, ext) {
         const base = String(slotName(s)).replace(/[\\/:*?"<>|\x00-\x1f]/g, '').replace(/\s+/g, '_').slice(0, 40) || 'save';
         const d = new Date(s.savedAt || Date.now());
@@ -69,16 +69,16 @@ window.HEMI_OFFICIAL = Object.freeze({
         ov = document.createElement('div');
         ov.id = 'hemiExportModal';
         ov.className = 'hemi-off-overlay';
-        ov.innerHTML = `<div class="hemi-off-box" role="dialog" aria-label="세이브 내보내기">
-            <div class="hemi-off-title">세이브 내보내기</div>
-            <div class="hemi-off-desc">이 브라우저(앱)에 남아 있는 세이브를 골라 파일로 받습니다. 받은 파일은 Steam 판에서 시작하기 › 저장 파일 불러오기로 열 수 있어요.</div>
-            ${slots.length ? `<label class="hemi-off-all"><input type="checkbox" data-x="all" checked> 모두 선택 <span class="hemi-off-dim">(${slots.length}개)</span></label>
+        ov.innerHTML = `<div class="hemi-off-box" role="dialog" aria-label="${esc(i18n('sim.official.2'))}">
+            <div class="hemi-off-title">${esc(i18n('sim.official.2'))}</div>
+            <div class="hemi-off-desc">${esc(i18n('sim.official.3'))}</div>
+            ${slots.length ? `<label class="hemi-off-all"><input type="checkbox" data-x="all" checked> ${esc(i18n('sim.official.4'))} <span class="hemi-off-dim">(${slots.length}${esc(i18n('sim.official.5'))}</span></label>
             <div class="hemi-off-list">${slots.map(s => `<label class="hemi-off-item"><input type="checkbox" data-id="${esc(s.id)}" checked><span class="hemi-off-name">${esc(slotName(s))}</span><span class="hemi-off-dim">${s.savedAt ? esc(new Date(s.savedAt).toLocaleString()) : ''}</span></label>`).join('')}</div>
-            <div class="hemi-off-fmt"><span>형식</span>
-                <label><input type="radio" name="hemiExportFmt" value="hemi" ${canHemi ? 'checked' : 'disabled'}> .hemi (압축)</label>
+            <div class="hemi-off-fmt"><span>${esc(i18n('sim.main.14'))}</span>
+                <label><input type="radio" name="hemiExportFmt" value="hemi" ${canHemi ? 'checked' : 'disabled'}> ${esc(i18n('sim.official.6'))}</label>
                 <label><input type="radio" name="hemiExportFmt" value="json" ${canHemi ? '' : 'checked'}> .json</label></div>`
-            : '<div class="hemi-off-empty">이 브라우저(앱)에 남은 세이브가 없습니다.</div>'}
-            <div class="hemi-off-btns">${slots.length ? '<button type="button" class="hemi-off-btn primary" data-x="go">⬇ 선택한 세이브 받기</button>' : ''}<button type="button" class="hemi-off-btn" data-x="close">닫기</button></div>
+            : `<div class="hemi-off-empty">${esc(i18n('sim.official.7'))}</div>`}
+            <div class="hemi-off-btns">${slots.length ? `<button type="button" class="hemi-off-btn primary" data-x="go">${esc(i18n('sim.official.8'))}</button>` : ''}<button type="button" class="hemi-off-btn" data-x="close">${esc(i18n('sim.main.2'))}</button></div>
         </div>`;
         document.body.appendChild(ov);
         const q = s => ov.querySelector(s);
@@ -91,11 +91,11 @@ window.HEMI_OFFICIAL = Object.freeze({
         const go = q('[data-x="go"]');
         if (go) go.onclick = async () => {
             const ids = boxes().filter(b => b.checked).map(b => b.dataset.id);
-            if (!ids.length) { go.textContent = '받을 세이브를 고르세요'; setTimeout(() => { go.textContent = '⬇ 선택한 세이브 받기'; }, 1500); return; }
+            if (!ids.length) { go.textContent = i18n('sim.official.9'); setTimeout(() => { go.textContent = i18n('sim.official.8'); }, 1500); return; }
             const fmt = (ov.querySelector('input[name="hemiExportFmt"]:checked') || {}).value || 'json';
-            go.disabled = true; go.textContent = '받는 중…';
+            go.disabled = true; go.textContent = i18n('sim.official.10');
             const n = await exportSlots(ids, fmt);
-            go.disabled = false; go.textContent = `✔ ${n}개 받음 — 다시 받기`;
+            go.disabled = false; go.textContent = i18n('sim.official.11', { v: n });
         };
     }
 
@@ -107,12 +107,12 @@ window.HEMI_OFFICIAL = Object.freeze({
         g.className = 'hemi-off-overlay hemi-off-gate';
         const url = steamUrl();
         g.innerHTML = `<div class="hemi-off-box" role="alertdialog">
-            <div class="hemi-off-title">Hemicycle 정식 출시</div>
-            <div class="hemi-off-desc">Hemicycle이 Steam으로 정식 출시되어, 이 판에서는 더 이상 플레이할 수 없습니다. 지금까지의 세이브는 파일로 받아 Steam 판에서 이어서 할 수 있어요.</div>
+            <div class="hemi-off-title">${esc(i18n('sim.official.12'))}</div>
+            <div class="hemi-off-desc">${esc(i18n('sim.official.13'))}</div>
             <div class="hemi-off-btns">
-                ${url ? `<a class="hemi-off-btn primary" href="${esc(url)}" target="_blank" rel="noopener noreferrer">Steam 상점 열기 ↗</a>` : '<span class="hemi-off-btn disabled">Steam 상점 페이지 준비 중</span>'}
-                <button type="button" class="hemi-off-btn" data-x="export">⬇ 세이브 내보내기</button>
-                <a class="hemi-off-btn" href="index.html">처음 화면으로</a>
+                ${url ? `<a class="hemi-off-btn primary" href="${esc(url)}" target="_blank" rel="noopener noreferrer">${esc(i18n('sim.official.14'))}</a>` : `<span class="hemi-off-btn disabled">${esc(i18n('sim.official.15'))}</span>`}
+                <button type="button" class="hemi-off-btn" data-x="export">${esc(i18n('sim.official.16'))}</button>
+                <a class="hemi-off-btn" href="index.html">${esc(i18n('sim.official.17'))}</a>
             </div></div>`;
         document.body.appendChild(g);
         g.querySelector('[data-x="export"]').onclick = openExport;
@@ -134,7 +134,7 @@ window.HEMI_OFFICIAL = Object.freeze({
                 steam.removeAttribute('href');
                 steam.classList.add('home-news-soon');
                 const d = steam.querySelector('.home-news-desc');
-                if (d) d.textContent = '상점 페이지 준비 중';
+                if (d) d.textContent = i18n('sim.official.18');
             }
         }
         // 정식 출시 뒤 막는 판에서는 번역 템플릿 받기 같은 버튼(data-official-block)을 숨긴다
@@ -148,8 +148,8 @@ window.HEMI_OFFICIAL = Object.freeze({
                 start.removeAttribute('onclick');
                 start.onclick = e => { e.preventDefault(); openExport(); };
                 const l = start.querySelector('.home-menu-label'), d = start.querySelector('.home-menu-desc');
-                if (l) l.textContent = '세이브 내보내기';
-                if (d) d.textContent = '정식 출시 — 세이브를 파일로 받아 Steam 판으로';
+                if (l) l.textContent = i18n('sim.official.2');
+                if (d) d.textContent = i18n('sim.official.19');
             }
             if (/[?&#]export\b/.test(location.search + location.hash)) openExport();
         } else if (/^(main|teaser\d*|logo)\.html$/.test(page)) {

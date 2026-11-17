@@ -38,9 +38,9 @@
             const flag = { flag: 'crisis_' + safeId(c.id) };
             (c.meters || []).forEach(m => { if (m && m.id && !(m.id in vars)) vars[m.id] = Number(m.start) || 0; });
             (c.events || []).forEach(ev => events.push({ ...storyEvent(ev), trigger: ev.trigger_only ? ev.trigger : andCond(flag, ev.trigger) }));
-            (c.decisions || []).forEach(dc => decisions.push({ ...dc, category: dc.category || `격변: ${c.title || c.id}`, visible: andCond(flag, dc.visible), _crisis: c.id }));
+            (c.decisions || []).forEach(dc => decisions.push({ ...dc, category: dc.category || i18n('sim.campaign.1', { title: c.title || c.id }), visible: andCond(flag, dc.visible), _crisis: c.id }));
         });
-        return { format: 'hemicycle-script@1', id: 'campaign.' + safeId(d.id || 'untitled'), name: d.title || '시나리오', author: d.author || '', version: d.version || '',
+        return { format: 'hemicycle-script@1', id: 'campaign.' + safeId(d.id || 'untitled'), name: d.title || i18n('sim.campaign.2'), author: d.author || '', version: d.version || '',
             description: d.description || '', variables: vars, events, decisions };
     }
     function bindMod() { if (window.HemiScriptMods && window.HemiScriptMods.setSaveMods) window.HemiScriptMods.setSaveMods(R ? [toMod(R.data)] : []); }
@@ -62,14 +62,14 @@
     // 플레이 규칙 — 제작자가 잠근 "직접 수정" (v1.7.1 첫 조각: 세계지도 영토 · 경제권). 시나리오의 playRules.locks를 시작할 때 세이브(campaign.playRules)에 보관한다.
     // 잠가도 방향성 · 이벤트 · 결정의 효과로는 바뀐다. 화면(js/world-map.js · js/history.js)은 실제로 상태를 바꾸는 자리에서 lockReason을 묻는다.
     const LOCK_REASON = {
-        worldMap: '이 시나리오에서는 영토를 직접 수정할 수 없습니다. 방향성 · 이벤트 · 결정을 통해 바뀝니다.',
-        economicRegions: '이 시나리오에서는 경제권을 직접 수정할 수 없습니다. 방향성 · 이벤트 · 결정을 통해 바뀝니다.',
-        parties: '이 시나리오에서는 정당 · 이념을 직접 수정할 수 없습니다. 이벤트 · 결정 · 방향성을 통해 바뀝니다.',
-        seats: '이 시나리오에서는 의석 · 의원을 직접 수정할 수 없습니다. 선거 또는 이벤트를 통해 바뀝니다.',
-        elections: '이 시나리오에서는 선거제도 · 지역구를 직접 수정할 수 없습니다. 선거는 정해진 제도대로 치릅니다.',
-        government: '이 시나리오에서는 정부 형태 · 집권 · 내각을 직접 수정할 수 없습니다. 선거 · 표결 · 이벤트를 통해 바뀝니다.',
-        opinion: '이 시나리오에서는 지지율 · 여론을 직접 수정할 수 없습니다. 이벤트 · 기사 · 자동 변화를 통해 바뀝니다.',
-        economy: '이 시나리오에서는 경제 지표 · 경제 사건 · 항목을 직접 수정할 수 없습니다. 정책(통화 · 재정)과 이벤트로 바뀝니다.',
+        worldMap: i18n('sim.campaign.3'),
+        economicRegions: i18n('sim.campaign.4'),
+        parties: i18n('sim.campaign.5'),
+        seats: i18n('sim.campaign.6'),
+        elections: i18n('sim.campaign.7'),
+        government: i18n('sim.campaign.8'),
+        opinion: i18n('sim.campaign.9'),
+        economy: i18n('sim.campaign.10'),
     };
     const lockReason = name => (R && !loadingCampaign && isObj(R.playRules) && isObj(R.playRules.locks) && R.playRules.locks[name] === true && LOCK_REASON[name]) || null;
     // 스크립트 판정에 쓰는 지금 상태 (js/world-rules.js의 ctx) — 이 시나리오의 스크립트가 아니면 null
@@ -132,11 +132,11 @@
     }
     const today = () => R?.clock ? Clock.dateKey(R.clock.day) : worldToday();
     const dayNum = k => Clock.dayFromKey(k);
-    const labelOf = k => {const day=Clock.dayFromKey(k);if(day==null)return '';const p=Clock.parts(day);return `${p.y}년 ${p.m}월 ${p.d}일`;};
+    const labelOf = k => {const day=Clock.dayFromKey(k);if(day==null)return '';const p=Clock.parts(day);return i18n('sim.campaign.11', { y: p.y, m: p.m, v: p.d });};
     const nowDay = () => R?.clock ? R.clock.day+R.clock.hour/24 : dayNum(worldToday());
     const period = days => {
-        if(R?.clock.mode==='turn')return `${Math.max(0,Math.ceil(days))}턴`;
-        const hours=Math.max(0,Math.ceil(days*24-1e-8));return hours>=24?`${Math.floor(hours/24)}일${hours%24?` ${hours%24}시간`:''}`:`${hours}시간`;
+        if(R?.clock.mode==='turn')return i18n('sim.campaign.12', { days: Math.max(0,Math.ceil(days)) });
+        const hours=Math.max(0,Math.ceil(days*24-1e-8));return hours>=24?i18n('sim.campaign.14', { hours: Math.floor(hours/24), hours2: hours%24?(" " + i18n('sim.campaign.13', { hours: hours%24 })):'' }):i18n('sim.campaign.13', { hours });
     };
     function mirrorClockValues(){
         if(!R?.clock||loadingCampaign)return;
@@ -150,7 +150,7 @@
     function updateFocusProgress(){
         const cur=R?.focus.cur;if(!cur)return;
         const left=Math.max(0,cur.days-(nowDay()-cur.started));
-        document.querySelectorAll('.hf-current .hf-days,.cp-focus-cur .cp-days').forEach(el=>{el.textContent=period(left)+' 남음';});
+        document.querySelectorAll('.hf-current .hf-days,.cp-focus-cur .cp-days').forEach(el=>{el.textContent=period(left)+(" " + i18n('sim.campaign.15'));});
         document.querySelectorAll('.hf-current .hf-bar i,.cp-focus-cur + .cp-bar i').forEach(el=>{el.style.width=(cur.days?clamp((cur.days-left)/cur.days*100,0,100):100)+'%';});
     }
 
@@ -177,8 +177,8 @@
     function startFocus(id) {
         const f = focusById(id);
         if (!f || focusState(f) !== 'available') return;
-        const go = () => { R.focus.cur = { id: f.id, started: nowDay() ?? 0, days: Math.max(0, Number(f.days) || 0) }; if (!R.focus.cur.days) completeFocus(); toast(`방향성: ${f.title || f.id}`); refresh(); };
-        if (R.focus.cur) { const c = focusById(R.focus.cur.id); showCustomConfirm(`진행 중인 "${c ? c.title : R.focus.cur.id}"을(를) 그만두고 "${f.title}"을(를) 시작할까요? (진행한 날은 사라집니다)`, go); }
+        const go = () => { R.focus.cur = { id: f.id, started: nowDay() ?? 0, days: Math.max(0, Number(f.days) || 0) }; if (!R.focus.cur.days) completeFocus(); toast(i18n('sim.campaign.16', { f: f.title || f.id })); refresh(); };
+        if (R.focus.cur) { const c = focusById(R.focus.cur.id); showCustomConfirm(i18n('sim.campaign.17', { cur: c ? c.title : R.focus.cur.id, title: f.title }), go); }
         else go();
     }
     function completeFocus() {
@@ -187,13 +187,13 @@
         // 완료 효과의 세계지도 참조가 틀렸으면 완료로 기록하지 않는다 — 플래그 · 효과 · 이벤트 모두 그대로 두고, 고치면 다음 검사 때 완료된다
         const why = f ? precheck(f.effects) : null;
         if (why) {
-            if (cur.blocked !== why) { cur.blocked = why; if (R.clock && R.clock.mode === 'realtime') timeController.pause('방향성 효과 오류 · 일시정지'); showCustomAlert(`방향성 "${f.title || f.id}"을(를) 완료할 수 없습니다.\n${why}`); }
+            if (cur.blocked !== why) { cur.blocked = why; if (R.clock && R.clock.mode === 'realtime') timeController.pause(i18n('sim.campaign.18')); showCustomAlert(i18n('sim.campaign.19', { f: f.title || f.id, why })); }
             return;
         }
         R.focus.cur = null;
         R.focus.done[cur.id] = today() || 1;
         run([{ set_flag: 'focus_' + safeId(cur.id) }]);
-        if (f) { run(f.effects); if (f.event) SM()?.fire(modId(), f.event); if(f.article)publishArticle(f.article); toast(`✔ 방향성 완료: ${f.title || f.id}`); }
+        if (f) { run(f.effects); if (f.event) SM()?.fire(modId(), f.event); if(f.article)publishArticle(f.article); toast(i18n('sim.campaign.20', { f: f.title || f.id })); }
         checkArticles();
     }
 
@@ -208,7 +208,7 @@
         (c.missions || []).forEach(m => { if (m && m.id && !m.later) st.missions[m.id] = { status: 'active', started: nowDay() }; });
         run(c.onStart);
         if (c.intro) SM()?.fire(modId(), c.intro);
-        else superModal({ kicker: '격변 시작', title: c.title || c.id, text: c.desc, image: c.image, color: c.color });
+        else superModal({ kicker: i18n('sim.campaign.21'), title: c.title || c.id, text: c.desc, image: c.image, color: c.color });
         ui.view = 'crisis'; ui.sel = c.id;
     }
     function endCrisis(c, o) {
@@ -218,7 +218,7 @@
         run(o.effects);
         Object.values(st.missions).forEach(m => { if (m.status === 'active') m.status = 'cancelled'; });
         if (o.event) SM()?.fire(modId(), o.event);
-        else superModal({ kicker: `${c.title || c.id} — 결말`, title: o.title || o.id, text: o.text, image: o.image, color: c.color });
+        else superModal({ kicker: i18n('sim.campaign.22', { title: c.title || c.id }), title: o.title || o.id, text: o.text, image: o.image, color: c.color });
     }
     function tickCrisis(c, months) {
         const st = R.crises[c.id];
@@ -236,8 +236,8 @@
             let ms = st.missions[m.id];
             if (!ms && m.later && test(m.start)) ms = st.missions[m.id] = { status: 'active', started: nd };
             if (!ms || ms.status !== 'active') return;
-            if (m.condition && test(m.condition)) { ms.status = 'done'; ms.ended = today(); run(m.success); toast(`✔ 임무 성공: ${m.title || m.id}`); }
-            else if (Number(m.days) && nd - ms.started >= Number(m.days)) { ms.status = 'failed'; ms.ended = today(); run(m.fail); toast(`✖ 임무 실패: ${m.title || m.id}`); }
+            if (m.condition && test(m.condition)) { ms.status = 'done'; ms.ended = today(); run(m.success); toast(i18n('sim.campaign.23', { m: m.title || m.id })); }
+            else if (Number(m.days) && nd - ms.started >= Number(m.days)) { ms.status = 'failed'; ms.ended = today(); run(m.fail); toast(i18n('sim.campaign.24', { m: m.title || m.id })); }
         });
         // 결말: 조건이 맞는 첫 번째
         const o = (c.outcomes || []).find(x => x && x.condition && test(x.condition));
@@ -272,7 +272,7 @@
         checkArticles();
         // 결말 (엔딩)
         const e = (R.data.endings || []).find(x => x && x.condition && test(x.condition));
-        if (e) { R.ending = { id: e.id, at: today() };timeController.pause('시나리오 결말 · 일시정지'); setTimeout(() => showEnding(e), 400); }
+        if (e) { R.ending = { id: e.id, at: today() };timeController.pause(i18n('sim.campaign.25')); setTimeout(() => showEnding(e), 400); }
         refresh();
         window.dispatchEvent(new Event('hemi-campaign-ticked'));
     }
@@ -282,15 +282,15 @@
     function advanceOps(nd) {
         if (!R || !R.ops || !window.HemiOps || nd == null) return false;
         const r = HemiOps.advance(R.ops, R.data, nd);
-        r.researched.forEach(id => { const t = HemiOps.byId(R.data, 'tech', id); if (t) { run(t.effects); toast(`🔬 연구 완료: ${t.title || t.id}`); } });
-        r.built.forEach(id => { const f = HemiOps.byId(R.data, 'facilities', id); if (f) toast(`🏗 건설 완료: ${f.name || f.id}`); });
-        r.recruited.forEach(id => { const u = HemiOps.byId(R.data, 'units', id); if (u) toast(`🎖 편성 완료: ${u.name || u.id}`); });
+        r.researched.forEach(id => { const t = HemiOps.byId(R.data, 'tech', id); if (t) { run(t.effects); toast(i18n('sim.campaign.26', { title: t.title || t.id })); } });
+        r.built.forEach(id => { const f = HemiOps.byId(R.data, 'facilities', id); if (f) toast(i18n('sim.campaign.27', { f: f.name || f.id })); });
+        r.recruited.forEach(id => { const u = HemiOps.byId(R.data, 'units', id); if (u) toast(i18n('sim.campaign.28', { u: u.name || u.id })); });
         return !!(r.days || r.researched.length || r.built.length || r.recruited.length);
     }
     // 플레이어의 운영 행동 — 건설 · 연구 · 모집 · 무역 체결 / 취소. 이유(글자) 또는 null
     function opsAct(kind, id, act) {
-        if (!R || !R.ops || !window.HemiOps) return '이 시나리오에는 국가 운영이 없습니다';
-        if (act === 'cancel') { if (!HemiOps.cancel(kind, R.ops, R.data, id)) return '취소할 것이 없습니다'; }
+        if (!R || !R.ops || !window.HemiOps) return i18n('sim.campaign.29');
+        if (act === 'cancel') { if (!HemiOps.cancel(kind, R.ops, R.data, id)) return i18n('sim.campaign.30'); }
         else { const why = HemiOps.start(kind, R.ops, R.data, id, nowDay(), test); if (why) return why; }
         advanceOps(nowDay()); // 기간 0인 것은 바로 끝난다
         try { window.saveActiveNow?.(true); } catch (e) { /* 자동저장에 맡김 */ }
@@ -301,15 +301,15 @@
         const sm = window.HemiScriptMods; if (!sm || !sm.registerCondition || !window.HemiOps) return;
         const mine = mod => !!R && !!R.ops && !loadingCampaign && mod && mod.id === modId();
         Object.keys(HemiOps.COND).forEach(k => sm.registerCondition(k, (v, mod) => {
-            if (!mine(mod)) throw new Error('국가 운영 조건은 국가 운영을 쓰는 시나리오에서만 쓸 수 있습니다');
+            if (!mine(mod)) throw new Error(i18n('sim.campaign.31'));
             const res = HemiOps.testCond(k, v, R.ops, R.data); if (!res.ok) throw new Error(res.error); return res.value;
         }));
         Object.keys(HemiOps.EFF).forEach(k => sm.registerEffect(k, (v, mod) => {
-            if (!mine(mod)) throw new Error('국가 운영 효과는 국가 운영을 쓰는 시나리오에서만 쓸 수 있습니다');
+            if (!mine(mod)) throw new Error(i18n('sim.campaign.32'));
             const why = HemiOps.runEffect(k, v, R.ops, R.data, nowDay()); if (why) throw new Error(why);
         }));
         sm.setCostHandler({
-            check: (mod, cost) => (!mine(mod) ? '비용(자원)은 국가 운영을 쓰는 시나리오에서만 쓸 수 있습니다' : HemiOps.canPay(R.ops, cost) ? null : HemiOps.lacking(R.ops, cost, R.data).join(', ')),
+            check: (mod, cost) => (!mine(mod) ? i18n('sim.campaign.33') : HemiOps.canPay(R.ops, cost) ? null : HemiOps.lacking(R.ops, cost, R.data).join(', ')),
             pay: (mod, cost) => { if (mine(mod)) HemiOps.pay(R.ops, cost, R.data); },
             label: (mod, cost) => HemiOps.amounts(cost).map(([k, v]) => { const r = R && HemiOps.byId(R.data, 'resources', k); return `${r ? `${r.icon ? r.icon + ' ' : ''}${r.name || k}` : k} ${v}`; }).join(' · '),
         });
@@ -330,7 +330,7 @@
         for(const [id,v]of [['nationDateYear',p.y],['nationDateMonth',p.m],['nationDateDay',p.d]]){const e=document.getElementById(id);if(e)e.value=v;}
     }
     if (typeof origAdvance === 'function') window.advanceNationDate = function () {
-        if(R){toast('시나리오 시간의 진행/일시정지 또는 다음 턴을 사용하세요.');return false;}
+        if(R){toast(i18n('sim.campaign.34'));return false;}
         return origAdvance.apply(this,arguments);
     };
     const origApply = window.elecApplyToParliament;
@@ -350,7 +350,7 @@
             <h2 class="cp-super-title">${esc(fillT(o.title || ''))}</h2>
             <div class="cp-super-body">${paras(fillT(o.text || ''))}</div>
             ${o.extra || ''}
-            <div class="cp-row cp-end">${(buttons || [{ text: '확인', primary: true }]).map((b, i) => `<button type="button" class="cp-btn ${b.primary ? 'cp-primary' : ''}" data-i="${i}">${esc(b.text)}</button>`).join('')}</div>
+            <div class="cp-row cp-end">${(buttons || [{ text: i18n('common.ok'), primary: true }]).map((b, i) => `<button type="button" class="cp-btn ${b.primary ? 'cp-primary' : ''}" data-i="${i}">${esc(b.text)}</button>`).join('')}</div>
         </div></div>`);
         const close = () => { ov.remove(); document.removeEventListener('keydown', onKey, true); };
         const onKey = e => { if (e.key === 'Escape') { e.stopPropagation(); close(); } };
@@ -362,12 +362,12 @@
     function showIntro() {
         if (!R) return;
         const d = R.data, s = (d.starts || []).find(x => x.id === R.startId);
-        superModal({ kicker: `시나리오${d.author ? ` · 제작자: ${d.author}` : ''}`, title: d.title || '시나리오', text: [d.lore || d.description || '', s && s.desc ? `▶ ${s.name || ''}\n${s.desc}` : ''].filter(Boolean).join('\n\n'), image: d.image },
-            [{ text: '방향성 트리 보기', on: () => openTab('campfocus') }, { text: '시작하기', primary: true, on: () => openTab('campaign') }]);
+        superModal({ kicker: i18n('sim.campaign.36', { author: d.author ? (" " + i18n('sim.campaign.35', { author: d.author })) : '' }), title: d.title || i18n('sim.campaign.2'), text: [d.lore || d.description || '', s && s.desc ? `▶ ${s.name || ''}\n${s.desc}` : ''].filter(Boolean).join('\n\n'), image: d.image },
+            [{ text: i18n('sim.campaign.37'), on: () => openTab('campfocus') }, { text: i18n('sim.campaign.38'), primary: true, on: () => openTab('campaign') }]);
     }
     function showEnding(e) {
-        superModal({ kicker: `${R.data.title || '시나리오'} — 결말`, title: e.title || e.id, text: e.text, image: e.image, extra: `<div class="cp-dim">${esc(labelOf(R.ending && R.ending.at))}</div>` },
-            [{ text: '편집기로', on: () => { location.href = 'scenario.html'; } }, { text: '계속 플레이', primary: true }]);
+        superModal({ kicker: i18n('sim.campaign.22', { title: R.data.title || i18n('sim.campaign.2') }), title: e.title || e.id, text: e.text, image: e.image, extra: `<div class="cp-dim">${esc(labelOf(R.ending && R.ending.at))}</div>` },
+            [{ text: i18n('sim.campaign.39'), on: () => { location.href = 'scenario.html'; } }, { text: i18n('sim.campaign.40'), primary: true }]);
     }
 
     // Campaign news is a one-time narrative reader and archive, independent of HemiNews.
@@ -420,10 +420,10 @@
     }
     function renderArticles(host) {
         const published = Object.entries(R.articles.published).reverse();
-        host.innerHTML = `<div class="cp-wrap"><div class="cp-h">시나리오 기사 <span class="cp-dim">${published.length}건</span></div><p class="cp-dim">진행 중 전달된 소식입니다. 기사를 눌러 다시 읽을 수 있습니다.</p>${published.map(([id,record])=>{
+        host.innerHTML = `<div class="cp-wrap"><div class="cp-h">${esc(i18n('sim.campaign.41'))} <span class="cp-dim">${published.length}${esc(i18n('sim.campaign.42'))}</span></div><p class="cp-dim">${esc(i18n('sim.campaign.43'))}</p>${published.map(([id,record])=>{
             const a=articleList().find(a=>a.id===id);if(!a)return '';
-            return `<button type="button" class="cp-btn" data-read-article="${esc(id)}"><b>${esc(record.content?.title||a.title||id)}</b><span class="cp-grow"></span><span class="cp-dim">${esc(labelOf(record.at))}${record.read?'':' · 새 기사'}</span></button>`;
-        }).join('')||'<div class="cp-empty">아직 발행된 시나리오 기사가 없습니다.</div>'}</div>`;
+            return `<button type="button" class="cp-btn" data-read-article="${esc(id)}"><b>${esc(record.content?.title||a.title||id)}</b><span class="cp-grow"></span><span class="cp-dim">${esc(labelOf(record.at))}${record.read?'':esc((" " + i18n('sim.campaign.44')))}</span></button>`;
+        }).join('')||`<div class="cp-empty">${esc(i18n('sim.campaign.45'))}</div>`}</div>`;
         host.querySelectorAll('[data-read-article]').forEach(b=>b.onclick=()=>readArticle(b.dataset.readArticle));
     }
     // Modals are direct body children. Wait for introductions/events/crises to close
@@ -438,13 +438,13 @@
         const bar = document.querySelector('.main-tab-container');
         const ref = document.getElementById('mainContentSetup');
         if (!bar || !ref) return;
-        bar.insertBefore(el(`<button class="main-tab-btn" onclick="switchMainTab('campaign')" id="mainTabCampaign" style="display:none;">🎯 시나리오</button>`), bar.firstChild);
+        bar.insertBefore(el(`<button class="main-tab-btn" onclick="switchMainTab('campaign')" id="mainTabCampaign" style="display:none;">${esc(i18n('sim.campaign.46'))}</button>`), bar.firstChild);
         ref.parentElement.insertBefore(el(`<div id="mainContentCampaign" class="main-tab-content"><div class="cp-time-bar" data-campaign-time hidden></div>
             <div class="sub-tab-container" style="margin-top:10px;">
-                <button class="sub-tab-btn active" id="subTabCampaign" onclick="switchSubTab('campaign','campaign')">개요</button>
-                <button class="sub-tab-btn" id="subTabCampfocus" onclick="switchSubTab('campaign','campfocus')">방향성</button>
-                <button class="sub-tab-btn" id="subTabCampcrisis" onclick="switchSubTab('campaign','campcrisis')">격변</button>
-                <button class="sub-tab-btn" id="subTabCamparticles" onclick="switchSubTab('campaign','camparticles')">기사</button>
+                <button class="sub-tab-btn active" id="subTabCampaign" onclick="switchSubTab('campaign','campaign')">${esc(i18n('sim.campaign.47'))}</button>
+                <button class="sub-tab-btn" id="subTabCampfocus" onclick="switchSubTab('campaign','campfocus')">${esc(i18n('sim.campaign.48'))}</button>
+                <button class="sub-tab-btn" id="subTabCampcrisis" onclick="switchSubTab('campaign','campcrisis')">${esc(i18n('sim.campaign.49'))}</button>
+                <button class="sub-tab-btn" id="subTabCamparticles" onclick="switchSubTab('campaign','camparticles')">${esc(i18n('sim.news.10'))}</button>
             </div>
             <div id="contentCampaign" class="sub-tab-content active"></div>
             <div id="contentCampfocus" class="sub-tab-content"></div>
@@ -471,7 +471,7 @@
         const after = document.getElementById('dispTabNews') || document.getElementById('dispTabEconomy') || document.getElementById('dispTabCabinet');
         const ref = document.getElementById('dispPanelNews') || document.getElementById('dispPanelEconomy') || document.getElementById('dispPanelCabinet');
         if (!after || !ref) return;
-        after.parentElement.insertBefore(el(`<button class="disp-tab-btn" id="dispTabCampaign" data-tab="campaign" onclick="switchDispTab('campaign')" style="display:none;"><span class="disp-tab-label">시나리오</span><span class="disp-tab-close" onclick="event.stopPropagation();closeDispTab('campaign')">×</span></button>`), after.nextSibling);
+        after.parentElement.insertBefore(el(`<button class="disp-tab-btn" id="dispTabCampaign" data-tab="campaign" onclick="switchDispTab('campaign')" style="display:none;"><span class="disp-tab-label">${esc(i18n('sim.campaign.2'))}</span><span class="disp-tab-close" onclick="event.stopPropagation();closeDispTab('campaign')">×</span></button>`), after.nextSibling);
         ref.parentElement.insertBefore(el(`<div class="disp-panel" id="dispPanelCampaign"><div class="chamber-box cp-disp"><div class="cp-disp-bar" id="cpDispBar"></div><div id="cpDisp"></div></div></div>`), ref.nextSibling);
     })();
     const dispActive = () => !!document.getElementById('dispPanelCampaign')?.classList.contains('active');
@@ -501,18 +501,18 @@
 
     const meterHtml = m => {
         const v = varOf(m.id), lo = m.min ?? 0, hi = m.max ?? 100, pct = hi > lo ? (v - lo) / (hi - lo) * 100 : 0;
-        return `<div class="cp-meter" title="${esc(m.desc || '')}"><div class="cp-meter-h"><span>${esc(m.name || m.id)}</span><b>${Math.round(v * 10) / 10}${hi === 100 && lo === 0 ? '%' : ` / ${hi}`}</b>${m.perMonth ? `<span class="cp-dim">${m.perMonth > 0 ? '+' : ''}${m.perMonth}/월</span>` : ''}</div>
+        return `<div class="cp-meter" title="${esc(m.desc || '')}"><div class="cp-meter-h"><span>${esc(m.name || m.id)}</span><b>${Math.round(v * 10) / 10}${hi === 100 && lo === 0 ? '%' : ` / ${hi}`}</b>${m.perMonth ? `<span class="cp-dim">${m.perMonth > 0 ? '+' : ''}${m.perMonth}${esc(i18n('sim.campaign.50'))}</span>` : ''}</div>
             <div class="cp-bar"><i style="width:${clamp(pct, 0, 100)}%;${m.color ? `background:${esc(m.color)}` : ''}"></i></div></div>`;
     };
     function missionsHtml(c) {
         const st = R.crises[c.id], nd = nowDay() ?? 0;
         const list = (c.missions || []).filter(m => m && m.id && st.missions[m.id]);
         if (!list.length) return '';
-        return `<div class="cp-h">임무</div>${list.map(m => {
+        return `<div class="cp-h">${esc(i18n('sim.campaign.51'))}</div>${list.map(m => {
             const ms = st.missions[m.id], left = Number(m.days) ? Math.max(0, Number(m.days) - (nd - ms.started)) : null;
             const pct = Number(m.days) ? clamp((nd - ms.started) / Number(m.days) * 100, 0, 100) : 0;
             return `<div class="cp-mission ${ms.status}"><div class="cp-mission-h"><span class="cp-ico">${{ active: '⏳', done: '✔', failed: '✖', cancelled: '–' }[ms.status]}</span><b>${esc(fillT(m.title || m.id))}</b>
-                <span class="cp-grow"></span>${ms.status === 'active' && left != null ? `<span class="cp-days">${period(left)} 남음</span>` : `<span class="cp-dim">${{ done: '성공', failed: '실패', cancelled: '취소됨', active: '' }[ms.status]}</span>`}</div>
+                <span class="cp-grow"></span>${ms.status === 'active' && left != null ? `<span class="cp-days">${period(left)} ${esc(i18n('sim.campaign.15'))}</span>` : `<span class="cp-dim">${{ done: esc(i18n('sim.help.110')), failed: esc(i18n('sim.help.112')), cancelled: esc(i18n('sim.campaign.52')), active: '' }[ms.status]}</span>`}</div>
                 ${m.desc ? `<div class="cp-dim">${esc(fillT(m.desc))}</div>` : ''}
                 ${ms.status === 'active' && left != null ? `<div class="cp-bar cp-bar-thin"><i style="width:${pct}%"></i></div>` : ''}</div>`;
         }).join('')}`;
@@ -520,19 +520,19 @@
     function decisionsHtml(c) {
         const list = SM() ? SM().decisions(modId(), d => d._crisis === c.id) : [];
         if (!list.length) return '';
-        return `<div class="cp-h">격변 결정</div>${list.map(d => `<div class="cp-dec ${d.block ? 'off' : ''}"><div class="cp-grow"><b>${esc(d.title)}</b>${d.desc ? `<div class="cp-dim">${esc(d.desc)}</div>` : ''}</div>
-            ${d.cost && window.HemiOps && R && R.ops ? `<div class="cp-dim">비용: ${esc(HemiOps.amounts(d.cost).map(([k, v]) => `${(HemiOps.byId(R.data, 'resources', k) || {}).name || k} ${v}`).join(' · '))}</div>` : ''}
-            <button type="button" class="cp-btn ${d.block ? '' : 'cp-primary'}" data-take="${esc(d.id)}" ${d.block ? 'disabled' : ''}>${esc(d.block || '결정하기')}</button></div>`).join('')}`;
+        return `<div class="cp-h">${esc(i18n('sim.campaign.53'))}</div>${list.map(d => `<div class="cp-dec ${d.block ? 'off' : ''}"><div class="cp-grow"><b>${esc(d.title)}</b>${d.desc ? `<div class="cp-dim">${esc(d.desc)}</div>` : ''}</div>
+            ${d.cost && window.HemiOps && R && R.ops ? `<div class="cp-dim">${esc(i18n('sim.scriptmods.37'))} ${esc(HemiOps.amounts(d.cost).map(([k, v]) => `${(HemiOps.byId(R.data, 'resources', k) || {}).name || k} ${v}`).join(' · '))}</div>` : ''}
+            <button type="button" class="cp-btn ${d.block ? '' : 'cp-primary'}" data-take="${esc(d.id)}" ${d.block ? 'disabled' : ''}>${esc(d.block || esc(i18n('sim.scriptmods.38')))}</button></div>`).join('')}`;
     }
     function crisisCard(c, big) {
         const st = R.crises[c.id];
         const o = st.outcome && (c.outcomes || []).find(x => x.id === st.outcome);
         return `<div class="cp-crisis ${st.status} ${big ? 'big' : ''}" style="${c.color ? `--cp-c:${esc(c.color)}` : ''}">
-            <div class="cp-crisis-h"><span class="cp-tag">${{ active: '진행 중', ended: '끝남', idle: '아직' }[st.status]}</span><b>${esc(c.title || c.id)}</b><span class="cp-grow"></span>${st.started ? `<span class="cp-dim">${esc(labelOf(st.started))}~</span>` : ''}</div>
+            <div class="cp-crisis-h"><span class="cp-tag">${{ active: i18n('sim.campaign.54'), ended: i18n('sim.campaign.55'), idle: i18n('sim.campaign.56') }[st.status]}</span><b>${esc(c.title || c.id)}</b><span class="cp-grow"></span>${st.started ? `<span class="cp-dim">${esc(labelOf(st.started))}~</span>` : ''}</div>
             ${big && c.image ? `<img class="cp-crisis-img" src="${esc(c.image)}" alt="">` : ''}
             ${c.desc && (big || st.status === 'active') ? `<div class="cp-crisis-desc">${big ? paras(fillT(c.desc)) : esc(fillT(c.desc)).slice(0, 160)}</div>` : ''}
             ${st.status === 'active' ? (c.meters || []).filter(m => m && m.id).map(meterHtml).join('') + missionsHtml(c) + decisionsHtml(c) : ''}
-            ${st.status === 'ended' && o ? `<div class="cp-outcome">결말: <b>${esc(o.title || o.id)}</b></div>` : ''}
+            ${st.status === 'ended' && o ? `<div class="cp-outcome">${esc(i18n('sim.campaign.57'))} <b>${esc(o.title || o.id)}</b></div>` : ''}
         </div>`;
     }
     function bindDecisions(host) {
@@ -546,7 +546,7 @@
         if (sub === 'camparticles') { const host=document.getElementById('contentCamparticles');if(host&&R)renderArticles(host);return; }
         const host = document.getElementById('contentCampaign');
         if (!host) return;
-        if (!R) { host.innerHTML = '<div class="cp-empty">이 세이브에는 시나리오가 없습니다. 메인 화면 › 시나리오 · 격변에서 시나리오를 만들고 "시험 플레이"하세요.</div>'; return; }
+        if (!R) { host.innerHTML = `<div class="cp-empty">${esc(i18n('sim.campaign.58'))}</div>`; return; }
         const d = R.data, cur = R.focus.cur, f = cur && focusById(cur.id), nd = nowDay() ?? 0;
         const left = cur ? Math.max(0, cur.days - (nd - (cur.started ?? nd))) : 0;
         const active = crisisList().filter(c => R.crises[c.id]?.status === 'active');
@@ -554,19 +554,19 @@
         const avail = focusList().filter(x => focusState(x) === 'available');
         const ending = R.ending && (d.endings || []).find(e => e.id === R.ending.id);
         host.innerHTML = `<div class="cp-wrap">
-            <div class="cp-head"><div class="cp-kicker">시나리오 · 테스트</div><div class="cp-title">${esc(d.title || '시나리오')}</div>${d.author ? `<div class="cp-dim">제작자: ${esc(d.author)}</div>` : ''}
-                <div class="cp-row"><button type="button" class="cp-btn" data-intro>세계관</button><button type="button" class="cp-btn" data-tree>방향성 트리</button><button type="button" class="cp-btn" data-crisis-view>격변 화면</button><button type="button" class="cp-btn" data-articles>기사</button><a class="cp-btn" href="scenario.html">편집기</a></div></div>
-            ${ending ? `<div class="cp-ending">🏁 결말: <b>${esc(ending.title || ending.id)}</b> <button type="button" class="cp-btn" data-ending>다시 보기</button></div>` : ''}
-            <div class="cp-card"><div class="cp-h">방향성</div>
-                ${cur ? `<div class="cp-focus-cur"><b>${esc(f ? f.title : cur.id)}</b><span class="cp-grow"></span><span class="cp-days">${period(left)} 남음</span></div>
+            <div class="cp-head"><div class="cp-kicker">${esc(i18n('sim.campaign.59'))}</div><div class="cp-title">${esc(d.title || esc(i18n('sim.campaign.2')))}</div>${d.author ? `<div class="cp-dim">${esc(i18n('sim.campaign.60'))} ${esc(d.author)}</div>` : ''}
+                <div class="cp-row"><button type="button" class="cp-btn" data-intro>${esc(i18n('sim.campaign.61'))}</button><button type="button" class="cp-btn" data-tree>${esc(i18n('sim.campaign.62'))}</button><button type="button" class="cp-btn" data-crisis-view>${esc(i18n('sim.campaign.63'))}</button><button type="button" class="cp-btn" data-articles>${esc(i18n('sim.news.10'))}</button><a class="cp-btn" href="scenario.html">${esc(i18n('sim.campaign.64'))}</a></div></div>
+            ${ending ? `<div class="cp-ending">${esc(i18n('sim.campaign.65'))} <b>${esc(ending.title || ending.id)}</b> <button type="button" class="cp-btn" data-ending>${esc(i18n('sim.campaign.66'))}</button></div>` : ''}
+            <div class="cp-card"><div class="cp-h">${esc(i18n('sim.campaign.48'))}</div>
+                ${cur ? `<div class="cp-focus-cur"><b>${esc(f ? f.title : cur.id)}</b><span class="cp-grow"></span><span class="cp-days">${period(left)} ${esc(i18n('sim.campaign.15'))}</span></div>
                     <div class="cp-bar"><i style="width:${cur.days ? clamp((cur.days - left) / cur.days * 100, 0, 100) : 100}%"></i></div>`
-                : `<div class="cp-dim">${avail.length ? `고를 수 있는 방향성 ${avail.length}개 — 방향성 트리에서 고르세요` : focusList().length ? '지금 고를 수 있는 방향성이 없습니다' : '이 시나리오에는 방향성 트리가 없습니다'}</div>`}
+                : `<div class="cp-dim">${avail.length ? esc(i18n('sim.campaign.67', { avail: avail.length })) : focusList().length ? esc(i18n('sim.campaign.68')) : esc(i18n('sim.campaign.69'))}</div>`}
                 ${!cur && avail.length ? `<div class="cp-row">${avail.slice(0, 6).map(x => `<button type="button" class="cp-btn" data-focus="${esc(x.id)}">${esc(x.title || x.id)} <span class="cp-dim">${period(Number(x.days)||0)}</span></button>`).join('')}</div>` : ''}
-                <div class="cp-dim">끝낸 방향성 ${Object.keys(R.focus.done).length} / ${focusList().length}</div></div>
-            <div class="cp-h2">진행 중인 격변 ${active.length}</div>
-            ${active.map(c => crisisCard(c, false)).join('') || '<div class="cp-dim">진행 중인 격변이 없습니다.</div>'}
-            ${ended.length ? `<div class="cp-h2">지나간 격변</div>${ended.map(c => crisisCard(c, false)).join('')}` : ''}
-            <div class="cp-row"><button type="button" class="cp-btn" data-check>지금 확인</button><button type="button" class="cp-btn cp-x" data-quit>시나리오 끝내기</button></div>
+                <div class="cp-dim">${esc(i18n('sim.campaign.70'))} ${Object.keys(R.focus.done).length} / ${focusList().length}</div></div>
+            <div class="cp-h2">${esc(i18n('sim.campaign.71'))} ${active.length}</div>
+            ${active.map(c => crisisCard(c, false)).join('') || `<div class="cp-dim">${esc(i18n('sim.campaign.72'))}</div>`}
+            ${ended.length ? `<div class="cp-h2">${esc(i18n('sim.campaign.73'))}</div>${ended.map(c => crisisCard(c, false)).join('')}` : ''}
+            <div class="cp-row"><button type="button" class="cp-btn" data-check>${esc(i18n('sim.campaign.74'))}</button><button type="button" class="cp-btn cp-x" data-quit>${esc(i18n('sim.campaign.75'))}</button></div>
         </div>`;
         host.querySelector('[data-intro]').onclick = showIntro;
         host.querySelector('[data-tree]').onclick = () => openTab('campfocus');
@@ -574,8 +574,8 @@
         host.querySelector('[data-articles]').onclick=()=>openTab('camparticles');
         host.querySelector('[data-ending]')?.addEventListener('click', () => showEnding(ending));
         host.querySelectorAll('[data-focus]').forEach(b => { b.onclick = () => startFocus(b.dataset.focus); });
-        host.querySelector('[data-check]').onclick = () => { tick(); toast('시나리오를 확인했습니다'); };
-        host.querySelector('[data-quit]').onclick = () => showCustomConfirm('이 세이브에서 시나리오를 뗄까요? 나라는 그대로 두고 방향성 · 격변 · 시나리오 이벤트 · 결정만 없어집니다.', () => { timeController.pause();resetArticleWindow();R = null;timeController.reset();window.dispatchEvent(new Event('hemi-campaign-changed')); bindMod(); refresh(); });
+        host.querySelector('[data-check]').onclick = () => { tick(); toast(i18n('sim.campaign.76')); };
+        host.querySelector('[data-quit]').onclick = () => showCustomConfirm(i18n('sim.campaign.77'), () => { timeController.pause();resetArticleWindow();R = null;timeController.reset();window.dispatchEvent(new Event('hemi-campaign-changed')); bindMod(); refresh(); });
         bindDecisions(host);
     }
 
@@ -588,12 +588,12 @@
         const by = st => focusList().filter(x => focusState(x) === st);
         const item = (x, btn) => `<div class="cp-dec">${iconOf(x, 'cp-li')}<div class="cp-grow"><b>${esc(x.title || x.id)}</b><div class="cp-dim">${period(Number(x.days)||0)}${x.desc ? ' · ' + esc(fillT(x.desc)).slice(0, 80) : ''}</div></div>${btn || ''}</div>`;
         host.innerHTML = `<div class="cp-wrap">
-            <div class="cp-card"><div class="cp-h">진행 중</div>
-                ${cur ? `<div class="cp-focus-cur"><b>${esc(f ? f.title : cur.id)}</b><span class="cp-grow"></span><span class="cp-days">${period(left)} 남음</span></div><div class="cp-bar"><i style="width:${cur.days ? clamp((cur.days - left) / cur.days * 100, 0, 100) : 100}%"></i></div>` : '<div class="cp-dim">진행 중인 방향성이 없습니다.</div>'}</div>
-            <div class="cp-h2">고를 수 있음 ${by('available').length}</div>
-            ${by('available').map(x => item(x, `<button type="button" class="cp-btn cp-primary" data-focus="${esc(x.id)}">시작</button>`)).join('') || '<div class="cp-dim">지금 고를 수 있는 방향성이 없습니다.</div>'}
-            ${by('done').length ? `<div class="cp-h2">끝냄 ${by('done').length}</div>${by('done').map(x => item(x, `<span class="cp-dim">${esc(labelOf(R.focus.done[x.id] > 1 ? R.focus.done[x.id] : null))}</span>`)).join('')}` : ''}
-            <div class="cp-dim">오른쪽 방향성 트리에서 상자를 눌러 자세히 보고 고를 수도 있습니다.</div>
+            <div class="cp-card"><div class="cp-h">${esc(i18n('sim.campaign.54'))}</div>
+                ${cur ? `<div class="cp-focus-cur"><b>${esc(f ? f.title : cur.id)}</b><span class="cp-grow"></span><span class="cp-days">${period(left)} ${esc(i18n('sim.campaign.15'))}</span></div><div class="cp-bar"><i style="width:${cur.days ? clamp((cur.days - left) / cur.days * 100, 0, 100) : 100}%"></i></div>` : `<div class="cp-dim">${esc(i18n('sim.campaign.78'))}</div>`}</div>
+            <div class="cp-h2">${esc(i18n('sim.campaign.79'))} ${by('available').length}</div>
+            ${by('available').map(x => item(x, `<button type="button" class="cp-btn cp-primary" data-focus="${esc(x.id)}">${esc(i18n('sim.campaign.80'))}</button>`)).join('') || `<div class="cp-dim">${esc(i18n('sim.campaign.81'))}</div>`}
+            ${by('done').length ? `<div class="cp-h2">${esc(i18n('sim.campaign.82'))} ${by('done').length}</div>${by('done').map(x => item(x, `<span class="cp-dim">${esc(labelOf(R.focus.done[x.id] > 1 ? R.focus.done[x.id] : null))}</span>`)).join('')}` : ''}
+            <div class="cp-dim">${esc(i18n('sim.campaign.83'))}</div>
         </div>`;
         host.querySelectorAll('[data-focus]').forEach(b => { b.onclick = () => startFocus(b.dataset.focus); });
     }
@@ -605,10 +605,10 @@
         const ended = crisisList().filter(c => R.crises[c.id]?.status === 'ended');
         const idle = crisisList().filter(c => R.crises[c.id]?.status === 'idle');
         host.innerHTML = `<div class="cp-wrap">
-            <div class="cp-h2">진행 중 ${active.length}</div>
-            ${active.map(c => crisisCard(c, false)).join('') || '<div class="cp-dim">진행 중인 격변이 없습니다.</div>'}
-            ${ended.length ? `<div class="cp-h2">지나감 ${ended.length}</div>${ended.map(c => crisisCard(c, false)).join('')}` : ''}
-            ${idle.length ? `<div class="cp-dim">아직 시작하지 않은 격변 ${idle.length}개 — 날짜 · 조건이 맞으면 시작됩니다.</div>` : ''}
+            <div class="cp-h2">${esc(i18n('sim.campaign.54'))} ${active.length}</div>
+            ${active.map(c => crisisCard(c, false)).join('') || `<div class="cp-dim">${esc(i18n('sim.campaign.72'))}</div>`}
+            ${ended.length ? `<div class="cp-h2">${esc(i18n('sim.campaign.84'))} ${ended.length}</div>${ended.map(c => crisisCard(c, false)).join('')}` : ''}
+            ${idle.length ? `<div class="cp-dim">${esc(i18n('sim.campaign.85'))} ${idle.length}${esc(i18n('sim.campaign.86'))}</div>` : ''}
         </div>`;
         bindDecisions(host);
     }
@@ -617,8 +617,8 @@
         const bar = document.getElementById('cpDispBar'), box = document.getElementById('cpDisp');
         if (!bar || !box) return;
         if(!R||ui.view!=='focus'){box._treeViewport?.destroy();box._treeViewport=null;}
-        if (!R) { bar.innerHTML = ''; box.innerHTML = '<div class="cp-empty">시나리오가 없습니다.</div>'; return; }
-        bar.innerHTML = `<div class="cp-seg"><button type="button" data-view="focus" class="${ui.view === 'focus' ? 'on' : ''}">방향성 트리</button><button type="button" data-view="crisis" class="${ui.view === 'crisis' ? 'on' : ''}">격변</button><button type="button" data-view="articles" class="${ui.view === 'articles' ? 'on' : ''}">기사</button></div><span class="cp-grow"></span><b class="cp-disp-title">${esc(R.data.title || '')}</b>`;
+        if (!R) { bar.innerHTML = ''; box.innerHTML = `<div class="cp-empty">${esc(i18n('sim.campaign.87'))}</div>`; return; }
+        bar.innerHTML = `<div class="cp-seg"><button type="button" data-view="focus" class="${ui.view === 'focus' ? 'on' : ''}">${esc(i18n('sim.campaign.62'))}</button><button type="button" data-view="crisis" class="${ui.view === 'crisis' ? 'on' : ''}">${esc(i18n('sim.campaign.49'))}</button><button type="button" data-view="articles" class="${ui.view === 'articles' ? 'on' : ''}">${esc(i18n('sim.news.10'))}</button></div><span class="cp-grow"></span><b class="cp-disp-title">${esc(R.data.title || '')}</b>`;
         bar.querySelectorAll('[data-view]').forEach(b => { b.onclick = () => { ui.view = b.dataset.view; renderDisp(); }; });
         if (ui.view === 'crisis') renderCrisisView(box); else if(ui.view === 'articles')renderArticles(box); else renderTree(box);
     }
@@ -628,7 +628,7 @@
         const oldWrap=box.querySelector('.cp-tree-wrap'), scroll=oldWrap?{x:oldWrap.scrollLeft,y:oldWrap.scrollTop}:{x:0,y:0};
         box._treeViewport?.destroy();box._treeViewport=null;
         const list = focusList();
-        if (!list.length) { box.innerHTML = '<div class="cp-empty">이 시나리오에는 방향성 트리가 없습니다.</div>'; return; }
+        if (!list.length) { box.innerHTML = `<div class="cp-empty">${esc(i18n('sim.campaign.88'))}</div>`; return; }
         const FV = window.HemiFocusView, st = FV ? FV.style(R.data) : { width: 150, height: 74, gapX: 30, gapY: 46 };
         const W = st.width, H = st.height, GX = st.gapX, GY = st.gapY, P = FV ? FV.padding(R.data,st) : 20;
         const pos = f => ({ x: P + (Number(f.x) || 0) * (W + GX), y: P + (Number(f.y) || 0) * (H + GY) });
@@ -644,20 +644,20 @@
                 if (Math.abs(p.y - b.y) < 1) { const x1 = Math.min(p.x, b.x) + W, x2 = Math.max(p.x, b.x); lines += `<line x1="${x1}" y1="${y}" x2="${x2}" y2="${y}" class="cp-excl"/><text x="${(x1 + x2) / 2}" y="${y + 5}" text-anchor="middle" class="cp-excl-t">✕</text>`; } });
         });
         const sel = ui.sel && focusById(ui.sel);
-        box.innerHTML = `<div class="cp-row cp-tree-tools"><span class="cp-dim">방향성 ${Object.keys(R.focus.done).length} / ${list.length} 완료</span><span class="cp-grow"></span><button type="button" class="cp-btn" data-tree-zoom="out" aria-label="트리 축소">−</button><span class="cp-dim" data-tree-zoom-label>${Math.round(ui.treeZoom*100)}%</span><button type="button" class="cp-btn" data-tree-zoom="in" aria-label="트리 확대">+</button><button type="button" class="cp-btn" data-tree-fit>전체 보기</button></div><div class="cp-tree-wrap"><div style="width:${maxX*ui.treeZoom}px;height:${maxY*ui.treeZoom}px"><div class="cp-tree hf-scope" id="cpFocusTree" style="width:${maxX}px;height:${maxY}px;transform:scale(${ui.treeZoom});transform-origin:top left">${FV ? FV.styleTag(st, '#cpFocusTree') : ''}
+        box.innerHTML = `<div class="cp-row cp-tree-tools"><span class="cp-dim">${esc(i18n('sim.campaign.48'))} ${Object.keys(R.focus.done).length} / ${list.length} ${esc(i18n('sim.campaign.90'))}</span><span class="cp-grow"></span><button type="button" class="cp-btn" data-tree-zoom="out" aria-label="${esc(i18n('sim.campaign.89'))}">−</button><span class="cp-dim" data-tree-zoom-label>${Math.round(ui.treeZoom*100)}%</span><button type="button" class="cp-btn" data-tree-zoom="in" aria-label="${esc(i18n('sim.campaign.91'))}">+</button><button type="button" class="cp-btn" data-tree-fit>${esc(i18n('sim.campaign.92'))}</button></div><div class="cp-tree-wrap"><div style="width:${maxX*ui.treeZoom}px;height:${maxY*ui.treeZoom}px"><div class="cp-tree hf-scope" id="cpFocusTree" style="width:${maxX}px;height:${maxY}px;transform:scale(${ui.treeZoom});transform-origin:top left">${FV ? FV.styleTag(st, '#cpFocusTree') : ''}
             <svg class="cp-tree-svg" width="${maxX}" height="${maxY}">${lines}</svg>
             ${list.map(f => { const p = pos(f), s = focusState(f), cur = R.focus.cur && R.focus.cur.id === f.id;
                 const nd = nowDay() ?? 0, pct = cur && R.focus.cur.days ? clamp((nd - (R.focus.cur.started ?? nd)) / R.focus.cur.days * 100, 0, 100) : 0;
-                const daysText = s === 'done' ? '완료' : cur ? `${period(Math.max(0,R.focus.cur.days-(nd-(R.focus.cur.started??nd))))} 남음` : `${period(Number(f.days)||0)}`;
+                const daysText = s === 'done' ? esc(i18n('sim.campaign.90')) : cur ? esc(i18n('sim.campaign.93', { nd: period(Math.max(0,R.focus.cur.days-(nd-(R.focus.cur.started??nd)))) })) : `${period(Number(f.days)||0)}`;
                 return `<button type="button" class="cp-node hf-node hf-${s} ${ui.sel === f.id ? 'sel' : ''}" data-node="${esc(f.id)}" style="left:${p.x}px;top:${p.y}px;width:${W}px;height:${H}px" title="${esc(f.title || f.id)}">
                     ${FV ? FV.inner(f, { status: s, daysText, progress: pct, current: cur }, st) : esc(f.title || f.id)}</button>`; }).join('')}
         </div></div></div>
-        ${sel ? `<div class="cp-node-detail"><div class="cp-row">${iconOf(sel, 'cp-li')}<b>${esc(sel.title || sel.id)}</b><span class="cp-grow"></span><span class="cp-dim">${period(Number(sel.days)||0)} · ${{ done: '완료', current: '진행 중', available: '고를 수 있음', locked: '아직 못 고름', blocked: '다른 길을 골라 막힘' }[focusState(sel)]}</span></div>
+        ${sel ? `<div class="cp-node-detail"><div class="cp-row">${iconOf(sel, 'cp-li')}<b>${esc(sel.title || sel.id)}</b><span class="cp-grow"></span><span class="cp-dim">${period(Number(sel.days)||0)} · ${{ done: esc(i18n('sim.campaign.90')), current: esc(i18n('sim.campaign.54')), available: esc(i18n('sim.campaign.79')), locked: esc(i18n('sim.campaign.94')), blocked: esc(i18n('sim.campaign.95')) }[focusState(sel)]}</span></div>
             ${sel.desc ? `<div class="cp-crisis-desc">${paras(fillT(sel.desc))}</div>` : ''}
-            ${(sel.prereq || []).length ? `<div class="cp-dim">먼저: ${sel.prereq.map(id => esc((focusById(id) || {}).title || id)).join(', ')}</div>` : ''}
-            ${(sel.any || []).length ? `<div class="cp-dim">이 중 하나 먼저: ${sel.any.map(id => esc((focusById(id) || {}).title || id)).join(', ')}</div>` : ''}
-            ${(sel.exclusive || []).length ? `<div class="cp-dim">함께 못 고름: ${sel.exclusive.map(id => esc((focusById(id) || {}).title || id)).join(', ')}</div>` : ''}
-            ${focusState(sel) === 'available' ? `<div class="cp-row"><button type="button" class="cp-btn cp-primary" data-start-focus="${esc(sel.id)}">이 방향으로 (${period(Number(sel.days)||0)})</button></div>` : ''}</div>` : '<div class="cp-dim cp-hint">휠로 확대/축소하고 휠 버튼을 누른 채 끌어 이동합니다. 상자를 눌러 방향성을 고르세요. 한 번에 하나씩 진행합니다.</div>'}`;
+            ${(sel.prereq || []).length ? `<div class="cp-dim">${esc(i18n('sim.campaign.96'))} ${sel.prereq.map(id => esc((focusById(id) || {}).title || id)).join(', ')}</div>` : ''}
+            ${(sel.any || []).length ? `<div class="cp-dim">${esc(i18n('sim.campaign.97'))} ${sel.any.map(id => esc((focusById(id) || {}).title || id)).join(', ')}</div>` : ''}
+            ${(sel.exclusive || []).length ? `<div class="cp-dim">${esc(i18n('sim.campaign.98'))} ${sel.exclusive.map(id => esc((focusById(id) || {}).title || id)).join(', ')}</div>` : ''}
+            ${focusState(sel) === 'available' ? `<div class="cp-row"><button type="button" class="cp-btn cp-primary" data-start-focus="${esc(sel.id)}">${esc(i18n('sim.campaign.99'))}${period(Number(sel.days)||0)})</button></div>` : ''}</div>` : `<div class="cp-dim cp-hint">${esc(i18n('sim.campaign.100'))}</div>`}`;
         const wrap=box.querySelector('.cp-tree-wrap');
         box._treeViewport=HemiTreeViewport.mount(wrap,box.querySelector('#cpFocusTree'),{
             zoom:ui.treeZoom,left:scroll.x,top:scroll.y,
@@ -670,7 +670,7 @@
     }
     function renderCrisisView(box) {
         const list = crisisList().filter(c => R.crises[c.id]?.status !== 'idle');
-        if (!list.length) { box.innerHTML = `<div class="cp-empty">아직 시작된 격변이 없습니다.${crisisList().length ? ` 이 시나리오의 격변 ${crisisList().length}개는 날짜 · 조건이 맞으면 시작됩니다.` : ''}</div>`; return; }
+        if (!list.length) { box.innerHTML = `<div class="cp-empty">${esc(i18n('sim.campaign.101'))}${crisisList().length ? esc((" " + i18n('sim.campaign.102', { crisisList: crisisList().length }))) : ''}</div>`; return; }
         const active = list.filter(c => R.crises[c.id].status === 'active');
         const pick = list.find(c => c.id === ui.sel) || active[0] || list[0];
         box.innerHTML = `${list.length > 1 ? `<div class="cp-row">${list.map(c => `<button type="button" class="cp-chip ${c === pick ? 'on' : ''} ${R.crises[c.id].status}" data-pick="${esc(c.id)}">${esc(c.title || c.id)}</button>`).join('')}</div>` : ''}${crisisCard(pick, true)}`;

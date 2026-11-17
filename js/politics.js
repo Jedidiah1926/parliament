@@ -30,25 +30,25 @@
             });
             return best;
         };
-        H.add({ id: 'equal', label: '동일 후보수 분배', kind: 'split', weights: members => members.map(() => 1),
-            hint: '총선 지역구를 참여 정당이 같은 수씩 나눠 맡습니다 (각자 상대적으로 강한 지역구부터). 대선 · 총리 선거는 같은 확률로 추첨해요.',
-            localHint: '권역 · 지역구를 참여 정당이 같은 수씩 나눠 맡아요 (각자 상대적으로 강한 곳부터).' });
-        H.add({ id: 'seats', label: '의석수 비례 분배', kind: 'split', weights: (members, ch) => members.map(p => seatsIn(p, ch)),
-            hint: '총선 지역구를 참여 정당의 지금 의석 비율대로 나눠 맡습니다 (각자 상대적으로 강한 지역구부터). 대선 · 총리 선거는 의석 비례 추첨으로 정해요.',
-            localHint: '권역 · 지역구를 참여 정당의 지금 의석 비율대로 나눠 맡아요 (각자 상대적으로 강한 곳부터).' });
-        H.add({ id: 'incumbent', label: '현직 우선', kind: 'pick',
+        H.add({ id: 'equal', label: i18n('sim.politics.1'), kind: 'split', weights: members => members.map(() => 1),
+            hint: i18n('sim.politics.2'),
+            localHint: i18n('sim.politics.3') });
+        H.add({ id: 'seats', label: i18n('sim.politics.4'), kind: 'split', weights: (members, ch) => members.map(p => seatsIn(p, ch)),
+            hint: i18n('sim.politics.5'),
+            localHint: i18n('sim.politics.6') });
+        H.add({ id: 'incumbent', label: i18n('sim.politics.7'), kind: 'pick',
             pick: (members, scoreOf, ctx) => holderOf(members, ctx.chamber, ctx.keys || (ctx.key != null ? [ctx.key] : [])),
             pickPres: members => {
                 const holder = (typeof electionKind !== 'undefined' && electionKind === 'pm') ? pm : president;
                 return members.find(p => holder && String(p.id) === String(holder.partyId)) || null;
             },
-            hint: '지역구마다 지금 그 지역구를 가진(지난 선거 당선) 참여 정당이 다시 나섭니다. 현직이 없으면 지지율 1위. 대선 · 총리 선거는 현직 대통령 · 총리의 정당이 참여했으면 그 정당이에요.',
-            localHint: '권역 · 지역구마다 그곳 지역구 의석을 가장 많이 가진 참여 정당이 나서요. 없으면 지지율 1위.' });
-        H.add({ id: 'lottery', label: '추첨', kind: 'pick',
+            hint: i18n('sim.politics.8'),
+            localHint: i18n('sim.politics.9') });
+        H.add({ id: 'lottery', label: i18n('sim.politics.10'), kind: 'pick',
             pick: members => members[Math.floor(Math.random() * members.length)] || null,
             pickPres: members => members[Math.floor(Math.random() * members.length)] || null,
-            hint: '지역구마다 참여 정당 중 한 곳을 같은 확률로 추첨합니다. 대선 · 총리 선거도 추첨이에요.',
-            localHint: '권역 · 지역구마다 참여 정당 중 한 곳을 같은 확률로 추첨해요.' });
+            hint: i18n('sim.politics.11'),
+            localHint: i18n('sim.politics.12') });
     }
 
     // ================= 공동교섭단체 =================
@@ -62,7 +62,7 @@
         chamber: ['house', 'senate', 'third'].includes(g.chamber) ? g.chamber : 'house',
     }));
     const membersOf = g => g.partyIds.map(partyById).filter(p => p && p.status !== 'banned' && p.status !== 'dissolved');
-    const groupName = g => g.name.trim() || membersOf(g).map(p => p.name).join(' · ') || '공동교섭단체';
+    const groupName = g => g.name.trim() || membersOf(g).map(p => p.name).join(' · ') || i18n('sim.help.14');
     const groupSeats = (g, ch) => membersOf(g).reduce((a, p) => a + seatsIn(p, ch || g.chamber), 0);
     const isValid = (g, ch) => membersOf(g).length >= 2 && (ch || g.chamber) === g.chamber && groupSeats(g, ch) >= Math.max(1, minSeats());
     window.HemiJointGroups = {
@@ -108,29 +108,29 @@
         const minor = min > 0 ? live.filter(p => seatsIn(p, ch0) < min && !inValid.has(String(p.id))) : [];
         const dot = c => `<span class="jg-dot" style="background:${esc(c)}"></span>`;
         box.innerHTML = `
-            <div class="jg-head"><span>🤝 공동교섭단체</span></div>
-            <div class="jg-dim">교섭단체 기준에 못 미치는 정당들이 함께 교섭단체를 이룹니다. 합쳐서 기준을 넘기면 성립하고, 위키 틀에서 비교섭단체 대신 그 정당들로 보이며 각주가 붙어요.</div>
-            <div class="jg-row"><span class="jg-dim">교섭단체 기준</span><input type="number" min="0" class="jg-num" data-act="min" value="${min}"><span class="jg-dim">석 ${min ? '' : '— 0이면 기준 없음 (위키 틀과 같은 값)'}</span>
-                ${min ? '' : `<button type="button" class="jg-btn" data-act="min20">${DEFAULT_MIN}석으로</button>`}</div>
+            <div class="jg-head"><span>${esc(i18n('sim.politics.13'))}</span></div>
+            <div class="jg-dim">${esc(i18n('sim.politics.14'))}</div>
+            <div class="jg-row"><span class="jg-dim">${esc(i18n('sim.history.117'))}</span><input type="number" min="0" class="jg-num" data-act="min" value="${min}"><span class="jg-dim">${esc(i18n('sim.party.11'))} ${min ? '' : esc(i18n('sim.politics.15'))}</span>
+                ${min ? '' : `<button type="button" class="jg-btn" data-act="min20">${DEFAULT_MIN}${esc(i18n('sim.politics.16'))}</button>`}</div>
             ${groups.map(g => {
                 const ms = membersOf(g), seats = groupSeats(g), ok = isValid(g);
                 const cand = parties.filter(p => seatsIn(p, g.chamber) > 0 && p.status !== 'dissolved' && p.status !== 'banned');
                 return `<div class="jg-card${ok ? ' jg-ok' : ''}" data-id="${esc(g.id)}">
-                    <div class="jg-row"><input type="text" data-f="name" value="${esc(g.name)}" maxlength="40" placeholder="교섭단체 이름 (비우면 정당 이름을 이어서)">
+                    <div class="jg-row"><input type="text" data-f="name" value="${esc(g.name)}" maxlength="40" placeholder="${esc(i18n('sim.politics.17'))}">
                         ${chs.length > 1 ? `<select data-f="chamber">${chs.map(c => `<option value="${c}" ${c === g.chamber ? 'selected' : ''}>${esc(chName(c))}</option>`).join('')}</select>` : ''}
-                        <button type="button" class="jg-btn" data-act="del" title="공동교섭단체 해산">✕</button></div>
-                    <div class="jg-parties">${cand.map(p => `<label class="jg-party${used(g, p.id) ? ' jg-off' : ''}"><input type="checkbox" data-p="${esc(p.id)}" ${g.partyIds.includes(String(p.id)) ? 'checked' : ''} ${used(g, p.id) ? 'disabled' : ''}>${dot(p.color)}${esc(p.name)} <span class="jg-dim">${seatsIn(p, g.chamber)}석</span></label>`).join('') || '<span class="jg-dim">의석이 있는 정당이 없습니다</span>'}</div>
-                    <div class="jg-status">${ms.length < 2 ? '정당을 두 곳 이상 고르세요.' : ok
-                        ? `✔ 교섭단체 성립 — ${esc(groupName(g))} ${seats}석 (기준 ${Math.max(1, min)}석)`
-                        : `✘ 기준 미달 — ${seats}석 / ${Math.max(1, min)}석`}</div>
+                        <button type="button" class="jg-btn" data-act="del" title="${esc(i18n('sim.politics.18'))}">✕</button></div>
+                    <div class="jg-parties">${cand.map(p => `<label class="jg-party${used(g, p.id) ? ' jg-off' : ''}"><input type="checkbox" data-p="${esc(p.id)}" ${g.partyIds.includes(String(p.id)) ? 'checked' : ''} ${used(g, p.id) ? 'disabled' : ''}>${dot(p.color)}${esc(p.name)} <span class="jg-dim">${seatsIn(p, g.chamber)}${esc(i18n('sim.party.11'))}</span></label>`).join('') || `<span class="jg-dim">${esc(i18n('sim.politics.19'))}</span>`}</div>
+                    <div class="jg-status">${ms.length < 2 ? esc(i18n('sim.vassals.93')) : ok
+                        ? i18n('sim.politics.20', { groupName: esc(groupName(g)), seats, v: Math.max(1, min) })
+                        : esc(i18n('sim.politics.21', { seats, v: Math.max(1, min) }))}</div>
                 </div>`;
             }).join('')}
-            <button type="button" class="jg-add" data-act="add">+ 공동교섭단체 구성</button>
+            <button type="button" class="jg-add" data-act="add">${esc(i18n('sim.politics.22'))}</button>
             <div class="jg-sum">
-                <div class="jg-sum-title">교섭단체 현황 — ${esc(chName(ch0))}</div>
-                ${solo.map(p => `<div class="jg-line">${dot(p.color)}${esc(p.name)} <span class="jg-dim">${seatsIn(p, ch0)}석</span></div>`).join('')}
-                ${groups.filter(g => isValid(g, ch0)).map(g => `<div class="jg-line">${membersOf(g).map(p => dot(p.color)).join('')}${esc(groupName(g))} <span class="jg-dim">공동교섭단체 · ${groupSeats(g, ch0)}석</span></div>`).join('')}
-                ${minor.length ? `<div class="jg-line jg-dim">비교섭단체: ${minor.map(p => `${esc(p.name)} ${seatsIn(p, ch0)}석`).join(', ')}</div>` : ''}
+                <div class="jg-sum-title">${esc(i18n('sim.politics.23'))} ${esc(chName(ch0))}</div>
+                ${solo.map(p => `<div class="jg-line">${dot(p.color)}${esc(p.name)} <span class="jg-dim">${seatsIn(p, ch0)}${esc(i18n('sim.party.11'))}</span></div>`).join('')}
+                ${groups.filter(g => isValid(g, ch0)).map(g => `<div class="jg-line">${membersOf(g).map(p => dot(p.color)).join('')}${esc(groupName(g))} <span class="jg-dim">${esc(i18n('sim.politics.24'))} ${groupSeats(g, ch0)}${esc(i18n('sim.party.11'))}</span></div>`).join('')}
+                ${minor.length ? `<div class="jg-line jg-dim">${esc(i18n('sim.politics.25'))} ${minor.map(p => i18n('sim.politics.26', { name: esc(p.name), ch0: seatsIn(p, ch0) })).join(', ')}</div>` : ''}
             </div>`;
         const minIn = box.querySelector('[data-act="min"]');
         const setMin = v => { if (window.HemiHistory && window.HemiHistory.wiki) window.HemiHistory.wiki.groupMin = Math.max(0, Number(v) || 0); render(); };
@@ -231,11 +231,11 @@
     }
     const RULES = {
         normal: null,
-        martial: { name: '계엄령', side: 0.5, opp: 1.5, sideCut: 0.8, sideText: '활동 금지 대신 부정선거 규탄 여론 — 지지율 20% 하락', sideLabel: '정부 · 여당' },
-        absolute: { name: '전제군주정', side: 0.3, opp: 1.5, sideCut: 0.75, sideText: '활동 금지 대신 왕실 스캔들 — 지지율 25% 하락 (혁명 확률 상승)', sideLabel: '왕당파' },
-        junta: { name: '군정 (관제 선거)', side: 0.2, opp: 1.5, sideCut: 0.85, sideText: '활동 금지 대신 관제 선거 의혹 — 지지율 15% 하락', sideLabel: '군부 쪽 정당' },
+        martial: { name: i18n('sim.core.46'), side: 0.5, opp: 1.5, sideCut: 0.8, sideText: i18n('sim.politics.27'), sideLabel: i18n('sim.politics.28') },
+        absolute: { name: i18n('sim.royal.60'), side: 0.3, opp: 1.5, sideCut: 0.75, sideText: i18n('sim.politics.29'), sideLabel: i18n('sim.politics.30') },
+        junta: { name: i18n('sim.politics.31'), side: 0.2, opp: 1.5, sideCut: 0.85, sideText: i18n('sim.politics.32'), sideLabel: i18n('sim.politics.33') },
     };
-    const OPP_TEXT = { martial: '활동 금지 + 지지율 절반 (계엄 당국의 처벌)', absolute: '활동 금지 + 지지율 절반 (왕실의 처벌)', junta: '강제 해산(활동 금지) + 지지율 절반' };
+    const OPP_TEXT = { martial: i18n('sim.politics.34'), absolute: i18n('sim.politics.35'), junta: i18n('sim.politics.36') };
     function cutSupport(pid, factor) {
         (typeof chamberList === 'function' ? chamberList() : ['house']).forEach(ch => {
             const st = elecStore?.[ch]?.[pid];
@@ -251,7 +251,7 @@
         },
         punish(p) {
             const r = regime(), R = RULES[r];
-            if (!R) return { ban: true, text: '활동 금지' };
+            if (!R) return { ban: true, text: i18n('sim.vote.32') };
             if (onSide(p, r)) { cutSupport(p.id, R.sideCut); return { ban: false, text: R.sideText }; }
             cutSupport(p.id, 0.5);
             return { ban: true, text: OPP_TEXT[r] };
@@ -283,10 +283,10 @@
         const r = regime(), R = RULES[r];
         const tries = parties.filter(p => p.fraudAttempt);
         box.innerHTML = !R
-            ? `<div class="fr-head">정권 상태: 일반</div><div class="fr-dim">발각 확률은 그대로, 발각되면 활동 금지. 계엄령 · 전제군주정 · 군정(관제 선거)에서는 정권 쪽 정당은 덜 발각되고 처벌도 가벼워요.</div>`
-            : `<div class="fr-head">정권 상태: ${esc(R.name)}</div>
-               <div class="fr-dim">${esc(R.sideLabel)} 발각 확률 ×${R.side} · 발각 시 ${esc(R.sideText)}<br>야당 발각 확률 ×${R.opp} · 발각 시 ${esc(OPP_TEXT[r])}</div>
-               ${tries.length ? `<div class="fr-list">${tries.map(p => { const base = p.fraudAttempt.catchChance ?? 0, eff = window.HemiFraudRegime.catchChance(p, base); return `<div>${esc(p.name)} <span class="fr-dim">${onSide(p, r) ? esc(R.sideLabel) : '야당'}</span> — 실제 발각 확률 <b>${eff}%</b> <span class="fr-dim">(기본 ${base}%)</span></div>`; }).join('')}</div>` : ''}`;
+            ? `<div class="fr-head">${esc(i18n('sim.politics.37'))}</div><div class="fr-dim">${esc(i18n('sim.politics.38'))}</div>`
+            : `<div class="fr-head">${esc(i18n('sim.politics.39'))} ${esc(R.name)}</div>
+               <div class="fr-dim">${esc(R.sideLabel)} ${esc(i18n('sim.politics.40'))}${R.side} ${esc(i18n('sim.politics.41'))} ${esc(R.sideText)}<br>${esc(i18n('sim.politics.42'))}${R.opp} ${esc(i18n('sim.politics.41'))} ${esc(OPP_TEXT[r])}</div>
+               ${tries.length ? `<div class="fr-list">${tries.map(p => { const base = p.fraudAttempt.catchChance ?? 0, eff = window.HemiFraudRegime.catchChance(p, base); return `<div>${esc(p.name)} <span class="fr-dim">${onSide(p, r) ? esc(R.sideLabel) : esc(i18n('sim.district.164'))}</span> ${esc(i18n('sim.politics.43'))} <b>${eff}%</b> <span class="fr-dim">${esc(i18n('sim.politics.44'))} ${base}%)</span></div>`; }).join('')}</div>` : ''}`;
     }
     const origRF = window.renderFraudTab;
     if (typeof origRF === 'function') window.renderFraudTab = function () { const res = origRF.apply(this, arguments); try { renderBanner(); } catch (e) { /* 화면 준비 전 */ } return res; };
@@ -297,8 +297,8 @@
         let box = document.getElementById('econManaged');
         if (!(window.HemiCoup && window.HemiCoup.junta)) { if (box) box.remove(); return; }
         if (!box) { box = el('<div id="econManaged" class="fr-box"></div>'); host.insertBefore(box, host.firstChild); }
-        box.innerHTML = `<label class="fr-row"><input type="checkbox" ${managed ? 'checked' : ''}> 관제 선거 허용</label>
-            <div class="fr-dim">켜면 군정 중에도 총선 · 대선 · 지방선거를 치릅니다. 군부 쪽 정당의 부정선거는 거의 들키지 않고(×0.2) 들켜도 지지율만 떨어지지만, 야당이 들키면 강제 해산돼요.</div>`;
+        box.innerHTML = `<label class="fr-row"><input type="checkbox" ${managed ? 'checked' : ''}> ${esc(i18n('sim.politics.45'))}</label>
+            <div class="fr-dim">${esc(i18n('sim.politics.46'))}</div>`;
         box.querySelector('input').onchange = e => { managed = e.target.checked; };
     }
     const origSwitch = window.switchSubTab;

@@ -71,11 +71,11 @@ html[data-theme-family="modern"] .hemi-mp-name { color: var(--m-text, #18181b); 
         overlay = document.createElement('div');
         overlay.className = 'hemi-mp-overlay';
         overlay.innerHTML = `<div class="hemi-mp" role="dialog" aria-modal="true" aria-labelledby="hemiMpTitle">
-            <div class="hemi-mp-head"><div><div class="hemi-mp-title" id="hemiMpTitle">${esc(t('맵 프리셋'))}</div>
-                <div class="hemi-mp-sub">${esc(t('나라를 고르면 그 나라의 행정구역이 지역구 지도가 됩니다. 고른 뒤 지역구를 눌러 의석 수 · 인구 · 성향을 정하세요.'))}</div></div>
-                <button type="button" class="hemi-mp-x" aria-label="${esc(t('닫기'))}">×</button></div>
-            <div class="hemi-mp-grid"><div class="hemi-mp-msg">${esc(t('지도를 불러오는 중…'))}</div></div>
-            <div class="hemi-mp-foot">${esc(t('지도 자료: Natural Earth (공개 도메인) · 제작자가 적힌 지도는 커뮤니티 제작'))}</div></div>`;
+            <div class="hemi-mp-head"><div><div class="hemi-mp-title" id="hemiMpTitle">${esc(t(i18n('sim.contentTerritory.12')))}</div>
+                <div class="hemi-mp-sub">${esc(t(i18n('sim.mappresets.1')))}</div></div>
+                <button type="button" class="hemi-mp-x" aria-label="${esc(t(i18n('sim.main.2')))}">×</button></div>
+            <div class="hemi-mp-grid"><div class="hemi-mp-msg">${esc(t(i18n('sim.mappresets.2')))}</div></div>
+            <div class="hemi-mp-foot">${esc(t(i18n('sim.mappresets.3')))}</div></div>`;
         overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
         overlay.querySelector('.hemi-mp-x').onclick = close;
         document.addEventListener('keydown', onKey, true);
@@ -83,14 +83,14 @@ html[data-theme-family="modern"] .hemi-mp-name { color: var(--m-text, #18181b); 
         const grid = overlay.querySelector('.hemi-mp-grid');
         let maps;
         try { maps = await load(); }
-        catch (e) { grid.innerHTML = `<div class="hemi-mp-msg">${esc(t('지도를 불러오지 못했습니다.'))}</div>`; return; }
+        catch (e) { grid.innerHTML = `<div class="hemi-mp-msg">${esc(t(i18n('sim.mappresets.4')))}</div>`; return; }
         if (!overlay) return;
         const en = isEn();
         grid.innerHTML = maps.map((m, i) => `<button type="button" class="hemi-mp-card" data-i="${i}">
             <svg class="hemi-mp-thumb" viewBox="${esc(m.viewBox)}" preserveAspectRatio="xMidYMid meet" aria-hidden="true">${m.districts.map(d => `<path d="${d.d}"/>`).join('')}</svg>
             <span class="hemi-mp-name">${esc(en ? m.name.en : m.name.ko)}</span>
-            <span class="hemi-mp-desc">${esc(en ? m.desc.en : m.desc.ko)} · ${m.count}${en ? '' : '개 지역구'}</span>${m.author ? `
-            <span class="hemi-mp-author">${esc(t('제작자'))}: ${esc(m.author)}</span>` : ''}</button>`).join('');
+            <span class="hemi-mp-desc">${esc(en ? m.desc.en : m.desc.ko)} · ${m.count}${en ? '' : i18n('sim.mappresets.5')}</span>${m.author ? `
+            <span class="hemi-mp-author">${esc(t(i18n('sim.mappresets.6')))}: ${esc(m.author)}</span>` : ''}</button>`).join('');
         grid.querySelectorAll('.hemi-mp-card').forEach(b => { b.onclick = () => choose(maps[+b.dataset.i]); });
         const first = grid.querySelector('.hemi-mp-card'); if (first) first.focus();
     }
@@ -103,7 +103,7 @@ html[data-theme-family="modern"] .hemi-mp-name { color: var(--m-text, #18181b); 
             close();
             if (typeof window.districtApplyMapData !== 'function') return;
             window.districtApplyMapData({ viewBox: map.viewBox, shapes }, labels);
-            if (typeof window.showKbdToast === 'function') window.showKbdToast(`${en ? map.name.en : map.name.ko} · ${map.count}${en ? ' districts' : '개 지역구'}`);
+            if (typeof window.showKbdToast === 'function') window.showKbdToast(`${en ? map.name.en : map.name.ko} · ${map.count}${en ? ' districts' : i18n('sim.mappresets.5')}`);
         };
         if (typeof window.districtConfirmReplaceMap === 'function') window.districtConfirmReplaceMap(apply, () => {});
         else apply();

@@ -7,18 +7,18 @@
         let timer=0,generation=0,busy=false,lastSave=0,reason='';
         const state=()=>api.state(),clock=()=>state()?.clock;
         function blocked() {
-            if(document.body.classList.contains('no-open-tab'))return '플레이할 세이브를 열어 주세요';
-            if(document.hidden)return '다른 화면으로 이동해 일시정지';
-            if([...document.querySelectorAll('[role="dialog"][aria-modal="true"]')].some(el=>el.getClientRects().length)||window.HemiScriptMods?.state?.queue?.length||state()?.articles?.queue?.length)return '소식을 확인한 뒤 진행하세요';
-            const settings=document.getElementById('settingsPanelLayer');if(settings&&getComputedStyle(settings).display!=='none')return '설정을 닫은 뒤 진행하세요';
-            if(window.isDatePanelOpen?.()||window.isSavePanelOpen?.())return '열린 설정을 닫은 뒤 진행하세요';
+            if(document.body.classList.contains('no-open-tab'))return i18n('sim.campaignTime.1');
+            if(document.hidden)return i18n('sim.campaignTime.2');
+            if([...document.querySelectorAll('[role="dialog"][aria-modal="true"]')].some(el=>el.getClientRects().length)||window.HemiScriptMods?.state?.queue?.length||state()?.articles?.queue?.length)return i18n('sim.campaignTime.3');
+            const settings=document.getElementById('settingsPanelLayer');if(settings&&getComputedStyle(settings).display!=='none')return i18n('sim.campaignTime.4');
+            if(window.isDatePanelOpen?.()||window.isSavePanelOpen?.())return i18n('sim.campaignTime.5');
             return '';
         }
         function stopTimer(){clearTimeout(timer);timer=0;generation++;}
         function save(){lastSave=performance.now();api.save();}
         // 시간이 흐르며 하는 저장 — 화면을 멈추지 않게 모아서 (일시정지 · 속도 바꾸기 · 창 닫기는 위의 save로 바로)
         function saveSoon(){lastSave=performance.now();(api.saveSoon||api.save)();}
-        function pause(message='일시정지') {
+        function pause(message=i18n('sim.campaignTime.6')) {
             stopTimer();const c=clock();if(!c)return false;
             const changed=!c.paused;c.paused=true;reason=message;render();if(changed)save();return true;
         }
@@ -30,7 +30,7 @@
         function step(mode) {
             const s=state(),c=s?.clock;if(!c||c.mode!==mode||busy)return false;
             const block=blocked();if(block){if(mode==='realtime')pause(block);else {reason=block;render();}return false;}
-            const next=Clock.advance(c);if(!next){pause('달력 범위의 끝입니다');return false;}
+            const next=Clock.advance(c);if(!next){pause(i18n('sim.campaignTime.7'));return false;}
             busy=true;
             try{
                 s.clock=next;
@@ -66,26 +66,26 @@
                     const focused=host.contains(document.activeElement)?document.activeElement:null;
                     const focusRole=focused?.hasAttribute('data-campaign-toggle')?'[data-campaign-toggle]':focused?.hasAttribute('data-campaign-next-turn')?'[data-campaign-next-turn]':null;
                     host.dataset.playbackKey=key;
-                    host.innerHTML=`<span class="cp-time-label">${world?'일반 게임':'시나리오'} · ${c.mode==='turn'?'턴제':'실시간'}</span><strong class="cp-time-date"></strong><span class="cp-time-controls">${c.mode==='turn'?`<button type="button" class="cp-time-button" data-campaign-next-turn ${busy?'disabled':''}>다음 턴</button><span class="cp-time-note">1턴 = 1일</span>`:`<button type="button" class="cp-time-button" data-campaign-toggle>${c.paused?'▶ 진행':'Ⅱ 일시정지'}</button><label class="cp-time-speed-label">속도 <select data-campaign-speed aria-label="${world?'일반 게임':'시나리오'} 진행 속도">${[1,2,3,4,5].map(n=>`<option value="${n}" ${n===c.speed?'selected':''}>${n}</option>`).join('')}</select></label><span class="cp-time-note"></span>`}</span>`;
+                    host.innerHTML=`<span class="cp-time-label">${world?i18n('sim.campaignTime.8'):i18n('sim.campaignTime.9')} · ${c.mode==='turn'?i18n('sim.campaignTime.10'):i18n('sim.campaignTime.11')}</span><strong class="cp-time-date"></strong><span class="cp-time-controls">${c.mode==='turn'?`<button type="button" class="cp-time-button" data-campaign-next-turn ${busy?'disabled':''}>${escapeHtmlText(i18n('sim.campaignTime.12'))}</button><span class="cp-time-note">${escapeHtmlText(i18n('sim.campaignTime.13'))}</span>`:`<button type="button" class="cp-time-button" data-campaign-toggle>${c.paused?escapeHtmlText(i18n('sim.campaignTime.14')):escapeHtmlText(i18n('sim.campaignTime.15'))}</button><label class="cp-time-speed-label">${escapeHtmlText(i18n('sim.siege.60'))} <select data-campaign-speed aria-label="${escapeHtmlText(i18n('sim.campaignTime.speedOf', { what: world ? i18n('sim.campaignTime.8') : i18n('sim.campaignTime.9') }))}">${[1,2,3,4,5].map(n=>`<option value="${n}" ${n===c.speed?'selected':''}>${n}</option>`).join('')}</select></label><span class="cp-time-note"></span>`}</span>`;
                     host.querySelector('[data-campaign-next-turn]')?.addEventListener('click',nextTurn);
                     host.querySelector('[data-campaign-toggle]')?.addEventListener('click',()=>clock()?.paused?play():pause());
                     host.querySelector('[data-campaign-speed]')?.addEventListener('change',e=>speed(+e.target.value));
                     if(focusRole)host.querySelector(focusRole)?.focus({preventScroll:true});
                 }
                 host.querySelector('.cp-time-date').textContent=Clock.label(c);
-                if(c.mode==='realtime')host.querySelector('.cp-time-note').textContent=c.paused?(reason||'일시정지'):'진행 중';
+                if(c.mode==='realtime')host.querySelector('.cp-time-note').textContent=c.paused?(reason||i18n('sim.campaignTime.6')):i18n('sim.campaignTime.16');
             });
             const locked=root.hasAttribute('data-campaign-clock')||root.hasAttribute('data-world-clock');
             for(const id of ['nationDateYear','nationDateMonth','nationDateDay']){const el=document.getElementById(id);if(el)el.disabled=locked;}
             if(c){const date=document.getElementById('dispInfoDate');if(date)date.textContent=Clock.label(c);}
         }
-        function reset(){stopTimer();busy=false;lastSave=performance.now();reason=clock()?'불러온 게임 · 일시정지':'';if(clock())clock().paused=true;api.mirror();render();}
+        function reset(){stopTimer();busy=false;lastSave=performance.now();reason=clock()?i18n('sim.campaignTime.17'):'';if(clock())clock().paused=true;api.mirror();render();}
         // Observe direct modal additions/removals, not every clock label update.
         new MutationObserver(records=>{
             if(!clock()||!records.some(r=>r.type==='attributes'||[...r.addedNodes,...r.removedNodes].some(n=>n.nodeType===1&&(n.matches?.('[role="dialog"]')||n.querySelector?.('[role="dialog"]')))))return;
             if(!clock().paused&&blocked())pause(blocked());else render();
         }).observe(document.body,{childList:true,attributes:true,attributeFilter:['class']});
-        document.addEventListener('visibilitychange',()=>{if(document.hidden&&clock())pause('다른 화면으로 이동해 일시정지');else render();});
+        document.addEventListener('visibilitychange',()=>{if(document.hidden&&clock())pause(i18n('sim.campaignTime.2'));else render();});
         document.addEventListener('keydown',e=>{
             if(e.repeat&&e.target.closest?.('[data-campaign-next-turn]')){e.preventDefault();return;}
             if(e.code!=='Space'||e.repeat||e.ctrlKey||e.metaKey||e.altKey||!clock()||clock().mode!=='realtime'||/^(INPUT|TEXTAREA|SELECT|BUTTON)$/.test(e.target.tagName)||e.target.closest?.('[role="button"],[contenteditable="true"]')||blocked())return;

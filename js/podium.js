@@ -11,7 +11,7 @@
     // 봉쇄 돌파 · 의장석 점거 애니메이션 (1.6.4 국회공성전 — js/siege.js, 본 게임에 들어감)
     const hasAnim = () => true;
 
-    const MODES = [['always', '항상 표시'], ['anim', '애니메이션에서만'], ['occupy', '의장석 점거 때만']];
+    const MODES = [['always', i18n('sim.podium.1')], ['anim', i18n('sim.podium.2')], ['occupy', i18n('sim.podium.3')]];
     let mode = 'anim';
 
     const origGet = window.getAppState;
@@ -86,10 +86,10 @@
             box.style.marginTop = '16px';
             anchor.parentElement.insertBefore(box, anchor.nextSibling);
         }
-        const modes = hasAnim() ? MODES : [['always', '항상 표시'], ['anim', '표시 안 함']];
-        box.innerHTML = `<label style="color:#888;font-size:0.8rem;margin-bottom:6px;display:block;">의장석 표시</label>
+        const modes = hasAnim() ? MODES : [['always', i18n('sim.podium.1')], ['anim', i18n('sim.podium.4')]];
+        box.innerHTML = `<label style="color:#888;font-size:0.8rem;margin-bottom:6px;display:block;">${escapeHtmlText(i18n('sim.podium.5'))}</label>
             <div class="system-radio-group" style="margin-bottom:6px;">${modes.map(([k, t]) => `<button type="button" class="system-radio-btn ${mode === k || (k === 'anim' && !hasAnim() && mode === 'occupy') ? 'active' : ''}" data-podium="${k}">${t}</button>`).join('')}</div>
-            <div style="color:#666;font-size:0.72rem;">${hasAnim() ? '반원 가운데에 의장석(단상과 의장)을 그립니다. "항상 표시"면 반원 화면에도 늘 보이고, 봉쇄 돌파 · 의장석 점거 애니메이션에도 나옵니다.' : '반원 가운데(의석 수 · 로고 위)에 의장석(단상과 의장)을 그립니다.'}</div>`;
+            <div style="color:#666;font-size:0.72rem;">${hasAnim() ? escapeHtmlText(i18n('sim.podium.6')) : escapeHtmlText(i18n('sim.podium.7'))}</div>`;
         box.querySelectorAll('[data-podium]').forEach(b => {
             b.onclick = () => {
                 mode = b.dataset.podium;

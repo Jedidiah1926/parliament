@@ -38,7 +38,7 @@
         const x = (h >>> 0).toString(16).toUpperCase().padStart(8, '0');
         return `#${x.slice(0, 3)}-${x.slice(3, 5)}`;
     }
-    const RISK = v => (v < 20 ? ['낮음', 'lo'] : v < 45 ? ['보통', 'mid'] : v < 70 ? ['높음', 'hi'] : ['치명적', 'crit']);
+    const RISK = v => (v < 20 ? [i18n('sim.fraudportal.1'), 'lo'] : v < 45 ? [i18n('sim.siege.63'), 'mid'] : v < 70 ? [i18n('sim.fraudportal.2'), 'hi'] : [i18n('sim.fraudportal.3'), 'crit']);
     // 가짜 주소 — 세이브마다 달라 보이게 국가명으로
     function onion() {
         const nation = document.getElementById('nationNameInput')?.value || 'state';
@@ -56,35 +56,35 @@
             const fa = p.fraudAttempt, risk = RISK(fa.catchChance ?? 0);
             const names = (fa.riggedDistricts || []).map(k => (typeof districtNames !== 'undefined' && (districtNames[fa.chamber]?.[k] || districtNames.house?.[k])) || k);
             return `<div class="fp-op">
-                <div class="fp-op-head"><span class="fp-code">${codeOf(p.id + ':' + fa.chamber)}</span><i class="fp-dot" style="--pc:${esc(p.color)}"></i><b>${esc(p.name)}</b><span class="fp-tag">${esc(chName(fa.chamber))}</span><span class="fp-status">● 대기 — 다음 총선 개표 때 실행</span></div>
+                <div class="fp-op-head"><span class="fp-code">${codeOf(p.id + ':' + fa.chamber)}</span><i class="fp-dot" style="--pc:${esc(p.color)}"></i><b>${esc(p.name)}</b><span class="fp-tag">${esc(chName(fa.chamber))}</span><span class="fp-status">${esc(i18n('sim.fraudportal.4'))}</span></div>
                 <div class="fp-op-body">
-                    <div><span class="fp-k">득표 부풀리기</span><span class="fp-v">+${fa.boostPct || 0}%p</span></div>
-                    <div><span class="fp-k">조작 지역구</span><span class="fp-v">${names.length}곳</span></div>
-                    <div class="fp-risk ${risk[1]}"><span class="fp-k">발각 위험</span><span class="fp-v">${fa.catchChance ?? 0}% · ${risk[0]}</span><span class="fp-meter"><span style="width:${Math.min(100, fa.catchChance ?? 0)}%"></span></span></div>
+                    <div><span class="fp-k">${esc(i18n('sim.fraudportal.5'))}</span><span class="fp-v">+${fa.boostPct || 0}%p</span></div>
+                    <div><span class="fp-k">${esc(i18n('sim.fraudportal.6'))}</span><span class="fp-v">${esc(i18n('sim.common.places', { count: names.length }))}</span></div>
+                    <div class="fp-risk ${risk[1]}"><span class="fp-k">${esc(i18n('sim.fraudportal.8'))}</span><span class="fp-v">${fa.catchChance ?? 0}% · ${risk[0]}</span><span class="fp-meter"><span style="width:${Math.min(100, fa.catchChance ?? 0)}%"></span></span></div>
                 </div>
-                <div class="fp-m fp-escrow"><span>🔐 에스크로 예치됨</span><span>판매자 ghost_ballot · ★ 4.9</span></div>
-                ${names.length ? `<div class="fp-dist">${names.slice(0, 12).map(n => `<span>${esc(n)}</span>`).join('')}${names.length > 12 ? `<span>외 ${names.length - 12}곳</span>` : ''}</div>` : ''}
+                <div class="fp-m fp-escrow"><span>${esc(i18n('sim.fraudportal.9'))}</span><span>${esc(i18n('sim.fraudportal.10'))}</span></div>
+                ${names.length ? `<div class="fp-dist">${names.slice(0, 12).map(n => `<span>${esc(n)}</span>`).join('')}${names.length > 12 ? `<span>${esc(i18n('sim.common.morePlaces', { count: names.length - 12 }))}</span>` : ''}</div>` : ''}
             </div>`;
-        }).join('') : '<div class="fp-empty">&gt; 진행 중인 의뢰 없음. 왼쪽에서 정당을 골라 거래를 시작하세요<span class="fp-cursor">_</span></div>';
+        }).join('') : `<div class="fp-empty">${esc(i18n('sim.fraudportal.12'))}<span class="fp-cursor">_</span></div>`;
         const led = ledger.length ? ledger.map(r => (r.ops || []).map(o => `<div class="fp-led ${o.caught ? 'bad' : 'ok'}">
-                <span class="fp-led-st">${o.caught ? '✘ 발각' : '✔ 은폐됨'}</span>
+                <span class="fp-led-st">${o.caught ? esc(i18n('sim.fraudportal.13')) : esc(i18n('sim.fraudportal.14'))}</span>
                 <i class="fp-dot" style="--pc:${esc(o.color)}"></i><span class="fp-led-name">${esc(o.name)}</span>
-                <span class="fp-led-meta">${esc([r.title, r.year].filter(Boolean).join(' '))} · ${esc(r.chamberName || '')}${r.date ? ` · ${esc(r.date)}` : ''} · +${o.boostPct}%p · ${o.rigged}곳 · 위험 ${o.catchChance}%</span>
-            </div>`).join('')).join('') : '<div class="fp-empty">&gt; 기록 없음</div>';
+                <span class="fp-led-meta">${esc([r.title, r.year].filter(Boolean).join(' '))} · ${esc(r.chamberName || '')}${r.date ? ` · ${esc(r.date)}` : ''} · +${o.boostPct}%p · ${o.rigged}${esc(i18n('sim.fraudportal.15'))} ${o.catchChance}%</span>
+            </div>`).join('')).join('') : `<div class="fp-empty">${esc(i18n('sim.fraudportal.16'))}</div>`;
         box.innerHTML = `<div class="fp">
-            <div class="fp-bar"><span class="fp-onion">🧅</span><span class="fp-url">http://${esc(onion())}</span><span class="fp-sec">🔒 3홉 회로 · 추적 불가</span></div>
+            <div class="fp-bar"><span class="fp-onion">🧅</span><span class="fp-url">http://${esc(onion())}</span><span class="fp-sec">${esc(i18n('sim.fraudportal.17'))}</span></div>
             <div class="fp-hero">
                 <div class="fp-logo" data-text="BLACK BALLOT">BLACK <em>BALLOT</em></div>
-                <div class="fp-sub">검은 투표함 — 표 중개 · 개표 조정 · 흔적 정리</div>
-                <div class="fp-warn">이 페이지는 존재하지 않습니다. 당신은 아무것도 보지 않았습니다.</div>
-                <div class="fp-m fp-cats"><span class="on">전체</span><span>표 매수</span><span>개표 조정</span><span>흔적 정리</span><span>증인 관리</span></div>
+                <div class="fp-sub">${esc(i18n('sim.fraudportal.18'))}</div>
+                <div class="fp-warn">${esc(i18n('sim.fraudportal.19'))}</div>
+                <div class="fp-m fp-cats"><span class="on">${esc(i18n('sim.contentVote.21'))}</span><span>${esc(i18n('sim.fraudportal.20'))}</span><span>${esc(i18n('sim.fraudportal.21'))}</span><span>${esc(i18n('sim.fraudportal.22'))}</span><span>${esc(i18n('sim.fraudportal.23'))}</span></div>
             </div>
-            <div class="fp-sec-h"><i class="fp-br">[ </i>진행 중인 의뢰 <b>${ops.length}</b><i class="fp-br"> ]</i></div>
+            <div class="fp-sec-h"><i class="fp-br">[ </i>${esc(i18n('sim.fraudportal.24'))} <b>${ops.length}</b><i class="fp-br"> ]</i></div>
             ${opsHtml}
             <div id="fpMaps"></div>
-            <div class="fp-sec-h"><i class="fp-br">[ </i>거래 기록<i class="fp-br"> ]</i></div>
+            <div class="fp-sec-h"><i class="fp-br">[ </i>${esc(i18n('sim.fraudportal.25'))}<i class="fp-br"> ]</i></div>
             <div class="fp-ledger">${led}</div>
-            <div class="fp-foot">세션 ${codeOf(onion()).slice(1)} · 로그는 접속을 끊으면 지워집니다 · 발각되면 그 정당은 활동 금지</div>
+            <div class="fp-foot">${esc(i18n('sim.fraudportal.26'))} ${codeOf(onion()).slice(1)} ${esc(i18n('sim.fraudportal.27'))}</div>
         </div>`;
         // 표적 지역구 지도 — 의뢰가 걸린 원마다 (지도 방식 지역구일 때). 조작 지역구는 의뢰한 정당 색으로 채우고,
         // 지역구를 누르면 고른 정당의 조작 지역구로 넣고 · 다시 누르면 뺀다 (왼쪽 목록과 같은 값)
@@ -104,10 +104,10 @@
             (districtSvgMapFor(ch).shapes || []).forEach(sh => { fills[sh.key] = rig[sh.key] ? rig[sh.key].color : inCh(sh.key) ? '#0b0f0c' : '#050605'; });
             const wrap = document.createElement('div');
             wrap.className = 'fp-map';
-            wrap.innerHTML = `<div class="fp-sec-h"><i class="fp-br">[ </i>표적 지역구 — ${esc(chName(ch))}<i class="fp-br"> ]</i></div>
+            wrap.innerHTML = `<div class="fp-sec-h"><i class="fp-br">[ </i>${esc(i18n('sim.fraudportal.28'))} ${esc(chName(ch))}<i class="fp-br"> ]</i></div>
                 ${opsCh.length > 1 ? `<div class="fp-pick">${opsCh.map(p => `<button type="button" class="${p.id === active.id ? 'on' : ''}" data-pid="${p.id}"><i class="fp-dot" style="--pc:${esc(p.color)}"></i>${esc(p.name)}</button>`).join('')}</div>` : ''}
                 <div class="fp-map-in"></div>
-                <div class="fp-map-legend"><span class="fp-sw" style="--pc:${esc(active.color)}"></span>조작 지역구 · 지역구를 누르면 <b>${esc(active.name)}</b>의 표적으로 · 다시 누르면 해제</div>`;
+                <div class="fp-map-legend"><span class="fp-sw" style="--pc:${esc(active.color)}"></span>${esc(i18n('sim.fraudportal.29'))} <b>${esc(active.name)}</b>${esc(i18n('sim.fraudportal.30'))}</div>`;
             maps.appendChild(wrap);
             wrap.querySelectorAll('.fp-pick button').forEach(btn => btn.addEventListener('click', () => { activeBy[ch] = Number(btn.dataset.pid); render(); }));
             const inner = wrap.querySelector('.fp-map-in');
@@ -118,7 +118,7 @@
             renderDistrictSvgInto(inner, {
                 chamber: ch, zoomKey: 'fraud:' + ch, hideAbbr: true, clickable: true,
                 getFill: k => fills[k] || '#050605',
-                title: k => !inCh(k) ? `${nameOf(k)} — 조작 불가` : rig[k] ? `⚠ ${nameOf(k)} — ${rig[k].name} 조작` : `${nameOf(k)} — 눌러서 조작`,
+                title: k => !inCh(k) ? i18n('sim.fraudportal.31', { nameOf: nameOf(k) }) : rig[k] ? i18n('sim.fraudportal.32', { nameOf: nameOf(k), name: rig[k].name }) : i18n('sim.fraudportal.33', { nameOf: nameOf(k) }),
                 onClickKey: k => toggleRig(ch, k),
             });
         });

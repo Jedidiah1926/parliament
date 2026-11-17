@@ -146,7 +146,7 @@
             try {
                 const cur = getAppState();
                 const hit = locked.find(k => JSON.stringify(SLICES[k](cur)) !== JSON.stringify(SLICES[k](next || {})));
-                if (hit) { refuse(reasonFor(hit) + ' (실행 취소로도 되돌릴 수 없습니다)'); return undefined; }
+                if (hit) { refuse(reasonFor(hit) + (" " + i18n('sim.playLocks.1'))); return undefined; }
             } catch (e) { /* 비교 실패 — 그대로 진행 */ }
         }
         bypass++;
