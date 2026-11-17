@@ -5,7 +5,7 @@
 //     <내용 파일>            언어 팩(.json) · 테마(.json) · 프리셋(세이브 파일 .hemi 또는 .json)
 //     preview.png           (선택) 창작마당 미리보기 그림 — 올릴 때만 쓰임
 // hemicycle-item.json이 없으면 폴더 안 파일을 보고 알아서 판단한다:
-//   - "format": "dno-lang-pack@1"      → 언어 팩
+//   - "format": "dno-lang-pack@2"      → 언어 팩 (예전 @1도 읽음)
 //   - "format": "hemicycle-theme@1"    → 테마
 //   - "format": "hemicycle-script@1"   → 스크립트 모드 (이벤트 · 결정 · 변수 — js/scriptmods.js, docs/MODDING.md)
 //   - .hemi 파일, 또는 세이브 형식(.json) → 프리셋 (제목은 폴더 이름)
@@ -26,7 +26,8 @@ const fs = require('fs');
 const zlib = require('zlib');
 
 const ITEM_MANIFEST = 'hemicycle-item.json';
-const LANG_FORMAT = 'dno-lang-pack@1';
+const LANG_FORMAT = 'dno-lang-pack@2';
+const LANG_FORMATS = ['dno-lang-pack@1', LANG_FORMAT]; // @1: 사전만 · @2: 키도 (js/lang.js)
 const THEME_FORMAT = 'hemicycle-theme@1';
 const SCRIPT_FORMAT = 'hemicycle-script@1';
 const MAX_JSON_BYTES = 3000000;      // 언어 팩 · 테마
@@ -137,7 +138,7 @@ function readItemFolder(folder, source, itemId) {
             const isHemi = /\.hemi$/i.test(f);
             if (!isHemi && type !== 'preset') {
                 const obj = readJson(file, MAX_PRESET_BYTES);
-                if (obj && obj.format === LANG_FORMAT && (!type || type === 'language')) {
+                if (obj && LANG_FORMATS.includes(obj.format) && (!type || type === 'language')) {
                     out.languages.push({ ...base, pack: obj });
                     // 언어 팩과 함께 올린 프리셋 언어 파일
                     if (manifest.presets && typeof manifest.presets === 'object' && obj.code) {
@@ -241,4 +242,4 @@ function loadPreset(key) {
     return obj;
 }
 
-module.exports = { modsDir, listMods, loadPreset, steam, ITEM_MANIFEST, LANG_FORMAT, THEME_FORMAT, SCRIPT_FORMAT };
+module.exports = { modsDir, listMods, loadPreset, steam, ITEM_MANIFEST, LANG_FORMAT, LANG_FORMATS, THEME_FORMAT, SCRIPT_FORMAT };

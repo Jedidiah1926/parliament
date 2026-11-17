@@ -15,7 +15,7 @@ const fs = require('fs');
 const path = require('path');
 const zlib = require('zlib');
 
-const LANG_FORMAT = 'dno-lang-pack@1';
+const LANG_FORMATS = ['dno-lang-pack@1', 'dno-lang-pack@2']; // 언어 팩 (@2: 키 방식, js/lang.js)
 const THEME_FORMAT = 'hemicycle-theme@1';
 const SCRIPT_FORMAT = 'hemicycle-script@1';
 const ITEM_MANIFEST = 'hemicycle-item.json';
@@ -54,7 +54,7 @@ let content = null;
 for (const f of files) {
     let obj;
     try { obj = readJson(path.join(folder, f)); } catch (e) { continue; }
-    const t = obj && obj.format === LANG_FORMAT ? 'language' : obj && obj.format === THEME_FORMAT ? 'theme' : obj && obj.format === SCRIPT_FORMAT ? 'script' : isSave(obj) ? 'preset' : '';
+    const t = obj && LANG_FORMATS.includes(obj.format) ? 'language' : obj && obj.format === THEME_FORMAT ? 'theme' : obj && obj.format === SCRIPT_FORMAT ? 'script' : isSave(obj) ? 'preset' : '';
     if (t && (!type || type === t || (type === 'preset-language' && t === 'preset'))) { type = type || t; content = obj; break; }
 }
 if (!content) fail('폴더에 올릴 내용이 없습니다 (언어 팩 · 테마 · 스크립트 모드 · 프리셋 세이브 파일).');

@@ -6,13 +6,22 @@
 //   - 불러온 팩: localStorage(dnoLangPacks)에 보관
 //   - 모드 · 창작마당 팩(데스크톱 앱): 모드 폴더와 Steam 창작마당 구독 아이템에서 앱이 읽어 넘겨준다
 //     (window.hemicycleDesktop.modLanguagePacks — electron/mods.js 참고). 지우려면 폴더를 지우거나 구독을 끊는다
-// 팩 형식은 README의 "번역(언어 팩) 만들기" 참고 (형식 식별자: dno-lang-pack@1).
+// 팩 형식은 README의 "번역(언어 팩) 만들기" 참고 (형식 식별자: dno-lang-pack@2, 예전 @1도 읽음).
+//
+// 번역 방식 두 가지가 함께 돈다 (0.2.4 — 화면을 하나씩 키 방식으로 옮기는 중):
+//   1) 키 번역(새 방식): 화면 글자마다 고유 키(예: "home.menu.start")를 두고, 고른 언어 팩의 keys에서 글자를 찾는다.
+//      한국어도 팩 하나(lang/kr.js)다. HTML은 data-i18n="키"(글자) · data-i18n-title 등(속성), JS는 i18n('키', { 변수 })
+//      팩에 키가 없으면 한국어 팩 글자 → 그래도 없으면 키 그대로. 한국어 글자로 돌아간 경우는 아래 2)가 이어서 번역한다
+//   2) 사전 번역(예전 방식): 다 그려진 한국어 글자를 dict · patterns로 바꿔 끼운다. 아직 키로 옮기지 않은 화면용
 (function () {
     'use strict';
 
     const LANG_KEY = 'dnoLang';
     const PACKS_KEY = 'dnoLangPacks';
-    const PACK_FORMAT = 'dno-lang-pack@1';
+    const PACK_FORMAT = 'dno-lang-pack@2';
+    const PACK_FORMATS = ['dno-lang-pack@1', PACK_FORMAT]; // @1: 사전(dict · patterns)만 · @2: 키(keys)도
+    const KEY_NAME = /^[A-Za-z0-9_][A-Za-z0-9_.-]{0,119}$/; // 키 이름: 영문 · 숫자 · _ . -
+    const PLURAL_CATS = ['zero', 'one', 'two', 'few', 'many', 'other'];
     const SOURCE_LANG = { code: 'kr', name: '한국어' };
     const BUILTIN = { en: { code: 'en', name: 'English', script: 'lang/en.js' } };
     const MAX_PACK_BYTES = 1500000; // localStorage 용량(보통 5MB)을 세이브와 나눠 쓰므로 팩 하나의 상한
@@ -86,16 +95,20 @@
     // ---- 팩 검증/정리 — 불러온 JSON을 엔진이 쓰는 형태로 맞추고, 문제가 있으면 이유를 돌려준다 ----
     function normalizePack(raw) {
         if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return { error: '언어 팩 형식이 아닙니다.' };
-        if (raw.format && raw.format !== PACK_FORMAT) return { error: `지원하지 않는 형식입니다 (${String(raw.format)}).` };
+        if (raw.format && !PACK_FORMATS.includes(raw.format)) return { error: `지원하지 않는 형식입니다 (${String(raw.format)}).` };
         const code = String(raw.code || '').trim().toLowerCase();
         if (!/^[a-z]{2,3}(-[a-z0-9]{2,8})?$/.test(code)) return { error: '언어 코드(code)가 올바르지 않습니다. 예: "jp", "zh-tw", "en-gb"' };
         if (code === SOURCE_LANG.code || code === 'ko') return { error: '한국어는 기본 언어라 팩으로 불러올 수 없습니다.' };
         if (BUILTIN[code]) return { error: `"${code}"는 기본 제공 언어의 코드입니다. 다른 코드(예: "${code}-custom")를 쓰세요.` };
         const name = String(raw.name || '').trim();
         if (!name || name.length > 40) return { error: '언어 이름(name)을 1~40자로 적어 주세요.' };
+        const keys = normalizeKeys(raw.keys);
         let dict = raw.dict;
         if (dict && !Array.isArray(dict) && typeof dict === 'object') dict = Object.entries(dict);
-        if (!Array.isArray(dict)) return { error: '번역 사전(dict)이 없습니다.' };
+        if (!Array.isArray(dict)) {
+            if (!Object.keys(keys).length) return { error: '번역(keys 또는 dict)이 없습니다.' };
+            dict = [];
+        }
         dict = dict.filter(e => Array.isArray(e) && typeof e[0] === 'string' && e[0] && typeof e[1] === 'string');
         const patterns = [];
         for (const p of (Array.isArray(raw.patterns) ? raw.patterns : [])) {
@@ -106,7 +119,24 @@
         const months = Array.isArray(raw.months) && raw.months.length === 12 ? raw.months.map(String) : null;
         const ordinal = raw.ordinal === 'en' ? 'en' : 'none';
         const neonFont = NEON_FONTS[raw.neonFont] ? String(raw.neonFont) : undefined; // 네온 테마 글꼴 (위 NEON_FONTS 참고)
-        return { pack: { format: PACK_FORMAT, code, name, author: String(raw.author || ''), version: String(raw.version || ''), months, ordinal, patterns, dict, ...(neonFont ? { neonFont } : {}) } };
+        return { pack: { format: PACK_FORMAT, code, name, author: String(raw.author || ''), version: String(raw.version || ''), months, ordinal, patterns, dict, keys, ...(neonFont ? { neonFont } : {}) } };
+    }
+
+    // keys: { "키": "글자" } — 글자 안의 {이름}은 변수 자리. 수에 따라 모양이 바뀌는 글자는
+    // { "one": "{count} seat", "other": "{count} seats" }처럼 복수 범주(Intl.PluralRules)로 적고 count 변수로 고른다
+    function normalizeKeys(raw) {
+        const out = {};
+        if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return out;
+        for (const [k, v] of Object.entries(raw)) {
+            if (!KEY_NAME.test(k)) continue;
+            if (typeof v === 'string') { out[k] = v; continue; }
+            if (v && typeof v === 'object' && !Array.isArray(v) && typeof v.other === 'string') {
+                const forms = {};
+                PLURAL_CATS.forEach(c => { if (typeof v[c] === 'string') forms[c] = v[c]; });
+                out[k] = forms;
+            }
+        }
+        return out;
     }
 
     function installPack(raw) {
@@ -155,13 +185,17 @@
         return loadBuiltin(code);
     }
 
-    // 번역가용 템플릿 두 가지 — 첫 번째 칸(한국어 원문)은 앱이 찾는 열쇠라 그대로 두고, 두 번째 칸(번역)만 바꾸면 된다
-    //  · base 'kr': 두 번째 칸에 한국어 원문을 그대로 채워 둠 (한국어를 보고 번역할 때)
-    //  · base 'en': 두 번째 칸에 영어 번역을 채워 둠 (영어를 보고 번역할 때)
+    // 번역가용 템플릿 두 가지
+    //  · keys: { "키": "글자" } — 키(왼쪽)는 그대로 두고 글자(오른쪽)만 번역. {이름}은 변수 자리라 그대로 둔다
+    //  · dict: ["한국어 원문", "번역"] — 아직 키로 옮기지 않은 화면용. 첫 번째 칸은 앱이 찾는 열쇠라 그대로, 두 번째 칸만 번역
+    //  · base 'kr': 한국어 글자를 채워 둠 (한국어를 보고 번역할 때) · base 'en': 영어 글자를 채워 둠 (영어를 보고 번역할 때)
     // 규칙(patterns)의 "to"는 어느 쪽이든 영어 예시로 들어 있으니 함께 번역한다
     async function buildTemplate(base) {
         const en = await loadBuiltin('en');
         const ko = base === 'kr' || base === 'ko';
+        const krKeys = sourceKeys(), enKeys = normalizeKeys(en.keys);
+        const keys = {};
+        Object.keys(krKeys).forEach(k => { keys[k] = ko ? krKeys[k] : (Object.prototype.hasOwnProperty.call(enKeys, k) ? enKeys[k] : krKeys[k]); });
         return JSON.stringify({
             format: PACK_FORMAT,
             code: '',
@@ -169,27 +203,145 @@
             author: '',
             version: '1',
             _help: ko
-                ? 'dict의 각 항목은 ["한국어 원문", "번역"]입니다. 두 번째 칸에 한국어 원문이 그대로 들어 있으니 그 칸만 번역하세요 (첫 번째 칸은 바꾸지 마세요). patterns의 "to"는 영어 예시이니 함께 번역하세요. code(예: "jp")와 name(예: "日本語")을 채운 뒤 메인 화면 🌐 > 언어 팩 불러오기로 적용합니다. 데스크톱 앱에서는 🌐 > 모드 폴더 열기로 연 폴더 안에 새 폴더를 만들어 이 파일을 넣어도 되고, 그 폴더가 그대로 창작마당 아이템이 됩니다.'
-                : 'dict의 각 항목은 ["한국어 원문", "번역"]입니다. 두 번째 칸에 영어 번역이 들어 있으니 그 칸만 바꾸세요 (첫 번째 칸은 바꾸지 마세요). code(예: "jp")와 name(예: "日本語")을 채운 뒤 메인 화면 🌐 > 언어 팩 불러오기로 적용합니다. 데스크톱 앱에서는 🌐 > 모드 폴더 열기로 연 폴더 안에 새 폴더를 만들어 이 파일을 넣어도 됩니다 (그 폴더가 그대로 창작마당 아이템). / Each dict entry is ["Korean source", "translation"]. Replace only the second (English) column. In the desktop app you can also put this file in its own folder inside 🌐 > Open mods folder — that folder is a Workshop item as-is.',
+                ? 'keys는 { "키": "글자" }입니다. 키(왼쪽)는 바꾸지 말고 글자(오른쪽)만 번역하세요. 글자 안의 {name} 같은 자리는 그대로 두세요. dict의 각 항목은 ["한국어 원문", "번역"]입니다. 두 번째 칸에 한국어 원문이 그대로 들어 있으니 그 칸만 번역하세요 (첫 번째 칸은 바꾸지 마세요). patterns의 "to"는 영어 예시이니 함께 번역하세요. code(예: "jp")와 name(예: "日本語")을 채운 뒤 메인 화면 🌐 > 언어 팩 불러오기로 적용합니다. 데스크톱 앱에서는 🌐 > 모드 폴더 열기로 연 폴더 안에 새 폴더를 만들어 이 파일을 넣어도 되고, 그 폴더가 그대로 창작마당 아이템이 됩니다.'
+                : 'keys는 { "키": "글자" }입니다. 키(왼쪽)는 바꾸지 말고 글자(오른쪽)만 바꾸세요. {name} 같은 자리는 그대로 두세요. dict의 각 항목은 ["한국어 원문", "번역"]입니다. 두 번째 칸에 영어 번역이 들어 있으니 그 칸만 바꾸세요 (첫 번째 칸은 바꾸지 마세요). code(예: "jp")와 name(예: "日本語")을 채운 뒤 메인 화면 🌐 > 언어 팩 불러오기로 적용합니다. 데스크톱 앱에서는 🌐 > 모드 폴더 열기로 연 폴더 안에 새 폴더를 만들어 이 파일을 넣어도 됩니다 (그 폴더가 그대로 창작마당 아이템). / "keys" maps a key to its text: keep the key (left), translate only the text (right) and keep {placeholders} as they are. Each dict entry is ["Korean source", "translation"]. Replace only the second (English) column. In the desktop app you can also put this file in its own folder inside 🌐 > Open mods folder — that folder is a Workshop item as-is.',
             months: ko ? ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월'] : en.months,
             ordinal: ko ? '' : en.ordinal,
+            keys,
             patterns: en.patterns,
             dict: ko ? en.dict.map(e => [e[0], e[0]]) : en.dict,
         }, null, 1);
     }
 
+    const current = getLang();
+    const hasOwn = (o, k) => !!o && Object.prototype.hasOwnProperty.call(o, k);
+
+    // ===== 키 번역 (0.2.4) =====
+    // 한국어 팩(lang/kr.js)과 고른 기본 제공 팩(lang/<code>.js)은 페이지를 읽는 도중에 바로 붙여(document.write) 둔다 —
+    // 그래야 뒤따르는 스크립트가 처음 그릴 때부터 i18n()을 쓸 수 있고, 한국어가 보였다가 바뀌는 깜빡임이 없다.
+    // (이 파일은 모든 페이지에서 일반 <script>로 읽으므로 그 시점엔 아직 문서를 읽는 중이다)
+    const packRegistry = () => (window.DnoLangPacks = window.DnoLangPacks || {});
+    function writeScript(src) {
+        if (document.readyState !== 'loading') return false;
+        document.write('<script src="' + src + '"><\/script>');
+        return true;
+    }
+    const SOURCE_SCRIPT = 'lang/kr.js';
+    if (!packRegistry()[SOURCE_LANG.code] && !writeScript(SOURCE_SCRIPT)) {
+        const el = document.createElement('script');
+        el.src = SOURCE_SCRIPT;
+        el.onload = () => applyKeysWhenReady();
+        document.head.appendChild(el);
+    }
+    if (BUILTIN[current] && !packRegistry()[current] && !loadInstalled()[current] && !EXTERNAL[current] && writeScript(BUILTIN[current].script)) {
+        // 붙여 둔 스크립트는 DOMContentLoaded 전에 실행된다. 그때도 없으면(파일 오류) 평소처럼 따로 읽는다
+        scriptLoads[current] = new Promise(resolve => document.addEventListener('DOMContentLoaded', resolve, { once: true }))
+            .then(() => { const pk = packRegistry()[current]; if (pk) return pk; delete scriptLoads[current]; return loadBuiltin(current); });
+    }
+
+    function sourceKeys() {
+        const pk = packRegistry()[SOURCE_LANG.code];
+        if (pk && !pk._keys) pk._keys = normalizeKeys(pk.keys);
+        return pk ? pk._keys : {};
+    }
+    let currentKeysCache = null;
+    function currentKeys() {
+        if (current === SOURCE_LANG.code) return sourceKeys();
+        if (currentKeysCache) return currentKeysCache;
+        const raw = loadInstalled()[current] || externalPack(current) || packRegistry()[current];
+        if (!raw) return null; // 기본 제공 팩을 아직 읽는 중
+        currentKeysCache = normalizeKeys(raw.keys);
+        return currentKeysCache;
+    }
+    const LOCALE = { kr: 'ko', jp: 'ja', cn: 'zh-CN', tw: 'zh-TW' };
+    const pluralRules = {};
+    function plural(code, n) {
+        const loc = LOCALE[code] || code;
+        if (!pluralRules[loc]) { try { pluralRules[loc] = new Intl.PluralRules(loc); } catch (e) { pluralRules[loc] = new Intl.PluralRules('en'); } }
+        return pluralRules[loc].select(n);
+    }
+    const missingKeys = new Set();
+    // { v: 글자 또는 복수형, code: 그 글자의 언어, hit: 고른 언어 팩에서 찾았는지 }
+    function lookup(key) {
+        const cur = currentKeys();
+        if (cur && hasOwn(cur, key)) return { v: cur[key], code: current, hit: true };
+        const src = sourceKeys();
+        if (hasOwn(src, key)) return { v: src[key], code: SOURCE_LANG.code, hit: current === SOURCE_LANG.code };
+        if (!missingKeys.has(key)) { missingKeys.add(key); if (packRegistry()[SOURCE_LANG.code]) console.warn('[i18n] 한국어 팩에 없는 키:', key); }
+        return { v: null, code: SOURCE_LANG.code, hit: false };
+    }
+    function formatText(r, vars) {
+        let v = r.v;
+        if (v && typeof v === 'object') {
+            const n = Number(vars && vars.count);
+            v = v[plural(r.code, isFinite(n) ? n : 0)] ?? v.other;
+        }
+        return String(v).replace(/\{([A-Za-z0-9_]+)\}/g, (m, name) => (vars && hasOwn(vars, name) && vars[name] != null ? String(vars[name]) : m));
+    }
+    // i18n(key, vars): 키의 글자. 변수는 {이름} 자리에 들어간다(글자 그대로 — innerHTML에 넣을 땐 부르는 쪽에서 escape)
+    function k(key, vars) {
+        const r = lookup(String(key));
+        return r.v == null ? String(key) : formatText(r, vars);
+    }
+
+    // HTML의 data-i18n(글자) · data-i18n-title 등(속성)을 채운다. 변수는 data-i18n-vars='{"n": 3}'
+    // data-i18n은 자식 요소가 없는 요소에만 (아이콘 같은 자식이 지워지지 않도록 글자는 안쪽 <span>에 단다)
+    const KEY_ATTRS = { 'data-i18n-title': 'title', 'data-i18n-placeholder': 'placeholder', 'data-i18n-alt': 'alt', 'data-i18n-aria-label': 'aria-label' };
+    const KEY_SELECTOR = ['[data-i18n]', ...Object.keys(KEY_ATTRS).map(a => `[${a}]`)].join(',');
+    const warnedEls = new WeakSet();
+    function applyKeys(root) {
+        if (!root || root.nodeType !== 1) return;
+        const els = root.querySelectorAll(KEY_SELECTOR);
+        if (root.matches(KEY_SELECTOR)) applyKeysTo(root);
+        els.forEach(applyKeysTo);
+    }
+    function applyKeysTo(el) {
+        let vars = null;
+        const rawVars = el.getAttribute('data-i18n-vars');
+        if (rawVars) { try { vars = JSON.parse(rawVars); } catch (e) { vars = null; } }
+        let allHit = true;
+        const key = el.getAttribute('data-i18n');
+        if (key) {
+            if (el.children.length) {
+                if (!warnedEls.has(el)) { warnedEls.add(el); console.warn('[i18n] data-i18n은 자식 요소가 없는 요소에만 다세요:', key, el); }
+                allHit = false;
+            } else {
+                const r = lookup(key);
+                if (r.v != null) { const t = formatText(r, vars); if (el.textContent !== t) el.textContent = t; }
+                allHit = allHit && r.hit;
+            }
+        }
+        for (const [dataAttr, attr] of Object.entries(KEY_ATTRS)) {
+            const ak = el.getAttribute(dataAttr);
+            if (!ak) continue;
+            const r = lookup(ak);
+            if (r.v != null) { const t = formatText(r, vars); if (el.getAttribute(attr) !== t) el.setAttribute(attr, t); }
+            allHit = allHit && r.hit;
+        }
+        // 고른 언어 팩에서 모두 찾은 요소는 사전 번역(아래 엔진)이 다시 건드리지 않게 표시해 둔다
+        if (current !== SOURCE_LANG.code) { if (allHit) el.setAttribute('data-i18n-ok', ''); else el.removeAttribute('data-i18n-ok'); }
+    }
+    function applyKeysWhenReady() {
+        if (document.readyState === 'loading') return; // DOMContentLoaded에서 한 번에
+        applyKeys(document.documentElement);
+    }
+    document.addEventListener('DOMContentLoaded', () => applyKeys(document.documentElement), { once: true });
+
     window.getLang = getLang;
     window.setLang = setLang;
     // translateSubtree(el): 페이지 로드 뒤에 새로 그려진 부분(시작 화면 세이브 목록, 로드맵 버전 탭 등)을 번역.
-    // 한국어일 땐 아무 일도 하지 않고, 팩이 준비되기 전에 불리면 준비된 뒤에 번역한다.
-    // t(s): 문자열 하나를 번역 (한국어이거나 팩이 아직 준비 전이면 그대로)
+    // 한국어일 땐 키(data-i18n)만 채우고, 팩이 준비되기 전에 불리면 준비된 뒤에 번역한다.
+    // t(s): 문자열 하나를 사전 번역 (한국어이거나 팩이 아직 준비 전이면 그대로)
+    // k(key, vars) = window.i18n: 키 번역 · apply(el): el 안의 data-i18n 채우기 · has(key): 한국어 팩에 있는 키인지
+    // missing(): 이 페이지에서 쓰였는데 한국어 팩에도 없는 키 · lang: 지금 언어 코드
     // setDataStrings(list): 세이브에 든 데이터(정당 · 지역구 · 의원 · 법안 이름 등) — 화면 번역에서 건드리지 않는다 (1.6.0, js/main.js가 알려 줌)
     // exact(s): 사전에 통째로 있는 글자면 그 번역, 아니면 null (예전 세이브의 기본 이름을 한 번 바꿀 때 사용) · ready: 팩이 준비됐는지
     window.DnoLang = { list: listLanguages, install: installPack, remove: removePack, template: buildTemplate, validate: normalizePack, format: PACK_FORMAT,
-        translateSubtree: () => {}, t: s => s, setDataStrings: () => {}, exact: () => null, ready: false };
+        lang: current, k, apply: applyKeys, has: key => hasOwn(sourceKeys(), key), missing: () => [...missingKeys],
+        translateSubtree: el => applyKeys(el), t: s => s, setDataStrings: () => {}, exact: () => null, ready: false };
+    window.i18n = k;
 
-    const current = getLang();
-    if (current === SOURCE_LANG.code) return; // 기본값(한국어)일 때는 아무 것도 하지 않는다
+    if (current === SOURCE_LANG.code) return; // 기본값(한국어)일 때는 사전 번역을 하지 않는다
     applyNeonFont(current); // 언어 코드로 정해 둔 네온 폰트 (팩에 neonFont가 있으면 팩을 읽은 뒤 한 번 더)
 
     // ===== 번역 엔진 =====
@@ -277,10 +429,10 @@
         return true;
     }
     window.DnoLang.setDataStrings = setDataStrings;
-    // translate="no"가 붙은 요소(조문 등 데이터 덩어리) 안은 번역하지 않는다
+    // translate="no"가 붙은 요소(조문 등 데이터 덩어리) 안과, 키 번역으로 이미 채운 요소(data-i18n-ok)는 사전 번역하지 않는다
     const noTranslate = node => {
         const el = node && (node.nodeType === Node.ELEMENT_NODE ? node : node.parentElement);
-        return !!(el && el.closest && el.closest('[translate="no"]'));
+        return !!(el && el.closest && el.closest('[translate="no"],[data-i18n-ok]'));
     };
 
     function translateTree(root, translateString) {
@@ -302,7 +454,7 @@
             if (node.nodeType !== Node.ELEMENT_NODE) return;
             const tag = node.tagName;
             if (tag === 'SCRIPT' || tag === 'STYLE') return;
-            if (node.getAttribute('translate') === 'no') return;
+            if (node.getAttribute('translate') === 'no' || node.hasAttribute('data-i18n-ok')) return;
             translateAttrs(node);
             if (tag === 'TEXTAREA') return; // 텍스트에어리어 내용은 사용자가 입력한 법안 본문 — 번역하지 않음
             for (const child of Array.from(node.childNodes)) translateNodeDeep(child);
@@ -311,6 +463,7 @@
         translateNodeDeep(root);
     }
     translateTree.attrsOnly = function (el, translateString) {
+        if (el.hasAttribute && el.hasAttribute('data-i18n-ok')) return;
         ['placeholder', 'title', 'alt'].forEach(attr => {
             if (el.hasAttribute && el.hasAttribute(attr)) {
                 const v = el.getAttribute(attr);
@@ -335,12 +488,12 @@
     window.confirm = function (msg) { return _confirm.call(window, translate(String(msg))); };
 
     const waiting = new Set(); // 팩 준비 전에 번역 요청된 부분
-    window.DnoLang.translateSubtree = el => { if (el) waiting.add(el); };
+    window.DnoLang.translateSubtree = el => { if (el) { applyKeys(el); waiting.add(el); } };
     packReady.then(pack => applyNeonFont(current, pack)).catch(() => {});
     Promise.all([packReady, pageLoaded]).then(([pack]) => {
         translate = buildTranslator(pack);
         translateTree(document.documentElement, translate);
-        window.DnoLang.translateSubtree = el => { if (el) translateTree(el, translate); };
+        window.DnoLang.translateSubtree = el => { if (el) { applyKeys(el); translateTree(el, translate); } };
         window.DnoLang.t = s => translate(s);
         window.DnoLang.exact = s => translate.exact(s);
         window.DnoLang.ready = true;
@@ -352,7 +505,8 @@
         // 번역 결과가 같으면 건드리지 않으므로, 이 번역이 다시 변경을 일으켜도 한 번 더 확인하고 멈춘다.
         const observer = new MutationObserver(mutations => {
             for (const m of mutations) {
-                if (m.type === 'childList') m.addedNodes.forEach(n => { if (n.isConnected) translateTree(n, translate); });
+                // 새로 그려진 부분: 키(data-i18n)를 먼저 채우고, 남은 한국어 글자를 사전으로 번역
+                if (m.type === 'childList') m.addedNodes.forEach(n => { if (n.isConnected) { applyKeys(n); translateTree(n, translate); } });
                 else if (m.type === 'characterData') { if (m.target.parentNode && m.target.parentNode.tagName !== 'TEXTAREA') translateTree(m.target, translate); }
                 else if (m.type === 'attributes') translateTree.attrsOnly(m.target, translate);
             }

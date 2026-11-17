@@ -1,8 +1,9 @@
 // 기본 제공 언어 팩: English — 형식은 커뮤니티 언어 팩(.json)과 똑같고, 데스크톱 앱(file://)에서도
 // fetch 없이 읽을 수 있도록 JS로 감싸 두었다. 형식 설명은 README의 "번역(언어 팩) 만들기" 참고.
+// keys(키 → 글자)는 lang/kr.js와 같은 키를 쓴다. 아직 키로 옮기지 않은 화면은 dict · patterns(한국어 원문 → 번역)로 번역한다.
 window.DnoLangPacks = window.DnoLangPacks || {};
 window.DnoLangPacks.en = {
- "format": "dno-lang-pack@1",
+ "format": "dno-lang-pack@2",
  "code": "en",
  "name": "English",
  "author": "Hemicycle",
@@ -21,6 +22,8 @@ window.DnoLangPacks.en = {
   "December"
  ],
  "ordinal": "en",
+ "keys": {
+ },
  "patterns": [
     {"re": "^\\+ 새 (.+)$", "to": "+ New $1"},
     {"re": "^내각: $", "to": "Cabinet: "},
