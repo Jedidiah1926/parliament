@@ -5425,6 +5425,19 @@ window.DnoLangPacks.en = {
    "↺ 위치 초기화",
    "↺ Reset view"
   ],
+  ["0.2.4 - 키 번역 · 한국어 팩", "0.2.4 - Key-based translation · Korean pack"],
+  ["키 번역", "Key-based translation"],
+  ["한국어 팩", "Korean pack"],
+  ["번역 검사 도구", "Translation checker"],
+  ["남은 목표: 화면별 키 이전", "Remaining: move each screen to keys"],
+  ["- 키 번역 — 화면 글자마다 고유 키를 두고, 고른 언어 팩에서 그 글자를 찾음 (한국어도 언어 팩 하나)", "- Key-based translation — every piece of UI text has its own key, looked up in the chosen language pack (Korean is a pack too)"],
+  ["- 언어 팩 형식 dno-lang-pack@2 — 키 · 변수 · 복수형, 예전 언어 팩도 그대로 읽음", "- Language pack format dno-lang-pack@2 — keys · variables · plurals; older language packs still load"],
+  ["- 아직 키로 옮기지 않은 화면은 예전처럼 사전 번역 — 화면을 하나씩 옮기는 동안에도 깨지지 않음", "- Screens not yet moved to keys use the old dictionary translation, so nothing breaks while screens are moved one by one"],
+  ["- 번역 템플릿에 키 추가, 빠진 키 · 어긋난 글자 검사 도구", "- Keys added to the translation template, plus a checker for missing keys and mismatched text"],
+  ["- 메인 화면을 키 번역으로 이전", "- Main screen moved to key-based translation"],
+  ["- 세이브 파일 변환(.hemi ↔ .json) 페이지 삭제 — 모바일 미지원, 불러오기는 .hemi · .json 그대로", "- Removed the save file converter (.hemi ↔ .json) page — mobile is not supported; loading still accepts .hemi and .json"],
+  ["- 설정 · 공통 창(알림 · 확인) 키 번역으로 이전", "- Move Settings and shared dialogs (alerts · confirmations) to key-based translation"],
+  ["- 시뮬레이터 · 경제 · 메이커를 화면별로 이전, 다 옮기면 사전 번역은 예전 언어 팩 호환용으로만", "- Move the simulator, economy and makers screen by screen; once done, dictionary translation stays only for older language packs"],
   [
    "· Shift+스크롤: 확대/축소 · 휠클릭 드래그: 이동",
    "· Shift+scroll: zoom · middle-click drag: pan"
