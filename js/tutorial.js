@@ -200,7 +200,8 @@
                         if (!p) return true; // 정당이 지워졌으면 이 단계는 건너뜀
                         const el = nameInput();
                         const typed = el ? el.value.trim() : p.name;
-                        return (!!typed && typed !== '신당') || (!!p.name && p.name !== '신당');
+                        const fresh = n => n === '신당' || n === i18n('sim.party.41'); // 새 정당 기본 이름 (언어에 따라 다름)
+                        return (!!typed && !fresh(typed)) || (!!p.name && !fresh(p.name));
                     },
                     done: i18n('tut.parties.8'),
                     leave: () => { const el = nameInput(); if (el && document.activeElement === el) el.blur(); }, // onchange로 이름 확정

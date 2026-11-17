@@ -327,6 +327,11 @@
         if (root.matches(KEY_SELECTOR)) applyKeysTo(root);
         els.forEach(applyKeysTo);
     }
+    // 엔진이 넣은 글자 · 속성 값 기억 — 스크립트가 나중에 그 글자를 바꿔 썼으면(게임 화면의 갱신되는 칸) 키로 되돌리지 않고,
+    // 사전 번역(아래 엔진)도 다시 그 글자를 번역하게 둔다. 처음 HTML에 적힌 한국어 글자(= 한국어 팩 글자)는 키 글자로 바꿔도 된다
+    const keyedText = new WeakMap(), keyedAttr = new WeakMap();
+    const srcText = (key, vars) => { const src = sourceKeys(); return hasOwn(src, key) ? formatText({ v: src[key], code: SOURCE_LANG.code }, vars) : null; };
+    const untouched = (cur, mine, key, vars) => (mine != null ? cur === mine : (cur.trim() === '' || cur.trim() === String(srcText(key, vars) ?? '').trim()));
     function applyKeysTo(el) {
         let vars = null;
         const rawVars = el.getAttribute('data-i18n-vars');
@@ -337,22 +342,33 @@
             if (el.children.length) {
                 if (!warnedEls.has(el)) { warnedEls.add(el); console.warn('[i18n] data-i18n은 자식 요소가 없는 요소에만 다세요:', key, el); }
                 allHit = false;
+            } else if (!untouched(el.textContent, keyedText.get(el), key, vars)) {
+                keyedText.delete(el); allHit = false; // 스크립트가 바꾼 글자 — 그대로 두고 사전 번역에 맡김
             } else {
                 const r = lookup(key);
-                if (r.v != null) { const t = formatText(r, vars); if (el.textContent !== t) el.textContent = t; }
+                if (r.v != null) { const t = formatText(r, vars); if (el.textContent !== t) el.textContent = t; keyedText.set(el, t); }
                 allHit = allHit && r.hit;
             }
         }
         for (const [dataAttr, attr] of Object.entries(KEY_ATTRS)) {
             const ak = el.getAttribute(dataAttr);
             if (!ak) continue;
+            const mine = (keyedAttr.get(el) || {})[attr];
+            if (!untouched(el.getAttribute(attr) || '', mine, ak, vars)) { const m = keyedAttr.get(el); if (m) delete m[attr]; allHit = false; continue; }
             const r = lookup(ak);
-            if (r.v != null) { const t = formatText(r, vars); if (el.getAttribute(attr) !== t) el.setAttribute(attr, t); }
+            if (r.v != null) { const t = formatText(r, vars); if (el.getAttribute(attr) !== t) el.setAttribute(attr, t); const m = keyedAttr.get(el) || {}; m[attr] = t; keyedAttr.set(el, m); }
             allHit = allHit && r.hit;
         }
         // 고른 언어 팩에서 모두 찾은 요소는 사전 번역(아래 엔진)이 다시 건드리지 않게 표시해 둔다
         if (current !== SOURCE_LANG.code) { if (allHit) el.setAttribute('data-i18n-ok', ''); else el.removeAttribute('data-i18n-ok'); }
     }
+    // 사전 번역이 건너뛸 요소인가 — data-i18n-ok이고, 글자가 아직 엔진이 넣은 그대로일 때만
+    function keyedIntact(el) {
+        if (!el || !el.hasAttribute || !el.hasAttribute('data-i18n-ok')) return false;
+        if (el.hasAttribute('data-i18n') && keyedText.has(el) && el.textContent !== keyedText.get(el)) { el.removeAttribute('data-i18n-ok'); return false; }
+        return true;
+    }
+    const keyedAttrIntact = (el, attr) => { const m = keyedAttr.get(el); return !!(m && m[attr] != null && el.getAttribute(attr) === m[attr]); };
     function applyKeysWhenReady() {
         if (document.readyState === 'loading') return; // DOMContentLoaded에서 한 번에
         applyKeys(document.documentElement);
@@ -465,13 +481,16 @@
     // translate="no"가 붙은 요소(조문 등 데이터 덩어리) 안과, 키 번역으로 이미 채운 요소(data-i18n-ok)는 사전 번역하지 않는다
     const noTranslate = node => {
         const el = node && (node.nodeType === Node.ELEMENT_NODE ? node : node.parentElement);
-        return !!(el && el.closest && el.closest('[translate="no"],[data-i18n-ok]'));
+        if (!el || !el.closest) return false;
+        if (el.closest('[translate="no"]')) return true;
+        const k = el.closest('[data-i18n-ok]');
+        return !!(k && keyedIntact(k));
     };
 
     function translateTree(root, translateString) {
         function translateAttrs(el) {
             ['placeholder', 'title', 'alt'].forEach(attr => {
-                if (el.hasAttribute && el.hasAttribute(attr)) {
+                if (el.hasAttribute && el.hasAttribute(attr) && !keyedAttrIntact(el, attr)) {
                     const v = el.getAttribute(attr);
                     const t = translateString(v);
                     if (t !== v) el.setAttribute(attr, t);
@@ -487,8 +506,9 @@
             if (node.nodeType !== Node.ELEMENT_NODE) return;
             const tag = node.tagName;
             if (tag === 'SCRIPT' || tag === 'STYLE') return;
-            if (node.getAttribute('translate') === 'no' || node.hasAttribute('data-i18n-ok')) return;
+            if (node.getAttribute('translate') === 'no') return;
             translateAttrs(node);
+            if (keyedIntact(node)) return; // 키로 채운 글자 (아직 그대로)
             if (tag === 'TEXTAREA') return; // 텍스트에어리어 내용은 사용자가 입력한 법안 본문 — 번역하지 않음
             for (const child of Array.from(node.childNodes)) translateNodeDeep(child);
         }
@@ -496,9 +516,8 @@
         translateNodeDeep(root);
     }
     translateTree.attrsOnly = function (el, translateString) {
-        if (el.hasAttribute && el.hasAttribute('data-i18n-ok')) return;
         ['placeholder', 'title', 'alt'].forEach(attr => {
-            if (el.hasAttribute && el.hasAttribute(attr)) {
+            if (el.hasAttribute && el.hasAttribute(attr) && !keyedAttrIntact(el, attr)) {
                 const v = el.getAttribute(attr);
                 const t = translateString(v);
                 if (t !== v) el.setAttribute(attr, t);

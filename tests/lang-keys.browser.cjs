@@ -29,8 +29,9 @@ const krPack = `window.HemiLangPacks = window.HemiLangPacks || {}; window.HemiLa
 const enPack = fs.readFileSync(path.join(__dirname, '..', 'lang', 'en.js'), 'utf8') + `\nwindow.HemiLangPacks.en.keys = ${JSON.stringify(EN_KEYS)};`;
 const FIXTURE = `<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><title>i18n</title>
 <script src="js/lang.js"></script></head><body>
-<span id="a" data-i18n="t.hello">안녕</span>
-<button id="b" data-i18n-title="t.tip" title="옛 도움말">?</button>
+<span id="a" data-i18n="t.hello">안녕하세요</span>
+<span id="z" data-i18n="t.hello">스크립트가 바꾼 글자</span>
+<button id="b" data-i18n-title="t.tip" title="도움말">?</button>
 <span id="c" data-i18n="t.days" data-i18n-vars='{"n":3}'></span>
 <span id="d1" data-i18n="t.seats" data-i18n-vars='{"count":1}'></span><span id="d2" data-i18n="t.seats" data-i18n-vars='{"count":2}'></span>
 <span id="e" data-i18n="t.fallback">설정</span>
@@ -68,7 +69,8 @@ const FIXTURE = `<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><tit
         {
             const { p, ctx, errors } = await open('kr', '/__i18n.html');
             const r = await read(p);
-            assert.equal(r.a, '안녕하세요', 'kr: data-i18n은 한국어 팩 글자로 (HTML에 적힌 글자보다 우선)');
+            assert.equal(r.a, '안녕하세요', 'kr: data-i18n은 한국어 팩 글자로');
+            assert.equal(await p.evaluate(() => document.getElementById('z').textContent), '스크립트가 바꾼 글자', 'kr: 한국어 팩 글자와 다른 글자(스크립트가 바꾼 것)는 그대로');
             assert.equal(r.b, '도움말', 'kr: data-i18n-title');
             assert.equal(r.c, '3일 뒤 다시', 'kr: data-i18n-vars 변수');
             assert.equal(r.d1, '1석'); assert.equal(r.d2, '2석');
@@ -101,8 +103,13 @@ const FIXTURE = `<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><tit
             // JS i18n()로 만든 글자도 사전 번역(알림창 · HemiLang.t)이 다시 건드리지 않음 — 변수로 넣은 데이터("설정")가 그대로
             const kept = await p.evaluate(() => [HemiLang.t(i18n('t.ok')), HemiLang.t('설정'), HemiLang.month(3), HemiLang.month(13)]);
             assert.deepEqual(kept, ['설정 news', 'Settings', 'March', '13'], 'en: 키로 만든 글자는 사전 번역 건너뜀 · 달 이름');
-            // 나중에 그려진 data-i18n은 MutationObserver가 채움
-            await p.evaluate(() => { const s = document.createElement('div'); s.id = 'late'; s.innerHTML = '<span data-i18n="t.hello">안녕</span><span>설정</span>'; document.body.appendChild(s); });
+            // 키로 채운 요소의 글자를 스크립트가 바꾸면: 새 글자는 사전 번역, 다시 번역해도 키 글자로 되돌리지 않음
+            await p.evaluate(() => { document.getElementById('a').textContent = '설정'; });
+            await p.waitForFunction(() => document.getElementById('a').textContent === 'Settings');
+            const kept2 = await p.evaluate(() => { HemiLang.translateSubtree(document.getElementById('a')); return document.getElementById('a').textContent; });
+            assert.equal(kept2, 'Settings', 'en: 스크립트가 바꾼 글자는 키로 되돌리지 않음');
+                        // 나중에 그려진 data-i18n은 MutationObserver가 채움
+            await p.evaluate(() => { const s = document.createElement('div'); s.id = 'late'; s.innerHTML = '<span data-i18n="t.hello">안녕하세요</span><span>설정</span>'; document.body.appendChild(s); });
             await p.waitForFunction(() => document.getElementById('late').textContent === 'HelloSettings');
             // 번역 템플릿에 keys (한국어 키 전부, 영어 기준은 영어 글자 · 없으면 한국어)
             const tpl = await p.evaluate(async () => JSON.parse(await HemiLang.template('en')));
