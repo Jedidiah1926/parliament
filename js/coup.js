@@ -383,7 +383,7 @@
             let b = document.getElementById('coupJuntaBanner');
             if (T.junta) {
                 if (!b) { b = el('<div id="coupJuntaBanner" class="coup-banner"></div>'); grid.parentElement.insertBefore(b, grid); }
-                b.innerHTML = `${esc(i18n('sim.coup.58'))} <b>${esc(T.junta.chairRole || '')} ${esc(T.junta.chairName)}</b>${T.junta.since ? esc((" " + i18n('sim.coup.59', { since: esc(T.junta.since) }))) : ''}`;
+                b.innerHTML = `${esc(i18n('sim.coup.58'))} <b>${esc(T.junta.chairRole || '')} ${esc(T.junta.chairName)}</b>${T.junta.since ? esc((" " + i18n('sim.coup.59', { since: (T.junta.since) }))) : ''}`;
             } else if (b) b.remove();
         }
         return r;
@@ -499,7 +499,7 @@
         const juntaHtml = T.junta ? `
             <div class="coup-junta">
                 <div class="coup-junta-title">${esc(i18n('sim.coup.85'))}</div>
-                <div class="coup-dim">${esc(i18n('sim.contentSystem.13'))} ${esc(T.junta.chairRole || '')} <b>${esc(T.junta.chairName)}</b>${T.junta.since ? esc((" " + i18n('sim.coup.59', { since: esc(T.junta.since) }))) : ''} ${esc(i18n('sim.coup.86'))}</div>
+                <div class="coup-dim">${esc(i18n('sim.contentSystem.13'))} ${esc(T.junta.chairRole || '')} <b>${esc(T.junta.chairName)}</b>${T.junta.since ? esc((" " + i18n('sim.coup.59', { since: (T.junta.since) }))) : ''} ${esc(i18n('sim.coup.86'))}</div>
                 <div class="coup-sub">${esc(i18n('sim.coup.87'))}</div>
                 <div class="coup-row coup-wrap">
                     <button type="button" class="coup-btn" data-act="transfer">${esc(i18n('sim.coup.88'))}</button>

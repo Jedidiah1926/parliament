@@ -23,22 +23,22 @@
     // after: 전체 메뉴에서 바로 앞에 오는 항목(탭 버튼 id) / 그룹(메인 탭 키)
     const FULL_MENU = {
         groups: [
-            { key: 'economy', icon: '💹', label: '경제', ver: '1.6.9', after: 'nation' },
-            { key: 'world', icon: '🌐', label: '세계', ver: '1.6.5', after: 'economy', items: [['subTabWorldmap', '지도'], ['subTabRanking', '국가 순위'], ['subTabBlocs', '진영'], ['subTabEconblocs', '경제권']] },
+            { key: 'economy', icon: '💹', label: i18n('sim.mainContentHelp.6'), ver: '1.6.9', after: 'nation' },
+            { key: 'world', icon: '🌐', label: i18n('sim.mainContentHelp.7'), ver: '1.6.5', after: 'economy', items: [['subTabWorldmap', i18n('sim.sidenav.1')], ['subTabRanking', i18n('sim.history.197')], ['subTabBlocs', i18n('sim.history.191')], ['subTabEconblocs', i18n('sim.sidenav.2')]] },
         ],
         items: [
-            { main: 'setup', id: 'subTabTimeline', label: '세력 변화', ver: '1.6.5', after: 'subTabList' },
-            { main: 'setup', id: 'subTabWikibox', label: '위키 틀', ver: '1.6.5', after: 'subTabTimeline' },
-            { main: 'law', id: 'subTabSiege', label: '공성전', ver: '1.6.4', after: 'subTabVote' },
-            { main: 'cabinet', id: 'subTabMilitary', label: '군부', ver: '1.6.2', after: 'subTabCabinetmembers' },
-            { main: 'cabinet', id: 'subTabCoup', label: '쿠데타', ver: '1.6.2', after: 'subTabMilitary' },
-            { main: 'cabinet', id: 'subTabRevolution', label: '혁명', ver: '1.6.3', after: 'subTabCoup' },
-            { main: 'cabinet', id: 'subTabRoyal', label: '왕실', ver: '1.6.6', after: 'subTabRevolution' },
-            { main: 'nation', id: 'subTabPeople', label: '사람', ver: '1.6.1', after: 'subTabRegions' },
-            { main: 'nation', id: 'subTabUnrecovered', label: '미수복', ver: '1.6.7', after: 'subTabPeople' },
-            { main: 'election', id: 'elecSubTabArticles', label: '기사', ver: '1.7.0', after: 'elecSubTabMprob' },
-            { main: 'world', id: 'subTabEconblocs', label: '경제권', ver: '1.7.1', after: 'subTabBlocs' },
-            { main: 'nation', id: 'subTabVassals', label: '종속국', ver: '1.6.8', after: 'subTabUnrecovered' },
+            { main: 'setup', id: 'subTabTimeline', label: i18n('sim.history.196'), ver: '1.6.5', after: 'subTabList' },
+            { main: 'setup', id: 'subTabWikibox', label: i18n('sim.history.198'), ver: '1.6.5', after: 'subTabTimeline' },
+            { main: 'law', id: 'subTabSiege', label: i18n('sim.siege.54'), ver: '1.6.4', after: 'subTabVote' },
+            { main: 'cabinet', id: 'subTabMilitary', label: i18n('sim.coup.56'), ver: '1.6.2', after: 'subTabCabinetmembers' },
+            { main: 'cabinet', id: 'subTabCoup', label: i18n('sim.coup.57'), ver: '1.6.2', after: 'subTabMilitary' },
+            { main: 'cabinet', id: 'subTabRevolution', label: i18n('sim.revolution.149'), ver: '1.6.3', after: 'subTabCoup' },
+            { main: 'cabinet', id: 'subTabRoyal', label: i18n('sim.royal.103'), ver: '1.6.6', after: 'subTabRevolution' },
+            { main: 'nation', id: 'subTabPeople', label: i18n('sim.sidenav.3'), ver: '1.6.1', after: 'subTabRegions' },
+            { main: 'nation', id: 'subTabUnrecovered', label: i18n('sim.sidenav.4'), ver: '1.6.7', after: 'subTabPeople' },
+            { main: 'election', id: 'elecSubTabArticles', label: i18n('sim.sidenav.5'), ver: '1.7.0', after: 'elecSubTabMprob' },
+            { main: 'world', id: 'subTabEconblocs', label: i18n('sim.sidenav.2'), ver: '1.7.1', after: 'subTabBlocs' },
+            { main: 'nation', id: 'subTabVassals', label: i18n('sim.sidenav.6'), ver: '1.6.8', after: 'subTabUnrecovered' },
         ],
     };
     const LOCK_SVG = '<svg class="mn-lock" viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><rect x="3" y="7" width="10" height="7.5" rx="1.5" fill="currentColor"/>'
@@ -46,11 +46,11 @@
     // 잠긴 기능을 누르면 — 개발자 모드면 그 기능이 있는 Teaser 화면으로 갈지 묻고, 아니면 언제 열리는지 알려 준다
     function lockedInfo(label, ver) {
         const page = {}[ver]; // 미리보기 화면이 있는 버전 → 번호 (지금은 없음)
-        const msg = `🔒 "${label}"은(는) ${ver} 업데이트에서 열리는 기능입니다.`;
+        const msg = i18n('sim.sidenav.7', { label, ver });
         const dev = window.HemiDev && page && (window.HemiDev.canOpen ? window.HemiDev.canOpen(page) : window.HemiDev.isOn());
         if (dev) {
             const go = () => { location.href = `teaser${page}.html`; };
-            const q = `${msg}\n\nTeaser ${ver} 미리보기 화면으로 갈까요? (미리보기 화면의 저장 공간은 따로입니다)`;
+            const q = i18n('sim.sidenav.8', { msg, ver });
             if (window.HemiUI && window.HemiUI.confirm) window.HemiUI.confirm(q).then(ok => { if (ok) go(); });
             else if (confirm(q)) go();
             return;
@@ -62,7 +62,7 @@
         it.type = 'button';
         it.className = 'mn-item mn-locked';
         it.title = label;
-        it.dataset.hemiTipSub = `🔒 ${ver}에서 열림`;
+        it.dataset.hemiTipSub = i18n('sim.sidenav.9', { ver });
         it.dataset.tipWhen = 'collapsed';
         it.innerHTML = `<span class="mn-dot" aria-hidden="true"></span><span class="mn-text">${LOCK_SVG}<span class="mn-locked-label"></span><span class="mn-lock-ver">${ver}</span></span>`;
         it.querySelector('.mn-locked-label').textContent = label;
@@ -125,7 +125,7 @@
         const nav = document.createElement('nav');
         nav.className = 'side-nav';
         nav.id = 'sideNav';
-        nav.setAttribute('aria-label', '메뉴');
+        nav.setAttribute('aria-label', i18n('sim.sidenav.10'));
         // 바깥 nav는 자리(끝 폭으로 한 번에)만 잡고, 보이는 판(.mn-panel)만 폭을 움직인다 — 접기 · 펴기 동안 본문을 매 프레임 다시 배치하지 않게
         nav.innerHTML = `<div class="mn-panel">
             <div class="mn-head">
@@ -133,13 +133,13 @@
                     <div class="mn-brand-title">Ministry of Interior</div>
                     <div class="mn-brand-sub" id="mnNationName"></div>
                 </div>
-                <button type="button" class="mn-collapse" id="mnCollapseBtn" title="사이드바 접기/펼치기" aria-label="사이드바 접기/펼치기">
+                <button type="button" class="mn-collapse" id="mnCollapseBtn" title="${escapeHtmlText(i18n('sim.sidenav.11'))}" aria-label="${escapeHtmlText(i18n('sim.sidenav.11'))}">
                     <svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true"><rect x="2.5" y="3.5" width="15" height="13" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.5"/><line x1="7.5" y1="3.5" x2="7.5" y2="16.5" stroke="currentColor" stroke-width="1.5"/></svg>
                 </button>
             </div>
             <div class="mn-search" role="search">
                 <svg class="mn-search-icon" viewBox="0 0 20 20" width="14" height="14" aria-hidden="true"><circle cx="8.5" cy="8.5" r="5.5" fill="none" stroke="currentColor" stroke-width="1.7"/><line x1="12.6" y1="12.6" x2="17" y2="17" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
-                <input type="search" id="mnSearchInput" placeholder="기능 검색 (예: 선거인단)" autocomplete="off" spellcheck="false" aria-label="기능 검색" aria-controls="mnSearchResults">
+                <input type="search" id="mnSearchInput" placeholder="${escapeHtmlText(i18n('sim.sidenav.12'))}" autocomplete="off" spellcheck="false" aria-label="${escapeHtmlText(i18n('sim.sidenav.13'))}" aria-controls="mnSearchResults">
                 <div class="mn-search-results" id="mnSearchResults" role="listbox" hidden></div>
             </div>
             <div class="mn-groups" id="mnGroups"></div></div>`;
@@ -203,8 +203,8 @@
             g.dataset.main = fg.key;
             g.dataset.tone = GROUP_TONES[fg.key] || 'info';
             g.innerHTML = `
-                <button type="button" class="mn-group-head" title="${fg.label} — ${fg.ver}에서 열림">
-                    <span class="mn-icon"></span><span class="mn-label"></span><span class="mn-lock-badge" title="언제 열리나요?">${LOCK_SVG}<span class="mn-lock-ver">${fg.ver}</span></span>${fg.items ? '<svg class="mn-chev" viewBox="0 0 12 12" width="12" height="12" aria-hidden="true"><path d="M3 7.5 6 4.5 9 7.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>' : ''}
+                <button type="button" class="mn-group-head" title="${escapeHtmlText(i18n('sim.sidenav.opensIn', { label: fg.label, ver: fg.ver }))}">
+                    <span class="mn-icon"></span><span class="mn-label"></span><span class="mn-lock-badge" title="${escapeHtmlText(i18n('sim.sidenav.14'))}">${LOCK_SVG}<span class="mn-lock-ver">${fg.ver}</span></span>${fg.items ? '<svg class="mn-chev" viewBox="0 0 12 12" width="12" height="12" aria-hidden="true"><path d="M3 7.5 6 4.5 9 7.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>' : ''}
                 </button>
                 <div class="mn-items"></div>`;
             g.querySelector('.mn-icon').textContent = fg.icon;
@@ -378,9 +378,11 @@
     };
     // 탭이 아닌 곳 (위쪽 탭 바의 저장 · 설정 창)
     const SEARCH_ACTIONS = [
-        { label: '저장', path: '저장 창', keys: ['저장', '세이브', '불러오기', '자동저장', '파일로 저장', '내보내기', '종합 프리셋', '지역구 프리셋', 'hemimap'], run: () => window.openSavePanel && window.openSavePanel() },
-        { label: '설정', path: '설정 창', keys: ['설정', '테마', '다크 모드', '네온', '해상도', '전체 화면', '창 모드', '디버그 모드', '개발자 모드', '언어', '업데이트', '저장 위치'], run: () => window.openSettingsPanel && window.openSettingsPanel() },
+        { label: '저장', get path() { return i18n('sim.sidenav.savePanel'); }, keys: ['저장', '세이브', '불러오기', '자동저장', '파일로 저장', '내보내기', '종합 프리셋', '지역구 프리셋', 'hemimap'], run: () => window.openSavePanel && window.openSavePanel() },
+        { label: '설정', get path() { return i18n('sim.sidenav.settingsPanel'); }, keys: ['설정', '테마', '다크 모드', '네온', '해상도', '전체 화면', '창 모드', '디버그 모드', '개발자 모드', '언어', '업데이트', '저장 위치'], run: () => window.openSettingsPanel && window.openSettingsPanel() },
     ];
+    // 찾을 말 — 한국어 그대로에 지금 언어 사전으로 옮긴 말도 더한다 (영어 화면에서도 영어로 찾히게)
+    const withTr = list => { const tr = window.HemiLang && window.HemiLang.t; return tr ? [...new Set([...list, ...list.map(x => tr(x))])] : list; };
     const norm = s => String(s || '').toLowerCase().replace(/[\s·\-–—_/()[\]{}:,.!?'"「」『』…]+/g, '');
     function contentOf(btn) {
         const m = /^(?:subTab|elecSubTab)(.+)$/.exec(btn.id || ''); if (!m) return null;
@@ -406,7 +408,7 @@
                 const panel = contentOf(src);
                 out.push({ kind: 'menu', text: label, path, go, panel, w: help ? 1 : 3 });
                 out.push({ kind: 'menu', text: gLabel, path, go, panel, w: 0.5 });
-                (SEARCH_ALIASES[src.id] || []).forEach(k => out.push({ kind: 'alias', text: k, path, go, panel, w: 2 }));
+                withTr(SEARCH_ALIASES[src.id] || []).forEach(k => out.push({ kind: 'alias', text: k, path, go, panel, w: 2 }));
                 if (!panel || seenPanel.has(panel)) return;
                 seenPanel.add(panel);
                 const seen = new Set();
@@ -424,12 +426,12 @@
             const label = (l.querySelector('.mn-locked-label, .mn-label') || l).textContent.trim();
             const ver = (l.querySelector('.mn-lock-ver') || {}).textContent || '';
             const id = l.dataset.lockedId;
-            const path = `🔒 ${label} — ${ver}에서 열림`;
+            const path = i18n('sim.sidenav.15', { label, ver });
             const go = () => l.click();
             out.push({ kind: 'menu', text: label, path, go, w: 2, locked: true });
-            (SEARCH_ALIASES[id] || []).forEach(k => out.push({ kind: 'alias', text: k, path, go, w: 1.5, locked: true }));
+            withTr(SEARCH_ALIASES[id] || []).forEach(k => out.push({ kind: 'alias', text: k, path, go, w: 1.5, locked: true }));
         });
-        SEARCH_ACTIONS.forEach(a => a.keys.forEach(k => out.push({ kind: 'alias', text: k, path: a.path, go: a.run, w: 1.5 })));
+        SEARCH_ACTIONS.forEach(a => withTr(a.keys).forEach(k => out.push({ kind: 'alias', text: k, path: a.path, go: a.run, w: 1.5 })));
         return out;
     }
     function searchIndex(index, q) {
@@ -470,7 +472,7 @@
             }, 150);
         };
         const render = () => {
-            if (!results.length) { box.innerHTML = input.value.trim() ? '<div class="mn-search-empty">찾는 기능이 없습니다</div>' : ''; box.hidden = !input.value.trim(); return; }
+            if (!results.length) { box.innerHTML = input.value.trim() ? `<div class="mn-search-empty">${escapeHtmlText(i18n('sim.sidenav.16'))}</div>` : ''; box.hidden = !input.value.trim(); return; }
             box.hidden = false;
             box.innerHTML = '';
             results.forEach((r, i) => {

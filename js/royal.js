@@ -537,7 +537,7 @@
             action = `<div class="royal-card royal-reign" style="--royal-c:${esc((mx && mx.d.color) || '#7a1f2b')}">
                 <div class="royal-head">👑 ${abs ? esc(i18n('sim.royal.60')) : esc(i18n('sim.contentSystem.5'))}</div>
                 <div class="royal-row"><span class="royal-dim">${esc(i18n('sim.royal.139'))}</span><select data-ui="title">${[...new Set([S.monarchy.title, ...TITLES])].map(t => `<option ${t === S.monarchy.title ? 'selected' : ''}>${esc(t)}</option>`).join('')}</select>
-                    <b class="royal-grow">${esc(mx ? mx.c.name : esc(i18n('sim.export.18')))}</b><span class="royal-dim">${esc(mx ? mx.d.name : '')}${S.monarchy.since ? esc((" " + i18n('sim.royal.104', { since: esc(S.monarchy.since) }))) : ''}</span></div>
+                    <b class="royal-grow">${esc(mx ? mx.c.name : esc(i18n('sim.export.18')))}</b><span class="royal-dim">${esc(mx ? mx.d.name : '')}${S.monarchy.since ? esc((" " + i18n('sim.royal.104', { since: (S.monarchy.since) }))) : ''}</span></div>
                 <div class="royal-dim">${abs ? esc(i18n('sim.royal.140')) : esc(i18n('sim.royal.141'))}</div>
                 <div class="royal-sub">${esc(i18n('sim.royal.112'))}</div>
                 <div class="royal-dim">${esc(i18n('sim.royal.142'))} <b>${(() => { const n = mx ? lineOf(mx.d, mx.c.id)[0] : null; return n ? esc(n.name || esc(i18n('sim.core.7'))) : esc(i18n('sim.royal.143')); })()}</b> (${esc(mx ? RULES[mx.d.rule] || '' : '')})</div>

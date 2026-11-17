@@ -22,461 +22,461 @@
     // hiddenNote: 원래 탭이 지금 숨겨져 있을 때 붙일 안내, openWhenHidden: 숨겨져 있어도 "열기"로 나타나게 할 수 있음
     const PAGES = {
         setup: {
-            intro: '의회 자체의 설정과 의회를 이루는 이념 · 정당 · 의석 · 집권 세력 · 의원을 다룹니다.',
+            intro: i18n('sim.help.1'),
             tabs: [
                 {
                     btn: 'subTabAssembly', open: go('setup', 'assembly'),
-                    desc: '의장단(의장 · 부의장), 원별 반원 가운데 표시(의석 수 · 의회 로고 · 의장석), 집권 세력 강조. 단원제 · 양원제 · 삼원제는 의석 · 원 구성에서 골라요.',
+                    desc: i18n('sim.help.2'),
                 },
                 {
                     btn: 'subTabIdeology', open: go('setup', 'ideology'),
-                    desc: '정당이 속할 이념을 추가하고 순서를 정합니다. 자동 정렬일 때 정당은 이 순서대로 반원에 앉아요.',
-                    inner: [['무소속 "사용"', '끄면 무소속이 모든 원에서 빠집니다 (선거 · 지지율 · 의석에 나오지 않음). 다시 켜면 끄기 전대로 돌아와요. 무소속 의석이 남아 있으면 먼저 0으로 만들어야 끌 수 있습니다.']],
+                    desc: i18n('sim.help.3'),
+                    inner: [[i18n('sim.help.4'), i18n('sim.help.5')]],
                 },
                 {
                     btn: 'subTabParty', open: go('setup', 'party'),
-                    desc: '나라의 정당을 만들고 꾸밉니다.',
+                    desc: i18n('sim.help.6'),
                     inner: [
-                        ['정보', '정당 추가 · 복제 · 삭제, 이름 · 약칭 · 색 · 이념 · 상태, 소속 의회, 파벌, 합당(흡수합당 · 신설합당).'],
-                        ['당수', '정당 대표와 파벌 대표의 이름 · 사진. 의원내각제에선 다수당 당수가 자동으로 총리가 됩니다.'],
-                        ['로고', '정당 · 파벌 로고를 올리고 지웁니다 (정사각형 권장). 의석 · 원 구성 카드의 로고는 보기만 하고, 누르면 여기로 와요. 통계 카드에 로고를 쓸지는 정보 탭의 "통계 표시"에서 고릅니다.'],
+                        [i18n('sim.contentParty.1'), i18n('sim.help.7')],
+                        [i18n('sim.contentParty.2'), i18n('sim.help.8')],
+                        [i18n('sim.contentParty.3'), i18n('sim.help.9')],
                     ],
                 },
                 {
                     btn: 'subTabSettings', open: go('setup', 'settings'),
-                    desc: '원 구성(단원제 · 양원제 · 삼원제)과 의회별 이름 · 총 의석 수, 정당마다 몇 석인지 정합니다. "배정 합계"는 총 의석 수를 넘을 수 없어요.',
-                    inner: [['하원 · 상원 · 삼원', '원마다 따로 정합니다. 상원 · 삼원은 이 탭 위쪽 원 구성에서 양원제 · 삼원제를 골랐을 때 나타나요.']],
+                    desc: i18n('sim.help.10'),
+                    inner: [[i18n('sim.help.11'), i18n('sim.help.12')]],
                 },
                 {
                     btn: 'subTabCoalition', open: go('setup', 'coalition'),
-                    desc: '정당들을 묶어 연립정부를 만듭니다. 집권 연정(★) · 대표당 · 각외협력 정당을 정하고, 단독 집권이나 무집권 상태로 둘 수도 있어요. 집권 세력은 반원에서 금색 테두리로 표시됩니다.',
-                    inner: [['공동교섭단체', '교섭단체 기준(위키 틀과 같은 값)에 못 미치는 정당들이 함께 교섭단체를 이룹니다. 합친 의석이 기준을 넘으면 성립하고, 위키 틀에서 비교섭단체 대신 그 정당들로 보이며 각주가 붙어요.']],
+                    desc: i18n('sim.help.13'),
+                    inner: [[i18n('sim.help.14'), i18n('sim.help.15')]],
                 },
                 {
                     btn: 'subTabMembers', open: go('setup', 'members'),
-                    desc: '지역구에서 당선된 의원 명단입니다. 이름 · 사진을 채우고, 궐석(빈자리)으로 처리하면 보궐선거를 치를 수 있어요. 지역구 선거를 치른 뒤에 채워집니다.',
+                    desc: i18n('sim.help.16'),
                 },
                 {
                     btn: 'subTabList', open: go('setup', 'list'),
-                    desc: '비례대표 의원 명단입니다. 자리마다 소속 정당 · 이름 · 사진을 정하고, 그 의원을 당수로 지정할 수 있어요.',
+                    desc: i18n('sim.help.17'),
                 },
                 {
                     btn: 'subTabTimeline', open: go('setup', 'timeline'),
-                    desc: '세력 변화 — 정당 의석을 시점마다 기록해 오른쪽 "세력 변화" 시각 탭에 정당 역사 도표로 그립니다 (의석 띠 · 점유율 · ▲▼ · 정당별 흐름, 창당 · 당명 변경 · 합당 · 분당 계보도). 총선을 의회에 반영하면 자동으로 기록되고, "지금 기록하기"로 직접 남기거나 선거 기록에서 가져올 수 있어요.',
-                    inner: [['정당 승계', '같은 정당의 당명 · 색 바꾸기(예: 한나라당 → 새누리당), 서로 다른 정당을 앞 → 뒤로 잇기(후신 · 합당 · 분당).']],
+                    desc: i18n('sim.help.18'),
+                    inner: [[i18n('sim.help.19'), i18n('sim.help.20')]],
                 },
                 {
                     btn: 'subTabWikibox', open: go('setup', 'wikibox'),
-                    desc: '위키 틀 — 위키 문서의 "원내 구성" 틀처럼 여당 · 야당 정당을 의석과 함께 모은 틀을 오른쪽 시각 화면에 그립니다. 원내 · 원외 전환, 나무위키 문법으로 복사, 반원 그림 저장.',
+                    desc: i18n('sim.help.21'),
                 },
             ],
         },
         law: {
-            intro: '법안을 만들고 통과시키는 과정입니다. 메뉴 위의 단계 막대(제출 › 위원회 › 본회의 › 서명 › 기록 › 법령)에 단계마다 법안 수가 보이고, 누르면 그 탭으로 갑니다 (서명은 내각 › 서명).',
+            intro: i18n('sim.help.22'),
             tabs: [
                 {
                     btn: 'subTabBill', open: go('law', 'bill'),
-                    desc: '새 법안 작성 — 종류(법률안 · 헌법 개정안), 제목, 조문(제1조 · 제2조 … 조 단위로 쓰고 순서를 바꿈), 태그, 가결 기준. 기존 법안 수정과 개정안도 여기서.',
-                    inner: [['헌법 개정안', '고르면 지금 헌법 조문이 채워지고 가결 기준이 2/3로 바뀝니다. 가결되면 그 조문이 새 헌법이 돼요.']],
+                    desc: i18n('sim.help.23'),
+                    inner: [[i18n('sim.contentBill.3'), i18n('sim.help.24')]],
                 },
                 {
                     btn: 'subTabCommittee', open: go('law', 'committee'),
-                    desc: '상임위원회 — 법안을 본회의 전에 먼저 심사합니다. 위원은 그 원의 정당 의석 비율대로 배정되고, 정당마다 찬성 · 반대 · 기권을 골라 "심사 확정"을 누르면 위원 과반 찬성일 때 본회의로, 부결이면 폐기돼요.',
+                    desc: i18n('sim.help.25'),
                     inner: [
-                        ['기본 위원회', '법제사법 · 기획재정 · 외교통일 · 국방 · 행정안전 · 교육 · 보건복지 · 환경노동 8개를 한 번에 만듭니다.'],
-                        ['위원 구성', '기본은 "자동 (의석 비례)" — 위원 수를 그 원의 정당 의석 비율대로 나눕니다. "직접 정하기"로 바꾸면 정당마다 위원 수를 직접 넣고(위원 수 = 합계), 의석이 바뀌어도 그대로예요. 켤 때는 지금 자동 배정에서 시작합니다.'],
-                        ['소관 태그', '법안 태그가 위원회 소관 태그와 겹치면 그 위원회로 자동 지정됩니다 (상정 탭에서 바꾸거나 "없음"으로 바로 본회의).'],
+                        [i18n('sim.help.26'), i18n('sim.help.27')],
+                        [i18n('sim.legis.57'), i18n('sim.help.28')],
+                        [i18n('sim.legis.61'), i18n('sim.help.29')],
                     ],
                 },
                 {
                     btn: 'subTabTable', open: go('law', 'table'),
-                    desc: '법안을 의회 또는 국무회의에 올리고, 의회로 올릴 법안은 소관 위원회를 고릅니다. 위원회 심사가 끝나야 "심의 선택"이 열려요. 검색 · 태그로 찾을 수 있습니다.',
+                    desc: i18n('sim.help.30'),
                 },
                 {
                     btn: 'subTabVote', open: go('law', 'vote'),
-                    desc: '정당별 · 의원별 찬반 표결. 의회를 통과한 법안의 서명 · 거부권 행사는 내각 › 서명에서 합니다.',
+                    desc: i18n('sim.help.31'),
                 },
                 {
                     btn: 'subTabSiege', open: go('law', 'siege'),
-                    desc: '국회공성전 — 의원들이 몸으로 표결을 지키거나 막는 상황입니다. 결과마다 오른쪽 하원 반원 위에서 의원들이 움직이는 애니메이션이 나와요 (켜고 끄기 · 0.5× ~ 4× 속도).',
+                    desc: i18n('sim.help.32'),
                     inner: [
-                        ['계엄 중 봉쇄 돌파', '계엄군 · 경찰이 국회를 막은 동안, 정당마다 참여율을 정하면 의원 한 명씩 봉쇄를 뚫는지 굴려 봅니다. 들어간 의원만 계엄 해제 결의안을 표결하고(재적 과반이면 해제), 반대 정당은 입구를 막을 수 있어요.'],
-                        ['물리적 의사 방해', '반대하는 법안의 표결을 막으려 의장석을 점거합니다. 참여 의원 수 · 결속도 · 의장 경호권 · 직권상정 · 국회선진화법으로 성공 확률이 정해지고, 성공하면 표결이 무산돼요. 폭력을 쓴 정당은 지지율이 깎이고 다친 의원은 몇 번 결석합니다.'],
+                        [i18n('sim.siege.14'), i18n('sim.help.33')],
+                        [i18n('sim.help.34'), i18n('sim.help.35')],
                     ],
                 },
                 {
                     btn: 'subTabArchive', open: go('law', 'archive'),
-                    desc: '가결 · 부결 · 거부된 법안 보관함입니다 (상태별로 걸러 보기). 위쪽 칩에서 원(하원 · 상원 …)이나 위원회를 고르면 그곳의 본회의 표결 · 위원회 심사 기록을 하나씩 봅니다. 선거 기록은 선거 › 선거 기록에 있어요.',
+                    desc: i18n('sim.help.36'),
                 },
                 {
                     btn: 'subTabLawbook', open: go('law', 'lawbook'),
-                    desc: '법령집 — 가결된 법률을 조문 그대로 모아 봅니다. 법률은 개정 계보마다 가장 최근 판이 보이고(제정 · 개정 횟수), 여기서 개정안을 낼 수 있어요.',
+                    desc: i18n('sim.help.37'),
                 },
                 {
                     btn: 'subTabConstitution', open: go('law', 'constitution'),
-                    desc: '헌법 — "헌법 제정하기"로 처음 만들고, "직접 편집"(표결 없이 바로) 또는 "개정안 발의"(표결을 거쳐, 가결 기준 2/3)로 고칩니다. 개정 이력이 남아요.',
+                    desc: i18n('sim.help.38'),
                 },
             ],
         },
         nation: {
-            intro: '나라의 기본 틀 — 상징 · 지역(지역구) · 권역을 정합니다.',
+            intro: i18n('sim.help.39'),
             tabs: [
                 {
                     btn: 'subTabSymbol', open: go('nation', 'symbol'),
-                    desc: '국가명과 국기.',
+                    desc: i18n('sim.help.40'),
                 },
                 {
                     btn: 'subTabTerritory', open: go('nation', 'territory'),
-                    desc: '지역구를 만들고 원별 의석 수 · 인구를 정합니다. 맵 메이커에서 만든 지도(.jsx)를 올리면 실제 지도 모양의 지역구를 쓸 수 있고, 지역구 프리셋(.hemimap — 저장 창의 지역구만 내보내기나 맵 메이커에서 만듦)을 올리면 지도 · 이름 · 의석 수 · 인구 · 권역이 한 번에 들어와요 (정당 · 내각은 그대로). (1.5.9까지는 여론 › 지역구)',
+                    desc: i18n('sim.help.41'),
                 },
                 {
                     btn: 'subTabRegions', open: go('nation', 'regions'),
-                    desc: '지역구를 권역으로 묶습니다 — 권역형 비례대표 · 지방선거 권역 단체장의 단위. 권역 득표율은 지역구 성향을 평균하는 자동 집계나 직접 입력 중에서 고릅니다. (1.5.9까지는 여론 › 권역)',
+                    desc: i18n('sim.help.42'),
                 },
                 {
                     btn: 'subTabPeople', open: go('nation', 'people'),
-                    desc: '사람 — 인물(이름 · 사진 · 이념 · 정당 · 파벌 · 메모)을 미리 만들어 두고 자리에 배정합니다. 이름 · 사진을 고치면 배정된 모든 자리에 반영되고, 선거 · 당적 변경으로 자리가 사라져도 인물은 남아요.',
+                    desc: i18n('sim.help.43'),
                     inner: [
-                        ['모든 자리에서 가져오기', '의원 · 당수 · 원내대표 · 파벌 대표 · 의장단 · 대통령(국왕) · 내각 · 지방 단체장 · 왕가 주장자처럼 이름이 적힌 자리에서 인물을 만들고 연결합니다 (같은 이름은 한 사람).'],
-                        ['지역구 후보', '선거 전에 인물을 지역구 후보로 내세우면, 총선 · 보궐선거에서 그 정당이 이긴 의석에 바로 배정돼요.'],
-                        ['시민 · 이민자', '지역구 인구를 시민과 이민자로 나눕니다 (국가 › 지역의 "시민 / 인구"). 이민자 투표권은 선거 › 방식, 이민자 성향은 여론 › 종합.'],
+                        [i18n('sim.help.44'), i18n('sim.help.45')],
+                        [i18n('sim.help.46'), i18n('sim.help.47')],
+                        [i18n('sim.help.48'), i18n('sim.help.49')],
                     ],
                 },
                 {
                     btn: 'subTabUnrecovered', open: go('nation', 'unrecovered'),
-                    desc: '미수복 — 나라가 영유권을 주장하지만 실제로 다스리지 못하는 땅(미수복 지역)을 정합니다. 종류를 여러 개 만들어 이름 · 빗금 색을 정하고, "칠하기"를 켠 채 지도에서 지역구를 눌러 지정해요. 미수복 지역은 모든 지도에서 빗금으로 보이고, 총선 지역구 · 지방선거 · 국민투표와 지역구 의석 수에서 빠집니다.',
+                    desc: i18n('sim.help.50'),
                     inner: [
-                        ['통합 · 영토 통일', '"통합"은 그 종류만, "영토 통일 (전체)"는 모든 미수복 지역을 되찾아 일반 지역구로 돌립니다 (선거 · 의석에 다시 포함).'],
-                        ['이름 색', '미수복 지역의 지역구 이름을 다른 지역과 같은 색으로 할지, 그 종류의 빗금 색으로 할지 고릅니다.'],
+                        [i18n('sim.help.51'), i18n('sim.help.52')],
+                        [i18n('sim.help.53'), i18n('sim.help.54')],
                     ],
                 },
                 {
                     btn: 'subTabVassals', open: go('nation', 'vassals'),
-                    desc: '종속국 — 본국에 딸린 나라(보호국 · 괴뢰국 · 자치령 …)를 만들고 "칠하기"로 지도에서 그 나라 땅을 정합니다. 종속국 땅은 모든 지도에서 그 나라 색 점무늬로 보이고, 본국 총선 지역구 · 지방선거 · 국민투표와 지역구 의석 수에서 빠집니다.',
+                    desc: i18n('sim.help.55'),
                     inner: [
-                        ['종속국 의회', '종속국마다 의회 이름 · 의석 수 · 봉쇄조항 · 정당(지지율 · 의석)을 정하고 "선거 실시"로 의석을 새로 나눕니다. "본국 정당 가져오기"로 본국 정당을 그대로 들일 수 있어요.'],
-                        ['본국 총선에도 참여', '스코틀랜드 · 카탈루냐 같은 자치 지역 — 켜면 그 종속국은 자기 의회를 따로 두면서도 그 땅의 지역구가 본국 총선 · 지방선거 · 국민투표에 들어가고 본국 지역구 의석에 셉니다 (경제 집계 · 공납은 종속국 그대로).'],
-                        ['합병 · 해방', '"합병"은 종속국 땅을 일반 지역구로 돌리고(종속국 의회 해산), "해방"은 독립국으로 떼어 냅니다 — 독립국은 지도에 따로 보이고 세계 › 국가 순위에 오르며, 다시 종속국으로 삼거나 지역구에서 아예 뺄 수 있어요.'],
+                        [i18n('sim.help.56'), i18n('sim.help.57')],
+                        [i18n('sim.help.58'), i18n('sim.help.59')],
+                        [i18n('sim.help.60'), i18n('sim.help.61')],
                     ],
                 },
                 {
                     btn: 'subTabDecisions', open: go('nation', 'decisions'),
-                    desc: '결정 · 모드 — 스크립트 모드(코드 없이 JSON으로 만든 이벤트 · 결정 · 국가 변수)를 켜고 끄고, 모드가 넣은 결정을 실행합니다. 이벤트는 날짜를 넘길 때(또는 총선 결과를 반영할 때) 조건이 맞으면 창으로 뜹니다.',
+                    desc: i18n('sim.help.62'),
                     inner: [
-                        ['결정', '모드가 넣은 버튼 — 조건이 맞아야 실행할 수 있고, 한 번만 쓰거나 정한 날 수가 지나야 다시 쓸 수 있어요.'],
-                        ['모드', '모드 파일 불러오기(.json) · 예제 모드 · 켜고 끄기(이 기기의 모든 세이브), 모더 도구(변수 · 플래그 · 이벤트 바로 띄우기). 데스크톱 앱은 모드 폴더 · 창작마당 모드도 읽어요. 만드는 법은 docs/MODDING.md.'],
+                        [i18n('sim.help.63'), i18n('sim.help.64')],
+                        [i18n('sim.help.65'), i18n('sim.help.66')],
                     ],
                 },
                 {
-                    btn: 'dispDateSettingsBtn', title: '날짜 · 회기 설정', open: () => { if(typeof openDatePanel === 'function') openDatePanel(); },
-                    path: '시각',
-                    desc: '날짜 줄의 ⚙로 여는 창. 연호(선택) · 연 · 월 · 일, 회기의 대수 · 이름 · 회기 번호 · 지금 회기 종류, 그리고 자동 진행(정기회 시작일이 지나면 정기회로 · 하원 총선 반영 시 대수 +1).',
+                    btn: 'dispDateSettingsBtn', title: i18n('sim.main.1'), open: () => { if(typeof openDatePanel === 'function') openDatePanel(); },
+                    path: i18n('sim.mainContentHelp.9'),
+                    desc: i18n('sim.help.67'),
                 },
                 {
                     btn: 'subTabNationSettings', open: go('nation', 'nationSettings'),
-                    desc: '지도 위 글씨 · 배지 크기.',
+                    desc: i18n('sim.help.68'),
                 },
                 {
-                    btn: 'saveTabSaveBtn', title: '저장', open: () => { if(typeof openSavePanel === 'function') openSavePanel(); },
-                    path: '맨 위',
-                    desc: '탭 바 오른쪽 끝 "저장" 버튼으로 여는 창. 지금 저장(Ctrl+S), 자동저장과 주기, 세이브 목록(즐겨찾기 · 이름 바꾸기 · 삭제), 다른 이름으로 저장(사본), 종합 프리셋(.hemi — 세이브 전체) 내보내기 · 불러오기(새 탭으로 열림), 지역구만 내보내기(.hemimap — 지역구 프리셋). 자동저장을 끄면 저장하지 않은 변경사항을 ↺로 되돌릴 수 있어요.',
+                    btn: 'saveTabSaveBtn', title: i18n('sim.main.3'), open: () => { if(typeof openSavePanel === 'function') openSavePanel(); },
+                    path: i18n('sim.help.69'),
+                    desc: i18n('sim.help.70'),
                 },
             ],
         },
         vote: {
-            intro: '선거를 치르고 개표합니다. 결과는 여론 탭의 지지율 · 성향을 바탕으로 정해져요.',
+            intro: i18n('sim.help.71'),
             tabs: [
                 {
                     btn: 'subTabElecPresidential', open: go('vote', 'elecPresidential'),
-                    desc: '대통령(총리직선제면 총리) 선거 개표.',
+                    desc: i18n('sim.help.72'),
                 },
                 {
                     btn: 'subTabElecGeneral', open: go('vote', 'elecGeneral'),
-                    desc: '의회 선거 — 비례 · 지역구 · 혼합 방식, 자동 · 선택 개표, 궐석 지역구만 다시 뽑는 보궐선거, 개표 속도. 개표가 끝나면 "✔ 의회에 반영"을 눌러야 의석이 바뀝니다.',
+                    desc: i18n('sim.help.73'),
                 },
                 {
                     btn: 'subTabElecSettings', open: go('vote', 'elecSettings'),
-                    desc: '대선 · 총리 선거 방식(단순 다수 · 결선투표 · 선거인단)과 지지율을 가져올 기준 원, 이민자 투표권. 선거인단제를 고르면 선거인단 설정이 나와요.',
+                    desc: i18n('sim.help.74'),
                 },
                 {
                     btn: 'subTabElecCandidates', open: go('vote', 'elecCandidates'),
-                    desc: '후보 단일화(여러 정당이 후보 한 명으로)와 대선 · 총리 선거 후보(기본은 당수 — 의원 연결이나 직접 입력으로 바꿈).',
+                    desc: i18n('sim.help.75'),
                     inner: [
-                        ['단일후보 정하기', '지지율 1위(기본) · 지지율 비례 분배(총선 지역구를 참여 정당의 전체 지지율 비율대로 나눠 맡음, 대선 · 총리 선거는 지지율 비례 추첨) · 예비선거(참여 정당 지지 + 일반 유권자 여론조사(유동층)를 정한 비율로 섞은 경선). 대선 · 총리 선거의 추첨 · 경선은 단일화 카드에서 한 번 치러 후보를 정해 둡니다.'],
-                        ['결집률', '후보를 내지 않는 참여 정당의 표가 단일후보에게 가는 비율(기본 100%, 경선을 치르면 +5%p). 총선 지역구에서 결집하지 않은 표는 다른 정당으로 흩어져요.'],
+                        [i18n('sim.union.25'), i18n('sim.help.76')],
+                        [i18n('sim.union.27'), i18n('sim.help.77')],
                     ],
                 },
                 {
                     btn: 'subTabElecLocal', open: go('vote', 'elecLocal'),
-                    desc: '지방선거 — 권역 단체장(예: 지사)과 지역구 단체장(예: 시장)을 뽑습니다. 지역구 인구 × 투표율로 실제 득표수를 계산하고, 당선자를 현직 단체장으로 반영하면 오른쪽에 지방자치 현황 지도가 나와요. 직책 이름은 권역 · 지역구마다 따로 정할 수 있습니다.',
+                    desc: i18n('sim.help.78'),
                     inner: [
-                        ['지방선거 연대', '여러 정당이 연대해 권역 · 지역구마다 단일후보를 냅니다 (총선 지역구 단일화와 따로). 단일후보는 예비선거(그 지역의 연대 정당 지지 + 일반 유권자 여론조사(유동층)를 정한 비율로) 또는 지지율 1위로 정하고, 나머지 연대 정당의 표는 결집률만큼 단일후보에게 갑니다.'],
+                        [i18n('sim.help.79'), i18n('sim.help.80')],
                     ],
                 },
                 {
                     btn: 'subTabReferendum', open: go('vote', 'referendum'),
-                    desc: '국민투표 — 정당마다 찬성 · 중립 · 반대 입장을 정하면 지역구마다 그 정당 지지층이 입장대로 찬반을 나눠 득표가 나옵니다. 투표율 기준(예: 50%)을 켜면 그 아래일 때는 결과와 상관없이 부결.',
+                    desc: i18n('sim.help.81'),
                 },
                 {
                     btn: 'subTabElecRecord', open: go('vote', 'elecRecord'),
-                    desc: '지난 선거 결과 — 총선 · 대선(총리 선거) · 지방선거 · 국민투표 기록을 최근 순으로, 종류 칩 · 검색으로 걸러 봅니다.',
+                    desc: i18n('sim.help.82'),
                 },
                 {
-                    btn: 'subTabFraud', open: go('vote', 'fraud'), suffix: ' (부정선거)',
-                    desc: '정당별로 다음 총선 개표 1회에 한해 부정선거를 시도할 수 있습니다. 발각은 개표 도중 무작위 시점에 드러나며, 그 순간 개표가 멈추고 조작된 표를 무효로 해 처음부터 다시 개표합니다. 발각된 정당은 활동 금지 처분을 받아요.',
-                    inner: [['정권 상태', '계엄령 · 전제군주정 · 군정에서는 정권 쪽 정당이 덜 들키고(×0.5 · ×0.3 · ×0.2) 들켜도 활동 금지 대신 지지율이 떨어지며(왕정은 왕실 스캔들), 야당은 더 들키고(×1.5) 활동 금지 + 지지율 절반. 군정은 내각 › 쿠데타에서 "관제 선거"를 허용해야 선거를 치러요.']],
+                    btn: 'subTabFraud', open: go('vote', 'fraud'), suffix: (" " + i18n('sim.help.83')),
+                    desc: i18n('sim.help.84'),
+                    inner: [[i18n('sim.help.85'), i18n('sim.help.86')]],
                 },
             ],
         },
         election: {
-            intro: '선거 결과를 좌우하는 성향 · 지지율을 정합니다 (지역구 · 권역은 국가 묶음). 여기서 정한 값으로 선거 탭에서 개표해요.',
+            intro: i18n('sim.help.87'),
             tabs: [
                 {
                     btn: 'elecSubTabOverview', open: goElec('overview'),
-                    desc: '종합 — "시민 / 이민자 성향 따로 정하기"(기본 켬)와 시민 · 인구 · 이민자 수, 원마다 정당별 지지율(시민 · 이민자 · 합산)을 한눈에 봅니다. 끄면 이민자 탭이 시민 탭과 묶여(동기화) 이민자도 시민과 같은 성향으로 투표해요 (시민 · 인구 수는 따로).',
+                    desc: i18n('sim.help.88'),
                 },
                 {
                     btn: 'elecSubTabTendency', open: goElec('tendency'),
-                    desc: '지역구마다 정당별 성향(%)을 정합니다. 지역구 선거에서 어느 정당이 이길지가 여기서 갈려요.',
-                    inner: [['무당층', '지역구 · 권역마다 성향 칸 아래에 무당층(%)을 정할 수 있습니다. 개표 때마다 무당층 표를 그 지역에 후보를 낸 정당들에 나눠 더해요 — 일부(무작위 비율)는 정당마다 난수로, 나머지는 성향 × 친화도(0.5~1.5 난수) 비율로. 성향이 0인 정당은 받지 않아 무당층만으로 당선되지는 않고, 결과가 덜 뻔해집니다. 총선 지역구와 지방선거에 쓰여요. 지역구에 따로 정하지 않으면 권역 성향을 쓰는 지역구는 권역 무당층을 따릅니다.']],
+                    desc: i18n('sim.help.89'),
+                    inner: [[i18n('sim.district.49'), i18n('sim.help.90')]],
                 },
                 {
                     btn: 'elecSubTabMtendency', open: goElec('mtendency'),
-                    desc: '이민자 성향 — 시민 성향과 같은 화면으로 이민자의 지역구 · 권역 성향을 정합니다. 이민자가 투표하는 선거에서 지역구마다 시민 · 이민자 수만큼 섞어 개표해요 (지역구 성향이 없으면 권역 성향 → 이민자 지지율).',
+                    desc: i18n('sim.help.91'),
                 },
                 {
                     btn: 'elecSubTabMprob', open: goElec('mprob'),
-                    desc: '이민자 지지율 — 시민 지지율과 같은 화면으로 이민자의 정당별 지지율을 정합니다. 이민자가 투표하는 총선 비례 · 대선은 전국 시민 · 이민자 수만큼 섞어 개표해요.',
+                    desc: i18n('sim.help.92'),
                 },
                 {
-                    title: '기사 (🔒 1.7.0)',
-                    desc: '신문 · 방송 기사를 직접 작성하는 기능(언론사 · 제목 · 부제 · 날짜 · 본문 · 사진, 날짜순 기사 목록) — 1.7.0에서 열립니다.',
+                    title: i18n('sim.help.93'),
+                    desc: i18n('sim.help.94'),
                 },
                 {
                     btn: 'elecSubTabProb', open: goElec('prob'),
-                    desc: '정당별 지지율(%)과 오차 범위를 정합니다. 비례대표 의석과 대선 결과의 바탕이 되고, 선거를 치르려면 꼭 필요해요. 전국형 · 권역형 비례를 고를 수 있습니다.',
+                    desc: i18n('sim.help.95'),
                     inner: [
-                        ['무당파', '개표 때마다 무당파 표를 정당에 나눠 비례대표 의석 배분에 더합니다.\n'
-                            + 'S = max(0, 무당파 지지율 ± 오차),  r = 0~1 난수 (선거마다)\n'
-                            + '① 무작위 몫 S·r — 정당마다 난수 u(0~1) → 정당 i의 몫 = S·r · uᵢ / Σu  (지지율과 무관)\n'
-                            + '② 지지율 몫 S·(1−r) — 정당 지지율 wᵢ(오차 반영) × 친화도 aᵢ(0.5~1.5 난수) → 몫 = S·(1−r) · wᵢaᵢ / Σwa\n'
-                            + '최종 가중치 = wᵢ + ①몫 + ②몫 → 이 비율로 비례 의석을 배분. 활동 금지 정당은 받지 않고, 지역구 결과는 성향(%)으로 따로 정해져요.'],
-                        ['비례 득표율 따로 정하기', '원마다 켜면 정당마다 "비례(%)" 칸이 생깁니다 (켤 때 지금 지지율을 복사). 그 원의 비례 의석과 봉쇄조항(전국형 비례)은 이 값(± 오차, 무당파 배분 포함)으로 나누고, 지역구(성향) · 대선 · 지방선거 · 여론은 지지율을 그대로 써요. 위성정당 예: 모정당 비례 0%, 위성정당 지지율 0% · 비례 N%. 권역형 비례는 권역 득표를 씁니다.'],
-                        ['무소속 포함하기', '무당파 칸 바로 아래. 켜면 무소속도 무당파 표를 받습니다 — ①은 지지율과 무관해서 무소속 지지율이 0이어도 의석을 얻을 수 있어요. 끄면(기본) 무소속은 ① · ② 모두에서 빠집니다.'],
+                        [i18n('sim.district.66'), (i18n('sim.help.96') + "\n")
+                            + (i18n('sim.help.97') + "\n")
+                            + (i18n('sim.help.98') + "\n")
+                            + (i18n('sim.help.99') + "\n")
+                            + i18n('sim.help.100')],
+                        [i18n('sim.district.88'), i18n('sim.help.101')],
+                        [i18n('sim.district.95'), i18n('sim.help.102')],
                     ],
                 },
             ],
         },
         cabinet: {
-            intro: '정부를 이끄는 사람들과 그 권한을 다룹니다. 의석 화면의 "내각" 탭에 한눈에 보여요.',
+            intro: i18n('sim.help.103'),
             tabs: [
                 {
                     btn: 'subTabSystem', open: go('cabinet', 'system'),
-                    desc: '정부 형태(대통령제 · 이원집정부제 · 의원내각제 · 입헌군주제 · 집단지도체제)와 직책 이름, 그리고 법안 거부권 · 비상사태 · 의회 해산 · 계엄령 권한을 누가 가질지 정합니다. 의회 해산은 의회 전체 또는 한 원(예: 하원)만 고를 수 있어요.',
+                    desc: i18n('sim.help.104'),
                 },
                 {
                     btn: 'subTabPresident', open: go('cabinet', 'president'),
-                    desc: '대통령의 이름 · 사진 · 소속 정당. 의원에서 불러오면 그 의원 정보와 연결돼 함께 바뀝니다.',
+                    desc: i18n('sim.help.105'),
                 },
                 {
                     btn: 'subTabPm', open: go('cabinet', 'pm'),
-                    desc: '총리 선출 방식(다수당 대표 자동 · 총리직선제), 현재 총리 고정, 부총리, 내각 불신임안 발의. 건설적 불신임제(독일 · 이스라엘식)를 켜면 불신임안에 후임을 함께 지명하고, 가결되면 그 후임이 바로 총리가 됩니다.',
+                    desc: i18n('sim.help.106'),
                 },
                 {
                     btn: 'subTabCabinetmembers', open: go('cabinet', 'cabinetmembers'),
-                    desc: '장관 · 국무위원을 추가하고 직책 · 이름 · 사진 · 소속 정당을 정합니다.',
+                    desc: i18n('sim.help.107'),
                 },
                 {
                     btn: 'subTabMilitary', open: go('cabinet', 'military'),
-                    desc: '군부 — 군 지휘부(국방부 장관 · 합참의장 · 육해공군 참모총장 등)를 정합니다. 지휘관마다 소속 · 정부에 대한 충성도(0~100) · 가까운 정당이 있고, 쿠데타 성공 확률 · 국회공성전 봉쇄 강도에 쓰여요.',
+                    desc: i18n('sim.help.108'),
                 },
                 {
                     btn: 'subTabCoup', open: go('cabinet', 'coup'),
-                    desc: '쿠데타 — 주도 세력(군부 · 정당 · 대통령 친위)과 지도자를 고르면 성공 확률을 요인별로 보여 주고, 일으키면 주사위를 굴립니다.',
+                    desc: i18n('sim.help.109'),
                     inner: [
-                        ['성공', '계엄령 선포 · 의회 정지 · 반대 정당 활동 금지. 군부가 성공하면 숨겨진 정부 형태 "군정" — 군사평의회 의장이 대통령 · 총리를 겸하고 선거가 멈춥니다.'],
-                        ['실패', '주도 세력 처벌(지도자 숙청 · 정당 활동 금지 · 대통령 축출)과 역풍으로 지지율 하락.'],
-                        ['군정에서 벗어나기', '민정 이양(계엄 해제 · 선거 재개 · 막힌 정당 복권) · 역쿠데타 · 혁명.'],
+                        [i18n('sim.help.110'), i18n('sim.help.111')],
+                        [i18n('sim.help.112'), i18n('sim.help.113')],
+                        [i18n('sim.coup.87'), i18n('sim.help.114')],
                     ],
                 },
                 {
                     btn: 'subTabRevolution', open: go('cabinet', 'revolution'),
-                    desc: '혁명 — 민중이 주체입니다. 주도 이념(민주 · 공산주의)과 혁명 정당을 고르면 성공 확률을 요인별로 보여 줘요 (정부 불신 · 군정 · 계엄 · 활동 금지 정당 · 혁명 정당 지지율 · 군의 충성).',
+                    desc: i18n('sim.help.115'),
                     inner: [
-                        ['공산주의 혁명', '성공하면 숨겨진 정부 형태 "당-국가 체제" — 혁명 정당 일당 집권, 다른 정당은 활동 금지 또는 우당, 의회는 최고인민회의, 선거는 단일 후보 찬반 투표.'],
-                        ['민주 혁명', '성공하면 군정 · 당-국가 체제 · 계엄이 무너지고 막혔던 정당이 복권, 새 헌법과 새 총선.'],
-                        ['혁명 연합', '여러 정당이 함께 일으킵니다 — 연합 정당의 지지율 · 앞서는 지역도 성공 확률에 더하고, 실패하면 연합 정당도 함께 활동 금지돼요.'],
-                        ['평의회 체제', '혁명 연합으로 공산주의 혁명에 성공하면 고를 수 있어요 — 연합 정당이 모두 남아 경쟁 선거로 정권을 주고받고(최고평의회 · 평의회 의장), 연합 밖 정당은 활동 금지. 당-국가 체제를 고르면 연합 정당은 우당이 됩니다.'],
+                        [i18n('sim.revolution.59'), i18n('sim.help.116')],
+                        [i18n('sim.revolution.60'), i18n('sim.help.117')],
+                        [i18n('sim.revolution.48'), i18n('sim.help.118')],
+                        [i18n('sim.revolution.83'), i18n('sim.help.119')],
                     ],
                 },
                 {
                     btn: 'subTabRoyal', open: go('cabinet', 'royal'),
-                    desc: '왕실 — 왕가와 왕위 주장자(이름 · 칭호 · 성별 · 사진 · 지지 정당)를 정하고 계승 규칙(남계만 · 남자 우선 · 성별 무관)을 고릅니다. 주장자 순서(⋮⋮ 끌기)가 출생 순이에요.',
+                    desc: i18n('sim.help.120'),
                     inner: [
-                        ['왕정복고', '공화정에서 군주제를 되살립니다 — 지지 정당이 하원 과반이면 의회 결의로 입헌군주제, 아니면 왕당파 쿠데타(입헌군주제 · 전제군주정).'],
-                        ['군주제에서', '서거 · 퇴위하면 계승 규칙대로 다음 계승자가 즉위하고, 다른 주장자가 정통 왕위를 주장하면 계승 분쟁(의회 표결 · 내전). 입헌군주제는 친위 쿠데타로 전제군주정, 전제군주정은 입헌 개혁으로 돌아가고, 공화 혁명으로 군주제를 없앨 수 있어요.'],
+                        [i18n('sim.help.121'), i18n('sim.help.122')],
+                        [i18n('sim.help.123'), i18n('sim.help.124')],
                     ],
                 },
                 {
                     btn: 'subTabSign', open: go('cabinet', 'sign'),
-                    desc: '서명 — 의회를 통과해 거부권 주체(대통령 · 총리 · 내각)의 서명을 기다리는 법안입니다. 서명하면 가결되고, 거부권을 행사하면 최종 부결돼요. 거부권 주체가 없으면(정부 형태 · 권한) 이 단계 없이 바로 가결됩니다.',
+                    desc: i18n('sim.help.125'),
                 },
                 {
                     btn: 'subTabCouncil', open: go('cabinet', 'council'),
-                    desc: '내각이 의결하는 법안의 표결과 의결 정족수. 계엄령으로 의회가 정지된 동안에는 여기서 법안을 통과시킵니다.',
+                    desc: i18n('sim.help.126'),
                 },
                 {
                     btn: 'subTabCouncilArchive', open: go('cabinet', 'councilArchive'),
-                    desc: '국무회의에서 가결 · 부결된 법안 보관함입니다 (상태별로 걸러 보기). 의회가 의결한 법안은 입법 › 표결 기록에 있어요.',
+                    desc: i18n('sim.help.127'),
                 },
             ],
         },
         economy: {
-            intro: '날짜를 따라 도는 나라 경제입니다. 결과를 강제하지 않고 계산 · 표시 · 제안하며, 모든 수치는 직접 고칠 수 있어요. 계산은 날짜가 분기(설정에 따라 1개월 · 1년) 경계를 지날 때만 돕니다. 오른쪽 "경제" 시각 탭에 계기판과 그래프가 있어요.',
+            intro: i18n('sim.help.128'),
             tabs: [
-                { btn: 'subTabEcoOverview', open: go('economy', 'overview'), desc: '개요 — 지표마다 반원 계기(안전 · 경고 · 위기), 신용등급, 경제 체제, 경고 신호, 국가부채 · 국고 · 세입 · 세출 금액.' },
-                { btn: 'subTabEcoAnalysis', open: go('economy', 'analysis'), desc: '분석 — 전문가 그래프(연동 다중 패널 · 예측 부채꼴 · 기여도 분해 · 부채 동학 · 정책 민감도 · 예산 흐름도), 분석 프리셋, 데이터 표 · CSV.' },
-                { btn: 'subTabEcoMonetary', open: go('economy', 'monetary'), desc: '통화 — 기준금리 · 화폐발행률 · 양적완화 · 양적긴축 · 평가절하, 중앙은행 독립(자동 금리). 통화정책은 법안 없이 바로 반영돼요.' },
-                { btn: 'subTabEcoFiscal', open: go('economy', 'fiscal'), desc: '재정 — 재량지출 · 의무지출 · 세목별 세율 · 국고 · 부채 한도. 예산 · 세율 바꾸기는 기본으로 예산안(법안)을 거쳐 입법 › 표결에서 통과해야 반영됩니다 (못 넘기면 준예산).' },
-                { btn: 'subTabEcoRegion', open: go('economy', 'region'), desc: '지역 — 지역구마다 산업구조 · 연령구조 · 소득등급 · 실업률 · 민심. 같은 정책도 지역마다 다르게 작용하고, 경제 성과가 지지율 · 지역구 성향을 조금씩 움직여요 (설정).' },
-                { btn: 'subTabEcoScenario', open: go('economy', 'scenario'), desc: '시나리오 — 초기값(고정 · 전환 · 구간)과 프리셋.' },
-                { btn: 'subTabEcoEvents', open: go('economy', 'events'), desc: '이벤트 — 정한 날짜에 대공황 · 금융 위기 · 오일 쇼크 · 하이퍼인플레이션 · 국가 부도 · 재해 · 호황(또는 직접 만든 사건)을 일으킵니다.' },
-                { btn: 'subTabEcoItems', open: go('economy', 'items'), desc: '항목 — 사용자 정의 지출 항목 · 세목 · 자산.' },
+                { btn: 'subTabEcoOverview', open: go('economy', 'overview'), desc: i18n('sim.help.129') },
+                { btn: 'subTabEcoAnalysis', open: go('economy', 'analysis'), desc: i18n('sim.help.130') },
+                { btn: 'subTabEcoMonetary', open: go('economy', 'monetary'), desc: i18n('sim.help.131') },
+                { btn: 'subTabEcoFiscal', open: go('economy', 'fiscal'), desc: i18n('sim.help.132') },
+                { btn: 'subTabEcoRegion', open: go('economy', 'region'), desc: i18n('sim.help.133') },
+                { btn: 'subTabEcoScenario', open: go('economy', 'scenario'), desc: i18n('sim.help.134') },
+                { btn: 'subTabEcoEvents', open: go('economy', 'events'), desc: i18n('sim.help.135') },
+                { btn: 'subTabEcoItems', open: go('economy', 'items'), desc: i18n('sim.help.136') },
             ],
         },
         world: {
-            intro: '세계 여러 나라·진영·영토 지도입니다. 세계지도는 선거용 지역구 지도와 별도로 관리합니다.',
+            intro: i18n('sim.help.137'),
             tabs: [
                 {
                     btn: 'subTabWorldmap', open: go('world', 'worldmap'),
-                    desc: '지도 — 지역구 지도와 같은 .hemimap 파일을 불러와 각 구역을 국가 영토로 칠합니다. 국가별 색 · 지우기 · 실행 취소/다시 실행, 휠 확대/축소와 휠 버튼 이동을 지원합니다. 배정은 세이브마다 저장되며 지역구·의석 수를 바꾸지 않습니다.',
+                    desc: i18n('sim.help.138'),
                 },
                 {
                     btn: 'subTabRanking', open: go('world', 'ranking'),
-                    desc: '국가 순위 — 냉전 국가 순위처럼 나라마다 국기(그림) · 진영 · 하위 이념 · 점수를 정하면 오른쪽 "국가 순위" 시각 탭에 순위표와 순위 변동이 나옵니다.',
+                    desc: i18n('sim.help.139'),
                 },
                 {
                     btn: 'subTabBlocs', open: go('world', 'blocs'),
-                    desc: '진영 — 진영 추가 · 삭제, 색 · 설명, 하위 이념 추가 · 삭제, 진영 구도 막대.',
+                    desc: i18n('sim.help.140'),
                 },
                 {
                     btn: 'subTabEconblocs', open: go('world', 'econblocs'),
-                    desc: '경제권 — 세계 지도의 구역을 묶어 공업권 · 무역권 · 수도권 같은 경제 지역을 만들고 칠합니다. 국가 영토 · 선거 지역구와 따로 저장되고 국경을 넘어도 됩니다. 지도 위의 "국가 영토 / 경제권"으로 표시를 바꿉니다. (구역별 경제 자료는 아직 없어 구역 수 · 소유 국가만 집계합니다.)',
+                    desc: i18n('sim.help.141'),
                 },
             ],
         },
         layout: {
-            intro: '화면 맨 위의 세이브 탭 바와 왼쪽 메뉴(사이드바) 쓰는 법입니다.',
+            intro: i18n('sim.help.142'),
             tabs: [
                 {
-                    path: '맨 위', title: '⌂ 집 아이콘',
-                    desc: '탭 바 맨 왼쪽. 누르면 지금 상태를 바로 저장한 뒤 메인 화면(시작 화면)으로 돌아갑니다.',
+                    path: i18n('sim.help.69'), title: i18n('sim.help.143'),
+                    desc: i18n('sim.help.144'),
                 },
                 {
-                    path: '맨 위', title: '세이브 탭',
-                    desc: '탭 하나하나가 세이브(나라 하나)입니다. 누르면 그 세이브로 바로 바뀌고, 진행 상황은 그 세이브에 그대로 자동저장돼요. 프리셋으로 시작하면 프리셋 제목으로 탭이 생깁니다.',
+                    path: i18n('sim.help.69'), title: i18n('sim.help.145'),
+                    desc: i18n('sim.help.146'),
                     inner: [
-                        ['●', '탭 이름 옆의 점 — 아직 저장하지 않은 변경사항이 있다는 뜻. 자동저장이 켜져 있으면 곧 저장되고, 꺼져 있으면 탭을 옮기거나 닫을 때 저장할지 물어요.'],
-                        ['이름 바꾸기', '탭 이름을 더블클릭 (또는 저장 창의 ✎).'],
-                        ['×', '탭만 닫기 — 세이브는 지워지지 않아요. 탭을 모두 닫으면 아래 화면이 빕니다. 세이브 삭제는 저장 창의 세이브 목록이나 시작 화면의 🗑에서.'],
+                        ['●', i18n('sim.help.147')],
+                        [i18n('sim.help.148'), i18n('sim.help.149')],
+                        ['×', i18n('sim.help.150')],
                     ],
                 },
                 {
-                    path: '맨 위', title: '+ 새 세이브',
-                    desc: '새 세이브를 만듭니다.',
+                    path: i18n('sim.help.69'), title: i18n('sim.contentSave.10'),
+                    desc: i18n('sim.help.151'),
                     inner: [
-                        ['새로 생성', '아무것도 없는 기본 상태에서 새로 시작 — 지금 화면은 복사되지 않아요.'],
-                        ['프리셋에서 생성', '서독 튜토리얼처럼 미리 준비된 나라의 복사본으로 시작.'],
-                        ['닫은 탭 다시 열기', '×로 닫아 둔 세이브를 다시 탭으로 띄웁니다.'],
+                        [i18n('sim.help.152'), i18n('sim.help.153')],
+                        [i18n('sim.help.154'), i18n('sim.help.155')],
+                        [i18n('sim.help.156'), i18n('sim.help.157')],
                     ],
                 },
                 {
-                    path: '맨 위', title: '저장 버튼',
-                    desc: '탭 바 오른쪽 끝. 저장 창(지금 저장 · 자동저장 · 세이브 목록 · 다른 이름으로 저장 · 파일)을 엽니다. 국가 › 저장에 있던 것이 모두 여기로 옮겨졌어요.',
+                    path: i18n('sim.help.69'), title: i18n('sim.help.158'),
+                    desc: i18n('sim.help.159'),
                 },
                 {
-                    path: '왼쪽', title: '메뉴 묶음과 항목',
-                    desc: '의회 · 입법 · 여론 · 선거 · 내각 · 국가 · 도움말 일곱 묶음과 그 안의 항목. 항목을 누르면 그 기능 화면이 열리고, 묶음 제목을 누르면 접히거나 펼쳐집니다 (다음에 열어도 그대로 기억).',
+                    path: i18n('sim.help.160'), title: i18n('sim.help.161'),
+                    desc: i18n('sim.help.162'),
                 },
                 {
-                    path: '왼쪽', title: '사이드바 접기',
-                    desc: '사이드바 머리 오른쪽의 접기 버튼으로 아이콘만 남기고 접어 편집 화면을 넓게 쓸 수 있어요. 접힌 상태에선 아이콘을 누르면 그 묶음으로 바로 이동합니다.',
+                    path: i18n('sim.help.160'), title: i18n('sim.help.163'),
+                    desc: i18n('sim.help.164'),
                 },
                 {
-                    path: '가운데', title: '편집 패널 머리 · 폭 조절',
-                    desc: '편집 패널 맨 위에는 라이트/다크에선 지금 위치(묶음 › 항목), 네온에선 "MINISTRY OF INTERIOR" 띠와 국가명이 보입니다. 편집 패널과 시각 화면 사이 경계를 끌면 폭을 바꿀 수 있고, 더블클릭하면 기본 폭으로 돌아가요.',
+                    path: i18n('sim.help.165'), title: i18n('sim.help.166'),
+                    desc: i18n('sim.help.167'),
                 },
                 {
-                    path: '공통', title: '실행 버튼과 단축키',
-                    desc: '설정을 바꾸면 시각 화면이 알아서 새로 그려집니다. "PROTOCOL EXECUTE"(실행) 버튼은 기본으로 숨겨져 있고 설정 › 화면에서 켤 수 있어요 — 숨겨도 Enter로 다시 그릴 수 있습니다.',
+                    path: i18n('sim.help.168'), title: i18n('sim.help.169'),
+                    desc: i18n('sim.help.170'),
                     inner: [
-                        ['Enter', '입력 칸 밖에서 누르면 실행.'],
-                        ['Ctrl+S', '바로 저장.'],
-                        ['Ctrl+Z', '되돌리기 (Ctrl+Shift+Z로 다시 실행).'],
-                        ['Esc', '열려 있는 확인 · 안내 · 내보내기 · 저장 · 날짜 창 닫기.'],
+                        ['Enter', i18n('sim.help.171')],
+                        ['Ctrl+S', i18n('sim.help.172')],
+                        ['Ctrl+Z', i18n('sim.help.173')],
+                        ['Esc', i18n('sim.help.174')],
                     ],
                 },
                 {
-                    path: '메인 화면', title: '테마 · 언어 · 튜토리얼',
-                    desc: '⌂로 메인 화면에 가면 설정(라이트 · 다크 · 네온 테마)과 🌐 언어(언어 팩 불러오기 포함)를 바꿀 수 있어요. 튜토리얼은 시작하기 › 프리셋의 "서독"으로 언제든 다시 할 수 있고, 기본 튜토리얼(핵심 흐름)과 세부 튜토리얼(기능별)로 나뉘어 있습니다.',
+                    path: i18n('sim.help.175'), title: i18n('sim.help.176'),
+                    desc: i18n('sim.help.177'),
                 },
             ],
         },
         visual: {
-            intro: '화면 오른쪽의 시각 탭 — 설정한 내용이 그림으로 보이는 곳입니다.',
-            path: '시각',
+            intro: i18n('sim.help.178'),
+            path: i18n('sim.mainContentHelp.9'),
             tabs: [
                 {
                     btn: 'dispTabHouse', open: disp('house'),
-                    desc: '하원(첫 번째 의회)의 의석을 반원으로 보여줍니다. 위쪽 "반원 / 지역구"로 지역구 지도 보기로 바꿀 수 있고, 아래에는 여당 · 야당별 정당 카드(의석 수 · 비율 · 파벌)와 원외정당, 의장단이 나와요.',
+                    desc: i18n('sim.help.179'),
                 },
                 {
-                    btn: 'dispTabSenate', open: disp('senate'), hiddenNote: '양원제 · 삼원제일 때 나타나요',
-                    desc: '상원(두 번째 의회)의 의석. 보는 법은 하원과 같습니다.',
+                    btn: 'dispTabSenate', open: disp('senate'), hiddenNote: i18n('sim.help.180'),
+                    desc: i18n('sim.help.181'),
                 },
                 {
-                    btn: 'dispTabThird', open: disp('third'), hiddenNote: '삼원제일 때 나타나요',
-                    desc: '삼원(세 번째 의회)의 의석.',
+                    btn: 'dispTabThird', open: disp('third'), hiddenNote: i18n('sim.help.182'),
+                    desc: i18n('sim.help.183'),
                 },
                 {
                     btn: 'dispTabCabinet', open: disp('cabinet'),
-                    desc: '대통령 · 총리 · 부총리 · 국무위원 등 정부 구성원을 카드로 한눈에 보여줍니다. 내각 묶음에서 정한 내용이 여기 반영돼요.',
+                    desc: i18n('sim.help.184'),
                 },
                 {
                     btn: 'dispTabDistrict', open: go('nation', 'territory'), openWhenHidden: true,
-                    desc: '지역구 지도. 국가 › 지역구 지도를 열면 나타나고, 지역구를 눌러 편집할 수 있어요. 탭의 ×로 닫습니다.',
+                    desc: i18n('sim.help.185'),
                 },
                 {
                     btn: 'dispTabTendency', open: goElec('tendency'), openWhenHidden: true,
-                    desc: '정당별 성향 지도. 여론 › 시민 성향을 열면 나타나며, 지역구마다 어느 정당 쪽인지 색으로 보여요.',
+                    desc: i18n('sim.help.186'),
                 },
                 {
                     btn: 'dispTabRegion', open: go('nation', 'regions'), openWhenHidden: true,
-                    desc: '권역 지도. 국가 › 권역을 열면 나타나고, 지역구를 칠해 권역으로 묶습니다.',
+                    desc: i18n('sim.help.187'),
                 },
                 {
                     btn: 'dispTabTimeline', open: go('setup', 'timeline'),
-                    desc: '세력 변화 — 의회 › 세력 변화의 기록을 정당 역사 도표로 (의석 변화 · 당 변화 계보도, 아래로 스크롤). 우클릭으로 PNG · SVG 내보내기.',
+                    desc: i18n('sim.help.188'),
                 },
                 {
                     btn: 'dispTabWiki', open: go('setup', 'wikibox'),
-                    desc: '위키 틀 — 원내 구성 틀 (정당 로고 · 의석 · 여야 구분). 우클릭으로 PNG · SVG 내보내기.',
+                    desc: i18n('sim.help.189'),
                 },
                 {
                     btn: 'dispTabRanking', open: go('world', 'ranking'),
-                    desc: '국가 순위 — 세계 › 국가 순위의 순위표 (국기 · 진영 · 점수 · 순위 변동).',
+                    desc: i18n('sim.help.190'),
                 },
                 {
-                    btn: 'dispTabElecResultHouse', title: '선거결과', open: disp('elecResultHouse'), hiddenNote: '총선을 개표하면 원마다 생겨요',
-                    desc: '총선 개표 화면과 결과. 개표가 진행되는 모습, 정당별 득표와 직전 대비 의석 변동(▲/▼)을 보여주고, 결과를 확인한 뒤 선거 › 총선의 "✔ 의회에 반영"을 누르면 그 결과대로 의석이 바뀝니다.',
+                    btn: 'dispTabElecResultHouse', title: i18n('sim.help.191'), open: disp('elecResultHouse'), hiddenNote: i18n('sim.help.192'),
+                    desc: i18n('sim.help.193'),
                 },
                 {
-                    title: '날짜 · 회기', open: () => { if(typeof openDatePanel === 'function') openDatePanel(); },
-                    desc: '시각 화면 맨 위 줄의 현재 날짜와 회기. ▶ · ▶▶ · ▶▶▶로 하루 · 일주일 · 한 달씩 넘기고, "다음: 정기회 / 임시회"로 다음 회기 종류를 골라(지금 회기는 그대로) "다음 회기"로 넘깁니다. ⚙로 날짜 · 회기 설정 창을 엽니다.',
+                    title: i18n('sim.help.194'), open: () => { if(typeof openDatePanel === 'function') openDatePanel(); },
+                    desc: i18n('sim.help.195'),
                 },
                 {
-                    title: '좌석 정보 · 이미지 내보내기',
-                    desc: '좌석(점)을 누르면 그 자리의 정당 · 의원 정보 카드가 뜹니다. 반원 · 지도 · 선거 결과 · 내각 화면에서 오른쪽 클릭(모바일은 길게 누르기) → "내보내기..."를 고르면 이미지로 저장할 수 있어요.',
+                    title: i18n('sim.help.196'),
+                    desc: i18n('sim.help.197'),
                 },
             ],
         },
@@ -506,14 +506,14 @@
                 <div class="help-card-head">
                     <span class="help-card-path"></span>
                     <span class="help-card-title"></span>
-                    <button type="button" class="help-open">열기 →</button>
+                    <button type="button" class="help-open">${escapeHtmlText(i18n('sim.help.198'))}</button>
                 </div>
                 <p class="help-desc"></p>`;
             card.querySelector('.help-card-path').textContent = (tab.path || page.path || groupLabel(key).replace(/^\S+\s+/, '')) + ' ›';
             const srcLabel = src ? (src.querySelector('.disp-tab-label') || src).textContent.trim() : '';
             // suffix는 이름이 기호뿐일 때만 (⚠ → "⚠ (부정선거)", 잠금을 풀어 "부정선거"가 되면 붙이지 않음)
             card.querySelector('.help-card-title').textContent = (tab.title || srcLabel || tab.btn) + (tab.suffix && !/[\p{L}]/u.test(srcLabel || '') ? tab.suffix : '');
-            card.querySelector('.help-desc').textContent = tab.desc + (hidden && !tab.openWhenHidden ? ` (${tab.hiddenNote || '지금 설정에선 숨겨져 있어요'})` : '');
+            card.querySelector('.help-desc').textContent = tab.desc + (hidden && !tab.openWhenHidden ? ` (${tab.hiddenNote || i18n('sim.help.199')})` : '');
             const openBtn = card.querySelector('.help-open');
             if (!tab.open) openBtn.style.display = 'none';
             openBtn.disabled = hidden && !tab.openWhenHidden;

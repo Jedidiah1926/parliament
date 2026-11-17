@@ -36,7 +36,7 @@
         while (territories.some(t => t.id === 't' + n)) n++;
         // 세이브에 든 이름은 번역하지 않으므로, 영어 화면이면 기본 이름도 영어로 만든다
         const en = typeof window.getLang === 'function' && window.getLang() === 'en';
-        const t = { id: 't' + n, name: name || (en ? `Unrecovered territory ${n}` : `미수복 지역 ${n}`), color: PALETTE[(n - 1) % PALETTE.length] };
+        const t = { id: 't' + n, name: name || (en ? `Unrecovered territory ${n}` : i18n('sim.unrecovered.1', { v: n })), color: PALETTE[(n - 1) % PALETTE.length] };
         territories.push(t);
         return t;
     }
@@ -49,7 +49,7 @@
         const u = tz && typeof tz.unrecovered === 'object' ? tz.unrecovered : {};
         Object.entries(u).forEach(([key, v]) => {
             let id = typeof v === 'string' ? v : null;
-            if (!id || !territoryById(id)) id = (territories[0] || addTerritory('미수복 지역')).id;
+            if (!id || !territoryById(id)) id = (territories[0] || addTerritory(i18n('sim.unrecovered.2'))).id;
             unrecovered[key] = id;
         });
         brush = null;
@@ -134,7 +134,7 @@
             const g = o.getFill, t = o.title, b = o.seatBadges;
             o.defs = (o.defs || '') + hatchDefs(prefix);
             o.getFill = key => (isUnrec(key) ? `url(#${prefix}${unrecovered[key]})` : (g ? g(key) : null));
-            o.title = key => (isUnrec(key) ? `${nameOf(key)} (미수복 지역: ${territoryOf(key).name})` : (t ? t(key) : nameOf(key)));
+            o.title = key => (isUnrec(key) ? i18n('sim.unrecovered.3', { key: nameOf(key), name: territoryOf(key).name }) : (t ? t(key) : nameOf(key)));
             if (b) o.seatBadges = key => (isUnrec(key) ? null : b(key));
         }
         // 칠하기 도구가 켜져 있으면 지역구 편집 지도에서 누르는 지역구를 바로 칠한다 (편집 칸을 열지 않음)
@@ -145,7 +145,7 @@
         if (brush && wrapEl && wrapEl.id === 'districtSvgWrap' && o.clickable) {
             o.onClickKey = key => paint(key);
             const t = o.title;
-            o.title = key => (t ? t(key) : nameOf(key)) + (brush === 'erase' ? ' — 눌러서 지우기' : ` — 눌러서 "${territoryById(brush)?.name || ''}"로 칠하기`);
+            o.title = key => (t ? t(key) : nameOf(key)) + (brush === 'erase' ? (" " + i18n('sim.unrecovered.4')) : (" " + i18n('sim.unrecovered.5', { name: territoryById(brush)?.name || '' })));
         }
         const r = origRender.call(this, wrapEl, o);
         // 미수복 지역 이름을 그 종류의 빗금 색으로 (설정에 따라)
@@ -179,9 +179,9 @@
     function kindSelectHtml(key) {
         const cur = isUnrec(key) ? unrecovered[key] : '';
         return `<select class="teaser-unrec-select">
-                <option value="">— 아님 (일반 지역구) —</option>
+                <option value="">${esc(i18n('sim.unrecovered.6'))}</option>
                 ${territories.map(t => `<option value="${esc(t.id)}" ${t.id === cur ? 'selected' : ''}>${esc(t.name)}</option>`).join('')}
-                <option value="__new">+ 새 종류</option>
+                <option value="__new">${esc(i18n('sim.unrecovered.7'))}</option>
             </select>`;
     }
     function bindKindSelect(box, key) {
@@ -198,8 +198,8 @@
         if (panel && key && panel.style.display !== 'none') {
             const box = document.createElement('label');
             box.className = 'teaser-unrec-toggle';
-            box.innerHTML = `미수복 지역 ${kindSelectHtml(key)}
-                <span class="teaser-dim">— 실제로 다스리지 못하는 지역구 (선거 · 의석에서 빠짐) · 종류는 국가 › 미수복에서 관리</span>`;
+            box.innerHTML = `${esc(i18n('sim.unrecovered.2'))} ${kindSelectHtml(key)}
+                <span class="teaser-dim">${esc(i18n('sim.unrecovered.8'))}</span>`;
             bindKindSelect(box, key);
             panel.insertBefore(box, panel.children[1] || null);
         }
@@ -222,19 +222,19 @@
         if (!t) return;
         const n = keysOf(id).length;
         if (!n) { dropTerritory(id); return; }
-        showCustomConfirm(`"${t.name}"의 미수복 지역 ${n}곳을 되찾아 본국에 통합합니다 (일반 지역구로 편입 · 다른 미수복 지역은 그대로). 계속하시겠습니까?`, () => dropTerritory(id));
+        showCustomConfirm(i18n('sim.unrecovered.9', { name: t.name, v: n }), () => dropTerritory(id));
     }
     function removeTerritory(id) {
         const t = territoryById(id);
         if (!t) return;
         const n = keysOf(id).length;
         if (!n) { dropTerritory(id); return; }
-        showCustomConfirm(`"${t.name}" 종류를 지웁니다. 이 종류로 칠한 지역구 ${n}곳은 일반 지역구로 돌아갑니다. 계속하시겠습니까?`, () => dropTerritory(id));
+        showCustomConfirm(i18n('sim.unrecovered.10', { name: t.name, v: n }), () => dropTerritory(id));
     }
     function unifyAll() {
         const n = Object.keys(unrecovered).filter(isUnrec).length;
         if (!n) return;
-        showCustomConfirm(`모든 종류의 미수복 지역 ${n}곳을 되찾아 일반 지역구로 편입합니다. 계속하시겠습니까?`, () => {
+        showCustomConfirm(i18n('sim.unrecovered.11', { v: n }), () => {
             unrecovered = {};
             territories = [];
             brush = null;
@@ -255,7 +255,7 @@
         // 예전 화면(여론 › 지역구가 있던 1.5.9)이면 지역구 편집을 국가 › 지역구 지도로 옮겨 둔다
         if (!document.getElementById('subTabTerritory')) {
             const namePanel = document.getElementById('districtNamePanel');
-            nationBar.insertBefore(el(`<button class="sub-tab-btn" onclick="switchSubTab('nation','territory')" id="subTabTerritory">지역</button>`), settingsBtn);
+            nationBar.insertBefore(el(`<button class="sub-tab-btn" onclick="switchSubTab('nation','territory')" id="subTabTerritory">${esc(i18n('sim.unrecovered.12'))}</button>`), settingsBtn);
             const territory = el(`<div id="contentTerritory" class="sub-tab-content"></div>`);
             nation.insertBefore(territory, settings);
             if (namePanel) territory.appendChild(namePanel);
@@ -266,7 +266,7 @@
             document.getElementById('elecSubTendency')?.classList.add('active');
             legacyTabs = true;
         }
-        nationBar.insertBefore(el(`<button class="sub-tab-btn" onclick="switchSubTab('nation','unrecovered')" id="subTabUnrecovered">미수복</button>`), settingsBtn);
+        nationBar.insertBefore(el(`<button class="sub-tab-btn" onclick="switchSubTab('nation','unrecovered')" id="subTabUnrecovered">${esc(i18n('sim.unrecovered.13'))}</button>`), settingsBtn);
         nation.insertBefore(el(`<div id="contentUnrecovered" class="sub-tab-content"></div>`), settings);
         districtContent.insertBefore(el(`<div id="teaserUnrecLink" class="teaser-unrec-link"></div>`), districtContent.firstChild);
     })();
@@ -313,8 +313,8 @@
         const box = document.getElementById('teaserUnrecLink');
         if (!box) return;
         const total = Object.keys(unrecovered).filter(isUnrec).length;
-        box.innerHTML = `<span>미수복 지역 ${total}곳${territories.length ? ` (${territories.length}종류)` : ''}</span>
-            <button type="button" class="teaser-btn">국가 › 미수복에서 관리</button>`;
+        box.innerHTML = `<span>${esc(i18n('sim.unrecovered.2'))} ${esc(i18n('sim.common.places', { count: total }))}${territories.length ? esc((" " + i18n('sim.unrecovered.15', { territories: territories.length }))) : ''}</span>
+            <button type="button" class="teaser-btn">${esc(i18n('sim.unrecovered.16'))}</button>`;
         box.querySelector('button').addEventListener('click', () => window.switchSubTab('nation', 'unrecovered'));
     }
 
@@ -328,47 +328,47 @@
             const keys = keysOf(t.id);
             return `<div class="teaser-terr ${brush === t.id ? 'painting' : ''}" data-id="${esc(t.id)}">
                 <div class="teaser-terr-head">
-                    <input type="color" class="teaser-terr-color" value="${esc(t.color)}" title="빗금 색">
-                    <input type="text" class="teaser-terr-name" value="${esc(t.name)}" maxlength="40" title="종류 이름">
+                    <input type="color" class="teaser-terr-color" value="${esc(t.color)}" title="${esc(i18n('sim.unrecovered.17'))}">
+                    <input type="text" class="teaser-terr-name" value="${esc(t.name)}" maxlength="40" title="${esc(i18n('sim.unrecovered.18'))}">
                 </div>
                 <div class="teaser-terr-actions">
-                    <span class="teaser-dim">${keys.length}곳</span>
-                    <button type="button" class="teaser-btn teaser-paint ${brush === t.id ? 'active' : ''}">${brush === t.id ? '칠하는 중' : '칠하기'}</button>
-                    <button type="button" class="teaser-btn teaser-unify-one">통합</button>
-                    <button type="button" class="teaser-btn teaser-del">삭제</button>
+                    <span class="teaser-dim">${esc(i18n('sim.common.places', { count: keys.length }))}</span>
+                    <button type="button" class="teaser-btn teaser-paint ${brush === t.id ? 'active' : ''}">${brush === t.id ? esc(i18n('sim.unrecovered.19')) : esc(i18n('sim.unrecovered.20'))}</button>
+                    <button type="button" class="teaser-btn teaser-unify-one">${esc(i18n('sim.unrecovered.21'))}</button>
+                    <button type="button" class="teaser-btn teaser-del">${esc(i18n('common.delete'))}</button>
                 </div>
-                ${keys.length ? `<div class="teaser-chips">${keys.slice(0, LIMIT).map(k => `<span class="teaser-chip" data-key="${esc(k)}">${esc(nameOf(k))}<button type="button" title="이 지역구 빼기">×</button></span>`).join('')}${keys.length > LIMIT ? `<span class="teaser-dim teaser-small">외 ${keys.length - LIMIT}곳</span>` : ''}</div>` : '<div class="teaser-dim teaser-small">아직 칠한 지역구가 없습니다</div>'}
+                ${keys.length ? `<div class="teaser-chips">${keys.slice(0, LIMIT).map(k => `<span class="teaser-chip" data-key="${esc(k)}">${esc(nameOf(k))}<button type="button" title="${esc(i18n('sim.unrecovered.22'))}">×</button></span>`).join('')}${keys.length > LIMIT ? `<span class="teaser-dim teaser-small">${esc(i18n('sim.common.morePlaces', { count: keys.length - LIMIT }))}</span>` : ''}</div>` : `<div class="teaser-dim teaser-small">${esc(i18n('sim.unrecovered.24'))}</div>`}
             </div>`;
         }).join('');
         const sel = typeof selectedDistrictKey !== 'undefined' ? selectedDistrictKey : null;
         host.innerHTML = `
             <div class="teaser-unrec-summary">
                 <div class="teaser-unrec-row">
-                    <span class="teaser-unrec-count">미수복 지역 ${territories.length}종류 · ${total}곳</span>
-                    <button type="button" class="teaser-unify" ${total ? '' : 'disabled'}>영토 통일 (전체)</button>
+                    <span class="teaser-unrec-count">${esc(i18n('sim.unrecovered.2'))} ${territories.length}${esc(i18n('sim.unrecovered.25'))} ${esc(i18n('sim.common.places', { count: total }))}</span>
+                    <button type="button" class="teaser-unify" ${total ? '' : 'disabled'}>${esc(i18n('sim.unrecovered.26'))}</button>
                 </div>
-                <div class="teaser-dim teaser-small">실제로 다스리지 못하는 지역구 — 선거 · 의석에서 빠지고 지도에 종류별 빗금으로 표시됩니다. 종류마다 따로 본국에 통합할 수 있습니다.</div>
+                <div class="teaser-dim teaser-small">${esc(i18n('sim.unrecovered.27'))}</div>
                 <div class="teaser-unrec-row teaser-label-color">
-                    <span class="teaser-dim">지도의 지역 이름 색</span>
+                    <span class="teaser-dim">${esc(i18n('sim.unrecovered.28'))}</span>
                     <span class="system-radio-group" style="margin:0;">
-                        <button type="button" class="system-radio-btn ${labelColor === 'same' ? 'active' : ''}" data-lcolor="same">다른 지역과 같게</button>
-                        <button type="button" class="system-radio-btn ${labelColor === 'hatch' ? 'active' : ''}" data-lcolor="hatch">빗금 색으로</button>
+                        <button type="button" class="system-radio-btn ${labelColor === 'same' ? 'active' : ''}" data-lcolor="same">${esc(i18n('sim.unrecovered.29'))}</button>
+                        <button type="button" class="system-radio-btn ${labelColor === 'hatch' ? 'active' : ''}" data-lcolor="hatch">${esc(i18n('sim.unrecovered.31'))}</button>
                     </span>
                 </div>
                 <div class="teaser-add-row">
-                    <input type="text" class="teaser-add-name" maxlength="40" placeholder="새 종류 이름 (예: 오스트리아, 알자스로렌-룩셈부르크, 동방영토, 북방영토)">
-                    <button type="button" class="teaser-btn teaser-add">+ 종류 추가</button>
+                    <input type="text" class="teaser-add-name" maxlength="40" placeholder="${esc(i18n('sim.unrecovered.30'))}">
+                    <button type="button" class="teaser-btn teaser-add">${esc(i18n('sim.unrecovered.32'))}</button>
                 </div>
                 ${cards}
                 <div class="teaser-tools">
-                    <button type="button" class="teaser-btn teaser-erase ${brush === 'erase' ? 'active' : ''}" ${total ? '' : 'disabled'}>${brush === 'erase' ? '지우는 중' : '지우개'}</button>
+                    <button type="button" class="teaser-btn teaser-erase ${brush === 'erase' ? 'active' : ''}" ${total ? '' : 'disabled'}>${brush === 'erase' ? esc(i18n('sim.unrecovered.33')) : esc(i18n('sim.unrecovered.34'))}</button>
                 </div>
                 <div class="teaser-dim teaser-small">${brush
-                    ? (brush === 'erase' ? '오른쪽 지도에서 미수복 지역을 눌러 일반 지역구로 돌립니다. 다시 "지우는 중"을 누르면 끝납니다.'
-                        : `오른쪽 지도에서 지역구를 차례로 눌러 "${esc(territoryById(brush)?.name || '')}"로 칠합니다 (같은 종류로 칠한 곳을 다시 누르면 지움). 다시 "칠하는 중"을 누르면 끝납니다.`)
-                    : (territories.length ? '"칠하기"를 누른 뒤 오른쪽 지도에서 지역구를 차례로 눌러 여러 곳을 한 번에 칠하세요. 칠하기 도구를 끈 채 지역구를 누르면 아래에서 종류를 고를 수 있습니다.'
-                        : '종류를 추가하고 "칠하기"로 오른쪽 지도에서 지역구를 칠하세요.')}</div>
-                ${sel && !brush ? `<label class="teaser-unrec-toggle teaser-sel">선택한 지역구: <b>${esc(nameOf(sel))}</b> ${kindSelectHtml(sel)}</label>` : ''}
+                    ? (brush === 'erase' ? esc(i18n('sim.unrecovered.35'))
+                        : i18n('sim.unrecovered.36', { name: esc(territoryById(brush)?.name || '') }))
+                    : (territories.length ? esc(i18n('sim.unrecovered.37'))
+                        : esc(i18n('sim.unrecovered.38')))}</div>
+                ${sel && !brush ? `<label class="teaser-unrec-toggle teaser-sel">${esc(i18n('sim.unrecovered.39'))} <b>${esc(nameOf(sel))}</b> ${kindSelectHtml(sel)}</label>` : ''}
             </div>`;
         host.querySelector('.teaser-unify').addEventListener('click', unifyAll);
         host.querySelectorAll('[data-lcolor]').forEach(b => b.addEventListener('click', () => { labelColor = b.dataset.lcolor; refreshUI(); }));

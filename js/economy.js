@@ -1709,7 +1709,7 @@
                         <label>${esc(i18n('econ.ui.246'))} <input type="text" data-a="name" maxlength="16" placeholder="${esc(i18n('econ.ui.310'))}"></label>
                         <label>${esc(i18n('econ.ui.291'))} <input type="number" data-a="decay" value="0.03" step="0.01" min="0" max="0.5"></label>
                         <label>${esc(i18n('econ.ui.323'))} <input type="number" data-a="start" value="50" step="1" min="0" max="100" title="${esc(i18n('econ.ui.322'))}"></label>
-                        <label>${esc(i18n('econ.ui.324'))} <select data-a="item"><option value="">${esc(i18n('econ.ui.174'))}</option>${itemDefs().map(d => `<option value="${esc(d.id)}">${esc(d.name)}${d.asset ? esc((" " + i18n('econ.ui.325', { asset: esc(assets.find(a => a.id === d.asset)?.name || d.asset) }))) : ''}</option>`).join('')}</select></label>
+                        <label>${esc(i18n('econ.ui.324'))} <select data-a="item"><option value="">${esc(i18n('econ.ui.174'))}</option>${itemDefs().map(d => `<option value="${esc(d.id)}">${esc(d.name)}${d.asset ? esc((" " + i18n('econ.ui.325', { asset: (assets.find(a => a.id === d.asset)?.name || d.asset) }))) : ''}</option>`).join('')}</select></label>
                     </div>
                     <div class="econ-effs"><div class="econ-dim">${esc(i18n('econ.ui.292'))}</div>
                         <template><div class="econ-effrow"><select data-eff="k">${targets.map(([tk, tl]) => `<option value="${esc(tk)}">${esc(tl)}</option>`).join('')}</select><input type="number" data-eff="v" value="0.02" step="0.01" min="-1" max="1"><button type="button" class="econ-x" data-eff-del title="${esc(i18n('econ.ui.290'))}">×</button></div></template>

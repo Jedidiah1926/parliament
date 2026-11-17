@@ -318,7 +318,7 @@
 
     // HTML의 data-i18n(글자) · data-i18n-title 등(속성)을 채운다. 변수는 data-i18n-vars='{"n": 3}'
     // data-i18n은 자식 요소가 없는 요소에만 (아이콘 같은 자식이 지워지지 않도록 글자는 안쪽 <span>에 단다)
-    const KEY_ATTRS = { 'data-i18n-title': 'title', 'data-i18n-placeholder': 'placeholder', 'data-i18n-alt': 'alt', 'data-i18n-aria-label': 'aria-label' };
+    const KEY_ATTRS = { 'data-i18n-title': 'title', 'data-i18n-placeholder': 'placeholder', 'data-i18n-alt': 'alt', 'data-i18n-aria-label': 'aria-label', 'data-i18n-modern-label': 'data-modern-label' };
     const KEY_SELECTOR = ['[data-i18n]', ...Object.keys(KEY_ATTRS).map(a => `[${a}]`)].join(',');
     const warnedEls = new WeakSet();
     function applyKeys(root) {

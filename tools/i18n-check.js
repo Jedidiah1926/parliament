@@ -52,7 +52,7 @@ function main() {
     const used = new Map(); // key → ["file:line", ...]
     const prefixes = new Set();
     const mentioned = new Set(); // 따옴표 안에 적힌 키 이름 — i18n(cond ? 'a.b' : 'a.c')처럼 고르는 경우도 쓰는 것으로 본다
-    const ATTR = /\bdata-i18n(?:-title|-placeholder|-alt|-aria-label)?="([^"$]+)"/g;
+    const ATTR = /\bdata-i18n(?:-title|-placeholder|-alt|-aria-label|-modern-label)?="([^"$]+)"/g;
     const CALL = /(?:\bi18n(?:\.ref)?|\bHemiLang\.(?:k|source))\(\s*(['"])([^'"\n]+)\1/g;
     const DYN = /(?:\bi18n|\bHemiLang\.k)\(\s*`([^`$]*)\$\{/g;
     const INLINE = /<([a-zA-Z][\w-]*)\b([^>]*?)\sdata-i18n="([^"$]+)"([^>]*)>([^<]*)<\/\1>/g;

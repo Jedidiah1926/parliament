@@ -640,8 +640,8 @@
             if (p) {
                 if (!b) { b = el('<div id="revPartyStateBanner" class="rev-banner"></div>'); grid.parentElement.insertBefore(b, grid); }
                 b.innerHTML = isCouncil()
-                    ? `${esc(i18n('sim.revolution.150'))} ${esc(namesOf((S.partyState.bloc || []).map(partyById).filter(Boolean)))} ${esc(i18n('sim.revolution.151'))} <b>${esc(president.name || '')}</b>${S.partyState.since ? esc((" " + i18n('sim.revolution.152', { since: esc(S.partyState.since) }))) : ''}`
-                    : `${esc(i18n('sim.revolution.153'))} ${esc(p.name)} ${esc(i18n('sim.revolution.154'))} <b>${esc(president.name || '')}</b>${S.partyState.since ? esc((" " + i18n('sim.revolution.152', { since: esc(S.partyState.since) }))) : ''}`;
+                    ? `${esc(i18n('sim.revolution.150'))} ${esc(namesOf((S.partyState.bloc || []).map(partyById).filter(Boolean)))} ${esc(i18n('sim.revolution.151'))} <b>${esc(president.name || '')}</b>${S.partyState.since ? esc((" " + i18n('sim.revolution.152', { since: (S.partyState.since) }))) : ''}`
+                    : `${esc(i18n('sim.revolution.153'))} ${esc(p.name)} ${esc(i18n('sim.revolution.154'))} <b>${esc(president.name || '')}</b>${S.partyState.since ? esc((" " + i18n('sim.revolution.152', { since: (S.partyState.since) }))) : ''}`;
             } else if (b) b.remove();
         }
         return r;
@@ -720,7 +720,7 @@
             <button type="button" class="rev-go" data-act="go">✊ ${kind === 'communist' ? esc(i18n('sim.revolution.59')) : esc(i18n('sim.revolution.60'))} ${esc(i18n('sim.revolution.197'))}</button>
             ${last ? `<div class="rev-result ${last.success ? 'ok' : 'fail'}">
                 <div class="rev-result-head">${last.kind === 'yesno' ? esc(i18n('sim.revolution.198')) : last.success ? esc(i18n('sim.revolution.199')) : esc(i18n('sim.revolution.200'))} — ${esc(kindName(last.kind))}${last.chance != null ? ` <span class="rev-dim">${esc(i18n('sim.revolution.201'))} ${last.chance}%)</span>` : ''}</div>
-                <div class="rev-dim">${last.party ? esc((i18n('sim.revolution.202', { party: esc(last.party) }) + " ")) : ''}${esc(last.date || '')}</div>
+                <div class="rev-dim">${last.party ? esc((i18n('sim.revolution.202', { party: (last.party) }) + " ")) : ''}${esc(last.date || '')}</div>
                 <ul>${(last.effects || []).map(e => `<li>${esc(e)}</li>`).join('')}</ul></div>` : ''}
             ${S.log.length ? `<details class="rev-log"><summary>${esc(i18n('sim.revolution.203'))}${S.log.length})</summary>${S.log.map(x => `<div class="rev-log-row"><span class="${x.kind === 'yesno' ? '' : x.success ? 'rev-plus' : 'rev-minus'}">${x.kind === 'yesno' ? '🗳' : x.success ? '✔' : '✘'}</span><span>${esc(kindName(x.kind))}${x.party ? ` · ${esc(x.party)}` : ''}${x.date ? ` · ${esc(x.date)}` : ''}${x.chance != null ? ` · ${x.chance}%` : ''}</span></div>`).join('')}</details>` : ''}`;
         box.querySelectorAll('[data-kind]').forEach(b => { b.onclick = () => { ui.kind = b.dataset.kind; ui.partyId = ''; ui.lastId = null; renderRevolution(); }; });

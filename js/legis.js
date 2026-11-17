@@ -666,7 +666,7 @@ function renderLawBookTab() {
             <div class="bill-card-title">${legisEsc(e.latest.title)}${(e.latest.version || 1) > 1 ? ` <span class="bill-version-badge">${legisEsc(i18n('sim.bill.38', { v: e.latest.version }))}</span>` : ''}</div>
             ${articlesHtml(billArticles(e.latest)) || `<div class="cm-note">${legisEsc(i18n('sim.legis.66'))}</div>`}
             <div class="bill-card-footer">
-                <span class="lb-meta">${e.first.voteDate ? i18n('sim.legis.67', { voteDate: legisEsc(e.first.voteDate) }) : legisEsc(i18n('sim.legis.68'))}${e.revisions ? legisEsc((" " + i18n('sim.legis.70', { revisions: e.revisions, voteDate: e.latest.voteDate ? legisEsc((" " + i18n('sim.legis.69', { voteDate: legisEsc(e.latest.voteDate) }))) : '' }))) : ''}</span>
+                <span class="lb-meta">${e.first.voteDate ? i18n('sim.legis.67', { voteDate: legisEsc(e.first.voteDate) }) : legisEsc(i18n('sim.legis.68'))}${e.revisions ? legisEsc((" " + i18n('sim.legis.70', { revisions: e.revisions, voteDate: e.latest.voteDate ? (" " + i18n('sim.legis.69', { voteDate: (e.latest.voteDate) })) : '' }))) : ''}</span>
                 ${typeof buildTagHtml === 'function' ? buildTagHtml(e.latest) : ''}
                 <button class="bill-amend-btn" style="margin-left:auto;" onclick="startAmendment('${e.latest.id}')">${legisEsc(i18n('sim.bill.71'))}</button>
             </div>
