@@ -202,7 +202,7 @@ function createWindow(url) {
             win.destroy();
         };
         const timer = setTimeout(() => finish(null), 500);
-        win.webContents.executeJavaScript("localStorage.getItem('dnoThemeMode')", true)
+        win.webContents.executeJavaScript("localStorage.getItem('hemiThemeMode') || localStorage.getItem('dnoThemeMode')", true)
             .then(theme => { clearTimeout(timer); finish(THEME_BG[theme] ? theme : null); })
             .catch(() => { clearTimeout(timer); finish(null); });
     });
@@ -231,7 +231,7 @@ function setDisplayMode(mode) {
             if (!inside) Object.assign(saved, { x: area.x + Math.round((area.width - w) / 2), y: area.y + Math.round((area.height - h) / 2) });
         }
         const url = win.webContents.getURL();
-        win.webContents.executeJavaScript("localStorage.getItem('dnoThemeMode')", true)
+        win.webContents.executeJavaScript("localStorage.getItem('hemiThemeMode') || localStorage.getItem('dnoThemeMode')", true)
             .catch(() => null)
             .then(theme => {
                 if (THEME_BG[theme]) saved.theme = theme;

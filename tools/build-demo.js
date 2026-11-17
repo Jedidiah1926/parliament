@@ -20,7 +20,7 @@ const APP_ID = String(argVal('--app-id') || process.env.STEAM_DEMO_APP_ID || '')
 if (APP_ID && !/^\d+$/.test(APP_ID)) { console.error(`Steam App ID는 숫자여야 합니다: ${APP_ID}`); process.exit(1); }
 const OBFUSCATE = !args.includes('--no-obfuscate');
 
-const COPY_DIRS = ['electron', 'js', 'css', 'fonts', 'presets', 'lang', 'old2', 'icons'];
+const COPY_DIRS = ['electron', 'js', 'css', 'fonts', 'presets', 'lang', 'icons'];
 const SKIP = [
     /^teaser\d*\.html$/, /^map\.html$/, /^js\/maptrace\.js$/, // 미리보기 · 맵 메이커 (데모는 맵 프리셋만)
     /^js\/teaser6\d(charts)?\.js$/,  // 미리보기 기능

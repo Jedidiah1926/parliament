@@ -8,6 +8,7 @@
   "scripts": {
     "start": "electron .",
     "smoketest": "electron electron/smoketest.js",
+    "i18n:check": "node tools/i18n-check.js",
     "build:teaser": "node tools/build-teaser.js",
     "build:win": "electron-builder --win",
     "build:win:portable": "electron-builder --win portable",
@@ -36,7 +37,6 @@
       "fonts/**/*",
       "presets/**/*",
       "lang/**/*",
-      "old2/**/*",
       "icons/**/*",
       "!electron/smoketest.js",
       "!README.md",

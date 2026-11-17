@@ -17,7 +17,7 @@
     const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
     const finite = v => typeof v === 'number' && isFinite(v);
     const fmtNum = (v, d = 1) => (finite(v) ? (Math.abs(v) >= 1000 ? Math.round(v).toLocaleString() : v.toFixed(d)) : '—');
-    const STATUS = { good: { word: '안전', icon: '●' }, warning: { word: '경고', icon: '▲' }, serious: { word: '위험', icon: '◆' }, critical: { word: '위기', icon: '✖' } };
+    const STATUS = { good: { word: i18n('econ.ui.1'), icon: '●' }, warning: { word: i18n('econ.ui.2'), icon: '▲' }, serious: { word: i18n('econ.ui.3'), icon: '◆' }, critical: { word: i18n('econ.ui.4'), icon: '✖' } };
 
     // 눈금 — 사람이 읽기 좋은 간격 (1 · 2 · 5 × 10ⁿ)
     function ticks(min, max, n = 5) {
@@ -250,7 +250,7 @@
             if (readout) readout.textContent = `${opt.x[i] ?? ''} · ` + opt.series.filter(s => finite(s.values[i])).map(s => `${s.label} ${fmtNum(s.values[i], decimals)}${opt.unit || ''}`).join(' · ');
             if (ev) {
                 const rows = opt.series.filter(s => finite(s.values[i])).map(s => ({ color: s.color, dash: s.dash, value: fmtNum(s.values[i], decimals) + (opt.unit || ''), label: s.label }));
-                (opt.fan || []).forEach(f => { if (i >= f.start && finite(f.lo90?.[i])) rows.push({ value: `${fmtNum(f.lo90[i], decimals)} ~ ${fmtNum(f.hi90[i], decimals)}${opt.unit || ''}`, label: '예측 90% 범위' }); });
+                (opt.fan || []).forEach(f => { if (i >= f.start && finite(f.lo90?.[i])) rows.push({ value: `${fmtNum(f.lo90[i], decimals)} ~ ${fmtNum(f.hi90[i], decimals)}${opt.unit || ''}`, label: i18n('econ.chart.1') }); });
                 (opt.markers || []).filter(m => m.i === i).forEach(m => rows.push({ value: '⚑', label: m.label }));
                 showTip(ev.clientX, ev.clientY, String(opt.x[i] ?? ''), rows);
             }
@@ -297,13 +297,13 @@
     function drawMini(container, opt, range) {
         container.textContent = '';
         const W = widthOf(container), H = 46, padL = 46, padR = 14, pw = W - padL - padR, n = opt.x.length;
-        const svg = S('svg', { viewBox: `0 0 ${W} ${H}`, width: W, height: H, class: 'econ-svg econ-mini-svg', role: 'img', 'aria-label': '기간 고르기 — 끌어서 확대할 기간을 고르세요' }, container);
+        const svg = S('svg', { viewBox: `0 0 ${W} ${H}`, width: W, height: H, class: 'econ-svg econ-mini-svg', role: 'img', 'aria-label': i18n('econ.chart.2') }, container);
         const s = opt.overview.series;
         const [lo, hi] = extent([s.values], 0.1);
         const xs = xScale(opt, 0, n - 1, padL, pw), X = xs.X, Y = v => 6 + (H - 18) - (v - lo) / (hi - lo) * (H - 18);
         let d = ''; s.values.forEach((v, i) => { if (finite(v)) d += (d ? 'L' : 'M') + X(i).toFixed(1) + ',' + Y(v).toFixed(1); });
         S('path', { d, fill: 'none', stroke: s.color, 'stroke-width': 1.5, opacity: 0.7 }, svg);
-        T(svg, 4, H / 2 + 3, '기간', { class: 'econ-tick' });
+        T(svg, 4, H / 2 + 3, i18n('econ.ui.92'), { class: 'econ-tick' });
         const win = S('rect', { y: 2, height: H - 10, class: 'econ-brush' }, svg);
         const place = (a, b) => { win.setAttribute('x', X(a)); win.setAttribute('width', Math.max(4, X(b) - X(a))); };
         place(range[0], range[1]);
@@ -340,7 +340,7 @@
         const W = widthOf(container), H = opt.height || 220, n = opt.x.length;
         const i0 = opt.range ? opt.range[0] : 0, i1 = opt.range ? opt.range[1] : n - 1;
         const padL = 46, padR = 14, padT = opt.title ? 24 : 10, padB = 26, pw = W - padL - padR, ph = H - padT - padB;
-        const svg = S('svg', { viewBox: `0 0 ${W} ${H}`, width: W, height: H, class: 'econ-svg', role: 'img', 'aria-label': opt.title || '쌓인 막대' }, container);
+        const svg = S('svg', { viewBox: `0 0 ${W} ${H}`, width: W, height: H, class: 'econ-svg', role: 'img', 'aria-label': opt.title || i18n('econ.chart.3') }, container);
         S('rect', { x: 0, y: 0, width: W, height: H, class: 'econ-surface' }, svg);
         if (opt.title) T(svg, padL, 15, opt.title, { class: 'econ-title' });
         let lo = 0, hi = 0;
@@ -413,7 +413,7 @@
         const R = Rmax / (inner + (1 - inner) * (1 + MAXD)), ri0 = R * inner, th = R - ri0;
         const d = Math.max(-MAXD, Math.min(MAXD, (ts - tr) / big * 2.5));
         const outS = ri0 + th * (1 + d), outR = ri0 + th * (1 - d);
-        const svg = S('svg', { viewBox: `0 0 ${W} ${H}`, width: W, height: H, class: 'econ-svg', role: 'img', 'aria-label': `세출 ${fmtNum(ts)} · 세입 ${fmtNum(tr)}` }, container);
+        const svg = S('svg', { viewBox: `0 0 ${W} ${H}`, width: W, height: H, class: 'econ-svg', role: 'img', 'aria-label': i18n('econ.chart.4', { ts: fmtNum(ts), tr: fmtNum(tr) }) }, container);
         S('rect', { x: 0, y: 0, width: W, height: H, class: 'econ-surface' }, svg);
         const half = (items, total, up) => {
             const ro2 = up ? outS : outR, ri = ri0; let acc = 0;
@@ -431,7 +431,7 @@
                     const lx = cx - rm * Math.cos(am), ly = (up ? cy - rm * Math.sin(am) : cy + rm * Math.sin(am)) + 4;
                     T(svg, lx, ly, it.label.length > 7 ? it.label.slice(0, 6) + '…' : it.label, { class: 'econ-seglabel', 'text-anchor': 'middle' });
                 }
-                const show = ev => showTip(ev.clientX, ev.clientY, up ? '세출' : '세입', [{ color: it.color, value: `${fmtNum(it.value)}${opt.unit || ''} (${(it.value / total * 100).toFixed(1)}%)`, label: it.label }]);
+                const show = ev => showTip(ev.clientX, ev.clientY, up ? i18n('econ.chart.5') : i18n('econ.ui.126'), [{ color: it.color, value: `${fmtNum(it.value)}${opt.unit || ''} (${(it.value / total * 100).toFixed(1)}%)`, label: it.label }]);
                 seg.addEventListener('pointermove', show);
                 seg.addEventListener('focus', () => { const r = seg.getBoundingClientRect(); show({ clientX: r.right, clientY: r.top }); });
                 seg.addEventListener('pointerleave', hideTip); seg.addEventListener('blur', hideTip);
@@ -439,15 +439,15 @@
         };
         half(opt.spend, ts, true); half(opt.rev, tr, false);
         S('line', { x1: 6, x2: W - 6, y1: cy, y2: cy, class: 'econ-axis' }, svg);
-        T(svg, cx, cy - outS - 6, `세출 ${fmtNum(ts)}${opt.unit || ''}`, { class: 'econ-title', 'text-anchor': 'middle' });
-        T(svg, cx, cy + outR + 15, `세입 ${fmtNum(tr)}${opt.unit || ''}`, { class: 'econ-title', 'text-anchor': 'middle' });
+        T(svg, cx, cy - outS - 6, i18n('econ.chart.6', { ts: fmtNum(ts), unit: opt.unit || '' }), { class: 'econ-title', 'text-anchor': 'middle' });
+        T(svg, cx, cy + outR + 15, i18n('econ.chart.7', { tr: fmtNum(tr), unit: opt.unit || '' }), { class: 'econ-title', 'text-anchor': 'middle' });
         if (opt.center) { T(svg, cx, cy - 6, opt.center[0], { class: 'econ-hero-sm', 'text-anchor': 'middle' }); T(svg, cx, cy + 14, opt.center[1], { class: 'econ-tick', 'text-anchor': 'middle' }); }
         svg.dataset.exportKind = 'econchart';
         twoLegends(container, opt);
     }
     function twoLegends(container, opt) {
         const wrap = document.createElement('div'); wrap.className = 'econ-legend2';
-        [['세출', opt.spend], ['세입', opt.rev]].forEach(([title, items]) => {
+        [[i18n('econ.chart.5'), opt.spend], [i18n('econ.ui.126'), opt.rev]].forEach(([title, items]) => {
             const col = document.createElement('div');
             const h = document.createElement('div'); h.className = 'econ-legend2-h'; h.textContent = title; col.appendChild(h);
             items.filter(it => it.value > 0).forEach(it => {
@@ -468,7 +468,7 @@
         container.classList.add('econ-chart');
         const W = widthOf(container), H = 118, padL = 44, padR = 70, bh = 26;
         const sum = a => a.reduce((t, x) => t + Math.max(0, x.value), 0), ts = sum(opt.spend), tr = sum(opt.rev), big = Math.max(ts, tr) || 1;
-        const svg = S('svg', { viewBox: `0 0 ${W} ${H}`, width: W, height: H, class: 'econ-svg', role: 'img', 'aria-label': `세출 ${fmtNum(ts)} · 세입 ${fmtNum(tr)}` }, container);
+        const svg = S('svg', { viewBox: `0 0 ${W} ${H}`, width: W, height: H, class: 'econ-svg', role: 'img', 'aria-label': i18n('econ.chart.4', { ts: fmtNum(ts), tr: fmtNum(tr) }) }, container);
         S('rect', { x: 0, y: 0, width: W, height: H, class: 'econ-surface' }, svg);
         const pw = W - padL - padR, X = v => padL + v / big * pw;
         const row = (items, total, y, title) => {
@@ -485,12 +485,12 @@
             });
             T(svg, X(total) + 6, y + bh / 2 + 4, fmtNum(total) + (opt.unit || ''), { class: 'econ-tick' });
         };
-        row(opt.spend, ts, 14, '세출'); row(opt.rev, tr, 14 + bh + 12, '세입');
+        row(opt.spend, ts, 14, i18n('econ.chart.5')); row(opt.rev, tr, 14 + bh + 12, i18n('econ.ui.126'));
         const gapY = 14 + 2 * bh + 26;
         if (Math.abs(ts - tr) > 1e-9) {
             const a = X(Math.min(ts, tr)), b = X(Math.max(ts, tr));
             S('line', { x1: a, x2: b, y1: gapY - 8, y2: gapY - 8, class: ts > tr ? 'econ-deficit' : 'econ-surplus', 'stroke-width': 2 }, svg);
-            T(svg, (a + b) / 2, gapY + 6, `${ts > tr ? '적자' : '흑자'} ${fmtNum(Math.abs(ts - tr))}${opt.unit || ''}`, { class: 'econ-tick', 'text-anchor': 'middle' });
+            T(svg, (a + b) / 2, gapY + 6, `${ts > tr ? i18n('econ.ui.168') : i18n('econ.ui.169')} ${fmtNum(Math.abs(ts - tr))}${opt.unit || ''}`, { class: 'econ-tick', 'text-anchor': 'middle' });
         }
         svg.dataset.exportKind = 'econchart';
         twoLegends(container, opt);
@@ -506,7 +506,7 @@
         const maxNodes = Math.max(...opt.cols.map(c => c.length));
         const H = Math.max(240, Math.min(560, 40 + maxNodes * 30));
         const padT = 14, padB = 14, nodeW = 12, gap = 6, labelW = Math.min(150, W * 0.2);
-        const svg = S('svg', { viewBox: `0 0 ${W} ${H}`, width: W, height: H, class: 'econ-svg', role: 'img', 'aria-label': '예산 흐름도' }, container);
+        const svg = S('svg', { viewBox: `0 0 ${W} ${H}`, width: W, height: H, class: 'econ-svg', role: 'img', 'aria-label': i18n('econ.ui.74') }, container);
         S('rect', { x: 0, y: 0, width: W, height: H, class: 'econ-surface' }, svg);
         const colX = c => labelW + (nCol <= 1 ? 0 : c / (nCol - 1) * (W - 2 * labelW - nodeW));
         const totals = opt.cols.map(col => col.reduce((t, n) => t + Math.max(0, n.value), 0));
@@ -599,7 +599,7 @@
         container.classList.add('econ-chart');
         const rows = opt.rows.slice().sort((a, b) => Math.abs(b.value) - Math.abs(a.value));
         const W = widthOf(container), rh = 24, padT = opt.title ? 26 : 8, H = padT + rows.length * rh + 22, labelW = Math.min(170, W * 0.36), padR = 54;
-        const svg = S('svg', { viewBox: `0 0 ${W} ${H}`, width: W, height: H, class: 'econ-svg', role: 'img', 'aria-label': opt.title || '정책 민감도' }, container);
+        const svg = S('svg', { viewBox: `0 0 ${W} ${H}`, width: W, height: H, class: 'econ-svg', role: 'img', 'aria-label': opt.title || i18n('econ.ui.78') }, container);
         S('rect', { x: 0, y: 0, width: W, height: H, class: 'econ-surface' }, svg);
         if (opt.title) T(svg, 8, 16, opt.title, { class: 'econ-title' });
         const m = Math.max(...rows.map(r => Math.abs(r.value)), 1e-6) * 1.05;
@@ -615,7 +615,7 @@
             const show = ev => showTip(ev.clientX, ev.clientY, r.label, [{ value: (r.value > 0 ? '+' : '') + fmtNum(r.value, dec) + (opt.unit || ''), label: r.sub || '' }]);
             rect.addEventListener('pointermove', show); rect.addEventListener('pointerleave', hideTip);
         });
-        T(svg, cx, H - 6, '← 낮춤 · 높임 →', { class: 'econ-axislabel', 'text-anchor': 'middle' });
+        T(svg, cx, H - 6, i18n('econ.chart.8'), { class: 'econ-axislabel', 'text-anchor': 'middle' });
         svg.dataset.exportKind = 'econchart';
     }
 
@@ -628,7 +628,7 @@
         const all = opt.points, i0 = opt.range ? opt.range[0] : 0, i1 = opt.range ? opt.range[1] : all.length - 1;
         const pts = all.slice(i0, i1 + 1).filter(p => finite(p.x) && finite(p.y));
         const W = widthOf(container), H = opt.height || 300, padL = 48, padR = 16, padT = 12, padB = 38, pw = W - padL - padR, ph = H - padT - padB;
-        const svg = S('svg', { viewBox: `0 0 ${W} ${H}`, width: W, height: H, class: 'econ-svg', role: 'img', 'aria-label': '경제 궤적 — 실업률과 인플레이션' }, container);
+        const svg = S('svg', { viewBox: `0 0 ${W} ${H}`, width: W, height: H, class: 'econ-svg', role: 'img', 'aria-label': i18n('econ.chart.9') }, container);
         S('rect', { x: 0, y: 0, width: W, height: H, class: 'econ-surface' }, svg);
         const [x0, x1] = extent([pts.map(p => p.x)], 0.15, true), [y0, y1] = extent([pts.map(p => p.y)], 0.15, true);
         const X = v => padL + (v - x0) / (x1 - x0) * pw, Y = v => padT + ph - (v - y0) / (y1 - y0) * ph;
@@ -637,15 +637,15 @@
         // 사분면 이름 (기준: 실업 6% · 인플레이션 4%)
         const qx = X(clamp(6, x0, x1)), qy = Y(clamp(4, y0, y1));
         S('line', { x1: qx, x2: qx, y1: padT, y2: padT + ph, class: 'econ-quad' }, svg); S('line', { x1: padL, x2: W - padR, y1: qy, y2: qy, class: 'econ-quad' }, svg);
-        T(svg, W - padR - 4, padT + 12, '스태그플레이션', { class: 'econ-quadlabel', 'text-anchor': 'end' });
-        T(svg, padL + 4, padT + 12, '과열', { class: 'econ-quadlabel' });
-        T(svg, W - padR - 4, padT + ph - 6, '불황', { class: 'econ-quadlabel', 'text-anchor': 'end' });
-        T(svg, padL + 4, padT + ph - 6, '안정', { class: 'econ-quadlabel' });
+        T(svg, W - padR - 4, padT + 12, i18n('econ.chart.10'), { class: 'econ-quadlabel', 'text-anchor': 'end' });
+        T(svg, padL + 4, padT + 12, i18n('econ.chart.11'), { class: 'econ-quadlabel' });
+        T(svg, W - padR - 4, padT + ph - 6, i18n('econ.chart.12'), { class: 'econ-quadlabel', 'text-anchor': 'end' });
+        T(svg, padL + 4, padT + ph - 6, i18n('econ.chart.13'), { class: 'econ-quadlabel' });
         T(svg, padL + pw / 2, H - 6, opt.xLabel, { class: 'econ-axislabel', 'text-anchor': 'middle' });
         T(svg, 12, padT + ph / 2, opt.yLabel, { class: 'econ-axislabel', 'text-anchor': 'middle', transform: `rotate(-90 12 ${padT + ph / 2})` });
         if (pts.length > 1) S('path', { d: 'M' + pts.map(p => `${X(p.x).toFixed(1)},${Y(p.y).toFixed(1)}`).join('L'), fill: 'none', class: 'econ-trail', 'stroke-width': 1.5 }, svg);
         pts.forEach((p, k) => S('circle', { cx: X(p.x), cy: Y(p.y), r: k === pts.length - 1 ? 6 : 3, class: k === pts.length - 1 ? 'econ-trail-now' : 'econ-trail-dot', style: `opacity:${(0.35 + 0.65 * (k + 1) / pts.length).toFixed(2)}` }, svg));
-        if (pts.length) { const last = pts[pts.length - 1]; T(svg, X(last.x) + 9, Y(last.y) - 8, `지금 (${last.label})`, { class: 'econ-endlabel' }); }
+        if (pts.length) { const last = pts[pts.length - 1]; T(svg, X(last.x) + 9, Y(last.y) - 8, i18n('econ.chart.14', { label: last.label }), { class: 'econ-endlabel' }); }
         const hit = S('rect', { x: padL, y: padT, width: pw, height: ph, fill: 'transparent' }, svg);
         hit.addEventListener('pointermove', ev => {
             const r = svg.getBoundingClientRect(), mx = (ev.clientX - r.left) * W / r.width, my = (ev.clientY - r.top) * H / r.height;

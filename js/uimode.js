@@ -7,12 +7,12 @@
 
     function safeGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
     function safeSet(k, v) { try { localStorage.setItem(k, v); return true; } catch (e) { return false; } }
-    try { localStorage.removeItem('dnoUiMode'); } catch (e) { /* 저장 불가 */ }
+    try { localStorage.removeItem('hemiUiMode'); } catch (e) { /* 저장 불가 */ }
 
     // ===== 실행(PROTOCOL EXECUTE) 버튼 표시 — 설정 › 화면 (기본: 숨김) =====
     // 대부분의 편집이 의석 화면을 알아서 다시 그리므로 버튼은 기본으로 숨기고, 켜면 편집 패널 아래 버튼이 보인다.
     // 숨겨도 입력 칸 밖에서 Enter를 누르면 다시 그린다. <html data-exec-btn="on|off"> — css/main.css가 숨긴다
-    const EXEC_BTN_KEY = 'dnoExecButton';
+    const EXEC_BTN_KEY = 'hemiExecButton';
     const getExecButton = () => safeGet(EXEC_BTN_KEY) === 'on';
     function setExecButton(on) {
         safeSet(EXEC_BTN_KEY, on ? 'on' : 'off');

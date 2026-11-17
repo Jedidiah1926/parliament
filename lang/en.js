@@ -1,8 +1,9 @@
 // 기본 제공 언어 팩: English — 형식은 커뮤니티 언어 팩(.json)과 똑같고, 데스크톱 앱(file://)에서도
 // fetch 없이 읽을 수 있도록 JS로 감싸 두었다. 형식 설명은 README의 "번역(언어 팩) 만들기" 참고.
-window.DnoLangPacks = window.DnoLangPacks || {};
-window.DnoLangPacks.en = {
- "format": "dno-lang-pack@1",
+// keys(키 → 글자)는 lang/kr.js와 같은 키를 쓴다. 아직 키로 옮기지 않은 화면은 dict · patterns(한국어 원문 → 번역)로 번역한다.
+window.HemiLangPacks = window.HemiLangPacks || {};
+window.HemiLangPacks.en = {
+ "format": "hemicycle-lang@2",
  "code": "en",
  "name": "English",
  "author": "Hemicycle",
@@ -21,6 +22,890 @@ window.DnoLangPacks.en = {
   "December"
  ],
  "ordinal": "en",
+ "keys": {
+  "common.cancel": "Cancel",
+  "common.date.era.y": "{era}{y}",
+  "common.date.era.ym": "{era}{y}, {month}",
+  "common.date.era.ymd": "{era}{y}, {month} {d}",
+  "common.date.y": "{era}{y}",
+  "common.date.ym": "{month} {era}{y}",
+  "common.date.ymd": "{month} {d}, {era}{y}",
+  "common.delete": "Delete",
+  "common.edit": "Edit",
+  "common.hide": "Hide",
+  "common.loading": "Loading...",
+  "common.noResults": "No results.",
+  "common.ok": "OK",
+  "common.show": "Show",
+  "common.source.mods": "Mods folder",
+  "common.source.workshop": "Workshop",
+  "home.lang": "Language",
+  "home.lang.import": "Import Language Pack (.json)",
+  "home.lang.importFailed": "Could not load the language pack: {error}",
+  "home.lang.imported": "Loaded the language pack \"{name}\". Switch to this language now?",
+  "home.lang.modsFolder": "Open mods folder",
+  "home.lang.readFailed": "Could not read the language pack. (Not a valid JSON file)",
+  "home.lang.remove": "Delete language pack",
+  "home.lang.removeConfirm": "Delete the language pack \"{name}\"?",
+  "home.lang.templateBlocked": "After the official release, translation templates can't be downloaded from this version — please use the Steam version.",
+  "home.lang.templateEn": "Translation template (EN · English-based)",
+  "home.lang.templateFailed": "Could not create the translation template.",
+  "home.lang.templateKr": "Translation template (KR · Korean-based)",
+  "home.menu": "Main menu",
+  "home.menu.maker": "Create",
+  "home.menu.makerDesc": "Make and manage maps · scenarios · challenges",
+  "home.menu.roadmap": "Roadmap & Updates",
+  "home.menu.roadmapDesc": "Plans and what changed",
+  "home.menu.settings": "Settings",
+  "home.menu.settingsDesc": "Display · Theme",
+  "home.menu.start": "Start",
+  "home.menu.startDesc": "New game or continue",
+  "home.news": "News",
+  "home.news.steam": "Hemicycle on Steam",
+  "home.news.steamDesc": "Wishlist · Workshop · Reviews",
+  "home.news.trailer": "Hemicycle Trailer",
+  "home.news.trailerDesc": "New video · Official trailer",
+  "home.news.youtube": "Hemicycle on YouTube",
+  "home.news.youtubeDesc": "@Hemicycles · updates and announcements",
+  "home.stage.demo": "STEAM DEMO",
+  "home.stage.demoTip": "This is the demo — the full game has more features",
+  "home.stage.tip": "This is an open beta test — features and the save format may change",
+  "home.subtitle": "Give me liberty, or give me death! : The invisible hand",
+  "saveSelect.badge.fullOnly": "🔒 Full game",
+  "saveSelect.badge.new": "New!",
+  "saveSelect.badge.soon": "Coming soon",
+  "saveSelect.badge.updated": "Updated!",
+  "saveSelect.blank": "Blank Save",
+  "saveSelect.blank.note": "Build your own country from scratch",
+  "saveSelect.blank.placeholder": "e.g. Right after the 2nd general election",
+  "saveSelect.blank.start": "Create & Start",
+  "saveSelect.deleteConfirm": "Really delete \"{name}\"?\n\nThis can't be undone. (Shift+click to delete without this prompt)",
+  "saveSelect.deleteFailed": "Couldn't delete. (storage error)",
+  "saveSelect.deleteTip": "Delete (Shift+click: delete without confirming)",
+  "saveSelect.deleteTitle": "Delete save",
+  "saveSelect.demoImport": "Loading save files isn't available in the demo. (Available in the full game)",
+  "saveSelect.demoTitle": "Demo",
+  "saveSelect.districtFile": "This is a district preset (.hemimap). Open a save, then upload it with \"Upload district map\" in Country › District map to replace only that save's districts.",
+  "saveSelect.empty.favorites": "Click ☆ to keep saves you open often here.",
+  "saveSelect.empty.first": "No saves yet. Start one from \"Start New\".",
+  "saveSelect.empty.rest": "No other saves.",
+  "saveSelect.empty.saves": "No saves yet.",
+  "saveSelect.fav.add": "Favorite",
+  "saveSelect.fav.remove": "Remove from favorites",
+  "saveSelect.favorites": "★ Favorites",
+  "saveSelect.importFailed": "Couldn't load the save file. (Invalid format or corrupted file)",
+  "saveSelect.importFile": "📁 Load save file (.hemi)",
+  "saveSelect.importTooBig": "This file is too large to open here. Start the game and open it from Save › File › Load.",
+  "saveSelect.maxSlots": "You can have up to {max} saves. Delete an existing save and try again.",
+  "saveSelect.nameRequired": "Enter a save name.",
+  "saveSelect.nameTaken": "A save named \"{name}\" already exists. Please enter a different name.",
+  "saveSelect.presets": "Presets",
+  "saveSelect.presets.empty": "No presets available.",
+  "saveSelect.presets.note": "Picking one makes a copy as a new save",
+  "saveSelect.saves": "Other saves",
+  "saveSelect.search": "Search saves",
+  "saveSelect.stories.campaigns": "Scenarios",
+  "saveSelect.stories.challenges": "Challenges",
+  "saveSelect.stories.makerList": "Creations ↗",
+  "saveSelect.stories.note": "New plays start from a copy of the save. Deleting a creation keeps saves already in progress.",
+  "saveSelect.stories.search": "Search scenarios · challenges",
+  "saveSelect.tab.continue": "Continue",
+  "saveSelect.tab.new": "Start New",
+  "saveSelect.tab.stories": "Scenarios · Challenges",
+  "saveSelect.tab.tutorial": "Tutorial",
+  "saveSelect.tut.basic": "Basic lessons",
+  "saveSelect.tut.basicNote": "New here? Go in order from #1",
+  "saveSelect.tut.detail": "Advanced lessons",
+  "saveSelect.tut.detailNote": "Pick just the features you need",
+  "saveSelect.tut.doneTip": "Completed lesson",
+  "saveSelect.tut.loadFailed": "Couldn't load the tutorial.",
+  "stories.chooseStart.label": "Choose a starting country",
+  "stories.chooseStart.title": "Which country do you want to start as?",
+  "stories.deleteConfirm.campaign": "Delete the scenario “{title}”? This can't be undone. Saves of plays in progress are kept.",
+  "stories.deleteConfirm.challenge": "Delete the challenge “{title}”? This can't be undone. Saves of plays in progress are kept.",
+  "stories.deleteFailed": "Couldn't delete: {error}",
+  "stories.deleteLabel": "Delete {title}",
+  "stories.empty.campaign": "No saved scenarios. Make one in the maker or load a file.",
+  "stories.empty.challenge": "No saved challenges. Make one in the maker or load a file.",
+  "stories.err.badCondition": "A condition can't be read. Check it in the challenge maker.",
+  "stories.err.noStartSave": "There is no starting save file. Choose one in the maker.",
+  "stories.err.notChallenge": "This is not a challenge file.",
+  "stories.kind.campaign": "Scenario",
+  "stories.kind.challenge": "Challenge",
+  "stories.listFailed": "Couldn't read the list. Please open the tab again.",
+  "stories.noAuthor": "Unknown author",
+  "stories.noDescription": "No description.",
+  "stories.play": "▶ New play",
+  "stories.untitled": "(untitled)",
+  "settings.back": "← Main menu",
+  "settings.display": "Display",
+  "settings.display.borderless": "Borderless fullscreen",
+  "settings.display.borderlessLocked": "🔒 Borderless fullscreen (app only)",
+  "settings.display.count": "COUNT",
+  "settings.display.countHint": "While counting, fill the hemicycle party by party from the left, or light up seats of the final layout in random order (also in Elections › Settings).",
+  "settings.display.countRandom": "Random seat reveal",
+  "settings.display.countSeq": "Fill in order",
+  "settings.display.desc": "Choose how the window and screen elements are shown.",
+  "settings.display.desktopOnly": "Only available in the desktop app",
+  "settings.display.exec": "EXECUTE",
+  "settings.display.execHint": "The \"PROTOCOL EXECUTE\" button under the edit panel. The seat view redraws by itself when you change settings, so it is hidden by default. Even when hidden, press Enter outside an input to redraw.",
+  "settings.display.f11": "Press F11 to switch between fullscreen and windowed",
+  "settings.display.f11Web": "F11 also switches between fullscreen and windowed · borderless fullscreen is desktop app only",
+  "settings.display.fullscreen": "Fullscreen",
+  "settings.display.noFullscreen": "Fullscreen isn't available in this browser (or screen) — try pressing F11",
+  "settings.display.resBrowser": "The browser version uses the browser window size as it is — resolution can be chosen in the desktop app.",
+  "settings.display.resCurrent": "Current window size {w} × {h}",
+  "settings.display.resCurrentMax": "Current window size {w} × {h} (maximized)",
+  "settings.display.resDesktopOnly": "🔒 Desktop app only",
+  "settings.display.resFullHint": "Fullscreen and borderless fullscreen use the monitor resolution ({w} × {h}) — the chosen resolution applies when you go back to windowed mode.",
+  "settings.display.resMonitor": "monitor resolution",
+  "settings.display.resPick": "Choose a resolution",
+  "settings.display.resScale": "scale {pct}%",
+  "settings.display.resTooBig": "doesn't fit this monitor",
+  "settings.display.resWindowedHint": "The screen size in windowed mode (monitor {w} × {h}{scale}). You can also drag the window border to resize it.",
+  "settings.display.resolution": "RESOLUTION",
+  "settings.display.tipGray": "Keep it grey",
+  "settings.display.tipHint": "The colour of the tooltip that appears when you hover grey buttons or text in the Neon theme. Tooltips of coloured buttons (Legislation, Elections and so on) always follow the button's colour.",
+  "settings.display.tipNeon": "Neon default colour",
+  "settings.display.tooltip": "TOOLTIP",
+  "settings.display.vote": "VOTE",
+  "settings.display.voteClassic": "Classic",
+  "settings.display.voteHint": "Classic: click yea · nay · abstain straight onto seats and finish with \"Confirm Vote\". Revamped: plan votes with seats and party lines, press \"Start Vote\" and members vote one by one at random moments, then the seats regroup into yea · nay · abstain.",
+  "settings.display.voteNew": "Revamped",
+  "settings.display.window": "WINDOW",
+  "settings.display.windowed": "Windowed",
+  "settings.etc": "Other settings",
+  "settings.etc.available": "New version {latest} is out — download the new installer from the releases page to keep using the app.",
+  "settings.etc.checkUpdate": "Check for updates",
+  "settings.etc.checking": "Checking…",
+  "settings.etc.chooseFolder": "Change location…",
+  "settings.etc.debug": "DEBUG MODE",
+  "settings.etc.defaultDir": "(default location)",
+  "settings.etc.desc": "Other settings.",
+  "settings.etc.dev": "DEVELOPER MODE",
+  "settings.etc.devCode": "Developer code",
+  "settings.etc.devHint": "Enter the developer code to open the next-update preview (teaser) screens.",
+  "settings.etc.devIsOn": "Developer mode is on.",
+  "settings.etc.devLocked": "The Teaser {id} screen can only be opened in developer mode.",
+  "settings.etc.devOff": "Turn off",
+  "settings.etc.devTurnedOff": "Turned off.",
+  "settings.etc.devTurnedOn": "Developer mode turned on.",
+  "settings.etc.devWrong": "Wrong code.",
+  "settings.etc.downloaded": "Downloaded new version {latest} — the game will save, restart and install it.",
+  "settings.etc.downloading": "Downloading new version {latest}… {percent}%",
+  "settings.etc.hiddenGov": "Hidden forms of government",
+  "settings.etc.hiddenGovHint": "Choosing Show lists the hidden forms of government that were only reachable through coups, revolutions or restorations (1.6.2 military government · 1.6.3 party-state · 1.6.6 absolute monarchy) under Cabinet › Government · Powers, so you can switch to them directly. Absolute monarchy only appears on the preview (teaser) screen that includes it.",
+  "settings.etc.hiddenGovShow": "Show",
+  "settings.etc.installUpdate": "Restart now to install",
+  "settings.etc.installing": "Restarting to install new version {latest}…",
+  "settings.etc.modeNotify": "Portable version — new versions are only announced (install with the installer for automatic updates)",
+  "settings.etc.modeOff": "Development run — no update checks",
+  "settings.etc.modeSteam": "Steam version — Steam handles updates",
+  "settings.etc.movedDefault": "Moved the saves to the default location.",
+  "settings.etc.movedNew": "Moved the saves to the new folder.",
+  "settings.etc.openFolder": "Open folder",
+  "settings.etc.realtime": "Real-time",
+  "settings.etc.releases": "Releases page",
+  "settings.etc.resetFolder": "Back to default",
+  "settings.etc.saveDir": "SAVE FOLDER",
+  "settings.etc.saveDirHint": "Saves are not kept inside the app but in this folder, one \"name.hemi\" file per save — back them up or copy them as they are, or open them on another device with \"Load\". .hemi files you put here in the file explorer show up as saves the next time you open the start screen, and saves deleted in the game go to the recycle bin. Changing the location moves your current saves to the new folder. (Folders that need administrator rights, like Program Files, can't be used)",
+  "settings.etc.timeMode": "Time mode",
+  "settings.etc.timeModeHint": "In turn-based mode you advance the date with the buttons on the date line. In real-time mode, set the date and then use play/pause and speeds 1–5 (Space toggles). Time stops while an event or settings check is open and pauses after loading. Scenarios follow the time mode their author chose.",
+  "settings.etc.turn": "Turn-based",
+  "settings.etc.unknownError": "unknown error",
+  "settings.etc.upToDate": "You are up to date.",
+  "settings.etc.upToDateV": "You are up to date ({latest}).",
+  "settings.etc.update": "UPDATE",
+  "settings.etc.updateError": "Couldn't check for updates ({error}).",
+  "settings.etc.updateHint": "When a new version is posted on GitHub Releases you must update — the installed version downloads it automatically, saves, restarts and installs it, and the app can't be used until it is updated.",
+  "settings.etc.version": "Current version {version}",
+  "settings.nav": "Settings categories",
+  "settings.theme": "Theme",
+  "settings.theme.color": "THEME COLOR",
+  "settings.theme.colorHint": "Applies to the accent colour of Neon mode (borders, text and so on)",
+  "settings.theme.colorReset": "Reset to default",
+  "settings.theme.dark": "Dark mode",
+  "settings.theme.desc": "Light/Dark are clean screens without CRT effects; Neon is the original retro terminal look.",
+  "settings.theme.light": "Light mode",
+  "settings.theme.mode": "THEME MODE",
+  "settings.theme.mods": "MOD THEMES",
+  "settings.theme.neon": "Neon mode",
+  "settings.theme.neonOnly": "(can only be changed in Neon mode)",
+  "settings.theme.template": "THEME TEMPLATE",
+  "settings.theme.templateBtn": "Download theme template (.json)",
+  "settings.theme.templateHelp": "Set the id (lowercase letters · digits · - · _) and name, then change the colours in colors. base is one of light · dark · neon. Put this file in a folder and put that folder where the desktop app's main screen 🌐 > Open mods folder opens, and it appears in Settings > Theme > Mod themes.",
+  "settings.theme.templateHint": "Downloads a theme file filled with the current theme's colours. Change the id, name and colours, then put it in its own folder inside the desktop app's mods folder and it shows up under \"Mod themes\".",
+  "settings.theme.templateName": "My theme",
+  "econ.budget.1": "Quantitative tightening",
+  "econ.budget.2": "Temporary tax cut",
+  "econ.budget.3": "Temporary tax hike",
+  "econ.budget.4": "FY{y}",
+  "econ.budget.5": "Turn {turn}",
+  "econ.budget.6": "A budget bill is still being voted on — settle it in Legislation › Vote, then submit again.",
+  "econ.budget.7": "Nothing has changed — adjust spending or tax rates in the Fiscal tab, then submit a budget.",
+  "econ.budget.8": "in effect for {to}",
+  "econ.budget.9": "(of GDP)",
+  "econ.budget.10": "Article {v}. {label}: {GDP}",
+  "econ.budget.11": "· tax law changes",
+  "econ.budget.12": "{yearLabel} budget (No. {budgetNo}){taxChanged}",
+  "econ.budget.13": "Budget",
+  "econ.budget.14": "Tax law",
+  "econ.budget.15": "There is no legislation screen, so the budget bill could not be submitted.",
+  "econ.budget.16": "{title} submitted",
+  "econ.budget.17": "“{title}” was put into Legislation › Submit. Once it passes it takes effect from the next {unit}; until then the previous budget (provisional budget) is used.\n\nIn the Fiscal tab, “Predicted vote” shows each party's expected vote so you can fill them in at once.",
+  "econ.budget.19": "[Economy] {title} passed",
+  "econ.budget.20": "vetoed",
+  "econ.budget.21": "Rejected",
+  "econ.budget.22": "{title} {vetoed} — provisional budget (previous budget) in effect",
+  "econ.budget.23": "No budget bill is being voted on — submit a budget first.",
+  "econ.budget.24": "Filled in each party's vote as predicted. Adjust any parties you want to change and confirm the vote.",
+  "econ.budget.25": "Could not fill in the vote screen — please enter the votes in Legislation › Vote yourself.",
+  "econ.budget.passed": "{title} passed — new budget in effect",
+  "econ.budget.voteTip": "In government {gov} · spending preference {tag} · tax burden {tax}",
+  "econ.chart.1": "Forecast 90% range",
+  "econ.chart.2": "Choose a period — drag to pick the period to zoom into",
+  "econ.chart.3": "Stacked bars",
+  "econ.chart.4": "Spending {ts} · revenue {tr}",
+  "econ.chart.5": "Spending",
+  "econ.chart.6": "Spending {ts}{unit}",
+  "econ.chart.7": "Revenue {tr}{unit}",
+  "econ.chart.8": "← lower · raise →",
+  "econ.chart.9": "Economic path — unemployment and inflation",
+  "econ.chart.10": "Stagflation",
+  "econ.chart.11": "Overheating",
+  "econ.chart.12": "Slump",
+  "econ.chart.13": "Stable",
+  "econ.chart.14": "Now ({label})",
+  "econ.currency.dollar": "dollars",
+  "econ.currency.mark": "marks",
+  "econ.date.1": "Turning the date back keeps the economy history — calculation continues from the current date",
+  "econ.date.2": "(Only the most recent {RUN_MAX} is calculated at once; anything before that is skipped)",
+  "econ.date.3": "The date moved forward by {gap}. Calculate the economy for that period?{RUN_MAX}\n\nIf you cancel, the economy stays as it is and calculation continues from the current date.",
+  "econ.date.6": "months",
+  "econ.date.9": "yr",
+  "econ.def.1": "Army",
+  "econ.def.2": "Navy · Air force",
+  "econ.def.3": "Science",
+  "econ.def.4": "Education",
+  "econ.def.5": "Infrastructure",
+  "econ.def.6": "Administration",
+  "econ.def.7": "Policing",
+  "econ.def.8": "Farm subsidies",
+  "econ.def.9": "Welfare",
+  "econ.def.10": "Health care",
+  "econ.def.11": "Royal household",
+  "econ.def.12": "Technology",
+  "econ.def.13": "Human capital",
+  "econ.def.14": "Military strength",
+  "econ.def.15": "Public health",
+  "econ.def.16": "Public order",
+  "econ.def.17": "Income tax",
+  "econ.def.18": "Corporate tax",
+  "econ.def.19": "VAT",
+  "econ.def.20": "Social insurance",
+  "econ.def.21": "Tariffs",
+  "econ.def.22": "Property tax",
+  "econ.def.23": "Potential growth",
+  "econ.def.24": "Natural unemployment",
+  "econ.def.25": "Inflation",
+  "econ.def.26": "Public mood",
+  "econ.def.27": "Confidence",
+  "econ.def.28": "1 month",
+  "econ.def.29": "1 quarter",
+  "econ.def.30": "1 year",
+  "econ.disp.1": "Economy",
+  "econ.disp.2": "Tag preferences",
+  "econ.disp.3": "−2 dislike · 0 neutral · +2 like — empty cells come from the ideology (faded numbers). Members vote on budgets by the tags of the spending items.",
+  "econ.disp.4": "Reset this party to ideology defaults",
+  "econ.disp.5": "All",
+  "econ.disp.6": "10 yrs",
+  "econ.disp.7": "5 yrs",
+  "econ.disp.8": "2 yrs",
+  "econ.disp.9": "World › Economic regions — economic areas made of map zones",
+  "econ.disp.10": "Economic regions ↗",
+  "econ.disp.11": "Custom layout",
+  "econ.disp.12": "Reset zoom",
+  "econ.disp.13": "Save the whole economy view as a picture (PNG · JPG · SVG) — or right-click the view",
+  "econ.disp.14": "Every point in time · indicator as CSV",
+  "econ.disp.15": "Show large (Esc to return)",
+  "econ.disp.16": "📷 Photo",
+  "econ.disp.17": "⤡ Smaller",
+  "econ.disp.18": "⛶ Larger",
+  "econ.disp.19": "Could not draw the chart:",
+  "econ.disp.20": "Economic warning signs",
+  "econ.disp.21": "Off",
+  "econ.disp.22": "Click for the {go} tab on the left · Shift + click for {v} details",
+  "econ.disp.23": "Click a gauge to go to its tab on the left ·",
+  "econ.disp.24": "Shift + click",
+  "econ.disp.25": " for that indicator's details (forecast · related warnings · package policies)",
+  "econ.disp.26": "Growth {growth} (year on year)",
+  "econ.disp.27": "{debt} of GDP",
+  "econ.disp.28": "{reserves} of GDP",
+  "econ.disp.29": "Empty",
+  "econ.disp.30": "Revenue (annual)",
+  "econ.disp.31": "{rev} of GDP",
+  "econ.disp.32": "Spending (annual)",
+  "econ.disp.33": "{spend} of GDP",
+  "econ.disp.34": "Fiscal deficit (annual)",
+  "econ.disp.35": "Fiscal surplus (annual)",
+  "econ.disp.36": "{balance} of GDP",
+  "econ.disp.37": "Debt interest (annual)",
+  "econ.disp.38": "Bond yield {yield}",
+  "econ.disp.39": "Fiscal amounts",
+  "econ.disp.40": "Trends",
+  "econ.disp.41": "— click chips to choose indicators to overlay (same % scale) · dotted lines are forecasts",
+  "econ.disp.42": "{label} forecast",
+  "econ.disp.43": "Budget (annual · {unit})",
+  "econ.disp.44": "— spending on top · revenue below, thickness = spending vs revenue gap",
+  "econ.disp.45": "— spending and revenue on the same axis",
+  "econ.disp.46": "of GDP",
+  "econ.disp.47": "Show as budget hemicycle",
+  "econ.disp.48": "Show as horizontal bars",
+  "econ.disp.49": "The safe range widens with the growth trend (about the last 3 years), and prices swing harder the faster or hotter growth is — with the current growth trend of {v}, the safe ceiling is {hyper}",
+  "econ.disp.50": "← Overview",
+  "econ.disp.51": "Now {label}",
+  "econ.disp.52": "If nothing changes, next 1 {unit}",
+  "econ.disp.53": "{next} {next2}{dunit} · 50% range {nextLo} – {nextHi}",
+  "econ.disp.54": "If nothing changes, in {yr}",
+  "econ.disp.55": "unchanged",
+  "econ.disp.56": "higher",
+  "econ.disp.57": "lower",
+  "econ.disp.58": "{yv} {yv2}{dunit} · vs now: {yv3}",
+  "econ.disp.59": "{label} trend",
+  "econ.disp.60": "— dotted line is the forecast if current policy is kept (dark band 50% · light band 90%)",
+  "econ.disp.61": "Warning signs related to {label}",
+  "econ.disp.62": "No related warning signs.",
+  "econ.disp.63": "What moves it",
+  "econ.disp.64": "— change in {label} after {yr} when changing one thing at a time",
+  "econ.disp.65": "No policy moves it noticeably.",
+  "econ.disp.66": "— this {unit} {used}/{lim} · numbers are {label} after {yr} (without it: {base})",
+  "econ.disp.67": "later",
+  "econ.disp.68": "tab — adjust directly →",
+  "econ.disp.69": "Debt interest",
+  "econ.disp.70": "Pensions · unemployment benefits",
+  "econ.disp.71": "Other revenue",
+  "econ.disp.72": "{label} forecast (median)",
+  "econ.disp.73": "— shared crosshair · grey = recession (a stretch of negative growth) · drag the minimap below to zoom in",
+  "econ.disp.74": "Growth (year on year, %)",
+  "econ.disp.75": "Unemployment (%)",
+  "econ.disp.76": "Inflation (%)",
+  "econ.disp.77": "Policy rate · Bond yield (%)",
+  "econ.disp.78": "— each {unit}'s growth (annualized) split by cause · line = growth in that period",
+  "econ.disp.79": "Growth in that period (annualized)",
+  "econ.disp.80": "Potential growth (technology · human capital · infrastructure)",
+  "econ.disp.81": "Fiscal (spending · tax changes)",
+  "econ.disp.82": "Monetary (real rate · QE)",
+  "econ.disp.83": "Money supply",
+  "econ.disp.84": "Exchange rate (exports)",
+  "econ.disp.85": "Tax side effects",
+  "econ.disp.86": "Unexpected shocks",
+  "econ.disp.87": "Events (crisis · boom)",
+  "econ.disp.88": "— log scale is in the Analysis tab",
+  "econ.disp.89": "Annual money growth (%)",
+  "econ.disp.90": "Money growth",
+  "econ.disp.91": "Currency value (index, start = 100)",
+  "econ.disp.92": "— expected + overheating + money + import prices + taxes · other + adjustment lag = actual inflation",
+  "econ.disp.93": "Expected inflation",
+  "econ.disp.94": "Demand pull (aggregate demand)",
+  "econ.disp.95": "Excess money",
+  "econ.disp.96": "Import prices (currency value)",
+  "econ.disp.97": "Taxes · other",
+  "econ.disp.98": "Adjustment lag",
+  "econ.disp.99": "Economic path",
+  "econ.disp.100": "— path joining the unemployment × inflation point of each {unit} (top right = stagflation)",
+  "econ.disp.101": "Debt dynamics",
+  "econ.disp.102": "— if r − g is positive, the debt ratio grows even with a primary balance of 0",
+  "econ.disp.103": "National debt (% of GDP)",
+  "econ.disp.104": "r − g (bond yield − nominal growth, %p)",
+  "econ.disp.105": "Primary balance (excluding interest, % of GDP)",
+  "econ.disp.106": "Primary balance",
+  "econ.disp.107": "Rate spreads",
+  "econ.disp.108": "— a growing risk premium means markets don't trust the bonds",
+  "econ.disp.109": "Risk premium (bond − policy, %p)",
+  "econ.disp.110": "Risk premium",
+  "econ.disp.111": "Budget flow (annual · {unit})",
+  "econ.disp.112": "— taxes → treasury → spending groups → items · width = amount",
+  "econ.disp.113": "— spending (% of GDP) by group · line = revenue",
+  "econ.disp.114": "— one circle = one district · size = population · color = public mood (blue good · red bad) · linked with the map",
+  "econ.disp.115": "District Map — {mapBy}",
+  "econ.disp.116": "Policy sensitivity — {label}",
+  "econ.disp.117": "— change in {label} after {hz} when changing one lever (compared without noise)",
+  "econ.disp.118": "Forecast fan — {label}",
+  "econ.disp.119": "— if current policy is kept, dark band 50% · light band 90% range",
+  "econ.disp.120": "— baseline 50 · built by spending and decays every year",
+  "econ.disp.121": "— every point in time · indicator (CSV via the button above)",
+  "econ.disp.122": "Choose charts to show in Economy › Analysis on the left.",
+  "econ.disp.123": "Bond issuance",
+  "econ.disp.124": "Treasury",
+  "econ.disp.125": "Added to treasury",
+  "econ.disp.126": "Pensions",
+  "econ.disp.127": "Unemployment benefits",
+  "econ.disp.128": "No district map — upload a map in Country › District map.",
+  "econ.disp.129": "GDP per capita {v} (nationwide = 100)",
+  "econ.disp.130": "Income level {v}",
+  "econ.disp.131": "Bad",
+  "econ.disp.132": "Good",
+  "econ.disp.133": "No districts.",
+  "econ.disp.134": "Nationwide 100",
+  "econ.disp.135": "Population",
+  "econ.disp.136": "Public mood bad",
+  "econ.disp.137": "— coloring is set in Economy › Districts",
+  "econ.disp.138": "— click a circle to edit that district",
+  "econ.disp.139": "District table",
+  "econ.disp.140": "District",
+  "econ.disp.141": "Income",
+  "econ.disp.142": "Agri · Manuf · Serv",
+  "econ.disp.143": "Time",
+  "econ.disp.144": "Growth%",
+  "econ.disp.145": "Inflation%",
+  "econ.disp.146": "Unemployment%",
+  "econ.disp.147": "Policy rate%",
+  "econ.disp.148": "Bond yield%",
+  "econ.disp.149": "Debt%",
+  "econ.disp.150": "Fiscal balance%",
+  "econ.elect.1": "General election results applied",
+  "econ.event.1": "Great Depression",
+  "econ.event.2": "Financial crisis",
+  "econ.event.3": "Oil shock",
+  "econ.event.4": "Hyperinflation",
+  "econ.event.5": "Sovereign default",
+  "econ.event.6": "Economic collapse",
+  "econ.event.7": "Disaster · war damage",
+  "econ.event.8": "Boom",
+  "econ.event.9": "Custom",
+  "econ.event.10": "Weak",
+  "econ.event.11": "Normal",
+  "econ.event.12": "Strong",
+  "econ.event.13": "Extreme",
+  "econ.event.14": "Growth {fx}%/yr",
+  "econ.event.15": "GDP {lvl}% at once",
+  "econ.event.16": "Inflation {fx}%p",
+  "econ.event.17": "Unemployment {u}%p",
+  "econ.event.18": "Confidence {conf}",
+  "econ.event.19": "Currency value {cur}%",
+  "econ.event.20": "{pw}% of debt written off",
+  "econ.event.21": "No effect",
+  "econ.event.nowTip": "Start in the next {unit} calculation, regardless of the date",
+  "econ.forecast.1": "Growth",
+  "econ.forecast.2": "Unemployment",
+  "econ.forecast.3": "Policy rate",
+  "econ.forecast.4": "Bond yield",
+  "econ.forecast.5": "Debt ratio",
+  "econ.forecast.6": "Fiscal balance",
+  "econ.forecast.7": "Currency value",
+  "econ.forecast.8": "Policy rate +1%p",
+  "econ.forecast.9": "Money printing rate +1%p",
+  "econ.forecast.10": "Spending (% of GDP)",
+  "econ.forecast.11": "Tax rates",
+  "econ.forecast.12": "Quantitative easing",
+  "econ.forecast.13": "Devaluation",
+  "econ.group.civil": "Civil",
+  "econ.group.defense": "Defense",
+  "econ.group.welfare": "Welfare",
+  "econ.log.1": "{keyNow} Q{keyNow2}",
+  "econ.preset.1": "West Germany 1983",
+  "econ.preset.2": "Federal Republic of Germany, 1983 — growth 1.6%, inflation 3.3%, unemployment about 9%, discount rate 4%, national debt about 39%, social market economy",
+  "econ.preset.3": "Stable times",
+  "econ.preset.4": "Inflation 2% · unemployment 4% · debt 50%",
+  "econ.preset.5": "Postwar reconstruction",
+  "econ.preset.6": "Inflation fixed at 40% for 4 turns, debt 180%, confidence 20",
+  "econ.preset.7": "Bailout",
+  "econ.preset.8": "Policy rate fixed at 15% for 8 turns, income tax 20% → 35% (4 turns)",
+  "econ.preset.9": "War economy",
+  "econ.preset.10": "Defense (army) spending fixed at 8% for 6 turns",
+  "econ.rating.1": "Prime",
+  "econ.rating.2": "High grade",
+  "econ.rating.3": "Investment grade",
+  "econ.rating.4": "Lower investment grade",
+  "econ.rating.5": "Speculative",
+  "econ.rating.6": "Default risk",
+  "econ.rating.7": "Default",
+  "econ.rating.8": "Negative real growth",
+  "econ.rating.9": "Excessive deficit",
+  "econ.rating.10": "Bloated reserves",
+  "econ.rating.11": "Currency collapse risk",
+  "econ.rating.12": "Near debt ceiling",
+  "econ.rating.13": "Sovereign default",
+  "econ.rating.14": "Capital flight",
+  "econ.rating.15": "Withdrawing money",
+  "econ.rating.16": "Almost none printed",
+  "econ.rating.17": "High",
+  "econ.rating.18": "Very high",
+  "econ.region.1": "Nationwide",
+  "econ.region.2": "and more",
+  "econ.region.3": "New territory joined ({nameOf}{fresh2}) — unification cost adds +{cost}%p to national debt",
+  "econ.rule.1": "Independent central bank — the rate is set automatically by the Taylor rule",
+  "econ.rule.2": "Fixed by a scenario rule — {left} left",
+  "econ.rule.nowAt": "Rules now at {unit} {n}",
+  "econ.rule.periodTip": "Period ({unit})",
+  "econ.rule.segsTip": "{unit} range:value, separated by commas",
+  "econ.scale.eok": "×100M",
+  "econ.scale.jo": "×1T",
+  "econ.scale.man": "×10K",
+  "econ.span.months": {"one": "{count} month", "other": "{count} months"},
+  "econ.span.quarters": {"one": "{count} quarter", "other": "{count} quarters"},
+  "econ.span.years": {"one": "{count} year", "other": "{count} years"},
+  "econ.span.yearsAnd": "{years} {rest}",
+  "econ.state.1": "Spending \"{name}\": asset ({asset}) does not exist, so asset building was turned off",
+  "econ.state.2": "Tax \"{name}\": unknown side effect ({v}) was ignored",
+  "econ.state.3": "Asset \"{name}\": unknown effect target ({v}) was ignored",
+  "econ.state.4": "Circular asset references ({name}) — effects between these assets are off",
+  "econ.tag.agriculture": "Agriculture",
+  "econ.tag.education": "Education",
+  "econ.tag.environment": "Environment",
+  "econ.tag.industry": "Industry",
+  "econ.tag.prestige": "Prestige",
+  "econ.tag.science": "Science",
+  "econ.tag.security": "Security",
+  "econ.tag.welfare": "Welfare",
+  "econ.turn.1": "Hyperinflation — inflation {infl}",
+  "econ.turn.2": "Sovereign default crisis — debt {debt} (of GDP)",
+  "econ.turn.3": "Great Depression — unemployment {unemp}",
+  "econ.turn.4": "Capital flight — confidence {conf}, currency value plunges 15%",
+  "econ.turn.5": "Currency collapse — money printing {print}/quarter",
+  "econ.turn.6": "Public mood collapse ({mood}) — risk of coup · revolution",
+  "econ.turn.7": "Credit rating {rating} → {rt} ({rt2})",
+  "econ.turn.8": "{evName} ended",
+  "econ.turn.9": "[Economy] {label}",
+  "econ.turn.10": "Economy News",
+  "econ.turn.11": "When public mood collapses, a coup or revolution can happen (jump there from the warnings in Economy › Overview).",
+  "econ.ui.1": "Safe",
+  "econ.ui.2": "Warning",
+  "econ.ui.3": "Danger",
+  "econ.ui.4": "Crisis",
+  "econ.ui.5": "💹 Economy",
+  "econ.ui.6": "Overview",
+  "econ.ui.7": "Analysis",
+  "econ.ui.8": "Monetary",
+  "econ.ui.9": "Fiscal",
+  "econ.ui.10": "Regions",
+  "econ.ui.11": "Scenario",
+  "econ.ui.12": "Events",
+  "econ.ui.13": "Items",
+  "econ.ui.14": "{print}%/quarter · {print2}",
+  "econ.ui.15": "Planned economy",
+  "econ.ui.16": "Mixed (planned side)",
+  "econ.ui.17": "Mixed economy",
+  "econ.ui.18": "Social market economy",
+  "econ.ui.19": "Free market economy",
+  "econ.ui.20": "If nothing changes, next",
+  "econ.ui.21": "Now",
+  "econ.ui.22": "Next",
+  "econ.ui.23": "forecast (no noise)",
+  "econ.ui.24": "Growth (year on year)",
+  "econ.ui.25": "National debt (% of GDP)",
+  "econ.ui.26": "The invisible hand — monetary and fiscal policy work differently in each district, and the results come back as public mood and in parliament. Every number can be edited directly, and the calculation only runs when the date (Country › Date) moves to the next",
+  "econ.ui.27": ".",
+  "econ.ui.28": "Credit rating — set by confidence and national debt",
+  "econ.ui.29": "Recorded since {label}",
+  "econ.ui.30": "Start",
+  "econ.ui.31": "{label} · Follows the date",
+  "econ.ui.32": "{turn} elapsed · set a date to follow it",
+  "econ.ui.33": "Calculation step",
+  "econ.ui.34": "▶ Next",
+  "econ.ui.35": "Planned",
+  "econ.ui.36": "Economic system",
+  "econ.ui.37": "Market",
+  "econ.ui.38": "Economic system — the planned side has low unemployment but low growth and efficiency; the market side has higher growth and bigger business cycles (default comes from the ruling party's ideology).",
+  "econ.ui.39": "Public mood collapse (",
+  "econ.ui.40": "— a coup or revolution can happen.",
+  "econ.ui.41": "Coup tab",
+  "econ.ui.42": "Revolution tab",
+  "econ.ui.43": "No warning signs",
+  "econ.ui.44": "Forecast",
+  "econ.ui.45": "(no noise)",
+  "econ.ui.46": "Debt",
+  "econ.ui.47": "Budget",
+  "econ.ui.48": "— applied through a budget bill",
+  "econ.ui.49": "— applied immediately",
+  "econ.ui.50": "Settings",
+  "econ.ui.51": "Change budget · tax rates through a budget bill",
+  "econ.ui.52": "— applied immediately under military rule · party-state",
+  "econ.ui.53": "Reflect economic performance in support · district leanings",
+  "econ.ui.54": "Open the Coup · Revolution tab right away when public mood collapses",
+  "econ.ui.55": "World › Our country's ranking score follows GDP",
+  "econ.ui.56": " package policy limit:",
+  "econ.ui.57": "",
+  "econ.ui.58": "Budget chart",
+  "econ.ui.59": "Budget hemicycle",
+  "econ.ui.60": "Two horizontal bars",
+  "econ.ui.61": "📈 Show the economy view large",
+  "econ.ui.62": "Open analysis",
+  "econ.ui.63": "“{title}” is being voted on — the previous budget (provisional budget) applies until it passes",
+  "econ.ui.64": "“{title}” rejected — running on the provisional (previous) budget. You can fix it in the Fiscal tab and submit again",
+  "econ.ui.65": "{draftChanges} changes in the budget draft — \"Submit budget\" in the Fiscal tab",
+  "econ.ui.66": "Budget No. {budgetNo} in effect · revenue {rev} · spending {spend} (of GDP)",
+  "econ.ui.67": "Business cycle panel (growth · unemployment · inflation · rates)",
+  "econ.ui.68": "Growth decomposition",
+  "econ.ui.69": "Inflation panel (inflation · money growth · currency value)",
+  "econ.ui.70": "Inflation decomposition",
+  "econ.ui.71": "Economic path (unemployment × inflation)",
+  "econ.ui.72": "Debt dynamics (debt · r − g · primary balance)",
+  "econ.ui.73": "Rate spreads (policy · bond · risk premium)",
+  "econ.ui.74": "Budget flow",
+  "econ.ui.75": "Budget composition over time",
+  "econ.ui.76": "Regional scatter",
+  "econ.ui.77": "District Map",
+  "econ.ui.78": "Policy sensitivity",
+  "econ.ui.79": "Forecast fan (chosen indicator)",
+  "econ.ui.80": "Asset trends",
+  "econ.ui.81": "Data table",
+  "econ.ui.82": "Business cycle",
+  "econ.ui.83": "Inflation analysis",
+  "econ.ui.84": "Fiscal health",
+  "econ.ui.85": "Regional gaps",
+  "econ.ui.86": "Policy lab",
+  "econ.ui.87": "Assets",
+  "econ.ui.88": "Expert analysis — drawn large in the right-hand view. All charts share the same period and crosshair; hover to see values at that point, drag the minimap to zoom into a period. Right-click to export a picture.",
+  "econ.ui.89": "Custom",
+  "econ.ui.90": "Pick and arrange charts below",
+  "econ.ui.91": "Choose charts",
+  "econ.ui.92": "Period",
+  "econ.ui.93": "Log scale for inflation · money growth (for hyperinflation)",
+  "econ.ui.94": "Sensitivity · forecast indicator",
+  "econ.ui.95": "Sensitivity horizon",
+  "econ.ui.96": "⛶ Full screen",
+  "econ.ui.97": "Export CSV",
+  "econ.ui.98": "Terms — r − g: bond yield − nominal growth (if positive, debt grows by itself) · risk premium: bond yield − policy rate · primary balance: fiscal balance excluding interest · real rate: policy rate − expected inflation",
+  "econ.ui.99": "Monetary policy belongs to the central bank, so it takes effect immediately without a bill. Raising rates tames inflation but cuts investment and jobs; printing lots of money lifts the economy for now but wrecks prices and the currency.",
+  "econ.ui.100": "Real rate",
+  "econ.ui.101": "% (expected inflation",
+  "econ.ui.102": "%) · bond yield",
+  "econ.ui.103": "Independent central bank — the rate is set automatically by the Taylor rule (2 + inflation + ½(inflation − 2) + ½ output gap), confidence ↑",
+  "econ.ui.104": "Money printing rate",
+  "econ.ui.105": "%/quarter ·",
+  "econ.ui.106": "Annual money growth",
+  "econ.ui.107": "% · above 30%/quarter triggers a currency collapse crisis",
+  "econ.ui.108": "Package policies",
+  "econ.ui.109": "This",
+  "econ.ui.110": ": printing +3%p, rates · bond yields ↓",
+  "econ.ui.111": ": printing −2%p, rates ↑",
+  "econ.ui.112": "Currency value −12%, exports (manufacturing regions) ↑ · import prices ↑ · confidence ↓",
+  "econ.ui.113": "In progress:",
+  "econ.ui.114": "{type} ({left} left)",
+  "econ.ui.115": "You can use up to {pkgLimit} package policies this {unit}.",
+  "econ.ui.116": "Devaluation — currency value −12%",
+  "econ.ui.117": "Other",
+  "econ.ui.118": "Spending is set as a % of GDP.",
+  "econ.ui.119": "Edited values gather in the",
+  "econ.ui.120": "budget draft",
+  "econ.ui.121": " and take effect once the budget passes in parliament (until then, the previous budget).",
+  "econ.ui.122": "Edited values take effect immediately (you can switch to the budget bill method in Settings).",
+  "econ.ui.123": "Fiscal deficit",
+  "econ.ui.124": "Fiscal surplus",
+  "econ.ui.125": "of GDP ·",
+  "econ.ui.126": "Revenue",
+  "econ.ui.127": "· spending",
+  "econ.ui.128": "(mandatory spending",
+  "econ.ui.129": "· balance under the draft {totalSpend}%",
+  "econ.ui.130": "Submit budget",
+  "econ.ui.131": "({changes} items)",
+  "econ.ui.132": "Discard draft",
+  "econ.ui.133": "Fill Legislation › Vote with predicted votes",
+  "econ.ui.134": "Predicted vote",
+  "econ.ui.135": "— House: about",
+  "econ.ui.136": " seats yea · about",
+  "econ.ui.137": " seats",
+  "econ.ui.138": "Party",
+  "econ.ui.139": "Prediction",
+  "econ.ui.140": "Score",
+  "econ.ui.141": "Expected defections",
+  "econ.ui.142": "Yea",
+  "econ.ui.143": "Nay",
+  "econ.ui.144": "Abstain",
+  "econ.ui.147": "{defect}/{members}",
+  "econ.ui.148": "Score = in government (ruling +1 · confidence and supply +0.6 · opposition −0.5) + spending tag preferences + tax burden. District members can break with the party line over local interests (industry · income). Edit preferences in the Items tab.",
+  "econ.ui.149": "Cut this group's spending by 15%",
+  "econ.ui.150": "Austerity −15%",
+  "econ.ui.151": "In effect",
+  "econ.ui.152": "% → Draft",
+  "econ.ui.153": "Mandatory spending",
+  "econ.ui.154": "Calculated automatically · rules change only by law",
+  "econ.ui.155": "Debt interest (debt × bond yield)",
+  "econ.ui.156": "Pensions (elderly population)",
+  "econ.ui.157": "Unemployment benefits (unemployed)",
+  "econ.ui.158": "Too high and revenue actually falls (Laffer curve)",
+  "econ.ui.159": "Revenue",
+  "econ.ui.160": "Temporary tax cut (",
+  "econ.ui.161": "Temporary tax hike (",
+  "econ.ui.162": "Tribute from dependencies",
+  "econ.ui.163": "Treasury · debt",
+  "econ.ui.164": "Treasury (reserves)",
+  "econ.ui.165": "· of GDP",
+  "econ.ui.166": "National debt",
+  "econ.ui.167": "Fiscal balance (annual)",
+  "econ.ui.168": "Deficit",
+  "econ.ui.169": "Surplus",
+  "econ.ui.170": "Repay debt",
+  "econ.ui.171": "Invest in infrastructure",
+  "econ.ui.172": "Surpluses repay debt automatically",
+  "econ.ui.173": "Debt ceiling",
+  "econ.ui.174": "None",
+  "econ.ui.175": "Above it, bond issuance stops — forced austerity · shutdown",
+  "econ.ui.176": "{v} austerity −15%",
+  "econ.ui.177": "Repaid {v}%p of debt from the treasury",
+  "econ.ui.178": "Invested {v}%p of the treasury in infrastructure",
+  "econ.ui.179": "GDP per capita",
+  "econ.ui.180": "Income level",
+  "econ.ui.181": "Main industry",
+  "econ.ui.182": "Each district has its own industry mix, age structure and income level, so the same policy works differently (rate hikes hit manufacturing, welfare cuts hit low incomes, devaluation helps export manufacturing regions). Unrecovered territory and dependency land are left out of national totals.",
+  "econ.ui.183": "Map coloring",
+  "econ.ui.184": "There are no districts, so the country is calculated as one — upload a map in Country › District map to calculate each district.",
+  "econ.ui.185": "Per capita",
+  "econ.ui.186": "· unemployment",
+  "econ.ui.187": "% · public mood",
+  "econ.ui.188": "· income",
+  "econ.ui.189": "Agriculture",
+  "econ.ui.190": "Manufacturing",
+  "econ.ui.191": "Services",
+  "econ.ui.192": "Youth",
+  "econ.ui.193": "Working age",
+  "econ.ui.194": "Elderly",
+  "econ.ui.195": "Unemployment %",
+  "econ.ui.196": "Industry and age shares are adjusted to add up to 1 · population comes from \"Citizens / population\" in Country › District map",
+  "econ.ui.197": "Spending · {name}",
+  "econ.ui.198": "Tax rate · {name}",
+  "econ.ui.199": "Build a scenario from \"value + duration\", not just starting values — fixed (locked) holds the value for the period, transition goes gradually from A → B, schedule (segments) uses a different value per",
+  "econ.ui.200": ". When the period ends, values go back to being calculated. Policies tied to fixed values are locked.",
+  "econ.ui.201": "Presets",
+  "econ.ui.202": "Choosing one restarts the economy from scratch",
+  "econ.ui.203": "Default",
+  "econ.ui.204": "Basic economy with no rules",
+  "econ.ui.205": "Rules",
+  "econ.ui.208": "Fixed",
+  "econ.ui.209": "Transition",
+  "econ.ui.210": "Schedule",
+  "econ.ui.211": "Start value only",
+  "econ.ui.212": "End",
+  "econ.ui.213": "{rule} left",
+  "econ.ui.214": "Ended",
+  "econ.ui.215": "Delete rule",
+  "econ.ui.216": "No rules.",
+  "econ.ui.217": "Restart the rules' periods from now",
+  "econ.ui.218": "+ Add rule",
+  "econ.ui.219": "Restart count from now",
+  "econ.ui.220": "Crisis thresholds",
+  "econ.ui.221": "Hyperinflation (inflation above %/yr)",
+  "econ.ui.222": "Sovereign default crisis (debt above %)",
+  "econ.ui.223": "Great Depression (unemployment above %)",
+  "econ.ui.224": "Capital flight (confidence below)",
+  "econ.ui.225": "Currency collapse (printing above %/quarter)",
+  "econ.ui.226": "Coup · revolution risk (public mood below)",
+  "econ.ui.227": "Display",
+  "econ.ui.228": "Currency",
+  "econ.ui.229": "Scale",
+  "econ.ui.230": "(None)",
+  "econ.ui.231": "Changing it scales district GDP by the same ratio",
+  "econ.ui.232": "Restart economy (clears history)",
+  "econ.ui.233": "Restart the economy from scratch as \"{v}\". The economy history will be cleared. Continue?",
+  "econ.ui.234": "Clear all economy history and start over. Continue?",
+  "econ.ui.235": "In progress",
+  "econ.ui.236": "Past",
+  "econ.ui.237": "Planned",
+  "econ.ui.238": "This time",
+  "econ.ui.239": "{left} yr",
+  "econ.ui.240": "{left} mo",
+  "econ.ui.241": "in {left}{left2}",
+  "econ.ui.242": "On the chosen date an economic crisis or boom happens — it starts when the date (Country › Date) passes that month and lasts for the chosen period. At the start, confidence and currency value take a one-time hit; during the period it pushes growth, inflation and unemployment. (Separate from crises that come on their own when thresholds are crossed)",
+  "econ.ui.243": "Set Country › Date first — events happen by date.",
+  "econ.ui.244": "New event",
+  "econ.ui.245": "Set the name and effects yourself",
+  "econ.ui.246": "Name",
+  "econ.ui.247": "e.g. Great famine",
+  "econ.ui.248": "Growth (%/yr, during the period)",
+  "econ.ui.249": "Inflation (%p, during the period)",
+  "econ.ui.250": "Unemployment (%p, during the period)",
+  "econ.ui.251": "Confidence (at the start)",
+  "econ.ui.252": "Currency value (%, at the start)",
+  "econ.ui.253": "Start year",
+  "econ.ui.254": "Start month",
+  "econ.ui.255": "Month",
+  "econ.ui.256": "Duration (months)",
+  "econ.ui.257": "Intensity",
+  "econ.ui.258": "+ Add event",
+  "econ.ui.259": " right away",
+  "econ.ui.260": "Event list",
+  "econ.ui.261": "By date · before it happens you can change date · duration · intensity",
+  "econ.ui.262": "Delete — stops here if in progress",
+  "econ.ui.263": "Delete",
+  "econ.ui.264": "No events yet.",
+  "econ.ui.265": "Event",
+  "econ.ui.266": "That date has already passed — set it after the next calculation period. (To trigger it right away, use \"Next … right away\")",
+  "econ.ui.267": "Spending items",
+  "econ.ui.268": "Taxes",
+  "econ.ui.269": "Built-in items are hidden and can be restored under \"Hidden built-ins\" below.",
+  "econ.ui.270": "Delete {kind} \"{name}\"?{kind2}",
+  "econ.ui.271": "Manufacturing regions",
+  "econ.ui.272": "Industrial regions",
+  "econ.ui.273": "High-income regions",
+  "econ.ui.274": "The wealthy",
+  "econ.ui.275": "All regions equally",
+  "econ.ui.276": "Imports",
+  "econ.ui.277": "Group",
+  "econ.ui.278": "Tags",
+  "econ.ui.279": "Base spending %",
+  "econ.ui.280": "Cap %",
+  "econ.ui.281": "Unemployment effect",
+  "econ.ui.282": "Public mood effect",
+  "econ.ui.283": "Diminishing returns",
+  "econ.ui.284": "Builds asset",
+  "econ.ui.285": "Base tax rate %",
+  "econ.ui.286": "Tax base (share of GDP)",
+  "econ.ui.287": "Regional burden",
+  "econ.ui.288": "Growth side effect /%p",
+  "econ.ui.289": "Inflation /%p",
+  "econ.ui.290": "Remove effect",
+  "econ.ui.291": "Depreciation /yr",
+  "econ.ui.292": "Effects (per point above the baseline of 50)",
+  "econ.ui.293": "+ Effect",
+  "econ.ui.294": "Reset to default",
+  "econ.ui.295": "Save",
+  "econ.ui.296": "Cancel",
+  "econ.ui.297": "Edited",
+  "econ.ui.298": "Edit",
+  "econ.ui.299": "Hidden built-ins",
+  "econ.ui.300": "Restore",
+  "econ.ui.301": "You can create your own spending items, taxes and assets. They are calculated by the same rules as the built-ins (diminishing returns · depreciation), and their definitions are stored in the save. Members react not to an item's name but to its",
+  "econ.ui.302": ".",
+  "econ.ui.303": "No tags",
+  "econ.ui.304": "{group} · {tags} · base {s0}%{asset}",
+  "econ.ui.305": "Space program",
+  "econ.ui.306": "Civil",
+  "econ.ui.307": "Science, Prestige",
+  "econ.ui.308": "+ New spending item",
+  "econ.ui.309": "Unemployment change in %p per extra 1%p of spending above base (negative = falls)",
+  "econ.ui.310": "Space technology",
+  "econ.ui.311": "+ New asset",
+  "econ.ui.312": "New asset name",
+  "econ.ui.313": "Effect target",
+  "econ.ui.314": "per point above the baseline (50)",
+  "econ.ui.315": "Effect coefficient",
+  "econ.ui.316": "Add item",
+  "econ.ui.317": "Base {rate0}% · base {base}% of GDP · {weight}",
+  "econ.ui.318": "Carbon tax",
+  "econ.ui.319": "+ New tax",
+  "econ.ui.320": "Add tax",
+  "econ.ui.321": "{assets} pts · depreciation {decay}%/yr · {name}",
+  "econ.ui.322": "Baseline is 50 — the higher, the stronger the effect",
+  "econ.ui.323": "Starting value",
+  "econ.ui.324": "Built by spending item",
+  "econ.ui.325": "(now: {asset})",
+  "econ.ui.326": "Add asset",
+  "econ.ui.327": "Party tag preferences",
+  "econ.ui.328": "How much each party likes each tag (",
+  "econ.ui.329": ") — used for the budget bill's predicted vote. The table is wide, so edit it in the \"Tag preferences\" tab of the right-hand view.",
+  "econ.ui.330": "Open tag preferences →",
+  "econ.ui.331": "Please enter an item name.",
+  "econ.ui.332": "{name} asset",
+  "econ.ui.333": "Please enter an asset name.",
+  "econ.ui.334": "Please enter a tax name.",
+  "econ.ui.335": "Please enter a name.",
+  "econ.ui.tagsTip": "Separated by commas — built-in tags: {tags}",
+  "econ.unit": "{scale} {cur}",
+  "econ.unit.month": "month",
+  "econ.unit.quarter": "quarter",
+  "econ.unit.year": "year"
+ },
  "patterns": [
     {"re": "^\\+ 새 (.+)$", "to": "+ New $1"},
     {"re": "^내각: $", "to": "Cabinet: "},
@@ -845,9 +1730,6 @@ window.DnoLangPacks.en = {
   }
  ],
  "dict": [
-    ["- 좌석 정보 UX 개편 — 마우스를 올리면 좌석이 살짝 커지며 떠오르고 #번호 · 의원 · 정당 미리보기(예전의 떨어진 흰 고리 대신), 누르면 정보 카드가 열리고 그 좌석이 강조됨, 다른 좌석을 누르면 바로 바뀌고 바깥을 누르거나 Esc로 닫힘(× 없이도)", "- Seat info UX refresh — hovering lifts the seat slightly and previews #number · member · party (instead of the old detached white ring); clicking opens the info card and highlights the seat, clicking another seat switches right away, and clicking outside or Esc closes it (no × needed)"],
-    ["- 내장 프리셋 \"그레이트브리튼 북아일랜드 연합왕국\" 추가 (제작자: ttorri)", "- New built-in preset \"United Kingdom of Great Britain and Northern Ireland\" (by ttorri)"],
-    ["- 의석 ↔ 내각 양방향 연동 — 좌석 정보 카드에서 그 의원이 맡은 내각 자리를 보고 바로 임명 · 연결 끊기, 의원과 연결된 각료 카드에서 이름 · 사진을 고치면 의원에게도 반영 (당적은 의원을 따름)", "- Two-way seat ↔ cabinet link — the seat info card shows the member's cabinet posts and lets you appoint or unlink them; editing the name or photo on a linked cabinet card updates the member too (party follows the member)"],
     ["제작자: ttorri", "By ttorri"],
     ["🔗 의원과 연결됨 — 당적은 의원을 따르고, 이름·사진은 어느 쪽에서 고쳐도 함께 바뀜", "🔗 Linked to a member — party follows the member; name and photo stay in sync whichever side you edit"],
     ["내각에 임명…", "Appoint to cabinet…"],
@@ -877,7 +1759,6 @@ window.DnoLangPacks.en = {
     ["조건 맞음", "Conditions met"],
     ["조건 안 맞음", "Conditions not met"],
     ["이벤트 없음", "No events"],
-    ["- 스크립트 모드 — 코드 없이 JSON으로 이벤트 · 결정 · 국가 변수 · 플래그를 더함 (국가 › 결정 탭: 결정 실행 · 모드 켜고 끄기 · 모드 파일 불러오기 · 예제 모드 · 모더 도구), 날짜를 넘길 때 · 총선 결과 반영 때 이벤트 검사, 데스크톱 앱은 모드 폴더 · 창작마당에서 읽음 (docs/MODDING.md)", "- Script mods — add events, decisions, national variables and flags with JSON, no code (Nation › Decisions: take decisions, turn mods on/off, load mod files, example mod, modder tools); events are checked when the date advances and when election results are applied; the desktop app reads the mods folder and the Workshop (docs/MODDING.md)"],
     ["결정 · 모드 — 스크립트 모드(코드 없이 JSON으로 만든 이벤트 · 결정 · 국가 변수)를 켜고 끄고, 모드가 넣은 결정을 실행합니다. 이벤트는 날짜를 넘길 때(또는 총선 결과를 반영할 때) 조건이 맞으면 창으로 뜹니다.", "Decisions · mods — turn script mods (events, decisions and national variables made in JSON, no code) on or off and take the decisions they add. Events pop up when the date advances (or election results are applied) and their conditions are met."],
     ["모드가 넣은 버튼 — 조건이 맞아야 실행할 수 있고, 한 번만 쓰거나 정한 날 수가 지나야 다시 쓸 수 있어요.", "Buttons added by mods — they work only when their conditions are met, and are single-use or have a cooldown in days."],
     ["모드 파일 불러오기(.json) · 예제 모드 · 켜고 끄기(이 기기의 모든 세이브), 모더 도구(변수 · 플래그 · 이벤트 바로 띄우기). 데스크톱 앱은 모드 폴더 · 창작마당 모드도 읽어요. 만드는 법은 docs/MODDING.md.", "Load mod files (.json) · example mod · on/off (all saves on this device), modder tools (variables, flags, fire events). The desktop app also reads the mods folder and Workshop mods. How to make one: docs/MODDING.md."],
@@ -887,19 +1768,12 @@ window.DnoLangPacks.en = {
     ["(자치 지역 — 스코틀랜드 · 카탈루냐처럼)", "(autonomous region — like Scotland or Catalonia)"],
     ["세력 변화의 당 변화(계보도)에 이 날짜로 창당이 표시됩니다 — 기록에 처음 나온 날보다 이르면 그 날짜에 창당 시점이 생겨요", "The party lineage in Seat history starts at this date — if it's earlier than the party's first record, a founding point is added at that date"],
     ["스코틀랜드 · 카탈루냐처럼 — 자기 의회는 따로 두되, 그 땅의 지역구도 본국 총선 · 지방선거 · 국민투표에 들어가고 본국 지역구 의석에 셈", "Like Scotland or Catalonia — keeps its own parliament, but its districts also vote in national, local elections and referendums and count toward national district seats"],
-    ["- 정당 창당일 — 의회 › 정당 카드에 \"창당일\"을 정하면 세력 변화의 당 변화(계보도)가 그 날짜에서 시작 (기록 날짜 사이에 창당 시점을 끼워 넣음, 아직 의석이 없는 정당도 표시)", "- Party founding date — set \"Founded\" on a party card and the party lineage in Seat history starts there (a founding point is inserted between record dates; parties without seats yet are shown too)"],
-    ["- 종속국 \"본국 총선에도 참여\" — 스코틀랜드 · 카탈루냐 같은 자치 지역처럼 자기 의회는 따로 두면서 그 땅의 지역구가 본국 총선 · 지방선거 · 국민투표에 들어가고 지역구 의석에도 셈 (경제 집계 · 공납은 종속국 그대로)", "- Dependencies \"Also votes in national elections\" — like autonomous regions such as Scotland or Catalonia, they keep their own parliament while their districts vote in national, local elections and referendums and count toward district seats (economy and tribute unchanged)"],
-    ["- 고친 점: 경제 › 시나리오의 화면 표시에서 화폐 단위를 바꾸면 \"NaN\"이 되던 문제", "- Fixed: changing the currency unit under Economy › Scenario display turned it into \"NaN\""],
-    ["- 맵 프리셋 5개 추가 — 오스트레일리아(6개 주 + 2개 준주) · 멕시코(31개 주 + 멕시코시티) · 인도(28개 주 + 8개 연방 직할지) · 폴란드(16개 주) · 스위스(26개 칸톤), 모두 15개", "- 5 more map presets — Australia (6 states + 2 territories), Mexico (31 states + Mexico City), India (28 states + 8 union territories), Poland (16 voivodeships), Switzerland (26 cantons), 15 in all"],
     ["지역구 정보 칸", "District info fields"],
     ["의석", "Seats"],
     ["인구", "Population"],
-    ["- 맵 메이커에서 지역구 프리셋(.hemimap) 만들기 — 목록의 지역구마다 약칭 · 의석 수 · 인구를 정해 .hemimap으로 내보냄 (게임의 지역구 지도 업로드 칸에 올리면 한 번에), .hemimap을 열어 고칠 수도 있음 (상원 · 삼원 의석 · 권역은 그대로 이어 담김)", "- Map maker makes district presets (.hemimap) — set each district's abbreviation, seats and population in the list and export a .hemimap (upload it in the game's district map field to load it all at once); you can also open a .hemimap to edit it (upper/third-chamber seats and regions carry over)"],
-    ["- 내장 프리셋 \"대한민국\" 추가 (제작자: 왕조명)", "- New built-in preset \"Republic of Korea\" (by 왕조명)"],
     ["제작자: 왕조명", "By 왕조명"],
     ["제작자", "Author"],
     ["지도 자료: Natural Earth (공개 도메인) · 제작자가 적힌 지도는 커뮤니티 제작", "Map data: Natural Earth (public domain) · maps with an author are community-made"],
-    ["- 맵 프리셋 \"2024 대한민국 총선\" 추가 — 제22대 국회의원 선거 지역구 254개 (제작자: 델리델리델리만쥬), 맵 프리셋 창에 커뮤니티 지도 · 제작자 표시", "- New map preset \"2024 South Korean legislative election\" — the 254 constituencies of the 22nd National Assembly election (by 델리델리델리만쥬), community maps and authors shown in the map preset window"],
     ["지금 보이는 경제 시각 화면 전체를 사진(PNG · JPG · SVG)으로 — 화면에서 우클릭해도 됨", "Save the whole economy view as a picture (PNG · JPG · SVG) — or right-click the view"],
     ["— 위 세출 · 아래 세입, 두께 = 세출 · 세입 차이", "— spending on top · revenue below, thickness = spending vs revenue gap"],
     ["📷 사진", "📷 Photo"],
@@ -1064,15 +1938,10 @@ window.DnoLangPacks.en = {
   ["술탄", "Sultan"],
   ["새 왕가", "New house"],
   ["왕족", "Royal"],
-  ["- 1.6.6 미리보기(Teaser 1.6.6)를 본 게임에 통합하고 미리보기 화면은 삭제 — 예전 1.6.6 미리보기 세이브는 시작 화면에서 본 게임 세이브로 옮겨짐 (왕실 · 왕정복고 · 전제군주정)", "- Merged the 1.6.6 preview (Teaser 1.6.6) into the main game and removed the preview page — old 1.6.6 preview saves move into the main game's saves on the start screen (royal · restoration · absolute monarchy)"],
-  ["- 세계 › 경제권 탭 자리 (잠김, 1.7.1)", "- World › Economic blocs tab placeholder (locked, 1.7.1)"],
-  ["- 버전 표시 v1.6.6", "- Version label v1.6.6"],
-  ["- 세계 메뉴 신설 — 국가 순위(오른쪽 시각 탭, 국기 · 점수 고치기) · 진영", "- New World menu — country ranking (right display tab, edit flags · scores) · blocs"],
   ["Give me liberty, or give me death! : 왕은 죽었다, 국왕 만세!", "Give me liberty, or give me death! : The king is dead, long live the king!"],
   ["🔒 경제권", "🔒 Economic blocs"],
   ["경제권 — 1.7.1에서 열림", "Economic blocs — opens in 1.7.1"],
   ["🔒 \"경제권\"은(는) 1.7.1 업데이트에서 열리는 기능입니다. 여러 나라를 묶어 경제권(관세 동맹 · 공동시장 · 통화 동맹 …)을 정하고 경제에 반영해요.", "🔒 \"Economic blocs\" opens in the 1.7.1 update. Group countries into economic blocs (customs unions · common markets · currency unions …) that feed into the economy."],
-  ["- 부정선거 탭 ⚠ 잠금 해제를 세이브마다 따로 — 한 세이브에서 풀면 모든 세이브에서 풀리고 잠금 해제 연출도 처음 한 번만 나오던 문제 수정", "- The ⚠ unlock of the election fraud tab is now per save — fixed unlocking it in one save unlocking every save, and the unlock sequence only ever playing once"],
   ["정당 태그 선호", "Party tag preferences"],
   ["태그 선호", "Tag preferences"],
   ["태그 선호 화면 열기 →", "Open tag preferences →"],
@@ -1095,7 +1964,6 @@ window.DnoLangPacks.en = {
   ["의석 화면이 바로 바뀌어요", "The seat view updates right away"],
   ["의석 수 같은 설정을 바꾸면 의석 화면이 바로 새로 그려져요 — 새 정당의 자리도 생겼을 거예요. 화면이 맞지 않아 보이면 입력 칸 밖에서 Enter 키로 다시 그릴 수 있고, 설정 › 화면에서 실행 버튼을 켤 수도 있어요.", "Changing settings like seat counts redraws the seat view right away — the new party's seats should be there. If the view looks off, press Enter outside an input to redraw, or turn on the execute button in Settings › Display."],
   ["설정을 바꾸면 시각 화면이 알아서 새로 그려집니다. \"PROTOCOL EXECUTE\"(실행) 버튼은 기본으로 숨겨져 있고 설정 › 화면에서 켤 수 있어요 — 숨겨도 Enter로 다시 그릴 수 있습니다.", "The view redraws by itself when you change settings. The \"PROTOCOL EXECUTE\" button is hidden by default and can be turned on in Settings › Display — even hidden, Enter redraws."],
-  ["- 실행(PROTOCOL EXECUTE) 버튼을 기본으로 숨김 — 설정 › 화면 › 실행 버튼에서 표시/숨기기 (대부분의 편집이 의석 화면을 알아서 다시 그리고, 숨겨도 Enter로 다시 그림)", "- The PROTOCOL EXECUTE button is hidden by default — show or hide it in Settings › Display › Execute button (most edits redraw the seat view by themselves, and Enter still redraws)"],
   ["군 지휘부를 정해 둡니다. 충성도는 지금 정부에 대한 충성(0~100)으로, 낮을수록 군부 쿠데타가 잘 되고 높을수록 친위 쿠데타를 돕습니다. 가까운 정당은 그 정당이 쿠데타를 일으킬 때 힘을 보탭니다.", "Set up the military command. Loyalty is loyalty to the current government (0–100): the lower it is, the likelier a military coup succeeds; the higher, the more it helps a self-coup. An allied party gets their help when it stages a coup."],
   ["— 가까운 정당 없음 —", "— No allied party —"],
   ["충성도", "Loyalty"],
@@ -1142,20 +2010,8 @@ window.DnoLangPacks.en = {
   ["군사평의회", "Military council"],
   ["군사평의회 의장", "Military council chair"],
   ["Give me liberty, or give me death! : 주사위는 던져졌다", "Give me liberty, or give me death! : The die is cast"],
-  ["- 1.6.2 미리보기(Teaser 1.6.2)를 본 게임에 통합하고 미리보기 화면은 삭제 — 예전 1.6.2 미리보기 세이브는 시작 화면에서 본 게임 세이브로 옮겨짐 (군부 · 쿠데타 · 군정)", "- Merged the 1.6.2 preview (Teaser 1.6.2) into the main game and removed the preview page — old 1.6.2 preview saves move into the main game's saves on the start screen (military · coup · junta)"],
-  ["- 버전 표시 v1.6.2", "- Version label v1.6.2"],
-  ["- 1.6.3 미리보기(Teaser 1.6.3)를 본 게임에 통합하고 미리보기 화면은 삭제 — 예전 1.6.3 미리보기 세이브는 시작 화면에서 본 게임 세이브로 옮겨짐 (혁명 · 당-국가 체제 · 선거인단)", "- Merged the 1.6.3 preview (Teaser 1.6.3) into the main game and removed the preview page — old 1.6.3 preview saves move into the main game's saves on the start screen (revolution · party-state · electoral college)"],
-  ["- 버전 표시 v1.6.3", "- Version label v1.6.3"],
   ["Give me liberty, or give me death! : 대담하라!", "Give me liberty, or give me death! : Be bold!"],
-  ["- 1.6.4 미리보기(Teaser 1.6.4)를 본 게임에 통합하고 미리보기 화면은 삭제 — 예전 1.6.4 미리보기 세이브는 시작 화면에서 본 게임 세이브로 옮겨짐 (국회공성전)", "- Merged the 1.6.4 preview (Teaser 1.6.4) into the main game and removed the preview page — old 1.6.4 preview saves move into the main game's saves on the start screen (parliament siege)"],
-  ["- 버전 표시 v1.6.4", "- Version label v1.6.4"],
   ["Give me liberty, or give me death! : 영광이 산 위에서 꺾였도다", "Give me liberty, or give me death! : Thy glory is slain upon thy high places"],
-  ["- 공성전의 \"계엄령 선포 (의회 정지, 시험용)\" 버튼을 계엄령을 선포할 수 있는 탭(계엄령 권한 주체인 대통령 · 총리 · 내각 구성원 탭, 주체가 없으면 내각 설정)으로 데려가는 버튼으로 바꿈", "- The siege's \"declare martial law (suspend parliament, test)\" button now takes you to the tab where martial law is declared (the president · PM · cabinet members tab that holds the power, or cabinet settings if no one does)"],
-  ["- 1.6.5 미리보기(Teaser 1.6.5)를 본 게임에 통합하고 미리보기 화면은 삭제 — 예전 1.6.5 미리보기 세이브는 시작 화면에서 본 게임 세이브로 옮겨짐 (세력 변화 · 위키 틀 · 세계)", "- Merged the 1.6.5 preview (Teaser 1.6.5) into the main game and removed the preview page — old 1.6.5 preview saves move into the main game's saves on the start screen (power shifts · wiki box · world)"],
-  ["- 버전 표시 v1.6.5", "- Version label v1.6.5"],
-  ["- 메뉴 이름 정리 — 의회 › 의회 설정 → 의장 · 표시, 의회 구성 → 의석 · 원 구성(원 구성을 이리로 옮김), 여론 › 지역구 · 지지율 - 시민 / 이민자 → 시민 성향 · 시민 지지율 · 이민자 성향 · 이민자 지지율, 선거 › 지선 → 지방선거, 내각 › 내각 설정 → 정부 형태 · 권한, 국가 › 지역 → 지역구 지도 (튜토리얼 · 도움말 · 안내 문구도 함께, 검색은 옛 이름으로도 찾음)", "- Clearer menu names — Parliament › Settings → Speakers · Display, Composition → Seats · Chambers (chamber setup moved here), Opinion › Districts/Support - Citizens/Immigrants → Citizen lean · Citizen support · Immigrant lean · Immigrant support, Elections › Local → Local elections, Cabinet › Settings → Government · Powers, Nation › Territory → District Map (tutorial, help and hints updated; search also finds the old names)"],
-  ["- 선거 › 방식을 선거 제도(대선 · 총리 선거 방식 · 기준 원 · 이민자 투표권 · 선거인단)와 후보(후보 단일화 · 대선/총리 선거 후보)로 나눔", "- Elections › Method split into Electoral System (presidential/PM method · source chamber · immigrant voting · electoral college) and Candidates (candidate unions · presidential/PM candidates)"],
-  ["- 선거 › ⚠ — 처음에는 이름 없이 ⚠, 누르면 몇 번 말리다가 끝까지 들어가려 하면 화면이 점점 붉어지며 잠금이 풀리고 그 뒤로는 \"부정선거\"", "- Elections › ⚠ — nameless at first; clicking it pleads with you a few times, and if you keep going the screen turns ever redder until it unlocks, showing \"Election fraud\" from then on"],
   ["원 구성(단원제 · 양원제 · 삼원제)과 의회별 이름 · 총 의석 수, 정당마다 몇 석인지 정합니다. \"배정 합계\"는 총 의석 수를 넘을 수 없어요.", "Unicameral · bicameral · tricameral, plus set each chamber's name and total seats, and how many seats each party has. The \"Assigned total\" can't exceed the total."],
   ["의장 · 표시", "Speakers · Display"],
   ["의석 · 원 구성", "Seats · Chambers"],
@@ -1170,25 +2026,9 @@ window.DnoLangPacks.en = {
   ["대선 · 총리 선거 방식(단순 다수 · 결선투표 · 선거인단)과 지지율을 가져올 기준 원, 이민자 투표권. 선거인단제를 고르면 선거인단 설정이 나와요.", "Presidential · PM election method (plurality · runoff · electoral college), the chamber whose support is used, and immigrant voting rights. Choosing the electoral college shows its settings."],
   ["후보 단일화(여러 정당이 후보 한 명으로)와 대선 · 총리 선거 후보(기본은 당수 — 의원 연결이나 직접 입력으로 바꿈).", "Candidate unions (several parties behind one candidate) and presidential · PM candidates (party leaders by default — change them by linking a member or typing a name)."],
   ["의장단(의장 · 부의장), 원별 반원 가운데 표시(의석 수 · 의회 로고 · 의장석), 집권 세력 강조. 단원제 · 양원제 · 삼원제는 의석 · 원 구성에서 골라요.", "Speakers (speaker · deputies), what each chamber shows at the center of the hemicycle (seat count · chamber logo · podium) and the governing bloc highlight. Unicameral · bicameral · tricameral is chosen in Seats · Chambers."],
-  ["- 사이드바 맨 위에 기능 검색 — 메뉴 이름 · 각 탭 안의 글자 · 동의어로 찾아 그 탭을 열고 찾은 곳을 잠깐 표시 (예: \"선거인단\" → 선거 › 방식), 저장 · 설정 창과 잠긴 기능(🔒 열리는 버전)도 찾음, Ctrl + K로 바로", "- Feature search at the top of the sidebar — finds menus, text inside each tab and synonyms, opens the tab and briefly highlights the spot (e.g. \"electoral college\" → Elections › Method); also finds the save · settings windows and locked features (🔒 with their version), Ctrl + K to jump there"],
   ["기능 검색 (예: 선거인단)", "Search features (e.g. electoral college)"],
   ["찾는 기능이 없습니다", "No matching feature"],
-  ["- 경제 시각 화면에서 계기(인플레이션 · 성장률 · 실업률 · 부채비율 · 민심 · 신뢰도)를 누르면 그 지표 화면으로 — 이대로면 다음 1분기 · 1년 뒤(지금과 비교), 추이와 예측, 관련 경고 신호만, 무엇이 움직이나(정책 민감도), 그 지표에 듣는 패키지 정책(1년 뒤 예상과 함께 바로 쓰기)", "- Clicking a gauge (inflation · growth · unemployment · debt · mood · confidence) in the economy display opens a view for that metric — next quarter and one year ahead if nothing changes (vs now), trend with forecast, only the related warning signals, what moves it (policy sensitivity), and the package policies that act on it (with the one-year outlook, usable right there)"],
-  ["- 인플레이션 안전 범위가 성장 흐름(최근 약 3년)에 따라 넓어짐 — 2%를 넘는 1%p마다 안전 상한 +1.25%p (최대 +12%p, 고도성장기처럼 성장 10%면 물가 15%까지 안전), 민심 · 신뢰도가 깎이기 시작하는 인플레이션도 함께 올라감. 고성장 · 과열일수록 인플레이션가 크게 출렁이고, 총수요가 넘치면(경기 과열) 물가가 더 가파르게 오름 — 인플레이션 분해에 \"수요 견인 (총수요)\"", "- The safe inflation range widens with the growth trend (about the last 3 years) — +1.25%p on the safe ceiling per 1%p above 2% (up to +12%p; at 10% growth, as in a high-growth era, up to 15% inflation counts as safe), and the inflation level where mood and confidence start to fall rises with it. Inflation swings more in fast-growing, overheating economies, and excess aggregate demand pushes prices up more steeply — shown as \"demand-pull (aggregate demand)\" in the inflation breakdown"],
-  ["- 설정 › 화면 — 창 모드 · 전체 화면 · 테두리 없는 전체 화면이 늘 보이게 (브라우저판은 테두리 없는 전체 화면을 앱 전용으로 잠금, 게임 안 설정 창에서도 게임 화면 전체가 전체 화면으로)", "- Settings › Display — windowed · fullscreen · borderless are always shown (borderless locked as app-only in the browser; from the in-game settings pop-up the whole game goes fullscreen)"],
-  ["- 설정 › 화면 › 해상도 (데스크톱 앱) — 창 모드 크기를 실제 픽셀(1280×720 ~ 3840×2160)로, 모니터에 맞는 것만 고를 수 있고 전체 화면 중에 고르면 창 모드로 돌아갈 때 적용", "- Settings › Display › Resolution (desktop app) — windowed size in real pixels (1280×720 – 3840×2160), only sizes that fit the monitor; chosen in fullscreen it applies on returning to windowed"],
-  ["- 맵 메이커 — 오른쪽 위 내보내기는 고른 지역구만, 목록 아래는 전체 내보내기", "- Map maker — the top-right Export exports the selected districts; the button under the list exports everything"],
-  ["- 맵 메이커 — 그림 지도 추적에서 색 허용 오차를 낮출수록(10 → 3) 지역이 사라지거나 이웃과 합쳐지고 개수가 들쭉날쭉하던 문제 수정 (조각을 평균 색으로 다시 묶고, 가는 경계선을 지역으로 남기지 않게)", "- Map maker — fixed image tracing where lowering the color tolerance (10 → 3) made regions vanish or merge into neighbors and the count jump around (fragments are regrouped by average color, thin border lines no longer become regions)"],
-  ["- 게임 화면 위쪽 탭 바의 저장 버튼 오른쪽에 설정 버튼 — 게임을 떠나지 않고 설정(테마 · 화면 · 기타 설정)을 창으로 열어 바꿈", "- Settings button right of Save in the game's top tab bar — open settings (theme · display · other) in a pop-up without leaving the game"],
   ["설정", "Settings"],
-  ["- 설정 › 기타 설정 › 디버그 모드에 진행 방식 — 턴제 / 실시간(현재 잠김)", "- Settings › Other › Debug mode: game pace — turn-based / real-time (locked for now)"],
-  ["- 지방자치 현황 화면(지도 아래)에서 단체장 카드의 사진을 눌러 올리고 이름을 바로 적음 — 현직 단체장 칸을 일일이 열지 않아도 됨", "- Local government overview (under the map): upload a head's photo and type their name right on the card — no need to open each incumbent entry"],
-  ["- 하원 · 상원 지역구가 둘 다 경합일 때 반원 / 지역구 보기에서 한 원의 지역구가 색칠되지 않던 문제 수정", "- Fixed districts in one chamber not being colored in the hemicycle / district view when both chambers had tied (tossup) districts"],
-  ["- 군부 지휘관을 내각 자리와 연결 — 군부의 국방부 장관 등을 내각 › 내각 구성원의 자리와 연결하면 직책 · 이름 · 사진 · 당적을 그 자리에서 가져옴 (기본 군 지휘부를 만들 때 내각에 국방 장관 자리가 있으면 바로 연결)", "- Link officers to cabinet posts — link the military's defense minister etc. to a post in Cabinet › Members to take its title · name · photo · party from there (creating the default command links it to an existing defense minister post)"],
-  ["- 설정 › 기타 설정 › 디버그 모드 — 숨겨진 정부 형태 보이기 · 숨기기: 보이면 내각 › 내각 설정의 정부 형태 아래에 군정 · 당-국가 체제 · 전제군주정(1.6.6 미리보기) 버튼이 나와 쿠데타 · 혁명 없이 바로 바꿈", "- Settings › Other › Debug mode — show/hide hidden government forms: when shown, Cabinet › Settings lists junta · party-state · absolute monarchy (1.6.6 preview) under the government form, switching to them directly without a coup or revolution"],
-  ["- 군부 소속 — 지휘관마다 국방부 · 합동참모본부 · 육군 · 해군 · 공군 · 해병대 · 특수부대 등 소속을 고르고, 소속마다 색을 정함 (소속 추가 · 이름 바꾸기)", "- Military branches — each officer gets a branch (Ministry of Defense · Joint Chiefs · Army · Navy · Air Force · Marines · Special Forces …) with a color per branch (add · rename branches)"],
-  ["- 총선에서 \"파벌 나눠서\"인 정당은 지지율도 파벌별로 나눠 보여 줌 (지지율 분포 막대 · 범례 · 지지율 입력 목록)", "- Parties set to \"split factions\" in elections also show their support split by faction (support bar · legend · support list)"],
-  ["- 군정에서 다수당 방식 총리 자동 반영 때문에 군사평의회 의장에 다수당 당적이 붙던 문제 수정", "- Fixed the military council chair showing the majority party under the junta (majority-party PM auto-fill)"],
   ["서명", "Sign"],
   ["기록", "Records"],
   ["서명 대기", "Awaiting signature"],
@@ -1204,12 +2044,9 @@ window.DnoLangPacks.en = {
   ["✍ 서명", "✍ Signed"],
   ["서명 — 의회를 통과해 거부권 주체(대통령 · 총리 · 내각)의 서명을 기다리는 법안입니다. 서명하면 가결되고, 거부권을 행사하면 최종 부결돼요. 거부권 주체가 없으면(내각 설정) 이 단계 없이 바로 가결됩니다.", "Sign — bills that passed parliament and await the veto holder's (president · PM · cabinet) signature. Signing passes the bill; a veto makes it finally fail. With no veto holder (Cabinet settings), bills pass without this step."],
   ["법안을 만들고 통과시키는 과정입니다. 메뉴 위의 단계 막대(제출 › 위원회 › 본회의 › 서명 › 기록 › 법령)에 단계마다 법안 수가 보이고, 누르면 그 탭으로 갑니다 (서명은 내각 › 서명).", "The process of writing and passing bills. The step bar at the top (Submit › Committee › Floor › Sign › Records › Statutes) shows how many bills are at each step; click a step to open its tab (signing is in Cabinet › Sign)."],
-  ["- 입법 과정 막대의 서명 · 기록을 나눔 — 서명은 내각 › 서명 탭(서명 대기 법안에 서명 · 거부권 행사, 최근 결정), 기록은 입법 › 표결 기록", "- Split Sign and Records in the legislation step bar — signing happens in the new Cabinet › Sign tab (sign or veto bills awaiting signature, recent decisions); records stay in Legislation › Vote records"],
   ["종합", "Overview"],
   ["지역구 - 시민", "Districts - Citizens"],
   ["지지율 - 시민", "Support - Citizens"],
-  ["지역구 - 이민자", "Districts - Migrants"],
-  ["지지율 - 이민자", "Support - Migrants"],
   ["시민 / 이민자 성향 따로 정하기", "Set citizen / migrant leanings separately"],
   ["지역구 - 이민자 · 지지율 - 이민자에서 이민자 성향을 따로 정합니다. 이민자가 투표하는 선거에서는 지역구마다 시민 · 이민자 수만큼 섞어 개표해요 (총선 비례 · 대선은 전국 수로).", "Set migrant leanings separately in Districts - Migrants and Support - Migrants. In elections where migrants vote, each district's count blends citizens and migrants by their numbers (national totals for list seats and presidential races)."],
   ["꺼져 있으면 지역구 - 이민자는 지역구 - 시민과, 지지율 - 이민자는 지지율 - 시민과 같은 값으로 묶이고 이민자도 시민과 같은 성향으로 투표합니다. 시민 · 인구 수는 따로예요.", "When off, Districts - Migrants is tied to Districts - Citizens and Support - Migrants to Support - Citizens, and migrants vote like citizens. Citizen and population counts stay separate."],
@@ -1229,10 +2066,6 @@ window.DnoLangPacks.en = {
   ["지역구 - 이민자 — 지역구 - 시민과 같은 화면으로 이민자의 지역구 · 권역 성향을 정합니다. 이민자가 투표하는 선거에서 지역구마다 시민 · 이민자 수만큼 섞어 개표해요 (지역구 성향이 없으면 권역 성향 → 이민자 지지율).", "Districts - Migrants — set migrants' district and region leanings on the same screen as Districts - Citizens. In elections where migrants vote, each district blends citizens and migrants by their numbers (no district leaning → region leaning → migrant support)."],
   ["지지율 - 이민자 — 지지율 - 시민과 같은 화면으로 이민자의 정당별 지지율을 정합니다. 이민자가 투표하는 총선 비례 · 대선은 전국 시민 · 이민자 수만큼 섞어 개표해요.", "Support - Migrants — set migrants' support by party on the same screen as Support - Citizens. List seats and presidential races where migrants vote blend national citizen and migrant counts."],
   ["여론 › 종합의 \"시민 / 이민자 성향 따로 정하기\"(기본 켬)를 켜 두면 지역구 - 이민자 · 지지율 - 이민자 탭에서 이민자 성향을 시민과 같은 화면으로 따로 정해요. 이민자가 투표하는 선거에서는 지역구마다 시민 · 이민자 수만큼 섞어 개표하고(총선 비례 · 대선은 전국 수로), 지방선거 · 국민투표는 유권자 수도 바뀝니다. 끄면 이민자 탭이 시민 탭과 묶여 이민자도 시민과 같은 성향으로 투표해요.", "With \"Set citizen / migrant leanings separately\" (on by default) in Opinion › Overview, set migrant leanings separately in the Districts - Migrants and Support - Migrants tabs, on the same screens as citizens. In elections where migrants vote, each district blends citizens and migrants by their numbers (national totals for list seats and presidential races), and local elections and referendums also change electorate size. When off, the migrant tabs are tied to the citizen tabs and migrants vote like citizens."],
-  ["- 사람 탭 검색창이 흰색으로 보이던 문제 수정 · 사람 카드의 자리 배정 · 지역구 후보를 한 줄씩 길게, 메모 칸도 어두운 입력칸으로", "- Fixed the People tab search box showing white · the post and district-candidate pickers on a person card each take a full line, and the memo box uses the dark input style"],
-  ["- 여론 메뉴 개편 — 종합 · 지역구 - 시민 · 지지율 - 시민 · 지역구 - 이민자 · 지지율 - 이민자. 이민자 성향을 선거 › 방식의 전국 % 하나 대신 시민과 같은 화면(지역구 · 권역 성향, 원마다 지지율)으로 따로 정함", "- Opinion menu reworked — Overview · Districts - Citizens · Support - Citizens · Districts - Migrants · Support - Migrants. Migrant leanings are set on the same screens as citizens (district · region leanings, support per chamber) instead of one national % in Elections › Method"],
-  ["- 여론 › 종합 — \"시민 / 이민자 성향 따로 정하기\"(기본 켬), 끄면 이민자 탭이 시민 탭과 동기화돼 이민자도 시민과 같은 성향으로 투표 (시민 · 인구 수는 따로), 시민 · 인구 · 이민자 수와 원마다 정당별 지지율(시민 · 이민자 · 합산)", "- Opinion › Overview — \"Set citizen / migrant leanings separately\" (on by default); when off the migrant tabs sync with the citizen tabs and migrants vote like citizens (citizen and population counts stay separate); citizen · population · migrant counts and support by party per chamber (citizens · migrants · combined)"],
-  ["- 예전 세이브의 이민자 성향(전국 %)은 이민자 지지율로 옮겨짐", "- Old saves' migrant lean (national %) moves into migrant support"],
   ["모든 자리에서 가져오기", "Import from all posts"],
   ["아직 사람이 없습니다. \"＋ 사람 추가\"로 만들거나, \"모든 자리에서 가져오기\"로 지금 자리에 적힌 이름을 인물로 옮겨 보세요.", "No people yet. Create one with \"＋ Add person\", or use \"Import from all posts\" to turn the names already written in posts into people."],
   ["이름이 적힌 자리가 없습니다 — 의원 · 당수 · 의장 · 내각 같은 자리에 이름을 적거나, 여기서 사람을 직접 추가하세요.", "No post has a name written in it — write names into posts like members, leaders, speakers or the cabinet, or add people here directly."],
@@ -1240,8 +2073,6 @@ window.DnoLangPacks.en = {
   ["\"모든 자리에서 가져오기\"를 누르면 의원 · 당수 · 파벌 대표 · 의장단 · 대통령(국왕) · 내각 · 지방 단체장처럼 이름이 적힌 모든 자리에서 인물을 만들고 연결합니다 (같은 이름은 한 사람). \"＋ 사람 추가\"로 직접 만들어도 돼요.", "Press \"Import from all posts\" to create and link people from every post with a name — members, leaders, faction leaders, speakers, president (monarch), cabinet and local heads (the same name is one person). You can also create them directly with \"＋ Add person\"."],
   ["의장단", "Speakers"],
   ["지방 단체장", "Local heads"],
-  ["- 사람 탭 \"모든 자리에서 가져오기\" — 의원 · 당수 · 원내대표 · 내각에 더해 파벌 대표 · 의장 · 부의장 · 대통령(국왕) · 현직 지방 단체장에서도 인물을 만들고 연결, 그 자리들에 인물 배정도 가능 (미리보기의 왕가 주장자도)", "- People tab \"Import from all posts\" — besides members, leaders, floor leaders and cabinet, it also creates and links people from faction leaders, speakers, deputy speakers, president (monarch) and current local heads, and people can be assigned to those posts (also royal claimants in previews)"],
-  ["- 사람 탭 검색창이 흰색으로 보이던 문제 수정", "- Fixed the People tab search box showing white"],
   ["가결 · 부결 · 거부된 법안 보관함입니다 (상태별로 걸러 보기). 위쪽 칩에서 원(하원 · 상원 …)이나 위원회를 고르면 그곳의 본회의 표결 · 위원회 심사 기록을 하나씩 봅니다. 선거 기록은 선거 › 선거 기록에 있어요.", "The archive of passed, failed and vetoed bills (filter by status). Pick a chamber (lower house · upper house …) or a committee in the chips at the top to see each of its floor votes or committee reviews. Election records are in Elections › Election records."],
   ["법령집 — 가결된 법률을 조문 그대로 모아 봅니다. 법률은 개정 계보마다 가장 최근 판이 보이고(제정 · 개정 횟수), 여기서 개정안을 낼 수 있어요.", "The statute book — passed laws, article by article. Each amendment line shows its latest version (enactment · number of amendments), and you can propose amendments here."],
   ["헌법 — \"헌법 제정하기\"로 처음 만들고, \"직접 편집\"(표결 없이 바로) 또는 \"개정안 발의\"(표결을 거쳐, 가결 기준 2/3)로 고칩니다. 개정 이력이 남아요.", "Constitution — create it with \"Enact a constitution\", then change it with \"Edit directly\" (instantly, no vote) or \"Propose amendment\" (through a vote, 2/3 to pass). The amendment history is kept."],
@@ -1250,14 +2081,10 @@ window.DnoLangPacks.en = {
   ["입법 › 헌법에서 헌법을 제정하고 고칩니다. 헌법 개정안(가결 기준 2/3)을 통과시키면 헌법이 바뀌고 개정 이력이 남아요.", "Enact and change the constitution in Legislation › Constitution. Passing a constitutional amendment (2/3 to pass) changes the constitution and adds to its amendment history."],
   ["이 위원회의 심사 기록이 없습니다", "No reviews by this committee yet"],
   ["이 원의 표결 기록이 없습니다", "No votes in this chamber yet"],
-  ["- 입법 › 표결 기록을 원 · 위원회마다 — 선거 기록처럼 위쪽 칩에서 원(하원 · 상원 …)이나 위원회를 고르면 그곳의 본회의 표결 · 위원회 심사를 하나씩 (심사 중인 법안의 위원회 심사도 기록에 남음)", "- Vote records per chamber and committee — like election records, pick a chamber or committee in the chips at the top to see each of its floor votes or committee reviews (committee reviews of bills still in progress are recorded too)"],
-  ["- 법령 탭과 헌법 탭을 나눔 — 입법 › 법령은 법률, 입법 › 헌법은 헌법 (제정 · 직접 편집 · 개정안 발의 · 개정 이력)", "- Split the Statutes and Constitution tabs — Legislation › Statutes holds laws, Legislation › Constitution holds the constitution (enact · edit · propose amendments · history)"],
-  ["- 법안 카드의 상정(국회 | 국무회의) 버튼을 붙은 두 칸으로, 소관 위원회 줄과 나란히", "- Bill card: the tabling buttons (parliament | cabinet council) are now one joined pair, aligned with the committee row"],
   ["소속 정당", "Party"],
   ["사람 지우기", "Delete person"],
   ["인물을 미리 만들어 두고 의석 · 당직 · 내각 자리에 배정합니다. 이름 · 사진을 여기서 고치면 배정된 모든 자리에 반영되고, 선거 · 당적 변경 · 궐석으로 자리가 사라져도 인물은 남아요.", "Create people in advance and assign them to seats, party posts and cabinet posts. Editing a name or photo here updates every post they hold, and people stay here even when an election, a party switch or a vacancy takes their post away."],
   ["＋ 사람 추가", "＋ Add person"],
-  ["의원 · 내각에서 가져오기", "Import from members · cabinet"],
   ["자리 있음", "With a post"],
   ["자리 없음", "Without a post"],
   ["지역구 후보", "District candidates"],
@@ -1292,10 +2119,6 @@ window.DnoLangPacks.en = {
   [
    "언어 팩 관리…",
    "Manage language packs…"
-  ],
-  [
-   "언어 · 화면 · 테마",
-   "Language · Display · Theme"
   ],
   [
    "앞으로의 계획과 바뀐 점",
@@ -1774,10 +2597,6 @@ window.DnoLangPacks.en = {
    "Could not create the translation template."
   ],
   [
-   "원내대표 이름",
-   "Floor leader name"
-  ],
-  [
    "원내대표",
    "Floor leader"
   ],
@@ -1976,10 +2795,6 @@ window.DnoLangPacks.en = {
   [
    "[무소속 이념/정당이 설정되어 있지 않습니다]",
    "[The independent ideology/party is not set up]"
-  ],
-  [
-   "정당이 안 생성되는 버그 수정",
-   "fixed a bug where parties failed to be created"
   ],
   [
    "원외정당 (",
@@ -2312,10 +3127,6 @@ window.DnoLangPacks.en = {
   [
    "#",
    "#"
-  ],
-  [
-   "- 연정 멤버/각외협력 목록에서 개별 무소속 의원을 이름(또는 좌석번호)으로 표시하도록 개선",
-   "- Coalition members/External Support lists now show individual independent members by name (or seat number)"
   ],
   [
    "예: 대게르만국",
@@ -2682,10 +3493,6 @@ window.DnoLangPacks.en = {
    "Bill"
   ],
   [
-   "0.2.0 - 다중언어 프로젝트 시작",
-   "0.2.0 - Multilingual Project Begins"
-  ],
-  [
    "성향 탭에서 설정한 지지도를 기반으로 각 지역구의 당선자를 결정합니다.",
    "Determines each district's winner based on the support levels set in the Tendency tab."
   ],
@@ -3030,132 +3837,12 @@ window.DnoLangPacks.en = {
    "Reset"
   ],
   [
-   "1.5.0 - 지역구/비례 시스템 개편",
-   "1.5.0 - District/Proportional System Overhaul"
-  ],
-  [
-   "1.4.9 - 저장 리워크",
-   "1.4.9 - Save Rework"
-  ],
-  [
-   "1.4.8 - 의회 리워크 Part.II",
-   "1.4.8 - Parliament Rework Part II"
-  ],
-  [
-   "1.4.7 - 정당 리워크 Part.II",
-   "1.4.7 - Party Rework Part II"
-  ],
-  [
-   "1.4.6 - 기록 리워크",
-   "1.4.6 - Records Rework"
-  ],
-  [
-   "1.4.5 - 핫픽스",
-   "1.4.5 - Hotfix"
-  ],
-  [
-   "1.4.4 - 지역구 리워크",
-   "1.4.4 - District Rework"
-  ],
-  [
-   "1.4.3 - 정당 리워크 Part.I",
-   "1.4.3 - Party Rework Part I"
-  ],
-  [
-   "1.4.2 - 의회 리워크 Part.I",
-   "1.4.2 - Parliament Rework Part I"
-  ],
-  [
-   "1.4.1 - 연정 리워크",
-   "1.4.1 - Coalition Rework"
-  ],
-  [
-   "1.4.0 - 선거 리워크",
-   "1.4.0 - Election Rework"
-  ],
-  [
-   "1.3.4 - 선거 일부 리워크",
-   "1.3.4 - Partial Election Rework"
-  ],
-  [
-   "1.3.3 - 정당 탭 신설",
-   "1.3.3 - Party Tab Added"
-  ],
-  [
-   "1.3.2 - 버그 수정",
-   "1.3.2 - Bug Fixes"
-  ],
-  [
-   "1.3.1 - UI 리워크",
-   "1.3.1 - UI Rework"
-  ],
-  [
-   "1.3.0 - 선거 추가",
-   "1.3.0 - Election Added"
-  ],
-  [
-   "1.2.1 - 법안 보완",
-   "1.2.1 - Bill Improvements"
-  ],
-  [
-   "1.2.0 - 법안 추가",
-   "1.2.0 - Bills Added"
-  ],
-  [
-   "1.1.1 - 버그 수정",
-   "1.1.1 - Bug Fixes"
-  ],
-  [
-   "1.1.0 - 저장 추가",
-   "1.1.0 - Save Added"
-  ],
-  [
-   "1.0.0 - 프로젝트 시작",
-   "1.0.0 - Project Begins"
-  ],
-  [
    "1.5.1 - 영어버전 출시",
    "1.5.1 - English Version Release"
   ],
   [
    "1.5.0 - 모바일 출시",
    "1.5.0 - Mobile Release"
-  ],
-  [
-   "0.2.0 - 다중언어 프로젝트 시작",
-   "0.2.0 - Multilingual Project Begins"
-  ],
-  [
-   "0.1.4 - 프리릴리스 삭제",
-   "0.1.4 - Pre-release Removed"
-  ],
-  [
-   "0.1.3 - 버그 수정",
-   "0.1.3 - Bug Fixes"
-  ],
-  [
-   "0.1.2 - 선거 추가",
-   "0.1.2 - Election Added"
-  ],
-  [
-   "0.1.1 - 선거 삭제",
-   "0.1.1 - Election Removed"
-  ],
-  [
-   "0.1.0 - 선거 개발",
-   "0.1.0 - Election Development"
-  ],
-  [
-   "0.0.2 - 네온 테마",
-   "0.0.2 - Neon Theme"
-  ],
-  [
-   "0.0.1 - 일반 테마",
-   "0.0.1 - General Theme"
-  ],
-  [
-   "0.0.0 - 비공개 개발",
-   "0.0.0 - Private Development"
   ],
   [
    "2027 출시",
@@ -3166,312 +3853,44 @@ window.DnoLangPacks.en = {
    "- Changed the save version naming scheme (starting from v1.0; filenames now use the dno-save-v1.0-... format with a KST timestamp)"
   ],
   [
-   "- 날짜/회기 설정 추가 (회기 이름도 국회 외 다른 명칭으로 커스터마이즈 가능), 우측 디스플레이 패널 상단에 상시 표시",
-   "- Added date/session settings (the session name can now be customized beyond just \"National Assembly\"), always shown at the top of the right display panel"
-  ],
-  [
-   "- 선거 시스템 리워크 II (선거 > 지지율 탭 신설, \"전체에 반영\" 체크박스로 여러 원의 지지율 일괄 설정 지원)",
-   "- Election system rework II (added Election > Support Rate tab; the \"Apply to All\" checkbox lets you batch-set support rates across chambers)"
-  ],
-  [
-   "- 의회 시스템 리워크 III (원외정당 시스템 추가, 의원실별로 정확히 판정하도록 개선)",
-   "- Parliament system rework III (added the out-of-parliament party system, now judged correctly per chamber)"
-  ],
-  [
    "- 좌석 정보 카드 추가 (호버 대신 클릭으로 확인, 무소속 이름·파벌·집권 세력 표기)",
    "- Added a seat info card (click instead of hover; shows independent name, faction, and ruling power)"
-  ],
-  [
-   "- 저장 탭 신설 (자동저장 켜기/끄기, 저장 데이터 초기화, 파일로 저장/불러오기)",
-   "- Added a Save tab (autosave on/off, reset saved data, save/load to file)"
-  ],
-  [
-   "- 지지율 탭의 하원·상원·삼원 표기가 사용자 설정 명칭을 실시간으로 따르도록 수정",
-   "- The Support Rate tab's House/Senate/Third labels now follow user-set chamber names live"
-  ],
-  [
-   "- \"저장 시 사진 포함\" 체크박스 제거 (항상 사진을 포함하여 저장하도록 변경)",
-   "- Removed the \"include photos when saving\" checkbox (photos are now always included)"
-  ],
-  [
-   "- 입법기록 리워크 (개정안 발의, 법안 버전 표기, 표결 세부 타임라인 추가)",
-   "- Legislative record rework (amendment proposals, bill version labels, detailed vote timeline)"
-  ],
-  [
-   "- 실행 취소(Ctrl+Z) 및 다시 실행(Ctrl+Shift+Z) 기능 추가",
-   "- Added undo (Ctrl+Z) and redo (Ctrl+Shift+Z)"
-  ],
-  [
-   "- 국가 > 설정 신설에 맞춰 시작 화면 기본 탭을 국가 > 설정으로 변경",
-   "- Changed the default landing tab to Nation > Settings, to match the new Nation > Settings tab"
   ],
   [
    "- 자동저장 기능 추가 (localStorage 기반, 새로고침해도 유지)",
    "- Added autosave (localStorage-based, persists across refreshes)"
   ],
   [
-   "- 입법 시스템 리워크 (제출과 상정을 분리, 법안 수정 가능)",
-   "- Legislation system rework (split Submit and Floor, bills can now be edited)"
-  ],
-  [
    "- 시작 화면 리워크 (점검 안내/자동 리디렉션 페이지로 전환)",
    "- Landing screen rework (switched to a maintenance-notice/auto-redirect page)"
-  ],
-  [
-   "- 국가명·국기 설정 추가 (국가 > 설정, 헤더에 상시 표시)",
-   "- Added nation name/flag settings (Nation > Settings, always shown in the header)"
-  ],
-  [
-   "- 선거기록 리워크 (정당별 세부 기록, 저장 시각 표기 추가)",
-   "- Election record rework (per-party detail records, saved-time labels)"
-  ],
-  [
-   "- 최근 추가된 기능들이 저장/불러오기에 정확히 반영되도록 점검",
-   "- Audited recently added features to ensure they're correctly saved/loaded"
   ],
   [
    "- 점검 기간 자동화 (자동으로 점검 안내 표시 및 리디렉션)",
    "- Automated maintenance windows (auto-shows the notice and redirects)"
   ],
   [
-   "- 입법/표결 시스템 보완 (기준선, 비율 설정, 태그 추가)",
-   "- Legislation/voting system improvements (thresholds, ratio settings, tags)"
-  ],
-  [
-   "- 순서 시스템 리워크 (기존 화살표에서 슬라이딩 방식으로)",
-   "- Reorder system rework (switched from arrows to drag-to-reorder)"
-  ],
-  [
-   "- 정당 시스템 리워크 II (정당 해산/금지 표기 추가)",
-   "- Party system rework II (added dissolved/banned party labels)"
-  ],
-  [
-   "- 로드맵 카드 업데이트 로그가 길어지면 스크롤되도록 개선",
-   "- Roadmap cards now scroll when their changelog gets long"
-  ],
-  [
-   "- 기존 SAVE/LOAD 버튼 제거 (저장 탭으로 통합)",
-   "- Removed the old SAVE/LOAD buttons (merged into the Save tab)"
-  ],
-  [
-   "- 선거 시스템 리워크 I (지역구/지지율 시스템 추가)",
-   "- Election system rework I (added district/support-rate systems)"
-  ],
-  [
-   "- 선거 시스템 수정 (지역구 시스템 beta 추가)",
-   "- Election system update (added district system beta)"
-  ],
-  [
-   "- 정당/연정 카드 리워크 (카드 접기 기능 추가)",
-   "- Party/coalition card rework (added card collapsing)"
-  ],
-  [
-   "- 지역구 시스템 리워크 (지역구 이름 설정 추가)",
-   "- District system rework (added district naming)"
-  ],
-  [
    "- 정당 시스템 리워크 I (무소속 로직 리워크)",
    "- Party system rework I (reworked independent logic)"
-  ],
-  [
-   "- 툴팁이 화면 밖으로 벗어나지 않도록 위치 보정",
-   "- Fixed tooltip positioning so it stays on-screen"
-  ],
-  [
-   "- 의회 시스템 리워크 II (의석 번호 추가)",
-   "- Parliament system rework II (added seat numbers)"
-  ],
-  [
-   "- 입법 리워크 (개정안 및 법안에 버전 부여)",
-   "- Legislation rework (versioning for amendments and bills)"
-  ],
-  [
-   "- UI 리워크 (정당 순서 자동/수동 설정)",
-   "- UI rework (auto/manual party ordering)"
-  ],
-  [
-   "- 연정 시스템 리워크 (신임과 보완 추가)",
-   "- Coalition system rework (added Confidence & Supply)"
-  ],
-  [
-   "- 좌석 정보 카드에서 투표 상태 표기 제거",
-   "- Removed vote-status labels from the seat info card"
-  ],
-  [
-   "- 의회 시스템 리워크 I (삼원제 추가)",
-   "- Parliament system rework I (added the tricameral system)"
-  ],
-  [
-   "- 파벌 시스템 추가 (당 내 파벌 추가)",
-   "- Added the faction system (factions within a party)"
-  ],
-  [
-   "- 선거 기록에서 저장 시각 표기 제거",
-   "- Removed the saved-time label from election records"
   ],
   [
    "- 좌석 호버 시 흰색 고리 표시 추가",
    "- Added a white ring on seat hover"
   ],
   [
-   "- 정당이 안 생성되는 버그 수정",
-   "- Fixed a bug where parties failed to be created"
-  ],
-  [
-   "- 정당 탭 신설 및 기능 재편",
-   "- Added a Party tab and reorganized its features"
-  ],
-  [
-   "- 선거 시스템 개발 시도 II",
-   "- Election System Development Attempt II"
-  ],
-  [
-   "- 중위·하위 탭 디자인 정리",
-   "- Cleaned up mid/lower tab design"
-  ],
-  [
-   "- 선거 시스템 개발 시도 I",
-   "- Election System Development Attempt I"
-  ],
-  [
-   "- 저장/불러오기 시스템 추가",
-   "- Added save/load system"
-  ],
-  [
-   "- 당수 사진 및 이름 추가",
-   "- Added leader photo and name"
-  ],
-  [
-   "- 선거 시스템 개발 실패",
-   "- Election System Development Failed"
-  ],
-  [
-   "- 입법/표결 시스템 추가",
-   "- Added legislation/voting system"
-  ],
-  [
-   "- 선거 시스템 개발 완료",
-   "- Election System Development Complete"
-  ],
-  [
-   "- 시뮬레이션 개발 시작",
-   "- Simulation Development Begins"
-  ],
-  [
-   "- 버그 수정",
-   "- Bug Fixes"
-  ],
-  [
    "- 네온 테마 추가",
    "- Added neon theme"
-  ],
-  [
-   "- 일반 테마 삭제",
-   "- General Theme Removed"
-  ],
-  [
-   "- 프리릴리스 시작",
-   "- Pre-release Begins"
-  ],
-  [
-   "- 사진 비율 조정",
-   "- Adjusted photo aspect ratio"
   ],
   [
    "- 일반 테마 추가",
    "- Added general theme"
   ],
   [
-   "- 정당 로고 추가",
-   "- Added party logo"
-  ],
-  [
    "- 영어 번역 작업",
    "- English translation work"
   ],
   [
-   "- 영어 추가",
-   "- Added English"
-  ],
-  [
-   "- 프리릴리스 중단",
-   "- Pre-release Discontinued"
-  ],
-  [
-   "- 프로젝트 공개",
-   "- Project Made Public"
-  ],
-  [
-   "- 프로젝트 시작",
-   "- Project Begins"
-  ],
-  [
-   "- 베타 생성",
-   "- Beta Created"
-  ],
-  [
-   "- 베타 삭제",
-   "- Beta Removed"
-  ],
-  [
    "- 모바일 내에서도 구동 가능하도록 수정",
    "- Fixed to also run properly on mobile"
-  ],
-  [
-   "- 로드맵 리워크 및 메인 화면 리워크",
-   "- Roadmap rework and main screen rework"
-  ],
-  [
-   "- 저장 시스템 버전 업데이트 (v13)",
-   "- Save system version update (v13)"
-  ],
-  [
-   "- 저장 시스템 버전 업데이트 (v12)",
-   "- Save system version update (v12)"
-  ],
-  [
-   "- 저장 시스템 버전 업데이트 (v11)",
-   "- Save system version update (v11)"
-  ],
-  [
-   "- 저장 시스템 버전 업데이트 (v10)",
-   "- Save system version update (v10)"
-  ],
-  [
-   "- 저장 시스템 버전 업데이트 (v9)",
-   "- Save system version update (v9)"
-  ],
-  [
-   "- 저장 시스템 버전 업데이트 (v8)",
-   "- Save system version update (v8)"
-  ],
-  [
-   "- 저장 시스템 버전 업데이트 (v7)",
-   "- Save system version update (v7)"
-  ],
-  [
-   "- 저장 시스템 버전 업데이트 (v6)",
-   "- Save system version update (v6)"
-  ],
-  [
-   "- 저장 시스템 버전 업데이트 (v5)",
-   "- Save system version update (v5)"
-  ],
-  [
-   "- 저장 시스템 버전 업데이트 (v4)",
-   "- Save system version update (v4)"
-  ],
-  [
-   "- 저장 시스템 버전 업데이트 (v3)",
-   "- Save system version update (v3)"
-  ],
-  [
-   "- 저장 시스템 버전 업데이트 (v2)",
-   "- Save system version update (v2)"
-  ],
-  [
-   "- 저장 시스템 버전 업데이트 (v1)",
-   "- Save system version update (v1)"
   ],
   [
    "제거",
@@ -3702,14 +4121,6 @@ window.DnoLangPacks.en = {
    "—Abs"
   ],
   [
-   "- 선거 시스템 추가",
-   "- Added election system"
-  ],
-  [
-   "- UI 리워크",
-   "- UI Rework"
-  ],
-  [
    "선거결과",
    "Election Results"
   ],
@@ -3770,14 +4181,6 @@ window.DnoLangPacks.en = {
    "Merge"
   ],
   [
-   "프로토콜 실행",
-   "Execute Protocol"
-  ],
-  [
-   "로드맵 및 업데이트 내역 보기",
-   "View Roadmap & Update History"
-  ],
-  [
    "새로 시작",
    "Start New"
   ],
@@ -3796,10 +4199,6 @@ window.DnoLangPacks.en = {
   [
    "프리셋 — 고르면 복사본이 새 세이브로 만들어집니다",
    "Presets — picking one creates a copy as a new save"
-  ],
-  [
-   "튜토리얼 공화국",
-   "Tutorial Republic"
   ],
   [
    "튜토리얼",
@@ -3866,108 +4265,16 @@ window.DnoLangPacks.en = {
    "Couldn't load the save file. (Invalid format or corrupted file)"
   ],
   [
-   "- 설정에 데스크톱(가로형)/모바일(세로형) UI 모드 추가, 모바일 전용 레이아웃 및 좌우 패널 전환 버튼 신설",
-   "- Added Desktop (landscape) / Mobile (portrait) UI modes to Settings, with a mobile-only layout and buttons to switch between the left and right panels"
-  ],
-  [
-   "- 의회 > 구성 정당 카드 UI 개편 (로고 + 이름·상태 / 이념·의석 2행 레이아웃)",
-   "- Redesigned the party cards in Parliament > Composition (logo + name/status / ideology/seats two-row layout)"
-  ],
-  [
-   "- 활동 금지된 정당은 표결·과반 계산에서 제외되고, 좌석 클릭 및 일괄 투표가 차단되도록 수정",
-   "- Banned parties are now excluded from votes and majority calculations, and seat clicks and bulk voting are blocked for them"
-  ],
-  [
-   "- 각외협력을 다른 연정 소속 정당도 설정할 수 있도록 개선",
-   "- Parties belonging to another coalition can now also be set as confidence-and-supply partners"
-  ],
-  [
    "- 순서 변경(⋮⋮) 핸들이 모바일 터치 드래그로도 동작하도록 수정",
    "- The reorder (⋮⋮) handle now works with touch dragging on mobile"
-  ],
-  [
-   "- 의회 > 의원 탭을 지역구 당선자 전용으로 분리하고, 의회 > 비례 탭을 신설해 정당별 비례 의석을 개별 명단으로 관리 (무소속의 비례 당선도 지원)",
-   "- Split Parliament > Members into a district-winners-only tab and added a new Parliament > List tab to manage each party's proportional seats as an individual roster (independents can also win list seats)"
-  ],
-  [
-   "- 의회 > 의원 / 비례 탭에 검색(이름·#좌석번호) 및 정당·이념 다중 선택 필터 팝업 추가, 좌석 번호 표시",
-   "- Added search (name / #seat number) and a multi-select party/ideology filter popup to the Members / List tabs, and show seat numbers"
-  ],
-  [
-   "- 지역구 맵 미리보기 크기를 편집 화면과 동일하게 확대",
-   "- Enlarged the district map preview to match the editing screen"
   ],
   [
    "- 파일명 체계 정리 (main/dno/roadmap/settings/teaser) 및 저장 파일 버전 v1.1로 업데이트",
    "- Cleaned up file names (main/dno/roadmap/settings/teaser) and updated the save file version to v1.1"
   ],
   [
-   "- 지역구/비례 의원 카드에도 (무소속이 아니어도) 사진을 등록할 수 있도록 개선",
-   "- District and list member cards can now have photos too (not only independents)"
-  ],
-  [
-   "- 디스플레이 탭 바 구분선을 모바일 화면에서만 표시하도록 수정하고, 탭 버튼과 구분선이 붙어 보이도록 여백 제거",
-   "- The display tab bar divider now shows only on mobile, and removed the gap so tab buttons sit flush against it"
-  ],
-  [
-   "- 반원 중앙에 의석 수 대신 각 원(하원/상원/삼원)의 로고를 표시하는 기능 추가, 국가 > 설정에서 의석 수/로고 전환 버튼과 로고 업로드란 신설 (의석 수 입력은 기존대로 의회 > 구성에 유지)",
-   "- Added the option to show each chamber's logo (House/Senate/Third) in the middle of the hemicycle instead of the seat count, with a seat-count/logo toggle and logo upload in Nation > Settings (seat counts are still entered in Parliament > Composition)"
-  ],
-  [
-   "- 로고 업로드란 클릭 시 파일 선택창이 뜨지 않던 문제, 로고 표시 크기 및 위치(반원 중앙 하단 정렬) 조정",
-   "- Fixed the logo upload box not opening the file picker, and adjusted the logo's size and position (bottom-centered in the hemicycle)"
-  ],
-  [
-   "- 로드맵 페이지 접속 시 항상 1.4 항목이 열리던 문제 수정 (진행 중인 최신 버전이 자동으로 열리도록 개선)",
-   "- Fixed the roadmap always opening on 1.4 (it now opens the latest version in progress)"
-  ],
-  [
-   "- 여러 의원실을 한 번에 개표한 뒤 \"의회 반영\"을 눌러도 마지막 의원실만 지역구 당선자 정보가 반영되고 나머지 의원실은 당선자가 표시되지 않던 문제 수정",
-   "- Fixed an issue where, after counting several chambers at once, \"Apply to Parliament\" only applied district winners to the last chamber and left the others without winners"
-  ],
-  [
-   "- 버그 수정 (정당 정보 재정렬 시 초기화 문제, 파벌 당수 이름 미반영 문제, 의회 구성 변경 시 비례 탭 내부 탭이 갱신되지 않던 문제 등)",
-   "- Bug fixes (party info resetting when reordered, faction leader names not applying, List tab's inner tabs not updating when the chamber setup changed, and more)"
-  ],
-  [
-   "- 맵 메이커(구 맵 메이커, MINISTRY OF TRANSPORT)에서 만든 실제 지도 모양의 지역구를 .jsx로 내보내고, 지역구 탭에서 업로드해 하원·상원·삼원이 하나의 지도를 공유하는 \"지도\" 지역구 시스템 추가",
-   "- Added the \"Map\" district system: export real map-shaped districts from the Map Maker (formerly MINISTRY OF TRANSPORT) as .jsx and upload them in the District tab, with the House, Senate and Third chamber sharing one map"
-  ],
-  [
-   "- 지역구별로 원별 의석 수를 따로 지정할 수 있고, 도형을 클릭하면 이름·약칭·의석 수를 편집 가능 (약칭을 지정하면 지도 위 도형 가운데에 표시)",
-   "- Each district can have its own seat count per chamber, and clicking a shape lets you edit its name, abbreviation and seats (the abbreviation is shown in the middle of the shape)"
-  ],
-  [
-   "- 정당별 성향(%)은 지역구 탭이 아닌 성향 탭에서 지도를 직접 클릭해 편집하도록 이동, 육각형 방식과 달리 원(하원/상원/삼원)별로 독립된 성향 데이터를 가짐",
-   "- Party leanings (%) are now edited by clicking the map in the Tendency tab instead of the District tab, and unlike the hex system each chamber (House/Senate/Third) has its own leaning data"
-  ],
-  [
-   "- 국가 > 설정에 \"지역구 시스템\" 전환 토글 추가 (기본값 육각형, 지도로 전환 시 기존 구 지역구 탭이 지도 편집용으로 대체됨)",
-   "- Added a \"District system\" toggle to Nation > Settings (default hex; switching to Map replaces the old District tab with map editing)"
-  ],
-  [
-   "- 지도 지역구의 의석이 여러 개면 더 이상 한 정당이 전부 가져가지 않고, 비례 의석과 같은 최대잔여법으로 지역구 안에서도 여러 정당이 나눠 가지도록 개표 방식 개편, 개표 결과 지도에 정당별 획득 의석 수 배지 표시",
-   "- Multi-seat map districts no longer go entirely to one party — seats are split among parties within the district using the largest remainder method (like list seats), and the result map shows each party's seats as badges"
-  ],
-  [
-   "- 성향 종합 지도와 개표 결과 지도 모두, 1위가 여러 정당으로 동률(경합)이면 빗금 무늬로 표시하고, 단독 1위는 득표율이 높을수록 정당 고유색에 가깝게, 낮을수록 흰색에 가깝게 표시",
-   "- On both the overall tendency map and the result map, ties for first place are shown with hatching, and a sole leader is shown closer to the party color the higher its share (closer to white when lower)"
-  ],
-  [
-   "- 지도 업로드 시 배경/틀로 잘못 포함된 거대한 도형이 지역구들을 한쪽에 몰아넣던 문제, 도형 좌표 규모가 저장된 값과 달라 지역구가 안 보이던 문제 수정 (자동 경계상자 보정 + 이상치 도형 제외), 잘못 섞인 도형을 지도에서 직접 삭제하는 기능 추가",
-   "- Fixed huge background/frame shapes squeezing districts into a corner on upload, and districts disappearing when shape coordinates didn't match the saved scale (automatic bounding-box correction + outlier exclusion); added deleting stray shapes directly on the map"
-  ],
-  [
-   "- 지도 지역구 테두리 색을 자유롭게 지정하고, 설정에서 고른 테마 색과 동기화하는 기능 추가",
-   "- Map district border colors can be set freely or synced with the theme color chosen in Settings"
-  ],
-  [
    "- 설정에 테마 색(강조색) 선택 기능 신설 (HEX 직접 입력, 기본값 초기화, 다른 탭에도 실시간 반영), 그동안 특정 화면에서만 고정 청록색으로 하드코딩돼 있던 옅은 배경/그림자 색상들도 모두 테마 색을 따라가도록 수정",
    "- Added a theme (accent) color picker to Settings (direct HEX input, reset to default, applied live across tabs), and faint backgrounds/shadows that were hard-coded cyan on some screens now follow the theme color"
-  ],
-  [
-   "- 정당·이념·연정·지역구 목록의 순서 변경(⋮⋮) 드래그가 카드를 포인터 위치까지 끌고 가다가 갑자기 맨 위로 튕기던 문제, 정당 목록을 드래그로 옮겨도 이념순 자동정렬이 되돌리던 문제 수정",
-   "- Fixed reorder (⋮⋮) dragging in party/ideology/coalition/district lists suddenly jumping to the top, and ideology auto-sort undoing manual party reordering"
   ],
   [
    "- 캔버스/SVG 우클릭 시 뜨는 \"내보내기...\" 메뉴 신설 — 반원·지역구 지도 등 모든 시각화를 PNG/JPG/SVG 형식으로 다운로드 가능",
@@ -3982,78 +4289,6 @@ window.DnoLangPacks.en = {
    "- Added detail options to exports with stats: \"Expand independents\" (list individual members), \"Include extra-parliamentary parties\" (parties with 0 seats) and \"Include leader/logo photos\" — these only affect the export, not the on-screen collapsed state"
   ],
   [
-   "- 내보내기 창에 \"최상단에 포함\" 옵션(국기/국가 이름/날짜/회기) 추가 — 체크한 항목만 레터헤드 형태로 이미지 맨 위에 표시",
-   "- Added \"Include at top\" options to the export dialog (flag / nation name / date / session) — checked items appear as a letterhead at the top of the image"
-  ],
-  [
-   "- 모든 체크박스를 브라우저 기본 모양 대신 네온 테두리의 박스형 체크로 교체",
-   "- Replaced all checkboxes with neon-bordered box checks instead of the browser default"
-  ],
-  [
-   "- 의석 현황 화면 우측 상단 날짜/회기 표시를 두 줄로 나누고 날짜를 회기보다 밝게 표시하도록 변경 (내보내기 헤더와 동일한 스타일)",
-   "- Split the date/session display at the top right of the seat screen into two lines with the date brighter than the session (same style as the export header)"
-  ],
-  [
-   "- 반원 중앙에 로고를 표시할 때 직사각형 로고까지 정사각형으로 늘려 원형으로 잘라내던 문제 수정 — 정사각형/원형 로고는 기존과 동일하게, 그 외 비율은 원본 비율을 유지한 채 표시",
-   "- Fixed rectangular logos being stretched square and cropped into a circle in the middle of the hemicycle — square/round logos look the same as before, other shapes keep their original aspect ratio"
-  ],
-  [
-   "- 좌석 클릭 시 뜨는 정보 창에 각외협력 관계가 전혀 표시되지 않던 문제 수정",
-   "- Fixed confidence-and-supply relationships never showing in the seat info window"
-  ],
-  [
-   "- 무소속 의원 개개인에게 활동중/활동 금지 상태 지정 기능 추가 — 과반 계산·좌석 정보 창·통계 카드에 정당과 동일하게 반영",
-   "- Individual independent members can now be set Active/Banned — reflected in majority calculations, the seat info window and stat cards just like parties"
-  ],
-  [
-   "- 지역구 시스템 기본값을 육각형에서 지도로 변경, \"육각형\"을 \"그리드\"로 이름 변경 및 선택 버튼 순서를 지도·그리드 순으로 조정",
-   "- Changed the default district system from hex to Map, renamed \"Hex\" to \"Grid\", and reordered the buttons to Map, Grid"
-  ],
-  [
-   "- 활동 금지된 정당은 지지율 탭에서 입력이 비활성화되고 살짝 흐리게 표시되며 이름 옆에 네온 스타일 \"활동 금지\" 배지가 붙음 (수치는 저장은 되지만) — 지지율 분포 및 차기 선거 의석 배분 계산에서는 실제로 반영되지 않도록 수정",
-   "- Banned parties have their inputs disabled and slightly dimmed in the Support tab with a neon \"Banned\" badge next to the name (values are still saved) — they are no longer counted in the support distribution or next-election seat allocation"
-  ],
-  [
-   "- 상위 탭의 \"저장\"을 없애고 국가 > 설정 최하단으로 이동, 그 자리에 \"내각\" 탭 신설 (Coming Soon)",
-   "- Removed \"Save\" from the top tabs and moved it to the bottom of Nation > Settings; added a \"Cabinet\" tab in its place (Coming Soon)"
-  ],
-  [
-   "- 지역구 지도(SVG)에도 육각형 지도와 동일하게 이동/확대 기능 추가 — 휠클릭 드래그로 이동, Shift+스크롤로 확대/축소, 위치 초기화 버튼",
-   "- Added pan/zoom to the district map (SVG) like the hex map — middle-click drag to pan, Shift+scroll to zoom, and a reset-position button"
-  ],
-  [
-   "- 상단 고정바에 있던 단원제/양원제/삼원제 선택 버튼을 국가 > 설정으로 이동",
-   "- Moved the unicameral/bicameral/tricameral buttons from the fixed top bar to Nation > Settings"
-  ],
-  [
-   "- 국가 > 설정을 의회/상징/날짜/저장 4개 내부 탭으로 분리하고 기존 설정 항목들을 재배치, 의회 탭에 각 원(하원/상원/삼원)의 의장·부의장 사진·이름 설정 기능 신설",
-   "- Split Nation > Settings into four inner tabs (Parliament / Symbols / Date / Save), rearranged the existing options, and added speaker and deputy speaker photos/names for each chamber in the Parliament tab"
-  ],
-  [
-   "- \"내각\" 탭 신설 (설정/대통령/총리/내각 4개 하위 탭)",
-   "- Added the \"Cabinet\" tab (four sub-tabs: Settings / President / Prime Minister / Cabinet)"
-  ],
-  [
-   "· 설정: 정부 형태(대통령제/이원집정부제/의원내각제) 지정",
-   "· Settings: choose the form of government (presidential / semi-presidential / parliamentary)"
-  ],
-  [
-   "· 설정: 법안 거부권 주체(없음/대통령/총리) 지정 및 표결 시스템에 통합 — 모든 원을 통과한 법안은 거부권자의 서명을 거쳐야 최종 가결되며, 거부 시 별도로 부결 처리 (서명 대기/거부됨 상태 및 기록 탭 액션 버튼 추가)",
-   "· Settings: choose who holds the bill veto (none / president / PM), integrated into voting — bills that pass every chamber need the veto holder's signature to finally pass and are rejected separately if vetoed (added Awaiting signature / Vetoed states and action buttons in the Records tab)"
-  ],
-  [
-   "· 설정: 국가 비상사태(노랑)·의회 해산(주황)·계엄령(빨강) 각각 권한 주체 지정 및 선포/해제 기능, 선포 시 네온 스타일 \"! OO !\" 경고 배지 표시",
-   "· Settings: assign who holds the state of emergency (yellow), dissolution (orange) and martial law (red) powers, with declare/lift actions and a neon \"! XX !\" warning badge when declared"
-  ],
-  [
-   "· 대통령/총리: 사진·이름 설정 (정당 지도자와 동일한 카드 UI)",
-   "· President / PM: set photo and name (same card UI as party leaders)"
-  ],
-  [
-   "· 내각: 국무위원(사진·이름·직책) 추가/수정/삭제",
-   "· Cabinet: add/edit/remove ministers (photo, name, position)"
-  ],
-  [
    "- \"전체에 반영\" 동기화 체크박스의 배경·테두리가 하드코딩된 청록색 대신 테마 색을 따라가도록 수정",
    "- The \"Apply to all\" sync checkbox's background and border now follow the theme color instead of hard-coded cyan"
   ],
@@ -4062,144 +4297,12 @@ window.DnoLangPacks.en = {
    "- The maintenance notice / auto-redirect start page (index.html) now uses the theme color chosen in Settings (the theme color module wasn't loaded, so it was always the default cyan)"
   ],
   [
-   "- 위 신규 상태(정부 형태, 대통령, 총리, 내각 구성원, 거부권 주체, 비상사태 권한/상태, 의장단)를 저장/불러오기에 모두 반영",
-   "- All of the new state above (form of government, president, PM, cabinet members, veto holder, emergency powers/status, speakers) is saved and loaded"
-  ],
-  [
-   "- 대통령/총리/국무위원에 당적(소속 정당) 표시 기능 추가, 대통령제에서는 총리 탭·라벨이 자동으로 \"국무총리\"로 전환",
-   "- Added party affiliation to the president, PM and ministers; under a presidential system the PM tab and label automatically switch to \"Prime Minister (appointed)\""
-  ],
-  [
-   "- 비상 권한 선포/해제 버튼이 항상 해당 색(노랑/주황/빨강)과 \"! 라벨 !\" 문구를 갖도록 수정, 실제 선포 버튼은 권한 주체로 지정된 대통령/총리(또는 집단지도체제일 땐 내각) 탭에 표시",
-   "- Emergency power declare/lift buttons now always use their color (yellow/orange/red) and \"! label !\" text, and the actual declare button appears in the tab of the assigned holder (president/PM, or the cabinet under collective leadership)"
-  ],
-  [
-   "- 정부 형태에 따라 거부권·비상 권한 주체로 고를 수 있는 대상 제한 (대통령제: 대통령만, 의원내각제: 총리만, 이원집정부제: 둘 다, 집단지도체제: 내각만)",
-   "- Limited who can hold the veto and emergency powers by form of government (presidential: president only, parliamentary: PM only, semi-presidential: both, collective leadership: cabinet only)"
-  ],
-  [
-   "- 우측 디스플레이 패널에 하원/상원/삼원처럼 항상 표시되는 \"내각\" 탭 신설 — 대통령/총리(또는 의장)·국무위원을 사진·이름·당적 카드로 표시",
-   "- Added an always-visible \"Cabinet\" tab to the right display panel, like House/Senate/Third — shows the president/PM (or chair) and ministers as cards with photo, name and party"
-  ],
-  [
-   "- 대통령·총리·국무위원을 실제 의원(지역구 당선자/비례 의원/무소속)과 연결해 이름·사진·당적을 자동으로 불러오고 계속 동기화하는 기능 추가 (수동 입력으로 언제든 되돌리기 가능)",
-   "- The president, PM and ministers can be linked to actual members (district winners / list members / independents) to pull in and keep syncing name, photo and party (switch back to manual input at any time)"
-  ],
-  [
-   "- 국가 > 선거 > 선거를 대선/총선/설정 3개 내부 탭으로 분리, \"대선(대통령 선거)\" 신설 — 단순 다수 대표제/결선투표제/선거인단제 중 방식을 고르고, 후보별 득표율(또는 선거인단)을 계산해 당선자를 대통령에 자동 반영",
-   "- Split Nation > Elections into three inner tabs (Presidential / General / Settings) and added presidential elections — choose plurality, runoff or electoral college, and the winner is calculated from vote shares (or electors) and set as president automatically"
-  ],
-  [
-   "- 각 정당의 선거 후보를 기본값(당수) 대신 의원 연결 또는 직접 입력으로 재지정할 수 있는 \"후보 설정\" 추가 (대선/총리 선거 공용)",
-   "- Added \"Candidate settings\" to replace each party's default candidate (its leader) with a linked member or manual entry (shared by presidential and PM elections)"
-  ],
-  [
-   "- 총리 선출 과정 구현: 대통령제는 대통령이 후보를 지명하면 의회 심의(임명동의안 자동 발의)를 거쳐 확정, 의원내각제/이원집정부제는 기준 원의 다수당 대표가 자동으로 총리가 됨(총리직선제 체크박스로 총선 탭에서 직접선거로 전환 가능)",
-   "- Implemented PM selection: under a presidential system the president nominates and parliament confirms (a consent motion is filed automatically); under parliamentary/semi-presidential systems the majority party leader of the base chamber becomes PM automatically (a direct PM election can be enabled with a checkbox in the General tab)"
-  ],
-  [
-   "- 의원내각제/이원집정부제에서 내각(총리) 불신임안을 발의하고, 가결 시 현재 총리가 해임되는 기능 추가",
-   "- Under parliamentary/semi-presidential systems, a motion of no confidence in the cabinet (PM) can be filed, removing the current PM if it passes"
-  ],
-  [
-   "- \"집단지도체제\" 정부 형태 신설 — 대통령/총리 탭이 사라지고 의장 1인 + 장관 여러 명이 모두 \"내각\" 탭으로 통합, 거부권·비상 권한 주체도 \"내각\"으로 지정 가능",
-   "- Added the \"collective leadership\" form of government — the president/PM tabs disappear and a single chair plus ministers are all managed in the \"Cabinet\" tab, which can also hold the veto and emergency powers"
-  ],
-  [
-   "- 집권 세력 강조(HIGHLIGHT GOV) 체크박스를 국가 > 설정 > 상징에서 의회 탭으로 이동",
-   "- Moved the HIGHLIGHT GOV checkbox from Nation > Settings > Symbols to the Parliament tab"
-  ],
-  [
-   "- 국무위원(장관) 목록에 순서 변경(⋮⋮) 드래그 추가",
-   "- Added reorder (⋮⋮) dragging to the minister list"
-  ],
-  [
-   "- 우측 디스플레이 패널의 \"내각\" 탭도 우클릭 → 내보내기로 PNG/JPG/SVG 다운로드 가능",
-   "- The \"Cabinet\" tab in the right display panel can also be exported as PNG/JPG/SVG via right-click → Export"
-  ],
-  [
-   "- 비례 의원을 내각 직책에 연결할 때 사진이 반영되지 않던 문제 수정",
-   "- Fixed photos not carrying over when linking a list member to a cabinet position"
-  ],
-  [
-   "- 대선/총리 직선에 무소속 후보도 출마할 수 있도록 개선",
-   "- Independent candidates can now run in presidential and direct PM elections"
-  ],
-  [
-   "- 선거 후보 설정에서 의원 불러오기 목록이 해당 정당 소속 의원으로만 제한되도록 수정 (다른 정당 의원이 함께 뜨던 문제)",
-   "- The member picker in candidate settings now only lists that party's members (other parties' members used to appear too)"
-  ],
-  [
-   "- 각 원(하원/상원/삼원)의 부의장을 여러 명 추가/삭제할 수 있도록 개선 (기존 1명 고정 → 기본 0명)",
-   "- Each chamber (House/Senate/Third) can now have any number of deputy speakers (previously fixed at 1; now 0 by default)"
-  ],
-  [
-   "- 지역구 지도(SVG) 기본 배색을 밝은 단색 채우기 대신 어두운 톤 + 정당·성향 색의 네온 광원으로 변경, 도형 전체를 칠하는 대신 경계 안쪽에서 은은하게 빛나도록 표시",
-   "- Changed the district map (SVG) default colors from bright solid fills to a dark tone with neon glows in party/tendency colors, softly glowing inside the borders instead of filling whole shapes"
-  ],
-  [
-   "- SVG 지도 안내 문구 오타 수정 (\"뉴 지역구 탭\" → \"지역구 탭\")",
-   "- Fixed a typo in the SVG map hint (\"New District tab\" → \"District tab\")"
-  ],
-  [
-   "- 단순 다수 대표제/이원집정부제/집단지도체제 버튼 및 대선·총리 선거 요약 문구의 줄바꿈 위치 정리",
-   "- Tidied line breaks in the plurality / semi-presidential / collective leadership buttons and the presidential/PM election summaries"
-  ],
-  [
-   "- 입법 > 상정 탭의 국회/국무회의 버튼에서 실제 선택된 쪽을 구분하기 어렵던 문제 수정 (선택된 쪽만 색이 채워지고 ✔ 표시)",
-   "- Made the selected option clear on the Parliament / Cabinet Council buttons in Legislation > Table (only the selected one is filled and marked ✔)"
-  ],
-  [
-   "- 저장 파일 버전 v1.2로 업데이트",
-   "- Updated the save file version to v1.2"
-  ],
-  [
-   "- 부정선거 추가",
-   "- Added election fraud"
-  ],
-  [
-   "- 부정선거 탭 잠금 해제 (정식 공개)",
-   "- Unlocked the election fraud tab (official release)"
-  ],
-  [
-   "- 의석 현황 화면 우측 상단 날짜/회기 글씨 크기 확대",
-   "- Enlarged the date/session text at the top right of the seat screen"
-  ],
-  [
-   "- 사진 포함 내보내기 최상단 헤더의 국기·국가 이름·날짜·회기 글씨 크기 확대",
-   "- Enlarged the flag, nation name, date and session in the header of exports with photos"
-  ],
-  [
-   "- 정당/파벌 옆에 복제(사본) 버튼 추가",
-   "- Added a duplicate (copy) button next to parties/factions"
-  ],
-  [
-   "- 선거 결과 카드에 직전 대비 의석 증감(▲/▼) 표시",
-   "- Election result cards show seat changes from the previous election (▲/▼)"
-  ],
-  [
    "- 조작 탭과 화면 탭 사이 경계를 드래그로 리사이즈 가능, 더블클릭으로 기본 폭 복원, 리사이즈 시 반원 캔버스가 찌그러지던 문제 수정",
    "- The border between the control and display panels can be dragged to resize (double-click restores the default width); fixed the hemicycle canvas distorting on resize"
   ],
   [
    "- 키보드 단축키 추가: Ctrl+S(즉시 저장 + \"저장됨\" 토스트), Enter(입력 중이 아닐 때 프로토콜 실행), Esc(열려 있는 확인/알림/내보내기 창 닫기)",
    "- Added keyboard shortcuts: Ctrl+S (save now + \"Saved\" toast), Enter (execute protocol when not typing), Esc (close open confirm/alert/export windows)"
-  ],
-  [
-   "- 입법 > 기록 탭에 가결/부결(거부권 포함)/서명 대기 상태 필터 추가",
-   "- Added Passed / Rejected (incl. vetoed) / Awaiting signature status filters to Legislation > Records"
-  ],
-  [
-   "- 저장 시스템 전면 개편: 자동저장을 이름 붙인 세이브마다 전용 자동저장(\"OO 자동저장\")을 따로 갖도록 개편, 세이브 전환/삭제 시에도 서로 진행 상황이 섞이지 않음. 특정 세이브에 속하지 않는 기본 자동저장 슬롯은 \"기존 저장\"으로 이름 구분",
-   "- Overhauled the save system: each named save now has its own autosave (\"XX Autosave\"), so progress never mixes when switching or deleting saves. The default autosave slot that belongs to no save is labeled separately (formerly \"Existing Save\")"
-  ],
-  [
-   "- 자동저장 주기를 15초/30초/1분/3분/5분/10분 중 설정 > 저장 탭에서 선택 가능",
-   "- The autosave interval can be set to 15s / 30s / 1m / 3m / 5m / 10m in Settings > Save"
-  ],
-  [
-   "- 메인 화면 \"프로토콜 실행\" 버튼을 누르면 새 세이브를 만들거나 기존 세이브(자동저장 포함)를 골라 이어할 수 있는 온보딩 창 신설, 저장 파일(.json) 업로드로 바로 이어하기도 가능",
-   "- Pressing \"Execute Protocol\" on the main screen now opens an onboarding window to create a new save or continue an existing one (including autosaves), or continue straight from an uploaded save file (.json)"
   ],
   [
    "- 이전 버전에서 쓰던 구 방식 자동저장 데이터를 새 저장 슬롯 형식으로 자동 이관 — 업데이트 후 세이브가 사라진 것처럼 보이는 문제 방지",
@@ -4214,32 +4317,8 @@ window.DnoLangPacks.en = {
    "- Added packaging as an Electron-based Windows desktop app (.exe) (npm run build:win)"
   ],
   [
-   "- 남아있던 브라우저 기본 알림/확인 팝업을 모두 앱 자체 스타일 알림/확인 창으로 교체",
-   "- Replaced all remaining browser alert/confirm popups with the app's own styled dialogs"
-  ],
-  [
-   "- 무소속 통계 카드에서 당수 이름/사진이 표시되지 않도록 수정, 개별 의원 목록의 스크롤 높이 제한 제거",
-   "- Independent stat cards no longer show a leader name/photo, and removed the scroll height limit on the individual member list"
-  ],
-  [
-   "- 의장단/내각 표시 카드의 이름 잘림 폭 확대",
-   "- Widened the name area on speaker/cabinet display cards so names are truncated less"
-  ],
-  [
-   "- 내보내기 헤더 국가 이름 볼드체 제거",
-   "- Removed bold from the nation name in export headers"
-  ],
-  [
-   "- 부정선거 시도 카드 내부 체크박스 등 폼 요소 색을 경고색(빨강)으로 통일",
-   "- Unified checkboxes and other controls inside the election fraud card to the warning color (red)"
-  ],
-  [
    "- JS/CSS 파일을 js/, css/ 폴더로 정리 (내부 구조 변경, HTML 진입점 경로는 그대로 유지)",
    "- Organized JS/CSS files into js/ and css/ folders (internal change; HTML entry paths unchanged)"
-  ],
-  [
-   "- 저장 파일 버전 v1.3으로 업데이트",
-   "- Updated the save file version to v1.3"
   ],
   [
    "- 테마 모드 3종(라이트/다크/네온) 추가 — 기존 레트로 스타일은 \"네온\"으로 이름 변경",
@@ -4250,92 +4329,12 @@ window.DnoLangPacks.en = {
    "- Major Light/Dark UI overhaul: a dedicated stylesheet (css/modern.css) and a modern design with borderless monotone buttons"
   ],
   [
-   "- 접고 펼 수 있는 세로 탭 사이드바 신설(라이트/다크/네온 공통), 라이트/다크는 패널 머리에 현재 위치(그룹 › 항목) 표시, 네온은 \"MINISTRY OF INTERIOR\" 띠 유지",
-   "- Added a collapsible vertical tab sidebar (all themes); Light/Dark show the current location (group › item) in the panel header, Neon keeps the \"MINISTRY OF INTERIOR\" strip"
-  ],
-  [
-   "- 최상단 세이브 탭 바 높이가 맞지 않아 생기던 스크롤바 제거",
-   "- Removed the scrollbar caused by the top save tab bar's height mismatch"
-  ],
-  [
-   "- 선거 결과 내보내기에서 의석 변동 텍스트를 화면과 같은 빨강/초록으로 표시",
-   "- Seat change text in exported election results now uses the same red/green as on screen"
-  ],
-  [
    "- 창 크기 조절 시 선거 결과 · 지역구 지도 등 캔버스가 찌그러지던 문제 수정",
    "- Fixed election results, district maps and other canvases distorting when resizing the window"
   ],
   [
-   "- 시작 화면 개편: 창을 키워 왼쪽엔 프리셋, 오른쪽엔 세이브 — 세이브 검색 · ★ 즐겨찾기, 프리셋을 고르면 그 설정의 복사본이 새 세이브로 생성",
-   "- Redesigned the start screen: a larger window with presets on the left and saves on the right — save search and ★ favorites; picking a preset creates a copy as a new save"
-  ],
-  [
-   "- \"튜토리얼 공화국\" 프리셋과 조작법 튜토리얼 추가",
-   "- Added the \"Tutorial Republic\" preset and a controls tutorial"
-  ],
-  [
-   "- 세이브 이름 변경 (탭 더블클릭 또는 설정 > 저장 목록의 ✎)",
-   "- Rename saves (double-click the tab, or ✎ in the Settings > Save list)"
-  ],
-  [
-   "- 합당 기능 추가: 흡수합당(존속 정당이 흡수) · 신설합당(새 정당 창당) — 의석 · 의원 · 파벌 · 연정 · 지지율 · 내각 소속을 함께 이전, 합쳐지는 정당을 계파로 남기기 가능",
-   "- Added party mergers: absorption (a surviving party absorbs others) and new-party mergers — seats, members, factions, coalitions, support and cabinet affiliations move over, and merged parties can be kept as factions"
-  ],
-  [
-   "- 언어 전환을 언어별 파일(언어 팩) 구조로 개편, 커뮤니티 번역(.json) 불러오기/삭제 및 번역 템플릿 내려받기 지원",
-   "- Reworked language switching into per-language files (language packs), with loading/removing community translations (.json) and downloading a translation template"
-  ],
-  [
-   "- 모바일 UI 개편: 화면 아래 탭 바(의회 · 국가 · 여론 · 내각 · 의석), 떠 있는 실행 버튼, 위에 붙어 따라오는 하위 탭 칩 줄, 누르기 쉬운 버튼 크기 · 노치 여백 · iOS 입력칸 확대 방지",
-   "- Mobile UI overhaul: a bottom tab bar (Parliament · Nation · Opinion · Cabinet · Seats), a floating execute button, a sticky sub-tab chip row, larger touch targets, notch-safe spacing and no iOS zoom on inputs"
-  ],
-  [
-   "- 모바일 실행 버튼을 편집 패널과 같은 폭으로 (네온은 \">> PROTOCOL EXECUTE <<\" 문구 유지)",
-   "- The mobile execute button now matches the edit panel's width (Neon keeps the \">> PROTOCOL EXECUTE <<\" text)"
-  ],
-  [
-   "- 튜토리얼을 직접 해보는 실습형으로 개편 — 표시된 곳을 실제로 조작해야 다음 단계로 넘어감, #1 화면 둘러보기 · #2 정당과 의석 · #3 입법 · #4 여론과 선거 · #5 내각 과정으로 나누고 목차 · 과정 완료 카드 추가",
-   "- Reworked the tutorial into a hands-on one — you must actually use the highlighted control to move on; split into #1 Tour · #2 Parties & Seats · #3 Legislation · #4 Opinion & Elections · #5 Cabinet, with a lesson list and completion cards"
-  ],
-  [
-   "- 튜토리얼 개표 단계가 개표 장면을 가리지 않도록 화면을 어둡게 하지 않고 말풍선을 옆(모바일은 아래)으로",
-   "- The tutorial's vote-count step no longer dims the screen and moves its bubble aside (below on mobile) so the count stays visible"
-  ],
-  [
-   "- 네온 모드의 국가명을 사이드바 머리가 아닌 원래 자리(헤더 아래 짙은 회색 줄)에 표시",
-   "- In Neon mode the nation name is back in its original place (the dark gray bar under the header) instead of the sidebar header"
-  ],
-  [
-   "- 의회 > 구성에 원별 \"배정 합계\" 표시, 정당 의석은 총 의석 수를 넘겨 입력할 수 없도록 제한 (넘친 의석이 반원에 보이지 않던 문제 방지)",
-   "- Parliament > Composition shows an \"Assigned total\" per chamber, and party seats can no longer exceed the total (seats over the limit used to be invisible in the hemicycle)"
-  ],
-  [
-   "- 메뉴 맨 아래에 회색 \"도움말\" 묶음 추가 — 의회 · 국가 · 여론 · 내각의 모든 탭이 무슨 역할인지 설명하고 해당 탭으로 바로 이동",
-   "- Added a gray \"Help\" group at the bottom of the menu — explains what every tab in Parliament, Nation, Opinion and Cabinet does, with shortcuts to open them"
-  ],
-  [
-   "- 건설적 불신임제(독일 · 이스라엘식) 추가 — 불신임안에 후임을 함께 지명하고, 가결되면 공석 없이 그 후임이 바로 총리가 됨",
-   "- Added the constructive vote of no confidence (German/Israeli style) — the motion names a successor, who becomes PM immediately if it passes, leaving no vacancy"
-  ],
-  [
-   "- 의회 해산 시 의회 전체 또는 한 원(예: 하원)만 해산 가능 — 그 원의 총선을 반영해야 해제",
-   "- Dissolution can now target the whole parliament or a single chamber (e.g. the lower house) — lifted once that chamber's general election is applied"
-  ],
-  [
-   "- 부정선거 탭 표기를 ⚠로 통일하고 다른 탭과 높이를 맞춤",
-   "- The election fraud tab is now consistently labeled ⚠ and matches the other tabs' height"
-  ],
-  [
-   "- 최상단 세이브 탭 바 맨 왼쪽에 메인 화면으로 돌아가는 집 아이콘 추가 (누르면 바로 저장 후 이동)",
-   "- Added a home icon at the far left of the save tab bar to return to the main screen (saves first)"
-  ],
-  [
    "- old2.html 추가 — UI 개편 전 화면을 체험할 수 있는 페이지 (세이브는 따로 보관)",
    "- Added old2.html — a page to try the pre-overhaul UI (saves are kept separately)"
-  ],
-  [
-   "- 데스크톱 앱에 영어 언어 팩이 빠져 있던 문제 수정",
-   "- Fixed the English language pack missing from the desktop app"
   ],
   [
    "1.5.9 - 프로그램 출시",
@@ -4348,26 +4347,6 @@ window.DnoLangPacks.en = {
   [
    "- Steam 개발자 계정을 위한 펀딩 시작",
    "- Starting funding for a Steam developer account"
-  ],
-  [
-   "0.2.1 - 영어 개발 시작",
-   "0.2.1 - English Development Begins"
-  ],
-  [
-   "- 언어 설정 추가",
-   "- Added language settings"
-  ],
-  [
-   "- 초기 개발 성공",
-   "- Initial development succeeded"
-  ],
-  [
-   "- 저장 버전명 체계 변경 (v1.0부터 시작, KST 기준 타임스탬프)",
-   "- Changed the save version naming scheme (starting at v1.0, KST timestamps)"
-  ],
-  [
-   "설정 / SETTINGS",
-   "SETTINGS"
   ],
   [
    "메인 화면으로",
@@ -4924,7 +4903,6 @@ window.DnoLangPacks.en = {
   ["직접 지정", "Custom"],
   ["개표 변동 ±", "Count variation ±"],
   ["총선 지역구는 성향(무당층 포함)에 정당마다 이만큼 무작위로 더해 개표 — 0이면 매번 성향대로 같은 결과", "General-election districts are counted from their leanings (incl. undecided) plus this much random variation per party — 0 gives the same result every time"],
-  ["- 총선 지역구 개표 변동을 세이브마다 정하기 — 여론 › 시민 성향 아래 \"개표 변동 ±N%p\"(기본 15, 예전과 같음). 지역구는 성향(무당층 포함)에 정당마다 이만큼 무작위로 더해 개표하므로 성향 차이가 작으면 선거마다 결과가 바뀜 — 0으로 두면 늘 성향대로 같은 결과", "- Set general-election district count variation per save — \"Count variation ±N%p\" under Opinion › Citizen lean (default 15, as before). Districts are counted from their leanings (incl. undecided) plus this much random variation per party, so close districts can flip between elections — set 0 for the same result every time"],
   ["중점 디자인", "Direction design"],
   ["사용자 템플릿", "Custom template"],
   ["기본 (큰 아이콘 + 이름판)", "Default (big icon + name plate)"],
@@ -4936,7 +4914,6 @@ window.DnoLangPacks.en = {
   ["간격", "Spacing"],
   ["템플릿 (HTML — 비우면 기본)", "Template (HTML — empty for default)"],
   ["CSS (방향성 트리 안에만 걸림)", "CSS (applies only inside the direction tree)"],
-  ["- 방향성 상자 새 모양(위에 큰 아이콘 · 아래 이름판, 상태별 빛 · 회색 · ✔ · ✕), 모딩으로 상자 모양을 통째로 — 중점 디자인(크기 · 간격 · HTML 템플릿 · CSS, 트리 안에만 걸리고 스크립트 · 바깥 주소는 막힘)", "- New direction box look (big icon on top, name plate below, glow · gray · ✔ · ✕ by state); mods can redesign the box completely — direction design (size, spacing, HTML template, CSS; scoped to the tree, scripts and external URLs blocked)"],
   ["칸으로", "Form"],
   ["JSON으로", "JSON"],
   ["아이콘 (이모지 또는 그림)", "Icon (emoji or image)"],
@@ -5047,7 +5024,6 @@ window.DnoLangPacks.en = {
   ["이 세이브에서 시나리오를 뗄까요? 나라는 그대로 두고 방향성 · 격변 · 시나리오 이벤트 · 결정만 없어집니다.", "Detach the scenario from this save? The country stays as it is; only directions, upheavals and scenario events · decisions go away."],
   ["상자를 누르면 자세히 보고 고를 수 있습니다. 한 번에 하나씩, 정한 날이 지나면 끝나고 효과가 들어갑니다.", "Click a box to see details and choose it. One at a time; when its days pass it completes and its effects apply."],
   ["오른쪽 방향성 트리에서 상자를 눌러 자세히 보고 고를 수도 있습니다.", "You can also click a box in the direction tree on the right to see details and choose it."],
-  ["0.3.0 - 시나리오 · 격변 테스트", "0.3.0 - Scenario · upheaval test"],
   ["시나리오 (세계관 · 시작 나라 · 결말)", "Scenarios (lore · starting countries · endings)"],
   ["방향성 트리", "Direction trees"],
   ["격변 (게이지 · 기한 임무 · 결말)", "Upheaval (gauges · timed missions · outcomes)"],
@@ -5129,8 +5105,6 @@ window.DnoLangPacks.en = {
   ["조건을 읽지 못한 항목이 있습니다:", "Some conditions couldn't be read:"],
   ["시나리오를 넘기지 못했습니다. (저장 공간 부족)", "Couldn't hand over the scenario (out of storage)."],
   ["예정 표 찍기", "Planned votes"],
-  ["1.7.0 - 민중의 소리는 신의 소리 \"Vox populi, vox Dei\"", "1.7.0 - The voice of the people is the voice of God \"Vox populi, vox Dei\""],
-  ["민중의 소리는 신의 소리 \"Vox populi, vox Dei\"", "The voice of the people is the voice of God \"Vox populi, vox Dei\""],
   ["Hemicycle 트레일러", "Hemicycle Trailer"],
   ["새 영상 · 공식 트레일러", "New video · Official trailer"],
   ["투표 중…", "Voting…"],
@@ -5170,7 +5144,6 @@ window.DnoLangPacks.en = {
   ["목표 · 이벤트가 있는 시나리오 만들고 공유하기", "Make and share scenarios with goals and events"],
   ["테스트", "Test"],
   ["활동 중", "Active"],
-  ["0.3 : Scenario", "0.3 : Scenario"],
   ["0.3.0 - 시나리오 테스트", "0.3.0 - Scenario test"],
   ["시나리오 편집기 (scenario.html)", "Scenario editor (scenario.html)"],
   ["목표 · 실패 조건 · 마감일", "Goals · failure conditions · deadline"],
@@ -5181,20 +5154,9 @@ window.DnoLangPacks.en = {
   ["- 이벤트 · 결정 · 변수 — 스크립트 모드 형식(docs/MODDING.md), 그 시나리오의 세이브에서만 돎", "- Events, decisions and variables — script mod format (docs/MODDING.md), running only in that scenario's save"],
   ["- 시험 플레이 — 시작 상태로 새 세이브를 만들어 시나리오를 붙임, 브리핑 창 · 오른쪽 아래 🎯 목표 카드 · 날짜를 넘기거나 총선 결과를 반영할 때 검사 · 승리 · 패배 창", "- Test play — creates a new save from the starting state and attaches the scenario: briefing window, 🎯 goal card at the bottom right, checks when the date advances or election results are applied, victory and defeat windows"],
   ["- 내 시나리오는 이 기기에 자동 저장, 내보내기 · 불러오기(.hemiscn)로 공유", "- My scenarios are saved automatically on this device; share them by exporting and opening .hemiscn files"],
-  ["- 프리셋 목록 정리 — 서독은 튜토리얼 태그 · 노란 테두리 없이 제작자 표시(Pilcrow1926), 새로 들어오거나 바뀐 프리셋에 신규!(노랑) · 업데이트!(녹색) 표시와 같은 색 테두리, 날짜는 카드 아랫줄 오른쪽으로", "- Preset list cleanup — West Germany shows its creator (Pilcrow1926) without the tutorial tag or gold border, new and updated presets get New! (yellow) · Updated! (green) tags with matching borders, and dates move to the bottom right of each card"],
-  ["- 버전 표시 v1.7.0", "- Version shown as v1.7.0"],
   ["업데이트!", "Updated!"],
   ["신규!", "New!"],
-  ["- 여론 › 기사 탭 — 기사 작성 · 수정 · 삭제 · 발행 (제목 · 부제 · 본문 · 작성일 · 언론사 · 기자 · 대표 사진, 유형: 정치 · 경제 · 사회 · 국제 · 사설 · 속보), 발행 · 초안 · 유형 걸러 보기와 찾기, 읽기 창", "- Opinion › Articles tab — write, edit, delete and publish articles (headline, subtitle, body, date, outlet, reporter, main photo; types: Politics · Economy · Society · World · Editorial · Breaking), filter by published/draft/type and search, reading view"],
-  ["- 기사 연결 — 정당 · 정치인(사람 탭 인물) · 정부 · 법안을 기사에 연결", "- Article links — link parties, politicians (People tab), the government and bills to an article"],
-  ["- 기사 효과 — 발행할 때 정당 지지율 · 국정 지지율을 정한 만큼 움직임, 영향 범위는 전국(모든 원의 지지율) · 권역 · 개별 지역구(그곳의 시민 성향). 발행을 취소하거나 지우면 들어간 만큼 정확히 되돌리고, 발행된 기사를 고치면 효과를 다시 계산", "- Article effects — publishing moves party support and government approval by the amounts you set; reach is nationwide (support in every chamber), regions or single districts (citizen leanings there). Unpublishing or deleting reverses exactly what was applied, and editing a published article recalculates its effects"],
-  ["- 여론 › 국정 지지율 — 대통령 · 총리(집단지도체제는 의장) · 내각 국정 지지율, 날짜를 넘길 때 · 기사를 발행할 때 정당 지지율과 함께 날짜별로 기록", "- Opinion › Government approval — approval for the president, prime minister (chair under collective leadership) and cabinet, recorded by date together with party support whenever the date advances or an article is published"],
-  ["- 자동 여론 변동(켜기 · 끄기, 끄면 지금처럼 손으로만) — 경제지표(성장률 · 실업률 · 물가) 반영 세기, 기준값으로 돌아가기, 내각 지지율에 따른 집권 세력 정당 지지율 연동, 총선 뒤 허니문", "- Automatic opinion shifts (on/off; off keeps manual editing as before) — economy weight (growth, unemployment, inflation), drift back to a baseline, ruling-party support linked to cabinet approval, post-election honeymoon"],
-  ["- 오른쪽 시각 화면 \"여론 · 기사\" — 신문 1면(머리기사 · 기사 목록 · 국정 지지율, 언론사별로) · 여론 추이 그래프(정당 지지율 · 국정 지지율 점선 · 기사 시점 표시, 선 켜고 끄기, 지난 기록 대비 변화), 둘 다 사진(PNG)으로 저장", "- \"Opinion · News\" view on the right — front page (lead story, article list and government approval, per outlet) and opinion trend chart (party support, dashed government approval, article markers, toggleable lines, change since last record); both can be saved as PNG"],
-  ["- 스크립트 모드에 국정 지지율 조건 · 효과(approval)와 기사 발행 효과(article) 추가 (docs/MODDING.md)", "- Script mods get a government approval condition and effect (approval) and an article publishing effect (article) (docs/MODDING.md)"],
-  ["- 로드맵 카드 개편 — 카드마다 상태 칩(완료 · 진행 중 · 예정) · 날짜 · 요약 목록 · 항목 수, 자세히 보기 창은 항목 목록 · 소제목 · 고친 점 표시 · 찾기 칸", "- Roadmap card redesign — each card shows a status chip (Done · In progress · Planned), date, summary list and item count; the details window lists items with subheadings, tags fixes and adds a search box"],
   ["여론 › 기사", "Opinion › Articles"],
-  ["국정 지지율 · 여론 추이", "Government approval · opinion trend"],
   ["국정 지지율", "Government approval"],
   ["여론 · 기사", "Opinion · News"],
   ["신문", "Paper"],
@@ -5303,15 +5265,9 @@ window.DnoLangPacks.en = {
   ["완료", "Done"],
   ["진행 중", "In progress"],
   ["예정", "Planned"],
-  ["개 항목", " items"],
   ["고침", "Fix"],
-  ["항목 찾기", "Find an item"],
-  ["찾는 항목이 없습니다.", "No matching items."],
-  ["스크립트 모드 (모딩)", "Script mods (modding)"],
-  ["의석 ↔ 내각 연동", "Seat ↔ cabinet link"],
-  ["세이브 선택 화면 탭", "Tabbed save select screen"],
-  ["앞으로 (예정)", "Coming next (planned)"],
-  ["- 세이브 선택 화면을 탭으로 — 새로 시작(왼쪽 프리셋 · 오른쪽 빈 세이브) · 이어하기(왼쪽 즐겨찾기 · 오른쪽 일반 세이브, 검색 · 파일 불러오기) · 튜토리얼(왼쪽 기본 과정 · 오른쪽 심화 과정, 고르면 서독 튜토리얼 새 세이브에서 그 과정부터, 마친 과정 ✓), 서독 프리셋 설명은 제작자 표시(제작자: Pilcrow1926)로, 프리셋 목록(시작 화면 · 새 탭)에서 서독을 고르면 튜토리얼 없이 프리셋으로만 시작", "- Save select screen now uses tabs — New game (presets on the left, blank save on the right) · Continue (favorites on the left, other saves on the right, with search and file import) · Tutorial (basic lessons on the left, advanced on the right; picking one starts a new West Germany tutorial save at that lesson, completed lessons get a ✓); the West Germany preset now shows its creator (By Pilcrow1926), and picking West Germany from a preset list (start screen or new tab) opens it as a plain preset without the tutorial"],
+  ["키 번역", "Key-based translation"],
+  ["한국어 팩", "Korean pack"],
   ["처음이라면 여기서 시작하세요.", "Start here if you're new."],
   ["고르면 복사본이 새 세이브로 만들어집니다", "Picking one makes a copy as a new save"],
   ["아무것도 없는 나라에서 직접 만들어 갑니다", "Build your own country from scratch"],
@@ -5329,9 +5285,6 @@ window.DnoLangPacks.en = {
   ["저장된 세이브가 없습니다. \"새로 시작\"에서 시작하세요.", "No saves yet. Start one from \"New game\"."],
   ["마친 과정", "Completed lesson"],
   ["튜토리얼을 불러오지 못했습니다.", "Couldn't load the tutorial."],
-  ["- 내장 프리셋 \"대한민국\"에 ttorri의 이념 체계 · 원외정당(노동당 · 정의당 · 자유와혁신) · 의원 이름 · 정치인 명단 · 군부 · 지역구 지지율을 더함 (제작자: 왕조명 & ttorri) — 함께 만든 프리셋은 목록에서 제작자 이름에 밑줄이 생기고, 마우스를 올리면 그 사람이 만든 부분이 보임", "- Built-in preset \"Republic of Korea\" now includes ttorri's ideology system, extra-parliamentary parties (Labor Party, Justice Party, Freedom and Innovation), member names, politician roster, military leadership and district support (by 왕조명 & ttorri) — for co-made presets, creator names are underlined in the list and hovering one shows what that person made"],
-  ["- 지역구 지도 테두리 · 글씨 테두리 색 방식 고르기(네온) — \"직접 지정\"은 고른 색 그대로, \"테마 색 비례\"는 지금 테마 색에서 색상을 얼마나 돌리고 채도 · 밝기를 몇 배로 했는지를 기억해 설정에서 테마 색을 바꾸면 같은 비율로 따라 바뀜 (옆에 \"밝기 ×0.50\"처럼 표시, 테마 색과 동기화를 누르면 테마 색 그대로 따라감)", "- Choose how district map borders and label outlines are colored (neon): \"Custom\" uses exactly the color you pick, \"Relative to theme\" remembers how far the hue is turned and how much saturation and brightness are scaled from the theme color, and follows in the same proportion when you change the theme color in settings (shown beside it, e.g. \"Brightness ×0.50\"; Sync with theme color follows it exactly)"],
-  ["- 내장 프리셋 \"일본국\" 갱신 (제작자: sushdjr0106)", "- Updated built-in preset \"Japan\" (by sushdjr0106)"],
   ["테마 색 비례", "Relative to theme"],
   ["직접 지정: 고른 색 그대로 · 테마 색 비례: 테마 색이 바뀌면 같은 비율로 따라 바뀜", "Custom: exactly the color you pick · Relative to theme: follows the theme color in the same proportion when it changes"],
   ["테마 색 그대로", "Same as theme color"],
@@ -6371,10 +6324,6 @@ window.DnoLangPacks.en = {
    "Shapes found"
   ],
   [
-   "하이라이트",
-   "Highlight"
-  ],
-  [
    "SVG 지도로 지역구 지도 만들기",
    "Build district maps from SVG"
   ],
@@ -6399,36 +6348,8 @@ window.DnoLangPacks.en = {
    "Close this tab?\nAutosave is off, so unsaved changes will be lost."
   ],
   [
-   "- 맵 메이커 새 디자인 — 한 화면에 들어오는 앱 레이아웃(스크롤 없음), 라이트 · 다크 · 네온 테마 적용, 메인으로 돌아가는 버튼",
-   "- Map Maker redesign — fits on one screen (no scrolling), follows the light · dark · neon themes, back-to-main button"
-  ],
-  [
-   "- 메인 화면 메뉴에 맵 메이커 추가, 언어 설정(언어 팩 불러오기 · 번역 템플릿 · 삭제 포함)은 메인 화면 🌐 버튼으로 옮김",
-   "- Map Maker added to the main menu; language settings (including loading packs, translation template, deletion) moved to the 🌐 button on the main screen"
-  ],
-  [
-   "- 마우스를 올리면 뜨는 말풍선과 알림 · 확인 창이 라이트 · 다크 · 네온 테마를 따름 (네온에선 버튼 색에 맞춘 말풍선)",
-   "- Tooltips and alert/confirm dialogs now follow the light · dark · neon themes (neon tooltips match the button color)"
-  ],
-  [
-   "- 세이브 탭을 모두 닫을 수 있음(맨 앞 탭 포함) — 탭을 닫아도 세이브는 지워지지 않고, 모두 닫으면 아래 화면이 비며 \"+ › 닫은 탭 다시 열기\"로 다시 열 수 있음",
-   "- Every save tab can now be closed (including the first) — closing a tab no longer deletes the save; closing all leaves the screen empty, and \"+ › Reopen closed tab\" brings them back"
-  ],
-  [
-   "- 네온 테마 메인 화면 제목 글꼴을 둥근모로",
-   "- Neon main screen title now uses the NeoDunggeunmo font"
-  ],
-  [
    "- 상단 탭 바 오른쪽에 \"저장\" 버튼 — 국가 › 저장이 떠 있는 저장 창으로 옮겨짐(자동저장 · 세이브 목록 · 다른 이름으로 저장 · 파일), + 버튼은 크롬처럼 마지막 탭 바로 오른쪽으로",
    "- \"Save\" button on the right of the top tab bar — Nation › Save moved into a floating save panel (autosave · save list · save as · file); the + button now sits right after the last tab, like Chrome"
-  ],
-  [
-   "- 라이트/다크 사이드바 머리에서 \"Ministry of Interior\"를 빼고 국가명을 제목으로 (사이드바를 접으면 화면 위 경로 맨 앞에 국가명)",
-   "- Light/dark sidebar header drops \"Ministry of Interior\" and shows the nation name as the title (when collapsed, the nation name leads the breadcrumb)"
-  ],
-  [
-   "- 맵 메이커 네온 모드 글자가 가짜 굵게로 뭉개지던 문제, 라이트/다크 로드맵 스크롤바(검은 트랙) 정리",
-   "- Fixed smeared faux-bold text in the neon Map Maker, and cleaned up the light/dark roadmap scrollbars (black track)"
   ],
   [
    "저장 · 자동저장 · 세이브 목록 · 파일",
@@ -6437,10 +6358,6 @@ window.DnoLangPacks.en = {
   [
    "새 탭",
    "New tab"
-  ],
-  [
-   "- 국가 › 국가 설정 탭 신설 — 지역구 시스템(지도 · 그리드)과 지도 글씨 · 배지 크기를 의회 › 의회 설정에서 옮김, 원별 반원 중앙 표시(의석 수 · 로고)는 국가 › 상징에서 의회 › 의회 설정으로",
-   "- New Nation › Nation Settings tab — district system (map/grid) and map label/badge size moved here from Parliament › Parliament Settings; per-chamber hemicycle center display (seats/logo) moved from Nation › Symbols to Parliament › Parliament Settings"
   ],
   [
    "지역구 시스템(지도 · 그리드)과 지도 위 글씨 · 배지 크기.",
@@ -6453,10 +6370,6 @@ window.DnoLangPacks.en = {
   [
    "의회 구성",
    "Parliament Composition"
-  ],
-  [
-   "- 의회 탭 순서 변경: 의회 설정 · 이념 · 정당 · 의회 구성(구 구성) · 집권과 연정 · 지역구 의원 · 비례대표, 국가 › 설정은 국가 설정 · 내각 › 설정은 내각 설정 · 내각 › 기록은 국무회의 기록 · 선거 › 기록은 선거 기록 · 입법 › 기록은 표결 기록으로 이름 변경",
-   "- Parliament tab order: Parliament Settings · Ideologies · Parties · Composition (formerly Setup) · Government & Coalitions · District Members · List Members; Nation › Settings renamed Nation Settings and Cabinet › Settings renamed Cabinet Settings, Cabinet › Record renamed Council Records, Election › Record renamed Election Records, Legislation › Record renamed Vote Records"
   ],
   [
    "국가 설정",
@@ -6477,10 +6390,6 @@ window.DnoLangPacks.en = {
   [
    "표결 기록",
    "Vote Records"
-  ],
-  [
-   "- 오른쪽 화면의 날짜 · 회기 표시를 탭 줄 위 별도 줄로 — 회기 이름이 길어져도 국회 · 상원 등 탭이 눌려 세로로 찌그러지지 않음",
-   "- The date/session line on the right screen now sits on its own row above the tabs, so long session names no longer squeeze the tabs"
   ],
   [
    "하루 진행 (+1일)",
@@ -6527,10 +6436,6 @@ window.DnoLangPacks.en = {
    "More"
   ],
   [
-   "- 날짜 · 회기 줄을 두 줄 컨트롤 바로 — 날짜 옆 ▶(+1일) · ▶▶(+7일) · ▶▶▶(+1개월) 진행 버튼과 설정(⚙) 버튼, 회기 옆 \"다음: 정기회/임시회\" 토글(다음 회기부터 적용) · 다음 회기 (진행 버튼은 연 · 월 · 일 날짜 · 개별형 회기일 때 표시)",
-   "- Date/session line becomes a two-row control bar — ▶ (+1 day) · ▶▶ (+7 days) · ▶▶▶ (+1 month) and a settings (⚙) button next to the date, a \"Next: regular/extraordinary\" toggle (applies from the next session), and Next session next to the session (advance buttons show with year/month/day dates and individual sessions)"
-  ],
-  [
    "삭제 (Shift+클릭: 확인 없이 바로 삭제)",
    "Delete (Shift+click: delete without confirming)"
   ],
@@ -6541,14 +6446,6 @@ window.DnoLangPacks.en = {
   [
    "삭제하지 못했습니다. (저장 공간 오류)",
    "Couldn't delete. (storage error)"
-  ],
-  [
-   "- 시작 화면 이어하기 목록의 세이브마다 휴지통 버튼 — 클릭하면 되돌릴 수 없다는 확인창, Shift+클릭하면 바로 삭제 (이름 붙은 세이브는 전용 자동저장도 함께)",
-   "- Trash button on every save in the start screen's Continue list — click asks to confirm (can't be undone), Shift+click deletes right away (a named save takes its own autosave with it)"
-  ],
-  [
-   "- 네온 글꼴(네오둥근모)을 fonts 폴더에 함께 배포 — 인터넷 없이(데스크톱 앱)도 글꼴이 보임",
-   "- The neon font (NeoDunggeunmo) now ships in the fonts folder, so it shows even offline (desktop app)"
   ],
   [
    "다음: 정기회",
@@ -6583,10 +6480,6 @@ window.DnoLangPacks.en = {
    "Use ▶ · ▶▶ · ▶▶▶ on the date line (top right) to advance a day, a week or a month"
   ],
   [
-   "- 국가 › 날짜: 연 · 월 · 일 입력칸이 기본(직접 입력은 선택), 진행 버튼은 날짜 줄로 옮김 · 날짜를 정하기 전에 ▶를 누르면 연도 칸으로 안내",
-   "- Nation › Date: year · month · day fields are now the default (free text is optional), advance buttons moved to the date line; pressing ▶ before a date is set takes you to the year field"
-  ],
-  [
    "자동 진행",
    "Automatic progression"
   ],
@@ -6615,24 +6508,8 @@ window.DnoLangPacks.en = {
    "Size of the labels and badges on the map."
   ],
   [
-   "- 지역구 그리드(육각형) 방식 삭제 — 지역구는 지도 방식 하나만, 국가 설정의 지역구 시스템 선택도 없어짐 (예전 그리드 세이브는 불러올 때 이름 · 의석 · 성향 · 당선자를 그대로 지도 방식 데이터로 변환)",
-   "- Removed the grid (hex) district system — districts use maps only, and the district-system choice in Nation Settings is gone (old grid saves are converted on load, keeping names, seats, tendencies and members)"
-  ],
-  [
-   "- 날짜 · 회기 설정을 날짜 줄 ⚙로 여는 떠 있는 창으로 (구 국가 › 날짜) · 자동 진행: 날짜가 정기회 시작일(기본 9월 1일)을 지나면 정기회로 다음 회기, 하원 총선 확정 시 대수 +1 (둘 다 켜고 끌 수 있음)",
-   "- Date & session settings open as a floating panel from the date line's ⚙ (formerly Nation › Date) · Automatic progression: passing the regular-session start date (default Sep 1) opens a regular session, and a confirmed lower-house general election bumps the term (both toggleable)"
-  ],
-  [
    "① ⬆ SVG 열기(바로 분석) → ② 오른쪽 목록에서 이름 고치기 · 고르기 → ③ 내보내기",
    "① ⬆ Open SVG (analyzed right away) → ② Rename · pick in the list on the right → ③ Export"
-  ],
-  [
-   "- 맵 메이커: SVG를 열면 바로 분석 (분석 버튼 없앰)",
-   "- Map Maker: opening an SVG analyzes it right away (no separate Analyze button)"
-  ],
-  [
-   "- 라이트/다크에서는 지역구 지도 테두리 색 · 글씨 테두리 색 설정을 숨기고 고정색 사용 (다크 글씨 테두리 #404245, 라이트 #52525B) — 네온에서만 변경 가능",
-   "- In light/dark the district map border and label-outline color settings are hidden and fixed colors are used (dark label outline #404245, light #52525B) — changeable in neon only"
   ],
   [
    "스크롤: 확대 · 축소",
@@ -6655,28 +6532,8 @@ window.DnoLangPacks.en = {
    "- Map Maker: scroll to zoom, middle-drag to pan and ↺ reset in the preview · shapes labelled line / area / rectangle / circle · the ⌖ (highlight) button is replaced by linked hover between list rows and map shapes · fixed Korean names showing as __ · shapes now show four distinct states — normal / hover (thick outline) / selected (accent fill) / selected + hover (fixed a selected shape keeping the hover color after the mouse left)"
   ],
   [
-   "- 네온 메인 화면의 시작하기를 금색으로 (집권 세력 강조처럼) — 마우스를 올린 다른 메뉴(시안)와 구분",
-   "- The neon main screen's Start is now gold (like the governing-bloc highlight), so it stands apart from a hovered menu item (cyan)"
-  ],
-  [
-   "- 안정화: 개표가 끝나기 전·\"✔ 의회에 반영\"을 누르기 전에 실제 의석이 먼저 바뀌던 문제 수정 — 개표는 따로 집계하고 반영할 때만 의석이 바뀜 (재개표의 \"직전 대비 ▲▼\" 기준도 바로잡힘, 개표 도중 창을 닫아도 의석이 반쯤 센 상태로 저장되지 않음)",
-   "- Stability: seats no longer change before a count finishes or before pressing \"✔ Apply to Parliament\" — the count is tallied separately and seats change only on apply (also fixes the recount's \"vs. previous ▲▼\" baseline, and closing the window mid-count no longer saves half-counted seats)"
-  ],
-  [
-   "- 모바일에서 저장 · 날짜/회기 창이 아래 탭 바를 덮지 않게",
-   "- On mobile, the save and date/session panels no longer cover the bottom tab bar"
-  ],
-  [
    "반영할 새 개표 결과가 없습니다. (이미 의회에 반영했습니다)",
    "There's no new count to apply. (It has already been applied to parliament.)"
-  ],
-  [
-   "- 안정화: 이미 반영한 개표 결과를 \"✔ 의회에 반영\"으로 또 누르면(보궐선거 · 수동 편집 뒤 포함) 의회가 지난 총선 결과로 조용히 되돌아가던 문제 수정 — 이제 \"반영할 새 개표 결과가 없습니다\" 안내",
-   "- Stability: pressing \"\u2714 Apply to Parliament\" again on an already-applied count (including after a by-election or manual edits) no longer silently reverts parliament to the last general election \u2014 it now says there is no new count to apply"
-  ],
-  [
-   "- 로드맵 화면 머리에 \"← 메인으로\" 버튼",
-   "- \"\u2190 Main menu\" button in the roadmap header"
   ],
   [
    "메뉴 이동 · 의석 화면 · 날짜 줄 · 세이브 탭",
@@ -6861,10 +6718,6 @@ window.DnoLangPacks.en = {
   [
    "정당 › 당수에서 정당 대표와 파벌 대표의 이름 · 사진을 정합니다. 원내대표도 따로 둘 수 있고, \"의석 선택 → 붙여넣기\"로 반원에서 고른 의원의 이름 · 사진을 그대로 가져올 수 있어요.",
    "Party › Leaders sets the name and photo of party and faction leaders. You can also have a floor leader, and \"Pick seat → paste\" copies the name and photo of a member chosen on the hemicycle."
-  ],
-  [
-   "의회 설정과 연정",
-   "Parliament settings and coalitions"
   ],
   [
    "단원제 · 양원제 · 삼원제 · 의장단 · 반원 가운데 · 연립정부",
@@ -7227,36 +7080,12 @@ window.DnoLangPacks.en = {
    "e.g. Reiwa → Reiwa 1, April 20"
   ],
   [
-   "- 튜토리얼 대폭 확장 — 기본 튜토리얼 6개(화면 둘러보기 · 정당과 의석 · 입법 · 여론과 선거 · 내각 · 저장과 메인 화면)와 세부 튜토리얼 10개(이념 · 정당 심화 · 의회 설정과 연정 · 지역구와 지도 · 선거 심화 · 입법 심화 · 정부 형태와 권한 · 날짜와 회기 · 부정선거 · 화면 다루기)로 나눠 목차에 묶음별로 표시, 바뀐 화면(저장 창 · 날짜 줄 · 의회에 반영 · 탭 닫기) 반영",
-   "- Tutorial greatly expanded — 6 basic lessons (screen tour · parties & seats · legislation · opinion & elections · cabinet · saving & the main screen) and 10 detailed lessons (ideologies · parties in depth · parliament settings & coalitions · districts & maps · elections in depth · legislation in depth · government & powers · date & session · election fraud · working the screen), grouped in the lesson list; updated for the new save panel, date line, apply-to-parliament and tab closing"
-  ],
-  [
    "- 튜토리얼 중 앱의 알림 · 확인창이 막히거나 Enter가 튜토리얼로 새던 문제 수정, 마친 과정 기록을 과정 이름(id)으로 (예전 기록은 그대로 옮김)",
    "- Fixed app dialogs being blocked during the tutorial and Enter leaking into the tutorial; completed lessons are now recorded by id (old records carried over)"
   ],
   [
-   "- 도움말 갱신 — 저장 버튼 · 날짜 · 회기 설정 창 · 탭 닫기와 다시 열기 · 의회에 반영 · 테마 · 언어 · 튜토리얼 안내",
-   "- Help updated — save button · date & session settings · closing and reopening tabs · apply to parliament · theme, language and tutorial"
-  ],
-  [
-   "- 날짜의 \"직접 입력\"과 회기의 \"단순형\" 삭제 — 날짜는 연호(선택) + 연 · 월 · 일, 회기는 대수 · 이름 · 회기 번호로만 (예전 세이브의 글자는 불러올 때 칸으로 옮김, 예: \"레이와 1년 4월 20일\" → 연호 레이와 · 1 · 4 · 20), 연호 1년처럼 두 자리 이하 연도도 그대로 넘어감",
-   "- Removed free-text dates and \"simple\" sessions — dates are an optional era name + year · month · day, sessions are term · name · number (old saves are converted on load, e.g. \"Reiwa 1, April 20\" → era Reiwa · 1 · 4 · 20); years of two digits or less (like era year 1) now advance correctly"
-  ],
-  [
-   "- 튜토리얼 공화국 프리셋에 날짜(2026년 3월 2일)와 회기(제1대 국회 제1회 정기회)를 넣음",
-   "- The Tutorial Republic preset now has a date (March 2, 2026) and session (1st National Assembly, 1st Regular Session)"
-  ],
-  [
    "해상도",
    "Resolution"
-  ],
-  [
-   "- 데스크톱 앱: Ctrl +/−/0 확대 · 축소(Ctrl+휠 포함), F11 전체 화면, Ctrl+R 새로고침 · 창 크기 · 위치 · 최대화 · 전체 화면 · 확대 배율을 기억 · 켤 때 마지막 테마 색으로 열어 빈 창이 번쩍이지 않게",
-   "- Desktop app: Ctrl +/−/0 zoom (Ctrl+wheel too), F11 fullscreen, Ctrl+R reload · remembers window size, position, maximized/fullscreen state and zoom · opens in the last theme's color without a blank flash"
-  ],
-  [
-   "- 이미지 내보내기에 해상도 선택(1× · 2× · 3×, 기본 2×) — 화면 배율과 상관없이 다시 그려 선명하게, 마지막 선택을 기억",
-   "- Image export resolution (1× · 2× · 3×, default 2×) — redrawn crisply regardless of screen scaling; remembers the last choice"
   ],
   [
    "1.5.8 - 후보 단일화",
@@ -7269,10 +7098,6 @@ window.DnoLangPacks.en = {
   [
    "1.5.9 - 지선",
    "1.5.9 - Local Elections"
-  ],
-  [
-   "- 지방선거(지선) 추가",
-   "- Local elections added"
   ],
   [
    "1.6: 텀블벅 펀딩",
@@ -7327,34 +7152,6 @@ window.DnoLangPacks.en = {
    "- Steam Early Access launch"
   ],
   [
-   "2.0.0 - 정식 출시",
-   "2.0.0 - Full Release"
-  ],
-  [
-   "- 정식 출시",
-   "- Full release"
-  ],
-  [
-   "0.2.2 - 영어 번역 · 템플릿",
-   "0.2.2 - English Translation · Template"
-  ],
-  [
-   "- 영어 번역 — 시뮬레이터 화면 전체 · 알림/확인창 · 튜토리얼 · 도움말 · 로드맵 · 맵 메이커",
-   "- English translation — the whole simulator, alerts/confirmations, tutorial, help, roadmap and Map Maker"
-  ],
-  [
-   "- 번역 템플릿 설정 기능 — 메인 화면 🌐에서 번역 템플릿 받기 · 언어 팩(.json) 불러오기 · 삭제",
-   "- Translation template tools — download the translation template, load language packs (.json) and delete them from 🌐 on the main screen"
-  ],
-  [
-   "- 영어 번역",
-   "- English translation"
-  ],
-  [
-   "- 번역 템플릿 설정",
-   "- Translation template tools"
-  ],
-  [
    "- 무소속 로직 리워크",
    "- Independents logic rework"
   ],
@@ -7395,10 +7192,6 @@ window.DnoLangPacks.en = {
    "- Bill versions"
   ],
   [
-   "- 좌석 정보 카드",
-   "- Seat info card"
-  ],
-  [
    "- 저장 v12",
    "- Save v12"
   ],
@@ -7433,14 +7226,6 @@ window.DnoLangPacks.en = {
   [
    "- 탭 디자인 정리",
    "- Tab design cleanup"
-  ],
-  [
-   "- 자동저장",
-   "- Autosave"
-  ],
-  [
-   "- 저장 탭 신설",
-   "- New Save tab"
   ],
   [
    "- 실행 취소 · 다시 실행",
@@ -7527,10 +7312,6 @@ window.DnoLangPacks.en = {
    "- Autosave interval"
   ],
   [
-   "- Windows 데스크톱 앱",
-   "- Windows desktop app"
-  ],
-  [
    "- 정당 복제 · 단축키",
    "- Party duplication · shortcuts"
   ],
@@ -7567,10 +7348,6 @@ window.DnoLangPacks.en = {
    "- Expanded tutorial · Map Maker redesign"
   ],
   [
-   "자세히 보기 ›",
-   "Details ›"
-  ],
-  [
    "모든 원에 같은 비율",
    "Same ratio for every chamber"
   ],
@@ -7583,16 +7360,8 @@ window.DnoLangPacks.en = {
    "Default"
   ],
   [
-   "일반 테마",
-   "General theme"
-  ],
-  [
    "네온 테마",
    "Neon theme"
-  ],
-  [
-   "네온 빛번짐",
-   "Neon glow"
   ],
   [
    "소식",
@@ -7607,168 +7376,32 @@ window.DnoLangPacks.en = {
    "@Hemicycles · updates and announcements"
   ],
   [
-   "- 로드맵 새 디자인 — 위 탭을 큰 버전(0 · 1 · 2)으로, 한 줄 가로 스크롤(휠을 내리면 오른쪽), 구간 제목이 스크롤을 따라 왼쪽에 붙어 이동 · 카드에는 요약만, 누르면 자세한 내용이 떠 있는 창으로 · 아직 정하지 않은 버전은 흐린 카드로 자리 표시",
-   "- New roadmap design — top tabs are major versions (0 · 1 · 2), one horizontally scrolling row (scroll down to move right), section titles stick to the left as you scroll · cards show a summary and open the full notes in a popup · undecided versions are shown as faded placeholder cards"
-  ],
-  [
    "- 로드맵 0.0.1 · 0.0.2의 \"일반 테마\" · \"네온 테마\"를 누르면 그 시절 화면(old.html · old2.html)으로",
    "- Roadmap 0.0.1 · 0.0.2: \"General theme\" and \"Neon theme\" link to those old screens (old.html · old2.html)"
-  ],
-  [
-   "- 라이트/다크: 붙어 있는 버튼 묶음(0 · 1 · 2, 정보 · 당수, 정부 형태, 설정 목록 등)의 선택 표시가 미끄러지듯 이동",
-   "- Light/dark: the selection in grouped buttons (0 · 1 · 2, info · leader, government form, settings list, etc.) slides smoothly"
-  ],
-  [
-   "- 가결 기준 \"지정...\"을 원마다 — \"모든 원에 같은 비율\"을 켜면 첫 줄 비율을 그대로, 끄면 하원 · 상원 · 삼원 비율을 따로 · 줄마다 비율과 필요한 의석 수 자동 계산, 표결 · 기준선 · 기록 · 법안 카드도 원별 기준을 따름",
-   "- Custom pass threshold per chamber — with \"same ratio for every chamber\" the first row applies to all, otherwise each chamber gets its own ratio · each row shows the percentage and required seats, and votes, markers, records and bill cards use each chamber's threshold"
   ],
   [
    "- logo.html(로고 제작 화면) — 의회 메뉴만 남기고, 집권 정당 강조 색을 HEX 코드로 바꾸고 네온 빛번짐을 켜고 끌 수 있음 · 본 게임 세이브와 따로 저장",
    "- logo.html (logo maker) — only the Parliament menu, with a HEX colour for the ruling-party highlight and a neon glow toggle · saved separately from the main game"
   ],
   [
-   "- 메인 화면 오른쪽 위에 \"소식\" — 공식 유튜브 채널(@Hemicycles) 링크 · 데스크톱 앱에서는 바깥 링크를 기본 브라우저로 엶",
-   "- \"News\" at the top right of the main screen — link to the official YouTube channel (@Hemicycles) · the desktop app opens outside links in the default browser"
-  ],
-  [
    "- old2.html(개편 전 화면)은 라이트/다크 설정과 상관없이 항상 네온으로",
    "- old2.html (the pre-redesign screen) always uses the neon theme, whatever light/dark setting is chosen"
-  ],
-  [
-   "- 버전 표시 v1.5.7",
-   "- Version label v1.5.7"
-  ],
-  [
-   "- 내부 파일 구조 정리 및 저장 파일 버전 v1.1로 업데이트",
-   "- Cleaned up the internal file structure and updated the save file version to v1.1"
-  ],
-  [
-   "- 자동저장 기능 추가 (새로고침해도 유지)",
-   "- Added autosave (persists across refreshes)"
-  ],
-  [
-   "- 내보내기 창에 \"아래 의석 수 등 통계 포함\" 체크박스 추가, 실제 화면과 동일한 카드 디자인(색상 띠·이름·의석·%·상태 태그·범례)으로 재현 (SVG는 화면을 그대로 담아 픽셀 단위로 동일, PNG/JPG는 도형으로 다시 그림)",
-   "- Added an \"Include stats below (seat counts, etc.)\" checkbox to the export dialog, reproducing the on-screen card design (color strip, name, seats, %, status tags, legend) — SVG captures the screen pixel-for-pixel, PNG/JPG are redrawn as shapes"
-  ],
-  [
-   "- 시작 화면의 점검 안내/자동 이동 화면에도 설정에서 고른 테마 색이 반영되도록 수정 (그동안 항상 기본 청록색으로 고정돼 있던 문제)",
-   "- The maintenance notice / auto-forward start screen now uses the theme color chosen in Settings (it was always the default cyan)"
   ],
   [
    "- 화면 최상단에 크롬 탭 스타일의 세이브 탭 바 신설 — 클릭 한 번으로 확인창 없이 세이브 사이를 즉시 전환, \"+\"로 새 세이브를 새로 만들거나 미리 등록해둔 프리셋에서 시작 가능 (프리셋으로 시나리오 배포·공유)",
    "- Added a Chrome-style save tab bar at the very top — switch between saves instantly with one click, no confirmation, and use \"+\" to create a new save or start from a registered preset (distribute/share scenarios as presets)"
   ],
   [
-   "- Windows 데스크톱 앱(.exe) 추가",
-   "- Added a Windows desktop app (.exe)"
-  ],
-  [
-   "- 내부 파일 구조 정리",
-   "- Cleaned up the internal file structure"
-  ],
-  [
-   "- 라이트/다크 모드 UI 대대적 개편: 테두리 없는 모노톤 버튼 등 현대적인 디자인",
-   "- Major Light/Dark UI overhaul: a modern design with borderless monotone buttons"
-  ],
-  [
-   "- UI 개편 전 화면을 체험할 수 있는 페이지 추가 (세이브는 따로 보관)",
-   "- Added a page to try the pre-overhaul UI (saves are kept separately)"
-  ],
-  [
-   "- 로드맵 0.0.1 · 0.0.2의 \"일반 테마\" · \"네온 테마\"를 누르면 그 시절 화면으로",
-   "- Roadmap 0.0.1 · 0.0.2: \"General theme\" and \"Neon theme\" link to those old screens"
-  ],
-  [
-   "- 로고 제작 화면 — 의회 메뉴만 남기고, 집권 정당 강조 색을 HEX 코드로 바꾸고 네온 빛번짐을 켜고 끌 수 있음 · 본 게임 세이브와 따로 저장",
-   "- Logo maker — only the Parliament menu, with a HEX colour for the ruling-party highlight and a neon glow toggle · saved separately from the main game"
-  ],
-  [
-   "- 개편 전 화면은 라이트/다크 설정과 상관없이 항상 네온으로",
-   "- The pre-redesign screen always uses the neon theme, whatever light/dark setting is chosen"
-  ],
-  [
    "- 무소속 시스템 리워크",
    "- Independents system rework"
-  ],
-  [
-   "- 정당 시스템 리워크 I (무소속 시스템 리워크)",
-   "- Party system rework I (reworked independent system)"
-  ],
-  [
-   "- 좌석 정보 카드 추가 (마우스를 올리는 대신 클릭으로 확인, 무소속 이름·파벌·집권 세력 표기)",
-   "- Added a seat info card (click instead of mouse-over; shows independent name, faction, and ruling power)"
-  ],
-  [
-   "- 좌석에 마우스를 올리면 흰색 고리 표시 추가",
-   "- Added a white ring on seat mouse-over"
-  ],
-  [
-   "- 시작 화면 리워크 (점검 안내 · 자동 이동 화면으로 전환)",
-   "- Landing screen rework (switched to a maintenance-notice/auto-forward screen)"
-  ],
-  [
-   "- 점검 기간 자동화 (자동으로 점검 안내 표시 및 자동 이동)",
-   "- Automated maintenance windows (auto-shows the notice and forwards)"
-  ],
-  [
-   "- 순서 변경(⋮⋮) 손잡이가 모바일 터치 드래그로도 동작하도록 수정",
-   "- The reorder (⋮⋮) grip now works with touch dragging on mobile"
-  ],
-  [
-   "- 설정에 테마 색(강조색) 선택 기능 신설 (HEX 직접 입력, 기본값 초기화, 다른 탭에도 실시간 반영), 그동안 특정 화면에서만 청록색으로 고정돼 있던 옅은 배경/그림자 색상들도 모두 테마 색을 따라가도록 수정",
-   "- Added a theme (accent) color picker to Settings (direct HEX input, reset to default, applied live across tabs), and faint backgrounds/shadows that were fixed to cyan on some screens now follow the theme color"
-  ],
-  [
-   "- 반원 · 지도 우클릭 시 뜨는 \"내보내기...\" 메뉴 신설 — 반원·지역구 지도 등 모든 시각화를 PNG/JPG/SVG 형식으로 다운로드 가능",
-   "- Added an \"Export...\" menu on right-clicking any hemicycle/map — download every visualization (hemicycle, district maps, etc.) as PNG/JPG/SVG"
-  ],
-  [
-   "- \"전체에 반영\" 동기화 체크박스의 배경·테두리가 고정된 청록색 대신 테마 색을 따라가도록 수정",
-   "- The \"Apply to all\" sync checkbox's background and border now follow the theme color instead of a fixed cyan"
-  ],
-  [
-   "- 조작 탭과 화면 탭 사이 경계를 드래그로 크기 조절 가능, 더블클릭으로 기본 폭 복원, 크기를 바꿀 때 반원이 찌그러지던 문제 수정",
-   "- The border between the control and display panels can be dragged to resize (double-click restores the default width); fixed the hemicycle view distorting on size change"
-  ],
-  [
-   "- 키보드 단축키 추가: Ctrl+S(즉시 저장 + \"저장됨\" 알림), Enter(입력 중이 아닐 때 프로토콜 실행), Esc(열려 있는 확인/알림/내보내기 창 닫기)",
-   "- Added keyboard shortcuts: Ctrl+S (save now + \"Saved\" notice), Enter (execute protocol when not typing), Esc (close open confirm/alert/export windows)"
-  ],
-  [
-   "- 이전 버전에서 쓰던 구 방식 자동저장 데이터를 새 저장 방식으로 자동으로 옮김 — 업데이트 후 세이브가 사라진 것처럼 보이는 문제 방지",
-   "- Old-style autosave data from earlier versions is moved to the new save format automatically — so saves don't seem to vanish after updating"
-  ],
-  [
-   "- 창 크기 조절 시 선거 결과 · 지역구 지도 등이 찌그러지던 문제 수정",
-   "- Fixed election results, district maps and other views distorting when resizing the window"
-  ],
-  [
-   "- 맵 메이커: 미리보기에서 스크롤로 확대 · 축소, 휠 클릭 드래그로 이동, ↺ 위치 초기화 · 도형 종류를 선 / 면 / 사각형 / 원으로 표시 · ⌖(하이라이트) 버튼 대신 목록 줄과 지도 도형이 마우스를 올리면 서로 강조 · 한글 이름이 __로 보이던 문제 수정 · 도형 색 상태를 기본 / 마우스 올림(굵은 테두리) / 선택(강조색) / 선택+마우스 올림로 네 가지 모두 구분 (선택한 도형에서 마우스를 빼면 마우스 올림 색이 남던 문제 수정)",
-   "- Map Maker: scroll to zoom, middle-drag to pan and ↺ reset in the preview · shapes labelled line / area / rectangle / circle · the ⌖ (highlight) button is replaced by linked mouse-over between list rows and map shapes · fixed Korean names showing as __ · shapes now show four distinct states — normal / mouse-over (thick outline) / selected (accent fill) / selected + mouse-over (fixed a selected shape keeping the mouse-over color after the mouse left)"
-  ],
-  [
-   "- 튜토리얼 중 앱의 알림 · 확인창이 막히거나 Enter가 튜토리얼로 새던 문제 수정, 마친 과정 기록을 과정 이름으로 (예전 기록은 그대로 옮김)",
-   "- Fixed app dialogs being blocked during the tutorial and Enter leaking into the tutorial; completed lessons are now recorded by lesson name (old records carried over)"
   ],
   [
    "지금은 공개 베타 테스트 기간이에요 — 기능과 세이브 형식이 바뀔 수 있어요",
    "This is an open beta test — features and the save format may change"
   ],
   [
-   "- 후보 단일화 — 선거 전에 여러 정당의 후보를 한 명으로 합쳐 출마",
-   "- Candidate unification — parties merge behind a single candidate before an election"
-  ],
-  [
    "- 나무위키식 의회 틀 — 의석 배치 · 정당별 의석 · 집권 세력을 한눈에 보여주는 틀",
    "- Namuwiki-style parliament box — seat layout, seats per party and the ruling bloc at a glance"
-  ],
-  [
-   "- 지방선거(지선) 추가 — 지역구 인구 수에 따라 실제 득표수가 계산됨",
-   "- Local elections — vote counts calculated from each district's population"
-  ],
-  [
-   "- 국민투표 — 인구 시스템과 연계해 찬반 득표수 · 투표율로 결과 결정",
-   "- Referendums — tied to the population system, decided by yes/no vote counts and turnout"
   ],
   [
    "1.7: 텀블벅 펀딩",
@@ -7779,14 +7412,6 @@ window.DnoLangPacks.en = {
    "1.7.0 - Tumblbug Funding Launch"
   ],
   [
-   "1.6.0 - 테니스 코트의 맹세 \"Serment du Jeu de paume\"",
-   "1.6.0 - The Tennis Court Oath \"Serment du Jeu de paume\""
-  ],
-  [
-   "1.6.2 - 주사위는 던져졌다 \"Alea iacta est\"",
-   "1.6.2 - The die is cast \"Alea iacta est\""
-  ],
-  [
    "1.6.4 - 대담하라! \"De l'audace!\"",
    "1.6.4 - Be bold! \"De l'audace!\""
   ],
@@ -7795,68 +7420,8 @@ window.DnoLangPacks.en = {
    "- Statute book in the style of a national law portal — passed bills collected as articles"
   ],
   [
-   "- 헌법 및 개정안 시스템 추가",
-   "- Constitution and amendment system"
-  ],
-  [
-   "- 쿠데타 추가",
-   "- Coups"
-  ],
-  [
-   "- 혁명 추가",
-   "- Revolutions"
-  ],
-  [
-   "- 국회공성전 추가",
-   "- Storming the parliament"
-  ],
-  [
-   "- 정당 세력 변화 타임라인 추가",
-   "- Timeline of party strength over time"
-  ],
-  [
-   "1.6.0 - 테니스 코트의 맹세",
-   "1.6.0 - The Tennis Court Oath"
-  ],
-  [
-   "1.6.2 - 주사위는 던져졌다",
-   "1.6.2 - The die is cast"
-  ],
-  [
-   "1.6.4 - 대담하라!",
-   "1.6.4 - Be bold!"
-  ],
-  [
-   "- 법안에 조항 개념 추가 — 제1조 · 제2조처럼 조항 단위로 쓰고 고치기",
-   "- Bills get articles — write and amend them article by article (Article 1, Article 2…)"
-  ],
-  [
-   "- 입법 화면 개편",
-   "- Legislation screen redesign"
-  ],
-  [
-   "1.6.5 - 영광이 산 위에서 꺾였도다",
-   "1.6.5 - Thy glory is slain upon thy high places"
-  ],
-  [
-   "1.6.6 - 왕은 죽었다, 국왕 만세!",
-   "1.6.6 - The king is dead, long live the king!"
-  ],
-  [
-   "- 왕정복고 — 군주제 정당의 쿠데타 · 혁명으로 군주제 부활",
-   "- Restoration — monarchist parties bring back the crown through a coup or revolution"
-  ],
-  [
    "- 숨겨진 정부 형태: 절대군주제 — 왕이 총리 임명 · 거부권 · 비상 권한을 가짐",
    "- Hidden government form: absolute monarchy — the monarch appoints the PM and holds the veto and emergency powers"
-  ],
-  [
-   "- 왕가와 왕위 주장자 — 정당마다 지지하는 주장자, 계승 규칙(남계 · 여성 계승 등)",
-   "- Royal houses and claimants — each party backs a claimant; succession rules (male-line, female succession, etc.)"
-  ],
-  [
-   "- 계승 분쟁 — 카를로스파처럼 정통 왕위를 두고 다툼",
-   "- Succession disputes — rival claims to the legitimate throne, Carlist-style"
   ],
   [
    "- 친위 쿠데타(입헌군주제 → 절대군주제) · 공화 혁명(군주제 폐지)",
@@ -7881,10 +7446,6 @@ window.DnoLangPacks.en = {
   [
    "- 쿠데타 (군부 · 정당 · 친위)",
    "- Coups (military · party · self-coup)"
-  ],
-  [
-   "- 숨겨진 정부 형태: 군정",
-   "- Hidden government form: military junta"
   ],
   [
    "- 성공 · 실패 결과",
@@ -7927,104 +7488,8 @@ window.DnoLangPacks.en = {
    "- Support penalties · anti-brawl law"
   ],
   [
-   "- 쿠데타 추가 — 주도 세력: 군부 · 정당 · 대통령(친위 쿠데타)",
-   "- Coups — led by the military, a party or the president (self-coup)"
-  ],
-  [
-   "- 숨겨진 정부 형태: 군정 — 군부가 일으키면 주도 정당 없이 군사평의회가 집권 (의장이 대통령 · 총리를 겸함, 의회 정지 · 선거 중단, 거부권 · 비상 권한 독점)",
-   "- Hidden government form: military junta — a military coup puts a junta in power with no leading party (its chair is both president and PM, parliament is suspended, elections halted, veto and emergency powers monopolised)"
-  ],
-  [
-   "- 성공 확률 — 여당 의석 · 지지율 · 계엄 여부 등을 반영",
-   "- Success chance — based on the ruling seats, support, martial law and more"
-  ],
-  [
-   "- 성공: 계엄 선포 · 의회 해산 또는 정지 · 반대 정당 활동 금지 / 실패: 주도 세력 처벌 · 역풍으로 지지율 하락",
-   "- Success: martial law, parliament dissolved or suspended, opposition parties banned / Failure: leaders punished, support drops from the backlash"
-  ],
-  [
-   "- 군정에서 벗어나기 — 민정 이양(선거 재개) · 역쿠데타 · 혁명",
-   "- Leaving military rule — return to civilian rule (elections resume), counter-coups, revolution"
-  ],
-  [
-   "- 혁명 추가 — 민중이 주체, 여론 · 인구와 연계",
-   "- Revolutions — driven by the people, tied to public opinion and population"
-  ],
-  [
-   "- 주도 이념에 따라 결과 체제가 달라짐",
-   "- The resulting regime depends on the leading ideology"
-  ],
-  [
-   "- 공산주의 혁명 → 숨겨진 정부 형태: 당-국가 체제 (혁명 정당 일당 집권 · 다른 정당은 금지 또는 우당(통일전선)으로, 최고 지도자 총서기 · 국가주석 · 총리, 의회는 최고인민회의로 거의 만장일치, 단일 후보 찬반 선거)",
-   "- Communist revolution → hidden government form: party-state (one-party rule by the revolutionary party, other parties banned or kept as allied united-front parties, a general secretary above the state president and premier, a supreme people's assembly voting near-unanimously, single-candidate yes/no elections)"
-  ],
-  [
-   "- 민주 혁명 → 독재 · 군정 붕괴, 일반 정부 형태 복귀 + 새 헌법",
-   "- Democratic revolution → dictatorships and juntas fall, a normal government form returns with a new constitution"
-  ],
-  [
-   "- 혁명 이후 국호 · 국기 교체와 새 총선",
-   "- A new country name and flag and a fresh general election after the revolution"
-  ],
-  [
-   "- 선거인단 시스템 — 지역(시도)별 선거인 수(인구 비례 · 의석 수 · 직접 입력), 승자독식 · 비례 배분, 과반 기준과 과반 미달 시 의회 결정, 신의 없는 선거인, 지도로 보기",
-   "- Electoral college system — electors per region (by population, by seats, or set by hand), winner-take-all or proportional allocation, a majority threshold with the legislature deciding when no one reaches it, faithless electors, and a map view"
-  ],
-  [
-   "- 국회공성전 추가",
-   "- Storming the parliament"
-  ],
-  [
-   "- 계엄 중 봉쇄 돌파 — 의원들이 본회의장에 들어가야 계엄 해제 결의안을 표결할 수 있음 (들어오지 못한 의원은 표결 제외)",
-   "- Breaking the martial-law blockade — members must get into the chamber to vote on lifting martial law (those who can't get in don't vote)"
-  ],
-  [
-   "- 물리적 의사 방해 — 계엄과 무관하게, 반대 법안 표결을 막으려 의장석 점거 · 몸싸움",
-   "- Physical obstruction — regardless of martial law, occupying the Speaker's chair and brawling to stop a vote on a bill you oppose"
-  ],
-  [
-   "- 성공 확률 — 참여 의원 수 · 정당 결속도 · 의장 경호권 발동 · 직권상정 등을 반영, 성공하면 표결 무산",
-   "- Success chance — based on how many members join, party cohesion, the Speaker calling security and forcing the bill to a vote; success cancels the vote"
-  ],
-  [
-   "- 폭력을 쓴 정당은 지지율 페널티, 부상으로 결석하는 의원 · \"국회선진화법\" 설정으로 페널티 강화",
-   "- Parties that use violence lose support; injured members may miss votes; an \"anti-brawl law\" setting makes the penalties harsher"
-  ],
-  [
-   "- 원별 지역구 분리 — 하원 · 상원(· 삼원)이 서로 다른 지역구 지도를 쓸 수 있게 (공유 · 분리 중 선택)",
-   "- Separate districts per chamber — the lower and upper (and third) chambers can use different district maps (choose shared or separate)"
-  ],
-  [
-   "0.0.2 - 네온 테마",
-   "0.0.2 - Neon Theme"
-  ],
-  [
    "네온 테마",
    "Neon theme"
-  ],
-  [
-   "- 테마 모드 3종(라이트/다크/네온) 추가",
-   "- Added three theme modes (Light / Dark / Neon)"
-  ],
-  [
-   "- 로드맵 0.0.1 · 0.0.2의 \"일반 테마\" · \"네온 테마\"를 누르면 그 시절 화면으로",
-   "- Roadmap 0.0.1 · 0.0.2: \"General theme\" and \"Neon theme\" link to those old screens"
-  ],
-  [
-   "- 위키식 의회 틀 — 의석 배치 · 정당별 의석 · 집권 세력을 한눈에 보여주는 틀",
-   "- Wiki-style parliament box — seat layout, seats per party and the ruling bloc at a glance"
-  ],
-  [
-   "- 가결된 법안을 조문 형태로 모아 보는 입법 기록",
-   "- A legislative record that collects passed bills as articles"
-  ],
-  [
-   "- 화면 최상단에 브라우저 탭 스타일의 세이브 탭 바 신설 — 클릭 한 번으로 확인창 없이 세이브 사이를 즉시 전환, \"+\"로 새 세이브를 새로 만들거나 미리 등록해둔 프리셋에서 시작 가능 (프리셋으로 시나리오 배포·공유)",
-   "- Added a browser-style save tab bar at the very top — switch between saves instantly with one click, no confirmation, and use \"+\" to create a new save or start from a registered preset (distribute/share scenarios as presets)"
-  ],
-  [
-   "- 상단 탭 바 오른쪽에 \"저장\" 버튼 — 국가 › 저장이 떠 있는 저장 창으로 옮겨짐(자동저장 · 세이브 목록 · 다른 이름으로 저장 · 파일), + 버튼은 브라우저처럼 마지막 탭 바로 오른쪽으로",
-   "- \"Save\" button on the right of the top tab bar — Nation › Save moved into a floating save panel (autosave · save list · save as · file); the + button now sits right after the last tab, like browser"
   ],
   [
    "파일 (.hemi)",
@@ -8107,26 +7572,6 @@ window.DnoLangPacks.en = {
    "Use a region as one multi-member constituency (e.g. the prefectural districts of Japan's House of Councillors). Set its seats and each party's winners directly; they count toward party seats right away and are kept separate from list seats when an election runs."
   ],
   [
-   "- 숨겨진 정부 형태: 전제군주정 — 왕이 총리 임명 · 거부권 · 비상 권한을 가짐",
-   "- Hidden government form: autocratic monarchy — the monarch appoints the PM and holds the veto and emergency powers"
-  ],
-  [
-   "- 친위 쿠데타(입헌군주제 → 전제군주정) · 공화 혁명(군주제 폐지)",
-   "- Self-coup (constitutional → autocratic monarchy) · republican revolution (abolishing the monarchy)"
-  ],
-  [
-   "- 숨겨진 정부 형태: 전제군주정",
-   "- Hidden government form: autocratic monarchy"
-  ],
-  [
-   "- 상임위원회 추가 — 법안이 본회의 전에 소관 상임위원회 심사를 거침",
-   "- Standing committees — bills are reviewed by the relevant committee before the plenary vote"
-  ],
-  [
-   "- 냉전 국가 순위 — 꾸밈용 (기능 없음)",
-   "- Cold War country ranking — decorative only (no gameplay effect)"
-  ],
-  [
    "- 조문식 입법 기록",
    "- Article-style legislative record"
   ],
@@ -8161,10 +7606,6 @@ window.DnoLangPacks.en = {
   [
    "전체 화면은 다른 화면으로 옮기면 창 모드로 돌아갑니다",
    "Fullscreen returns to windowed when you move to another screen"
-  ],
-  [
-   "- 화면 표시 방식 — 창 모드 · 전체 화면 · 테두리 없는 전체 화면 중 선택 (설정 → 화면)",
-   "- Display mode — choose windowed, fullscreen or borderless fullscreen (Settings → Display)"
   ],
   [
    "이 원의 지역구 지도",
@@ -8231,24 +7672,8 @@ window.DnoLangPacks.en = {
    "Per-chamber district maps"
   ],
   [
-   "화면 표시 방식 · 앱 아이콘",
-   "Display modes · app icon"
-  ],
-  [
    "- 앱 · 설치 파일 · 브라우저 탭 아이콘에 Hemicycle 로고",
    "- Hemicycle logo as the app, installer and browser tab icon"
-  ],
-  [
-   "- 버전 표시 v1.5.8",
-   "- Version label v1.5.8"
-  ],
-  [
-   "- 앱 · 설치 파일 아이콘에 Hemicycle 로고 (창 · 작업 표시줄 · 브라우저 탭은 반원 로고)",
-   "- Hemicycle logo as the app and installer icon (the window, taskbar and browser tab use the seat-arc logo)"
-  ],
-  [
-   "- 점검 안내 기능 삭제 — 사이트 주소로 들어오면 바로 메인 화면",
-   "- Removed the maintenance notice — the site address now opens the main screen directly"
   ],
   [
    "창작마당",
@@ -8261,10 +7686,6 @@ window.DnoLangPacks.en = {
   [
    "모드 폴더 열기",
    "Open mods folder"
-  ],
-  [
-   "- 모드 폴더 — 데스크톱 앱에서 폴더째 넣은 언어 팩 · 테마 · 프리셋을 바로 불러옴 (창작마당 대비)",
-   "- Mods folder — the desktop app loads language packs, themes and presets dropped in as folders (ready for the Workshop)"
   ],
   [
    "MOD THEMES / 모드 테마",
@@ -8407,10 +7828,6 @@ window.DnoLangPacks.en = {
    "Continue"
   ],
   [
-   "- 튜토리얼 목차 개편(이어서 하기 · 기본/세부 탭) · 후보 단일화 · 부정선거 · 지역구 튜토리얼 보강",
-   "- Tutorial menu redesign (continue button \u00b7 basic/detailed tabs) \u00b7 new and expanded lessons for candidate unification, election fraud and districts"
-  ],
-  [
    "지선",
    "Local"
   ],
@@ -8550,12 +7967,6 @@ window.DnoLangPacks.en = {
    "국민투표에 부칠 안건(질문)을 적어 주세요.",
    "Enter the question to put to the referendum."
   ],
-  [
-   "인구 기반 득표수",
-   "Population-based vote counts"
-  ],
-  ["- 지역구 선거에서 그 지역구 성향이 0인 정당(무소속 등)이 개표 노이즈만으로 당선되던 문제 수정 — 의석이 여럿인 지역구에서 성향을 두 정당에 100% 나눠 줘도 매번 무소속이 나왔음", "- Fixed parties with 0% tendency in a district (such as independents) winning district seats from vote-count noise alone — even with tendency split 100% between two parties, multi-seat districts kept electing independents"],
-  ["- 권역으로 묶은 지도(권역 탭 · 지방선거 권역 단계 · 지방자치 현황)에서 권역 테두리가 군데군데 끊기던 문제 수정 — 권역 안쪽 경계선은 없애고 바깥 둘레만 지도 기본 선으로, 지방자치 현황 지도에 권역별 · 지역구별 보기", "- Fixed region outlines breaking off in places on region-grouped maps (Regions tab, the region level of local elections, local government overview) — borders inside a region are gone and only the outer edge is drawn with the map's default line; the local government map gets By region · By district views"],
   ["권역별 득표율", "Vote share by region"],
   ["지역구별 · 권역별 결과", "Results by district · region"],
   ["대통령 선거", "Presidential election"],
@@ -8565,13 +7976,7 @@ window.DnoLangPacks.en = {
   ["지역구를 만들고 원별 의석 수 · 인구를 정합니다. 맵 메이커에서 만든 지도(.jsx)를 올리면 실제 지도 모양의 지역구를 쓸 수 있어요. (1.5.9까지는 여론 › 지역구)", "Create districts and set each chamber's seats and population. Upload a map made in the map maker (.jsx) to use real map-shaped districts. (Opinion › Districts up to 1.5.9)"],
   ["지역구를 권역으로 묶습니다 — 권역형 비례대표 · 지방선거 권역 단체장의 단위. 권역 득표율은 지역구 성향을 평균하는 자동 집계나 직접 입력 중에서 고릅니다. (1.5.9까지는 여론 › 권역)", "Group districts into regions — the unit for regional list seats and regional heads in local elections. Regional vote shares come either from averaging district tendencies automatically or from direct input. (Opinion › Regions up to 1.5.9)"],
   ["선거 결과를 좌우하는 성향 · 지지율을 정합니다 (지역구 · 권역은 국가 묶음). 여기서 정한 값으로 선거 탭에서 개표해요.", "Set the tendencies and support rates that decide elections (districts and regions are under Nation). The Elections tab counts votes from these values."],
-  ["국가 › 지역 · 권역", "Nation › Districts · Regions"],
-  ["선거 기록 통합 · 검색", "Unified election records · search"],
   ["봉쇄조항", "Electoral threshold"],
-  ["- 여론 › 지역구 · 여론 › 권역을 국가 › 지역 · 국가 › 권역으로 옮김 (여론에는 성향 · 지지율만)", "- Opinion › Districts and Opinion › Regions move to Nation › Districts and Nation › Regions (Opinion keeps only Tendency and Support)"],
-  ["- 선거 › 선거 기록에 지방선거 · 국민투표 · 대선(총리 선거) 기록도 함께 — 최근 순, 기록 검색 · 종류 필터 (국무회의 기록처럼 기록이 없어도 검색 창 표시)", "- Elections › Records now also lists local elections, referendums and presidential (PM) elections — newest first, with record search and type filters (the search box shows even with no records, like the cabinet records)"],
-  ["- 국가 › 미수복 탭 신설 (국가 › 지역 · 권역은 1.6.0)", "- A new Nation › Unrecovered tab (Nation › Districts and Regions arrive in 1.6.0)"],
-  ["군부 설정", "Military command"],
   ["지도에 지역구 이름 표시", "Show district names on maps"],
   ["서브 이념 없음", "No sub-ideology"],
   ["서브 이념 — 비워 두면 이념 그대로", "Sub-ideology — leave empty to use the ideology"],
@@ -8598,11 +8003,6 @@ window.DnoLangPacks.en = {
   ["지역 기반", "Regional base"],
   ["— 없음 (선거 전 몫대로)", "— none (pre-election shares)"],
   ["(\"파벌 나눠서\" 정당은 새 의석을 파벌 몫대로 나눴습니다.)", "(Parties set to \"Split factions\" had their new seats divided among their factions.)"],
-  ["총선 파벌 나눠서 · 합쳐서", "Split or merged factions in elections"],
-  ["- 총선에서 파벌 나눠서 · 합쳐서 — 정당마다 개표 결과를 반영할 때 파벌 의석을 선거 전 몫대로 나눌지(나눠서), 정당 몫으로 합칠지(합쳐서) 고름. 지역 기반 파벌(예: 바이에른의 기독교사회연합)은 고른 지역구들에서 정당이 얻는 표만큼 새 의석을 가져감", "- Split or merged factions in elections — for each party, choose whether faction seats are divided by their pre-election shares (split) or merged into the party (merged) when results are applied. A regional faction (e.g. the CSU in Bavaria) takes new seats in proportion to the party's votes in its chosen districts"],
-  ["튜토리얼 전면 개정: 서독", "Tutorial overhaul: West Germany"],
-  ["- 튜토리얼 전면 개정 — 가상의 \"튜토리얼 공화국\" 대신 1983년 서독(독일연방공화국, 제10대 연방의회): 실제 정당 · 의석(기민·기사연합 · 사회민주당 · 자유민주당 · 녹색당), 연방의회 · 연방평의회, 주별 지역구 · 성향, 기본법 · 상임위원회, 동독 주는 지역구가 아닌 땅(1.6.7 미리보기에선 미수복 지역)", "- Tutorial overhaul — instead of the made-up \"Tutorial Republic\", West Germany (the Federal Republic of Germany, 10th Bundestag) in 1983: real parties and seats (CDU/CSU · SPD · FDP · Greens), Bundestag and Bundesrat, state districts and leanings, the Basic Law and standing committees, with the East German states as land outside the districts (unrecovered territory in the 1.6.7 preview)"],
-  ["- 군부 설정 — 국방부 장관 · 참모 · 장성 등 군 지휘부를 정해 둠 (쿠데타 주도 · 진압에 쓰임)", "- Military command — set up the military leadership such as the defense minister, chiefs of staff and generals (used to lead or put down coups)"],
   ["Give me liberty, or give me death! : 테니스 코트의 맹세", "Give me liberty, or give me death! : The Tennis Court Oath"],
   ["Give me liberty, or give me death! : 인간은 자유롭게 태어났다", "Give me liberty, or give me death! : Man is born free"],
   ["로고는 의회 › 정당 › 로고에서 바꿉니다 (눌러서 열기)", "Change logos in Parliament › Parties › Logo (click to open)"],
@@ -8613,10 +8013,8 @@ window.DnoLangPacks.en = {
   ["▌ 파벌 로고", "▌ Faction logos"],
   ["[정당 없음]", "[No parties]"],
   ["정당 · 파벌 로고를 올리고 지웁니다 (정사각형 권장). 의회 구성 카드의 로고는 보기만 하고, 누르면 여기로 와요. 통계 카드에 로고를 쓸지는 정보 탭의 \"통계 표시\"에서 고릅니다.", "Upload and remove party and faction logos (square works best). Logos on the Composition cards are display-only and bring you here when clicked. Whether stats cards show the logo is set under \"Stats display\" on the Info tab."],
-  ["- 의회 › 정당에 로고 탭 — 정당 · 파벌 로고를 여기서 올리고 지움 (의회 구성 카드의 로고는 보기만, 누르면 로고 탭으로)", "- A Logo tab under Parliament › Parties — upload and remove party and faction logos here (logos on the Composition cards are display-only and open the Logo tab when clicked)"],
   ["직책", "Title"],
   ["기본 직책입니다. 권역 · 지역구마다 직책을 따로 정하려면(예: 서울 특별시장 · 경기 도지사 · 구청장 · 군수) 아래 현직 단체장 목록의 직책 칸에 적으세요.", "These are the default titles. To give a region or district its own title (e.g. Mayor of Seoul, Governor of Gyeonggi, district mayor, county head), type it in the Title box in the incumbent list below."],
-  ["- 지방선거 단체장 직책을 권역 · 지역구마다 따로 — 현직 단체장 목록의 직책 칸에 적으면 그곳만 그 직책(예: 특별시장 · 도지사 · 구청장 · 군수), 비우면 기본 직책. 개표 결과 · 현직 반영 · 지방자치 현황에 그대로", "- Local government titles per region and district — type a title in the incumbent list to use it there only (e.g. special-city mayor, governor, district mayor, county head); leave it blank for the default. Carried into results, incumbents and the local government overview"],
   ["Hemicycle — 세이브 파일 변환", "Hemicycle — Save file converter"],
   ["세이브 파일 변환 (.hemi ↔ .json)", "Save file converter (.hemi ↔ .json)"],
   [".hemi는 세이브 내용(JSON)을 압축한 파일이고, .json은 압축하지 않은 예전 형식입니다. 둘은 내용이 같아서 서로 바꿔도 그대로 불러올 수 있어요. 휴대폰에서 .hemi 파일이 열리지 않으면 여기서 .json으로 바꿔 보세요.", ".hemi is the save data (JSON) compressed; .json is the older uncompressed format. Their content is the same, so either one loads after converting. If a .hemi file won't open on your phone, convert it to .json here."],
@@ -8644,16 +8042,10 @@ window.DnoLangPacks.en = {
   ["🔄 .hemi ↔ .json 변환 (휴대폰에서 .hemi가 안 열릴 때)", "🔄 Convert .hemi ↔ .json (when .hemi won't open on a phone)"],
   ["🔄 .hemi ↔ .json 변환", "🔄 Convert .hemi ↔ .json"],
   ["파일이 너무 커서 여기서 열 수 없습니다. 시작한 뒤 저장 › 파일 › 불러오기로 열어 보세요.", "This file is too large to open here. Start the game and open it from Save › File › Load."],
-  ["- 휴대폰에서 .hemi 세이브 · .jsx 지도 파일을 고를 수 없던 문제 수정 (모바일 파일 선택 창이 모르는 확장자를 막던 것), 시작 화면에서 큰 세이브를 불러오면 실패하던 문제 수정, .hemi ↔ .json 변환 페이지 추가", "- Fixed being unable to pick .hemi saves and .jsx map files on phones (mobile file pickers blocked the unknown extensions), fixed large saves failing to load from the main screen, and added a .hemi ↔ .json converter page"],
-  ["- 권역별 성향 — 여론 › 성향에서 지역구별 · 권역별 입력을 바꿔 가며, 권역마다 정당 성향을 한 번에 정함. 지역구 성향을 따로 정하지 않은 지역구는 속한 권역 성향으로 총선 지역구 · 지방선거 · 국민투표 · 권역 자동 집계를 치름 (지역구 값이 있으면 그쪽 우선)", "- Regional tendencies — switch between per-district and per-region input in Opinion › Tendency and set party tendencies for a whole region at once. Districts without their own tendency use their region's for district elections, local elections, referendums and regional auto-tallies (a district's own values take priority)"],
   ["지역구 성향을 하나도 정하지 않은(모두 0인) 지역구는 이 권역 성향으로 총선 지역구 · 지방선거 · 국민투표를 치릅니다. 지도에서 지역구를 누르면 그 권역으로 바뀌어요.", "Districts with no tendency of their own (all 0) use this region's tendency in district elections, local elections and referendums. Clicking a district on the map switches to its region."],
   ["모두 이 권역 성향을 씁니다", "all use this region's tendency"],
   ["권역별", "By region"],
   ["지역구별", "By district"],
-  [
-   "- 버전 표시 v1.5.9",
-   "- Version label v1.5.9"
-  ],
   [
    "권역마다",
    "Per region"
@@ -8719,28 +8111,8 @@ window.DnoLangPacks.en = {
    "Photo"
   ],
   [
-   "0.2 : Multi",
-   "0.2 : Multi"
-  ],
-  [
-   "0.2.3 - 테마 템플릿 · Steam 이식 준비",
-   "0.2.3 - Theme template · Steam port prep"
-  ],
-  [
    "테마 템플릿",
    "Theme template"
-  ],
-  [
-   "Steam 이식 준비",
-   "Steam port prep"
-  ],
-  [
-   "- 테마 템플릿 추가 — 설정 → 테마에서 지금 테마의 색이 채워진 템플릿을 받아 색을 바꾼 나만의 테마를 만들 수 있게 (라이트 · 다크 · 네온 바탕, 설정 → 테마 → 모드 테마에서 선택)",
-   "- Theme template — download a template filled with the current theme's colours from Settings → Theme and make your own recoloured theme (based on light · dark · neon, picked under Settings → Theme → Mod themes)"
-  ],
-  [
-   "- Steam 이식을 위한 조치 — 언어 팩 · 테마 · 프리셋을 폴더째 넣어 쓰는 모드 폴더, Steam 창작마당 구독 · 업로드 준비",
-   "- Groundwork for the Steam port — a mods folder for language packs, themes and presets dropped in as folders, ready for Steam Workshop subscriptions and uploads"
   ],
   [
    "THEME TEMPLATE / 테마 템플릿",
@@ -8755,24 +8127,12 @@ window.DnoLangPacks.en = {
    "Downloads a theme file filled with the current theme's colours. Change the id, name and colours, then put it in its own folder inside the desktop app's mods folder and it shows up under \"Mod themes\"."
   ],
   [
-   "1.6.7 - 즉시, 지체 없이",
-   "1.6.7 - Immediately, without delay"
-  ],
-  [
    "영토 통일",
    "Territorial unification"
   ],
   [
    "미수복 지역",
    "Unrecovered territory"
-  ],
-  [
-   "- 미수복 지역 — 지역구 지도에서 실제로 다스리지 못하는 지역구를 \"미수복\"으로 지정해 따로 표시 (선거 · 의석에서는 빠짐)",
-   "- Unrecovered territory — mark districts on the map that the country claims but doesn't control as \"unrecovered\" and show them apart (left out of elections and seats)"
-  ],
-  [
-   "- 영토 통일 — 미수복 지역을 되찾아 일반 지역구로 편입 (선거 · 의석에 다시 포함)",
-   "- Territorial unification — recover unrecovered territory and fold it back in as ordinary districts (counted in elections and seats again)"
   ],
   [
    "— 실제로 다스리지 못하는 지역구 (선거 · 의석에서 빠짐)",
@@ -8811,60 +8171,14 @@ window.DnoLangPacks.en = {
   ["탭 하나하나가 세이브(나라 하나)입니다. 누르면 그 세이브로 바로 바뀌고, 진행 상황은 그 세이브에 그대로 자동저장돼요. 프리셋으로 시작하면 프리셋 제목으로 탭이 생깁니다.", "Each tab is a save (one nation). Click to switch to it instantly; progress is autosaved straight into that save. Starting from a preset opens a tab named after the preset."],
   ["탭 이름 옆의 점 — 아직 저장하지 않은 변경사항이 있다는 뜻. 자동저장이 켜져 있으면 곧 저장되고, 꺼져 있으면 탭을 옮기거나 닫을 때 저장할지 물어요.", "The dot next to a tab name means there are unsaved changes. With autosave on they are saved shortly; with it off, you're asked whether to save when switching or closing tabs."],
   ["맨 위의 탭 하나하나가 세이브(나라 하나)입니다. 누르면 그 나라로 바로 바뀌고, 진행 상황은 그 세이브에 그대로 자동저장돼요. 이름 옆에 ●가 보이면 아직 저장하지 않은 변경사항이 있다는 뜻이에요. +는 새 탭(새로 만들기 · 프리셋 · 닫은 탭 다시 열기), 탭 이름을 더블클릭하면 이름 바꾸기, ×는 탭만 닫기(세이브는 남아요)입니다. 맨 왼쪽 ⌂는 저장하고 메인 화면으로 돌아갑니다.", "Each tab at the top is a save (one country). Click one to switch to it instantly; progress is autosaved straight into that save. A ● next to the name means there are unsaved changes. + opens a new tab (new · preset · reopen closed tab), double-click a tab name to rename it, and × only closes the tab (the save stays). ⌂ on the far left saves and returns to the main screen."],
-  ["세이브 · 자동저장 개편", "Save & autosave overhaul"],
-  ["- 지방선거: 권역 단체장(예: 지사) · 지역구 단체장(예: 시장)을 함께 뽑고, 당선자를 현직 단체장으로 반영해 남겨 둠", "- Local elections: elect regional heads (e.g. governors) and district heads (e.g. mayors) together, and keep the winners as current officeholders"],
-  ["- 지방선거 · 국민투표의 지역구별 결과를 목록 대신 지도로도 보기 — 국민투표는 찬성 우세 초록 · 반대 우세 빨강, 지방선거는 당선 정당 색 (고른 보기를 기억)", "- See local election and referendum results by district on a map as well as a list — referendums show yes-leaning green and no-leaning red, local elections the winning party's color (your choice is remembered)"],
-  ["- 내각 화면 이름을 바꿀 수 있게 (예: Bundeskabinett)", "- The cabinet display can be renamed (e.g. Bundeskabinett)"],
-  ["- 맵 메이커: 떨어진 땅이 한 도형으로 묶인 지역구를 나누고, 고른 도형을 하나로 합치기 · 합친 도형이 엉뚱한 곳으로 튀던 문제 수정", "- Map maker: split districts whose separate pieces of land are bundled into one shape, merge selected shapes · fixed merged shapes jumping to the wrong place"],
-  ["- 뒤집히거나 회전된 지역구 지도가 바르게 보이도록 수정, 네온 테마 오른쪽 화면 탭을 패널에 붙임", "- Flipped or rotated district maps now display correctly; neon display tabs are joined to the panel"],
-  ["- 설정에서 테마 템플릿 받기", "- Download a theme template from Settings"],
-  ["- 내장 프리셋 \"미합중국\" 추가 (제작자: ttorri)", "- New built-in preset \"United States of America\" (by ttorri)"],
-  ["- 중대선거구(한 지역구에 의석 여러 개)로 선거를 치르면 지역구 의원 탭에 당선자가 지역구마다 한 명만 나오던 문제 수정 — 의석마다 당선자가 따로 나오고(\"서울 (2)\"처럼 의석 번호), 비례대표 인원 계산 · 지도 툴팁 · 의원 불러오기 목록도 맞춤 (예전 세이브는 불러올 때 빠진 당선자를 채움)", "- Fixed multi-member districts showing only one winner per district in the district members tab — each seat now has its own winner (numbered like \"Seoul (2)\"), and list seat counts, map tooltips and the member picker match (older saves get the missing winners filled in on load)"],
-  ["- 중대선거구 보궐선거에서 빈자리 하나에 그 지역구 의석 수만큼 정당 의석이 늘던 문제, 당선 정당 직접 지정 · 지역구 의석 수 줄이기 · 지역구 삭제 때 당선자가 어긋나던 문제 수정", "- Fixed a multi-member by-election adding as many party seats as the district has for a single vacancy, and winners going out of sync when setting winners by hand, reducing a district's seats or deleting a district"],
-  ["- \"새 의회 (1)\"(어느 세이브에도 속하지 않던 기본 세션) 삭제 — 탭은 모두 이름 붙은 세이브, 프리셋으로 시작하면 프리셋 제목으로 탭이 열림 (남아 있던 기록은 \"이전 자동저장\"이라는 보통 세이브로 옮김)", "- Removed \"New Parliament (1)\" (the default session that belonged to no save) — every tab is a named save, and starting from a preset opens a tab named after it (leftover data becomes an ordinary save called \"Previous autosave\")"],
-  ["- 세이브 · 자동저장 개편 — 세이브 하나에 가장 최근 상태 하나만 보관(따로 쌓이던 \"OO 자동저장\" 없앰 · 큰 지도가 든 세이브가 저장 공간을 두 배로 쓰던 문제 해결), 자동저장과 지금 저장(Ctrl+S)이 모두 그 세이브에 저장, 바뀐 게 없으면 다시 쓰지 않음", "- Save & autosave overhaul — each save keeps just its latest state (no more separate \"… Autosave\" entries, so saves with big maps no longer use twice the storage); autosave and Save now (Ctrl+S) both write into that save, and nothing is rewritten when nothing changed"],
-  ["- 저장하지 않은 변경사항이 있으면 탭 이름 옆에 ● — 자동저장이 꺼져 있으면 탭을 옮기거나 닫을 때 · 메인으로 갈 때 저장할지 묻고, 저장 창의 ↺로 마지막 저장 상태로 되돌리기", "- A ● next to the tab name shows unsaved changes — with autosave off you're asked whether to save when switching or closing tabs or going to the main screen, and ↺ in the save window reverts to the last save"],
-  ["- 저장 공간이 가득 차 저장하지 못하면 알림 · 저장 창에 사용량 표시, \"파일 불러오기\"는 파일 이름으로 새 탭을 만들어 엶 (지금 세이브를 덮어쓰지 않음), 탭을 모두 닫아 두면 다시 열어도 빈 화면", "- A warning when storage is full and a save fails, storage usage in the save window, loading a file opens it in a new tab named after the file (instead of overwriting the current save), and closing every tab keeps the screen empty after reopening"],
-  ["- 지역구 의원 · 비례대표가 수백 명일 때 탭을 열거나 고치면 화면이 멈추던 문제 개선 — 앞쪽 40명만 먼저 그리고 스크롤하면 이어서 그림(보던 위치 유지), 이름을 고칠 때 목록 전체를 다시 그리지 않음", "- Opening or editing the district members / list seats tabs no longer freezes with hundreds of members — the first 40 are drawn and more appear as you scroll (keeping your place), and editing a name no longer redraws the whole list"],
-  ["- 프리셋 · 튜토리얼을 언어마다 따로 만든 파일로 — 한국어 파일을 화면 번역으로 \"국회 → Parliament\"처럼 단어만 바꿔 끼우는 대신 언어별 파일을 불러와 호환성 문제 해결 (그 언어 파일이 없으면 기본(한국어) 파일 그대로)", "- Presets and tutorials as separate files per language \u2014 instead of swapping words in the Korean file through on-screen translation (\"\uad6d\ud68c \u2192 Parliament\"), each language loads its own file, fixing compatibility issues (the default Korean file is used as-is when a language has none)"],
-  ["- 프리셋 경로 덮어쓰기(당명 · 이념명 등을 언어별로 바꿔 넣던 방식) 삭제, 화면 번역은 메뉴 · 버튼 · 안내 같은 UI 문구에만 — 정당 · 지역구 · 법안 이름처럼 세이브에 든 데이터는 번역하지 않음 (사용자가 넣은 \"국회\"가 \"Parliament\"로 바뀌던 문제)", "- Remove preset path overrides (the old way of swapping party and ideology names per language); on-screen translation applies only to UI text such as menus, buttons and notices \u2014 data in a save like party, district and bill names is never translated (so a user's own \"\uad6d\ud68c\" no longer turns into \"Parliament\")"],
-  ["- 프리셋 · 튜토리얼의 언어별 파일도 창작마당 · 모드 폴더로 배포 · 구독 — 언어 팩과 함께 올리면 그 언어로 프리셋 · 튜토리얼이 열림", "- Per-language preset and tutorial files can also be shared through the Steam Workshop and the mods folder \u2014 upload them alongside a language pack and presets and tutorials open in that language"],
-  ["언어별 프리셋 · 튜토리얼 (창작마당)", "Per-language presets \u00b7 tutorials (Workshop)"],
-  ["언어별 프리셋 · 튜토리얼", "Per-language presets \u00b7 tutorials"],
-  ["- 의석 번호 통일 — 의원 카드의 #번호(지역구 목록 순서)와 반원 좌석 정보의 #번호(정당별 좌석 배치 순서)가 따로 매겨져 같은 번호가 다른 의원을 가리키던 문제 수정: 의원마다 반원의 실제 좌석을 정해 카드 번호와 좌석 번호가 같은 의원을 가리키고, 좌석을 누르면 그 의원(이름 · 지역구)이 보이게", "- Unified seat numbers \u2014 the # on member cards (district list order) and the # in the hemicycle seat info (seating order by party) were counted separately, so the same number pointed to different members: each member gets their actual hemicycle seat, card and seat numbers point to the same member, and clicking a seat shows that member (name \u00b7 district)"],
   ["의석 번호 통일", "Unified seat numbers"],
   ["서독 프리셋", "West Germany preset"],
-  ["미수복 지역 (종류별)", "Unrecovered territory (by kind)"],
-  ["영토 통일 · 종류별 통합", "Territorial unification · integration by kind"],
-  ["국가 › 지역 · 미수복 탭", "Nation › Regions · Unrecovered tabs"],
-  ["- 미수복 지역 종류 — 종류를 여러 개 만들어 이름 · 빗금 색을 정함 (예: 오스트리아 · 알자스로렌-룩셈부르크 · 동방영토 · 북방영토), 칠하기 도구로 지도에서 여러 지역구를 한 번에 지정", "- Kinds of unrecovered territory — create several kinds, each with its own name and hatch color (e.g. Austria · Alsace-Lorraine-Luxembourg · Eastern Territories · Northern Territories), and mark many districts at once on the map with the paint tool"],
-  ["- 종류별 통합 — 미수복 지역을 종류마다 따로 본국에 통합 (전체를 한 번에 되찾는 영토 통일도 가능)", "- Integration by kind — integrate each kind of unrecovered territory into the home nation separately (or reclaim everything at once with territorial unification)"],
   ["- 여론 › 지역구를 국가 › 지역으로 옮기고, 국가 › 미수복 탭 신설", "- Opinion › Districts moves to Nation › Districts, plus a new Nation › Unrecovered tab"],
-  ["- 내장 프리셋 \"서독\" 추가", "- Built-in preset \"West Germany\""],
-  ["1.6.8 - 갈라질 수도 없고 분리될 수도 없다 \"Indivisibiliter ac inseparabiliter\"", "1.6.8 - Indivisible and inseparable \"Indivisibiliter ac inseparabiliter\""],
-  ["1.6.8 - 갈라질 수도 없고 분리될 수도 없다", "1.6.8 - Indivisible and inseparable"],
-  ["1.6.9 - 보이지 않는 손 \"Invisible hand\"", "1.6.9 - The invisible hand \"Invisible hand\""],
-  ["1.6.9 - 보이지 않는 손", "1.6.9 - The invisible hand"],
   ["경제 시스템", "Economy system"],
-  ["- 경제 시스템 추가 (메뉴 › 경제)", "- Added an economy system (Menu › Economy)"],
   ["종속국 의회", "Dependency parliaments"],
-  ["종속국 합병 · 해방", "Annexing and releasing dependencies"],
   ["종속국", "Dependencies"],
-  ["- 종속국 — 본국에 딸린 나라를 만들어 둠, 지역구 지도에서 미수복 지역과 비슷하지만 다른 모양으로 따로 표시", "- Dependencies — set up countries attached to the home nation, shown on the district map apart from it, like unrecovered territory but marked differently"],
-  ["- 종속국 의회 — 종속국마다 따로 의회(의석 · 정당 · 선거)를 둠", "- Dependency parliaments — each dependency has its own parliament (seats, parties, elections)"],
-  ["- 종속국 합병 — 종속국을 본국에 편입해 일반 지역구로 만듦 (선거 · 의석에 포함)", "- Annexing dependencies — merge a dependency into the home nation as regular districts (counted in elections and seats)"],
-  ["- 종속국 해방 — 종속국을 독립시켜 본국에서 떼어 냄", "- Releasing dependencies — grant a dependency independence and split it off from the home nation"],
   ["1.6.1 - 인간은 자유롭게 태어났다 \"L'homme est né libre.\"", "1.6.1 - Man is born free \"L'homme est né libre.\""],
   ["국가 › 사람 탭", "Nation › People tab"],
-  ["인물 커스텀 (이념 · 정당 · 파벌 · 자리)", "Custom people (ideology · party · faction · posts)"],
-  ["지역구 후보 · 내각 자리 배정", "District candidates · cabinet posts"],
-  ["의석이 사라져도 인물은 유지", "People stay when seats disappear"],
-  ["- 국가 › 사람 탭 신설 — 인물마다 이름 · 사진 · 이념 · 소속 정당 · 파벌 · 배정된 자리(의석) · 지역구 후보 · 내각 자리 등을 자유롭게 정해 미리 만들어 둠", "- New Nation › People tab — create people in advance and customize each one freely: name, photo, ideology, party, faction, assigned seat, district candidacy, cabinet post and more"],
-  ["- 지역구 후보 — 선거 전에 사람 탭의 인물을 지역구 후보로 내세우고, 당선되면 그 지역구 의석에 바로 배정 (낙선해도 인물은 남음)", "- District candidates — field people from the People tab as district candidates before an election; winners are assigned to that district's seat right away (losers stay in the People tab)"],
-  ["- 내각 자리 — 대통령 · 총리 · 장관 등 내각 직책도 사람 탭의 인물로 배정 (의원이 아닌 인물도 가능)", "- Cabinet posts — fill president, prime minister, ministers and other cabinet posts with people from the People tab (non-members too)"],
-  ["- 지역구 의원 · 비례대표(· 당수 · 원내대표 · 내각)에 사람 탭의 인물을 골라 배정 — 지금처럼 의석마다 이름 · 사진을 따로 적지 않음", "- Assign people from the People tab to district seats and list seats (and party leaders, floor leaders, cabinet) — no more typing a name and photo for each seat"],
-  ["- 선거 · 당적 변경 · 궐석 등으로 의석이 사라져도 인물은 사람 탭에 그대로 남고, 다음 선거나 보궐선거 때 다시 배정 (지금은 의석이 없어지면 그 자리의 이름 · 사진도 함께 사라짐)", "- When a seat disappears through an election, a party switch or a vacancy, the person stays in the People tab and can be assigned again at the next election or by-election (today the name and photo vanish with the seat)"],
-  ["- 한 인물이 의원 · 장관처럼 여러 자리를 겸하면 사람 탭 한 곳에서 관리 — 이름 · 사진을 고치면 배정된 모든 자리에 반영", "- A person holding several posts, such as member and minister, is managed in one place — editing their name or photo updates every post they hold"],
   ["무소속 포함하기", "Include independents"],
   ["켜면 무당파 표의 일부가 무소속에게도 갑니다 (무소속 지지율이 0이어도). 끄면 무당파 표는 정당에만 나눠집니다.", "When on, part of the undecided vote also goes to independents (even at 0% support). When off, undecided votes go to parties only."],
   ["끄면 무소속이 모든 원에서 빠집니다 (선거 · 지지율 · 의석에 나오지 않음). 다시 켜면 원래대로 돌아옵니다.", "When off, independents are removed from every chamber (no elections, polling or seats). Turn it back on to restore them."],
@@ -8872,12 +8186,9 @@ window.DnoLangPacks.en = {
   ["끄면 무소속이 모든 원에서 빠집니다 (선거 · 지지율 · 의석에 나오지 않음). 다시 켜면 끄기 전대로 돌아와요. 무소속 의석이 남아 있으면 먼저 0으로 만들어야 끌 수 있습니다.", "When off, independents are removed from every chamber (no elections, polling or seats); turning it back on restores the previous state. If independents still hold seats, set them to 0 first."],
   ["개표 때마다 무당파 표를 정당에 나눠 비례대표 의석 배분에 더합니다.\nS = max(0, 무당파 지지율 ± 오차),  r = 0~1 난수 (선거마다)\n① 무작위 몫 S·r — 정당마다 난수 u(0~1) → 정당 i의 몫 = S·r · uᵢ / Σu  (지지율과 무관)\n② 지지율 몫 S·(1−r) — 정당 지지율 wᵢ(오차 반영) × 친화도 aᵢ(0.5~1.5 난수) → 몫 = S·(1−r) · wᵢaᵢ / Σwa\n최종 가중치 = wᵢ + ①몫 + ②몫 → 이 비율로 비례 의석을 배분. 활동 금지 정당은 받지 않고, 지역구 결과는 성향(%)으로 따로 정해져요.", "Each count splits the undecided vote among parties and adds it to the list-seat allocation.\nS = max(0, undecided share ± margin),  r = random 0–1 (per election)\n① Random share S·r — a random u (0–1) per party → party i gets S·r · uᵢ / Σu  (independent of support)\n② Support share S·(1−r) — party support wᵢ (with margin) × affinity aᵢ (random 0.5–1.5) → share = S·(1−r) · wᵢaᵢ / Σwa\nFinal weight = wᵢ + ① + ② → list seats are allocated in this ratio. Banned parties get nothing, and district results are decided separately by tendency (%)."],
   ["무당파 칸 바로 아래. 켜면 무소속도 무당파 표를 받습니다 — ①은 지지율과 무관해서 무소속 지지율이 0이어도 의석을 얻을 수 있어요. 끄면(기본) 무소속은 ① · ② 모두에서 빠집니다.", "Right below the undecided row. When on, independents also receive undecided votes — ① ignores support, so independents can win seats even at 0%. When off (default), independents are left out of both ① and ②."],
-  ["- 여론 › 지지율의 무당파 칸 아래에 \"무소속 포함하기\" — 끄면(기본) 무당파 표가 무소속에게 가지 않음 (무소속 지지율이 0인데도 무당파 표의 무작위 몫으로 무소속이 당선되던 문제), 도움말에 무당파 배분 방식을 수식으로 설명", "- \"Include independents\" under the undecided row in Opinion › Polling — when off (default), undecided votes don't go to independents (they used to win seats from the random share even at 0% support); the help explains the undecided-vote formula"],
-  ["- 의회 › 이념에서 무소속을 켜고 끌 수 있게 — 끄면 무소속이 모든 원에서 빠짐, 지역구 선거에서 그 원에 참여하지 않거나 활동 금지된 정당이 지역구를 가져가던 문제 수정", "- Independents can be switched on and off in Parliament › Ideologies — when off they leave every chamber; fixed parties not running in a chamber, or banned, winning its districts"],
   ["위원회", "Committees"],
   ["법령", "Statutes"],
   ["본회의", "Floor"],
-  ["서명 · 기록", "Signing · Records"],
   ["법률안", "Bill"],
   ["헌법 개정안", "Constitutional amendment"],
   ["조문", "Articles"],
@@ -8931,10 +8242,6 @@ window.DnoLangPacks.en = {
   ["보건복지위원회", "Health and Welfare Committee"],
   ["환경노동위원회", "Environment and Labor Committee"],
   ["국가 재건을 위해 필요한 모든 조치를 취할 수 있다.\n집행부는 의회의 동의 없이 긴급 법령을 발동할 수 있다.", "All measures necessary for national reconstruction may be taken.\nThe executive may issue emergency decrees without the consent of the legislature."],
-  ["- 봉쇄조항 — 선거 › 지지율의 비례대표 방식에서 원마다 봉쇄조항(%)을 정함: 전국 득표율이 이보다 낮은 정당은 비례 의석을 받지 못함(지역구 당선은 유지). 지역구 N석 이상 이기면 면제(예: 독일 5% · 지역구 3석). 개표 결과 제목에 미달 정당 표시, 튜토리얼(서독) 연방의회는 5% · 3석", "- Electoral threshold — set a threshold (%) per chamber under Election › Support › list system: parties below this national vote share get no list seats (district wins are kept). Winning N districts or more exempts a party (e.g. Germany 5% · 3 districts). The count result title names the parties below it; the tutorial (West Germany) Bundestag uses 5% · 3 seats"],
-  ["- 그 원에 참여하지 않는 원외 정당(정당 카드에서 그 원 체크를 끈 정당)이 총선 비례 의석을 받던 문제 수정 — 지지율 입력 목록에 없는데도 저장된 지지율 · 무당파 몫으로 의석이 생기던 것. 지역구 후보처럼 개표에서도 빠지고, 직전 대비 ▲▼도 0석에서 비교", "- Fixed extra-parliamentary parties (chamber unchecked on the party card) winning list seats in a general election — they got seats from stored support and the swing share even though they were not in the support list. Like district candidates they now sit out the count, and the ▲▼ change compares from 0 seats"],
-  ["- 부정선거 발각을 개표 도중으로 — 개표를 시작하자마자 드러나는 대신, 조작된 표로 개표가 진행되다가 무작위 시점(15~85%)에 발각: 개표가 멈추고 그 정당은 활동 금지, 조작 표를 무효로 해 처음부터 다시 개표", "- Election fraud is now uncovered during the count — instead of at the very start, counting runs on the rigged votes and the fraud is uncovered at a random point (15–85%): counting stops, the party is banned, the rigged votes are voided and the count starts over"],
-  ["- 맵 메이커: 그림 지도(webp · png · jpg) 자동 추적 — 같은 색 덩어리를 도형으로 바꿈(색 허용 오차 · 최소 크기 · 바탕 빼기 조절), 만든 .jsx 다시 열어 고치기, 내보낼 파일 이름 정하기", "- Map maker: auto-trace raster maps (webp · png · jpg) — same-colored areas become shapes (adjust color tolerance · minimum size · drop background), reopen a made .jsx to edit it, choose the export file name"],
   ["⬆ 지도 열기", "⬆ Open map"],
   ["파일 이름", "File name"],
   ["그림 자동 추적", "Raster auto-trace"],
@@ -8946,7 +8253,6 @@ window.DnoLangPacks.en = {
   ["다시 추적", "Trace again"],
   ["연 지도가 여기 표시됩니다", "The opened map shows here"],
   ["그림에서 지역을 찾는 중…", "Finding regions in the image…"],
-  ["- 사이드바에 1.6.7 기준 전체 메뉴 — 본 게임 · 각 Teaser 화면에 아직 없는 기능(군부 · 쿠데타 · 혁명 · 왕실 · 공성전 · 세력 변화 · 위키 틀 · 미수복 · 경제 · 세계)도 제자리에 🔒와 열리는 버전으로 표시, 누르면 언제 열리는지 안내", "- Sidebar shows the full 1.6.7 menu — features not yet in the main game or a given Teaser (military · coup · revolution · royal house · siege · power shifts · wiki box · unrecovered · economy · world) appear in place with 🔒 and the version they arrive in; clicking tells you when they open"],
   ["국가 순위", "Country ranking"],
   ["진영", "Blocs"],
   ["미수복", "Unrecovered"],
@@ -8967,10 +8273,7 @@ window.DnoLangPacks.en = {
   ["세력 변화 타임라인 · 위키 틀 · 냉전 국가 순위 (+1.6.1 ~ 1.6.4)", "Party strength timeline · wiki infobox · Cold War nation ranking (+1.6.1 ~ 1.6.4)"],
   ["왕정복고 · 전제군주정 · 왕위 계승 · 친위 쿠데타 · 공화 혁명 (+1.6.1 ~ 1.6.5)", "Restoration · absolute monarchy · succession · self-coup · republican revolution (+1.6.1 ~ 1.6.5)"],
   ["미수복 지역 · 영토 통일 (+1.6.1 ~ 1.6.6)", "Unrecovered territories · reunification (+1.6.1 ~ 1.6.6)"],
-  ["- 데스크톱 앱 필수 업데이트 — GitHub Release에 새 버전이 올라오면 업데이트할 때까지 앱을 쓸 수 없음: 설치판은 자동으로 받아 세이브를 저장하고 다시 시작해 설치, 압축판은 릴리스 페이지에서 새 설치 프로그램을 받도록 안내 (인터넷이 안 돼 확인을 못 하면 막지 않음). 설정 › 기타 설정 › 업데이트에서 버전 · 진행 상황 확인", "- Mandatory desktop updates — when a new version is published on GitHub Releases, the app cannot be used until it is updated: installed builds download it, save the game and restart to install; zip builds point you to the new installer on the releases page (no block when offline and the check cannot run). See version and progress in Settings › Other › Update"],
   ["- 데스크톱 앱 세이브 폴더 — 세이브를 앱 안이 아니라 정한 폴더(기본 문서\\Hemicycle\\Saves)에 세이브마다 .hemi 파일로 저장, 설정 › 기타 설정 › 저장 위치에서 폴더 열기 · 위치 바꾸기(세이브를 새 폴더로 옮김). 탐색기에서 넣은 .hemi는 세이브로 보이고, 지운 세이브는 휴지통으로", "- Desktop save folder — saves are stored as one .hemi file each in a folder you choose (default Documents\\Hemicycle\\Saves) instead of inside the app; Settings › Other › Save folder can open the folder or change it (saves move to the new folder). .hemi files dropped in show up as saves, and deleted saves go to the Recycle Bin"],
-  ["- 세이브 저장 공간 줄이기 — 브라우저 저장소의 세이브를 무손실로 압축해 약 1/4로 (사진 · 지도는 그대로, 일본국 프리셋 3.4MB → 0.9MB), 저장 창의 사용량도 압축 뒤 크기로. .json 내보내기는 줄 바꿈 없이", "- Smaller saves in storage — saves in browser storage are compressed losslessly to about a quarter (photos and maps untouched; the Japan preset goes from 3.4MB to 0.9MB), and the save panel shows the compressed usage. .json exports are written without line breaks"],
-  ["- 맵 프리셋 — 국가 › 지역에서 나라 지도 10개(대한민국 · 일본 · 미국 · 독일 · 프랑스 · 영국 · 이탈리아 · 스페인 · 캐나다 · 브라질) 중 하나를 골라 바로 지역구 지도로 (지역구 이름 · 약칭 포함, Natural Earth 지도)", "- Map presets — pick one of 10 country maps (South Korea, Japan, USA, Germany, France, UK, Italy, Spain, Canada, Brazil) in Nation › Territory to use as your district map right away (with district names and abbreviations, Natural Earth data)"],
   ["업데이트 확인", "Check for updates"],
   ["지금 다시 시작해 설치", "Restart now to install"],
   ["릴리스 페이지", "Releases page"],
@@ -8995,45 +8298,12 @@ window.DnoLangPacks.en = {
   ["⬇ 세이브 내보내기", "⬇ Export saves"],
   ["처음 화면으로", "Back to start"],
   ["받는 중…", "Downloading…"],
-  ["- 메인 메뉴 순서 정리 — 의회 › 입법 › 여론 › 선거 › 내각 › 국가 › 도움말 (도움말 하위 탭도 같은 순서)", "- Main menu order — Parliament › Legislation › Opinion › Elections › Cabinet › Nation › Help (help sub-tabs follow the same order)"],
-  ["- 파벌 카드 개편 — 정당처럼 약칭 칸, ⋮⋮ 끌어서 순서 바꾸기 (서브 이념 목록도 ⋮⋮ 끌기)", "- Faction cards reworked — an abbreviation field like parties, drag ⋮⋮ to reorder (sub-ideology lists too)"],
-  ["- 이념 고르기를 [이념] [서브 이념] 두 칸으로 — 서브 이념을 고르면 그걸로, 비워 두면 이념 그대로 (정당 · 파벌 · 무소속 의원)", "- Ideology picker split into [Ideology] [Sub-ideology] — a chosen sub-ideology is used, otherwise the ideology (parties · factions · independents)"],
-  ["- 로고 바탕을 당색 · 흰색 · 투명 중에서 고름 (바탕이 흰 로고도 깔끔하게), 의석 통계 카드에서 로고가 잘리던 문제 수정", "- Logo background: party color · white · transparent (logos with white backgrounds look clean); fixed logos being cropped in seat stat cards"],
-  ["- 지도 지역구 이름 — 지도 앱처럼 화면에서 늘 같은 크기, 너무 작은 지역은 숨겼다가 확대하면 보임, 이름끼리 겹치면 숨김. 국가 › 국가 설정에 \"지역구 이름 표시\" · \"의석 수 박스 표시\" 체크", "- Map district names keep a constant on-screen size like map apps, hide when too small (appear when zoomed) or overlapping. Nation › Settings has \"Show district names\" · \"Show seat count boxes\""],
-  ["- 양원제 · 삼원제에서 원마다 원내대표 — 정당 카드에 그 정당이 참여하는 원마다 원내대표 칸, 의석 통계 카드에는 그 원의 원내대표 (예전 세이브의 원내대표는 하원 원내대표로)", "- Floor leaders per chamber in bicameral · tricameral setups — one floor leader slot per chamber the party sits in; seat stat cards show that chamber's floor leader (older saves' floor leader becomes the lower-house one)"],
-  ["- 정식 출시 준비 — 정식 출시 스위치(js/official.js): 켜면 이 판에서는 플레이만 막고 Steam 상점 링크 · 세이브 내보내기(골라서 .hemi · .json) 제공", "- Release prep — an official-release switch (js/official.js): when on, this build only blocks play and offers a Steam store link · save export (pick saves, .hemi · .json)"],
-  ["원마다 원내대표", "Floor leaders per chamber"],
-  ["맵 메이커 그림 추적", "Map maker image tracing"],
-  ["필수 자동 업데이트", "Mandatory auto-update"],
-  ["- 의원 · 내각에서 가져오기 — 지금 의석 · 당수 · 원내대표 · 내각 자리에 적힌 이름으로 인물을 만들고 연결 (같은 이름은 한 사람)", "- Import from seats — create people from names already on seats · party leaders · floor leaders · cabinet posts and link them (same name = one person)"],
-  ["- 한 사람은 한 원에 의석 하나 — 지역구에 당선되면 같은 원의 비례 자리는 비움, 후보가 없으면 같은 정당 현역이 다시 그 자리에", "- One seat per chamber per person — winning a district frees their list seat in that chamber; without a candidate, a same-party incumbent keeps the seat"],
-  ["- 지난 선거 요약 (당선 · 배정 / 낙선), 이름 검색 · 자리 있음 · 자리 없음 · 지역구 후보 필터, ⋮⋮ 끌어서 순서", "- Last election summary (elected · assigned / lost), name search · seated · unseated · candidate filters, drag ⋮⋮ to reorder"],
-  ["- 원마다 원내대표 자리 (양원제 · 삼원제)", "- Floor leader posts per chamber (bicameral · tricameral)"],
   ["- 의회 › 의회 설정에 의장석 표시 설정 (모든 미리보기 공통)", "- Speaker podium display setting in Parliament › Settings (all previews)"],
-  ["- 의회 › 의회 설정에 의장석 표시 설정 — 반원 가운데에 의장석(단상과 의장)을 늘 그릴지", "- Speaker podium setting in Parliament › Settings — whether to always draw the podium and speaker at the centre of the hemicycle"],
-  ["- 위원회 표결을 위원 의석에서 — 본회의 표결처럼 의석을 누르거나 끌어서 의원 한 명씩 찬성 · 반대 · 기권, 정당별 한 번에 정하기. 위원장은 맨 위 가운데, 여당 쪽 · 야당 쪽이 마주 보는 두 줄 (정당 순서대로)", "- Committee votes on the committee seat map — like floor votes, click or drag seats to set each member to yea · nay · abstain, or set a whole party at once. The chair sits at the top centre, with the ruling and opposition sides on two facing benches (in party order)"],
-  ["- 위원회 찬반 고르기가 잘려 보이던 문제 수정", "- Fixed committee yea/nay choices being clipped"],
-  ["- 법안 태그 고르기 — 법안을 쓰거나 고칠 때 상임위원회 소관 태그를 눌러 붙이거나 새 태그를 입력", "- Bill tag picker — when writing or editing a bill, click a committee's jurisdiction tags or type a new tag"],
-  ["- 1.6.1 미리보기(Teaser 1.6.1)를 본 게임에 통합하고 미리보기 화면은 삭제 — 예전 1.6.1 미리보기 세이브는 시작 화면에서 본 게임 세이브로 옮겨짐 (사람 · 시민 · 이민자 · 의장석)", "- Merged the 1.6.1 preview (Teaser 1.6.1) into the main game and removed the preview page — old 1.6.1 preview saves move into the main game's saves on the start screen (people · citizens · migrants · speaker podium)"],
-  ["- 버전 표시 v1.6.1", "- Version label v1.6.1"],
-  ["위원회 의석 표결", "Committee seat-map votes"],
   ["법안 태그 고르기", "Bill tag picker"],
-  ["원 · 위원회별 표결 기록", "Vote records per chamber · committee"],
   ["헌법 탭", "Constitution tab"],
-  ["의회 › 세력 변화 · 정당 역사 도표", "Parliament › Power shifts · party history charts"],
-  ["위키 틀 (원내 · 원외)", "Wiki box (in · out of parliament)"],
-  ["세계 › 국가 순위 · 진영", "World › country ranking · blocs"],
   ["경제 탭 (잠김, 1.6.9)", "Economy tab (locked, 1.6.9)"],
   ["우클릭 내보내기", "Right-click export"],
-  ["- 의회 › 세력 변화 — 시점마다 의석을 기록(총선을 의회에 반영하면 자동), 오른쪽 시각 화면에 의석 변화 도표(정당이 생기고 · 커지고 · 줄고 · 사라지는 흐름, 집권 표시)와 당 변화 계보도(창당 · 당명 변경 · 승계 · 소멸), 막대 · 흐름을 누르면 자세히", "- Parliament › Power shifts — record seats over time (automatic when an election is applied); seat-change chart (parties forming · growing · shrinking · vanishing, ruling marked) and party lineage (founding · renaming · succession · dissolution) on the right; click bars · flows for details"],
-  ["- 위키 틀 — 나무위키식 원내 구성 틀(정당 로고 · 의석 · 양원 나눠 표시 · 공동교섭단체 각주), 원내 · 원외 전환(원외 정당 목록), 위키 문법 복사 · 미리보기", "- Wiki box — namu-wiki style composition box (party logos · seats · split houses · joint-group footnotes), toggle in/out of parliament (extra-parliamentary list), copy wiki markup · preview"],
   ["- 세계 메뉴 신설 — 국가 순위(오른쪽 시각 탭, 국기 · 점수 고치기) · 진영, 경제 메뉴는 색만 정해 두고 잠금 (1.6.9)", "- New World menu — country ranking (right display tab, flags · scores) · blocs; Economy menu reserved and locked (1.6.9)"],
-  ["- 새 시각 화면(위키 틀 · 순위 · 세력 변화)도 우클릭으로 PNG · SVG 내보내기", "- New visuals (wiki box · ranking · power shifts) export to PNG · SVG via right-click"],
-  ["- 내각 › 왕실 탭 — 왕가마다 계승 규칙(남계만 · 남자 우선 · 성별 무관)과 주장자(⋮⋮ 끌기가 출생 순), 정당마다 지지 주장자, 예시 왕가(서독이면 호엔촐레른가 · 비텔스바흐가)", "- Cabinet › Royal house tab — succession rules per dynasty (male-only · male-preference · equal) and claimants (drag ⋮⋮ = birth order), backing parties per claimant, sample dynasties (Hohenzollern · Wittelsbach for West Germany)"],
-  ["- 왕정복고 — 지지 정당이 하원 과반이면 의회 결의로 입헌군주제, 아니면 왕당파 쿠데타(입헌 · 전제 선택), 국호가 \"○○ 왕국\"으로 바뀌고 새 기본법 · 헌법", "- Restoration — by parliamentary resolution if backers hold a lower-house majority (constitutional), otherwise a royalist coup (constitutional or absolute); the country becomes \"… Kingdom\" with a new basic law · constitution"],
-  ["- 서거 · 퇴위 계승, 계승 분쟁은 의회 표결 · 내전으로 결판, 입헌 개혁(전제 → 입헌), 공화 혁명이 성공하면 국호 복원", "- Succession on death · abdication, disputes settled by parliamentary vote · civil war, constitutional reform (absolute → constitutional), the old name returns after a republican revolution"],
-  ["- 미수복 지역 이름 색 — 그 종류의 빗금 색으로 할지 전체를 한 색으로 할지 고름", "- Unrecovered region label color — use each type's hatch color or one color for all"],
-  ["- 버전 표시 v1.6.0", "- Version label v1.6.0"],
   ["법안을 만들고 통과시키는 과정입니다. 메뉴 위의 단계 막대(제출 › 위원회 › 본회의 › 서명 · 기록 › 법령)에 단계마다 법안 수가 보이고, 누르면 그 탭으로 갑니다.", "The process of drafting bills and getting them passed. The stage bar above the menu (Submit › Committees › Floor › Signing · Records › Statutes) shows the number of bills at each stage — click one to jump to that tab."],
   ["새 법안 작성 — 종류(법률안 · 헌법 개정안), 제목, 조문(제1조 · 제2조 … 조 단위로 쓰고 순서를 바꿈), 태그, 가결 기준. 기존 법안 수정과 개정안도 여기서.", "Draft a new bill — type (bill · constitutional amendment), title, articles (written article by article, Article 1, Article 2 …, reorderable), tags and passage threshold. Editing existing bills and amendments is here too."],
   ["고르면 지금 헌법 조문이 채워지고 가결 기준이 2/3로 바뀝니다. 가결되면 그 조문이 새 헌법이 돼요.", "Choosing it fills in the current constitution's articles and sets the threshold to 2/3. If it passes, those articles become the new constitution."],
@@ -9053,7 +8323,6 @@ window.DnoLangPacks.en = {
   ["직책 (예: 외교부 장관)", "Position (e.g. Minister of Foreign Affairs)"],
   ["[궐석]", "[Vacant]"],
   ["보궐선거로 채우기", "Fill by by-election"],
-  ["- 국가 › 종속국 탭 신설 — 종속국마다 이름 · 색 · 종속 형태(보호국 · 보호령 · 괴뢰국 · 자치령 · 동군연합 … — 형태 목록은 직접 추가 · 이름 바꾸기 · 지우기), 칠하기 도구로 지도에서 여러 지역구를 한 번에 그 나라 땅으로 지정", "- A new Nation › Dependencies tab — each dependency has a name, color and form (protectorate · protected territory · puppet state · dominion · personal union … — add, rename or remove forms as you like), and the paint tool marks many districts on the map as its land at once"],
   ["보호령", "Protected territory"],
   ["동군연합", "Personal union"],
   ["신탁통치령", "Trust territory"],
@@ -9062,9 +8331,6 @@ window.DnoLangPacks.en = {
   ["기본 목록으로", "Reset to defaults"],
   ["— 직접 추가 · 이름 바꾸기 · 지우기", "— add, rename or remove"],
   ["종속 형태 목록을 기본 목록으로 되돌릴까요? (이미 정한 나라의 형태는 그대로)", "Reset the list of dependency forms to the defaults? (Countries keep the form they already have)"],
-  ["- 종속국 땅은 모든 지도에서 그 나라 색 점무늬로 표시 (미수복 지역의 빗금과 구별), 본국 총선 지역구 · 지방선거 · 국민투표에서 빠지고 지역구 의석 수에서도 빠짐", "- Dependency land shows on every map as dots in its color (unlike the hatching of unrecovered territory) and is left out of home-nation district elections, local elections, referendums and the district seat count"],
-  ["- 종속국 의회 — 의회 이름 · 의석 수 · 봉쇄조항 · 정당(지지율 · 의석), \"본국 정당 가져오기\", 선거 실시(봉쇄조항 + 동트 방식), 반원형 의석 그림", "- Dependency parliaments — name, seat count, threshold and parties (support · seats), \"Import home parties\", elections (threshold + D'Hondt) and a small hemicycle chart"],
-  ["- 해방한 나라는 독립국으로 지도에 따로 표시되고 세계 › 국가 순위에 오름, 다시 종속국으로 삼거나 지역구에서 아예 뺄 수 있음", "- Released countries show on the map as independent states and join World › Country ranking; they can be made dependencies again or removed from the districts entirely"],
   ["종속국 · 종속국 의회 · 합병 · 해방 (+1.6.1 ~ 1.6.7)", "Dependencies · dependency parliaments · annexation · release (+1.6.1 ~ 1.6.7)"],
   ["종속국 만들기 · 칠하기 · 종속국 의회와 선거 · 합병 · 해방", "Creating dependencies · painting · dependency parliaments and elections · annexation · release"],
   ["종속국 만들기", "Creating a dependency"],
@@ -9086,43 +8352,16 @@ window.DnoLangPacks.en = {
   ["속국", "Vassal"],
   ["— 아님 (본국 지역구) —", "— None (home district) —"],
   ["+ 새 종속국", "+ New dependency"],
-  ["- 시민 · 이민자 — 지역구 인구를 시민권자와 이민자로 나눔 (국가 › 지역에서 지역구마다 \"시민 / 인구\", 비우면 인구 전체가 시민)", "- Citizens · immigrants — split each district's population into citizens and immigrants (\"citizens / population\" per district in Nation › Districts; leave it blank and everyone is a citizen)"],
-  ["- 이민자 투표권 — 시민은 모든 선거에서 투표, 이민자는 선거마다(대선 · 총리 직선 / 총선 / 지방선거 / 국민투표) 투표할 수 있는지 정함 (선거 › 방식)", "- Immigrant voting rights — citizens vote in every election; choose per election (presidential · direct PM / general / local / referendum) whether immigrants may vote (Elections › System)"],
-  ["- 이민자 성향 — 따로 정하면 이민자가 투표하는 선거에서 지역구마다 시민 · 이민자 수만큼 섞어 개표 (총선 비례 · 대선은 전국 수로), 지방선거 · 국민투표는 유권자 수도 바뀜", "- Immigrant leanings — when set, elections where immigrants vote blend them in by each district's citizen and immigrant numbers (national totals for list seats and presidential votes); local elections and referendums also change their electorate"],
-  ["시민 · 이민자 · 이민자 투표권", "Citizens · immigrants · immigrant voting rights"],
   ["이민자 투표권", "Immigrant voting rights"],
   ["— 시민권자는 모든 선거에서 투표합니다", "— citizens vote in every election"],
   ["대선 · 총리 직선", "Presidential · direct PM"],
   ["이민자 성향 따로 정하기", "Set immigrant leanings separately"],
   ["선거 › 방식에서 설정", "Set in Elections › System"],
   ["시민", "Citizens"],
-  ["경제 시스템 (메뉴 › 경제)", "Economy system (Menu › Economy)"],
   ["통화 · 재정 정책", "Monetary · fiscal policy"],
-  ["지역구 경제", "District economies"],
-  ["예산안 · 예상 표결", "Budget bills · predicted votes"],
-  ["초기값 · 사용자 정의 항목", "Starting values · custom items"],
-  ["- 경제 시스템 추가 (메뉴 › 경제) — 개요 · 통화 · 재정 · 지역 · 시나리오 · 항목", "- Economy system (Menu › Economy) — Overview · Monetary · Fiscal · Regions · Scenario · Items"],
-  ["- 경제 그래프 (오른쪽 시각 탭) — 지표 추이(예측 점선 · 위기 · 총선 표시), 예산(세입 · 세출 구성), 자산 추이, 경제 궤적(실업 × 인플레이션), 지역 비교 · 지역구 지도, 우클릭 내보내기", "- Economy charts (right-hand visual tab) — indicator trends (dashed forecast, crisis and election markers), budget (revenue and spending mix), asset trends, economic path (unemployment × inflation), district comparison and map, right-click export"],
   ["경제 그래프", "Economy charts"],
-  ["- 날짜를 따라 계산 — 기본 1분기(1개월 · 1년도 가능), 날짜가 분기 경계를 지나면 지난 만큼 계산 (날짜를 직접 고쳐도 · 되돌리면 이어서)", "- Follows the date — one quarter by default (a month or a year also possible); when the date crosses a quarter boundary the periods that passed are computed (also when the date is edited directly; rewinding continues from the new date)"],
-  ["- 통화 정책 — 기준금리, 화폐발행률, 양적완화 · 양적긴축 · 평가절하, 중앙은행 독립(자동 금리)", "- Monetary policy — policy rate, money printing rate, QE · QT · devaluation, central bank independence (automatic rate)"],
-  ["- 재정 — 재량지출(군비 · 과학 · 교육 · 인프라 · 복지 …)과 누적 자산, 의무지출(이자 · 연금 · 실업급여), 세목별 세율, 재정수지 · 국가부채", "- Public finance — discretionary spending (military · science · education · infrastructure · welfare …) and the assets it builds, mandatory spending (interest · pensions · unemployment benefits), tax rates by tax, budget balance · national debt"],
-  ["- 지역구 경제 — 산업구조 · 연령구조 · 소득등급 · 실업률 · 민심, 같은 정책도 지역마다 다르게 작용", "- District economies — industry mix · age structure · income level · unemployment · public mood; the same policy hits each district differently"],
-  ["- 의회 연동 — 예산안 · 세법 개정안을 법안으로 표결(못 넘기면 준예산), 정당 · 의원별 예상 표결", "- Parliament — budget and tax bills go to a vote (if they fail, last year's budget carries over), with predicted votes per party and member"],
-  ["- 경제 성과가 지지율 · 지역구 성향에 반영 (설정)", "- Economic performance moves party support and district leanings (optional)"],
-  ["- 위기 이벤트 — 하이퍼인플레이션 · 국가부도 · 대공황 · 자본 도피 · 통화 붕괴, 쿠데타 · 혁명 경고", "- Crisis events — hyperinflation · sovereign default · depression · capital flight · currency collapse, with coup and revolution warnings"],
-  ["- 이벤트 탭 — 정한 날짜에 대공황 · 금융 위기 · 오일 쇼크 · 하이퍼인플레이션 · 국가 부도 · 경제 붕괴 · 재해 · 호황(또는 직접 만든 사건)을 일으킴, 기간 · 세기 설정", "- Events tab — trigger a depression · financial crisis · oil shock · hyperinflation · sovereign default · economic collapse · disaster · boom (or your own event) on a chosen date, with duration and strength"],
-  ["- 성장률은 전년 대비, 그래프 칸은 실제 시간 길이대로(1개월 · 1분기 · 1년), 국가부채 · 국고 · 세입 · 세출 · 이자 금액 표시", "- Growth is year over year, chart spacing follows real time (month · quarter · year), and debt · treasury · revenue · spending · interest are shown as amounts"],
   ["경제권", "Economic blocs"],
   ["- 경제권 — 여러 나라를 묶어 경제권(관세 동맹 · 공동시장 · 통화 동맹 …)을 정하고 경제에 반영", "- Economic blocs — group countries into blocs (customs union · common market · currency union …) that affect the economy"],
-  ["- 초기값 시나리오(고정 · 전환 · 구간)와 프리셋, 사용자 정의 지출 항목 · 세목 · 자산", "- Starting-value scenarios (locked · transition · schedule) and presets, custom spending items · taxes · assets"],
-  ["- 개요 화면 — 지표마다 반원 계기(안전 · 경고 · 위기 구간)와 겹쳐 보는 큰 추이 그래프, 신용등급(AAA ~ D), 경제 체제(계획 ↔ 시장)", "- Overview — a semicircle gauge per indicator (safe · warning · crisis bands) and one large trend chart with overlaid indicators, credit rating (AAA to D), economic system (planned ↔ market)"],
-  ["- 예산 반원 · 가로 막대 중 골라 보는 세출 · 세입 구성과 재정 적자", "- Spending and revenue mix with the deficit, shown as a budget hemicycle or two horizontal bars"],
-  ["- 국고(흑자 적립 · 부채 상환 · 투자) · 부채 한도(법안으로 상향), 지출 묶음(국방 · 민간 …)", "- Treasury reserves (surpluses saved, debt repayment, investment) · debt ceiling (raised by law), spending groups (defense · civilian …)"],
-  ["- 경제 경고 신호(실질 마이너스 성장 · 인플레이션 위험 · 과도한 적자 · 부채 위험 · 국고 과잉 · 금융 위기)", "- Economic warning signs (negative real growth · inflation critical · excessive deficit · critical debt · bloated reserves · financial crisis)"],
-  ["경제 그래프 · 전문가 분석", "Economy charts · expert analysis"],
-  ["- 전문가 분석 — 연동 다중 패널(같은 십자선 · 기간 확대 · 로그 눈금 · 침체 음영), 예측 부채꼴, 성장 · 인플레이션 기여도 분해, 부채 동학(r − g), 정책 민감도, 예산 흐름도, 지역 산점도, 데이터 표 · CSV", "- Expert analysis — linked multi-panel charts (shared crosshair · range zoom · log scale · recession shading), forecast fan charts, growth and inflation decomposition, debt dynamics (r − g), policy sensitivity, budget flow diagram, district scatter, data table · CSV"],
-  ["- 분석 프리셋(경기 순환 · 인플레이션 · 재정 건전성 · 지역 격차)과 크게 보기", "- Analysis presets (business cycle · inflation · fiscal health · regional gaps) and full-screen view"],
   ["개요", "Overview"],
   ["분석", "Analysis"],
   ["통화", "Monetary"],
@@ -9208,8 +8447,6 @@ window.DnoLangPacks.en = {
   ["전후 재건", "Postwar reconstruction"],
   ["구제금융", "Bailout"],
   ["전시 체제", "War economy"],
-  ["- 서독 튜토리얼은 1983년 서독 경제 · 주별 산업구조로 시작, 미수복 지역을 통일하면 동독 주가 편입되고 통일 비용이 듦 · 종속국 땅은 집계에서 빠지고 공납 세입", "- The West German tutorial starts with the 1983 West German economy and state industry mixes; reunifying the unrecovered territory brings in the East German states at a reunification cost · dependency land is left out of national totals and pays tribute"],
-  ["- 1.6.5 국가 순위 · 세력 변화, 1.6.2 쿠데타 · 1.6.3 혁명(민심 붕괴 경고), 1.6.6 왕실 예산과 연동", "- Linked with the 1.6.5 ranking and power shifts, 1.6.2 coups and 1.6.3 revolutions (collapse-of-mood warnings), and 1.6.6 royal budgets"],
   ["궐석", "Vacant"],
   ["SVG · 그림(webp · png · jpg · bmp, 자동 추적) · .jsx · .hemimap 지도를 지역구 지도(.jsx — 모양만) 또는 지역구 프리셋(.hemimap — 모양 · 이름 · 약칭 · 의석 수 · 인구)으로 — 만든 파일은 국가 › 지역구 지도에서 불러옵니다", "Turn SVG · images (webp · png · jpg · bmp, auto-traced) · .jsx · .hemimap maps into a district map (.jsx — shapes only) or a district preset (.hemimap — shapes · names · abbreviations · seats · population) — load the file in Country › District map"],
   ["같은 색 이웃 합치기", "Merge same-color neighbors"],
@@ -9233,11 +8470,9 @@ window.DnoLangPacks.en = {
   ["직접 정하기", "Set manually"],
   ["정당마다 위원 수를 정합니다 (위원 수 = 합계). 의석이 바뀌어도 그대로이고, \"자동 (의석 비례)\"로 돌리면 이 합계로 다시 나눠요.", "Set each party's member count (committee size = the total). It stays when seats change; switching back to \"Auto (by seats)\" re-splits this total by seats."],
   ["기본은 \"자동 (의석 비례)\" — 위원 수를 그 원의 정당 의석 비율대로 나눕니다. \"직접 정하기\"로 바꾸면 정당마다 위원 수를 직접 넣고(위원 수 = 합계), 의석이 바뀌어도 그대로예요. 켤 때는 지금 자동 배정에서 시작합니다.", "Default is \"Auto (by seats)\" — members are split by each party's seats in that chamber. Switch to \"Set manually\" to enter each party's member count (committee size = the total); it stays the same when seats change. It starts from the current automatic split."],
-  ["- 입법 › 위원회에서 위원 구성을 직접 정하기 — 위원회마다 \"자동 (의석 비례)\" / \"직접 정하기\"를 골라 정당별 위원 수를 넣음 (위원 수 = 합계, 의석이 바뀌어도 그대로), 해산된 정당은 위원을 받지 않음", "- Set committee membership manually in Legislation › Committees — pick \"Auto (by seats)\" or \"Set manually\" per committee and enter each party's member count (size = the total, unchanged when seats change); dissolved parties get no members"],
   ["무당층", "Undecided"],
   ["개표 때마다 무당층 표가 이 지역 정당들에 나뉩니다 (일부는 무작위, 나머지는 성향 비율대로 · 성향 0인 정당은 받지 않음)", "At each count, undecided votes are split among this area's parties (partly random, the rest by tendency · parties at 0 get none)"],
   ["지역구 · 권역마다 성향 칸 아래에 무당층(%)을 정할 수 있습니다. 개표 때마다 무당층 표를 그 지역에 후보를 낸 정당들에 나눠 더해요 — 일부(무작위 비율)는 정당마다 난수로, 나머지는 성향 × 친화도(0.5~1.5 난수) 비율로. 성향이 0인 정당은 받지 않아 무당층만으로 당선되지는 않고, 결과가 덜 뻔해집니다. 총선 지역구와 지방선거에 쓰여요. 지역구에 따로 정하지 않으면 권역 성향을 쓰는 지역구는 권역 무당층을 따릅니다.", "Under the tendency fields of each district or region you can set an undecided share (%). At every count, undecided votes are split among the parties running there — a random portion by a random number per party, the rest by tendency × affinity (random 0.5–1.5). Parties at 0 tendency get none, so undecided votes alone never elect anyone; results just become less predictable. Used for general-election districts and local elections. A district without its own value follows its region's undecided share when it uses the region's tendency."],
-  ["- 여론 › 시민 성향에 무당층 — 지역구 · 권역마다 성향 칸 아래에 무당층(%)을 정하면, 개표 때마다 그 표가 후보를 낸 정당들에 나뉨 (여론 › 지지율의 무당파와 같은 방식: 일부는 무작위, 나머지는 성향 비율대로, 성향 0인 정당은 받지 않음) — 총선 지역구 · 지방선거에 반영, 성향 지도 툴팁에도 표시", "- Undecided share in Opinion › Citizen lean — set an undecided (%) under each district's or region's tendency fields and, at every count, those votes are split among the parties running there (same way as the undecided row in Opinion › Polling: partly random, the rest by tendency, none to parties at 0) — used for general-election districts and local elections, and shown in the tendency map tooltip"],
   ["지역구 프리셋(.hemimap) 파일입니다. 세이브를 연 뒤 국가 › 지역구 지도의 \"지역구 지도 업로드\"로 올리면 그 세이브의 지역구만 바뀝니다.", "This is a district preset (.hemimap). Open a save, then upload it with \"Upload district map\" in Country › District map to replace only that save's districts."],
   ["지역구 프리셋(.hemimap) 파일입니다.\n국가 › 지역구 지도의 \"지역구 지도 업로드\"로 올리면 지금 세이브의 지역구만 바뀝니다.", "This is a district preset (.hemimap).\nUpload it with \"Upload district map\" in Country › District map to replace only this save's districts."],
   ["종합 프리셋 (.hemi)", "Full preset (.hemi)"],
@@ -9257,8 +8492,6 @@ window.DnoLangPacks.en = {
   ["종합 프리셋(.hemi) 파일입니다.\n저장 창의 \"종합 프리셋 불러오기\"로 여세요. 여기서는 지역구 프리셋(.hemimap)과 맵 메이커 지도(.jsx)를 올립니다.", "This is a full preset (.hemi).\nOpen it with \"Load full preset\" in the save window. This field takes district presets (.hemimap) and map maker maps (.jsx)."],
   ["지역구 프리셋(.hemimap)이나 맵 메이커 지도(.jsx)가 아닙니다.", "This isn't a district preset (.hemimap) or a map maker map (.jsx)."],
   ["지역구를 만들고 원별 의석 수 · 인구를 정합니다. 맵 메이커에서 만든 지도(.jsx)를 올리면 실제 지도 모양의 지역구를 쓸 수 있고, 지역구 프리셋(.hemimap)을 올리면 지도 · 이름 · 의석 수 · 인구 · 권역이 한 번에 들어와요 (정당 · 내각은 그대로). (1.5.9까지는 여론 › 지역구)", "Create districts and set seats and population per chamber. Upload a map made in the map maker (.jsx) to use real map shapes, or a district preset (.hemimap) to bring in the map, names, seats, population and regions at once (parties and cabinet stay). (Up to 1.5.9 this was Opinion › Districts)"],
-  ["- 종합 프리셋 · 지역구 프리셋 나누기 — 저장 창의 파일 칸이 \"종합 프리셋 (.hemi)\"(세이브 전체 내보내기 · 불러오기)와 \"지역구 프리셋 (.hemimap)\"으로 나뉨. \"지역구만 내보내기\"는 지역구 지도(따로 쓰는 원의 지도 포함) · 이름 · 약칭 · 원별 의석 수 · 인구 · 권역만 담고(정당 · 성향 · 선거 결과는 빼고), 국가 › 지역구 지도의 업로드 칸(.jsx와 같은 칸)에 올리면 정당 · 내각은 그대로 둔 채 지역구만 바뀜", "- Full presets and district presets are separate — the save window's file section splits into \"Full preset (.hemi)\" (export/load the whole save) and \"District preset (.hemimap)\". \"Export districts only\" saves just the district map (including separate chamber maps), names, abbreviations, seats per chamber, population and regions (no parties, tendencies or results); uploading it in Country › District map (same field as .jsx) replaces only the districts and keeps parties and cabinet"],
-  ["- 경제 시각 탭 전체 내보내기 — 그래프 밖에서 우클릭하면 지금 보이는 경제 화면 전체(계기 · 신용등급 · 경고 신호 · 금액 카드 · 그래프 · 표)를 PNG · JPG · SVG 한 장으로, 그래프 위에서는 그 그래프만 (글자는 화면 글꼴 그대로)", "- Export the whole economy visual tab — right-click outside a chart to export everything on the economy screen (gauges · credit rating · warning signals · amount cards · charts · tables) as one PNG · JPG · SVG; right-click a chart to export just that chart (text keeps the screen font)"],
   ["비례 득표율 따로 정하기", "Set list vote separately"],
   ["이 원의 비례 의석 · 봉쇄조항은 \"비례(%)\" 값으로 나눕니다 (권역형 비례는 권역 득표). 지역구(성향)와 대선 · 지방선거 · 여론은 지지율을 그대로 써요. 위성정당 예: 모정당 비례 0%, 위성정당 지지율 0% · 비례 N%.", "This chamber's list seats and threshold are allocated by the \"List(%)\" values (regional lists use regional votes). Districts (tendency), presidential and local elections and opinion keep using support. Satellite party example: parent party list 0%, satellite support 0% · list N%."],
   ["비례(%)", "List(%)"],
@@ -9277,13 +8510,8 @@ window.DnoLangPacks.en = {
   ["시나리오 — 초기값(고정 · 전환 · 구간)과 프리셋.", "Scenario — starting values (fixed · transition · range) and presets."],
   ["이벤트 — 정한 날짜에 대공황 · 금융 위기 · 오일 쇼크 · 하이퍼인플레이션 · 국가 부도 · 재해 · 호황(또는 직접 만든 사건)을 일으킵니다.", "Events — trigger a great depression, financial crisis, oil shock, hyperinflation, sovereign default, disaster or boom (or your own event) on a set date."],
   ["항목 — 사용자 정의 지출 항목 · 세목 · 자산.", "Items — custom spending items, taxes and assets."],
-  ["- 비례 득표율 따로 정하기 — 여론 › 지지율에서 원마다 켜면 정당마다 \"비례(%)\" 칸이 생겨(지금 지지율을 복사해 시작) 그 원의 비례 의석 · 봉쇄조항(전국형)은 이 값으로 나눔, 지역구 · 대선 · 지방선거 · 여론은 지지율 그대로 — 위성정당처럼 지지율과 비례 표가 갈라지는 선거(예: 2024년 한국 총선)", "- Set list vote separately — turn it on per chamber in Opinion › Polling and each party gets a \"List(%)\" field (starting from current support); that chamber's list seats and threshold (national lists) use these values, while districts, presidential and local elections and opinion keep using support — for elections where support and list votes diverge, like satellite parties (e.g. the 2024 South Korean election)"],
-  ["- 1.6.9 미리보기(Teaser 1.6.9)를 본 게임에 통합하고 미리보기 화면은 삭제 — 예전 1.6.9 미리보기 세이브는 시작 화면에서 본 게임 세이브로 옮겨짐 (경제 · 후보 선출 방법 · 공동교섭단체 · 정권 상태별 부정선거), 경제 미리보기 전용 코드는 없앰", "- Merged the 1.6.9 preview (Teaser 1.6.9) into the main game and removed the preview page — old 1.6.9 preview saves move to the main save list from the start screen (economy · candidate selection methods · joint negotiating groups · regime-dependent fraud); the economy-preview-only code is retired"],
-  ["- 버전 표시 v1.6.9", "- Version shown as v1.6.9"],
   [" (해산)", " (dissolved)"],
   [" (활동 금지)", " (banned)"],
-  ["- 혁명 — 활동 금지 · 해산된 정당도 혁명 정당 · 혁명 연합으로 고를 수 있음 (지하 활동, 성공하면 복권 · 원래 이름으로 재건)", "- Revolutions — banned and dissolved parties can lead or join a revolution (underground); if it succeeds they are reinstated, dissolved ones under their old names"],
-  ["- 고친 점: 해산된 정당(\"*해산됨*\")이 총선 · 대선 · 지방선거에 나와 의석을 얻어 의회에 다시 들어오던 문제", "- Fixed: dissolved parties (\"*해산됨*\") ran in general, presidential and local elections and won their way back into parliament"],
   ["활동 금지 대신 부정선거 규탄 여론 — 지지율 20% 하락", "no ban; public outrage over the fraud — support −20%"],
   ["활동 금지 대신 왕실 스캔들 — 지지율 25% 하락 (혁명 확률 상승)", "no ban; royal scandal — support −25% (revolution more likely)"],
   ["활동 금지 대신 관제 선거 의혹 — 지지율 15% 하락", "no ban; suspicions of a rigged state election — support −15%"],
@@ -9298,7 +8526,6 @@ window.DnoLangPacks.en = {
   ["발각 확률은 그대로, 발각되면 활동 금지. 계엄령 · 전제군주정 · 군정(관제 선거)에서는 정권 쪽 정당은 덜 발각되고 처벌도 가벼워요.", "Detection odds as set; a caught party is banned. Under martial law, absolute monarchy or a junta (managed election), regime-side parties are caught less often and punished more lightly."],
   ["관제 선거 허용", "Allow managed elections"],
   ["켜면 군정 중에도 총선 · 대선 · 지방선거를 치릅니다. 군부 쪽 정당의 부정선거는 거의 들키지 않고(×0.2) 들켜도 지지율만 떨어지지만, 야당이 들키면 강제 해산돼요.", "When on, general, presidential and local elections go ahead under the junta. Fraud by military-aligned parties is rarely caught (×0.2) and only costs support, but a caught opposition party is forcibly dissolved."],
-  ["- 정권 상태에 따른 부정선거 — 계엄령 · 전제군주정 · 군정에서 정권 쪽 정당은 덜 들키고(×0.5 · ×0.3 · ×0.2) 들켜도 활동 금지 대신 지지율 하락(왕정은 왕실 스캔들), 야당은 더 들키고(×1.5) 활동 금지 + 지지율 절반, 군정은 \"관제 선거\"를 허용하면 선거를 치름", "- Election fraud by regime — under martial law, absolute monarchy and a junta, regime-side parties are caught less (×0.5 · ×0.3 · ×0.2) and lose support instead of being banned (a royal scandal under the crown), while the opposition is caught more (×1.5) and banned with support halved; a junta can hold elections once \"managed elections\" is allowed"],
   ["동일 후보수 분배", "Equal split"],
   ["의석수 비례 분배", "Split by seats"],
   ["현직 우선", "Incumbent first"],
@@ -9324,11 +8551,8 @@ window.DnoLangPacks.en = {
   ["공동교섭단체 해산", "Dissolve joint group"],
   ["+ 공동교섭단체 구성", "+ Form joint negotiating group"],
   ["의석이 있는 정당이 없습니다", "No party holds seats"],
-  ["- 후보 선출 방법 더하기 — 후보 단일화(총선 지역구 · 대선)와 지방선거 연대에 동일 후보수 분배 · 의석수 비례 분배 · 현직 우선 · 추첨 (지지율 1위 · 지지율 비례 분배 · 예비선거에 더해)", "- More ways to pick candidates — candidate unions (general-election districts · presidential) and local election alliances gain equal split · split by seats · incumbent first · lottery (on top of top support · split by support · primary)"],
-  ["- 공동교섭단체 — 의회 › 집권과 연정에서 교섭단체 기준에 못 미치는 정당들이 함께 교섭단체를 이룸, 교섭단체 현황, 위키 틀에 각주로 표시", "- Joint negotiating groups — in Parliament › Government & coalitions, parties below the threshold form a negotiating group together; negotiating-group overview; shown as a footnote in the wiki box"],
   ["후보 선출 방법 · 공동교섭단체", "Candidate selection methods · joint negotiating groups"],
   ["● 창당 · 당명 변경 / 곡선으로 합쳐짐 = 승계 / ✕ 소멸 · 줄 · 이름을 누르면 자세히", "● founded · renamed / curve = succession / ✕ dissolved · click a line or name for details"],
-  ["- 의회 › 세력 변화의 당 변화(정당 계보도) 개편 — 정당이 많으면 이름표가 겹치던 문제 고침: 줄 폭을 이름에 맞추고(많으면 가로 스크롤), 긴 이름은 \"…\"로 줄이고 전체 이름은 위 범례 · 마우스 올리기 · 누르기로", "- Reworked the party lineage chart in Parliament › Power shifts — fixed name labels overlapping when there are many parties: lanes fit the names (scrolling sideways when there are many), long names are shortened with \"…\", and full names show in the legend above, on hover and on click"],
   ["지지율 1위", "Top support"],
   ["지지율 비례 분배", "Split by support"],
   ["예비선거", "Primary"],
@@ -9341,7 +8565,6 @@ window.DnoLangPacks.en = {
   ["지지율 1위(기본) · 지지율 비례 분배(총선 지역구를 참여 정당의 전체 지지율 비율대로 나눠 맡음, 대선 · 총리 선거는 지지율 비례 추첨) · 예비선거(참여 정당 지지 + 일반 유권자 여론조사(유동층)를 정한 비율로 섞은 경선). 대선 · 총리 선거의 추첨 · 경선은 단일화 카드에서 한 번 치러 후보를 정해 둡니다.", "Top support (default) · split by support (general-election districts divided by the member parties' overall support; presidential/PM elections drawn by lot weighted by support) · primary (member-party support mixed with a general-public poll of swing voters at a set ratio). For presidential/PM elections, the draw or primary is held once on the union card to fix the candidate."],
   ["결집률", "Consolidation"],
   ["후보를 내지 않는 참여 정당의 표가 단일후보에게 가는 비율(기본 100%, 경선을 치르면 +5%p). 총선 지역구에서 결집하지 않은 표는 다른 정당으로 흩어져요.", "The share of the non-running member parties' votes that go to the single candidate (100% by default, +5%p after a primary). In general-election districts, votes that don't consolidate scatter to other parties."],
-  ["- 후보 단일화(선거 › 후보)의 단일후보 정하기 — 지지율 1위 · 지지율 비례 분배(총선 지역구를 전체 지지율 비율대로 나눠 맡음, 대선 · 총리 선거는 비례 추첨) · 예비선거(지역 지지 + 유동층 여론조사 경선), 결집률", "- Choosing the single candidate for candidate unions (Elections › Candidates) — top support · split by support (general-election districts divided by overall support; presidential/PM elections by weighted draw) · primary (local support + swing-voter poll), consolidation rate"],
   ["아직 칠한 땅이 없습니다", "No land painted yet"],
   ["의회 이름", "Parliament name"],
   ["지지율 %", "Support %"],
@@ -9379,19 +8602,11 @@ window.DnoLangPacks.en = {
   ["권역 · 지역구마다 연대 안에서 지지율이 가장 높은 정당이 후보가 돼요. 결집하지 않은 표는 다른 정당으로 흩어져요.", "In each region and district, the alliance party with the highest support becomes the candidate. Votes that don't consolidate scatter to other parties."],
   ["정당을 두 곳 이상 고르세요.", "Pick at least two parties."],
   ["+ 연대 추가", "+ Add alliance"],
-  ["- 1.6.8 미리보기(Teaser 1.6.8)를 본 게임에 통합하고 미리보기 화면은 삭제 — 예전 1.6.8 미리보기 세이브는 시작 화면에서 본 게임 세이브로 옮겨짐 (종속국 · 종속국 의회 · 지방선거 연대)", "- The 1.6.8 preview (Teaser 1.6.8) is merged into the main game and the preview page removed — old 1.6.8 preview saves move into the main save list from the start screen (dependencies · dependency parliaments · local election alliances)"],
-  ["- 버전 표시 v1.6.8", "- Version shown as v1.6.8"],
   ["Give me liberty, or give me death! : 갈라질 수도 없고 분리될 수도 없다", "Give me liberty, or give me death! : Indivisible and inseparable"],
   ["혁명 연합", "Revolutionary coalition"],
   ["여러 정당이 함께 일으킵니다 — 연합 정당의 지지율 · 앞서는 지역도 성공 확률에 더하고, 실패하면 연합 정당도 함께 활동 금지돼요.", "Several parties rise up together — the coalition parties' support and the areas they lead also add to the chance of success, and if it fails the coalition parties are banned too."],
   ["평의회 체제", "Council state"],
   ["혁명 연합으로 공산주의 혁명에 성공하면 고를 수 있어요 — 연합 정당이 모두 남아 경쟁 선거로 정권을 주고받고(최고평의회 · 평의회 의장), 연합 밖 정당은 활동 금지. 당-국가 체제를 고르면 연합 정당은 우당이 됩니다.", "Available when a communist revolution succeeds with a revolutionary coalition — every coalition party survives and they trade power through competitive elections (Supreme Council · Chair of the Council), while parties outside the coalition are banned. Choose the party-state instead and the coalition parties become allied parties."],
-  ["혁명 연합 · 평의회 체제", "Revolutionary coalition · council state"],
-  ["- 혁명 연합 — 공산주의 · 민주 혁명을 여러 정당이 함께 일으킴 (연합 정당의 지지율 · 앞서는 지역이 성공 확률에 더해지고, 실패하면 함께 활동 금지)", "- Revolutionary coalition — several parties can launch a communist or democratic revolution together (the coalition parties' support and leading areas add to the chance of success; if it fails they are all banned)"],
-  ["- 숨겨진 정부 형태: 평의회 체제 — 혁명 연합의 공산주의 혁명이 성공하면 당-국가 체제(연합 정당은 우당) 대신 고를 수 있음, 연합 정당끼리 경쟁 선거로 정권 교체(최고평의회 · 평의회 의장), 연합 밖 정당은 활동 금지", "- Hidden form of government: council state — when a coalition's communist revolution succeeds, choose it instead of the party-state (where coalition parties become allied parties); coalition parties change power through competitive elections (Supreme Council · Chair of the Council) and parties outside the coalition are banned"],
-  ["지방선거 연대 · 예비선거", "Local election alliances · primaries"],
-  ["- 지방선거 연대 — 여러 정당이 연대해 권역 · 지역구마다 단일후보를 냄 (총선 지역구 단일화와 따로 정함)", "- Local election alliances — several parties field a single candidate in each region and district (set separately from general-election district unions)"],
-  ["- 예비선거 — 그 지역의 연대 정당 지지와 일반 유권자 여론조사(유동층)를 정한 비율로 섞은 경선으로 단일후보를 정함, 또는 지지율 1위가 후보 · 결집률(연대 표가 단일후보에게 가는 비율)", "- Primaries — pick the single candidate by a primary that mixes local support for the alliance parties with a general-public poll (swing voters) at a set ratio, or simply take the top party · consolidation rate (the share of alliance votes that go to the single candidate)"],
   ["영토 통일 (전체)", "Reunify all territory"],
   ["칠하기", "Paint"],
   ["칠하는 중", "Painting"],
@@ -9421,38 +8636,15 @@ window.DnoLangPacks.en = {
   ["\"통합\"은 그 종류만, \"영토 통일 (전체)\"는 모든 미수복 지역을 되찾아 일반 지역구로 돌립니다 (선거 · 의석에 다시 포함).", "\"Integrate\" recovers just that kind; \"Reunify all territory\" recovers every unrecovered territory and turns it back into regular districts (counted in elections and seats again)."],
   ["이름 색", "Name color"],
   ["미수복 지역의 지역구 이름을 다른 지역과 같은 색으로 할지, 그 종류의 빗금 색으로 할지 고릅니다.", "Choose whether unrecovered districts are labeled in the same color as other areas or in their kind's hatch color."],
-  ["- 1.6.7 미리보기(Teaser 1.6.7)를 본 게임에 통합하고 미리보기 화면은 삭제 — 예전 1.6.7 미리보기 세이브는 시작 화면에서 본 게임 세이브로 옮겨짐 (미수복 지역 · 영토 통일), 서독 튜토리얼은 동독 주가 미수복 지역으로 시작", "- The 1.6.7 preview (Teaser 1.6.7) is merged into the main game and the preview page removed — old 1.6.7 preview saves move into the main save list from the start screen (unrecovered territory · reunification); the West Germany tutorial starts with the East German states as unrecovered territory"],
-  ["- 버전 표시 v1.6.7", "- Version shown as v1.6.7"],
   ["Give me liberty, or give me death! : 즉시, 지체 없이", "Give me liberty, or give me death! : Immediately, without delay"],
   ["여론 시스템 완성", "Complete public-opinion system"],
   ["기사 시스템 추가", "New article system"],
   ["경제권 추가", "Economic blocs"],
   ["경제 시스템 소규모 보완", "Small economy improvements"],
-  ["언론 시스템 확장", "Expanded media system"],
   ["여론조사", "Opinion polls"],
-  ["정당 내부 정치", "Intra-party politics"],
-  ["당대표 경선", "Leadership contests"],
   ["분당", "Party splits"],
   ["시위", "Protests"],
-  ["파업", "Strikes"],
-  ["시민운동", "Civic movements"],
-  ["지방의회", "Local councils"],
   ["지방정부", "Local governments"],
-  ["연방제", "Federalism"],
-  ["정치 협상", "Political negotiation"],
-  ["연정 협약", "Coalition agreements"],
-  ["정책 거래", "Policy deals"],
-  ["선거운동", "Campaigning"],
-  ["공약", "Pledges"],
-  ["후보 토론", "Candidate debates"],
-  ["선거자금", "Campaign finance"],
-  ["정치인 경력", "Politician careers"],
-  ["인맥", "Connections"],
-  ["평판", "Reputation"],
-  ["정치적 생애", "Political lives"],
-  ["정치 기록 통합", "Unified political records"],
-  ["정권 평가", "Government evaluations"],
-  ["국내 정치 시스템 완성", "Domestic politics, complete"],
   ["- 여론 › 기사 탭 신설 — 기사 작성·수정·삭제·발행", "- New Opinion › Articles tab — write, edit, delete and publish articles"],
   ["- 기사 제목, 부제, 본문, 작성일, 언론사, 기자, 대표 사진 설정", "- Set an article's headline, subhead, body, date, outlet, reporter and lead photo"],
   ["- 기사 유형 추가 — 정치·경제·사회·국제·사설·속보", "- Article types — politics, economy, society, world, editorial, breaking news"],
@@ -9474,113 +8666,6 @@ window.DnoLangPacks.en = {
   ["- 통화동맹의 공동 통화·기준금리 설정", "- Common currency and policy rate for currency unions"],
   ["- 경제권 가입에 따른 무역량·물가·성장률 보정", "- Bloc membership adjusts trade volume, prices and growth"],
   ["- 경제권 관련 조약과 가입·탈퇴 기록", "- Record of bloc treaties, accessions and withdrawals"],
-  ["- 경제권별 회원국 경제지표 비교표 추가", "- Table comparing member economies within each bloc"],
-  ["- 여론 › 언론사 탭 신설", "- New Opinion › Media outlets tab"],
-  ["- 언론사 생성·수정·폐간", "- Create, edit and shut down outlets"],
-  ["- 언론사 이름·로고·창간일·본사 소재지 설정", "- Set an outlet's name, logo, founding date and headquarters"],
-  ["- 언론사 유형 — 신문·방송·통신사·인터넷 언론", "- Outlet types — newspaper, broadcaster, news agency, online media"],
-  ["- 언론사별 정치 성향과 정당 선호도 설정", "- Each outlet's political leaning and party preferences"],
-  ["- 언론사 신뢰도·영향력·독자층 설정", "- Each outlet's credibility, influence and audience"],
-  ["- 기사에 언론사별 보도 성향과 영향력 반영", "- Articles reflect their outlet's slant and influence"],
-  ["- 여론조사 기관 생성 및 조사 결과 작성", "- Create polling firms and write up their results"],
-  ["- 정당 지지율·국정 지지율·선거 후보 지지율 조사", "- Polls on party support, approval ratings and candidate support"],
-  ["- 표본 크기·오차범위·조사 방식 설정", "- Set sample size, margin of error and polling method"],
-  ["- 실제 지지율과 여론조사 발표 수치 구분", "- Actual support kept separate from published poll numbers"],
-  ["- 언론 자유도, 검열, 언론사 폐쇄·활동 금지 기능", "- Press freedom, censorship, and closing or banning outlets"],
-  ["- 언론사별 기사 목록과 보도 기록 열람", "- Browse each outlet's articles and coverage history"],
-  ["- 의회 › 정당에 당내 정치 관리 기능 추가", "- Intra-party politics in Parliament › Parties"],
-  ["- 정당별 당원 수·당비·조직 규모 설정", "- Each party's membership, dues and organization size"],
-  ["- 당대표·원내대표 임기 및 선출 방식 설정", "- Terms and selection methods for party leaders and floor leaders"],
-  ["- 당대표 경선 — 당원 투표·대의원 투표·의원총회", "- Leadership contests — member vote, delegate vote or caucus"],
-  ["- 경선 후보 등록 및 후보별 득표율 설정", "- Register contest candidates and set their vote shares"],
-  ["- 파벌별 당원·의원·지도부 구성 관리", "- Manage each faction's members, MPs and leadership"],
-  ["- 파벌 간 갈등도와 정당 결속도 설정", "- Set factional conflict and party cohesion"],
-  ["- 당내 정책 노선 투표와 당론 결정", "- Internal votes on policy direction and the party line"],
-  ["- 당론에 반대한 의원에 대한 징계·제명", "- Discipline or expel MPs who defy the party line"],
-  ["- 파벌의 집단 탈당과 신당 창당", "- Factions walk out en masse and found new parties"],
-  ["- 정당 분열 시 의석·의원·당원·지지율 분배", "- Split seats, MPs, members and support when a party breaks up"],
-  ["- 기존 합당 시스템과 연결해 분당·합당 계보 기록", "- Party family trees of splits and mergers, linked to the merger system"],
-  ["- 전당대회 및 당대표 교체 이력 추가", "- History of party conventions and leadership changes"],
-  ["- 여론 › 시민사회 탭 신설", "- New Opinion › Civil society tab"],
-  ["- 시민단체·노동조합·학생단체·이익집단 생성", "- Create civic groups, trade unions, student groups and interest groups"],
-  ["- 단체별 회원 수·정치 성향·활동 지역 설정", "- Set each group's membership, leaning and area of activity"],
-  ["- 시위·집회·행진·파업·총파업 개최", "- Hold protests, rallies, marches, strikes and general strikes"],
-  ["- 시위 목적 설정 — 법안 반대·정권 퇴진·선거 요구·정책 변경 등", "- Protest goals — oppose a bill, topple the government, demand elections, change a policy and more"],
-  ["- 시위 참가자 수와 지역별 참여율 설정", "- Set turnout and regional participation"],
-  ["- 시위 규모에 따른 정부 지지율·경제활동 영향", "- Large protests hit government approval and economic activity"],
-  ["- 정부 대응 — 협상·양보·방관·집회 제한·강제 해산", "- Government responses — negotiate, concede, ignore, restrict assembly, disperse by force"],
-  ["- 시위 중 충돌·체포·부상 등 사건 기록", "- Record clashes, arrests and injuries during protests"],
-  ["- 집회·결사의 자유와 노동권 관련 법률 연동", "- Linked to laws on freedom of assembly and association and labor rights"],
-  ["- 계엄령·독재·혁명 시스템과 시민운동 연결", "- Civic movements linked to martial law, dictatorship and revolution"],
-  ["- 지역별 시위 발생 현황 지도 표시", "- Map of protests by region"],
-  ["- 주요 시민운동의 역사와 결과 기록", "- History and outcomes of major civic movements"],
-  ["- 기존 지방선거 시스템에 지방의회 선거 추가", "- Local council elections added to the local election system"],
-  ["- 권역별 지방의회 생성 및 의석 수 설정", "- Create regional councils and set their seats"],
-  ["- 지방의회별 정당 구성·의장·집권 세력 관리", "- Manage each council's party makeup, speaker and ruling bloc"],
-  ["- 지방정부의 단체장·부단체장·행정부 구성", "- Form local executives — heads, deputies and administrations"],
-  ["- 지방의회 조례 발의·표결·개정·폐지", "- Propose, vote on, amend and repeal local ordinances"],
-  ["- 지방정부 예산·지방세·지방채 설정", "- Set local budgets, local taxes and local bonds"],
-  ["- 중앙정부와 지방정부 간 재정 이전", "- Fiscal transfers between central and local government"],
-  ["- 단일국가·연방국가·지역국가 체제 설정", "- Choose unitary, federal or regional state structures"],
-  ["- 중앙정부와 지방정부의 입법·행정 권한 배분", "- Divide legislative and executive powers between central and local government"],
-  ["- 연방 구성국별 헌법·의회·정부 설정", "- Constitutions, legislatures and governments for each federal state"],
-  ["- 지방정부의 자치권 확대·축소", "- Expand or curb local autonomy"],
-  ["- 중앙정부의 지방정부 해산·직무 정지", "- The central government dissolves or suspends local governments"],
-  ["- 지방선거·지방의회·지방정부 변동 기록", "- Record of changes in local elections, councils and governments"],
-  ["- 지역구 지도에서 지방정부별 정치 현황 확인", "- See each local government's politics on the district map"],
-  ["- 의회 › 집권과 연정에 연정 협상 기능 추가", "- Coalition negotiations in Parliament › Government & coalitions"],
-  ["- 정당별 협상 대표와 협상 참여 정당 지정", "- Name each party's negotiators and the parties at the table"],
-  ["- 연정 협약서 작성 및 정책 합의 사항 등록", "- Draft coalition agreements and record policy commitments"],
-  ["- 연정 협약에 법안·예산·헌법 개정 등 정책 목표 연결", "- Tie coalition agreements to goals such as bills, budgets and constitutional amendments"],
-  ["- 정당별 장관직·정부 직책 배분", "- Share out ministries and government posts among parties"],
-  ["- 소수정부의 신임공급 협약 설정", "- Confidence-and-supply deals for minority governments"],
-  ["- 법안별 정당 간 협상 및 수정안 교환", "- Bill-by-bill negotiation and exchange of amendments"],
-  ["- 협상 타결·결렬·중단 기록", "- Record talks that succeed, collapse or stall"],
-  ["- 연정 협약 이행 여부 표시", "- Track whether coalition agreements are kept"],
-  ["- 협약 위반에 따른 정당 간 신뢰도 변화", "- Broken agreements change trust between parties"],
-  ["- 연정 탈퇴·재협상·붕괴 절차 추가", "- Procedures for leaving, renegotiating or collapsing a coalition"],
-  ["- 불신임안·조기 총선·내각 개편과 연정 협상 연동", "- Linked to no-confidence motions, snap elections and reshuffles"],
-  ["- 연정 협약서와 협상 결과 내보내기", "- Export coalition agreements and negotiation results"],
-  ["- 선거 › 선거운동 탭 신설", "- New Elections › Campaign tab"],
-  ["- 총선·대선·지방선거별 선거운동 기간 설정", "- Campaign periods for general, presidential and local elections"],
-  ["- 정당 및 후보별 선거운동 일정 관리", "- Manage campaign schedules for parties and candidates"],
-  ["- 선거 공약 작성과 정책 분야별 분류", "- Write campaign pledges, sorted by policy area"],
-  ["- 공약에 세금·복지·경제·외교 등 정책 목표 연결", "- Tie pledges to policy goals such as tax, welfare, economy and foreign affairs"],
-  ["- 지역별 유세와 선거운동 효과 설정", "- Regional rallies and their campaign effects"],
-  ["- TV 토론·후보 토론회 개최", "- Hold TV debates and candidate forums"],
-  ["- 토론 참가 후보·주제·평가 결과 입력", "- Enter debate participants, topics and verdicts"],
-  ["- 정당별 선거자금·후원금·선거비용 관리", "- Manage each party's campaign funds, donations and spending"],
-  ["- 정치자금 관련 법률과 지출 한도 설정", "- Political finance laws and spending limits"],
-  ["- 선거운동 사건 — 후보 사퇴·실언·스캔들·공약 변경", "- Campaign events — withdrawals, gaffes, scandals, changed pledges"],
-  ["- 선거운동에 따른 지역별 지지율 변화", "- Campaigning shifts regional support"],
-  ["- 선거운동 종료 후 최종 지지율과 실제 개표 결과 비교", "- Compare final polling with the actual count after the campaign"],
-  ["- 선거별 공약·유세·토론·자금 사용 기록 보관", "- Archive each election's pledges, rallies, debates and spending"],
-  ["- 기존 인물 시스템에 정치인 상세 프로필 추가", "- Detailed politician profiles in the people system"],
-  ["- 정치인 출생일·출생지·학력·직업·정치 입문일 설정", "- Set birth date, birthplace, education, occupation and entry into politics"],
-  ["- 정치인별 이념·정책 성향·정치적 목표 설정", "- Each politician's ideology, policy leanings and political goals"],
-  ["- 정치인 경력 기록 — 의원·장관·당대표·총리·대통령 등", "- Career record — MP, minister, party leader, prime minister, president and more"],
-  ["- 정당 입당·탈당·복당·당적 변경 이력", "- History of joining, leaving, rejoining and switching parties"],
-  ["- 정치인 간 관계 설정 — 협력·경쟁·갈등·후원", "- Relationships between politicians — allies, rivals, feuds, patrons"],
-  ["- 정치인별 대중 인지도·호감도·신뢰도·평판", "- Each politician's name recognition, favorability, trust and reputation"],
-  ["- 지역구 기반 정치적 영향력과 개인 지지율", "- Local power base and personal support"],
-  ["- 정치인 스캔들·수사·기소·유죄 판결 기록", "- Record scandals, investigations, indictments and convictions"],
-  ["- 정치인의 사임·은퇴·사망·정계 복귀", "- Resignations, retirements, deaths and comebacks"],
-  ["- 의원직 승계와 보궐선거 절차 연동", "- Linked to seat succession and by-elections"],
-  ["- 정치인별 선거 출마·당선·낙선 기록", "- Each politician's runs, wins and losses"],
-  ["- 정치인 개인 연표와 경력 카드 내보내기", "- Export a politician's timeline and career card"],
-  ["- 국가 › 역사 탭 신설", "- New Country › History tab"],
-  ["- 정당·의회·선거·내각·언론·시민운동 기록 통합", "- One record of parties, parliament, elections, cabinets, media and civic movements"],
-  ["- 정권별 집권 기간과 주요 사건 자동 정리", "- Each government's time in office and key events, summarized automatically"],
-  ["- 역대 대통령·총리·내각 목록", "- Lists of past presidents, prime ministers and cabinets"],
-  ["- 정권별 경제성장률·물가·실업률·재정 지표 비교", "- Compare growth, inflation, unemployment and fiscal figures by government"],
-  ["- 정권별 지지율 변화와 주요 기사 연결", "- Each government's approval history linked to key articles"],
-  ["- 선거 공약 이행 여부와 정책 성과 평가", "- Rate pledges kept and policy results"],
-  ["- 정당별 장기 지지율·의석·집권 기간 비교", "- Compare parties' long-run support, seats and time in power"],
-  ["- 정치인별 재임 기간과 주요 활동 통계", "- Each politician's time in office and activity statistics"],
-  ["- 시위·파업·정권 교체 등 주요 사건 연대기", "- Chronicle of major events such as protests, strikes and changes of government"],
-  ["- 특정 날짜의 의회 구성·정부·여론 상태 조회", "- Look up parliament, government and opinion on any date"],
-  ["- 정치 연표 필터 — 정당·정부·선거·경제·사회", "- Timeline filters — parties, government, elections, economy, society"],
-  ["- 국가 정치사 보고서 생성 및 이미지·CSV 내보내기", "- Generate a national political history report and export it as image or CSV"],
-  ["- 1.7 전체 기능의 저장 호환성·성능·UI 최종 정리", "- Final pass on save compatibility, performance and UI across all of 1.7"]
+  ["- 경제권별 회원국 경제지표 비교표 추가", "- Table comparing member economies within each bloc"]
  ]
 };

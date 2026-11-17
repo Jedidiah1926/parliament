@@ -9,7 +9,7 @@
 (function () {
     'use strict';
 
-    const THEME_KEY = 'dnoThemeColor';
+    const THEME_KEY = 'hemiThemeColor';
     const DEFAULT_COLOR = '#00ffff';
 
     function safeGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }

@@ -4,15 +4,15 @@
 // - 내 챌린지는 이 브라우저 · 앱의 IndexedDB에 저장 (세이브 파일을 시작으로 쓰면 그 세이브도 함께)
 // - 내보내기: .hemiscn (gzip으로 압축한 JSON — 세이브 .hemi와 같은 방식), 불러오기: .hemiscn · .json
 // - 시험 플레이: 챌린지를 sessionStorage(크면 IndexedDB)에 맡기고 시작 프리셋/세이브로 main.html을 연다 (js/challenge.js가 받음)
-/* global DnoPresets, DnoUI */
+/* global HemiPresets, HemiUI */
 (function () {
     'use strict';
     const FORMAT = 'hemicycle-challenge@1';
     const OLD_FORMAT = 'hemicycle-scenario@1'; // 0.3.0 처음 판의 이름
     const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
     const $ = id => document.getElementById(id);
-    const alertBox = (m, t) => (window.DnoUI && DnoUI.alert ? DnoUI.alert(m, t ? { title: t } : undefined) : Promise.resolve(alert(m)));
-    const confirmBox = m => (window.DnoUI && DnoUI.confirm ? DnoUI.confirm(m) : Promise.resolve(confirm(m)));
+    const alertBox = (m, t) => (window.HemiUI && HemiUI.alert ? HemiUI.alert(m, t ? { title: t } : undefined) : Promise.resolve(alert(m)));
+    const confirmBox = m => (window.HemiUI && HemiUI.confirm ? HemiUI.confirm(m) : Promise.resolve(confirm(m)));
     const uid = p => p + '_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 
     // ---------------------------------------------------------------
@@ -225,8 +225,8 @@
         try {
             if (st.kind === 'save') { startInfo = st.state ? summarize(st.state) : { nation: '(세이브를 고르세요)', date: '', parties: [] }; }
             else {
-                const p = await DnoPresets.find(st.preset);
-                const state = p ? await DnoPresets.loadState(p) : null;
+                const p = await HemiPresets.find(st.preset);
+                const state = p ? await HemiPresets.loadState(p) : null;
                 if (tok !== loadToken) return;
                 startInfo = state ? summarize(state) : { nation: '(프리셋을 읽지 못함)', date: '', parties: [] };
             }
@@ -304,21 +304,21 @@
         const scn = { ...d, start: { kind: st.kind, preset: st.preset, name: st.name } }; // 시작 세이브는 따로 넘김
         const name = d.title || '챌린지';
         try {
-            ['hemiBootCampaign','hemiBootCampaignPending','hemiBootChallenge','hemiBootChallengePending','dnoBootPresetId','dnoBootNewSaveName','dnoBootImportedStateJSON','dnoBootImportedName','dnoBootImportPending'].forEach(k=>sessionStorage.removeItem(k));
+            ['hemiBootCampaign','hemiBootCampaignPending','hemiBootChallenge','hemiBootChallengePending','hemiBootPresetId','hemiBootNewSaveName','hemiBootImportedStateJSON','hemiBootImportedName','hemiBootImportPending'].forEach(k=>sessionStorage.removeItem(k));
             const text = JSON.stringify(scn);
             try { sessionStorage.setItem('hemiBootChallenge', text); }
             catch (e) { await window.HemiFile.stash('bootChallenge', { text }); sessionStorage.setItem('hemiBootChallengePending', '1'); }
             if (st.kind === 'save') {
                 const stateText = JSON.stringify(st.state);
-                try { sessionStorage.setItem('dnoBootImportedStateJSON', stateText); sessionStorage.setItem('dnoBootImportedName', name); }
+                try { sessionStorage.setItem('hemiBootImportedStateJSON', stateText); sessionStorage.setItem('hemiBootImportedName', name); }
                 catch (e) {
-                    sessionStorage.removeItem('dnoBootImportedStateJSON');
+                    sessionStorage.removeItem('hemiBootImportedStateJSON');
                     await window.HemiFile.stash('bootImport', { name, text: stateText });
-                    sessionStorage.setItem('dnoBootImportPending', '1');
+                    sessionStorage.setItem('hemiBootImportPending', '1');
                 }
             } else {
-                sessionStorage.setItem('dnoBootPresetId', st.preset || 'builtin:tutorial');
-                sessionStorage.setItem('dnoBootNewSaveName', name);
+                sessionStorage.setItem('hemiBootPresetId', st.preset || 'builtin:tutorial');
+                sessionStorage.setItem('hemiBootNewSaveName', name);
             }
         } catch (e) { alertBox('챌린지를 넘기지 못했습니다. (저장 공간 부족)'); return; }
         location.href = 'main.html';
@@ -340,7 +340,7 @@
     window.addEventListener('beforeunload', () => { if (saveTimer) saveNow(); });
 
     (async function init() {
-        try { presets = window.DnoPresets ? await DnoPresets.list() : []; } catch (e) { presets = []; }
+        try { presets = window.HemiPresets ? await HemiPresets.list() : []; } catch (e) { presets = []; }
         const all = (await dbAll().catch(() => [])).sort((a, b) => b.updatedAt - a.updatedAt);
         let last = null; try { last = localStorage.getItem(LAST); } catch (e) { /* 무시 */ }
         const params=new URLSearchParams(location.search), requested=params.get('item');

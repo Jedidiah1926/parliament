@@ -43,7 +43,7 @@ const base = process.env.STUDIO_TEST_URL || 'http://127.0.0.1:8000';
             assert.deepEqual([cur.world.countries[0].key, cur.starts[0].worldBindings.rep, cur.events[0].options[0].effects[0].transfer_regions.to.key, cur.articles[0].trigger.all[1].owns_regions.country.key, cur.focus[1].available.all[1].owns_regions.country.key], ['rep', 'w_republic', 'rep', 'rep', 'rep']);
             assert.deepEqual(await p.evaluate(() => HemiCampaignEditor.check()), []);
             await p.locator('[data-wc="0"] [data-wckey]').fill('federation'); await p.locator('[data-wc="0"] [data-wckey]').blur();
-            assert.match(await p.locator('.dno-dialog-msg').innerText(), /겹치지 않게/); await p.locator('.dno-dialog-btn:not(.cancel)').click();
+            assert.match(await p.locator('.hemi-dialog-msg').innerText(), /겹치지 않게/); await p.locator('.hemi-dialog-btn:not(.cancel)').click();
             assert.equal((await data()).world.countries[0].key, 'rep');
             await p.locator('[data-wc="0"] [data-wckey]').fill('republic'); await p.locator('[data-wc="0"] [data-wckey]').blur();
             assert.equal(JSON.stringify(await data()), original);
@@ -109,7 +109,7 @@ const base = process.env.STUDIO_TEST_URL || 'http://127.0.0.1:8000';
             const file = await download.path(), fs = require('node:fs');
             await p.evaluate(() => { const d2 = HemiCampaignEditor.data; d2.world = { countries: [] }; d2.events = []; HemiCampaignEditor.data = d2; });
             await p.evaluate(bytes => { HemiCampaignEditor.importFile(new File([new Uint8Array(bytes)], 'border.hemicmp')); }, [...fs.readFileSync(file)]);
-            await p.locator('.dno-dialog-btn:not(.cancel)').click(); // 같은 시나리오가 이미 있음 → 덮어쓰기
+            await p.locator('.hemi-dialog-btn:not(.cancel)').click(); // 같은 시나리오가 이미 있음 → 덮어쓰기
             await p.waitForFunction(() => HemiCampaignEditor.data.events.length === 2);
             const back = await data(); back.id = 'border_editor';
             assert.equal(JSON.stringify(back), original);
@@ -215,12 +215,12 @@ const base = process.env.STUDIO_TEST_URL || 'http://127.0.0.1:8000';
         // 결정 — 연결한 국가가 사라지면 실행하지 않고 사용 기록 · 플래그도 남기지 않는다. 고치면 다시 할 수 있다
         await dropRepublic();
         await p.evaluate(id => HemiScriptMods.take(id, 'cede_island'), mod);
-        assert.match(await p.locator('.dno-dialog-overlay, .custom-alert, #customAlertOverlay').last().innerText(), /실행할 수 없습니다[\s\S]*국가 순위에 없습니다/);
+        assert.match(await p.locator('.hemi-dialog-overlay, .custom-alert, #customAlertOverlay').last().innerText(), /실행할 수 없습니다[\s\S]*국가 순위에 없습니다/);
         await p.keyboard.press('Enter'); await settle(p);
         assert.deepEqual(await p.evaluate(id => [HemiScriptMods.state.taken[id]?.cede_island ?? null, !!HemiScriptMods.flags(id).island_taken, HemiWorldMap.state.owners.island], mod), [null, false, 'w_federation']);
         // 방향성 — 완료 효과가 틀리면 완료로 기록하지 않는다
         await p.evaluate(() => HemiCampaign.startFocus('survey')); await p.evaluate(() => HemiCampaign.nextTurn()); await settle(p);
-        assert.match(await p.locator('.dno-dialog-overlay, .custom-alert, #customAlertOverlay').last().innerText(), /완료할 수 없습니다/);
+        assert.match(await p.locator('.hemi-dialog-overlay, .custom-alert, #customAlertOverlay').last().innerText(), /완료할 수 없습니다/);
         await p.keyboard.press('Enter'); await settle(p);
         assert.deepEqual(await p.evaluate(id => [HemiCampaign.state.focus.cur?.id, !!HemiCampaign.state.focus.done.survey, !!HemiScriptMods.flags(id).focus_survey, !!HemiScriptMods.flags(id).surveyed], mod), ['survey', false, false, false]);
         await restoreRepublic();
@@ -300,16 +300,16 @@ const base = process.env.STUDIO_TEST_URL || 'http://127.0.0.1:8000';
         await p.evaluate(() => { for (const id of ['wmClear', 'wmUndo', 'wmRedo', 'wmAddCountry']) { const b2 = document.getElementById(id); b2.disabled = false; b2.click(); } const t = document.querySelector('[data-wm-tool="erase"]'); t.disabled = false; t.click(); document.querySelector('[data-wm-key="capital"]').dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 0 })); });
         await settle(p);
         assert.deepEqual(await owners(p), START);
-        assert.equal(await p.locator('.dno-dialog-overlay').count(), 0); // 지우기 확인 창도 뜨지 않는다
+        assert.equal(await p.locator('.hemi-dialog-overlay').count(), 0); // 지우기 확인 창도 뜨지 않는다
         assert.match(await p.locator('#wmRegion').innerText(), /수도 · /);
         const rowsBefore = await p.evaluate(() => HemiHistory.ranking.rows.length);
         await p.locator('#wmFile').setInputFiles({ name: 'other.hemimap', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(F.map())) });
-        assert.match(await p.locator('.dno-dialog-msg').innerText(), /영토를 직접 수정할 수 없습니다/); await p.locator('.dno-dialog-btn:not(.cancel)').click();
+        assert.match(await p.locator('.hemi-dialog-msg').innerText(), /영토를 직접 수정할 수 없습니다/); await p.locator('.hemi-dialog-btn:not(.cancel)').click();
         assert.deepEqual(await owners(p), START); assert.equal(await p.evaluate(() => HemiHistory.ranking.rows.length), rowsBefore);
         // 국가 순위에서 영토가 있는 국가를 지워 미배정으로 만드는 길도 막힌다
         await p.evaluate(() => switchSubTab('world', 'ranking')); await settle(p);
         await p.locator('[data-rdel="w_federation"]').click();
-        assert.match(await p.locator('.dno-dialog-msg').innerText(), /영토를 직접 수정할 수 없습니다[\s\S]*영토가 있습니다/); await p.locator('.dno-dialog-btn:not(.cancel)').click(); await settle(p);
+        assert.match(await p.locator('.hemi-dialog-msg').innerText(), /영토를 직접 수정할 수 없습니다[\s\S]*영토가 있습니다/); await p.locator('.hemi-dialog-btn:not(.cancel)').click(); await settle(p);
         assert.ok(await p.evaluate(() => HemiHistory.ranking.rows.some(r => r.id === 'w_federation')));
         // 경제권도 같다
         await p.evaluate(() => switchSubTab('world', 'econblocs')); await settle(p);

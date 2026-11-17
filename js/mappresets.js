@@ -5,7 +5,7 @@
 // districtConfirmReplaceMap) 지역구 이름 · 약칭을 함께 넣는다 (화면 언어가 영어면 영어 이름).
 (function () {
     'use strict';
-    const t = s => (window.DnoLang && typeof DnoLang.t === 'function' ? DnoLang.t(s) : s);
+    const t = s => (window.HemiLang && typeof HemiLang.t === 'function' ? HemiLang.t(s) : s);
     const isEn = () => (typeof window.getLang === 'function' ? window.getLang() : 'kr') === 'en';
     const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
     let loading = null, overlay = null;

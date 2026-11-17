@@ -20,7 +20,7 @@
     const clamp = (v, a = 0, b = 100) => Math.max(a, Math.min(b, v));
     const r1 = v => Math.round(v * 10) / 10;
     const el = html => { const d = document.createElement('div'); d.innerHTML = html.trim(); return d.firstChild; };
-    const tr = x => (window.DnoLang && window.DnoLang.t ? window.DnoLang.t(String(x)) : String(x)); // 사진(캔버스)에 그리는 글자는 화면 번역이 닿지 않으므로 직접
+    const tr = x => (window.HemiLang && window.HemiLang.t ? window.HemiLang.t(String(x)) : String(x)); // 사진(캔버스)에 그리는 글자는 화면 번역이 닿지 않으므로 직접
 
     const TYPES = [['politics', '정치'], ['economy', '경제'], ['society', '사회'], ['world', '국제'], ['editorial', '사설'], ['breaking', '속보']];
     const TYPE_LABEL = Object.fromEntries(TYPES);

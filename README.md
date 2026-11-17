@@ -25,11 +25,10 @@ Hemicycle(구 DATANET Parliament Simulation)은 설치나 빌드 없이 **브라
 | `index.html` | 시작 메뉴 · 시작하기 (SAVE SELECT) (새 플레이 · 이어하기) |
 | `maker.html` | 만들기 — 맵 · 시나리오 · 챌린지 제작물 목록, 새로 만들기 · 편집 · 삭제 |
 | `main.html` | 시뮬레이터 본체 (`js/main.js` · `css/main.css`) |
-| `dno.html` | 예전 주소 호환용 — `main.html`로 이동 |
 | `settings.html` | 설정 화면 (언어 선택) |
-| `roadmap.html` | 개발 로드맵 및 업데이트 내역 |
+| (로드맵) | 개발 로드맵 · 업데이트 내역은 웹([Jedidiah1926/hemicycleweb](https://github.com/Jedidiah1926/hemicycleweb))으로 옮김 — 메인 메뉴의 "로드맵 · 업데이트"가 웹 로드맵을 브라우저로 연다. 예전 화면(`old.html` · `old2.html`)도 웹으로 |
 | (미리보기 화면) | 다음 업데이트 미리보기(`teaserNN.html`) — 지금은 없음. 1.6.1 — 국가 › 사람 · 시민 · 이민자 · 의장석(`js/people.js` · `js/podium.js`) · 1.6.2 — 군부 · 쿠데타 · 군정(`js/coup.js`) · 1.6.3 — 혁명 · 당-국가 체제 · 선거인단(`js/revolution.js`) · 1.6.4 — 국회공성전(`js/siege.js`) · 1.6.5 — 세력 변화 · 위키 틀 · 세계(`js/history.js`) · 1.6.6 — 왕실 · 왕정복고 · 전제군주정(`js/royal.js`) · 1.6.7 — 미수복 지역 · 영토 통일(`js/unrecovered.js`) · 1.6.8 — 종속국 · 지방선거 연대(`js/vassals.js`) · 1.6.9 — 경제 시스템(메뉴 › 경제, `js/economy.js` + 그래프 `js/economycharts.js`) · 후보 선출 방법 · 공동교섭단체 · 정권 상태별 부정선거(`js/politics.js`)는 본 게임에 들어가 `main.html`이 읽음. `teaser61.html` ~ `teaser69.html`은 없앴고, 예전 미리보기 세이브(`hemicycleTeaserV2-번호:`)는 시작 화면이 본 게임 세이브로 옮김. 새 미리보기는 `tools/build-teaser.js`의 `TEASERS`와 `js/devmode.js`의 `TEASERS`에 적으면 `npm run build:teaser`가 만들고, 설정 › 기타 설정에서 개발자 모드를 켜야 열림. 설정 › 기타 설정 › 디버그 모드에서 숨겨진 정부 형태를 "보이기"로 하면 내각 › 정부 형태 · 권한의 정부 형태 아래에 쿠데타 · 혁명 · 왕정복고로만 들어가던 숨겨진 정부 형태(1.6.2 군정 · 1.6.3 당-국가 체제 · 1.6.6 전제군주정) 버튼이 나와 주사위 없이 바로 바꿈 (`js/devmode.js`의 `HemiDev.hiddenGov`, 저장 키 `hemicycleDebugHiddenGov`) |
-| `lang.js` | 언어 설정 저장 및 한국어→영어 실시간 치환 엔진 (`main.html`/`roadmap.html`에서 사용) |
+| `lang.js` | 언어 설정 저장 및 번역 엔진 — 키 번역(`lang/kr.js` · `lang/en.js`의 keys)과 한국어→영어 사전 치환 |
 
 `index.html` 또는 `main.html`을 브라우저에서 직접 열면 됩니다. Chrome, Firefox, Edge 최신 버전에서 동작하며, 한글 글꼴(네오둥근모 · Pretendard)은 `fonts/` 폴더에 함께 들어 있어 인터넷 없이도 보이고, 영문 보조 글꼴 VT323만 Google Fonts에서 불러옵니다.
 
@@ -59,7 +58,7 @@ npm run build:win     # Windows 설치형 exe 빌드 → dist/Hemicycle-Setup-<�
 - 데스크톱 앱은 로컬 파일(`localStorage`)에 세이브를 저장하므로 브라우저 버전과 데이터가 공유되지 않습니다.
 - **자동 업데이트** (`electron/updater.js`, electron-updater): `v`로 시작하는 태그를 올리면 `.github/workflows/release.yml`이 앱 버전을 태그로 맞춰(예: `v1.6.1-obt` → `1.6.1-obt`) 빌드하고, 설치 프로그램 · 압축판과 함께 업데이트 정보(`latest.yml` · `.blockmap`)를 Release에 올립니다. 업데이트는 **필수**입니다 — 켤 때와 4시간마다 Release를 확인해 새 버전이 있으면 설치할 때까지 모든 화면을 덮어 앱을 쓸 수 없게 합니다(`electron/preload.js`). 설치 프로그램으로 깐 앱은 새 버전을 받은 뒤 지금 세이브를 저장하고 다시 시작해 설치하고, 압축판은 릴리스 페이지에서 새 설치 프로그램을 받으라고 안내합니다. 인터넷이 안 돼 확인 자체를 못 하면 막지 않고, 받다가 실패하면 "다시 시도". Steam 판은 Steam이 업데이트합니다. 사전 출시판(`-obt` 등)을 쓰는 앱은 사전 출시 Release도 받습니다. 설정 › 기타 설정 › 업데이트에서 버전 · 진행 상황 확인.
 - 자동 업데이트는 이 기능이 들어간 버전부터 동작합니다 — 그 전 버전을 쓰는 사람은 새 설치 프로그램을 한 번 직접 받아야 합니다.
-- **정식 출시 스위치** (`js/official.js`): `official: false`(지금, OBT)면 그대로 플레이합니다. `true`로 바꾸면 이 판(웹 · GitHub 설치판)은 플레이만 막고 — 시작 화면 소식에 Steam 상점 링크(`steamUrl`, 비어 있으면 "준비 중"), "시작하기" 대신 "세이브 내보내기"(세이브를 골라 .hemi 또는 .json으로 받기), 게임 화면(main · Teaser)에는 Steam으로 안내하는 창이 덮고, 번역 템플릿 받기도 막습니다. 맵 메이커 · 변환 · 설정 · 로드맵은 그대로이고, Steam 판(`electron/steam.json`에 appId)은 막지 않습니다.
+- **정식 출시 스위치** (`js/official.js`): `official: false`(지금, OBT)면 그대로 플레이합니다. `true`로 바꾸면 이 판(웹 · GitHub 설치판)은 플레이만 막고 — 시작 화면 소식에 Steam 상점 링크(`steamUrl`, 비어 있으면 "준비 중"), "시작하기" 대신 "세이브 내보내기"(세이브를 골라 .hemi 또는 .json으로 받기), 게임 화면(main · Teaser)에는 Steam으로 안내하는 창이 덮고, 번역 템플릿 받기도 막습니다. 맵 메이커 · 설정 · 로드맵은 그대로이고, Steam 판(`electron/steam.json`에 appId)은 막지 않습니다.
 - **세이브 압축 저장** (`js/slotstore.js`, 웹 · 앱 공통): 브라우저 저장소(localStorage, 한도 약 5MB)의 세이브 목록은 세이브마다 상태를 gzip으로 압축해 `stateZ`에 담는다(한 글자에 15비트, 무손실 — 사진 · 지도도 그대로). 저장소 읽기 · 쓰기에 끼어들어 게임 코드는 압축 전 목록을 그대로 본다. 쓸 때는 먼저 그대로 저장하고 바뀐 세이브만 뒤에서 내장 압축(CompressionStream)으로 줄여 다시 쓰고, 공간이 모자라면 그 자리에서 바로 압축(고정 허프만 deflate)해 넣는다. 풀기는 내장 inflate로 바로. 예전 세이브는 열 때 한 번 압축됨. 보통 원래 크기의 약 1/4 (일본국 프리셋 3.4MB → 0.9MB). `.json` 내보내기는 줄 바꿈 없이, 앱 세이브 폴더의 `.hemi`는 gzip 최고 단계.
 - **세이브 폴더** (`electron/saves.js` · `js/desktopsaves.js`): 앱의 세이브는 앱 데이터가 아니라 폴더의 파일로 — 기본 `문서\Hemicycle\Saves`, 설정 › 기타 설정 › 저장 위치에서 바꿈(지금 세이브가 새 폴더로 옮겨짐, 쓸 수 없는 폴더는 거절). 세이브 하나 = `세이브 이름.hemi` 하나("파일로 저장"과 같은 gzip JSON, 안의 `__hemiSlot`에 id · 이름 · 시각), 미리보기 세이브는 `Teaser 1.6.N`, 로고 제작은 `로고` 하위 폴더. 폴더가 원본이라 페이지를 열 때 폴더를 읽어 브라우저 저장소(작업용 사본)를 덮고, 세이브 목록을 저장할 때마다 바뀐 세이브만 파일로 씀(동기 — 저장 직후 꺼져도 남음). 탐색기에서 넣은 · 이름을 바꾼 .hemi · .json은 다음에 열 때 세이브로 보이고, 게임에서 지운 세이브는 휴지통으로. 처음 쓰는 폴더(`.hemicycle` 표시 파일 없음)에는 그때까지 앱 저장소의 세이브를 옮겨 담음. 웹 버전은 그대로 브라우저 저장소.
 - 창 크기 · 위치 · 최대화 · 전체 화면 · 확대 배율 · 마지막 테마(와 바꾼 저장 위치)는 `%APPDATA%\Hemicycle\window-state.json`에 기억해 다음에 그대로 엽니다 (모니터 구성이 바뀌어 화면 밖이면 기본 위치로).
@@ -235,20 +234,27 @@ npx electron-builder --config electron-builder.demo.js --win dir   # → dist-de
 
 ## 🌐 번역(언어 팩) 만들기
 
-화면은 한국어로 만들어져 있고, 다른 언어는 **언어 팩**(한국어 원문 → 번역 사전)으로 표시합니다. 언어 팩은 코드 없이 데이터만 담은 `.json` 파일이라 누구나 새 언어를 만들어 공유할 수 있습니다.
+다른 언어는 **언어 팩**으로 표시합니다. 언어 팩은 코드 없이 데이터만 담은 `.json` 파일이라 누구나 새 언어를 만들어 공유할 수 있습니다. 팩에는 두 가지 번역이 들어 있습니다 (0.2.4부터 화면을 하나씩 첫 번째 방식으로 옮기는 중):
+
+- **`keys`** — 화면 글자마다 붙은 고유 키(예: `"home.menu.start"`)와 그 언어 글자. 한국어도 팩 하나(`lang/kr.js`)이고, 팩에 없는 키는 한국어 글자로 보입니다. `{n}` 같은 자리는 변수라 그대로 둡니다. 수에 따라 모양이 바뀌는 글자는 `{ "one": "{count} seat", "other": "{count} seats" }`처럼 적습니다.
+- **`dict`** · **`patterns`** — 아직 키로 옮기지 않은 화면용. 다 그려진 한국어 글자를 `["한국어 원문", "번역"]`으로 바꿔 끼웁니다.
 
 1. 메인 화면 🌐 › **번역 템플릿 받기**(한국어 기준 · 영어 기준)로 템플릿 `.json`을 받습니다.
-2. `code`(예: `"jp"`, `"zh-tw"`)와 `name`(예: `"日本語"`)을 채우고, `dict`의 각 항목 `["한국어 원문", "번역"]`에서 **두 번째 칸만** 바꿉니다.
+2. `code`(예: `"jp"`, `"zh-tw"`)와 `name`(예: `"日本語"`)을 채우고, `keys`는 **오른쪽 글자만**, `dict`의 각 항목 `["한국어 원문", "번역"]`은 **두 번째 칸만** 바꿉니다.
 3. 메인 화면 🌐 › **언어 팩 불러오기 (.json)**로 파일을 고르면 언어 목록에 추가되고 바로 쓸 수 있습니다 (브라우저에 저장, ✕로 삭제).
 
 ```json
 {
-  "format": "dno-lang-pack@1",
+  "format": "hemicycle-lang@2",
   "code": "jp",
   "name": "日本語",
   "author": "만든 사람",
   "months": ["1月", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月"],
   "ordinal": "none",
+  "keys": {
+    "home.menu.start": "はじめる",
+    "common.daysLater": "{n}日後にまた"
+  },
   "patterns": [
     { "re": "(\\d+|\\?)년\\s*(\\d+|\\?)월\\s*(\\d+|\\?)일", "to": "$1年{{month:$2}}$3日" },
     { "re": "(\\d+)석", "to": "$1議席" }
@@ -260,11 +266,14 @@ npx electron-builder --config electron-builder.demo.js --win dir   # → dist-de
 }
 ```
 
+- `keys`: 키 → 글자. 키는 `lang/kr.js`에 있는 것과 같아야 하고(모르는 키는 쓰이지 않음), 글자 속 `{이름}` 자리도 한국어 글자와 같아야 합니다. keys만 있는 팩도 됩니다. 예전 형식(`dno-lang-pack@1`, dict만) 팩도 그대로 읽습니다.
 - `dict`: 화면에 보이는 한국어 문구 → 번역. 긴 문구가 먼저 매칭되므로 문장 전체와 단어를 함께 넣어도 됩니다. `{ "원문": "번역" }` 객체로 써도 됩니다.
 - `patterns`: 숫자가 섞인 문구(날짜·의석 수 등)를 위한 정규식 규칙. `to`에서 `$1`은 괄호 그룹, `{{month:$2}}`는 `months`의 달 이름, `{{ordinal:$1}}`은 서수(`"ordinal": "en"`이면 1st/2nd…, `"none"`이면 숫자 그대로), `{{map:$4|정기회=Regular Session;임시회=Extraordinary Session}}`는 값 바꾸기, `{{dict:$1}}`은 사전 찾기입니다.
 - `neonFont` (선택): 네온 테마 글꼴. 네오둥근모에 없는 글자(가나 · 한자 등)를 쓰는 언어는 `"maruminya"`(마루미냐 한글 — 한국어 · 일본어 12px 픽셀 폰트, `fonts/maruminya`, SIL OFL 1.1)를 적으면 네온 테마 글꼴이 통째로 바뀝니다. 코드가 `jp`(일본어)인 팩은 적지 않아도 마루미냐 한글을 씁니다.
 - `code`는 `kr`(기본 한국어)와 기본 제공 언어(`en`)를 쓸 수 없습니다 — 기본 영어를 고쳐 쓰려면 `en-custom`처럼 다른 코드를 쓰세요.
 - 기본 제공 언어는 `lang/<code>.js`에 같은 형식의 JSON을 JS로 감싸 두고 `js/lang.js`의 `BUILTIN`에 등록합니다 (데스크톱 앱이 `file://`로 열려 JSON 파일을 직접 읽을 수 없기 때문).
+
+**화면을 키 방식으로 옮길 때 (개발)**: 한국어 글자를 `lang/kr.js`의 `keys`에 키와 함께 넣고, 영어는 `lang/en.js`의 `keys`에 같은 키로 넣습니다. HTML은 `<span data-i18n="home.menu.start">시작하기</span>`(글자) · `data-i18n-title` · `data-i18n-placeholder` · `data-i18n-alt` · `data-i18n-aria-label`(속성) · `data-i18n-vars='{"n":3}'`(변수), JS는 `i18n('home.menu.start')` · `i18n('common.daysLater', { n: 3 })`를 씁니다. `data-i18n`은 자식 요소가 없는 요소에만 답니다(아이콘이 있으면 글자를 안쪽 `<span>`에). 키로 옮긴 글자는 `lang/en.js`의 `dict`에서 지워도 됩니다. 옮긴 뒤에는 `npm run i18n:check`로 빠진 키 · 다른 변수 자리 · HTML 글자와 한국어 팩이 어긋난 곳을 확인합니다.
 
 ### 모드 폴더 · Steam 창작마당 (데스크톱 앱)
 
@@ -339,7 +348,7 @@ npx electron-builder --config electron-builder.demo.js --win dir   # → dist-de
 
 ## 개발 현황
 
-진행 중인 기능과 변경 이력은 `roadmap.html`(로드맵 및 업데이트 내역)에서 버전별로 확인할 수 있습니다.
+진행 중인 기능과 변경 이력은 웹 로드맵([Jedidiah1926/hemicycleweb](https://github.com/Jedidiah1926/hemicycleweb)의 `roadmap.html`)에서 버전별로 확인할 수 있습니다.
 
 **v1.7.1 계획:** 세계지도·시나리오 연동, 시나리오 오류 검사 강화, 앱 전반 성능 최적화, Steam 시나리오 멀티플레이, 지도에서 구분하는 경제권, 시나리오 메이커 확장을 [통합 작업 계획](docs/design/V1_7_1_PLAN.md)에 정리합니다. [메이커 보완 설계](docs/design/SCENARIO_MAKER_EXPANSION.md)는 방향성·결정·기술 트리·군사력·경제·무역·자원 등의 제작과 정당·의석 등 플레이 중 직접 편집 잠금을 포함합니다. 구현 전 초안이며, 경제권은 지도상의 경제 지역입니다.
 

@@ -1,5 +1,5 @@
 // ===== 세이브 목록 압축 저장 — 브라우저 저장소(localStorage) 공간 아끼기 =====
-// 세이브 목록(dnoParliamentSaveSlots · 티저 · 로고 저장 공간)은 세이브마다 상태 JSON을 그대로 담아 저장소 한도(약 5MB)를
+// 세이브 목록(hemiParliamentSaveSlots · 티저 · 로고 저장 공간)은 세이브마다 상태 JSON을 그대로 담아 저장소 한도(약 5MB)를
 // 금방 채운다. 이 파일은 저장소 읽기 · 쓰기에 끼어들어, 세이브의 상태를 gzip으로 압축해 "stateZ"에 담아 두고
 // 읽을 때 다시 풀어 준다 — 게임 코드(js/main.js · 시작 화면 · js/official.js · js/desktopsaves.js)는 그대로 압축 전 목록을 본다.
 //   - 무손실: 사진 · 지도 등 내용은 한 글자도 바뀌지 않는다 (풀면 압축 전과 똑같은 JSON)
@@ -12,7 +12,7 @@
     'use strict';
     let ls;
     try { ls = window.localStorage; if (!ls) return; } catch (e) { return; }
-    const KEY_RE = /^(hemicycleTeaserV2-\d{2}:|hemicycleLogo:)?dnoParliamentSaveSlots$/;
+    const KEY_RE = /^(hemicycleTeaserV2-\d{2}:|hemicycleLogo:)?hemiParliamentSaveSlots$/;
     const MIN_CHARS = 4096; // 이보다 작은 상태는 압축하지 않음
     const canZip = typeof CompressionStream === 'function';
     const origGet = Storage.prototype.getItem, origSet = Storage.prototype.setItem;
@@ -248,7 +248,7 @@
     // ---------- 세이브 목록 읽기 · 쓰기 ----------
     const byId = new Map();      // "공간|세이브 id" → { json, packed } — 같은 내용은 다시 압축 · 풀기 하지 않게
     const lastRaw = new Map(), lastOut = new Map(); // 키 → 마지막으로 저장소에 있던 글자 / 그걸 푼 글자
-    const nsOf = key => key.slice(0, key.length - 'dnoParliamentSaveSlots'.length);
+    const nsOf = key => key.slice(0, key.length - 'hemiParliamentSaveSlots'.length);
     // 세이브 정보(state 빼고) + 상태 JSON 글자를 이어 붙여 한 세이브의 JSON을 만든다 (상태를 두 번 직렬화하지 않게)
     function joinSlot(rest, field, valueJson) {
         const head = JSON.stringify(rest);

@@ -553,5 +553,5 @@
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
     else init();
 
-    window.DnoHelp = { render, pages: Object.keys(PAGES) };
+    window.HemiHelp = { render, pages: Object.keys(PAGES) };
 })();

@@ -10,7 +10,7 @@
 (function () {
     'use strict';
 
-    const THEME_MODE_KEY = 'dnoThemeMode';
+    const THEME_MODE_KEY = 'hemiThemeMode';
     const VALID_MODES = ['tno', 'light', 'dark'];
     const DEFAULT_MODE = 'light'; // 처음 켰을 때(저장된 테마가 없을 때) 기본은 라이트
 
@@ -20,7 +20,7 @@
     // ===== 모드 테마 (데스크톱 앱 — 모드 폴더 · Steam 창작마당) =====
     // 형식 hemicycle-theme@1: { id, name, author, base: 'light'|'dark'|'neon', colors: { '--m-bg': '#...', ... }, css? }
     // 바탕 테마(base)의 화면 규칙을 그대로 쓰고 색 변수(--m-* · --tno-*)만 바꾼다. css는 선택 — 바깥 파일 · 주소는 막는다
-    const THEME_MOD_KEY = 'dnoThemeMod';
+    const THEME_MOD_KEY = 'hemiThemeMod';
     const THEME_FORMAT = 'hemicycle-theme@1';
     const BASE_MODE = { light: 'light', dark: 'dark', neon: 'tno', tno: 'tno' };
     const MAX_THEME_CSS = 100000;
@@ -167,7 +167,7 @@
         while (walker.nextNode()) nodes.push(walker.currentNode);
         nodes.forEach(n => { const t = emojiFix(n.nodeValue); if (t !== n.nodeValue) n.nodeValue = t; });
     }
-    window.DnoEmoji = { fix: emojiFix, fixTree: emojiFixTree };
+    window.HemiEmoji = { fix: emojiFix, fixTree: emojiFixTree };
     function startEmojiMode() {
         emojiFixTree(document.body);
         // 결과가 같으면 건드리지 않으므로 이 변경이 다시 관찰돼도 한 번 더 확인하고 멈춘다

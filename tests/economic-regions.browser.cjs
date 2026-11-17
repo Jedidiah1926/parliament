@@ -14,7 +14,7 @@ const base = process.env.STUDIO_TEST_URL || 'http://127.0.0.1:8000';
         const owners = () => p.evaluate(() => ({ ...HemiWorldMap.state.owners }));
         const fill = key => p.evaluate(k => document.querySelector(`[data-wm-key="${k}"]`).getAttribute('fill'), key);
         const OWN = { capital: 'w_republic', riverbank: 'w_federation', island: 'w_federation' };
-        const confirmOk = () => p.locator('.dno-dialog-btn:not(.cancel)').click();
+        const confirmOk = () => p.locator('.hemi-dialog-btn:not(.cancel)').click();
 
         await p.goto(base + '/main.html'); await p.waitForFunction(() => typeof startFromPresetOnBoot === 'function');
         await p.evaluate(() => startFromPresetOnBoot('builtin:tutorial')); await p.waitForFunction(() => !!activeSlotId && parties.length > 3 && !!window.HemiWorldMap); await p.waitForTimeout(600);
@@ -89,7 +89,7 @@ const base = process.env.STUDIO_TEST_URL || 'http://127.0.0.1:8000';
         await p.locator('[data-we-zone="zone1"]').click(); await p.locator('#weId').fill('north'); await p.locator('#weId').blur();
         assert.deepEqual((await eco()).regions, { capital: 'north', riverbank: 'north', island: 'coastal_trade' });
         await p.locator('#weId').fill('coastal_trade'); await p.locator('#weId').blur();
-        assert.match(await p.locator('.dno-dialog-msg').innerText(), /겹치지 않게/); await confirmOk();
+        assert.match(await p.locator('.hemi-dialog-msg').innerText(), /겹치지 않게/); await confirmOk();
         assert.equal((await eco()).zones[0].id, 'north');
         // 저장 → 복원: economicRegions 칸에 따로, 세계지도 칸에는 섞이지 않는다
         const saved = await p.evaluate(() => getAppState());
@@ -110,7 +110,7 @@ const base = process.env.STUDIO_TEST_URL || 'http://127.0.0.1:8000';
         assert.deepEqual((await eco()).regions, {}); assert.deepEqual(await owners(), OWN);
         await p.locator('#weUndo').click(); assert.deepEqual((await eco()).regions, saved.economicRegions.regions);
         await p.locator('[data-we-zone="north"]').click(); await p.locator('#weDelete').click();
-        assert.match(await p.locator('.dno-dialog-msg').innerText(), /소속 구역 2개는 미배정/); await confirmOk(); await settle();
+        assert.match(await p.locator('.hemi-dialog-msg').innerText(), /소속 구역 2개는 미배정/); await confirmOk(); await settle();
         assert.deepEqual(await eco().then(e => [e.zones.map(z => z.id), e.regions]), [['coastal_trade'], { island: 'coastal_trade' }]);
         assert.equal(await fill('capital'), '#35404b');
         await p.evaluate(() => switchSubTab('world', 'worldmap'));

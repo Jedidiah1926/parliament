@@ -9,7 +9,7 @@
 // 각 프리셋은 { id, title, description, date(게임 속 시작 날짜), tutorial, comingSoon, langs, ... } 형태로 통일되고, id로 다시 찾아 상태를 불러온다.
 // 언어별 파일 (1.6.0): langs = { en: { script | file | key, title, description } } — 지금 언어의 파일이 있으면 그 파일을,
 // 없으면 기본(한국어) 파일을 그대로 쓴다. 화면 번역(js/lang.js)으로 데이터를 바꿔 끼우는 예전 방식(경로 덮어쓰기)은 없앴다.
-// 내장 프리셋의 언어 파일은 DNO_PRESET_DATA['<id>@<언어>']에 담는다 (예: presets/tutorial.en.js).
+// 내장 프리셋의 언어 파일은 HEMI_PRESET_DATA['<id>@<언어>']에 담는다 (예: presets/tutorial.en.js).
 // 모드 · 창작마당에서 내장 프리셋에 언어 파일을 더할 수도 있다 (electron/mods.js의 presetLangs).
 // comingSoon이면 목록에 "준비 중"으로 보이기만 하고 고를 수는 없다.
 (function () {
@@ -183,7 +183,7 @@
     async function readSource(src, dataId) {
         if (src.script) {
             await loadScriptOnce(src.script);
-            return window.DNO_PRESET_DATA && window.DNO_PRESET_DATA[dataId];
+            return window.HEMI_PRESET_DATA && window.HEMI_PRESET_DATA[dataId];
         }
         if (src.key || src.modKey) {
             if (!window.hemicycleDesktop || !window.hemicycleDesktop.loadModPreset) throw new Error('mod presets need the desktop app');
@@ -212,5 +212,5 @@
         return copy;
     }
 
-    window.DnoPresets = { list, find, loadState };
+    window.HemiPresets = { list, find, loadState };
 })();

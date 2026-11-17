@@ -31,8 +31,8 @@ const out = path.join(__dirname, '..', 'presets', name + (lang ? '.' + lang : ''
 fs.writeFileSync(out,
     `// 내장 프리셋 데이터 — tools/make-preset.js로 ${path.basename(input)}에서 만든 파일. js/presets.js가 <script>로 불러온다\n` +
     `// (데스크톱 앱은 file://로 열려 fetch로 JSON을 읽을 수 없으므로 JS로 감싸 둠)\n` +
-    `window.DNO_PRESET_DATA = window.DNO_PRESET_DATA || {};\n` +
-    `window.DNO_PRESET_DATA['${id}'] = ${JSON.stringify(state)};\n`);
+    `window.HEMI_PRESET_DATA = window.HEMI_PRESET_DATA || {};\n` +
+    `window.HEMI_PRESET_DATA['${id}'] = ${JSON.stringify(state)};\n`);
 
 const c = state.config || {};
 const date = c.nationDateYear

@@ -1,101 +1,103 @@
 // ===== 테마에 맞춘 말풍선(툴팁) · 알림창(alert) · 확인창(confirm) =====
 // 브라우저 기본 title 말풍선과 alert/confirm 창은 테마를 따르지 않으므로(흰 상자), 앱 자체 UI로 대신 그린다.
-//  - 말풍선: title 속성을 data-dno-tip으로 옮겨 기본 말풍선을 끄고, 마우스를 올리면 테마색 말풍선을 띄운다
-//  - DnoUI.alert(msg, opts) → Promise (확인을 누르면 끝남) · window.alert도 이것으로 대신한다
-//  - DnoUI.confirm(msg, opts) → Promise<boolean> (confirm은 멈춰 기다릴 수 없으므로 await로 써야 한다)
+//  - 말풍선: title 속성을 data-hemi-tip으로 옮겨 기본 말풍선을 끄고, 마우스를 올리면 테마색 말풍선을 띄운다
+//  - HemiUI.alert(msg, opts) → Promise (확인을 누르면 끝남) · window.alert도 이것으로 대신한다
+//  - HemiUI.confirm(msg, opts) → Promise<boolean> (confirm은 멈춰 기다릴 수 없으므로 await로 써야 한다)
 //  - opts: { title, okText, cancelText, tone: 'info' | 'warn' | 'danger' }
 (function () {
-    if (window.DnoUI) return;
-    const t = s => (window.DnoLang && typeof DnoLang.t === 'function' ? DnoLang.t(String(s)) : String(s));
+    if (window.HemiUI) return;
+    const t = s => (window.HemiLang && typeof HemiLang.t === 'function' ? HemiLang.t(String(s)) : String(s));
+    // 키 번역(js/lang.js) — 이 파일이 lang.js 없이 쓰이는 화면도 있어 없으면 한국어 그대로
+    const key = (k, fallback) => (typeof window.i18n === 'function' ? window.i18n(k) : fallback);
     const isModern = () => document.documentElement.getAttribute('data-theme-family') === 'modern';
 
     const css = `
-.dno-tip {
-    --dno-tip-c: var(--tno-neon, #00ffff);
+.hemi-tip {
+    --hemi-tip-c: var(--tno-neon, #00ffff);
     position: fixed; z-index: 100000; pointer-events: none; max-width: min(320px, calc(100vw - 16px));
     padding: 6px 11px; font-size: 0.8rem; line-height: 1.45; word-break: keep-all;
     opacity: 0; transition: opacity .12s ease;
-    background: var(--tno-panel, #0a0c10); color: var(--dno-tip-c);
-    border: 1px solid var(--dno-tip-c); border-left-width: 3px;
-    box-shadow: 0 0 12px color-mix(in srgb, var(--dno-tip-c) 35%, transparent);
+    background: var(--tno-panel, #0a0c10); color: var(--hemi-tip-c);
+    border: 1px solid var(--hemi-tip-c); border-left-width: 3px;
+    box-shadow: 0 0 12px color-mix(in srgb, var(--hemi-tip-c) 35%, transparent);
     font-family: 'NeoDunggeunmo', 'VT323', monospace;
 }
-.dno-tip.show { opacity: 1; }
+.hemi-tip.show { opacity: 1; }
 /* 바로 옆 대상으로 옮길 때 — 사라졌다 다시 뜨지 않고 미끄러지듯 따라간다 (접힌 사이드바의 점 훑기도) */
-.dno-tip.moving { transition: opacity .12s ease, left .14s cubic-bezier(.2, .8, .2, 1), top .14s cubic-bezier(.2, .8, .2, 1); }
-.dno-tip-title { display: block; white-space: pre-line; }
-.dno-tip-sub { display: block; margin-top: 2px; font-size: .9em; color: #9aa4ad; white-space: pre-line; }
-/* 꼬리 — 가리키는 쪽으로. 위치를 화면 안으로 당겨도 대상의 가운데를 가리키도록 --dno-tip-ax/ay로 옮긴다 */
-.dno-tip::before {
+.hemi-tip.moving { transition: opacity .12s ease, left .14s cubic-bezier(.2, .8, .2, 1), top .14s cubic-bezier(.2, .8, .2, 1); }
+.hemi-tip-title { display: block; white-space: pre-line; }
+.hemi-tip-sub { display: block; margin-top: 2px; font-size: .9em; color: #9aa4ad; white-space: pre-line; }
+/* 꼬리 — 가리키는 쪽으로. 위치를 화면 안으로 당겨도 대상의 가운데를 가리키도록 --hemi-tip-ax/ay로 옮긴다 */
+.hemi-tip::before {
     content: ''; position: absolute; width: 8px; height: 8px; box-sizing: border-box;
     background: inherit; border: inherit; border-width: 1px; transform: rotate(45deg);
 }
-.dno-tip[data-side="bottom"]::before { top: -5px; left: calc(var(--dno-tip-ax, 50%) - 4px); border-right: none; border-bottom: none; }
-.dno-tip[data-side="top"]::before { bottom: -5px; left: calc(var(--dno-tip-ax, 50%) - 4px); border-left: none; border-top: none; }
-.dno-tip[data-side="right"]::before { left: -6px; top: calc(var(--dno-tip-ay, 50%) - 4px); border-top: none; border-right: none; }
-.dno-tip[data-side="left"]::before { right: -5px; top: calc(var(--dno-tip-ay, 50%) - 4px); border-bottom: none; border-left: none; }
-html[data-theme-family="modern"] .dno-tip {
+.hemi-tip[data-side="bottom"]::before { top: -5px; left: calc(var(--hemi-tip-ax, 50%) - 4px); border-right: none; border-bottom: none; }
+.hemi-tip[data-side="top"]::before { bottom: -5px; left: calc(var(--hemi-tip-ax, 50%) - 4px); border-left: none; border-top: none; }
+.hemi-tip[data-side="right"]::before { left: -6px; top: calc(var(--hemi-tip-ay, 50%) - 4px); border-top: none; border-right: none; }
+.hemi-tip[data-side="left"]::before { right: -5px; top: calc(var(--hemi-tip-ay, 50%) - 4px); border-bottom: none; border-left: none; }
+html[data-theme-family="modern"] .hemi-tip {
     background: var(--m-text, #18181b); color: var(--m-surface, #fff); border: none; border-radius: 8px; padding: 6px 10px;
     box-shadow: 0 6px 16px rgba(0, 0, 0, .18); font-family: var(--m-font, inherit); font-weight: 500; font-size: 0.78rem;
 }
-html[data-theme-family="modern"] .dno-tip-sub { color: inherit; opacity: .72; font-weight: 400; }
-html[data-theme-family="modern"] .dno-tip::before { border: none; }
-@media (prefers-reduced-motion: reduce) { .dno-tip, .dno-tip.moving { transition: none; } }
-.dno-dialog-overlay {
+html[data-theme-family="modern"] .hemi-tip-sub { color: inherit; opacity: .72; font-weight: 400; }
+html[data-theme-family="modern"] .hemi-tip::before { border: none; }
+@media (prefers-reduced-motion: reduce) { .hemi-tip, .hemi-tip.moving { transition: none; } }
+.hemi-dialog-overlay {
     position: fixed; inset: 0; z-index: 100001; display: flex; align-items: center; justify-content: center;
     padding: 16px; background: rgba(0, 0, 0, .72);
 }
-.dno-dialog {
-    --dno-dlg-c: var(--tno-neon, #00ffff);
+.hemi-dialog {
+    --hemi-dlg-c: var(--tno-neon, #00ffff);
     width: 360px; max-width: 100%; padding: 20px; background: #0a0c10; color: #ddd;
-    border: 1px solid var(--dno-dlg-c); box-shadow: 0 0 18px color-mix(in srgb, var(--dno-dlg-c) 30%, transparent);
+    border: 1px solid var(--hemi-dlg-c); box-shadow: 0 0 18px color-mix(in srgb, var(--hemi-dlg-c) 30%, transparent);
     font-family: 'NeoDunggeunmo', 'VT323', monospace;
 }
-.dno-dialog.tone-warn { --dno-dlg-c: var(--tno-gold, #ffd700); }
-.dno-dialog.tone-danger { --dno-dlg-c: #ff5555; }
-.dno-dialog-title { color: var(--dno-dlg-c); font-size: 1.05rem; margin-bottom: 10px; letter-spacing: 1px; }
-.dno-dialog-msg { font-size: 0.95rem; line-height: 1.6; white-space: pre-line; word-break: keep-all; overflow-wrap: anywhere; max-height: 60vh; overflow-y: auto; }
-.dno-dialog-actions { display: flex; gap: 8px; margin-top: 20px; }
-.dno-dialog-btn {
+.hemi-dialog.tone-warn { --hemi-dlg-c: var(--tno-gold, #ffd700); }
+.hemi-dialog.tone-danger { --hemi-dlg-c: #ff5555; }
+.hemi-dialog-title { color: var(--hemi-dlg-c); font-size: 1.05rem; margin-bottom: 10px; letter-spacing: 1px; }
+.hemi-dialog-msg { font-size: 0.95rem; line-height: 1.6; white-space: pre-line; word-break: keep-all; overflow-wrap: anywhere; max-height: 60vh; overflow-y: auto; }
+.hemi-dialog-actions { display: flex; gap: 8px; margin-top: 20px; }
+.hemi-dialog-btn {
     flex: 1; padding: 9px 12px; cursor: pointer; font: inherit; font-size: 0.95rem;
-    background: color-mix(in srgb, var(--dno-dlg-c) 12%, transparent); color: var(--dno-dlg-c); border: 1px solid var(--dno-dlg-c);
+    background: color-mix(in srgb, var(--hemi-dlg-c) 12%, transparent); color: var(--hemi-dlg-c); border: 1px solid var(--hemi-dlg-c);
 }
-.dno-dialog-btn:hover, .dno-dialog-btn:focus-visible { background: color-mix(in srgb, var(--dno-dlg-c) 24%, transparent); outline: none; }
-.dno-dialog-btn.cancel { background: transparent; color: #888; border-color: #333; }
-.dno-dialog-btn.cancel:hover, .dno-dialog-btn.cancel:focus-visible { color: #ddd; border-color: #666; }
-html[data-theme-family="modern"] .dno-dialog-overlay { background: rgba(0, 0, 0, .4); }
-html[data-theme-family="modern"] .dno-dialog {
-    --dno-dlg-c: var(--m-accent, #18181b);
+.hemi-dialog-btn:hover, .hemi-dialog-btn:focus-visible { background: color-mix(in srgb, var(--hemi-dlg-c) 24%, transparent); outline: none; }
+.hemi-dialog-btn.cancel { background: transparent; color: #888; border-color: #333; }
+.hemi-dialog-btn.cancel:hover, .hemi-dialog-btn.cancel:focus-visible { color: #ddd; border-color: #666; }
+html[data-theme-family="modern"] .hemi-dialog-overlay { background: rgba(0, 0, 0, .4); }
+html[data-theme-family="modern"] .hemi-dialog {
+    --hemi-dlg-c: var(--m-accent, #18181b);
     background: var(--m-surface, #fff); color: var(--m-text, #18181b); border: 1px solid var(--m-border, #e4e4e7);
     border-radius: 16px; box-shadow: 0 20px 50px rgba(0, 0, 0, .25); font-family: var(--m-font, inherit); padding: 22px;
 }
-html[data-theme-family="modern"] .dno-dialog.tone-warn { --dno-dlg-c: var(--m-gold, #d97706); }
-html[data-theme-family="modern"] .dno-dialog.tone-danger { --dno-dlg-c: var(--m-danger, #dc2626); }
-html[data-theme-family="modern"] .dno-dialog-title { color: var(--m-text, #18181b); font-weight: 700; letter-spacing: 0; }
-html[data-theme-family="modern"] .dno-dialog-msg { color: var(--m-text-2, #52525b); }
-html[data-theme-family="modern"] .dno-dialog-btn {
-    border: none; border-radius: 10px; font-weight: 600; background: var(--dno-dlg-c); color: var(--m-surface, #fff);
+html[data-theme-family="modern"] .hemi-dialog.tone-warn { --hemi-dlg-c: var(--m-gold, #d97706); }
+html[data-theme-family="modern"] .hemi-dialog.tone-danger { --hemi-dlg-c: var(--m-danger, #dc2626); }
+html[data-theme-family="modern"] .hemi-dialog-title { color: var(--m-text, #18181b); font-weight: 700; letter-spacing: 0; }
+html[data-theme-family="modern"] .hemi-dialog-msg { color: var(--m-text-2, #52525b); }
+html[data-theme-family="modern"] .hemi-dialog-btn {
+    border: none; border-radius: 10px; font-weight: 600; background: var(--hemi-dlg-c); color: var(--m-surface, #fff);
 }
-html[data-theme-family="modern"] .dno-dialog-btn:hover, html[data-theme-family="modern"] .dno-dialog-btn:focus-visible { filter: brightness(1.12); background: var(--dno-dlg-c); }
-html[data-theme-family="modern"] .dno-dialog-btn.cancel { background: var(--m-surface-2, #f4f4f5); color: var(--m-text, #18181b); }
-html[data-theme-family="modern"] .dno-dialog-btn.cancel:hover, html[data-theme-family="modern"] .dno-dialog-btn.cancel:focus-visible { background: var(--m-surface-3, #e4e4e7); filter: none; }
+html[data-theme-family="modern"] .hemi-dialog-btn:hover, html[data-theme-family="modern"] .hemi-dialog-btn:focus-visible { filter: brightness(1.12); background: var(--hemi-dlg-c); }
+html[data-theme-family="modern"] .hemi-dialog-btn.cancel { background: var(--m-surface-2, #f4f4f5); color: var(--m-text, #18181b); }
+html[data-theme-family="modern"] .hemi-dialog-btn.cancel:hover, html[data-theme-family="modern"] .hemi-dialog-btn.cancel:focus-visible { background: var(--m-surface-3, #e4e4e7); filter: none; }
 `;
     function injectStyle() {
-        if (document.getElementById('dnoDialogsStyle')) return;
+        if (document.getElementById('hemiDialogsStyle')) return;
         const st = document.createElement('style');
-        st.id = 'dnoDialogsStyle';
+        st.id = 'hemiDialogsStyle';
         st.textContent = css;
         (document.head || document.documentElement).appendChild(st);
     }
     injectStyle();
 
     // ===== 말풍선 =====
-    // title → data-dno-tip (새로 그려지거나 나중에 title이 바뀌어도 바로 옮긴다)
+    // title → data-hemi-tip (새로 그려지거나 나중에 title이 바뀌어도 바로 옮긴다)
     function adopt(el) {
         const v = el.getAttribute('title');
         if (v === null || el instanceof SVGElement) return;
         el.removeAttribute('title');
-        if (v.trim()) el.setAttribute('data-dno-tip', v); else el.removeAttribute('data-dno-tip');
+        if (v.trim()) el.setAttribute('data-hemi-tip', v); else el.removeAttribute('data-hemi-tip');
         if (!el.hasAttribute('aria-label') && !el.textContent.trim() && v.trim()) el.setAttribute('aria-label', v);
     }
     function adoptTree(root) {
@@ -113,14 +115,14 @@ html[data-theme-family="modern"] .dno-dialog-btn.cancel:hover, html[data-theme-f
     else adoptTree(document.documentElement);
 
     // 말풍선 — 처음엔 0.3초 뒤에 뜨고, 뜬 뒤(또는 사라진 지 0.6초 안에) 다른 대상으로 옮기면 기다리지 않고 미끄러지듯 따라간다.
-    // 두 줄: data-dno-tip-sub(흐린 둘째 줄) 또는 글자의 첫 줄 = 이름, 나머지 = 설명.
-    // 네온: 가리킨 대상의 색으로. 회색 대상은 기본은 네온색, 설정(dnoTipNeonGray = 'gray')이면 회색 그대로
+    // 두 줄: data-hemi-tip-sub(흐린 둘째 줄) 또는 글자의 첫 줄 = 이름, 나머지 = 설명.
+    // 네온: 가리킨 대상의 색으로. 회색 대상은 기본은 네온색, 설정(hemiTipNeonGray = 'gray')이면 회색 그대로
     const SHOW_DELAY = 300, WARM_MS = 600, FADE_DELAY = 70;
     let tipEl = null, tipTarget = null, tipTimer = null, fadeTimer = null, lastShownAt = 0, visible = false;
     function ensureTip() {
         if (tipEl) return tipEl;
-        tipEl = document.createElement('div'); tipEl.className = 'dno-tip'; tipEl.setAttribute('role', 'tooltip'); tipEl.id = 'dnoTip';
-        tipEl.innerHTML = '<span class="dno-tip-title"></span><span class="dno-tip-sub"></span>';
+        tipEl = document.createElement('div'); tipEl.className = 'hemi-tip'; tipEl.setAttribute('role', 'tooltip'); tipEl.id = 'hemiTip';
+        tipEl.innerHTML = '<span class="hemi-tip-title"></span><span class="hemi-tip-sub"></span>';
         document.body.appendChild(tipEl);
         return tipEl;
     }
@@ -156,8 +158,8 @@ html[data-theme-family="modern"] .dno-dialog-btn.cancel:hover, html[data-theme-f
         y = Math.max(8, Math.min(y, vh - tr.height - 8));
         tipEl.dataset.side = side;
         // 화면 끝에서 상자를 당겨도 꼬리는 대상의 가운데를
-        tipEl.style.setProperty('--dno-tip-ax', Math.max(10, Math.min(tr.width - 10, r.left + r.width / 2 - x)) + 'px');
-        tipEl.style.setProperty('--dno-tip-ay', Math.max(10, Math.min(tr.height - 10, r.top + r.height / 2 - y)) + 'px');
+        tipEl.style.setProperty('--hemi-tip-ax', Math.max(10, Math.min(tr.width - 10, r.left + r.width / 2 - x)) + 'px');
+        tipEl.style.setProperty('--hemi-tip-ay', Math.max(10, Math.min(tr.height - 10, r.top + r.height / 2 - y)) + 'px');
         tipEl.style.left = x + 'px';
         tipEl.style.top = y + 'px';
     }
@@ -167,34 +169,34 @@ html[data-theme-family="modern"] .dno-dialog-btn.cancel:hover, html[data-theme-f
         if (!m || (m[4] !== undefined && +m[4] === 0)) return '';
         const v = [+m[1], +m[2], +m[3]];
         const gray = Math.max(...v) - Math.min(...v) < 40; // 채도가 거의 없는 색 = 회색 · 흰색 · 검정
-        if (gray) { let pref = null; try { pref = localStorage.getItem('dnoTipNeonGray'); } catch (e) { /* 저장 불가 */ } if (pref !== 'gray') return ''; }
+        if (gray) { let pref = null; try { pref = localStorage.getItem('hemiTipNeonGray'); } catch (e) { /* 저장 불가 */ } if (pref !== 'gray') return ''; }
         return c;
     }
     function tipText(target) {
-        const raw = t(target.getAttribute('data-dno-tip') || '');
-        const sub = target.getAttribute('data-dno-tip-sub');
+        const raw = t(target.getAttribute('data-hemi-tip') || '');
+        const sub = target.getAttribute('data-hemi-tip-sub');
         if (sub != null) return [raw, t(sub)];
         const i = raw.indexOf('\n');
         return i > 0 ? [raw.slice(0, i), raw.slice(i + 1).replace(/^\n+/, '')] : [raw, ''];
     }
     function showTip(target) {
-        if (!target.isConnected || !target.getAttribute('data-dno-tip')) return;
+        if (!target.isConnected || !target.getAttribute('data-hemi-tip')) return;
         if (target.dataset.tipWhen === 'collapsed' && !document.body.classList.contains('side-nav-collapsed')) return;
         ensureTip();
         clearTimeout(fadeTimer);
         const [title, sub] = tipText(target);
-        tipEl.querySelector('.dno-tip-title').textContent = title;
-        const subEl = tipEl.querySelector('.dno-tip-sub');
+        tipEl.querySelector('.hemi-tip-title').textContent = title;
+        const subEl = tipEl.querySelector('.hemi-tip-sub');
         subEl.textContent = sub; subEl.style.display = sub ? '' : 'none';
-        if (!isModern()) { const c = neonColorOf(target); if (c) tipEl.style.setProperty('--dno-tip-c', c); else tipEl.style.removeProperty('--dno-tip-c'); }
-        else tipEl.style.removeProperty('--dno-tip-c');
+        if (!isModern()) { const c = neonColorOf(target); if (c) tipEl.style.setProperty('--hemi-tip-c', c); else tipEl.style.removeProperty('--hemi-tip-c'); }
+        else tipEl.style.removeProperty('--hemi-tip-c');
         const follow = visible; // 이미 떠 있으면 그 자리에서 미끄러져 옮겨 감
         tipEl.classList.toggle('moving', follow);
         if (!follow) { tipEl.style.left = '-9999px'; tipEl.style.top = '0'; }
         placeTip(target);
         tipEl.classList.add('show');
         visible = true;
-        target.setAttribute('aria-describedby', 'dnoTip');
+        target.setAttribute('aria-describedby', 'hemiTip');
     }
     function armTip(target, immediate) {
         if (target === tipTarget) return;
@@ -206,29 +208,29 @@ html[data-theme-family="modern"] .dno-dialog-btn.cancel:hover, html[data-theme-f
         else tipTimer = setTimeout(() => { if (tipTarget === target) showTip(target); }, SHOW_DELAY);
     }
     document.addEventListener('mouseover', e => {
-        const target = e.target.closest ? e.target.closest('[data-dno-tip]') : null;
+        const target = e.target.closest ? e.target.closest('[data-hemi-tip]') : null;
         if (target === tipTarget) return;
         if (!target) { hideTip(); return; }
         armTip(target);
     }, true);
     document.addEventListener('mouseout', e => {
         if (tipTarget && (!e.relatedTarget || !tipTarget.contains(e.relatedTarget))) {
-            const next = e.relatedTarget && e.relatedTarget.closest ? e.relatedTarget.closest('[data-dno-tip]') : null;
+            const next = e.relatedTarget && e.relatedTarget.closest ? e.relatedTarget.closest('[data-hemi-tip]') : null;
             if (!next) hideTip();
         }
     }, true);
     // 키보드로 옮겨 온 포커스에도 (마우스 클릭으로 생긴 포커스는 빼고)
     document.addEventListener('focusin', e => {
-        const target = e.target.closest ? e.target.closest('[data-dno-tip]') : null;
+        const target = e.target.closest ? e.target.closest('[data-hemi-tip]') : null;
         if (!target) return;
         let kb = false; try { kb = e.target.matches(':focus-visible'); } catch (err) { /* 미지원 */ }
         if (kb) armTip(target, true);
     }, true);
-    document.addEventListener('focusout', e => { if (tipTarget && e.target.closest && e.target.closest('[data-dno-tip]') === tipTarget) hideTip(true); }, true);
+    document.addEventListener('focusout', e => { if (tipTarget && e.target.closest && e.target.closest('[data-hemi-tip]') === tipTarget) hideTip(true); }, true);
     ['mousedown', 'wheel', 'blur'].forEach(ev => window.addEventListener(ev, () => hideTip(true), true));
     window.addEventListener('keydown', e => { if (e.key !== 'Tab' && e.key !== 'Shift') hideTip(true); }, true);
     window.addEventListener('scroll', () => hideTip(true), true);
-    window.DnoTip = { hide: () => hideTip(true), show: el => armTip(el, true) };
+    window.HemiTip = { hide: () => hideTip(true), show: el => armTip(el, true) };
 
     // ===== 알림창 · 확인창 =====
     const queue = [];
@@ -239,34 +241,34 @@ html[data-theme-family="modern"] .dno-dialog-btn.cancel:hover, html[data-theme-f
         injectStyle();
         hideTip(true);
         const overlay = document.createElement('div');
-        overlay.className = 'dno-dialog-overlay';
+        overlay.className = 'hemi-dialog-overlay';
         const box = document.createElement('div');
-        box.className = 'dno-dialog tone-' + (job.opts.tone || (job.confirm || isModern() ? 'info' : 'warn'));
+        box.className = 'hemi-dialog tone-' + (job.opts.tone || (job.confirm || isModern() ? 'info' : 'warn'));
         box.setAttribute('role', job.confirm ? 'alertdialog' : 'alert');
         box.setAttribute('aria-modal', 'true');
         if (job.opts.title) {
             const h = document.createElement('div');
-            h.className = 'dno-dialog-title';
+            h.className = 'hemi-dialog-title';
             h.textContent = t(job.opts.title);
             box.appendChild(h);
         }
         const msg = document.createElement('div');
-        msg.className = 'dno-dialog-msg';
+        msg.className = 'hemi-dialog-msg';
         msg.textContent = t(job.message);
         box.appendChild(msg);
         const actions = document.createElement('div');
-        actions.className = 'dno-dialog-actions';
+        actions.className = 'hemi-dialog-actions';
         const ok = document.createElement('button');
         ok.type = 'button';
-        ok.className = 'dno-dialog-btn ok';
-        ok.textContent = job.opts.okText ? t(job.opts.okText) : (typeof getLang === 'function' && getLang() !== 'kr' ? 'OK' : '확인');
+        ok.className = 'hemi-dialog-btn ok';
+        ok.textContent = job.opts.okText ? t(job.opts.okText) : key('common.ok', '확인');
         actions.appendChild(ok);
         let cancel = null;
         if (job.confirm) {
             cancel = document.createElement('button');
             cancel.type = 'button';
-            cancel.className = 'dno-dialog-btn cancel';
-            cancel.textContent = t(job.opts.cancelText || '취소');
+            cancel.className = 'hemi-dialog-btn cancel';
+            cancel.textContent = job.opts.cancelText ? t(job.opts.cancelText) : key('common.cancel', '취소');
             actions.appendChild(cancel);
         }
         box.appendChild(actions);
@@ -307,10 +309,10 @@ html[data-theme-family="modern"] .dno-dialog-btn.cancel:hover, html[data-theme-f
         });
     }
 
-    window.DnoUI = {
+    window.HemiUI = {
         alert: (message, opts) => enqueue(message, opts, false),
         confirm: (message, opts) => enqueue(message, opts, true),
     };
     // 기존 코드의 alert()도 테마 창으로 — 알림 뒤의 코드는 기다리지 않고 바로 이어진다(기존 호출은 모두 알림 후 return)
-    window.alert = message => { window.DnoUI.alert(message); };
+    window.alert = message => { window.HemiUI.alert(message); };
 })();

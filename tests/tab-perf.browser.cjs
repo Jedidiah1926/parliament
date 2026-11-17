@@ -14,7 +14,7 @@ async function open(browser, { block = false, theme = 'light' } = {}) {
     await ctx.route('https://fonts.googleapis.com/**', r => r.abort());
     if (block) await ctx.route('**/js/modern-style-index.js', r => r.fulfill({ status: 200, contentType: 'text/javascript', body: '' }));
     await ctx.addInitScript(t => {
-        try { localStorage.setItem('dnoThemeMode', t); } catch (e) { /* 저장 불가 */ }
+        try { localStorage.setItem('hemiThemeMode', t); } catch (e) { /* 저장 불가 */ }
         document.addEventListener('DOMContentLoaded', () => { const st = document.createElement('style'); st.textContent = '*,*::before,*::after{transition:none!important;animation:none!important}'; document.head.appendChild(st); });
     }, theme);
     await p.goto(base + '/main.html'); await p.waitForFunction(() => typeof startFromPresetOnBoot === 'function');
@@ -90,7 +90,7 @@ async function styles(p) {
         // ---------- 3) 인물 목록 — 나눠 그리고, 더 보기로 이어 붙인다 ----------
         await p.evaluate(() => switchSubTab('nation', 'people')); await p.waitForTimeout(150);
         await p.locator('#contentPeople [data-act="import"]').click(); await p.waitForTimeout(300);
-        if (await p.locator('.dno-dialog-overlay button').count()) { await p.locator('.dno-dialog-overlay button').first().click(); await p.waitForTimeout(150); } // 가져오기 결과 알림
+        if (await p.locator('.hemi-dialog-overlay button').count()) { await p.locator('.hemi-dialog-overlay button').first().click(); await p.waitForTimeout(150); } // 가져오기 결과 알림
         // 사람을 150명 넘게 만들어 나눠 그리기를 확인 (튜토리얼은 자리가 적다)
         await p.evaluate(() => { for (let i = 0; i < 150; i++) HemiPeople.people.push({ id: 'tp' + i, name: '시험인물' + i, photo: '', ideologyId: null, partyId: null, factionId: null, bio: '' }); switchSubTab('setup', 'party'); switchSubTab('nation', 'people'); });
         await p.waitForTimeout(200);

@@ -12,6 +12,7 @@
     <link rel="stylesheet" href="css/index.css">
     <link rel="stylesheet" href="css/scrollbars.css">
     <link rel="stylesheet" href="css/modern.css">
+    <script src="js/storage-migrate.js"></script><!-- 저장소 키 이름 옮기기 (dno… → hemi…) — 맨 먼저 -->
     <script src="js/modern-style-index.js"></script>
 
     <script>
@@ -51,161 +52,161 @@
 
         <!-- 두 단 설정 화면: 왼쪽 분류 목록 · 오른쪽 그 분류의 설정 -->
         <div class="settings-layout">
-            <nav class="settings-nav" aria-label="설정 분류">
+            <nav class="settings-nav" data-i18n-aria-label="settings.nav" aria-label="설정 분류">
                 <div class="status-line neon-only">
                     SYSTEM: ONLINE<br>
                     CONFIG MODULE
                 </div>
-                <button class="settings-nav-item" data-section="theme" onclick="showSettingsSection('theme')"><span class="settings-nav-icon">🎨</span>테마</button>
-                <button class="settings-nav-item" data-section="display" onclick="showSettingsSection('display')"><span class="settings-nav-icon">🖥</span>화면</button>
-                <button class="settings-nav-item" data-section="etc" onclick="showSettingsSection('etc')"><span class="settings-nav-icon">⚙</span>기타 설정</button>
+                <button class="settings-nav-item" data-section="theme" onclick="showSettingsSection('theme')"><span class="settings-nav-icon">🎨</span><span data-i18n="settings.theme">테마</span></button>
+                <button class="settings-nav-item" data-section="display" onclick="showSettingsSection('display')"><span class="settings-nav-icon">🖥</span><span data-i18n="settings.display">화면</span></button>
+                <button class="settings-nav-item" data-section="etc" onclick="showSettingsSection('etc')"><span class="settings-nav-icon">⚙</span><span data-i18n="settings.etc">기타 설정</span></button>
                 <div class="settings-nav-spacer"></div>
-                <a href="index.html" class="settings-nav-item settings-nav-back">← 메인으로</a>
+                <a href="index.html" class="settings-nav-item settings-nav-back" data-i18n="settings.back">← 메인으로</a>
             </nav>
 
             <main class="settings-panel">
                 <!-- 테마 -->
                 <section class="settings-section" id="settingsSectionTheme" data-section="theme">
-                    <h2 class="settings-section-title">테마</h2>
-                    <div class="settings-section-desc">라이트/다크는 CRT 효과 없는 깔끔한 화면, 네온은 기존의 레트로 터미널 화면입니다.</div>
+                    <h2 class="settings-section-title" data-i18n="settings.theme">테마</h2>
+                    <div class="settings-section-desc" data-i18n="settings.theme.desc">라이트/다크는 CRT 효과 없는 깔끔한 화면, 네온은 기존의 레트로 터미널 화면입니다.</div>
                     <div class="settings-group">
-                        <div class="settings-label">THEME MODE / 테마 모드</div>
+                        <div class="settings-label" data-i18n="settings.theme.mode">THEME MODE / 테마 모드</div>
                         <div class="lang-select-group">
-                            <button class="lang-select-btn" id="themeModeBtnLight" onclick="selectThemeMode('light')">라이트 모드</button>
-                            <button class="lang-select-btn" id="themeModeBtnDark" onclick="selectThemeMode('dark')">다크 모드</button>
-                            <button class="lang-select-btn" id="themeModeBtnTno" onclick="selectThemeMode('tno')">네온 모드</button>
+                            <button class="lang-select-btn" id="themeModeBtnLight" onclick="selectThemeMode('light')" data-i18n="settings.theme.light">라이트 모드</button>
+                            <button class="lang-select-btn" id="themeModeBtnDark" onclick="selectThemeMode('dark')" data-i18n="settings.theme.dark">다크 모드</button>
+                            <button class="lang-select-btn" id="themeModeBtnTno" onclick="selectThemeMode('tno')" data-i18n="settings.theme.neon">네온 모드</button>
                         </div>
                     </div>
                     <!-- 모드 테마 (데스크톱 앱 — 모드 폴더 · 창작마당) — 있을 때만 보임 -->
                     <div class="settings-group" id="themeModGroup" style="display:none;">
-                        <div class="settings-label">MOD THEMES / 모드 테마</div>
+                        <div class="settings-label" data-i18n="settings.theme.mods">MOD THEMES / 모드 테마</div>
                         <div class="lang-select-group" id="themeModList"></div>
                     </div>
                     <div class="settings-group">
-                        <div class="settings-label">THEME TEMPLATE / 테마 템플릿</div>
-                        <button class="lang-select-btn" onclick="downloadThemeTemplate()" style="width:100%;">테마 템플릿 받기 (.json)</button>
-                        <div class="settings-hint">지금 테마의 색이 채워진 테마 파일을 받습니다. id · name과 색을 바꾼 뒤 데스크톱 앱의 모드 폴더에 폴더째 넣으면 "모드 테마"에 나타납니다.</div>
+                        <div class="settings-label" data-i18n="settings.theme.template">THEME TEMPLATE / 테마 템플릿</div>
+                        <button class="lang-select-btn" onclick="downloadThemeTemplate()" style="width:100%;" data-i18n="settings.theme.templateBtn">테마 템플릿 받기 (.json)</button>
+                        <div class="settings-hint" data-i18n="settings.theme.templateHint">지금 테마의 색이 채워진 테마 파일을 받습니다. id · name과 색을 바꾼 뒤 데스크톱 앱의 모드 폴더에 폴더째 넣으면 "모드 테마"에 나타납니다.</div>
                     </div>
                     <div class="settings-group" id="themeColorSection">
-                        <div class="settings-label">THEME COLOR / 테마 색 <span id="themeColorTnoOnlyNote" style="color:#666;font-size:0.75rem;text-transform:none;"></span></div>
+                        <div class="settings-label"><span data-i18n="settings.theme.color">THEME COLOR / 테마 색</span> <span id="themeColorTnoOnlyNote" style="color:#666;font-size:0.75rem;text-transform:none;"></span></div>
                         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
                             <input type="color" id="themeColorInput" onchange="onThemeColorChange(this.value)"
                                 style="width:52px;height:40px;padding:0;border:2px solid var(--tno-border);background:none;cursor:pointer;">
                             <input type="text" id="themeColorHexInput" maxlength="7" placeholder="#00ffff"
                                 onchange="onThemeColorHexChange(this.value)"
                                 style="width:90px;background:#000;border:1px solid var(--tno-border);color:var(--tno-neon);font-family:inherit;font-size:0.9rem;padding:8px 6px;text-align:center;text-transform:uppercase;">
-                            <button class="lang-select-btn" id="themeColorResetBtn" onclick="onThemeColorReset()" style="padding:8px 12px;">기본값으로 초기화</button>
+                            <button class="lang-select-btn" id="themeColorResetBtn" onclick="onThemeColorReset()" style="padding:8px 12px;" data-i18n="settings.theme.colorReset">기본값으로 초기화</button>
                         </div>
-                        <div class="settings-hint">네온 모드의 강조 색(테두리·글자 등)에 적용됩니다</div>
+                        <div class="settings-hint" data-i18n="settings.theme.colorHint">네온 모드의 강조 색(테두리·글자 등)에 적용됩니다</div>
                     </div>
                 </section>
 
                 <!-- 화면 -->
                 <section class="settings-section" id="settingsSectionDisplay" data-section="display">
-                    <h2 class="settings-section-title">화면</h2>
-                    <div class="settings-section-desc">창 표시와 화면 요소를 고릅니다.</div>
+                    <h2 class="settings-section-title" data-i18n="settings.display">화면</h2>
+                    <div class="settings-section-desc" data-i18n="settings.display.desc">창 표시와 화면 요소를 고릅니다.</div>
                     <div class="settings-group" id="displayModeGroup">
-                        <div class="settings-label">WINDOW / 창 표시</div>
+                        <div class="settings-label" data-i18n="settings.display.window">WINDOW / 창 표시</div>
                         <div class="lang-select-group">
-                            <button class="lang-select-btn" id="displayModeBtnWindowed" onclick="selectDisplayMode('windowed')">창 모드</button>
-                            <button class="lang-select-btn" id="displayModeBtnFullscreen" onclick="selectDisplayMode('fullscreen')">전체 화면</button>
-                            <button class="lang-select-btn" id="displayModeBtnBorderless" onclick="selectDisplayMode('borderless')">테두리 없는 전체 화면</button>
+                            <button class="lang-select-btn" id="displayModeBtnWindowed" onclick="selectDisplayMode('windowed')" data-i18n="settings.display.windowed">창 모드</button>
+                            <button class="lang-select-btn" id="displayModeBtnFullscreen" onclick="selectDisplayMode('fullscreen')" data-i18n="settings.display.fullscreen">전체 화면</button>
+                            <button class="lang-select-btn" id="displayModeBtnBorderless" onclick="selectDisplayMode('borderless')" data-i18n="settings.display.borderless">테두리 없는 전체 화면</button>
                         </div>
-                        <div class="settings-hint" id="displayModeHint">F11 키로 전체 화면과 창 모드를 오갈 수 있습니다</div>
+                        <div class="settings-hint" id="displayModeHint" data-i18n="settings.display.f11">F11 키로 전체 화면과 창 모드를 오갈 수 있습니다</div>
                     </div>
                     <div class="settings-group" id="resolutionGroup">
-                        <div class="settings-label">RESOLUTION / 해상도</div>
+                        <div class="settings-label" data-i18n="settings.display.resolution">RESOLUTION / 해상도</div>
                         <select id="resolutionSelect" class="dev-code-input" style="width:100%;" onchange="selectResolution(this.value)"></select>
                         <div class="settings-hint" id="resolutionHint"></div>
                     </div>
                     <div class="settings-group">
-                        <div class="settings-label">EXECUTE / 실행 버튼</div>
+                        <div class="settings-label" data-i18n="settings.display.exec">EXECUTE / 실행 버튼</div>
                         <div class="lang-select-group">
-                            <button class="lang-select-btn" id="execBtnOff" onclick="selectExecButton(false)">숨기기</button>
-                            <button class="lang-select-btn" id="execBtnOn" onclick="selectExecButton(true)">표시</button>
+                            <button class="lang-select-btn" id="execBtnOff" onclick="selectExecButton(false)" data-i18n="common.hide">숨기기</button>
+                            <button class="lang-select-btn" id="execBtnOn" onclick="selectExecButton(true)" data-i18n="common.show">표시</button>
                         </div>
-                        <div class="settings-hint">편집 패널 아래의 "PROTOCOL EXECUTE"(실행) 버튼입니다. 설정을 바꾸면 의석 화면이 알아서 다시 그려져서 기본으로 숨겨 둡니다. 숨겨도 입력 칸 밖에서 Enter를 누르면 다시 그려요.</div>
+                        <div class="settings-hint" data-i18n="settings.display.execHint">편집 패널 아래의 "PROTOCOL EXECUTE"(실행) 버튼입니다. 설정을 바꾸면 의석 화면이 알아서 다시 그려져서 기본으로 숨겨 둡니다. 숨겨도 입력 칸 밖에서 Enter를 누르면 다시 그려요.</div>
                     </div>
                     <div class="settings-group">
-                        <div class="settings-label">VOTE / 표결 연출</div>
+                        <div class="settings-label" data-i18n="settings.display.vote">VOTE / 표결 연출</div>
                         <div class="lang-select-group">
-                            <button class="lang-select-btn" id="voteStyleClassic" onclick="selectVoteStyle('classic')">기존</button>
-                            <button class="lang-select-btn" id="voteStyleNew" onclick="selectVoteStyle('new')">개편</button>
+                            <button class="lang-select-btn" id="voteStyleClassic" onclick="selectVoteStyle('classic')" data-i18n="settings.display.voteClassic">기존</button>
+                            <button class="lang-select-btn" id="voteStyleNew" onclick="selectVoteStyle('new')" data-i18n="settings.display.voteNew">개편</button>
                         </div>
-                        <div class="settings-hint">기존: 좌석에 찬성 · 반대 · 기권을 바로 찍고 "표결 확정"으로 끝냅니다. 개편: 좌석 · 당론으로 예정 표를 정해 두고 "표결 시작"을 누르면 의원들이 무작위 타이밍으로 하나씩 투표한 뒤 찬성 · 반대 · 기권 순으로 자리가 모입니다.</div>
+                        <div class="settings-hint" data-i18n="settings.display.voteHint">기존: 좌석에 찬성 · 반대 · 기권을 바로 찍고 "표결 확정"으로 끝냅니다. 개편: 좌석 · 당론으로 예정 표를 정해 두고 "표결 시작"을 누르면 의원들이 무작위 타이밍으로 하나씩 투표한 뒤 찬성 · 반대 · 기권 순으로 자리가 모입니다.</div>
                     </div>
                     <div class="settings-group">
-                        <div class="settings-label">COUNT / 개표 연출</div>
+                        <div class="settings-label" data-i18n="settings.display.count">COUNT / 개표 연출</div>
                         <div class="lang-select-group">
-                            <button class="lang-select-btn" id="seatFillSeq" onclick="selectSeatFill('seq')">순차적으로 채우기</button>
-                            <button class="lang-select-btn" id="seatFillRandom" onclick="selectSeatFill('random')">무작위 자리 채우기</button>
+                            <button class="lang-select-btn" id="seatFillSeq" onclick="selectSeatFill('seq')" data-i18n="settings.display.countSeq">순차적으로 채우기</button>
+                            <button class="lang-select-btn" id="seatFillRandom" onclick="selectSeatFill('random')" data-i18n="settings.display.countRandom">무작위 자리 채우기</button>
                         </div>
-                        <div class="settings-hint">개표하는 동안 반원의 의석을 정당 순서대로 왼쪽부터 채울지, 최종 자리 배치에서 무작위 순서로 켤지 고릅니다 (선거 › 설정에서도 바꿀 수 있어요).</div>
+                        <div class="settings-hint" data-i18n="settings.display.countHint">개표하는 동안 반원의 의석을 정당 순서대로 왼쪽부터 채울지, 최종 자리 배치에서 무작위 순서로 켤지 고릅니다 (선거 › 설정에서도 바꿀 수 있어요).</div>
                     </div>
                     <div class="settings-group">
-                        <div class="settings-label">TOOLTIP / 네온 말풍선 색</div>
+                        <div class="settings-label" data-i18n="settings.display.tooltip">TOOLTIP / 네온 말풍선 색</div>
                         <div class="lang-select-group">
-                            <button class="lang-select-btn" id="tipGrayNeon" onclick="selectTipGray('neon')">네온 기본색</button>
-                            <button class="lang-select-btn" id="tipGrayGray" onclick="selectTipGray('gray')">회색 그대로</button>
+                            <button class="lang-select-btn" id="tipGrayNeon" onclick="selectTipGray('neon')" data-i18n="settings.display.tipNeon">네온 기본색</button>
+                            <button class="lang-select-btn" id="tipGrayGray" onclick="selectTipGray('gray')" data-i18n="settings.display.tipGray">회색 그대로</button>
                         </div>
-                        <div class="settings-hint">네온 테마에서 회색 버튼 · 글자에 마우스를 올렸을 때 뜨는 말풍선의 색입니다. 색이 있는 버튼(입법 · 선거 등)의 말풍선은 언제나 그 버튼 색을 따릅니다.</div>
+                        <div class="settings-hint" data-i18n="settings.display.tipHint">네온 테마에서 회색 버튼 · 글자에 마우스를 올렸을 때 뜨는 말풍선의 색입니다. 색이 있는 버튼(입법 · 선거 등)의 말풍선은 언제나 그 버튼 색을 따릅니다.</div>
                     </div>
                 </section>
 
                 <!-- 기타 설정 -->
                 <section class="settings-section" id="settingsSectionEtc" data-section="etc">
-                    <h2 class="settings-section-title">기타 설정</h2>
-                    <div class="settings-section-desc">그 밖의 설정입니다.</div>
+                    <h2 class="settings-section-title" data-i18n="settings.etc">기타 설정</h2>
+                    <div class="settings-section-desc" data-i18n="settings.etc.desc">그 밖의 설정입니다.</div>
                     <div class="settings-group" id="saveDirGroup" hidden>
-                        <div class="settings-label">SAVE FOLDER / 저장 위치</div>
-                        <div class="save-dir-path" id="saveDirPath"></div>
+                        <div class="settings-label" data-i18n="settings.etc.saveDir">SAVE FOLDER / 저장 위치</div>
+                        <div class="save-dir-path" id="saveDirPath" translate="no"></div>
                         <div class="update-row">
-                            <button type="button" class="lang-select-btn" onclick="openSaveDir()">폴더 열기</button>
-                            <button type="button" class="lang-select-btn" onclick="chooseSaveDir()">위치 바꾸기…</button>
-                            <button type="button" class="lang-select-btn" id="saveDirResetBtn" onclick="resetSaveDir()">기본 위치로</button>
+                            <button type="button" class="lang-select-btn" onclick="openSaveDir()" data-i18n="settings.etc.openFolder">폴더 열기</button>
+                            <button type="button" class="lang-select-btn" onclick="chooseSaveDir()" data-i18n="settings.etc.chooseFolder">위치 바꾸기…</button>
+                            <button type="button" class="lang-select-btn" id="saveDirResetBtn" onclick="resetSaveDir()" data-i18n="settings.etc.resetFolder">기본 위치로</button>
                         </div>
                         <div class="settings-hint" id="saveDirMsg"></div>
-                        <div class="settings-hint">세이브는 앱 안이 아니라 이 폴더에 세이브마다 "이름.hemi" 파일로 저장됩니다 — 그대로 백업 · 복사하거나 다른 기기에서 "불러오기"로 열 수 있어요. 탐색기에서 넣은 .hemi 파일은 다음에 시작 화면을 열 때 세이브로 보이고, 게임에서 지운 세이브는 휴지통으로 갑니다. 위치를 바꾸면 지금 세이브가 새 폴더로 옮겨져요. (Program Files처럼 관리자 권한이 필요한 폴더는 쓸 수 없어요)</div>
+                        <div class="settings-hint" data-i18n="settings.etc.saveDirHint">세이브는 앱 안이 아니라 이 폴더에 세이브마다 "이름.hemi" 파일로 저장됩니다 — 그대로 백업 · 복사하거나 다른 기기에서 "불러오기"로 열 수 있어요. 탐색기에서 넣은 .hemi 파일은 다음에 시작 화면을 열 때 세이브로 보이고, 게임에서 지운 세이브는 휴지통으로 갑니다. 위치를 바꾸면 지금 세이브가 새 폴더로 옮겨져요. (Program Files처럼 관리자 권한이 필요한 폴더는 쓸 수 없어요)</div>
                     </div>
                     <div class="settings-group" id="updateGroup" hidden>
-                        <div class="settings-label">UPDATE / 업데이트</div>
+                        <div class="settings-label" data-i18n="settings.etc.update">UPDATE / 업데이트</div>
                         <div class="settings-hint" id="updateVersion"></div>
                         <div class="update-status" id="updateStatus"></div>
                         <div class="update-bar" id="updateBarWrap" hidden><div class="update-bar-fill" id="updateBar"></div></div>
                         <div class="update-row">
-                            <button type="button" class="lang-select-btn" id="updateCheckBtn" onclick="checkUpdateNow()">업데이트 확인</button>
-                            <button type="button" class="lang-select-btn active" id="updateInstallBtn" onclick="installUpdateNow()" hidden>지금 다시 시작해 설치</button>
-                            <button type="button" class="lang-select-btn" onclick="hemicycleDesktop.openReleases()">릴리스 페이지</button>
+                            <button type="button" class="lang-select-btn" id="updateCheckBtn" onclick="checkUpdateNow()" data-i18n="settings.etc.checkUpdate">업데이트 확인</button>
+                            <button type="button" class="lang-select-btn active" id="updateInstallBtn" onclick="installUpdateNow()" hidden data-i18n="settings.etc.installUpdate">지금 다시 시작해 설치</button>
+                            <button type="button" class="lang-select-btn" onclick="hemicycleDesktop.openReleases()" data-i18n="settings.etc.releases">릴리스 페이지</button>
                         </div>
-                        <div class="settings-hint">새 버전이 GitHub Release에 올라오면 반드시 업데이트해야 합니다 — 설치판은 자동으로 받아 저장 후 다시 시작해 설치하고, 업데이트 전까지는 앱을 쓸 수 없습니다.</div>
+                        <div class="settings-hint" data-i18n="settings.etc.updateHint">새 버전이 GitHub Release에 올라오면 반드시 업데이트해야 합니다 — 설치판은 자동으로 받아 저장 후 다시 시작해 설치하고, 업데이트 전까지는 앱을 쓸 수 없습니다.</div>
                     </div>
                     <div class="settings-group" id="devModeGroup">
-                        <div class="settings-label">DEVELOPER MODE / 개발자 모드</div>
+                        <div class="settings-label" data-i18n="settings.etc.dev">DEVELOPER MODE / 개발자 모드</div>
                         <div class="settings-hint dev-locked-note" id="devLockedNote" hidden></div>
                         <form class="dev-code-row" id="devCodeForm" onsubmit="submitDevCode(event)">
-                            <input type="password" id="devCodeInput" class="dev-code-input" placeholder="개발자 코드" autocomplete="off" autocapitalize="off" spellcheck="false">
-                            <button type="submit" class="lang-select-btn">확인</button>
+                            <input type="password" id="devCodeInput" class="dev-code-input" data-i18n-placeholder="settings.etc.devCode" placeholder="개발자 코드" autocomplete="off" autocapitalize="off" spellcheck="false">
+                            <button type="submit" class="lang-select-btn" data-i18n="common.ok">확인</button>
                         </form>
                         <div class="settings-hint" id="devCodeMsg">개발자 코드를 넣으면 다음 업데이트 미리보기(티저) 화면을 열 수 있습니다.</div>
                         <div id="devOnBox" hidden>
                             <div class="dev-teaser-list" id="devTeaserList"></div>
-                            <button type="button" class="lang-select-btn" onclick="turnOffDevMode()" style="width:100%;margin-top:10px;">끄기</button>
+                            <button type="button" class="lang-select-btn" onclick="turnOffDevMode()" style="width:100%;margin-top:10px;" data-i18n="settings.etc.devOff">끄기</button>
                         </div>
                     </div>
                     <div class="settings-group" id="debugModeGroup">
-                        <div class="settings-label">DEBUG MODE / 디버그 모드</div>
-                        <div class="settings-hint" style="margin-top:0;margin-bottom:8px;">숨겨진 정부 형태</div>
+                        <div class="settings-label" data-i18n="settings.etc.debug">DEBUG MODE / 디버그 모드</div>
+                        <div class="settings-hint" style="margin-top:0;margin-bottom:8px;" data-i18n="settings.etc.hiddenGov">숨겨진 정부 형태</div>
                         <div class="lang-select-group">
-                            <button type="button" class="lang-select-btn" id="debugHiddenGovShowBtn" onclick="selectDebugHiddenGov(true)">보이기</button>
-                            <button type="button" class="lang-select-btn" id="debugHiddenGovHideBtn" onclick="selectDebugHiddenGov(false)">숨기기</button>
+                            <button type="button" class="lang-select-btn" id="debugHiddenGovShowBtn" onclick="selectDebugHiddenGov(true)" data-i18n="settings.etc.hiddenGovShow">보이기</button>
+                            <button type="button" class="lang-select-btn" id="debugHiddenGovHideBtn" onclick="selectDebugHiddenGov(false)" data-i18n="common.hide">숨기기</button>
                         </div>
-                        <div class="settings-hint">보이기를 고르면 내각 › 정부 형태 · 권한의 정부 형태 아래에 쿠데타 · 혁명 · 왕정복고로만 들어가던 숨겨진 정부 형태(1.6.2 군정 · 1.6.3 당-국가 체제 · 1.6.6 전제군주정)가 나와 바로 바꿀 수 있습니다. 전제군주정은 그 기능이 들어간 미리보기(티저) 화면에서만 보입니다.</div>
-                        <div class="settings-hint" style="margin-top:14px;margin-bottom:8px;">진행 방식</div>
+                        <div class="settings-hint" data-i18n="settings.etc.hiddenGovHint">보이기를 고르면 내각 › 정부 형태 · 권한의 정부 형태 아래에 쿠데타 · 혁명 · 왕정복고로만 들어가던 숨겨진 정부 형태(1.6.2 군정 · 1.6.3 당-국가 체제 · 1.6.6 전제군주정)가 나와 바로 바꿀 수 있습니다. 전제군주정은 그 기능이 들어간 미리보기(티저) 화면에서만 보입니다.</div>
+                        <div class="settings-hint" style="margin-top:14px;margin-bottom:8px;" data-i18n="settings.etc.timeMode">진행 방식</div>
                         <div class="lang-select-group" id="timeModeGroup">
-                            <button type="button" class="lang-select-btn active" id="timeModeTurnBtn" onclick="HemiTimeMode.set('turn')" aria-pressed="true">턴제</button>
-                            <button type="button" class="lang-select-btn" id="timeModeRealtimeBtn" onclick="HemiTimeMode.set('realtime')" aria-pressed="false">실시간</button>
+                            <button type="button" class="lang-select-btn active" id="timeModeTurnBtn" onclick="HemiTimeMode.set('turn')" aria-pressed="true" data-i18n="settings.etc.turn">턴제</button>
+                            <button type="button" class="lang-select-btn" id="timeModeRealtimeBtn" onclick="HemiTimeMode.set('realtime')" aria-pressed="false" data-i18n="settings.etc.realtime">실시간</button>
                         </div>
-                        <div class="settings-hint">턴제에서는 날짜 줄의 버튼으로 날짜를 넘깁니다. 실시간에서는 날짜를 정한 뒤 진행/일시정지 · 1~5단계 속도를 사용하세요 (Space 전환). 이벤트·설정 확인 중에는 멈추며 불러오면 일시정지합니다. 시나리오는 제작자가 지정한 진행 방식을 따릅니다.</div>
+                        <div class="settings-hint" data-i18n="settings.etc.timeModeHint">턴제에서는 날짜 줄의 버튼으로 날짜를 넘깁니다. 실시간에서는 날짜를 정한 뒤 진행/일시정지 · 1~5단계 속도를 사용하세요 (Space 전환). 이벤트·설정 확인 중에는 멈추며 불러오면 일시정지합니다. 시나리오는 제작자가 지정한 진행 방식을 따릅니다.</div>
                     </div>
                 </section>
             </main>
@@ -221,19 +222,28 @@
         // ===== 자동 업데이트 (데스크톱 앱만 — electron/updater.js) =====
         // 설치 프로그램으로 깐 앱은 GitHub Release의 새 버전을 뒤에서 받아 두었다가 다시 시작할 때 설치,
         // 압축판은 새 버전이 있으면 알려 주고 릴리스 페이지를 연다
+        // 키 번역(js/lang.js) — data-i18n이 달린 요소의 글자를 바꿀 때는 키도 함께 바꾼다 (안 그러면 페이지를 다 읽을 때 원래 키 글자로 돌아감)
+        function setKey(el, key, vars, attr) {
+            if(!el) return;
+            const data = attr ? 'data-i18n-' + attr : 'data-i18n';
+            el.setAttribute(data, key);
+            if(vars) el.setAttribute('data-i18n-vars', JSON.stringify(vars)); else el.removeAttribute('data-i18n-vars');
+            if(attr) el.setAttribute(attr, i18n(key, vars)); else el.textContent = i18n(key, vars);
+        }
         const updApi = window.hemicycleDesktop && window.hemicycleDesktop.getUpdateState ? window.hemicycleDesktop : null;
         function renderUpdate(st) {
             if(!st) return;
             document.getElementById('updateGroup').hidden = false;
-            const modeNote = { auto: '', notify: ' · 압축판 — 새 버전은 알림만 (설치 프로그램으로 깔면 자동 업데이트)', steam: ' · Steam 판 — Steam이 업데이트', off: ' · 개발 실행 — 업데이트 확인 안 함' }[st.mode] || '';
-            document.getElementById('updateVersion').textContent = `지금 버전 ${st.version}${modeNote}`;
+            const noteKey = { notify: 'settings.etc.modeNotify', steam: 'settings.etc.modeSteam', off: 'settings.etc.modeOff' }[st.mode];
+            document.getElementById('updateVersion').textContent = i18n('settings.etc.version', { version: st.version }) + (noteKey ? ' · ' + i18n(noteKey) : '');
+            const latest = st.latest || '';
             const msg = {
-                idle: '', off: '', checking: '확인 중…', none: `최신 버전입니다${st.latest ? ` (${st.latest})` : ''}.`,
-                downloading: `새 버전 ${st.latest || ''} 받는 중… ${st.percent || 0}%`,
-                downloaded: `새 버전 ${st.latest || ''}을(를) 받았습니다 — 저장하고 다시 시작해 설치합니다.`,
-                installing: `새 버전 ${st.latest || ''}을(를) 설치하려고 다시 시작합니다…`,
-                available: `새 버전 ${st.latest || ''}이(가) 나왔습니다 — 릴리스 페이지에서 새 설치 프로그램을 받아야 계속 쓸 수 있습니다.`,
-                error: `업데이트를 확인하지 못했습니다 (${st.error || '알 수 없는 오류'}).`,
+                idle: '', off: '', checking: i18n('settings.etc.checking'), none: st.latest ? i18n('settings.etc.upToDateV', { latest }) : i18n('settings.etc.upToDate'),
+                downloading: i18n('settings.etc.downloading', { latest, percent: st.percent || 0 }),
+                downloaded: i18n('settings.etc.downloaded', { latest }),
+                installing: i18n('settings.etc.installing', { latest }),
+                available: i18n('settings.etc.available', { latest }),
+                error: i18n('settings.etc.updateError', { error: st.error || i18n('settings.etc.unknownError') }),
             }[st.status] || '';
             document.getElementById('updateStatus').textContent = msg;
             document.getElementById('updateBarWrap').hidden = st.status !== 'downloading';
@@ -253,7 +263,7 @@
         function renderSaveDir(info, msg) {
             if(!info) return;
             document.getElementById('saveDirGroup').hidden = false;
-            document.getElementById('saveDirPath').textContent = info.dir + (info.isDefault ? '  (기본 위치)' : '');
+            document.getElementById('saveDirPath').textContent = info.dir + (info.isDefault ? '  ' + i18n('settings.etc.defaultDir') : '');
             document.getElementById('saveDirResetBtn').hidden = !!info.isDefault;
             document.getElementById('saveDirMsg').textContent = msg || '';
         }
@@ -261,12 +271,12 @@
         async function chooseSaveDir() {
             if(!saveApi) return;
             const r = await saveApi.chooseDir();
-            if(r && !r.canceled) renderSaveDir(r, r.ok ? '세이브를 새 폴더로 옮겼습니다.' : r.error);
+            if(r && !r.canceled) renderSaveDir(r, r.ok ? i18n('settings.etc.movedNew') : r.error);
         }
         async function resetSaveDir() {
             if(!saveApi) return;
             const r = await saveApi.resetDir();
-            renderSaveDir(r, r.ok ? '세이브를 기본 위치로 옮겼습니다.' : r.error);
+            renderSaveDir(r, r.ok ? i18n('settings.etc.movedDefault') : r.error);
         }
         if(saveApi) saveApi.info().then(info => renderSaveDir(info));
 
@@ -289,27 +299,26 @@
             const on = HemiDev.anyOn(), full = HemiDev.isOn();
             document.getElementById('devCodeForm').hidden = full;
             document.getElementById('devOnBox').hidden = !on;
-            document.getElementById('devCodeMsg').textContent = msg || (full ? '개발자 모드가 켜져 있습니다.'
-                : '개발자 코드를 넣으면 다음 업데이트 미리보기(티저) 화면을 열 수 있습니다.');
+            document.getElementById('devCodeMsg').textContent = msg || i18n(full ? 'settings.etc.devIsOn' : 'settings.etc.devHint');
             document.getElementById('devCodeMsg').classList.toggle('dev-code-err', msg === DEV_WRONG);
             document.getElementById('devTeaserList').innerHTML = on ? HemiDev.teasers.map(t =>
                 `<a class="lang-select-btn dev-teaser-link" href="${t.file}" target="_top"><b>${t.title}</b><span>${t.note}</span></a>`).join('') : '';
             const note = document.getElementById('devLockedNote');
             const locked = new URLSearchParams(location.search).get('locked');
             note.hidden = !locked || HemiDev.canOpen(locked);
-            if (locked) note.textContent = `Teaser ${String(locked).replace(/[^\w]/g, '')} 화면은 개발자 모드에서만 열 수 있습니다.`;
+            if (locked) note.textContent = i18n('settings.etc.devLocked', { id: String(locked).replace(/[^\w]/g, '') });
         }
-        const DEV_WRONG = '코드가 맞지 않습니다.';
+        const DEV_WRONG = i18n('settings.etc.devWrong');
         function submitDevCode(e) {
             e.preventDefault();
             const input = document.getElementById('devCodeInput');
             const ok = HemiDev.unlock(input.value);
             input.value = '';
-            renderDevMode(!ok ? DEV_WRONG : '개발자 모드가 켜졌습니다.');
+            renderDevMode(!ok ? DEV_WRONG : i18n('settings.etc.devTurnedOn'));
         }
         function turnOffDevMode() {
             HemiDev.lock();
-            renderDevMode('껐습니다.');
+            renderDevMode(i18n('settings.etc.devTurnedOff'));
         }
         renderDevMode();
 
@@ -336,17 +345,17 @@
         // ===== 표결 연출 · 개표 연출 — main.html이 같은 localStorage 키를 읽는다 =====
         function lsGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
         function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* 저장 불가 환경 */ } }
-        function selectVoteStyle(v) { lsSet('dnoVoteStyle', v === 'classic' ? 'classic' : 'new'); renderPlayStyleButtons(); }
-        function selectSeatFill(v) { lsSet('dnoElecSeatFill', v === 'random' ? 'random' : 'seq'); renderPlayStyleButtons(); }
-        function selectTipGray(v) { lsSet('dnoTipNeonGray', v === 'gray' ? 'gray' : 'neon'); renderPlayStyleButtons(); }
+        function selectVoteStyle(v) { lsSet('hemiVoteStyle', v === 'classic' ? 'classic' : 'new'); renderPlayStyleButtons(); }
+        function selectSeatFill(v) { lsSet('hemiElecSeatFill', v === 'random' ? 'random' : 'seq'); renderPlayStyleButtons(); }
+        function selectTipGray(v) { lsSet('hemiTipNeonGray', v === 'gray' ? 'gray' : 'neon'); renderPlayStyleButtons(); }
         function renderPlayStyleButtons() {
-            const tipGray = lsGet('dnoTipNeonGray') === 'gray';
+            const tipGray = lsGet('hemiTipNeonGray') === 'gray';
             document.getElementById('tipGrayGray').classList.toggle('active', tipGray);
             document.getElementById('tipGrayNeon').classList.toggle('active', !tipGray);
-            const vNew = lsGet('dnoVoteStyle') !== 'classic';
+            const vNew = lsGet('hemiVoteStyle') !== 'classic';
             document.getElementById('voteStyleNew').classList.toggle('active', vNew);
             document.getElementById('voteStyleClassic').classList.toggle('active', !vNew);
-            const rnd = lsGet('dnoElecSeatFill') === 'random';
+            const rnd = lsGet('hemiElecSeatFill') === 'random';
             document.getElementById('seatFillRandom').classList.toggle('active', rnd);
             document.getElementById('seatFillSeq').classList.toggle('active', !rnd);
         }
@@ -383,9 +392,9 @@
             const sel = document.getElementById('resolutionSelect');
             const hint = document.getElementById('resolutionHint');
             if(!desktopApi || !desktopApi.getResolution) {
-                sel.innerHTML = '<option>🔒 데스크톱 앱 전용</option>';
+                sel.innerHTML = `<option>${i18n('settings.display.resDesktopOnly')}</option>`;
                 sel.disabled = true;
-                hint.textContent = '브라우저판은 브라우저 창 크기를 그대로 씁니다 — 해상도는 데스크톱 앱에서 고를 수 있어요.';
+                hint.textContent = i18n('settings.display.resBrowser');
                 return;
             }
             info = info || await desktopApi.getResolution();
@@ -394,11 +403,11 @@
             const isCur = o => cur && o.width === cur.width && o.height === cur.height;
             const picked = info.mode === 'windowed' ? (info.options.find(isCur) || null) : (ch ? info.options.find(o => o.width === ch.width && o.height === ch.height) : null);
             sel.disabled = false;
-            sel.innerHTML = (picked ? '' : `<option value="" selected>${info.mode === 'windowed' ? `지금 창 크기 ${cur.width} × ${cur.height}${info.maximized ? ' (최대화)' : ''}` : '해상도 고르기'}</option>`)
-                + info.options.map(o => `<option value="${o.width}x${o.height}" ${picked === o ? 'selected' : ''} ${o.fits ? '' : 'disabled'}>${o.width} × ${o.height}${o.width === info.monitor.width && o.height === info.monitor.height ? ' (모니터 해상도)' : ''}${o.fits ? '' : ' — 이 모니터에 맞지 않음'}</option>`).join('');
+            sel.innerHTML = (picked ? '' : `<option value="" selected>${info.mode === 'windowed' ? i18n(info.maximized ? 'settings.display.resCurrentMax' : 'settings.display.resCurrent', { w: cur.width, h: cur.height }) : i18n('settings.display.resPick')}</option>`)
+                + info.options.map(o => `<option value="${o.width}x${o.height}" ${picked === o ? 'selected' : ''} ${o.fits ? '' : 'disabled'}>${o.width} × ${o.height}${o.width === info.monitor.width && o.height === info.monitor.height ? ` (${i18n('settings.display.resMonitor')})` : ''}${o.fits ? '' : ` — ${i18n('settings.display.resTooBig')}`}</option>`).join('');
             hint.textContent = info.mode === 'windowed'
-                ? `창 모드의 화면 크기입니다 (모니터 ${info.monitor.width} × ${info.monitor.height}${info.scale !== 1 ? ` · 배율 ${Math.round(info.scale * 100)}%` : ''}). 창 테두리를 끌어 크기를 바꿀 수도 있어요.`
-                : `전체 화면 · 테두리 없는 전체 화면은 모니터 해상도(${info.monitor.width} × ${info.monitor.height})를 씁니다 — 고른 해상도는 창 모드로 돌아갈 때 적용돼요.`;
+                ? i18n('settings.display.resWindowedHint', { w: info.monitor.width, h: info.monitor.height, scale: info.scale !== 1 ? ' · ' + i18n('settings.display.resScale', { pct: Math.round(info.scale * 100) }) : '' })
+                : i18n('settings.display.resFullHint', { w: info.monitor.width, h: info.monitor.height });
         }
         async function selectResolution(v) {
             const m = /^(\d+)x(\d+)$/.exec(v || '');
@@ -414,13 +423,13 @@
                 // 웹: 테두리 없는 전체 화면은 데스크톱 앱에서만 — 숨기지 않고 잠가 둔다 (세 가지가 다 보이게)
                 const bl = document.getElementById('displayModeBtnBorderless');
                 bl.disabled = true;
-                bl.title = '데스크톱 앱에서만 쓸 수 있습니다';
-                bl.textContent = '🔒 테두리 없는 전체 화면 (앱 전용)';
+                setKey(bl, 'settings.display.desktopOnly', null, 'title');
+                setKey(bl, 'settings.display.borderlessLocked');
                 const hint = document.getElementById('displayModeHint');
                 if(!fsDoc.fullscreenEnabled) {
                     document.getElementById('displayModeBtnFullscreen').disabled = true;
-                    hint.textContent = '이 브라우저(또는 화면)에서는 전체 화면을 쓸 수 없습니다 — F11 키를 눌러 보세요';
-                } else hint.textContent = 'F11 키로도 전체 화면과 창 모드를 오갈 수 있습니다 · 테두리 없는 전체 화면은 데스크톱 앱에서만';
+                    setKey(hint, 'settings.display.noFullscreen');
+                } else setKey(hint, 'settings.display.f11Web');
                 fsDoc.addEventListener('fullscreenchange', () => {
                     displayMode = fsDoc.fullscreenElement ? 'fullscreen' : 'windowed';
                     renderDisplayModeButtons();
@@ -452,7 +461,7 @@
                 const btn = document.createElement('button');
                 btn.className = 'lang-select-btn' + (t.id === mod ? ' active' : '');
                 btn.textContent = t.name;
-                btn.title = (t.source === 'workshop' ? '창작마당' : '모드 폴더') + (t.author ? ' · ' + t.author : '');
+                btn.title = i18n(t.source === 'workshop' ? 'common.source.workshop' : 'common.source.mods') + (t.author ? ' · ' + t.author : '');
                 btn.onclick = () => selectThemeMod(t.id);
                 box.appendChild(btn);
             });
@@ -470,12 +479,12 @@
             const tpl = {
                 format: 'hemicycle-theme@1',
                 id: 'my-theme',
-                name: '나의 테마',
+                name: i18n('settings.theme.templateName'),
                 author: '',
                 base: mode === 'tno' ? 'neon' : mode,
                 colors,
                 css: '',
-                _help: 'id(영문 소문자 · 숫자 · - · _)와 name을 정하고 colors의 색을 바꾸세요. base는 light · dark · neon 중 하나입니다. 이 파일을 폴더에 넣고 그 폴더를 데스크톱 앱 메인 화면 🌐 > 모드 폴더 열기로 연 곳에 넣으면 설정 > 테마 > 모드 테마에 나타납니다.',
+                _help: i18n('settings.theme.templateHelp'),
             };
             const url = URL.createObjectURL(new Blob([JSON.stringify(tpl, null, 2)], { type: 'application/json' }));
             const a = document.createElement('a');
@@ -499,7 +508,7 @@
             document.getElementById('themeColorHexInput').disabled = !isTno;
             document.getElementById('themeColorResetBtn').disabled = !isTno;
             document.getElementById('themeColorSection').style.opacity = isTno ? '1' : '0.4';
-            document.getElementById('themeColorTnoOnlyNote').textContent = isTno ? '' : '(네온 모드에서만 변경 가능)';
+            document.getElementById('themeColorTnoOnlyNote').textContent = isTno ? '' : i18n('settings.theme.neonOnly');
         }
         function onThemeColorChange(hex) {
             setThemeColor(hex);

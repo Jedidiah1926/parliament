@@ -8,8 +8,8 @@
 (function () {
     'use strict';
 
-    const COLLAPSE_KEY = 'dnoSideNavCollapsed';
-    const CLOSED_GROUPS_KEY = 'dnoSideNavClosedGroups';
+    const COLLAPSE_KEY = 'hemiSideNavCollapsed';
+    const CLOSED_GROUPS_KEY = 'hemiSideNavClosedGroups';
     // Chrome 탭 그룹처럼 그룹마다 구분색 — 실제 색은 테마별 CSS가 data-tone에 맞춰 정한다
     const GROUP_TONES = { campaign: 'gold', setup: 'info', law: 'purple', nation: 'orange', vote: 'danger', election: 'gold', cabinet: 'success', help: 'muted', world: 'pink', economy: 'lime' };
 
@@ -51,18 +51,18 @@
         if (dev) {
             const go = () => { location.href = `teaser${page}.html`; };
             const q = `${msg}\n\nTeaser ${ver} 미리보기 화면으로 갈까요? (미리보기 화면의 저장 공간은 따로입니다)`;
-            if (window.DnoUI && window.DnoUI.confirm) window.DnoUI.confirm(q).then(ok => { if (ok) go(); });
+            if (window.HemiUI && window.HemiUI.confirm) window.HemiUI.confirm(q).then(ok => { if (ok) go(); });
             else if (confirm(q)) go();
             return;
         }
-        if (window.DnoUI && window.DnoUI.alert) window.DnoUI.alert(msg); else alert(msg);
+        if (window.HemiUI && window.HemiUI.alert) window.HemiUI.alert(msg); else alert(msg);
     }
     function lockedItem(label, ver) {
         const it = document.createElement('button');
         it.type = 'button';
         it.className = 'mn-item mn-locked';
         it.title = label;
-        it.dataset.dnoTipSub = `🔒 ${ver}에서 열림`;
+        it.dataset.hemiTipSub = `🔒 ${ver}에서 열림`;
         it.dataset.tipWhen = 'collapsed';
         it.innerHTML = `<span class="mn-dot" aria-hidden="true"></span><span class="mn-text">${LOCK_SVG}<span class="mn-locked-label"></span><span class="mn-lock-ver">${ver}</span></span>`;
         it.querySelector('.mn-locked-label').textContent = label;

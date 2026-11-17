@@ -9,8 +9,8 @@
     'use strict';
     const api = window.hemicycleDesktop && window.hemicycleDesktop.saves;
     if (!api) return;
-    const SLOTS = 'dnoParliamentSaveSlots';
-    const KEY_RE = /^(hemicycleTeaserV2-\d{2}:|hemicycleLogo:)?dnoParliamentSaveSlots$/;
+    const SLOTS = 'hemiParliamentSaveSlots';
+    const KEY_RE = /^(hemicycleTeaserV2-\d{2}:|hemicycleLogo:)?hemiParliamentSaveSlots$/;
     let ls;
     try { ls = window.localStorage; } catch (e) { return; }
     const origSet = Storage.prototype.setItem, origRemove = Storage.prototype.removeItem;
