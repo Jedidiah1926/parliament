@@ -32,7 +32,7 @@
     const HemiCoup = () => window.HemiCoup || null;
     const isGovParty = p => !!p && (p.isRuling || coalitions.some(c => c.isRuling && (c.members || []).some(id => String(id) === String(p.id))));
     const nowDate = () => { try { return formatNationDate(); } catch (e) { return ''; } };
-    const houseName = () => { try { return chamberDisplayName('house'); } catch (e) { return '하원'; } };
+    const houseName = () => { try { return chamberDisplayName('house'); } catch (e) { return i18n('sim.contentSettings.5'); } };
     const speakerName = () => (typeof chamberLeaders !== 'undefined' && chamberLeaders?.house?.speaker?.name) || '';
 
     // ---- 상태 (세이브의 siege 칸 — 1.6.4 미리보기 세이브는 teaser64 칸) ----
@@ -90,7 +90,7 @@
             if (S.injured.some(x => x.ch === 'house' && x.key === s.key)) continue;
             const left = 1 + Math.floor(Math.random() * 3);
             S.injured.push({ id: uid(), ch: 'house', key: s.key, name: seatName(s), party: s.party.name, left });
-            picked.push(`${seatName(s)} (${s.party.name}, ${left}번)`);
+            picked.push(i18n('sim.siege.1', { s: seatName(s), name: s.party.name, left }));
         }
         return picked;
     }
@@ -154,10 +154,10 @@
     }
 
     function breakthrough() {
-        if (!emergencyPowers.martialLaw.active) { showCustomAlert('계엄령이 선포된 상태에서만 할 수 있습니다.'); return; }
-        if (HemiCoup() && HemiCoup().junta) { showCustomAlert('군정에서는 의회가 해산돼 있습니다 — 내각 › 쿠데타 · 혁명으로 군정을 끝내세요.'); return; }
+        if (!emergencyPowers.martialLaw.active) { showCustomAlert(i18n('sim.siege.2')); return; }
+        if (HemiCoup() && HemiCoup().junta) { showCustomAlert(i18n('sim.siege.3')); return; }
         const odds = breakthroughOdds();
-        showCustomConfirm(`계엄군 봉쇄를 뚫고 ${houseName()} 본회의장에 들어가 계엄 해제 결의안을 표결합니다.${odds.wall.n ? `\n${blockerParties().map(p => p.name).join(' · ')} 의원 ${odds.wall.n}명이 입구를 막고 있습니다.` : ''}\n가결 기준: 재적 ${odds.seats.length}명의 과반 ${odds.need}명 · 예상 성공 확률 ${odds.chance}%\n계속하시겠습니까?`, () => {
+        showCustomConfirm(i18n('sim.siege.5', { houseName: houseName(), wall: odds.wall.n ? ("\n" + i18n('sim.siege.4', { name: blockerParties().map(p => p.name).join(' · '), wall: odds.wall.n })) : '', seats: odds.seats.length, need: odds.need, chance: odds.chance }), () => {
             const hurt = injuredKeys('house');
             const entered = [], blocked = [], walled = [];
             seatParties(odds.seats).forEach(p => {
@@ -182,21 +182,21 @@
     }
     function applyBreakthrough(odds, entered, blocked, walled, wallSeats, hurtSeats, success) {
         const yea = entered.length;
-        const byParty = seatParties(entered).map(p => `${p.name} ${entered.filter(s => s.party === p).length}`).join(' · ') || '없음';
-        const effects = [`본회의장 입장 ${yea}명 (${byParty}) · 봉쇄선에 막힘 ${blocked.length}명${walled.length ? ` · 입구 저지에 막힘 ${walled.length}명` : ''}`,
-            `계엄 해제 결의안 — 찬성 ${yea} / 필요 ${odds.need} (재적 ${odds.seats.length})`];
+        const byParty = seatParties(entered).map(p => `${p.name} ${entered.filter(s => s.party === p).length}`).join(' · ') || i18n('sim.contentVote.16');
+        const effects = [i18n('sim.siege.7', { yea, byParty, blocked: blocked.length, walled: walled.length ? (" " + i18n('sim.siege.6', { walled: walled.length })) : '' }),
+            i18n('sim.siege.8', { yea, need: odds.need, seats: odds.seats.length })];
         if (wallSeats.length) {
             const bl = blockerParties();
             const mult = S.advancedAct ? 2 : 1;
             bl.forEach(p => cutSupport(p, 1 - 0.05 * mult));
-            effects.push(`${bl.map(p => p.name).join(' · ')} 의원 ${wallSeats.length}명이 입구를 막음 — 지지율 ${5 * mult}% 하락${S.advancedAct ? ' (국회선진화법)' : ''}`);
+            effects.push(i18n('sim.siege.10', { name: bl.map(p => p.name).join(' · '), wallSeats: wallSeats.length, mult: 5 * mult, advancedAct: S.advancedAct ? (" " + i18n('sim.siege.9')) : '' }));
         }
         const hurtList = hurtSeats.length ? injure(hurtSeats, hurtSeats.length) : [];
-        if (hurtList.length) effects.push(`부상 결석: ${hurtList.join(', ')}`);
+        if (hurtList.length) effects.push(i18n('sim.siege.11', { hurtList: hurtList.join(', ') }));
         // 결의안 기록 — 상정된 해제 결의안이 있으면 그것을, 없으면 새로
         let bill = bills.find(b => b.isMartialLawLift && getBillOverallStatus(b) === 'pending');
         if (!bill) {
-            bill = { id: 'b' + Date.now(), title: '계엄 해제 결의안', content: '', threshold: 0.5, numer: null, denom: null, tags: ['계엄해제'],
+            bill = { id: 'b' + Date.now(), title: i18n('sim.core.58'), content: '', threshold: 0.5, numer: null, denom: null, tags: [i18n('sim.core.59')],
                 houseStatus: 'pending', senateStatus: 'pending', thirdStatus: 'pending', houseVote: null, senateVote: null, thirdVote: null,
                 version: 1, parentBillId: null, isAmendment: false, voteHistory: [], isMartialLawLift: true, martialLawLiftApplied: false };
             bills.push(bill);
@@ -215,11 +215,11 @@
             emergencyPowers.martialLaw.active = false;
             emergencyPowers.martialLaw.suspendParliament = false;
             try { renderEmergencyPowers(); applyMartialLawEffects(); } catch (e) { /* 화면 준비 전 */ }
-            effects.push('가결 — 계엄령 해제');
+            effects.push(i18n('sim.siege.12'));
         } else {
-            effects.push('부결 — 과반에 못 미쳐 계엄군이 들어간 의원들을 봉쇄선 밖으로 끌어냄, 계엄 유지');
+            effects.push(i18n('sim.siege.13'));
         }
-        addLog('breakthrough', '계엄 중 봉쇄 돌파', odds.chance, success, effects);
+        addLog('breakthrough', i18n('sim.siege.14'), odds.chance, success, effects);
         rerender();
     }
 
@@ -276,7 +276,7 @@
         ov.className = 'siege-anim';
         ov.width = W * dpr; ov.height = H * dpr;
         ov.style.cssText = `position:absolute;left:${cvs.offsetLeft}px;top:${cvs.offsetTop}px;width:${W}px;height:${H}px;z-index:60;cursor:pointer;`;
-        ov.title = '눌러서 건너뛰기';
+        ov.title = i18n('sim.siege.15');
         wrap.appendChild(ov);
         const shade = document.querySelector('#dispPanelHouse .martial-law-shade');
         if (shade) shade.style.opacity = '0.35';
@@ -359,12 +359,12 @@
             ctx.restore();
             if (!g.showPodium(kind)) return;
             const pd = g.podium;
-            if (TP) TP.draw(ctx, pd, 'house', { wood: C.wood, speaker, label: '의장석', labelColor: C.dim });
+            if (TP) TP.draw(ctx, pd, 'house', { wood: C.wood, speaker, label: i18n('sim.siege.16'), labelColor: C.dim });
             else {
                 ctx.fillStyle = C.wood; ctx.fillRect(pd.x - pd.w / 2, pd.y - pd.h / 2, pd.w, pd.h);
                 ctx.strokeStyle = g.GOLD; ctx.lineWidth = 1; ctx.strokeRect(pd.x - pd.w / 2, pd.y - pd.h / 2, pd.w, pd.h);
                 ctx.font = `10px ${C.font}`; ctx.textAlign = 'center'; ctx.fillStyle = C.dim;
-                ctx.fillText('의장석', pd.x, pd.y + pd.h / 2 + 11);
+                ctx.fillText(i18n('sim.siege.16'), pd.x, pd.y + pd.h / 2 + 11);
             }
         };
         // 재생: frame(t)가 true를 돌려주면 끝. 속도(ui.animSpeed)만큼 빨리, 누르면 끝으로, 끝나면 잠깐 두었다 사라짐
@@ -488,13 +488,13 @@
                 if (alpha <= 0) return;
                 g.dot(x, y, m.color, alpha, ring);
             });
-            g.label('계엄군 봉쇄선', 8, barrierY + 15, ALERT);
-            if (r.wallSeats.length) g.label(`입구 저지 ${r.wallSeats.length}명`, CX + gateHalf + 10, gateY + 4, C.dim);
-            g.title(`입장 ${inCount} / 필요 ${r.need}`,
-                `봉쇄선에 막힘 ${stopped}${r.walled.length ? ` · 입구 저지에 막힘 ${walledNow}` : ''}${r.hurtSeats.length ? ` · 부상 ${r.hurtSeats.length}` : ''}`,
+            g.label(i18n('sim.siege.17'), 8, barrierY + 15, ALERT);
+            if (r.wallSeats.length) g.label(i18n('sim.siege.18', { wallSeats: r.wallSeats.length }), CX + gateHalf + 10, gateY + 4, C.dim);
+            g.title(i18n('sim.siege.19', { inCount, need: r.need }),
+                i18n('sim.siege.22', { stopped, walledNow: r.walled.length ? (" " + i18n('sim.siege.20', { walledNow })) : '', hurtSeats: r.hurtSeats.length ? (" " + i18n('sim.siege.21', { hurtSeats: r.hurtSeats.length })) : '' }),
                 inCount >= r.need ? OK : (!r.success && t >= expelAt ? ALERT : null));
-            if (t > total) g.banner(r.success ? '가결 — 계엄 해제' : '부결 — 계엄 유지', r.success ? OK : ALERT);
-            else if (!r.success && t >= expelAt) g.banner('과반 미달 — 계엄군이 의원들을 끌어냅니다', ALERT, 14);
+            if (t > total) g.banner(r.success ? i18n('sim.siege.23') : i18n('sim.siege.24'), r.success ? OK : ALERT);
+            else if (!r.success && t >= expelAt) g.banner(i18n('sim.siege.25'), ALERT, 14);
         }, total, finish);
     }
 
@@ -566,10 +566,10 @@
                 }
                 g.dot(x + jit(), y + jit(), m.color, 1, m.hurt && t > arriveAll ? ALERT : null);
             });
-            g.title(`의장석 점거 ${atPodium} / ${r.part.length}명${guardN ? ` · 경위 ${guardN}명` : ''}`, `『${r.billTitle}』${r.direct ? ' · 직권상정' : ''}${r.hurtSeats.length ? ` · 부상 ${r.hurtSeats.length}` : ''}`, null);
-            if (t > total) g.banner(r.success ? '표결 무산 — 의장석 점거 성공' : '점거 해산 — 표결 진행', r.success ? OK : ALERT);
-            else if (t >= clashEnd) g.banner(r.success ? '의장이 의장석을 떠납니다' : '점거 의원들이 밀려납니다', r.success ? OK : ALERT, 14);
-            else if (clashing) g.banner('몸싸움', ALERT, 14);
+            g.title(i18n('sim.siege.27', { atPodium, part: r.part.length, guardN: guardN ? (" " + i18n('sim.siege.26', { guardN })) : '' }), `『${r.billTitle}』${r.direct ? (" " + i18n('sim.siege.28')) : ''}${r.hurtSeats.length ? (" " + i18n('sim.siege.21', { hurtSeats: r.hurtSeats.length })) : ''}`, null);
+            if (t > total) g.banner(r.success ? i18n('sim.siege.29') : i18n('sim.siege.30'), r.success ? OK : ALERT);
+            else if (t >= clashEnd) g.banner(r.success ? i18n('sim.siege.31') : i18n('sim.siege.32'), r.success ? OK : ALERT, 14);
+            else if (clashing) g.banner(i18n('sim.siege.33'), ALERT, 14);
         }, total, finish);
     }
 
@@ -593,25 +593,25 @@
         const coh = obsSeats.length ? obsSeats.reduce((a, s) => a + cohesionOf(s.party), 0) / obsSeats.length : 50;
         const f = [];
         const add = (label, v) => f.push({ label, v: Math.round(v) });
-        add('기본', 15);
-        add(`점거에 나선 의원 ${n}명 (의석의 ${Math.round(n / total * 100)}%)`, Math.min(40, n / total * 100 * 1.2));
-        add(`상대 진영 ${others}명 (의석의 ${Math.round(others / total * 100)}%)`, -(others / total * 100 - 50) * 0.4);
-        add(`정당 결속도 (평균 ${Math.round(coh)})`, (coh - 50) * 0.4);
-        if (ui.guard) add(`의장${speakerName() ? ' ' + speakerName() : ''} 경호권 발동`, -20);
-        if (ui.direct && !S.advancedAct) add('직권상정', -10);
-        if (S.advancedAct) add('국회선진화법 (위법 부담)', -10);
+        add(i18n('sim.siege.34'), 15);
+        add(i18n('sim.siege.35', { v: n, total: Math.round(n / total * 100) }), Math.min(40, n / total * 100 * 1.2));
+        add(i18n('sim.siege.36', { others, total: Math.round(others / total * 100) }), -(others / total * 100 - 50) * 0.4);
+        add(i18n('sim.siege.37', { coh: Math.round(coh) }), (coh - 50) * 0.4);
+        if (ui.guard) add(i18n('sim.siege.38', { speakerName: speakerName() ? ' ' + speakerName() : '' }), -20);
+        if (ui.direct && !S.advancedAct) add(i18n('sim.siege.39'), -10);
+        if (S.advancedAct) add(i18n('sim.siege.40'), -10);
         const raw = f.reduce((a, x) => a + x.v, 0);
         return { f, n, obsSeats, seats, chance: clamp(Math.round(raw), 5, 90) };
     }
 
     function obstruct() {
         const bill = bills.find(b => b.id === ui.billId);
-        if (!bill) { showCustomAlert('막을 법안을 고르세요.'); return; }
+        if (!bill) { showCustomAlert(i18n('sim.siege.41')); return; }
         const obs = obstructorParties();
-        if (!obs.length) { showCustomAlert('의장석을 점거할 정당을 고르세요.'); return; }
+        if (!obs.length) { showCustomAlert(i18n('sim.siege.42')); return; }
         const odds = obstructOdds();
-        if (!odds.n) { showCustomAlert('점거에 나설 의원이 없습니다.'); return; }
-        showCustomConfirm(`『${bill.title}』 표결을 막으려 ${obs.map(p => p.name).join(' · ')} 의원 ${odds.n}명이 의장석을 점거합니다. 성공 확률 ${odds.chance}%.\n계속하시겠습니까?`, () => {
+        if (!odds.n) { showCustomAlert(i18n('sim.siege.43')); return; }
+        showCustomConfirm(i18n('sim.siege.44', { title: bill.title, name: obs.map(p => p.name).join(' · '), odds: odds.n, chance: odds.chance }), () => {
             const success = Math.random() * 100 < odds.chance;
             // 점거 인원과 부상자는 미리 정해 애니메이션에 보여 준 뒤 그대로 반영
             const part = odds.obsSeats.slice().sort(() => Math.random() - 0.5).slice(0, odds.n);
@@ -626,25 +626,25 @@
     function applyObstruct(bill, obs, odds, success, hurtSeats, guard, direct) {
         const mult = S.advancedAct ? 2 : 1;
         const effects = [];
-        if (direct && bill.committeeStatus === 'pending') { bill.committeeStatus = 'pass'; bill.t64DirectTabled = true; effects.push('의장 직권상정 — 상임위원회 심사를 건너뜀'); }
+        if (direct && bill.committeeStatus === 'pending') { bill.committeeStatus = 'pass'; bill.t64DirectTabled = true; effects.push(i18n('sim.siege.45')); }
         if (success) {
             bill.t64Obstructed = (bill.t64Obstructed || 0) + 1;
-            effects.push(`표결 무산 — 『${bill.title}』은(는) 계속 계류 (지금까지 ${bill.t64Obstructed}번 무산)`);
+            effects.push(i18n('sim.siege.46', { title: bill.title, t64Obstructed: bill.t64Obstructed }));
         } else {
-            effects.push('점거 해산 — 표결은 그대로 진행됩니다 (입법 › 표결)');
+            effects.push(i18n('sim.siege.47'));
         }
         // 지지율 페널티
         const pen = (success ? 0.05 : 0.08) * mult;
         obs.forEach(p => cutSupport(p, 1 - pen));
-        effects.push(`${obs.map(p => p.name).join(' · ')} 지지율 ${Math.round(pen * 100)}% 하락 (폭력 사용)${S.advancedAct ? ' — 국회선진화법: 국회회의방해죄 고발로 페널티 두 배' : ''}`);
+        effects.push(i18n('sim.siege.49', { name: obs.map(p => p.name).join(' · '), pen: Math.round(pen * 100), advancedAct: S.advancedAct ? (" " + i18n('sim.siege.48')) : '' }));
         if (guard) {
             const gov = parties.filter(p => isGovParty(p) && !obs.includes(p));
-            if (gov.length) { gov.forEach(p => cutSupport(p, 1 - 0.02 * mult)); effects.push(`경호권 몸싸움 — ${gov.map(p => p.name).join(' · ')} 지지율 ${2 * mult}% 하락`); }
+            if (gov.length) { gov.forEach(p => cutSupport(p, 1 - 0.02 * mult)); effects.push(i18n('sim.siege.50', { name: gov.map(p => p.name).join(' · '), mult: 2 * mult })); }
         }
         // 부상 — 점거 의원 위주, 경호권이면 더 많이
         const hurtList = hurtSeats.length ? injure(hurtSeats, hurtSeats.length) : [];
-        if (hurtList.length) effects.push(`부상 결석: ${hurtList.join(', ')}`);
-        addLog('obstruct', `의장석 점거 — 『${bill.title}』`, odds.chance, success, effects);
+        if (hurtList.length) effects.push(i18n('sim.siege.11', { hurtList: hurtList.join(', ') }));
+        addLog('obstruct', i18n('sim.siege.51', { title: bill.title }), odds.chance, success, effects);
         ui.lastBillId = bill.id;
         rerender();
     }
@@ -702,7 +702,7 @@
         try { key = (seatAssignments(chamber).bySeat || [])[hit]; } catch (e) { /* 배정 전 */ }
         const x = key && S.injured.find(y => y.ch === chamber && y.key === key);
         const body = document.getElementById('seatInfoCardBody');
-        if (x && body) body.insertAdjacentHTML('beforeend', `<div class="siege-hurt-row">🩹 부상 결석 — 다음 표결 ${x.left}번 불참</div>`);
+        if (x && body) body.insertAdjacentHTML('beforeend', `<div class="siege-hurt-row">${esc(i18n('sim.siege.52'))} ${x.left}${esc(i18n('sim.siege.53'))}</div>`);
         return r;
     };
 
@@ -713,7 +713,7 @@
         const bar = law && law.querySelector(':scope > .sub-tab-container');
         if (!bar) return;
         const after = document.getElementById('subTabVote');
-        const btn = el(`<button class="sub-tab-btn" onclick="switchSubTab('law','siege')" id="subTabSiege">공성전</button>`);
+        const btn = el(`<button class="sub-tab-btn" onclick="switchSubTab('law','siege')" id="subTabSiege">${esc(i18n('sim.siege.54'))}</button>`);
         if (after && after.nextSibling) bar.insertBefore(btn, after.nextSibling); else bar.appendChild(btn);
         law.appendChild(el(`<div id="contentSiege" class="sub-tab-content"></div>`));
     })();
@@ -726,18 +726,18 @@
 
     const factorRow = x => `<div class="siege-factor"><span>${esc(x.label)}</span><span class="${x.v >= 0 ? 'siege-plus' : 'siege-minus'}">${x.v >= 0 ? '+' : ''}${x.v}%p</span></div>`;
     const resultCard = e => e ? `<div class="siege-result ${e.success ? 'ok' : 'fail'}">
-            <div class="siege-result-head"><span class="siege-badge ${e.success ? 'ok' : 'fail'}">${e.success ? '✔ 성공' : '✘ 실패'}</span><span>${esc(e.title)}</span></div>
-            <div class="siege-dim siege-small">${esc(e.date)} · 성공 확률 ${e.chance}%</div>
+            <div class="siege-result-head"><span class="siege-badge ${e.success ? 'ok' : 'fail'}">${e.success ? esc(i18n('sim.siege.55')) : esc(i18n('sim.siege.56'))}</span><span>${esc(e.title)}</span></div>
+            <div class="siege-dim siege-small">${esc(e.date)} ${esc(i18n('sim.siege.57'))} ${e.chance}%</div>
             <ul>${e.effects.map(x => `<li>${esc(x)}</li>`).join('')}</ul>
-            ${e.kind === 'obstruct' && !e.success && ui.lastBillId ? '<button type="button" class="siege-btn" data-act="tovote">입법 › 표결로 가기 →</button>' : ''}
+            ${e.kind === 'obstruct' && !e.success && ui.lastBillId ? `<button type="button" class="siege-btn" data-act="tovote">${esc(i18n('sim.siege.58'))}</button>` : ''}
         </div>` : '';
     const chip = (text, cls) => `<span class="siege-stat ${cls || ''}">${text}</span>`;
     const dot = c => `<i class="siege-dot" style="background:${esc(c)}"></i>`;
     const animControls = () => `<div class="siege-animrow">
-            <label class="siege-toggle"><input type="checkbox" data-in="anim" ${ui.anim ? 'checked' : ''}><span>옆 반원 화면에 애니메이션 보기</span></label>
-            <div class="siege-speed ${ui.anim ? '' : 'siege-off'}"><span class="siege-dim">속도</span>${ANIM_SPEEDS.map(v => `<button type="button" class="${(ui.animSpeed || 1) === v ? 'on' : ''}" data-speed="${v}">${v}×</button>`).join('')}</div>
+            <label class="siege-toggle"><input type="checkbox" data-in="anim" ${ui.anim ? 'checked' : ''}><span>${esc(i18n('sim.siege.59'))}</span></label>
+            <div class="siege-speed ${ui.anim ? '' : 'siege-off'}"><span class="siege-dim">${esc(i18n('sim.siege.60'))}</span>${ANIM_SPEEDS.map(v => `<button type="button" class="${(ui.animSpeed || 1) === v ? 'on' : ''}" data-speed="${v}">${v}×</button>`).join('')}</div>
         </div>`;
-    const blockadeWord = v => (v >= 80 ? '철통' : v >= 60 ? '강함' : v >= 35 ? '보통' : '느슨함');
+    const blockadeWord = v => (v >= 80 ? i18n('sim.siege.61') : v >= 60 ? i18n('sim.siege.62') : v >= 35 ? i18n('sim.siege.63') : i18n('sim.siege.64'));
     const emptyState = (icon, text, extra) => `<div class="siege-empty"><div class="siege-empty-icon">${icon}</div><div>${text}</div>${extra || ''}</div>`;
     // 확률 게이지 — 큰 숫자 + 막대
     const gauge = (label, chance, sub) => `<div class="siege-gauge"><div class="siege-gauge-head"><span>${label}</span><b class="${chance >= 50 ? 'hi' : chance >= 25 ? 'mid' : 'lo'}">${chance}%</b></div>
@@ -747,7 +747,7 @@
     const MARTIAL_TAB = { president: ['president', 'presidentEmergencyPowers'], pm: ['pm', 'pmEmergencyPowers'], cabinet: ['cabinetmembers', 'cabinetEmergencyPowers'] };
     function martialTabLabel() {
         const h = emergencyPowers.martialLaw.holder;
-        return h === 'cabinet' ? '내각 구성원' : MARTIAL_TAB[h] ? effRoleLabel(h) : '정부 형태 · 권한';
+        return h === 'cabinet' ? i18n('sim.mainContentCabinet.4') : MARTIAL_TAB[h] ? effRoleLabel(h) : i18n('sim.mainContentCabinet.1');
     }
     function goDeclareMartialLaw() {
         const t = MARTIAL_TAB[emergencyPowers.martialLaw.holder];
@@ -759,46 +759,46 @@
             block.classList.add('siege-flash');
             setTimeout(() => block.classList.remove('siege-flash'), 1600);
         }
-        if (!t) showCustomAlert('계엄령 권한 주체가 없습니다 — 여기서 계엄령 권한 주체(대통령 · 총리)를 정하면 그 탭의 비상 권한에 계엄령 선포 버튼이 생깁니다.');
+        if (!t) showCustomAlert(i18n('sim.siege.65'));
     }
 
     function renderBreakPanel(seats, last) {
         const res = last && last.kind === 'breakthrough' ? resultCard(last) : '';
         const ml = emergencyPowers.martialLaw;
-        if (!ml.active) return res + emptyState('🚧', '계엄령이 선포돼 있지 않습니다.<br>대통령 · 총리 탭의 비상 권한으로 계엄령을 선포하면 열립니다.',
-            `<button type="button" class="siege-btn" data-act="martial">${esc(martialTabLabel())} 탭에서 계엄령 선포하기 →</button>`);
-        if (HemiCoup() && HemiCoup().junta) return res + emptyState('🎖', '군정에서는 의회가 해산돼 있습니다.<br>내각 › 쿠데타 · 혁명으로 군정을 끝내세요.');
+        if (!ml.active) return res + emptyState('🚧', `${esc(i18n('sim.siege.66'))}<br>${esc(i18n('sim.siege.67'))}`,
+            `<button type="button" class="siege-btn" data-act="martial">${esc(martialTabLabel())} ${esc(i18n('sim.siege.68'))}</button>`);
+        if (HemiCoup() && HemiCoup().junta) return res + emptyState('🎖', `${esc(i18n('sim.siege.69'))}<br>${esc(i18n('sim.siege.70'))}`);
         const o = breakthroughOdds();
         const total = Math.max(1, o.seats.length);
         const needPct = o.need / total * 100;
         const segs = o.groups.map(g => ({ g, v: g.try * g.prob })).filter(x => x.v > 0.5);
         let html = `<div class="siege-meter-box">
-                <div class="siege-meter-head"><span>예상 입장 <b>${Math.round(o.expected)}</b>명</span><span class="siege-dim">재적 ${o.seats.length} · 과반 ${o.need}</span></div>
-                <div class="siege-meter">${segs.map(x => `<span style="width:${x.v / total * 100}%;background:${esc(x.g.p.color)}" title="${esc(x.g.p.name)} 약 ${Math.round(x.v)}명"></span>`).join('')}
+                <div class="siege-meter-head"><span>${esc(i18n('sim.siege.71'))} <b>${Math.round(o.expected)}</b>${esc(i18n('sim.siege.72'))}</span><span class="siege-dim">${esc(i18n('sim.history.84'))} ${o.seats.length} ${esc(i18n('sim.siege.73'))} ${o.need}</span></div>
+                <div class="siege-meter">${segs.map(x => `<span style="width:${x.v / total * 100}%;background:${esc(x.g.p.color)}" title="${esc(x.g.p.name)} ${esc(i18n('sim.siege.74'))} ${esc(i18n('sim.common.people', { count: Math.round(x.v) }))}"></span>`).join('')}
                     <em style="left:${needPct}%"></em></div>
-                <div class="siege-meter-legend">${segs.map(x => `<span>${dot(x.g.p.color)}${esc(x.g.p.name)} ${Math.round(x.v)}</span>`).join('')}<span class="siege-need">┃ 과반 ${o.need}</span></div>
+                <div class="siege-meter-legend">${segs.map(x => `<span>${dot(x.g.p.color)}${esc(x.g.p.name)} ${Math.round(x.v)}</span>`).join('')}<span class="siege-need">${esc(i18n('sim.siege.75'))} ${o.need}</span></div>
             </div>
-            ${gauge('계엄 해제 성공 확률', o.chance, '들어간 의원만 표결 — 가결 기준은 들어간 인원이 아니라 재적 과반')}
-            <div class="siege-group"><div class="siege-group-title">봉쇄</div>
-                <div class="siege-row"><span class="siege-lbl">봉쇄 강도</span><input type="range" min="0" max="100" value="${blockade()}" data-in="blockade" data-live="blockadeVal"><b id="blockadeVal">${blockade()} · ${blockadeWord(blockade())}</b></div>
-                <div class="siege-dim siege-small">기본값은 군 지휘부의 평균 충성도 (내각 › 군부)</div>
-                <label class="siege-toggle"><input type="checkbox" data-in="citizens" ${ui.citizens ? 'checked' : ''}><span>시민들이 국회 앞에 모여 길을 엶 <em>입장 확률 +10%p</em></span></label>
+            ${gauge(esc(i18n('sim.siege.76')), o.chance, esc(i18n('sim.siege.77')))}
+            <div class="siege-group"><div class="siege-group-title">${esc(i18n('sim.siege.78'))}</div>
+                <div class="siege-row"><span class="siege-lbl">${esc(i18n('sim.siege.79'))}</span><input type="range" min="0" max="100" value="${blockade()}" data-in="blockade" data-live="blockadeVal"><b id="blockadeVal">${blockade()} · ${blockadeWord(blockade())}</b></div>
+                <div class="siege-dim siege-small">${esc(i18n('sim.siege.80'))}</div>
+                <label class="siege-toggle"><input type="checkbox" data-in="citizens" ${ui.citizens ? 'checked' : ''}><span>${esc(i18n('sim.siege.81'))} <em>${esc(i18n('sim.siege.82'))}</em></span></label>
             </div>
-            <div class="siege-group"><div class="siege-group-title">입구 저지</div>
-                <div class="siege-dim siege-small" style="margin-bottom:6px">표결을 막으려는 정당이 본회의장 입구를 몸으로 막습니다 — 봉쇄선을 뚫은 의원도 여기서 막힐 수 있어요. 막은 정당은 지지율이 떨어지고, 그 의원들은 들어가지 않습니다.</div>
+            <div class="siege-group"><div class="siege-group-title">${esc(i18n('sim.siege.83'))}</div>
+                <div class="siege-dim siege-small" style="margin-bottom:6px">${esc(i18n('sim.siege.84'))}</div>
                 <div class="siege-chips">${seatParties(o.seats).map(p => `<label class="siege-chip ${ui.blockers[p.id] ? 'on' : ''}"><input type="checkbox" data-blk="${esc(p.id)}" ${ui.blockers[p.id] ? 'checked' : ''}>${dot(p.color)}${esc(p.name)}</label>`).join('')}</div>
-                ${o.wall.pool.length ? `<div class="siege-row"><span class="siege-lbl">저지 인원</span><input type="range" min="5" max="100" step="5" value="${ui.blockShare}" data-in="blockShare" data-live="blockShareVal"><b id="blockShareVal">${ui.blockShare}%</b></div>
-                <div class="siege-dim siege-small">입구에 ${o.wall.n}명 — 봉쇄선을 뚫은 의원이 입구에서 막힐 확률 ${Math.round(o.wall.stop * 100)}%</div>` : ''}
+                ${o.wall.pool.length ? `<div class="siege-row"><span class="siege-lbl">${esc(i18n('sim.siege.85'))}</span><input type="range" min="5" max="100" step="5" value="${ui.blockShare}" data-in="blockShare" data-live="blockShareVal"><b id="blockShareVal">${ui.blockShare}%</b></div>
+                <div class="siege-dim siege-small">${esc(i18n('sim.siege.86'))} ${o.wall.n}${esc(i18n('sim.siege.87'))} ${Math.round(o.wall.stop * 100)}%</div>` : ''}
             </div>
-            <div class="siege-group"><div class="siege-group-title">정당별 참여</div>
+            <div class="siege-group"><div class="siege-group-title">${esc(i18n('sim.siege.88'))}</div>
                 ${o.groups.map(g => `<div class="siege-prow${g.blocker ? ' siege-off' : ''}">
-                    <div class="siege-prow-head">${dot(g.p.color)}<b>${esc(g.p.name)}</b>${isGovParty(g.p) ? '<span class="siege-tag">여당</span>' : ''}<span class="siege-dim">${g.n}석</span>
-                        <span class="siege-prow-exp">${g.blocker ? '입구 저지 중' : `입장 ${Math.round(g.prob * 100)}% · 예상 <b>${Math.round(g.try * g.prob)}</b>`}</span></div>
-                    ${g.blocker ? '' : `<div class="siege-row"><span class="siege-lbl">참여율</span><input type="range" min="0" max="100" step="5" value="${rateOf(g.p)}" data-rate="${esc(g.p.id)}" data-live="rate_${esc(g.p.id)}"><b id="rate_${esc(g.p.id)}">${rateOf(g.p)}%</b></div>`}
+                    <div class="siege-prow-head">${dot(g.p.color)}<b>${esc(g.p.name)}</b>${isGovParty(g.p) ? `<span class="siege-tag">${esc(i18n('sim.district.163'))}</span>` : ''}<span class="siege-dim">${g.n}${esc(i18n('sim.party.11'))}</span>
+                        <span class="siege-prow-exp">${g.blocker ? esc(i18n('sim.siege.89')) : `${esc(i18n('sim.siege.90'))} ${Math.round(g.prob * 100)}${esc(i18n('sim.siege.91'))} <b>${Math.round(g.try * g.prob)}</b>`}</span></div>
+                    ${g.blocker ? '' : `<div class="siege-row"><span class="siege-lbl">${esc(i18n('sim.siege.92'))}</span><input type="range" min="0" max="100" step="5" value="${rateOf(g.p)}" data-rate="${esc(g.p.id)}" data-live="rate_${esc(g.p.id)}"><b id="rate_${esc(g.p.id)}">${rateOf(g.p)}%</b></div>`}
                 </div>`).join('')}
             </div>
             ${animControls()}
-            <button type="button" class="siege-go" data-act="break">🚪 봉쇄 돌파 · 계엄 해제 표결</button>`;
+            <button type="button" class="siege-go" data-act="break">${esc(i18n('sim.siege.93'))}</button>`;
         return html + res;
     }
 
@@ -810,33 +810,33 @@
             const opp = ps.filter(p => !isGovParty(p)).sort((a, b) => seats.filter(s => s.party === b).length - seats.filter(s => s.party === a).length)[0];
             if (opp) ui.obstructors[opp.id] = true;
         }
-        if (!pb.length) return emptyState('📜', '표결을 기다리는 법안이 없습니다.<br>입법 › 제출에서 법안을 올리세요.');
+        if (!pb.length) return emptyState('📜', `${esc(i18n('sim.siege.94'))}<br>${esc(i18n('sim.siege.95'))}`);
         const o = obstructOdds();
         const obs = obstructorParties();
         const total = Math.max(1, o.seats.length);
         const others = o.seats.filter(s => !obs.includes(s.party));
         const otherParties = seatParties(others);
-        let html = `<div class="siege-group"><div class="siege-group-title">막을 법안</div>
-                <select data-in="bill">${pb.map(b => `<option value="${esc(b.id)}" ${b.id === ui.billId ? 'selected' : ''}>${esc(b.title)}${b.committeeStatus === 'pending' ? ' (상임위 심사 중)' : ''}${b.t64Obstructed ? ` · 무산 ${b.t64Obstructed}번` : ''}</option>`).join('')}</select>
+        let html = `<div class="siege-group"><div class="siege-group-title">${esc(i18n('sim.siege.96'))}</div>
+                <select data-in="bill">${pb.map(b => `<option value="${esc(b.id)}" ${b.id === ui.billId ? 'selected' : ''}>${esc(b.title)}${b.committeeStatus === 'pending' ? esc((" " + i18n('sim.siege.97'))) : ''}${b.t64Obstructed ? esc((" " + i18n('sim.siege.98', { t64Obstructed: b.t64Obstructed }))) : ''}</option>`).join('')}</select>
             </div>
-            <div class="siege-group"><div class="siege-group-title">점거하는 정당</div>
+            <div class="siege-group"><div class="siege-group-title">${esc(i18n('sim.siege.99'))}</div>
                 <div class="siege-chips">${ps.map(p => `<label class="siege-chip ${ui.obstructors[p.id] ? 'on' : ''}"><input type="checkbox" data-obs="${esc(p.id)}" ${ui.obstructors[p.id] ? 'checked' : ''}>${dot(p.color)}${esc(p.name)}</label>`).join('')}</div>
-                <div class="siege-row"><span class="siege-lbl">참여 의원</span><input type="range" min="5" max="100" step="5" value="${ui.share}" data-in="share" data-live="shareVal"><b id="shareVal">${ui.share}%</b></div>
+                <div class="siege-row"><span class="siege-lbl">${esc(i18n('sim.siege.100'))}</span><input type="range" min="5" max="100" step="5" value="${ui.share}" data-in="share" data-live="shareVal"><b id="shareVal">${ui.share}%</b></div>
             </div>
             <div class="siege-vs">
-                <div class="siege-vs-head"><span>점거 <b>${o.n}</b>명</span><span>상대 진영 <b>${others.length}</b>명</span></div>
+                <div class="siege-vs-head"><span>${esc(i18n('sim.siege.101'))} <b>${o.n}</b>${esc(i18n('sim.siege.72'))}</span><span>${esc(i18n('sim.siege.102'))} <b>${others.length}</b>${esc(i18n('sim.siege.72'))}</span></div>
                 <div class="siege-vs-bar">${obs.map(p => { const n = Math.round(o.obsSeats.filter(s => s.party === p).length * ui.share / 100); return n ? `<span style="width:${n / total * 100}%;background:${esc(p.color)}"></span>` : ''; }).join('')}
                     <span class="siege-vs-gap" style="flex:1"></span>
                     ${otherParties.map(p => `<span class="siege-vs-opp" style="width:${others.filter(s => s.party === p).length / total * 100}%;background:${esc(p.color)}"></span>`).join('')}</div>
             </div>
-            <div class="siege-group"><div class="siege-group-title">의장 쪽 대응</div>
-                <label class="siege-toggle"><input type="checkbox" data-in="guard" ${ui.guard ? 'checked' : ''}><span>의장${speakerName() ? ' ' + esc(speakerName()) : ''} 경호권 발동 <em>경위 · 경찰 투입, 몸싸움 · 부상 늘어남</em></span></label>
-                <label class="siege-toggle ${S.advancedAct ? 'siege-off' : ''}"><input type="checkbox" data-in="direct" ${ui.direct && !S.advancedAct ? 'checked' : ''} ${S.advancedAct ? 'disabled' : ''}><span>직권상정 <em>${S.advancedAct ? '국회선진화법으로 막힘' : '의장이 바로 본회의에 올림'}</em></span></label>
+            <div class="siege-group"><div class="siege-group-title">${esc(i18n('sim.siege.103'))}</div>
+                <label class="siege-toggle"><input type="checkbox" data-in="guard" ${ui.guard ? 'checked' : ''}><span>${esc(i18n('sim.contentSystem.13'))}${speakerName() ? ' ' + esc(speakerName()) : ''} ${esc(i18n('sim.siege.104'))} <em>${esc(i18n('sim.siege.105'))}</em></span></label>
+                <label class="siege-toggle ${S.advancedAct ? 'siege-off' : ''}"><input type="checkbox" data-in="direct" ${ui.direct && !S.advancedAct ? 'checked' : ''} ${S.advancedAct ? 'disabled' : ''}><span>${esc(i18n('sim.siege.39'))} <em>${S.advancedAct ? esc(i18n('sim.siege.106')) : esc(i18n('sim.siege.107'))}</em></span></label>
             </div>
-            ${gauge('점거 성공 확률', o.chance, '')}
-            <details class="siege-factors"><summary class="siege-dim">확률 계산 보기</summary>${o.f.map(factorRow).join('')}<div class="siege-dim siege-small">합계는 5~90% 사이로 맞춥니다.</div></details>
+            ${gauge(esc(i18n('sim.siege.108')), o.chance, '')}
+            <details class="siege-factors"><summary class="siege-dim">${esc(i18n('sim.siege.109'))}</summary>${o.f.map(factorRow).join('')}<div class="siege-dim siege-small">${esc(i18n('sim.siege.110'))}</div></details>
             ${animControls()}
-            <button type="button" class="siege-go" data-act="obstruct">✊ 의장석 점거</button>`;
+            <button type="button" class="siege-go" data-act="obstruct">${esc(i18n('sim.siege.111'))}</button>`;
         if (last && last.kind === 'obstruct') html += resultCard(last);
         return html;
     }
@@ -851,33 +851,33 @@
         if (!ui.mode) ui.mode = ml.active ? 'break' : 'obstruct';
         const pbN = pendingBills().length;
         let html = `<div class="siege-head">
-                <div class="siege-intro">계엄군의 봉쇄를 뚫고 본회의장에 들어가 계엄을 해제하거나, 의장석을 점거해 반대 법안의 표결을 막습니다. 폭력에는 지지율 페널티와 부상이 따릅니다.</div>
+                <div class="siege-intro">${esc(i18n('sim.siege.112'))}</div>
                 <div class="siege-stats">
-                    ${ml.active ? chip(`⚠ 계엄 선포 중${ml.suspendParliament ? ' · 의회 정지' : ''}`, 'alert') : chip('계엄 없음')}
-                    ${chip(`국회선진화법 ${S.advancedAct ? '켜짐' : '꺼짐'}`, S.advancedAct ? 'on' : '')}
-                    ${chip(`🩹 부상 결석 ${S.injured.length}`, S.injured.length ? 'warn' : '')}
-                    ${chip(`📜 계류 법안 ${pbN}`)}
+                    ${ml.active ? chip(i18n('sim.siege.114', { suspendParliament: ml.suspendParliament ? esc((" " + i18n('sim.siege.113'))) : '' }), 'alert') : chip(esc(i18n('sim.siege.115')))}
+                    ${chip(i18n('sim.siege.117', { advancedAct: S.advancedAct ? esc(i18n('sim.siege.116')) : esc(i18n('sim.tabs.10')) }), S.advancedAct ? 'on' : '')}
+                    ${chip(esc(i18n('sim.siege.118', { injured: S.injured.length })), S.injured.length ? 'warn' : '')}
+                    ${chip(esc(i18n('sim.siege.119', { pbN })))}
                 </div>
             </div>`;
-        if (!seats.length) html += emptyState('🏛', '의석이 없습니다 — 먼저 의회를 구성하세요.');
+        if (!seats.length) html += emptyState('🏛', i18n('sim.siege.120'));
         html += `<div class="siege-modes">
-                <button type="button" class="siege-mode ${ui.mode === 'break' ? 'active' : ''}" data-mode="break"><b>🚧 봉쇄 돌파</b><span>계엄 해제 표결</span>${ml.active ? '<i class="siege-live"></i>' : ''}</button>
-                <button type="button" class="siege-mode ${ui.mode === 'obstruct' ? 'active' : ''}" data-mode="obstruct"><b>🪑 의장석 점거</b><span>표결 막기</span></button>
+                <button type="button" class="siege-mode ${ui.mode === 'break' ? 'active' : ''}" data-mode="break"><b>${esc(i18n('sim.siege.121'))}</b><span>${esc(i18n('sim.siege.122'))}</span>${ml.active ? '<i class="siege-live"></i>' : ''}</button>
+                <button type="button" class="siege-mode ${ui.mode === 'obstruct' ? 'active' : ''}" data-mode="obstruct"><b>${esc(i18n('sim.siege.123'))}</b><span>${esc(i18n('sim.siege.124'))}</span></button>
             </div>
             <div class="siege-panel">${ui.mode === 'break' ? renderBreakPanel(seats, last) : renderObstructPanel(seats, ps, last)}</div>`;
 
         // --- 설정 · 부상 · 기록 (접어 둠) ---
-        html += `<details class="siege-fold" ${ui.openSet ? 'open' : ''} data-fold="openSet"><summary>⚖ 설정 · 정당 결속도</summary>
-                <label class="siege-toggle"><input type="checkbox" data-in="act" ${S.advancedAct ? 'checked' : ''}><span>국회선진화법 <em>직권상정 제한, 폭력 페널티 두 배 (국회회의방해죄)</em></span></label>
-                <div class="siege-dim siege-small" style="margin:8px 0 2px">정당 결속도 — 봉쇄 돌파 입장 확률 · 점거 성공 확률에 반영</div>
-                ${ps.map(p => `<div class="siege-row"><span class="siege-lbl">${dot(p.color)}${esc(p.name)}</span><input type="range" min="0" max="100" step="5" value="${cohesionOf(p)}" data-coh="${esc(p.id)}" data-live="coh_${esc(p.id)}"><b id="coh_${esc(p.id)}">${cohesionOf(p)}</b></div>`).join('') || '<div class="siege-dim">정당 없음</div>'}
+        html += `<details class="siege-fold" ${ui.openSet ? 'open' : ''} data-fold="openSet"><summary>${esc(i18n('sim.siege.125'))}</summary>
+                <label class="siege-toggle"><input type="checkbox" data-in="act" ${S.advancedAct ? 'checked' : ''}><span>${esc(i18n('sim.siege.126'))} <em>${esc(i18n('sim.siege.127'))}</em></span></label>
+                <div class="siege-dim siege-small" style="margin:8px 0 2px">${esc(i18n('sim.siege.128'))}</div>
+                ${ps.map(p => `<div class="siege-row"><span class="siege-lbl">${dot(p.color)}${esc(p.name)}</span><input type="range" min="0" max="100" step="5" value="${cohesionOf(p)}" data-coh="${esc(p.id)}" data-live="coh_${esc(p.id)}"><b id="coh_${esc(p.id)}">${cohesionOf(p)}</b></div>`).join('') || `<div class="siege-dim">${esc(i18n('sim.siege.129'))}</div>`}
             </details>
-            <details class="siege-fold" ${ui.openHurt ? 'open' : ''} data-fold="openHurt"><summary>🩹 부상 결석 (${S.injured.length})</summary>
-                ${S.injured.length ? S.injured.map(x => `<div class="siege-hurt"><span>${esc(x.name)} <span class="siege-dim">${esc(x.party)}</span></span><span class="siege-dim">다음 표결 ${x.left}번 불참</span><button type="button" class="siege-btn siege-mini" data-heal="${esc(x.id)}">회복</button></div>`).join('')
-                    : '<div class="siege-dim">다친 의원이 없습니다. 다친 의원은 표결에서 빠지고, 표결을 확정할 때마다 하나씩 회복합니다.</div>'}
+            <details class="siege-fold" ${ui.openHurt ? 'open' : ''} data-fold="openHurt"><summary>${esc(i18n('sim.siege.130'))}${S.injured.length})</summary>
+                ${S.injured.length ? S.injured.map(x => `<div class="siege-hurt"><span>${esc(x.name)} <span class="siege-dim">${esc(x.party)}</span></span><span class="siege-dim">${esc(i18n('sim.siege.131'))} ${x.left}${esc(i18n('sim.siege.53'))}</span><button type="button" class="siege-btn siege-mini" data-heal="${esc(x.id)}">${esc(i18n('sim.siege.132'))}</button></div>`).join('')
+                    : `<div class="siege-dim">${esc(i18n('sim.siege.133'))}</div>`}
             </details>
-            <details class="siege-fold" ${ui.openLog ? 'open' : ''} data-fold="openLog"><summary>📋 공성전 기록 (${S.log.length})</summary>
-                ${S.log.length ? S.log.map(e => `<div class="siege-log-row"><span class="${e.success ? 'siege-plus' : 'siege-minus'}">${e.success ? '✔' : '✘'}</span><span class="siege-dim">${esc(e.date)}</span><span>${esc(e.title)}</span><span class="siege-dim">${e.chance}%</span></div>`).join('') : '<div class="siege-dim">아직 기록이 없습니다.</div>'}
+            <details class="siege-fold" ${ui.openLog ? 'open' : ''} data-fold="openLog"><summary>${esc(i18n('sim.siege.134'))}${S.log.length})</summary>
+                ${S.log.length ? S.log.map(e => `<div class="siege-log-row"><span class="${e.success ? 'siege-plus' : 'siege-minus'}">${e.success ? '✔' : '✘'}</span><span class="siege-dim">${esc(e.date)}</span><span>${esc(e.title)}</span><span class="siege-dim">${e.chance}%</span></div>`).join('') : `<div class="siege-dim">${esc(i18n('sim.history.37'))}</div>`}
             </details>`;
         box.innerHTML = html;
 

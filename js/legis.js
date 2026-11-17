@@ -46,7 +46,7 @@ function parseArticlesFromText(text) {
 }
 // 조항 → 한 덩어리 글 (검색 · 예전 화면 호환용 content)
 function articlesToText(arts) {
-    return (arts || []).map((a, i) => `제${i + 1}조${a.title ? `(${a.title})` : ''} ${a.text || ''}`.trim()).join('\n');
+    return (arts || []).map((a, i) => i18n('sim.legis.1', { v: i + 1, title: a.title ? `(${a.title})` : '', text: a.text || '' }).trim()).join('\n');
 }
 function legisEsc(s) {
     return typeof escapeHtmlText === 'function' ? escapeHtmlText(s) : String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -56,10 +56,10 @@ function articlesHtml(arts, limit) {
     const list = arts || [];
     if (!list.length) return '';
     const shown = limit ? list.slice(0, limit) : list;
-    const more = limit && list.length > limit ? `<div class="art-more">… 외 ${list.length - limit}개 조</div>` : '';
+    const more = limit && list.length > limit ? `<div class="art-more">${legisEsc(i18n('sim.legis.2', { count: list.length - limit }))}</div>` : '';
     // 조 번호는 UI(번역됨), 조 제목 · 본문은 세이브 데이터라 번역하지 않는다(translate="no")
     return `<ol class="art-list">${shown.map((a, i) => `
-        <li><span class="art-head">제${i + 1}조</span>${a.title ? `<span class="art-head" translate="no">(${legisEsc(a.title)})</span>` : ''} <span class="art-body" translate="no">${legisEsc(a.text || '')}</span></li>`).join('')}</ol>${more}`;
+        <li><span class="art-head">${legisEsc(i18n('sim.legis.4', { v: i + 1 }))}</span>${a.title ? `<span class="art-head" translate="no">(${legisEsc(a.title)})</span>` : ''} <span class="art-body" translate="no">${legisEsc(a.text || '')}</span></li>`).join('')}</ol>${more}`;
 }
 // 법안 카드 본문 — 조항이 있으면 조문으로, 없으면 아무것도
 function billBodyHtml(bill, limit) {
@@ -78,14 +78,14 @@ function legisRenderArticleEditor(id, articles) {
     box.innerHTML = arts.map((a, i) => `
         <div class="art-row" data-idx="${i}">
             <div class="art-row-head">
-                <span class="art-no">제${i + 1}조</span>
-                <input type="text" class="art-title" placeholder="조 제목 (선택, 예: 목적)" value="${legisEsc(a.title)}" maxlength="60">
-                <button type="button" class="order-btn" title="위로" onclick="legisArticleAction('${id}',${i},'up')" ${i === 0 ? 'disabled style="opacity:0.2"' : ''}>▲</button>
-                <button type="button" class="order-btn" title="아래로" onclick="legisArticleAction('${id}',${i},'down')" ${i === arts.length - 1 ? 'disabled style="opacity:0.2"' : ''}>▼</button>
-                <button type="button" class="remove-btn" title="이 조 삭제" onclick="legisArticleAction('${id}',${i},'remove')">X</button>
+                <span class="art-no">${legisEsc(i18n('sim.legis.4', { v: i + 1 }))}</span>
+                <input type="text" class="art-title" placeholder="${legisEsc(i18n('sim.legis.6'))}" value="${legisEsc(a.title)}" maxlength="60">
+                <button type="button" class="order-btn" title="${legisEsc(i18n('sim.legis.7'))}" onclick="legisArticleAction('${id}',${i},'up')" ${i === 0 ? 'disabled style="opacity:0.2"' : ''}>▲</button>
+                <button type="button" class="order-btn" title="${legisEsc(i18n('sim.legis.8'))}" onclick="legisArticleAction('${id}',${i},'down')" ${i === arts.length - 1 ? 'disabled style="opacity:0.2"' : ''}>▼</button>
+                <button type="button" class="remove-btn" title="${legisEsc(i18n('sim.legis.9'))}" onclick="legisArticleAction('${id}',${i},'remove')">X</button>
             </div>
-            <textarea class="art-text" rows="2" placeholder="조문 내용">${legisEsc(a.text)}</textarea>
-        </div>`).join('') + `<button type="button" class="art-add" onclick="legisArticleAction('${id}',-1,'add')">+ 조 추가</button>`;
+            <textarea class="art-text" rows="2" placeholder="${legisEsc(i18n('sim.legis.10'))}">${legisEsc(a.text)}</textarea>
+        </div>`).join('') + `<button type="button" class="art-add" onclick="legisArticleAction('${id}',-1,'add')">${legisEsc(i18n('sim.legis.11'))}</button>`;
 }
 function legisReadArticleRows(id) {
     const box = document.getElementById(id);
@@ -115,12 +115,12 @@ function legisOnBillKindChange() {
     const kind = document.getElementById('newBillKind')?.value || 'law';
     if (kind !== 'constitution') return;
     if (!constitution) {
-        showCustomAlert('아직 헌법이 없습니다. 입법 › 법령에서 헌법을 먼저 제정하면, 그 조문을 바탕으로 개정안을 낼 수 있어요.\n(빈 개정안을 내면 가결될 때 그 조문이 새 헌법이 됩니다)');
+        showCustomAlert(i18n('sim.legis.12'));
     }
     const current = legisReadArticles('newBillArticles');
     if (!current.length && constitution) legisRenderArticleEditor('newBillArticles', constitution.articles);
     const title = document.getElementById('newBillTitle');
-    if (title && !title.value.trim()) title.value = legisUiText(`${constitution?.title || legisUiText('헌법')} 개정안`);
+    if (title && !title.value.trim()) title.value = legisUiText(i18n('sim.legis.13', { legisUiText: constitution?.title || legisUiText(i18n('sim.mainContentLaw.7')) }));
     const thr = document.getElementById('newBillThreshold');
     if (thr && thr.value === '0.5') { thr.value = '0.667'; if (typeof toggleCustomThreshold === 'function') toggleCustomThreshold(); }
 }
@@ -129,7 +129,7 @@ function legisProposeConstitutionAmendment() {
     switchSubTab('law', 'bill');
     const kind = document.getElementById('newBillKind');
     if (kind) kind.value = 'constitution';
-    document.getElementById('newBillTitle').value = legisUiText(`${constitution?.title || legisUiText('헌법')} 개정안`);
+    document.getElementById('newBillTitle').value = legisUiText(i18n('sim.legis.13', { legisUiText: constitution?.title || legisUiText(i18n('sim.mainContentLaw.7')) }));
     legisRenderArticleEditor('newBillArticles', constitution ? constitution.articles : []);
     const thr = document.getElementById('newBillThreshold');
     if (thr) { thr.value = '0.667'; if (typeof toggleCustomThreshold === 'function') toggleCustomThreshold(); }
@@ -141,7 +141,7 @@ function legisUiText(ko) {
     return (HemiLang.exact && HemiLang.exact(ko)) || (HemiLang.t ? HemiLang.t(ko) : ko);
 }
 function billKindLabel(bill) {
-    return bill && bill.kind === 'constitution' ? '헌법 개정안' : '';
+    return bill && bill.kind === 'constitution' ? i18n('sim.contentBill.3') : '';
 }
 
 // ── 상임위원회 ───────────────────────────────
@@ -207,14 +207,14 @@ function legisPlenaryBlock(bill) {
     const c = committeeById(bill.committeeId);
     if (!c) return null; // 위원회가 지워졌으면 그냥 본회의로
     if (bill.committeeStatus === 'pass') return null;
-    if (bill.committeeStatus === 'fail') return `${c.name}에서 부결돼 폐기된 법안입니다.`;
-    return `${c.name} 심사가 끝나야 본회의에 올릴 수 있습니다.`;
+    if (bill.committeeStatus === 'fail') return i18n('sim.legis.14', { name: c.name });
+    return i18n('sim.legis.15', { name: c.name });
 }
 function setBillCommittee(id, committeeId) {
     const bill = bills.find(b => b.id === id);
     if (!bill) return;
     if (bill.committeeStatus === 'pass' || bill.committeeStatus === 'fail') {
-        showCustomAlert('위원회 심사가 끝난 법안은 소관 위원회를 바꿀 수 없습니다.');
+        showCustomAlert(i18n('sim.legis.16'));
         renderBillList();
         return;
     }
@@ -279,22 +279,22 @@ function committeeVoteHtml(bill, c) {
     const W = 320, L = committeeSeatLayout(seats, W), pts = L.pts, r = L.r, H = Math.ceil(L.bottom + 44);
     const t = committeeTally(seats), required = requiredSeatsFor(seats.length, 0.5), pass = t.yea >= required;
     const ring = Math.max(1.4, r * 0.3);
-    const word = { yea: '찬성', nay: '반대', abs: '기권' };
-    const dots = seats.map((x, i) => `<circle class="cm-seat${x.side === 'C' ? ' cm-chair' : ''}" data-i="${i}" cx="${pts[i].x.toFixed(1)}" cy="${pts[i].y.toFixed(1)}" r="${(r - ring / 2).toFixed(1)}" fill="${x.color}" stroke="${CM_VOTE_COLOR[x.v]}" stroke-width="${ring.toFixed(1)}"><title>${x.side === 'C' ? '위원장 · ' : ''}${legisEsc(x.name)} — ${word[x.v]}</title></circle>`).join('');
+    const word = { yea: i18n('sim.contentVote.23'), nay: i18n('sim.contentVote.24'), abs: i18n('sim.contentVote.25') };
+    const dots = seats.map((x, i) => `<circle class="cm-seat${x.side === 'C' ? ' cm-chair' : ''}" data-i="${i}" cx="${pts[i].x.toFixed(1)}" cy="${pts[i].y.toFixed(1)}" r="${(r - ring / 2).toFixed(1)}" fill="${x.color}" stroke="${CM_VOTE_COLOR[x.v]}" stroke-width="${ring.toFixed(1)}"><title>${x.side === 'C' ? (i18n('sim.legis.17') + " ") : ''}${legisEsc(x.name)} — ${word[x.v]}</title></circle>`).join('');
     const chairPt = seats[0] && seats[0].side === 'C' ? pts[0] : null;
     const partyRows = [];
     seats.forEach(x => { if (!partyRows.some(p => String(p.pid) === String(x.pid))) partyRows.push({ pid: x.pid, name: x.name, color: x.color }); });
     return `
-        <div class="cm-vote-modes" role="group" aria-label="누를 때 던질 표">${[['yea', '▲ 찬성'], ['nay', '▼ 반대'], ['abs', '— 기권']].map(([v, l]) => `<button type="button" class="cm-mode cm-mode-${v}${cmVoteMode === v ? ' on' : ''}" data-mode="${v}" aria-pressed="${cmVoteMode === v}">${l}</button>`).join('')}<span class="cm-vote-hint">의석을 누르거나 끌어서 표를 바꿔요</span></div>
-        <svg class="cm-hemi" viewBox="0 0 ${W} ${H}" role="img" aria-label="위원회 의석 — 찬성 ${t.yea} · 반대 ${t.nay} · 기권 ${t.abs}">${dots}
-            ${chairPt ? `<text x="${W / 2}" y="${(chairPt.y + r + 11).toFixed(1)}" class="cm-chair-label">위원장</text>` : ''}
-            <text x="${W / 2}" y="${(L.bottom + 22).toFixed(1)}" class="cm-hemi-num">${t.yea} : ${t.nay}</text><text x="${W / 2}" y="${H - 4}" class="cm-hemi-sub ${pass ? 'pass' : 'fail'}">${pass ? '통과 예상' : '부결 예상'} · 과반 ${required}</text></svg>
-        <div class="cm-tally"><span class="y">찬성 ${t.yea}</span><span class="n">반대 ${t.nay}</span><span class="a">기권 ${t.abs}</span></div>
+        <div class="cm-vote-modes" role="group" aria-label="${legisEsc(i18n('sim.legis.18'))}">${[['yea', legisEsc(i18n('sim.contentVote.8'))], ['nay', legisEsc(i18n('sim.contentVote.10'))], ['abs', legisEsc(i18n('sim.contentVote.12'))]].map(([v, l]) => `<button type="button" class="cm-mode cm-mode-${v}${cmVoteMode === v ? ' on' : ''}" data-mode="${v}" aria-pressed="${cmVoteMode === v}">${l}</button>`).join('')}<span class="cm-vote-hint">${legisEsc(i18n('sim.legis.19'))}</span></div>
+        <svg class="cm-hemi" viewBox="0 0 ${W} ${H}" role="img" aria-label="${legisEsc(i18n('sim.legis.ariaSeats', { yea: t.yea, nay: t.nay, abs: t.abs }))}">${dots}
+            ${chairPt ? `<text x="${W / 2}" y="${(chairPt.y + r + 11).toFixed(1)}" class="cm-chair-label">${legisEsc(i18n('sim.legis.22'))}</text>` : ''}
+            <text x="${W / 2}" y="${(L.bottom + 22).toFixed(1)}" class="cm-hemi-num">${t.yea} : ${t.nay}</text><text x="${W / 2}" y="${H - 4}" class="cm-hemi-sub ${pass ? 'pass' : 'fail'}">${pass ? legisEsc(i18n('sim.legis.23')) : legisEsc(i18n('sim.legis.24'))} ${legisEsc(i18n('sim.legis.25'))} ${required}</text></svg>
+        <div class="cm-tally"><span class="y">${legisEsc(i18n('sim.contentVote.23'))} ${t.yea}</span><span class="n">${legisEsc(i18n('sim.contentVote.24'))} ${t.nay}</span><span class="a">${legisEsc(i18n('sim.contentVote.25'))} ${t.abs}</span></div>
         <div class="cm-stances">${partyRows.map(p => {
             const mine = seats.filter(x => String(x.pid) === String(p.pid)), cnt = committeeTally(mine);
             const all = ['yea', 'nay', 'abs'].find(k => cnt[k] === mine.length);
-            return `<div class="cm-stance-row"><i style="background:${p.color}"></i><span>${legisEsc(p.name)} <em>${mine.length}명${all ? '' : ` · ${cnt.yea}/${cnt.nay}/${cnt.abs}`}</em></span>
-                <span class="cm-seg">${[['yea', '찬성'], ['nay', '반대'], ['abs', '기권']].map(([v, l]) => `<button type="button" class="cm-pv cm-pv-${v}${all === v ? ' on' : ''}" data-pid="${p.pid}" data-v="${v}" aria-pressed="${all === v}">${l}</button>`).join('')}</span></div>`;
+            return `<div class="cm-stance-row"><i style="background:${p.color}"></i><span>${legisEsc(p.name)} <em>${mine.length}${legisEsc(i18n('sim.legis.26'))}${all ? '' : ` · ${cnt.yea}/${cnt.nay}/${cnt.abs}`}</em></span>
+                <span class="cm-seg">${[['yea', legisEsc(i18n('sim.contentVote.23'))], ['nay', legisEsc(i18n('sim.contentVote.24'))], ['abs', legisEsc(i18n('sim.contentVote.25'))]].map(([v, l]) => `<button type="button" class="cm-pv cm-pv-${v}${all === v ? ' on' : ''}" data-pid="${p.pid}" data-v="${v}" aria-pressed="${all === v}">${l}</button>`).join('')}</span></div>`;
         }).join('')}</div>`;
 }
 function committeeVoteRefresh(billId) {
@@ -352,7 +352,7 @@ async function runCommitteeVoteAnim(billId, bill, c, box, svg) {
     const anim = cmAnim[billId] = { skip: false };
     const wait = ms => new Promise(r => setTimeout(r, ms));
     const btn = box.nextElementSibling && box.nextElementSibling.classList.contains('cm-confirm') ? box.nextElementSibling : null;
-    if (btn) btn.textContent = legisUiText('⏩ 투표 중… (누르면 건너뛰기)');
+    if (btn) btn.textContent = legisUiText(i18n('sim.vote.21'));
     box.classList.add('cm-voting');
     try {
         const seats = committeeSeats(bill, c);
@@ -369,9 +369,9 @@ async function runCommitteeVoteAnim(billId, bill, c, box, svg) {
         const t = { yea: 0, nay: 0, abs: 0 };
         const show = () => {
             if (num) num.textContent = `${t.yea} : ${t.nay}`;
-            if (tally) tally.innerHTML = `<span class="y">${legisUiText('찬성')} ${t.yea}</span><span class="n">${legisUiText('반대')} ${t.nay}</span><span class="a">${legisUiText('기권')} ${t.abs}</span>`;
+            if (tally) tally.innerHTML = `<span class="y">${legisUiText(i18n('sim.contentVote.23'))} ${t.yea}</span><span class="n">${legisUiText(i18n('sim.contentVote.24'))} ${t.nay}</span><span class="a">${legisUiText(i18n('sim.contentVote.25'))} ${t.abs}</span>`;
         };
-        if (sub) { sub.setAttribute('class', 'cm-hemi-sub'); sub.textContent = legisUiText('투표 중…'); }
+        if (sub) { sub.setAttribute('class', 'cm-hemi-sub'); sub.textContent = legisUiText(i18n('sim.legis.27')); }
         show();
         // 1) 무작위 타이밍으로 한 명씩
         const total = Math.max(1500, Math.min(3600, 1100 + seats.length * 70));
@@ -403,7 +403,7 @@ async function runCommitteeVoteAnim(billId, bill, c, box, svg) {
             });
         });
         const required = requiredSeatsFor(seats.length, 0.5), pass = t.yea >= required;
-        if (sub) { sub.setAttribute('class', 'cm-hemi-sub ' + (pass ? 'pass' : 'fail')); sub.textContent = `${legisUiText(pass ? '통과' : '부결')} · ${legisUiText('과반')} ${required}`; }
+        if (sub) { sub.setAttribute('class', 'cm-hemi-sub ' + (pass ? 'pass' : 'fail')); sub.textContent = `${legisUiText(pass ? i18n('sim.legis.28') : i18n('sim.core.74'))} · ${legisUiText(i18n('sim.bill.7'))} ${required}`; }
         if (!anim.skip) await wait(900);
     } finally {
         delete cmAnim[billId];
@@ -415,7 +415,7 @@ function finalizeCommitteeVote(billId) {
     const c = bill && committeeById(bill.committeeId);
     if (!bill || !c) return;
     const comp = committeeComposition(c);
-    if (!comp.length) { showCustomAlert('이 위원회에 배정할 위원이 없습니다. 그 원에 의석을 가진 정당이 있어야 합니다.'); return; }
+    if (!comp.length) { showCustomAlert(i18n('sim.legis.29')); return; }
     const seats = committeeSeats(bill, c);
     const { yea, nay, abs } = committeeTally(seats);
     // 정당별로 가장 많이 던진 표 (예전 기록과 같은 모양)
@@ -435,11 +435,11 @@ function finalizeCommitteeVote(billId) {
     if (!bill.voteHistory) bill.voteHistory = [];
     bill.voteHistory.push({ chamber: 'committee', committeeId: c.id, committeeName: c.name, result, date: bill.voteDate || '', yea, nay, abs, total, required, threshold: 0.5, at: new Date().toISOString() });
     renderCommitteeTab(); renderBillList(); renderArchiveList(); syncBillSelect();
-    if (typeof showKbdToast === 'function') showKbdToast(result === 'pass' ? `✔ ${c.name} 통과 — 본회의에 올릴 수 있어요` : `✘ ${c.name}에서 부결 — 폐기`);
+    if (typeof showKbdToast === 'function') showKbdToast(result === 'pass' ? i18n('sim.legis.30', { name: c.name }) : i18n('sim.legis.31', { name: c.name }));
 }
 function addCommittee(name, tags) {
     const ch = (typeof chamberList === 'function' ? chamberList() : ['house'])[0];
-    committees.push({ id: 'cm' + Date.now() + Math.floor(Math.random() * 1000), name: name || legisUiText('새 위원회'), chamber: ch, size: COMMITTEE_DEFAULT_SIZE, chairPartyId: null, tags: tags || [] });
+    committees.push({ id: 'cm' + Date.now() + Math.floor(Math.random() * 1000), name: name || legisUiText(i18n('sim.legis.32')), chamber: ch, size: COMMITTEE_DEFAULT_SIZE, chairPartyId: null, tags: tags || [] });
     renderCommitteeTab();
 }
 function addDefaultCommittees() {
@@ -482,7 +482,7 @@ function removeCommittee(id) {
     const c = committeeById(id);
     if (!c) return;
     const pending = bills.filter(b => b.committeeId === id && b.committeeStatus === 'pending').length;
-    showCustomConfirm(`"${c.name}"을(를) 삭제할까요?${pending ? `\n심사 중인 법안 ${pending}건은 위원회 심사 없이 본회의로 넘어갑니다.` : ''}`, () => {
+    showCustomConfirm(i18n('sim.legis.34', { name: c.name, pending: pending ? ("\n" + i18n('sim.legis.33', { pending })) : '' }), () => {
         committees = committees.filter(x => x.id !== id);
         bills.forEach(b => { if (b.committeeId === id && b.committeeStatus === 'pending') { b.committeeId = null; b.committeeStatus = null; } });
         renderCommitteeTab(); renderBillList(); syncBillSelect();
@@ -532,12 +532,12 @@ function renderBillTagPicker(id) {
     const council = typeof isCouncilVotingMode === 'function' && isCouncilVotingMode();
     const sug = id === 'newBillTags' && !council && tags.length && cms.length ? suggestCommitteeFor({ tags }) : undefined;
     box.innerHTML = `
-        <div class="btp-row">${tags.map(t => `<span class="btp-chip"># ${legisEsc(t)}<button type="button" data-del="${legisEsc(t)}" aria-label="${legisEsc(T('태그 빼기'))}">×</button></span>`).join('')}<input type="text" class="btp-new" value="${legisEsc(draft)}" placeholder="${legisEsc(T(tags.length ? '태그 더하기 (Enter)' : '태그 — 아래에서 고르거나 새로 입력 (Enter · 쉼표)'))}" aria-label="${legisEsc(T('새 태그'))}"></div>
-        ${cms.length ? `<div class="btp-sec"><div class="btp-h">${legisEsc(T('위원회 소관 태그'))} <span>— ${legisEsc(T('누르면 붙고, 태그가 겹치는 위원회가 심사해요'))}</span></div>
+        <div class="btp-row">${tags.map(t => `<span class="btp-chip"># ${legisEsc(t)}<button type="button" data-del="${legisEsc(t)}" aria-label="${legisEsc(T(i18n('sim.legis.35')))}">×</button></span>`).join('')}<input type="text" class="btp-new" value="${legisEsc(draft)}" placeholder="${legisEsc(T(tags.length ? i18n('sim.legis.36') : i18n('sim.legis.37')))}" aria-label="${legisEsc(T(i18n('sim.legis.38')))}"></div>
+        ${cms.length ? `<div class="btp-sec"><div class="btp-h">${legisEsc(T(i18n('sim.legis.39')))} <span>— ${legisEsc(T(i18n('sim.legis.40')))}</span></div>
             ${cms.map(c => `<div class="btp-cm"><span class="btp-cm-name">${legisEsc(c.name)}</span>${c.tags.map(opt).join('')}</div>`).join('')}</div>`
-            : `<div class="btp-hint">${legisEsc(T('상임위원회가 없어요 — 입법 › 위원회에서 만들면 소관 태그를 골라 붙일 수 있어요'))}</div>`}
-        ${others.length ? `<div class="btp-sec"><div class="btp-h">${legisEsc(T('다른 법안에서 쓴 태그'))}</div><div class="btp-cm">${others.map(opt).join('')}</div></div>` : ''}
-        ${sug !== undefined ? `<div class="btp-hint btp-route">${sug ? `→ ${legisEsc(T('소관 위원회'))}: <b>${legisEsc(sug.name)}</b>` : `→ ${legisEsc(T('소관 태그와 겹치지 않아 위원회 심사 없이 본회의로'))}`}</div>` : ''}`;
+            : `<div class="btp-hint">${legisEsc(T(i18n('sim.legis.41')))}</div>`}
+        ${others.length ? `<div class="btp-sec"><div class="btp-h">${legisEsc(T(i18n('sim.legis.42')))}</div><div class="btp-cm">${others.map(opt).join('')}</div></div>` : ''}
+        ${sug !== undefined ? `<div class="btp-hint btp-route">${sug ? `→ ${legisEsc(T(i18n('sim.legis.43')))}: <b>${legisEsc(sug.name)}</b>` : `→ ${legisEsc(T(i18n('sim.legis.44')))}`}</div>` : ''}`;
     const nw = box.querySelector('.btp-new');
     const commit = () => { const add = billTagList(nw.value.replace(/[，、]/g, ',')); if (!add.length) return false; nw.value = ''; setBillTags(id, tags.concat(add)); return true; };
     nw.addEventListener('keydown', e => {
@@ -557,9 +557,9 @@ function committeeManualHtml(c) {
     const pool = committeePool(c);
     if (!pool.length) return '';
     return `<div class="cm-manual">${pool.map(p => `
-        <label title="${legisEsc(p.name)} — 의석 ${p.seats}"><i style="background:${p.color}"></i><span>${legisEsc(p.name)}</span>
+        <label title="${legisEsc(p.name)} ${legisEsc(i18n('sim.district.109'))} ${p.seats}"><i style="background:${p.color}"></i><span>${legisEsc(p.name)}</span>
             <input type="number" min="0" max="999" value="${Math.max(0, parseInt(c.manual[p.id]) || 0)}" onchange="setCommitteeMembers('${c.id}','${p.id}',this.value)"></label>`).join('')}
-        <div class="cm-note">정당마다 위원 수를 정합니다 (위원 수 = 합계). 의석이 바뀌어도 그대로이고, "자동 (의석 비례)"로 돌리면 이 합계로 다시 나눠요.</div></div>`;
+        <div class="cm-note">${legisEsc(i18n('sim.legis.45'))}</div></div>`;
 }
 function renderCommitteeTab() {
     refreshBillTagPickers(); // 위원회 소관 태그가 바뀌면 법안 태그 고르기 목록도
@@ -568,10 +568,10 @@ function renderCommitteeTab() {
     const chambers = typeof chamberList === 'function' ? chamberList() : ['house'];
     if (!committees.length) {
         box.innerHTML = `
-            <div class="cm-empty">아직 상임위원회가 없습니다. 위원회를 만들면 법안을 본회의 전에 소관 위원회에서 먼저 심사해요.
+            <div class="cm-empty">${legisEsc(i18n('sim.legis.46'))}
                 <div class="cm-empty-btns">
-                    <button class="add-btn" onclick="addDefaultCommittees()">기본 위원회 만들기 (${COMMITTEE_PRESETS.length}개)</button>
-                    <button class="add-btn" onclick="addCommittee()">+ 위원회 추가</button>
+                    <button class="add-btn" onclick="addDefaultCommittees()">${legisEsc(i18n('sim.legis.47', { count: COMMITTEE_PRESETS.length }))}</button>
+                    <button class="add-btn" onclick="addCommittee()">${legisEsc(i18n('sim.legis.49'))}</button>
                 </div>
             </div>`;
         return;
@@ -583,35 +583,35 @@ function renderCommitteeTab() {
         const reviewing = bills.filter(b => b.committeeId === c.id && b.committeeStatus === 'pending' && getBillOverallStatus(b) === 'pending');
         const done = bills.filter(b => b.committeeId === c.id && (b.committeeStatus === 'pass' || b.committeeStatus === 'fail')).length;
         const total = comp.reduce((a, p) => a + p.n, 0);
-        const compBar = comp.length ? `<div class="cm-bar">${comp.map(p => `<span style="flex:${p.n};background:${p.color};" title="${legisEsc(p.name)} ${p.n}명"></span>`).join('')}</div>
+        const compBar = comp.length ? `<div class="cm-bar">${comp.map(p => `<span style="flex:${p.n};background:${p.color};" title="${legisEsc(p.name)} ${legisEsc(i18n('sim.common.people', { count: p.n }))}"></span>`).join('')}</div>
             <div class="cm-legend">${comp.map(p => `<span><i style="background:${p.color}"></i>${legisEsc(p.name)} ${p.n}</span>`).join('')}</div>`
-            : '<div class="cm-note">그 원에 의석을 가진 정당이 없어 위원을 배정할 수 없습니다.</div>';
+            : `<div class="cm-note">${legisEsc(i18n('sim.legis.50'))}</div>`;
         const reviewHtml = reviewing.length ? reviewing.map(b => `
             <div class="cm-bill">
                 <div class="cm-bill-title">${legisEsc(b.title)} ${billKindLabel(b) ? `<span class="bill-version-badge">${billKindLabel(b)}</span>` : ''}</div>
                 ${billBodyHtml(b, 2)}
                 <div class="cm-vote" id="cmVote-${b.id}">${committeeVoteHtml(b, c)}</div>
-                <button class="add-btn cm-confirm" onclick="confirmCommitteeVote('${b.id}')">▶ 위원회 심사 확정 (위원 ${total}명 중 과반 ${requiredSeatsFor(total, 0.5)}명 찬성이면 통과)</button>
-            </div>`).join('') : '<div class="cm-note">심사 중인 법안이 없습니다. 입법 › 상정에서 법안의 소관 위원회를 고르세요.</div>';
+                <button class="add-btn cm-confirm" onclick="confirmCommitteeVote('${b.id}')">${legisEsc(i18n('sim.legis.51', { total, need: requiredSeatsFor(total, 0.5) }))}</button>
+            </div>`).join('') : `<div class="cm-note">${legisEsc(i18n('sim.legis.54'))}</div>`;
         return `
         <div class="vote-panel cm-card">
             <div class="cm-head">
                 <input type="text" class="cm-name" value="${legisEsc(c.name)}" onchange="updateCommittee('${c.id}','name',this.value)">
-                <button class="remove-btn" title="위원회 삭제" onclick="removeCommittee('${c.id}')">X</button>
+                <button class="remove-btn" title="${legisEsc(i18n('sim.legis.55'))}" onclick="removeCommittee('${c.id}')">X</button>
             </div>
             <div class="cm-fields">
-                ${chambers.length > 1 ? `<label>원 <select onchange="updateCommittee('${c.id}','chamber',this.value)">${chambers.map(x => `<option value="${x}" ${x === ch ? 'selected' : ''}>${legisEsc(chamberDisplayName(x))}</option>`).join('')}</select></label>` : ''}
-                <label>위원 구성 <select onchange="setCommitteeManual('${c.id}', this.value === 'manual')"><option value="auto" ${c.manual ? '' : 'selected'}>자동 (의석 비례)</option><option value="manual" ${c.manual ? 'selected' : ''}>직접 정하기</option></select></label>
-                ${c.manual ? `<label>위원 수 <b class="cm-total">${total}</b></label>` : `<label>위원 수 <input type="number" min="1" max="999" value="${c.size || COMMITTEE_DEFAULT_SIZE}" onchange="updateCommittee('${c.id}','size',this.value)"></label>`}
-                <label>위원장 <select onchange="updateCommittee('${c.id}','chairPartyId',this.value)">${comp.map(p => `<option value="${p.id}" ${chair && String(chair.id) === String(p.id) ? 'selected' : ''}>${legisEsc(p.name)}</option>`).join('') || '<option value="">-</option>'}</select></label>
-                <label class="cm-tags">소관 태그 <input type="text" value="${legisEsc((c.tags || []).join(', '))}" placeholder="예: 경제, 예산" onchange="updateCommittee('${c.id}','tags',this.value)"></label>
+                ${chambers.length > 1 ? `<label>${legisEsc(i18n('sim.legis.56'))} <select onchange="updateCommittee('${c.id}','chamber',this.value)">${chambers.map(x => `<option value="${x}" ${x === ch ? 'selected' : ''}>${legisEsc(chamberDisplayName(x))}</option>`).join('')}</select></label>` : ''}
+                <label>${legisEsc(i18n('sim.legis.57'))} <select onchange="setCommitteeManual('${c.id}', this.value === 'manual')"><option value="auto" ${c.manual ? '' : 'selected'}>${legisEsc(i18n('sim.legis.58'))}</option><option value="manual" ${c.manual ? 'selected' : ''}>${legisEsc(i18n('sim.legis.59'))}</option></select></label>
+                ${c.manual ? `<label>${legisEsc(i18n('sim.legis.60'))} <b class="cm-total">${total}</b></label>` : `<label>${legisEsc(i18n('sim.legis.60'))} <input type="number" min="1" max="999" value="${c.size || COMMITTEE_DEFAULT_SIZE}" onchange="updateCommittee('${c.id}','size',this.value)"></label>`}
+                <label>${legisEsc(i18n('sim.legis.22'))} <select onchange="updateCommittee('${c.id}','chairPartyId',this.value)">${comp.map(p => `<option value="${p.id}" ${chair && String(chair.id) === String(p.id) ? 'selected' : ''}>${legisEsc(p.name)}</option>`).join('') || '<option value="">-</option>'}</select></label>
+                <label class="cm-tags">${legisEsc(i18n('sim.legis.61'))} <input type="text" value="${legisEsc((c.tags || []).join(', '))}" placeholder="${legisEsc(i18n('sim.legis.62'))}" onchange="updateCommittee('${c.id}','tags',this.value)"></label>
             </div>
             ${c.manual ? committeeManualHtml(c) : ''}
             ${compBar}
-            <div class="cm-sub">심사 중 ${reviewing.length}건 · 심사 끝 ${done}건</div>
+            <div class="cm-sub">${legisEsc(i18n('sim.legis.63', { reviewing: reviewing.length, done }))}</div>
             ${reviewHtml}
         </div>`;
-    }).join('') + `<button class="add-btn" onclick="addCommittee()">+ 위원회 추가</button>`;
+    }).join('') + `<button class="add-btn" onclick="addCommittee()">${legisEsc(i18n('sim.legis.49'))}</button>`;
     box.querySelectorAll('.cm-vote').forEach(v => committeeVoteBind(v.id.replace(/^cmVote-/, '')));
 }
 
@@ -621,7 +621,7 @@ function legisApplyEnactments() {
     bills.forEach(b => {
         if (b.kind !== 'constitution' || b.enacted || getBillOverallStatus(b) !== 'passed') return;
         const arts = billArticles(b).map(a => ({ title: a.title || '', text: a.text || '' }));
-        if (!constitution) constitution = { title: legisUiText('헌법'), preamble: '', articles: [], revisions: [] };
+        if (!constitution) constitution = { title: legisUiText(i18n('sim.mainContentLaw.7')), preamble: '', articles: [], revisions: [] };
         constitution.articles = arts;
         constitution.revisions = constitution.revisions || [];
         constitution.revisions.push({ billId: b.id, title: b.title, date: b.voteDate || '', at: new Date().toISOString() });
@@ -663,17 +663,17 @@ function renderLawBookTab() {
     const entries = lawBookEntries().filter(e => !q || e.latest.title.toLowerCase().includes(q) || (e.latest.content || '').toLowerCase().includes(q) || (e.latest.tags || []).some(t => String(t).toLowerCase().includes(q)));
     const lawsHtml = entries.length ? entries.map(e => `
         <div class="bill-card lb-law">
-            <div class="bill-card-title">${legisEsc(e.latest.title)}${(e.latest.version || 1) > 1 ? ` <span class="bill-version-badge">제${e.latest.version}판</span>` : ''}</div>
-            ${articlesHtml(billArticles(e.latest)) || '<div class="cm-note">조문이 없습니다.</div>'}
+            <div class="bill-card-title">${legisEsc(e.latest.title)}${(e.latest.version || 1) > 1 ? ` <span class="bill-version-badge">${legisEsc(i18n('sim.bill.38', { v: e.latest.version }))}</span>` : ''}</div>
+            ${articlesHtml(billArticles(e.latest)) || `<div class="cm-note">${legisEsc(i18n('sim.legis.66'))}</div>`}
             <div class="bill-card-footer">
-                <span class="lb-meta">${e.first.voteDate ? `제정 ${legisEsc(e.first.voteDate)}` : '제정'}${e.revisions ? ` · 개정 ${e.revisions}회${e.latest.voteDate ? ` (최근 ${legisEsc(e.latest.voteDate)})` : ''}` : ''}</span>
+                <span class="lb-meta">${e.first.voteDate ? i18n('sim.legis.67', { voteDate: legisEsc(e.first.voteDate) }) : legisEsc(i18n('sim.legis.68'))}${e.revisions ? legisEsc((" " + i18n('sim.legis.70', { revisions: e.revisions, voteDate: e.latest.voteDate ? legisEsc((" " + i18n('sim.legis.69', { voteDate: legisEsc(e.latest.voteDate) }))) : '' }))) : ''}</span>
                 ${typeof buildTagHtml === 'function' ? buildTagHtml(e.latest) : ''}
-                <button class="bill-amend-btn" style="margin-left:auto;" onclick="startAmendment('${e.latest.id}')">📝 개정안 발의</button>
+                <button class="bill-amend-btn" style="margin-left:auto;" onclick="startAmendment('${e.latest.id}')">${legisEsc(i18n('sim.bill.71'))}</button>
             </div>
-        </div>`).join('') : `<div class="cm-note">${q ? '검색 결과가 없습니다.' : '아직 가결된 법률이 없습니다. 의회에서 가결된 법률안이 조문 그대로 여기에 모여요.'}</div>`;
+        </div>`).join('') : `<div class="cm-note">${q ? i18n('common.noResults') : i18n('sim.legis.71')}</div>`;
     box.innerHTML = `
-        <div class="lb-section-title">법률 <span class="lb-count">${lawBookEntries().length}</span></div>
-        <div class="bill-search-bar"><input type="text" placeholder="법률 검색..." value="${legisEsc(lawBookQuery)}" oninput="lawBookQuery=this.value; renderLawBookTab(); const i=document.querySelector('#lawBook .bill-search-bar input'); if(i){i.focus(); i.setSelectionRange(i.value.length,i.value.length);}"></div>
+        <div class="lb-section-title">${legisEsc(i18n('sim.legis.72'))} <span class="lb-count">${lawBookEntries().length}</span></div>
+        <div class="bill-search-bar"><input type="text" placeholder="${legisEsc(i18n('sim.legis.73'))}" value="${legisEsc(lawBookQuery)}" oninput="lawBookQuery=this.value; renderLawBookTab(); const i=document.querySelector('#lawBook .bill-search-bar input'); if(i){i.focus(); i.setSelectionRange(i.value.length,i.value.length);}"></div>
         ${lawsHtml}`;
 }
 // 헌법 탭 — 헌법 조문 · 제정 · 직접 편집 · 개정안 발의 · 개정 이력
@@ -686,45 +686,45 @@ function renderConstitutionTab() {
     if (constitutionEditing) {
         consHtml = `
             <div class="vote-panel lb-cons">
-                <div class="vote-panel-title"><span class="tno-prompt">&gt; </span>${constitution ? '헌법 직접 편집' : '헌법 제정'}</div>
-                <input type="text" id="consTitleInput" class="vote-bill-input" placeholder="이름 (예: 대한민국헌법)" value="${legisEsc(constitution?.title || legisUiText('헌법'))}" style="margin-bottom:6px;">
-                <textarea id="consPreambleInput" class="art-text" rows="2" placeholder="전문 (선택)">${legisEsc(constitution?.preamble || '')}</textarea>
+                <div class="vote-panel-title"><span class="tno-prompt">&gt; </span>${constitution ? legisEsc(i18n('sim.legis.74')) : legisEsc(i18n('sim.legis.75'))}</div>
+                <input type="text" id="consTitleInput" class="vote-bill-input" placeholder="${legisEsc(i18n('sim.legis.76'))}" value="${legisEsc(constitution?.title || legisUiText(legisEsc(i18n('sim.mainContentLaw.7'))))}" style="margin-bottom:6px;">
+                <textarea id="consPreambleInput" class="art-text" rows="2" placeholder="${legisEsc(i18n('sim.legis.77'))}">${legisEsc(constitution?.preamble || '')}</textarea>
                 <div id="consArticles"></div>
                 <div class="lb-btns">
-                    <button class="add-btn" onclick="saveConstitutionEdit()">[✔] 저장</button>
-                    <button class="add-btn" onclick="constitutionEditing=false; renderConstitutionTab();">취소</button>
+                    <button class="add-btn" onclick="saveConstitutionEdit()">${legisEsc(i18n('sim.legis.78'))}</button>
+                    <button class="add-btn" onclick="constitutionEditing=false; renderConstitutionTab();">${legisEsc(i18n('common.cancel'))}</button>
                 </div>
-                <div class="cm-note">직접 편집은 표결 없이 바로 바뀝니다 (처음 헌법을 만들 때 · 고칠 때). 표결을 거치려면 "개정안 발의"를 쓰세요.</div>
+                <div class="cm-note">${legisEsc(i18n('sim.legis.79'))}</div>
             </div>`;
     } else if (constitution) {
         const revs = constitution.revisions || [];
         consHtml = `
             <div class="vote-panel lb-cons">
                 <div class="lb-cons-head">
-                    <div class="lb-cons-title">${legisEsc(constitution.title || '헌법')}</div>
+                    <div class="lb-cons-title">${legisEsc(constitution.title || legisEsc(i18n('sim.mainContentLaw.7')))}</div>
                     <div class="lb-btns">
-                        <button class="bill-amend-btn" onclick="legisProposeConstitutionAmendment()">📝 개정안 발의</button>
-                        <button class="bill-select-btn" onclick="constitutionEditing=true; renderConstitutionTab();">✎ 직접 편집</button>
+                        <button class="bill-amend-btn" onclick="legisProposeConstitutionAmendment()">${legisEsc(i18n('sim.bill.71'))}</button>
+                        <button class="bill-select-btn" onclick="constitutionEditing=true; renderConstitutionTab();">${legisEsc(i18n('sim.legis.80'))}</button>
                     </div>
                 </div>
                 ${constitution.preamble ? `<div class="lb-preamble" translate="no">${legisEsc(constitution.preamble)}</div>` : ''}
-                ${articlesHtml(constitution.articles) || '<div class="cm-note">조문이 없습니다.</div>'}
-                <div class="lb-revs">${revs.length ? `개정 ${revs.length}회 — ${revs.map((r, i) => `#${i + 1}${r.date ? ` (${legisEsc(r.date)})` : ''}`).join(' · ')}` : '개정 이력 없음'}</div>
+                ${articlesHtml(constitution.articles) || `<div class="cm-note">${legisEsc(i18n('sim.legis.66'))}</div>`}
+                <div class="lb-revs">${revs.length ? i18n('sim.legis.81', { revs: revs.length, date: revs.map((r, i) => `#${i + 1}${r.date ? ` (${legisEsc(r.date)})` : ''}`).join(' · ') }) : legisEsc(i18n('sim.legis.82'))}</div>
             </div>`;
     } else {
         consHtml = `
-            <div class="vote-panel lb-cons cm-empty">아직 헌법이 없습니다.
-                <div class="cm-empty-btns"><button class="add-btn" onclick="constitutionEditing=true; renderConstitutionTab();">헌법 제정하기</button></div>
+            <div class="vote-panel lb-cons cm-empty">${legisEsc(i18n('sim.legis.83'))}
+                <div class="cm-empty-btns"><button class="add-btn" onclick="constitutionEditing=true; renderConstitutionTab();">${legisEsc(i18n('sim.legis.84'))}</button></div>
             </div>`;
     }
     box.innerHTML = consHtml;
     if (constitutionEditing) legisRenderArticleEditor('consArticles', constitution ? constitution.articles : []);
 }
 function saveConstitutionEdit() {
-    const title = document.getElementById('consTitleInput')?.value.trim() || '헌법';
+    const title = document.getElementById('consTitleInput')?.value.trim() || i18n('sim.mainContentLaw.7');
     const preamble = document.getElementById('consPreambleInput')?.value.trim() || '';
     const articles = legisReadArticles('consArticles');
-    if (!articles.length && !preamble) { showCustomAlert('조문을 하나 이상 적어 주세요.'); return; }
+    if (!articles.length && !preamble) { showCustomAlert(i18n('sim.legis.85')); return; }
     constitution = { title, preamble, articles, revisions: constitution?.revisions || [] };
     constitutionEditing = false;
     renderConstitutionTab();
@@ -738,7 +738,7 @@ function voteBodyKey(h) {
     if (h.chamber === 'committee') {
         if (h.committeeId && committeeById(h.committeeId)) return 'cm:' + h.committeeId;
         const c = committees.find(x => x.name === h.committeeName);
-        return c ? 'cm:' + c.id : 'cmn:' + (h.committeeName || '상임위원회');
+        return c ? 'cm:' + c.id : 'cmn:' + (h.committeeName || i18n('sim.bill.43'));
     }
     return ['house', 'senate', 'third'].includes(h.chamber) ? h.chamber : null;
 }
@@ -775,18 +775,18 @@ function renderArchiveBodyList(container, sc, query, activeTag) {
     renderTagFilter(sc.tags, getAllTags(evBills), activeTag, t => { sc.set('tag', sc.get().tag === t ? null : t); renderArchiveList('law'); });
     const isCm = archiveBody.startsWith('cm');
     if (!events.length) {
-        container.innerHTML = `<div style="color:#333; text-align:center; padding:20px; border:1px dashed #222;">${isCm ? '이 위원회의 심사 기록이 없습니다' : '이 원의 표결 기록이 없습니다'}</div>`;
+        container.innerHTML = `<div style="color:#333; text-align:center; padding:20px; border:1px dashed #222;">${isCm ? i18n('sim.legis.86') : i18n('sim.legis.87')}</div>`;
         return;
     }
     const shown = events.filter(e => billMatchesFilter(e.bill, query, activeTag));
     if (!shown.length) {
-        container.innerHTML = '<div style="color:#444; text-align:center; padding:16px; border:1px dashed #222;">검색 결과가 없습니다</div>';
+        container.innerHTML = `<div style="color:#444; text-align:center; padding:16px; border:1px dashed #222;">${legisEsc(i18n('sim.bill.56'))}</div>`;
         return;
     }
     const pass = shown.filter(e => e.h.result === 'pass').length;
-    container.innerHTML = `<div class="ab-summary">${isCm ? '심사' : '표결'} ${shown.length}건 · <span class="y">가결 ${pass}</span> · <span class="n">부결 ${shown.length - pass}</span></div>` + shown.map(e => `
+    container.innerHTML = `<div class="ab-summary">${isCm ? legisEsc(i18n('sim.bill.44')) : legisEsc(i18n('sim.mainContentLaw.4'))} ${shown.length}${legisEsc(i18n('sim.legis.88'))} <span class="y">${legisEsc(i18n('sim.core.73'))} ${pass}</span> · <span class="n">${legisEsc(i18n('sim.core.74'))} ${shown.length - pass}</span></div>` + shown.map(e => `
         <div class="bill-card" style="border-left-color:${e.h.result === 'pass' ? 'var(--vote-yea)' : 'var(--vote-nay)'};">
-            <div class="bill-card-title">${legisEsc(e.bill.title)}${(e.bill.version || 1) > 1 ? ` <span class="bill-version-badge">제${e.bill.version}판</span>` : ''}</div>
+            <div class="bill-card-title">${legisEsc(e.bill.title)}${(e.bill.version || 1) > 1 ? ` <span class="bill-version-badge">${legisEsc(i18n('sim.bill.38', { v: e.bill.version }))}</span>` : ''}</div>
             <div style="margin-top:4px;">${buildTagHtml(e.bill)}</div>
             ${voteHistoryRowHtml(e.h)}
             <div class="bill-card-footer">${buildBillBadges(e.bill)}</div>
@@ -801,28 +801,28 @@ function renderSignList() {
     const waiting = bills.filter(b => getBillOverallStatus(b) === 'awaiting_veto');
     const done = bills.filter(b => b.vetoStatus === 'signed' || b.vetoStatus === 'vetoed').filter(b => ['passed', 'vetoed'].includes(getBillOverallStatus(b))).slice(-5).reverse();
     const head = holder
-        ? `<div class="cm-note">의회를 통과한 법안에 <b>${legisEsc(holder)}</b>이(가) 서명하면 가결되고, 거부권을 행사하면 최종 부결됩니다. 거부권 주체는 내각 › 정부 형태 · 권한에서 정해요.</div>`
-        : `<div class="cm-note">거부권 주체가 없어 의회를 통과한 법안은 바로 가결됩니다. 서명 단계를 쓰려면 내각 › 정부 형태 · 권한에서 거부권 주체를 정하세요.</div>`;
+        ? `<div class="cm-note">${legisEsc(i18n('sim.legis.89'))} <b>${legisEsc(holder)}</b>${legisEsc(i18n('sim.legis.90'))}</div>`
+        : `<div class="cm-note">${legisEsc(i18n('sim.legis.91'))}</div>`;
     const card = b => `
         <div class="bill-card" style="border-left-color:var(--tno-gold);">
-            <div class="bill-card-title">${legisEsc(b.title)}${(b.version || 1) > 1 ? ` <span class="bill-version-badge">제${b.version}판</span>` : ''}</div>
+            <div class="bill-card-title">${legisEsc(b.title)}${(b.version || 1) > 1 ? ` <span class="bill-version-badge">${legisEsc(i18n('sim.bill.38', { v: b.version }))}</span>` : ''}</div>
             ${billBodyHtml(b, 3)}
             <div style="margin-top:4px;">${buildTagHtml(b)}</div>
             <div class="bill-card-footer">
                 ${buildBillBadges(b)}
-                <span class="bill-history-toggle" onclick="event.stopPropagation(); toggleBillHistory('${b.id}')">▾ 세부 기록</span>
+                <span class="bill-history-toggle" onclick="event.stopPropagation(); toggleBillHistory('${b.id}')">${legisEsc(i18n('sim.bill.63'))}</span>
                 <div style="margin-left:auto; display:flex; gap:5px;">
-                    <button class="bill-amend-btn" onclick="signBill('${b.id}')">✍ ${legisEsc(holder)} 서명</button>
-                    <button class="bill-remove-btn" onclick="vetoBill('${b.id}')">🛑 거부권 행사</button>
+                    <button class="bill-amend-btn" onclick="signBill('${b.id}')">✍ ${legisEsc(holder)} ${legisEsc(i18n('sim.mainContentCabinet.5'))}</button>
+                    <button class="bill-remove-btn" onclick="vetoBill('${b.id}')">${legisEsc(i18n('sim.legis.92'))}</button>
                 </div>
             </div>
             ${buildBillHistoryHtml(b)}
         </div>`;
-    const recent = done.length ? `<div class="lb-section-title">최근 결정</div>` + done.map(b => `
-        <div class="sign-done ${b.vetoStatus === 'vetoed' ? 'n' : 'y'}">${b.vetoStatus === 'vetoed' ? '🛑 거부' : '✍ 서명'} · ${legisEsc(b.title)}</div>`).join('') : '';
+    const recent = done.length ? `<div class="lb-section-title">${legisEsc(i18n('sim.legis.93'))}</div>` + done.map(b => `
+        <div class="sign-done ${b.vetoStatus === 'vetoed' ? 'n' : 'y'}">${b.vetoStatus === 'vetoed' ? i18n('sim.legis.94') : i18n('sim.legis.95')} · ${legisEsc(b.title)}</div>`).join('') : '';
     box.innerHTML = `${head}
-        <div class="lb-section-title">서명 대기 <span class="lb-count">${waiting.length}</span></div>
-        ${waiting.length ? waiting.map(card).join('') : '<div style="color:#444; text-align:center; padding:16px; border:1px dashed #222;">서명을 기다리는 법안이 없습니다</div>'}
+        <div class="lb-section-title">${legisEsc(i18n('sim.legis.96'))} <span class="lb-count">${waiting.length}</span></div>
+        ${waiting.length ? waiting.map(card).join('') : `<div style="color:#444; text-align:center; padding:16px; border:1px dashed #222;">${legisEsc(i18n('sim.legis.97'))}</div>`}
         ${recent}`;
 }
 
@@ -838,14 +838,14 @@ function renderLawPipeline() {
     const laws = lawBookEntries().length;
     const cur = (typeof currentSubTab !== 'undefined' && currentSubTab.law) || 'bill';
     const steps = [
-        ['bill', '제출', null],
-        ['committee', '위원회', inCommittee],
-        ['table', '본회의', plenary],
-        ['sign', '서명', awaiting || null, 'cabinet'],
-        ['archive', '기록', null],
-        ['lawbook', '법령', laws],
+        ['bill', i18n('sim.mainContentLaw.1'), null],
+        ['committee', i18n('sim.mainContentLaw.2'), inCommittee],
+        ['table', i18n('sim.legis.98'), plenary],
+        ['sign', i18n('sim.mainContentCabinet.5'), awaiting || null, 'cabinet'],
+        ['archive', i18n('sim.legis.99'), null],
+        ['lawbook', i18n('sim.mainContentLaw.6'), laws],
     ];
-    box.innerHTML = steps.map(([tab, label, n, main], i) => `${i ? '<span class="lp-arrow">›</span>' : ''}<button type="button" class="lp-step${cur === tab ? ' active' : ''}" onclick="switchSubTab('${main || 'law'}','${tab}')"${main ? ` title="${main === 'cabinet' ? '내각 › 서명' : ''}"` : ''}>${label}${n != null ? ` <b>${n}</b>` : ''}</button>`).join('');
+    box.innerHTML = steps.map(([tab, label, n, main], i) => `${i ? '<span class="lp-arrow">›</span>' : ''}<button type="button" class="lp-step${cur === tab ? ' active' : ''}" onclick="switchSubTab('${main || 'law'}','${tab}')"${main ? ` title="${main === 'cabinet' ? i18n('sim.legis.100') : ''}"` : ''}>${label}${n != null ? ` <b>${n}</b>` : ''}</button>`).join('');
 }
 
 // ── 저장 · 불러오기 (main.js의 getAppState/setAppState가 부름) ──
@@ -855,7 +855,7 @@ function legisGetState() {
 function legisSetState(leg) {
     committees = Array.isArray(leg?.committees) ? leg.committees.map(c => ({ size: COMMITTEE_DEFAULT_SIZE, chamber: 'house', chairPartyId: null, tags: [], ...c })) : [];
     constitution = leg?.constitution && typeof leg.constitution === 'object'
-        ? { title: '헌법', preamble: '', articles: [], revisions: [], ...leg.constitution }
+        ? { title: i18n('sim.mainContentLaw.7'), preamble: '', articles: [], revisions: [], ...leg.constitution }
         : null;
     constitutionEditing = false;
     lawBookQuery = '';

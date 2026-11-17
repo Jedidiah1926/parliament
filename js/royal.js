@@ -37,10 +37,10 @@
         const total = parties.reduce((a, p) => a + (p[key] || 0), 0);
         return total ? parties.filter(filter).reduce((a, p) => a + (p[key] || 0), 0) / total : 0;
     }
-    const RULES = { salic: '남계만 (살리카법)', male: '남자 우선', equal: '성별 무관 (장자)' };
+    const RULES = { salic: i18n('sim.royal.1'), male: i18n('sim.royal.2'), equal: i18n('sim.royal.3') };
     const TITLES = ['국왕', '여왕', '황제', '여제', '대공', '술탄'];
     const PALETTE = ['#7a1f2b', '#1f3a7a', '#5b3a8a', '#2e6b4f', '#8a6a1f', '#444444'];
-    const GOV_NAME = { parliamentary: '의원내각제', presidential: '대통령제', semi: '이원집정부제', collective: '집단지도체제', monarchy: '입헌군주제' };
+    const GOV_NAME = { parliamentary: i18n('sim.contentSystem.4'), presidential: i18n('sim.contentSystem.2'), semi: i18n('sim.contentSystem.3'), collective: i18n('sim.contentSystem.6'), monarchy: i18n('sim.contentSystem.5') };
 
     // ---- 상태 (세이브의 royal 칸 — 1.6.6 미리보기 세이브는 teaser66 칸) ----
     //   dynasties: [{ id, name, color, rule, claimants: [{ id, name, title, gender:'m'|'f', photo, partyIds:[pid] }] }]
@@ -73,7 +73,7 @@
     // ---- 주장자 · 계승 ----
     const allClaimants = () => S.dynasties.flatMap(d => d.claimants.map(c => ({ c, d })));
     const findClaimant = id => allClaimants().find(x => x.c.id === id) || null;
-    const claimantLabel = x => x ? `${x.c.name || '(이름 없음)'}${x.c.title ? ` (${x.c.title})` : ''} · ${x.d.name || '왕가'}` : '';
+    const claimantLabel = x => x ? `${x.c.name || i18n('sim.core.7')}${x.c.title ? ` (${x.c.title})` : ''} · ${x.d.name || i18n('sim.royal.4')}` : '';
     // 계승 순위 — 왕가 안 순서(출생 순)를 계승 규칙대로 거른다
     function lineOf(d, excludeId) {
         const list = d.claimants.filter(c => c.id !== excludeId);
@@ -126,13 +126,13 @@
     function startMonarchy(x, kind) {
         const coupApi = HemiCoup();
         const fx = [];
-        if (coupApi && coupApi.junta) { coupApi.endJunta('revolution'); fx.push('군정 붕괴'); }
-        S.monarchy = { kind, title: x.c.gender === 'f' ? '여왕' : '국왕', since: formatNationDate(), prevGovType: govType,
+        if (coupApi && coupApi.junta) { coupApi.endJunta('revolution'); fx.push(i18n('sim.royal.5')); }
+        S.monarchy = { kind, title: x.c.gender === 'f' ? i18n('sim.royal.6') : i18n('sim.core.3'), since: formatNationDate(), prevGovType: govType,
             prevPresident: { name: president.name || '', photo: president.photo || '', partyId: president.partyId ?? null },
             prevVeto: typeof vetoHolder !== 'undefined' ? vetoHolder : 'none',
             prevHolders: Object.fromEntries(Object.keys(emergencyPowers).map(k => [k, emergencyPowers[k].holder])), banned: [], prevNation: nationName() };
         const kn = kingdomName(nationName());
-        if (kn && kn !== nationName()) { setNationName(kn); fx.push(`국호 변경: ${S.monarchy.prevNation} → ${kn}`); }
+        if (kn && kn !== nationName()) { setNationName(kn); fx.push(i18n('sim.royal.7', { prevNation: S.monarchy.prevNation, kn })); }
         seatMonarch(x);
         if (kind === 'absolute') makeAbsolute(); else makeConstitutional();
         S.dispute = null;
@@ -142,7 +142,7 @@
         const prev = S.monarchy;
         S.monarchy = null; S.dispute = null;
         // 국호 — 왕정 전의 공화국 이름이 있으면 되돌리고, 없으면 "○○ 공화국"
-        const rep = prev && prev.prevNation && !/(왕국|제국|대공국|공국)$/.test(prev.prevNation) ? prev.prevNation : (nationRoot(nationName()) ? `${nationRoot(nationName())} 공화국` : '');
+        const rep = prev && prev.prevNation && !/(왕국|제국|대공국|공국)$/.test(prev.prevNation) ? prev.prevNation : (nationRoot(nationName()) ? i18n('sim.royal.8', { nationName: nationRoot(nationName()) }) : '');
         if (rep && rep !== nationName()) setNationName(rep);
         setGovType(gov || (prev && prev.prevGovType && prev.prevGovType !== 'monarchy' ? prev.prevGovType : 'parliamentary'));
         Object.assign(president, { name: '', photo: '', partyId: null, linkedSeat: null });
@@ -156,7 +156,7 @@
         if (typeof legisGetState !== 'function') return;
         const cur = legisGetState();
         const prev = cur.constitution;
-        const revisions = prev ? [...(prev.revisions || []), { date: formatNationDate(), note: `"${prev.title}" 폐지 · "${c.title}" 제정` }] : [];
+        const revisions = prev ? [...(prev.revisions || []), { date: formatNationDate(), note: i18n('sim.royal.9', { title: prev.title, title2: c.title }) }] : [];
         legisSetState({ ...cur, constitution: { ...c, revisions } });
     }
     const nationName = () => document.getElementById('nationNameInput')?.value?.trim() || '';
@@ -168,36 +168,36 @@
     }
     // 나라 이름에서 공화국 꼬리를 떼어 낸 뿌리 (독일연방공화국 → 독일) — 왕정복고 · 공화 혁명 때 국호를 바꾸는 데 씀
     const nationRoot = nm => (nm || '').replace(/\s*(연방|인민|민주|사회주의|자유|민주주의)*\s*공화국$/, '').replace(/\s*(왕국|제국|대공국|공국)$/, '').trim() || nm || '';
-    const kingdomName = nm => nm && /(왕국|제국|대공국|공국)$/.test(nm) ? nm : (nationRoot(nm) ? `${nationRoot(nm)} 왕국` : '');
+    const kingdomName = nm => nm && /(왕국|제국|대공국|공국)$/.test(nm) ? nm : (nationRoot(nm) ? i18n('sim.royal.10', { nm: nationRoot(nm) }) : '');
     function monarchyConstitution(x, kind) {
-        const nm = nationName(), house = x.d.name || '왕가';
-        return kind === 'absolute' ? { title: `${nm ? nm + ' ' : ''}기본법`,
-            preamble: `${house}의 정통 군주가 하늘과 국민 앞에서 나라를 다스리며, 국민은 군주에게 충성하고 나라의 번영을 위하여 이 기본법을 받든다.`,
+        const nm = nationName(), house = x.d.name || i18n('sim.royal.4');
+        return kind === 'absolute' ? { title: i18n('sim.royal.11', { nm: nm ? nm + ' ' : '' }),
+            preamble: i18n('sim.royal.12', { house }),
             articles: [
-                { title: '군주', text: `${nm || '국가'}의 군주는 ${house}의 정통 계승자이며, 신성하여 침해할 수 없다.` },
-                { title: '통치권', text: '군주는 국가의 원수로서 통치권을 총람하고, 총리와 각료를 임명하고 해임한다.' },
-                { title: '입법', text: '의회는 군주의 협찬 기관이며, 법률은 군주의 재가로 효력을 가진다. 군주는 법률안을 거부할 수 있다.' },
-                { title: '비상 대권', text: '군주는 국가 비상시 계엄을 선포하고 의회를 정회 또는 해산할 수 있다.' },
-                { title: '왕위 계승', text: `왕위는 ${RULES[x.d.rule] || '정해진 규칙'}에 따라 ${house}에서 계승한다.` },
-            ] } : { title: `${nm ? nm + ' ' : ''}헌법`,
-            preamble: `${nm || '우리 나라'}는 ${house}의 군주를 국가의 상징으로 모시는 입헌군주국이며, 주권은 국민에게 있다.`,
+                { title: i18n('sim.royal.13'), text: i18n('sim.royal.14', { nm: nm || i18n('sim.mainContentHelp.5'), house }) },
+                { title: i18n('sim.royal.15'), text: i18n('sim.royal.16') },
+                { title: i18n('sim.mainContentHelp.2'), text: i18n('sim.royal.17') },
+                { title: i18n('sim.royal.18'), text: i18n('sim.royal.19') },
+                { title: i18n('sim.royal.20'), text: i18n('sim.royal.22', { rule: RULES[x.d.rule] || i18n('sim.royal.21'), house }) },
+            ] } : { title: i18n('sim.royal.23', { nm: nm ? nm + ' ' : '' }),
+            preamble: i18n('sim.royal.25', { nm: nm || i18n('sim.royal.24'), house }),
             articles: [
-                { title: '국체', text: `${nm || '국가'}는 입헌군주국이다. 군주는 국가와 국민 통합의 상징이며 국정에 관한 실권을 가지지 아니한다.` },
-                { title: '국민주권', text: '주권은 국민에게 있고, 모든 권력은 국민으로부터 나온다.' },
-                { title: '내각', text: '행정권은 내각에 속하며, 총리는 의회의 신임에 기초한다.' },
-                { title: '왕위 계승', text: `왕위는 ${RULES[x.d.rule] || '정해진 규칙'}에 따라 ${house}에서 계승한다.` },
+                { title: i18n('sim.royal.26'), text: i18n('sim.royal.27', { nm: nm || i18n('sim.mainContentHelp.5') }) },
+                { title: i18n('sim.royal.28'), text: i18n('sim.royal.29') },
+                { title: i18n('sim.contentSystem.9'), text: i18n('sim.royal.30') },
+                { title: i18n('sim.royal.20'), text: i18n('sim.royal.22', { rule: RULES[x.d.rule] || i18n('sim.royal.21'), house }) },
             ] };
     }
     function republicConstitution(gov) {
         const nm = nationName();
-        return { title: `${nm ? nm + ' ' : ''}헌법`,
-            preamble: '우리 국민은 군주제를 폐지하고, 국민 모두가 주권자인 공화국을 세우며 자유와 평등의 질서를 지키기 위하여 이 헌법을 제정한다.',
+        return { title: i18n('sim.royal.23', { nm: nm ? nm + ' ' : '' }),
+            preamble: i18n('sim.royal.31'),
             articles: [
-                { title: '국체', text: `${nm || '국가'}는 민주공화국이다.` },
-                { title: '국민주권', text: '주권은 국민에게 있고, 모든 권력은 국민으로부터 나온다.' },
-                { title: '군주제의 폐지', text: '군주제와 귀족 제도는 폐지되며, 어떠한 특권 계급도 인정되지 아니한다.' },
-                { title: '정부 형태', text: `정부는 ${GOV_NAME[gov] || '공화정'}로 구성한다.` },
-                { title: '선거', text: '국가원수와 의회 의원은 국민의 보통 · 평등 · 직접 · 비밀 선거로 뽑는다.' },
+                { title: i18n('sim.royal.26'), text: i18n('sim.royal.32', { nm: nm || i18n('sim.mainContentHelp.5') }) },
+                { title: i18n('sim.royal.28'), text: i18n('sim.royal.29') },
+                { title: i18n('sim.royal.33'), text: i18n('sim.royal.34') },
+                { title: i18n('sim.contentSystem.1'), text: i18n('sim.royal.36', { gov: GOV_NAME[gov] || i18n('sim.royal.35') }) },
+                { title: i18n('sim.mainContentHelp.4'), text: i18n('sim.royal.37') },
             ] };
     }
     function cutSupport(pid, factor) {
@@ -208,43 +208,43 @@
     // ---- 확률 ----
     function restorationChance(x) {
         const f = [], add = (label, v) => f.push({ label, v: Math.round(v) });
-        add('기본', 10);
+        add(i18n('sim.royal.38'), 10);
         if (!x) return { factors: f, chance: 5 };
         const bs = backers(x.c);
-        add(`지지 정당 지지율 (${Math.round(backingSupport(x.c))}%)`, backingSupport(x.c) * 0.4);
-        add(`지지 정당 의석 (${Math.round(backingSeats(x.c) * 100)}%)`, backingSeats(x.c) * 25);
+        add(i18n('sim.royal.39', { backingSupport: Math.round(backingSupport(x.c)) }), backingSupport(x.c) * 0.4);
+        add(i18n('sim.royal.40', { backingSeats: Math.round(backingSeats(x.c) * 100) }), backingSeats(x.c) * 25);
         const coupApi = HemiCoup();
         if (coupApi && coupApi.military && coupApi.military.length) {
             const aligned = coupApi.military.filter(m => bs.some(p => String(p.id) === String(m.partyId)));
-            if (aligned.length) add(`가까운 장성 ${aligned.length}명`, Math.min(25, 8 * aligned.length));
-            add('군 지휘부의 불만', 20 * coupApi.militaryDisloyalty());
+            if (aligned.length) add(i18n('sim.royal.41', { aligned: aligned.length }), Math.min(25, 8 * aligned.length));
+            add(i18n('sim.royal.42'), 20 * coupApi.militaryDisloyalty());
         }
-        if (coupApi && coupApi.junta) add('군정에 대한 반감', 10);
-        add('정부 · 여당의 의석', -20 * seatShare(p => isGovParty(p) && !bs.includes(p)));
+        if (coupApi && coupApi.junta) add(i18n('sim.royal.43'), 10);
+        add(i18n('sim.royal.44'), -20 * seatShare(p => isGovParty(p) && !bs.includes(p)));
         return { factors: f, chance: clamp(Math.round(f.reduce((a, y) => a + y.v, 0)), 5, 90) };
     }
     function selfCoupChance() {
         const f = [], add = (label, v) => f.push({ label, v: Math.round(v) });
         const x = monarchX();
-        add('기본', 15);
-        if (x) add(`왕당파 의석 (${Math.round(backingSeats(x.c) * 100)}%)`, backingSeats(x.c) * 35);
+        add(i18n('sim.royal.38'), 15);
+        if (x) add(i18n('sim.royal.45', { backingSeats: Math.round(backingSeats(x.c) * 100) }), backingSeats(x.c) * 35);
         const loyal = militaryLoyalty();
-        if (loyal != null) add(`군의 충성 (평균 ${Math.round(loyal)})`, (loyal - 50) * 0.5);
-        add('입헌 정부 · 여당의 의석', -15 * seatShare(p => isGovParty(p) && !(x && backers(x.c).includes(p))));
+        if (loyal != null) add(i18n('sim.royal.46', { loyal: Math.round(loyal) }), (loyal - 50) * 0.5);
+        add(i18n('sim.royal.47'), -15 * seatShare(p => isGovParty(p) && !(x && backers(x.c).includes(p))));
         return { factors: f, chance: clamp(Math.round(f.reduce((a, y) => a + y.v, 0)), 5, 90) };
     }
     function republicChance(pid) {
         const f = [], add = (label, v) => f.push({ label, v: Math.round(v) });
         const x = monarchX();
-        add('기본', 10);
-        if (S.monarchy && S.monarchy.kind === 'absolute') add('전제 왕권에 대한 반감', 20);
-        if (emergencyPowers?.martialLaw?.active) add('계엄령', 10);
+        add(i18n('sim.royal.38'), 10);
+        if (S.monarchy && S.monarchy.kind === 'absolute') add(i18n('sim.royal.48'), 20);
+        if (emergencyPowers?.martialLaw?.active) add(i18n('sim.core.46'), 10);
         const p = partyById(pid);
-        if (p) add(`${p.name} 지지율 (${support(p.id)}%)`, support(p.id) * 0.4);
-        if (x) add(`왕당파 지지율 (${Math.round(backingSupport(x.c))}%)`, -backingSupport(x.c) * 0.3);
-        if (S.dispute) add('계승 분쟁으로 흔들리는 왕실', 10);
+        if (p) add(i18n('sim.royal.49', { name: p.name, support: support(p.id) }), support(p.id) * 0.4);
+        if (x) add(i18n('sim.royal.50', { backingSupport: Math.round(backingSupport(x.c)) }), -backingSupport(x.c) * 0.3);
+        if (S.dispute) add(i18n('sim.royal.51'), 10);
         const loyal = militaryLoyalty();
-        if (loyal != null) add(`군의 충성 (평균 ${Math.round(loyal)})`, -(loyal - 50) * 0.4);
+        if (loyal != null) add(i18n('sim.royal.46', { loyal: Math.round(loyal) }), -(loyal - 50) * 0.4);
         return { factors: f, chance: clamp(Math.round(f.reduce((a, y) => a + y.v, 0)), 5, 90) };
     }
 
@@ -256,22 +256,22 @@
     function done() { rerenderGov(); if (HemiCoup()) HemiCoup().refresh(); refresh(); }
     function restore() {
         const x = findClaimant(ui.claimantId);
-        if (!x) { showCustomAlert('왕위에 올릴 주장자를 고르세요 (위 "왕가와 왕위 주장자"에서 먼저 만듭니다).'); return; }
-        if (window.HemiRevolution && window.HemiRevolution.partyState) { showCustomAlert('당-국가 체제에서는 먼저 민주 혁명으로 체제를 무너뜨려야 합니다.'); return; }
+        if (!x) { showCustomAlert(i18n('sim.royal.52')); return; }
+        if (window.HemiRevolution && window.HemiRevolution.partyState) { showCustomAlert(i18n('sim.royal.53')); return; }
         if (ui.method === 'parliament') {
             const share = backingSeats(x.c);
-            if (share <= 0.5) { showCustomAlert(`의회 결의로 왕정을 되살리려면 ${x.c.name || '주장자'}을(를) 지지하는 정당이 하원 과반이어야 합니다 (지금 ${Math.round(share * 100)}%). 쿠데타로 해 보세요.`); return; }
-            showCustomConfirm(`의회 결의로 ${claimantLabel(x)}을(를) 입헌군주로 모십니다 (지지 정당 의석 ${Math.round(share * 100)}%). 계속하시겠습니까?`, () => {
+            if (share <= 0.5) { showCustomAlert(i18n('sim.royal.55', { name: x.c.name || i18n('sim.royal.54'), share: Math.round(share * 100) })); return; }
+            showCustomConfirm(i18n('sim.royal.56', { claimantLabel: claimantLabel(x), share: Math.round(share * 100) }), () => {
                 const fx = startMonarchy(x, 'constitutional');
                 setConstitution(monarchyConstitution(x, 'constitutional'));
-                fx.push(`왕정복고 — 입헌군주제, ${S.monarchy.title} ${x.c.name}`, '국가원수 = 군주 (상징적), 실권은 총리', '새 헌법 (입법 › 법령) · 대통령 선거 중단');
+                fx.push(i18n('sim.royal.57', { title: S.monarchy.title, name: x.c.name }), i18n('sim.royal.58'), i18n('sim.royal.59'));
                 logIt('restore', claimantLabel(x), null, true, fx); done();
             });
             return;
         }
         const { chance } = restorationChance(x);
-        const kindName = ui.kind === 'absolute' ? '전제군주정' : '입헌군주제';
-        showCustomConfirm(`왕당파 쿠데타로 ${claimantLabel(x)}을(를) 왕위에 올립니다 (${kindName}), 성공 확률 ${chance}%. 계속하시겠습니까?`, () => {
+        const kindName = ui.kind === 'absolute' ? i18n('sim.royal.60') : i18n('sim.contentSystem.5');
+        showCustomConfirm(i18n('sim.royal.61', { claimantLabel: claimantLabel(x), kindName, chance }), () => {
             const success = Math.random() * 100 < chance;
             let fx = [];
             if (success) {
@@ -279,38 +279,38 @@
                 setConstitution(monarchyConstitution(x, ui.kind));
                 if (ui.kind === 'absolute') {
                     declareMartialLaw();
-                    fx.push(`왕정복고 — 숨겨진 정부 형태: 전제군주정, ${S.monarchy.title} ${x.c.name}`, '왕이 총리 임명 · 거부권 · 비상 권한', '계엄령 선포 · 왕국 기본법');
-                } else fx.push(`왕정복고 — 입헌군주제, ${S.monarchy.title} ${x.c.name}`, '새 헌법 (입법 › 법령) · 대통령 선거 중단');
+                    fx.push(i18n('sim.royal.62', { title: S.monarchy.title, name: x.c.name }), i18n('sim.royal.63'), i18n('sim.royal.64'));
+                } else fx.push(i18n('sim.royal.57', { title: S.monarchy.title, name: x.c.name }), i18n('sim.royal.59'));
             } else {
                 backers(x.c).forEach(p => { p.status = 'banned'; cutSupport(p.id, 0.5); });
-                fx.push('쿠데타 실패 — 왕당파 정당 활동 금지 · 지지율 절반', `${x.c.name || '주장자'} 망명`);
+                fx.push(i18n('sim.royal.65'), i18n('sim.royal.66', { name: x.c.name || i18n('sim.royal.54') }));
             }
             logIt('restoreCoup', claimantLabel(x), chance, success, fx); done();
         });
     }
     // 디버그 모드: 왕정복고 · 친위 쿠데타 없이 바로 전제군주정 (설정 › 기타 설정 › 숨겨진 정부 형태 보이기, js/devmode.js)
     function debugAbsolute() {
-        if (S.monarchy && S.monarchy.kind === 'absolute') { showCustomAlert('이미 전제군주정입니다 — 내각 › 왕실의 입헌 개혁 · 공화 혁명으로 벗어날 수 있어요.'); return; }
-        if (window.HemiRevolution && window.HemiRevolution.partyState) { showCustomAlert('당-국가 체제에서는 먼저 민주 혁명으로 체제를 무너뜨려야 합니다.'); return; }
+        if (S.monarchy && S.monarchy.kind === 'absolute') { showCustomAlert(i18n('sim.royal.67')); return; }
+        if (window.HemiRevolution && window.HemiRevolution.partyState) { showCustomAlert(i18n('sim.royal.53')); return; }
         const x = S.monarchy ? monarchX() : (findClaimant(ui.claimantId) || allClaimants()[0] || null);
-        if (!x) { showCustomAlert('왕위에 올릴 주장자가 없습니다 — 내각 › 왕실의 "왕가와 왕위 주장자"에서 먼저 만드세요.'); return; }
-        showCustomConfirm(`디버그 — 바로 전제군주정으로 바꿉니다 (${S.monarchy ? `${S.monarchy.title} ${x.c.name}` : claimantLabel(x)}). 계속하시겠습니까?`, () => {
-            const fx = ['디버그 모드로 바로 바꿈'];
+        if (!x) { showCustomAlert(i18n('sim.royal.68')); return; }
+        showCustomConfirm(i18n('sim.royal.69', { claimantLabel: S.monarchy ? `${S.monarchy.title} ${x.c.name}` : claimantLabel(x) }), () => {
+            const fx = [i18n('sim.royal.70')];
             const kind = S.monarchy ? 'selfCoup' : 'restoreCoup';
             if (S.monarchy) makeAbsolute(); else fx.push(...startMonarchy(x, 'absolute'));
             declareMartialLaw();
             setConstitution(monarchyConstitution(x, 'absolute'));
-            fx.push(`숨겨진 정부 형태: 전제군주정, ${S.monarchy.title} ${x.c.name}`, '왕이 총리 임명 · 거부권 · 비상 권한', '계엄령 선포 · 왕국 기본법');
+            fx.push(i18n('sim.royal.71', { title: S.monarchy.title, name: x.c.name }), i18n('sim.royal.63'), i18n('sim.royal.64'));
             logIt(kind, claimantLabel(x), null, true, fx); done();
         });
     }
-    if (window.HemiDev && HemiDev.hiddenGov) HemiDev.hiddenGov.register({ id: 'absolute', label: '전제군주정', version: '1.6.6', isActive: () => !!S.monarchy && S.monarchy.kind === 'absolute', enter: debugAbsolute });
+    if (window.HemiDev && HemiDev.hiddenGov) HemiDev.hiddenGov.register({ id: 'absolute', label: i18n('sim.royal.60'), version: '1.6.6', isActive: () => !!S.monarchy && S.monarchy.kind === 'absolute', enter: debugAbsolute });
 
     function selfCoup() {
         const x = monarchX();
         if (!S.monarchy || S.monarchy.kind !== 'constitutional' || !x) return;
         const { chance } = selfCoupChance();
-        showCustomConfirm(`${S.monarchy.title} ${x.c.name}이(가) 친위 쿠데타로 의회를 누르고 전제군주정을 세웁니다, 성공 확률 ${chance}%. 계속하시겠습니까?`, () => {
+        showCustomConfirm(i18n('sim.royal.72', { title: S.monarchy.title, name: x.c.name, chance }), () => {
             const success = Math.random() * 100 < chance;
             const fx = [];
             if (success) {
@@ -319,45 +319,45 @@
                 // 왕을 지지하지 않는 정당은 활동 금지 (공화 혁명 · 입헌 개혁 때 복권)
                 const keep = new Set(backers(x.c).map(p => String(p.id)));
                 parties.forEach(p => { if (!keep.has(String(p.id)) && activeParty(p)) { p.status = 'banned'; S.monarchy.banned.push(p.id); } });
-                fx.push('숨겨진 정부 형태: 전제군주정 — 왕이 총리 임명 · 거부권 · 비상 권한', '계엄령 선포 · 왕국 기본법', `반왕당 정당 ${S.monarchy.banned.length}곳 활동 금지`);
+                fx.push(i18n('sim.royal.73'), i18n('sim.royal.64'), i18n('sim.royal.74', { banned: S.monarchy.banned.length }));
             } else {
                 const next = succession(true);
-                fx.push(`실패 — ${S.monarchy && x ? `${x.c.name} 퇴위` : '왕 퇴위'}`, ...(next ? [`${next}`] : ['계승자가 없어 왕위가 비었습니다']));
+                fx.push(i18n('sim.royal.77', { name: S.monarchy && x ? i18n('sim.royal.75', { name: x.c.name }) : i18n('sim.royal.76') }), ...(next ? [`${next}`] : [i18n('sim.royal.78')]));
             }
             logIt('selfCoup', x.c.name, chance, success, fx); done();
         });
     }
     function reform() {
         if (!S.monarchy || S.monarchy.kind !== 'absolute') return;
-        showCustomConfirm('입헌 개혁 — 왕이 실권을 내놓고 입헌군주제로 돌아갑니다 (계엄 해제 · 활동 금지 정당 복권 · 새 헌법). 계속하시겠습니까?', () => {
+        showCustomConfirm(i18n('sim.royal.79'), () => {
             const x = monarchX();
             makeConstitutional(); liftMartialLaw();
             (S.monarchy.banned || []).forEach(id => { const p = partyById(id); if (p && p.status === 'banned') p.status = 'active'; });
             S.monarchy.banned = [];
             if (x) setConstitution(monarchyConstitution(x, 'constitutional'));
-            logIt('reform', x ? x.c.name : '', null, true, ['입헌군주제로 — 국왕은 상징, 실권은 총리', '계엄 해제 · 활동 금지 정당 복권 · 새 헌법']); done();
+            logIt('reform', x ? x.c.name : '', null, true, [i18n('sim.royal.80'), i18n('sim.royal.81')]); done();
         });
     }
     function revolt() {
         if (!S.monarchy) return;
         const p = partyById(ui.repParty);
         const { chance } = republicChance(ui.repParty);
-        showCustomConfirm(`공화 혁명을 일으킵니다${p ? ` — 혁명 정당: ${p.name}` : ''} (성공하면 ${GOV_NAME[ui.repGov]}), 성공 확률 ${chance}%. 계속하시겠습니까?`, () => {
+        showCustomConfirm(i18n('sim.royal.83', { name: p ? (" " + i18n('sim.royal.82', { name: p.name })) : '', repGov: GOV_NAME[ui.repGov], chance }), () => {
             const success = Math.random() * 100 < chance;
             const x = monarchX();
             const fx = [];
             if (success) {
                 const before = nationName();
                 endMonarchy(ui.repGov);
-                if (nationName() !== before) fx.push(`국호 변경: ${before} → ${nationName()}`);
+                if (nationName() !== before) fx.push(i18n('sim.royal.84', { before, nationName: nationName() }));
                 setConstitution(republicConstitution(ui.repGov));
-                fx.push(`군주제 폐지 — ${GOV_NAME[ui.repGov]} 공화국`, `${x ? `${x.c.name}은(는) 왕위 주장자로 남음` : ''}`, '새 공화국 헌법 · 계엄 해제 · 활동 금지 정당 복권', `${effRoleLabel('president')} 공석 — 선거로 뽑으세요`);
+                fx.push(i18n('sim.royal.85', { repGov: GOV_NAME[ui.repGov] }), `${x ? i18n('sim.royal.86', { name: x.c.name }) : ''}`, i18n('sim.royal.87'), i18n('sim.royal.88', { president: effRoleLabel('president') }));
                 if (p) cutSupport(p.id, 1.2);
             } else {
-                if (p) { p.status = 'banned'; cutSupport(p.id, 0.5); S.monarchy.banned.push(p.id); fx.push(`${p.name} 활동 금지 · 지지율 절반`); }
-                declareMartialLaw(); fx.push('왕정이 계엄령 선포');
+                if (p) { p.status = 'banned'; cutSupport(p.id, 0.5); S.monarchy.banned.push(p.id); fx.push(i18n('sim.royal.89', { name: p.name })); }
+                declareMartialLaw(); fx.push(i18n('sim.royal.90'));
             }
-            logIt('republic', p ? p.name : '시민 혁명', chance, success, fx.filter(Boolean)); done();
+            logIt('republic', p ? p.name : i18n('sim.royal.91'), chance, success, fx.filter(Boolean)); done();
         });
     }
     // 계승 — 왕이 서거 · 퇴위하면 다음 계승자 (같은 왕가 → 없으면 지지가 가장 센 다른 왕가 주장자). 돌려주는 값: 설명 문구
@@ -375,21 +375,21 @@
         seatMonarch({ c: next, d: nd });
         if (S.dispute && S.dispute.rivalId === next.id) S.dispute = null;
         rerenderGov();
-        return `${S.monarchy.title} ${next.name} 즉위 (${nd.name})${nd !== (x && x.d) ? ' — 왕가 교체' : ''}`;
+        return i18n('sim.royal.93', { title: S.monarchy.title, name: next.name, name2: nd.name, nd: nd !== (x && x.d) ? (" " + i18n('sim.royal.92')) : '' });
     }
     function demise() {
         const x = monarchX();
         if (!S.monarchy || !x) return;
-        showCustomConfirm(`${S.monarchy.title} ${x.c.name}의 서거 · 퇴위 — 계승 규칙(${RULES[x.d.rule] || ''})대로 다음 계승자가 즉위합니다. 계속하시겠습니까?`, () => {
+        showCustomConfirm(i18n('sim.royal.94', { title: S.monarchy.title, name: x.c.name, rule: RULES[x.d.rule] || '' }), () => {
             const msg = succession();
-            logIt('succession', x.c.name, null, true, [`${x.c.name} 서거 · 퇴위`, msg || '계승자가 없어 왕위가 비었습니다']); done();
+            logIt('succession', x.c.name, null, true, [i18n('sim.royal.95', { name: x.c.name }), msg || i18n('sim.royal.78')]); done();
         });
     }
     function claimDispute() {
         const r = findClaimant(ui.rivalId), x = monarchX();
-        if (!r || !x || r.c.id === x.c.id) { showCustomAlert('정통 왕위를 주장할 다른 주장자를 고르세요.'); return; }
+        if (!r || !x || r.c.id === x.c.id) { showCustomAlert(i18n('sim.royal.96')); return; }
         S.dispute = { rivalId: r.c.id, since: formatNationDate() };
-        logIt('dispute', claimantLabel(r), null, true, [`${r.c.name}이(가) 정통 왕위를 주장 — 계승 분쟁 시작`, `지지: ${backers(r.c).map(p => p.name).join(', ') || '없음'}`]); done();
+        logIt('dispute', claimantLabel(r), null, true, [i18n('sim.royal.97', { name: r.c.name }), i18n('sim.royal.98', { name: backers(r.c).map(p => p.name).join(', ') || i18n('sim.contentVote.16') })]); done();
     }
     function resolveDispute(how) {
         const r = S.dispute && findClaimant(S.dispute.rivalId), x = monarchX();
@@ -411,10 +411,10 @@
         if (rivalWins) {
             seatMonarch(r);
             backers(x.c).forEach(p => cutSupport(p.id, 0.8));
-            fx.push(`${r.c.name} 승리 — ${S.monarchy.title} 즉위 (${r.d.name})`, `${x.c.name}의 지지 정당 지지율 하락`);
+            fx.push(i18n('sim.royal.99', { name: r.c.name, title: S.monarchy.title, name2: r.d.name }), i18n('sim.royal.100', { name: x.c.name }));
         } else {
             backers(r.c).forEach(p => cutSupport(p.id, 0.8));
-            fx.push(`${x.c.name} 왕위 지킴`, `${r.c.name}의 지지 정당 지지율 하락`);
+            fx.push(i18n('sim.royal.101', { name: x.c.name }), i18n('sim.royal.100', { name: r.c.name }));
         }
         S.dispute = null;
         logIt(how === 'parliament' ? 'disputeVote' : 'disputeWar', `${x.c.name} vs ${r.c.name}`, chance, true, fx); done();
@@ -423,13 +423,13 @@
     // ---- 직책 이름 · 대통령 선거 ----
     const origRole = window.effRoleLabel;
     window.effRoleLabel = function (key) {
-        if (S.monarchy && key === 'president') return S.monarchy.title || '국왕';
+        if (S.monarchy && key === 'president') return S.monarchy.title || i18n('sim.core.3');
         return origRole.apply(this, arguments);
     };
     if (typeof window.runPresidentialElection === 'function') {
         const origPres = window.runPresidentialElection;
         window.runPresidentialElection = function () {
-            if (S.monarchy) { showCustomAlert(`군주제에서는 국가원수(${S.monarchy.title})를 선거로 뽑지 않습니다 — 내각 › 왕실에서 계승 · 공화 혁명을 다룹니다.`); return; }
+            if (S.monarchy) { showCustomAlert(i18n('sim.royal.102', { title: S.monarchy.title })); return; }
             return origPres.apply(this, arguments);
         };
     }
@@ -441,7 +441,7 @@
         const bar = cab && cab.querySelector(':scope > .sub-tab-container');
         if (!bar) return;
         const before = document.getElementById('subTabCouncil');
-        bar.insertBefore(el(`<button class="sub-tab-btn" onclick="switchSubTab('cabinet','royal')" id="subTabRoyal">왕실</button>`), before);
+        bar.insertBefore(el(`<button class="sub-tab-btn" onclick="switchSubTab('cabinet','royal')" id="subTabRoyal">${esc(i18n('sim.royal.103'))}</button>`), before);
         cab.appendChild(el(`<div id="contentRoyal" class="sub-tab-content"></div>`));
     })();
     const origSwitch = window.switchSubTab;
@@ -459,7 +459,7 @@
             const x = monarchX();
             if (S.monarchy) {
                 if (!b) { b = el('<div id="royalBanner" class="royal-banner"></div>'); grid.parentElement.insertBefore(b, grid); }
-                b.innerHTML = `👑 ${S.monarchy.kind === 'absolute' ? '전제군주정' : '입헌군주제'} — ${esc(S.monarchy.title)} <b>${esc(x ? x.c.name : '(공석)')}</b>${x ? ` · ${esc(x.d.name)}` : ''}${S.monarchy.since ? ` · ${esc(S.monarchy.since)}부터` : ''}${S.dispute ? ' · ⚔ 계승 분쟁 중' : ''}`;
+                b.innerHTML = `👑 ${S.monarchy.kind === 'absolute' ? i18n('sim.royal.60') : i18n('sim.contentSystem.5')} — ${esc(S.monarchy.title)} <b>${esc(x ? x.c.name : i18n('sim.export.18'))}</b>${x ? ` · ${esc(x.d.name)}` : ''}${S.monarchy.since ? (" " + i18n('sim.royal.104', { since: esc(S.monarchy.since) })) : ''}${S.dispute ? (" " + i18n('sim.royal.105')) : ''}`;
                 b.style.setProperty('--royal-c', (x && x.d.color) || '#7a1f2b');
             } else if (b) b.remove();
         }
@@ -468,11 +468,11 @@
 
     // ---- 화면 ----
     function chanceBox({ factors, chance }) {
-        return `<div class="royal-chance"><div class="royal-chance-head"><span>성공 확률</span><b>${chance}%</b></div>
+        return `<div class="royal-chance"><div class="royal-chance-head"><span>${esc(i18n('sim.royal.106'))}</span><b>${chance}%</b></div>
             <div class="royal-bar"><span style="width:${chance}%"></span></div>
             ${factors.map(f => `<div class="royal-factor"><span>${esc(f.label)}</span><span class="${f.v >= 0 ? 'royal-plus' : 'royal-minus'}">${f.v >= 0 ? '+' : ''}${f.v}%p</span></div>`).join('')}</div>`;
     }
-    const KIND_NAME = { restore: '왕정복고 (의회 결의)', restoreCoup: '왕정복고 (쿠데타)', selfCoup: '친위 쿠데타', reform: '입헌 개혁', republic: '공화 혁명', succession: '계승', dispute: '계승 분쟁', disputeVote: '분쟁 — 의회 표결', disputeWar: '분쟁 — 내전' };
+    const KIND_NAME = { restore: i18n('sim.royal.107'), restoreCoup: i18n('sim.royal.108'), selfCoup: i18n('sim.royal.109'), reform: i18n('sim.royal.110'), republic: i18n('sim.royal.111'), succession: i18n('sim.royal.112'), dispute: i18n('sim.royal.113'), disputeVote: i18n('sim.royal.114'), disputeWar: i18n('sim.royal.115') };
     function dynastiesHtml() {
         const mx = monarchX();
         return S.dynasties.map(d => {
@@ -480,33 +480,33 @@
             const rank = id => { const i = line.findIndex(c => c.id === id); return i < 0 ? null : i + 1; };
             return `<div class="royal-dyn" style="--royal-c:${esc(d.color)}" data-dyn="${esc(d.id)}">
                 <div class="royal-row">
-                    <input type="color" value="${esc(d.color)}" data-df="color" title="왕가 색">
-                    <input type="text" value="${esc(d.name)}" data-df="name" placeholder="왕가 이름 (예: 호엔촐레른가)" class="royal-grow">
-                    <button type="button" class="royal-x" data-dact="del" title="왕가 지우기">✕</button>
+                    <input type="color" value="${esc(d.color)}" data-df="color" title="${esc(i18n('sim.royal.116'))}">
+                    <input type="text" value="${esc(d.name)}" data-df="name" placeholder="${esc(i18n('sim.royal.117'))}" class="royal-grow">
+                    <button type="button" class="royal-x" data-dact="del" title="${esc(i18n('sim.royal.118'))}">✕</button>
                 </div>
-                <div class="royal-row"><span class="royal-dim">계승 규칙</span><select data-df="rule" class="royal-grow">${Object.entries(RULES).map(([k, t]) => `<option value="${k}" ${d.rule === k ? 'selected' : ''}>${t}</option>`).join('')}</select></div>
+                <div class="royal-row"><span class="royal-dim">${esc(i18n('sim.royal.119'))}</span><select data-df="rule" class="royal-grow">${Object.entries(RULES).map(([k, t]) => `<option value="${k}" ${d.rule === k ? 'selected' : ''}>${t}</option>`).join('')}</select></div>
                 <div id="royalCl_${esc(d.id)}" class="royal-claimants">
                 ${d.claimants.map(c => {
                     const isKing = mx && mx.c.id === c.id, r = rank(c.id);
                     return `<div class="royal-cl ${isKing ? 'king' : ''}" data-cl="${esc(c.id)}">
-                        <span class="drag-handle royal-handle" title="끌어서 순서(출생 순) 바꾸기">⋮⋮</span>
-                        <label class="leader-photo-box royal-photo" title="사진">${c.photo ? `<img src="${c.photo}" alt="">` : '<div class="photo-ph">👤</div>'}<input type="file" accept="image/*" data-cf="photo"></label>
+                        <span class="drag-handle royal-handle" title="${esc(i18n('sim.royal.120'))}">⋮⋮</span>
+                        <label class="leader-photo-box royal-photo" title="${esc(i18n('sim.royal.121'))}">${c.photo ? `<img src="${c.photo}" alt="">` : '<div class="photo-ph">👤</div>'}<input type="file" accept="image/*" data-cf="photo"></label>
                         <div class="royal-cl-main">
                             <div class="royal-row">
-                                <span class="royal-rank">${isKing ? '👑' : r ? `${r}위` : '—'}</span>
-                                <input type="text" value="${esc(c.name)}" data-cf="name" placeholder="이름" class="royal-grow">
-                                <select data-cf="gender" title="성별"><option value="m" ${c.gender !== 'f' ? 'selected' : ''}>남</option><option value="f" ${c.gender === 'f' ? 'selected' : ''}>여</option></select>
-                                <button type="button" class="royal-x" data-cact="del" title="빼기">✕</button>
+                                <span class="royal-rank">${isKing ? '👑' : r ? esc(i18n('sim.royal.122', { r })) : '—'}</span>
+                                <input type="text" value="${esc(c.name)}" data-cf="name" placeholder="${esc(i18n('sim.contentDate.11'))}" class="royal-grow">
+                                <select data-cf="gender" title="${esc(i18n('sim.royal.123'))}"><option value="m" ${c.gender !== 'f' ? 'selected' : ''}>${esc(i18n('sim.royal.124'))}</option><option value="f" ${c.gender === 'f' ? 'selected' : ''}>${esc(i18n('sim.royal.126'))}</option></select>
+                                <button type="button" class="royal-x" data-cact="del" title="${esc(i18n('sim.royal.125'))}">✕</button>
                             </div>
-                            <input type="text" value="${esc(c.title)}" data-cf="title" placeholder="칭호 (예: 프로이센 왕자)">
-                            <div class="royal-chips">${(c.partyIds || []).map(pid => { const p = partyById(pid); return p ? `<span class="royal-chip" style="--pc:${esc(p.color)}">${esc(p.abbr || p.name)}<button type="button" data-unback="${esc(pid)}" title="지지 철회">×</button></span>` : ''; }).join('')}
-                                <select data-cf="back" class="royal-back"><option value="">+ 지지 정당</option>${parties.filter(p => !isInd(p) && !(c.partyIds || []).map(String).includes(String(p.id))).map(p => `<option value="${esc(p.id)}">${esc(p.name)}</option>`).join('')}</select>
+                            <input type="text" value="${esc(c.title)}" data-cf="title" placeholder="${esc(i18n('sim.royal.127'))}">
+                            <div class="royal-chips">${(c.partyIds || []).map(pid => { const p = partyById(pid); return p ? `<span class="royal-chip" style="--pc:${esc(p.color)}">${esc(p.abbr || p.name)}<button type="button" data-unback="${esc(pid)}" title="${esc(i18n('sim.royal.128'))}">×</button></span>` : ''; }).join('')}
+                                <select data-cf="back" class="royal-back"><option value="">${esc(i18n('sim.royal.129'))}</option>${parties.filter(p => !isInd(p) && !(c.partyIds || []).map(String).includes(String(p.id))).map(p => `<option value="${esc(p.id)}">${esc(p.name)}</option>`).join('')}</select>
                             </div>
                         </div>
                     </div>`;
                 }).join('')}
                 </div>
-                <button type="button" class="royal-add" data-dact="addcl">[+] 주장자 추가</button>
+                <button type="button" class="royal-add" data-dact="addcl">${esc(i18n('sim.royal.130'))}</button>
             </div>`;
         }).join('');
     }
@@ -514,19 +514,19 @@
         const box = document.getElementById('contentRoyal');
         if (!box) return;
         const mx = monarchX();
-        const claimOpts = sel => allClaimants().map(({ c, d }) => `<option value="${esc(c.id)}" ${c.id === sel ? 'selected' : ''}>${esc(c.name || '(이름 없음)')} · ${esc(d.name)} · 지지 ${Math.round(backingSeats(c) * 100)}%</option>`).join('');
+        const claimOpts = sel => allClaimants().map(({ c, d }) => `<option value="${esc(c.id)}" ${c.id === sel ? 'selected' : ''}>${esc(c.name || esc(i18n('sim.core.7')))} · ${esc(d.name)} ${esc(i18n('sim.royal.131'))} ${Math.round(backingSeats(c) * 100)}%</option>`).join('');
         if (!allClaimants().some(x => x.c.id === ui.claimantId)) ui.claimantId = (allClaimants().sort((a, b) => strength(b.c) - strength(a.c))[0] || { c: {} }).c.id || '';
         let action = '';
         if (!S.monarchy) {
             const x = findClaimant(ui.claimantId);
             action = `<div class="royal-card">
-                <div class="royal-head">👑 왕정복고</div>
-                <div class="royal-dim">공화정에서 군주제를 되살립니다. 주장자를 지지하는 정당이 하원 과반이면 의회 결의로, 아니면 왕당파 쿠데타로.</div>
-                ${allClaimants().length ? `<select data-ui="claimantId">${claimOpts(ui.claimantId)}</select>` : '<div class="royal-dim">먼저 아래에서 왕가와 주장자를 만드세요.</div>'}
-                <div class="system-radio-group"><button type="button" class="system-radio-btn ${ui.method === 'parliament' ? 'active' : ''}" data-method="parliament">의회 결의</button><button type="button" class="system-radio-btn ${ui.method === 'coup' ? 'active' : ''}" data-method="coup">쿠데타</button></div>
-                ${ui.method === 'parliament' ? `<div class="royal-dim">지지 정당 의석: <b>${x ? Math.round(backingSeats(x.c) * 100) : 0}%</b> — 50%를 넘으면 주사위 없이 입헌군주제로</div>`
-                    : `<div class="system-radio-group"><button type="button" class="system-radio-btn ${ui.kind === 'constitutional' ? 'active' : ''}" data-kind="constitutional">입헌군주제</button><button type="button" class="system-radio-btn ${ui.kind === 'absolute' ? 'active' : ''}" data-kind="absolute">전제군주정</button></div>${chanceBox(restorationChance(x))}`}
-                <button type="button" class="royal-go" data-act="restore" ${allClaimants().length ? '' : 'disabled'}>👑 왕정복고</button>
+                <div class="royal-head">${esc(i18n('sim.royal.132'))}</div>
+                <div class="royal-dim">${esc(i18n('sim.royal.133'))}</div>
+                ${allClaimants().length ? `<select data-ui="claimantId">${claimOpts(ui.claimantId)}</select>` : `<div class="royal-dim">${esc(i18n('sim.royal.134'))}</div>`}
+                <div class="system-radio-group"><button type="button" class="system-radio-btn ${ui.method === 'parliament' ? 'active' : ''}" data-method="parliament">${esc(i18n('sim.royal.135'))}</button><button type="button" class="system-radio-btn ${ui.method === 'coup' ? 'active' : ''}" data-method="coup">${esc(i18n('sim.royal.136'))}</button></div>
+                ${ui.method === 'parliament' ? `<div class="royal-dim">${esc(i18n('sim.royal.137'))} <b>${x ? Math.round(backingSeats(x.c) * 100) : 0}%</b> ${esc(i18n('sim.royal.138'))}</div>`
+                    : `<div class="system-radio-group"><button type="button" class="system-radio-btn ${ui.kind === 'constitutional' ? 'active' : ''}" data-kind="constitutional">${esc(i18n('sim.contentSystem.5'))}</button><button type="button" class="system-radio-btn ${ui.kind === 'absolute' ? 'active' : ''}" data-kind="absolute">${esc(i18n('sim.royal.60'))}</button></div>${chanceBox(restorationChance(x))}`}
+                <button type="button" class="royal-go" data-act="restore" ${allClaimants().length ? '' : 'disabled'}>${esc(i18n('sim.royal.132'))}</button>
             </div>`;
         } else {
             const abs = S.monarchy.kind === 'absolute';
@@ -535,35 +535,35 @@
             if (!rivals.some(y => y.c.id === ui.rivalId)) ui.rivalId = (rivals[0] || { c: {} }).c.id || '';
             const repParties = parties.filter(activeParty);
             action = `<div class="royal-card royal-reign" style="--royal-c:${esc((mx && mx.d.color) || '#7a1f2b')}">
-                <div class="royal-head">👑 ${abs ? '전제군주정' : '입헌군주제'}</div>
-                <div class="royal-row"><span class="royal-dim">칭호</span><select data-ui="title">${[...new Set([S.monarchy.title, ...TITLES])].map(t => `<option ${t === S.monarchy.title ? 'selected' : ''}>${esc(t)}</option>`).join('')}</select>
-                    <b class="royal-grow">${esc(mx ? mx.c.name : '(공석)')}</b><span class="royal-dim">${esc(mx ? mx.d.name : '')}${S.monarchy.since ? ` · ${esc(S.monarchy.since)}부터` : ''}</span></div>
-                <div class="royal-dim">${abs ? '왕이 총리를 임명하고(내각 › 총리) 거부권 · 비상 권한을 모두 쥡니다. 의회는 협찬 기관입니다.' : '국왕은 상징적 국가원수이고 실권은 총리에게 있습니다 (의원내각제처럼).'}</div>
-                <div class="royal-sub">계승</div>
-                <div class="royal-dim">다음 계승자: <b>${(() => { const n = mx ? lineOf(mx.d, mx.c.id)[0] : null; return n ? esc(n.name || '(이름 없음)') : '없음 — 다른 왕가에서'; })()}</b> (${esc(mx ? RULES[mx.d.rule] || '' : '')})</div>
-                <button type="button" class="royal-btn" data-act="demise">⚱ 서거 · 퇴위 → 다음 계승자 즉위</button>
-                <div class="royal-sub">계승 분쟁</div>
-                ${rival ? `<div class="royal-vs"><span>👑 ${esc(mx ? mx.c.name : '')}<small>지지 의석 ${mx ? Math.round(backingSeats(mx.c) * 100) : 0}%</small></span><b>vs</b><span>⚔ ${esc(rival.c.name)}<small>지지 의석 ${Math.round(backingSeats(rival.c) * 100)}%</small></span></div>
-                    <div class="royal-row"><button type="button" class="royal-btn" data-act="vote">의회 표결로 결판</button><button type="button" class="royal-btn" data-act="war">내전으로 결판 (주사위)</button></div>`
-                    : rivals.length ? `<div class="royal-row"><select data-ui="rivalId" class="royal-grow">${rivals.map(({ c, d }) => `<option value="${esc(c.id)}" ${c.id === ui.rivalId ? 'selected' : ''}>${esc(c.name || '(이름 없음)')} · ${esc(d.name)}</option>`).join('')}</select><button type="button" class="royal-btn" data-act="dispute">정통 왕위 주장</button></div>`
-                    : '<div class="royal-dim">왕위를 다툴 다른 주장자가 없습니다.</div>'}
-                <div class="royal-sub">${abs ? '입헌 개혁 · 공화 혁명' : '친위 쿠데타 · 공화 혁명'}</div>
-                ${abs ? '<button type="button" class="royal-btn" data-act="reform">⚖ 입헌 개혁 (입헌군주제로)</button>'
-                    : `${chanceBox(selfCoupChance())}<button type="button" class="royal-btn" data-act="selfcoup">⚔ 친위 쿠데타 (전제군주정으로)</button>`}
-                <div class="royal-row"><select data-ui="repParty" class="royal-grow"><option value="">— 시민 혁명 (정당 없음) —</option>${repParties.map(p => `<option value="${esc(p.id)}" ${String(p.id) === String(ui.repParty) ? 'selected' : ''}>${esc(p.name)} · 지지율 ${support(p.id)}%</option>`).join('')}</select>
+                <div class="royal-head">👑 ${abs ? esc(i18n('sim.royal.60')) : esc(i18n('sim.contentSystem.5'))}</div>
+                <div class="royal-row"><span class="royal-dim">${esc(i18n('sim.royal.139'))}</span><select data-ui="title">${[...new Set([S.monarchy.title, ...TITLES])].map(t => `<option ${t === S.monarchy.title ? 'selected' : ''}>${esc(t)}</option>`).join('')}</select>
+                    <b class="royal-grow">${esc(mx ? mx.c.name : esc(i18n('sim.export.18')))}</b><span class="royal-dim">${esc(mx ? mx.d.name : '')}${S.monarchy.since ? esc((" " + i18n('sim.royal.104', { since: esc(S.monarchy.since) }))) : ''}</span></div>
+                <div class="royal-dim">${abs ? esc(i18n('sim.royal.140')) : esc(i18n('sim.royal.141'))}</div>
+                <div class="royal-sub">${esc(i18n('sim.royal.112'))}</div>
+                <div class="royal-dim">${esc(i18n('sim.royal.142'))} <b>${(() => { const n = mx ? lineOf(mx.d, mx.c.id)[0] : null; return n ? esc(n.name || esc(i18n('sim.core.7'))) : esc(i18n('sim.royal.143')); })()}</b> (${esc(mx ? RULES[mx.d.rule] || '' : '')})</div>
+                <button type="button" class="royal-btn" data-act="demise">${esc(i18n('sim.royal.144'))}</button>
+                <div class="royal-sub">${esc(i18n('sim.royal.113'))}</div>
+                ${rival ? `<div class="royal-vs"><span>👑 ${esc(mx ? mx.c.name : '')}<small>${esc(i18n('sim.royal.145'))} ${mx ? Math.round(backingSeats(mx.c) * 100) : 0}%</small></span><b>vs</b><span>⚔ ${esc(rival.c.name)}<small>${esc(i18n('sim.royal.145'))} ${Math.round(backingSeats(rival.c) * 100)}%</small></span></div>
+                    <div class="royal-row"><button type="button" class="royal-btn" data-act="vote">${esc(i18n('sim.royal.146'))}</button><button type="button" class="royal-btn" data-act="war">${esc(i18n('sim.royal.147'))}</button></div>`
+                    : rivals.length ? `<div class="royal-row"><select data-ui="rivalId" class="royal-grow">${rivals.map(({ c, d }) => `<option value="${esc(c.id)}" ${c.id === ui.rivalId ? 'selected' : ''}>${esc(c.name || esc(i18n('sim.core.7')))} · ${esc(d.name)}</option>`).join('')}</select><button type="button" class="royal-btn" data-act="dispute">${esc(i18n('sim.royal.148'))}</button></div>`
+                    : `<div class="royal-dim">${esc(i18n('sim.royal.149'))}</div>`}
+                <div class="royal-sub">${abs ? esc(i18n('sim.royal.150')) : esc(i18n('sim.royal.151'))}</div>
+                ${abs ? `<button type="button" class="royal-btn" data-act="reform">${esc(i18n('sim.royal.152'))}</button>`
+                    : `${chanceBox(selfCoupChance())}<button type="button" class="royal-btn" data-act="selfcoup">${esc(i18n('sim.royal.153'))}</button>`}
+                <div class="royal-row"><select data-ui="repParty" class="royal-grow"><option value="">${esc(i18n('sim.royal.154'))}</option>${repParties.map(p => `<option value="${esc(p.id)}" ${String(p.id) === String(ui.repParty) ? 'selected' : ''}>${esc(p.name)} ${esc(i18n('sim.royal.155'))} ${support(p.id)}%</option>`).join('')}</select>
                     <select data-ui="repGov">${['parliamentary', 'presidential', 'semi'].map(g => `<option value="${g}" ${ui.repGov === g ? 'selected' : ''}>${GOV_NAME[g]}</option>`).join('')}</select></div>
                 ${chanceBox(republicChance(ui.repParty))}
-                <button type="button" class="royal-go" data-act="republic">✊ 공화 혁명</button>
+                <button type="button" class="royal-go" data-act="republic">${esc(i18n('sim.royal.156'))}</button>
             </div>`;
         }
         const last = S.log.find(x => x.id === ui.lastId);
-        box.innerHTML = `<div class="royal-intro">왕가와 왕위 주장자를 정하고, 왕정복고 · 계승 · 계승 분쟁 · 친위 쿠데타 · 공화 혁명을 다룹니다. 주장자 순서(⋮⋮ 끌기)가 출생 순이고, 계승 규칙에 따라 계승 순위가 정해져요.</div>
+        box.innerHTML = `<div class="royal-intro">${esc(i18n('sim.royal.157'))}</div>
             ${action}
-            ${last ? `<div class="royal-result ${last.success ? 'ok' : 'fail'}"><div class="royal-head">${last.success ? '✔' : '✘'} ${esc(KIND_NAME[last.kind] || last.kind)}${last.chance != null ? ` <span class="royal-dim">(확률 ${last.chance}%)</span>` : ''}</div><ul>${(last.effects || []).map(e => `<li>${esc(e)}</li>`).join('')}</ul></div>` : ''}
-            <div class="royal-sub">왕가와 왕위 주장자</div>
+            ${last ? `<div class="royal-result ${last.success ? 'ok' : 'fail'}"><div class="royal-head">${last.success ? '✔' : '✘'} ${esc(KIND_NAME[last.kind] || last.kind)}${last.chance != null ? ` <span class="royal-dim">${esc(i18n('sim.royal.158'))} ${last.chance}%)</span>` : ''}</div><ul>${(last.effects || []).map(e => `<li>${esc(e)}</li>`).join('')}</ul></div>` : ''}
+            <div class="royal-sub">${esc(i18n('sim.royal.159'))}</div>
             ${dynastiesHtml()}
-            <div class="royal-row"><button type="button" class="royal-add" data-act="adddyn">[+] 왕가 추가</button>${S.dynasties.length ? '' : '<button type="button" class="royal-add" data-act="seed">[+] 예시 왕가 만들기</button>'}</div>
-            ${S.log.length ? `<details class="royal-log"><summary>왕실 기록 (${S.log.length})</summary>${S.log.map(x => `<div class="royal-log-row"><span class="${x.success ? 'royal-plus' : 'royal-minus'}">${x.success ? '✔' : '✘'}</span><span>${esc(KIND_NAME[x.kind] || x.kind)} · ${esc(x.who || '')}${x.date ? ` · ${esc(x.date)}` : ''}${x.chance != null ? ` · ${x.chance}%` : ''}</span></div>`).join('')}</details>` : ''}`;
+            <div class="royal-row"><button type="button" class="royal-add" data-act="adddyn">${esc(i18n('sim.royal.160'))}</button>${S.dynasties.length ? '' : `<button type="button" class="royal-add" data-act="seed">${esc(i18n('sim.royal.161'))}</button>`}</div>
+            ${S.log.length ? `<details class="royal-log"><summary>${esc(i18n('sim.royal.162'))}${S.log.length})</summary>${S.log.map(x => `<div class="royal-log-row"><span class="${x.success ? 'royal-plus' : 'royal-minus'}">${x.success ? '✔' : '✘'}</span><span>${esc(KIND_NAME[x.kind] || x.kind)} · ${esc(x.who || '')}${x.date ? ` · ${esc(x.date)}` : ''}${x.chance != null ? ` · ${x.chance}%` : ''}</span></div>`).join('')}</details>` : ''}`;
         bind(box);
     }
     function bind(box) {
@@ -574,14 +574,14 @@
         const on = (sel, fn) => { const b = q(sel); if (b) b.onclick = fn; };
         on('[data-act="restore"]', restore); on('[data-act="selfcoup"]', selfCoup); on('[data-act="reform"]', reform); on('[data-act="republic"]', revolt);
         on('[data-act="demise"]', demise); on('[data-act="dispute"]', claimDispute); on('[data-act="vote"]', () => resolveDispute('parliament')); on('[data-act="war"]', () => resolveDispute('war'));
-        on('[data-act="adddyn"]', () => { S.dynasties.push({ id: uid(), name: '새 왕가', color: PALETTE[S.dynasties.length % PALETTE.length], rule: 'male', claimants: [] }); render(); });
+        on('[data-act="adddyn"]', () => { S.dynasties.push({ id: uid(), name: i18n('sim.royal.163'), color: PALETTE[S.dynasties.length % PALETTE.length], rule: 'male', claimants: [] }); render(); });
         on('[data-act="seed"]', seed);
         box.querySelectorAll('.royal-dyn').forEach(card => {
             const d = S.dynasties.find(x => x.id === card.dataset.dyn); if (!d) return;
             card.querySelectorAll('[data-df]').forEach(i => { i.onchange = () => { d[i.dataset.df] = i.value; render(); rerenderGov(); }; });
             card.querySelector('[data-dact="del"]').onclick = () => {
-                if (S.monarchy && S.monarchy.dynastyId === d.id) { showCustomAlert('지금 왕위에 있는 왕가는 지울 수 없습니다.'); return; }
-                showCustomConfirm(`"${d.name}" 왕가를 지울까요? 주장자 ${d.claimants.length}명도 함께 지워집니다.`, () => { S.dynasties = S.dynasties.filter(x => x !== d); render(); });
+                if (S.monarchy && S.monarchy.dynastyId === d.id) { showCustomAlert(i18n('sim.royal.164')); return; }
+                showCustomConfirm(i18n('sim.royal.165', { name: d.name, claimants: d.claimants.length }), () => { S.dynasties = S.dynasties.filter(x => x !== d); render(); });
             };
             card.querySelector('[data-dact="addcl"]').onclick = () => { d.claimants.push({ id: uid(), name: '', title: '', gender: 'm', photo: '', partyIds: [] }); render(); };
             card.querySelectorAll('.royal-cl').forEach(row => {
@@ -594,7 +594,7 @@
                 });
                 row.querySelectorAll('[data-unback]').forEach(b => { b.onclick = () => { c.partyIds = c.partyIds.filter(x => String(x) !== String(b.dataset.unback)); render(); }; });
                 row.querySelector('[data-cact="del"]').onclick = () => {
-                    if (monarchX() && monarchX().c === c) { showCustomAlert('지금 왕위에 있는 사람은 뺄 수 없습니다 — "서거 · 퇴위"를 쓰세요.'); return; }
+                    if (monarchX() && monarchX().c === c) { showCustomAlert(i18n('sim.royal.166')); return; }
                     d.claimants = d.claimants.filter(x => x !== c); render();
                 };
                 const h = row.querySelector('.royal-handle');
@@ -620,11 +620,11 @@
             return;
         }
         S.dynasties = de ? [
-            mk('호엔촐레른가', '#3a3a3a', 'salic', [['루이 페르디난트', '프로이센 왕자 · 가주'], ['크리스티안지기스문트', '프로이센 왕자'], ['게오르크 프리드리히', '프로이센 왕자']]),
-            mk('비텔스바흐가', '#1f6fb3', 'salic', [['알브레히트', '바이에른 공작 · 가주'], ['프란츠', '바이에른 공작'], ['막스', '바이에른 공작']]),
+            mk(i18n('sim.royal.167'), '#3a3a3a', 'salic', [[i18n('sim.royal.168'), i18n('sim.royal.169')], [i18n('sim.royal.170'), i18n('sim.royal.171')], [i18n('sim.royal.172'), i18n('sim.royal.171')]]),
+            mk(i18n('sim.royal.173'), '#1f6fb3', 'salic', [[i18n('sim.royal.174'), i18n('sim.royal.175')], [i18n('sim.royal.176'), i18n('sim.royal.177')], [i18n('sim.royal.178'), i18n('sim.royal.177')]]),
         ] : [
-            mk('왕가 1', PALETTE[0], 'male', [['왕위 주장자', '왕세자'], ['둘째', '왕자'], ['셋째', '공주', 'f']]),
-            mk('왕가 2', PALETTE[1], 'equal', [['다른 주장자', '대공']]),
+            mk(i18n('sim.royal.179'), PALETTE[0], 'male', [[i18n('sim.royal.180'), i18n('sim.royal.181')], [i18n('sim.royal.182'), i18n('sim.royal.183')], [i18n('sim.royal.184'), i18n('sim.royal.185'), 'f']]),
+            mk(i18n('sim.royal.186'), PALETTE[1], 'equal', [[i18n('sim.royal.187'), i18n('sim.royal.188')]]),
         ];
         render();
     }
@@ -637,7 +637,7 @@
     }
     // 국가 › 사람(js/people.js)에 왕가 사람(주장자)도 자리로 — 인물을 배정하거나 "모든 자리에서 가져오기"로 인물을 만든다
     (window.HemiPeopleSeats = window.HemiPeopleSeats || []).push({
-        seats: () => allClaimants().map(({ c, d }) => ({ key: `rc:${c.id}`, group: '왕실', label: `${d.name || '왕가'} · ${c.title || '왕족'}`, obj: c })),
+        seats: () => allClaimants().map(({ c, d }) => ({ key: `rc:${c.id}`, group: i18n('sim.royal.103'), label: `${d.name || i18n('sim.royal.4')} · ${c.title || i18n('sim.royal.189')}`, obj: c })),
         refresh,
     });
 
