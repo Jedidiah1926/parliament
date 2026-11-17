@@ -684,7 +684,7 @@
     // label: 글자 또는 i18n.ref(키, 변수) — 키로 남긴 기록은 보여 줄 때 그때 언어로 (evText), label에는 한국어 글을 함께 둔다 (예전 앱 · 검색용)
     function addEvent(kind, label) {
         const ref = label && typeof label === 'object' ? label : null;
-        const ev = { t: E.turn, kind, label: ref ? (window.DnoLang && DnoLang.source ? DnoLang.source(ref.key, ref.vars) : ref.key) : label };
+        const ev = { t: E.turn, kind, label: ref ? (window.HemiLang && HemiLang.source ? HemiLang.source(ref.key, ref.vars) : ref.key) : label };
         if (ref) { ev.key = ref.key; if (ref.vars) ev.vars = ref.vars; }
         E.events.push(ev);
         if (E.events.length > 300) E.events.splice(0, E.events.length - 300);
@@ -1074,7 +1074,7 @@
     // 금액 글자 — 한국어는 "16,700억 마르크"처럼 규모 단위로, 그 밖의 언어는 실제 금액을 줄여서("1.67T marks")
     const SCALE_FACTOR = { '': 1, '만': 1e4, '억': 1e8, '조': 1e12 };
     function amountText(v) {
-        const lang = (window.DnoLang && DnoLang.lang) || 'kr';
+        const lang = (window.HemiLang && HemiLang.lang) || 'kr';
         if (lang === 'kr') return `${Math.round(v).toLocaleString()}${scaleLabel(E.settings.scale)}`;
         const n = v * (SCALE_FACTOR[E.settings.scale || ''] || 1);
         try { return new Intl.NumberFormat({ jp: 'ja' }[lang] || lang, { notation: 'compact', maximumFractionDigits: 2 }).format(n); }

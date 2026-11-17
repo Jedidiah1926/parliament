@@ -48,7 +48,7 @@
     let T = fresh();
     function fresh() { return { military: [], branches: defaultBranches(), junta: null, coupBanned: [], log: [] }; }
     function defaultBranches() {
-        const tr = k => (window.DnoLang && typeof DnoLang.t === 'function' ? DnoLang.t(k) : k);
+        const tr = k => (window.HemiLang && typeof HemiLang.t === 'function' ? HemiLang.t(k) : k);
         return DEFAULT_BRANCHES.map(b => ({ id: b.id, name: tr(b.name), color: b.color }));
     }
     function guessBranch(role) {
@@ -465,7 +465,7 @@
         });
         const seed = box.querySelector('[data-act="seed"]');
         // 기본 직책 이름은 화면 언어로 (세이브에 든 이름은 번역하지 않으므로 만들 때 바꿔 둔다)
-        const tr = k => (window.DnoLang && typeof DnoLang.t === 'function' ? DnoLang.t(k) : k);
+        const tr = k => (window.HemiLang && typeof HemiLang.t === 'function' ? HemiLang.t(k) : k);
         if (seed) seed.onclick = () => {
             // 내각에 국방 장관 자리가 있으면 기본 지휘부의 국방부 장관을 그 자리와 바로 연결
             const defense = cabinetList().find(c => /국방/.test(c.position || ''));

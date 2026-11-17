@@ -25,7 +25,6 @@ Hemicycle(구 DATANET Parliament Simulation)은 설치나 빌드 없이 **브라
 | `index.html` | 시작 메뉴 · 시작하기 (SAVE SELECT) (새 플레이 · 이어하기) |
 | `maker.html` | 만들기 — 맵 · 시나리오 · 챌린지 제작물 목록, 새로 만들기 · 편집 · 삭제 |
 | `main.html` | 시뮬레이터 본체 (`js/main.js` · `css/main.css`) |
-| `dno.html` | 예전 주소 호환용 — `main.html`로 이동 |
 | `settings.html` | 설정 화면 (언어 선택) |
 | (로드맵) | 개발 로드맵 · 업데이트 내역은 웹([Jedidiah1926/hemicycleweb](https://github.com/Jedidiah1926/hemicycleweb))으로 옮김 — 메인 메뉴의 "로드맵 · 업데이트"가 웹 로드맵을 브라우저로 연다. 예전 화면(`old.html` · `old2.html`)도 웹으로 |
 | (미리보기 화면) | 다음 업데이트 미리보기(`teaserNN.html`) — 지금은 없음. 1.6.1 — 국가 › 사람 · 시민 · 이민자 · 의장석(`js/people.js` · `js/podium.js`) · 1.6.2 — 군부 · 쿠데타 · 군정(`js/coup.js`) · 1.6.3 — 혁명 · 당-국가 체제 · 선거인단(`js/revolution.js`) · 1.6.4 — 국회공성전(`js/siege.js`) · 1.6.5 — 세력 변화 · 위키 틀 · 세계(`js/history.js`) · 1.6.6 — 왕실 · 왕정복고 · 전제군주정(`js/royal.js`) · 1.6.7 — 미수복 지역 · 영토 통일(`js/unrecovered.js`) · 1.6.8 — 종속국 · 지방선거 연대(`js/vassals.js`) · 1.6.9 — 경제 시스템(메뉴 › 경제, `js/economy.js` + 그래프 `js/economycharts.js`) · 후보 선출 방법 · 공동교섭단체 · 정권 상태별 부정선거(`js/politics.js`)는 본 게임에 들어가 `main.html`이 읽음. `teaser61.html` ~ `teaser69.html`은 없앴고, 예전 미리보기 세이브(`hemicycleTeaserV2-번호:`)는 시작 화면이 본 게임 세이브로 옮김. 새 미리보기는 `tools/build-teaser.js`의 `TEASERS`와 `js/devmode.js`의 `TEASERS`에 적으면 `npm run build:teaser`가 만들고, 설정 › 기타 설정에서 개발자 모드를 켜야 열림. 설정 › 기타 설정 › 디버그 모드에서 숨겨진 정부 형태를 "보이기"로 하면 내각 › 정부 형태 · 권한의 정부 형태 아래에 쿠데타 · 혁명 · 왕정복고로만 들어가던 숨겨진 정부 형태(1.6.2 군정 · 1.6.3 당-국가 체제 · 1.6.6 전제군주정) 버튼이 나와 주사위 없이 바로 바꿈 (`js/devmode.js`의 `HemiDev.hiddenGov`, 저장 키 `hemicycleDebugHiddenGov`) |
@@ -246,7 +245,7 @@ npx electron-builder --config electron-builder.demo.js --win dir   # → dist-de
 
 ```json
 {
-  "format": "dno-lang-pack@2",
+  "format": "hemicycle-lang@2",
   "code": "jp",
   "name": "日本語",
   "author": "만든 사람",

@@ -3,7 +3,7 @@
 //   격변 = 시작 조건 · 날짜, 게이지(변수), 기한 있는 임무, 격변 전용 결정 · 이벤트(슈퍼 이벤트), 결말
 // 조건 · 효과는 스크립트 모드 형식(docs/MODDING.md)을 그대로 쓴다 — 칸 옆 "도우미"로 자주 쓰는 모양을 넣을 수 있다.
 // 내 시나리오는 IndexedDB(hemicycleCampaigns)에 자동 저장, .hemicmp(gzip JSON)로 내보내기 · 불러오기, 시험 플레이는 js/campaign.js가 받음.
-/* global DnoPresets, DnoUI */
+/* global HemiPresets, HemiUI */
 (function () {
     'use strict';
     const FORMAT = 'hemicycle-campaign@1';
@@ -15,8 +15,8 @@
     const blockedDraft = () => { if (!rawPending.size) return false; $('cpSaveStatus').textContent = 'JSON을 적용하거나 변경 취소 후 이동하세요.'; return true; };
     const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
     const $ = id => document.getElementById(id);
-    const alertBox = m => (window.DnoUI && DnoUI.alert ? DnoUI.alert(m) : Promise.resolve(alert(m)));
-    const confirmBox = m => (window.DnoUI && DnoUI.confirm ? DnoUI.confirm(m) : Promise.resolve(confirm(m)));
+    const alertBox = m => (window.HemiUI && HemiUI.alert ? HemiUI.alert(m) : Promise.resolve(alert(m)));
+    const confirmBox = m => (window.HemiUI && HemiUI.confirm ? HemiUI.confirm(m) : Promise.resolve(confirm(m)));
     const uid = p => p + '_' + Date.now().toString(36).slice(-5) + Math.random().toString(36).slice(2, 5);
 
     // ---------------------------------------------------------------
@@ -782,14 +782,14 @@
         d._startId = start.id;
         const name = `${S.title || '시나리오'}${S.starts.length > 1 && start.name ? ` — ${start.name}` : ''}`;
         try {
-            ['hemiBootCampaign','hemiBootCampaignPending','hemiBootChallenge','hemiBootChallengePending','dnoBootPresetId','dnoBootNewSaveName','dnoBootImportedStateJSON','dnoBootImportedName','dnoBootImportPending'].forEach(k=>sessionStorage.removeItem(k));
+            ['hemiBootCampaign','hemiBootCampaignPending','hemiBootChallenge','hemiBootChallengePending','hemiBootPresetId','hemiBootNewSaveName','hemiBootImportedStateJSON','hemiBootImportedName','hemiBootImportPending'].forEach(k=>sessionStorage.removeItem(k));
             const text = JSON.stringify(d);
             try { sessionStorage.setItem('hemiBootCampaign', text); } catch (e) { await window.HemiFile.stash('bootCampaign', { text }); sessionStorage.setItem('hemiBootCampaignPending', '1'); }
             if (start.kind === 'save') {
                 const st = JSON.stringify(start.state);
-                try { sessionStorage.setItem('dnoBootImportedStateJSON', st); sessionStorage.setItem('dnoBootImportedName', name); }
-                catch (e) { sessionStorage.removeItem('dnoBootImportedStateJSON'); await window.HemiFile.stash('bootImport', { name, text: st }); sessionStorage.setItem('dnoBootImportPending', '1'); }
-            } else { sessionStorage.setItem('dnoBootPresetId', start.preset || 'builtin:tutorial'); sessionStorage.setItem('dnoBootNewSaveName', name); }
+                try { sessionStorage.setItem('hemiBootImportedStateJSON', st); sessionStorage.setItem('hemiBootImportedName', name); }
+                catch (e) { sessionStorage.removeItem('hemiBootImportedStateJSON'); await window.HemiFile.stash('bootImport', { name, text: st }); sessionStorage.setItem('hemiBootImportPending', '1'); }
+            } else { sessionStorage.setItem('hemiBootPresetId', start.preset || 'builtin:tutorial'); sessionStorage.setItem('hemiBootNewSaveName', name); }
         } catch (e) { alertBox('시나리오를 넘기지 못했습니다. (저장 공간 부족)'); return; }
         location.href = 'main.html';
     }
@@ -824,7 +824,7 @@
     window.addEventListener('beforeunload', () => { if (saveT) saveNow(); });
 
     (async function init() {
-        try { presets = window.DnoPresets ? await DnoPresets.list() : []; } catch (e) { presets = []; }
+        try { presets = window.HemiPresets ? await HemiPresets.list() : []; } catch (e) { presets = []; }
         const all = (await dbAll().catch(() => [])).sort((a, b) => b.updatedAt - a.updatedAt);
         let last = null; try { last = localStorage.getItem(LAST); } catch (e) { /* 무시 */ }
         const params=new URLSearchParams(location.search), requested=params.get('item');

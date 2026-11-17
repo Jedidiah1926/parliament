@@ -126,10 +126,10 @@
         $('weAbbr').oninput=e=>{z.abbr=e.target.value.slice(0,12);legend();save();};
         $('weDesc').oninput=e=>{z.desc=e.target.value.slice(0,2000);save();};
         $('weColor').oninput=e=>{if(D.color(e.target.value)){z.color=e.target.value;if(layer==='zones')for(const k of nodes.keys())if(zoneOf(k)===z.id)styleRegion(k);legend();}};$('weColor').onchange=save;
-        $('weId').onchange=e=>{const next=e.target.value.trim();if(next===z.id)return;if(!D.zoneId(next)||zoneById(next)){e.target.value=z.id;DnoUI.alert('경제권 ID는 영문·숫자·_ . -로, 다른 경제권과 겹치지 않게 입력하세요.');return;}
+        $('weId').onchange=e=>{const next=e.target.value.trim();if(next===z.id)return;if(!D.zoneId(next)||zoneById(next)){e.target.value=z.id;HemiUI.alert('경제권 ID는 영문·숫자·_ . -로, 다른 경제권과 겹치지 않게 입력하세요.');return;}
             for(const k of Object.keys(E.regions))if(E.regions[k]===z.id)E.regions[k]=next;z.id=next;zone=next;zPast=[];zFuture=[];renderZoneEdit();updateControls();save();notify('manual',null,'zones');};
         $('weDelete').onclick=async()=>{const token=revision,count=Object.values(E.regions).filter(id=>id===z.id).length;
-            if(!await DnoUI.confirm(`경제권 "${zoneLabel(z)}"을(를) 삭제할까요?\n소속 구역 ${count}개는 미배정이 됩니다. 이 경제권(ID: ${z.id})을 쓰는 시나리오 조건 · 효과는 더 이상 맞지 않게 됩니다.`)||token!==revision)return;
+            if(!await HemiUI.confirm(`경제권 "${zoneLabel(z)}"을(를) 삭제할까요?\n소속 구역 ${count}개는 미배정이 됩니다. 이 경제권(ID: ${z.id})을 쓰는 시나리오 조건 · 효과는 더 이상 맞지 않게 됩니다.`)||token!==revision)return;
             const keys=Object.keys(E.regions).filter(k=>E.regions[k]===z.id);for(const k of keys)delete E.regions[k];E.zones=E.zones.filter(x=>x!==z);zone='';zPast=[];zFuture=[];
             if(layer==='zones')keys.forEach(styleRegion);renderZoneEdit();updateControls();save();notify('manual',keys,'zones');};
         renderZoneStats();
@@ -235,7 +235,7 @@
     controls.querySelectorAll('[data-wm-tool]').forEach(b=>b.onclick=()=>{tool=b.dataset.wmTool;updateControls();});
     $('wmUndo').onclick=()=>{if(!S||!past.length||lockWhy('worldMap'))return;const was=D.clone(S.owners);future.push(was);S.owners=Object.assign(Object.create(null),past.pop());repaint();save();notify('manual',diffKeys(was,S.owners));};
     $('wmRedo').onclick=()=>{if(!S||!future.length||lockWhy('worldMap'))return;const was=D.clone(S.owners);past.push(was);S.owners=Object.assign(Object.create(null),future.pop());repaint();save();notify('manual',diffKeys(was,S.owners));};
-    $('wmClear').onclick=async()=>{if(!S||lockWhy('worldMap'))return;const token=revision;if(!await DnoUI.confirm('세계지도의 모든 영토 배정을 지울까요? 지도 모양과 국가는 유지됩니다.')||token!==revision)return;const before=D.clone(S.owners),was=layer;S.owners=Object.create(null);layer='owners';remember(before);layer=was;repaint();};
+    $('wmClear').onclick=async()=>{if(!S||lockWhy('worldMap'))return;const token=revision;if(!await HemiUI.confirm('세계지도의 모든 영토 배정을 지울까요? 지도 모양과 국가는 유지됩니다.')||token!==revision)return;const before=D.clone(S.owners),was=layer;S.owners=Object.create(null);layer='owners';remember(before);layer=was;repaint();};
     $('wmRanking').onclick=()=>switchSubTab('world','ranking');
     // 경제권 화면의 조작
     panel.querySelectorAll('[data-wm-layer]').forEach(b=>b.onclick=()=>switchSubTab('world',b.dataset.wmLayer==='zones'?'econblocs':'worldmap'));
@@ -251,7 +251,7 @@
     $('weNewName').onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();$('weAdd').click();}};
     $('weUndo').onclick=()=>{if(!S||!zPast.length||lockWhy('economicRegions'))return;const was=D.clone(E.regions);zFuture.push(was);E.regions=Object.assign(Object.create(null),zPast.pop());repaint();save();notify('manual',diffKeys(was,E.regions),'zones');};
     $('weRedo').onclick=()=>{if(!S||!zFuture.length||lockWhy('economicRegions'))return;const was=D.clone(E.regions);zPast.push(was);E.regions=Object.assign(Object.create(null),zFuture.pop());repaint();save();notify('manual',diffKeys(was,E.regions),'zones');};
-    $('weClear').onclick=async()=>{if(!S||lockWhy('economicRegions'))return;const token=revision;if(!await DnoUI.confirm('모든 구역의 경제권 배정을 지울까요? 경제권 목록과 국가 영토는 유지됩니다.')||token!==revision)return;const before=D.clone(E.regions),was=layer;E.regions=Object.create(null);layer='zones';remember(before);layer=was;repaint();};
+    $('weClear').onclick=async()=>{if(!S||lockWhy('economicRegions'))return;const token=revision;if(!await HemiUI.confirm('모든 구역의 경제권 배정을 지울까요? 경제권 목록과 국가 영토는 유지됩니다.')||token!==revision)return;const before=D.clone(E.regions),was=layer;E.regions=Object.create(null);layer='zones';remember(before);layer=was;repaint();};
     $('weSearch').oninput=renderFound;$('weOnlyFree').onchange=renderFound;
     $('wmAddCountry').onclick=()=>{if(lockWhy('worldMap'))return;const text=$('wmNewName').value.trim();if(!text){$('wmNewName').focus();return;}const row={id:'wm_'+Date.now().toString(36)+Math.random().toString(36).slice(2,7),name:text,flag:'🏳',bloc:'',ideo:'',score:0,prevRank:null,self:false};rows().push(row);country=row.id;$('wmNewName').value='';updateControls();save();};
     function mergeCountries(data){
@@ -271,7 +271,7 @@
     // 지도 파일에 경제권이 들어 있으면 그것으로, 없으면 경제권 목록은 두고 배정만 비운다 — 새 지도의 구역에 옛 배정을 조용히 붙이지 않는다
     function importData(preset){const next=D.read(preset);loadRequest++;mergeCountries(next);E=next.economic||D.economic({zones:E.zones});delete next.economic;S=next;revision++;past=[];future=[];zPast=[];zFuture=[];$('weEdit').dataset.zone='';draw();save();notify('import');return true;}
     $('wmOpen').onclick=()=>$('wmFile').click();
-    $('wmFile').onchange=async e=>{const file=e.target.files[0],token=revision,request=++loadRequest;e.target.value='';if(!file)return;if(lockWhy('worldMap')){DnoUI.alert(lockWhy('worldMap'));return;}try{const data=JSON.parse(await HemiFile.readText(file));D.read(data);if(token!==revision||request!==loadRequest)return;if(S&&!await DnoUI.confirm('세계지도와 영토 배정을 불러온 파일로 바꿀까요? 지역구 지도는 그대로 유지됩니다.'))return;if(token!==revision||request!==loadRequest)return;importData(data);show();}catch(err){if(token===revision&&request===loadRequest)DnoUI.alert('세계지도를 불러오지 못했습니다: '+err.message);}};
+    $('wmFile').onchange=async e=>{const file=e.target.files[0],token=revision,request=++loadRequest;e.target.value='';if(!file)return;if(lockWhy('worldMap')){HemiUI.alert(lockWhy('worldMap'));return;}try{const data=JSON.parse(await HemiFile.readText(file));D.read(data);if(token!==revision||request!==loadRequest)return;if(S&&!await HemiUI.confirm('세계지도와 영토 배정을 불러온 파일로 바꿀까요? 지역구 지도는 그대로 유지됩니다.'))return;if(token!==revision||request!==loadRequest)return;importData(data);show();}catch(err){if(token===revision&&request===loadRequest)HemiUI.alert('세계지도를 불러오지 못했습니다: '+err.message);}};
     $('wmExport').onclick=async()=>{if(!S)return;const out=D.write(S,snapshot(),E);const blob=await HemiFile.encode(out),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=String(out.meta?.name||'world-map').replace(/[\\/:*?"<>|]/g,'_')+'.hemimap';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),5000);};
     function show(){disp.style.display='';switchDispTab('worldmap');}
     const origSub=window.switchSubTab;window.switchSubTab=function(main,sub){const r=origSub.apply(this,arguments);if(main==='world'&&sub==='worldmap'){setLayer('owners');repaint();show();}else if(main==='world'&&sub==='econblocs'){setLayer('zones');repaint();show();}return r;};

@@ -3,10 +3,10 @@
 // 렌더링된 DOM 텍스트를 페이지 로드 때 한 번 치환해 표시한다. 언어 팩은 순수 데이터(JSON)라서
 // 누구나 새 언어를 만들어 공유(창작마당)하고, 설정 화면에서 .json 파일로 불러와 쓸 수 있다.
 //   - 기본 제공 팩: lang/<code>.js (JSON을 JS로 감싼 것 — 데스크톱 앱 file://에서도 읽힘)
-//   - 불러온 팩: localStorage(dnoLangPacks)에 보관
+//   - 불러온 팩: localStorage(hemiLangPacks)에 보관
 //   - 모드 · 창작마당 팩(데스크톱 앱): 모드 폴더와 Steam 창작마당 구독 아이템에서 앱이 읽어 넘겨준다
 //     (window.hemicycleDesktop.modLanguagePacks — electron/mods.js 참고). 지우려면 폴더를 지우거나 구독을 끊는다
-// 팩 형식은 README의 "번역(언어 팩) 만들기" 참고 (형식 식별자: dno-lang-pack@2, 예전 @1도 읽음).
+// 팩 형식은 README의 "번역(언어 팩) 만들기" 참고 (형식 식별자: hemicycle-lang@2, 예전 @1도 읽음).
 //
 // 번역 방식 두 가지가 함께 돈다 (0.2.4 — 화면을 하나씩 키 방식으로 옮기는 중):
 //   1) 키 번역(새 방식): 화면 글자마다 고유 키(예: "home.menu.start")를 두고, 고른 언어 팩의 keys에서 글자를 찾는다.
@@ -16,9 +16,9 @@
 (function () {
     'use strict';
 
-    const LANG_KEY = 'dnoLang';
-    const PACKS_KEY = 'dnoLangPacks';
-    const PACK_FORMAT = 'dno-lang-pack@2';
+    const LANG_KEY = 'hemiLang';
+    const PACKS_KEY = 'hemiLangPacks';
+    const PACK_FORMAT = 'hemicycle-lang@2';
     const PACK_FORMATS = ['dno-lang-pack@1', PACK_FORMAT]; // @1: 사전(dict · patterns)만 · @2: 키(keys)도
     const KEY_NAME = /^[A-Za-z0-9_][A-Za-z0-9_.-]{0,119}$/; // 키 이름: 영문 · 숫자 · _ . -
     const PLURAL_CATS = ['zero', 'one', 'two', 'few', 'many', 'other'];
@@ -38,7 +38,7 @@
         if (!key || !NEON_FONTS[key] || neonFontApplied === key) return;
         neonFontApplied = key;
         const style = document.createElement('style');
-        style.id = 'dnoNeonFont';
+        style.id = 'hemiNeonFont';
         style.textContent = `@font-face { font-family: 'NeoDunggeunmo'; font-weight: normal; font-style: normal; font-display: block; src: url('${NEON_FONTS[key]}') format('woff2'); }`;
         (document.head || document.documentElement).appendChild(style);
         document.documentElement.setAttribute('data-neon-font', key);
@@ -168,12 +168,12 @@
     function loadBuiltin(code) {
         const b = BUILTIN[code];
         if (!b) return Promise.reject(new Error('unknown builtin language: ' + code));
-        if (window.DnoLangPacks && window.DnoLangPacks[code]) return Promise.resolve(window.DnoLangPacks[code]);
+        if (window.HemiLangPacks && window.HemiLangPacks[code]) return Promise.resolve(window.HemiLangPacks[code]);
         if (!scriptLoads[code]) {
             scriptLoads[code] = new Promise((resolve, reject) => {
                 const el = document.createElement('script');
                 el.src = b.script;
-                el.onload = () => (window.DnoLangPacks && window.DnoLangPacks[code] ? resolve(window.DnoLangPacks[code]) : reject(new Error('pack missing')));
+                el.onload = () => (window.HemiLangPacks && window.HemiLangPacks[code] ? resolve(window.HemiLangPacks[code]) : reject(new Error('pack missing')));
                 el.onerror = () => { delete scriptLoads[code]; reject(new Error('language pack load failed: ' + b.script)); };
                 document.head.appendChild(el);
             });
@@ -224,7 +224,7 @@
     // 한국어 팩(lang/kr.js)과 고른 기본 제공 팩(lang/<code>.js)은 페이지를 읽는 도중에 바로 붙여(document.write) 둔다 —
     // 그래야 뒤따르는 스크립트가 처음 그릴 때부터 i18n()을 쓸 수 있고, 한국어가 보였다가 바뀌는 깜빡임이 없다.
     // (이 파일은 모든 페이지에서 일반 <script>로 읽으므로 그 시점엔 아직 문서를 읽는 중이다)
-    const packRegistry = () => (window.DnoLangPacks = window.DnoLangPacks || {});
+    const packRegistry = () => (window.HemiLangPacks = window.HemiLangPacks || {});
     function writeScript(src) {
         if (document.readyState !== 'loading') return false;
         document.write('<script src="' + src + '"><\/script>');
@@ -369,7 +369,7 @@
     // missing(): 이 페이지에서 쓰였는데 한국어 팩에도 없는 키 · lang: 지금 언어 코드
     // setDataStrings(list): 세이브에 든 데이터(정당 · 지역구 · 의원 · 법안 이름 등) — 화면 번역에서 건드리지 않는다 (1.6.0, js/main.js가 알려 줌)
     // exact(s): 사전에 통째로 있는 글자면 그 번역, 아니면 null (예전 세이브의 기본 이름을 한 번 바꿀 때 사용) · ready: 팩이 준비됐는지
-    window.DnoLang = { list: listLanguages, install: installPack, remove: removePack, template: buildTemplate, validate: normalizePack, format: PACK_FORMAT,
+    window.HemiLang = { list: listLanguages, install: installPack, remove: removePack, template: buildTemplate, validate: normalizePack, format: PACK_FORMAT,
         lang: current, k, month, source, apply: applyKeys, has: key => hasOwn(sourceKeys(), key), missing: () => [...missingKeys],
         translateSubtree: el => applyKeys(el), t: s => s, setDataStrings: () => {}, exact: () => null, ready: false };
     window.i18n = k;
@@ -430,14 +430,14 @@
             const whole = s.trim();
             if (dataSet.has(whole) || keyedOutputs.has(whole)) return orig; // 키로 만든 글자도 그대로
             // 글자 전체가 사전에 있는 UI 문구면(예: "무소속 포함하기") 데이터 단어가 섞여 있어도 UI로 번역
-            if (dictMap.has(whole)) { const t = s.replace(whole, dictMap.get(whole)); return window.DnoEmoji ? window.DnoEmoji.fix(t) : t; }
+            if (dictMap.has(whole)) { const t = s.replace(whole, dictMap.get(whole)); return window.HemiEmoji ? window.HemiEmoji.fix(t) : t; }
             const held = [];
             if (dataRe) s = s.replace(dataRe, m => { held.push(m); return '\uE000' + (held.length - 1) + '\uE001'; });
             for (const [re, rep] of patterns) s = s.replace(re, rep);
             if (dictRegex) s = s.replace(dictRegex, m => dictMap.get(m) ?? m);
             if (held.length) s = s.replace(/\uE000(\d+)\uE001/g, (_, i) => held[+i] ?? '');
             // 번역할 게 없었다면 선택자를 떼지 않은 원래 글자를 그대로 돌려준다 (이모지 표시 방식과 서로 되돌리며 반복하지 않게)
-            return s === base ? orig : (window.DnoEmoji ? window.DnoEmoji.fix(s) : s);
+            return s === base ? orig : (window.HemiEmoji ? window.HemiEmoji.fix(s) : s);
         };
         translateString.exact = v => { const k = String(v == null ? '' : v).replace(/\uFE0E/g, ''); return dictMap.has(k) ? dictMap.get(k) : null; };
         return translateString;
@@ -461,7 +461,7 @@
         catch (e) { dataRe = null; }
         return true;
     }
-    window.DnoLang.setDataStrings = setDataStrings;
+    window.HemiLang.setDataStrings = setDataStrings;
     // translate="no"가 붙은 요소(조문 등 데이터 덩어리) 안과, 키 번역으로 이미 채운 요소(data-i18n-ok)는 사전 번역하지 않는다
     const noTranslate = node => {
         const el = node && (node.nodeType === Node.ELEMENT_NODE ? node : node.parentElement);
@@ -521,19 +521,19 @@
     window.confirm = function (msg) { return _confirm.call(window, translate(String(msg))); };
 
     const waiting = new Set(); // 팩 준비 전에 번역 요청된 부분
-    window.DnoLang.translateSubtree = el => { if (el) { applyKeys(el); waiting.add(el); } };
+    window.HemiLang.translateSubtree = el => { if (el) { applyKeys(el); waiting.add(el); } };
     packReady.then(pack => applyNeonFont(current, pack)).catch(() => {});
     Promise.all([packReady, pageLoaded]).then(([pack]) => {
         translate = buildTranslator(pack);
         translateTree(document.documentElement, translate);
-        window.DnoLang.translateSubtree = el => { if (el) { applyKeys(el); translateTree(el, translate); } };
-        window.DnoLang.t = s => translate(s);
-        window.DnoLang.exact = s => translate.exact(s);
-        window.DnoLang.ready = true;
+        window.HemiLang.translateSubtree = el => { if (el) { applyKeys(el); translateTree(el, translate); } };
+        window.HemiLang.t = s => translate(s);
+        window.HemiLang.exact = s => translate.exact(s);
+        window.HemiLang.ready = true;
         waiting.forEach(el => { if (el.isConnected) translateTree(el, translate); });
         waiting.clear();
         // 번역된 문자열로 직접 다시 그려야 하는 화면(로드맵 카드 제목 등)에 알림
-        window.dispatchEvent(new Event('dnolangready'));
+        window.dispatchEvent(new Event('hemilangready'));
         // 앱이 나중에 다시 그리는 부분(목록 갱신, 도움말, 튜토리얼 말풍선, 알림창 등)도 계속 번역한다.
         // 번역 결과가 같으면 건드리지 않으므로, 이 번역이 다시 변경을 일으켜도 한 번 더 확인하고 멈춘다.
         const observer = new MutationObserver(mutations => {

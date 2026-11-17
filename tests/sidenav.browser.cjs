@@ -12,7 +12,7 @@ const base = process.env.STUDIO_TEST_URL || 'http://127.0.0.1:8000';
             const errors = [];
             const ctx = await browser.newContext({ viewport: { width: 1280, height: 720 } }), p = await ctx.newPage();
             p.setDefaultTimeout(15000); p.on('pageerror', e => errors.push(e.message)); await ctx.route('https://fonts.googleapis.com/**', r => r.abort());
-            await ctx.addInitScript(t => { localStorage.setItem('dnoThemeMode', t); localStorage.removeItem('dnoSideNavCollapsed'); localStorage.removeItem('dnoSideNavClosedGroups'); }, theme);
+            await ctx.addInitScript(t => { localStorage.setItem('hemiThemeMode', t); localStorage.removeItem('hemiSideNavCollapsed'); localStorage.removeItem('hemiSideNavClosedGroups'); }, theme);
             await p.goto(base + '/main.html'); await p.waitForFunction(() => typeof startFromPresetOnBoot === 'function');
             await p.evaluate(() => startFromPresetOnBoot('builtin:tutorial')); await p.waitForFunction(() => !!activeSlotId && parties.length > 3); await p.waitForTimeout(600);
             const geo = () => p.evaluate(() => {
@@ -56,13 +56,13 @@ const base = process.env.STUDIO_TEST_URL || 'http://127.0.0.1:8000';
             // ---- 점: 이름표가 따라오고, 누르면 그 화면 ----
             const dots = p.locator('#sideNav .mn-group.active .mn-item');
             await dots.nth(0).hover(); await p.waitForTimeout(420);
-            const t1 = await p.evaluate(() => document.getElementById('dnoTip').textContent);
+            const t1 = await p.evaluate(() => document.getElementById('hemiTip').textContent);
             await dots.nth(1).hover(); await p.waitForTimeout(30);
-            const t2 = await p.evaluate(() => ({ text: document.getElementById('dnoTip').textContent, moving: document.getElementById('dnoTip').classList.contains('moving'), side: document.getElementById('dnoTip').dataset.side }));
+            const t2 = await p.evaluate(() => ({ text: document.getElementById('hemiTip').textContent, moving: document.getElementById('hemiTip').classList.contains('moving'), side: document.getElementById('hemiTip').dataset.side }));
             assert.notEqual(t1, t2.text); assert.ok(t2.moving, `${theme}: 옆 점으로 옮기면 기다리지 않고 따라감`); assert.equal(t2.side, 'right');
-            const label = (await dots.nth(1).getAttribute('data-dno-tip')).trim();
+            const label = (await dots.nth(1).getAttribute('data-hemi-tip')).trim();
             await dots.nth(1).click(); await p.waitForTimeout(250);
-            assert.equal(await p.evaluate(() => document.querySelector('#sideNav .mn-group.active .mn-item.active').getAttribute('data-dno-tip')), label, `${theme}: 점을 누르면 그 화면`);
+            assert.equal(await p.evaluate(() => document.querySelector('#sideNav .mn-group.active .mn-item.active').getAttribute('data-hemi-tip')), label, `${theme}: 점을 누르면 그 화면`);
 
             // ---- 아이콘: 점 열고 닫기 (이동하지 않음), 펼친 목록과 같은 상태 ----
             const key = await p.evaluate(() => [...document.querySelectorAll('#sideNav .mn-group')].find(g => !g.classList.contains('active') && g.querySelector('.mn-item') && g.offsetParent).dataset.main);

@@ -69,7 +69,7 @@
         if (e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
         e.preventDefault();
         try { if (dirty || timer) await saveNow(); else await queue; location.href = 'maker.html'; }
-        catch (err) { await DnoUI.alert('저장하지 못했습니다. 프로젝트 저장을 다시 누르거나 파일로 내보내세요.'); }
+        catch (err) { await HemiUI.alert('저장하지 못했습니다. 프로젝트 저장을 다시 누르거나 파일로 내보내세요.'); }
     });
     document.addEventListener('input', changed); document.addEventListener('change', changed);
     window.addEventListener('mapmakerchange', changed);

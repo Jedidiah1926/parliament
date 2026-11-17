@@ -13,8 +13,8 @@
 (function () {
     'use strict';
 
-    const DONE_KEY = 'dnoTutorialDone';          // 예전 기록(과정 순서 번호)
-    const DONE_IDS_KEY = 'dnoTutorialDoneIds';   // 지금 기록(과정 id)
+    const DONE_KEY = 'hemiTutorialDone';          // 예전 기록(과정 순서 번호)
+    const DONE_IDS_KEY = 'hemiTutorialDoneIds';   // 지금 기록(과정 id)
     const hasEl = id => !!document.getElementById(id);
     // 메뉴: 세로 사이드바 (없으면 원래 가로 탭 줄)
     const navTarget = () => (hasEl('sideNav') ? '#sideNav' : '.main-tab-container');
@@ -1510,7 +1510,7 @@
         if (!(target instanceof Node)) return false;
         if (bubble && bubble.contains(target)) return true;
         // 앱 자체 확인/안내창은 언제나 누를 수 있어야 한다 (예: 법안 제목 없이 등록 → 안내창)
-        if (target instanceof Element && target.closest('.dno-dialog-overlay, #customAlertOverlay, #customConfirmOverlay')) return true;
+        if (target instanceof Element && target.closest('.hemi-dialog-overlay, #customAlertOverlay, #customConfirmOverlay')) return true;
         const step = curStep();
         return !!step && allowedEls(step).some(el => el === target || el.contains(target));
     }
@@ -1695,11 +1695,11 @@
         lessonIdx = li;
         showStep(0);
     }
-    const PENDING_KEY = 'dnoTutorialStartLesson';
+    const PENDING_KEY = 'hemiTutorialStartLesson';
     function launchPreview(l) {
         try {
-            sessionStorage.setItem('dnoBootPresetId', 'builtin:tutorial');
-            sessionStorage.setItem('dnoBootNewSaveName', `서독 (${l.locked} 미리보기)`);
+            sessionStorage.setItem('hemiBootPresetId', 'builtin:tutorial');
+            sessionStorage.setItem('hemiBootNewSaveName', `서독 (${l.locked} 미리보기)`);
             sessionStorage.setItem(PENDING_KEY, l.id);
         } catch (e) { /* sessionStorage 없음 — 그냥 화면만 옮긴다 */ }
         stop();
@@ -1822,7 +1822,7 @@
     function onKey(e) {
         if (!active) return;
         if (isEditable(e.target)) return; // 입력 칸에서의 Enter/화살표/Esc는 그대로 입력 칸 몫
-        if (document.querySelector('.dno-dialog-overlay')) return; // 앱의 알림 · 확인창이 떠 있으면 그 창이 키를 처리
+        if (document.querySelector('.hemi-dialog-overlay')) return; // 앱의 알림 · 확인창이 떠 있으면 그 창이 키를 처리
         if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); stop(); }
         else if (e.key === 'ArrowRight' || e.key === 'Enter') {
             // 실습 단계에선 누를 수 있게 허용한 버튼 위의 Enter는 그대로 둔다
@@ -1868,7 +1868,7 @@
         GUARDED.forEach(t => window.removeEventListener(t, guard, true));
     }
 
-    window.DnoTutorial = {
+    window.HemiTutorial = {
         start, stop, next, showMenu,
         // goto(과정, 단계) — 튜토리얼이 켜져 있을 때 특정 단계로 바로 이동 (0부터)
         goto: (li, si = 0) => { if (!active || !LESSONS[li]) return; lessonIdx = li; showStep(Math.max(0, Math.min(si, LESSONS[li].steps.length - 1))); },

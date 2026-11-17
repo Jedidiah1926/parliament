@@ -4,9 +4,9 @@
 //   - 변수: "{n}일 뒤 다시"처럼 {이름} 자리에 i18n('키', { n: 3 })의 값이 들어간다
 //   - 수에 따라 모양이 바뀌는 글자: { "one": "...", "other": "..." } (한국어는 보통 "other" 하나면 된다)
 // 키를 바꾸거나 지우면 `node tools/i18n-check.js`로 다른 팩 · 화면과 어긋나지 않았는지 확인한다.
-window.DnoLangPacks = window.DnoLangPacks || {};
-window.DnoLangPacks.kr = {
- "format": "dno-lang-pack@2",
+window.HemiLangPacks = window.HemiLangPacks || {};
+window.HemiLangPacks.kr = {
+ "format": "hemicycle-lang@2",
  "code": "kr",
  "name": "한국어",
  "author": "Hemicycle",

@@ -382,7 +382,7 @@
         clearTimeout(articlePump);
         articlePump = setTimeout(() => {
             articlePump = 0;
-            if (!R || articleWindow || !R.articles.queue.length || SM()?.state?.queue?.length || document.querySelector('.cp-overlay,.sm-overlay,.ca-overlay,.dno-dialog-overlay')) return;
+            if (!R || articleWindow || !R.articles.queue.length || SM()?.state?.queue?.length || document.querySelector('.cp-overlay,.sm-overlay,.ca-overlay,.hemi-dialog-overlay')) return;
             const id = R.articles.queue[0], article = articleList().find(a=>a.id===id);
             if (!article) { R.articles.queue.shift(); scheduleArticles(); return; }
             readArticle(id);

@@ -1524,11 +1524,11 @@
 
         // ── 브라우저 기본 alert/confirm 대신 앱 자체 UI로 표시 (권한 선포 등 확인/안내용) ──────────────
         function showCustomAlert(message) {
-            window.DnoUI ? DnoUI.alert(message) : alert(message);
+            window.HemiUI ? HemiUI.alert(message) : alert(message);
         }
         function showCustomConfirm(message, onConfirm, onCancel) {
-            if(!window.DnoUI) { if(confirm(message)) onConfirm(); else onCancel?.(); return; }
-            DnoUI.confirm(message).then(ok => ok ? onConfirm() : onCancel?.());
+            if(!window.HemiUI) { if(confirm(message)) onConfirm(); else onCancel?.(); return; }
+            HemiUI.confirm(message).then(ok => ok ? onConfirm() : onCancel?.());
         }
 
         // 지정된 한 원의 의석을 비운다 — 지역구는 궐석 처리(기록 보존), 비례 명단은 초기화, 정당별 의석 수는 0으로
@@ -3172,7 +3172,7 @@
             return { fill: getVoteColor(planned), ring: null };
         }
         // 표결 연출 — 'new': 예정 표 · 무작위 타이밍 투표(개편), 'classic': 좌석에 바로 표를 찍고 확정(기존). 설정 › 화면, 이 브라우저(앱)에 저장
-        function voteStyleNew() { try { return localStorage.getItem('dnoVoteStyle') !== 'classic'; } catch(e) { return true; } }
+        function voteStyleNew() { try { return localStorage.getItem('hemiVoteStyle') !== 'classic'; } catch(e) { return true; } }
         // 표결 화면 글자를 지금 방식에 맞춤
         function applyVoteStyleLabels() {
             const isNew = voteStyleNew();
@@ -3802,7 +3802,7 @@
         // ===== 내보내기 해상도 (1× · 2× · 3×) =====
         // 화면 배율과 상관없이 고른 배율로 다시 그려 내보낸다 (예: 배율 100% 모니터에서도 2×면 두 배 크기로 선명하게).
         // 마지막으로 고른 값을 기억하고, 처음엔 2×
-        const EXPORT_SCALE_KEY = 'dnoExportScale';
+        const EXPORT_SCALE_KEY = 'hemiExportScale';
         let exportScale = (() => { const v = parseInt(safeLsGet(EXPORT_SCALE_KEY), 10); return [1, 2, 3].includes(v) ? v : 2; })();
         function setExportScale(v) {
             if(![1, 2, 3].includes(v)) return;
@@ -5247,18 +5247,18 @@
                 let bootSlotId = null;
                 let bootImportedJSON = null;
                 try {
-                    bootImportedJSON = sessionStorage.getItem('dnoBootImportedStateJSON');
-                    sessionStorage.removeItem('dnoBootImportedStateJSON');
-                    bootSlotId = sessionStorage.getItem('dnoBootLoadSlotId');
-                    sessionStorage.removeItem('dnoBootLoadSlotId');
-                    bootNewSaveName = sessionStorage.getItem('dnoBootNewSaveName');
-                    sessionStorage.removeItem('dnoBootNewSaveName');
-                    bootPresetId = sessionStorage.getItem('dnoBootPresetId');
-                    sessionStorage.removeItem('dnoBootPresetId');
-                    bootImportName = sessionStorage.getItem('dnoBootImportedName');
-                    sessionStorage.removeItem('dnoBootImportedName');
-                    if(sessionStorage.getItem('dnoBootImportPending')) {
-                        sessionStorage.removeItem('dnoBootImportPending');
+                    bootImportedJSON = sessionStorage.getItem('hemiBootImportedStateJSON');
+                    sessionStorage.removeItem('hemiBootImportedStateJSON');
+                    bootSlotId = sessionStorage.getItem('hemiBootLoadSlotId');
+                    sessionStorage.removeItem('hemiBootLoadSlotId');
+                    bootNewSaveName = sessionStorage.getItem('hemiBootNewSaveName');
+                    sessionStorage.removeItem('hemiBootNewSaveName');
+                    bootPresetId = sessionStorage.getItem('hemiBootPresetId');
+                    sessionStorage.removeItem('hemiBootPresetId');
+                    bootImportName = sessionStorage.getItem('hemiBootImportedName');
+                    sessionStorage.removeItem('hemiBootImportedName');
+                    if(sessionStorage.getItem('hemiBootImportPending')) {
+                        sessionStorage.removeItem('hemiBootImportPending');
                         // 큰 세이브는 IndexedDB에 맡겨져 있다 — 화면이 다 준비된 뒤 "파일 불러오기"와 같은 방법으로 새 탭에 연다
                         setTimeout(async () => {
                             try {
@@ -5319,8 +5319,8 @@
         async function startFromPresetOnBoot(presetId, name) {
             let preset = null;
             try {
-                preset = await DnoPresets.find(presetId);
-                const state = await DnoPresets.loadState(preset);
+                preset = await HemiPresets.find(presetId);
+                const state = await HemiPresets.loadState(preset);
                 applyStateFromScratch(state); // 프리셋에 없는 값은 이전 세이브가 아니라 기본값으로
                 simulate(); refreshUI();
                 createNamedSlotFromCurrentState(uniqueSaveName(name || preset.title));
@@ -5335,8 +5335,8 @@
             } catch(e) { /* 자동저장 UI 갱신 실패는 앱 동작에 영향 없음 */ }
             // 튜토리얼은 시작 화면의 "튜토리얼" 탭에서 과정을 고른 경우에만 연다 (프리셋 목록의 서독은 프리셋으로만)
             let tutLesson = null;
-            try { tutLesson = sessionStorage.getItem('dnoTutorialStartLesson'); } catch(e) {}
-            if(preset && preset.tutorial && tutLesson && window.DnoTutorial) window.DnoTutorial.start();
+            try { tutLesson = sessionStorage.getItem('hemiTutorialStartLesson'); } catch(e) {}
+            if(preset && preset.tutorial && tutLesson && window.HemiTutorial) window.HemiTutorial.start();
         }
 
         // ===== SAVE / LOAD (v5) =====
@@ -5889,11 +5889,11 @@
         // localStorage 자체에 접근하는 것만으로도 예외가 발생할 수 있으므로
         // 모든 접근을 반드시 try/catch로 감싼다 — 그렇지 않으면 window.onload 안에서
         // 예외가 나는 순간 이후의 전체 초기화 코드가 실행되지 않아 앱 자체가 먹통이 된다.
-        const SAVE_SLOTS_KEY = 'dnoParliamentSaveSlots';
-        const LEGACY_AUTOSAVE_KEY = 'dnoParliamentAutosave'; // 세이브 슬롯 통합 이전, 단일 키에 저장하던 구버전 자동저장
-        const ACTIVE_SLOT_KEY = 'dnoParliamentActiveSlotId'; // 지금(마지막으로) 열려 있던 세이브의 id
-        const AUTOSAVE_ENABLED_KEY = 'dnoParliamentAutosaveEnabled';
-        const AUTOSAVE_INTERVAL_KEY = 'dnoParliamentAutosaveIntervalSec';
+        const SAVE_SLOTS_KEY = 'hemiParliamentSaveSlots';
+        const LEGACY_AUTOSAVE_KEY = 'hemiParliamentAutosave'; // 세이브 슬롯 통합 이전, 단일 키에 저장하던 구버전 자동저장
+        const ACTIVE_SLOT_KEY = 'hemiParliamentActiveSlotId'; // 지금(마지막으로) 열려 있던 세이브의 id
+        const AUTOSAVE_ENABLED_KEY = 'hemiParliamentAutosaveEnabled';
+        const AUTOSAVE_INTERVAL_KEY = 'hemiParliamentAutosaveIntervalSec';
         const AUTOSAVE_INTERVAL_OPTIONS = [15, 30, 60, 180, 300, 600]; // 초 단위 — 15초/30초/1분/3분/5분/10분
         const AUTOSAVE_INTERVAL_DEFAULT = 15;
         const LEGACY_DEFAULT_SAVE_NAME = '이전 자동저장'; // 예전 전역 자동저장 슬롯을 보통 세이브로 바꿀 때 붙이는 이름
@@ -6023,7 +6023,7 @@
 
         // ===== 열린 탭 목록 (진짜 프로그램처럼) — 탭을 닫아도 세이브는 지워지지 않는다(삭제는 저장 목록에서) =====
         // 저장값이 없으면(이전 버전) 기본 세션 + 모든 세이브가 열린 것으로 본다. 탭을 모두 닫으면 아래 화면은 빈다.
-        const OPEN_TABS_KEY = 'dnoOpenSaveTabs';
+        const OPEN_TABS_KEY = 'hemiOpenSaveTabs';
         let noOpenTab = false;
         function currentTabId() { return activeSlotId; }
         function loadOpenTabs(slots = loadSaveMetas()) {
@@ -6348,7 +6348,7 @@
 
         // ===== 국가 > 저장: 현재 세이브 카드 · 세이브 목록 =====
         // 즐겨찾기는 시작 화면(index.html)과 같은 저장소를 쓴다 — 어느 쪽에서 ★를 눌러도 양쪽에 반영
-        const SAVE_FAVORITES_KEY = 'dnoSaveFavorites';
+        const SAVE_FAVORITES_KEY = 'hemiSaveFavorites';
         function loadSaveFavorites() {
             try { return new Set(JSON.parse(localStorage.getItem(SAVE_FAVORITES_KEY) || '[]')); } catch(e) { return new Set(); }
         }
@@ -6664,12 +6664,12 @@
         // 고르면 presets/<file>을 그 상태 그대로 새 탭(세이브)에 담아 즉시 전환한다.
         // 개발자/배포자가 presets/ 폴더에 .json 파일을 추가하고 index.json에
         // 등록하기만 하면 누구나 그 프리셋을 쓸 수 있다 (자세한 방법은 README 참고).
-        // (목록·불러오기는 js/presets.js의 DnoPresets가 담당 — 내장 프리셋 + presets/index.json)
+        // (목록·불러오기는 js/presets.js의 HemiPresets가 담당 — 내장 프리셋 + presets/index.json)
         let presetListCache = null;
         let pendingPresetId = null;
 
         async function loadPresetList() {
-            if(!presetListCache) presetListCache = window.DnoPresets ? await DnoPresets.list() : [];
+            if(!presetListCache) presetListCache = window.HemiPresets ? await HemiPresets.list() : [];
             return presetListCache;
         }
 
@@ -6732,8 +6732,8 @@
             let presetState = null, presetMeta = null;
             if(presetId) {
                 try {
-                    presetMeta = await DnoPresets.find(presetId);
-                    presetState = await DnoPresets.loadState(presetMeta);
+                    presetMeta = await HemiPresets.find(presetId);
+                    presetState = await HemiPresets.loadState(presetMeta);
                 } catch(e) { showCustomAlert('프리셋을 불러오지 못했습니다.'); return; }
             }
 
@@ -6826,7 +6826,7 @@
         var undoDomObserver = null;
         var undoGesture = 0, undoGestureAt = 0, undoPendingGesture = -1, undoPointerDown = false;
         // 상태와 상관없이 늘 바뀌는 화면 조각 — 말풍선 · 커서 · 토스트 · 시계
-        const UNDO_DOM_NOISE = '.dno-tip, #kbdToast, .kbd-toast, #hemi-cursor-style, [data-undo-ignore]';
+        const UNDO_DOM_NOISE = '.hemi-tip, #kbdToast, .kbd-toast, #hemi-cursor-style, [data-undo-ignore]';
         function undoNoiseNode(n) {
             const el = n && (n.nodeType === 1 ? n : n.parentElement);
             return !!(el && el.closest && el.closest(UNDO_DOM_NOISE));
@@ -7044,7 +7044,7 @@
         }
 
         // ── 조작 탭(.controls)/시각 탭(.display-area) 사이 경계를 드래그해 폭 조절 ──────────────
-        const PANEL_RESIZER_WIDTH_KEY = 'dnoControlsPanelWidth';
+        const PANEL_RESIZER_WIDTH_KEY = 'hemiControlsPanelWidth';
         const PANEL_RESIZER_DEFAULT_WIDTH = 400; // .controls의 CSS 기본값(flex: 0 0 400px)과 일치시켜야 "초기화"가 실제 기본 폭으로 돌아감
         function safeGetLocal(k) { try { return localStorage.getItem(k); } catch(e) { return null; } }
         function safeSetLocal(k, v) { try { localStorage.setItem(k, v); return true; } catch(e) { return false; } }
@@ -7516,15 +7516,15 @@
             const ui = typeof getLang === 'function' ? getLang() : 'kr';
             if(dataLang) return;
             if(ui === 'kr') return;
-            if(!window.DnoLang || !DnoLang.ready) return; // 언어 팩이 준비되면 다시 (dnolangready)
+            if(!window.HemiLang || !HemiLang.ready) return; // 언어 팩이 준비되면 다시 (hemilangready)
             let st;
             try { st = getAppState(); } catch(e) { return; }
             let changed = 0;
             const walk = o => {
-                if(Array.isArray(o)) { o.forEach((v, i) => { if(typeof v === 'string') { const t = /[가-힣]/.test(v) ? DnoLang.exact(v) : null; if(t) { o[i] = t; changed++; } } else if(v && typeof v === 'object') walk(v); }); return; }
+                if(Array.isArray(o)) { o.forEach((v, i) => { if(typeof v === 'string') { const t = /[가-힣]/.test(v) ? HemiLang.exact(v) : null; if(t) { o[i] = t; changed++; } } else if(v && typeof v === 'object') walk(v); }); return; }
                 Object.keys(o).forEach(k => {
                     const v = o[k];
-                    if(typeof v === 'string') { if(/[가-힣]/.test(v) && !v.startsWith('data:')) { const t = DnoLang.exact(v); if(t) { o[k] = t; changed++; } } }
+                    if(typeof v === 'string') { if(/[가-힣]/.test(v) && !v.startsWith('data:')) { const t = HemiLang.exact(v); if(t) { o[k] = t; changed++; } } }
                     else if(v && typeof v === 'object') walk(v);
                 });
             };
@@ -7534,7 +7534,7 @@
             simulate(); refreshUI();
             if(changed && typeof setSaveDirty === 'function') setSaveDirty(true);
         }
-        window.addEventListener('dnolangready', () => setTimeout(localizeLegacyData, 0));
+        window.addEventListener('hemilangready', () => setTimeout(localizeLegacyData, 0));
         // 화면 번역에서 뺄 데이터 글자 — 정당 · 파벌 · 이념 · 연정 · 국가 · 원 · 지역구 · 의원 · 내각 · 법안 · 위원회 이름 등
         function collectDataStrings() {
             const out = [];
@@ -7558,7 +7558,7 @@
             return out;
         }
         function syncDataStrings() {
-            if(window.DnoLang && DnoLang.setDataStrings && typeof getLang === 'function' && getLang() !== 'kr') DnoLang.setDataStrings(collectDataStrings());
+            if(window.HemiLang && HemiLang.setDataStrings && typeof getLang === 'function' && getLang() !== 'kr') HemiLang.setDataStrings(collectDataStrings());
         }
 
         // 화면 갱신 — 자료 맞추기는 늘 하고, 목록은 지금 보이는 것만 다시 그린다 (v1.7.1 성능).
@@ -8509,7 +8509,7 @@
             designatePartyLeader(party.id, ind.name || '', ind.photo || '');
         }
 
-        function addIdeology() { ideologies.push({ id: Date.now(), name: window.DnoLang ? DnoLang.t("새 이념") : "새 이념" }); refreshUI(); }
+        function addIdeology() { ideologies.push({ id: Date.now(), name: window.HemiLang ? HemiLang.t("새 이념") : "새 이념" }); refreshUI(); }
         function addIndependentIdeology() {
             if(!ideologies.find(i=>i.id===IND_IDEOLOGY_ID)) ideologies.push({id:IND_IDEOLOGY_ID, name:"무소속"});
             simulate(); refreshUI();
@@ -8532,7 +8532,7 @@
         function addSubIdeology(parentId) {
             const ide = ideologies.find(i => i.id === parentId); if(!ide) return;
             if(!ide.subs) ide.subs = [];
-            ide.subs.push({ id: Date.now(), name: window.DnoLang ? DnoLang.t('새 서브 이념') : '새 서브 이념' }); // 영어 모드면 기본 이름도 번역
+            ide.subs.push({ id: Date.now(), name: window.HemiLang ? HemiLang.t('새 서브 이념') : '새 서브 이념' }); // 영어 모드면 기본 이름도 번역
             refreshUI();
         }
         function updateSubIdeology(parentId, subId, name) {
@@ -9509,7 +9509,7 @@
                 for(const st of FRAUD_STEPS) {
                     v.style.setProperty('--red', st.red);
                     v.style.setProperty('--beat', st.beat + 's');
-                    const ok = window.DnoUI ? await DnoUI.confirm(st.msg, { title: '⚠', okText: st.ok, cancelText: st.cancel, tone: 'danger' }) : confirm(st.msg);
+                    const ok = window.HemiUI ? await HemiUI.confirm(st.msg, { title: '⚠', okText: st.ok, cancelText: st.cancel, tone: 'danger' }) : confirm(st.msg);
                     if(!ok) { v.style.setProperty('--red', 0); await wait(700); v.className = ''; return; }
                 }
                 // 끝까지 들어가면 화면이 붉게 차오르고 잠금 해제
@@ -11450,17 +11450,17 @@
             return elecBuildDistrictSeatBreakdown(lastRecord?.districtResults);
         }
         // 지도 위 의석 수 숫자 박스 표시 여부 (화면 설정 — 세이브와 무관하게 이 기기에 기억)
-        let districtSeatBadgesOn = (() => { try { return localStorage.getItem('dnoDistrictSeatBadges') !== '0'; } catch(e) { return true; } })();
+        let districtSeatBadgesOn = (() => { try { return localStorage.getItem('hemiDistrictSeatBadges') !== '0'; } catch(e) { return true; } })();
         function setDistrictSeatBadges(on) {
             districtSeatBadgesOn = !!on;
-            try { localStorage.setItem('dnoDistrictSeatBadges', on ? '1' : '0'); } catch(e) { /* 저장 불가 환경 */ }
+            try { localStorage.setItem('hemiDistrictSeatBadges', on ? '1' : '0'); } catch(e) { /* 저장 불가 환경 */ }
             districtRedrawAllMaps();
         }
         // 지도 위 지역구 이름(약칭) 표시 여부 (화면 설정 — 이 기기에 기억)
-        let districtLabelsOn = (() => { try { return localStorage.getItem('dnoDistrictLabels') !== '0'; } catch(e) { return true; } })();
+        let districtLabelsOn = (() => { try { return localStorage.getItem('hemiDistrictLabels') !== '0'; } catch(e) { return true; } })();
         function setDistrictLabels(on) {
             districtLabelsOn = !!on;
-            try { localStorage.setItem('dnoDistrictLabels', on ? '1' : '0'); } catch(e) { /* 저장 불가 환경 */ }
+            try { localStorage.setItem('hemiDistrictLabels', on ? '1' : '0'); } catch(e) { /* 저장 불가 환경 */ }
             districtRedrawAllMaps();
         }
         function districtRedrawAllMaps() {
@@ -15119,10 +15119,10 @@
 
         // 개표 연출(반원 의석 채우기) — 'seq': 정당 순서대로 왼쪽부터 채움(예전 방식), 'random': 최종 자리 배치에서
         // 무작위 순서로 의석이 켜지며 개표율 표시. 화면 취향이라 세이브가 아니라 이 브라우저(앱)에 저장
-        let elecSeatFill = (() => { try { return localStorage.getItem('dnoElecSeatFill') === 'random' ? 'random' : 'seq'; } catch(e) { return 'seq'; } })();
+        let elecSeatFill = (() => { try { return localStorage.getItem('hemiElecSeatFill') === 'random' ? 'random' : 'seq'; } catch(e) { return 'seq'; } })();
         function setElecSeatFill(mode) {
             elecSeatFill = mode === 'random' ? 'random' : 'seq';
-            try { localStorage.setItem('dnoElecSeatFill', elecSeatFill); } catch(e) { /* 저장 불가 환경 */ }
+            try { localStorage.setItem('hemiElecSeatFill', elecSeatFill); } catch(e) { /* 저장 불가 환경 */ }
             syncElecSeatFillUI();
         }
         function syncElecSeatFillUI() {
@@ -16381,7 +16381,7 @@
                 renderPartyInfoList();
                 const names = caughtFraud.map(({ p }) => p.name).join(', ');
                 const fateTxt = window.HemiFraudRegime ? fates.map(f => `${f.p.name}: ${f.text}`).join('\n') : `발각된 정당(${names})은 활동이 금지됩니다.`;
-                await (window.DnoUI ? DnoUI.alert(`⚠ 개표 도중 ${names}의 부정선거가 발각되었습니다! (개표율 ${pct}%)\n조작된 표를 모두 무효 처리하고 처음부터 다시 개표합니다.\n${fateTxt}`) : Promise.resolve(alert(`⚠ 개표 도중 ${names}의 부정선거가 발각되었습니다!`)));
+                await (window.HemiUI ? HemiUI.alert(`⚠ 개표 도중 ${names}의 부정선거가 발각되었습니다! (개표율 ${pct}%)\n조작된 표를 모두 무효 처리하고 처음부터 다시 개표합니다.\n${fateTxt}`) : Promise.resolve(alert(`⚠ 개표 도중 ${names}의 부정선거가 발각되었습니다!`)));
                 applyFraud();
                 ({ weighted, wTotal, districtResults, listSeatMap, seatMap, pool, thresholdOut } = computeOutcome());
                 saveLastResult();

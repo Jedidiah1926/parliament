@@ -15,7 +15,7 @@ const fs = require('fs');
 const path = require('path');
 const zlib = require('zlib');
 
-const LANG_FORMATS = ['dno-lang-pack@1', 'dno-lang-pack@2']; // 언어 팩 (@2: 키 방식, js/lang.js)
+const LANG_FORMATS = ['dno-lang-pack@1', 'hemicycle-lang@2']; // 언어 팩 (@2: 키 방식, js/lang.js)
 const THEME_FORMAT = 'hemicycle-theme@1';
 const SCRIPT_FORMAT = 'hemicycle-script@1';
 const ITEM_MANIFEST = 'hemicycle-item.json';

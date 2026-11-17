@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hemicycle</title>
     
+    <script src="js/storage-migrate.js"></script><!-- 저장소 키 이름 옮기기 (dno… → hemi…) — 맨 먼저 -->
     <script src="js/thememode.js"></script>
     <script src="js/dialogs.js"></script>
     <script src="js/savefile.js"></script>
@@ -275,8 +276,8 @@
         // 그대로 읽어서 세이브 목록을 보여준다. 실제 상태(state) 파싱/적용은 하지 않고
         // 목록 표시와 부팅 시 넘길 sessionStorage 플래그 설정만 담당 — 무거운 state 객체를
         // 여기서 손댈 필요가 없다.
-        const SAVE_SLOTS_KEY = 'dnoParliamentSaveSlots';
-        const LEGACY_AUTOSAVE_KEY = 'dnoParliamentAutosave'; // 세이브 슬롯 통합 이전, 단일 키에 저장하던 구버전 자동저장
+        const SAVE_SLOTS_KEY = 'hemiParliamentSaveSlots';
+        const LEGACY_AUTOSAVE_KEY = 'hemiParliamentAutosave'; // 세이브 슬롯 통합 이전, 단일 키에 저장하던 구버전 자동저장
         const LEGACY_DEFAULT_SAVE_NAME = '이전 자동저장'; // main.js와 동일
 
         // 세이브는 이제 "탭 하나 = 세이브 하나 = 가장 최근 상태 하나" (js/main.js 저장 슬롯 설명 참고).
@@ -348,7 +349,7 @@
                     moving.forEach(s => { const c = { ...s }; while(ids.has(c.id)) c.id = `${c.id}-t${tid}`; ids.add(c.id); cur.push(c); });
                     try { localStorage.setItem(SAVE_SLOTS_KEY, JSON.stringify(cur)); } catch(e) { return; }
                 }
-                try { localStorage.removeItem(key); localStorage.removeItem(TEASER_PREFIX(tid) + 'dnoParliamentActiveSlotId'); } catch(e) {}
+                try { localStorage.removeItem(key); localStorage.removeItem(TEASER_PREFIX(tid) + 'hemiParliamentActiveSlotId'); } catch(e) {}
             });
         }
         migrateMergedTeaserSaves();
@@ -364,7 +365,7 @@
         }
 
         // 즐겨찾기는 세이브 슬롯 배열과 따로 보관 — main.js가 슬롯 배열을 통째로 다시 쓰더라도 지워지지 않게
-        const SAVE_FAVORITES_KEY = 'dnoSaveFavorites';
+        const SAVE_FAVORITES_KEY = 'hemiSaveFavorites';
         const MAX_SAVE_SLOTS = 20; // main.js와 동일
         function loadFavorites() {
             try { return new Set(JSON.parse(localStorage.getItem(SAVE_FAVORITES_KEY) || '[]')); } catch(e) { return new Set(); }
@@ -399,7 +400,7 @@
                     <div class="save-select-item preset-card save-card">
                         <button class="save-card-main" onclick="continueSave('${s.id}'${tz})">
                             <span class="preset-card-top">
-                                <span class="save-select-item-name">${escapeSaveName(s.name)}</span>
+                                <span class="save-select-item-name" translate="no">${escapeSaveName(s.name)}</span>
                                 ${ingame ? `<span class="preset-card-date">${escapeSaveName(ingame)}</span>` : ''}
                             </span>
                             <span class="preset-card-desc">${saveRealTime(s.savedAt)}${where}</span>
@@ -423,7 +424,7 @@
             const c = state?.config || {};
             if(!c.nationDateYear) return '';
             const era = c.nationDateEra ? c.nationDateEra + ' ' : '';
-            const vars = { era, y: c.nationDateYear, month: c.nationDateMonth ? DnoLang.month(c.nationDateMonth) : '', d: c.nationDateDay || '' };
+            const vars = { era, y: c.nationDateYear, month: c.nationDateMonth ? HemiLang.month(c.nationDateMonth) : '', d: c.nationDateDay || '' };
             // 연호가 있으면 영어 등에서 순서가 달라진다 (Reiwa 1, April 20 / April 20, 1990)
             const form = c.nationDateMonth ? (c.nationDateDay ? 'ymd' : 'ym') : 'y';
             return i18n((era ? 'common.date.era.' : 'common.date.') + form, vars);
@@ -444,16 +445,16 @@
             const slot = all.find(s => s.id === id);
             if(!slot) return;
             if(!e.shiftKey) {
-                const ok = await DnoUI.confirm(i18n('saveSelect.deleteConfirm', { name: slot.name }), { title: i18n('saveSelect.deleteTitle'), tone: 'danger', okText: i18n('common.delete'), focusCancel: true });
+                const ok = await HemiUI.confirm(i18n('saveSelect.deleteConfirm', { name: slot.name }), { title: i18n('saveSelect.deleteTitle'), tone: 'danger', okText: i18n('common.delete'), focusCancel: true });
                 if(!ok) return;
             }
             const rest = loadSaveSlotsForMenu().filter(s => s.id !== id);
             try { localStorage.setItem(SAVE_SLOTS_KEY, JSON.stringify(rest)); }
-            catch(err) { DnoUI.alert(i18n('saveSelect.deleteFailed')); return; }
+            catch(err) { HemiUI.alert(i18n('saveSelect.deleteFailed')); return; }
             const fav = loadFavorites();
             if(fav.delete(id)) { try { localStorage.setItem(SAVE_FAVORITES_KEY, JSON.stringify(Array.from(fav))); } catch(err) {} }
             // 이어서 하던 세이브였다면 "지금 세이브" 표시도 정리 (다음에 열면 남은 탭 중 하나로)
-            try { if(localStorage.getItem('dnoParliamentActiveSlotId') === id) localStorage.removeItem('dnoParliamentActiveSlotId'); } catch(err) {}
+            try { if(localStorage.getItem('hemiParliamentActiveSlotId') === id) localStorage.removeItem('hemiParliamentActiveSlotId'); } catch(err) {}
             renderSaveSelectList();
         }
 
@@ -466,21 +467,21 @@
             const slot = slots.find(s => s && s.id === id);
             if(!slot) return;
             if(!e.shiftKey) {
-                const ok = await DnoUI.confirm(i18n('saveSelect.deleteConfirm', { name: slot.name }), { title: i18n('saveSelect.deleteTitle'), tone: 'danger', okText: i18n('common.delete'), focusCancel: true });
+                const ok = await HemiUI.confirm(i18n('saveSelect.deleteConfirm', { name: slot.name }), { title: i18n('saveSelect.deleteTitle'), tone: 'danger', okText: i18n('common.delete'), focusCancel: true });
                 if(!ok) return;
             }
             try { localStorage.setItem(key, JSON.stringify(slots.filter(s => !(s && s.id === id)))); }
-            catch(err) { DnoUI.alert(i18n('saveSelect.deleteFailed')); return; }
+            catch(err) { HemiUI.alert(i18n('saveSelect.deleteFailed')); return; }
             const fav = loadFavorites();
             if(fav.delete(id)) { try { localStorage.setItem(SAVE_FAVORITES_KEY, JSON.stringify(Array.from(fav))); } catch(err) {} }
-            try { if(localStorage.getItem(TEASER_PREFIX(teaserId) + 'dnoParliamentActiveSlotId') === id) localStorage.removeItem(TEASER_PREFIX(teaserId) + 'dnoParliamentActiveSlotId'); } catch(err) {}
+            try { if(localStorage.getItem(TEASER_PREFIX(teaserId) + 'hemiParliamentActiveSlotId') === id) localStorage.removeItem(TEASER_PREFIX(teaserId) + 'hemiParliamentActiveSlotId'); } catch(err) {}
             renderSaveSelectList();
         }
 
         async function renderPresetSelectList() {
             const container = document.getElementById('presetSelectList');
             container.innerHTML = `<div class="save-select-empty">${i18n('common.loading')}</div>`;
-            const list = window.DnoPresets ? await DnoPresets.list() : [];
+            const list = window.HemiPresets ? await HemiPresets.list() : [];
             if(list.length === 0) {
                 container.innerHTML = `<div class="save-select-empty">${i18n('saveSelect.presets.empty')}</div>`;
                 return;
@@ -520,7 +521,7 @@
             const show = async el => {
                 hide();
                 const card = el.closest('.preset-card');
-                const list = window.DnoPresets ? await DnoPresets.list() : [];
+                const list = window.HemiPresets ? await HemiPresets.list() : [];
                 const cards = [...document.querySelectorAll('#presetSelectList .preset-card')];
                 const p = list[cards.indexOf(card)];
                 const c = p && Array.isArray(p.credits) ? p.credits[+el.dataset.presetCredit] : null;
@@ -555,7 +556,7 @@
             renderTutorialSelectList();
             // 처음 열 때: 세이브가 있으면 이어하기, 없으면 새로 시작 (지난번에 고른 탭이 있으면 그 탭)
             let last = null;
-            try { last = localStorage.getItem('dnoSaveSelectTab'); } catch(e) {}
+            try { last = localStorage.getItem('hemiSaveSelectTab'); } catch(e) {}
             const hasSaves = loadSaveSlotsForMenu().concat(loadTeaserSlotsForMenu()).length > 0;
             switchSaveSelectTab(tab || (last === 'continue' && !hasSaves ? 'new' : last) || (hasSaves ? 'continue' : 'new'), true);
             document.getElementById('saveSelectOverlay').style.display = 'flex';
@@ -570,12 +571,12 @@
                 b.setAttribute('aria-selected', String(on));
             });
             document.querySelectorAll('#saveSelectOverlay [data-ss-panel]').forEach(p => { p.style.display = p.dataset.ssPanel === tab ? '' : 'none'; });
-            if(!silent) { try { localStorage.setItem('dnoSaveSelectTab', tab); } catch(e) {} }
+            if(!silent) { try { localStorage.setItem('hemiSaveSelectTab', tab); } catch(e) {} }
         }
 
         // 튜토리얼 탭 — 서독 튜토리얼 프리셋으로 새 세이브를 만들고 고른 과정을 바로 연다 (과정 목록은 js/tutorial.js)
         function renderTutorialSelectList() {
-            const lessons = window.DnoTutorial && DnoTutorial.catalog ? DnoTutorial.catalog() : [];
+            const lessons = window.HemiTutorial && HemiTutorial.catalog ? HemiTutorial.catalog() : [];
             const item = l => `
                 <button class="save-select-item preset-card tut-card${l.done ? ' tut-card-done' : ''}" ${l.avail ? `onclick="startTutorialLesson('${l.id}')"` : 'disabled'}>
                     <span class="preset-card-top">
@@ -596,14 +597,14 @@
         }
 
         async function startTutorialLesson(lessonId) {
-            const list = window.DnoPresets ? await DnoPresets.list() : [];
+            const list = window.HemiPresets ? await HemiPresets.list() : [];
             const preset = list.find(p => p.tutorial && !p.comingSoon);
             if(!preset) return;
             if(namedSlotCount() >= MAX_SAVE_SLOTS) { alert(i18n('saveSelect.maxSlots', { max: MAX_SAVE_SLOTS })); return; }
             try {
-                sessionStorage.setItem('dnoBootPresetId', preset.id);
-                sessionStorage.setItem('dnoBootNewSaveName', window.DnoLang ? DnoLang.t(preset.title) : preset.title);
-                sessionStorage.setItem('dnoTutorialStartLesson', lessonId); // main.html의 튜토리얼이 이 과정부터 연다
+                sessionStorage.setItem('hemiBootPresetId', preset.id);
+                sessionStorage.setItem('hemiBootNewSaveName', window.HemiLang ? HemiLang.t(preset.title) : preset.title);
+                sessionStorage.setItem('hemiTutorialStartLesson', lessonId); // main.html의 튜토리얼이 이 과정부터 연다
             } catch(e) {}
             location.href = 'main.html';
         }
@@ -623,27 +624,27 @@
                 return;
             }
             if(namedSlotCount() >= MAX_SAVE_SLOTS) { alert(i18n('saveSelect.maxSlots', { max: MAX_SAVE_SLOTS })); return; }
-            try { sessionStorage.setItem('dnoBootNewSaveName', name); } catch(e) {}
+            try { sessionStorage.setItem('hemiBootNewSaveName', name); } catch(e) {}
             location.href = 'main.html';
         }
 
         // 프리셋을 고르면 그 상태의 복사본을 새 세이브(프리셋 제목, 겹치면 번호 붙임)로 만들어 바로 시작 —
         // 실제 복제는 main.html이 프리셋을 불러온 뒤에 한다
         async function startFromPreset(index) {
-            const list = window.DnoPresets ? await DnoPresets.list() : [];
+            const list = window.HemiPresets ? await HemiPresets.list() : [];
             const preset = list[index];
             if(!preset || preset.comingSoon) return;
             if(namedSlotCount() >= MAX_SAVE_SLOTS) { alert(i18n('saveSelect.maxSlots', { max: MAX_SAVE_SLOTS })); return; }
             try {
-                sessionStorage.setItem('dnoBootPresetId', preset.id);
-                sessionStorage.setItem('dnoBootNewSaveName', window.DnoLang ? DnoLang.t(preset.title) : preset.title); // 영어 등에서는 세이브 이름도 번역
+                sessionStorage.setItem('hemiBootPresetId', preset.id);
+                sessionStorage.setItem('hemiBootNewSaveName', window.HemiLang ? HemiLang.t(preset.title) : preset.title); // 영어 등에서는 세이브 이름도 번역
             } catch(e) {}
             location.href = 'main.html';
         }
 
         // teaserId가 있으면 미리보기 세이브 — 그 티저 화면에서 연다
         function continueSave(id, teaserId) {
-            try { sessionStorage.setItem('dnoBootLoadSlotId', id); } catch(e) {}
+            try { sessionStorage.setItem('hemiBootLoadSlotId', id); } catch(e) {}
             const t = teaserId && teaserOf(teaserId);
             location.href = t ? t.file : 'main.html';
         }
@@ -651,7 +652,7 @@
         // 예전에 "파일로 저장"으로 다운로드해둔 .hemi(예전 .json) 파일을 불러와 시작 —
         // main.html이 파일 이름으로 새 세이브를 만들어 그 세이브로 이어서 진행한다.
         async function importSaveFile(input) {
-            if(window.HEMI_BUILD && window.HEMI_BUILD.demo) { input.value = ''; DnoUI.alert(i18n('saveSelect.demoImport'), { title: i18n('saveSelect.demoTitle') }); return; }
+            if(window.HEMI_BUILD && window.HEMI_BUILD.demo) { input.value = ''; HemiUI.alert(i18n('saveSelect.demoImport'), { title: i18n('saveSelect.demoTitle') }); return; }
             const file = input.files?.[0];
             if(!file) return;
             let text;
@@ -659,7 +660,7 @@
                 text = window.HemiFile ? await window.HemiFile.readText(file) : await file.text();
                 const obj = JSON.parse(text);
                 // 지역구 프리셋(.hemimap)은 세이브가 아니다 — 게임 안 국가 › 지역구 지도에서 올림
-                if(obj && obj.format === 'hemicycle-districts') { input.value = ''; DnoUI.alert(i18n('saveSelect.districtFile')); return; }
+                if(obj && obj.format === 'hemicycle-districts') { input.value = ''; HemiUI.alert(i18n('saveSelect.districtFile')); return; }
                 const parl = obj.parliament || obj.data;
                 if(!parl || !Array.isArray(parl.parties)) throw new Error('형식이 올바르지 않음');
             } catch(e) {
@@ -669,14 +670,14 @@
             }
             const name = file.name.replace(/\.(hemi|json)$/i, '');
             try {
-                sessionStorage.setItem('dnoBootImportedStateJSON', text);
-                sessionStorage.setItem('dnoBootImportedName', name);
+                sessionStorage.setItem('hemiBootImportedStateJSON', text);
+                sessionStorage.setItem('hemiBootImportedName', name);
             } catch(e) {
                 // 지도 · 사진이 든 큰 세이브는 sessionStorage 한도를 넘는다 — IndexedDB에 맡겨 두고 게임 화면에서 꺼냄
                 try {
-                    sessionStorage.removeItem('dnoBootImportedStateJSON');
+                    sessionStorage.removeItem('hemiBootImportedStateJSON');
                     await window.HemiFile.stash('bootImport', { name, text });
-                    sessionStorage.setItem('dnoBootImportPending', '1');
+                    sessionStorage.setItem('hemiBootImportPending', '1');
                 } catch(e2) {
                     alert(i18n('saveSelect.importTooBig'));
                     input.value = '';
@@ -694,7 +695,7 @@
         });
 
         // 언어가 한국어가 아니면, 세이브 창의 목록처럼 페이지를 연 뒤에 새로 그려지는 부분도 번역한다 (js/lang.js)
-        const translateSaveWindow = () => { if(window.DnoLang && window.DnoLang.translateSubtree) window.DnoLang.translateSubtree(document.getElementById('saveSelectOverlay')); };
+        const translateSaveWindow = () => { if(window.HemiLang && window.HemiLang.translateSubtree) window.HemiLang.translateSubtree(document.getElementById('saveSelectOverlay')); };
         const _renderSaveSelectList = renderSaveSelectList;
         renderSaveSelectList = function() { const r = _renderSaveSelectList.apply(this, arguments); translateSaveWindow(); return r; };
         const _renderPresetSelectList = renderPresetSelectList;
@@ -706,9 +707,9 @@
         function renderHomeLangMenu() {
             const menu = document.getElementById('homeLangMenu');
             const codeEl = document.getElementById('homeLangCode');
-            if(!menu || !window.DnoLang) return;
+            if(!menu || !window.HemiLang) return;
             const cur = getLang();
-            const list = DnoLang.list();
+            const list = HemiLang.list();
             const curItem = list.find(l => l.code === cur);
             if(codeEl) codeEl.textContent = (cur === 'kr' ? 'KO' : cur.toUpperCase());
             menu.innerHTML = list.map(l => `
@@ -725,10 +726,10 @@
         // 불러온 언어 팩 삭제 — 쓰던 언어였다면 한국어로 돌아가 다시 불러옴
         async function removeHomeLangPack(e, code) {
             e.stopPropagation();
-            const item = DnoLang.list().find(l => l.code === code);
-            if(!item || !(await DnoUI.confirm(i18n('home.lang.removeConfirm', { name: item.name }), { tone: 'danger', okText: i18n('common.delete') }))) return;
+            const item = HemiLang.list().find(l => l.code === code);
+            if(!item || !(await HemiUI.confirm(i18n('home.lang.removeConfirm', { name: item.name }), { tone: 'danger', okText: i18n('common.delete') }))) return;
             const wasCurrent = getLang() === code;
-            DnoLang.remove(code);
+            HemiLang.remove(code);
             if(wasCurrent) { location.reload(); return; }
             renderHomeLangMenu();
         }
@@ -739,15 +740,15 @@
             let raw;
             try { raw = JSON.parse(await file.text()); }
             catch(e) { alert(i18n('home.lang.readFailed')); return; }
-            const result = DnoLang.install(raw);
+            const result = HemiLang.install(raw);
             if(!result.ok) { alert(i18n('home.lang.importFailed', { error: result.error })); return; }
             renderHomeLangMenu();
-            if(await DnoUI.confirm(i18n('home.lang.imported', { name: result.name }))) { setLang(result.code); location.reload(); }
+            if(await HemiUI.confirm(i18n('home.lang.imported', { name: result.name }))) { setLang(result.code); location.reload(); }
         }
         async function downloadLangTemplate(base) {
             if(window.HemiOfficial && window.HemiOfficial.playBlocked()) { alert(i18n('home.lang.templateBlocked')); return; } // js/official.js
             try {
-                const text = await DnoLang.template(base);
+                const text = await HemiLang.template(base);
                 const url = URL.createObjectURL(new Blob([text], { type: 'application/json' }));
                 const a = document.createElement('a');
                 a.href = url;

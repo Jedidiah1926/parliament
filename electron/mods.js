@@ -5,7 +5,7 @@
 //     <내용 파일>            언어 팩(.json) · 테마(.json) · 프리셋(세이브 파일 .hemi 또는 .json)
 //     preview.png           (선택) 창작마당 미리보기 그림 — 올릴 때만 쓰임
 // hemicycle-item.json이 없으면 폴더 안 파일을 보고 알아서 판단한다:
-//   - "format": "dno-lang-pack@2"      → 언어 팩 (예전 @1도 읽음)
+//   - "format": "hemicycle-lang@2"      → 언어 팩 (예전 @1도 읽음)
 //   - "format": "hemicycle-theme@1"    → 테마
 //   - "format": "hemicycle-script@1"   → 스크립트 모드 (이벤트 · 결정 · 변수 — js/scriptmods.js, docs/MODDING.md)
 //   - .hemi 파일, 또는 세이브 형식(.json) → 프리셋 (제목은 폴더 이름)
@@ -26,7 +26,7 @@ const fs = require('fs');
 const zlib = require('zlib');
 
 const ITEM_MANIFEST = 'hemicycle-item.json';
-const LANG_FORMAT = 'dno-lang-pack@2';
+const LANG_FORMAT = 'hemicycle-lang@2';
 const LANG_FORMATS = ['dno-lang-pack@1', LANG_FORMAT]; // @1: 사전만 · @2: 키도 (js/lang.js)
 const THEME_FORMAT = 'hemicycle-theme@1';
 const SCRIPT_FORMAT = 'hemicycle-script@1';

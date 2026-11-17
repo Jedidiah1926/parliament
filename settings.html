@@ -12,6 +12,7 @@
     <link rel="stylesheet" href="css/index.css">
     <link rel="stylesheet" href="css/scrollbars.css">
     <link rel="stylesheet" href="css/modern.css">
+    <script src="js/storage-migrate.js"></script><!-- 저장소 키 이름 옮기기 (dno… → hemi…) — 맨 먼저 -->
     <script src="js/modern-style-index.js"></script>
 
     <script>
@@ -344,17 +345,17 @@
         // ===== 표결 연출 · 개표 연출 — main.html이 같은 localStorage 키를 읽는다 =====
         function lsGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
         function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* 저장 불가 환경 */ } }
-        function selectVoteStyle(v) { lsSet('dnoVoteStyle', v === 'classic' ? 'classic' : 'new'); renderPlayStyleButtons(); }
-        function selectSeatFill(v) { lsSet('dnoElecSeatFill', v === 'random' ? 'random' : 'seq'); renderPlayStyleButtons(); }
-        function selectTipGray(v) { lsSet('dnoTipNeonGray', v === 'gray' ? 'gray' : 'neon'); renderPlayStyleButtons(); }
+        function selectVoteStyle(v) { lsSet('hemiVoteStyle', v === 'classic' ? 'classic' : 'new'); renderPlayStyleButtons(); }
+        function selectSeatFill(v) { lsSet('hemiElecSeatFill', v === 'random' ? 'random' : 'seq'); renderPlayStyleButtons(); }
+        function selectTipGray(v) { lsSet('hemiTipNeonGray', v === 'gray' ? 'gray' : 'neon'); renderPlayStyleButtons(); }
         function renderPlayStyleButtons() {
-            const tipGray = lsGet('dnoTipNeonGray') === 'gray';
+            const tipGray = lsGet('hemiTipNeonGray') === 'gray';
             document.getElementById('tipGrayGray').classList.toggle('active', tipGray);
             document.getElementById('tipGrayNeon').classList.toggle('active', !tipGray);
-            const vNew = lsGet('dnoVoteStyle') !== 'classic';
+            const vNew = lsGet('hemiVoteStyle') !== 'classic';
             document.getElementById('voteStyleNew').classList.toggle('active', vNew);
             document.getElementById('voteStyleClassic').classList.toggle('active', !vNew);
-            const rnd = lsGet('dnoElecSeatFill') === 'random';
+            const rnd = lsGet('hemiElecSeatFill') === 'random';
             document.getElementById('seatFillRandom').classList.toggle('active', rnd);
             document.getElementById('seatFillSeq').classList.toggle('active', !rnd);
         }

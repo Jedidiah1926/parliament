@@ -2,7 +2,7 @@
 //   python3 -m http.server 8000 & node tests/save-path.browser.cjs
 const { chromium } = require('playwright'), assert = require('node:assert/strict');
 const base = process.env.STUDIO_TEST_URL || 'http://127.0.0.1:8000';
-const KEY = 'dnoParliamentSaveSlots';
+const KEY = 'hemiParliamentSaveSlots';
 (async () => {
     const b = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || '/opt/pw-browsers/chromium', headless: true });
     try {

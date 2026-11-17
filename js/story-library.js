@@ -4,7 +4,7 @@
     const storage = window.HemiMakerStore;
     const stores = {campaign:storage.types.campaign,challenge:storage.types.challenge};
     const esc = x => String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-    const alertBox = msg => window.DnoUI?.alert ? DnoUI.alert(msg) : Promise.resolve(alert(msg));
+    const alertBox = msg => window.HemiUI?.alert ? HemiUI.alert(msg) : Promise.resolve(alert(msg));
     const list = storage.list, remove = storage.remove;
     const i18n = window.i18n || (key => key); // 키 번역 (js/lang.js, lang/kr.js)
     async function handoff(kind,data,start) {
@@ -12,14 +12,14 @@
         if(kind==='campaign'){d.starts.forEach(s=>delete s.state);d._startId=start.id;}else d.start={kind:start.kind,preset:start.preset,name:start.name};
         const name=data.title||stores[kind].name, key=kind==='campaign'?'Campaign':'Challenge';
         // Remove stale boot instructions for either story type and either start source.
-        for(const k of ['hemiBootCampaign','hemiBootCampaignPending','hemiBootChallenge','hemiBootChallengePending','dnoBootPresetId','dnoBootNewSaveName','dnoBootImportedStateJSON','dnoBootImportedName','dnoBootImportPending'])sessionStorage.removeItem(k);
+        for(const k of ['hemiBootCampaign','hemiBootCampaignPending','hemiBootChallenge','hemiBootChallengePending','hemiBootPresetId','hemiBootNewSaveName','hemiBootImportedStateJSON','hemiBootImportedName','hemiBootImportPending'])sessionStorage.removeItem(k);
         const text=JSON.stringify(d);
         try{sessionStorage.setItem('hemiBoot'+key,text);}catch(e){await HemiFile.stash('boot'+key,{text});sessionStorage.setItem('hemiBoot'+key+'Pending','1');}
         if(start.kind==='save'){
             if(!start.state)throw Error(i18n('stories.err.noStartSave'));
             const text=JSON.stringify(start.state);
-            try{sessionStorage.setItem('dnoBootImportedStateJSON',text);sessionStorage.setItem('dnoBootImportedName',name);}catch(e){sessionStorage.removeItem('dnoBootImportedStateJSON');await HemiFile.stash('bootImport',{name,text});sessionStorage.setItem('dnoBootImportPending','1');}
-        }else {sessionStorage.setItem('dnoBootPresetId',start.preset||'builtin:tutorial');sessionStorage.setItem('dnoBootNewSaveName',name);}
+            try{sessionStorage.setItem('hemiBootImportedStateJSON',text);sessionStorage.setItem('hemiBootImportedName',name);}catch(e){sessionStorage.removeItem('hemiBootImportedStateJSON');await HemiFile.stash('bootImport',{name,text});sessionStorage.setItem('hemiBootImportPending','1');}
+        }else {sessionStorage.setItem('hemiBootPresetId',start.preset||'builtin:tutorial');sessionStorage.setItem('hemiBootNewSaveName',name);}
         location.href='main.html';
     }
     async function launch(kind,item,startId) {
@@ -57,7 +57,7 @@
                 container.querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>{localStorage.setItem(meta.last,rows[+b.dataset.edit].id);location.href=storage.url(kind,rows[+b.dataset.edit].id);});
                 container.querySelectorAll('[data-delete]').forEach(b=>b.onclick=async()=>{
                     const it=rows[+b.dataset.delete],message=i18n('stories.deleteConfirm.'+kind,{title:it.title});
-                    const ok=window.DnoUI?.confirm?await DnoUI.confirm(message):confirm(message);if(!ok)return;
+                    const ok=window.HemiUI?.confirm?await HemiUI.confirm(message):confirm(message);if(!ok)return;
                     try{await remove(kind,it.id);await render();}catch(e){alertBox(i18n('stories.deleteFailed',{error:e.message}));}
                 });
             }catch(e){if(turn===epoch)container.textContent=i18n('stories.listFailed');}

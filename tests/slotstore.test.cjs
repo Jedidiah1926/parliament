@@ -43,20 +43,20 @@ test('줄지 않는 사진 구간은 늘어나지 않고, 글자 구간은 줄�
 test('저장 공간이 모자라면 바로 압축해 넣고, 읽으면 압축 전과 같은 목록이 나온다', () => {
     const state = sampleState(true), raw = JSON.stringify([{ id: 'a', name: '세이브', state }]);
     const { ls, data } = load(Math.floor(raw.length * 0.75)); // 압축 전 그대로는 안 들어가는 크기
-    ls.setItem('dnoParliamentSaveSlots', raw);
-    assert.ok(data.get('dnoParliamentSaveSlots').includes('"stateZ"'));
-    assert.equal(ls.getItem('dnoParliamentSaveSlots'), raw);
+    ls.setItem('hemiParliamentSaveSlots', raw);
+    assert.ok(data.get('hemiParliamentSaveSlots').includes('"stateZ"'));
+    assert.equal(ls.getItem('hemiParliamentSaveSlots'), raw);
     // 한 번 더 저장 (바뀐 내용) — 처음부터 압축 경로로 가도 결과는 같다
     state.notes += '끝'; const raw2 = JSON.stringify([{ id: 'a', name: '세이브', state }]);
-    ls.setItem('dnoParliamentSaveSlots', raw2);
-    assert.equal(ls.getItem('dnoParliamentSaveSlots'), raw2);
+    ls.setItem('hemiParliamentSaveSlots', raw2);
+    assert.equal(ls.getItem('hemiParliamentSaveSlots'), raw2);
 });
 test('공간이 넉넉하면 압축 전 그대로 먼저 쓴다', () => {
     const raw = JSON.stringify([{ id: 'a', name: '세이브', state: sampleState(false) }]);
     const { ls, data } = load();
-    ls.setItem('dnoParliamentSaveSlots', raw);
-    assert.equal(data.get('dnoParliamentSaveSlots'), raw);
-    assert.equal(ls.getItem('dnoParliamentSaveSlots'), raw);
+    ls.setItem('hemiParliamentSaveSlots', raw);
+    assert.equal(data.get('hemiParliamentSaveSlots'), raw);
+    assert.equal(ls.getItem('hemiParliamentSaveSlots'), raw);
 });
 test('세이브 하나만 바꾸기(updateSlot) — 예전처럼 목록 전체를 다시 쓴 것과 저장 결과가 같다', () => {
     for (const quota of [0, 1]) {
@@ -64,7 +64,7 @@ test('세이브 하나만 바꾸기(updateSlot) — 예전처럼 목록 전체�
         const list = [{ id: 'a', name: '하나', savedAt: 't0', color: '#fff', state: a }, { id: 'auto', isAutosave: true, name: '자동', state: b }, { id: 'b', name: '둘', savedAt: 't0', state: b }];
         const raw = JSON.stringify(list);
         const { ls, data, store } = load(quota ? Math.floor(raw.length * 0.75) : 0);
-        const key = 'dnoParliamentSaveSlots';
+        const key = 'hemiParliamentSaveSlots';
         ls.setItem(key, raw);
         // 정보만 읽기 — 상태는 빠지고 나머지는 그대로
         assert.deepEqual(JSON.parse(JSON.stringify(store.metas(key))), list.map(({ state, ...rest }) => rest));
@@ -90,7 +90,7 @@ test('세이브 하나만 바꾸기(updateSlot) — 예전처럼 목록 전체�
 test('updateSlot — 공간이 모자라 못 쓰면 오류를 던지고 저장소는 그대로다', () => {
     const big = sampleState(true), raw = JSON.stringify([{ id: 'a', name: '세이브', state: sampleState(false) }]);
     const { ls, store } = load(raw.length + 2000);
-    const key = 'dnoParliamentSaveSlots';
+    const key = 'hemiParliamentSaveSlots';
     ls.setItem(key, raw);
     big.pad = b64(400000); // 압축해도 안 들어가는 크기
     assert.throws(() => store.updateSlot(key, 'a', {}, JSON.stringify(big)));

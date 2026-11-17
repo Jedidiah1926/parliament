@@ -2,7 +2,7 @@
 //  - data-i18n(글자) · data-i18n-title(속성) · {변수} · 복수형 · 문서를 읽는 중(DOMContentLoaded 전)에도 i18n()이 바로 됨
 //  - 고른 팩에 없는 키는 한국어 글자 → 사전 번역(예전 방식)으로 이어짐, 키로 채운 글자는 사전 번역이 다시 건드리지 않음
 //  - 나중에 그려진 data-i18n도 채움, 자식 요소가 있으면 건드리지 않음, 없는 키는 키 그대로 + missing()
-//  - JS i18n()으로 만든 글자도 사전 번역이 다시 건드리지 않음 · 달 이름(DnoLang.month)
+//  - JS i18n()으로 만든 글자도 사전 번역이 다시 건드리지 않음 · 달 이름(HemiLang.month)
 //  - @2 팩 검사(keys만 있는 팩 · 복수형 · 잘못된 형식) · 번역 템플릿에 keys
 //  - 실제 메인 화면: 한국어 · 영어에서 오류 없이 열리고 예전 사전 번역도 그대로
 //   python3 -m http.server 8000 & node tests/lang-keys.browser.cjs
@@ -25,8 +25,8 @@ const EN_KEYS = {
     // t.fallback 없음 → 한국어 "설정" → 사전 번역 "Settings"
     't.ok': '설정 news', // 키로 채운 글자 안의 한국어는 사전 번역이 건드리지 않아야 함
 };
-const krPack = `window.DnoLangPacks = window.DnoLangPacks || {}; window.DnoLangPacks.kr = ${JSON.stringify({ format: 'dno-lang-pack@2', code: 'kr', name: '한국어', months: ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월'], keys: KR_KEYS })};`;
-const enPack = fs.readFileSync(path.join(__dirname, '..', 'lang', 'en.js'), 'utf8') + `\nwindow.DnoLangPacks.en.keys = ${JSON.stringify(EN_KEYS)};`;
+const krPack = `window.HemiLangPacks = window.HemiLangPacks || {}; window.HemiLangPacks.kr = ${JSON.stringify({ format: 'hemicycle-lang@2', code: 'kr', name: '한국어', months: ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월'], keys: KR_KEYS })};`;
+const enPack = fs.readFileSync(path.join(__dirname, '..', 'lang', 'en.js'), 'utf8') + `\nwindow.HemiLangPacks.en.keys = ${JSON.stringify(EN_KEYS)};`;
 const FIXTURE = `<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><title>i18n</title>
 <script src="js/lang.js"></script></head><body>
 <span id="a" data-i18n="t.hello">안녕</span>
@@ -53,7 +53,7 @@ const FIXTURE = `<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><tit
                 await ctx.route('**/lang/en.js', r => r.fulfill({ contentType: 'text/javascript', body: enPack }));
             }
             await ctx.route('**/__i18n.html', r => r.fulfill({ contentType: 'text/html', body: FIXTURE }));
-            await ctx.addInitScript(([l, st]) => { Object.entries(st).forEach(([k, v]) => localStorage.setItem(k, v)); localStorage.setItem('dnoLang', l); }, [lang, storage]);
+            await ctx.addInitScript(([l, st]) => { Object.entries(st).forEach(([k, v]) => localStorage.setItem(k, v)); localStorage.setItem('hemiLang', l); }, [lang, storage]);
             await p.goto(base + url);
             await p.waitForLoadState('load');
             return { p, ctx, errors };
@@ -76,11 +76,11 @@ const FIXTURE = `<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><tit
             assert.equal(r.early, 'loading');
             assert.equal(r.f, '<b>자식</b>', '자식 요소가 있는 data-i18n은 그대로');
             assert.equal(r.okMark, false, 'kr에선 data-i18n-ok를 달지 않음');
-            const miss = await p.evaluate(() => [i18n('t.nope'), DnoLang.missing(), DnoLang.has('t.hello'), DnoLang.lang]);
+            const miss = await p.evaluate(() => [i18n('t.nope'), HemiLang.missing(), HemiLang.has('t.hello'), HemiLang.lang]);
             assert.deepEqual(miss, ['t.nope', ['t.nope'], true, 'kr'], '없는 키는 키 그대로 + missing()');
-            assert.equal(await p.evaluate(() => DnoLang.month(3)), '3월', 'kr: 달 이름');
+            assert.equal(await p.evaluate(() => HemiLang.month(3)), '3월', 'kr: 달 이름');
             // 나중에 그린 부분은 translateSubtree(= apply)로
-            const late = await p.evaluate(() => { const s = document.createElement('span'); s.setAttribute('data-i18n', 't.hello'); document.body.appendChild(s); DnoLang.translateSubtree(s); return s.textContent; });
+            const late = await p.evaluate(() => { const s = document.createElement('span'); s.setAttribute('data-i18n', 't.hello'); document.body.appendChild(s); HemiLang.translateSubtree(s); return s.textContent; });
             assert.equal(late, '안녕하세요');
             assert.deepEqual(errors, []);
             await ctx.close();
@@ -89,7 +89,7 @@ const FIXTURE = `<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><tit
         // ---- 영어 (기본 제공 팩, 키 + 사전) ----
         {
             const { p, ctx, errors } = await open('en', '/__i18n.html');
-            await p.waitForFunction(() => DnoLang.ready);
+            await p.waitForFunction(() => HemiLang.ready);
             const r = await read(p);
             assert.equal(r.a, 'Hello'); assert.equal(r.b, 'Help');
             assert.equal(r.c, 'Again in 3 days');
@@ -98,15 +98,15 @@ const FIXTURE = `<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><tit
             assert.equal(r.e, 'Settings', 'en 팩에 없는 키 → 한국어 글자 → 사전 번역');
             assert.equal(r.ok, '설정 news', '키로 채운 글자는 사전 번역이 다시 건드리지 않음');
             assert.equal(r.okMark, true);
-            // JS i18n()로 만든 글자도 사전 번역(알림창 · DnoLang.t)이 다시 건드리지 않음 — 변수로 넣은 데이터("설정")가 그대로
-            const kept = await p.evaluate(() => [DnoLang.t(i18n('t.ok')), DnoLang.t('설정'), DnoLang.month(3), DnoLang.month(13)]);
+            // JS i18n()로 만든 글자도 사전 번역(알림창 · HemiLang.t)이 다시 건드리지 않음 — 변수로 넣은 데이터("설정")가 그대로
+            const kept = await p.evaluate(() => [HemiLang.t(i18n('t.ok')), HemiLang.t('설정'), HemiLang.month(3), HemiLang.month(13)]);
             assert.deepEqual(kept, ['설정 news', 'Settings', 'March', '13'], 'en: 키로 만든 글자는 사전 번역 건너뜀 · 달 이름');
             // 나중에 그려진 data-i18n은 MutationObserver가 채움
             await p.evaluate(() => { const s = document.createElement('div'); s.id = 'late'; s.innerHTML = '<span data-i18n="t.hello">안녕</span><span>설정</span>'; document.body.appendChild(s); });
             await p.waitForFunction(() => document.getElementById('late').textContent === 'HelloSettings');
             // 번역 템플릿에 keys (한국어 키 전부, 영어 기준은 영어 글자 · 없으면 한국어)
-            const tpl = await p.evaluate(async () => JSON.parse(await DnoLang.template('en')));
-            assert.equal(tpl.format, 'dno-lang-pack@2');
+            const tpl = await p.evaluate(async () => JSON.parse(await HemiLang.template('en')));
+            assert.equal(tpl.format, 'hemicycle-lang@2');
             assert.equal(tpl.keys['t.hello'], 'Hello'); assert.equal(tpl.keys['t.fallback'], '설정');
             assert.ok(Array.isArray(tpl.dict) && tpl.dict.length > 1000, '템플릿에 사전도 그대로');
             assert.deepEqual(errors, []);
@@ -117,12 +117,12 @@ const FIXTURE = `<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><tit
         {
             const { p, ctx } = await open('kr', '/__i18n.html');
             const v = await p.evaluate(() => ({
-                keysOnly: DnoLang.validate({ format: 'dno-lang-pack@2', code: 'jp', name: '日本語', keys: { 't.hello': 'こんにちは', 't.seats': { other: '{count}議席', bad: 1 }, 'bad key!': 'x', 't.num': 3 } }),
-                v1: DnoLang.validate({ format: 'dno-lang-pack@1', code: 'jp', name: '日本語', dict: [['국회', '国会']] }),
-                v3: DnoLang.validate({ format: 'dno-lang-pack@3', code: 'jp', name: '日本語', keys: { a: 'b' } }),
-                empty: DnoLang.validate({ format: 'dno-lang-pack@2', code: 'jp', name: '日本語', keys: {} }),
-                install: DnoLang.install({ format: 'dno-lang-pack@2', code: 'jp', name: '日本語', keys: { 't.hello': 'こんにちは', 't.days': '{n}日後にまた' } }),
-                stored: localStorage.getItem('dnoLangPacks'),
+                keysOnly: HemiLang.validate({ format: 'hemicycle-lang@2', code: 'jp', name: '日本語', keys: { 't.hello': 'こんにちは', 't.seats': { other: '{count}議席', bad: 1 }, 'bad key!': 'x', 't.num': 3 } }),
+                v1: HemiLang.validate({ format: 'dno-lang-pack@1', code: 'jp', name: '日本語', dict: [['국회', '国会']] }),
+                v3: HemiLang.validate({ format: 'dno-lang-pack@3', code: 'jp', name: '日本語', keys: { a: 'b' } }),
+                empty: HemiLang.validate({ format: 'hemicycle-lang@2', code: 'jp', name: '日本語', keys: {} }),
+                install: HemiLang.install({ format: 'hemicycle-lang@2', code: 'jp', name: '日本語', keys: { 't.hello': 'こんにちは', 't.days': '{n}日後にまた' } }),
+                stored: localStorage.getItem('hemiLangPacks'),
             }));
             assert.deepEqual(v.keysOnly.pack.keys, { 't.hello': 'こんにちは', 't.seats': { other: '{count}議席' } }, '잘못된 키 이름 · 글자가 아닌 값은 버림');
             assert.deepEqual(v.keysOnly.pack.dict, []);
@@ -130,8 +130,8 @@ const FIXTURE = `<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><tit
             assert.ok(v.v3.error, '모르는 형식은 거절'); assert.ok(v.empty.error, 'keys도 dict도 없으면 거절');
             assert.equal(v.install.ok, true);
             await ctx.close();
-            const jp = await open('jp', '/__i18n.html', true, { dnoLangPacks: v.stored }); // 불러온 팩은 브라우저 저장소에 남는다
-            await jp.p.waitForFunction(() => DnoLang.ready);
+            const jp = await open('jp', '/__i18n.html', true, { hemiLangPacks: v.stored }); // 불러온 팩은 브라우저 저장소에 남는다
+            await jp.p.waitForFunction(() => HemiLang.ready);
             const r = await read(jp.p);
             assert.equal(r.a, 'こんにちは'); assert.equal(r.g, '5日後にまた', '불러온 팩도 문서를 읽는 중에 바로');
             assert.equal(r.b, '도움말', '그 팩에 없는 키는 한국어 글자');
@@ -142,8 +142,8 @@ const FIXTURE = `<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><tit
         // ---- 실제 메인 화면 (실제 lang/kr.js · lang/en.js) ----
         for (const lang of ['kr', 'en']) {
             const { p, ctx, errors } = await open(lang, '/index.html', false);
-            if (lang === 'en') await p.waitForFunction(() => DnoLang.ready);
-            const r = await p.evaluate(() => ({ i18n: typeof window.i18n, kr: !!(window.DnoLangPacks && DnoLangPacks.kr), en: !!(window.DnoLangPacks && DnoLangPacks.en), label: document.querySelector('.home-menu-primary .home-menu-label').textContent }));
+            if (lang === 'en') await p.waitForFunction(() => HemiLang.ready);
+            const r = await p.evaluate(() => ({ i18n: typeof window.i18n, kr: !!(window.HemiLangPacks && HemiLangPacks.kr), en: !!(window.HemiLangPacks && HemiLangPacks.en), label: document.querySelector('.home-menu-primary .home-menu-label').textContent }));
             assert.equal(r.i18n, 'function'); assert.equal(r.kr, true);
             assert.equal(r.en, lang === 'en', '영어일 때만 영어 팩을 읽음');
             if (lang === 'kr') assert.equal(r.label, '시작하기');

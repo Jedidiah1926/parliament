@@ -3,7 +3,7 @@
 //   node tools/i18n-check.js            오류가 있으면 종료 코드 1 (경고는 출력만)
 //   node tools/i18n-check.js --strict   영어 팩에 빠진 키도 오류로
 // 오류
-//   - 화면에서 쓰는 키가 한국어 팩에 없음 (data-i18n="…" · i18n('…') · DnoLang.k('…'))
+//   - 화면에서 쓰는 키가 한국어 팩에 없음 (data-i18n="…" · i18n('…') · HemiLang.k('…'))
 //   - 다른 팩에만 있는 키 (한국어 팩에서 지웠거나 오타)
 //   - 다른 팩의 글자에 한국어 글자와 다른 {변수} 자리가 있음
 //   - 복수형 글자({ one, other … })에 "other"가 없음
@@ -24,7 +24,7 @@ function loadPacks() {
     for (const f of fs.readdirSync(path.join(ROOT, 'lang')).filter(f => /\.js$/.test(f)).sort()) {
         vm.runInContext(fs.readFileSync(path.join(ROOT, 'lang', f), 'utf8'), sandbox, { filename: 'lang/' + f });
     }
-    return sandbox.window.DnoLangPacks || {};
+    return sandbox.window.HemiLangPacks || {};
 }
 
 function listSources() {
@@ -53,8 +53,8 @@ function main() {
     const prefixes = new Set();
     const mentioned = new Set(); // 따옴표 안에 적힌 키 이름 — i18n(cond ? 'a.b' : 'a.c')처럼 고르는 경우도 쓰는 것으로 본다
     const ATTR = /\bdata-i18n(?:-title|-placeholder|-alt|-aria-label)?="([^"$]+)"/g;
-    const CALL = /(?:\bi18n(?:\.ref)?|\bDnoLang\.(?:k|source))\(\s*(['"])([^'"\n]+)\1/g;
-    const DYN = /(?:\bi18n|\bDnoLang\.k)\(\s*`([^`$]*)\$\{/g;
+    const CALL = /(?:\bi18n(?:\.ref)?|\bHemiLang\.(?:k|source))\(\s*(['"])([^'"\n]+)\1/g;
+    const DYN = /(?:\bi18n|\bHemiLang\.k)\(\s*`([^`$]*)\$\{/g;
     const INLINE = /<([a-zA-Z][\w-]*)\b([^>]*?)\sdata-i18n="([^"$]+)"([^>]*)>([^<]*)<\/\1>/g;
     for (const file of listSources()) {
         const text = fs.readFileSync(path.join(ROOT, file), 'utf8');

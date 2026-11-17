@@ -22,11 +22,11 @@
         $('makerProjects').innerHTML = rows.length ? rows.map((p,i) => `<article class="scn-card maker-project" data-kind="${p.kind}"><div class="maker-project-meta"><span class="maker-kind">${types[p.kind].name}</span><span class="scn-grow"></span><time>${esc(stamp(p.updatedAt))}</time></div><h2>${esc(p.title || '(제목 없음)')}</h2><p class="scn-dim">${esc(p.data?.description || (p.kind === 'map' ? `${p.data?.shapes?.length || 0}개 도형` : '설명이 없습니다.'))}</p>${p.data?.author ? `<span class="scn-dim">${esc(p.data.author)}</span>` : ''}<div class="maker-project-actions">${demo && p.kind === 'map' ? '<span class="scn-dim">🔒 정식판에서 편집</span>' : `<a class="scn-btn scn-primary" href="${esc(store.url(p.kind,p.id))}" data-edit>편집 이어하기</a>`}<button type="button" class="scn-btn scn-danger" data-delete="${i}" aria-label="${esc(p.title)} 삭제">삭제</button></div></article>`).join('') : `<div class="maker-empty"><h2>${query ? '검색 결과가 없습니다.' : failures.length ? '제작물 목록을 확인하지 못했습니다.' : '아직 저장된 제작물이 없습니다.'}</h2><p class="scn-dim">${query ? '다른 검색어나 종류를 선택해 보세요.' : '위의 메이커에서 새로 만들거나 파일을 불러오세요. 시나리오·챌린지는 자동 저장되며, 맵은 지도 편집 시 프로젝트 저장됩니다.'}</p></div>`;
         $('makerProjects').querySelectorAll('[data-delete]').forEach(b => b.onclick = async () => {
             const p = rows[+b.dataset.delete];
-            const yes = await DnoUI.confirm(`“${p.title || '(제목 없음)'}” ${types[p.kind].name} 제작물을 삭제할까요? 되돌릴 수 없습니다. 이미 생성한 게임 세이브와 내보낸 파일은 남습니다.`, { title: '제작물 삭제', tone: 'danger', okText: '삭제', focusCancel: true });
+            const yes = await HemiUI.confirm(`“${p.title || '(제목 없음)'}” ${types[p.kind].name} 제작물을 삭제할까요? 되돌릴 수 없습니다. 이미 생성한 게임 세이브와 내보낸 파일은 남습니다.`, { title: '제작물 삭제', tone: 'danger', okText: '삭제', focusCancel: true });
             if (!yes) return;
             b.disabled = true;
             try { await store.remove(p.kind,p.id); await load(); }
-            catch (e) { b.disabled = false; await DnoUI.alert('삭제하지 못했습니다. 다시 시도해 주세요.'); }
+            catch (e) { b.disabled = false; await HemiUI.alert('삭제하지 못했습니다. 다시 시도해 주세요.'); }
         });
     }
     async function load() {

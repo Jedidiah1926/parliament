@@ -20,7 +20,7 @@ window.HEMI_OFFICIAL = Object.freeze({
     const isDemoBuild = () => !!(window.HEMI_BUILD && window.HEMI_BUILD.demo); // Steam 데모 빌드
     const playBlocked = () => isOfficial() && !isSteamBuild() && !isDemoBuild();
     const steamUrl = () => String(cfg.steamUrl || '');
-    const SAVE_SLOTS_KEY = 'dnoParliamentSaveSlots'; // js/main.js와 같은 키 (본 게임 저장 공간)
+    const SAVE_SLOTS_KEY = 'hemiParliamentSaveSlots'; // js/main.js와 같은 키 (본 게임 저장 공간)
     const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
     // ---- 세이브 내보내기 — 브라우저에 남은 세이브를 골라 .hemi / .json 파일로 ----

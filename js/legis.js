@@ -137,8 +137,8 @@ function legisProposeConstitutionAmendment() {
 }
 // 새로 만드는 데이터(기본 위원회 이름 · 개정안 제목 등)는 지금 화면 언어로 — 화면 번역은 데이터를 바꾸지 않으므로 만들 때 바꿔 둔다
 function legisUiText(ko) {
-    if (!window.DnoLang) return ko;
-    return (DnoLang.exact && DnoLang.exact(ko)) || (DnoLang.t ? DnoLang.t(ko) : ko);
+    if (!window.HemiLang) return ko;
+    return (HemiLang.exact && HemiLang.exact(ko)) || (HemiLang.t ? HemiLang.t(ko) : ko);
 }
 function billKindLabel(bill) {
     return bill && bill.kind === 'constitution' ? '헌법 개정안' : '';
