@@ -278,10 +278,30 @@
         }
         return String(v).replace(/\{([A-Za-z0-9_]+)\}/g, (m, name) => (vars && hasOwn(vars, name) && vars[name] != null ? String(vars[name]) : m));
     }
+    // 고른 언어 팩의 키로 만든 글자는 기억해 두고, 사전 번역(아래 엔진 · 알림창)이 다시 건드리지 않게 한다 —
+    // 변수로 들어간 세이브 이름 같은 데이터("내 세이브")가 사전 때문에 "내 Save"로 바뀌지 않도록
+    const keyedOutputs = new Set();
+    function rememberKeyed(text) {
+        const t = String(text).replace(/\uFE0E/g, '').trim();
+        if (!t || !/[가-힣]/.test(t)) return; // 한국어가 없으면 사전 번역이 바꿀 것도 없다
+        keyedOutputs.delete(t);
+        keyedOutputs.add(t);
+        if (keyedOutputs.size > 2000) keyedOutputs.delete(keyedOutputs.values().next().value);
+    }
     // i18n(key, vars): 키의 글자. 변수는 {이름} 자리에 들어간다(글자 그대로 — innerHTML에 넣을 땐 부르는 쪽에서 escape)
     function k(key, vars) {
         const r = lookup(String(key));
-        return r.v == null ? String(key) : formatText(r, vars);
+        if (r.v == null) return String(key);
+        const out = formatText(r, vars);
+        if (r.hit && current !== SOURCE_LANG.code) rememberKeyed(out);
+        return out;
+    }
+    // month(n): 달 이름 (한국어 "3월", 영어 "March") — 고른 팩에 months가 없으면 숫자 그대로
+    function month(n) {
+        const i = parseInt(n, 10);
+        const raw = current === SOURCE_LANG.code ? packRegistry()[SOURCE_LANG.code] : (loadInstalled()[current] || externalPack(current) || packRegistry()[current]);
+        const ms = raw && Array.isArray(raw.months) && raw.months.length === 12 ? raw.months : null;
+        return ms && i >= 1 && i <= 12 ? String(ms[i - 1]) : String(n);
     }
 
     // HTML의 data-i18n(글자) · data-i18n-title 등(속성)을 채운다. 변수는 data-i18n-vars='{"n": 3}'
@@ -333,11 +353,11 @@
     // 한국어일 땐 키(data-i18n)만 채우고, 팩이 준비되기 전에 불리면 준비된 뒤에 번역한다.
     // t(s): 문자열 하나를 사전 번역 (한국어이거나 팩이 아직 준비 전이면 그대로)
     // k(key, vars) = window.i18n: 키 번역 · apply(el): el 안의 data-i18n 채우기 · has(key): 한국어 팩에 있는 키인지
-    // missing(): 이 페이지에서 쓰였는데 한국어 팩에도 없는 키 · lang: 지금 언어 코드
+    // month(n): 달 이름 · missing(): 이 페이지에서 쓰였는데 한국어 팩에도 없는 키 · lang: 지금 언어 코드
     // setDataStrings(list): 세이브에 든 데이터(정당 · 지역구 · 의원 · 법안 이름 등) — 화면 번역에서 건드리지 않는다 (1.6.0, js/main.js가 알려 줌)
     // exact(s): 사전에 통째로 있는 글자면 그 번역, 아니면 null (예전 세이브의 기본 이름을 한 번 바꿀 때 사용) · ready: 팩이 준비됐는지
     window.DnoLang = { list: listLanguages, install: installPack, remove: removePack, template: buildTemplate, validate: normalizePack, format: PACK_FORMAT,
-        lang: current, k, apply: applyKeys, has: key => hasOwn(sourceKeys(), key), missing: () => [...missingKeys],
+        lang: current, k, month, apply: applyKeys, has: key => hasOwn(sourceKeys(), key), missing: () => [...missingKeys],
         translateSubtree: el => applyKeys(el), t: s => s, setDataStrings: () => {}, exact: () => null, ready: false };
     window.i18n = k;
 
@@ -395,7 +415,7 @@
             const base = s;
             // 세이브 데이터(이름 등)는 번역하지 않는다 — 글자 전체가 데이터면 그대로, 섞여 있으면 데이터 부분을 잠시 빼 두었다가 되돌림
             const whole = s.trim();
-            if (dataSet.has(whole)) return orig;
+            if (dataSet.has(whole) || keyedOutputs.has(whole)) return orig; // 키로 만든 글자도 그대로
             // 글자 전체가 사전에 있는 UI 문구면(예: "무소속 포함하기") 데이터 단어가 섞여 있어도 UI로 번역
             if (dictMap.has(whole)) { const t = s.replace(whole, dictMap.get(whole)); return window.DnoEmoji ? window.DnoEmoji.fix(t) : t; }
             const held = [];

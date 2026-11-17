@@ -10,7 +10,7 @@
 //   - HTML에 적어 둔 한국어 글자(<span data-i18n="키">글자</span>)가 한국어 팩 글자와 다름
 // 경고
 //   - 한국어 팩에는 있는데 다른 팩에 없는 키 (그 언어에서는 한국어 글자 → 사전 번역으로 보임)
-//   - 어디서도 쓰지 않는 키 (i18n(`prefix.${…}`)처럼 키를 만들어 쓰는 곳은 그 prefix로 시작하는 키를 쓰는 것으로 본다)
+//   - 어디서도 쓰지 않는 키 (i18n(`prefix.${…}`) · 'prefix.' + 이름처럼 키를 만들어 쓰는 곳은 그 prefix로 시작하는 키를 쓰는 것으로 본다)
 'use strict';
 const fs = require('fs'), path = require('path'), vm = require('vm');
 
@@ -51,6 +51,7 @@ function main() {
     // 쓰는 곳 모으기
     const used = new Map(); // key → ["file:line", ...]
     const prefixes = new Set();
+    const mentioned = new Set(); // 따옴표 안에 적힌 키 이름 — i18n(cond ? 'a.b' : 'a.c')처럼 고르는 경우도 쓰는 것으로 본다
     const ATTR = /\bdata-i18n(?:-title|-placeholder|-alt|-aria-label)?="([^"$]+)"/g;
     const CALL = /(?:\bi18n|\bDnoLang\.k)\(\s*(['"])([^'"\n]+)\1/g;
     const DYN = /(?:\bi18n|\bDnoLang\.k)\(\s*`([^`$]*)\$\{/g;
@@ -59,8 +60,11 @@ function main() {
         const text = fs.readFileSync(path.join(ROOT, file), 'utf8');
         const add = (key, idx) => { if (!used.has(key)) used.set(key, []); used.get(key).push(`${file}:${lineOf(text, idx)}`); };
         for (const m of text.matchAll(ATTR)) add(m[1], m.index);
-        for (const m of text.matchAll(CALL)) add(m[2], m.index);
+        for (const m of text.matchAll(CALL)) { if (m[2].endsWith('.')) prefixes.add(m[2]); else add(m[2], m.index); } // i18n('a.' + kind)는 prefix
         for (const m of text.matchAll(DYN)) if (m[1]) prefixes.add(m[1]);
+        // 'common.date.' + form 처럼 점으로 끝나는 글자를 이어 붙여 키를 만드는 곳
+        for (const m of text.matchAll(/(['"`])([A-Za-z0-9_][A-Za-z0-9_-]*(?:\.[A-Za-z0-9_-]+)*\.)\1/g)) prefixes.add(m[2]);
+        for (const m of text.matchAll(/(['"`])([A-Za-z0-9_][A-Za-z0-9_-]*(?:\.[A-Za-z0-9_-]+)+)\1/g)) mentioned.add(m[2]);
         // HTML에 적어 둔 한국어 글자 = 한국어 팩 글자 (변수가 있는 요소는 빼고)
         for (const m of text.matchAll(INLINE)) {
             const attrs = m[2] + m[4], key = m[3], inline = decode(m[5]).trim();
@@ -73,7 +77,7 @@ function main() {
     for (const [key, where] of used) if (!Object.prototype.hasOwnProperty.call(krKeys, key)) errors.push(`한국어 팩에 없는 키 "${key}" — ${where.slice(0, 3).join(', ')}${where.length > 3 ? ' …' : ''}`);
     for (const [key, v] of Object.entries(krKeys)) {
         if (v && typeof v === 'object' && typeof v.other !== 'string') errors.push(`lang/kr.js "${key}": 복수형에 "other"가 없습니다`);
-        if (!used.has(key) && ![...prefixes].some(p => key.startsWith(p))) warnings.push(`쓰지 않는 키 "${key}"`);
+        if (!used.has(key) && !mentioned.has(key) && ![...prefixes].some(p => key.startsWith(p))) warnings.push(`쓰지 않는 키 "${key}"`);
     }
     for (const [code, pack] of Object.entries(packs)) {
         if (code === SOURCE || !pack || !pack.keys) continue;

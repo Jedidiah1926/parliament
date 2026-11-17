@@ -2,6 +2,7 @@
 //  - data-i18n(글자) · data-i18n-title(속성) · {변수} · 복수형 · 문서를 읽는 중(DOMContentLoaded 전)에도 i18n()이 바로 됨
 //  - 고른 팩에 없는 키는 한국어 글자 → 사전 번역(예전 방식)으로 이어짐, 키로 채운 글자는 사전 번역이 다시 건드리지 않음
 //  - 나중에 그려진 data-i18n도 채움, 자식 요소가 있으면 건드리지 않음, 없는 키는 키 그대로 + missing()
+//  - JS i18n()으로 만든 글자도 사전 번역이 다시 건드리지 않음 · 달 이름(DnoLang.month)
 //  - @2 팩 검사(keys만 있는 팩 · 복수형 · 잘못된 형식) · 번역 템플릿에 keys
 //  - 실제 메인 화면: 한국어 · 영어에서 오류 없이 열리고 예전 사전 번역도 그대로
 //   python3 -m http.server 8000 & node tests/lang-keys.browser.cjs
@@ -24,7 +25,7 @@ const EN_KEYS = {
     // t.fallback 없음 → 한국어 "설정" → 사전 번역 "Settings"
     't.ok': '설정 news', // 키로 채운 글자 안의 한국어는 사전 번역이 건드리지 않아야 함
 };
-const krPack = `window.DnoLangPacks = window.DnoLangPacks || {}; window.DnoLangPacks.kr = ${JSON.stringify({ format: 'dno-lang-pack@2', code: 'kr', name: '한국어', keys: KR_KEYS })};`;
+const krPack = `window.DnoLangPacks = window.DnoLangPacks || {}; window.DnoLangPacks.kr = ${JSON.stringify({ format: 'dno-lang-pack@2', code: 'kr', name: '한국어', months: ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월'], keys: KR_KEYS })};`;
 const enPack = fs.readFileSync(path.join(__dirname, '..', 'lang', 'en.js'), 'utf8') + `\nwindow.DnoLangPacks.en.keys = ${JSON.stringify(EN_KEYS)};`;
 const FIXTURE = `<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><title>i18n</title>
 <script src="js/lang.js"></script></head><body>
@@ -77,6 +78,7 @@ const FIXTURE = `<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><tit
             assert.equal(r.okMark, false, 'kr에선 data-i18n-ok를 달지 않음');
             const miss = await p.evaluate(() => [i18n('t.nope'), DnoLang.missing(), DnoLang.has('t.hello'), DnoLang.lang]);
             assert.deepEqual(miss, ['t.nope', ['t.nope'], true, 'kr'], '없는 키는 키 그대로 + missing()');
+            assert.equal(await p.evaluate(() => DnoLang.month(3)), '3월', 'kr: 달 이름');
             // 나중에 그린 부분은 translateSubtree(= apply)로
             const late = await p.evaluate(() => { const s = document.createElement('span'); s.setAttribute('data-i18n', 't.hello'); document.body.appendChild(s); DnoLang.translateSubtree(s); return s.textContent; });
             assert.equal(late, '안녕하세요');
@@ -96,6 +98,9 @@ const FIXTURE = `<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><tit
             assert.equal(r.e, 'Settings', 'en 팩에 없는 키 → 한국어 글자 → 사전 번역');
             assert.equal(r.ok, '설정 news', '키로 채운 글자는 사전 번역이 다시 건드리지 않음');
             assert.equal(r.okMark, true);
+            // JS i18n()로 만든 글자도 사전 번역(알림창 · DnoLang.t)이 다시 건드리지 않음 — 변수로 넣은 데이터("설정")가 그대로
+            const kept = await p.evaluate(() => [DnoLang.t(i18n('t.ok')), DnoLang.t('설정'), DnoLang.month(3), DnoLang.month(13)]);
+            assert.deepEqual(kept, ['설정 news', 'Settings', 'March', '13'], 'en: 키로 만든 글자는 사전 번역 건너뜀 · 달 이름');
             // 나중에 그려진 data-i18n은 MutationObserver가 채움
             await p.evaluate(() => { const s = document.createElement('div'); s.id = 'late'; s.innerHTML = '<span data-i18n="t.hello">안녕</span><span>설정</span>'; document.body.appendChild(s); });
             await p.waitForFunction(() => document.getElementById('late').textContent === 'HelloSettings');
