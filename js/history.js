@@ -88,7 +88,7 @@
             setTimeout(() => {
                 const rec = (typeof elecRecords !== 'undefined' && elecRecords[0]) || null;
                 const fresh = rec && Date.now() - new Date(rec.savedAt).getTime() < 60000;
-                record(fresh ? `${rec.title}${rec.year && rec.year !== '?' ? ` (${rec.year})` : ''}` : '선거 반영', 'election', true);
+                record(fresh ? `${rec.title}${rec.year && rec.year !== '?' ? ` (${rec.year})` : ''}` : i18n('sim.history.1'), 'election', true);
                 renderTimeline();
             }, 0);
             return r;
@@ -104,7 +104,7 @@
             const ps = r.parties.filter(p => (p.seats || 0) > 0);
             if (!ps.length) return;
             S.timeline.push({
-                id: uid(), at: new Date(r.savedAt).getTime() || Date.now(), date: r.year && r.year !== '?' ? String(r.year) : '', label: r.title || '선거',
+                id: uid(), at: new Date(r.savedAt).getTime() || Date.now(), date: r.year && r.year !== '?' ? String(r.year) : '', label: r.title || i18n('sim.mainContentHelp.4'),
                 source: key, chamber: r.chamberType, total: ps.reduce((a, p) => a + p.seats, 0),
                 parties: ps.map(p => ({ id: p.id, name: p.name, color: p.color, seats: p.seats })), ruling: [],
             });
@@ -204,12 +204,12 @@
                 const pa = at(snaps[i], id), pc = at(snaps[i + 1], id), p = pc || pa || info(id);
                 const fill = pa && pc && pa.color !== pc.color ? gradient(pa.color, pc.color, defs) : esc(p.color);
                 const s0 = seat(snaps[i], id), s1 = seat(snaps[i + 1], id), dd = s1 - s0;
-                ribbon(a0, a1, c0, c1, fill, `${p.name} 의석 변화`, [
-                    `기간: ${esc(when(snaps[i]))} → ${esc(when(snaps[i + 1]))}`,
-                    `의석: ${s0}석 → ${s1}석${dd ? ` <b style="color:${dd > 0 ? '#2ecc71' : '#e74c3c'}">${dd > 0 ? '▲' : '▼'}${Math.abs(dd)}</b>` : ' (변동 없음)'}`,
-                    `점유율: ${Math.round(s0 / (snaps[i].total || 1) * 1000) / 10}% → ${Math.round(s1 / (snaps[i + 1].total || 1) * 1000) / 10}%`,
-                    pa && pc && pa.name !== pc.name ? `당명 변경: ${esc(pa.name)} → ${esc(pc.name)}` : '',
-                    !pa ? '새로 의석을 얻음' : !pc ? '의석을 모두 잃음' : '']);
+                ribbon(a0, a1, c0, c1, fill, i18n('sim.history.2', { name: p.name }), [
+                    i18n('sim.history.3', { snaps: esc(when(snaps[i])), snaps2: esc(when(snaps[i + 1])) }),
+                    i18n('sim.history.5', { s0, s1, dd: dd ? ` <b style="color:${dd > 0 ? '#2ecc71' : '#e74c3c'}">${dd > 0 ? '▲' : '▼'}${Math.abs(dd)}</b>` : (" " + i18n('sim.history.4')) }),
+                    i18n('sim.history.6', { total: Math.round(s0 / (snaps[i].total || 1) * 1000) / 10, total2: Math.round(s1 / (snaps[i + 1].total || 1) * 1000) / 10 }),
+                    pa && pc && pa.name !== pc.name ? i18n('sim.history.7', { name: esc(pa.name), name2: esc(pc.name) }) : '',
+                    !pa ? i18n('sim.history.8') : !pc ? i18n('sim.history.9') : '']);
                 // 같은 정당이 당명을 바꿈 → 흐름 가운데에 새 이름
                 if (pa && pc && pa.name !== pc.name) notes += `<text x="${(a0 + a1 + c0 + c1) / 4}" y="${ym + 4}" class="hist-h-note" text-anchor="middle">→ ${esc(pc.name)}</text>`;
             });
@@ -220,7 +220,7 @@
                 if (!(fa > 0 && tb > 0)) return;
                 const [a0, a1] = spans[i][l.from] || [0, 0], [c0, c1] = spans[i + 1][l.to] || [0, 0];
                 const pf = info(l.from), pt = info(l.to);
-                ribbon(a0, a1, c0, c1, gradient(pf.color, pt.color, defs), '승계', [`${esc(pf.name)} → ${esc(pt.name)}`, `기간: ${esc(when(snaps[i]))} → ${esc(when(snaps[i + 1]))}`, `의석: ${fa}석 → ${tb}석`]);
+                ribbon(a0, a1, c0, c1, gradient(pf.color, pt.color, defs), i18n('sim.history.10'), [`${esc(pf.name)} → ${esc(pt.name)}`, i18n('sim.history.3', { snaps: esc(when(snaps[i])), snaps2: esc(when(snaps[i + 1])) }), i18n('sim.history.11', { fa, tb })]);
                 notes += `<text x="${(a0 + a1 + c0 + c1) / 4}" y="${ym + 4}" class="hist-h-note" text-anchor="middle">→ ${esc(pt.name)}</text>`;
             });
         }
@@ -239,11 +239,11 @@
                 const d = base == null || (base === 0 && !preds.length) ? null : n - base;
                 const share = Math.round(n / (sn.total || 1) * 1000) / 10;
                 bars += `<rect x="${x0}" y="${y}" width="${w}" height="${BAR}" fill="${esc(p.color)}" class="hist-h-hit${gov ? ' hist-h-gov' : ''}"${infoTag(`${gov ? '★ ' : ''}${p.name}`, [
-                    `기록: ${esc(sn.label || sn.date || `#${i + 1}`)}${sn.label && sn.date ? ` (${esc(sn.date)})` : ''}`,
-                    `의석: <b>${n}석</b> / ${sn.total}석 (${share}%)`,
-                    d ? `앞 기록 대비: <b style="color:${d > 0 ? '#2ecc71' : '#e74c3c'}">${d > 0 ? '▲' : '▼'}${Math.abs(d)}</b>${preds.length ? ` (승계: ${preds.map(pid => esc(info(pid).name)).join(', ')})` : ''}` : (i && base === 0 && !preds.length ? '앞 기록 대비: 새로 진입' : ''),
-                    share > 50 ? '단독 과반' : '',
-                    gov ? '집권 세력' : '']) }/>`;
+                    i18n('sim.history.12', { date: esc(sn.label || sn.date || `#${i + 1}`), date2: sn.label && sn.date ? ` (${esc(sn.date)})` : '' }),
+                    `${esc(i18n('sim.history.13'))} <b>${n}${esc(i18n('sim.party.11'))}</b> / ${sn.total}${esc(i18n('sim.district.160'))}${share}%)`,
+                    d ? `${esc(i18n('sim.history.14'))} <b style="color:${d > 0 ? '#2ecc71' : '#e74c3c'}">${d > 0 ? '▲' : '▼'}${Math.abs(d)}</b>${preds.length ? esc((" " + i18n('sim.history.15', { name: preds.map(pid => esc(info(pid).name)).join(', ') }))) : ''}` : (i && base === 0 && !preds.length ? i18n('sim.history.16') : ''),
+                    share > 50 ? i18n('sim.history.17') : '',
+                    gov ? i18n('sim.history.18') : '']) }/>`;
                 const dTxt = d ? ` ${d > 0 ? '▲' : '▼'}${Math.abs(d)}` : '';
                 const opts = [`${p.name} ${n}${dTxt}`, `${p.name} ${n}`, `${n}${dTxt}`, String(n)];
                 // 글자 폭(11px 글꼴): 한글 · 한자는 한 칸, 나머지는 약 0.6칸 — 한글을 0.6칸으로 재면 이름이 옆 막대로 넘쳤다
@@ -254,13 +254,13 @@
             const govNames = sn.parties.filter(p => ruling.has(String(p.id))).map(p => p.name);
             const dTot = i ? sn.total - snaps[i - 1].total : 0;
             labels += `<text x="${LW}" y="${y + 11}" class="hist-h-lab" text-anchor="end">${esc((sn.label || sn.date || `#${i + 1}`).slice(0, 16))}</text>`;
-            labels += `<text x="${LW}" y="${y + 24}" class="hist-h-sub" text-anchor="end">${esc([sn.label ? sn.date : '', `${sn.total}석${dTot ? ` (${dTot > 0 ? '+' : ''}${dTot})` : ''}`].filter(Boolean).join(' · ').slice(0, 24))}</text>`;
+            labels += `<text x="${LW}" y="${y + 24}" class="hist-h-sub" text-anchor="end">${esc([sn.label ? sn.date : '', i18n('sim.history.19', { total: sn.total, dTot: dTot ? ` (${dTot > 0 ? '+' : ''}${dTot})` : '' })].filter(Boolean).join(' · ').slice(0, 24))}</text>`;
             if (govNames.length) labels += `<text x="${LW}" y="${y + BAR + 11}" class="hist-h-gov-lab" text-anchor="end">★ ${esc(govNames.join('·').slice(0, 18))}</text>`;
         });
         const half = count ? `<line x1="${X0 + CW / 2}" x2="${X0 + CW / 2}" y1="0" y2="${H}" class="hist-h-half"/>` : `<line x1="${X0 + CW / 2}" x2="${X0 + CW / 2}" y1="0" y2="${H}" class="hist-h-half"/>`;
         const legend = ids.map(id => { const p = info(id); return `<span>${dotHtml(p.color)}${esc(p.name)}</span>`; }).join('');
-        return `<div class="hist-legend hist-h-legend">${legend}<span class="hist-dim">막대 · 흐름을 누르면 자세히 · ★ 집권 · ┆ ${count ? `최대 의석(${maxTotal})의 절반` : '과반'} · ▲▼ 앞 기록 대비</span></div>
-            <svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" class="hist-hist" role="img" aria-label="의석 변화"><defs>${defs.join('')}</defs>${flows}${half}${bars}${notes}${labels}</svg>`;
+        return `<div class="hist-legend hist-h-legend">${legend}<span class="hist-dim">${esc(i18n('sim.history.20'))} ${count ? esc(i18n('sim.history.21', { maxTotal })) : esc(i18n('sim.bill.7'))} ${esc(i18n('sim.history.22'))}</span></div>
+            <svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" class="hist-hist" role="img" aria-label="${esc(i18n('sim.history.23'))}"><defs>${defs.join('')}</defs>${flows}${half}${bars}${notes}${labels}</svg>`;
     }
 
     // ---- 창당일 (의회 › 정당 카드의 "창당일", p.founded = 'YYYY-MM-DD') ----
@@ -277,7 +277,7 @@
         return m ? +m[1] * 10000 : null;
     };
     const foundedOf = p => (/^\d{1,4}-\d{2}-\d{2}$/.test(String(p && p.founded || '')) ? p.founded : null);
-    const foundedLabel = f => { const [y, m, d] = f.split('-').map(Number); return `${y}년 ${m}월 ${d}일`; };
+    const foundedLabel = f => { const [y, m, d] = f.split('-').map(Number); return i18n('sim.history.24', { y, m, v: d }); };
     function addFoundingPoints(points) {
         const list = (typeof parties !== 'undefined' ? parties : []).filter(foundedOf).slice().sort((a, b) => dateKey(foundedOf(a)) - dateKey(foundedOf(b)));
         list.forEach(p => {
@@ -296,7 +296,7 @@
             const alive = new Map();
             if (prev && next) prev.alive.forEach((v, pid) => { if (next.alive.has(pid)) alive.set(pid, { ...v }); });
             alive.set(id, info);
-            points.splice(at, 0, { at: prev ? prev.at : (next ? next.at - 1 : 0), label: '창당', date: foundedLabel(foundedOf(p)), founding: true, key, alive, snaps: [] });
+            points.splice(at, 0, { at: prev ? prev.at : (next ? next.at - 1 : 0), label: i18n('sim.history.25'), date: foundedLabel(foundedOf(p)), founding: true, key, alive, snaps: [] });
             // 기록에 한 번도 나온 적 없는 지금 정당은 마지막 기록까지 이어 둔다
             const dissolved = p.status === 'dissolved';
             if (firstK < 0 && !dissolved && points.length - 1 > at) points[points.length - 1].alive.set(id, { ...info });
@@ -382,9 +382,9 @@
                 if (!a || !b) { lines += `<line x1="${x}" x2="${x}" y1="${yOf(k)}" y2="${yOf(k + 1)}" stroke="${esc((a || b || {}).color || '#888')}" stroke-width="2" stroke-dasharray="3 4"/>`; continue; }
                 const fill = a.color !== b.color ? gradient(a.color, b.color, defs) : esc(b.color);
                 lines += `<rect x="${x - BW / 2}" y="${yOf(k)}" width="${BW}" height="${ROW}" fill="${fill}" class="hist-h-hit"${infoTag(b.name, [
-                    `기간: ${esc(points[k].label || points[k].date || '')} → ${esc(points[k + 1].label || points[k + 1].date || '')}`,
-                    `의석: ${a.seats || 0}석 → ${b.seats || 0}석`,
-                    a.name !== b.name ? `당명 변경: ${esc(a.name)} → ${esc(b.name)}` : ''])}/>`;
+                    i18n('sim.history.26', { date: esc(points[k].label || points[k].date || ''), date2: esc(points[k + 1].label || points[k + 1].date || '') }),
+                    i18n('sim.history.27', { seats: a.seats || 0, seats2: b.seats || 0 }),
+                    a.name !== b.name ? i18n('sim.history.7', { name: esc(a.name), name2: esc(b.name) }) : ''])}/>`;
             }
             // 이름표: 창당한 자리 · 당명이 바뀐 자리
             for (let k = first; k <= last; k++) {
@@ -392,9 +392,9 @@
                 const prev = k > first ? points[k - 1].alive.get(id) : null;
                 const isStart = k === first, renamed = prev && prev.name !== p.name;
                 if (!isStart && !renamed) continue;
-                const sub = isStart ? ((S.succession || []).some(l => sameId(l.to, id) && linkK(l) + 1 === k) ? '승계' : '창당') : `← ${prev.name}`;
-                const subTxt = `${sub}${p.seats ? ` · ${p.seats}석` : ''}`;
-                nodes += `<g class="hist-h-hit"${infoTag(p.name, [`${esc(sub)} · ${esc(points[k].label || points[k].date || `#${k + 1}`)}`, p.seats ? `의석: ${p.seats}석` : '', renamed ? `당명 변경: ${esc(prev.name)} → ${esc(p.name)}` : ''])}><title>${esc(p.name)}</title>`
+                const sub = isStart ? ((S.succession || []).some(l => sameId(l.to, id) && linkK(l) + 1 === k) ? i18n('sim.history.10') : i18n('sim.history.25')) : `← ${prev.name}`;
+                const subTxt = `${sub}${p.seats ? (" " + i18n('sim.history.28', { seats: p.seats })) : ''}`;
+                nodes += `<g class="hist-h-hit"${infoTag(p.name, [`${esc(sub)} · ${esc(points[k].label || points[k].date || `#${k + 1}`)}`, p.seats ? i18n('sim.history.29', { seats: p.seats }) : '', renamed ? i18n('sim.history.7', { name: esc(prev.name), name2: esc(p.name) }) : ''])}><title>${esc(p.name)}</title>`
                     + `<circle cx="${x}" cy="${yOf(k)}" r="${isStart ? 7 : 6}" fill="${esc(p.color)}" class="hist-l-node"/>`
                     + `<text x="${x + 11}" y="${yOf(k) - 2}" class="hist-l-name">${esc(fit(p.name, 12, nameRoom))}</text><text x="${x + 11}" y="${yOf(k) + 11}" class="hist-h-sub">${esc(fit(subTxt, 10, nameRoom))}</text></g>`;
             }
@@ -406,22 +406,22 @@
                 if (k1 >= points.length) {
                     // 아직 다음 기록이 없음 — 다음 기록에서 합쳐질 예정
                     links += `<path d="M${x},${y1} C${x},${y1 + ROW * 0.45} ${x2},${y1 + ROW * 0.35} ${x2},${y1 + ROW * 0.8}" fill="none" stroke="${esc(pf ? pf.color : '#888')}" stroke-width="3" stroke-dasharray="5 4" opacity=".7"/>`;
-                    nodes += `<text x="${(x + x2) / 2}" y="${y1 + ROW * 0.62}" class="hist-h-sub" text-anchor="middle">다음 기록에서 합쳐짐</text>`;
+                    nodes += `<text x="${(x + x2) / 2}" y="${y1 + ROW * 0.62}" class="hist-h-sub" text-anchor="middle">${esc(i18n('sim.history.30'))}</text>`;
                     return;
                 }
                 const pt2 = points[k1].alive.get(t), y2 = yOf(k1);
                 const gid = `histlg${++gradSeq}`;
                 defs.push(`<linearGradient id="${gid}" gradientUnits="userSpaceOnUse" x1="${x}" y1="${y1}" x2="${x2}" y2="${y2}"><stop offset="0" stop-color="${esc(pf ? pf.color : '#888')}"/><stop offset="1" stop-color="${esc(pt2 ? pt2.color : (pf ? pf.color : '#888'))}"/></linearGradient>`);
-                links += `<path d="M${x},${y1} C${x},${y1 + ROW * 0.55} ${x2},${y2 - ROW * 0.55} ${x2},${y2}" fill="none" stroke="url(#${gid})" stroke-width="${BW}" class="hist-h-hit"${infoTag('승계', [`${esc(pf ? pf.name : '')} → ${esc(pt2 ? pt2.name : '')}`, `시점: ${esc(points[k1].label || points[k1].date || '')}`])}/>`;
+                links += `<path d="M${x},${y1} C${x},${y1 + ROW * 0.55} ${x2},${y2 - ROW * 0.55} ${x2},${y2}" fill="none" stroke="url(#${gid})" stroke-width="${BW}" class="hist-h-hit"${infoTag(i18n('sim.history.10'), [`${esc(pf ? pf.name : '')} → ${esc(pt2 ? pt2.name : '')}`, i18n('sim.history.31', { date: esc(points[k1].label || points[k1].date || '') })])}/>`;
             });
             if (!outs.some(l => linkK(l) >= last) && last < points.length - 1) {
-                nodes += `<text x="${x}" y="${yOf(last) + 18}" class="hist-l-end" text-anchor="middle">✕</text><text x="${x + 11}" y="${yOf(last) + 24}" class="hist-h-sub">소멸</text>`;
+                nodes += `<text x="${x}" y="${yOf(last) + 18}" class="hist-l-end" text-anchor="middle">✕</text><text x="${x + 11}" y="${yOf(last) + 24}" class="hist-h-sub">${esc(i18n('sim.history.32'))}</text>`;
             }
         });
         // 범례 — 정당마다 마지막 이름 · 색 (도표의 이름표가 줄어들어도 여기서 전체 이름을 본다)
         const legend = ids.map(id => { let p = null; points.forEach(pt => { p = pt.alive.get(id) || p; }); return p ? `<span>${dotHtml(p.color)}${esc(p.name)}</span>` : ''; }).join('');
-        return `<div class="hist-legend hist-h-legend">${legend}<span class="hist-dim">● 창당 · 당명 변경 / 곡선으로 합쳐짐 = 승계 / ✕ 소멸 · 줄 · 이름을 누르면 자세히</span></div>
-            <div class="hist-l-scroll"><svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" class="hist-hist" role="img" aria-label="당 변화"><defs>${defs.join('')}</defs>${rows}${links}${lines}${nodes}</svg></div>`;
+        return `<div class="hist-legend hist-h-legend">${legend}<span class="hist-dim">${esc(i18n('sim.history.33'))}</span></div>
+            <div class="hist-l-scroll"><svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" class="hist-hist" role="img" aria-label="${esc(i18n('sim.history.34'))}"><defs>${defs.join('')}</defs>${rows}${links}${lines}${nodes}</svg></div>`;
     }
 
     function renderHistory() {
@@ -432,14 +432,14 @@
         const snaps = S.timeline.filter(x => x.chamber === ui.tlChamber).sort((a, b) => a.at - b.at);
         const lineage = ui.histView === 'lineage';
         const title = document.getElementById('histHistTitle');
-        if (title) title.textContent = lineage ? '당 변화' : `${chName(ui.tlChamber)} 의석 변화`;
+        if (title) title.textContent = lineage ? i18n('sim.history.34') : i18n('sim.history.35', { tlChamber: chName(ui.tlChamber) });
         const panel = document.getElementById('dispPanelTimeline');
         const width = (wrap.clientWidth || (panel && panel.clientWidth) || 600) - 4;
         const seg = (items, cur, attr) => `<div class="hist-seg">${items.map(([k, t]) => `<button type="button" class="${cur === k ? 'on' : ''}" data-${attr}="${k}">${esc(t)}</button>`).join('')}</div>`;
-        const controls = `<div class="hist-h-controls">${seg([['seats', '의석 변화'], ['lineage', '당 변화']], ui.histView, 'hview')}
-            ${lineage ? '' : seg([['share', '점유율'], ['count', '의석 수']], ui.seatMode, 'hmode')}
+        const controls = `<div class="hist-h-controls">${seg([['seats', i18n('sim.history.23')], ['lineage', i18n('sim.history.34')]], ui.histView, 'hview')}
+            ${lineage ? '' : seg([['share', i18n('sim.history.36')], ['count', i18n('sim.contentAssembly.4')]], ui.seatMode, 'hmode')}
             ${!lineage && chs.length > 1 ? seg(chs.map(c => [c, chName(c)]), ui.tlChamber, 'hch') : ''}</div>`;
-        const empty = '<div class="hist-empty"><div class="hist-empty-icon">📈</div>아직 기록이 없습니다.<br>왼쪽 의회 › 세력 변화에서 "지금 의석 기록하기"를 누르거나, 총선을 치러 의회에 반영하면 여기에 아래로 쌓여요.</div>';
+        const empty = `<div class="hist-empty"><div class="hist-empty-icon">📈</div>${esc(i18n('sim.history.37'))}<br>${esc(i18n('sim.history.38'))}</div>`;
         histInfo = [];
         if (typeof closeSeatInfoCard === 'function') closeSeatInfoCard();
         wrap.innerHTML = controls + (lineage ? (S.timeline.length ? lineageChart(width) : empty) : (snaps.length ? seatsChart(snaps, width) : empty));
@@ -478,13 +478,13 @@
         const seat = (sn, id) => (sn.parties.find(x => sameId(x.id, id)) || {}).seats || 0;
         const info = id => { for (let i = show.length - 1; i >= 0; i--) { const p = show[i].parties.find(x => sameId(x.id, id)); if (p) return p; } return { name: '?', color: '#888' }; };
         ids.sort((a, b) => seat(show[show.length - 1], b) - seat(show[show.length - 1], a));
-        return `<div class="hist-tablewrap"><table class="hist-table"><thead><tr><th>정당</th>${show.map(sn => `<th title="${esc(sn.date)}">${esc((sn.label || sn.date || '').slice(0, 10))}</th>`).join('')}</tr></thead>
+        return `<div class="hist-tablewrap"><table class="hist-table"><thead><tr><th>${esc(i18n('sim.mainContentSetup.2'))}</th>${show.map(sn => `<th title="${esc(sn.date)}">${esc((sn.label || sn.date || '').slice(0, 10))}</th>`).join('')}</tr></thead>
             <tbody>${ids.map(id => { const p = info(id); return `<tr><td>${dotHtml(p.color)}${esc(p.name)}</td>${show.map((sn, i) => {
                 const v = seat(sn, id), prev = i ? seat(show[i - 1], id) : null, d = prev == null ? 0 : v - prev;
                 const gov = (sn.ruling || []).some(x => sameId(x, id));
                 return `<td class="${gov ? 'hist-gov' : ''}">${v || '—'}${d ? `<small class="${d > 0 ? 'hist-up' : 'hist-down'}">${d > 0 ? '▲' : '▼'}${Math.abs(d)}</small>` : ''}</td>`;
             }).join('')}</tr>`; }).join('')}</tbody></table></div>
-            <div class="hist-dim hist-small">굵은 칸은 그 시점의 집권 세력 · ▲▼는 바로 앞 기록과의 차이 (최근 8개)</div>`;
+            <div class="hist-dim hist-small">${esc(i18n('sim.history.39'))}</div>`;
     }
 
     function successionPanel() {
@@ -494,19 +494,19 @@
         const colorOf = id => (known.find(k => sameId(k.id, id)) || { color: '#888' }).color;
         if (ui.rbPid == null || !cur.some(p => sameId(p.id, ui.rbPid))) ui.rbPid = cur[0] ? cur[0].id : null;
         const rbParty = cur.find(p => sameId(p.id, ui.rbPid));
-        return `<details class="hist-fold" ${ui.openSucc ? 'open' : ''} data-fold="openSucc"><summary>🔁 정당 승계</summary>
-            <div class="hist-sub-title">당명 · 색 바꾸기 (승계)</div>
-            <div class="hist-dim hist-small" style="margin:0 0 6px">한나라당 → 새누리당처럼 같은 정당이 이름 · 색을 바꿉니다. 의석 · 의원 · 연정은 그대로 이어지고, 그 시점이 기록돼 "당 변화"에 표시돼요.</div>
-            <div class="hist-field"><span>정당</span><select data-rb="pid">${cur.map(p => `<option value="${esc(p.id)}" ${sameId(p.id, ui.rbPid) ? 'selected' : ''}>${esc(p.name)}</option>`).join('')}</select></div>
-            <div class="hist-field"><span>새 이름</span><input type="text" data-rb="name" placeholder="${esc(rbParty ? rbParty.name : '')}"></div>
-            <div class="hist-field"><span>새 색</span><input type="color" data-rb="color" value="${esc(rbParty && /^#[0-9a-f]{6}$/i.test(rbParty.color) ? rbParty.color : '#888888')}"></div>
-            <button type="button" class="hist-btn primary" data-act="rebrand">승계</button>
-            <div class="hist-sub-title" style="margin-top:14px">승계 관계 잇기</div>
-            <div class="hist-dim hist-small" style="margin:0 0 6px">서로 다른 정당을 앞 정당 → 뒤 정당으로 잇습니다 (해산 뒤 후신 · 합당 · 분당). 지금까지의 기록 바로 다음 기록에서 앞 정당 줄이 뒤 정당 줄로 합쳐져요 — 합당이면 앞 정당은 해산하거나 의석을 0으로 두세요.</div>
+        return `<details class="hist-fold" ${ui.openSucc ? 'open' : ''} data-fold="openSucc"><summary>${esc(i18n('sim.history.40'))}</summary>
+            <div class="hist-sub-title">${esc(i18n('sim.history.41'))}</div>
+            <div class="hist-dim hist-small" style="margin:0 0 6px">${esc(i18n('sim.history.42'))}</div>
+            <div class="hist-field"><span>${esc(i18n('sim.mainContentSetup.2'))}</span><select data-rb="pid">${cur.map(p => `<option value="${esc(p.id)}" ${sameId(p.id, ui.rbPid) ? 'selected' : ''}>${esc(p.name)}</option>`).join('')}</select></div>
+            <div class="hist-field"><span>${esc(i18n('sim.history.43'))}</span><input type="text" data-rb="name" placeholder="${esc(rbParty ? rbParty.name : '')}"></div>
+            <div class="hist-field"><span>${esc(i18n('sim.history.44'))}</span><input type="color" data-rb="color" value="${esc(rbParty && /^#[0-9a-f]{6}$/i.test(rbParty.color) ? rbParty.color : '#888888')}"></div>
+            <button type="button" class="hist-btn primary" data-act="rebrand">${esc(i18n('sim.history.10'))}</button>
+            <div class="hist-sub-title" style="margin-top:14px">${esc(i18n('sim.history.45'))}</div>
+            <div class="hist-dim hist-small" style="margin:0 0 6px">${esc(i18n('sim.history.46'))}</div>
             <div class="hist-succ-row"><select data-sl="from">${known.map(k => `<option value="${esc(k.id)}">${esc(k.name)}</option>`).join('')}</select><span>→</span>
                 <select data-sl="to">${known.map((k, i) => `<option value="${esc(k.id)}" ${i === 1 ? 'selected' : ''}>${esc(k.name)}</option>`).join('')}</select>
-                <button type="button" class="hist-btn" data-act="link">잇기</button></div>
-            ${(S.succession || []).map(l => `<div class="hist-snap">${dotHtml(colorOf(l.from))}<span>${esc(nameOf(l.from))}</span><span class="hist-dim">→</span>${dotHtml(colorOf(l.to))}<span style="flex:1">${esc(nameOf(l.to))}</span><button type="button" class="hist-x" data-unlink="${l.id}" title="끊기">×</button></div>`).join('')}
+                <button type="button" class="hist-btn" data-act="link">${esc(i18n('sim.history.47'))}</button></div>
+            ${(S.succession || []).map(l => `<div class="hist-snap">${dotHtml(colorOf(l.from))}<span>${esc(nameOf(l.from))}</span><span class="hist-dim">→</span>${dotHtml(colorOf(l.to))}<span style="flex:1">${esc(nameOf(l.to))}</span><button type="button" class="hist-x" data-unlink="${l.id}" title="${esc(i18n('sim.history.48'))}">×</button></div>`).join('')}
         </details>`;
     }
 
@@ -517,27 +517,27 @@
         if (!chs.includes(ui.tlChamber)) ui.tlChamber = chs[0];
         const snaps = S.timeline.filter(x => x.chamber === ui.tlChamber).sort((a, b) => a.at - b.at);
         const recCount = (typeof elecRecords !== 'undefined' ? elecRecords : []).filter(r => r && r.chamberType && !S.timeline.some(x => x.source === 'rec:' + r.id)).length;
-        box.innerHTML = `<div class="hist-intro">정당 의석을 시점마다 기록해 세력이 어떻게 오르내렸는지(의석 변화), 정당이 어떻게 생기고 바뀌고 이어졌는지(당 변화) 봅니다. 총선 결과를 의회에 반영하면 자동으로 기록돼요.</div>
+        box.innerHTML = `<div class="hist-intro">${esc(i18n('sim.history.49'))}</div>
             ${chs.length > 1 ? `<div class="system-radio-group hist-tabs">${chs.map(c => `<button type="button" class="system-radio-btn ${ui.tlChamber === c ? 'active' : ''}" data-tlch="${c}">${esc(chName(c))}</button>`).join('')}</div>` : ''}
             <div class="hist-actions">
-                <button type="button" class="hist-btn primary" data-act="snap">📸 지금 의석 기록하기</button>
-                <button type="button" class="hist-btn" data-act="import" ${recCount ? '' : 'disabled'}>선거 기록에서 가져오기${recCount ? ` (${recCount})` : ''}</button>
+                <button type="button" class="hist-btn primary" data-act="snap">${esc(i18n('sim.history.50'))}</button>
+                <button type="button" class="hist-btn" data-act="import" ${recCount ? '' : 'disabled'}>${esc(i18n('sim.history.51'))}${recCount ? ` (${recCount})` : ''}</button>
             </div>
-            <div class="hist-card hist-histnote"><span>📊 오른쪽 시각 화면 "세력 변화" 탭에서 의석 변화 · 당 변화 도표를 아래로 스크롤하며 봐요.</span><button type="button" class="hist-btn" data-act="showhist">오른쪽에서 보기</button></div>
+            <div class="hist-card hist-histnote"><span>${esc(i18n('sim.history.52'))}</span><button type="button" class="hist-btn" data-act="showhist">${esc(i18n('sim.history.53'))}</button></div>
             ${snaps.length ? `<div class="hist-card">${changeTable(snaps)}</div>` : ''}
             ${successionPanel()}
-            ${snaps.length ? `<details class="hist-fold"><summary>기록 ${snaps.length}개 — 이름 바꾸기 · 지우기</summary>
-                ${snaps.slice().reverse().map(sn => `<div class="hist-snap"><input type="text" value="${esc(sn.label)}" placeholder="${esc(sn.date || '이름 없음')}" data-label="${sn.id}"><span class="hist-dim">${esc(sn.date)} · ${sn.total}석${sn.source === 'election' ? ' · 선거' : sn.source === 'succession' ? ' · 승계' : String(sn.source).startsWith('rec:') ? ' · 선거 기록' : ''}</span><button type="button" class="hist-x" data-del="${sn.id}" title="지우기">×</button></div>`).join('')}
-            </details>` : `<div class="hist-empty"><div class="hist-empty-icon">📈</div>아직 기록이 없습니다.<br>"지금 의석 기록하기"를 누르거나, 총선을 치러 의회에 반영하면 쌓여요.</div>`}`;
+            ${snaps.length ? `<details class="hist-fold"><summary>${esc(i18n('sim.history.55', { count: snaps.length }))}</summary>
+                ${snaps.slice().reverse().map(sn => `<div class="hist-snap"><input type="text" value="${esc(sn.label)}" placeholder="${esc(sn.date || esc(i18n('sim.history.56')))}" data-label="${sn.id}"><span class="hist-dim">${esc(sn.date)} · ${sn.total}${esc(i18n('sim.party.11'))}${sn.source === 'election' ? esc((" " + i18n('sim.history.57'))) : sn.source === 'succession' ? esc((" " + i18n('sim.history.58'))) : String(sn.source).startsWith('rec:') ? esc((" " + i18n('sim.history.59'))) : ''}</span><button type="button" class="hist-x" data-del="${sn.id}" title="${esc(i18n('sim.history.60'))}">×</button></div>`).join('')}
+            </details>` : `<div class="hist-empty"><div class="hist-empty-icon">📈</div>${esc(i18n('sim.history.37'))}<br>${esc(i18n('sim.history.61'))}</div>`}`;
         box.querySelectorAll('[data-tlch]').forEach(b => { b.onclick = () => { ui.tlChamber = b.dataset.tlch; renderTimeline(); }; });
         box.querySelector('[data-act="showhist"]').onclick = showHistoryTab;
         box.querySelector('[data-act="snap"]').onclick = () => {
             const n = record('', 'manual', false);
-            if (!n) showCustomAlert('기록할 의석이 없습니다.');
+            if (!n) showCustomAlert(i18n('sim.history.62'));
             renderTimeline();
         };
         const imp = box.querySelector('[data-act="import"]');
-        if (imp) imp.onclick = () => { const n = importRecords(); showCustomAlert(n ? `선거 기록 ${n}개를 가져왔습니다.` : '가져올 선거 기록이 없습니다.'); renderTimeline(); };
+        if (imp) imp.onclick = () => { const n = importRecords(); showCustomAlert(n ? i18n('sim.history.63', { v: n }) : i18n('sim.history.64')); renderTimeline(); };
         box.querySelectorAll('[data-label]').forEach(i => { i.onchange = () => { const sn = S.timeline.find(x => x.id === i.dataset.label); if (sn) sn.label = i.value.trim(); renderTimeline(); }; });
         box.querySelectorAll('[data-del]').forEach(b => { b.onclick = () => { S.timeline = S.timeline.filter(x => x.id !== b.dataset.del); renderTimeline(); }; });
         box.querySelectorAll('[data-fold]').forEach(d => d.addEventListener('toggle', () => { ui[d.dataset.fold] = d.open; }));
@@ -548,9 +548,9 @@
             const name = box.querySelector('[data-rb="name"]').value.trim();
             const color = box.querySelector('[data-rb="color"]').value;
             const p = parties.find(x => sameId(x.id, ui.rbPid));
-            if (!p) { showCustomAlert('승계할 정당을 고르세요.'); return; }
-            if (!name) { showCustomAlert('새 이름을 적으세요.'); return; }
-            showCustomConfirm(`${p.name} → ${name}\n같은 정당이 이름${color && color !== p.color ? ' · 색' : ''}을 바꿉니다. 이 시점이 기록됩니다. 계속하시겠습니까?`, () => {
+            if (!p) { showCustomAlert(i18n('sim.history.65')); return; }
+            if (!name) { showCustomAlert(i18n('sim.history.66')); return; }
+            showCustomConfirm(i18n('sim.history.68', { name: p.name, name2: name, color: color && color !== p.color ? (" " + i18n('sim.history.67')) : '' }), () => {
                 rebrand(p.id, name, color);
                 renderTimeline();
             });
@@ -558,8 +558,8 @@
         const lk = box.querySelector('[data-act="link"]');
         if (lk) lk.onclick = () => {
             const from = box.querySelector('[data-sl="from"]').value, to = box.querySelector('[data-sl="to"]').value;
-            if (!from || !to || from === to) { showCustomAlert('서로 다른 두 정당을 고르세요.'); return; }
-            if ((S.succession || []).some(l => sameId(l.from, from) && sameId(l.to, to))) { showCustomAlert('이미 이어져 있습니다.'); return; }
+            if (!from || !to || from === to) { showCustomAlert(i18n('sim.history.69')); return; }
+            if ((S.succession || []).some(l => sameId(l.from, from) && sameId(l.to, to))) { showCustomAlert(i18n('sim.history.70')); return; }
             const toNum = v => (/^\d+$/.test(v) ? Number(v) : v);
             S.succession = (S.succession || []).concat([{ id: uid(), from: toNum(from), to: toNum(to), at: Date.now() }]);
             renderTimeline();
@@ -588,7 +588,7 @@
     // 틀에 담을 의회: 'house' · 'senate' · 'third' 하나, 또는 'both'(상원 | 하원 의석을 한 칸에 나란히 — 예: 참의원 | 중의원)
     const wikiModes = () => { const chs = chambers(); return chs.includes('senate') ? [...chs, 'both'] : chs; };
     const wikiChs = mode => (mode === 'both' ? ['senate', 'house'] : [mode]);
-    const wikiModeName = mode => (mode === 'both' ? `양원 (${chName('senate')} | ${chName('house')})` : chName(mode));
+    const wikiModeName = mode => (mode === 'both' ? i18n('sim.history.71', { senate: chName('senate'), house: chName('house') }) : chName(mode));
     function pmName() {
         try { const r = pmAutoSource(); if (r && r.name) return r.name; } catch (e) { /* main.js 없음 */ }
         try { return (pm && pm.name) || ''; } catch (e) { return ''; }
@@ -611,9 +611,9 @@
         const start = (S.wiki.termStart || '').trim(), end = (S.wiki.termEnd || '').trim();
         return {
             mode, chs, main, seats,
-            title: (S.wiki.title || '').trim() || [nationName(), mode === 'both' ? '의회' : chName(mode)].filter(Boolean).join(' '),
-            govName: (S.wiki.govName || '').trim() || (pmn ? `${pmn} 내각` : ''),
-            period: start || end ? `(${start}${start ? ' ' : ''}~ ${end || '현재'})` : '',
+            title: (S.wiki.title || '').trim() || [nationName(), mode === 'both' ? i18n('sim.mainContentHelp.1') : chName(mode)].filter(Boolean).join(' '),
+            govName: (S.wiki.govName || '').trim() || (pmn ? i18n('sim.history.72', { pmn }) : ''),
+            period: start || end ? `(${start}${start ? ' ' : ''}~ ${end || i18n('sim.history.73')})` : '',
             gov: named.filter(isGovParty), opp: named.filter(p => !isGovParty(p)), minor, ind,
             totals: chs.map(ch => ps.reduce((a, p) => a + seatsOf(p, ch), 0)), quotas: chs.map(quotaOf),
             emblem: (typeof chamberLogos !== 'undefined' && chamberLogos[main]) || (typeof nationFlag !== 'undefined' && nationFlag) || '',
@@ -637,17 +637,17 @@
     }
     const splitRows = arr => { const out = []; let i = 0; rowSizes(arr.length).forEach(k => { out.push(arr.slice(i, i + k)); i += k; }); return out; };
     // 받침이 있으면 "이라는", 없으면 "라는" (기민·기사연합이라는 · 사회민주당이라는 · 자민당이라는 …)
-    const raneun = w => { const c = String(w || '').trim().slice(-1).charCodeAt(0); return c >= 0xAC00 && c <= 0xD7A3 && (c - 0xAC00) % 28 ? '이라는' : '라는'; };
+    const raneun = w => { const c = String(w || '').trim().slice(-1).charCodeAt(0); return c >= 0xAC00 && c <= 0xD7A3 && (c - 0xAC00) % 28 ? i18n('sim.history.74') : i18n('sim.history.75'); };
     // 각주 — 파벌이 둘 이상인 정당은 "공동교섭단체", 비교섭단체(기준 미달 · 무소속) 목록, 직접 쓴 각주
     function wikiNotes(d) {
         const notes = [], mark = new Map();
-        const where = d.mode === 'both' ? '의회' : chName(d.mode);
-        const seatTxt = arr => (d.chs.length > 1 ? arr.map((n, i) => `${chName(d.chs[i])} ${n}석`).join(' · ') : `${arr[0]}석`);
+        const where = d.mode === 'both' ? i18n('sim.mainContentHelp.1') : chName(d.mode);
+        const seatTxt = arr => (d.chs.length > 1 ? arr.map((n, i) => i18n('sim.history.76', { chs: chName(d.chs[i]), v: n })).join(' · ') : i18n('sim.history.77', { arr: arr[0] }));
         [...d.gov, ...d.opp].forEach(p => {
             const fs = (p.factions || []).map(f => ({ f, s: d.chs.map(ch => seatsOf(f, ch)) })).filter(x => x.s.some(Boolean));
             if (fs.length < 2) return;
             const list = fs.map(x => `${x.f.name}(${seatTxt(x.s)})`);
-            notes.push(`${list.slice(0, -1).join(', ')}과 ${list[list.length - 1]}은 ${where}에서 ${p.name}${raneun(p.name)} 공동교섭단체로 활동함.`);
+            notes.push(i18n('sim.history.78', { list: list.slice(0, -1).join(', '), list2: list[list.length - 1], where, name: p.name, name2: raneun(p.name) }));
             mark.set(p.id, notes.length);
         });
         // 공동교섭단체(1.6.9 — js/politics.js) — 여러 정당이 함께 교섭단체를 이룸
@@ -655,7 +655,7 @@
             const ms = g.parties.filter(p => [...d.gov, ...d.opp].includes(p));
             if (ms.length < 2) return;
             const list = ms.map(p => `${p.name}(${seatTxt(d.seats(p))})`);
-            notes.push(`${list.slice(0, -1).join(', ')}과 ${list[list.length - 1]}은 ${where}에서 ${g.name}${raneun(g.name)} 공동교섭단체로 활동함.`);
+            notes.push(i18n('sim.history.78', { list: list.slice(0, -1).join(', '), list2: list[list.length - 1], where, name: g.name, name2: raneun(g.name) }));
             ms.forEach(p => { if (!mark.has(p.id)) mark.set(p.id, notes.length); });
         });
         const small = [...d.minor, ...d.ind];
@@ -671,8 +671,8 @@
         // (회색은 #3d3d3d · #5c5c5c처럼 흔하지 않은 값으로 — 라이트 · 다크 테마가 #333 · #555 같은 인라인 회색을 테마 색으로 바꿔 버림)
         const c = color || '#5c5c5c', light = fgFor(c) !== '#fff';
         const ink = light ? '#3d3d3d' : c;
-        if (arr.length < 2) return `<span class="nb-seat" style="color:${esc(ink)}">${arr[0]}석</span>`;
-        return `<span class="nb-seat split"><span class="a" style="background:${esc(light ? '#5c5c5c' : c)}">${arr[0]}석</span><span class="b" style="color:${esc(ink)}">${arr[1]}석</span></span>`;
+        if (arr.length < 2) return `<span class="nb-seat" style="color:${esc(ink)}">${arr[0]}${esc(i18n('sim.party.11'))}</span>`;
+        return `<span class="nb-seat split"><span class="a" style="background:${esc(light ? '#5c5c5c' : c)}">${arr[0]}${esc(i18n('sim.party.11'))}</span><span class="b" style="color:${esc(ink)}">${arr[1]}${esc(i18n('sim.party.11'))}</span></span>`;
     }
     function namuBox(d) {
         const frame = S.wiki.frame || '#2b3a67', ffg = fgFor(frame);
@@ -680,7 +680,7 @@
         const block = (p, k) => {
             const c = p.color || '#888', fg = fgFor(c);
             const sup = mark.get(p.id) ? `<sup>${mark.get(p.id)}</sup>` : '';
-            return `<div class="nb-party k${k}" style="background:${esc(c)};color:${fg}" title="${esc(p.name)} ${d.seats(p).join(' | ')}석">
+            return `<div class="nb-party k${k}" style="background:${esc(c)};color:${fg}" title="${esc(p.name)} ${esc(i18n('sim.history.seatsTip', { seats: d.seats(p).join(' | ') }))}">
                 ${p.logoPhoto ? (p.logoBg === 'white' ? `<span class="nb-logo-card"><img class="nb-logo" src="${esc(p.logoPhoto)}" alt=""></span>` : `<img class="nb-logo" src="${esc(p.logoPhoto)}" alt="">`) : ''}
                 <div class="nb-pname">${esc(p.name)}${sup}</div>${seatBadge(d.seats(p), c)}</div>`;
         };
@@ -688,21 +688,21 @@
         const group = (label, arr) => (arr.length ? `<div class="nb-sec">${label}</div>${rows(arr)}` : '');
         const small = [...d.minor, ...d.ind];
         const smallSeats = d.chs.map((ch, i) => small.reduce((a, p) => a + d.seats(p)[i], 0));
-        const smallLabel = d.minor.length ? '비교섭단체' : '무소속';
+        const smallLabel = d.minor.length ? i18n('sim.history.79') : i18n('sim.core.4');
         const vac = d.quotas.map((q, i) => (q && q > d.totals[i] ? q - d.totals[i] : 0));
-        const legend = d.chs.length > 1 ? `<div class="nb-legend"><span class="nb-seat split"><span class="a" style="background:#6b6b6b">${esc(chName(d.chs[0]))} 의석</span><span class="b" style="color:#6b6b6b">${esc(chName(d.chs[1]))} 의석</span></span></div>` : '';
+        const legend = d.chs.length > 1 ? `<div class="nb-legend"><span class="nb-seat split"><span class="a" style="background:#6b6b6b">${esc(chName(d.chs[0]))} ${esc(i18n('sim.party.9'))}</span><span class="b" style="color:#6b6b6b">${esc(chName(d.chs[1]))} ${esc(i18n('sim.party.9'))}</span></span></div>` : '';
         const custom = (S.wiki.note || '').trim();
         const showNotes = notes.length || custom || legend;
         return `<div class="nbx2" style="--nb-frame:${esc(frame)};--nb-ffg:${ffg}">
             <div class="nb-head">
                 <div class="nb-emblem">${d.emblem ? `<img src="${esc(d.emblem)}" alt="">` : emblemSvg(ffg)}</div><i class="nb-sep"></i>
-                <div><div class="nb-nation">${esc(d.title)}</div><div class="nb-title">원내 구성</div></div>
+                <div><div class="nb-nation">${esc(d.title)}</div><div class="nb-title">${esc(i18n('sim.history.80'))}</div></div>
             </div>
-            <details class="nb-body" open><summary>[ 펼치기 · 접기 ]</summary>
+            <details class="nb-body" open><summary>${esc(i18n('sim.history.81'))}</summary>
                 ${d.govName || d.period ? `<div class="nb-cab">${d.govName ? `<b>${esc(d.govName)}</b>` : ''}${d.period ? `<small>${esc(d.period)}</small>` : ''}</div>` : ''}
-                ${d.gov.length ? group(d.gov.length > 1 ? '연립여당' : '여당', d.gov) + group('야당', d.opp) : group('원내 정당', d.opp)}
+                ${d.gov.length ? group(d.gov.length > 1 ? esc(i18n('sim.history.82')) : esc(i18n('sim.district.163')), d.gov) + group(esc(i18n('sim.district.164')), d.opp) : group(esc(i18n('sim.history.83')), d.opp)}
                 ${small.length ? `<div class="nb-small">${smallLabel}${smallMark ? `<sup>${smallMark}</sup>` : ''} ${seatBadge(smallSeats, '#7f7f7f')}</div>` : ''}
-                <div class="nb-total">재적 ${seatBadge(d.totals, frame)}${vac.some(Boolean) ? ` <small>(궐석 ${vac.join(' | ')})</small>` : ''}</div>
+                <div class="nb-total">${esc(i18n('sim.history.84'))} ${seatBadge(d.totals, frame)}${vac.some(Boolean) ? ` <small>${esc(i18n('sim.history.85'))} ${vac.join(' | ')})</small>` : ''}</div>
                 ${showNotes ? `<div class="nb-notes">${notes.map((t, i) => `<div>${i + 1}. ${esc(t)}</div>`).join('')}${custom ? `<div>※ ${esc(custom)}</div>` : ''}${legend}</div>` : ''}
             </details>
             ${wikiFoot()}
@@ -711,8 +711,8 @@
     // 꼬리줄 "정당 구분 (원내 · 원외)" — 눌러서 원내 구성 틀 · 원외정당 틀을 오간다
     function wikiFoot() {
         if (S.wiki.footer === false) return '';
-        const b = (k, t) => `<button type="button" class="nb-fbtn${ui.wikiView === k ? ' on' : ''}" data-wview="${k}" title="${k === 'in' ? '원내 구성 틀 보기' : '원외정당 틀 보기'}">${t}</button>`;
-        return `<div class="nb-foot">정당 구분 (${b('in', '원내')} · ${b('out', '원외')})</div>`;
+        const b = (k, t) => `<button type="button" class="nb-fbtn${ui.wikiView === k ? ' on' : ''}" data-wview="${k}" title="${k === 'in' ? i18n('sim.history.86') : i18n('sim.history.87')}">${t}</button>`;
+        return `<div class="nb-foot">${esc(i18n('sim.history.88'))}${b('in', esc(i18n('sim.history.89')))} · ${b('out', esc(i18n('sim.history.90')))})</div>`;
     }
     // 원외정당: 고른 원(양원이면 두 원 모두)에 의석이 없는 정당 (무소속 · 해산한 정당 제외)
     const outParties = d => parties.filter(p => p.ideologyId !== IND_ID && p.status !== 'dissolved' && d.chs.every(ch => seatsOf(p, ch) === 0));
@@ -733,11 +733,11 @@
         return `<div class="nbx2 nbx-out" style="--nb-frame:${esc(frame)};--nb-ink:${esc(ink)}">
             <div class="nb-ohead">
                 ${d.emblem ? `<img class="nb-oflag" src="${esc(d.emblem)}" alt="">` : ''}
-                <div class="nb-otitle">${esc(nationName() || d.title)}의 원외정당</div>
+                <div class="nb-otitle">${esc(i18n('sim.history.204', { title: nationName() || d.title }))}</div>
             </div>
-            <details class="nb-body" open><summary>[ 펼치기 · 접기 ]</summary>
+            <details class="nb-body" open><summary>${esc(i18n('sim.history.81'))}</summary>
                 ${d.govName || d.period ? `<div class="nb-cab">${d.govName ? `<b>${esc(d.govName)}</b>` : ''}${d.period ? `<small>${esc(d.period)}</small>` : ''}</div>` : ''}
-                ${rows.length ? rows.join('') : `<div class="nb-oempty-all">${esc(d.mode === 'both' ? '두 원' : chName(d.mode))}에 의석이 없는 정당이 없어요.<br><small>의회 › 정당에서 의석이 0인 정당을 만들거나, 정당을 원에서 빼면 여기에 모여요.</small></div>`}
+                ${rows.length ? rows.join('') : `<div class="nb-oempty-all">${esc(i18n('sim.history.93', { ch: d.mode === 'both' ? i18n('sim.history.92') : chName(d.mode) }))}<br><small>${esc(i18n('sim.history.94'))}</small></div>`}
             </details>
             ${wikiFoot()}
         </div>`;
@@ -748,17 +748,17 @@
         const outs = outParties(d);
         const full = (bg, body) => `||<-3><bgcolor=${bg}> ${body} ||`;
         const lines = [];
-        lines.push(`||<tablewidth=100%><tablebordercolor=${frame}><-3><bgcolor=#ffffff> {{{+2 {{{${ink} ${B}${nationName() || d.title}의 원외정당${B}}}}}}} ||`);
+        lines.push(`||<tablewidth=100%><tablebordercolor=${frame}><-3><bgcolor=#ffffff> {{{+2 {{{${ink} ${B}${i18n('sim.history.204', { title: nationName() || d.title })}${B}}}}}}} ||`);
         if (d.govName || d.period) lines.push(full('#dddddd', `${d.govName ? `${B}${d.govName}${B}` : ''}${d.govName && d.period ? '[br]' : ''}${d.period ? `{{{-1 ${d.period}}}}` : ''}`));
         for (let i = 0; i < outs.length; i += 3) {
             const chunk = outs.slice(i, i + 3);
             lines.push(chunk.map(p => {
                 const c = inkFor(p.color || '#888');
-                const file = p.logoPhoto ? `[[파일:${p.name} 로고.png|height=40]][br]` : '';
+                const file = p.logoPhoto ? i18n('sim.history.95', { name: p.name }) : '';
                 return `||<bgcolor=#ffffff> ${file}{{{${c} ${B}${p.name}${B}${p.abbr ? `[br]${B}(${p.abbr})${B}` : ''}}}} `;
             }).join('') + '||<bgcolor=#f4f4f4> '.repeat(3 - chunk.length) + '||');
         }
-        if (S.wiki.footer !== false) lines.push(full('#ffffff', `정당 구분 (원내 · ${B}원외${B})`));
+        if (S.wiki.footer !== false) lines.push(full('#ffffff', i18n('sim.history.96', { B, B2: B })));
         return lines.join('\n');
     }
     // 나무위키 표 문법 — 6칸(2와 3의 공배수)을 기준으로 두 칸 줄은 <-3>, 세 칸 줄은 <-2>
@@ -769,11 +769,11 @@
         const chip = (bg, fg, txt) => `{{{#!wiki style="display:inline-block; background:${bg}; color:${fg}; padding:0 6px; border-radius:4px"\n${B}${txt}${B}}}}`;
         const badge = (arr, c) => {
             const light = fgFor(c) !== '#fff', ink = light ? '#333' : c;
-            return arr.length < 2 ? chip('#fff', ink, `${arr[0]}석`) : chip(light ? '#555' : c, '#fff', `${arr[0]}석`) + chip('#fff', ink, `${arr[1]}석`);
+            return arr.length < 2 ? chip('#fff', ink, i18n('sim.history.77', { arr: arr[0] })) : chip(light ? '#555' : c, '#fff', i18n('sim.history.77', { arr: arr[0] })) + chip('#fff', ink, i18n('sim.history.77', { arr: arr[1] }));
         };
         const full = (bg, body) => `||<-6><bgcolor=${bg}> ${body} ||`;
         const lines = [];
-        lines.push(`||<tablewidth=100%><tablebordercolor=${frame}><-6><bgcolor=${frame}> {{{${ffg} ${B}${d.title}${B}[br]{{{+2 ${B}원내 구성${B}}}}}}} ||`);
+        lines.push(`||<tablewidth=100%><tablebordercolor=${frame}><-6><bgcolor=${frame}> {{{${ffg} ${B}${d.title}${B}[br]{{{+2 ${B}${esc(i18n('sim.history.80'))}${B}}}}}}} ||`);
         if (d.govName || d.period) lines.push(full('#dddddd', `${d.govName ? `${B}${d.govName}${B}` : ''}${d.govName && d.period ? '[br]' : ''}${d.period ? `{{{-1 ${d.period}}}}` : ''}`));
         const group = (label, arr) => {
             if (!arr.length) return;
@@ -783,22 +783,22 @@
                     const c = p.color || '#888', fg = fgFor(c);
                     const sup = mark.get(p.id) ? `[* ${notes[mark.get(p.id) - 1]}]` : '';
                     // 로고가 있으면 위키에 "정당 이름 로고.png"로 올린 그림을 쓴다
-                    const file = `[[파일:${p.name} 로고.png|height=40]]`;
+                    const file = i18n('sim.history.97', { name: p.name });
                     const logo = p.logoPhoto ? (p.logoBg === 'white' ? `{{{#!wiki style="display:inline-block; background:#fff; padding:4px 10px; border-radius:6px"\n${file}}}}[br]` : `${file}[br]`) : '';
                     return `||<-${6 / row.length}><bgcolor=${c}> ${logo}{{{${fg} {{{+1 ${B}${p.name}${B}}}}}}}${sup}[br]${badge(d.seats(p), c)} `;
                 }).join('') + '||');
             });
         };
-        if (d.gov.length) { group(d.gov.length > 1 ? '연립여당' : '여당', d.gov); group('야당', d.opp); } else group('원내 정당', d.opp);
+        if (d.gov.length) { group(d.gov.length > 1 ? i18n('sim.history.82') : i18n('sim.district.163'), d.gov); group(i18n('sim.district.164'), d.opp); } else group(i18n('sim.history.83'), d.opp);
         const small = [...d.minor, ...d.ind];
         if (small.length) {
             const smallSeats = d.chs.map((ch, i) => small.reduce((a, p) => a + d.seats(p)[i], 0));
-            lines.push(full('#808080', `{{{#fff ${B}${d.minor.length ? '비교섭단체' : '무소속'}${B}}}}${smallMark ? `[* ${notes[smallMark - 1]}]` : ''} ${badge(smallSeats, '#808080')}`));
+            lines.push(full('#808080', `{{{#fff ${B}${d.minor.length ? i18n('sim.history.79') : i18n('sim.core.4')}${B}}}}${smallMark ? `[* ${notes[smallMark - 1]}]` : ''} ${badge(smallSeats, '#808080')}`));
         }
-        lines.push(full(frame, `{{{${ffg} ${B}재적${B}}}} ${badge(d.totals, frame)}`));
+        lines.push(full(frame, `{{{${ffg} ${B}${i18n('sim.history.84')}${B}}}} ${badge(d.totals, frame)}`));
         const custom = (S.wiki.note || '').trim();
-        if (custom || d.chs.length > 1) lines.push(full('#f2f2f2', `{{{-1 ${[custom ? `※ ${custom}` : '', d.chs.length > 1 ? chip('#666', '#fff', `${chName(d.chs[0])} 의석`) + chip('#fff', '#666', `${chName(d.chs[1])} 의석`) : ''].filter(Boolean).join('[br]')}}}}`));
-        if (S.wiki.footer !== false) lines.push(full('#ffffff', `정당 구분 (${B}원내${B} · 원외)`));
+        if (custom || d.chs.length > 1) lines.push(full('#f2f2f2', `{{{-1 ${[custom ? `※ ${custom}` : '', d.chs.length > 1 ? chip('#666', '#fff', i18n('sim.history.99', { chs: chName(d.chs[0]) })) + chip('#fff', '#666', i18n('sim.history.99', { chs: chName(d.chs[1]) })) : ''].filter(Boolean).join('[br]')}}}}`));
+        if (S.wiki.footer !== false) lines.push(full('#ffffff', i18n('sim.history.100', { B, B2: B })));
         return lines.join('\n');
     }
     // 오른쪽 시각 화면 "위키 틀" 탭 — 틀 미리보기
@@ -825,30 +825,30 @@
         const modes = wikiModes();
         if (!modes.includes(ui.wikiChamber)) ui.wikiChamber = modes[0];
         const d = wikiData(ui.wikiChamber);
-        const auto = (() => { const pmn = pmName(); return pmn ? `${pmn} 내각` : '예: 콜 내각'; })();
-        box.innerHTML = `<div class="hist-intro">위키 문서의 "원내 구성" 틀을 만듭니다. 정당 · 연정(집권) · 의석에서 자동으로 채워지고, 미리보기는 오른쪽 시각 화면 "위키 틀" 탭에 바로 보여요.</div>
-            ${modes.length > 1 ? `<div class="system-radio-group hist-tabs">${modes.map(c => `<button type="button" class="system-radio-btn ${ui.wikiChamber === c ? 'active' : ''}" data-wch="${c}">${esc(c === 'both' ? '양원' : chName(c))}</button>`).join('')}</div>` : ''}
-            <div class="system-radio-group hist-tabs">${[['in', '원내 구성'], ['out', '원외정당']].map(([k, t]) => `<button type="button" class="system-radio-btn ${ui.wikiView === k ? 'active' : ''}" data-wv="${k}">${t}</button>`).join('')}</div>
-            ${ui.wikiChamber === 'both' ? `<div class="hist-dim hist-small" style="margin:-4px 0 8px">정당마다 [${esc(chName('senate'))} | ${esc(chName('house'))}] 의석을 나란히 적어요.</div>` : ''}
+        const auto = (() => { const pmn = pmName(); return pmn ? i18n('sim.history.72', { pmn }) : i18n('sim.history.101'); })();
+        box.innerHTML = `<div class="hist-intro">${esc(i18n('sim.history.102'))}</div>
+            ${modes.length > 1 ? `<div class="system-radio-group hist-tabs">${modes.map(c => `<button type="button" class="system-radio-btn ${ui.wikiChamber === c ? 'active' : ''}" data-wch="${c}">${esc(c === 'both' ? esc(i18n('sim.history.103')) : chName(c))}</button>`).join('')}</div>` : ''}
+            <div class="system-radio-group hist-tabs">${[['in', esc(i18n('sim.history.80'))], ['out', esc(i18n('sim.history.104'))]].map(([k, t]) => `<button type="button" class="system-radio-btn ${ui.wikiView === k ? 'active' : ''}" data-wv="${k}">${t}</button>`).join('')}</div>
+            ${ui.wikiChamber === 'both' ? `<div class="hist-dim hist-small" style="margin:-4px 0 8px">${esc(i18n('sim.history.105'))}${esc(chName('senate'))} | ${esc(chName('house'))}${esc(i18n('sim.history.106'))}</div>` : ''}
             <div class="hist-actions">
-                <button type="button" class="hist-btn primary" data-act="copy">📋 위키 문법 복사</button>
-                <button type="button" class="hist-btn" data-act="showwiki">오른쪽에서 보기</button>
-                <button type="button" class="hist-btn" data-act="img">🖼 반원 그림 저장</button>
+                <button type="button" class="hist-btn primary" data-act="copy">${esc(i18n('sim.history.107'))}</button>
+                <button type="button" class="hist-btn" data-act="showwiki">${esc(i18n('sim.history.53'))}</button>
+                <button type="button" class="hist-btn" data-act="img">${esc(i18n('sim.history.108'))}</button>
             </div>
             <div class="hist-card hist-wk-form">
-                <div class="hist-card-head"><b>틀 머리</b></div>
-                <div class="hist-field"><span>제목</span><input type="text" data-w="title" value="${esc(S.wiki.title || '')}" placeholder="${esc(d.title)}"></div>
-                <div class="hist-field"><span>머리 색</span><input type="color" data-w="frame" value="${esc(S.wiki.frame || '#2b3a67')}"><button type="button" class="hist-btn" data-frame="#ffffff">흰색</button><button type="button" class="hist-btn" data-frame="#2b3a67">남색</button></div>
-                <div class="hist-card-head" style="margin-top:10px"><b>내각</b></div>
-                <div class="hist-field"><span>이름</span><input type="text" data-w="govName" value="${esc(S.wiki.govName || '')}" placeholder="${esc(auto)}"></div>
-                <div class="hist-field"><span>기간</span><input type="text" data-w="termStart" value="${esc(S.wiki.termStart || '')}" placeholder="시작 예: 1982.10.01"><span>~</span><input type="text" data-w="termEnd" value="${esc(S.wiki.termEnd || '')}" placeholder="비우면 현재"></div>
-                <div class="hist-card-head" style="margin-top:10px"><b>정당 구분</b></div>
-                <div class="hist-field"><span>교섭단체 기준</span><input type="number" min="0" data-w="groupMin" value="${Number(S.wiki.groupMin) || 0}" style="width:5em"><span class="hist-dim">석 미만은 비교섭단체 (0이면 무소속만)</span></div>
-                <div class="hist-field"><span>각주</span><input type="text" data-w="note" value="${esc(S.wiki.note || '')}" placeholder="직접 쓰는 설명 (※로 붙음)"></div>
-                <label class="hist-field" style="cursor:pointer"><input type="checkbox" data-w="footer" ${S.wiki.footer === false ? '' : 'checked'}><span>맨 아래 "정당 구분 (원내 · 원외)" 줄</span></label>
-                <div class="hist-dim hist-small">엠블럼은 의회 › 의장 · 표시의 로고(없으면 국기), 정당 로고는 의회 › 정당 › 로고에서 정해요. 파벌이 둘 이상인 정당은 각주에 공동교섭단체로 적혀요.</div>
+                <div class="hist-card-head"><b>${esc(i18n('sim.history.109'))}</b></div>
+                <div class="hist-field"><span>${esc(i18n('sim.history.110'))}</span><input type="text" data-w="title" value="${esc(S.wiki.title || '')}" placeholder="${esc(d.title)}"></div>
+                <div class="hist-field"><span>${esc(i18n('sim.history.111'))}</span><input type="color" data-w="frame" value="${esc(S.wiki.frame || '#2b3a67')}"><button type="button" class="hist-btn" data-frame="#ffffff">${esc(i18n('sim.party.29'))}</button><button type="button" class="hist-btn" data-frame="#2b3a67">${esc(i18n('sim.history.112'))}</button></div>
+                <div class="hist-card-head" style="margin-top:10px"><b>${esc(i18n('sim.contentSystem.9'))}</b></div>
+                <div class="hist-field"><span>${esc(i18n('sim.contentDate.11'))}</span><input type="text" data-w="govName" value="${esc(S.wiki.govName || '')}" placeholder="${esc(auto)}"></div>
+                <div class="hist-field"><span>${esc(i18n('sim.history.113'))}</span><input type="text" data-w="termStart" value="${esc(S.wiki.termStart || '')}" placeholder="${esc(i18n('sim.history.114'))}"><span>~</span><input type="text" data-w="termEnd" value="${esc(S.wiki.termEnd || '')}" placeholder="${esc(i18n('sim.history.115'))}"></div>
+                <div class="hist-card-head" style="margin-top:10px"><b>${esc(i18n('sim.history.116'))}</b></div>
+                <div class="hist-field"><span>${esc(i18n('sim.history.117'))}</span><input type="number" min="0" data-w="groupMin" value="${Number(S.wiki.groupMin) || 0}" style="width:5em"><span class="hist-dim">${esc(i18n('sim.history.118'))}</span></div>
+                <div class="hist-field"><span>${esc(i18n('sim.history.119'))}</span><input type="text" data-w="note" value="${esc(S.wiki.note || '')}" placeholder="${esc(i18n('sim.history.120'))}"></div>
+                <label class="hist-field" style="cursor:pointer"><input type="checkbox" data-w="footer" ${S.wiki.footer === false ? '' : 'checked'}><span>${esc(i18n('sim.history.121'))}</span></label>
+                <div class="hist-dim hist-small">${esc(i18n('sim.history.122'))}</div>
             </div>
-            <details class="hist-fold"><summary>위키 문법 보기</summary><textarea class="hist-markup" readonly>${esc(wikiMarkupNow())}</textarea><div class="hist-dim hist-small">로고가 있는 정당은 [[파일:정당 이름 로고.png]]로 들어가요 — 위키에 그 이름으로 로고 그림을 올리면 그대로 보여요.</div></details>`;
+            <details class="hist-fold"><summary>${esc(i18n('sim.history.123'))}</summary><textarea class="hist-markup" readonly>${esc(wikiMarkupNow())}</textarea><div class="hist-dim hist-small">${esc(i18n('sim.history.124'))}</div></details>`;
         box.querySelectorAll('[data-wch]').forEach(b => { b.onclick = () => { ui.wikiChamber = b.dataset.wch; renderWikibox(); showWikiTab(); }; });
         box.querySelectorAll('[data-wv]').forEach(b => { b.onclick = () => { ui.wikiView = b.dataset.wv; renderWikibox(); showWikiTab(); }; });
         box.querySelectorAll('[data-w]').forEach(i => {
@@ -861,12 +861,12 @@
         box.querySelector('[data-act="showwiki"]').onclick = showWikiTab;
         box.querySelector('[data-act="copy"]').onclick = async () => {
             const text = wikiMarkupNow();
-            try { await navigator.clipboard.writeText(text); showCustomAlert('위키 문법을 복사했습니다.'); }
-            catch (e) { const ta = box.querySelector('.hist-markup'); if (ta) { ta.closest('details').open = true; ta.select(); } showCustomAlert('복사하지 못했습니다 — "위키 문법 보기"에서 직접 복사하세요.'); }
+            try { await navigator.clipboard.writeText(text); showCustomAlert(i18n('sim.history.125')); }
+            catch (e) { const ta = box.querySelector('.hist-markup'); if (ta) { ta.closest('details').open = true; ta.select(); } showCustomAlert(i18n('sim.history.126')); }
         };
         box.querySelector('[data-act="img"]').onclick = () => {
             const url = hemicycleImage(d.main, 600);
-            if (!url) { showCustomAlert('반원 그림을 만들 수 없습니다.'); return; }
+            if (!url) { showCustomAlert(i18n('sim.history.127')); return; }
             const a = document.createElement('a');
             a.href = url; a.download = `${(d.title || 'hemicycle').replace(/[\\/:*?"<>|]/g, '_')}.png`;
             document.body.appendChild(a); a.click(); a.remove();
@@ -878,13 +878,13 @@
     function defaultBlocs() {
         const mk = (id, name, color, desc, ideos) => ({ id, name, color, desc, ideologies: ideos.map(n => ({ id: uid(), name: n })) });
         return [
-            mk('west', '서방 진영', '#3b82f6', '자유 시장 · 의회 민주주의 · 북대서양 동맹', ['자유민주주의', '보수주의', '사회민주주의', '기독교 민주주의']),
-            mk('east', '동구권', '#dc2626', '계획 경제 · 일당 체제 · 바르샤바 조약', ['마르크스-레닌주의', '스탈린주의', '마오쩌둥 사상', '주체사상']),
-            mk('nonaligned', '비동맹', '#a3a3a3', '어느 진영에도 속하지 않는 제3세계', ['티토주의', '아랍 사회주의', '제3세계주의']),
-            mk('other', '기타', '#a16207', '', []),
+            mk('west', i18n('sim.history.128'), '#3b82f6', i18n('sim.history.129'), [i18n('sim.history.130'), i18n('sim.auto.12'), i18n('sim.history.131'), i18n('sim.history.132')]),
+            mk('east', i18n('sim.history.133'), '#dc2626', i18n('sim.history.134'), [i18n('sim.history.135'), i18n('sim.history.136'), i18n('sim.history.137'), i18n('sim.history.138')]),
+            mk('nonaligned', i18n('sim.history.139'), '#a3a3a3', i18n('sim.history.140'), [i18n('sim.history.141'), i18n('sim.history.142'), i18n('sim.history.143')]),
+            mk('other', i18n('sim.history.144'), '#a16207', '', []),
         ];
     }
-    const blocOf = k => S.blocs.find(b => b.id === k) || { id: '', name: '미분류', color: '#777', ideologies: [] };
+    const blocOf = k => S.blocs.find(b => b.id === k) || { id: '', name: i18n('sim.history.145'), color: '#777', ideologies: [] };
     const ideoOf = (b, id) => (b.ideologies || []).find(x => x.id === id) || null;
     function renderBlocs() {
         const box = document.getElementById('contentBlocs');
@@ -893,28 +893,28 @@
         const total = Math.max(1, rows.length);
         const members = b => rows.filter(r => r.bloc === b.id);
         const unassigned = rows.filter(r => !S.blocs.some(b => b.id === r.bloc));
-        box.innerHTML = `<div class="hist-intro">진영을 만들고 색 · 설명 · 하위 이념을 정합니다. 세계 › 국가 순위에서 나라마다 진영과 하위 이념을 고를 수 있어요. (꾸밈용 — 게임 기능에는 영향 없음)</div>
+        box.innerHTML = `<div class="hist-intro">${esc(i18n('sim.history.146'))}</div>
             <div class="hist-card">
-                <div class="hist-card-head"><b>진영 구도</b><span class="hist-dim">국가 ${rows.length}개</span></div>
-                <div class="hist-bloc-bar">${S.blocs.map(b => { const n = members(b).length; return n ? `<span style="width:${n / total * 100}%;background:${esc(b.color)}" title="${esc(b.name)} ${n}개국"></span>` : ''; }).join('')}${unassigned.length ? `<span style="width:${unassigned.length / total * 100}%;background:#777" title="미분류 ${unassigned.length}개국"></span>` : ''}</div>
-                <div class="hist-legend">${S.blocs.map(b => `<span>${dotHtml(b.color)}${esc(b.name)} ${members(b).length}</span>`).join('')}${unassigned.length ? `<span>${dotHtml('#777')}미분류 ${unassigned.length}</span>` : ''}</div>
+                <div class="hist-card-head"><b>${esc(i18n('sim.history.147'))}</b><span class="hist-dim">${esc(i18n('sim.history.148', { count: rows.length }))}</span></div>
+                <div class="hist-bloc-bar">${S.blocs.map(b => { const n = members(b).length; return n ? `<span style="width:${n / total * 100}%;background:${esc(b.color)}" title="${esc(b.name)} ${esc(i18n('sim.history.countries', { count: n }))}"></span>` : ''; }).join('')}${unassigned.length ? `<span style="width:${unassigned.length / total * 100}%;background:#777" title="${esc(i18n('sim.history.unassignedTip', { count: unassigned.length }))}"></span>` : ''}</div>
+                <div class="hist-legend">${S.blocs.map(b => `<span>${dotHtml(b.color)}${esc(b.name)} ${members(b).length}</span>`).join('')}${unassigned.length ? `<span>${dotHtml('#777')}${esc(i18n('sim.history.145'))} ${unassigned.length}</span>` : ''}</div>
             </div>
             ${S.blocs.map(b => {
                 const ms = members(b).slice().sort((x, y) => (Number(y.score) || 0) - (Number(x.score) || 0));
                 return `<div class="hist-bloc" style="--bloc:${esc(b.color)}">
                     <div class="hist-bloc-head">
-                        <input type="color" value="${esc(/^#[0-9a-f]{6}$/i.test(b.color) ? b.color : '#888888')}" data-bc="${esc(b.id)}" title="진영 색">
-                        <input type="text" class="hist-bloc-name" value="${esc(b.name)}" data-bn="${esc(b.id)}" placeholder="진영 이름">
-                        <button type="button" class="hist-x" data-bdel="${esc(b.id)}" title="진영 지우기">×</button>
+                        <input type="color" value="${esc(/^#[0-9a-f]{6}$/i.test(b.color) ? b.color : '#888888')}" data-bc="${esc(b.id)}" title="${esc(i18n('sim.history.149'))}">
+                        <input type="text" class="hist-bloc-name" value="${esc(b.name)}" data-bn="${esc(b.id)}" placeholder="${esc(i18n('sim.history.150'))}">
+                        <button type="button" class="hist-x" data-bdel="${esc(b.id)}" title="${esc(i18n('sim.history.151'))}">×</button>
                     </div>
-                    <input type="text" class="hist-bloc-desc" value="${esc(b.desc || '')}" data-bd="${esc(b.id)}" placeholder="설명 (예: 계획 경제 · 일당 체제)">
-                    <div class="hist-sub-title">하위 이념</div>
-                    <div class="hist-chips">${(b.ideologies || []).map(x => `<span class="hist-ichip">${esc(x.name)} <small>${rows.filter(r => r.bloc === b.id && r.ideo === x.id).length || ''}</small><button type="button" data-idel="${esc(b.id)}|${esc(x.id)}" title="지우기">×</button></span>`).join('') || '<span class="hist-dim">없음</span>'}</div>
-                    <div class="hist-succ-row"><input type="text" placeholder="하위 이념 추가" data-iadd="${esc(b.id)}"><button type="button" class="hist-btn" data-iaddbtn="${esc(b.id)}">추가</button></div>
-                    <div class="hist-dim hist-small">소속 국가: ${ms.length ? ms.map(r => esc(rowName(r))).join(', ') : '없음'}</div>
+                    <input type="text" class="hist-bloc-desc" value="${esc(b.desc || '')}" data-bd="${esc(b.id)}" placeholder="${esc(i18n('sim.history.152'))}">
+                    <div class="hist-sub-title">${esc(i18n('sim.history.153'))}</div>
+                    <div class="hist-chips">${(b.ideologies || []).map(x => `<span class="hist-ichip">${esc(x.name)} <small>${rows.filter(r => r.bloc === b.id && r.ideo === x.id).length || ''}</small><button type="button" data-idel="${esc(b.id)}|${esc(x.id)}" title="${esc(i18n('sim.history.60'))}">×</button></span>`).join('') || `<span class="hist-dim">${esc(i18n('sim.contentVote.16'))}</span>`}</div>
+                    <div class="hist-succ-row"><input type="text" placeholder="${esc(i18n('sim.history.154'))}" data-iadd="${esc(b.id)}"><button type="button" class="hist-btn" data-iaddbtn="${esc(b.id)}">${esc(i18n('sim.contentTerritory.3'))}</button></div>
+                    <div class="hist-dim hist-small">${esc(i18n('sim.history.155'))} ${ms.length ? ms.map(r => esc(rowName(r))).join(', ') : esc(i18n('sim.contentVote.16'))}</div>
                 </div>`;
             }).join('')}
-            <div class="hist-actions"><button type="button" class="hist-btn primary" data-act="addbloc">+ 진영 추가</button><button type="button" class="hist-btn" data-act="resetblocs">처음 진영으로</button></div>`;
+            <div class="hist-actions"><button type="button" class="hist-btn primary" data-act="addbloc">${esc(i18n('sim.history.156'))}</button><button type="button" class="hist-btn" data-act="resetblocs">${esc(i18n('sim.history.157'))}</button></div>`;
         const B = id => S.blocs.find(b => b.id === id);
         box.querySelectorAll('[data-bc]').forEach(i => { i.onchange = () => { const b = B(i.dataset.bc); if (b) { b.color = i.value; renderBlocs(); renderRanking(); } }; });
         box.querySelectorAll('[data-bn]').forEach(i => { i.onchange = () => { const b = B(i.dataset.bn); if (b) { b.name = i.value.trim() || b.name; renderBlocs(); renderRanking(); } }; });
@@ -923,7 +923,7 @@
             btn.onclick = () => {
                 const b = B(btn.dataset.bdel); if (!b) return;
                 const n = members(b).length;
-                showCustomConfirm(`"${b.name}" 진영을 지울까요?${n ? `\n소속 국가 ${n}개는 미분류가 됩니다.` : ''}`, () => {
+                showCustomConfirm(i18n('sim.history.159', { name: b.name, v: n ? ("\n" + i18n('sim.history.158', { v: n })) : '' }), () => {
                     S.blocs = S.blocs.filter(x => x !== b);
                     S.ranking.rows.forEach(r => { if (r.bloc === b.id) { r.bloc = ''; r.ideo = ''; } });
                     renderBlocs(); renderRanking();
@@ -949,10 +949,10 @@
         });
         box.querySelector('[data-act="addbloc"]').onclick = () => {
             const palette = ['#8b5cf6', '#10b981', '#f59e0b', '#ec4899', '#14b8a6', '#6366f1'];
-            S.blocs.push({ id: uid(), name: `새 진영 ${S.blocs.length + 1}`, color: palette[S.blocs.length % palette.length], desc: '', ideologies: [] });
+            S.blocs.push({ id: uid(), name: i18n('sim.history.160', { blocs: S.blocs.length + 1 }), color: palette[S.blocs.length % palette.length], desc: '', ideologies: [] });
             renderBlocs(); renderRanking();
         };
-        box.querySelector('[data-act="resetblocs"]').onclick = () => showCustomConfirm('진영을 처음 목록(서방 · 동구권 · 비동맹 · 기타)으로 되돌릴까요?\n고친 진영과 하위 이념은 사라지고, 없는 진영의 국가는 미분류가 됩니다.', () => {
+        box.querySelector('[data-act="resetblocs"]').onclick = () => showCustomConfirm(i18n('sim.history.161'), () => {
             S.blocs = defaultBlocs();
             S.ranking.rows.forEach(r => { if (!S.blocs.some(b => b.id === r.bloc)) r.bloc = ''; r.ideo = ''; });
             renderBlocs(); renderRanking();
@@ -964,16 +964,16 @@
     // (처음 읽힐 때 fresh()가 이름 없이 부르므로, 이름이 있을 때만 아래쪽 FLAG_BY_NAME을 쓴다)
     function defaultRanking(selfName) {
         const rows = [
-            ['미합중국', '🇺🇸', 'west', 100], ['소비에트 연방', '☭', 'east', 96], ['서독', '🇩🇪', 'west', 74], ['일본', '🇯🇵', 'west', 72], ['영국', '🇬🇧', 'west', 70],
-            ['프랑스', '🇫🇷', 'west', 68], ['중화인민공화국', '🇨🇳', 'east', 62], ['동독', '⚒', 'east', 52], ['인도', '🇮🇳', 'nonaligned', 46], ['유고슬라비아', '★', 'nonaligned', 40],
+            [i18n('sim.history.162'), '🇺🇸', 'west', 100], [i18n('sim.history.163'), '☭', 'east', 96], [i18n('sim.history.164'), '🇩🇪', 'west', 74], [i18n('sim.history.165'), '🇯🇵', 'west', 72], [i18n('sim.history.166'), '🇬🇧', 'west', 70],
+            [i18n('sim.history.167'), '🇫🇷', 'west', 68], [i18n('sim.history.168'), '🇨🇳', 'east', 62], [i18n('sim.history.169'), '⚒', 'east', 52], [i18n('sim.history.170'), '🇮🇳', 'nonaligned', 46], [i18n('sim.history.171'), '★', 'nonaligned', 40],
         ].map(([name, flag, bloc, score]) => ({ id: uid(), name, flag, flagKey: '', flagImg: '', bloc, ideo: '', score, prevRank: null, self: false }));
         const selfKey = selfName ? FLAG_BY_NAME[selfName] : null;
         const twin = selfKey ? rows.find(r => FLAG_BY_NAME[r.name] === selfKey) : null;
         if (twin) rows.splice(rows.indexOf(twin), 1);
         rows.push({ id: uid(), name: '', flag: '', bloc: twin ? twin.bloc : 'west', score: twin ? twin.score : 50, prevRank: null, self: true });
-        return { title: '냉전 국가 순위', rows };
+        return { title: i18n('sim.history.172'), rows };
     }
-    const rowName = r => (r.self ? (nationName() || '우리나라') : r.name);
+    const rowName = r => (r.self ? (nationName() || i18n('sim.history.173')) : r.name);
     const ranked = () => S.ranking.rows.slice().sort((a, b) => (Number(b.score) || 0) - (Number(a.score) || 0));
     // 기본 국기 — 간단히 그린 SVG (이모지 국기는 Windows에서 글자로만 보여서). 직접 올린 그림(flagImg)이 있으면 그쪽을 쓴다
     const star = (cx, cy, r, fill, rot = -90) => `<polygon fill="${fill}" points="${Array.from({ length: 10 }, (_, i) => { const a = (rot + i * 36) * Math.PI / 180, rr = i % 2 ? r * 0.4 : r; return `${(cx + rr * Math.cos(a)).toFixed(2)},${(cy + rr * Math.sin(a)).toFixed(2)}`; }).join(' ')}"/>`;
@@ -1031,9 +1031,9 @@
         const list = ranked();
         const counts = S.blocs.map(b => [b, S.ranking.rows.filter(r => r.bloc === b.id).length]);
         const title = document.getElementById('histRankTitle');
-        if (title) title.textContent = S.ranking.title || '냉전 국가 순위';
+        if (title) title.textContent = S.ranking.title || i18n('sim.history.172');
         wrap.innerHTML = list.length ? `<div class="hist-rk">
-                <div class="hist-rk-title">${esc(S.ranking.title || '냉전 국가 순위')}</div>
+                <div class="hist-rk-title">${esc(S.ranking.title || i18n('sim.history.172'))}</div>
                 <div class="hist-rk-blocs">${counts.map(([b, n]) => (n ? `<span><i style="background:${esc(b.color)}"></i>${esc(b.name)} ${n}</span>` : '')).join('')}</div>
                 ${list.map((r, i) => {
                     const rank = i + 1, b = blocOf(r.bloc);
@@ -1047,7 +1047,7 @@
                         <span class="hist-rk-mv ${mv > 0 ? 'up' : mv < 0 ? 'down' : ''}">${mv > 0 ? '▲' + mv : mv < 0 ? '▼' + (-mv) : r.prevRank ? '–' : ''}</span>
                     </div>`;
                 }).join('')}
-            </div>` : '<div class="hist-empty"><div class="hist-empty-icon">🌐</div>순위에 나라가 없습니다.<br>왼쪽 세계 › 국가 순위에서 "+ 국가 추가"를 눌러 보세요.</div>';
+            </div>` : `<div class="hist-empty"><div class="hist-empty-icon">🌐</div>${esc(i18n('sim.history.174'))}<br>${esc(i18n('sim.history.175'))}</div>`;
     }
     function showRankTab() {
         const btn = document.getElementById('dispTabRanking');
@@ -1064,31 +1064,31 @@
         if (!box) return;
         clearTimeout(rankResort);
         const list = ranked();
-        const blocOpts = r => `${S.blocs.map(b => `<option value="${esc(b.id)}" ${r.bloc === b.id ? 'selected' : ''}>${esc(b.name)}</option>`).join('')}<option value="" ${S.blocs.some(b => b.id === r.bloc) ? '' : 'selected'}>미분류</option>`;
-        const ideoOpts = r => `<option value="">하위 이념 —</option>${blocOf(r.bloc).ideologies.map(x => `<option value="${esc(x.id)}" ${r.ideo === x.id ? 'selected' : ''}>${esc(x.name)}</option>`).join('')}`;
-        box.innerHTML = `<div class="hist-intro">꾸밈용 화면입니다 — 게임 기능에는 영향이 없어요. 고친 내용은 오른쪽 시각 화면 "국가 순위" 탭에 바로 보여요.</div>
+        const blocOpts = r => `${S.blocs.map(b => `<option value="${esc(b.id)}" ${r.bloc === b.id ? 'selected' : ''}>${esc(b.name)}</option>`).join('')}<option value="" ${S.blocs.some(b => b.id === r.bloc) ? '' : 'selected'}>${esc(i18n('sim.history.145'))}</option>`;
+        const ideoOpts = r => `<option value="">${esc(i18n('sim.history.176'))}</option>${blocOf(r.bloc).ideologies.map(x => `<option value="${esc(x.id)}" ${r.ideo === x.id ? 'selected' : ''}>${esc(x.name)}</option>`).join('')}`;
+        box.innerHTML = `<div class="hist-intro">${esc(i18n('sim.history.177'))}</div>
             <div class="hist-card hist-re-head">
-                <div class="hist-field"><span>제목</span><input type="text" data-rt="title" value="${esc(S.ranking.title)}" placeholder="냉전 국가 순위"></div>
+                <div class="hist-field"><span>${esc(i18n('sim.history.110'))}</span><input type="text" data-rt="title" value="${esc(S.ranking.title)}" placeholder="${esc(i18n('sim.history.172'))}"></div>
                 <div class="hist-actions">
-                    <button type="button" class="hist-btn primary" data-act="addrow">+ 국가 추가</button>
-                    <button type="button" class="hist-btn" data-act="mark" title="지금 순위를 기준으로 저장 — 점수를 바꾸면 순위표에 ▲▼로 변동이 보여요">순위 기준 저장</button>
-                    <button type="button" class="hist-btn" data-act="showrank">오른쪽에서 보기</button>
-                    <button type="button" class="hist-btn" data-act="reset">처음 목록으로</button>
+                    <button type="button" class="hist-btn primary" data-act="addrow">${esc(i18n('sim.history.179'))}</button>
+                    <button type="button" class="hist-btn" data-act="mark" title="${esc(i18n('sim.history.178'))}">${esc(i18n('sim.history.180'))}</button>
+                    <button type="button" class="hist-btn" data-act="showrank">${esc(i18n('sim.history.53'))}</button>
+                    <button type="button" class="hist-btn" data-act="reset">${esc(i18n('sim.history.181'))}</button>
                 </div>
             </div>
-            <div class="hist-re-hint">국기 칸을 누르면 그림을 올려요 · 점수는 ± 또는 직접 입력 · 진영을 바꾸면 하위 이념이 비워져요</div>
+            <div class="hist-re-hint">${esc(i18n('sim.history.182'))}</div>
             <div class="hist-re-list">
             ${list.map((r, i) => {
                 const b = blocOf(r.bloc);
                 return `<div class="hist-re-row${r.self ? ' self' : ''}" style="--bloc:${esc(b.color)}" data-row="${r.id}">
                     <span class="hist-re-no">${i + 1}</span>
-                    ${r.self ? `<span class="hist-re-flag self" title="국가 › 상징의 국기">${flagHtml(r)}</span>` : `<label class="hist-re-flag" title="눌러서 국기 그림 고르기">${flagHtml(r)}<input type="file" accept="image/*" data-rflag="${r.id}" hidden>${r.flagImg ? `<button type="button" class="hist-re-unflag" data-unflag="${r.id}" title="올린 국기 빼기">×</button>` : ''}</label>`}
-                    <input type="text" class="hist-re-name" data-rf="name" data-id="${r.id}" value="${esc(r.self ? rowName(r) : r.name)}" ${r.self ? 'disabled title="국가 › 상징의 국가명 — 우리나라"' : 'placeholder="국가 이름"'}>
-                    <span class="hist-re-score"><button type="button" data-step="-1" data-id="${r.id}" title="1점 내리기">−</button><input type="number" data-rf="score" data-id="${r.id}" value="${Number(r.score) || 0}" min="0" max="999"><button type="button" data-step="1" data-id="${r.id}" title="1점 올리기">+</button></span>
-                    ${r.self ? '<span class="hist-re-me" title="우리나라 — 이름 · 국기는 국가 › 상징에서 바꿔요">★</span>' : `<button type="button" class="hist-x" data-rdel="${r.id}" title="지우기">×</button>`}
+                    ${r.self ? `<span class="hist-re-flag self" title="${esc(i18n('sim.history.183'))}">${flagHtml(r)}</span>` : `<label class="hist-re-flag" title="${esc(i18n('sim.history.184'))}">${flagHtml(r)}<input type="file" accept="image/*" data-rflag="${r.id}" hidden>${r.flagImg ? `<button type="button" class="hist-re-unflag" data-unflag="${r.id}" title="${esc(i18n('sim.history.185'))}">×</button>` : ''}</label>`}
+                    <input type="text" class="hist-re-name" data-rf="name" data-id="${r.id}" value="${esc(r.self ? rowName(r) : r.name)}" ${r.self ? `disabled title="${esc(i18n('sim.history.186'))}"` : `placeholder="${esc(i18n('sim.history.187'))}"`}>
+                    <span class="hist-re-score"><button type="button" data-step="-1" data-id="${r.id}" title="${esc(i18n('sim.history.188'))}">−</button><input type="number" data-rf="score" data-id="${r.id}" value="${Number(r.score) || 0}" min="0" max="999"><button type="button" data-step="1" data-id="${r.id}" title="${esc(i18n('sim.history.189'))}">+</button></span>
+                    ${r.self ? `<span class="hist-re-me" title="${esc(i18n('sim.history.190'))}">★</span>` : `<button type="button" class="hist-x" data-rdel="${r.id}" title="${esc(i18n('sim.history.60'))}">×</button>`}
                     <span class="hist-re-meta">
-                        <select data-rf="bloc" data-id="${r.id}" title="진영">${blocOpts(r)}</select>
-                        <select data-rf="ideo" data-id="${r.id}" title="하위 이념" ${b.ideologies.length ? '' : 'disabled'}>${ideoOpts(r)}</select>
+                        <select data-rf="bloc" data-id="${r.id}" title="${esc(i18n('sim.history.191'))}">${blocOpts(r)}</select>
+                        <select data-rf="ideo" data-id="${r.id}" title="${esc(i18n('sim.history.153'))}" ${b.ideologies.length ? '' : 'disabled'}>${ideoOpts(r)}</select>
                     </span>
                 </div>`;
             }).join('')}
@@ -1133,12 +1133,12 @@
                 const r = at(b.dataset.rdel); if (!r) return;
                 // 영토 직접 수정이 잠긴 시나리오에서는 국가를 지워 영토를 미배정으로 만드는 길도 막는다 (js/campaign.js lockReason)
                 const locked = window.HemiCampaign && window.HemiCampaign.lockReason && window.HemiCampaign.lockReason('worldMap');
-                if (locked && !r.self && window.HemiWorldMap && window.HemiWorldMap.state && Object.values(window.HemiWorldMap.state.owners).includes(String(r.id))) { showCustomAlert(locked + '\n(이 국가는 세계지도에 영토가 있습니다.)'); return; }
-                showCustomConfirm(`"${rowName(r)}"을(를) 순위에서 지울까요?`, () => { S.ranking.rows = S.ranking.rows.filter(x => x.id !== r.id); renderRanking(); renderBlocs(); });
+                if (locked && !r.self && window.HemiWorldMap && window.HemiWorldMap.state && Object.values(window.HemiWorldMap.state.owners).includes(String(r.id))) { showCustomAlert(locked + ("\n" + i18n('sim.history.192'))); return; }
+                showCustomConfirm(i18n('sim.history.193', { r: rowName(r) }), () => { S.ranking.rows = S.ranking.rows.filter(x => x.id !== r.id); renderRanking(); renderBlocs(); });
             };
         });
         box.querySelector('[data-act="addrow"]').onclick = () => {
-            const r = { id: uid(), name: '새 국가', flag: '🏳', flagKey: '', flagImg: '', bloc: (S.blocs[S.blocs.length - 1] || {}).id || '', ideo: '', score: 30, prevRank: null, self: false };
+            const r = { id: uid(), name: i18n('sim.history.194'), flag: '🏳', flagKey: '', flagImg: '', bloc: (S.blocs[S.blocs.length - 1] || {}).id || '', ideo: '', score: 30, prevRank: null, self: false };
             S.ranking.rows.push(r);
             renderRanking(); renderBlocs();
             const inp = box.querySelector(`input[data-rf="name"][data-id="${r.id}"]`);
@@ -1146,7 +1146,7 @@
         };
         box.querySelector('[data-act="mark"]').onclick = () => { ranked().forEach((r, i) => { r.prevRank = i + 1; }); renderRanking(); };
         box.querySelector('[data-act="showrank"]').onclick = showRankTab;
-        box.querySelector('[data-act="reset"]').onclick = () => showCustomConfirm('국가 순위를 처음 목록으로 되돌릴까요?', () => { S.ranking = defaultRanking(nationName()); renderRanking(); renderBlocs(); });
+        box.querySelector('[data-act="reset"]').onclick = () => showCustomConfirm(i18n('sim.history.195'), () => { S.ranking = defaultRanking(nationName()); renderRanking(); renderBlocs(); });
     }
 
     // ================= 탭 =================
@@ -1160,58 +1160,58 @@
         if (after && after.nextSibling) bar.insertBefore(btn, after.nextSibling); else bar.appendChild(btn);
         host.appendChild(el(`<div id="content${id}" class="sub-tab-content"></div>`));
     }
-    addTab('mainContentSetup', 'subTabList', 'setup', 'timeline', 'Timeline', '세력 변화');
+    addTab('mainContentSetup', 'subTabList', 'setup', 'timeline', 'Timeline', i18n('sim.history.196'));
     // 오른쪽 시각 화면 탭 "세력 변화" — 정당 역사 도표 (아래로 스크롤)
     (function addDispTab() {
         const after = document.getElementById('dispTabRegion') || document.getElementById('dispTabCabinet');
         if (!after) return;
-        const btn = el(`<button class="disp-tab-btn" id="dispTabTimeline" data-tab="timeline" onclick="switchDispTab('timeline')" style="display:none;"><span class="disp-tab-label">세력 변화</span><span class="disp-tab-close" onclick="event.stopPropagation();closeDispTab('timeline')">×</span></button>`);
+        const btn = el(`<button class="disp-tab-btn" id="dispTabTimeline" data-tab="timeline" onclick="switchDispTab('timeline')" style="display:none;"><span class="disp-tab-label">${esc(i18n('sim.history.196'))}</span><span class="disp-tab-close" onclick="event.stopPropagation();closeDispTab('timeline')">×</span></button>`);
         after.parentElement.insertBefore(btn, after.nextSibling);
         const ref = document.getElementById('dispPanelRegion') || document.getElementById('dispPanelCabinet');
         if (!ref) return;
         ref.parentElement.insertBefore(el(`<div class="disp-panel" id="dispPanelTimeline"><div class="chamber-box hist-hist-box">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;"><h3 style="margin:0;border:none;padding:0;"><span class="tno-prompt">&gt; </span><span id="histHistTitle">세력 변화</span></h3></div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;"><h3 style="margin:0;border:none;padding:0;"><span class="tno-prompt">&gt; </span><span id="histHistTitle">${esc(i18n('sim.history.196'))}</span></h3></div>
             <div id="histHistWrap"></div></div></div>`), ref.nextSibling);
     })();
     // 오른쪽 시각 화면 탭 "국가 순위" — 세계 › 국가 순위에서 고친 순위표를 크게 본다
     (function addRankDispTab() {
         const after = document.getElementById('dispTabTimeline') || document.getElementById('dispTabCabinet');
         if (!after) return;
-        after.parentElement.insertBefore(el(`<button class="disp-tab-btn" id="dispTabRanking" data-tab="ranking" onclick="switchDispTab('ranking')" style="display:none;"><span class="disp-tab-label">국가 순위</span><span class="disp-tab-close" onclick="event.stopPropagation();closeDispTab('ranking')">×</span></button>`), after.nextSibling);
+        after.parentElement.insertBefore(el(`<button class="disp-tab-btn" id="dispTabRanking" data-tab="ranking" onclick="switchDispTab('ranking')" style="display:none;"><span class="disp-tab-label">${esc(i18n('sim.history.197'))}</span><span class="disp-tab-close" onclick="event.stopPropagation();closeDispTab('ranking')">×</span></button>`), after.nextSibling);
         const ref = document.getElementById('dispPanelTimeline') || document.getElementById('dispPanelCabinet');
         if (!ref) return;
         ref.parentElement.insertBefore(el(`<div class="disp-panel" id="dispPanelRanking"><div class="chamber-box hist-rank-box">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;"><h3 style="margin:0;border:none;padding:0;"><span class="tno-prompt">&gt; </span><span id="histRankTitle">국가 순위</span></h3></div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;"><h3 style="margin:0;border:none;padding:0;"><span class="tno-prompt">&gt; </span><span id="histRankTitle">${esc(i18n('sim.history.197'))}</span></h3></div>
             <div id="histRankWrap"></div></div></div>`), ref.nextSibling);
     })();
     // 오른쪽 시각 화면 탭 "위키 틀" — 원내 구성 틀 미리보기
     (function addWikiDispTab() {
         const after = document.getElementById('dispTabTimeline') || document.getElementById('dispTabCabinet');
         if (!after) return;
-        after.parentElement.insertBefore(el(`<button class="disp-tab-btn" id="dispTabWiki" data-tab="wiki" onclick="switchDispTab('wiki')" style="display:none;"><span class="disp-tab-label">위키 틀</span><span class="disp-tab-close" onclick="event.stopPropagation();closeDispTab('wiki')">×</span></button>`), after.nextSibling);
+        after.parentElement.insertBefore(el(`<button class="disp-tab-btn" id="dispTabWiki" data-tab="wiki" onclick="switchDispTab('wiki')" style="display:none;"><span class="disp-tab-label">${esc(i18n('sim.history.198'))}</span><span class="disp-tab-close" onclick="event.stopPropagation();closeDispTab('wiki')">×</span></button>`), after.nextSibling);
         const ref = document.getElementById('dispPanelTimeline') || document.getElementById('dispPanelCabinet');
         if (!ref) return;
         ref.parentElement.insertBefore(el(`<div class="disp-panel" id="dispPanelWiki"><div class="chamber-box">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;"><h3 style="margin:0;border:none;padding:0;"><span class="tno-prompt">&gt; </span>위키 틀</h3></div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;"><h3 style="margin:0;border:none;padding:0;"><span class="tno-prompt">&gt; </span>${esc(i18n('sim.history.198'))}</h3></div>
             <div id="histWikiWrap"></div></div></div>`), ref.nextSibling);
     })();
-    addTab('mainContentSetup', 'subTabTimeline', 'setup', 'wikibox', 'Wikibox', '위키 틀');
+    addTab('mainContentSetup', 'subTabTimeline', 'setup', 'wikibox', 'Wikibox', i18n('sim.history.198'));
     // 세계 (1.6.5) — 국가 아래 새 메인 메뉴: 국가 순위 · 진영
     (function addWorldMain() {
         const nationBtn = document.getElementById('mainTabNation'), nationContent = document.getElementById('mainContentNation');
         if (!nationBtn || !nationContent) return;
         // 경제 — 자리 · 색만 잡아 둔 잠긴 메뉴 (국가 다음, 세계 앞). 누르면 안내만 뜬다
-        const eco = el(`<button class="main-tab-btn" onclick="histEconomyLocked()" id="mainTabEconomy" title="경제 — 1.6.9 업데이트에서 열립니다">💹 경제 🔒</button>`);
+        const eco = el(`<button class="main-tab-btn" onclick="histEconomyLocked()" id="mainTabEconomy" title="${esc(i18n('sim.history.199'))}">${esc(i18n('sim.history.200'))}</button>`);
         nationBtn.parentElement.insertBefore(eco, nationBtn.nextSibling);
-        nationBtn.parentElement.insertBefore(el(`<button class="main-tab-btn" onclick="switchMainTab('world')" id="mainTabWorld">🌐 세계</button>`), eco.nextSibling);
+        nationBtn.parentElement.insertBefore(el(`<button class="main-tab-btn" onclick="switchMainTab('world')" id="mainTabWorld">${esc(i18n('sim.history.201'))}</button>`), eco.nextSibling);
         nationContent.parentElement.insertBefore(el(`<div id="mainContentWorld" class="main-tab-content"><div class="sub-tab-container"></div></div>`), nationContent.nextSibling);
         try { if (!currentSubTab.world) currentSubTab.world = 'ranking'; } catch (e) { /* main.js 없음 */ }
     })();
     const origSetLogoBg = window.setLogoBg;
     if (typeof origSetLogoBg === 'function') window.setLogoBg = function () { const r = origSetLogoBg.apply(this, arguments); try { renderWikiPreview(); } catch (e) { /* 아직 없음 */ } return r; };
-    window.histEconomyLocked = () => { try { showCustomAlert('🔒 경제 메뉴는 아직 잠겨 있어요 — 1.6.9 "보이지 않는 손" 업데이트에서 경제 시스템과 함께 열립니다.'); } catch (e) { /* 알림 없음 */ } };
-    addTab('mainContentWorld', null, 'world', 'ranking', 'Ranking', '국가 순위');
-    addTab('mainContentWorld', 'subTabRanking', 'world', 'blocs', 'Blocs', '진영');
+    window.histEconomyLocked = () => { try { showCustomAlert(i18n('sim.history.202')); } catch (e) { /* 알림 없음 */ } };
+    addTab('mainContentWorld', null, 'world', 'ranking', 'Ranking', i18n('sim.history.197'));
+    addTab('mainContentWorld', 'subTabRanking', 'world', 'blocs', 'Blocs', i18n('sim.history.191'));
     const origSwitch = window.switchSubTab;
     window.switchSubTab = function (main, sub) {
         const r = origSwitch.apply(this, arguments);
@@ -1274,12 +1274,12 @@
         // 머리: 엠블럼 | 제목 · 원내 구성
         const headH = 92;
         parts.push(`<rect x="0" y="0" width="${W}" height="${headH}" fill="${X(frame)}"/>`);
-        const tw = Math.max(textW(d.title, 16, 700), textW('원내 구성', 24, 800));
+        const tw = Math.max(textW(d.title, 16, 700), textW(i18n('sim.history.80'), 24, 800));
         const emW = 90, gap = 16, total = emW + gap * 2 + 1 + tw, x0 = (W - total) / 2;
         parts.push(d.emblem ? `<image href="${X(d.emblem)}" x="${x0}" y="16" width="${emW}" height="60" preserveAspectRatio="xMidYMid meet"/>` : `<g transform="translate(${x0 + 13},26)">${emblemSvg(ffg)}</g>`);
         parts.push(`<rect x="${x0 + emW + gap}" y="14" width="1" height="64" fill="${ffg}" opacity=".35"/>`);
         parts.push(`<text x="${x0 + emW + gap * 2 + 1}" y="40" font-size="16" font-weight="700" fill="${ffg}">${X(d.title)}</text>`);
-        parts.push(`<text x="${x0 + emW + gap * 2 + 1}" y="70" font-size="24" font-weight="800" fill="${ffg}">원내 구성</text>`);
+        parts.push(`<text x="${x0 + emW + gap * 2 + 1}" y="70" font-size="24" font-weight="800" fill="${ffg}">${esc(i18n('sim.history.80'))}</text>`);
         y = headH;
         const band = (h, fill, inner) => { parts.push(`<rect x="0" y="${y}" width="${W}" height="${h}" fill="${fill}"/>` + inner(y)); y += h; };
         const ctext = (cy, t, size, weight, fill) => `<text x="${W / 2}" y="${cy}" font-size="${size}" font-weight="${weight}" fill="${fill}" text-anchor="middle">${X(t)}</text>`;
@@ -1291,16 +1291,16 @@
         const badge = (cx, cy, arr, color, size = 15) => {
             const c = color || '#5c5c5c', light = fgFor(c) !== '#fff', ink = light ? '#3d3d3d' : c;
             if (arr.length < 2) {
-                const t = `${arr[0]}석`, w = textW(t, size, 800) + 14, h = size + 8;
+                const t = i18n('sim.history.77', { arr: arr[0] }), w = textW(t, size, 800) + 14, h = size + 8;
                 return `<rect x="${cx - w / 2}" y="${cy - h / 2}" width="${w}" height="${h}" rx="5" fill="#fff"/><text x="${cx}" y="${cy + size * 0.36}" font-size="${size}" font-weight="800" fill="${ink}" text-anchor="middle">${t}</text>`;
             }
-            const ta = `${arr[0]}석`, tb = `${arr[1]}석`, wa = textW(ta, size, 800) + 16, wb = textW(tb, size, 800) + 12, h = size + 8, x = cx - (wa + wb) / 2;
+            const ta = i18n('sim.history.77', { arr: arr[0] }), tb = i18n('sim.history.77', { arr: arr[1] }), wa = textW(ta, size, 800) + 16, wb = textW(tb, size, 800) + 12, h = size + 8, x = cx - (wa + wb) / 2;
             return `<rect x="${x - 1.5}" y="${cy - h / 2 - 1.5}" width="${wa + wb + 3}" height="${h + 3}" rx="6" fill="#fff"/>`
                 + `<path d="M${x} ${cy - h / 2} h${wa} l-5 ${h} h-${wa - 5} z" fill="${light ? '#5c5c5c' : X(c)}"/>`
                 + `<text x="${x + (wa - 3) / 2}" y="${cy + size * 0.36}" font-size="${size}" font-weight="800" fill="#fff" text-anchor="middle">${ta}</text>`
                 + `<text x="${x + wa + wb / 2 - 2}" y="${cy + size * 0.36}" font-size="${size}" font-weight="800" fill="${ink}" text-anchor="middle">${tb}</text>`;
         };
-        const badgeW = (arr, size = 15) => (arr.length < 2 ? textW(`${arr[0]}석`, size, 800) + 14 : textW(`${arr[0]}석`, size, 800) + 16 + textW(`${arr[1]}석`, size, 800) + 12 + 3);
+        const badgeW = (arr, size = 15) => (arr.length < 2 ? textW(i18n('sim.history.77', { arr: arr[0] }), size, 800) + 14 : textW(i18n('sim.history.77', { arr: arr[0] }), size, 800) + 16 + textW(i18n('sim.history.77', { arr: arr[1] }), size, 800) + 12 + 3);
         // 글자 + 의석 표시를 한 덩어리로 가운데 정렬 (재적 · 비교섭단체 띠)
         const labelBadge = (cy, label, fill, arr, color) => {
             const lw = textW(label, 17, 800), bw = badgeW(arr), x0 = (W - (lw + 10 + bw)) / 2;
@@ -1335,14 +1335,14 @@
             parts.push(`<rect x="0" y="${y + h}" width="${W}" height="1" fill="#fff" opacity=".75"/>`);
             y += h + 1;
         });
-        if (d.gov.length) { sec(d.gov.length > 1 ? '연립여당' : '여당'); rowsOf(d.gov); if (d.opp.length) { sec('야당'); rowsOf(d.opp); } } else if (d.opp.length) { sec('원내 정당'); rowsOf(d.opp); }
+        if (d.gov.length) { sec(d.gov.length > 1 ? i18n('sim.history.82') : i18n('sim.district.163')); rowsOf(d.gov); if (d.opp.length) { sec(i18n('sim.district.164')); rowsOf(d.opp); } } else if (d.opp.length) { sec(i18n('sim.history.83')); rowsOf(d.opp); }
         const small = [...d.minor, ...d.ind];
         if (small.length) {
             const smallSeats = d.chs.map((ch, i) => small.reduce((a, p) => a + d.seats(p)[i], 0));
-            const label = (d.minor.length ? '비교섭단체' : '무소속') + (smallMark ? ` ${smallMark})` : '');
+            const label = (d.minor.length ? i18n('sim.history.79') : i18n('sim.core.4')) + (smallMark ? ` ${smallMark})` : '');
             band(44, '#808080', yy => labelBadge(yy + 22, label, '#fff', smallSeats, '#7f7f7f'));
         }
-        band(46, frame, yy => labelBadge(yy + 23, '재적', ffg, d.totals, frame));
+        band(46, frame, yy => labelBadge(yy + 23, i18n('sim.history.84'), ffg, d.totals, frame));
         const custom = (S.wiki.note || '').trim();
         const noteLines = [];
         notes.forEach((t, i) => wrapText(`${i + 1}. ${t}`, 13, W - 40).forEach(l => noteLines.push(l)));
@@ -1351,9 +1351,9 @@
         if (noteLines.length || legend) {
             const h = 14 + noteLines.length * 22 + (legend ? 32 : 0) + 6;
             band(h, '#f2f2f2', yy => noteLines.map((l, i) => ctext(yy + 28 + i * 22, l, 13, 400, '#333')).join('')
-                + (legend ? badge(W / 2, yy + 18 + noteLines.length * 22 + 14, [`${chName(d.chs[0])} 의석`.replace(/석$/, ''), `${chName(d.chs[1])} 의석`.replace(/석$/, '')], '#6b6b6b', 12) : ''));
+                + (legend ? badge(W / 2, yy + 18 + noteLines.length * 22 + 14, [i18n('sim.history.99', { chs: chName(d.chs[0]) }).replace(/석$/, ''), i18n('sim.history.99', { chs: chName(d.chs[1]) }).replace(/석$/, '')], '#6b6b6b', 12) : ''));
         }
-        if (S.wiki.footer !== false) band(44, '#ffffff', yy => `<rect x="0" y="${yy}" width="${W}" height="1" fill="#ddd"/>` + ctext(yy + 28, '정당 구분 (원내 · 원외)', 15, 700, '#222'));
+        if (S.wiki.footer !== false) band(44, '#ffffff', yy => `<rect x="0" y="${yy}" width="${W}" height="1" fill="#ddd"/>` + ctext(yy + 28, i18n('sim.history.203'), 15, 700, '#222'));
         const H = y;
         return `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${W + 6}" height="${H + 6}" viewBox="-3 -3 ${W + 6} ${H + 6}" font-family="${X(FONT)}">`
             + `<rect x="-3" y="-3" width="${W + 6}" height="${H + 6}" fill="${X(frame)}"/><rect x="0" y="0" width="${W}" height="${H}" fill="#fff"/>${parts.join('')}</svg>`;
@@ -1367,7 +1367,7 @@
         const ctext = (cy, t, size, weight, fill) => `<text x="${W / 2}" y="${cy}" font-size="${size}" font-weight="${weight}" fill="${X(fill)}" text-anchor="middle">${X(t)}</text>`;
         const headH = d.emblem ? 136 : 64;
         if (d.emblem) parts.push(`<image href="${X(d.emblem)}" x="${W / 2 - 55}" y="14" width="110" height="70" preserveAspectRatio="xMidYMid meet"/>`);
-        parts.push(ctext(headH - 20, `${nationName() || d.title}의 원외정당`, 24, 800, ink));
+        parts.push(ctext(headH - 20, i18n('sim.history.204', { title: nationName() || d.title }), 24, 800, ink));
         parts.push(`<rect x="0" y="${headH}" width="${W}" height="1" fill="#e3e3e3"/>`);
         y = headH + 1;
         if (d.govName || d.period) {
@@ -1376,7 +1376,7 @@
             y += h;
         }
         const cw = W / 3;
-        if (!outs.length) { parts.push(ctext(y + 40, '의석이 없는 정당이 없어요.', 14, 400, '#555')); y += 64; }
+        if (!outs.length) { parts.push(ctext(y + 40, i18n('sim.history.205'), 14, 400, '#555')); y += 64; }
         for (let i = 0; i < outs.length; i += 3) {
             const chunk = outs.slice(i, i + 3);
             const h = chunk.some(p => p.logoPhoto) ? 136 : 96;
@@ -1400,7 +1400,7 @@
             parts.push(`<rect x="0" y="${y}" width="${W}" height="1" fill="#e3e3e3"/><rect x="${cw}" y="${y}" width="1" height="${h}" fill="#e3e3e3"/><rect x="${cw * 2}" y="${y}" width="1" height="${h}" fill="#e3e3e3"/>`);
             y += h;
         }
-        if (S.wiki.footer !== false) { parts.push(`<rect x="0" y="${y}" width="${W}" height="1" fill="#ddd"/>` + ctext(y + 28, '정당 구분 (원내 · 원외)', 15, 700, '#222')); y += 44; }
+        if (S.wiki.footer !== false) { parts.push(`<rect x="0" y="${y}" width="${W}" height="1" fill="#ddd"/>` + ctext(y + 28, i18n('sim.history.203'), 15, 700, '#222')); y += 44; }
         const H = y;
         return `<svg xmlns="http://www.w3.org/2000/svg" width="${W + 6}" height="${H + 6}" viewBox="-3 -3 ${W + 6} ${H + 6}" font-family="${X(FONT)}">`
             + `<rect x="-3" y="-3" width="${W + 6}" height="${H + 6}" fill="${X(frame)}"/><rect x="0" y="0" width="${W}" height="${H}" fill="#fff"/>${parts.join('')}</svg>`;
@@ -1415,7 +1415,7 @@
         const W = 720, padX = 24, rowH = 46;
         const counts = S.blocs.map(b => [b, S.ranking.rows.filter(r => r.bloc === b.id).length]).filter(([, n]) => n);
         const parts = [];
-        parts.push(`<text x="${W / 2}" y="44" font-size="26" font-weight="800" fill="${X(text)}" text-anchor="middle" letter-spacing="2">${X(S.ranking.title || '냉전 국가 순위')}</text>`);
+        parts.push(`<text x="${W / 2}" y="44" font-size="26" font-weight="800" fill="${X(text)}" text-anchor="middle" letter-spacing="2">${X(S.ranking.title || i18n('sim.history.172'))}</text>`);
         // 진영 범례 (가운데 정렬)
         const items = counts.map(([b, n]) => ({ b, t: `${b.name} ${n}`, w: 14 + textW(`${b.name} ${n}`, 13) + 16 }));
         let lx = (W - items.reduce((a, it) => a + it.w, 0)) / 2;
@@ -1464,7 +1464,7 @@
             t.removeAttribute('class');
         });
         const w = Number(svgEl.getAttribute('width')) || svgEl.getBoundingClientRect().width, h = Number(svgEl.getAttribute('height')) || svgEl.getBoundingClientRect().height;
-        const title = document.getElementById('histHistTitle')?.textContent || '세력 변화';
+        const title = document.getElementById('histHistTitle')?.textContent || i18n('sim.history.196');
         const head = 44;
         clone.setAttribute('x', 0); clone.setAttribute('y', head); clone.setAttribute('width', w); clone.setAttribute('height', h);
         return `<svg xmlns="http://www.w3.org/2000/svg" width="${w + 24}" height="${h + head + 16}" viewBox="-12 0 ${w + 24} ${h + head + 16}" font-family="${X(FONT)}"><rect x="-12" width="${w + 24}" height="${h + head + 16}" fill="${X(bg)}"/>`
@@ -1511,7 +1511,7 @@
         const bare = new XMLSerializer().serializeToString(root);
         holder.remove();
         const img = new Image();
-        await new Promise((ok, bad) => { img.onload = ok; img.onerror = () => bad(new Error('그림을 만들지 못했습니다')); img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(bare); });
+        await new Promise((ok, bad) => { img.onload = ok; img.onerror = () => bad(new Error(i18n('sim.history.imgFail'))); img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(bare); });
         const c = document.createElement('canvas');
         c.width = Math.round(W * scale); c.height = Math.round(H * scale);
         const ctx = c.getContext('2d');
