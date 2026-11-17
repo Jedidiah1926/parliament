@@ -54,8 +54,6 @@ window.HemiLangPacks.en = {
   "home.menu": "Main menu",
   "home.menu.maker": "Create",
   "home.menu.makerDesc": "Make and manage maps · scenarios · challenges",
-  "home.menu.roadmap": "Roadmap & Updates",
-  "home.menu.roadmapDesc": "Plans and what changed",
   "home.menu.settings": "Settings",
   "home.menu.settingsDesc": "Display · Theme",
   "home.menu.start": "Start",

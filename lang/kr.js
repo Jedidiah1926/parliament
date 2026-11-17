@@ -43,8 +43,6 @@ window.HemiLangPacks.kr = {
   "home.menu": "메인 메뉴",
   "home.menu.maker": "만들기",
   "home.menu.makerDesc": "맵 · 시나리오 · 챌린지 제작물 만들기와 관리",
-  "home.menu.roadmap": "로드맵 · 업데이트",
-  "home.menu.roadmapDesc": "앞으로의 계획과 바뀐 점",
   "home.menu.settings": "설정",
   "home.menu.settingsDesc": "화면 · 테마",
   "home.menu.start": "시작하기",
