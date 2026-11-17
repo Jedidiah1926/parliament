@@ -3,7 +3,7 @@
 // official: true  — 정식 출시(Steam): 이 판(웹 · GitHub 설치판)에서는 플레이만 막는다.
 //     · 시작 화면 소식에 Steam 상점 링크(steamUrl)가 나온다
 //     · "시작하기" 대신 "세이브 내보내기" — 브라우저에 남은 세이브를 골라 .hemi 또는 .json으로 받아 Steam 판으로 옮길 수 있다
-//     · 게임 화면(main.html · Teaser)을 열면 Steam으로 안내하는 창이 덮는다 (맵 메이커 · 변환 · 설정 · 로드맵은 그대로)
+//     · 게임 화면(main.html · Teaser)을 열면 Steam으로 안내하는 창이 덮는다 (맵 메이커 · 설정은 그대로)
 //     · 번역 템플릿 받기(시작 화면 언어 메뉴)도 막는다 — data-official-block 버튼은 숨기고, 받기 함수도 막음
 //     · Steam 판(electron/steam.json에 appId가 있는 데스크톱 앱)은 막지 않는다
 // steamUrl: 나중에 채울 Steam 상점 주소 — 비어 있으면 링크 대신 "상점 페이지 준비 중"으로 보여 준다

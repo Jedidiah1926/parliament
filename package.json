@@ -37,7 +37,6 @@
       "fonts/**/*",
       "presets/**/*",
       "lang/**/*",
-      "old2/**/*",
       "icons/**/*",
       "!electron/smoketest.js",
       "!README.md",

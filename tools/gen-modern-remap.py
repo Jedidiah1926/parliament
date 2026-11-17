@@ -13,9 +13,9 @@ import re, colorsys, sys, os
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 P = 'html[data-theme-family="modern"]'
 
-CSS_FILES = ['css/dno.css', 'css/teaser.css', 'css/main.css', 'css/roadmap.css', 'css/index.css']
+CSS_FILES = ['css/dno.css', 'css/teaser.css', 'css/main.css', 'css/index.css']
 INLINE_FILES = ['dno.html', 'js/dno.js', 'teaser.html', 'js/teaser.js', 'main.html', 'settings.html',
-                'roadmap.html', 'js/roadmap.js', 'index.html', 'map.html']
+                'index.html', 'map.html']
 
 
 def read(f):
