@@ -27,14 +27,40 @@
         if (window.HemiDev && window.HemiDev.anyOn()) window.HemiDev.teasers.forEach(t => spaces.push(`hemicycleTeaserV2-${t.id}:`));
     }
 
-    // 오류 글 — 이 파일은 main.html에서 번역 엔진(js/lang.js)보다 먼저 읽히므로, 아직 없으면 한국어로
-    const tr = (key, kr) => (typeof window.i18n === 'function' ? window.i18n(key) : kr);
+    // 오류 글 — 앱(electron/saves.js)은 원인 code만 넘기고, 글자는 고른 언어 팩의 common.saveFolder.<code>로.
+    // 이 파일은 main.html에서 번역 엔진(js/lang.js)보다 먼저 읽히므로, 글자는 보여 줄 때 만든다
+    const has = key => !!(window.HemiLang && window.HemiLang.has && window.HemiLang.has(key));
+    const say = (key, vars) => (typeof window.i18n === 'function' ? window.i18n(key, vars) : key);
+    const reasonOf = err => {
+        if (!err) return '';
+        const key = 'common.saveFolder.' + (err.code || 'failed');
+        return say(has(key) ? key : 'common.saveFolder.failed');
+    };
+    const errOf = (r, fallback) => ({ code: (r && r.code) || fallback || 'failed', detail: (r && r.error) || '' });
+
+    // 저장 · 읽기에 실패하면 한 번 알린다 (테마 창 — js/dialogs.js). 같은 원인은 다시 묻지 않고, 저장이 되면 다시 알릴 수 있게
+    let notified = '';
+    function notify(kind) {
+        const err = lastError;
+        if (!err || notified === kind + ':' + err.code) return;
+        notified = kind + ':' + err.code;
+        const show = () => {
+            const msg = say(kind === 'read' ? 'common.saveFolder.readAlert' : 'common.saveFolder.writeAlert', { reason: reasonOf(err) });
+            if (window.HemiUI && window.HemiUI.alert) window.HemiUI.alert(msg, { tone: 'danger', title: say('common.saveFolder.title') });
+            else console.warn('[세이브 폴더]', msg);
+        };
+        // 번역 팩 · 대화상자가 준비된 뒤에 (페이지를 여는 중에 난 오류)
+        let waits = 0; // 언어 팩을 못 읽어도 3초 뒤에는 알린다
+        const ready = () => (window.HemiLang && window.HemiLang.ready === false && waits++ < 30 ? setTimeout(ready, 100) : show());
+        if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', ready, { once: true });
+        else ready();
+    }
 
     function push(ns, text) {
         let r;
         try { r = api.write(ns, text); } catch (e) { r = { ok: false, error: String(e && e.message || e) }; }
-        if (!r || !r.ok) { lastError = (r && r.error) || tr('common.saveFolder.unknownError', '알 수 없는 오류'); console.warn('[세이브 폴더] 저장 실패:', lastError); }
-        else lastError = null;
+        if (!r || !r.ok) { lastError = errOf(r); console.warn('[세이브 폴더] 저장 실패:', lastError.code, lastError.detail); notify('write'); }
+        else { lastError = null; notified = ''; }
         return r;
     }
 
@@ -43,7 +69,7 @@
         const key = ns + SLOTS;
         let r;
         try { r = api.read(ns); } catch (e) { r = null; }
-        if (!r || r.error || !Array.isArray(r.slots)) { if (r && r.error) lastError = r.error; return; }
+        if (!r || r.error || !Array.isArray(r.slots)) { if (r && r.error) { lastError = errOf(r); console.warn('[세이브 폴더] 읽기 실패:', lastError.code, lastError.detail); notify('read'); } return; }
         if (!r.initialized) {
             // 처음 쓰는 폴더 — 지금까지 앱 저장소에 있던 세이브를 폴더로
             let local = null;
@@ -52,7 +78,7 @@
             return;
         }
         try { origSet.call(ls, key, JSON.stringify(r.slots)); }
-        catch (e) { lastError = tr('common.saveFolder.tooBig', '세이브가 너무 커서 불러오지 못했습니다'); console.warn('[세이브 폴더] 저장소에 담지 못함:', e); }
+        catch (e) { lastError = { code: 'tooBig', detail: String(e && e.message || e) }; console.warn('[세이브 폴더] 저장소에 담지 못함:', e); notify('read'); }
     });
 
     // 저장할 때: 저장소 → 폴더
@@ -65,7 +91,7 @@
         if (one && one.meta && typeof one.json === 'string') {
             let r = null;
             try { r = api.writeSlot(ns, JSON.stringify(one.meta), one.json); } catch (e) { r = null; }
-            if (r && r.ok) { lastError = null; return; }
+            if (r && r.ok) { lastError = null; notified = ''; return; }
         }
         push(ns, String(v));
     };
@@ -74,5 +100,5 @@
         if (this === ls && KEY_RE.test(String(k))) push(String(k).slice(0, -SLOTS.length), '[]');
     };
 
-    window.HemiSaveFolder = { dir: () => { try { return api.dir(); } catch (e) { return ''; } }, lastError: () => lastError };
+    window.HemiSaveFolder = { dir: () => { try { return api.dir(); } catch (e) { return ''; } }, lastError: () => (lastError ? reasonOf(lastError) : null), lastErrorCode: () => (lastError ? lastError.code : null) };
 })();

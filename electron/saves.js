@@ -27,9 +27,11 @@ function subdirOf(ns) {
     if (m) return `Teaser 1.${m[1]}.${m[2]}`;
     return null;
 }
+// 페이지에 넘기는 오류는 code(번역 키 common.saveFolder.<code>) — 글자는 페이지가 고른 언어로 (js/desktopsaves.js · settings.html)
+const failure = (code, detail) => Object.assign(new Error(detail || code), { saveCode: code });
 function nsDir(ns) {
     const sub = subdirOf(ns);
-    if (sub == null) throw new Error('알 수 없는 저장 공간: ' + ns);
+    if (sub == null) throw failure('badSpace', 'unknown save space: ' + ns);
     return sub ? path.join(base, sub) : base;
 }
 const sha1 = s => crypto.createHash('sha1').update(s).digest('hex');
@@ -97,7 +99,7 @@ function read(ns) {
 // 페이지가 세이브 목록(JSON 글자)을 저장할 때 — 바뀐 세이브만 파일로 쓰고, 이름이 바뀌면 파일 이름도, 없어진 세이브는 휴지통으로
 function write(ns, text) {
     const slots = JSON.parse(text || '[]');
-    if (!Array.isArray(slots)) throw new Error('세이브 목록이 아닙니다');
+    if (!Array.isArray(slots)) throw failure('badList', 'not a save list');
     const dir = nsDir(ns);
     fs.mkdirSync(dir, { recursive: true });
     if (!fs.existsSync(path.join(dir, MARKER))) fs.writeFileSync(path.join(dir, MARKER), JSON.stringify({ app: 'Hemicycle', v: 1 }));
@@ -158,7 +160,7 @@ function writable(dir) {
 // 저장 폴더 바꾸기 — 지금 폴더의 세이브(본 게임 · 하위 폴더)를 새 폴더로 옮긴다 (이름이 겹치면 " (2)")
 function moveTo(next) {
     next = path.resolve(next);
-    if (!writable(next)) return { ok: false, error: '이 폴더에는 쓸 수 없습니다 (관리자 권한이 필요한 곳일 수 있어요 — 문서 폴더 등을 고르세요)' };
+    if (!writable(next)) return { ok: false, code: 'notWritable', error: 'folder is not writable: ' + next };
     const prev = base;
     if (prev && path.resolve(prev) !== next && fs.existsSync(prev)) {
         const subs = [''].concat(fs.readdirSync(prev).filter(d => /^(Teaser 1\.\d\.\d{1,2}|로고)$/.test(d) && fs.statSync(path.join(prev, d)).isDirectory()));
@@ -193,4 +195,15 @@ function init(opts) {
 const getDir = () => base;
 const isDefault = () => path.resolve(base) === path.resolve(defaultDir());
 
-module.exports = { init, read, write, writeSlot, moveTo, getDir, isDefault, defaultDir: () => defaultDir(), subdirOf };
+// 오류 → 페이지에 넘길 code (fs 오류는 원인별로)
+function codeOf(e) {
+    if (e && e.saveCode) return e.saveCode;
+    const c = e && e.code;
+    if (c === 'EACCES' || c === 'EPERM' || c === 'EROFS') return 'noPermission';
+    if (c === 'ENOSPC' || c === 'EDQUOT') return 'diskFull';
+    if (c === 'EBUSY') return 'busy';
+    if (c === 'ENOENT' || c === 'ENOTDIR') return 'missing';
+    return 'failed';
+}
+
+module.exports = { codeOf, init, read, write, writeSlot, moveTo, getDir, isDefault, defaultDir: () => defaultDir(), subdirOf };

@@ -2536,6 +2536,7 @@ html[data-theme-family="modern"] .settings-nav-item.active { background: var(--m
 html[data-theme-family="modern"] .settings-section-title { color: var(--m-text) !important; font-weight: 700; letter-spacing: 0; font-size: 22px; }
 html[data-theme-family="modern"] .settings-section-desc { color: var(--m-text-3) !important; }
 html[data-theme-family="modern"] .settings-hint { color: var(--m-text-2) !important; }
+html[data-theme-family="modern"] .settings-hint.is-error { color: var(--m-danger) !important; text-shadow: none; }
 html[data-theme-family="modern"] .dev-code-input { background: var(--m-surface); border: 1px solid var(--m-border-strong); border-radius: 10px; color: var(--m-text); font-size: 15px; }
 html[data-theme-family="modern"] .dev-code-input:focus { border-color: var(--m-accent); }
 html[data-theme-family="modern"] .dev-code-err { color: var(--m-danger) !important; }

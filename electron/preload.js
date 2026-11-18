@@ -45,7 +45,7 @@ contextBridge.exposeInMainWorld('hemicycleDesktop', {
         dir: () => ipcRenderer.sendSync('saves:dir-sync'),
         info: () => ipcRenderer.invoke('saves:info'),
         openDir: () => ipcRenderer.invoke('saves:open-dir'),
-        chooseDir: () => ipcRenderer.invoke('saves:choose-dir'),
+        chooseDir: title => ipcRenderer.invoke('saves:choose-dir', String(title || '')),
         resetDir: () => ipcRenderer.invoke('saves:reset-dir'),
     },
 });
