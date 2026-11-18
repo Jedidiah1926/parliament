@@ -1,16 +1,16 @@
 // Pure challenge condition compiler, shared by the maker and SAVE SELECT.
 (function(){
 'use strict';
-    const OPS = [['gte', '이상'], ['lte', '이하'], ['gt', '초과'], ['lt', '미만'], ['eq', '같음']];
-    const ECON = [['growth', '성장률'], ['infl', '인플레이션'], ['unemp', '실업률'], ['rate', '기준금리'], ['debt', '부채비율'], ['balance', '재정수지'], ['mood', '민심']];
-    const APPR = [['cabinet', '내각'], ['president', '대통령'], ['pm', '총리'], ['chair', '의장(집단지도체제)']];
+    const OPS = [['gte', i18n('maker.challengeData.1')], ['lte', i18n('maker.challengeData.2')], ['gt', i18n('maker.challengeData.3')], ['lt', i18n('maker.challengeData.4')], ['eq', i18n('maker.challengeData.5')]];
+    const ECON = [['growth', i18n('maker.challengeData.6')], ['infl', i18n('maker.challengeData.7')], ['unemp', i18n('maker.challengeData.8')], ['rate', i18n('maker.challengeData.9')], ['debt', i18n('maker.challengeData.10')], ['balance', i18n('maker.challengeData.11')], ['mood', i18n('maker.challengeData.12')]];
+    const APPR = [['cabinet', i18n('sim.contentSystem.9')], ['president', i18n('sim.mainContentCabinet.2')], ['pm', i18n('sim.mainContentCabinet.3')], ['chair', i18n('maker.challengeData.13')]];
     const KINDS = [
-        ['ruling', '정당이 집권'], ['not_ruling', '정당이 집권하지 않음'], ['party_seats', '정당 의석'], ['party_support', '정당 지지율'],
-        ['ruling_seats', '집권 세력 의석'], ['approval', '국정 지지율'], ['economy', '경제 지표'], ['date_after', '날짜가 되면'],
-        ['party_status', '정당 상태'], ['flag', '플래그(이벤트 · 결정이 켬)'], ['var', '챌린지 변수'], ['custom', '직접 쓰기 (JSON)'],
+        ['ruling', i18n('maker.challengeData.14')], ['not_ruling', i18n('maker.challengeData.15')], ['party_seats', i18n('maker.challengeData.16')], ['party_support', i18n('sim.news.grpParty')],
+        ['ruling_seats', i18n('maker.challengeData.17')], ['approval', i18n('sim.news.11')], ['economy', i18n('maker.challengeData.18')], ['date_after', i18n('maker.challengeData.19')],
+        ['party_status', i18n('maker.challengeData.20')], ['flag', i18n('maker.challengeData.21')], ['var', i18n('maker.challengeData.22')], ['custom', i18n('maker.challengeData.23')],
     ];
     const KIND_LABEL = Object.fromEntries(KINDS);
-    const partyLabel = v => ({ ruling: '집권 세력 최대 정당', largest: '하원 최대 정당', opposition: '야당 최대 정당' }[v] || v || '?');
+    const partyLabel = v => ({ ruling: i18n('maker.challengeData.24'), largest: i18n('maker.challengeData.25'), opposition: i18n('maker.challengeData.26') }[v] || v || '?');
     const opLabel = o => (OPS.find(x => x[0] === o) || ['', ''])[1];
     function toCond(kind, p) {
         p = p || {};
@@ -32,20 +32,20 @@
     }
     function autoText(kind, p) {
         p = p || {};
-        const unit = p.share || kind === 'ruling_seats' && p.share !== false ? '%' : '석';
+        const unit = p.share || kind === 'ruling_seats' && p.share !== false ? '%' : i18n('sim.party.11');
         switch (kind) {
-            case 'ruling': return `${partyLabel(p.party)} 집권`;
-            case 'not_ruling': return `${partyLabel(p.party)}이(가) 집권하지 않음`;
-            case 'party_seats': return `${partyLabel(p.party)} ${p.chamber && p.chamber !== 'house' ? (p.chamber === 'senate' ? '상원 ' : '삼원 ') : ''}의석 ${p.n || 0}${unit} ${opLabel(p.op || 'gte')}`;
-            case 'party_support': return `${partyLabel(p.party)} 지지율 ${p.n || 0}% ${opLabel(p.op || 'gte')}`;
-            case 'ruling_seats': return `집권 세력 의석 ${p.n || 0}${p.share !== false ? '%' : '석'} ${opLabel(p.op || 'gte')}`;
-            case 'approval': return `${(APPR.find(a => a[0] === (p.of || 'cabinet')) || ['', '내각'])[1]} 국정 지지율 ${p.n || 0}% ${opLabel(p.op || 'gte')}`;
+            case 'ruling': return i18n('maker.challengeData.27', { party: partyLabel(p.party) });
+            case 'not_ruling': return i18n('maker.challengeData.28', { party: partyLabel(p.party) });
+            case 'party_seats': return i18n('maker.challengeData.29', { party: partyLabel(p.party), senate: p.chamber && p.chamber !== 'house' ? (p.chamber === 'senate' ? (i18n('sim.contentSettings.6') + " ") : (i18n('sim.contentSettings.7') + " ")) : '', v: p.n || 0, unit, gte: opLabel(p.op || 'gte') });
+            case 'party_support': return i18n('maker.challengeData.30', { party: partyLabel(p.party), v: p.n || 0, gte: opLabel(p.op || 'gte') });
+            case 'ruling_seats': return i18n('maker.challengeData.31', { v: p.n || 0, share: p.share !== false ? '%' : i18n('sim.party.11'), gte: opLabel(p.op || 'gte') });
+            case 'approval': return i18n('maker.challengeData.32', { cabinet: (APPR.find(a => a[0] === (p.of || 'cabinet')) || ['', i18n('sim.contentSystem.9')])[1], v: p.n || 0, gte: opLabel(p.op || 'gte') });
             case 'economy': return `${(ECON.find(e => e[0] === (p.indicator || 'growth')) || ['', '?'])[1]} ${p.n || 0} ${opLabel(p.op || 'gte')}`;
-            case 'date_after': return `${p.date || '?'}이 되면`;
-            case 'party_status': return `${partyLabel(p.party)} ${{ banned: '활동 금지', dissolved: '해산', active: '활동 중' }[p.is || 'banned']}`;
-            case 'flag': return `플래그 "${p.flag || '?'}"`;
-            case 'var': return `변수 ${p.name || '?'} ${p.n || 0} ${opLabel(p.op || 'gte')}`;
-            default: return '사용자 조건';
+            case 'date_after': return i18n('maker.challengeData.33', { date: p.date || '?' });
+            case 'party_status': return `${partyLabel(p.party)} ${{ banned: i18n('sim.vote.32'), dissolved: i18n('sim.export.3'), active: i18n('maker.challengeData.34') }[p.is || 'banned']}`;
+            case 'flag': return i18n('maker.challengeData.35', { flag: p.flag || '?' });
+            case 'var': return i18n('maker.challengeData.36', { name: p.name || '?', v: p.n || 0, gte: opLabel(p.op || 'gte') });
+            default: return i18n('maker.challengeData.37');
         }
     }
 

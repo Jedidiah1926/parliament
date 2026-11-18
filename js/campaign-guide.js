@@ -4,11 +4,11 @@
     const esc = x => String(x ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
     const select = (key, opts, value) => `<select class="scn-in" data-gf="${key}" aria-label="${key}">${opts.map(([v, t]) => `<option value="${esc(v)}" ${String(value) === v ? 'selected' : ''}>${esc(t)}</option>`).join('')}</select>`;
     const input = (key, value, label, type = 'text') => `<label class="cpg-field"><span>${label}</span><input class="scn-in" data-gf="${key}" type="${type}" value="${esc(value)}"></label>`;
-    const CONDITIONS = [['flag','플래그가 켜짐'],['not_flag','플래그가 꺼짐'],['date_after','날짜 이후'],['date_before','날짜 이전'],['var','변수 비교'],['approval','내각 지지율 비교'],['ruling_seats','집권 세력 의석 % 비교'],['owns_regions','구역 소유 (세계지도)'],['in_economic_region','경제권 소속 (세계지도)']];
-    const EFFECTS = [['add_var','변수 더하기'],['set_var','변수 설정'],['approval','내각 지지율 더하기'],['support','정당 지지율 더하기'],['set_flag','플래그 켜기'],['clear_flag','플래그 끄기'],['fire_event','이벤트 실행'],['toast','짧은 알림'],['transfer_regions','영토 변경 (세계지도)'],['assign_economic_region','경제권 배정 (세계지도)']];
+    const CONDITIONS = [['flag',i18n('maker.campaignGuide.1')],['not_flag',i18n('maker.campaignGuide.2')],['date_after',i18n('maker.campaignGuide.3')],['date_before',i18n('maker.campaignGuide.4')],['var',i18n('maker.campaignGuide.5')],['approval',i18n('maker.campaignGuide.6')],['ruling_seats',i18n('maker.campaignGuide.7')],['owns_regions',i18n('maker.campaignGuide.8')],['in_economic_region',i18n('maker.campaignGuide.9')]];
+    const EFFECTS = [['add_var',i18n('maker.campaignGuide.10')],['set_var',i18n('maker.campaignGuide.11')],['approval',i18n('maker.campaignGuide.12')],['support',i18n('maker.campaignGuide.13')],['set_flag',i18n('maker.campaignGuide.14')],['clear_flag',i18n('maker.campaignGuide.15')],['fire_event',i18n('maker.campaignGuide.16')],['toast',i18n('maker.campaignGuide.17')],['transfer_regions',i18n('maker.campaignGuide.18')],['assign_economic_region',i18n('maker.campaignGuide.19')]];
     // 국가 운영 (js/ops-rules.js) — 어느 목록을 가리키는지, 값의 모양
-    const OPS_C = [['resource','자원 양 비교 (운영)'],['facility_count','시설 수 비교 (운영)'],['unit_count','부대 수 비교 (운영)'],['military_strength','군사력 비교 (운영)'],['tech_done','기술 연구 완료 (운영)'],['trade_active','무역 계약 진행 중 (운영)']];
-    const OPS_E = [['add_resource','자원 더하기 (운영)'],['set_resource','자원 정하기 (운영)'],['add_facility','시설 더하기 · 빼기 (운영)'],['add_units','부대 더하기 · 빼기 (운영)'],['grant_tech','기술 주기 (운영)'],['start_trade','무역 계약 시작 (운영)'],['end_trade','무역 계약 끝내기 (운영)']];
+    const OPS_C = [['resource',i18n('maker.campaignGuide.20')],['facility_count',i18n('maker.campaignGuide.21')],['unit_count',i18n('maker.campaignGuide.22')],['military_strength',i18n('maker.campaignGuide.23')],['tech_done',i18n('maker.campaignGuide.24')],['trade_active',i18n('maker.campaignGuide.25')]];
+    const OPS_E = [['add_resource',i18n('maker.campaignGuide.26')],['set_resource',i18n('maker.campaignGuide.27')],['add_facility',i18n('maker.campaignGuide.28')],['add_units',i18n('maker.campaignGuide.29')],['grant_tech',i18n('maker.campaignGuide.30')],['start_trade',i18n('maker.campaignGuide.31')],['end_trade',i18n('maker.campaignGuide.32')]];
     CONDITIONS.push(...OPS_C); EFFECTS.push(...OPS_E);
     const OPS_REF = { resource: 'resources', facility_count: 'facilities', unit_count: 'units', tech_done: 'tech', trade_active: 'trades', add_resource: 'resources', set_resource: 'resources', add_facility: 'facilities', add_units: 'units', grant_tech: 'tech', start_trade: 'trades', end_trade: 'trades', military_strength: null };
     const OPS_STR = new Set(['tech_done', 'trade_active', 'grant_tech', 'start_trade', 'end_trade']);
@@ -19,12 +19,12 @@
         let out = '';
         if (ref) {
             const cur = OPS_STR.has(key) ? v : v && v.id, items = opsList(data, ref);
-            const opts = [...items.map(x => [x.id, `${x.icon ? x.icon + ' ' : ''}${x.name || x.title || x.id}`]), ...(cur && !items.some(x => x.id === cur) ? [[cur, `⚠ ${cur} (없음)`]] : [])];
-            out += `<label class="cpg-field"><span>${{ resources: '자원', facilities: '시설', units: '부대', tech: '기술', trades: '무역 계약' }[ref]}</span>${opts.length ? select('opsid', opts, cur ?? '') : '<span class="scn-dim">국가 운영 탭에서 먼저 만드세요</span>'}</label>`;
+            const opts = [...items.map(x => [x.id, `${x.icon ? x.icon + ' ' : ''}${x.name || x.title || x.id}`]), ...(cur && !items.some(x => x.id === cur) ? [[cur, i18n('maker.campaignGuide.33', { cur })]] : [])];
+            out += `<label class="cpg-field"><span>${{ resources: i18n('sim.campaignOps.23'), facilities: i18n('sim.campaignOps.26'), units: i18n('sim.campaignOps.49'), tech: i18n('sim.campaignOps.6'), trades: i18n('sim.campaignOps.61') }[ref]}</span>${opts.length ? select('opsid', opts, cur ?? '') : `<span class="scn-dim">${esc(i18n('maker.campaignGuide.34'))}</span>`}</label>`;
         }
         if (OPS_STR.has(key)) return out;
-        if (kind === 'cond') { const op = OPS.find(([k]) => k in v)?.[0] || 'gte'; return out + select('op', OPS, op) + input('number', v[op], '기준 값', 'number'); }
-        return out + input('number', v[OPS_NUMKEY[key]], key === 'add_facility' || key === 'add_units' ? '수 (빼려면 -)' : '양', 'number');
+        if (kind === 'cond') { const op = OPS.find(([k]) => k in v)?.[0] || 'gte'; return out + select('op', OPS, op) + input('number', v[op], i18n('maker.campaignGuide.35'), 'number'); }
+        return out + input('number', v[OPS_NUMKEY[key]], key === 'add_facility' || key === 'add_units' ? i18n('maker.campaignGuide.36') : i18n('maker.campaignGuide.37'), 'number');
     }
     // 세계지도 규칙 — 나라(열쇠) 또는 경제권(id)을 가리키는 칸의 이름과 id 칸
     const WORLD = { owns_regions: ['country','key'], transfer_regions: ['to','key'], in_economic_region: ['zone','id'], assign_economic_region: ['to','id'] };
@@ -35,18 +35,18 @@
         const [refField, idField] = WORLD[key], cat = catalog(data), ref = v[refField] || {};
         const targets = idField === 'key' ? countriesOf(data).map(c => [c.key, c.name || c.key]) : cat.zones.map(z => [z.id, z.name]);
         const cur = ref.unassigned ? NONE : (ref[idField] ?? '');
-        const options = [...targets, ...(cur !== NONE && cur !== '' && !targets.some(([k]) => k === cur) ? [[cur, `⚠ ${cur} (목록에 없음)`]] : []), [NONE, '미배정']];
+        const options = [...targets, ...(cur !== NONE && cur !== '' && !targets.some(([k]) => k === cur) ? [[cur, i18n('maker.campaignGuide.38', { cur })]] : []), [NONE, i18n('sim.worldMap.43')]];
         const known = new Map(cat.regions.map(r => [r.key, r.name])), picked = Array.isArray(v.regions) ? v.regions : [];
-        const all = [...cat.regions, ...picked.filter(k => !known.has(k)).map(k => ({ key: k, name: `⚠ ${k} (지도에 없음)` }))];
-        const summary = picked.length ? picked.map(k => known.get(k) || k).join(', ') : '구역을 고르세요';
-        const who = idField === 'key' ? (kind === 'cond' ? '소유한 나라' : '받을 나라') : (kind === 'cond' ? '경제권' : '배정할 경제권');
-        return `<label class="cpg-field"><span>${who}</span>${select('ref', options.length > 1 || idField === 'id' ? options : [['', idField === 'key' ? '시작 나라 › 세계지도 연결에서 나라를 추가하세요' : ''], [NONE, '미배정']], cur)}</label>
-            ${kind === 'cond' ? `<label class="cpg-field"><span>구역</span>${select('mode', [['all','모두'],['any','하나 이상']], v.mode === 'any' ? 'any' : 'all')}</label>` : ''}
-            <details class="cpg-regions"><summary><b>구역 <span data-gregion-count>${picked.length}</span>개</b> · <span data-gregion-summary>${esc(summary)}</span></summary>
-            ${all.length ? `<input class="scn-in" type="search" data-gregion-search placeholder="구역 이름 · 키 검색" aria-label="구역 검색"><div class="cpg-region-list">${all.map(r => `<label class="scn-check"><input type="checkbox" data-gregion="${esc(r.key)}" ${picked.includes(r.key) ? 'checked' : ''}><span>${esc(r.name)}</span><code>${esc(r.key)}</code></label>`).join('')}</div>`
-                : '<p class="scn-dim">시작 나라 탭에서 세계지도가 든 세이브(세계 › 지도에서 .hemimap을 불러와 저장한 .hemi)를 고르면 구역 목록이 나옵니다.</p>'}</details>`;
+        const all = [...cat.regions, ...picked.filter(k => !known.has(k)).map(k => ({ key: k, name: i18n('maker.campaignGuide.39', { v: k }) }))];
+        const summary = picked.length ? picked.map(k => known.get(k) || k).join(', ') : i18n('maker.campaignGuide.40');
+        const who = idField === 'key' ? (kind === 'cond' ? i18n('maker.campaignGuide.41') : i18n('maker.campaignGuide.42')) : (kind === 'cond' ? i18n('sim.sidenav.2') : i18n('maker.campaignGuide.43'));
+        return `<label class="cpg-field"><span>${who}</span>${select('ref', options.length > 1 || idField === 'id' ? options : [['', idField === 'key' ? esc(i18n('maker.campaignGuide.44')) : ''], [NONE, esc(i18n('sim.worldMap.43'))]], cur)}</label>
+            ${kind === 'cond' ? `<label class="cpg-field"><span>${esc(i18n('sim.worldMap.48'))}</span>${select('mode', [['all',esc(i18n('sim.news.62'))],['any',esc(i18n('maker.campaignGuide.45'))]], v.mode === 'any' ? 'any' : 'all')}</label>` : ''}
+            <details class="cpg-regions"><summary><b>${esc(i18n('sim.worldMap.48'))} <span data-gregion-count>${picked.length}</span>${esc(i18n('sim.worldMap.49'))}</b> · <span data-gregion-summary>${esc(summary)}</span></summary>
+            ${all.length ? `<input class="scn-in" type="search" data-gregion-search placeholder="${esc(i18n('sim.worldMap.24'))}" aria-label="${esc(i18n('sim.worldMap.25'))}"><div class="cpg-region-list">${all.map(r => `<label class="scn-check"><input type="checkbox" data-gregion="${esc(r.key)}" ${picked.includes(r.key) ? 'checked' : ''}><span>${esc(r.name)}</span><code>${esc(r.key)}</code></label>`).join('')}</div>`
+                : `<p class="scn-dim">${esc(i18n('maker.campaignGuide.46'))}</p>`}</details>`;
     }
-    const OPS = [['gte','이상 ≥'],['lte','이하 ≤'],['gt','초과 >'],['lt','미만 <'],['eq','같음 ='],['ne','다름 ≠']];
+    const OPS = [['gte',i18n('maker.campaignGuide.47')],['lte',i18n('maker.campaignGuide.48')],['gt',i18n('maker.campaignGuide.49')],['lt',i18n('maker.campaignGuide.50')],['eq',i18n('maker.campaignGuide.51')],['ne',i18n('maker.campaignGuide.52')]];
     const defaults = (key, kind, data) => {
         if (key in OPS_REF) { const ref = OPS_REF[key], first = ref ? opsList(data || {}, ref)[0]?.id || '' : ''; if (OPS_STR.has(key)) return first; if (kind === 'cond') return key === 'military_strength' ? { gte: 10 } : { id: first, gte: 1 }; return { id: first, [OPS_NUMKEY[key]]: 1 }; }
         if (WORLD[key]) { const [refField, idField] = WORLD[key], first = idField === 'key' ? countriesOf(data || {})[0]?.key : catalog(data || {}).zones[0]?.id; return { [refField]: first ? { [idField]: first } : { unassigned: true }, regions: [] }; }
@@ -56,7 +56,7 @@
         if (key === 'support') return { party: 'ruling', add: 5 };
         if (key === 'add_var' || key === 'set_var') return { name: 'tension', value: 5 };
         if (key.startsWith('date_')) return '1990-01-01';
-        return key === 'toast' ? '새로운 변화가 시작되었습니다.' : 'my_flag';
+        return key === 'toast' ? i18n('maker.campaignGuide.53') : 'my_flag';
     };
     function simpleRule(rule, kind) {
         if (!rule || typeof rule !== 'object' || Array.isArray(rule) || Object.keys(rule).length !== 1) return false;
@@ -108,18 +108,18 @@
                 if (WORLD[key]) fields += worldFields(key, v, kind, data);
                 else if (key in OPS_REF) fields += opsFields(key, v, kind, data);
                 else if (typeof v === 'string') {
-                    fields += input('text', v, key.startsWith('date_') ? '날짜 (YYYY-MM-DD)' : key === 'toast' ? '알림 내용' : key === 'fire_event' ? '이벤트 ID' : '플래그 이름');
-                    if (kind === 'cond' && key === 'flag') fields += select('focus', [['','방향성 완료로 채우기'],...(data.focus || []).map(f => ['focus_' + f.id, f.title || f.id])], '');
+                    fields += input('text', v, key.startsWith('date_') ? i18n('maker.campaignGuide.54') : key === 'toast' ? i18n('maker.campaignGuide.55') : key === 'fire_event' ? i18n('maker.campaignGuide.56') : i18n('maker.campaignGuide.57'));
+                    if (kind === 'cond' && key === 'flag') fields += select('focus', [['',i18n('maker.campaignGuide.58')],...(data.focus || []).map(f => ['focus_' + f.id, f.title || f.id])], '');
                 } else {
-                    if (key === 'var' || key === 'add_var' || key === 'set_var') fields += input('name', v.name, '변수 이름');
-                    if (key === 'support') fields += input('party', v.party, '정당 (ruling = 여당)');
-                    if (kind === 'cond') { const op = OPS.find(([k]) => k in v)?.[0] || 'gte'; fields += select('op', OPS, op) + input('number', v[op], '기준 값', 'number'); }
-                    else fields += input('number', v.value ?? v.add, '변경 값', 'number');
+                    if (key === 'var' || key === 'add_var' || key === 'set_var') fields += input('name', v.name, i18n('maker.campaignGuide.59'));
+                    if (key === 'support') fields += input('party', v.party, i18n('maker.campaignGuide.60'));
+                    if (kind === 'cond') { const op = OPS.find(([k]) => k in v)?.[0] || 'gte'; fields += select('op', OPS, op) + input('number', v[op], i18n('maker.campaignGuide.35'), 'number'); }
+                    else fields += input('number', v.value ?? v.add, i18n('maker.campaignGuide.61'), 'number');
                 }
-            } else fields = `<div class="cpg-custom"><b>사용자 정의 규칙 · 그대로 유지됨</b><code>${esc(JSON.stringify(rule))}</code><small>복합 규칙은 프로 모드에서 편집할 수 있습니다.</small></div>`;
-            return `<div class="cpg-rule" data-gr="${i}">${fields}<button type="button" class="scn-x" data-gr-remove aria-label="규칙 삭제">×</button></div>`;
+            } else fields = `<div class="cpg-custom"><b>${esc(i18n('maker.campaignGuide.62'))}</b><code>${esc(JSON.stringify(rule))}</code><small>${esc(i18n('maker.campaignGuide.63'))}</small></div>`;
+            return `<div class="cpg-rule" data-gr="${i}">${fields}<button type="button" class="scn-x" data-gr-remove aria-label="${esc(i18n('maker.campaignGuide.64'))}">×</button></div>`;
         }).join('');
-        return `<section class="cpg-rules" data-guide="${esc(path)}" data-gkind="${kind}"><div class="scn-row"><b>${esc(label)}</b><span class="scn-grow"></span>${kind === 'cond' ? select('join',[['all','모든 조건 충족'],['any','하나 이상 충족']],join) : ''}</div>${html || `<p class="scn-dim">${kind === 'cond' ? '추가 조건 없음 · 연결한 선행 방향성만 확인합니다.' : '추가 효과 없음 · 방향성 완료는 자동으로 기록됩니다.'}</p>`}<button type="button" class="scn-btn" data-gr-add>+ ${kind === 'cond' ? '조건' : '효과'} 추가</button></section>`;
+        return `<section class="cpg-rules" data-guide="${esc(path)}" data-gkind="${kind}"><div class="scn-row"><b>${esc(label)}</b><span class="scn-grow"></span>${kind === 'cond' ? select('join',[['all',esc(i18n('maker.campaignGuide.65'))],['any',esc(i18n('maker.campaignGuide.66'))]],join) : ''}</div>${html || `<p class="scn-dim">${kind === 'cond' ? esc(i18n('maker.campaignGuide.67')) : esc(i18n('maker.campaignGuide.68'))}</p>`}<button type="button" class="scn-btn" data-gr-add>+ ${kind === 'cond' ? esc(i18n('maker.campaignGuide.69')) : esc(i18n('maker.campaignGuide.70'))} ${esc(i18n('sim.contentTerritory.3'))}</button></section>`;
     }
     function bind(body, api) {
         body.querySelectorAll('[data-guide]').forEach(box => {
@@ -137,7 +137,7 @@
                     const picked = [...row.querySelectorAll('[data-gregion]')].filter(x => x.checked).map(x => x.dataset.gregion);
                     v.regions = picked; put(r.items, r.join);
                     row.querySelector('[data-gregion-count]').textContent = picked.length;
-                    row.querySelector('[data-gregion-summary]').textContent = picked.length ? picked.map(k => row.querySelector(`[data-gregion="${CSS.escape(k)}"]`).nextElementSibling.textContent).join(', ') : '구역을 고르세요';
+                    row.querySelector('[data-gregion-summary]').textContent = picked.length ? picked.map(k => row.querySelector(`[data-gregion="${CSS.escape(k)}"]`).nextElementSibling.textContent).join(', ') : i18n('maker.campaignGuide.40');
                 }));
                 row.querySelector('[data-gregion-search]')?.addEventListener('input', e => { const q = e.target.value.trim().toLowerCase(); row.querySelectorAll('.cpg-region-list > label').forEach(l => { l.hidden = !!q && !l.textContent.toLowerCase().includes(q); }); });
                 row.querySelectorAll('[data-gf]').forEach(el => {

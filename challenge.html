@@ -26,14 +26,14 @@
   <!-- 챌린지 제작 · 공유 — 목표 · 실패 조건이 있는 짧은 도전. "시험 플레이"로 게임(main.html)에서 바로 해 볼 수 있다 (js/challenge.js) -->
   <div class="scn-frame">
     <header class="scn-head">
-      <a class="scn-back" href="maker.html">← 제작물 목록</a>
+      <a class="scn-back" href="maker.html" data-i18n="map.main.2">← 제작물 목록</a>
       <div class="scn-head-title">CHALLENGE EDITOR <span class="scn-test">TEST</span></div>
       <span class="scn-grow"></span>
-      <select id="scnLibrary" class="scn-in" title="내 챌린지"></select>
-      <button type="button" class="scn-btn" id="scnNew">새 챌린지</button>
-      <button type="button" class="scn-btn" id="scnOpen">불러오기</button>
-      <button type="button" class="scn-btn" id="scnExport">내보내기 (.hemichl)</button>
-      <button type="button" class="scn-btn scn-primary" id="scnPlay">▶ 시험 플레이</button>
+      <select id="scnLibrary" class="scn-in" title="내 챌린지" data-i18n-title="maker.challenge.main.1"></select>
+      <button type="button" class="scn-btn" id="scnNew" data-i18n="maker.challenge.main.2">새 챌린지</button>
+      <button type="button" class="scn-btn" id="scnOpen" data-i18n="maker.challenge.main.3">불러오기</button>
+      <button type="button" class="scn-btn" id="scnExport" data-i18n="maker.challenge.main.4">내보내기 (.hemichl)</button>
+      <button type="button" class="scn-btn scn-primary" id="scnPlay" data-i18n="maker.challenge.main.5">▶ 시험 플레이</button>
       <input type="file" id="scnFile" accept=".hemichl,.hemiscn,.json,application/json" hidden>
     </header>
     <main class="scn-body" id="scnBody"></main>

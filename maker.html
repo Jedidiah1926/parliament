@@ -24,22 +24,22 @@
 <body>
   <div class="scn-frame maker-hub">
     <header class="scn-head">
-      <a class="scn-back" href="index.html">← 메인으로</a>
+      <a class="scn-back" href="index.html" data-i18n="settings.back">← 메인으로</a>
       <div class="scn-head-title">MAKER SELECT</div>
       <span class="scn-grow"></span>
-      <a class="scn-btn" href="index.html#saves">시작하기 ↗</a>
+      <a class="scn-btn" href="index.html#saves" data-i18n="maker.maker.main.1">시작하기 ↗</a>
     </header>
     <main class="maker-body">
-      <section aria-label="새 제작물" class="maker-create">
-        <a class="scn-card maker-new" href="map.html?new=1" data-new="map"><span class="scn-h">맵 메이커</span><span class="scn-dim">SVG · 그림으로 지역구 지도 만들기</span><span class="maker-new-action">+ 새 맵</span></a>
-        <a class="scn-card maker-new" href="scenario.html?new=1" data-new="campaign"><span class="scn-h">시나리오 메이커</span><span class="scn-dim">세계관 · 방향성 트리 · 격변과 결말</span><span class="maker-new-action">+ 새 시나리오</span></a>
-        <a class="scn-card maker-new" href="challenge.html?new=1" data-new="challenge"><span class="scn-h">챌린지 메이커</span><span class="scn-dim">목표 · 실패 조건이 있는 짧은 도전</span><span class="maker-new-action">+ 새 챌린지</span></a>
+      <section aria-label="새 제작물" class="maker-create" data-i18n-aria-label="maker.maker.main.10">
+        <a class="scn-card maker-new" href="map.html?new=1" data-new="map"><span class="scn-h" data-i18n="sim.contentTerritory.10">맵 메이커</span><span class="scn-dim" data-i18n="maker.maker.main.2">SVG · 그림으로 지역구 지도 만들기</span><span class="maker-new-action" data-i18n="maker.maker.main.3">+ 새 맵</span></a>
+        <a class="scn-card maker-new" href="scenario.html?new=1" data-new="campaign"><span class="scn-h" data-i18n="maker.maker.main.4">시나리오 메이커</span><span class="scn-dim" data-i18n="maker.maker.main.5">세계관 · 방향성 트리 · 격변과 결말</span><span class="maker-new-action" data-i18n="maker.maker.main.6">+ 새 시나리오</span></a>
+        <a class="scn-card maker-new" href="challenge.html?new=1" data-new="challenge"><span class="scn-h" data-i18n="maker.maker.main.7">챌린지 메이커</span><span class="scn-dim" data-i18n="maker.maker.main.8">목표 · 실패 조건이 있는 짧은 도전</span><span class="maker-new-action" data-i18n="maker.maker.main.9">+ 새 챌린지</span></a>
       </section>
-      <section class="scn-card maker-library" aria-label="내 제작물">
-        <div class="scn-row"><h1 class="scn-h">내 제작물</h1><span class="scn-grow"></span><label class="maker-search">검색 <input class="scn-in" id="makerSearch" type="search" placeholder="제목 · 설명 · 제작자"></label><button type="button" class="scn-btn" id="makerRefresh">새로고침</button></div>
-        <p class="scn-dim">편집하던 제작물을 이어서 만드세요. 실제 게임을 시작하거나 이어하려면 시작하기에서 선택하세요.</p>
-        <nav class="cpe-tabs" id="makerTabs" aria-label="제작물 종류"></nav>
-        <p class="scn-dim" id="makerStatus" role="status" aria-live="polite">제작물을 불러오는 중…</p>
+      <section class="scn-card maker-library" aria-label="내 제작물" data-i18n-aria-label="maker.maker.main.11">
+        <div class="scn-row"><h1 class="scn-h" data-i18n="maker.maker.main.11">내 제작물</h1><span class="scn-grow"></span><label class="maker-search"><span data-i18n="maker.maker.main.13">검색</span> <input class="scn-in" id="makerSearch" type="search" placeholder="제목 · 설명 · 제작자" data-i18n-placeholder="maker.maker.main.12"></label><button type="button" class="scn-btn" id="makerRefresh" data-i18n="maker.maker.main.14">새로고침</button></div>
+        <p class="scn-dim" data-i18n="maker.maker.main.15">편집하던 제작물을 이어서 만드세요. 실제 게임을 시작하거나 이어하려면 시작하기에서 선택하세요.</p>
+        <nav class="cpe-tabs" id="makerTabs" aria-label="제작물 종류" data-i18n-aria-label="maker.maker.main.16"></nav>
+        <p class="scn-dim" id="makerStatus" role="status" aria-live="polite" data-i18n="maker.maker.main.17">제작물을 불러오는 중…</p>
         <div class="maker-projects" id="makerProjects"></div>
       </section>
     </main>

@@ -3,7 +3,7 @@
 // 편집기(js/campaign-editor.js)가 html(api) · bind(body, api)를 부른다. api = { S, getP, setP, touch, render, esc, jsonField, detailMode, uid }
 (function () {
     'use strict';
-    const SECTIONS = [['resources', '자원'], ['facilities', '시설'], ['tech', '기술 트리'], ['units', '부대'], ['trades', '무역']];
+    const SECTIONS = [['resources', i18n('sim.campaignOps.23')], ['facilities', i18n('sim.campaignOps.26')], ['tech', i18n('maker.campaignEditorOps.1')], ['units', i18n('sim.campaignOps.49')], ['trades', i18n('sim.campaignOps.8')]];
     let section = 'resources';
     const num = v => (v === '' || v == null ? null : Number(v));
     const list = (S, k) => (Array.isArray(S[k]) ? S[k] : []);
@@ -11,10 +11,10 @@
     // 자원 양 칸 — { 자원: 숫자 } (자원 고르기 + 숫자, 줄 더하기 · 빼기)
     function amountField(api, path, label, value) {
         const { esc, S } = api, res = list(S, 'resources'), entries = value && typeof value === 'object' && !Array.isArray(value) ? Object.entries(value) : [];
-        const opt = cur => `${res.map(r => `<option value="${esc(r.id)}" ${r.id === cur ? 'selected' : ''}>${esc(`${r.icon ? r.icon + ' ' : ''}${r.name || r.id}`)}</option>`).join('')}${cur && !res.some(r => r.id === cur) ? `<option value="${esc(cur)}" selected>⚠ ${esc(cur)} (없는 자원)</option>` : ''}`;
+        const opt = cur => `${res.map(r => `<option value="${esc(r.id)}" ${r.id === cur ? 'selected' : ''}>${esc(`${r.icon ? r.icon + ' ' : ''}${r.name || r.id}`)}</option>`).join('')}${cur && !res.some(r => r.id === cur) ? `<option value="${esc(cur)}" selected>⚠ ${esc(cur)} ${esc(i18n('maker.campaignEditorOps.2'))}</option>` : ''}`;
         return `<div class="cpo-amount" data-amount="${esc(path)}"><span class="cpo-lab">${esc(label)}</span>
-            ${entries.map(([k, v], i) => `<div class="scn-row" data-amount-row="${i}"><select class="scn-in" data-amount-key aria-label="${esc(label)} 자원">${opt(k)}</select><input class="scn-in scn-num" type="number" step="any" min="0" data-amount-val value="${esc(v)}" aria-label="${esc(label)} 양"><button type="button" class="scn-x" data-amount-del aria-label="빼기">×</button></div>`).join('')}
-            ${res.length ? `<button type="button" class="scn-btn cpo-small" data-amount-add>+ ${esc(label)}</button>` : '<span class="scn-dim">자원 탭에서 자원을 먼저 만드세요.</span>'}</div>`;
+            ${entries.map(([k, v], i) => `<div class="scn-row" data-amount-row="${i}"><select class="scn-in" data-amount-key aria-label="${esc(i18n('maker.campaignEditorOps.ariaRes', { label }))}">${opt(k)}</select><input class="scn-in scn-num" type="number" step="any" min="0" data-amount-val value="${esc(v)}" aria-label="${esc(i18n('maker.campaignEditorOps.ariaAmt', { label }))}"><button type="button" class="scn-x" data-amount-del aria-label="${esc(i18n('sim.coup.71'))}">×</button></div>`).join('')}
+            ${res.length ? `<button type="button" class="scn-btn cpo-small" data-amount-add>+ ${esc(label)}</button>` : `<span class="scn-dim">${esc(i18n('maker.campaignEditorOps.3'))}</span>`}</div>`;
     }
     const field = (api, path, label, value, type = 'text', extra = '') => `<label class="cpg-field"><span>${api.esc(label)}</span><input class="scn-in" data-ops-field="${api.esc(path)}" data-ops-type="${type}" type="${type === 'int' || type === 'num' ? 'number' : 'text'}" ${type === 'int' ? 'step="1" min="0"' : type === 'num' ? 'step="any" min="0"' : ''} value="${api.esc(value ?? '')}" ${extra}></label>`;
     const check = (api, path, label, on) => `<label class="scn-check"><input type="checkbox" data-ops-bool="${api.esc(path)}" ${on ? 'checked' : ''}>${api.esc(label)}</label>`;
@@ -22,61 +22,62 @@
     function techPick(api, path, label, value, skip) {
         const { esc, S } = api, tech = list(S, 'tech').filter(t => t.id !== skip), cur = Array.isArray(value) ? value : [];
         if (!tech.length) return '';
-        return `<div class="cpo-pick" data-ops-pick="${esc(path)}"><span class="cpo-lab">${esc(label)}</span>${tech.map(t => `<label class="scn-check"><input type="checkbox" value="${esc(t.id)}" ${cur.includes(t.id) ? 'checked' : ''}>${esc(t.title || t.id)}</label>`).join('')}${cur.filter(id => !tech.some(t => t.id === id)).map(id => `<label class="scn-check"><input type="checkbox" value="${esc(id)}" checked>⚠ ${esc(id)} (없는 기술)</label>`).join('')}</div>`;
+        return `<div class="cpo-pick" data-ops-pick="${esc(path)}"><span class="cpo-lab">${esc(label)}</span>${tech.map(t => `<label class="scn-check"><input type="checkbox" value="${esc(t.id)}" ${cur.includes(t.id) ? 'checked' : ''}>${esc(t.title || t.id)}</label>`).join('')}${cur.filter(id => !tech.some(t => t.id === id)).map(id => `<label class="scn-check"><input type="checkbox" value="${esc(id)}" checked>⚠ ${esc(id)} ${esc(i18n('maker.campaignEditorOps.4'))}</label>`).join('')}</div>`;
     }
     const rules = (api, path, label, kind) => window.HemiCampaignGuide.rules(path, label, kind, api.getP(path), api.S);
-    const card = (api, k, i, title, inner) => `<details class="cpg-script" open data-ops-item="${k}.${i}"><summary>${api.esc(title)}</summary>${inner}<button type="button" class="scn-btn scn-danger" data-ops-del="${k}" data-index="${i}">삭제</button></details>`;
+    const card = (api, k, i, title, inner) => `<details class="cpg-script" open data-ops-item="${k}.${i}"><summary>${api.esc(title)}</summary>${inner}<button type="button" class="scn-btn scn-danger" data-ops-del="${k}" data-index="${i}">${api.esc(i18n('common.delete'))}</button></details>`;
 
     function sectionHtml(api) {
         const { S, esc } = api, p = section;
         if (api.detailMode === 'json') return api.jsonField(p, SECTIONS.find(s => s[0] === p)[1], 'list', 14);
         const items = list(S, p);
-        if (p === 'resources') return `<p class="scn-dim">석유 · 철강 · 식량처럼 이 시나리오에서 쓰는 자원입니다. 국고도 자원으로 만들어 비용에 쓰세요(기본 게임의 경제와는 따로 계산합니다).</p>
-            <div class="cpo-table">${items.map((r, i) => `<div class="scn-row cpo-res" data-ops-item="resources.${i}">${field(api, `resources.${i}.icon`, '아이콘', r.icon, 'text', 'maxlength="4" style="width:56px"')}${field(api, `resources.${i}.name`, '이름', r.name)}${field(api, `resources.${i}.id`, 'ID', r.id)}${field(api, `resources.${i}.unit`, '단위', r.unit, 'text', 'style="width:70px"')}${field(api, `resources.${i}.start`, '처음 재고', r.start, 'num')}${field(api, `resources.${i}.max`, '저장 한도 (비우면 없음)', r.max, 'num')}<button type="button" class="scn-x" data-ops-del="resources" data-index="${i}" aria-label="자원 삭제">×</button></div>`).join('')}</div>
-            <button type="button" class="scn-btn" data-ops-add="resources">+ 자원</button>`;
-        if (p === 'facilities') return `<p class="scn-dim">시설은 하루마다 목록 순서대로 가동합니다. 소비 · 유지비를 다 낼 수 없으면 그날 멈춥니다. 건설은 비용을 시작할 때 한 번 내고, 기간이 지나면 완료됩니다.</p>
-            ${field(api, 'buildSlots', '동시에 지을 수 있는 수', S.buildSlots ?? 1, 'int')}
-            ${items.map((f, i) => card(api, 'facilities', i, `${f.icon ? f.icon + ' ' : ''}${f.name || f.id}`, `<div class="scn-grid2">${field(api, `facilities.${i}.name`, '이름', f.name)}${field(api, `facilities.${i}.id`, 'ID', f.id)}${field(api, `facilities.${i}.icon`, '아이콘', f.icon)}${field(api, `facilities.${i}.days`, '건설 기간 (일)', f.days, 'num')}${field(api, `facilities.${i}.start`, '처음 수', f.start, 'int')}${field(api, `facilities.${i}.max`, '최대 수 (비우면 없음)', f.max, 'int')}</div>
-                ${field(api, `facilities.${i}.desc`, '설명', f.desc)}${check(api, `facilities.${i}.buildable`, '플레이어가 지을 수 있음', f.buildable !== false)}
-                ${amountField(api, `facilities.${i}.cost`, '건설 비용', f.cost)}${amountField(api, `facilities.${i}.produce`, '하루 생산', f.produce)}${amountField(api, `facilities.${i}.consume`, '하루 소비 (생산에 드는 것)', f.consume)}${amountField(api, `facilities.${i}.upkeep`, '하루 유지비', f.upkeep)}
-                ${techPick(api, `facilities.${i}.requires`, '필요 기술', f.requires)}${rules(api, `facilities.${i}.available`, '건설 조건', 'cond')}`)).join('')}
-            <button type="button" class="scn-btn" data-ops-add="facilities">+ 시설</button>`;
-        if (p === 'tech') return `<p class="scn-dim">방향성과 따로 진행하는 연구입니다. 한 번에 하나를 연구하고, 비용은 시작할 때 냅니다(취소하면 돌려받지 않음). X · Y는 트리의 칸 위치(X는 2칸이 상자 하나)입니다.</p>
-            <div class="scn-row"><button type="button" class="scn-btn" data-ops-layout>자동 정렬</button></div>
-            ${items.map((t, i) => card(api, 'tech', i, `${t.icon ? t.icon + ' ' : ''}${t.title || t.id}`, `<div class="scn-grid2">${field(api, `tech.${i}.title`, '이름', t.title)}${field(api, `tech.${i}.id`, 'ID', t.id)}${field(api, `tech.${i}.icon`, '아이콘', t.icon)}${field(api, `tech.${i}.days`, '연구 기간 (일)', t.days, 'num')}${field(api, `tech.${i}.x`, 'X', t.x, 'num')}${field(api, `tech.${i}.y`, 'Y', t.y, 'num')}</div>
-                ${field(api, `tech.${i}.desc`, '설명', t.desc)}${check(api, `tech.${i}.start`, '처음부터 연구됨', t.start === true)}
-                ${amountField(api, `tech.${i}.cost`, '연구 비용', t.cost)}${techPick(api, `tech.${i}.prereq`, '필수 선행', t.prereq, t.id)}${techPick(api, `tech.${i}.any`, '이 중 하나', t.any, t.id)}${techPick(api, `tech.${i}.exclusive`, '함께 연구할 수 없음', t.exclusive, t.id)}
-                ${rules(api, `tech.${i}.available`, '연구 조건', 'cond')}${rules(api, `tech.${i}.effects`, '연구 완료 효과', 'eff')}`)).join('')}
-            <button type="button" class="scn-btn" data-ops-add="tech">+ 기술</button>`;
-        if (p === 'units') return `<p class="scn-dim">부대 수 × 전력이 군사력입니다. 유지비를 못 낸 날은 그 부대의 전력이 절반입니다. 전투 · 이동은 없고, 군사력은 조건(military_strength)과 이벤트로 이야기에 쓰입니다.</p>
-            ${field(api, 'recruitSlots', '동시에 편성할 수 있는 수', S.recruitSlots ?? 1, 'int')}
-            ${items.map((u, i) => card(api, 'units', i, `${u.icon ? u.icon + ' ' : ''}${u.name || u.id}`, `<div class="scn-grid2">${field(api, `units.${i}.name`, '이름', u.name)}${field(api, `units.${i}.id`, 'ID', u.id)}${field(api, `units.${i}.icon`, '아이콘', u.icon)}${field(api, `units.${i}.branch`, '병종 (예: 육군)', u.branch)}${field(api, `units.${i}.strength`, '전력', u.strength, 'num')}${field(api, `units.${i}.days`, '편성 기간 (일)', u.days, 'num')}${field(api, `units.${i}.start`, '처음 수', u.start, 'int')}${field(api, `units.${i}.max`, '최대 수 (비우면 없음)', u.max, 'int')}</div>
-                ${field(api, `units.${i}.desc`, '설명', u.desc)}${check(api, `units.${i}.recruitable`, '플레이어가 편성할 수 있음', u.recruitable !== false)}
-                ${amountField(api, `units.${i}.cost`, '편성 비용', u.cost)}${amountField(api, `units.${i}.upkeep`, '하루 유지비', u.upkeep)}${techPick(api, `units.${i}.requires`, '필요 기술', u.requires)}${rules(api, `units.${i}.available`, '편성 조건', 'cond')}`)).join('')}
-            <button type="button" class="scn-btn" data-ops-add="units">+ 부대</button>`;
+        if (p === 'resources') return `<p class="scn-dim">${esc(i18n('maker.campaignEditorOps.5'))}</p>
+            <div class="cpo-table">${items.map((r, i) => `<div class="scn-row cpo-res" data-ops-item="resources.${i}">${field(api, `resources.${i}.icon`, esc(i18n('maker.campaignEditorOps.6')), r.icon, 'text', 'maxlength="4" style="width:56px"')}${field(api, `resources.${i}.name`, esc(i18n('sim.contentDate.11')), r.name)}${field(api, `resources.${i}.id`, 'ID', r.id)}${field(api, `resources.${i}.unit`, esc(i18n('maker.campaignEditorOps.7')), r.unit, 'text', 'style="width:70px"')}${field(api, `resources.${i}.start`, esc(i18n('maker.campaignEditorOps.8')), r.start, 'num')}${field(api, `resources.${i}.max`, esc(i18n('maker.campaignEditorOps.9')), r.max, 'num')}<button type="button" class="scn-x" data-ops-del="resources" data-index="${i}" aria-label="${esc(i18n('maker.campaignEditorOps.10'))}">×</button></div>`).join('')}</div>
+            <button type="button" class="scn-btn" data-ops-add="resources">${esc(i18n('maker.campaignEditorOps.11'))}</button>`;
+        if (p === 'facilities') return `<p class="scn-dim">${esc(i18n('maker.campaignEditorOps.12'))}</p>
+            ${field(api, 'buildSlots', esc(i18n('maker.campaignEditorOps.13')), S.buildSlots ?? 1, 'int')}
+            ${items.map((f, i) => card(api, 'facilities', i, `${f.icon ? f.icon + ' ' : ''}${f.name || f.id}`, `<div class="scn-grid2">${field(api, `facilities.${i}.name`, esc(i18n('sim.contentDate.11')), f.name)}${field(api, `facilities.${i}.id`, 'ID', f.id)}${field(api, `facilities.${i}.icon`, esc(i18n('maker.campaignEditorOps.6')), f.icon)}${field(api, `facilities.${i}.days`, esc(i18n('maker.campaignEditorOps.14')), f.days, 'num')}${field(api, `facilities.${i}.start`, esc(i18n('maker.campaignEditorOps.15')), f.start, 'int')}${field(api, `facilities.${i}.max`, esc(i18n('maker.campaignEditorOps.16')), f.max, 'int')}</div>
+                ${field(api, `facilities.${i}.desc`, esc(i18n('maker.campaignEditorOps.17')), f.desc)}${check(api, `facilities.${i}.buildable`, esc(i18n('maker.campaignEditorOps.18')), f.buildable !== false)}
+                ${amountField(api, `facilities.${i}.cost`, esc(i18n('maker.campaignEditorOps.19')), f.cost)}${amountField(api, `facilities.${i}.produce`, esc(i18n('maker.campaignEditorOps.20')), f.produce)}${amountField(api, `facilities.${i}.consume`, esc(i18n('maker.campaignEditorOps.21')), f.consume)}${amountField(api, `facilities.${i}.upkeep`, esc(i18n('maker.campaignEditorOps.22')), f.upkeep)}
+                ${techPick(api, `facilities.${i}.requires`, esc(i18n('maker.campaignEditorOps.23')), f.requires)}${rules(api, `facilities.${i}.available`, esc(i18n('maker.campaignEditorOps.24')), 'cond')}`)).join('')}
+            <button type="button" class="scn-btn" data-ops-add="facilities">${esc(i18n('maker.campaignEditorOps.25'))}</button>`;
+        if (p === 'tech') return `<p class="scn-dim">${esc(i18n('maker.campaignEditorOps.26'))}</p>
+            <div class="scn-row"><button type="button" class="scn-btn" data-ops-layout>${esc(i18n('maker.campaignEditorOps.27'))}</button></div>
+            ${items.map((t, i) => card(api, 'tech', i, `${t.icon ? t.icon + ' ' : ''}${t.title || t.id}`, `<div class="scn-grid2">${field(api, `tech.${i}.title`, esc(i18n('sim.contentDate.11')), t.title)}${field(api, `tech.${i}.id`, 'ID', t.id)}${field(api, `tech.${i}.icon`, esc(i18n('maker.campaignEditorOps.6')), t.icon)}${field(api, `tech.${i}.days`, esc(i18n('maker.campaignEditorOps.28')), t.days, 'num')}${field(api, `tech.${i}.x`, 'X', t.x, 'num')}${field(api, `tech.${i}.y`, 'Y', t.y, 'num')}</div>
+                ${field(api, `tech.${i}.desc`, esc(i18n('maker.campaignEditorOps.17')), t.desc)}${check(api, `tech.${i}.start`, esc(i18n('maker.campaignEditorOps.29')), t.start === true)}
+                ${amountField(api, `tech.${i}.cost`, esc(i18n('maker.campaignEditorOps.30')), t.cost)}${techPick(api, `tech.${i}.prereq`, esc(i18n('maker.campaignEditorOps.31')), t.prereq, t.id)}${techPick(api, `tech.${i}.any`, esc(i18n('maker.campaignEditorOps.32')), t.any, t.id)}${techPick(api, `tech.${i}.exclusive`, esc(i18n('maker.campaignEditorOps.33')), t.exclusive, t.id)}
+                ${rules(api, `tech.${i}.available`, esc(i18n('maker.campaignEditorOps.34')), 'cond')}${rules(api, `tech.${i}.effects`, esc(i18n('maker.campaignEditorOps.35')), 'eff')}`)).join('')}
+            <button type="button" class="scn-btn" data-ops-add="tech">${esc(i18n('maker.campaignEditorOps.36'))}</button>`;
+        if (p === 'units') return `<p class="scn-dim">${esc(i18n('maker.campaignEditorOps.37'))}</p>
+            ${field(api, 'recruitSlots', esc(i18n('maker.campaignEditorOps.38')), S.recruitSlots ?? 1, 'int')}
+            ${items.map((u, i) => card(api, 'units', i, `${u.icon ? u.icon + ' ' : ''}${u.name || u.id}`, `<div class="scn-grid2">${field(api, `units.${i}.name`, esc(i18n('sim.contentDate.11')), u.name)}${field(api, `units.${i}.id`, 'ID', u.id)}${field(api, `units.${i}.icon`, esc(i18n('maker.campaignEditorOps.6')), u.icon)}${field(api, `units.${i}.branch`, esc(i18n('maker.campaignEditorOps.39')), u.branch)}${field(api, `units.${i}.strength`, esc(i18n('sim.campaignOps.47')), u.strength, 'num')}${field(api, `units.${i}.days`, esc(i18n('maker.campaignEditorOps.40')), u.days, 'num')}${field(api, `units.${i}.start`, esc(i18n('maker.campaignEditorOps.15')), u.start, 'int')}${field(api, `units.${i}.max`, esc(i18n('maker.campaignEditorOps.16')), u.max, 'int')}</div>
+                ${field(api, `units.${i}.desc`, esc(i18n('maker.campaignEditorOps.17')), u.desc)}${check(api, `units.${i}.recruitable`, esc(i18n('maker.campaignEditorOps.41')), u.recruitable !== false)}
+                ${amountField(api, `units.${i}.cost`, esc(i18n('maker.campaignEditorOps.42')), u.cost)}${amountField(api, `units.${i}.upkeep`, esc(i18n('maker.campaignEditorOps.22')), u.upkeep)}${techPick(api, `units.${i}.requires`, esc(i18n('maker.campaignEditorOps.23')), u.requires)}${rules(api, `units.${i}.available`, esc(i18n('maker.campaignEditorOps.43')), 'cond')}`)).join('')}
+            <button type="button" class="scn-btn" data-ops-add="units">${esc(i18n('maker.campaignEditorOps.44'))}</button>`;
         if (p === 'trades') {
             const countries = S.world && Array.isArray(S.world.countries) ? S.world.countries : [];
-            const partner = (i, cur) => `<label class="cpg-field"><span>거래 상대</span><select class="scn-in" data-ops-field="trades.${i}.partner" data-ops-type="text"><option value="">고르세요</option>${countries.map(c => `<option value="${esc(c.key)}" ${c.key === cur ? 'selected' : ''}>${esc(c.name || c.key)}</option>`).join('')}${cur && !countries.some(c => c.key === cur) ? `<option value="${esc(cur)}" selected>⚠ ${esc(cur)} (나라 목록에 없음)</option>` : ''}</select></label>`;
-            return `<p class="scn-dim">하루마다 내줄 것을 모두 낼 수 있을 때만 주고받습니다. 못 내면 그날 계약이 이행 실패로 끝납니다. 상대국의 재고는 계산하지 않습니다. 거래 상대는 시작 나라 탭의 세계지도 연결에 적은 나라입니다.${countries.length ? '' : ' <b>나라가 아직 없습니다.</b>'}</p>
-            ${items.map((t, i) => card(api, 'trades', i, t.title || t.id, `<div class="scn-grid2">${field(api, `trades.${i}.title`, '이름', t.title)}${field(api, `trades.${i}.id`, 'ID', t.id)}${partner(i, t.partner)}${field(api, `trades.${i}.days`, '기간 (일, 비우면 기한 없음)', t.days, 'num')}</div>
-                ${field(api, `trades.${i}.desc`, '설명', t.desc)}${check(api, `trades.${i}.repeat`, '끝난 뒤 다시 맺을 수 있음', t.repeat === true)}
-                ${amountField(api, `trades.${i}.give`, '하루마다 내줄 것', t.give)}${amountField(api, `trades.${i}.get`, '하루마다 받을 것', t.get)}${rules(api, `trades.${i}.visible`, '목록에 보이는 조건', 'cond')}${rules(api, `trades.${i}.available`, '체결 조건', 'cond')}`)).join('')}
-            <button type="button" class="scn-btn" data-ops-add="trades">+ 무역 계약</button>`;
+            const partner = (i, cur) => `<label class="cpg-field"><span>${esc(i18n('maker.campaignEditorOps.45'))}</span><select class="scn-in" data-ops-field="trades.${i}.partner" data-ops-type="text"><option value="">${esc(i18n('maker.campaignEditorOps.46'))}</option>${countries.map(c => `<option value="${esc(c.key)}" ${c.key === cur ? 'selected' : ''}>${esc(c.name || c.key)}</option>`).join('')}${cur && !countries.some(c => c.key === cur) ? `<option value="${esc(cur)}" selected>⚠ ${esc(cur)} ${esc(i18n('maker.campaignEditorOps.47'))}</option>` : ''}</select></label>`;
+            return `<p class="scn-dim">${esc(i18n('maker.campaignEditorOps.48'))}${countries.length ? '' : ` <b>${esc(i18n('maker.campaignEditorOps.49'))}</b>`}</p>
+            ${items.map((t, i) => card(api, 'trades', i, t.title || t.id, `<div class="scn-grid2">${field(api, `trades.${i}.title`, esc(i18n('sim.contentDate.11')), t.title)}${field(api, `trades.${i}.id`, 'ID', t.id)}${partner(i, t.partner)}${field(api, `trades.${i}.days`, esc(i18n('maker.campaignEditorOps.50')), t.days, 'num')}</div>
+                ${field(api, `trades.${i}.desc`, esc(i18n('maker.campaignEditorOps.17')), t.desc)}${check(api, `trades.${i}.repeat`, esc(i18n('maker.campaignEditorOps.51')), t.repeat === true)}
+                ${amountField(api, `trades.${i}.give`, esc(i18n('maker.campaignEditorOps.52')), t.give)}${amountField(api, `trades.${i}.get`, esc(i18n('maker.campaignEditorOps.53')), t.get)}${rules(api, `trades.${i}.visible`, esc(i18n('maker.campaignEditorOps.54')), 'cond')}${rules(api, `trades.${i}.available`, esc(i18n('maker.campaignEditorOps.55')), 'cond')}`)).join('')}
+            <button type="button" class="scn-btn" data-ops-add="trades">${esc(i18n('maker.campaignEditorOps.56'))}</button>`;
         }
         return '';
     }
     function html(api) {
+        const esc = api.esc;
         const counts = Object.fromEntries(SECTIONS.map(([k]) => [k, list(api.S, k).length]));
-        return `<section class="scn-card"><div class="scn-h">국가 운영</div><p class="scn-dim">필요한 것만 만드세요 — 하나도 없으면 게임의 시나리오 › 운영 탭이 나오지 않습니다. 하루 단위로 계산합니다(턴제 1턴 = 1일). 조건 · 효과에서 resource · tech_done · military_strength · add_resource · add_facility … 를 쓸 수 있습니다.</p>
+        return `<section class="scn-card"><div class="scn-h">${esc(i18n('maker.campaignEditorOps.57'))}</div><p class="scn-dim">${esc(i18n('maker.campaignEditorOps.58'))}</p>
             <div class="scn-seg cpo-seg">${SECTIONS.map(([k, l]) => `<button type="button" data-ops-section="${k}" class="${k === section ? 'on' : ''}">${l} <span class="scn-n">${counts[k]}</span></button>`).join('')}</div>
             <div class="cpo-body">${sectionHtml(api)}</div></section>`;
     }
     const DEFAULTS = {
-        resources: api => ({ id: api.uid('res'), name: '새 자원', icon: '', unit: '', start: 0 }),
-        facilities: api => ({ id: api.uid('fac'), name: '새 시설', icon: '🏭', desc: '', cost: {}, days: 3, produce: {}, consume: {}, upkeep: {} }),
-        tech: api => ({ id: api.uid('tech'), title: '새 기술', icon: '🔬', desc: '', x: 0, y: list(api.S, 'tech').length, days: 5, cost: {}, prereq: [], any: [], exclusive: [], effects: [] }),
-        units: api => ({ id: api.uid('unit'), name: '새 부대', icon: '🪖', branch: '육군', cost: {}, days: 3, upkeep: {}, strength: 1 }),
-        trades: api => ({ id: api.uid('trade'), title: '새 계약', partner: (api.S.world && api.S.world.countries && api.S.world.countries[0] && api.S.world.countries[0].key) || '', desc: '', give: {}, get: {}, days: 30 }),
+        resources: api => ({ id: api.uid('res'), name: i18n('maker.campaignEditorOps.59'), icon: '', unit: '', start: 0 }),
+        facilities: api => ({ id: api.uid('fac'), name: i18n('maker.campaignEditorOps.60'), icon: '🏭', desc: '', cost: {}, days: 3, produce: {}, consume: {}, upkeep: {} }),
+        tech: api => ({ id: api.uid('tech'), title: i18n('maker.campaignEditorOps.61'), icon: '🔬', desc: '', x: 0, y: list(api.S, 'tech').length, days: 5, cost: {}, prereq: [], any: [], exclusive: [], effects: [] }),
+        units: api => ({ id: api.uid('unit'), name: i18n('maker.campaignEditorOps.62'), icon: '🪖', branch: i18n('maker.campaignEditorOps.63'), cost: {}, days: 3, upkeep: {}, strength: 1 }),
+        trades: api => ({ id: api.uid('trade'), title: i18n('maker.campaignEditorOps.64'), partner: (api.S.world && api.S.world.countries && api.S.world.countries[0] && api.S.world.countries[0].key) || '', desc: '', give: {}, get: {}, days: 30 }),
     };
     // ID를 바꾸면 다른 곳의 참조도 함께 (자원 양 · 필요 기술 · 선행 · 조건/효과의 id)
     function renameRef(S, kind, from, to) {

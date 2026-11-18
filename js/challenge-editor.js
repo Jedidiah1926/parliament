@@ -35,7 +35,7 @@
     // ---------------------------------------------------------------
     function blank() {
         return {
-            format: FORMAT, id: uid('scn'), title: '새 챌린지', author: '', version: '1.0', description: '',
+            format: FORMAT, id: uid('scn'), title: i18n('maker.challengeEditor.1'), author: '', version: '1.0', description: '',
             briefing: '', winText: '', loseText: '',
             start: { kind: 'preset', preset: 'builtin:tutorial' }, // { kind: 'preset', preset } | { kind: 'save', name, state }
             deadline: '', surviveToDeadline: false,
@@ -60,51 +60,51 @@
         body.innerHTML = `
         <section class="scn-col">
             <div class="scn-card">
-                <div class="scn-h">기본 정보</div>
-                <label class="scn-lab">제목</label><input class="scn-in scn-title" data-f="title" maxlength="80" value="${esc(S.title)}">
+                <div class="scn-h">${esc(i18n('maker.challengeEditor.2'))}</div>
+                <label class="scn-lab">${esc(i18n('sim.history.110'))}</label><input class="scn-in scn-title" data-f="title" maxlength="80" value="${esc(S.title)}">
                 <div class="scn-grid2">
-                    <div><label class="scn-lab">제작자</label><input class="scn-in" data-f="author" maxlength="60" value="${esc(S.author)}"></div>
-                    <div><label class="scn-lab">버전</label><input class="scn-in" data-f="version" maxlength="20" value="${esc(S.version)}"></div>
+                    <div><label class="scn-lab">${esc(i18n('sim.mappresets.6'))}</label><input class="scn-in" data-f="author" maxlength="60" value="${esc(S.author)}"></div>
+                    <div><label class="scn-lab">${esc(i18n('maker.challengeEditor.3'))}</label><input class="scn-in" data-f="version" maxlength="20" value="${esc(S.version)}"></div>
                 </div>
-                <label class="scn-lab">한 줄 설명</label><input class="scn-in" data-f="description" maxlength="200" value="${esc(S.description)}" placeholder="목록에 보일 짧은 설명">
-                <label class="scn-lab">브리핑 (시작할 때 보이는 글)</label><textarea class="scn-in" data-f="briefing" rows="6" placeholder="상황 설명, 플레이어가 할 일">${esc(S.briefing)}</textarea>
+                <label class="scn-lab">${esc(i18n('maker.challengeEditor.4'))}</label><input class="scn-in" data-f="description" maxlength="200" value="${esc(S.description)}" placeholder="${esc(i18n('maker.challengeEditor.5'))}">
+                <label class="scn-lab">${esc(i18n('maker.challengeEditor.7'))}</label><textarea class="scn-in" data-f="briefing" rows="6" placeholder="${esc(i18n('maker.challengeEditor.6'))}">${esc(S.briefing)}</textarea>
                 <div class="scn-grid2">
-                    <div><label class="scn-lab">승리했을 때 글</label><textarea class="scn-in" data-f="winText" rows="3">${esc(S.winText)}</textarea></div>
-                    <div><label class="scn-lab">패배했을 때 글</label><textarea class="scn-in" data-f="loseText" rows="3">${esc(S.loseText)}</textarea></div>
+                    <div><label class="scn-lab">${esc(i18n('maker.challengeEditor.8'))}</label><textarea class="scn-in" data-f="winText" rows="3">${esc(S.winText)}</textarea></div>
+                    <div><label class="scn-lab">${esc(i18n('maker.challengeEditor.9'))}</label><textarea class="scn-in" data-f="loseText" rows="3">${esc(S.loseText)}</textarea></div>
                 </div>
             </div>
             <div class="scn-card">
-                <div class="scn-h">시작</div>
-                <div class="scn-seg"><button type="button" data-start="preset" class="${st.kind !== 'save' ? 'on' : ''}">내장 프리셋</button><button type="button" data-start="save" class="${st.kind === 'save' ? 'on' : ''}">세이브 파일 (.hemi)</button></div>
+                <div class="scn-h">${esc(i18n('sim.campaign.80'))}</div>
+                <div class="scn-seg"><button type="button" data-start="preset" class="${st.kind !== 'save' ? 'on' : ''}">${esc(i18n('maker.challengeEditor.10'))}</button><button type="button" data-start="save" class="${st.kind === 'save' ? 'on' : ''}">${esc(i18n('maker.challengeEditor.11'))}</button></div>
                 ${st.kind === 'save'
-                    ? `<div class="scn-row"><button type="button" class="scn-btn" id="scnSaveBtn">${st.state ? '다른 세이브 고르기' : '세이브 파일 고르기'}</button><span class="scn-dim">${st.state ? esc(st.name || '세이브') : '게임에서 시작 상황을 만들고 저장 › 파일로 저장(.hemi)한 파일'}</span>
+                    ? `<div class="scn-row"><button type="button" class="scn-btn" id="scnSaveBtn">${st.state ? esc(i18n('maker.challengeEditor.12')) : esc(i18n('maker.challengeEditor.13'))}</button><span class="scn-dim">${st.state ? esc(st.name || esc(i18n('maker.challengeEditor.14'))) : esc(i18n('maker.challengeEditor.15'))}</span>
                        <input type="file" id="scnSaveFile" accept=".hemi,.json,application/json" hidden></div>`
                     : `<select class="scn-in" id="scnPreset">${presets.filter(p => !p.comingSoon).map(p => `<option value="${esc(p.id)}" ${p.id === st.preset ? 'selected' : ''}>${esc(p.title)}${p.date ? ` — ${esc(p.date)}` : ''}</option>`).join('')}</select>`}
-                <div class="scn-start-info">${startInfo ? `🏛 ${esc(startInfo.nation || '(국가명 없음)')} · ${esc(startInfo.date || '날짜 없음')} · 정당 ${parties.length}개` : '<span class="scn-dim">시작 상태를 읽는 중…</span>'}</div>
+                <div class="scn-start-info">${startInfo ? i18n('maker.challengeEditor.18', { nation: esc(startInfo.nation || esc(i18n('maker.challengeEditor.16'))), date: esc(startInfo.date || esc(i18n('maker.challengeEditor.17'))), parties: parties.length }) : `<span class="scn-dim">${esc(i18n('maker.challengeEditor.19'))}</span>`}</div>
                 <div class="scn-grid2">
-                    <div><label class="scn-lab">마감일 (선택)</label><input class="scn-in" data-f="deadline" placeholder="YYYY-MM-DD" value="${esc(S.deadline)}"></div>
-                    <div class="scn-check-wrap"><label class="scn-check"><input type="checkbox" data-fb="surviveToDeadline" ${S.surviveToDeadline ? 'checked' : ''}> 마감일까지 목표를 지키면 승리 (아니면 목표를 다 이루는 순간 승리)</label></div>
+                    <div><label class="scn-lab">${esc(i18n('maker.challengeEditor.20'))}</label><input class="scn-in" data-f="deadline" placeholder="YYYY-MM-DD" value="${esc(S.deadline)}"></div>
+                    <div class="scn-check-wrap"><label class="scn-check"><input type="checkbox" data-fb="surviveToDeadline" ${S.surviveToDeadline ? 'checked' : ''}> ${esc(i18n('maker.challengeEditor.21'))}</label></div>
                 </div>
             </div>
             <div class="scn-card">
-                <div class="scn-h">고급 — 이벤트 · 결정 · 변수 <span class="scn-dim">(스크립트 모드 형식 · docs/MODDING.md)</span></div>
-                <div class="scn-dim scn-small">조건 · 효과에서 쓰는 변수 · 플래그는 이 챌린지 것만 따로 셉니다. 목표의 "플래그" · "챌린지 변수"와 같은 이름을 쓰면 이어집니다.</div>
-                ${['variables', 'events', 'decisions'].map(k => `<label class="scn-lab">${{ variables: '변수 (처음 값) — { "이름": 숫자 }', events: '이벤트 — [ { id, title, desc, trigger, options } ]', decisions: '결정 — [ { id, title, desc, available, effects } ]' }[k]}</label>
+                <div class="scn-h">${esc(i18n('maker.challengeEditor.22'))} <span class="scn-dim">${esc(i18n('maker.challengeEditor.23'))}</span></div>
+                <div class="scn-dim scn-small">${esc(i18n('maker.challengeEditor.24'))}</div>
+                ${['variables', 'events', 'decisions'].map(k => `<label class="scn-lab">${{ variables: esc(i18n('maker.challengeEditor.25')), events: esc(i18n('maker.challengeEditor.26')), decisions: esc(i18n('maker.challengeEditor.27')) }[k]}</label>
                     <textarea class="scn-in scn-code" data-json="${k}" rows="${k === 'variables' ? 3 : 7}" spellcheck="false">${esc(JSON.stringify(S[k], null, 2))}</textarea><div class="scn-err" data-err="${k}"></div>`).join('')}
-                <div class="scn-row"><button type="button" class="scn-btn" id="scnExample">예제 이벤트 · 결정 넣기</button></div>
+                <div class="scn-row"><button type="button" class="scn-btn" id="scnExample">${esc(i18n('maker.challengeEditor.28'))}</button></div>
             </div>
         </section>
         <section class="scn-col">
-            ${condListHtml('goals', '목표', '이루면 승리 — "선택" 목표는 승리에 필요 없음, "끝까지 유지"는 다시 깨질 수 있음', parties)}
-            ${condListHtml('failures', '실패 조건', '하나라도 맞으면 패배', parties)}
+            ${condListHtml('goals', esc(i18n('sim.challenge.12')), esc(i18n('maker.challengeEditor.29')), parties)}
+            ${condListHtml('failures', esc(i18n('sim.challenge.4')), esc(i18n('maker.challengeEditor.30')), parties)}
             <div class="scn-card scn-note">
-                <div class="scn-h">시험 플레이 · 공유</div>
-                <div class="scn-dim scn-small">▶ 시험 플레이를 누르면 시작 상태로 새 세이브를 만들고 챌린지를 붙여 게임이 열립니다. 오른쪽 아래 🎯 카드에서 목표를 보고, 날짜를 넘기거나 총선 결과를 반영할 때마다 검사합니다.<br>
-                내보내기(.hemichl)한 파일을 다른 사람이 여기서 불러오면 같은 챌린지를 할 수 있습니다. 챌린지는 이 기기에 자동 저장됩니다.</div>
-                <div class="scn-row"><button type="button" class="scn-btn scn-danger" id="scnDelete">이 챌린지 지우기</button></div>
+                <div class="scn-h">${esc(i18n('maker.challengeEditor.31'))}</div>
+                <div class="scn-dim scn-small">${esc(i18n('maker.challengeEditor.32'))}<br>
+                ${esc(i18n('maker.challengeEditor.33'))}</div>
+                <div class="scn-row"><button type="button" class="scn-btn scn-danger" id="scnDelete">${esc(i18n('maker.challengeEditor.34'))}</button></div>
             </div>
         </section>
-        <datalist id="scnParties"><option value="ruling">집권 세력 최대 정당</option><option value="largest">하원 최대 정당</option><option value="opposition">야당 최대 정당</option>${parties.map(n => `<option value="${esc(n)}">`).join('')}</datalist>`;
+        <datalist id="scnParties"><option value="ruling">${esc(i18n('maker.challengeEditor.35'))}</option><option value="largest">${esc(i18n('maker.challengeEditor.36'))}</option><option value="opposition">${esc(i18n('maker.challengeEditor.37'))}</option>${parties.map(n => `<option value="${esc(n)}">`).join('')}</datalist>`;
         bind();
     }
 
@@ -113,36 +113,36 @@
         return `<div class="scn-card">
             <div class="scn-h">${title} <span class="scn-n">${list.length}</span></div>
             <div class="scn-dim scn-small">${hint}</div>
-            ${list.map((g, i) => condRow(key, g, i)).join('') || `<div class="scn-empty">${key === 'goals' ? '목표가 없으면 자유 플레이입니다.' : '실패 조건 없음'}</div>`}
-            <div class="scn-row"><button type="button" class="scn-btn" data-add="${key}">+ ${key === 'goals' ? '목표' : '실패 조건'} 추가</button></div>
+            ${list.map((g, i) => condRow(key, g, i)).join('') || `<div class="scn-empty">${key === 'goals' ? esc(i18n('maker.challengeEditor.38')) : esc(i18n('maker.challengeEditor.39'))}</div>`}
+            <div class="scn-row"><button type="button" class="scn-btn" data-add="${key}">+ ${key === 'goals' ? esc(i18n('sim.challenge.12')) : esc(i18n('sim.challenge.4'))} ${esc(i18n('sim.contentTerritory.3'))}</button></div>
         </div>`;
     }
     function condRow(key, g, i) {
         const p = g.p || {}, k = g.kind || 'custom';
-        const party = `<input class="scn-in" list="scnParties" data-p="party" value="${esc(p.party || '')}" placeholder="정당 이름" style="width:150px">`;
+        const party = `<input class="scn-in" list="scnParties" data-p="party" value="${esc(p.party || '')}" placeholder="${esc(i18n('maker.challengeEditor.40'))}" style="width:150px">`;
         const opn = `<select class="scn-in" data-p="op">${OPS.map(([v, l]) => `<option value="${v}" ${(p.op || 'gte') === v ? 'selected' : ''}>${l}</option>`).join('')}</select>`;
         const num = `<input class="scn-in scn-num" type="number" step="any" data-p="n" value="${esc(p.n ?? '')}">`;
         let fields = '';
         switch (k) {
             case 'ruling': case 'not_ruling': fields = party; break;
-            case 'party_seats': fields = `${party}<select class="scn-in" data-p="chamber">${[['house', '하원'], ['senate', '상원'], ['third', '삼원']].map(([v, l]) => `<option value="${v}" ${(p.chamber || 'house') === v ? 'selected' : ''}>${l}</option>`).join('')}</select>${num}<label class="scn-check"><input type="checkbox" data-pb="share" ${p.share ? 'checked' : ''}> %</label>${opn}`; break;
+            case 'party_seats': fields = `${party}<select class="scn-in" data-p="chamber">${[['house', i18n('sim.contentSettings.5')], ['senate', i18n('sim.contentSettings.6')], ['third', i18n('sim.contentSettings.7')]].map(([v, l]) => `<option value="${v}" ${(p.chamber || 'house') === v ? 'selected' : ''}>${l}</option>`).join('')}</select>${num}<label class="scn-check"><input type="checkbox" data-pb="share" ${p.share ? 'checked' : ''}> %</label>${opn}`; break;
             case 'party_support': fields = `${party}${num}<span class="scn-dim">%</span>${opn}`; break;
             case 'ruling_seats': fields = `${num}<label class="scn-check"><input type="checkbox" data-pb="share" ${p.share !== false ? 'checked' : ''}> %</label>${opn}`; break;
             case 'approval': fields = `<select class="scn-in" data-p="of">${APPR.map(([v, l]) => `<option value="${v}" ${(p.of || 'cabinet') === v ? 'selected' : ''}>${l}</option>`).join('')}</select>${num}<span class="scn-dim">%</span>${opn}`; break;
             case 'economy': fields = `<select class="scn-in" data-p="indicator">${ECON.map(([v, l]) => `<option value="${v}" ${(p.indicator || 'growth') === v ? 'selected' : ''}>${l}</option>`).join('')}</select>${num}${opn}`; break;
             case 'date_after': fields = `<input class="scn-in" data-p="date" placeholder="YYYY-MM-DD" value="${esc(p.date || '')}" style="width:130px">`; break;
-            case 'party_status': fields = `${party}<select class="scn-in" data-p="is">${[['banned', '활동 금지'], ['dissolved', '해산'], ['active', '활동 중']].map(([v, l]) => `<option value="${v}" ${(p.is || 'banned') === v ? 'selected' : ''}>${l}</option>`).join('')}</select>`; break;
-            case 'flag': fields = `<input class="scn-in" data-p="flag" placeholder="플래그 이름" value="${esc(p.flag || '')}" style="width:150px">`; break;
-            case 'var': fields = `<input class="scn-in" data-p="name" placeholder="변수 이름" value="${esc(p.name || '')}" style="width:120px">${num}${opn}`; break;
+            case 'party_status': fields = `${party}<select class="scn-in" data-p="is">${[['banned', i18n('sim.vote.32')], ['dissolved', i18n('sim.export.3')], ['active', i18n('maker.challengeEditor.41')]].map(([v, l]) => `<option value="${v}" ${(p.is || 'banned') === v ? 'selected' : ''}>${l}</option>`).join('')}</select>`; break;
+            case 'flag': fields = `<input class="scn-in" data-p="flag" placeholder="${esc(i18n('maker.challengeEditor.42'))}" value="${esc(p.flag || '')}" style="width:150px">`; break;
+            case 'var': fields = `<input class="scn-in" data-p="name" placeholder="${esc(i18n('maker.challengeEditor.43'))}" value="${esc(p.name || '')}" style="width:120px">${num}${opn}`; break;
             default: fields = `<textarea class="scn-in scn-code" data-p="json" rows="3" spellcheck="false" placeholder='{ "party_seats": { "party": "ruling", "share": true, "gte": 50 } }'>${esc(p.json || JSON.stringify(g.condition || {}, null, 1))}</textarea>`;
         }
         return `<div class="scn-cond" data-list="${key}" data-i="${i}">
             <div class="scn-row"><select class="scn-in" data-kind>${KINDS.map(([v, l]) => `<option value="${v}" ${k === v ? 'selected' : ''}>${l}</option>`).join('')}</select>
-                <span class="scn-grow"></span><button type="button" class="scn-x" data-up title="위로">↑</button><button type="button" class="scn-x" data-del title="빼기">×</button></div>
+                <span class="scn-grow"></span><button type="button" class="scn-x" data-up title="${esc(i18n('sim.legis.7'))}">↑</button><button type="button" class="scn-x" data-del title="${esc(i18n('sim.coup.71'))}">×</button></div>
             <div class="scn-row scn-fields">${fields}</div>
             <div class="scn-row"><input class="scn-in scn-grow" data-text value="${esc(g.text || '')}" placeholder="${esc(autoText(k, p))}">
-                ${key === 'goals' ? `<label class="scn-check"><input type="checkbox" data-opt ${g.required === false ? 'checked' : ''}> 선택</label><label class="scn-check"><input type="checkbox" data-hold ${g.hold ? 'checked' : ''}> 끝까지 유지</label>` : ''}</div>
-            ${g.condition == null ? '<div class="scn-err">조건 JSON을 읽지 못했습니다</div>' : ''}
+                ${key === 'goals' ? `<label class="scn-check"><input type="checkbox" data-opt ${g.required === false ? 'checked' : ''}> ${esc(i18n('sim.main.24'))}</label><label class="scn-check"><input type="checkbox" data-hold ${g.hold ? 'checked' : ''}> ${esc(i18n('maker.challengeEditor.44'))}</label>` : ''}</div>
+            ${g.condition == null ? `<div class="scn-err">${esc(i18n('maker.challengeEditor.45'))}</div>` : ''}
         </div>`;
     }
 
@@ -169,18 +169,18 @@
                 if (!obj || !(obj.parliament || obj.data) || !Array.isArray((obj.parliament || obj.data).parties)) throw new Error('not a save');
                 S.start = { kind: 'save', name: f.name.replace(/\.(hemi|json)$/i, ''), state: obj };
                 startInfo = summarize(obj); render(); touch();
-            } catch (err) { alertBox('Hemicycle 세이브 파일(.hemi)이 아닙니다.'); }
+            } catch (err) { alertBox(i18n('maker.challengeEditor.46')); }
         });
         body.querySelectorAll('[data-json]').forEach(ta => { ta.oninput = () => {
             const k = ta.dataset.json, err = body.querySelector(`[data-err="${k}"]`);
-            try { const v = JSON.parse(ta.value || (k === 'variables' ? '{}' : '[]')); if (k === 'variables' ? (typeof v !== 'object' || Array.isArray(v)) : !Array.isArray(v)) throw new Error(k === 'variables' ? '{ } 객체여야 합니다' : '[ ] 배열이어야 합니다'); S[k] = v; err.textContent = ''; touch(); }
-            catch (e2) { err.textContent = 'JSON 오류: ' + e2.message; }
+            try { const v = JSON.parse(ta.value || (k === 'variables' ? '{}' : '[]')); if (k === 'variables' ? (typeof v !== 'object' || Array.isArray(v)) : !Array.isArray(v)) throw new Error(k === 'variables' ? i18n('maker.challengeEditor.47') : i18n('maker.challengeEditor.48')); S[k] = v; err.textContent = ''; touch(); }
+            catch (e2) { err.textContent = (i18n('maker.challengeEditor.49') + " ") + e2.message; }
         }; });
         $('scnExample').onclick = () => {
             S.variables = { ...S.variables, crisis: 0 };
-            S.events = [...S.events, { id: 'scandal', title: '정치 스캔들', desc: '{party:ruling}의 핵심 인사가 스캔들에 휘말렸습니다.', trigger: { chance: 20 }, once: true,
-                options: [{ text: '사과하고 경질한다', effects: [{ support: { party: 'ruling', add: -1 } }, { approval: { of: 'cabinet', add: -2 } }] }, { text: '모르쇠로 버틴다', effects: [{ support: { party: 'ruling', add: -3 } }, { add_var: { name: 'crisis', value: 1 } }] }] }];
-            S.decisions = [...S.decisions, { id: 'rally', category: '챌린지', title: '지지층 결집 집회', desc: '여당 지지율 +2 · 국정 지지율 -1 (180일마다)', cooldown_days: 180, effects: [{ support: { party: 'ruling', add: 2 } }, { approval: { of: 'cabinet', add: -1 } }] }];
+            S.events = [...S.events, { id: 'scandal', title: i18n('maker.challengeEditor.50'), desc: i18n('maker.challengeEditor.51'), trigger: { chance: 20 }, once: true,
+                options: [{ text: i18n('maker.challengeEditor.52'), effects: [{ support: { party: 'ruling', add: -1 } }, { approval: { of: 'cabinet', add: -2 } }] }, { text: i18n('maker.challengeEditor.53'), effects: [{ support: { party: 'ruling', add: -3 } }, { add_var: { name: 'crisis', value: 1 } }] }] }];
+            S.decisions = [...S.decisions, { id: 'rally', category: i18n('sim.challenge.1'), title: i18n('sim.scriptmods.79'), desc: i18n('maker.challengeEditor.54'), cooldown_days: 180, effects: [{ support: { party: 'ruling', add: 2 } }, { approval: { of: 'cabinet', add: -1 } }] }];
             render(); touch();
         };
         body.querySelectorAll('[data-add]').forEach(b => { b.onclick = () => {
@@ -203,7 +203,7 @@
             row.querySelector('[data-up]').onclick = () => { if (i > 0) { [S[key][i - 1], S[key][i]] = [S[key][i], S[key][i - 1]]; render(); touch(); } };
         });
         $('scnDelete').onclick = async () => {
-            if (!(await confirmBox(`"${S.title}" 챌린지를 이 기기에서 지울까요? (내보낸 파일은 그대로)`))) return;
+            if (!(await confirmBox(i18n('maker.challengeEditor.55', { title: S.title })))) return;
             await dbDel(S.id).catch(() => {});
             const all = await dbAll().catch(() => []);
             if (all.length) await openItem(all.sort((a, b) => b.updatedAt - a.updatedAt)[0]); else { S = blank(); startInfo = null; render(); loadStartInfo(); await saveNow(); }
@@ -216,21 +216,21 @@
         const c = state.config || {};
         const parl = state.parliament || state.data || {};
         const parties = (parl.parties || []).filter(p => p && p.ideologyId !== 9999 && p.status !== 'dissolved').map(p => String(p.name || '').trim()).filter(Boolean);
-        return { nation: c.nationName || '', date: c.nationDateYear ? `${c.nationDateEra ? c.nationDateEra + ' ' : ''}${c.nationDateYear}년 ${c.nationDateMonth || 1}월 ${c.nationDateDay || 1}일` : '', parties };
+        return { nation: c.nationName || '', date: c.nationDateYear ? i18n('maker.challengeEditor.56', { nationDateEra: c.nationDateEra ? c.nationDateEra + ' ' : '', nationDateYear: c.nationDateYear, nationDateMonth: c.nationDateMonth || 1, nationDateDay: c.nationDateDay || 1 }) : '', parties };
     }
     let loadToken = 0;
     async function loadStartInfo() {
         const st = S.start || {};
         const tok = ++loadToken;
         try {
-            if (st.kind === 'save') { startInfo = st.state ? summarize(st.state) : { nation: '(세이브를 고르세요)', date: '', parties: [] }; }
+            if (st.kind === 'save') { startInfo = st.state ? summarize(st.state) : { nation: i18n('maker.challengeEditor.57'), date: '', parties: [] }; }
             else {
                 const p = await HemiPresets.find(st.preset);
                 const state = p ? await HemiPresets.loadState(p) : null;
                 if (tok !== loadToken) return;
-                startInfo = state ? summarize(state) : { nation: '(프리셋을 읽지 못함)', date: '', parties: [] };
+                startInfo = state ? summarize(state) : { nation: i18n('maker.challengeEditor.58'), date: '', parties: [] };
             }
-        } catch (e) { startInfo = { nation: '(시작 상태를 읽지 못함)', date: '', parties: [] }; }
+        } catch (e) { startInfo = { nation: i18n('maker.challengeEditor.59'), date: '', parties: [] }; }
         if (tok === loadToken) render();
     }
 
@@ -241,13 +241,13 @@
     function touch() { clearTimeout(saveTimer); saveTimer = setTimeout(saveNow, 500); }
     async function saveNow() {
         clearTimeout(saveTimer);
-        try { await dbPut({ id: S.id, title: S.title || '(제목 없음)', updatedAt: Date.now(), data: JSON.parse(JSON.stringify(S)) }); localStorage.setItem(LAST, S.id); history.replaceState(null,'','challenge.html?item='+encodeURIComponent(S.id)); } catch (e) { /* 저장 실패 — 내보내기로 */ }
+        try { await dbPut({ id: S.id, title: S.title || i18n('sim.news.8'), updatedAt: Date.now(), data: JSON.parse(JSON.stringify(S)) }); localStorage.setItem(LAST, S.id); history.replaceState(null,'','challenge.html?item='+encodeURIComponent(S.id)); } catch (e) { /* 저장 실패 — 내보내기로 */ }
         refreshLibrary();
     }
     async function refreshLibrary() {
         const sel = $('scnLibrary');
         const all = (await dbAll().catch(() => [])).sort((a, b) => b.updatedAt - a.updatedAt);
-        sel.innerHTML = `<option value="" disabled>내 챌린지 (${all.length})</option>` + all.map(it => `<option value="${esc(it.id)}" ${it.id === S.id ? 'selected' : ''}>${esc(it.title)}</option>`).join('');
+        sel.innerHTML = `<option value="" disabled>${esc(i18n('maker.challengeEditor.60'))}${all.length})</option>` + all.map(it => `<option value="${esc(it.id)}" ${it.id === S.id ? 'selected' : ''}>${esc(it.title)}</option>`).join('');
     }
     async function openItem(it) {
         S = normalize(it.data) || blank();
@@ -286,9 +286,9 @@
             const d = normalize(JSON.parse(window.HemiFile ? await window.HemiFile.readText(f) : await f.text()));
             if (!d) throw new Error('format');
             const all = await dbAll().catch(() => []);
-            if (all.some(it => it.id === d.id) && !(await confirmBox(`같은 챌린지("${d.title}")가 이미 있습니다. 불러온 것으로 덮어쓸까요? (취소하면 복사본으로)`))) d.id = uid('scn');
+            if (all.some(it => it.id === d.id) && !(await confirmBox(i18n('maker.challengeEditor.61', { title: d.title })))) d.id = uid('scn');
             S = d; startInfo = null; render(); loadStartInfo(); await saveNow();
-        } catch (e) { alertBox('Hemicycle 챌린지 파일(.hemichl)이 아닙니다.'); }
+        } catch (e) { alertBox(i18n('maker.challengeEditor.62')); }
     }
 
     // ---------------------------------------------------------------
@@ -298,11 +298,11 @@
         await saveNow();
         const d = finalData();
         const st = d.start || {};
-        if (st.kind === 'save' && !st.state) { alertBox('시작할 세이브 파일을 고르세요.'); return; }
+        if (st.kind === 'save' && !st.state) { alertBox(i18n('maker.challengeEditor.63')); return; }
         const bad = [...d.goals, ...d.failures].find(g => g.condition == null);
-        if (bad) { alertBox(`조건을 읽지 못한 항목이 있습니다: ${bad.text || bad.id}`); return; }
+        if (bad) { alertBox(i18n('maker.challengeEditor.64', { bad: bad.text || bad.id })); return; }
         const scn = { ...d, start: { kind: st.kind, preset: st.preset, name: st.name } }; // 시작 세이브는 따로 넘김
-        const name = d.title || '챌린지';
+        const name = d.title || i18n('sim.challenge.1');
         try {
             ['hemiBootCampaign','hemiBootCampaignPending','hemiBootChallenge','hemiBootChallengePending','hemiBootPresetId','hemiBootNewSaveName','hemiBootImportedStateJSON','hemiBootImportedName','hemiBootImportPending'].forEach(k=>sessionStorage.removeItem(k));
             const text = JSON.stringify(scn);
@@ -320,7 +320,7 @@
                 sessionStorage.setItem('hemiBootPresetId', st.preset || 'builtin:tutorial');
                 sessionStorage.setItem('hemiBootNewSaveName', name);
             }
-        } catch (e) { alertBox('챌린지를 넘기지 못했습니다. (저장 공간 부족)'); return; }
+        } catch (e) { alertBox(i18n('maker.challengeEditor.65')); return; }
         location.href = 'main.html';
     }
 
@@ -345,7 +345,7 @@
         let last = null; try { last = localStorage.getItem(LAST); } catch (e) { /* 무시 */ }
         const params=new URLSearchParams(location.search), requested=params.get('item');
         const it = params.has('new') ? null : requested ? all.find(x=>x.id===requested) : all.find(x => x.id === last) || all[0];
-        if(requested&&!it)alertBox('이 제작물을 찾을 수 없습니다. 제작물 목록에서 다시 선택해 주세요.');
+        if(requested&&!it)alertBox(i18n('maker.challengeEditor.66'));
         if (it) S = normalize(it.data) || blank();
         render(); loadStartInfo(); refreshLibrary();
         if (!it) saveNow();
