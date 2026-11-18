@@ -1,7 +1,7 @@
 // 세이브 파일(.hemi 또는 .json)을 내장 프리셋 데이터 파일(presets/<이름>.js)로 바꾼다.
 //   node tools/make-preset.js <세이브 파일> <이름>      예) node tools/make-preset.js 일본.hemi japan
 //   node tools/make-preset.js <세이브 파일> <이름> --lang en   → 그 프리셋의 영어 파일 presets/<이름>.en.js
-// 만든 뒤 js/presets.js의 해당 항목(id: 'builtin:<이름>')에서 comingSoon을 지우고, 출력된 날짜를 date에 넣으면 된다.
+// 만든 뒤 js/presets.js의 BUILTIN에 항목(id: 'builtin:<이름>')을 더하고, 이름 · 출력된 날짜는 presets.<이름>.title · .date 키(lang/kr.js · lang/en.js)로 넣는다.
 // 언어 파일은 그 항목의 langs에 { en: { script: 'presets/<이름>.en.js' } }처럼 적는다 (1.6.0 — 프리셋은 언어마다 따로 만든 파일을 쓴다)
 const fs = require('fs');
 const path = require('path');

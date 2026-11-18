@@ -7,9 +7,14 @@
 //     · 번역 템플릿 받기(시작 화면 언어 메뉴)도 막는다 — data-official-block 버튼은 숨기고, 받기 함수도 막음
 //     · Steam 판(electron/steam.json에 appId가 있는 데스크톱 앱)은 막지 않는다
 // steamUrl: 나중에 채울 Steam 상점 주소 — 비어 있으면 링크 대신 "상점 페이지 준비 중"으로 보여 준다
+// webMoved: true — 브라우저 판(웹사이트로 연 게임) 종료: 앱(릴리스)만 쓴다. 웹사이트로 열면 official처럼 플레이를 막고
+//     "세이브 내보내기"와 앱 받기(releasesUrl)로 안내한다 — 브라우저에 남은 세이브를 앱으로 옮길 수 있게.
+//     앱(데스크톱 · Steam), 파일로 직접 연 게임(file://), 이 컴퓨터의 테스트 서버(localhost · 127.0.0.1)는 막지 않는다.
 window.HEMI_OFFICIAL = Object.freeze({
     official: false,
     steamUrl: '', // 예: 'https://store.steampowered.com/app/0000000/Hemicycle/'
+    webMoved: true,
+    releasesUrl: 'https://github.com/Jedidiah1926/parliament/releases',
 });
 
 (function () {
@@ -18,7 +23,12 @@ window.HEMI_OFFICIAL = Object.freeze({
     const isSteamBuild = () => !!(window.hemicycleDesktop && window.hemicycleDesktop.isSteamBuild);
     const isOfficial = () => !!cfg.official;
     const isDemoBuild = () => !!(window.HEMI_BUILD && window.HEMI_BUILD.demo); // Steam 데모 빌드
-    const playBlocked = () => isOfficial() && !isSteamBuild() && !isDemoBuild();
+    // 웹사이트로 연 게임인지 — 앱(window.hemicycleDesktop)도 아니고 file://도 아니고 이 컴퓨터의 테스트 서버도 아닌 http(s)
+    const isWebSite = () => !window.hemicycleDesktop && /^https?:$/.test(location.protocol)
+        && !/^(localhost|127(?:\.\d+){3}|\[::1\]|0\.0\.0\.0)$/.test(location.hostname);
+    const webMoved = () => !!cfg.webMoved && isWebSite();
+    const playBlocked = () => (isOfficial() && !isSteamBuild() && !isDemoBuild()) || webMoved();
+    const releasesUrl = () => String(cfg.releasesUrl || '');
     const steamUrl = () => String(cfg.steamUrl || '');
     const SAVE_SLOTS_KEY = 'hemiParliamentSaveSlots'; // js/main.js와 같은 키 (본 게임 저장 공간)
     const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -100,27 +110,33 @@ window.HEMI_OFFICIAL = Object.freeze({
     }
 
     // ---- 게임 화면을 막는 안내 (정식 출시 후 웹 · GitHub 판) ----
-    function blockGame() {
+    function blockGame(closable) {
         if (document.getElementById('hemiOfficialGate')) return;
         const g = document.createElement('div');
         g.id = 'hemiOfficialGate';
         g.className = 'hemi-off-overlay hemi-off-gate';
         const url = steamUrl();
+        // 브라우저 판 종료(webMoved)면 앱(릴리스) 받기로, 정식 출시(official)면 Steam 상점으로
+        const web = webMoved() && !(isOfficial() && url);
+        const getApp = web
+            ? (releasesUrl() ? `<a class="hemi-off-btn primary" href="${esc(releasesUrl())}" target="_blank" rel="noopener noreferrer">${esc(i18n('sim.official.webGetApp'))}</a>` : '')
+            : (url ? `<a class="hemi-off-btn primary" href="${esc(url)}" target="_blank" rel="noopener noreferrer">${esc(i18n('sim.official.14'))}</a>` : `<span class="hemi-off-btn disabled">${esc(i18n('sim.official.15'))}</span>`);
         g.innerHTML = `<div class="hemi-off-box" role="alertdialog">
-            <div class="hemi-off-title">${esc(i18n('sim.official.12'))}</div>
-            <div class="hemi-off-desc">${esc(i18n('sim.official.13'))}</div>
+            <div class="hemi-off-title">${esc(i18n(web ? 'sim.official.webTitle' : 'sim.official.12'))}</div>
+            <div class="hemi-off-desc">${esc(i18n(web ? 'sim.official.webDesc' : 'sim.official.13'))}</div>
             <div class="hemi-off-btns">
-                ${url ? `<a class="hemi-off-btn primary" href="${esc(url)}" target="_blank" rel="noopener noreferrer">${esc(i18n('sim.official.14'))}</a>` : `<span class="hemi-off-btn disabled">${esc(i18n('sim.official.15'))}</span>`}
+                ${getApp}
                 <button type="button" class="hemi-off-btn" data-x="export">${esc(i18n('sim.official.16'))}</button>
-                <a class="hemi-off-btn" href="index.html">${esc(i18n('sim.official.17'))}</a>
+                ${closable ? `<button type="button" class="hemi-off-btn" data-x="close">${esc(i18n('sim.main.2'))}</button>` : `<a class="hemi-off-btn" href="index.html">${esc(i18n('sim.official.17'))}</a>`}
             </div></div>`;
         document.body.appendChild(g);
         g.querySelector('[data-x="export"]').onclick = openExport;
+        if (closable) { g.querySelector('[data-x="close"]').onclick = () => g.remove(); return; }
         // 막힌 화면 뒤의 단축키(Ctrl+S 등)도 먹지 않게
         window.addEventListener('keydown', e => { if (!document.getElementById('hemiExportModal')) { e.stopImmediatePropagation(); } }, true);
     }
 
-    window.HemiOfficial = { isOfficial, playBlocked, steamUrl, openExport, exportSlots, savedSlots };
+    window.HemiOfficial = { isOfficial, webMoved, playBlocked, steamUrl, releasesUrl, openExport, exportSlots, savedSlots };
 
     function decorate() {
         const on = isOfficial();
@@ -149,8 +165,10 @@ window.HEMI_OFFICIAL = Object.freeze({
                 start.onclick = e => { e.preventDefault(); openExport(); };
                 const l = start.querySelector('.home-menu-label'), d = start.querySelector('.home-menu-desc');
                 if (l) l.textContent = i18n('sim.official.2');
-                if (d) d.textContent = i18n('sim.official.19');
+                if (d) d.textContent = i18n(webMoved() && !isOfficial() ? 'sim.official.webStartDesc' : 'sim.official.19');
             }
+            // 브라우저 판 종료: 시작 화면에 들어오면 안내 창을 먼저 띄운다 (닫고 메인 화면을 볼 수 있음)
+            if (webMoved() && !isOfficial()) blockGame(true);
             if (/[?&#]export\b/.test(location.search + location.hash)) openExport();
         } else if (/^(main|teaser\d*|logo)\.html$/.test(page)) {
             blockGame();

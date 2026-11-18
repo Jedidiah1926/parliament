@@ -6660,11 +6660,8 @@
         }
 
         // ===== 프리셋에서 새 세이브 만들기 =====
-        // presets/index.json에 등록된 [{file, title}] 목록을 읽어 제목을 보여주고,
-        // 고르면 presets/<file>을 그 상태 그대로 새 탭(세이브)에 담아 즉시 전환한다.
-        // 개발자/배포자가 presets/ 폴더에 .json 파일을 추가하고 index.json에
-        // 등록하기만 하면 누구나 그 프리셋을 쓸 수 있다 (자세한 방법은 README 참고).
-        // (목록·불러오기는 js/presets.js의 HemiPresets가 담당 — 내장 프리셋 + presets/index.json)
+        // 프리셋을 고르면 그 상태 그대로 새 탭(세이브)에 담아 즉시 전환한다.
+        // (목록·불러오기는 js/presets.js의 HemiPresets가 담당 — 내장 프리셋 + 모드 · 창작마당 프리셋)
         let presetListCache = null;
         let pendingPresetId = null;
 
