@@ -48,8 +48,8 @@
     let T = fresh();
     function fresh() { return { military: [], branches: defaultBranches(), junta: null, coupBanned: [], log: [] }; }
     function defaultBranches() {
-        const tr = k => (window.HemiLang && typeof HemiLang.t === 'function' ? HemiLang.t(k) : k);
-        return DEFAULT_BRANCHES.map(b => ({ id: b.id, name: tr(b.name), color: b.color }));
+        // 기본 소속 이름은 지금 화면 언어로 (세이브에 든 이름은 그대로)
+        return DEFAULT_BRANCHES.map(b => ({ id: b.id, name: i18n('sim.coup.branch.' + b.id), color: b.color }));
     }
     function guessBranch(role) {
         const d = DEFAULT_BRANCHES.find(b => b.keys.some(k => String(role || '').includes(k)));
@@ -464,12 +464,11 @@
             renderMilitary();
         });
         const seed = box.querySelector('[data-act="seed"]');
-        // 기본 직책 이름은 화면 언어로 (세이브에 든 이름은 번역하지 않으므로 만들 때 바꿔 둔다)
-        const tr = k => (window.HemiLang && typeof HemiLang.t === 'function' ? HemiLang.t(k) : k);
+        // 기본 직책 이름은 DEFAULT_ROSTER에서 이미 지금 화면 언어(i18n)
         if (seed) seed.onclick = () => {
             // 내각에 국방 장관 자리가 있으면 기본 지휘부의 국방부 장관을 그 자리와 바로 연결
             const defense = cabinetList().find(c => /국방/.test(c.position || ''));
-            DEFAULT_ROSTER.forEach(([role, loyalty, branchId]) => T.military.push({ id: uid(), role: tr(role), name: '', photo: '', partyId: '', loyalty, branchId: branchById(branchId) ? branchId : '',
+            DEFAULT_ROSTER.forEach(([role, loyalty, branchId]) => T.military.push({ id: uid(), role, name: '', photo: '', partyId: '', loyalty, branchId: branchById(branchId) ? branchId : '',
                 cabinetId: branchId === 'mnd' && defense ? defense.id : '' }));
             renderMilitary();
         };

@@ -378,11 +378,11 @@
     };
     // 탭이 아닌 곳 (위쪽 탭 바의 저장 · 설정 창)
     const SEARCH_ACTIONS = [
-        { label: '저장', get path() { return i18n('sim.sidenav.savePanel'); }, keys: ['저장', '세이브', '불러오기', '자동저장', '파일로 저장', '내보내기', '종합 프리셋', '지역구 프리셋', 'hemimap'], run: () => window.openSavePanel && window.openSavePanel() },
-        { label: '설정', get path() { return i18n('sim.sidenav.settingsPanel'); }, keys: ['설정', '테마', '다크 모드', '네온', '해상도', '전체 화면', '창 모드', '디버그 모드', '개발자 모드', '언어', '업데이트', '저장 위치'], run: () => window.openSettingsPanel && window.openSettingsPanel() },
+        { id: 'savePanel', label: '저장', get path() { return i18n('sim.sidenav.savePanel'); }, keys: ['저장', '세이브', '불러오기', '자동저장', '파일로 저장', '내보내기', '종합 프리셋', '지역구 프리셋', 'hemimap'], run: () => window.openSavePanel && window.openSavePanel() },
+        { id: 'settingsPanel', label: '설정', get path() { return i18n('sim.sidenav.settingsPanel'); }, keys: ['설정', '테마', '다크 모드', '네온', '해상도', '전체 화면', '창 모드', '디버그 모드', '개발자 모드', '언어', '업데이트', '저장 위치'], run: () => window.openSettingsPanel && window.openSettingsPanel() },
     ];
-    // 찾을 말 — 한국어 그대로에 지금 언어 사전으로 옮긴 말도 더한다 (영어 화면에서도 영어로 찾히게)
-    const withTr = list => { const tr = window.HemiLang && window.HemiLang.t; return tr ? [...new Set([...list, ...list.map(x => tr(x))])] : list; };
+    // 찾을 말 — 한국어 그대로에 지금 언어의 동의어(sim.sidenav.alias.<id> — "|"로 나눈 목록)도 더한다 (영어 화면에서도 영어로 찾히게)
+    const withTr = (id, list) => { const k = 'sim.sidenav.alias.' + id; if (!window.HemiLang || !HemiLang.has(k)) return list; return [...new Set([...list, ...String(i18n(k)).split('|').map(x => x.trim()).filter(Boolean)])]; };
     const norm = s => String(s || '').toLowerCase().replace(/[\s·\-–—_/()[\]{}:,.!?'"「」『』…]+/g, '');
     function contentOf(btn) {
         const m = /^(?:subTab|elecSubTab)(.+)$/.exec(btn.id || ''); if (!m) return null;
@@ -408,7 +408,7 @@
                 const panel = contentOf(src);
                 out.push({ kind: 'menu', text: label, path, go, panel, w: help ? 1 : 3 });
                 out.push({ kind: 'menu', text: gLabel, path, go, panel, w: 0.5 });
-                withTr(SEARCH_ALIASES[src.id] || []).forEach(k => out.push({ kind: 'alias', text: k, path, go, panel, w: 2 }));
+                withTr(src.id, SEARCH_ALIASES[src.id] || []).forEach(k => out.push({ kind: 'alias', text: k, path, go, panel, w: 2 }));
                 if (!panel || seenPanel.has(panel)) return;
                 seenPanel.add(panel);
                 const seen = new Set();
@@ -429,9 +429,9 @@
             const path = i18n('sim.sidenav.15', { label, ver });
             const go = () => l.click();
             out.push({ kind: 'menu', text: label, path, go, w: 2, locked: true });
-            withTr(SEARCH_ALIASES[id] || []).forEach(k => out.push({ kind: 'alias', text: k, path, go, w: 1.5, locked: true }));
+            withTr(id, SEARCH_ALIASES[id] || []).forEach(k => out.push({ kind: 'alias', text: k, path, go, w: 1.5, locked: true }));
         });
-        SEARCH_ACTIONS.forEach(a => withTr(a.keys).forEach(k => out.push({ kind: 'alias', text: k, path: a.path, go: a.run, w: 1.5 })));
+        SEARCH_ACTIONS.forEach(a => withTr(a.id, a.keys).forEach(k => out.push({ kind: 'alias', text: k, path: a.path, go: a.run, w: 1.5 })));
         return out;
     }
     function searchIndex(index, q) {

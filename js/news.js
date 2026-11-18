@@ -20,7 +20,7 @@
     const clamp = (v, a = 0, b = 100) => Math.max(a, Math.min(b, v));
     const r1 = v => Math.round(v * 10) / 10;
     const el = html => { const d = document.createElement('div'); d.innerHTML = html.trim(); return d.firstChild; };
-    const tr = x => (window.HemiLang && window.HemiLang.t ? window.HemiLang.t(String(x)) : String(x)); // 사진(캔버스)에 그리는 글자는 화면 번역이 닿지 않으므로 직접
+    const tr = x => String(x); // 사진(캔버스)에 그리는 글자 — i18n()으로 이미 지금 언어
 
     const TYPES = [['politics', i18n('sim.news.1')], ['economy', i18n('sim.mainContentHelp.6')], ['society', i18n('sim.news.2')], ['world', i18n('sim.news.3')], ['editorial', i18n('sim.news.4')], ['breaking', i18n('sim.news.5')]];
     const TYPE_LABEL = Object.fromEntries(TYPES);

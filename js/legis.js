@@ -135,11 +135,8 @@ function legisProposeConstitutionAmendment() {
     if (thr) { thr.value = '0.667'; if (typeof toggleCustomThreshold === 'function') toggleCustomThreshold(); }
     document.getElementById('newBillTitle')?.focus();
 }
-// 새로 만드는 데이터(기본 위원회 이름 · 개정안 제목 등)는 지금 화면 언어로 — 화면 번역은 데이터를 바꾸지 않으므로 만들 때 바꿔 둔다
-function legisUiText(ko) {
-    if (!window.HemiLang) return ko;
-    return (HemiLang.exact && HemiLang.exact(ko)) || (HemiLang.t ? HemiLang.t(ko) : ko);
-}
+// 예전에는 사전 번역을 거치던 자리 — 지금은 글자가 이미 i18n()으로 지금 언어라 그대로 돌려준다
+function legisUiText(s) { return s; }
 function billKindLabel(bill) {
     return bill && bill.kind === 'constitution' ? i18n('sim.contentBill.3') : '';
 }
@@ -446,7 +443,7 @@ function addDefaultCommittees() {
     const have = new Set(committees.map(c => c.name));
     const en = typeof getLang === 'function' && getLang() === 'en';
     COMMITTEE_PRESETS.forEach(([n, t, tEn], i) => {
-        const name = legisUiText(n);
+        const name = i18n('sim.legis.committee.' + (i + 1)); // 기본 위원회 이름은 지금 화면 언어로 (n은 한국어 원래 이름)
         if (!have.has(name)) committees.push({ id: 'cm' + Date.now() + i, name, chamber: 'house', size: COMMITTEE_DEFAULT_SIZE, chairPartyId: null, tags: (en ? tEn : t).slice() });
     });
     renderCommitteeTab(); renderBillList();

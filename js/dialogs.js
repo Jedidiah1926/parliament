@@ -6,7 +6,7 @@
 //  - opts: { title, okText, cancelText, tone: 'info' | 'warn' | 'danger' }
 (function () {
     if (window.HemiUI) return;
-    const t = s => (window.HemiLang && typeof HemiLang.t === 'function' ? HemiLang.t(String(s)) : String(s));
+    const t = s => String(s); // 글자는 i18n()으로 이미 지금 언어 (예전 사전 번역 자리)
     // 키 번역(js/lang.js) — 이 파일이 lang.js 없이 쓰이는 화면도 있어 없으면 한국어 그대로
     const key = (k, fallback) => (typeof window.i18n === 'function' ? window.i18n(k) : fallback);
     const isModern = () => document.documentElement.getAttribute('data-theme-family') === 'modern';
@@ -99,7 +99,7 @@ html[data-theme-family="modern"] .hemi-dialog-btn.cancel:hover, html[data-theme-
         el.removeAttribute('title');
         if (v.trim()) el.setAttribute('data-hemi-tip', v); else el.removeAttribute('data-hemi-tip');
         // 글자 없는 요소의 aria-label도 말풍선 글로 — 여기서 넣은 것(data-hemi-aria)은 title이 다시 바뀌면(언어 바꾸기 등) 따라 바꾼다
-        if (v.trim() && !el.textContent.trim() && (!el.hasAttribute('aria-label') || el.hasAttribute('data-hemi-aria'))) { el.setAttribute('aria-label', v); el.setAttribute('data-hemi-aria', ''); }
+        if (v.trim() && (el.hasAttribute('data-hemi-aria') || (!el.textContent.trim() && !el.hasAttribute('aria-label')))) { el.setAttribute('aria-label', v); el.setAttribute('data-hemi-aria', ''); }
     }
     function adoptTree(root) {
         if (root.nodeType !== 1) return;

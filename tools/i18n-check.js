@@ -9,7 +9,7 @@
 //   - 복수형 글자({ one, other … })에 "other"가 없음
 //   - HTML에 적어 둔 한국어 글자(<span data-i18n="키">글자</span>)가 한국어 팩 글자와 다름
 // 경고
-//   - 한국어 팩에는 있는데 다른 팩에 없는 키 (그 언어에서는 한국어 글자 → 사전 번역으로 보임)
+//   - 한국어 팩에는 있는데 다른 팩에 없는 키 (그 언어에서는 한국어 글자로 보임)
 //   - 어디서도 쓰지 않는 키 (i18n(`prefix.${…}`) · 'prefix.' + 이름처럼 키를 만들어 쓰는 곳은 그 prefix로 시작하는 키를 쓰는 것으로 본다)
 'use strict';
 const fs = require('fs'), path = require('path'), vm = require('vm');

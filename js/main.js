@@ -5587,7 +5587,6 @@
             if(!parl || !Array.isArray(parl.parties) || !Array.isArray(parl.ideologies) || !Array.isArray(parl.coalitions))
                 throw new Error("Invalid parliament data");
             dataLang = state.meta?.dataLang || null;
-            setTimeout(localizeLegacyData, 0); // 언어 정보 없는 세이브를 한국어가 아닌 화면에서 열었으면 기본 이름을 그 언어로 (1.6.0)
 
             ideologies = parl.ideologies;
             parties    = parl.parties.map(p => ({ leaderName:'', leaderPhoto:'', floorLeaderName:'', floorLeaderPhoto:'', floorLeaders:{}, logoPhoto:'', showLogoInStats:false, hideStatsPhoto:false, description:'', factions:[], seatsThird:0, inThird:false, abbr:'', fraudAttempt:null, ...p, factions:(p.factions||[]).map(f=>({leaderName:'',leaderPhoto:'',logoPhoto:'',usePartyColor:false,seatsThird:0,...f})) }));
@@ -7505,58 +7504,9 @@
         }
 
         // ── 세이브 데이터 언어 (1.6.0) ──
-        // 화면 번역은 UI 글자에만 하고 세이브에 든 이름 · 제목은 그대로 둔다. 그래서 데이터 자체가 어느 언어로 쓰였는지 기억한다(meta.dataLang).
-        // 언어 정보가 없는 세이브(예전 세이브 · 새로 만든 기본 상태)를 한국어가 아닌 화면에서 열면, 사전에 통째로 있는 기본 이름
-        // (기본 정당 · 이념 · 원 이름 등)만 그 언어로 한 번 바꿔 둔다 — 예전에 화면 번역으로 보이던 모습 그대로
+        // 세이브에 든 이름 · 제목은 화면 언어와 상관없이 그대로 둔다. 데이터가 어느 언어로 쓰였는지만 기억한다(meta.dataLang).
+        // (예전에는 언어 정보가 없는 세이브를 다른 언어 화면에서 열면 사전 번역으로 기본 이름을 한 번 바꿨다 — 사전 번역을 없애며 함께 없앰)
         let dataLang = null;
-        function localizeLegacyData() {
-            const ui = typeof getLang === 'function' ? getLang() : 'kr';
-            if(dataLang) return;
-            if(ui === 'kr') return;
-            if(!window.HemiLang || !HemiLang.ready) return; // 언어 팩이 준비되면 다시 (hemilangready)
-            let st;
-            try { st = getAppState(); } catch(e) { return; }
-            let changed = 0;
-            const walk = o => {
-                if(Array.isArray(o)) { o.forEach((v, i) => { if(typeof v === 'string') { const t = /[가-힣]/.test(v) ? HemiLang.exact(v) : null; if(t) { o[i] = t; changed++; } } else if(v && typeof v === 'object') walk(v); }); return; }
-                Object.keys(o).forEach(k => {
-                    const v = o[k];
-                    if(typeof v === 'string') { if(/[가-힣]/.test(v) && !v.startsWith('data:')) { const t = HemiLang.exact(v); if(t) { o[k] = t; changed++; } } }
-                    else if(v && typeof v === 'object') walk(v);
-                });
-            };
-            Object.keys(st).forEach(k => { if(k !== 'meta' && k !== 'ui' && st[k] && typeof st[k] === 'object') walk(st[k]); });
-            st.meta = { ...(st.meta || {}), dataLang: ui };
-            try { setAppState(st); } catch(e) { dataLang = ui; return; }
-            simulate(); refreshUI();
-            if(changed && typeof setSaveDirty === 'function') setSaveDirty(true);
-        }
-        window.addEventListener('hemilangready', () => setTimeout(localizeLegacyData, 0));
-        // 화면 번역에서 뺄 데이터 글자 — 정당 · 파벌 · 이념 · 연정 · 국가 · 원 · 지역구 · 의원 · 내각 · 법안 · 위원회 이름 등
-        function collectDataStrings() {
-            const out = [];
-            const add = v => { if(typeof v === 'string' && v) out.push(v); };
-            parties.forEach(p => { add(p.name); add(p.abbr); add(p.leaderName); add(p.floorLeaderName); Object.values(p.floorLeaders||{}).forEach(f => add(f && f.name)); (p.factions||[]).forEach(f => { add(f.name); add(f.leaderName); }); });
-            ideologies.forEach(i => { add(i.name); (i.subs||[]).forEach(sb => add(sb.name)); });
-            coalitions.forEach(c => { add(c.name); add(c.externalSupportLabel); });
-            ['nationNameInput','houseNameInput','senateNameInput','thirdNameInput'].forEach(id => add(document.getElementById(id)?.value));
-            ['house','senate','third'].forEach(ch => {
-                Object.values(districtNames[ch] || {}).forEach(add);
-                Object.values(districtMembers[ch] || {}).forEach(m => add(m && m.name));
-                Object.values(listMembers[ch] || {}).forEach(arr => (arr || []).forEach(m => add(m && m.name)));
-            });
-            independents.forEach(x => add(x.name));
-            [president, pm, pmNominee].forEach(x => add(x && x.name));
-            cabinetMembers.forEach(m => { add(m.name); add(m.position); });
-            Object.values(cabinetRoleLabels || {}).forEach(add);
-            bills.forEach(b => { add(b.title); (b.tags || []).forEach(add); });
-            if(typeof committees !== 'undefined') committees.forEach(c => add(c.name));
-            if(typeof constitution !== 'undefined' && constitution) add(constitution.title);
-            return out;
-        }
-        function syncDataStrings() {
-            if(window.HemiLang && HemiLang.setDataStrings && typeof getLang === 'function' && getLang() !== 'kr') HemiLang.setDataStrings(collectDataStrings());
-        }
 
         // 화면 갱신 — 자료 맞추기는 늘 하고, 목록은 지금 보이는 것만 다시 그린다 (v1.7.1 성능).
         // 안 보이는 목록(다른 탭 · 접힌 패널)은 "다시 그려야 함"으로만 적어 두었다가 보이는 순간 그린다:
@@ -7579,7 +7529,6 @@
         }
         function refreshUI() {
             noteStateTouched(); // 실행 취소 캐시 — 안 보이는 목록만 바뀌어 화면 변화가 없어도 "상태가 바뀌었을 수 있음"
-            syncDataStrings();
             syncDistrictIndependentLinks();
             syncIndependents();
             syncListMembers();
@@ -8505,7 +8454,7 @@
             designatePartyLeader(party.id, ind.name || '', ind.photo || '');
         }
 
-        function addIdeology() { ideologies.push({ id: Date.now(), name: window.HemiLang ? HemiLang.t(i18n('sim.party.39')) : i18n('sim.party.39') }); refreshUI(); }
+        function addIdeology() { ideologies.push({ id: Date.now(), name: i18n('sim.party.39') }); refreshUI(); }
         function addIndependentIdeology() {
             if(!ideologies.find(i=>i.id===IND_IDEOLOGY_ID)) ideologies.push({id:IND_IDEOLOGY_ID, name:"무소속"});
             simulate(); refreshUI();
@@ -8528,7 +8477,7 @@
         function addSubIdeology(parentId) {
             const ide = ideologies.find(i => i.id === parentId); if(!ide) return;
             if(!ide.subs) ide.subs = [];
-            ide.subs.push({ id: Date.now(), name: window.HemiLang ? HemiLang.t(i18n('sim.party.40')) : i18n('sim.party.40') }); // 영어 모드면 기본 이름도 번역
+            ide.subs.push({ id: Date.now(), name: i18n('sim.party.40') }); // 영어 모드면 기본 이름도 번역
             refreshUI();
         }
         function updateSubIdeology(parentId, subId, name) {
@@ -16609,7 +16558,6 @@
             checkNoConfidenceBills();
             checkMartialLawLiftBills();
             renderCabinetDisplay();
-            syncDataStrings();
         }
 
         // ── 의원 ↔ 반원 좌석 배정 (1.6.0 의석 번호 통일) ──

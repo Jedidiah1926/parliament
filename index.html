@@ -598,7 +598,7 @@
             if(namedSlotCount() >= MAX_SAVE_SLOTS) { alert(i18n('saveSelect.maxSlots', { max: MAX_SAVE_SLOTS })); return; }
             try {
                 sessionStorage.setItem('hemiBootPresetId', preset.id);
-                sessionStorage.setItem('hemiBootNewSaveName', window.HemiLang ? HemiLang.t(preset.title) : preset.title);
+                sessionStorage.setItem('hemiBootNewSaveName', preset.title);
                 sessionStorage.setItem('hemiTutorialStartLesson', lessonId); // main.html의 튜토리얼이 이 과정부터 연다
             } catch(e) {}
             location.href = 'main.html';
@@ -632,7 +632,7 @@
             if(namedSlotCount() >= MAX_SAVE_SLOTS) { alert(i18n('saveSelect.maxSlots', { max: MAX_SAVE_SLOTS })); return; }
             try {
                 sessionStorage.setItem('hemiBootPresetId', preset.id);
-                sessionStorage.setItem('hemiBootNewSaveName', window.HemiLang ? HemiLang.t(preset.title) : preset.title); // 영어 등에서는 세이브 이름도 번역
+                sessionStorage.setItem('hemiBootNewSaveName', preset.title); // 영어 등에서는 세이브 이름도 번역
             } catch(e) {}
             location.href = 'main.html';
         }
