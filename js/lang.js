@@ -26,9 +26,9 @@
     // 화면 곳곳의 font-family가 'NeoDunggeunmo' 이름을 직접 쓰므로, 같은 이름의 @font-face를 뒤에 하나 더 넣어 통째로 갈아 끼운다.
     //   maruminya: 마루미냐 한글(x12y12pxMaruMinyaHangul, SIL OFL 1.1 — fonts/maruminya/OFL.txt) — 한국어 · 일본어 12px 픽셀 폰트
     //              github.com/quiple/x12y12pxMaruMinyaHangul (원본: hicchicc/x12y12pxMaruMinya)
-    // 언어 코드로 정해 두거나(일본어 jp), 언어 팩에 "neonFont": "maruminya"를 적는다
+    // 언어 코드로 정해 두거나(일본어 ja · jp — ja-JP처럼 지역이 붙어도 됨), 언어 팩에 "neonFont": "maruminya"를 적는다
     const NEON_FONTS = { maruminya: 'fonts/maruminya/x12y12pxMaruMinyaHangul.woff2' };
-    const NEON_FONT_BY_LANG = { jp: 'maruminya' };
+    const NEON_FONT_BY_LANG = { ja: 'maruminya', jp: 'maruminya' };
     let neonFontApplied = '';
     function applyNeonFont(code, pack) {
         const key = (pack && NEON_FONTS[pack.neonFont] ? pack.neonFont : '') || NEON_FONT_BY_LANG[String(code || '').split('-')[0]];
@@ -187,9 +187,10 @@
             name: '',
             author: '',
             version: '1',
+            // 한국어 템플릿(키-한국어)은 한국어 모딩용 — 안내도 한국어로, 영어 템플릿(키-영어)은 해외 번역용 — 안내도 영어로
             _help: ko
-                ? 'keys는 { "키": "글자" }입니다. 키(왼쪽)는 바꾸지 말고 글자(오른쪽)만 번역하세요. 글자 안의 {name} 같은 자리는 그대로 두세요. 수에 따라 모양이 바뀌는 글자는 { "one": "…", "other": "…" }처럼 적을 수 있습니다. months는 달 이름 12개입니다. code(예: "jp")와 name(예: "日本語")을 채운 뒤 메인 화면 🌐 > 언어 팩 불러오기로 적용합니다. 데스크톱 앱에서는 🌐 > 모드 폴더 열기로 연 폴더 안에 새 폴더를 만들어 이 파일을 넣어도 되고, 그 폴더가 그대로 창작마당 아이템이 됩니다.'
-                : 'keys는 { "키": "글자" }입니다. 키(왼쪽)는 바꾸지 말고 글자(오른쪽)만 바꾸세요. {name} 같은 자리는 그대로 두세요. code(예: "jp")와 name(예: "日本語")을 채운 뒤 메인 화면 🌐 > 언어 팩 불러오기로 적용합니다. / "keys" maps a key to its text: keep the key (left), translate only the text (right) and keep {placeholders} as they are. Text that changes with a number can be written as { "one": "…", "other": "…" }. "months" is the 12 month names. Fill in code (e.g. "jp") and name, then load it via 🌐 > Load language pack on the main screen. In the desktop app you can also put this file in its own folder inside 🌐 > Open mods folder — that folder is a Workshop item as-is.',
+                ? '키-한국어 템플릿입니다 (한국어 모딩용). keys는 { "키": "글자" }입니다. 키(왼쪽)는 바꾸지 말고 글자(오른쪽)만 고치세요. 글자 안의 {name} 같은 자리는 그대로 두세요. 수에 따라 모양이 바뀌는 글자는 { "one": "…", "other": "…" }처럼 적을 수 있습니다. months는 달 이름 12개입니다. code(예: "ko-mod", "jp")와 name(예: "한국어 (사투리)")을 채운 뒤 메인 화면 🌐 › 언어 팩 불러오기로 적용합니다 — "kr"과 "en"은 기본 언어 코드라 쓸 수 없습니다. 데스크톱 앱에서는 🌐 › 모드 폴더 열기로 연 폴더 안에 새 폴더를 만들어 이 파일을 넣어도 되고, 그 폴더가 그대로 창작마당 아이템이 됩니다.'
+                : 'Key-English template (for translators). "keys" maps a key to its text: keep the key (left) and translate only the text (right). Keep {placeholders} such as {name} as they are. Text that changes with a number can be written as { "one": "…", "other": "…" }. "months" holds the 12 month names. Fill in "code" (e.g. "jp", "zh-tw", "en-gb") and "name" (e.g. "日本語"), then load the file via 🌐 › Load language pack on the main screen — "kr" and "en" are reserved for the built-in languages. In the desktop app you can also put this file in its own folder inside 🌐 › Open mods folder; that folder is a Workshop item as-is.',
             months: ko ? ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월'] : en.months,
             keys,
         }, null, 1);
