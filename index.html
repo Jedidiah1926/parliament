@@ -747,7 +747,7 @@
                 const url = URL.createObjectURL(new Blob([text], { type: 'application/json' }));
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = `hemicycle-lang-template-${base === 'kr' ? 'kr' : 'en'}.json`;
+                a.download = `hemicycle-lang-template-${base === 'kr' ? 'ko' : 'en'}.json`; // 키-한국어 · 키-영어
                 document.body.appendChild(a);
                 a.click();
                 a.remove();
