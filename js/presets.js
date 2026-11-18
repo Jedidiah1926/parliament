@@ -18,80 +18,76 @@
     const BUILTIN = [
         {
             id: 'builtin:tutorial',
-            title: '서독',
-            description: '제작자: Pilcrow1926',
+            title: i18n('presets.tutorial.title'),
+            description: i18n('presets.by', { author: 'Pilcrow1926' }),
             author: 'Pilcrow1926',
-            date: '1983년 3월 29일',
+            date: i18n('presets.tutorial.date'),
             tutorial: true,
             script: 'presets/tutorial.js',
-            langs: { en: { script: 'presets/tutorial.en.js', title: 'West Germany', description: 'By Pilcrow1926' } },
+            langs: { en: { script: 'presets/tutorial.en.js' } },
         },
         {
             id: 'builtin:japan',
             badge: 'updated', // 목록의 노란 표시 — 'new' 신규! · 'updated' 업데이트!
-            title: '일본국',
-            description: '제작자: sushdjr0106',
-            date: '2026년 2월 9일',
+            title: i18n('presets.japan.title'),
+            description: i18n('presets.by', { author: 'sushdjr0106' }),
+            date: i18n('presets.japan.date'),
             author: 'sushdjr0106',
             script: 'presets/japan.js',
-            langs: { en: { script: 'presets/japan.en.js', title: 'Japan', description: 'By sushdjr0106' } },
+            langs: { en: { script: 'presets/japan.en.js' } },
         },
         {
             id: 'builtin:usa',
-            title: '미합중국',
-            description: '제작자: ttorri',
-            date: '2026년 11월 13일',
+            title: i18n('presets.usa.title'),
+            description: i18n('presets.by', { author: 'ttorri' }),
+            date: i18n('presets.usa.date'),
             author: 'ttorri',
             script: 'presets/usa.js',
-            langs: { en: { script: 'presets/usa.en.js', title: 'United States of America', description: 'By ttorri' } },
+            langs: { en: { script: 'presets/usa.en.js' } },
         },
         {
             id: 'builtin:germany',
-            title: '독일연방공화국',
-            description: '제작자: ttorri',
+            title: i18n('presets.germany.title'),
+            description: i18n('presets.by', { author: 'ttorri' }),
             date: '',
             author: 'ttorri',
             script: 'presets/germany.js',
-            langs: { en: { title: 'Federal Republic of Germany', description: 'By ttorri' } }, // 영어 데이터 파일은 아직 없음 — 한국어 데이터로 열림
+            langs: {}, // 영어 데이터 파일은 아직 없음 — 한국어 데이터로 열림
         },
         {
             id: 'builtin:korea',
             badge: 'updated', // 목록의 노란 표시 — 'new' 신규! · 'updated' 업데이트!
-            title: '대한민국 2026',
-            description: '제작자: 왕조명 & ttorri',
-            date: '2026년 10월 31일',
+            title: i18n('presets.korea.title'),
+            description: i18n('presets.by', { author: '왕조명 & ttorri' }),
+            date: i18n('presets.korea.date'),
             author: '왕조명 & ttorri',
             // 함께 만든 프리셋 — 목록에서 이름에 밑줄, 마우스를 올리면 그 사람이 만든 부분
             credits: [
-                { name: '왕조명', work: ['국가 · 정당 설정', '지역구 지도와 원별 의석 배치', '대통령 · 국무총리 · 내각 · 의장단', '지방자치단체장', '경제 · 국기 · 의회 로고'] },
-                { name: 'ttorri', work: ['이념 체계 (하위 이념 포함)', '원외정당 (노동당 · 정의당 · 자유와혁신)', '지역구 · 비례 · 무소속 의원 이름', '정치인 명단 (인물 탭)과 지역구 후보', '군부 지휘부', '지역구별 정당 지지율 · 무당층'] },
+                { name: '왕조명', work: [i18n('presets.korea.credit.a1'), i18n('presets.korea.credit.a2'), i18n('presets.korea.credit.a3'), i18n('presets.korea.credit.a4'), i18n('presets.korea.credit.a5')] },
+                { name: 'ttorri', work: [i18n('presets.korea.credit.b1'), i18n('presets.korea.credit.b2'), i18n('presets.korea.credit.b3'), i18n('presets.korea.credit.b4'), i18n('presets.korea.credit.b5'), i18n('presets.korea.credit.b6')] },
             ],
             script: 'presets/korea.js',
-            langs: { en: { title: 'Republic of Korea 2026', description: 'By 왕조명 & ttorri',
-                credits: [
-                    { name: '왕조명', work: ['Country and party setup', 'District map and seat layout', 'President, prime minister, cabinet and speakers', 'Local government heads', 'Economy, flag and parliament logos'] },
-                    { name: 'ttorri', work: ['Ideology system (with sub-ideologies)', 'Extra-parliamentary parties (Labor Party, Justice Party, Freedom and Innovation)', 'Names of district, list and independent members', 'Politician roster (People tab) and district candidates', 'Military leadership', 'Party support and undecided voters by district'] },
-                ] } }, // 영어 데이터 파일은 아직 없음 — 한국어 데이터로 열림
+            langs: {}, // 영어 데이터 파일은 아직 없음 — 한국어 데이터로 열림
         },
         {
             id: 'builtin:korea2024',
             badge: 'new', // 목록의 노란 표시 — 'new' 신규! · 'updated' 업데이트!
-            title: '대한민국 2024',
-            description: '제작자: 스노든',
-            date: '2024년 4월 10일',
+            title: i18n('presets.korea2024.title'),
+            description: i18n('presets.by', { author: '스노든' }),
+            date: i18n('presets.korea2024.date'),
             author: '스노든',
             script: 'presets/korea2024.js',
-            langs: { en: { title: 'Republic of Korea 2024', description: 'By 스노든' } }, // 영어 데이터 파일은 아직 없음 — 한국어 데이터로 열림
+            langs: {}, // 영어 데이터 파일은 아직 없음 — 한국어 데이터로 열림
         },
         {
             id: 'builtin:uk',
             badge: 'new', // 목록의 노란 표시 — 'new' 신규! · 'updated' 업데이트!
-            title: '그레이트브리튼 북아일랜드 연합왕국',
-            description: '제작자: ttorri',
-            date: '2026년 10월 26일',
+            title: i18n('presets.uk.title'),
+            description: i18n('presets.by', { author: 'ttorri' }),
+            date: i18n('presets.uk.date'),
             author: 'ttorri',
             script: 'presets/uk.js',
-            langs: { en: { title: 'United Kingdom of Great Britain and Northern Ireland', description: 'By ttorri' } }, // 영어 데이터 파일은 아직 없음 — 한국어 데이터로 열림
+            langs: {}, // 영어 데이터 파일은 아직 없음 — 한국어 데이터로 열림
         },
     ];
     const INDEX_URL = 'presets/index.json';

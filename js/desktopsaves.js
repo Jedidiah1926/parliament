@@ -27,10 +27,13 @@
         if (window.HemiDev && window.HemiDev.anyOn()) window.HemiDev.teasers.forEach(t => spaces.push(`hemicycleTeaserV2-${t.id}:`));
     }
 
+    // 오류 글 — 이 파일은 main.html에서 번역 엔진(js/lang.js)보다 먼저 읽히므로, 아직 없으면 한국어로
+    const tr = (key, kr) => (typeof window.i18n === 'function' ? window.i18n(key) : kr);
+
     function push(ns, text) {
         let r;
         try { r = api.write(ns, text); } catch (e) { r = { ok: false, error: String(e && e.message || e) }; }
-        if (!r || !r.ok) { lastError = (r && r.error) || '알 수 없는 오류'; console.warn('[세이브 폴더] 저장 실패:', lastError); }
+        if (!r || !r.ok) { lastError = (r && r.error) || tr('common.saveFolder.unknownError', '알 수 없는 오류'); console.warn('[세이브 폴더] 저장 실패:', lastError); }
         else lastError = null;
         return r;
     }
@@ -49,7 +52,7 @@
             return;
         }
         try { origSet.call(ls, key, JSON.stringify(r.slots)); }
-        catch (e) { lastError = '세이브가 너무 커서 불러오지 못했습니다'; console.warn('[세이브 폴더] 저장소에 담지 못함:', e); }
+        catch (e) { lastError = tr('common.saveFolder.tooBig', '세이브가 너무 커서 불러오지 못했습니다'); console.warn('[세이브 폴더] 저장소에 담지 못함:', e); }
     });
 
     // 저장할 때: 저장소 → 폴더
