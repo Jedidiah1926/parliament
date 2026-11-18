@@ -77,17 +77,17 @@
     // 세이브에 든 이름은 번역하지 않으므로, 영어 화면이면 새로 만드는 기본 이름도 영어로
     const enUI = () => typeof window.getLang === 'function' && window.getLang() === 'en';
     function freshParliament() {
-        return { name: enUI() ? 'Parliament' : '의회', seats: 60, threshold: 5, parties: [], elections: 0, shares: {} };
+        return { name: enUI() ? 'Parliament' : i18n('sim.mainContentHelp.1'), seats: 60, threshold: 5, parties: [], elections: 0, shares: {} };
     }
     function addVassal(name) {
         const id = newId('v', vassals.concat(liberated));
         const n = Number(id.slice(1));
-        const v = { id, name: name || (enUI() ? `Dependency ${n}` : `종속국 ${n}`), color: PALETTE[(n - 1) % PALETTE.length], kind: defaultKind(), parliament: freshParliament() };
+        const v = { id, name: name || (enUI() ? `Dependency ${n}` : i18n('sim.vassals.1', { v: n })), color: PALETTE[(n - 1) % PALETTE.length], kind: defaultKind(), parliament: freshParliament() };
         vassals.push(v);
         return v;
     }
     function cleanParty(p, i) {
-        return { id: String(p.id || 'p' + (i + 1)), name: String(p.name || `정당 ${i + 1}`), color: hex(p.color) || PALETTE[i % PALETTE.length], support: num(p.support, 0, 0, 100), seats: Math.round(num(p.seats, 0, 0, 9999)) };
+        return { id: String(p.id || 'p' + (i + 1)), name: String(p.name || i18n('sim.vassals.2', { v: i + 1 })), color: hex(p.color) || PALETTE[i % PALETTE.length], support: num(p.support, 0, 0, 100), seats: Math.round(num(p.seats, 0, 0, 9999)) };
     }
     function cleanParliament(pl) {
         const base = freshParliament();
@@ -181,8 +181,8 @@
             const g = o.getFill, t = o.title, b = o.seatBadges;
             o.defs = (o.defs || '') + dotDefs(prefix);
             o.getFill = key => (isVassal(key) ? `url(#${prefix}${vassalOf[key]})` : isLib(key) ? libFill(libOfKey(key).color) : (g ? g(key) : null));
-            o.title = key => (isVassal(key) ? `${nameOf(key)} (종속국: ${vassalOfKey(key).name})`
-                : isLib(key) ? `${nameOf(key)} (독립국: ${libOfKey(key).name})` : (t ? t(key) : nameOf(key)));
+            o.title = key => (isVassal(key) ? i18n('sim.vassals.3', { key: nameOf(key), name: vassalOfKey(key).name })
+                : isLib(key) ? i18n('sim.vassals.4', { key: nameOf(key), name: libOfKey(key).name }) : (t ? t(key) : nameOf(key)));
             if (b) o.seatBadges = key => (isOutOfHome(key) ? null : b(key));
         }
         if (!brush && onVassalTab() && wrapEl && wrapEl.id === 'districtSvgWrap' && o.clickable) {
@@ -192,7 +192,7 @@
         if (brush && wrapEl && wrapEl.id === 'districtSvgWrap' && o.clickable) {
             o.onClickKey = key => paint(key);
             const t = o.title;
-            o.title = key => (t ? t(key) : nameOf(key)) + (brush === 'erase' ? ' — 눌러서 지우기' : ` — 눌러서 "${vassalById(brush)?.name || ''}" 땅으로 칠하기`);
+            o.title = key => (t ? t(key) : nameOf(key)) + (brush === 'erase' ? (" " + i18n('sim.vassals.5')) : (" " + i18n('sim.vassals.6', { name: vassalById(brush)?.name || '' })));
         }
         const r = origRender.call(this, wrapEl, o);
         const svg = active && wrapEl && wrapEl.querySelector('svg');
@@ -226,9 +226,9 @@
     function vassalSelectHtml(key) {
         const cur = isVassal(key) ? vassalOf[key] : '';
         return `<select class="vassal-select">
-                <option value="">— 아님 (본국 지역구) —</option>
+                <option value="">${esc(i18n('sim.vassals.7'))}</option>
                 ${vassals.map(v => `<option value="${esc(v.id)}" ${v.id === cur ? 'selected' : ''}>${esc(v.name)} (${esc(v.kind)})</option>`).join('')}
-                <option value="__new">+ 새 종속국</option>
+                <option value="__new">${esc(i18n('sim.vassals.8'))}</option>
             </select>`;
     }
     function bindVassalSelect(box, key) {
@@ -246,9 +246,9 @@
             const box = document.createElement('label');
             box.className = 'vassal-toggle';
             box.innerHTML = isLib(key)
-                ? `독립국 <b>${esc(libOfKey(key).name)}</b> <span class="vassal-dim">— 해방되어 본국에서 떨어져 나간 땅 · 국가 › 종속국에서 관리</span>`
-                : `종속국 ${vassalSelectHtml(key)}
-                <span class="vassal-dim">— 본국에 딸린 나라의 땅 (본국 선거 · 의석에서 빠짐) · 국가 › 종속국에서 관리</span>`;
+                ? `${esc(i18n('sim.vassals.9'))} <b>${esc(libOfKey(key).name)}</b> <span class="vassal-dim">${esc(i18n('sim.vassals.10'))}</span>`
+                : `${esc(i18n('sim.vassals.11'))} ${vassalSelectHtml(key)}
+                <span class="vassal-dim">${esc(i18n('sim.vassals.12'))}</span>`;
             if (!isLib(key)) bindVassalSelect(box, key);
             panel.insertBefore(box, panel.children[1] || null);
         }
@@ -259,7 +259,7 @@
     function runElection(v) {
         const P = v.parliament;
         const list = P.parties.filter(p => p.support > 0);
-        if (!list.length) { showCustomAlert(`"${v.name}" ${P.name}에 지지율이 있는 정당이 없습니다. 정당을 추가하거나 "본국 정당 가져오기"를 눌러 주세요.`); return; }
+        if (!list.length) { showCustomAlert(i18n('sim.vassals.13', { name: v.name, name2: P.name })); return; }
         // 지지율에 ±15% 흔들림을 준 득표
         const votes = list.map(p => Math.max(0.0001, p.support * (1 + (Math.random() * 2 - 1) * 0.15)));
         const sum = votes.reduce((a, b) => a + b, 0);
@@ -281,20 +281,20 @@
     function importHomeParties(v) {
         const P = v.parliament;
         const src = (typeof parties !== 'undefined' && Array.isArray(parties) ? parties : []).filter(p => (p.seatsHouse || 0) > 0);
-        if (!src.length) { showCustomAlert('본국 하원에 의석이 있는 정당이 없습니다.'); return; }
+        if (!src.length) { showCustomAlert(i18n('sim.vassals.14')); return; }
         const total = src.reduce((a, p) => a + (p.seatsHouse || 0), 0) || 1;
         const go = () => {
             P.parties = src.map((p, i) => ({ id: 'p' + (i + 1), name: String(p.name || ''), color: hex(p.color) || PALETTE[i % PALETTE.length], support: Math.round((p.seatsHouse || 0) / total * 1000) / 10, seats: 0 }));
             P.shares = {};
             runElection(v);
         };
-        if (P.parties.length) showCustomConfirm(`"${v.name}" ${P.name}의 정당 ${P.parties.length}개를 지우고 본국 하원 정당(지지율은 본국 의석 비율)으로 바꾼 뒤 선거를 치릅니다. 계속하시겠습니까?`, go);
+        if (P.parties.length) showCustomConfirm(i18n('sim.vassals.15', { name: v.name, name2: P.name, parties: P.parties.length }), go);
         else go();
     }
     function hemicycleSvg(P) {
         const list = P.parties.filter(p => p.seats > 0);
         const N = list.reduce((a, p) => a + p.seats, 0);
-        if (!N) return '<div class="vassal-dim vassal-small">아직 의석이 없습니다 — "선거 실시"를 누르거나 정당별 의석을 직접 적으세요.</div>';
+        if (!N) return `<div class="vassal-dim vassal-small">${esc(i18n('sim.vassals.16'))}</div>`;
         const rows = Math.max(1, Math.min(14, Math.round(Math.sqrt(N / 3.2))));
         const radii = Array.from({ length: rows }, (_, i) => (rows === 1 ? 1 : 0.42 + 0.58 * i / (rows - 1)));
         const rsum = radii.reduce((a, b) => a + b, 0);
@@ -313,7 +313,7 @@
         list.forEach(p => { for (let k = 0; k < p.seats; k++) colors.push(p.color); });
         const outer = per[rows - 1];
         const dot = Math.min(0.58 / Math.max(rows, 1) * 0.42, (Math.PI / Math.max(outer - 1, 1)) * 0.42, 0.12);
-        return `<svg class="vassal-hemi" viewBox="-1.12 -1.12 2.24 1.2" role="img" aria-label="${esc(P.name)} 의석 ${N}석">`
+        return `<svg class="vassal-hemi" viewBox="-1.12 -1.12 2.24 1.2" role="img" aria-label="${esc(P.name)} ${esc(i18n('sim.party.9'))} ${esc(i18n('sim.history.seatsTip', { seats: N }))}">`
             + pts.slice(0, colors.length).map((p, i) => `<circle cx="${p.x.toFixed(4)}" cy="${p.y.toFixed(4)}" r="${dot.toFixed(4)}" fill="${colors[i]}"/>`).join('')
             + `<text x="0" y="-0.08" text-anchor="middle" class="vassal-hemi-n">${N}</text></svg>`;
     }
@@ -330,7 +330,7 @@
         if (!v) return;
         const keys = keysOf(id);
         const seats = keys.reduce((a, k) => a + seatsOf(k), 0);
-        showCustomConfirm(`"${v.name}"을(를) 본국에 합병합니다. 그 땅 ${keys.length}곳(지역구 의석 ${seats}석)은 일반 지역구가 되어 본국 선거 · 의석에 들어가고, ${v.parliament.name}는 해산됩니다. 계속하시겠습니까?`, () => {
+        showCustomConfirm(i18n('sim.vassals.17', { name: v.name, keys: keys.length, seats, name2: v.parliament.name }), () => {
             dropVassal(id);
             refreshUI();
         });
@@ -339,7 +339,7 @@
         const v = vassalById(id);
         if (!v) return;
         const keys = keysOf(id);
-        showCustomConfirm(`"${v.name}"을(를) 해방합니다. 독립국이 되어 본국에서 떨어져 나가고, 그 땅 ${keys.length}곳은 계속 본국 선거에서 빠집니다.${window.HemiHistory ? ' 세계 › 국가 순위에도 올라갑니다.' : ''} 계속하시겠습니까?`, () => {
+        showCustomConfirm(i18n('sim.vassals.19', { name: v.name, keys: keys.length, HemiHistory: window.HemiHistory ? (" " + i18n('sim.vassals.18')) : '' }), () => {
             liberated.push({ id: v.id, name: v.name, color: v.color, kind: v.kind });
             keys.forEach(k => { liberatedOf[k] = v.id; });
             dropVassal(id);
@@ -364,7 +364,7 @@
         const l = libById(id);
         if (!l) return;
         const keys = libKeysOf(id);
-        showCustomConfirm(`독립국 "${l.name}"의 땅 ${keys.length}곳을 본국 지역구에서 아예 뺍니다 (지도에는 지역구가 아닌 땅으로 남음). 계속하시겠습니까?`, () => {
+        showCustomConfirm(i18n('sim.vassals.20', { name: l.name, keys: keys.length }), () => {
             ['house', 'senate', 'third'].forEach(ch => {
                 const grid = districtGrid[ch];
                 if (!grid) return;
@@ -382,7 +382,7 @@
         if (!v) return;
         const n = keysOf(id).length;
         if (!n && !v.parliament.parties.length) { dropVassal(id); refreshUI(); return; }
-        showCustomConfirm(`"${v.name}"을(를) 지웁니다. 칠한 땅 ${n}곳은 본국 지역구로 돌아가고 의회 정보도 사라집니다. 계속하시겠습니까?`, () => { dropVassal(id); refreshUI(); });
+        showCustomConfirm(i18n('sim.vassals.21', { name: v.name, v: n }), () => { dropVassal(id); refreshUI(); });
     }
 
     // ---- 국가 › 종속국 탭 신설 ----
@@ -393,7 +393,7 @@
         if (!nationBar) return;
         const settingsBtn = document.getElementById('subTabNationSettings');
         const settings = document.getElementById('contentNationSettings');
-        nationBar.insertBefore(el(`<button class="sub-tab-btn" onclick="switchSubTab('nation','vassals')" id="subTabVassals">종속국</button>`), settingsBtn);
+        nationBar.insertBefore(el(`<button class="sub-tab-btn" onclick="switchSubTab('nation','vassals')" id="subTabVassals">${esc(i18n('sim.vassals.11'))}</button>`), settingsBtn);
         nation.insertBefore(el(`<div id="contentVassals" class="sub-tab-content"></div>`), settings);
     })();
     const onTab = sub => typeof currentMainTab !== 'undefined' && currentMainTab === 'nation' && typeof currentSubTab !== 'undefined' && currentSubTab.nation === sub;
@@ -429,28 +429,28 @@
         const top = P.parties.slice().sort((a, b) => b.seats - a.seats)[0];
         return `<div class="vassal-parl">
             <div class="vassal-parl-grid">
-                <label>의회 이름 <input type="text" class="vassal-in" data-f="name" value="${esc(P.name)}" maxlength="30"></label>
-                <label>의석 <input type="number" class="vassal-in vassal-num" data-f="seats" value="${P.seats}" min="1" max="999"></label>
-                <label>봉쇄조항 <input type="number" class="vassal-in vassal-num" data-f="threshold" value="${P.threshold}" min="0" max="50" step="0.5">%</label>
+                <label>${esc(i18n('sim.vassals.22'))} <input type="text" class="vassal-in" data-f="name" value="${esc(P.name)}" maxlength="30"></label>
+                <label>${esc(i18n('sim.party.9'))} <input type="number" class="vassal-in vassal-num" data-f="seats" value="${P.seats}" min="1" max="999"></label>
+                <label>${esc(i18n('sim.vassals.23'))} <input type="number" class="vassal-in vassal-num" data-f="threshold" value="${P.threshold}" min="0" max="50" step="0.5">%</label>
             </div>
             <div class="vassal-parties">
-                <div class="vassal-party vassal-party-head"><span></span><span>정당</span><span>지지율 %</span><span>의석</span><span>득표</span><span></span></div>
+                <div class="vassal-party vassal-party-head"><span></span><span>${esc(i18n('sim.mainContentSetup.2'))}</span><span>${esc(i18n('sim.vassals.24'))}</span><span>${esc(i18n('sim.party.9'))}</span><span>${esc(i18n('sim.vassals.25'))}</span><span></span></div>
                 ${P.parties.map(p => `<div class="vassal-party" data-pid="${esc(p.id)}">
-                    <input type="color" class="vassal-pcolor" value="${esc(p.color)}" title="정당 색">
+                    <input type="color" class="vassal-pcolor" value="${esc(p.color)}" title="${esc(i18n('sim.vassals.26'))}">
                     <input type="text" class="vassal-in" data-pf="name" value="${esc(p.name)}" maxlength="30">
                     <input type="number" class="vassal-in vassal-num" data-pf="support" value="${p.support}" min="0" max="100" step="0.1">
                     <input type="number" class="vassal-in vassal-num" data-pf="seats" value="${p.seats}" min="0" max="999">
                     <span class="vassal-dim vassal-share">${P.shares[p.id] != null ? P.shares[p.id] + '%' : '—'}</span>
-                    <button type="button" class="vassal-x" title="정당 지우기">×</button>
-                </div>`).join('') || '<div class="vassal-dim vassal-small">정당이 없습니다.</div>'}
+                    <button type="button" class="vassal-x" title="${esc(i18n('sim.vassals.27'))}">×</button>
+                </div>`).join('') || `<div class="vassal-dim vassal-small">${esc(i18n('sim.vassals.28'))}</div>`}
             </div>
             <div class="vassal-row">
-                <button type="button" class="vassal-btn" data-act="addparty">+ 정당</button>
-                <button type="button" class="vassal-btn" data-act="import">본국 정당 가져오기</button>
-                <button type="button" class="vassal-btn vassal-strong" data-act="elect">선거 실시</button>
+                <button type="button" class="vassal-btn" data-act="addparty">${esc(i18n('sim.vassals.29'))}</button>
+                <button type="button" class="vassal-btn" data-act="import">${esc(i18n('sim.vassals.30'))}</button>
+                <button type="button" class="vassal-btn vassal-strong" data-act="elect">${esc(i18n('sim.vassals.31'))}</button>
             </div>
             <div class="vassal-hemi-wrap">${hemicycleSvg(P)}</div>
-            <div class="vassal-dim vassal-small">${P.elections ? `제${P.elections}대 ${esc(P.name)} · ` : ''}의석 ${sum}/${P.seats}석 · 과반 ${major}석${top && top.seats ? ` · 제1당 ${esc(top.name)} ${top.seats}석${top.seats >= major ? ' (과반)' : ''}` : ''}${sup && Math.abs(sup - 100) > 0.5 ? ` · 지지율 합 ${Math.round(sup * 10) / 10}% (비율로 나눔)` : ''}${sum !== P.seats && sum ? ' · 정당 의석 합이 의석 수와 다릅니다' : ''}</div>
+            <div class="vassal-dim vassal-small">${P.elections ? esc((i18n('sim.vassals.32', { elections: P.elections, name: (P.name) }) + " ")) : ''}${esc(i18n('sim.party.9'))} ${sum}/${P.seats}${esc(i18n('sim.vassals.33'))} ${major}${esc(i18n('sim.party.11'))}${top && top.seats ? esc((" " + i18n('sim.vassals.35', { name: (top.name), seats: top.seats, major: top.seats >= major ? (" " + i18n('sim.vassals.34')) : '' }))) : ''}${sup && Math.abs(sup - 100) > 0.5 ? esc((" " + i18n('sim.vassals.36', { sup: Math.round(sup * 10) / 10 }))) : ''}${sum !== P.seats && sum ? esc((" " + i18n('sim.vassals.37'))) : ''}</div>
             ${P.parties.filter(p => p.seats > 0).length ? `<div class="vassal-legend">${P.parties.filter(p => p.seats > 0).map(p => `<span><i style="background:${esc(p.color)}"></i>${esc(p.name)} ${p.seats}</span>`).join('')}</div>` : ''}
         </div>`;
     }
@@ -465,57 +465,57 @@
             const open = openParl.has(v.id);
             return `<div class="vassal-card ${brush === v.id ? 'painting' : ''}" data-id="${esc(v.id)}">
                 <div class="vassal-head">
-                    <input type="color" class="vassal-color" value="${esc(v.color)}" title="점무늬 색">
-                    <input type="text" class="vassal-name" value="${esc(v.name)}" maxlength="40" title="나라 이름">
+                    <input type="color" class="vassal-color" value="${esc(v.color)}" title="${esc(i18n('sim.vassals.38'))}">
+                    <input type="text" class="vassal-name" value="${esc(v.name)}" maxlength="40" title="${esc(i18n('sim.vassals.39'))}">
                     ${kindEditFor === v.id
-                        ? `<input type="text" class="vassal-in vassal-kind vassal-kind-new" maxlength="30" placeholder="새 형태 (예: 동군연합)" title="새 종속 형태 — Enter로 추가, Esc로 취소">`
-                        : `<select class="vassal-select vassal-kind" title="종속 형태">${(kinds.includes(v.kind) ? kinds : kinds.concat(v.kind)).map(k => `<option value="${esc(k)}" ${k === v.kind ? 'selected' : ''}>${esc(k)}</option>`).join('')}<option value="__new">＋ 새 형태…</option></select>`}
+                        ? `<input type="text" class="vassal-in vassal-kind vassal-kind-new" maxlength="30" placeholder="${esc(i18n('sim.vassals.40'))}" title="${esc(i18n('sim.vassals.41'))}">`
+                        : `<select class="vassal-select vassal-kind" title="${esc(i18n('sim.vassals.42'))}">${(kinds.includes(v.kind) ? kinds : kinds.concat(v.kind)).map(k => `<option value="${esc(k)}" ${k === v.kind ? 'selected' : ''}>${esc(k)}</option>`).join('')}<option value="__new">${esc(i18n('sim.vassals.43'))}</option></select>`}
                 </div>
                 <div class="vassal-actions">
-                    <span class="vassal-dim">${keys.length}곳 · 지역구 의석 ${seats}석</span>
-                    <button type="button" class="vassal-btn ${brush === v.id ? 'active' : ''}" data-act="paint">${brush === v.id ? '칠하는 중' : '칠하기'}</button>
+                    <span class="vassal-dim">${keys.length}${esc(i18n('sim.vassals.44'))} ${seats}${esc(i18n('sim.party.11'))}</span>
+                    <button type="button" class="vassal-btn ${brush === v.id ? 'active' : ''}" data-act="paint">${brush === v.id ? esc(i18n('sim.vassals.45')) : esc(i18n('sim.vassals.46'))}</button>
                     <button type="button" class="vassal-btn ${open ? 'active' : ''}" data-act="parl">${esc(v.parliament.name)}</button>
-                    <button type="button" class="vassal-btn" data-act="annex">합병</button>
-                    <button type="button" class="vassal-btn" data-act="liberate">해방</button>
-                    <button type="button" class="vassal-btn" data-act="del">삭제</button>
+                    <button type="button" class="vassal-btn" data-act="annex">${esc(i18n('sim.vassals.48'))}</button>
+                    <button type="button" class="vassal-btn" data-act="liberate">${esc(i18n('sim.vassals.49'))}</button>
+                    <button type="button" class="vassal-btn" data-act="del">${esc(i18n('common.delete'))}</button>
                 </div>
-                <label class="vassal-toggle vassal-homevote" title="스코틀랜드 · 카탈루냐처럼 — 자기 의회는 따로 두되, 그 땅의 지역구도 본국 총선 · 지방선거 · 국민투표에 들어가고 본국 지역구 의석에 셈"><input type="checkbox" data-homevote ${v.homeVote ? 'checked' : ''}> 본국 총선에도 참여 <span class="vassal-dim">(자치 지역 — 스코틀랜드 · 카탈루냐처럼)</span></label>
-                ${keys.length ? `<div class="vassal-chips">${keys.slice(0, LIMIT).map(k => `<span class="vassal-chip" data-key="${esc(k)}">${esc(nameOf(k))}<button type="button" title="이 지역구 빼기">×</button></span>`).join('')}${keys.length > LIMIT ? `<span class="vassal-dim vassal-small">외 ${keys.length - LIMIT}곳</span>` : ''}</div>` : '<div class="vassal-dim vassal-small">아직 칠한 땅이 없습니다</div>'}
+                <label class="vassal-toggle vassal-homevote" title="${esc(i18n('sim.vassals.47'))}"><input type="checkbox" data-homevote ${v.homeVote ? 'checked' : ''}> ${esc(i18n('sim.vassals.50'))} <span class="vassal-dim">${esc(i18n('sim.vassals.51'))}</span></label>
+                ${keys.length ? `<div class="vassal-chips">${keys.slice(0, LIMIT).map(k => `<span class="vassal-chip" data-key="${esc(k)}">${esc(nameOf(k))}<button type="button" title="${esc(i18n('sim.vassals.52'))}">×</button></span>`).join('')}${keys.length > LIMIT ? `<span class="vassal-dim vassal-small">${esc(i18n('sim.common.morePlaces', { count: keys.length - LIMIT }))}</span>` : ''}</div>` : `<div class="vassal-dim vassal-small">${esc(i18n('sim.vassals.55'))}</div>`}
                 ${open ? parliamentHtml(v) : ''}
             </div>`;
         }).join('');
         const libs = liberated.map(l => `<div class="vassal-lib" data-lid="${esc(l.id)}">
-                <i style="background:${esc(l.color)}"></i><b>${esc(l.name)}</b><span class="vassal-dim">${libKeysOf(l.id).length}곳 · 독립국</span>
-                <button type="button" class="vassal-btn" data-act="revassal">다시 종속국으로</button>
-                <button type="button" class="vassal-btn" data-act="detach">지역구에서 빼기</button>
+                <i style="background:${esc(l.color)}"></i><b>${esc(l.name)}</b><span class="vassal-dim">${libKeysOf(l.id).length}${esc(i18n('sim.vassals.56'))}</span>
+                <button type="button" class="vassal-btn" data-act="revassal">${esc(i18n('sim.vassals.57'))}</button>
+                <button type="button" class="vassal-btn" data-act="detach">${esc(i18n('sim.vassals.58'))}</button>
             </div>`).join('');
         const sel = typeof selectedDistrictKey !== 'undefined' ? selectedDistrictKey : null;
         host.innerHTML = `
             <div class="vassal-summary">
-                <div class="vassal-row vassal-between"><span class="vassal-count">종속국 ${vassals.length}곳 · 땅 ${total}곳${liberated.length ? ` · 독립국 ${liberated.length}곳` : ''}</span></div>
-                <div class="vassal-dim vassal-small">본국에 딸린 나라 — 지도에 그 나라 색 점무늬로 따로 보이고, 본국 선거 · 의석에서 빠집니다 ("본국 총선에도 참여"를 켜면 자치 지역처럼 본국 선거에도 들어감). 종속국마다 따로 의회(의석 · 정당 · 선거)가 있고, 본국에 합병하거나 해방(독립)시킬 수 있습니다.</div>
+                <div class="vassal-row vassal-between"><span class="vassal-count">${esc(i18n('sim.vassals.11'))} ${vassals.length}${esc(i18n('sim.vassals.59'))} ${esc(i18n('sim.common.places', { count: total }))}${liberated.length ? esc((" " + i18n('sim.vassals.60', { liberated: liberated.length }))) : ''}</span></div>
+                <div class="vassal-dim vassal-small">${esc(i18n('sim.vassals.61'))}</div>
                 <details class="vassal-kinds" ${kindsOpen ? 'open' : ''}>
-                    <summary>종속 형태 ${kinds.length}가지 <span class="vassal-dim">— 직접 추가 · 이름 바꾸기 · 지우기</span></summary>
-                    <div class="vassal-chips">${kinds.map((k, i) => `<span class="vassal-chip vassal-kind-chip" data-i="${i}"><input type="text" value="${esc(k)}" maxlength="30" title="눌러서 이름 바꾸기" style="width:${kindChipWidth(k)}"><span class="vassal-dim">${vassals.concat(liberated).filter(v => v.kind === k).length || ''}</span><button type="button" title="이 형태 지우기 (이 형태인 나라는 그대로)">×</button></span>`).join('')}</div>
+                    <summary>${esc(i18n('sim.vassals.42'))} ${kinds.length}${esc(i18n('sim.vassals.62'))} <span class="vassal-dim">${esc(i18n('sim.vassals.63'))}</span></summary>
+                    <div class="vassal-chips">${kinds.map((k, i) => `<span class="vassal-chip vassal-kind-chip" data-i="${i}"><input type="text" value="${esc(k)}" maxlength="30" title="${esc(i18n('sim.vassals.64'))}" style="width:${kindChipWidth(k)}"><span class="vassal-dim">${vassals.concat(liberated).filter(v => v.kind === k).length || ''}</span><button type="button" title="${esc(i18n('sim.vassals.65'))}">×</button></span>`).join('')}</div>
                     <div class="vassal-row">
-                        <input type="text" class="vassal-add-name vassal-add-kind" maxlength="30" placeholder="새 형태 (예: 동군연합, 보호령, 번국, 조공국)">
-                        <button type="button" class="vassal-btn" data-act="addkind">+ 형태 추가</button>
-                        <button type="button" class="vassal-btn" data-act="resetkinds">기본 목록으로</button>
+                        <input type="text" class="vassal-add-name vassal-add-kind" maxlength="30" placeholder="${esc(i18n('sim.vassals.66'))}">
+                        <button type="button" class="vassal-btn" data-act="addkind">${esc(i18n('sim.vassals.68'))}</button>
+                        <button type="button" class="vassal-btn" data-act="resetkinds">${esc(i18n('sim.vassals.69'))}</button>
                     </div>
                 </details>
                 <div class="vassal-row">
-                    <input type="text" class="vassal-add-name" maxlength="40" placeholder="새 종속국 이름 (예: 보헤미아-모라비아 보호령, 만주국, 그린란드)">
-                    <button type="button" class="vassal-btn" data-act="add">+ 종속국 추가</button>
+                    <input type="text" class="vassal-add-name" maxlength="40" placeholder="${esc(i18n('sim.vassals.67'))}">
+                    <button type="button" class="vassal-btn" data-act="add">${esc(i18n('sim.vassals.70'))}</button>
                 </div>
                 ${cards}
-                <div class="vassal-row"><button type="button" class="vassal-btn ${brush === 'erase' ? 'active' : ''}" data-act="erase" ${total ? '' : 'disabled'}>${brush === 'erase' ? '지우는 중' : '지우개'}</button></div>
+                <div class="vassal-row"><button type="button" class="vassal-btn ${brush === 'erase' ? 'active' : ''}" data-act="erase" ${total ? '' : 'disabled'}>${brush === 'erase' ? esc(i18n('sim.vassals.71')) : esc(i18n('sim.vassals.72'))}</button></div>
                 <div class="vassal-dim vassal-small">${brush
-                    ? (brush === 'erase' ? '오른쪽 지도에서 종속국 땅을 눌러 본국 지역구로 돌립니다. 다시 "지우는 중"을 누르면 끝납니다.'
-                        : `오른쪽 지도에서 지역구를 차례로 눌러 "${esc(vassalById(brush)?.name || '')}" 땅으로 칠합니다 (같은 나라로 칠한 곳을 다시 누르면 지움). 다시 "칠하는 중"을 누르면 끝납니다.`)
-                    : (vassals.length ? '"칠하기"를 누른 뒤 오른쪽 지도에서 지역구를 차례로 눌러 그 나라 땅으로 정하세요. 칠하기 도구를 끈 채 지역구를 누르면 아래에서 종속국을 고를 수 있습니다.'
-                        : '종속국을 추가하고 "칠하기"로 오른쪽 지도에서 그 나라 땅을 칠하세요.')}</div>
-                ${sel && !brush && !isLib(sel) ? `<label class="vassal-toggle vassal-sel">선택한 지역구: <b>${esc(nameOf(sel))}</b> ${vassalSelectHtml(sel)}</label>` : ''}
-                ${libs ? `<div class="vassal-libs"><div class="vassal-count">독립국 (해방된 나라)</div>${libs}</div>` : ''}
+                    ? (brush === 'erase' ? esc(i18n('sim.vassals.73'))
+                        : i18n('sim.vassals.74', { name: esc(vassalById(brush)?.name || '') }))
+                    : (vassals.length ? esc(i18n('sim.vassals.75'))
+                        : esc(i18n('sim.vassals.76')))}</div>
+                ${sel && !brush && !isLib(sel) ? `<label class="vassal-toggle vassal-sel">${esc(i18n('sim.vassals.77'))} <b>${esc(nameOf(sel))}</b> ${vassalSelectHtml(sel)}</label>` : ''}
+                ${libs ? `<div class="vassal-libs"><div class="vassal-count">${esc(i18n('sim.vassals.78'))}</div>${libs}</div>` : ''}
             </div>`;
         const kindsBox = host.querySelector('.vassal-kinds');
         kindsBox.addEventListener('toggle', () => { kindsOpen = kindsBox.open; });
@@ -523,7 +523,7 @@
         const addK = () => { if (addKind(kindInput.value)) renderVassalTab(); };
         host.querySelector('[data-act="addkind"]').addEventListener('click', addK);
         kindInput.addEventListener('keydown', e => { if (e.key === 'Enter') addK(); });
-        host.querySelector('[data-act="resetkinds"]').addEventListener('click', () => showCustomConfirm('종속 형태 목록을 기본 목록으로 되돌릴까요? (이미 정한 나라의 형태는 그대로)', () => { kinds = DEFAULT_KINDS.slice(); renderVassalTab(); }));
+        host.querySelector('[data-act="resetkinds"]').addEventListener('click', () => showCustomConfirm(i18n('sim.vassals.79'), () => { kinds = DEFAULT_KINDS.slice(); renderVassalTab(); }));
         host.querySelectorAll('.vassal-kind-chip').forEach(chip => {
             const old = kinds[Number(chip.dataset.i)];
             const inp = chip.querySelector('input');
@@ -547,7 +547,7 @@
             act('annex', () => annexVassal(id));
             act('liberate', () => liberateVassal(id));
             act('del', () => removeVassal(id));
-            act('addparty', () => { P.parties.push(cleanParty({ id: newId('p', P.parties), name: enUI() ? `Party ${P.parties.length + 1}` : `정당 ${P.parties.length + 1}`, support: 10 }, P.parties.length)); renderVassalTab(); });
+            act('addparty', () => { P.parties.push(cleanParty({ id: newId('p', P.parties), name: enUI() ? `Party ${P.parties.length + 1}` : i18n('sim.vassals.80', { parties: P.parties.length + 1 }), support: 10 }, P.parties.length)); renderVassalTab(); });
             act('import', () => importHomeParties(v));
             act('elect', () => runElection(v));
             card.querySelector('.vassal-name').addEventListener('change', e => { v.name = e.target.value.trim() || v.name; refreshUI(); });
@@ -724,7 +724,7 @@
         }));
     }
     const members = a => a.partyIds.map(partyById).filter(p => p && p.status !== 'banned' && p.status !== 'dissolved');
-    const label = a => a.name.trim() || members(a).map(p => p.name).join(' · ') || '연대';
+    const label = a => a.name.trim() || members(a).map(p => p.name).join(' · ') || i18n('sim.vassals.81');
 
     const origGet = window.getAppState;
     window.getAppState = function () {
@@ -807,28 +807,28 @@
         const swingPct = num(elecStore?.[hostCh]?.__swing__?.prob, 0);
         host.innerHTML = `
             <div class="la-box">
-                <div class="la-head"><span>🤝 지방선거 연대 · 단일후보</span></div>
-                <div class="pv-dim pv-small">연대한 정당은 권역 · 지역구마다 한 명만 내보냅니다. 연대를 하나라도 정하면 지방선거에는 총선 지역구 단일화(선거 › 후보) 대신 이 연대가 쓰여요.</div>
+                <div class="la-head"><span>${esc(i18n('sim.vassals.82'))}</span></div>
+                <div class="pv-dim pv-small">${esc(i18n('sim.vassals.83'))}</div>
                 ${alliances.map(a => `
                 <div class="la-card" data-id="${esc(a.id)}">
-                    <div class="la-row"><input type="text" data-f="name" value="${esc(a.name)}" maxlength="40" placeholder="연대 이름 (비우면 정당 이름을 이어서)">
-                        <button type="button" class="la-del" data-act="del" title="연대 지우기">✕</button></div>
+                    <div class="la-row"><input type="text" data-f="name" value="${esc(a.name)}" maxlength="40" placeholder="${esc(i18n('sim.vassals.84'))}">
+                        <button type="button" class="la-del" data-act="del" title="${esc(i18n('sim.vassals.85'))}">✕</button></div>
                     <div class="la-parties">${list.map(p => `<label class="la-party${used(a, p.id) ? ' la-off' : ''}"><input type="checkbox" data-p="${esc(p.id)}" ${a.partyIds.includes(String(p.id)) ? 'checked' : ''} ${used(a, p.id) ? 'disabled' : ''}><span class="la-dot" style="background:${esc(p.color)}"></span>${esc(p.name)}</label>`).join('')}</div>
                     <div class="la-row la-method">
-                        <span class="pv-dim pv-small">단일후보 정하기</span>
+                        <span class="pv-dim pv-small">${esc(i18n('sim.union.25'))}</span>
                         <div class="system-radio-group la-methods">
-                            ${H().list.map(x => `<button type="button" class="system-radio-btn ${H().find(a.method).id === x.id ? 'active' : ''}" data-m="${esc(x.id)}">${esc(x.id === 'primary' ? '예비선거 (경선)' : x.id === 'top' ? '지지율 최고' : x.label)}</button>`).join('')}
+                            ${H().list.map(x => `<button type="button" class="system-radio-btn ${H().find(a.method).id === x.id ? 'active' : ''}" data-m="${esc(x.id)}">${esc(x.id === 'primary' ? esc(i18n('sim.vassals.86')) : x.id === 'top' ? esc(i18n('sim.vassals.87')) : x.label)}</button>`).join('')}
                         </div>
                     </div>
                     <div class="pv-grid2">
-                        ${H().find(a.method).kind === 'primary' ? `<div><label class="pv-label">유동층(여론조사) 반영 (%)</label><input type="number" data-f="mix" min="0" max="100" value="${a.mix}"></div>` : '<div></div>'}
-                        <div><label class="pv-label">결집률 (%)</label><input type="number" data-f="transfer" min="0" max="100" value="${a.transfer}"></div>
+                        ${H().find(a.method).kind === 'primary' ? `<div><label class="pv-label">${esc(i18n('sim.vassals.88'))}</label><input type="number" data-f="mix" min="0" max="100" value="${a.mix}"></div>` : '<div></div>'}
+                        <div><label class="pv-label">${esc(i18n('sim.vassals.89'))}</label><input type="number" data-f="transfer" min="0" max="100" value="${a.transfer}"></div>
                     </div>
                     <div class="pv-dim pv-small">${(() => { const M = H().find(a.method); return M.kind === 'primary'
-                        ? `경선 득표 = 그 지역의 연대 정당 지지 ${100 - a.mix}% + 일반 유권자 여론조사(유동층 — 전국 지지율 × 친화도) ${a.mix}%. 지금 무당파 ${swingPct}%. 경선을 치르면 승복 효과로 결집률 +5%p.`
-                        : M.kind === 'top' ? '권역 · 지역구마다 연대 안에서 지지율이 가장 높은 정당이 후보가 돼요.' : (M.localHint || H().hint(M, a)); })()} 결집하지 않은 표는 다른 정당으로 흩어져요.${members(a).length < 2 ? ' <b>정당을 두 곳 이상 고르세요.</b>' : ''}</div>
+                        ? esc(i18n('sim.vassals.90', { mix: 100 - a.mix, mix2: a.mix, swingPct }))
+                        : M.kind === 'top' ? esc(i18n('sim.vassals.91')) : (M.localHint || H().hint(M, a)); })()} ${esc(i18n('sim.vassals.92'))}${members(a).length < 2 ? ` <b>${esc(i18n('sim.vassals.93'))}</b>` : ''}</div>
                 </div>`).join('')}
-                <button type="button" class="la-add" data-act="add">+ 연대 추가</button>
+                <button type="button" class="la-add" data-act="add">${esc(i18n('sim.vassals.94'))}</button>
             </div>`;
         host.querySelector('[data-act="add"]').onclick = () => { alliances.push(fresh()); render(); };
         host.querySelectorAll('.la-card').forEach(card => {

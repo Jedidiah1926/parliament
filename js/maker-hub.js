@@ -9,29 +9,29 @@
     if (demo) {
         const link = document.querySelector('[data-new="map"]');
         link.removeAttribute('href'); link.setAttribute('aria-disabled', 'true');
-        link.querySelector('.maker-new-action').textContent = '🔒 정식판에서';
+        link.querySelector('.maker-new-action').textContent = i18n('maker.makerHub.1');
     }
     const stamp = date => Number.isFinite(date) ? new Date(date).toLocaleDateString('ko-KR') : '';
     function render() {
-        $('makerTabs').innerHTML = [['all','전체'], ...Object.entries(types).map(([k,t]) => [k,t.name])].map(([k,title]) => `<button type="button" class="cpe-tab ${k === filter ? 'on' : ''}" aria-pressed="${k === filter}" data-filter="${k}">${title} <span class="scn-n">${projects.filter(p => k === 'all' || p.kind === k).length}</span></button>`).join('');
+        $('makerTabs').innerHTML = [['all',i18n('sim.contentVote.21')], ...Object.entries(types).map(([k,t]) => [k,t.name])].map(([k,title]) => `<button type="button" class="cpe-tab ${k === filter ? 'on' : ''}" aria-pressed="${k === filter}" data-filter="${k}">${title} <span class="scn-n">${projects.filter(p => k === 'all' || p.kind === k).length}</span></button>`).join('');
         $('makerTabs').querySelectorAll('[data-filter]').forEach(b => b.onclick = () => { filter = b.dataset.filter; history.replaceState(null, '', filter === 'all' ? 'maker.html' : 'maker.html?type=' + filter); render(); });
         const query = $('makerSearch').value.trim().toLowerCase();
         const rows = projects.filter(p => (filter === 'all' || p.kind === filter) && `${p.title} ${p.data?.description || ''} ${p.data?.author || ''}`.toLowerCase().includes(query));
-        $('makerStatus').textContent = failures.length ? failures.map(k => types[k].name + ' 목록을 읽지 못했습니다. 새로고침해 주세요.').join(' ') : `${rows.length}개 제작물 · 이 브라우저 / 앱에 저장된 작업`;
+        $('makerStatus').textContent = failures.length ? failures.map(k => types[k].name + (" " + i18n('maker.makerHub.2'))).join(' ') : i18n('maker.makerHub.3', { rows: rows.length });
         $('makerStatus').classList.toggle('maker-error', !!failures.length);
-        $('makerProjects').innerHTML = rows.length ? rows.map((p,i) => `<article class="scn-card maker-project" data-kind="${p.kind}"><div class="maker-project-meta"><span class="maker-kind">${types[p.kind].name}</span><span class="scn-grow"></span><time>${esc(stamp(p.updatedAt))}</time></div><h2>${esc(p.title || '(제목 없음)')}</h2><p class="scn-dim">${esc(p.data?.description || (p.kind === 'map' ? `${p.data?.shapes?.length || 0}개 도형` : '설명이 없습니다.'))}</p>${p.data?.author ? `<span class="scn-dim">${esc(p.data.author)}</span>` : ''}<div class="maker-project-actions">${demo && p.kind === 'map' ? '<span class="scn-dim">🔒 정식판에서 편집</span>' : `<a class="scn-btn scn-primary" href="${esc(store.url(p.kind,p.id))}" data-edit>편집 이어하기</a>`}<button type="button" class="scn-btn scn-danger" data-delete="${i}" aria-label="${esc(p.title)} 삭제">삭제</button></div></article>`).join('') : `<div class="maker-empty"><h2>${query ? '검색 결과가 없습니다.' : failures.length ? '제작물 목록을 확인하지 못했습니다.' : '아직 저장된 제작물이 없습니다.'}</h2><p class="scn-dim">${query ? '다른 검색어나 종류를 선택해 보세요.' : '위의 메이커에서 새로 만들거나 파일을 불러오세요. 시나리오·챌린지는 자동 저장되며, 맵은 지도 편집 시 프로젝트 저장됩니다.'}</p></div>`;
+        $('makerProjects').innerHTML = rows.length ? rows.map((p,i) => `<article class="scn-card maker-project" data-kind="${p.kind}"><div class="maker-project-meta"><span class="maker-kind">${types[p.kind].name}</span><span class="scn-grow"></span><time>${esc(stamp(p.updatedAt))}</time></div><h2>${esc(p.title || esc(i18n('sim.news.8')))}</h2><p class="scn-dim">${esc(p.data?.description || (p.kind === 'map' ? esc(i18n('maker.makerHub.4', { shapes: p.data?.shapes?.length || 0 })) : esc(i18n('maker.makerHub.5'))))}</p>${p.data?.author ? `<span class="scn-dim">${esc(p.data.author)}</span>` : ''}<div class="maker-project-actions">${demo && p.kind === 'map' ? `<span class="scn-dim">${esc(i18n('maker.makerHub.6'))}</span>` : `<a class="scn-btn scn-primary" href="${esc(store.url(p.kind,p.id))}" data-edit>${esc(i18n('maker.makerHub.7'))}</a>`}<button type="button" class="scn-btn scn-danger" data-delete="${i}" aria-label="${esc(i18n('maker.hub.deleteOf', { title: p.title }))}">${esc(i18n('common.delete'))}</button></div></article>`).join('') : `<div class="maker-empty"><h2>${query ? i18n('common.noResults') : failures.length ? i18n('maker.makerHub.8') : i18n('maker.makerHub.9')}</h2><p class="scn-dim">${query ? i18n('maker.makerHub.10') : i18n('maker.makerHub.11')}</p></div>`;
         $('makerProjects').querySelectorAll('[data-delete]').forEach(b => b.onclick = async () => {
             const p = rows[+b.dataset.delete];
-            const yes = await HemiUI.confirm(`“${p.title || '(제목 없음)'}” ${types[p.kind].name} 제작물을 삭제할까요? 되돌릴 수 없습니다. 이미 생성한 게임 세이브와 내보낸 파일은 남습니다.`, { title: '제작물 삭제', tone: 'danger', okText: '삭제', focusCancel: true });
+            const yes = await HemiUI.confirm(i18n('maker.makerHub.12', { title: p.title || i18n('sim.news.8'), name: types[p.kind].name }), { title: i18n('maker.makerHub.13'), tone: 'danger', okText: i18n('common.delete'), focusCancel: true });
             if (!yes) return;
             b.disabled = true;
             try { await store.remove(p.kind,p.id); await load(); }
-            catch (e) { b.disabled = false; await HemiUI.alert('삭제하지 못했습니다. 다시 시도해 주세요.'); }
+            catch (e) { b.disabled = false; await HemiUI.alert(i18n('maker.makerHub.14')); }
         });
     }
     async function load() {
         const id = ++loadId;
-        $('makerStatus').textContent = '제작물을 불러오는 중…';
+        $('makerStatus').textContent = i18n('maker.makerHub.15');
         const results = await Promise.allSettled(Object.keys(types).map(kind => store.list(kind)));
         if (id !== loadId) return;
         projects = []; failures = [];

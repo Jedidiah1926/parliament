@@ -64,7 +64,7 @@
             box.style.marginTop = '10px';
             group.parentElement.insertBefore(box, group.nextSibling);
         }
-        box.innerHTML = '<label style="color:#888;font-size:0.8rem;margin-bottom:6px;display:block;">숨겨진 정부 형태 (디버그 모드)</label>'
+        box.innerHTML = `<label style="color:#888;font-size:0.8rem;margin-bottom:6px;display:block;">${escapeHtmlText(i18n('sim.devmode.1'))}</label>`
             + '<div class="system-radio-group" style="flex-direction:column;"></div>';
         const list = box.lastChild;
         hiddenGovDefs.slice().sort((a, b) => String(a.version).localeCompare(String(b.version), undefined, { numeric: true })).forEach(d => {

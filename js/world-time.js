@@ -29,9 +29,9 @@
     window.getAppState=function(){mirror();const s=origGet.apply(this,arguments);if(active()&&!loading)s.worldClock={...holder.clock};return s;};
     const origSet=window.setAppState;
     window.setAppState=function(s){let r;loading=true;try{r=origSet.apply(this,arguments);}finally{loading=false;}configure(s?.worldClock);return r;};
-    window.advanceNationDate=function(){if(active()){window.showKbdToast?.('실시간 진행/일시정지로 시간을 조작하세요.');return false;}const r=origAdvance.apply(this,arguments);if(HemiTimeMode.get()==='realtime'&&!holder)configure();return r;};
+    window.advanceNationDate=function(){if(active()){window.showKbdToast?.(i18n('sim.worldTime.1'));return false;}const r=origAdvance.apply(this,arguments);if(HemiTimeMode.get()==='realtime'&&!holder)configure();return r;};
     const origSettings=window.openSettingsPanel;
-    if(origSettings)window.openSettingsPanel=function(){window.HemiCampaign?.pause();controller.pause('설정 · 일시정지');return origSettings.apply(this,arguments);};
+    if(origSettings)window.openSettingsPanel=function(){window.HemiCampaign?.pause();controller.pause(i18n('sim.worldTime.2'));return origSettings.apply(this,arguments);};
     window.addEventListener('hemi-time-mode-changed',()=>configure(active()?.clock));
     window.addEventListener('hemi-campaign-changed',()=>{if(window.HemiCampaign?.state){holder=null;controller.reset();}else configure();});
     for(const id of ['nationDateYear','nationDateMonth','nationDateDay'])document.getElementById(id).addEventListener('change',()=>{if(!active())configure();});

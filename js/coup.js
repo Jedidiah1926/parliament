@@ -23,7 +23,7 @@
     const uid = () => 'm' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
     const partyById = id => parties.find(p => String(p.id) === String(id)) || null;
     const DEFAULT_ROSTER = [
-        ['국방부 장관', 55, 'mnd'], ['합동참모의장', 60, 'jcs'], ['육군참모총장', 60, 'army'], ['해군참모총장', 65, 'navy'], ['공군참모총장', 65, 'air'],
+        [i18n('sim.coup.1'), 55, 'mnd'], [i18n('sim.coup.2'), 60, 'jcs'], [i18n('sim.coup.3'), 60, 'army'], [i18n('sim.coup.4'), 65, 'navy'], [i18n('sim.coup.5'), 65, 'air'],
     ];
     // 군 소속(육군 · 해군 · 공군 …) 기본값 — 이름 · 색은 내각 › 군부에서 바꾸고 더할 수 있다. keys는 직책 이름으로 소속을 짐작할 때 쓴다
     const DEFAULT_BRANCHES = [
@@ -36,7 +36,7 @@
         { id: 'special', name: '특수부대', color: '#7a4a8a', keys: ['특수', '특전'] },
     ];
     const OFFICER_COLOR = '#6b7d4a'; // 소속이 없는 지휘관 카드 색
-    const TYPE_LABEL = { military: '군부 쿠데타', party: '정당 쿠데타', self: '친위 쿠데타' };
+    const TYPE_LABEL = { military: i18n('sim.coup.6'), party: i18n('sim.coup.7'), self: i18n('sim.coup.8') };
 
     // ---- 상태 (세이브의 coup 칸 — 1.6.2 미리보기 세이브는 teaser62 칸) ----
     //   military: [{ id, role, name, photo, partyId, loyalty, branchId, cabinetId }]
@@ -48,8 +48,8 @@
     let T = fresh();
     function fresh() { return { military: [], branches: defaultBranches(), junta: null, coupBanned: [], log: [] }; }
     function defaultBranches() {
-        const tr = k => (window.HemiLang && typeof HemiLang.t === 'function' ? HemiLang.t(k) : k);
-        return DEFAULT_BRANCHES.map(b => ({ id: b.id, name: tr(b.name), color: b.color }));
+        // 기본 소속 이름은 지금 화면 언어로 (세이브에 든 이름은 그대로)
+        return DEFAULT_BRANCHES.map(b => ({ id: b.id, name: i18n('sim.coup.branch.' + b.id), color: b.color }));
     }
     function guessBranch(role) {
         const d = DEFAULT_BRANCHES.find(b => b.keys.some(k => String(role || '').includes(k)));
@@ -78,7 +78,7 @@
             m.partyId = e.partyId == null ? '' : String(e.partyId);
         });
     }
-    const cabinetLinkLabel = c => `${c.position || '(직책 없음)'}${cabinetEffective(c).name ? ` · ${cabinetEffective(c).name}` : ''}`;
+    const cabinetLinkLabel = c => `${c.position || i18n('sim.coup.9')}${cabinetEffective(c).name ? ` · ${cabinetEffective(c).name}` : ''}`;
     let ui = { type: 'military', leaderId: '', partyId: '', lastId: null };
 
     const origGet = window.getAppState;
@@ -126,35 +126,35 @@
         const martial = emergencyPowers?.martialLaw?.active;
         if (type === 'military' || type === 'counter') {
             const leader = T.military.find(m => m.id === opts.leaderId);
-            add('기본', type === 'counter' ? 20 : 15);
+            add(i18n('sim.coup.10'), type === 'counter' ? 20 : 15);
             if (leader) {
-                add(`지도자 ${leader.name || leader.role}의 불만 (충성도 ${leader.loyalty})`, 25 * disloyal(leader));
-                if (isTopRole(leader)) add(`지휘 계통 장악 (${leader.role})`, 10);
+                add(i18n('sim.coup.11', { role: leader.name || leader.role, loyalty: leader.loyalty }), 25 * disloyal(leader));
+                if (isTopRole(leader)) add(i18n('sim.coup.12', { role: leader.role }), 10);
             }
-            add('군 지휘부 전체의 불만', 40 * militaryDisloyalty(leader && leader.id));
+            add(i18n('sim.coup.13'), 40 * militaryDisloyalty(leader && leader.id));
             if (type === 'military') {
-                add('정부 · 여당의 의석', -25 * seatShare(isGovParty));
-                if (martial) add('이미 선포된 계엄령 (정부가 군을 쥐고 있음)', -10);
+                add(i18n('sim.coup.14'), -25 * seatShare(isGovParty));
+                if (martial) add(i18n('sim.coup.15'), -10);
             }
         } else if (type === 'party') {
             const p = partyById(opts.partyId);
-            add('기본', 5);
+            add(i18n('sim.coup.10'), 5);
             if (p) {
-                add(`${p.name} 지지율 (${support(p.id)}%)`, 0.5 * support(p.id));
-                add(`${p.name} 의석`, 20 * seatShare(x => x === p));
+                add(i18n('sim.coup.16', { name: p.name, support: support(p.id) }), 0.5 * support(p.id));
+                add(i18n('sim.coup.17', { name: p.name }), 20 * seatShare(x => x === p));
                 const aligned = T.military.filter(m => String(m.partyId) === String(p.id));
-                if (aligned.length) add(`가까운 장성 ${aligned.length}명`, Math.min(25, 8 * aligned.length));
-                if (isGovParty(p)) add('이미 정부 · 여당 (반대 세력 없이 굳히기)', 10);
+                if (aligned.length) add(i18n('sim.coup.18', { aligned: aligned.length }), Math.min(25, 8 * aligned.length));
+                if (isGovParty(p)) add(i18n('sim.coup.19'), 10);
             }
-            add('군 지휘부의 불만', 20 * militaryDisloyalty());
-            add('정부 · 여당의 의석', -20 * seatShare(x => isGovParty(x) && (!p || x !== p)));
+            add(i18n('sim.coup.20'), 20 * militaryDisloyalty());
+            add(i18n('sim.coup.14'), -20 * seatShare(x => isGovParty(x) && (!p || x !== p)));
         } else if (type === 'self') {
             const pp = partyById(president.partyId);
-            add('기본', 20);
-            add('정부 · 여당의 의석', 35 * seatShare(isGovParty));
-            if (pp) add(`${pp.name} 지지율 (${support(pp.id)}%)`, 0.3 * support(pp.id));
-            add('군 지휘부의 충성', 30 * (1 - militaryDisloyalty()));
-            if (martial) add('이미 선포된 계엄령', 10);
+            add(i18n('sim.coup.10'), 20);
+            add(i18n('sim.coup.14'), 35 * seatShare(isGovParty));
+            if (pp) add(i18n('sim.coup.21', { name: pp.name, pp: support(pp.id) }), 0.3 * support(pp.id));
+            add(i18n('sim.coup.22'), 30 * (1 - militaryDisloyalty()));
+            if (martial) add(i18n('sim.coup.23'), 10);
         }
         const total = clamp(Math.round(f.reduce((a, x) => a + x.v, 0)), 5, 95);
         return { factors: f, chance: total };
@@ -192,24 +192,24 @@
     function attempt() {
         syncCabinetLinks();
         const type = ui.type;
-        if (T.junta && type !== 'counter') { showCustomAlert('군정 중입니다 — 아래 "군정에서 벗어나기"의 역쿠데타를 쓰세요.'); return; }
+        if (T.junta && type !== 'counter') { showCustomAlert(i18n('sim.coup.24')); return; }
         let leaderName = '', target = '';
         if (type === 'military' || type === 'counter') {
             const m = T.military.find(x => x.id === ui.leaderId);
-            if (!m) { showCustomAlert('주도할 군 지휘관을 고르세요 (내각 › 군부에서 군 지휘부를 먼저 정합니다).'); return; }
-            if (type === 'counter' && T.junta && m.id === T.junta.chairId) { showCustomAlert('지금 군사평의회 의장은 역쿠데타를 일으킬 수 없습니다.'); return; }
+            if (!m) { showCustomAlert(i18n('sim.coup.25')); return; }
+            if (type === 'counter' && T.junta && m.id === T.junta.chairId) { showCustomAlert(i18n('sim.coup.26')); return; }
             leaderName = `${m.role} ${m.name || ''}`.trim();
-            target = type === 'counter' ? '군사평의회' : '정부';
+            target = type === 'counter' ? i18n('sim.coup.27') : i18n('sim.coup.28');
         } else if (type === 'party') {
             const p = partyById(ui.partyId);
-            if (!p || p.status === 'banned' || p.status === 'dissolved') { showCustomAlert('주도할 정당을 고르세요 (활동 금지 · 해산된 정당은 안 됨).'); return; }
-            leaderName = p.name; target = '정부';
+            if (!p || p.status === 'banned' || p.status === 'dissolved') { showCustomAlert(i18n('sim.coup.29')); return; }
+            leaderName = p.name; target = i18n('sim.coup.28');
         } else {
-            if (!president.name && president.partyId == null) { showCustomAlert(`${effRoleLabel('president')}이(가) 없어 친위 쿠데타를 일으킬 수 없습니다.`); return; }
-            leaderName = `${effRoleLabel('president')} ${president.name || ''}`.trim(); target = '의회';
+            if (!president.name && president.partyId == null) { showCustomAlert(i18n('sim.coup.30', { president: effRoleLabel('president') })); return; }
+            leaderName = `${effRoleLabel('president')} ${president.name || ''}`.trim(); target = i18n('sim.mainContentHelp.1');
         }
         const { chance } = coupChance(type, { leaderId: ui.leaderId, partyId: ui.partyId });
-        showCustomConfirm(`${TYPE_LABEL[type] || '역쿠데타'}를 일으킵니다 — 주도: ${leaderName}, 성공 확률 ${chance}%. 계속하시겠습니까?`, () => {
+        showCustomConfirm(i18n('sim.coup.32', { type: TYPE_LABEL[type] || i18n('sim.coup.31'), leaderName, chance }), () => {
             const success = Math.random() * 100 < chance;
             const effects = success ? applySuccess(type) : applyFailure(type);
             const entry = { id: uid(), at: Date.now(), date: (typeof formatNationDate === 'function' ? formatNationDate() : ''), type: type === 'counter' ? 'counter' : type,
@@ -230,8 +230,8 @@
                     prevRuling: Object.fromEntries(parties.map(p => [p.id, !!p.isRuling])), since: formatNationDate() };
                 parties.forEach(p => { p.isRuling = false; });
                 coalitions.forEach(c => { c._wasRuling = !!c.isRuling; c.isRuling = false; });
-                fx.push('주도 정당 없이 군사평의회 집권 (숨겨진 정부 형태: 군정)');
-            } else fx.push(`군사평의회 의장 교체 (${T.junta.chairName} → ${m.name || m.role})`);
+                fx.push(i18n('sim.coup.33'));
+            } else fx.push(i18n('sim.coup.34', { chairName: T.junta.chairName, role: m.name || m.role }));
             T.junta.chairId = m.id; T.junta.chairName = m.name || m.role; T.junta.chairRole = m.role;
             // 의장이 대통령 · 총리를 겸하고, 비상 권한을 모두 쥔다
             Object.assign(president, { name: m.name || m.role, photo: m.photo || '', partyId: null, linkedSeat: null });
@@ -239,22 +239,22 @@
             Object.keys(emergencyPowers).forEach(k => { emergencyPowers[k].holder = 'president'; });
             m.loyalty = 100;
             declareMartialLaw();
-            fx.push('계엄령 선포 · 의회 정지 · 선거 중단', `의장 ${m.name || m.role}이(가) 대통령 · 총리를 겸함`);
+            fx.push(i18n('sim.coup.35'), i18n('sim.coup.36', { role: m.name || m.role }));
         } else if (type === 'party') {
             const p = partyById(ui.partyId);
             parties.forEach(x => { x.isRuling = x === p; });
             coalitions.forEach(c => { c.isRuling = false; });
-            const leader = p.leaderName || `${p.name} 대표`; // 당수 이름을 안 적은 정당은 "OO 대표"로
+            const leader = p.leaderName || i18n('sim.coup.37', { name: p.name }); // 당수 이름을 안 적은 정당은 "OO 대표"로
             Object.assign(president, { name: leader, photo: p.leaderPhoto || '', partyId: p.id, linkedSeat: null });
             declareMartialLaw();
             const banned = banOpposition([p.id]);
-            fx.push(`${p.name} 집권 · ${effRoleLabel('president')}: ${leader}`, '계엄령 선포 · 의회 정지', `반대 정당 ${banned.length}곳 활동 금지`);
+            fx.push(i18n('sim.coup.38', { name: p.name, president: effRoleLabel('president'), leader }), i18n('sim.coup.39'), i18n('sim.coup.40', { banned: banned.length }));
         } else {
             declareMartialLaw();
             const keep = parties.filter(isGovParty).map(p => p.id);
             if (president.partyId != null) keep.push(president.partyId);
             const banned = banOpposition(keep);
-            fx.push('계엄령 선포 · 의회 정지', `반대 정당 ${banned.length}곳 활동 금지`);
+            fx.push(i18n('sim.coup.39'), i18n('sim.coup.40', { banned: banned.length }));
         }
         return fx;
     }
@@ -265,18 +265,18 @@
             const m = T.military.find(x => x.id === ui.leaderId);
             T.military = T.military.filter(x => x !== m);
             T.military.forEach(x => { x.loyalty = clamp((Number(x.loyalty) || 0) + 10, 0, 100); }); // 숙청 뒤 남은 지휘부는 몸을 사린다
-            fx.push(`${m.role} ${m.name || ''} 숙청 (군 지휘부에서 빠짐)`.trim(), '남은 지휘부 충성도 +10');
+            fx.push(i18n('sim.coup.41', { role: m.role, name: m.name || '' }).trim(), i18n('sim.coup.42'));
         } else if (type === 'party') {
             const p = partyById(ui.partyId);
             p.status = 'banned';
             cutSupport(p.id, 0.5);
-            fx.push(`${p.name} 활동 금지 · 지지율 절반으로`);
+            fx.push(i18n('sim.coup.43', { name: p.name }));
         } else {
             const pp = partyById(president.partyId);
             const name = president.name;
             Object.assign(president, { name: '', photo: '', partyId: null, linkedSeat: null });
-            if (pp) { cutSupport(pp.id, 0.7); fx.push(`${pp.name} 지지율 30% 하락`); }
-            fx.unshift(`${effRoleLabel('president')} ${name || ''} 축출 (공석)`.trim());
+            if (pp) { cutSupport(pp.id, 0.7); fx.push(i18n('sim.coup.44', { name: pp.name })); }
+            fx.unshift(i18n('sim.coup.45', { president: effRoleLabel('president'), name: name || '' }).trim());
         }
         return fx;
     }
@@ -284,7 +284,7 @@
     // ---- 군정에서 벗어나기 ----
     function transferToCivilians() {
         if (!T.junta) return;
-        showCustomConfirm('민정 이양 — 계엄령을 해제하고 의회 · 선거를 되살립니다. 쿠데타로 활동 금지된 정당은 복권되고, 대통령 · 총리는 다음 선거까지 공석입니다. 계속하시겠습니까?', () => endJunta('transfer'));
+        showCustomConfirm(i18n('sim.coup.46'), () => endJunta('transfer'));
     }
     // 군정을 끝낸다 — 민정 이양(transfer)과 1.6.3 민주 혁명(revolution)이 함께 쓴다
     function endJunta(how) {
@@ -299,7 +299,7 @@
             Object.assign(pm, { name: '', photo: '', partyId: null, linkedSeat: null });
             coalitions.forEach(c => { delete c._wasRuling; });
             if (how !== 'revolution') T.log.unshift({ id: uid(), at: Date.now(), date: formatNationDate(), type: 'transfer', leader: T.junta.chairName, target: '', chance: null, success: true,
-                effects: ['계엄령 해제 · 의회 활동 재개 · 선거 재개', '대통령 · 총리 공석 (선거로 뽑음)'] });
+                effects: [i18n('sim.coup.47'), i18n('sim.coup.48')] });
             T.junta = null;
             rerenderGov();
             refresh();
@@ -313,26 +313,26 @@
     // ---- 디버그 모드: 쿠데타 없이 바로 군정 (설정 › 기타 설정 › 숨겨진 정부 형태 보이기, js/devmode.js) ----
     function debugJunta() {
         syncCabinetLinks();
-        if (T.junta) { showCustomAlert('이미 군정입니다 — 내각 › 쿠데타의 "민정 이양"으로 벗어날 수 있어요.'); return; }
+        if (T.junta) { showCustomAlert(i18n('sim.coup.49')); return; }
         const m = T.military.find(x => x.id === ui.leaderId) || T.military[0];
-        if (!m) { showCustomAlert('군사평의회 의장이 될 군 지휘관이 없습니다 — 내각 › 군부에서 군 지휘부를 먼저 정하세요.'); return; }
+        if (!m) { showCustomAlert(i18n('sim.coup.50')); return; }
         const leaderName = `${m.role} ${m.name || ''}`.trim();
-        showCustomConfirm(`디버그 — 쿠데타 없이 바로 군정으로 바꿉니다 (의장: ${leaderName}). 계속하시겠습니까?`, () => {
+        showCustomConfirm(i18n('sim.coup.51', { leaderName }), () => {
             ui.leaderId = m.id;
-            const effects = ['디버그 모드로 바로 바꿈', ...applySuccess('military')];
-            const entry = { id: uid(), at: Date.now(), date: formatNationDate(), type: 'military', leader: leaderName, target: '정부', chance: null, success: true, effects };
+            const effects = [i18n('sim.coup.52'), ...applySuccess('military')];
+            const entry = { id: uid(), at: Date.now(), date: formatNationDate(), type: 'military', leader: leaderName, target: i18n('sim.coup.28'), chance: null, success: true, effects };
             T.log.unshift(entry);
             ui.lastId = entry.id;
             rerenderGov();
             refresh();
         });
     }
-    if (window.HemiDev && HemiDev.hiddenGov) HemiDev.hiddenGov.register({ id: 'junta', label: '군정', version: '1.6.2', isActive: () => !!T.junta, enter: debugJunta });
+    if (window.HemiDev && HemiDev.hiddenGov) HemiDev.hiddenGov.register({ id: 'junta', label: i18n('sim.coup.53'), version: '1.6.2', isActive: () => !!T.junta, enter: debugJunta });
 
     // ---- 군정: 직책 이름 · 선거 중단 ----
     const origRole = window.effRoleLabel;
     window.effRoleLabel = function (key) {
-        if (T.junta && (key === 'president' || key === 'pm')) return '군사평의회 의장';
+        if (T.junta && (key === 'president' || key === 'pm')) return i18n('sim.coup.54');
         return origRole.apply(this, arguments);
     };
     // 다수당 방식 총리 자동 반영을 끈다 — 군정에서는 의장이 총리를 겸하므로 다수당 대표 · 당적이 끼어들면 안 됨
@@ -351,7 +351,7 @@
     const blockIfJunta = fn => function () {
         // 관제 선거를 허용했으면(1.6.9 — js/politics.js) 군정에서도 선거를 치른다
         const managed = window.HemiFraudRegime && window.HemiFraudRegime.managedElections && window.HemiFraudRegime.managedElections();
-        if (T.junta && !managed) { showCustomAlert('군정 중에는 선거가 중단됩니다 — 내각 › 쿠데타의 "민정 이양" 뒤에 치를 수 있어요.'); return; }
+        if (T.junta && !managed) { showCustomAlert(i18n('sim.coup.55')); return; }
         return fn.apply(this, arguments);
     };
     ['elecRun', 'elecRunByElection', 'runPresidentialElection'].forEach(n => { if (typeof window[n] === 'function') window[n] = blockIfJunta(window[n]); });
@@ -364,8 +364,8 @@
         const bar = cab && cab.querySelector(':scope > .sub-tab-container');
         if (!bar) return;
         const before = document.getElementById('subTabCouncil');
-        bar.insertBefore(el(`<button class="sub-tab-btn" onclick="switchSubTab('cabinet','military')" id="subTabMilitary">군부</button>`), before);
-        bar.insertBefore(el(`<button class="sub-tab-btn" onclick="switchSubTab('cabinet','coup')" id="subTabCoup">쿠데타</button>`), before);
+        bar.insertBefore(el(`<button class="sub-tab-btn" onclick="switchSubTab('cabinet','military')" id="subTabMilitary">${esc(i18n('sim.coup.56'))}</button>`), before);
+        bar.insertBefore(el(`<button class="sub-tab-btn" onclick="switchSubTab('cabinet','coup')" id="subTabCoup">${esc(i18n('sim.coup.57'))}</button>`), before);
         cab.appendChild(el(`<div id="contentMilitary" class="sub-tab-content"></div>`));
         cab.appendChild(el(`<div id="contentCoup" class="sub-tab-content"></div>`));
     })();
@@ -383,7 +383,7 @@
             let b = document.getElementById('coupJuntaBanner');
             if (T.junta) {
                 if (!b) { b = el('<div id="coupJuntaBanner" class="coup-banner"></div>'); grid.parentElement.insertBefore(b, grid); }
-                b.innerHTML = `⚔ 군정 — 군사평의회 집권 중 · 의장 <b>${esc(T.junta.chairRole || '')} ${esc(T.junta.chairName)}</b>${T.junta.since ? ` · ${esc(T.junta.since)}부터` : ''}`;
+                b.innerHTML = `${esc(i18n('sim.coup.58'))} <b>${esc(T.junta.chairRole || '')} ${esc(T.junta.chairName)}</b>${T.junta.since ? esc((" " + i18n('sim.coup.59', { since: (T.junta.since) }))) : ''}`;
             } else if (b) b.remove();
         }
         return r;
@@ -395,55 +395,55 @@
         if (!box) return;
         syncCabinetLinks();
         const avg = T.military.length ? Math.round(T.military.reduce((a, m) => a + (Number(m.loyalty) || 0), 0) / T.military.length) : null;
-        const partyOpts = sel => `<option value="">— 가까운 정당 없음 —</option>` + parties.filter(p => p.status !== 'dissolved')
+        const partyOpts = sel => `<option value="">${esc(i18n('sim.coup.60'))}</option>` + parties.filter(p => p.status !== 'dissolved')
             .map(p => `<option value="${esc(p.id)}" ${String(p.id) === String(sel) ? 'selected' : ''}>${esc(p.name)}</option>`).join('');
-        const cabinetOpts = () => `<option value="">— 연결 안 함 —</option>` + cabinetList()
+        const cabinetOpts = () => `<option value="">${esc(i18n('sim.coup.61'))}</option>` + cabinetList()
             .map(c => `<option value="${esc(c.id)}">${esc(cabinetLinkLabel(c))}</option>`).join('');
-        const branchOpts = sel => `<option value="">— 소속 없음 —</option>` + T.branches
-            .map(b => `<option value="${esc(b.id)}" ${b.id === sel ? 'selected' : ''}>${esc(b.name || '(이름 없음)')}</option>`).join('');
+        const branchOpts = sel => `<option value="">${esc(i18n('sim.coup.62'))}</option>` + T.branches
+            .map(b => `<option value="${esc(b.id)}" ${b.id === sel ? 'selected' : ''}>${esc(b.name || i18n('sim.core.7'))}</option>`).join('');
         box.innerHTML = `
-            <div class="coup-intro">군 지휘부를 정해 둡니다. 충성도는 지금 정부에 대한 충성(0~100)으로, 낮을수록 군부 쿠데타가 잘 되고 높을수록 친위 쿠데타를 돕습니다. 가까운 정당은 그 정당이 쿠데타를 일으킬 때 힘을 보탭니다.</div>
-            <div class="coup-row coup-summary"><span>군 지휘부 ${T.military.length}명${avg != null ? ` · 평균 충성도 <b>${avg}</b>` : ''}</span>
-                ${T.junta ? `<span class="coup-tag">군정 — 의장 ${esc(T.junta.chairName)}</span>` : ''}</div>
+            <div class="coup-intro">${esc(i18n('sim.coup.63'))}</div>
+            <div class="coup-row coup-summary"><span>${esc(i18n('sim.coup.64', { count: T.military.length }))}${avg != null ? ` ${esc(i18n('sim.coup.66'))} <b>${avg}</b>` : ''}</span>
+                ${T.junta ? `<span class="coup-tag">${esc(i18n('sim.coup.67'))} ${esc(T.junta.chairName)}</span>` : ''}</div>
             <details class="coup-branches" ${ui.branchesOpen ? 'open' : ''}>
-                <summary>군 소속 · 색 (${T.branches.length})</summary>
-                <div class="coup-dim coup-small">지휘관마다 소속을 고르면 카드가 그 색으로 표시됩니다. 이름 · 색을 바꾸거나 소속을 더할 수 있어요.</div>
+                <summary>${esc(i18n('sim.coup.68'))}${T.branches.length})</summary>
+                <div class="coup-dim coup-small">${esc(i18n('sim.coup.69'))}</div>
                 ${T.branches.map(b => `
                     <div class="coup-row coup-branch-row" data-bid="${esc(b.id)}">
-                        <input type="color" data-bf="color" value="${esc(b.color || OFFICER_COLOR)}" title="색">
-                        <input type="text" data-bf="name" value="${esc(b.name)}" placeholder="소속 이름 (예: 해병대)">
-                        <span class="coup-dim coup-small">${T.military.filter(m => m.branchId === b.id).length}명</span>
-                        <button type="button" class="coup-x" data-bact="del" title="빼기">✕</button>
+                        <input type="color" data-bf="color" value="${esc(b.color || OFFICER_COLOR)}" title="${esc(i18n('sim.main.25'))}">
+                        <input type="text" data-bf="name" value="${esc(b.name)}" placeholder="${esc(i18n('sim.coup.70'))}">
+                        <span class="coup-dim coup-small">${esc(i18n('sim.common.people', { count: T.military.filter(m => m.branchId === b.id).length }))}</span>
+                        <button type="button" class="coup-x" data-bact="del" title="${esc(i18n('sim.coup.71'))}">✕</button>
                     </div>`).join('')}
                 <div class="coup-row">
-                    <button class="add-btn" data-bact="add" style="flex:1;">[+] 소속 추가</button>
-                    <button class="add-btn" data-bact="reset" style="flex:1;">기본 소속으로</button>
+                    <button class="add-btn" data-bact="add" style="flex:1;">${esc(i18n('sim.coup.72'))}</button>
+                    <button class="add-btn" data-bact="reset" style="flex:1;">${esc(i18n('sim.coup.73'))}</button>
                 </div>
             </details>
             ${T.military.map(m => `
                 <div class="card-item coup-officer ${T.junta && T.junta.chairId === m.id ? 'coup-chair' : ''}" data-id="${esc(m.id)}" style="--coup-branch:${esc(officerColor(m))}">
                     <div class="coup-photo-col">
-                        <label class="leader-photo-box coup-photo" title="사진">${m.photo ? `<img src="${m.photo}" alt="">` : '<div class="photo-ph">🎖</div>'}<input type="file" accept="image/*" data-f="photo" ${m.cabinetId ? 'disabled' : ''}></label>
+                        <label class="leader-photo-box coup-photo" title="${esc(i18n('sim.coup.74'))}">${m.photo ? `<img src="${m.photo}" alt="">` : '<div class="photo-ph">🎖</div>'}<input type="file" accept="image/*" data-f="photo" ${m.cabinetId ? 'disabled' : ''}></label>
                         ${branchById(m.branchId) ? `<span class="coup-branch-tag">${esc(branchById(m.branchId).name)}</span>` : ''}
                     </div>
                     <div class="coup-officer-main">
                         <div class="coup-row">
-                            <input type="text" data-f="role" value="${esc(m.role)}" placeholder="직책 (예: 육군참모총장)" class="coup-role" ${m.cabinetId ? 'disabled' : ''}>
-                            <button type="button" class="coup-x" data-act="del" title="빼기">✕</button>
+                            <input type="text" data-f="role" value="${esc(m.role)}" placeholder="${esc(i18n('sim.coup.75'))}" class="coup-role" ${m.cabinetId ? 'disabled' : ''}>
+                            <button type="button" class="coup-x" data-act="del" title="${esc(i18n('sim.coup.71'))}">✕</button>
                         </div>
-                        <input type="text" data-f="name" value="${esc(m.name)}" placeholder="이름" ${m.cabinetId ? 'disabled' : ''}>
-                        <div class="coup-row coup-field"><span>소속</span><select data-f="branchId">${branchOpts(m.branchId)}</select></div>
-                        <div class="coup-row coup-field"><span>정당</span><select data-f="partyId" ${m.cabinetId ? 'disabled' : ''}>${partyOpts(m.partyId)}</select></div>
+                        <input type="text" data-f="name" value="${esc(m.name)}" placeholder="${esc(i18n('sim.contentDate.11'))}" ${m.cabinetId ? 'disabled' : ''}>
+                        <div class="coup-row coup-field"><span>${esc(i18n('sim.coup.76'))}</span><select data-f="branchId">${branchOpts(m.branchId)}</select></div>
+                        <div class="coup-row coup-field"><span>${esc(i18n('sim.mainContentSetup.2'))}</span><select data-f="partyId" ${m.cabinetId ? 'disabled' : ''}>${partyOpts(m.partyId)}</select></div>
                         ${m.cabinetId && cabinetById(m.cabinetId) ? `
-                        <div class="coup-row coup-linked">🔗 내각(${esc(cabinetById(m.cabinetId).position || '직책 없음')})과 연결됨 — 직책 · 이름 · 사진 · 당적 자동 반영
-                            <button type="button" class="coup-x" data-act="unlinkCab">연결 해제</button></div>`
-                        : `<div class="coup-row coup-field"><span>내각</span><select data-f="cabinetId">${cabinetOpts()}</select></div>`}
-                        <div class="coup-row coup-loyal"><span>충성도</span><input type="range" min="0" max="100" step="5" data-f="loyalty" value="${Number(m.loyalty) || 0}"><b>${Number(m.loyalty) || 0}</b></div>
+                        <div class="coup-row coup-linked">${esc(i18n('sim.coup.77'))}${esc(cabinetById(m.cabinetId).position || esc(i18n('sim.coup.78')))}${esc(i18n('sim.coup.79'))}
+                            <button type="button" class="coup-x" data-act="unlinkCab">${esc(i18n('sim.contentPresident.4'))}</button></div>`
+                        : `<div class="coup-row coup-field"><span>${esc(i18n('sim.contentSystem.9'))}</span><select data-f="cabinetId">${cabinetOpts()}</select></div>`}
+                        <div class="coup-row coup-loyal"><span>${esc(i18n('sim.coup.80'))}</span><input type="range" min="0" max="100" step="5" data-f="loyalty" value="${Number(m.loyalty) || 0}"><b>${Number(m.loyalty) || 0}</b></div>
                     </div>
                 </div>`).join('')}
-            <button class="add-btn" data-act="add">[+] 군 지휘관 추가</button>
-            ${T.military.length ? '' : '<button class="add-btn" data-act="seed">[+] 기본 군 지휘부 만들기 (국방부 장관 · 합참의장 · 육해공군 참모총장)</button>'}`;
-        box.querySelector('[data-act="add"]').onclick = () => { T.military.push({ id: uid(), role: '장성', name: '', photo: '', partyId: '', loyalty: 60, branchId: '' }); renderMilitary(); };
+            <button class="add-btn" data-act="add">${esc(i18n('sim.coup.81'))}</button>
+            ${T.military.length ? '' : `<button class="add-btn" data-act="seed">${esc(i18n('sim.coup.82'))}</button>`}`;
+        box.querySelector('[data-act="add"]').onclick = () => { T.military.push({ id: uid(), role: i18n('sim.coup.83'), name: '', photo: '', partyId: '', loyalty: 60, branchId: '' }); renderMilitary(); };
         // 군 소속 · 색
         const det = box.querySelector('.coup-branches');
         det.ontoggle = () => { ui.branchesOpen = det.open; };
@@ -458,18 +458,17 @@
             };
         });
         det.querySelector('[data-bact="add"]').onclick = () => { T.branches.push({ id: uid(), name: '', color: '#888888' }); renderMilitary(); };
-        det.querySelector('[data-bact="reset"]').onclick = () => showCustomConfirm('군 소속을 기본값(국방부 · 합동참모본부 · 육군 · 해군 · 공군 · 해병대 · 특수부대)으로 되돌립니다. 직접 더한 소속은 빠지고, 지휘관 소속은 직책 이름으로 다시 짐작합니다. 계속하시겠습니까?', () => {
+        det.querySelector('[data-bact="reset"]').onclick = () => showCustomConfirm(i18n('sim.coup.84'), () => {
             T.branches = defaultBranches();
             T.military.forEach(m => { m.branchId = guessBranch(m.role); });
             renderMilitary();
         });
         const seed = box.querySelector('[data-act="seed"]');
-        // 기본 직책 이름은 화면 언어로 (세이브에 든 이름은 번역하지 않으므로 만들 때 바꿔 둔다)
-        const tr = k => (window.HemiLang && typeof HemiLang.t === 'function' ? HemiLang.t(k) : k);
+        // 기본 직책 이름은 DEFAULT_ROSTER에서 이미 지금 화면 언어(i18n)
         if (seed) seed.onclick = () => {
             // 내각에 국방 장관 자리가 있으면 기본 지휘부의 국방부 장관을 그 자리와 바로 연결
             const defense = cabinetList().find(c => /국방/.test(c.position || ''));
-            DEFAULT_ROSTER.forEach(([role, loyalty, branchId]) => T.military.push({ id: uid(), role: tr(role), name: '', photo: '', partyId: '', loyalty, branchId: branchById(branchId) ? branchId : '',
+            DEFAULT_ROSTER.forEach(([role, loyalty, branchId]) => T.military.push({ id: uid(), role, name: '', photo: '', partyId: '', loyalty, branchId: branchById(branchId) ? branchId : '',
                 cabinetId: branchId === 'mnd' && defense ? defense.id : '' }));
             renderMilitary();
         };
@@ -498,13 +497,13 @@
         if (!box) return;
         const juntaHtml = T.junta ? `
             <div class="coup-junta">
-                <div class="coup-junta-title">⚔ 군정 — 군사평의회 집권 중</div>
-                <div class="coup-dim">의장 ${esc(T.junta.chairRole || '')} <b>${esc(T.junta.chairName)}</b>${T.junta.since ? ` · ${esc(T.junta.since)}부터` : ''} · 대통령 · 총리 겸임, 비상 권한 독점, 의회 정지 · 선거 중단</div>
-                <div class="coup-sub">군정에서 벗어나기</div>
+                <div class="coup-junta-title">${esc(i18n('sim.coup.85'))}</div>
+                <div class="coup-dim">${esc(i18n('sim.contentSystem.13'))} ${esc(T.junta.chairRole || '')} <b>${esc(T.junta.chairName)}</b>${T.junta.since ? esc((" " + i18n('sim.coup.59', { since: (T.junta.since) }))) : ''} ${esc(i18n('sim.coup.86'))}</div>
+                <div class="coup-sub">${esc(i18n('sim.coup.87'))}</div>
                 <div class="coup-row coup-wrap">
-                    <button type="button" class="coup-btn" data-act="transfer">민정 이양</button>
-                    <button type="button" class="coup-btn" data-act="counter">역쿠데타 준비</button>
-                    <button type="button" class="coup-btn" onclick="switchSubTab('cabinet','revolution')">혁명 →</button>
+                    <button type="button" class="coup-btn" data-act="transfer">${esc(i18n('sim.coup.88'))}</button>
+                    <button type="button" class="coup-btn" data-act="counter">${esc(i18n('sim.coup.89'))}</button>
+                    <button type="button" class="coup-btn" onclick="switchSubTab('cabinet','revolution')">${esc(i18n('sim.coup.90'))}</button>
                 </div>
             </div>` : '';
         if (T.junta && ui.type !== 'counter') ui.type = 'counter';
@@ -525,28 +524,28 @@
         const typeBtn = (k, t) => `<button type="button" class="system-radio-btn ${type === k ? 'active' : ''}" data-type="${k}">${t}</button>`;
         box.innerHTML = `
             ${juntaHtml}
-            ${T.junta ? '<div class="coup-sub">역쿠데타</div>' : `
-            <div class="coup-intro">주도 세력을 고르면 성공 확률을 요인별로 보여 줍니다. 성공하면 계엄령이 선포되고 의회가 멈추며, 실패하면 주도 세력이 처벌받습니다.</div>
-            <div class="system-radio-group">${typeBtn('military', '군부')}${typeBtn('party', '정당')}${typeBtn('self', `${effRoleLabel('president')} (친위)`)}</div>`}
+            ${T.junta ? `<div class="coup-sub">${esc(i18n('sim.coup.31'))}</div>` : `
+            <div class="coup-intro">${esc(i18n('sim.coup.91'))}</div>
+            <div class="system-radio-group">${typeBtn('military', esc(i18n('sim.coup.56')))}${typeBtn('party', esc(i18n('sim.mainContentSetup.2')))}${typeBtn('self', esc(i18n('sim.coup.92', { president: effRoleLabel('president') })))}</div>`}
             <div class="coup-pick">
                 ${type === 'military' || type === 'counter' ? (officers.length ? `
-                    <label class="coup-dim">주도할 군 지휘관</label>
-                    <select data-pick="leader">${officers.map(m => `<option value="${esc(m.id)}" ${m.id === ui.leaderId ? 'selected' : ''}>${branchById(m.branchId) ? `[${esc(branchById(m.branchId).name)}] ` : ''}${esc(m.role)} ${esc(m.name || '(이름 없음)')} · 충성도 ${m.loyalty}</option>`).join('')}</select>`
-                    : '<div class="coup-dim">군 지휘부가 없습니다 — 내각 › 군부에서 먼저 정하세요.</div>') : ''}
+                    <label class="coup-dim">${esc(i18n('sim.coup.93'))}</label>
+                    <select data-pick="leader">${officers.map(m => `<option value="${esc(m.id)}" ${m.id === ui.leaderId ? 'selected' : ''}>${branchById(m.branchId) ? `[${esc(branchById(m.branchId).name)}] ` : ''}${esc(m.role)} ${esc(m.name || esc(i18n('sim.core.7')))} ${esc(i18n('sim.coup.94'))} ${m.loyalty}</option>`).join('')}</select>`
+                    : `<div class="coup-dim">${esc(i18n('sim.coup.95'))}</div>`) : ''}
                 ${type === 'party' ? `
-                    <label class="coup-dim">주도할 정당</label>
-                    <select data-pick="party">${activeParties.map(p => `<option value="${esc(p.id)}" ${String(p.id) === String(ui.partyId) ? 'selected' : ''}>${esc(p.name)} · 지지율 ${support(p.id)}%${isGovParty(p) ? ' · 여당' : ''}</option>`).join('')}</select>` : ''}
-                ${type === 'self' ? `<div class="coup-dim">주도: ${esc(effRoleLabel('president'))} ${esc(president.name || '(공석)')}${partyById(president.partyId) ? ` · ${esc(partyById(president.partyId).name)}` : ''} — 의회를 멈추고 반대 정당을 막습니다</div>` : ''}
+                    <label class="coup-dim">${esc(i18n('sim.coup.96'))}</label>
+                    <select data-pick="party">${activeParties.map(p => `<option value="${esc(p.id)}" ${String(p.id) === String(ui.partyId) ? 'selected' : ''}>${esc(p.name)} ${esc(i18n('sim.coup.97'))} ${support(p.id)}%${isGovParty(p) ? esc((" " + i18n('sim.coup.98'))) : ''}</option>`).join('')}</select>` : ''}
+                ${type === 'self' ? `<div class="coup-dim">${esc(i18n('sim.coup.99'))} ${esc(effRoleLabel('president'))} ${esc(president.name || esc(i18n('sim.export.18')))}${partyById(president.partyId) ? ` · ${esc(partyById(president.partyId).name)}` : ''} ${esc(i18n('sim.coup.100'))}</div>` : ''}
             </div>
             <div class="coup-chance">
-                <div class="coup-chance-head"><span>성공 확률</span><b>${chance}%</b></div>
+                <div class="coup-chance-head"><span>${esc(i18n('sim.coup.101'))}</span><b>${chance}%</b></div>
                 <div class="coup-bar"><span style="width:${chance}%"></span></div>
                 ${factors.map(x => `<div class="coup-factor"><span>${esc(x.label)}</span><span class="${x.v >= 0 ? 'coup-plus' : 'coup-minus'}">${x.v >= 0 ? '+' : ''}${x.v}%p</span></div>`).join('')}
-                <div class="coup-dim coup-small">합계는 5~95% 사이로 맞춥니다.</div>
+                <div class="coup-dim coup-small">${esc(i18n('sim.coup.102'))}</div>
             </div>
-            <button type="button" class="coup-go" data-act="go">⚔ ${T.junta ? '역쿠데타' : TYPE_LABEL[type]} 일으키기</button>
+            <button type="button" class="coup-go" data-act="go">⚔ ${T.junta ? esc(i18n('sim.coup.31')) : TYPE_LABEL[type]} ${esc(i18n('sim.coup.103'))}</button>
             ${last ? resultCard(last) : ''}
-            ${T.log.length ? `<details class="coup-log"><summary>쿠데타 기록 (${T.log.length})</summary>${T.log.map(logRow).join('')}</details>` : ''}`;
+            ${T.log.length ? `<details class="coup-log"><summary>${esc(i18n('sim.coup.104'))}${T.log.length})</summary>${T.log.map(logRow).join('')}</details>` : ''}`;
         box.querySelectorAll('[data-type]').forEach(b => { b.onclick = () => { ui.type = b.dataset.type; ui.lastId = null; renderCoup(); }; });
         const ls = box.querySelector('[data-pick="leader"]'); if (ls) ls.onchange = () => { ui.leaderId = ls.value; renderCoup(); };
         const ps = box.querySelector('[data-pick="party"]'); if (ps) ps.onchange = () => { ui.partyId = ps.value; renderCoup(); };
@@ -554,11 +553,11 @@
         const tr = box.querySelector('[data-act="transfer"]'); if (tr) tr.onclick = transferToCivilians;
         const ct = box.querySelector('[data-act="counter"]'); if (ct) ct.onclick = () => { box.querySelector('[data-act="go"]').scrollIntoView({ behavior: 'smooth', block: 'center' }); };
     }
-    const typeName = t => ({ military: '군부 쿠데타', party: '정당 쿠데타', self: '친위 쿠데타', counter: '역쿠데타', transfer: '민정 이양' }[t] || t);
+    const typeName = t => ({ military: i18n('sim.coup.6'), party: i18n('sim.coup.7'), self: i18n('sim.coup.8'), counter: i18n('sim.coup.31'), transfer: i18n('sim.coup.88') }[t] || t);
     function resultCard(x) {
         return `<div class="coup-result ${x.success ? 'ok' : 'fail'}">
-            <div class="coup-result-head">${x.type === 'transfer' ? '🕊 민정 이양' : x.success ? '✔ 성공' : '✘ 실패'} — ${esc(typeName(x.type))}${x.chance != null ? ` <span class="coup-dim">(확률 ${x.chance}%)</span>` : ''}</div>
-            <div class="coup-dim">주도: ${esc(x.leader)}${x.date ? ` · ${esc(x.date)}` : ''}</div>
+            <div class="coup-result-head">${x.type === 'transfer' ? esc(i18n('sim.coup.105')) : x.success ? esc(i18n('sim.coup.106')) : esc(i18n('sim.coup.107'))} — ${esc(typeName(x.type))}${x.chance != null ? ` <span class="coup-dim">${esc(i18n('sim.coup.108'))} ${x.chance}%)</span>` : ''}</div>
+            <div class="coup-dim">${esc(i18n('sim.coup.99'))} ${esc(x.leader)}${x.date ? ` · ${esc(x.date)}` : ''}</div>
             <ul>${(x.effects || []).map(e => `<li>${esc(e)}</li>`).join('')}</ul>
         </div>`;
     }

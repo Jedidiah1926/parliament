@@ -8,15 +8,15 @@
     const color=x=>typeof x==='string'&&/^#[\da-f]{6}$/i.test(x);
     function geometry(preset){
         const source=preset?.format==='hemicycle-districts'&&preset.district?.svgMap;
-        if(!object(source)||!Array.isArray(source.shapes)||!source.shapes.length)throw Error('SVG 구역 모양이 든 .hemimap 파일을 선택하세요.');
+        if(!object(source)||!Array.isArray(source.shapes)||!source.shapes.length)throw Error(i18n('sim.worldMapData.1'));
         const box=String(source.viewBox||'').trim().split(/[\s,]+/).map(Number);
-        if(box.length!==4||!box.every(Number.isFinite)||box[2]<=0||box[3]<=0)throw Error('지도의 viewBox가 올바르지 않습니다.');
+        if(box.length!==4||!box.every(Number.isFinite)||box[2]<=0||box[3]<=0)throw Error(i18n('sim.worldMapData.2'));
         const keys=new Set();
         const shapes=source.shapes.map(sh=>{
-            if(!object(sh)||typeof sh.key!=='string'||!sh.key.trim()||keys.has(sh.key)||!tags.has(sh.tag||'path')||!object(sh.attrs))throw Error('구역의 키·모양이 잘못되었거나 중복됩니다.');
+            if(!object(sh)||typeof sh.key!=='string'||!sh.key.trim()||keys.has(sh.key)||!tags.has(sh.tag||'path')||!object(sh.attrs))throw Error(i18n('sim.worldMapData.3'));
             keys.add(sh.key);
             const clean=Object.fromEntries(Object.entries(sh.attrs).filter(([k,v])=>attrs.has(k)&&['string','number'].includes(typeof v)).map(([k,v])=>[k,String(v)]));
-            if((sh.tag||'path')==='path'&&!clean.d)throw Error('구역 경로가 비어 있습니다.');
+            if((sh.tag||'path')==='path'&&!clean.d)throw Error(i18n('sim.worldMapData.4'));
             return {key:sh.key,tag:sh.tag||'path',attrs:clean};
         });
         return {viewBox:box,shapes};

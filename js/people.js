@@ -95,7 +95,7 @@
                 const party = partyById(m.partyId);
                 const ind = party && party.ideologyId === IND ? independents.find(x => x.chamber === ch && x.districtKey === key) : null;
                 out.push({
-                    key: `d:${ch}:${key}`, kind: 'district', group: `${cn} 지역구`, partyId: m.partyId,
+                    key: `d:${ch}:${key}`, kind: 'district', group: i18n('sim.people.1', { cn }), partyId: m.partyId,
                     label: `${districtMemberLabel(ch, key)} (${party ? party.name : '?'})`,
                     obj: m, ind,
                     name: () => (ind ? ind.name : m.name) || '',
@@ -103,46 +103,46 @@
             });
             parties.forEach(p => (listMembers[ch]?.[p.id] || []).forEach((m, i) => {
                 if (!m || m.vacant) return;
-                out.push({ key: `l:${ch}:${p.id}:${m.id}`, kind: 'list', group: `${cn} 비례대표`, partyId: p.id, label: `${p.name} ${i + 1}번`, obj: m, name: () => m.name || '' });
+                out.push({ key: `l:${ch}:${p.id}:${m.id}`, kind: 'list', group: i18n('sim.people.2', { cn }), partyId: p.id, label: i18n('sim.people.3', { name: p.name, v: i + 1 }), obj: m, name: () => m.name || '' });
             }));
             independents.filter(x => x.chamber === ch && !x.districtKey).forEach((x, i) => {
-                out.push({ key: `i:${x.id}`, kind: 'independent', group: `${cn} 무소속`, partyId: (parties.find(p => p.ideologyId === IND) || {}).id, label: `무소속 ${i + 1}`, obj: x, name: () => x.name || '' });
+                out.push({ key: `i:${x.id}`, kind: 'independent', group: i18n('sim.people.4', { cn }), partyId: (parties.find(p => p.ideologyId === IND) || {}).id, label: i18n('sim.people.5', { v: i + 1 }), obj: x, name: () => x.name || '' });
             });
         });
         parties.filter(p => p.ideologyId !== IND).forEach(p => {
-            out.push({ key: `pl:${p.id}`, kind: 'leader', group: '당직', partyId: p.id, label: `${p.name} 당수`, obj: p, nameKey: 'leaderName', photoKey: 'leaderPhoto', pidKey: 'leaderPersonId', name: () => p.leaderName || '' });
+            out.push({ key: `pl:${p.id}`, kind: 'leader', group: i18n('sim.people.6'), partyId: p.id, label: i18n('sim.people.7', { name: p.name }), obj: p, nameKey: 'leaderName', photoKey: 'leaderPhoto', pidKey: 'leaderPersonId', name: () => p.leaderName || '' });
             // 원내대표는 원마다 (양원제 · 삼원제) — 하원은 예전 칸(floorLeaderName …), 상원 · 삼원은 p.floorLeaders[원]
             const flChs = typeof floorLeaderChambers === 'function' ? floorLeaderChambers(p) : ['house'];
             const multi = chs().length > 1;
             flChs.forEach(ch => {
                 if (ch === 'house' || !multi) {
-                    out.push({ key: `pf:${p.id}`, kind: 'floor', group: '당직', partyId: p.id, label: `${p.name} 원내대표${multi ? ` (${chName('house')})` : ''}`, obj: p, nameKey: 'floorLeaderName', photoKey: 'floorLeaderPhoto', pidKey: 'floorLeaderPersonId', name: () => p.floorLeaderName || '' });
+                    out.push({ key: `pf:${p.id}`, kind: 'floor', group: i18n('sim.people.6'), partyId: p.id, label: i18n('sim.people.8', { name: p.name, house: multi ? ` (${chName('house')})` : '' }), obj: p, nameKey: 'floorLeaderName', photoKey: 'floorLeaderPhoto', pidKey: 'floorLeaderPersonId', name: () => p.floorLeaderName || '' });
                 } else {
                     p.floorLeaders = p.floorLeaders || {};
                     const f = p.floorLeaders[ch] = p.floorLeaders[ch] || { name: '', photo: '' };
-                    out.push({ key: `pf:${p.id}:${ch}`, kind: 'floor', group: '당직', partyId: p.id, label: `${p.name} 원내대표 (${chName(ch)})`, obj: f, nameKey: 'name', photoKey: 'photo', pidKey: 'personId', name: () => f.name || '' });
+                    out.push({ key: `pf:${p.id}:${ch}`, kind: 'floor', group: i18n('sim.people.6'), partyId: p.id, label: i18n('sim.people.9', { name: p.name, ch: chName(ch) }), obj: f, nameKey: 'name', photoKey: 'photo', pidKey: 'personId', name: () => f.name || '' });
                 }
             });
         });
         const role = k => { try { return effRoleLabel(k); } catch (e) { return k; } };
-        out.push({ key: 'c:president', kind: 'cabinet', group: '내각', label: role('president'), obj: president, name: () => president.name || '' });
-        out.push({ key: 'c:pm', kind: 'cabinet', group: '내각', label: role('pm'), obj: pm, name: () => pm.name || '' });
-        if (typeof collectiveChair !== 'undefined' && collectiveChair) out.push({ key: 'c:chair', kind: 'cabinet', group: '내각', label: '집단지도체제 의장', obj: collectiveChair, name: () => collectiveChair.name || '' });
-        (deputyPms || []).forEach(d => out.push({ key: `c:dpm:${d.id}`, kind: 'cabinet', group: '내각', label: d.position || '부총리', obj: d, name: () => d.name || '' }));
-        (cabinetMembers || []).forEach(c => out.push({ key: `c:cm:${c.id}`, kind: 'cabinet', group: '내각', label: c.position || '내각 구성원', obj: c, name: () => c.name || '' }));
+        out.push({ key: 'c:president', kind: 'cabinet', group: i18n('sim.contentSystem.9'), label: role('president'), obj: president, name: () => president.name || '' });
+        out.push({ key: 'c:pm', kind: 'cabinet', group: i18n('sim.contentSystem.9'), label: role('pm'), obj: pm, name: () => pm.name || '' });
+        if (typeof collectiveChair !== 'undefined' && collectiveChair) out.push({ key: 'c:chair', kind: 'cabinet', group: i18n('sim.contentSystem.9'), label: i18n('sim.people.10'), obj: collectiveChair, name: () => collectiveChair.name || '' });
+        (deputyPms || []).forEach(d => out.push({ key: `c:dpm:${d.id}`, kind: 'cabinet', group: i18n('sim.contentSystem.9'), label: d.position || i18n('sim.contentSystem.11'), obj: d, name: () => d.name || '' }));
+        (cabinetMembers || []).forEach(c => out.push({ key: `c:cm:${c.id}`, kind: 'cabinet', group: i18n('sim.contentSystem.9'), label: c.position || i18n('sim.mainContentCabinet.4'), obj: c, name: () => c.name || '' }));
         // 의장 · 부의장 (원마다)
         if (typeof chamberLeaders !== 'undefined' && chamberLeaders) chs().forEach(ch => {
             const L = chamberLeaders[ch];
             if (!L) return;
-            if (L.speaker) out.push({ key: `sp:${ch}`, kind: 'speaker', group: '의장단', label: `${chName(ch)} 의장`, obj: L.speaker, name: () => L.speaker.name || '' });
+            if (L.speaker) out.push({ key: `sp:${ch}`, kind: 'speaker', group: i18n('sim.contentAssembly.2'), label: i18n('sim.people.11', { ch: chName(ch) }), obj: L.speaker, name: () => L.speaker.name || '' });
             const deps = L.deputies || [];
-            deps.forEach((d, i) => out.push({ key: `dp:${ch}:${d.id}`, kind: 'speaker', group: '의장단', label: `${chName(ch)} 부의장${deps.length > 1 ? i + 1 : ''}`, obj: d, name: () => d.name || '' }));
+            deps.forEach((d, i) => out.push({ key: `dp:${ch}:${d.id}`, kind: 'speaker', group: i18n('sim.contentAssembly.2'), label: i18n('sim.people.12', { ch: chName(ch), deps: deps.length > 1 ? i + 1 : '' }), obj: d, name: () => d.name || '' }));
         });
         // 파벌 대표
-        parties.forEach(p => (p.factions || []).forEach(f => out.push({ key: `fl:${p.id}:${f.id}`, kind: 'leader', group: '당직', partyId: p.id, label: `${p.name} · ${f.name || '파벌'} 대표`, obj: f, nameKey: 'leaderName', photoKey: 'leaderPhoto', pidKey: 'leaderPersonId', name: () => f.leaderName || '' })));
+        parties.forEach(p => (p.factions || []).forEach(f => out.push({ key: `fl:${p.id}:${f.id}`, kind: 'leader', group: i18n('sim.people.6'), partyId: p.id, label: i18n('sim.people.14', { name: p.name, name2: f.name || i18n('sim.people.13') }), obj: f, nameKey: 'leaderName', photoKey: 'leaderPhoto', pidKey: 'leaderPersonId', name: () => f.leaderName || '' })));
         // 현직 지방 단체장 (선거 › 지방선거 — js/popvote.js)
         if (window.PopVote && typeof PopVote.peopleSeats === 'function') {
-            try { PopVote.peopleSeats().forEach(h => out.push({ key: `lh:${h.key}`, kind: 'local', group: '지방 단체장', partyId: h.partyId, label: h.label, obj: h.obj, name: () => h.obj.name || '' })); } catch (e) { /* 지방선거 준비 전 */ }
+            try { PopVote.peopleSeats().forEach(h => out.push({ key: `lh:${h.key}`, kind: 'local', group: i18n('sim.people.15'), partyId: h.partyId, label: h.label, obj: h.obj, name: () => h.obj.name || '' })); } catch (e) { /* 지방선거 준비 전 */ }
         }
         // 다른 화면이 더하는 자리 (미리보기의 왕실 등): window.HemiPeopleSeats = [{ seats: () => [{ key, group, label, obj, … }], refresh }]
         (window.HemiPeopleSeats || []).forEach(src => { try { (src.seats() || []).forEach(x => out.push({ kind: 'extra', name: () => x.obj[x.nameKey || 'name'] || '', ...x })); } catch (e) { /* 그 화면 준비 전 */ } });
@@ -194,7 +194,7 @@
         const prev = pidOf(s) && pidOf(s) !== personId ? personById(pidOf(s)) : null;
         seatPerson(s, person);
         rerender(); render();
-        if (prev) showCustomAlert(`${s.label} 자리에 있던 ${prev.name || '(이름 없음)'}은(는) 자리에서 물러났습니다 (사람 탭에는 그대로 남아요).`);
+        if (prev) showCustomAlert(i18n('sim.people.16', { label: s.label, name: prev.name || i18n('sim.core.7') }));
     }
     function unassign(seatKey) {
         const s = seats().find(x => x.key === seatKey);
@@ -258,7 +258,7 @@
             const bases = Array.from(new Set((vacantKeys || []).map(k => districtBaseKey(chamber, k))));
             const r = await origBy.apply(this, arguments);
             const x = placeAfterElection(chamber, [], bases);
-            if (x.elected.length || x.lost.length) S.lastElection = { date: formatNationDate(), chamber: chName(chamber) + ' 보궐선거', ...x };
+            if (x.elected.length || x.lost.length) S.lastElection = { date: formatNationDate(), chamber: chName(chamber) + (" " + i18n('sim.people.17')), ...x };
             rerender(); refresh();
             return r;
         };
@@ -282,7 +282,7 @@
             write(s, p); linked++;
         });
         rerender(); render();
-        showCustomAlert(made || linked ? `인물 ${made}명을 새로 만들고, 자리 ${linked}곳을 사람 탭의 인물과 연결했습니다.` : '이름이 적힌 자리가 없습니다 — 의원 · 당수 · 의장 · 내각 같은 자리에 이름을 적거나, 여기서 사람을 직접 추가하세요.');
+        showCustomAlert(made || linked ? i18n('sim.people.18', { made, linked }) : i18n('sim.people.19'));
     }
 
     // ---- 탭: 국가 › 사람 ----
@@ -292,7 +292,7 @@
         const bar = nation && nation.querySelector(':scope > .sub-tab-container');
         if (!bar) return;
         const settingsBtn = document.getElementById('subTabNationSettings');
-        bar.insertBefore(el(`<button class="sub-tab-btn" onclick="switchSubTab('nation','people')" id="subTabPeople">사람</button>`), settingsBtn);
+        bar.insertBefore(el(`<button class="sub-tab-btn" onclick="switchSubTab('nation','people')" id="subTabPeople">${esc(i18n('sim.people.20'))}</button>`), settingsBtn);
         nation.appendChild(el(`<div id="contentPeople" class="sub-tab-content"></div>`));
     })();
     const origSwitch = window.switchSubTab;
@@ -303,7 +303,7 @@
     };
 
     function ideologyOptions(cur) {
-        const opts = ['<option value="">— 이념 없음 —</option>'];
+        const opts = [`<option value="">${esc(i18n('sim.people.21'))}</option>`];
         (ideologies || []).forEach(i => {
             opts.push(`<option value="${i.id}" ${sameId(i.id, cur) ? 'selected' : ''}>${esc(i.name)}</option>`);
             (i.subs || []).forEach(sb => opts.push(`<option value="${sb.id}" ${sameId(sb.id, cur) ? 'selected' : ''}>　└ ${esc(sb.name)}</option>`));
@@ -317,13 +317,13 @@
             if (holder && holder.id === person.id) return;
             const now = holder ? holder.name : s.name();
             if (!groups.has(s.group)) groups.set(s.group, []);
-            groups.get(s.group).push(`<option value="${esc(s.key)}">${esc(s.label)}${now ? ` — 지금: ${esc(now)}` : ''}</option>`);
+            groups.get(s.group).push(`<option value="${esc(s.key)}">${esc(s.label)}${now ? (" " + i18n('sim.people.22', { now: esc(now) })) : ''}</option>`);
         });
-        return '<option value="">＋ 자리 배정…</option>' + [...groups.entries()].map(([g, o]) => `<optgroup label="${esc(g)}">${o.join('')}</optgroup>`).join('')
-            + '<optgroup label="내각"><option value="__newcm">새 내각 구성원 자리로 추가</option></optgroup>';
+        return `<option value="">${esc(i18n('sim.people.23'))}</option>` + [...groups.entries()].map(([g, o]) => `<optgroup label="${esc(g)}">${o.join('')}</optgroup>`).join('')
+            + `<optgroup label="${esc(i18n('sim.people.grpCabinet'))}"><option value="__newcm">${esc(i18n('sim.people.24'))}</option></optgroup>`;
     }
     function candOptions() {
-        const out = ['<option value="">＋ 지역구 후보로…</option>'];
+        const out = [`<option value="">${esc(i18n('sim.people.25'))}</option>`];
         chs().forEach(ch => {
             const keys = typeof districtSortedKeys === 'function' ? districtSortedKeys(ch) : [];
             if (!keys.length) return;
@@ -358,24 +358,24 @@
         if (openAt >= ui.shown) ui.shown = openAt + 1; // 펼친 카드는 늘 보이게
         const shown = list.slice(0, ui.shown);
         box.innerHTML = `
-            <div class="people-intro">인물을 미리 만들어 두고 의석 · 당직 · 내각 자리에 배정합니다. 이름 · 사진을 여기서 고치면 배정된 모든 자리에 반영되고, 선거 · 당적 변경 · 궐석으로 자리가 사라져도 인물은 남아요.</div>
+            <div class="people-intro">${esc(i18n('sim.people.28'))}</div>
             <div class="people-bar">
-                <button type="button" class="people-btn people-primary" data-act="add">＋ 사람 추가</button>
-                <button type="button" class="people-btn" data-act="import" title="의원 · 당수 · 원내대표 · 파벌 대표 · 의장단 · 대통령(국왕) · 내각 · 지방 단체장 등 이름이 적힌 모든 자리에서 인물을 만들고 연결 (같은 이름은 한 사람)">모든 자리에서 가져오기</button>
-                <input type="text" class="people-search" data-ui="q" placeholder="이름 검색" value="${esc(ui.q)}">
+                <button type="button" class="people-btn people-primary" data-act="add">${esc(i18n('sim.people.29'))}</button>
+                <button type="button" class="people-btn" data-act="import" title="${esc(i18n('sim.people.26'))}">${esc(i18n('sim.people.30'))}</button>
+                <input type="text" class="people-search" data-ui="q" placeholder="${esc(i18n('sim.people.27'))}" value="${esc(ui.q)}">
             </div>
             ${popSummaryHtml()}
-            <div class="system-radio-group people-filter">${[['all', '전체'], ['seated', '자리 있음'], ['none', '자리 없음'], ['cand', '지역구 후보']].map(([k, t]) => `<button type="button" class="system-radio-btn ${ui.filter === k ? 'active' : ''}" data-filter="${k}">${t} <span class="people-n">${counts[k]}</span></button>`).join('')}</div>
-            ${le ? `<div class="people-result"><b>지난 선거 (${esc(le.chamber)}${le.date ? ` · ${esc(le.date)}` : ''})</b>
-                ${le.elected.length ? `<div>✔ 당선 · 배정: ${le.elected.map(x => `${esc((personById(x.personId) || {}).name || '?')} <span class="people-dim">(${esc(x.place)})</span>`).join(', ')}</div>` : ''}
-                ${le.lost.length ? `<div>✘ 낙선: ${le.lost.map(x => `${esc((personById(x.personId) || {}).name || '?')} <span class="people-dim">(${esc(x.place)})</span>`).join(', ')} — 사람 탭에 남아 다음 선거에 다시 나갈 수 있어요</div>` : ''}
-                <button type="button" class="people-x" data-act="clearres" title="닫기">✕</button></div>` : ''}
-            <div id="peopleList" class="people-list">${list.length ? shown.map(p => card(p, posMap.get(p.id) || [])).join('') + moreBtn(shown.length, list.length) : `<div class="people-empty">${S.people.length ? '조건에 맞는 사람이 없습니다.' : '아직 사람이 없습니다. "＋ 사람 추가"로 만들거나, "모든 자리에서 가져오기"로 지금 자리에 적힌 이름을 인물로 옮겨 보세요.'}</div>`}</div>`;
+            <div class="system-radio-group people-filter">${[['all', esc(i18n('sim.contentVote.21'))], ['seated', esc(i18n('sim.people.31'))], ['none', esc(i18n('sim.people.32'))], ['cand', esc(i18n('sim.people.33'))]].map(([k, t]) => `<button type="button" class="system-radio-btn ${ui.filter === k ? 'active' : ''}" data-filter="${k}">${t} <span class="people-n">${counts[k]}</span></button>`).join('')}</div>
+            ${le ? `<div class="people-result"><b>${esc(i18n('sim.people.34'))}${esc(le.chamber)}${le.date ? ` · ${esc(le.date)}` : ''})</b>
+                ${le.elected.length ? `<div>${esc(i18n('sim.people.35'))} ${le.elected.map(x => `${esc((personById(x.personId) || {}).name || '?')} <span class="people-dim">(${esc(x.place)})</span>`).join(', ')}</div>` : ''}
+                ${le.lost.length ? `<div>${esc(i18n('sim.people.36'))} ${le.lost.map(x => `${esc((personById(x.personId) || {}).name || '?')} <span class="people-dim">(${esc(x.place)})</span>`).join(', ')} ${esc(i18n('sim.people.37'))}</div>` : ''}
+                <button type="button" class="people-x" data-act="clearres" title="${esc(i18n('sim.main.2'))}">✕</button></div>` : ''}
+            <div id="peopleList" class="people-list">${list.length ? shown.map(p => card(p, posMap.get(p.id) || [])).join('') + moreBtn(shown.length, list.length) : `<div class="people-empty">${S.people.length ? esc(i18n('sim.people.38')) : esc(i18n('sim.people.39'))}</div>`}</div>`;
         bind(box);
         bindMore(box, list, posMap);
         box.querySelector('[data-act="migrants"]')?.addEventListener('click', () => { switchSubTab('vote', 'elecSettings'); setTimeout(() => document.getElementById('peopleMigrantCard')?.scrollIntoView({ block: 'center' }), 50); });
     }
-    const moreBtn = (n, total) => n < total ? `<button type="button" class="member-list-more people-list-more">${n} / ${total}명 표시 중 — 더 보기</button>` : '';
+    const moreBtn = (n, total) => n < total ? `<button type="button" class="member-list-more people-list-more">${esc(i18n('sim.people.41', { to: n, list: total }))}</button>` : '';
     // "더 보기" — 버튼을 누르거나 목록 끝이 보이면 다음 묶음을 덧붙인다 (이미 그린 카드는 그대로)
     function bindMore(box, list, posMap) {
         const btn = box.querySelector('.people-list-more');
@@ -392,7 +392,7 @@
             added.forEach(bindCard);
             ui.shown = to;
             if (to >= list.length) { btn.remove(); if (io) io.disconnect(); }
-            else btn.textContent = `${to} / ${list.length}명 표시 중 — 더 보기`;
+            else btn.textContent = i18n('sim.people.41', { to, list: list.length });
         };
         btn.onclick = more;
         if (typeof IntersectionObserver === 'function') {
@@ -408,26 +408,26 @@
         const open = ui.openId === p.id;
         return `<div class="people-card ${open ? 'open' : ''}" data-id="${esc(p.id)}" style="--pc:${esc(color)}">
             <div class="people-head">
-                <span class="drag-handle people-handle" title="끌어서 순서 바꾸기">⋮⋮</span>
-                <label class="leader-photo-box people-photo" title="사진">${p.photo ? `<img src="${p.photo}" alt="">` : '<div class="photo-ph">👤</div>'}<input type="file" accept="image/*" data-f="photo"></label>
+                <span class="drag-handle people-handle" title="${esc(i18n('sim.people.42'))}">⋮⋮</span>
+                <label class="leader-photo-box people-photo" title="${esc(i18n('sim.coup.74'))}">${p.photo ? `<img src="${p.photo}" alt="">` : '<div class="photo-ph">👤</div>'}<input type="file" accept="image/*" data-f="photo"></label>
                 <div class="people-main">
-                    <input type="text" class="people-name" data-f="name" value="${esc(p.name)}" placeholder="이름">
-                    <div class="people-sub"><i class="people-dot"></i>${esc(party ? party.name : '무소속 · 정당 없음')}${p.ideologyId != null && ideologyName(+p.ideologyId) ? ` · ${esc(ideologyName(+p.ideologyId))}` : ''}</div>
-                    <div class="people-chips">${pos.map(s => `<span class="people-chip">${KIND_ICON[s.kind] || '•'} ${esc(s.kind === 'district' || s.kind === 'list' || s.kind === 'independent' ? `${s.group} · ${s.label}` : s.label)}<button type="button" data-unassign="${esc(s.key)}" title="자리에서 빼기 (인물은 남음)">×</button></span>`).join('')}
-                        ${cands.map(c => `<span class="people-chip people-cand">🎯 ${esc(placeName(c.ch, c.key))} 후보<button type="button" data-uncand="${esc(c.ch)}|${esc(c.key)}" title="후보 취소">×</button></span>`).join('')}
-                        ${!pos.length && !cands.length ? '<span class="people-none">자리 없음</span>' : ''}</div>
+                    <input type="text" class="people-name" data-f="name" value="${esc(p.name)}" placeholder="${esc(i18n('sim.contentDate.11'))}">
+                    <div class="people-sub"><i class="people-dot"></i>${esc(party ? party.name : esc(i18n('sim.people.43')))}${p.ideologyId != null && ideologyName(+p.ideologyId) ? ` · ${esc(ideologyName(+p.ideologyId))}` : ''}</div>
+                    <div class="people-chips">${pos.map(s => `<span class="people-chip">${KIND_ICON[s.kind] || '•'} ${esc(s.kind === 'district' || s.kind === 'list' || s.kind === 'independent' ? `${s.group} · ${s.label}` : s.label)}<button type="button" data-unassign="${esc(s.key)}" title="${esc(i18n('sim.people.44'))}">×</button></span>`).join('')}
+                        ${cands.map(c => `<span class="people-chip people-cand">🎯 ${esc(placeName(c.ch, c.key))} ${esc(i18n('sim.mainContentVote.6'))}<button type="button" data-uncand="${esc(c.ch)}|${esc(c.key)}" title="${esc(i18n('sim.people.45'))}">×</button></span>`).join('')}
+                        ${!pos.length && !cands.length ? `<span class="people-none">${esc(i18n('sim.people.32'))}</span>` : ''}</div>
                 </div>
-                <button type="button" class="people-more" data-act="toggle" title="자세히">${open ? '▴' : '▾'}</button>
+                <button type="button" class="people-more" data-act="toggle" title="${esc(i18n('sim.people.46'))}">${open ? '▴' : '▾'}</button>
             </div>
             ${open ? `<div class="people-body">
                 <div class="people-grid">
-                    <label>이념<select data-f="ideologyId">${ideologyOptions(p.ideologyId)}</select></label>
-                    <label>소속 정당<select data-f="partyId"><option value="">— 정당 없음 —</option>${parties.filter(x => x.ideologyId !== IND).map(x => `<option value="${esc(x.id)}" ${sameId(x.id, p.partyId) ? 'selected' : ''}>${esc(x.name)}</option>`).join('')}</select></label>
-                    <label>파벌<select data-f="factionId" ${facs.length ? '' : 'disabled'}><option value="">— 파벌 없음 —</option>${facs.map(f => `<option value="${esc(f.id)}" ${sameId(f.id, p.factionId) ? 'selected' : ''}>${esc(f.name)}</option>`).join('')}</select></label>
+                    <label>${esc(i18n('sim.main.26'))}<select data-f="ideologyId">${ideologyOptions(p.ideologyId)}</select></label>
+                    <label>${esc(i18n('sim.people.47'))}<select data-f="partyId"><option value="">${esc(i18n('sim.people.48'))}</option>${parties.filter(x => x.ideologyId !== IND).map(x => `<option value="${esc(x.id)}" ${sameId(x.id, p.partyId) ? 'selected' : ''}>${esc(x.name)}</option>`).join('')}</select></label>
+                    <label>${esc(i18n('sim.people.13'))}<select data-f="factionId" ${facs.length ? '' : 'disabled'}><option value="">${esc(i18n('sim.people.49'))}</option>${facs.map(f => `<option value="${esc(f.id)}" ${sameId(f.id, p.factionId) ? 'selected' : ''}>${esc(f.name)}</option>`).join('')}</select></label>
                 </div>
                 <div class="people-stack"><select data-act="assign">${seatOptions(p)}</select><select data-act="cand">${candOptions()}</select></div>
-                <textarea data-f="bio" rows="2" placeholder="메모 · 약력">${esc(p.bio || '')}</textarea>
-                <div class="people-row people-end"><button type="button" class="people-btn people-danger" data-act="del">사람 지우기</button></div>
+                <textarea data-f="bio" rows="2" placeholder="${esc(i18n('sim.people.50'))}">${esc(p.bio || '')}</textarea>
+                <div class="people-row people-end"><button type="button" class="people-btn people-danger" data-act="del">${esc(i18n('sim.people.51'))}</button></div>
             </div>` : ''}
         </div>`;
     }
@@ -462,7 +462,7 @@
             const as = q1('[data-act="assign"]');
             if (as) as.onchange = () => {
                 if (as.value === '__newcm') {
-                    const cm = { id: Date.now(), name: '', position: '장관', photo: '', partyId: null, linkedSeat: null };
+                    const cm = { id: Date.now(), name: '', position: i18n('sim.core.1'), photo: '', partyId: null, linkedSeat: null };
                     cabinetMembers.push(cm);
                     assign(p.id, `c:cm:${cm.id}`);
                 } else if (as.value) assign(p.id, as.value);
@@ -473,13 +473,13 @@
                 const [ch, key] = cs.value.split('|');
                 const list = candOf(ch)[key] || (candOf(ch)[key] = []);
                 if (!list.includes(p.id)) list.push(p.id);
-                if (!p.partyId) showCustomAlert('정당이 없는 후보는 당선돼도 자리에 자동으로 배정되지 않습니다 — 소속 정당을 정해 두세요 (무소속 당선은 자리 배정으로 직접).');
+                if (!p.partyId) showCustomAlert(i18n('sim.people.52'));
                 render();
             };
             c.querySelectorAll('[data-unassign]').forEach(b => { b.onclick = () => unassign(b.dataset.unassign); });
             c.querySelectorAll('[data-uncand]').forEach(b => { b.onclick = () => { const [ch, key] = b.dataset.uncand.split('|'); candOf(ch)[key] = (candOf(ch)[key] || []).filter(x => x !== p.id); if (!candOf(ch)[key].length) delete candOf(ch)[key]; render(); }; });
             const del = q1('[data-act="del"]');
-            if (del) del.onclick = () => showCustomConfirm(`${p.name || '(이름 없음)'}을(를) 지울까요? 배정된 자리에서도 빠집니다 (자리는 남고 이름 · 사진만 비워짐).`, () => {
+            if (del) del.onclick = () => showCustomConfirm(i18n('sim.people.53', { name: p.name || i18n('sim.core.7') }), () => {
                 positionsOf(p.id).forEach(s => write(s, null));
                 Object.keys(S.candidates).forEach(ch => Object.keys(S.candidates[ch]).forEach(k => { S.candidates[ch][k] = S.candidates[ch][k].filter(x => x !== p.id); if (!S.candidates[ch][k].length) delete S.candidates[ch][k]; }));
                 S.people = S.people.filter(x => x !== p);
@@ -494,7 +494,7 @@
     // =====================================================================
     // ---- 시민 · 이민자 — 지역구 인구 = 시민권자 + 이민자, 선거마다 이민자 투표권 ----
     // =====================================================================
-    const VOTE_KINDS = [['presidential', '대선 · 총리 직선'], ['general', '총선'], ['local', '지방선거'], ['referendum', '국민투표']];
+    const VOTE_KINDS = [['presidential', i18n('sim.people.54')], ['general', i18n('sim.mainContentVote.2')], ['local', i18n('sim.mainContentVote.3')], ['referendum', i18n('sim.mainContentVote.4')]];
     const fmtN = n => Math.round(n).toLocaleString();
     const excludedKey = k => (typeof window.isDistrictUnrecovered === 'function' && window.isDistrictUnrecovered(k))
         || (typeof window.isDistrictVassal === 'function' && window.isDistrictVassal(k));
@@ -650,7 +650,7 @@
     const jsArg = v => JSON.stringify(String(v)).replace(/"/g, '&quot;');
     const citTitle = (ch, k) => {
         const pop = popRaw(ch, k);
-        return pop == null ? '시민권자 수 — 인구를 먼저 적으세요' : `시민권자 수 (비우면 인구 전체) · 이민자 ${fmtN(migrantsOf(ch, k))}명`;
+        return pop == null ? i18n('sim.people.55') : i18n('sim.people.56', { ch: fmtN(migrantsOf(ch, k)) });
     };
     const origList = window.renderDistrictListPanel;
     if (typeof origList === 'function') {
@@ -662,9 +662,9 @@
                 const m = /districtSetPopulation\('([^']*)','([^']*)'/.exec(inp.getAttribute('onchange') || '');
                 if (!m || inp.previousElementSibling?.classList.contains('people-cit-sep')) return;
                 const [, ch, key] = m;
-                inp.placeholder = '인구';
+                inp.placeholder = i18n('sim.district.29');
                 const c = document.createElement('input');
-                c.type = 'number'; c.min = '0'; c.step = '1'; c.className = 'people-cit'; c.placeholder = '시민';
+                c.type = 'number'; c.min = '0'; c.step = '1'; c.className = 'people-cit'; c.placeholder = i18n('sim.people.57');
                 c.value = citRaw(ch, key) ?? '';
                 c.title = citTitle(ch, key);
                 c.style.cssText = inp.style.cssText.replace(/width:\s*\d+px/, 'width:74px');
@@ -679,7 +679,7 @@
             const ch = (panel.querySelector('.drag-card-district input[type="number"]:not(.people-cit)')?.getAttribute('onchange') || '').match(/districtSetPopulation\('([^']*)'/)?.[1];
             if (sum && ch && /^총 인구/.test(sum.textContent)) {
                 const t = totals(ch);
-                sum.textContent = `시민 ${fmtN(t.cit)} / 인구 ${fmtN(t.pop)} · 이민자 ${fmtN(t.mig)}`;
+                sum.textContent = i18n('sim.people.58', { cit: fmtN(t.cit), pop: fmtN(t.pop), mig: fmtN(t.mig) });
             }
             return r;
         };
@@ -690,10 +690,10 @@
             const html = origPopHtml.apply(this, arguments);
             const pop = popRaw(ch, key);
             return html + `<div class="people-cit-row" style="${extraStyle || ''}">
-                    <span>시민</span>
-                    <input type="number" min="0" step="1" placeholder="${pop == null ? '인구를 먼저 적으세요' : `비우면 인구 전체 (${fmtN(pop)})`}" value="${citRaw(ch, key) ?? ''}"
+                    <span>${esc(i18n('sim.people.57'))}</span>
+                    <input type="number" min="0" step="1" placeholder="${pop == null ? esc(i18n('sim.people.59')) : esc(i18n('sim.people.60', { pop: fmtN(pop) }))}" value="${citRaw(ch, key) ?? ''}"
                         onchange="peopleSetCitizens(${jsArg(ch)},${jsArg(key)},this.value)">
-                    <span class="people-dim">${pop == null ? '' : `이민자 ${fmtN(migrantsOf(ch, key))}명`}</span>
+                    <span class="people-dim">${pop == null ? '' : esc(i18n('sim.people.61', { key: fmtN(migrantsOf(ch, key)) }))}</span>
                 </div>`;
         };
     }
@@ -704,9 +704,9 @@
         if (!t.pop) return '';
         const on = VOTE_KINDS.filter(([k]) => migrantsVote(k)).map(([, n]) => n);
         return `<div class="people-pop">
-                <div><b>시민 ${fmtN(t.cit)}</b> / 인구 ${fmtN(t.pop)} · 이민자 ${fmtN(t.mig)} <span class="people-dim">(${t.pop ? (t.mig / t.pop * 100).toFixed(1) : 0}%)</span></div>
-                <div class="people-dim">이민자 투표권: ${on.length ? on.join(' · ') : '없음'} — 지역구별 시민 수는 국가 › 지역구 지도</div>
-                <button type="button" class="people-btn" data-act="migrants">선거 › 선거 제도에서 설정</button>
+                <div><b>${esc(i18n('sim.people.57'))} ${fmtN(t.cit)}</b> ${esc(i18n('sim.people.62'))} ${fmtN(t.pop)} ${esc(i18n('sim.people.63'))} ${fmtN(t.mig)} <span class="people-dim">(${t.pop ? (t.mig / t.pop * 100).toFixed(1) : 0}%)</span></div>
+                <div class="people-dim">${esc(i18n('sim.people.64'))} ${on.length ? on.join(' · ') : esc(i18n('sim.contentVote.16'))} ${esc(i18n('sim.people.65'))}</div>
+                <button type="button" class="people-btn" data-act="migrants">${esc(i18n('sim.people.66'))}</button>
             </div>`;
     }
 
@@ -751,8 +751,8 @@
         b.style.display = '';
         b.className = 'opinion-layer-banner' + (S.opinion.split ? '' : ' synced');
         b.innerHTML = S.opinion.split
-            ? '<b>이민자 성향</b> — 여기서 바꾼 값은 이민자에게만 적용됩니다 (시민은 시민 성향 · 시민 지지율).'
-            : '<b>시민과 동기화됨</b> — 여기서 바꾸면 시민 성향도 함께 바뀝니다. 따로 정하려면 여론 › 종합에서 "시민 / 이민자 성향 따로 정하기"를 켜세요.';
+            ? `<b>${esc(i18n('sim.mainContentElection.4'))}</b> ${esc(i18n('sim.people.67'))}`
+            : `<b>${esc(i18n('sim.people.68'))}</b> ${esc(i18n('sim.people.69'))}`;
     };
     // 여론 밖으로 나가면 시민 성향으로 되돌린다 (선거 · 지도 등 다른 화면은 늘 시민 성향을 본다)
     const origMain = window.switchMainTab;
@@ -780,28 +780,28 @@
             const { cit, mig } = totals(ch);
             const cs = elecStore[ch] || {}, ms = split && M ? (M.prob[ch] || {}) : cs;
             const list = parties.filter(p => p.status !== 'banned' && p.status !== 'dissolved' && (Number(cs[p.id]?.prob) > 0 || Number(ms[p.id]?.prob) > 0));
-            if (!list.length) return `<div class="op-ch">${esc(chName(ch))}</div><div class="people-dim people-small">지지율이 없습니다 — 시민 지지율에서 정하세요.</div>`;
+            if (!list.length) return `<div class="op-ch">${esc(chName(ch))}</div><div class="people-dim people-small">${esc(i18n('sim.people.70'))}</div>`;
             const rows = list.map(p => {
                 const c = Number(cs[p.id]?.prob) || 0, m = Number(ms[p.id]?.prob) || 0;
                 const all = cit + mig > 0 ? (cit * c + mig * m) / (cit + mig) : c;
                 return `<tr><td><span class="people-dot" style="--pc:${esc(p.color)}"></span>${esc(p.name)}</td><td>${fmtP(c)}%</td><td class="${split && m !== c ? 'op-diff' : 'op-same'}">${fmtP(m)}%</td><td>${fmtP(all)}%</td></tr>`;
             }).join('');
             return `<div class="op-ch">${esc(chName(ch))}</div>
-                <table class="op-table"><thead><tr><th>정당</th><th>시민</th><th>이민자</th><th>합산</th></tr></thead><tbody>${rows}</tbody></table>`;
+                <table class="op-table"><thead><tr><th>${esc(i18n('sim.mainContentSetup.2'))}</th><th>${esc(i18n('sim.people.57'))}</th><th>${esc(i18n('sim.people.71'))}</th><th>${esc(i18n('sim.people.72'))}</th></tr></thead><tbody>${rows}</tbody></table>`;
         }).join('');
         box.innerHTML = `
             <div class="op-card">
-                <label class="op-toggle"><input type="checkbox" data-op="split" ${split ? 'checked' : ''}> 시민 / 이민자 성향 따로 정하기</label>
+                <label class="op-toggle"><input type="checkbox" data-op="split" ${split ? 'checked' : ''}> ${esc(i18n('sim.people.73'))}</label>
                 <div class="people-dim people-small">${split
-                    ? '이민자 성향 · 이민자 지지율에서 이민자 성향을 따로 정합니다. 이민자가 투표하는 선거에서는 지역구마다 시민 · 이민자 수만큼 섞어 개표해요 (총선 비례 · 대선은 전국 수로).'
-                    : '꺼져 있으면 이민자 성향은 시민 성향과, 이민자 지지율은 시민 지지율과 같은 값으로 묶이고 이민자도 시민과 같은 성향으로 투표합니다. 시민 · 인구 수는 따로예요.'}</div>
+                    ? esc(i18n('sim.people.74'))
+                    : esc(i18n('sim.people.75'))}</div>
             </div>
             <div class="op-card">
-                <div>${t.pop ? `<b>시민 ${fmtN(t.cit)}</b> / 인구 ${fmtN(t.pop)} · 이민자 ${fmtN(t.mig)} <span class="people-dim">(${t.pop ? (t.mig / t.pop * 100).toFixed(1) : 0}%)</span>` : '지역구 인구가 없습니다 — 국가 › 지역구 지도에서 지역구마다 "시민 / 인구"를 적으세요.'}</div>
-                <div class="people-dim">이민자 투표권: ${on.length ? on.join(' · ') : '없음'}</div>
-                <div class="people-row"><button type="button" class="people-btn" data-op="territory">국가 › 지역구 지도에서 시민 수</button><button type="button" class="people-btn" data-op="method">선거 › 선거 제도에서 투표권</button></div>
+                <div>${t.pop ? `<b>${esc(i18n('sim.people.57'))} ${fmtN(t.cit)}</b> ${esc(i18n('sim.people.62'))} ${fmtN(t.pop)} ${esc(i18n('sim.people.63'))} ${fmtN(t.mig)} <span class="people-dim">(${t.pop ? (t.mig / t.pop * 100).toFixed(1) : 0}%)</span>` : esc(i18n('sim.people.76'))}</div>
+                <div class="people-dim">${esc(i18n('sim.people.64'))} ${on.length ? on.join(' · ') : esc(i18n('sim.contentVote.16'))}</div>
+                <div class="people-row"><button type="button" class="people-btn" data-op="territory">${esc(i18n('sim.people.77'))}</button><button type="button" class="people-btn" data-op="method">${esc(i18n('sim.people.78'))}</button></div>
             </div>
-            <div class="op-card"><div class="op-title">정당별 지지율</div>${tables}</div>`;
+            <div class="op-card"><div class="op-title">${esc(i18n('sim.people.79'))}</div>${tables}</div>`;
         box.querySelector('[data-op="split"]').onchange = e => setSplit(e.target.checked);
         box.querySelector('[data-op="territory"]').onclick = () => switchSubTab('nation', 'territory');
         box.querySelector('[data-op="method"]').onclick = () => switchSubTab('vote', 'elecSettings');
@@ -817,11 +817,11 @@
         if (!box) { box = document.createElement('div'); box.id = 'peopleMigrantCard'; box.className = 'people-mig'; host.appendChild(box); }
         const t = totals('house');
         box.innerHTML = `
-            <label class="people-mig-title">이민자 투표권 <span class="people-dim">— 시민권자는 모든 선거에서 투표합니다</span></label>
-            <div class="people-dim people-small">${t.pop ? `시민 ${fmtN(t.cit)} / 인구 ${fmtN(t.pop)} · 이민자 ${fmtN(t.mig)}명` : '지역구 인구가 없습니다 — 국가 › 지역구 지도에서 지역구마다 "시민 / 인구"를 적으세요.'}${t.pop && !t.mig ? ' — 아직 이민자가 없습니다 (국가 › 지역구 지도에서 시민 수를 인구보다 적게 적으세요)' : ''}</div>
+            <label class="people-mig-title">${esc(i18n('sim.people.80'))} <span class="people-dim">${esc(i18n('sim.people.81'))}</span></label>
+            <div class="people-dim people-small">${t.pop ? esc(i18n('sim.people.82', { cit: fmtN(t.cit), pop: fmtN(t.pop), mig: fmtN(t.mig) })) : esc(i18n('sim.people.76'))}${t.pop && !t.mig ? esc((" " + i18n('sim.people.83'))) : ''}</div>
             <div class="people-mig-kinds">${VOTE_KINDS.map(([k, n]) => `<label class="people-mig-kind"><input type="checkbox" data-kind="${k}" ${migrantsVote(k) ? 'checked' : ''}> ${n}</label>`).join('')}</div>
-            <div class="people-dim people-small">이민자 성향은 여론 › 종합 · 이민자 성향 · 이민자 지지율에서 정합니다.</div>
-            <button type="button" class="people-btn" data-act="opinion">여론 › 종합으로</button>`;
+            <div class="people-dim people-small">${esc(i18n('sim.people.84'))}</div>
+            <button type="button" class="people-btn" data-act="opinion">${esc(i18n('sim.people.85'))}</button>`;
         box.querySelectorAll('[data-kind]').forEach(c => c.addEventListener('change', () => { S.migrantVote[c.dataset.kind] = c.checked; renderMigrantCard(); render(); }));
         box.querySelector('[data-act="opinion"]').addEventListener('click', () => { switchMainTab('election'); elecSwitchSub('overview'); });
     }

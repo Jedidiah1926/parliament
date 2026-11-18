@@ -9,7 +9,7 @@
         let zoom = clamp(options.zoom || 1), pan = null;
         wrap.dataset.treeViewport = '';
         if (!wrap.hasAttribute('tabindex')) wrap.tabIndex = 0;
-        if (!wrap.hasAttribute('aria-label')) wrap.setAttribute('aria-label', '방향성 트리 · 휠 확대/축소 · 휠 버튼 드래그 이동');
+        if (!wrap.hasAttribute('aria-label')) wrap.setAttribute('aria-label', i18n('sim.treeViewport.1'));
         // Clip the unscaled layout box to the scaled surface, avoiding phantom
         // scroll extents after zooming out. Artwork padding is part of the tree.
         layer.style.position = 'relative'; layer.style.overflow = 'hidden';

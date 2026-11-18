@@ -21,7 +21,7 @@
                     if (canvas) { ok({ img: canvas, url }); return; }
                 } catch (e) { /* 아래 오류로 */ }
                 URL.revokeObjectURL(url);
-                bad(new Error('그림을 읽지 못했습니다 (지원하지 않는 형식이거나 손상된 파일).'));
+                bad(new Error(i18n('map.trace.1')));
             };
             img.src = url;
         });
@@ -306,7 +306,7 @@
                     d += 'M' + sp.map(p => f(p[0]) + ',' + f(p[1])).join('L') + 'Z';
                 }
             }
-            if (d) paths.push(`<path id="지역 ${rank + 1}" d="${d}" fill="${colorOf(kept[n])}" fill-rule="evenodd" stroke="#333" stroke-width="0.6" vector-effect="non-scaling-stroke"/>`);
+            if (d) paths.push(`<path id="${String(i18n('map.trace.regionN', { n: rank + 1 })).replace(/[&<>"]/g, '_')}" d="${d}" fill="${colorOf(kept[n])}" fill-rule="evenodd" stroke="#333" stroke-width="0.6" vector-effect="non-scaling-stroke"/>`);
         });
         return paths;
     }
@@ -316,7 +316,7 @@
         const { img, url } = await loadImage(file);
         try {
             const IW = img.naturalWidth || img.width, IH = img.naturalHeight || img.height;
-            if (!IW || !IH) throw new Error('그림 크기를 알 수 없습니다.');
+            if (!IW || !IH) throw new Error(i18n('map.trace.2'));
             if (o.pixel) return tracePixel(img, IW, IH, o);
             // 작은 그림은 부드럽게 키워서 추적 — 경계가 화소 계단 대신 반 화소 단위로 잡혀 더 정확하고 매끈해진다
             const big = Math.max(IW, IH);
@@ -566,7 +566,7 @@
                         d += 'M' + sp.map(p => f(p[0]) + ',' + f(p[1])).join('L') + 'Z';
                     }
                 }
-                if (d) paths.push(`<path id="지역 ${n + 1}" d="${d}" fill="${hex(...c.color)}" fill-rule="evenodd" stroke="#333" stroke-width="${Math.max(0.5, Math.round(k * 10) / 10)}"/>`);
+                if (d) paths.push(`<path id="${String(i18n('map.trace.regionN', { n: n + 1 })).replace(/[&<>"]/g, '_')}" d="${d}" fill="${hex(...c.color)}" fill-rule="evenodd" stroke="#333" stroke-width="${Math.max(0.5, Math.round(k * 10) / 10)}"/>`);
             });
             const svgText = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${IW} ${IH}" width="${IW}" height="${IH}">${paths.join('')}</svg>`;
             const stats = { comps: comps.length, W, H, small: 0, nocore: 0, thin: 0, droppedPx: 0 };

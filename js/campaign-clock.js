@@ -29,7 +29,7 @@
         if(dateKey(next.day)>99991231)return null;
         return next;
     }
-    function label(clock) {const p=parts(clock.day);return `${p.y}년 ${p.m}월 ${p.d}일`+(clock.mode==='realtime'?` ${String(clock.hour).padStart(2,'0')}:00`:` · 제${clock.turn+1}턴`);}
+    function label(clock) {const p=parts(clock.day);return i18n('sim.campaignClock.1', { y: p.y, m: p.m, v: p.d })+(clock.mode==='realtime'?` ${String(clock.hour).padStart(2,'0')}:00`:(" " + i18n('sim.campaignClock.2', { turn: clock.turn+1 })));}
     const api={SPEED_MS,dayFromDate,dayFromKey,dateKey,parts,config,normalize,advance,label};
     if(typeof module!=='undefined'&&module.exports)module.exports=api;else root.HemiCampaignClock=api;
 })(typeof window==='undefined'?globalThis:window);

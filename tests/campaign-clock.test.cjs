@@ -1,3 +1,4 @@
+require('./fixtures/i18n-node.cjs'); // 모듈의 i18n() — 한국어 팩 글자
 const {test}=require('node:test'),assert=require('node:assert/strict');
 const C=require('../js/campaign-clock.js'),Tools=require('../js/campaign-tools.js');
 test('strict UTC calendar round trips leap days, year 1 and year end',()=>{

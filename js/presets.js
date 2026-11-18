@@ -2,12 +2,11 @@
 // 프리셋은 두 가지 경로로 모인다:
 //   1) 내장 프리셋(BUILTIN) — presets/*.js에 JS로 감싸 두고 <script>로 불러온다.
 //      데스크톱 앱(Electron)은 file://로 열려 fetch로 JSON을 읽을 수 없기 때문.
-//   2) 배포자가 추가한 프리셋 — presets/index.json에 {file, title, description?, date?, tutorial?}로
-//      등록한 presets/<file>(.json). fetch를 쓰므로 웹(http)으로 열었을 때만 보인다 (README 참고).
-//   3) 모드 · 창작마당 프리셋(데스크톱 앱) — 모드 폴더나 구독한 창작마당 아이템에 든 세이브 파일.
+//      (예전의 presets/index.json 목록은 웹(http)에서만 읽혀서, 브라우저 판을 끝내며 없앴다)
+//   2) 모드 · 창작마당 프리셋(데스크톱 앱) — 모드 폴더나 구독한 창작마당 아이템에 든 세이브 파일.
 //      목록은 앱이 넘겨주고(window.hemicycleDesktop.modPresets), 상태는 고를 때 앱에서 읽어 온다 (electron/mods.js 참고)
 // 각 프리셋은 { id, title, description, date(게임 속 시작 날짜), tutorial, comingSoon, langs, ... } 형태로 통일되고, id로 다시 찾아 상태를 불러온다.
-// 언어별 파일 (1.6.0): langs = { en: { script | file | key, title, description } } — 지금 언어의 파일이 있으면 그 파일을,
+// 언어별 파일 (1.6.0): langs = { en: { script | key, title?, description? } } — 내장 프리셋의 이름 · 설명은 presets.* 키(lang/*.js) — 지금 언어의 파일이 있으면 그 파일을,
 // 없으면 기본(한국어) 파일을 그대로 쓴다. 화면 번역(js/lang.js)으로 데이터를 바꿔 끼우는 예전 방식(경로 덮어쓰기)은 없앴다.
 // 내장 프리셋의 언어 파일은 HEMI_PRESET_DATA['<id>@<언어>']에 담는다 (예: presets/tutorial.en.js).
 // 모드 · 창작마당에서 내장 프리셋에 언어 파일을 더할 수도 있다 (electron/mods.js의 presetLangs).
@@ -18,98 +17,79 @@
     const BUILTIN = [
         {
             id: 'builtin:tutorial',
-            title: '서독',
-            description: '제작자: Pilcrow1926',
+            title: i18n('presets.tutorial.title'),
+            description: i18n('presets.by', { author: 'Pilcrow1926' }),
             author: 'Pilcrow1926',
-            date: '1983년 3월 29일',
+            date: i18n('presets.tutorial.date'),
             tutorial: true,
             script: 'presets/tutorial.js',
-            langs: { en: { script: 'presets/tutorial.en.js', title: 'West Germany', description: 'By Pilcrow1926' } },
+            langs: { en: { script: 'presets/tutorial.en.js' } },
         },
         {
             id: 'builtin:japan',
             badge: 'updated', // 목록의 노란 표시 — 'new' 신규! · 'updated' 업데이트!
-            title: '일본국',
-            description: '제작자: sushdjr0106',
-            date: '2026년 2월 9일',
+            title: i18n('presets.japan.title'),
+            description: i18n('presets.by', { author: 'sushdjr0106' }),
+            date: i18n('presets.japan.date'),
             author: 'sushdjr0106',
             script: 'presets/japan.js',
-            langs: { en: { script: 'presets/japan.en.js', title: 'Japan', description: 'By sushdjr0106' } },
+            langs: { en: { script: 'presets/japan.en.js' } },
         },
         {
             id: 'builtin:usa',
-            title: '미합중국',
-            description: '제작자: ttorri',
-            date: '2026년 11월 13일',
+            title: i18n('presets.usa.title'),
+            description: i18n('presets.by', { author: 'ttorri' }),
+            date: i18n('presets.usa.date'),
             author: 'ttorri',
             script: 'presets/usa.js',
-            langs: { en: { script: 'presets/usa.en.js', title: 'United States of America', description: 'By ttorri' } },
+            langs: { en: { script: 'presets/usa.en.js' } },
         },
         {
             id: 'builtin:germany',
-            title: '독일연방공화국',
-            description: '제작자: ttorri',
+            title: i18n('presets.germany.title'),
+            description: i18n('presets.by', { author: 'ttorri' }),
             date: '',
             author: 'ttorri',
             script: 'presets/germany.js',
-            langs: { en: { title: 'Federal Republic of Germany', description: 'By ttorri' } }, // 영어 데이터 파일은 아직 없음 — 한국어 데이터로 열림
+            langs: {}, // 영어 데이터 파일은 아직 없음 — 한국어 데이터로 열림
         },
         {
             id: 'builtin:korea',
             badge: 'updated', // 목록의 노란 표시 — 'new' 신규! · 'updated' 업데이트!
-            title: '대한민국 2026',
-            description: '제작자: 왕조명 & ttorri',
-            date: '2026년 10월 31일',
+            title: i18n('presets.korea.title'),
+            description: i18n('presets.by', { author: '왕조명 & ttorri' }),
+            date: i18n('presets.korea.date'),
             author: '왕조명 & ttorri',
             // 함께 만든 프리셋 — 목록에서 이름에 밑줄, 마우스를 올리면 그 사람이 만든 부분
             credits: [
-                { name: '왕조명', work: ['국가 · 정당 설정', '지역구 지도와 원별 의석 배치', '대통령 · 국무총리 · 내각 · 의장단', '지방자치단체장', '경제 · 국기 · 의회 로고'] },
-                { name: 'ttorri', work: ['이념 체계 (하위 이념 포함)', '원외정당 (노동당 · 정의당 · 자유와혁신)', '지역구 · 비례 · 무소속 의원 이름', '정치인 명단 (인물 탭)과 지역구 후보', '군부 지휘부', '지역구별 정당 지지율 · 무당층'] },
+                { name: '왕조명', work: [i18n('presets.korea.credit.a1'), i18n('presets.korea.credit.a2'), i18n('presets.korea.credit.a3'), i18n('presets.korea.credit.a4'), i18n('presets.korea.credit.a5')] },
+                { name: 'ttorri', work: [i18n('presets.korea.credit.b1'), i18n('presets.korea.credit.b2'), i18n('presets.korea.credit.b3'), i18n('presets.korea.credit.b4'), i18n('presets.korea.credit.b5'), i18n('presets.korea.credit.b6')] },
             ],
             script: 'presets/korea.js',
-            langs: { en: { title: 'Republic of Korea 2026', description: 'By 왕조명 & ttorri',
-                credits: [
-                    { name: '왕조명', work: ['Country and party setup', 'District map and seat layout', 'President, prime minister, cabinet and speakers', 'Local government heads', 'Economy, flag and parliament logos'] },
-                    { name: 'ttorri', work: ['Ideology system (with sub-ideologies)', 'Extra-parliamentary parties (Labor Party, Justice Party, Freedom and Innovation)', 'Names of district, list and independent members', 'Politician roster (People tab) and district candidates', 'Military leadership', 'Party support and undecided voters by district'] },
-                ] } }, // 영어 데이터 파일은 아직 없음 — 한국어 데이터로 열림
+            langs: {}, // 영어 데이터 파일은 아직 없음 — 한국어 데이터로 열림
         },
         {
             id: 'builtin:korea2024',
             badge: 'new', // 목록의 노란 표시 — 'new' 신규! · 'updated' 업데이트!
-            title: '대한민국 2024',
-            description: '제작자: 스노든',
-            date: '2024년 4월 10일',
+            title: i18n('presets.korea2024.title'),
+            description: i18n('presets.by', { author: '스노든' }),
+            date: i18n('presets.korea2024.date'),
             author: '스노든',
             script: 'presets/korea2024.js',
-            langs: { en: { title: 'Republic of Korea 2024', description: 'By 스노든' } }, // 영어 데이터 파일은 아직 없음 — 한국어 데이터로 열림
+            langs: {}, // 영어 데이터 파일은 아직 없음 — 한국어 데이터로 열림
         },
         {
             id: 'builtin:uk',
             badge: 'new', // 목록의 노란 표시 — 'new' 신규! · 'updated' 업데이트!
-            title: '그레이트브리튼 북아일랜드 연합왕국',
-            description: '제작자: ttorri',
-            date: '2026년 10월 26일',
+            title: i18n('presets.uk.title'),
+            description: i18n('presets.by', { author: 'ttorri' }),
+            date: i18n('presets.uk.date'),
             author: 'ttorri',
             script: 'presets/uk.js',
-            langs: { en: { title: 'United Kingdom of Great Britain and Northern Ireland', description: 'By ttorri' } }, // 영어 데이터 파일은 아직 없음 — 한국어 데이터로 열림
+            langs: {}, // 영어 데이터 파일은 아직 없음 — 한국어 데이터로 열림
         },
     ];
-    const INDEX_URL = 'presets/index.json';
     let listCache = null;
-
-    async function fetchIndexPresets() {
-        try {
-            const res = await fetch(INDEX_URL);
-            if (!res.ok) return [];
-            const list = await res.json();
-            return (Array.isArray(list) ? list : [])
-                .filter(p => p && p.file && p.title)
-                .map(p => ({ id: 'file:' + p.file, title: String(p.title), description: p.description ? String(p.description) : '', date: p.date ? String(p.date) : '', tutorial: !!p.tutorial, file: p.file,
-                    langs: p.langs && typeof p.langs === 'object' ? p.langs : {} }));
-        } catch (e) {
-            return []; // file://(데스크톱 앱) 등 fetch를 쓸 수 없는 환경 — 내장 프리셋만 사용
-        }
-    }
 
     function modPresets() {
         const d = window.hemicycleDesktop;
@@ -132,12 +112,12 @@
     // 지금 언어의 파일 정보 (없으면 null)
     function langVariant(preset) {
         const v = preset && preset.langs && preset.langs[currentLang()];
-        return v && (v.script || v.file || v.key) ? v : null;
+        return v && (v.script || v.key) ? v : null;
     }
 
     async function list() {
         if (!listCache) {
-            const all = BUILTIN.map(p => ({ ...p, langs: { ...(p.langs || {}) } })).concat(await fetchIndexPresets(), modPresets());
+            const all = BUILTIN.map(p => ({ ...p, langs: { ...(p.langs || {}) } })).concat(modPresets());
             // 모드 · 창작마당에서 더한 언어 파일 (예: 프랑스어 언어 팩과 함께 올린 서독 튜토리얼 프랑스어 파일)
             const d = window.hemicycleDesktop;
             (d && Array.isArray(d.modPresetLangs) ? d.modPresetLangs : []).forEach(x => {
@@ -179,7 +159,7 @@
         return scriptLoads[src];
     }
 
-    // 파일 하나 읽기 — src: { script, id } | { key } | { file }
+    // 파일 하나 읽기 — src: { script, id } | { key }
     async function readSource(src, dataId) {
         if (src.script) {
             await loadScriptOnce(src.script);
@@ -189,9 +169,7 @@
             if (!window.hemicycleDesktop || !window.hemicycleDesktop.loadModPreset) throw new Error('mod presets need the desktop app');
             return window.hemicycleDesktop.loadModPreset(src.key || src.modKey);
         }
-        const res = await fetch('presets/' + src.file);
-        if (!res.ok) throw new Error('preset fetch failed');
-        return res.json();
+        throw new Error('preset has no data source');
     }
 
     // 프리셋 상태(getAppState()와 같은 형태)를 불러와 복사본으로 돌려준다 — 원본을 건드리지 않게.

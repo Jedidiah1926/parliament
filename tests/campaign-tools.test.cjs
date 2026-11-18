@@ -1,3 +1,4 @@
+require('./fixtures/i18n-node.cjs'); // 모듈의 i18n() — 한국어 팩 글자
 const {test}=require('node:test');
 const assert=require('node:assert/strict');
 const T=require('../js/campaign-tools.js');

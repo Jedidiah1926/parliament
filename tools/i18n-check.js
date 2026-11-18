@@ -9,7 +9,7 @@
 //   - 복수형 글자({ one, other … })에 "other"가 없음
 //   - HTML에 적어 둔 한국어 글자(<span data-i18n="키">글자</span>)가 한국어 팩 글자와 다름
 // 경고
-//   - 한국어 팩에는 있는데 다른 팩에 없는 키 (그 언어에서는 한국어 글자 → 사전 번역으로 보임)
+//   - 한국어 팩에는 있는데 다른 팩에 없는 키 (그 언어에서는 한국어 글자로 보임)
 //   - 어디서도 쓰지 않는 키 (i18n(`prefix.${…}`) · 'prefix.' + 이름처럼 키를 만들어 쓰는 곳은 그 prefix로 시작하는 키를 쓰는 것으로 본다)
 'use strict';
 const fs = require('fs'), path = require('path'), vm = require('vm');
@@ -52,7 +52,7 @@ function main() {
     const used = new Map(); // key → ["file:line", ...]
     const prefixes = new Set();
     const mentioned = new Set(); // 따옴표 안에 적힌 키 이름 — i18n(cond ? 'a.b' : 'a.c')처럼 고르는 경우도 쓰는 것으로 본다
-    const ATTR = /\bdata-i18n(?:-title|-placeholder|-alt|-aria-label)?="([^"$]+)"/g;
+    const ATTR = /\bdata-i18n(?:-title|-placeholder|-alt|-aria-label|-modern-label)?="([^"$]+)"/g;
     const CALL = /(?:\bi18n(?:\.ref)?|\bHemiLang\.(?:k|source))\(\s*(['"])([^'"\n]+)\1/g;
     const DYN = /(?:\bi18n|\bHemiLang\.k)\(\s*`([^`$]*)\$\{/g;
     const INLINE = /<([a-zA-Z][\w-]*)\b([^>]*?)\sdata-i18n="([^"$]+)"([^>]*)>([^<]*)<\/\1>/g;

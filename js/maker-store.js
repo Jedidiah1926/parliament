@@ -2,12 +2,12 @@
 (function () {
     'use strict';
     const types = {
-        map: { db: 'hemicycleMaps', last: 'hemicycleMapLast', editor: 'map.html', name: '맵', list: 'mapSelectList' },
-        campaign: { db: 'hemicycleCampaigns', last: 'hemicycleCampaignLast', editor: 'scenario.html', name: '시나리오', list: 'campaignSelectList' },
-        challenge: { db: 'hemicycleScenarios', last: 'hemicycleScenarioLast', editor: 'challenge.html', name: '챌린지', list: 'challengeSelectList' },
+        map: { db: 'hemicycleMaps', last: 'hemicycleMapLast', editor: 'map.html', name: i18n('maker.makerStore.1'), list: 'mapSelectList' },
+        campaign: { db: 'hemicycleCampaigns', last: 'hemicycleCampaignLast', editor: 'scenario.html', name: i18n('sim.campaign.2'), list: 'campaignSelectList' },
+        challenge: { db: 'hemicycleScenarios', last: 'hemicycleScenarioLast', editor: 'challenge.html', name: i18n('sim.challenge.1'), list: 'challengeSelectList' },
     };
     async function transaction(kind, mode, run) {
-        if (!Object.hasOwn(types, kind)) throw Error('알 수 없는 제작물 종류입니다.');
+        if (!Object.hasOwn(types, kind)) throw Error(i18n('maker.makerStore.2'));
         const db = await new Promise((resolve, reject) => {
             const request = indexedDB.open(types[kind].db, 1);
             request.onupgradeneeded = () => { if (!request.result.objectStoreNames.contains('items')) request.result.createObjectStore('items', { keyPath: 'id' }); };
@@ -19,7 +19,7 @@
                 const tx = db.transaction('items', mode), result = run(tx.objectStore('items'));
                 tx.oncomplete = () => resolve(result.result);
                 tx.onerror = () => reject(tx.error);
-                tx.onabort = () => reject(tx.error || Error('저장 작업이 취소되었습니다.'));
+                tx.onabort = () => reject(tx.error || Error(i18n('maker.makerStore.3')));
             });
         } finally { db.close(); }
     }

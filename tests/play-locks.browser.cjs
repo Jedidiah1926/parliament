@@ -1,5 +1,6 @@
 // 플레이 규칙 — 정당 · 의석 · 선거제도 · 정부 · 여론 · 경제 직접 수정 잠금 (js/play-locks.js). 실제 마우스 · 키보드 입력으로 확인한다.
 //   python3 -m http.server 8000 & node tests/play-locks.browser.cjs
+require('./fixtures/i18n-node.cjs'); // Node에서 읽는 모듈의 i18n() — 한국어 팩 글자
 const { chromium } = require('playwright'), assert = require('node:assert/strict');
 const T = require('../js/campaign-tools.js');
 const base = process.env.STUDIO_TEST_URL || 'http://127.0.0.1:8000';

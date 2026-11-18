@@ -55,7 +55,7 @@
     }
     function clampStock(d, id, v) { const r = byId(d, 'resources', id), max = r && r.max != null && Number.isFinite(Number(r.max)) ? Number(r.max) : Infinity; return r3(Math.max(0, Math.min(max, v))); }
     const canPay = (s, cost) => amounts(cost).every(([k, v]) => v <= 0 || num(s.stock[k]) + 1e-9 >= v);
-    const lacking = (s, cost, d) => amounts(cost).filter(([k, v]) => v > 0 && num(s.stock[k]) + 1e-9 < v).map(([k, v]) => `${nameOf(d, 'resources', k)} ${fmt(v - num(s.stock[k]))} 부족`);
+    const lacking = (s, cost, d) => amounts(cost).filter(([k, v]) => v > 0 && num(s.stock[k]) + 1e-9 < v).map(([k, v]) => i18n('sim.opsRules.1', { resources: nameOf(d, 'resources', k), stock: fmt(v - num(s.stock[k])) }));
     function pay(s, cost, d) { amounts(cost).forEach(([k, v]) => { s.stock[k] = clampStock(d, k, num(s.stock[k]) - v); }); }
     function gain(s, got, d) { amounts(got).forEach(([k, v]) => { s.stock[k] = clampStock(d, k, num(s.stock[k]) + v); }); }
     const fmt = v => String(r3(v));
@@ -79,12 +79,12 @@
         });
         list(d, 'trades').forEach(t => {
             const st = s.trades[t.id]; if (!st || st.status !== 'active') return;
-            if (st.ends != null && dayNo > st.ends) { st.status = 'done'; note(s, `무역 완료: ${t.title || t.id}`); return; }
-            if (!canPay(s, t.give)) { st.status = 'failed'; st.ended = dayNo; note(s, `무역 이행 실패: ${t.title || t.id} (${lacking(s, t.give, d).join(', ')})`); return; }
+            if (st.ends != null && dayNo > st.ends) { st.status = 'done'; note(s, i18n('sim.opsRules.2', { title: t.title || t.id })); return; }
+            if (!canPay(s, t.give)) { st.status = 'failed'; st.ended = dayNo; note(s, i18n('sim.opsRules.3', { title: t.title || t.id, give: lacking(s, t.give, d).join(', ') })); return; }
             pay(s, t.give, d); gain(s, t.get, d);
         });
         const newly = shortF.filter(id => !s.shortage.facilities.includes(id)).map(id => nameOf(d, 'facilities', id));
-        if (newly.length) note(s, `가동 중단(투입 부족): ${newly.join(', ')}`);
+        if (newly.length) note(s, i18n('sim.opsRules.4', { newly: newly.join(', ') }));
         s.shortage = { facilities: shortF, units: shortU };
     }
     // 지금 날(소수 = 시간)까지 — 지난 날마다 하루 계산, 기간이 찬 건설 · 연구 · 모집을 끝낸다. 끝난 것 목록을 돌려준다
@@ -96,10 +96,10 @@
         if (today - s.day > 366) s.day = today - 366;
         while (s.day < today) { s.day++; dailyStep(s, d, s.day); out.days++; }
         const due = j => now - num(j.started) + 1e-9 >= num(j.days);
-        s.building = s.building.filter(j => { if (!due(j)) return true; const f = byId(d, 'facilities', j.id); if (f) { s.facilities[j.id] = Math.floor(num(s.facilities[j.id])) + 1; out.built.push(j.id); note(s, `건설 완료: ${f.name || f.id}`); } return false; });
-        s.recruiting = s.recruiting.filter(j => { if (!due(j)) return true; const u = byId(d, 'units', j.id); if (u) { s.units[j.id] = Math.floor(num(s.units[j.id])) + 1; out.recruited.push(j.id); note(s, `편성 완료: ${u.name || u.id}`); } return false; });
+        s.building = s.building.filter(j => { if (!due(j)) return true; const f = byId(d, 'facilities', j.id); if (f) { s.facilities[j.id] = Math.floor(num(s.facilities[j.id])) + 1; out.built.push(j.id); note(s, i18n('sim.opsRules.5', { f: f.name || f.id })); } return false; });
+        s.recruiting = s.recruiting.filter(j => { if (!due(j)) return true; const u = byId(d, 'units', j.id); if (u) { s.units[j.id] = Math.floor(num(s.units[j.id])) + 1; out.recruited.push(j.id); note(s, i18n('sim.opsRules.6', { u: u.name || u.id })); } return false; });
         const cur = s.tech.cur;
-        if (cur && due(cur)) { s.tech.cur = null; s.tech.done[cur.id] = today; out.researched.push(cur.id); note(s, `연구 완료: ${nameOf(d, 'tech', cur.id)}`); }
+        if (cur && due(cur)) { s.tech.cur = null; s.tech.done[cur.id] = today; out.researched.push(cur.id); note(s, i18n('sim.opsRules.7', { cur: nameOf(d, 'tech', cur.id) })); }
         return out;
     }
 
@@ -119,46 +119,46 @@
     function whyNot(kind, s, d, id, test) {
         const slots = k => Math.max(1, Math.floor(num(d[k]) || 1));
         if (kind === 'facility') {
-            const f = byId(d, 'facilities', id); if (!f) return '없는 시설';
-            if (f.buildable === false) return '지을 수 없는 시설';
-            const miss = missingTech(s, f.requires); if (miss.length) return `먼저 연구: ${miss.map(x => nameOf(d, 'tech', x)).join(', ')}`;
+            const f = byId(d, 'facilities', id); if (!f) return i18n('sim.opsRules.8');
+            if (f.buildable === false) return i18n('sim.opsRules.9');
+            const miss = missingTech(s, f.requires); if (miss.length) return i18n('sim.opsRules.10', { tech: miss.map(x => nameOf(d, 'tech', x)).join(', ') });
             const have = Math.floor(num(s.facilities[id])) + s.building.filter(j => j.id === id).length;
-            if (f.max != null && have >= num(f.max)) return `최대 ${num(f.max)}개`;
-            if (s.building.length >= slots('buildSlots')) return '건설 중인 시설이 있습니다';
-            if (f.available && test && !test(f.available)) return f.requirement_text || '조건 미충족';
+            if (f.max != null && have >= num(f.max)) return i18n('sim.opsRules.11', { f: num(f.max) });
+            if (s.building.length >= slots('buildSlots')) return i18n('sim.opsRules.12');
+            if (f.available && test && !test(f.available)) return f.requirement_text || i18n('sim.scriptmods.27');
             if (!canPay(s, f.cost)) return lacking(s, f.cost, d).join(', ');
             return null;
         }
         if (kind === 'unit') {
-            const u = byId(d, 'units', id); if (!u) return '없는 부대';
-            if (u.recruitable === false) return '편성할 수 없는 부대';
-            const miss = missingTech(s, u.requires); if (miss.length) return `먼저 연구: ${miss.map(x => nameOf(d, 'tech', x)).join(', ')}`;
+            const u = byId(d, 'units', id); if (!u) return i18n('sim.opsRules.13');
+            if (u.recruitable === false) return i18n('sim.opsRules.14');
+            const miss = missingTech(s, u.requires); if (miss.length) return i18n('sim.opsRules.10', { tech: miss.map(x => nameOf(d, 'tech', x)).join(', ') });
             const have = Math.floor(num(s.units[id])) + s.recruiting.filter(j => j.id === id).length;
-            if (u.max != null && have >= num(u.max)) return `최대 ${num(u.max)}개`;
-            if (s.recruiting.length >= slots('recruitSlots')) return '편성 중인 부대가 있습니다';
-            if (u.available && test && !test(u.available)) return u.requirement_text || '조건 미충족';
+            if (u.max != null && have >= num(u.max)) return i18n('sim.opsRules.15', { u: num(u.max) });
+            if (s.recruiting.length >= slots('recruitSlots')) return i18n('sim.opsRules.16');
+            if (u.available && test && !test(u.available)) return u.requirement_text || i18n('sim.scriptmods.27');
             if (!canPay(s, u.cost)) return lacking(s, u.cost, d).join(', ');
             return null;
         }
         if (kind === 'tech') {
-            const t = byId(d, 'tech', id); if (!t) return '없는 기술';
+            const t = byId(d, 'tech', id); if (!t) return i18n('sim.opsRules.17');
             const st = techState(s, d, t);
-            if (st === 'done') return '이미 연구함'; if (st === 'current') return '연구 중'; if (st === 'blocked') return '다른 길을 골랐습니다'; if (st === 'locked') return '선행 기술 필요';
-            if (s.tech.cur) return '다른 기술을 연구 중입니다';
-            if (t.available && test && !test(t.available)) return t.requirement_text || '조건 미충족';
+            if (st === 'done') return i18n('sim.opsRules.18'); if (st === 'current') return i18n('sim.opsRules.19'); if (st === 'blocked') return i18n('sim.opsRules.20'); if (st === 'locked') return i18n('sim.opsRules.21');
+            if (s.tech.cur) return i18n('sim.opsRules.22');
+            if (t.available && test && !test(t.available)) return t.requirement_text || i18n('sim.scriptmods.27');
             if (!canPay(s, t.cost)) return lacking(s, t.cost, d).join(', ');
             return null;
         }
         if (kind === 'trade') {
-            const t = byId(d, 'trades', id); if (!t) return '없는 계약';
+            const t = byId(d, 'trades', id); if (!t) return i18n('sim.opsRules.23');
             const st = s.trades[id];
-            if (st && st.status === 'active') return '진행 중';
-            if (st && t.repeat !== true) return '이미 맺었던 계약';
-            if (t.available && test && !test(t.available)) return t.requirement_text || '조건 미충족';
+            if (st && st.status === 'active') return i18n('sim.campaign.54');
+            if (st && t.repeat !== true) return i18n('sim.opsRules.24');
+            if (t.available && test && !test(t.available)) return t.requirement_text || i18n('sim.scriptmods.27');
             if (!canPay(s, t.give)) return lacking(s, t.give, d).join(', ');
             return null;
         }
-        return '알 수 없는 행동';
+        return i18n('sim.opsRules.25');
     }
     // 시작 — 검사 → 비용 → 상태. 성공하면 null, 아니면 이유 (아무것도 바꾸지 않음)
     function start(kind, s, d, id, now, test) {
@@ -167,14 +167,14 @@
         if (kind === 'facility') { const f = byId(d, 'facilities', id); pay(s, f.cost, d); s.building.push({ id, started: day, days: Math.max(0, num(f.days)) }); }
         if (kind === 'unit') { const u = byId(d, 'units', id); pay(s, u.cost, d); s.recruiting.push({ id, started: day, days: Math.max(0, num(u.days)) }); }
         if (kind === 'tech') { const t = byId(d, 'tech', id); pay(s, t.cost, d); s.tech.cur = { id, started: day, days: Math.max(0, num(t.days)) }; }
-        if (kind === 'trade') { const t = byId(d, 'trades', id); s.trades[id] = { status: 'active', started: Math.floor(day), ends: num(t.days) > 0 ? Math.floor(day) + Math.floor(num(t.days)) : null }; note(s, `무역 체결: ${t.title || t.id}`); }
+        if (kind === 'trade') { const t = byId(d, 'trades', id); s.trades[id] = { status: 'active', started: Math.floor(day), ends: num(t.days) > 0 ? Math.floor(day) + Math.floor(num(t.days)) : null }; note(s, i18n('sim.opsRules.26', { title: t.title || t.id })); }
         return null;
     }
     function cancel(kind, s, d, id) {
         if (kind === 'tech') { if (s.tech.cur && s.tech.cur.id === id) { s.tech.cur = null; return true; } return false; }
         if (kind === 'facility') { const i = s.building.findIndex(j => j.id === id); if (i < 0) return false; s.building.splice(i, 1); return true; }
         if (kind === 'unit') { const i = s.recruiting.findIndex(j => j.id === id); if (i < 0) return false; s.recruiting.splice(i, 1); return true; }
-        if (kind === 'trade') { const st = s.trades[id]; if (!st || st.status !== 'active') return false; st.status = 'cancelled'; st.ended = s.day; note(s, `무역 중단: ${nameOf(d, 'trades', id)}`); return true; }
+        if (kind === 'trade') { const st = s.trades[id]; if (!st || st.status !== 'active') return false; st.status = 'cancelled'; st.ended = s.day; note(s, i18n('sim.opsRules.27', { trades: nameOf(d, 'trades', id) })); return true; }
         return false;
     }
 
@@ -222,22 +222,22 @@
     // 조건 판정 — { ok, value } 또는 { ok: false, error }
     function testCond(k, v, s, d) {
         const c = COND[k]; if (!c) return null;
-        if (!c.check(v)) return { ok: false, error: `${k}: 형식이 틀렸습니다` };
-        if (c.kind && !byId(d, c.kind, refId(v))) return { ok: false, error: `${k}: 없는 항목 "${refId(v)}"` };
+        if (!c.check(v)) return { ok: false, error: i18n('sim.opsRules.28', { v: k }) };
+        if (c.kind && !byId(d, c.kind, refId(v))) return { ok: false, error: i18n('sim.opsRules.29', { v: k, refId: refId(v) }) };
         return { ok: true, value: c.bool ? c.bool(s, v) : cmp(c.read(s, v, d), v) };
     }
     // 효과 적용 — null(성공) 또는 이유. 틀린 효과는 아무것도 바꾸지 않는다
     function runEffect(k, v, s, d, now) {
-        const e = EFF[k]; if (!e) return `${k}: 모르는 효과`;
-        if (!e.check(v)) return `${k}: 형식이 틀렸습니다`;
+        const e = EFF[k]; if (!e) return i18n('sim.opsRules.30', { v: k });
+        if (!e.check(v)) return i18n('sim.opsRules.28', { v: k });
         const id = refId(v);
-        if (!byId(d, e.kind, id)) return `${k}: 없는 항목 "${id}"`;
+        if (!byId(d, e.kind, id)) return i18n('sim.opsRules.31', { v: k, v2: id });
         if (k === 'add_resource') s.stock[id] = clampStock(d, id, num(s.stock[id]) + Number(v.value));
         if (k === 'set_resource') s.stock[id] = clampStock(d, id, Number(v.value));
         if (k === 'add_facility') { const f = byId(d, 'facilities', id), max = f.max != null ? num(f.max) : Infinity; s.facilities[id] = Math.max(0, Math.min(max, Math.floor(num(s.facilities[id])) + Number(v.count))); }
         if (k === 'add_units') { const u = byId(d, 'units', id), max = u.max != null ? num(u.max) : Infinity; s.units[id] = Math.max(0, Math.min(max, Math.floor(num(s.units[id])) + Number(v.count))); }
         if (k === 'grant_tech') { if (!techDone(s, id)) { if (s.tech.cur && s.tech.cur.id === id) s.tech.cur = null; s.tech.done[id] = Math.floor(Number.isFinite(now) ? now : s.day); } }
-        if (k === 'start_trade') { const t = byId(d, 'trades', id); if (!(s.trades[id] && s.trades[id].status === 'active')) { const day = Math.floor(Number.isFinite(now) ? now : s.day); s.trades[id] = { status: 'active', started: day, ends: num(t.days) > 0 ? day + Math.floor(num(t.days)) : null }; note(s, `무역 체결: ${t.title || t.id}`); } }
+        if (k === 'start_trade') { const t = byId(d, 'trades', id); if (!(s.trades[id] && s.trades[id].status === 'active')) { const day = Math.floor(Number.isFinite(now) ? now : s.day); s.trades[id] = { status: 'active', started: day, ends: num(t.days) > 0 ? day + Math.floor(num(t.days)) : null }; note(s, i18n('sim.opsRules.26', { title: t.title || t.id })); } }
         if (k === 'end_trade') { const st = s.trades[id]; if (st && st.status === 'active') { st.status = 'cancelled'; st.ended = s.day; } }
         return null;
     }

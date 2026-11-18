@@ -20,9 +20,9 @@
     const clamp = (v, a = 0, b = 100) => Math.max(a, Math.min(b, v));
     const r1 = v => Math.round(v * 10) / 10;
     const el = html => { const d = document.createElement('div'); d.innerHTML = html.trim(); return d.firstChild; };
-    const tr = x => (window.HemiLang && window.HemiLang.t ? window.HemiLang.t(String(x)) : String(x)); // 사진(캔버스)에 그리는 글자는 화면 번역이 닿지 않으므로 직접
+    const tr = x => String(x); // 사진(캔버스)에 그리는 글자 — i18n()으로 이미 지금 언어
 
-    const TYPES = [['politics', '정치'], ['economy', '경제'], ['society', '사회'], ['world', '국제'], ['editorial', '사설'], ['breaking', '속보']];
+    const TYPES = [['politics', i18n('sim.news.1')], ['economy', i18n('sim.mainContentHelp.6')], ['society', i18n('sim.news.2')], ['world', i18n('sim.news.3')], ['editorial', i18n('sim.news.4')], ['breaking', i18n('sim.news.5')]];
     const TYPE_LABEL = Object.fromEntries(TYPES);
     const TYPE_COLOR = { politics: '#4f8cff', economy: '#22b573', society: '#f0a030', world: '#a066e0', editorial: '#8a96a3', breaking: '#e5484d' };
 
@@ -73,7 +73,7 @@
     }
     const keyOf = s => { const m = /^(-?\d{1,5})(?:-(\d{1,2}))?(?:-(\d{1,2}))?$/.exec(String(s ?? '').trim()); return m ? +m[1] * 10000 + (+m[2] || 1) * 100 + (+m[3] || 1) : null; };
     const strOf = k => { if (k == null) return ''; const y = Math.floor(k / 10000), m = Math.floor(k / 100) % 100, d = k % 100; return `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`; };
-    const labelOf = k => { if (k == null) return ''; const y = Math.floor(k / 10000), m = Math.floor(k / 100) % 100, d = k % 100; return `${y}년 ${m}월 ${d}일`; };
+    const labelOf = k => { if (k == null) return ''; const y = Math.floor(k / 10000), m = Math.floor(k / 100) % 100, d = k % 100; return i18n('sim.news.6', { y, m, v: d }); };
     const dayNum = k => { const y = Math.floor(k / 10000), m = Math.floor(k / 100) % 100, d = k % 100; const dt = new Date(2000, m - 1, d); dt.setFullYear(y, m - 1, d); return Math.round(dt.getTime() / 86400000); };
     const todayStr = () => { const t = today(); return t ? strOf(t.key) : ''; };
 
@@ -85,7 +85,7 @@
     const chName = ch => { try { return chamberDisplayName(ch); } catch (e) { return ch; } };
     const isGov = p => !!p && (p.isRuling || (typeof coalitions !== 'undefined' ? coalitions : []).some(c => c.isRuling && (c.members || []).some(id => String(id) === String(p.id) || String(id).startsWith(p.id + '__'))));
     const probOf = (p, ch = 'house') => Number(elecStore?.[ch]?.[p.id]?.prob) || 0;
-    const role = k => { try { return effRoleLabel(k); } catch (e) { return { president: '대통령', pm: '총리', chair: '의장' }[k] || k; } };
+    const role = k => { try { return effRoleLabel(k); } catch (e) { return { president: i18n('sim.mainContentCabinet.2'), pm: i18n('sim.mainContentCabinet.3'), chair: i18n('sim.contentSystem.13') }[k] || k; } };
 
     // 지금 정부 형태에서 국정 지지율을 매기는 자리 — [{ key, label, name }]
     function targets() {
@@ -96,10 +96,10 @@
             out.push({ key: 'president', label: role('president'), name: (typeof president !== 'undefined' && president?.name) || '' });
             out.push({ key: 'pm', label: role('pm'), name: (typeof pm !== 'undefined' && pm?.name) || '' });
         }
-        out.push({ key: 'cabinet', label: '내각', name: '' });
+        out.push({ key: 'cabinet', label: i18n('sim.contentSystem.9'), name: '' });
         return out;
     }
-    const targetLabel = k => (targets().find(t => t.key === k) || { label: { president: '대통령', pm: '총리', chair: '의장', cabinet: '내각' }[k] || k }).label;
+    const targetLabel = k => (targets().find(t => t.key === k) || { label: { president: i18n('sim.mainContentCabinet.2'), pm: i18n('sim.mainContentCabinet.3'), chair: i18n('sim.contentSystem.13'), cabinet: i18n('sim.contentSystem.9') }[k] || k }).label;
 
     // ---------------------------------------------------------------
     // 기록 (여론 추이)
@@ -108,7 +108,7 @@
         const t = today();
         const last = N.history[N.history.length - 1];
         const key = t ? t.key : (last ? last.key + 1 : 1);
-        const e = { key, label: t ? labelOf(key) : `기록 ${N.history.length + 1}`, probs: {}, appr: { ...N.approval } };
+        const e = { key, label: t ? labelOf(key) : i18n('sim.news.7', { history: N.history.length + 1 }), probs: {}, appr: { ...N.approval } };
         realParties().forEach(p => { e.probs[p.id] = r1(probOf(p)); });
         const i = N.history.findIndex(h => h.key === key);
         if (i >= 0) N.history[i] = e; else { N.history.push(e); N.history.sort((a, b) => a.key - b.key); }
@@ -183,7 +183,7 @@
         if (!a.date) a.date = todayStr();
         snapshot();
         afterChange();
-        if (!quiet) toast(`기사 발행: ${a.title || '(제목 없음)'}`);
+        if (!quiet) toast(i18n('sim.news.9', { title: a.title || i18n('sim.news.8') }));
     }
     function unpublish(a) {
         if (!a || a.status !== 'published') return;
@@ -266,8 +266,8 @@
         const wrap = document.getElementById('mainContentElection');
         const bar = wrap && wrap.querySelector(':scope > .sub-tab-container');
         if (!bar) return;
-        bar.appendChild(el(`<button class="sub-tab-btn" id="elecSubTabArticles" onclick="elecSwitchSub('articles')">기사</button>`));
-        bar.appendChild(el(`<button class="sub-tab-btn" id="elecSubTabApproval" onclick="elecSwitchSub('approval')">국정 지지율</button>`));
+        bar.appendChild(el(`<button class="sub-tab-btn" id="elecSubTabArticles" onclick="elecSwitchSub('articles')">${esc(i18n('sim.news.10'))}</button>`));
+        bar.appendChild(el(`<button class="sub-tab-btn" id="elecSubTabApproval" onclick="elecSwitchSub('approval')">${esc(i18n('sim.news.11'))}</button>`));
         wrap.appendChild(el(`<div id="elecSubArticles" class="sub-tab-content"></div>`));
         wrap.appendChild(el(`<div id="elecSubApproval" class="sub-tab-content"></div>`));
     })();
@@ -316,15 +316,15 @@
     function effectText(a) {
         return (a.effects || []).filter(ef => Number(ef.delta)).map(ef => {
             const d = Number(ef.delta), sign = d > 0 ? '+' : '';
-            if (ef.target === 'approval') return `${targetLabel(ef.which)} 국정 ${sign}${d}`;
+            if (ef.target === 'approval') return i18n('sim.news.12', { which: targetLabel(ef.which), sign, v: d });
             const p = partyById(ef.partyId);
             return `${p ? p.name : '?'} ${sign}${d}`;
         }).join(' · ');
     }
     function scopeText(sc) {
-        if (!sc || sc.kind === 'national') return '전국';
+        if (!sc || sc.kind === 'national') return i18n('sim.news.13');
         const n = (sc.keys || []).length;
-        return `${sc.kind === 'region' ? '권역' : '지역구'} ${n}곳${chambers().length > 1 ? ` (${chName(sc.ch || 'house')})` : ''}`;
+        return i18n('sim.news.14', { region: sc.kind === 'region' ? i18n('sim.mainContentNation.3') : i18n('sim.contentTerritory.1'), v: n, house: chambers().length > 1 ? ` (${chName(sc.ch || 'house')})` : '' });
     }
     function renderArticles() {
         const host = document.getElementById('elecSubArticles');
@@ -336,31 +336,31 @@
                 && (!q || [a.title, a.subtitle, a.body, a.outlet, a.reporter].some(v => String(v || '').toLowerCase().includes(q))));
         const pub = N.articles.filter(a => a.status === 'published').length;
         host.innerHTML = `<div class="nw-wrap">
-            <div class="nw-intro">기사를 쓰고 발행하면 정한 만큼 정당 지지율 · 국정 지지율이 움직입니다 (발행 취소하면 그만큼 되돌림). 오른쪽 "여론 · 기사" 화면에 신문 1면과 여론 추이가 보입니다.</div>
+            <div class="nw-intro">${esc(i18n('sim.news.15'))}</div>
             <div class="nw-bar">
-                <button type="button" class="nw-btn nw-primary" data-new>+ 새 기사</button>
-                <select class="nw-in" data-filter><option value="all">전체 ${N.articles.length}</option><option value="published" ${ui.filter === 'published' ? 'selected' : ''}>발행 ${pub}</option><option value="draft" ${ui.filter === 'draft' ? 'selected' : ''}>초안 ${N.articles.length - pub}</option></select>
-                <select class="nw-in" data-type><option value="">모든 유형</option>${TYPES.map(([k, l]) => `<option value="${k}" ${ui.type === k ? 'selected' : ''}>${l}</option>`).join('')}</select>
-                <input class="nw-in nw-grow" type="search" data-q placeholder="기사 찾기" value="${esc(ui.q)}">
+                <button type="button" class="nw-btn nw-primary" data-new>${esc(i18n('sim.news.16'))}</button>
+                <select class="nw-in" data-filter><option value="all">${esc(i18n('sim.contentVote.21'))} ${N.articles.length}</option><option value="published" ${ui.filter === 'published' ? 'selected' : ''}>${esc(i18n('sim.news.17'))} ${pub}</option><option value="draft" ${ui.filter === 'draft' ? 'selected' : ''}>${esc(i18n('sim.news.18'))} ${N.articles.length - pub}</option></select>
+                <select class="nw-in" data-type><option value="">${esc(i18n('sim.news.19'))}</option>${TYPES.map(([k, l]) => `<option value="${k}" ${ui.type === k ? 'selected' : ''}>${l}</option>`).join('')}</select>
+                <input class="nw-in nw-grow" type="search" data-q placeholder="${esc(i18n('sim.news.20'))}" value="${esc(ui.q)}">
             </div>
             ${list.length ? list.map(a => `
                 <div class="nw-card ${a.status === 'published' ? 'pub' : 'draft'}" data-id="${esc(a.id)}">
                     ${a.photo ? `<img class="nw-thumb" src="${esc(a.photo)}" alt="">` : ''}
                     <div class="nw-card-main">
-                        <div class="nw-card-top"><span class="nw-type" style="--c:${TYPE_COLOR[a.type] || '#888'}">${esc(TYPE_LABEL[a.type] || '기사')}</span>
-                            <span class="nw-status">${a.status === 'published' ? '발행됨' : '초안'}</span><span class="nw-dim">${esc(labelOf(keyOf(a.date)))}</span></div>
-                        <div class="nw-card-title">${esc(a.title || '(제목 없음)')}</div>
+                        <div class="nw-card-top"><span class="nw-type" style="--c:${TYPE_COLOR[a.type] || '#888'}">${esc(TYPE_LABEL[a.type] || esc(i18n('sim.news.10')))}</span>
+                            <span class="nw-status">${a.status === 'published' ? esc(i18n('sim.news.21')) : esc(i18n('sim.news.18'))}</span><span class="nw-dim">${esc(labelOf(keyOf(a.date)))}</span></div>
+                        <div class="nw-card-title">${esc(a.title || esc(i18n('sim.news.8')))}</div>
                         ${a.subtitle ? `<div class="nw-card-sub">${esc(a.subtitle)}</div>` : ''}
-                        <div class="nw-dim">${esc([a.outlet, a.reporter && a.reporter + ' 기자'].filter(Boolean).join(' · '))}</div>
+                        <div class="nw-dim">${esc([a.outlet, a.reporter && a.reporter + esc((" " + i18n('sim.news.22')))].filter(Boolean).join(' · '))}</div>
                         ${effectText(a) ? `<div class="nw-eff">📈 ${esc(effectText(a))} <span class="nw-dim">· ${esc(scopeText(a.scope))}</span></div>` : ''}
                         <div class="nw-row">
-                            <button type="button" class="nw-btn" data-edit>수정</button>
-                            ${a.status === 'published' ? '<button type="button" class="nw-btn" data-unpub>발행 취소</button>' : '<button type="button" class="nw-btn nw-primary" data-pub>발행</button>'}
-                            <button type="button" class="nw-btn" data-read>읽기</button>
-                            <button type="button" class="nw-btn nw-danger" data-del>삭제</button>
+                            <button type="button" class="nw-btn" data-edit>${esc(i18n('sim.news.23'))}</button>
+                            ${a.status === 'published' ? `<button type="button" class="nw-btn" data-unpub>${esc(i18n('sim.news.24'))}</button>` : `<button type="button" class="nw-btn nw-primary" data-pub>${esc(i18n('sim.news.17'))}</button>`}
+                            <button type="button" class="nw-btn" data-read>${esc(i18n('sim.news.25'))}</button>
+                            <button type="button" class="nw-btn nw-danger" data-del>${esc(i18n('common.delete'))}</button>
                         </div>
                     </div>
-                </div>`).join('') : `<div class="nw-empty">${N.articles.length ? '조건에 맞는 기사가 없습니다.' : '아직 기사가 없습니다. "+ 새 기사"로 첫 기사를 써 보세요.'}</div>`}
+                </div>`).join('') : `<div class="nw-empty">${N.articles.length ? esc(i18n('sim.news.26')) : esc(i18n('sim.news.27'))}</div>`}
         </div>`;
         host.querySelector('[data-new]').onclick = () => { const a = blank(); ui.editing = { draft: a, isNew: true }; renderArticles(); };
         host.querySelector('[data-filter]').onchange = e => { ui.filter = e.target.value; renderArticles(); };
@@ -371,9 +371,9 @@
             const a = N.articles.find(x => x.id === card.dataset.id); if (!a) return;
             card.querySelector('[data-edit]').onclick = () => { ui.editing = { draft: JSON.parse(JSON.stringify(a)), isNew: false }; renderArticles(); };
             card.querySelector('[data-pub]')?.addEventListener('click', () => publish(a));
-            card.querySelector('[data-unpub]')?.addEventListener('click', () => showCustomConfirm(`"${a.title || '(제목 없음)'}" 발행을 취소할까요? 들어갔던 지지율 효과만큼 되돌립니다.`, () => unpublish(a)));
+            card.querySelector('[data-unpub]')?.addEventListener('click', () => showCustomConfirm(i18n('sim.news.28', { title: a.title || i18n('sim.news.8') }), () => unpublish(a)));
             card.querySelector('[data-read]').onclick = () => readArticle(a);
-            card.querySelector('[data-del]').onclick = () => showCustomConfirm(`"${a.title || '(제목 없음)'}" 기사를 지울까요?${a.status === 'published' ? '\n(발행된 기사라 지지율 효과도 되돌립니다)' : ''}`, () => {
+            card.querySelector('[data-del]').onclick = () => showCustomConfirm(i18n('sim.news.30', { title: a.title || i18n('sim.news.8'), published: a.status === 'published' ? ("\n" + i18n('sim.news.29')) : '' }), () => {
                 if (a.status === 'published') unpublish(a);
                 N.articles = N.articles.filter(x => x !== a);
                 refresh();
@@ -395,64 +395,64 @@
         const selKeys = new Set((sc.keys || []).map(String));
         const pub = a.status === 'published';
         host.innerHTML = `<div class="nw-wrap nw-editor">
-            <div class="nw-bar"><button type="button" class="nw-btn" data-back>← 목록</button><b class="nw-grow">${ui.editing.isNew ? '새 기사' : '기사 수정'}</b>
-                ${pub ? '<span class="nw-dim">발행된 기사 — 효과를 바꾸면 저장할 때 다시 계산됩니다</span>' : ''}</div>
-            <label class="nw-lab">유형</label>
+            <div class="nw-bar"><button type="button" class="nw-btn" data-back>${esc(i18n('sim.news.31'))}</button><b class="nw-grow">${ui.editing.isNew ? esc(i18n('sim.news.32')) : esc(i18n('sim.news.33'))}</b>
+                ${pub ? `<span class="nw-dim">${esc(i18n('sim.news.34'))}</span>` : ''}</div>
+            <label class="nw-lab">${esc(i18n('sim.news.35'))}</label>
             <div class="nw-types">${TYPES.map(([k, l]) => `<button type="button" class="nw-chip ${a.type === k ? 'on' : ''}" data-type="${k}" style="--c:${TYPE_COLOR[k]}">${l}</button>`).join('')}</div>
-            <label class="nw-lab">제목</label><input class="nw-in nw-title" data-f="title" maxlength="120" value="${esc(a.title)}" placeholder="예: 여당, 예산안 단독 처리">
-            <label class="nw-lab">부제</label><input class="nw-in" data-f="subtitle" maxlength="200" value="${esc(a.subtitle)}" placeholder="(선택)">
-            <label class="nw-lab">본문</label><textarea class="nw-in nw-body" data-f="body" rows="8" placeholder="기사 본문">${esc(a.body)}</textarea>
+            <label class="nw-lab">${esc(i18n('sim.history.110'))}</label><input class="nw-in nw-title" data-f="title" maxlength="120" value="${esc(a.title)}" placeholder="${esc(i18n('sim.news.36'))}">
+            <label class="nw-lab">${esc(i18n('sim.news.37'))}</label><input class="nw-in" data-f="subtitle" maxlength="200" value="${esc(a.subtitle)}" placeholder="${esc(i18n('sim.news.38'))}">
+            <label class="nw-lab">${esc(i18n('sim.news.40'))}</label><textarea class="nw-in nw-body" data-f="body" rows="8" placeholder="${esc(i18n('sim.news.39'))}">${esc(a.body)}</textarea>
             <div class="nw-grid3">
-                <div><label class="nw-lab">작성일</label><input class="nw-in" data-f="date" value="${esc(a.date)}" placeholder="YYYY-MM-DD"></div>
-                <div><label class="nw-lab">언론사</label><input class="nw-in" data-f="outlet" list="nwOutlets" maxlength="40" value="${esc(a.outlet)}" placeholder="예: 헤미일보"></div>
-                <div><label class="nw-lab">기자</label><input class="nw-in" data-f="reporter" list="nwReporters" maxlength="40" value="${esc(a.reporter)}"></div>
+                <div><label class="nw-lab">${esc(i18n('sim.news.41'))}</label><input class="nw-in" data-f="date" value="${esc(a.date)}" placeholder="YYYY-MM-DD"></div>
+                <div><label class="nw-lab">${esc(i18n('sim.news.42'))}</label><input class="nw-in" data-f="outlet" list="nwOutlets" maxlength="40" value="${esc(a.outlet)}" placeholder="${esc(i18n('sim.news.43'))}"></div>
+                <div><label class="nw-lab">${esc(i18n('sim.news.22'))}</label><input class="nw-in" data-f="reporter" list="nwReporters" maxlength="40" value="${esc(a.reporter)}"></div>
             </div>
             <datalist id="nwOutlets">${outlets.map(o => `<option value="${esc(o)}">`).join('')}</datalist>
             <datalist id="nwReporters">${reporters.map(o => `<option value="${esc(o)}">`).join('')}</datalist>
-            <label class="nw-lab">대표 사진</label>
+            <label class="nw-lab">${esc(i18n('sim.news.44'))}</label>
             <div class="nw-row">${a.photo ? `<img class="nw-photo" src="${esc(a.photo)}" alt="">` : ''}
-                <button type="button" class="nw-btn" data-photo>${a.photo ? '사진 바꾸기' : '사진 올리기'}</button>${a.photo ? '<button type="button" class="nw-btn" data-photo-del>사진 빼기</button>' : ''}
+                <button type="button" class="nw-btn" data-photo>${a.photo ? esc(i18n('sim.news.45')) : esc(i18n('sim.news.46'))}</button>${a.photo ? `<button type="button" class="nw-btn" data-photo-del>${esc(i18n('sim.news.47'))}</button>` : ''}
                 <input type="file" accept="image/*" data-photo-file hidden></div>
 
-            <div class="nw-sec">연결</div>
-            <label class="nw-lab">정당</label>
-            <div class="nw-types">${plist.map(p => `<button type="button" class="nw-chip ${a.links.parties.map(String).includes(String(p.id)) ? 'on' : ''}" data-link-party="${esc(p.id)}" style="--c:${esc(p.color || '#888')}">${esc(p.name)}</button>`).join('') || '<span class="nw-dim">정당 없음</span>'}</div>
-            <label class="nw-check"><input type="checkbox" data-link-gov ${a.links.gov ? 'checked' : ''}> 정부 (${esc(tg.filter(t => t.key !== 'cabinet').map(t => t.label + (t.name ? ' ' + t.name : '')).join(' · ') || '내각')})</label>
-            <label class="nw-lab">정치인</label>
+            <div class="nw-sec">${esc(i18n('sim.news.48'))}</div>
+            <label class="nw-lab">${esc(i18n('sim.mainContentSetup.2'))}</label>
+            <div class="nw-types">${plist.map(p => `<button type="button" class="nw-chip ${a.links.parties.map(String).includes(String(p.id)) ? 'on' : ''}" data-link-party="${esc(p.id)}" style="--c:${esc(p.color || '#888')}">${esc(p.name)}</button>`).join('') || `<span class="nw-dim">${esc(i18n('sim.siege.129'))}</span>`}</div>
+            <label class="nw-check"><input type="checkbox" data-link-gov ${a.links.gov ? 'checked' : ''}> ${esc(i18n('sim.news.49'))}${esc(tg.filter(t => t.key !== 'cabinet').map(t => t.label + (t.name ? ' ' + t.name : '')).join(' · ') || esc(i18n('sim.contentSystem.9')))})</label>
+            <label class="nw-lab">${esc(i18n('sim.news.50'))}</label>
             <div class="nw-row">${a.links.people.map(id => { const pp = people.find(x => x.id === id); return `<span class="nw-tag">${esc(pp ? pp.name : id)} <button type="button" data-unlink-person="${esc(id)}">×</button></span>`; }).join('')}
-                <input class="nw-in" data-add-person list="nwPeople" placeholder="이름으로 추가" style="width:140px"></div>
+                <input class="nw-in" data-add-person list="nwPeople" placeholder="${esc(i18n('sim.news.51'))}" style="width:140px"></div>
             <datalist id="nwPeople">${people.slice(0, 2000).map(pp => `<option value="${esc(pp.name)}">`).join('')}</datalist>
-            <label class="nw-lab">법안</label>
+            <label class="nw-lab">${esc(i18n('sim.result.7'))}</label>
             <div class="nw-row">${a.links.bills.map(id => { const b = billList.find(x => String(x.id) === String(id)); return `<span class="nw-tag">${esc(b ? b.title : id)} <button type="button" data-unlink-bill="${esc(id)}">×</button></span>`; }).join('')}
-                <select class="nw-in" data-add-bill><option value="">+ 법안 연결</option>${billList.filter(b => !a.links.bills.map(String).includes(String(b.id))).map(b => `<option value="${esc(b.id)}">${esc(b.title)}</option>`).join('')}</select></div>
+                <select class="nw-in" data-add-bill><option value="">${esc(i18n('sim.news.52'))}</option>${billList.filter(b => !a.links.bills.map(String).includes(String(b.id))).map(b => `<option value="${esc(b.id)}">${esc(b.title)}</option>`).join('')}</select></div>
 
-            <div class="nw-sec">발행할 때 효과</div>
-            <div class="nw-dim nw-small">정당 지지율은 아래 영향 범위에 따라 — 전국이면 모든 원의 지지율, 권역 · 지역구면 그곳의 시민 성향이 움직입니다. 국정 지지율은 언제나 전국.</div>
+            <div class="nw-sec">${esc(i18n('sim.news.53'))}</div>
+            <div class="nw-dim nw-small">${esc(i18n('sim.news.54'))}</div>
             ${(a.effects || []).map((ef, i) => `<div class="nw-eff-row" data-eff="${i}">
                 <select class="nw-in nw-grow" data-eff-target>
-                    <optgroup label="정당 지지율">${plist.map(p => `<option value="party:${esc(p.id)}" ${ef.target === 'party' && String(ef.partyId) === String(p.id) ? 'selected' : ''}>${esc(p.name)}</option>`).join('')}</optgroup>
-                    <optgroup label="국정 지지율">${tg.map(t => `<option value="approval:${t.key}" ${ef.target === 'approval' && ef.which === t.key ? 'selected' : ''}>${esc(t.label)}</option>`).join('')}</optgroup>
+                    <optgroup label="${esc(i18n('sim.news.grpParty'))}">${plist.map(p => `<option value="party:${esc(p.id)}" ${ef.target === 'party' && String(ef.partyId) === String(p.id) ? 'selected' : ''}>${esc(p.name)}</option>`).join('')}</optgroup>
+                    <optgroup label="${esc(i18n('sim.news.grpApproval'))}">${tg.map(t => `<option value="approval:${t.key}" ${ef.target === 'approval' && ef.which === t.key ? 'selected' : ''}>${esc(t.label)}</option>`).join('')}</optgroup>
                 </select>
                 <input class="nw-in nw-num" type="number" step="0.1" min="-30" max="30" data-eff-delta value="${esc(ef.delta)}"> <span class="nw-dim">%p</span>
-                <button type="button" class="nw-x" data-eff-del title="빼기">×</button></div>`).join('')}
-            <div class="nw-row"><button type="button" class="nw-btn" data-eff-add>+ 효과 추가</button>
-                ${a.links.parties.length ? '<button type="button" class="nw-btn" data-eff-fromlinks>연결한 정당으로 채우기</button>' : ''}</div>
-            <label class="nw-lab">영향 범위</label>
+                <button type="button" class="nw-x" data-eff-del title="${esc(i18n('sim.coup.71'))}">×</button></div>`).join('')}
+            <div class="nw-row"><button type="button" class="nw-btn" data-eff-add>${esc(i18n('sim.news.55'))}</button>
+                ${a.links.parties.length ? `<button type="button" class="nw-btn" data-eff-fromlinks>${esc(i18n('sim.news.56'))}</button>` : ''}</div>
+            <label class="nw-lab">${esc(i18n('sim.news.57'))}</label>
             <div class="nw-types">
-                <button type="button" class="nw-chip ${sc.kind === 'national' ? 'on' : ''}" data-scope="national">전국</button>
-                <button type="button" class="nw-chip ${sc.kind === 'region' ? 'on' : ''}" data-scope="region" ${svgOn() && regionList(sc.ch || 'house').length ? '' : 'disabled title="권역이 없습니다"'}>권역</button>
-                <button type="button" class="nw-chip ${sc.kind === 'district' ? 'on' : ''}" data-scope="district" ${svgOn() && districtList(sc.ch || 'house').length ? '' : 'disabled title="지역구 지도가 없습니다"'}>개별 지역구</button>
+                <button type="button" class="nw-chip ${sc.kind === 'national' ? 'on' : ''}" data-scope="national">${esc(i18n('sim.news.13'))}</button>
+                <button type="button" class="nw-chip ${sc.kind === 'region' ? 'on' : ''}" data-scope="region" ${svgOn() && regionList(sc.ch || 'house').length ? '' : `disabled title="${esc(i18n('sim.news.58'))}"`}>${esc(i18n('sim.mainContentNation.3'))}</button>
+                <button type="button" class="nw-chip ${sc.kind === 'district' ? 'on' : ''}" data-scope="district" ${svgOn() && districtList(sc.ch || 'house').length ? '' : `disabled title="${esc(i18n('sim.news.59'))}"`}>${esc(i18n('sim.news.60'))}</button>
                 ${sc.kind !== 'national' && chs.length > 1 ? `<select class="nw-in" data-scope-ch>${chs.map(c => `<option value="${c}" ${(sc.ch || 'house') === c ? 'selected' : ''}>${esc(chName(c))}</option>`).join('')}</select>` : ''}
             </div>
             ${sc.kind !== 'national' ? `<div class="nw-pick">
-                <div class="nw-row"><input class="nw-in nw-grow" type="search" data-pick-q placeholder="${sc.kind === 'region' ? '권역' : '지역구'} 찾기"><span class="nw-dim"><b data-pick-n>${selKeys.size}</b> <span>곳 고름</span></span>
-                    <button type="button" class="nw-btn" data-pick-all>모두</button><button type="button" class="nw-btn" data-pick-none>비우기</button></div>
+                <div class="nw-row"><input class="nw-in nw-grow" type="search" data-pick-q placeholder="${esc(i18n('sim.news.findIn', { what: sc.kind === 'region' ? i18n('sim.mainContentNation.3') : i18n('sim.contentTerritory.1') }))}"><span class="nw-dim"><b data-pick-n>${selKeys.size}</b> <span>${esc(i18n('sim.news.61'))}</span></span>
+                    <button type="button" class="nw-btn" data-pick-all>${esc(i18n('sim.news.62'))}</button><button type="button" class="nw-btn" data-pick-none>${esc(i18n('sim.news.63'))}</button></div>
                 <div class="nw-pick-list">${scopeItems.map(it => `<label class="nw-check" data-name="${esc(String(it.name).toLowerCase())}"><input type="checkbox" data-pick="${esc(it.key)}" ${selKeys.has(String(it.key)) ? 'checked' : ''}> ${esc(it.name)}</label>`).join('')}</div></div>` : ''}
 
             <div class="nw-bar nw-foot">
-                <button type="button" class="nw-btn" data-back>취소</button><span class="nw-grow"></span>
-                <button type="button" class="nw-btn" data-save>${pub ? '저장' : '초안 저장'}</button>
-                ${pub ? '' : '<button type="button" class="nw-btn nw-primary" data-save-pub>저장하고 발행</button>'}
+                <button type="button" class="nw-btn" data-back>${esc(i18n('common.cancel'))}</button><span class="nw-grow"></span>
+                <button type="button" class="nw-btn" data-save>${pub ? esc(i18n('sim.main.3')) : esc(i18n('sim.news.64'))}</button>
+                ${pub ? '' : `<button type="button" class="nw-btn nw-primary" data-save-pub>${esc(i18n('sim.news.65'))}</button>`}
             </div>
         </div>`;
         const $ = s => host.querySelector(s), $$ = s => host.querySelectorAll(s);
@@ -506,9 +506,9 @@
         $('[data-pick-none]')?.addEventListener('click', () => { sc.keys = []; rer(); });
         $$('[data-back]').forEach(b => { b.onclick = () => { ui.editing = null; renderArticles(); }; });
         const save = andPublish => {
-            if (!String(a.title || '').trim()) { showCustomAlert('기사 제목을 적어 주세요.'); return; }
-            if (a.date && keyOf(a.date) == null) { showCustomAlert('작성일은 YYYY-MM-DD 형식으로 적어 주세요. (예: 2026-11-03)'); return; }
-            if (sc.kind !== 'national' && !(sc.keys || []).length && (a.effects || []).some(ef => ef.target === 'party')) { showCustomAlert(`영향 범위에서 ${sc.kind === 'region' ? '권역' : '지역구'}을 하나 이상 고르세요.`); return; }
+            if (!String(a.title || '').trim()) { showCustomAlert(i18n('sim.news.66')); return; }
+            if (a.date && keyOf(a.date) == null) { showCustomAlert(i18n('sim.news.67')); return; }
+            if (sc.kind !== 'national' && !(sc.keys || []).length && (a.effects || []).some(ef => ef.target === 'party')) { showCustomAlert(i18n('sim.news.68', { region: sc.kind === 'region' ? i18n('sim.mainContentNation.3') : i18n('sim.contentTerritory.1') })); return; }
             a.effects = (a.effects || []).filter(ef => Number(ef.delta));
             const i = N.articles.findIndex(x => x.id === a.id);
             if (i >= 0) {
@@ -520,13 +520,13 @@
                     N.articles[i] = a;
                     ui.editing = null;
                     publish(a, true);
-                    toast('발행된 기사를 고쳤습니다');
+                    toast(i18n('sim.news.69'));
                     return;
                 }
                 N.articles[i] = a;
             } else N.articles.push(a);
             ui.editing = null;
-            if (andPublish) publish(a); else { toast('초안을 저장했습니다'); refresh(); }
+            if (andPublish) publish(a); else { toast(i18n('sim.news.70')); refresh(); }
         };
         $('[data-save]').onclick = () => save(false);
         $('[data-save-pub]')?.addEventListener('click', () => save(true));
@@ -546,7 +546,7 @@
                 if (!url || !url.startsWith('data:image/webp')) { try { url = c.toDataURL('image/jpeg', 0.85); } catch (e) { url = ev.target.result; } }
                 done(url);
             };
-            img.onerror = () => showCustomAlert('사진을 읽지 못했습니다.');
+            img.onerror = () => showCustomAlert(i18n('sim.news.71'));
             img.src = ev.target.result;
         };
         fr.readAsDataURL(file);
@@ -557,20 +557,20 @@
         const billList = (typeof bills !== 'undefined' ? bills : []);
         const links = [
             ...a.links.parties.map(id => partyById(id)).filter(Boolean).map(p => `<span class="nw-tag" style="border-color:${esc(p.color)}">${esc(p.name)}</span>`),
-            ...(a.links.gov ? ['<span class="nw-tag">정부</span>'] : []),
+            ...(a.links.gov ? [`<span class="nw-tag">${esc(i18n('sim.coup.28'))}</span>`] : []),
             ...a.links.people.map(id => people.find(x => x.id === id)).filter(Boolean).map(pp => `<span class="nw-tag">${esc(pp.name)}</span>`),
             ...a.links.bills.map(id => billList.find(x => String(x.id) === String(id))).filter(Boolean).map(b => `<span class="nw-tag">📜 ${esc(b.title)}</span>`),
         ];
         const ov = el(`<div class="nw-overlay"><article class="nw-read" role="dialog" aria-modal="true">
-            <button type="button" class="nw-read-x" aria-label="닫기">×</button>
-            <div class="nw-card-top"><span class="nw-type" style="--c:${TYPE_COLOR[a.type] || '#888'}">${esc(TYPE_LABEL[a.type] || '기사')}</span><span class="nw-dim">${esc([a.outlet, labelOf(keyOf(a.date))].filter(Boolean).join(' · '))}</span></div>
-            <h2 class="nw-read-title">${esc(a.title || '(제목 없음)')}</h2>
+            <button type="button" class="nw-read-x" aria-label="${esc(i18n('sim.main.2'))}">×</button>
+            <div class="nw-card-top"><span class="nw-type" style="--c:${TYPE_COLOR[a.type] || '#888'}">${esc(TYPE_LABEL[a.type] || esc(i18n('sim.news.10')))}</span><span class="nw-dim">${esc([a.outlet, labelOf(keyOf(a.date))].filter(Boolean).join(' · '))}</span></div>
+            <h2 class="nw-read-title">${esc(a.title || esc(i18n('sim.news.8')))}</h2>
             ${a.subtitle ? `<div class="nw-read-sub">${esc(a.subtitle)}</div>` : ''}
-            ${a.reporter ? `<div class="nw-dim">${esc(a.reporter)} 기자</div>` : ''}
+            ${a.reporter ? `<div class="nw-dim">${esc(a.reporter)} ${esc(i18n('sim.news.22'))}</div>` : ''}
             ${a.photo ? `<img class="nw-read-photo" src="${esc(a.photo)}" alt="">` : ''}
             <div class="nw-read-body">${esc(a.body || '').split(/\n{2,}/).map(par => `<p>${par.replace(/\n/g, '<br>')}</p>`).join('')}</div>
             ${links.length ? `<div class="nw-row">${links.join('')}</div>` : ''}
-            ${effectText(a) ? `<div class="nw-eff">📈 ${esc(effectText(a))} · ${esc(scopeText(a.scope))}${a.status === 'published' ? '' : ' (발행하면)'}</div>` : ''}
+            ${effectText(a) ? `<div class="nw-eff">📈 ${esc(effectText(a))} · ${esc(scopeText(a.scope))}${a.status === 'published' ? '' : esc((" " + i18n('sim.news.72')))}</div>` : ''}
         </article></div>`);
         const close = () => { ov.remove(); document.removeEventListener('keydown', onKey, true); };
         const onKey = e => { if (e.key === 'Escape') { e.stopPropagation(); close(); } };
@@ -591,7 +591,7 @@
         const last = N.history[N.history.length - 1];
         const hasEcon = !!econ();
         host.innerHTML = `<div class="nw-wrap">
-            <div class="nw-intro">대통령 · 총리 · 내각에 대한 국정 지지율입니다. 날짜를 넘길 때마다 정당 지지율과 함께 기록되어 오른쪽 "여론 추이" 그래프에 그려집니다.</div>
+            <div class="nw-intro">${esc(i18n('sim.news.73'))}</div>
             ${tg.map(t => {
                 const v = Number(N.approval[t.key]) || 0;
                 const prev = last && last.appr ? Number(last.appr[t.key]) : null;
@@ -603,17 +603,17 @@
                     <div class="nw-meter"><i style="width:${v}%"></i></div>
                 </div>`;
             }).join('')}
-            <div class="nw-row"><button type="button" class="nw-btn" data-rec>지금 기록하기</button><button type="button" class="nw-btn" data-trend>여론 추이 보기</button>
-                <span class="nw-dim"><span>기록</span> ${N.history.length}</span>${N.history.length ? '<button type="button" class="nw-btn nw-danger" data-clear>기록 지우기</button>' : ''}</div>
+            <div class="nw-row"><button type="button" class="nw-btn" data-rec>${esc(i18n('sim.news.74'))}</button><button type="button" class="nw-btn" data-trend>${esc(i18n('sim.news.75'))}</button>
+                <span class="nw-dim"><span>${esc(i18n('sim.legis.99'))}</span> ${N.history.length}</span>${N.history.length ? `<button type="button" class="nw-btn nw-danger" data-clear>${esc(i18n('sim.news.76'))}</button>` : ''}</div>
 
-            <div class="nw-sec">자동 여론 변동</div>
-            <label class="nw-check nw-switch"><input type="checkbox" data-auto ${A.on ? 'checked' : ''}> 날짜를 넘기면 국정 지지율이 저절로 움직이기 (끄면 지금처럼 손으로만)</label>
+            <div class="nw-sec">${esc(i18n('sim.news.77'))}</div>
+            <label class="nw-check nw-switch"><input type="checkbox" data-auto ${A.on ? 'checked' : ''}> ${esc(i18n('sim.news.78'))}</label>
             <div class="nw-rules ${A.on ? '' : 'off'}">
-                <div class="nw-rule"><span>경제 반영 세기</span><input class="nw-in nw-num" type="number" min="0" max="3" step="0.1" data-rule="econ" value="${A.econ}"><span class="nw-dim">${hasEcon ? '성장률 ↑ · 실업률 ↓ · 물가 안정이면 오름' : '경제를 시작한 세이브에서만'}</span></div>
-                <div class="nw-rule"><span>기준값으로 돌아가기</span><input class="nw-in nw-num" type="number" min="0" max="50" step="0.5" data-rule="decay" value="${A.decay}"><span class="nw-dim">%/월 — 기준값</span><input class="nw-in nw-num" type="number" min="0" max="100" step="1" data-rule="base" value="${A.base}"><span class="nw-dim">%</span></div>
-                <div class="nw-rule"><span>여당 지지율 연동</span><input class="nw-in nw-num" type="number" min="0" max="100" step="5" data-rule="couple" value="${A.couple}"><span class="nw-dim">% — 내각 지지율이 움직인 만큼(이 비율로) 집권 세력 정당 지지율도 (지지율 비례로 나눔)</span></div>
-                <div class="nw-rule"><span>총선 뒤 허니문</span><input class="nw-in nw-num" type="number" min="0" max="30" step="1" data-rule="honeymoon" value="${A.honeymoon}"><span class="nw-dim">%p — 총선 결과를 의회에 반영할 때</span></div>
-                <div class="nw-dim nw-small">기사 효과는 자동 변동과 상관없이 발행할 때 들어갑니다.</div>
+                <div class="nw-rule"><span>${esc(i18n('sim.news.79'))}</span><input class="nw-in nw-num" type="number" min="0" max="3" step="0.1" data-rule="econ" value="${A.econ}"><span class="nw-dim">${hasEcon ? esc(i18n('sim.news.80')) : esc(i18n('sim.news.81'))}</span></div>
+                <div class="nw-rule"><span>${esc(i18n('sim.news.82'))}</span><input class="nw-in nw-num" type="number" min="0" max="50" step="0.5" data-rule="decay" value="${A.decay}"><span class="nw-dim">${esc(i18n('sim.news.83'))}</span><input class="nw-in nw-num" type="number" min="0" max="100" step="1" data-rule="base" value="${A.base}"><span class="nw-dim">%</span></div>
+                <div class="nw-rule"><span>${esc(i18n('sim.news.84'))}</span><input class="nw-in nw-num" type="number" min="0" max="100" step="5" data-rule="couple" value="${A.couple}"><span class="nw-dim">${esc(i18n('sim.news.85'))}</span></div>
+                <div class="nw-rule"><span>${esc(i18n('sim.news.86'))}</span><input class="nw-in nw-num" type="number" min="0" max="30" step="1" data-rule="honeymoon" value="${A.honeymoon}"><span class="nw-dim">${esc(i18n('sim.news.87'))}</span></div>
+                <div class="nw-dim nw-small">${esc(i18n('sim.news.88'))}</div>
             </div>
         </div>`;
         host.querySelectorAll('[data-appr]').forEach(box => {
@@ -628,9 +628,9 @@
             rg.oninput = () => set(rg.value, false); rg.onchange = () => set(rg.value, true);
             nu.onchange = () => set(nu.value, true);
         });
-        host.querySelector('[data-rec]').onclick = () => { snapshot(); toast('지금 여론을 기록했습니다'); refresh(); };
+        host.querySelector('[data-rec]').onclick = () => { snapshot(); toast(i18n('sim.news.89')); refresh(); };
         host.querySelector('[data-trend]').onclick = () => { ui.view = 'trend'; showDisp(); };
-        host.querySelector('[data-clear]')?.addEventListener('click', () => showCustomConfirm('여론 기록을 모두 지울까요? (지금 지지율은 그대로)', () => { N.history = []; refresh(); }));
+        host.querySelector('[data-clear]')?.addEventListener('click', () => showCustomConfirm(i18n('sim.news.90'), () => { N.history = []; refresh(); }));
         host.querySelector('[data-auto]').onchange = e => { N.auto.on = e.target.checked; renderApproval(); };
         host.querySelectorAll('[data-rule]').forEach(inp => { inp.onchange = () => { N.auto[inp.dataset.rule] = Number(inp.value) || 0; }; });
     }
@@ -642,7 +642,7 @@
         const after = document.getElementById('dispTabEconomy') || document.getElementById('dispTabTimeline') || document.getElementById('dispTabCabinet');
         const ref = document.getElementById('dispPanelEconomy') || document.getElementById('dispPanelTimeline') || document.getElementById('dispPanelCabinet');
         if (!after || !ref) return;
-        after.parentElement.insertBefore(el(`<button class="disp-tab-btn" id="dispTabNews" data-tab="news" onclick="switchDispTab('news')" style="display:none;"><span class="disp-tab-label">여론 · 기사</span><span class="disp-tab-close" onclick="event.stopPropagation();closeDispTab('news')">×</span></button>`), after.nextSibling);
+        after.parentElement.insertBefore(el(`<button class="disp-tab-btn" id="dispTabNews" data-tab="news" onclick="switchDispTab('news')" style="display:none;"><span class="disp-tab-label">${esc(i18n('sim.news.91'))}</span><span class="disp-tab-close" onclick="event.stopPropagation();closeDispTab('news')">×</span></button>`), after.nextSibling);
         ref.parentElement.insertBefore(el(`<div class="disp-panel" id="dispPanelNews"><div class="chamber-box nw-disp"><div class="nw-disp-bar" id="nwDispBar"></div><div id="nwDisp"></div></div></div>`), ref.nextSibling);
     })();
     const dispActive = () => !!document.getElementById('dispPanelNews')?.classList.contains('active');
@@ -662,9 +662,9 @@
         const bar = document.getElementById('nwDispBar'), box = document.getElementById('nwDisp');
         if (!bar || !box) return;
         const outlets = [...new Set(N.articles.filter(a => a.status === 'published').map(a => a.outlet).filter(Boolean))];
-        bar.innerHTML = `<div class="nw-seg"><button type="button" data-view="paper" class="${ui.view === 'paper' ? 'on' : ''}">신문</button><button type="button" data-view="trend" class="${ui.view === 'trend' ? 'on' : ''}">여론 추이</button></div>
-            ${ui.view === 'paper' && outlets.length > 1 ? `<select class="nw-in" data-outlet><option value="">모든 언론사</option>${outlets.map(o => `<option ${ui.outlet === o ? 'selected' : ''}>${esc(o)}</option>`).join('')}</select>` : ''}
-            <span class="nw-grow"></span><button type="button" class="nw-btn" data-png>📷 <span>사진으로 저장</span></button>`;
+        bar.innerHTML = `<div class="nw-seg"><button type="button" data-view="paper" class="${ui.view === 'paper' ? 'on' : ''}">${esc(i18n('sim.news.92'))}</button><button type="button" data-view="trend" class="${ui.view === 'trend' ? 'on' : ''}">${esc(i18n('sim.news.93'))}</button></div>
+            ${ui.view === 'paper' && outlets.length > 1 ? `<select class="nw-in" data-outlet><option value="">${esc(i18n('sim.news.94'))}</option>${outlets.map(o => `<option ${ui.outlet === o ? 'selected' : ''}>${esc(o)}</option>`).join('')}</select>` : ''}
+            <span class="nw-grow"></span><button type="button" class="nw-btn" data-png>📷 <span>${esc(i18n('sim.news.95'))}</span></button>`;
         bar.querySelectorAll('[data-view]').forEach(b => { b.onclick = () => { ui.view = b.dataset.view; renderDisp(); }; });
         bar.querySelector('[data-outlet]')?.addEventListener('change', e => { ui.outlet = e.target.value; renderDisp(); });
         bar.querySelector('[data-png]').onclick = () => (ui.view === 'trend' ? exportTrend() : exportPaper());
@@ -680,23 +680,23 @@
         const list = publishedList();
         const nation = document.getElementById('nationNameInput')?.value || '';
         const t = today();
-        const mast = ui.outlet || (new Set(list.map(a => a.outlet).filter(Boolean)).size === 1 ? list[0].outlet : '') || (nation ? `${nation} 신문` : '오늘의 신문');
+        const mast = ui.outlet || (new Set(list.map(a => a.outlet).filter(Boolean)).size === 1 ? list[0].outlet : '') || (nation ? i18n('sim.news.96', { nation }) : i18n('sim.news.97'));
         if (!list.length) return `<div class="nw-paper"><div class="nw-mast"><div class="nw-mast-name">${esc(mast)}</div><div class="nw-mast-date">${esc(t ? labelOf(t.key) : '')}</div></div>
-            <div class="nw-empty">아직 발행한 기사가 없습니다. 여론 › 기사에서 기사를 쓰고 발행하세요.</div></div>`;
+            <div class="nw-empty">${esc(i18n('sim.news.98'))}</div></div>`;
         const lead = list.find(a => a.photo) || list[0];
         const rest = list.filter(a => a !== lead).slice(0, 12);
         const snippet = (s, n) => { const x = String(s || '').replace(/\s+/g, ' ').trim(); return x.length > n ? x.slice(0, n) + '…' : x; };
         const appr = targets().map(tg => `<span><span>${esc(tg.label)}</span> <b>${(Number(N.approval[tg.key]) || 0).toFixed(1)}%</b></span>`).join('');
         return `<div class="nw-paper">
-            <div class="nw-mast"><div class="nw-mast-name">${esc(mast)}</div><div class="nw-mast-date"><span>${esc(t ? labelOf(t.key) : '')}</span> · <span>발행 기사</span> ${list.length}</div><div class="nw-mast-appr"><span>국정 지지율</span> ${appr}</div></div>
+            <div class="nw-mast"><div class="nw-mast-name">${esc(mast)}</div><div class="nw-mast-date"><span>${esc(t ? labelOf(t.key) : '')}</span> · <span>${esc(i18n('sim.news.99'))}</span> ${list.length}</div><div class="nw-mast-appr"><span>${esc(i18n('sim.news.11'))}</span> ${appr}</div></div>
             <article class="nw-lead" data-read="${esc(lead.id)}">
                 ${lead.photo ? `<img src="${esc(lead.photo)}" alt="">` : ''}
-                <div><span class="nw-type" style="--c:${TYPE_COLOR[lead.type] || '#888'}">${esc(TYPE_LABEL[lead.type] || '기사')}</span>
+                <div><span class="nw-type" style="--c:${TYPE_COLOR[lead.type] || '#888'}">${esc(TYPE_LABEL[lead.type] || esc(i18n('sim.news.10')))}</span>
                 <h3>${esc(lead.title)}</h3>${lead.subtitle ? `<div class="nw-paper-sub">${esc(lead.subtitle)}</div>` : ''}
-                <p>${esc(snippet(lead.body, 240))}</p><div class="nw-dim">${esc([lead.outlet, lead.reporter && lead.reporter + ' 기자', labelOf(keyOf(lead.date))].filter(Boolean).join(' · '))}</div></div>
+                <p>${esc(snippet(lead.body, 240))}</p><div class="nw-dim">${esc([lead.outlet, lead.reporter && lead.reporter + esc((" " + i18n('sim.news.22'))), labelOf(keyOf(lead.date))].filter(Boolean).join(' · '))}</div></div>
             </article>
             <div class="nw-cols">${rest.map(a => `<article class="nw-item" data-read="${esc(a.id)}">
-                <span class="nw-type" style="--c:${TYPE_COLOR[a.type] || '#888'}">${esc(TYPE_LABEL[a.type] || '기사')}</span>
+                <span class="nw-type" style="--c:${TYPE_COLOR[a.type] || '#888'}">${esc(TYPE_LABEL[a.type] || esc(i18n('sim.news.10')))}</span>
                 <h4>${esc(a.title)}</h4><p>${esc(snippet(a.subtitle || a.body, 90))}</p>
                 <div class="nw-dim">${esc([a.outlet, labelOf(keyOf(a.date))].filter(Boolean).join(' · '))}</div></article>`).join('')}</div>
         </div>`;
@@ -711,7 +711,7 @@
         const top = plist.slice().sort((a, b) => (Number(lastP[b.id]) || probOf(b)) - (Number(lastP[a.id]) || probOf(a)));
         const series = [
             ...top.map(p => ({ id: 'p:' + p.id, name: p.name, color: p.color || '#888', dash: false, vals: H.map(h => (h.probs && h.probs[p.id] != null ? Number(h.probs[p.id]) : null)) })),
-            ...targets().map((t, i) => ({ id: 'a:' + t.key, name: `국정 · ${t.label}`, color: ['#ffd166', '#f78c6b', '#c0c0c0'][i] || '#ccc', dash: true, vals: H.map(h => (h.appr && h.appr[t.key] != null ? Number(h.appr[t.key]) : null)) })),
+            ...targets().map((t, i) => ({ id: 'a:' + t.key, name: i18n('sim.news.100', { label: t.label }), color: ['#ffd166', '#f78c6b', '#c0c0c0'][i] || '#ccc', dash: true, vals: H.map(h => (h.appr && h.appr[t.key] != null ? Number(h.appr[t.key]) : null)) })),
         ];
         if (!trendSel) trendSel = new Set([...top.slice(0, 6).map(p => 'p:' + p.id), 'a:cabinet', ...targets().filter(t => t.key !== 'cabinet').slice(0, 1).map(t => 'a:' + t.key)]);
         return { H, series };
@@ -759,11 +759,11 @@
             : { bg: '#0b0d12', grid: '#1e252d', dim: '#7d8a90', text: '#e0e0e0', font: getComputedStyle(document.body).fontFamily };
     }
     function trendHtml() {
-        if (N.history.length < 1) return `<div class="nw-empty">아직 여론 기록이 없습니다. 날짜를 넘기거나 기사를 발행하면, 또는 여론 › 국정 지지율에서 "지금 기록하기"를 누르면 기록됩니다.</div>`;
+        if (N.history.length < 1) return `<div class="nw-empty">${esc(i18n('sim.news.101'))}</div>`;
         const { series } = trendData();
         const last = N.history[N.history.length - 1];
         return `<div class="nw-trend">
-            <div class="nw-trend-head"><b>여론 추이</b><span class="nw-dim"><span>${esc(N.history[0].label)}</span> ~ <span>${esc(last.label)}</span> · <span>기록</span> ${N.history.length} · <span>점선은 국정 지지율, 아래 점은 기사</span></span></div>
+            <div class="nw-trend-head"><b>${esc(i18n('sim.news.93'))}</b><span class="nw-dim"><span>${esc(N.history[0].label)}</span> ~ <span>${esc(last.label)}</span> · <span>${esc(i18n('sim.legis.99'))}</span> ${N.history.length} · <span>${esc(i18n('sim.news.102'))}</span></span></div>
             <div class="nw-chart-wrap" id="nwChartWrap">${trendSvg(760, 340)}</div>
             <div class="nw-legend">${series.map(s => `<button type="button" class="nw-leg ${trendSel.has(s.id) ? 'on' : ''}" data-ser="${esc(s.id)}"><i style="background:${esc(s.color)}" class="${s.dash ? 'dash' : ''}"></i>${esc(s.name)}${s.vals.length && s.vals[s.vals.length - 1] != null ? ` <span class="nw-dim">${s.vals[s.vals.length - 1]}%</span>` : ''}</button>`).join('')}</div>
             ${N.history.length >= 2 ? changeTable() : ''}
@@ -773,7 +773,7 @@
         const H = N.history, a = H[Math.max(0, H.length - 2)], b = H[H.length - 1];
         const rows = realParties().map(p => ({ name: p.name, color: p.color, v: Number(b.probs?.[p.id]) || 0, d: r1((Number(b.probs?.[p.id]) || 0) - (Number(a.probs?.[p.id]) || 0)) }))
             .sort((x, y) => y.v - x.v).slice(0, 10);
-        return `<div class="nw-sec">지난 기록(${esc(a.label)}) 대비</div><div class="nw-change">${rows.map(r => `<div><i class="nw-dot" style="background:${esc(r.color)}"></i>${esc(r.name)}<span class="nw-grow"></span><b>${r.v}%</b>${r.d ? `<span class="nw-delta ${r.d > 0 ? 'up' : 'down'}">${r.d > 0 ? '▲' : '▼'}${Math.abs(r.d)}</span>` : '<span class="nw-delta">–</span>'}</div>`).join('')}</div>`;
+        return `<div class="nw-sec">${esc(i18n('sim.news.103'))}${esc(a.label)}${esc(i18n('sim.news.104'))}</div><div class="nw-change">${rows.map(r => `<div><i class="nw-dot" style="background:${esc(r.color)}"></i>${esc(r.name)}<span class="nw-grow"></span><b>${r.v}%</b>${r.d ? `<span class="nw-delta ${r.d > 0 ? 'up' : 'down'}">${r.d > 0 ? '▲' : '▼'}${Math.abs(r.d)}</span>` : '<span class="nw-delta">–</span>'}</div>`).join('')}</div>`;
     }
     function bindTrend(box) {
         box.querySelectorAll('[data-ser]').forEach(b => { b.onclick = () => { const id = b.dataset.ser; if (trendSel.has(id)) trendSel.delete(id); else trendSel.add(id); renderDisp(); }; });
@@ -787,7 +787,7 @@
     }
     const fileBase = () => (document.getElementById('nationNameInput')?.value || 'hemicycle').replace(/[\\/:*?"<>|]/g, '_');
     function exportTrend() {
-        if (!N.history.length) { showCustomAlert('아직 여론 기록이 없습니다.'); return; }
+        if (!N.history.length) { showCustomAlert(i18n('sim.news.105')); return; }
         const pal = getPal();
         const W = 1200, H0 = 560, legendH = 28 * Math.ceil(trendData().series.filter(s => trendSel.has(s.id)).length / 4) + 70;
         const svg = trendSvg(W, H0, pal);
@@ -796,25 +796,25 @@
             const c = document.createElement('canvas'); c.width = W * 2; c.height = (H0 + legendH) * 2;
             const g = c.getContext('2d'); g.scale(2, 2);
             g.fillStyle = pal.bg; g.fillRect(0, 0, W, H0 + legendH);
-            g.fillStyle = pal.text; g.font = `bold 20px ${pal.font}`; g.fillText(tr('여론 추이'), 40, 36);
+            g.fillStyle = pal.text; g.font = `bold 20px ${pal.font}`; g.fillText(tr(i18n('sim.news.93')), 40, 36);
             g.drawImage(img, 0, 50, W, H0 - 50);
             let x = 40, y = H0 + 20; g.font = `14px ${pal.font}`;
             trendData().series.filter(s => trendSel.has(s.id)).forEach((s, i) => {
                 if (i && i % 4 === 0) { x = 40; y += 28; }
                 g.strokeStyle = s.color; g.lineWidth = 3; g.setLineDash(s.dash ? [6, 4] : []); g.beginPath(); g.moveTo(x, y); g.lineTo(x + 24, y); g.stroke(); g.setLineDash([]);
                 const lv = s.vals[s.vals.length - 1];
-                g.fillStyle = pal.text; g.fillText(`${s.name.replace(/^국정 · /, tr('국정 지지율') + ' · ')}${lv != null ? ` ${lv}%` : ''}`, x + 32, y + 5);
+                g.fillStyle = pal.text; g.fillText(`${s.name.replace(/^국정 · /, tr(i18n('sim.news.11')) + ' · ')}${lv != null ? ` ${lv}%` : ''}`, x + 32, y + 5);
                 x += 280;
             });
             g.fillStyle = pal.dim; g.font = `12px ${pal.font}`; g.fillText(`${tr(N.history[0].label)} ~ ${tr(N.history[N.history.length - 1].label)}`, 40, H0 + legendH - 16);
-            download(c, `${fileBase()}-여론추이.png`);
+            download(c, i18n('sim.news.106', { fileBase: fileBase() }));
         };
-        img.onerror = () => showCustomAlert('그래프를 사진으로 만들지 못했습니다.');
+        img.onerror = () => showCustomAlert(i18n('sim.news.107'));
         img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
     }
     function exportPaper() {
         const list = publishedList();
-        if (!list.length) { showCustomAlert('발행한 기사가 없습니다.'); return; }
+        if (!list.length) { showCustomAlert(i18n('sim.news.108')); return; }
         const pal = getPal();
         const W = 1000, pad = 40;
         const c = document.createElement('canvas');
@@ -837,22 +837,22 @@
         const nation = document.getElementById('nationNameInput')?.value || '';
         const t = today();
         g.fillStyle = pal.text; g.font = `bold 34px ${pal.font}`; g.textAlign = 'center';
-        g.fillText(ui.outlet || (nation ? `${nation} ${tr('신문')}` : tr('오늘의 신문')), W / 2, 62);
+        g.fillText(ui.outlet || (nation ? `${nation} ${tr(i18n('sim.news.92'))}` : tr(i18n('sim.news.97'))), W / 2, 62);
         g.font = `14px ${pal.font}`; g.fillStyle = pal.dim;
-        g.fillText(`${t ? tr(labelOf(t.key)) : ''} · ${tr('발행 기사')} ${list.length} · ${tr('국정 지지율')} ${targets().map(tg => `${tr(tg.label)} ${(Number(N.approval[tg.key]) || 0).toFixed(1)}%`).join(' · ')}`, W / 2, 92);
+        g.fillText(`${t ? tr(labelOf(t.key)) : ''} · ${tr(i18n('sim.news.99'))} ${list.length} · ${tr(i18n('sim.news.11'))} ${targets().map(tg => `${tr(tg.label)} ${(Number(N.approval[tg.key]) || 0).toFixed(1)}%`).join(' · ')}`, W / 2, 92);
         g.textAlign = 'left';
         g.strokeStyle = pal.text; g.lineWidth = 2; g.beginPath(); g.moveTo(pad, 110); g.lineTo(W - pad, 110); g.stroke();
         let y = 130;
         blocks.forEach(({ a, tl, bl, bh }) => {
-            g.fillStyle = TYPE_COLOR[a.type] || pal.dim; g.font = `bold 13px ${pal.font}`; const tl0 = tr(TYPE_LABEL[a.type] || '기사'); g.fillText(tl0, pad, y + 18); const tlw = g.measureText(tl0).width;
-            g.fillStyle = pal.dim; g.font = `13px ${pal.font}`; g.fillText([a.outlet, a.reporter && a.reporter + ' ' + tr('기자'), tr(labelOf(keyOf(a.date)))].filter(Boolean).join(' · '), pad + tlw + 12, y + 18);
+            g.fillStyle = TYPE_COLOR[a.type] || pal.dim; g.font = `bold 13px ${pal.font}`; const tl0 = tr(TYPE_LABEL[a.type] || i18n('sim.news.10')); g.fillText(tl0, pad, y + 18); const tlw = g.measureText(tl0).width;
+            g.fillStyle = pal.dim; g.font = `13px ${pal.font}`; g.fillText([a.outlet, a.reporter && a.reporter + ' ' + tr(i18n('sim.news.22')), tr(labelOf(keyOf(a.date)))].filter(Boolean).join(' · '), pad + tlw + 12, y + 18);
             let yy = y + 30;
             g.fillStyle = pal.text; g.font = `bold 22px ${pal.font}`; tl.forEach(l => { yy += 28; g.fillText(l, pad, yy); });
             g.fillStyle = pal.dim; g.font = `15px ${pal.font}`; bl.forEach(l => { yy += 22; g.fillText(l, pad, yy); });
             g.strokeStyle = pal.grid; g.lineWidth = 1; g.beginPath(); g.moveTo(pad, y + bh - 8); g.lineTo(W - pad, y + bh - 8); g.stroke();
             y += bh;
         });
-        download(c, `${fileBase()}-기사.png`);
+        download(c, i18n('sim.news.109', { fileBase: fileBase() }));
     }
 
     // ---------------------------------------------------------------

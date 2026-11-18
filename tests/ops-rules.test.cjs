@@ -1,5 +1,6 @@
 // 시나리오 국가 운영 규칙 (js/ops-rules.js) — 자원 · 시설 · 기술 · 군사 · 무역의 하루 계산과 시작/취소.
 //   node --test tests/ops-rules.test.cjs
+require('./fixtures/i18n-node.cjs'); // 모듈의 i18n() — 한국어 팩 글자
 const test = require('node:test'), assert = require('node:assert/strict'), O = require('../js/ops-rules.js');
 const data = () => ({
     resources: [{ id: 'money', name: '국고', start: 100 }, { id: 'coal', name: '석탄', start: 10, max: 50 }, { id: 'steel', name: '철강', start: 0 }, { id: 'food', name: '식량', start: 20 }],
