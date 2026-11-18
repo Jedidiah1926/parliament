@@ -306,7 +306,7 @@
                     d += 'M' + sp.map(p => f(p[0]) + ',' + f(p[1])).join('L') + 'Z';
                 }
             }
-            if (d) paths.push(`<path id="${esc(i18n('map.trace.regionN', { n: rank + 1 }))}" d="${d}" fill="${colorOf(kept[n])}" fill-rule="evenodd" stroke="#333" stroke-width="0.6" vector-effect="non-scaling-stroke"/>`);
+            if (d) paths.push(`<path id="${String(i18n('map.trace.regionN', { n: rank + 1 })).replace(/[&<>"]/g, '_')}" d="${d}" fill="${colorOf(kept[n])}" fill-rule="evenodd" stroke="#333" stroke-width="0.6" vector-effect="non-scaling-stroke"/>`);
         });
         return paths;
     }
@@ -566,7 +566,7 @@
                         d += 'M' + sp.map(p => f(p[0]) + ',' + f(p[1])).join('L') + 'Z';
                     }
                 }
-                if (d) paths.push(`<path id="${esc(i18n('map.trace.regionN', { n: n + 1 }))}" d="${d}" fill="${hex(...c.color)}" fill-rule="evenodd" stroke="#333" stroke-width="${Math.max(0.5, Math.round(k * 10) / 10)}"/>`);
+                if (d) paths.push(`<path id="${String(i18n('map.trace.regionN', { n: n + 1 })).replace(/[&<>"]/g, '_')}" d="${d}" fill="${hex(...c.color)}" fill-rule="evenodd" stroke="#333" stroke-width="${Math.max(0.5, Math.round(k * 10) / 10)}"/>`);
             });
             const svgText = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${IW} ${IH}" width="${IW}" height="${IH}">${paths.join('')}</svg>`;
             const stats = { comps: comps.length, W, H, small: 0, nocore: 0, thin: 0, droppedPx: 0 };
