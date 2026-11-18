@@ -26,9 +26,9 @@
     // 화면 곳곳의 font-family가 'NeoDunggeunmo' 이름을 직접 쓰므로, 같은 이름의 @font-face를 뒤에 하나 더 넣어 통째로 갈아 끼운다.
     //   maruminya: 마루미냐 한글(x12y12pxMaruMinyaHangul, SIL OFL 1.1 — fonts/maruminya/OFL.txt) — 한국어 · 일본어 12px 픽셀 폰트
     //              github.com/quiple/x12y12pxMaruMinyaHangul (원본: hicchicc/x12y12pxMaruMinya)
-    // 언어 코드로 정해 두거나(일본어 jp), 언어 팩에 "neonFont": "maruminya"를 적는다
+    // 언어 코드로 정해 두거나(일본어 ja · jp — ja-JP처럼 지역이 붙어도 됨), 언어 팩에 "neonFont": "maruminya"를 적는다
     const NEON_FONTS = { maruminya: 'fonts/maruminya/x12y12pxMaruMinyaHangul.woff2' };
-    const NEON_FONT_BY_LANG = { jp: 'maruminya' };
+    const NEON_FONT_BY_LANG = { ja: 'maruminya', jp: 'maruminya' };
     let neonFontApplied = '';
     function applyNeonFont(code, pack) {
         const key = (pack && NEON_FONTS[pack.neonFont] ? pack.neonFont : '') || NEON_FONT_BY_LANG[String(code || '').split('-')[0]];
