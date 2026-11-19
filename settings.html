@@ -265,18 +265,27 @@
             document.getElementById('saveDirGroup').hidden = false;
             document.getElementById('saveDirPath').textContent = info.dir + (info.isDefault ? '  ' + i18n('settings.etc.defaultDir') : '');
             document.getElementById('saveDirResetBtn').hidden = !!info.isDefault;
-            document.getElementById('saveDirMsg').textContent = msg || '';
+            const box = document.getElementById('saveDirMsg');
+            box.textContent = msg || '';
+            box.classList.toggle('is-error', !!(info && info.ok === false && msg)); // 오류는 테마의 경고 색 (css/index.css · css/modern.css)
+        }
+        // 앱이 넘긴 오류 code → 고른 언어의 글자 (common.saveFolder.<code>)
+        function saveDirError(r) {
+            const key = c => 'common.saveFolder.' + c;
+            const text = c => i18n(window.HemiLang && HemiLang.has(key(c)) ? key(c) : key('failed'));
+            if(r && r.code === 'moveFailed') return i18n('common.saveFolder.moveFailed', { reason: text(r.cause || 'failed') });
+            return text((r && r.code) || 'failed');
         }
         async function openSaveDir() { if(saveApi) await saveApi.openDir(); }
         async function chooseSaveDir() {
             if(!saveApi) return;
-            const r = await saveApi.chooseDir();
-            if(r && !r.canceled) renderSaveDir(r, r.ok ? i18n('settings.etc.movedNew') : r.error);
+            const r = await saveApi.chooseDir(i18n('common.saveFolder.chooseTitle'));
+            if(r && !r.canceled) renderSaveDir(r, r.ok ? i18n('settings.etc.movedNew') : saveDirError(r));
         }
         async function resetSaveDir() {
             if(!saveApi) return;
             const r = await saveApi.resetDir();
-            renderSaveDir(r, r.ok ? i18n('settings.etc.movedDefault') : r.error);
+            renderSaveDir(r, r.ok ? i18n('settings.etc.movedDefault') : saveDirError(r));
         }
         if(saveApi) saveApi.info().then(info => renderSaveDir(info));
 

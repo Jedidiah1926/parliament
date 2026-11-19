@@ -95,6 +95,7 @@
         .settings-group .lang-select-group { margin-bottom: 0; }
         .settings-group .lang-select-group + .lang-select-group { margin-top: 6px; }
         .settings-hint { color: var(--tno-text); font-size: 0.85rem; margin-top: 8px; opacity: .8; text-transform: none; }
+        .settings-hint.is-error { color: var(--tno-alert); opacity: 1; text-shadow: 0 0 6px color-mix(in srgb, var(--tno-alert) 45%, transparent); } /* 저장 위치 오류 등 */
         /* 기타 설정 › 개발자 모드 */
         .dev-code-row { display: flex; gap: 6px; }
         /* 업데이트 (데스크톱 앱 — 설정 › 기타 설정) */

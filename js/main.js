@@ -14499,6 +14499,10 @@
                         <button style="background:transparent;border:1px solid #333;color:#888;padding:4px 8px;font-family:inherit;font-size:0.75rem;cursor:pointer;" onclick="setElectionSystemField('${ch}','threshold',5)">5%</button>
                         <button style="background:transparent;border:1px solid #333;color:#888;padding:4px 8px;font-family:inherit;font-size:0.75rem;cursor:pointer;" onclick="setElectionSystemField('${ch}','threshold',0)">${escapeHtmlText(i18n('sim.contentVote.16'))}</button>
                     </div>
+                    <label style="display:flex;align-items:center;gap:8px;margin-top:8px;cursor:pointer;color:#888;font-size:0.85rem;" title="${escapeHtmlText(i18n('sim.district.capTotalTip'))}">
+                        <input type="checkbox" ${sys.capTotal ? 'checked' : ''} onchange="setElectionSystemField('${ch}','capTotal', this.checked)">
+                        <span>${escapeHtmlText(i18n('sim.district.capTotal'))}</span>
+                    </label>
                     <div style="font-size:0.72rem;color:#555;margin-top:6px;">${escapeHtmlText(i18n('sim.district.81'))}${parseFloat(sys.threshold) > 0 ? ` ${escapeHtmlText(i18n('sim.district.82'))} <b style="color:var(--tno-neon);">${parseFloat(sys.threshold)}%</b>${parseInt(sys.thresholdSeats) > 0 ? escapeHtmlText(i18n('sim.district.83', { thresholdSeats: parseInt(sys.thresholdSeats) })) : ''}` : ''}</div>
                     <div style="font-size:0.72rem;color:#555;margin-top:6px;">${escapeHtmlText(i18n('sim.district.mixHint'))}${sys.listScope==='regional' ? ` ${escapeHtmlText(i18n('sim.district.84'))} <b style="color:var(--tno-neon);">${escapeHtmlText(i18n('sim.district.85'))}</b> ${escapeHtmlText(i18n('sim.district.86'))}` : ''}</div>
                 </div>
@@ -14751,6 +14755,12 @@
                     const breakdown = elecBuildDistrictSeatBreakdown(districtResults);
                     Object.keys(breakdown).forEach(key => districtSetSeatMembers(ch, key, districtSeatListFrom(breakdown[key]), false));
                     districtSeatResults[ch] = breakdown;
+                }
+                // 전체 의석 상한으로 당선이 무효가 된 지역구 — 남은 당선자가 없으면 자리를 비운다 (지난 당선자가 남지 않게)
+                const dropped = [...new Set(result.droppedDistrictKeys || [])];
+                if(dropped.length > 0) {
+                    const kept = new Set((districtResults || []).map(d => d.key));
+                    dropped.filter(k => !kept.has(k)).forEach(k => districtSetSeatMembers(ch, k, [], false));
                 }
                 lastCh = ch;
             });
@@ -16039,6 +16049,7 @@
             applyFraud();
             const caughtFraud = fraudAttempts.filter(x => x.caught);
 
+            let droppedDistrictKeys = []; // 전체 의석 상한으로 당선을 무효로 한 지역구 (반영할 때 당선자를 비운다)
             const computeOutcome = () => {
                 // ── 오차 적용 후 각 당 지지율 계산 (활동 금지된 정당은 저장된 지지율과 무관하게 가중치 0) ──
                 const partyWeighted = parties.map(p => {
@@ -16103,6 +16114,32 @@
                     n: (districtWinCounts[p.id]||0) + (listSeatMap[p.id]||0),
                     origProb: p.origProb,
                 }));
+                // 전체 의석 상한 (원별 설정 capTotal) — 지역구가 전체 의석보다 많거나 권역 선거구 의석까지 더해 넘치면,
+                // 각 정당 의석을 지금 결과의 비율대로 줄여 (전체 의석 − 권역 선거구 지정 의석)에 맞춘다.
+                // 줄어든 정당은 비례 의석부터 빼고, 그래도 넘치면 그 정당의 지역구 당선 몇 곳을 무작위로 무효(당선자 없음)로 한다
+                droppedDistrictKeys = [];
+                if(getElectionSystem(chamber).capTotal) {
+                    const regionFixed = Object.values(regionSeatTotalsByParty(chamber)).reduce((a, n) => a + (n || 0), 0);
+                    const budget = Math.max(0, totalSeats - regionFixed);
+                    const cur = seatMap.reduce((a, x) => a + x.n, 0);
+                    if(cur > budget) {
+                        const capped = largestRemainderAlloc(seatMap.map(x => ({ id: x.id, w: x.n })), budget);
+                        seatMap.forEach(x => {
+                            const n = capped[x.id] || 0;
+                            const d = districtWinCounts[x.id] || 0;
+                            const keepD = Math.min(d, n);
+                            if(keepD < d) {
+                                const mine = districtResults.map((r, i) => r && r.partyId === x.id ? i : -1).filter(i => i >= 0);
+                                for(let i = mine.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [mine[i], mine[j]] = [mine[j], mine[i]]; }
+                                mine.slice(0, d - keepD).forEach(i => { droppedDistrictKeys.push(districtResults[i].key); districtResults[i] = null; });
+                                districtWinCounts[x.id] = keepD;
+                            }
+                            listSeatMap[x.id] = n - keepD;
+                            x.n = n;
+                        });
+                        for(let i = districtResults.length - 1; i >= 0; i--) if(!districtResults[i]) districtResults.splice(i, 1);
+                    }
+                }
 
                 // 지역구 개표 순서 셔플 (연출용)
                 for(let i=districtResults.length-1; i>0; i--) {
@@ -16137,7 +16174,7 @@
             // 선거 결과 화면에서 "직전 대비 의석 변동"을 계산하는 기준이 된다
             const prevSeatMap = parties.map(p => ({ id: p.id, n: p[inKeyFor(chamber)] ? (p[seatKey]||0) : 0 })); // 원외 정당은 직전 의석 0
             const saveLastResult = () => {
-                elecLastResult = { chamber, isSenate: chamber==='senate', seatMap: seatMap.map(x=>({...x})), weighted, districtResults: [...districtResults], mode: elecMode, prevSeatMap, thresholdOut };
+                elecLastResult = { chamber, isSenate: chamber==='senate', seatMap: seatMap.map(x=>({...x})), weighted, districtResults: [...districtResults], droppedDistrictKeys: [...droppedDistrictKeys], mode: elecMode, prevSeatMap, thresholdOut };
                 elecLastResults[chamber] = elecLastResult;
             };
             saveLastResult();
@@ -16286,7 +16323,7 @@
                     const p = parties.find(x=>x.id===pool[i]);
                     if(p){ counts[p.id]=(counts[p.id]||0)+1; }
 
-                    const pct = ((districtSeats + i + 1)/totalSeats*100).toFixed(1)+'%';
+                    const pct = ((districtResults.length + i + 1)/totalSeats*100).toFixed(1)+'%';
                     document.getElementById('elecProgressBar').style.width=pct;
                     document.getElementById('elecResultBar'+suf).style.width=pct;
 

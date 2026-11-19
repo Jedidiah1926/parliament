@@ -302,23 +302,25 @@ ipcMain.handle('resolution:set', (event, w, h) => setResolution(w, h));
 // 읽기 · 쓰기는 동기 — 저장 직후 앱이 꺼져도(업데이트 설치 등) 파일에 남아 있게
 ipcMain.on('saves:read', (event, ns) => {
     try { event.returnValue = saves.read(String(ns || '')); }
-    catch (e) { console.error('saves read failed:', e); event.returnValue = { initialized: true, slots: null, error: String(e && e.message || e) }; }
+    catch (e) { console.error('saves read failed:', e); event.returnValue = { initialized: true, slots: null, code: saves.codeOf(e), error: String(e && e.message || e) }; }
 });
 ipcMain.on('saves:write', (event, ns, text) => {
     try { event.returnValue = saves.write(String(ns || ''), String(text || '[]')); }
-    catch (e) { console.error('saves write failed:', e); event.returnValue = { ok: false, error: String(e && e.message || e) }; }
+    catch (e) { console.error('saves write failed:', e); event.returnValue = { ok: false, code: saves.codeOf(e), error: String(e && e.message || e) }; }
 });
 // 세이브 하나의 상태만 바뀐 저장 — 그 파일 하나만 (안 되는 경우는 { fallback: true }로 답해 페이지가 saves:write로 다시 보낸다)
 ipcMain.on('saves:write-slot', (event, ns, meta, state) => {
     try { event.returnValue = saves.writeSlot(String(ns || ''), String(meta || ''), String(state || '')); }
-    catch (e) { console.error('saves write-slot failed:', e); event.returnValue = { ok: false, fallback: true, error: String(e && e.message || e) }; }
+    catch (e) { console.error('saves write-slot failed:', e); event.returnValue = { ok: false, fallback: true, code: saves.codeOf(e), error: String(e && e.message || e) }; }
 });
 ipcMain.on('saves:dir-sync', event => { event.returnValue = saves.getDir(); });
 const savesInfo = () => ({ dir: saves.getDir(), isDefault: saves.isDefault(), defaultDir: saves.defaultDir() });
 // 저장 위치를 바꾸면 세이브를 새 폴더로 옮기고, 열린 화면을 다시 불러와 새 폴더를 읽게 한다
 function switchSaveDir(dir) {
-    const r = saves.moveTo(dir);
-    if (!r.ok) return { ...savesInfo(), ok: false, error: r.error };
+    let r;
+    try { r = saves.moveTo(dir); }
+    catch (e) { console.error('saves move failed:', e); return { ...savesInfo(), ok: false, code: 'moveFailed', cause: saves.codeOf(e), error: String(e && e.message || e) }; }
+    if (!r.ok) return { ...savesInfo(), ok: false, code: r.code, error: r.error };
     saved.saveDir = saves.isDefault() ? undefined : saves.getDir();
     saveWindowState(saved);
     BrowserWindow.getAllWindows().forEach(w => { if (!w.isDestroyed()) w.webContents.reload(); });
@@ -326,9 +328,10 @@ function switchSaveDir(dir) {
 }
 ipcMain.handle('saves:info', () => savesInfo());
 ipcMain.handle('saves:open-dir', () => { fs.mkdirSync(saves.getDir(), { recursive: true }); return shell.openPath(saves.getDir()); });
-ipcMain.handle('saves:choose-dir', async event => {
+// 창 제목은 페이지가 고른 언어로 넘겨 준다 (없으면 예전 화면 — 한국어)
+ipcMain.handle('saves:choose-dir', async (event, title) => {
     const win = BrowserWindow.fromWebContents(event.sender);
-    const r = await dialog.showOpenDialog(win, { title: '세이브를 둘 폴더 고르기', defaultPath: saves.getDir(), properties: ['openDirectory', 'createDirectory'] });
+    const r = await dialog.showOpenDialog(win, { title: String(title || '').slice(0, 120) || '세이브를 둘 폴더 고르기', defaultPath: saves.getDir(), properties: ['openDirectory', 'createDirectory'] });
     if (r.canceled || !r.filePaths[0]) return { ...savesInfo(), ok: false, canceled: true };
     return switchSaveDir(r.filePaths[0]);
 });
