@@ -815,7 +815,14 @@
         recordsChanged();
     }
 
+    // 정당을 지웠을 때 (js/main.js removeParty) — 국민투표 입장은 빼고, 지방선거 당선자는 소속을 비운다 (자리 · 이름은 남김)
+    function forgetParty(pid) {
+        const same = x => x != null && String(x) === String(pid);
+        Object.keys(S.ref.stances || {}).forEach(k => { if (same(k)) delete S.ref.stances[k]; });
+        Object.values(S.local.holders || {}).forEach(h => { if (h && same(h.partyId)) h.partyId = null; });
+    }
     window.PopVote = {
+        forgetParty,
         runLocal, runRef, renderLocal, renderRef, refresh, show, remove, getState, setState, records, peopleSeats,
         applyLocal, setHolder, setOffice, uploadHolderPhoto, setHolderQuick, uploadHolderPhotoQuick, setUnitsView, showHolders: () => showHoldersOnDisplay(true),
     };
