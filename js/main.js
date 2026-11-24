@@ -8516,7 +8516,71 @@
             parties.push({id:Date.now(), name:"무소속", color:"#999999", seatsHouse:1, seatsSenate:0, seatsThird:0, ideologyId:IND_IDEOLOGY_ID, isRuling:false, inHouse:true, inSenate:true, inThird:false, leaderName: "", leaderPhoto: "", logoPhoto: "", showLogoInStats: false, hideStatsPhoto: false, factions: [] });
             simulate(); refreshUI();
         }
-        function removeParty(i) { const pid=parties[i].id; parties.splice(i,1); coalitions.forEach(c=>c.members=c.members.filter(x=>x!==pid)); simulate(); refreshUI(); }
+        // 정당 삭제 — 정당 목록에서 빼고, 그 정당을 가리키던 데이터도 함께 정리한다.
+        // (예전엔 연정 구성원만 지워서, 지지율(시민 · 이민자) · 지역구 성향 · 지역구 당선자 · 개표 대기 결과 · 인물 소속 등에 남아
+        //  여론 합계가 어긋나고, 지역구 자리에 없는 정당 의원이 남거나 개표 결과를 반영할 때 다시 끼어들었다)
+        // 지난 선거 기록 · 연표 · 뉴스는 그때의 기록이라 그대로 둔다.
+        function removeParty(i) {
+            const party = parties[i];
+            if(!party) return;
+            const pid = party.id;
+            const same = x => x != null && String(x) === String(pid);
+            const dropKey = obj => { if(obj && typeof obj === 'object') Object.keys(obj).forEach(k => { if(same(k)) delete obj[k]; }); };
+            // 여론 › 이민자 탭이 열려 있으면 시민 성향이 이민자 데이터와 바뀌어 있다 — 먼저 되돌린다
+            try { window.HemiPeople?.swapOut?.(); } catch(e) { /* 사람 모듈 없음 */ }
+            parties.splice(i, 1);
+            const CHS = ['house', 'senate', 'third'];
+            // 연정
+            coalitions.forEach(c => {
+                c.members = (c.members || []).filter(x => !same(x));
+                if(same(c.leadPartyId)) c.leadPartyId = null;
+                if(Array.isArray(c.externalSupporters)) c.externalSupporters = c.externalSupporters.filter(x => !same(x));
+            });
+            // 의석 · 의원: 비례 명단은 지우고, 지역구 자리는 궐석으로 (보궐선거로 다시 채울 수 있게)
+            CHS.forEach(ch => {
+                dropKey(listMembers[ch]);
+                Object.values(districtMembers[ch] || {}).forEach(m => { if(m && same(m.partyId)) { m.partyId = null; m.factionId = null; m.vacant = true; } });
+                Object.values(districtSeatResults[ch] || {}).forEach(dropKey);
+            });
+            // 지지율 · 성향 (시민) — 권역 득표 · 비례 득표율 · 지역구 성향까지
+            CHS.forEach(ch => {
+                dropKey(elecStore[ch]);
+                if(elecListVote[ch]) dropKey(elecListVote[ch]);
+                Object.values(regionVoteStore[ch] || {}).forEach(dropKey);
+                Object.values(regionTendency[ch] || {}).forEach(dropKey);
+            });
+            dropKey(tendencyData);
+            Object.values(districtSvgTendency || {}).forEach(byCh => Object.values(byCh || {}).forEach(dropKey));
+            // 이민자 성향 (js/people.js — 시민 성향과 같은 모양)
+            const mig = window.HemiPeople?.opinion?.migrant;
+            if(mig) {
+                CHS.forEach(ch => { dropKey(mig.prob?.[ch]); Object.values(mig.regionTendency?.[ch] || {}).forEach(dropKey); });
+                dropKey(mig.tendencyData);
+                Object.values(mig.svgTendency || {}).forEach(byCh => Object.values(byCh || {}).forEach(dropKey));
+            }
+            // 인물 · 직책: 소속을 비운다 (사람은 남는다)
+            (window.HemiPeople?.people || []).forEach(h => { if(same(h.partyId)) { h.partyId = null; h.factionId = null; } });
+            [president, pm, collectiveChair, pmNominee, ...deputyPms, ...cabinetMembers].forEach(o => {
+                if(!o) return;
+                if(same(o.partyId)) o.partyId = null;
+                if(o.linkedSeat && same(o.linkedSeat.partyId)) o.linkedSeat = null;
+            });
+            dropKey(presElectionCandidateOverrides);
+            candidateUnions.forEach(u => { u.partyIds = (u.partyIds || []).filter(x => !same(x)); });
+            candidateUnions = candidateUnions.filter(u => (u.partyIds || []).length >= 2);
+            // 반영하지 않은 개표 결과에서도 뺀다 — 반영할 때 지운 정당의 지역구 당선자가 다시 생기지 않게
+            const pruneResult = r => {
+                if(!r) return;
+                if(Array.isArray(r.seatMap)) r.seatMap = r.seatMap.filter(x => !same(x.id));
+                if(Array.isArray(r.weighted)) r.weighted = r.weighted.filter(x => !same(x.id));
+                if(Array.isArray(r.districtResults)) r.districtResults = r.districtResults.filter(x => !same(x.partyId));
+            };
+            Object.values(elecLastResults || {}).forEach(pruneResult);
+            if(elecLastResult && !elecLastResult.applied) pruneResult(elecLastResult);
+            // 국민투표 입장 · 지방선거 당선자
+            try { window.PopVote?.forgetParty?.(pid); } catch(e) { /* 지방선거 모듈 없음 */ }
+            simulate(); refreshUI();
+        }
 
         // ===== 합당 (흡수합당 / 신설합당) =====
         // 흡수합당: 존속 정당 하나가 다른 정당들을 흡수 — 존속 정당의 이름·색·당수는 그대로
