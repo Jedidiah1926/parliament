@@ -4,6 +4,9 @@ const fs = require('fs');
 const mods = require('./mods');
 const updater = require('./updater');
 const saves = require('./saves');
+// Steam 판(electron/steam.json의 appId)이면 창을 만들기 전에 Steam에 연결한다 — Steam 오버레이는 앱이 준비되기 전에 켜야 하고,
+// 창작마당 구독 목록도 이 연결을 쓴다. GitHub 릴리스 판(appId 없음)은 아무것도 하지 않는다
+mods.steam();
 
 // 데이터 폴더(세이브·설정이 든 브라우저 저장소)는 앱 이름 "Hemicycle"을 따른다.
 // 예전 이름(DATANET Parliament Simulation) 시절의 폴더가 있고 새 폴더가 아직 없으면, 처음 켤 때 한 번 통째로 옮겨 와

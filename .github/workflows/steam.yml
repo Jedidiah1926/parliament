@@ -1,0 +1,75 @@
+# Steam 판 빌드 — Steam(SteamPipe)에 올릴 Windows 앱 폴더를 만든다 (GitHub Release는 만들지 않음)
+# Actions 탭 › "Steam build (Windows)" › Run workflow에서 버전을 넣고 실행 → 실행 결과 화면 아래 Artifacts의
+# "Hemicycle-steam-win64-<버전>"을 받아 압축을 풀고, 그 폴더를 SteamPipe(ContentBuilder)로 올린다.
+#
+# GitHub 릴리스 판과 다른 점 (electron/steam.json의 appId를 채움)
+#   - GitHub 자동 업데이트를 확인하지 않음 — Steam이 업데이트 (electron/updater.js)
+#   - Steam 창작마당 · 오버레이를 씀 (steamworks.js를 함께 넣음, electron/mods.js)
+#   - 설치 프로그램 없이 실행 파일 폴더(Hemicycle.exe)만 — Steam이 설치를 맡는다
+name: Steam build (Windows)
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: '앱 버전 (예: 1.7.1-obt.7 — 앞의 v 없이)'
+        required: true
+        default: '1.7.1'
+
+permissions:
+  contents: read
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      # Steam 연동 (창작마당 · 오버레이) — Steam 판에만 넣는다. 빌드에 들어가려면 dependencies에 있어야 해서
+      # 이 실행 안에서만 package.json에 더한다 (저장소의 package.json은 그대로)
+      - run: npm install --save steamworks.js@0.4.0
+
+      - name: Set app version
+        shell: bash
+        run: npm version "${{ inputs.version }}" --no-git-tag-version --allow-same-version
+
+      # Steam 판 표시 — steam.json의 steamAppId(본편 App ID)를 appId에
+      - name: Mark as Steam build
+        shell: bash
+        run: |
+          node -e "
+            const fs = require('fs'), p = 'electron/steam.json';
+            const s = JSON.parse(fs.readFileSync(p, 'utf8'));
+            if (!s.steamAppId) { console.error('electron/steam.json에 steamAppId가 없습니다'); process.exit(1); }
+            s.appId = s.steamAppId;
+            fs.writeFileSync(p, JSON.stringify(s, null, 2));
+            console.log('Steam App ID', s.appId);
+          "
+
+      - name: Build app folder
+        run: npx electron-builder --win dir --x64 --publish never
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+
+      # 빌드에 Steam 판 설정과 steamworks.js가 들어갔는지 확인
+      - name: Check build
+        shell: bash
+        run: |
+          test -f dist/win-unpacked/Hemicycle.exe
+          ls dist/win-unpacked/resources/app.asar.unpacked/node_modules/steamworks.js/dist/win64/
+          test -f dist/win-unpacked/resources/app.asar.unpacked/node_modules/steamworks.js/dist/win64/steam_api64.dll
+          npx --yes @electron/asar extract-file dist/win-unpacked/resources/app.asar electron/steam.json
+          node -e "const s = JSON.parse(require('fs').readFileSync('steam.json','utf8')); if (!s.appId) { console.error('appId가 비어 있습니다'); process.exit(1); } console.log('steam.json appId', s.appId);"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Hemicycle-steam-win64-${{ inputs.version }}
+          path: dist/win-unpacked/
+          retention-days: 30
