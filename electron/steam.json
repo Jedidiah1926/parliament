@@ -1,4 +1,5 @@
 {
   "appId": null,
-  "_comment": "Steam 출시 후 Steamworks에서 받은 App ID(숫자)를 appId에 넣고 `npm install steamworks.js`를 하면 창작마당 구독 아이템(언어 팩)을 읽고, tools/workshop-upload.js로 올릴 수 있습니다. 비워 두면 창작마당 기능은 꺼진 채 모드 폴더만 씁니다."
+  "steamAppId": 5767270,
+  "_comment": "appId는 Steam 판 빌드에서만 채운다 (.github/workflows/steam.yml이 steamAppId 값을 넣음) — 채우면 앱이 GitHub 업데이트를 확인하지 않고 Steam 창작마당 · 오버레이를 쓴다. GitHub 릴리스 판은 비워 둔다. steamAppId: Steamworks 본편 Hemicycle의 App ID (store.steampowered.com/app/5767270)"
 }

@@ -1,7 +1,7 @@
 // Steam 창작마당에 모드(언어 팩 · 테마 · 프리셋 · 스크립트 모드) 올리기 (Steam 출시 후에 쓰는 도구 — 미리 준비해 둔 것)
 //
 // 준비:
-//   1) electron/steam.json의 appId에 Steamworks App ID를 넣는다 (또는 HEMICYCLE_STEAM_APP_ID 환경 변수)
+//   1) electron/steam.json의 steamAppId(본편 5767270)를 쓴다 — 다른 앱(데모 등)이면 appId 또는 HEMICYCLE_STEAM_APP_ID 환경 변수
 //   2) npm install steamworks.js
 //   3) Steam 클라이언트에 로그인한 상태로 실행
 //
@@ -31,7 +31,7 @@ if (!folder || !fs.existsSync(folder) || !fs.statSync(folder).isDirectory()) fai
 
 let steamCfg = {};
 try { steamCfg = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'electron', 'steam.json'), 'utf8')); } catch (e) { /* 없음 */ }
-const appId = Number(process.env.HEMICYCLE_STEAM_APP_ID || steamCfg.appId) || 0;
+const appId = Number(process.env.HEMICYCLE_STEAM_APP_ID || steamCfg.appId || steamCfg.steamAppId) || 0; // 비어 있으면 본편 App ID
 if (!appId) fail('Steam App ID가 없습니다. electron/steam.json의 appId를 채우세요.');
 
 // ---- 아이템 내용 확인 ----
