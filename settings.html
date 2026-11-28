@@ -168,18 +168,6 @@
                         <div class="settings-hint" id="saveDirMsg"></div>
                         <div class="settings-hint" data-i18n="settings.etc.saveDirHint">세이브는 앱 안이 아니라 이 폴더에 세이브마다 "이름.hemi" 파일로 저장됩니다 — 그대로 백업 · 복사하거나 다른 기기에서 "불러오기"로 열 수 있어요. 탐색기에서 넣은 .hemi 파일은 다음에 시작 화면을 열 때 세이브로 보이고, 게임에서 지운 세이브는 휴지통으로 갑니다. 위치를 바꾸면 지금 세이브가 새 폴더로 옮겨져요. (Program Files처럼 관리자 권한이 필요한 폴더는 쓸 수 없어요)</div>
                     </div>
-                    <div class="settings-group" id="updateGroup" hidden>
-                        <div class="settings-label" data-i18n="settings.etc.update">UPDATE / 업데이트</div>
-                        <div class="settings-hint" id="updateVersion"></div>
-                        <div class="update-status" id="updateStatus"></div>
-                        <div class="update-bar" id="updateBarWrap" hidden><div class="update-bar-fill" id="updateBar"></div></div>
-                        <div class="update-row">
-                            <button type="button" class="lang-select-btn" id="updateCheckBtn" onclick="checkUpdateNow()" data-i18n="settings.etc.checkUpdate">업데이트 확인</button>
-                            <button type="button" class="lang-select-btn active" id="updateInstallBtn" onclick="installUpdateNow()" hidden data-i18n="settings.etc.installUpdate">지금 다시 시작해 설치</button>
-                            <button type="button" class="lang-select-btn" onclick="hemicycleDesktop.openReleases()" data-i18n="settings.etc.releases">릴리스 페이지</button>
-                        </div>
-                        <div class="settings-hint" data-i18n="settings.etc.updateHint">새 버전이 GitHub Release에 올라오면 반드시 업데이트해야 합니다 — 설치판은 자동으로 받아 저장 후 다시 시작해 설치하고, 업데이트 전까지는 앱을 쓸 수 없습니다.</div>
-                    </div>
                     <div class="settings-group" id="devModeGroup">
                         <div class="settings-label" data-i18n="settings.etc.dev">DEVELOPER MODE / 개발자 모드</div>
                         <div class="settings-hint dev-locked-note" id="devLockedNote" hidden></div>
@@ -219,9 +207,6 @@
     </div>
 
     <script>
-        // ===== 자동 업데이트 (데스크톱 앱만 — electron/updater.js) =====
-        // 설치 프로그램으로 깐 앱은 GitHub Release의 새 버전을 뒤에서 받아 두었다가 다시 시작할 때 설치,
-        // 압축판은 새 버전이 있으면 알려 주고 릴리스 페이지를 연다
         // 키 번역(js/lang.js) — data-i18n이 달린 요소의 글자를 바꿀 때는 키도 함께 바꾼다 (안 그러면 페이지를 다 읽을 때 원래 키 글자로 돌아감)
         function setKey(el, key, vars, attr) {
             if(!el) return;
@@ -230,34 +215,6 @@
             if(vars) el.setAttribute('data-i18n-vars', JSON.stringify(vars)); else el.removeAttribute('data-i18n-vars');
             if(attr) el.setAttribute(attr, i18n(key, vars)); else el.textContent = i18n(key, vars);
         }
-        const updApi = window.hemicycleDesktop && window.hemicycleDesktop.getUpdateState ? window.hemicycleDesktop : null;
-        function renderUpdate(st) {
-            if(!st) return;
-            document.getElementById('updateGroup').hidden = false;
-            const noteKey = { notify: 'settings.etc.modeNotify', steam: 'settings.etc.modeSteam', off: 'settings.etc.modeOff' }[st.mode];
-            document.getElementById('updateVersion').textContent = i18n('settings.etc.version', { version: st.version }) + (noteKey ? ' · ' + i18n(noteKey) : '');
-            const latest = st.latest || '';
-            const msg = {
-                idle: '', off: '', checking: i18n('settings.etc.checking'), none: st.latest ? i18n('settings.etc.upToDateV', { latest }) : i18n('settings.etc.upToDate'),
-                downloading: i18n('settings.etc.downloading', { latest, percent: st.percent || 0 }),
-                downloaded: i18n('settings.etc.downloaded', { latest }),
-                installing: i18n('settings.etc.installing', { latest }),
-                available: i18n('settings.etc.available', { latest }),
-                error: i18n('settings.etc.updateError', { error: st.error || i18n('settings.etc.unknownError') }),
-            }[st.status] || '';
-            document.getElementById('updateStatus').textContent = msg;
-            document.getElementById('updateBarWrap').hidden = st.status !== 'downloading';
-            document.getElementById('updateBar').style.width = (st.percent || 0) + '%';
-            document.getElementById('updateInstallBtn').hidden = st.status !== 'downloaded';
-            document.getElementById('updateCheckBtn').disabled = st.mode === 'off' || st.status === 'checking' || st.status === 'downloading';
-        }
-        async function checkUpdateNow() { if(updApi) { await updApi.checkForUpdates(); renderUpdate(await updApi.getUpdateState()); } }
-        async function installUpdateNow() { if(updApi) await updApi.installUpdate(); }
-        if(updApi) {
-            updApi.onUpdateStatus(renderUpdate);
-            updApi.getUpdateState().then(renderUpdate);
-        }
-
         // ===== 저장 위치 (데스크톱 앱만 — electron/saves.js) =====
         const saveApi = window.hemicycleDesktop && window.hemicycleDesktop.saves ? window.hemicycleDesktop.saves : null;
         function renderSaveDir(info, msg) {

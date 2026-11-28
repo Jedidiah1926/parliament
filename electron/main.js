@@ -2,7 +2,6 @@ const { app, BrowserWindow, Menu, ipcMain, screen, shell, dialog } = require('el
 const path = require('path');
 const fs = require('fs');
 const mods = require('./mods');
-const updater = require('./updater');
 const saves = require('./saves');
 // Steam 판(electron/steam.json의 appId)이면 창을 만들기 전에 Steam에 연결한다 — Steam 오버레이는 앱이 준비되기 전에 켜야 하고,
 // 창작마당 구독 목록도 이 연결을 쓴다. GitHub 릴리스 판(appId 없음)은 아무것도 하지 않는다
@@ -347,13 +346,6 @@ ipcMain.on('mods:list', event => {
 ipcMain.handle('mods:preset', (event, key) => mods.loadPreset(key));
 ipcMain.handle('mods:open-folder', () => shell.openPath(mods.modsDir()));
 ipcMain.handle('display-mode:set', (event, mode) => setDisplayMode(mode));
-// 자동 업데이트 (electron/updater.js) — 설정 화면의 "업데이트" 칸이 쓴다
-ipcMain.handle('update:get', () => updater.getState());
-ipcMain.handle('update:check', () => updater.check());
-ipcMain.handle('update:install', () => updater.install());
-ipcMain.handle('update:set-auto', (event, on) => updater.setAuto(on));
-ipcMain.handle('update:open-releases', () => updater.openReleases());
-ipcMain.handle('update:quit', () => app.quit());
 // Steam 판인지 (electron/steam.json에 appId) — js/official.js가 정식 출시 뒤에도 Steam 판은 막지 않게
 ipcMain.on('app:is-steam', event => {
     try { event.returnValue = !!(process.env.HEMICYCLE_STEAM_APP_ID || JSON.parse(fs.readFileSync(path.join(__dirname, 'steam.json'), 'utf8')).appId); }
@@ -367,16 +359,7 @@ app.whenReady().then(() => {
         trash: p => { if (fs.existsSync(p)) shell.trashItem(p).catch(() => { try { fs.unlinkSync(p); } catch (e) { /* 없음 */ } }); },
     });
     createWindow();
-    updater.init({
-        send: st => BrowserWindow.getAllWindows().forEach(w => { if (!w.isDestroyed()) w.webContents.send('update:status', updater.getState()); }),
-        getWin: () => (mainWin && !mainWin.isDestroyed() ? mainWin : BrowserWindow.getAllWindows()[0] || null),
-        settings: { autoUpdate: saved.autoUpdate !== false },
-        save: st => { saved.autoUpdate = !!st.autoUpdate; saveWindowState(saved); },
-        // 설치하려고 다시 시작하기 전에 열린 화면마다 지금 세이브를 저장하고, "저장하지 않은 변경" 확인 창이 끄기를 막지 않게 한다
-        beforeInstall: () => Promise.all(BrowserWindow.getAllWindows().map(w => w.isDestroyed() ? null : w.webContents.executeJavaScript(
-            "try { if (typeof saveActiveNow === 'function') saveActiveNow(true); } catch (e) {} try { suppressAutosaveOnUnload = true; } catch (e) {} true;", true
-        ).catch(() => null))),
-    });
+    // 자동 업데이트는 v1.7.1-obt.8에서 없앴다 — 앞으로 업데이트는 Steam이 맡는다 (GitHub 릴리스 판은 새 버전을 직접 받아 설치)
     app.on('activate', () => {
         if (BrowserWindow.getAllWindows().length === 0) createWindow();
     });
